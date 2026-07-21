@@ -34,7 +34,7 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-21 from the game source at v26.51.
+ * Assembled 2026-07-21 from the game source at v26.52.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
@@ -72,14 +72,15 @@
  * actor-intent seam drives later locomotion and pose changes without referring
  * to the body's internal discretization.
  *
- * v4.4 restored-goopy contract: the v4.3 material-clock experiment is gone.
- * The consistency slider again changes the physical damping, motion transfer,
- * grid viscosity, and reconstructed surface used by the v3.31 endpoint.
+ * v4.5 lively-rest contract: full simulation time, particle footprint, global
+ * momentum, and airborne spray never change. The water control adjusts only a
+ * smooth low-speed, low-shear neighbour filter. Shallow numerical dregs calm;
+ * coherent slosh and deliberate impacts stay live in the same pool.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.4';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.5';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -148,7 +149,7 @@
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
-  var waterFeel = 1;   // 0..1, very goopy to v3.9 raw-motion water
+  var waterFeel = 0.55; // 0..1, calmer dregs to longer-lived slosh
   var debugParticles = true;
 
   /* ==== THE SHARED WALL GRID ============================================
@@ -711,10 +712,10 @@
             // Its effective 0.992 * 0.97 keep-factor compounded at roughly
             // 186 substeps per wall second, retaining under 0.1% of carried
             // momentum after one second. The fixed setter lets this host use
-            // the intended raw 1.0 / 1.0 transfer. Keep a trace of grid
-            // smoothing and enough air drag to stop ballistic orphan spray,
-            // but let the pressure limiter, density cap, anti-clump, CFL cap
-            // and swept collision own stability.
+            // the intended raw 1.0 / 1.0 transfer. v4.5 keeps bulk water raw
+            // and adds only the local quiet-shear filter in applyWaterFeel;
+            // the pressure limiter, density cap, anti-clump, CFL cap, and
+            // swept collision continue to own stability.
             applyWaterFeel();
             liquidWGPU.setSimParam('AERATION_COEFF', 5);
             // Fresh CPU mirror for the slime coupling: the default cadence
@@ -9611,30 +9612,30 @@
   }
 
   function waterFeelName(t) {
-    if (t < 0.16) return 'very goopy';
-    if (t < 0.38) return 'goopy';
-    if (t < 0.66) return 'fluid';
-    if (t < 0.88) return 'watery';
-    return 'very watery';
+    if (t < 0.16) return 'calmer';
+    if (t < 0.38) return 'calm';
+    if (t < 0.66) return 'balanced';
+    if (t < 0.88) return 'lively';
+    return 'very lively';
   }
 
   function applyWaterFeel() {
     if (!liquidWGPU || !liquidWGPU.setSimParam) return;
     var t = Math.max(0, Math.min(1, waterFeel));
-    // Most of the slider is useful water; the cubic syrup weight reserves
-    // the far-left end for the deliberately extreme compounded drag. The
-    // far-right values are byte-for-byte the stable v3.9 host tune.
-    var syrup = Math.pow(1 - t, 3);
+    // v4.5: one material, two simultaneous energy scales. Global momentum,
+    // time, pressure, and rendering stay fixed. This filter sees only the
+    // tiny disagreement between slow neighbouring grid cells. Smooth gates
+    // turn it off for waves, impacts, streams, and spray; even the calmer end
+    // therefore keeps the deliberate splash that makes the toy worth poking.
     liquidWGPU.setSimParam('CALM', 0);
-    liquidWGPU.setSimParam('GRID_VISC', 0.02 + 0.63 * syrup);
-    liquidWGPU.setSimParam('DAMPING', 1.0 - 0.008 * syrup);
-    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0 - 0.03 * syrup);
-    liquidWGPU.setSimParam('AIR_DRAG', 0.996 - 0.006 * syrup);
-    if (liquidWGPU.setRenderParam) {
-      liquidWGPU.setRenderParam('SURFACE_BLUR', 6.0 * syrup);
-      liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8 - 1.3 * syrup);
-      liquidWGPU.setRenderParam('SURFACE_SOFT', 0.8 - 0.55 * syrup);
-    }
+    liquidWGPU.setSimParam('GRID_VISC', 0);
+    liquidWGPU.setSimParam('DAMPING', 1);
+    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
+    liquidWGPU.setSimParam('AIR_DRAG', 0.996);
+    liquidWGPU.setSimParam('QUIET_VISC', 0.04 - 0.024 * t);
+    liquidWGPU.setSimParam('QUIET_SPEED', 42 - 14 * t);
+    liquidWGPU.setSimParam('QUIET_SHEAR', 14 - 5 * t);
+    liquidWGPU.setSimParam('QUIET_SUPPORT', 3);
   }
 
   function applyParticleDebug() {

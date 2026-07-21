@@ -461,15 +461,19 @@
         'fly.acc': 5,                          // horizontal steering authority
         // --- v25.42 popcorn-fix trio: the owner's live water-feel dials ---
         'water.PRESSURE_MAX_DV': 1,            // THE pop killer (px/s per substep; 0 = old popcorn)
-        'water.AIR_DRAG': 2,                   // airborne droplet deceleration (1 = off)
-        'water.COHESION': 3,                   // DANGER: explosive above 0; supervised A/B only
+        'water.QUIET_VISC': 2,                 // v26.52 low-energy relative filter, never bulk damping
+        'water.QUIET_SPEED': 2.1,              // absolute-speed disengagement gate
+        'water.QUIET_SHEAR': 2.2,              // local-difference disengagement gate
+        'water.QUIET_SUPPORT': 2.3,            // massy cardinal-neighbour requirement
+        'water.AIR_DRAG': 3,                   // airborne droplet deceleration (1 = off)
+        'water.COHESION': 4,                   // DANGER: explosive above 0; supervised A/B only
         // --- v25.44 honey dials: how watery flow feels (1.0/1.0/0 = raw) ---
-        'water.DAMP_LIVE': 4,                  // lively velocity keep/substep (1 = frictionless slosh)
-        'water.MOTION_LIVE': 5,                // lively APIC transfer scale (1 = full)
-        'water.VISC_LIVE': 6,                  // lively grid viscosity (0 = raw)
-        'water.FLOOR_FRICTION': 7,             // per-substep drag on floor-adjacent cells
-        'water.WALL_FRICTION': 8,              // per-substep drag on wall-adjacent cells
-        'water.LIP_FRICTION': 9,               // v25.45 ledge spill (= FLOOR_FRICTION for old damming)
+        'water.DAMP_LIVE': 5,                  // lively velocity keep/substep (1 = frictionless slosh)
+        'water.MOTION_LIVE': 6,                // lively APIC transfer scale (1 = full)
+        'water.VISC_LIVE': 7,                  // lively grid viscosity (0 = raw)
+        'water.FLOOR_FRICTION': 8,             // per-substep drag on floor-adjacent cells
+        'water.WALL_FRICTION': 9,              // per-substep drag on wall-adjacent cells
+        'water.LIP_FRICTION': 10,              // v25.45 ledge spill (= FLOOR_FRICTION for old damming)
         // --- core feel (v22 unified-contact model): dial these to shape the slime ---
         'jello.JELLO_SOLVER_ID': 1,            // pbd / xpbd / fem
         'jello.JELLO_E': 2,                    // overall softness (lower = squishier)
@@ -836,4 +840,3 @@
       gmTuningPanelSetVisible(!gmPanelVisible);
     }
     window.gmTuningPanelToggle = gmTuningPanelToggle;
-

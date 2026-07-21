@@ -750,6 +750,33 @@
           function (v) { LIQUID_GRID_VISC = v; gmSetWaterSim('GRID_VISC', v); },
           0, 0.6, undefined);
       }
+      // v26.52 — local low-energy filter. Unlike GRID_VISC, this does not
+      // touch energetic or high-shear water and never rides the global calm
+      // state, so it can quiet numerical dregs without shortening a slosh.
+      if (typeof LIQUID_QUIET_VISC !== 'undefined') {
+        gmRegisterLever('water.QUIET_VISC', 'water', 'QUIET_VISC (micro-jitter only)',
+          function () { return LIQUID_QUIET_VISC; },
+          function (v) { LIQUID_QUIET_VISC = v; gmSetWaterSim('QUIET_VISC', v); },
+          0, 0.12, undefined);
+      }
+      if (typeof LIQUID_QUIET_SPEED !== 'undefined') {
+        gmRegisterLever('water.QUIET_SPEED', 'water', 'QUIET_SPEED (px/s gate)',
+          function () { return LIQUID_QUIET_SPEED; },
+          function (v) { LIQUID_QUIET_SPEED = v; gmSetWaterSim('QUIET_SPEED', v); },
+          8, 80, undefined);
+      }
+      if (typeof LIQUID_QUIET_SHEAR !== 'undefined') {
+        gmRegisterLever('water.QUIET_SHEAR', 'water', 'QUIET_SHEAR (px/s gate)',
+          function () { return LIQUID_QUIET_SHEAR; },
+          function (v) { LIQUID_QUIET_SHEAR = v; gmSetWaterSim('QUIET_SHEAR', v); },
+          3, 30, undefined);
+      }
+      if (typeof LIQUID_QUIET_SUPPORT !== 'undefined') {
+        gmRegisterLever('water.QUIET_SUPPORT', 'water', 'QUIET_SUPPORT (neighbours)',
+          function () { return LIQUID_QUIET_SUPPORT; },
+          function (v) { LIQUID_QUIET_SUPPORT = v; gmSetWaterSim('QUIET_SUPPORT', v); },
+          0, 4, 1);
+      }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
       // ceil-split where stepDt swings with frame jitter (kept for A/B).

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.51';
+  var GAME_VERSION = 'v26.52';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1677,6 +1677,15 @@
                                       // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
                                       // v24.152 0.05, v24.157 0.10; the settled grind still gets the
                                       // full LIQUID_GRID_VISC lever value as calm ramps.)
+  // v26.52 — energy-selective quiet filter. It removes only microscopic
+  // neighbour disagreement from slow, supported water. A coherent wave has
+  // almost no disagreement to remove; impacts and pours cross the smooth
+  // speed/shear gates; airborne particles keep their shared trajectory.
+  // This is always continuous and never sleeps or freezes on-screen water.
+  var LIQUID_QUIET_VISC = 0.027;
+  var LIQUID_QUIET_SPEED = 34;         // px/s: fully disengaged by this speed
+  var LIQUID_QUIET_SHEAR = 11;         // px/s: fully disengaged by this local delta
+  var LIQUID_QUIET_SUPPORT = 3;        // massy cardinal neighbours required
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -2926,7 +2935,6 @@
     pumpPhase: 0,
     coneSpin: 0,                   // accumulated rotation of cutter head (radians)
   };
-
   /* ---- World Generation ---- */
   // Surface ponds are STREAMED (v24.11): worldgen carves every pit into this
   // list, but updateSurfacePondStreaming() (070) only spawns water in the
@@ -9992,6 +10000,7 @@
       if (liquidWGPU && liquidWGPU.setSimParam) {
         liquidWGPU.setSimParam('CALM', 0);
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
+        liquidWGPU.setSimParam('QUIET_VISC', 0);
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -10095,6 +10104,13 @@
       // pristine targets stay in 010/020); a lever change is re-blended
       // here next frame, so the one-frame overwrite is invisible.
       liquidWGPU.setSimParam('GRID_VISC', liquidGridViscEff);
+      // v26.52 quiet-shear filter: these gates are local to each cell, so the
+      // world can contain a faintly sloshing pool and ballistic spray in the
+      // same substep. They do not ride the old whole-body calm ramp.
+      liquidWGPU.setSimParam('QUIET_VISC', LIQUID_QUIET_VISC);
+      liquidWGPU.setSimParam('QUIET_SPEED', LIQUID_QUIET_SPEED);
+      liquidWGPU.setSimParam('QUIET_SHEAR', LIQUID_QUIET_SHEAR);
+      liquidWGPU.setSimParam('QUIET_SUPPORT', LIQUID_QUIET_SUPPORT);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }
@@ -59598,6 +59614,33 @@
           function (v) { LIQUID_GRID_VISC = v; gmSetWaterSim('GRID_VISC', v); },
           0, 0.6, undefined);
       }
+      // v26.52 — local low-energy filter. Unlike GRID_VISC, this does not
+      // touch energetic or high-shear water and never rides the global calm
+      // state, so it can quiet numerical dregs without shortening a slosh.
+      if (typeof LIQUID_QUIET_VISC !== 'undefined') {
+        gmRegisterLever('water.QUIET_VISC', 'water', 'QUIET_VISC (micro-jitter only)',
+          function () { return LIQUID_QUIET_VISC; },
+          function (v) { LIQUID_QUIET_VISC = v; gmSetWaterSim('QUIET_VISC', v); },
+          0, 0.12, undefined);
+      }
+      if (typeof LIQUID_QUIET_SPEED !== 'undefined') {
+        gmRegisterLever('water.QUIET_SPEED', 'water', 'QUIET_SPEED (px/s gate)',
+          function () { return LIQUID_QUIET_SPEED; },
+          function (v) { LIQUID_QUIET_SPEED = v; gmSetWaterSim('QUIET_SPEED', v); },
+          8, 80, undefined);
+      }
+      if (typeof LIQUID_QUIET_SHEAR !== 'undefined') {
+        gmRegisterLever('water.QUIET_SHEAR', 'water', 'QUIET_SHEAR (px/s gate)',
+          function () { return LIQUID_QUIET_SHEAR; },
+          function (v) { LIQUID_QUIET_SHEAR = v; gmSetWaterSim('QUIET_SHEAR', v); },
+          3, 30, undefined);
+      }
+      if (typeof LIQUID_QUIET_SUPPORT !== 'undefined') {
+        gmRegisterLever('water.QUIET_SUPPORT', 'water', 'QUIET_SUPPORT (neighbours)',
+          function () { return LIQUID_QUIET_SUPPORT; },
+          function (v) { LIQUID_QUIET_SUPPORT = v; gmSetWaterSim('QUIET_SUPPORT', v); },
+          0, 4, 1);
+      }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
       // ceil-split where stepDt swings with frame jitter (kept for A/B).
@@ -61593,15 +61636,19 @@
         'fly.acc': 5,                          // horizontal steering authority
         // --- v25.42 popcorn-fix trio: the owner's live water-feel dials ---
         'water.PRESSURE_MAX_DV': 1,            // THE pop killer (px/s per substep; 0 = old popcorn)
-        'water.AIR_DRAG': 2,                   // airborne droplet deceleration (1 = off)
-        'water.COHESION': 3,                   // DANGER: explosive above 0; supervised A/B only
+        'water.QUIET_VISC': 2,                 // v26.52 low-energy relative filter, never bulk damping
+        'water.QUIET_SPEED': 2.1,              // absolute-speed disengagement gate
+        'water.QUIET_SHEAR': 2.2,              // local-difference disengagement gate
+        'water.QUIET_SUPPORT': 2.3,            // massy cardinal-neighbour requirement
+        'water.AIR_DRAG': 3,                   // airborne droplet deceleration (1 = off)
+        'water.COHESION': 4,                   // DANGER: explosive above 0; supervised A/B only
         // --- v25.44 honey dials: how watery flow feels (1.0/1.0/0 = raw) ---
-        'water.DAMP_LIVE': 4,                  // lively velocity keep/substep (1 = frictionless slosh)
-        'water.MOTION_LIVE': 5,                // lively APIC transfer scale (1 = full)
-        'water.VISC_LIVE': 6,                  // lively grid viscosity (0 = raw)
-        'water.FLOOR_FRICTION': 7,             // per-substep drag on floor-adjacent cells
-        'water.WALL_FRICTION': 8,              // per-substep drag on wall-adjacent cells
-        'water.LIP_FRICTION': 9,               // v25.45 ledge spill (= FLOOR_FRICTION for old damming)
+        'water.DAMP_LIVE': 5,                  // lively velocity keep/substep (1 = frictionless slosh)
+        'water.MOTION_LIVE': 6,                // lively APIC transfer scale (1 = full)
+        'water.VISC_LIVE': 7,                  // lively grid viscosity (0 = raw)
+        'water.FLOOR_FRICTION': 8,             // per-substep drag on floor-adjacent cells
+        'water.WALL_FRICTION': 9,              // per-substep drag on wall-adjacent cells
+        'water.LIP_FRICTION': 10,              // v25.45 ledge spill (= FLOOR_FRICTION for old damming)
         // --- core feel (v22 unified-contact model): dial these to shape the slime ---
         'jello.JELLO_SOLVER_ID': 1,            // pbd / xpbd / fem
         'jello.JELLO_E': 2,                    // overall softness (lower = squishier)
@@ -61968,7 +62015,6 @@
       gmTuningPanelSetVisible(!gmPanelVisible);
     }
     window.gmTuningPanelToggle = gmTuningPanelToggle;
-
   // ====== ART ATLAS EXPORT (dev bench hook — art-lab.html) ======
   // Exposes the game's pixel-art renderers + palettes on window.__sluiceAtlas
   // so the pixel-art atlas bench (art-lab.html) can render every piece of art

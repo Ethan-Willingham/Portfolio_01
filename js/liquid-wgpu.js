@@ -305,6 +305,18 @@
   // flow passes through untouched. Lives in SimParams coll.z (live via
   // setSimParam('GRID_VISC') / the gm water lever). edit2: 010-constants.
   var LIQUID_GRID_VISC = 0.45;  // v24.166 — reverted from the v24.164 0.7 (paired with the now-disabled force-freeze); live value is the calm-blend pushed each frame
+  // v26.52 — QUIET-SHEAR FILTER. This is deliberately not another material
+  // clock or a global damping term. It blends only a low-speed cell's
+  // velocity toward its massy-neighbour mean, and only while the local shear
+  // is microscopic. Coherent slosh has almost no difference to remove; an
+  // impact or pour crosses the speed/shear gates and gets the raw solver;
+  // airborne spray either moves coherently or crosses the speed gate. The
+  // module default is zero so boot references stay exact. Shipping hosts push
+  // their live values after the self-tests.
+  var LIQUID_QUIET_VISC    = 0;
+  var LIQUID_QUIET_SPEED   = 34;   // px/s: filter fully gone by this cell speed
+  var LIQUID_QUIET_SHEAR   = 11;   // px/s: filter fully gone by this neighbour delta
+  var LIQUID_QUIET_SUPPORT = 3;    // massy cardinal neighbours required
   // v24.120 WATER DEBUG KIT — live diagnostic bitmask from the game's gm
   // 'water' levers (edit2 twins in sluice.js 020-state). Rides to the
   // kernels in SimParams coll.w, so flipping a lever needs NO recompile:
@@ -405,7 +417,6 @@
   var LIQUID_SURFACE_THRESH  = 1.8;   // v24.162 — raised from 0.85: a lone particle's metaball peak is ~1.0, so THRESH-SOFT=1.0 makes single particles invisible while bodies (field >> 1) stay solid. edit2 sluice 010
   var LIQUID_SURFACE_SOFT    = 0.8;   // v24.162 — was 0.35 (lower edge = one-particle peak)
   var LIQUID_SURFACE_RSCALE  = 0.9;   // v26.17 honest footprint: body support spans ~2 rest spacings, not a 10px halo
-  var LIQUID_SURFACE_BLUR    = 0;     // post-field reconstruction radius in device px; 0 keeps the game path exact
   var LIQUID_DROPLETS        = 1;     // v25.32 — visible-droplet pass for low-support particles
                                       // (strays/spray render as small drops instead of nothing;
                                       // the fat-disc bug is impossible: droplet size is fixed,
@@ -703,8 +714,8 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
-    // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
+    // constants every compute kernel reads. 13 vec4 = 208 bytes (v26.52 added
+    // quiet; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
     // GPU chain (and before each harness run* call). Bind groups bind the
@@ -712,10 +723,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 192,
+      size: 208,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(48);   // 12 vec4 lanes (v25.56 + bath)
+    instance.simParamsHost = new Float32Array(52);   // 13 vec4 lanes (v26.52 + quiet-shear)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1210,8 +1221,8 @@
   ];
 
   /* ---- v14.26 — fill + push the SimParams uniform --------------------
-   * Pack the module's live fluid-feel physics vars into the 28-lane f32
-   * staging array (7 vec4 — see the WGSL_SIM_PARAMS banner for the field
+   * Pack the module's live fluid-feel physics vars into the 52-lane f32
+   * staging array (13 vec4 — see the WGSL_SIM_PARAMS banner for the field
    * map) and writeBuffer it. Called before every kernel that reads `sp`
    * (the live runFrame chain AND each harness run* call), so a setSimParam
    * mutation is picked up on the very next step with no recompile.
@@ -1226,6 +1237,7 @@
    *   20-23 g2pB   : oilAerThreshold, aerCoeff, oilAerCoeff, calm (v24.145)
    *   24-27 coll   : bounceWater, bounceOil, gridVisc, dbgFlags
    *   28-31 g2pC   : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173)
+   *   48-51 quiet  : low-energy viscosity, speed gate, shear gate, support
    * Filled from the same LIQUID_* numbers the WGSL `${...}` literals used
    * before v14.26 — at default values the GPU sees byte-identical input,
    * so the boot self-tests still pass with unchanged diffs.
@@ -1274,6 +1286,10 @@
     sh[42] = LIQUID_BATH_SRC_X1;    sh[43] = LIQUID_BATH_SRC_Y1;
     sh[44] = LIQUID_BATH_SRC_T;     sh[45] = LIQUID_BATH_SRC_RATE;
     sh[46] = 0; sh[47] = 0;
+    // quiet : v26.52 energy-selective rest filter. Module boot stays zero;
+    // the game and standalone host push their chosen live value afterward.
+    sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
+    sh[50] = LIQUID_QUIET_SHEAR; sh[51] = LIQUID_QUIET_SUPPORT;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4289,7 +4305,7 @@ fn guestCandidateWins(d2 : f32, qx : f32, qy : f32,
    * FIXED_SCALE, CELL, LIQUID_COLLIDE_RADIUS) stay baked `const`s — they
    * are not feel knobs (TUNING.md §2.1 marks them "don't set directly").
    *
-   * vec4-packed for std140 alignment — 7 vec4 = 112 bytes (a multiple of
+   * vec4-packed for std140 alignment — 13 vec4 = 208 bytes (a multiple of
    * 16; each vec4 lands 16-byte aligned). Field map (mirrors the lane
    * order writeSimParams fills):
    *   grav    : (gravity, oilGravity, pressureStiff, oilPressureStiff)
@@ -4317,6 +4333,7 @@ struct SimParams {
   bathA  : vec4<f32>,   // v25.56 bath: heatExchange, heatCool, heatBuoy, bathOn
   bathB  : vec4<f32>,   // v25.56 bath: heat-source rect x0, y0, x1, y1 (world px)
   bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
+  quiet  : vec4<f32>,   // v26.52: low-energy visc, speed gate, shear gate, support
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4949,11 +4966,14 @@ fn rawCellVel(n : u32) -> vec3<f32> {
     var velX = (momX + dvX) * invm;
     var velY = (momY + dvY) * invm + grav;
     // v24.115 — grid viscosity (sp.coll.z): blend toward the massy
-    // 4-neighbour average. Anti-phase compression oscillation (the
-    // clamped-EOS limit cycle that keeps a settled pond breathing
-    // forever) cancels here; uniform flow is unchanged by averaging.
+    // 4-neighbour average. v26.52 adds a separate quiet-shear contribution:
+    // it exists only below smooth speed + neighbour-difference gates and
+    // only in supported water. It removes microscopic anti-phase chatter,
+    // never coherent translation. Wakes and terrain boundaries are applied
+    // after this block, so a player/slime impact is not pre-damped.
     let visc = sp.coll.z;
-    if (visc > 0.0) {
+    let quietVisc = sp.quiet.x;
+    if (visc > 0.0 || quietVisc > 0.0) {
       let col = c % gp.gridW;
       var nSum = vec3<f32>(0.0, 0.0, 0.0);
       if (col > 0u)             { nSum = nSum + rawCellVel(c - 1u); }
@@ -4963,8 +4983,23 @@ fn rawCellVel(n : u32) -> vec3<f32> {
       if (nSum.z > 0.0) {
         let nAvgX = nSum.x / nSum.z;
         let nAvgY = nSum.y / nSum.z;
-        velX = velX + (nAvgX - velX) * visc;
-        velY = velY + (nAvgY - velY) * visc;
+        var viscEff = clamp(visc, 0.0, 0.95);
+        if (quietVisc > 0.0 && nSum.z >= sp.quiet.w) {
+          // Grid velocity is cells moved this substep. Convert both the
+          // absolute speed and neighbour delta back to world px/s so the
+          // gates stay invariant under cell size and fixed-step tuning.
+          let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
+          let speedPx = length(vec2<f32>(velX, velY)) * pxPerStep;
+          let shearPx = length(vec2<f32>(nAvgX - velX, nAvgY - velY)) * pxPerStep;
+          let speedQuiet = 1.0 - smoothstep(sp.quiet.y * 0.4, sp.quiet.y, speedPx);
+          let shearQuiet = 1.0 - smoothstep(sp.quiet.z * 0.3, sp.quiet.z, shearPx);
+          let quietK = clamp(quietVisc * speedQuiet * shearQuiet * (1.0 - oilK), 0.0, 0.95);
+          // Compose rather than add so the combined coefficient cannot
+          // overshoot when a developer also enables the legacy viscosity.
+          viscEff = 1.0 - (1.0 - viscEff) * (1.0 - quietK);
+        }
+        velX = velX + (nAvgX - velX) * viscEff;
+        velY = velY + (nAvgY - velY) * viscEff;
       }
     }
     cellVelX[c] = velX;
@@ -6354,7 +6389,6 @@ struct RenderParams {
   oilColor      : vec4<f32>,
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
-  surfaceFx     : vec4<f32>,   // x = post-field reconstruction radius in device px
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 `;
@@ -6525,37 +6559,6 @@ struct VOut {
   @builtin(position) pos : vec4<f32>,
 };
 
-fn surfaceFieldAt(px : vec2<i32>) -> vec4<f32> {
-  let c = textureLoad(fieldTex, px, 0);
-  let br = rp.surfaceFx.x;
-  // The game ships zero and returns after the same single texture load as
-  // before v26.46. Only the standalone goopy endpoint pays for reconstruction.
-  if (br < 0.5) { return c; }
-  let dims = vec2<i32>(textureDimensions(fieldTex));
-  let hi = dims - vec2<i32>(1);
-  let p = clamp(px, vec2<i32>(0), hi);
-  // Separable five-sample Gaussian weights [1 4 6 4 1]. The 5x5 footprint
-  // closes the small dark gaps between settled goopy islands without
-  // increasing any particle splat. Terrain clips the reconstructed result.
-  var sum = vec4<f32>(0.0);
-  var wsum = 0.0;
-  for (var gy = -2; gy <= 2; gy = gy + 1) {
-    let ay = abs(gy);
-    let wy = select(select(1.0, 4.0, ay == 1), 6.0, ay == 0);
-    let oy = i32(round(f32(gy) * br * 0.5));
-    for (var gx = -2; gx <= 2; gx = gx + 1) {
-      let ax = abs(gx);
-      let wx = select(select(1.0, 4.0, ax == 1), 6.0, ax == 0);
-      let w = wx * wy;
-      let ox = i32(round(f32(gx) * br * 0.5));
-      sum = sum + textureLoad(fieldTex,
-        clamp(p + vec2<i32>(ox, oy), vec2<i32>(0), hi), 0) * w;
-      wsum = wsum + w;
-    }
-  }
-  return sum / wsum;
-}
-
 fn compositeTerrainSolid(wp : vec2<f32>) -> bool {
   if (tp.worldTile <= 0.0) { return false; }
   let tc = i32(floor(wp.x / tp.worldTile)) - bitcast<i32>(tp.tileOrigC);
@@ -6579,7 +6582,7 @@ fn vs(@builtin(vertex_index) vid : u32) -> VOut {
 
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
-  let f = surfaceFieldAt(vec2<i32>(in.pos.xy));
+  let f = textureLoad(fieldTex, vec2<i32>(in.pos.xy), 0);
   let t = rp.surf.x;
   let s = max(rp.surf.y, 0.001);
   let aWaterEdge = smoothstep(t - s, t + s, f.r);
@@ -6665,32 +6668,6 @@ fn dropletTerrainSolid(wp : vec2<f32>) -> bool {
   return ((word >> (idx & 31u)) & 1u) != 0u;
 }
 
-fn dropletFieldAt(px : vec2<i32>) -> vec4<f32> {
-  let dims = vec2<i32>(textureDimensions(fieldTex));
-  let hi = dims - vec2<i32>(1);
-  let p = clamp(px, vec2<i32>(0), hi);
-  let c = textureLoad(fieldTex, p, 0);
-  let br = rp.surfaceFx.x;
-  if (br < 0.5) { return c; }
-  var sum = vec4<f32>(0.0);
-  var wsum = 0.0;
-  for (var gy = -2; gy <= 2; gy = gy + 1) {
-    let ay = abs(gy);
-    let wy = select(select(1.0, 4.0, ay == 1), 6.0, ay == 0);
-    let oy = i32(round(f32(gy) * br * 0.5));
-    for (var gx = -2; gx <= 2; gx = gx + 1) {
-      let ax = abs(gx);
-      let wx = select(select(1.0, 4.0, ax == 1), 6.0, ax == 0);
-      let w = wx * wy;
-      let ox = i32(round(f32(gx) * br * 0.5));
-      sum = sum + textureLoad(fieldTex,
-        clamp(p + vec2<i32>(ox, oy), vec2<i32>(0), hi), 0) * w;
-      wsum = wsum + w;
-    }
-  }
-  return sum / wsum;
-}
-
 fn corner(vid : u32) -> vec2<f32> {
   var c = vec2<f32>(-1.0, -1.0);
   if (vid == 1u) { c = vec2<f32>( 1.0, -1.0); }
@@ -6717,8 +6694,10 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let scrX = (p.x - rp.camX) * rp.dpws;
   let scrY = (p.y - rp.camY) * rp.dpws;
   if (scrX < 0.0 || scrY < 0.0 || scrX >= rp.canvasW || scrY >= rp.canvasH) { return out; }
-  let samplePx = vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5));
-  let field = dropletFieldAt(samplePx);
+  let dims = vec2<i32>(textureDimensions(fieldTex));
+  let samplePx = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5)),
+                       vec2<i32>(0), dims - vec2<i32>(1));
+  let field = textureLoad(fieldTex, samplePx, 0);
   let surfaceA = smoothstep(rp.surf.x - max(rp.surf.y, 0.001),
                             rp.surf.x + max(rp.surf.y, 0.001), field.r);
   // Fully exposed centres get a full drop. Fade through partially covered
@@ -7750,17 +7729,17 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     instance.renderCtx     = ctx;
     instance.renderFormat  = fmt;
 
-    // --- RenderParams uniform — 32 f32 lanes, 128 bytes ---
+    // --- RenderParams uniform — 28 f32 lanes, 112 bytes ---
     // 8 scalars (32 B) + 3 vec4 colour fields (48 B) + the v24.113 surf
     // vec4 (16 B: threshold, softness, splat scale, on/off). The legacy
     // disc shader's struct only declares the first 80 bytes; binding the
     // larger buffer to it is valid (buffer >= struct).
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 128,   // v26.46: +16 for the surfaceFx vec4 (surface struct only)
+      size: 112,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(32);
+    instance.renderParamsHost = new Float32Array(28);
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var bgl = dev.createBindGroupLayout({
@@ -8050,9 +8029,6 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // it; with the bath off the field's heat alpha is 0, so it never applies.
     rh[24] = LIQUID_BATH_TINT_R;   rh[25] = LIQUID_BATH_TINT_G;
     rh[26] = LIQUID_BATH_TINT_B;   rh[27] = LIQUID_BATH_TINT_STR;
-    // v26.46 post-field reconstruction. Defaults to zero, leaving the game
-    // and every existing render path byte-for-byte unchanged.
-    rh[28] = LIQUID_SURFACE_BLUR; rh[29] = 0; rh[30] = 0; rh[31] = 0;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -9226,7 +9202,6 @@ fn main() {
             case 'SURFACE_THRESH':       LIQUID_SURFACE_THRESH = v; break;
             case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
-            case 'SURFACE_BLUR':         LIQUID_SURFACE_BLUR = v < 0 ? 0 : (v > 6 ? 6 : v); break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
             // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
             // the hot-water look for the feel-check; STR 0 kills the tint.
@@ -9277,6 +9252,12 @@ fn main() {
             case 'DAMPING':              LIQUID_DAMPING = v; if (LIQUID_MATS && LIQUID_MATS[0]) LIQUID_MATS[0].damping = v; break;
             case 'OIL_DAMPING':          LIQUID_OIL_DAMPING = v; if (LIQUID_MATS && LIQUID_MATS[1]) LIQUID_MATS[1].damping = v; break;
             case 'GRID_VISC':            LIQUID_GRID_VISC = v; break;
+            // v26.52 quiet-shear filter. These values affect only supported,
+            // low-energy water; they never resize the renderer or alter time.
+            case 'QUIET_VISC':           LIQUID_QUIET_VISC = v < 0 ? 0 : (v > 0.2 ? 0.2 : v); break;
+            case 'QUIET_SPEED':          LIQUID_QUIET_SPEED = v < 1 ? 1 : v; break;
+            case 'QUIET_SHEAR':          LIQUID_QUIET_SHEAR = v < 1 ? 1 : v; break;
+            case 'QUIET_SUPPORT':        LIQUID_QUIET_SUPPORT = v < 0 ? 0 : (v > 4 ? 4 : v); break;
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;
