@@ -34,7 +34,7 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-21 from the game source at v26.47.
+ * Assembled 2026-07-21 from the game source at v26.49.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
@@ -80,7 +80,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.0';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.2';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -3130,6 +3130,56 @@
     b.sleeping = false; b.sleepFrames = 0;
   }
 
+  // Apply a whole-body launch in REAL world px/s. Solver velocity runs on the
+  // slowed material clock, so translating input directly into Verlet history
+  // under-shoots by JELLO_TIMESCALE. Keeping this conversion here gives the
+  // pointer, future NPC jumps, water play, and scripted interactions one honest
+  // launch path. A temporary per-body ceiling admits the rigid flight without
+  // raising the normal cap that prevents confined internal-energy blowups. The
+  // higher ceiling clears on first terrain contact or once speed falls below the
+  // ordinary material limit.
+  function jelloLaunchBody(b, vx, vy, opts) {
+    if (!b || !(b.n > 0) || !isFinite(vx + vy)) return null;
+    opts = opts || {};
+    var ts = Math.max(0.02, JELLO_TIMESCALE || 0.5);
+    var h = isFinite(opts.h) && opts.h > 1e-6 ? opts.h : JELLO_H;
+    var blend = isFinite(opts.blend) ? Math.max(0, Math.min(1, opts.blend)) : 1;
+    var maxSpeed = isFinite(opts.maxSpeed) ? Math.max(0, opts.maxSpeed) : 1400;
+    var maxPointSpeed = isFinite(opts.maxPointSpeed) ? Math.max(maxSpeed, opts.maxPointSpeed) : 1600;
+    var omega = isFinite(opts.omega) ? opts.omega : 0;
+    var maxOmega = isFinite(opts.maxOmega) ? Math.max(0, opts.maxOmega) : 8;
+    if (omega > maxOmega) omega = maxOmega; else if (omega < -maxOmega) omega = -maxOmega;
+    var speed = Math.sqrt(vx * vx + vy * vy);
+    if (speed > maxSpeed && speed > 1e-9) {
+      var scale = maxSpeed / speed;
+      vx *= scale; vy *= scale; speed = maxSpeed;
+    }
+    var keep = 1 - blend;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var cx = isFinite(b.cx) ? b.cx : 0, cy = isFinite(b.cy) ? b.cy : 0;
+    for (var i = 0; i < b.n; i++) {
+      var currentX = (px[i] - ox[i]) / h * ts;
+      var currentY = (py[i] - oy[i]) / h * ts;
+      var rx = px[i] - cx, ry = py[i] - cy;
+      var targetX = vx - omega * ry;
+      var targetY = vy + omega * rx;
+      var outX = currentX * keep + targetX * blend;
+      var outY = currentY * keep + targetY * blend;
+      var pointSpeed = Math.sqrt(outX * outX + outY * outY);
+      if (pointSpeed > maxPointSpeed && pointSpeed > 1e-9) {
+        var pointScale = maxPointSpeed / pointSpeed;
+        outX *= pointScale; outY *= pointScale;
+      }
+      ox[i] = px[i] - (outX / ts) * h;
+      oy[i] = py[i] - (outY / ts) * h;
+    }
+    b._launchVMax = maxPointSpeed / ts;
+    b._launchHit = false;
+    b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
+    b._plyMs = performance.now();
+    return { vx: vx, vy: vy, speed: speed, omega: omega };
+  }
+
   // Install a triangle HEALTH mesh from the spring graph. The round and
   // equilateral builders are already fully triangulated by their springs, but
   // historically did not retain explicit triangle topology, so the inversion
@@ -4037,7 +4087,8 @@
       damp -= JELLO_SHEAR * rate;
       if (damp < 0.80) damp = 0.80; else if (damp > 1.0) damp = 1.0;
     }
-    var vcap = JELLO_VMAX * dt;   // max per-step displacement (px)
+    var stepVMax = b._launchVMax > JELLO_VMAX ? b._launchVMax : JELLO_VMAX;
+    var vcap = stepVMax * dt;   // max per-step displacement (px)
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     // v25.85 BANYA soak (plan B-D5): ONE-WAY buoyancy for guest slimes in a
     // tub. Points below the analytic waterline get gravity progressively
@@ -4414,6 +4465,7 @@
       return;
     }
     if (!jelloWorldSolidAt(x, y)) { if (JELLO_GAP_BLOCK) jelloGapBlock(b, i); return; }
+    if (b._launchVMax > JELLO_VMAX) b._launchHit = true;
     var col = Math.floor(x / TILE), row = Math.floor(y / TILE);
     var left = col * TILE, right = left + TILE, top = row * TILE, bot = top + TILE;
     // Penetration to each side. dir codes: 0=up,1=down,2=left,3=right.
@@ -6817,12 +6869,20 @@
   // h cancels, so the cap is the same px/s in pbd and xpbd/fem). -----
   function jelloClampVelocity(b, h) {
     if (JELLO_VMAX <= 0 || h <= 0) return;
-    var vcap = JELLO_VMAX * h, vcap2 = vcap * vcap;
+    if (b._launchHit) { b._launchVMax = 0; b._launchHit = false; }
+    var vmax = b._launchVMax > JELLO_VMAX ? b._launchVMax : JELLO_VMAX;
+    var vcap = vmax * h, vcap2 = vcap * vcap;
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var bulkX = 0, bulkY = 0;
     for (var i = 0; i < n; i++) {
       var dvx = px[i] - ox[i], dvy = py[i] - oy[i];
       var v2 = dvx * dvx + dvy * dvy;
       if (v2 > vcap2) { var sc = vcap / Math.sqrt(v2); ox[i] = px[i] - dvx * sc; oy[i] = py[i] - dvy * sc; }
+      bulkX += px[i] - ox[i]; bulkY += py[i] - oy[i];
+    }
+    if (b._launchVMax > JELLO_VMAX) {
+      var bulkSpeed = Math.sqrt(bulkX * bulkX + bulkY * bulkY) / (n * h);
+      if (bulkSpeed < JELLO_VMAX * 0.9) b._launchVMax = 0;
     }
   }
   // Zero a body's XPBD Lagrange multipliers (start of each xpbd/fem substep).
@@ -8609,6 +8669,7 @@
       setActorIntent: jelloSetActorIntent,
       clearActorIntent: jelloClearActorIntent,
       actor: jelloActorFor,
+      launchBody: jelloLaunchBody,
       feels: JELLO_FEELS,
       totalPoints: jelloTotalPoints,
       player: function () { return player; },
@@ -8765,10 +8826,14 @@
   var grabProxyLead = 0, grabCorrectionAlpha = 1;
   var grabReleaseVX = 0, grabReleaseVY = 0, grabReleaseOmega = 0;
   var grabLastH = JELLO_H, grabLastMotionMs = 0;
-  var JELLO_GRAB_RELEASE_BLEND = 0.82;
-  var JELLO_GRAB_RELEASE_SPEED = 1900;
-  var JELLO_GRAB_RELEASE_POINT = 2100;
-  var JELLO_GRAB_RELEASE_FRESH = 180;
+  var JELLO_GRAB_RELEASE_BLEND = 0.92;
+  var JELLO_GRAB_RELEASE_SPEED = 1400;
+  var JELLO_GRAB_RELEASE_POINT = 1600;
+  var JELLO_GRAB_RELEASE_FRESH = 230;
+  var JELLO_GRAB_RELEASE_BOOST_MIN = 1.05;
+  var JELLO_GRAB_RELEASE_BOOST_MAX = 1.15;
+  var JELLO_GRAB_RELEASE_SPIN = 0.55;
+  var JELLO_GRAB_RELEASE_SPIN_MAX = 7;
   var JELLO_GRAB_RECOVER = 1.35;
 
   function jelloGrabApplyRelease(b) {
@@ -8777,24 +8842,26 @@
     var vx = grabReleaseVX, vy = grabReleaseVY;
     if (!isFinite(vx + vy)) return;
     var speed = Math.sqrt(vx * vx + vy * vy);
-    if (speed > JELLO_GRAB_RELEASE_SPEED && speed > 1e-9) {
-      var scale = JELLO_GRAB_RELEASE_SPEED / speed;
-      vx *= scale; vy *= scale;
-    }
-    var h = grabLastH > 1e-6 ? grabLastH : JELLO_H;
-    var keep = 1 - JELLO_GRAB_RELEASE_BLEND;
-    for (var i = 0; i < b.n; i++) {
-      var currentX = (b.px[i] - b.ox[i]) / h;
-      var currentY = (b.py[i] - b.oy[i]) / h;
-      var outX = currentX * keep + vx * JELLO_GRAB_RELEASE_BLEND;
-      var outY = currentY * keep + vy * JELLO_GRAB_RELEASE_BLEND;
-      var pointSpeed = Math.sqrt(outX * outX + outY * outY);
-      if (pointSpeed > JELLO_GRAB_RELEASE_POINT && pointSpeed > 1e-9) {
-        var pointScale = JELLO_GRAB_RELEASE_POINT / pointSpeed;
-        outX *= pointScale; outY *= pointScale;
-      }
-      b.ox[i] = b.px[i] - outX * h;
-      b.oy[i] = b.py[i] - outY * h;
+    if (!(speed > 1)) return;
+    var u = Math.max(0, Math.min(1, (speed - 140) / 860));
+    u = u * u * (3 - 2 * u);
+    var boost = JELLO_GRAB_RELEASE_BOOST_MIN +
+      (JELLO_GRAB_RELEASE_BOOST_MAX - JELLO_GRAB_RELEASE_BOOST_MIN) * u;
+    vx *= boost; vy *= boost;
+    jelloCarryReadSurface(b);
+    var rx = carrySurfaceX - b.cx, ry = carrySurfaceY - b.cy;
+    var radius = Math.max(8, (b.bboxR - b.bboxL + b.bboxB - b.bboxT) * 0.25);
+    var omega = (rx * vy - ry * vx) /
+      Math.max(1, rx * rx + ry * ry + radius * radius * 0.45) * JELLO_GRAB_RELEASE_SPIN;
+    var launch = jelloLaunchBody(b, vx, vy, {
+      h: grabLastH, blend: JELLO_GRAB_RELEASE_BLEND,
+      maxSpeed: JELLO_GRAB_RELEASE_SPEED,
+      maxPointSpeed: JELLO_GRAB_RELEASE_POINT,
+      omega: omega, maxOmega: JELLO_GRAB_RELEASE_SPIN_MAX
+    });
+    if (launch) {
+      carryLastLaunchSpeed = launch.speed;
+      carryLastLaunchSpin = launch.omega;
     }
   }
 
@@ -8815,6 +8882,7 @@
   var carryPendingX = 0, carryPendingY = 0;
   var carrySessionTravel = 0, carrySessionMaxError = 0;
   var carryLastTravel = 0, carryLastMaxError = 0, carryLastReleaseSpeed = 0;
+  var carryLastLaunchSpeed = 0, carryLastLaunchSpin = 0;
 
   function jelloCarryReadSurface(b) {
     if (!b || carrySurfaceA < 0 || carrySurfaceB < 0) {
@@ -8926,6 +8994,7 @@
       carryPointerMs = performance.now();
       carryPendingX = carryPendingY = 0;
       carrySessionTravel = carrySessionMaxError = 0;
+      carryLastLaunchSpeed = carryLastLaunchSpin = 0;
       grabAttemptDX = grabAttemptDY = 0;
       grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
       grabLastMotionMs = 0;
@@ -9030,6 +9099,8 @@
         sessionTravel: b ? carrySessionTravel : carryLastTravel,
         maxAnchorError: b ? carrySessionMaxError : carryLastMaxError,
         lastReleaseSpeed: carryLastReleaseSpeed,
+        lastLaunchSpeed: carryLastLaunchSpeed,
+        lastLaunchSpin: carryLastLaunchSpin,
         releaseVX: grabReleaseVX, releaseVY: grabReleaseVY,
         body: b ? {
           cx: b.cx, cy: b.cy, vx: b.vx || 0, vy: b.vy || 0,
@@ -9948,8 +10019,15 @@
     readoutEl.setAttribute('data-slime-centers', jelloBodies.slice(0, 8).map(function (b) {
       return b.cx.toFixed(2) + ',' + b.cy.toFixed(2);
     }).join(';'));
+    readoutEl.setAttribute('data-slime-velocities', jelloBodies.slice(0, 8).map(function (b) {
+      return ((b.vx || 0) * JELLO_TIMESCALE).toFixed(2) + ',' +
+        ((b.vy || 0) * JELLO_TIMESCALE).toFixed(2);
+    }).join(';'));
     readoutEl.setAttribute('data-actor-active', String(jelloBodies.reduce(function (count, b) {
       return count + (b.actor && b.actor.enabled ? 1 : 0);
+    }, 0)));
+    readoutEl.setAttribute('data-launch-active', String(jelloBodies.reduce(function (count, b) {
+      return count + (b._launchVMax > JELLO_VMAX ? 1 : 0);
     }, 0)));
     var carryData = window.__slimeGrab ? window.__slimeGrab() : null;
     readoutEl.setAttribute('data-grab-active', carryData && carryData.active ? 'true' : 'false');
@@ -9960,6 +10038,10 @@
       ? (carryData.active
         ? Math.hypot(carryData.releaseVX, carryData.releaseVY)
         : carryData.lastReleaseSpeed).toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-launch-speed', carryData
+      ? carryData.lastLaunchSpeed.toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-launch-spin', carryData
+      ? carryData.lastLaunchSpin.toFixed(3) : '0');
     readoutEl.setAttribute('data-grab-travel', carryData ? carryData.sessionTravel.toFixed(2) : '0');
     readoutEl.setAttribute('data-grab-max-anchor-error', carryData
       ? carryData.maxAnchorError.toFixed(4) : '0');
@@ -10073,6 +10155,11 @@
         wobble: 0.07, phaseSpeed: 5, state: 'browser-test'
       });
     }
+    if (location.search.indexOf('flingtest=1') >= 0 && jelloBodies[2]) {
+      jelloLaunchBody(jelloBodies[2], 520, -420, {
+        blend: 0.92, maxSpeed: 1400, maxPointSpeed: 1600, omega: 3.5
+      });
+    }
     fitStage();
     bakeWalls();
     updateReadout();
@@ -10119,6 +10206,13 @@
       actor: function (i, intent) {
         var b = jelloBodies[i];
         return b ? jelloSetActorIntent(b, intent) : null;
+      },
+      fling: function (i, vx, vy, omega) {
+        var b = jelloBodies[i];
+        return b ? jelloLaunchBody(b, vx, vy, {
+          blend: 0.92, maxSpeed: 1400, maxPointSpeed: 1600,
+          omega: omega || 0, maxOmega: 7
+        }) : null;
       },
       clearActor: function (i) {
         var b = jelloBodies[i];

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.47';
+  var GAME_VERSION = 'v26.49';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -52609,6 +52609,56 @@
     b.sleeping = false; b.sleepFrames = 0;
   }
 
+  // Apply a whole-body launch in REAL world px/s. Solver velocity runs on the
+  // slowed material clock, so translating input directly into Verlet history
+  // under-shoots by JELLO_TIMESCALE. Keeping this conversion here gives the
+  // pointer, future NPC jumps, water play, and scripted interactions one honest
+  // launch path. A temporary per-body ceiling admits the rigid flight without
+  // raising the normal cap that prevents confined internal-energy blowups. The
+  // higher ceiling clears on first terrain contact or once speed falls below the
+  // ordinary material limit.
+  function jelloLaunchBody(b, vx, vy, opts) {
+    if (!b || !(b.n > 0) || !isFinite(vx + vy)) return null;
+    opts = opts || {};
+    var ts = Math.max(0.02, JELLO_TIMESCALE || 0.5);
+    var h = isFinite(opts.h) && opts.h > 1e-6 ? opts.h : JELLO_H;
+    var blend = isFinite(opts.blend) ? Math.max(0, Math.min(1, opts.blend)) : 1;
+    var maxSpeed = isFinite(opts.maxSpeed) ? Math.max(0, opts.maxSpeed) : 1400;
+    var maxPointSpeed = isFinite(opts.maxPointSpeed) ? Math.max(maxSpeed, opts.maxPointSpeed) : 1600;
+    var omega = isFinite(opts.omega) ? opts.omega : 0;
+    var maxOmega = isFinite(opts.maxOmega) ? Math.max(0, opts.maxOmega) : 8;
+    if (omega > maxOmega) omega = maxOmega; else if (omega < -maxOmega) omega = -maxOmega;
+    var speed = Math.sqrt(vx * vx + vy * vy);
+    if (speed > maxSpeed && speed > 1e-9) {
+      var scale = maxSpeed / speed;
+      vx *= scale; vy *= scale; speed = maxSpeed;
+    }
+    var keep = 1 - blend;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var cx = isFinite(b.cx) ? b.cx : 0, cy = isFinite(b.cy) ? b.cy : 0;
+    for (var i = 0; i < b.n; i++) {
+      var currentX = (px[i] - ox[i]) / h * ts;
+      var currentY = (py[i] - oy[i]) / h * ts;
+      var rx = px[i] - cx, ry = py[i] - cy;
+      var targetX = vx - omega * ry;
+      var targetY = vy + omega * rx;
+      var outX = currentX * keep + targetX * blend;
+      var outY = currentY * keep + targetY * blend;
+      var pointSpeed = Math.sqrt(outX * outX + outY * outY);
+      if (pointSpeed > maxPointSpeed && pointSpeed > 1e-9) {
+        var pointScale = maxPointSpeed / pointSpeed;
+        outX *= pointScale; outY *= pointScale;
+      }
+      ox[i] = px[i] - (outX / ts) * h;
+      oy[i] = py[i] - (outY / ts) * h;
+    }
+    b._launchVMax = maxPointSpeed / ts;
+    b._launchHit = false;
+    b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
+    b._plyMs = performance.now();
+    return { vx: vx, vy: vy, speed: speed, omega: omega };
+  }
+
   // Install a triangle HEALTH mesh from the spring graph. The round and
   // equilateral builders are already fully triangulated by their springs, but
   // historically did not retain explicit triangle topology, so the inversion
@@ -53516,7 +53566,8 @@
       damp -= JELLO_SHEAR * rate;
       if (damp < 0.80) damp = 0.80; else if (damp > 1.0) damp = 1.0;
     }
-    var vcap = JELLO_VMAX * dt;   // max per-step displacement (px)
+    var stepVMax = b._launchVMax > JELLO_VMAX ? b._launchVMax : JELLO_VMAX;
+    var vcap = stepVMax * dt;   // max per-step displacement (px)
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     // v25.85 BANYA soak (plan B-D5): ONE-WAY buoyancy for guest slimes in a
     // tub. Points below the analytic waterline get gravity progressively
@@ -53893,6 +53944,7 @@
       return;
     }
     if (!jelloWorldSolidAt(x, y)) { if (JELLO_GAP_BLOCK) jelloGapBlock(b, i); return; }
+    if (b._launchVMax > JELLO_VMAX) b._launchHit = true;
     var col = Math.floor(x / TILE), row = Math.floor(y / TILE);
     var left = col * TILE, right = left + TILE, top = row * TILE, bot = top + TILE;
     // Penetration to each side. dir codes: 0=up,1=down,2=left,3=right.
@@ -56296,12 +56348,20 @@
   // h cancels, so the cap is the same px/s in pbd and xpbd/fem). -----
   function jelloClampVelocity(b, h) {
     if (JELLO_VMAX <= 0 || h <= 0) return;
-    var vcap = JELLO_VMAX * h, vcap2 = vcap * vcap;
+    if (b._launchHit) { b._launchVMax = 0; b._launchHit = false; }
+    var vmax = b._launchVMax > JELLO_VMAX ? b._launchVMax : JELLO_VMAX;
+    var vcap = vmax * h, vcap2 = vcap * vcap;
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var bulkX = 0, bulkY = 0;
     for (var i = 0; i < n; i++) {
       var dvx = px[i] - ox[i], dvy = py[i] - oy[i];
       var v2 = dvx * dvx + dvy * dvy;
       if (v2 > vcap2) { var sc = vcap / Math.sqrt(v2); ox[i] = px[i] - dvx * sc; oy[i] = py[i] - dvy * sc; }
+      bulkX += px[i] - ox[i]; bulkY += py[i] - oy[i];
+    }
+    if (b._launchVMax > JELLO_VMAX) {
+      var bulkSpeed = Math.sqrt(bulkX * bulkX + bulkY * bulkY) / (n * h);
+      if (bulkSpeed < JELLO_VMAX * 0.9) b._launchVMax = 0;
     }
   }
   // Zero a body's XPBD Lagrange multipliers (start of each xpbd/fem substep).
@@ -58088,6 +58148,7 @@
       setActorIntent: jelloSetActorIntent,
       clearActorIntent: jelloClearActorIntent,
       actor: jelloActorFor,
+      launchBody: jelloLaunchBody,
       feels: JELLO_FEELS,
       totalPoints: jelloTotalPoints,
       player: function () { return player; },
