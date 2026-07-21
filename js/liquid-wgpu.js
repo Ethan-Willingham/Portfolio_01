@@ -405,6 +405,7 @@
   var LIQUID_SURFACE_THRESH  = 1.8;   // v24.162 — raised from 0.85: a lone particle's metaball peak is ~1.0, so THRESH-SOFT=1.0 makes single particles invisible while bodies (field >> 1) stay solid. edit2 sluice 010
   var LIQUID_SURFACE_SOFT    = 0.8;   // v24.162 — was 0.35 (lower edge = one-particle peak)
   var LIQUID_SURFACE_RSCALE  = 0.9;   // v26.17 honest footprint: body support spans ~2 rest spacings, not a 10px halo
+  var LIQUID_SURFACE_BLUR    = 0;     // post-field reconstruction radius in device px; 0 keeps the game path exact
   var LIQUID_DROPLETS        = 1;     // v25.32 — visible-droplet pass for low-support particles
                                       // (strays/spray render as small drops instead of nothing;
                                       // the fat-disc bug is impossible: droplet size is fixed,
@@ -6353,6 +6354,7 @@ struct RenderParams {
   oilColor      : vec4<f32>,
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
+  surfaceFx     : vec4<f32>,   // x = post-field reconstruction radius in device px
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 `;
@@ -6523,6 +6525,37 @@ struct VOut {
   @builtin(position) pos : vec4<f32>,
 };
 
+fn surfaceFieldAt(px : vec2<i32>) -> vec4<f32> {
+  let c = textureLoad(fieldTex, px, 0);
+  let br = rp.surfaceFx.x;
+  // The game ships zero and returns after the same single texture load as
+  // before v26.46. Only the standalone goopy endpoint pays for reconstruction.
+  if (br < 0.5) { return c; }
+  let dims = vec2<i32>(textureDimensions(fieldTex));
+  let hi = dims - vec2<i32>(1);
+  let p = clamp(px, vec2<i32>(0), hi);
+  // Separable five-sample Gaussian weights [1 4 6 4 1]. The 5x5 footprint
+  // closes the small dark gaps between settled goopy islands without
+  // increasing any particle splat. Terrain clips the reconstructed result.
+  var sum = vec4<f32>(0.0);
+  var wsum = 0.0;
+  for (var gy = -2; gy <= 2; gy = gy + 1) {
+    let ay = abs(gy);
+    let wy = select(select(1.0, 4.0, ay == 1), 6.0, ay == 0);
+    let oy = i32(round(f32(gy) * br * 0.5));
+    for (var gx = -2; gx <= 2; gx = gx + 1) {
+      let ax = abs(gx);
+      let wx = select(select(1.0, 4.0, ax == 1), 6.0, ax == 0);
+      let w = wx * wy;
+      let ox = i32(round(f32(gx) * br * 0.5));
+      sum = sum + textureLoad(fieldTex,
+        clamp(p + vec2<i32>(ox, oy), vec2<i32>(0), hi), 0) * w;
+      wsum = wsum + w;
+    }
+  }
+  return sum / wsum;
+}
+
 fn compositeTerrainSolid(wp : vec2<f32>) -> bool {
   if (tp.worldTile <= 0.0) { return false; }
   let tc = i32(floor(wp.x / tp.worldTile)) - bitcast<i32>(tp.tileOrigC);
@@ -6546,7 +6579,7 @@ fn vs(@builtin(vertex_index) vid : u32) -> VOut {
 
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
-  let f = textureLoad(fieldTex, vec2<i32>(in.pos.xy), 0);
+  let f = surfaceFieldAt(vec2<i32>(in.pos.xy));
   let t = rp.surf.x;
   let s = max(rp.surf.y, 0.001);
   let aWaterEdge = smoothstep(t - s, t + s, f.r);
@@ -6632,6 +6665,32 @@ fn dropletTerrainSolid(wp : vec2<f32>) -> bool {
   return ((word >> (idx & 31u)) & 1u) != 0u;
 }
 
+fn dropletFieldAt(px : vec2<i32>) -> vec4<f32> {
+  let dims = vec2<i32>(textureDimensions(fieldTex));
+  let hi = dims - vec2<i32>(1);
+  let p = clamp(px, vec2<i32>(0), hi);
+  let c = textureLoad(fieldTex, p, 0);
+  let br = rp.surfaceFx.x;
+  if (br < 0.5) { return c; }
+  var sum = vec4<f32>(0.0);
+  var wsum = 0.0;
+  for (var gy = -2; gy <= 2; gy = gy + 1) {
+    let ay = abs(gy);
+    let wy = select(select(1.0, 4.0, ay == 1), 6.0, ay == 0);
+    let oy = i32(round(f32(gy) * br * 0.5));
+    for (var gx = -2; gx <= 2; gx = gx + 1) {
+      let ax = abs(gx);
+      let wx = select(select(1.0, 4.0, ax == 1), 6.0, ax == 0);
+      let w = wx * wy;
+      let ox = i32(round(f32(gx) * br * 0.5));
+      sum = sum + textureLoad(fieldTex,
+        clamp(p + vec2<i32>(ox, oy), vec2<i32>(0), hi), 0) * w;
+      wsum = wsum + w;
+    }
+  }
+  return sum / wsum;
+}
+
 fn corner(vid : u32) -> vec2<f32> {
   var c = vec2<f32>(-1.0, -1.0);
   if (vid == 1u) { c = vec2<f32>( 1.0, -1.0); }
@@ -6658,10 +6717,8 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let scrX = (p.x - rp.camX) * rp.dpws;
   let scrY = (p.y - rp.camY) * rp.dpws;
   if (scrX < 0.0 || scrY < 0.0 || scrX >= rp.canvasW || scrY >= rp.canvasH) { return out; }
-  let dims = vec2<i32>(textureDimensions(fieldTex));
-  let samplePx = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5)),
-                       vec2<i32>(0), dims - vec2<i32>(1));
-  let field = textureLoad(fieldTex, samplePx, 0);
+  let samplePx = vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5));
+  let field = dropletFieldAt(samplePx);
   let surfaceA = smoothstep(rp.surf.x - max(rp.surf.y, 0.001),
                             rp.surf.x + max(rp.surf.y, 0.001), field.r);
   // Fully exposed centres get a full drop. Fade through partially covered
@@ -7693,17 +7750,17 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     instance.renderCtx     = ctx;
     instance.renderFormat  = fmt;
 
-    // --- RenderParams uniform — 24 f32 lanes, 96 bytes ---
+    // --- RenderParams uniform — 32 f32 lanes, 128 bytes ---
     // 8 scalars (32 B) + 3 vec4 colour fields (48 B) + the v24.113 surf
     // vec4 (16 B: threshold, softness, splat scale, on/off). The legacy
     // disc shader's struct only declares the first 80 bytes; binding the
     // larger buffer to it is valid (buffer >= struct).
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 112,   // v25.57: +16 for the bathTint vec4 (surface struct only)
+      size: 128,   // v26.46: +16 for the surfaceFx vec4 (surface struct only)
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(28);
+    instance.renderParamsHost = new Float32Array(32);
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var bgl = dev.createBindGroupLayout({
@@ -7993,6 +8050,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // it; with the bath off the field's heat alpha is 0, so it never applies.
     rh[24] = LIQUID_BATH_TINT_R;   rh[25] = LIQUID_BATH_TINT_G;
     rh[26] = LIQUID_BATH_TINT_B;   rh[27] = LIQUID_BATH_TINT_STR;
+    // v26.46 post-field reconstruction. Defaults to zero, leaving the game
+    // and every existing render path byte-for-byte unchanged.
+    rh[28] = LIQUID_SURFACE_BLUR; rh[29] = 0; rh[30] = 0; rh[31] = 0;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -9166,6 +9226,7 @@ fn main() {
             case 'SURFACE_THRESH':       LIQUID_SURFACE_THRESH = v; break;
             case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
+            case 'SURFACE_BLUR':         LIQUID_SURFACE_BLUR = v < 0 ? 0 : (v > 6 ? 6 : v); break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
             // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
             // the hot-water look for the feel-check; STR 0 kills the tint.

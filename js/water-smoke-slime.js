@@ -78,11 +78,16 @@
  * body. A rejected complete solver pose accepts its largest legal prefix, or
  * takes a sub-spacing collision-safe rigid traction step toward the proxy.
  * Snapshot restoration is atomic through the final world-collision pass.
+ *
+ * v3.31 goopy-render contract: the consistency slider keeps its existing
+ * physics endpoints, while the far-left end reconstructs the settled density
+ * field before compositing. Real particles and their collision footprint keep
+ * their fixed size; only the dark gaps between nearby field islands close.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.30';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.31';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -10239,6 +10244,11 @@
     liquidWGPU.setSimParam('DAMPING', 1.0 - 0.008 * syrup);
     liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0 - 0.03 * syrup);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996 - 0.006 * syrup);
+    if (liquidWGPU.setRenderParam) {
+      liquidWGPU.setRenderParam('SURFACE_BLUR', 6.0 * syrup);
+      liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8 - 1.3 * syrup);
+      liquidWGPU.setRenderParam('SURFACE_SOFT', 0.8 - 0.55 * syrup);
+    }
   }
 
   function applyParticleDebug() {
