@@ -34,7 +34,7 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-17 from the game source at v26.14.
+ * Assembled 2026-07-21 from the game source at v26.47.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
@@ -65,19 +65,12 @@
  * instead of wide per-particle halos, while thin water stays visible through
  * the coverage droplet pass. Both paths clip against collision terrain.
  *
- * v3.27 grab-tether contract: rejection may move the collision-safe proxy
- * back to the restored body, but it never rewrites the fingertip's canonical
- * lattice offsets. The anchor goal therefore stays attached to the proxy.
- *
- * v3.29 continuous-grab contract: topology pressure shrinks one continuously
- * active correction instead of switching the grip off. The legal proxy stays
- * within a few lattice spacings of the material anchor, so rejected motion can
- * never accumulate into a delayed yank.
- *
- * v3.30 liveness contract: zero fingertip correction cannot freeze the whole
- * body. A rejected complete solver pose accepts its largest legal prefix, or
- * takes a sub-spacing collision-safe rigid traction step toward the proxy.
- * Snapshot restoration is atomic through the final world-collision pass.
+ * v4.0 surface-carry contract: the pointer owns one continuous coordinate on
+ * the visible boundary. It receives the full pointer displacement after every
+ * solver substep, with no proxy or speed ceiling. The hidden solver may deform
+ * the remaining body, but it never becomes the visible material. The generic
+ * actor-intent seam drives later locomotion and pose changes without referring
+ * to the body's internal discretization.
  *
  * v3.31 goopy-render contract: the consistency slider keeps its existing
  * physics endpoints, while the far-left end reconstructs the settled density
@@ -87,7 +80,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.31';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.0';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -95,7 +88,6 @@
   var stage = document.getElementById('toy-stage');
   var viewport = document.getElementById('toy-viewport');
   var canvas = document.getElementById('toy-canvas');
-  var debugCanvas = document.getElementById('toy-debug-canvas');
   if (!stage || !viewport || !canvas) return;
 
   var isMobile = (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) ||
@@ -117,12 +109,6 @@
   canvas.width = Math.round(worldW * dpr);
   canvas.height = Math.round(worldH * dpr);
   var ctx = canvas.getContext('2d');
-  var debugCtx = null;
-  if (debugCanvas) {
-    debugCanvas.width = Math.round(worldW * dpr);
-    debugCanvas.height = Math.round(worldH * dpr);
-    debugCtx = debugCanvas.getContext('2d');
-  }
 
   var fitScale = 1;
   function fitStage() {
@@ -165,8 +151,6 @@
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
   var waterFeel = 1;   // 0..1, very goopy to v3.9 raw-motion water
   var debugParticles = true;
-  var debugGrab = false;
-  var grabDebugLast = null;
 
   /* ==== THE SHARED WALL GRID ============================================
    * One Uint8Array, one probe. tileAt(r,c) is the exact single choke point
@@ -3060,6 +3044,92 @@
     }
   }
 
+  // Public control seam for future slime actors. An intent describes bulk
+  // motion and a smooth target pose. It never mentions solver points, springs,
+  // or a particular body topology, so round, tiled, triangular, and later
+  // authored silhouettes can share the same locomotion and behavior code.
+  function jelloActorFor(b) {
+    if (!b) return null;
+    if (!b.actor) {
+      b.actor = {
+        enabled: false,
+        moveX: 0, moveY: 0, hasMoveY: false,
+        speed: 120, accel: 900, follow: 12,
+        jump: 0,
+        poseX: 1, poseY: 1, poseFollow: 9,
+        wobble: 0, phase: 0, phaseSpeed: 0,
+        state: 'idle'
+      };
+    }
+    return b.actor;
+  }
+
+  function jelloSetActorIntent(b, intent) {
+    var a = jelloActorFor(b);
+    if (!a) return null;
+    intent = intent || {};
+    a.enabled = intent.enabled === undefined ? true : !!intent.enabled;
+    if (isFinite(intent.moveX)) a.moveX = Math.max(-1, Math.min(1, intent.moveX));
+    if (isFinite(intent.moveY)) {
+      a.moveY = Math.max(-1, Math.min(1, intent.moveY));
+      a.hasMoveY = true;
+    }
+    if (intent.moveY === null) a.hasMoveY = false;
+    if (isFinite(intent.speed)) a.speed = Math.max(0, intent.speed);
+    if (isFinite(intent.accel)) a.accel = Math.max(0, intent.accel);
+    if (isFinite(intent.follow)) a.follow = Math.max(0, intent.follow);
+    if (isFinite(intent.jump) && intent.jump > 0) a.jump = intent.jump;
+    if (isFinite(intent.poseX)) a.poseX = Math.max(0.55, Math.min(1.8, intent.poseX));
+    if (isFinite(intent.poseY)) a.poseY = Math.max(0.55, Math.min(1.8, intent.poseY));
+    if (isFinite(intent.poseFollow)) a.poseFollow = Math.max(0, intent.poseFollow);
+    if (isFinite(intent.wobble)) a.wobble = Math.max(0, Math.min(0.28, intent.wobble));
+    if (isFinite(intent.phaseSpeed)) a.phaseSpeed = intent.phaseSpeed;
+    if (typeof intent.state === 'string') a.state = intent.state;
+    if (a.enabled) { b.sleeping = false; b.sleepFrames = 0; b.frozen = false; }
+    return a;
+  }
+
+  function jelloClearActorIntent(b) {
+    var a = jelloActorFor(b);
+    if (!a) return;
+    a.enabled = false;
+    a.moveX = 0; a.moveY = 0; a.hasMoveY = false; a.jump = 0;
+    a.poseX = 1; a.poseY = 1; a.wobble = 0; a.phaseSpeed = 0;
+    a.state = 'idle';
+    b.poseSX = 1; b.poseSY = 1;
+  }
+
+  function jelloActuateBody(b, h) {
+    var a = b.actor;
+    if (!a || !a.enabled || b._carried || !(h > 0)) return;
+    var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var vx = 0, vy = 0;
+    for (var i = 0; i < n; i++) {
+      vx += (px[i] - ox[i]) / h;
+      vy += (py[i] - oy[i]) / h;
+    }
+    vx /= n; vy /= n;
+    var gain = Math.min(1, a.follow * h);
+    var dvx = (a.moveX * a.speed - vx) * gain;
+    var dvy = a.hasMoveY ? (a.moveY * a.speed - vy) * gain : 0;
+    var dvCap = a.accel * h;
+    var dv = Math.sqrt(dvx * dvx + dvy * dvy);
+    if (dv > dvCap && dv > 1e-8) { dvx *= dvCap / dv; dvy *= dvCap / dv; }
+    if (a.jump > 0) { dvy -= a.jump; a.jump = 0; }
+    for (i = 0; i < n; i++) {
+      ox[i] -= dvx * h;
+      oy[i] -= dvy * h;
+    }
+    a.phase += a.phaseSpeed * h;
+    var pulse = 1 + Math.sin(a.phase) * a.wobble;
+    var targetX = Math.max(0.55, Math.min(1.8, a.poseX * pulse));
+    var targetY = Math.max(0.55, Math.min(1.8, a.poseY / pulse));
+    var poseGain = Math.min(1, a.poseFollow * h);
+    b.poseSX = (b.poseSX || 1) + (targetX - (b.poseSX || 1)) * poseGain;
+    b.poseSY = (b.poseSY || 1) + (targetY - (b.poseSY || 1)) * poseGain;
+    b.sleeping = false; b.sleepFrames = 0;
+  }
+
   // Install a triangle HEALTH mesh from the spring graph. The round and
   // equilateral builders are already fully triangulated by their springs, but
   // historically did not retain explicit triangle topology, so the inversion
@@ -4050,10 +4120,14 @@
     if (b.rigidOnly || beta <= 0) { b.shL00 = R00; b.shL01 = R01; b.shL10 = R10; b.shL11 = R11; }
     else { b.shL00 = L00; b.shL01 = L01; b.shL10 = L10; b.shL11 = L11; }
     b.shFrame = jelloFrameNo;
-    // Pull each point toward its goal.
+    // Pull each point toward its goal. Actor pose scales are continuous body
+    // controls, independent of the hidden discretization and rest silhouette.
+    var poseSX = isFinite(b.poseSX) ? b.poseSX : 1;
+    var poseSY = isFinite(b.poseSY) ? b.poseSY : 1;
     for (i = 0; i < n; i++) {
-      var gx = T00 * qx[i] + T01 * qy[i] + cx;
-      var gy = T10 * qx[i] + T11 * qy[i] + cy;
+      var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
+      var gx = T00 * pqx + T01 * pqy + cx;
+      var gy = T10 * pqx + T11 * pqy + cy;
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
     }
@@ -4964,7 +5038,8 @@
     // the pen wall). After the third acceptance grant the fold is proven
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
-    if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle or mid-recovery
+    if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !b._carried &&
+          !(b.actor && b.actor.enabled) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
       b.sleepFrames++;
       if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
         b._forceSleep = false;
@@ -6069,6 +6144,7 @@
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
     var resilienceGuard = jelloResilienceStepBegin(b);
+    jelloActuateBody(b, h);
     jelloIntegrate(b, h);
     // The public physics toy installs this optional compliant pointer grip.
     // The game has no direct mouse grab, so the typeof branch is a clean no-op.
@@ -7726,7 +7802,12 @@
           jelloGrabAcceptStep(b);
         }
       }
-      for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve) jelloClampVelocity(b, h); }
+      for (ai = 0; ai < nActive; ai++) {
+        b = active[ai];
+        if (!b._solve) continue;
+        jelloClampVelocity(b, h);
+        if (typeof jelloDrivePostSubstep === 'function') jelloDrivePostSubstep(b, h);
+      }
       if (devMode) _phTail += performance.now() - _phT0;
     }
     if (devMode && totalSteps > 0) {
@@ -8069,50 +8150,33 @@
     }
   }
 
-  // The visible texture is the actual live spring lattice. Drawing its current
-  // point positions makes the whole material reveal rotation, shear, stretch,
-  // and squash without a decorative animation or the large debug-particle
-  // circles. Shear braces sit behind structural edges; tiny joint pins make the
-  // topology readable without swelling the body's collision silhouette.
-  function jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha) {
-    if (!b.sA || !b.sB || !(b.springN > 0)) return;
-    var px = b.px, py = b.py, sA = b.sA, sB = b.sB, sType = b.sType;
-    var spacing = b.spacing || (TILE / JELLO_NPT);
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // Diagonal/shear braces first, then the stronger structural lattice.
-    ctx.strokeStyle = 'hsla(' + (hue - 10) + ',' + jelloClampPct(54 * satMul) + '%,' +
-      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.14).toFixed(3) + ')';
-    ctx.lineWidth = Math.max(0.42, spacing * 0.075);
-    ctx.beginPath();
-    for (var s = 0; s < b.springN; s++) {
-      if (!sType || !sType[s]) continue;
-      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = 'hsla(' + (hue + 12) + ',' + jelloClampPct(74 * satMul) + '%,' +
-      jelloClampPct(78 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
-    ctx.lineWidth = Math.max(0.58, spacing * 0.105);
-    ctx.beginPath();
-    for (s = 0; s < b.springN; s++) {
-      if (sType && sType[s]) continue;
-      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
-    }
-    ctx.stroke();
-
-    var jointR = Math.max(0.42, Math.min(0.9, spacing * 0.105));
-    ctx.fillStyle = 'hsla(' + (hue + 18) + ',' + jelloClampPct(82 * satMul) + '%,' +
-      jelloClampPct(86 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')';
-    ctx.beginPath();
-    for (var p = 0; p < b.n; p++) {
-      ctx.moveTo(px[p] + jointR, py[p]);
-      ctx.arc(px[p], py[p], jointR, 0, 6.2831853);
-    }
-    ctx.fill();
-    ctx.restore();
+  // A continuous depth wash gives the gel material variation without exposing
+  // the solver mesh. Physics points and springs are implementation details.
+  // Public shading is derived only from the body's silhouette, bulk motion,
+  // and smooth best-fit deformation.
+  function jelloDrawMaterialVolume(b, hue, satMul, lightAdd, alpha) {
+    var l = b.bboxL, r = b.bboxR, t = b.bboxT, bm = b.bboxB;
+    var w = r - l, h = bm - t;
+    if (!(w > 1 && h > 1)) return;
+    var cx = isFinite(b.cx) ? b.cx : (l + r) * 0.5;
+    var cy = isFinite(b.cy) ? b.cy : (t + bm) * 0.5;
+    var vx = isFinite(b.vx) ? b.vx : 0;
+    var vy = isFinite(b.vy) ? b.vy : 0;
+    var driftX = Math.max(-w * 0.12, Math.min(w * 0.12, -vx * 0.012));
+    var driftY = Math.max(-h * 0.10, Math.min(h * 0.10, -vy * 0.008));
+    var radius = Math.max(w, h) * 0.72;
+    var depth = ctx.createRadialGradient(
+      cx + driftX - w * 0.12, cy + driftY - h * 0.16, 0,
+      cx + driftX, cy + driftY, radius
+    );
+    depth.addColorStop(0, 'hsla(' + (hue + 12) + ',' + jelloClampPct(88 * satMul) + '%,' +
+      jelloClampPct(82 + lightAdd) + '%,' + (alpha * 0.16).toFixed(3) + ')');
+    depth.addColorStop(0.48, 'hsla(' + hue + ',' + jelloClampPct(82 * satMul) + '%,' +
+      jelloClampPct(58 + lightAdd) + '%,' + (alpha * 0.035).toFixed(3) + ')');
+    depth.addColorStop(1, 'hsla(' + (hue - 8) + ',' + jelloClampPct(74 * satMul) + '%,' +
+      jelloClampPct(30 + lightAdd) + '%,' + (alpha * 0.18).toFixed(3) + ')');
+    ctx.fillStyle = depth;
+    ctx.fillRect(l, t, w, h);
   }
 
   function jelloDrawBody(b) {
@@ -8214,8 +8278,7 @@
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
 
-    // The complete live lattice is the material texture, not a debug overlay.
-    jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha);
+    jelloDrawMaterialVolume(b, hue, satMul, lightAdd, alpha);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
@@ -8543,6 +8606,9 @@
       sanitize: jelloSanitizeBody,
       applyFeel: jelloApplyFeel,
       cycleFeel: jelloCycleFeel,
+      setActorIntent: jelloSetActorIntent,
+      clearActorIntent: jelloClearActorIntent,
+      actor: jelloActorFor,
       feels: JELLO_FEELS,
       totalPoints: jelloTotalPoints,
       player: function () { return player; },
@@ -8687,459 +8753,187 @@
     return b;
   }
 
+  // Pointer carry state. The public controller below addresses only a
+  // continuous surface coordinate and bulk motion.
   var grabBody = null;
-  var grabIdx = null, grabOffX = null, grabOffY = null, grabWeight = null, grabRing = null;
-  var grabAnchor = -1;
+  var grabIdx = null, grabOffX = null, grabOffY = null;
+  var grabWeight = null, grabRing = null, grabAnchor = -1;
   var grabTargetX = 0, grabTargetY = 0, grabSolveX = 0, grabSolveY = 0;
   var grabPrevSolveX = 0, grabPrevSolveY = 0;
   var grabAttemptDX = 0, grabAttemptDY = 0;
-  var grabBlockNX = 0, grabBlockNY = 0, grabBlockReason = '', grabBlockBody = null;
-  var grabBlockTravel = 0, grabStepScale = 1, grabGripBlend = 1, grabSpin = 0;
-  var grabTopologyStreak = 0, grabTopologyAccepts = 0;
-  var grabTopologyMinRatio = 1, grabCorrectionAlpha = 1, grabProxyLead = 0;
-  var grabTopologyMode = '', grabTopologyProgress = 0;
-  var grabRejectBase = 0, grabCorrX = null, grabCorrY = null;
-  var grabFitC = 1, grabFitS = 0, grabFitCX = 0, grabFitCY = 0, grabFitOCX = 0, grabFitOCY = 0;
-  var grabAcceptedCX = 0, grabAcceptedCY = 0, grabAcceptedAngle = 0;
+  var grabBlockNX = 0, grabBlockNY = 0, grabBlockReason = '';
+  var grabProxyLead = 0, grabCorrectionAlpha = 1;
   var grabReleaseVX = 0, grabReleaseVY = 0, grabReleaseOmega = 0;
   var grabLastH = JELLO_H, grabLastMotionMs = 0;
-  var JELLO_GRAB_HANDLE_SPEED = 3600;  // px/s, independent of solver/substep count
-  var JELLO_GRAB_HANDLE_STEP = 2.0;    // swept guard still bounds one step to two lattice spacings
-  var JELLO_GRAB_BACKOFF_MIN = 0.012;  // a rejected proxy can search below the former 0.12 floor
-  var JELLO_GRAB_PROXY_LEAD = 3.0;     // proxy cannot store more than this many spacings of debt
-  var JELLO_GRAB_ORIENT_RESERVE = 0.06;// keep positive signed-area margin before the shared solve
-  var JELLO_GRAB_POINT_STEP = 0.46;    // maximum anchor correction per substep
-  var JELLO_GRAB_STIFF = 0.46;
-  var JELLO_GRAB_RING_WEIGHT = [1, 0.30, 0.09, 0.027]; // anchor, then graph-adjacent falloff shells
-  var JELLO_GRAB_HISTORY = 0.96;       // keep the held patch controlled; release velocity is explicit below
-  var JELLO_GRAB_ANGULAR_FOLLOW = 0.30; // tangential hand speed accelerates rigid angular velocity
   var JELLO_GRAB_RELEASE_BLEND = 0.82;
-  var JELLO_GRAB_RELEASE_SPEED = 1650; // px/s centre-of-mass cap
-  var JELLO_GRAB_RELEASE_POINT = 1900; // px/s cap after angular velocity is added
-  var JELLO_GRAB_RELEASE_OMEGA = 18;   // rad/s
-  var JELLO_GRAB_RELEASE_FRESH = 180;  // ms; holding still cancels a stale fling
-  var JELLO_GRAB_RECOVER = 1.35;       // seconds of gentle rest-shape recovery after release
-  var grabClipX = 0, grabClipY = 0, grabClipNX = 0, grabClipNY = 0;
+  var JELLO_GRAB_RELEASE_SPEED = 1900;
+  var JELLO_GRAB_RELEASE_POINT = 2100;
+  var JELLO_GRAB_RELEASE_FRESH = 180;
+  var JELLO_GRAB_RECOVER = 1.35;
 
-  // Fresh best-fit material rotation for the grip. The renderer uses the same
-  // rest-space fit, but this local version also returns a current centroid and
-  // runs inside each grab substep. Co-rotating offsets are the key difference
-  // between a true pinch and the former world-axis patch, which quietly held the
-  // selected skin at its starting orientation and resisted spin.
-  function jelloGrabFit(b) {
-    var cx = 0, cy = 0, ocx = 0, ocy = 0;
+  function jelloGrabApplyRelease(b) {
+    if (!grabLastMotionMs ||
+        performance.now() - grabLastMotionMs > JELLO_GRAB_RELEASE_FRESH) return;
+    var vx = grabReleaseVX, vy = grabReleaseVY;
+    if (!isFinite(vx + vy)) return;
+    var speed = Math.sqrt(vx * vx + vy * vy);
+    if (speed > JELLO_GRAB_RELEASE_SPEED && speed > 1e-9) {
+      var scale = JELLO_GRAB_RELEASE_SPEED / speed;
+      vx *= scale; vy *= scale;
+    }
+    var h = grabLastH > 1e-6 ? grabLastH : JELLO_H;
+    var keep = 1 - JELLO_GRAB_RELEASE_BLEND;
     for (var i = 0; i < b.n; i++) {
-      cx += b.px[i]; cy += b.py[i]; ocx += b.ox[i]; ocy += b.oy[i];
-    }
-    cx /= b.n; cy /= b.n; ocx /= b.n; ocy /= b.n;
-    var rc = 0, rs = 0;
-    for (i = 0; i < b.n; i++) {
-      var dx = b.px[i] - cx, dy = b.py[i] - cy;
-      rc += dx * b.qx[i] + dy * b.qy[i];
-      rs += dy * b.qx[i] - dx * b.qy[i];
-    }
-    var rl = Math.sqrt(rc * rc + rs * rs);
-    if (rl > 1e-9) { grabFitC = rc / rl; grabFitS = rs / rl; }
-    else { grabFitC = 1; grabFitS = 0; }
-    grabFitCX = cx; grabFitCY = cy; grabFitOCX = ocx; grabFitOCY = ocy;
-  }
-
-  // Build a geodesic fingertip around one lattice node. Graph distance, not a
-  // screen-space radius, decides influence: the anchor is exact, its spring
-  // neighbours receive 30%, then 9%, then 2.7%. This gives the surrounding
-  // material enough continuity to avoid a needle-like tear without turning a
-  // visible quarter of the slime into one rigid handle.
-  function jelloGrabBuildPatch(b, anchor, hx, hy) {
-    var adj = new Array(b.n);
-    for (var i = 0; i < b.n; i++) adj[i] = [];
-    for (var s = 0; s < b.springN; s++) {
-      if (b.sType && b.sType[s]) continue; // structural neighbours only, not diagonal braces
-      var a = b.sA[s], z = b.sB[s];
-      adj[a].push(z); adj[z].push(a);
-    }
-    var depth = new Int16Array(b.n);
-    depth.fill(-1);
-    var queue = new Int32Array(b.n), q0 = 0, q1 = 0;
-    depth[anchor] = 0; queue[q1++] = anchor;
-    var idx = [], ox = [], oy = [], wt = [], rings = [];
-    while (q0 < q1) {
-      var pi = queue[q0++], ring = depth[pi];
-      if (!jelloGrabClipPath(hx, hy, b.px[pi], b.py[pi], b.spacing)) {
-        var dx = b.px[pi] - hx, dy = b.py[pi] - hy;
-        idx.push(pi);
-        ox.push(grabFitC * dx + grabFitS * dy);
-        oy.push(-grabFitS * dx + grabFitC * dy);
-        wt.push(JELLO_GRAB_RING_WEIGHT[ring]);
-        rings.push(ring);
+      var currentX = (b.px[i] - b.ox[i]) / h;
+      var currentY = (b.py[i] - b.oy[i]) / h;
+      var outX = currentX * keep + vx * JELLO_GRAB_RELEASE_BLEND;
+      var outY = currentY * keep + vy * JELLO_GRAB_RELEASE_BLEND;
+      var pointSpeed = Math.sqrt(outX * outX + outY * outY);
+      if (pointSpeed > JELLO_GRAB_RELEASE_POINT && pointSpeed > 1e-9) {
+        var pointScale = JELLO_GRAB_RELEASE_POINT / pointSpeed;
+        outX *= pointScale; outY *= pointScale;
       }
-      if (ring + 1 >= JELLO_GRAB_RING_WEIGHT.length) continue;
-      var nbr = adj[pi];
-      for (var ni = 0; ni < nbr.length; ni++) {
-        var next = nbr[ni];
-        if (depth[next] >= 0) continue;
-        depth[next] = ring + 1;
-        queue[q1++] = next;
-      }
+      b.ox[i] = b.px[i] - outX * h;
+      b.oy[i] = b.py[i] - outY * h;
     }
-    grabAnchor = anchor;
-    grabIdx = idx; grabOffX = ox; grabOffY = oy; grabWeight = wt; grabRing = rings;
   }
 
-  function jelloGrabClearBlock() {
-    grabBlockNX = 0; grabBlockNY = 0;
-    grabBlockReason = ''; grabBlockBody = null; grabBlockTravel = 0;
+  /* ==== KINEMATIC SURFACE CARRY ========================================
+   * The pointer owns one continuous coordinate on the visible boundary.
+   * That coordinate follows pointer displacement exactly, with no speed cap,
+   * proxy, trust region, or interior-node patch. The soft solver remains free
+   * to squash and wobble the rest of the body. A final per-substep pin makes
+   * the hand attachment authoritative after contact and world collision.
+   *
+   * This is also the first consumer of the generic drive seam used by future
+   * slime actors. Carry is kinematic. Actor intent is dynamic. Both address a
+   * body as a silhouette and a pose, never as a visible lattice. ==== */
+  var carrySurfaceA = -1, carrySurfaceB = -1, carrySurfaceT = 0;
+  var carrySurfaceX = 0, carrySurfaceY = 0;
+  var carryOffsetX = 0, carryOffsetY = 0;
+  var carryPointerX = 0, carryPointerY = 0, carryPointerMs = 0;
+  var carryPendingX = 0, carryPendingY = 0;
+  var carrySessionTravel = 0, carrySessionMaxError = 0;
+  var carryLastTravel = 0, carryLastMaxError = 0, carryLastReleaseSpeed = 0;
+
+  function jelloCarryReadSurface(b) {
+    if (!b || carrySurfaceA < 0 || carrySurfaceB < 0) {
+      carrySurfaceX = carrySurfaceY = 0;
+      return;
+    }
+    var u = carrySurfaceT, v = 1 - u;
+    carrySurfaceX = b.px[carrySurfaceA] * v + b.px[carrySurfaceB] * u;
+    carrySurfaceY = b.py[carrySurfaceA] * v + b.py[carrySurfaceB] * u;
   }
 
-  function jelloGrabResetTopologyRecovery() {
-    grabTopologyStreak = 0;
-    grabTopologyAccepts = 0;
-    grabTopologyMinRatio = 1;
-    grabCorrectionAlpha = 1;
-    grabTopologyMode = '';
-    grabTopologyProgress = 0;
+  function jelloCarryFindSurface(b, wx, wy) {
+    var best = 1e30, bestA = -1, bestB = -1, bestT = 0;
+    for (var k = 0; k < b.ringN; k++) {
+      var a = b.ring[k], z = b.ring[(k + 1) % b.ringN];
+      var ax = b.px[a], ay = b.py[a];
+      var dx = b.px[z] - ax, dy = b.py[z] - ay;
+      var dd = dx * dx + dy * dy;
+      var u = dd > 1e-9 ? ((wx - ax) * dx + (wy - ay) * dy) / dd : 0;
+      if (u < 0) u = 0; else if (u > 1) u = 1;
+      var sx = ax + dx * u, sy = ay + dy * u;
+      var ex = sx - wx, ey = sy - wy, d2 = ex * ex + ey * ey;
+      if (d2 < best) { best = d2; bestA = a; bestB = z; bestT = u; }
+    }
+    carrySurfaceA = bestA; carrySurfaceB = bestB; carrySurfaceT = bestT;
+    jelloCarryReadSurface(b);
+    return bestA >= 0;
   }
 
-  function jelloGrabMinOrientationRatio(b) {
-    if (!b || !b.triHealthOnly || !(b.triN > 0)) return 1;
-    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
-    var minRatio = 1e18;
-    for (var t = 0; t < b.triN; t++) {
-      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
-      var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
-      var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
-      var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      if (ratio < minRatio) minRatio = ratio;
-    }
-    return minRatio === 1e18 ? 1 : minRatio;
-  }
-
-  // Test one proposed local grab correction without mutating the lattice. The
-  // determinant is evaluated against the exact health mesh used by the shared
-  // rollback guard, so the controller can stop just before a mirrored cell
-  // instead of discovering the fold after the full body solve.
-  function jelloGrabCorrectionMinRatio(b, alpha) {
-    if (!b || !b.triHealthOnly || !(b.triN > 0)) return 1;
-    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
-    var minRatio = 1e18;
-    for (var t = 0; t < b.triN; t++) {
-      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
-      var x0 = px[i0] + grabCorrX[i0] * alpha, y0 = py[i0] + grabCorrY[i0] * alpha;
-      var x1 = px[i1] + grabCorrX[i1] * alpha, y1 = py[i1] + grabCorrY[i1] * alpha;
-      var x2 = px[i2] + grabCorrX[i2] * alpha, y2 = py[i2] + grabCorrY[i2] * alpha;
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
-      var ratio = ((x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)) * detInv;
-      if (ratio < minRatio) minRatio = ratio;
-    }
-    return minRatio === 1e18 ? 1 : minRatio;
-  }
-
-  // Apply the largest safe fraction of the requested fingertip correction.
-  // This is a spatial trust region, not a timer: force remains continuous and
-  // a nearly flat cell simply receives a smaller correction on this substep.
-  function jelloGrabApplySafeCorrection(b, pointCap, pointStiff) {
-    if (!grabCorrX || grabCorrX.length < b.n) {
-      grabCorrX = new Float64Array(b.n);
-      grabCorrY = new Float64Array(b.n);
-    } else {
-      grabCorrX.fill(0);
-      grabCorrY.fill(0);
-    }
-    for (var i = 0; i < grabIdx.length; i++) {
-      var pi = grabIdx[i];
-      var targetOffX = grabFitC * grabOffX[i] - grabFitS * grabOffY[i];
-      var targetOffY = grabFitS * grabOffX[i] + grabFitC * grabOffY[i];
-      var localStiff = pointStiff * (grabWeight ? grabWeight[i] : 1);
-      var dx = (grabSolveX + targetOffX - b.px[pi]) * localStiff;
-      var dy = (grabSolveY + targetOffY - b.py[pi]) * localStiff;
-      var d = Math.sqrt(dx * dx + dy * dy);
-      if (d > pointCap && d > 1e-9) { dx *= pointCap / d; dy *= pointCap / d; }
-      grabCorrX[pi] = dx;
-      grabCorrY[pi] = dy;
-    }
-    var baseRatio = jelloGrabCorrectionMinRatio(b, 0);
-    var reserve = Math.min(JELLO_GRAB_ORIENT_RESERVE,
-                           Math.max(JELLO_ORIENT_MIN + 0.001, baseRatio));
-    var alpha = 1;
-    if (jelloGrabCorrectionMinRatio(b, 1) < reserve) {
-      var safe = 0, unsafe = 1;
-      for (var q = 0; q < 8; q++) {
-        var mid = (safe + unsafe) * 0.5;
-        if (jelloGrabCorrectionMinRatio(b, mid) >= reserve) safe = mid;
-        else unsafe = mid;
-      }
-      alpha = safe;
-    }
-    grabCorrectionAlpha = alpha;
-    for (i = 0; i < grabIdx.length; i++) {
-      pi = grabIdx[i];
-      dx = grabCorrX[pi] * alpha;
-      dy = grabCorrY[pi] * alpha;
-      b.px[pi] += dx; b.py[pi] += dy;
-      b.ox[pi] += dx * JELLO_GRAB_HISTORY;
-      b.oy[pi] += dy * JELLO_GRAB_HISTORY;
-    }
-    grabTopologyMinRatio = jelloGrabCorrectionMinRatio(b, 0);
-    return alpha;
-  }
-
-  // Snapshot rollback deliberately preserves velocity, which is correct for a
-  // wall hit but wrong when an internal deformation mode is what mirrored a
-  // cell. In open space retain the body's exact mean translation and best-fit
-  // angular motion while damping only the non-rigid residual. Near terrain the
-  // contact may drain the rigid mode too, because preserving motion into a wall
-  // simply submits the same illegal fold on the next integration step.
-  function jelloGrabDampRejectedDeformation(b) {
-    var h = grabLastH;
-    if (!(h > 1e-6)) return;
-    var cx = 0, cy = 0, vx = 0, vy = 0;
+  function jelloCarryTranslate(b, dx, dy) {
+    if (!(Math.abs(dx) + Math.abs(dy) > 1e-10)) return;
     for (var i = 0; i < b.n; i++) {
-      cx += b.px[i]; cy += b.py[i];
-      vx += (b.px[i] - b.ox[i]) / h;
-      vy += (b.py[i] - b.oy[i]) / h;
+      b.px[i] += dx; b.py[i] += dy;
+      b.ox[i] += dx; b.oy[i] += dy;
     }
-    cx /= b.n; cy /= b.n; vx /= b.n; vy /= b.n;
-    var angular = 0, inertia = 0;
-    for (i = 0; i < b.n; i++) {
-      var rx = b.px[i] - cx, ry = b.py[i] - cy;
-      var pvx = (b.px[i] - b.ox[i]) / h - vx;
-      var pvy = (b.py[i] - b.oy[i]) / h - vy;
-      angular += rx * pvy - ry * pvx;
-      inertia += rx * rx + ry * ry;
-    }
-    var omega = inertia > 1e-8 ? angular / inertia : 0;
-    var nearTerrain = false;
-    var probe = Math.max(2, (b.spacing || 1) * 1.25);
-    for (i = 0; i < b.ringN && !nearTerrain; i++) {
-      var ri = b.ring[i], rpx = b.px[ri], rpy = b.py[ri];
-      nearTerrain = jelloWorldSolidAt(rpx + probe, rpy) ||
-                    jelloWorldSolidAt(rpx - probe, rpy) ||
-                    jelloWorldSolidAt(rpx, rpy + probe) ||
-                    jelloWorldSolidAt(rpx, rpy - probe);
-    }
-    var keepInternal = 0.12;
-    // At terrain, rigid translation or spin can be the mode that repeatedly
-    // drives an otherwise healthy body into the same fold. The contact impulse
-    // is allowed to drain it; accepted hand motion rebuilds release momentum.
-    var keepRigid = nearTerrain ? 0.12 : 1;
-    for (i = 0; i < b.n; i++) {
-      rx = b.px[i] - cx; ry = b.py[i] - cy;
-      var rigidVX = vx - omega * ry, rigidVY = vy + omega * rx;
-      var currentVX = (b.px[i] - b.ox[i]) / h;
-      var currentVY = (b.py[i] - b.oy[i]) / h;
-      var outVX = rigidVX * keepRigid + (currentVX - rigidVX) * keepInternal;
-      var outVY = rigidVY * keepRigid + (currentVY - rigidVY) * keepInternal;
-      b.ox[i] = b.px[i] - outVX * h;
-      b.oy[i] = b.py[i] - outVY * h;
-    }
+    b.bboxL += dx; b.bboxR += dx;
+    b.bboxT += dy; b.bboxB += dy;
+    b.cx += dx; b.cy += dy;
   }
 
-  // Optional callback from the shared engine's post-contact closure. A zero
-  // fingertip alpha does not imply that the complete contact/shape result is
-  // legal: v3.29 could restore the same near-flat snapshot thousands of times.
-  // First accept the largest legal fraction of that complete solver result.
-  // If the prefix is too small, use a collision-checked rigid traction step
-  // toward the legal proxy. Rigid motion preserves every signed area exactly,
-  // so even a collapsed local pinch has a guaranteed way to leave open space.
-  function jelloGrabResolveTopologyStep(b, active, nActive) {
-    if (b !== grabBody || grabCorrectionAlpha >= 1e-4) return false;
-    var fraction = typeof jelloGrabAcceptStepFraction === 'function'
-                 ? jelloGrabAcceptStepFraction(b, active, nActive) : 0;
-    if (fraction > 0) {
-      grabTopologyMode = 'topology-fraction';
-      grabTopologyProgress = fraction;
-      grabTopologyStreak++;
-      grabTopologyAccepts = 0;
-      grabStepScale = Math.max(grabStepScale, Math.min(0.25, Math.max(0.08, fraction)));
-      grabTopologyMinRatio = jelloGrabMinOrientationRatio(b);
-      b._grabBlocked = 1;
-      b._grabBlockReason = grabTopologyMode;
-      return true;
-    }
+  function jelloCarryPin(b) {
+    jelloCarryReadSurface(b);
+    var wantedX = grabTargetX + carryOffsetX;
+    var wantedY = grabTargetY + carryOffsetY;
+    var dx = wantedX - carrySurfaceX;
+    var dy = wantedY - carrySurfaceY;
+    jelloCarryTranslate(b, dx, dy);
+    carrySurfaceX = wantedX; carrySurfaceY = wantedY;
+    jelloCarryReadSurface(b);
+    var postError = Math.hypot(wantedX - carrySurfaceX, wantedY - carrySurfaceY);
+    if (postError > carrySessionMaxError) carrySessionMaxError = postError;
+    grabSolveX = grabTargetX; grabSolveY = grabTargetY;
+    grabProxyLead = 0; grabCorrectionAlpha = 1;
+  }
 
-    // The fraction helper restored the legal substep snapshot. Measure the
-    // proxy from that live material pose, then move the body coherently by no
-    // more than 0.35 lattice spacings. This is fallback traction, not a broad
-    // normal grab: the local pinch remains the only path in healthy geometry.
-    jelloGrabFit(b);
-    var slot = jelloGrabAnchorSlot();
-    if (slot < 0) return false;
-    var armX = grabFitC * grabOffX[slot] - grabFitS * grabOffY[slot];
-    var armY = grabFitS * grabOffX[slot] + grabFitC * grabOffY[slot];
-    var materialX = b.px[grabAnchor] - armX;
-    var materialY = b.py[grabAnchor] - armY;
-    var dx = grabSolveX - materialX, dy = grabSolveY - materialY;
+  function jelloCarryInjectLag(b) {
+    var dx = carryPendingX, dy = carryPendingY;
+    carryPendingX = carryPendingY = 0;
     var d = Math.sqrt(dx * dx + dy * dy);
-    var cap = Math.max(1, (b.spacing || 1) * 0.35);
-    if (d > cap && d > 1e-9) { dx *= cap / d; dy *= cap / d; }
-    var traction = typeof jelloGrabTryRigidShift === 'function'
-                 ? jelloGrabTryRigidShift(b, active, nActive, dx, dy) : 0;
-    if (!(traction > 0)) return false;
-    grabTopologyMode = 'topology-traction';
-    grabTopologyProgress = Math.sqrt(dx * dx + dy * dy) * traction;
-    grabTopologyStreak++;
-    grabTopologyAccepts = 0;
-    // Once rigid traction proves this direction legal, do not leave the proxy
-    // crawling at the 0.012 emergency floor. A quarter-scale local retry is
-    // still conservative, while allowing the proxy/body pair to visibly move.
-    if (grabStepScale < 0.25) grabStepScale = 0.25;
-    grabTopologyMinRatio = jelloGrabMinOrientationRatio(b);
-    b._grabBlocked = 1;
-    b._grabBlockReason = grabTopologyMode;
-    return true;
-  }
-
-  function jelloGrabAnchorSlot() {
-    if (!grabIdx) return -1;
-    for (var i = 0; i < grabIdx.length; i++) {
-      if (grabIdx[i] === grabAnchor) return i;
+    if (!(d > 1e-5)) return;
+    var cap = Math.max(2, (b.spacing || JELLO_DISC_PITCH) * 0.9);
+    if (d > cap) { dx *= cap / d; dy *= cap / d; d = cap; }
+    jelloCarryReadSurface(b);
+    var far = 1;
+    for (var i = 0; i < b.n; i++) {
+      var fx = b.px[i] - carrySurfaceX, fy = b.py[i] - carrySurfaceY;
+      var fd = Math.sqrt(fx * fx + fy * fy);
+      if (fd > far) far = fd;
     }
-    return -1;
-  }
-
-  // Contact rejection cancels positional debt by moving the collision-safe
-  // proxy back underneath the restored anchor. The material-space offsets are
-  // the user's original fingertip geometry and remain immutable for the grab.
-  // Recomputing them here turns any cursor separation into a hidden long arm:
-  // the debug proxy can sit under the cursor while the anchor goal stays with
-  // the slime. Keeping the offsets canonical makes that impossible.
-  function jelloGrabRebaseGrip(b) {
-    if (!b || !grabIdx) return;
-    jelloGrabFit(b);
-    var slot = jelloGrabAnchorSlot();
-    if (slot >= 0) {
-      var armX = grabFitC * grabOffX[slot] - grabFitS * grabOffY[slot];
-      var armY = grabFitS * grabOffX[slot] + grabFitC * grabOffY[slot];
-      var anchorX = b.px[grabAnchor], anchorY = b.py[grabAnchor];
-      var solveX = anchorX - armX, solveY = anchorY - armY;
-      // A severely compressed anchor can put that ideal proxy just inside a
-      // tile. Stop at the last legal point without changing the canonical arm.
-      if (jelloGrabClipPath(anchorX, anchorY, solveX, solveY, b.spacing)) {
-        solveX = grabClipX; solveY = grabClipY;
-      }
-      grabSolveX = grabPrevSolveX = solveX;
-      grabSolveY = grabPrevSolveY = solveY;
+    for (i = 0; i < b.n; i++) {
+      fx = b.px[i] - carrySurfaceX; fy = b.py[i] - carrySurfaceY;
+      var weight = Math.sqrt(fx * fx + fy * fy) / far;
+      weight = weight * weight * 0.24;
+      b.ox[i] += dx * weight;
+      b.oy[i] += dy * weight;
     }
-    grabAttemptDX = grabAttemptDY = 0;
-    grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
-    grabAcceptedAngle = Math.atan2(grabFitS, grabFitC);
-    grabGripBlend = 0;
-  }
-
-  function jelloGrabReleaseBlock(b) {
-    jelloGrabRebaseGrip(b);
-    grabStepScale = 1;
-    jelloGrabResetTopologyRecovery();
-    jelloGrabClearBlock();
-  }
-
-  // The normal points from legal space INTO the obstruction. Keeping one
-  // unilateral normal is enough to turn a rejected 2-D cursor step into the
-  // legal tangent component, which is the standard active-set treatment of a
-  // kinematic handle at contact. Motion away from the obstacle stays free.
-  function jelloGrabSetBlock(nx, ny, reason, other) {
-    var nl = Math.sqrt(nx * nx + ny * ny);
-    if (!(nl > 1e-6)) {
-      nx = grabAttemptDX; ny = grabAttemptDY;
-      nl = Math.sqrt(nx * nx + ny * ny);
+    if (b.rippleCd <= 0 && d > (b.spacing || 1) * 0.45) {
+      var amp = Math.min(1, d / Math.max(1, (b.spacing || 1) * 0.9));
+      jelloRippleInject(b, carrySurfaceX, carrySurfaceY,
+                        -amp * JELLO_RIPPLE_MAX * 0.22, 2);
+      b.rippleCd = 0.07;
     }
-    if (!(nl > 1e-6)) return;
-    grabBlockNX = nx / nl; grabBlockNY = ny / nl;
-    grabBlockReason = reason || 'contact';
-    grabBlockBody = other || null;
-    grabBlockTravel = 0;
-  }
-
-  function jelloGrabPathHitNormal(x0, y0, x1, y1) {
-    var dx = x1 - x0, dy = y1 - y0;
-    var col = Math.floor(x1 / TILE), row = Math.floor(y1 / TILE);
-    var left = col * TILE, right = left + TILE;
-    var top = row * TILE, bottom = top + TILE;
-    var tx = -1e18, ty = -1e18;
-    if (dx > 1e-9) tx = (left - x0) / dx;
-    else if (dx < -1e-9) tx = (right - x0) / dx;
-    if (dy > 1e-9) ty = (top - y0) / dy;
-    else if (dy < -1e-9) ty = (bottom - y0) / dy;
-    if (tx > ty) {
-      grabClipNX = dx > 0 ? 1 : -1; grabClipNY = 0;
-    } else if (ty > -1e17) {
-      grabClipNX = 0; grabClipNY = dy > 0 ? 1 : -1;
-    } else {
-      var dl = Math.sqrt(dx * dx + dy * dy) || 1;
-      grabClipNX = dx / dl; grabClipNY = dy / dl;
-    }
-  }
-
-  // Clip a virtual grip segment against terrain, writing the last legal point
-  // to grabClipX/Y. The grip is a straight connection through open space: it
-  // cannot reach through a wall or bend around a ledge while the cursor is on
-  // the far side. The same probe filters selected particles at grab start.
-  function jelloGrabClipPath(x0, y0, x1, y1, spacing) {
-    grabClipX = x0; grabClipY = y0; grabClipNX = 0; grabClipNY = 0;
-    var dx = x1 - x0, dy = y1 - y0, d = Math.sqrt(dx * dx + dy * dy);
-    if (!(d > 1e-8)) return false;
-    var stride = Math.min(1, Math.max(0.35, (spacing || JELLO_DISC_PITCH) * 0.25));
-    var steps = Math.ceil(d / stride);
-    for (var q = 1; q <= steps; q++) {
-      var f = q / steps, x = x0 + dx * f, y = y0 + dy * f;
-      if (jelloWorldSolidAt(x, y)) {
-        jelloGrabPathHitNormal(x0, y0, x, y);
-        return true;
-      }
-      grabClipX = x; grabClipY = y;
-    }
-    return false;
   }
 
   function jelloGrabStart(wx, wy) {
     jelloGrabEnd();
-    if (jelloWorldSolidAt(wx, wy)) return false;
     for (var bi = jelloBodies.length - 1; bi >= 0; bi--) {
-      var b = jelloBodies[bi];
-      var pad = 18;
+      var b = jelloBodies[bi], pad = 18;
+      if (!b || b._melting || b.ringN < 3) continue;
       if (wx < b.bboxL - pad || wx > b.bboxR + pad ||
           wy < b.bboxT - pad || wy > b.bboxB + pad) continue;
-      var hit = jelloPointInRing(b, wx, wy);
-      if (!hit) {
-        var best = 1e9;
-        for (var k = 0; k < b.ringN; k++) {
-          var ri = b.ring[k];
-          var dx = b.px[ri] - wx, dy = b.py[ri] - wy;
-          var d2 = dx * dx + dy * dy;
-          if (d2 < best) best = d2;
-        }
-        if (best > pad * pad) continue;
+      if (!jelloPointInRing(b, wx, wy)) {
+        var near = jelloNearestOnRing(b, wx, wy);
+        var ndx = near.x - wx, ndy = near.y - wy;
+        if (ndx * ndx + ndy * ndy > pad * pad) continue;
       }
-      // One nearest visible lattice node is the real anchor. The patch grows
-      // from that node through spring adjacency with exponential ring falloff.
-      var anchor = -1, anchorD2 = 1e18;
-      for (var pi = 0; pi < b.n; pi++) {
-        var ddx = b.px[pi] - wx, ddy = b.py[pi] - wy;
-        var pd2 = ddx * ddx + ddy * ddy;
-        if (pd2 < anchorD2 &&
-            !jelloGrabClipPath(wx, wy, b.px[pi], b.py[pi], b.spacing)) {
-          anchor = pi; anchorD2 = pd2;
-        }
-      }
-      if (anchor < 0) continue;
-      jelloGrabFit(b);
-      jelloGrabBuildPatch(b, anchor, wx, wy);
+      if (!jelloCarryFindSurface(b, wx, wy)) continue;
       grabBody = b;
+      grabAnchor = carrySurfaceA;
+      grabIdx = [carrySurfaceA, carrySurfaceB];
+      grabOffX = grabOffY = null;
+      grabWeight = grabRing = null;
       grabTargetX = grabSolveX = wx;
       grabTargetY = grabSolveY = wy;
       grabPrevSolveX = wx; grabPrevSolveY = wy;
+      carryOffsetX = carrySurfaceX - wx;
+      carryOffsetY = carrySurfaceY - wy;
+      carryPointerX = wx; carryPointerY = wy;
+      carryPointerMs = performance.now();
+      carryPendingX = carryPendingY = 0;
+      carrySessionTravel = carrySessionMaxError = 0;
       grabAttemptDX = grabAttemptDY = 0;
-      grabStepScale = 1;
-      grabGripBlend = 1;
-      grabSpin = 0;
-      grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
-      grabAcceptedAngle = Math.atan2(grabFitS, grabFitC);
       grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
       grabLastMotionMs = 0;
-      grabRejectBase = b._guardRejects | 0;
-      jelloGrabResetTopologyRecovery();
-      jelloGrabClearBlock();
-      b._grabbed = true;
+      grabBlockReason = ''; grabBlockNX = grabBlockNY = 0;
+      grabProxyLead = 0; grabCorrectionAlpha = 1;
+      b._grabbed = false;
+      b._carried = true;
+      b._grabApplied = 0;
       b._recoverT = 0;
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
       return true;
@@ -9151,578 +8945,99 @@
     var b = grabBody;
     if (!b) return;
     if (jelloBodies.indexOf(b) < 0 || b._melting) { jelloGrabEnd(); return; }
-    b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
-    b._plyMs = performance.now();      // crowd-drain freshness stamp (see updateJello)
-    grabTargetX = wx;
-    grabTargetY = wy;
-  }
-
-  // The pointer only moves a target. The actual constraint is solved inside
-  // each physics substep, after the collision sweep has recorded its legal
-  // starting positions. This prevents one rendered frame from teleporting a
-  // patch of lattice across a platform and making the crossed state permanent.
-  function jelloGrabSubstep(b, h) {
-    if (b !== grabBody || !grabIdx || !grabIdx.length) return;
-    b._grabApplied = 1;
-    grabCorrectionAlpha = 1;
-    grabTopologyMode = '';
-    grabTopologyProgress = 0;
-    grabLastH = h;
-    var spacing = Math.max(1, b.spacing || 1);
-    jelloGrabFit(b);
-    var anchorSlot = jelloGrabAnchorSlot();
-    var materialProxyX = grabSolveX, materialProxyY = grabSolveY;
-    if (anchorSlot >= 0) {
-      var materialArmX = grabFitC * grabOffX[anchorSlot] - grabFitS * grabOffY[anchorSlot];
-      var materialArmY = grabFitS * grabOffX[anchorSlot] + grabFitC * grabOffY[anchorSlot];
-      materialProxyX = b.px[grabAnchor] - materialArmX;
-      materialProxyY = b.py[grabAnchor] - materialArmY;
-    }
-    grabPrevSolveX = grabSolveX; grabPrevSolveY = grabSolveY;
-    var hdx = grabTargetX - grabSolveX, hdy = grabTargetY - grabSolveY;
-
-    // A path block can be tested exactly. Body contacts are broader than the
-    // handle ray, so they stay active until the accepted-step callback sees
-    // that the body itself has left the contact.
-    if (grabBlockReason === 'path' &&
-        !jelloGrabClipPath(grabSolveX, grabSolveY, grabTargetX, grabTargetY, spacing)) {
-      jelloGrabReleaseBlock(b);
-    }
-    if (grabBlockReason) {
-      var inward = hdx * grabBlockNX + hdy * grabBlockNY;
-      if (inward < -spacing * 0.08) {
-        jelloGrabReleaseBlock(b);
-      } else if (inward > 0) {
-        hdx -= grabBlockNX * inward;
-        hdy -= grabBlockNY * inward;
-      }
-    }
-    var hd = Math.sqrt(hdx * hdx + hdy * hdy);
-    var handleCap = Math.min(spacing * JELLO_GRAB_HANDLE_STEP,
-                             JELLO_GRAB_HANDLE_SPEED * h) * grabStepScale;
-    var nextX, nextY;
-    if (hd > handleCap && hd > 1e-9) {
-      nextX = grabSolveX + hdx * handleCap / hd;
-      nextY = grabSolveY + hdy * handleCap / hd;
-    } else {
-      // hdx/hdy may already be the target displacement projected onto a
-      // contact tangent. Reconstruct from the proxy, not from the unprojected
-      // cursor target.
-      nextX = grabSolveX + hdx;
-      nextY = grabSolveY + hdy;
-    }
-    // The proxy is a physical handle, not an unbounded command queue. If the
-    // material anchor cannot yet follow a fast cursor, park the proxy a small
-    // distance ahead of it. This keeps the pull continuous without storing the
-    // hundreds of pixels of hidden positional debt that caused the v3.28 pulse.
-    var leadX = nextX - materialProxyX, leadY = nextY - materialProxyY;
-    var leadD = Math.sqrt(leadX * leadX + leadY * leadY);
-    var leadCap = spacing * JELLO_GRAB_PROXY_LEAD;
-    if (leadD > leadCap && leadD > 1e-9) {
-      nextX = materialProxyX + leadX * leadCap / leadD;
-      nextY = materialProxyY + leadY * leadCap / leadD;
-    }
-    grabAttemptDX = nextX - grabSolveX;
-    grabAttemptDY = nextY - grabSolveY;
-    if (jelloGrabClipPath(grabSolveX, grabSolveY, nextX, nextY, spacing)) {
-      nextX = grabClipX; nextY = grabClipY;
-      grabAttemptDX = nextX - grabSolveX;
-      grabAttemptDY = nextY - grabSolveY;
-      jelloGrabSetBlock(grabClipNX, grabClipNY, 'path', null);
-    }
-    b._grabBlocked = grabBlockReason ? 1 : 0;
-    grabSolveX = nextX; grabSolveY = nextY;
-    grabProxyLead = Math.hypot(grabSolveX - materialProxyX, grabSolveY - materialProxyY);
-
-    // At contact the handle is an active unilateral constraint, not a spring
-    // that should keep pulling the selected skin behind the obstacle. With no
-    // legal tangent step, apply no grab correction at all: integration,
-    // gravity, shape solving, and collision continue normally. With tangent
-    // motion, translate the mass coherently and let collision provide squash.
-    var contactMode = !!grabBlockReason;
-    var moved = Math.abs(grabAttemptDX) + Math.abs(grabAttemptDY) > 1e-7;
-    if (contactMode && !moved) {
-      b._grabApplied = 0;
-      return;
-    }
-    var stepDX = grabSolveX - grabPrevSolveX, stepDY = grabSolveY - grabPrevSolveY;
-    // A contact tangent is already collision-approved, so translate the body
-    // coherently and velocity-free along it. Open-space motion never receives
-    // a whole-body positional transform: the weighted lattice pinch below is
-    // the only driver, which is what makes an edge grab feel local.
-    if (contactMode) {
-      for (var bp = 0; bp < b.n; bp++) {
-        b.px[bp] += stepDX; b.py[bp] += stepDY;
-        b.ox[bp] += stepDX; b.oy[bp] += stepDY;
-      }
-      return;
-    }
-    if (grabGripBlend < 1e-4) {
-      // Contact rebases fade back in from one small seed. Topology recovery no
-      // longer reaches this branch because its grip never switches off.
-      grabGripBlend = 0.08;
-      b._grabApplied = 0;
-      return;
-    }
-
-    // A point force creates torque. Match a fraction of the hand's angular
-    // speed in the VELOCITY field only, leaving every position to the local
-    // patch and the soft-body solver. This supplies responsive acceleration
-    // without bringing back the broad, rigid positional grab.
-    if (Math.abs(stepDX) + Math.abs(stepDY) > 1e-7) {
-      var armX = grabPrevSolveX - grabFitCX, armY = grabPrevSolveY - grabFitCY;
-      var arm2 = armX * armX + armY * armY;
-      if (arm2 > spacing * spacing * 2 && h > 1e-6) {
-        var targetOmega = (armX * stepDY - armY * stepDX) / (arm2 * h);
-        if (targetOmega > JELLO_GRAB_RELEASE_OMEGA) targetOmega = JELLO_GRAB_RELEASE_OMEGA;
-        else if (targetOmega < -JELLO_GRAB_RELEASE_OMEGA) targetOmega = -JELLO_GRAB_RELEASE_OMEGA;
-        var angularMomentum = 0, inertia = 0;
-        for (var av = 0; av < b.n; av++) {
-          var arx = b.px[av] - grabFitCX, ary = b.py[av] - grabFitCY;
-          var avx = (b.px[av] - b.ox[av]) / h;
-          var avy = (b.py[av] - b.oy[av]) / h;
-          angularMomentum += arx * avy - ary * avx;
-          inertia += arx * arx + ary * ary;
-        }
-        var currentOmega = inertia > 1e-8 ? angularMomentum / inertia : 0;
-        var addOmega = (targetOmega - currentOmega) * JELLO_GRAB_ANGULAR_FOLLOW * grabGripBlend;
-        for (av = 0; av < b.n; av++) {
-          arx = b.px[av] - grabFitCX; ary = b.py[av] - grabFitCY;
-          b.ox[av] += ary * addOmega * h;
-          b.oy[av] -= arx * addOmega * h;
-        }
-      }
-    }
-    // Normal manipulation keeps the established quarter-scale point floor.
-    // Topology recovery must be allowed to search below it or a large target
-    // error always saturates at the same 0.92px correction and can livelock.
-    var pointScale = grabTopologyStreak > 0
-                   ? Math.max(JELLO_GRAB_BACKOFF_MIN, grabStepScale)
-                   : Math.max(0.25, grabStepScale);
-    var pointCap = spacing * JELLO_GRAB_POINT_STEP * pointScale;
-    var pointStiff = JELLO_GRAB_STIFF * (0.5 + 0.5 * grabStepScale) * grabGripBlend;
-    var safeAlpha = jelloGrabApplySafeCorrection(b, pointCap, pointStiff);
-    var rigidTraction = 0;
-    if (safeAlpha < 1e-4 && typeof jelloGrabTryRigidShift === 'function') {
-      // The local pinch has no signed-area-safe direction, but a rigid move
-      // preserves every triangle exactly. Pull the whole material pose toward
-      // its already-clamped proxy by one sub-spacing step, validating terrain
-      // and peers before committing it. This prevents alpha=0 from becoming a
-      // visually frozen 0.012-scale crawl even when the full solver would have
-      // accepted the otherwise force-free substep.
-      var tractionX = grabSolveX - materialProxyX;
-      var tractionY = grabSolveY - materialProxyY;
-      var tractionD = Math.sqrt(tractionX * tractionX + tractionY * tractionY);
-      var tractionCap = Math.max(1, spacing * 0.35);
-      if (tractionD > tractionCap && tractionD > 1e-9) {
-        tractionX *= tractionCap / tractionD;
-        tractionY *= tractionCap / tractionD;
-      }
-      rigidTraction = jelloGrabTryRigidShift(
-        b, jelloBodies, jelloBodies.length, tractionX, tractionY);
-      if (rigidTraction > 0) {
-        grabTopologyMode = 'topology-traction';
-        grabTopologyProgress = Math.sqrt(tractionX * tractionX + tractionY * tractionY) * rigidTraction;
-        b._grabBlocked = 1;
-        b._grabBlockReason = grabTopologyMode;
-      }
-    }
-    if (safeAlpha < 0.995) {
-      if (grabTopologyStreak < 1) grabTopologyStreak = 1;
-      grabTopologyAccepts = 0;
-      if (rigidTraction > 0) {
-        if (grabStepScale < 0.25) grabStepScale = 0.25;
-      } else {
-        grabStepScale = Math.max(JELLO_GRAB_BACKOFF_MIN,
-                                 Math.min(grabStepScale, Math.max(JELLO_GRAB_BACKOFF_MIN, safeAlpha)));
-      }
-    }
-  }
-
-  // Called by the shared solver when terrain, a mirrored cell, or another
-  // slime made this manipulation substep illegal. Roll the proxy back, retain
-  // the rejected direction as a unilateral contact normal, and keep solving.
-  // The next substep can therefore move along or away from the obstruction
-  // without waiting for a new pointer event.
-  function jelloGrabRejectStep(b, reason) {
-    if (b !== grabBody) return;
-    grabSolveX = grabPrevSolveX; grabSolveY = grabPrevSolveY;
-    var hasNormal = b._grabRejectNX * b._grabRejectNX +
-                    b._grabRejectNY * b._grabRejectNY > 1e-8;
-    var refX = grabAttemptDX, refY = grabAttemptDY;
-    if (refX * refX + refY * refY < 1e-8) {
-      refX = grabTargetX - grabSolveX; refY = grabTargetY - grabSolveY;
-    }
-    // A mirrored cell in otherwise open space is a controller step that was
-    // too large, not a collision plane. Back off the spatial trust region and
-    // keep the grip active; accepted substeps restore full speed below.
-    if (reason === 'topology' && !b._grabRejectBody) {
-      var nearPeer = jelloGrabFindPeerContact(b);
-      if (nearPeer) {
-        jelloRingBBox(b); jelloRingBBox(nearPeer);
-        var pcx = (nearPeer._cbL + nearPeer._cbR - b._cbL - b._cbR) * 0.5;
-        var pcy = (nearPeer._cbT + nearPeer._cbB - b._cbT - b._cbB) * 0.5;
-        var pcl = Math.sqrt(pcx * pcx + pcy * pcy) || 1;
-        b._grabRejectNX = pcx / pcl; b._grabRejectNY = pcy / pcl;
-        b._grabRejectBody = nearPeer;
-        hasNormal = true;
-        reason = 'peer-topology';
-        grabStepScale = 1;
-      } else if (jelloGrabTerrainContactAlive(
-                   b,
-                   hasNormal ? b._grabRejectNX : refX,
-                   hasNormal ? b._grabRejectNY : refY)) {
-        // A fold while the ring is already touching terrain is contact
-        // compression, even if the final validator noticed orientation first.
-        // Probe in the REJECTED direction, not the previous block normal. On
-        // first contact that old normal is still zero, which was the remaining
-        // retry loop behind the owner's exact-frame structure freeze.
-        reason = 'terrain';
-        if (!hasNormal) {
-          b._grabRejectNX = refX; b._grabRejectNY = refY;
-          hasNormal = refX * refX + refY * refY > 1e-8;
-        }
-        grabStepScale = 1;
-      } else {
-        // This is a legal-step search, not a contact rebase. The shared guard
-        // already restored the body and grabSolve was rolled back above. Keep
-        // that last legal proxy and the continuously active fingertip, then
-        // retry with a strictly smaller spatial correction. Never zero grip:
-        // that created the visible relax/yank oscillator in v3.28.
-        grabTopologyStreak++;
-        grabTopologyAccepts = 0;
-        grabTopologyMinRatio = jelloGrabMinOrientationRatio(b);
-        grabCorrectionAlpha = 0;
-        jelloGrabClearBlock();
-        grabStepScale = Math.max(JELLO_GRAB_BACKOFF_MIN, grabStepScale * 0.45);
-        jelloGrabDampRejectedDeformation(b);
-        grabAttemptDX = grabAttemptDY = 0;
-        b._grabBlocked = 1;
-        b._grabBlockReason = 'topology-backoff';
-        return;
-      }
-    }
-    jelloGrabResetTopologyRecovery();
-    var nx = hasNormal ? b._grabRejectNX : refX;
-    var ny = hasNormal ? b._grabRejectNY : refY;
-    // A contained tile sample can be nearest to the far side of a deeply
-    // squashed ring, which reverses its raw boundary-to-sample vector. The
-    // controller normal is unilateral and must always point in the direction
-    // of the rejected handle step.
-    if (nx * refX + ny * refY < 0) { nx = -nx; ny = -ny; }
-    if (reason === 'terrain') {
-      // The demo terrain is an axis-aligned tile grid. Ring containment can
-      // report a diagonal nearest-sample vector even on a flat shelf; using
-      // that as the manifold leaves a small fake tangent in a straight-down
-      // drag and retries it forever. Recover the actual tile-face normal.
-      if (Math.abs(nx) > Math.abs(ny)) { nx = nx < 0 ? -1 : 1; ny = 0; }
-      else { ny = ny < 0 ? -1 : 1; nx = 0; }
-    }
-    jelloGrabSetBlock(nx, ny,
-                      reason || 'contact', b._grabRejectBody || null);
-    // The rejected patch has no legal positional debt. Rebase it to the
-    // restored body immediately so a stationary cursor cannot resubmit the
-    // same fold on every substep. Tangent and away motion remain available.
-    jelloGrabRebaseGrip(b);
-    b._grabBlocked = 1;
-    b._grabBlockReason = reason || '';
-  }
-
-  function jelloGrabTerrainContactAlive(b, nx, ny) {
-    if (nx === undefined) { nx = grabBlockNX; ny = grabBlockNY; }
-    var nl = Math.sqrt(nx * nx + ny * ny);
-    if (!(nl > 1e-8)) return false;
-    nx /= nl; ny /= nl;
-    var probe = Math.max(3, (b.spacing || 1) * 1.5);
-    for (var k = 0; k < b.ringN; k++) {
-      var pi = b.ring[k];
-      if (jelloWorldSolidAt(b.px[pi] + nx * probe * 0.45,
-                            b.py[pi] + ny * probe * 0.45) ||
-          jelloWorldSolidAt(b.px[pi] + nx * probe,
-                            b.py[pi] + ny * probe)) return true;
-    }
-    return false;
-  }
-
-  function jelloGrabPeerContactAlive(b) {
-    var other = grabBlockBody;
-    if (!other || jelloBodies.indexOf(other) < 0 || other._melting) return false;
-    var pad = Math.max(b.spacing || 1, other.spacing || 1) * 0.8;
-    jelloRingBBox(b); jelloRingBBox(other);
-    return !(b._cbR + pad < other._cbL || b._cbL - pad > other._cbR ||
-             b._cbB + pad < other._cbT || b._cbT - pad > other._cbB);
-  }
-
-  function jelloGrabFindPeerContact(b) {
-    jelloRingBBox(b);
-    for (var i = 0; i < jelloBodies.length; i++) {
-      var other = jelloBodies[i];
-      if (other === b || other._melting) continue;
-      jelloRingBBox(other);
-      var pad = Math.max(b.spacing || 1, other.spacing || 1) * 0.8;
-      if (!(b._cbR + pad < other._cbL || b._cbL - pad > other._cbR ||
-            b._cbB + pad < other._cbT || b._cbT - pad > other._cbB)) return other;
-    }
-    return null;
-  }
-
-  function jelloGrabCaptureMotion(b) {
-    jelloGrabFit(b);
-    var angle = Math.atan2(grabFitS, grabFitC);
-    var da = angle - grabAcceptedAngle;
-    while (da > Math.PI) da -= 6.2831853;
-    while (da < -Math.PI) da += 6.2831853;
-    var moved = Math.abs(grabAttemptDX) + Math.abs(grabAttemptDY) > 1e-7;
-    if (moved && grabLastH > 1e-6) {
-      var svx = (grabFitCX - grabAcceptedCX) / grabLastH;
-      var svy = (grabFitCY - grabAcceptedCY) / grabLastH;
-      var somega = da / grabLastH;
-      var blend = 0.24;
+    var dx = wx - carryPointerX, dy = wy - carryPointerY;
+    if (Math.abs(dx) + Math.abs(dy) > 1e-8) {
+      var now = performance.now();
+      var sampleDt = Math.max(1, Math.min(80, now - carryPointerMs));
+      var svx = dx * 1000 / sampleDt, svy = dy * 1000 / sampleDt;
+      var blend = 1 - Math.exp(-sampleDt / 34);
       grabReleaseVX += (svx - grabReleaseVX) * blend;
       grabReleaseVY += (svy - grabReleaseVY) * blend;
-      grabReleaseOmega += (somega - grabReleaseOmega) * blend;
-      grabLastMotionMs = performance.now();
+      grabLastMotionMs = now;
+      carryPendingX += dx; carryPendingY += dy;
+      carrySessionTravel += Math.sqrt(dx * dx + dy * dy);
+      grabAttemptDX = dx; grabAttemptDY = dy;
+      carryPointerX = wx; carryPointerY = wy; carryPointerMs = now;
     }
-    grabSpin += da;
-    grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
-    grabAcceptedAngle = angle;
+    grabTargetX = grabSolveX = wx;
+    grabTargetY = grabSolveY = wy;
+    b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
+    b._plyMs = performance.now();
   }
 
-  // Positional constraints are deliberately quiet while held. On a fresh
-  // release, convert the accepted centre and angle motion into one bounded
-  // rigid velocity field. Internal damping preserves rigid motion, so the
-  // slime now carries a real fling and spin instead of dying at pointer-up.
-  function jelloGrabApplyRelease(b) {
-    if (!grabLastMotionMs || performance.now() - grabLastMotionMs > JELLO_GRAB_RELEASE_FRESH) return;
-    var vx = grabReleaseVX, vy = grabReleaseVY, omega = grabReleaseOmega;
-    if (!isFinite(vx + vy + omega)) return;
-    var speed = Math.sqrt(vx * vx + vy * vy);
-    if (speed > JELLO_GRAB_RELEASE_SPEED && speed > 1e-9) {
-      var ls = JELLO_GRAB_RELEASE_SPEED / speed; vx *= ls; vy *= ls;
-    }
-    if (omega > JELLO_GRAB_RELEASE_OMEGA) omega = JELLO_GRAB_RELEASE_OMEGA;
-    else if (omega < -JELLO_GRAB_RELEASE_OMEGA) omega = -JELLO_GRAB_RELEASE_OMEGA;
-    if (grabBlockReason) {
-      var inward = vx * grabBlockNX + vy * grabBlockNY;
-      if (inward > 0) { vx -= grabBlockNX * inward; vy -= grabBlockNY * inward; }
-    }
-    jelloGrabFit(b);
-    var h = grabLastH > 1e-6 ? grabLastH : JELLO_H;
-    var keep = 1 - JELLO_GRAB_RELEASE_BLEND;
-    for (var i = 0; i < b.n; i++) {
-      var rx = b.px[i] - grabFitCX, ry = b.py[i] - grabFitCY;
-      var desiredX = vx - omega * ry, desiredY = vy + omega * rx;
-      var currentX = (b.px[i] - b.ox[i]) / h;
-      var currentY = (b.py[i] - b.oy[i]) / h;
-      var outX = currentX * keep + desiredX * JELLO_GRAB_RELEASE_BLEND;
-      var outY = currentY * keep + desiredY * JELLO_GRAB_RELEASE_BLEND;
-      var ps = Math.sqrt(outX * outX + outY * outY);
-      if (ps > JELLO_GRAB_RELEASE_POINT && ps > 1e-9) {
-        var psc = JELLO_GRAB_RELEASE_POINT / ps; outX *= psc; outY *= psc;
-      }
-      b.ox[i] = b.px[i] - outX * h;
-      b.oy[i] = b.py[i] - outY * h;
-    }
+  function jelloGrabSubstep(b, h) {
+    if (b !== grabBody || !b._carried) return;
+    grabLastH = h;
+    b._grabApplied = 0;
+    b.sleeping = false; b.sleepFrames = 0;
+    jelloCarryPin(b);
+    jelloCarryInjectLag(b);
   }
 
-  // The shared solver invokes this only after the full body, terrain, and
-  // body-body pass accepted the attempted substep. It is the safe place to
-  // retire a contact normal: doing it on raw cursor movement caused the old
-  // stop/retry/stop latch and its visible pauses.
-  function jelloGrabAcceptStep(b) {
-    if (b !== grabBody) return;
-    jelloGrabCaptureMotion(b);
-    var topologyRecovering = grabTopologyStreak > 0;
-    grabTopologyMinRatio = jelloGrabMinOrientationRatio(b);
-    var limited = grabCorrectionAlpha < 0.995;
-    if (!limited) {
-      grabStepScale += (1 - grabStepScale) * (topologyRecovering ? 0.04 : 0.12);
-    }
-    if (!grabBlockReason) {
-      grabGripBlend += (1 - grabGripBlend) * 0.18;
-    }
-    if (!grabBlockReason) {
-      if (topologyRecovering) {
-        if (!limited && grabTopologyMinRatio >= JELLO_ORIENT_TARGET * 2) grabTopologyAccepts++;
-        else grabTopologyAccepts = 0;
-        // Roughly 150 ms of full, margin-positive corrections proves the local
-        // search has escaped. Restore normal gains without a discrete force edge.
-        if (grabTopologyAccepts >= 36 && grabStepScale > 0.7) {
-          jelloGrabResetTopologyRecovery();
-        }
-      }
-      if (grabStepScale > 0.995) grabStepScale = 1;
-      b._grabBlocked = 0;
-      b._grabBlockReason = '';
-      return;
-    }
-    grabBlockTravel += Math.sqrt(grabAttemptDX * grabAttemptDX + grabAttemptDY * grabAttemptDY);
-    var clear = false;
-    if (grabBlockReason === 'terrain') clear = !jelloGrabTerrainContactAlive(b);
-    else if (grabBlockReason === 'slime' || grabBlockReason === 'peer-topology') {
-      clear = !jelloGrabPeerContactAlive(b);
-    } else if (grabBlockReason === 'topology') {
-      clear = grabBlockTravel > Math.max(2, (b.spacing || 1) * 0.75);
-    }
-    if (clear) {
-      jelloGrabReleaseBlock(b);
-      b._grabBlocked = 0;
-      b._grabBlockReason = '';
-    }
+  // The shared solver calls this after collision and its velocity clamp. The
+  // surface pin wins last, which is the exact one-to-one hand contract.
+  function jelloDrivePostSubstep(b, h) {
+    if (b !== grabBody || !b._carried) return;
+    grabLastH = h;
+    jelloCarryPin(b);
   }
 
-  function jelloGrabSaveDebugSample(b) {
-    if (!debugGrab || !b || !grabIdx || !grabIdx.length) return grabDebugLast;
-    var counts = [0, 0, 0, 0];
-    var anchorError = 0, maxError = 0, goalArm = 0;
-    for (var i = 0; i < grabIdx.length; i++) {
-      var ring = grabRing ? grabRing[i] : 0;
-      if (ring < 0 || ring > 3) ring = 3;
-      counts[ring]++;
-      var goalX = grabSolveX + grabFitC * grabOffX[i] - grabFitS * grabOffY[i];
-      var goalY = grabSolveY + grabFitS * grabOffX[i] + grabFitC * grabOffY[i];
-      var pi = grabIdx[i];
-      var err = Math.hypot(goalX - b.px[pi], goalY - b.py[pi]);
-      if (err > maxError) maxError = err;
-      if (pi === grabAnchor) {
-        anchorError = err;
-        goalArm = Math.hypot(goalX - grabSolveX, goalY - grabSolveY);
-      }
-    }
-    grabDebugLast = {
-      t: performance.now(),
-      reason: grabBlockReason || grabTopologyMode || b._grabBlockReason || 'free',
-      applied: b._grabApplied ? 'applied' : 'body free',
-      cursorGap: Math.hypot(grabTargetX - grabSolveX, grabTargetY - grabSolveY),
-      anchorError: anchorError, maxError: maxError, goalArm: goalArm,
-      anchor: grabAnchor, shells: counts.join('/'),
-      step: grabStepScale, grip: grabGripBlend,
-      nx: grabBlockNX, ny: grabBlockNY,
-      rejects: Math.max(0, (b._guardRejects | 0) - grabRejectBase),
-      rejectTotal: b._guardRejects | 0,
-      retry: grabTopologyStreak,
-      stable: grabTopologyAccepts,
-      alpha: grabCorrectionAlpha,
-      lead: grabProxyLead,
-      topologyMode: grabTopologyMode || '',
-      topologyProgress: grabTopologyProgress,
-      minRatio: grabTopologyMinRatio,
-      releaseMag: Math.hypot(grabReleaseVX, grabReleaseVY),
-      releaseOmega: grabReleaseOmega
-    };
-    return grabDebugLast;
-  }
+  function jelloGrabRejectStep() {}
+  function jelloGrabAcceptStep() {}
+  function jelloGrabResolveTopologyStep() { return false; }
 
   function jelloGrabEnd() {
     var b = grabBody;
     if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
-      jelloGrabSaveDebugSample(b);
+      jelloCarryPin(b);
+      carryLastTravel = carrySessionTravel;
+      carryLastMaxError = carrySessionMaxError;
+      carryLastReleaseSpeed = Math.hypot(grabReleaseVX, grabReleaseVY);
       jelloGrabApplyRelease(b);
+      b._carried = false;
       b._grabbed = false;
       b._grabApplied = 0;
-      b._grabBlocked = 0;
       b._recoverT = Math.max(b._recoverT || 0, JELLO_GRAB_RECOVER);
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     }
-    grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null; grabWeight = null; grabRing = null;
-    grabAnchor = -1;
-    grabPrevSolveX = grabPrevSolveY = 0;
+    grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null;
+    grabWeight = null; grabRing = null; grabAnchor = -1;
+    carrySurfaceA = carrySurfaceB = -1; carrySurfaceT = 0;
+    carrySurfaceX = carrySurfaceY = carryOffsetX = carryOffsetY = 0;
+    carryPendingX = carryPendingY = 0;
     grabAttemptDX = grabAttemptDY = 0;
-    grabStepScale = 1;
-    grabGripBlend = 1;
-    grabSpin = 0;
     grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
     grabLastMotionMs = 0;
-    grabProxyLead = 0;
-    grabRejectBase = 0;
-    jelloGrabResetTopologyRecovery();
-    jelloGrabClearBlock();
+    grabBlockReason = ''; grabBlockNX = grabBlockNY = 0;
   }
 
-  // Read-only QA probe. It keeps the drag controller testable without exposing
-  // mutation hooks to the public demo.
   if (typeof window !== 'undefined') {
     window.__slimeGrab = function () {
-      var body = null, folds = 0, crossings = 0, checksum = 0;
-      var ringCounts = [0, 0, 0, 0];
-      var goalArm = 0, anchorError = 0;
-      if (grabRing) for (var gri = 0; gri < grabRing.length; gri++) ringCounts[grabRing[gri]]++;
-      if (grabBody) {
-        var anchorSlot = jelloGrabAnchorSlot();
-        if (anchorSlot >= 0) {
-          var anchorGoalX = grabSolveX + grabFitC * grabOffX[anchorSlot] - grabFitS * grabOffY[anchorSlot];
-          var anchorGoalY = grabSolveY + grabFitS * grabOffX[anchorSlot] + grabFitC * grabOffY[anchorSlot];
-          goalArm = Math.hypot(anchorGoalX - grabSolveX, anchorGoalY - grabSolveY);
-          anchorError = Math.hypot(anchorGoalX - grabBody.px[grabAnchor],
-                                   anchorGoalY - grabBody.py[grabAnchor]);
-        }
-        for (var i = 0; i < grabBody.n; i++) {
-          checksum += grabBody.px[i] * (i + 1) + grabBody.py[i] * (i + 3);
-        }
-        if (grabBody.triHealthOnly) {
-          var TA = grabBody.triA, TB = grabBody.triB, TC = grabBody.triC;
-          var Dm = grabBody.triDmInv;
-          for (var t = 0; t < grabBody.triN; t++) {
-            var i0 = TA[t], i1 = TB[t], i2 = TC[t];
-            var e1x = grabBody.px[i1] - grabBody.px[i0];
-            var e1y = grabBody.py[i1] - grabBody.py[i0];
-            var e2x = grabBody.px[i2] - grabBody.px[i0];
-            var e2y = grabBody.py[i2] - grabBody.py[i0];
-            var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
-            if ((e1x * e2y - e1y * e2x) * detInv < JELLO_ORIENT_MIN) folds++;
-          }
-        }
-        for (var bi = 0; bi < jelloBodies.length; bi++) {
-          var other = jelloBodies[bi];
-          if (other !== grabBody && !other._melting && jelloRingsCrossProper(grabBody, other)) crossings++;
-        }
-        body = {
-          cx: grabBody.cx, cy: grabBody.cy, vx: grabBody.vx || 0, vy: grabBody.vy || 0,
-          left: grabBody.bboxL, top: grabBody.bboxT,
-          right: grabBody.bboxR, bottom: grabBody.bboxB,
-          checksum: checksum, folds: folds, crossings: crossings,
-          angle: Math.atan2(grabBody.shRs || 0, grabBody.shRc === undefined ? 1 : grabBody.shRc)
-        };
+      var b = grabBody, error = 0;
+      if (b) {
+        jelloCarryReadSurface(b);
+        error = Math.hypot(grabTargetX + carryOffsetX - carrySurfaceX,
+                           grabTargetY + carryOffsetY - carrySurfaceY);
       }
       return {
         worldW: worldW, worldH: worldH, fitScale: fitScale,
-        pointerDown: !!pointerDown, tool: tool || '', pointerX: px || 0, pointerY: py || 0,
-        active: !!grabBody, targetX: grabTargetX, targetY: grabTargetY,
-        solveX: grabSolveX, solveY: grabSolveY,
-        gap: Math.hypot(grabTargetX - grabSolveX, grabTargetY - grabSolveY),
-        blocked: !!grabBlockReason, reason: grabBlockReason,
-        nx: grabBlockNX, ny: grabBlockNY,
-        stepScale: grabStepScale,
-        gripBlend: grabGripBlend,
-        selected: grabIdx ? grabIdx.length : 0,
-        anchor: grabAnchor,
-        goalArm: goalArm,
-        anchorError: anchorError,
-        indices: grabIdx ? grabIdx.slice() : [],
-        ringCounts: ringCounts,
-        weights: grabWeight ? grabWeight.slice() : [],
-        spin: grabSpin,
-        releaseVX: grabReleaseVX,
-        releaseVY: grabReleaseVY,
-        releaseOmega: grabReleaseOmega,
-        attemptX: grabAttemptDX, attemptY: grabAttemptDY,
-        applied: grabBody ? !!grabBody._grabApplied : false,
-        guardReason: grabBody ? (grabBody._guardRejectReason || '') : '',
-        terrainAlive: grabBody && grabBlockReason === 'terrain' ? jelloGrabTerrainContactAlive(grabBody) : false,
-        rejects: grabBody ? (grabBody._guardRejects | 0) : 0,
-        grabRejects: grabBody ? Math.max(0, (grabBody._guardRejects | 0) - grabRejectBase) : 0,
-        topologyRetry: grabTopologyStreak,
-        topologyStable: grabTopologyAccepts,
-        topologyCooldown: 0,
-        correctionAlpha: grabCorrectionAlpha,
-        proxyLead: grabProxyLead,
-        topologyMode: grabTopologyMode,
-        topologyProgress: grabTopologyProgress,
-        minOrientationRatio: grabTopologyMinRatio,
-        body: body,
-        bodies: jelloBodies.map(function (b) {
-          return { cx: b.cx, cy: b.cy, left: b.bboxL, top: b.bboxT,
-                   right: b.bboxR, bottom: b.bboxB, melting: !!b._melting };
+        pointerDown: !!pointerDown, tool: tool || '',
+        pointerX: px || 0, pointerY: py || 0,
+        active: !!b, mode: b ? 'surface-carry' : 'free',
+        targetX: grabTargetX, targetY: grabTargetY,
+        solveX: grabTargetX, solveY: grabTargetY,
+        gap: 0, anchorError: error,
+        sessionTravel: b ? carrySessionTravel : carryLastTravel,
+        maxAnchorError: b ? carrySessionMaxError : carryLastMaxError,
+        lastReleaseSpeed: carryLastReleaseSpeed,
+        releaseVX: grabReleaseVX, releaseVY: grabReleaseVY,
+        body: b ? {
+          cx: b.cx, cy: b.cy, vx: b.vx || 0, vy: b.vy || 0,
+          left: b.bboxL, top: b.bboxT, right: b.bboxR, bottom: b.bboxB
+        } : null,
+        bodies: jelloBodies.map(function (body) {
+          return { cx: body.cx, cy: body.cy, left: body.bboxL, top: body.bboxT,
+                   right: body.bboxR, bottom: body.bboxB, melting: !!body._melting };
         })
       };
     };
@@ -10126,6 +9441,7 @@
       pvy = pvy * 0.5 + ((w.y - py) / mdt) * 0.5;
     }
     px = w.x; py = w.y;
+    if (grabBody && pointerDown && e.pointerId === pointerId) jelloGrabTick(px, py);
     if (slimeGhost) { slimeGhost.x = px; slimeGhost.y = py; }
     e.preventDefault();
   });
@@ -10270,23 +9586,6 @@
     syncParticleUI();
   }
 
-  function syncGrabDebugUI() {
-    var btn = document.getElementById('toy-grab-debug');
-    if (!btn) return;
-    btn.classList.toggle('is-on', debugGrab);
-    btn.setAttribute('aria-pressed', debugGrab ? 'true' : 'false');
-  }
-
-  function setGrabDebug(on) {
-    debugGrab = !!on;
-    syncGrabDebugUI();
-    if (!debugGrab && debugCtx) {
-      grabDebugLast = null;
-      debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-      debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
-    }
-  }
-
   var gravInput = null, timeInput = null, brushInput = null, flowInput = null;
   function syncSliderUI() {
     if (gravInput) gravInput.value = String(Math.round(gravMul * 100));
@@ -10330,10 +9629,6 @@
     if (particlesBtn) particlesBtn.addEventListener('click', function () {
       setParticleDebug(!debugParticles);
     });
-    var grabDebugBtn = document.getElementById('toy-grab-debug');
-    if (grabDebugBtn) grabDebugBtn.addEventListener('click', function () {
-      setGrabDebug(!debugGrab);
-    });
     if (gravInput) gravInput.addEventListener('input', function () {
       gravMul = Math.max(0, Math.min(2, (+gravInput.value || 0) / 100));
       applyGravity(); syncSliderUI();
@@ -10354,12 +9649,9 @@
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       var map = { '1': 'draw', '2': 'erase', '3': 'water', '4': 'smoke', '5': 'slime', '6': 'poke' };
       if (map[e.key]) setTool(map[e.key]);
-      if ((e.key === 'd' || e.key === 'D') && !e.repeat &&
-          !e.metaKey && !e.ctrlKey && !e.altKey) setGrabDebug(!debugGrab);
     });
     setTool('draw');
     syncParticleUI();
-    syncGrabDebugUI();
     syncSliderUI();
   }
 
@@ -10621,232 +9913,8 @@
     ctx.restore();
   }
 
-  // A read-only picture of the entire grab controller. This deliberately
-  // lives on its own top canvas: water and smoke cannot cover the evidence,
-  // and switching it off removes both the draw cost and every diagnostic
-  // mark. The raw cursor, legal proxy and point targets are different things;
-  // showing all three is what makes a large visible grab error explainable.
-  function drawGrabDebug() {
-    if (!debugCtx || !debugCanvas) return;
-    if (!debugGrab) return;
-    var g = debugCtx;
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.save();
-    g.lineCap = 'round';
-    g.lineJoin = 'round';
-
-    var C_RAW = '#deb9cf';
-    var C_PROXY = '#8fb3c7';
-    var C_ANCHOR = '#dfc288';
-    var C_GOOD = '#9ec79a';
-    var C_BLOCK = '#d9978c';
-    var C_TEXT = '#e8e2d6';
-    var C_DIM = '#b8b2a2';
-    var C_RULE = '#5a675c';
-    var ringColor = ['#f5f1ea', '#dfc288', '#8fb3c7', '#b79bc4'];
-
-    function line(x0, y0, x1, y1, color, width, dash) {
-      g.strokeStyle = color; g.lineWidth = width || 1;
-      g.setLineDash(dash || []);
-      g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-      g.setLineDash([]);
-    }
-    function cross(x, y, r, color, width) {
-      line(x - r, y, x + r, y, color, width || 1.5);
-      line(x, y - r, x, y + r, color, width || 1.5);
-    }
-    function diamond(x, y, r, color, fill) {
-      g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y);
-      g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath();
-      if (fill) { g.fillStyle = color; g.fill(); }
-      g.strokeStyle = color; g.lineWidth = 1.5; g.stroke();
-    }
-    function arrow(x0, y0, x1, y1, color, label) {
-      var dx = x1 - x0, dy = y1 - y0;
-      var dl = Math.sqrt(dx * dx + dy * dy);
-      if (!(dl > 0.5)) return;
-      var ux = dx / dl, uy = dy / dl;
-      line(x0, y0, x1, y1, color, 1.6);
-      line(x1, y1, x1 - ux * 7 - uy * 4, y1 - uy * 7 + ux * 4, color, 1.6);
-      line(x1, y1, x1 - ux * 7 + uy * 4, y1 - uy * 7 - ux * 4, color, 1.6);
-      if (label) {
-        g.fillStyle = color;
-        g.font = '9px "Commit Mono", monospace';
-        g.fillText(label, x1 + 5, y1 - 5);
-      }
-    }
-    function label(text, x, y, color) {
-      g.fillStyle = color || C_TEXT;
-      g.font = '9px "Commit Mono", monospace';
-      g.fillText(text, x, y);
-    }
-    function n1(v) { return isFinite(v) ? v.toFixed(1) : 'n/a'; }
-
-    // Raw input is visible even before a body is acquired.
-    if (pointerIn || pointerDown) {
-      g.strokeStyle = C_RAW; g.lineWidth = 1.6;
-      g.beginPath(); g.arc(px, py, 8, 0, 6.2831853); g.stroke();
-      cross(px, py, 12, C_RAW, 1.2);
-      label('RAW CURSOR', px + 11, py - 10, C_RAW);
-    }
-
-    var body = grabBody;
-    var active = !!(body && grabIdx && grabIdx.length);
-    var cursorGap = active ? Math.hypot(grabTargetX - grabSolveX, grabTargetY - grabSolveY) : 0;
-    var anchorError = 0, maxError = 0;
-    var ringCounts = [0, 0, 0, 0];
-    var anchorGoalX = grabSolveX, anchorGoalY = grabSolveY;
-    var anchorX = anchorGoalX, anchorY = anchorGoalY;
-
-    if (active) {
-      var gapColor = cursorGap > Math.max(2, body.spacing * 0.5) ? C_BLOCK : C_GOOD;
-      line(grabTargetX, grabTargetY, grabSolveX, grabSolveY, gapColor, 1.4, [6, 4]);
-      diamond(grabSolveX, grabSolveY, 7, C_PROXY, false);
-      cross(grabSolveX, grabSolveY, 4, C_PROXY, 1.2);
-      label('LEGAL PROXY', grabSolveX + 10, grabSolveY + 15, C_PROXY);
-
-      // Every selected point gets both its current position and its controller
-      // target. The short connecting line is the actual positional error the
-      // compliant pinch is trying to close, not an inferred visual radius.
-      for (var gi = grabIdx.length - 1; gi >= 0; gi--) {
-        var pi = grabIdx[gi];
-        var ring = grabRing ? grabRing[gi] : 0;
-        if (ring < 0 || ring > 3) ring = 3;
-        ringCounts[ring]++;
-        var goalX = grabSolveX + grabFitC * grabOffX[gi] - grabFitS * grabOffY[gi];
-        var goalY = grabSolveY + grabFitS * grabOffX[gi] + grabFitC * grabOffY[gi];
-        var ex = goalX - body.px[pi], ey = goalY - body.py[pi];
-        var err = Math.sqrt(ex * ex + ey * ey);
-        if (err > maxError) maxError = err;
-        var color = ringColor[ring];
-        g.globalAlpha = ring === 0 ? 0.95 : 0.34 + (3 - ring) * 0.12;
-        line(body.px[pi], body.py[pi], goalX, goalY, color, ring === 0 ? 1.8 : 0.8);
-        g.beginPath();
-        g.arc(goalX, goalY, ring === 0 ? 4.5 : 2.2, 0, 6.2831853);
-        g.strokeStyle = color; g.lineWidth = 1; g.stroke();
-        g.beginPath();
-        g.arc(body.px[pi], body.py[pi], ring === 0 ? 4.5 : Math.max(1.7, 3.4 - ring * 0.45), 0, 6.2831853);
-        g.fillStyle = color; g.fill();
-        if (pi === grabAnchor) {
-          anchorGoalX = goalX; anchorGoalY = goalY;
-          anchorX = body.px[pi]; anchorY = body.py[pi]; anchorError = err;
-        }
-      }
-      g.globalAlpha = 1;
-      diamond(anchorGoalX, anchorGoalY, 6, C_ANCHOR, false);
-      label('ANCHOR GOAL', anchorGoalX + 9, anchorGoalY - 8, C_ANCHOR);
-      g.strokeStyle = C_TEXT; g.lineWidth = 2;
-      g.beginPath(); g.arc(anchorX, anchorY, 6, 0, 6.2831853); g.stroke();
-      label('CURRENT ANCHOR', anchorX + 9, anchorY + 14, C_TEXT);
-
-      // The material pivot makes torque and release rotation legible.
-      var cx = isFinite(grabFitCX) ? grabFitCX : body.cx;
-      var cy = isFinite(grabFitCY) ? grabFitCY : body.cy;
-      g.strokeStyle = C_ANCHOR; g.lineWidth = 1.2;
-      g.beginPath(); g.arc(cx, cy, 10, 0, 6.2831853); g.stroke();
-      cross(cx, cy, 5, C_ANCHOR, 1);
-      label('BODY PIVOT', cx + 12, cy - 8, C_ANCHOR);
-
-      // Contact geometry. The normal points toward the obstruction; the
-      // perpendicular dashed line is the legal tangent the proxy can follow.
-      if (grabBlockReason && grabBlockNX * grabBlockNX + grabBlockNY * grabBlockNY > 1e-8) {
-        arrow(grabSolveX, grabSolveY,
-              grabSolveX + grabBlockNX * 48, grabSolveY + grabBlockNY * 48,
-              C_BLOCK, 'BLOCK NORMAL');
-        var tx = -grabBlockNY, ty = grabBlockNX;
-        line(grabSolveX - tx * 38, grabSolveY - ty * 38,
-             grabSolveX + tx * 38, grabSolveY + ty * 38,
-             C_PROXY, 1, [4, 4]);
-        label('LEGAL TANGENT', grabSolveX + tx * 40 + 4, grabSolveY + ty * 40, C_PROXY);
-      }
-
-      // Enlarge the accepted substep so a 1 to 2 px solver move is visible.
-      if (Math.abs(grabAttemptDX) + Math.abs(grabAttemptDY) > 1e-5) {
-        arrow(grabSolveX, grabSolveY,
-              grabSolveX + grabAttemptDX * 8, grabSolveY + grabAttemptDY * 8,
-              C_GOOD, 'STEP x8');
-      }
-      var releaseSpeed = Math.hypot(grabReleaseVX, grabReleaseVY);
-      if (releaseSpeed > 1) {
-        var releaseScale = Math.min(0.10, 80 / releaseSpeed);
-        arrow(cx, cy, cx + grabReleaseVX * releaseScale, cy + grabReleaseVY * releaseScale,
-              C_GOOD, 'RELEASE');
-      }
-      jelloGrabSaveDebugSample(body);
-    }
-
-    var lastVisible = !active && grabDebugLast &&
-                      performance.now() - grabDebugLast.t < 5000;
-
-    // Fixed panel: exact numbers stay readable when labels overlap a small or
-    // badly deformed body. Compact screens receive the same facts split over
-    // more lines instead of shrinking the type into illegibility.
-    var compact = worldW < 560;
-    var panelX = 8, panelY = 8, panelW = Math.min(compact ? 310 : 520, worldW - 16);
-    var panelH = compact ? 156 : 125;
-    g.globalAlpha = 0.94;
-    g.fillStyle = 'rgba(30,36,32,0.92)';
-    g.fillRect(panelX, panelY, panelW, panelH);
-    g.globalAlpha = 1;
-    g.strokeStyle = C_RULE; g.lineWidth = 1;
-    g.strokeRect(panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1);
-    g.font = (compact ? '8px' : '10px') + ' "Commit Mono", monospace';
-    g.fillStyle = C_TEXT;
-    g.fillText('GRAB DEBUG  ' + (active ? 'ACTIVE' : lastVisible ? 'LAST RELEASE' : 'IDLE'),
-               panelX + 10, panelY + 16);
-
-    if (!active && !lastVisible) {
-      g.fillStyle = C_DIM;
-      g.fillText('Choose POKE, then press and hold a slime.', panelX + 10, panelY + 35);
-      g.fillText('The overlay is read-only. Physics is unchanged.', panelX + 10, panelY + 52);
-    } else {
-      var data = grabDebugLast;
-      var lines;
-      if (compact) {
-        lines = [
-          'state ' + data.reason + '  ' + data.applied,
-          'cursor gap ' + n1(data.cursorGap) + 'px  goal arm ' + n1(data.goalArm) + 'px',
-          'anchor error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
-          'anchor #' + data.anchor + '  shells ' + data.shells,
-          'step ' + n1(data.step) + '  grip ' + n1(data.grip) + '  alpha ' + n1(data.alpha),
-          'lead ' + n1(data.lead) + 'px  retry/stable ' + data.retry + '/' + data.stable,
-          'rejects ' + data.rejects + '  orient ' + n1(data.minRatio),
-          'release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
-        ];
-      } else {
-        lines = [
-          'state ' + data.reason + '  ' + data.applied + '  cursor gap ' + n1(data.cursorGap) + 'px',
-          'anchor #' + data.anchor + '  arm ' + n1(data.goalArm) + 'px  error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
-          'shells 0/1/2/3: ' + data.shells + '  step ' + n1(data.step) + '  grip ' + n1(data.grip) +
-            '  alpha ' + n1(data.alpha),
-          'lead ' + n1(data.lead) + 'px  retry/stable ' + data.retry + '/' + data.stable +
-            '  rejects ' + data.rejects + '  orient ' + n1(data.minRatio) +
-            (data.topologyMode ? '  progress ' + n1(data.topologyProgress) : ''),
-          'normal ' + n1(data.nx) + ',' + n1(data.ny) +
-            '  release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
-        ];
-      }
-      g.fillStyle = C_DIM;
-      var lineH = compact ? 14 : 17;
-      for (var li = 0; li < lines.length; li++) {
-        g.fillText(lines[li], panelX + 10, panelY + 34 + li * lineH);
-      }
-    }
-
-    // Small color key, kept at the panel's foot and useful even while idle.
-    var legendY = panelY + panelH - 10;
-    var legend = [[C_RAW, 'raw'], [C_PROXY, 'proxy'], [C_ANCHOR, 'goal'], [C_TEXT, 'anchor']];
-    var lx = panelX + 10;
-    g.font = '8px "Commit Mono", monospace';
-    for (var lg = 0; lg < legend.length; lg++) {
-      g.fillStyle = legend[lg][0]; g.fillRect(lx, legendY - 6, 6, 6);
-      g.fillText(legend[lg][1], lx + 9, legendY);
-      lx += compact ? 57 : 67;
-    }
-    g.restore();
-  }
+  // The public canvas never draws solver points, springs, topology, or grab
+  // targets. Numerical surface-carry state remains available to the harness.
 
   function render() {
     bakeWalls();
@@ -10857,7 +9925,6 @@
     drawJelloBlobs();
     drawCursor();
     drawLiquidToy();
-    drawGrabDebug();
   }
 
   function updateReadout() {
@@ -10875,41 +9942,27 @@
     // Headless/browser probe for the water-to-smoke handoff. Kept out of
     // the visible readout so the toy stays compact.
     readoutEl.setAttribute('data-smoke-water-flow-splats', String(smokeWaterFlowSplats));
-    readoutEl.setAttribute('data-grab-debug', debugGrab ? 'on' : 'off');
     readoutEl.setAttribute('data-pointer-down', pointerDown ? 'true' : 'false');
     readoutEl.setAttribute('data-pointer-x', px.toFixed(2));
     readoutEl.setAttribute('data-pointer-y', py.toFixed(2));
     readoutEl.setAttribute('data-slime-centers', jelloBodies.slice(0, 8).map(function (b) {
       return b.cx.toFixed(2) + ',' + b.cy.toFixed(2);
     }).join(';'));
-    var debugData = debugGrab ? grabDebugLast : null;
-    readoutEl.setAttribute('data-grab-active', grabBody ? 'true' : 'false');
-    readoutEl.setAttribute('data-grab-state', debugData ? debugData.reason : 'idle');
-    readoutEl.setAttribute('data-grab-rejects', debugData ? String(debugData.rejects) : '0');
-    readoutEl.setAttribute('data-grab-cursor-gap', debugData ? debugData.cursorGap.toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-goal-arm', debugData ? debugData.goalArm.toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-anchor-error', debugData ? debugData.anchorError.toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-step', debugData ? debugData.step.toFixed(4) : '1');
-    readoutEl.setAttribute('data-grab-grip', debugData ? debugData.grip.toFixed(4) : '1');
-    readoutEl.setAttribute('data-grab-retry', debugData ? String(debugData.retry) : '0');
-    readoutEl.setAttribute('data-grab-stable', debugData ? String(debugData.stable) : '0');
-    readoutEl.setAttribute('data-grab-alpha', debugData ? debugData.alpha.toFixed(4) : '1');
-    readoutEl.setAttribute('data-grab-lead', debugData ? debugData.lead.toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-topology-mode', debugData ? debugData.topologyMode : '');
-    readoutEl.setAttribute('data-grab-topology-progress', debugData ? debugData.topologyProgress.toFixed(4) : '0');
-    readoutEl.setAttribute('data-grab-cooldown', '0');
-    readoutEl.setAttribute('data-grab-min-orientation', debugData ? debugData.minRatio.toFixed(4) : '1');
-    var debugFolds = debugGrab && grabBody ? (jelloHasOrientationFold(grabBody) ? 1 : 0) : 0;
-    var debugCrossings = 0;
-    if (debugGrab && grabBody) {
-      for (var dbi = 0; dbi < jelloBodies.length; dbi++) {
-        var debugOther = jelloBodies[dbi];
-        if (debugOther !== grabBody && !debugOther._melting &&
-            jelloRingsCrossProper(grabBody, debugOther)) debugCrossings++;
-      }
-    }
-    readoutEl.setAttribute('data-grab-folds', String(debugFolds));
-    readoutEl.setAttribute('data-grab-crossings', String(debugCrossings));
+    readoutEl.setAttribute('data-actor-active', String(jelloBodies.reduce(function (count, b) {
+      return count + (b.actor && b.actor.enabled ? 1 : 0);
+    }, 0)));
+    var carryData = window.__slimeGrab ? window.__slimeGrab() : null;
+    readoutEl.setAttribute('data-grab-active', carryData && carryData.active ? 'true' : 'false');
+    readoutEl.setAttribute('data-grab-mode', carryData ? carryData.mode : 'free');
+    readoutEl.setAttribute('data-grab-cursor-gap', carryData ? carryData.gap.toFixed(3) : '0');
+    readoutEl.setAttribute('data-grab-anchor-error', carryData ? carryData.anchorError.toFixed(3) : '0');
+    readoutEl.setAttribute('data-grab-release-speed', carryData
+      ? (carryData.active
+        ? Math.hypot(carryData.releaseVX, carryData.releaseVY)
+        : carryData.lastReleaseSpeed).toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-travel', carryData ? carryData.sessionTravel.toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-max-anchor-error', carryData
+      ? carryData.maxAnchorError.toFixed(4) : '0');
   }
 
   function frame(tNow) {
@@ -11011,6 +10064,15 @@
     bootSmoke();
     wireUI();
     scene('falls');
+    // Opt-in browser probe for the public actor-intent seam. It deliberately
+    // speaks only in whole-body motion and pose, never solver topology.
+    if (location.search.indexOf('actortest=1') >= 0 && jelloBodies[2]) {
+      jelloSetActorIntent(jelloBodies[2], {
+        moveX: 1, speed: 150, accel: 1100,
+        poseX: 1.12, poseY: 0.9, poseFollow: 9,
+        wobble: 0.07, phaseSpeed: 5, state: 'browser-test'
+      });
+    }
     fitStage();
     bakeWalls();
     updateReadout();
@@ -11033,8 +10095,7 @@
           fps: Math.round(fpsEMA), waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
           scene: currentScene, tool: tool,
-          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
-          debugGrab: debugGrab
+          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles
         };
       },
       scene: scene,
@@ -11052,10 +10113,19 @@
         else if (k === 'brush') { brushR = +v; syncSliderUI(); }
         else if (k === 'flow') { waterFeel = Math.max(0, Math.min(1, +v || 0)); applyWaterFeel(); syncSliderUI(); }
         else if (k === 'particles') { setParticleDebug(!!v); }
-        else if (k === 'grabDebug') { setGrabDebug(!!v); }
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },
+      actor: function (i, intent) {
+        var b = jelloBodies[i];
+        return b ? jelloSetActorIntent(b, intent) : null;
+      },
+      clearActor: function (i) {
+        var b = jelloBodies[i];
+        if (!b) return false;
+        jelloClearActorIntent(b);
+        return true;
+      },
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
           waterFlowSplats: smokeWaterFlowSplats };

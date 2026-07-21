@@ -1026,6 +1026,92 @@
     }
   }
 
+  // Public control seam for future slime actors. An intent describes bulk
+  // motion and a smooth target pose. It never mentions solver points, springs,
+  // or a particular body topology, so round, tiled, triangular, and later
+  // authored silhouettes can share the same locomotion and behavior code.
+  function jelloActorFor(b) {
+    if (!b) return null;
+    if (!b.actor) {
+      b.actor = {
+        enabled: false,
+        moveX: 0, moveY: 0, hasMoveY: false,
+        speed: 120, accel: 900, follow: 12,
+        jump: 0,
+        poseX: 1, poseY: 1, poseFollow: 9,
+        wobble: 0, phase: 0, phaseSpeed: 0,
+        state: 'idle'
+      };
+    }
+    return b.actor;
+  }
+
+  function jelloSetActorIntent(b, intent) {
+    var a = jelloActorFor(b);
+    if (!a) return null;
+    intent = intent || {};
+    a.enabled = intent.enabled === undefined ? true : !!intent.enabled;
+    if (isFinite(intent.moveX)) a.moveX = Math.max(-1, Math.min(1, intent.moveX));
+    if (isFinite(intent.moveY)) {
+      a.moveY = Math.max(-1, Math.min(1, intent.moveY));
+      a.hasMoveY = true;
+    }
+    if (intent.moveY === null) a.hasMoveY = false;
+    if (isFinite(intent.speed)) a.speed = Math.max(0, intent.speed);
+    if (isFinite(intent.accel)) a.accel = Math.max(0, intent.accel);
+    if (isFinite(intent.follow)) a.follow = Math.max(0, intent.follow);
+    if (isFinite(intent.jump) && intent.jump > 0) a.jump = intent.jump;
+    if (isFinite(intent.poseX)) a.poseX = Math.max(0.55, Math.min(1.8, intent.poseX));
+    if (isFinite(intent.poseY)) a.poseY = Math.max(0.55, Math.min(1.8, intent.poseY));
+    if (isFinite(intent.poseFollow)) a.poseFollow = Math.max(0, intent.poseFollow);
+    if (isFinite(intent.wobble)) a.wobble = Math.max(0, Math.min(0.28, intent.wobble));
+    if (isFinite(intent.phaseSpeed)) a.phaseSpeed = intent.phaseSpeed;
+    if (typeof intent.state === 'string') a.state = intent.state;
+    if (a.enabled) { b.sleeping = false; b.sleepFrames = 0; b.frozen = false; }
+    return a;
+  }
+
+  function jelloClearActorIntent(b) {
+    var a = jelloActorFor(b);
+    if (!a) return;
+    a.enabled = false;
+    a.moveX = 0; a.moveY = 0; a.hasMoveY = false; a.jump = 0;
+    a.poseX = 1; a.poseY = 1; a.wobble = 0; a.phaseSpeed = 0;
+    a.state = 'idle';
+    b.poseSX = 1; b.poseSY = 1;
+  }
+
+  function jelloActuateBody(b, h) {
+    var a = b.actor;
+    if (!a || !a.enabled || b._carried || !(h > 0)) return;
+    var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var vx = 0, vy = 0;
+    for (var i = 0; i < n; i++) {
+      vx += (px[i] - ox[i]) / h;
+      vy += (py[i] - oy[i]) / h;
+    }
+    vx /= n; vy /= n;
+    var gain = Math.min(1, a.follow * h);
+    var dvx = (a.moveX * a.speed - vx) * gain;
+    var dvy = a.hasMoveY ? (a.moveY * a.speed - vy) * gain : 0;
+    var dvCap = a.accel * h;
+    var dv = Math.sqrt(dvx * dvx + dvy * dvy);
+    if (dv > dvCap && dv > 1e-8) { dvx *= dvCap / dv; dvy *= dvCap / dv; }
+    if (a.jump > 0) { dvy -= a.jump; a.jump = 0; }
+    for (i = 0; i < n; i++) {
+      ox[i] -= dvx * h;
+      oy[i] -= dvy * h;
+    }
+    a.phase += a.phaseSpeed * h;
+    var pulse = 1 + Math.sin(a.phase) * a.wobble;
+    var targetX = Math.max(0.55, Math.min(1.8, a.poseX * pulse));
+    var targetY = Math.max(0.55, Math.min(1.8, a.poseY / pulse));
+    var poseGain = Math.min(1, a.poseFollow * h);
+    b.poseSX = (b.poseSX || 1) + (targetX - (b.poseSX || 1)) * poseGain;
+    b.poseSY = (b.poseSY || 1) + (targetY - (b.poseSY || 1)) * poseGain;
+    b.sleeping = false; b.sleepFrames = 0;
+  }
+
   // Install a triangle HEALTH mesh from the spring graph. The round and
   // equilateral builders are already fully triangulated by their springs, but
   // historically did not retain explicit triangle topology, so the inversion
@@ -2016,10 +2102,14 @@
     if (b.rigidOnly || beta <= 0) { b.shL00 = R00; b.shL01 = R01; b.shL10 = R10; b.shL11 = R11; }
     else { b.shL00 = L00; b.shL01 = L01; b.shL10 = L10; b.shL11 = L11; }
     b.shFrame = jelloFrameNo;
-    // Pull each point toward its goal.
+    // Pull each point toward its goal. Actor pose scales are continuous body
+    // controls, independent of the hidden discretization and rest silhouette.
+    var poseSX = isFinite(b.poseSX) ? b.poseSX : 1;
+    var poseSY = isFinite(b.poseSY) ? b.poseSY : 1;
     for (i = 0; i < n; i++) {
-      var gx = T00 * qx[i] + T01 * qy[i] + cx;
-      var gy = T10 * qx[i] + T11 * qy[i] + cy;
+      var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
+      var gx = T00 * pqx + T01 * pqy + cx;
+      var gy = T10 * pqx + T11 * pqy + cy;
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
     }
@@ -2930,7 +3020,8 @@
     // the pen wall). After the third acceptance grant the fold is proven
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
-    if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle or mid-recovery
+    if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !b._carried &&
+          !(b.actor && b.actor.enabled) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
       b.sleepFrames++;
       if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
         b._forceSleep = false;
@@ -4035,6 +4126,7 @@
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
     var resilienceGuard = jelloResilienceStepBegin(b);
+    jelloActuateBody(b, h);
     jelloIntegrate(b, h);
     // The public physics toy installs this optional compliant pointer grip.
     // The game has no direct mouse grab, so the typeof branch is a clean no-op.
@@ -5692,7 +5784,12 @@
           jelloGrabAcceptStep(b);
         }
       }
-      for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve) jelloClampVelocity(b, h); }
+      for (ai = 0; ai < nActive; ai++) {
+        b = active[ai];
+        if (!b._solve) continue;
+        jelloClampVelocity(b, h);
+        if (typeof jelloDrivePostSubstep === 'function') jelloDrivePostSubstep(b, h);
+      }
       if (devMode) _phTail += performance.now() - _phT0;
     }
     if (devMode && totalSteps > 0) {
@@ -6035,50 +6132,33 @@
     }
   }
 
-  // The visible texture is the actual live spring lattice. Drawing its current
-  // point positions makes the whole material reveal rotation, shear, stretch,
-  // and squash without a decorative animation or the large debug-particle
-  // circles. Shear braces sit behind structural edges; tiny joint pins make the
-  // topology readable without swelling the body's collision silhouette.
-  function jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha) {
-    if (!b.sA || !b.sB || !(b.springN > 0)) return;
-    var px = b.px, py = b.py, sA = b.sA, sB = b.sB, sType = b.sType;
-    var spacing = b.spacing || (TILE / JELLO_NPT);
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // Diagonal/shear braces first, then the stronger structural lattice.
-    ctx.strokeStyle = 'hsla(' + (hue - 10) + ',' + jelloClampPct(54 * satMul) + '%,' +
-      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.14).toFixed(3) + ')';
-    ctx.lineWidth = Math.max(0.42, spacing * 0.075);
-    ctx.beginPath();
-    for (var s = 0; s < b.springN; s++) {
-      if (!sType || !sType[s]) continue;
-      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = 'hsla(' + (hue + 12) + ',' + jelloClampPct(74 * satMul) + '%,' +
-      jelloClampPct(78 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
-    ctx.lineWidth = Math.max(0.58, spacing * 0.105);
-    ctx.beginPath();
-    for (s = 0; s < b.springN; s++) {
-      if (sType && sType[s]) continue;
-      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
-    }
-    ctx.stroke();
-
-    var jointR = Math.max(0.42, Math.min(0.9, spacing * 0.105));
-    ctx.fillStyle = 'hsla(' + (hue + 18) + ',' + jelloClampPct(82 * satMul) + '%,' +
-      jelloClampPct(86 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')';
-    ctx.beginPath();
-    for (var p = 0; p < b.n; p++) {
-      ctx.moveTo(px[p] + jointR, py[p]);
-      ctx.arc(px[p], py[p], jointR, 0, 6.2831853);
-    }
-    ctx.fill();
-    ctx.restore();
+  // A continuous depth wash gives the gel material variation without exposing
+  // the solver mesh. Physics points and springs are implementation details.
+  // Public shading is derived only from the body's silhouette, bulk motion,
+  // and smooth best-fit deformation.
+  function jelloDrawMaterialVolume(b, hue, satMul, lightAdd, alpha) {
+    var l = b.bboxL, r = b.bboxR, t = b.bboxT, bm = b.bboxB;
+    var w = r - l, h = bm - t;
+    if (!(w > 1 && h > 1)) return;
+    var cx = isFinite(b.cx) ? b.cx : (l + r) * 0.5;
+    var cy = isFinite(b.cy) ? b.cy : (t + bm) * 0.5;
+    var vx = isFinite(b.vx) ? b.vx : 0;
+    var vy = isFinite(b.vy) ? b.vy : 0;
+    var driftX = Math.max(-w * 0.12, Math.min(w * 0.12, -vx * 0.012));
+    var driftY = Math.max(-h * 0.10, Math.min(h * 0.10, -vy * 0.008));
+    var radius = Math.max(w, h) * 0.72;
+    var depth = ctx.createRadialGradient(
+      cx + driftX - w * 0.12, cy + driftY - h * 0.16, 0,
+      cx + driftX, cy + driftY, radius
+    );
+    depth.addColorStop(0, 'hsla(' + (hue + 12) + ',' + jelloClampPct(88 * satMul) + '%,' +
+      jelloClampPct(82 + lightAdd) + '%,' + (alpha * 0.16).toFixed(3) + ')');
+    depth.addColorStop(0.48, 'hsla(' + hue + ',' + jelloClampPct(82 * satMul) + '%,' +
+      jelloClampPct(58 + lightAdd) + '%,' + (alpha * 0.035).toFixed(3) + ')');
+    depth.addColorStop(1, 'hsla(' + (hue - 8) + ',' + jelloClampPct(74 * satMul) + '%,' +
+      jelloClampPct(30 + lightAdd) + '%,' + (alpha * 0.18).toFixed(3) + ')');
+    ctx.fillStyle = depth;
+    ctx.fillRect(l, t, w, h);
   }
 
   function jelloDrawBody(b) {
@@ -6180,8 +6260,7 @@
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
 
-    // The complete live lattice is the material texture, not a debug overlay.
-    jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha);
+    jelloDrawMaterialVolume(b, hue, satMul, lightAdd, alpha);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
@@ -6509,6 +6588,9 @@
       sanitize: jelloSanitizeBody,
       applyFeel: jelloApplyFeel,
       cycleFeel: jelloCycleFeel,
+      setActorIntent: jelloSetActorIntent,
+      clearActorIntent: jelloClearActorIntent,
+      actor: jelloActorFor,
       feels: JELLO_FEELS,
       totalPoints: jelloTotalPoints,
       player: function () { return player; },
