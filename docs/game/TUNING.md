@@ -315,7 +315,6 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | (v24.158 awake-stray endgame) | — | — | Perf panel on the owner's lake showed 44789 AWAKE / 24 sleeping — the accumulating fat discs + mid-air freezes were AWAKE strays (wedged on terrain, jittering ~4-5 px/s: too fast to ever sleep, too slow to fall), which the v24.156 SLEEP-GATED evaporation never touched. FIX: evaporation decoupled from sleep — any non-frozen particle with <24 neighbours AND speed²<36 (slow) evaporates regardless of sleep state (neighbour+velocity guards keep bodies/streams safe). Plus the splat size curve steepened: sub-rest-density (dn<1) falls off QUADRATICALLY (`0.2+1.3·dn²`) so a half-density stray is ~1.6 px not ~3, while body (dn≥1) stays at the 1.5 cap (no static-TV); pointSize floor 1.15→0.8 |
 | `LIQUID_SURFACE_THRESH` `edit²` | `1.8` | 0.5–3 | v24.162 — was 0.85. Metaball visibility threshold: a lone particle splats a field peak of ~1.0, a real body stacks to 10-50, so THRESH−SOFT=1.0 makes SINGLE particles invisible (the proven "giant single particles" fix) while bodies stay fully solid. Keep size at 1.8 (do NOT shrink — that caused the v24.154 static-TV). Live gm lever |
 | `LIQUID_SURFACE_SOFT` `edit²` | `0.8` | 0.1–1.5 | v24.162 — was 0.35. Smoothstep half-width; lower edge (THRESH−SOFT) = one-particle peak so singletons fully drop out |
-| `LIQUID_SURFACE_BLUR` | `0` | 0–6 | v26.46 post-field reconstruction radius in device px. The game ships 0 and takes the exact old one-sample branch. The standalone demo's goopy endpoint reaches 6 and applies a 5-by-5 Gaussian field sample before thresholding, closing gaps between settled density islands without enlarging particle splats. The droplet coverage pass samples the same reconstruction, and terrain still clips the final fragments. Live through `setRenderParam('SURFACE_BLUR', value)` |
 | `water.DBG_PARTICLES` | `0` | 0/1 | v24.161 PARTICLE PROOF overlay (WebGPU render only): draws every particle as its own tiny hard dot (fixed 3.6px device, NO density scaling, NO metaball merge), coloured by a per-index hash, ON TOP of the water. Diagnostic for "is that giant thing one particle or a merged cluster" — a single particle = one lone dot, a cluster = the circle fills with a speckle of many colours. Separate `dbgDotsPipeline` (reuses the render bind group); a build failure leaves it null and never touches the live render. Toggle in the L panel water group |
 | `LIQUID_CALM_RAMP` | `1.2` | 0.2–4 | Seconds for calm 0→1 (brake + viscosity fade-in) once quiet. gm `water.CALM_RAMP` |
 | `LIQUID_CALM_MAX` | `0` | 0–1 | v25.39 — REST LIVELINESS CAP: the calm ramp parks here instead of 1.0. **v25.41 — DEFAULT 0 (the owner: water must never brake/settle/freeze on screen): with the popcorn fixed at the physics root (`LIQUID_PRESSURE_MAX_DV`, §2.10), the whole brake/settle/freeze machinery is dormant — water is pure fluid at all times on screen and is QUIETER at rest (fast 0, mean 1.5 px/s) than the machinery ever made it. Per-particle off-screen freezing (camera-distance) is untouched.** Raise toward 0.5 for the mid-settle brake shimmer, 1 = the old full grind + freeze latch. gm `water.CALM_MAX` (live) |
@@ -504,19 +503,25 @@ async CPU mirror and REMOVE mutation ops; it is not part of the shared WebGPU
 solver. The game keeps its fuller orphan wake, hang test, and housekeeping
 accounting in `070-collision-liquids.js`.
 
-**v26.46 goopy field reconstruction:** the standalone slider's original
-goopy physics remains `GRID_VISC = 0.65`, `DAMPING = 0.992`,
-`WATER_MOTION_SCALE = 0.97`, and `AIR_DRAG = 0.99`. That endpoint can settle
-the pool into small density islands, which the compact v26.17 renderer exposed
-as one large round field blob per island. The proof overlay showed several
-fixed 3.6-device-pixel particles inside each apparent giant. The shared
-renderer now has a default-zero `SURFACE_BLUR` path. The demo drives it with
-the same cubic syrup weight from 0 to 6 device px and pairs it with
-`SURFACE_THRESH` 1.8 to 0.5 and `SURFACE_SOFT` 0.8 to 0.25. A 5 by 5 Gaussian
-sample closes the inter-island gaps before compositing. The droplet coverage
-test samples the same reconstructed field, and final terrain clipping remains
-after reconstruction. Sluice leaves blur at 0 and takes the original single
-texture-load branch.
+**v26.50 stable consistency clock:** the v26.46 standalone experiment was
+wrong. It tied the goopy slider to a 0 to 6 device px field blur while lowering
+`SURFACE_THRESH` from 1.8 to 0.5 and `SURFACE_SOFT` from 0.8 to 0.25. That
+expanded the visible surface before the physics moved. Removing those render
+changes exposed the older material failure: the far-left endpoint restored
+`GRID_VISC = 0.65`, `DAMPING = 0.992`, and `WATER_MOTION_SCALE = 0.97` on every
+substep. The pool reorganized into a sparse lattice within a fraction of a
+second, and the compact renderer honestly revealed one round field island per
+group. Even small grid-viscosity increases eventually reproduced the lattice.
+
+The blur path and its extra 16 uniform bytes are removed from the shared
+renderer. The standalone consistency control now keeps `GRID_VISC = 0.02`,
+`DAMPING = 1`, `WATER_MOTION_SCALE = 1`, `AIR_DRAG = 0.996`, and every render
+parameter fixed. Its cubic syrup weight changes only the water material clock,
+from 45 percent at very goopy to 100 percent at very watery, multiplied by the
+ordinary time slider. The same stable equations therefore run at both ends,
+particle packing stays continuous, and switching endpoints cannot resize the
+surface. Repeated endpoint switches and a ten-second far-left hold stayed solid
+at 120 fps in the 29,000 to 39,000-particle Falls scene.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

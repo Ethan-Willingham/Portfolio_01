@@ -72,15 +72,15 @@
  * actor-intent seam drives later locomotion and pose changes without referring
  * to the body's internal discretization.
  *
- * v3.31 goopy-render contract: the consistency slider keeps its existing
- * physics endpoints, while the far-left end reconstructs the settled density
- * field before compositing. Real particles and their collision footprint keep
- * their fixed size; only the dark gaps between nearby field islands close.
+ * v4.3 stable-consistency contract: the water material clock moves from 45 to
+ * 100 percent, while solver packing and every render dimension remain fixed.
+ * The failed field blur and the lattice-forming viscosity, damping, and motion
+ * transfer endpoints are gone.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.2';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.3';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9607,7 +9607,11 @@
 
   function applyTimescale() {
     var t = Math.max(0.05, timeMul);
-    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', 1.55 * t);
+    var syrup = Math.pow(1 - Math.max(0, Math.min(1, waterFeel)), 3);
+    var waterRate = 1.0 - 0.55 * syrup;
+    if (liquidWGPU && liquidWGPU.setSimParam) {
+      liquidWGPU.setSimParam('TIMESCALE', 1.55 * t * waterRate);
+    }
     JELLO_TIMESCALE = 0.5 * t;
   }
 
@@ -9621,21 +9625,18 @@
 
   function applyWaterFeel() {
     if (!liquidWGPU || !liquidWGPU.setSimParam) return;
-    var t = Math.max(0, Math.min(1, waterFeel));
-    // Most of the slider is useful water; the cubic syrup weight reserves
-    // the far-left end for the deliberately extreme compounded drag. The
-    // far-right values are byte-for-byte the stable v3.9 host tune.
-    var syrup = Math.pow(1 - t, 3);
+    // Every tested increase in this solver's grid-viscosity term reorganized
+    // the pool into a sparse lattice. The material slider therefore keeps the
+    // stable water equations fixed and changes their clock in applyTimescale.
+    // This slows the complete response without changing particle packing.
     liquidWGPU.setSimParam('CALM', 0);
-    liquidWGPU.setSimParam('GRID_VISC', 0.02 + 0.63 * syrup);
-    liquidWGPU.setSimParam('DAMPING', 1.0 - 0.008 * syrup);
-    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0 - 0.03 * syrup);
-    liquidWGPU.setSimParam('AIR_DRAG', 0.996 - 0.006 * syrup);
-    if (liquidWGPU.setRenderParam) {
-      liquidWGPU.setRenderParam('SURFACE_BLUR', 6.0 * syrup);
-      liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8 - 1.3 * syrup);
-      liquidWGPU.setRenderParam('SURFACE_SOFT', 0.8 - 0.55 * syrup);
-    }
+    liquidWGPU.setSimParam('GRID_VISC', 0.02);
+    liquidWGPU.setSimParam('DAMPING', 1.0);
+    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
+    liquidWGPU.setSimParam('AIR_DRAG', 0.996);
+    applyTimescale();
+    // Render parameters intentionally do not belong in this handler. The
+    // consistency control changes dynamics, never visual particle footprint.
   }
 
   function applyParticleDebug() {
