@@ -301,10 +301,10 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_REST_BRAKE_HARD_VSQ` `edit²` | `100` | 25–400 | Hard-brake stage below this |v|² (10 px/s) |
 | `LIQUID_REST_BRAKE_HARD` `edit²` | `0.75` | 0.6–0.9 | Hard brake multiplier. CAUTION: 0.55 destabilised the pressure solver (churn went UP); do not crank. Also do NOT remove: an A/B with the brake off plateaued at ~14 px/s with zero sleep even under grid viscosity |
 | `LIQUID_GRID_VISC` `edit²` | `0.45` | 0–0.6 | v24.115 — per-substep blend of each massy cell's velocity toward its massy 4-neighbour average (momentum diffusion). THE rest-calm lever: cancels the clamped-EOS limit-cycle standing waves; 0 disables, high = syrupy splashes. Live gm lever |
-| `LIQUID_QUIET_VISC` | `0.027` | 0–0.12 | v26.52 local low-energy neighbour blend. Unlike `GRID_VISC`, it fades out with cell speed and local shear, requires supported water, and never rides the whole-body calm ramp. Removes microscopic anti-phase chatter while coherent slosh passes almost unchanged. gm `water.QUIET_VISC` |
-| `LIQUID_QUIET_SPEED` | `34` | 8–80 px/s | v26.52 absolute-speed disengagement gate. The filter is full below 40 percent of this value and smoothly reaches zero here. gm `water.QUIET_SPEED` |
-| `LIQUID_QUIET_SHEAR` | `11` | 3–30 px/s | v26.52 neighbour-difference disengagement gate. The filter is full below 30 percent of this value and smoothly reaches zero here. A wave or impact should cross this before its coherent motion is shortened. gm `water.QUIET_SHEAR` |
-| `LIQUID_QUIET_SUPPORT` | `3` | 0–4 | v26.52 massy cardinal neighbours required before quiet filtering can apply. Low-support cells keep the raw solve. A coherent airborne particle is also unchanged because its neighbour delta is approximately zero. gm `water.QUIET_SUPPORT` |
+| `LIQUID_QUIET_VISC` | `0.026` | 0–0.12 | v26.53 local low-energy neighbour blend. Unlike `GRID_VISC`, it fades out with cell speed and local shear and never rides the whole-body calm ramp. It now accepts two massy cardinal neighbours so a one-cell-thick sheet is covered. gm `water.QUIET_VISC` |
+| `LIQUID_QUIET_SPEED` | `43` | 8–80 px/s | v26.53 absolute-speed disengagement gate shared by the relative filter and tail brake. Both smoothly reach zero here, so deliberate impacts stay raw. gm `water.QUIET_SPEED` |
+| `LIQUID_QUIET_SHEAR` | `11` | 3–30 px/s | v26.53 neighbour-difference disengagement gate for the grid blend. The filter is full below 30 percent of this value and smoothly reaches zero here. gm `water.QUIET_SHEAR` |
+| `LIQUID_QUIET_DRAG` | `0.0032` | 0–0.02 | v26.53 per-substep low-speed tail brake. It shortens coherent body-water slosh only below `QUIET_SPEED`; a density gate fades it out below 0.55 and removes it by 0.30 so airborne spray keeps its arc. gm `water.QUIET_DRAG` |
 | `LIQUID_SIM_FORCE_EVERY` | `12` | 6–30 | Heartbeat — force a full sim step every N frames (legacy idle-skip path; the v24.145 freeze supersedes it while `FREEZE`=1) |
 | `LIQUID_SIM_PLAYER_VEL_GATE` | `8` | 4–20 | Player speed below which "calm" skip is allowed |
 | `LIQUID_FREEZE` | `1` | 0/1 | v24.145 WATER STATE MACHINE master: 1 = whole-body freeze when settled (stepping stops entirely; only a stimulus thaws), 0 = legacy idle-skip heartbeat. gm `water.FREEZE` |
@@ -473,13 +473,13 @@ before a host can retune uniforms. Stage 5 reports up to four particles as
 opposite sides of the hard 3 px/s sleep threshold; identity bits or any other
 flag mismatch still fail the boot check.
 
-The standalone v4.5 host uses `GRID_VISC = 0`, `DAMPING = 1.0`,
+The standalone v4.6 host uses `GRID_VISC = 0`, `DAMPING = 1.0`,
 `WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996` across the entire water
 control. It does not change `LIQUID_GRAVITY`, pressure, the fixed
 1/120-second quantum, or the 1.55 playback timescale. Stability continues to
 come from `LIQUID_PRESSURE_MAX_DV`, the density cap, min-separation pass,
 pre-advection CFL cap, swept terrain collision, and the v26.14 guest-union
-collision. The control changes only the v26.52 quiet-shear gates described
+collision. The control changes only the v26.53 two-scale quiet filter described
 below. The toolbar's **particles** button only switches the existing
 `DBG_PARTICLES` proof-dot render pass; it never changes simulation state.
 
@@ -503,7 +503,7 @@ async CPU mirror and REMOVE mutation ops; it is not part of the shared WebGPU
 solver. The game keeps its fuller orphan wake, hang test, and housekeeping
 accounting in `070-collision-liquids.js`.
 
-**v26.52 lively-rest water:** the v26.46 to v26.51 goopy experiments are
+**v26.53 calm-range water:** the v26.46 to v26.51 goopy experiments are
 retired. The first tied the standalone slider to `GRID_VISC = 0.65`,
 `DAMPING = 0.992`, `WATER_MOTION_SCALE = 0.97`, `AIR_DRAG = 0.99`, and a
 25-sample field reconstruction. That endpoint separated particle packing into
@@ -514,21 +514,29 @@ motion because gravity and every splash played at the reduced rate.
 The shared renderer is back to its compact one-sample surface path, with no
 `SURFACE_BLUR` uniform or extra render lanes. Global water runs at full time,
 `DAMPING = 1`, `WATER_MOTION_SCALE = 1`, and `GRID_VISC = 0` while lively.
-The new `quiet` SimParams vec4 adds one branch inside the existing grid-update
-dispatch, not another pass. It measures absolute cell speed and disagreement
-with the massy cardinal-neighbour mean in world px/s. A smooth product of those
-two gates scales `QUIET_VISC`; at speed or shear the coefficient is zero.
-Oil is excluded, and fewer than `QUIET_SUPPORT` massy neighbours also exclude a
-cell. The filter changes only relative motion, so a coherent slosh, stream, or
-airborne group retains its shared velocity. Wakes and terrain boundaries run
-after the filter. The pressure shock limiter continues to remove one-substep
-numerical popcorn while a real impact can earn the cap again on every substep.
+The `quiet` SimParams vec4 adds branches inside the existing grid-update and
+G2P dispatches, not another pass. The relative stage measures absolute cell
+speed and disagreement with the massy cardinal-neighbour mean in world px/s.
+It now accepts two massy neighbours, which includes a one-cell-thick horizontal
+or vertical sheet that the v26.52 three-neighbour rule excluded.
 
-The standalone control is now **calmer to very lively**, with balanced at 55
-percent. It maps `QUIET_VISC` 0.040 to 0.016, `QUIET_SPEED` 42 to 28 px/s, and
-`QUIET_SHEAR` 14 to 9 px/s. Time, gravity, pressure, air drag, rendering, and
-particle footprint do not move. Both endpoints retain intentional splash;
-only the lifetime of microscopic dregs and small ripples changes.
+The fourth quiet lane is now `QUIET_DRAG`, a separate smooth tail brake. It
+removes shared momentum only below `QUIET_SPEED`, solving the other v26.52
+blind spot: coherent slosh has no neighbour disagreement and therefore passed
+the relative filter unchanged. A density smoothstep makes the brake full in
+supported body water, fades it below density ratio 0.55, and removes it by
+0.30. High-speed impacts and separated spray therefore stay raw. The extra
+work is one uniform branch inside each existing dispatch, with no buffer, pass,
+or render cost added. Wakes and terrain boundaries still run after the grid
+filter. The pressure shock limiter continues to own one-substep popcorn.
+
+The standalone control is now **very calm to very lively**, with balanced at
+55 percent. Its quadratic calm response maps `QUIET_VISC` 0.058 to 0.018,
+`QUIET_SPEED` 70 to 36 px/s, `QUIET_SHEAR` 20 to 9 px/s, and `QUIET_DRAG`
+0.011 to 0.0012. Very calm decisively settles a thin sheet after a disturbance;
+very lively still loses its low-speed tail eventually. Time, gravity, pressure,
+air drag, rendering, and particle footprint do not move, so both endpoints
+retain intentional high-speed splash without replaying it in slow motion.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

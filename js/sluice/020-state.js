@@ -343,15 +343,15 @@
                                       // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
                                       // v24.152 0.05, v24.157 0.10; the settled grind still gets the
                                       // full LIQUID_GRID_VISC lever value as calm ramps.)
-  // v26.52 — energy-selective quiet filter. It removes only microscopic
-  // neighbour disagreement from slow, supported water. A coherent wave has
-  // almost no disagreement to remove; impacts and pours cross the smooth
-  // speed/shear gates; airborne particles keep their shared trajectory.
-  // This is always continuous and never sleeps or freezes on-screen water.
-  var LIQUID_QUIET_VISC = 0.027;
-  var LIQUID_QUIET_SPEED = 34;         // px/s: fully disengaged by this speed
-  var LIQUID_QUIET_SHEAR = 11;         // px/s: fully disengaged by this local delta
-  var LIQUID_QUIET_SUPPORT = 3;        // massy cardinal neighbours required
+  // v26.53 — two-scale quiet filter. The grid blend removes microscopic
+  // disagreement and now includes one-cell-thick sheets. The tail brake
+  // removes shared momentum only after supported body water falls below its
+  // smooth speed gate. High-speed impacts and density-separated spray remain
+  // raw; no stage sleeps, freezes, slows the material clock, or changes size.
+  var LIQUID_QUIET_VISC = 0.026;
+  var LIQUID_QUIET_SPEED = 43;         // px/s: both quiet stages disengage here
+  var LIQUID_QUIET_SHEAR = 11;         // px/s: grid blend disengages by this delta
+  var LIQUID_QUIET_DRAG = 0.0032;      // per-substep supported-water tail brake
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992

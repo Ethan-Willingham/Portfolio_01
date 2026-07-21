@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.52';
+  var GAME_VERSION = 'v26.53';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1677,15 +1677,15 @@
                                       // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
                                       // v24.152 0.05, v24.157 0.10; the settled grind still gets the
                                       // full LIQUID_GRID_VISC lever value as calm ramps.)
-  // v26.52 — energy-selective quiet filter. It removes only microscopic
-  // neighbour disagreement from slow, supported water. A coherent wave has
-  // almost no disagreement to remove; impacts and pours cross the smooth
-  // speed/shear gates; airborne particles keep their shared trajectory.
-  // This is always continuous and never sleeps or freezes on-screen water.
-  var LIQUID_QUIET_VISC = 0.027;
-  var LIQUID_QUIET_SPEED = 34;         // px/s: fully disengaged by this speed
-  var LIQUID_QUIET_SHEAR = 11;         // px/s: fully disengaged by this local delta
-  var LIQUID_QUIET_SUPPORT = 3;        // massy cardinal neighbours required
+  // v26.53 — two-scale quiet filter. The grid blend removes microscopic
+  // disagreement and now includes one-cell-thick sheets. The tail brake
+  // removes shared momentum only after supported body water falls below its
+  // smooth speed gate. High-speed impacts and density-separated spray remain
+  // raw; no stage sleeps, freezes, slows the material clock, or changes size.
+  var LIQUID_QUIET_VISC = 0.026;
+  var LIQUID_QUIET_SPEED = 43;         // px/s: both quiet stages disengage here
+  var LIQUID_QUIET_SHEAR = 11;         // px/s: grid blend disengages by this delta
+  var LIQUID_QUIET_DRAG = 0.0032;      // per-substep supported-water tail brake
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -10001,6 +10001,7 @@
         liquidWGPU.setSimParam('CALM', 0);
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
         liquidWGPU.setSimParam('QUIET_VISC', 0);
+        liquidWGPU.setSimParam('QUIET_DRAG', 0);
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -10104,13 +10105,13 @@
       // pristine targets stay in 010/020); a lever change is re-blended
       // here next frame, so the one-frame overwrite is invisible.
       liquidWGPU.setSimParam('GRID_VISC', liquidGridViscEff);
-      // v26.52 quiet-shear filter: these gates are local to each cell, so the
-      // world can contain a faintly sloshing pool and ballistic spray in the
-      // same substep. They do not ride the old whole-body calm ramp.
+      // v26.53 two-scale quiet filter: the relative grid blend and the smooth
+      // supported-water tail brake can settle a thin sheet while an impact or
+      // density-separated spray remains raw in the same substep.
       liquidWGPU.setSimParam('QUIET_VISC', LIQUID_QUIET_VISC);
       liquidWGPU.setSimParam('QUIET_SPEED', LIQUID_QUIET_SPEED);
       liquidWGPU.setSimParam('QUIET_SHEAR', LIQUID_QUIET_SHEAR);
-      liquidWGPU.setSimParam('QUIET_SUPPORT', LIQUID_QUIET_SUPPORT);
+      liquidWGPU.setSimParam('QUIET_DRAG', LIQUID_QUIET_DRAG);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }
@@ -59614,9 +59615,8 @@
           function (v) { LIQUID_GRID_VISC = v; gmSetWaterSim('GRID_VISC', v); },
           0, 0.6, undefined);
       }
-      // v26.52 — local low-energy filter. Unlike GRID_VISC, this does not
-      // touch energetic or high-shear water and never rides the global calm
-      // state, so it can quiet numerical dregs without shortening a slosh.
+      // v26.53 — two-scale low-energy filter. The relative stage removes
+      // numerical chatter; the tail stage shortens only slow body-water slosh.
       if (typeof LIQUID_QUIET_VISC !== 'undefined') {
         gmRegisterLever('water.QUIET_VISC', 'water', 'QUIET_VISC (micro-jitter only)',
           function () { return LIQUID_QUIET_VISC; },
@@ -59635,11 +59635,11 @@
           function (v) { LIQUID_QUIET_SHEAR = v; gmSetWaterSim('QUIET_SHEAR', v); },
           3, 30, undefined);
       }
-      if (typeof LIQUID_QUIET_SUPPORT !== 'undefined') {
-        gmRegisterLever('water.QUIET_SUPPORT', 'water', 'QUIET_SUPPORT (neighbours)',
-          function () { return LIQUID_QUIET_SUPPORT; },
-          function (v) { LIQUID_QUIET_SUPPORT = v; gmSetWaterSim('QUIET_SUPPORT', v); },
-          0, 4, 1);
+      if (typeof LIQUID_QUIET_DRAG !== 'undefined') {
+        gmRegisterLever('water.QUIET_DRAG', 'water', 'QUIET_DRAG (slow tail)',
+          function () { return LIQUID_QUIET_DRAG; },
+          function (v) { LIQUID_QUIET_DRAG = v; gmSetWaterSim('QUIET_DRAG', v); },
+          0, 0.02, undefined);
       }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
@@ -61636,10 +61636,10 @@
         'fly.acc': 5,                          // horizontal steering authority
         // --- v25.42 popcorn-fix trio: the owner's live water-feel dials ---
         'water.PRESSURE_MAX_DV': 1,            // THE pop killer (px/s per substep; 0 = old popcorn)
-        'water.QUIET_VISC': 2,                 // v26.52 low-energy relative filter, never bulk damping
+        'water.QUIET_VISC': 2,                 // v26.53 low-energy relative filter
         'water.QUIET_SPEED': 2.1,              // absolute-speed disengagement gate
         'water.QUIET_SHEAR': 2.2,              // local-difference disengagement gate
-        'water.QUIET_SUPPORT': 2.3,            // massy cardinal-neighbour requirement
+        'water.QUIET_DRAG': 2.3,               // smooth low-speed body-water tail brake
         'water.AIR_DRAG': 3,                   // airborne droplet deceleration (1 = off)
         'water.COHESION': 4,                   // DANGER: explosive above 0; supervised A/B only
         // --- v25.44 honey dials: how watery flow feels (1.0/1.0/0 = raw) ---
