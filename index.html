@@ -87,11 +87,9 @@
     .hs-input::placeholder { color: var(--text-faint); }
     .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
     /* the rest-state hint: a quiet "Search" label beside the magnifier (so the
-       collapsed field is discoverable as search), plus the / key on real
-       keyboards. Hidden once the field is open; the placeholder takes over. */
+       collapsed field is discoverable as search). Hidden once the field is
+       open; the placeholder takes over. (Pressing / still focuses it.) */
     .hs-hint { flex: none; display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); white-space: nowrap; }
-    .hs-kbd { display: none; font-family: var(--font-mono); font-size: 0.66rem; line-height: 1; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 4px; padding: 0.16rem 0.34rem; }
-    @media (hover: hover) and (pointer: fine) { .hs-kbd { display: inline-block; } }
     .home-search.is-open .hs-hint { display: none; }
     /* About + Archive: quiet links at the right end of the rule, no pill, split
        by a hairline so they read as a pair. */
@@ -229,7 +227,7 @@
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
             <input class="hs-input" type="search" placeholder="Search every post" aria-label="Search every post" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
-            <span class="hs-hint" aria-hidden="true">Search<kbd class="hs-kbd">/</kbd></span>
+            <span class="hs-hint" aria-hidden="true">Search</span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
