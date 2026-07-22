@@ -22,7 +22,14 @@
 @media (min-width: 720px) { .site-header { margin-bottom: 2.6rem; } }
 
 /* ---- search: magnifier that slides open into a full input, the same as home ---- */
-.home-search { position: relative; display: flex; align-items: center; gap: 1rem; margin-top: 1.6rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--rule); }
+.home-search { position: relative; display: flex; align-items: center; gap: 1rem; margin-top: 1.6rem; padding-bottom: 0.8rem; }
+/* Masked hairline: the rule under the search dissolves at both ends instead of
+   hard-stopping, and warms toward the accent while the field is focused. The
+   pseudo-elements are absolutely positioned, so they never become flex items. */
+.home-search::before, .home-search::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; }
+.home-search::before { background: linear-gradient(90deg, transparent, var(--rule) 13%, var(--rule) 87%, transparent); }
+.home-search::after { background: linear-gradient(90deg, transparent 22%, var(--accent) 50%, transparent 78%); opacity: 0; transition: opacity 0.45s ease; }
+.home-search:focus-within::after { opacity: 0.55; }
 .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
 .hs-field { display: flex; align-items: center; gap: 0.55rem; flex: 0 1 auto; min-width: clamp(220px, 30vw, 300px); padding: 0.5rem 0.55rem; margin: -0.5rem -0.55rem; border-radius: 10px; cursor: pointer; transition: background .2s ease; }
 .hs-field:hover { background: rgba(245,241,234,0.05); }
