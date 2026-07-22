@@ -79,7 +79,7 @@ for (const h of HUBS) {
 
 for (const p of SHELF.singles) {
   const endcap = endcapHTML(
-    'More on the shelf',
+    'More in Longform',
     `${SHELF.path}.html`, SHELF.title,
     [{ href: '/', label: 'Home' }],
   );

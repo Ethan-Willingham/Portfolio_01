@@ -1,5 +1,5 @@
 /* archive-banner.js
- * One source of truth for the "this post is archived" notice that sits at the
+ * One source of truth for the "this post is still in progress" notice that sits at the
  * top of every page under /archive. Each archived post loads this with a single
  * <script src="/js/archive-banner.js"></script> placed as the first child of
  * <body>, so the banner renders at the very top with no flash.
@@ -50,21 +50,21 @@
   var banner = document.createElement("aside");
   banner.className = "arc-banner";
   banner.setAttribute("role", "note");
-  banner.setAttribute("aria-label", "Archived post notice");
+  banner.setAttribute("aria-label", "In-progress post notice");
   banner.innerHTML =
     '<div class="arc-banner__in">' +
     '<span class="arc-banner__mark" aria-hidden="true">▣</span>' +
     '<div class="arc-banner__body">' +
-    '<p class="arc-banner__kicker">Archived</p>' +
-    '<p class="arc-banner__lead">You’re reading something I shelved.</p>' +
-    "<p>I move things into the archive when I lose interest, decide the idea was " +
-    "better in my head than on the page, or just don’t feel like finishing them " +
-    "right now. About " + PCT + "% of what I start ends up in here, so this one " +
-    "is in good company.</p>" +
+    '<p class="arc-banner__kicker">In Progress</p>' +
+    '<p class="arc-banner__lead">You’re reading something that isn’t ready yet.</p>' +
+    "<p>Nothing I make shows up finished. Every post starts rough and goes through " +
+    "a lot of versions; the ones in here just aren’t there yet, still being worked " +
+    "on, on hold, or not how I want them. About " + PCT + "% of what I start is " +
+    "sitting in progress like this, so this one is in good company.</p>" +
     "<p>So set your expectations: the design is rough in spots, some of it is " +
-    "half-built, and parts read exactly like what they are, a draft that an AI and " +
-    "I never came back to polish. It is here for the idea, not the finish. " +
-    '<a href="/">See what actually made it &rarr;</a></p>' +
+    "half-built, and parts read exactly like what they are, a draft an AI and I " +
+    "haven’t come back to polish yet. It is here for the idea, not the finish. " +
+    '<a href="/">See what’s ready &rarr;</a></p>' +
     "</div></div>";
 
   function place() {

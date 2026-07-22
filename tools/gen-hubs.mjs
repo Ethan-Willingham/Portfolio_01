@@ -1,6 +1,6 @@
-/* gen-hubs.mjs  -  generate the collection hub pages, the Boring Stuff shelf,
-   and rewrite the homepage's card list (lift the shelf posts off the homepage,
-   then add one shelf card).
+/* gen-hubs.mjs  -  generate the collection hub pages, the Longform collection
+   page, and rewrite the homepage's card list (lift the collection's posts off
+   the homepage; the collection itself is a header link, not a card).
    Idempotent: safe to re-run any time, e.g. after flipping a member from soon to
    live. Run from the repo root: node tools/gen-hubs.mjs   Then re-run
    tools/wrap-picture.mjs on the hubs + shelf + index.html to restore the WebP
@@ -129,9 +129,10 @@ const HUBS = [
 
 const SHELF = {
   path: 'boring-stuff',
-  title: 'Boring Stuff',
-  /* the HOMEPAGE card (owner reimaged it 2026-07-12: the Admont library, not
-     the vegetables; keep this in sync with index.html or a re-run reverts it) */
+  title: 'Longform',
+  /* the Admont library image (owner reimaged it 2026-07-12: the library, not
+     the vegetables). Now used only for the collection page's og:image; the
+     homepage links to the collection with a header link instead of carding it. */
   thumb: 'boring-stuff.jpg',
   credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
   alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
@@ -202,13 +203,13 @@ const hubPage = (h) => `<!DOCTYPE html>
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
             <input class="hs-input" type="search" data-search-scope="${h.slug}" placeholder="Search this collection only" aria-label="Search ${h.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
-            <span class="hs-hint" aria-hidden="true">Search<kbd class="hs-kbd">/</kbd></span>
+            <span class="hs-hint" aria-hidden="true">Search</span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
         <span class="hs-links">
           <a class="hs-about" href="/">Home</a>
-          <a class="hs-about" href="boring-stuff.html">Shelf</a>
+          <a class="hs-about" href="boring-stuff.html">Longform</a>
           <a class="hs-about" href="about.html">About</a>
         </span>
       </div>
@@ -286,8 +287,8 @@ const shelfPage = () => `<!DOCTYPE html>
         <div class="hs-field-wrap">
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-            <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search this shelf only" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
-            <span class="hs-hint" aria-hidden="true">Search<kbd class="hs-kbd">/</kbd></span>
+            <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search Longform only" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <span class="hs-hint" aria-hidden="true">Search</span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
@@ -316,26 +317,16 @@ ${shelfHubs.map(shelfHubCard).concat(SHELF.singles.map(shelfSingleCard)).join('\
 </html>
 `;
 
-/* ---- homepage surgery: drop shelf posts + old hub/shelf cards, then add the
-   one Boring Stuff shelf card. REMOVE includes the shelf path so re-running
-   never doubles it. ---------------------------------------------------------- */
+/* ---- homepage surgery: drop the collection's posts + old hub/collection cards
+   off the homepage. The collection is reached from a header link, not a card, so
+   nothing is added back. REMOVE includes the collection path so a re-run also
+   clears any stale card. ----------------------------------------------------- */
 const REMOVE = new Set([
   ...HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)),
   ...HUBS.map((h) => h.slug + '.html'),
   ...SHELF.singles.map((p) => p.href),
   SHELF.path + '.html',
 ]);
-const shelfHomeCard = () => `        <li class="article-list-item fade-in" data-keywords="boring stuff vegetables essays guides collections inner life health philosophy religion sacred books stories career management warehouse customer success psychiatry dsm">
-          <a class="article-item is-collection" href="${SHELF.path}.html">
-            <span class="article-item-thumb">
-              <!-- ${SHELF.credit} -->
-              <img src="assets/thumbs/${SHELF.thumb}" width="600" height="400" loading="eager" decoding="async" alt="${SHELF.alt}">
-            </span>
-            <span class="article-item-date">Shelf &middot; ${shelfCount} posts</span>
-            <h2 class="article-item-title">${SHELF.title}</h2>
-            <p class="article-item-description">${SHELF.cardDesc}</p>
-          </a>
-        </li>`;
 
 /* ---- run the generation only when executed directly (node tools/gen-hubs.mjs),
    never as an import side effect (gen-post-nav.mjs imports the data above). --- */
@@ -353,10 +344,10 @@ if (isMain) {
     if (href && REMOVE.has(href)) { removed++; return false; }
     return true;
   });
-  const newList = shelfHomeCard() + '\n' + keptLis.join('\n');
+  const newList = keptLis.join('\n');
   idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
   writeFileSync(join(ROOT, 'index.html'), idx);
-  console.log('homepage: removed ' + removed + ' shelf post/old-hub cards, kept ' + keptLis.length + ', added 1 shelf card');
+  console.log('homepage: removed ' + removed + ' collection post/old-hub cards, kept ' + keptLis.length + ' (collection is a header link, no card)');
 }
 
 export { HUBS, SHELF, ordered, liveCount };

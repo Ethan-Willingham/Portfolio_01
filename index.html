@@ -98,8 +98,8 @@
        open; the placeholder takes over. (Pressing / still focuses it.) */
     .hs-hint { flex: none; display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); white-space: nowrap; }
     .home-search.is-open .hs-hint { display: none; }
-    /* About + Archive: quiet links at the right end of the rule, no pill, split
-       by a hairline so they read as a pair. */
+    /* Longform, In Progress, About: quiet links at the right end of the rule, no
+       pill, split by hairlines so they read as a set. */
     .hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 0.85rem; }
     .hs-about {
       flex: none; font-family: var(--font-body); font-size: 0.82rem;
@@ -239,8 +239,9 @@
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
         <span class="hs-links">
+          <a class="hs-about" href="boring-stuff.html">Longform</a>
+          <a class="hs-about" href="archive.html">In Progress</a>
           <a class="hs-about" href="about.html">About</a>
-          <a class="hs-about" href="archive.html">Archive</a>
         </span>
       </div>
       <p class="hs-readout" role="status" aria-live="polite"></p>
@@ -248,17 +249,6 @@
 
     <main>
       <ul class="article-list">
-        <li class="article-list-item fade-in" data-keywords="boring stuff vegetables essays guides collections inner life health philosophy religion sacred books stories career management warehouse customer success psychiatry dsm">
-          <a class="article-item is-collection" href="boring-stuff.html">
-            <span class="article-item-thumb">
-              <!-- thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons. -->
-              <picture><source type="image/webp" srcset="assets/thumbs/boring-stuff.webp"><img src="assets/thumbs/boring-stuff.jpg" width="600" height="400" loading="eager" decoding="async" alt="The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco."></picture>
-            </span>
-            <span class="article-item-date">Shelf &middot; 51 posts</span>
-            <h2 class="article-item-title">Boring Stuff</h2>
-            <p class="article-item-description">the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.</p>
-          </a>
-        </li>
 <li class="article-list-item fade-in" data-keywords="water smoke slime physics toy simulation fluid webgpu webgl gpu mls-mpm particle soft body xpbd jello sandbox draw walls pour play demo interactive spa waterfall zero gravity">
           <a class="article-item" href="water-smoke-slime.html">
             <span class="article-item-thumb">
