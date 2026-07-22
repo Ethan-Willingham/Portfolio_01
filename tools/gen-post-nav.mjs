@@ -39,8 +39,12 @@ function stamp(file, endcap, backHref, backLabel) {
   if (!existsSync(path)) return `MISSING ${file}`;
   let html = readFileSync(path, 'utf8');
 
-  // 1) replace or insert the endcap block, just above the site footer
-  html = html.replace(/[ \t]*<!-- endcap nav,[\s\S]*?<\/nav>\n/, '');
+  // 1) replace or insert the endcap block, just above the site footer. Strip any
+  // existing endcap first, keyed on the .u-next nav itself with the marker comment
+  // OPTIONAL: older, hand-authored endcaps predate the marker convention, so a
+  // marker-only match would skip them and leave a duplicate behind. The global
+  // flag also collapses any pre-existing pair of endcaps back down to one.
+  html = html.replace(/[ \t]*(?:<!-- endcap nav,[\s\S]*?-->\s*)?<nav class="u-next"[\s\S]*?<\/nav>\n/g, '');
   const foot = html.indexOf('<footer class="site-footer"');
   if (foot < 0) return `NO-FOOTER ${file}`;
   const lineStart = html.lastIndexOf('\n', foot) + 1;
