@@ -219,3 +219,91 @@
     if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2500 }); else setTimeout(load, 1500);
   }
 })();
+
+/* ---------------------------------------------------------------------------
+   Resonant hairline. The search underline is rendered as a plucked string: a
+   1-D damped wave equation solved on a canvas. Every keystroke rings the string
+   at the caret; the pulse travels out, reflects off the faded ends, and settles.
+   The loop runs only while there is energy, so it is free at rest, and the whole
+   thing is skipped under prefers-reduced-motion (the static CSS hairline stays).
+   It is driven by input, never hover, so it behaves the same on touch.
+--------------------------------------------------------------------------- */
+(function () {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var root = document.querySelector('.home-search');
+  var input = root && root.querySelector('.hs-input');
+  if (!root || !input) return;
+
+  var docCss = getComputedStyle(document.documentElement);
+  function toRgb(name, fallback) {
+    var v = (docCss.getPropertyValue(name) || fallback).trim().replace('#', '');
+    if (v.length === 3) v = v.replace(/./g, '$&$&');
+    return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+  }
+  var RULE = toRgb('--rule', '#4A544B'), ACC = toRgb('--accent', '#D4C4A0');
+  var DPR = Math.min(2, window.devicePixelRatio || 1);
+
+  var cv = document.createElement('canvas');
+  cv.className = 'hs-wave';
+  cv.setAttribute('aria-hidden', 'true');
+  root.classList.add('wave-on');
+  root.appendChild(cv);
+  var ctx = cv.getContext('2d');
+  var meas = document.createElement('canvas').getContext('2d');
+
+  var N = 200, u = new Float32Array(N), vel = new Float32Array(N);
+  var W = 0, H = 0, base = 0, focused = false, raf = null;
+  var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5;
+
+  function size() {
+    var r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    cv.width = Math.max(1, Math.round(W * DPR));
+    cv.height = Math.max(1, Math.round(H * DPR));
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    base = H / 2;
+    draw();
+  }
+  function caretX() {
+    var s = getComputedStyle(input);
+    meas.font = s.fontStyle + ' ' + s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily;
+    var w = meas.measureText(input.value).width;
+    var left = input.getBoundingClientRect().left - cv.getBoundingClientRect().left;
+    return Math.max(2, Math.min(W - 2, left + w));
+  }
+  function pluck(x, amp) {
+    var c = Math.max(1, Math.min(N - 2, Math.round(x / W * (N - 1))));
+    for (var k = -7; k <= 7; k++) { var j = c + k; if (j < 1 || j > N - 2) continue; u[j] += amp * Math.exp(-(k * k) / 10); }
+    run();
+  }
+  function energy() { var e = 0; for (var i = 0; i < N; i++) e += u[i] * u[i] + vel[i] * vel[i]; return e; }
+  function step() {
+    var i, a;
+    for (i = 1; i < N - 1; i++) { a = STIFF * (u[i - 1] + u[i + 1] - 2 * u[i]); vel[i] = (vel[i] + a) * VDAMP; }
+    u[0] = u[N - 1] = 0; vel[0] = vel[N - 1] = 0;
+    for (i = 1; i < N - 1; i++) u[i] += vel[i];
+    draw();
+    raf = energy() > 0.02 ? requestAnimationFrame(step) : null;
+  }
+  function run() { if (!raf) raf = requestAnimationFrame(step); }
+  function draw() {
+    if (!W) return;
+    ctx.clearRect(0, 0, W, H);
+    var t = Math.max(focused ? 0.3 : 0, Math.min(1, Math.sqrt(energy()) / 6));
+    var col = 'rgb(' + Math.round(RULE[0] + (ACC[0] - RULE[0]) * t) + ',' + Math.round(RULE[1] + (ACC[1] - RULE[1]) * t) + ',' + Math.round(RULE[2] + (ACC[2] - RULE[2]) * t) + ')';
+    var g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, 'transparent'); g.addColorStop(0.13, col); g.addColorStop(0.87, col); g.addColorStop(1, 'transparent');
+    ctx.strokeStyle = g; ctx.lineWidth = 1.2; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var i = 0; i < N; i++) { var x = i / (N - 1) * W, y = base + u[i]; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+
+  input.addEventListener('focus', function () { focused = true; draw(); });
+  input.addEventListener('blur', function () { focused = false; draw(); });
+  input.addEventListener('input', function () { pluck(caretX(), AMP); });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') pluck(W * 0.5, AMP * 1.5); });
+
+  if (window.ResizeObserver) new ResizeObserver(size).observe(cv); else window.addEventListener('resize', size);
+  size();
+})();

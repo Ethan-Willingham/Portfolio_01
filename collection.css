@@ -31,20 +31,21 @@
 .home-search::after { background: linear-gradient(90deg, transparent 22%, var(--accent) 50%, transparent 78%); opacity: 0; transition: opacity 0.45s ease; }
 .home-search:focus-within::after { opacity: 0.55; }
 .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
-.hs-field { display: flex; align-items: center; gap: 0.55rem; flex: 0 1 auto; min-width: clamp(220px, 30vw, 300px); padding: 0.5rem 0.55rem; margin: -0.5rem -0.55rem; border-radius: 10px; cursor: pointer; transition: background .2s ease; }
-.hs-field:hover { background: rgba(245,241,234,0.05); }
-.home-search.is-open .hs-field { cursor: text; background: none; }
-.hs-mag { flex: none; width: 1.15rem; height: 1.15rem; color: var(--text-faint); transition: color .25s ease; }
-.home-search.is-open .hs-mag { color: var(--accent); }
-.hs-input { flex: 1 1 auto; min-width: 0; width: 100%; max-width: 0; opacity: 0; background: transparent; border: none; color: var(--text-bright); font-family: var(--font-body); font-size: 1.1rem; line-height: 1.3; padding: 0; outline: none; transition: max-width .34s cubic-bezier(.2,.7,.2,1), opacity .22s ease; }
-.home-search.is-open .hs-input { max-width: 680px; opacity: 1; }
+.hs-field { display: flex; align-items: center; gap: 0.6rem; flex: 1 1 auto; min-width: 0; cursor: text; }
+.hs-mag { flex: none; width: 1.15rem; height: 1.15rem; color: var(--text-faint); transition: color .3s ease; }
+.home-search:focus-within .hs-mag { color: var(--accent); }
+.hs-input { flex: 1 1 auto; min-width: 0; width: 100%; background: transparent; border: none; color: var(--text-bright); caret-color: var(--accent); font-family: var(--font-body); font-size: 1.1rem; line-height: 1.3; padding: 0; outline: none; }
 .hs-input::placeholder { color: var(--text-faint); }
 .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-/* the rest-state hint: a quiet "Search" label beside the magnifier (so the
-   collapsed field is discoverable as search). Hidden once the field is open;
-   the input's placeholder takes over. (Pressing / still focuses it.) */
-.hs-hint { flex: none; display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); white-space: nowrap; }
-.home-search.is-open .hs-hint { display: none; }
+/* The rest-state "Search" hint is retired: the field no longer collapses, so the
+   input's own placeholder is the resting label. */
+.hs-hint { display: none; }
+/* Resonant hairline: search.js swaps the static rule for a <canvas> that draws
+   the underline as a plucked string (a 1-D wave equation), rung at the caret as
+   you type. wave-on is only added when motion is allowed, so reduced-motion and
+   no-JS keep the static masked hairline above. */
+.hs-wave { position: absolute; left: 0; right: 0; bottom: -15px; width: 100%; height: 30px; pointer-events: none; }
+.home-search.wave-on::before, .home-search.wave-on::after { display: none; }
 .hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 0.85rem; }
 .hs-about { flex: none; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); text-decoration: none; white-space: nowrap; transition: color 0.2s ease; padding-block: 0.55rem; margin-block: -0.55rem; }
 .hs-links .hs-about + .hs-about { padding-left: 0.85rem; border-left: 1px solid var(--rule); }
