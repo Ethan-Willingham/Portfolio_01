@@ -54,7 +54,7 @@
 .hs-links .hs-about + .hs-about { position: relative; }
 .hs-links .hs-about + .hs-about::before {
   content: ""; position: absolute; left: -0.8rem; top: 50%; transform: translateY(-50%);
-  width: 1px; height: 1.7em; background: var(--rule);
+  width: 1px; height: 1.9em; background: var(--rule);
 }
 .hs-about:hover { color: var(--text-bright); }
 .hs-readout { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
