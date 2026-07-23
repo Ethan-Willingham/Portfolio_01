@@ -141,18 +141,21 @@
   // list the models by how much they were used (most tokens first): 4.8, 4.7, ...
   MODELS.slice().sort(function (a, b) { return b.tokens - a.tokens; }).forEach(function (m) {
     var built = m.posts > 0;
-    var chip = document.createElement(built ? 'button' : 'div');
-    chip.className = 'ma-mind' + (built || m.note ? '' : ' is-minor');
+    var interactive = built || !!m.note;  // fuel-only models (a note, no per-page tiles) are clickable too
+    var chip = document.createElement(interactive ? 'button' : 'div');
+    chip.className = 'ma-mind' + (interactive ? '' : ' is-minor');
     chip.style.setProperty('--mc', m.color);
     chip.innerHTML =
       '<span class="ma-mind-dot" style="background:' + m.color + '"></span>' +
       '<span class="ma-mind-name">' + m.label + '</span>' +
       '<span class="ma-mind-fuel">' + fmtTok(m.tokens) + ' · $' + m.cost.toLocaleString('en-US') + '</span>' +
       '<span class="ma-mind-posts">' + (m.note ? m.note : built ? m.posts + (m.posts === 1 ? ' post' : ' posts') : 'tooling only') + '</span>';
-    if (built) {
+    if (interactive) {
       chip.type = 'button';
       chip.setAttribute('aria-pressed', 'false');
-      chip.setAttribute('aria-label', 'Show only the ' + m.posts + ' posts ' + m.label + ' helped build');
+      chip.setAttribute('aria-label', built
+        ? 'Show only the ' + m.posts + ' posts ' + m.label + ' helped build'
+        : m.label + ' helped across the site; its work is not broken out page by page');
       chip.addEventListener('click', function () { setFilter(activeModel === m.id ? null : m.id); });
       chipById[m.id] = chip;
     }
@@ -215,8 +218,13 @@
     var shown = applyFilter(true);
     if (activeModel) {
       var m = MID[activeModel];
-      hintText.innerHTML = 'Showing the <b>' + shown + '</b> ' + (shown === 1 ? 'post' : 'posts') +
-        ' <b style="color:' + m.color + '">' + m.label + '</b> helped build.';
+      if (m.posts === 0 && m.note) {
+        hintText.innerHTML = '<b style="color:' + m.color + '">' + m.label +
+          '</b> worked across the site in July. Its share is not broken out page by page, so it has no individual tiles here.';
+      } else {
+        hintText.innerHTML = 'Showing the <b>' + shown + '</b> ' + (shown === 1 ? 'post' : 'posts') +
+          ' <b style="color:' + m.color + '">' + m.label + '</b> helped build.';
+      }
       clearBtn.style.display = '';
     } else {
       hintText.textContent = 'Pick a model above to see only the posts it helped build.';
