@@ -53,16 +53,16 @@
   },
   "days": {
     "2026-07-23": {
-      "totalTokens": 105994465,
-      "cost": 93.53961849999997,
+      "totalTokens": 131738515,
+      "cost": 112.25234424999998,
       "models": {
         "claude-opus-4-8": {
-          "input": 1451,
-          "cacheWrite": 2894816,
-          "cacheRead": 62315273,
-          "output": 497738,
-          "totalTokens": 65709278,
-          "cost": 61.7009415,
+          "input": 1620,
+          "cacheWrite": 3182599,
+          "cacheRead": 87600547,
+          "output": 668562,
+          "totalTokens": 91453328,
+          "cost": 80.41366725,
           "pricing": "daily categories"
         },
         "gpt-5.6-sol": {

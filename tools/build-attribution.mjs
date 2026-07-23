@@ -68,6 +68,7 @@ const NEW = process.env.ATTR_NEW_JSON ? JSON.parse(process.env.ATTR_NEW_JSON) : 
   sluice: { files: ['grand-motherload.html', 'js/sluice.js'], label: 'Sluice', href: 'grand-motherload.html', kind: 'post' },
   'under-the-street': { files: ['under-the-street.html'], label: "What's Under a Twin Cities Street", href: 'under-the-street.html', kind: 'post' },
   kant: { files: ['kant.html', 'js/kant.js'], label: 'Kant', href: 'kant.html', kind: 'post' },
+  euclid: { files: ['euclid.html', 'js/euclid.js'], label: 'Euclid', href: 'euclid.html', kind: 'post' },
 };
 
 // ---- file -> post-key router ----
