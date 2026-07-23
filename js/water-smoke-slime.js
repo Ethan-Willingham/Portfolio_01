@@ -34,7 +34,7 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-21 from the game source at v26.53.
+ * Assembled 2026-07-23 from the game source at v26.54.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
@@ -72,15 +72,15 @@
  * actor-intent seam drives later locomotion and pose changes without referring
  * to the body's internal discretization.
  *
- * v4.6 calm-range contract: full simulation time, particle footprint, and
- * airborne spray never change. A relative filter now reaches one-cell-thick
- * sheets, while a second smooth low-speed brake gives supported body water a
- * real settling range. Deliberate impacts cross the gate and remain raw.
+ * v4.3 stable-consistency contract: the water material clock moves from 45 to
+ * 100 percent, while solver packing and every render dimension remain fixed.
+ * The failed field blur and the lattice-forming viscosity, damping, and motion
+ * transfer endpoints are gone.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.6';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.3';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -149,7 +149,7 @@
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
-  var waterFeel = 0.55; // 0..1, calmer dregs to longer-lived slosh
+  var waterFeel = 1;   // 0..1, very goopy to v3.9 raw-motion water
   var debugParticles = true;
 
   /* ==== THE SHARED WALL GRID ============================================
@@ -712,10 +712,10 @@
             // Its effective 0.992 * 0.97 keep-factor compounded at roughly
             // 186 substeps per wall second, retaining under 0.1% of carried
             // momentum after one second. The fixed setter lets this host use
-            // the intended raw 1.0 / 1.0 transfer. v4.6 keeps bulk water raw
-            // and adds only the two-scale low-energy filter in applyWaterFeel;
-            // the pressure limiter, density cap, anti-clump, CFL cap, and
-            // swept collision continue to own stability.
+            // the intended raw 1.0 / 1.0 transfer. Keep a trace of grid
+            // smoothing and enough air drag to stop ballistic orphan spray,
+            // but let the pressure limiter, density cap, anti-clump, CFL cap
+            // and swept collision own stability.
             applyWaterFeel();
             liquidWGPU.setSimParam('AERATION_COEFF', 5);
             // Fresh CPU mirror for the slime coupling: the default cadence
@@ -9607,38 +9607,36 @@
 
   function applyTimescale() {
     var t = Math.max(0.05, timeMul);
-    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', 1.55 * t);
+    var syrup = Math.pow(1 - Math.max(0, Math.min(1, waterFeel)), 3);
+    var waterRate = 1.0 - 0.55 * syrup;
+    if (liquidWGPU && liquidWGPU.setSimParam) {
+      liquidWGPU.setSimParam('TIMESCALE', 1.55 * t * waterRate);
+    }
     JELLO_TIMESCALE = 0.5 * t;
   }
 
   function waterFeelName(t) {
-    if (t < 0.16) return 'very calm';
-    if (t < 0.38) return 'calm';
-    if (t < 0.66) return 'balanced';
-    if (t < 0.88) return 'lively';
-    return 'very lively';
+    if (t < 0.16) return 'very goopy';
+    if (t < 0.38) return 'goopy';
+    if (t < 0.66) return 'fluid';
+    if (t < 0.88) return 'watery';
+    return 'very watery';
   }
 
   function applyWaterFeel() {
     if (!liquidWGPU || !liquidWGPU.setSimParam) return;
-    var t = Math.max(0, Math.min(1, waterFeel));
-    // v4.6: one material, two simultaneous energy scales. Global time,
-    // pressure, and rendering stay fixed. The relative stage reaches thin
-    // two-neighbour sheets; the tail stage removes shared body-water momentum
-    // only after it slows. A quadratic response makes the endpoint visibly
-    // calm without crushing the useful middle of the control. Density gating
-    // keeps separated spray raw even when its ballistic arc reaches the apex.
-    var calm = 1 - t;
-    var calm2 = calm * calm;
+    // Every tested increase in this solver's grid-viscosity term reorganized
+    // the pool into a sparse lattice. The material slider therefore keeps the
+    // stable water equations fixed and changes their clock in applyTimescale.
+    // This slows the complete response without changing particle packing.
     liquidWGPU.setSimParam('CALM', 0);
-    liquidWGPU.setSimParam('GRID_VISC', 0);
-    liquidWGPU.setSimParam('DAMPING', 1);
-    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
+    liquidWGPU.setSimParam('GRID_VISC', 0.02);
+    liquidWGPU.setSimParam('DAMPING', 1.0);
+    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996);
-    liquidWGPU.setSimParam('QUIET_VISC', 0.018 + 0.04 * calm2);
-    liquidWGPU.setSimParam('QUIET_SPEED', 36 + 34 * calm2);
-    liquidWGPU.setSimParam('QUIET_SHEAR', 9 + 11 * calm2);
-    liquidWGPU.setSimParam('QUIET_DRAG', 0.0012 + 0.0098 * calm2);
+    applyTimescale();
+    // Render parameters intentionally do not belong in this handler. The
+    // consistency control changes dynamics, never visual particle footprint.
   }
 
   function applyParticleDebug() {
