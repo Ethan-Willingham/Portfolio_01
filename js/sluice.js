@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.54';
+  var GAME_VERSION = 'v26.55';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -326,16 +326,17 @@
   // quantum accumulator, so more 1/120 substeps run per wall second while
   // per-substep physics (the calm) is bit-identical — the identical
   // trajectory, fast-forwarded. Effective wall-clock gravity scales by
-  // TIMESCALE²: 250 x 1.55² = 600.6 ≈ world GRAVITY, i.e. water finally
-  // falls like every other object in the game. Splash heights are unchanged
-  // (same trajectories), just snappier. Cost: awake water runs ~3 substeps
-  // per 60 Hz frame instead of 2 (+55% sim passes; calm/idle/zero-water
-  // skips are all outside the substep loop and still fire). MAX_SUBSTEPS
-  // still caps slow frames, so weak devices self-throttle toward 1x speed
-  // (never pay more than the old worst case + shed). 1 = the old slo-mo.
+  // v26.55 sets the default to the 42 percent point on the standalone
+  // material scale, just inside its "fluid" band. The restored v4.3 curve
+  // maps that point to 1.55 x (1 - 0.55 x 0.58³) = 1.383667. Effective
+  // wall-clock gravity is therefore about 479 px/s². Splash trajectories
+  // and solver stability are unchanged; only their playback rate changes.
+  // Awake water averages about 2.77 substeps per 60 Hz frame instead of
+  // 3.10 at 1.55. MAX_SUBSTEPS still caps slow frames, so weak devices
+  // self-throttle rather than paying more. 1 = the old slo-mo.
   // gm water.TIMESCALE (live); boot A/B ?wdbg=TIMESCALE:1.
   // edit² with js/liquid-wgpu.js (module twin + its runFrame).
-  var LIQUID_TIMESCALE = 1.55;
+  var LIQUID_TIMESCALE = 1.38366702;
   var LIQUID_WATER_MOTION_SCALE = 0.97;   // v10.107 — restored v10.102 lively tune
   var LIQUID_WALL_BOUNCE_IN = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE = 0.095;
@@ -59606,10 +59607,11 @@
           function (v) { LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; gmSetWaterSim('FIXED_STEP', v); },
           0, 1, 1);
       }
-      // v25.29 — sim playback rate (the slo-mo fix): dt banks x TIMESCALE
+      // v25.29 sim playback rate (the slo-mo fix): dt banks x TIMESCALE
       // into the fixed-quantum accumulator, so the same calm physics play
-      // faster. 1.55² x LIQUID_GRAVITY(250) ≈ world GRAVITY (600). 1 = the
-      // old slo-mo; rationale at the 010-constants block.
+      // faster. v26.55 defaults to 1.383667, the demo scale's 42 percent
+      // point just inside "fluid." 1 = the old slo-mo; rationale at the
+      // 010-constants block.
       if (typeof LIQUID_TIMESCALE !== 'undefined') {
         gmRegisterLever('water.TIMESCALE', 'water', 'TIMESCALE (sim playback rate)',
           function () { return LIQUID_TIMESCALE; },
