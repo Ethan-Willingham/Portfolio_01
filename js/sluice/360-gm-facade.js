@@ -750,32 +750,6 @@
           function (v) { LIQUID_GRID_VISC = v; gmSetWaterSim('GRID_VISC', v); },
           0, 0.6, undefined);
       }
-      // v26.53 — two-scale low-energy filter. The relative stage removes
-      // numerical chatter; the tail stage shortens only slow body-water slosh.
-      if (typeof LIQUID_QUIET_VISC !== 'undefined') {
-        gmRegisterLever('water.QUIET_VISC', 'water', 'QUIET_VISC (micro-jitter only)',
-          function () { return LIQUID_QUIET_VISC; },
-          function (v) { LIQUID_QUIET_VISC = v; gmSetWaterSim('QUIET_VISC', v); },
-          0, 0.12, undefined);
-      }
-      if (typeof LIQUID_QUIET_SPEED !== 'undefined') {
-        gmRegisterLever('water.QUIET_SPEED', 'water', 'QUIET_SPEED (px/s gate)',
-          function () { return LIQUID_QUIET_SPEED; },
-          function (v) { LIQUID_QUIET_SPEED = v; gmSetWaterSim('QUIET_SPEED', v); },
-          8, 80, undefined);
-      }
-      if (typeof LIQUID_QUIET_SHEAR !== 'undefined') {
-        gmRegisterLever('water.QUIET_SHEAR', 'water', 'QUIET_SHEAR (px/s gate)',
-          function () { return LIQUID_QUIET_SHEAR; },
-          function (v) { LIQUID_QUIET_SHEAR = v; gmSetWaterSim('QUIET_SHEAR', v); },
-          3, 30, undefined);
-      }
-      if (typeof LIQUID_QUIET_DRAG !== 'undefined') {
-        gmRegisterLever('water.QUIET_DRAG', 'water', 'QUIET_DRAG (slow tail)',
-          function () { return LIQUID_QUIET_DRAG; },
-          function (v) { LIQUID_QUIET_DRAG = v; gmSetWaterSim('QUIET_DRAG', v); },
-          0, 0.02, undefined);
-      }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
       // ceil-split where stepDt swings with frame jitter (kept for A/B).

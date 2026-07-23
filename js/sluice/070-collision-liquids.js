@@ -1533,8 +1533,6 @@
       if (liquidWGPU && liquidWGPU.setSimParam) {
         liquidWGPU.setSimParam('CALM', 0);
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
-        liquidWGPU.setSimParam('QUIET_VISC', 0);
-        liquidWGPU.setSimParam('QUIET_DRAG', 0);
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -1638,13 +1636,6 @@
       // pristine targets stay in 010/020); a lever change is re-blended
       // here next frame, so the one-frame overwrite is invisible.
       liquidWGPU.setSimParam('GRID_VISC', liquidGridViscEff);
-      // v26.53 two-scale quiet filter: the relative grid blend and the smooth
-      // supported-water tail brake can settle a thin sheet while an impact or
-      // density-separated spray remains raw in the same substep.
-      liquidWGPU.setSimParam('QUIET_VISC', LIQUID_QUIET_VISC);
-      liquidWGPU.setSimParam('QUIET_SPEED', LIQUID_QUIET_SPEED);
-      liquidWGPU.setSimParam('QUIET_SHEAR', LIQUID_QUIET_SHEAR);
-      liquidWGPU.setSimParam('QUIET_DRAG', LIQUID_QUIET_DRAG);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }
