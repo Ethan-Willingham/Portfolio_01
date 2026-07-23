@@ -251,7 +251,7 @@
 
     var N = 200, u = new Float32Array(N), vel = new Float32Array(N);
     var W = 0, H = 0, base = 0, focused = false, raf = null, warm = 0;
-    var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5, WARM_FADE = 0.012;
+    var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5, WARM_FADE = 0.007;
 
     function size() {
       var r = cv.getBoundingClientRect();
