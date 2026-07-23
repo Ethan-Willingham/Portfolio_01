@@ -289,11 +289,14 @@
   function draw() {
     if (!W) return;
     ctx.clearRect(0, 0, W, H);
-    var t = Math.max(focused ? 0.3 : 0, Math.min(1, Math.sqrt(energy()) / 6));
-    var col = 'rgb(' + Math.round(RULE[0] + (ACC[0] - RULE[0]) * t) + ',' + Math.round(RULE[1] + (ACC[1] - RULE[1]) * t) + ',' + Math.round(RULE[2] + (ACC[2] - RULE[2]) * t) + ')';
+    var t = Math.max(focused ? 0.22 : 0, Math.min(1, Math.sqrt(energy()) / 6));
+    var cr = Math.round(RULE[0] + (ACC[0] - RULE[0]) * t), cg = Math.round(RULE[1] + (ACC[1] - RULE[1]) * t), cb = Math.round(RULE[2] + (ACC[2] - RULE[2]) * t);
+    // Light at rest, brightening only as it rings, so the resting line is a soft
+    // hairline rather than a heavy dark rule.
+    var col = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + (0.5 + 0.42 * t) + ')';
     var g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0, 'transparent'); g.addColorStop(0.13, col); g.addColorStop(0.87, col); g.addColorStop(1, 'transparent');
-    ctx.strokeStyle = g; ctx.lineWidth = 1.2; ctx.lineJoin = 'round';
+    g.addColorStop(0, 'transparent'); g.addColorStop(0.16, col); g.addColorStop(0.84, col); g.addColorStop(1, 'transparent');
+    ctx.strokeStyle = g; ctx.lineWidth = 1; ctx.lineJoin = 'round';
     ctx.beginPath();
     for (var i = 0; i < N; i++) { var x = i / (N - 1) * W, y = base + u[i]; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
     ctx.stroke();
