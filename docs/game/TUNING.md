@@ -301,6 +301,10 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_REST_BRAKE_HARD_VSQ` `edit²` | `100` | 25–400 | Hard-brake stage below this |v|² (10 px/s) |
 | `LIQUID_REST_BRAKE_HARD` `edit²` | `0.75` | 0.6–0.9 | Hard brake multiplier. CAUTION: 0.55 destabilised the pressure solver (churn went UP); do not crank. Also do NOT remove: an A/B with the brake off plateaued at ~14 px/s with zero sleep even under grid viscosity |
 | `LIQUID_GRID_VISC` `edit²` | `0.45` | 0–0.6 | v24.115 — per-substep blend of each massy cell's velocity toward its massy 4-neighbour average (momentum diffusion). THE rest-calm lever: cancels the clamped-EOS limit-cycle standing waves; 0 disables, high = syrupy splashes. Live gm lever |
+| `LIQUID_QUIET_VISC` | `0.026` | 0–0.12 | v26.53 local low-energy neighbour blend. Unlike `GRID_VISC`, it fades out with cell speed and local shear and never rides the whole-body calm ramp. It now accepts two massy cardinal neighbours so a one-cell-thick sheet is covered. gm `water.QUIET_VISC` |
+| `LIQUID_QUIET_SPEED` | `43` | 8–80 px/s | v26.53 absolute-speed disengagement gate shared by the relative filter and tail brake. Both smoothly reach zero here, so deliberate impacts stay raw. gm `water.QUIET_SPEED` |
+| `LIQUID_QUIET_SHEAR` | `11` | 3–30 px/s | v26.53 neighbour-difference disengagement gate for the grid blend. The filter is full below 30 percent of this value and smoothly reaches zero here. gm `water.QUIET_SHEAR` |
+| `LIQUID_QUIET_DRAG` | `0.0032` | 0–0.02 | v26.53 per-substep low-speed tail brake. It shortens coherent body-water slosh only below `QUIET_SPEED`; a density gate fades it out below 0.55 and removes it by 0.30 so airborne spray keeps its arc. gm `water.QUIET_DRAG` |
 | `LIQUID_SIM_FORCE_EVERY` | `12` | 6–30 | Heartbeat — force a full sim step every N frames (legacy idle-skip path; the v24.145 freeze supersedes it while `FREEZE`=1) |
 | `LIQUID_SIM_PLAYER_VEL_GATE` | `8` | 4–20 | Player speed below which "calm" skip is allowed |
 | `LIQUID_FREEZE` | `1` | 0/1 | v24.145 WATER STATE MACHINE master: 1 = whole-body freeze when settled (stepping stops entirely; only a stimulus thaws), 0 = legacy idle-skip heartbeat. gm `water.FREEZE` |
@@ -469,19 +473,15 @@ before a host can retune uniforms. Stage 5 reports up to four particles as
 opposite sides of the hard 3 px/s sleep threshold; identity bits or any other
 flag mismatch still fail the boot check.
 
-The standalone v3.12 host's **very watery** endpoint uses
-`GRID_VISC = 0.02`, `DAMPING = 1.0`,
-`WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996`. It does not change
-`LIQUID_GRAVITY`, pressure, the fixed 1/120-second quantum, or the 1.55 playback
-timescale. Stability continues to come from `LIQUID_PRESSURE_MAX_DV`, the
-density cap, min-separation pass, pre-advection CFL cap, swept terrain
-collision, and the v26.14 guest-union collision. Its new consistency slider
-uses the cubic weight `(1 - t)^3` to interpolate toward a deliberately extreme
-goopy endpoint: `GRID_VISC = 0.65`, `DAMPING = 0.992`,
-`WATER_MOTION_SCALE = 0.97`, and `AIR_DRAG = 0.99`. Pressure, gravity, timestep,
-and every stability guard remain fixed across the slider. The toolbar's
-**particles** button only switches the existing `DBG_PARTICLES` proof-dot
-render pass; it never changes simulation state.
+The standalone v4.6 host uses `GRID_VISC = 0`, `DAMPING = 1.0`,
+`WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996` across the entire water
+control. It does not change `LIQUID_GRAVITY`, pressure, the fixed
+1/120-second quantum, or the 1.55 playback timescale. Stability continues to
+come from `LIQUID_PRESSURE_MAX_DV`, the density cap, min-separation pass,
+pre-advection CFL cap, swept terrain collision, and the v26.14 guest-union
+collision. The control changes only the v26.53 two-scale quiet filter described
+below. The toolbar's **particles** button only switches the existing
+`DBG_PARTICLES` proof-dot render pass; it never changes simulation state.
 
 **v26.17 honest render footprint:** the old `SURFACE_RSCALE = 1.7` shared
 default, and especially the standalone host's `2.1` override, painted a wide
@@ -503,53 +503,49 @@ async CPU mirror and REMOVE mutation ops; it is not part of the shared WebGPU
 solver. The game keeps its fuller orphan wake, hang test, and housekeeping
 accounting in `070-collision-liquids.js`.
 
-**v26.50 stable consistency clock:** the v26.46 standalone experiment was
-wrong. It tied the goopy slider to a 0 to 6 device px field blur while lowering
-`SURFACE_THRESH` from 1.8 to 0.5 and `SURFACE_SOFT` from 0.8 to 0.25. That
-expanded the visible surface before the physics moved. Removing those render
-changes exposed the older material failure: the far-left endpoint restored
-`GRID_VISC = 0.65`, `DAMPING = 0.992`, and `WATER_MOTION_SCALE = 0.97` on every
-substep. The pool reorganized into a sparse lattice within a fraction of a
-second, and the compact renderer honestly revealed one round field island per
-group. Even small grid-viscosity increases eventually reproduced the lattice.
+**v26.53 calm-range water:** the v26.46 to v26.51 goopy experiments are
+retired. The first tied the standalone slider to `GRID_VISC = 0.65`,
+`DAMPING = 0.992`, `WATER_MOTION_SCALE = 0.97`, `AIR_DRAG = 0.99`, and a
+25-sample field reconstruction. That endpoint separated particle packing into
+a lattice, then hid it behind oversized blue lobes. The next experiment held
+packing fixed and slowed the water clock to 45 percent; it looked like slow
+motion because gravity and every splash played at the reduced rate.
 
-The blur path and its extra 16 uniform bytes are removed from the shared
-renderer. The standalone consistency control now keeps `GRID_VISC = 0.02`,
-`DAMPING = 1`, `WATER_MOTION_SCALE = 1`, `AIR_DRAG = 0.996`, and every render
-parameter fixed. Its cubic syrup weight changes only the water material clock,
-from 45 percent at very goopy to 100 percent at very watery, multiplied by the
-ordinary time slider. The same stable equations therefore run at both ends,
-particle packing stays continuous, and switching endpoints cannot resize the
-surface. Repeated endpoint switches and a ten-second far-left hold stayed solid
-at 120 fps in the 29,000 to 39,000-particle Falls scene.
+The shared renderer is back to its compact one-sample surface path, with no
+`SURFACE_BLUR` uniform or extra render lanes. Global water runs at full time,
+`DAMPING = 1`, `WATER_MOTION_SCALE = 1`, and `GRID_VISC = 0` while lively.
+The `quiet` SimParams vec4 adds branches inside the existing grid-update and
+G2P dispatches, not another pass. The relative stage measures absolute cell
+speed and disagreement with the massy cardinal-neighbour mean in world px/s.
+It now accepts two massy neighbours, which includes a one-cell-thick horizontal
+or vertical sheet that the v26.52 three-neighbour rule excluded.
 
-**v26.54 rollback:** the v4.4 through v4.6 liveliness experiments are removed.
-They replaced the material clock with low-energy grid filtering and then a
-supported-water tail brake. The endpoints remained too similar at first, and
-the wider follow-up range still left shallow water busier than the owner wanted.
-The standalone host and shared solver are restored to the v4.3 behavior from
-commit `39bd2d9`: fixed packing and render dimensions, stable equations, and a
-45 to 100 percent material clock controlled by the consistency slider. The game
-version advances only to force fresh cache stamps on the restored files.
+The fourth quiet lane is now `QUIET_DRAG`, a separate smooth tail brake. It
+removes shared momentum only below `QUIET_SPEED`, solving the other v26.52
+blind spot: coherent slosh has no neighbour disagreement and therefore passed
+the relative filter unchanged. A density smoothstep makes the brake full in
+supported body water, fades it below density ratio 0.55, and removes it by
+0.30. High-speed impacts and separated spray therefore stay raw. The extra
+work is one uniform branch inside each existing dispatch, with no buffer, pass,
+or render cost added. Wakes and terrain boundaries still run after the grid
+filter. The pressure shock limiter continues to own one-substep popcorn.
 
-**v26.55 lower-fluid default:** the game and standalone demo now open at the
-42 percent point on the v4.3 material scale, just inside the `fluid` label's
-38 to 66 percent band. The cubic clock mapping makes that
-`1.55 * (1 - 0.55 * 0.58^3) = 1.38366702`. Nothing in particle packing,
-pressure, damping, motion transfer, or rendering changes. The customer sees
-the same stable splashes and calm shallow-water behavior playing about 11
-percent more gently than the former very-watery default. Awake water also
-averages about 2.77 solver substeps per 60 Hz frame instead of 3.10.
+The standalone control is **very calm to very lively** and opens at 42 percent,
+the lower edge of the label `fluid`. Its quadratic calm response maps
+`QUIET_VISC` 0.058 to 0.018,
+`QUIET_SPEED` 70 to 36 px/s, `QUIET_SHEAR` 20 to 9 px/s, and `QUIET_DRAG`
+0.011 to 0.0012. Very calm decisively settles a thin sheet after a disturbance;
+very lively still loses its low-speed tail eventually. Time, gravity, pressure,
+air drag, rendering, and particle footprint do not move, so both endpoints
+retain intentional high-speed splash without replaying it in slow motion.
 
-**v26.56 v3.30 restoration:** the owner clarified that the intended rollback
-target was demo v3.30 at commit `d6a6e01`, not v4.3. The game and shared module
-therefore return to `LIQUID_TIMESCALE = 1.55`, and the demo again opens at very
-watery with a fixed 1.55 clock across the slider. Its cubic goopy endpoints are
-restored exactly: `GRID_VISC` 0.02 to 0.65, `DAMPING` 1 to 0.992,
-`WATER_MOTION_SCALE` 1 to 0.97, and `AIR_DRAG` 0.996 to 0.99. The known
-very-goopy density islands and their large rendered field circles are part of
-this requested baseline. Later slime repairs, continuous demo smoke, grab as
-the default tool, and particle proof dots hidden by default remain intact.
+**v26.53.1 retained lower-fluid landing:** the game keeps the requested
+`1.38366702` playback rate, about 11 percent gentler than the historical
+v26.53 rate of 1.55. The standalone v4.6.1 demo also opens at 42 percent, but
+its slider changes the two quiet-water stages while its material clock remains
+1.55. At that point the quiet values are approximately `0.03146` viscosity,
+`47.44` px/s speed, `12.70` px/s shear, and `0.00450` tail drag. Both surfaces
+call the landing point `fluid`; neither changes particle size or rendering.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
@@ -599,7 +595,7 @@ was exhausted across ~15 versions.
 | `LIQUID_RAW` | `0` | v24.169 — run saharan's model: the RAW branch at the top of `liquidStateTick` forces damp/motion=1, visc=0, no sleep/freeze/brake, calm pinned 0. **v25.32 — DEFAULT OFF (the owner's shallow-popcorn call): raw's permanent limit-cycle simmer + periodic 30-100 px/s bursts read as endless boil on 1-2 tile water ("when only 1 tile deep, it should be calm"). The v24.145 state machine (live -> settling -> settled) is back: lively water keeps near-raw feel (DAMP_LIVE/MOTION_LIVE/VISC_LIVE floors), quiet water grinds still (measured: 1-tile pond settles ~13 s from boot to mean 1.2-2.2 px/s and holds; a bombed pond returns to settled ~10 s after the last blast; pondtest=4 permanent stim stays bounded 60 s at 120 fps; the drain leg never congeals mid-flow). Rare brief wake-blips (~3 per 47 s, snuffed <2.5 s by the settled brake) remain — the freeze latch (awake ≤2%) is unreachable at ~8-11k awake, so full whole-body freeze never engages; relax the converged latch if the blips still read as pops. Raw remains one flip away: gm water.RAW / ?wdbg=RAW:1 (the lever setter now also clears the kernel no-sleep bit on a live 1->0 flip). v25.39: the owner then vetoed the fully-settled look too — the calm ramp now parks at `LIQUID_CALM_MAX` (0.5, §2.8), so rest = the mid-settle shimmer and the freeze latch is structurally disarmed unless CALM_MAX is dialed back to 1** |
 | `LIQUID_SUBSTEP_DT` `edit²` | `1/120` | v24.169 — was 1/240. Matched to saharan's cadence; 1/240 corrected pressure 2x as often against an over-strong gravity = the over-correction limit cycle |
 | `LIQUID_GRAVITY` | `250` | v24.169 — was 1000 (~4x saharan). THE POPCORN FIX (with SUBSTEP_DT). gm-LIVE |
-| `LIQUID_TIMESCALE` `edit²` | `1.55` | v25.29 introduced the stable material clock rather than raising gravity back into the over-driven EOS regime. v26.56 restores the v3.30 value. Per-substep physics and splash trajectories remain bit-identical; the trajectory plays at 1.55x. Wall-clock effective gravity is `1.55² * 250 = 600.6` px/s², approximately the world gravity, and awake water averages about 3.10 substeps per 60 Hz frame. MAX_SUBSTEPS still caps slow frames. gm `water.TIMESCALE` (live, resets the bank); boot A/B `?wdbg=TIMESCALE:1` restores the old slow-motion rate |
+| `LIQUID_TIMESCALE` `edit²` | `1.38366702` | v25.29 introduced the stable material clock rather than raising gravity back into the over-driven EOS regime. v26.53.1 retains the requested 42 percent `fluid` landing rate: `1.55 * (1 - 0.55 * 0.58^3)`. Per-substep v26.53 physics and splash trajectories remain bit-identical; the trajectory simply plays about 11 percent more gently than the historical 1.55 default. Wall-clock effective gravity is about 479 px/s², and awake water averages about 2.77 substeps per 60 Hz frame rather than 3.10. MAX_SUBSTEPS still caps slow frames. gm `water.TIMESCALE` (live, resets the bank); boot A/B `?wdbg=TIMESCALE:1.55` restores the historical rate |
 | `LIQUID_DENS_CAP` `edit²` | `6·LIQUID_DENSITY` (=24) | **v24.182** — clamp the density the pressure pass sees. A jet-formed knot blew to ~100x rest (dn 406 on the owner's overlay), which the EOS turned into a ~2000 impulse = the bounce engine. Normal water never exceeds ~4x, so the cap is invisible to real water but bounds the knot. Lockstep all 4 density-gather sites (CPU 070, WGSL pressure, both `fr()` refs) |
 | `LIQUID_DECLUMP_ON` | `1` | **v24.185 — ANTI-CLUMP min-separation, the keystone.** The cap bounds the impulse; this stops the over-packing from PERSISTING. A per-substep PBD/FleX positional pass (`WGSL_DECLUMP`, run after buildGrid) gated to over-dense particles only (`LIQUID_DECLUMP_OVERDENSE` 1.6·rest = 6.4), pushing any neighbour closer than `LIQUID_DECLUMP_DMIN` (1.1px ≈ rest spacing) apart by `LIQUID_DECLUMP_STRENGTH` (0.4/substep). Dormant on a calm pond (floor ~6.2 < trigger). gm `water.DECLUMP` (1/0). GPU-only; CPU fallback keeps old behaviour |
 | (v24.186 terrain clamp) | — | The declump push is clamped per-axis at the LEADING EDGE against the same terrain mask the collide kernel uses (`paramsBuf` already carries the terrain rect; `terrainMask` = declump binding 7), so a wall-packed knot spreads ALONG/away from the wall but never bleeds INTO solid dirt. RULE: any positional pass that moves particles MUST be terrain-aware (neighbour-only repulsion against a wall always points into it) |
