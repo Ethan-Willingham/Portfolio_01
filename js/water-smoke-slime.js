@@ -34,7 +34,7 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-23 from the game source at v26.55.
+ * Assembled 2026-07-23 from the game source at v26.53.1.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
@@ -72,29 +72,19 @@
  * actor-intent seam drives later locomotion and pose changes without referring
  * to the body's internal discretization.
  *
- * v4.3 stable-consistency contract: the water material clock moves from 45 to
- * 100 percent, while solver packing and every render dimension remain fixed.
- * The failed field blur and the lattice-forming viscosity, damping, and motion
- * transfer endpoints are gone.
+ * v4.6 calm-range contract: full simulation time, particle footprint, and
+ * airborne spray never change. A relative filter now reaches one-cell-thick
+ * sheets, while a second smooth low-speed brake gives supported body water a
+ * real settling range. Deliberate impacts cross the gate and remain raw.
  *
- * v4.3.1 default: the page opens at 42 percent, just inside the "fluid" band,
- * instead of at the very-watery endpoint. The underlying v4.3 curve and solver
- * are unchanged.
- *
- * v4.3.2 landing defaults: particle proof dots start hidden, poke/grab starts
- * selected, and fixed vents feed a continuous 30 Hz smoke source instead of
- * isolated half-second puffs.
- *
- * v3.30.1 restoration: the owner chose v3.30 as the water baseline. The demo
- * again uses the fixed 1.55 material clock and the original cubic goopy
- * viscosity, damping, motion-transfer, and air-drag endpoints. The known large
- * density-island circles at very goopy are intentionally present. Later smoke,
- * slime, grab-default, and particle-toggle-default work remains.
+ * v4.6.1 retained landing defaults: the page opens at 42 percent in the fluid
+ * band, particle proof dots start hidden, poke/grab starts selected, and fixed
+ * vents feed a continuous 30 Hz smoke source instead of isolated puffs.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.30.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.6.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -163,7 +153,7 @@
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
-  var waterFeel = 1;   // 0..1, v3.30 default: very watery
+  var waterFeel = 0.42; // 0..1, defaults just inside the "fluid" band
   var debugParticles = false;
 
   /* ==== THE SHARED WALL GRID ============================================
@@ -726,10 +716,10 @@
             // Its effective 0.992 * 0.97 keep-factor compounded at roughly
             // 186 substeps per wall second, retaining under 0.1% of carried
             // momentum after one second. The fixed setter lets this host use
-            // the intended raw 1.0 / 1.0 transfer. Keep a trace of grid
-            // smoothing and enough air drag to stop ballistic orphan spray,
-            // but let the pressure limiter, density cap, anti-clump, CFL cap
-            // and swept collision own stability.
+            // the intended raw 1.0 / 1.0 transfer. v4.6 keeps bulk water raw
+            // and adds only the two-scale low-energy filter in applyWaterFeel;
+            // the pressure limiter, density cap, anti-clump, CFL cap, and
+            // swept collision continue to own stability.
             applyWaterFeel();
             liquidWGPU.setSimParam('AERATION_COEFF', 5);
             // Fresh CPU mirror for the slime coupling: the default cadence
@@ -9629,27 +9619,33 @@
   }
 
   function waterFeelName(t) {
-    if (t < 0.16) return 'very goopy';
-    if (t < 0.38) return 'goopy';
+    if (t < 0.16) return 'very calm';
+    if (t < 0.38) return 'calm';
     if (t < 0.66) return 'fluid';
-    if (t < 0.88) return 'watery';
-    return 'very watery';
+    if (t < 0.88) return 'lively';
+    return 'very lively';
   }
 
   function applyWaterFeel() {
     if (!liquidWGPU || !liquidWGPU.setSimParam) return;
     var t = Math.max(0, Math.min(1, waterFeel));
-    // Restored from v3.30. Most of the slider remains useful water; the cubic
-    // syrup weight reserves the far-left end for compounded physical drag.
-    // The very-goopy endpoint is known to reorganize settled water into
-    // separated density islands that the compact field renderer shows as
-    // large circles. That historical behavior is the requested baseline.
-    var syrup = Math.pow(1 - t, 3);
+    // v4.6: one material, two simultaneous energy scales. Global time,
+    // pressure, and rendering stay fixed. The relative stage reaches thin
+    // two-neighbour sheets; the tail stage removes shared body-water momentum
+    // only after it slows. A quadratic response makes the endpoint visibly
+    // calm without crushing the useful middle of the control. Density gating
+    // keeps separated spray raw even when its ballistic arc reaches the apex.
+    var calm = 1 - t;
+    var calm2 = calm * calm;
     liquidWGPU.setSimParam('CALM', 0);
-    liquidWGPU.setSimParam('GRID_VISC', 0.02 + 0.63 * syrup);
-    liquidWGPU.setSimParam('DAMPING', 1.0 - 0.008 * syrup);
-    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0 - 0.03 * syrup);
-    liquidWGPU.setSimParam('AIR_DRAG', 0.996 - 0.006 * syrup);
+    liquidWGPU.setSimParam('GRID_VISC', 0);
+    liquidWGPU.setSimParam('DAMPING', 1);
+    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
+    liquidWGPU.setSimParam('AIR_DRAG', 0.996);
+    liquidWGPU.setSimParam('QUIET_VISC', 0.018 + 0.04 * calm2);
+    liquidWGPU.setSimParam('QUIET_SPEED', 36 + 34 * calm2);
+    liquidWGPU.setSimParam('QUIET_SHEAR', 9 + 11 * calm2);
+    liquidWGPU.setSimParam('QUIET_DRAG', 0.0012 + 0.0098 * calm2);
   }
 
   function applyParticleDebug() {

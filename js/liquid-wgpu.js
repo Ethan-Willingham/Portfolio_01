@@ -185,11 +185,11 @@
   // 010-constants twin). runFrame banks dt x TIMESCALE into the accumulator:
   // more 1/120 substeps per wall second, per-substep physics untouched (the
   // identical trajectory, fast-forwarded, so the v24.169 calm survives).
-  // v26.56 restores the v3.30 default of 1.55. Wall-clock effective gravity
-  // is 1.55² x 250 = 600.6, approximately the game's world GRAVITY (600).
-  // Live via setSimParam('TIMESCALE') (gm water.TIMESCALE).
-  // 1 = the old slo-mo.
-  var LIQUID_TIMESCALE = 1.55;
+  // v26.53.1 retains the requested 42 percent "fluid" landing rate:
+  // 1.55 x (1 - 0.55 x 0.58³) = 1.383667. Wall-clock effective gravity
+  // is about 479 px/s². Live via setSimParam('TIMESCALE') (gm
+  // water.TIMESCALE). 1 = the old slo-mo.
+  var LIQUID_TIMESCALE = 1.38366702;
   var LIQUID_AERATION_BLUR     = 0.01;
   var LIQUID_AERATION_DAMP     = 0.988;
   var LIQUID_OIL_AERATION_BLUR = 0.008;
@@ -306,6 +306,18 @@
   // flow passes through untouched. Lives in SimParams coll.z (live via
   // setSimParam('GRID_VISC') / the gm water lever). edit2: 010-constants.
   var LIQUID_GRID_VISC = 0.45;  // v24.166 — reverted from the v24.164 0.7 (paired with the now-disabled force-freeze); live value is the calm-blend pushed each frame
+  // v26.53 — TWO-SCALE QUIET FILTER. The grid stage removes local neighbour
+  // disagreement, now including one-cell-thick sheets (two cardinal
+  // neighbours). The particle stage adds a separate smooth low-speed tail
+  // brake to body-supported water. The brake is zero at impact/splash speed
+  // and is density-gated away from airborne spray. This gives the host a real
+  // calm-to-lively range without changing the material clock or render size.
+  // Module defaults remain zero so boot references stay exact; shipping hosts
+  // push live values after the self-tests.
+  var LIQUID_QUIET_VISC    = 0;
+  var LIQUID_QUIET_SPEED   = 34;   // px/s: filter fully gone by this cell speed
+  var LIQUID_QUIET_SHEAR   = 11;   // px/s: filter fully gone by this neighbour delta
+  var LIQUID_QUIET_DRAG    = 0;    // per-substep low-speed body-water tail brake
   // v24.120 WATER DEBUG KIT — live diagnostic bitmask from the game's gm
   // 'water' levers (edit2 twins in sluice.js 020-state). Rides to the
   // kernels in SimParams coll.w, so flipping a lever needs NO recompile:
@@ -703,8 +715,8 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
-    // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
+    // constants every compute kernel reads. 13 vec4 = 208 bytes (v26.53 quiet
+    // stages; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
     // GPU chain (and before each harness run* call). Bind groups bind the
@@ -712,10 +724,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 192,
+      size: 208,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(48);   // 12 vec4 lanes (v25.56 + bath)
+    instance.simParamsHost = new Float32Array(52);   // 13 vec4 lanes (v26.53 two-scale quiet)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1210,8 +1222,8 @@
   ];
 
   /* ---- v14.26 — fill + push the SimParams uniform --------------------
-   * Pack the module's live fluid-feel physics vars into the 28-lane f32
-   * staging array (7 vec4 — see the WGSL_SIM_PARAMS banner for the field
+   * Pack the module's live fluid-feel physics vars into the 52-lane f32
+   * staging array (13 vec4 — see the WGSL_SIM_PARAMS banner for the field
    * map) and writeBuffer it. Called before every kernel that reads `sp`
    * (the live runFrame chain AND each harness run* call), so a setSimParam
    * mutation is picked up on the very next step with no recompile.
@@ -1226,6 +1238,7 @@
    *   20-23 g2pB   : oilAerThreshold, aerCoeff, oilAerCoeff, calm (v24.145)
    *   24-27 coll   : bounceWater, bounceOil, gridVisc, dbgFlags
    *   28-31 g2pC   : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173)
+   *   48-51 quiet  : low-energy viscosity, speed gate, shear gate, support
    * Filled from the same LIQUID_* numbers the WGSL `${...}` literals used
    * before v14.26 — at default values the GPU sees byte-identical input,
    * so the boot self-tests still pass with unchanged diffs.
@@ -1274,6 +1287,10 @@
     sh[42] = LIQUID_BATH_SRC_X1;    sh[43] = LIQUID_BATH_SRC_Y1;
     sh[44] = LIQUID_BATH_SRC_T;     sh[45] = LIQUID_BATH_SRC_RATE;
     sh[46] = 0; sh[47] = 0;
+    // quiet : v26.53 two-scale rest filter. Module boot stays zero; the game
+    // and standalone host push their chosen live values afterward.
+    sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
+    sh[50] = LIQUID_QUIET_SHEAR; sh[51] = LIQUID_QUIET_DRAG;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4289,7 +4306,7 @@ fn guestCandidateWins(d2 : f32, qx : f32, qy : f32,
    * FIXED_SCALE, CELL, LIQUID_COLLIDE_RADIUS) stay baked `const`s — they
    * are not feel knobs (TUNING.md §2.1 marks them "don't set directly").
    *
-   * vec4-packed for std140 alignment — 7 vec4 = 112 bytes (a multiple of
+   * vec4-packed for std140 alignment — 13 vec4 = 208 bytes (a multiple of
    * 16; each vec4 lands 16-byte aligned). Field map (mirrors the lane
    * order writeSimParams fills):
    *   grav    : (gravity, oilGravity, pressureStiff, oilPressureStiff)
@@ -4317,6 +4334,7 @@ struct SimParams {
   bathA  : vec4<f32>,   // v25.56 bath: heatExchange, heatCool, heatBuoy, bathOn
   bathB  : vec4<f32>,   // v25.56 bath: heat-source rect x0, y0, x1, y1 (world px)
   bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
+  quiet  : vec4<f32>,   // v26.53: low-energy visc, speed gate, shear gate, tail drag
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4949,11 +4967,15 @@ fn rawCellVel(n : u32) -> vec3<f32> {
     var velX = (momX + dvX) * invm;
     var velY = (momY + dvY) * invm + grav;
     // v24.115 — grid viscosity (sp.coll.z): blend toward the massy
-    // 4-neighbour average. Anti-phase compression oscillation (the
-    // clamped-EOS limit cycle that keeps a settled pond breathing
-    // forever) cancels here; uniform flow is unchanged by averaging.
+    // 4-neighbour average. v26.53 adds a separate quiet-shear contribution:
+    // it exists only below smooth speed + neighbour-difference gates and in
+    // water with at least two massy cardinal neighbours. Two is deliberate:
+    // a one-cell-thick horizontal puddle has left/right support but failed the
+    // old three-neighbour test. Wakes and terrain boundaries are applied after
+    // this block, so a player/slime impact is not pre-damped.
     let visc = sp.coll.z;
-    if (visc > 0.0) {
+    let quietVisc = sp.quiet.x;
+    if (visc > 0.0 || quietVisc > 0.0) {
       let col = c % gp.gridW;
       var nSum = vec3<f32>(0.0, 0.0, 0.0);
       if (col > 0u)             { nSum = nSum + rawCellVel(c - 1u); }
@@ -4963,8 +4985,23 @@ fn rawCellVel(n : u32) -> vec3<f32> {
       if (nSum.z > 0.0) {
         let nAvgX = nSum.x / nSum.z;
         let nAvgY = nSum.y / nSum.z;
-        velX = velX + (nAvgX - velX) * visc;
-        velY = velY + (nAvgY - velY) * visc;
+        var viscEff = clamp(visc, 0.0, 0.95);
+        if (quietVisc > 0.0 && nSum.z >= 2.0) {
+          // Grid velocity is cells moved this substep. Convert both the
+          // absolute speed and neighbour delta back to world px/s so the
+          // gates stay invariant under cell size and fixed-step tuning.
+          let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
+          let speedPx = length(vec2<f32>(velX, velY)) * pxPerStep;
+          let shearPx = length(vec2<f32>(nAvgX - velX, nAvgY - velY)) * pxPerStep;
+          let speedQuiet = 1.0 - smoothstep(sp.quiet.y * 0.4, sp.quiet.y, speedPx);
+          let shearQuiet = 1.0 - smoothstep(sp.quiet.z * 0.3, sp.quiet.z, shearPx);
+          let quietK = clamp(quietVisc * speedQuiet * shearQuiet * (1.0 - oilK), 0.0, 0.95);
+          // Compose rather than add so the combined coefficient cannot
+          // overshoot when a developer also enables the legacy viscosity.
+          viscEff = 1.0 - (1.0 - viscEff) * (1.0 - quietK);
+        }
+        velX = velX + (nAvgX - velX) * viscEff;
+        velY = velY + (nAvgY - velY) * viscEff;
       }
     }
     cellVelX[c] = velX;
@@ -5488,6 +5525,21 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let bfC = 1.0 + (bf - 1.0) * sp.g2pB.w;
     newVX = newVX * bfC;
     newVY = newVY * bfC;
+  }
+  // v26.53 — smooth LOW-SPEED tail brake for supported body water. The
+  // neighbour filter above cannot shorten coherent slosh by design, which
+  // made the standalone slider's endpoints look identical. This second stage
+  // removes a tunable amount of shared low-speed momentum, but only after the
+  // water is below the quiet speed gate. Density support fades the brake out
+  // below 0.55 and removes it entirely by 0.30, so separate spray keeps its
+  // complete arc. sp.quiet.w is a per-substep strength; zero is an exact no-op.
+  if (!oil && sp.quiet.w > 0.0) {
+    let quietSpeed = sqrt(newVX * newVX + newVY * newVY);
+    let quietTail = 1.0 - smoothstep(sp.quiet.y * 0.25, sp.quiet.y, quietSpeed);
+    let quietBody = smoothstep(0.30, 0.55, densityRatio);
+    let quietKeep = 1.0 - clamp(sp.quiet.w * quietTail * quietBody, 0.0, 0.2);
+    newVX = newVX * quietKeep;
+    newVY = newVY * quietKeep;
   }
   // v24.173 Old-Faithful — speed-gated burst damp + hard velocity clamp
   // (water only). Bleed energy from FAST water so a stir settles while
@@ -9217,6 +9269,12 @@ fn main() {
             case 'DAMPING':              LIQUID_DAMPING = v; if (LIQUID_MATS && LIQUID_MATS[0]) LIQUID_MATS[0].damping = v; break;
             case 'OIL_DAMPING':          LIQUID_OIL_DAMPING = v; if (LIQUID_MATS && LIQUID_MATS[1]) LIQUID_MATS[1].damping = v; break;
             case 'GRID_VISC':            LIQUID_GRID_VISC = v; break;
+            // v26.53 two-scale quiet filter. These values affect only
+            // low-energy body water; they never resize the renderer or alter time.
+            case 'QUIET_VISC':           LIQUID_QUIET_VISC = v < 0 ? 0 : (v > 0.2 ? 0.2 : v); break;
+            case 'QUIET_SPEED':          LIQUID_QUIET_SPEED = v < 1 ? 1 : v; break;
+            case 'QUIET_SHEAR':          LIQUID_QUIET_SHEAR = v < 1 ? 1 : v; break;
+            case 'QUIET_DRAG':           LIQUID_QUIET_DRAG = v < 0 ? 0 : (v > 0.05 ? 0.05 : v); break;
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;

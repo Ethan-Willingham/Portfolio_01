@@ -177,16 +177,16 @@
   // SAME sim back faster. Each frame banks dt x TIMESCALE into the fixed-
   // quantum accumulator, so more 1/120 substeps run per wall second while
   // per-substep physics (the calm) is bit-identical — the identical
-  // trajectory, fast-forwarded. Effective wall-clock gravity scales by
-  // v26.56 restores the v3.30 playback rate after the owner identified that
-  // historical water as the preferred baseline. Effective wall-clock gravity
-  // is 250 x 1.55² = 600.6, approximately the world GRAVITY. Awake water
-  // averages about 3.10 substeps per 60 Hz frame. MAX_SUBSTEPS still caps slow
-  // frames, so weak devices self-throttle rather than paying more.
-  // 1 = the old slo-mo.
+  // trajectory, fast-forwarded. v26.53.1 retains the requested 42 percent
+  // "fluid" landing rate: 1.55 x (1 - 0.55 x 0.58³) = 1.383667. Effective
+  // wall-clock gravity is about 479 px/s². Splash trajectories and per-step
+  // v26.53 quiet-water physics are unchanged; only their playback rate
+  // changes. Awake water averages about 2.77 substeps per 60 Hz frame.
+  // MAX_SUBSTEPS still caps slow frames, so weak devices self-throttle
+  // rather than paying more. 1 = the old slo-mo.
   // gm water.TIMESCALE (live); boot A/B ?wdbg=TIMESCALE:1.
   // edit² with js/liquid-wgpu.js (module twin + its runFrame).
-  var LIQUID_TIMESCALE = 1.55;
+  var LIQUID_TIMESCALE = 1.38366702;
   var LIQUID_WATER_MOTION_SCALE = 0.97;   // v10.107 — restored v10.102 lively tune
   var LIQUID_WALL_BOUNCE_IN = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE = 0.095;
