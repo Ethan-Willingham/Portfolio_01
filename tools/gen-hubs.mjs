@@ -202,7 +202,7 @@ const hubPage = (h) => `<!DOCTYPE html>
         <div class="hs-field-wrap">
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-            <input class="hs-input" type="search" data-search-scope="${h.slug}" placeholder="Search this collection only" aria-label="Search ${h.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <input class="hs-input" type="search" data-search-scope="${h.slug}" placeholder="Search" aria-label="Search ${h.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
             <span class="hs-hint" aria-hidden="true">Search</span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
@@ -287,7 +287,7 @@ const shelfPage = () => `<!DOCTYPE html>
         <div class="hs-field-wrap">
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-            <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search Longform only" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
             <span class="hs-hint" aria-hidden="true">Search</span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
