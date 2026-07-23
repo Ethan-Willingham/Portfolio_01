@@ -142,13 +142,13 @@
   MODELS.slice().sort(function (a, b) { return b.tokens - a.tokens; }).forEach(function (m) {
     var built = m.posts > 0;
     var chip = document.createElement(built ? 'button' : 'div');
-    chip.className = 'ma-mind' + (built ? '' : ' is-minor');
+    chip.className = 'ma-mind' + (built || m.note ? '' : ' is-minor');
     chip.style.setProperty('--mc', m.color);
     chip.innerHTML =
       '<span class="ma-mind-dot" style="background:' + m.color + '"></span>' +
       '<span class="ma-mind-name">' + m.label + '</span>' +
       '<span class="ma-mind-fuel">' + fmtTok(m.tokens) + ' · $' + m.cost.toLocaleString('en-US') + '</span>' +
-      '<span class="ma-mind-posts">' + (built ? m.posts + (m.posts === 1 ? ' post' : ' posts') : 'tooling only') + '</span>';
+      '<span class="ma-mind-posts">' + (m.note ? m.note : built ? m.posts + (m.posts === 1 ? ' post' : ' posts') : 'tooling only') + '</span>';
     if (built) {
       chip.type = 'button';
       chip.setAttribute('aria-pressed', 'false');

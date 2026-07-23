@@ -1,8 +1,8 @@
 {
   "note": "Durable baseline for the About-page token stats. tokens/cost/peak are everything through lastFoldedDate; update-about.mjs adds this machine's ccusage since, and folds completed days back in here so the totals survive ccusage log pruning. Edit by hand only to re-baseline.",
-  "lastFoldedDate": "2026-07-12",
-  "tokens": 22655599357,
-  "cost": 22506.921568949998,
+  "lastFoldedDate": "2026-07-22",
+  "tokens": 24581068059,
+  "cost": 24600.96989695,
   "peakTokens": 1543803732,
   "models": {
     "claude-opus-4-7": {
@@ -10,12 +10,12 @@
       "cost": 4001
     },
     "claude-opus-4-8": {
-      "tokens": 10599446320,
-      "cost": 10412.40051125
+      "tokens": 11223002682,
+      "cost": 10924.747226750002
     },
     "claude-fable-5": {
-      "tokens": 2934570983,
-      "cost": 5244.211079
+      "tokens": 3639903787,
+      "cost": 6363.9415525
     },
     "claude-sonnet-4-6": {
       "tokens": 258941168,
@@ -34,8 +34,8 @@
       "cost": 0.7689698
     },
     "gpt-5.6-sol": {
-      "tokens": 77639797,
-      "cost": 55.895742999999996
+      "tokens": 674219333,
+      "cost": 517.866882
     }
   },
   "daily": {
