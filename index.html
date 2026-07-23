@@ -113,6 +113,14 @@
     }
     .hs-about:hover { color: var(--text-bright); }
     .hs-about:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
+    /* Mobile: on one row the nav links crowd the input and clip the placeholder
+       ("Search every post" cut to "Search ever"). Stack instead: the field takes
+       its own full-width row, the links drop below it left-aligned. */
+    @media (max-width: 560px) {
+      .home-search { flex-wrap: wrap; row-gap: 0.85rem; }
+      .hs-field-wrap { flex-basis: 100%; }
+      .hs-links { margin-left: 0; }
+    }
 
     /* the typeahead dropdown */
     .hs-panel {
