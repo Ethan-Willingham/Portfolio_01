@@ -250,8 +250,8 @@
     var meas = input ? document.createElement('canvas').getContext('2d') : null;
 
     var N = 200, u = new Float32Array(N), vel = new Float32Array(N);
-    var W = 0, H = 0, base = 0, focused = false, raf = null;
-    var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5;
+    var W = 0, H = 0, base = 0, focused = false, raf = null, warm = 0;
+    var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5, WARM_DECAY = 0.9;
 
     function size() {
       var r = cv.getBoundingClientRect();
@@ -272,6 +272,7 @@
     function pluck(x, amp) {
       var c = Math.max(1, Math.min(N - 2, Math.round(x / W * (N - 1))));
       for (var k = -7; k <= 7; k++) { var j = c + k; if (j < 1 || j > N - 2) continue; u[j] += amp * Math.exp(-(k * k) / 10); }
+      warm = 1;
       run();
     }
     function energy() { var e = 0; for (var i = 0; i < N; i++) e += u[i] * u[i] + vel[i] * vel[i]; return e; }
@@ -280,17 +281,20 @@
       for (i = 1; i < N - 1; i++) { a = STIFF * (u[i - 1] + u[i + 1] - 2 * u[i]); vel[i] = (vel[i] + a) * VDAMP; }
       u[0] = u[N - 1] = 0; vel[0] = vel[N - 1] = 0;
       for (i = 1; i < N - 1; i++) u[i] += vel[i];
+      warm *= WARM_DECAY;
       draw();
-      raf = energy() > 0.02 ? requestAnimationFrame(step) : null;
+      if (energy() > 0.02 || warm > 0.01) { raf = requestAnimationFrame(step); }
+      else { warm = 0; raf = null; draw(); }
     }
     function run() { if (!raf) raf = requestAnimationFrame(step); }
     function draw() {
       if (!W) return;
       ctx.clearRect(0, 0, W, H);
-      var t = Math.max(focused ? 0.22 : 0, Math.min(1, Math.sqrt(energy()) / 6));
+      var t = Math.max(focused ? 0.22 : 0, warm);
       var cr = Math.round(RULE[0] + (ACC[0] - RULE[0]) * t), cg = Math.round(RULE[1] + (ACC[1] - RULE[1]) * t), cb = Math.round(RULE[2] + (ACC[2] - RULE[2]) * t);
-      // One uniform color across, matching the static hairline, and warming
-      // toward the accent as the string rings.
+      // One uniform color across, matching the static hairline. The accent warmth
+      // snaps to full on a pluck and eases back on its own smooth exponential,
+      // decoupled from the noisier ring energy so the fade never staircases.
       ctx.strokeStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
       ctx.lineWidth = 1; ctx.lineJoin = 'round';
       ctx.beginPath();
