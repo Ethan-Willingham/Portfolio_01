@@ -34,7 +34,7 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-23 from the game source at v26.54.
+ * Assembled 2026-07-23 from the game source at v26.55.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
@@ -76,11 +76,15 @@
  * 100 percent, while solver packing and every render dimension remain fixed.
  * The failed field blur and the lattice-forming viscosity, damping, and motion
  * transfer endpoints are gone.
+ *
+ * v4.3.1 default: the page opens at 42 percent, just inside the "fluid" band,
+ * instead of at the very-watery endpoint. The underlying v4.3 curve and solver
+ * are unchanged.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.3';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.3.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -149,7 +153,7 @@
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
-  var waterFeel = 1;   // 0..1, very goopy to v3.9 raw-motion water
+  var waterFeel = 0.42; // 0..1, defaults just inside the "fluid" band
   var debugParticles = true;
 
   /* ==== THE SHARED WALL GRID ============================================

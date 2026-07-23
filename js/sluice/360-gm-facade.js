@@ -759,10 +759,11 @@
           function (v) { LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; gmSetWaterSim('FIXED_STEP', v); },
           0, 1, 1);
       }
-      // v25.29 — sim playback rate (the slo-mo fix): dt banks x TIMESCALE
+      // v25.29 sim playback rate (the slo-mo fix): dt banks x TIMESCALE
       // into the fixed-quantum accumulator, so the same calm physics play
-      // faster. 1.55² x LIQUID_GRAVITY(250) ≈ world GRAVITY (600). 1 = the
-      // old slo-mo; rationale at the 010-constants block.
+      // faster. v26.55 defaults to 1.383667, the demo scale's 42 percent
+      // point just inside "fluid." 1 = the old slo-mo; rationale at the
+      // 010-constants block.
       if (typeof LIQUID_TIMESCALE !== 'undefined') {
         gmRegisterLever('water.TIMESCALE', 'water', 'TIMESCALE (sim playback rate)',
           function () { return LIQUID_TIMESCALE; },
