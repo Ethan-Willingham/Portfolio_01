@@ -185,11 +185,11 @@
   // 010-constants twin). runFrame banks dt x TIMESCALE into the accumulator:
   // more 1/120 substeps per wall second, per-substep physics untouched (the
   // identical trajectory, fast-forwarded, so the v24.169 calm survives).
-  // v26.55 defaults to the standalone scale's 42 percent point, just inside
-  // "fluid": 1.55 x (1 - 0.55 x 0.58³) = 1.383667. Wall-clock effective
-  // gravity is about 479 px/s². Live via setSimParam('TIMESCALE') (gm
-  // water.TIMESCALE). 1 = the old slo-mo.
-  var LIQUID_TIMESCALE = 1.38366702;
+  // v26.56 restores the v3.30 default of 1.55. Wall-clock effective gravity
+  // is 1.55² x 250 = 600.6, approximately the game's world GRAVITY (600).
+  // Live via setSimParam('TIMESCALE') (gm water.TIMESCALE).
+  // 1 = the old slo-mo.
+  var LIQUID_TIMESCALE = 1.55;
   var LIQUID_AERATION_BLUR     = 0.01;
   var LIQUID_AERATION_DAMP     = 0.988;
   var LIQUID_OIL_AERATION_BLUR = 0.008;
