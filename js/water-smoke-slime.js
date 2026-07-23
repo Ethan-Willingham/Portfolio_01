@@ -80,11 +80,15 @@
  * v4.3.1 default: the page opens at 42 percent, just inside the "fluid" band,
  * instead of at the very-watery endpoint. The underlying v4.3 curve and solver
  * are unchanged.
+ *
+ * v4.3.2 landing defaults: particle proof dots start hidden, poke/grab starts
+ * selected, and fixed vents feed a continuous 30 Hz smoke source instead of
+ * isolated half-second puffs.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.3.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.3.2'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -154,7 +158,7 @@
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
   var waterFeel = 0.42; // 0..1, defaults just inside the "fluid" band
-  var debugParticles = true;
+  var debugParticles = false;
 
   /* ==== THE SHARED WALL GRID ============================================
    * One Uint8Array, one probe. tileAt(r,c) is the exact single choke point
@@ -744,8 +748,8 @@
             // halo that makes ledges swell and terrain collision look false.
             liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8);
             liquidWGPU.setRenderParam('SURFACE_RSCALE', 0.9);
-            // Per-particle proof dots remain on by default. v3.10 exposes
-            // the existing extra render pass as a visible toolbar toggle.
+            // Per-particle proof dots start hidden. The toolbar toggle keeps
+            // the diagnostic pass available without making it the landing view.
             applyParticleDebug();
           }
           applyGravity();
@@ -1782,6 +1786,9 @@
   var smokePaintedJello = false;
   var SMOKE_IDLE_HOLD = 15;
   var SMOKE_COL = { r: 0.20, g: 0.185, b: 0.165 };   // warm gray, light enough to read on the dark box
+  var SMOKE_EMITTER_COL = { r: 0.62, g: 0.58, b: 0.52 };
+  var SMOKE_EMITTER_DT = 1 / 30;
+  var smokeEmitterSplats = 0;
   var SMOKE_WATER_FLOW_MIN_VY = 55;
   // Keep the waterfall legible without pinning the whole plume to it.
   var SMOKE_WATER_FLOW_FORCE = 0.16;
@@ -1812,9 +1819,9 @@
     if (dye < 384) dye = 384;
     if (dye > 672) dye = 672;
     var opts = isMobile
-      ? { SIM_RESOLUTION: 96, DYE_RESOLUTION: 256, DENSITY_DISSIPATION: 0.3,
+      ? { SIM_RESOLUTION: 96, DYE_RESOLUTION: 256, DENSITY_DISSIPATION: 0.24,
           VELOCITY_DISSIPATION: 0.04, CURL: 14, SPLAT_RADIUS: 0.18, SHADING: true }
-      : { SIM_RESOLUTION: 160, DYE_RESOLUTION: dye, DENSITY_DISSIPATION: 0.3,
+      : { SIM_RESOLUTION: 160, DYE_RESOLUTION: dye, DENSITY_DISSIPATION: 0.18,
           VELOCITY_DISSIPATION: 0.02, CURL: 14, SPLAT_RADIUS: 0.18, SHADING: false };
     var ok = false;
     try { ok = !!SmokeFluid.init(smokeCanvas, opts); } catch (e) { ok = false; }
@@ -9463,7 +9470,7 @@
    * Six tools, one pointer. Continuous effects (pour, puff, carve, poke)
    * are applied per FRAME in toolTick so rates are framerate-honest; the
    * pointer handlers only track state. ==== */
-  var tool = 'draw';
+  var tool = 'poke';
   var pointerDown = false, pointerIn = false;
   var pointerId = -1;
   var px = 0, py = 0;            // current world position
@@ -9726,7 +9733,7 @@
       var map = { '1': 'draw', '2': 'erase', '3': 'water', '4': 'smoke', '5': 'slime', '6': 'poke' };
       if (map[e.key]) setTool(map[e.key]);
     });
-    setTool('draw');
+    setTool('poke');
     syncParticleUI();
     syncSliderUI();
   }
@@ -9811,27 +9818,48 @@
         }
       } else if (em.kind === 'smoke') {
         if (!smokeActive) continue;
-        // Distinct rising puffs on a slow clock instead of a per-frame
-        // stream: a fixed vent that splats every frame stacks dye on the
-        // same texels until the core clips to white. A burst every half
-        // second reads as breathing smoke and keeps the field in range.
-        em.t = (em.t || 0) + dt;
-        var period = 0.52 + 0.13 * Math.sin((em.phase || 0) * 5.1);
-        if (em.t < period) continue;
-        em.t = 0;
-        // Velocity units are texels/second (the advection shader multiplies
-        // by dt * texelSize), so a visible puff wants dv in the hundreds —
-        // Pavel's own mouse splats run 50-600. +dy is up-screen here.
-        var sway = Math.sin(performance.now() * 0.00093 + (em.phase || 0) * 3.7) * 34;
-        var lift = (0.25 + 0.75 * gravMul) * (95 + Math.random() * 50) * (em.liftK || 1);
-        var jx = (Math.random() - 0.5) * 26;
-        // Light warm-gray dye: the game's near-black diesel smoke is tuned
-        // for a bright sky; on this dark box smoke has to ADD light. Spa
-        // steam overrides the color cooler and the lift lazier via em.col
-        // and em.liftK.
-        var dye = em.col || { r: 0.40, g: 0.38, b: 0.35 };
-        smokePuff(em.x, em.y, sway + jx, lift, { r: 0, g: 0, b: 0 }, 0.02);
-        smokePuff(em.x, em.y - 6, (sway + jx) * 0.5, lift * 0.55, dye, 0.018);
+        // A fixed 30 Hz source produces one connected plume. The old
+        // half-second burst injected a huge velocity/dye packet, left a gap,
+        // then repeated, which is exactly the visible "puff, puff" cadence.
+        // Small fixed samples preserve the same fluid solver while removing
+        // that source discontinuity. The accumulator follows simulation time
+        // so the ordinary time slider slows emission and advection together.
+        em.acc = Math.min(SMOKE_EMITTER_DT * 3,
+          (em.acc || 0) + dt * Math.max(0.05, timeMul));
+        var samples = Math.floor(em.acc / SMOKE_EMITTER_DT);
+        if (samples <= 0) continue;
+        em.acc -= samples * SMOKE_EMITTER_DT;
+        if (samples > 3) samples = 3;
+        for (var si = 0; si < samples; si++) {
+          em.age = (em.age || 0) + SMOKE_EMITTER_DT;
+          var phase = em.phase || 0;
+          var sourceX = em.x +
+            Math.sin(em.age * 1.35 + phase * 2.3) * 2.2 +
+            Math.sin(em.age * 3.1 + phase) * 0.8;
+          var sway =
+            Math.sin(em.age * 1.1 + phase * 3.7) * 6.8 +
+            Math.sin(em.age * 2.6 + phase * 1.4) * 2.1;
+          var lift = (0.25 + 0.75 * gravMul) *
+            (11.5 + Math.sin(em.age * 1.7 + phase) * 1.2) * (em.liftK || 1);
+          // The dark stage needs a light warm-gray field. Dye is split
+          // between a narrow mouth and a softer body so the source stays
+          // legible without turning into a clipped white ball.
+          var base = em.col || SMOKE_EMITTER_COL;
+          var amount = em.density || 1;
+          var mouthDye = {
+            r: base.r * 0.045 * amount,
+            g: base.g * 0.045 * amount,
+            b: base.b * 0.045 * amount
+          };
+          var bodyDye = {
+            r: base.r * 0.16 * amount,
+            g: base.g * 0.16 * amount,
+            b: base.b * 0.16 * amount
+          };
+          smokePuff(sourceX, em.y - 2, sway * 0.28, lift * 0.42, mouthDye, 0.011);
+          smokePuff(sourceX + sway * 0.08, em.y - 7, sway, lift, bodyDye, 0.025);
+          smokeEmitterSplats += 2;
+        }
       }
     }
   }
@@ -10018,6 +10046,7 @@
     // Headless/browser probe for the water-to-smoke handoff. Kept out of
     // the visible readout so the toy stays compact.
     readoutEl.setAttribute('data-smoke-water-flow-splats', String(smokeWaterFlowSplats));
+    readoutEl.setAttribute('data-smoke-emitter-splats', String(smokeEmitterSplats));
     readoutEl.setAttribute('data-pointer-down', pointerDown ? 'true' : 'false');
     readoutEl.setAttribute('data-pointer-x', px.toFixed(2));
     readoutEl.setAttribute('data-pointer-y', py.toFixed(2));
@@ -10227,7 +10256,7 @@
       },
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
-          waterFlowSplats: smokeWaterFlowSplats };
+          waterFlowSplats: smokeWaterFlowSplats, emitterSplats: smokeEmitterSplats };
       },
       poke: function (x, y, vx, vy, R, ms) {
         R = R || 20;

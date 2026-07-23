@@ -262,11 +262,11 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c4.4 0 7.5 3.2 7.5 7.2 0 4.4-3.4 7.8-7.5 7.8s-7.5-3.4-7.5-7.8c0-4 3.1-7.2 7.5-7.2z"/><circle cx="9.4" cy="10.6" r="0.7" fill="currentColor" stroke="none"/><circle cx="14.6" cy="10.6" r="0.7" fill="currentColor" stroke="none"/></svg>
             slime
           </button>
-          <button class="tb" data-tool="poke" title="Poke and drag (6)">
+          <button class="tb is-on" data-tool="poke" title="Poke and drag (6)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l12.5 8-5.4 1.4 3 6.1-2.8 1.4-3-6.2-4.3 3.4z"/></svg>
             poke
           </button>
-          <button class="tb is-on" id="toy-particles" type="button" title="Toggle water particle debug dots" aria-pressed="true">
+          <button class="tb" id="toy-particles" type="button" title="Toggle water particle debug dots" aria-pressed="false">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="1.5"/><circle cx="15.5" cy="6" r="1.5"/><circle cx="11" cy="12.5" r="1.5"/><circle cx="18" cy="14" r="1.5"/><circle cx="6" cy="17" r="1.5"/></svg>
             particles
           </button>
@@ -304,7 +304,7 @@
         </div>
       </div>
 
-      <p class="toy-hint">draw walls · pour water · tune its flow · toggle particles · poke everything</p>
+      <p class="toy-hint">grab slimes · pour water · draw walls · tune the flow · reveal particles</p>
       <p class="toy-nowater" id="toy-nowater" hidden>No WebGPU in this browser, so the water is off. The smoke and slimes still run. Water works in current Chrome and Edge, Safari 26, and recent Firefox.</p>
     </section>
 
@@ -333,7 +333,7 @@
 
       <h2 class="u-h2">The smoke</h2>
       <p>The smoke is the oldest method on the page: a classic Eulerian grid fluid in WebGL, based on <a class="u-link" href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov's much-copied demo</a>. Velocity advects itself, 25 Jacobi iterations per frame make the field incompressible, vorticity confinement restores the curl the coarse grid smears away, and what you actually see is a dye field carried along by all of it.</p>
-      <p>The drawn walls are rasterized into its obstacle mask whenever they change, and so are the slime outlines and slow, dense water. A plume will split around a blob that is wobbling in real time and bank off the surface of a pool. Fast water works differently: the toy averages its speed in 8-pixel cells and feeds the strongest falling cells into the smoke's velocity field, so a waterfall drags a plume down with it instead of cutting a square hole through it.</p>
+      <p>The drawn walls are rasterized into its obstacle mask whenever they change, and so are the slime outlines and slow, dense water. The landing scene's vent feeds the field continuously, thirty small injections each second rather than one oversized puff every half-second. Its plume will split around a blob that is wobbling in real time and bank off the surface of a pool. Fast water works differently: the toy averages its speed in 8-pixel cells and feeds the strongest falling cells into the smoke's velocity field, so a waterfall drags a plume down with it instead of cutting a square hole through it.</p>
 
       <h2 class="u-h2">One dumb grid</h2>
       <p>There is no shared physics library underneath. There is one flat array of 8-pixel cells. The water kernels read it packed as a bitmask, the slime solver probes it point by point, the smoke receives it as a texture. Drawing a line edits all three simulations at once, which is why the page feels like one world instead of three separate demos.</p>
@@ -361,7 +361,7 @@
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
   <script src="js/liquid-wgpu.js?v=v26.55"></script>
-  <script src="js/water-smoke-slime.js?v=v4.3.1"></script>
+  <script src="js/water-smoke-slime.js?v=v4.3.2"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
