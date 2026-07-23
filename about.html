@@ -280,6 +280,50 @@
   .cv-bar { height: 5px; border-radius: 999px; overflow: hidden; background: #1c211d; display: flex; margin-top: auto; }
   .cv-bar i { height: 100%; width: 0; transition: width 0.6s var(--ma-spring); }
   .cv-date { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; }
+  /* ---- the tile grid clamps to a few rows; a frosted veil hints at the rest ---- */
+  .cv-collapse { position: relative; transition: max-height 0.62s cubic-bezier(0.22, 1, 0.36, 1); }
+  .cv-collapse[data-collapsed="true"] { overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) { .cv-collapse { transition: none; } }
+  /* the veil: a fade to the page colour, with a progressive frost ramping in toward the button */
+  .cv-veil {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.95rem;
+    pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
+    background: linear-gradient(to bottom, rgba(48,57,49,0) 0%, rgba(48,57,49,0.5) 44%, rgba(48,57,49,0.94) 84%, var(--bg) 100%);
+  }
+  .cv-veil.is-on { opacity: 1; }
+  @supports ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+    .cv-veil::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      -webkit-backdrop-filter: blur(6px) saturate(1.04); backdrop-filter: blur(6px) saturate(1.04);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 6%, #000 58%);
+      mask-image: linear-gradient(to bottom, transparent 6%, #000 58%);
+    }
+  }
+  .cv-viewall, .cv-showless {
+    pointer-events: auto; position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-body); font-size: 0.88rem; font-weight: 600; color: var(--text-bright);
+    cursor: pointer; padding: 0.6rem 1.15rem; border-radius: 999px;
+    background: rgba(58, 66, 57, 0.72); border: 1px solid var(--ma-hair-2);
+    -webkit-backdrop-filter: blur(9px) saturate(1.1); backdrop-filter: blur(9px) saturate(1.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.24), 0 12px 28px -14px rgba(0,0,0,0.62);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.24s var(--ma-spring), background 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease, color 0.24s ease;
+  }
+  .cv-viewall .cv-count { color: var(--text-dim); font-weight: 600; }
+  .cv-chev { width: 14px; height: 14px; flex: none; color: var(--text-dim); transition: transform 0.3s var(--ma-spring), color 0.24s ease; }
+  @media (hover: hover) {
+    .cv-viewall:hover, .cv-showless:hover { transform: translateY(-2px); background: var(--ma-card-hi); border-color: var(--accent); box-shadow: 0 3px 9px rgba(0,0,0,0.26), 0 18px 38px -16px rgba(0,0,0,0.66); }
+    .cv-viewall:hover .cv-chev { color: var(--accent); transform: translateY(2px); }
+    .cv-showless:hover .cv-chev { color: var(--accent); transform: rotate(180deg) translateY(2px); }
+  }
+  .cv-viewall:active, .cv-showless:active { transform: translateY(0); }
+  .cv-viewall:focus-visible, .cv-showless:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+  .cv-showless .cv-chev { transform: rotate(180deg); }
+  .cv-lessrow { display: none; justify-content: center; margin-top: 1.05rem; }
+  .cv-lessrow.is-on { display: flex; }
+  .cv-showless { background: rgba(58, 66, 57, 0.5); }
   .ma-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(8, 10, 8, 0.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.32s ease; }
   .ma-scrim.is-on { opacity: 1; pointer-events: auto; }
   .ma-tray { position: fixed; z-index: 51; width: min(540px, 92vw); background: rgba(27, 33, 28, 0.9); -webkit-backdrop-filter: blur(20px) saturate(1.3); backdrop-filter: blur(20px) saturate(1.3); border: 1px solid rgba(245, 241, 234, 0.16); border-radius: 26px; padding: 1.4rem 1.5rem 1.5rem; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; max-height: 86vh; overflow-y: auto; }

@@ -230,6 +230,7 @@
       hintText.textContent = 'Pick a model above to see only the posts it helped build.';
       clearBtn.style.display = 'none';
     }
+    refreshCollapse(true); // the filter changed the row count; re-clamp (or open up) to match
   }
 
   // ---------- build: metric toggle ----------
@@ -551,6 +552,7 @@
       ? 'Share of output tokens each model actually wrote into a post.'
       : 'Share of file changes each model made to a post.';
     reorderGrid(); // re-sort the grid by the new metric and FLIP-glide the cards (also repaints)
+    refreshCollapse(true); // row heights shift with the re-sort; re-fit the clamp
     if (openPost) paintTray(openPost);
   });
 
@@ -558,7 +560,24 @@
   root.appendChild(legend);
   root.appendChild(hint);
   root.appendChild(controls);
-  root.appendChild(grid);
+
+  // wrap the grid so it can clamp to a few rows behind a frosted veil (see collapse controller below)
+  var CHEV = '<svg class="cv-chev" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.5 6 L8 10.5 L12.5 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  grid.id = 'cv-grid';
+  var wrap = document.createElement('div');
+  wrap.className = 'cv-collapse';
+  wrap.setAttribute('data-collapsed', 'false');
+  wrap.appendChild(grid);
+  var veil = document.createElement('div');
+  veil.className = 'cv-veil';
+  veil.innerHTML = '<button type="button" class="cv-viewall" aria-controls="cv-grid" aria-expanded="true">' +
+    '<span>View all <span class="cv-count"></span></span>' + CHEV + '</button>';
+  wrap.appendChild(veil);
+  root.appendChild(wrap);
+  var lessRow = document.createElement('div');
+  lessRow.className = 'cv-lessrow';
+  lessRow.innerHTML = '<button type="button" class="cv-showless" aria-controls="cv-grid" aria-expanded="true">Show less' + CHEV + '</button>';
+  root.appendChild(lessRow);
   // the tray + scrim are position:fixed; an ancestor of #ma-root carries a transform
   // (the .fade-in reveal), which would trap fixed positioning inside it. Mount them on
   // <body> so they centre against the viewport instead.
@@ -577,4 +596,112 @@
     }, { threshold: 0, rootMargin: '0px 0px 45% 0px' });
     io.observe(grid);
   }
+
+  // ---------- collapse: show ~3 rows, frost the 4th, reveal the rest on demand ----------
+  // The grid is a firehose (~74 tiles / many rows). Clamp it to VIS_ROWS full rows with the next
+  // row peeking under a frosted veil, and let the reader open the whole thing on request. Column
+  // count is responsive, so everything is measured from the real laid-out tiles, not hard-coded.
+  var VIS_ROWS = 3;
+  var viewAllBtn = veil.querySelector('.cv-viewall');
+  var viewAllCount = veil.querySelector('.cv-count');
+  var showLessBtn = lessRow.querySelector('.cv-showless');
+  var collapsed = false, userExpanded = false;
+
+  function prefersReduced() { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  function visibleTiles() {
+    var out = [];
+    for (var i = 0; i < POSTS.length; i++) { var el = POSTS[i]._el; if (el.style.display !== 'none') out.push(el); }
+    return out;
+  }
+  // read the responsive layout: how many columns, and the top/height of each row we care about
+  function measure() {
+    var tiles = visibleTiles();
+    if (tiles.length < 2) return null;
+    var top0 = tiles[0].offsetTop, cols = 1;
+    for (var i = 1; i < tiles.length; i++) { if (Math.abs(tiles[i].offsetTop - top0) <= 2) cols++; else break; }
+    return {
+      tiles: tiles, top0: top0, cols: cols, rows: Math.ceil(tiles.length / cols),
+      rowTop: function (r) { var t = tiles[r * cols]; return t ? t.offsetTop - top0 : null; },
+      rowH: function (r) { var t = tiles[r * cols]; return t ? t.offsetHeight : 0; }
+    };
+  }
+  // clamp height = VIS_ROWS full rows + ~56% of the next, so it clearly peeks under the frost
+  function clampH(m) { var t = m.rowTop(VIS_ROWS); return t == null ? null : Math.round(t + 0.56 * m.rowH(VIS_ROWS)); }
+  // frost from the lower half of the last full row down through the peeking row
+  function placeVeil(m, ch) {
+    var vTop = m.rowTop(VIS_ROWS - 1) + 0.42 * m.rowH(VIS_ROWS - 1);
+    veil.style.height = Math.max(64, Math.round(ch - vTop)) + 'px';
+  }
+  // tiles fully below the clamp are pulled out of the tab order + a11y tree
+  function setInert(m, ch) {
+    POSTS.forEach(function (p) {
+      var el = p._el, below = el.style.display !== 'none' && (el.offsetTop - m.top0) >= ch - 2;
+      if (below) el.setAttribute('inert', ''); else el.removeAttribute('inert');
+    });
+  }
+  function clearInert() { POSTS.forEach(function (p) { p._el.removeAttribute('inert'); }); }
+
+  function toCollapsed(m, animate) {
+    var ch = clampH(m); if (ch == null) return;
+    var wasOpen = !collapsed; collapsed = true;
+    wrap.setAttribute('data-collapsed', 'true');
+    placeVeil(m, ch);
+    viewAllCount.textContent = m.tiles.length + ' pages';
+    if (animate && wasOpen) {                 // open -> clamped: start from full height, glide down
+      wrap.style.transition = 'none'; wrap.style.maxHeight = grid.scrollHeight + 'px';
+      void wrap.offsetWidth; wrap.style.transition = ''; wrap.style.maxHeight = ch + 'px';
+    } else if (!animate) {                     // set the clamp with no motion (first paint, resize)
+      wrap.style.transition = 'none'; wrap.style.maxHeight = ch + 'px';
+      void wrap.offsetWidth; wrap.style.transition = '';
+    } else {                                   // already clamped: just re-fit smoothly
+      wrap.style.maxHeight = ch + 'px';
+    }
+    veil.classList.add('is-on');
+    viewAllBtn.setAttribute('aria-expanded', 'false');
+    lessRow.classList.remove('is-on');
+    setInert(m, ch);
+  }
+  function toExpanded(showLess, animate) {
+    collapsed = false; clearInert();
+    veil.classList.remove('is-on');
+    viewAllBtn.setAttribute('aria-expanded', 'true');
+    lessRow.classList.toggle('is-on', !!showLess);
+    var atCap = wrap.style.maxHeight && wrap.style.maxHeight !== 'none';
+    if (animate && atCap) {                    // grow to full, keep clipping until it lands, then release
+      wrap.style.maxHeight = grid.scrollHeight + 'px';
+      var done = function () {
+        wrap.removeEventListener('transitionend', done);
+        if (collapsed) return;                 // a re-collapse won the race
+        wrap.setAttribute('data-collapsed', 'false'); wrap.style.maxHeight = 'none';
+      };
+      wrap.addEventListener('transitionend', done);
+      setTimeout(done, 820);                   // fallback if transitionend never fires
+    } else {
+      wrap.setAttribute('data-collapsed', 'false'); wrap.style.maxHeight = 'none';
+    }
+  }
+  // decide clamp vs open for the current (possibly filtered) tile set
+  function refreshCollapse(animate) {
+    var m = measure(); if (!m) return;
+    var canClamp = m.rows > VIS_ROWS;
+    if (canClamp && !userExpanded) toCollapsed(m, animate);
+    else toExpanded(canClamp && userExpanded, animate);
+  }
+
+  viewAllBtn.addEventListener('click', function () {
+    userExpanded = true; toExpanded(true, true);
+    showLessBtn.focus({ preventScroll: true });
+  });
+  showLessBtn.addEventListener('click', function () {
+    userExpanded = false; refreshCollapse(true);
+    var top = wrap.getBoundingClientRect().top + window.pageYOffset - 90;
+    window.scrollTo({ top: top, behavior: prefersReduced() ? 'auto' : 'smooth' });
+    viewAllBtn.focus({ preventScroll: true });
+  });
+
+  // first fit once laid out, and again after fonts settle (row heights shift on swap)
+  requestAnimationFrame(function () { refreshCollapse(false); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { refreshCollapse(false); });
+  var rzT = 0;
+  window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(function () { refreshCollapse(false); }, 150); });
 })();
