@@ -33,9 +33,17 @@
     '.btt-fab.show .ar{stroke-dashoffset:0;transition:stroke-dashoffset .9s ease .12s;}' +
     '.btt-fab .lbl{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;' +
       'transition:max-width .35s cubic-bezier(0.23,1,0.32,1),opacity .3s,margin .35s cubic-bezier(0.23,1,0.32,1);}' +
-    '.btt-fab:hover{color:var(--text-bright,#F5F1EA);}' +
-    '.btt-fab:hover .lbl,.btt-fab:focus-visible .lbl{max-width:5ch;opacity:1;margin-left:0.45em;}' +
+    // Keyboard focus always reveals the label + highlight.
+    '.btt-fab:focus-visible .lbl{max-width:5ch;opacity:1;margin-left:0.45em;}' +
     '.btt-fab:focus-visible{outline:none;color:var(--text-bright,#F5F1EA);box-shadow:0 0 0 2px rgba(212,196,160,0.5);}' +
+    // Hover reveal is pointer-only. On a touch device the first tap would otherwise
+    // land on :hover (opening the "top" label), and the browser swallows that tap as
+    // a hover, forcing a second tap to actually scroll. Gate it to real pointers so a
+    // single tap goes straight to the click handler and returns to the top.
+    '@media (hover: hover) and (pointer: fine){' +
+      '.btt-fab:hover{color:var(--text-bright,#F5F1EA);}' +
+      '.btt-fab:hover .lbl{max-width:5ch;opacity:1;margin-left:0.45em;}' +
+    '}' +
     // The click handler parks focus on the page title for keyboard/AT users.
     // Safari draws a default focus ring around it even on a tap; suppress that
     // ring when the move came from a tap/click (the handler adds .btt-noring).
