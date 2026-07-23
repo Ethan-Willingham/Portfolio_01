@@ -5,15 +5,17 @@
    tokens and the page has gone stale.
 
    What it refreshes, in one pass:
-     1. TOKENS    ccusage -> the 3 headline stats in about.html (tokens / peak day
-                  / cost) and the per-model fuel totals in the attribution viz.
+     1. TOKENS    ccusage + the official model registry -> the 3 headline stats
+                  in about.html and per-model fuel totals in the attribution viz.
      2. RIVER     git log -> appends every commit since the last refresh to the
                   commit river (js/git-history-data.js), and adds a new topic for
                   each new post so its dots get their own color + legend entry.
      3. TILES     appends a per-post attribution tile for every new post (the
                   "which AI built which page" viz), computed from this machine's
-                  Claude Code transcripts via build-attribution.mjs.
+                  Claude Code and Codex transcripts via build-attribution.mjs.
      4. SEARCH    rebuilds search-index.json so new posts are findable.
+     5. SIZE      measures the current publishable checkout.
+     6. CHECK     validates every generated dataset before it can be published.
 
    Usage (from the repo root):
      node tools/update-about.mjs            # DRY RUN: show every change, write nothing
@@ -24,11 +26,10 @@
    - The commit river is APPEND-ONLY on purpose. The public history was rewritten
      on 2026-05-29; the pre-rewrite snapshot in git-history-data.js must be kept
      byte-for-byte. This tool never regenerates it, it only appends newer commits.
-   - The token headline is a frozen baseline + live ccusage. The published number
-     ("everything through the last refresh") lives in tools/about-stats.json, and
-     each run adds this machine's usage since. Folded days persist in that file so
-     the number never drops when old ccusage logs get pruned. The second machine's
-     historical contribution is the seeded baseline (it is not re-derivable here).
+   - The token headline is a frozen legacy baseline plus a durable daily ledger.
+     Each new day keeps all four token categories so it can survive log pruning and
+     be checked against tools/about-models.json. The second machine's historical
+     contribution remains in the legacy baseline and is not re-derivable here.
    - "New posts" are read from the index.html article list + the archive/ folder,
      the same authoritative list build-search-index.mjs uses. Ship a post (give it
      a homepage card) and it shows up here automatically. Posts built on another
@@ -47,6 +48,8 @@ const F_HIST = join(REPO, 'js/git-history-data.js');
 const F_ATTR = join(REPO, 'js/git-attribution-data.js');
 const F_ABOUT = join(REPO, 'about.html');
 const F_STATS = join(REPO, 'tools/about-stats.json');
+const F_MODELS = join(REPO, 'tools/about-models.json');
+const MODEL_REGISTRY = JSON.parse(readFileSync(F_MODELS, 'utf8'));
 
 const H = s => `\n\x1b[1m${s}\x1b[0m`;       // bold heading
 const dim = s => `\x1b[2m${s}\x1b[0m`;
@@ -73,6 +76,10 @@ function saveData(file, banner, varName, obj) {
 }
 const today = () => { const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
 const nowSec = () => Math.floor(Date.now() / 1000);
+const ymdLocal = value => {
+  const d = new Date(value);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+};
 
 // ============================================================================
 // Enumerate posts the way the rest of the site does: the index.html article
@@ -194,9 +201,15 @@ const route = new Map();
 for (const t of topics) if (t.href) {
   route.set(t.href, t.key);
   const slug = t.href.replace(/.*\//, '').replace(/\.html$/, '');
+  route.set(slug + '.html', t.key);
   route.set('js/' + slug + '.js', t.key);
 }
-const ALIAS = { 'js/globe.js': 'daylight-globe', 'the-first-year.html': 'first-year', 'baby-research.html': 'first-year' };
+const ALIAS = {
+  'js/globe.js': 'daylight-globe',
+  'the-first-year.html': 'first-year',
+  'baby-research.html': 'first-year',
+  'under-the-street.html': 'under-the-street'
+};
 for (const [f, k] of Object.entries(ALIAS)) if (topicIndexByKey.has(k)) route.set(f, k);
 const GENERIC = new Set(['homepage', 'site', 'docs']);
 function fileKey(f) {
@@ -256,12 +269,12 @@ log(`  + ${fresh.length} new commits since ${new Date(lastTs * 1000).toISOString
   (fresh.length ? '  ' + dim(Object.entries(byTopic).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}:${n}`).join('  ')) : ''));
 
 // ============================================================================
-// PHASE 1 (TOKENS) -- read ccusage, fold completed days into the durable
-// baseline, compute the display numbers. (Applied after the tile pass so it can
-// set per-model fuel on the freshly-appended attribution file.)
+// PHASE 1 (TOKENS) -- read ccusage into the durable daily ledger and compute
+// display numbers. (Applied after the tile pass so it can set per-model fuel on
+// the freshly-appended attribution file.)
 // ============================================================================
 function readCcusage() {
-  const tries = ['ccusage --json', `bun ${JSON.stringify(join(homedir(), '.bun/bin/ccusage'))} --json`, 'npx -y ccusage@latest --json'];
+  const tries = ['ccusage --json', `bun ${JSON.stringify(join(homedir(), '.bun/bin/ccusage'))} --json`];
   for (const cmd of tries) {
     try {
       const out = execSync(cmd, { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] });
@@ -271,70 +284,178 @@ function readCcusage() {
   }
   return null;
 }
-log(H('3/4  TOKENS  ') + dim('ccusage -> headline stats + per-model fuel'));
+function ccusageVersion() {
+  const tries = ['ccusage --version', `bun ${JSON.stringify(join(homedir(), '.bun/bin/ccusage'))} --version`];
+  for (const cmd of tries) {
+    try { return execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch {}
+  }
+  return 'unknown';
+}
+function priceFor(model, day) {
+  const config = MODEL_REGISTRY.models[model];
+  if (!config) throw new Error(`unknown model in ccusage: ${model}. Add it to tools/about-models.json after checking its official price.`);
+  const prices = (config.prices || []).filter(p => p.from <= day && (!p.through || day <= p.through));
+  if (prices.length !== 1) throw new Error(`no unambiguous price for ${model} on ${day}`);
+  return prices[0];
+}
+function pricedBreakdown(model, day, b) {
+  const p = priceFor(model, day);
+  const million = 1e6;
+  return ((b.inputTokens || 0) * p.input +
+    (b.cacheCreationTokens || 0) * p.cacheWrite5m +
+    (b.cacheReadTokens || 0) * p.cacheRead +
+    (b.outputTokens || 0) * p.output) / million;
+}
+function jsonlFiles(dir) {
+  if (!existsSync(dir)) return [];
+  let out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const file = join(dir, ent.name);
+    if (ent.isDirectory()) out = out.concat(jsonlFiles(file));
+    else if (ent.isFile() && ent.name.endsWith('.jsonl')) out.push(file);
+  }
+  return out;
+}
+// GPT-5.6 changes price when a single request crosses 272K input tokens. Daily
+// ccusage aggregates cannot preserve that threshold, so price Codex per response.
+function codexCostsByDay() {
+  const out = {};
+  for (const file of jsonlFiles(join(homedir(), '.codex/sessions'))) {
+    let activeTurn = '';
+    const turnModels = new Map();
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
+      if (!line) continue;
+      let row; try { row = JSON.parse(line); } catch { continue; }
+      const p = row.payload || {};
+      if (row.type === 'turn_context') {
+        turnModels.set(p.turn_id, p.model);
+        continue;
+      }
+      if (row.type !== 'event_msg') continue;
+      if (p.type === 'task_started') {
+        activeTurn = p.turn_id || activeTurn;
+        continue;
+      }
+      if (p.type !== 'token_count') continue;
+      const model = turnModels.get(p.turn_id || activeTurn);
+      if (!model || MODEL_REGISTRY.models[model]?.provider !== 'openai') continue;
+      const u = p.info && p.info.last_token_usage;
+      if (!u) continue;
+      const day = ymdLocal(row.timestamp);
+      const rate = priceFor(model, day);
+      const input = u.input_tokens || 0;
+      const cached = u.cached_input_tokens || 0;
+      const uncached = Math.max(0, input - cached);
+      const long = rate.longContext && input > rate.longContext.aboveInputTokens;
+      const inputMult = long ? rate.longContext.inputMultiplier : 1;
+      const outputMult = long ? rate.longContext.outputMultiplier : 1;
+      const cost = (uncached * rate.input * inputMult +
+        cached * rate.cacheRead * inputMult +
+        (u.output_tokens || 0) * rate.output * outputMult) / 1e6;
+      const key = day + '\0' + model;
+      const a = out[key] || (out[key] = { cost: 0, requests: 0, longRequests: 0 });
+      a.cost += cost;
+      a.requests += 1;
+      if (long) a.longRequests += 1;
+    }
+  }
+  return out;
+}
+log(H('3/4  TOKENS  ') + dim('durable daily ledger + official list prices'));
 const cc = readCcusage();
 const attr = loadData(F_ATTR);
 
-// seed the durable baseline from the currently-published numbers on first run
-let stats;
-if (existsSync(F_STATS)) {
-  stats = JSON.parse(readFileSync(F_STATS, 'utf8'));
-} else {
-  const seedModels = {};
-  for (const m of attr.obj.models) seedModels[m.id] = { tokens: m.tokens, cost: m.cost };
+if (!cc) throw new Error('ccusage is required. Install it or restore ~/.bun/bin/ccusage before publishing About data.');
+let stats = JSON.parse(readFileSync(F_STATS, 'utf8'));
+if (stats.version !== 2) {
   stats = {
-    note: 'Durable baseline for the About-page token stats. tokens/cost/peak are everything through lastFoldedDate; update-about.mjs adds this machine\'s ccusage since, and folds completed days back in here so the totals survive ccusage log pruning. Edit by hand only to re-baseline.',
-    lastFoldedDate: '2026-06-16',
-    tokens: 18100000000, cost: 17000, peakTokens: 1540000000,
-    models: seedModels,
+    version: 2,
+    note: 'Durable About-page usage ledger. legacy is the published estimate through its cutoff and cannot be reconstructed after old logs were pruned. days keeps full token categories from the cutoff forward so totals survive pruning and future prices can be audited.',
+    methodology: {
+      collector: 'ccusage',
+      collectorVersion: ccusageVersion(),
+      pricingRegistry: 'tools/about-models.json',
+      pricingVerified: MODEL_REGISTRY.verified,
+      priceMeaning: 'API-equivalent list-price estimate, not an invoice',
+      cacheWriteAssumption: 'ccusage does not distinguish cache duration, so cacheCreationTokens use the 5-minute write rate',
+      gptLongContext: 'GPT-5.6 is priced per Codex response so requests above 272K input tokens receive the official multiplier'
+    },
+    legacy: {
+      through: stats.lastFoldedDate,
+      tokens: stats.tokens,
+      cost: stats.cost,
+      peakTokens: stats.peakTokens,
+      models: stats.models
+    },
+    days: {},
+    daily: stats.daily
   };
-  log(dim('  (seeded tools/about-stats.json from the published 18.1B / $17,000 baseline)'));
+  log(dim(`  migrated the flat baseline to a durable daily ledger after ${stats.legacy.through}`));
+}
+stats.methodology.collectorVersion = ccusageVersion();
+stats.methodology.pricingVerified = MODEL_REGISTRY.verified;
+stats.methodology.priceMeaning = 'API-equivalent estimate using the published rate for each model and usage date, not an invoice';
+stats.updated = today();
+
+const codexCosts = codexCostsByDay();
+if (!stats.methodology.legacyGptLongContextCorrected) {
+  for (const [id, base] of Object.entries(stats.legacy.models)) {
+    if (MODEL_REGISTRY.models[id]?.provider !== 'openai') continue;
+    const exact = Object.entries(codexCosts)
+      .filter(([key]) => key.endsWith('\0' + id) && key.slice(0, 10) <= stats.legacy.through)
+      .reduce((sum, [, row]) => sum + row.cost, 0);
+    if (!exact) continue;
+    stats.legacy.cost += exact - base.cost;
+    base.cost = exact;
+  }
+  stats.methodology.legacyGptLongContextCorrected = true;
+}
+for (const d of (cc.daily || []).filter(d => d.period > stats.legacy.through)) {
+  const day = { totalTokens: 0, cost: 0, models: {} };
+  for (const b of (d.modelBreakdowns || [])) {
+    const id = b.modelName;
+    const tokens = {
+      input: b.inputTokens || 0,
+      cacheWrite: b.cacheCreationTokens || 0,
+      cacheRead: b.cacheReadTokens || 0,
+      output: b.outputTokens || 0
+    };
+    const totalTokens = tokens.input + tokens.cacheWrite + tokens.cacheRead + tokens.output;
+    let cost = pricedBreakdown(id, d.period, b);
+    let pricing = 'daily categories';
+    const exact = codexCosts[d.period + '\0' + id];
+    if (MODEL_REGISTRY.models[id]?.provider === 'openai') {
+      if (!exact || !exact.requests) throw new Error(`cannot price ${id} on ${d.period}: the per-response Codex log is missing`);
+      cost = exact.cost;
+      pricing = `per response (${exact.requests} requests, ${exact.longRequests} long-context)`;
+    }
+    day.models[id] = { ...tokens, totalTokens, cost, pricing };
+    day.totalTokens += totalTokens;
+    day.cost += cost;
+  }
+  const prior = stats.days[d.period];
+  if (prior && day.totalTokens < prior.totalTokens) {
+    log(warn(`  ${d.period} dropped from ${prior.totalTokens} to ${day.totalTokens} tokens in ccusage; keeping the durable stored day`));
+    continue;
+  }
+  stats.days[d.period] = day;
 }
 
-let tokStr, peakStr, costStr, modelFuel = null, foldInfo = '';
-if (!cc) {
-  log(warn('  ccusage not available -- leaving token numbers unchanged'));
-} else {
-  const daily = cc.daily || [];
-  const t0 = today();
-  const after = daily.filter(d => d.period > stats.lastFoldedDate);   // everything new since last fold
-  const liveTok = after.reduce((s, d) => s + (d.totalTokens || 0), 0);
-  const liveCost = after.reduce((s, d) => s + (d.totalCost || 0), 0);
-  const dispTok = stats.tokens + liveTok;
-  const dispCost = stats.cost + liveCost;
-  const peak = Math.max(stats.peakTokens, ...daily.map(d => d.totalTokens || 0));
-  // per-model display fuel = baseline + this machine since lastFoldedDate
-  const liveModel = {};
-  for (const d of after) for (const b of (d.modelBreakdowns || [])) {
-    const id = b.modelName; if (!liveModel[id]) liveModel[id] = { tokens: 0, cost: 0 };
-    liveModel[id].tokens += (b.cacheReadTokens || 0) + (b.cacheCreationTokens || 0) + (b.inputTokens || 0) + (b.outputTokens || 0);
-    liveModel[id].cost += b.cost || 0;
-  }
-  modelFuel = {};
-  for (const m of attr.obj.models) {
-    const base = stats.models[m.id] || { tokens: m.tokens, cost: m.cost };
-    const live = liveModel[m.id] || { tokens: 0, cost: 0 };
-    modelFuel[m.id] = { tokens: Math.round(base.tokens + live.tokens), cost: Math.round(base.cost + live.cost) };
-  }
-  tokStr = (dispTok / 1e9).toFixed(1) + 'B';
-  peakStr = (peak / 1e9).toFixed(2) + 'B';
-  costStr = '~$' + (Math.round(dispCost / 100) * 100).toLocaleString('en-US');
-  log(`  tokens  ${dim('18.1B'.padEnd(8))} -> ${ok(tokStr)}     peak ${ok(peakStr)}     cost ${ok(costStr)}   ${dim(`(+${(liveTok / 1e9).toFixed(2)}B, +$${Math.round(liveCost)} since ${stats.lastFoldedDate})`)}`);
-  // fold completed days (strictly before today) into the durable baseline
-  const fold = after.filter(d => d.period < t0);
-  if (fold.length) {
-    const foldTok = fold.reduce((s, d) => s + (d.totalTokens || 0), 0);
-    stats.tokens += foldTok; stats.cost += fold.reduce((s, d) => s + (d.totalCost || 0), 0);
-    stats.peakTokens = peak;
-    stats.lastFoldedDate = fold.reduce((m, d) => d.period > m ? d.period : m, stats.lastFoldedDate);
-    for (const d of fold) for (const b of (d.modelBreakdowns || [])) {
-      const id = b.modelName; if (!stats.models[id]) stats.models[id] = { tokens: 0, cost: 0 };
-      stats.models[id].tokens += (b.cacheReadTokens || 0) + (b.cacheCreationTokens || 0) + (b.inputTokens || 0) + (b.outputTokens || 0);
-      stats.models[id].cost += b.cost || 0;
-    }
-    foldInfo = `folded ${fold.length} day(s) through ${stats.lastFoldedDate}`;
-  }
+const dayRows = Object.entries(stats.days);
+const dispTok = stats.legacy.tokens + dayRows.reduce((sum, [, d]) => sum + d.totalTokens, 0);
+const dispCost = stats.legacy.cost + dayRows.reduce((sum, [, d]) => sum + d.cost, 0);
+const peak = Math.max(stats.legacy.peakTokens, ...dayRows.map(([, d]) => d.totalTokens));
+const modelFuel = {};
+for (const [id, base] of Object.entries(stats.legacy.models)) modelFuel[id] = { tokens: base.tokens, cost: base.cost };
+for (const [, d] of dayRows) for (const [id, b] of Object.entries(d.models)) {
+  const fuel = modelFuel[id] || (modelFuel[id] = { tokens: 0, cost: 0 });
+  fuel.tokens += b.totalTokens;
+  fuel.cost += b.cost;
 }
+const tokStr = (dispTok / 1e9).toFixed(1) + 'B';
+const peakStr = (peak / 1e9).toFixed(2) + 'B';
+const costStr = '~$' + (Math.round(dispCost / 100) * 100).toLocaleString('en-US');
+log(`  ${ok(tokStr)} tokens   peak ${ok(peakStr)}   ${ok(costStr)}   ${dim(`${dayRows.length} durable day(s) after ${stats.legacy.through}`)}`);
 
 // ---- FUEL LINE: the orange tokens-per-day band on the commit river ----------
 // A frozen hand-built baseline (the array in js/git-history.js, May 1 - Jun 16)
@@ -394,48 +515,51 @@ saveData(F_HIST, hist.banner, hist.varName, hist.obj);
 log(ok(`  wrote js/git-history-data.js`) + dim(`  (${topics.length} topics, ${commits.length} commits)`));
 
 // 2. tiles (build-attribution reads the updated topic list, appends tiles, bumps model.posts/edits)
-try {
-  execSync('node tools/build-attribution.mjs --write', { cwd: REPO, stdio: 'inherit', env: { ...process.env, ATTR_NEW_JSON: JSON.stringify(ATTR_NEW) } });
-} catch (e) { console.error(warn('  build-attribution failed: ' + e.message)); }
+execSync('node tools/build-attribution.mjs --write', { cwd: REPO, stdio: 'inherit', env: { ...process.env, ATTR_NEW_JSON: JSON.stringify(ATTR_NEW) } });
 
 // 3. token numbers: re-read the attribution file (now with new tiles) and set fuel + dates
-if (cc) {
-  const a2 = loadData(F_ATTR);
-  for (const m of a2.obj.models) if (modelFuel[m.id]) { m.tokens = modelFuel[m.id].tokens; m.cost = modelFuel[m.id].cost; }
-  a2.obj.generated = nowSec();
-  if (a2.obj.window) a2.obj.window = a2.obj.window.replace(/to\s+\d{4}-\d{2}-\d{2}\s*$/, 'to ' + today());
-  saveData(F_ATTR, a2.banner, a2.varName, a2.obj);
-  let about = readFileSync(F_ABOUT, 'utf8');
-  // function replacements: costStr contains a '$', which would be read as a
-  // backreference ($1) in a string replacement and corrupt the markup.
-  // NB: these label strings must match about.html exactly. If the copy is
-  // reworded, update them here too, or the number silently stops refreshing
-  // (String.replace on a non-matching regex is a no-op, not an error).
-  about = about
-    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">tokens in total)/, (_, a, b) => a + tokStr + b)
-    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">the busiest single day)/, (_, a, b) => a + peakStr + b)
-    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">at list prices)/, (_, a, b) => a + costStr + b);
-  writeFileSync(F_ABOUT, about);
-  writeFileSync(F_STATS, JSON.stringify(stats, null, 2) + '\n');
-  log(ok('  wrote about.html token stats') + dim(`  ${tokStr} / ${peakStr} / ${costStr}`) + (foldInfo ? dim('  + ' + foldInfo) : ''));
+const a2 = loadData(F_ATTR);
+for (const m of a2.obj.models) if (modelFuel[m.id]) {
+  m.tokens = Math.round(modelFuel[m.id].tokens);
+  m.cost = Math.round(modelFuel[m.id].cost);
 }
+a2.obj.generated = nowSec();
+if (a2.obj.window) a2.obj.window = a2.obj.window.replace(/to\s+\d{4}-\d{2}-\d{2}\s*$/, 'to ' + today());
+saveData(F_ATTR, a2.banner, a2.varName, a2.obj);
+let about = readFileSync(F_ABOUT, 'utf8');
+const replaceStat = (html, key, value) => {
+  const re = new RegExp(`(<span class="n" data-about-stat="${key}">)[^<]*(</span>)`);
+  if ((html.match(re) || []).length === 0) throw new Error(`about.html is missing the ${key} data marker`);
+  return html.replace(re, (_, a, b) => a + value + b);
+};
+about = replaceStat(about, 'tokens', tokStr);
+about = replaceStat(about, 'peak', peakStr);
+about = replaceStat(about, 'cost', costStr);
+const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from my local Claude Code and Codex logs. The dollar figure applies the published API rates for each model and date; it is not what I was billed. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">The method and its limits are public.</a></p>`;
+if (!/<p data-about-freshness>[\s\S]*?<\/p>/.test(about)) throw new Error('about.html is missing the freshness marker');
+about = about.replace(/<p data-about-freshness>[\s\S]*?<\/p>/, freshnessParagraph);
+writeFileSync(F_ABOUT, about);
+writeFileSync(F_STATS, JSON.stringify(stats, null, 2) + '\n');
+log(ok('  wrote about.html token stats') + dim(`  ${tokStr} / ${peakStr} / ${costStr}`));
 
 // 4. search index
-try {
-  execSync('node tools/build-search-index.mjs', { cwd: REPO, stdio: 'inherit' });
-  log(ok('  rebuilt search-index.json'));
-} catch (e) { console.error(warn('  build-search-index failed: ' + e.message)); }
+execSync('node tools/build-search-index.mjs', { cwd: REPO, stdio: 'inherit' });
+log(ok('  rebuilt search-index.json'));
 
 // 5. site-size growth curve (deployed bytes per day, from git blob sizes)
-try {
-  execSync('node tools/build-site-size.mjs --write', { cwd: REPO, stdio: 'inherit' });
-  log(ok('  rebuilt js/site-size-data.js'));
-} catch (e) { console.error(warn('  build-site-size failed: ' + e.message)); }
+execSync('node tools/build-site-size.mjs --write', { cwd: REPO, stdio: 'inherit' });
+log(ok('  rebuilt js/site-size-data.js'));
+
+// 6. fail closed: a stale price, missing page, bad total, or partial generator
+// run stops here and cannot be published by the live wrapper.
+execSync('node tools/check-about.mjs', { cwd: REPO, stdio: 'inherit' });
+log(ok('  validated every About dataset'));
 
 // optional commit + push
 if (COMMIT) {
   log(H('COMMIT + PUSH'));
-  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-codex-attribution.json'];
+  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-models.json', 'tools/about-attribution-ledger.json'];
   try {
     execSync('git add ' + files.map(f => JSON.stringify(f)).join(' '), { cwd: REPO, stdio: 'inherit' });
     const msg = `about: refresh build stats (+${fresh.length} commits, +${newTopics.length} posts, ${tokStr || 'tokens'})`;

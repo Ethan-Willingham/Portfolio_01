@@ -1,41 +1,80 @@
 {
-  "note": "Durable baseline for the About-page token stats. tokens/cost/peak are everything through lastFoldedDate; update-about.mjs adds this machine's ccusage since, and folds completed days back in here so the totals survive ccusage log pruning. Edit by hand only to re-baseline.",
-  "lastFoldedDate": "2026-07-22",
-  "tokens": 24581068059,
-  "cost": 24600.96989695,
-  "peakTokens": 1543803732,
-  "models": {
-    "claude-opus-4-7": {
-      "tokens": 5231000000,
-      "cost": 4001
-    },
-    "claude-opus-4-8": {
-      "tokens": 11223002682,
-      "cost": 10924.747226750002
-    },
-    "claude-fable-5": {
-      "tokens": 3639903787,
-      "cost": 6363.9415525
-    },
-    "claude-sonnet-4-6": {
-      "tokens": 258941168,
-      "cost": 165.1265942
-    },
-    "claude-haiku-4-5-20251001": {
-      "tokens": 81591251,
-      "cost": 17.5186717
-    },
-    "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit": {
-      "tokens": 82292,
-      "cost": 0
-    },
-    "claude-sonnet-5": {
-      "tokens": 1327546,
-      "cost": 0.7689698
-    },
-    "gpt-5.6-sol": {
-      "tokens": 674219333,
-      "cost": 517.866882
+  "version": 2,
+  "note": "Durable About-page usage ledger. legacy is the published estimate through its cutoff and cannot be reconstructed after old logs were pruned. days keeps full token categories from the cutoff forward so totals survive pruning and future prices can be audited.",
+  "methodology": {
+    "collector": "ccusage",
+    "collectorVersion": "ccusage 20.0.4",
+    "pricingRegistry": "tools/about-models.json",
+    "pricingVerified": "2026-07-23",
+    "priceMeaning": "API-equivalent estimate using the published rate for each model and usage date, not an invoice",
+    "cacheWriteAssumption": "ccusage does not distinguish cache duration, so cacheCreationTokens use the 5-minute write rate",
+    "gptLongContext": "GPT-5.6 is priced per Codex response so requests above 272K input tokens receive the official multiplier",
+    "legacyGptLongContextCorrected": true
+  },
+  "legacy": {
+    "through": "2026-07-22",
+    "tokens": 24581068059,
+    "cost": 24617.02957595,
+    "peakTokens": 1543803732,
+    "models": {
+      "claude-opus-4-7": {
+        "tokens": 5231000000,
+        "cost": 4001
+      },
+      "claude-opus-4-8": {
+        "tokens": 11223002682,
+        "cost": 10924.747226750002
+      },
+      "claude-fable-5": {
+        "tokens": 3639903787,
+        "cost": 6363.9415525
+      },
+      "claude-sonnet-4-6": {
+        "tokens": 258941168,
+        "cost": 165.1265942
+      },
+      "claude-haiku-4-5-20251001": {
+        "tokens": 81591251,
+        "cost": 17.5186717
+      },
+      "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit": {
+        "tokens": 82292,
+        "cost": 0
+      },
+      "claude-sonnet-5": {
+        "tokens": 1327546,
+        "cost": 0.7689698
+      },
+      "gpt-5.6-sol": {
+        "tokens": 674219333,
+        "cost": 533.9265610000001
+      }
+    }
+  },
+  "days": {
+    "2026-07-23": {
+      "totalTokens": 62672569,
+      "cost": 55.929347249999985,
+      "models": {
+        "claude-opus-4-8": {
+          "input": 141,
+          "cacheWrite": 1938739,
+          "cacheRead": 27976371,
+          "output": 116011,
+          "totalTokens": 30031262,
+          "cost": 29.00628425,
+          "pricing": "daily categories"
+        },
+        "gpt-5.6-sol": {
+          "input": 1552747,
+          "cacheWrite": 0,
+          "cacheRead": 30966016,
+          "output": 122544,
+          "totalTokens": 32641307,
+          "cost": 26.923062999999985,
+          "pricing": "per response (246 requests, 0 long-context)"
+        }
+      }
     }
   },
   "daily": {
@@ -90,5 +129,6 @@
       65467268,
       18225562
     ]
-  }
+  },
+  "updated": "2026-07-23"
 }

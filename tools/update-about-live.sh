@@ -5,9 +5,10 @@
 # Does the whole safe flow so you never have to think about it:
 #   1. fetch the latest origin/main (the live site)
 #   2. build a throwaway clean worktree there (your local main can be messy/stale)
-#   3. run tools/update-about.mjs --write  (ccusage stats + commit river + tiles + search)
-#   4. commit + push straight to origin/main, which GitHub Pages auto-deploys
-#   5. remove the throwaway worktree
+#   3. run tools/update-about.mjs --write  (usage ledger + prices + river + tiles + search)
+#   4. validate every total, model, page link, price date, and generated dataset
+#   5. commit + push straight to origin/main, which GitHub Pages auto-deploys
+#   6. remove the throwaway worktree
 #
 # Double-click "Update About Page" on the Desktop, or run:  bash tools/update-about-live.sh
 # ============================================================================
@@ -36,14 +37,15 @@ cd "$WT" || die "worktree missing"
 echo "==> Running the updater..."
 node tools/update-about.mjs --write || die "the updater hit an error (see above)"
 
+echo "==> Checking the generated data..."
+node tools/check-about.mjs || die "the data check failed, so nothing was published"
+
 echo "==> Publishing any changes..."
-git add about.html js/git-history-data.js js/git-attribution-data.js js/site-size-data.js search-index.json tools/about-stats.json tools/about-codex-attribution.json
+git add about.html js/git-history-data.js js/git-attribution-data.js js/site-size-data.js search-index.json tools/about-stats.json tools/about-attribution-ledger.json
 if git diff --cached --quiet; then
   bold "Already up to date - nothing new to publish."
 else
-  git commit -q -m "about: refresh build stats (ccusage + commit river + tiles)
-
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" || die "commit failed"
+  git commit -q -m "about: refresh build stats" || die "commit failed"
   if git push origin HEAD:main; then
     bold "Done. Live in ~15 seconds: $SITE"
   else

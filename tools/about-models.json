@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "verified": "2026-07-23",
+  "maxVerificationAgeDays": 45,
+  "note": "The model registry and API-equivalent list prices used by the About page. Prices are USD per million tokens. Recheck the official sources before verified becomes older than maxVerificationAgeDays.",
+  "sources": {
+    "anthropic": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "openai": "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+  },
+  "models": {
+    "claude-opus-4-7": {
+      "provider": "anthropic",
+      "label": "Opus 4.7",
+      "short": "4.7",
+      "color": "#E8954E",
+      "showInAttribution": true,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 5,
+          "cacheWrite5m": 6.25,
+          "cacheWrite1h": 10,
+          "cacheRead": 0.5,
+          "output": 25
+        }
+      ]
+    },
+    "claude-opus-4-8": {
+      "provider": "anthropic",
+      "label": "Opus 4.8",
+      "short": "4.8",
+      "color": "#B488DB",
+      "showInAttribution": true,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 5,
+          "cacheWrite5m": 6.25,
+          "cacheWrite1h": 10,
+          "cacheRead": 0.5,
+          "output": 25
+        }
+      ]
+    },
+    "claude-fable-5": {
+      "provider": "anthropic",
+      "label": "Fable 5",
+      "short": "F5",
+      "color": "#4FC0C4",
+      "showInAttribution": true,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 10,
+          "cacheWrite5m": 12.5,
+          "cacheWrite1h": 20,
+          "cacheRead": 1,
+          "output": 50
+        }
+      ]
+    },
+    "claude-sonnet-4-6": {
+      "provider": "anthropic",
+      "label": "Sonnet 4.6",
+      "short": "S4.6",
+      "color": "#A6CB63",
+      "showInAttribution": true,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 3,
+          "cacheWrite5m": 3.75,
+          "cacheWrite1h": 6,
+          "cacheRead": 0.3,
+          "output": 15
+        }
+      ]
+    },
+    "claude-haiku-4-5-20251001": {
+      "provider": "anthropic",
+      "label": "Haiku 4.5",
+      "short": "H4.5",
+      "color": "#DE85A6",
+      "showInAttribution": true,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 1,
+          "cacheWrite5m": 1.25,
+          "cacheWrite1h": 2,
+          "cacheRead": 0.1,
+          "output": 5
+        }
+      ]
+    },
+    "claude-sonnet-5": {
+      "provider": "anthropic",
+      "label": "Sonnet 5",
+      "short": "S5",
+      "color": "#DFC288",
+      "showInAttribution": false,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "through": "2026-08-31",
+          "input": 2,
+          "cacheWrite5m": 2.5,
+          "cacheWrite1h": 4,
+          "cacheRead": 0.2,
+          "output": 10
+        },
+        {
+          "from": "2026-09-01",
+          "input": 3,
+          "cacheWrite5m": 3.75,
+          "cacheWrite1h": 6,
+          "cacheRead": 0.3,
+          "output": 15
+        }
+      ]
+    },
+    "gpt-5.6-sol": {
+      "provider": "openai",
+      "label": "GPT-5.6 Sol",
+      "short": "G5.6",
+      "color": "#8FB3C7",
+      "showInAttribution": true,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 5,
+          "cacheWrite5m": 6.25,
+          "cacheRead": 0.5,
+          "output": 30,
+          "longContext": {
+            "aboveInputTokens": 272000,
+            "inputMultiplier": 2,
+            "outputMultiplier": 1.5
+          }
+        }
+      ]
+    },
+    "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit": {
+      "provider": "local",
+      "label": "Qwen3 Coder",
+      "short": "Qwen",
+      "color": "#9EC79A",
+      "showInAttribution": false,
+      "prices": [
+        {
+          "from": "2026-01-01",
+          "input": 0,
+          "cacheWrite5m": 0,
+          "cacheRead": 0,
+          "output": 0
+        }
+      ]
+    }
+  }
+}

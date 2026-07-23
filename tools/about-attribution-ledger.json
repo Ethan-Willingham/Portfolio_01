@@ -1,0 +1,1425 @@
+{
+  "note": "Durable hashed-session ledger for Claude Code and Codex per-post attribution. Session snapshots only grow, retained entries survive local transcript pruning, and residuals preserve already-published work whose transcript was gone at migration.",
+  "version": 2,
+  "sessions": {
+    "codex:5b53b49ba5d3ce68": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "warehouse": {
+            "edits": 1,
+            "tokens": 3718,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          },
+          "customer-success": {
+            "edits": 2,
+            "tokens": 24813,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          },
+          "all-in": {
+            "edits": 20,
+            "tokens": 20247,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          }
+        }
+      }
+    },
+    "codex:8a8ad92e1852045e": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "space-age": {
+            "edits": 7,
+            "tokens": 16122,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          }
+        }
+      }
+    },
+    "codex:ac9c953c65884405": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "first-year": {
+            "edits": 1,
+            "tokens": 387,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          },
+          "get-used-to-everything": {
+            "edits": 1,
+            "tokens": 387,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          }
+        }
+      }
+    },
+    "codex:0d94d2af6c472135": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "water-smoke-slime": {
+            "edits": 237,
+            "tokens": 185881,
+            "first": "2026-07-18",
+            "last": "2026-07-23"
+          },
+          "sluice": {
+            "edits": 177,
+            "tokens": 149945,
+            "first": "2026-07-18",
+            "last": "2026-07-23"
+          }
+        }
+      }
+    },
+    "codex:3be05c483969416a": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "big-enough": {
+            "edits": 42,
+            "tokens": 43202,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "codex:67dccff134282217": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "sluice": {
+            "edits": 33,
+            "tokens": 18513,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          },
+          "water-smoke-slime": {
+            "edits": 16,
+            "tokens": 7536,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "codex:729b3f522fabcc9f": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "hebrew-bible": {
+            "edits": 38,
+            "tokens": 81277,
+            "first": "2026-07-18",
+            "last": "2026-07-19"
+          }
+        }
+      }
+    },
+    "codex:58f20a8915c07d88": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "quran": {
+            "edits": 2,
+            "tokens": 696,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "gita": {
+            "edits": 5,
+            "tokens": 19120,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "new-testament": {
+            "edits": 7,
+            "tokens": 28673,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "guru-granth-sahib": {
+            "edits": 7,
+            "tokens": 23604,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "tao-te-ching": {
+            "edits": 2,
+            "tokens": 2549,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "analects": {
+            "edits": 7,
+            "tokens": 13748,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          }
+        }
+      }
+    },
+    "codex:4dc642328b2a4b73": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "water-smoke-slime": {
+            "edits": 31,
+            "tokens": 27824,
+            "first": "2026-07-21",
+            "last": "2026-07-21"
+          },
+          "sluice": {
+            "edits": 13,
+            "tokens": 12643,
+            "first": "2026-07-21",
+            "last": "2026-07-21"
+          }
+        }
+      }
+    },
+    "claude:8b61505cca0f90d2": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 15,
+            "tokens": 24188,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:0223fb07f2c92d99": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "daylight-globe": {
+            "edits": 7,
+            "tokens": 20837,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:392e1e75b4a607b3": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 113,
+            "tokens": 292771,
+            "first": "2026-07-03",
+            "last": "2026-07-05"
+          }
+        }
+      }
+    },
+    "claude:dfacad86640f0f06": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 15,
+            "tokens": 18229,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:829a79674a56d170": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 25,
+            "tokens": 116011,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:3a4d435cbcd31beb": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 13,
+            "tokens": 11381,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:65269943b0c07de7": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "customer-success": {
+            "edits": 14,
+            "tokens": 90870,
+            "first": "2026-07-11",
+            "last": "2026-07-11"
+          },
+          "warehouse": {
+            "edits": 3,
+            "tokens": 6633,
+            "first": "2026-07-11",
+            "last": "2026-07-11"
+          },
+          "all-in": {
+            "edits": 3,
+            "tokens": 6633,
+            "first": "2026-07-11",
+            "last": "2026-07-11"
+          },
+          "nothing-new": {
+            "edits": 2,
+            "tokens": 2075,
+            "first": "2026-07-11",
+            "last": "2026-07-11"
+          }
+        }
+      }
+    },
+    "claude:c1539804a8ffaae8": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 94,
+            "tokens": 244744,
+            "first": "2026-07-05",
+            "last": "2026-07-05"
+          }
+        }
+      }
+    },
+    "claude:869f38bcb9ad5ee5": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 1466,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:d1dc79fa6ba9f636": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 13,
+            "tokens": 8527,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:39d1a417ad77f7c2": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "water-smoke-slime": {
+            "edits": 123,
+            "tokens": 323033,
+            "first": "2026-07-17",
+            "last": "2026-07-17"
+          },
+          "sluice": {
+            "edits": 9,
+            "tokens": 13430,
+            "first": "2026-07-17",
+            "last": "2026-07-17"
+          }
+        }
+      }
+    },
+    "claude:905de64ab206a83b": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 2094,
+            "first": "2026-07-17",
+            "last": "2026-07-17"
+          }
+        }
+      }
+    },
+    "claude:f4dd1b5a9cd5ac3b": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "the-other-hours": {
+            "edits": 20,
+            "tokens": 34889,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "claude:dd86f965a87b2564": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 17,
+            "tokens": 29816,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:c2f5e1ad53637a2b": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "third-thing": {
+            "edits": 3,
+            "tokens": 4378,
+            "first": "2026-07-12",
+            "last": "2026-07-12"
+          },
+          "mri": {
+            "edits": 2,
+            "tokens": 1733,
+            "first": "2026-07-12",
+            "last": "2026-07-12"
+          },
+          "under-the-street": {
+            "edits": 1,
+            "tokens": 17530,
+            "first": "2026-07-12",
+            "last": "2026-07-12"
+          }
+        }
+      }
+    },
+    "claude:295c49f0d03de7e1": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "particle-life": {
+            "edits": 7,
+            "tokens": 15989,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:dea5d378e3b83c4c": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "claude-recommends": {
+            "edits": 6,
+            "tokens": 36069,
+            "first": "2026-07-22",
+            "last": "2026-07-22"
+          }
+        }
+      }
+    },
+    "claude:88432bda06a33d5d": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "under-the-street": {
+            "edits": 28,
+            "tokens": 24868,
+            "first": "2026-07-13",
+            "last": "2026-07-13"
+          }
+        },
+        "claude-fable-5": {
+          "under-the-street": {
+            "edits": 16,
+            "tokens": 28206,
+            "first": "2026-07-13",
+            "last": "2026-07-13"
+          }
+        }
+      }
+    },
+    "claude:8ab5405f35168d48": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 23,
+            "tokens": 87300,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "claude:608d5545fac28c74": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "the-other-side": {
+            "edits": 38,
+            "tokens": 195843,
+            "first": "2026-07-02",
+            "last": "2026-07-02"
+          }
+        },
+        "claude-opus-4-8": {
+          "the-other-side": {
+            "edits": 2,
+            "tokens": 2444,
+            "first": "2026-07-02",
+            "last": "2026-07-02"
+          }
+        }
+      }
+    },
+    "claude:f80d4b0c24e1da04": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "particle-life": {
+            "edits": 15,
+            "tokens": 18186,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "claude:874fbfd0e46ffe6c": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "warehouse": {
+            "edits": 38,
+            "tokens": 74218,
+            "first": "2026-07-05",
+            "last": "2026-07-05"
+          }
+        }
+      }
+    },
+    "claude:e7f43c4ca0e3a57a": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "hebrew-bible": {
+            "edits": 38,
+            "tokens": 119565,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "gita": {
+            "edits": 10,
+            "tokens": 29655,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "tao-te-ching": {
+            "edits": 45,
+            "tokens": 193583,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          }
+        },
+        "claude-opus-4-8": {
+          "tao-te-ching": {
+            "edits": 1,
+            "tokens": 840,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          }
+        }
+      }
+    },
+    "claude:750b738d1a95c69c": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 27,
+            "tokens": 50663,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:28319d8e93fc000f": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 196,
+            "tokens": 513631,
+            "first": "2026-07-02",
+            "last": "2026-07-03"
+          }
+        }
+      }
+    },
+    "claude:38bba03ddf8c0835": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 2448,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:49d1bfa7d9aaa4d6": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 53,
+            "tokens": 82958,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "claude:c7a25ce3e769e1a4": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 17,
+            "tokens": 8807,
+            "first": "2026-07-05",
+            "last": "2026-07-05"
+          }
+        }
+      }
+    },
+    "claude:c0a77b6257d30bf4": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 66,
+            "tokens": 128211,
+            "first": "2026-07-01",
+            "last": "2026-07-02"
+          }
+        }
+      }
+    },
+    "claude:7fea44dffc46f23c": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "all-in": {
+            "edits": 80,
+            "tokens": 359652,
+            "first": "2026-07-09",
+            "last": "2026-07-09"
+          },
+          "warehouse": {
+            "edits": 28,
+            "tokens": 88354,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          }
+        }
+      }
+    },
+    "claude:77634763b34b632a": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 9,
+            "tokens": 6792,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:9c679a781f06db33": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sounds-made-up": {
+            "edits": 13,
+            "tokens": 14728,
+            "first": "2026-07-11",
+            "last": "2026-07-11"
+          }
+        }
+      }
+    },
+    "claude:613ea8dc6c9e38c0": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 12,
+            "tokens": 22744,
+            "first": "2026-07-05",
+            "last": "2026-07-05"
+          }
+        }
+      }
+    },
+    "claude:556914897fe0f1c0": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 23,
+            "tokens": 51071,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "claude:833858e02e49cc1e": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "hebrew-bible": {
+            "edits": 4,
+            "tokens": 15053,
+            "first": "2026-07-14",
+            "last": "2026-07-14"
+          }
+        }
+      }
+    },
+    "claude:ec51fb4bf22b12ca": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 6858,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:a872adfbd3e9e4ad": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "hebrew-bible": {
+            "edits": 28,
+            "tokens": 240393,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          }
+        }
+      }
+    },
+    "claude:9497be4d1ba60413": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 13,
+            "tokens": 13506,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:261be43656dbda84": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 27,
+            "tokens": 25335,
+            "first": "2026-07-18",
+            "last": "2026-07-18"
+          }
+        }
+      }
+    },
+    "claude:bd6a0fba7eb948c0": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 21,
+            "tokens": 39637,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:087ec9280c650a92": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 12098,
+            "first": "2026-07-06",
+            "last": "2026-07-06"
+          }
+        }
+      }
+    },
+    "claude:0fc68e07fa3a00b2": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 5657,
+            "first": "2026-07-04",
+            "last": "2026-07-04"
+          }
+        }
+      }
+    },
+    "claude:e9c631349e72f2c6": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 8,
+            "tokens": 12150,
+            "first": "2026-07-03",
+            "last": "2026-07-03"
+          }
+        }
+      }
+    },
+    "claude:b8fc8830e8015a36": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 24,
+            "tokens": 32656,
+            "first": "2026-06-28",
+            "last": "2026-06-28"
+          }
+        }
+      }
+    },
+    "claude:fd13f493c76604f3": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 179,
+            "tokens": 564980,
+            "first": "2026-07-05",
+            "last": "2026-07-11"
+          }
+        },
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 24,
+            "tokens": 19855,
+            "first": "2026-07-05",
+            "last": "2026-07-16"
+          }
+        }
+      }
+    },
+    "claude:cbbdf6e694a9328b": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "hebrew-bible": {
+            "edits": 5,
+            "tokens": 6724,
+            "first": "2026-07-13",
+            "last": "2026-07-13"
+          }
+        }
+      }
+    },
+    "claude:9c8e3712274182c6": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "customer-success": {
+            "edits": 20,
+            "tokens": 57827,
+            "first": "2026-07-10",
+            "last": "2026-07-10"
+          }
+        }
+      }
+    }
+  },
+  "residuals": {
+    "claude-opus-4-7": {
+      "random-galaxy": {
+        "edits": 1122,
+        "tokens": 2888195,
+        "first": "2026-05-22",
+        "last": "2026-06-01"
+      },
+      "particle-life": {
+        "edits": 273,
+        "tokens": 628961,
+        "first": "2026-05-24",
+        "last": "2026-06-01"
+      },
+      "optional-body": {
+        "edits": 263,
+        "tokens": 1371921,
+        "first": "2026-05-22",
+        "last": "2026-06-01"
+      },
+      "weather": {
+        "edits": 178,
+        "tokens": 362368,
+        "first": "2026-05-24",
+        "last": "2026-06-01"
+      },
+      "daylight-globe": {
+        "edits": 21,
+        "tokens": 150099,
+        "first": "2026-05-24",
+        "last": "2026-06-14"
+      },
+      "gallery": {
+        "edits": 22,
+        "tokens": 79183,
+        "first": "2026-05-24",
+        "last": "2026-06-01"
+      },
+      "sluice": {
+        "edits": 58,
+        "tokens": 187475,
+        "first": "2026-05-20",
+        "last": "2026-07-21"
+      }
+    },
+    "claude-opus-4-8": {
+      "random-galaxy": {
+        "edits": 1,
+        "tokens": 2144,
+        "first": "2026-05-22",
+        "last": "2026-06-01"
+      },
+      "optional-body": {
+        "edits": 4,
+        "tokens": 9558,
+        "first": "2026-05-22",
+        "last": "2026-06-01"
+      },
+      "all-in": {
+        "edits": 181,
+        "tokens": 1031780,
+        "first": "2026-05-30",
+        "last": "2026-07-10"
+      },
+      "weather": {
+        "edits": 2,
+        "tokens": 8496,
+        "first": "2026-05-24",
+        "last": "2026-06-01"
+      },
+      "big-enough": {
+        "edits": 135,
+        "tokens": 563485,
+        "first": "2026-06-10",
+        "last": "2026-07-18"
+      },
+      "first-year": {
+        "edits": 162,
+        "tokens": 765122,
+        "first": "2026-06-01",
+        "last": "2026-07-10"
+      },
+      "ocean": {
+        "edits": 106,
+        "tokens": 625624,
+        "first": "2026-05-30",
+        "last": "2026-06-01"
+      },
+      "machine-to-atom": {
+        "edits": 102,
+        "tokens": 542786,
+        "first": "2026-05-30",
+        "last": "2026-06-03"
+      },
+      "nothing-new": {
+        "edits": 68,
+        "tokens": 459038,
+        "first": "2026-06-11",
+        "last": "2026-06-12"
+      },
+      "five-hundred-children": {
+        "edits": 73,
+        "tokens": 204239,
+        "first": "2026-06-11",
+        "last": "2026-06-12"
+      },
+      "third-thing": {
+        "edits": 62,
+        "tokens": 644234,
+        "first": "2026-05-30",
+        "last": "2026-05-31"
+      },
+      "longevity": {
+        "edits": 39,
+        "tokens": 105915,
+        "first": "2026-06-10",
+        "last": "2026-06-14"
+      },
+      "sure-things": {
+        "edits": 10,
+        "tokens": 111452,
+        "first": "2026-06-09",
+        "last": "2026-06-11"
+      },
+      "daylight-globe": {
+        "edits": 7,
+        "tokens": 22932,
+        "first": "2026-05-24",
+        "last": "2026-06-14"
+      },
+      "forty": {
+        "edits": 24,
+        "tokens": 86461,
+        "first": "2026-06-13",
+        "last": "2026-06-15"
+      },
+      "gallery": {
+        "edits": 1,
+        "tokens": 2193,
+        "first": "2026-05-24",
+        "last": "2026-06-01"
+      },
+      "particles": {
+        "edits": 9,
+        "tokens": 58863,
+        "first": "2026-06-01",
+        "last": "2026-06-15"
+      },
+      "mri": {
+        "edits": 8,
+        "tokens": 12608,
+        "first": "2026-06-01",
+        "last": "2026-06-01"
+      },
+      "warehouse": {
+        "edits": 5,
+        "tokens": 15823,
+        "first": "2026-05-31",
+        "last": "2026-07-10"
+      },
+      "alcoholics-anonymous": {
+        "edits": 5,
+        "tokens": 41894,
+        "first": "2026-06-13",
+        "last": "2026-06-13"
+      },
+      "predatory-advertising": {
+        "edits": 2,
+        "tokens": 44250,
+        "first": "2026-06-05",
+        "last": "2026-06-05"
+      },
+      "first-164": {
+        "edits": 1,
+        "tokens": 30163,
+        "first": "2026-06-13",
+        "last": "2026-06-13"
+      },
+      "seven-habits": {
+        "edits": 8,
+        "tokens": 39499,
+        "first": "2026-06-17",
+        "last": "2026-06-18"
+      },
+      "tao-te-ching": {
+        "edits": 8,
+        "tokens": 53282,
+        "first": "2026-06-17",
+        "last": "2026-07-19"
+      },
+      "the-far-side-of-the-body": {
+        "edits": 8,
+        "tokens": 83040,
+        "first": "2026-06-18",
+        "last": "2026-06-18"
+      },
+      "no-blood-test": {
+        "edits": 14,
+        "tokens": 151714,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "still-moving": {
+        "edits": 19,
+        "tokens": 138965,
+        "first": "2026-06-19",
+        "last": "2026-06-19"
+      },
+      "sounds-made-up": {
+        "edits": 3,
+        "tokens": 47655,
+        "first": "2026-06-20",
+        "last": "2026-06-21"
+      },
+      "wisdom-never-written-down": {
+        "edits": 9,
+        "tokens": 51681,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "hebrew-bible": {
+        "edits": 0,
+        "tokens": 9053,
+        "first": "2026-06-19",
+        "last": "2026-07-19"
+      },
+      "analects": {
+        "edits": 10,
+        "tokens": 39852,
+        "first": "2026-06-19",
+        "last": "2026-07-19"
+      },
+      "zhuangzi": {
+        "edits": 27,
+        "tokens": 215025,
+        "first": "2026-06-18",
+        "last": "2026-06-20"
+      },
+      "dhammapada": {
+        "edits": 17,
+        "tokens": 44864,
+        "first": "2026-06-18",
+        "last": "2026-06-20"
+      },
+      "gita": {
+        "edits": 14,
+        "tokens": 46352,
+        "first": "2026-06-19",
+        "last": "2026-07-19"
+      },
+      "new-testament": {
+        "edits": 10,
+        "tokens": 41445,
+        "first": "2026-06-19",
+        "last": "2026-07-19"
+      },
+      "nagarjuna": {
+        "edits": 14,
+        "tokens": 85452,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "quran": {
+        "edits": 5,
+        "tokens": 30141,
+        "first": "2026-06-20",
+        "last": "2026-07-19"
+      },
+      "guru-granth-sahib": {
+        "edits": 7,
+        "tokens": 35026,
+        "first": "2026-06-20",
+        "last": "2026-07-19"
+      },
+      "plato": {
+        "edits": 12,
+        "tokens": 58180,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "aristotle": {
+        "edits": 29,
+        "tokens": 138914,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "meditations": {
+        "edits": 5,
+        "tokens": 21201,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "social-contract": {
+        "edits": 5,
+        "tokens": 21509,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "marx": {
+        "edits": 10,
+        "tokens": 38221,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "mill": {
+        "edits": 13,
+        "tokens": 64262,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "darwin": {
+        "edits": 10,
+        "tokens": 61427,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "nietzsche": {
+        "edits": 21,
+        "tokens": 89020,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "camus": {
+        "edits": 5,
+        "tokens": 21409,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "case-for-god": {
+        "edits": 8,
+        "tokens": 65512,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "beginning-of-infinity": {
+        "edits": 55,
+        "tokens": 211497,
+        "first": "2026-06-18",
+        "last": "2026-06-19"
+      },
+      "sapiens": {
+        "edits": 5,
+        "tokens": 50971,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "meditation": {
+        "edits": 33,
+        "tokens": 133298,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "chemical-path": {
+        "edits": 7,
+        "tokens": 47947,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "william-james": {
+        "edits": 2,
+        "tokens": 20179,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "fox": {
+        "edits": 10,
+        "tokens": 119730,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "perennial-philosophy": {
+        "edits": 7,
+        "tokens": 30662,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "frankl": {
+        "edits": 9,
+        "tokens": 43725,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "modern-teachers": {
+        "edits": 13,
+        "tokens": 84212,
+        "first": "2026-06-20",
+        "last": "2026-06-21"
+      },
+      "cults-the-cage": {
+        "edits": 7,
+        "tokens": 34417,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "cults-business": {
+        "edits": 13,
+        "tokens": 37685,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "spirituality-of-imperfection": {
+        "edits": 6,
+        "tokens": 33877,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "get-used-to-everything": {
+        "edits": 23,
+        "tokens": 125621,
+        "first": "2026-06-20",
+        "last": "2026-07-10"
+      },
+      "odyssey": {
+        "edits": 12,
+        "tokens": 74604,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "art-of-war": {
+        "edits": 7,
+        "tokens": 27451,
+        "first": "2026-06-20",
+        "last": "2026-06-20"
+      },
+      "symposium": {
+        "edits": 10,
+        "tokens": 43186,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "kama-sutra": {
+        "edits": 3,
+        "tokens": 19055,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "machiavelli": {
+        "edits": 8,
+        "tokens": 34357,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "grand-inquisitor": {
+        "edits": 8,
+        "tokens": 29244,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "in-praise-of-shadows": {
+        "edits": 6,
+        "tokens": 25528,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "the-other-hours": {
+        "edits": 12,
+        "tokens": 60711,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      },
+      "sluice": {
+        "edits": 824,
+        "tokens": 2367604,
+        "first": "2026-05-20",
+        "last": "2026-07-21"
+      },
+      "what-to-eat": {
+        "edits": 2,
+        "tokens": 9380,
+        "first": "2026-06-22",
+        "last": "2026-06-22"
+      },
+      "the-body-rhymes": {
+        "edits": 7,
+        "tokens": 36269,
+        "first": "2026-06-21",
+        "last": "2026-06-21"
+      }
+    },
+    "claude-fable-5": {
+      "big-enough": {
+        "edits": 41,
+        "tokens": 79136,
+        "first": "2026-06-10",
+        "last": "2026-07-18"
+      },
+      "nothing-new": {
+        "edits": 11,
+        "tokens": 16930,
+        "first": "2026-06-11",
+        "last": "2026-06-12"
+      },
+      "five-hundred-children": {
+        "edits": 1,
+        "tokens": 21451,
+        "first": "2026-06-11",
+        "last": "2026-06-12"
+      },
+      "the-number": {
+        "edits": 56,
+        "tokens": 299973,
+        "first": "2026-06-10",
+        "last": "2026-06-10"
+      },
+      "best-photographs": {
+        "edits": 56,
+        "tokens": 325357,
+        "first": "2026-06-10",
+        "last": "2026-06-11"
+      },
+      "longevity": {
+        "edits": 1,
+        "tokens": 1044,
+        "first": "2026-06-10",
+        "last": "2026-06-14"
+      },
+      "sure-things": {
+        "edits": 26,
+        "tokens": 232456,
+        "first": "2026-06-09",
+        "last": "2026-06-11"
+      },
+      "under-the-street": {
+        "edits": 1,
+        "tokens": 17530,
+        "first": "2026-07-12",
+        "last": "2026-07-12"
+      }
+    },
+    "claude-sonnet-4-6": {
+      "sluice": {
+        "edits": 5,
+        "tokens": 2152,
+        "first": "2026-05-20",
+        "last": "2026-07-21"
+      }
+    }
+  },
+  "residualsInitialized": "2026-07-23"
+}
