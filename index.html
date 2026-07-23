@@ -92,7 +92,7 @@
        the underline as a plucked string (a 1-D wave equation), rung at the caret
        as you type. wave-on is only added when motion is allowed, so reduced-motion
        and no-JS keep the static masked hairline above. */
-    .hs-wave { position: absolute; left: 0; right: 0; bottom: -15px; width: 100%; height: 30px; pointer-events: none; }
+    .hs-wave { position: absolute; left: 0; right: 0; bottom: -15px; width: 100%; height: 30px; pointer-events: auto; touch-action: pan-y; }
     .home-search.wave-on::before, .home-search.wave-on::after { display: none; }
     /* Longform, In Progress, About: quiet links at the right end of the rule, no
        pill, split by hairlines so they read as a set. */

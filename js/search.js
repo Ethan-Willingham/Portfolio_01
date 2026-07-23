@@ -306,6 +306,11 @@
   input.addEventListener('blur', function () { focused = false; draw(); });
   input.addEventListener('input', function () { pluck(caretX(), AMP); });
   input.addEventListener('keydown', function (e) { if (e.key === 'Enter') pluck(W * 0.5, AMP * 1.5); });
+  // Click or tap the line itself to pluck it right there. preventDefault keeps
+  // focus where it is, so a tap never steals focus: no keyboard popup on touch,
+  // and an open results panel stays open.
+  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); pluck(e.clientX - cv.getBoundingClientRect().left, AMP * 1.6); });
+  cv.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep focus in Firefox/Safari too
 
   if (window.ResizeObserver) new ResizeObserver(size).observe(cv); else window.addEventListener('resize', size);
   size();

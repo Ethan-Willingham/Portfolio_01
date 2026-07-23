@@ -44,7 +44,7 @@
    the underline as a plucked string (a 1-D wave equation), rung at the caret as
    you type. wave-on is only added when motion is allowed, so reduced-motion and
    no-JS keep the static masked hairline above. */
-.hs-wave { position: absolute; left: 0; right: 0; bottom: -15px; width: 100%; height: 30px; pointer-events: none; }
+.hs-wave { position: absolute; left: 0; right: 0; bottom: -15px; width: 100%; height: 30px; pointer-events: auto; touch-action: pan-y; }
 .home-search.wave-on::before, .home-search.wave-on::after { display: none; }
 .hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 0.85rem; }
 .hs-about { flex: none; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); text-decoration: none; white-space: nowrap; transition: color 0.2s ease; padding-block: 0.55rem; margin-block: -0.55rem; }
