@@ -37,7 +37,7 @@ echo "==> Running the updater..."
 node tools/update-about.mjs --write || die "the updater hit an error (see above)"
 
 echo "==> Publishing any changes..."
-git add about.html js/git-history-data.js js/git-attribution-data.js js/site-size-data.js search-index.json tools/about-stats.json
+git add about.html js/git-history-data.js js/git-attribution-data.js js/site-size-data.js search-index.json tools/about-stats.json tools/about-codex-attribution.json
 if git diff --cached --quiet; then
   bold "Already up to date - nothing new to publish."
 else

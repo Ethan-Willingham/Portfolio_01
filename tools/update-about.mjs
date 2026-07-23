@@ -435,7 +435,7 @@ try {
 // optional commit + push
 if (COMMIT) {
   log(H('COMMIT + PUSH'));
-  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json'];
+  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-codex-attribution.json'];
   try {
     execSync('git add ' + files.map(f => JSON.stringify(f)).join(' '), { cwd: REPO, stdio: 'inherit' });
     const msg = `about: refresh build stats (+${fresh.length} commits, +${newTopics.length} posts, ${tokStr || 'tokens'})`;

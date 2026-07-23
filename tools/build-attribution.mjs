@@ -16,31 +16,41 @@
 
    THE ALGORITHM (matches the committed data):
      - scan THIS machine's Claude Code transcripts (~/.claude/projects/-Users-...)
+       and Codex transcripts (~/.codex/sessions)
      - each assistant message with an Edit/Write/MultiEdit tool_use is attributed
        to message.model + the post whose file it touched
+     - each successful Codex patch_apply_end event is attributed the same way;
+       tools/about-codex-attribution.json keeps a hashed per-session ledger so
+       pruned transcripts never remove already-published credit
      - edit-share  = count of ops
      - token-share = each turn's usage.output_tokens split across the (distinct)
        POST files it edited (shared files like style.css are not the denominator)
-     - file -> post key via the git-history topic hrefs + js aliases; Sluice excluded
+     - file -> post key via the git-history topic hrefs + js aliases
 
    *** ADD-ONLY ON PURPOSE ***  Transcripts get PRUNED over time, so re-deriving
    every post from scratch REGRESSES intact tiles (e.g. machine-to-atom dropped
-   from 102 to 2 surviving edits). So this keeps every committed tile BYTE-FOR-BYTE
-   and only APPENDS posts that have no tile yet. Run without --write first: the
-   VALIDATION block must show EXACT (or close) for untouched posts, which proves
-   the router/algorithm still matches before you trust the new numbers.
+   from 102 to 2 surviving edits). The Claude pass therefore keeps committed
+   rows unchanged and only appends missing posts. Codex rows are rebuilt from
+   the durable per-session ledger, which preserves sessions after their local
+   transcripts disappear. Run without --write first to inspect both passes.
 
    A post built on ANOTHER machine/account has zero edits here and is correctly
-   ABSENT (space-age, star-signs, remote-viewing). Do NOT fabricate a tile for it.
+   ABSENT. Do NOT fabricate a tile for it.
    Per-model fuel totals (models[].tokens/cost) are a blended two-machine ccusage
    snapshot this script does NOT recompute; it only bumps the post/edit counts.
    ============================================================================ */
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { homedir } from 'node:os';
+import { createHash } from 'node:crypto';
 
 const REPO = process.cwd();
 const TX = join(homedir(), '.claude/projects/-Users-ethan-Portfolio-01');
+const CODEX_TX = join(homedir(), '.codex/sessions');
+const CODEX_LEDGER = join(REPO, 'tools/about-codex-attribution.json');
+const CODEX_MODELS = {
+  'gpt-5.6-sol': { label: 'GPT-5.6 Sol', short: 'G5.6', color: '#8FB3C7' },
+};
 
 const GH = JSON.parse(readFileSync(join(REPO, 'js/git-history-data.js'), 'utf8').match(/=\s*(\{[\s\S]*\});?\s*$/m)[1]);
 const ATTR = JSON.parse(readFileSync(join(REPO, 'js/git-attribution-data.js'), 'utf8').match(/=\s*(\{[\s\S]*\});?\s*$/m)[1]);
@@ -64,7 +74,11 @@ const NEW = process.env.ATTR_NEW_JSON ? JSON.parse(process.env.ATTR_NEW_JSON) : 
 // ---- file -> post-key router ----
 const route = new Map();
 for (const t of GH.topics) {
-  if (t.href) { const slug = t.href.replace(/\.html$/, ''); route.set(t.href, t.key); route.set('js/' + slug + '.js', t.key); }
+  if (t.href) {
+    const slug = t.href.replace(/.*\//, '').replace(/\.html$/, '');
+    route.set(t.href, t.key);
+    route.set('js/' + slug + '.js', t.key);
+  }
 }
 const ALIAS = {
   'js/globe.js': 'daylight-globe',
@@ -96,9 +110,9 @@ function keyFor(rel) {
   const parts = rel.split('/');
   for (let i = 0; i < parts.length; i++) {
     const tail = parts.slice(i).join('/');
+    if (route.has(tail)) return route.get(tail);
     const am = tail.match(/^archive\/([^/]+)\//);
     if (am) return am[1];
-    if (route.has(tail)) return route.get(tail);
   }
   return '';
 }
@@ -140,6 +154,138 @@ for (const f of readdirSync(TX)) {
   }
 }
 
+// ---- Codex transcripts -> durable per-session ledger ----
+// Codex records successful file mutations as patch_apply_end events. A token_count
+// event follows the model response that issued each patch, so its output tokens can
+// be divided across the distinct post files changed by that response just like the
+// Claude transcript pass above.
+function jsonlFiles(dir) {
+  if (!existsSync(dir)) return [];
+  let out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const file = join(dir, ent.name);
+    if (ent.isDirectory()) out = out.concat(jsonlFiles(file));
+    else if (ent.isFile() && ent.name.endsWith('.jsonl')) out.push(file);
+  }
+  return out;
+}
+
+function codexSession(file) {
+  let sessionId = basename(file);
+  let activeTurn = '';
+  const turnModels = new Map();
+  const pending = new Map();
+  const models = {};
+
+  const flush = (model, outTok) => {
+    if (!CODEX_MODELS[model] || !pending.size) { pending.clear(); return; }
+    const paths = [...pending.values()].reduce((n, x) => n + x.paths.size, 0);
+    const perPathTok = paths ? outTok / paths : 0;
+    const posts = models[model] || (models[model] = {});
+    for (const [key, item] of pending) {
+      const a = posts[key] || (posts[key] = { edits: 0, tokens: 0, first: item.first, last: item.last });
+      a.edits += item.edits;
+      a.tokens += perPathTok * item.paths.size;
+      if (item.first < a.first) a.first = item.first;
+      if (item.last > a.last) a.last = item.last;
+    }
+    pending.clear();
+  };
+
+  for (const ln of readFileSync(file, 'utf8').split('\n')) {
+    if (!ln) continue;
+    let o; try { o = JSON.parse(ln); } catch { continue; }
+    const p = o.payload || {};
+    if (o.type === 'session_meta') {
+      sessionId = p.id || p.session_id || sessionId;
+      continue;
+    }
+    if (o.type === 'turn_context') {
+      turnModels.set(p.turn_id, p.model);
+      continue;
+    }
+    if (o.type !== 'event_msg') continue;
+    if (p.type === 'task_started') {
+      activeTurn = p.turn_id || '';
+      pending.clear();
+      continue;
+    }
+    if (p.type === 'patch_apply_end' && p.success) {
+      const model = turnModels.get(p.turn_id || activeTurn);
+      if (!CODEX_MODELS[model]) continue;
+      const ts = o.timestamp || '';
+      for (const path of Object.keys(p.changes || {})) {
+        const key = keyFor(path);
+        if (!key || EXCLUDE.has(key)) continue;
+        const item = pending.get(key) || { edits: 0, paths: new Set(), first: ts, last: ts };
+        item.edits += 1;
+        item.paths.add(path.replace(/\\/g, '/'));
+        if (ts && ts < item.first) item.first = ts;
+        if (ts && ts > item.last) item.last = ts;
+        pending.set(key, item);
+      }
+      continue;
+    }
+    if (p.type === 'token_count') {
+      const model = turnModels.get(activeTurn);
+      flush(model, (p.info && p.info.last_token_usage && p.info.last_token_usage.output_tokens) || 0);
+      continue;
+    }
+    if (p.type === 'task_complete') {
+      flush(turnModels.get(activeTurn), 0);
+      activeTurn = '';
+    }
+  }
+  flush(turnModels.get(activeTurn), 0);
+
+  const clean = {};
+  for (const [model, posts] of Object.entries(models)) {
+    clean[model] = {};
+    for (const [key, a] of Object.entries(posts)) {
+      clean[model][key] = {
+        edits: a.edits,
+        tokens: Math.round(a.tokens),
+        first: (a.first || '').slice(0, 10),
+        last: (a.last || '').slice(0, 10),
+      };
+    }
+  }
+  if (!Object.keys(clean).length) return null;
+  const id = createHash('sha256').update(sessionId).digest('hex').slice(0, 16);
+  return [id, { models: clean }];
+}
+
+const ledger = existsSync(CODEX_LEDGER)
+  ? JSON.parse(readFileSync(CODEX_LEDGER, 'utf8'))
+  : {
+      note: 'Durable hashed-session ledger for Codex per-post attribution. Rebuilt by tools/build-attribution.mjs; retained entries survive local transcript pruning.',
+      version: 1,
+      sessions: {},
+    };
+let codexScanned = 0;
+for (const file of jsonlFiles(CODEX_TX)) {
+  const found = codexSession(file);
+  if (!found) continue;
+  const [id, data] = found;
+  ledger.sessions[id] = data;
+  codexScanned++;
+}
+
+const codexAcc = new Map();
+for (const session of Object.values(ledger.sessions)) {
+  for (const [model, posts] of Object.entries(session.models || {})) {
+    for (const [key, a] of Object.entries(posts)) {
+      const id = model + '\0' + key;
+      const total = codexAcc.get(id) || { model, key, edits: 0, tokens: 0, first: a.first, last: a.last };
+      total.edits += a.edits || 0;
+      total.tokens += a.tokens || 0;
+      if (a.first && a.first < total.first) total.first = a.first;
+      if (a.last && a.last > total.last) total.last = a.last;
+      codexAcc.set(id, total);
+    }
+  }
+}
+
 const ymd = ts => { const d = new Date(ts * 1000); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
 const committed = new Map(ATTR.posts.map(p => [p.key, p]));
 const totals = a => ({ te: Object.values(a.edits).reduce((x, y) => x + y, 0), tt: Object.values(a.tokens).reduce((x, y) => x + y, 0) });
@@ -148,6 +294,10 @@ const checkKeys = process.argv.slice(2).filter(a => !a.startsWith('--'));
 const keys = checkKeys.length ? checkKeys : ['random-galaxy', 'particle-life', 'optional-body', 'all-in'];
 console.log('transcripts:', TX, excludeSession ? `(excluding session ${excludeSession})` : '');
 console.log('turns with edits:', turns, '| turns counted to a post:', editTurns);
+console.log('Codex sessions with post edits:', codexScanned, '| durable model/post rows:', codexAcc.size);
+for (const a of [...codexAcc.values()].sort((x, y) => y.tokens - x.tokens)) {
+  console.log(`  ${a.model} -> ${a.key}: ${a.edits}ed / ${Math.round(a.tokens)}tok [${a.first}..${a.last}]`);
+}
 console.log('\nVALIDATION (computed vs committed — expect EXACT/close for untouched posts):');
 for (const k of keys) {
   const a = acc.get(k), c = committed.get(k);
@@ -188,7 +338,64 @@ if (process.argv.includes('--write')) {
     for (const m of Object.keys(models)) { const md = out.models.find(x => x.id === m); if (md) { md.posts += 1; md.edits += models[m].edits; } }
     added++;
   }
+
+  // Codex owns the configured gpt-* rows in each tile. Replacing those rows from
+  // the durable ledger makes reruns idempotent while leaving the add-only Claude
+  // attribution untouched.
+  const postByKey = new Map(out.posts.map(p => [p.key, p]));
+  const topicByKey = new Map(GH.topics.map(t => [t.key, t]));
+  for (const a of codexAcc.values()) {
+    let post = postByKey.get(a.key);
+    if (!post) {
+      const meta = topicByKey.get(a.key);
+      if (!meta || !meta.href || !['post', 'archived'].includes(meta.kind)) continue;
+      post = {
+        key: a.key,
+        label: meta.label,
+        href: meta.href,
+        kind: meta.kind,
+        first: a.first,
+        last: a.last,
+        edits: 0,
+        tokens: 0,
+        models: {},
+        words: wordCount(meta.href),
+      };
+      out.posts.push(post);
+      postByKey.set(a.key, post);
+      added++;
+    }
+    post.models[a.model] = { edits: a.edits, tokens: Math.round(a.tokens) };
+    if (a.first && a.first < post.first) post.first = a.first;
+    if (a.last && a.last > post.last) post.last = a.last;
+    post.edits = Object.values(post.models).reduce((n, m) => n + (m.edits || 0), 0);
+    post.tokens = Object.values(post.models).reduce((n, m) => n + (m.tokens || 0), 0);
+  }
+
+  for (const [id, config] of Object.entries(CODEX_MODELS)) {
+    let model = out.models.find(m => m.id === id);
+    if (!model) {
+      let fuel = { tokens: 0, cost: 0 };
+      try { fuel = JSON.parse(readFileSync(join(REPO, 'tools/about-stats.json'), 'utf8')).models[id] || fuel; } catch {}
+      model = { id, ...config, tokens: fuel.tokens, cost: Math.round(fuel.cost), posts: 0, edits: 0 };
+      out.models.push(model);
+    }
+    Object.assign(model, config);
+    delete model.note;
+    const credited = out.posts.filter(p => p.models && p.models[id]);
+    model.posts = credited.length;
+    model.edits = credited.reduce((n, p) => n + p.models[id].edits, 0);
+  }
+  out.generated = Math.floor(Date.now() / 1000);
+  const windowStart = (out.window.match(/\d{4}-\d{2}-\d{2}/) || ['2026-05-21'])[0];
+  const windowEnd = out.posts.reduce((last, p) => p.last > last ? p.last : last, windowStart);
+  out.window = windowStart + ' to ' + windowEnd;
+  out.note = out.note
+    .replace('derived from Claude Code session transcripts', 'derived from Claude Code and Codex session transcripts')
+    .replace('Each Edit/Write op', 'Each Edit/Write or successful Codex patch op');
+
   const banner = readFileSync(join(REPO, 'js/git-attribution-data.js'), 'utf8').match(/^[\s\S]*?(?=window\.GIT_ATTRIBUTION)/)[0];
   writeFileSync(join(REPO, 'js/git-attribution-data.js'), banner + 'window.GIT_ATTRIBUTION = ' + JSON.stringify(out) + ';\n');
+  writeFileSync(CODEX_LEDGER, JSON.stringify(ledger, null, 2) + '\n');
   console.log(`\nWROTE js/git-attribution-data.js: +${added} tiles, ${out.posts.length} total. Verify on about.html, then commit.`);
 }
