@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
+  <meta name="color-scheme" content="dark">
+  <title>Kant</title>
+  <meta name="description" content="A plain-language walk through Kant's Groundwork of the Metaphysics of Morals, the book where he tries to build all of morality on a single rule, in seven stops, featuring T.K. Abbott's public-domain translation with the modern wording set beside it.">
+  <meta property="og:title" content="Kant">
+  <meta property="og:description" content="Everyone has heard a parent ask, what if everyone did that? Kant is the one who tried to turn it into the whole of morality. A walk through the Groundwork in seven stops, from the good will to the one rule that treats every person as an end.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/kant.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/kant-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/kant-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     KANT AND THE ONE RULE
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: seven stops through the argument of the Groundwork of
+     the Metaphysics of Morals, each unpacked in plain language,
+     with a collapsible side panel that stacks the modern
+     translators on the one line everybody quotes. Featured text:
+     T.K. Abbott (public domain). Sits in the site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono).
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --classic: #cf9f78;               /* Abbott, the featured public-domain spine */
+    --standard:#bc9d65;               /* the academic-standard moderns */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .de { font-style: italic; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 420px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Abbott passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-classic  { border-left-color: var(--classic); }
+  .stack-standard { border-left-color: var(--standard); }
+  .stack-feat { background: rgba(207,159,120,0.07); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--classic); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  /* the term panel: a word Kant coined or bent, and what it carries */
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; color: var(--accent); }
+  .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="philosophy.html" class="post-back ll-back"><span class="pb-label">How to Think, and What's Real</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Kant</h1>
+    <p class="hero-dek">One rule, meant to hold with no God and no reward standing behind it, that Kant believed the whole of right and wrong could be built on. It may be the most stubborn attempt anyone ever made to prove that some things are simply wrong.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>7 stops</b> through the Groundwork <span class="sep">/</span> featured: <b>T.K. Abbott</b> <span class="sep">/</span> ~23 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Every kid hears the same question, usually right after doing something small and selfish. You cut the line, you lie to duck a chore, and some adult says: what if everyone did that? It is meant to shut the argument down, not open one. Immanuel Kant spent his life deciding it was the whole of right and wrong.</p>
+
+      <p>Take that question, make it exact, and point it at every single thing you do, and you have the <strong>categorical imperative</strong>, Kant's one rule. He thought all of morality could be built on it, the way Euclid built a world of geometry out of a handful of axioms. Not a list of commandments, not a holy book, not a gut feeling. One test, run by reason, that any person anywhere could run for themselves and get the same answer.</p>
+
+      <p>What makes Kant Kant is where he refuses to look. Not at what your action produces, whether it makes anyone happy, including you. Not at how it feels, whether you did it out of love or spite. He throws all of that out and stares at one thing: the rule you were secretly acting on, and whether you could stand for everyone else to act on it too. Morality, for him, is not about results, and it is not about feelings. It is about whether your reasons could be everybody's reasons.</p>
+
+      <p>The book is the <strong>Groundwork of the Metaphysics of Morals</strong>, published in 1785, by a man who was already, on the strength of his <em>Critique of Pure Reason</em>, the most argued-over philosopher in Europe. It is short, under a hundred pages, and it is a genuine slog, some of the hardest clear writing in philosophy, because Kant is not just stating his rule, he is trying to prove it, chasing it down to the last bolt. This page walks the argument in seven stops, from its first move to its last, and ends where the argument itself cracks, because it does crack, in a few famous places.</p>
+
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/kant-portrait.webp"><img src="assets/images/kant-portrait.jpg" width="900" height="1296" loading="eager" decoding="async" alt="A close portrait of Immanuel Kant against a black ground: a pale, sharp-featured man with a high domed forehead and grey powdered hair curled at the sides, in a dark coat with a white collar, his eyes lowered."></picture>
+        <figcaption>Immanuel Kant, by an unknown painter of the school of Anton Graff (c. 1790). Public domain, via Wikimedia Commons.</figcaption>
+      </figure>
+
+      <p>The featured translation throughout is <strong>Thomas Kingsmill Abbott's</strong>, from 1873, long in the public domain, so every passage is quoted in full instead of in snippets. It reads old, all "thou canst" and "whereby," and I have kept it that way and set the modern wording right beside it on the one line everybody quotes, so you can watch a hundred and twenty years of English move across the same sentence.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole book on one page</p>
+        <p class="u-callout-body">The diagnosis: we keep confusing being good with getting good results or having warm feelings, and both of those are mostly luck. The cure: the only thing that is good with no strings attached is a <em>good will</em>, a will that acts from duty, on a rule it could wish were a law for everyone, treating every person as an end in themselves and never as a mere tool. Do that, and you are not just obeying the moral law, you are its author. That authorship, Kant says, is what a human being is worth. He has a word for it: dignity.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">The only good thing</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 7</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-goodwill" data-label="The only good thing" data-tag="First Section">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> First Section, the good will</p>
+      <h2 class="station-h">The one thing that is good no matter what</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / First Section</p>
+        <div class="passage-t">
+          <p>Nothing can possibly be conceived in the world, or even out of it, which can be called good, without qualification, except a good will.</p>
+          <p>Even if it should happen that ... this will should wholly lack power to accomplish its purpose, if with its greatest efforts it should yet achieve nothing, and there should remain only the good will ... then, like a jewel, it would still shine by its own light, as a thing which has its whole value in itself.</p>
+          <span class="passage-n">Groundwork, First Section (Ak. 4:393)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Kant opens with a claim that sounds enormous and is: there is exactly one thing in the world that is good with no conditions attached, and it is a good will. Every other good thing is only good on a condition, and he walks you through them to prove it.</p>
+        <p>Start with the traits everyone envies. Intelligence, nerve, cool judgment, patience. All good, Kant grants, then he pulls the floor out: they are only good if the will using them is good. A sharp mind and steady nerve are precisely what make a con artist worse than a clumsy one, and "the coolness of a villain," he writes, makes him "more abominable in our eyes than he would have been without it." Hand a bad will a set of good tools and you have made the world worse, not better. Same with the gifts of luck: money, power, health, even happiness. A cruel person who is also happy and lucky is not a good in the world, they are an offense.</p>
+        <p>So the good is not in the talents and not in the winnings. The one thing that stays good in every hand, the saint's and the monster's, the thing that decides whether all the rest tilts toward good or evil, is the quality of the will behind it. A will that wants to do right because it is right.</p>
+        <p>Then Kant makes the strangest claim of the lot, and the whole book leans on it. A good will is good <em>even if it never accomplishes a thing</em>. Suppose you try your absolute hardest to do right and fail completely, through plain bad luck, so that no good at all comes of it. The good will, Kant says, "would still shine by its own light, as a thing which has its whole value in itself." The results were never the point, because results are luck. A person who tries with everything they have and fails has the same moral worth as the one who succeeds. The world got the good outcome from the second person, but the goodness belonged equally to both.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>This is the exact spot where Kant splits from the neighbors.</strong> The other great modern answer, <a href="mill.html">Mill's</a> and the utilitarians', says results are the <em>only</em> thing that counts: an act is good if it produces more happiness, full stop, and a good intention that helps no one is worth nothing. Kant says the reverse. Two thinkers, two doors, and most of modern ethics still walks through one or the other. The rest of this walk is what is behind Kant's.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-duty" data-label="Duty, not inclination" data-tag="First Section">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> First Section, acting from duty</p>
+      <h2 class="station-h">Why the kind thing can be worth nothing</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / First Section</p>
+        <div class="passage-t">
+          <p>It is always a matter of duty that a dealer should not over charge an inexperienced purchaser; and wherever there is much commerce the prudent tradesman does not overcharge, but keeps a fixed price for everyone ... Accordingly the action was done neither from duty nor from direct inclination, but merely with a selfish view.</p>
+          <span class="passage-n">Groundwork, First Section (Ak. 4:397)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here Kant makes his most disliked move, and it pays to see why he makes it before deciding he is wrong. An action has real moral worth, he says, only when it is done <strong>from duty</strong>, because it is right, and not <strong>from inclination</strong>, because you felt like it or it paid.</p>
+        <p>The shopkeeper is his example. Picture an honest merchant who never overcharges anyone, not even a child who would never catch the difference. Good behavior, obviously. But if he is honest because a reputation for fair prices is good for business, then, Kant says, he has done the right thing "neither from duty nor from direct inclination, but merely with a selfish view." His honesty happened to line up with what duty demands. It was not done for duty's sake. It was done for the till.</p>
+        <p>Then the hard case, the one people still argue about. Picture someone who genuinely loves to help, who gets a warm glow from doing people good. Lovely, says Kant, and worth precisely nothing, morally, because they are just indulging a taste, the way someone else likes to garden. Then he turns the screw. Take that same warm person and drown their good cheer in some private grief, until they feel nothing for anybody, and have them drag themselves out of bed to help a stranger anyway, cold, purely because it is the right thing to do. <em>Now,</em> Kant says, and only now, "first has his action its genuine moral worth." The colder it feels, the clearer the duty shows, because at that point nothing else could possibly be moving them.</p>
+        <p>This lands wrong on almost everyone, and it deserves a fair hearing both ways. Read one way it is a little monstrous, and Kant's own contemporaries said so. The poet Schiller mocked it inside Kant's lifetime, roughly: I am happy to help my friends, but it troubles me that I enjoy it, so I fear I am not virtuous. If the theory really says the warm helper ranks below the grim one gritting their teeth, something has gone wrong.</p>
+        <p>But read him more carefully and the point is narrower and much better. Kant is not saying feelings are bad, or that you should go cold, or that the cheerful helper is a worse person. He is saying your feelings cannot be the thing your morality <em>rests on</em>, because they come and go and are not yours to command. The friend who is kind only when kindness comes easy will drop you the day it doesn't. The one who is kind from duty is still there on the worst day, when the warm feeling is gone. Kant is hunting for the part of goodness you can actually count on, and a mood is not it.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-imperative" data-label="The categorical imperative" data-tag="Second Section">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Second Section, the one rule</p>
+      <h2 class="station-h">One rule, and every duty falls out of it</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / Second Section</p>
+        <div class="passage-t">
+          <p>There is therefore but one categorical imperative, namely, this: Act only on that maxim whereby thou canst at the same time will that it should become a universal law.</p>
+          <span class="passage-n">Groundwork, Second Section (Ak. 4:421)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the machine at the center of the book. Kant claims every duty you have drops out of a single rule, and here it is: act only on a <strong>maxim</strong> you could <em>will to be a universal law</em>. Two bits of jargon, both simple. A maxim is just the personal rule you are actually acting on, the real reason, said out loud and honest: "I break a promise whenever keeping it gets expensive." To will it as a universal law is to ask whether you could genuinely want that rule to hold for everyone, always, including on the days it gets used against you.</p>
+        <p>First the word <strong>categorical</strong>, because it carries the whole difference. Almost every rule we live by is <em>hypothetical</em>, an if-then: if you want to stay out of jail, don't steal; if you want friends, be kind. Take away the want and the rule falls silent. Kant's imperative has no "if." It does not ask what you want. Do not lie, full stop, not "do not lie if you would like to be trusted." A categorical rule binds you whether it pays or not, and that, for Kant, is the only kind of rule that is genuinely moral rather than merely clever.</p>
+        <p>Watch the test run on his own example. You are broke, and you are thinking about promising to repay a loan you already know you cannot repay, a flat lie to get the cash. Run the Kant question: could I will that <em>everyone</em> in a tight spot make a promise they intend to break? Try to and it collapses in your hands. If everyone did that, a promise would carry no weight at all, no one would lend on the strength of one, and the very tool you are reaching for, a believed promise, would stop existing. "While I can will the lie," Kant writes, "I can by no means will that lying should be a universal law," because as soon as it "should be made a universal law, [it] would necessarily destroy itself." The lie only works <em>because</em> almost everyone else tells the truth. Make it the universal rule and it eats its own legs.</p>
+        <p>Notice what this is not. It is not "what goes around comes around." It is not a warning that the liar might get caught. Kant does not care whether the liar gets caught; the getting-caught question is exactly the prudent, hypothetical thinking he is trying to leave behind. The point is colder and cleaner than a threat: the liar's rule cannot even be <em>thought</em> as a rule for everyone without contradicting itself. It fails a logic test, not a luck test. The wrong is baked into the reasoning, and you can see it from your armchair.</p>
+
+        <details class="stack">
+          <summary>The most famous sentence in the book, in three hands</summary>
+          <div class="stack-body">
+            <p class="stack-gloss" style="margin-top:0.2rem">One sentence, the categorical imperative itself, across a hundred and twenty years of English. Nothing in the idea changes. Watch <em>only</em> the surface: the archaic pronouns fall away, "whereby" turns into "through which," and the plain "act on a maxim" grows the careful "act in accordance with a maxim."</p>
+            <div class="stack-v stack-classic stack-feat">
+              <div class="stack-vh"><span class="stack-vn">T.K. Abbott <span class="star">featured</span></span><span class="stack-vy">1873</span></div>
+              <div class="stack-vt">"Act only on that maxim whereby thou canst at the same time will that it should become a universal law."</div>
+            </div>
+            <div class="stack-v stack-standard">
+              <div class="stack-vh"><span class="stack-vn">H.J. Paton</span><span class="stack-vy">1948</span></div>
+              <div class="stack-vt">"Act only on that maxim through which you can at the same time will that it should become a universal law."</div>
+            </div>
+            <div class="stack-v stack-standard">
+              <div class="stack-vh"><span class="stack-vn">Mary Gregor</span><span class="stack-vy">1996</span></div>
+              <div class="stack-vt">"Act only in accordance with that maxim through which you can at the same time will that it become a universal law."</div>
+            </div>
+            <p class="stack-gloss" style="margin-top:1rem">Kant gives a second wording on the same page, the "law of nature" version: <em>Act as if the maxim of thy action were to become by thy will a universal law of nature.</em> Same test, dressed as a thought experiment: imagine your rule becoming a law of physics that everyone is simply built to follow, and see whether the world you just made still hangs together.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-humanity" data-label="Humanity as an end" data-tag="Second Section">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Second Section, persons and things</p>
+      <h2 class="station-h">Treat people as ends, never merely as tools</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / Second Section</p>
+        <div class="passage-t">
+          <p>So act as to treat humanity, whether in thine own person or in that of any other, in every case as an end withal, never as means only.</p>
+          <span class="passage-n">Groundwork, Second Section (Ak. 4:429)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Kant says the one rule can be put a second way, and this is the version that walked out of the book and became the moral backbone of the modern world. Treat every person always as an end, never merely as a means.</p>
+        <p>Under it is a line between two kinds of thing: persons and things. A thing has a price. It is worth what it does for you, and if you swap it for an equal one you have lost nothing. A person is not like that. People, Kant says, "are called persons, because their very nature points them out as ends in themselves." They are not raw material for your plans. They arrive with plans of their own.</p>
+        <p>The most important word in the sentence is the smallest one: <strong>merely</strong>. Kant does not say never use a person as a means, which would be lunacy, you use people as means all day long. The barista, the surgeon, the driver, the stranger you ask for directions, every one of them is a means to something you want, and there is nothing wrong with it. The line is "never <em>merely</em> as a means," never as <em>just</em> a tool, in a way that runs straight past the fact that they are a person with a will and ends of their own. Pay the surgeon, respect her judgment, let her refuse, and you are treating her as a means and an end at once. Drug her, deceive her, force her, and you have crossed the line into merely.</p>
+        <p>This is why, for Kant, lying and coercion are the two great wrongs, and why they are wrong in the very same way. Both use a person by going around their reason. When you lie to someone to get what you want, you are steering them with false information, working them like a lever they cannot see. When you force them, you skip their yes altogether. Either way another human being has been folded into your plan as a part, not a partner. The clean test underneath it is consent: could the person, if they knew the whole truth of what you are doing, actually go along with it? If not, you are using them merely, and no good outcome buys it back.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>This is the most usable thing Kant ever wrote, and the least controversial.</strong> You do not need the rest of the system to feel its pull. It is the exact wrong in a scam, in slavery, in propaganda, in every arrangement where one person is quietly reduced to a resource for another. "You are using me" is an accusation everyone understands on contact, and this is the sentence that put it into philosophy.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-dignity" data-label="Price and dignity" data-tag="Second Section">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> Second Section, the kingdom of ends</p>
+      <h2 class="station-h">What has a price, and what has a dignity</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / Second Section</p>
+        <div class="passage-t">
+          <p>In the kingdom of ends everything has either value or dignity. Whatever has a value can be replaced by something else which is equivalent; whatever, on the other hand, is above all value, and therefore admits of no equivalent, has a dignity.</p>
+          <span class="passage-n">Groundwork, Second Section (Ak. 4:434)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Now Kant pulls back to the picture the two rules add up to. Imagine a whole community of people, each one acting only on rules that could be laws for everyone, each one treating all the others as ends and never as mere tools. He calls it the <strong>kingdom of ends</strong>: a group in which every member is at once a maker of the laws and a subject of them, and nobody is anybody's mere instrument. He is honest that no such place exists. "It is certainly only an ideal." It is the target you aim at, the way a physicist aims at a frictionless surface knowing the real floor always drags.</p>
+        <p>Out of that picture comes his most quoted contrast, and the single word most worth stealing from him: <strong>dignity</strong>. Everything, Kant says, has either a price or a dignity. If a thing has a price, something else can stand in for it, because it is worth only what it trades for. Money has a price. Skills have a price: "skill and diligence in labour have a market value." A dignity is a different kind of thing entirely, not a bigger price but no price at all. It is "above all value," which is Kant's careful way of saying it has no equivalent, that there is nothing you could swap in for it with nothing lost.</p>
+        <p>People, he says, have a dignity. That is the claim, and it is doing colossal, invisible work under the floor of the modern world. It is why you cannot buy a person. It is why "everyone has their price" is an insult and not an observation. It is what we actually mean when we call a human life priceless, which is not that it is worth an infinite pile of money but that it does not belong on the money scale at all. Put a person on one pan of a scale and a sum of money on the other and you have already made a category mistake, because one of those two things does not go on scales.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>You can trace a straight line from this page to 1948.</strong> The Universal Declaration of Human Rights opens, in its very first sentence, on "the inherent <em>dignity</em> ... of all members of the human family." That word is not decoration and it is not an accident. It is Kant's, carrying Kant's exact meaning, a worth that has no price and cannot be traded away, load-bearing at the foundation of the whole idea of human rights.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-autonomy" data-label="Autonomy" data-tag="Second Section">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> Second Section, the will that makes the law</p>
+      <h2 class="station-h">Freedom is obeying a law you wrote yourself</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / Second Section</p>
+        <div class="passage-t">
+          <p>Autonomy of the will is that property of it by which it is a law to itself.</p>
+          <p>Autonomy then is the basis of the dignity of human and of every rational nature.</p>
+          <span class="passage-n">Groundwork, Second Section (Ak. 4:440, 4:436)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Now the deepest move in the book, and the strangest. Where does the moral law get the authority to bind you so absolutely? Not from God, Kant says. Not from the king, not from your society, not from what you happen to want. It gets its authority from <em>you</em>, from your own reason. You are bound by the moral law because you are the one who wrote it. He calls this <strong>autonomy</strong>, from the Greek <span class="de">autos</span> and <span class="de">nomos</span>, self and law: a will that is "a law to itself."</p>
+        <p>The word has gone soft in modern use, where "autonomy" just means doing your own thing, being left alone to follow your preferences. That is nearly the opposite of what Kant meant, and the gap is worth stopping on. For Kant, doing whatever you feel like is not freedom at all. When appetite or fear or habit or craving pushes you into an action, you did not choose it, you were shoved, and a person shoved by their own impulses is no more free than a rock rolling downhill is free. He has a name for that condition too: <strong>heteronomy</strong>, being ruled from outside, and a hunger is an outside ruler just as much as a tyrant is. The addict is the least free person Kant can imagine, precisely because they are only ever "doing what they want."</p>
+        <p>So real freedom turns out to be the reverse of what it looks like. You are most free not when you have escaped every rule, but when the rule you are following is one your own reason handed you, instead of one your appetites or your circumstances forced on you. The soldier who bolts is driven by fear; the one who holds the line is, in Kant's sense, the freer of the two, because he is acting on a law he set against the pull of his own terror. Obeying yourself and being free become the same act. That is the quiet payoff of the entire book: the moral law is not a cage lowered onto you from above. It is the one law you give yourself, which is exactly why it can bind you completely without ever making you a slave. "Autonomy," Kant says, "is the basis of the dignity of human and of every rational nature." Your dignity, the thing in you that has no price, just is this: you are the kind of creature that can write its own law and then live by it.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-cracks" data-label="Where it cracks" data-tag="the objections">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> the objections, kept in</p>
+      <h2 class="station-h">Where it cracks</h2>
+
+      <div class="passage">
+        <p class="passage-k">Abbott / the last line of the book</p>
+        <div class="passage-t">
+          <p>And thus while we do not comprehend the practical unconditional necessity of the moral imperative, we yet comprehend its incomprehensibility, and this is all that can be fairly demanded of a philosophy which strives to carry its principles up to the very limit of human reason.</p>
+          <span class="passage-n">Groundwork, Third Section (Ak. 4:463)</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>A rule this clean was always going to hit hard cases, and the honest thing is to walk them, not hide them. Kant met the most famous one head-on and gave the answer most readers think is plainly wrong.</p>
+        <p><strong>The murderer at the door.</strong> A killer turns up asking, straight out, whether your friend is hiding in your house. He is. Can you lie? Every nerve says obviously yes. A French writer, Benjamin Constant, put this to Kant in 1797 expecting him to allow it. Kant, then in his seventies, wrote a whole short essay in reply and said no. You may not lie, even to the murderer at the door. Lying fails the universal-law test, and it does not get a special pass because the stakes are horrifying. Most readers take this as a reductio, a case that proves the theory has gone rigid: a morality that forbids lying to a killer to save an innocent life has lost hold of the thing morality was for.</p>
+        <p><strong>The empty formula.</strong> A generation later Hegel pressed a deeper complaint. The universal-law test, he said, is empty. It tells you to check whether your maxim could be a law for everyone, but it never tells you how to <em>describe</em> your maxim, and the description does all the work. Write your rule as "I break promises whenever it suits me" and it fails. Write the same act as "I break promises on a Tuesday in a leap year when the rent is three days late" and you might will that universal without the sky falling. Feed the machine a clever enough maxim and it will wave almost anything through, or forbid almost anything. Kant's defenders answer that the humanity formula, never treat a person merely as a means, does the real filtering, and it mostly does, which is a quiet admission that the famous first formula cannot stand on its own.</p>
+        <p><strong>The proof that isn't.</strong> This is the technical crack, and the biggest. The Groundwork's whole third section sets out to <em>prove</em> the thing the rest of the book needs: that we really are free, and so really are bound by a moral law our own reason gives us. Without that freedom, the entire structure is a beautiful description of a law nobody is actually standing under. Kant argues for it, and by broad agreement, arguably including his own later, he fails. A few years on he stopped trying to prove freedom and simply called it a "fact of reason" we are entitled to assume. The most rigorous ethics ever built rests, at the very bottom, on a floor its own author could not lay. He all but says so in the book's last line, quoted above: we do not comprehend how the moral law is possible, we only "comprehend its incomprehensibility."</p>
+        <p><strong>So what survives, and it is most of it.</strong> Cut away the parts that overreach and the core is still standing, and you reach for it constantly. The universal-law question is a real test of fairness, the machinery behind "how would you like it if everyone did that" and behind every time you catch someone carving out a private exception for themselves that they would never grant anyone else. And the humanity formula, treat people as ends and never merely as tools, is about as close to bedrock as moral philosophy gets: it is why "dignity" sits in the charters of human rights, why consent is the bright line in medicine and sex and research, why "you're using me" is a wrong everyone feels before they can explain it. Kant wanted to hand that conviction a proof, worked out from nothing, like Euclid. What he actually handed it was a spine.</p>
+        <p>Two and a half centuries on, after every attempt to run morality purely on outcomes or purely on feelings has hit a wall of its own, Kant's stubborn little rule is still the thing we grab for when we want to say that some things stay wrong even when they pay, and that a person is never merely a step on the way to your goal. That is not nothing. It might be the most anyone has managed.</p>
+      </div>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured translation throughout is <strong>Thomas Kingsmill Abbott's</strong>, first published in 1873 as <em>Fundamental Principles of the Metaphysic of Morals</em> and long in the public domain, which is why every passage above is quoted in full rather than in fragments. It is one of the versions English readers have met Kant in for over a century. It runs archaic, and I have left it that way on purpose, then set the modern wording beside it on the sentence where the difference is most fun to watch. Every quotation is verbatim; I pulled the text and checked each line rather than trusting memory, and the ellipses only ever shorten a passage, never stitch two claims into one.</p>
+      <ul class="src-list">
+        <li><b>The featured text</b> is T.K. Abbott's translation (1873), via <a href="https://www.gutenberg.org/ebooks/5682">Project Gutenberg</a>.</li>
+        <li><b>The comparison panel</b> on the categorical imperative sets Abbott beside H.J. Paton (Harper, 1948) and Mary Gregor (Cambridge, 1996), the two standard modern English versions, quoted in a single line each for comparison and named.</li>
+        <li><b>The background</b> leans on the <a href="https://plato.stanford.edu/entries/kant-moral/">Stanford Encyclopedia of Philosophy</a> entry on Kant's moral philosophy, including its account of the several formulas of the imperative and the long fight over whether they really come to the same thing.</li>
+        <li><b>The murderer-at-the-door exchange</b> is real: Benjamin Constant's 1797 objection, and Kant's reply the same year, the essay usually titled <em>On a Supposed Right to Lie from Philanthropy</em>.</li>
+      </ul>
+      <p>Two honest notes. The line people most often hang on Kant, "the starry heavens above me and the moral law within me," is not from this book at all; it closes the <em>Critique of Practical Reason</em> (1788), and I have kept it out to avoid the mix-up. And the citations in the passage boxes use the standard Academy pagination (Ak. 4), the page numbers of the Prussian Academy edition that every Kant scholar cites, so you can find any line in any edition you own.</p>
+      <p>The breakdowns are mine. The two modern translations are still in copyright and appear here only in short single-line excerpts, for comparison and study, with each translator named.</p>
+      <p class="colo-note">The portrait in the opening and on the homepage card is the most reproduced likeness of Kant, an anonymous painting of about 1790 from the school of Anton Graff, in the public domain via Wikimedia Commons. It catches him near the end of the decade that produced the Groundwork, already the most famous philosopher in Europe and, by every account, one of the least dramatic men who ever lived: a lifelong bachelor who took the same walk through Konigsberg at the same hour every afternoon, so regularly that neighbors were said to set their clocks by him. The revolution was all on the page.</p>
+    </section>
+  </main>
+
+  <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
+  <nav class="u-next" aria-label="Keep reading">
+    <p class="u-next-k">Next in How to Think, and What's Real</p>
+    <p class="u-next-t"><a class="u-next-link" href="marx.html">Karl Marx</a></p>
+    <p class="u-next-more"><a href="philosophy.html">All 13 posts in How to Think, and What's Real</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
+  </nav>
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/kant.js" defer></script>
+</body>
+</html>
