@@ -761,9 +761,8 @@
       }
       // v25.29 sim playback rate (the slo-mo fix): dt banks x TIMESCALE
       // into the fixed-quantum accumulator, so the same calm physics play
-      // faster. v26.55 defaults to 1.383667, the demo scale's 42 percent
-      // point just inside "fluid." 1 = the old slo-mo; rationale at the
-      // 010-constants block.
+      // faster. v26.56 restores the v3.30 default of 1.55.
+      // 1 = the old slo-mo; rationale at the 010-constants block.
       if (typeof LIQUID_TIMESCALE !== 'undefined') {
         gmRegisterLever('water.TIMESCALE', 'water', 'TIMESCALE (sim playback rate)',
           function () { return LIQUID_TIMESCALE; },

@@ -84,11 +84,17 @@
  * v4.3.2 landing defaults: particle proof dots start hidden, poke/grab starts
  * selected, and fixed vents feed a continuous 30 Hz smoke source instead of
  * isolated half-second puffs.
+ *
+ * v3.30.1 restoration: the owner chose v3.30 as the water baseline. The demo
+ * again uses the fixed 1.55 material clock and the original cubic goopy
+ * viscosity, damping, motion-transfer, and air-drag endpoints. The known large
+ * density-island circles at very goopy are intentionally present. Later smoke,
+ * slime, grab-default, and particle-toggle-default work remains.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.3.2'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.30.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -157,7 +163,7 @@
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
-  var waterFeel = 0.42; // 0..1, defaults just inside the "fluid" band
+  var waterFeel = 1;   // 0..1, v3.30 default: very watery
   var debugParticles = false;
 
   /* ==== THE SHARED WALL GRID ============================================
@@ -9618,11 +9624,7 @@
 
   function applyTimescale() {
     var t = Math.max(0.05, timeMul);
-    var syrup = Math.pow(1 - Math.max(0, Math.min(1, waterFeel)), 3);
-    var waterRate = 1.0 - 0.55 * syrup;
-    if (liquidWGPU && liquidWGPU.setSimParam) {
-      liquidWGPU.setSimParam('TIMESCALE', 1.55 * t * waterRate);
-    }
+    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', 1.55 * t);
     JELLO_TIMESCALE = 0.5 * t;
   }
 
@@ -9636,18 +9638,18 @@
 
   function applyWaterFeel() {
     if (!liquidWGPU || !liquidWGPU.setSimParam) return;
-    // Every tested increase in this solver's grid-viscosity term reorganized
-    // the pool into a sparse lattice. The material slider therefore keeps the
-    // stable water equations fixed and changes their clock in applyTimescale.
-    // This slows the complete response without changing particle packing.
+    var t = Math.max(0, Math.min(1, waterFeel));
+    // Restored from v3.30. Most of the slider remains useful water; the cubic
+    // syrup weight reserves the far-left end for compounded physical drag.
+    // The very-goopy endpoint is known to reorganize settled water into
+    // separated density islands that the compact field renderer shows as
+    // large circles. That historical behavior is the requested baseline.
+    var syrup = Math.pow(1 - t, 3);
     liquidWGPU.setSimParam('CALM', 0);
-    liquidWGPU.setSimParam('GRID_VISC', 0.02);
-    liquidWGPU.setSimParam('DAMPING', 1.0);
-    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
-    liquidWGPU.setSimParam('AIR_DRAG', 0.996);
-    applyTimescale();
-    // Render parameters intentionally do not belong in this handler. The
-    // consistency control changes dynamics, never visual particle footprint.
+    liquidWGPU.setSimParam('GRID_VISC', 0.02 + 0.63 * syrup);
+    liquidWGPU.setSimParam('DAMPING', 1.0 - 0.008 * syrup);
+    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0 - 0.03 * syrup);
+    liquidWGPU.setSimParam('AIR_DRAG', 0.996 - 0.006 * syrup);
   }
 
   function applyParticleDebug() {
