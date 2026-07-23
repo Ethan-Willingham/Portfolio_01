@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
+  <meta name="color-scheme" content="dark">
+  <title>Euclid</title>
+  <meta name="description" content="A plain-language walk through Euclid's Elements, the book that invented mathematical proof, in seven stops, featuring Heath's public-domain translation with live geometric constructions that draw themselves.">
+  <meta property="og:title" content="Euclid">
+  <meta property="og:description" content="The idea that you can prove something true, step by airtight step, was invented in one book around 300 BC. A walk through Euclid's Elements in seven stops, with the constructions drawing themselves, from the first triangle to the flaw that opened non-Euclidean space.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/euclid.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/euclid-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/euclid-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     EUCLID AND THE INVENTION OF PROOF
+     Approach B, the One-Reading Walk, with live SVG geometry:
+     seven stops through the Elements, each unpacked in plain
+     language, with constructions that draw themselves the way a
+     compass-and-straightedge reader would. Featured text: T.L.
+     Heath (public domain). Site shell (forest green, parchment,
+     Century Supra / Segoe UI / Commit Mono). No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --geo-a: #d38f7d;                 /* circle / square on one leg (warm) */
+    --geo-b: #7fa3c9;                 /* circle / square on the other (cool) */
+    --geo-r: var(--accent);           /* the result: the thing constructed */
+    --geo-dim: color-mix(in srgb, var(--text-dim) 80%, transparent);
+  }
+  html, body { overflow-x: clip; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .prose { margin: 0; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Heath passage */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* ---------- GEOMETRY FIGURES ---------- */
+  .gfig { margin: 1.7rem 0 0.6rem; background: rgba(0,0,0,0.15); border: 1px solid var(--rule); border-radius: 14px; padding: 0.5rem; }
+  .gfig svg { display: block; width: 100%; height: auto; }
+  .gfig-bar { display: flex; align-items: center; gap: 0.8rem; padding: 0.55rem 0.75rem 0.2rem; }
+  .gp-btn { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); background: transparent; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 0.35rem 0.95rem; cursor: pointer; transition: border-color .2s, color .2s; flex: none; }
+  .gp-btn:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .gp-cap { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.03em; line-height: 1.4; color: var(--text-dim); }
+  .gfig-note { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em; color: var(--text-faint); margin: 0.6rem 0.3rem 0.1rem; text-align: center; }
+
+  /* SVG element language */
+  .g-base { stroke: var(--text-dim); stroke-width: 2.4; fill: none; stroke-linecap: round; }
+  .g-circA { stroke: var(--geo-a); stroke-width: 2; fill: none; opacity: 0.92; }
+  .g-circB { stroke: var(--geo-b); stroke-width: 2; fill: none; opacity: 0.92; }
+  .g-side { stroke: var(--geo-r); stroke-width: 3; fill: none; stroke-linecap: round; }
+  .g-fill { fill: var(--accent); fill-opacity: 0.16; }
+  .g-pt { fill: var(--text-bright); }
+  .g-lbl { fill: var(--text-bright); font-family: var(--font-mono); font-size: 15px; }
+  .g-lbl.dim { fill: var(--text-dim); }
+  .g-tick { stroke: var(--geo-r); stroke-width: 2; stroke-linecap: round; }
+  .g-thin { stroke: var(--geo-dim); stroke-width: 1.6; fill: none; }
+  .g-dash { stroke: var(--geo-dim); stroke-width: 1.8; fill: none; stroke-dasharray: 4 5; }
+  .g-sqA { fill: color-mix(in srgb, var(--geo-a) 26%, transparent); stroke: var(--geo-a); stroke-width: 2; }
+  .g-sqB { fill: color-mix(in srgb, var(--geo-b) 26%, transparent); stroke: var(--geo-b); stroke-width: 2; }
+  .g-sqC { fill: color-mix(in srgb, var(--geo-r) 24%, transparent); stroke: var(--geo-r); stroke-width: 2; }
+  .g-tri { fill: rgba(0,0,0,0.25); stroke: var(--text-bright); stroke-width: 2.4; }
+  .g-area { fill: var(--text-bright); font-family: var(--font-mono); font-size: 17px; text-anchor: middle; }
+  .g-ang { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .g-angl { fill: var(--accent); font-family: var(--font-mono); font-size: 13px; }
+  .g-globe { fill: rgba(127,163,201,0.05); stroke: var(--geo-dim); stroke-width: 1.6; }
+  .g-grid { fill: none; stroke: var(--geo-dim); stroke-width: 1.2; opacity: 0.7; }
+  .g-sph { fill: color-mix(in srgb, var(--geo-r) 16%, transparent); stroke: var(--geo-r); stroke-width: 2.6; stroke-linejoin: round; }
+
+  /* draw-on animation */
+  .gp-line { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); transition: stroke-dashoffset 0.7s ease; }
+  .gp-line.drawn { stroke-dashoffset: 0; }
+  .gp-circ { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); transition: stroke-dashoffset 1s ease; }
+  .gp-circ.drawn { stroke-dashoffset: 0; }
+  .gp-pop { opacity: 0; transition: opacity 0.45s ease; }
+  .gp-pop.drawn { opacity: 1; }
+  @media (prefers-reduced-motion: reduce){
+    .gp-line, .gp-circ, .gp-pop { transition: none; }
+    .gp-line, .gp-circ { stroke-dashoffset: 0; }
+    .gp-pop { opacity: 1; }
+  }
+
+  /* the postulates list (mini figure + Heath text) */
+  .post-list { margin: 1.5rem 0 0.5rem; display: grid; gap: 0.2rem; }
+  .post-item { display: grid; grid-template-columns: 84px 1fr; gap: 1rem; align-items: center; padding: 0.75rem 0.2rem; border-top: 1px solid var(--rule); }
+  .post-item:first-child { border-top: none; }
+  .post-item svg { width: 84px; height: 60px; display: block; }
+  .post-n { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  .post-t { font-family: var(--font-body); font-size: 1rem; line-height: 1.5; color: var(--text); margin: 0.15rem 0 0; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  @media (max-width: 560px){
+    body { padding-left: 0; padding-right: 0; }
+    .passage { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+    .post-item { grid-template-columns: 68px 1fr; gap: 0.8rem; }
+    .post-item svg { width: 68px; height: 50px; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="philosophy.html" class="post-back ll-back"><span class="pb-label">How to Think, and What's Real</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Euclid</h1>
+    <p class="hero-dek">The idea that you can prove something true, step by airtight step, until no one can ever argue with it again, was invented in one book. Here is how the machine works, with the diagrams building themselves as you read.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>7 stops</b> through the Elements <span class="sep">/</span> featured: <b>T.L. Heath</b> <span class="sep">/</span> ~18 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Somewhere around the ninth grade, a teacher made you prove two triangles were the same. You wrote statements down one side of the page and a reason for each one down the other, and every reason had to be a rule you had already agreed to. It felt like a pointless ritual. That ritual is about 2,300 years old, and it may be the most powerful idea anyone has ever had.</p>
+
+      <p>It comes from one book. The <strong>Elements</strong>, written by a man named Euclid in the Greek city of Alexandria around 300 BC. This is the book where the idea of <em>proof</em>, of pinning a thing down so hard that no one can ever argue it back open, stopped being an occasional trick and became a method you could teach. Not a clever proof here and there. A whole world of them, hundreds, each one locked to the one before it, the entire structure resting on a handful of starting rules a child would nod along to.</p>
+
+      <p>It worked so well that it became the most successful textbook in the history of the world. For more than two thousand years, if you learned geometry, you learned it out of Euclid. Students were still being drilled straight from the Elements in the early 1900s. Only the Bible has been printed in more editions. No other schoolbook is even close.</p>
+
+      <p>And here is the twist that runs through the whole thing. The geometry is not really the point. What Euclid invented was not a pile of facts about triangles, it was a <em>machine for producing certainty</em>, a way to start from almost nothing and force everything else to follow, and that machine got borrowed by physics, by philosophy, and by the men who wrote the American Declaration of Independence. This is a walk through it in seven stops, and because Euclid is one of the few thinkers whose argument you can actually watch happen, the diagrams here build themselves, the way his reader would have drawn them, with a compass and a straightedge and nothing else.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole book on one page</p>
+        <p class="u-callout-body">Euclid's move is to never ask you to trust him. He writes down the fewest, most undeniable rules he can, the ones nobody would refuse (you can draw a line between two points; all right angles are equal; the whole is greater than the part), and then he builds <em>every</em> other truth in geometry out of just those, one forced step at a time, until he has proven things you would never have believed on sight. The result is knowledge with no soft spot in it, because to deny the conclusion you would have to deny one of the baby rules you already accepted. That is the whole trick. It outlived the geometry, and we still run on it.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">Start from almost nothing</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 7</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-axioms" data-label="Start from almost nothing" data-tag="the foundation">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> definitions, postulates, common notions</p>
+      <h2 class="station-h">Start from almost nothing</h2>
+
+      <div class="prose">
+        <p>Euclid opens not with a theorem but with a list of things he is going to assume, and the striking part is how short the list is. Everything in the Elements, all 465 propositions across thirteen books, is built out of three small piles of starting material, and the whole foundation fits on half a page.</p>
+        <p>First, <strong>definitions</strong>, fixing what his words mean so no argument can hide in a fuzzy one. A point is "that which has no part." A line is "breadthless length." He is nailing down the vocabulary before he builds.</p>
+        <p>Then five <strong>postulates</strong>, the geometric moves he lets himself make. Read them and notice how tiny they are, and that the first three are not even claims, they are <em>permissions</em>, things you are allowed to do with two tools and no others: a straightedge with no marks, and a compass.</p>
+      </div>
+
+      <div class="post-list" aria-label="Euclid's five postulates">
+        <div class="post-item">
+          <svg viewBox="0 0 84 60" aria-hidden="true"><circle class="g-pt" cx="14" cy="44" r="3.2"/><circle class="g-pt" cx="70" cy="18" r="3.2"/><line class="g-side" x1="14" y1="44" x2="70" y2="18"/></svg>
+          <div><p class="post-n">Postulate 1</p><p class="post-t">To draw a straight line from any point to any point.</p></div>
+        </div>
+        <div class="post-item">
+          <svg viewBox="0 0 84 60" aria-hidden="true"><line class="g-side" x1="10" y1="30" x2="50" y2="30"/><line class="g-dash" x1="50" y1="30" x2="74" y2="30"/><path class="g-dash" d="M70 26 L76 30 L70 34" style="fill:none"/></svg>
+          <div><p class="post-n">Postulate 2</p><p class="post-t">To produce a finite straight line continuously in a straight line.</p></div>
+        </div>
+        <div class="post-item">
+          <svg viewBox="0 0 84 60" aria-hidden="true"><circle class="g-circB" cx="42" cy="30" r="22"/><line class="g-thin" x1="42" y1="30" x2="64" y2="30"/><circle class="g-pt" cx="42" cy="30" r="3"/></svg>
+          <div><p class="post-n">Postulate 3</p><p class="post-t">To describe a circle with any centre and distance.</p></div>
+        </div>
+        <div class="post-item">
+          <svg viewBox="0 0 84 60" aria-hidden="true"><path class="g-side" d="M14 12 L14 46 L40 46"/><path class="g-thin" d="M20 46 L20 40 L26 40"/><path class="g-side" d="M70 12 L70 46 L48 46" opacity="0"/><path class="g-side" d="M52 14 L70 14 L70 48"/><path class="g-thin" d="M64 14 L64 20 L70 20"/></svg>
+          <div><p class="post-n">Postulate 4</p><p class="post-t">That all right angles are equal to one another.</p></div>
+        </div>
+        <div class="post-item">
+          <svg viewBox="0 0 84 60" aria-hidden="true"><line class="g-thin" x1="8" y1="16" x2="80" y2="26"/><line class="g-thin" x1="8" y1="48" x2="80" y2="34"/><line class="g-base" x1="24" y1="6" x2="40" y2="56"/><circle class="g-pt" cx="79" cy="30" r="2.6" style="fill:var(--accent)"/></svg>
+          <div><p class="post-n">Postulate 5</p><p class="post-t">The awkward one about parallel lines. It gets its own stop later, because two thousand years of trouble came out of it.</p></div>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Then five <strong>common notions</strong>, the plain logic anyone grants, not even about geometry: things equal to the same thing are equal to each other; if you add equals to equals the results are equal; the whole is greater than the part.</p>
+        <p>That is the entire foundation. A page of the obvious. And from here on Euclid will not let himself say that a single new thing is true unless he can march it, step by step, all the way back down to this page. The genius of the Elements is not any one theorem. It is the decision to build a universe from a floor this small, and to never once cheat by just asserting something because it looks right.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-prop1" data-label="The first triangle" data-tag="Proposition 1">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Book I, Proposition 1</p>
+      <h2 class="station-h">Build a perfect triangle from nothing</h2>
+
+      <div class="passage">
+        <p class="passage-k">Heath / Book I, Proposition 1</p>
+        <div class="passage-t">
+          <p>On a given finite straight line to construct an equilateral triangle.</p>
+          <p>With centre A and distance AB let the circle BCD be described; again, with centre B and distance BA let the circle ACE be described; and from the point C, in which the circles cut one another, to the points A, B let the straight lines CA, CB be joined.</p>
+          <span class="passage-n">Elements I, Proposition 1 &middot; T.L. Heath</span>
+        </div>
+      </div>
+
+      <div class="gfig" data-anim>
+        <svg viewBox="0 40 600 420" role="img" aria-label="Euclid's construction of an equilateral triangle: two circles of equal radius on the ends of segment AB cross at C, and CA, CB complete the triangle.">
+          <circle class="g-circA gp-circ" data-seq="2" style="--len:1131" cx="210" cy="250" r="180"/>
+          <circle class="g-circB gp-circ" data-seq="3" style="--len:1131" cx="390" cy="250" r="180"/>
+          <polygon class="g-fill gp-pop" data-seq="6" points="210,250 390,250 300,94.12"/>
+          <line class="g-base gp-line" data-seq="1" style="--len:180" x1="210" y1="250" x2="390" y2="250"/>
+          <line class="g-side gp-line" data-seq="5" style="--len:180" x1="210" y1="250" x2="300" y2="94.12"/>
+          <line class="g-side gp-line" data-seq="5" style="--len:180" x1="390" y1="250" x2="300" y2="94.12"/>
+          <g class="gp-pop" data-seq="6">
+            <line class="g-tick" x1="300" y1="244" x2="300" y2="256"/>
+            <line class="g-tick" x1="250" y1="169" x2="260" y2="175"/>
+            <line class="g-tick" x1="340" y1="175" x2="350" y2="169"/>
+          </g>
+          <circle class="g-pt gp-pop" data-seq="1" cx="210" cy="250" r="4.5"/>
+          <circle class="g-pt gp-pop" data-seq="1" cx="390" cy="250" r="4.5"/>
+          <circle class="g-pt gp-pop" data-seq="4" cx="300" cy="94.12" r="4.5"/>
+          <text class="g-lbl gp-pop" data-seq="1" x="186" y="272">A</text>
+          <text class="g-lbl gp-pop" data-seq="1" x="402" y="272">B</text>
+          <text class="g-lbl gp-pop" data-seq="4" x="292" y="80">C</text>
+        </svg>
+        <div class="gfig-bar">
+          <button class="gp-btn" type="button">Replay</button>
+          <span class="gp-cap">two circles, one intersection, a triangle that cannot be anything but equilateral</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Watch what he does with those crude little rules. The very first proposition demands something that sounds impossible with a pen and a compass: build a <em>perfect</em> equilateral triangle, all three sides exactly equal, on a given line.</p>
+        <p>Here is the whole trick, and you just watched it. Take the line, call its ends A and B. Put the compass point on A, open it to B, swing a full circle. Move the point to B, open it back to A, swing another. The two circles cross at a point, call it C. Draw C to A, and C to B. That triangle is equilateral, exactly, guaranteed, forever.</p>
+        <p>Why <em>guaranteed</em>? This is the beautiful part, and it is the entire method in one breath. C sits on the first circle, centered at A, so the distance A to C equals the distance A to B, because every point on a circle is the same distance from its center, which was a definition. C also sits on the second circle, centered at B, so B to C equals B to A for the same reason. Now A to C equals A to B, and B to C equals A to B, so by a common notion, things equal to the same thing are equal to each other, all three lengths are equal. He signs it off with the phrase students still write at the bottom of a proof: <em>being what it was required to do.</em></p>
+        <p>Look at what did not happen. He never measured anything. He never said "that looks about equal." He <em>forced</em> it. The triangle is equilateral not because it happened to come out that way but because it could not have come out any other way, and every link in the chain is a definition or a rule you already granted. That is a proof. Proposition 1 of Book I, and the machine is already running.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-proof" data-label="What a proof is" data-tag="the method">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> the shape of every argument</p>
+      <h2 class="station-h">What a proof actually is</h2>
+
+      <div class="prose">
+        <p>Step back and look at the shape of what just happened, because Euclid repeats it hundreds of times and it is the thing he really invented. Every proposition has the same skeleton. State exactly what you will show. Do the construction. Then prove it works, and every single sentence of the proof points at its reason: a definition, a postulate, a common notion, or a proposition already proved. Nothing floats. Nothing is true just because it is obvious, or because Euclid says so.</p>
+        <p>That last part is the revolution, and it is easy to miss because we were all raised inside it. Before this, "how do you know?" was answered by an authority, or by "look, it is obvious," or by whoever gave the better speech. Euclid answers it a completely different way: I know because it <em>follows</em>. Grant the starting rules, grant each step, and you are trapped into the conclusion. There is no escape and no appeal to who is saying it. A proof is a machine for turning things you already believe into things you did not know you believed, leaving no room to wriggle out.</p>
+        <p>And it compounds. Once a proposition is proved, it becomes a tool for proving the next, which becomes a tool for the next, and the tower climbs. By the end of Book I he is proving things about parallel lines and areas that nobody would accept on sight, and every one of them is bolted, through a chain you can walk by hand, back down to that half page of the obvious.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>There is a crack in the marble, and it is worth seeing.</strong> Look back at Proposition 1. Euclid says the two circles cross at a point C. Do they? Obviously, you can see them cross. But "obviously" is exactly the move he swore off. Nothing in his five postulates actually guarantees the two circles share a point rather than slipping through a gap in each other. He assumed it because the picture shows it, which is the one thing he was not allowed to do. The Elements is quietly full of these leaks, spots where the diagram smuggles in a fact the logic never earned. It took until 1899, when David Hilbert rebuilt the foundations of geometry from scratch, to seal every one of them. Which is its own kind of compliment: the standard Euclid set was so high that it took two thousand years and one of the greatest mathematicians alive to catch the places he had not quite met it.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-pythagoras" data-label="Pythagoras" data-tag="Proposition 47">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Book I, Proposition 47</p>
+      <h2 class="station-h">The one everyone half-remembers</h2>
+
+      <div class="passage">
+        <p class="passage-k">Heath / Book I, Proposition 47</p>
+        <div class="passage-t">
+          <p>In right-angled triangles the square on the side subtending the right angle is equal to the squares on the sides containing the right angle.</p>
+          <span class="passage-n">Elements I, Proposition 47 &middot; T.L. Heath</span>
+        </div>
+      </div>
+
+      <div class="gfig">
+        <svg viewBox="138 52 290 320" role="img" aria-label="A right triangle with a square built on each side; the square on the hypotenuse has the same area as the two squares on the legs combined.">
+          <polygon class="g-sqA" points="230,172 230,250 152,250 152,172"/>
+          <polygon class="g-sqB" points="230,250 334,250 334,354 230,354"/>
+          <polygon class="g-sqC" points="230,172 334,250 412,146 308,68"/>
+          <polygon class="g-tri" points="230,250 334,250 230,172"/>
+          <path class="g-thin" d="M230 238 L242 238 L242 250" style="stroke:var(--text-bright)"/>
+          <text class="g-area" x="191" y="217">a&#178;</text>
+          <text class="g-area" x="282" y="308">b&#178;</text>
+          <text class="g-area" x="333" y="165" transform="rotate(-36.87 333 165)">c&#178;</text>
+        </svg>
+        <p class="gfig-note">square on the long side (c&#178;) = square on one leg (a&#178;) + square on the other (b&#178;)</p>
+      </div>
+
+      <div class="prose">
+        <p>Forty-six propositions later, Book I arrives at the one theorem everybody half-remembers, usually mangled as "a squared plus b squared equals c squared." Euclid had no algebra and writes no equation. He writes a fact about <em>areas</em>: in a right triangle, the square built on the longest side, the one across from the right angle, holds exactly as much area as the two squares built on the other two sides put together.</p>
+        <p>The picture above is the whole statement. Build a literal square on each side of the triangle. The big tilted one, on the long side, covers exactly as much ground as the other two combined. Make the short sides 3 and 4 and their squares hold 9 and 16; the square on the long side holds precisely 25. That relationship is the seed of all of trigonometry, of navigation, of how your phone finds itself with GPS, and eventually of the distance formula in Einstein's spacetime, sitting here as proposition 47 of the very first book.</p>
+        <p>What makes it Euclid and not just Pythagoras is that he does not measure the squares, he <em>proves</em> the areas are equal, by slicing the big square into two pieces and showing each piece matches one of the small squares exactly, using area theorems he had bolted down over the previous ten propositions. Plenty of cultures knew the 3-4-5 rope trick by experience long before him. The point of the Elements is never that a fact is true. It is that here, for the first time, it is <em>forced</em>, true not because anyone checked but because the axioms leave it no way out.</p>
+      </div>
+
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/byrne-i47.webp"><img src="assets/images/byrne-i47.jpg" width="1000" height="678" loading="lazy" decoding="async" alt="A page from Oliver Byrne's 1847 colored edition of Euclid, proving Proposition 47 with red, blue, black, and yellow shapes in place of lettered points, ending in Q.E.D."></picture>
+        <figcaption>The same theorem in Oliver Byrne's <em>The First Six Books of the Elements of Euclid</em> (1847), which replaced Euclid's letters with colored figures. A Victorian try at what this page does with animation, 150 years early. Public domain, via Wikimedia Commons.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-parallel" data-label="The rule that didn't fit" data-tag="Postulate 5">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> the fifth postulate</p>
+      <h2 class="station-h">The rule that did not fit</h2>
+
+      <div class="passage">
+        <p class="passage-k">Heath / Book I, Postulate 5</p>
+        <div class="passage-t">
+          <p>That, if a straight line falling on two straight lines make the interior angles on the same side less than two right angles, the two straight lines, if produced indefinitely, meet on that side on which are the angles less than the two right angles.</p>
+          <span class="passage-n">Elements I, Postulate 5 &middot; T.L. Heath</span>
+        </div>
+      </div>
+
+      <div class="gfig">
+        <svg viewBox="0 0 460 250" role="img" aria-label="A line crossing two others; where the two interior angles on one side add to less than 180 degrees, the two lines lean together and meet on that side.">
+          <line class="g-thin" x1="40" y1="78" x2="322" y2="128"/>
+          <line class="g-dash" x1="322" y1="128" x2="430" y2="147"/>
+          <line class="g-thin" x1="40" y1="214" x2="322" y2="164"/>
+          <line class="g-dash" x1="322" y1="164" x2="430" y2="147"/>
+          <line class="g-base" x1="150" y1="46" x2="196" y2="236"/>
+          <path class="g-ang" d="M188 118 A26 26 0 0 1 196 141"/>
+          <path class="g-ang" d="M190 178 A26 26 0 0 0 196 154"/>
+          <text class="g-angl" x="198" y="130">&#945;</text>
+          <text class="g-angl" x="198" y="176">&#946;</text>
+          <circle class="g-pt" cx="430" cy="147" r="4" style="fill:var(--accent)"/>
+          <text class="g-lbl" x="420" y="137" text-anchor="end" style="fill:var(--accent);font-size:13px">they meet</text>
+        </svg>
+        <p class="gfig-note">interior angles &#945; + &#946; less than two right angles, so the lines meet on that side</p>
+      </div>
+
+      <div class="prose">
+        <p>Go back and read those five postulates again, and one of them is not like the others. Four are a single short breath each: draw a line, extend a line, draw a circle, all right angles are equal. The fifth needs a whole paragraph, printed above, and you have to read it twice. Decoded, it says: if two lines lean toward each other, they will eventually meet on the side they are leaning. It is the <strong>parallel postulate</strong>, and it is really a statement about when lines <em>never</em> meet: given a line and a point off it, there is exactly one line through that point that stays parallel forever.</p>
+        <p>It is obviously true. It is also, sitting next to the other four, obviously ugly. It has none of the instant, childlike self-evidence of "all right angles are equal." It reads like a <em>theorem</em>, something that ought to be provable, not something you should have to assume. Euclid himself seems to have flinched at it. He avoids using the fifth postulate for as long as he possibly can, grinding out his first twenty-eight propositions without it, and only reaches for it at Proposition 29 because he finally has no choice.</p>
+        <p>So for the next two thousand years, the best mathematicians alive tried to fix what they took to be Euclid's one blemish. Surely, they thought, this ugly fifth rule is secretly a theorem, provable from the clean first four. Prove it, and you could strike it from the list of assumptions and the foundation would be flawless. Ptolemy tried. The great Arab mathematicians tried for centuries. Every one of them failed, and every time someone thought they had it, another found the buried spot where they had quietly assumed the very thing they were trying to prove.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-noneuclid" data-label="The flaw was a door" data-tag="non-Euclidean space">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> the two-thousand-year payoff</p>
+      <h2 class="station-h">The flaw was a door</h2>
+
+      <div class="gfig">
+        <svg viewBox="0 0 300 268" role="img" aria-label="A triangle drawn on a sphere from the north pole down to the equator: each of its three angles is a right angle, so they add to 270 degrees, more than the 180 of a flat triangle.">
+          <circle class="g-globe" cx="150" cy="132" r="108"/>
+          <ellipse class="g-grid" cx="150" cy="132" rx="108" ry="34"/>
+          <ellipse class="g-grid" cx="150" cy="132" rx="40" ry="108"/>
+          <path class="g-sph" d="M150 26 L150 166 A108 34 0 0 1 60 150 Q92 84 150 26 Z"/>
+          <path class="g-thin" d="M150 40 L162 42 L160 54" style="stroke:var(--accent)"/>
+          <path class="g-thin" d="M150 152 L150 166 L136 162" style="stroke:var(--accent)"/>
+          <path class="g-thin" d="M72 146 L60 150 L64 138" style="stroke:var(--accent)"/>
+          <circle class="g-pt" cx="150" cy="26" r="3.5"/>
+          <circle class="g-pt" cx="150" cy="166" r="3.5"/>
+          <circle class="g-pt" cx="60" cy="150" r="3.5"/>
+        </svg>
+        <p class="gfig-note">on a sphere, a triangle's three angles add to more than 180&#176;. Euclid "proved" that impossible. On a flat page he was right; here he is not.</p>
+      </div>
+
+      <div class="prose">
+        <p>The two-thousand-year failure turned out to be the most productive failure in the history of mathematics, because the reason nobody could prove the fifth postulate is that it <em>cannot be proved</em>. It is a genuine choice, not a hidden theorem. And in the 1820s and 30s a few people, most famously a young Hungarian named Janos Bolyai and a Russian named Nikolai Lobachevsky, working apart and against their peers' advice, finally asked the heretical question: what if we just do not assume it? What if we assume the opposite?</p>
+        <p>You would expect the whole structure to collapse into nonsense. It does not. Assume that through a point you can draw <em>many</em> lines parallel to a given one, and instead of contradiction you get a different geometry, complete and self-consistent, describing a space that curves away from itself like an endless saddle. Assume there are <em>no</em> parallels, that every pair of lines eventually meets, and you get another one, the geometry of the surface of a sphere. Draw a big enough triangle on a globe, up from the equator to the north pole and back down, and its three angles add up to more than 180 degrees, which Euclid had "proven" was flatly impossible. On a flat sheet, he was right. On a sphere, he was wrong. Neither is the one true geometry. They are just different, each one locked to its own answer about that fifth rule.</p>
+        <p>Then came the twist that would have stopped Euclid's heart. Which geometry does our <em>actual universe</em> run on? Not his. In 1915, Einstein showed that gravity is nothing but the curving of space and time, that space itself bends around a star, and that across the cosmos as a whole the geometry is not flat. The straight line, the flat plane, the triangle whose angles make a tidy 180 degrees, the thing every schoolchild was handed for two thousand years as the plain truth about space, is a local approximation, near enough inside a room and quietly false across a galaxy. Euclid's one ugly assumption was never a blemish to scrub out. It was the single load-bearing choice in the whole cathedral, and prying it loose opened the door to the geometry the real universe is written in.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-legacy" data-label="The inheritance" data-tag="the method">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> what we actually kept</p>
+      <h2 class="station-h">The method outlived the geometry</h2>
+
+      <div class="prose">
+        <p>So the content got surpassed. The astonishing thing is that the method never did. Long after we learned that Euclid's geometry is not the last word on space, his way of <em>building</em> an argument, axioms at the bottom and an unbroken chain of "therefore" climbing up to the conclusion, became the gold standard for what it means to truly know a thing, in fields that have nothing to do with triangles.</p>
+        <p>Newton wrote the <em>Principia</em>, the book that founded modern physics, as a march of Euclidean propositions, definitions and axioms and proofs, because that was simply what a serious argument was supposed to look like. Spinoza tried to do it to ethics, laying out his entire moral philosophy "in geometrical order," with numbered definitions and axioms and a little <em>which was to be demonstrated</em> stamped after each claim about God and the good life. Whether he pulled it off is another question, but the ambition is pure Euclid: make morality as certain as a triangle.</p>
+        <p>And it soaked into how we argue about everything. When Jefferson opens the Declaration of Independence with "we hold these truths to be self-evident," he is reaching for exactly Euclid's move: state the axioms, the things no reasonable person will deny, then force the conclusion, that a people may govern themselves, to follow. Lincoln, already a congressman, taught himself the first six books of the Elements by lamplight, and said he did it because he kept using the word "demonstrate" and wanted to know what it really meant. He had hit the limit of his own reasoning and went to the source to buy the thing Euclid was selling.</p>
+        <p>That is the inheritance. Not the triangles. The idea that you can take a few things everyone already agrees on and, by nothing but honest steps, build your way out to conclusions nobody could have guessed and no one can deny. Every proof in every math paper, every "self-evident" in every argument, every time a scientist says a result follows from the assumptions, is running on the machine Euclid built.</p>
+        <p>The geometry turned out to be one map among many. The method turned out to be how we find our way at all. Twenty-three centuries later, when you want to say you have really nailed something down, past all argument, you still say you have <em>proven</em> it, and somewhere behind the word there is a man with a compass and a straightedge, refusing to take anyone's word for anything.</p>
+      </div>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured translation is <strong>Sir Thomas L. Heath's</strong>, from his 1908 Cambridge edition <em>The Thirteen Books of Euclid's Elements</em>, long in the public domain and still the standard English Euclid, so every line above is quoted exactly. Heath's is the version, footnotes and all, that most English readers have met Euclid in for over a century. Every quotation was checked against the text rather than trusted to memory; the definitions, all five postulates, all five common notions, and Propositions 1 and 47 are verbatim.</p>
+      <ul class="src-list">
+        <li><b>The featured text</b> is T.L. Heath's translation (Cambridge, 1908), quoted from David E. Joyce's and David R. Wilkins' careful online transcriptions of Book I.</li>
+        <li><b>The figures are original.</b> The constructions are built to Euclid's own recipe, so Proposition 1 really does draw itself with two equal circles and two lines, the same steps his reader followed with a compass. The colored plate at Proposition 47 is from Oliver Byrne's 1847 edition, in the public domain via Wikimedia Commons.</li>
+        <li><b>The later history</b> leans on standard accounts of the parallel-postulate problem and its resolution by Bolyai, Lobachevsky, and Gauss, on David Hilbert's <em>Foundations of Geometry</em> (1899) for the gaps in Euclid's rigor, and on Einstein's general relativity (1915) for the non-Euclidean shape of real space.</li>
+      </ul>
+      <p>Two honest notes. We know almost nothing about <strong>Euclid the man</strong>, not when he was born, not where, barely even that he was one person rather than the name of a school. And he did not discover most of the Elements; he collected and reorganized results already worked out by others, Eudoxus on proportion, Theaetetus on the regular solids. His towering achievement is not the theorems, it is the <em>architecture</em>, the decision to prove all of it from one small floor and the discipline to actually do it. Second, the famous "flaw" of the fifth postulate was not a mistake at all. Euclid was <em>right</em> to make it an assumption. The two-thousand-year effort to prove it away was the real error, and the people who finally accepted it as a free choice are the ones who found the door.</p>
+      <p class="colo-note">The image on the homepage card is a plate from Byrne's 1847 Euclid, one of the most beautiful books of the nineteenth century and a genuine ancestor of what this page tries to do: show the proof instead of only telling it. The count of 465 propositions and thirteen books is Heath's. Any errors in the retellings and the diagrams are mine, not Euclid's, and certainly not Heath's.</p>
+    </section>
+  </main>
+
+  <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
+  <nav class="u-next" aria-label="Keep reading">
+    <p class="u-next-k">Next in How to Think, and What's Real</p>
+    <p class="u-next-t"><a class="u-next-link" href="meditations.html">Marcus Aurelius</a></p>
+    <p class="u-next-more"><a href="philosophy.html">All 14 posts in How to Think, and What's Real</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
+  </nav>
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/euclid.js" defer></script>
+</body>
+</html>
