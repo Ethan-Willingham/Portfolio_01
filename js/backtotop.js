@@ -24,6 +24,9 @@
       'display:inline-flex;align-items:center;padding:0.7rem 0.8rem;border:none;' +
       'font-family:var(--font-body,system-ui,sans-serif);font-size:0.88rem;line-height:inherit;' +
       'border-radius:2px;background:transparent;color:var(--text-dim,#B8B2A2);cursor:pointer;overflow:hidden;' +
+      // iOS paints a translucent-black box over a tapped control by default; kill it
+      // (and the long-press callout) so a tap shows nothing but the scroll.
+      '-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;' +
       'opacity:0;transform:translateX(-50%);pointer-events:none;' +
       'transition:opacity .04s ease,color .25s ease;}' +
     '.btt-fab.show{opacity:1;pointer-events:auto;transition:opacity .45s ease,color .25s ease;}' +
@@ -78,19 +81,48 @@
     b.classList.remove('show');
   }
 
-  b.addEventListener('click', function (ev) {
+  var lastAct = 0;
+  function goTop(ring) {
+    // One activation guard: on touch we act on touchend AND cancel the synthesized
+    // click, but keep this in case a browser slips the click through anyway.
+    if (Date.now() - lastAct < 600) return;
+    lastAct = Date.now();
     hide(true);                                           // vanish at once the moment it's used
     window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
     var t = document.querySelector('h1') || document.querySelector('main') || document.body;
     if (t) {
       t.setAttribute('tabindex', '-1');
-      // Keep moving focus to the top (keyboard/AT), but don't box the title in a
-      // focus ring when this was a tap or click (ev.detail > 0). A keyboard
-      // activation (ev.detail === 0) keeps the ring so the focus jump stays visible.
-      if (ev.detail !== 0) t.classList.add('btt-noring'); else t.classList.remove('btt-noring');
+      // Move focus to the top for keyboard/AT, but don't box the title in a focus
+      // ring for a tap/click; a keyboard activation (ring) keeps it so the jump shows.
+      if (ring) t.classList.remove('btt-noring'); else t.classList.add('btt-noring');
       t.focus({ preventScroll: true });
     }
-  });
+  }
+
+  // Touch path: act on the FIRST tap. Left to itself, iOS Safari runs a mouse-
+  // emulation dance on the first tap of a control (hover, focus, THEN a deferred
+  // click) that swallows it, so it took a second tap to scroll. Handling touchend
+  // and preventing its default cancels that whole sequence (the emulated
+  // mouse/focus events and the deferred click), so a single tap scrolls at once
+  // and nothing flashes under the finger. A drag that began on the button is left
+  // to scroll the page.
+  var tsx = 0, tsy = 0, tMoved = false;
+  b.addEventListener('touchstart', function (ev) {
+    var t = ev.changedTouches[0]; tsx = t.clientX; tsy = t.clientY; tMoved = false;
+  }, { passive: true });
+  b.addEventListener('touchmove', function (ev) {
+    var t = ev.changedTouches[0];
+    if (Math.abs(t.clientX - tsx) > 10 || Math.abs(t.clientY - tsy) > 10) tMoved = true;
+  }, { passive: true });
+  b.addEventListener('touchend', function (ev) {
+    if (tMoved) return;                                   // was a scroll/drag, not a tap
+    ev.preventDefault();                                  // cancel the emulated mouse + deferred click
+    goTop(false);
+  }, { passive: false });
+
+  // Mouse and keyboard (Enter/Space and AT activation arrive as a click; detail 0
+  // means a keyboard/AT activation, which keeps the focus ring).
+  b.addEventListener('click', function (ev) { goTop(ev.detail === 0); });
   document.body.appendChild(b);
 
   // Only worth a back-to-top on a genuinely long page.
