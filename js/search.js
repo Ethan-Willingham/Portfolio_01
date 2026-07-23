@@ -23,6 +23,21 @@
   var live  = document.querySelector('.hs-readout');
   if (!input || !panel) return;
 
+  // The results panel is frosted glass (a backdrop-filter blur). That blur can
+  // only sample the posts behind it when no ancestor is a "backdrop root." The
+  // masthead's one-second rise animation (transform + opacity) promotes
+  // .site-header into a backdrop root and keeps it one even after it settles,
+  // which silently kills the blur (the posts show through sharp instead of
+  // diffused). The animation's end state is identical to no animation, so once
+  // it has played we just remove it. Reduced-motion has no animation, nothing to
+  // do; the setTimeout is a fallback in case the animationend event is missed.
+  var header = document.querySelector('.site-header');
+  if (header) {
+    var dropHeaderAnim = function () { header.style.animation = 'none'; };
+    header.addEventListener('animationend', dropHeaderAnim);
+    setTimeout(dropHeaderAnim, 1400);
+  }
+
   // scope: 'home' (every non-archived post, the default), 'archive' (archived
   // posts only), or a hub slug (only that hub's posts). Set via the input's
   // data-search-scope attribute. The home scope includes the hub child posts,
