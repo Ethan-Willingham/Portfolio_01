@@ -53,26 +53,26 @@
   },
   "days": {
     "2026-07-23": {
-      "totalTokens": 62672569,
-      "cost": 55.929347249999985,
+      "totalTokens": 105994465,
+      "cost": 93.53961849999997,
       "models": {
         "claude-opus-4-8": {
-          "input": 141,
-          "cacheWrite": 1938739,
-          "cacheRead": 27976371,
-          "output": 116011,
-          "totalTokens": 30031262,
-          "cost": 29.00628425,
+          "input": 1451,
+          "cacheWrite": 2894816,
+          "cacheRead": 62315273,
+          "output": 497738,
+          "totalTokens": 65709278,
+          "cost": 61.7009415,
           "pricing": "daily categories"
         },
         "gpt-5.6-sol": {
-          "input": 1552747,
+          "input": 1725261,
           "cacheWrite": 0,
-          "cacheRead": 30966016,
-          "output": 122544,
-          "totalTokens": 32641307,
-          "cost": 26.923062999999985,
-          "pricing": "per response (246 requests, 0 long-context)"
+          "cacheRead": 38426624,
+          "output": 133302,
+          "totalTokens": 40285187,
+          "cost": 31.838676999999976,
+          "pricing": "per response (291 requests, 0 long-context)"
         }
       }
     }
