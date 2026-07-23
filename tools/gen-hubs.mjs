@@ -137,7 +137,7 @@ const SHELF = {
   credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
   alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
   cardDesc: 'the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.',
-  hubOrder: ['inner-life', 'staying-alive', 'philosophy', 'religion', 'power-story-love', 'career'],
+  hubOrder: ['career', 'staying-alive', 'inner-life', 'religion', 'philosophy', 'power-story-love'],
   singles: [
     {
       href: 'no-blood-test.html', title: 'The Book With No Blood Test', thumb: 'no-blood-test.jpg',
