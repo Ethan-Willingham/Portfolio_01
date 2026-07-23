@@ -221,19 +221,15 @@
 })();
 
 /* ---------------------------------------------------------------------------
-   Resonant hairline. The search underline is rendered as a plucked string: a
-   1-D damped wave equation solved on a canvas. Every keystroke rings the string
-   at the caret; the pulse travels out, reflects off the faded ends, and settles.
-   The loop runs only while there is energy, so it is free at rest, and the whole
-   thing is skipped under prefers-reduced-motion (the static CSS hairline stays).
-   It is driven by input, never hover, so it behaves the same on touch.
+   Resonant hairline. A hairline is rendered on a <canvas> as a plucked string:
+   a 1-D damped wave equation. Click or tap it to strum it at that point; the
+   masthead search also plucks at the caret as you type. The loop runs only
+   while there is energy (free at rest) and is skipped under prefers-reduced-
+   motion, where the static CSS line stays. Mounted on the search underline and
+   on the footer's top rule.
 --------------------------------------------------------------------------- */
 (function () {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var root = document.querySelector('.home-search');
-  var input = root && root.querySelector('.hs-input');
-  if (!root || !input) return;
-
   var docCss = getComputedStyle(document.documentElement);
   function toRgb(name, fallback) {
     var v = (docCss.getPropertyValue(name) || fallback).trim().replace('#', '');
@@ -243,75 +239,83 @@
   var RULE = toRgb('--rule', '#4A544B'), ACC = toRgb('--accent', '#D4C4A0');
   var DPR = Math.min(2, window.devicePixelRatio || 1);
 
-  var cv = document.createElement('canvas');
-  cv.className = 'hs-wave';
-  cv.setAttribute('aria-hidden', 'true');
-  root.classList.add('wave-on');
-  root.appendChild(cv);
-  var ctx = cv.getContext('2d');
-  var meas = document.createElement('canvas').getContext('2d');
+  function mountWave(host, opts) {
+    var input = opts.input || null;
+    var cv = document.createElement('canvas');
+    cv.className = opts.cls;
+    cv.setAttribute('aria-hidden', 'true');
+    host.classList.add('wave-on');
+    host.appendChild(cv);
+    var ctx = cv.getContext('2d');
+    var meas = input ? document.createElement('canvas').getContext('2d') : null;
 
-  var N = 200, u = new Float32Array(N), vel = new Float32Array(N);
-  var W = 0, H = 0, base = 0, focused = false, raf = null;
-  var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5;
+    var N = 200, u = new Float32Array(N), vel = new Float32Array(N);
+    var W = 0, H = 0, base = 0, focused = false, raf = null;
+    var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5;
 
-  function size() {
-    var r = cv.getBoundingClientRect();
-    W = r.width; H = r.height;
-    cv.width = Math.max(1, Math.round(W * DPR));
-    cv.height = Math.max(1, Math.round(H * DPR));
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    base = H / 2;
-    draw();
-  }
-  function caretX() {
-    var s = getComputedStyle(input);
-    meas.font = s.fontStyle + ' ' + s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily;
-    var w = meas.measureText(input.value).width;
-    var left = input.getBoundingClientRect().left - cv.getBoundingClientRect().left;
-    return Math.max(2, Math.min(W - 2, left + w));
-  }
-  function pluck(x, amp) {
-    var c = Math.max(1, Math.min(N - 2, Math.round(x / W * (N - 1))));
-    for (var k = -7; k <= 7; k++) { var j = c + k; if (j < 1 || j > N - 2) continue; u[j] += amp * Math.exp(-(k * k) / 10); }
-    run();
-  }
-  function energy() { var e = 0; for (var i = 0; i < N; i++) e += u[i] * u[i] + vel[i] * vel[i]; return e; }
-  function step() {
-    var i, a;
-    for (i = 1; i < N - 1; i++) { a = STIFF * (u[i - 1] + u[i + 1] - 2 * u[i]); vel[i] = (vel[i] + a) * VDAMP; }
-    u[0] = u[N - 1] = 0; vel[0] = vel[N - 1] = 0;
-    for (i = 1; i < N - 1; i++) u[i] += vel[i];
-    draw();
-    raf = energy() > 0.02 ? requestAnimationFrame(step) : null;
-  }
-  function run() { if (!raf) raf = requestAnimationFrame(step); }
-  function draw() {
-    if (!W) return;
-    ctx.clearRect(0, 0, W, H);
-    var t = Math.max(focused ? 0.22 : 0, Math.min(1, Math.sqrt(energy()) / 6));
-    var cr = Math.round(RULE[0] + (ACC[0] - RULE[0]) * t), cg = Math.round(RULE[1] + (ACC[1] - RULE[1]) * t), cb = Math.round(RULE[2] + (ACC[2] - RULE[2]) * t);
-    // Light at rest, brightening only as it rings, so the resting line is a soft
-    // hairline rather than a heavy dark rule.
-    var col = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + (0.5 + 0.42 * t) + ')';
-    var g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0, 'transparent'); g.addColorStop(0.16, col); g.addColorStop(0.84, col); g.addColorStop(1, 'transparent');
-    ctx.strokeStyle = g; ctx.lineWidth = 1; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    for (var i = 0; i < N; i++) { var x = i / (N - 1) * W, y = base + u[i]; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-    ctx.stroke();
+    function size() {
+      var r = cv.getBoundingClientRect();
+      W = r.width; H = r.height;
+      cv.width = Math.max(1, Math.round(W * DPR));
+      cv.height = Math.max(1, Math.round(H * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      base = H / 2;
+      draw();
+    }
+    function caretX() {
+      var s = getComputedStyle(input);
+      meas.font = s.fontStyle + ' ' + s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily;
+      var w = meas.measureText(input.value).width;
+      var left = input.getBoundingClientRect().left - cv.getBoundingClientRect().left;
+      return Math.max(2, Math.min(W - 2, left + w));
+    }
+    function pluck(x, amp) {
+      var c = Math.max(1, Math.min(N - 2, Math.round(x / W * (N - 1))));
+      for (var k = -7; k <= 7; k++) { var j = c + k; if (j < 1 || j > N - 2) continue; u[j] += amp * Math.exp(-(k * k) / 10); }
+      run();
+    }
+    function energy() { var e = 0; for (var i = 0; i < N; i++) e += u[i] * u[i] + vel[i] * vel[i]; return e; }
+    function step() {
+      var i, a;
+      for (i = 1; i < N - 1; i++) { a = STIFF * (u[i - 1] + u[i + 1] - 2 * u[i]); vel[i] = (vel[i] + a) * VDAMP; }
+      u[0] = u[N - 1] = 0; vel[0] = vel[N - 1] = 0;
+      for (i = 1; i < N - 1; i++) u[i] += vel[i];
+      draw();
+      raf = energy() > 0.02 ? requestAnimationFrame(step) : null;
+    }
+    function run() { if (!raf) raf = requestAnimationFrame(step); }
+    function draw() {
+      if (!W) return;
+      ctx.clearRect(0, 0, W, H);
+      var t = Math.max(focused ? 0.22 : 0, Math.min(1, Math.sqrt(energy()) / 6));
+      var cr = Math.round(RULE[0] + (ACC[0] - RULE[0]) * t), cg = Math.round(RULE[1] + (ACC[1] - RULE[1]) * t), cb = Math.round(RULE[2] + (ACC[2] - RULE[2]) * t);
+      // One uniform color across, matching the static hairline, and warming
+      // toward the accent as the string rings.
+      ctx.strokeStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+      ctx.lineWidth = 1; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (var i = 0; i < N; i++) { var x = i / (N - 1) * W, y = base + u[i]; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+      ctx.stroke();
+    }
+
+    if (input) {
+      input.addEventListener('focus', function () { focused = true; draw(); });
+      input.addEventListener('blur', function () { focused = false; draw(); });
+      input.addEventListener('input', function () { pluck(caretX(), AMP); });
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') pluck(W * 0.5, AMP * 1.5); });
+    }
+    // Click or tap the line to strum it right there. preventDefault keeps focus
+    // where it is (no keyboard popup on touch, an open results panel stays open).
+    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); pluck(e.clientX - cv.getBoundingClientRect().left, AMP * 1.6); });
+    cv.addEventListener('mousedown', function (e) { e.preventDefault(); });
+
+    if (window.ResizeObserver) new ResizeObserver(size).observe(cv); else window.addEventListener('resize', size);
+    size();
   }
 
-  input.addEventListener('focus', function () { focused = true; draw(); });
-  input.addEventListener('blur', function () { focused = false; draw(); });
-  input.addEventListener('input', function () { pluck(caretX(), AMP); });
-  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') pluck(W * 0.5, AMP * 1.5); });
-  // Click or tap the line itself to pluck it right there. preventDefault keeps
-  // focus where it is, so a tap never steals focus: no keyboard popup on touch,
-  // and an open results panel stays open.
-  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); pluck(e.clientX - cv.getBoundingClientRect().left, AMP * 1.6); });
-  cv.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep focus in Firefox/Safari too
+  var search = document.querySelector('.home-search');
+  if (search && search.querySelector('.hs-input')) mountWave(search, { cls: 'hs-wave', input: search.querySelector('.hs-input') });
 
-  if (window.ResizeObserver) new ResizeObserver(size).observe(cv); else window.addEventListener('resize', size);
-  size();
+  var footer = document.querySelector('.site-footer-inner');
+  if (footer) mountWave(footer, { cls: 'foot-wave' });
 })();

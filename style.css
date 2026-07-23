@@ -1026,7 +1026,12 @@ body {
    wrapper) so the full-bleed cover posts, which have no .site-wrapper, get the
    same clearance. */
 .site-footer { margin-top: auto; padding-top: 3.5rem; padding-bottom: 4rem; }
-.site-footer-inner { border-top: 1px solid var(--rule); padding-top: 1.5rem; padding-bottom: 1rem; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1.5rem; font-size: 0.88rem; color: var(--text-faint); }
+.site-footer-inner { position: relative; border-top: 1px solid var(--rule); padding-top: 1.5rem; padding-bottom: 1rem; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1.5rem; font-size: 0.88rem; color: var(--text-faint); }
+/* Strummable footer rule: search.js overlays a <canvas> that draws this same
+   line as a plucked string; wave-on hides the static border so the canvas owns
+   it (reduced-motion / no-JS keep the border). Click or tap the line to strum. */
+.site-footer-inner.wave-on { border-top-color: transparent; }
+.foot-wave { position: absolute; left: 0; right: 0; top: -12px; width: 100%; height: 24px; pointer-events: auto; touch-action: pan-y; }
 /* Full-bleed post pages (no .site-wrapper) zero the body's side padding and inset
    each section by the gutter themselves; the footer must match, or the copyright
    byline ends up flush against the screen edge on mobile. Home-style pages keep
