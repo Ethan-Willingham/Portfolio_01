@@ -75,7 +75,10 @@
     .home-search::before { background: linear-gradient(90deg, transparent, var(--rule) 13%, var(--rule) 87%, transparent); }
     .home-search::after { background: linear-gradient(90deg, transparent 22%, var(--accent) 50%, transparent 78%); opacity: 0; transition: opacity 0.45s ease; }
     .home-search:focus-within::after { opacity: 0.55; }
-    .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
+    /* NOT position:relative, so the results panel below anchors to the full-width
+       .home-search (spanning under the links) instead of just the field, which
+       left it bunched on the left third. */
+    .hs-field-wrap { flex: 1 1 auto; min-width: 0; display: flex; }
     /* the collapsed field is just the icon, but its click/tap zone runs a wide
        fixed width (never as far as About) so it is easy to hit; a subtle hover
        wash shows the area on desktop, and touch gets a big target either way. */
@@ -116,7 +119,7 @@
 
     /* the typeahead dropdown */
     .hs-panel {
-      position: absolute; z-index: 60; top: calc(100% + 1.9rem); left: 0; right: 0;
+      position: absolute; z-index: 60; top: calc(100% + 1.1rem); left: 0; right: 0;
       /* Frosted glass: translucent, with a strong backdrop blur so the posts
          behind melt into a soft, nearly-illegible out-of-focus wash (real frosted
          glass, not a tinted slab). The blur only reaches the posts because
