@@ -43,9 +43,10 @@
   // ----- precompute -----
   var tMin = commits[0][IX_T], tMax = commits[N - 1][IX_T];
   var span0 = tMax - tMin;
-  // default focus window: May 7 to June 21 2026, the build eruption (scroll/pinch out to reveal the full history back to 2023)
-  var defT0 = new Date(2026, 4, 7).getTime() / 1000;             // May 7, 2026
-  var defT1 = new Date(2026, 5, 21, 23, 59, 59).getTime() / 1000; // June 21, 2026 (end of day, fixed)
+  // default focus window: May 8 2026 to today, the build eruption (scroll/pinch out to reveal the full history back to 2023)
+  var defT0 = new Date(2026, 4, 8).getTime() / 1000;             // May 8, 2026
+  var _dNow = new Date();
+  var defT1 = new Date(_dNow.getFullYear(), _dNow.getMonth(), _dNow.getDate(), 23, 59, 59).getTime() / 1000; // end of today
   var fullT0 = tMin - Math.max(86400, span0 * 0.015);
   var fullT1 = Math.max(tMax + 86400 * 7, defT1);       // zoom-out bound; always covers the default window
   var fullSpan = fullT1 - fullT0;

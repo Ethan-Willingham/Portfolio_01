@@ -325,7 +325,7 @@
       el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(13px)';
       var bi = el.querySelectorAll('.cv-bar i'); for (var k = 0; k < bi.length; k++) bi[k].style.width = '0';
       void el.offsetWidth;
-      var d = i * 38;
+      var d = Math.min(i * 18, 620);
       el.style.transition = 'opacity 0.5s ease ' + d + 'ms, transform 0.55s var(--ma-spring) ' + d + 'ms';
       el.style.opacity = '1'; el.style.transform = 'none';
       (function (e2) { setTimeout(function () { growBars(e2.querySelector('.cv-bar')); }, d + 70); })(el);
@@ -559,13 +559,14 @@
   setTrayMode(); // commit the closed-state mode up front so the first open springs cleanly
   window.addEventListener('resize', setTrayMode);
 
-  // reveal the grid (draw the rings on + count up) when it scrolls into view
+  // reveal the grid a bit BEFORE it scrolls into view, so the tiles are already
+  // in by the time you reach them (fire ~45% of a viewport early, on first contact)
   if (ANIM) {
     var io = new IntersectionObserver(function (entries) {
       for (var j = 0; j < entries.length; j++) {
         if (entries[j].isIntersecting) { revealGrid(); io.disconnect(); break; }
       }
-    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px 45% 0px' });
     io.observe(grid);
   }
 })();
