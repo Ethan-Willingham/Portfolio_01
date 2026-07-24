@@ -318,6 +318,39 @@
   var LIQUID_QUIET_SPEED   = 34;   // px/s: filter fully gone by this cell speed
   var LIQUID_QUIET_SHEAR   = 11;   // px/s: filter fully gone by this neighbour delta
   var LIQUID_QUIET_DRAG    = 0;    // per-substep low-speed body-water tail brake
+  // v26.54 — HYDROSTATIC HEAD GATE (the shallow-puddle boil fix). Measured
+  // cause: thin water is not DECAYING, it is DRIVEN. A deep column sits far
+  // above the EOS knee (`max(0, d/rest - 1)`) because the head above it keeps
+  // it compressed, so grid aliasing is a small ripple on a large stable
+  // pressure field. A one-tile film has no head at all, so it sits exactly ON
+  // the knee, where the clamp acts as a RECTIFIER: pressure can only ever push
+  // apart, never pull together, so aliasing noise is converted into a
+  // one-way energy source and the film boils forever. Proof (standalone toy,
+  // 1-tile film vs 9-tile pool, both settled 35 s): the strongest brake in the
+  // codebase (QUIET_DRAG 0.05 + QUIET_VISC 0.12, ~87%/s of velocity removed)
+  // only took the film 10.8 -> 6.7 px/s while it took the pool 37.5 -> 4.3;
+  // capping the pressure impulse instead took the film to 0.19 px/s.
+  // Brakes cannot beat a pump, so this gates the PUMP by how much water column
+  // a cell is actually part of. Deep water keeps the full v25.41 shock-limiter
+  // cap and is bit-identical to before; thin water gets a tight one.
+  // Module defaults are an exact no-op (THIN_DV 0 disables the whole gate) so
+  // the boot self-tests keep their reference bytes; hosts push live values.
+  // WHAT DID NOT WORK (measured, do not retry): scaling the pressure-impulse
+  // cap (`LIQUID_PRESSURE_MAX_DV`) down for thin water. It does quiet a film,
+  // but only by CRUSHING it: the cap limits the one force holding a fluid
+  // apart, so at cap 2 a 200 px column collapsed to 19 px and every basin lost
+  // most of its height. Quiet-looking, completely wrong. Any fix has to leave
+  // the pressure solve alone.
+  // WHAT THIS IS: bottom-boundary damping, the real reason a puddle settles in
+  // under a second while a lake sloshes for minutes. Shallow-water damping
+  // scales like 1/depth^2; ours was depth-independent, which is the whole bug.
+  // A velocity brake never touches the pressure solve, so incompressibility is
+  // preserved and nothing sags. Strength 0 = exact no-op (kernel skips the
+  // probe), so module boot stays on the v26.53 reference bytes.
+  var LIQUID_SHALLOW_DAMP    = 0;    // per-substep brake at the thin end (0 = OFF)
+  var LIQUID_SHALLOW_LO_PX   = 40;   // head at/below which the brake is full
+  var LIQUID_SHALLOW_HI_PX   = 200;  // head at/above which the brake is gone
+  var LIQUID_SHALLOW_SPEED   = 60;   // px/s: brake fades out above this, so impacts stay raw
   // v24.120 WATER DEBUG KIT — live diagnostic bitmask from the game's gm
   // 'water' levers (edit2 twins in sluice.js 020-state). Rides to the
   // kernels in SimParams coll.w, so flipping a lever needs NO recompile:
@@ -715,8 +748,8 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 13 vec4 = 208 bytes (v26.53 quiet
-    // stages; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
+    // constants every compute kernel reads. 14 vec4 = 224 bytes (v26.54 head
+    // gate; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
     // GPU chain (and before each harness run* call). Bind groups bind the
@@ -724,10 +757,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 208,
+      size: 224,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(52);   // 13 vec4 lanes (v26.53 two-scale quiet)
+    instance.simParamsHost = new Float32Array(56);   // 14 vec4 lanes (v26.54 head gate)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1239,6 +1272,7 @@
    *   24-27 coll   : bounceWater, bounceOil, gridVisc, dbgFlags
    *   28-31 g2pC   : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173)
    *   48-51 quiet  : low-energy viscosity, speed gate, shear gate, support
+   *   52-55 head   : shallow damp, lo head px, hi head px, speed gate px/s
    * Filled from the same LIQUID_* numbers the WGSL `${...}` literals used
    * before v14.26 — at default values the GPU sees byte-identical input,
    * so the boot self-tests still pass with unchanged diffs.
@@ -1291,6 +1325,10 @@
     // and standalone host push their chosen live values afterward.
     sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
     sh[50] = LIQUID_QUIET_SHEAR; sh[51] = LIQUID_QUIET_DRAG;
+    // head : v26.54 shallow-water bottom damping. DAMP 0 skips the probe, so
+    // the module default keeps gridUpdate byte-identical to v26.53.
+    sh[52] = LIQUID_SHALLOW_DAMP;  sh[53] = LIQUID_SHALLOW_LO_PX;
+    sh[54] = LIQUID_SHALLOW_HI_PX; sh[55] = LIQUID_SHALLOW_SPEED;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4335,6 +4373,7 @@ struct SimParams {
   bathB  : vec4<f32>,   // v25.56 bath: heat-source rect x0, y0, x1, y1 (world px)
   bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
   quiet  : vec4<f32>,   // v26.53: low-energy visc, speed gate, shear gate, tail drag
+  head   : vec4<f32>,   // v26.54: shallow damp, lo head px, hi head px, speed gate
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4927,6 +4966,64 @@ fn rawCellVel(n : u32) -> vec3<f32> {
              f32(atomicLoad(&cellDVY[n])) / FIXED_SCALE) * ninv + nGrav;
   return vec3<f32>(nvx, nvy, 1.0);
 }
+
+// v26.54 — HYDROSTATIC HEAD: how much water column this cell belongs to, in
+// world px, sampled straight up and straight down on a graded ladder of taps.
+//
+// WHY A LADDER AND NOT A WALK: gridUpdate's bind group is already at the
+// 8-storage-buffer floor, so a precomputed depth field cannot be bound here.
+// cellMass is already bound (rawCellVel reads it), so the probe is free of
+// new bindings, new kernels and new dispatches.
+//
+// WHY THIS IS SEAMLESS ACROSS EVERY BODY: nothing here classifies water. There
+// is no puddle/lake test, no threshold, no per-body tag, no hysteresis and no
+// state carried between frames. Each tap contributes its NORMALISED MASS, a
+// continuous 0..1, rather than a yes/no occupancy test, so the estimate slides
+// smoothly as a body fills, drains, merges or splits instead of stepping when
+// a cell crosses some line. A lake draining to a puddle simply walks down the
+// ramp; a puddle filling into a lake walks up it; a lake's shallow shelf reads
+// shallower than its middle, which is what real water does.
+//
+// Taps are spaced wider with distance (cheap coverage of the deep end where
+// precision does not matter) and each is weighted by the span it stands for,
+// so the sum approximates the integral of water presence over the column.
+// Out-of-window taps are dropped from the sum AND its normaliser rather than
+// counted as empty, so a body sitting against the active-region edge is not
+// mis-read as thin.
+const HEAD_SPAN : f32 = 139.0;   // 2 x 69.5 cells: the ladder's full weight
+fn columnHead(c : u32) -> f32 {
+  let stride = gp.gridW;
+  let row    = c / stride;
+  let rows   = gp.cells / stride;
+  var acc  : f32 = 0.0;
+  var wsum : f32 = 0.0;
+  // Offsets in cells; at CELL 2.5 px the far tap reaches ~158 px of column.
+  // Each weight is the span in cells that its tap stands for, so the sum is a
+  // midpoint-rule integral of water presence over the column and comes out in
+  // cells. HEAD_SPAN is the full two-sided weight (2 x 69.5 cells).
+  var offs = array<u32, 7>(3u, 8u, 15u, 24u, 35u, 48u, 63u);
+  var wts  = array<f32, 7>(5.5, 6.0, 8.0, 10.0, 12.0, 14.0, 14.0);
+  for (var k = 0u; k < 7u; k = k + 1u) {
+    let d = offs[k];
+    let w = wts[k];
+    if (row >= d) {
+      let m = f32(atomicLoad(&cellMass[c - d * stride])) / FIXED_SCALE;
+      acc  = acc + w * min(m / LIQUID_DENSITY, 1.0);
+      wsum = wsum + w;
+    }
+    if (row + d < rows) {
+      let m = f32(atomicLoad(&cellMass[c + d * stride])) / FIXED_SCALE;
+      acc  = acc + w * min(m / LIQUID_DENSITY, 1.0);
+      wsum = wsum + w;
+    }
+  }
+  if (wsum <= 0.0) { return 0.0; }
+  // Re-normalise to the full two-sided weight so a probe clipped by the active
+  // window's edge reports the same head a fully sampled one would. This only
+  // ever compensates for taps that could not be READ; taps that read empty
+  // water still count as empty, which is the whole signal.
+  return acc * (HEAD_SPAN / wsum) * (1.0 / gp.invCell);
+}
 `;
 
   var WGSL_GRID_UPDATE_BODY = /* wgsl */ `
@@ -5002,6 +5099,37 @@ fn rawCellVel(n : u32) -> vec3<f32> {
         }
         velX = velX + (nAvgX - velX) * viscEff;
         velY = velY + (nAvgY - velY) * viscEff;
+      }
+    }
+    // v26.54 — SHALLOW-WATER BOTTOM DAMPING. The one thing the solver never
+    // modelled: how fast a body of water settles depends on how much of it
+    // there is. Real shallow water is damped by its own bottom boundary layer
+    // at a rate scaling like 1/depth^2, which is why a puddle stops in under a
+    // second and a lake sloshes for minutes. Ours damped both the same, so a
+    // film inherited lake-length settling and rang forever.
+    //
+    // The brake is squared in "shallow" to echo that 1/depth^2 steepness, and
+    // it fades out above a speed gate so a deliberate impact, a pour, or a
+    // fast sheet is never pre-damped: only the settling tail is touched. That
+    // is what lets a small puddle splash hard and then go still, which is
+    // exactly what a real one does.
+    //
+    // Seamless by construction: columnHead is continuous, the ramp between
+    // sp.head.y and sp.head.z is a smoothstep, and nothing anywhere classifies
+    // a body as "puddle" or "lake". A draining lake walks down the ramp, a
+    // filling puddle walks up it, and a lake's shallow shelf damps a little
+    // more than its deep middle, which is what real water does too.
+    // Runs BEFORE gridWake, so player/slime/explosion impulses land undamped.
+    if (sp.head.x > 0.0 && oilK < 0.5) {
+      let headPx  = columnHead(c);
+      let shallow = 1.0 - smoothstep(sp.head.y, max(sp.head.z, sp.head.y + 1.0), headPx);
+      if (shallow > 0.0) {
+        let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
+        let spdPx = length(vec2<f32>(velX, velY)) * pxPerStep;
+        let slow  = 1.0 - smoothstep(sp.head.w * 0.5, max(sp.head.w, 1.0), spdPx);
+        let k = clamp(sp.head.x * shallow * shallow * slow, 0.0, 0.9);
+        velX = velX * (1.0 - k);
+        velY = velY * (1.0 - k);
       }
     }
     cellVelX[c] = velX;
@@ -9275,6 +9403,11 @@ fn main() {
             case 'QUIET_SPEED':          LIQUID_QUIET_SPEED = v < 1 ? 1 : v; break;
             case 'QUIET_SHEAR':          LIQUID_QUIET_SHEAR = v < 1 ? 1 : v; break;
             case 'QUIET_DRAG':           LIQUID_QUIET_DRAG = v < 0 ? 0 : (v > 0.05 ? 0.05 : v); break;
+            // v26.54 hydrostatic head gate. THIN_DV 0 turns the gate off.
+            case 'SHALLOW_DAMP':         LIQUID_SHALLOW_DAMP = v < 0 ? 0 : (v > 0.9 ? 0.9 : v); break;
+            case 'SHALLOW_LO_PX':        LIQUID_SHALLOW_LO_PX = v < 0 ? 0 : v; break;
+            case 'SHALLOW_HI_PX':        LIQUID_SHALLOW_HI_PX = v < 1 ? 1 : v; break;
+            case 'SHALLOW_SPEED':        LIQUID_SHALLOW_SPEED = v < 1 ? 1 : v; break;
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;
