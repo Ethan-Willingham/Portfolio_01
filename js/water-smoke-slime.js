@@ -84,7 +84,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.7'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.6.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9646,26 +9646,6 @@
     liquidWGPU.setSimParam('QUIET_SPEED', 36 + 34 * calm2);
     liquidWGPU.setSimParam('QUIET_SHEAR', 9 + 11 * calm2);
     liquidWGPU.setSimParam('QUIET_DRAG', 0.0012 + 0.0098 * calm2);
-    // v4.7 — SHALLOW-WATER BOTTOM DAMPING, the lever that finally reaches
-    // puddles. The QUIET pair above only ever had authority over deep water:
-    // measured across the slider's whole range, a one-tile film sat at 10.6
-    // px/s at "very calm" and 10.9 at "very lively", while the deep basin
-    // moved 11 -> 38. That is why the control read as doing nothing.
-    // Real shallow water is damped by its own bottom boundary layer at a rate
-    // scaling like 1/depth^2, which is why a puddle stops in about a second
-    // and a lake sloshes for minutes. The engine now models that, gated on a
-    // continuous measure of how much water column is actually there, so this
-    // slider changes how fast SMALL water settles and leaves deep water alone.
-    // The impact itself is never damped (see SHALLOW_SPEED), so a calmed
-    // puddle still splashes at full force and then goes still.
-    var shallowDamp = 0.32 - 0.28 * t;
-    var forced = /[?&]shallow=([0-9.]+)/.exec(
-      (window.location && window.location.search) || '');
-    if (forced) shallowDamp = Math.max(0, Math.min(0.9, parseFloat(forced[1])));
-    liquidWGPU.setSimParam('SHALLOW_DAMP', shallowDamp);
-    liquidWGPU.setSimParam('SHALLOW_LO_PX', 50);
-    liquidWGPU.setSimParam('SHALLOW_HI_PX', 140);
-    liquidWGPU.setSimParam('SHALLOW_SPEED', 60);
   }
 
   function applyParticleDebug() {
