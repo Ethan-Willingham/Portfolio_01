@@ -665,6 +665,19 @@
           function (v) { LIQUID_DROPLETS = v ? 1 : 0; gmSetWaterLook('DROPLETS', LIQUID_DROPLETS); },
           0, 1, 1);
       }
+      // v26.57: composite gap bridge + contact wetting (render only).
+      if (typeof LIQUID_SURF_BRIDGE !== 'undefined') {
+        gmRegisterLever('water.SURF_BRIDGE', 'water', 'SURF_BRIDGE (tear filler)',
+          function () { return LIQUID_SURF_BRIDGE; },
+          function (v) { LIQUID_SURF_BRIDGE = v; gmSetWaterLook('SURF_BRIDGE', v); },
+          0, 2, undefined);
+      }
+      if (typeof LIQUID_SURF_BRIDGE_R !== 'undefined') {
+        gmRegisterLever('water.SURF_BRIDGE_R', 'water', 'SURF_BRIDGE_R (tap px)',
+          function () { return LIQUID_SURF_BRIDGE_R; },
+          function (v) { LIQUID_SURF_BRIDGE_R = v; gmSetWaterLook('SURF_BRIDGE_R', v); },
+          1, 8, undefined);
+      }
       // v24.160 — PARTICLE PROOF overlay toggle: each particle drawn as one
       // hard dot over the water, so a "giant particle" is provably one
       // particle (one dot) or a merged cluster (a speckle of many dots).

@@ -323,6 +323,10 @@
   // gm water.DROPLETS (1 = on); boot A/B ?wdbg=DROPLETS:0.
   // edit² with js/liquid-wgpu.js (module twin + WGSL_SURFACE_DROPLETS).
   var LIQUID_DROPLETS = 1;
+  // v26.57: composite gap bridge + contact wetting (render only; see the
+  // banner in js/liquid-wgpu.js). edit2 twins there.
+  var LIQUID_SURF_BRIDGE = 0.9;
+  var LIQUID_SURF_BRIDGE_R = 3;
   // v24.160 — PARTICLE PROOF overlay (WebGPU only): 1 = draw every particle
   // as its own tiny hard dot (no density scaling, no metaball merge),
   // coloured per-index, on top of the water. Diagnostic for "is that giant

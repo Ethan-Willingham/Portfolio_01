@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.56';
+  var GAME_VERSION = 'v26.57';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -471,6 +471,10 @@
   // gm water.DROPLETS (1 = on); boot A/B ?wdbg=DROPLETS:0.
   // edit² with js/liquid-wgpu.js (module twin + WGSL_SURFACE_DROPLETS).
   var LIQUID_DROPLETS = 1;
+  // v26.57: composite gap bridge + contact wetting (render only; see the
+  // banner in js/liquid-wgpu.js). edit2 twins there.
+  var LIQUID_SURF_BRIDGE = 0.9;
+  var LIQUID_SURF_BRIDGE_R = 3;
   // v24.160 — PARTICLE PROOF overlay (WebGPU only): 1 = draw every particle
   // as its own tiny hard dot (no density scaling, no metaball merge),
   // coloured per-index, on top of the water. Diagnostic for "is that giant
@@ -59603,6 +59607,19 @@
           function () { return LIQUID_DROPLETS; },
           function (v) { LIQUID_DROPLETS = v ? 1 : 0; gmSetWaterLook('DROPLETS', LIQUID_DROPLETS); },
           0, 1, 1);
+      }
+      // v26.57: composite gap bridge + contact wetting (render only).
+      if (typeof LIQUID_SURF_BRIDGE !== 'undefined') {
+        gmRegisterLever('water.SURF_BRIDGE', 'water', 'SURF_BRIDGE (tear filler)',
+          function () { return LIQUID_SURF_BRIDGE; },
+          function (v) { LIQUID_SURF_BRIDGE = v; gmSetWaterLook('SURF_BRIDGE', v); },
+          0, 2, undefined);
+      }
+      if (typeof LIQUID_SURF_BRIDGE_R !== 'undefined') {
+        gmRegisterLever('water.SURF_BRIDGE_R', 'water', 'SURF_BRIDGE_R (tap px)',
+          function () { return LIQUID_SURF_BRIDGE_R; },
+          function (v) { LIQUID_SURF_BRIDGE_R = v; gmSetWaterLook('SURF_BRIDGE_R', v); },
+          1, 8, undefined);
       }
       // v24.160 — PARTICLE PROOF overlay toggle: each particle drawn as one
       // hard dot over the water, so a "giant particle" is provably one

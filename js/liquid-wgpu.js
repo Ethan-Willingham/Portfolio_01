@@ -443,6 +443,19 @@
   var LIQUID_SURFACE_THRESH  = 1.8;   // v24.162 — raised from 0.85: a lone particle's metaball peak is ~1.0, so THRESH-SOFT=1.0 makes single particles invisible while bodies (field >> 1) stay solid. edit2 sluice 010
   var LIQUID_SURFACE_SOFT    = 0.8;   // v24.162 — was 0.35 (lower edge = one-particle peak)
   var LIQUID_SURFACE_RSCALE  = 0.9;   // v26.17 honest footprint: body support spans ~2 rest spacings, not a 10px halo
+  // v26.57: GAP BRIDGE + CONTACT WETTING (composite render only, no sim
+  // effect). A shallow sheet lives at the visibility threshold, so its
+  // shimmer opens sub-threshold tears between particles and the field's
+  // lower tail dies a few pixels above a floor (a flickering dark seam at
+  // the contact line). For nearly-covered pixels the edge test now uses
+  // an effective field boosted by the strongest of eight neighbour taps;
+  // a tap landing inside solid terrain samples its reflection instead
+  // (a Neumann mirror), which extends the field down to the floor exactly
+  // where water rests on it. A gate zeroes the boost where the field is
+  // near zero, so silhouettes do not swell and real spray stays separate.
+  // Strength 0 restores the exact old edge. gm water.SURF_BRIDGE.
+  var LIQUID_SURF_BRIDGE     = 0.9;   // boost strength (0 = off)
+  var LIQUID_SURF_BRIDGE_R   = 3;     // tap radius, device px
   var LIQUID_DROPLETS        = 1;     // v25.32 — visible-droplet pass for low-support particles
                                       // (strays/spray render as small drops instead of nothing;
                                       // the fat-disc bug is impossible: droplet size is fixed,
@@ -6699,6 +6712,7 @@ struct RenderParams {
   oilColor      : vec4<f32>,
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
+  bridge        : vec4<f32>,   // v26.57: x = gap-bridge strength, y = tap radius px, z/w spare
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 `;
@@ -6890,12 +6904,44 @@ fn vs(@builtin(vertex_index) vid : u32) -> VOut {
   return out;
 }
 
+// v26.57: one gap-bridge tap. Samples the water field at px + off; when
+// that point sits inside solid terrain the tap samples the REFLECTION
+// (px - off) instead, a Neumann mirror that lets the field continue to
+// the contact line so resting water visually touches its floor.
+fn bridgeTap(px : vec2<f32>, off : vec2<f32>) -> f32 {
+  var sp = px + off;
+  let wpT = vec2<f32>(rp.camX + sp.x / max(rp.dpws, 0.001),
+                      rp.camY + sp.y / max(rp.dpws, 0.001));
+  if (compositeTerrainSolid(wpT)) { sp = px - off; }
+  sp = clamp(sp, vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
+  return textureLoad(fieldTex, vec2<i32>(sp), 0).r;
+}
+
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
   let f = textureLoad(fieldTex, vec2<i32>(in.pos.xy), 0);
   let t = rp.surf.x;
   let s = max(rp.surf.y, 0.001);
-  let aWaterEdge = smoothstep(t - s, t + s, f.r);
+  // v26.57 GAP BRIDGE + CONTACT WETTING (see the module const banner). The
+  // edge test alone uses the boosted field; foam, body and heat keep
+  // reading the raw field, so bridged pixels take plain water colour.
+  // Only the near-threshold band pays the taps.
+  var fw = f.r;
+  if (rp.bridge.x > 0.0 && fw > t * 0.08 && fw < t + s) {
+    let r = max(rp.bridge.y, 1.0);
+    let d = r * 0.7071;
+    var nbMax = bridgeTap(in.pos.xy, vec2<f32>(r, 0.0));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(-r, 0.0)));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(0.0, r)));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(0.0, -r)));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(d, d)));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(-d, d)));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(d, -d)));
+    nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(-d, -d)));
+    let gate = smoothstep(t * 0.10, t * 0.55, fw);
+    fw = fw + rp.bridge.x * gate * nbMax;
+  }
+  let aWaterEdge = smoothstep(t - s, t + s, fw);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
   if (aWaterEdge <= 0.001 && aOilEdge <= 0.001) { discard; }
   // Clip the finished surface once per visible pixel. This uses the exact
@@ -8046,10 +8092,10 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // larger buffer to it is valid (buffer >= struct).
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 112,
+      size: 128,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(28);
+    instance.renderParamsHost = new Float32Array(32);   // 8 vec4 (v26.57 bridge)
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var bgl = dev.createBindGroupLayout({
@@ -8339,6 +8385,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // it; with the bath off the field's heat alpha is 0, so it never applies.
     rh[24] = LIQUID_BATH_TINT_R;   rh[25] = LIQUID_BATH_TINT_G;
     rh[26] = LIQUID_BATH_TINT_B;   rh[27] = LIQUID_BATH_TINT_STR;
+    // v26.57 gap bridge + contact wetting (lanes 28-31).
+    rh[28] = LIQUID_SURF_BRIDGE;   rh[29] = LIQUID_SURF_BRIDGE_R;
+    rh[30] = 0;                    rh[31] = 0;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -9510,6 +9559,9 @@ fn main() {
             // v24.113 — surface render (field + threshold compositing).
             case 'SURFACE_RENDER':       LIQUID_SURFACE_RENDER = v; break;
             case 'SURFACE_THRESH':       LIQUID_SURFACE_THRESH = v; break;
+            // v26.57 gap bridge + contact wetting (composite edge only)
+            case 'SURF_BRIDGE':          LIQUID_SURF_BRIDGE = v < 0 ? 0 : (v > 2 ? 2 : v); break;
+            case 'SURF_BRIDGE_R':        LIQUID_SURF_BRIDGE_R = v < 1 ? 1 : (v > 8 ? 8 : v); break;
             case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
