@@ -309,6 +309,8 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_TURB_REF` | `60` | 20–600 px/s | v26.54 pair disagreement where the eddy gate saturates; it engages from 8 percent of this value. Lower = the exchange reaches gentler churn. gm `water.TURB_REF` |
 | `LIQUID_FLOOR_REACH` | `1.0` | 0–1 | v26.54 graded bottom boundary layer: the floor's lateral grip extends up to six cells above the touching row at a height-decaying fraction of `FLOOR_FRICTION` (0.60/0.42/0.28/0.18/0.11/0.06). The real reason a puddle stills in a second while a lake sloshes on; without it a drip's bore skated over its own gripped bottom row and crossed the whole puddle. v26.55 also grips vertical motion at 60 percent of the lateral weight (the shallow-band breathing orbit is vy-dominant). Purely local, no depth classification. gm `water.FLOOR_REACH` |
 | `LIQUID_KNEE_W` | `0.12` | 0–0.5 | v26.55 EOS knee hinge width (density-ratio units; 0 = the exact legacy hard knee). The one-sided EOS rectifies density-aliasing noise at the free surface into outward kicks; a C1 quadratic hinge over `0 < x < w` makes near-knee kicks quadratically small while `x >= w` keeps the exact linear slope. Water only. gm `water.KNEE_W` |
+| `LIQUID_TURB_LIVE` | `0.12` | 0–0.4 | v26.56 lively floor for the eddy exchange while calm is drained (water really flowing). The full static grip ground a pouring stream's landing churn to a 2.5 percent fast fraction (owner: honey); at rest the blend returns to the full `TURB_VISC`. Tier `edit` (020-state) |
+| `LIQUID_REACH_LIVE` | `0.45` | 0–1 | v26.56 lively floor for the boundary-layer reach, same blend. Keeps a landing sheet's runout alive while flowing; full grip at rest. Tier `edit` (020-state) |
 | `LIQUID_SIM_FORCE_EVERY` | `12` | 6–30 | Heartbeat — force a full sim step every N frames (legacy idle-skip path; the v24.145 freeze supersedes it while `FREEZE`=1) |
 | `LIQUID_SIM_PLAYER_VEL_GATE` | `8` | 4–20 | Player speed below which "calm" skip is allowed |
 | `LIQUID_FREEZE` | `1` | 0/1 | v24.145 WATER STATE MACHINE master: 1 = whole-body freeze when settled (stepping stops entirely; only a stimulus thaws), 0 = legacy idle-skip heartbeat. gm `water.FREEZE` |
@@ -603,6 +605,32 @@ px/s of sub-pixel shimmer remains in the band; the named next escalation, if
 it still reads as noise, is a two-tap temporal filter on the resolved grid
 velocity (kills substep-frequency oscillation regardless of speed, needs a
 prev-velocity buffer in both pipelines).
+
+**v26.56: the pour-honey fix (liveliness rides activity, not statistics).**
+The owner: "the liveliness dies too fast, a stream lands like honey." Measured
+with the pour probe (continuous 6 s stream onto bare floor): v4.6.1 runout
+front 184 px with 17.9 percent of the landing disc above 30 px/s; the v4.8
+static grip gave 81 px and 2.5 percent. Attribution: the eddy exchange owned
+the churn deadness (disabling it alone restored fast to 13.3 percent), the
+static demo CALM owned the largest runout share, the reach a mild slice of
+both; airborne splash was identical throughout. Fix: TURB_VISC / FLOOR_REACH
+now ride the calm ramp between lively floors (`TURB_LIVE`/`REACH_LIVE`) and
+their full rest values, and calm itself is driven by ACTIVITY. HARD-WON
+LESSON: the first attempt drove calm from global fast-water statistics and
+LATCHED, because the shallow band's own lively-state boil (~4 percent above
+24 px/s) and a modest stream are numerically inseparable; rest regressed
+4 -> 10 px/s and a drip's splash burst tripped it. The game never needed a
+stats rule: every pour a player can cause starts from a HARD stimulus (dig,
+bomb, rig) which snaps calm to 0 and `fastHold` keeps it there for the life
+of the flow, while streamed pond fills and rain are soft by design and SHOULD
+land on calm water. The standalone host, whose pours are host-known input,
+enters lively only from sustained input (pour/poke held > 0.3 s, so a drip
+click stays fully calm and the drip-bore kill is intact), sustains it while
+input continues or a genuine flood runs (> 5 percent fast, above the band's
+~4 percent self-boil), and ramps the full rest grip back over ~1.4 s
+(waterLivelinessTick). The fizz machinery is a REST behavior; nothing is lost
+while water is visibly busy, and the v26.55 dam-toe arrest relaxes while
+anything flows.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

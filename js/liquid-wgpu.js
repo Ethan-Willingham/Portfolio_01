@@ -2214,6 +2214,58 @@
         }
       }
     }
+    // v26.56 eddy-exchange twin (kernel: eddyPair + the capped-sum apply
+    // in gridUpdate). Exact no-op at LIQUID_TURB_VISC 0, so boot-default
+    // runs are untouched; faithful at any pushed value so the relative
+    // Stage tolerances hold no matter when the host's first
+    // liquidStateTick lands (v26.54/55 skipped this twin and the Stage 5
+    // diff sat at 90-99 percent of tolerance, then failed under the
+    // v26.56 calm-ramp dynamics).
+    if (LIQUID_TURB_VISC > 0) {
+      var exVX = (LIQUID_GRID_VISC > 0) ? rawVX : Float64Array.from(refVelX);
+      var exVY = (LIQUID_GRID_VISC > 0) ? rawVY : Float64Array.from(refVelY);
+      var gwT = g.w | 0;
+      var pxT = fr(1 / Math.max(fr(fr(dt) * fr(inv)), 0.000001));
+      var t0T = fr(fr(LIQUID_TURB_REF) * fr(0.08));
+      var t1T = fr(LIQUID_TURB_REF);
+      for (ci = 0; ci < cells; ci++) {
+        var mT = fr(fr(refMassFx[ci]) / FX);
+        if (mT <= 0) continue;
+        var exSX = 0, exSY = 0, avX = 0, avY = 0, avN = 0;
+        var colT = ci % gwT;
+        var nbrT = [colT > 0 ? ci - 1 : -1, colT + 1 < gwT ? ci + 1 : -1,
+                    ci >= gwT ? ci - gwT : -1, ci + gwT < cells ? ci + gwT : -1];
+        for (var nT = 0; nT < 4; nT++) {
+          var cnT = nbrT[nT];
+          if (cnT < 0) continue;
+          var nmT = fr(fr(refMassFx[cnT]) / FX);
+          if (nmT <= 0) continue;
+          avX += exVX[cnT]; avY += exVY[cnT]; avN++;
+          var dvxT = fr(exVX[cnT] - exVX[ci]);
+          var dvyT = fr(exVY[cnT] - exVY[ci]);
+          var muT = fr(fr(mT * nmT) / fr(mT + nmT));
+          var lenT = fr(fr(Math.sqrt(fr(fr(dvxT * dvxT) + fr(dvyT * dvyT)))) * pxT);
+          var tt = (lenT - t0T) / (t1T - t0T);
+          if (tt < 0) tt = 0; else if (tt > 1) tt = 1;
+          tt = fr(tt);
+          var gateT = fr(fr(tt * tt) * fr(3 - 2 * tt));
+          exSX += dvxT * fr(muT * gateT);
+          exSY += dvyT * fr(muT * gateT);
+        }
+        if (avN === 0) continue;
+        var oilKT = fr(fr(fr(refOilFx[ci]) / FX) / mT);
+        var exKT = fr(fr(fr(LIQUID_TURB_VISC) * fr(1 - oilKT)) / mT);
+        var ex2T = fr(fr(fr(exSX * exSX) + fr(exSY * exSY)) * fr(exKT * exKT));
+        var agXT = fr(fr(avX / avN) - exVX[ci]);
+        var agYT = fr(fr(avY / avN) - exVY[ci]);
+        var ag2T = fr(fr(agXT * agXT) + fr(agYT * agYT));
+        if (ex2T > fr(ag2T * 0.81) && ex2T > 0) {
+          exKT = fr(exKT * fr(Math.sqrt(fr(fr(ag2T * 0.81) / ex2T))));
+        }
+        refVelX[ci] = fr(refVelX[ci] + fr(exSX * exKT));
+        refVelY[ci] = fr(refVelY[ci] + fr(exSY * exKT));
+      }
+    }
 
     Promise.all([
       readbackBuffer(instance, instance.buf.cellVelX, cells * 4),
@@ -2516,6 +2568,54 @@
           refVelX[ci] = fr(rawVX[ci] + fr(fr(aXV - rawVX[ci]) * LIQUID_GRID_VISC));
           refVelY[ci] = fr(rawVY[ci] + fr(fr(aYV - rawVY[ci]) * LIQUID_GRID_VISC));
         }
+      }
+    }
+    // v26.56 eddy-exchange twin (see the Stage-4 reference for the full
+    // rationale): exact no-op at LIQUID_TURB_VISC 0, faithful at any
+    // pushed value so the Stage-5 tolerance holds at any push timing.
+    if (LIQUID_TURB_VISC > 0) {
+      var exVX = (LIQUID_GRID_VISC > 0) ? rawVX : Float64Array.from(refVelX);
+      var exVY = (LIQUID_GRID_VISC > 0) ? rawVY : Float64Array.from(refVelY);
+      var gwT = g.w | 0;
+      var pxT = fr(1 / Math.max(fr(fr(dt) * fr(inv)), 0.000001));
+      var t0T = fr(fr(LIQUID_TURB_REF) * fr(0.08));
+      var t1T = fr(LIQUID_TURB_REF);
+      for (ci = 0; ci < cells; ci++) {
+        var mT = fr(fr(refMassFx[ci]) / FX);
+        if (mT <= 0) continue;
+        var exSX = 0, exSY = 0, avX = 0, avY = 0, avN = 0;
+        var colT = ci % gwT;
+        var nbrT = [colT > 0 ? ci - 1 : -1, colT + 1 < gwT ? ci + 1 : -1,
+                    ci >= gwT ? ci - gwT : -1, ci + gwT < cells ? ci + gwT : -1];
+        for (var nT = 0; nT < 4; nT++) {
+          var cnT = nbrT[nT];
+          if (cnT < 0) continue;
+          var nmT = fr(fr(refMassFx[cnT]) / FX);
+          if (nmT <= 0) continue;
+          avX += exVX[cnT]; avY += exVY[cnT]; avN++;
+          var dvxT = fr(exVX[cnT] - exVX[ci]);
+          var dvyT = fr(exVY[cnT] - exVY[ci]);
+          var muT = fr(fr(mT * nmT) / fr(mT + nmT));
+          var lenT = fr(fr(Math.sqrt(fr(fr(dvxT * dvxT) + fr(dvyT * dvyT)))) * pxT);
+          var tt = (lenT - t0T) / (t1T - t0T);
+          if (tt < 0) tt = 0; else if (tt > 1) tt = 1;
+          tt = fr(tt);
+          var gateT = fr(fr(tt * tt) * fr(3 - 2 * tt));
+          exSX += dvxT * fr(muT * gateT);
+          exSY += dvyT * fr(muT * gateT);
+        }
+        if (avN === 0) continue;
+        var oilKT = fr(fr(fr(refOilFx[ci]) / FX) / mT);
+        var exKT = fr(fr(fr(LIQUID_TURB_VISC) * fr(1 - oilKT)) / mT);
+        var ex2T = fr(fr(fr(exSX * exSX) + fr(exSY * exSY)) * fr(exKT * exKT));
+        var agXT = fr(fr(avX / avN) - exVX[ci]);
+        var agYT = fr(fr(avY / avN) - exVY[ci]);
+        var ag2T = fr(fr(agXT * agXT) + fr(agYT * agYT));
+        if (ex2T > fr(ag2T * 0.81) && ex2T > 0) {
+          exKT = fr(exKT * fr(Math.sqrt(fr(fr(ag2T * 0.81) / ex2T))));
+        }
+        refVelX[ci] = fr(refVelX[ci] + fr(exSX * exKT));
+        refVelY[ci] = fr(refVelY[ci] + fr(exSY * exKT));
       }
     }
 

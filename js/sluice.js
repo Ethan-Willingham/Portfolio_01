@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.55';
+  var GAME_VERSION = 'v26.56';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1712,6 +1712,15 @@
   // free-surface rectifier pump behind the shallow-band fizz. edit2 twin
   // in js/liquid-wgpu.js (module default 0; pushed after boot).
   var LIQUID_KNEE_W = 0.12;
+  // v26.56: lively floors for the calm-ramp blends (pour-honey fix).
+  // While water really flows (fastHold drains calm), the eddy exchange
+  // relaxes to TURB_LIVE and the floor reach to REACH_LIVE, so a landing
+  // stream keeps its churn and runout; at rest both return to the full
+  // fizz-killing grip. Measured on the standalone pour probe: the full
+  // static grip cut the landing disc's fast fraction 17.9 -> 2.5 percent
+  // and halved the runout, which the owner called honey.
+  var LIQUID_TURB_LIVE = 0.12;
+  var LIQUID_REACH_LIVE = 0.45;
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -10123,6 +10132,18 @@
       LIQUID_CALM += dt / LIQUID_CALM_RAMP;
       if (LIQUID_CALM > 1) LIQUID_CALM = 1;
     }
+    // v26.56 NOTE: a stats-driven "flowing water drains calm" rule was
+    // built and REVERTED here: the shallow band's own lively-state boil
+    // and a modest stream are inseparable in global fast counts, so the
+    // rule latched fizzing puddles lively (measured on the standalone
+    // twin: rest 4 -> 10 px/s). The game does not need it: every real
+    // pour a player can cause starts from a HARD stimulus (digs, bombs,
+    // the rig) which snaps calm to 0, and fastHold then KEEPS it there
+    // for the life of the flow; streamed pond fills and rain are soft by
+    // design and should land on calm water. The TURB/REACH calm-ramp
+    // blends below stay: they relax the grip whenever the machine is
+    // lively, which is what keeps a landing stream churning and running
+    // out instead of reading as honey.
     // v25.39 — REST LIVELINESS CAP: the ramp parks at CALM_MAX (default 0.5)
     // instead of 1, so rest keeps the mid-settle shimmer the owner asked for
     // (rationale at the const in 020). Clamp unconditionally so a live lever
@@ -10151,9 +10172,18 @@
       liquidWGPU.setSimParam('QUIET_SHEAR', LIQUID_QUIET_SHEAR);
       liquidWGPU.setSimParam('QUIET_DRAG', LIQUID_QUIET_DRAG);
       // v26.54 eddy dissipation + floor boundary layer (see 020-state).
-      liquidWGPU.setSimParam('TURB_VISC', LIQUID_TURB_VISC);
+      // v26.56: both ride the calm ramp between a lively floor and the
+      // full rest grip, so a landing stream keeps its churn and runout
+      // while quiet water still grinds still (pour-honey fix; the fizz
+      // machinery is a REST behavior and loses nothing while water is
+      // visibly busy).
+      var calmT56 = LIQUID_CALM_MAX > 0 ? (LIQUID_CALM / LIQUID_CALM_MAX) : 0;
+      if (calmT56 > 1) calmT56 = 1;
+      liquidWGPU.setSimParam('TURB_VISC',
+        LIQUID_TURB_LIVE + (LIQUID_TURB_VISC - LIQUID_TURB_LIVE) * calmT56);
       liquidWGPU.setSimParam('TURB_REF', LIQUID_TURB_REF);
-      liquidWGPU.setSimParam('FLOOR_REACH', LIQUID_FLOOR_REACH);
+      liquidWGPU.setSimParam('FLOOR_REACH',
+        LIQUID_REACH_LIVE + (LIQUID_FLOOR_REACH - LIQUID_REACH_LIVE) * calmT56);
       // v26.55 EOS knee hinge (see 020-state).
       liquidWGPU.setSimParam('KNEE_W', LIQUID_KNEE_W);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);

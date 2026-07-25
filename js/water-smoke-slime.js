@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.8'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.9'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -436,6 +436,42 @@
   var waterCellVX = new Float32Array(gridW * gridH);   // velocity SUMS; divide by count to average
   var waterCellVY = new Float32Array(gridW * gridH);
   var waterColSurf = new Float32Array(gridW);          // per-column free-surface Y (Infinity = dry column)
+  // v4.9: LIVELINESS STATE (the toy's miniature of the game's stimulus
+  // machine). The v4.8 static CALM plus full-strength eddy/reach ground a
+  // pouring stream's landing zone into honey (measured: runout front 81 vs
+  // 184 px on v4.6.1, landing-disc fast fraction 2.5 vs 17.9 percent).
+  // ENTER lively only from sustained INPUT (pour/poke/fling held longer
+  // than 0.3 s), never from physics statistics: the shallow band's own
+  // lively-state boil and a modest stream are numerically inseparable in
+  // global fast counts, so a stats gate latches the fizz alive (measured:
+  // rest regressed 4 -> 10 px/s). A single drip click is under the hold
+  // and stays fully calm, keeping the drip-bore kill intact. Once lively,
+  // a high fast fraction (> 5 percent above 24 px/s, e.g. a just-released
+  // flood) SUSTAINS it after input stops; the band's own boil peaks near
+  // 4 percent and releases. calmT then ramps back over ~1.4 s and the
+  // full rest grip (CALM brake, TURB_VISC, FLOOR_REACH) returns.
+  var waterFastCount = 0;
+  var waterInputT = -1e9;
+  var waterInputHoldT = 0;
+  var waterCalmT = 1;
+  var waterCalmFull = 0, waterTurbFull = 0.4, waterReachFull = 1;
+  var waterLastPush = -1;
+  function waterLivelinessTick(dt) {
+    if (!liquidWGPU || !liquidWGPU.setSimParam) return;
+    var inputNow = (performance.now() - waterInputT) < 250;
+    if (inputNow) waterInputHoldT += dt;
+    else waterInputHoldT = 0;
+    var flooding = waterFastCount > Math.max(60, liquidCount * 0.05);
+    var stim = (waterInputHoldT > 0.3) || (waterCalmT < 0.98 && (inputNow || flooding));
+    if (stim) waterCalmT = Math.max(0, waterCalmT - dt / 0.3);
+    else waterCalmT = Math.min(1, waterCalmT + dt / 1.4);
+    if (Math.abs(waterCalmT - waterLastPush) < 0.015 &&
+        waterCalmT !== 0 && waterCalmT !== 1) return;
+    waterLastPush = waterCalmT;
+    liquidWGPU.setSimParam('CALM', waterCalmFull * waterCalmT);
+    liquidWGPU.setSimParam('TURB_VISC', 0.12 + (waterTurbFull - 0.12) * waterCalmT);
+    liquidWGPU.setSimParam('FLOOR_REACH', 0.45 + (waterReachFull - 0.45) * waterCalmT);
+  }
   var WATER_CELL_WET = 10;      // ~1/4 rest density for an 8px cell: real water, not spray
   var WATER_CELL_REST = 41;     // rest density per 8px cell (the sim's 655 per 32px tile)
   var waterCellsAny = false;
@@ -445,10 +481,19 @@
     waterCellCount.fill(0);
     waterCellVX.fill(0);
     waterCellVY.fill(0);
-    if (waterState !== 'on' || liquidCount === 0) { waterColSurf.fill(Infinity); return; }
+    if (waterState !== 'on' || liquidCount === 0) {
+      waterColSurf.fill(Infinity);
+      waterFastCount = 0;
+      return;
+    }
+    waterFastCount = 0;
     for (var i = 0; i < liquidCount; i++) {
       var c = (liquidX[i] / TILE) | 0;
       var r = (liquidY[i] / TILE) | 0;
+      // v4.9: fast-water census for the liveliness state (the game's
+      // LIQUID_FAST_VSQ idiom, 24 px/s). Counted before the bounds check
+      // so off-grid spray still registers as activity.
+      if (liquidVX[i] * liquidVX[i] + liquidVY[i] * liquidVY[i] > 576) waterFastCount++;
       if (c < 0 || c >= gridW || r < 0 || r >= gridH) continue;
       var idx = r * gridW + c;
       waterCellCount[idx]++;
@@ -815,6 +860,7 @@
   // ---- Spawning ---------------------------------------------------------
   function spawnWaterJet(wx, wy, rad, vx, vy, n) {
     if (waterState === 'off') return;
+    waterInputT = performance.now();   // v4.9 liveliness: pouring is input
     for (var i = 0; i < n; i++) {
       if (liquidCount >= LIQUID_MAX_PARTICLES - 8) return;
       var a = Math.random() * 6.2831853;
@@ -9567,6 +9613,7 @@
       pts[k * 4 + 3] = vy;
     }
     pokeGuest = { x: px, y: py, hw: Math.min(34, R), hh: Math.min(34, R), pts: pts };
+    waterInputT = performance.now();   // v4.9 liveliness: poking is input
   }
 
   function toolTick(dt) {
@@ -9645,14 +9692,15 @@
     // keeps separated spray raw even when its ballistic arc reaches the apex.
     var calm = 1 - t;
     var calm2 = calm * calm;
-    // v4.8: CALM now rides the slider (static; the toy has no stimulus
-    // state machine). It scales ONLY the kernel's two-stage sub-25 px/s
-    // rest brake, capped under the 0.5 sleep latch, and is the one sink
-    // that drains the shallow-band vertical breathing orbit the v4.7
-    // mechanisms cannot reach (measured: 8-10 px/s forever at 5-25 cell
-    // depths, halved by brake + knee). Splash and flow speeds sit far
-    // above the brake's gate.
-    liquidWGPU.setSimParam('CALM', Math.min(0.48, 0.26 + 0.30 * calm));
+    // v4.8: CALM scales ONLY the kernel's two-stage sub-25 px/s rest
+    // brake, capped under the 0.5 sleep latch; it is the one sink that
+    // drains the shallow-band breathing orbit. v4.9: the slider sets the
+    // REST-STATE targets; waterLivelinessTick blends CALM / TURB_VISC /
+    // FLOOR_REACH between these and a lively floor by real water
+    // activity, so a pouring stream lands raw while rest still grinds
+    // still.
+    waterCalmFull = Math.min(0.48, 0.26 + 0.30 * calm);
+    liquidWGPU.setSimParam('CALM', waterCalmFull * waterCalmT);
     liquidWGPU.setSimParam('DAMPING', 1);
     liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996);
@@ -9667,9 +9715,11 @@
     // seconds, and splash peaks measure unchanged. The slider keeps real
     // authority: calm strengthens all three, lively relaxes them.
     liquidWGPU.setSimParam('GRID_VISC', 0.012 + 0.016 * calm);
-    liquidWGPU.setSimParam('TURB_VISC', 0.25 + 0.26 * calm);
+    waterTurbFull = 0.25 + 0.26 * calm;
+    waterReachFull = Math.min(1, 0.72 + 0.48 * calm);
+    liquidWGPU.setSimParam('TURB_VISC', 0.12 + (waterTurbFull - 0.12) * waterCalmT);
     liquidWGPU.setSimParam('TURB_REF', 60);
-    liquidWGPU.setSimParam('FLOOR_REACH', Math.min(1, 0.72 + 0.48 * calm));
+    liquidWGPU.setSimParam('FLOOR_REACH', 0.45 + (waterReachFull - 0.45) * waterCalmT);
     liquidWGPU.setSimParam('KNEE_W', 0.10 + 0.05 * calm);   // v4.8 EOS knee hinge
   }
 
@@ -10117,6 +10167,7 @@
     retireLiquidOrphans();
     updateLiquidToy(dt);
     buildWaterCells();
+    waterLivelinessTick(dt);
     jelloWaterCoupleTick(dt);
     if (toyFrameNo % 30 === 0) wakeSleepersOnBodies();   // sparse: every WAKE op
       // bumps the mutation seq, and a seq moving every 4th frame starves the
