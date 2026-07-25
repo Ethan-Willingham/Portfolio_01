@@ -318,6 +318,27 @@
   var LIQUID_QUIET_SPEED   = 34;   // px/s: filter fully gone by this cell speed
   var LIQUID_QUIET_SHEAR   = 11;   // px/s: filter fully gone by this neighbour delta
   var LIQUID_QUIET_DRAG    = 0;    // per-substep low-speed body-water tail brake
+  // v26.54: EDDY DISSIPATION (the inverse of the quiet shear gate). The
+  // quiet blend above deliberately dies where neighbour disagreement
+  // exceeds its gate, which left energetic disorder (boiling shallow
+  // films, standing swirl in big bodies, a bore's leading edge) undamped
+  // forever in the 15-100 px/s window between the quiet ceiling and the
+  // burst-damp floor. This grid blend GROWS with local disagreement (a
+  // Smagorinsky-flavoured gradient proxy standing in for the missing
+  // turbulent cascade), so churn bleeds fastest where it is most
+  // disordered, while coherent translation at any speed (free fall, a
+  // pour, a dam-break front) has near-zero disagreement and passes
+  // untouched. Module defaults stay 0 so the boot self-tests are
+  // byte-identical; shipping hosts push live values afterward (game:
+  // 020-state twins via liquidStateTick; toy: applyWaterFeel).
+  var LIQUID_TURB_VISC     = 0;    // eddy exchange rate per substep (0 = off)
+  var LIQUID_TURB_REF      = 140;  // px/s pair disagreement where the gate saturates
+  // v26.54: graded bottom boundary layer strength (0 = off). The floor's
+  // grip reaches up to three cells above the touching row at a
+  // height-decaying fraction of LIQUID_FLOOR_FRICTION, which is what
+  // stops a shallow bore that used to skate over its own gripped bottom
+  // row. See the gridBoundary kernel comment.
+  var LIQUID_FLOOR_REACH   = 0;
   // v24.120 WATER DEBUG KIT — live diagnostic bitmask from the game's gm
   // 'water' levers (edit2 twins in sluice.js 020-state). Rides to the
   // kernels in SimParams coll.w, so flipping a lever needs NO recompile:
@@ -715,8 +736,8 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 13 vec4 = 208 bytes (v26.53 quiet
-    // stages; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
+    // constants every compute kernel reads. 14 vec4 = 224 bytes (v26.54 eddy
+    // lane; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
     // GPU chain (and before each harness run* call). Bind groups bind the
@@ -724,10 +745,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 208,
+      size: 224,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(52);   // 13 vec4 lanes (v26.53 two-scale quiet)
+    instance.simParamsHost = new Float32Array(56);   // 14 vec4 lanes (v26.54 eddy)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1239,6 +1260,7 @@
    *   24-27 coll   : bounceWater, bounceOil, gridVisc, dbgFlags
    *   28-31 g2pC   : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173)
    *   48-51 quiet  : low-energy viscosity, speed gate, shear gate, support
+   *   52-55 turb   : eddy rate, px/s saturation, floorReach, spare (v26.54)
    * Filled from the same LIQUID_* numbers the WGSL `${...}` literals used
    * before v14.26 — at default values the GPU sees byte-identical input,
    * so the boot self-tests still pass with unchanged diffs.
@@ -1291,6 +1313,11 @@
     // and standalone host push their chosen live values afterward.
     sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
     sh[50] = LIQUID_QUIET_SHEAR; sh[51] = LIQUID_QUIET_DRAG;
+    // turb : v26.54 eddy dissipation + graded floor boundary layer.
+    // Module boot stays zero (self-tests byte-identical); shipping hosts
+    // push their live values afterward.
+    sh[52] = LIQUID_TURB_VISC;   sh[53] = LIQUID_TURB_REF;
+    sh[54] = LIQUID_FLOOR_REACH; sh[55] = 0;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4335,6 +4362,7 @@ struct SimParams {
   bathB  : vec4<f32>,   // v25.56 bath: heat-source rect x0, y0, x1, y1 (world px)
   bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
   quiet  : vec4<f32>,   // v26.53: low-energy visc, speed gate, shear gate, tail drag
+  turb   : vec4<f32>,   // v26.54: eddy rate, px/s saturation, floorReach, spare
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4927,6 +4955,58 @@ fn rawCellVel(n : u32) -> vec3<f32> {
              f32(atomicLoad(&cellDVY[n])) / FIXED_SCALE) * ninv + nGrav;
   return vec3<f32>(nvx, nvy, 1.0);
 }
+
+// v26.54: same recompute, but returning mass in .z (0 = empty) so the
+// eddy exchange below can weight each pair by the harmonic mass mean.
+// Kept as a separate helper so the legacy viscosity gather above stays
+// textually and numerically untouched. Unlike rawCellVel this MIRRORS
+// the gridUpdate shock limiter (sp.feel.z) on the pressure impulse: the
+// exchange must see the same capped dv the cell's own velocity uses, or
+// it transports uncapped one-substep pressure spikes around the limiter
+// and re-seeds the exact popcorn the limiter exists to kill (measured:
+// a strong exchange rate turned a resting film's 12 px/s boil into 56).
+fn rawCellVelM(n : u32) -> vec3<f32> {
+  let nm = f32(atomicLoad(&cellMass[n])) / FIXED_SCALE;
+  if (nm <= 0.0) { return vec3<f32>(0.0, 0.0, 0.0); }
+  let ninv  = 1.0 / nm;
+  let nOilK = (f32(atomicLoad(&cellOilMass[n])) / FIXED_SCALE) * ninv;
+  let nGrav = (sp.grav.x + (sp.grav.y - sp.grav.x) * nOilK) *
+              (gp.stepDt * gp.stepDt * gp.invCell);
+  var ndx = f32(atomicLoad(&cellDVX[n])) / FIXED_SCALE;
+  var ndy = f32(atomicLoad(&cellDVY[n])) / FIXED_SCALE;
+  if (sp.feel.z > 0.0) {
+    let dvCapN = sp.feel.z * gp.stepDt * gp.invCell * nm;
+    let dvL2 = ndx * ndx + ndy * ndy;
+    if (dvL2 > dvCapN * dvCapN) {
+      let dvSc = dvCapN / sqrt(dvL2);
+      ndx = ndx * dvSc;
+      ndy = ndy * dvSc;
+    }
+  }
+  let nvx = (f32(atomicLoad(&cellVX[n])) / FIXED_SCALE + ndx) * ninv;
+  let nvy = (f32(atomicLoad(&cellVY[n])) / FIXED_SCALE + ndy) * ninv + nGrav;
+  return vec3<f32>(nvx, nvy, nm);
+}
+
+// v26.54: one eddy-exchange pair term. Momentum-conserving by
+// construction: the harmonic mass mean mu = m_i*m_j/(m_i+m_j) and the
+// disagreement gate are symmetric in (i, j) while (v_j - v_i) is
+// antisymmetric, so cell j's kernel computes the exact opposite impulse
+// and the pair's total momentum is unchanged. A heavy surge therefore
+// PAYS for every bit of crest it entrains (the old free-entrainment
+// blend fed a bore its own film), and the exchange strictly removes
+// kinetic energy. The smoothstep engages on the PAIR's disagreement in
+// world px/s: disordered churn saturates it, coherent translation
+// carries none.
+fn eddyPair(myM : f32, myVX : f32, myVY : f32, n : u32, pxPerStep : f32) -> vec2<f32> {
+  let o = rawCellVelM(n);
+  if (o.z <= 0.0) { return vec2<f32>(0.0, 0.0); }
+  let dvx = o.x - myVX;
+  let dvy = o.y - myVY;
+  let mu = (myM * o.z) / (myM + o.z);
+  let gate = smoothstep(sp.turb.y * 0.08, sp.turb.y, length(vec2<f32>(dvx, dvy)) * pxPerStep);
+  return vec2<f32>(dvx, dvy) * (mu * gate);
+}
 `;
 
   var WGSL_GRID_UPDATE_BODY = /* wgsl */ `
@@ -4975,7 +5055,8 @@ fn rawCellVel(n : u32) -> vec3<f32> {
     // this block, so a player/slime impact is not pre-damped.
     let visc = sp.coll.z;
     let quietVisc = sp.quiet.x;
-    if (visc > 0.0 || quietVisc > 0.0) {
+    let turbVisc = sp.turb.x;
+    if (visc > 0.0 || quietVisc > 0.0 || turbVisc > 0.0) {
       let col = c % gp.gridW;
       var nSum = vec3<f32>(0.0, 0.0, 0.0);
       if (col > 0u)             { nSum = nSum + rawCellVel(c - 1u); }
@@ -4986,13 +5067,13 @@ fn rawCellVel(n : u32) -> vec3<f32> {
         let nAvgX = nSum.x / nSum.z;
         let nAvgY = nSum.y / nSum.z;
         var viscEff = clamp(visc, 0.0, 0.95);
+        // Grid velocity is cells moved this substep. Convert both the
+        // absolute speed and neighbour delta back to world px/s so the
+        // gates stay invariant under cell size and fixed-step tuning.
+        let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
+        let shearPx = length(vec2<f32>(nAvgX - velX, nAvgY - velY)) * pxPerStep;
         if (quietVisc > 0.0 && nSum.z >= 2.0) {
-          // Grid velocity is cells moved this substep. Convert both the
-          // absolute speed and neighbour delta back to world px/s so the
-          // gates stay invariant under cell size and fixed-step tuning.
-          let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
           let speedPx = length(vec2<f32>(velX, velY)) * pxPerStep;
-          let shearPx = length(vec2<f32>(nAvgX - velX, nAvgY - velY)) * pxPerStep;
           let speedQuiet = 1.0 - smoothstep(sp.quiet.y * 0.4, sp.quiet.y, speedPx);
           let shearQuiet = 1.0 - smoothstep(sp.quiet.z * 0.3, sp.quiet.z, shearPx);
           let quietK = clamp(quietVisc * speedQuiet * shearQuiet * (1.0 - oilK), 0.0, 0.95);
@@ -5002,6 +5083,38 @@ fn rawCellVel(n : u32) -> vec3<f32> {
         }
         velX = velX + (nAvgX - velX) * viscEff;
         velY = velY + (nAvgY - velY) * viscEff;
+        // v26.54 eddy dissipation: the inverse of the quiet shear gate,
+        // standing in for the missing turbulent cascade. Each massy
+        // neighbour pair exchanges momentum scaled by the harmonic mass
+        // mean and a smoothstep on the PAIR's own disagreement (see
+        // eddyPair), so boiling films, standing swirl and a bore's ragged
+        // leading edge bleed fastest where they are most disordered while
+        // coherent translation at any speed exchanges nothing. Unlike the
+        // old average-blend idea this is momentum-conserving, so a surge
+        // cannot entrain its crest for free. sp.turb.x is the exchange
+        // rate per substep, sp.turb.y the pair disagreement (px/s) where
+        // the gate saturates; zero is an exact no-op (boot self-tests
+        // unchanged). Applied to the pre-blend velocity snapshot the
+        // neighbours also see, then added onto the blended velocity.
+        if (turbVisc > 0.0) {
+          var ex = vec2<f32>(0.0, 0.0);
+          let myV = rawCellVelM(c);
+          if (col > 0u)             { ex = ex + eddyPair(mass, myV.x, myV.y, c - 1u, pxPerStep); }
+          if (col + 1u < gp.gridW)  { ex = ex + eddyPair(mass, myV.x, myV.y, c + 1u, pxPerStep); }
+          if (c >= gp.gridW)        { ex = ex + eddyPair(mass, myV.x, myV.y, c - gp.gridW, pxPerStep); }
+          if (c + gp.gridW < gp.cells) { ex = ex + eddyPair(mass, myV.x, myV.y, c + gp.gridW, pxPerStep); }
+          // Convert the pair sum into this cell's velocity change and cap
+          // the total so stacked neighbours can never overshoot the
+          // agreement point (stability at any tuned rate).
+          var exK = turbVisc * (1.0 - oilK) / mass;
+          let exLen2 = (ex.x * ex.x + ex.y * ex.y) * exK * exK;
+          let agree2 = (shearPx / max(pxPerStep, 0.000001)) * (shearPx / max(pxPerStep, 0.000001));
+          if (exLen2 > agree2 * 0.81 && exLen2 > 0.0) {
+            exK = exK * sqrt(agree2 * 0.81 / exLen2);
+          }
+          velX = velX + ex.x * exK;
+          velY = velY + ex.y * exK;
+        }
       }
     }
     cellVelX[c] = velX;
@@ -5161,6 +5274,36 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
       let rightOpen = !rightSolid && !gridSolid(cgx + 1, cgy + 1);
       if (leftOpen || rightOpen) { fricF = max(fricF, sp.feel.w); }
       vx = vx * fricF;
+    }
+    // v26.54: graded bottom boundary layer (sp.turb.z = FLOOR_REACH,
+    // 0 = exact no-op). Floor friction above grips only the touching cell
+    // row, so a shallow bore rode its own lubricated bottom layer: the
+    // crest one to three cells up felt nothing and a single drip's surge
+    // crossed a whole puddle. Real shallow water is stopped by exactly
+    // this layer; it is why a puddle stills in about a second while a
+    // lake sloshes on (in a film EVERY row is boundary layer, in a deep
+    // body only the bottom skin is). Each non-floor cell probes down up
+    // to three cells and the nearest floor below grips its lateral
+    // motion by a height-decaying fraction of the floor friction.
+    // Purely local, no depth classification, no speed gate; bulk water
+    // four or more cells up is untouched.
+    if (!downSolid && sp.turb.z > 0.0) {
+      // Reach profile: measured on a 4-row film, a drip's surge crest
+      // peaks 4-6 cells up and simply rode over a 3-cell reach, so the
+      // grip extends 6 cells with a roughly exponential falloff. In a
+      // one-tile pond (13 cells) this brakes the bottom half; in a lake
+      // it is a thin skin.
+      var reachW = 0.0;
+      if (gridSolid(cgx, cgy + 2)) { reachW = 0.60; }
+      else if (gridSolid(cgx, cgy + 3)) { reachW = 0.42; }
+      else if (gridSolid(cgx, cgy + 4)) { reachW = 0.28; }
+      else if (gridSolid(cgx, cgy + 5)) { reachW = 0.18; }
+      else if (gridSolid(cgx, cgy + 6)) { reachW = 0.11; }
+      else if (gridSolid(cgx, cgy + 7)) { reachW = 0.06; }
+      if (reachW > 0.0) {
+        let blFric = 1.0 - (1.0 - floorFric) * reachW * sp.turb.z;
+        vx = vx * blFric;
+      }
     }
     if (leftSolid || rightSolid) { vy = vy * wallFric; }
   }
@@ -9275,6 +9418,10 @@ fn main() {
             case 'QUIET_SPEED':          LIQUID_QUIET_SPEED = v < 1 ? 1 : v; break;
             case 'QUIET_SHEAR':          LIQUID_QUIET_SHEAR = v < 1 ? 1 : v; break;
             case 'QUIET_DRAG':           LIQUID_QUIET_DRAG = v < 0 ? 0 : (v > 0.05 ? 0.05 : v); break;
+            // v26.54 eddy dissipation + floor boundary layer (turb lanes)
+            case 'TURB_VISC':            LIQUID_TURB_VISC = v < 0 ? 0 : (v > 0.95 ? 0.95 : v); break;
+            case 'TURB_REF':             LIQUID_TURB_REF = v < 1 ? 1 : v; break;
+            case 'FLOOR_REACH':          LIQUID_FLOOR_REACH = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;

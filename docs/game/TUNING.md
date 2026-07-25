@@ -305,6 +305,9 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_QUIET_SPEED` | `43` | 8–80 px/s | v26.53 absolute-speed disengagement gate shared by the relative filter and tail brake. Both smoothly reach zero here, so deliberate impacts stay raw. gm `water.QUIET_SPEED` |
 | `LIQUID_QUIET_SHEAR` | `11` | 3–30 px/s | v26.53 neighbour-difference disengagement gate for the grid blend. The filter is full below 30 percent of this value and smoothly reaches zero here. gm `water.QUIET_SHEAR` |
 | `LIQUID_QUIET_DRAG` | `0.0032` | 0–0.02 | v26.53 per-substep low-speed tail brake. It shortens coherent body-water slosh only below `QUIET_SPEED`; a density gate fades it out below 0.55 and removes it by 0.30 so airborne spray keeps its arc. gm `water.QUIET_DRAG` |
+| `LIQUID_TURB_VISC` | `0.4` | 0–0.95 | v26.54 eddy dissipation, the inverse of the quiet shear gate: each massy cell pair exchanges momentum scaled by the harmonic mass mean and a smoothstep on that pair's own disagreement. Momentum-conserving (a surge pays for the crest it entrains), strictly energy-removing, and zero for coherent translation at any speed. Kills the resting boil and the standing swirl that lived in the 15-100 px/s window no other mechanism touched. gm `water.TURB_VISC` |
+| `LIQUID_TURB_REF` | `60` | 20–600 px/s | v26.54 pair disagreement where the eddy gate saturates; it engages from 8 percent of this value. Lower = the exchange reaches gentler churn. gm `water.TURB_REF` |
+| `LIQUID_FLOOR_REACH` | `1.0` | 0–1 | v26.54 graded bottom boundary layer: the floor's lateral grip extends up to six cells above the touching row at a height-decaying fraction of `FLOOR_FRICTION` (0.60/0.42/0.28/0.18/0.11/0.06). The real reason a puddle stills in a second while a lake sloshes on; without it a drip's bore skated over its own gripped bottom row and crossed the whole puddle. Purely local, no depth classification. gm `water.FLOOR_REACH` |
 | `LIQUID_SIM_FORCE_EVERY` | `12` | 6–30 | Heartbeat — force a full sim step every N frames (legacy idle-skip path; the v24.145 freeze supersedes it while `FREEZE`=1) |
 | `LIQUID_SIM_PLAYER_VEL_GATE` | `8` | 4–20 | Player speed below which "calm" skip is allowed |
 | `LIQUID_FREEZE` | `1` | 0/1 | v24.145 WATER STATE MACHINE master: 1 = whole-body freeze when settled (stepping stops entirely; only a stimulus thaws), 0 = legacy idle-skip heartbeat. gm `water.FREEZE` |
@@ -541,11 +544,41 @@ retain intentional high-speed splash without replaying it in slow motion.
 
 **v26.53.1 retained lower-fluid landing:** the game keeps the requested
 `1.38366702` playback rate, about 11 percent gentler than the historical
-v26.53 rate of 1.55. The standalone v4.6.1 demo also opens at 42 percent, but
-its slider changes the two quiet-water stages while its material clock remains
+v26.53 rate of 1.55. The standalone demo also opens at 42 percent, but
+its slider changes the water stages while its material clock remains
 1.55. At that point the quiet values are approximately `0.03146` viscosity,
 `47.44` px/s speed, `12.70` px/s shear, and `0.00450` tail drag. Both surfaces
 call the landing point `fluid`; neither changes particle size or rendering.
+Since v4.7 the same slider also drives the v26.54 terms: at the landing point
+`GRID_VISC` 0.021, `TURB_VISC` 0.40, `TURB_REF` 60, `FLOOR_REACH` 1.0
+(matching the game's shipped constants); calm strengthens all of them, lively
+relaxes them, and the material clock still never moves.
+
+**v26.54, the dead band, the eddy exchange, and the floor's reach.** Measured
+with one-boot-per-config probes on the standalone demo (harness in
+`.claude/water-tools/`): the sim's entire dissipation stack was gated so that
+NOTHING acted between the quiet ceiling (~43 px/s, and ~11 px/s of neighbour
+disagreement) and the burst-damp floor (100 px/s). Every long-standing water
+complaint lived in that window: a 4-row film boiled at 12 px/s forever and a
+12-particle drip sent a bore across the full 500 px half-tank at 25-30 px
+amplitude; a 400x110 px tank never rested (mean 22 px/s before stimulus, still
+17 px/s with zero sleepers 45 s after a hard stir). Two mechanisms close the
+window. (1) `TURB_VISC`/`TURB_REF`: a momentum-conserving pairwise eddy
+exchange in gridUpdate whose gate GROWS with the pair's own disagreement,
+standing in for the missing turbulent cascade. Two hard-won constraints: the
+exchange must see the shock-limiter-CAPPED pressure impulse (`rawCellVelM`
+mirrors `sp.feel.z`; the uncapped accumulators turned a resting film's 12 px/s
+boil into 56 by transporting spikes around the limiter), and a plain blend
+toward the neighbour average is NOT momentum-conserving (it let a bore entrain
+its crest for free and threw the whole film across the tank; the harmonic-mass
+pair form fixed both). (2) `FLOOR_REACH`: the graded bottom boundary layer in
+gridBoundary. Attribution runs: the exchange alone cut the bore's far-field
+amplitude ~60 percent but let it ring wall to wall for 6+ s; the reach alone
+left amplitude near baseline but killed the wave DEAD after one traverse
+(zero flags after 3.75 s); together a resting film measures 0.1 px/s (was 12)
+with the source-adjacent splash bands unchanged. The demo's water slider and
+the game push all three live; `?shallow=`-era depth classification stays
+rejected (nothing classifies water; both terms are purely local).
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

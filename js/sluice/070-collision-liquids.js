@@ -1535,6 +1535,8 @@
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
         liquidWGPU.setSimParam('QUIET_VISC', 0);
         liquidWGPU.setSimParam('QUIET_DRAG', 0);
+        liquidWGPU.setSimParam('TURB_VISC', 0);   // saharan purity: no eddy term
+        liquidWGPU.setSimParam('FLOOR_REACH', 0); // and no boundary-layer reach
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -1645,6 +1647,10 @@
       liquidWGPU.setSimParam('QUIET_SPEED', LIQUID_QUIET_SPEED);
       liquidWGPU.setSimParam('QUIET_SHEAR', LIQUID_QUIET_SHEAR);
       liquidWGPU.setSimParam('QUIET_DRAG', LIQUID_QUIET_DRAG);
+      // v26.54 eddy dissipation + floor boundary layer (see 020-state).
+      liquidWGPU.setSimParam('TURB_VISC', LIQUID_TURB_VISC);
+      liquidWGPU.setSimParam('TURB_REF', LIQUID_TURB_REF);
+      liquidWGPU.setSimParam('FLOOR_REACH', LIQUID_FLOOR_REACH);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.53.1';
+  var GAME_VERSION = 'v26.54';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1672,10 +1672,13 @@
   var LIQUID_BURST_DAMP = 0.985;      // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO = 100.0;   // px/s — burst damp starts here (above rested ambient)
   var LIQUID_BURST_GATE_HI = 300.0;   // px/s — burst damp reaches full BURST_DAMP here
-  var LIQUID_VISC_LIVE = 0;           // v25.44 — was 0.10 (the v24.157 floor): the honey fix, see the
-                                      // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
-                                      // v24.152 0.05, v24.157 0.10; the settled grind still gets the
-                                      // full LIQUID_GRID_VISC lever value as calm ramps.)
+  var LIQUID_VISC_LIVE = 0.02;        // v26.54: 0 -> 0.02: a small always-on base diffusion floor to
+                                      // pair with the eddy exchange (probe-tuned with it; one fifth of
+                                      // the 0.10 that read as honey in v25.44, and the honey era also
+                                      // compounded DAMP/MOTION floors that stay retired). (History:
+                                      // v24.150 0.15 -> 0.08, v24.152 0.05, v24.157 0.10, v25.44 0;
+                                      // the settled grind still gets the full LIQUID_GRID_VISC lever
+                                      // value as calm ramps.)
   // v26.53 — two-scale quiet filter. The grid blend removes microscopic
   // disagreement and now includes one-cell-thick sheets. The tail brake
   // removes shared momentum only after supported body water falls below its
@@ -1685,6 +1688,25 @@
   var LIQUID_QUIET_SPEED = 43;         // px/s: both quiet stages disengage here
   var LIQUID_QUIET_SHEAR = 11;         // px/s: grid blend disengages by this delta
   var LIQUID_QUIET_DRAG = 0.0032;      // per-substep supported-water tail brake
+  // v26.54: eddy dissipation (the inverse of the quiet shear gate). The
+  // quiet blend dies where neighbour disagreement exceeds its gate, which
+  // left energetic disorder (boiling shallow films, standing swirl in big
+  // bodies, a bore's leading edge) undamped forever in the 15-100 px/s
+  // window between the quiet ceiling and the burst-damp floor. Each massy
+  // cell pair now exchanges momentum scaled by the harmonic mass mean and
+  // a smoothstep on that pair's own disagreement (momentum-conserving, so
+  // a surge pays for every bit of crest it entrains), which means churn
+  // bleeds fastest where it is most disordered while coherent translation
+  // at any speed (free fall, pours, a dam-break front) exchanges nothing.
+  // FLOOR_REACH extends floor friction's grip up to three cells above the
+  // touching row at a height-decaying fraction, the real reason a puddle
+  // stills in a second while a lake sloshes on; without it a shallow bore
+  // skates over its own gripped bottom row. edit2 twins in
+  // js/liquid-wgpu.js (module defaults stay 0 there; the game pushes
+  // these live values after the boot self-tests).
+  var LIQUID_TURB_VISC = 0.4;          // eddy exchange rate per substep
+  var LIQUID_TURB_REF = 60;            // px/s pair disagreement at full gate
+  var LIQUID_FLOOR_REACH = 1.0;        // graded bottom boundary layer strength
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -10001,6 +10023,8 @@
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
         liquidWGPU.setSimParam('QUIET_VISC', 0);
         liquidWGPU.setSimParam('QUIET_DRAG', 0);
+        liquidWGPU.setSimParam('TURB_VISC', 0);   // saharan purity: no eddy term
+        liquidWGPU.setSimParam('FLOOR_REACH', 0); // and no boundary-layer reach
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -10111,6 +10135,10 @@
       liquidWGPU.setSimParam('QUIET_SPEED', LIQUID_QUIET_SPEED);
       liquidWGPU.setSimParam('QUIET_SHEAR', LIQUID_QUIET_SHEAR);
       liquidWGPU.setSimParam('QUIET_DRAG', LIQUID_QUIET_DRAG);
+      // v26.54 eddy dissipation + floor boundary layer (see 020-state).
+      liquidWGPU.setSimParam('TURB_VISC', LIQUID_TURB_VISC);
+      liquidWGPU.setSimParam('TURB_REF', LIQUID_TURB_REF);
+      liquidWGPU.setSimParam('FLOOR_REACH', LIQUID_FLOOR_REACH);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }
@@ -59639,6 +59667,25 @@
           function () { return LIQUID_QUIET_DRAG; },
           function (v) { LIQUID_QUIET_DRAG = v; gmSetWaterSim('QUIET_DRAG', v); },
           0, 0.02, undefined);
+      }
+      // v26.54: eddy dissipation (shear-scaled grid blend, see 020-state).
+      if (typeof LIQUID_TURB_VISC !== 'undefined') {
+        gmRegisterLever('water.TURB_VISC', 'water', 'TURB_VISC (eddy blend)',
+          function () { return LIQUID_TURB_VISC; },
+          function (v) { LIQUID_TURB_VISC = v; gmSetWaterSim('TURB_VISC', v); },
+          0, 0.5, undefined);
+      }
+      if (typeof LIQUID_TURB_REF !== 'undefined') {
+        gmRegisterLever('water.TURB_REF', 'water', 'TURB_REF (px/s saturation)',
+          function () { return LIQUID_TURB_REF; },
+          function (v) { LIQUID_TURB_REF = v; gmSetWaterSim('TURB_REF', v); },
+          20, 600, undefined);
+      }
+      if (typeof LIQUID_FLOOR_REACH !== 'undefined') {
+        gmRegisterLever('water.FLOOR_REACH', 'water', 'FLOOR_REACH (boundary layer)',
+          function () { return LIQUID_FLOOR_REACH; },
+          function (v) { LIQUID_FLOOR_REACH = v; gmSetWaterSim('FLOOR_REACH', v); },
+          0, 1, undefined);
       }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy

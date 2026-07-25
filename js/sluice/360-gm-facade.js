@@ -776,6 +776,25 @@
           function (v) { LIQUID_QUIET_DRAG = v; gmSetWaterSim('QUIET_DRAG', v); },
           0, 0.02, undefined);
       }
+      // v26.54: eddy dissipation (shear-scaled grid blend, see 020-state).
+      if (typeof LIQUID_TURB_VISC !== 'undefined') {
+        gmRegisterLever('water.TURB_VISC', 'water', 'TURB_VISC (eddy blend)',
+          function () { return LIQUID_TURB_VISC; },
+          function (v) { LIQUID_TURB_VISC = v; gmSetWaterSim('TURB_VISC', v); },
+          0, 0.5, undefined);
+      }
+      if (typeof LIQUID_TURB_REF !== 'undefined') {
+        gmRegisterLever('water.TURB_REF', 'water', 'TURB_REF (px/s saturation)',
+          function () { return LIQUID_TURB_REF; },
+          function (v) { LIQUID_TURB_REF = v; gmSetWaterSim('TURB_REF', v); },
+          20, 600, undefined);
+      }
+      if (typeof LIQUID_FLOOR_REACH !== 'undefined') {
+        gmRegisterLever('water.FLOOR_REACH', 'water', 'FLOOR_REACH (boundary layer)',
+          function () { return LIQUID_FLOOR_REACH; },
+          function (v) { LIQUID_FLOOR_REACH = v; gmSetWaterSim('FLOOR_REACH', v); },
+          0, 1, undefined);
+      }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
       // ceil-split where stepDt swings with frame jitter (kept for A/B).

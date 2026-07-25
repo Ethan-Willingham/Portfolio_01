@@ -339,10 +339,13 @@
   var LIQUID_BURST_DAMP = 0.985;      // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO = 100.0;   // px/s — burst damp starts here (above rested ambient)
   var LIQUID_BURST_GATE_HI = 300.0;   // px/s — burst damp reaches full BURST_DAMP here
-  var LIQUID_VISC_LIVE = 0;           // v25.44 — was 0.10 (the v24.157 floor): the honey fix, see the
-                                      // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
-                                      // v24.152 0.05, v24.157 0.10; the settled grind still gets the
-                                      // full LIQUID_GRID_VISC lever value as calm ramps.)
+  var LIQUID_VISC_LIVE = 0.02;        // v26.54: 0 -> 0.02: a small always-on base diffusion floor to
+                                      // pair with the eddy exchange (probe-tuned with it; one fifth of
+                                      // the 0.10 that read as honey in v25.44, and the honey era also
+                                      // compounded DAMP/MOTION floors that stay retired). (History:
+                                      // v24.150 0.15 -> 0.08, v24.152 0.05, v24.157 0.10, v25.44 0;
+                                      // the settled grind still gets the full LIQUID_GRID_VISC lever
+                                      // value as calm ramps.)
   // v26.53 — two-scale quiet filter. The grid blend removes microscopic
   // disagreement and now includes one-cell-thick sheets. The tail brake
   // removes shared momentum only after supported body water falls below its
@@ -352,6 +355,25 @@
   var LIQUID_QUIET_SPEED = 43;         // px/s: both quiet stages disengage here
   var LIQUID_QUIET_SHEAR = 11;         // px/s: grid blend disengages by this delta
   var LIQUID_QUIET_DRAG = 0.0032;      // per-substep supported-water tail brake
+  // v26.54: eddy dissipation (the inverse of the quiet shear gate). The
+  // quiet blend dies where neighbour disagreement exceeds its gate, which
+  // left energetic disorder (boiling shallow films, standing swirl in big
+  // bodies, a bore's leading edge) undamped forever in the 15-100 px/s
+  // window between the quiet ceiling and the burst-damp floor. Each massy
+  // cell pair now exchanges momentum scaled by the harmonic mass mean and
+  // a smoothstep on that pair's own disagreement (momentum-conserving, so
+  // a surge pays for every bit of crest it entrains), which means churn
+  // bleeds fastest where it is most disordered while coherent translation
+  // at any speed (free fall, pours, a dam-break front) exchanges nothing.
+  // FLOOR_REACH extends floor friction's grip up to three cells above the
+  // touching row at a height-decaying fraction, the real reason a puddle
+  // stills in a second while a lake sloshes on; without it a shallow bore
+  // skates over its own gripped bottom row. edit2 twins in
+  // js/liquid-wgpu.js (module defaults stay 0 there; the game pushes
+  // these live values after the boot self-tests).
+  var LIQUID_TURB_VISC = 0.4;          // eddy exchange rate per substep
+  var LIQUID_TURB_REF = 60;            // px/s pair disagreement at full gate
+  var LIQUID_FLOOR_REACH = 1.0;        // graded bottom boundary layer strength
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992

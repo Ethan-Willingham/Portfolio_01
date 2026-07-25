@@ -72,6 +72,14 @@
  * actor-intent seam drives later locomotion and pose changes without referring
  * to the body's internal discretization.
  *
+ * v4.7 dissipation contract: the shared solver gained a momentum-conserving
+ * pairwise eddy exchange (gate grows with each pair's own disagreement) and a
+ * graded floor boundary layer (the floor grips up to six cells above the
+ * touching row). Probe-verified at the landing point: a resting film measures
+ * 0.1 px/s, a drip's bore no longer crosses the puddle, a hard-stirred
+ * 400x110 tank calms in about ten seconds, and splash peak speeds are
+ * unchanged. The slider drives the new terms plus the v4.6 quiet stages.
+ *
  * v4.6 calm-range contract: full simulation time, particle footprint, and
  * airborne spray never change. A relative filter now reaches one-cell-thick
  * sheets, while a second smooth low-speed brake gives supported body water a
@@ -84,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.6.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.7'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9638,7 +9646,6 @@
     var calm = 1 - t;
     var calm2 = calm * calm;
     liquidWGPU.setSimParam('CALM', 0);
-    liquidWGPU.setSimParam('GRID_VISC', 0);
     liquidWGPU.setSimParam('DAMPING', 1);
     liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996);
@@ -9646,6 +9653,16 @@
     liquidWGPU.setSimParam('QUIET_SPEED', 36 + 34 * calm2);
     liquidWGPU.setSimParam('QUIET_SHEAR', 9 + 11 * calm2);
     liquidWGPU.setSimParam('QUIET_DRAG', 0.0012 + 0.0098 * calm2);
+    // v4.7: the eddy exchange + floor boundary layer carry the felt range
+    // now (docs/game/TUNING.md v26.54). The 42 percent landing point maps
+    // to the probe-verified 0.02 / 0.4 / 60 / 1.0 set: a drip's bore dies
+    // instead of crossing the puddle, a stirred tank calms in about ten
+    // seconds, and splash peaks measure unchanged. The slider keeps real
+    // authority: calm strengthens all three, lively relaxes them.
+    liquidWGPU.setSimParam('GRID_VISC', 0.012 + 0.016 * calm);
+    liquidWGPU.setSimParam('TURB_VISC', 0.25 + 0.26 * calm);
+    liquidWGPU.setSimParam('TURB_REF', 60);
+    liquidWGPU.setSimParam('FLOOR_REACH', Math.min(1, 0.72 + 0.48 * calm));
   }
 
   function applyParticleDebug() {
