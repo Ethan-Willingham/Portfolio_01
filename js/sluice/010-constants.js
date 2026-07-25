@@ -134,7 +134,7 @@
   // Wall bounce magnitudes are reflection coefficients for cells inside /
   // adjacent to solid tiles. Lower = wetter (more absorptive walls).
   var LIQUID_PRESSURE_STIFF = 5;         // v24.10 — saharan's exact value (his Water demo EOS is `(d/4-1)*5`; this is the "effectively 5.0" the comment above remembers). v24.8 tried 20 single-step and it splashed constantly; REVERTED. The deep-water "popcorn" was never the stiffness — it was a dt-units mismatch (gravity is dt²-scaled real-time, pressure is dt=1 per-step like saharan's). The real fix is SUBSTEPPING (below), exactly as saharan does. edit² with js/liquid-wgpu.js.
-  var LIQUID_DAMPING = 0.992;            // v24.10 — REVERTED to original 0.992 (v24.8's 0.97 made it sluggish). edit² with js/liquid-wgpu.js.
+  var LIQUID_DAMPING = 1.0;              // v26.55: settled target neutralized to the live value (the calm ramp now enables ONLY the rest brake; global damping stays raw at any calm). Was 0.992. edit2 with js/liquid-wgpu.js.
   // ---- Substepping (v24.10) — the deep-water fix, ported from saharan's Water demo ----
   // saharan runs SUBSTEP sub-steps per frame at a fixed dt and keeps gravity +
   // pressure in the SAME per-step time units, so a deep tank stays at ~rest
@@ -187,7 +187,7 @@
   // gm water.TIMESCALE (live); boot A/B ?wdbg=TIMESCALE:1.
   // edit² with js/liquid-wgpu.js (module twin + its runFrame).
   var LIQUID_TIMESCALE = 1.38366702;
-  var LIQUID_WATER_MOTION_SCALE = 0.97;   // v10.107 — restored v10.102 lively tune
+  var LIQUID_WATER_MOTION_SCALE = 1.0;    // v26.55: settled target neutralized (full APIC at any calm; was 0.97, the v10.107 tune)
   var LIQUID_WALL_BOUNCE_IN = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE = 0.095;
   var LIQUID_OIL_PRESSURE_STIFF = 2.5;
@@ -340,7 +340,7 @@
   // the runaway it was masking was fixed AT THE SOURCE instead - LIQUID_DENS_CAP
   // + the anti-clump pass in liquid-wgpu.js, v24.182-186 - so more settled
   // damping is not the path).
-  var LIQUID_GRID_VISC = 0.45;
+  var LIQUID_GRID_VISC = 0.02;           // v26.55: settled target = the live base floor (the calm ramp no longer thickens rest; was 0.45)
   var LIQUID_SURFACE_PARTICLE_MAX = 16000;
   var LIQUID_SURFACE_WATER_TARGET = 1800;
   var LIQUID_SURFACE_OIL_TARGET = 0;

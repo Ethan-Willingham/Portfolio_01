@@ -219,9 +219,9 @@
    * are interpolated as literals into the WGSL G2P kernel; the self-test
    * diff catches any drift from the CPU side.
    * -------------------------------------------------------------------- */
-  var LIQUID_DAMPING               = 0.992;  // v24.10 — REVERTED to original 0.992 (v24.8's 0.97 was sluggish). edit² with 010-constants.js.
+  var LIQUID_DAMPING               = 1.0;    // v26.55: settled target neutralized to the live value (was 0.992); the calm ramp enables only the rest brake. edit2 with 010-constants.js.
   var LIQUID_OIL_DAMPING           = 0.97;
-  var LIQUID_WATER_MOTION_SCALE    = 0.97;
+  var LIQUID_WATER_MOTION_SCALE    = 1.0;    // v26.55: neutralized (was 0.97); full APIC at any calm
   var LIQUID_INV_DENSITY           = 1 / LIQUID_DENSITY;   // 0.25
   var LIQUID_AERATION_THRESHOLD     = 0.55;
   var LIQUID_OIL_AERATION_THRESHOLD = 0.5;
@@ -305,7 +305,7 @@
   // anti-phase neighbour velocities cancel under this blend while uniform
   // flow passes through untouched. Lives in SimParams coll.z (live via
   // setSimParam('GRID_VISC') / the gm water lever). edit2: 010-constants.
-  var LIQUID_GRID_VISC = 0.45;  // v24.166 — reverted from the v24.164 0.7 (paired with the now-disabled force-freeze); live value is the calm-blend pushed each frame
+  var LIQUID_GRID_VISC = 0.02;  // v26.55: settled target = the live base floor (was 0.45); the calm ramp no longer thickens rest, it only scales the rest brake
   // v26.53 — TWO-SCALE QUIET FILTER. The grid stage removes local neighbour
   // disagreement, now including one-cell-thick sheets (two cardinal
   // neighbours). The particle stage adds a separate smooth low-speed tail
@@ -333,6 +333,10 @@
   // 020-state twins via liquidStateTick; toy: applyWaterFeel).
   var LIQUID_TURB_VISC     = 0;    // eddy exchange rate per substep (0 = off)
   var LIQUID_TURB_REF      = 140;  // px/s pair disagreement where the gate saturates
+  // v26.55: EOS knee hinge width in density-ratio units (0 = the exact
+  // legacy hard knee). Kills the free-surface rectifier pump behind the
+  // eternal shallow-film fizz; see the WGSL gridPressure block.
+  var LIQUID_KNEE_W        = 0;
   // v26.54: graded bottom boundary layer strength (0 = off). The floor's
   // grip reaches up to three cells above the touching row at a
   // height-decaying fraction of LIQUID_FLOOR_FRICTION, which is what
@@ -1260,7 +1264,7 @@
    *   24-27 coll   : bounceWater, bounceOil, gridVisc, dbgFlags
    *   28-31 g2pC   : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173)
    *   48-51 quiet  : low-energy viscosity, speed gate, shear gate, support
-   *   52-55 turb   : eddy rate, px/s saturation, floorReach, spare (v26.54)
+   *   52-55 turb   : eddy rate, px/s saturation, floorReach, kneeW (v26.54/55)
    * Filled from the same LIQUID_* numbers the WGSL `${...}` literals used
    * before v14.26 — at default values the GPU sees byte-identical input,
    * so the boot self-tests still pass with unchanged diffs.
@@ -1313,11 +1317,11 @@
     // and standalone host push their chosen live values afterward.
     sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
     sh[50] = LIQUID_QUIET_SHEAR; sh[51] = LIQUID_QUIET_DRAG;
-    // turb : v26.54 eddy dissipation + graded floor boundary layer.
-    // Module boot stays zero (self-tests byte-identical); shipping hosts
-    // push their live values afterward.
+    // turb : v26.54 eddy dissipation + graded floor boundary layer +
+    // v26.55 knee hinge. Module boot stays zero (self-tests
+    // byte-identical); shipping hosts push their live values afterward.
     sh[52] = LIQUID_TURB_VISC;   sh[53] = LIQUID_TURB_REF;
-    sh[54] = LIQUID_FLOOR_REACH; sh[55] = 0;
+    sh[54] = LIQUID_FLOOR_REACH; sh[55] = LIQUID_KNEE_W;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -2106,6 +2110,16 @@
       refDensity[i] = density;
       refAerationOut[i] = newAer;
       var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
+      // v26.55 knee hinge twin (see the WGSL gridPressure block): exact
+      // no-op at LIQUID_KNEE_W 0, so the numbered self-tests hold.
+      if (LIQUID_KNEE_W > 0 && !oil && pressure > 0) {
+        var xgK = fr(fr(density / fr(LIQUID_DENSITY)) - 1);
+        if (xgK < fr(LIQUID_KNEE_W)) {
+          pressure = fr(fr(fr(fr(stiff) * xgK) * xgK) / fr(2 * fr(LIQUID_KNEE_W)));
+        } else {
+          pressure = fr(fr(stiff) * fr(xgK - fr(fr(LIQUID_KNEE_W) * 0.5)));
+        }
+      }
       // v25.41 — detachment cohesion (water only), matches the WGSL block.
       if (pressure < 0) {
         var dnR = fr(density / fr(LIQUID_DENSITY));
@@ -2403,6 +2417,16 @@
       refDensity[i] = density;
       refAerationOut[i] = newAerP;
       var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
+      // v26.55 knee hinge twin (see the WGSL gridPressure block): exact
+      // no-op at LIQUID_KNEE_W 0, so the numbered self-tests hold.
+      if (LIQUID_KNEE_W > 0 && !oilP && pressure > 0) {
+        var xgK2 = fr(fr(density / fr(LIQUID_DENSITY)) - 1);
+        if (xgK2 < fr(LIQUID_KNEE_W)) {
+          pressure = fr(fr(fr(fr(stiff) * xgK2) * xgK2) / fr(2 * fr(LIQUID_KNEE_W)));
+        } else {
+          pressure = fr(fr(stiff) * fr(xgK2 - fr(fr(LIQUID_KNEE_W) * 0.5)));
+        }
+      }
       // v25.41 — detachment cohesion (water only), matches the WGSL block.
       if (pressure < 0) {
         var dnR = fr(density / fr(LIQUID_DENSITY));
@@ -4362,7 +4386,7 @@ struct SimParams {
   bathB  : vec4<f32>,   // v25.56 bath: heat-source rect x0, y0, x1, y1 (world px)
   bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
   quiet  : vec4<f32>,   // v26.53: low-energy visc, speed gate, shear gate, tail drag
-  turb   : vec4<f32>,   // v26.54: eddy rate, px/s saturation, floorReach, spare
+  turb   : vec4<f32>,   // v26.54/55: eddy rate, px/s saturation, floorReach, kneeW
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4857,6 +4881,23 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // 600 px/s cap within seconds). Oil keeps the old clamp everywhere.
   // sp.feel.x = 0 restores the exact old behavior.
   var pressure = (density / LIQUID_DENSITY - 1.0) * stiff;
+  // v26.55: KNEE HINGE (sp.turb.w = hinge width in density-ratio units;
+  // 0 = the exact legacy hard knee). The one-sided EOS is a RECTIFIER at
+  // the free surface: density-aliasing noise around d = rest only ever
+  // produces outward kicks, which is the inexhaustible pump behind the
+  // eternal shallow-film fizz. Measured: no downstream velocity sink can
+  // beat it (a 40 percent rest brake, a 3.75x tail drag, and an eddy gate
+  // reaching to 1.6 px/s all left the 8 px/s equilibrium untouched, flat).
+  // The C1 quadratic hinge over 0 < x < w makes near-knee kicks
+  // quadratically small while x >= w keeps the exact linear slope (offset
+  // by the constant w/2 the hinge absorbs, which cancels out of the
+  // hydrostatic gradient). Water only; oil keeps the hard knee.
+  let kneeW = sp.turb.w;
+  if (kneeW > 0.0 && !oil && pressure > 0.0) {
+    let xg = density / LIQUID_DENSITY - 1.0;
+    if (xg < kneeW) { pressure = stiff * xg * xg / (2.0 * kneeW); }
+    else            { pressure = stiff * (xg - kneeW * 0.5); }
+  }
   if (pressure < 0.0) {
     let dnR = density / LIQUID_DENSITY;
     var ck = (0.7 - dnR) * ${1 / 0.3};
@@ -5303,6 +5344,15 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
       if (reachW > 0.0) {
         let blFric = 1.0 - (1.0 - floorFric) * reachW * sp.turb.z;
         vx = vx * blFric;
+        // v26.55: the layer grips VERTICAL motion too (at 60 percent of
+        // the lateral weight). The shallow-band fizz that survived every
+        // velocity sink is a vertical pressure-gravity breathing orbit
+        // (measured vy-dominant, 5-25 cell depths only); impermeability
+        // of the bottom is the physical sink for it, exactly as the
+        // lateral grip was for bores. Falls and pours only feel this in
+        // their last few cells above a floor (a few ms of residence).
+        let blFricY = 1.0 - (1.0 - floorFric) * reachW * 0.6 * sp.turb.z;
+        vy = vy * blFricY;
       }
     }
     if (leftSolid || rightSolid) { vy = vy * wallFric; }
@@ -9422,6 +9472,7 @@ fn main() {
             case 'TURB_VISC':            LIQUID_TURB_VISC = v < 0 ? 0 : (v > 0.95 ? 0.95 : v); break;
             case 'TURB_REF':             LIQUID_TURB_REF = v < 1 ? 1 : v; break;
             case 'FLOOR_REACH':          LIQUID_FLOOR_REACH = v < 0 ? 0 : (v > 1 ? 1 : v); break;
+            case 'KNEE_W':               LIQUID_KNEE_W = v < 0 ? 0 : (v > 0.5 ? 0.5 : v); break;   // v26.55 EOS knee hinge
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;

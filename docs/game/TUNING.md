@@ -307,7 +307,8 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_QUIET_DRAG` | `0.0032` | 0–0.02 | v26.53 per-substep low-speed tail brake. It shortens coherent body-water slosh only below `QUIET_SPEED`; a density gate fades it out below 0.55 and removes it by 0.30 so airborne spray keeps its arc. gm `water.QUIET_DRAG` |
 | `LIQUID_TURB_VISC` | `0.4` | 0–0.95 | v26.54 eddy dissipation, the inverse of the quiet shear gate: each massy cell pair exchanges momentum scaled by the harmonic mass mean and a smoothstep on that pair's own disagreement. Momentum-conserving (a surge pays for the crest it entrains), strictly energy-removing, and zero for coherent translation at any speed. Kills the resting boil and the standing swirl that lived in the 15-100 px/s window no other mechanism touched. gm `water.TURB_VISC` |
 | `LIQUID_TURB_REF` | `60` | 20–600 px/s | v26.54 pair disagreement where the eddy gate saturates; it engages from 8 percent of this value. Lower = the exchange reaches gentler churn. gm `water.TURB_REF` |
-| `LIQUID_FLOOR_REACH` | `1.0` | 0–1 | v26.54 graded bottom boundary layer: the floor's lateral grip extends up to six cells above the touching row at a height-decaying fraction of `FLOOR_FRICTION` (0.60/0.42/0.28/0.18/0.11/0.06). The real reason a puddle stills in a second while a lake sloshes on; without it a drip's bore skated over its own gripped bottom row and crossed the whole puddle. Purely local, no depth classification. gm `water.FLOOR_REACH` |
+| `LIQUID_FLOOR_REACH` | `1.0` | 0–1 | v26.54 graded bottom boundary layer: the floor's lateral grip extends up to six cells above the touching row at a height-decaying fraction of `FLOOR_FRICTION` (0.60/0.42/0.28/0.18/0.11/0.06). The real reason a puddle stills in a second while a lake sloshes on; without it a drip's bore skated over its own gripped bottom row and crossed the whole puddle. v26.55 also grips vertical motion at 60 percent of the lateral weight (the shallow-band breathing orbit is vy-dominant). Purely local, no depth classification. gm `water.FLOOR_REACH` |
+| `LIQUID_KNEE_W` | `0.12` | 0–0.5 | v26.55 EOS knee hinge width (density-ratio units; 0 = the exact legacy hard knee). The one-sided EOS rectifies density-aliasing noise at the free surface into outward kicks; a C1 quadratic hinge over `0 < x < w` makes near-knee kicks quadratically small while `x >= w` keeps the exact linear slope. Water only. gm `water.KNEE_W` |
 | `LIQUID_SIM_FORCE_EVERY` | `12` | 6–30 | Heartbeat — force a full sim step every N frames (legacy idle-skip path; the v24.145 freeze supersedes it while `FREEZE`=1) |
 | `LIQUID_SIM_PLAYER_VEL_GATE` | `8` | 4–20 | Player speed below which "calm" skip is allowed |
 | `LIQUID_FREEZE` | `1` | 0/1 | v24.145 WATER STATE MACHINE master: 1 = whole-body freeze when settled (stepping stops entirely; only a stimulus thaws), 0 = legacy idle-skip heartbeat. gm `water.FREEZE` |
@@ -324,7 +325,7 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_SURFACE_SOFT` `edit²` | `0.8` | 0.1–1.5 | v24.162 — was 0.35. Smoothstep half-width; lower edge (THRESH−SOFT) = one-particle peak so singletons fully drop out |
 | `water.DBG_PARTICLES` | `0` | 0/1 | v24.161 PARTICLE PROOF overlay (WebGPU render only): draws every particle as its own tiny hard dot (fixed 3.6px device, NO density scaling, NO metaball merge), coloured by a per-index hash, ON TOP of the water. Diagnostic for "is that giant thing one particle or a merged cluster" — a single particle = one lone dot, a cluster = the circle fills with a speckle of many colours. Separate `dbgDotsPipeline` (reuses the render bind group); a build failure leaves it null and never touches the live render. Toggle in the L panel water group |
 | `LIQUID_CALM_RAMP` | `1.2` | 0.2–4 | Seconds for calm 0→1 (brake + viscosity fade-in) once quiet. gm `water.CALM_RAMP` |
-| `LIQUID_CALM_MAX` | `0` | 0–1 | v25.39 — REST LIVELINESS CAP: the calm ramp parks here instead of 1.0. **v25.41 — DEFAULT 0 (the owner: water must never brake/settle/freeze on screen): with the popcorn fixed at the physics root (`LIQUID_PRESSURE_MAX_DV`, §2.10), the whole brake/settle/freeze machinery is dormant — water is pure fluid at all times on screen and is QUIETER at rest (fast 0, mean 1.5 px/s) than the machinery ever made it. Per-particle off-screen freezing (camera-distance) is untouched.** Raise toward 0.5 for the mid-settle brake shimmer, 1 = the old full grind + freeze latch. gm `water.CALM_MAX` (live) |
+| `LIQUID_CALM_MAX` | `0.45` | 0–1 | v25.39 — REST LIVELINESS CAP: the calm ramp parks here instead of 1.0. v25.41 parked it at 0 (water must never brake/settle/freeze on screen). **v26.55 — 0 -> 0.45, and calm no longer means "settled look": the blend targets (`DAMPING`/`MOTION`/`GRID_VISC` in 010) are neutralized to their live values, so the ramp now enables ONLY the v24.112 two-stage sub-25 px/s rest brake, parked under the 0.5 sleep latch. This is the one sink that drains the 5-25 cell shallow band's vertical breathing orbit (probe-measured: 8-10 px/s forever; brakes at tau 50 ms, a 3.75x tail drag, an eddy gate to 1.6 px/s, and a wide knee hinge each failed alone; brake + hinge halves it). A hard stimulus still snaps calm to 0 = fully raw.** 1 = the old full grind + freeze latch. gm `water.CALM_MAX` (live) |
 | `LIQUID_STIM_HOLD` | `1.0` | 0.2–4 | Seconds of quiet before calm starts rising. gm `water.STIM_HOLD` |
 | `LIQUID_STIM_MAX` | `6.0` | 2–15 | Hard cap: settle regardless of the fast-water hold (convergence guarantee). gm `water.STIM_MAX` |
 | `LIQUID_FAST_VSQ` | `576` | — | "Still really flowing" metric (24 px/s squared): fast-count above ~0.4% of particles holds the body lively so flows are never braked mid-stream |
@@ -579,6 +580,29 @@ left amplitude near baseline but killed the wave DEAD after one traverse
 with the source-adjacent splash bands unchanged. The demo's water slider and
 the game push all three live; `?shallow=`-era depth classification stays
 rejected (nothing classifies water; both terms are purely local).
+
+**v26.55: the shallow-band breathing orbit (the last fizz).** The owner's clip
+(a ~12 px puddle on a ledge, debug dots on) showed a constant-amplitude shimmer
+that never decays; frame-by-frame extraction measured ~7-8k changed pixels per
+frame, dead flat. Reproduced headless and cornered by elimination, all with
+one-boot probes: it is DEPTH-BANDED (a 4-row film on the same slab is glassy at
+0.14 px/s; 10-20 rows fizz at 8-10 px/s; a 110 px tank rests at 2.7), it
+survives every velocity sink (a tau 50 ms rest brake moved the equilibrium
+only 24 percent; a 3.75x tail drag, an eddy gate reaching 1.6 px/s, and a
+pressure-cap halving did nearly nothing), it is VERTICAL-dominant (mean |vy|
+6.8 vs |vx| 4.8), and the drain/lip current is irrelevant (sealed control
+identical). Conclusion: a pressure-gravity breathing orbit intrinsic to the
+discretization where the whole body sits near the EOS knee, continuously
+re-driven, immune to disagreement-gated terms because it is spatially smooth.
+Shipped counters: the `KNEE_W` hinge (cuts the rectifier's near-rest gain),
+a vertical component on `FLOOR_REACH` (60 percent weight), and the re-armed
+rest brake via `CALM_MAX` 0.45 with the settled-look targets neutralized (see
+the table). Together the band drops to ~4 px/s in the demo's static-calm
+mapping and lower in the game's state-machine mapping. Honest residual: ~4
+px/s of sub-pixel shimmer remains in the band; the named next escalation, if
+it still reads as noise, is a two-tap temporal filter on the resolved grid
+velocity (kills substep-frequency oscillation regardless of speed, needs a
+prev-velocity buffer in both pipelines).
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

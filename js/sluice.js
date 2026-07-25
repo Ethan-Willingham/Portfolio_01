@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.54';
+  var GAME_VERSION = 'v26.55';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -282,7 +282,7 @@
   // Wall bounce magnitudes are reflection coefficients for cells inside /
   // adjacent to solid tiles. Lower = wetter (more absorptive walls).
   var LIQUID_PRESSURE_STIFF = 5;         // v24.10 — saharan's exact value (his Water demo EOS is `(d/4-1)*5`; this is the "effectively 5.0" the comment above remembers). v24.8 tried 20 single-step and it splashed constantly; REVERTED. The deep-water "popcorn" was never the stiffness — it was a dt-units mismatch (gravity is dt²-scaled real-time, pressure is dt=1 per-step like saharan's). The real fix is SUBSTEPPING (below), exactly as saharan does. edit² with js/liquid-wgpu.js.
-  var LIQUID_DAMPING = 0.992;            // v24.10 — REVERTED to original 0.992 (v24.8's 0.97 made it sluggish). edit² with js/liquid-wgpu.js.
+  var LIQUID_DAMPING = 1.0;              // v26.55: settled target neutralized to the live value (the calm ramp now enables ONLY the rest brake; global damping stays raw at any calm). Was 0.992. edit2 with js/liquid-wgpu.js.
   // ---- Substepping (v24.10) — the deep-water fix, ported from saharan's Water demo ----
   // saharan runs SUBSTEP sub-steps per frame at a fixed dt and keeps gravity +
   // pressure in the SAME per-step time units, so a deep tank stays at ~rest
@@ -335,7 +335,7 @@
   // gm water.TIMESCALE (live); boot A/B ?wdbg=TIMESCALE:1.
   // edit² with js/liquid-wgpu.js (module twin + its runFrame).
   var LIQUID_TIMESCALE = 1.38366702;
-  var LIQUID_WATER_MOTION_SCALE = 0.97;   // v10.107 — restored v10.102 lively tune
+  var LIQUID_WATER_MOTION_SCALE = 1.0;    // v26.55: settled target neutralized (full APIC at any calm; was 0.97, the v10.107 tune)
   var LIQUID_WALL_BOUNCE_IN = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE = 0.095;
   var LIQUID_OIL_PRESSURE_STIFF = 2.5;
@@ -488,7 +488,7 @@
   // the runaway it was masking was fixed AT THE SOURCE instead - LIQUID_DENS_CAP
   // + the anti-clump pass in liquid-wgpu.js, v24.182-186 - so more settled
   // damping is not the path).
-  var LIQUID_GRID_VISC = 0.45;
+  var LIQUID_GRID_VISC = 0.02;           // v26.55: settled target = the live base floor (the calm ramp no longer thickens rest; was 0.45)
   var LIQUID_SURFACE_PARTICLE_MAX = 16000;
   var LIQUID_SURFACE_WATER_TARGET = 1800;
   var LIQUID_SURFACE_OIL_TARGET = 0;
@@ -1707,6 +1707,11 @@
   var LIQUID_TURB_VISC = 0.4;          // eddy exchange rate per substep
   var LIQUID_TURB_REF = 60;            // px/s pair disagreement at full gate
   var LIQUID_FLOOR_REACH = 1.0;        // graded bottom boundary layer strength
+  // v26.55: EOS knee hinge width (density-ratio units; 0 = legacy hard
+  // knee). Quadratically softens near-rest pressure kicks, cutting the
+  // free-surface rectifier pump behind the shallow-band fizz. edit2 twin
+  // in js/liquid-wgpu.js (module default 0; pushed after boot).
+  var LIQUID_KNEE_W = 0.12;
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -1767,7 +1772,16 @@
   // screen (per-particle off-screen freezing is camera-distance-based and
   // untouched). The whole state machine stays one lever away: raise
   // water.CALM_MAX to re-engage settling (1 = the old full grind+freeze).
-  var LIQUID_CALM_MAX = 0;
+  // v26.55: 0 -> 0.45. Re-arms the v24.112 two-stage rest brake through the
+  // state machine (stimulus still snaps calm to 0 = raw), parked safely
+  // under the 0.5 sleep latch. Measured: the 5-25 cell shallow band hosts a
+  // vertical pressure-gravity breathing orbit that no gated sink touches
+  // (mean 8-10 px/s forever); the brake is the only lever that drains it
+  // (to ~4 px/s with the knee hinge). The old settled-look side effects are
+  // gone: the calm-blend targets (DAMPING / MOTION / GRID_VISC in 010) are
+  // neutralized to their live values, so calm now means ONLY "brake the
+  // sub-25 px/s tail", never thicker or slower water.
+  var LIQUID_CALM_MAX = 0.45;
   var LIQUID_STIM_HOLD = 1.0;         // s — quiet time before calm starts rising
   var LIQUID_STIM_MAX = 6.0;          // s — hard cap: settle regardless of fast-water hold (convergence guarantee)
   var LIQUID_FAST_VSQ = 576.0;        // px/s squared — "still really flowing" metric (24 px/s, above the
@@ -10025,6 +10039,7 @@
         liquidWGPU.setSimParam('QUIET_DRAG', 0);
         liquidWGPU.setSimParam('TURB_VISC', 0);   // saharan purity: no eddy term
         liquidWGPU.setSimParam('FLOOR_REACH', 0); // and no boundary-layer reach
+        liquidWGPU.setSimParam('KNEE_W', 0);      // and the exact hard knee
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -10139,6 +10154,8 @@
       liquidWGPU.setSimParam('TURB_VISC', LIQUID_TURB_VISC);
       liquidWGPU.setSimParam('TURB_REF', LIQUID_TURB_REF);
       liquidWGPU.setSimParam('FLOOR_REACH', LIQUID_FLOOR_REACH);
+      // v26.55 EOS knee hinge (see 020-state).
+      liquidWGPU.setSimParam('KNEE_W', LIQUID_KNEE_W);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }
@@ -59686,6 +59703,13 @@
           function () { return LIQUID_FLOOR_REACH; },
           function (v) { LIQUID_FLOOR_REACH = v; gmSetWaterSim('FLOOR_REACH', v); },
           0, 1, undefined);
+      }
+      // v26.55: EOS knee hinge (see 020-state).
+      if (typeof LIQUID_KNEE_W !== 'undefined') {
+        gmRegisterLever('water.KNEE_W', 'water', 'KNEE_W (EOS hinge width)',
+          function () { return LIQUID_KNEE_W; },
+          function (v) { LIQUID_KNEE_W = v; gmSetWaterSim('KNEE_W', v); },
+          0, 0.5, undefined);
       }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy

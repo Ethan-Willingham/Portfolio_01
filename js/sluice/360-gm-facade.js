@@ -795,6 +795,13 @@
           function (v) { LIQUID_FLOOR_REACH = v; gmSetWaterSim('FLOOR_REACH', v); },
           0, 1, undefined);
       }
+      // v26.55: EOS knee hinge (see 020-state).
+      if (typeof LIQUID_KNEE_W !== 'undefined') {
+        gmRegisterLever('water.KNEE_W', 'water', 'KNEE_W (EOS hinge width)',
+          function () { return LIQUID_KNEE_W; },
+          function (v) { LIQUID_KNEE_W = v; gmSetWaterSim('KNEE_W', v); },
+          0, 0.5, undefined);
+      }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
       // ceil-split where stepDt swings with frame jitter (kept for A/B).

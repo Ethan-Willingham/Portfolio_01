@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.7'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.8'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9645,7 +9645,14 @@
     // keeps separated spray raw even when its ballistic arc reaches the apex.
     var calm = 1 - t;
     var calm2 = calm * calm;
-    liquidWGPU.setSimParam('CALM', 0);
+    // v4.8: CALM now rides the slider (static; the toy has no stimulus
+    // state machine). It scales ONLY the kernel's two-stage sub-25 px/s
+    // rest brake, capped under the 0.5 sleep latch, and is the one sink
+    // that drains the shallow-band vertical breathing orbit the v4.7
+    // mechanisms cannot reach (measured: 8-10 px/s forever at 5-25 cell
+    // depths, halved by brake + knee). Splash and flow speeds sit far
+    // above the brake's gate.
+    liquidWGPU.setSimParam('CALM', Math.min(0.48, 0.26 + 0.30 * calm));
     liquidWGPU.setSimParam('DAMPING', 1);
     liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996);
@@ -9663,6 +9670,7 @@
     liquidWGPU.setSimParam('TURB_VISC', 0.25 + 0.26 * calm);
     liquidWGPU.setSimParam('TURB_REF', 60);
     liquidWGPU.setSimParam('FLOOR_REACH', Math.min(1, 0.72 + 0.48 * calm));
+    liquidWGPU.setSimParam('KNEE_W', 0.10 + 0.05 * calm);   // v4.8 EOS knee hinge
   }
 
   function applyParticleDebug() {

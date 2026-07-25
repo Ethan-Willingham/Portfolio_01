@@ -374,6 +374,11 @@
   var LIQUID_TURB_VISC = 0.4;          // eddy exchange rate per substep
   var LIQUID_TURB_REF = 60;            // px/s pair disagreement at full gate
   var LIQUID_FLOOR_REACH = 1.0;        // graded bottom boundary layer strength
+  // v26.55: EOS knee hinge width (density-ratio units; 0 = legacy hard
+  // knee). Quadratically softens near-rest pressure kicks, cutting the
+  // free-surface rectifier pump behind the shallow-band fizz. edit2 twin
+  // in js/liquid-wgpu.js (module default 0; pushed after boot).
+  var LIQUID_KNEE_W = 0.12;
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -434,7 +439,16 @@
   // screen (per-particle off-screen freezing is camera-distance-based and
   // untouched). The whole state machine stays one lever away: raise
   // water.CALM_MAX to re-engage settling (1 = the old full grind+freeze).
-  var LIQUID_CALM_MAX = 0;
+  // v26.55: 0 -> 0.45. Re-arms the v24.112 two-stage rest brake through the
+  // state machine (stimulus still snaps calm to 0 = raw), parked safely
+  // under the 0.5 sleep latch. Measured: the 5-25 cell shallow band hosts a
+  // vertical pressure-gravity breathing orbit that no gated sink touches
+  // (mean 8-10 px/s forever); the brake is the only lever that drains it
+  // (to ~4 px/s with the knee hinge). The old settled-look side effects are
+  // gone: the calm-blend targets (DAMPING / MOTION / GRID_VISC in 010) are
+  // neutralized to their live values, so calm now means ONLY "brake the
+  // sub-25 px/s tail", never thicker or slower water.
+  var LIQUID_CALM_MAX = 0.45;
   var LIQUID_STIM_HOLD = 1.0;         // s — quiet time before calm starts rising
   var LIQUID_STIM_MAX = 6.0;          // s — hard cap: settle regardless of fast-water hold (convergence guarantee)
   var LIQUID_FAST_VSQ = 576.0;        // px/s squared — "still really flowing" metric (24 px/s, above the
