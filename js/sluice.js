@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.64';
+  var GAME_VERSION = 'v26.65';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1549,18 +1549,12 @@
   var liquidSleeping = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidFrozen = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidRestFrames = new Uint16Array(LIQUID_MAX_PARTICLES);
-  // v24.175 — ORPHAN DWELL: consecutive orphan-ticks (~0.25s each at 120fps) a
-  // particle has been an isolated stray. The orphan tick evaporates slow strays
-  // immediately (the v24.158 < 6 px/s rule), but a FAST lone particle (on the
-  // pond surface or alone on dirt) slips that guard and, in saharan-raw, has no
-  // sleep + no damping below the burst gate + no neighbours to settle against,
-  // so it jitters forever (the owner's "giant excited orphan"). A persistent
-  // stray is told apart from a transient spew droplet by TIME, not speed: this
-  // counts how long it has stayed isolated; past LIQUID_ORPHAN_DWELL_TICKS it
-  // evaporates regardless of speed. Spew droplets are clustered (n high) or
-  // land/merge quickly, so they never reach the threshold.
-  var liquidOrphanDwell = new Uint8Array(LIQUID_MAX_PARTICLES);
-  var LIQUID_ORPHAN_DWELL_TICKS = 8;  // orphan ticks a fast stray must persist before evaporating (gm water.ORPHAN_DWELL)
+  // v26.65: orphan EVAPORATION (v24.158/175, the old dwell array and its
+  // gm lever) is REMOVED entirely; owner rule: water is CONSERVED, no
+  // particle ever disappears. The per-cell calm field (v26.63) brakes a
+  // wedged stray by its own cell's stillness, so lone beads rest, sleep,
+  // and persist; the orphan pass only WAKES unsupported sleepers now
+  // (the hang test in 070).
   var LIQUID_SLEEP_FRAMES = 45;       // consecutive low-KE frames before sleeping (v24.112: 60 -> 45; edit2 liquid-wgpu.js)
   var LIQUID_SLEEP_VSQ = 9.0;         // px/s squared — sleep below this (v24.112: 1.0 -> 9.0, |v| < 3 px/s;
                                       // at 1.0 a settled pond's surface simmer kept every particle awake
@@ -3366,7 +3360,6 @@
     liquidSleeping[id] = 0;
     liquidFrozen[id] = 0;
     liquidRestFrames[id] = 0;
-    liquidOrphanDwell[id] = 0;   // v24.175 — fresh particle is not yet a stray
     // v24.109 — log the add for the GPU op replay (see liquidOps in 020).
     if (liquidOps.length < LIQUID_OPS_MAX) {
       liquidOps.push(1, x, y, vx || 0, vy || 0, liquidType[id], liquidOrigin[id]);
@@ -8822,7 +8815,6 @@
         liquidVY[i] = 0;
         liquidSleeping[i] = 0;
         liquidRestFrames[i] = 0;
-        liquidOrphanDwell[i] = 0;   // v24.175 — thawed particle starts fresh, not a stale stray
       }
       liquidFrozen[i] = nowFrozen;
       if (nowFrozen) frozen++;
@@ -9786,7 +9778,6 @@
       liquidGY[i] = liquidGY[last];
       liquidDX[i] = liquidDX[last];
       liquidDY[i] = liquidDY[last];
-      liquidOrphanDwell[i] = liquidOrphanDwell[last];
       liquidSleeping[i] = liquidSleeping[last];
       liquidFrozen[i] = liquidFrozen[last];
       liquidRestFrames[i] = liquidRestFrames[last];
@@ -9934,16 +9925,13 @@
   var LIQUID_SIM_FORCE_EVERY = 12;          // ~200ms heartbeat at 60fps
   var LIQUID_SIM_PLAYER_VEL_GATE = 8;       // px/s — below this player counts as calm
 
-  // ---- v24.150 ORPHAN WAKE ----
+  // ---- v24.150 ORPHAN WAKE (v26.65: wake-only, water is CONSERVED) ----
   // A sleeping particle whose support has drained away must be woken
   // (nothing else will: a drain is gentle, so no cell near it ever clears
   // the wake bar, and it hangs frozen mid-air as a fat blob while the
   // rest of the water leaves — the owner's "large particles freeze in
   // place as the rest drains out"). Every ~30 frames, bucket the mirror
-  // into 16 px cells; any sleeper whose 3x3 neighbourhood holds fewer
-  // than 24 particles is an orphan (v24.152: was 8 — the surviving blobs
-  // were 10-60 particle clusters; a body cell holds ~160 at rest and a
-  // real puddle hundreds, so genuine water is untouchable). WAKE ops ride the
+  // into 16 px cells and run the hang test below. WAKE ops ride the
   // sanctioned mutation channel so the GPU stays in sync; the seq bump is
   // flagged as housekeeping so liquidStateTick does NOT read it as a
   // stimulus (orphan wakes must never hold a lake lively).
@@ -9960,56 +9948,23 @@
       k = ((liquidX[i] / 16) | 0) * 100003 + ((liquidY[i] / 16) | 0);
       bx.set(k, (bx.get(k) || 0) + 1);
     }
-    // Downward iteration: evaporation swap-removes from the tail (the
-    // moved particle was already visited), the sweep's own pattern.
+    // v26.65 CONSERVATION: the v24.158/175 evaporation branch is gone.
+    // The owner wants zero particle disappearance, and the disease that
+    // branch treated (awake strays jittering 4-5 px/s forever as fat
+    // discs) was a GLOBAL-calm artifact: any activity anywhere held the
+    // rest brake off a wedged stray. The v26.63 per-cell calm field
+    // brakes a stray by its OWN cell's stillness, so lone beads now
+    // genuinely rest, sleep, and persist. What remains is the v24.153
+    // HANG TEST for every sleeper (isolated ones included, which the
+    // evaporation used to eat first): a sleeping particle with zero
+    // particles AND no solid tile in the 16 px bucket below has had its
+    // support drained away; wake it so sheets peel from their edges and
+    // strays fall and bead out instead of fossilizing mid-air. An awake
+    // one is already being simulated and will fall on its own.
     var woke = 0;
     for (i = liquidCount - 1; i >= 0; i--) {
-      if (liquidFrozen[i]) continue;
+      if (liquidFrozen[i] || !liquidSleeping[i]) continue;
       var cx = (liquidX[i] / 16) | 0, cy = (liquidY[i] / 16) | 0;
-      var n = 0;
-      for (var ox = -1; ox <= 1; ox++) {
-        for (var oy = -1; oy <= 1; oy++) {
-          n += bx.get((cx + ox) * 100003 + (cy + oy)) || 0;
-        }
-      }
-      // v24.158 — EVAPORATION, now SLEEP-INDEPENDENT. The owner's "every
-      // particle becomes this size / frozen in mid-air" was AWAKE strays:
-      // a particle wedged against terrain jitters ~4-5 px/s, too fast to
-      // ever sleep (the 3 px/s gate) yet too slow to fall, so the old
-      // sleep-gated evaporation never touched it and they ACCUMULATED as
-      // fat awake discs. Now any non-frozen particle in a tiny cluster
-      // (<24 in its 3x3 of 16px; a real puddle holds hundreds, a lake
-      // surface ~900) that is also SLOW (<6 px/s, the velocity guard so
-      // flowing/splashing water is never eaten) soaks away. Sleep state is
-      // irrelevant — stuck-awake and settled-asleep strays both go. REMOVE
-      // ops are counted into the housekeeping skip so the state machine
-      // never reads evaporation as a stimulus.
-      if (n < 24) {
-        var evx = liquidVX[i], evy = liquidVY[i];
-        // v24.175 — count how long this particle has stayed an isolated stray.
-        var dwell = liquidOrphanDwell[i] + 1;
-        if (dwell > 250) dwell = 250;
-        liquidOrphanDwell[i] = dwell;
-        // Slow strays soak away immediately (the v24.158 < 6 px/s rule). A
-        // FAST lone particle that has persisted past the dwell threshold is the
-        // stuck "giant excited orphan" (on the pond surface or alone on dirt,
-        // never settling in saharan-raw) — evaporate it regardless of speed.
-        // A transient spew droplet is clustered (n high -> never enters here)
-        // or lands/merges before the threshold, so the spew is spared.
-        if (evx * evx + evy * evy < 36 || dwell >= LIQUID_ORPHAN_DWELL_TICKS) {
-          removeLiquidParticle(i);
-          liquidOrphanSeqSkip++;
-        }
-        continue;
-      }
-      liquidOrphanDwell[i] = 0;   // v24.175 — n>=24: part of real water, reset the stray timer
-      // v24.153 — HANG TEST (sleeping particles only; an awake one is
-      // already being simulated and will fall on its own): a thick sheet
-      // asleep under an overhang is neighbour-supported but has nothing
-      // UNDER it; if the cell below holds zero particles AND no solid
-      // tile, wake it so sheets peel from their unsupported edges and
-      // drain toward level instead of fossilizing mid-air.
-      if (!liquidSleeping[i]) continue;
       var belowN = bx.get(cx * 100003 + (cy + 1)) || 0;
       if (belowN > 0) continue;
       if (liquidWorldSolidAt(liquidX[i], liquidY[i] + 16)) continue;
@@ -59962,16 +59917,6 @@
           function () { return LIQUID_BURST_GATE_HI; },
           function (v) { LIQUID_BURST_GATE_HI = v; gmSetWaterSim('BURST_GATE_HI', v); },
           50, 800, undefined);
-      }
-      // v24.175 — ORPHAN DWELL: orphan-ticks (~0.25s each at 120fps) a FAST lone
-      // stray must persist before it evaporates (the stuck "giant excited
-      // orphan" cleanup). Lower = cleared sooner; higher = safer for spew
-      // droplets. CPU-side only (the orphan tick), no GPU push.
-      if (typeof LIQUID_ORPHAN_DWELL_TICKS !== 'undefined') {
-        gmRegisterLever('water.ORPHAN_DWELL', 'water', 'ORPHAN_DWELL (ticks)',
-          function () { return LIQUID_ORPHAN_DWELL_TICKS; },
-          function (v) { LIQUID_ORPHAN_DWELL_TICKS = Math.max(1, v | 0); },
-          1, 40, 1);
       }
       if (typeof LIQUID_VISC_LIVE !== 'undefined') {
         gmRegisterLever('water.VISC_LIVE', 'water', 'VISC_LIVE',

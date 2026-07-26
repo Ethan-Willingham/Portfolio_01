@@ -363,7 +363,6 @@
     liquidSleeping[id] = 0;
     liquidFrozen[id] = 0;
     liquidRestFrames[id] = 0;
-    liquidOrphanDwell[id] = 0;   // v24.175 — fresh particle is not yet a stray
     // v24.109 — log the add for the GPU op replay (see liquidOps in 020).
     if (liquidOps.length < LIQUID_OPS_MAX) {
       liquidOps.push(1, x, y, vx || 0, vy || 0, liquidType[id], liquidOrigin[id]);

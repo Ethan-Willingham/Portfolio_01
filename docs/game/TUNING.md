@@ -718,6 +718,26 @@ radius) all hold; the guards dam-break front now runs 575-690 instead of
 arresting at 574 (same disease, same cure). Boot self-tests byte-exact
 (everything gated behind flag 56, zero during the stages).
 
+**v26.65: WATER IS CONSERVED (orphan evaporation removed).** Owner rule:
+zero particles may disappear. The v24.158/175 evaporation (isolated slow
+strays soaked away immediately, fast ones past an 8-tick dwell; the
+dwell array and the gm `water.ORPHAN_DWELL` lever are deleted) treated a
+GLOBAL-calm artifact: any activity anywhere held the rest brake off a
+wedged stray, so strays jittered forever as fat discs. The v26.63
+per-cell calm field brakes a stray by its OWN cell's stillness, so lone
+beads now rest, sleep, persist, and render through the droplet pass at
+nominal size. The orphan pass (both hosts) is wake-only now: the v24.153
+hang test for every sleeper, isolated ones included; a sleeping particle
+with no particles and no solid below is woken so sheets peel from their
+edges and strays fall and bead out instead of fossilizing mid-air.
+Intended removals stay: pond streaming drain plus stray-surface janitor
+(both off-camera by construction), oil intake suction, boot pre-settle
+trims, and the NaN-coordinate backstop. Measured: violent splash scene
+conserved 512/512 across 40 s (zero decreasing samples; a same-scene
+spawn-shortfall red herring traced to spawnWaterJet's solid-tile skip);
+three stranded beads persist at v 0.03 and render seated on the floor;
+smallpool decay unchanged.
+
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
 host keeps each selected slime in a stable one-of-eight slot while wet-cell

@@ -7115,8 +7115,10 @@ fn vs(@builtin(vertex_index)   vid : u32,
   // actual stray bug was STALENESS: a sleeping particle skips the
   // pressure pass, so a stray that once slept dense kept its interior
   // size forever — clamp SLEEPERS to nominal instead. Inside a body the
-  // merged field dwarfs per-splat size, so lakes are unchanged; the
-  // stranded-speck residue itself now EVAPORATES (070 orphan pass).
+  // merged field dwarfs per-splat size, so lakes are unchanged. (v26.65:
+  // stranded residue no longer evaporates, water is conserved; a stray
+  // rests as a nominal-size bead under the per-cell calm brake and
+  // renders through the droplet pass.)
   let density = aux[iid].x;
   let dn = density * INV_DENSITY;
   // v24.163 — SIZE BY ISOLATION (aggressive). The splat size that merges

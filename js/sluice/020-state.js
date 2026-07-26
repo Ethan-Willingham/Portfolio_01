@@ -212,18 +212,12 @@
   var liquidSleeping = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidFrozen = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidRestFrames = new Uint16Array(LIQUID_MAX_PARTICLES);
-  // v24.175 — ORPHAN DWELL: consecutive orphan-ticks (~0.25s each at 120fps) a
-  // particle has been an isolated stray. The orphan tick evaporates slow strays
-  // immediately (the v24.158 < 6 px/s rule), but a FAST lone particle (on the
-  // pond surface or alone on dirt) slips that guard and, in saharan-raw, has no
-  // sleep + no damping below the burst gate + no neighbours to settle against,
-  // so it jitters forever (the owner's "giant excited orphan"). A persistent
-  // stray is told apart from a transient spew droplet by TIME, not speed: this
-  // counts how long it has stayed isolated; past LIQUID_ORPHAN_DWELL_TICKS it
-  // evaporates regardless of speed. Spew droplets are clustered (n high) or
-  // land/merge quickly, so they never reach the threshold.
-  var liquidOrphanDwell = new Uint8Array(LIQUID_MAX_PARTICLES);
-  var LIQUID_ORPHAN_DWELL_TICKS = 8;  // orphan ticks a fast stray must persist before evaporating (gm water.ORPHAN_DWELL)
+  // v26.65: orphan EVAPORATION (v24.158/175, the old dwell array and its
+  // gm lever) is REMOVED entirely; owner rule: water is CONSERVED, no
+  // particle ever disappears. The per-cell calm field (v26.63) brakes a
+  // wedged stray by its own cell's stillness, so lone beads rest, sleep,
+  // and persist; the orphan pass only WAKES unsupported sleepers now
+  // (the hang test in 070).
   var LIQUID_SLEEP_FRAMES = 45;       // consecutive low-KE frames before sleeping (v24.112: 60 -> 45; edit2 liquid-wgpu.js)
   var LIQUID_SLEEP_VSQ = 9.0;         // px/s squared — sleep below this (v24.112: 1.0 -> 9.0, |v| < 3 px/s;
                                       // at 1.0 a settled pond's surface simmer kept every particle awake

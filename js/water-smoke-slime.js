@@ -58,8 +58,10 @@
  *
  * v3.11 visibility contract: the normal droplet pass reads actual rendered
  * field coverage, so fast sheets cannot fall between the surface and droplet
- * paths. A guarded orphan sweep also retires small isolated clusters that do
- * not rejoin water, instead of simulating them forever.
+ * paths. (v4.18: the old orphan retirement is gone; water is conserved.
+ * Isolated beads persist, rest under the per-cell calm brake, and render
+ * through the droplet pass; a sweep only WAKES sleeping strays whose
+ * support has drained away so they cannot fossilize mid-air.)
  *
  * v3.12 honest-footprint contract: dense water uses a compact field support
  * instead of wide per-particle halos, while thin water stays visible through
@@ -92,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.17'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.18'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -312,8 +314,6 @@
   var liquidSleeping = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidFrozen = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidRestFrames = new Uint16Array(LIQUID_MAX_PARTICLES);
-  var liquidOrphanDwell = new Uint8Array(LIQUID_MAX_PARTICLES);
-  var LIQUID_ORPHAN_DWELL_TICKS = 8;  // 8 half-second sweeps = 4 s for fast spray
   var liquidOrphanTick = 0;
 
   var liquidCount = 0;
@@ -338,7 +338,6 @@
     liquidSleeping[id] = 0;
     liquidFrozen[id] = 0;
     liquidRestFrames[id] = 0;
-    liquidOrphanDwell[id] = 0;
     if (liquidOps.length < LIQUID_OPS_MAX) {
       liquidOps.push(1, x, y, vx || 0, vy || 0, liquidType[id], liquidOrigin[id]);
     } else liquidOpsOverflow = true;
@@ -366,17 +365,21 @@
       liquidSleeping[i] = liquidSleeping[last];
       liquidFrozen[i] = liquidFrozen[last];
       liquidRestFrames[i] = liquidRestFrames[last];
-      liquidOrphanDwell[i] = liquidOrphanDwell[last];
     }
     liquidMutationSeq++;
     liquidCount--;
   }
 
-  /* Small isolated clusters should either merge back into visible water or
-   * leave the simulation. Every 30 frames, use the async CPU mirror to count
-   * support in the same 16 px neighbourhood as Sluice. Slow isolated residue
-   * retires immediately; moving spray gets four seconds to land or rejoin.
-   * Real streams and pools reset their dwell because they have ample support. */
+  /* v4.18 conservation contract: WATER NEVER EVAPORATES. The old sweep
+   * retired small isolated clusters (the v3.11 orphan rule); the owner
+   * wants every particle to persist, and the per-cell calm field means a
+   * lone bead now genuinely comes to rest instead of jittering awake
+   * forever (the disease the retirement was built for: with GLOBAL calm,
+   * any activity anywhere held the rest brake off a wedged stray). What
+   * remains is a WAKE pass: every 30 frames, a SLEEPING particle with no
+   * particles and no solid in the 16 px bucket below it has had its
+   * support drained away, so it is woken to fall and bead on the floor
+   * instead of fossilizing mid-air. Beads asleep on solid stay asleep. */
   function retireLiquidOrphans() {
     liquidOrphanTick++;
     if (liquidOrphanTick < 30 || !liquidCount) return;
@@ -388,28 +391,21 @@
       key = ((liquidX[i] / 16) | 0) * 100003 + ((liquidY[i] / 16) | 0);
       buckets.set(key, (buckets.get(key) || 0) + 1);
     }
+    var woke = 0;
     for (i = liquidCount - 1; i >= 0; i--) {
-      if (liquidFrozen[i]) continue;
+      if (liquidFrozen[i] || !liquidSleeping[i]) continue;
       var cx = (liquidX[i] / 16) | 0;
       var cy = (liquidY[i] / 16) | 0;
-      var nearby = 0;
-      for (var ox = -1; ox <= 1; ox++) {
-        for (var oy = -1; oy <= 1; oy++) {
-          nearby += buckets.get((cx + ox) * 100003 + (cy + oy)) || 0;
-        }
-      }
-      if (nearby >= 24) {
-        liquidOrphanDwell[i] = 0;
-        continue;
-      }
-      var dwell = liquidOrphanDwell[i] + 1;
-      if (dwell > 250) dwell = 250;
-      liquidOrphanDwell[i] = dwell;
-      var vx = liquidVX[i], vy = liquidVY[i];
-      if (vx * vx + vy * vy < 36 || dwell >= LIQUID_ORPHAN_DWELL_TICKS) {
-        removeLiquidParticle(i);
-      }
+      if (buckets.get(cx * 100003 + (cy + 1)) || 0) continue;
+      if (jelloWorldSolidAt(liquidX[i], liquidY[i] + 16)) continue;
+      liquidSleeping[i] = 0;
+      liquidRestFrames[i] = 0;
+      if (liquidOps.length < LIQUID_OPS_MAX) {
+        liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+      } else liquidOpsOverflow = true;
+      woke++;
     }
+    if (woke) liquidMutationSeq++;
   }
 
   // Waking is a real op (type 4) so the change reaches the GPU-resident rows.
@@ -915,7 +911,6 @@
 
   function clearLiquid() {
     liquidCount = 0;
-    liquidOrphanDwell.fill(0);
     liquidOrphanTick = 0;
     liquidMutationSeq++;
     liquidOps.length = 0;

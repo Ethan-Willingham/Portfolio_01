@@ -958,16 +958,6 @@
           function (v) { LIQUID_BURST_GATE_HI = v; gmSetWaterSim('BURST_GATE_HI', v); },
           50, 800, undefined);
       }
-      // v24.175 — ORPHAN DWELL: orphan-ticks (~0.25s each at 120fps) a FAST lone
-      // stray must persist before it evaporates (the stuck "giant excited
-      // orphan" cleanup). Lower = cleared sooner; higher = safer for spew
-      // droplets. CPU-side only (the orphan tick), no GPU push.
-      if (typeof LIQUID_ORPHAN_DWELL_TICKS !== 'undefined') {
-        gmRegisterLever('water.ORPHAN_DWELL', 'water', 'ORPHAN_DWELL (ticks)',
-          function () { return LIQUID_ORPHAN_DWELL_TICKS; },
-          function (v) { LIQUID_ORPHAN_DWELL_TICKS = Math.max(1, v | 0); },
-          1, 40, 1);
-      }
       if (typeof LIQUID_VISC_LIVE !== 'undefined') {
         gmRegisterLever('water.VISC_LIVE', 'water', 'VISC_LIVE',
           function () { return LIQUID_VISC_LIVE; },
