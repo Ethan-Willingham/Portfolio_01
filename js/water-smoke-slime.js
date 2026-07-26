@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.10'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.11'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -457,7 +457,11 @@
   var waterCalmFull = 0, waterTurbFull = 0.4, waterReachFull = 1;
   var waterLastPush = -1;
   function waterLivelinessTick(dt) {
-    if (!liquidWGPU || !liquidWGPU.setSimParam) return;
+    // Ready-gated: hosts push live values only after the numbered boot
+    // self-tests (the design contract since v26.53). Pushing during the
+    // test window races the GPU dispatch against the CPU reference's
+    // module-var reads and flakes Stage 5.
+    if (!liquidWGPU || !liquidWGPU.setSimParam || !liquidWGPU.ready) return;
     var inputNow = (performance.now() - waterInputT) < 250;
     if (inputNow) waterInputHoldT += dt;
     else waterInputHoldT = 0;
