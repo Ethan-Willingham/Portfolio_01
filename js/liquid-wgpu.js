@@ -367,6 +367,10 @@
   // a pure strength scale. 0 = the exact legacy global-scalar behaviour
   // (boot self-tests byte-identical).
   var LIQUID_CALM_LOCAL    = 0;
+  // v26.64: the lateral reach's lively floor in local mode (sp.local.y):
+  // open or agitated cells blend from this floor up to the full pushed
+  // strength by their LOCAL calm.
+  var LIQUID_REACH_FLOOR   = 0;
 
   // v26.54: graded bottom boundary layer strength (0 = off). The floor's
   // grip reaches up to three cells above the touching row at a
@@ -1382,7 +1386,7 @@
     sh[54] = LIQUID_FLOOR_REACH; sh[55] = LIQUID_KNEE_W;
     // local : v26.63 per-cell calm field mode (0 = legacy global scalar,
     // byte-exact; hosts push 1 after the boot self-tests).
-    sh[56] = LIQUID_CALM_LOCAL;  sh[57] = 0;
+    sh[56] = LIQUID_CALM_LOCAL;  sh[57] = LIQUID_REACH_FLOOR;
     sh[58] = 0; sh[59] = 0;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
@@ -5432,7 +5436,7 @@ struct P2GParams {
 @group(0) @binding(4) var<storage, read_write> cellVelY    : array<f32>;
 @group(0) @binding(5) var<storage, read>       terrainMask : array<u32>;
 // v26.63: per-cell calm field, read by the lateral-reach locality.
-@group(0) @binding(8) var<storage, read>       calmCellB   : array<f32>;
+@group(0) @binding(8) var<storage, read_write> calmCellB   : array<f32>;
 
 const FIXED_SCALE : f32 = ${FIXED_SCALE};
 const CELL        : f32 = ${LIQUID_CELL_DEFAULT};
@@ -5459,6 +5463,84 @@ fn terrainSolidAt(px : f32, py : f32) -> bool {
 // at the cell centre, ((gx+0.5)*CELL, (gy+0.5)*CELL).
 fn gridSolid(gx : i32, gy : i32) -> bool {
   return terrainSolidAt((f32(gx) + 0.5) * CELL, (f32(gy) + 0.5) * CELL);
+}
+
+// v26.64: is this row OPEN sideways from cell c0? Walk up to 16 cells
+// left and right at the row: hitting solid terrain confines that side;
+// running out of water into open air opens it. The walk is clamped to
+// the active window (index arithmetic past the edge would wrap rows);
+// the cap treats the unknown as confined, erring toward settling.
+fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
+  // "Water" here means real water: at least ~1.5 particles of the
+  // 4-per-cell rest density. A sub-rest trace film carries ZERO EOS
+  // pressure (the one-sided knee), so it can neither hold a wedge back
+  // nor transmit its push to a lip; counting it as water made a parked
+  // wedge read as confined through its own drained trail (measured:
+  // three gate variants in a row changed nothing until this line).
+  // Open air means TWO consecutive sub-floor cells: a single low-mass
+  // pocket backed by solid is confinement, not air. A wall-hugging
+  // cell is permanently half-covered by the B-spline (about 1.2 of
+  // 4 particles at rest), and with a one-cell test both corners of
+  // every walled basin read as open air forever: a permanent false
+  // seed that kept the whole bed marked and the pool fizzing
+  // (measured: rest meanV pinned near 9.5 px/s vs the 3.6 baseline).
+  // A real drainable fringe is followed by more emptiness and passes.
+  // ...and beyond those two the NEXT cell must not be solid. A painted
+  // wall's edge column is phantom air (cell centre outside the paint,
+  // so not gridSolid; particles pushed out, so no mass), and together
+  // with the B-spline-starved corner cell it fakes a two-cell gap at
+  // every wall foot. A real fringe continues into more air; a wall
+  // pocket hits paint and stays confinement.
+  // The mass test reads a TWO-ROW COLUMN SUM, not the single row:
+  // settled particles rest straddling the contact row's top boundary,
+  // so a pool's contact row is naturally patchy (0.7 to 1.3 of 4 in
+  // pockets while the row above holds 3.3 to 5.3; read back from the
+  // GPU), and a single-row walk found fake air mid-pool and seeded
+  // forever. The SUM with a 3-particle floor separates the two cases
+  // a max() could not: a pool column reads 4.0 or more everywhere, a
+  // drained trail film 2.1 or less, so the wedge is not read as
+  // confined through its own trail (the max() variant re-parked it).
+  let waterFloor = 3.0 * FIXED_SCALE;
+  let colW = c0 % gp.gridW;
+  let capL = min(16u, colW);
+  var kL = 1u;
+  loop {
+    if (kL > capL) { break; }
+    if (gridSolid(cgx - i32(kL), cgy)) { break; }
+    var mL = f32(cellMass[c0 - kL]);
+    if (c0 - kL >= gp.gridW) { mL = mL + f32(cellMass[c0 - kL - gp.gridW]); }
+    if (mL < waterFloor) {
+      if (kL == capL) { break; }
+      if (gridSolid(cgx - i32(kL) - 1, cgy)) { break; }
+      var mL2 = f32(cellMass[c0 - kL - 1u]);
+      if (c0 - kL - 1u >= gp.gridW) { mL2 = mL2 + f32(cellMass[c0 - kL - 1u - gp.gridW]); }
+      if (mL2 < waterFloor) {
+        if (gridSolid(cgx - i32(kL) - 2, cgy)) { break; }
+        return true;
+      }
+    }
+    kL = kL + 1u;
+  }
+  let capR = min(16u, gp.gridW - 1u - colW);
+  var kR = 1u;
+  loop {
+    if (kR > capR) { break; }
+    if (gridSolid(cgx + i32(kR), cgy)) { break; }
+    var mR = f32(cellMass[c0 + kR]);
+    if (c0 + kR >= gp.gridW) { mR = mR + f32(cellMass[c0 + kR - gp.gridW]); }
+    if (mR < waterFloor) {
+      if (kR == capR) { break; }
+      if (gridSolid(cgx + i32(kR) + 1, cgy)) { break; }
+      var mR2 = f32(cellMass[c0 + kR + 1u]);
+      if (c0 + kR + 1u >= gp.gridW) { mR2 = mR2 + f32(cellMass[c0 + kR + 1u - gp.gridW]); }
+      if (mR2 < waterFloor) {
+        if (gridSolid(cgx + i32(kR) + 2, cgy)) { break; }
+        return true;
+      }
+    }
+    kR = kR + 1u;
+  }
+  return false;
 }
 `;
 
@@ -5500,6 +5582,39 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
     if (rightSolid && vx > 0.0) { vx = vx * bEdge; }
     if (upSolid    && vy < 0.0) { vy = vy * bEdge; }
     if (downSolid  && vy > 0.0) { vy = vy * bEdge; }
+    // v26.64 CONFINEMENT GATE (the owner's rule, generalized): water may
+    // only settle where it is confined. Walk up to 16 cells left and
+    // right AT THIS CELL'S ROW: hitting solid terrain means that side is
+    // confined; running out of water into open air means the column can
+    // still drain or level, so this cell must not park. Open cells get
+    // their local calm clamped low, which keeps the rest brake and the
+    // reach's calm floor off while hydrostatics finish the job. A wedge
+    // leaning on a ledge lip drains off instead of parking mid-slope; a
+    // bump on a level pool reads open at its own row and self-levels;
+    // a walled pond reads confined and settles exactly as before. Deep
+    // interiors hit the 16-cell cap and count as confined.
+    var isOpenCell = false;
+    if (sp.local.x > 0.0 && downSolid && rowOpen(c, cgx, cgy)) {
+      // Openness is strictly a BED phenomenon: only a floor-contact
+      // cell whose own row reaches open air within the walk can seed.
+      // Surface cells never qualify, whatever the raggedness; an early
+      // surface-row variant let a sloshing pool's transient 2-cell
+      // raggedness seed marks that contagion then carried across the
+      // whole surface, and the drive+slickness fed the very fizz that
+      // kept the surface ragged: a self-sustaining simmer in a walled
+      // basin (measured: rest meanV pinned near 10 px/s while the
+      // pre-wip baseline decayed 9.3 to 3.6 over the same window).
+      isOpenCell = true;
+      // The seed is a SENTINEL (-1), not merely a low calm. The
+      // cellState pass spreads it along the bed through connected
+      // water (openness contagion), so a wide sheet's interior
+      // releases too; the 16-cell row walk alone only ever released
+      // the fringe, and the interior parked behind it (measured five
+      // times). A sentinel cannot be confused with ordinary lively
+      // low calm, which must NOT spread: a sloshing confined basin
+      // would chain-hold itself un-calm forever through plain values.
+      calmCellB[c] = -1.0;
+    }
     // Surface friction — a floor brakes lateral motion, walls brake
     // vertical. This is the drag that kills the shoot-along-the-surface
     // jet pressure scatter creates on flat floors.
@@ -5515,7 +5630,82 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
       let leftOpen  = !leftSolid  && !gridSolid(cgx - 1, cgy + 1);
       let rightOpen = !rightSolid && !gridSolid(cgx + 1, cgy + 1);
       if (leftOpen || rightOpen) { fricF = max(fricF, sp.feel.w); }
+      // v26.64: an OPEN cell's whole contact line takes the lip-grade
+      // slickness, not just the final edge cell. A draining sheet rides a
+      // lubricated contact layer in reality; with full-strength floor
+      // friction on the approach, a 1 percent wedge slope (about 6 px/s2
+      // of drive) throttles the lip to a dribble and the wedge parks
+      // (measured: 2028 particles to 1920 in 30 s).
+      // The contagion mark (calm sentinel -1, spread by cellState) takes
+      // the same slickness: the interior of a draining sheet is open in
+      // every sense that matters even though its own 16-cell row walk
+      // caps out inside the body.
+      if (sp.local.x > 0.0 && (isOpenCell || calmCellB[c] < -0.5)) { fricF = max(fricF, sp.feel.w); }
       vx = vx * fricF;
+    }
+    // v26.64 SHALLOW-WATER DRIVE. A wedge a few cells deep has no
+    // lateral hydrostatic push in the MPM grid (measured: with every
+    // damper forced off, an 11 px wedge on an open ledge still parked;
+    // the EOS's equilibrium compression at that head is far below the
+    // pressure the gradient would need). So the missing force is
+    // modeled directly: a = g * surface slope, applied over the whole
+    // column like real shallow-water forcing (bed row only was a fifth
+    // of the drive and still parked). The surface slope comes from the
+    // upward partial column masses of the two lateral neighbours; the
+    // walk down to the bed gives the true column height for the gates:
+    // deep pools keep pure EOS hydrostatics (their surface rows must
+    // not read as shallow film), sub-monolayer films do not
+    // self-spread, and an overhang (air below) gets nothing.
+    // OPEN columns only (the column's BED cell carries the mark, seeded
+    // or contagion-spread): a settled shallow pool's surface is one
+    // particle ragged, and at this resolution those packing slopes are
+    // statistically identical to a real drainable wedge's 2 percent
+    // grade, so an ungated drive set every confined shallow basin
+    // fizzing on its own noise forever (measured: rest meanV climbing
+    // to 10 px/s and the body puffed into sub-render-density mist).
+    // Confinement is the one signal that separates the two, exactly
+    // the owner's rule; keying on the bed cell lets the whole column
+    // drive while keeping surface cells free of marks entirely.
+    if (sp.local.x > 0.0) {
+      var dBed = 99.0;
+      var kD = 0u;
+      loop {
+        if (kD >= 10u) { break; }
+        if (gridSolid(cgx, cgy + 1 + i32(kD))) { dBed = f32(kD); break; }
+        let rowD = c + (kD + 1u) * gp.gridW;
+        if (rowD >= gp.cells || f32(cellMass[rowD]) < 0.5 * FIXED_SCALE) { break; }
+        kD = kD + 1u;
+      }
+      if (dBed < 10.0 && calmCellB[c + u32(dBed) * gp.gridW] < -0.5) {
+        var hC = 0.0; var hL = 0.0; var hR = 0.0;
+        let colW2 = c % gp.gridW;
+        var kU = 0u;
+        loop {
+          if (kU >= 10u) { break; }
+          let rowC = c - kU * gp.gridW;
+          if (rowC >= gp.cells || i32(kU) > cgy - oy) { break; }
+          hC = hC + f32(cellMass[rowC]);
+          if (colW2 > 0u) { hL = hL + f32(cellMass[rowC - 1u]); }
+          if (colW2 + 1u < gp.gridW) { hR = hR + f32(cellMass[rowC + 1u]); }
+          kU = kU + 1u;
+        }
+        let toCells = ${LIQUID_INV_DENSITY} / FIXED_SCALE;
+        hC = hC * toCells; hL = hL * toCells; hR = hR * toCells;
+        if (leftSolid)  { hL = hC; }
+        if (rightSolid) { hR = hC; }
+        let hFull = hC + dBed;
+        let sGate = 1.0 - smoothstep(6.0, 9.0, hFull);
+        let fGate = smoothstep(0.55, 0.9, hFull);
+        let slope = clamp((hL - hR) * 0.5, -0.8, 0.8);
+        let gravB = sp.grav.x + (sp.grav.y - sp.grav.x) * oilK;
+        // The 2x gain compensates the residual drags a real free
+        // surface does not have (eddy exchange at the toe, turbulence
+        // viscosity, partial reach on the rows above the bed): at the
+        // physical 1x a 350 px wedge needed over two minutes to clear,
+        // which still read as parked to the eye.
+        vx = vx + 2.0 * gravB * slope * sGate * fGate *
+             (gp.stepDt * gp.stepDt * gp.invCell);
+      }
     }
     // v26.54: graded bottom boundary layer (sp.turb.z = FLOOR_REACH,
     // 0 = exact no-op). Floor friction above grips only the touching cell
@@ -5557,7 +5747,22 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
         // v26.63: locally-calm cells take full lateral grip even while
         // the world's liveliness blend is relaxed (a distant pool's
         // agitation must not lubricate this one's floor).
-        if (sp.local.x > 0.0) { vxK = max(vxK, calmCellB[c]); }
+        // v26.64: in local mode the LOCAL field owns the blend outright,
+        // between the lively floor (sp.local.y) and the pushed full
+        // strength. The old max() let the global rest push defeat the
+        // confinement gate, parking a wedge on an open ledge (measured:
+        // 2024 particles draining to only 1915 in 30 s).
+        if (sp.local.x > 0.0) {
+          // Shipped v26.63 base formula, exactly (max() also guards the
+          // sentinel): a wip rewrite that blended grip from cell calm
+          // alone let marginal cells keep their own floor slick and a
+          // walled basin's fizz sustained itself (measured 7.8 px/s at
+          // 20 s vs 3.6 baseline). The sentinel is a pure CAP on top:
+          // open cells take at most the sp.local.y reach however calm
+          // the rest of the world is.
+          vxK = max(vxK, max(calmCellB[c], 0.0));
+          if (isOpenCell || calmCellB[c] < -0.5) { vxK = min(vxK, sp.local.y); }
+        }
         if (c >= gp.gridW * 7u) {
           let mUp4 = f32(cellMass[c - gp.gridW * 4u]);
           let mUp7 = f32(cellMass[c - gp.gridW * 7u]);
@@ -5951,7 +6156,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // distant pool's agitation cannot release the brake here. Legacy
     // path (local 0) is expression-identical.
     var calmEff = sp.g2pB.w;
-    if (sp.local.x > 0.0) { calmEff = calmEff * calmCellG[nbr[4]]; }
+    // max() guards the v26.64 open sentinel (-1): an open-marked cell
+    // takes zero brake, and the sentinel must never flip the sign.
+    if (sp.local.x > 0.0) { calmEff = calmEff * max(calmCellG[nbr[4]], 0.0); }
     let bfC = 1.0 + (bf - 1.0) * calmEff;
     newVX = newVX * bfC;
     newVY = newVY * bfC;
@@ -5967,7 +6174,16 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let quietSpeed = sqrt(newVX * newVX + newVY * newVY);
     let quietTail = 1.0 - smoothstep(sp.quiet.y * 0.25, sp.quiet.y, quietSpeed);
     let quietBody = smoothstep(0.30, 0.55, densityRatio);
-    let quietKeep = 1.0 - clamp(sp.quiet.w * quietTail * quietBody, 0.0, 0.2);
+    // v26.64: the open sentinel (-1) releases the tail entirely, so
+    // unconfined water is not pinned at the tail's terminal creep (a
+    // ledge wedge's slope drive is only ~8 px/s^2, and the full tail
+    // parked it at ~5 px/s instead of draining). POSITIVE calm does
+    // not scale it: the tail is the shallow-band orbit killer, and
+    // scaling it by settling calm halved the kill rate in a walled
+    // basin (measured: 8.8 px/s at 20 s vs the baseline's 3.6).
+    var quietW = sp.quiet.w;
+    if (sp.local.x > 0.0 && calmCellG[nbr[4]] < -0.5) { quietW = 0.0; }
+    let quietKeep = 1.0 - clamp(quietW * quietTail * quietBody, 0.0, 0.2);
     newVX = newVX * quietKeep;
     newVY = newVY * quietKeep;
   }
@@ -7764,7 +7980,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       bEntries.push({ binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
     }
     // v26.63: per-cell calm field for the lateral-reach locality.
-    bEntries.push({ binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
+    bEntries.push({ binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } });
     var bBgl = dev.createBindGroupLayout({
       label: 'liquid.gridBoundaryBGL',
       entries: bEntries
@@ -7853,6 +8069,9 @@ struct P2GParams {
   // cancel in momentum / mass, so the speed needs no decode constant.
   if (sp.local.x > 0.0) {
     var cc = calmCell[c];
+    // v26.64: a cell leaving the open mark (-1 sentinel) rebuilds calm
+    // from zero through the normal rise, keeping the 6 s runout grace.
+    if (cc < 0.0) { cc = 0.0; }
     let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
     let mFx = f32(atomicLoad(&csMass[c]));
     var lively = false;
@@ -7888,7 +8107,54 @@ struct P2GParams {
     }
     if (lively) { cc = cc - gp.stepDt / 0.3; }
     else { cc = cc + gp.stepDt / 6.0; }
-    calmCell[c] = clamp(cc, 0.0, 1.0);
+    // v26.64 OPENNESS CONTAGION. The boundary seeds truly open cells
+    // with the -1 sentinel (its row walk sees open air within 16
+    // cells); here the mark spreads laterally through connected
+    // supported water, one cell per substep, so the interior of a wide
+    // draining sheet releases too. Spread requires real water on both
+    // sides of the hop (no jumping across mist), and it keys on the
+    // SENTINEL only: ordinary lively low calm never spreads, so a
+    // sloshing walled basin cannot chain-hold itself (no seed, no
+    // contagion; the moment the seeds drain away every marked cell
+    // falls back to the normal rise above).
+    // v26.64 GRADIENT openness contagion. Boundary seeds write -1;
+    // each hop through connected water WEAKENS the mark by a fixed
+    // step, so a cell stays marked only while a monotone path links it
+    // to a LIVE seed. An equality-spread version latched: a basin
+    // marked while filling (scattered sheets on the dry floor are
+    // genuinely open) held itself marked forever afterward, every bed
+    // cell vouching for its equally-marked neighbour (read back from
+    // the GPU: the whole pool body solid -1 at rest, fizzing at 9.5
+    // px/s). With the gradient, an orphaned block's values drift up
+    // one step per substep and the marks collapse in under a second;
+    // mutual holding is arithmetically impossible. Step 0.004 with the
+    // -0.5 consumer threshold gives about 125 cells of reach from a
+    // seed. Spread runs along the bed (cells with no water beneath:
+    // bed contact or a droplet; a pool's surface rows always have full
+    // water below and can never carry the mark) plus a bed-anchored
+    // vertical climb, so a marked column releases its upper rows too.
+    // A confined pool's bed is never seeded, so nothing spreads there.
+    var src = 0.0;
+    if (mFx > 0.5 * ${FIXED_SCALE}) {
+      var bedHere = true;
+      let cB = c + gp.gridW;
+      if (cB < gp.cells && f32(atomicLoad(&csMass[cB])) > 0.5 * ${FIXED_SCALE}) {
+        bedHere = false;
+      }
+      if (bedHere) {
+        let col3 = c % gp.gridW;
+        if (col3 > 0u && f32(atomicLoad(&csMass[c - 1u])) > 0.5 * ${FIXED_SCALE}) {
+          src = min(src, calmCell[c - 1u] + 0.004);
+        }
+        if (col3 + 1u < gp.gridW && f32(atomicLoad(&csMass[c + 1u])) > 0.5 * ${FIXED_SCALE}) {
+          src = min(src, calmCell[c + 1u] + 0.004);
+        }
+      } else if (cB < gp.cells) {
+        src = min(src, calmCell[cB] + 0.004);
+      }
+    }
+    if (src < -0.5) { calmCell[c] = src; }
+    else { calmCell[c] = clamp(cc, 0.0, 1.0); }
   }
 `;
     try {
@@ -9966,6 +10232,7 @@ fn main() {
             case 'DV_FILTER':            LIQUID_DV_FILTER = v < -0.6 ? -0.6 : (v > 0.9 ? 0.9 : v); break; // v26.61 temporal pressure filter (measured dead end, ships 0)
             case 'REACH_VY':             LIQUID_REACH_VY = v < 0 ? 0 : (v > 1 ? 1 : v); break;   // v26.61 vertical-reach floor
             case 'CALM_LOCAL':           LIQUID_CALM_LOCAL = v ? 1 : 0; break;   // v26.63 per-cell calm field mode
+            case 'REACH_FLOOR':          LIQUID_REACH_FLOOR = v < 0 ? 0 : (v > 1 ? 1 : v); break; // v26.64 local-mode reach floor
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.63';
+  var GAME_VERSION = 'v26.64';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1725,6 +1725,11 @@
   // and halved the runout, which the owner called honey.
   var LIQUID_TURB_LIVE = 0.12;
   var LIQUID_REACH_LIVE = 0.45;
+  // v26.64: reach cap for OPEN water (the confinement gate's slick
+  // floor): bed cells that can reach open air, and their columns, take
+  // at most this much bottom grip so unconfined sheets drain off a
+  // ledge instead of parking. Confined pools never see the cap.
+  var LIQUID_REACH_OPEN = 0.15;
   // v26.61: temporal pressure filter blend (see js/liquid-wgpu.js banner).
   // State-free dissipation of substep-frequency pressure noise; the one
   // mechanism that grinds a very shallow film even while fastHold keeps
@@ -10234,8 +10239,14 @@
       liquidWGPU.setSimParam('TURB_VISC',
         LIQUID_TURB_LIVE + (LIQUID_TURB_VISC - LIQUID_TURB_LIVE) * calmT56);
       liquidWGPU.setSimParam('TURB_REF', LIQUID_TURB_REF);
+      // v26.64: the global reach blend is the shipped v26.63 ramp; on
+      // top of it the engine's confinement gate caps OPEN water (bed
+      // cells that can reach open air, plus their columns) at the
+      // REACH_FLOOR slickness so unconfined sheets drain instead of
+      // parking. Confined pools never see the cap.
       liquidWGPU.setSimParam('FLOOR_REACH',
         LIQUID_REACH_LIVE + (LIQUID_FLOOR_REACH - LIQUID_REACH_LIVE) * calmT56);
+      liquidWGPU.setSimParam('REACH_FLOOR', LIQUID_REACH_OPEN);
       // v26.55 EOS knee hinge (see 020-state).
       liquidWGPU.setSimParam('KNEE_W', LIQUID_KNEE_W);
       // v26.61 temporal pressure filter (see 020-state).

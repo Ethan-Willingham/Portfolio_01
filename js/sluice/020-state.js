@@ -388,6 +388,11 @@
   // and halved the runout, which the owner called honey.
   var LIQUID_TURB_LIVE = 0.12;
   var LIQUID_REACH_LIVE = 0.45;
+  // v26.64: reach cap for OPEN water (the confinement gate's slick
+  // floor): bed cells that can reach open air, and their columns, take
+  // at most this much bottom grip so unconfined sheets drain off a
+  // ledge instead of parking. Confined pools never see the cap.
+  var LIQUID_REACH_OPEN = 0.15;
   // v26.61: temporal pressure filter blend (see js/liquid-wgpu.js banner).
   // State-free dissipation of substep-frequency pressure noise; the one
   // mechanism that grinds a very shallow film even while fastHold keeps

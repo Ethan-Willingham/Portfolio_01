@@ -1706,8 +1706,14 @@
       liquidWGPU.setSimParam('TURB_VISC',
         LIQUID_TURB_LIVE + (LIQUID_TURB_VISC - LIQUID_TURB_LIVE) * calmT56);
       liquidWGPU.setSimParam('TURB_REF', LIQUID_TURB_REF);
+      // v26.64: the global reach blend is the shipped v26.63 ramp; on
+      // top of it the engine's confinement gate caps OPEN water (bed
+      // cells that can reach open air, plus their columns) at the
+      // REACH_FLOOR slickness so unconfined sheets drain instead of
+      // parking. Confined pools never see the cap.
       liquidWGPU.setSimParam('FLOOR_REACH',
         LIQUID_REACH_LIVE + (LIQUID_FLOOR_REACH - LIQUID_REACH_LIVE) * calmT56);
+      liquidWGPU.setSimParam('REACH_FLOOR', LIQUID_REACH_OPEN);
       // v26.55 EOS knee hinge (see 020-state).
       liquidWGPU.setSimParam('KNEE_W', LIQUID_KNEE_W);
       // v26.61 temporal pressure filter (see 020-state).

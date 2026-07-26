@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.16'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.17'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9729,6 +9729,9 @@
     // liveliness cannot release this one's brake.
     liquidWGPU.setSimParam('CALM', waterCalmFull);
     liquidWGPU.setSimParam('CALM_LOCAL', 1);
+    // v4.17: REACH_FLOOR is the OPEN-water reach cap (the confinement
+    // gate's slick floor), not a blend endpoint; see TUNING.md v26.64.
+    liquidWGPU.setSimParam('REACH_FLOOR', 0.15);
     liquidWGPU.setSimParam('DAMPING', 1);
     liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996);

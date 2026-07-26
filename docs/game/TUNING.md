@@ -680,6 +680,44 @@ TUNING NOTE: the field's rise time is the runout's grace period; 2.6 s froze
 the pour toe at 94 px, 6 s restored 120. Legacy global behaviour is byte
 exact at flag 0 (boot self-tests unchanged); raw mode zeroes the flag.
 
+**v26.64: the CONFINEMENT GATE (unconfined water never settles).** Owner
+report: a wedge parked on a ledge with an open edge, barely dribbling over.
+Kill test: with EVERY damper forced off (CALM, both quiet lanes, TURB,
+GRID_VISC, FLOOR_REACH, KNEE, friction all zero) the wedge STILL parked,
+so the fault was in the base physics: a 4-cell-deep wedge has no lateral
+hydrostatic pressure gradient the MPM grid can resolve, and nothing pushes
+it toward the lip. Three mechanisms, all local-mode only (flag 56):
+(1) OPEN SEEDS: gridBoundary marks bed-contact cells whose row can reach
+open air within 16 cells (calmCell sentinel -1). The walk reads a TWO-ROW
+column sum against a 3-particle floor (a settled pool's contact row is
+naturally patchy while the row above is full, and a single-row read seeded
+mid-pool forever), needs two consecutive sub-floor cells (a B-spline
+starved wall corner fakes one), and beyond those the next cell must not be
+solid (a painted wall's edge column is phantom air: centre outside the
+paint so not solid, particles pushed out so no mass).
+(2) GRADIENT CONTAGION: the cellState pass spreads the mark through
+connected water, one hop per substep, losing 0.004 per hop (about 125
+cells of reach at the -0.5 consumer threshold). Equality spread latched: a
+basin marked while FILLING held itself marked forever, each bed cell
+vouching for its equally marked neighbour; with the gradient an orphaned
+block collapses in under a second and mutual holding is arithmetically
+impossible. Spread runs along the bed (no water beneath) plus a
+bed-anchored vertical climb, so surface raggedness can never carry it.
+(3) SHALLOW-WATER DRIVE: for columns whose BED cell is marked, gridBoundary
+adds a = 2g x surface slope (from the neighbouring two-row column masses)
+over the whole column, gated off above ~6 cells of depth (real EOS
+hydrostatics take over) and below ~a monolayer (films do not self-spread).
+Consumers of the mark: rest brake and quiet tail release entirely (G2P,
+max() guards the sentinel), lateral reach capped at REACH_FLOOR (now the
+OPEN-water cap, 0.15, not a blend endpoint; hosts push the shipped v26.63
+FLOOR_REACH ramp again), lip-grade slick friction. Measured: the ledge
+wedge drains 23.5 percent in 30 s and clears in about a minute; a walled
+control basin decays 7.3-2.6 px/s in 20 s (baseline 3.6); smallpool,
+twopools (0.9x), pour (front 182 px), fizz, simmer (no cliff), wave (12 px
+radius) all hold; the guards dam-break front now runs 575-690 instead of
+arresting at 574 (same disease, same cure). Boot self-tests byte-exact
+(everything gated behind flag 56, zero during the stages).
+
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
 host keeps each selected slime in a stable one-of-eight slot while wet-cell
