@@ -7120,8 +7120,40 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let samplePx = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5)),
                        vec2<i32>(0), dims - vec2<i32>(1));
   let field = textureLoad(fieldTex, samplePx, 0);
-  let surfaceA = smoothstep(rp.surf.x - max(rp.surf.y, 0.001),
-                            rp.surf.x + max(rp.surf.y, 0.001), field.r);
+  // v26.60: coverage must match what the composite PAINTS, which since
+  // v26.57 is the bridged effective field, not the raw one. A calm
+  // surface's top particle row sits in the half-covered band of the raw
+  // field, so every such particle wore a persistent light foam-tinted
+  // mark on top of already-painted body water (the owner's "light
+  // colored smaller particles on calm ponds"). Same taps, same gate as
+  // the composite bridge; strength 0 restores the raw test.
+  var fCov = field.r;
+  let tD = rp.surf.x;
+  let sD = max(rp.surf.y, 0.001);
+  if (rp.bridge.x > 0.0 && fCov > tD * 0.08 && fCov < tD + sD) {
+    let rB = max(rp.bridge.y, 1.0);
+    let dB = rB * 0.7071;
+    var nbD = 0.0;
+    var q = clamp(vec2<i32>(floor(vec2<f32>(scrX + rB, scrY) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX - rB, scrY) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY + rB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY - rB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX + dB, scrY + dB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX - dB, scrY + dB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX + dB, scrY - dB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    q = clamp(vec2<i32>(floor(vec2<f32>(scrX - dB, scrY - dB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
+    nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
+    let gateD = smoothstep(tD * 0.10, tD * 0.55, fCov);
+    fCov = fCov + rp.bridge.x * gateD * nbD;
+  }
+  let surfaceA = smoothstep(tD - sD, tD + sD, fCov);
   // Fully exposed centres get a full drop. Fade through partially covered
   // film so the pass fills holes without stippling an already solid body.
   let a = 1.0 - smoothstep(0.25, 0.70, surfaceA);
