@@ -1534,7 +1534,7 @@
       // contract: module defaults stay pristine through the test window).
       // Pushing mid-test races the GPU dispatch against the CPU
       // reference's module-var reads and flaked Stage 5 world-dependently.
-      if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.ready) {
+      if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.simActive) {
         liquidWGPU.setSimParam('CALM', 0);
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
         liquidWGPU.setSimParam('QUIET_VISC', 0);
@@ -1653,7 +1653,7 @@
     liquidMotionEff = LIQUID_MOTION_LIVE + (LIQUID_WATER_MOTION_SCALE - LIQUID_MOTION_LIVE) * LIQUID_CALM;
     // v26.58: ready-gated (see the raw-branch note): tests run at module
     // defaults, hosts push after Stage 8, and Stage 5 stops flaking.
-    if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.ready) {
+    if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.simActive) {
       liquidWGPU.setSimParam('CALM', LIQUID_CALM);
       // The module's mirrors carry the BLENDED values (the gm levers'
       // pristine targets stay in 010/020); a lever change is re-blended
