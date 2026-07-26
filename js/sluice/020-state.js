@@ -388,6 +388,12 @@
   // and halved the runout, which the owner called honey.
   var LIQUID_TURB_LIVE = 0.12;
   var LIQUID_REACH_LIVE = 0.45;
+  // v26.61: temporal pressure filter blend (see js/liquid-wgpu.js banner).
+  // State-free dissipation of substep-frequency pressure noise; the one
+  // mechanism that grinds a very shallow film even while fastHold keeps
+  // the body lively (a waterfall must not keep a distant puddle boiling).
+  var LIQUID_DV_FILTER = 0;         // measured dead end both directions, ships 0
+  var LIQUID_REACH_VY = 1.0;        // vertical-reach strength floor, liveliness-independent
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992

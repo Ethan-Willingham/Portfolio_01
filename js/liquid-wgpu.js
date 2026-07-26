@@ -337,6 +337,27 @@
   // legacy hard knee). Kills the free-surface rectifier pump behind the
   // eternal shallow-film fizz; see the WGSL gridPressure block.
   var LIQUID_KNEE_W        = 0;
+  // v26.61: TEMPORAL PRESSURE FILTER. Per active cell, the live chain
+  // blends this substep's pressure impulse with the previous substep's.
+  // Oscillatory kicks at substep frequency (the rectifier pump that keeps
+  // very shallow films fizzing even at the lively liveliness floors,
+  // measured 8-15 px/s forever under the falls scene's perpetual input)
+  // cancel in the mix; steady hydrostatic support is equal every substep
+  // and passes exactly; gravity is a separate term and untouched; a
+  // splash impulse keeps its momentum, spread over two substeps (~8 ms).
+  // Dispatched ONLY by the live frame chain (runGrid2's liveChain flag),
+  // never by the numbered test harness, so the fr() references need no
+  // twin at any pushed value. Rides SimParams bathC.z (lane 46).
+  // MEASURED DEAD END, both directions, do not re-arm: smoothing (+0.5)
+  // took the falls shelf from 17.7 to 43 px/s and phase LEAD (-0.3) to
+  // 55. The limit cycle is phase-sensitive and any temporal tampering
+  // with the impulse de-tunes the EOS's self-regulation. Ships 0; the
+  // kernel stays as a documented danger lever (the COHESION precedent).
+  var LIQUID_DV_FILTER     = 0;   // 0 = off; fraction blended toward the previous impulse
+  // v26.61: minimum strength of the boundary layer's VERTICAL grip,
+  // independent of the liveliness blend (see the gridBoundary comment).
+  var LIQUID_REACH_VY      = 0;   // module default 0 = exact v26.60 behaviour; hosts push 1
+
   // v26.54: graded bottom boundary layer strength (0 = off). The floor's
   // grip reaches up to three cells above the touching row at a
   // height-decaying fraction of LIQUID_FLOOR_FRICTION, which is what
@@ -682,6 +703,12 @@
       cellDVY:     mk('liquid.cellDVY',     GRID_MAX_CELLS * 4),
       cellVelX:    mk('liquid.cellVelX',    GRID_MAX_CELLS * 4),
       cellVelY:    mk('liquid.cellVelY',    GRID_MAX_CELLS * 4),
+      /* v26.61: previous-substep pressure impulse per cell (vec2<f32>,
+       * fixed-point values stored as f32) for the temporal pressure
+       * filter. Deliberately never cleared: a reactivated sparse block or
+       * an active-window origin shift mixes one substep against a stale
+       * value, bounded by k x the shock-limiter cap, self-correcting. */
+      cellDVPrev:  mk('liquid.cellDVPrev',  GRID_MAX_CELLS * 8),
       /* ---- Stage 6 — terrain solidity bitmask ----
        * 1 bit/tile, row-major over the live-particle tile rect (bbox +
        * halo). The game fills a byte/tile array via the fillTerrainSolid
@@ -1325,7 +1352,9 @@
     sh[40] = LIQUID_BATH_SRC_X0;    sh[41] = LIQUID_BATH_SRC_Y0;
     sh[42] = LIQUID_BATH_SRC_X1;    sh[43] = LIQUID_BATH_SRC_Y1;
     sh[44] = LIQUID_BATH_SRC_T;     sh[45] = LIQUID_BATH_SRC_RATE;
-    sh[46] = 0; sh[47] = 0;
+    // lane 46 (bathC.z): v26.61 temporal pressure filter blend (ships 0).
+    // lane 47 (bathC.w): v26.61 vertical-reach strength floor.
+    sh[46] = LIQUID_DV_FILTER;      sh[47] = LIQUID_REACH_VY;
     // quiet : v26.53 two-scale rest filter. Module boot stays zero; the game
     // and standalone host push their chosen live values afterward.
     sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
@@ -5500,7 +5529,15 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
         // of the bottom is the physical sink for it, exactly as the
         // lateral grip was for bores. Falls and pours only feel this in
         // their last few cells above a floor (a few ms of residence).
-        let blFricY = 1.0 - (1.0 - floorFric) * reachW * 0.6 * sp.turb.z;
+        // v26.61: the vertical grip takes its OWN strength floor
+        // (sp.bathC.w) so it never relaxes with liveliness: the orbit is
+        // vertical while a pour's runout (the reason the lateral grip
+        // relaxes) is horizontal. Measured: a 1-3 row film at full grip
+        // is stone dead even with the rest brake off, but fizzed at
+        // 11-19 px/s forever at the 0.45 lively floor under the falls
+        // scene's perpetual input.
+        let vyK = max(sp.turb.z, sp.bathC.w);
+        let blFricY = 1.0 - (1.0 - floorFric) * reachW * 0.6 * vyK;
         vy = vy * blFricY;
       }
     }
@@ -7727,6 +7764,84 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       layout: bBgl,
       entries: bBgEntries
     });
+    // v26.61: temporal pressure filter (see LIQUID_DV_FILTER). Its own
+    // tiny pass between pressure and gridUpdate because the grid-update
+    // bind group already sits at the 8-storage-buffer floor. Auto layouts;
+    // dense and sparse keep separate bind groups.
+    var WGSL_DV_FILTER_HEAD = /* wgsl */ `
+struct P2GParams {
+  count:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, cells:u32,
+};
+@group(0) @binding(0) var<uniform> gp : P2GParams;
+@group(0) @binding(1) var<storage, read_write> cellDVX : array<atomic<i32>>;
+@group(0) @binding(2) var<storage, read_write> cellDVY : array<atomic<i32>>;
+@group(0) @binding(3) var<storage, read_write> prevDV  : array<vec2<f32>>;
+`;
+    var WGSL_DV_FILTER_BODY = /* wgsl */ `
+  if (c >= gp.cells) { return; }
+  let k = sp.bathC.z;
+  let dx = f32(atomicLoad(&cellDVX[c]));
+  let dy = f32(atomicLoad(&cellDVY[c]));
+  let pv = prevDV[c];
+  prevDV[c] = vec2<f32>(dx, dy);
+  if (abs(k) > 0.001) {
+    atomicStore(&cellDVX[c], i32(round(dx + (pv.x - dx) * k)));
+    atomicStore(&cellDVY[c], i32(round(dy + (pv.y - dy) * k)));
+  }
+`;
+    try {
+      instance.dvFilterPipe = dev.createComputePipeline({
+        label: 'liquid.dvFilter',
+        layout: 'auto',
+        compute: {
+          module: dev.createShaderModule({
+            code: WGSL_SIM_PARAMS + simBind(4) + WGSL_DV_FILTER_HEAD +
+                  cellEntryDense(WGSL_DV_FILTER_BODY)
+          }),
+          entryPoint: 'main'
+        }
+      });
+      instance.dvFilterBG = dev.createBindGroup({
+        label: 'liquid.dvFilterBG',
+        layout: instance.dvFilterPipe.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: { buffer: instance.paramsBuf } },
+          { binding: 1, resource: { buffer: instance.buf.cellDVX } },
+          { binding: 2, resource: { buffer: instance.buf.cellDVY } },
+          { binding: 3, resource: { buffer: instance.buf.cellDVPrev } },
+          { binding: 4, resource: { buffer: instance.simParamsBuf } }
+        ]
+      });
+      if (instance.sparseCapable && instance.sparseGrid2OK) {
+        instance.dvFilterPipeSparse = dev.createComputePipeline({
+          label: 'liquid.dvFilterSparse',
+          layout: 'auto',
+          compute: {
+            module: dev.createShaderModule({
+              code: WGSL_SIM_PARAMS + simBind(4) + WGSL_DV_FILTER_HEAD +
+                    sparseListBind(5) + cellEntrySparse(WGSL_DV_FILTER_BODY)
+            }),
+            entryPoint: 'main'
+          }
+        });
+        instance.dvFilterBGSparse = dev.createBindGroup({
+          label: 'liquid.dvFilterBGSparse',
+          layout: instance.dvFilterPipeSparse.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: { buffer: instance.paramsBuf } },
+            { binding: 1, resource: { buffer: instance.buf.cellDVX } },
+            { binding: 2, resource: { buffer: instance.buf.cellDVY } },
+            { binding: 3, resource: { buffer: instance.buf.cellDVPrev } },
+            { binding: 4, resource: { buffer: instance.simParamsBuf } },
+            { binding: 5, resource: { buffer: instance.buf.blockList } }
+          ]
+        });
+      }
+    } catch (eDv) {
+      instance.dvFilterPipe = null;
+      instance.dvFilterPipeSparse = null;
+      try { console.log('LiquidWGPU v26.61: dv-filter pipeline failed (' + ((eDv && eDv.message) || eDv) + '), filter off.'); } catch (_) {}
+    }
     instance.grid2Ready = true;
   }
 
@@ -7753,7 +7868,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
    *                 friction on the resolved velocity (v14.3)
    * Assumes runP2G() already populated cellMass/cellOilMass/cellAeration/
    * cellVX/cellVY for the current grid. */
-  function runGrid2(instance, substepSlot) {
+  function runGrid2(instance, substepSlot, liveChain) {
     if (!instance.grid2Ready) return;
     var g = instance.grid;
     if (!g || g.cells <= 0) return;
@@ -7794,6 +7909,17 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       cp.setPipeline(hnSparse ? P.heatNormalizeSparse : P.heatNormalize);
       cp.setBindGroup(0, instance.pressureBG);
       if (hnSparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
+      else { cp.dispatchWorkgroups(cellGroups); }
+    }
+
+    // 2c. v26.61: temporal pressure filter, LIVE CHAIN ONLY: the numbered
+    //     test harness calls runGrid2 without liveChain, so the fr()
+    //     references stay exact at any pushed DV_FILTER value.
+    if (liveChain && LIQUID_DV_FILTER !== 0 && instance.dvFilterPipe) {
+      var dvSp = sparse && instance.dvFilterPipeSparse;
+      cp.setPipeline(dvSp ? instance.dvFilterPipeSparse : instance.dvFilterPipe);
+      cp.setBindGroup(0, dvSp ? instance.dvFilterBGSparse : instance.dvFilterBG);
+      if (dvSp) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
       else { cp.dispatchWorkgroups(cellGroups); }
     }
 
@@ -9130,7 +9256,7 @@ fn main() {
       buildGrid(instance, ss > 0);
       runDeclump(instance);   // v24.185 — min-separation, after the fresh grid
       runP2G(instance);
-      runGrid2(instance, ss);
+      runGrid2(instance, ss, true);   // liveChain: the dv filter runs here only
       runG2P(instance);
       runCollide(instance, ss);
     }
@@ -9723,6 +9849,8 @@ fn main() {
             case 'TURB_REF':             LIQUID_TURB_REF = v < 1 ? 1 : v; break;
             case 'FLOOR_REACH':          LIQUID_FLOOR_REACH = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             case 'KNEE_W':               LIQUID_KNEE_W = v < 0 ? 0 : (v > 0.5 ? 0.5 : v); break;   // v26.55 EOS knee hinge
+            case 'DV_FILTER':            LIQUID_DV_FILTER = v < -0.6 ? -0.6 : (v > 0.9 ? 0.9 : v); break; // v26.61 temporal pressure filter (measured dead end, ships 0)
+            case 'REACH_VY':             LIQUID_REACH_VY = v < 0 ? 0 : (v > 1 ? 1 : v); break;   // v26.61 vertical-reach floor
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;

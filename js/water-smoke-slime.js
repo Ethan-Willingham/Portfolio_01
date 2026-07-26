@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.13'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.14'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9725,6 +9725,12 @@
     liquidWGPU.setSimParam('TURB_REF', 60);
     liquidWGPU.setSimParam('FLOOR_REACH', 0.45 + (waterReachFull - 0.45) * waterCalmT);
     liquidWGPU.setSimParam('KNEE_W', 0.10 + 0.05 * calm);   // v4.8 EOS knee hinge
+    // v4.14: temporal pressure filter. State-free dissipation of the
+    // substep-frequency noise that kept very shallow films fizzing even
+    // while the scene's emitters hold the liveliness floors (a waterfall
+    // must not keep a distant puddle boiling).
+    liquidWGPU.setSimParam('DV_FILTER', 0);
+    liquidWGPU.setSimParam('REACH_VY', 1);
   }
 
   function applyParticleDebug() {

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.60';
+  var GAME_VERSION = 'v26.61';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1725,6 +1725,12 @@
   // and halved the runout, which the owner called honey.
   var LIQUID_TURB_LIVE = 0.12;
   var LIQUID_REACH_LIVE = 0.45;
+  // v26.61: temporal pressure filter blend (see js/liquid-wgpu.js banner).
+  // State-free dissipation of substep-frequency pressure noise; the one
+  // mechanism that grinds a very shallow film even while fastHold keeps
+  // the body lively (a waterfall must not keep a distant puddle boiling).
+  var LIQUID_DV_FILTER = 0;         // measured dead end both directions, ships 0
+  var LIQUID_REACH_VY = 1.0;        // vertical-reach strength floor, liveliness-independent
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -10057,6 +10063,8 @@
         liquidWGPU.setSimParam('TURB_VISC', 0);   // saharan purity: no eddy term
         liquidWGPU.setSimParam('FLOOR_REACH', 0); // and no boundary-layer reach
         liquidWGPU.setSimParam('KNEE_W', 0);      // and the exact hard knee
+        liquidWGPU.setSimParam('DV_FILTER', 0);   // and unfiltered impulses
+        liquidWGPU.setSimParam('REACH_VY', 0);    // raw = no vertical floor either
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
         liquidWGPU.setSimParam('DBG_FLAGS', 1);   // bit1 = no-sleep (kernel)
@@ -10196,6 +10204,9 @@
         LIQUID_REACH_LIVE + (LIQUID_FLOOR_REACH - LIQUID_REACH_LIVE) * calmT56);
       // v26.55 EOS knee hinge (see 020-state).
       liquidWGPU.setSimParam('KNEE_W', LIQUID_KNEE_W);
+      // v26.61 temporal pressure filter (see 020-state).
+      liquidWGPU.setSimParam('DV_FILTER', LIQUID_DV_FILTER);
+      liquidWGPU.setSimParam('REACH_VY', LIQUID_REACH_VY);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);
     }
@@ -59763,6 +59774,13 @@
           function () { return LIQUID_KNEE_W; },
           function (v) { LIQUID_KNEE_W = v; gmSetWaterSim('KNEE_W', v); },
           0, 0.5, undefined);
+      }
+      // v26.61: temporal pressure filter (see 020-state).
+      if (typeof LIQUID_DV_FILTER !== 'undefined') {
+        gmRegisterLever('water.DV_FILTER', 'water', 'DV_FILTER (impulse blend)',
+          function () { return LIQUID_DV_FILTER; },
+          function (v) { LIQUID_DV_FILTER = v; gmSetWaterSim('DV_FILTER', v); },
+          0, 0.9, undefined);
       }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy

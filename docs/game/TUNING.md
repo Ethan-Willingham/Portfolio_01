@@ -636,6 +636,26 @@ input continues or a genuine flood runs (> 5 percent fast, above the band's
 while water is visibly busy, and the v26.55 dam-toe arrest relaxes while
 anything flows.
 
+**v26.61: the shallow-energy study, two dead ends, and what the froth was.**
+The owner filmed a 1-3 row film frothing "with zero energy loss". The study's
+findings, all one-boot-measured: (1) on the current build a thin film AT REST
+is stone dead (mean 0.00-0.01 px/s) at every slider position, uniform or
+patchy; the complaint does not reproduce. (2) The falls scene's left shelf
+runs 17-25 px/s forever, but it gains ~300 particles per second of waterfall
+spray: that motion is bombardment, real physics, not failed calming. (3) The
+clip was recorded four minutes after the v26.60 speck fix pushed, inside
+deploy-plus-cache latency: the froth matches the pre-fix droplet-mark
+signature, which amplified sub-pixel bobbing into visible dancing light.
+Two mechanisms were built and MEASURED AS DEAD ENDS, kept off as documented
+danger levers: `DV_FILTER` (temporal blend of the pressure impulse; smoothing
++0.5 took the shelf 17.7 to 43 px/s and phase lead -0.3 to 55, because the
+limit cycle is phase-sensitive and any impulse-timing tamper de-tunes the
+EOS's self-regulation; ships 0, live-chain-only dispatch so the numbered
+tests never see it) and the same round proved `REACH_VY` (a
+liveliness-independent floor for the boundary layer's vertical grip) null on
+the fed shelf but pour-safe; it ships engaged at 1 as the physically correct
+default (the bottom's impermeability should not relax with mood).
+
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
 host keeps each selected slime in a stable one-of-eight slot while wet-cell
