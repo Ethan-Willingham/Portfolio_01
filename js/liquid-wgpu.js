@@ -357,6 +357,16 @@
   // v26.61: minimum strength of the boundary layer's VERTICAL grip,
   // independent of the liveliness blend (see the gridBoundary comment).
   var LIQUID_REACH_VY      = 0;   // module default 0 = exact v26.60 behaviour; hosts push 1
+  // v26.63: PER-CELL CALM FIELD. Measured on two far-apart basins: with
+  // one global calm scalar, agitating pool B doubled resting pool A's
+  // motion (4.65 -> 9.9 px/s) because releasing the world-wide grip let
+  // A's suppressed breathing resurface. In field mode each cell's calm
+  // falls when ITS water moves fast (over 24 px/s, tau ~0.3 s) and rises
+  // as it stills (tau ~2.6 s); the rest brake and the boundary layer's
+  // lateral grip read the LOCAL value, and the pushed CALM lane becomes
+  // a pure strength scale. 0 = the exact legacy global-scalar behaviour
+  // (boot self-tests byte-identical).
+  var LIQUID_CALM_LOCAL    = 0;
 
   // v26.54: graded bottom boundary layer strength (0 = off). The floor's
   // grip reaches up to three cells above the touching row at a
@@ -709,6 +719,12 @@
        * an active-window origin shift mixes one substep against a stale
        * value, bounded by k x the shock-limiter cap, self-correcting. */
       cellDVPrev:  mk('liquid.cellDVPrev',  GRID_MAX_CELLS * 8),
+      /* v26.63: per-cell calm field (f32, 0 lively .. 1 calm). Updated by
+       * the cellState pass each substep; read by G2P (rest brake) and
+       * gridBoundary (lateral reach) in CALM_LOCAL mode. Same staleness
+       * contract as cellDVPrev: origin shifts and block reactivation read
+       * a stale value briefly and self-correct within tau. */
+      calmCell:    mk('liquid.calmCell',    GRID_MAX_CELLS * 4),
       /* ---- Stage 6 — terrain solidity bitmask ----
        * 1 bit/tile, row-major over the live-particle tile rect (bbox +
        * halo). The game fills a byte/tile array via the fillTerrainSolid
@@ -780,7 +796,7 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 14 vec4 = 224 bytes (v26.54 eddy
+    // constants every compute kernel reads. 15 vec4 = 240 bytes (v26.63 local
     // lane; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
@@ -789,10 +805,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 224,
+      size: 240,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(56);   // 14 vec4 lanes (v26.54 eddy)
+    instance.simParamsHost = new Float32Array(60);   // 15 vec4 lanes (v26.63 local calm)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1364,6 +1380,10 @@
     // byte-identical); shipping hosts push their live values afterward.
     sh[52] = LIQUID_TURB_VISC;   sh[53] = LIQUID_TURB_REF;
     sh[54] = LIQUID_FLOOR_REACH; sh[55] = LIQUID_KNEE_W;
+    // local : v26.63 per-cell calm field mode (0 = legacy global scalar,
+    // byte-exact; hosts push 1 after the boot self-tests).
+    sh[56] = LIQUID_CALM_LOCAL;  sh[57] = 0;
+    sh[58] = 0; sh[59] = 0;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4565,6 +4585,7 @@ struct SimParams {
   bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
   quiet  : vec4<f32>,   // v26.53: low-energy visc, speed gate, shear gate, tail drag
   turb   : vec4<f32>,   // v26.54/55: eddy rate, px/s saturation, floorReach, kneeW
+  local  : vec4<f32>,   // v26.63: calmLocal flag, spare, spare, spare
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -5410,6 +5431,8 @@ struct P2GParams {
 @group(0) @binding(3) var<storage, read_write> cellVelX    : array<f32>;
 @group(0) @binding(4) var<storage, read_write> cellVelY    : array<f32>;
 @group(0) @binding(5) var<storage, read>       terrainMask : array<u32>;
+// v26.63: per-cell calm field, read by the lateral-reach locality.
+@group(0) @binding(8) var<storage, read>       calmCellB   : array<f32>;
 
 const FIXED_SCALE : f32 = ${FIXED_SCALE};
 const CELL        : f32 = ${LIQUID_CELL_DEFAULT};
@@ -5520,7 +5543,27 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
       else if (gridSolid(cgx, cgy + 6)) { reachW = 0.11; }
       else if (gridSolid(cgx, cgy + 7)) { reachW = 0.06; }
       if (reachW > 0.0) {
-        let blFric = 1.0 - (1.0 - floorFric) * reachW * sp.turb.z;
+        // v26.63: a cell with DEEP WATER ABOVE it is a basin's bottom
+        // skin, not a free-running sheet, and a basin's bottom boundary
+        // layer drags at FULL strength no matter how lively the body is.
+        // Real small pools die in seconds precisely because that layer is
+        // most of their volume; ours coasted like a pendulum because the
+        // lateral grip relaxed to its lively floor during the very slosh
+        // it should have been draining (measured: a 170x44 basin seiche
+        // plateaued at 7-12 px/s for 26 s and never calmed). A pour's
+        // runout sheet has air a few cells up and keeps the lively-floor
+        // slickness.
+        var vxK = sp.turb.z;
+        // v26.63: locally-calm cells take full lateral grip even while
+        // the world's liveliness blend is relaxed (a distant pool's
+        // agitation must not lubricate this one's floor).
+        if (sp.local.x > 0.0) { vxK = max(vxK, calmCellB[c]); }
+        if (c >= gp.gridW * 7u) {
+          let mUp4 = f32(cellMass[c - gp.gridW * 4u]);
+          let mUp7 = f32(cellMass[c - gp.gridW * 7u]);
+          if (mUp4 > 0.0 && mUp7 > 0.0) { vxK = 1.0; }
+        }
+        let blFric = 1.0 - (1.0 - floorFric) * reachW * vxK;
         vx = vx * blFric;
         // v26.55: the layer grips VERTICAL motion too (at 60 percent of
         // the lateral weight). The shallow-band fizz that survived every
@@ -5595,6 +5638,8 @@ struct P2GParams {
 // v25.56 BATH B1: the mass-normalized heat field (pressure layout wrote
 // it this substep). Bound rw because the buffer is an atomic accumulator.
 @group(0) @binding(8) var<storage, read_write> cellHeat : array<atomic<i32>>;
+// v26.63: per-cell calm field, read by the rest brake in CALM_LOCAL mode.
+@group(0) @binding(9) var<storage, read> calmCellG : array<f32>;
 
 // Cell pitch (world px / cell) — LIQUID_CELL on the CPU side.
 const CELL : f32 = ${LIQUID_CELL_DEFAULT};
@@ -5901,7 +5946,13 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // ramp (g2pB.w; 0 = stimulated, 1 = settling), so active water flows
     // undamped. At calm=1 this is exactly bf (Sterbenz: 1+(bf-1) is
     // lossless in f32), so the self-tests are byte-identical.
-    let bfC = 1.0 + (bf - 1.0) * sp.g2pB.w;
+    // v26.63: in CALM_LOCAL mode g2pB.w is a pure strength scale and the
+    // locality comes from THIS particle's cell in the calm field, so a
+    // distant pool's agitation cannot release the brake here. Legacy
+    // path (local 0) is expression-identical.
+    var calmEff = sp.g2pB.w;
+    if (sp.local.x > 0.0) { calmEff = calmEff * calmCellG[nbr[4]]; }
+    let bfC = 1.0 + (bf - 1.0) * calmEff;
     newVX = newVX * bfC;
     newVY = newVY * bfC;
   }
@@ -7712,6 +7763,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     if (instance.sparseCapable) {
       bEntries.push({ binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
     }
+    // v26.63: per-cell calm field for the lateral-reach locality.
+    bEntries.push({ binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
     var bBgl = dev.createBindGroupLayout({
       label: 'liquid.gridBoundaryBGL',
       entries: bEntries
@@ -7759,6 +7812,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     if (instance.sparseCapable) {
       bBgEntries.push({ binding: 7, resource: { buffer: instance.buf.blockList } });
     }
+    bBgEntries.push({ binding: 8, resource: { buffer: instance.buf.calmCell } });   // v26.63
     instance.gridBoundaryBG = dev.createBindGroup({
       label: 'liquid.gridBoundaryBG',
       layout: bBgl,
@@ -7771,11 +7825,16 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     var WGSL_DV_FILTER_HEAD = /* wgsl */ `
 struct P2GParams {
   count:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, cells:u32,
+  stepDt:f32, invCell:f32,
 };
 @group(0) @binding(0) var<uniform> gp : P2GParams;
 @group(0) @binding(1) var<storage, read_write> cellDVX : array<atomic<i32>>;
 @group(0) @binding(2) var<storage, read_write> cellDVY : array<atomic<i32>>;
 @group(0) @binding(3) var<storage, read_write> prevDV  : array<vec2<f32>>;
+@group(0) @binding(5) var<storage, read_write> csVX   : array<atomic<i32>>;
+@group(0) @binding(6) var<storage, read_write> csVY   : array<atomic<i32>>;
+@group(0) @binding(7) var<storage, read_write> csMass : array<atomic<i32>>;
+@group(0) @binding(8) var<storage, read_write> calmCell : array<f32>;
 `;
     var WGSL_DV_FILTER_BODY = /* wgsl */ `
   if (c >= gp.cells) { return; }
@@ -7787,6 +7846,49 @@ struct P2GParams {
   if (abs(k) > 0.001) {
     atomicStore(&cellDVX[c], i32(round(dx + (pv.x - dx) * k)));
     atomicStore(&cellDVY[c], i32(round(dy + (pv.y - dy) * k)));
+  }
+  // v26.63: per-cell calm field update. A cell's calm falls fast while
+  // ITS water moves over 24 px/s and rises slowly as it stills; empty
+  // cells drift calm so vacated splash zones re-arm. Fixed-point scales
+  // cancel in momentum / mass, so the speed needs no decode constant.
+  if (sp.local.x > 0.0) {
+    var cc = calmCell[c];
+    let pxPerStep = 1.0 / max(gp.stepDt * gp.invCell, 0.000001);
+    let mFx = f32(atomicLoad(&csMass[c]));
+    var lively = false;
+    if (mFx > 0.0) {
+      let cvx = (f32(atomicLoad(&csVX[c])) / mFx) * pxPerStep;
+      let cvy = (f32(atomicLoad(&csVY[c])) / mFx) * pxPerStep;
+      lively = (cvx * cvx + cvy * cvy) > 576.0;
+    }
+    // Lateral spread: a runout sheet's toe creeps under the 24 px/s bar
+    // with fast water right behind it, and without this it froze early
+    // (measured: pour runout 94 px vs 127 with the global exemption).
+    // A neighbour flowing over 32 px/s marks this cell lively too; the
+    // shallow band's suppressed fizz is 8-15 px/s everywhere, so it
+    // cannot chain-hold itself through this path.
+    if (!lively) {
+      let col2 = c % gp.gridW;
+      if (col2 > 0u) {
+        let mL = f32(atomicLoad(&csMass[c - 1u]));
+        if (mL > 0.0) {
+          let lx = (f32(atomicLoad(&csVX[c - 1u])) / mL) * pxPerStep;
+          let ly = (f32(atomicLoad(&csVY[c - 1u])) / mL) * pxPerStep;
+          if (lx * lx + ly * ly > 1024.0) { lively = true; }
+        }
+      }
+      if (!lively && col2 + 1u < gp.gridW) {
+        let mR = f32(atomicLoad(&csMass[c + 1u]));
+        if (mR > 0.0) {
+          let rx = (f32(atomicLoad(&csVX[c + 1u])) / mR) * pxPerStep;
+          let ry = (f32(atomicLoad(&csVY[c + 1u])) / mR) * pxPerStep;
+          if (rx * rx + ry * ry > 1024.0) { lively = true; }
+        }
+      }
+    }
+    if (lively) { cc = cc - gp.stepDt / 0.3; }
+    else { cc = cc + gp.stepDt / 6.0; }
+    calmCell[c] = clamp(cc, 0.0, 1.0);
   }
 `;
     try {
@@ -7809,7 +7911,11 @@ struct P2GParams {
           { binding: 1, resource: { buffer: instance.buf.cellDVX } },
           { binding: 2, resource: { buffer: instance.buf.cellDVY } },
           { binding: 3, resource: { buffer: instance.buf.cellDVPrev } },
-          { binding: 4, resource: { buffer: instance.simParamsBuf } }
+          { binding: 4, resource: { buffer: instance.simParamsBuf } },
+          { binding: 5, resource: { buffer: instance.buf.cellVX } },
+          { binding: 6, resource: { buffer: instance.buf.cellVY } },
+          { binding: 7, resource: { buffer: instance.buf.cellMass } },
+          { binding: 8, resource: { buffer: instance.buf.calmCell } }
         ]
       });
       if (instance.sparseCapable && instance.sparseGrid2OK) {
@@ -7819,7 +7925,7 @@ struct P2GParams {
           compute: {
             module: dev.createShaderModule({
               code: WGSL_SIM_PARAMS + simBind(4) + WGSL_DV_FILTER_HEAD +
-                    sparseListBind(5) + cellEntrySparse(WGSL_DV_FILTER_BODY)
+                    sparseListBind(9) + cellEntrySparse(WGSL_DV_FILTER_BODY)
             }),
             entryPoint: 'main'
           }
@@ -7833,7 +7939,11 @@ struct P2GParams {
             { binding: 2, resource: { buffer: instance.buf.cellDVY } },
             { binding: 3, resource: { buffer: instance.buf.cellDVPrev } },
             { binding: 4, resource: { buffer: instance.simParamsBuf } },
-            { binding: 5, resource: { buffer: instance.buf.blockList } }
+            { binding: 5, resource: { buffer: instance.buf.cellVX } },
+            { binding: 6, resource: { buffer: instance.buf.cellVY } },
+            { binding: 7, resource: { buffer: instance.buf.cellMass } },
+            { binding: 8, resource: { buffer: instance.buf.calmCell } },
+            { binding: 9, resource: { buffer: instance.buf.blockList } }
           ]
         });
       }
@@ -7915,7 +8025,7 @@ struct P2GParams {
     // 2c. v26.61: temporal pressure filter, LIVE CHAIN ONLY: the numbered
     //     test harness calls runGrid2 without liveChain, so the fr()
     //     references stay exact at any pushed DV_FILTER value.
-    if (liveChain && LIQUID_DV_FILTER !== 0 && instance.dvFilterPipe) {
+    if (liveChain && (LIQUID_DV_FILTER !== 0 || LIQUID_CALM_LOCAL > 0) && instance.dvFilterPipe) {
       var dvSp = sparse && instance.dvFilterPipeSparse;
       cp.setPipeline(dvSp ? instance.dvFilterPipeSparse : instance.dvFilterPipe);
       cp.setBindGroup(0, dvSp ? instance.dvFilterBGSparse : instance.dvFilterBG);
@@ -8014,7 +8124,10 @@ struct P2GParams {
         { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
         // v25.56 BATH B1: cellHeat (7 storage buffers, still within the
         // 8-storage-buffer WebGPU floor this layout has always relied on).
-        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
+        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        // v26.63: per-cell calm field (8th storage buffer, exactly AT the
+        // floor; nothing further fits in this layout).
+        { binding: 9, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }
       ]
     });
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
@@ -8045,7 +8158,8 @@ struct P2GParams {
         { binding: 5, resource: { buffer: instance.buf.cellVelX } },
         { binding: 6, resource: { buffer: instance.buf.cellVelY } },
         { binding: 7, resource: { buffer: instance.simParamsBuf } },
-        { binding: 8, resource: { buffer: instance.buf.cellHeat } }   // v25.56 bath
+        { binding: 8, resource: { buffer: instance.buf.cellHeat } },  // v25.56 bath
+        { binding: 9, resource: { buffer: instance.buf.calmCell } }   // v26.63 calm field
       ]
     });
     instance.g2pReady = true;
@@ -9851,6 +9965,7 @@ fn main() {
             case 'KNEE_W':               LIQUID_KNEE_W = v < 0 ? 0 : (v > 0.5 ? 0.5 : v); break;   // v26.55 EOS knee hinge
             case 'DV_FILTER':            LIQUID_DV_FILTER = v < -0.6 ? -0.6 : (v > 0.9 ? 0.9 : v); break; // v26.61 temporal pressure filter (measured dead end, ships 0)
             case 'REACH_VY':             LIQUID_REACH_VY = v < 0 ? 0 : (v > 1 ? 1 : v); break;   // v26.61 vertical-reach floor
+            case 'CALM_LOCAL':           LIQUID_CALM_LOCAL = v ? 1 : 0; break;   // v26.63 per-cell calm field mode
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;

@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.15'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.16'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -451,6 +451,7 @@
   // 4 percent and releases. calmT then ramps back over ~1.4 s and the
   // full rest grip (CALM brake, TURB_VISC, FLOOR_REACH) returns.
   var waterFastCount = 0;
+  var waterFracEMA = 0;
   var waterInputT = -1e9;
   var waterInputHoldT = 0;
   var waterCalmT = 1;
@@ -474,17 +475,24 @@
     // grows as the slosh shrinks and the tail dies progressively over
     // seconds. A continuous map also cannot latch, the binary gate's old
     // failure mode: it converges along the curve instead.
-    var frac = liquidCount ? waterFastCount / liquidCount : 0;
-    var target = 1 - Math.min(1, frac / 0.05);
+    // v4.16: the controller reads a LOW-PASSED fraction and releases
+    // gently unless real input is down. The instantaneous census made a
+    // small basin's own seiche rebounds (brief 5-7 percent spikes) crash
+    // calm through the fast down-slew, a relaxation oscillation of the
+    // controller itself (measured: calm lane climbing to 0.33 then
+    // crashing to 0.04, over and over). Sustained floods still register
+    // within a second; noise averages out.
+    var fracRaw = liquidCount ? waterFastCount / liquidCount : 0;
+    waterFracEMA += (fracRaw - waterFracEMA) * (1 - Math.exp(-dt / 1.2));
+    var target = 1 - Math.min(1, waterFracEMA / 0.05);
     if (waterInputHoldT > 0.3 || (inputNow && waterCalmT < 0.98)) target = 0;
-    var tau = (target < waterCalmT) ? 0.3 : 3.2;
+    var tau = (target < waterCalmT) ? (inputNow ? 0.3 : 1.2) : 3.2;
     var kSlew = 1 - Math.exp(-dt / tau);
     waterCalmT += (target - waterCalmT) * kSlew;
     if (waterCalmT < 0) waterCalmT = 0; else if (waterCalmT > 1) waterCalmT = 1;
     if (Math.abs(waterCalmT - waterLastPush) < 0.01 &&
         waterCalmT !== 0 && waterCalmT !== 1) return;
     waterLastPush = waterCalmT;
-    liquidWGPU.setSimParam('CALM', waterCalmFull * waterCalmT);
     liquidWGPU.setSimParam('TURB_VISC', 0.12 + (waterTurbFull - 0.12) * waterCalmT);
     liquidWGPU.setSimParam('FLOOR_REACH', 0.45 + (waterReachFull - 0.45) * waterCalmT);
   }
@@ -9716,7 +9724,11 @@
     // activity, so a pouring stream lands raw while rest still grinds
     // still.
     waterCalmFull = Math.min(0.48, 0.26 + 0.30 * calm);
-    liquidWGPU.setSimParam('CALM', waterCalmFull * waterCalmT);
+    // v4.16: CALM is a pure strength scale; locality comes from the
+    // engine's per-cell calm field (CALM_LOCAL), so a distant pool's
+    // liveliness cannot release this one's brake.
+    liquidWGPU.setSimParam('CALM', waterCalmFull);
+    liquidWGPU.setSimParam('CALM_LOCAL', 1);
     liquidWGPU.setSimParam('DAMPING', 1);
     liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1);
     liquidWGPU.setSimParam('AIR_DRAG', 0.996);

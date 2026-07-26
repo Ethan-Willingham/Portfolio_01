@@ -656,6 +656,30 @@ liveliness-independent floor for the boundary layer's vertical grip) null on
 the fed shelf but pour-safe; it ships engaged at 1 as the physically correct
 default (the bottom's impermeability should not relax with mood).
 
+**v26.63: basin bottom drag + the PER-CELL CALM FIELD (calm becomes local).**
+Two owner reports, both measured and closed. (1) Small pools sloshed forever:
+a 170x44 basin seiche plateaued at 7-12 px/s for 26 s and never calmed,
+because the lateral boundary grip relaxed to its lively floor during the very
+slosh it should drain, and a small basin's slosh IS its own liveliness. Fix:
+a cell with deep water above it (mass probes 4 and 7 rows up) is a basin's
+bottom skin and takes FULL lateral grip regardless of liveliness; a pour's
+runout sheet has air above and keeps the lively slickness. The seiche now
+decays 17-12-10-7-rest along its envelope. (2) Agitating one pool excited a
+calm pool across the map (measured 2x), because calm was ONE global scalar.
+`CALM_LOCAL` mode (SimParams lane 56, 15th vec4): the cellState pass (the
+former dv-filter pass, rebound with cellVX/VY/mass + the calmCell buffer)
+evolves a per-cell calm each substep: falls in ~0.3 s while that cell's water
+moves over 24 px/s (or a lateral neighbour over 32, so a runout toe creeping
+under the bar stays slick behind its own flow), rises over ~6 s as it stills.
+The rest brake (G2P, binding 9) and the lateral reach (gridBoundary, binding
+8) read the LOCAL value; the pushed CALM lane is now a pure strength scale
+(the demo pushes the slider's rest strength, the game pushes CALM_MAX).
+Measured: pool A reads 0.9x its rest while pool B churns at 13; pour runout
+120 px with live churn; simmer decays 32-26-18-8-3.6-1.2 with no cliff.
+TUNING NOTE: the field's rise time is the runout's grace period; 2.6 s froze
+the pour toe at 94 px, 6 s restored 120. Legacy global behaviour is byte
+exact at flag 0 (boot self-tests unchanged); raw mode zeroes the flag.
+
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
 host keeps each selected slime in a stable one-of-eight slot while wet-cell

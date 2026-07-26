@@ -394,6 +394,7 @@
   // the body lively (a waterfall must not keep a distant puddle boiling).
   var LIQUID_DV_FILTER = 0;         // measured dead end both directions, ships 0
   var LIQUID_REACH_VY = 1.0;        // vertical-reach strength floor, liveliness-independent
+  var liquidFracEMA = 0;              // v26.63: low-passed fast fraction for the calm target
   // v26.62: calm is a CONTINUOUS controller now (liquidStateTick): the
   // target falls smoothly with the live fast fraction (fully lively at
   // 5 percent moving above 24 px/s, fully calm at none), rises with slew

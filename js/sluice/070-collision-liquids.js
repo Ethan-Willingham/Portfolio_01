@@ -1543,6 +1543,7 @@
         liquidWGPU.setSimParam('FLOOR_REACH', 0); // and no boundary-layer reach
         liquidWGPU.setSimParam('KNEE_W', 0);      // and the exact hard knee
         liquidWGPU.setSimParam('DV_FILTER', 0);   // and unfiltered impulses
+        liquidWGPU.setSimParam('CALM_LOCAL', 0);  // and the global calm scalar
         liquidWGPU.setSimParam('REACH_VY', 0);    // raw = no vertical floor either
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
         liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
@@ -1635,9 +1636,15 @@
       // reverted binary drain latched: a continuous map converges).
       // STIM_MAX keeps the old convergence guarantee against a
       // pathological permanent fast count.
-      var calmTgtG = 1 - Math.min(1, liquidFastCount / (Math.max(1, liquidCount) * 0.05));
+      // v26.63: low-passed fraction (the demo's hunting lesson: an
+      // instantaneous census lets a small pond's own seiche rebounds
+      // crash calm through the fast down-slew, a controller-level
+      // relaxation oscillation). Sustained floods register in ~1 s.
+      liquidFracEMA += ((liquidFastCount / Math.max(1, liquidCount)) - liquidFracEMA) *
+        (1 - Math.exp(-dt / 1.2));
+      var calmTgtG = 1 - Math.min(1, liquidFracEMA / 0.05);
       if (liquidStimT > LIQUID_STIM_MAX) calmTgtG = 1;
-      var tauG = (calmTgtG < LIQUID_CALM) ? 0.45 : (LIQUID_CALM_RAMP * 2);
+      var tauG = (calmTgtG < LIQUID_CALM) ? 1.2 : (LIQUID_CALM_RAMP * 2);
       LIQUID_CALM += (calmTgtG - LIQUID_CALM) * (1 - Math.exp(-dt / tauG));
       if (LIQUID_CALM > 1) LIQUID_CALM = 1;
       if (LIQUID_CALM < 0) LIQUID_CALM = 0;
@@ -1671,7 +1678,12 @@
     // v26.58: ready-gated (see the raw-branch note): tests run at module
     // defaults, hosts push after Stage 8, and Stage 5 stops flaking.
     if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.simActive) {
-      liquidWGPU.setSimParam('CALM', LIQUID_CALM);
+      // v26.63: CALM is a pure strength scale in field mode; the engine's
+      // per-cell calm field carries the locality, so a bomb at one pond
+      // cannot release a distant pond's brake. The internal LIQUID_CALM
+      // ramp keeps running for its other consumers (blends, hold timers).
+      liquidWGPU.setSimParam('CALM', LIQUID_CALM_MAX);
+      liquidWGPU.setSimParam('CALM_LOCAL', 1);
       // The module's mirrors carry the BLENDED values (the gm levers'
       // pristine targets stay in 010/020); a lever change is re-blended
       // here next frame, so the one-frame overwrite is invisible.
