@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.58';
+  var GAME_VERSION = 'v26.57';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -10045,11 +10045,7 @@
       liquidCalmHoldT = 0;
       LIQUID_DBG_NO_SLEEP = 1;
       liquidStateName = 'raw';
-      // v26.58: push only after the boot self-tests complete (the v26.53
-      // contract: module defaults stay pristine through the test window).
-      // Pushing mid-test races the GPU dispatch against the CPU
-      // reference's module-var reads and flaked Stage 5 world-dependently.
-      if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.ready) {
+      if (liquidWGPU && liquidWGPU.setSimParam) {
         liquidWGPU.setSimParam('CALM', 0);
         liquidWGPU.setSimParam('GRID_VISC', LIQUID_RAW_VISC);
         liquidWGPU.setSimParam('QUIET_VISC', 0);
@@ -10166,9 +10162,7 @@
     // pristine SETTLED targets; the module mirrors carry the blend.
     liquidDampEff = LIQUID_DAMP_LIVE + (LIQUID_DAMPING - LIQUID_DAMP_LIVE) * LIQUID_CALM;
     liquidMotionEff = LIQUID_MOTION_LIVE + (LIQUID_WATER_MOTION_SCALE - LIQUID_MOTION_LIVE) * LIQUID_CALM;
-    // v26.58: ready-gated (see the raw-branch note): tests run at module
-    // defaults, hosts push after Stage 8, and Stage 5 stops flaking.
-    if (liquidWGPU && liquidWGPU.setSimParam && liquidWGPU.ready) {
+    if (liquidWGPU && liquidWGPU.setSimParam) {
       liquidWGPU.setSimParam('CALM', LIQUID_CALM);
       // The module's mirrors carry the BLENDED values (the gm levers'
       // pristine targets stay in 010/020); a lever change is re-blended
