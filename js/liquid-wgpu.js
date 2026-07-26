@@ -2241,6 +2241,24 @@
       var pxT = fr(1 / Math.max(fr(fr(dt) * fr(inv)), 0.000001));
       var t0T = fr(fr(LIQUID_TURB_REF) * fr(0.08));
       var t1T = fr(LIQUID_TURB_REF);
+      // The kernel's stability cap compares against the UNCAPPED neighbour
+      // average (rawCellVel), while the pair terms use the capped one
+      // (rawCellVelM). Mirror both: an earlier twin used the capped
+      // snapshot for the average too, which held on quiet ponds but
+      // diverged to 0.8 velocity diff on freshly-spawned worlds where the
+      // pressure cap engages widely (boot-dependent Stage 5 flake).
+      var uncVX = new Float64Array(cells);
+      var uncVY = new Float64Array(cells);
+      for (ci = 0; ci < cells; ci++) {
+        var mU = fr(fr(refMassFx[ci]) / FX);
+        if (mU <= 0) continue;
+        var invU = fr(1 / mU);
+        var oilU = fr(fr(fr(refOilFx[ci]) / FX) * invU);
+        var gravU = fr(fr(LIQUID_GRAVITY + fr(fr(LIQUID_OIL_GRAVITY - LIQUID_GRAVITY) * oilU)) *
+                       fr(fr(fr(dt) * fr(dt)) * fr(inv)));
+        uncVX[ci] = fr(fr(fr(fr(refVXFx[ci]) / FX) + fr(fr(refDVXFx[ci]) / FX)) * invU);
+        uncVY[ci] = fr(fr(fr(fr(fr(refVYFx[ci]) / FX) + fr(fr(refDVYFx[ci]) / FX)) * invU) + gravU);
+      }
       for (ci = 0; ci < cells; ci++) {
         var mT = fr(fr(refMassFx[ci]) / FX);
         if (mT <= 0) continue;
@@ -2253,7 +2271,7 @@
           if (cnT < 0) continue;
           var nmT = fr(fr(refMassFx[cnT]) / FX);
           if (nmT <= 0) continue;
-          avX += exVX[cnT]; avY += exVY[cnT]; avN++;
+          avX += uncVX[cnT]; avY += uncVY[cnT]; avN++;
           var dvxT = fr(exVX[cnT] - exVX[ci]);
           var dvyT = fr(exVY[cnT] - exVY[ci]);
           var muT = fr(fr(mT * nmT) / fr(mT + nmT));
@@ -2593,6 +2611,24 @@
       var pxT = fr(1 / Math.max(fr(fr(dt) * fr(inv)), 0.000001));
       var t0T = fr(fr(LIQUID_TURB_REF) * fr(0.08));
       var t1T = fr(LIQUID_TURB_REF);
+      // The kernel's stability cap compares against the UNCAPPED neighbour
+      // average (rawCellVel), while the pair terms use the capped one
+      // (rawCellVelM). Mirror both: an earlier twin used the capped
+      // snapshot for the average too, which held on quiet ponds but
+      // diverged to 0.8 velocity diff on freshly-spawned worlds where the
+      // pressure cap engages widely (boot-dependent Stage 5 flake).
+      var uncVX = new Float64Array(cells);
+      var uncVY = new Float64Array(cells);
+      for (ci = 0; ci < cells; ci++) {
+        var mU = fr(fr(refMassFx[ci]) / FX);
+        if (mU <= 0) continue;
+        var invU = fr(1 / mU);
+        var oilU = fr(fr(fr(refOilFx[ci]) / FX) * invU);
+        var gravU = fr(fr(LIQUID_GRAVITY + fr(fr(LIQUID_OIL_GRAVITY - LIQUID_GRAVITY) * oilU)) *
+                       fr(fr(fr(dt) * fr(dt)) * fr(inv)));
+        uncVX[ci] = fr(fr(fr(fr(refVXFx[ci]) / FX) + fr(fr(refDVXFx[ci]) / FX)) * invU);
+        uncVY[ci] = fr(fr(fr(fr(fr(refVYFx[ci]) / FX) + fr(fr(refDVYFx[ci]) / FX)) * invU) + gravU);
+      }
       for (ci = 0; ci < cells; ci++) {
         var mT = fr(fr(refMassFx[ci]) / FX);
         if (mT <= 0) continue;
@@ -2605,7 +2641,7 @@
           if (cnT < 0) continue;
           var nmT = fr(fr(refMassFx[cnT]) / FX);
           if (nmT <= 0) continue;
-          avX += exVX[cnT]; avY += exVY[cnT]; avN++;
+          avX += uncVX[cnT]; avY += uncVY[cnT]; avN++;
           var dvxT = fr(exVX[cnT] - exVX[ci]);
           var dvyT = fr(exVY[cnT] - exVY[ci]);
           var muT = fr(fr(mT * nmT) / fr(mT + nmT));
@@ -6941,14 +6977,44 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     let gate = smoothstep(t * 0.10, t * 0.55, fw);
     fw = fw + rp.bridge.x * gate * nbMax;
   }
-  let aWaterEdge = smoothstep(t - s, t + s, fw);
+  var aWaterEdge = smoothstep(t - s, t + s, fw);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
+  let wp = vec2<f32>(rp.camX + in.pos.x / max(rp.dpws, 0.001),
+                     rp.camY + in.pos.y / max(rp.dpws, 0.001));
+  // v26.58 CONTACT INVARIANT (the owner's cup argument): the space between
+  // a body of water and the floor directly under it can never be air,
+  // because water surrounds it and nothing could have let air in. The
+  // v26.57 mirror taps close the resting seam but gate on the pixel's own
+  // field, so a hard jiggle that lifts the bottom particle row still
+  // flashed a dark line: mid-gap pixels carry near-zero field and the
+  // bridge never engaged. This clause skips the gate entirely: a pixel
+  // with solid terrain just below and FULL BODY-STRENGTH field (>= the
+  // visibility threshold) within three tap radii straight above renders
+  // as water at that body's edge alpha. A lone droplet peaks near half
+  // the threshold, so spray passing low over a floor cannot trigger it;
+  // only a real body resting or jiggling above its floor does.
+  if (rp.bridge.x > 0.0 && aWaterEdge < 0.999) {
+    let dpw = max(rp.dpws, 0.001);
+    if (compositeTerrainSolid(vec2<f32>(wp.x, wp.y + 3.0 / dpw))) {
+      let r = max(rp.bridge.y, 1.0);
+      var pUp = clamp(in.pos.xy + vec2<f32>(0.0, -r),
+                      vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
+      var fUp = textureLoad(fieldTex, vec2<i32>(pUp), 0).r;
+      pUp = clamp(in.pos.xy + vec2<f32>(0.0, -2.0 * r),
+                  vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
+      fUp = max(fUp, textureLoad(fieldTex, vec2<i32>(pUp), 0).r);
+      pUp = clamp(in.pos.xy + vec2<f32>(0.0, -3.0 * r),
+                  vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
+      fUp = max(fUp, textureLoad(fieldTex, vec2<i32>(pUp), 0).r);
+      if (fUp >= t) {
+        aWaterEdge = max(aWaterEdge, smoothstep(t - s, t + s, fUp));
+      }
+    }
+  }
   if (aWaterEdge <= 0.001 && aOilEdge <= 0.001) { discard; }
   // Clip the finished surface once per visible pixel. This uses the exact
   // bitmask collision reads, without paying a storage lookup for every
   // overlapping particle splat fragment.
-  let wp = vec2<f32>(rp.camX + in.pos.x / max(rp.dpws, 0.001),
-                     rp.camY + in.pos.y / max(rp.dpws, 0.001));
   if (compositeTerrainSolid(wp)) { discard; }
   // Water tint: foam fraction from the aeration-weighted channel.
   // v24.150 — foam needs a real BODY behind it; v24.152 softened (0.6t to
