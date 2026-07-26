@@ -92,7 +92,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.14'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.15'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -465,11 +465,23 @@
     var inputNow = (performance.now() - waterInputT) < 250;
     if (inputNow) waterInputHoldT += dt;
     else waterInputHoldT = 0;
-    var flooding = waterFastCount > Math.max(60, liquidCount * 0.05);
-    var stim = (waterInputHoldT > 0.3) || (waterCalmT < 0.98 && (inputNow || flooding));
-    if (stim) waterCalmT = Math.max(0, waterCalmT - dt / 0.3);
-    else waterCalmT = Math.min(1, waterCalmT + dt / 1.4);
-    if (Math.abs(waterCalmT - waterLastPush) < 0.015 &&
+    // v4.15: CONTINUOUS liveliness. The old two-state gate held the grip
+    // fully off while any flood ran, then landed the entire rest grip over
+    // 1.4 s when the fraction crossed a line: an "infinite" slosh that
+    // dies in a blink (the owner's cliff; visible in the simmer traces as
+    // 21 -> 1.4 px/s between half-second samples). The target is now a
+    // smooth function of how much water is really moving, so the grip
+    // grows as the slosh shrinks and the tail dies progressively over
+    // seconds. A continuous map also cannot latch, the binary gate's old
+    // failure mode: it converges along the curve instead.
+    var frac = liquidCount ? waterFastCount / liquidCount : 0;
+    var target = 1 - Math.min(1, frac / 0.05);
+    if (waterInputHoldT > 0.3 || (inputNow && waterCalmT < 0.98)) target = 0;
+    var tau = (target < waterCalmT) ? 0.3 : 3.2;
+    var kSlew = 1 - Math.exp(-dt / tau);
+    waterCalmT += (target - waterCalmT) * kSlew;
+    if (waterCalmT < 0) waterCalmT = 0; else if (waterCalmT > 1) waterCalmT = 1;
+    if (Math.abs(waterCalmT - waterLastPush) < 0.01 &&
         waterCalmT !== 0 && waterCalmT !== 1) return;
     waterLastPush = waterCalmT;
     liquidWGPU.setSimParam('CALM', waterCalmFull * waterCalmT);

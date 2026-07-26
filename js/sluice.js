@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.61';
+  var GAME_VERSION = 'v26.62';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1731,6 +1731,12 @@
   // the body lively (a waterfall must not keep a distant puddle boiling).
   var LIQUID_DV_FILTER = 0;         // measured dead end both directions, ships 0
   var LIQUID_REACH_VY = 1.0;        // vertical-reach strength floor, liveliness-independent
+  // v26.62: calm is a CONTINUOUS controller now (liquidStateTick): the
+  // target falls smoothly with the live fast fraction (fully lively at
+  // 5 percent moving above 24 px/s, fully calm at none), rises with slew
+  // 2 x CALM_RAMP and falls with ~0.45 s. The old binary gate landed the
+  // whole rest grip at once and killed a long slosh in a blink. The
+  // demo's waterLivelinessTick mirrors the same curve host-side.
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -10144,9 +10150,24 @@
     var wantCalm = liquidStimT > LIQUID_STIM_HOLD && (!fastHold || liquidStimT > LIQUID_STIM_MAX);
     if (hard) {
       LIQUID_CALM = 0;                  // a real hit snaps the body lively at once
-    } else if (wantCalm && LIQUID_CALM < 1) {
-      LIQUID_CALM += dt / LIQUID_CALM_RAMP;
+    } else if (liquidStimT > LIQUID_STIM_HOLD) {
+      // v26.62: CONTINUOUS calm target. The old binary gate (wantCalm)
+      // held the grip fully off while the fast fraction sat over a line,
+      // then landed the whole rest grip in one 1.2 s ramp: a long slosh
+      // that dies in a blink (the owner's cliff). The target now falls
+      // smoothly with how much water is really moving, so the grip grows
+      // as the slosh shrinks and the tail dies progressively; and a fresh
+      // flood LOWERS the target smoothly, so a pour onto a resting pond
+      // sheds the brake without any hard stimulus (safe here where the
+      // reverted binary drain latched: a continuous map converges).
+      // STIM_MAX keeps the old convergence guarantee against a
+      // pathological permanent fast count.
+      var calmTgtG = 1 - Math.min(1, liquidFastCount / (Math.max(1, liquidCount) * 0.05));
+      if (liquidStimT > LIQUID_STIM_MAX) calmTgtG = 1;
+      var tauG = (calmTgtG < LIQUID_CALM) ? 0.45 : (LIQUID_CALM_RAMP * 2);
+      LIQUID_CALM += (calmTgtG - LIQUID_CALM) * (1 - Math.exp(-dt / tauG));
       if (LIQUID_CALM > 1) LIQUID_CALM = 1;
+      if (LIQUID_CALM < 0) LIQUID_CALM = 0;
     }
     // v26.56 NOTE: a stats-driven "flowing water drains calm" rule was
     // built and REVERTED here: the shallow band's own lively-state boil

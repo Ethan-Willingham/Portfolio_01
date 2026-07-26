@@ -394,6 +394,12 @@
   // the body lively (a waterfall must not keep a distant puddle boiling).
   var LIQUID_DV_FILTER = 0;         // measured dead end both directions, ships 0
   var LIQUID_REACH_VY = 1.0;        // vertical-reach strength floor, liveliness-independent
+  // v26.62: calm is a CONTINUOUS controller now (liquidStateTick): the
+  // target falls smoothly with the live fast fraction (fully lively at
+  // 5 percent moving above 24 px/s, fully calm at none), rises with slew
+  // 2 x CALM_RAMP and falls with ~0.45 s. The old binary gate landed the
+  // whole rest grip at once and killed a long slosh in a blink. The
+  // demo's waterLivelinessTick mirrors the same curve host-side.
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
