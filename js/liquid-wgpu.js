@@ -8532,10 +8532,17 @@ struct P2GParams {
    * z-layer once renderActive flips on at Stage 8.
    * -------------------------------------------------------------------- */
   // Bottom-HUD clip — mirrors the CPU liquidGLConsoleClipPath (a clean
-  // 36-px bottom inset so liquid never bleeds through the console HUD).
-  var LIQUID_WGPU_HUD_INSET = 36;
-  function liquidWGPUClipPath() {
-    return 'inset(0px 0px ' + LIQUID_WGPU_HUD_INSET + 'px 0px)';
+  // 36-px bottom inset so liquid never bleeds through the game's console
+  // HUD). v26.68: per-instance (opts.hudInset); the game keeps the 36 px
+  // default, the toy passes 0. The toy has no bottom HUD, and the clip
+  // silently hid every drop resting in the world's bottom 36 px (the
+  // owner's "sliver at the bottom where I can't see the water": an 11k
+  // particle pool along the falls scene's floor, simulated, invisible).
+  function liquidWGPUClipPath(instance) {
+    var inset = 36;
+    if (instance && instance.hudInsetPx !== undefined) inset = instance.hudInsetPx;
+    if (!inset) return 'none';
+    return 'inset(0px 0px ' + inset + 'px 0px)';
   }
 
   // Position + CSS-size the render canvas over the main viewport. The
@@ -8551,7 +8558,7 @@ struct P2GParams {
     cv.style.top    = '0';
     cv.style.width  = cssW + 'px';
     cv.style.height = cssH + 'px';
-    cv.style.clipPath = liquidWGPUClipPath();
+    cv.style.clipPath = liquidWGPUClipPath(instance);
   }
 
   /* Build the Stage-7 render canvas + pipeline. Creates liquidWGPUCanvas
@@ -9911,6 +9918,9 @@ fn main() {
       // natively, exactly like the CPU renderer's liquidGLCanvas. May be
       // null (then the render canvas is built detached — still drawable).
       mainCanvas: opts.mainCanvas || (liquid && liquid.mainCanvas) || null,
+      // v26.68: bottom clip of the liquid render canvas in CSS px. The
+      // game's console HUD needs 36; a host with no bottom HUD passes 0.
+      hudInsetPx: (opts.hudInset !== undefined && opts.hudInset !== null) ? +opts.hudInset : 36,
       adapter: null,
       device: null,
       queue: null,

@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.21'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.22'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -727,6 +727,10 @@
     }
     liquidWGPU = window.LiquidWGPU.create({
       mainCanvas: canvas,
+      // v4.22: the toy has no bottom console HUD, so the engine's 36 px
+      // bottom clip (a game-HUD guard) must be off. It was silently
+      // hiding every drop that rested in the world's bottom 36 px.
+      hudInset: 0,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
