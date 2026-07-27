@@ -815,13 +815,6 @@
           function (v) { LIQUID_KNEE_W = v; gmSetWaterSim('KNEE_W', v); },
           0, 0.5, undefined);
       }
-      // v26.61: temporal pressure filter (see 020-state).
-      if (typeof LIQUID_DV_FILTER !== 'undefined') {
-        gmRegisterLever('water.DV_FILTER', 'water', 'DV_FILTER (impulse blend)',
-          function () { return LIQUID_DV_FILTER; },
-          function (v) { LIQUID_DV_FILTER = v; gmSetWaterSim('DV_FILTER', v); },
-          0, 0.9, undefined);
-      }
       // v24.124 — fixed-quantum substepping (the 120 Hz firecracker fix):
       // 1 = constant stepDt with remainder banking (default), 0 = legacy
       // ceil-split where stepDt swings with frame jitter (kept for A/B).

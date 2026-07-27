@@ -1504,7 +1504,6 @@
         liquidWGPU.setSimParam('TURB_VISC', 0);   // saharan purity: no eddy term
         liquidWGPU.setSimParam('FLOOR_REACH', 0); // and no boundary-layer reach
         liquidWGPU.setSimParam('KNEE_W', 0);      // and the exact hard knee
-        liquidWGPU.setSimParam('DV_FILTER', 0);   // and unfiltered impulses
         liquidWGPU.setSimParam('CALM_LOCAL', 0);  // and the global calm scalar
         liquidWGPU.setSimParam('REACH_VY', 0);    // raw = no vertical floor either
         liquidWGPU.setSimParam('DAMPING', LIQUID_RAW_DAMP);
@@ -1678,8 +1677,6 @@
       liquidWGPU.setSimParam('REACH_FLOOR', LIQUID_REACH_OPEN);
       // v26.55 EOS knee hinge (see 020-state).
       liquidWGPU.setSimParam('KNEE_W', LIQUID_KNEE_W);
-      // v26.61 temporal pressure filter (see 020-state).
-      liquidWGPU.setSimParam('DV_FILTER', LIQUID_DV_FILTER);
       liquidWGPU.setSimParam('REACH_VY', LIQUID_REACH_VY);
       liquidWGPU.setSimParam('DAMPING', liquidDampEff);
       liquidWGPU.setSimParam('WATER_MOTION_SCALE', liquidMotionEff);

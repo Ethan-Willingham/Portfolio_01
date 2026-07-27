@@ -646,12 +646,13 @@ spray: that motion is bombardment, real physics, not failed calming. (3) The
 clip was recorded four minutes after the v26.60 speck fix pushed, inside
 deploy-plus-cache latency: the froth matches the pre-fix droplet-mark
 signature, which amplified sub-pixel bobbing into visible dancing light.
-Two mechanisms were built and MEASURED AS DEAD ENDS, kept off as documented
-danger levers: `DV_FILTER` (temporal blend of the pressure impulse; smoothing
-+0.5 took the shelf 17.7 to 43 px/s and phase lead -0.3 to 55, because the
-limit cycle is phase-sensitive and any impulse-timing tamper de-tunes the
-EOS's self-regulation; ships 0, live-chain-only dispatch so the numbered
-tests never see it) and the same round proved `REACH_VY` (a
+Two mechanisms were built and MEASURED AS DEAD ENDS: `DV_FILTER` (temporal
+blend of the pressure impulse; smoothing +0.5 took the shelf 17.7 to 43 px/s
+and phase lead -0.3 to 55, because the limit cycle is phase-sensitive and any
+impulse-timing tamper de-tunes the EOS's self-regulation; shipped 0 as a
+documented danger lever until v26.67 DELETED the machinery outright, keep
+this paragraph as the do-not-rebuild record) and the same round proved
+`REACH_VY` (a
 liveliness-independent floor for the boundary layer's vertical grip) null on
 the fed shelf but pour-safe; it ships engaged at 1 as the physically correct
 default (the bottom's impermeability should not relax with mood).
@@ -756,6 +757,33 @@ micro-moves at ~0.85 px/s forever under a dripper and slowly settles
 into the regular rest packing. That is the physics of a packed particle
 bed, it is invisible with the dot overlay off, and it stops wherever
 the body truly freezes.
+
+**v26.67: OPTIMIZATION + CLEANUP PASS (owner: "water is perfect, now
+optimize").** Measured baseline first (headless, settled tank): GPU
+frame ~3.3 ms at 10k particles, ~7.4 ms at 40k (the 120 fps edge),
+~16 ms at 90k; the whole calm-field machinery measured ~1.25 ms at 90k.
+Changes, all behavior-preserving and re-verified by the full probe
+battery: (1) the v26.61 temporal pressure filter, a measured dead end
+that shipped permanently disabled, is DELETED end to end (kernel code,
+the 16.8 MB prevDV buffer that was still read and written for every
+active cell every substep, SimParams lane 46, the gm lever, and both
+hosts' pushes); the pass it lived in survives as the cell-state pass
+(the calm field) with three fewer bindings. The dead-end LESSON stays
+in the v26.61 chapter: temporal tampering with the pressure impulse
+de-tunes the EOS in both directions, do not re-arm. (2) Confinement
+gate walks cut: the shallow-water drive's 10-cell bed walk is
+pre-gated by the cell's own mark (the climb marks driven columns
+within substeps, so an unmarked cell cannot be driven and the walk no
+longer runs for every water cell to decide "no"); rowOpen's cap drops
+16 to 8 (gradient contagion carries openness the long way, the walk
+only needs to see NEARBY air) and skips the above-row load when the
+contact row alone proves water. (3) Readback economy: a
+readbackApplyGen counter on the engine lets hosts skip re-bucketing
+identical mirrors (the toy's buildWaterCells over up to 100k
+particles ran every frame; it now runs only when a new readback
+lands), and the toy's desktop readback cadence goes 2 to 3 (the game
+already ran 6). Comment archaeology in the confinement-gate shaders
+compressed to pointers at this file.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

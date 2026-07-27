@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.19'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.20'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -447,6 +447,7 @@
   // 4 percent and releases. calmT then ramps back over ~1.4 s and the
   // full rest grip (CALM brake, TURB_VISC, FLOOR_REACH) returns.
   var waterFastCount = 0;
+  var waterBucketGen = -1;   // v4.20: last engine readbackApplyGen bucketed
   var waterFracEMA = 0;
   var waterInputT = -1e9;
   var waterInputHoldT = 0;
@@ -798,7 +799,7 @@
             // Fresh CPU mirror for the slime coupling: the default cadence
             // (every 20 runFrames) is built for oil suction; the per-point
             // density/velocity sampling wants ~3-frame-old water.
-            liquidWGPU.setSimParam('DBG_READBACK_EVERY', isMobile ? 4 : 2);
+            liquidWGPU.setSimParam('DBG_READBACK_EVERY', isMobile ? 4 : 3);
           }
           if (liquidWGPU.setRenderParam) {
             // The toy's water palette: the game default is a bright azure
@@ -9747,11 +9748,6 @@
     liquidWGPU.setSimParam('TURB_REF', 60);
     liquidWGPU.setSimParam('FLOOR_REACH', 0.45 + (waterReachFull - 0.45) * waterCalmT);
     liquidWGPU.setSimParam('KNEE_W', 0.10 + 0.05 * calm);   // v4.8 EOS knee hinge
-    // v4.14: temporal pressure filter. State-free dissipation of the
-    // substep-frequency noise that kept very shallow films fizzing even
-    // while the scene's emitters hold the liveliness floors (a waterfall
-    // must not keep a distant puddle boiling).
-    liquidWGPU.setSimParam('DV_FILTER', 0);
     liquidWGPU.setSimParam('REACH_VY', 1);
   }
 
@@ -10198,7 +10194,15 @@
     emittersTick(dt);
     retireLiquidOrphans();
     updateLiquidToy(dt);
-    buildWaterCells();
+    // v4.20 perf: rebucket the mirror only when a NEW readback landed
+    // (engine readbackApplyGen). The mirror refreshes every few frames;
+    // rebuilding identical buckets on the frames between was pure waste
+    // at up to 100k particles per pass.
+    var rbGen = (liquidWGPU && liquidWGPU.readbackApplyGen) | 0;
+    if (rbGen !== waterBucketGen || !liquidCount) {
+      waterBucketGen = rbGen;
+      buildWaterCells();
+    }
     waterLivelinessTick(dt);
     jelloWaterCoupleTick(dt);
     if (toyFrameNo % 30 === 0) wakeSleepersOnBodies();   // sparse: every WAKE op

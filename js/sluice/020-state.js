@@ -387,11 +387,6 @@
   // at most this much bottom grip so unconfined sheets drain off a
   // ledge instead of parking. Confined pools never see the cap.
   var LIQUID_REACH_OPEN = 0.15;
-  // v26.61: temporal pressure filter blend (see js/liquid-wgpu.js banner).
-  // State-free dissipation of substep-frequency pressure noise; the one
-  // mechanism that grinds a very shallow film even while fastHold keeps
-  // the body lively (a waterfall must not keep a distant puddle boiling).
-  var LIQUID_DV_FILTER = 0;         // measured dead end both directions, ships 0
   var LIQUID_REACH_VY = 1.0;        // vertical-reach strength floor, liveliness-independent
   var liquidFracEMA = 0;              // v26.63: low-passed fast fraction for the calm target
   // v26.62: calm is a CONTINUOUS controller now (liquidStateTick): the

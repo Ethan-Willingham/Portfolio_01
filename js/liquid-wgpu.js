@@ -337,23 +337,11 @@
   // legacy hard knee). Kills the free-surface rectifier pump behind the
   // eternal shallow-film fizz; see the WGSL gridPressure block.
   var LIQUID_KNEE_W        = 0;
-  // v26.61: TEMPORAL PRESSURE FILTER. Per active cell, the live chain
-  // blends this substep's pressure impulse with the previous substep's.
-  // Oscillatory kicks at substep frequency (the rectifier pump that keeps
-  // very shallow films fizzing even at the lively liveliness floors,
-  // measured 8-15 px/s forever under the falls scene's perpetual input)
-  // cancel in the mix; steady hydrostatic support is equal every substep
-  // and passes exactly; gravity is a separate term and untouched; a
-  // splash impulse keeps its momentum, spread over two substeps (~8 ms).
-  // Dispatched ONLY by the live frame chain (runGrid2's liveChain flag),
-  // never by the numbered test harness, so the fr() references need no
-  // twin at any pushed value. Rides SimParams bathC.z (lane 46).
-  // MEASURED DEAD END, both directions, do not re-arm: smoothing (+0.5)
-  // took the falls shelf from 17.7 to 43 px/s and phase LEAD (-0.3) to
-  // 55. The limit cycle is phase-sensitive and any temporal tampering
-  // with the impulse de-tunes the EOS's self-regulation. Ships 0; the
-  // kernel stays as a documented danger lever (the COHESION precedent).
-  var LIQUID_DV_FILTER     = 0;   // 0 = off; fraction blended toward the previous impulse
+  // (v26.67: the v26.61 temporal pressure filter, a MEASURED dead end
+  // that shipped permanently disabled, is deleted outright: kernel,
+  // prevDV buffer, lane 46, lever, and host pushes. The lesson stays in
+  // TUNING.md v26.61: temporal tampering with the pressure impulse
+  // de-tunes the EOS's self-regulation in BOTH directions.)
   // v26.61: minimum strength of the boundary layer's VERTICAL grip,
   // independent of the liveliness blend (see the gridBoundary comment).
   var LIQUID_REACH_VY      = 0;   // module default 0 = exact v26.60 behaviour; hosts push 1
@@ -717,17 +705,12 @@
       cellDVY:     mk('liquid.cellDVY',     GRID_MAX_CELLS * 4),
       cellVelX:    mk('liquid.cellVelX',    GRID_MAX_CELLS * 4),
       cellVelY:    mk('liquid.cellVelY',    GRID_MAX_CELLS * 4),
-      /* v26.61: previous-substep pressure impulse per cell (vec2<f32>,
-       * fixed-point values stored as f32) for the temporal pressure
-       * filter. Deliberately never cleared: a reactivated sparse block or
-       * an active-window origin shift mixes one substep against a stale
-       * value, bounded by k x the shock-limiter cap, self-correcting. */
-      cellDVPrev:  mk('liquid.cellDVPrev',  GRID_MAX_CELLS * 8),
-      /* v26.63: per-cell calm field (f32, 0 lively .. 1 calm). Updated by
-       * the cellState pass each substep; read by G2P (rest brake) and
-       * gridBoundary (lateral reach) in CALM_LOCAL mode. Same staleness
-       * contract as cellDVPrev: origin shifts and block reactivation read
-       * a stale value briefly and self-correct within tau. */
+      /* v26.63: per-cell calm field (f32, 0 lively .. 1 calm; -1 = the
+       * v26.64 open sentinel). Updated by the cellState pass each
+       * substep; read by G2P (rest brake, quiet tail) and gridBoundary
+       * (lateral reach, confinement gate). Deliberately never cleared:
+       * origin shifts and block reactivation read a stale value briefly
+       * and self-correct within the field's own tau. */
       calmCell:    mk('liquid.calmCell',    GRID_MAX_CELLS * 4),
       /* ---- Stage 6 — terrain solidity bitmask ----
        * 1 bit/tile, row-major over the live-particle tile rect (bbox +
@@ -1372,9 +1355,9 @@
     sh[40] = LIQUID_BATH_SRC_X0;    sh[41] = LIQUID_BATH_SRC_Y0;
     sh[42] = LIQUID_BATH_SRC_X1;    sh[43] = LIQUID_BATH_SRC_Y1;
     sh[44] = LIQUID_BATH_SRC_T;     sh[45] = LIQUID_BATH_SRC_RATE;
-    // lane 46 (bathC.z): v26.61 temporal pressure filter blend (ships 0).
+    // lane 46 (bathC.z): spare (was the deleted v26.61 dv filter).
     // lane 47 (bathC.w): v26.61 vertical-reach strength floor.
-    sh[46] = LIQUID_DV_FILTER;      sh[47] = LIQUID_REACH_VY;
+    sh[46] = 0;                     sh[47] = LIQUID_REACH_VY;
     // quiet : v26.53 two-scale rest filter. Module boot stays zero; the game
     // and standalone host push their chosen live values afterward.
     sh[48] = LIQUID_QUIET_VISC;  sh[49] = LIQUID_QUIET_SPEED;
@@ -5471,35 +5454,18 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
 // the active window (index arithmetic past the edge would wrap rows);
 // the cap treats the unknown as confined, erring toward settling.
 fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
-  // "Water" here means real water: at least ~1.5 particles of the
-  // 4-per-cell rest density. A sub-rest trace film carries ZERO EOS
-  // pressure (the one-sided knee), so it can neither hold a wedge back
-  // nor transmit its push to a lip; counting it as water made a parked
-  // wedge read as confined through its own drained trail (measured:
-  // three gate variants in a row changed nothing until this line).
-  // Open air means TWO consecutive sub-floor cells: a single low-mass
-  // pocket backed by solid is confinement, not air. A wall-hugging
-  // cell is permanently half-covered by the B-spline (about 1.2 of
-  // 4 particles at rest), and with a one-cell test both corners of
-  // every walled basin read as open air forever: a permanent false
-  // seed that kept the whole bed marked and the pool fizzing
-  // (measured: rest meanV pinned near 9.5 px/s vs the 3.6 baseline).
-  // A real drainable fringe is followed by more emptiness and passes.
-  // ...and beyond those two the NEXT cell must not be solid. A painted
-  // wall's edge column is phantom air (cell centre outside the paint,
-  // so not gridSolid; particles pushed out, so no mass), and together
-  // with the B-spline-starved corner cell it fakes a two-cell gap at
-  // every wall foot. A real fringe continues into more air; a wall
-  // pocket hits paint and stays confinement.
-  // The mass test reads a TWO-ROW COLUMN SUM, not the single row:
-  // settled particles rest straddling the contact row's top boundary,
-  // so a pool's contact row is naturally patchy (0.7 to 1.3 of 4 in
-  // pockets while the row above holds 3.3 to 5.3; read back from the
-  // GPU), and a single-row walk found fake air mid-pool and seeded
-  // forever. The SUM with a 3-particle floor separates the two cases
-  // a max() could not: a pool column reads 4.0 or more everywhere, a
-  // drained trail film 2.1 or less, so the wedge is not read as
-  // confined through its own trail (the max() variant re-parked it).
+  // Can this bed cell's row reach open air within 16 cells? Every rule
+  // here guards a measured false-seed class (full history + numbers in
+  // docs/game/TUNING.md v26.64; do not simplify without rereading it):
+  // air = TWO consecutive cells whose TWO-ROW COLUMN SUM is under 3 of
+  // the 4-per-cell rest (single-row reads see fake air in a pool's
+  // naturally patchy contact row; a max() of the rows reads a wedge as
+  // confined through its own 2-layer trail; one-cell gaps are wall-foot
+  // starvation, not air), and the cell beyond must not be solid (a
+  // painted wall's edge column is phantom air: centre outside the
+  // paint, particles pushed out). v26.67 tried an 8-cell cap; it cut
+  // the ledge drain rate to a quarter (fewer seeds, slower front), so
+  // 16 stays; the lazy above-row load still halves the walk's loads.
   let waterFloor = 3.0 * FIXED_SCALE;
   let colW = c0 % gp.gridW;
   let capL = min(16u, colW);
@@ -5508,12 +5474,12 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
     if (kL > capL) { break; }
     if (gridSolid(cgx - i32(kL), cgy)) { break; }
     var mL = f32(cellMass[c0 - kL]);
-    if (c0 - kL >= gp.gridW) { mL = mL + f32(cellMass[c0 - kL - gp.gridW]); }
+    if (mL < waterFloor && c0 - kL >= gp.gridW) { mL = mL + f32(cellMass[c0 - kL - gp.gridW]); }
     if (mL < waterFloor) {
       if (kL == capL) { break; }
       if (gridSolid(cgx - i32(kL) - 1, cgy)) { break; }
       var mL2 = f32(cellMass[c0 - kL - 1u]);
-      if (c0 - kL - 1u >= gp.gridW) { mL2 = mL2 + f32(cellMass[c0 - kL - 1u - gp.gridW]); }
+      if (mL2 < waterFloor && c0 - kL - 1u >= gp.gridW) { mL2 = mL2 + f32(cellMass[c0 - kL - 1u - gp.gridW]); }
       if (mL2 < waterFloor) {
         if (gridSolid(cgx - i32(kL) - 2, cgy)) { break; }
         return true;
@@ -5527,12 +5493,12 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
     if (kR > capR) { break; }
     if (gridSolid(cgx + i32(kR), cgy)) { break; }
     var mR = f32(cellMass[c0 + kR]);
-    if (c0 + kR >= gp.gridW) { mR = mR + f32(cellMass[c0 + kR - gp.gridW]); }
+    if (mR < waterFloor && c0 + kR >= gp.gridW) { mR = mR + f32(cellMass[c0 + kR - gp.gridW]); }
     if (mR < waterFloor) {
       if (kR == capR) { break; }
       if (gridSolid(cgx + i32(kR) + 1, cgy)) { break; }
       var mR2 = f32(cellMass[c0 + kR + 1u]);
-      if (c0 + kR + 1u >= gp.gridW) { mR2 = mR2 + f32(cellMass[c0 + kR + 1u - gp.gridW]); }
+      if (mR2 < waterFloor && c0 + kR + 1u >= gp.gridW) { mR2 = mR2 + f32(cellMass[c0 + kR + 1u - gp.gridW]); }
       if (mR2 < waterFloor) {
         if (gridSolid(cgx + i32(kR) + 2, cgy)) { break; }
         return true;
@@ -5582,37 +5548,17 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
     if (rightSolid && vx > 0.0) { vx = vx * bEdge; }
     if (upSolid    && vy < 0.0) { vy = vy * bEdge; }
     if (downSolid  && vy > 0.0) { vy = vy * bEdge; }
-    // v26.64 CONFINEMENT GATE (the owner's rule, generalized): water may
-    // only settle where it is confined. Walk up to 16 cells left and
-    // right AT THIS CELL'S ROW: hitting solid terrain means that side is
-    // confined; running out of water into open air means the column can
-    // still drain or level, so this cell must not park. Open cells get
-    // their local calm clamped low, which keeps the rest brake and the
-    // reach's calm floor off while hydrostatics finish the job. A wedge
-    // leaning on a ledge lip drains off instead of parking mid-slope; a
-    // bump on a level pool reads open at its own row and self-levels;
-    // a walled pond reads confined and settles exactly as before. Deep
-    // interiors hit the 16-cell cap and count as confined.
+    // v26.64 CONFINEMENT GATE (the owner's rule: water only settles
+    // where something confines it; full design + measured history in
+    // docs/game/TUNING.md v26.64). A BED-CONTACT cell whose row can
+    // reach open air seeds the calm field with the -1 open SENTINEL;
+    // the cellState pass spreads it through connected water. Bed cells
+    // only (surface raggedness self-sustained a marked fizz), and a
+    // sentinel rather than a low value (ordinary lively calm must never
+    // spread, or a sloshing basin chain-holds itself).
     var isOpenCell = false;
     if (sp.local.x > 0.0 && downSolid && rowOpen(c, cgx, cgy)) {
-      // Openness is strictly a BED phenomenon: only a floor-contact
-      // cell whose own row reaches open air within the walk can seed.
-      // Surface cells never qualify, whatever the raggedness; an early
-      // surface-row variant let a sloshing pool's transient 2-cell
-      // raggedness seed marks that contagion then carried across the
-      // whole surface, and the drive+slickness fed the very fizz that
-      // kept the surface ragged: a self-sustaining simmer in a walled
-      // basin (measured: rest meanV pinned near 10 px/s while the
-      // pre-wip baseline decayed 9.3 to 3.6 over the same window).
       isOpenCell = true;
-      // The seed is a SENTINEL (-1), not merely a low calm. The
-      // cellState pass spreads it along the bed through connected
-      // water (openness contagion), so a wide sheet's interior
-      // releases too; the 16-cell row walk alone only ever released
-      // the fringe, and the interior parked behind it (measured five
-      // times). A sentinel cannot be confused with ordinary lively
-      // low calm, which must NOT spread: a sloshing confined basin
-      // would chain-hold itself un-calm forever through plain values.
       calmCellB[c] = -1.0;
     }
     // Surface friction — a floor brakes lateral motion, walls brake
@@ -5643,30 +5589,20 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
       if (sp.local.x > 0.0 && (isOpenCell || calmCellB[c] < -0.5)) { fricF = max(fricF, sp.feel.w); }
       vx = vx * fricF;
     }
-    // v26.64 SHALLOW-WATER DRIVE. A wedge a few cells deep has no
-    // lateral hydrostatic push in the MPM grid (measured: with every
-    // damper forced off, an 11 px wedge on an open ledge still parked;
-    // the EOS's equilibrium compression at that head is far below the
-    // pressure the gradient would need). So the missing force is
-    // modeled directly: a = g * surface slope, applied over the whole
-    // column like real shallow-water forcing (bed row only was a fifth
-    // of the drive and still parked). The surface slope comes from the
-    // upward partial column masses of the two lateral neighbours; the
-    // walk down to the bed gives the true column height for the gates:
-    // deep pools keep pure EOS hydrostatics (their surface rows must
-    // not read as shallow film), sub-monolayer films do not
-    // self-spread, and an overhang (air below) gets nothing.
-    // OPEN columns only (the column's BED cell carries the mark, seeded
-    // or contagion-spread): a settled shallow pool's surface is one
-    // particle ragged, and at this resolution those packing slopes are
-    // statistically identical to a real drainable wedge's 2 percent
-    // grade, so an ungated drive set every confined shallow basin
-    // fizzing on its own noise forever (measured: rest meanV climbing
-    // to 10 px/s and the body puffed into sub-render-density mist).
-    // Confinement is the one signal that separates the two, exactly
-    // the owner's rule; keying on the bed cell lets the whole column
-    // drive while keeping surface cells free of marks entirely.
-    if (sp.local.x > 0.0) {
+    // v26.64 SHALLOW-WATER DRIVE (design + measurements in TUNING.md
+    // v26.64): under-resolved shallow columns have NO lateral
+    // hydrostatic push in the grid (kill test: every damper off, wedge
+    // still parked), so the force is modeled: a = 2g x surface slope
+    // over the whole column. OPEN columns only (bed cell marked): a
+    // settled pool's ragged packing slopes are statistically identical
+    // to a drainable grade, and an ungated drive boiled confined basins
+    // on their own noise. Gates: off above ~6-9 cells (real EOS takes
+    // over) and below ~a monolayer (films never self-spread); overhangs
+    // get nothing. v26.67 perf: the own-cell mark pre-gates the walks
+    // (the climb marks a driven column within substeps; unmarked cell =
+    // undriven column, so the 10-cell bed walk no longer runs for every
+    // water cell just to decide "no").
+    if (sp.local.x > 0.0 && (isOpenCell || calmCellB[c] < -0.5)) {
       var dBed = 99.0;
       var kD = 0u;
       loop {
@@ -5753,13 +5689,10 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
         // confinement gate, parking a wedge on an open ledge (measured:
         // 2024 particles draining to only 1915 in 30 s).
         if (sp.local.x > 0.0) {
-          // Shipped v26.63 base formula, exactly (max() also guards the
-          // sentinel): a wip rewrite that blended grip from cell calm
-          // alone let marginal cells keep their own floor slick and a
-          // walled basin's fizz sustained itself (measured 7.8 px/s at
-          // 20 s vs 3.6 baseline). The sentinel is a pure CAP on top:
-          // open cells take at most the sp.local.y reach however calm
-          // the rest of the world is.
+          // Shipped v26.63 base formula exactly (max() also guards the
+          // sentinel; blending from cell calm alone let basins sustain
+          // their own fizz, TUNING.md v26.64). The sentinel is a pure
+          // CAP: open cells take at most sp.local.y reach.
           vxK = max(vxK, max(calmCellB[c], 0.0));
           if (isOpenCell || calmCellB[c] < -0.5) { vxK = min(vxK, sp.local.y); }
         }
@@ -6174,13 +6107,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let quietSpeed = sqrt(newVX * newVX + newVY * newVY);
     let quietTail = 1.0 - smoothstep(sp.quiet.y * 0.25, sp.quiet.y, quietSpeed);
     let quietBody = smoothstep(0.30, 0.55, densityRatio);
-    // v26.64: the open sentinel (-1) releases the tail entirely, so
-    // unconfined water is not pinned at the tail's terminal creep (a
-    // ledge wedge's slope drive is only ~8 px/s^2, and the full tail
-    // parked it at ~5 px/s instead of draining). POSITIVE calm does
-    // not scale it: the tail is the shallow-band orbit killer, and
-    // scaling it by settling calm halved the kill rate in a walled
-    // basin (measured: 8.8 px/s at 20 s vs the baseline's 3.6).
+    // v26.64: the open sentinel releases the tail entirely (full tail
+    // pinned a draining wedge at terminal creep); POSITIVE calm must
+    // NOT scale it (halved the orbit kill in basins, TUNING.md).
     var quietW = sp.quiet.w;
     if (sp.local.x > 0.0 && calmCellG[nbr[4]] < -0.5) { quietW = 0.0; }
     let quietKeep = 1.0 - clamp(quietW * quietTail * quietBody, 0.0, 0.2);
@@ -8039,35 +7968,27 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       layout: bBgl,
       entries: bBgEntries
     });
-    // v26.61: temporal pressure filter (see LIQUID_DV_FILTER). Its own
-    // tiny pass between pressure and gridUpdate because the grid-update
-    // bind group already sits at the 8-storage-buffer floor. Auto layouts;
-    // dense and sparse keep separate bind groups.
-    var WGSL_DV_FILTER_HEAD = /* wgsl */ `
+    // v26.67: the CELL-STATE pass (per-cell calm field). Its own tiny
+    // pass between pressure and gridUpdate because the grid-update bind
+    // group already sits at the 8-storage-buffer floor. Auto layouts;
+    // dense and sparse keep separate bind groups. (Until v26.66 this
+    // pass also hosted the v26.61 temporal pressure filter, a measured
+    // dead end that shipped permanently disabled yet still read and
+    // wrote a 16.8 MB prevDV buffer for every active cell every substep;
+    // that machinery is deleted, the dead-end LESSON stays in TUNING.md.)
+    var WGSL_CELL_STATE_HEAD = /* wgsl */ `
 struct P2GParams {
   count:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, cells:u32,
   stepDt:f32, invCell:f32,
 };
 @group(0) @binding(0) var<uniform> gp : P2GParams;
-@group(0) @binding(1) var<storage, read_write> cellDVX : array<atomic<i32>>;
-@group(0) @binding(2) var<storage, read_write> cellDVY : array<atomic<i32>>;
-@group(0) @binding(3) var<storage, read_write> prevDV  : array<vec2<f32>>;
 @group(0) @binding(5) var<storage, read_write> csVX   : array<atomic<i32>>;
 @group(0) @binding(6) var<storage, read_write> csVY   : array<atomic<i32>>;
 @group(0) @binding(7) var<storage, read_write> csMass : array<atomic<i32>>;
 @group(0) @binding(8) var<storage, read_write> calmCell : array<f32>;
 `;
-    var WGSL_DV_FILTER_BODY = /* wgsl */ `
+    var WGSL_CELL_STATE_BODY = /* wgsl */ `
   if (c >= gp.cells) { return; }
-  let k = sp.bathC.z;
-  let dx = f32(atomicLoad(&cellDVX[c]));
-  let dy = f32(atomicLoad(&cellDVY[c]));
-  let pv = prevDV[c];
-  prevDV[c] = vec2<f32>(dx, dy);
-  if (abs(k) > 0.001) {
-    atomicStore(&cellDVX[c], i32(round(dx + (pv.x - dx) * k)));
-    atomicStore(&cellDVY[c], i32(round(dy + (pv.y - dy) * k)));
-  }
   // v26.63: per-cell calm field update. A cell's calm falls fast while
   // ITS water moves over 24 px/s and rises slowly as it stills; empty
   // cells drift calm so vacated splash zones re-arm. Fixed-point scales
@@ -8122,23 +8043,15 @@ struct P2GParams {
     // sloshing walled basin cannot chain-hold itself (no seed, no
     // contagion; the moment the seeds drain away every marked cell
     // falls back to the normal rise above).
-    // v26.64 GRADIENT openness contagion. Boundary seeds write -1;
-    // each hop through connected water WEAKENS the mark by a fixed
-    // step, so a cell stays marked only while a monotone path links it
-    // to a LIVE seed. An equality-spread version latched: a basin
-    // marked while filling (scattered sheets on the dry floor are
-    // genuinely open) held itself marked forever afterward, every bed
-    // cell vouching for its equally-marked neighbour (read back from
-    // the GPU: the whole pool body solid -1 at rest, fizzing at 9.5
-    // px/s). With the gradient, an orphaned block's values drift up
-    // one step per substep and the marks collapse in under a second;
-    // mutual holding is arithmetically impossible. Step 0.004 with the
-    // -0.5 consumer threshold gives about 125 cells of reach from a
-    // seed. Spread runs along the bed (cells with no water beneath:
-    // bed contact or a droplet; a pool's surface rows always have full
-    // water below and can never carry the mark) plus a bed-anchored
-    // vertical climb, so a marked column releases its upper rows too.
-    // A confined pool's bed is never seeded, so nothing spreads there.
+    // v26.64 GRADIENT openness contagion (history in TUNING.md v26.64).
+    // Each hop from a -1 seed WEAKENS the mark by 0.004 (about 125
+    // cells of reach at the -0.5 consumer threshold), so a cell stays
+    // marked only while a monotone path links it to a LIVE seed:
+    // orphaned blocks drift up one step per substep and collapse, and
+    // mutual holding is arithmetically impossible (an equality-spread
+    // version latched whole basins marked forever). Spread runs along
+    // the bed only, plus the bed-anchored vertical climb; surface rows
+    // (full water below) can never carry the mark.
     var src = 0.0;
     if (mFx > 0.5 * ${FIXED_SCALE}) {
       var bedHere = true;
@@ -8163,25 +8076,22 @@ struct P2GParams {
   }
 `;
     try {
-      instance.dvFilterPipe = dev.createComputePipeline({
-        label: 'liquid.dvFilter',
+      instance.cellStatePipe = dev.createComputePipeline({
+        label: 'liquid.cellState',
         layout: 'auto',
         compute: {
           module: dev.createShaderModule({
-            code: WGSL_SIM_PARAMS + simBind(4) + WGSL_DV_FILTER_HEAD +
-                  cellEntryDense(WGSL_DV_FILTER_BODY)
+            code: WGSL_SIM_PARAMS + simBind(4) + WGSL_CELL_STATE_HEAD +
+                  cellEntryDense(WGSL_CELL_STATE_BODY)
           }),
           entryPoint: 'main'
         }
       });
-      instance.dvFilterBG = dev.createBindGroup({
-        label: 'liquid.dvFilterBG',
-        layout: instance.dvFilterPipe.getBindGroupLayout(0),
+      instance.cellStateBG = dev.createBindGroup({
+        label: 'liquid.cellStateBG',
+        layout: instance.cellStatePipe.getBindGroupLayout(0),
         entries: [
           { binding: 0, resource: { buffer: instance.paramsBuf } },
-          { binding: 1, resource: { buffer: instance.buf.cellDVX } },
-          { binding: 2, resource: { buffer: instance.buf.cellDVY } },
-          { binding: 3, resource: { buffer: instance.buf.cellDVPrev } },
           { binding: 4, resource: { buffer: instance.simParamsBuf } },
           { binding: 5, resource: { buffer: instance.buf.cellVX } },
           { binding: 6, resource: { buffer: instance.buf.cellVY } },
@@ -8190,25 +8100,22 @@ struct P2GParams {
         ]
       });
       if (instance.sparseCapable && instance.sparseGrid2OK) {
-        instance.dvFilterPipeSparse = dev.createComputePipeline({
-          label: 'liquid.dvFilterSparse',
+        instance.cellStatePipeSparse = dev.createComputePipeline({
+          label: 'liquid.cellStateSparse',
           layout: 'auto',
           compute: {
             module: dev.createShaderModule({
-              code: WGSL_SIM_PARAMS + simBind(4) + WGSL_DV_FILTER_HEAD +
-                    sparseListBind(9) + cellEntrySparse(WGSL_DV_FILTER_BODY)
+              code: WGSL_SIM_PARAMS + simBind(4) + WGSL_CELL_STATE_HEAD +
+                    sparseListBind(9) + cellEntrySparse(WGSL_CELL_STATE_BODY)
             }),
             entryPoint: 'main'
           }
         });
-        instance.dvFilterBGSparse = dev.createBindGroup({
-          label: 'liquid.dvFilterBGSparse',
-          layout: instance.dvFilterPipeSparse.getBindGroupLayout(0),
+        instance.cellStateBGSparse = dev.createBindGroup({
+          label: 'liquid.cellStateBGSparse',
+          layout: instance.cellStatePipeSparse.getBindGroupLayout(0),
           entries: [
             { binding: 0, resource: { buffer: instance.paramsBuf } },
-            { binding: 1, resource: { buffer: instance.buf.cellDVX } },
-            { binding: 2, resource: { buffer: instance.buf.cellDVY } },
-            { binding: 3, resource: { buffer: instance.buf.cellDVPrev } },
             { binding: 4, resource: { buffer: instance.simParamsBuf } },
             { binding: 5, resource: { buffer: instance.buf.cellVX } },
             { binding: 6, resource: { buffer: instance.buf.cellVY } },
@@ -8218,10 +8125,10 @@ struct P2GParams {
           ]
         });
       }
-    } catch (eDv) {
-      instance.dvFilterPipe = null;
-      instance.dvFilterPipeSparse = null;
-      try { console.log('LiquidWGPU v26.61: dv-filter pipeline failed (' + ((eDv && eDv.message) || eDv) + '), filter off.'); } catch (_) {}
+    } catch (eCs) {
+      instance.cellStatePipe = null;
+      instance.cellStatePipeSparse = null;
+      try { console.log('LiquidWGPU v26.67: cell-state pipeline failed (' + ((eCs && eCs.message) || eCs) + '), calm field off.'); } catch (_) {}
     }
     instance.grid2Ready = true;
   }
@@ -8293,14 +8200,14 @@ struct P2GParams {
       else { cp.dispatchWorkgroups(cellGroups); }
     }
 
-    // 2c. v26.61: temporal pressure filter, LIVE CHAIN ONLY: the numbered
-    //     test harness calls runGrid2 without liveChain, so the fr()
-    //     references stay exact at any pushed DV_FILTER value.
-    if (liveChain && (LIQUID_DV_FILTER !== 0 || LIQUID_CALM_LOCAL > 0) && instance.dvFilterPipe) {
-      var dvSp = sparse && instance.dvFilterPipeSparse;
-      cp.setPipeline(dvSp ? instance.dvFilterPipeSparse : instance.dvFilterPipe);
-      cp.setBindGroup(0, dvSp ? instance.dvFilterBGSparse : instance.dvFilterBG);
-      if (dvSp) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
+    // 2c. cell-state pass (per-cell calm field), LIVE CHAIN ONLY: the
+    //     numbered test harness calls runGrid2 without liveChain, so
+    //     the fr() references stay exact.
+    if (liveChain && LIQUID_CALM_LOCAL > 0 && instance.cellStatePipe) {
+      var csSp = sparse && instance.cellStatePipeSparse;
+      cp.setPipeline(csSp ? instance.cellStatePipeSparse : instance.cellStatePipe);
+      cp.setBindGroup(0, csSp ? instance.cellStateBGSparse : instance.cellStateBG);
+      if (csSp) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
       else { cp.dispatchWorkgroups(cellGroups); }
     }
 
@@ -9246,6 +9153,11 @@ struct P2GParams {
         instance.sleepingCount = sleeping;
         instance.frozenCount = frozen;
         instance.fastCount = fast;
+        // v26.67: generation counter for hosts. A host that re-buckets
+        // the mirror (the toy's buildWaterCells over up to 100k
+        // particles) can skip frames where no new readback landed
+        // instead of rebuilding identical data every frame.
+        instance.readbackApplyGen = (instance.readbackApplyGen | 0) + 1;
       }
     } catch (_) {
       // Ignore — the unmap below still runs so the buffers are reusable.
@@ -10234,7 +10146,6 @@ fn main() {
             case 'TURB_REF':             LIQUID_TURB_REF = v < 1 ? 1 : v; break;
             case 'FLOOR_REACH':          LIQUID_FLOOR_REACH = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             case 'KNEE_W':               LIQUID_KNEE_W = v < 0 ? 0 : (v > 0.5 ? 0.5 : v); break;   // v26.55 EOS knee hinge
-            case 'DV_FILTER':            LIQUID_DV_FILTER = v < -0.6 ? -0.6 : (v > 0.9 ? 0.9 : v); break; // v26.61 temporal pressure filter (measured dead end, ships 0)
             case 'REACH_VY':             LIQUID_REACH_VY = v < 0 ? 0 : (v > 1 ? 1 : v); break;   // v26.61 vertical-reach floor
             case 'CALM_LOCAL':           LIQUID_CALM_LOCAL = v ? 1 : 0; break;   // v26.63 per-cell calm field mode
             case 'REACH_FLOOR':          LIQUID_REACH_FLOOR = v < 0 ? 0 : (v > 1 ? 1 : v); break; // v26.64 local-mode reach floor
