@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.18'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.19'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 

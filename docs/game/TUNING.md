@@ -738,6 +738,25 @@ spawn-shortfall red herring traced to spawnWaterJet's solid-tile skip);
 three stranded beads persist at v 0.03 and render seated on the floor;
 smallpool decay unchanged.
 
+**v26.66: DBG_PARTICLES overlay draws every particle (degradation report).**
+Owner: the particle-dot view "degrades" over 1-2 hours (patchwork, blue
+holes, faint striping). Instrumented 14-minute run of the falls scene:
+count, aeration, mean speed, and JS heap are all FLAT (the sim does not
+drift), but two overlay behaviours aged the picture and one real
+positional effect remains. (1) Frozen particles were CLIPPED from the
+dot pass, so freeze/thaw geography read as growing dotless blue holes;
+the overlay now draws ALL particles (sleeping dimmed 0.8, frozen 0.5),
+which also matches its stated purpose of proving particles exist.
+(2) Dot colour hashes the particle INDEX, and pre-v26.65 evaporation
+swap-removes constantly reassigned indices, recolouring dots; the
+conservation change already removed that churn. (3) The faint stripes
+are REAL annealing: the measured lattice-order metric climbs 0.25 to
+0.34 in 14 minutes (random pack is about 0.25) because the pool
+micro-moves at ~0.85 px/s forever under a dripper and slowly settles
+into the regular rest packing. That is the physics of a packed particle
+bed, it is invisible with the dot overlay off, and it stops wherever
+the body truly freezes.
+
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
 host keeps each selected slime in a stable one-of-eight slot while wet-cell

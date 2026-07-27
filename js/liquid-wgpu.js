@@ -7531,13 +7531,16 @@ fn dcorner(vid : u32) -> vec2<f32> {
 @vertex
 fn vs(@builtin(vertex_index) vid : u32, @builtin(instance_index) iid : u32) -> DOut {
   var o : DOut;
+  // v4.19: frozen particles used to be clipped from the overlay, so a
+  // frozen body read as a dotless blue hole and the freeze/thaw
+  // geography aged the confetti into patchwork over hours (the owner's
+  // degradation report). The overlay's whole point is proof that every
+  // particle exists, so draw ALL of them: sleeping slightly dimmed,
+  // frozen more, both still clearly present.
   let fl = dflag[iid];
-  if (((fl >> 5u) & 1u) != 0u) {              // frozen -> clip offscreen
-    o.pos = vec4<f32>(2.0, 2.0, 2.0, 1.0);
-    o.uv  = vec2<f32>(0.0, 0.0);
-    o.col = vec3<f32>(0.0, 0.0, 0.0);
-    return o;
-  }
+  var dim = 1.0;
+  if (((fl >> 4u) & 1u) != 0u) { dim = 0.8; }
+  if (((fl >> 5u) & 1u) != 0u) { dim = 0.5; }
   let p = dpos[iid];
   let half = 1.8;                              // fixed device px — hard dot, no scaling
   let scrX = (p.x - rp.camX) * rp.dpws;
@@ -7549,7 +7552,7 @@ fn vs(@builtin(vertex_index) vid : u32, @builtin(instance_index) iid : u32) -> D
   o.uv  = cc;
   let h = iid * 2654435761u;                   // distinct bright colour per particle index
   let hv = vec3<f32>(f32((h >> 16u) & 255u), f32((h >> 8u) & 255u), f32(h & 255u)) / 255.0;
-  o.col = vec3<f32>(0.35, 0.35, 0.35) + 0.65 * hv;
+  o.col = (vec3<f32>(0.35, 0.35, 0.35) + 0.65 * hv) * dim;
   return o;
 }
 
