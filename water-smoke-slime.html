@@ -77,12 +77,16 @@
       font-size: 0.66rem;
       letter-spacing: 0.04em;
       color: var(--d-text-dim);
-      background: rgba(24, 29, 25, 0.72);
-      border: 1px solid var(--d-rule);
+      /* v4.21: near-transparent so the pill never hides the water
+         behind it (the owner's bottom sliver); the text-shadow keeps
+         the readout legible over bright water. */
+      background: rgba(24, 29, 25, 0.22);
+      border: 1px solid rgba(84, 96, 88, 0.35);
       border-radius: 6px;
       padding: 0.22rem 0.5rem;
       pointer-events: none;
       white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
     }
     .toy-fallback[hidden] { display: none; }
     .toy-fallback {
@@ -361,7 +365,7 @@
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
   <script src="js/liquid-wgpu.js?v=v26.67"></script>
-  <script src="js/water-smoke-slime.js?v=v4.20"></script>
+  <script src="js/water-smoke-slime.js?v=v4.21"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
