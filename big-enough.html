@@ -80,7 +80,7 @@
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
   .sec > :last-child { margin-bottom: 0; }
   .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
-  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-kicker::before, .sec.first .sec-h::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
   .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
@@ -315,7 +315,7 @@
   <header class="hero">
     <h1 class="hero-title">Big Enough: How Much Muscle Is Actually Worth Building</h1>
     <p class="hero-dek">Muscle growth is generous at first. Then each added set, meal, and year buys less. Here is what the research can measure, what it cannot, and where the smart effort stops.</p>
-    <p class="hero-meta">A field guide to natural muscle <span class="sep">/</span> <b>current through 2026</b> <span class="sep">/</span> evidence graded</p>
+    <p class="hero-meta">A field guide to natural muscle <span class="sep">/</span> <b>49 sources</b> <span class="sep">/</span> 30 min read</p>
   </header>
 
   <main id="guide">
@@ -327,12 +327,11 @@
 
   <!-- ===================== 1. THE ONE-PAGE VERSION ===================== -->
   <section id="start" class="sec first" aria-labelledby="start-h">
-    <span class="sec-kicker">Start here</span>
     <h2 id="start-h" class="sec-h">The one-page version</h2>
 
-    <p class="lede">The useful part of muscle science fits on one page. Train each muscle with enough hard weekly sets, add repetitions or load when you can, eat enough protein, sleep, and keep going. Creatine helps a little. Most products do not. The difficult part is not finding another lever. It is noticing when a lever that works has started paying less.</p>
+    <p class="lede">The useful part of muscle science fits on one page. Train each muscle group with enough hard weekly sets, add repetitions or load when you can, eat enough protein, sleep, and keep going. Creatine helps a little. Most products do not. The difficult part is noticing when a lever that works has started paying less.</p>
 
-    <p>You can become strong and visibly muscular on a plan that fits on a sticky note. You can also keep adding work after the easy progress is gone. Research can show that the returns shrink. It cannot show you where your own ceiling sits. <strong>Big enough</strong> is therefore not a biological coordinate. It is the point where the next increment is no longer worth what it asks from the rest of your life.</p>
+    <p>You can become strong and visibly muscular on a plan that fits on a sticky note. You can also keep adding work after the easy progress is gone. Research can show that the returns shrink. It cannot show you where your own ceiling sits. <strong>Big enough</strong> is therefore the point where the next increment stops being worth what it asks from the rest of your life.</p>
 
     <figure class="viz reveal" aria-label="The entire effective protocol on a single card.">
       <figcaption>The whole plan, on one card</figcaption>
@@ -342,7 +341,7 @@
         <div class="plan-tile" style="--tile:#9ec79a"><div class="plan-name"><span class="plan-n">2</span> Eat</div><div class="plan-body">About 0.7 g protein per pound each day is a sensible target, not a magic cutoff.</div></div>
         <div class="plan-tile" style="--tile:#8fb3c7"><div class="plan-name"><span class="plan-n">3</span> Sleep</div><div class="plan-body">Give recovery a regular 7 to 9 hour window. Hypertrophy has no proven hour-by-hour curve.</div></div>
         <div class="plan-tile" style="--tile:#dfc288"><div class="plan-name"><span class="plan-n">4</span> Move</div><div class="plan-body">Keep some cardio. Sensible concurrent training does not erase whole-muscle growth.</div></div>
-        <div class="plan-tile is-key" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">5</span> Creatine</div><div class="plan-body">3 to 5 g of plain monohydrate a day. Useful, well studied, and optional.</div></div>
+        <div class="plan-tile" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">5</span> Creatine</div><div class="plan-body">Optional. If you want one supplement, 3 to 5 g of plain monohydrate a day.</div></div>
         <div class="plan-tile" style="--tile:#b79bc4"><div class="plan-name"><span class="plan-n">6</span> Wait</div><div class="plan-body">Measure progress across months. No study can predict your personal finish line.</div></div>
       </div>
       <p class="viz-note">That is the engine. The chapters below show where the measurements are solid and where judgment has to replace precision.</p>
@@ -374,7 +373,7 @@
     <p>A separate 2026 dose-response meta-regression added an important qualification: the observed curve kept rising as weekly sets increased, but each added set bought less than the one before it. Its models fit the available studies rather than defining a hard threshold, so confidence in the exact curve should fall toward the high-volume edge. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span></p>
 
     <figure class="viz reveal" aria-label="What the evidence establishes and what it cannot predict about diminishing returns.">
-      <figcaption>The honest curve has a wide edge</figcaption>
+      <figcaption>Where the evidence stops</figcaption>
       <p class="viz-sub">The direction is clear. The personal coordinates are not.</p>
       <div class="prog-wrap"><table class="prog">
         <thead><tr><th>The evidence supports</th><th>The evidence does not supply</th></tr></thead>
@@ -427,104 +426,12 @@
 
     <p class="viz-note">The bands are practical reading aids, not biological borders. Exercise selection, training age, set quality, recovery, and the muscle being trained all move them. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span></p>
 
-    <h3>What “big enough” can honestly mean</h3>
-    <p>People do not gain at one published annual rate. Studies show large variation, measurement noise, and no clean split where women gain half as much as men. A 2025 meta-analysis found similar relative hypertrophy between sexes, with only a small male advantage in absolute change. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40028215/">Refalo 2025</a></span> <span class="grade g-a">strong</span></p>
+    <h3>Who decides when it is enough</h3>
+    <p>People do not gain at one published annual rate. The measured spread is wide, and it does not split cleanly by sex: a 2025 meta-analysis found similar relative hypertrophy in men and women, with only a small male advantage in absolute change. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40028215/">Refalo 2025</a></span> <span class="grade g-a">strong</span></p>
 
     <p>The stopping rule has to be personal: keep adding work while the return still matters to you and recovery remains good. Stop adding it when another weekly hour, another food rule, or another tired joint matters more than the likely increment of muscle. A competitive bodybuilder may choose differently from a parent who wants strength, health, and three free evenings.</p>
 
     <blockquote class="u-pq">Diminishing returns can tell you how to spend the next hour. They cannot tell you what percentage of your genes you own.<cite class="u-pq-cite">The limit of the evidence</cite></blockquote>
-
-    <hr class="u-divider">
-  </section>
-
-  <!-- ===================== 2. CREATINE ===================== -->
-  <section id="creatine" class="sec" aria-labelledby="creatine-h">
-    <style>
-      @media all {
-        .cr-glow { animation: crGlow 3.6s ease-in-out infinite; }
-        @keyframes crGlow { 0%,30% { opacity:0.25; } 48% { opacity:1; } 70%,100% { opacity:0.25; } }
-      }
-      @media (prefers-reduced-motion: reduce) { .cr-glow { animation: none; opacity: 1; } }
-    </style>
-    <span class="sec-kicker">The one supplement</span>
-    <h2 id="creatine-h" class="sec-h">Creatine, kept in proportion</h2>
-
-    <p class="lede">Creatine monohydrate can add a little strength and lean mass to a resistance-training program. It is inexpensive, extensively studied, and generally well tolerated by healthy adults. The effect is useful rather than transformative, which is exactly the scale a guide about diminishing returns should preserve.</p>
-
-    <p>Creatine is not exotic. It is a small molecule your liver already makes and your muscles already store, and you eat about a gram of it a day if you eat meat or fish. Supplementing simply tops the tank up past what food can manage, and a fuller tank does measurable work.</p>
-
-    <h3>What it actually does, up close</h3>
-    <p>Your muscles run their hardest, fastest efforts on a tiny, instant battery called the <strong>phosphocreatine system</strong>. When a muscle fires, it spends ATP (the cell's energy coin) and is left holding spent change, ADP. Phosphocreatine immediately hands over a phosphate to turn that ADP back into fresh ATP, in a fraction of a second, faster than any other energy pathway in the body. The more phosphocreatine you have banked, the longer you can keep that instant battery topped up. Supplementing raises the muscle's creatine and phosphocreatine stores by <strong>20 to 40 percent</strong>. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
-
-    <figure class="viz reveal" aria-label="A three-dimensional model of the phosphocreatine molecule.">
-      <figcaption>The instant battery, up close</figcaption>
-      <p class="viz-sub">This is phosphocreatine itself: a creatine molecule carrying a charged phosphate group, the orange cluster at left. It hands that phosphate straight to spent ADP to rebuild ATP, the cell's energy coin, faster than any other system in the body. A fuller bank of it means a couple more good reps before the battery runs flat.</p>
-      <div class="mol-stage">
-        <img class="mol" src="assets/images/big-enough/phosphocreatine.webp" width="1600" height="978" loading="lazy" decoding="async" alt="A three-dimensional ball-and-stick model of phosphocreatine: an orange phosphorus atom ringed by red oxygens at the left (the charged phosphate group), linked through blue nitrogen atoms to a dark carbon backbone that ends in a red carboxyl group at the right.">
-      </div>
-      <p class="viz-note">This is also why creatine helps short, powerful efforts (a heavy set, a sprint, a jump) and does almost nothing for a long, steady jog. It is a battery for bursts. <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Phosphocreatine-zwitterion-3D-balls.png">3-D model by Jynto, Wikimedia Commons (CC0)</a></span></p>
-    </figure>
-
-    <h3>The muscle effect: real, but be honest about the size</h3>
-    <p>Here is where the marketing and the science part ways. Most of creatine's muscle-building power is <em>indirect</em>: by topping up that battery it lets you grind out an extra rep or two and recover a little faster, so you pile up more good training over months. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> Its <em>direct</em> contribution to muscle thickness, isolated from the training, is small, on the order of a fraction of an inch. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-a">strong</span> The training builds the muscle. Creatine just lets you train a bit harder and hold a bit more.</p>
-
-    <figure class="viz reveal scrollx" aria-label="Bar chart of extra strength and lean mass from adding creatine to training.">
-      <figcaption>What creatine adds, on top of training</figcaption>
-      <p class="viz-sub">The bars are the extra gain from creatine versus an identical program with a placebo, pooled across meta-analyses. Useful, not transformative.</p>
-      <svg viewBox="0 0 700 300" role="img" aria-label="Bench press plus 3 pounds, squat plus 12 pounds, and lean mass in older adults plus 3 pounds, all extra compared with placebo.">
-        <line x1="150" y1="40" x2="150" y2="250" class="v-grid-s"/>
-        <line x1="150" y1="250" x2="660" y2="250" class="v-grid-s"/>
-        <!-- scale ticks: +14 lb across 150..660 -->
-        <g class="v-axis">
-          <text x="150" y="270" text-anchor="middle">0</text>
-          <text x="296" y="270" text-anchor="middle">+4</text>
-          <text x="441" y="270" text-anchor="middle">+8</text>
-          <text x="587" y="270" text-anchor="middle">+12 lb</text>
-        </g>
-        <line x1="296" y1="40" x2="296" y2="250" class="v-grid"/>
-        <line x1="441" y1="40" x2="441" y2="250" class="v-grid"/>
-        <line x1="587" y1="40" x2="587" y2="250" class="v-grid"/>
-        <!-- bars: scale 36.4px per lb -->
-        <g>
-          <text x="142" y="74" text-anchor="end" class="v-label" font-size="13">Bench press 1RM</text>
-          <rect class="grow-b" x="150" y="60" width="115" height="26" rx="4" fill="#8fb3c7" style="transform-box:fill-box;transform-origin:left;"/>
-          <text x="277" y="78" class="v-mono" font-size="12" fill="#8fb3c7">+3 lb</text>
-        </g>
-        <g>
-          <text x="142" y="139" text-anchor="end" class="v-label" font-size="13">Squat 1RM</text>
-          <rect class="grow-b" x="150" y="125" width="453" height="26" rx="4" fill="#D4C4A0" style="transform-box:fill-box;transform-origin:left;"/>
-          <text x="546" y="143" class="v-mono" font-size="12" fill="#232a25" font-weight="700">+12 lb</text>
-        </g>
-        <g>
-          <text x="142" y="204" text-anchor="end" class="v-label" font-size="13">Lean mass (older adults)</text>
-          <rect class="grow-b" x="150" y="190" width="110" height="26" rx="4" fill="#9ec79a" style="transform-box:fill-box;transform-origin:left;"/>
-          <text x="272" y="208" class="v-mono" font-size="12" fill="#9ec79a">+3 lb</text>
-        </g>
-      </svg>
-      <table class="viz-data" style="font-size:0.74rem;color:#B8B2A2;border-collapse:collapse;margin-top:0.6em;">
-        <tr><td style="padding-right:1em">Bench +3.2 lb, squat +12.4 lb vs placebo</td><td><span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span></td></tr>
-        <tr><td style="padding-right:1em">Older adults +3 lb lean mass</td><td><span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">Chilibeck 2017</a></span></td></tr>
-      </table>
-    </figure>
-
-    <h3>A possible brain effect, kept in proportion</h3>
-    <p>Creatine also participates in brain energy metabolism. Reviews report possible benefits for memory, particularly under stress or in groups with lower baseline creatine intake, but the evidence is smaller and less consistent than the sports literature. A striking 2024 sleep-deprivation experiment used a single dose near 25 grams in a small sample; it does not show that the ordinary daily spoonful sharpens a rested brain. <span class="u-src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29704637/">Avgerinos 2018</a></span> <span class="grade g-c">mixed</span></p>
-
-    <h3>How to take it</h3>
-    <p>Buy plain <strong>creatine monohydrate</strong>, the original cheap form. Nothing fancier has been shown to beat it; the fancy versions cost more to do the same job. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
-    <ul>
-      <li><strong>3 to 5 grams a day, every day.</strong> Use the included measured scoop or a scale; ordinary teaspoons vary. This dose saturates muscle over roughly three to four weeks.</li>
-      <li><strong>Loading is optional.</strong> 20 grams a day for five to seven days fills the tank faster, but reaches the same place. Most people skip it.</li>
-      <li><strong>Timing does not matter.</strong> Any time, with or without food. Consistency is the only thing that counts.</li>
-      <li><strong>A small scale increase is possible.</strong> Creatine can draw more water into muscle, especially during loading. The amount and timing vary, and no weight change does not prove it failed.</li>
-    </ul>
-
-    <h3>The myths, retired</h3>
-    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It nudges a blood marker (creatinine) that can spook a doctor reading a lab result, but that is a measurement artifact, not damage. With existing kidney disease, ask your doctor first. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></p></aside>
-    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>"It makes your hair fall out."</b> Traces to one 2009 study that measured a hormone (DHT), not actual hair, and was never replicated. The first trial to look directly at hair, in 2025, found no difference from placebo. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <span class="grade g-b">good</span></p></aside>
-    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>"It causes cramps and dehydration."</b> Controlled evidence has not shown higher rates of either in healthy users. Some field studies report fewer events, but that does not prove creatine prevents them. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></p></aside>
-
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Response varies.</b> A small study found that some participants stored much less additional creatine than others, partly related to their starting muscle characteristics. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">Syrotuik 2004</a></span> If months of consistent use produce no useful change, stopping is reasonable. Existing kidney disease or another relevant medical condition is a reason to ask a clinician first.</p></aside>
 
     <hr class="u-divider">
   </section>
@@ -586,7 +493,7 @@
     <p>How heavy? For <em>growth</em>, surprisingly flexible: loads from about 30 to 85 percent of your one-rep max produced similar average hypertrophy when sets were taken close to failure. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> In other words, a hard set of 8 and a hard set of 25 can both work. For pure <em>strength</em>, heavy wins clearly. So pick loads that let you train hard without wrecking your joints, and stop worrying that 12-rep sets are "too light to grow."</p>
 
     <h3>Lever three: effort (close to failure, not always to it)</h3>
-    <p>Sets generally become more stimulative as they finish closer to failure, but the exact curve is uncertain. Failure itself is not required, and using it on every set adds fatigue that can reduce later work. A practical default is to finish most sets with roughly <strong>2 to 3 reps in reserve</strong>, then use failure selectively when the exercise is safe and the extra fatigue is acceptable. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38970765/">Robinson 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="grade g-a">strong</span></p>
+    <p>Sets generally become more stimulative as they finish closer to failure, but the exact curve is uncertain. Failure itself is not required, and using it on every set adds fatigue that can reduce later work. A practical default is to finish most sets with roughly 2 to 3 reps in reserve, then use failure selectively when the exercise is safe and the extra fatigue is acceptable. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38970765/">Robinson 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="grade g-a">strong</span></p>
 
     <h3>The smaller levers</h3>
     <ul>
@@ -597,7 +504,7 @@
     </ul>
 
     <h3>The part that happens out of the gym</h3>
-    <p>Sleep and protein support recovery, but hypertrophy research does not provide a clean percentage for each hour slept. In one small laboratory study, a night of <strong>total sleep deprivation</strong> reduced muscle protein synthesis by about 18 percent. That is evidence against all-nighters, not proof that an ordinary short night costs the same amount of muscle. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-c">mixed</span> A regular 7 to 9 hour sleep opportunity remains a sound recovery target.</p>
+    <p>Sleep and protein support recovery, but hypertrophy research does not provide a clean percentage for each hour slept. In one small laboratory study, a night of total sleep deprivation reduced muscle protein synthesis by about 18 percent. That is evidence against all-nighters, not proof that an ordinary short night costs the same amount of muscle. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-c">mixed</span> A regular 7 to 9 hour sleep opportunity remains a sound recovery target.</p>
     <p>And the famous "anabolic window," the panic that you must drink protein within thirty minutes of your last rep? A myth: once you account for total daily protein, the timing magic disappears. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">Schoenfeld 2013</a></span> <span class="grade g-a">strong</span> The window is hours wide. Hit your daily total and the clock takes care of itself, as the <a href="#diet">food chapter</a> covers.</p>
 
     <hr class="u-divider">
@@ -622,7 +529,7 @@
 
     <figure class="photo portrait reveal">
       <img src="assets/images/big-enough/charioteer.webp" width="1000" height="1504" loading="lazy" decoding="async" alt="The Charioteer of Delphi, a life-size ancient Greek bronze of a young charioteer in a long pleated robe, standing calm and upright with one arm extended to hold the reins.">
-      <figcaption>The Charioteer of Delphi has held the same pose, calm and exact, for twenty-five centuries. Good training is mostly that: one honest movement, owned and repeated, until the body has no choice but to adapt.
+      <figcaption>The Charioteer of Delphi has held the same pose, calm and exact, for twenty-five centuries. Good training is mostly that: one movement, owned and repeated, until the body has no choice but to adapt.
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:The_Charioteer_of_Delphi,_478_BC,_AM_of_Delphi,_201441.jpg">The Charioteer of Delphi, c. 478 BC, Archaeological Museum of Delphi. Photo: Zde, CC BY-SA 4.0</a></span>
       </figcaption>
     </figure>
@@ -651,7 +558,7 @@
       <div class="week"><span class="wk-name">Full body &#215;3</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
       <div class="week"><span class="wk-name">Upper / lower &#215;4</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
       <div class="week"><span class="wk-name">Push / pull / legs &#215;6</span><span class="wk-cell wk-push">Push</span><span class="wk-cell wk-pull">Pull</span><span class="wk-cell wk-legs">Legs</span><span class="wk-cell wk-push">Push</span><span class="wk-cell wk-pull">Pull</span><span class="wk-cell wk-legs">Legs</span><span class="wk-cell wk-rest">rest</span></div>
-      <p class="viz-note">Three honest full-body days beat six half-hearted ones.</p>
+      <p class="viz-note">Three full-body days done right beat six half-hearted ones.</p>
     </figure>
 
     <h3>Where to start</h3>
@@ -710,7 +617,7 @@
 
     <p>Progress it the same way as the starter plan. Add a repetition or a small plate when performance allows. If a slot stalls for a month, first check recovery and technique, then consider changing the exercise. More volume is an option, not an automatic upgrade: add it to a specific muscle only when you can recover from it and value the likely smaller return.</p>
 
-    <p>Each of those six sessions contains 13 to 16 working sets, so with warm-ups and ordinary rest, expect roughly <strong>45 to 60 minutes</strong>. A shorter version can drop the later isolation sets or use compatible supersets; the trade is lower weekly volume, not automatic failure to grow.</p>
+    <p>Each of those six sessions contains 13 to 16 working sets, so with warm-ups and ordinary rest, expect roughly 45 to 60 minutes. A shorter version can drop the later isolation sets or use compatible supersets; the trade is lower weekly volume, not automatic failure to grow.</p>
 
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>The week, in hours</th><th class="n">Days</th><th class="n">One session</th><th class="n">Per week</th><th>What it buys</th></tr></thead>
@@ -720,7 +627,7 @@
         <tr><td>Push / pull / legs</td><td class="n">6</td><td class="n">45-60 min</td><td class="n">~5 hrs</td><td>the same dose, plus direct arm, delt, and calf work</td></tr>
       </tbody>
     </table></div>
-    <p style="white-space:normal;display:block;font-size:0.8em;color:var(--text-dim);margin:-0.6em 0 1.4em">Times assume honest rest and a 10-minute warm-up. The six-day version costs more hours mostly because the small muscles get sets of their own.</p>
+    <p style="white-space:normal;display:block;font-size:0.8em;color:var(--text-dim);margin:-0.6em 0 1.4em">Times assume full rest between sets and a 10-minute warm-up. The six-day version costs more hours mostly because the small muscles get sets of their own.</p>
 
     <h3>Form, in one rule and six cues</h3>
     <p>Good form keeps the target muscle working through a useful range while the load remains repeatable and tolerable. If added weight shortens the range or changes the exercise into a different movement, reduce it. The cues below are practical defaults, not universal anatomy rules:</p>
@@ -746,7 +653,7 @@
     <p class="lede">Cardio is not a tax a lifter pays for health. At ordinary doses it can coexist with hypertrophy, and cardiorespiratory fitness predicts outcomes that a larger arm cannot. The practical question is how to combine the two without turning every day into a maximal leg session.</p>
 
     <h3>Cardio and the heart</h3>
-    <p>In a clinical cohort of more than 120,000 people, low measured cardiorespiratory fitness was strongly associated with higher mortality. The least-fit group had about <strong>five times</strong> the adjusted risk of the elite performers. This was observational evidence from people referred for treadmill testing, so it cannot prove that fitness alone caused the difference, but the association is large and consistent with the broader literature. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+    <p>In a clinical cohort of more than 120,000 people, low measured cardiorespiratory fitness was strongly associated with higher mortality. The least-fit group had about five times the adjusted risk of the elite performers. This was observational evidence from people referred for treadmill testing, so it cannot prove that fitness alone caused the difference, but the association is large and consistent with the broader literature. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal scrollx" aria-label="Risk of death by factor: low fitness dwarfs smoking, diabetes, and heart disease.">
       <figcaption>Low fitness carried the largest association</figcaption>
@@ -802,7 +709,7 @@
     <p class="lede">Training supplies the stimulus. Food supplies amino acids and energy. Protein has a useful target range, not a magic cutoff, and a calorie surplus is an option rather than a prerequisite for every lifter. Once those needs are covered, nutrition becomes much less exotic than its market suggests.</p>
 
     <h3>Protein: use a target, not a cliff</h3>
-    <p>Pooling 49 studies and nearly 1,900 people, researchers estimated that the average added benefit of protein supplementation leveled near <strong>0.74 grams per pound of bodyweight per day</strong>. The confidence interval was wide, roughly 0.47 to 1.0 grams per pound, and the estimate applies to groups, not a personal switch. About 0.7 grams per pound is therefore a sensible daily target for gaining, not proof that everything above it is wasted. Higher intakes can be useful during an energy deficit, especially for lean, trained people. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></p>
+    <p>Pooling 49 studies and nearly 1,900 people, researchers estimated that the average added benefit of protein supplementation leveled near 0.74 grams per pound of bodyweight per day. The confidence interval was wide, roughly 0.47 to 1.0 grams per pound, and the estimate applies to groups, not a personal switch. About 0.7 grams per pound is therefore a sensible daily target for gaining, not proof that everything above it is wasted. Higher intakes can be useful during an energy deficit, especially for lean, trained people. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></p>
 
     <figure class="viz reveal" aria-label="The average added benefit of protein intake levels near an estimated group breakpoint around 0.7 grams per pound, with wide uncertainty.">
       <figcaption>Protein has an estimated breakpoint, not a trapdoor</figcaption>
@@ -859,14 +766,50 @@
     <hr class="u-divider">
   </section>
 
+  <!-- ===================== CREATINE (sits with food; de-emphasized 2026-07-30) ===================== -->
+  <section id="creatine" class="sec" aria-labelledby="creatine-h">
+    <span class="sec-kicker">The one supplement</span>
+    <h2 id="creatine-h" class="sec-h">Creatine, kept in proportion</h2>
+
+    <p class="lede">Creatine monohydrate adds a little strength and lean mass to a training program. It is about as well studied as a supplement gets, and a 1 kg tub covers 200 days at 5 grams. The effect is useful rather than transformative, which is the scale a guide about diminishing returns should keep.</p>
+
+    <p>It is not exotic. Creatine is a small molecule your liver already makes and your muscles already store, and you eat about a gram of it a day if you eat meat or fish. Your hardest, fastest efforts run on it. A firing muscle spends ATP (the cell's energy coin) and is left holding spent change, ADP; phosphocreatine hands over a phosphate to rebuild fresh ATP in a fraction of a second, faster than any other pathway in the body. Supplementing raises those stores by 20 to 40 percent. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
+
+    <figure class="viz reveal" aria-label="A three-dimensional model of the phosphocreatine molecule.">
+      <figcaption>The instant battery, up close</figcaption>
+      <p class="viz-sub">This is phosphocreatine itself: a creatine molecule carrying a charged phosphate group, the orange cluster at left. It hands that phosphate straight to spent ADP to rebuild ATP, the cell's energy coin, faster than any other system in the body. A fuller bank of it means a couple more good reps before the battery runs flat.</p>
+      <div class="mol-stage">
+        <img class="mol" src="assets/images/big-enough/phosphocreatine.webp" width="1600" height="978" loading="lazy" decoding="async" alt="A three-dimensional ball-and-stick model of phosphocreatine: an orange phosphorus atom ringed by red oxygens at the left (the charged phosphate group), linked through blue nitrogen atoms to a dark carbon backbone that ends in a red carboxyl group at the right.">
+      </div>
+      <p class="viz-note">This is also why creatine helps short, powerful efforts (a heavy set, a sprint, a jump) and does almost nothing for a long, steady jog. It is a battery for bursts. <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Phosphocreatine-zwitterion-3D-balls.png">3-D model by Jynto, Wikimedia Commons (CC0)</a></span></p>
+    </figure>
+
+    <p>The size of the payoff is where the marketing and the evidence part ways. Most of creatine's muscle-building power is <em>indirect</em>: a topped-up battery buys an extra rep or two and slightly faster recovery, so more good training piles up over months. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> Its <em>direct</em> contribution to muscle thickness, isolated from the training, is a fraction of an inch. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-a">strong</span> Against an identical program on placebo, pooled trials put creatine at about 3 lb on a bench press and 12 lb on a squat, <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span> and about 3 lb of lean mass in older adults. <span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">Chilibeck 2017</a></span> The training builds the muscle. Creatine lets you train a bit harder and hold a bit more.</p>
+
+    <p>Buy plain creatine monohydrate, the original cheap form. Nothing fancier has been shown to beat it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
+    <ul>
+      <li>3 to 5 grams a day, every day, saturates muscle over about three to four weeks. Use the measured scoop or a scale, since ordinary teaspoons vary.</li>
+      <li>Loading, 20 grams a day for five to seven days, fills the tank faster and ends in the same place. Most people skip it. Timing does not matter.</li>
+      <li>The scale may tick up a little, since creatine draws water into muscle. No weight change does not prove it failed.</li>
+    </ul>
+
+    <p>The brain claims are a thinner literature. Reviews report possible memory benefits under stress or in people with low baseline intake, and the striking 2024 sleep-deprivation result used a single dose near 25 grams in a small sample, which is not what a daily spoonful tests. <span class="u-src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29704637/">Avgerinos 2018</a></span> <span class="grade g-c">mixed</span></p>
+
+    <aside class="u-callout"><p class="u-callout-k">The myths, retired</p><p class="u-callout-body"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It nudges a blood marker (creatinine) that can spook a doctor reading a lab result, which is a measurement artifact and not damage. <b>"It makes your hair fall out."</b> That traces to one 2009 study which measured a hormone (DHT) rather than hair, and was never replicated; the first trial to look directly at hair, in 2025, found no difference from placebo. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <b>"It causes cramps and dehydration."</b> Controlled evidence has not shown higher rates of either in healthy users. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></p></aside>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Response varies.</b> A small study found that some participants stored much less additional creatine than others, partly related to their starting muscle characteristics. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">Syrotuik 2004</a></span> If months of consistent use produce no useful change, stopping is reasonable. Existing kidney disease or another relevant medical condition is a reason to ask a clinician first.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
   <!-- ===================== 13. GENETICS ===================== -->
   <section id="genetics" class="sec" aria-labelledby="genetics-h">
     <span class="sec-kicker">The limits and the balance</span>
     <h2 id="genetics-h" class="sec-h">Born different: genes and fibers</h2>
 
-    <p class="lede">People can follow the same supervised program and show very different measured changes. Genetics is one contributor, but training history, nutrition, sleep, adherence, starting size, and measurement error travel with it. The honest lesson is not that a short trial reveals anyone's destiny. It is that a population average cannot promise your result.</p>
+    <p class="lede">People can follow the same supervised program and show very different measured changes. Genetics is one contributor, but training history, nutrition, sleep, adherence, starting size, and measurement error travel with it. No twelve-week trial reveals anyone's destiny, and no population average can promise your result.</p>
 
-    <p>In one large study, 585 people completed the same supervised 12-week arm program. Measured muscle-size change ranged from <strong>minus 2 percent to plus 59 percent</strong>, and strength change ranged from zero to plus 250 percent. The study demonstrates wide observed variation, not how much of that spread was genetic; small negative changes can also reflect measurement noise. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
+    <p>In one large study, 585 people completed the same supervised 12-week arm program. Measured muscle-size change ranged from minus 2 percent to plus 59 percent, and strength change ranged from zero to plus 250 percent. The study demonstrates wide observed variation, not how much of that spread was genetic; small negative changes can also reflect measurement noise. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal" aria-label="The spread of muscle growth among 585 people on the same program.">
       <figcaption>Same program, 585 different results</figcaption>
@@ -916,7 +859,7 @@
 
     <p class="lede">Building muscle is slow, and complete immobilization can shrink it quickly. Ordinary layoffs are less dramatic, and retraining is often faster than the first build. Muscle appears to retain some cellular and epigenetic traces of earlier training, but their permanence and their exact contribution to faster regrowth are still being worked out.</p>
 
-    <p>With <em>complete</em> immobilization, a cast or a hospital bed, muscle can decline around <strong>half a percent per day</strong> early on, with strength falling faster than size. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> <span class="grade g-b">good</span> Normal life is not bed rest. Short training breaks tend to cause much smaller changes, and the timing varies with training history, activity, illness, and the outcome measured. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">Mujika 2000</a></span></p>
+    <p>With <em>complete</em> immobilization, a cast or a hospital bed, muscle can decline around half a percent per day early on, with strength falling faster than size. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> <span class="grade g-b">good</span> Normal life is not bed rest. Short training breaks tend to cause much smaller changes, and the timing varies with training history, activity, illness, and the outcome measured. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">Mujika 2000</a></span></p>
 
     <figure class="viz reveal" aria-label="A conceptual timeline showing muscle built slowly, reduced during a layoff, then often regained more quickly.">
       <figcaption>Built slowly, often regained faster</figcaption>
@@ -1026,7 +969,7 @@
       <p class="viz-note">Only volume has a current quantitative hypertrophy dose-response across a broad range, and even that curve carries substantial uncertainty. The other rows should not be forced into matching percentages.</p>
     </figure>
 
-    <p>The evidence can tell you that another block of weekly sets will probably buy less than the first. It cannot price your evenings, your joints, your attention, or the satisfaction of competing. That final conversion is yours. The honest stopping point begins exactly where the literature ends.</p>
+    <p>The evidence can tell you that another block of weekly sets will probably buy less than the first. It cannot price your evenings, your joints, your attention, or the satisfaction of competing. That final conversion is yours. The stopping point begins exactly where the literature ends.</p>
 
     <div class="disclaimer" role="note">
       <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your history, your heart, or your joints. Talk to a physician before starting creatine, a new diet, or a serious training program, especially if you have any kidney, heart, or metabolic condition. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
@@ -1123,7 +1066,7 @@
 
     <p>The page keeps uncertainty visible on purpose. Coaching estimates are not presented as longitudinal science, observational associations are not written as causes, and the professional-bodybuilding evidence is separated from natural hypertrophy. If a source changes the answer, the page should change with it.</p>
 
-    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Originally researched June 2026. Re-audited and revised July 2026. Forty-nine cited sources, twelve diagrams, and two interactive tools. Not medical advice.</p>
+    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Originally researched June 2026. Re-audited and revised July 2026. Forty-nine cited sources, eleven diagrams, and two interactive tools. Not medical advice.</p>
   </section>
 
   </main>
