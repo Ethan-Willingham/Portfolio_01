@@ -110,12 +110,6 @@
     .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
   }
 
-  /* ---------- CHAPTER STRIP ---------- */
-  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
-  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
-  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
-  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
-
   /* in-section jump menu */
   .sec-index { list-style: none; counter-reset: si; display: grid; grid-template-columns: 1fr; gap: 0.1rem 1.4rem; margin: 0 0 1.8rem; padding: 1rem 1.05rem 1.1rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.13); }
   .sec-index::before { content: 'In this section'; grid-column: 1 / -1; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem; }
@@ -331,17 +325,6 @@
     <figcaption><em>Farnese Hercules</em>, Naples. Photo: Marie-Lan Nguyen, CC BY 2.5.</figcaption>
   </figure>
 
-  <!-- chapter strip -->
-  <nav class="chapters" aria-label="Chapters">
-    <span class="lead">Start with the point</span>
-    <a href="#start">Start here</a>
-    <a href="#returns">Diminishing returns</a>
-    <a href="#creatine">The supplement</a>
-    <a href="#grows">Building it</a>
-    <a href="#diet">Feeding it</a>
-    <a href="#genetics">Limits and balance</a>
-  </nav>
-
   <!-- ===================== 1. THE ONE-PAGE VERSION ===================== -->
   <section id="start" class="sec first" aria-labelledby="start-h">
     <span class="sec-kicker">Start here</span>
@@ -355,7 +338,7 @@
       <figcaption>The whole plan, on one card</figcaption>
       <p class="viz-sub">These are the high-return inputs. The exact result and the time it takes vary too much to promise a percentage.</p>
       <div class="plan-grid">
-        <div class="plan-tile" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">1</span> Lift</div><div class="plan-body">Start near 10 challenging weekly sets per muscle, then adjust to your recovery.</div></div>
+        <div class="plan-tile" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">1</span> Lift</div><div class="plan-body">Start near 10 challenging weekly sets per muscle group, then adjust to your recovery.</div></div>
         <div class="plan-tile" style="--tile:#9ec79a"><div class="plan-name"><span class="plan-n">2</span> Eat</div><div class="plan-body">About 0.7 g protein per pound each day is a sensible target, not a magic cutoff.</div></div>
         <div class="plan-tile" style="--tile:#8fb3c7"><div class="plan-name"><span class="plan-n">3</span> Sleep</div><div class="plan-body">Give recovery a regular 7 to 9 hour window. Hypertrophy has no proven hour-by-hour curve.</div></div>
         <div class="plan-tile" style="--tile:#dfc288"><div class="plan-name"><span class="plan-n">4</span> Move</div><div class="plan-body">Keep some cardio. Sensible concurrent training does not erase whole-muscle growth.</div></div>
@@ -562,10 +545,10 @@
 
     <h3>The signal: tension, not damage</h3>
     <p>For years people thought you had to "tear the muscle down," and that soreness proved a good workout. That is mostly wrong. The primary signal for growth is <strong>mechanical tension</strong>: the muscle sensing a heavy load through a full range of motion and converting that strain into "build" signals. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> Damage and the metabolic "burn" are supporting players at most, and chasing soreness just buys fatigue. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
-    <p>You deliver that tension with a handful of levers, about six of them. Every one has a sweet spot, and pushing past it costs more than it pays.</p>
+    <p>You deliver that tension with a handful of levers, seven of them. Every one has a sweet spot, and pushing past it costs more than it pays.</p>
 
     <h3>Lever one: volume (the big one)</h3>
-    <p>Volume, the number of challenging sets a muscle performs each week, is the lever most tightly tied to growth. This is where the fractional counting from the last chapter earns its keep: a bench press is direct chest work and about half a set for the triceps, a row is direct back work and about half a set for the biceps. That method best fit the newest dose-response analysis. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Older pooled trials also found that groups performing 10 or more weekly sets generally grew more than lower-volume groups. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></p>
+    <p>Volume, the number of challenging sets a muscle performs each week, is the lever most tightly tied to growth. Counting sets fractionally matters most here: a bench press is direct chest work and about half a set for the triceps, a row is direct back work and about half a set for the biceps. That method best fit the newest dose-response analysis. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Older pooled trials also found that groups performing 10 or more weekly sets generally grew more than lower-volume groups. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></p>
 
     <figure class="viz reveal" aria-label="A curve of muscle growth against weekly training volume.">
       <figcaption>More sets, more muscle, up to a point</figcaption>
@@ -1030,7 +1013,7 @@
       <div class="prog-wrap"><table class="prog">
         <thead><tr><th>Lever</th><th>A useful starting point</th><th>What the evidence says about more</th></tr></thead>
         <tbody>
-          <tr><td>Training volume</td><td>about 10 fractional sets per muscle each week</td><td>growth can keep rising, with smaller returns and more fatigue</td></tr>
+          <tr><td>Training volume</td><td>about 10 fractional sets per muscle group each week</td><td>growth can keep rising, with smaller returns and more fatigue</td></tr>
           <tr><td>Effort</td><td>most sets about 2 to 3 reps from failure</td><td>closer may add stimulus; failure is optional and more fatiguing</td></tr>
           <tr><td>Protein</td><td>about 0.7 g per pound a day</td><td>average benefit likely shrinks; individual need is not a cliff</td></tr>
           <tr><td>Calories</td><td>maintenance or a modest surplus</td><td>larger surpluses add disproportionately more fat</td></tr>
