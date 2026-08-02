@@ -409,6 +409,35 @@ try {
     check('S6 wall cram: no NaN', maxOf(s, 'nan') === 0);
   }
 
+  // ---- S7: full embed rescue (build a body inside solid ground) ----
+  // The worst tunneling seed: every point starts welded in terrain. The
+  // engine must resolve it through the in-wall rescue (spiral teleport to
+  // legal open space, or despawn) and never squeeze it through a wall.
+  if (want('S7')) {
+    const site = await ev(`__H.site(300, 12)`);
+    const g = site.g, c = site.c;
+    await ev(`__H.pinStart(function(){ return ${c + 5} * ${TILE}; }, function(){ return (${g} + 3) * ${TILE}; })`);
+    const built = await ev(`(function(){
+      window.__E = __jello.build([{ r: ${g + 3}, c: ${c + 5} }], 'slime');
+      return !!__E;
+    })()`);
+    if (built) {
+      await sleep(4000);
+      const out = await ev(`(function(){
+        var alive = __jello.bodies.indexOf(__E) >= 0;
+        if (!alive) return { alive: false, solid: 0 };
+        var solid = 0;
+        for (var i = 0; i < __E.n; i++)
+          if (__H.solidAt(__E.px[i], __E.py[i])) solid++;
+        return { alive: true, solid: solid, cx: __E.cx, cy: __E.cy };
+      })()`);
+      check('S7 embed: rescued clean or despawned', out.alive ? out.solid === 0 : true,
+        out.alive ? `rescued, ${out.solid} points in solid` : 'despawned (acceptable)');
+    } else {
+      note('S7 embed', 'build refused inside solid (also a safe outcome)');
+    }
+  }
+
   // ================= NPC boot (the game-real pileup) =================
   if (want('S4')) {
   consoleErrors.length = 0;

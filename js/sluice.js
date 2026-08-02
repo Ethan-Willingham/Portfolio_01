@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.70';
+  var GAME_VERSION = 'v26.71';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -54029,6 +54029,15 @@
       // (coincident pairs are skipped by the d<eps guards and would never re-separate).
       var hcx = isFinite(b.cx) ? b.cx : b.rx[i], hcy = isFinite(b.cy) ? b.cy : b.ry[i];
       hcx += ((i % 7) - 3) * 0.4; hcy += ((((i / 7) | 0) % 7) - 3) * 0.4;
+      // v26.71: a heal target inside terrain would park a collision-exempt
+      // point in a wall (non-finite coords read OPEN to jelloWorldSolidAt
+      // until healed). Prefer the frame-start snapshot when the centroid
+      // area is solid; if both are solid the body is embedded and the
+      // in-wall rescue owns it.
+      if (jelloWorldSolidAt(hcx, hcy) && b.fpx && i < b.fpx.length &&
+          isFinite(b.fpx[i]) && isFinite(b.fpy[i]) && !jelloWorldSolidAt(b.fpx[i], b.fpy[i])) {
+        hcx = b.fpx[i]; hcy = b.fpy[i];
+      }
       px[i] = ox[i] = hcx; py[i] = oy[i] = hcy;
       return;
     }
@@ -54162,18 +54171,25 @@
     }
     // Fully enclosed. If the previous position is OPEN, snap back to it (the old
     // behaviour); if it is ALSO solid (a big contact/containment correction carried
-    // the pair into the wall), walk toward the body centroid for an open cell and
-    // park there - never leave a point welded inside terrain.
+    // the pair into the wall), fall back to the frame-start snapshot (the engine's
+    // anti-slip anchor, legal by construction at frame start), then ONE step toward
+    // the body centroid - never leave a point welded inside terrain.
     if (!jelloWorldSolidAt(ox[i], oy[i])) { px[i] = ox[i]; py[i] = oy[i]; return; }
+    if (b.fpx && i < b.fpx.length && !jelloWorldSolidAt(b.fpx[i], b.fpy[i])) {
+      px[i] = ox[i] = b.fpx[i]; py[i] = oy[i] = b.fpy[i]; return;
+    }
     var ucx = b.cx || x, ucy = b.cy || y;
     var ud = Math.sqrt((ucx - x) * (ucx - x) + (ucy - y) * (ucy - y));
     if (ud > 1e-3) {
+      // v26.71: ONE cell toward the centroid, never two. The old w=2 step
+      // could SKIP a solid w=1 cell and park the point on the far side of a
+      // 1-tile wall (the documented through-wall worm). A point still stuck
+      // after this stays put; genuine embedding is the body-level in-wall
+      // rescue's job (spiral probe or despawn), which never crosses walls.
       var ux = (ucx - x) / ud, uy = (ucy - y) / ud;
-      for (var w = 1; w <= 2; w++) {
-        var wx2 = (Math.floor((x + ux * TILE * w) / TILE) + 0.5) * TILE;
-        var wy2 = (Math.floor((y + uy * TILE * w) / TILE) + 0.5) * TILE;
-        if (!jelloWorldSolidAt(wx2, wy2)) { px[i] = wx2; py[i] = wy2; ox[i] = wx2; oy[i] = wy2; return; }
-      }
+      var wx2 = (Math.floor((x + ux * TILE) / TILE) + 0.5) * TILE;
+      var wy2 = (Math.floor((y + uy * TILE) / TILE) + 0.5) * TILE;
+      if (!jelloWorldSolidAt(wx2, wy2)) { px[i] = wx2; py[i] = wy2; ox[i] = wx2; oy[i] = wy2; return; }
     }
     px[i] = ox[i]; py[i] = oy[i];
   }
