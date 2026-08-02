@@ -46,7 +46,10 @@ panel tokens) and the three fonts; otherwise they do not overlap.
 > with a player-facing switch: pause > Options > Banya, persisted as `sluice.opt.banya` and read
 > at boot by the flag block. It flips live; `?bath=1` remains the dev override and still wins.)
 > (Jello/slime soft bodies used to be on this list but are **LIVE** in production,
-> `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls.)
+> `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls. Since
+> v26.69 every activated slime is a true NPC (`js/sluice/345-slime-npc.js`): it wanders
+> in hops, startles from a fast rig, and swims with real states (splash, relaxed float,
+> paddle out, shake off). Kill switch `?npc=0`.)
 
 ---
 

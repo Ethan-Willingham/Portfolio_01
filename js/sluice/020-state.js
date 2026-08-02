@@ -737,9 +737,14 @@
           }
           // v26.04 — bath guests as moving fluid boundaries (the registry
           // is rebuilt each scene frame by bathGuestTick, empty outside).
-          return { player: pl, rocket: rk, explosions: ex,
-                   guests: (typeof bathGuestColliders !== 'undefined' &&
-                            bathGuestColliders.length) ? bathGuestColliders : null };
+          // v26.69: wild slime NPCs ride the same channel in the world.
+          // the bath scene wins while it runs (world bodies are frozen
+          // off-camera then), otherwise the NPC slot registry feeds in.
+          var gs = (typeof bathGuestColliders !== 'undefined' &&
+                    bathGuestColliders.length) ? bathGuestColliders
+                 : ((typeof slimeNpcGuestsAny !== 'undefined' &&
+                     slimeNpcGuestsAny) ? slimeNpcGuests : null);
+          return { player: pl, rocket: rk, explosions: ex, guests: gs };
         }
       }
     };

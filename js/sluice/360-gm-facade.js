@@ -1284,6 +1284,48 @@
           function (v) { JELLO_DISSOLVE_N = v; },
           100, 3000, undefined); // dense-bin particles needed (films never count)
       }
+      if (typeof SLIME_NPC !== 'undefined') {
+        gmRegisterLever('slime.NPC', 'slime', 'NPC',
+          function () { return SLIME_NPC ? 1 : 0; },
+          function (v) { SLIME_NPC = !!v; },
+          0, 1, 1);              // master: wild slimes think, wander, swim
+        gmRegisterLever('slime.HOP_VY', 'slime', 'HOP_VY',
+          function () { return SLIME_HOP_VY; },
+          function (v) { SLIME_HOP_VY = v; },
+          100, 600, undefined);  // hop impulse, solver px/s
+        gmRegisterLever('slime.HOP_VX', 'slime', 'HOP_VX',
+          function () { return SLIME_HOP_VX; },
+          function (v) { SLIME_HOP_VX = v; },
+          40, 320, undefined);   // air-steer servo target, solver px/s
+        gmRegisterLever('slime.HOP_CD', 'slime', 'HOP_CD',
+          function () { return SLIME_HOP_CD; },
+          function (v) { SLIME_HOP_CD = v; },
+          0.3, 3, undefined);    // seconds between wander hops
+        gmRegisterLever('slime.SOAK_MIN', 'slime', 'SOAK_MIN',
+          function () { return SLIME_SOAK_MIN; },
+          function (v) { SLIME_SOAK_MIN = v; },
+          2, 60, undefined);     // shortest full soak, seconds
+        gmRegisterLever('slime.SOAK_MAX', 'slime', 'SOAK_MAX',
+          function () { return SLIME_SOAK_MAX; },
+          function (v) { SLIME_SOAK_MAX = v; },
+          4, 120, undefined);
+        gmRegisterLever('slime.SPLASH_T', 'slime', 'SPLASH_T',
+          function () { return SLIME_SPLASH_T; },
+          function (v) { SLIME_SPLASH_T = v; },
+          1, 20, undefined);     // seconds per splashing bout
+        gmRegisterLever('slime.RELAX_T', 'slime', 'RELAX_T',
+          function () { return SLIME_RELAX_T; },
+          function (v) { SLIME_RELAX_T = v; },
+          2, 40, undefined);     // seconds per relaxed float
+        gmRegisterLever('slime.BUOY_LIFT', 'slime', 'BUOY_LIFT',
+          function () { return SLIME_BUOY_LIFT; },
+          function (v) { SLIME_BUOY_LIFT = v; },
+          1, 3, undefined);      // relaxed-float lift
+        gmRegisterLever('slime.WET_MIN', 'slime', 'WET_MIN',
+          function () { return SLIME_WET_MIN; },
+          function (v) { SLIME_WET_MIN = v; },
+          2, 60, undefined);     // mirror particles in bbox = "in water"
+      }
       if (typeof JELLO_PLASTICITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_PLASTICITY', 'jello', 'JELLO_PLASTICITY',
           function () { return JELLO_PLASTICITY; },

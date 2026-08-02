@@ -5597,7 +5597,8 @@
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
       // v25.85 BANYA: guest slimes are customers, not solutes (plan B-D5).
-      if (b.guest) { b._dslT = 0; b._dslNear = 0; continue; }
+      // v26.69: NPC slimes are creatures that swim; they never dissolve.
+      if (b.guest || b.npc) { b._dslT = 0; b._dslNear = 0; continue; }
       var bx0 = Math.floor((b.bboxL - JELLO_DISSOLVE_R) * 0.0625);
       var bx1 = Math.floor((b.bboxR + JELLO_DISSOLVE_R) * 0.0625);
       var by0 = Math.floor((b.bboxT - JELLO_DISSOLVE_R) * 0.0625);
