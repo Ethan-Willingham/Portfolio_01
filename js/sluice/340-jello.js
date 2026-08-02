@@ -221,7 +221,13 @@
   // blow-up). A drive-in fling is ~250 px/s, so 600 is far above normal motion and only
   // bleeds off the runaway pile kick — lower it for a calmer heap, raise it for livelier
   // launches. Was 900 (pre-solve only) through v21.44.
-  var JELLO_VMAX           = 600;
+  var JELLO_VMAX           = 1400;  // sim px/s; x JELLO_TIMESCALE = 700 REAL px/s terminal.
+                                    // v26.72 owner call: 600 (300 real, hit in 0.5 s) read as
+                                    // "sliding through the sky" and killed splash energy. The
+                                    // ceiling is the anti-blowup cap, NOT drag; per-substep
+                                    // displacement at 1400 is ~5.8 px, far under TILE. HARD
+                                    // BOUND: stay under 1480 (= player flyTune.maxFall 740
+                                    // real) or a rider desyncs from a falling slime.
   // Restitution threshold (anti rest-buzz): contacts slower than this along the
   // contact normal (sim px/s) are perfectly INELASTIC - no bounce term. A point
   // resting on a floor re-penetrates by ~g*h^2 each substep; bouncing that

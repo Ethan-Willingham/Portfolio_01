@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.25'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.26'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -647,9 +647,12 @@
           // repeats this centrally for every host, but keeping the toy's
           // source honest makes the dead-band below read the same velocity.
           var spd = Math.sqrt(pvx * pvx + pvy * pvy);
-          if (spd > 600) {
-            var psc = 600 / spd;
-            pvx *= psc; pvy *= psc; spd = 600;
+          // v4.26: cap raised 600 -> 900 with the engine's faster terminal
+          // (JELLO_VMAX 1400 = 700 real px/s): a 600 cap would saturate the
+          // splash input and flatten every big plunge this retune bought.
+          if (spd > 900) {
+            var psc = 900 / spd;
+            pvx *= psc; pvy *= psc; spd = 900;
           }
           if (spd > vMax) vMax = spd;
           mvxSum += pvx; mvySum += pvy;
@@ -2324,7 +2327,13 @@
   // blow-up). A drive-in fling is ~250 px/s, so 600 is far above normal motion and only
   // bleeds off the runaway pile kick — lower it for a calmer heap, raise it for livelier
   // launches. Was 900 (pre-solve only) through v21.44.
-  var JELLO_VMAX           = 600;
+  var JELLO_VMAX           = 1400;  // sim px/s; x JELLO_TIMESCALE = 700 REAL px/s terminal.
+                                    // v26.72 owner call: 600 (300 real, hit in 0.5 s) read as
+                                    // "sliding through the sky" and killed splash energy. The
+                                    // ceiling is the anti-blowup cap, NOT drag; per-substep
+                                    // displacement at 1400 is ~5.8 px, far under TILE. HARD
+                                    // BOUND: stay under 1480 (= player flyTune.maxFall 740
+                                    // real) or a rider desyncs from a falling slime.
   // Restitution threshold (anti rest-buzz): contacts slower than this along the
   // contact normal (sim px/s) are perfectly INELASTIC - no bounce term. A point
   // resting on a floor re-penetrates by ~g*h^2 each substep; bouncing that

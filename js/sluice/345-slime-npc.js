@@ -191,8 +191,11 @@
         ri = b.ring[((k * rn) / take) | 0];
         pvx = (b.px[ri] - b.ox[ri]) * ih;
         pvy = (b.py[ri] - b.oy[ri]) * ih;
-        if (pvx > 600) pvx = 600; else if (pvx < -600) pvx = -600;
-        if (pvy > 600) pvy = 600; else if (pvy < -600) pvy = -600;
+        // v26.72: cap raised 600 -> 900 with the faster terminal (700 real).
+        // A 600 cap would saturate the guest sweep's splash input and eat
+        // the plunge energy the fall retune exists to deliver.
+        if (pvx > 900) pvx = 900; else if (pvx < -900) pvx = -900;
+        if (pvy > 900) pvy = 900; else if (pvy < -900) pvy = -900;
         var sp = Math.abs(pvx) + Math.abs(pvy);
         if (sp > maxV) maxV = sp;
         pts[k * 4] = b.px[ri]; pts[k * 4 + 1] = b.py[ri];
@@ -238,7 +241,13 @@
 
     // Every wet state keeps the buoy current (the window rides the body;
     // the line is the sensed waterline). Splash sits a little deeper.
-    if (m.st === 'splash' || m.st === 'relax' || m.st === 'plunge') {
+    // v26.72: during the plunge the buoy WAITS until the dive has spent
+    // its energy (bathBuoy's drag killed a 700 px/s entry almost the same
+    // frame, so the body never plowed and the crown never formed). The
+    // guest boundary carries the full entry velocity into the solver; the
+    // float engages once the body has actually gone deep.
+    if (m.st === 'splash' || m.st === 'relax' ||
+        (m.st === 'plunge' && (m.t > 0.35 || vyReal < 120))) {
       if (m.hasLine) {
         b.bathBuoy = {
           line: m.line + (m.st === 'splash' ? 12 : 6),

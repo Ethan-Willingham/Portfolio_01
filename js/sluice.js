@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.71';
+  var GAME_VERSION = 'v26.72';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -51827,7 +51827,13 @@
   // blow-up). A drive-in fling is ~250 px/s, so 600 is far above normal motion and only
   // bleeds off the runaway pile kick — lower it for a calmer heap, raise it for livelier
   // launches. Was 900 (pre-solve only) through v21.44.
-  var JELLO_VMAX           = 600;
+  var JELLO_VMAX           = 1400;  // sim px/s; x JELLO_TIMESCALE = 700 REAL px/s terminal.
+                                    // v26.72 owner call: 600 (300 real, hit in 0.5 s) read as
+                                    // "sliding through the sky" and killed splash energy. The
+                                    // ceiling is the anti-blowup cap, NOT drag; per-substep
+                                    // displacement at 1400 is ~5.8 px, far under TILE. HARD
+                                    // BOUND: stay under 1480 (= player flyTune.maxFall 740
+                                    // real) or a rider desyncs from a falling slime.
   // Restitution threshold (anti rest-buzz): contacts slower than this along the
   // contact normal (sim px/s) are perfectly INELASTIC - no bounce term. A point
   // resting on a floor re-penetrates by ~g*h^2 each substep; bouncing that
@@ -58533,8 +58539,11 @@
         ri = b.ring[((k * rn) / take) | 0];
         pvx = (b.px[ri] - b.ox[ri]) * ih;
         pvy = (b.py[ri] - b.oy[ri]) * ih;
-        if (pvx > 600) pvx = 600; else if (pvx < -600) pvx = -600;
-        if (pvy > 600) pvy = 600; else if (pvy < -600) pvy = -600;
+        // v26.72: cap raised 600 -> 900 with the faster terminal (700 real).
+        // A 600 cap would saturate the guest sweep's splash input and eat
+        // the plunge energy the fall retune exists to deliver.
+        if (pvx > 900) pvx = 900; else if (pvx < -900) pvx = -900;
+        if (pvy > 900) pvy = 900; else if (pvy < -900) pvy = -900;
         var sp = Math.abs(pvx) + Math.abs(pvy);
         if (sp > maxV) maxV = sp;
         pts[k * 4] = b.px[ri]; pts[k * 4 + 1] = b.py[ri];
@@ -58580,7 +58589,13 @@
 
     // Every wet state keeps the buoy current (the window rides the body;
     // the line is the sensed waterline). Splash sits a little deeper.
-    if (m.st === 'splash' || m.st === 'relax' || m.st === 'plunge') {
+    // v26.72: during the plunge the buoy WAITS until the dive has spent
+    // its energy (bathBuoy's drag killed a 700 px/s entry almost the same
+    // frame, so the body never plowed and the crown never formed). The
+    // guest boundary carries the full entry velocity into the solver; the
+    // float engages once the body has actually gone deep.
+    if (m.st === 'splash' || m.st === 'relax' ||
+        (m.st === 'plunge' && (m.t > 0.35 || vyReal < 120))) {
       if (m.hasLine) {
         b.bathBuoy = {
           line: m.line + (m.st === 'splash' ? 12 : 6),
@@ -60787,7 +60802,7 @@
         gmRegisterLever('jello.JELLO_VMAX', 'jello', 'JELLO_VMAX',
           function () { return JELLO_VMAX; },
           function (v) { JELLO_VMAX = v; },
-          50, 1500, undefined);
+          50, 1480, undefined);   // hard max 1480 = player maxFall 740 real (rider desync bound)
       }
       if (typeof JELLO_GRAVITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_GRAVITY', 'jello', 'JELLO_GRAVITY',

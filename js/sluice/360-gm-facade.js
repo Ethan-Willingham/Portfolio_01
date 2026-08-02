@@ -1254,7 +1254,7 @@
         gmRegisterLever('jello.JELLO_VMAX', 'jello', 'JELLO_VMAX',
           function () { return JELLO_VMAX; },
           function (v) { JELLO_VMAX = v; },
-          50, 1500, undefined);
+          50, 1480, undefined);   // hard max 1480 = player maxFall 740 real (rider desync bound)
       }
       if (typeof JELLO_GRAVITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_GRAVITY', 'jello', 'JELLO_GRAVITY',
