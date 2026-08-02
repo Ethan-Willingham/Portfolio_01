@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.23'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.24'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2629,8 +2629,10 @@
   // frame decoupled from the solver so the two passes fought -> jitter, and (b) only moved the
   // boundary RING so interiors slid through -> sticking. Now every point is a disk of radius r;
   // two points of DIFFERENT bodies within 2r are pushed apart to 2r — a UNILATERAL constraint
-  // (only ever separates, never pulls) so blobs touch and stack but never merge. Inverse-mass
-  // split, true serial Gauss-Seidel; positional Coulomb friction holds piles from slumping.
+  // (only ever separates, never pulls) so blobs touch and stack but never merge. Equal 50/50
+  // split (the code has always been half-and-half regardless of body mass; this comment used
+  // to claim inverse-mass), true serial Gauss-Seidel; positional Coulomb friction holds piles
+  // from slumping.
   // (Do NOT add a no-correction slop band here: tried for v24.112, it parks faces closer than
   // 2r where slow drift interleaves the rings and the containment backstop teleport-fights the
   // band forever — measured ~600 containment ejections/s on a resting pair. The touching-row
@@ -5839,11 +5841,21 @@
         // wander). Sub-margin overlap belongs to the contact solve, which owns it.
         var aIn = jelloPointInRing(B, A.cx, A.cy);
         var bIn = !aIn && jelloPointInRing(A, B.cx, B.cy);
-        if (!aIn && !bIn) continue;
-        var mNear = aIn ? jelloNearestOnRing(B, A.cx, A.cy) : jelloNearestOnRing(A, B.cx, B.cy);
-        var mqx = aIn ? A.cx : B.cx, mqy = aIn ? A.cy : B.cy;
-        var mdx = mNear.x - mqx, mdy = mNear.y - mqy;
-        if (mdx * mdx + mdy * mdy < 16) continue;          // < 4px deep: grazing, not merged
+        // v26.70 interleave trigger: >= 4 of one ring's points inside the
+        // other this frame (per-frame max from the containment pass) is a
+        // merge in progress even while both centroids are still outside.
+        // The pressed-cram class sat 12px interleaved for seconds without
+        // tripping the centroid gate below; the >= 4 floor keeps single-
+        // point grazes (the R9 flicker class) with the contact solve.
+        var itl = (A._ctnMate === B && (A._ctnN | 0) >= 4) ||
+                  (B._ctnMate === A && (B._ctnN | 0) >= 4);
+        if (!aIn && !bIn && !itl) continue;
+        if (aIn || bIn) {
+          var mNear = aIn ? jelloNearestOnRing(B, A.cx, A.cy) : jelloNearestOnRing(A, B.cx, B.cy);
+          var mqx = aIn ? A.cx : B.cx, mqy = aIn ? A.cy : B.cy;
+          var mdx = mNear.x - mqx, mdy = mNear.y - mqy;
+          if (mdx * mdx + mdy * mdy < 16 && !itl) continue;   // < 4px deep and no interleave: grazing
+        }
         var ddx = A.cx - B.cx, ddy = A.cy - B.cy, dd2 = ddx * ddx + ddy * ddy;
         if (pick[a] < 0 || dd2 < pd2[a]) { pick[a] = c2; pd2[a] = dd2; }
         if (pick[c2] < 0 || dd2 < pd2[c2]) { pick[c2] = a; pd2[c2] = dd2; }
@@ -7486,23 +7498,57 @@
     for (var i = 0; i < rn; i++) { var x = px[ring[i]], y = py[ring[i]]; if (x < l) l = x; if (x > r) r = x; if (y < t) t = y; if (y > bm) bm = y; }
     b._cbL = l; b._cbR = r; b._cbT = t; b._cbB = bm;
   }
+  // Sided nearest-boundary (v26.70): among B's ring points on the half facing
+  // (dirX, dirY) from B's centroid, the one nearest to (x, y). The old plain
+  // nearest had a pass-through hole: a point pushed past B's midline exited
+  // the FAR side, so the backstop COMPLETED a merge instead of reversing it.
+  // Exiting toward the owning body's centroid side makes every correction
+  // coherent (all of A's points leave toward A) at the same O(ringN) cost.
+  function jelloNearestOnRingSided(B, x, y, dirX, dirY) {
+    var ring = B.ring, rn = B.ringN, px = B.px, py = B.py;
+    var bcx = B.cx, bcy = B.cy;
+    var best = -1, bestD2 = 1e18, bx = 0, by = 0;
+    for (var i = 0; i < rn; i++) {
+      var p = ring[i], rx = px[p], ry = py[p];
+      if ((rx - bcx) * dirX + (ry - bcy) * dirY < 0) continue;   // far half: never exit there
+      var dx = rx - x, dy = ry - y, d2 = dx * dx + dy * dy;
+      if (d2 < bestD2) { bestD2 = d2; best = p; bx = rx; by = ry; }
+    }
+    if (best < 0) return jelloNearestOnRing(B, x, y);   // degenerate ring: plain nearest
+    return { x: bx, y: by };
+  }
   function jelloContainOneWay(A, B, margin, damp) {
     var ring = A.ring, rn = A.ringN, px = A.px, py = A.py, ox = A.ox, oy = A.oy;
     var bl = B._cbL, br = B._cbR, bt = B._cbT, bb = B._cbB;
+    var dirX = A.cx - B.cx, dirY = A.cy - B.cy;
+    var dl = Math.sqrt(dirX * dirX + dirY * dirY);
+    if (dl > 1e-4) { dirX /= dl; dirY /= dl; } else { dirX = 1; dirY = 0; }   // co-located: any side, but ONE side
+    var found = 0;
     for (var i = 0; i < rn; i++) {
       var p = ring[i], x = px[p], y = py[p];
       if (x < bl || x > br || y < bt || y > bb) continue;       // point-bbox cull
       if (!jelloPointInRing(B, x, y)) continue;                 // only points actually inside B
-      var near = jelloNearestOnRing(B, x, y);
+      found++;
+      var near = jelloNearestOnRingSided(B, x, y, dirX, dirY);
       var nx = near.x - x, ny = near.y - y, d = Math.sqrt(nx * nx + ny * ny);
       if (!(d > 1e-4)) continue;   // !(...) also rejects a NaN d — never divide by it
       nx /= d; ny /= d;
       var tx = near.x + nx * margin, ty = near.y + ny * margin; // park just OUTSIDE B's boundary
+      // Terrain guard (v26.70): the old unbounded hop could park a point
+      // inside a floor or wall (containment was the one mover with no
+      // solid check). Skip this substep instead; the world collide owns
+      // the point and the next substep retries with fresh geometry.
+      if (jelloWorldSolidAt(tx, ty)) continue;
       var ddx = tx - x, ddy = ty - y;
       px[p] = tx; py[p] = ty; ox[p] += ddx; oy[p] += ddy;       // velocity-free positional push
       var vn = (px[p] - ox[p]) * nx + (py[p] - oy[p]) * ny;     // inward approach along the exit normal
       if (vn < 0) { ox[p] += nx * vn * damp; oy[p] += ny * vn * damp; }   // bleed it (inelastic)
     }
+    // Interleave pressure gauge (v26.70): how many of A's ring points sat
+    // inside B this substep. jelloUnmergeBodies reads the per-frame max as
+    // a merge trigger that fires BEFORE the centroid crosses (the old 4px
+    // centroid gate slept through multi-point interleaves 12px deep).
+    if (found > (A._ctnN | 0)) { A._ctnN = found; A._ctnMate = B; }
   }
   function jelloContainBodies(active, nActive) {
     if (!JELLO_CONTACT_CONTAIN || nActive < 2) return;
@@ -7818,6 +7864,8 @@
       b.selfMin2 = bsm * bsm;
       if (b.cr > maxCr) maxCr = b.cr;
       b._cHits = 0;      // crowd-pressure gauge, accumulated by the contact solve this frame
+      b._ctnN = 0;       // interleave gauge (v26.70): max ring points inside one neighbour this
+      b._ctnMate = null; // frame, accumulated by jelloContainOneWay, read by jelloUnmergeBodies
       b._wedgeHits = 0;  // wedge gauge: gap-block ejects + diagonal-pinch undos this frame (v25.21) —
                          // a body grinding inside a too-small tile channel churns against SOLID, which
                          // the body-body gauge above never sees (the owner's wedged-slime shake)
@@ -8741,6 +8789,11 @@
       arenaClear: jelloDevArenaClear,
       arenaInfo: function () { return { left: jelloArenaLeftC, ground: jelloArenaGroundR, cells: jelloArenaCells.length }; },
       build: jelloBuildBody,
+      // Harness observability (tools/jello/): the engine's OWN containment
+      // predicates, so "merged" is measured by the same geometry the solver
+      // enforces, not a bbox proxy.
+      pointInRing: function (b, x, y) { return jelloPointInRing(b, x, y); },
+      nearestOnRing: function (b, x, y) { return jelloNearestOnRing(b, x, y); },
       buildDisc: jelloBuildDisc,
       buildTriangle: jelloBuildTriangle,
       placeTiles: jelloDevPlaceTiles,
