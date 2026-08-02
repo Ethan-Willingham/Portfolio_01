@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.27'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.28'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1912,7 +1912,8 @@
 
   function smokePuff(wx, wy, dvx, dvy, col, rad) {
     if (!smokeActive) return;
-    smokeAwakeT = SMOKE_IDLE_HOLD;
+    smokeAwakeT = (typeof presetIdleHold === 'number' && presetIdleHold > 0)
+      ? presetIdleHold : SMOKE_IDLE_HOLD;   // v4.28: ink blooms hang longer
     SmokeFluid.splat(wx / worldW, 1 - wy / worldH, dvx, dvy, col || SMOKE_COL, rad || 0.013);
   }
 
@@ -9739,8 +9740,9 @@
       var pulse = 0.6 + 0.4 * Math.sin(performance.now() * 0.0017);
       smokePuff(px, py,
         pvx * 0.28,
-        -pvy * 0.28 + 26 * pulse * (0.25 + 0.75 * gravMul),
-        SMOKE_COL, 0.010 * Math.max(0.6, brushR / 16));
+        -pvy * 0.28 + 26 * pulse * (0.25 + 0.75 * gravMul) * presetSmokeLift,
+        presetSmokeColFor ? presetSmokeColFor(pvx, pvy) : SMOKE_COL,
+        0.010 * Math.max(0.6, brushR / 16));
     } else if (tool === 'poke') {
       jelloGrabTick(px, py);
       if (smokeActive && smokeAwakeT > 0 && (pvx !== 0 || pvy !== 0)) {
@@ -9766,13 +9768,13 @@
   }
 
   function applyGravity() {
-    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('GRAVITY', 250 * gravMul);
+    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('GRAVITY', 250 * gravMul * presetGravScale);
     JELLO_GRAVITY = GRAVITY * gravMul;
   }
 
   function applyTimescale() {
     var t = Math.max(0.05, timeMul);
-    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', 1.55 * t);
+    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', 1.55 * t * presetWaterTimeScale);
     JELLO_TIMESCALE = 0.5 * t;
   }
 
@@ -9832,6 +9834,9 @@
     liquidWGPU.setSimParam('FLOOR_REACH', 0.45 + (waterReachFull - 0.45) * waterCalmT);
     liquidWGPU.setSimParam('KNEE_W', 0.10 + 0.05 * calm);   // v4.8 EOS knee hinge
     liquidWGPU.setSimParam('REACH_VY', 1);
+    // v4.28: an active water preset re-pushes its overlapping levers so the
+    // flow slider never silently strips a preset's material.
+    if (waterPresetReassert) waterPresetReassert();
   }
 
   function applyParticleDebug() {
@@ -9870,6 +9875,375 @@
     if (tv) tv.textContent = Math.round(timeMul * 100) + '%';
     if (bv) bv.textContent = Math.round(brushR) + 'px';
     if (fv) fv.textContent = waterFeelName(waterFeel);
+  }
+
+  /* ==== PRESETS (v4.28) =================================================
+   * Three toggle groups (water / smoke / slime), each a set of strongly
+   * different materials and weathers over the same three engines. Default
+   * chips restore the exact boot look. Everything here is HOST code: the
+   * presets drive live engine setters (setSimParam / setRenderParam /
+   * SmokeFluid.config / jello closure vars) and per-body material fields,
+   * never engine source. Scene switches are preset-safe: smoke emitter
+   * overrides apply at read time in emittersTick, per-body slime fields
+   * re-stamp each presetTick, and water levers persist in the engine.
+   * -------------------------------------------------------------------- */
+  var PRESET_ACTIVE = { water: 'default', smoke: 'default', slime: 'default' };
+  var presetGravScale = 1;        // water gravity multiplier (tide breathes it)
+  var presetWaterTimeScale = 1;   // water clock multiplier (magma runs slow)
+  var presetSmokeColFor = null;   // fn(pvx, pvy) -> {r,g,b} for pointer smoke
+  var presetSmokeLift = 1;        // pointer + emitter lift multiplier (fog sinks at -0.5)
+  var presetEmCol = null;         // emitter color override (aurora rotates it live)
+  var presetEmDensity = 0;        // emitter density override (0 = leave em.density)
+  var presetEmLiftK = 0;          // emitter liftK override (0 = leave em.liftK)
+  var presetIdleHold = 0;         // smoke idle-gate override seconds (0 = SMOKE_IDLE_HOLD)
+  var waterPresetReassert = null; // re-push overlapping levers after the flow slider
+  var presetClock = 0;
+  var presetFreezeT = 0;          // deep-freeze progress 0..1
+  var presetFlashT = 0;           // thunderhead countdown
+  var smokeCfgDefault = null;     // SmokeFluid.config snapshot, taken pre-first-switch
+  var slimeSnap = null;           // jello closure-var snapshot, taken pre-first-switch
+
+  function presetSet(sys, name) {
+    if (!PRESET_ACTIVE.hasOwnProperty(sys)) return;
+    if (sys === 'water') presetApplyWater(name);
+    else if (sys === 'smoke') presetApplySmoke(name);
+    else presetApplySlime(name);
+    PRESET_ACTIVE[sys] = name;
+    presetSyncChips();
+  }
+
+  /* ---- water ---- */
+  // Engine defaults for every lever a water preset touches (declarations in
+  // js/liquid-wgpu.js; boot-tuned values from the readyPromise block above).
+  var WATER_LEVER_DEFAULTS = {
+    AERATION_COEFF: 5, AERATION_THRESHOLD: 0.55, AERATION_DAMP: 0.988,
+    SURFACE_SOFT: 0.8, WATER_PARTICLE_SIZE: 1.8, DROPLETS: 1,
+    MAX_VEL: 600, PRESSURE_MAX_DV: 10, BURST_DAMP: 0.985,
+    BURST_GATE_LO: 100, BURST_GATE_HI: 300, BOUNCE_WATER: 0.18,
+    PRESSURE_STIFF: 5
+  };
+  var WATER_COLOR_DEFAULTS = {
+    WATER_R: 0.13, WATER_G: 0.34, WATER_B: 0.52, WATER_ALPHA: 0.86,
+    WATER_FOAM_R: 0.66, WATER_FOAM_G: 0.78, WATER_FOAM_B: 0.82,
+    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 0.9
+  };
+  function pushSim(map) { if (liquidWGPU && liquidWGPU.setSimParam) for (var k in map) liquidWGPU.setSimParam(k, map[k]); }
+  function pushRender(map) { if (liquidWGPU && liquidWGPU.setRenderParam) for (var k in map) liquidWGPU.setRenderParam(k, map[k]); }
+  function waterCols(r, g, b, a, fr, fg, fb) {
+    pushRender({ WATER_R: r, WATER_G: g, WATER_B: b, WATER_ALPHA: a,
+                 WATER_FOAM_R: fr, WATER_FOAM_G: fg, WATER_FOAM_B: fb });
+  }
+  function presetApplyWater(name) {
+    // Every switch starts from the boot state, then layers its own pushes,
+    // so presets never inherit a previous preset's leftovers.
+    presetGravScale = 1; presetWaterTimeScale = 1;
+    waterPresetReassert = null; presetFreezeT = 0;
+    pushSim(WATER_LEVER_DEFAULTS);
+    pushRender(WATER_COLOR_DEFAULTS);
+    applyWaterFeel(); applyGravity(); applyTimescale();
+    if (name === 'blacklight') {
+      // Ink-black body, UV foam: the speed-gated aeration channel becomes
+      // neon streaks that follow motion and die about a second later.
+      waterCols(0.02, 0.02, 0.03, 0.95, 0.10, 0.95, 1.0);
+      pushSim({ AERATION_COEFF: 14, AERATION_THRESHOLD: 0.25, AERATION_DAMP: 0.97 });
+    } else if (name === 'magma') {
+      // Molten rock: ember body, incandescent seams where it shears, and a
+      // heavy slow ooze under a four-fifths clock.
+      waterCols(0.42, 0.07, 0.01, 1.0, 1.0, 0.82, 0.30);
+      pushSim({ AERATION_COEFF: 9, AERATION_THRESHOLD: 0.35, AERATION_DAMP: 0.995,
+                SURFACE_SOFT: 0.5, MAX_VEL: 140, GRID_VISC: 0.35, DAMPING: 0.965 });
+      presetWaterTimeScale = 0.8; applyTimescale();
+      waterPresetReassert = function () { pushSim({ GRID_VISC: 0.35, DAMPING: 0.965 }); };
+    } else if (name === 'freeze') {
+      // State change: untouched water locks toward pale ice; any stirring
+      // thaws it back. The tick owns the lerp; nothing to push here.
+      presetFreezeT = 0;
+    } else if (name === 'tide') {
+      // The pool breathes on a fourteen-second gravity swell while the
+      // palette walks dusk hues. The tick owns both oscillators.
+    } else if (name === 'boil') {
+      // Full rolling boil on the documented popcorn lever: constant
+      // ejections, splashback, bright churn.
+      waterCols(0.10, 0.28, 0.44, 0.88, 0.95, 0.97, 1.0);
+      pushSim({ PRESSURE_MAX_DV: 90, BURST_DAMP: 0.995, BURST_GATE_HI: 520,
+                MAX_VEL: 1200, BOUNCE_WATER: 0.4, PRESSURE_STIFF: 8 });
+    }
+  }
+  function presetTickWater(dt) {
+    var name = PRESET_ACTIVE.water;
+    if (name === 'tide') {
+      var ph = presetClock * (Math.PI * 2 / 14);
+      presetGravScale = 0.35 + 0.85 * (0.5 + 0.5 * Math.sin(ph));
+      applyGravity();
+      // Dusk walk: three stops, blended on a slow triangle.
+      var u = 0.5 + 0.5 * Math.sin(presetClock * 0.11);
+      var v = 0.5 + 0.5 * Math.sin(presetClock * 0.053 + 2.1);
+      waterCols(0.06 + 0.16 * u, 0.10 + 0.14 * v, 0.30 + 0.24 * u,
+                0.90, 0.55 + 0.25 * v, 0.55 + 0.20 * u, 0.80);
+    } else if (name === 'freeze') {
+      // Advance toward ice while nothing disturbs the pool; thaw fast on
+      // input. pointerDown covers every tool; pour emitters count too.
+      var disturbed = pointerDown || emitters.length > 0;
+      presetFreezeT += disturbed ? -dt * 1.4 : dt / 8;
+      if (presetFreezeT < 0) presetFreezeT = 0;
+      if (presetFreezeT > 1) presetFreezeT = 1;
+      var f = presetFreezeT, ef = f * f;
+      waterCols(0.13 + (0.62 - 0.13) * f, 0.34 + (0.74 - 0.34) * f,
+                0.52 + (0.84 - 0.52) * f, 0.86 + 0.09 * f,
+                0.66 + 0.30 * f, 0.78 + 0.18 * f, 0.82 + 0.16 * f);
+      pushSim({ CALM: 0.26 + (0.95 - 0.26) * ef, CALM_LOCAL: 1,
+                QUIET_VISC: 0.018 + (0.2 - 0.018) * ef,
+                QUIET_DRAG: 0.0012 + (0.05 - 0.0012) * ef,
+                GRID_VISC: 0.012 + (0.5 - 0.012) * ef,
+                MAX_VEL: 600 - 560 * ef,
+                DROPLETS: f > 0.7 ? 0 : 1 });
+    }
+  }
+
+  /* ---- smoke ---- */
+  function presetSmokeSnapshot() {
+    if (smokeCfgDefault || !SmokeFluid || !SmokeFluid.config) return;
+    var c = SmokeFluid.config;
+    smokeCfgDefault = { CURL: c.CURL, DENSITY_DISSIPATION: c.DENSITY_DISSIPATION,
+      VELOCITY_DISSIPATION: c.VELOCITY_DISSIPATION, PRESSURE: c.PRESSURE,
+      PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS };
+  }
+  function presetApplySmoke(name) {
+    presetSmokeSnapshot();
+    var c = SmokeFluid && SmokeFluid.config;
+    if (!c) return;
+    // Reset to boot, then layer.
+    if (smokeCfgDefault) for (var k in smokeCfgDefault) c[k] = smokeCfgDefault[k];
+    c.wind_x = 0; c.wind_above_y = 0;
+    presetSmokeColFor = null; presetSmokeLift = 1;
+    presetEmCol = null; presetEmDensity = 0; presetEmLiftK = 0;
+    presetIdleHold = 0; presetFlashT = 0;
+    if (name === 'ember') {
+      // Born fire-hot, cools to soot. Pointer speed picks the flame color:
+      // slow strokes smolder deep red, fast strokes flash near white.
+      c.CURL = 34; c.DENSITY_DISSIPATION = 0.10;
+      presetEmCol = { r: 0.9, g: 0.30, b: 0.06 }; presetEmLiftK = 1.4;
+      presetSmokeColFor = function (pvx, pvy) {
+        var s = Math.min(1, Math.hypot(pvx, pvy) / 900);
+        return { r: 0.55 + 0.40 * s, g: 0.10 + 0.55 * s, b: 0.03 + 0.45 * s };
+      };
+    } else if (name === 'ink') {
+      // Sumi ink in still water: no lift, strokes die where you leave
+      // them, blooms feather for most of a minute.
+      c.DENSITY_DISSIPATION = 0.02; c.VELOCITY_DISSIPATION = 1.3; c.CURL = 3;
+      presetSmokeLift = 0; presetIdleHold = 45;
+      presetEmCol = { r: 0.10, g: 0.14, b: 0.45 };
+      presetSmokeColFor = function () { return { r: 0.05, g: 0.08, b: 0.22 }; };
+    } else if (name === 'aurora') {
+      // Northern lights: continuous low-luminance hue slide on ribbons
+      // that ride the engine's never-used wind lever. Tick owns the hue.
+      c.VELOCITY_DISSIPATION = 0.005; c.CURL = 8; c.DENSITY_DISSIPATION = 0.08;
+      c.wind_x = 0.012; c.wind_above_y = 0.05;
+      presetEmCol = { r: 0.1, g: 0.5, b: 0.3 };
+      presetSmokeColFor = function () { return presetEmCol; };
+    } else if (name === 'fog') {
+      // Dry ice: heavier than air, pours downhill, banks on walls and
+      // creeps flat across standing water (already a smoke obstacle).
+      c.CURL = 4; c.DENSITY_DISSIPATION = 0.05; c.VELOCITY_DISSIPATION = 0.6;
+      presetSmokeLift = -0.5;
+      presetEmCol = { r: 0.55, g: 0.62, b: 0.55 };
+      presetSmokeColFor = function () { return { r: 0.22, g: 0.25, b: 0.22 }; };
+    } else if (name === 'storm') {
+      // A brooding cell with interior lightning: the flash is one bright
+      // additive splat (a deliberate brief clip that decays), the thunder
+      // is four radial velocity-only shoves.
+      c.CURL = 38; c.DENSITY_DISSIPATION = 1.0;
+      presetEmCol = { r: 0.28, g: 0.26, b: 0.40 }; presetEmDensity = 1.6;
+      presetSmokeColFor = function () { return { r: 0.24, g: 0.22, b: 0.34 }; };
+      presetFlashT = 3 + Math.random() * 4;
+    }
+  }
+  function presetTickSmoke(dt) {
+    var name = PRESET_ACTIVE.smoke;
+    if (name === 'aurora' && presetEmCol) {
+      // Low-luminance HSV sweep, green -> teal -> violet band.
+      var h = (presetClock * 14) % 360;
+      var rad = h * Math.PI / 180;
+      presetEmCol.r = 0.10 + 0.09 * Math.max(0, Math.cos(rad));
+      presetEmCol.g = 0.10 + 0.11 * Math.max(0, Math.cos(rad - 2.1));
+      presetEmCol.b = 0.10 + 0.13 * Math.max(0, Math.cos(rad - 4.2));
+    } else if (name === 'storm' && smokeActive) {
+      presetFlashT -= dt;
+      if (presetFlashT <= 0) {
+        presetFlashT = 4 + Math.random() * 5;
+        // Place the flash at an emitter plume if one exists, else upper mid.
+        var fx = worldW * (0.35 + 0.3 * Math.random());
+        var fy = worldH * 0.30;
+        for (var ei = 0; ei < emitters.length; ei++) {
+          if (emitters[ei].kind === 'smoke') { fx = emitters[ei].x; fy = emitters[ei].y - worldH * 0.22; break; }
+        }
+        smokePuff(fx, fy, 0, 0, { r: 0.7, g: 0.7, b: 0.85 }, 0.05);
+        for (var q = 0; q < 4; q++) {
+          var an = q * Math.PI / 2 + Math.random() * 0.6;
+          SmokeFluid.splat(fx / worldW, 1 - fy / worldH,
+            Math.cos(an) * 260, Math.sin(an) * 260, { r: 0, g: 0, b: 0 }, 0.03);
+        }
+      }
+    }
+  }
+
+  /* ---- slime ---- */
+  function presetSlimeSnapshot() {
+    if (slimeSnap) return;
+    slimeSnap = {
+      feelIdx: jelloFeelIdx,
+      plas: JELLO_PLASTICITY, yield_: JELLO_YIELD, harden: JELLO_HARDEN,
+      shear: JELLO_SHEAR, shearCap: JELLO_SHEAR_CAP,
+      edge: JELLO_EDGE_STYLE, fuzz: JELLO_EDGE_FUZZ,
+      damping: JELLO_DAMPING, fric: JELLO_CONTACT_FRICTION
+    };
+  }
+  function presetSlimeBodyReset() {
+    for (var i = 0; i < jelloBodies.length; i++) {
+      var b = jelloBodies[i];
+      if (b._pm0) {
+        b.hue = b._pm0.hue; b.sat = b._pm0.sat; b.alpha = b._pm0.alpha;
+        b.refract = b._pm0.refract; b.shimmer = b._pm0.shimmer;
+        b.gloss = b._pm0.gloss; b.rim = b._pm0.rim; b.light = b._pm0.light;
+        b._pm0 = null;
+      }
+      b._pmPhase = undefined;
+      try { jelloClearActorIntent(b); } catch (e) {}
+    }
+  }
+  function presetSlimeMark(b) {
+    if (!b._pm0) {
+      b._pm0 = { hue: b.hue, sat: b.sat, alpha: b.alpha, refract: b.refract,
+                 shimmer: b.shimmer, gloss: b.gloss, rim: b.rim, light: b.light };
+    }
+  }
+  function presetApplySlime(name) {
+    presetSlimeSnapshot();
+    // Reset to boot, then layer.
+    presetSlimeBodyReset();
+    jelloApplyFeel(slimeSnap.feelIdx);
+    JELLO_PLASTICITY = slimeSnap.plas; JELLO_YIELD = slimeSnap.yield_;
+    JELLO_HARDEN = slimeSnap.harden; JELLO_SHEAR = slimeSnap.shear;
+    JELLO_SHEAR_CAP = slimeSnap.shearCap; JELLO_EDGE_STYLE = slimeSnap.edge;
+    JELLO_EDGE_FUZZ = slimeSnap.fuzz; JELLO_DAMPING = slimeSnap.damping;
+    JELLO_CONTACT_FRICTION = slimeSnap.fric;
+    if (name === 'oobleck') {
+      // Cornstarch slurry on the shipped-at-zero shear-thickening path:
+      // hits meet a solid, patience meets a liquid.
+      JELLO_E = 2; jelloRecomputeMaterial();
+      JELLO_XPBD_SHAPE = 0.002; JELLO_SHEAR = 0.6; JELLO_SHEAR_CAP = 3.0;
+    } else if (name === 'clay') {
+      // Pottery: throws leave permanent dents (the dormant plasticity
+      // axis), and dented bodies stack instead of sliding.
+      JELLO_E = 25; jelloRecomputeMaterial();
+      JELLO_XPBD_SHAPE = 0.02; JELLO_INT_DAMP = 35; JELLO_BOUNCE = 0.05;
+      JELLO_PLASTICITY = 0.35; JELLO_YIELD = 0.15; JELLO_HARDEN = 0.3;
+      JELLO_CONTACT_FRICTION = 0.9; JELLO_EDGE_STYLE = 0;
+    } else if (name === 'lava') {
+      JELLO_DAMPING = 0.9995;   // lazy waxy drift
+    }
+    // mood / jelly need no global physics change; the tick owns them.
+  }
+  function presetTickSlime(dt) {
+    var name = PRESET_ACTIVE.slime;
+    if (name === 'default') return;
+    var ts = (typeof JELLO_TIMESCALE === 'number') ? JELLO_TIMESCALE : 0.5;
+    for (var i = 0; i < jelloBodies.length; i++) {
+      var b = jelloBodies[i];
+      if (!b || b.n <= 0) continue;
+      presetSlimeMark(b);
+      if (name === 'mood') {
+        // Live speedometer: asleep-blue at rest, lime mid, hot orange when
+        // flung, cooling back over about two seconds.
+        var spd = Math.hypot(b.vx || 0, b.vy || 0) * ts;
+        var t = Math.min(1, spd / 520);
+        var target = t < 0.5 ? 200 + (90 - 200) * (t * 2) : 90 + (18 - 90) * (t * 2 - 1);
+        var h0 = (typeof b.hue === 'number') ? b.hue : 200;
+        b.hue = h0 + (target - h0) * Math.min(1, 5 * dt);
+        b.sat = 1.1;
+      } else if (name === 'lava') {
+        // Every blob its own slow-cycling wax color, phase-offset so no
+        // two match; shimmer and lens up for the iridescent look.
+        if (b._pmPhase === undefined) b._pmPhase = (i * 47) % 360;
+        b._pmPhase += (6 + (i % 5) * 2.5) * dt;
+        b.hue = b._pmPhase % 360;
+        b.shimmer = 0.35; b.refract = 0.2; b.sat = 1.15;
+      } else if (name === 'oobleck') {
+        b.hue = 60; b.sat = 0.15; b.light = 0.3; b.alpha = 0.92;
+        b.refract = 0; b.shimmer = 0.05;
+      } else if (name === 'clay') {
+        b.hue = 20; b.sat = 0.75; b.light = 0.08; b.alpha = 0.95;
+        b.refract = 0; b.shimmer = 0;
+      } else if (name === 'jelly') {
+        // Aquarium bells: translucent, rim-lit, pulsing to swim. Each body
+        // contracts on its own clock and gets a small upward shove at the
+        // squeeze, so it climbs a little and sinks back.
+        if (b._pmPhase === undefined) b._pmPhase = Math.random() * Math.PI * 2;
+        b._pmPhase += dt * (1.1 + (i % 3) * 0.25);
+        var ph = b._pmPhase;
+        b.hue = 260 + (i * 25) % 80; b.alpha = 0.4; b.refract = 0.25;
+        b.shimmer = 0.4; b.light = 0.1; b.rim = 0.35; b.sat = 0.9;
+        var squeeze = Math.sin(ph);
+        try {
+          jelloSetActorIntent(b, {
+            poseX: 1 + 0.16 * squeeze, poseY: 1 - 0.20 * squeeze,
+            poseFollow: 6, wobble: 0.08, phaseSpeed: 0,
+            jump: (squeeze > 0.92 && Math.cos(ph) > 0) ? 150 : 0,
+            state: 'jelly'
+          });
+        } catch (e) {}
+      }
+    }
+  }
+
+  function presetTick(dt) {
+    presetClock += dt;
+    presetTickWater(dt);
+    presetTickSmoke(dt);
+    presetTickSlime(dt);
+  }
+
+  /* ---- chips ---- */
+  var PRESET_GROUPS = [
+    { sys: 'water', label: 'water', names: ['default', 'blacklight', 'magma', 'freeze', 'tide', 'boil'] },
+    { sys: 'smoke', label: 'smoke', names: ['default', 'ember', 'ink', 'aurora', 'fog', 'storm'] },
+    { sys: 'slime', label: 'slime', names: ['default', 'mood', 'lava', 'oobleck', 'clay', 'jelly'] }
+  ];
+  function presetSyncChips() {
+    var chips = document.querySelectorAll('#toy-bar [data-preset]');
+    for (var i = 0; i < chips.length; i++) {
+      var kv = chips[i].getAttribute('data-preset').split(':');
+      chips[i].classList.toggle('is-on', PRESET_ACTIVE[kv[0]] === kv[1]);
+    }
+  }
+  function presetBuildUI() {
+    var bar = document.getElementById('toy-bar');
+    if (!bar) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'toy-presets';
+    for (var g = 0; g < PRESET_GROUPS.length; g++) {
+      var grp = PRESET_GROUPS[g];
+      var row = document.createElement('div');
+      row.className = 'toy-group';
+      row.setAttribute('role', 'group');
+      row.setAttribute('aria-label', grp.label + ' presets');
+      var lab = document.createElement('label');
+      lab.textContent = grp.label;
+      row.appendChild(lab);
+      for (var n = 0; n < grp.names.length; n++) {
+        var chip = document.createElement('button');
+        chip.className = 'toy-chip';
+        chip.setAttribute('data-preset', grp.sys + ':' + grp.names[n]);
+        chip.textContent = grp.names[n];
+        (function (sys, name) {
+          chip.addEventListener('click', function () { presetSet(sys, name); });
+        })(grp.sys, grp.names[n]);
+        row.appendChild(chip);
+      }
+      wrap.appendChild(row);
+    }
+    bar.appendChild(wrap);
+    presetSyncChips();
   }
 
   function wireUI() {
@@ -9920,6 +10294,7 @@
     setTool('poke');
     syncParticleUI();
     syncSliderUI();
+    presetBuildUI();
   }
 
   function setSceneChip(name) {
@@ -10024,12 +10399,13 @@
             Math.sin(em.age * 1.1 + phase * 3.7) * 6.8 +
             Math.sin(em.age * 2.6 + phase * 1.4) * 2.1;
           var lift = (0.25 + 0.75 * gravMul) *
-            (11.5 + Math.sin(em.age * 1.7 + phase) * 1.2) * (em.liftK || 1);
+            (11.5 + Math.sin(em.age * 1.7 + phase) * 1.2) *
+            (presetEmLiftK || em.liftK || 1) * presetSmokeLift;
           // The dark stage needs a light warm-gray field. Dye is split
           // between a narrow mouth and a softer body so the source stays
           // legible without turning into a clipped white ball.
-          var base = em.col || SMOKE_EMITTER_COL;
-          var amount = em.density || 1;
+          var base = presetEmCol || em.col || SMOKE_EMITTER_COL;
+          var amount = presetEmDensity || em.density || 1;
           var mouthDye = {
             r: base.r * 0.045 * amount,
             g: base.g * 0.045 * amount,
@@ -10274,6 +10650,7 @@
     if (dt > 0) fpsEMA = fpsEMA * 0.95 + (1 / dt) * 0.05;
 
     toolTick(dt);
+    presetTick(dt);
     emittersTick(dt);
     retireLiquidOrphans();
     updateLiquidToy(dt);
@@ -10427,6 +10804,9 @@
         else if (k === 'brush') { brushR = +v; syncSliderUI(); }
         else if (k === 'flow') { waterFeel = Math.max(0, Math.min(1, +v || 0)); applyWaterFeel(); syncSliderUI(); }
         else if (k === 'particles') { setParticleDebug(!!v); }
+        else if (k === 'waterPreset') { presetSet('water', String(v)); }
+        else if (k === 'smokePreset') { presetSet('smoke', String(v)); }
+        else if (k === 'slimePreset') { presetSet('slime', String(v)); }
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },

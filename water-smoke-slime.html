@@ -122,6 +122,21 @@
       gap: 0.4rem;
       flex-wrap: wrap;
     }
+    /* v4.28 preset rows: three full-width chip rows under the main bar. */
+    .toy-presets {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      width: 100%;
+      margin-top: 0.15rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid var(--d-rule);
+    }
+    .toy-presets label {
+      min-width: 3.2rem;
+      color: var(--d-text-dim);
+      font-size: 0.78rem;
+    }
     .toy-tools { gap: 0.3rem; }
     .tb {
       appearance: none;
@@ -365,7 +380,7 @@
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
   <script src="js/liquid-wgpu.js?v=v26.73"></script>
-  <script src="js/water-smoke-slime.js?v=v4.27"></script>
+  <script src="js/water-smoke-slime.js?v=v4.28"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
