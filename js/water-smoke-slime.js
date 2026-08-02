@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.29'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.30'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1885,20 +1885,32 @@
   function bootSmoke() {
     if (typeof WebGLRenderingContext === 'undefined') return;
     smokeCanvas = document.createElement('canvas');
-    var pxScale = isMobile ? 0.7 : 0.6;
+    // v4.30 resolution pass (owner: the smoke read "really really low
+    // resolution"). Three compounding causes, all fixed here: the overlay
+    // canvas ignored devicePixelRatio (a Retina display drew smoke at ~30%
+    // of device res and stretched it 3x), the dye field capped at 672
+    // texels across a stage twice that wide, and the 160-cell sim grid
+    // kept vortex detail chunky. The layer-two size presets magnified
+    // every coarse texel. Costs stay bounded: canvas capped at 1.25x world
+    // px, dye at 1024 (the engine's own float-linear fallback still caps
+    // at 512 on GPUs without linear filtering), sim at 224.
+    var dprS = Math.min(2, window.devicePixelRatio || 1);
+    var pxScale = isMobile
+      ? Math.max(0.7, Math.min(0.9, 0.5 * dprS))
+      : Math.max(0.75, Math.min(1.25, 0.6 * dprS));
     smokeCanvas.width = Math.max(64, Math.round(worldW * pxScale));
     smokeCanvas.height = Math.max(64, Math.round(worldH * pxScale));
     smokeCanvas.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:5;';
     stage.appendChild(smokeCanvas);
     smokeObH = Math.max(64, Math.round(smokeObW * worldH / worldW));
     var shortAxis = Math.min(worldW, worldH);
-    var dye = Math.round(shortAxis * 0.62);
-    if (dye < 384) dye = 384;
-    if (dye > 672) dye = 672;
+    var dye = Math.round(shortAxis * 0.95);
+    if (dye < 512) dye = 512;
+    if (dye > 1024) dye = 1024;
     var opts = isMobile
-      ? { SIM_RESOLUTION: 96, DYE_RESOLUTION: 256, DENSITY_DISSIPATION: 0.24,
+      ? { SIM_RESOLUTION: 112, DYE_RESOLUTION: 320, DENSITY_DISSIPATION: 0.24,
           VELOCITY_DISSIPATION: 0.04, CURL: 14, SPLAT_RADIUS: 0.18, SHADING: true }
-      : { SIM_RESOLUTION: 160, DYE_RESOLUTION: dye, DENSITY_DISSIPATION: 0.18,
+      : { SIM_RESOLUTION: 224, DYE_RESOLUTION: dye, DENSITY_DISSIPATION: 0.18,
           VELOCITY_DISSIPATION: 0.02, CURL: 14, SPLAT_RADIUS: 0.18, SHADING: false };
     var ok = false;
     try { ok = !!SmokeFluid.init(smokeCanvas, opts); } catch (e) { ok = false; }
