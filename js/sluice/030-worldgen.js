@@ -817,10 +817,10 @@
   // v25.59 — density of the scattered buried slimes, as a chance per diggable
   // tile. Each slime spans exactly one column, so a straight-down 1-tile shaft
   // meets about chance*150 of them per 150 m. Owner dialed the rareness down to
-  // 0.0035, so roughly one buried slime every ~285 m of descent, down from the
-  // ~1-per-150 m the old 0.0068 gave. Rare enough to read as a real find;
-  // ?jello=0 removes them entirely; scale this to taste.
-  var JELLO_PATCH_CHANCE = 0.0035;
+  // v26.73 owner call: halved again to 0.00175, roughly one buried slime
+  // every ~570 m of descent (history: 0.0068 -> 0.0035 -> here). Rare enough
+  // to read as a real find; ?jello=0 removes them entirely; scale to taste.
+  var JELLO_PATCH_CHANCE = 0.00175;
   function generateJelloPatches() {
     resetJello();
     if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
@@ -895,10 +895,10 @@
     if (aboveR < 0) return;
     var above = world[aboveR], ground = world[aboveR + 1];   // ground = row SKY_ROWS, the shore surface
     if (!above || !ground) return;
-    // Two perches per bank: snug against the wall, then one gap further out. Never
-    // the wall (cL-1 / cR+1) or the water (cL..cR); the 2-col spacing keeps each
-    // slime a separate one-tile creature.
-    var cols = [cL - 2, cL - 4, cR + 2, cR + 4];
+    // One perch per bank (v26.73 owner call: slime population halved), snug
+    // against the wall. Never the wall itself (cL-1 / cR+1) or the water
+    // (cL..cR); each perch is a separate one-tile creature.
+    var cols = [cL - 2, cR + 2];
     for (var i = 0; i < cols.length; i++) {
       var c = cols[i];
       if (c < 3 || c >= COLS - 3) continue;

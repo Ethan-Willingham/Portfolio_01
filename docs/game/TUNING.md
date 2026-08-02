@@ -885,8 +885,8 @@ worlds boot with test-pen bodies, assert against the pre-drop baseline).
 | `JELLO_DISSOLVE_R` | `40` | 16–128 | px beyond the body bbox counted as "near" |
 | `JELLO_DISSOLVE_N` | `500` | 100–3000 | Dense-bin particles within range required to trigger (films/sprays never count toward it) |
 
-**v26.69 scope change:** NPC bodies (`b.npc`, which since v26.69 means every
-wild slime) skip the dissolve entirely, same skip as the banya's `b.guest`
+**v26.69 scope change:** NPC bodies (`b.npc`, set only while the slime-NPC
+brains are enabled; they SHIP OFF since v26.73) skip the dissolve entirely, same skip as the banya's `b.guest`
 customers: creatures swim, they do not melt. The system and its levers stay
 live for any body without a brain (dev-pen fixtures, `__jello.spawn` blobs).
 
@@ -899,7 +899,7 @@ lengths around these bases.
 
 | Lever | Now | Range | Effect |
 |---|---|---|---|
-| `NPC` | `1` | 0/1 | Master: wild slimes think, wander, swim. 0 sweeps intents/buoys/guest lanes once and leaves plain soft bodies (`?npc=0` at boot) |
+| `NPC` | `0` | 0/1 | Master (SHIPS OFF since v26.73, owner call): wild slimes think, wander, swim. Flipping to 0 sweeps intents/buoys/guest lanes once; `?npc=1` enables per boot |
 | `HOP_VY` | `330` | 100–600 | Hop impulse, solver px/s (real = × `JELLO_TIMESCALE`). Obstacle hops ×1.35, startle ×1.25 |
 | `HOP_VX` | `130` | 40–320 | Air-steer servo target while mid-hop, solver px/s |
 | `HOP_CD` | `1.15` | 0.3–3 | Seconds between wander hops (playful slimes shave up to 0.45 s) |

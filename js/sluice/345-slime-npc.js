@@ -32,7 +32,11 @@
      brains re-attach fresh on load from the plain body list.
      ===================================================================== */
 
-  var SLIME_NPC = true;              // master switch (gm slime.NPC, ?npc=0)
+  var SLIME_NPC = false;             // master switch. PARKED OFF by owner call (2026-08-02):
+                                     // the brains stay shipped and testable (gm slime.NPC = 1
+                                     // live, ?npc=1 per boot) but wild slimes default to plain
+                                     // soft bodies. With brains off, bodies have no b.npc, so
+                                     // the v25.53 water dissolve applies to them again.
   var SLIME_HOP_VY = 330;            // hop impulse, solver px/s (real = x JELLO_TIMESCALE)
   var SLIME_HOP_VX = 130;            // air-steer servo target, solver px/s
   var SLIME_HOP_CD = 1.15;           // seconds between wander hops (temperament-scaled)
@@ -58,7 +62,8 @@
     for (var i = 0; i < 8; i++) { slimeNpcGuests.push({ pts: null }); slimeNpcGuestOwner.push(null); }
   })();
   try {
-    if (/[?&]npc=0/.test(location.search)) SLIME_NPC = false;
+    if (/[?&]npc=1/.test(location.search)) SLIME_NPC = true;
+    else if (/[?&]npc=0/.test(location.search)) SLIME_NPC = false;
   } catch (e) {}
 
   function slimeNpcAttach(b) {

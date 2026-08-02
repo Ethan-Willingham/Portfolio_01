@@ -69,9 +69,9 @@ slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the
 cargo, the surface station shop (Workshop + Supply Shelf only), upgrades (drill/fuel/cargo/
 hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water only), smoke, rare
 buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, tuned by
-`JELLO_PATCH_CHANCE` in 030) that fully cushion a fall and, since v26.69, live as true
-NPCs (345-slime-npc.js: they wander in hops, startle, and swim lakes with splash/relax/
-paddle-out states; `?npc=0` disables the brains), fall damage (v25.59: `FALL_IMPACT_FX`
+`JELLO_PATCH_CHANCE` in 030) that fully cushion a fall (the v26.69 NPC brains in
+345-slime-npc.js are PARKED OFF since v26.73, owner call; `?npc=1` or gm `slime.NPC`
+enables wander/hop/startle + swim states), fall damage (v25.59: `FALL_IMPACT_FX`
 on, a bad drop can kill on bare rock), flight (ONE unified model everywhere since v25.49:
 `flyTune` + the FLY FEEL presets), the night sky/weather/mountains/trees, audio (music + the
 wired-but-empty SFX), save/respawn, the Great Seam endgame chamber, the Mineral Ledger.

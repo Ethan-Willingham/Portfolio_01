@@ -484,7 +484,7 @@ try {
   // ================= NPC boot (S8b plunge + S4 pileup) =================
   if (want('S4') || want('S8')) {
   consoleErrors.length = 0;
-  await boot('');   // NPC brains ON (ship default)
+  await boot('npc=1');   // brains forced ON (they ship OFF since v26.73; these scenarios test the engine under brain churn)
 
   // ---- S8b: lake plunge plows deep (v26.72; needs the NPC brain live) ----
   // Drop a slime from the sky roof into a real lake. The buoy now waits

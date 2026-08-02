@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.72';
+  var GAME_VERSION = 'v26.73';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3814,10 +3814,10 @@
   // v25.59 — density of the scattered buried slimes, as a chance per diggable
   // tile. Each slime spans exactly one column, so a straight-down 1-tile shaft
   // meets about chance*150 of them per 150 m. Owner dialed the rareness down to
-  // 0.0035, so roughly one buried slime every ~285 m of descent, down from the
-  // ~1-per-150 m the old 0.0068 gave. Rare enough to read as a real find;
-  // ?jello=0 removes them entirely; scale this to taste.
-  var JELLO_PATCH_CHANCE = 0.0035;
+  // v26.73 owner call: halved again to 0.00175, roughly one buried slime
+  // every ~570 m of descent (history: 0.0068 -> 0.0035 -> here). Rare enough
+  // to read as a real find; ?jello=0 removes them entirely; scale to taste.
+  var JELLO_PATCH_CHANCE = 0.00175;
   function generateJelloPatches() {
     resetJello();
     if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
@@ -3892,10 +3892,10 @@
     if (aboveR < 0) return;
     var above = world[aboveR], ground = world[aboveR + 1];   // ground = row SKY_ROWS, the shore surface
     if (!above || !ground) return;
-    // Two perches per bank: snug against the wall, then one gap further out. Never
-    // the wall (cL-1 / cR+1) or the water (cL..cR); the 2-col spacing keeps each
-    // slime a separate one-tile creature.
-    var cols = [cL - 2, cL - 4, cR + 2, cR + 4];
+    // One perch per bank (v26.73 owner call: slime population halved), snug
+    // against the wall. Never the wall itself (cL-1 / cR+1) or the water
+    // (cL..cR); each perch is a separate one-tile creature.
+    var cols = [cL - 2, cR + 2];
     for (var i = 0; i < cols.length; i++) {
       var c = cols[i];
       if (c < 3 || c >= COLS - 3) continue;
@@ -58380,7 +58380,11 @@
      brains re-attach fresh on load from the plain body list.
      ===================================================================== */
 
-  var SLIME_NPC = true;              // master switch (gm slime.NPC, ?npc=0)
+  var SLIME_NPC = false;             // master switch. PARKED OFF by owner call (2026-08-02):
+                                     // the brains stay shipped and testable (gm slime.NPC = 1
+                                     // live, ?npc=1 per boot) but wild slimes default to plain
+                                     // soft bodies. With brains off, bodies have no b.npc, so
+                                     // the v25.53 water dissolve applies to them again.
   var SLIME_HOP_VY = 330;            // hop impulse, solver px/s (real = x JELLO_TIMESCALE)
   var SLIME_HOP_VX = 130;            // air-steer servo target, solver px/s
   var SLIME_HOP_CD = 1.15;           // seconds between wander hops (temperament-scaled)
@@ -58406,7 +58410,8 @@
     for (var i = 0; i < 8; i++) { slimeNpcGuests.push({ pts: null }); slimeNpcGuestOwner.push(null); }
   })();
   try {
-    if (/[?&]npc=0/.test(location.search)) SLIME_NPC = false;
+    if (/[?&]npc=1/.test(location.search)) SLIME_NPC = true;
+    else if (/[?&]npc=0/.test(location.search)) SLIME_NPC = false;
   } catch (e) {}
 
   function slimeNpcAttach(b) {
