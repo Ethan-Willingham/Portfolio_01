@@ -19,6 +19,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
    first, so the era column reads top-to-bottom as a timeline. Live members come
    before the greyed "coming soon" ones. A live member is
    {href,title,thumb,era,year,desc}; a planned one is {title,era,year,desc,soon}.
+   A hub marked inProgress is not carded on the Longform shelf. Its page carries
+   the amber in-progress banner and its members are flagged in the search index,
+   so the collection reads as unfinished instead of finished. Its posts stay live
+   at their normal URLs; nothing moves into /archive.
    Titles are short and parallel so the list reads as a set; descriptions are
    written for a reader who has never heard of the book. */
 const live = (href, title, thumb, era, year, desc) => ({ href, title, thumb, era, year, desc });
@@ -45,7 +49,7 @@ const HUBS = [
     ],
   },
   {
-    slug: 'philosophy', title: "How to Think, and What's Real",
+    slug: 'philosophy', title: "How to Think, and What's Real", inProgress: true,
     card: { thumb: 'aristotle.jpg', alt: "Rembrandt's painting of Aristotle resting a hand on a bust of Homer.",
       desc: 'How to think and what is real, from Plato and Aristotle to Darwin and Deutsch, each argument walked one move at a time, the dissenters kept in.' },
     lead: 'How to think, and what is real, in the order it was argued. From the ancient Greeks through the Enlightenment to modern science, with the dissenters kept in the room.',
@@ -86,7 +90,7 @@ const HUBS = [
     ],
   },
   {
-    slug: 'power-story-love', title: 'Power, Story, and Love',
+    slug: 'power-story-love', title: 'Power, Story, and Love', inProgress: true,
     card: { thumb: 'symposium.jpg', alt: "A detail of Anselm Feuerbach's Das Gastmahl, a torch-lit procession of garlanded revelers entering a feast.",
       desc: 'The human dramas: the Art of War on winning without fighting, the Odyssey on getting home, with power, story, and love still to come.' },
     lead: 'The human dramas, oldest first: the founding adventure of the West, the oldest book on strategy, and the great arguments about power, desire, and beauty still to come.',
@@ -137,7 +141,9 @@ const SHELF = {
   credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
   alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
   cardDesc: 'the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.',
-  hubOrder: ['career', 'staying-alive', 'inner-life', 'religion', 'philosophy', 'power-story-love'],
+  /* only the finished collections. philosophy and power-story-love moved to the
+     In Progress index (archive.html); they carry inProgress above. */
+  hubOrder: ['career', 'staying-alive', 'inner-life', 'religion'],
   singles: [
     {
       href: 'no-blood-test.html', title: 'The Book With No Blood Test', thumb: 'no-blood-test.jpg',
@@ -172,7 +178,14 @@ const memberCard = (m, i) => m.soon
           </a>
         </li>`;
 
-const hubPage = (h) => `<!DOCTYPE html>
+/* An in-progress hub loads the shared banner as the first child of <body> (same
+   contract as the pages under /archive), and its back-link points at the In
+   Progress index instead of the Longform shelf it is no longer listed on. */
+const hubPage = (h) => {
+  const banner = h.inProgress ? '\n  <script src="/js/archive-banner.js"></script>' : '';
+  const backHref = h.inProgress ? 'archive.html' : 'boring-stuff.html';
+  const backLabel = h.inProgress ? 'In Progress' : 'Longform';
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -193,7 +206,7 @@ const hubPage = (h) => `<!DOCTYPE html>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="collection.css">
 </head>
-<body>
+<body>${banner}
   <div class="site-wrapper">
     <header class="site-header">
       <h1 class="site-name">${h.title}</h1>
@@ -209,7 +222,7 @@ const hubPage = (h) => `<!DOCTYPE html>
         </div>
         <span class="hs-links">
           <a class="hs-about" href="/">Home</a>
-          <a class="hs-about" href="boring-stuff.html">Longform</a>
+          <a class="hs-about" href="${backHref}">${backLabel}</a>
           <a class="hs-about" href="about.html">About</a>
         </span>
       </div>
@@ -232,6 +245,7 @@ ${ordered(h.members).map(memberCard).join('\n')}
 </body>
 </html>
 `;
+};
 
 const liveCount = (h) => h.members.filter((m) => !m.soon).length;
 const shelfHubs = SHELF.hubOrder.map((slug) => HUBS.find((h) => h.slug === slug));

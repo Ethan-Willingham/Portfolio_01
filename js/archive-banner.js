@@ -1,8 +1,10 @@
 /* archive-banner.js
  * One source of truth for the "this post is still in progress" notice that sits at the
- * top of every page under /archive. Each archived post loads this with a single
+ * top of every page under /archive, and on the hub page of a collection that is
+ * still being filled out. Each such page loads this with a single
  * <script src="/js/archive-banner.js"></script> placed as the first child of
- * <body>, so the banner renders at the very top with no flash.
+ * <body>, so the banner renders at the very top with no flash. (An in-progress
+ * hub gets that line from tools/gen-hubs.mjs, from its inProgress flag.)
  *
  * The styles are injected here (with hardcoded fallbacks) so the banner looks
  * right even on the older archived pages whose stylesheet link is broken.
@@ -14,11 +16,18 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // The stat. Counted 2026-07-13: 20 archived, 11 still live on the homepage.
-  // (under-the-street.html was promoted to the homepage, then archived the next day.)
-  var ARCHIVED = 20;
-  var TOTAL = 31;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 65
+  // The stat. Recounted 2026-08-01, when the philosophy and power-story-love
+  // collections moved to the In Progress index: 40 in progress (19 under
+  // /archive plus those two collections' 14 + 7 live members), against 84 posts
+  // in all (12 homepage cards + 32 on the Longform shelf + the 40).
+  // The old 20/31 counted only the archive against the homepage, which left out
+  // the whole Longform shelf and so overstated the share. This denominator is
+  // every post on the site. Recount both numbers together; a bump to one alone
+  // makes the sentence below false. `node tools/build-search-index.mjs` prints
+  // the active / in progress / archived split, which is the easiest recount.
+  var ARCHIVED = 40;
+  var TOTAL = 84;
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 48
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +

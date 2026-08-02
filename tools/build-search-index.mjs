@@ -119,8 +119,14 @@ for (const block of cardBlocks) {
 // pages instead of on the homepage. Pull each hub's member links, tag them with
 // the hub slug (so a hub page's own search scopes to its posts, and the homepage
 // search still finds them as non-archived), and index their real text.
+// A hub listed on the In Progress index instead of the Longform shelf gets its
+// members flagged `inprogress` (mirror of tools/gen-hubs.mjs `inProgress`), so
+// the In Progress search finds them and the UI ranks and marks them like the
+// archived posts. They are NOT `archived`: the files never moved, the URLs are
+// live, and the homepage search still finds them. Keep this list in sync.
 const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive', 'career'];
-const BORING_HUBS = new Set(HUB_SLUGS);
+const IN_PROGRESS_HUBS = new Set(['philosophy', 'power-story-love']);
+const BORING_HUBS = new Set(HUB_SLUGS.filter((s) => !IN_PROGRESS_HUBS.has(s)));
 for (const slug of HUB_SLUGS) {
   const hubFile = join(ROOT, slug + '.html');
   if (!existsSync(hubFile)) continue;
@@ -137,6 +143,7 @@ for (const slug of HUB_SLUGS) {
       thumb: attr(block, /<img[^>]*src="([^"]+)"/),
       keywords: '', hub: slug, hubs: BORING_HUBS.has(slug) ? [slug, 'boring-stuff'] : [slug], sections: [],
     };
+    if (IN_PROGRESS_HUBS.has(slug)) post.inprogress = true;
     buildSections(post, join(ROOT, href));
     posts.push(post);
     seen.add(href);
@@ -218,9 +225,11 @@ writeFileSync(join(ROOT, 'search-index.json'), json);
 
 const kb = (json.length / 1024).toFixed(0);
 console.log(`search-index.json: ${posts.length} posts, ${json.length} bytes (${kb} KB)`);
-const active = posts.filter(p => !p.archived).length;
-console.log(`  (${active} active, ${posts.length - active} archived)`);
+const archived = posts.filter(p => p.archived).length;
+const inprog = posts.filter(p => p.inprogress).length;
+console.log(`  (${posts.length - archived - inprog} active, ${inprog} in progress, ${archived} archived)`);
 for (const p of posts) {
   const chars = p.sections.reduce((a, s) => a + s.text.length, 0);
-  console.log(`  ${(p.archived ? 'A ' : '  ') + p.url.padEnd(52)} ${String(p.sections.length).padStart(2)} sec  ${(chars/1024).toFixed(1).padStart(5)}KB  "${p.title}"`);
+  const mark = p.archived ? 'A ' : p.inprogress ? 'P ' : '  ';
+  console.log(`  ${mark + p.url.padEnd(52)} ${String(p.sections.length).padStart(2)} sec  ${(chars/1024).toFixed(1).padStart(5)}KB  "${p.title}"`);
 }

@@ -38,14 +38,19 @@
     setTimeout(dropHeaderAnim, 1400);
   }
 
-  // scope: 'home' (every non-archived post, the default), 'archive' (archived
-  // posts only), or a hub slug (only that hub's posts). Set via the input's
+  // scope: 'home' (every non-archived post, the default), 'archive' (the In
+  // Progress index: archived posts plus the members of an in-progress
+  // collection), or a hub slug (only that hub's posts). Set via the input's
   // data-search-scope attribute. The home scope includes the hub child posts,
   // so searching the homepage still finds a post that now lives inside a hub.
+  // `archived` means the file moved under /archive and the root URL is dead;
+  // `inprogress` means the post is still live at its own URL but belongs to a
+  // collection that is not finished, so home search keeps finding it.
   var scope = input.getAttribute('data-search-scope') || 'home';
+  function unfinished(p) { return !!p.archived || !!p.inprogress; }
   function inScope(p) {
     if (scope === 'home') return !p.archived;
-    if (scope === 'archive') return !!p.archived;
+    if (scope === 'archive') return unfinished(p);
     return p.hub === scope || (p.hubs && p.hubs.indexOf(scope) >= 0);
   }
 
@@ -119,7 +124,7 @@
       var score = (titleCount > 0 ? 10000 : 0) + headHits * 4 + count + p.recency * 3;
       hits.push({ post: p, count: count, score: score, firstSec: firstSec, firstPos: firstPos });
     }
-    hits.sort(function (a, b) { return (a.post.archived ? 1 : 0) - (b.post.archived ? 1 : 0) || b.score - a.score; });
+    hits.sort(function (a, b) { return (unfinished(a.post) ? 1 : 0) - (unfinished(b.post) ? 1 : 0) || b.score - a.score; });
     return hits;
   }
 
@@ -132,7 +137,7 @@
     } else {
       snippet = p.desc || (p.sections[0] ? clip(p.sections[0].text, 150) : '');
     }
-    return { post: p, url: url, archived: !!p.archived, count: h.count, label: label, titleHTML: hiLiteral(p.title, q), snippetHTML: hiLiteral(snippet, q) };
+    return { post: p, url: url, archived: unfinished(p), count: h.count, label: label, titleHTML: hiLiteral(p.title, q), snippetHTML: hiLiteral(snippet, q) };
   }
 
   function run(raw) {
@@ -171,7 +176,12 @@
       html = '';
       var archHeader = false;
       for (var i = 0; i < results.length; i++) {
-        if (scope !== 'archive' && results[i].archived && !archHeader) { archHeader = true; html += '<div class="hs-group">Archived posts</div>'; }
+        // The header only earns its place when it divides finished from
+        // unfinished. Unfinished always sorts last, so a finished results[0]
+        // means the list holds both; an unfinished results[0] means every row
+        // is unfinished (an in-progress hub searching itself) and the header
+        // would label the whole list instead of splitting it.
+        if (scope !== 'archive' && results[i].archived && !results[0].archived && !archHeader) { archHeader = true; html += '<div class="hs-group">In progress</div>'; }
         html += rowHTML(results[i], i);
       }
       var label = totalInstances + ' match' + (totalInstances === 1 ? '' : 'es') + ' in ' + postCount + ' post' + (postCount === 1 ? '' : 's');
