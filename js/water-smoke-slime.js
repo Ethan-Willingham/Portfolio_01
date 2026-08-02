@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.28'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.29'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -8969,14 +8969,47 @@
   /* ---- Slime spawning + pointer grab ---------------------------------- */
   var slimeHueCycle = 0;
 
+  // v4.29 shape menu: what the slime tool drops. 'ball' is the classic
+  // disc; everything else is a cell mask ('#' = one 8px world cell) scaled
+  // by the brush slider (k x k cells per glyph). Single-boundary shapes
+  // only: a true donut has two boundary rings and the boundary trace
+  // assumes one, so the ring shape is a horseshoe with a thin throat.
+  var slimeShape = 'ball';
+  // Masks stay SMALL on purpose: each '#' is one 8px cell that builds a
+  // 16-point lattice patch, so ~20 cells is already a ~320-point body (the
+  // brush-scaled first draft hit 2,000+ points per body and 5 fps).
+  var SLIME_SHAPES = {
+    cube:  ['####', '####', '####', '####'],
+    slab:  ['#######', '#######'],
+    tower: ['##', '##', '##', '##', '##', '##'],
+    worm:  ['#########'],
+    tri:   ['...#...', '..###..', '.#####.', '#######'],
+    plus:  ['..##..', '######', '######', '..##..'],
+    star:  ['...#...', '.#####.', '..###..', '.##.##.'],
+    heart: ['##..##', '######', '.####.', '..##..'],
+    hoop:  ['.####.', '##..##', '##..##', '##.###']
+  };
   function spawnSlimeAt(wx, wy, rad) {
     var r = Math.max(18, Math.min(46, rad));
     wx = Math.max(r + TILE * 2, Math.min(worldW - r - TILE * 2, wx));
     wy = Math.max(r + TILE * 2, Math.min(worldH - r - TILE * 2, wy));
     if (tileAt(Math.floor(wy / TILE), Math.floor(wx / TILE)) !== null) return null;
     var key = JELLO_TYPE_KEYS[slimeHueCycle++ % JELLO_TYPE_KEYS.length];
-    var b = jelloBuildDisc(wx, wy, r, key);
-    return b;
+    var mask = SLIME_SHAPES[slimeShape];
+    if (!mask) return jelloBuildDisc(wx, wy, r, key);
+    var rows = mask.length, cols = mask[0].length;
+    var r0 = Math.round(wy / TILE - rows / 2), c0 = Math.round(wx / TILE - cols / 2);
+    var cells = [];
+    for (var mr = 0; mr < rows; mr++) {
+      for (var mc = 0; mc < mask[mr].length; mc++) {
+        if (mask[mr].charAt(mc) !== '#') continue;
+        var rr = r0 + mr, cc = c0 + mc;
+        if (tileAt(rr, cc) !== null) return null;   // shape must fit in open air
+        cells.push({ r: rr, c: cc });
+        if (cells.length > 24) return null;         // hard point-budget guard
+      }
+    }
+    return cells.length ? jelloBuildBody(cells, key) : null;
   }
 
   // Pointer carry state. The public controller below addresses only a
@@ -9740,9 +9773,9 @@
       var pulse = 0.6 + 0.4 * Math.sin(performance.now() * 0.0017);
       smokePuff(px, py,
         pvx * 0.28,
-        -pvy * 0.28 + 26 * pulse * (0.25 + 0.75 * gravMul) * presetSmokeLift,
+        -pvy * 0.28 + 26 * pulse * (0.25 + 0.75 * gravMul) * presetSmokeLift * presetSmokeScaleObj.lift,
         presetSmokeColFor ? presetSmokeColFor(pvx, pvy) : SMOKE_COL,
-        0.010 * Math.max(0.6, brushR / 16));
+        0.010 * Math.max(0.6, brushR / 16) * presetSmokeScaleObj.rad);
     } else if (tool === 'poke') {
       jelloGrabTick(px, py);
       if (smokeActive && smokeAwakeT > 0 && (pvx !== 0 || pvy !== 0)) {
@@ -9887,7 +9920,23 @@
    * overrides apply at read time in emittersTick, per-body slime fields
    * re-stamp each presetTick, and water levers persist in the engine.
    * -------------------------------------------------------------------- */
-  var PRESET_ACTIVE = { water: 'default', smoke: 'default', slime: 'default' };
+  var PRESET_ACTIVE = { water: 'default', waterLook: 'default',
+                        smoke: 'default', smokeScale: 'default',
+                        slime: 'default', slimeLook: 'default' };
+  // v4.29 second layer: each system gains an independent stackable row.
+  // smokeScale = plume size and energy over any smoke material (the owner:
+  // "you can barely even see it coming out of the default chimney");
+  // waterLook / slimeLook = pure appearance over any behavior preset.
+  var SMOKE_SCALES = {
+    'default': { rad: 1,    dye: 1,    lift: 1,    curl: 0,   samples: 1 },
+    billow:    { rad: 1.9,  dye: 0.85, lift: 1.15, curl: 0,   samples: 1 },
+    tower:     { rad: 2.6,  dye: 0.75, lift: 1.8,  curl: 4,   samples: 2 },
+    flood:     { rad: 4.2,  dye: 0.55, lift: 0.9,  curl: -4,  samples: 2 },
+    chill:     { rad: 1.3,  dye: 0.9,  lift: 0.45, curl: -9,  samples: 1 },
+    frenzy:    { rad: 1.45, dye: 1,    lift: 1.35, curl: 18,  samples: 2 }
+  };
+  var presetSmokeScaleObj = SMOKE_SCALES['default'];
+  var smokeCurlBase = 14;         // what the active smoke MATERIAL wants; scale adds on top
   var presetGravScale = 1;        // water gravity multiplier (tide breathes it)
   var presetWaterTimeScale = 1;   // water clock multiplier (magma runs slow)
   var presetSmokeColFor = null;   // fn(pvx, pvy) -> {r,g,b} for pointer smoke
@@ -9905,10 +9954,13 @@
 
   function presetSet(sys, name) {
     if (!PRESET_ACTIVE.hasOwnProperty(sys)) return;
-    if (sys === 'water') presetApplyWater(name);
-    else if (sys === 'smoke') presetApplySmoke(name);
-    else presetApplySlime(name);
     PRESET_ACTIVE[sys] = name;
+    if (sys === 'water') presetApplyWater(name);
+    else if (sys === 'waterLook') presetApplyWaterLook(name);
+    else if (sys === 'smoke') presetApplySmoke(name);
+    else if (sys === 'smokeScale') presetApplySmokeScale(name);
+    else if (sys === 'slime') presetApplySlime(name);
+    else if (sys === 'slimeLook') presetApplySlimeLook(name);
     presetSyncChips();
   }
 
@@ -9933,41 +9985,91 @@
     pushRender({ WATER_R: r, WATER_G: g, WATER_B: b, WATER_ALPHA: a,
                  WATER_FOAM_R: fr, WATER_FOAM_G: fg, WATER_FOAM_B: fb });
   }
+  // What each water MATERIAL wants to look like when no look layer covers
+  // it. freeze and tide paint from their ticks instead (guarded the same).
+  var WATER_MAT_RENDER = {
+    blacklight: { WATER_R: 0.02, WATER_G: 0.02, WATER_B: 0.03, WATER_ALPHA: 0.95,
+                  WATER_FOAM_R: 0.10, WATER_FOAM_G: 0.95, WATER_FOAM_B: 1.0 },
+    magma:      { WATER_R: 0.42, WATER_G: 0.07, WATER_B: 0.01, WATER_ALPHA: 1.0,
+                  WATER_FOAM_R: 1.0, WATER_FOAM_G: 0.82, WATER_FOAM_B: 0.30 },
+    boil:       { WATER_R: 0.10, WATER_G: 0.28, WATER_B: 0.44, WATER_ALPHA: 0.88,
+                  WATER_FOAM_R: 0.95, WATER_FOAM_G: 0.97, WATER_FOAM_B: 1.0 },
+    syrup:      { WATER_R: 0.45, WATER_G: 0.30, WATER_B: 0.08, WATER_ALPHA: 0.93,
+                  WATER_FOAM_R: 0.85, WATER_FOAM_G: 0.70, WATER_FOAM_B: 0.35 }
+  };
+  // The pure-look layer (v4.29): appearance only, stacks over any material.
+  var WATER_LOOKS = {
+    pearl:  { WATER_R: 0.78, WATER_G: 0.80, WATER_B: 0.84, WATER_ALPHA: 0.97,
+              WATER_FOAM_R: 0.98, WATER_FOAM_G: 0.90, WATER_FOAM_B: 1.0,
+              SURFACE_SOFT: 1.1, WATER_PARTICLE_SIZE: 2.2 },
+    abyss:  { WATER_R: 0.01, WATER_G: 0.03, WATER_B: 0.06, WATER_ALPHA: 0.98,
+              WATER_FOAM_R: 0.35, WATER_FOAM_G: 0.85, WATER_FOAM_B: 0.75 },
+    toxic:  { WATER_R: 0.12, WATER_G: 0.55, WATER_B: 0.08, WATER_ALPHA: 0.9,
+              WATER_FOAM_R: 0.75, WATER_FOAM_G: 1.0, WATER_FOAM_B: 0.25 },
+    wine:   { WATER_R: 0.30, WATER_G: 0.04, WATER_B: 0.10, WATER_ALPHA: 0.92,
+              WATER_FOAM_R: 0.95, WATER_FOAM_G: 0.55, WATER_FOAM_B: 0.65 },
+    chrome: { WATER_R: 0.70, WATER_G: 0.73, WATER_B: 0.78, WATER_ALPHA: 1.0,
+              WATER_FOAM_R: 1.0, WATER_FOAM_G: 1.0, WATER_FOAM_B: 1.0,
+              SURFACE_THRESH: 2.4, WATER_PARTICLE_SIZE: 2.4 },
+    candy:  { WATER_R: 0.85, WATER_G: 0.30, WATER_B: 0.55, WATER_ALPHA: 0.88,
+              WATER_FOAM_R: 0.40, WATER_FOAM_G: 0.95, WATER_FOAM_B: 1.0 }
+  };
+  function presetWaterLookActive() { return PRESET_ACTIVE.waterLook !== 'default'; }
+  function presetWaterRenderBase() {
+    pushRender(WATER_COLOR_DEFAULTS);
+    var m = WATER_MAT_RENDER[PRESET_ACTIVE.water];
+    if (m) pushRender(m);
+  }
+  function presetApplyWaterLook(name) {
+    if (name === 'default') { presetWaterRenderBase(); return; }
+    var L = WATER_LOOKS[name];
+    if (!L) return;
+    pushRender(WATER_COLOR_DEFAULTS);   // clear stray render keys first
+    pushRender(L);
+  }
+  var presetGeyserT = 0;
   function presetApplyWater(name) {
     // Every switch starts from the boot state, then layers its own pushes,
-    // so presets never inherit a previous preset's leftovers.
+    // so presets never inherit a previous preset's leftovers. Appearance
+    // routes through the look layer: an active look always wins on render.
     presetGravScale = 1; presetWaterTimeScale = 1;
-    waterPresetReassert = null; presetFreezeT = 0;
+    waterPresetReassert = null; presetFreezeT = 0; presetGeyserT = 4;
     pushSim(WATER_LEVER_DEFAULTS);
-    pushRender(WATER_COLOR_DEFAULTS);
     applyWaterFeel(); applyGravity(); applyTimescale();
     if (name === 'blacklight') {
-      // Ink-black body, UV foam: the speed-gated aeration channel becomes
-      // neon streaks that follow motion and die about a second later.
-      waterCols(0.02, 0.02, 0.03, 0.95, 0.10, 0.95, 1.0);
+      // The speed-gated aeration channel becomes neon streaks that follow
+      // motion and die about a second later.
       pushSim({ AERATION_COEFF: 14, AERATION_THRESHOLD: 0.25, AERATION_DAMP: 0.97 });
     } else if (name === 'magma') {
-      // Molten rock: ember body, incandescent seams where it shears, and a
-      // heavy slow ooze under a four-fifths clock.
-      waterCols(0.42, 0.07, 0.01, 1.0, 1.0, 0.82, 0.30);
+      // Molten rock: incandescent seams where it shears, heavy slow ooze
+      // under a four-fifths clock.
       pushSim({ AERATION_COEFF: 9, AERATION_THRESHOLD: 0.35, AERATION_DAMP: 0.995,
                 SURFACE_SOFT: 0.5, MAX_VEL: 140, GRID_VISC: 0.35, DAMPING: 0.965 });
       presetWaterTimeScale = 0.8; applyTimescale();
       waterPresetReassert = function () { pushSim({ GRID_VISC: 0.35, DAMPING: 0.965 }); };
     } else if (name === 'freeze') {
       // State change: untouched water locks toward pale ice; any stirring
-      // thaws it back. The tick owns the lerp; nothing to push here.
+      // thaws it back. The tick owns the lerp.
       presetFreezeT = 0;
     } else if (name === 'tide') {
-      // The pool breathes on a fourteen-second gravity swell while the
-      // palette walks dusk hues. The tick owns both oscillators.
+      // A fourteen-second gravity swell under a dusk palette walk (tick).
     } else if (name === 'boil') {
-      // Full rolling boil on the documented popcorn lever: constant
-      // ejections, splashback, bright churn.
-      waterCols(0.10, 0.28, 0.44, 0.88, 0.95, 0.97, 1.0);
+      // Full rolling boil on the documented popcorn lever.
       pushSim({ PRESSURE_MAX_DV: 90, BURST_DAMP: 0.995, BURST_GATE_HI: 520,
                 MAX_VEL: 1200, BOUNCE_WATER: 0.4, PRESSURE_STIFF: 8 });
+    } else if (name === 'syrup') {
+      // Cold honey: thick, slow, ropes off ledges instead of splashing.
+      pushSim({ GRID_VISC: 0.28, DAMPING: 0.975, MAX_VEL: 220,
+                QUIET_VISC: 0.08, QUIET_DRAG: 0.02, SURFACE_SOFT: 0.55 });
+      waterPresetReassert = function () {
+        pushSim({ GRID_VISC: 0.28, DAMPING: 0.975, QUIET_VISC: 0.08, QUIET_DRAG: 0.02 });
+      };
+    } else if (name === 'geyser') {
+      // Old Faithful: every so often the pool floor detonates a column of
+      // spray. The tick owns the timer; physics otherwise stock.
+      presetGeyserT = 3 + Math.random() * 4;
     }
+    presetApplyWaterLook(PRESET_ACTIVE.waterLook);
   }
   function presetTickWater(dt) {
     var name = PRESET_ACTIVE.water;
@@ -9975,11 +10077,14 @@
       var ph = presetClock * (Math.PI * 2 / 14);
       presetGravScale = 0.35 + 0.85 * (0.5 + 0.5 * Math.sin(ph));
       applyGravity();
-      // Dusk walk: three stops, blended on a slow triangle.
-      var u = 0.5 + 0.5 * Math.sin(presetClock * 0.11);
-      var v = 0.5 + 0.5 * Math.sin(presetClock * 0.053 + 2.1);
-      waterCols(0.06 + 0.16 * u, 0.10 + 0.14 * v, 0.30 + 0.24 * u,
-                0.90, 0.55 + 0.25 * v, 0.55 + 0.20 * u, 0.80);
+      // Dusk walk: three stops, blended on a slow triangle. An active look
+      // layer owns the colors instead.
+      if (!presetWaterLookActive()) {
+        var u = 0.5 + 0.5 * Math.sin(presetClock * 0.11);
+        var v = 0.5 + 0.5 * Math.sin(presetClock * 0.053 + 2.1);
+        waterCols(0.06 + 0.16 * u, 0.10 + 0.14 * v, 0.30 + 0.24 * u,
+                  0.90, 0.55 + 0.25 * v, 0.55 + 0.20 * u, 0.80);
+      }
     } else if (name === 'freeze') {
       // Advance toward ice while nothing disturbs the pool; thaw fast on
       // input. pointerDown covers every tool; pour emitters count too.
@@ -9988,15 +10093,29 @@
       if (presetFreezeT < 0) presetFreezeT = 0;
       if (presetFreezeT > 1) presetFreezeT = 1;
       var f = presetFreezeT, ef = f * f;
-      waterCols(0.13 + (0.62 - 0.13) * f, 0.34 + (0.74 - 0.34) * f,
-                0.52 + (0.84 - 0.52) * f, 0.86 + 0.09 * f,
-                0.66 + 0.30 * f, 0.78 + 0.18 * f, 0.82 + 0.16 * f);
+      if (!presetWaterLookActive()) {
+        waterCols(0.13 + (0.62 - 0.13) * f, 0.34 + (0.74 - 0.34) * f,
+                  0.52 + (0.84 - 0.52) * f, 0.86 + 0.09 * f,
+                  0.66 + 0.30 * f, 0.78 + 0.18 * f, 0.82 + 0.16 * f);
+      }
       pushSim({ CALM: 0.26 + (0.95 - 0.26) * ef, CALM_LOCAL: 1,
                 QUIET_VISC: 0.018 + (0.2 - 0.018) * ef,
                 QUIET_DRAG: 0.0012 + (0.05 - 0.0012) * ef,
                 GRID_VISC: 0.012 + (0.5 - 0.012) * ef,
                 MAX_VEL: 600 - 560 * ef,
                 DROPLETS: f > 0.7 ? 0 : 1 });
+    } else if (name === 'geyser') {
+      presetGeyserT -= dt;
+      if (presetGeyserT <= 0) {
+        presetGeyserT = 7 + Math.random() * 5;
+        if (typeof liquidCount !== 'undefined' && liquidCount > 2000 &&
+            liquidCount < 60000) {
+          var gx = worldW * (0.2 + 0.6 * Math.random());
+          var gy = worldH - TILE * 2.5;
+          pushWake(gx, gy, 70, 950);
+          spawnWaterJet(gx, gy - 10, 8, (Math.random() - 0.5) * 120, -1500, 240);
+        }
+      }
     }
   }
 
@@ -10056,6 +10175,20 @@
       presetEmCol = { r: 0.28, g: 0.26, b: 0.40 }; presetEmDensity = 1.6;
       presetSmokeColFor = function () { return { r: 0.24, g: 0.22, b: 0.34 }; };
       presetFlashT = 3 + Math.random() * 4;
+    }
+    // The size layer stacks on whatever curl the material just chose.
+    smokeCurlBase = c.CURL;
+    presetApplySmokeScale(PRESET_ACTIVE.smokeScale);
+  }
+  function presetApplySmokeScale(name) {
+    // Snapshot BEFORE the first config mutation from either layer, or a
+    // size preset chosen first poisons the boot snapshot with scaled curl.
+    presetSmokeSnapshot();
+    presetSmokeScaleObj = SMOKE_SCALES[name] || SMOKE_SCALES['default'];
+    var c = SmokeFluid && SmokeFluid.config;
+    if (c) {
+      var curl = smokeCurlBase + presetSmokeScaleObj.curl;
+      c.CURL = curl < 0 ? 0 : (curl > 50 ? 50 : curl);
     }
   }
   function presetTickSmoke(dt) {
@@ -10203,11 +10336,208 @@
     presetTickSlime(dt);
   }
 
+  /* ---- slime LOOK layer (v4.29) --------------------------------------
+   * Pure appearance, painted OVER the engine's bodies each frame, clipped
+   * to each body's live boundary ring. Composite modes keep the engine's
+   * own shading and gloss underneath, so a pattern reads as part of the
+   * gel, not a sticker. Runs in render() right after drawJelloBlobs, same
+   * ctx, same world-coordinate transform. Cost: a clip + a fill or two per
+   * body; the pattern sources are tiny cached offscreen canvases.
+   * ------------------------------------------------------------------ */
+  var lookNoiseCv = null, lookNoiseFrame = -9;
+  var lookStripesCv = null, lookSnapCv = null;
+  function presetApplySlimeLook(name) { lookNoiseFrame = -9; }
+  function lookNoise() {
+    if (!lookNoiseCv) {
+      lookNoiseCv = document.createElement('canvas');
+      lookNoiseCv.width = 96; lookNoiseCv.height = 96;
+    }
+    if (toyFrameNo - lookNoiseFrame >= 4) {   // TV refresh, not per-frame
+      lookNoiseFrame = toyFrameNo;
+      var nctx = lookNoiseCv.getContext('2d');
+      var img = nctx.createImageData(96, 96);
+      var d = img.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var v = (Math.random() * 255) | 0;
+        d[i] = v; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255;
+      }
+      nctx.putImageData(img, 0, 0);
+      // Scanlines: every third row darkened, the CRT read.
+      nctx.fillStyle = 'rgba(0,0,0,0.45)';
+      for (var y = 0; y < 96; y += 3) nctx.fillRect(0, y, 96, 1);
+    }
+    return lookNoiseCv;
+  }
+  function lookStripes() {
+    if (lookStripesCv) return lookStripesCv;
+    lookStripesCv = document.createElement('canvas');
+    lookStripesCv.width = 28; lookStripesCv.height = 28;
+    var sctx = lookStripesCv.getContext('2d');
+    sctx.fillStyle = '#fff';
+    sctx.fillRect(0, 0, 28, 28);
+    sctx.fillStyle = '#000';
+    sctx.beginPath();
+    sctx.moveTo(0, 0); sctx.lineTo(14, 0); sctx.lineTo(0, 14); sctx.closePath();
+    sctx.moveTo(28, 0); sctx.lineTo(28, 14); sctx.lineTo(14, 28);
+    sctx.lineTo(0, 28); sctx.closePath();
+    sctx.fill();
+    return lookStripesCv;
+  }
+  function slimeRingPath(b) {
+    var ring = b.ring, rn = b.ringN, px = b.px, py = b.py;
+    var p = new Path2D();
+    p.moveTo(px[ring[0]], py[ring[0]]);
+    for (var i = 1; i < rn; i++) p.lineTo(px[ring[i]], py[ring[i]]);
+    p.closePath();
+    return p;
+  }
+  function drawSlimeLooks() {
+    var look = PRESET_ACTIVE.slimeLook;
+    if (look === 'default') return;
+    if (look === 'portal') {
+      // One snapshot of the frame so far (walls + water shadows + bodies):
+      // every slime becomes a live monitor showing the whole stage. The
+      // next frame's snapshot contains this one, so deep in every slime
+      // the world tunnels away into itself.
+      if (!lookSnapCv) {
+        lookSnapCv = document.createElement('canvas');
+        lookSnapCv.width = Math.max(2, canvas.width >> 2);
+        lookSnapCv.height = Math.max(2, canvas.height >> 2);
+      }
+      var snctx = lookSnapCv.getContext('2d');
+      snctx.clearRect(0, 0, lookSnapCv.width, lookSnapCv.height);
+      snctx.drawImage(canvas, 0, 0, lookSnapCv.width, lookSnapCv.height);
+    }
+    var t = presetClock;
+    for (var bi = 0; bi < jelloBodies.length; bi++) {
+      var b = jelloBodies[bi];
+      if (!b || b.ringN < 3 || !b.ring) continue;
+      var bl = b.bboxL, br = b.bboxR, bt = b.bboxT, bb = b.bboxB;
+      if (!isFinite(bl + br + bt + bb)) continue;
+      var bw = br - bl, bh = bb - bt;
+      if (bw < 4 || bh < 4) continue;
+      var cx = (bl + br) / 2, cy = (bt + bb) / 2;
+      var ctx2 = ctx;
+      ctx2.save();
+      try {
+        ctx2.clip(slimeRingPath(b));
+        if (look === 'tiedye') {
+          // Spiral dye: a slowly rotating six-color wheel, 'color' keeps
+          // the engine's light so the swirl looks soaked in, not painted.
+          ctx2.globalCompositeOperation = 'color';
+          ctx2.globalAlpha = 0.9;
+          if (ctx2.createConicGradient) {
+            var g = ctx2.createConicGradient(t * 0.5 + bi, cx, cy);
+            var stops = ['#e5484d', '#f5a524', '#f2e34c', '#3dd68c', '#3c9eff', '#b662f0', '#e5484d'];
+            for (var s1 = 0; s1 < stops.length; s1++) g.addColorStop(s1 / 6, stops[s1]);
+            ctx2.fillStyle = g;
+          } else {
+            ctx2.fillStyle = 'hsl(' + ((t * 40 + bi * 60) % 360) + ' 80% 55%)';
+          }
+          ctx2.fillRect(bl, bt, bw, bh);
+          // The white spiral core every tie-dye has.
+          ctx2.globalCompositeOperation = 'overlay';
+          ctx2.globalAlpha = 0.5;
+          var rg = ctx2.createRadialGradient(cx, cy, 1, cx, cy, Math.max(bw, bh) * 0.5);
+          rg.addColorStop(0, 'rgba(255,255,255,0.9)');
+          rg.addColorStop(0.35, 'rgba(255,255,255,0)');
+          ctx2.fillStyle = rg;
+          ctx2.fillRect(bl, bt, bw, bh);
+        } else if (look === 'static') {
+          // Dead channel: rolling TV snow with scanlines.
+          ctx2.globalCompositeOperation = 'overlay';
+          ctx2.globalAlpha = 0.6;
+          ctx2.drawImage(lookNoise(), bl, bt, bw, bh);
+        } else if (look === 'zebra') {
+          // Marching diagonal stripes.
+          ctx2.globalCompositeOperation = 'overlay';
+          ctx2.globalAlpha = 0.55;
+          var pat = ctx2.createPattern(lookStripes(), 'repeat');
+          ctx2.translate((t * 26) % 28, 0);
+          ctx2.fillStyle = pat;
+          ctx2.fillRect(bl - 28, bt, bw + 56, bh);
+        } else if (look === 'galaxy') {
+          // A nebula inside: dark space, one colored cloud, seeded stars
+          // that twinkle on their own clocks.
+          ctx2.globalCompositeOperation = 'multiply';
+          ctx2.globalAlpha = 0.85;
+          ctx2.fillStyle = '#141230';
+          ctx2.fillRect(bl, bt, bw, bh);
+          ctx2.globalCompositeOperation = 'lighter';
+          var ng = ctx2.createRadialGradient(
+            cx + Math.sin(t * 0.3 + bi) * bw * 0.2, cy, 1, cx, cy, Math.max(bw, bh) * 0.45);
+          ng.addColorStop(0, 'rgba(120,80,220,0.35)');
+          ng.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx2.fillStyle = ng;
+          ctx2.fillRect(bl, bt, bw, bh);
+          for (var st = 0; st < 14; st++) {
+            var sx = bl + ((Math.sin(bi * 131 + st * 37.7) * 0.5 + 0.5) * bw);
+            var sy = bt + ((Math.sin(bi * 57 + st * 91.3) * 0.5 + 0.5) * bh);
+            var tw = 0.25 + 0.75 * Math.abs(Math.sin(t * (1.2 + st * 0.23) + st));
+            ctx2.globalAlpha = tw;
+            ctx2.fillStyle = st % 4 ? '#fff' : '#ffd9a0';
+            ctx2.fillRect(sx, sy, st % 3 ? 1.2 : 2, st % 3 ? 1.2 : 2);
+          }
+        } else if (look === 'portal') {
+          ctx2.globalAlpha = 0.9;
+          ctx2.drawImage(lookSnapCv, bl, bt, bw, bh);
+          var vg = ctx2.createRadialGradient(cx, cy, Math.min(bw, bh) * 0.25, cx, cy, Math.max(bw, bh) * 0.6);
+          vg.addColorStop(0, 'rgba(0,0,0,0)');
+          vg.addColorStop(1, 'rgba(10,20,14,0.75)');
+          ctx2.fillStyle = vg;
+          ctx2.fillRect(bl, bt, bw, bh);
+        } else if (look === 'eyes') {
+          // A googly eye that follows the pointer.
+          var er = Math.min(bw, bh) * 0.30;
+          var dxp = px - cx, dyp = py - cy;
+          var dl = Math.hypot(dxp, dyp) || 1;
+          var off = Math.min(er * 0.38, dl * 0.1);
+          ctx2.globalAlpha = 0.95;
+          ctx2.fillStyle = '#f4f1e8';
+          ctx2.beginPath(); ctx2.arc(cx, cy, er, 0, 6.2832); ctx2.fill();
+          ctx2.fillStyle = 'hsl(' + (((b.hue || 160) + 180) % 360) + ' 55% 45%)';
+          ctx2.beginPath(); ctx2.arc(cx + dxp / dl * off, cy + dyp / dl * off, er * 0.55, 0, 6.2832); ctx2.fill();
+          ctx2.fillStyle = '#181d18';
+          ctx2.beginPath(); ctx2.arc(cx + dxp / dl * off * 1.25, cy + dyp / dl * off * 1.25, er * 0.28, 0, 6.2832); ctx2.fill();
+          ctx2.globalAlpha = 0.8; ctx2.fillStyle = '#fff';
+          ctx2.beginPath(); ctx2.arc(cx - er * 0.2, cy - er * 0.25, er * 0.12, 0, 6.2832); ctx2.fill();
+        } else if (look === 'holo') {
+          // Holographic foil: a rotating pastel wheel burned in with
+          // color-dodge plus a sheen band sweeping through.
+          ctx2.globalCompositeOperation = 'color-dodge';
+          ctx2.globalAlpha = 0.33;
+          if (ctx2.createConicGradient) {
+            var hg = ctx2.createConicGradient(-t * 0.8 + bi * 2, cx, cy);
+            var hs = ['#ff9ecb', '#9effd0', '#9ec8ff', '#f0e6a0', '#d0a0ff', '#ff9ecb'];
+            for (var s2 = 0; s2 < hs.length; s2++) hg.addColorStop(s2 / 5, hs[s2]);
+            ctx2.fillStyle = hg;
+          } else {
+            ctx2.fillStyle = '#c8c2ff';
+          }
+          ctx2.fillRect(bl, bt, bw, bh);
+          var bandX = bl + ((t * 60 + bi * 40) % (bw + 80)) - 40;
+          var lg = ctx2.createLinearGradient(bandX, 0, bandX + 34, 0);
+          lg.addColorStop(0, 'rgba(255,255,255,0)');
+          lg.addColorStop(0.5, 'rgba(255,255,255,0.55)');
+          lg.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx2.globalCompositeOperation = 'overlay';
+          ctx2.globalAlpha = 0.7;
+          ctx2.fillStyle = lg;
+          ctx2.fillRect(bl, bt, bw, bh);
+        }
+      } catch (e) {}
+      ctx2.restore();
+    }
+  }
+
   /* ---- chips ---- */
   var PRESET_GROUPS = [
-    { sys: 'water', label: 'water', names: ['default', 'blacklight', 'magma', 'freeze', 'tide', 'boil'] },
+    { sys: 'water', label: 'water', names: ['default', 'blacklight', 'magma', 'freeze', 'tide', 'boil', 'syrup', 'geyser'] },
+    { sys: 'waterLook', label: 'water look', names: ['default', 'pearl', 'abyss', 'toxic', 'wine', 'chrome', 'candy'] },
     { sys: 'smoke', label: 'smoke', names: ['default', 'ember', 'ink', 'aurora', 'fog', 'storm'] },
-    { sys: 'slime', label: 'slime', names: ['default', 'mood', 'lava', 'oobleck', 'clay', 'jelly'] }
+    { sys: 'smokeScale', label: 'smoke size', names: ['default', 'billow', 'tower', 'flood', 'chill', 'frenzy'] },
+    { sys: 'slime', label: 'slime', names: ['default', 'mood', 'lava', 'oobleck', 'clay', 'jelly'] },
+    { sys: 'slimeLook', label: 'slime look', names: ['default', 'tiedye', 'static', 'zebra', 'galaxy', 'portal', 'eyes', 'holo'] }
   ];
   function presetSyncChips() {
     var chips = document.querySelectorAll('#toy-bar [data-preset]');
@@ -10241,6 +10571,21 @@
         row.appendChild(chip);
       }
       wrap.appendChild(row);
+    }
+    // Shape menu for the slime tool, on the slime row.
+    var shapeRow = wrap.children[4];
+    if (shapeRow) {
+      var sel = document.createElement('select');
+      sel.id = 'toy-shape';
+      sel.setAttribute('aria-label', 'Slime spawn shape');
+      var shapes = ['ball', 'cube', 'slab', 'tower', 'worm', 'tri', 'plus', 'star', 'heart', 'hoop'];
+      for (var sh = 0; sh < shapes.length; sh++) {
+        var opt = document.createElement('option');
+        opt.value = shapes[sh]; opt.textContent = shapes[sh];
+        sel.appendChild(opt);
+      }
+      sel.addEventListener('change', function () { slimeShape = sel.value; setTool('slime'); });
+      shapeRow.appendChild(sel);
     }
     bar.appendChild(wrap);
     presetSyncChips();
@@ -10389,6 +10734,7 @@
         if (samples <= 0) continue;
         em.acc -= samples * SMOKE_EMITTER_DT;
         if (samples > 3) samples = 3;
+        samples = Math.min(4, samples * presetSmokeScaleObj.samples);
         for (var si = 0; si < samples; si++) {
           em.age = (em.age || 0) + SMOKE_EMITTER_DT;
           var phase = em.phase || 0;
@@ -10400,24 +10746,26 @@
             Math.sin(em.age * 2.6 + phase * 1.4) * 2.1;
           var lift = (0.25 + 0.75 * gravMul) *
             (11.5 + Math.sin(em.age * 1.7 + phase) * 1.2) *
-            (presetEmLiftK || em.liftK || 1) * presetSmokeLift;
+            (presetEmLiftK || em.liftK || 1) * presetSmokeLift * presetSmokeScaleObj.lift;
           // The dark stage needs a light warm-gray field. Dye is split
           // between a narrow mouth and a softer body so the source stays
           // legible without turning into a clipped white ball.
           var base = presetEmCol || em.col || SMOKE_EMITTER_COL;
           var amount = presetEmDensity || em.density || 1;
+          var dyeK = amount * presetSmokeScaleObj.dye;
           var mouthDye = {
-            r: base.r * 0.045 * amount,
-            g: base.g * 0.045 * amount,
-            b: base.b * 0.045 * amount
+            r: base.r * 0.045 * dyeK,
+            g: base.g * 0.045 * dyeK,
+            b: base.b * 0.045 * dyeK
           };
           var bodyDye = {
-            r: base.r * 0.16 * amount,
-            g: base.g * 0.16 * amount,
-            b: base.b * 0.16 * amount
+            r: base.r * 0.16 * dyeK,
+            g: base.g * 0.16 * dyeK,
+            b: base.b * 0.16 * dyeK
           };
-          smokePuff(sourceX, em.y - 2, sway * 0.28, lift * 0.42, mouthDye, 0.011);
-          smokePuff(sourceX + sway * 0.08, em.y - 7, sway, lift, bodyDye, 0.025);
+          var radK = presetSmokeScaleObj.rad;
+          smokePuff(sourceX, em.y - 2, sway * 0.28, lift * 0.42, mouthDye, 0.011 * radK);
+          smokePuff(sourceX + sway * 0.08, em.y - 7, sway, lift, bodyDye, 0.025 * radK);
           smokeEmitterSplats += 2;
         }
       }
@@ -10587,6 +10935,7 @@
     ctx.drawImage(wallsCanvas, 0, 0, wallsCanvas.width, wallsCanvas.height, 0, 0, worldW, worldH);
     drawEmitterFixtures();
     drawJelloBlobs();
+    drawSlimeLooks();
     drawCursor();
     drawLiquidToy();
   }
@@ -10807,6 +11156,10 @@
         else if (k === 'waterPreset') { presetSet('water', String(v)); }
         else if (k === 'smokePreset') { presetSet('smoke', String(v)); }
         else if (k === 'slimePreset') { presetSet('slime', String(v)); }
+        else if (k === 'waterLook') { presetSet('waterLook', String(v)); }
+        else if (k === 'smokeScale') { presetSet('smokeScale', String(v)); }
+        else if (k === 'slimeLook') { presetSet('slimeLook', String(v)); }
+        else if (k === 'slimeShape') { if (SLIME_SHAPES[v] || v === 'ball') slimeShape = String(v); }
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },
