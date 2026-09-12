@@ -34,9 +34,9 @@
        in opts) and just stops calling otherwise; a shared watchdog fades +
        frees abandoned loops (the flight-pack contract for asset loops).
        rig-hum, rig-drive, jet-spin, bomb-fuse, lava-sizzle, fuel-fill.
-     - flight(state): the synthesized FLIGHT pack (no assets); wind bed,
-       engine under load, stall horn, vario, ignition / sonic boom /
-       touchdown events. Built lazily from oscillators + one shared noise
+     - flight(state): the synthesized FLIGHT pack (no assets); shared jet
+       engine under load and ignition / sonic boom events.
+       Built lazily from oscillators + one shared noise
        loop on the first per-frame call from the flight integrator, then
        only gains/frequencies move; a watchdog silences it when the calls
        stop (shop open, tab hidden). Lives under sfxEffect, so the SFX
@@ -119,7 +119,7 @@ var SluiceAudio = (function () {
   //   g    base gain (pre-jitter), default 1
   //   j    pitch-jitter override (fraction; default SFX_PITCH_JITTER = ±3%)
   var SFX_DIR = 'assets/sfx/';
-  var SFX_BANK_VERSION = '1';
+  var SFX_BANK_VERSION = '2';
   var SFX_MANIFEST = {
     // EFFECT — the drill flagship (SFX_BIBLE §6)
     'drill-spinup':         { b: 'e', n: 1 },
@@ -160,6 +160,7 @@ var SluiceAudio = (function () {
     'rover-pop':            { b: 'e', n: 2 },
     'hull-hit':             { b: 'e', n: 3 },
     'teleport':             { b: 'e', n: 1 },
+    // Reserved: water contact stays silent in the live game.
     'liquid-enter':         { b: 'e', n: 2 },
     'liquid-exit':          { b: 'e', n: 2 },
     'lava-sizzle':          { b: 'e', n: 1, loop: true, ext: 'wav' },
@@ -168,6 +169,7 @@ var SluiceAudio = (function () {
     // SFX_PROMPT_SYSTEM §5 Priority set — footstep-* stay reserved)
     'rig-drive':            { b: 'e', n: 1, loop: true, ext: 'wav', g: 0.7 },
     'jet-spin':             { b: 'e', n: 1, loop: true, ext: 'wav', g: 0.6 },
+    // Retired: lateral flight uses the same engine voice as lift.
     'air-pulse':            { b: 'e', n: 6, g: 0.8 },
     // EFFECT — combat + the No Man's Zone course (085-combat.js /
     // 087-nmz-course.js). Auto-fire restraint: small, low-fatigue (§2.11);
@@ -935,44 +937,10 @@ var SluiceAudio = (function () {
   };
 
   // ===== SFX: the flight pack (synthesized; SluiceAudio.flight) =============
-  // The above-ground flight audio. EVERYTHING here is synthesized (oscillators
-  // + one shared noise loop + filters + gain envelopes); there are no flight
-  // assets, and the rostered 'fall-wind' loop stays dormant for the
-  // underground plunge. The flight integrator calls flight(state) every
-  // update frame (~60 Hz). The node graph is built ONCE on the first call,
-  // hangs off one flight bus under sfxEffect (so the SFX slider, mute and the
-  // depth lowpass Just Work), and after that every call only steers gains and
-  // frequencies, zipper-free via setTargetAtTime (the engine-RPM model,
-  // SFX_BIBLE §2.6). Continuous layers + counter-diffed one-shot events:
-  //   wind bed    a low rumble (LP ~220 Hz) + an airy hiss (BP 1.2k..3k Hz),
-  //               both riding speed01 = speed/cap; the hiss only matures past
-  //               the cap (~1.3x) so dives audibly tear. Air only, ~120 ms
-  //               fades. This is a bed (§8): quiet, under everything.
-  //   engine      a low saw growl + band-passed thrust noise riding spool; a
-  //               near-unison detuned LOAD saw beats against it when climbing
-  //               under power, with a small pitch strain, so working sounds
-  //               like work; shutting the throttle at speed opens a thin
-  //               freewheel whistle instead (the spool terms are ~0 there).
-  //   stall horn  a reedy band-passed square (~1.6 kHz), swells with the
-  //               buffet telegraph, full-on in the stall. Classic aviation
-  //               stall-warning UX, eased so it never clicks.
-  //   vario       a very quiet rising warble beeper on an engine-off zoom
-  //               climb (pitch 600..1100 Hz over climb 150..500 px/s);
-  //               FLIGHT_VARIO_GAIN zeroes the whole layer in one edit.
-  //   events      ignition bark (bigger from a cold spool), a tiny spool-down
-  //               pop, the sonic boom (double saturated bass thump, broadband
-  //               crack, ONE quieter mountain-echo slapback ~0.5 s later, and
-  //               a short music duck like the other big events), a soft
-  //               vapor-cone shoosh, and touchdown thunks graded greaser /
-  //               medium / hard from fx.landVy + fx.landTilt.
-  // WATCHDOG: update() stops while the shop is open or the tab is hidden, so
-  // the per-frame calls just STOP; an interval ramps every flight gain to 0
-  // after >250 ms without a call (plus an instant visibilitychange cut). No
-  // stuck wind loops, ever. Mix discipline per §8: the bed stays modest,
-  // events are readable, the whole pack sits well under the drill.
-  var FLIGHT_VARIO_GAIN  = 0.12;  // vario beeper gain cap; zero it to kill the layer
-  var FLIGHT_WIND_RUMBLE = 0.28;  // wind bed: low-rumble peak gain
-  var FLIGHT_WIND_HISS   = 0.22;  // wind bed: airy-hiss peak gain
+  // One synthesized jet for lift and lateral thrust, driven by spool and load.
+  // Coasting and free fall are silent: no wind, whistle, or vario layer.
+  // The shared node graph is built once and ramps parameters each frame.
+  // Collision cues own landings; the watchdog silences abandoned jet voices.
   var FLIGHT_ENGINE_GAIN = 0.3;   // thrust voice peak (the saw + noise scale under this)
   var FLIGHT_WATCHDOG_MS = 250;   // silence the pack after this long without a flight() call
   var fl = null;                  // the lazily built node bundle (null until the first call)
@@ -1004,13 +972,7 @@ var SluiceAudio = (function () {
       var bus = gn(1); bus.connect(sfxEffect);
       var noiseBuf = flightNoiseBuffer();
       var noise = ctx.createBufferSource(); noise.buffer = noiseBuf; noise.loop = true;
-      // wind bed: the one noise loop fans out into an LP rumble + a BP hiss
-      var rumLP = flt('lowpass', 220, 0.7), rumG = gn(0);
-      noise.connect(rumLP); rumLP.connect(rumG); rumG.connect(bus);
-      var hisBP = flt('bandpass', 1200, 0.8), hisG = gn(0);
-      noise.connect(hisBP); hisBP.connect(hisG); hisG.connect(bus);
-      // engine: band-passed thrust noise + two saws (main + detuned LOAD)
-      // sharing one lowpass body, + the high freewheel whistle off the noise
+      // Engine thrust noise and two saws (main + detuned load).
       var engBP = flt('bandpass', 380, 1.2), engNG = gn(0);
       noise.connect(engBP); engBP.connect(engNG); engNG.connect(bus);
       var engLP = flt('lowpass', 260, 0.7); engLP.connect(bus);
@@ -1018,21 +980,6 @@ var SluiceAudio = (function () {
       var engOG = gn(0); engOsc.connect(engOG); engOG.connect(engLP);
       var loadOsc = ctx.createOscillator(); loadOsc.type = 'sawtooth'; loadOsc.frequency.value = 59;
       var loadG = gn(0); loadOsc.connect(loadG); loadG.connect(engLP);
-      var whisBP = flt('bandpass', 2600, 14), whisG = gn(0);
-      noise.connect(whisBP); whisBP.connect(whisG); whisG.connect(bus);
-      // stall horn: a square picked reedy by a narrow bandpass (~1.6 kHz, the
-      // square's third harmonic, inside the spec'd 1.5..1.8 kHz alarm zone)
-      var hornOsc = ctx.createOscillator(); hornOsc.type = 'square'; hornOsc.frequency.value = 530;
-      var hornBP = flt('bandpass', 1590, 4), hornG = gn(0);
-      hornOsc.connect(hornBP); hornBP.connect(hornG); hornG.connect(bus);
-      // vario: a triangle carrier amplitude-warbled by a sine LFO (the gate
-      // gain sits at 0.5 and the LFO adds +-0.5 -> smooth 0..1 pulses, no
-      // clicky square edges, per the no-zipper doctrine)
-      var varioOsc = ctx.createOscillator(); varioOsc.type = 'triangle'; varioOsc.frequency.value = 800;
-      var varioGate = gn(0.5), varioG = gn(0);
-      varioOsc.connect(varioGate); varioGate.connect(varioG); varioG.connect(bus);
-      var varioLFO = ctx.createOscillator(); varioLFO.type = 'sine'; varioLFO.frequency.value = 5;
-      var varioLFOG = gn(0.5); varioLFO.connect(varioLFOG); varioLFOG.connect(varioGate.gain);
       // boom weight: the bass thumps route through a soft tanh saturator
       var satBus = gn(1);
       try {
@@ -1041,18 +988,16 @@ var SluiceAudio = (function () {
         shaper.curve = curve;
         satBus.connect(shaper); shaper.connect(bus);
       } catch (e2) { satBus.connect(bus); }
-      try { noise.start(); engOsc.start(); loadOsc.start(); hornOsc.start(); varioOsc.start(); varioLFO.start(); } catch (e3) {}
+      try { noise.start(); engOsc.start(); loadOsc.start(); } catch (e3) {}
       fl = {
         bus: bus, noiseBuf: noiseBuf,
-        rumG: rumG, hisBP: hisBP, hisG: hisG,
         engBP: engBP, engNG: engNG, engOsc: engOsc, engOG: engOG,
-        loadOsc: loadOsc, loadG: loadG, whisBP: whisBP, whisG: whisG,
-        hornG: hornG, varioOsc: varioOsc, varioLFO: varioLFO, varioG: varioG,
+        loadOsc: loadOsc, loadG: loadG,
         satBus: satBus,
         muted: false, lastMs: nowMs(), prevSpool: clamp01((st && st.spool) || 0),
         // seed the last-seen counters from the FIRST state so a mid-flight
-        // audio unlock does not replay a backlog of booms/landings
-        seen: { ig: fx.igniteN | 0, boom: fx.boomN | 0, vap: fx.vaporN | 0, land: fx.landN | 0 },
+        // audio unlock does not replay a backlog of flight events
+        seen: { boom: fx.boomN | 0, vap: fx.vaporN | 0 },
         watchT: setInterval(flightWatchdog, 120)
       };
     } catch (e) { fl = null; flightDead = true; }
@@ -1120,31 +1065,14 @@ var SluiceAudio = (function () {
   function flightVapor() {
     flightBurst(tnow(), 0.22, 0.12, 'bandpass', 2400, 1.4, 0.03);
   }
-  // touchdown, graded by the landing: a greaser earns a soft descending
-  // triple-thunk; a slam gets one weighty 60 Hz thud + a noise transient;
-  // anything between gets a single medium thunk.
-  function flightLand(vy, tilt) {
-    var t = tnow();
-    if (vy < 240 && tilt < 0.25) {
-      flightThump(t, 120, 0.07, 0.2);
-      flightThump(t + 0.09, 96, 0.08, 0.16);
-      flightThump(t + 0.18, 78, 0.1, 0.13);
-    } else if (vy > 420 || tilt > 0.5) {
-      flightThump(t, 60, 0.2, 0.78);
-      flightBurst(t, 0.045, 0.38, 'lowpass', 3200, 0.7);
-    } else {
-      flightThump(t, 90, 0.13, 0.4);
-      flightBurst(t, 0.03, 0.16, 'lowpass', 2600, 0.7);
-    }
-  }
+  // Landing audio is owned by the collision's land-soft/hard/damage cue.
+  // The flight pack adds no second impact or descending tonal flourish.
 
   // the watchdog kill: every continuous layer to 0 AND the bus itself, so a
   // later resume cannot blare a stale mix before the next drive lands
   function flightSilence(s) {
     if (!fl) return;
-    fset(fl.rumG.gain, 0, s); fset(fl.hisG.gain, 0, s);
     fset(fl.engNG.gain, 0, s); fset(fl.engOG.gain, 0, s); fset(fl.loadG.gain, 0, s);
-    fset(fl.whisG.gain, 0, s); fset(fl.hornG.gain, 0, s); fset(fl.varioG.gain, 0, s);
     fset(fl.bus.gain, 0, s);
   }
   // WATCHDOG: flight() rides update(), which stops when the shop opens or the
@@ -1176,18 +1104,8 @@ var SluiceAudio = (function () {
     fl.lastMs = nowMs();
     if (resumed) { fl.muted = false; fset(fl.bus.gain, 1, 0.08); }
 
-    var air = !!st.air;
-    var s01 = Math.max(0, (st.speed || 0) / (st.cap || 400));
     var spool = clamp01(st.spool || 0);
     var climb = st.climb || 0;
-
-    // wind bed: rumble rises speed01 0.25 -> 1.0; the hiss brightens with
-    // speed and only matures at ~1.3 x cap so dives audibly tear. Air only.
-    var rum = air ? FLIGHT_WIND_RUMBLE * Math.pow(clamp01((s01 - 0.25) / 0.75), 1.4) : 0;
-    var hisT = air ? clamp01((s01 - 0.15) / 1.15) : 0;
-    fset(fl.rumG.gain, rum, 0.12);
-    fset(fl.hisG.gain, FLIGHT_WIND_HISS * hisT * hisT, 0.12);
-    fset(fl.hisBP.frequency, 1200 + 1800 * hisT, 0.12);
 
     // engine under load: the growl + thrust noise ride spool; LOAD (spool *
     // climb) detunes the second saw into a beat and strains the pitch up
@@ -1199,39 +1117,16 @@ var SluiceAudio = (function () {
     fset(fl.engNG.gain, FLIGHT_ENGINE_GAIN * 0.55 * spool, 0.09);
     fset(fl.engBP.frequency, 380 + spool * 420 + load * 160, 0.12);
     fset(fl.loadG.gain, 0.22 * load, 0.12);
-    // freewheel: throttle shut + fast = a thin high whistle instead
-    var freeT = air ? clamp01((0.1 - spool) / 0.1) * clamp01((s01 - 0.8) / 0.4) : 0;
-    fset(fl.whisG.gain, 0.12 * freeT, 0.15);
-    fset(fl.whisBP.frequency, 2400 + s01 * 700, 0.2);
-
-    // stall horn: swells with the buffet telegraph, full-on in the stall
-    var horn = air ? (0.35 * clamp01(st.buffet || 0) + (st.stall ? 0.35 : 0)) : 0;
-    fset(fl.hornG.gain, horn, 0.1);
-
-    // vario: an engine-off zoom climb gets the quiet rising warble beeper
-    var vT = clamp01((climb - 150) / 350);
-    var vOn = air && spool < 0.15 && climb > 150;
-    fset(fl.varioG.gain, vOn ? FLIGHT_VARIO_GAIN * (0.5 + 0.5 * vT) : 0, 0.15);
-    if (vOn) {
-      fset(fl.varioOsc.frequency, 600 + 500 * vT, 0.1);
-      fset(fl.varioLFO.frequency, 4 + 3.5 * vT, 0.15);
-    }
-
     // events: the fx counters only ever increment; diff with last-seen
     var fx = st.fx || {};
-    if ((fx.igniteN | 0) > fl.seen.ig) {
-      fl.seen.ig = fx.igniteN | 0;
-      flightIgnite(1 - clamp01(fl.prevSpool / 0.3));     // cold spool = bigger bark
+    // Ignition follows the shared engine, so changing direction or adding
+    // lift to an already-running lateral jet cannot retrigger another bark.
+    if (!resumed && fl.prevSpool < 0.08 && spool >= 0.08) {
+      flightIgnite(1 - clamp01(fl.prevSpool / 0.3));
     }
     if ((fx.boomN | 0) > fl.seen.boom) { fl.seen.boom = fx.boomN | 0; flightBoom(); }
     if ((fx.vaporN | 0) > fl.seen.vap) { fl.seen.vap = fx.vaporN | 0; flightVapor(); }
-    if ((fx.landN | 0) > fl.seen.land) { fl.seen.land = fx.landN | 0; flightLand(fx.landVy || 0, fx.landTilt || 0); }
-    // tiny spool-down pop when the throttle falls through idle (skipped on a
-    // watchdog resume, where prevSpool is stale from before the gap)
-    if (!resumed && fl.prevSpool >= 0.08 && spool < 0.08) {
-      flightBurst(tnow(), 0.015, 0.1, 'bandpass', 700, 1.2);
-      flightThump(tnow(), 90, 0.05, 0.14);
-    }
+    // The normal gain ramp is the jet release; no added falling cue.
     fl.prevSpool = spool;
   }
 

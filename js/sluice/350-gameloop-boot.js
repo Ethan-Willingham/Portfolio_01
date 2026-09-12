@@ -16,7 +16,7 @@
        day/night     -> night thins/darkens the above-ground music
        fast fall     -> the filter dips for a muffled plunge */
   var _audio = { mode: null, gameOver: false, falling: false, danger: false, depthRows: -1, tod: -1,
-                 alertFuel: false, alertHull: false, wet: false, liqT: 0 };
+                 alertFuel: false, alertHull: false };
 
   function audioUpdate(dt) {
     if (typeof SluiceAudio === 'undefined' || !SluiceAudio) return;
@@ -26,7 +26,8 @@
       if (gameOver && !_audio.gameOver) {
         // The crunch that precedes the lament (SFX_BIBLE §10: death's SFX
         // side is hull-hit + land-damage; the music side is death()).
-        sfxPlay('hull-hit'); sfxPlay('land-damage');
+        // A fatal fall already played its contact cue on this frame.
+        if (!deathInfo || deathInfo.type !== 'fall') { sfxPlay('hull-hit'); sfxPlay('land-damage'); }
         SluiceAudio.death(); drillSfxActive = false; drillSfxMat = null; _audio.mode = null; _audio.danger = false;
       }
       // Revive edge: the player just left the death scene (respawn or restart).
@@ -125,22 +126,7 @@
         }
       }
 
-      // Liquid enter / exit (poll ~20 Hz): playerWaterCushion() is the same
-      // 0..1 coverage signal the fall-cushion uses (water-only is correct —
-      // oil pockets aren't generated yet, P0.4). Wide hysteresis so surface
-      // chop and the rig's own splash can't flap the splash one-shots.
-      _audio.liqT -= dt;
-      if (_audio.liqT <= 0) {
-        _audio.liqT = 0.05;
-        var cov = (typeof playerWaterCushion === 'function') ? playerWaterCushion() : 0;
-        if (!_audio.wet && cov >= 0.6) {
-          _audio.wet = true;
-          sfxPlay('liquid-enter', { gain: 0.6 + 0.4 * Math.min(1, Math.abs(player.vy) / 360) });
-        } else if (_audio.wet && cov <= 0.12) {
-          _audio.wet = false;
-          sfxPlay('liquid-exit');
-        }
-      }
+      // Water entry and exit are silent; the liquid visuals carry contact.
     } catch (e) { /* never break the game loop over audio */ }
   }
 

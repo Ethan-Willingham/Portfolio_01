@@ -10,6 +10,10 @@
   function drillSfx() {
     return (typeof SluiceAudio !== 'undefined' && SluiceAudio.sfx) ? SluiceAudio.sfx.drill : null;
   }
+  function drillBlockedSfx(reason) {
+    if (reason === 'CARGO FULL') sfxPlay('cargo-full', { gain: 0.65 });
+    else { var ds = drillSfx(); if (ds) ds.bounce(); }
+  }
   // ----- Game-side SFX shims (the wiring session, SFX_BIBLE §10) -----
   // Every one-shot / loop call site in the game funnels through these so the
   // typeof guard + try/catch live in ONE place; all are safe no-ops while
@@ -567,12 +571,6 @@
       // Instant tap kick: only on edge press, only when starting from low/wrong-sign vx,
       // and only on the ground (in the air it would feel like a teleport-step).
       var edgeTap = (dirIn > 0 && player.edgeMoveR) || (dirIn < 0 && player.edgeMoveL);
-      // air-pulse: the horizontal thruster puff, one per fresh airborne tap
-      // (pool of 6 + jitter keeps rapid tapping from machine-gunning). Was
-      // underground-only; the one model puffs everywhere airborne.
-      if (edgeTap && !player.onGround) {
-        sfxPlay('air-pulse', { pan: 0.25 * dirIn });
-      }
       if (edgeTap && player.onGround) {
         var sameSign = (dirIn > 0 && player.vx > 0) || (dirIn < 0 && player.vx < 0);
         if (!sameSign || Math.abs(player.vx) < TOP_SPEED * 0.3) {
@@ -778,8 +776,7 @@
     _fdbg.onGround = !!player.onGround;
 
     // ----- Flight SFX + haptics bridge (engine facade: js/audio.js) -----
-    // Per-frame state for the synthesized flight audio (wind bed keyed to
-    // airspeed, engine-under-load, stall horn, ignition bark, boom) plus the
+    // Per-frame state for the shared jet audio (engine load and ignition) plus the
     // rumble shim. Both are safe no-ops until their implementations exist.
     if (typeof SluiceAudio !== 'undefined' && SluiceAudio && SluiceAudio.flight) {
       try {
@@ -789,7 +786,10 @@
           speed: Math.sqrt(player.vx * player.vx + player.vy * player.vy),
           cap: flyTune.speed,
           boomV: flyTune.speed * 2,
-          spool: player.thrustSpool || 0,
+          // One engine voice for lift and lateral thrust. Audio only: the
+          // vertical spool still owns lift force and fuel consumption.
+          spool: Math.max(player.thrustSpool || 0,
+            !player.onGround && moveL !== moveR && player.fuel > 0 ? 1 : 0),
           climb: -player.vy,
           buffet: 0,
           stall: false,
@@ -1139,6 +1139,7 @@
             // Soft step-down landing after a real airborne stretch — barely
             // perceptible squash so the rig "settles" instead of clipping flat.
             player.squash = Math.max(player.squash, 0.10);
+            sfxPlay('land-soft', { gain: 0.65 });
           }
           if (player.hull <= 0) {
             endGame({ type: 'fall', speed: impactVy, damage: fallDmg });
@@ -1200,7 +1201,7 @@
         var blockReason = drillBlockReason(t_d, pr);
         if (blockReason) {
           if (t_d.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr, pc); }
-          else if (drillBlockMsgCool <= 0) { showMsg(blockReason, blockReason === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc1 = drillSfx(); if (_bnc1) _bnc1.bounce(); }
+          else if (drillBlockMsgCool <= 0) { showMsg(blockReason, blockReason === 'CARGO FULL'); drillBlockMsgCool = 1.5; drillBlockedSfx(blockReason); }
         } else {
           var _htD = drillHitTime(pr, t_d.type);
           drilling = { r: pr, c: pc, timer: _htD, hitTime: _htD, dirVec: 'd' };
@@ -1228,7 +1229,7 @@
         var blockReason2 = drillBlockReason(t_l, pr2);
         if (blockReason2) {
           if (t_l.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr2, pc2); }
-          else if (drillBlockMsgCool <= 0) { showMsg(blockReason2, blockReason2 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc2 = drillSfx(); if (_bnc2) _bnc2.bounce(); }
+          else if (drillBlockMsgCool <= 0) { showMsg(blockReason2, blockReason2 === 'CARGO FULL'); drillBlockMsgCool = 1.5; drillBlockedSfx(blockReason2); }
         } else {
           var _htL = drillHitTime(pr2, t_l.type);
           drilling = { r: pr2, c: pc2, timer: _htL, hitTime: _htL, dirVec: 'l' };
@@ -1255,7 +1256,7 @@
         var blockReason3 = drillBlockReason(t_r, pr3);
         if (blockReason3) {
           if (t_r.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr3, pc3); }
-          else if (drillBlockMsgCool <= 0) { showMsg(blockReason3, blockReason3 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc3 = drillSfx(); if (_bnc3) _bnc3.bounce(); }
+          else if (drillBlockMsgCool <= 0) { showMsg(blockReason3, blockReason3 === 'CARGO FULL'); drillBlockMsgCool = 1.5; drillBlockedSfx(blockReason3); }
         } else {
           var _htR = drillHitTime(pr3, t_r.type);
           drilling = { r: pr3, c: pc3, timer: _htR, hitTime: _htR, dirVec: 'r' };
@@ -1282,7 +1283,7 @@
         var blockReason4 = drillBlockReason(t_u, pr4);
         if (blockReason4) {
           if (t_u.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr4, pc4); }
-          else if (drillBlockMsgCool <= 0) { showMsg(blockReason4, blockReason4 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc4 = drillSfx(); if (_bnc4) _bnc4.bounce(); }
+          else if (drillBlockMsgCool <= 0) { showMsg(blockReason4, blockReason4 === 'CARGO FULL'); drillBlockMsgCool = 1.5; drillBlockedSfx(blockReason4); }
         } else {
           var _htU = drillHitTime(pr4, t_u.type);
           drilling = { r: pr4, c: pc4, timer: _htU, hitTime: _htU, dirVec: 'u' };

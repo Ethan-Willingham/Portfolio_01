@@ -7,8 +7,13 @@ The source recipe is `tools/audio/build-sfx.py`; the complete file inventory,
 durations, levels and source trail are in `bank.json`.
 
 The live game uses six drill materials, ground machinery, the existing flight
-synth, impacts, bombs, water, slime, selling, UI, alerts, discovery, and nine
-ambience beds. Reserved footsteps, retired flight slots, and flag-gated combat
+synth, impacts, bombs, slime, selling, UI, alerts, discovery, and nine
+ambience beds. Airborne steering and lift share one jet voice. Free fall,
+coasting, and water contact are silent; solid landings have one short, damped
+impact cue. The old `air-pulse` slot is retired. Drilling uses steady cutting
+friction and small fractures without bass sweeps. A full cargo hold makes a
+quiet click when it blocks a dig, limited by the existing message cooldown. Reserved footsteps, retired flight slots, and flag-gated
+combat
 sounds are supplied for completeness. Their presence does not enable those
 features or add new gameplay events.
 

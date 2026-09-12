@@ -113,6 +113,12 @@ A handful of samples plus jitter beats a huge static library. Budget your varian
 
 ---
 
+Owner tuning, v26.83: the live drill uses steady cutting friction and short,
+quiet fractures with no bass pitch drops. Airborne steering shares the lift
+jet. Free fall, coasting, and water contact are silent. Landings use one damped
+contact cue. A cargo-blocked mining attempt gets a quiet click on the existing
+message cooldown. Earlier flight and splash recipes below are historical.
+
 ## §6. The drill (the flagship sound)
 
 The drill is the most-heard sound in Sluice. It is also the hardest, because it is a continuous, material-aware, progress-aware loop. Treat it as a small system, not one sample.
@@ -196,20 +202,20 @@ Organized by IEZA (§3). Logical names follow the `js/audio.js` convention (lowe
 | `debris` | one-shot | 4 | post-break rubble |
 | `footstep-{dirt,grass,metal}` | one-shot | 4 each | surface walking |
 | `jetpack-ignite` / `jetpack-loop` / `jetpack-cutoff` | one-shot / loop / one-shot | 1 each | throttle-driven loop |
-| `land-soft` / `land-hard` / `land-damage` | one-shot | 2 each | fall-damage gets sub |
-| `fall-wind` | loop | 1 | the plunge whoosh, fades by fall speed (`MUSIC_BIBLE.md` §5.15) |
+| `land-soft` / `land-hard` / `land-damage` | one-shot | 2 each | one short, damped contact, scaled by impact |
+| `fall-wind` | loop | 1 | reserved; free fall is silent by owner direction |
 | `ore-pickup` (noise layer) | one-shot | 4 | pitched layer is music-side (§9) |
 | `cargo-full` | one-shot | 1 | soft "can't" |
 | `bomb-throw` / `bomb-fuse` / `bomb-small` / `bomb-large` | one-shot / loop / one-shot / one-shot | 2 each one-shot | large gets the most sub |
 | `rover-deploy` / `rover-pop` | one-shot | 2 each | balloon inflate / burst |
 | `hull-hit` | one-shot | 3 | taking damage |
 | `teleport` | one-shot | 1 | surface warp |
-| `liquid-enter` / `liquid-exit` / `lava-sizzle` | one-shot / one-shot / loop | 2 / 2 / 1 | water + lava + oil |
+| `liquid-enter` / `liquid-exit` / `lava-sizzle` | one-shot / one-shot / loop | 2 / 2 / 1 | water entry/exit retired by owner direction; lava sizzle remains |
 | `jello-wobble` | one-shot | 3 | squish/bounce |
 | `rig-hum` | loop | the player rig engine idle hum (deep, not whiny; §6 rule) |
 | `rig-drive` | loop | 1 | WIRED (350 audioUpdate: ground roll, pitch by speed); the player movement voice (the rig is a vehicle, not feet); 3 lab directions, tracked is the rec |
 | `jet-spin` | loop | 1 | RETIRED v25.49 (rotation flight removed; nothing drives it, the asset slot stays reserved) |
-| `air-pulse` | one-shot | 6 | WIRED (080 movement: airborne edge-taps everywhere since v25.49); the horizontal thruster puff, survives rapid tapping |
+| `air-pulse` | one-shot | 6 | RETIRED v26.83 by owner direction. Airborne left/right and lift share one jet voice, with no separate lateral puff. |
 | `turret-fire` / `enemy-hit` | one-shot | 3 each | WIRED (085: fireBullet = every gun; friendly-hit loops), panned by screen X; auto-fire restraint: small, low-fatigue, never a movie boom |
 | `drone-down` / `stinger-hit` | one-shot | 2 each | WIRED (085: every kill* + savage fn; stinger pecks throttled ~90ms); swarm hits stay light, the heavy receive is `hull-hit` |
 | `missile-launch` / `missile-hit` | one-shot | 2 each | WIRED (085: spawnMissile / both detonation paths); the launch doubles as the danger telegraph |

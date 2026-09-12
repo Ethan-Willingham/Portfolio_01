@@ -19,6 +19,8 @@ const server = createServer(async (req, res) => {
     const filename = path.resolve(root, '.' + name);
     if (!filename.startsWith(root)) { res.writeHead(403); return res.end(); }
     let data = await readFile(filename);
+    if (name === '/js/audio.js') data = Buffer.from(data.toString().replace('function playSfx(name, opts) {',
+      'function playSfx(name, opts) { window.__sfxCalls.push({name:name, gain:opts && opts.gain});'));
     // Game state access exists only in this test server's response, never the shipped bundle.
     if (name === '/js/sluice.js') data = Buffer.from(data.toString().replace(/\}\)\(\);\s*$/, `
       window.__sfxGameTest = {
@@ -28,6 +30,60 @@ const server = createServer(async (req, res) => {
         shopAudio: function () { shopState = 'floor'; audioUpdate(.016); shopState = 'closed'; },
         die: function () { gameOver = true; audioUpdate(.016); },
         revive: function () { gameOver = false; audioUpdate(.016); }
+      };
+      window.__sfxGameTest.contact = function (opts) {
+        var r = SKY_ROWS + 12, c = 90;
+        gameOver = gameWon = shopOpen = ledgerOpen = false; shopState = 'closed';
+        keys = {}; dpad.left = dpad.right = dpad.up = dpad.down = false;
+        drilling = null; hitPauseT = drillBlockMsgCool = 0;
+        player.drillCooldownT = player.drillGlideT = player.slideAssistT = 0;
+        player.slideTargetX = null; player.thrustSpool = player.jetBufferT = 0;
+        player.onGround = player.onCeiling = player.onJello = false;
+        player.airTime = 1; player.jelloGroundT = 0; player.hull = opts.lethal ? 1 : getMaxHull(); player.fuel = maxFuel;
+        player.x = c * TILE + (TILE - PLAYER_W) / 2; player.y = r * TILE - PLAYER_H;
+        player.vx = 0; player.vy = opts.vy || 0; cargo = [];
+        for (var rr = r - 3; rr <= r; rr++) for (var cc = c - 2; cc <= c + 2; cc++) {
+          world[rr][cc] = rr === r ? {type:'foundation', hp:999999} : null;
+        }
+        if (opts.vy) player.y -= 1;
+        if (opts.dir) {
+          while (cargoUsed() < maxCargo) cargo.push({type:'coal'});
+          var tr = r, tc = c;
+          if (opts.dir === 'Left') { tr = r - 1; tc--; player.x = c * TILE; }
+          if (opts.dir === 'Right') { tr = r - 1; tc++; player.x = (c + 1) * TILE - PLAYER_W; }
+          if (opts.dir === 'Up') { tr = r - 2; upgrades.vertLevel = 1; player.y = (r - 1) * TILE; }
+          world[tr][tc] = {type:opts.type || 'coal', hp:3};
+          keys['Arrow' + opts.dir] = true;
+        }
+        window.__sfxCalls = [];
+        var oldDev = devMode; if (opts.lethal) devMode = false;
+        try { for (var i = 0; i < (opts.frames || 1); i++) { update(.016); audioUpdate(.016); } }
+        finally { devMode = oldDev; }
+        return {calls:window.__sfxCalls, drilling:!!drilling, hull:player.hull, dead:gameOver,
+          tile:opts.dir ? world[tr][tc] : null};
+      };
+      window.__sfxGameTest.flightInput = function (dirs, fuel) {
+        gameOver = gameWon = shopOpen = ledgerOpen = false; shopState = 'closed';
+        keys = {}; dirs.forEach(function (d) { keys['Arrow' + d] = true; });
+        drilling = null; hitPauseT = 0; player.drillGlideT = 0; player.slideTargetX = null;
+        player.x = 90 * TILE; player.y = (SKY_ROWS - 20) * TILE;
+        player.vx = player.vy = player.thrustSpool = 0; player.fuel = fuel ? maxFuel : 0;
+        player.hull = getMaxHull(); reserveFuel = 0;
+        player.onGround = player.onJello = false;
+        var original = SluiceAudio.flight, state;
+        SluiceAudio.flight = function (st) { state = st; original(st); };
+        window.__sfxCalls = [];
+        try { update(.016); } finally { SluiceAudio.flight = original; }
+        return {spool:state.spool, calls:window.__sfxCalls};
+      };
+      window.__sfxGameTest.waterAudio = function () {
+        var original = playerWaterCushion;
+        window.__sfxCalls = [];
+        try {
+          playerWaterCushion = function () { return 1; }; audioUpdate(.1);
+          playerWaterCushion = function () { return 0; }; audioUpdate(.1);
+        } finally { playerWaterCushion = original; }
+        return window.__sfxCalls;
       };
     })();`));
     res.setHeader('Content-Type', types[path.extname(filename)] || 'application/octet-stream');
@@ -42,6 +98,10 @@ try {
     args: ['--enable-unsafe-webgpu', '--use-angle=metal', '--mute-audio'] });
   const context = await browser.newContext({ viewport: { width: 1280, height: 850 } });
   await context.addInitScript(() => {
+    window.__sfxCalls = [];
+    window.__oscStarts = 0;
+    const start = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (...args) { window.__oscStarts++; return start.apply(this, args); };
     const connect = AudioNode.prototype.connect;
     AudioNode.prototype.connect = function(dest, ...args) {
       if (dest === this.context.destination) {
@@ -120,6 +180,29 @@ try {
   assert(await page.evaluate(() => __peak()) < .99, 'Stacked bombs clipped');
   console.log('Mix: no repeat variants, 24-voice cap, audible drill, pause silence, loop watchdog, independent music/SFX mute, blast headroom');
 
+  await page.waitForTimeout(2700);
+  await page.evaluate(() => {
+    window.__flightState = {air:true, speed:900, cap:400, spool:0, climb:-900, fx:{}};
+    window.__flightTimer = setInterval(() => SluiceAudio.flight(__flightState), 25);
+  });
+  for (const climb of [-900, 0, 600]) {
+    await page.evaluate(climb => { __flightState.climb = climb; __flightState.fx.landN = 1; }, climb);
+    await page.waitForTimeout(300);
+    assert(await page.evaluate(() => __peak()) < .0001, 'Passive flight or legacy landing counter made noise: ' + climb);
+  }
+  await page.evaluate(() => { __flightState.spool = 1; });
+  await page.waitForTimeout(300);
+  assert(await page.evaluate(() => __peak()) > .001, 'Shared jet is silent under thrust');
+  const starts = await page.evaluate(() => __oscStarts);
+  await page.evaluate(() => { __flightState.fx.igniteN = 10; __flightState.climb = 0; });
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => __oscStarts), starts, 'Adding lift/direction retriggered ignition');
+  await page.evaluate(() => { __flightState.spool = 0; });
+  await page.waitForTimeout(300);
+  assert(await page.evaluate(() => __peak()) < .0001, 'Releasing the jet left a falling sound');
+  await page.evaluate(() => clearInterval(__flightTimer));
+  console.log('Flight: silent coasting and free fall, audible shared thrust, no second ignition or landing layer');
+
   await page.goto(origin + '/grand-motherload.html?dev=1&nosave=1');
   await page.waitForFunction(() => window.gm && window.__sfxGameTest, null, { timeout: 60000 });
   await page.locator('#gm-pause-btn').click();
@@ -156,6 +239,31 @@ try {
   }
   const lifecycle = await page.evaluate(() => { __sfxGameTest.shopAudio(); const shop=SluiceAudio.sfxStatus().zone; __sfxGameTest.die(); const death=SluiceAudio.sfxStatus(); __sfxGameTest.revive(); return {shop,death,revived:SluiceAudio.sfxStatus().zone}; });
   assert.equal(lifecycle.shop,'station'); assert.equal(lifecycle.death.zone,null); assert.equal(lifecycle.death.drill,null); assert(lifecycle.revived);
+  for (const dir of ['Down', 'Left', 'Right', 'Up']) {
+    const blocked = await page.evaluate(dir => __sfxGameTest.contact({dir, frames:40}), dir);
+    assert.equal(blocked.drilling, false, dir + ': full cargo allowed mining');
+    assert.equal(blocked.tile.hp, 3);
+    assert.equal(blocked.calls.filter(c => c.name === 'cargo-full').length, 1, JSON.stringify({dir,blocked}));
+    assert.equal(blocked.calls.find(c => c.name === 'cargo-full').gain, .65);
+    assert(!blocked.calls.some(c => c.name === 'drill-bounce'), 'Cargo block played the hard barrier clank');
+  }
+  const rubble = await page.evaluate(() => __sfxGameTest.contact({dir:'Down', type:'dirt', frames:5}));
+  assert(rubble.drilling && !rubble.calls.some(c => c.name === 'cargo-full'), 'Full cargo incorrectly blocked rubble: ' + JSON.stringify(rubble));
+  for (const [vy, cue, lethal] of [[120,'land-soft',false], [250,'land-hard',false], [400,'land-damage',false], [700,'land-damage',true]]) {
+    const contact = await page.evaluate(opts => __sfxGameTest.contact(opts), {vy, lethal, frames:3});
+    assert.deepEqual(contact.calls.filter(c => c.name.startsWith('land-') || c.name === 'hull-hit').map(c => c.name), [cue]);
+    assert.equal(contact.dead, lethal, JSON.stringify({vy,contact}));
+  }
+  for (const dirs of [['Left'], ['Right'], ['Up','Left'], ['Up','Right']]) {
+    const flight = await page.evaluate(dirs => __sfxGameTest.flightInput(dirs, true), dirs);
+    assert.equal(flight.spool, 1, 'Lateral thrust did not drive the shared jet');
+    assert(!flight.calls.some(c => c.name === 'air-pulse'));
+  }
+  assert.equal((await page.evaluate(() => __sfxGameTest.flightInput(['Left'], false))).spool, 0);
+  assert.equal((await page.evaluate(() => __sfxGameTest.flightInput(['Left','Right'], true))).spool, 0);
+  const water = await page.evaluate(() => __sfxGameTest.waterAudio());
+  assert(!water.some(c => c.name.startsWith('liquid-')));
+  console.log('Contacts: one quiet cargo cue in all four directions with no held-input spam, rubble still mines, single graded landing including fatal falls, unified lateral jet, silent water');
   await page.evaluate(() => localStorage.setItem('sluice.volume','0'));
   await page.reload();
   await page.waitForFunction(() => window.gm, null, {timeout:60000});

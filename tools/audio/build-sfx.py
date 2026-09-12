@@ -110,15 +110,16 @@ def motor(key, rng, dur=4):
     if key.startswith('drill-grind-'):
         mat = key.removeprefix('drill-grind-')
         hz, high, _, _, modal = MATERIALS[mat]
-        base = {'dirt': 76, 'stone': 83, 'ice': 88, 'crystal': 92, 'metal': 69, 'obsidian': 63}[mat]
-        x = .5 * texture(dur, rng, 100, min(high, 1600))
-        # Rounded motor lobes with low-frequency grit modulation, never a square-wave buzz.
-        pulse = (1 + .27 * np.sin(TAU * 19 * t) + .12 * np.sin(TAU * 31.25 * t))
-        x *= pulse
-        x += .22 * np.sin(TAU * base * t + .20 * np.sin(TAU * 2.25 * t))
-        x += .08 * np.sin(TAU * base * 2 * t)
+        base = {'dirt': 174, 'stone': 188, 'ice': 208, 'crystal': 216, 'metal': 182, 'obsidian': 166}[mat]
+        # Continuous cutting friction with shallow, irregular load variation.
+        # No low motor pulse or regularly spaced impacts that read as a drum.
+        load = np.clip(1 + .045 * texture(dur, rng, .5, 7, 0), .85, 1.15)
+        x = .62 * texture(dur, rng, 180, min(high, 1900), .15) * load
+        x += .16 * texture(dur, rng, 650, min(high + 300, 2600), 0)
+        x += .075 * np.sin(TAU * base * t + .10 * np.sin(TAU * 1.25 * t))
+        x += .035 * np.sin(TAU * base * 2 * t)
         if mat in ('ice', 'crystal', 'metal'):
-            x += .08 * modal * np.sin(TAU * round(hz * 4) / 4 * t) * (1 + .4 * np.sin(TAU * 3 * t))
+            x += .035 * modal * np.sin(TAU * round(hz * 4) / 4 * t)
     elif key in ('rig-hum', 'rig-drive', 'jet-spin', 'jetpack-loop'):
         base = 48 if key == 'rig-hum' else 64
         x = .4 * texture(dur, rng, 50, 800)
@@ -170,22 +171,42 @@ def ambience(key, rng, dur=16):
 
 def one_shot(key, rng, variant):
     if key.startswith('drill-break-'):
-        return impact(key.removeprefix('drill-break-'), rng), -20
+        mat = key.removeprefix('drill-break-')
+        hz, high, ratios, decay, modal = MATERIALS[mat]
+        dur = .30
+        t = times(dur)
+        # A short fracture in the cutting texture, without the old bass sweep.
+        x = .65 * texture(dur, rng, 250, high) * envelope(t, .024)
+        x += .15 * texture(dur, rng, 900, 4200, 0) * envelope(t, .006, .001)
+        x += .13 * modal * modes(t, hz, ratios, min(decay, .035), rng)
+        for off in rng.uniform(.018, .085, 5):
+            add_at(x, burst(rng, dur, high, .009, 600) * rng.uniform(.035, .075), off)
+        return x, -30 if mat == 'dirt' else -28
     if key == 'bomb-throw':
         return impact('metal', rng, .28, .2) * .4 + burst(rng, .28, 1300, .045) * .2, -26
     if key == 'drill-bounce':
         return impact('metal', rng, .30, .5), -24
-    if key == 'debris' or key.startswith('footstep-'):
+    if key == 'debris':
+        dur = .25
+        x = np.zeros(round(dur * SR))
+        for off in [0, *sorted(rng.uniform(.02, .13, 5))]:
+            add_at(x, burst(rng, dur, 2400, .012, 700) * rng.uniform(.05, .13), off)
+        return x, -36
+    if key.startswith('footstep-'):
         mat = 'metal' if key.endswith('metal') else 'dirt'
         return impact(mat, rng, .25, .2), -30
-    if key in ('drill-spinup', 'jetpack-ignite', 'jetpack-cutoff', 'air-pulse', 'missile-launch', 'rover-deploy', 'teleport'):
-        dur = {'drill-spinup': .32, 'jetpack-ignite': .32, 'jetpack-cutoff': .20,
+    if key == 'drill-spinup':
+        dur = .22
+        t = times(dur)
+        x = texture(dur, rng, 220, 1800) * envelope(t, .050, .004) * .65
+        x += sweep(t, 230, 430, .065, .008) * .06
+        return x, -33
+    if key in ('jetpack-ignite', 'jetpack-cutoff', 'air-pulse', 'missile-launch', 'rover-deploy', 'teleport'):
+        dur = {'jetpack-ignite': .32, 'jetpack-cutoff': .20,
                'air-pulse': .20, 'missile-launch': .55, 'rover-deploy': .8, 'teleport': 1.1}[key]
         t = times(dur)
         x = burst(rng, dur, 1500, dur / 5) * .35
-        if key == 'drill-spinup':
-            x += sweep(t, 80, 230, .09) * .3 + sweep(t, 150, 390, .07) * .1
-        elif key == 'teleport':
+        if key == 'teleport':
             x = texture(dur, rng, 350, 2000) * np.sin(np.pi * t / dur)**3 * .25
             x += sweep(t, 170, 720, .22) * .2
             add_at(x, bell(rng, [587.33, 880], .5, .1), .55)
@@ -195,13 +216,25 @@ def one_shot(key, rng, variant):
         else:
             x += sweep(t, 145, 65, dur / 5) * .22
         return x, -24 if key != 'air-pulse' else -29
-    if key.startswith('land-') or key in ('hull-hit', 'obstacle-hit', 'enemy-hit', 'stinger-hit', 'drone-down'):
-        heavy = key in ('land-damage', 'obstacle-hit', 'drone-down')
+    if key.startswith('land-'):
+        # Damped chassis contact: unpitched grit and fixed, short low modes.
+        # No descending pitch envelope, ringing clang, or repeated bounce.
+        heavy = key == 'land-damage'
+        dur = .42 if heavy else (.30 if key == 'land-hard' else .20)
+        t = times(dur)
+        x = texture(dur, rng, 60, 850) * envelope(t, .050 if heavy else .030) * .62
+        x += texture(dur, rng, 500, 2300) * envelope(t, .012, .001) * .18
+        x += modes(t, 86 if heavy else 125, [1, 1.37, 2.16], .025 if heavy else .018, rng) * .18
+        # A few grains settling after the contact, already quieter than its body.
+        add_at(x, burst(rng, dur, 1100, .017, 180) * .055, .045)
+        return x, -26 if heavy else (-29 if key == 'land-hard' else -33)
+    if key in ('hull-hit', 'obstacle-hit', 'enemy-hit', 'stinger-hit', 'drone-down'):
+        heavy = key in ('obstacle-hit', 'drone-down')
         dur = .9 if heavy else .5
         t = times(dur)
         x = impact('metal', rng, dur) * .55 + impact('stone', rng, dur) * .4
         x += sweep(t, 90 if heavy else 145, 48 if heavy else 83, .13 if heavy else .07) * .45
-        return x, -18 if heavy else (-29 if key == 'land-soft' else -22)
+        return x, -18 if heavy else -22
     if key in ('bomb-small', 'bomb-large', 'missile-hit', 'flak-burst', 'turret-fire', 'rover-pop', 'thunder'):
         big = key in ('bomb-large', 'thunder')
         small = key in ('turret-fire', 'rover-pop')
@@ -240,7 +273,12 @@ def one_shot(key, rng, variant):
         x = bell(rng, [hz], .24, .055)
         x += impact('metal', rng, .24, .1) * .16
         return x, -28 if key == 'ore-pickup' else -27
-    if key in ('ui-open', 'ui-denied', 'cargo-full'):
+    if key == 'cargo-full':
+        t = times(.16)
+        x = texture(.16, rng, 600, 1800) * envelope(t, .012) * .6
+        x += np.sin(TAU * 420 * t) * envelope(t, .025) * .13
+        return x, -32
+    if key in ('ui-open', 'ui-denied'):
         x = impact('metal', rng, .3, .5) * .4
         t = times(.3)
         x += sweep(t, 220 if key == 'ui-open' else 160, 130 if key == 'ui-open' else 110, .06) * .4
@@ -353,7 +391,7 @@ def main():
         demo.extend([samples[key], np.zeros(round(SR * .22))])
     if args.preview:
         write_wav(args.preview, np.concatenate(demo))
-    (out / 'bank.json').write_text(json.dumps({'version': 1, 'sampleRate': SR, 'source': 'Original procedural synthesis, tools/audio/build-sfx.py', 'sounds': report}, indent=2) + '\n')
+    (out / 'bank.json').write_text(json.dumps({'version': 2, 'sampleRate': SR, 'source': 'Original procedural synthesis, tools/audio/build-sfx.py', 'sounds': report}, indent=2) + '\n')
     print(f'Built {len(report)} sounds / {len(rows)} keys / {sum(r["bytes"] for r in report)/1e6:.2f} MB')
 
 
