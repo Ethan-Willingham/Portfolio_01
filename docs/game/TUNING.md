@@ -1112,10 +1112,10 @@ old field. `node tools/test-sluice-grass.cjs` checks these behavior boundaries.
 
 ## 5.8 Rare surface visitors
 
-The turtle (`167-surface-turtle.js`) and solitary hawk (`206-rare-bird.js`) each
+The turtle (`167-surface-turtle.js`) and solitary white heron (`206-rare-bird.js`) each
 have a one-animal cap. Their encounter clocks count time with the surface in
 view, so mining does not queue arrivals. Both enter beyond a camera edge and
-use tiny cached pixel poses in the existing flora/wood/stone palette.
+use cached pixel poses in the existing flora, stone and sky palette.
 
 The turtle first visits after 38 to 68 seconds of surface time, then waits
 120 to 220 seconds between visits. It walks at 5 world px/s, pauses to graze,
@@ -1124,10 +1124,12 @@ about 42 seconds it wanders back toward its entry edge. Removing its support
 removes the visitor rather than leaving it suspended. It is scenery with no
 collision or reward. `window.__surfaceTurtle.info()` reports its current state.
 
-The hawk waits 45 to 73 seconds before its first pass, with 90 to 180 seconds
-between later passes. Its 9-pixel wingspan is three times the flock birds'.
-It glides at 42 to 58 world px/s with one slow wingbeat every 5 to 8 seconds.
-There is one hawk at most, separate from all flock and perched-bird behavior.
+The heron waits 45 to 73 seconds before its first pass, with 90 to 180 seconds
+between later passes. Its 30-pixel profile has warm white wings, cool shaded
+feathers, a folded neck, ochre bill and long trailing legs. Nine cached poses
+give it two slow wingbeats every 4.2 to 6 seconds, with a small body lift and
+head/tail follow-through. It glides at 34 to 46 world px/s between strokes.
+There is one heron at most, separate from all flock and perched-bird behavior.
 It retires offscreen; following it keeps the current pass alive. Inspect it
 with `window.__rareBird.info()`. Both systems reset on world replacement.
 

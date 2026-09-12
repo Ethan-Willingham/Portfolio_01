@@ -101,7 +101,7 @@ quantities, unit prices, and haul value while the mine is paused).
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
 | `156-render-planet.js` | pixel-art continents and oceans below the sky horizon, lit by the existing day/night cycle |
 | `165-render-trees.js` / `166-render-surface-boulders.js` | open woodland and scattered surface stones, derived from supporting terrain |
-| `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary hawk |
+| `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary white heron |
 | `340-jello.js` | slime soft bodies, continuous gel rendering, and the topology-independent actor-intent seam |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |
