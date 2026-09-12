@@ -7154,14 +7154,9 @@ fn vs(@builtin(vertex_index)   vid : u32,
       }
       // Looked up at the grid-build position, a real particle always counts its
       // own cell, so nb >= 1; nb 0 means a truly stale grid (boot) — keep full.
-      if (nb >= 1u) {
-        d = d * clamp(f32(nb) / NB_FULL, 0.0, 1.0);
-        // A stretched but supported sheet can cross the MPM density-grid
-        // troughs. Cubing that density used to shrink its splats into a
-        // visible lattice of dots and holes. Real neighbouring particles
-        // keep a body-sized footprint; isolated spray keeps the small one.
-        d = max(d, 1.5 * smoothstep(4.0, NB_FULL, f32(nb)));
-      }
+      // Preserve the fine particle footprint as water leaves a body. A
+      // neighbour-count size floor merged loose groups into coarse sheets.
+      if (nb >= 1u) { d = d * clamp(f32(nb) / NB_FULL, 0.0, 1.0); }
     }
   }
   let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
@@ -7310,18 +7305,17 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   var aWaterEdge = smoothstep(t - s, t + s, fw);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
   // Contact can have zero field after the collision ring separates the
-  // outer particle row from a wall. Wet every side of the VISUAL boundary,
-  // including ceilings and corners, from real body-strength water inward
-  // of that wall. The cached band gates all extra work to the contact rim.
+  // outer particle row from a wall. Close the narrow wall/floor seam, but
+  // never search upward toward a ceiling: that painted an adhesive film
+  // above a receding free surface. The cached band limits work to the rim.
   // Each tap stays in the same open passage; a dry pocket or lone drop
   // cannot supply a body, and no field is carried through solid terrain.
   if (rp.bridge.x > 0.0 && terrain.g > 0.01 && aWaterEdge < 0.999) {
-    let dirs = array<vec2<f32>, 8>(
+    let dirs = array<vec2<f32>, 5>(
       vec2<f32>(-1.0, 0.0), vec2<f32>(1.0, 0.0),
-      vec2<f32>(0.0, -1.0), vec2<f32>(0.0, 1.0),
-      vec2<f32>(-0.7071, -0.7071), vec2<f32>(0.7071, -0.7071),
+      vec2<f32>(0.0, 1.0),
       vec2<f32>(-0.7071, 0.7071), vec2<f32>(0.7071, 0.7071));
-    for (var side = 0; side < 8; side = side + 1) {
+    for (var side = 0; side < 5; side = side + 1) {
       let dir = dirs[side];
       if (terrainRenderOpen(wp + dir * 6.0) > 0.5) { continue; }
       // Anchor the reach at the wall, not at each missing pixel. Otherwise
@@ -7336,7 +7330,8 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       }
       let wall = wp + dir * hi;
       for (var step = 1; step <= 3; step = step + 1) {
-        let depth = min(2.0 * f32(step), 5.0);
+        let reach = select(3.5, 5.0, dir.y > 0.5);
+        let depth = min(2.0 * f32(step), reach);
         if (depth <= hi) { continue; }
         let source = wall - dir * depth;
         if (terrainRenderOpen(source) < 0.5) { break; }
@@ -7345,7 +7340,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
         let sp = (source - vec2<f32>(rp.camX, rp.camY)) * rp.dpws;
         if (sp.x < 0.0 || sp.y < 0.0 || sp.x >= rp.canvasW || sp.y >= rp.canvasH) { break; }
         let body = textureLoad(fieldTex, vec2<i32>(sp), 0).r;
-        if (body >= t) { aWaterEdge = max(aWaterEdge, smoothstep(t - s, t + s, body)); }
+        if (body >= t + s) { aWaterEdge = 1.0; }
         if (aWaterEdge >= 0.999) { break; }
       }
       if (aWaterEdge >= 0.999) { break; }

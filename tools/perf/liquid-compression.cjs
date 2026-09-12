@@ -72,8 +72,16 @@ window.__compression = {
       explosions: [], guests: null, player: null
     }; };
   },
-  sheet: async function (isolated) {
-    this.seed(isolated ? 1 : 4096, isolated ? 1 : 64, 1.8, isolated ? 4 : 4 * 1.25 * 1.25 / (1.8 * 1.8));
+  sheet: async function (isolated, dense, spray) {
+    var spacing = dense ? 1.25 : 1.8;
+    this.seed(isolated ? 1 : 4096, isolated ? 1 : 64, spacing, isolated || dense ? 4 : 4 * 1.25 * 1.25 / (spacing * spacing));
+    if (spray) {
+      this.seed(600, 110);
+      for (var i = 0; i < liquidCount; i++) {
+        liquidDensity[i] = 2;
+        liquidVX[i] = Math.sin(i * 1.37) * 100; liquidVY[i] = -150 - (i % 7) * 8;
+      }
+    }
     liquidWGPU.buildGrid();
     // The live G2P pass records the pre-step position used by the render
     // neighbour lookup. This static sheet has not moved or run G2P yet.
@@ -87,14 +95,16 @@ window.__compression = {
     var enc = dev.createCommandEncoder();
     enc.copyTextureToBuffer({ texture: liquidWGPU.renderCtx.getCurrentTexture() }, { buffer: buf, bytesPerRow: stride }, [w, h]);
     dev.queue.submit([enc.finish()]); await buf.mapAsync(GPUMapMode.READ);
-    var a = new Uint8Array(buf.getMappedRange()); var holes = 0, pixels = 0, minAlpha = 255, wetPixels = 0;
-    for (var y = -40; y < 40; y += 0.25) for (var x = -40; x < 40; x += 0.25) {
+    var a = new Uint8Array(buf.getMappedRange()); var holes = 0, pixels = 0, minAlpha = 255, wetPixels = 0, pixelHash = 2166136261;
+    var extent = dense ? 30 : 40;
+    for (var y = -extent; y < extent; y += 0.25) for (var x = -extent; x < extent; x += 0.25) {
       var sx = Math.floor((this.cx + x - cam.x) * dpr * worldScale), sy = Math.floor((this.cy + y - cam.y) * dpr * worldScale);
       var alpha = a[sy * stride + sx * 4 + 3]; minAlpha = Math.min(minAlpha, alpha); pixels++;
+      for (var channel = 0; channel < 4; channel++) pixelHash = Math.imul(pixelHash ^ a[sy * stride + sx * 4 + channel], 16777619) >>> 0;
       if (alpha > 0) wetPixels++;
       if (alpha < liquidWGPU.renderParamsHost[11] * 255 * 0.95) holes++;
     }
-    buf.unmap(); buf.destroy(); return { holes: holes, pixels: pixels, minAlpha: minAlpha, wetPixels: wetPixels };
+    buf.unmap(); buf.destroy(); return { holes: holes, pixels: pixels, minAlpha: minAlpha, wetPixels: wetPixels, pixelHash: pixelHash };
   }
 };
 `;
@@ -187,8 +197,10 @@ async function run(page, url, label) {
       if ([29, 119, 599].includes(f)) longRelease.push(await __compression.stats());
     }
     const bead = await __compression.sheet(true);
+    const body = await __compression.sheet(false, true);
+    const spray = await __compression.sheet(false, false, true);
     const sheet = await __compression.sheet();
-    return { adapter: inst.adapter.info.description, compressed, extreme, ordinary, ordinaryState, initial, release, coincident, held, longRelease, bead, sheet };
+    return { adapter: inst.adapter.info.description, compressed, extreme, ordinary, ordinaryState, initial, release, coincident, held, longRelease, bead, body, spray, sheet };
   });
   assert.deepEqual(errors, []);
   assert(result.release.every(s => s.nonfinite === 0 && s.count === result.initial.count), 'Release conserves particles and stays finite');
@@ -228,8 +240,10 @@ async function main() {
       const page = await browser.newPage({ viewport: { width: 900, height: 700 }, extraHTTPHeaders: { 'x-water-source': label } });
       results[label] = await run(page, 'http://127.0.0.1:' + server.address().port, label); await page.close();
     }
-    assert(results.baseline.sheet.holes > 50000, 'Baseline reproduces the visible grid');
-    assert.equal(results.current.sheet.holes, 0, 'Supported sheets have no interior holes');
+    // The owner rejected merging loose water into a solid sheet. Dense
+    // bodies stay continuous; sparse groups retain the prior particle art.
+    assert.equal(results.current.body.holes, 0, 'Dense water has no interior grid gaps');
+    for (const kind of ['sheet', 'spray', 'bead']) assert.equal(results.current[kind].pixelHash, results.baseline[kind].pixelHash, kind + ' retains the pre-regression particle rendering');
     assert(results.baseline.bead.wetPixels > 0, 'Isolated droplets remain visible');
     assert.equal(results.current.bead.wetPixels, results.baseline.bead.wetPixels, 'Isolated droplets retain their compact footprint');
     assert.equal(results.baseline.coincident.largestStack, 1024, 'Baseline reproduces permanently coincident particles');

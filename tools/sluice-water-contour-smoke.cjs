@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
+const cp = require('node:child_process');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const probe = `
@@ -115,7 +116,7 @@ window.__waterContourTest = {
         if (a > 100) wet++;
       }
     }
-    var contacts = 0, contactGaps = 0, gapSamples = [];
+    var contacts = 0, contactGaps = 0, bankGaps = 0, gapSamples = [];
     function maskAt(wx, wy) {
       var x = wx - m.x - 0.5, y = wy - m.y - 0.5;
       var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
@@ -133,14 +134,29 @@ window.__waterContourTest = {
       var offset = (gpu ? sy : h - sy - 1) * stride + sx * 4 + 3;
       if (bytes[offset] < expectedAlpha * 0.98) {
         contactGaps++;
-        if (gapSamples.length < 8) gapSamples.push({ x: wx - this.col * TILE, y: wy - this.row * TILE, alpha: bytes[offset], expected: expectedAlpha });
+        // Ceiling contact may open as water recedes. Only submerged wall
+        // and floor seams must stay filled, away from the overhang's rim.
+        var ceiling = maskAt(wx, wy - 5) >= 128 ||
+          (maskAt(wx - 3.5, wy - 3.5) >= 128 && maskAt(wx - 3.5, wy + 3.5) < 128) ||
+          (maskAt(wx + 3.5, wy - 3.5) >= 128 && maskAt(wx + 3.5, wy + 3.5) < 128);
+        if (!ceiling) {
+          bankGaps++;
+          if (gapSamples.length < 8) gapSamples.push({ x: wx - this.col * TILE, y: wy - this.row * TILE, alpha: bytes[offset], expected: expectedAlpha });
+        }
       }
     }
     var ceilingAir = 0;
     for (var ay = 2; ay < 10; ay++) for (var ax = 2 * TILE; ax < 10 * TILE; ax++) {
       if (alpha(this.col * TILE + ax, this.row * TILE + ay) > 0) ceilingAir++;
     }
-    return { gapSamples: gapSamples, ceilingAir: ceilingAir, contacts: contacts, contactGaps: contactGaps, blocked: blocked, leaking: leaking, cutaway: cutaway, wetCutaway: wetCutaway, wet: wet,
+    var ceilingProbes = 0, ceilingFilm = 0;
+    for (var cx = 2 * TILE; cx < 10 * TILE; cx++) for (var cy = -4; cy < 5; cy += 0.5) {
+      var px = this.col * TILE + cx, py = this.row * TILE + cy;
+      if (maskAt(px, py) > 0.1 || maskAt(px, py - 1) < 128) continue;
+      ceilingProbes++;
+      if (alpha(px, py) > 100) ceilingFilm++;
+    }
+    return { gapSamples: gapSamples, bankGaps: bankGaps, ceilingFilm: ceilingFilm, ceilingProbes: ceilingProbes, ceilingAir: ceilingAir, contacts: contacts, contactGaps: contactGaps, blocked: blocked, leaking: leaking, cutaway: cutaway, wetCutaway: wetCutaway, wet: wet,
       dry: alpha((this.col + 13.5) * TILE, (this.row + 4.5) * TILE), revision: m.revision };
   },
   cache: function () {
@@ -158,11 +174,13 @@ window.__waterContourTest = {
 `;
 
 async function main() {
+  const liquidSource = process.env.LIQUID_REF ? cp.execFileSync('git', ['show', process.env.LIQUID_REF + ':js/liquid-wgpu.js'], { cwd: root, encoding: 'utf8', maxBuffer: 4e6 }) : null;
   const bundle = process.env.SOURCE ? fs.readdirSync(path.join(root, 'js/sluice')).filter(n => /^\d{3}-.*\.js$/.test(n)).sort()
     .map(n => fs.readFileSync(path.join(root, 'js/sluice', n), 'utf8')).join('') : fs.readFileSync(path.join(root, 'js/sluice.js'), 'utf8');
   const end = bundle.lastIndexOf('})();'); assert(end > 0);
   const server = http.createServer((req, res) => {
     const name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    if (name === '/js/liquid-wgpu.js' && liquidSource) { res.setHeader('Content-Type', 'text/javascript'); res.end(liquidSource); return; }
     if (name === '/js/sluice.js') {
       res.setHeader('Content-Type', 'text/javascript'); res.end(bundle.slice(0, end) + probe + bundle.slice(end)); return;
     }
@@ -219,16 +237,22 @@ async function main() {
         if (process.env.DUMP) {
           await call('draw'); await page.screenshot({ path: path.join(process.env.DUMP, 'water-contact.png') });
         }
-        if (!process.env.CONTACT_BASELINE) assert.equal(contact.contactGaps, 0, 'A full basin reaches every wall without dark contact seams');
+        if (!process.env.CONTACT_BASELINE) assert.equal(contact.bankGaps, 0, 'A full basin reaches its submerged walls and floor');
+        await call('scene', false, { gap: 2.2, topGap: 4.4 });
+        const ceiling = await call('pixels'); console.log('Receding ceiling', ceiling);
+        if (process.env.DUMP) {
+          await call('draw'); await page.screenshot({ path: path.join(process.env.DUMP, 'water-ceiling.png') });
+        }
+        if (!process.env.CONTACT_BASELINE) assert(ceiling.ceilingFilm < ceiling.ceilingProbes * 0.5, 'Water can detach from the ceiling without an adhesive film');
         await call('scene', false, { gap: 2.2, topGap: 18 });
         const air = await call('pixels');
         assert.equal(air.ceilingAir, 0, 'Contact wetting leaves a real air gap below the ceiling empty');
         await call('scene', false, { cross: true, gap: 2.2, zoom: 2.4 });
         const cross = await call('pixels'); console.log('Cross pocket', cross);
-        if (!process.env.CONTACT_BASELINE) assert.equal(cross.contactGaps, 0, 'The narrow cross-shaped pocket has continuous wall contact');
+        if (!process.env.CONTACT_BASELINE) assert.equal(cross.bankGaps, 0, 'The narrow cross-shaped pocket has continuous submerged wall contact');
         await call('settle');
         const settled = await call('pixels'); console.log('Settled cross pocket', settled);
-        if (!process.env.CONTACT_BASELINE) assert.equal(settled.contactGaps, 0, 'Real collision and settling keep the pocket in contact');
+        if (!process.env.CONTACT_BASELINE) assert.equal(settled.bankGaps, 0, 'Real settling keeps submerged walls and the floor in contact');
         if (process.env.DUMP) {
           await call('draw'); await page.screenshot({ path: path.join(process.env.DUMP, 'water-cross.png') });
         }

@@ -263,11 +263,18 @@ in red and a narrow contact band in green, limiting extra taps to the rim.
 The regression now checks separated particle rows and a narrow cross-shaped
 pocket before and after real simulation steps, plus an intact ceiling air gap.
 
-v26.118 keeps a body-sized water footprint when real neighbours support a
-stretched sheet. The old cubed density curve could shrink a connected sheet
-into a visible lattice of dots and holes. The neighbour guard still keeps
-isolated spray small; the footprint never exceeds the existing dense-body
-size. Pressure, damping, viscosity and the fluid clock are unchanged.
+v26.119 restores the fine density-based particle footprint. The v26.118
+neighbour-count size floor merged loose groups too aggressively and made
+free water look coarse. Loose clusters, moving spray and individual beads
+now match the v26.115 renderer pixel for pixel in the regression fixtures;
+dense bodies still pass the interior-gap check.
+
+Wall contact now reaches 3.5 world pixels inward instead of five and requires
+full body-strength water. The floor keeps its five-pixel seam correction.
+Ceiling-facing searches are removed, so a receding surface leaves an air gap
+instead of a painted film. The contour test distinguishes submerged banks
+from ceilings and checks both contact and detachment. These are rendering
+changes only; v26.118 compression performance and overlap recovery remain.
 
 Drawn by `drawLiquidsWebGL` (CPU GL) / the WGSL render shader (GPU). All of
 these are LIVE since v14.25 — the `water` gm group (L panel) pushes them via
