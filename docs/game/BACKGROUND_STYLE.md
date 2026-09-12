@@ -232,9 +232,13 @@ The grey subsoil at 60 to 130 m has its own parallax wall in
   `wallSubsoilShade` (`#1c2023`) belong only to this wall. Its low-contrast
   grey strata occupy roughly 11 to 22 percent value, slightly extending
   the wall budget in section 3 while staying behind the foreground stone.
-- **Texture:** a deterministic 256 by 256 canvas holds broad compressed
-  strata, shallow recesses and fine grain. Periodic noise joins the edges.
-  No brick grid, outlines, ore glints, or loose foreground pebbles.
+- **Texture (v26.97):** a deterministic 512 by 512 canvas holds broad,
+  angular rock planes with two flat tones per face, scattered narrow
+  fractures and fine grain. Jittered, horizontally stretched Voronoi cells
+  repeat across the texture edges. The earlier smooth noise read as clouds;
+  retain discrete facets so the material reads as stone. Only a few joints
+  are shaded, never a complete brick grid or outlined pebble network.
+  No ore glints or loose foreground pebbles.
   It uses the existing 0.55 X and 0.70 Y camera speeds.
 - **Transition:** topsoil to subsoil and subsoil to deepcrust blend over
   six tiles centred on their actual world-depth boundary. A cached mask

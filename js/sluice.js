@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.96';
+  var GAME_VERSION = 'v26.97';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -32369,9 +32369,8 @@
   function buildTopsoilWallPattern()    { return buildSubtleWallPattern(0x70150100, BG.wallTopsoil,    BG.bgTopsoil);    }
   function buildBedrockWallPattern()    { return buildSubtleWallPattern(0xBED20CC1, BG.wallBedrock,    BG.bgBedrock);    }
 
-  // Periodic value noise keeps both the rock texture and the boundary
-  // masks seamless when repeated. Features are broad and low contrast;
-  // they must read behind the loose stone in the collision plane.
+  // Periodic value noise keeps the irregular boundary masks seamless.
+  // The wall below uses discrete rock planes so its material stays legible.
   function biomeWallNoise(x, y, size, cols, rows, seed) {
     var u = x * cols / size, v = y * rows / size;
     var ix = Math.floor(u), iy = Math.floor(v), fx = u - ix, fy = v - iy;
@@ -32384,19 +32383,52 @@
   }
 
   function buildSubsoilWallPattern() {
-    var c = document.createElement('canvas'), size = 256;
+    var c = document.createElement('canvas'), size = 512;
     c.width = c.height = size;
     var g = c.getContext('2d'), pixels = g.createImageData(size, size);
     var base = nightSkyHexRGB(BG.wallSubsoil), light = nightSkyHexRGB(BG.wallSubsoilLight);
     var shade = nightSkyHexRGB(BG.wallSubsoilShade);
+    // Wide, irregular rock planes. Their seeds repeat across the texture
+    // boundary, but jitter keeps the bedding from becoming a brick grid.
+    var cols = 8, rows = 16, faces = [];
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        faces.push({
+          x: 0.15 + tileHash01(col, row, 641) * 0.70,
+          y: 0.15 + tileHash01(col, row, 647) * 0.70,
+          tone: (Math.floor(tileHash01(col, row, 653) * 5) - 2) * 0.30,
+          slope: (tileHash01(col, row, 661) - 0.5) * 1.3
+        });
+      }
+    }
     for (var y = 0; y < size; y++) {
       for (var x = 0; x < size; x++) {
-        // Uneven compressed strata with interrupted shallow recesses.
-        // No outlined blocks, loose pebbles, or long horizontal rules.
-        var warp = (biomeWallNoise(x, 0, size, 7, 1, 641) - 0.5) * 28;
-        var bed = biomeWallNoise(x, y + warp, size, 5, 16, 647);
-        var broad = biomeWallNoise(x, y, size, 4, 4, 653);
-        var tone = Math.max(-1, Math.min(1, (bed - 0.5) * 1.2 + (broad - 0.5) * 0.9));
+        var u = x * cols / size, v = y * rows / size;
+        var cellX = Math.floor(u), cellY = Math.floor(v);
+        var first = Infinity, second = Infinity, faceId = 0, nextId = 0;
+        var faceX = 0, faceY = 0;
+        for (var oy = -1; oy <= 1; oy++) {
+          for (var ox = -1; ox <= 1; ox++) {
+            var cx = cellX + ox, cy = cellY + oy;
+            var id = ((cy + rows) % rows) * cols + (cx + cols) % cols;
+            var face = faces[id], sx = cx + face.x, sy = cy + face.y;
+            var dx = u - sx, dy = v - sy, distance = dx * dx + dy * dy;
+            if (distance < first) {
+              second = first; nextId = faceId;
+              first = distance; faceId = id; faceX = sx; faceY = sy;
+            } else if (distance < second) {
+              second = distance; nextId = id;
+            }
+          }
+        }
+        var selected = faces[faceId];
+        // Two quiet, flat tones per plane read as cut stone rather than
+        // blurred clouds. Only scattered joints receive a thin recess;
+        // outlining every cell would turn the distant face into masonry.
+        var facet = v - faceY + (u - faceX) * selected.slope > 0.12;
+        var tone = selected.tone + (facet ? -0.12 : 0.12);
+        var joint = tileHash01(Math.min(faceId, nextId), Math.max(faceId, nextId), 673) < 0.23;
+        if (joint && second - first < 0.035) tone = -0.88;
         var accent = tone < 0 ? shade : light, amount = Math.abs(tone);
         var grain = (tileHash01(x, y, 659) - 0.5) * 2;
         var at = (y * size + x) * 4;
