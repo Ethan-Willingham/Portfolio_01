@@ -4,6 +4,7 @@
      cutter head visibly spins. Idle stow angle mirrors player.dir so
      the bit hangs off the front of the rig. */
   function updateDrillAnim(dt) {
+    updatePlayerTracks(dt);
     var targetA, targetE;
     if (drilling) {
       if (drilling.dirVec === 'd') targetA = Math.PI / 2;
@@ -221,7 +222,7 @@
 
   // v23.36 — static rig-part gradients built once, not every frame. drawPlayer
   // runs every frame (the rig is always on screen) and re-created 7 gradients
-  // whose endpoints and stops are pure literals (the hull/track/cupola/etc.
+  // whose endpoints and stops are pure literals (the hull/cupola/etc.
   // bodywork). These are drawn in the rig's LOCAL coordinate frame, and a
   // canvas gradient's coordinates are applied in whatever user space is active
   // at fill time, so a reused object paints identically frame to frame
@@ -235,10 +236,6 @@
   function ensurePlayerGrads() {
     if (_playerGrads) return _playerGrads;
     var g = {};
-    g.track = ctx.createLinearGradient(0, 18, 0, 25);
-    g.track.addColorStop(0, '#2a2f2c');
-    g.track.addColorStop(0.55, '#151817');
-    g.track.addColorStop(1, '#070808');
     g.hull = ctx.createLinearGradient(0, 5, 0, 20);
     g.hull.addColorStop(0, '#59634f');
     g.hull.addColorStop(0.42, '#3e483b');
@@ -322,6 +319,175 @@
     return _pfxLandDip * u * u * (3 - 2 * u);
   }
 
+  // The belt advances with ground distance, never with camera position or
+  // draw count. Keep its phase in world-facing coordinates so turning the
+  // hull around does not mirror the tread motion or jump the wheel spokes.
+  var PLAYER_TRACK_RUN = 12.8;
+  var PLAYER_TRACK_RADIUS = 2.65;
+  var PLAYER_TRACK_LENGTH = PLAYER_TRACK_RUN * 2 + Math.PI * PLAYER_TRACK_RADIUS * 2;
+  var PLAYER_TRACK_LINKS = 24;
+  var playerTrackAnim = {
+    owner: null, x: 0, y: 0, travel: 0, speed: 0, frameTravel: 0,
+    roadAngle: 0, driveAngle: 0
+  };
+
+  function updatePlayerTracks(dt) {
+    var a = playerTrackAnim;
+    if (a.owner !== player) {
+      a.owner = player;
+      a.x = player.x; a.y = player.y;
+      a.travel = a.speed = a.frameTravel = a.roadAngle = a.driveAngle = 0;
+      return;
+    }
+    var dx = player.x - a.x, dy = player.y - a.y;
+    a.x = player.x; a.y = player.y;
+    a.frameTravel = 0;
+    // Teleports, save restores and respawns keep the belt still. The velocity
+    // allowance admits a legitimate long movement step at a low frame rate.
+    if (!(dt > 0) || !isFinite(dx) || !isFinite(dy) ||
+        Math.abs(dx) > Math.max(TILE * 1.5, Math.abs(player.vx || 0) * dt * 2 + 4) ||
+        Math.abs(dy) > TILE * 2) {
+      a.speed = 0;
+      return;
+    }
+    var moved = 0;
+    if (player.onGround) {
+      // A resting rig carried by gel is not driving its tracks.
+      moved = player.onJello && !player.lastMoveL && !player.lastMoveR ? 0 : dx;
+      a.speed = moved / dt;
+    } else {
+      // Brief free spin after leaving the ground, then silence. Integrate
+      // the exponential exactly so 30/60/120 Hz settle at the same phase.
+      var decay = Math.exp(-18 * dt);
+      moved = a.speed * (1 - decay) / 18;
+      a.speed *= decay;
+      if (Math.abs(a.speed) < 0.1) a.speed = 0;
+    }
+    a.frameTravel = moved;
+    a.travel = ((a.travel + moved) % PLAYER_TRACK_LENGTH + PLAYER_TRACK_LENGTH) % PLAYER_TRACK_LENGTH;
+    a.roadAngle = (a.roadAngle + moved / 1.82) % (Math.PI * 2);
+    // Sprocket teeth follow the belt pitch circle, not the smaller hub face.
+    a.driveAngle = (a.driveAngle + moved / PLAYER_TRACK_RADIUS) % (Math.PI * 2);
+  }
+
+  // Arc-length parameterization of the complete belt: top run, nose, contact
+  // run, heel. Positive travel sends the bottom shoes backward under the rig.
+  function playerTrackPoint(distance) {
+    var run = PLAYER_TRACK_RUN, radius = PLAYER_TRACK_RADIUS;
+    var arc = Math.PI * radius;
+    var d = ((distance % PLAYER_TRACK_LENGTH) + PLAYER_TRACK_LENGTH) % PLAYER_TRACK_LENGTH;
+    if (d < run) return { x: 4.6 + d, y: 21.7 - radius, angle: 0 };
+    d -= run;
+    if (d < arc) {
+      var angle = d / radius - Math.PI * 0.5;
+      return { x: 17.4 + Math.cos(angle) * radius, y: 21.7 + Math.sin(angle) * radius, angle: angle + Math.PI * 0.5 };
+    }
+    d -= arc;
+    if (d < run) return { x: 17.4 - d, y: 21.7 + radius, angle: Math.PI };
+    d -= run;
+    var angle = d / radius + Math.PI * 0.5;
+    return { x: 4.6 + Math.cos(angle) * radius, y: 21.7 + Math.sin(angle) * radius, angle: angle + Math.PI * 0.5 };
+  }
+
+  function drawPlayerTrackWheel(x, y, radius, angle, sprocket, detail) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = '#101714';
+    ctx.beginPath(); ctx.arc(0, 0, radius + 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4b5850';
+    ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#222b28';
+    ctx.beginPath(); ctx.arc(0, 0, radius - 0.34, 0, Math.PI * 2); ctx.fill();
+    // The bevel catches the light in a fixed direction, while the machined
+    // face turns inside it. Fine details soften at speed to avoid strobing.
+    ctx.strokeStyle = '#697660';
+    ctx.lineWidth = 0.28;
+    ctx.beginPath(); ctx.arc(0, 0, radius - 0.13, Math.PI * 1.06, Math.PI * 1.68); ctx.stroke();
+    ctx.save();
+    ctx.rotate(angle);
+    ctx.globalAlpha *= detail;
+    if (sprocket) {
+      ctx.fillStyle = '#59665c';
+      for (var tooth = 0; tooth < 8; tooth++) {
+        ctx.save(); ctx.rotate(tooth * Math.PI / 4);
+        ctx.fillRect(radius - 0.2, -0.26, 0.48, 0.52); ctx.restore();
+      }
+    }
+    ctx.strokeStyle = sprocket ? '#697660' : '#4b5850';
+    ctx.lineWidth = sprocket ? 0.42 : 0.35;
+    ctx.beginPath();
+    for (var spoke = 0; spoke < 3; spoke++) {
+      var sa = spoke * Math.PI * 2 / 3;
+      ctx.moveTo(Math.cos(sa) * 0.46, Math.sin(sa) * 0.46);
+      ctx.lineTo(Math.cos(sa) * (radius - 0.57), Math.sin(sa) * (radius - 0.57));
+    }
+    ctx.stroke(); ctx.restore();
+    ctx.fillStyle = '#77816e';
+    ctx.beginPath(); ctx.arc(0, 0, 0.49, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#29332f';
+    ctx.beginPath(); ctx.arc(0.12, 0.12, 0.25, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPlayerTracks() {
+    var a = playerTrackAnim;
+    var pitch = PLAYER_TRACK_LENGTH / PLAYER_TRACK_LINKS;
+    ctx.save();
+    // The body caller already mirrored the hull. This symmetric assembly
+    // keeps its own world-facing frame, including its top-left metal light.
+    if (player.dir < 0) { ctx.translate(PLAYER_W, 0); ctx.scale(-1, 1); }
+    ctx.fillStyle = '#121615';
+    roundRect(ctx, 1.1, 18.2, 19.8, 7.1, 3.5, true);
+    ctx.strokeStyle = '#29332f';
+    ctx.lineWidth = 1.05;
+    roundRect(ctx, 1.95, 19.05, 18.1, 5.3, 2.65, false, true);
+
+    // Recessed suspension rail and three short swing arms sit behind the
+    // road wheels. End wheels carry the belt around the nose and heel.
+    ctx.strokeStyle = '#414d42';
+    ctx.lineWidth = 0.65;
+    ctx.beginPath(); ctx.moveTo(4.6, 20.3); ctx.lineTo(17.4, 20.3);
+    for (var arm = 0; arm < 3; arm++) {
+      var ax = 7.75 + arm * 3.25;
+      ctx.moveTo(ax - 0.7, 20.3); ctx.lineTo(ax, 22.05);
+    }
+    ctx.stroke();
+    var detail = 1 / (1 + Math.pow(Math.abs(a.frameTravel) / 1.82, 2));
+    drawPlayerTrackWheel(4.6, 21.7, 2.05, a.driveAngle, true, detail);
+    drawPlayerTrackWheel(17.4, 21.7, 2.05, a.driveAngle, true, detail);
+    for (var wheel = 0; wheel < 3; wheel++) {
+      drawPlayerTrackWheel(7.75 + wheel * 3.25, 22.05, 1.82, a.roadAngle, false, detail);
+    }
+
+    // A short shutter exposure on the links suppresses the wagon-wheel
+    // reversal that a tiny, repeating pattern produces at driving speed.
+    var exposure = Math.min(pitch, Math.abs(a.frameTravel) * 0.65);
+    var blur = Math.max(0, Math.min(1, (exposure / pitch - 0.12) / 0.5));
+    var samples = blur > 0 ? 5 : 1;
+    var alpha = ctx.globalAlpha;
+    for (var sample = 0; sample < samples; sample++) {
+      var weight = sample === 0 ? 1 - blur : blur / 4;
+      if (weight <= 0) continue;
+      var offset = sample === 0 ? 0 : ((sample - 1) / 3 - 0.5) * exposure * (a.frameTravel < 0 ? -1 : 1);
+      ctx.globalAlpha = alpha * weight;
+      for (var link = 0; link < PLAYER_TRACK_LINKS; link++) {
+        var pt = playerTrackPoint(link * pitch + a.travel + offset);
+        var light = -Math.sin(pt.angle) * 0.45 + Math.cos(pt.angle) * 0.8;
+        ctx.save(); ctx.translate(pt.x, pt.y); ctx.rotate(pt.angle);
+        // Each shoe has a steel face, a raised grouser and a recessed pin.
+        // Links stay separate at rest and articulate around both sprockets.
+        ctx.fillStyle = light > 0.35 ? '#59665c' : light > -0.4 ? '#414d42' : '#29332f';
+        ctx.fillRect(-pitch * 0.39, -0.55, pitch * 0.78, 1.1);
+        ctx.fillStyle = light > 0.35 ? '#89927c' : '#697660';
+        ctx.fillRect(-pitch * 0.27, -0.60, pitch * 0.54, 0.24);
+        ctx.fillStyle = '#222b28';
+        ctx.fillRect(pitch * 0.23, 0.12, 0.24, 0.3);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+
   // The rig body draw pass (track bed, hull, cupola, stack, lamp), factored
   // out of drawPlayer so the rotation smear ghosts can re-run the exact same
   // draw path with an angle + alpha override. Expects the caller to have set
@@ -330,34 +496,8 @@
   function drawPlayerRigBody(t, suspension) {
     var pgrad = ensurePlayerGrads();
 
-    // ----- T-10M-inspired track bed -----
-    ctx.fillStyle = pgrad.track;
-    roundRect(ctx, 1.3, 18.3, 19.4, 6.8, 2.2, true);
-    ctx.strokeStyle = '#050606';
-    ctx.lineWidth = 1;
-    roundRect(ctx, 1.3, 18.3, 19.4, 6.8, 2.2, false, true);
-
-    var treadOffset = Math.floor((player.x * 0.16) % 4);
-    ctx.fillStyle = '#3c413c';
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(2.2, 18.8, 17.6, 5.8);
-    ctx.clip();
-    for (var tr = 0; tr < 8; tr++) {
-      ctx.fillRect(2.4 + tr * 3 - treadOffset, 19.0, 1.45, 4.9);
-    }
-    ctx.restore();
-    for (var rw = 0; rw < 5; rw++) {
-      var rx = 4.0 + rw * 3.5;
-      ctx.fillStyle = '#090a0a';
-      ctx.beginPath();
-      ctx.arc(rx, 22.0, 1.65, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#525a50';
-      ctx.beginPath();
-      ctx.arc(rx, 22.0, 0.72, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Rigid running gear stays planted while the sprung hull settles.
+    drawPlayerTracks();
 
     ctx.save();
     ctx.translate(0, suspension || 0);
