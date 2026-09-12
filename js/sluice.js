@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.119';
+  var GAME_VERSION = 'v26.120';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -37200,8 +37200,9 @@
   var smokeObstWaterTick = 0;
   var SMOKE_OBST_WATER_EVERY = 8;
   var smokeObstDbgSrc = 'unset';     // dev probe: water-stamp source last repaint
-  var smokeObstWaterBins = null;     // v25.47 — reusable per-bin particle counts (water mask pass)
-  var smokeObstWaterVY = null;       // falling-water classifier for the mask
+  var smokeObstWaterBins = null;     // continuous particle density, reused on repaint
+  var smokeObstWaterVY = null;       // density-weighted falling-water velocity
+  var smokeObstWaterCanvas = null, smokeObstWaterCtx = null, smokeObstWaterImage = null;
   // Fast water entrains the surrounding air. The CPU mirror is binned every
   // few frames and the strongest falling cells inject velocity, not dye, into
   // the smoke field. Slow pool water remains a collision boundary.
@@ -37961,74 +37962,85 @@
       oc.restore();
     }
 
-    // Pass 4 — WATER as obstacle (v25.47, the owner's "smoke clearly exists
-    // on a completely separate layer" fix): paint the water body into the
-    // mask from the liquid CPU MIRROR (particle positions, refreshed each
-    // frame from the async GPU readback), the same way tiles and jello are
-    // painted — pure CPU geometry, never the rendered canvas. Two earlier
-    // attempts read the water canvas via drawImage and BOTH failed: in the
-    // update phase a WebGPU canvas reads blank (its texture is cleared
-    // after present — measured 0 px), and in the render phase the read is
-    // a GPU sync stall (measured 120 -> 30 fps while the camera moved).
-    // Binning ~15k particles into 8-px cells costs ~0.3 ms CPU, covers the
-    // whole overscan domain (the mirror has every particle, not just the
-    // viewport), and needs no timing contract with the renderer.
-    // Two alpha levels: full bins are solid to the solver (>0.5 threshold),
-    // half-full rim/spray bins paint at 0.4 = passable, so the boundary
-    // stays soft and thin spray lets smoke through. Skip = the exact old
-    // ghost-through. GL/mobile quad path skips water (perf-first).
-    // v26.02: NOT in the bath scene. In the world this keeps diesel smoke
-    // from ghosting through lakes, but the advection shader ZEROES dye
-    // inside obstacle bins, so in the scene it forbade the fog from ever
-    // touching the water: an inconsistent 8 px-quantized air gap flickering
-    // along the surface as bins crossed the density threshold (the owner's
-    // "blocks of air between the steam and the water"). Bath steam must
-    // HUG the water; the fog rides the live surface instead (bathSurfY).
+    // Pass 4: water still blocks smoke using the asynchronous CPU mirror.
+    // Reconstruct a continuous density mask instead of switching whole 8 px
+    // squares between clear, rim and solid. Those switches punched visible
+    // dark blue rectangles out of smoke over the water (v26.120).
+    // Never read the WebGPU water canvas here: before render it is cleared,
+    // and after render it forces a GPU sync. Bath fog still hugs its surface;
+    // the mobile quad path still skips water, as before.
     if (SMOKE_WATER_OBSTACLE && liquidCount > 0 &&
         !(typeof bathMode !== 'undefined' && bathMode)) {
       smokeObstDbgStamps++;
-      var BIN = 8;                                     // world px per bin
-      var binsW = Math.ceil(smokeFluidDomainWorldW / BIN);
-      var binsH = Math.ceil(smokeFluidDomainWorldH / BIN);
+      var BIN = 4;                                     // world px per sample
+      // Anchor samples to the world so camera motion cannot reshuffle them.
+      // The padding includes the quadratic kernel beyond the visible domain.
+      var originX = Math.floor(domainX / BIN) * BIN - BIN * 2;
+      var originY = Math.floor(domainY / BIN) * BIN - BIN * 2;
+      var binsW = Math.ceil((domainX + smokeFluidDomainWorldW - originX) / BIN) + 2;
+      var binsH = Math.ceil((domainY + smokeFluidDomainWorldH - originY) / BIN) + 2;
       var nBins = binsW * binsH;
       if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
-        smokeObstWaterBins = new Uint8Array(Math.max(nBins, 16384));
+        smokeObstWaterBins = new Float32Array(Math.max(nBins, 16384));
         smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
       }
       var bins = smokeObstWaterBins;
       bins.fill(0, 0, nBins);
       smokeObstWaterVY.fill(0, 0, nBins);
-      var domR = domainX + smokeFluidDomainWorldW;
-      var domB = domainY + smokeFluidDomainWorldH;
+      var domR = originX + (binsW - 1.5) * BIN;
+      var domB = originY + (binsH - 1.5) * BIN;
       for (var wi = 0; wi < liquidCount; wi++) {
         if (liquidFrozen[wi]) continue;
         var wx = liquidX[wi], wy = liquidY[wi];
-        if (wx < domainX || wx >= domR || wy < domainY || wy >= domB) continue;
-        var bi = ((wy - domainY) / BIN | 0) * binsW + ((wx - domainX) / BIN | 0);
-        if (bins[bi] < 255) bins[bi]++;
-        smokeObstWaterVY[bi] += liquidVY[wi];
-      }
-      // Rest density is ~41 particles per 8x8 bin (655/tile). Solid from
-      // ~60% of rest; rim/spray from ~25%.
-      var bw = BIN * sxScale, bh = BIN * syScale;
-      for (var pass = 0; pass < 2; pass++) {
-        oc.fillStyle = pass === 0 ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)';
-        var lo = pass === 0 ? 24 : 10, hi = pass === 0 ? 256 : 24;
-        for (var by = 0; by < binsH; by++) {
-          var rowB = by * binsW;
-          for (var bx = 0; bx < binsW; bx++) {
-            var bn = bins[rowB + bx];
-            var falling = bn > 0 && smokeObstWaterVY[rowB + bx] / bn > SMOKE_WATER_FLOW_MIN_VY;
-            // A moving waterfall is air-driving flow, not a wall. Give it
-            // only the passable rim stamp below so the plume is carried down
-            // instead of erased in an 8 px staircase.
-            if (pass === 0 && falling) continue;
-            if (bn >= lo && bn < hi) {
-              oc.fillRect(bx * bw, by * bh, bw + 0.5, bh + 0.5);
-            }
-          }
+        if (wx < originX + BIN || wx >= domR || wy < originY + BIN || wy >= domB) continue;
+        var gx = (wx - originX) / BIN, gy = (wy - originY) / BIN;
+        var ix = Math.floor(gx - 0.5), iy = Math.floor(gy - 0.5);
+        var fx = gx - ix, fy = gy - iy;
+        // Quadratic B-spline weights sum to one and have continuous slopes.
+        // Nine deposits per particle, with no per-particle allocations.
+        var x0 = 0.5 * (1.5 - fx) * (1.5 - fx);
+        var x1 = 0.75 - (fx - 1) * (fx - 1);
+        var x2 = 0.5 * (fx - 0.5) * (fx - 0.5);
+        for (var ky = 0; ky < 3; ky++) {
+          var yw = ky === 0 ? 0.5 * (1.5 - fy) * (1.5 - fy) :
+            ky === 1 ? 0.75 - (fy - 1) * (fy - 1) : 0.5 * (fy - 0.5) * (fy - 0.5);
+          var bi = (iy + ky) * binsW + ix;
+          var w0 = x0 * yw, w1 = x1 * yw, w2 = x2 * yw;
+          bins[bi] += w0; bins[bi + 1] += w1; bins[bi + 2] += w2;
+          smokeObstWaterVY[bi] += liquidVY[wi] * w0;
+          smokeObstWaterVY[bi + 1] += liquidVY[wi] * w1;
+          smokeObstWaterVY[bi + 2] += liquidVY[wi] * w2;
         }
       }
+      if (!smokeObstWaterCanvas) {
+        smokeObstWaterCanvas = document.createElement('canvas');
+        smokeObstWaterCtx = smokeObstWaterCanvas.getContext('2d');
+      }
+      if (!smokeObstWaterImage || smokeObstWaterCanvas.width !== binsW || smokeObstWaterCanvas.height !== binsH) {
+        smokeObstWaterCanvas.width = binsW; smokeObstWaterCanvas.height = binsH;
+        smokeObstWaterImage = smokeObstWaterCtx.createImageData(binsW, binsH);
+      }
+      var rgba = smokeObstWaterImage.data;
+      // Same density range as the old 10..24 particles per 8x8 bin, scaled
+      // by area. Pools remain solid; the rim changes continuously. Floating
+      // counts also avoid the old 255-count saturation under compression.
+      for (var bi = 0; bi < nBins; bi++) {
+        var bn = bins[bi];
+        var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
+        coverage *= coverage * (3 - 2 * coverage);
+        var falling = bn > 0 ? Math.max(0, Math.min(1,
+          (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
+        falling *= falling * (3 - 2 * falling);
+        rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+      }
+      smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
+      oc.save();
+      oc.imageSmoothingEnabled = true;
+      // A density sample is at a pixel's centre, hence the half-cell offset.
+      oc.drawImage(smokeObstWaterCanvas,
+        (originX - BIN * 0.5 - domainX) * sxScale, (originY - BIN * 0.5 - domainY) * syScale,
+        binsW * BIN * sxScale, binsH * BIN * syScale);
+      oc.restore();
       smokeObstDbgSrc = 'mirror';
     }
 
