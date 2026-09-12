@@ -19,12 +19,19 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const probe=String.raw`
 window.__motion = (function(){
   var cold=[], oldBuild=buildSurfaceBankStrip; buildSurfaceBankStrip=function(i,n){var t=performance.now();var r=oldBuild(i,n);cold.push({index:i,near:n,x:cam.x,ms:performance.now()-t});return r;}; var rows=[], enabled=false, pinY=0, oldUpdate=update, oldRender=render, transform=null;
+  var previousRaf=0, intervalMs=0, oldLoop=loop;
+  loop=function(time){
+    intervalMs=previousRaf ? time-previousRaf : 0;previousRaf=time;
+    var count=rows.length,t=performance.now(),result=oldLoop(time);
+    if(enabled && rows.length>count)rows[rows.length-1].frameCPU=performance.now()-t;
+    return result;
+  };
   var oldSet=ctx.setTransform;
   ctx.setTransform=function(a,b,c,d,e,f) { if(enabled && a===dpr*worldScale && a!==1 && !transform) transform=[e,f]; return oldSet.apply(this,arguments); };
   update=function(dt) {oldUpdate(dt); if(enabled){player.y=pinY;player.renderY=pinY;player.vy=0;player.onGround=false;player.fuel=getMaxFuel();}};
   render=function(){
     transform=null;var t=performance.now(); oldRender();
-    if(enabled)rows.push({dt:lastFrameDt*1000,cpu:performance.now()-t,x:player.x,rx:player.renderX,cx:cam.x,tx:transform&&transform[0],scale:dpr*worldScale,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
+    if(enabled)rows.push({dt:intervalMs,cpu:performance.now()-t,x:player.x,rx:player.renderX,cx:cam.x,tx:transform&&transform[0],scale:dpr*worldScale,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
   };
   return {
     ready:function(){return !!player && gameLoadingAssetsReady && !gameLoadingWorkPending;},
@@ -118,7 +125,7 @@ try {
   const result=await ev('__motion.stop()');result.errors=errors;fs.writeFileSync(path.join(out,mode+'.json'),JSON.stringify(result));
   const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,mode+'.png'),Buffer.from(shot.data,'base64'));
   function stats(a){a=a.slice().sort((x,y)=>x-y);return {n:a.length,avg:a.reduce((s,v)=>s+v,0)/a.length,p50:a[a.length>>1],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:a.at(-1)};}
-  console.log('RESULT',JSON.stringify({mode,frame:stats(result.rows.map(r=>r.dt)),render:stats(result.rows.map(r=>r.cpu)),over144:result.rows.filter(r=>r.dt>7.5).length,diag:result.diag,fps:result.fps,buckets:result.buckets,cold:result.cold,errors}));
+  console.log('RESULT',JSON.stringify({mode,frame:stats(result.rows.map(r=>r.dt)),wholeCPU:stats(result.rows.map(r=>r.frameCPU)),render:stats(result.rows.map(r=>r.cpu)),over144:result.rows.filter(r=>r.dt>7.5).length,diag:result.diag,fps:result.fps,buckets:result.buckets,cold:result.cold,errors}));
   assert.equal(errors.length,0,'no game runtime errors');
   assert(result.rows.length>100,'game produced enough frames to sample');
   let reversals=0,samples=0;

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.106';
+  var GAME_VERSION = 'v26.107';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -20857,7 +20857,45 @@
     path.lineTo(x1, y1);
   }
 
+  // Camera motion changes the transform every frame, but the cave outline
+  // changes only when its tile window, occupancy or shape tuning changes.
+  // Compare actual occupancy so drilling, bombs, save loads and dev edits
+  // all invalidate immediately, including mutations without a dirty hook.
+  // Paths are shared read-only by terrain rendering and smoke collision.
+  var voidContourCache = [];
+  var VOID_CONTOUR_CACHE_LIMIT = 12;
   function buildVoidContourPath(startRow, endRow, startCol, endCol) {
+    var key = [startRow, endRow, startCol, endCol, TILE,
+      VOID_CONVEX_INSET, VOID_CONCAVE_INSET, VOID_RUN_FADE,
+      WOBBLE_AMP_LOW, WOBBLE_AMP_HIGH, WOBBLE_WAVELEN_LOW,
+      WOBBLE_WAVELEN_HIGH, WOBBLE_SAMPLE_STEP].join(',');
+    var entry = null, index = -1;
+    for (var i = 0; i < voidContourCache.length; i++) {
+      if (voidContourCache[i].key === key) { entry = voidContourCache[i]; index = i; break; }
+    }
+    var count = Math.max(0, endRow - startRow + 1) * Math.max(0, endCol - startCol + 1);
+    // An unusually large dev query should not become a persistent allocation.
+    if (count > 65536) return buildVoidContourPathUncached(startRow, endRow, startCol, endCol);
+    var changed = !entry;
+    if (!entry) entry = { key: key, cells: new Uint8Array(count), path: null };
+    var cells = entry.cells, at = 0;
+    for (var r = startRow; r <= endRow; r++) {
+      for (var c = startCol; c <= endCol; c++) {
+        var empty = tileAt(r, c) === null ? 1 : 0;
+        if (cells[at] !== empty) { cells[at] = empty; changed = true; }
+        at++;
+      }
+    }
+    if (changed) entry.path = buildVoidContourPathUncached(startRow, endRow, startCol, endCol);
+    if (index !== 0) {
+      if (index > 0) voidContourCache.splice(index, 1);
+      voidContourCache.unshift(entry);
+      if (voidContourCache.length > VOID_CONTOUR_CACHE_LIMIT) voidContourCache.pop();
+    }
+    return entry.path;
+  }
+
+  function buildVoidContourPathUncached(startRow, endRow, startCol, endCol) {
     var path = new Path2D();
     var T = TILE;
 
@@ -53872,6 +53910,7 @@
   var JELLO_DISSOLVE_PPP   = 62;   // particles released per lattice point (~560/tile)
                                    // BEFORE the density scale (see jelloDissolvePoof)
   var jelloWaterBins   = new Map();              // binKey -> slot in the scratch below
+  var jelloWaterBinCache = null;
   var jelloWaterBinN   = new Float32Array(2048); // particles per bin (2048-bin cap:
                                                  //  overflow bins just read dry, and
                                                  //  the pass is AABB-gated)
@@ -54032,6 +54071,7 @@
     // Dissolve state (v25.53): a world rebuild must not leave a stale wake
     // pushing the new world's water or a ghost body mid-melt.
     if (jelloWaterBins.size) jelloWaterBins.clear();
+    jelloWaterBinCache = null;
     jelloSplashWakes.length = 0;
     jelloDissolving = null;
   }
@@ -58698,6 +58738,7 @@
     if (!JELLO_DISSOLVE || nActive === 0 ||
         typeof liquidCount === 'undefined' || liquidCount === 0) {
       if (bins.size) bins.clear();
+      jelloWaterBinCache = null;
       return;
     }
     // Union AABB (+R) of the active bodies, then one binning sweep of the
@@ -58714,22 +58755,7 @@
       if (b.bboxB > y1) y1 = b.bboxB;
     }
     x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
-    bins.clear();
-    var cur = 0, cap = jelloWaterBinN.length;
-    for (var i = 0; i < liquidCount; i++) {
-      var wx = liquidX[i], wy = liquidY[i];
-      if (!(wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1)) continue;   // NaN also skips
-      if (liquidType[i] !== 0) continue;   // WATER only (gel-in-oil = future reactions)
-      var key = Math.floor(wy * 0.0625) * 8192 + Math.floor(wx * 0.0625);
-      var s = bins.get(key);
-      if (s === undefined) {
-        if (cur >= cap) continue;   // bin cap: overflow just reads dry
-        s = cur++;
-        bins.set(key, s);
-        jelloWaterBinN[s] = 0;
-      }
-      jelloWaterBinN[s] += 1;
-    }
+    jelloBuildWaterBins(x0, y0, x1, y1);
     // Advance the one in-flight melt; no new triggers meanwhile (pacing: a
     // pile beside a flood converts one body at a time, not as a bomb).
     if (jelloDissolving) {
@@ -58773,6 +58799,42 @@
         }
       } else b._dslT = 0;
     }
+  }
+
+  // WebGPU refreshes the CPU mirror only when an async readback lands.
+  // Reuse its density lookup between readbacks if the exact query bounds
+  // and particle mutations also match. Timers and melt physics still run
+  // every frame. CPU water always rebuilds because its arrays move live.
+  function jelloBuildWaterBins(x0, y0, x1, y1) {
+    var gpu = typeof liquidWGPU !== 'undefined' && liquidWGPU;
+    var canReuse = gpu && gpu.simActive && typeof gpu.readbackApplyGen === 'number' &&
+      typeof liquidMutationSeq === 'number';
+    var cached = jelloWaterBinCache;
+    if (canReuse && cached && cached.gpu === gpu &&
+        cached.gen === gpu.readbackApplyGen && cached.seq === liquidMutationSeq &&
+        cached.count === liquidCount && cached.x === liquidX && cached.y === liquidY &&
+        cached.types === liquidType && cached.x0 === x0 && cached.y0 === y0 &&
+        cached.x1 === x1 && cached.y1 === y1) return;
+    var bins = jelloWaterBins;
+    bins.clear();
+    var cur = 0, cap = jelloWaterBinN.length;
+    for (var i = 0; i < liquidCount; i++) {
+      var wx = liquidX[i], wy = liquidY[i];
+      if (!(wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1)) continue;   // NaN also skips
+      if (liquidType[i] !== 0) continue;   // WATER only (gel-in-oil = future reactions)
+      var key = Math.floor(wy * 0.0625) * 8192 + Math.floor(wx * 0.0625);
+      var s = bins.get(key);
+      if (s === undefined) {
+        if (cur >= cap) continue;   // bin cap: overflow just reads dry
+        s = cur++;
+        bins.set(key, s);
+        jelloWaterBinN[s] = 0;
+      }
+      jelloWaterBinN[s] += 1;
+    }
+    jelloWaterBinCache = canReuse ? { gpu: gpu, gen: gpu.readbackApplyGen,
+      seq: liquidMutationSeq, count: liquidCount, x: liquidX, y: liquidY, types: liquidType,
+      x0: x0, y0: y0, x1: x1, y1: y1 } : null;
   }
 
   // Dev probe (window.__smokeObst pattern): headless harnesses + owner bug

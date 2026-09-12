@@ -820,6 +820,7 @@
   var JELLO_DISSOLVE_PPP   = 62;   // particles released per lattice point (~560/tile)
                                    // BEFORE the density scale (see jelloDissolvePoof)
   var jelloWaterBins   = new Map();              // binKey -> slot in the scratch below
+  var jelloWaterBinCache = null;
   var jelloWaterBinN   = new Float32Array(2048); // particles per bin (2048-bin cap:
                                                  //  overflow bins just read dry, and
                                                  //  the pass is AABB-gated)
@@ -980,6 +981,7 @@
     // Dissolve state (v25.53): a world rebuild must not leave a stale wake
     // pushing the new world's water or a ghost body mid-melt.
     if (jelloWaterBins.size) jelloWaterBins.clear();
+    jelloWaterBinCache = null;
     jelloSplashWakes.length = 0;
     jelloDissolving = null;
   }
@@ -5646,6 +5648,7 @@
     if (!JELLO_DISSOLVE || nActive === 0 ||
         typeof liquidCount === 'undefined' || liquidCount === 0) {
       if (bins.size) bins.clear();
+      jelloWaterBinCache = null;
       return;
     }
     // Union AABB (+R) of the active bodies, then one binning sweep of the
@@ -5662,22 +5665,7 @@
       if (b.bboxB > y1) y1 = b.bboxB;
     }
     x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
-    bins.clear();
-    var cur = 0, cap = jelloWaterBinN.length;
-    for (var i = 0; i < liquidCount; i++) {
-      var wx = liquidX[i], wy = liquidY[i];
-      if (!(wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1)) continue;   // NaN also skips
-      if (liquidType[i] !== 0) continue;   // WATER only (gel-in-oil = future reactions)
-      var key = Math.floor(wy * 0.0625) * 8192 + Math.floor(wx * 0.0625);
-      var s = bins.get(key);
-      if (s === undefined) {
-        if (cur >= cap) continue;   // bin cap: overflow just reads dry
-        s = cur++;
-        bins.set(key, s);
-        jelloWaterBinN[s] = 0;
-      }
-      jelloWaterBinN[s] += 1;
-    }
+    jelloBuildWaterBins(x0, y0, x1, y1);
     // Advance the one in-flight melt; no new triggers meanwhile (pacing: a
     // pile beside a flood converts one body at a time, not as a bomb).
     if (jelloDissolving) {
@@ -5721,6 +5709,42 @@
         }
       } else b._dslT = 0;
     }
+  }
+
+  // WebGPU refreshes the CPU mirror only when an async readback lands.
+  // Reuse its density lookup between readbacks if the exact query bounds
+  // and particle mutations also match. Timers and melt physics still run
+  // every frame. CPU water always rebuilds because its arrays move live.
+  function jelloBuildWaterBins(x0, y0, x1, y1) {
+    var gpu = typeof liquidWGPU !== 'undefined' && liquidWGPU;
+    var canReuse = gpu && gpu.simActive && typeof gpu.readbackApplyGen === 'number' &&
+      typeof liquidMutationSeq === 'number';
+    var cached = jelloWaterBinCache;
+    if (canReuse && cached && cached.gpu === gpu &&
+        cached.gen === gpu.readbackApplyGen && cached.seq === liquidMutationSeq &&
+        cached.count === liquidCount && cached.x === liquidX && cached.y === liquidY &&
+        cached.types === liquidType && cached.x0 === x0 && cached.y0 === y0 &&
+        cached.x1 === x1 && cached.y1 === y1) return;
+    var bins = jelloWaterBins;
+    bins.clear();
+    var cur = 0, cap = jelloWaterBinN.length;
+    for (var i = 0; i < liquidCount; i++) {
+      var wx = liquidX[i], wy = liquidY[i];
+      if (!(wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1)) continue;   // NaN also skips
+      if (liquidType[i] !== 0) continue;   // WATER only (gel-in-oil = future reactions)
+      var key = Math.floor(wy * 0.0625) * 8192 + Math.floor(wx * 0.0625);
+      var s = bins.get(key);
+      if (s === undefined) {
+        if (cur >= cap) continue;   // bin cap: overflow just reads dry
+        s = cur++;
+        bins.set(key, s);
+        jelloWaterBinN[s] = 0;
+      }
+      jelloWaterBinN[s] += 1;
+    }
+    jelloWaterBinCache = canReuse ? { gpu: gpu, gen: gpu.readbackApplyGen,
+      seq: liquidMutationSeq, count: liquidCount, x: liquidX, y: liquidY, types: liquidType,
+      x0: x0, y0: y0, x1: x1, y1: y1 } : null;
   }
 
   // Dev probe (window.__smokeObst pattern): headless harnesses + owner bug

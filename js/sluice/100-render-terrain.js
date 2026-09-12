@@ -1754,7 +1754,45 @@
     path.lineTo(x1, y1);
   }
 
+  // Camera motion changes the transform every frame, but the cave outline
+  // changes only when its tile window, occupancy or shape tuning changes.
+  // Compare actual occupancy so drilling, bombs, save loads and dev edits
+  // all invalidate immediately, including mutations without a dirty hook.
+  // Paths are shared read-only by terrain rendering and smoke collision.
+  var voidContourCache = [];
+  var VOID_CONTOUR_CACHE_LIMIT = 12;
   function buildVoidContourPath(startRow, endRow, startCol, endCol) {
+    var key = [startRow, endRow, startCol, endCol, TILE,
+      VOID_CONVEX_INSET, VOID_CONCAVE_INSET, VOID_RUN_FADE,
+      WOBBLE_AMP_LOW, WOBBLE_AMP_HIGH, WOBBLE_WAVELEN_LOW,
+      WOBBLE_WAVELEN_HIGH, WOBBLE_SAMPLE_STEP].join(',');
+    var entry = null, index = -1;
+    for (var i = 0; i < voidContourCache.length; i++) {
+      if (voidContourCache[i].key === key) { entry = voidContourCache[i]; index = i; break; }
+    }
+    var count = Math.max(0, endRow - startRow + 1) * Math.max(0, endCol - startCol + 1);
+    // An unusually large dev query should not become a persistent allocation.
+    if (count > 65536) return buildVoidContourPathUncached(startRow, endRow, startCol, endCol);
+    var changed = !entry;
+    if (!entry) entry = { key: key, cells: new Uint8Array(count), path: null };
+    var cells = entry.cells, at = 0;
+    for (var r = startRow; r <= endRow; r++) {
+      for (var c = startCol; c <= endCol; c++) {
+        var empty = tileAt(r, c) === null ? 1 : 0;
+        if (cells[at] !== empty) { cells[at] = empty; changed = true; }
+        at++;
+      }
+    }
+    if (changed) entry.path = buildVoidContourPathUncached(startRow, endRow, startCol, endCol);
+    if (index !== 0) {
+      if (index > 0) voidContourCache.splice(index, 1);
+      voidContourCache.unshift(entry);
+      if (voidContourCache.length > VOID_CONTOUR_CACHE_LIMIT) voidContourCache.pop();
+    }
+    return entry.path;
+  }
+
+  function buildVoidContourPathUncached(startRow, endRow, startCol, endCol) {
     var path = new Path2D();
     var T = TILE;
 

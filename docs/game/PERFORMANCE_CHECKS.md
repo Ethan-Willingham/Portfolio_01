@@ -1,5 +1,51 @@
 # Sluice performance checks
 
+## Repeated terrain and water work (v26.107)
+
+The cave contour cache keeps twelve immutable paths. Each lookup compares the
+actual tile occupancy and shape tuning, so direct mining, bomb, save/load and
+dev mutations cannot leave a stale collision outline. Camera movement alone
+reuses the path while retaining the original fractional raster transform.
+
+Slime water-density lookups reuse an unchanged WebGPU mirror only when the
+readback generation, particle mutation sequence, array identities and exact
+query bounds also match. CPU water still rebuilds every frame. Dissolve dwell,
+melting, density thresholds and the existing bin overflow order are preserved.
+
+```sh
+node tools/perf/frame-cache-equivalence.mjs
+node tools/perf/scroll-smoothness.mjs
+```
+
+The first tool compares against `387a4cb`: 333 exact path-command comparisons
+and 659 water-interaction frames, including edits, tuning, readbacks, mutations,
+CPU fallback, guests, invalid positions and overflow. It checks bounded path
+storage and confirms that repeated water queries actually skip rebuilds.
+The second runs a real browser flight and reports raw frame arrival intervals
+separately from whole-frame CPU time and rendering time. Its 25 checks cover
+scroll direction, texture warming, incremental texture equivalence, timing
+metrics and fractional terrain-chunk joins. `CHROME` overrides its browser;
+`DUMP` retains reports outside the checkout. Windows uses Chrome with D3D11.
+
+A nine-second 1920x1080 flight on the owner's NVIDIA Ampere adapter, using
+WebGL smoke and WebGPU water, gave these paired samples against v26.102:
+
+| Work | Before | After |
+| --- | ---: | ---: |
+| Cave outline CPU time, whole flight | 453.7 ms | 55.3 ms |
+| Average whole-frame CPU work | 3.58 ms | 2.95 ms |
+| 99th-percentile whole-frame CPU work | 11.1 ms | 8.4 ms |
+| 99th-percentile frame arrival interval | 20.8 ms | 14.1 ms |
+
+These samples ran during concurrent development. Average frame intervals were
+about 7.8 ms in both paired runs, so this does not establish a locked 144 FPS
+result. Shader cost, graphics compositing and browser scheduling remain areas
+to measure. Moving the smoke obstacle canvas to CPU rasterization was also
+tested: its upload cost rose to about 2.9 ms per frame, so that experiment was
+discarded. No rendering resolution, particle count or physics rate was reduced.
+
+## Earlier optimization passes
+
 The v26.76 optimization preserves the existing water shaders, simulation passes,
 substeps, particle counts, smoke resolutions, slime rendering and physics tuning.
 The comparison baseline is commit `f392c72` (v26.73); the intervening v26.74
