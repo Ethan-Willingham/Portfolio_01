@@ -991,7 +991,9 @@
   var perfBucketsRaw = {};
   var perfBucketsPk = {};
   function perfMark(name, t0) {
-    var dt = performance.now() - t0;
+    perfRecord(name, performance.now() - t0);
+  }
+  function perfRecord(name, dt) {
     perfBuckets[name] = (perfBuckets[name] || 0) * 0.9 + dt * 0.1;
     perfBucketsRaw[name] = dt;
     var pk = perfBucketsPk[name] || 0;
@@ -1043,15 +1045,11 @@
   // stacked DOM-layer canvases onto the page (see the render-architecture
   // note at the top of the file) — so it can read ~0 while an oversized
   // layer canvas is the frame's dominant cost.
-  // v14.15 — WebGPU GPU-time probe. gpuProbe's gl.finish is WebGL-only;
-  // the smoke + water sims run on WebGPU, which has no finish(). WebGPU's
-  // queue.onSubmittedWorkDone() resolves once the GPU has drained every
-  // submitted command — measuring wall-clock to that resolve is an honest
-  // GPU-busy signal and, unlike gl.finish, forces NO CPU<->GPU stall, so
-  // it runs every frame in dev mode (no FPS skew, no 'G' gate). It is
-  // whole-device: one number covering ALL WebGPU work — smoke sim+render
-  // AND water sim+render. At a vsync-capped fps it idles near one frame
-  // interval (normal pipelining); watch it CLIMB when GPU load rises.
+  // Async WebGPU queue completion latency, not GPU execution time. The
+  // interval includes queued work plus browser delivery of the callback;
+  // a busy main thread can inflate it even after the GPU has finished.
+  // It covers this WebGPU device, not smoke running on a WebGL context.
+  // Keep one outstanding query and avoid a synchronous gl.finish stall.
   var gpuWebGPUMs = 0;
   var _gpuWebGPUInFlight = false;
   function probeWebGPUGpu() {
@@ -1186,22 +1184,22 @@
       };
     }
     if (cpu >= gap) {
-      // CPU-bound — name the heaviest EMA bucket.
+      // Name the heaviest measured phase below the whole-render aggregate.
+      // These wall times include any wait inside a graphics API call.
       var topName = '—', topMs = 0;
       for (var k in perfBuckets) {
         if (!Object.prototype.hasOwnProperty.call(perfBuckets, k)) continue;
+        if (k === 'render.total') continue;
         if (perfBuckets[k] > topMs) { topMs = perfBuckets[k]; topName = k; }
       }
       return {
-        verdict: 'CPU-BOUND', colour: '#ff6666',
+        verdict: 'MAIN THREAD', colour: '#ff6666',
         cause: topName + ' ' + topMs.toFixed(1) + 'ms'
       };
     }
     return {
-      verdict: 'GPU-BOUND', colour: '#ff6666',
-      cause: (gpuWebGPUMs > interval * 0.55)
-        ? ('WebGPU sims ~' + gpuWebGPUMs.toFixed(1) + 'ms')
-        : 'fill-rate / compositing'
+      verdict: 'FRAME DELIVERY', colour: '#ff6666',
+      cause: 'GPU / compositor / scheduling'
     };
   }
 

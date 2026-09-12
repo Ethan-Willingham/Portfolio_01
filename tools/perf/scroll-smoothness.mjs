@@ -18,6 +18,7 @@ const port=Number(process.env.PORT || 8836), debugPort=port+1000;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const probe=String.raw`
 window.__motion = (function(){
+  var actualPerfOverlay=drawPerfOverlay;
   var cold=[], oldBuild=buildSurfaceBankStrip; buildSurfaceBankStrip=function(i,n){var t=performance.now();var r=oldBuild(i,n);cold.push({index:i,near:n,x:cam.x,ms:performance.now()-t});return r;}; var rows=[], enabled=false, pinY=0, oldUpdate=update, oldRender=render, transform=null;
   var previousRaf=0, intervalMs=0, oldLoop=loop;
   loop=function(time){
@@ -50,6 +51,59 @@ window.__motion = (function(){
       return {version:GAME_VERSION,width:canvas.width,height:canvas.height,ws:dpr*worldScale,worldCols:COLS,gpu:!!liquidWGPU,screen:[screenW,screenH]};
     },
     clear:function(){rows=[];cold=[];},
+    verifyOverlay:function(){
+      var checks=[];
+      function check(name,ok){if(!ok)throw Error(name);checks.push(name);}
+      var saved={ctx:ctx,w:viewW,h:viewH,dpr:dpr,mouse:mouseCursor,mobile:isMobile};
+      var oldNow=Object.getOwnPropertyDescriptor(performance,'now');
+      var oldMemory=Object.getOwnPropertyDescriptor(performance,'memory');
+      var clock=1000,paints=0,tips=0,contents=drawPerfOverlayContents,tip=drawPerfTooltip;
+      try {
+        Object.defineProperty(performance,'now',{configurable:true,value:function(){return clock;}});
+        Object.defineProperty(performance,'memory',{configurable:true,value:{usedJSHeapSize:104857600,totalJSHeapSize:134217728,jsHeapSizeLimit:4294967296}});
+        drawPerfOverlayContents=function(){paints++;return contents();};
+        drawPerfTooltip=function(){tips++;};
+        mouseCursor=null;perfOverlayPaintAt=-Infinity;
+        perfBuckets={};perfBucketsRaw={};perfBucketsPk={};
+        perfRecord('render.total',100);perfRecord('render.HUD',80);perfRecord('update.smoke',16);
+        var raw=perfSnapshotRaw();
+        check('worst-frame snapshot includes HUD and total render cost',raw.some(function(p){return p[0]==='render.HUD'&&p[1]===80;})&&raw.some(function(p){return p[0]==='render.total'&&p[1]===100;}));
+        check('render peaks are recorded',perfBucketsPk['render.HUD']===80);
+        perfFps=80;perfFpsCap=144;perfFrameMs=8;
+        check('diagnosis names a measured phase and avoids a hardware claim',perfDiagnose().verdict==='MAIN THREAD'&&perfDiagnose().cause.indexOf('render.HUD')===0);
+        perfFrameMs=2;
+        check('unmeasured wait is identified as frame delivery',perfDiagnose().verdict==='FRAME DELIVERY');
+        for(var scene=0;scene<3;scene++){
+          viewW=scene===2?390:1798+scene*122;viewH=scene===2?844:954;dpr=scene===1?1.5:1.25;isMobile=scene===2;
+          var direct=document.createElement('canvas'),cached=document.createElement('canvas');
+          direct.width=cached.width=Math.ceil(viewW*dpr);direct.height=cached.height=Math.ceil(viewH*dpr);
+          ctx=direct.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);contents();
+          ctx=cached.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);var before=paints;actualPerfOverlay();
+          check('panel refreshes for viewport or DPR changes '+scene,paints===before+1);
+          check('cache is limited to the panel column '+scene,perfOverlayCanvas.width<=Math.ceil(282*dpr)&&perfOverlayCanvas.height===Math.ceil(viewH*dpr));
+          var a=direct.getContext('2d').getImageData(0,0,direct.width,direct.height).data;
+          var b=ctx.getImageData(0,0,cached.width,cached.height).data,max=0;
+          for(var i=0;i<a.length;i+=4)for(var c=0;c<4;c++){
+            var av=c===3?a[i+c]:a[i+c]*a[i+3]/255,bv=c===3?b[i+c]:b[i+c]*b[i+3]/255;
+            max=Math.max(max,Math.abs(av-bv));
+          }
+          check('cached panel matches direct rendering '+scene+' (max '+max.toFixed(2)+')',max<=2);
+          for(var frame=0;frame<30;frame++)actualPerfOverlay();
+          check('panel reuses its bitmap between refreshes '+scene,paints===before+1);
+          clock+=100;actualPerfOverlay();
+          check('panel refreshes at 100 ms '+scene,paints===before+2);
+        }
+        var layout=perfOverlayLayout,row=layout.hitRows.find(function(r){return r[2]==='Verdict';});
+        mouseCursor={x:layout.bx+10,y:row[0]+1};actualPerfOverlay();actualPerfOverlay();
+        check('hover remains live between cached refreshes',tips===2);
+      } finally {
+        ctx=saved.ctx;viewW=saved.w;viewH=saved.h;dpr=saved.dpr;mouseCursor=saved.mouse;isMobile=saved.mobile;
+        drawPerfOverlayContents=contents;drawPerfTooltip=tip;perfOverlayPaintAt=-Infinity;
+        if(oldNow)Object.defineProperty(performance,'now',oldNow);else delete performance.now;
+        if(oldMemory)Object.defineProperty(performance,'memory',oldMemory);else delete performance.memory;
+      }
+      return checks;
+    },
     verify:function(){
       var checks=[];
       function check(name,value){if(!value)throw Error(name);checks.push(name);}
@@ -118,11 +172,15 @@ try {
   if(!ready)throw Error('Boot timeout '+JSON.stringify(errors));
   console.log('STATE',JSON.stringify(await ev(`__motion.start(${JSON.stringify(mode)})`)));
   console.log('ADAPTER',JSON.stringify(await ev('(async()=>{if(!navigator.gpu)return null;let a=await navigator.gpu.requestAdapter();return a ? {vendor:a.info.vendor,architecture:a.info.architecture,device:a.info.device,description:a.info.description} : null})()')));
-  await sleep(2500);await ev('__motion.clear()');
+  await sleep(2500);
   await send('Profiler.enable');await send('Profiler.setSamplingInterval',{interval:1000});await send('Profiler.start');
+  await sleep(150);await ev('__motion.clear()');
   await sleep(9000);
+  // Stop sampling before exporting the CPU profile. Export/serialization can
+  // stall the inspected renderer and must not become a fake gameplay hitch.
+  const result=await ev('__motion.stop()');
   const profileData=await send('Profiler.stop');fs.writeFileSync(path.join(out,mode+'.cpuprofile'),JSON.stringify(profileData.profile));
-  const result=await ev('__motion.stop()');result.errors=errors;fs.writeFileSync(path.join(out,mode+'.json'),JSON.stringify(result));
+  result.errors=errors;fs.writeFileSync(path.join(out,mode+'.json'),JSON.stringify(result));
   const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,mode+'.png'),Buffer.from(shot.data,'base64'));
   function stats(a){a=a.slice().sort((x,y)=>x-y);return {n:a.length,avg:a.reduce((s,v)=>s+v,0)/a.length,p50:a[a.length>>1],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:a.at(-1)};}
   console.log('RESULT',JSON.stringify({mode,frame:stats(result.rows.map(r=>r.dt)),wholeCPU:stats(result.rows.map(r=>r.frameCPU)),render:stats(result.rows.map(r=>r.cpu)),over144:result.rows.filter(r=>r.dt>7.5).length,diag:result.diag,fps:result.fps,buckets:result.buckets,cold:result.cold,errors}));
@@ -140,6 +198,8 @@ try {
   assert.equal(result.cold.length,0,'soil textures were prepared before scrolling into view');
   const checks=await ev('__motion.verify()');
   console.log('PASS '+(checks.length+5)+' checks; '+samples+' scrolling frames, no background reversals or cold soil builds');
+  const overlayChecks=await ev('__motion.verifyOverlay()');
+  console.log('PASS '+overlayChecks.length+' overlay timing, cache, raster and hover checks');
   console.log('Artifacts: '+out);
   const byId=new Map(profileData.profile.nodes.map(n=>[n.id,n]));const hits=new Map();for(let i=0;i<(profileData.profile.samples||[]).length;i++){let n=byId.get(profileData.profile.samples[i]);let key=n.callFrame.functionName+' '+n.callFrame.url.split('/').at(-1)+':'+(n.callFrame.lineNumber+1);hits.set(key,(hits.get(key)||0)+profileData.profile.timeDeltas[i]);}console.log('CPU',JSON.stringify([...hits].sort((a,b)=>b[1]-a[1]).slice(0,18)));
 } finally {if(ws){try{await send('Browser.close');}catch{}ws.close();}if(chrome&&chrome.exitCode===null)chrome.kill();server.close();}

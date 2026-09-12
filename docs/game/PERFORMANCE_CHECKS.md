@@ -1,5 +1,35 @@
 # Sluice performance checks
 
+## Diagnostic overhead and missing render spikes (v26.111)
+
+A surface-driving screenshot showed 133 ms hitches with only 16 ms accounted
+for by its largest listed bucket. Several render phases recorded only an EMA,
+so they could not appear in raw hitch snapshots or peak values. All major
+render phases now record raw, average and peak costs. The diagnostics panel
+has its own `render.perfOverlay` bucket. Parent and child timings overlap.
+
+The panel caches its text at 10 Hz in a bitmap limited to the panel column.
+Game rendering, timing samples and hover continue every frame. Resize and
+device-pixel-ratio changes refresh immediately. At the screenshot's exact
+2248x1193 canvas resolution (DPR 1.25), a paired nine-second drive measured
+3.36 ms average game-call time before and 2.91 ms after. The CPU profiler's
+text drawing samples fell from about 412 ms to 70 ms across those runs.
+Frame arrival intervals remained about 8.1 ms, so this does not resolve all
+missed refreshes. The reproduction uses a fresh world, not the owner's save.
+
+The panel now graphs frame arrival intervals, includes its build number and
+distinguishes measured main-thread work from unmeasured frame delivery time.
+WebGPU queue completion is labeled as async wait: its callback can be delayed
+by JavaScript or browser scheduling, so it is not a GPU execution timer and
+does not measure WebGL smoke. The G-key blocking probe remains opt-in.
+
+`node tools/perf/scroll-smoothness.mjs` also runs 20 diagnostic checks: missing
+render buckets and peaks, cautious attribution, bounded bitmap storage,
+refresh cadence, live hover, desktop/mobile resize and DPR changes. Cached
+panel pixels match a direct draw within two premultiplied channel levels.
+The flight harness begins sampling after profiler startup and stops before
+profile export, keeping that tooling overhead out of frame-arrival measurements.
+
 ## Repeated terrain and water work (v26.107)
 
 The cave contour cache keeps twelve immutable paths. Each lookup compares the

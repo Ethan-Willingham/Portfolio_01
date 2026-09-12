@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.110';
+  var GAME_VERSION = 'v26.111';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2328,7 +2328,9 @@
   var perfBucketsRaw = {};
   var perfBucketsPk = {};
   function perfMark(name, t0) {
-    var dt = performance.now() - t0;
+    perfRecord(name, performance.now() - t0);
+  }
+  function perfRecord(name, dt) {
     perfBuckets[name] = (perfBuckets[name] || 0) * 0.9 + dt * 0.1;
     perfBucketsRaw[name] = dt;
     var pk = perfBucketsPk[name] || 0;
@@ -2380,15 +2382,11 @@
   // stacked DOM-layer canvases onto the page (see the render-architecture
   // note at the top of the file) — so it can read ~0 while an oversized
   // layer canvas is the frame's dominant cost.
-  // v14.15 — WebGPU GPU-time probe. gpuProbe's gl.finish is WebGL-only;
-  // the smoke + water sims run on WebGPU, which has no finish(). WebGPU's
-  // queue.onSubmittedWorkDone() resolves once the GPU has drained every
-  // submitted command — measuring wall-clock to that resolve is an honest
-  // GPU-busy signal and, unlike gl.finish, forces NO CPU<->GPU stall, so
-  // it runs every frame in dev mode (no FPS skew, no 'G' gate). It is
-  // whole-device: one number covering ALL WebGPU work — smoke sim+render
-  // AND water sim+render. At a vsync-capped fps it idles near one frame
-  // interval (normal pipelining); watch it CLIMB when GPU load rises.
+  // Async WebGPU queue completion latency, not GPU execution time. The
+  // interval includes queued work plus browser delivery of the callback;
+  // a busy main thread can inflate it even after the GPU has finished.
+  // It covers this WebGPU device, not smoke running on a WebGL context.
+  // Keep one outstanding query and avoid a synchronous gl.finish stall.
   var gpuWebGPUMs = 0;
   var _gpuWebGPUInFlight = false;
   function probeWebGPUGpu() {
@@ -2523,22 +2521,22 @@
       };
     }
     if (cpu >= gap) {
-      // CPU-bound — name the heaviest EMA bucket.
+      // Name the heaviest measured phase below the whole-render aggregate.
+      // These wall times include any wait inside a graphics API call.
       var topName = '—', topMs = 0;
       for (var k in perfBuckets) {
         if (!Object.prototype.hasOwnProperty.call(perfBuckets, k)) continue;
+        if (k === 'render.total') continue;
         if (perfBuckets[k] > topMs) { topMs = perfBuckets[k]; topName = k; }
       }
       return {
-        verdict: 'CPU-BOUND', colour: '#ff6666',
+        verdict: 'MAIN THREAD', colour: '#ff6666',
         cause: topName + ' ' + topMs.toFixed(1) + 'ms'
       };
     }
     return {
-      verdict: 'GPU-BOUND', colour: '#ff6666',
-      cause: (gpuWebGPUMs > interval * 0.55)
-        ? ('WebGPU sims ~' + gpuWebGPUMs.toFixed(1) + 'ms')
-        : 'fill-rate / compositing'
+      verdict: 'FRAME DELIVERY', colour: '#ff6666',
+      cause: 'GPU / compositor / scheduling'
     };
   }
 
@@ -26530,7 +26528,7 @@
 
     var tNow = performance.now() / 1000;
 
-    perfBuckets['render.sky'] = (perfBuckets['render.sky'] || 0) * 0.9 + (performance.now() - _renderT0) * 0.1;
+    perfMark('render.sky', _renderT0);
     var _renderT1 = performance.now();
     if (!PERF_DISABLE_TERRAIN_CHUNKS) drawTerrainChunks(startRow, endRow, startCol, endCol);
     // v13.11 — cave walls are no longer a post-chunk pass. The biome wall
@@ -26538,7 +26536,7 @@
     // the chunks erase their voids to transparent, so the rock simply
     // occludes the wall. No drawCaveWalls* call here any more.
     drawTerrainClearOverlays(startRow, endRow, startCol, endCol);
-    perfBuckets['render.terrain'] = (perfBuckets['render.terrain'] || 0) * 0.9 + (performance.now() - _renderT1) * 0.1;
+    perfMark('render.terrain', _renderT1);
     var _renderT2 = performance.now();
     var _renderT2Tiles = _renderT2;
 
@@ -27013,7 +27011,7 @@
       ctx.restore();
     }
 
-    perfBuckets['render.tiles'] = (perfBuckets['render.tiles'] || 0) * 0.9 + (performance.now() - _renderT2Tiles) * 0.1;
+    perfMark('render.tiles', _renderT2Tiles);
     var _renderT2Ent = performance.now();
 
     // ====== RENDER: World entities (stations, player, effects) ======
@@ -27059,14 +27057,14 @@
     if (typeof birdsDraw === 'function') birdsDraw();   // ambient surface birds (205-birds.js): in front of sky/mountains/stations, behind smoke + rig
     if (typeof drawTreeLeaves === 'function') drawTreeLeaves();   // leaf + chip wakes off the trees (165): over stations + birds, behind smoke + rig
 
-    perfBuckets['render.entities'] = (perfBuckets['render.entities'] || 0) * 0.9 + (performance.now() - _renderT2Ent) * 0.1;
+    perfMark('render.entities', _renderT2Ent);
     var _renderT3 = performance.now();
     // ---- Liquids: surface water ponds + underground oil pockets ----
     var _gpuLiqT = devMode ? performance.now() : 0;
     drawLiquids();
     if (devMode) gpuProbe('liquid', _gpuLiqT, liquidGL);   // v12.13 — liquid GPU probe
     drawSurfacePondBasinOverlays(startCol, endCol);
-    perfBuckets['render.liquids'] = (perfBuckets['render.liquids'] || 0) * 0.9 + (performance.now() - _renderT3) * 0.1;
+    perfMark('render.liquids', _renderT3);
     var _renderT4 = performance.now();
 
     // ---- Rover reentry flame trail (drawn BEHIND player so it streaks
@@ -27076,7 +27074,7 @@
     // ---- Smoke trail (drawn BEHIND player so the rig sits in front of
     //      its own exhaust plume) ----
     try { drawSmoke(); } catch (e) { if (!window.__drawSmokeErr) { window.__drawSmokeErr = String(e) + '\n' + (e.stack||''); console.error('drawSmoke threw:', e); } }
-    perfBuckets['render.smoke'] = (perfBuckets['render.smoke'] || 0) * 0.9 + (performance.now() - _renderT4) * 0.1;
+    perfMark('render.smoke', _renderT4);
     var _renderT5 = performance.now();
 
     // The fluid plume supplies the exhaust. No fixed dark patch above the
@@ -27249,7 +27247,7 @@
       drawWeatherPrecip(canvas.width, canvas.height);
     }
 
-    perfBuckets['render.player+fx'] = (perfBuckets['render.player+fx'] || 0) * 0.9 + (performance.now() - _renderT5) * 0.1;
+    perfMark('render.player+fx', _renderT5);
     var _renderT6 = performance.now();
     // ====== RENDER: UI overlay (HUD, damage, D-pad) ======
     //  UI SPACE: reset transform; draw in CSS-pixel coords scaled by dpr
@@ -27334,7 +27332,9 @@
     drawNmzExitArrow();
 
     // Perf overlay (dev mode, or the mobile diagnostic flag) — survives the strip
+    var _rPerf = performance.now();
     if (perfOverlayOn()) drawPerfOverlay();
+    perfMark('render.perfOverlay', _rPerf);
     // In-game now-playing music readout (dev mode) — track name(s) + position
     if (devMode) drawNowPlaying();
 
@@ -27476,7 +27476,7 @@
       ctx.textAlign = 'left';
     }
 
-    perfBuckets['render.HUD'] = (perfBuckets['render.HUD'] || 0) * 0.9 + (performance.now() - _renderT6) * 0.1;
+    perfMark('render.HUD', _renderT6);
     // Restore the main canvas context (the UI phase may have redirected ctx to
     // the top canvas). World drawing next frame must land on the main canvas.
     ctx = _mainCtx;
@@ -51986,15 +51986,15 @@
   // (keyed by the row's label); rows with no specific tip fall back to their
   // section's PERF_SECTION_TIPS entry (matched by header prefix).
   var PERF_TIPS = {
-    'Verdict': 'HEALTHY = hitting the display refresh cap. CPU-BOUND = JavaScript is the bottleneck. GPU-BOUND = drawing / fill-rate is. MICROSTUTTER = the average is fine but frames hitch.',
+    'Verdict': 'MAIN THREAD means measured frame work is dominant, including waits inside graphics calls. FRAME DELIVERY means more time is outside that work. Neither alone identifies a CPU or GPU hardware bottleneck.',
     'Cause': 'The single biggest contributor to the current verdict.',
     'Hitches': 'How many recent frames ran far longer than normal. Each one is a visible stutter.',
     'Smoothness': 'jank% counts late animation frames. 1%-low is 1000 divided by the 99th-percentile interval between animation frames, including GPU and scheduling waits.',
     'FPS': 'Frames per second now, with the rolling average in parentheses. Capped at your monitor refresh rate.',
-    'CPU frame': 'Time JavaScript spent building this frame. p99 and max are the worst recent frames.',
-    'GPU/idle': 'Time left after the CPU work: GPU drawing + screen compositing + waiting for vsync. Large here while fps is low means GPU-bound.',
+    'CPU frame': 'Wall time inside the game update and render calls, including graphics API stalls. p99 and max are the worst recent measurements.',
+    'GPU/idle': 'Estimated frame interval minus measured game work. Includes graphics, browser scheduling and vsync idle; this is not a GPU execution measurement.',
     'Upd/Rnd/Smk': 'This frame split into update / render / smoke milliseconds. Each is also its own row in TOP BUCKETS.',
-    'WebGPU GPU': 'How long the GPU spent on the water + smoke simulations. Watch it climb when those get heavy.',
+    'GPU queue wait': 'Wall time until the WebGPU queue completion callback runs. Includes queued GPU work and delays in delivering the callback to JavaScript. It does not measure WebGL smoke or isolated GPU execution time.',
     'Heap': 'JavaScript memory: in use / allocated / browser limit. Steady is healthy; a constant climb suggests a leak.',
     'Speed vx': 'The rig current sideways speed, and whether it is on the ground or in the air.',
     'Peak air': 'The fastest sideways air speed seen this session. Fly full-tilt sideways to max it out.',
@@ -52010,8 +52010,8 @@
     'Jello solver': 'Which soft-body solver is running (press M to cycle). Amber = the old PBD baseline; green = the newer XPBD / FEM.'
   };
   var PERF_SECTION_TIPS = {
-    'DIAGNOSIS': 'The headline health check. Read this first: it says whether you are fast, CPU-bound, GPU-bound, or just stuttering, and the main cause.',
-    'WORST FRAME': 'The single slowest recent frame and what cost the most on it. A big number here is the stutter you just felt.',
+    'DIAGNOSIS': 'Frame pacing and the largest measured costs. Main-thread and delivery labels are clues for profiling, not a hardware bottleneck diagnosis.',
+    'WORST FRAME': 'The slowest recent measured game update/render call, with its raw timings. Parent and child buckets overlap; do not add them together. Browser delays outside the game call appear in Smoothness.',
     'JELLO COUPLING': 'Diagnoses why the rig drifts while standing on a jello blob. Only shown while you are on one.',
     'FRAME': 'This frame time budget. At 60Hz you get 16.7ms per frame; staying under it means smooth.',
     'FLIGHT SPEED': 'Measures how fast the rig flies sideways, used to size the No Man Zone expansion.',
@@ -52127,7 +52127,41 @@
     }
     ctx.restore();
   }
+  var perfOverlayCanvas = null, perfOverlayContext = null, perfOverlayLayout = null;
+  var perfOverlayPaintAt = -Infinity, perfOverlayViewW = 0, perfOverlayViewH = 0;
+  var perfOverlayDpr = 0;
   function drawPerfOverlay() {
+    // Sample the game every frame, but repaint this large text panel at 10 Hz.
+    // Only the panel bitmap is cached; live gameplay and hover stay full rate.
+    if (player && !player.onGround) perfPeakAirVx = Math.max(perfPeakAirVx, Math.abs(player.vx));
+    var now = performance.now();
+    var leftPx = Math.floor((viewW - 288) * dpr);
+    var width = Math.ceil((viewW - 8) * dpr) - leftPx + 1;
+    var height = Math.ceil(viewH * dpr);
+    if (!perfOverlayCanvas) {
+      perfOverlayCanvas = document.createElement('canvas');
+      perfOverlayContext = perfOverlayCanvas.getContext('2d');
+    }
+    if (now - perfOverlayPaintAt >= 100 || viewW !== perfOverlayViewW ||
+        viewH !== perfOverlayViewH || dpr !== perfOverlayDpr) {
+      if (perfOverlayCanvas.width !== width) perfOverlayCanvas.width = width;
+      if (perfOverlayCanvas.height !== height) perfOverlayCanvas.height = height;
+      var target = ctx;
+      try {
+        ctx = perfOverlayContext;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, width, height);
+        ctx.setTransform(dpr, 0, 0, dpr, -leftPx, 0);
+        drawPerfOverlayContents();
+      } finally { ctx = target; }
+      perfOverlayPaintAt = now; perfOverlayViewW = viewW; perfOverlayViewH = viewH; perfOverlayDpr = dpr;
+    }
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(perfOverlayCanvas, leftPx / dpr, 0, width / dpr, height / dpr);
+    ctx.restore();
+    drawPerfOverlayHover();
+  }
+  function drawPerfOverlayContents() {
     // v23.42: track peak airborne horizontal speed for the P0.1 flight-width
     // measurement (this panel runs every frame in dev mode).
     if (player && !player.onGround) {
@@ -52192,6 +52226,7 @@
       if (_rv > _ringHT) { _spikeN++; if (_rv > _spikeWorst) _spikeWorst = _rv; }
     }
     H('DIAGNOSIS');
+    K('Build', GAME_VERSION);
     K('Verdict', diag.verdict, diag.colour);
     K('Cause',   diag.cause);
     if (_spikeN > 0) {
@@ -52248,26 +52283,24 @@
     }
 
     H('FRAME');
-    // v11.76 — CPU vs GPU split. 'CPU frame' is JS work per frame; 'Interval'
-    // is the real 1000/fps; 'GPU/idle' is the gap = GPU execution + compositing
-    // + vsync wait. A large gap while fps sits BELOW the display refresh = the
-    // frame is GPU/fill-rate bound. Gap near 0 (or fps pinned at the refresh
-    // cap) = CPU bound / healthy — read the bucket list below.
+    // Measured game-call wall time and the remaining frame interval are
+    // separate clues. Neither distinguishes CPU execution from graphics
+    // stalls, browser scheduling, compositing or vsync by itself.
     var realMs = perfFps > 0 ? 1000 / perfFps : 0;
     var gpuGap = realMs > perfFrameMs ? realMs - perfFrameMs : 0;
     var intervals = perfIntervalStats();
     K('FPS',       perfFps + ' (' + (intervals.avg > 0 ? (1000 / intervals.avg).toFixed(0) : '0') + ' avg)');
+    K('Frame interval', intervals.avg.toFixed(2) + ' ms (p99 ' + intervals.p99.toFixed(1) + ')');
     K('CPU frame', perfFrameMs.toFixed(2) + ' ms (p99 ' + fs.p99.toFixed(1) + ', max ' + fs.max.toFixed(1) + ')');
     K('GPU/idle',  gpuGap.toFixed(2) + ' ms');
     // v23.42 — Update / Render / Smoke condensed to one line (each is also its
     // own bucket in TOP BUCKETS below); dropped the Interval line (= 1000/fps).
     K('Upd/Rnd/Smk', perfUpdateMs.toFixed(1) + ' / ' + perfRenderMs.toFixed(1) + ' / ' + perfSmokeMs.toFixed(1) + ' ms');
-    // v14.15 — WebGPU GPU time (the smoke + water sims). onSubmittedWorkDone
-    // drain; always shown in dev mode (no sync, no FPS skew). Hidden only
-    // when there is no WebGPU device at all (everything on CPU / WebGL).
+    // Async queue completion includes callback-delivery latency. It is not
+    // an isolated GPU timer and does not include the WebGL smoke queue.
     var _hasWGPU = !!((liquidWGPU && liquidWGPU.device) ||
                       (smokeWGPU && smokeWGPU.device));
-    if (_hasWGPU) K('WebGPU GPU', gpuWebGPUMs.toFixed(2) + ' ms drain (smoke+water)');
+    if (_hasWGPU) K('GPU queue wait', gpuWebGPUMs.toFixed(2) + ' ms (async)');
     // v12.4 — gl.finish-drained GPU time for the remaining WebGL
     // subsystems. v13.13 — opt-in ('G'); the finish() sync skews FPS.
     // v14.15 — covers the SKY now; the smoke / liquid lines appear only if
@@ -52602,23 +52635,23 @@
         ctx.fillText(item[2], valueX, ty2);
       } else if (item[0] === 'g') {
         // ---- Frame-time sparkline ----
-        // perfFrameRing is a ring buffer; walk it oldest→newest. The graph's
+        // Walk animation-frame intervals oldest to newest. The graph's
         // full height maps to max(3 × interval, 33) ms. A faint baseline sits
         // at the vsync interval; bars are green ≤1.15×, amber ≤2×, red above.
         var gx = bx + pad;
         var gy = rowY + 1;
         var gw = boxW - pad * 2;
         var gh = graphH - 2;
-        var interval = realMs0 > 0 ? realMs0 : 16.7;
+        var interval = perfFpsCap > 0 ? 1000 / perfFpsCap : (realMs0 > 0 ? realMs0 : 16.7);
         var fullMs = Math.max(3 * interval, 33);
-        var n = perfFrameRingFilled;
+        var n = perfIntervalRingFilled;
         if (n > 0) {
           var bw = gw / n;
           for (var gi = 0; gi < n; gi++) {
             // Oldest sample first: start at the next-write index and wrap.
-            var idx = (perfFrameRingIdx - n + gi + perfFrameRing.length * 2) %
-                      perfFrameRing.length;
-            var fv = perfFrameRing[idx];
+            var idx = (perfIntervalRingIdx - n + gi + perfIntervalRing.length * 2) %
+                      perfIntervalRing.length;
+            var fv = perfIntervalRing[idx];
             var bh = Math.max(1, Math.min(1, fv / fullMs) * gh);
             ctx.fillStyle = fv > interval * 2 ? '#ff6666'
                           : fv > interval * 1.15 ? '#ffcc44' : '#66ff66';
@@ -52655,6 +52688,13 @@
     }
     ctx.textAlign = 'left';
 
+    perfOverlayLayout = { bx: bx, by: by, boxW: boxW, boxH: boxH, hitRows: hitRows };
+  }
+  function drawPerfOverlayHover() {
+    if (!perfOverlayLayout) return;
+    var bx = perfOverlayLayout.bx, by = perfOverlayLayout.by;
+    var boxW = perfOverlayLayout.boxW, boxH = perfOverlayLayout.boxH;
+    var hitRows = perfOverlayLayout.hitRows;
     // v23.43 — hover tooltip. When the mouse is over a row of the panel, draw a
     // plain-English explanation of that metric (or its section) to the left of
     // the panel. Mouse + panel share CSS-pixel space, so this is a direct test.
@@ -61281,14 +61321,11 @@
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
     for (var _sk = 0; _sk < PERF_STRESS; _sk++) render();
     var _t5 = performance.now();
-    perfBuckets['update.main'] = (perfBuckets['update.main'] || 0) * 0.9 + (_t1 - _t0) * 0.1;
-    perfBuckets['render.total'] = (perfBuckets['render.total'] || 0) * 0.9 + (_t5 - _t4) * 0.1;
+    perfRecord('update.main', _t1 - _t0);
+    perfRecord('render.total', _t5 - _t4);
 
-    // v14.15 — sample WebGPU GPU drain (smoke + water). Non-intrusive, so
-    // it runs every perf-overlay frame; all of this frame's GPU work is
-    // submitted by now (update ran the sims, render ran the canvas draws).
-    // v25.9 — also runs on the mobile perf-overlay path so the phone panel
-    // shows the GPU drain (the onSubmittedWorkDone probe does not skew fps).
+    // Async WebGPU queue completion latency. The callback can also be
+    // delayed by the browser or main thread; it is not a GPU execution timer.
     if (perfOverlayOn()) probeWebGPUGpu();
 
     // Perf metrics (smoothed via rolling window)

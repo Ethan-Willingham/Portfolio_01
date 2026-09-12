@@ -435,7 +435,7 @@
 
     var tNow = performance.now() / 1000;
 
-    perfBuckets['render.sky'] = (perfBuckets['render.sky'] || 0) * 0.9 + (performance.now() - _renderT0) * 0.1;
+    perfMark('render.sky', _renderT0);
     var _renderT1 = performance.now();
     if (!PERF_DISABLE_TERRAIN_CHUNKS) drawTerrainChunks(startRow, endRow, startCol, endCol);
     // v13.11 — cave walls are no longer a post-chunk pass. The biome wall
@@ -443,7 +443,7 @@
     // the chunks erase their voids to transparent, so the rock simply
     // occludes the wall. No drawCaveWalls* call here any more.
     drawTerrainClearOverlays(startRow, endRow, startCol, endCol);
-    perfBuckets['render.terrain'] = (perfBuckets['render.terrain'] || 0) * 0.9 + (performance.now() - _renderT1) * 0.1;
+    perfMark('render.terrain', _renderT1);
     var _renderT2 = performance.now();
     var _renderT2Tiles = _renderT2;
 
@@ -918,7 +918,7 @@
       ctx.restore();
     }
 
-    perfBuckets['render.tiles'] = (perfBuckets['render.tiles'] || 0) * 0.9 + (performance.now() - _renderT2Tiles) * 0.1;
+    perfMark('render.tiles', _renderT2Tiles);
     var _renderT2Ent = performance.now();
 
     // ====== RENDER: World entities (stations, player, effects) ======
@@ -964,14 +964,14 @@
     if (typeof birdsDraw === 'function') birdsDraw();   // ambient surface birds (205-birds.js): in front of sky/mountains/stations, behind smoke + rig
     if (typeof drawTreeLeaves === 'function') drawTreeLeaves();   // leaf + chip wakes off the trees (165): over stations + birds, behind smoke + rig
 
-    perfBuckets['render.entities'] = (perfBuckets['render.entities'] || 0) * 0.9 + (performance.now() - _renderT2Ent) * 0.1;
+    perfMark('render.entities', _renderT2Ent);
     var _renderT3 = performance.now();
     // ---- Liquids: surface water ponds + underground oil pockets ----
     var _gpuLiqT = devMode ? performance.now() : 0;
     drawLiquids();
     if (devMode) gpuProbe('liquid', _gpuLiqT, liquidGL);   // v12.13 — liquid GPU probe
     drawSurfacePondBasinOverlays(startCol, endCol);
-    perfBuckets['render.liquids'] = (perfBuckets['render.liquids'] || 0) * 0.9 + (performance.now() - _renderT3) * 0.1;
+    perfMark('render.liquids', _renderT3);
     var _renderT4 = performance.now();
 
     // ---- Rover reentry flame trail (drawn BEHIND player so it streaks
@@ -981,7 +981,7 @@
     // ---- Smoke trail (drawn BEHIND player so the rig sits in front of
     //      its own exhaust plume) ----
     try { drawSmoke(); } catch (e) { if (!window.__drawSmokeErr) { window.__drawSmokeErr = String(e) + '\n' + (e.stack||''); console.error('drawSmoke threw:', e); } }
-    perfBuckets['render.smoke'] = (perfBuckets['render.smoke'] || 0) * 0.9 + (performance.now() - _renderT4) * 0.1;
+    perfMark('render.smoke', _renderT4);
     var _renderT5 = performance.now();
 
     // The fluid plume supplies the exhaust. No fixed dark patch above the
@@ -1154,7 +1154,7 @@
       drawWeatherPrecip(canvas.width, canvas.height);
     }
 
-    perfBuckets['render.player+fx'] = (perfBuckets['render.player+fx'] || 0) * 0.9 + (performance.now() - _renderT5) * 0.1;
+    perfMark('render.player+fx', _renderT5);
     var _renderT6 = performance.now();
     // ====== RENDER: UI overlay (HUD, damage, D-pad) ======
     //  UI SPACE: reset transform; draw in CSS-pixel coords scaled by dpr
@@ -1239,7 +1239,9 @@
     drawNmzExitArrow();
 
     // Perf overlay (dev mode, or the mobile diagnostic flag) — survives the strip
+    var _rPerf = performance.now();
     if (perfOverlayOn()) drawPerfOverlay();
+    perfMark('render.perfOverlay', _rPerf);
     // In-game now-playing music readout (dev mode) — track name(s) + position
     if (devMode) drawNowPlaying();
 
@@ -1381,7 +1383,7 @@
       ctx.textAlign = 'left';
     }
 
-    perfBuckets['render.HUD'] = (perfBuckets['render.HUD'] || 0) * 0.9 + (performance.now() - _renderT6) * 0.1;
+    perfMark('render.HUD', _renderT6);
     // Restore the main canvas context (the UI phase may have redirected ctx to
     // the top canvas). World drawing next frame must land on the main canvas.
     ctx = _mainCtx;

@@ -652,14 +652,11 @@
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
     for (var _sk = 0; _sk < PERF_STRESS; _sk++) render();
     var _t5 = performance.now();
-    perfBuckets['update.main'] = (perfBuckets['update.main'] || 0) * 0.9 + (_t1 - _t0) * 0.1;
-    perfBuckets['render.total'] = (perfBuckets['render.total'] || 0) * 0.9 + (_t5 - _t4) * 0.1;
+    perfRecord('update.main', _t1 - _t0);
+    perfRecord('render.total', _t5 - _t4);
 
-    // v14.15 — sample WebGPU GPU drain (smoke + water). Non-intrusive, so
-    // it runs every perf-overlay frame; all of this frame's GPU work is
-    // submitted by now (update ran the sims, render ran the canvas draws).
-    // v25.9 — also runs on the mobile perf-overlay path so the phone panel
-    // shows the GPU drain (the onSubmittedWorkDone probe does not skew fps).
+    // Async WebGPU queue completion latency. The callback can also be
+    // delayed by the browser or main thread; it is not a GPU execution timer.
     if (perfOverlayOn()) probeWebGPUGpu();
 
     // Perf metrics (smoothed via rolling window)
