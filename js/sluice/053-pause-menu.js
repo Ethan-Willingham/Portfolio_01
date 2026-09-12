@@ -21,6 +21,7 @@
     var title = document.getElementById('gm-menu-title');
     var back = document.getElementById('gm-opt-back');
     var save = document.getElementById('gm-pause-save');
+    var footer = card.querySelector('.pause-footer');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
     var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
@@ -32,6 +33,7 @@
       title.textContent = titles[page];
       back.hidden = page === 'main';
       save.hidden = page !== 'main';
+      footer.hidden = page !== 'main';
       if (page === 'main') {
         // The status source retains its detailed wording for other callers.
         save.textContent = save.textContent
@@ -55,6 +57,10 @@
     openWith('gm-controls-btn', 'controls');
     openWith('gm-new-game-btn', 'restart');
     back.addEventListener('click', pauseMenuBack);
+    document.getElementById('gm-menu-close').addEventListener('click', function () {
+      // Closing any page resumes through the existing safe Resume action.
+      document.getElementById('gm-resume-btn').click();
+    });
     document.getElementById('gm-cancel-restart').addEventListener('click', pauseMenuBack);
 
     // Keep keyboard traversal on the visible page. The game key handler

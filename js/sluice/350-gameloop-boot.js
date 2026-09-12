@@ -153,7 +153,7 @@
      keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
   var _pauseBtnHiddenForShop = null;
   function syncPauseBtnForShop() {
-    var up = shopOpen || shopState !== 'closed' || ledgerOpen;
+    var up = shopOpen || shopState !== 'closed' || ledgerOpen || cargoManifestOpen;
     if (up === _pauseBtnHiddenForShop) return;
     _pauseBtnHiddenForShop = up;
     var pb = document.getElementById('gm-pause-btn');
@@ -162,6 +162,7 @@
 
   /* ---- Game Loop ---- */
   var ledgerPadHeld = {};
+  var cargoManifestPadHeld = {};
   function loop(time) {
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
@@ -225,6 +226,27 @@
     if (terrainChunkRebuildBoostFrames > 0) terrainChunkRebuildBoostFrames--;
     if (dt > 1 / 45) fluidPerfStress = Math.min(2, fluidPerfStress + dt * 4);
     else if (dt < 1 / 55) fluidPerfStress = Math.max(0, fluidPerfStress - dt * 1.5);
+
+    // The cargo inspector owns the full frame before gameplay hotkeys,
+    // purchases, damage, or consumables can run. I also accepts polled input.
+    if (!cargoManifestOpen && (keys['i'] || keys['I'])) {
+      keys['i'] = keys['I'] = false;
+      cargoManifestToggle();
+    }
+    if (cargoManifestOpen) {
+      if (typeof gamepadTick === 'function') gamepadTick(dt);
+      var manifestNow = {};
+      for (var manifestKey in keys) {
+        manifestNow[manifestKey] = !!keys[manifestKey];
+        if (keys[manifestKey] && !cargoManifestPadHeld[manifestKey]) cargoManifestKeyDown(manifestKey);
+        keys[manifestKey] = false;
+      }
+      cargoManifestPadHeld = manifestNow;
+      render();
+      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      return;
+    }
+    cargoManifestPadHeld = {};
 
     // The collection page owns input and holds the mine still while browsing.
     // Poll the controller here because the normal poll is below gameplay input.

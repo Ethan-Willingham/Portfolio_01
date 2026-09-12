@@ -1195,13 +1195,14 @@
     // Mineral Ledger: full-screen collection catalogue (295), toggled via
     // ledgerToggle(). Guarded so the build stays coherent if 295 is absent.
     if (typeof drawLedger === 'function' && ledgerOpen) drawLedger();
+    if (cargoManifestOpen) drawCargoManifest();
     // Onboarding radio bubble (057), screen-space, above the HUD.
-    if (!ledgerOpen && typeof drawOnboarding === 'function') drawOnboarding();
+    if (!ledgerOpen && !cargoManifestOpen && typeof drawOnboarding === 'function') drawOnboarding();
     // General radio messages (058): showMsg's UI_NEW surface. Same plate
     // grammar as 057, takes its place while feedback is up.
     // Dispatched after the shop floor on purpose so purchase feedback
     // ("Need $X") stays readable inside the shop.
-    if (!ledgerOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
+    if (!ledgerOpen && !cargoManifestOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
 
     // v11.33 — Death screen plate (UI_NEW only). Always on top.
     if (UI_NEW && gameOver) {

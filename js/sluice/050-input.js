@@ -3,9 +3,19 @@
     window.addEventListener('keydown', function (e) {
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (!gamePaused && cargoManifestOpen) {
+        e.preventDefault();
+        if (!e.repeat) cargoManifestKeyDown(e.key);
+        return;
+      }
       if (!gamePaused && ledgerOpen) {
         e.preventDefault();
         if (!e.repeat) ledgerKeyDown(e.key);
+        return;
+      }
+      if (!gamePaused && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        if (!e.repeat) cargoManifestToggle();
         return;
       }
       keys[e.key] = true;
@@ -121,6 +131,7 @@
       // This button lives on the explicit erase-save confirmation page.
       // Death and the R bailout still use the ordinary town respawn.
       if (!gamePaused || pauseMenuPage !== 'restart') return;
+      if (cargoManifestOpen) cargoManifestToggle();
       saveWipe();
       init();
       resumeGame();
@@ -147,7 +158,15 @@
     // Mouse wheel — only consumed when the shop is open (so page scrolling
     // outside of an open shop still works). passive:false because we call
     // preventDefault inside the handler when the shop is open.
-    canvas.addEventListener('wheel', handleShopWheel, { passive: false });
+    canvas.addEventListener('wheel', function (e) {
+      if (cargoManifestOpen) {
+        e.preventDefault();
+        var delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? viewH : 1);
+        cargoManifestWheel(delta);
+        return;
+      }
+      handleShopWheel(e);
+    }, { passive: false });
   }
 
   function canvasPos(clientX, clientY) {
@@ -203,7 +222,9 @@
   function handleMouseMove(e) {
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
-    if (ledgerOpen) { ledgerPointerMove(p.x, p.y); return; }
+    if (cargoManifestOpen) { cargoManifestPointerMove(p.x, p.y); return; }
+    if (ledgerOpen) { canvas.style.cursor = ''; ledgerPointerMove(p.x, p.y); return; }
+    canvas.style.cursor = cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
     if (itemWheel.open && itemWheel.pointerId === 'mouse') {
       updateItemWheelHover(p.x, p.y);
     }
@@ -214,7 +235,13 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id) {
+    if (gamePaused) return;
+    if (cargoManifestOpen) { cargoManifestPointerDown(x, y); return; }
     if (ledgerOpen) { ledgerPointerDown(x, y); return; }
+    if (cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), x, y)) {
+      cargoManifestToggle();
+      return;
+    }
     touch.active = true;
     touch.x = x;
     touch.y = y;
@@ -364,6 +391,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (cargoManifestOpen) { cargoManifestPointerMove(x, y); return; }
     if (ledgerOpen) { ledgerPointerMove(x, y); return; }
     touch.x = x;
     touch.y = y;
@@ -395,6 +423,7 @@
     }
   }
   function processPointerUp(id) {
+    if (cargoManifestOpen) { touch.active = false; return; }
     if (ledgerOpen) { touch.active = false; return; }
     // The item wheel is fully click-driven (handled on pointer-down), so
     // pointer-up no longer commits or closes it.

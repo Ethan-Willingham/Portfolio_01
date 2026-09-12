@@ -39,7 +39,7 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
-    if (gameOver || gameWon || shopOpen || ledgerOpen) return;
+    if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
     // Keeps the rig parked while shopping so leftover inertia doesn't
     // drift the player out by accident.

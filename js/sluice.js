@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.87';
+  var GAME_VERSION = 'v26.88';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5328,9 +5328,19 @@
     window.addEventListener('keydown', function (e) {
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (!gamePaused && cargoManifestOpen) {
+        e.preventDefault();
+        if (!e.repeat) cargoManifestKeyDown(e.key);
+        return;
+      }
       if (!gamePaused && ledgerOpen) {
         e.preventDefault();
         if (!e.repeat) ledgerKeyDown(e.key);
+        return;
+      }
+      if (!gamePaused && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        if (!e.repeat) cargoManifestToggle();
         return;
       }
       keys[e.key] = true;
@@ -5446,6 +5456,7 @@
       // This button lives on the explicit erase-save confirmation page.
       // Death and the R bailout still use the ordinary town respawn.
       if (!gamePaused || pauseMenuPage !== 'restart') return;
+      if (cargoManifestOpen) cargoManifestToggle();
       saveWipe();
       init();
       resumeGame();
@@ -5472,7 +5483,15 @@
     // Mouse wheel — only consumed when the shop is open (so page scrolling
     // outside of an open shop still works). passive:false because we call
     // preventDefault inside the handler when the shop is open.
-    canvas.addEventListener('wheel', handleShopWheel, { passive: false });
+    canvas.addEventListener('wheel', function (e) {
+      if (cargoManifestOpen) {
+        e.preventDefault();
+        var delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? viewH : 1);
+        cargoManifestWheel(delta);
+        return;
+      }
+      handleShopWheel(e);
+    }, { passive: false });
   }
 
   function canvasPos(clientX, clientY) {
@@ -5528,7 +5547,9 @@
   function handleMouseMove(e) {
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
-    if (ledgerOpen) { ledgerPointerMove(p.x, p.y); return; }
+    if (cargoManifestOpen) { cargoManifestPointerMove(p.x, p.y); return; }
+    if (ledgerOpen) { canvas.style.cursor = ''; ledgerPointerMove(p.x, p.y); return; }
+    canvas.style.cursor = cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
     if (itemWheel.open && itemWheel.pointerId === 'mouse') {
       updateItemWheelHover(p.x, p.y);
     }
@@ -5539,7 +5560,13 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id) {
+    if (gamePaused) return;
+    if (cargoManifestOpen) { cargoManifestPointerDown(x, y); return; }
     if (ledgerOpen) { ledgerPointerDown(x, y); return; }
+    if (cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), x, y)) {
+      cargoManifestToggle();
+      return;
+    }
     touch.active = true;
     touch.x = x;
     touch.y = y;
@@ -5689,6 +5716,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (cargoManifestOpen) { cargoManifestPointerMove(x, y); return; }
     if (ledgerOpen) { ledgerPointerMove(x, y); return; }
     touch.x = x;
     touch.y = y;
@@ -5720,6 +5748,7 @@
     }
   }
   function processPointerUp(id) {
+    if (cargoManifestOpen) { touch.active = false; return; }
     if (ledgerOpen) { touch.active = false; return; }
     // The item wheel is fully click-driven (handled on pointer-down), so
     // pointer-up no longer commits or closes it.
@@ -6045,6 +6074,7 @@
     var title = document.getElementById('gm-menu-title');
     var back = document.getElementById('gm-opt-back');
     var save = document.getElementById('gm-pause-save');
+    var footer = card.querySelector('.pause-footer');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
     var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
@@ -6056,6 +6086,7 @@
       title.textContent = titles[page];
       back.hidden = page === 'main';
       save.hidden = page !== 'main';
+      footer.hidden = page !== 'main';
       if (page === 'main') {
         // The status source retains its detailed wording for other callers.
         save.textContent = save.textContent
@@ -6079,6 +6110,10 @@
     openWith('gm-controls-btn', 'controls');
     openWith('gm-new-game-btn', 'restart');
     back.addEventListener('click', pauseMenuBack);
+    document.getElementById('gm-menu-close').addEventListener('click', function () {
+      // Closing any page resumes through the existing safe Resume action.
+      document.getElementById('gm-resume-btn').click();
+    });
     document.getElementById('gm-cancel-restart').addEventListener('click', pauseMenuBack);
 
     // Keep keyboard traversal on the visible page. The game key handler
@@ -13360,7 +13395,7 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
-    if (gameOver || gameWon || shopOpen || ledgerOpen) return;
+    if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
     // Keeps the rig parked while shopping so leftover inertia doesn't
     // drift the player out by accident.
@@ -27030,13 +27065,14 @@
     // Mineral Ledger: full-screen collection catalogue (295), toggled via
     // ledgerToggle(). Guarded so the build stays coherent if 295 is absent.
     if (typeof drawLedger === 'function' && ledgerOpen) drawLedger();
+    if (cargoManifestOpen) drawCargoManifest();
     // Onboarding radio bubble (057), screen-space, above the HUD.
-    if (!ledgerOpen && typeof drawOnboarding === 'function') drawOnboarding();
+    if (!ledgerOpen && !cargoManifestOpen && typeof drawOnboarding === 'function') drawOnboarding();
     // General radio messages (058): showMsg's UI_NEW surface. Same plate
     // grammar as 057, takes its place while feedback is up.
     // Dispatched after the shop floor on purpose so purchase feedback
     // ("Need $X") stays readable inside the shop.
-    if (!ledgerOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
+    if (!ledgerOpen && !cargoManifestOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
 
     // v11.33 — Death screen plate (UI_NEW only). Always on top.
     if (UI_NEW && gameOver) {
@@ -39679,13 +39715,47 @@
     var unit = divisor === 1e9 ? 'b' : divisor === 1e6 ? 'm' : 'k';
     return '$' + (Math.floor(n / divisor * 10) / 10).toFixed(1) + unit;
   }
+  // Gauges keep their large numerical readings, with material cues particular
+  // to each instrument rather than six identical bars.
   function consoleMeter(bx, by, bw, bh, fraction, color) {
-    var y = Math.round(by + bh - 22);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(bx, y, bw, 4);
-    ctx.fillStyle = color;
-    ctx.fillRect(bx, y, Math.round(bw * Math.max(0, Math.min(1, fraction))), 4);
+    var y = Math.round(by + bh - 22), fill = Math.max(0, Math.min(1, fraction));
+    ctx.fillStyle = UIT_EDGE; ctx.fillRect(bx, y - 1, bw, 7);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW; ctx.fillRect(bx + 1, y, bw - 2, 4);
+    ctx.fillStyle = color; ctx.fillRect(bx + 1, y, Math.round((bw - 2) * fill), 4);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(bx, y + 5, bw, 1);
     return y;
+  }
+  function consoleCargoHovered() {
+    if (isMobile || !mouseCursor) return false;
+    var scale = consoleScale();
+    for (var i = 0; i < consoleBayLayout.length; i++) {
+      var cell = consoleBayLayout[i];
+      if (cell.bay.id === 'cargo') return mouseCursor.x >= cell.bx * scale &&
+        mouseCursor.x <= (cell.bx + cell.bw) * scale && mouseCursor.y >= cell.by * scale &&
+        mouseCursor.y <= (cell.by + cell.bh) * scale;
+    }
+    return false;
+  }
+  function consoleFuelDial(cx, cy, radius, fraction, color) {
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = UIMAT_WELD;
+    ctx.beginPath(); ctx.arc(cx, cy, radius, Math.PI, Math.PI * 2); ctx.stroke();
+    for (var i = 0; i <= 4; i++) {
+      var a = Math.PI + i * Math.PI / 4;
+      ctx.strokeStyle = i === 0 ? UIT_RED : UIMAT_WELD;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * (radius - 2), cy + Math.sin(a) * (radius - 2));
+      ctx.lineTo(cx + Math.cos(a) * (radius - 5), cy + Math.sin(a) * (radius - 5));
+      ctx.stroke();
+    }
+    var angle = Math.PI + Math.PI * fraction;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * (radius - 5), cy + Math.sin(angle) * (radius - 5)); ctx.stroke();
+    ctx.fillStyle = UIT_GOLD; ctx.fillRect(cx - 2, cy - 2, 4, 4);
+    ctx.fillStyle = UIT_TEXT; ctx.fillRect(cx - 1, cy - 1, 1, 1);
+    ctx.restore();
   }
   function consoleFuelReading() {
     var capacity = Math.max(1, maxFuel);
@@ -39694,14 +39764,24 @@
     var shortfall = home > 0.5 && player.fuel < home;
     return { fraction: fraction, percent: Math.floor(fraction * 100),
       home: home, homePercent: Math.ceil(home / capacity * 100), shortfall: shortfall,
-      color: shortfall || fraction < 0.15 ? UIT_RED : fraction < 0.30 ? UIT_GOLD : UIT_BODY };
+      color: shortfall || fraction < 0.15 ? UIT_RED : fraction < 0.30 ? UIT_GOLD : UIT_TEXT };
   }
   function drawFuelGauge(bx, by, bw, bh) {
     var fuel = consoleFuelReading();
     drawBayLabel(bx, by, bw, 'FUEL');
     if (reserveFuel > 0) consoleText(reserveFuel + ' spare', bx + bw, by + 11, 11, UIT_DIM, 'right');
     consoleValue('' + fuel.percent, '%', bx, by, bw, bh, fuel.color);
+    if (bw >= 116) consoleFuelDial(bx + bw - 21, by + 39, 19, fuel.fraction, fuel.color);
     var y = consoleMeter(bx, by, bw, bh, fuel.fraction, fuel.color);
+    // Etched quarter marks and a brass slider make the linear backup useful
+    // even on phones where the small round dial would crowd the number.
+    for (var i = 0; i <= 4; i++) {
+      ctx.fillStyle = UIMAT_WELD;
+      ctx.fillRect(bx + Math.round((bw - 1) * i / 4), y + 7, 1, 2);
+    }
+    var needle = bx + Math.round((bw - 3) * fuel.fraction);
+    ctx.fillStyle = fuel.fraction < 0.30 ? fuel.color : UIT_GOLD;
+    ctx.fillRect(needle, y - 2, 2, 8);
     if (fuel.home > 0.5) {
       // A labelled notch replaces the unexplained dot on the old dial.
       var x = Math.round(bx + Math.min(1, fuel.home / maxFuel) * (bw - 2));
@@ -39732,24 +39812,83 @@
     var color = fraction <= 0.25 ? UIT_RED : fraction <= 0.50 ? UIT_GOLD : UIT_BODY;
     drawBayLabel(bx, by, bw, 'HULL');
     consoleValue('' + Math.ceil(fraction * 100), '%', bx, by, bw, bh, color);
-    consoleMeter(bx, by, bw, bh, fraction, color);
+    var y = Math.round(by + bh - 23);
+    var plates = Math.min(24, 6 + (Math.max(1, upgrades.hullLevel || 1) - 1) * 3);
+    // A tier adds physical armor segments; damage empties them from the right.
+    for (var i = 0; i < plates; i++) {
+      var x0 = Math.round(bx + bw * i / plates), x1 = Math.round(bx + bw * (i + 1) / plates);
+      var remaining = Math.max(0, Math.min(1, fraction * plates - i));
+      ctx.fillStyle = UIT_EDGE; ctx.fillRect(x0, y, x1 - x0 - 1, 8);
+      if (remaining > 0) {
+        ctx.fillStyle = color; ctx.fillRect(x0, y + 1, Math.max(1, Math.round((x1 - x0 - 1) * remaining)), 5);
+        ctx.fillStyle = UIT_TEXT; ctx.fillRect(x0, y + 1, Math.max(1, Math.round((x1 - x0 - 1) * remaining)), 1);
+        ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(x0, y + 6, x1 - x0 - 1, 1);
+      }
+    }
     consoleText(fraction <= 0.50 ? 'Repair' : max + ' HP', bx, by + bh - 3, 11, fraction <= 0.50 ? color : UIT_DIM);
   }
   function drawCargoBay(bx, by, bw, bh) {
     var used = cargoUsed(), capacity = Math.max(1, maxCargo), value = 0;
     var full = used >= capacity;
     for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
-    drawBayLabel(bx, by, bw, 'CARGO');
-    if (full) consoleText('FULL', bx + bw, by + 11, 11, UIT_GOLD, 'right');
+    var hover = consoleCargoHovered();
+    var open = typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen;
+    // A raised hatch makes this instrument visibly operable. It is the one
+    // console reading that opens a view, so it earns the brass label and edge.
+    ctx.fillStyle = hover || open ? UIT_PANEL_SEL : UIT_PANEL;
+    ctx.fillRect(bx - 3, by - 2, bw + 6, bh + 3);
+    ctx.fillStyle = hover || open ? UIT_GOLD : UIMAT_WELD;
+    ctx.fillRect(bx - 3, by - 2, bw + 6, 1);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    ctx.fillRect(bx - 3, by + bh, bw + 6, 1);
+    consoleText('CARGO', bx, by + 11, 11, UIT_GOLD);
+    consoleText('>', bx + bw - 1, by + 11, 12, UIT_GOLD, 'right');
     consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
-    // A single fill reports capacity consistently, even for near-black coal.
+    if (bw >= 130 && cargo.length) {
+      // Actual ore art, not arbitrary colored chips. A narrow hatch keeps its
+      // capacity number; every specimen is available in the full manifest.
+      var samples = [], seen = {};
+      for (var c = cargo.length - 1; c >= 0 && samples.length < 2; c--) {
+        var type = cargoType(cargo[c]);
+        if (!seen[type]) { samples.push(cargo[c]); seen[type] = true; }
+      }
+      for (var j = 0; j < samples.length; j++) {
+        ctx.save();
+        ctx.translate(bx + bw - 23 * (j + 1), by + 19);
+        ctx.scale(0.625, 0.625);
+        drawLedgerSpecimen(0, 0, cargoType(samples[j]), j);
+        if (cargoShiny(samples[j])) { ctx.fillStyle = UIT_GOLD_HI; ctx.fillRect(25, 1, 5, 2); }
+        ctx.restore();
+      }
+    }
     consoleMeter(bx, by, bw, bh, used / capacity, full ? UIT_GOLD : UIT_BODY);
-    if (value > 0) consoleText(consoleMoney(value, bw, 11), bx, by + bh - 3, 11, UIT_DIM);
+    if (value > 0) consoleText(consoleMoney(value, bw - (full ? 33 : 0), 11), bx, by + bh - 3, 11, UIT_MONEY);
+    else consoleText('View hold', bx, by + bh - 3, 11, UIT_DIM);
+    if (full) consoleText('FULL', bx + bw, by + bh - 3, 11, UIT_GOLD, 'right');
   }
   function drawDepthDisplay(bx, by, bw, bh) {
     var depth = Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
     drawBayLabel(bx, by, bw, 'DEPTH');
-    consoleValue('' + depth, 'm', bx, by, bw, bh, UIT_TEXT, 24);
+    var digits = ('000' + depth).slice(-4);
+    var digitW = Math.min(18, Math.floor((bw - 15) / 4));
+    var size = Math.max(16, Math.min(23, Math.floor((digitW - 1) / 0.6)));
+    var base = by + Math.max(size + 15, bh >= 68 ? 39 : 33), top = base - size;
+    if (digitW < 11 || depth > 9999) {
+      consoleValue('' + depth, 'm', bx, by, bw, bh, UIT_TEXT, 22);
+      return;
+    }
+    // Four rolling-counter windows, with leading zeroes kept quiet. Shading
+    // suggests the drum surface without adding movement to the cached reading.
+    var significant = false;
+    for (var i = 0; i < 4; i++) {
+      var dx = bx + i * digitW;
+      ctx.fillStyle = UIT_EDGE; ctx.fillRect(dx, top - 2, digitW - 1, size + 6);
+      ctx.fillStyle = UIMAT_PLATE_SHADOW; ctx.fillRect(dx + 1, top - 1, digitW - 3, 2);
+      ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(dx, base + 3, digitW - 1, 1);
+      if (digits[i] !== '0' || i === 3) significant = true;
+      consoleText(digits[i], dx + 1, base, size, significant ? UIT_TEXT : UIMAT_WELD, 'left', true);
+    }
+    consoleText('m', bx + digitW * 4 + 4, base, 11, UIT_DIM);
   }
   function consoleSaveState() {
     if (SAVE_DISABLED) return 'off';
@@ -48222,6 +48361,256 @@
     if (wide) ukMono('LEFT / RIGHT', footX, L.prev.y + 35, 11, UIT_DIM, 'center');
     ctx.restore();
   }
+  // ===== Cargo manifest: inspect the current haul, without changing it =====
+  // The console hatch and I open this page. It owns input and freezes the
+  // mine while open; the pause overlay remains the owner on focus loss.
+  var cargoManifestOpen = false;
+  var cargoManifestPage = 0;
+  var cargoManifestHover = null;
+  var cargoManifestWheelDelta = 0;
+  var cargoManifestWheelAt = 0;
+
+  function cargoManifestCanOpen() {
+    return !gamePaused && !gameOver && !gameWon && !shopOpen &&
+      shopState === 'closed' && !ledgerOpen && !itemWheel.open &&
+      !(typeof bathMode !== 'undefined' && bathMode) &&
+      !seamCreditsOn && !seamExtractTiles && introPhase === 'done';
+  }
+
+  function cargoManifestClearInput() {
+    for (var key in keys) keys[key] = false;
+    dpad.left = dpad.right = dpad.up = dpad.down = false;
+    touch.active = false;
+    dpadTouchId = null;
+    shopTapCandidate = null;
+    shopDrag = null;
+    restartConfirmT = 0;
+    if (player) player.thrusting = false;
+    if (itemWheel.open) closeItemWheel(false);
+    var drill = drillSfx();
+    try {
+      if (drill && drill.stop) drill.stop();
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio) {
+        if (SluiceAudio.flight) SluiceAudio.flight({ spool: 0, climb: 0, fx: player ? player.fx : {}, dt: 0 });
+        if (SluiceAudio.fall) SluiceAudio.fall(false);
+      }
+      // Re-arm the edge so a still-falling rig restores its filter on exit.
+      if (typeof _audio !== 'undefined' && _audio) _audio.falling = false;
+    } catch (e) { /* an audio device failure must not block the inspector */ }
+    drillSfxActive = false;
+    drillSfxMat = null;
+    drillSfxStopT = 0;
+  }
+
+  function cargoManifestToggle() {
+    if (!cargoManifestOpen && !cargoManifestCanOpen()) return false;
+    cargoManifestOpen = !cargoManifestOpen;
+    cargoManifestPage = 0;
+    cargoManifestHover = null;
+    cargoManifestWheelDelta = 0;
+    cargoManifestClearInput();
+    canvas.style.cursor = '';
+    return cargoManifestOpen;
+  }
+
+  // consoleBayLayout is logical; all pointer handlers use CSS pixels.
+  function cargoManifestButtonRect() {
+    if (!UI_NEW) return null;
+    var scale = consoleScale();
+    for (var i = 0; i < consoleBayLayout.length; i++) {
+      var L = consoleBayLayout[i];
+      if (L.bay.id !== 'cargo') continue;
+      return { x: Math.floor(L.bx * scale), y: Math.floor(L.by * scale),
+        w: Math.ceil(L.bw * scale), h: Math.ceil(L.bh * scale) };
+    }
+    return null;
+  }
+
+  function cargoManifestContains(r, x, y) {
+    return !!r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+  }
+
+  function cargoManifestRows() {
+    var groups = {}, rows = [];
+    var oreOrder = ledgerOreList();
+    for (var i = 0; i < cargo.length; i++) {
+      var unit = cargo[i], type = cargoType(unit), shiny = cargoShiny(unit);
+      var key = type + ':' + (shiny ? 'shiny' : 'regular');
+      var row = groups[key];
+      if (!row) {
+        var def = ORES[type];
+        row = groups[key] = { key: key, type: type, shiny: shiny,
+          label: def ? def.label || type : 'Unknown mineral', quantity: 0,
+          unitSlots: cargoUnitSlots(unit), slots: 0,
+          unitValue: cargoUnitValue(unit), total: 0,
+          specimenIndex: Math.max(0, oreOrder.indexOf(type)) };
+        rows.push(row);
+      }
+      row.quantity++;
+      row.slots += cargoUnitSlots(unit);
+      row.total += cargoUnitValue(unit);
+    }
+    rows.sort(function (a, b) {
+      return a.specimenIndex - b.specimenIndex || Number(a.shiny) - Number(b.shiny);
+    });
+    return rows;
+  }
+
+  function cargoManifestSummary(rows) {
+    rows = rows || cargoManifestRows();
+    var total = 0;
+    for (var i = 0; i < rows.length; i++) total += rows[i].total;
+    return { quantity: cargo.length, slots: cargoUsed(), capacity: maxCargo, total: total };
+  }
+
+  function cargoManifestLayout(rows) {
+    rows = rows || cargoManifestRows();
+    var compact = viewH < 420;
+    var short = viewH < 300;
+    var margin = compact ? 8 : 16;
+    var w = Math.max(200, Math.min(880, viewW - margin * 2));
+    var pad = w < 440 ? 14 : 18;
+    var wide = w >= 600;
+    var headerH = wide ? (compact ? 82 : 100) : (compact ? 64 : 84);
+    var rowH = wide ? (compact ? 60 : 72) : (short ? 74 : 94);
+    var gap = 6, footerH = 78;
+    var perPage = Math.max(1, Math.min(Math.max(1, rows.length),
+      Math.floor((viewH - margin * 2 - headerH - footerH + gap) / (rowH + gap))));
+    var pages = Math.max(1, Math.ceil(rows.length / perPage));
+    cargoManifestPage = Math.max(0, Math.min(pages - 1, cargoManifestPage));
+    var listH = perPage * rowH + (perPage - 1) * gap;
+    var h = headerH + listH + footerH;
+    var x = Math.floor((viewW - w) / 2), y = Math.floor((viewH - h) / 2);
+    var footY = y + headerH + listH;
+    return { x: x, y: y, w: w, h: h, pad: pad, wide: wide, short: short, compact: compact,
+      listX: x + pad, listY: y + headerH, listW: w - pad * 2, listH: listH,
+      rowH: rowH, gap: gap, perPage: perPage, pages: pages, footerY: footY,
+      close: { x: x + w - pad - 44, y: y + (compact ? 8 : 18), w: 44, h: 44 },
+      prev: { x: x + pad, y: footY + 28, w: 80, h: 44 },
+      next: { x: x + w - pad - 80, y: footY + 28, w: 80, h: 44 } };
+  }
+
+  function cargoManifestHitAt(x, y, L) {
+    if (cargoManifestContains(L.close, x, y)) return 'close';
+    if (cargoManifestContains(L.prev, x, y)) return 'prev';
+    if (cargoManifestContains(L.next, x, y)) return 'next';
+    if (!cargoManifestContains(L, x, y)) return 'backdrop';
+    return null;
+  }
+
+  function cargoManifestMovePage(direction) {
+    var L = cargoManifestLayout();
+    cargoManifestPage = Math.max(0, Math.min(L.pages - 1, cargoManifestPage + direction));
+  }
+
+  function cargoManifestPointerDown(x, y) {
+    if (!cargoManifestOpen) return false;
+    var hit = cargoManifestHitAt(x, y, cargoManifestLayout());
+    if (hit === 'close' || hit === 'backdrop') cargoManifestToggle();
+    else if (hit === 'prev') cargoManifestMovePage(-1);
+    else if (hit === 'next') cargoManifestMovePage(1);
+    return true;
+  }
+
+  function cargoManifestPointerMove(x, y) {
+    if (!cargoManifestOpen) return false;
+    cargoManifestHover = cargoManifestHitAt(x, y, cargoManifestLayout());
+    canvas.style.cursor = cargoManifestHover ? 'pointer' : '';
+    return true;
+  }
+
+  function cargoManifestKeyDown(key) {
+    if (!cargoManifestOpen) return false;
+    if (key === 'Escape' || key === 'i' || key === 'I' || key === 'x' || key === 'X') cargoManifestToggle();
+    else if (key === 'ArrowLeft' || key === 'PageUp') cargoManifestMovePage(-1);
+    else if (key === 'ArrowRight' || key === 'PageDown') cargoManifestMovePage(1);
+    else if (key === 'Home') cargoManifestPage = 0;
+    else if (key === 'End') cargoManifestPage = cargoManifestLayout().pages - 1;
+    return true;
+  }
+
+  function cargoManifestWheel(delta) {
+    if (!cargoManifestOpen) return false;
+    var now = performance.now();
+    if (now - cargoManifestWheelAt < 220) return true;
+    cargoManifestWheelDelta += delta;
+    if (Math.abs(cargoManifestWheelDelta) >= 70) {
+      cargoManifestMovePage(cargoManifestWheelDelta > 0 ? 1 : -1);
+      cargoManifestWheelDelta = 0;
+      cargoManifestWheelAt = now;
+    }
+    return true;
+  }
+
+  function drawCargoManifest() {
+    if (!cargoManifestOpen) return;
+    var rows = cargoManifestRows(), summary = cargoManifestSummary(rows);
+    var L = cargoManifestLayout(rows);
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ukFizzDraw(1);
+    ctx.fillStyle = 'rgba(9,11,16,0.5)';
+    ctx.fillRect(0, viewH - consoleHeight(), viewW, consoleHeight());
+    ukPanelBox(L.x, L.y, L.w, L.h);
+    nsText('CARGO HOLD', L.listX, L.y + (L.compact ? 14 : 23), L.w < 440 ? 18 : 24, UIT_TEXT);
+    ukButton(L.close, 'X', 'ghost', cargoManifestHover === 'close', 0, 14);
+    var summaryText = summary.quantity.toLocaleString() + (summary.quantity === 1 ? ' item' : ' items') +
+      ' / ' + summary.slots.toLocaleString() + '/' + summary.capacity.toLocaleString() + ' slots';
+    ukMono(summaryText, L.listX, L.y + (L.compact ? 50 : 65), 11, UIT_BODY);
+    if (L.wide) {
+      ukMono('MINERAL', L.listX + 56, L.listY - 10, 11, UIT_DIM);
+      ukMono('QTY', L.listX + L.listW - 246, L.listY - 10, 11, UIT_DIM, 'right');
+      ukMono('EACH', L.listX + L.listW - 128, L.listY - 10, 11, UIT_DIM, 'right');
+      ukMono('TOTAL', L.listX + L.listW - 12, L.listY - 10, 11, UIT_DIM, 'right');
+    }
+
+    var first = cargoManifestPage * L.perPage;
+    var end = Math.min(rows.length, first + L.perPage);
+    for (var i = first; i < end; i++) {
+      var row = rows[i];
+      var x = L.listX, y = L.listY + (i - first) * (L.rowH + L.gap);
+      ukInset(x, y, L.listW, L.rowH);
+      var sx = x + 12, sy = y + (L.wide ? Math.floor((L.rowH - TILE) / 2) : 8);
+      if (ORES[row.type]) {
+        drawLedgerSpecimen(sx, sy, row.type, row.specimenIndex);
+        if (row.shiny) drawShinyTile(sx, sy, 4001 + row.specimenIndex * 37, 4007 + row.specimenIndex * 53, 0);
+      } else {
+        ukMono('?', sx + TILE / 2, sy + 23, 19, UIT_DIM, 'center');
+      }
+      ctx.strokeStyle = row.shiny ? UIT_GOLD : UIT_EDGE;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(sx - 0.5, sy - 0.5, TILE + 1, TILE + 1);
+      var ty = y + (L.wide ? 24 : L.short ? 18 : 23);
+      ukMono(row.label, x + 56, ty, 13, UIT_TEXT, 'left', true);
+      ukMono((row.shiny ? 'Shiny' : 'Regular') + ' / ' + row.unitSlots +
+        (row.unitSlots === 1 ? ' slot each' : ' slots each'), x + 56, ty + 17, 11, row.shiny ? UIT_MONEY : UIT_DIM);
+      if (L.wide) {
+        ukMono(row.quantity.toLocaleString(), x + L.listW - 246, y + 34, 13, UIT_BODY, 'right');
+        ukMono('$' + row.unitValue.toLocaleString(), x + L.listW - 128, y + 34, 13, UIT_BODY, 'right');
+        ukMono('$' + row.total.toLocaleString(), x + L.listW - 12, y + 34, 14, UIT_MONEY, 'right');
+      } else {
+        var metaY = y + (L.short ? 51 : 64);
+        ukMono('Qty ' + row.quantity.toLocaleString(), x + 12, metaY, 11, UIT_BODY);
+        ukMono('Each $' + row.unitValue.toLocaleString(), x + L.listW - 12, metaY, 11, UIT_BODY, 'right');
+        ukMono(row.slots.toLocaleString() + ' slots', x + 12, metaY + 17, 11, UIT_DIM);
+        ukMono('Total $' + row.total.toLocaleString(), x + L.listW - 12, metaY + 17, 11, UIT_MONEY, 'right');
+      }
+    }
+    if (!rows.length) {
+      ukInset(L.listX, L.listY, L.listW, L.listH);
+      var ey = L.listY + Math.floor(L.listH / 2);
+      ukMono('Your hold is empty.', L.x + L.w / 2, ey - 3, 13, UIT_TEXT, 'center');
+      ukMono('Mine a mineral to see its value here.', L.x + L.w / 2, ey + 18, 11, UIT_DIM, 'center');
+    }
+
+    ukMono('HAUL VALUE', L.listX, L.footerY + 20, 11, UIT_DIM);
+    ukMono('$' + summary.total.toLocaleString(), L.listX + L.listW, L.footerY + 21, 16, UIT_MONEY, 'right', true);
+    ukButton(L.prev, 'PREV', cargoManifestPage > 0 ? 'ghost' : 'locked', cargoManifestHover === 'prev', 0, 11);
+    ukButton(L.next, 'NEXT', cargoManifestPage < L.pages - 1 ? 'ghost' : 'locked', cargoManifestHover === 'next', 0, 11);
+    ukMono((cargoManifestPage + 1) + ' / ' + L.pages, L.x + L.w / 2, L.prev.y + 27, 12, UIT_BODY, 'center');
+    ctx.restore();
+  }
   // ========================================================================
   // v11.10 — Item radial wheel (UI_STYLE.md §8).
   // Replaces the four legacy HUD chips (teleporter, balloon, bombSmall,
@@ -48872,14 +49261,34 @@
   // the offscreen cache) and records each bay's rect for the live pass.
   function drawConsoleFrameContent(R) {
     consoleBayLayout.length = 0;
-    // One quiet chassis and one continuous glass field. Only the four mount
-    // screws remain; a repeating rivet pattern competed with the readouts.
-    ctx.fillStyle = UIT_PANEL;
+    // A folded steel housing with a narrow brass seam and a glass instrument
+    // bed. All wear is deterministic and cached; it never shimmers in play.
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
     ctx.fillRect(0, R.y, R.viewW, R.h);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(0, R.y, R.viewW, 1);
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillRect(R.x, R.y, R.w, R.h);
+    ctx.fillStyle = UI_OUTLINE;
+    ctx.fillRect(0, R.y, R.viewW, 2);
+    ctx.fillRect(0, R.y + R.h - 2, R.viewW, 2);
+    ctx.fillStyle = UIMAT_WELD;
+    ctx.fillRect(R.x + 2, R.y + 2, R.w - 4, 1);
+    ctx.fillStyle = UIT_GOLD;
+    ctx.fillRect(R.bodyX + 2, R.y + 3, R.bodyW - 4, 1);
     ctx.fillStyle = UIT_INSET;
-    ctx.fillRect(R.bodyX, R.y + 3, R.bodyW, R.stacked ? 77 : R.h - 3);
+    ctx.fillRect(R.bodyX, R.y + 5, R.bodyW, R.h - 10);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+    ctx.fillRect(R.bodyX, R.y + R.h - 5, R.bodyW, 1);
+    ctx.fillStyle = 'rgba(201,199,184,0.04)';
+    for (var wi = 0; wi < 9; wi++) {
+      var sx = R.x + 14 + ((wi * 113 + 19) % Math.max(1, Math.floor(R.w - 40)));
+      ctx.fillRect(sx, R.y + R.h - 3, Math.min(9, R.x + R.w - sx), 1);
+    }
+    // Wide screens have a small maker's stamp on the left mounting wing.
+    if (R.x >= 112) {
+      consoleText('SLUICE', R.x / 2, R.y + R.h / 2 + 4, 12, UIT_DIM, 'center', true);
+      ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+      ctx.fillRect(R.x / 2 - 21, R.y + R.h / 2 + 13, 42, 1);
+    }
     if (consoleCapStyleId !== 7) {
       drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
       drawConsoleCap(R.x + R.w - R.capW, R.y, R.capW, R.h, 'right');
@@ -48964,7 +49373,8 @@
       // Capacity upgrades repaint even when the hold contents stay unchanged.
       var contents = [];
       for (var i = 0; i < cargo.length; i++) contents.push(cargoType(cargo[i]) + ':' + cargoUnitSlots(cargo[i]) + ':' + cargoUnitValue(cargo[i]));
-      return maxCargo + '/' + cargoUsed() + '/' + contents.join(',');
+      return maxCargo + '/' + cargoUsed() + '/' + contents.join(',') + '/' + consoleCargoHovered() + '/' +
+        (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen);
     }
     if (id === 'cash') {
       var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
@@ -49026,12 +49436,13 @@
       if (sig === consoleBaySigs[i]) continue;   // gauge unchanged: keep the cached pixels
       consoleBaySigs[i] = sig;
       var _it0 = devMode ? performance.now() : 0;
-      // Repaint this bay into the layer: clear its rect (2px pad; bays sit in
-      // >=6px gutters so pads can't collide) and run the ordinary instrument
+      // Repaint this bay into the layer: clear its rect (4px pad; bays sit in
+      // >=12px gutters so pads can't collide) and run the ordinary instrument
       // draw with ctx pointed at the layer (the rebuildConsoleFrame pattern).
       consoleInstCtx.setTransform(ds, 0, 0, ds, 0, -consY);
       consoleInstCtx.imageSmoothingEnabled = false;
-      consoleInstCtx.clearRect(L.bx - 2, L.by - 2, L.bw + 4, L.bh + 4);
+      // Four-pixel clearance includes the raised cargo hatch rim.
+      consoleInstCtx.clearRect(L.bx - 4, L.by - 4, L.bw + 8, L.bh + 8);
       var oldCtx = ctx;
       ctx = consoleInstCtx;
       drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
@@ -58576,7 +58987,7 @@
      keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
   var _pauseBtnHiddenForShop = null;
   function syncPauseBtnForShop() {
-    var up = shopOpen || shopState !== 'closed' || ledgerOpen;
+    var up = shopOpen || shopState !== 'closed' || ledgerOpen || cargoManifestOpen;
     if (up === _pauseBtnHiddenForShop) return;
     _pauseBtnHiddenForShop = up;
     var pb = document.getElementById('gm-pause-btn');
@@ -58585,6 +58996,7 @@
 
   /* ---- Game Loop ---- */
   var ledgerPadHeld = {};
+  var cargoManifestPadHeld = {};
   function loop(time) {
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
@@ -58648,6 +59060,27 @@
     if (terrainChunkRebuildBoostFrames > 0) terrainChunkRebuildBoostFrames--;
     if (dt > 1 / 45) fluidPerfStress = Math.min(2, fluidPerfStress + dt * 4);
     else if (dt < 1 / 55) fluidPerfStress = Math.max(0, fluidPerfStress - dt * 1.5);
+
+    // The cargo inspector owns the full frame before gameplay hotkeys,
+    // purchases, damage, or consumables can run. I also accepts polled input.
+    if (!cargoManifestOpen && (keys['i'] || keys['I'])) {
+      keys['i'] = keys['I'] = false;
+      cargoManifestToggle();
+    }
+    if (cargoManifestOpen) {
+      if (typeof gamepadTick === 'function') gamepadTick(dt);
+      var manifestNow = {};
+      for (var manifestKey in keys) {
+        manifestNow[manifestKey] = !!keys[manifestKey];
+        if (keys[manifestKey] && !cargoManifestPadHeld[manifestKey]) cargoManifestKeyDown(manifestKey);
+        keys[manifestKey] = false;
+      }
+      cargoManifestPadHeld = manifestNow;
+      render();
+      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      return;
+    }
+    cargoManifestPadHeld = {};
 
     // The collection page owns input and holds the mine still while browsing.
     // Poll the controller here because the normal poll is below gameplay input.

@@ -74,13 +74,15 @@ buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, 
 enables wander/hop/startle + swim states), fall damage (v25.59: `FALL_IMPACT_FX`
 on, a bad drop can kill on bare rock), flight (ONE unified model everywhere since v25.49:
 `flyTune` + the FLY FEEL presets), the night sky/weather/mountains/trees, audio (music + the
-procedural SFX bank), save/respawn, the Great Seam endgame chamber, the Mineral Ledger.
+procedural SFX bank), save/respawn, the Great Seam endgame chamber, the Mineral Ledger,
+and the Cargo Hold inspector (click the console's Cargo hatch or press I to see
+quantities, unit prices, and haul value while the mine is paused).
 
 ---
 
 ## Fragments that matter for the simple game
 
-(The full 66-fragment map is in `docs/game/AGENTS.md`. These are the ones you will actually touch.)
+(The full fragment map is in `docs/game/AGENTS.md`. These are the ones you will actually touch.)
 
 | Fragment | What |
 |---|---|
@@ -95,6 +97,7 @@ procedural SFX bank), save/respawn, the Great Seam endgame chamber, the Mineral 
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
 | `245-ui-kit.js` | the reusable modal kit: fizzed-world backdrop + the catalog modal (tabs/list/detail/action) |
 | `250/270/280-shop-*.js` | the STORE modal spec + routing (250) and its workshop/shelf item builders (270/280) |
+| `297-cargo-manifest.js` | current cargo inspection: grouped mineral quantities, exact prices, responsive pages, and modal input |
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
 | `340-jello.js` | slime soft bodies, continuous gel rendering, and the topology-independent actor-intent seam |
 | `350-gameloop-boot.js` | the game loop + boot |

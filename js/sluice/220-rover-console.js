@@ -377,13 +377,47 @@
     var unit = divisor === 1e9 ? 'b' : divisor === 1e6 ? 'm' : 'k';
     return '$' + (Math.floor(n / divisor * 10) / 10).toFixed(1) + unit;
   }
+  // Gauges keep their large numerical readings, with material cues particular
+  // to each instrument rather than six identical bars.
   function consoleMeter(bx, by, bw, bh, fraction, color) {
-    var y = Math.round(by + bh - 22);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(bx, y, bw, 4);
-    ctx.fillStyle = color;
-    ctx.fillRect(bx, y, Math.round(bw * Math.max(0, Math.min(1, fraction))), 4);
+    var y = Math.round(by + bh - 22), fill = Math.max(0, Math.min(1, fraction));
+    ctx.fillStyle = UIT_EDGE; ctx.fillRect(bx, y - 1, bw, 7);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW; ctx.fillRect(bx + 1, y, bw - 2, 4);
+    ctx.fillStyle = color; ctx.fillRect(bx + 1, y, Math.round((bw - 2) * fill), 4);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(bx, y + 5, bw, 1);
     return y;
+  }
+  function consoleCargoHovered() {
+    if (isMobile || !mouseCursor) return false;
+    var scale = consoleScale();
+    for (var i = 0; i < consoleBayLayout.length; i++) {
+      var cell = consoleBayLayout[i];
+      if (cell.bay.id === 'cargo') return mouseCursor.x >= cell.bx * scale &&
+        mouseCursor.x <= (cell.bx + cell.bw) * scale && mouseCursor.y >= cell.by * scale &&
+        mouseCursor.y <= (cell.by + cell.bh) * scale;
+    }
+    return false;
+  }
+  function consoleFuelDial(cx, cy, radius, fraction, color) {
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = UIMAT_WELD;
+    ctx.beginPath(); ctx.arc(cx, cy, radius, Math.PI, Math.PI * 2); ctx.stroke();
+    for (var i = 0; i <= 4; i++) {
+      var a = Math.PI + i * Math.PI / 4;
+      ctx.strokeStyle = i === 0 ? UIT_RED : UIMAT_WELD;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * (radius - 2), cy + Math.sin(a) * (radius - 2));
+      ctx.lineTo(cx + Math.cos(a) * (radius - 5), cy + Math.sin(a) * (radius - 5));
+      ctx.stroke();
+    }
+    var angle = Math.PI + Math.PI * fraction;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * (radius - 5), cy + Math.sin(angle) * (radius - 5)); ctx.stroke();
+    ctx.fillStyle = UIT_GOLD; ctx.fillRect(cx - 2, cy - 2, 4, 4);
+    ctx.fillStyle = UIT_TEXT; ctx.fillRect(cx - 1, cy - 1, 1, 1);
+    ctx.restore();
   }
   function consoleFuelReading() {
     var capacity = Math.max(1, maxFuel);
@@ -392,14 +426,24 @@
     var shortfall = home > 0.5 && player.fuel < home;
     return { fraction: fraction, percent: Math.floor(fraction * 100),
       home: home, homePercent: Math.ceil(home / capacity * 100), shortfall: shortfall,
-      color: shortfall || fraction < 0.15 ? UIT_RED : fraction < 0.30 ? UIT_GOLD : UIT_BODY };
+      color: shortfall || fraction < 0.15 ? UIT_RED : fraction < 0.30 ? UIT_GOLD : UIT_TEXT };
   }
   function drawFuelGauge(bx, by, bw, bh) {
     var fuel = consoleFuelReading();
     drawBayLabel(bx, by, bw, 'FUEL');
     if (reserveFuel > 0) consoleText(reserveFuel + ' spare', bx + bw, by + 11, 11, UIT_DIM, 'right');
     consoleValue('' + fuel.percent, '%', bx, by, bw, bh, fuel.color);
+    if (bw >= 116) consoleFuelDial(bx + bw - 21, by + 39, 19, fuel.fraction, fuel.color);
     var y = consoleMeter(bx, by, bw, bh, fuel.fraction, fuel.color);
+    // Etched quarter marks and a brass slider make the linear backup useful
+    // even on phones where the small round dial would crowd the number.
+    for (var i = 0; i <= 4; i++) {
+      ctx.fillStyle = UIMAT_WELD;
+      ctx.fillRect(bx + Math.round((bw - 1) * i / 4), y + 7, 1, 2);
+    }
+    var needle = bx + Math.round((bw - 3) * fuel.fraction);
+    ctx.fillStyle = fuel.fraction < 0.30 ? fuel.color : UIT_GOLD;
+    ctx.fillRect(needle, y - 2, 2, 8);
     if (fuel.home > 0.5) {
       // A labelled notch replaces the unexplained dot on the old dial.
       var x = Math.round(bx + Math.min(1, fuel.home / maxFuel) * (bw - 2));
@@ -430,24 +474,83 @@
     var color = fraction <= 0.25 ? UIT_RED : fraction <= 0.50 ? UIT_GOLD : UIT_BODY;
     drawBayLabel(bx, by, bw, 'HULL');
     consoleValue('' + Math.ceil(fraction * 100), '%', bx, by, bw, bh, color);
-    consoleMeter(bx, by, bw, bh, fraction, color);
+    var y = Math.round(by + bh - 23);
+    var plates = Math.min(24, 6 + (Math.max(1, upgrades.hullLevel || 1) - 1) * 3);
+    // A tier adds physical armor segments; damage empties them from the right.
+    for (var i = 0; i < plates; i++) {
+      var x0 = Math.round(bx + bw * i / plates), x1 = Math.round(bx + bw * (i + 1) / plates);
+      var remaining = Math.max(0, Math.min(1, fraction * plates - i));
+      ctx.fillStyle = UIT_EDGE; ctx.fillRect(x0, y, x1 - x0 - 1, 8);
+      if (remaining > 0) {
+        ctx.fillStyle = color; ctx.fillRect(x0, y + 1, Math.max(1, Math.round((x1 - x0 - 1) * remaining)), 5);
+        ctx.fillStyle = UIT_TEXT; ctx.fillRect(x0, y + 1, Math.max(1, Math.round((x1 - x0 - 1) * remaining)), 1);
+        ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(x0, y + 6, x1 - x0 - 1, 1);
+      }
+    }
     consoleText(fraction <= 0.50 ? 'Repair' : max + ' HP', bx, by + bh - 3, 11, fraction <= 0.50 ? color : UIT_DIM);
   }
   function drawCargoBay(bx, by, bw, bh) {
     var used = cargoUsed(), capacity = Math.max(1, maxCargo), value = 0;
     var full = used >= capacity;
     for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
-    drawBayLabel(bx, by, bw, 'CARGO');
-    if (full) consoleText('FULL', bx + bw, by + 11, 11, UIT_GOLD, 'right');
+    var hover = consoleCargoHovered();
+    var open = typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen;
+    // A raised hatch makes this instrument visibly operable. It is the one
+    // console reading that opens a view, so it earns the brass label and edge.
+    ctx.fillStyle = hover || open ? UIT_PANEL_SEL : UIT_PANEL;
+    ctx.fillRect(bx - 3, by - 2, bw + 6, bh + 3);
+    ctx.fillStyle = hover || open ? UIT_GOLD : UIMAT_WELD;
+    ctx.fillRect(bx - 3, by - 2, bw + 6, 1);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    ctx.fillRect(bx - 3, by + bh, bw + 6, 1);
+    consoleText('CARGO', bx, by + 11, 11, UIT_GOLD);
+    consoleText('>', bx + bw - 1, by + 11, 12, UIT_GOLD, 'right');
     consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
-    // A single fill reports capacity consistently, even for near-black coal.
+    if (bw >= 130 && cargo.length) {
+      // Actual ore art, not arbitrary colored chips. A narrow hatch keeps its
+      // capacity number; every specimen is available in the full manifest.
+      var samples = [], seen = {};
+      for (var c = cargo.length - 1; c >= 0 && samples.length < 2; c--) {
+        var type = cargoType(cargo[c]);
+        if (!seen[type]) { samples.push(cargo[c]); seen[type] = true; }
+      }
+      for (var j = 0; j < samples.length; j++) {
+        ctx.save();
+        ctx.translate(bx + bw - 23 * (j + 1), by + 19);
+        ctx.scale(0.625, 0.625);
+        drawLedgerSpecimen(0, 0, cargoType(samples[j]), j);
+        if (cargoShiny(samples[j])) { ctx.fillStyle = UIT_GOLD_HI; ctx.fillRect(25, 1, 5, 2); }
+        ctx.restore();
+      }
+    }
     consoleMeter(bx, by, bw, bh, used / capacity, full ? UIT_GOLD : UIT_BODY);
-    if (value > 0) consoleText(consoleMoney(value, bw, 11), bx, by + bh - 3, 11, UIT_DIM);
+    if (value > 0) consoleText(consoleMoney(value, bw - (full ? 33 : 0), 11), bx, by + bh - 3, 11, UIT_MONEY);
+    else consoleText('View hold', bx, by + bh - 3, 11, UIT_DIM);
+    if (full) consoleText('FULL', bx + bw, by + bh - 3, 11, UIT_GOLD, 'right');
   }
   function drawDepthDisplay(bx, by, bw, bh) {
     var depth = Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
     drawBayLabel(bx, by, bw, 'DEPTH');
-    consoleValue('' + depth, 'm', bx, by, bw, bh, UIT_TEXT, 24);
+    var digits = ('000' + depth).slice(-4);
+    var digitW = Math.min(18, Math.floor((bw - 15) / 4));
+    var size = Math.max(16, Math.min(23, Math.floor((digitW - 1) / 0.6)));
+    var base = by + Math.max(size + 15, bh >= 68 ? 39 : 33), top = base - size;
+    if (digitW < 11 || depth > 9999) {
+      consoleValue('' + depth, 'm', bx, by, bw, bh, UIT_TEXT, 22);
+      return;
+    }
+    // Four rolling-counter windows, with leading zeroes kept quiet. Shading
+    // suggests the drum surface without adding movement to the cached reading.
+    var significant = false;
+    for (var i = 0; i < 4; i++) {
+      var dx = bx + i * digitW;
+      ctx.fillStyle = UIT_EDGE; ctx.fillRect(dx, top - 2, digitW - 1, size + 6);
+      ctx.fillStyle = UIMAT_PLATE_SHADOW; ctx.fillRect(dx + 1, top - 1, digitW - 3, 2);
+      ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(dx, base + 3, digitW - 1, 1);
+      if (digits[i] !== '0' || i === 3) significant = true;
+      consoleText(digits[i], dx + 1, base, size, significant ? UIT_TEXT : UIMAT_WELD, 'left', true);
+    }
+    consoleText('m', bx + digitW * 4 + 4, base, 11, UIT_DIM);
   }
   function consoleSaveState() {
     if (SAVE_DISABLED) return 'off';

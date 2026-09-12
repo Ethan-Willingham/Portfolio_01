@@ -22,7 +22,8 @@
       // Capacity upgrades repaint even when the hold contents stay unchanged.
       var contents = [];
       for (var i = 0; i < cargo.length; i++) contents.push(cargoType(cargo[i]) + ':' + cargoUnitSlots(cargo[i]) + ':' + cargoUnitValue(cargo[i]));
-      return maxCargo + '/' + cargoUsed() + '/' + contents.join(',');
+      return maxCargo + '/' + cargoUsed() + '/' + contents.join(',') + '/' + consoleCargoHovered() + '/' +
+        (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen);
     }
     if (id === 'cash') {
       var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
@@ -84,12 +85,13 @@
       if (sig === consoleBaySigs[i]) continue;   // gauge unchanged: keep the cached pixels
       consoleBaySigs[i] = sig;
       var _it0 = devMode ? performance.now() : 0;
-      // Repaint this bay into the layer: clear its rect (2px pad; bays sit in
-      // >=6px gutters so pads can't collide) and run the ordinary instrument
+      // Repaint this bay into the layer: clear its rect (4px pad; bays sit in
+      // >=12px gutters so pads can't collide) and run the ordinary instrument
       // draw with ctx pointed at the layer (the rebuildConsoleFrame pattern).
       consoleInstCtx.setTransform(ds, 0, 0, ds, 0, -consY);
       consoleInstCtx.imageSmoothingEnabled = false;
-      consoleInstCtx.clearRect(L.bx - 2, L.by - 2, L.bw + 4, L.bh + 4);
+      // Four-pixel clearance includes the raised cargo hatch rim.
+      consoleInstCtx.clearRect(L.bx - 4, L.by - 4, L.bw + 8, L.bh + 8);
       var oldCtx = ctx;
       ctx = consoleInstCtx;
       drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);

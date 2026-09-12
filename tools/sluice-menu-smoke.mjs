@@ -80,6 +80,36 @@ window.__menuSmoke = {
     this.pixels=pixels;
     return {hash:hash,maxDiff:maxDiff,changed:changed,large:large,total:pixels.length};
   },
+  toggleCargo: function () { return cargoManifestToggle(); },
+  seedCargo: function (kind) {
+    player.x = nearestTownStationCol() * TILE - 9 * TILE;
+    player.y = DECK_ROW * TILE - PLAYER_H; player.vx = player.vy = 0;
+    player.fuel=maxFuel; player.hull=getMaxHull();
+    cargo=[];
+    if(kind === 'mixed') cargo=[{type:'coal'},{type:'coal'}, {type:'gold'},{type:'gold'},{type:'gold'},
+      {type:'gold',shiny:true},{type:'gold',shiny:true},{type:'unobtanium',shiny:true}];
+    if(kind === 'all') ledgerOreList().forEach(function(type) {cargo.push({type:type,shiny:false},{type:type,shiny:true});});
+    cam.snap=true; updateCamera();
+  },
+  manifest: function () { return {open:cargoManifestOpen,rows:cargoManifestRows(),summary:cargoManifestSummary(),
+    page:cargoManifestPage,layout:cargoManifestLayout(),button:cargoManifestButtonRect(),
+    fuel:player.fuel,hull:player.hull,tele:teleporters,bombs:bombsSmall,items:cargo.length}; },
+  manifestScan: function () {
+    var oldCtx=ctx,oldMono=ukMono,oldText=nsText,lines=[];
+    var c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;ctx=c.getContext('2d');
+    ukMono=function(text,x,y,px,color,align,bold) {
+      oldMono(text,x,y,px,color,align,bold);var w=ctx.measureText(text).width;
+      lines.push({text:text,size:px,left:align==='right'?x-w:align==='center'?x-w/2:x,
+        right:align==='right'?x:align==='center'?x+w/2:x+w,top:y-px,bottom:y});
+    };
+    nsText=function(text,x,y,px,color,align) {
+      oldText(text,x,y,px,color,align);var w=nsTextW(text,px);
+      lines.push({text:text,size:px,left:align==='right'?x-w:align==='center'?x-w/2:x,
+        right:align==='right'?x:align==='center'?x+w/2:x+w,top:y,bottom:y+px});
+    };
+    try {drawCargoManifest();}finally {ctx=oldCtx;ukMono=oldMono;nsText=oldText;}
+    return lines;
+  },
   seedLedger: function () { ledgerOreList().forEach(function (ore) { ledgerRecordOre(ore, false); }); },
   parkAtShop: function () { player.x = nearestTownStationCol() * TILE + TILE / 2 - PLAYER_W / 2; player.y = DECK_ROW * TILE - PLAYER_H; player.vx = player.vy = 0; player.onGround = true; },
   ledger: function () { return { page: ledgerPage, layout: ledgerLayout(), count: ledgerOreList().length }; },
@@ -205,6 +235,7 @@ try {
   await check('pause dialog and focus', '__menuSmoke.state().paused && document.activeElement.id === "gm-resume-btn"');
   await shot('pause-desktop');
   await click('gm-options-btn'); await shot('options-desktop');
+  await check('Back and close occupy header corners', `(() => {const c=document.getElementById('gm-pause-card').getBoundingClientRect(),b=document.getElementById('gm-opt-back').getBoundingClientRect(),x=document.getElementById('gm-menu-close').getBoundingClientRect(),t=document.getElementById('gm-menu-title').getBoundingClientRect();return b.x<c.x+c.width/2 && x.x>c.x+c.width/2 && b.bottom<=t.top && x.y<t.top && b.height>=44 && x.width>=44 && x.height>=44;})()`);
   await ev('document.getElementById("gm-vol").focus()'); await key('ArrowRight');
   await check('native slider arrows apply and persist', 'document.getElementById("gm-vol-value").value === "61%" && localStorage.getItem("sluice.volume") === "0.61"');
   await click('gm-gfx-bal'); await click('gm-dmgflash-off'); await click('gm-lowflash-on');
@@ -213,7 +244,8 @@ try {
   await check('Escape backs out and restores focus', '__menuSmoke.state().paused && __menuSmoke.state().page === "main" && document.activeElement.id === "gm-options-btn"');
   await click('gm-controls-btn'); await shot('controls-desktop'); await key('Escape');
   await ev('document.getElementById("gm-new-game-btn").focus()'); await key('Tab');
-  await check('Tab stays in menu', 'document.activeElement.id === "gm-resume-btn"');
+  await check('Tab stays in menu', 'document.activeElement.id === "gm-menu-close"');
+  await key('Tab'); await check('Tab reaches Resume after close', 'document.activeElement.id === "gm-resume-btn"');
   await ev('__sluiceSave._test.addMoney(12345); __sluiceSave.now()');
   const savedMoney = await ev('__menuSmoke.state().money');
   await click('gm-new-game-btn'); await shot('new-game-confirmation');
@@ -222,16 +254,27 @@ try {
   await check('cancel preserves progress', `__menuSmoke.state().money === ${savedMoney}`);
   await key('Escape'); await check('resume gives gameplay keyboard focus', "document.activeElement.id === 'game-canvas'"); await boot(); await click('gm-pause-btn'); await click('gm-options-btn');
   await check('save and settings survive reload', `__menuSmoke.state().money === ${savedMoney} && document.getElementById('gm-vol').value === '61' && document.getElementById('gm-gfx-bal').getAttribute('aria-pressed') === 'true' && !SluiceOptions.damageFlash && SluiceOptions.lowFlash`);
+  await click('gm-opt-back');
+  await check('header Back restores pause and focus', '__menuSmoke.state().page === "main" && document.activeElement.id === "gm-options-btn"');
+  for(const button of [null,'gm-options-btn','gm-controls-btn','gm-new-game-btn']) {
+    if(button) await click(button);
+    await click('gm-menu-close');
+    await check('X resumes safely from ' + (button || 'main'), `!__menuSmoke.state().paused && __menuSmoke.state().money === ${savedMoney}`);
+    await click('gm-pause-btn');
+  }
+  await click('gm-options-btn');
   for (const [width,height,mobile] of [[390,844,true],[320,568,true],[844,390,true],[768,1024,true],[1920,1080,false]]) {
     await size(width,height,mobile);
     await check(`menu fits ${width}x${height}`, `(() => {const a=document.getElementById('game-pause').getBoundingClientRect(),c=document.getElementById('gm-pause-card').getBoundingClientRect(),b=document.getElementById('gm-opt-back').getBoundingClientRect();return c.left>=a.left && c.right<=a.right && c.top>=a.top && c.bottom<=a.bottom && b.bottom<=a.bottom && document.querySelector('.pause-body').scrollWidth<=document.querySelector('.pause-body').clientWidth;})()`);
     await shot(`options-${width}x${height}`);
   }
-  await size(390,844,true);
+  await size(320,568,true);
   await ev('document.querySelector(".pause-body").scrollTop=0');
-  await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:180,y:640}]});
-  for(let y=610;y>=300;y-=30){await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:180,y}]});await sleep(20);}
-  await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(250);
+  const scrollArea=await ev('document.querySelector(".pause-body").getBoundingClientRect().toJSON()');
+  const scrollX=scrollArea.x+8, scrollStart=scrollArea.bottom-20;
+  await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:scrollX,y:scrollStart}]});
+  for(let y=scrollStart-25;y>=scrollArea.y+15;y-=25){await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:scrollX,y}]});await sleep(20);}
+  await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(350);
   await check('touch scroll reaches lower settings', `(() => {const b=document.querySelector('.pause-body'); return b.scrollTop > 0 && b.scrollTop >= b.scrollHeight-b.clientHeight-2;})()`);
   await key('Escape'); await click('gm-new-game-btn'); await click('gm-restart-btn');
   await check('explicit confirmation resets run only', `!__menuSmoke.state().paused && __menuSmoke.state().money < ${savedMoney} && localStorage.getItem('sluice.opt.gfx') === 'balanced'`);
@@ -275,6 +318,37 @@ try {
   await ev('__menuSmoke.stockWheel()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'q',code:'KeyQ'});await sleep(200);await shot('item-wheel');
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'q',code:'KeyQ'});
+  await ev('__menuSmoke.seedCargo("mixed")');
+  await canvasClick('__menuSmoke.manifest().button');
+  await check('cargo hatch opens inspector', '__menuSmoke.manifest().open');
+  await check('cargo prices group regular and shiny correctly', `(() => {const m=__menuSmoke.manifest(),g=m.rows.find(r=>r.type==='gold'&&!r.shiny),s=m.rows.find(r=>r.type==='gold'&&r.shiny);return m.rows.length===4 && m.summary.quantity===8 && m.summary.slots===20 && m.summary.total===62610 && g.quantity===3 && g.unitValue===200 && g.total===600 && s.quantity===2 && s.unitValue===1000 && s.total===2000;})()`);
+  const beforeCargo=await ev('JSON.stringify({game:__menuSmoke.state(),hold:__menuSmoke.manifest()})');
+  await key('ArrowUp'); await key('t','KeyT'); await key('1','Digit1'); await key('Enter'); await key('c','KeyC');
+  await check('cargo browsing freezes rig and prevents other actions', `JSON.stringify({game:__menuSmoke.state(),hold:__menuSmoke.manifest()}) === ${JSON.stringify(beforeCargo)}`);
+  await shot('cargo-desktop');
+  await key('Escape');
+  await check('cargo Escape returns to game without pause', '!__menuSmoke.manifest().open && !__menuSmoke.state().paused');
+  await key('i','KeyI'); await canvasClick('__menuSmoke.manifest().layout.close');
+  await check('I opens and cargo X closes', '!__menuSmoke.manifest().open && __menuSmoke.manifest().summary.total===62610');
+  await ev('__menuSmoke.seedCargo("all"); __menuSmoke.toggleCargo()');
+  for(const [width,height,mobile] of [[1440,900,false],[390,844,true],[320,568,true],[568,320,true],[844,390,true]]) {
+    await size(width,height,mobile);await key('Home');
+    const pageCount=await ev('__menuSmoke.manifest().layout.pages');
+    for(let page=0;page<pageCount;page++) {
+      await check(`cargo text and controls fit ${width}x${height} page ${page+1}`, `(() => {const L=__menuSmoke.manifest().layout;return L.x>=0&&L.y>=0&&L.y+L.h<=__menuSmoke.state().height&&L.close.w>=44&&L.next.h>=44&&__menuSmoke.manifestScan().every(t=>t.size>=11&&t.left>=L.x&&t.right<=L.x+L.w&&t.top>=L.y&&t.bottom<=L.y+L.h);})()`);
+      if(page<pageCount-1) await key('ArrowRight');
+    }
+    await shot(`cargo-last-${width}x${height}`);
+  }
+  await check('all 64 mineral variants remain reachable', '__menuSmoke.manifest().rows.length===64 && __menuSmoke.manifest().page===__menuSmoke.manifest().layout.pages-1');
+  await size(390,844,true);await key('Home');
+  await canvasClick('__menuSmoke.manifest().layout.next',true);
+  await check('touch pages cargo forward', '__menuSmoke.manifest().page===1');
+  await canvasClick('__menuSmoke.manifest().layout.close',true);
+  await ev('__menuSmoke.seedCargo("empty")');await canvasClick('__menuSmoke.manifest().button',true);
+  await check('empty cargo remains inspectable', '__menuSmoke.manifest().open && __menuSmoke.manifest().summary.total===0 && __menuSmoke.manifestScan().some(t=>t.text === "Your hold is empty.")');
+  await shot('cargo-empty-phone');await key('i','KeyI');
+  await ev('__menuSmoke.resetConsole()');
   await send('Emulation.setUserAgentOverride', { userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' });
   await size(390,844,true,3); await boot();
   await check('mobile controls boot', '__menuSmoke.consoleInfo().mobile');

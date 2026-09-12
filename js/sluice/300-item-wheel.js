@@ -648,14 +648,34 @@
   // the offscreen cache) and records each bay's rect for the live pass.
   function drawConsoleFrameContent(R) {
     consoleBayLayout.length = 0;
-    // One quiet chassis and one continuous glass field. Only the four mount
-    // screws remain; a repeating rivet pattern competed with the readouts.
-    ctx.fillStyle = UIT_PANEL;
+    // A folded steel housing with a narrow brass seam and a glass instrument
+    // bed. All wear is deterministic and cached; it never shimmers in play.
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
     ctx.fillRect(0, R.y, R.viewW, R.h);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(0, R.y, R.viewW, 1);
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillRect(R.x, R.y, R.w, R.h);
+    ctx.fillStyle = UI_OUTLINE;
+    ctx.fillRect(0, R.y, R.viewW, 2);
+    ctx.fillRect(0, R.y + R.h - 2, R.viewW, 2);
+    ctx.fillStyle = UIMAT_WELD;
+    ctx.fillRect(R.x + 2, R.y + 2, R.w - 4, 1);
+    ctx.fillStyle = UIT_GOLD;
+    ctx.fillRect(R.bodyX + 2, R.y + 3, R.bodyW - 4, 1);
     ctx.fillStyle = UIT_INSET;
-    ctx.fillRect(R.bodyX, R.y + 3, R.bodyW, R.stacked ? 77 : R.h - 3);
+    ctx.fillRect(R.bodyX, R.y + 5, R.bodyW, R.h - 10);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+    ctx.fillRect(R.bodyX, R.y + R.h - 5, R.bodyW, 1);
+    ctx.fillStyle = 'rgba(201,199,184,0.04)';
+    for (var wi = 0; wi < 9; wi++) {
+      var sx = R.x + 14 + ((wi * 113 + 19) % Math.max(1, Math.floor(R.w - 40)));
+      ctx.fillRect(sx, R.y + R.h - 3, Math.min(9, R.x + R.w - sx), 1);
+    }
+    // Wide screens have a small maker's stamp on the left mounting wing.
+    if (R.x >= 112) {
+      consoleText('SLUICE', R.x / 2, R.y + R.h / 2 + 4, 12, UIT_DIM, 'center', true);
+      ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+      ctx.fillRect(R.x / 2 - 21, R.y + R.h / 2 + 13, 42, 1);
+    }
     if (consoleCapStyleId !== 7) {
       drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
       drawConsoleCap(R.x + R.w - R.capW, R.y, R.capW, R.h, 'right');

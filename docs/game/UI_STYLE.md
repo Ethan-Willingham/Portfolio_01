@@ -8,6 +8,27 @@
 
 > **Gunmetal + Brass skin (2026-07-18, v26.20):** the owner picked the Gunmetal + Brass palette in `store-theme-lab.html` (kept as the color bench) and the whole UI now wears it: cold desaturated blue-gray steel for every chrome surface (store panel, console frame and end caps, instrument cases, pause card, radio plates), while brass, gold, the dial faces, and the §6 signal colors stay warm ("cold machine, warm lit dials"). The source of truth for chrome color is the token block in `js/sluice/020-state.js`: the retuned `UIMAT_*` plate-steel tones plus the `UIT_*` theme tokens (panel, inset, text tiers, action gold, money, danger red `#ec7058` which now clears WCAG AA on the field). The §4 materials hexes for plate steel are superseded by those tokens; brass, lamp glass, and stencil paint values in §4 still stand. Re-skinning the UI again means editing that one block, nothing else.
 
+> **Console character and cargo (2026-09-11, v26.88).** The owner asked for
+> more character without losing the clear readings established in v26.82.
+> The rail keeps its six bays and type sizes, with a folded steel housing,
+> one brass seam, a small maker stamp, and four mounting screws. Fuel adds
+> a small needle beside its percentage on wider screens; hull uses armor
+> segments; depth uses quiet mechanical digit windows. Phone layouts omit
+> detail where it would crowd a reading. This supersedes the removal of
+> these physical cues in the clarity amendment below.
+>
+> Cargo is a raised hatch with a brass label and an opening chevron. Click
+> or tap it, or press I, to inspect the current haul. The shared panel kit
+> shows mineral specimens, separate regular and shiny groups, quantities,
+> weighted slots, exact unit prices, line totals, and the total haul value.
+> The mine and gameplay input stay frozen while inspecting. Escape, I,
+> the top-right X, or the backdrop closes it. Pagination keeps type legible
+> on phones and short screens; all action targets are at least 44px.
+>
+> Pause subpages place Back at the top-left. Every pause page has an X at
+> the top-right that resumes play without changing the save. Both controls
+> remain visible above the scrolling body. The main pause page stays spare.
+>
 > **Console clarity (2026-09-11, v26.82).** The bottom rail now uses one
 > continuous dark instrument field with slim gunmetal mounts. Fuel, hull,
 > and cargo come first; depth, speed, and cash use quieter readings. This
