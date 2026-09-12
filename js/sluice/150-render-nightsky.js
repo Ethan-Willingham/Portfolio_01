@@ -415,6 +415,9 @@
     '    viewODM += dM * stepSize;',
     '    viewODO += dO * stepSize;',
     '',
+    // No sunlight reaches this branch at night. Keep the view optical depth
+    // above for the moon, but skip the otherwise invisible secondary rays.
+    '    if (skySunIntensity > 0.0) {',
     '    vec3 sunOD = lightMarch(h, sunDirection.y);',
     '    vec3 tau = rayleighBeta * (sunOD.x + viewODR)',
     '             + mieBetaExt   * (sunOD.y + viewODM)',
@@ -431,6 +434,7 @@
     '',
     '    sumR += dR * transmittance * sunlightVisibility * stepSize;',
     '    sumM += dM * transmittance * sunlightVisibility * stepSize;',
+    '    }',
     '  }',
     '',
     '  vec3 scatteredLight = skySunIntensity * (',
@@ -760,7 +764,9 @@
     // re-renders the cached shader immediately instead of waiting for the next
     // time-of-day bucket. Constant in normal play, so it adds no extra renders.
     var _sg = SKY_SUNSET_GRADE;
-    var skyKey = Math.round(timeOfDay * 2400) + '|' + Math.round(cam.y) +
+    // Camera altitude is not a shader input. The horizon clip below already
+    // tracks its visible effect; celestials are anchored to the canvas.
+    var skyKey = Math.round(timeOfDay * 2400) +
                  '|' + Math.round(skyBottomPx) + '|' + worldScale.toFixed(3) +
                  '|' + rw + 'x' + rh + '|' + Math.round(moonPhase * 1000) +
                  '|' + (_sg.drama + _sg.twi * 3 + _sg.twiShape + _sg.sat + _sg.contrast +

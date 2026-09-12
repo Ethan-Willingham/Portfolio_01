@@ -71,3 +71,8 @@ assets/darwin/origin-title-page-1859.jpg
 assets/darwin/tree-of-life-diagram-1859.png
 assets/meditation/*-src.jpg
 assets/shop/soviet/masks/
+
+# Local desktop runtime and packaged game output.
+desktop/node_modules/
+desktop/stage/
+desktop/dist/

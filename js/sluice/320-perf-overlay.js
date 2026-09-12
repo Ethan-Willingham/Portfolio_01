@@ -388,6 +388,8 @@
     var _jelloBk = 'Canvas (CPU)';
     K('Smoke', _smokeBk, _bkCol(_smokeBk));
     K('Sky',   _skyBk,   _bkCol(_skyBk));
+    var _mtnBk = MTN_GPU_ENABLED && mtnGPU && !mtnGPUFailed ? 'WebGL' : 'Canvas';
+    K('Mountains', _mtnBk, _bkCol(_mtnBk));
     K('Water', _waterBk, _bkCol(_waterBk));
     K('Jello', _jelloBk + '  (' + jelloCount + ' pts)', _bkCol(_jelloBk));
 

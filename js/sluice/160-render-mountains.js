@@ -83,8 +83,8 @@
 
   // Cache only geometry. Light is evaluated every frame, so there are no
   // time buckets, bitmap replacements, or layer-by-layer colour updates.
-  // Closed, same-winding subpaths keep overlapping peaks solid; separate
-  // rim subpaths never draw connectors across valleys.
+  // Each peak has its own fallback paths. This avoids re-rasterizing a large
+  // compound path when WebGL is unavailable. Rim paths have no valley connectors.
   var MTN_CACHE_MARGIN = 4;
   var mtnPathCache = {};
   var mtnLight = null;
@@ -187,10 +187,11 @@
     if (snowY !== undefined) path.lineTo(snowX, snowY);
   }
 
-  function buildMtnPaths(cfg, baseY, idxFrom, idxTo) {
-    var paths = { body: new Path2D(), rim: new Path2D(), snow: new Path2D(),
-                  left: new Path2D(), right: new Path2D(),
-                  snowLeft: new Path2D(), snowRight: new Path2D(),
+  function buildMtnPeakPaths(cfg, baseY, idxFrom, idxTo, PathType) {
+    var MakePath = PathType || Path2D;
+    var paths = { body: new MakePath(), rim: new MakePath(), snow: new MakePath(),
+                  left: new MakePath(), right: new MakePath(),
+                  snowLeft: new MakePath(), snowRight: new MakePath(),
                   idxFrom: idxFrom, idxTo: idxTo, baseY: baseY };
     for (var idx = idxFrom; idx <= idxTo; idx++) {
       var peak = buildMountainPeak(idx, cfg.seed, cfg.step, baseY, cfg);
@@ -227,14 +228,22 @@
     return paths;
   }
 
-  function drawMtnDirectional(leftPath, rightPath, leftColor, rightColor, width) {
-    // Change colour, not coverage: varying stroke alpha makes subpixel
-    // silhouette edges breathe even though their geometry is stationary.
-    ctx.lineWidth = width;
-    ctx.strokeStyle = leftColor;
-    ctx.stroke(leftPath);
-    ctx.strokeStyle = rightColor;
-    ctx.stroke(rightPath);
+  function buildMtnPaths(cfg, baseY, idxFrom, idxTo) {
+    var paths = { peaks: [], visible: [], idxFrom: idxFrom, idxTo: idxTo, baseY: baseY };
+    for (var idx = idxFrom; idx <= idxTo; idx++) {
+      var peak = buildMtnPeakPaths(cfg, baseY, idx, idx);
+      var points = buildMountainPeak(idx, cfg.seed, cfg.step, baseY, cfg).pts;
+      peak.leftX = points[0][0]; peak.rightX = points[6][0];
+      paths.peaks.push(peak);
+    }
+    return paths;
+  }
+
+  function drawMtnPaths(peaks, name, stroke) {
+    for (var i = 0; i < peaks.length; i++) {
+      if (stroke) ctx.stroke(peaks[i][name]);
+      else ctx.fill(peaks[i][name]);
+    }
   }
 
   // ---- Pass 6: distant outpost lights — drawn LIVE every frame ----
@@ -281,25 +290,37 @@
       mtnPathCache[cfg.seed] = paths;
     }
     var colors = mountainColors(cfg);
+    var visible = paths.visible;
+    visible.length = 0;
+    var viewLeft = cam.x * (1 - p), viewRight = viewLeft + screenW;
+    for (var i = 0; i < paths.peaks.length; i++) {
+      var peak = paths.peaks[i];
+      // Include the miter extent at both edges; cache margins are not visible art.
+      if (peak.rightX + 16 >= viewLeft && peak.leftX - 16 <= viewRight) visible.push(peak);
+    }
     ctx.save();
     ctx.translate(cam.x * p, 0);
     ctx.lineJoin = 'miter';
     ctx.fillStyle = colors.fill;
-    ctx.fill(paths.body);
+    drawMtnPaths(visible, 'body', false);
     if (colors.snow) {
       ctx.fillStyle = colors.snow;
-      ctx.fill(paths.snow);
+      drawMtnPaths(visible, 'snow', false);
     }
     if (colors.rim) {
       ctx.strokeStyle = colors.rim;
       ctx.lineWidth = cfg.rimWidth || 1;
-      ctx.stroke(paths.rim);
+      drawMtnPaths(visible, 'rim', true);
     }
     if (colors.left) {
-      drawMtnDirectional(paths.left, paths.right, colors.left, colors.right, cfg.moonRimWidth || 1);
+      ctx.lineWidth = cfg.moonRimWidth || 1;
+      ctx.strokeStyle = colors.left; drawMtnPaths(visible, 'left', true);
+      ctx.strokeStyle = colors.right; drawMtnPaths(visible, 'right', true);
     }
     if (colors.snowLeft) {
-      drawMtnDirectional(paths.snowLeft, paths.snowRight, colors.snowLeft, colors.snowRight, 0.7);
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = colors.snowLeft; drawMtnPaths(visible, 'snowLeft', true);
+      ctx.strokeStyle = colors.snowRight; drawMtnPaths(visible, 'snowRight', true);
     }
     ctx.restore();
     drawMtnLights(cfg, baseY);
@@ -307,13 +328,19 @@
 
   function drawSkyMountains(worldLeft, worldRight, surfaceY) {
     updateMountainLight(performance.now());
+    var layers = mountainLayers();
+    if (typeof drawMountainsGL === 'function' && drawMountainsGL(layers)) return;
+    for (var i = 0; i < layers.length; i++) drawMountainLayer(layers[i]);
+  }
+
+  function mountainLayers() {
     // Layer 0 — DISTANT LAND. A low, broad, heavily-hazed ridge FAR beyond the
     // mountains. Drawn first (furthest back) so the mountains overlap it and it
     // shows through the gaps between peaks as distant land at the horizon. This
     // gives the horizon depth + light instead of sky-meets-dark when the player
     // lifts off and looks back. Silhouette only (no snow / rim / shadow); the
     // strongest aerial wash of any layer so it nearly melts into the sky.
-    drawMountainLayer({
+    return [{
       parallax: 0.90, step: 168, seed: 5501,
       minorRatio: 0.34,
       minHMajor: 18, maxHMajor: 40,
@@ -321,10 +348,10 @@
       fillColor:   BG.farLandFill,
       baseYOffset: 13,
       aerialAmt:   0.82
-    });
+    },
     // Layer 1 — FAR. Silhouette only per §5. Closest in value/saturation
     // to the sky so it dissolves into the horizon.
-    drawMountainLayer({
+    {
       parallax: 0.78, step: 96, seed: 31,
       minorRatio: 0.40,
       minHMajor: 50,  maxHMajor:  95,
@@ -332,7 +359,7 @@
       fillColor:   BG.farMtnFill,
       baseYOffset: 6,
       aerialAmt:   0.55
-    });
+    },
     // Layer 2 — MID. Main visual focus. Snow caps +
     // soft top-edge stroke in the FAR fill colour so the silhouette
     // feathers into the layer behind it. Hosts the distant outpost lights.
@@ -340,7 +367,7 @@
     // v10.46 — count and height reduced (was step 118 / maxHMajor 180).
     // Mountains read as too busy around the spawn town. Fewer, shorter
     // peaks let the surface compound breathe.
-    drawMountainLayer({
+    {
       parallax: 0.50, step: 150, seed: 137,
       minorRatio: 0.50,
       minHMajor: 80,  maxHMajor: 130,
@@ -365,11 +392,11 @@
       distantLights: true,
       baseYOffset: 2,
       aerialAmt:    0.30
-    });
+    },
     // Layer 3 — NEAR. Sharpest, darkest. Carries the 1-px BG.nearMtnRim
     // outline per §5 (the only mountain layer that gets a proper rim).
     // v10.46 — count and height reduced (was step 78 / maxHMajor 105).
-    drawMountainLayer({
+    {
       parallax: 0.22, step: 105, seed: 191,
       minorRatio: 0.45,
       minHMajor: 48,  maxHMajor:  80,
@@ -387,7 +414,7 @@
       snowRimColor: BG.midMtnSnowRim,
       baseYOffset: 0,
       aerialAmt:    0.10
-    });
+    }];
 
     // No horizon haze in v10.25 — the v10.24 dithered version landed as
     // chunky world-pixel-sized dots scattered through the sky, reading as

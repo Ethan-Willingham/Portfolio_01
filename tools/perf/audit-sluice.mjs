@@ -8,19 +8,25 @@ import http from 'node:http';
 import {spawn, execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {installGPUAudit} from './gpu-audit-probe.mjs';
 const root=path.resolve(process.env.ROOT || path.join(path.dirname(fileURLToPath(import.meta.url)),'../..'));
 const out=process.env.DUMP || fs.mkdtempSync(path.join(os.tmpdir(),'sluice-audit-'));
 assert(!path.resolve(out).startsWith(root+path.sep)); fs.mkdirSync(out,{recursive:true});
 const port=Number(process.env.PORT || 8840), debugPort=port+1000;
 const seconds=Number(process.env.SECONDS || 8), gpu=process.env.GPU==='1';
+const viewport={width:Number(process.env.WIDTH||1798),height:Number(process.env.HEIGHT||954),deviceScaleFactor:Number(process.env.DPR||1.25),mobile:false};
+const experiment=process.env.EXPERIMENT?fs.readFileSync(process.env.EXPERIMENT,'utf8'):'';
+const canvasOptions=process.env.CANVAS_OPTIONS?JSON.parse(process.env.CANVAS_OPTIONS):null;
+const electron=process.env.ELECTRON==='1', headed=electron||process.env.HEADED==='1';
 const audioProbe=String.raw`window.__audioAudit=function(){var tracks=Object.keys(buffers).map(function(name){var b=buffers[name];return {name:name,seconds:b.duration,bytes:b.length*b.numberOfChannels*4};});return {state:ctx&&ctx.state,tracks:tracks,decodedBytes:tracks.reduce(function(s,t){return s+t.bytes;},0),heap:performance.memory&&performance.memory.usedJSHeapSize};};`;
 const scenes=(process.env.SCENES || 'drive,flight,pen,pond,cave,deep,night,storm').split(',');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const browserProfile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-audit-chrome-'));
 const probe=String.raw`
+${experiment}
 window.__audit=(function(){
-  var rows=[],record=false,scene='',pinX=0,pinY=0,move=false,flying=false,active=false;
+  var rows=[],record=false,scene='',pinX=0,pinY=0,move=false,flying=false,rising=false,active=false;
   var oldLoop=loop,oldUpdate=update,previous=0,gpuRows=[],gpuPending=[],glCount=0;
   var loadingRows=[],oldLoading=renderLoadingScene;
   renderLoadingScene=function(){var t=performance.now(),p=introPhase;oldLoading();loadingRows.push({at:t,ms:performance.now()-t,phase:p,next:introPhase,assets:gameLoadingAssetsReady,pending:terrainChunkPendingThisFrame,clouds:loadingCloudsReady()});};
@@ -28,14 +34,19 @@ window.__audit=(function(){
     if(!window.__auditGPU)return fn;
     return function(){var gl=getGL(),ext=gl&&gl.getExtension('EXT_disjoint_timer_query_webgl2'),q;
       if(window.__auditGPU&&record&&ext&&gl.createQuery&&glCount%24===0){q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);}
-      var result=fn.apply(this,arguments);
-      if(q){gl.endQuery(ext.TIME_ELAPSED_EXT);gpuPending.push({gl:gl,ext:ext,q:q,name:name});}
+      function finish(){if(q){gl.endQuery(ext.TIME_ELAPSED_EXT);gpuPending.push({gl:gl,ext:ext,q:q,name:name});q=null;}}
+      // Stop the mountain query before Canvas imports its image. Cross-context
+      // synchronization is not time executing the mountain draw commands.
+      var composite=name==='mountains'&&q?ctx.drawImage:null,result;
+      if(composite)ctx.drawImage=function(){finish();return composite.apply(this,arguments);};
+      try{result=fn.apply(this,arguments);}finally{if(composite)ctx.drawImage=composite;finish();}
       return result;
     };
   }
   updateSmoke=query('smoke.update',smokeProbeGL,updateSmoke);
   smokeFluidDraw=query('smoke.draw',smokeProbeGL,smokeFluidDraw);
   renderSkyGL=query('sky',function(){return skyGL;},renderSkyGL);
+  if(typeof drawMountainsGL==='function')drawMountainsGL=query('mountains',function(){return mtnGPU&&mtnGPU.gl;},drawMountainsGL);
   loop=function(time){var t=performance.now(),dt=previous?time-previous:0;previous=time;
     var result=oldLoop(time),cpu=performance.now()-t;
     if(record&&introPhase==='done')rows.push({dt:dt,cpu:cpu,x:player.x,y:player.y,cx:cam.x,cy:cam.y,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
@@ -47,14 +58,15 @@ window.__audit=(function(){
     return result;
   };
   update=function(dt){oldUpdate(dt);if(active){
+    if(rising)pinY-=200*dt;
     player.y=pinY;player.renderY=pinY;player.vy=0;player.onGround=!flying;
     if(!move){player.x=pinX;player.renderX=pinX;player.vx=0;}
     player.fuel=getMaxFuel();player.hull=getMaxHull();
   }};
-  function state(){return {version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr,empty:!!b._emptySelf};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
+  function state(){return {version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],mountains:typeof mtnGPU!=='undefined'?{active:!!mtnGPU&&!mtnGPUFailed,failed:mtnGPUFailed,size:mtnGPU&&[mtnGPU.canvas.width,mtnGPU.canvas.height],samples:mtnGPU&&mtnGPU.gl.getParameter(mtnGPU.gl.SAMPLES)}:null,liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
   return {ready:function(){return introPhase==='done';},state:state,
     start:function(name,disable){
-      resize();scene=name;drawPerfOverlay=function(){};SUN.paused=true;timeOfDay=name==='night'?.02:.5;
+      resize();scene=name;drawPerfOverlay=function(){};SUN.paused=true;timeOfDay=name.startsWith('night')?.02:.5;
       if(name==='storm')gm.preset('storm ceiling');
       var disabled=disable.split(',');
       if(disabled.indexOf('smoke')>=0){PERF_DISABLE_SMOKE_FLUID=true;PERF_DISABLE_EXHAUST_BRIDGE=true;}
@@ -63,10 +75,11 @@ window.__audit=(function(){
       if(disabled.indexOf('jello')>=0){ENABLE_JELLO=false;}
       if(disabled.indexOf('weather')>=0)PERF_DISABLE_WEATHER=true;
       pinX=(DECK_LEFT_COL-5)*TILE;pinY=SKY_ROWS*TILE-PLAYER_H;
-      move=name==='drive'||name==='flight';flying=name==='flight';
+      move=name==='drive'||name==='flight'||name==='nightflight';flying=name==='flight'||name==='nightflight';
+      rising=name==='ascent'||name==='nightascent';if(rising){move=true;flying=true;}
       if(flying){pinX=80*TILE;pinY-=100;}
       if(name==='pen')pinX=(DECK_LEFT_COL-18)*TILE;
-      if(name==='pond'){var pond=surfacePonds.find(function(p){return p.cR-p.cL>=5;})||surfacePonds[0];if(!pond)throw Error('No pond');pinX=(pond.cL+pond.cR)*TILE*.5;pinY+=TILE;flying=true;}
+      if(name==='pond'||name==='nightpond'){var pond=surfacePonds.find(function(p){return p.cR-p.cL>=5;})||surfacePonds[0];if(!pond)throw Error('No pond');pinX=(pond.cL+pond.cR)*TILE*.5;pinY+=name==='nightpond'?-100:TILE;flying=true;}
       if(name==='cave'||name==='deep'){
         var rr=SKY_ROWS+(name==='deep'?Math.floor(TOWN_DEPTHS[0]*.8):55),best=0;
         if(name==='deep'){
@@ -83,34 +96,38 @@ window.__audit=(function(){
       gamePaused=false;startInPause=false;bootPauseFired=true;active=true;
       return state();
     },clear:function(){rows=[];gpuRows=[];if(window.__gpuAudit)window.__gpuAudit.rows=[];record=true;window.__auditRecording=true;},
-    stop:function(){record=false;window.__auditRecording=false;active=false;gamePaused=true;if(gameRafId)cancelAnimationFrame(gameRafId);gameRafId=0;return {scene:scene,rows:rows,gpu:gpuRows,webgpu:window.__gpuAudit,state:state()};}
+    stop:function(){record=false;window.__auditRecording=false;active=false;gamePaused=true;if(gameRafId)cancelAnimationFrame(gameRafId);gameRafId=0;var s=state();s.liquidActivity={awake:liquidStatAwake,sleeping:liquidStatSleeping,frozen:liquidStatFrozen};return {scene:scene,rows:rows,gpu:gpuRows,webgpu:window.__gpuAudit,state:s};}
   };
 })();
 `;
 const prelude=String.raw`
 (()=>{let s=48271;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);
-addEventListener('DOMContentLoaded',()=>{document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));let css=document.createElement('style');css.textContent='#game-pause,.game-header,#gm-perf-badge,#gm-pause-btn{display:none!important}.game-canvas-area{width:100%!important;height:100%!important}';document.head.appendChild(css);});
+addEventListener('DOMContentLoaded',()=>{document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));let css=document.createElement('style');css.textContent='#game-pause,.game-header,#gm-perf-badge,#gm-pause-btn{display:none!important}.game-wrapper{max-width:none!important}.game-canvas-area{width:100%!important;height:100%!important}';document.head.appendChild(css);dispatchEvent(new Event('resize'));});
 })();
 `;
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.m4a':'audio/mp4','.svg':'image/svg+xml'};
 const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}let data=fs.readFileSync(file);if(pathname==='/js/sluice.js'){let src=data.toString(),end=src.lastIndexOf('})();');data=Buffer.from(src.slice(0,end)+probe+src.slice(end));}if(pathname==='/js/audio.js')data=Buffer.from(data.toString().replace('  // ===== public API',audioProbe+'\n  // ===== public API'));res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch(e){res.writeHead(500);res.end(String(e));}});
 let chrome,ws,seq=0;const pending=new Map(),errors=[];
 let traceEvents=[],traceEnded=false;
+async function browserCall(method){const endpoint=await(await fetch('http://127.0.0.1:'+debugPort+'/json/version')).json();return new Promise((resolve,reject)=>{const socket=new WebSocket(endpoint.webSocketDebuggerUrl);socket.onopen=()=>socket.send(JSON.stringify({id:1,method}));socket.onerror=reject;socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id===1){socket.close();m.error?reject(Error(JSON.stringify(m.error))):resolve(m.result);}};});}
 function send(method,params={}){return new Promise((resolve,reject)=>{const id=++seq,t=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},45000);pending.set(id,{resolve:r=>{clearTimeout(t);resolve(r)},reject:e=>{clearTimeout(t);reject(e)}});ws.send(JSON.stringify({id,method,params}));});}
 async function ev(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result?.value;}
 function stats(values){const a=values.slice().sort((a,b)=>a-b);return a.length?{n:a.length,avg:a.reduce((a,b)=>a+b,0)/a.length,p50:a[a.length>>1],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:a.at(-1)}:null;}
 const summaries=fs.existsSync(path.join(out,'summary.json'))?JSON.parse(fs.readFileSync(path.join(out,'summary.json'),'utf8')).filter(r=>!scenes.includes(r.scene)):[];
 try{
   await new Promise(r=>server.listen(port,'127.0.0.1',r));
-  const executable=process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
-  chrome=spawn(executable,['--headless=new','--mute-audio','--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort,'about:blank'],{stdio:'ignore',windowsHide:true});
+  const executable=electron?path.join(root,'desktop/node_modules/electron/dist/electron.exe'):process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
+  const args=[...(headed?['--start-fullscreen']:['--headless=new']),'--mute-audio','--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort];
+  if(electron)args.push(path.join(root,'desktop'),'--fullscreen','--profile='+browserProfile,'--audit-url=http://127.0.0.1:'+port+'/grand-motherload.html');else args.push('about:blank');
+  chrome=spawn(executable,args,{stdio:'ignore',windowsHide:!headed,env:{...process.env,ELECTRON_RUN_AS_NODE:undefined}});
   let target;for(let i=0;i<100;i++){try{target=(await(await fetch('http://127.0.0.1:'+debugPort+'/json/list')).json()).find(t=>t.type==='page');if(target)break;}catch{}await sleep(100);}assert(target,'Chrome boot');
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+  ws.onclose=()=>{for(const p of pending.values())p.reject(Error('CDP disconnected'));pending.clear();};
   ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);if(p)m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args);if(m.method==='Tracing.dataCollected')traceEvents.push(...m.params.value);if(m.method==='Tracing.tracingComplete')traceEnded=true;};
   await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setBlockedURLs',{urls:['*googletagmanager.com*','*google-analytics.com*']});
-  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),seconds,scenes,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu},null,2));
-  await send('Emulation.setDeviceMetricsOverride',{width:1798,height:954,deviceScaleFactor:1.25,mobile:false});
-  await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__auditGPU='+gpu+';'+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
+  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),seconds,scenes,viewport,headed,electron,canvasOptions,experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu},null,2));
+  await send('Emulation.setDeviceMetricsOverride',viewport);
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   for(const scene of scenes){
     errors.length=0;
     await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?dev=1&nosave=1&nopause=1&tod=.5'+(process.env.PRESET?'&gmpreset='+encodeURIComponent(process.env.PRESET):'')});
@@ -126,8 +143,12 @@ try{
     await sleep(3000);
     if(process.env.TRACE==='1'){traceEvents=[];traceEnded=false;await send('Tracing.start',{categories:'devtools.timeline,cc,gpu,viz,disabled-by-default-gpu.service',transferMode:'ReportEvents'});}
     if(!gpu){await send('Profiler.enable');await send('Profiler.setSamplingInterval',{interval:1000});await send('Profiler.start');}
+    let presentation;
+    if(process.env.PRESENTMON){assert(headed,'Presentation capture requires a visible window');const info=await browserCall('SystemInfo.getProcessInfo'),gpuProcess=info.processInfo.find(p=>p.type==='GPU');assert(gpuProcess,'GPU process');presentation=spawn(process.env.PRESENTMON,['--process_id',String(gpuProcess.id),'--timed',String(seconds),'--terminate_after_timed','--no_console_stats','--session_name','SluiceAudit'+chrome.pid,'--output_file',path.join(out,scene+'.present.csv')],{windowsHide:true,stdio:['ignore',fs.openSync(path.join(out,scene+'.present.log'),'w'),fs.openSync(path.join(out,scene+'.present-error.log'),'w')]});}
     await sleep(150);await ev('__audit.clear()');await sleep(seconds*1000);
     const result=await ev('__audit.stop()');
+    result.bundleSHA256=createHash('sha256').update(fs.readFileSync(path.join(root,'js/sluice.js'))).digest('hex');
+    if(presentation&&presentation.exitCode===null)await new Promise(resolve=>{presentation.once('exit',resolve);setTimeout(()=>{if(presentation.exitCode===null)presentation.kill();resolve();},5000);});
     if(process.env.TRACE==='1'){await send('Tracing.end');for(let i=0;i<200&&!traceEnded;i++)await sleep(50);assert(traceEnded,'Trace completed');fs.writeFileSync(path.join(out,scene+'.trace.json'),JSON.stringify({traceEvents}));}
     let profile;if(!gpu){profile=(await send('Profiler.stop')).profile;fs.writeFileSync(path.join(out,scene+'.cpuprofile'),JSON.stringify(profile));}
     result.boot=boot;result.start=start;result.adapter=adapter;result.errors=errors.slice();result.audio=await ev('window.__audioAudit&&__audioAudit()');

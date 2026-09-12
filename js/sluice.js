@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.122';
+  var GAME_VERSION = 'v26.123';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5008,7 +5008,7 @@
         loadingBounded(water.queue.onSubmittedWorkDone(), 2000).then(function () { fence.gpuDone = true; });
       } catch (e) { fence.gpuDone = true; }
     }
-    var contexts = [smokeProbeGL(), skyGL];
+    var contexts = [smokeProbeGL(), skyGL, mtnGPU && !mtnGPUFailed ? mtnGPU.gl : null];
     for (var i = 0; i < contexts.length; i++) {
       var gl = contexts[i];
       if (!gl || !gl.fenceSync || gl.isContextLost()) continue;
@@ -28098,6 +28098,9 @@
     '    viewODM += dM * stepSize;',
     '    viewODO += dO * stepSize;',
     '',
+    // No sunlight reaches this branch at night. Keep the view optical depth
+    // above for the moon, but skip the otherwise invisible secondary rays.
+    '    if (skySunIntensity > 0.0) {',
     '    vec3 sunOD = lightMarch(h, sunDirection.y);',
     '    vec3 tau = rayleighBeta * (sunOD.x + viewODR)',
     '             + mieBetaExt   * (sunOD.y + viewODM)',
@@ -28114,6 +28117,7 @@
     '',
     '    sumR += dR * transmittance * sunlightVisibility * stepSize;',
     '    sumM += dM * transmittance * sunlightVisibility * stepSize;',
+    '    }',
     '  }',
     '',
     '  vec3 scatteredLight = skySunIntensity * (',
@@ -28443,7 +28447,9 @@
     // re-renders the cached shader immediately instead of waiting for the next
     // time-of-day bucket. Constant in normal play, so it adds no extra renders.
     var _sg = SKY_SUNSET_GRADE;
-    var skyKey = Math.round(timeOfDay * 2400) + '|' + Math.round(cam.y) +
+    // Camera altitude is not a shader input. The horizon clip below already
+    // tracks its visible effect; celestials are anchored to the canvas.
+    var skyKey = Math.round(timeOfDay * 2400) +
                  '|' + Math.round(skyBottomPx) + '|' + worldScale.toFixed(3) +
                  '|' + rw + 'x' + rh + '|' + Math.round(moonPhase * 1000) +
                  '|' + (_sg.drama + _sg.twi * 3 + _sg.twiShape + _sg.sat + _sg.contrast +
@@ -30890,8 +30896,8 @@
 
   // Cache only geometry. Light is evaluated every frame, so there are no
   // time buckets, bitmap replacements, or layer-by-layer colour updates.
-  // Closed, same-winding subpaths keep overlapping peaks solid; separate
-  // rim subpaths never draw connectors across valleys.
+  // Each peak has its own fallback paths. This avoids re-rasterizing a large
+  // compound path when WebGL is unavailable. Rim paths have no valley connectors.
   var MTN_CACHE_MARGIN = 4;
   var mtnPathCache = {};
   var mtnLight = null;
@@ -30994,10 +31000,11 @@
     if (snowY !== undefined) path.lineTo(snowX, snowY);
   }
 
-  function buildMtnPaths(cfg, baseY, idxFrom, idxTo) {
-    var paths = { body: new Path2D(), rim: new Path2D(), snow: new Path2D(),
-                  left: new Path2D(), right: new Path2D(),
-                  snowLeft: new Path2D(), snowRight: new Path2D(),
+  function buildMtnPeakPaths(cfg, baseY, idxFrom, idxTo, PathType) {
+    var MakePath = PathType || Path2D;
+    var paths = { body: new MakePath(), rim: new MakePath(), snow: new MakePath(),
+                  left: new MakePath(), right: new MakePath(),
+                  snowLeft: new MakePath(), snowRight: new MakePath(),
                   idxFrom: idxFrom, idxTo: idxTo, baseY: baseY };
     for (var idx = idxFrom; idx <= idxTo; idx++) {
       var peak = buildMountainPeak(idx, cfg.seed, cfg.step, baseY, cfg);
@@ -31034,14 +31041,22 @@
     return paths;
   }
 
-  function drawMtnDirectional(leftPath, rightPath, leftColor, rightColor, width) {
-    // Change colour, not coverage: varying stroke alpha makes subpixel
-    // silhouette edges breathe even though their geometry is stationary.
-    ctx.lineWidth = width;
-    ctx.strokeStyle = leftColor;
-    ctx.stroke(leftPath);
-    ctx.strokeStyle = rightColor;
-    ctx.stroke(rightPath);
+  function buildMtnPaths(cfg, baseY, idxFrom, idxTo) {
+    var paths = { peaks: [], visible: [], idxFrom: idxFrom, idxTo: idxTo, baseY: baseY };
+    for (var idx = idxFrom; idx <= idxTo; idx++) {
+      var peak = buildMtnPeakPaths(cfg, baseY, idx, idx);
+      var points = buildMountainPeak(idx, cfg.seed, cfg.step, baseY, cfg).pts;
+      peak.leftX = points[0][0]; peak.rightX = points[6][0];
+      paths.peaks.push(peak);
+    }
+    return paths;
+  }
+
+  function drawMtnPaths(peaks, name, stroke) {
+    for (var i = 0; i < peaks.length; i++) {
+      if (stroke) ctx.stroke(peaks[i][name]);
+      else ctx.fill(peaks[i][name]);
+    }
   }
 
   // ---- Pass 6: distant outpost lights — drawn LIVE every frame ----
@@ -31088,25 +31103,37 @@
       mtnPathCache[cfg.seed] = paths;
     }
     var colors = mountainColors(cfg);
+    var visible = paths.visible;
+    visible.length = 0;
+    var viewLeft = cam.x * (1 - p), viewRight = viewLeft + screenW;
+    for (var i = 0; i < paths.peaks.length; i++) {
+      var peak = paths.peaks[i];
+      // Include the miter extent at both edges; cache margins are not visible art.
+      if (peak.rightX + 16 >= viewLeft && peak.leftX - 16 <= viewRight) visible.push(peak);
+    }
     ctx.save();
     ctx.translate(cam.x * p, 0);
     ctx.lineJoin = 'miter';
     ctx.fillStyle = colors.fill;
-    ctx.fill(paths.body);
+    drawMtnPaths(visible, 'body', false);
     if (colors.snow) {
       ctx.fillStyle = colors.snow;
-      ctx.fill(paths.snow);
+      drawMtnPaths(visible, 'snow', false);
     }
     if (colors.rim) {
       ctx.strokeStyle = colors.rim;
       ctx.lineWidth = cfg.rimWidth || 1;
-      ctx.stroke(paths.rim);
+      drawMtnPaths(visible, 'rim', true);
     }
     if (colors.left) {
-      drawMtnDirectional(paths.left, paths.right, colors.left, colors.right, cfg.moonRimWidth || 1);
+      ctx.lineWidth = cfg.moonRimWidth || 1;
+      ctx.strokeStyle = colors.left; drawMtnPaths(visible, 'left', true);
+      ctx.strokeStyle = colors.right; drawMtnPaths(visible, 'right', true);
     }
     if (colors.snowLeft) {
-      drawMtnDirectional(paths.snowLeft, paths.snowRight, colors.snowLeft, colors.snowRight, 0.7);
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = colors.snowLeft; drawMtnPaths(visible, 'snowLeft', true);
+      ctx.strokeStyle = colors.snowRight; drawMtnPaths(visible, 'snowRight', true);
     }
     ctx.restore();
     drawMtnLights(cfg, baseY);
@@ -31114,13 +31141,19 @@
 
   function drawSkyMountains(worldLeft, worldRight, surfaceY) {
     updateMountainLight(performance.now());
+    var layers = mountainLayers();
+    if (typeof drawMountainsGL === 'function' && drawMountainsGL(layers)) return;
+    for (var i = 0; i < layers.length; i++) drawMountainLayer(layers[i]);
+  }
+
+  function mountainLayers() {
     // Layer 0 — DISTANT LAND. A low, broad, heavily-hazed ridge FAR beyond the
     // mountains. Drawn first (furthest back) so the mountains overlap it and it
     // shows through the gaps between peaks as distant land at the horizon. This
     // gives the horizon depth + light instead of sky-meets-dark when the player
     // lifts off and looks back. Silhouette only (no snow / rim / shadow); the
     // strongest aerial wash of any layer so it nearly melts into the sky.
-    drawMountainLayer({
+    return [{
       parallax: 0.90, step: 168, seed: 5501,
       minorRatio: 0.34,
       minHMajor: 18, maxHMajor: 40,
@@ -31128,10 +31161,10 @@
       fillColor:   BG.farLandFill,
       baseYOffset: 13,
       aerialAmt:   0.82
-    });
+    },
     // Layer 1 — FAR. Silhouette only per §5. Closest in value/saturation
     // to the sky so it dissolves into the horizon.
-    drawMountainLayer({
+    {
       parallax: 0.78, step: 96, seed: 31,
       minorRatio: 0.40,
       minHMajor: 50,  maxHMajor:  95,
@@ -31139,7 +31172,7 @@
       fillColor:   BG.farMtnFill,
       baseYOffset: 6,
       aerialAmt:   0.55
-    });
+    },
     // Layer 2 — MID. Main visual focus. Snow caps +
     // soft top-edge stroke in the FAR fill colour so the silhouette
     // feathers into the layer behind it. Hosts the distant outpost lights.
@@ -31147,7 +31180,7 @@
     // v10.46 — count and height reduced (was step 118 / maxHMajor 180).
     // Mountains read as too busy around the spawn town. Fewer, shorter
     // peaks let the surface compound breathe.
-    drawMountainLayer({
+    {
       parallax: 0.50, step: 150, seed: 137,
       minorRatio: 0.50,
       minHMajor: 80,  maxHMajor: 130,
@@ -31172,11 +31205,11 @@
       distantLights: true,
       baseYOffset: 2,
       aerialAmt:    0.30
-    });
+    },
     // Layer 3 — NEAR. Sharpest, darkest. Carries the 1-px BG.nearMtnRim
     // outline per §5 (the only mountain layer that gets a proper rim).
     // v10.46 — count and height reduced (was step 78 / maxHMajor 105).
-    drawMountainLayer({
+    {
       parallax: 0.22, step: 105, seed: 191,
       minorRatio: 0.45,
       minHMajor: 48,  maxHMajor:  80,
@@ -31194,13 +31227,210 @@
       snowRimColor: BG.midMtnSnowRim,
       baseYOffset: 0,
       aerialAmt:    0.10
-    });
+    }];
 
     // No horizon haze in v10.25 — the v10.24 dithered version landed as
     // chunky world-pixel-sized dots scattered through the sky, reading as
     // noise rather than atmosphere. Mountains alone provide enough horizon
     // separation. Haze will return in Stage 5 as a screen-space particle
     // pass (drift snow / dust) where the cells can be device-pixel-fine.
+  }
+  // Mountain geometry is static. Triangulate it once, then let the GPU move
+  // and light it. Large compound Canvas paths otherwise rasterize on Chrome's
+  // GPU-process CPU thread every frame. The Canvas renderer remains the fallback.
+  var mtnGPU = null, mtnGPUFailed = false, MTN_GPU_ENABLED = true;
+  var MTN_GPU_SUPERSAMPLE = 1;
+
+  function MtnRecordedPath() { this.lines = []; this.line = null; }
+  MtnRecordedPath.prototype.moveTo = function (x, y) {
+    this.line = [[x, y]]; this.lines.push(this.line);
+  };
+  MtnRecordedPath.prototype.lineTo = function (x, y) { this.line.push([x, y]); };
+  MtnRecordedPath.prototype.closePath = function () {};
+
+  function mtnCross(a, b, c) {
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  }
+  function mtnTriangle(out, a, b, c) {
+    out.push(a[0], a[1], b[0], b[1], c[0], c[1]);
+  }
+  function mtnTriangulate(out, points) {
+    if (points.length < 3) return;
+    var area = 0, order = [], i;
+    for (i = 0; i < points.length; i++) {
+      var a = points[i], b = points[(i + 1) % points.length];
+      area += a[0] * b[1] - b[0] * a[1]; order.push(i);
+    }
+    if (area < 0) order.reverse();
+    while (order.length > 3) {
+      var found = false;
+      for (i = 0; i < order.length; i++) {
+        var a = points[order[(i + order.length - 1) % order.length]];
+        var b = points[order[i]], c = points[order[(i + 1) % order.length]];
+        if (mtnCross(a, b, c) <= 1e-9) continue;
+        var inside = false;
+        for (var j = 0; j < order.length; j++) {
+          var p = points[order[j]];
+          if (p === a || p === b || p === c) continue;
+          if (mtnCross(a, b, p) >= -1e-9 && mtnCross(b, c, p) >= -1e-9 &&
+              mtnCross(c, a, p) >= -1e-9) { inside = true; break; }
+        }
+        if (inside) continue;
+        mtnTriangle(out, a, b, c); order.splice(i, 1); found = true; break;
+      }
+      if (!found) throw new Error('Mountain polygon could not be triangulated');
+    }
+    mtnTriangle(out, points[order[0]], points[order[1]], points[order[2]]);
+  }
+
+  // Opaque segment rectangles and miter wedges have the same butt caps and
+  // miter limit as Canvas. MSAA coverage is resolved after all overlaps.
+  function mtnStrokeTriangles(out, pts, width) {
+    var half = width * 0.5, previous = null;
+    for (var i = 1; i < pts.length; i++) {
+      var a = pts[i - 1], b = pts[i], dx = b[0] - a[0], dy = b[1] - a[1];
+      var len = Math.sqrt(dx * dx + dy * dy); if (len < 1e-9) continue;
+      dx /= len; dy /= len;
+      var nx = -dy * half, ny = dx * half;
+      var al = [a[0] + nx, a[1] + ny], ar = [a[0] - nx, a[1] - ny];
+      var bl = [b[0] + nx, b[1] + ny], br = [b[0] - nx, b[1] - ny];
+      mtnTriangle(out, al, ar, bl); mtnTriangle(out, ar, br, bl);
+      if (previous) {
+        var cross = previous.dx * dy - previous.dy * dx;
+        var sign = cross > 0 ? -1 : 1;
+        var l = [a[0] + previous.nx * sign, a[1] + previous.ny * sign];
+        var r = [a[0] + nx * sign, a[1] + ny * sign];
+        var denom = 1 + previous.dx * dx + previous.dy * dy;
+        var mx = denom > 1e-9 ? (previous.nx + nx) * sign / denom : Infinity;
+        var my = denom > 1e-9 ? (previous.ny + ny) * sign / denom : Infinity;
+        if (mx * mx + my * my <= half * half * 100) {
+          var tip = [a[0] + mx, a[1] + my];
+          mtnTriangle(out, a, l, tip); mtnTriangle(out, a, tip, r);
+        } else mtnTriangle(out, a, l, r);
+      }
+      previous = { dx: dx, dy: dy, nx: nx, ny: ny };
+    }
+  }
+
+  function initMtnGPU() {
+    if (mtnGPUFailed) return null;
+    if (mtnGPU) return mtnGPU;
+    var c = document.createElement('canvas');
+    var gl = c.getContext('webgl2', { alpha: true, antialias: true, depth: false, stencil: false });
+    if (!gl) { mtnGPUFailed = true; return null; }
+    function shader(type, text) {
+      var s = gl.createShader(type); gl.shaderSource(s, text); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { gl.deleteShader(s); throw new Error('Mountain shader'); }
+      return s;
+    }
+    try {
+      var vs = shader(gl.VERTEX_SHADER, '#version 300 es\nin vec2 pos;uniform vec2 size;uniform vec2 shift;uniform float scale;void main(){vec2 p=pos*scale+shift;gl_Position=vec4(p.x/size.x*2.0-1.0,1.0-p.y/size.y*2.0,0,1);}');
+      var fs = shader(gl.FRAGMENT_SHADER, '#version 300 es\nprecision highp float;uniform vec3 color;out vec4 pixel;void main(){pixel=vec4(color,1);}');
+      var program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs);
+      gl.bindAttribLocation(program, 0, 'pos'); gl.linkProgram(program);
+      gl.deleteShader(vs); gl.deleteShader(fs);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('Mountain program');
+      mtnGPU = { gl: gl, canvas: c, program: program, layers: {}, lights: gl.createBuffer(),
+        maxSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+        size: gl.getUniformLocation(program, 'size'), shift: gl.getUniformLocation(program, 'shift'),
+        scale: gl.getUniformLocation(program, 'scale'), color: gl.getUniformLocation(program, 'color') };
+      c.addEventListener('webglcontextlost', function (event) { event.preventDefault(); mtnGPUFailed = true; });
+      c.addEventListener('webglcontextrestored', function () { mtnGPU = null; mtnGPUFailed = false; });
+      return mtnGPU;
+    } catch (error) { mtnGPUFailed = true; return null; }
+  }
+
+  function mtnGPULayer(renderer, cfg) {
+    var first = Math.floor((cam.x * (1 - cfg.parallax) - cfg.step * 2) / cfg.step);
+    var last = Math.ceil((cam.x * (1 - cfg.parallax) + screenW + cfg.step * 2) / cfg.step);
+    var baseY = SKY_ROWS * TILE + (cfg.baseYOffset || 0), gl = renderer.gl;
+    var old = renderer.layers[cfg.seed];
+    if (old && old.first <= first && old.last >= last && old.baseY === baseY) return old;
+    first -= MTN_CACHE_MARGIN; last += MTN_CACHE_MARGIN;
+    var paths = buildMtnPeakPaths(cfg, baseY, first, last, MtnRecordedPath);
+    var layer = { first: first, last: last, baseY: baseY, batches: {} };
+    var names = ['body', 'snow', 'rim', 'left', 'right', 'snowLeft', 'snowRight'];
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i], tris = [], lines = paths[name].lines;
+      for (var j = 0; j < lines.length; j++) {
+        if (name === 'body' || name === 'snow') mtnTriangulate(tris, lines[j]);
+        else mtnStrokeTriangles(tris, lines[j], name === 'rim' ? (cfg.rimWidth || 1) :
+          name === 'left' || name === 'right' ? (cfg.moonRimWidth || 1) : 0.7);
+      }
+      var buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tris), gl.STATIC_DRAW);
+      layer.batches[name] = { buffer: buffer, count: tris.length / 2 };
+    }
+    if (old) for (var k in old.batches) gl.deleteBuffer(old.batches[k].buffer);
+    renderer.layers[cfg.seed] = layer; return layer;
+  }
+
+  function mtnGPUPaint(renderer, batch, color) {
+    if (!color || !batch.count) return;
+    var gl = renderer.gl, rgb = color.match(/[\d.]+/g);
+    gl.uniform3f(renderer.color, +rgb[0] / 255, +rgb[1] / 255, +rgb[2] / 255);
+    gl.bindBuffer(gl.ARRAY_BUFFER, batch.buffer); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, batch.count);
+  }
+
+  function mtnGPULights(renderer, cfg, baseY, transform, top) {
+    if (!cfg.distantLights) return;
+    var gl = renderer.gl, now = performance.now(), ox = cam.x * cfg.parallax;
+    var first = Math.floor((cam.x * (1 - cfg.parallax) - cfg.step * 2) / cfg.step);
+    var last = Math.ceil((cam.x * (1 - cfg.parallax) + screenW + cfg.step * 2) / cfg.step);
+    // Keep the original world-pixel rounding and draw order between layers.
+    gl.uniform2f(renderer.shift, transform.e, transform.f - top);
+    for (var idx = first; idx <= last; idx++) {
+      if (tileHash01(idx, cfg.seed, 0xA711) <= cfg.minorRatio || tileHash01(idx, cfg.seed, 0xF710) > 0.28) continue;
+      var phase = Math.floor(tileHash01(idx, cfg.seed, 0xF711) * 4);
+      if (((Math.floor(now / 500) + phase) & 1) !== 0) continue;
+      var h = cfg.minHMajor + tileHash01(idx, cfg.seed, 0xA710) * (cfg.maxHMajor - cfg.minHMajor);
+      if (tileHash01(idx, cfg.seed, 0xA712) > 0.80) h *= 1.30;
+      var x = Math.floor(idx * cfg.step + cfg.step * 0.5 +
+        (tileHash01(idx, cfg.seed, 0xA713) - 0.5) * cfg.step * 0.22 + ox);
+      var y = Math.floor(baseY - h) - 1;
+      gl.bindBuffer(gl.ARRAY_BUFFER, renderer.lights);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x,y,x+1,y,x,y+1,x,y+1,x+1,y,x+1,y+1]), gl.STREAM_DRAW);
+      var rgb = mtnRGB(tileHash01(idx, cfg.seed, 0xF712) < 0.6 ? BG.distantLight : BG.distantWindow);
+      mtnGPUPaint(renderer, { buffer: renderer.lights, count: 6 }, mtnCSS(rgb));
+    }
+  }
+
+  function drawMountainsGL(layers) {
+    if (!MTN_GPU_ENABLED || ctx.globalAlpha !== 1 || ctx.globalCompositeOperation !== 'source-over') return false;
+    var renderer = initMtnGPU(); if (!renderer || renderer.gl.isContextLost()) return false;
+    try {
+      var gl = renderer.gl, transform = ctx.getTransform(), ws = transform.a;
+      if (transform.b || transform.c || transform.d !== ws || ws <= 0) return false;
+      var top = canvas.height, bottom = 0;
+      for (var i = 0; i < layers.length; i++) {
+        var cfg = layers[i], base = SKY_ROWS * TILE + (cfg.baseYOffset || 0);
+        top = Math.min(top, Math.floor((base - Math.max(cfg.maxHMajor * 1.3, cfg.maxHMinor) - 16) * ws + transform.f));
+        bottom = Math.max(bottom, Math.ceil((base + 28) * ws + transform.f));
+      }
+      top = Math.max(0, top); bottom = Math.min(canvas.height, bottom);
+      if (bottom <= top) return true;
+      var ss = MTN_GPU_SUPERSAMPLE, w = Math.ceil(canvas.width * ss), h = Math.ceil((bottom - top) * ss);
+      if (w > renderer.maxSize || h > renderer.maxSize) return false;
+      var allocatedH = Math.min(renderer.maxSize, Math.ceil(h / 64) * 64);
+      // Quantized, grow-only height avoids reallocating MSAA buffers when a
+      // fractional vertical camera move changes the visible band by one pixel.
+      if (renderer.canvas.width !== w) { renderer.canvas.width = w; renderer.canvas.height = allocatedH; }
+      else if (renderer.canvas.height < h) renderer.canvas.height = allocatedH;
+      gl.viewport(0, 0, w, renderer.canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.disable(gl.BLEND); gl.useProgram(renderer.program); gl.enableVertexAttribArray(0);
+      gl.uniform2f(renderer.size, canvas.width, renderer.canvas.height / ss); gl.uniform1f(renderer.scale, ws);
+      for (var i = 0; i < layers.length; i++) {
+        var cfg = layers[i], layer = mtnGPULayer(renderer, cfg), colors = mountainColors(cfg);
+        gl.uniform2f(renderer.shift, transform.e + cam.x * cfg.parallax * ws, transform.f - top);
+        var names = ['body', 'snow', 'rim', 'left', 'right', 'snowLeft', 'snowRight'];
+        for (var j = 0; j < names.length; j++) mtnGPUPaint(renderer, layer.batches[names[j]], colors[names[j] === 'body' ? 'fill' : names[j]]);
+        mtnGPULights(renderer, cfg, layer.baseY, transform, top);
+      }
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(renderer.canvas, 0, top, canvas.width, renderer.canvas.height / ss); ctx.restore();
+      return true;
+    } catch (error) { mtnGPUFailed = true; return false; }
   }
 
   // ====== SURFACE TREES (165) ======
@@ -52670,6 +52900,8 @@
     var _jelloBk = 'Canvas (CPU)';
     K('Smoke', _smokeBk, _bkCol(_smokeBk));
     K('Sky',   _skyBk,   _bkCol(_skyBk));
+    var _mtnBk = MTN_GPU_ENABLED && mtnGPU && !mtnGPUFailed ? 'WebGL' : 'Canvas';
+    K('Mountains', _mtnBk, _bkCol(_mtnBk));
     K('Water', _waterBk, _bkCol(_waterBk));
     K('Jello', _jelloBk + '  (' + jelloCount + ' pts)', _bkCol(_jelloBk));
 
@@ -63864,6 +64096,11 @@
           function () { return PERF_CONSOLE_CACHE ? 1 : 0; },
           function (v) { PERF_CONSOLE_CACHE = !!v; },
           0, 1, 1);           // v25.31 instrument cache; 0 = legacy direct draw (A/B)
+      }
+      if (typeof MTN_GPU_ENABLED !== 'undefined') {
+        gmRegisterLever('perf.mountainGPU', 'perf', 'mountainGPU',
+          function () { return MTN_GPU_ENABLED ? 1 : 0; },
+          function (v) { MTN_GPU_ENABLED = !!v; }, 0, 1, 1);
       }
       if (typeof PERF_MAGMA_SKIP_LIVE_TINT !== 'undefined') {
         gmRegisterLever('perf.magmaSkipLiveTint', 'perf', 'magmaSkipLiveTint',

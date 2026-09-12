@@ -2214,6 +2214,11 @@
           function (v) { PERF_CONSOLE_CACHE = !!v; },
           0, 1, 1);           // v25.31 instrument cache; 0 = legacy direct draw (A/B)
       }
+      if (typeof MTN_GPU_ENABLED !== 'undefined') {
+        gmRegisterLever('perf.mountainGPU', 'perf', 'mountainGPU',
+          function () { return MTN_GPU_ENABLED ? 1 : 0; },
+          function (v) { MTN_GPU_ENABLED = !!v; }, 0, 1, 1);
+      }
       if (typeof PERF_MAGMA_SKIP_LIVE_TINT !== 'undefined') {
         gmRegisterLever('perf.magmaSkipLiveTint', 'perf', 'magmaSkipLiveTint',
           function () { return PERF_MAGMA_SKIP_LIVE_TINT ? 1 : 0; },
