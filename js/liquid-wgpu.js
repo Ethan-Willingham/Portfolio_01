@@ -1090,6 +1090,7 @@
     var mask  = instance.staging.terrainMask;
     var tiles = t.tiles;
     var words = (tiles + 31) >> 5;
+    var changed = instance.terrainMaskWords !== words;
     if (typeof hook === 'function') {
       hook(t.originCol, t.originRow, t.w, t.h, solid);
     } else {
@@ -1107,9 +1108,15 @@
       for (var k = 0; k < lim; k++) {
         if (solid[base + k]) bits |= (1 << k);
       }
+      if (mask[w] !== (bits >>> 0)) changed = true;
       mask[w] = bits >>> 0;
     }
-    instance.queue.writeBuffer(instance.buf.terrainMask, 0, mask, 0, words);
+    // Keep sampling terrain every frame so digs and streamed terrain are
+    // immediate. Only the transfer is skipped when its bytes are identical.
+    if (changed) {
+      instance.queue.writeBuffer(instance.buf.terrainMask, 0, mask, 0, words);
+      instance.terrainMaskWords = words;
+    }
     return tiles;
   }
 
@@ -1313,6 +1320,10 @@
    * so the boot self-tests still pass with unchanged diffs.
    * -------------------------------------------------------------------- */
   function writeSimParams(instance) {
+    // The synchronous live frame fills this once before opening its encoder.
+    // All substeps share these exact values; standalone self-tests still
+    // refresh before each stage, including after live tuning changes.
+    if (instance.frameEncoder) return;
     var sh = instance.simParamsHost;
     if (!sh) return;
     // v23.x — sourced from the LIQUID_MATS table (water = row 0, oil = row 1)
@@ -1381,16 +1392,14 @@
   //   (copy)      -> cellStart -> cellCursor for the scatter
   //   scatter     -> per particle, sortedIdx[atomicAdd(cellCursor)] = i
   // Assumes uploadParticles() + computeGridBounds() already ran.
-  // v14.7 — per-frame compute-submit batcher. runFrame sets instance.batchCBs
-  // to an array; each stage (buildGrid/runP2G/runGrid2/runG2P/runCollide)
-  // routes its command buffer here, and runFrame submits them all in one
-  // queue.submit instead of five — one submit's worth of CPU + driver
-  // overhead, and fewer CPU<->GPU handoff points. Standalone callers (the
-  // self-tests) leave batchCBs null, so each stage submits itself as before.
+  // Share one encoder across a live frame, retaining every compute-pass
+  // boundary and transfer in order. Standalone stage/self-test calls own
+  // their encoders and submit immediately. No dispatch or substep is skipped.
+  function liquidEncoder(instance, label) {
+    return instance.frameEncoder || instance.device.createCommandEncoder({ label: label });
+  }
   function liquidSubmit(instance, enc) {
-    var cb = enc.finish();
-    if (instance.batchCBs) { instance.batchCBs.push(cb); }
-    else { instance.queue.submit([cb]); }
+    if (enc !== instance.frameEncoder) instance.queue.submit([enc.finish()]);
   }
 
   function buildGrid(instance, clearPrev) {
@@ -1419,7 +1428,7 @@
      * change. denseClearAll covers seeds/handoffs/harness runs.
      * ------------------------------------------------------------------ */
     if (useSparse(instance)) {
-      var encS = dev.createCommandEncoder({ label: 'liquid.buildGridSparse' });
+      var encS = liquidEncoder(instance, 'liquid.buildGridSparse');
       var partGroupsS = Math.max(1, Math.ceil(count / WG));
       // Pass A — [deferred prev clear] + mark + compact.
       var cpA = encS.beginComputePass({ label: 'liquid.gridSparseMark' });
@@ -1473,7 +1482,7 @@
       return;
     }
 
-    var enc = dev.createCommandEncoder({ label: 'liquid.buildGrid' });
+    var enc = liquidEncoder(instance, 'liquid.buildGrid');
 
     var cellGroups  = Math.ceil(g.cells / WG);
     var partGroups  = Math.max(1, Math.ceil(count / WG));
@@ -8171,7 +8180,7 @@ struct P2GParams {
     var cellGroups = Math.ceil(g.cells / WG);
     var partGroups = Math.max(1, Math.ceil(count / WG));
     var sparse = useSparse(instance);
-    var enc = dev.createCommandEncoder({ label: 'liquid.runGrid2' });
+    var enc = liquidEncoder(instance, 'liquid.runGrid2');
     var cp = enc.beginComputePass({ label: 'liquid.grid2' });
 
     // 1. clearDV — zero the pressure-impulse accumulators over [0, cells).
@@ -8248,7 +8257,7 @@ struct P2GParams {
     var g = instance.grid;
     if (!g || g.cells <= 0) return;
     var dev = instance.device;
-    var enc = dev.createCommandEncoder({ label: 'liquid.sparseEndClear' });
+    var enc = liquidEncoder(instance, 'liquid.sparseEndClear');
     var cp = enc.beginComputePass({ label: 'liquid.sparseEndClear' });
     cp.setPipeline(instance.pipe.clearCountSparse);
     cp.setBindGroup(0, instance.bg.grid);
@@ -8470,7 +8479,7 @@ struct P2GParams {
     // v14.26 — refresh the live physics uniform before the G2P gather
     // reads it (motion scale / damping / aeration feel).
     writeSimParams(instance);
-    var enc = dev.createCommandEncoder({ label: 'liquid.runG2P' });
+    var enc = liquidEncoder(instance, 'liquid.runG2P');
     var cp = enc.beginComputePass({ label: 'liquid.g2p' });
     cp.setPipeline(instance.g2pPipe.gather);
     cp.setBindGroup(0, instance.g2pBG);
@@ -8493,7 +8502,7 @@ struct P2GParams {
     // v14.26 — refresh the live physics uniform before the collide kernel
     // reads the per-fluid terrain restitution (sp.coll).
     writeSimParams(instance);
-    var enc = dev.createCommandEncoder({ label: 'liquid.runCollide' });
+    var enc = liquidEncoder(instance, 'liquid.runCollide');
     var cp = enc.beginComputePass({ label: 'liquid.collide' });
     cp.setPipeline(instance.collidePipe.collide);
     var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
@@ -8511,7 +8520,7 @@ struct P2GParams {
     var count = instance.uploadedCount | 0;
     if (count <= 0) return;
     var dev = instance.device;
-    var enc = dev.createCommandEncoder({ label: 'liquid.runDeclump' });
+    var enc = liquidEncoder(instance, 'liquid.runDeclump');
     var cp = enc.beginComputePass({ label: 'liquid.declump' });
     cp.setPipeline(instance.declumpPipe);
     cp.setBindGroup(0, instance.declumpBG);
@@ -9542,35 +9551,30 @@ fn main() {
       denseClearAll(instance);
       instance.needsDenseClear = false;
     }
-    // 6. The full GPU per-frame chain — batched into one queue.submit,
-    // run subSteps× (v24.10). Each stage records its own command buffer
-    // and routes it through liquidSubmit, which collects them while
-    // batchCBs is set; they execute in array order on the queue. Each
-    // sub-step rebuilds the grid from the resident (GPU-evolved) particle
-    // buffers and advances dt/N — uploadParticles seeded them once above,
-    // so the sub-steps compound on the GPU with no extra upload or
-    // readback. v15.0 — ONE submit for the whole frame (was one per
-    // sub-step; submits are real driver overhead on mobile), and under the
-    // sparse path each sub-step ends with the indirect active-block clear
-    // that maintains the global-zero invariant.
-    instance.batchCBs = [];
-    for (var ss = 0; ss < subSteps; ss++) {
-      // v15.0 — sub-steps after the first fold the previous sub-step's
-      // active-block clear into their own first pass (same grid mapping).
-      buildGrid(instance, ss > 0);
-      runDeclump(instance);   // v24.185 — min-separation, after the fresh grid
-      runP2G(instance);
-      runGrid2(instance, ss, true);   // liveChain: the dv filter runs here only
-      runG2P(instance);
-      runCollide(instance, ss);
+    // 6. Encode the complete live chain once. Each stage retains its own
+    // compute passes (including sparse indirect-argument copies), while
+    // avoiding an encoder and command buffer per stage per substep. The
+    // physics uniform is constant throughout this synchronous frame.
+    writeSimParams(instance);
+    var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
+    instance.frameEncoder = frameEncoder;
+    try {
+      for (var ss = 0; ss < subSteps; ss++) {
+        buildGrid(instance, ss > 0);
+        runDeclump(instance);
+        runP2G(instance);
+        runGrid2(instance, ss, true);
+        runG2P(instance);
+        runCollide(instance, ss);
+      }
+      // Clear the last substep's active blocks before its grid mapping moves.
+      runSparseEndClear(instance);
+      instance.queue.submit([frameEncoder.finish()]);
+    } finally {
+      // A failed encode must not leave subsequent standalone calls holding
+      // an unfinished encoder or suppress their physics-uniform refresh.
+      instance.frameEncoder = null;
     }
-    // v15.0 — clear the LAST sub-step's active blocks while this frame's
-    // grid mapping still holds (sparse path only; no-op dense).
-    runSparseEndClear(instance);
-    if (instance.batchCBs.length > 0) {
-      instance.queue.submit(instance.batchCBs);
-    }
-    instance.batchCBs = null;
     // 7. Kick the async copy-back for the CPU mirror — but only every
     // LIQUID_READBACK_EVERY runFrames (v14.5). Per-frame mapAsync serialises
     // the CPU and GPU; kicking it rarely lets them pipeline. The mirror is
@@ -9644,7 +9648,7 @@ fn main() {
     var P = instance.p2gPipe;
     var cellGroups = Math.ceil(g.cells / WG);
     var partGroups = Math.max(1, Math.ceil(count / WG));
-    var enc = dev.createCommandEncoder({ label: 'liquid.runP2G' });
+    var enc = liquidEncoder(instance, 'liquid.runP2G');
     var cp = enc.beginComputePass({ label: 'liquid.p2g' });
     var sparse = useSparse(instance);
 
@@ -10003,7 +10007,8 @@ fn main() {
       opsPipe: null,         // v24.109 — single-thread replay pipeline
       opsBG: null,           // v24.109 — replay bind group
       opsReady: false,       // v24.109 — ops-replay path available (else full re-upload)
-      batchCBs: null,        // v14.7 — per-frame compute command-buffer batch
+      frameEncoder: null,   // shared only during the synchronous live frame
+      terrainMaskWords: 0,   // last uploaded mask length; zero forces the first transfer
       // v15.0 — sparse active-block grid state.
       sparseCapable: false,  // device grants >= 10 storage buffers/stage
       sparseGridOK: false,   // sparse grid-layout pipelines built

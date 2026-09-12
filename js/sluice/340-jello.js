@@ -5213,11 +5213,13 @@
   // substep allocation). Cell size = the contact diameter 2r, so a point's contacts are exactly
   // the 3x3 neighbour cells. Points are gathered across ALL active bodies each substep.
   var JELLO_HASH_N = 8191;                 // prime bucket count
+  var JELLO_HASH_SPARSE_MAX = 256;         // small scenes avoid scanning every bucket
   var jelloGPX = null, jelloGPY = null;    // gathered point positions (working copy this substep)
   var jelloGOX = null, jelloGOY = null;    // gathered previous positions (read-only, for friction)
   var jelloGR = null;                      // gathered per-point contact radius (mixed lattice densities)
   var jelloGBody = null, jelloGLocal = null, jelloGHash = null;   // gather -> active-idx, local-idx, cell hash
   var jelloHashStart = null, jelloHashCursor = null, jelloHashOrder = null;
+  var jelloHashUsed = null;               // occupied buckets, rebuilt for each contact solve
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
@@ -5234,6 +5236,7 @@
     jelloHashStart = new Int32Array(JELLO_HASH_N + 1);
     jelloHashCursor = new Int32Array(JELLO_HASH_N + 1);
     jelloHashOrder = new Int32Array(MP);
+    jelloHashUsed = new Int32Array(JELLO_HASH_SPARSE_MAX);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
     jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
@@ -5279,7 +5282,8 @@
     var invCell = 1 / cellSize;   // hash cell = the largest 2r among active bodies (covers any rA+rB)
     var GPX = jelloGPX, GPY = jelloGPY, GOX = jelloGOX, GOY = jelloGOY, GR = jelloGR;
     var GB = jelloGBody, GL = jelloGLocal, GH = jelloGHash;
-    var START = jelloHashStart, CURSOR = jelloHashCursor, ORDER = jelloHashOrder, HN = JELLO_HASH_N;
+    var START = jelloHashStart, CURSOR = jelloHashCursor, ORDER = jelloHashOrder;
+    var USED = jelloHashUsed, usedN = 0;
     var fric = JELLO_CONTACT_FRICTION, ndamp = JELLO_CONTACT_DAMP, MP = JELLO_MAX_POINTS;
     var ripVnMin = (JELLO_RIPPLE > 0) ? (JELLO_RIPPLE_VMIN / JELLO_TIMESCALE) * jelloStepH : 1e18;   // px/substep
     var citers = (JELLO_CONTACT_ITERS | 0); if (citers < 1) citers = 1;
@@ -5295,14 +5299,34 @@
       }
     }
     if (N < 2) return 0;
-    // 2. build the hash (count-sort)
-    START.fill(0);                       // START is Int32Array(HN+1); clears the whole bucket table
-    for (i = 0; i < N; i++) {
-      h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
-      GH[i] = h; START[h + 1]++;
+    // 2. Count-sort occupied buckets for small scenes. Each bucket still stores
+    // points in ascending gather-index order, so the contact sweep sees exactly
+    // the same candidates. Large scenes retain the dense prefix scan: its
+    // contiguous writes benchmark faster there than tracking occupied buckets.
+    START.fill(0);
+    var sparse = N <= JELLO_HASH_SPARSE_MAX;
+    if (sparse) {
+      CURSOR.fill(0);
+      for (i = 0; i < N; i++) {
+        h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        GH[i] = h;
+        if (CURSOR[h] === 0) USED[usedN++] = h;
+        CURSOR[h]++;
+      }
+      var offset = 0;
+      for (j = 0; j < usedN; j++) {
+        h = USED[j];
+        var count = CURSOR[h];
+        START[h] = offset; CURSOR[h] = offset; offset += count;
+      }
+    } else {
+      for (i = 0; i < N; i++) {
+        h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        GH[i] = h; START[h + 1]++;
+      }
+      for (j = 0; j < JELLO_HASH_N; j++) START[j + 1] += START[j];
+      CURSOR.set(START);
     }
-    for (j = 0; j < HN; j++) START[j + 1] += START[j];
-    CURSOR.set(START);                   // copy the prefix-sum offsets (same-length Int32Array memcpy)
     for (i = 0; i < N; i++) { h = GH[i]; ORDER[CURSOR[h]++] = i; }
     // 3. serial Gauss-Seidel contact sweep, iterated citers times (reuses the cached hash) so a
     //    hard press is fully separated instead of leaving residual overlap (the conjoined look).
@@ -5313,6 +5337,7 @@
     //    harness-measured, churning at ~100 px/s and never sleeping — the flat-ground
     //    "spongebob wiggle"). Ping-pong ordering cancels the directional bias; pair maths is
     //    direction-independent (each unordered pair still solved exactly once per pass).
+    var END = sparse ? CURSOR : START, endOffset = sparse ? 0 : 1;
     var contacts = 0, gx, gy, kk, cend, cx, cy, dx, dy, d2, d, pen, nx, ny, half, cit, si;
     jelloSweepFlip = !jelloSweepFlip;
     for (cit = 0; cit < citers; cit++) {
@@ -5325,7 +5350,7 @@
       for (gx = cx - 1; gx <= cx + 1; gx++) {
         for (gy = cy - 1; gy <= cy + 1; gy++) {
           h = jelloHashCell(gx, gy);
-          cend = START[h + 1];
+          cend = END[h + endOffset];
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
             if (j <= i) continue;            // each unordered pair once (gather-index order)

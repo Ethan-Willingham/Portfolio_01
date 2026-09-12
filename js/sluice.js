@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.74';
+  var GAME_VERSION = 'v26.76';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -4464,7 +4464,7 @@
       var bit = 1 << (row * 4 + col);
       if (!(mask & bit)) {
         mask |= bit;
-        if (++covered >= 16) break;                // fully covered — done
+        if (++covered >= 10) return 1;             // cushion already saturated
       }
     }
     // <=4 covered cells = a few stray splash droplets (no cushion); >=10 =
@@ -34732,6 +34732,7 @@
     var blitQuadVBO = null;  // v10.88 — exposed so other helpers can restore the buffer state
     var obstacleTexture = null;
     var obstacleSrcCanvas = null;
+    var obstacleWidth = 0, obstacleHeight = 0;
   
     // --- WebGL context / format negotiation -------------------------
     function getWebGLContext (cnv) {
@@ -34788,7 +34789,10 @@
       var fbo = glCtx.createFramebuffer();
       glCtx.bindFramebuffer(glCtx.FRAMEBUFFER, fbo);
       glCtx.framebufferTexture2D(glCtx.FRAMEBUFFER, glCtx.COLOR_ATTACHMENT0, glCtx.TEXTURE_2D, texture, 0);
-      return glCtx.checkFramebufferStatus(glCtx.FRAMEBUFFER) === glCtx.FRAMEBUFFER_COMPLETE;
+      var supported = glCtx.checkFramebufferStatus(glCtx.FRAMEBUFFER) === glCtx.FRAMEBUFFER_COMPLETE;
+      glCtx.deleteFramebuffer(fbo);
+      glCtx.deleteTexture(texture);
+      return supported;
     }
   
     // --- Shader / Program helpers -----------------------------------
@@ -35175,6 +35179,12 @@
       return { width: min, height: max };
     }
   
+    function deleteFBO (target) {
+      if (!target) return;
+      gl.deleteFramebuffer(target.fbo);
+      gl.deleteTexture(target.texture);
+    }
+
     function initFramebuffers () {
       var simRes = getResolution(config.SIM_RESOLUTION);
       var dyeRes = getResolution(config.DYE_RESOLUTION);
@@ -35184,6 +35194,12 @@
       var r    = ext.formatR;
       var filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
       gl.disable(gl.BLEND);
+      // A resize resets the fields. Release their previous GPU allocations.
+      if (dye) { deleteFBO(dye.read); deleteFBO(dye.write); }
+      if (velocity) { deleteFBO(velocity.read); deleteFBO(velocity.write); }
+      deleteFBO(divergence);
+      deleteFBO(curl);
+      if (pressure) { deleteFBO(pressure.read); deleteFBO(pressure.write); }
       dye        = createDoubleFBO(dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
       velocity   = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat,   rg.format,   texType, filtering);
       divergence = createFBO      (simRes.width, simRes.height, r.internalFormat,    r.format,    texType, gl.NEAREST);
@@ -35204,6 +35220,7 @@
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       // 1x1 transparent default — no obstacles until setObstacleAlpha runs.
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+      obstacleWidth = 1; obstacleHeight = 1;
     }
 
     // v10.87 — WebGL-native obstacle painter. Replaces the
@@ -35215,6 +35232,7 @@
     var obstacleFB = null;
     var obstacleQuadProgram = null;
     var obstacleQuadVBO = null;
+    var obstacleQuadCapacity = 0;
     var obstacleQuadAttrLoc = -1;
     var OBS_QUAD_VS = [
       'precision highp float;',
@@ -35228,9 +35246,10 @@
 
     function ensureObstacleFB (w, h) {
       ensureObstacleTexture();
-      if (!obstacleFB || obstacleFB.w !== w || obstacleFB.h !== h) {
+      if (!obstacleFB || obstacleWidth !== w || obstacleHeight !== h) {
         gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        obstacleWidth = w; obstacleHeight = h;
         if (!obstacleFB) {
           obstacleFB = { fbo: gl.createFramebuffer(), w: 0, h: 0 };
         }
@@ -35261,7 +35280,16 @@
         gl.disable(gl.BLEND);
         gl.useProgram(obstacleQuadProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, obstacleQuadVBO);
-        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);
+        // The scratch array includes capacity for empty tiles. Upload only
+        // the vertices drawn, and retain the GPU allocation between paints.
+        if (verts.byteLength > obstacleQuadCapacity) {
+          obstacleQuadCapacity = verts.byteLength;
+          gl.bufferData(gl.ARRAY_BUFFER, obstacleQuadCapacity, gl.DYNAMIC_DRAW);
+        }
+        if (ext.isWebGL2)
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, vertCount * 2);
+        else
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts.subarray(0, vertCount * 2));
         gl.enableVertexAttribArray(obstacleQuadAttrLoc);
         gl.vertexAttribPointer(obstacleQuadAttrLoc, 2, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.TRIANGLES, 0, vertCount);
@@ -35419,9 +35447,15 @@
       pressureProgram.bind();
       gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+      // The Jacobi passes share one sampler unit and viewport. Only the
+      // ping-pong textures/framebuffers change between iterations.
+      gl.uniform1i(pressureProgram.uniforms.uPressure, 1);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.viewport(0, 0, pressure.width, pressure.height);
       for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-        gl.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
-        blit(pressure.write);
+        gl.bindTexture(gl.TEXTURE_2D, pressure.read.texture);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pressure.write.fbo);
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
         pressure.swap();
       }
   
@@ -35455,8 +35489,7 @@
         gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
       gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
-      gl.uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
-      gl.uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
+      // The obstacle stays bound on unit 2 from the velocity pass.
       gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
       // Wind drifts dye above the surface only. u_wind_x is in UV/sec units.
       // u_wind_above_y is the UV Y threshold (uvY = 1 - syN, so above-surface
@@ -35488,7 +35521,6 @@
     function splat (uvX, uvY, dx, dy, color, splatRadius) {
       if (!ready) return;
       splatVelocity(uvX, uvY, dx, dy, splatRadius);
-      splatProgram.bind();
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
       blit(dye.write);
@@ -35512,7 +35544,12 @@
       gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+      if (obstacleWidth !== srcCanvas.width || obstacleHeight !== srcCanvas.height) {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+        obstacleWidth = srcCanvas.width; obstacleHeight = srcCanvas.height;
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+      }
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     }
   
@@ -56641,11 +56678,13 @@
   // substep allocation). Cell size = the contact diameter 2r, so a point's contacts are exactly
   // the 3x3 neighbour cells. Points are gathered across ALL active bodies each substep.
   var JELLO_HASH_N = 8191;                 // prime bucket count
+  var JELLO_HASH_SPARSE_MAX = 256;         // small scenes avoid scanning every bucket
   var jelloGPX = null, jelloGPY = null;    // gathered point positions (working copy this substep)
   var jelloGOX = null, jelloGOY = null;    // gathered previous positions (read-only, for friction)
   var jelloGR = null;                      // gathered per-point contact radius (mixed lattice densities)
   var jelloGBody = null, jelloGLocal = null, jelloGHash = null;   // gather -> active-idx, local-idx, cell hash
   var jelloHashStart = null, jelloHashCursor = null, jelloHashOrder = null;
+  var jelloHashUsed = null;               // occupied buckets, rebuilt for each contact solve
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
@@ -56662,6 +56701,7 @@
     jelloHashStart = new Int32Array(JELLO_HASH_N + 1);
     jelloHashCursor = new Int32Array(JELLO_HASH_N + 1);
     jelloHashOrder = new Int32Array(MP);
+    jelloHashUsed = new Int32Array(JELLO_HASH_SPARSE_MAX);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
     jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
@@ -56707,7 +56747,8 @@
     var invCell = 1 / cellSize;   // hash cell = the largest 2r among active bodies (covers any rA+rB)
     var GPX = jelloGPX, GPY = jelloGPY, GOX = jelloGOX, GOY = jelloGOY, GR = jelloGR;
     var GB = jelloGBody, GL = jelloGLocal, GH = jelloGHash;
-    var START = jelloHashStart, CURSOR = jelloHashCursor, ORDER = jelloHashOrder, HN = JELLO_HASH_N;
+    var START = jelloHashStart, CURSOR = jelloHashCursor, ORDER = jelloHashOrder;
+    var USED = jelloHashUsed, usedN = 0;
     var fric = JELLO_CONTACT_FRICTION, ndamp = JELLO_CONTACT_DAMP, MP = JELLO_MAX_POINTS;
     var ripVnMin = (JELLO_RIPPLE > 0) ? (JELLO_RIPPLE_VMIN / JELLO_TIMESCALE) * jelloStepH : 1e18;   // px/substep
     var citers = (JELLO_CONTACT_ITERS | 0); if (citers < 1) citers = 1;
@@ -56723,14 +56764,34 @@
       }
     }
     if (N < 2) return 0;
-    // 2. build the hash (count-sort)
-    START.fill(0);                       // START is Int32Array(HN+1); clears the whole bucket table
-    for (i = 0; i < N; i++) {
-      h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
-      GH[i] = h; START[h + 1]++;
+    // 2. Count-sort occupied buckets for small scenes. Each bucket still stores
+    // points in ascending gather-index order, so the contact sweep sees exactly
+    // the same candidates. Large scenes retain the dense prefix scan: its
+    // contiguous writes benchmark faster there than tracking occupied buckets.
+    START.fill(0);
+    var sparse = N <= JELLO_HASH_SPARSE_MAX;
+    if (sparse) {
+      CURSOR.fill(0);
+      for (i = 0; i < N; i++) {
+        h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        GH[i] = h;
+        if (CURSOR[h] === 0) USED[usedN++] = h;
+        CURSOR[h]++;
+      }
+      var offset = 0;
+      for (j = 0; j < usedN; j++) {
+        h = USED[j];
+        var count = CURSOR[h];
+        START[h] = offset; CURSOR[h] = offset; offset += count;
+      }
+    } else {
+      for (i = 0; i < N; i++) {
+        h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        GH[i] = h; START[h + 1]++;
+      }
+      for (j = 0; j < JELLO_HASH_N; j++) START[j + 1] += START[j];
+      CURSOR.set(START);
     }
-    for (j = 0; j < HN; j++) START[j + 1] += START[j];
-    CURSOR.set(START);                   // copy the prefix-sum offsets (same-length Int32Array memcpy)
     for (i = 0; i < N; i++) { h = GH[i]; ORDER[CURSOR[h]++] = i; }
     // 3. serial Gauss-Seidel contact sweep, iterated citers times (reuses the cached hash) so a
     //    hard press is fully separated instead of leaving residual overlap (the conjoined look).
@@ -56741,6 +56802,7 @@
     //    harness-measured, churning at ~100 px/s and never sleeping — the flat-ground
     //    "spongebob wiggle"). Ping-pong ordering cancels the directional bias; pair maths is
     //    direction-independent (each unordered pair still solved exactly once per pass).
+    var END = sparse ? CURSOR : START, endOffset = sparse ? 0 : 1;
     var contacts = 0, gx, gy, kk, cend, cx, cy, dx, dy, d2, d, pen, nx, ny, half, cit, si;
     jelloSweepFlip = !jelloSweepFlip;
     for (cit = 0; cit < citers; cit++) {
@@ -56753,7 +56815,7 @@
       for (gx = cx - 1; gx <= cx + 1; gx++) {
         for (gy = cy - 1; gy <= cy + 1; gy++) {
           h = jelloHashCell(gx, gy);
-          cend = START[h + 1];
+          cend = END[h + endOffset];
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
             if (j <= i) continue;            // each unordered pair once (gather-index order)

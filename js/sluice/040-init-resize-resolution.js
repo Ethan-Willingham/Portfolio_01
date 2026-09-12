@@ -433,7 +433,7 @@
       var bit = 1 << (row * 4 + col);
       if (!(mask & bit)) {
         mask |= bit;
-        if (++covered >= 16) break;                // fully covered — done
+        if (++covered >= 10) return 1;             // cushion already saturated
       }
     }
     // <=4 covered cells = a few stray splash droplets (no cushion); >=10 =

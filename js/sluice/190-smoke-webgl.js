@@ -30,6 +30,7 @@
     var blitQuadVBO = null;  // v10.88 — exposed so other helpers can restore the buffer state
     var obstacleTexture = null;
     var obstacleSrcCanvas = null;
+    var obstacleWidth = 0, obstacleHeight = 0;
   
     // --- WebGL context / format negotiation -------------------------
     function getWebGLContext (cnv) {
@@ -86,7 +87,10 @@
       var fbo = glCtx.createFramebuffer();
       glCtx.bindFramebuffer(glCtx.FRAMEBUFFER, fbo);
       glCtx.framebufferTexture2D(glCtx.FRAMEBUFFER, glCtx.COLOR_ATTACHMENT0, glCtx.TEXTURE_2D, texture, 0);
-      return glCtx.checkFramebufferStatus(glCtx.FRAMEBUFFER) === glCtx.FRAMEBUFFER_COMPLETE;
+      var supported = glCtx.checkFramebufferStatus(glCtx.FRAMEBUFFER) === glCtx.FRAMEBUFFER_COMPLETE;
+      glCtx.deleteFramebuffer(fbo);
+      glCtx.deleteTexture(texture);
+      return supported;
     }
   
     // --- Shader / Program helpers -----------------------------------
@@ -473,6 +477,12 @@
       return { width: min, height: max };
     }
   
+    function deleteFBO (target) {
+      if (!target) return;
+      gl.deleteFramebuffer(target.fbo);
+      gl.deleteTexture(target.texture);
+    }
+
     function initFramebuffers () {
       var simRes = getResolution(config.SIM_RESOLUTION);
       var dyeRes = getResolution(config.DYE_RESOLUTION);
@@ -482,6 +492,12 @@
       var r    = ext.formatR;
       var filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
       gl.disable(gl.BLEND);
+      // A resize resets the fields. Release their previous GPU allocations.
+      if (dye) { deleteFBO(dye.read); deleteFBO(dye.write); }
+      if (velocity) { deleteFBO(velocity.read); deleteFBO(velocity.write); }
+      deleteFBO(divergence);
+      deleteFBO(curl);
+      if (pressure) { deleteFBO(pressure.read); deleteFBO(pressure.write); }
       dye        = createDoubleFBO(dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
       velocity   = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat,   rg.format,   texType, filtering);
       divergence = createFBO      (simRes.width, simRes.height, r.internalFormat,    r.format,    texType, gl.NEAREST);
@@ -502,6 +518,7 @@
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       // 1x1 transparent default — no obstacles until setObstacleAlpha runs.
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+      obstacleWidth = 1; obstacleHeight = 1;
     }
 
     // v10.87 — WebGL-native obstacle painter. Replaces the
@@ -513,6 +530,7 @@
     var obstacleFB = null;
     var obstacleQuadProgram = null;
     var obstacleQuadVBO = null;
+    var obstacleQuadCapacity = 0;
     var obstacleQuadAttrLoc = -1;
     var OBS_QUAD_VS = [
       'precision highp float;',
@@ -526,9 +544,10 @@
 
     function ensureObstacleFB (w, h) {
       ensureObstacleTexture();
-      if (!obstacleFB || obstacleFB.w !== w || obstacleFB.h !== h) {
+      if (!obstacleFB || obstacleWidth !== w || obstacleHeight !== h) {
         gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        obstacleWidth = w; obstacleHeight = h;
         if (!obstacleFB) {
           obstacleFB = { fbo: gl.createFramebuffer(), w: 0, h: 0 };
         }
@@ -559,7 +578,16 @@
         gl.disable(gl.BLEND);
         gl.useProgram(obstacleQuadProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, obstacleQuadVBO);
-        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);
+        // The scratch array includes capacity for empty tiles. Upload only
+        // the vertices drawn, and retain the GPU allocation between paints.
+        if (verts.byteLength > obstacleQuadCapacity) {
+          obstacleQuadCapacity = verts.byteLength;
+          gl.bufferData(gl.ARRAY_BUFFER, obstacleQuadCapacity, gl.DYNAMIC_DRAW);
+        }
+        if (ext.isWebGL2)
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, vertCount * 2);
+        else
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts.subarray(0, vertCount * 2));
         gl.enableVertexAttribArray(obstacleQuadAttrLoc);
         gl.vertexAttribPointer(obstacleQuadAttrLoc, 2, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.TRIANGLES, 0, vertCount);
@@ -717,9 +745,15 @@
       pressureProgram.bind();
       gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+      // The Jacobi passes share one sampler unit and viewport. Only the
+      // ping-pong textures/framebuffers change between iterations.
+      gl.uniform1i(pressureProgram.uniforms.uPressure, 1);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.viewport(0, 0, pressure.width, pressure.height);
       for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-        gl.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
-        blit(pressure.write);
+        gl.bindTexture(gl.TEXTURE_2D, pressure.read.texture);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pressure.write.fbo);
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
         pressure.swap();
       }
   
@@ -753,8 +787,7 @@
         gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
       gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
-      gl.uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
-      gl.uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
+      // The obstacle stays bound on unit 2 from the velocity pass.
       gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
       // Wind drifts dye above the surface only. u_wind_x is in UV/sec units.
       // u_wind_above_y is the UV Y threshold (uvY = 1 - syN, so above-surface
@@ -786,7 +819,6 @@
     function splat (uvX, uvY, dx, dy, color, splatRadius) {
       if (!ready) return;
       splatVelocity(uvX, uvY, dx, dy, splatRadius);
-      splatProgram.bind();
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
       blit(dye.write);
@@ -810,7 +842,12 @@
       gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+      if (obstacleWidth !== srcCanvas.width || obstacleHeight !== srcCanvas.height) {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+        obstacleWidth = srcCanvas.width; obstacleHeight = srcCanvas.height;
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+      }
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     }
   
