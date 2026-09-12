@@ -6857,10 +6857,13 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 @group(1) @binding(0) var terrainRenderTex : texture_2d<f32>;
 @group(1) @binding(1) var terrainRenderSampler : sampler;
 @group(1) @binding(2) var<uniform> terrainRenderRect : vec4<f32>;
-fn terrainRenderOpen(wp : vec2<f32>) -> f32 {
-  if (terrainRenderRect.z <= 0.0) { return 1.0; }
+fn terrainRenderData(wp : vec2<f32>) -> vec2<f32> {
+  if (terrainRenderRect.z <= 0.0) { return vec2<f32>(0.0); }
   let uv = (wp - terrainRenderRect.xy) * terrainRenderRect.zw;
-  return 1.0 - textureSampleLevel(terrainRenderTex, terrainRenderSampler, uv, 0.0).a;
+  return textureSampleLevel(terrainRenderTex, terrainRenderSampler, uv, 0.0).rg;
+}
+fn terrainRenderOpen(wp : vec2<f32>) -> f32 {
+  return 1.0 - terrainRenderData(wp).r;
 }
 `;
 
@@ -7214,7 +7217,8 @@ fn bridgeTap(px : vec2<f32>, off : vec2<f32>) -> f32 {
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
   let wp = vec2<f32>(rp.camX, rp.camY) + in.pos.xy / max(rp.dpws, 0.001);
-  let open = terrainRenderOpen(wp);
+  let terrain = terrainRenderData(wp);
+  let open = 1.0 - terrain.r;
   if (open <= 0.001) { discard; }
   var fieldPx = in.pos.xy;
   // Rounded cutaways can expose a few pixels inside a collision tile.
@@ -7263,6 +7267,48 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   }
   var aWaterEdge = smoothstep(t - s, t + s, fw);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
+  // Contact can have zero field after the collision ring separates the
+  // outer particle row from a wall. Wet every side of the VISUAL boundary,
+  // including ceilings and corners, from real body-strength water inward
+  // of that wall. The cached band gates all extra work to the contact rim.
+  // Each tap stays in the same open passage; a dry pocket or lone drop
+  // cannot supply a body, and no field is carried through solid terrain.
+  if (rp.bridge.x > 0.0 && terrain.g > 0.01 && aWaterEdge < 0.999) {
+    let dirs = array<vec2<f32>, 8>(
+      vec2<f32>(-1.0, 0.0), vec2<f32>(1.0, 0.0),
+      vec2<f32>(0.0, -1.0), vec2<f32>(0.0, 1.0),
+      vec2<f32>(-0.7071, -0.7071), vec2<f32>(0.7071, -0.7071),
+      vec2<f32>(-0.7071, 0.7071), vec2<f32>(0.7071, 0.7071));
+    for (var side = 0; side < 8; side = side + 1) {
+      let dir = dirs[side];
+      if (terrainRenderOpen(wp + dir * 6.0) > 0.5) { continue; }
+      // Anchor the reach at the wall, not at each missing pixel. Otherwise
+      // a wide air gap can acquire an isolated strip of water halfway
+      // between the ceiling and the real free surface.
+      var lo = 0.0;
+      var hi = 6.0;
+      for (var search = 0; search < 4; search = search + 1) {
+        let mid = (lo + hi) * 0.5;
+        if (terrainRenderOpen(wp + dir * mid) > 0.5) { lo = mid; }
+        else { hi = mid; }
+      }
+      let wall = wp + dir * hi;
+      for (var step = 1; step <= 3; step = step + 1) {
+        let depth = min(2.0 * f32(step), 5.0);
+        if (depth <= hi) { continue; }
+        let source = wall - dir * depth;
+        if (terrainRenderOpen(source) < 0.5) { break; }
+        if (terrainRenderOpen(mix(wp, source, 0.33)) < 0.5 ||
+            terrainRenderOpen(mix(wp, source, 0.67)) < 0.5) { break; }
+        let sp = (source - vec2<f32>(rp.camX, rp.camY)) * rp.dpws;
+        if (sp.x < 0.0 || sp.y < 0.0 || sp.x >= rp.canvasW || sp.y >= rp.canvasH) { break; }
+        let body = textureLoad(fieldTex, vec2<i32>(sp), 0).r;
+        if (body >= t) { aWaterEdge = max(aWaterEdge, smoothstep(t - s, t + s, body)); }
+        if (aWaterEdge >= 0.999) { break; }
+      }
+      if (aWaterEdge >= 0.999) { break; }
+    }
+  }
   // v26.58 CONTACT INVARIANT (the owner's cup argument): the space between
   // a body of water and the floor directly under it can never be air,
   // because water surrounds it and nothing could have let air in. The

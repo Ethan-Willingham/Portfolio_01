@@ -24,7 +24,8 @@ window.__waterContourTest = {
     });
     return { gpu: !!(liquidWGPU && liquidWGPU.renderActive), version: GAME_VERSION };
   },
-  scene: function (surface) {
+  scene: function (surface, contact) {
+    var opts = contact && typeof contact === 'object' ? contact : {};
     var row = surface ? SKY_ROWS : SKY_ROWS + 12, col = 80;
     this.row = row; this.col = col;
     for (var r = Math.max(0, row - 8); r <= row + 15; r++) for (var c = col - 12; c <= col + 24; c++) {
@@ -32,6 +33,7 @@ window.__waterContourTest = {
       // A projecting shelf and two stepped basin walls reproduce the report.
       if (r >= row + 2 && r < row + 4 && c < col + 5) open = false;
       if (r >= row + 6 && c >= col + 9) open = false;
+      if (opts.cross) open = r >= row && r < row + 3 && c >= col && c < col + 3 && (r === row + 1 || c === col + 1);
       world[r][c] = open || r < SKY_ROWS ? null : { type: 'dirt', hp: ORES.dirt.hp };
     }
     // Sealed dry pocket, one tile away from the water.
@@ -39,15 +41,19 @@ window.__waterContourTest = {
     terrainChunkCache = {}; terrainChunkCount = 0; terrainWarmupFrames = 10;
     surfacePonds = []; jelloBodies = [];
     liquidCount = 0; liquidOps.length = 0; liquidOpsOverflow = true; liquidMutationSeq++;
-    for (var y = row * TILE + 8; y < (row + 8) * TILE; y += 1.2) {
+    for (var y = row * TILE + (opts.topGap || 8); y < (row + 8) * TILE; y += 1.2) {
       for (var x = col * TILE; x < (col + 12) * TILE; x += 1.2) {
-        if (!liquidWorldSolidAt(x, y)) addLiquidParticle('water', x, y, 0, 0, 0);
+        var gap = opts.gap === undefined ? (contact ? 2.2 : 0) : opts.gap;
+        if (!liquidWorldSolidAt(x, y) && !liquidWorldSolidAt(x - gap, y) &&
+            !liquidWorldSolidAt(x + gap, y) && !liquidWorldSolidAt(x, y - gap) &&
+            !liquidWorldSolidAt(x, y + gap)) addLiquidParticle('water', x, y, 0, 0, 0);
       }
     }
     for (var i = 0; i < liquidCount; i++) {
       liquidDensity[i] = LIQUID_DENSITY; liquidFrozen[i] = 0;
     }
     cam.x = (col - 1) * TILE; cam.y = (row - 1) * TILE;
+    if (opts.zoom) { worldScale = opts.zoom; screenW = viewW / worldScale; screenH = viewH / worldScale; }
     player.x = (col + 8) * TILE; player.y = row * TILE + 18;
     if (liquidWGPU && liquidWGPU.renderActive) {
       liquidWGPU.uploadParticles(); liquidWGPU.update(0);
@@ -55,6 +61,12 @@ window.__waterContourTest = {
     return { count: liquidCount, row: row, col: col, scale: worldScale, dpr: dpr };
   },
   draw: function () { render(); },
+  settle: async function () {
+    for (var frame = 0; frame < 120; frame++) {
+      liquidWGPU.update(1 / 60);
+      if (frame % 15 === 14) await liquidWGPU.device.queue.onSubmittedWorkDone();
+    }
+  },
   mode: function (mode) {
     liquidWGPU.liquid.getTerrainRenderMask = mode === 'square' ? null : liquidTerrainRenderMask;
     liquidWGPU.setRenderParam('SURFACE_RENDER', mode === 'legacy' ? 0 : 1);
@@ -82,7 +94,7 @@ window.__waterContourTest = {
     }
     var m = liquidTerrainRenderMask();
     var maskBytes = m.ctx.getImageData(0, 0, m.canvas.width, m.canvas.height).data;
-    function maskAlpha(x, y) { return maskBytes[(y * m.canvas.width + x) * 4 + 3]; }
+    function maskAlpha(x, y) { return maskBytes[(y * m.canvas.width + x) * 4]; }
     var blocked = 0, leaking = 0, cutaway = 0, wetCutaway = 0, wet = 0;
     // Probe the actual rasterized cave edge, including both kinds of corner.
     for (var y = (this.row + 1) * TILE; y < (this.row + 8) * TILE; y += 0.5) {
@@ -103,7 +115,32 @@ window.__waterContourTest = {
         if (a > 100) wet++;
       }
     }
-    return { blocked: blocked, leaking: leaking, cutaway: cutaway, wetCutaway: wetCutaway, wet: wet,
+    var contacts = 0, contactGaps = 0, gapSamples = [];
+    function maskAt(wx, wy) {
+      var x = wx - m.x - 0.5, y = wy - m.y - 0.5;
+      var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+      return (maskAlpha(ix, iy) * (1 - fx) + maskAlpha(ix + 1, iy) * fx) * (1 - fy) +
+        (maskAlpha(ix, iy + 1) * (1 - fx) + maskAlpha(ix + 1, iy + 1) * fx) * fy;
+    }
+    var scale = dpr * worldScale;
+    var expectedAlpha = gpu ? liquidWGPU.renderParamsHost[11] * 255 : LIQUID_WATER_ALPHA * 255;
+    for (var sy = 0; sy < h; sy++) for (var sx = 0; sx < w; sx++) {
+      var wx = cam.x + (sx + 0.5) / scale, wy = cam.y + (sy + 0.5) / scale;
+      if (wx < this.col * TILE - 4 || wx > (this.col + 12) * TILE + 4 ||
+          wy < (this.row + 1) * TILE || wy > (this.row + 8) * TILE + 4 || maskAt(wx, wy) > 0.1) continue;
+      if (Math.max(maskAt(wx - 5, wy), maskAt(wx + 5, wy), maskAt(wx, wy - 5), maskAt(wx, wy + 5)) < 128) continue;
+      contacts++;
+      var offset = (gpu ? sy : h - sy - 1) * stride + sx * 4 + 3;
+      if (bytes[offset] < expectedAlpha * 0.98) {
+        contactGaps++;
+        if (gapSamples.length < 8) gapSamples.push({ x: wx - this.col * TILE, y: wy - this.row * TILE, alpha: bytes[offset], expected: expectedAlpha });
+      }
+    }
+    var ceilingAir = 0;
+    for (var ay = 2; ay < 10; ay++) for (var ax = 2 * TILE; ax < 10 * TILE; ax++) {
+      if (alpha(this.col * TILE + ax, this.row * TILE + ay) > 0) ceilingAir++;
+    }
+    return { gapSamples: gapSamples, ceilingAir: ceilingAir, contacts: contacts, contactGaps: contactGaps, blocked: blocked, leaking: leaking, cutaway: cutaway, wetCutaway: wetCutaway, wet: wet,
       dry: alpha((this.col + 13.5) * TILE, (this.row + 4.5) * TILE), revision: m.revision };
   },
   cache: function () {
@@ -177,6 +214,24 @@ async function main() {
           await call('draw'); await page.screenshot({ path: path.join(process.env.DUMP, 'water-before.png') });
         }
         await call('mode', 'surface');
+        await call('scene', false, true); await call('draw');
+        const contact = await call('pixels'); console.log('Separated contact row', contact);
+        if (process.env.DUMP) {
+          await call('draw'); await page.screenshot({ path: path.join(process.env.DUMP, 'water-contact.png') });
+        }
+        if (!process.env.CONTACT_BASELINE) assert.equal(contact.contactGaps, 0, 'A full basin reaches every wall without dark contact seams');
+        await call('scene', false, { gap: 2.2, topGap: 18 });
+        const air = await call('pixels');
+        assert.equal(air.ceilingAir, 0, 'Contact wetting leaves a real air gap below the ceiling empty');
+        await call('scene', false, { cross: true, gap: 2.2, zoom: 2.4 });
+        const cross = await call('pixels'); console.log('Cross pocket', cross);
+        if (!process.env.CONTACT_BASELINE) assert.equal(cross.contactGaps, 0, 'The narrow cross-shaped pocket has continuous wall contact');
+        await call('settle');
+        const settled = await call('pixels'); console.log('Settled cross pocket', settled);
+        if (!process.env.CONTACT_BASELINE) assert.equal(settled.contactGaps, 0, 'Real collision and settling keep the pocket in contact');
+        if (process.env.DUMP) {
+          await call('draw'); await page.screenshot({ path: path.join(process.env.DUMP, 'water-cross.png') });
+        }
       }
       await page.setViewportSize({ width: 700, height: 600 });
       await call('scene', true); await call('draw');

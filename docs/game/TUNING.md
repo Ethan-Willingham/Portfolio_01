@@ -254,6 +254,15 @@ positions, collision, volume or flow tuning. Hosts without this optional mask
 Regression: `node tools/sluice-water-contour-smoke.cjs` covers wet corners,
 dry pockets, excavation, camera motion, resizing and both rendering backends.
 
+v26.115 closes the remaining contact seams after particles settle against
+the square collision boundary. The GPU surface checks for body-strength
+water within five world pixels inward from the visible wall, on every side
+and at corners. Reach is anchored at the wall so it cannot create a detached
+strip near a distant free surface. The cached bitmap stores solid coverage
+in red and a narrow contact band in green, limiting extra taps to the rim.
+The regression now checks separated particle rows and a narrow cross-shaped
+pocket before and after real simulation steps, plus an intact ceiling air gap.
+
 Drawn by `drawLiquidsWebGL` (CPU GL) / the WGSL render shader (GPU). All of
 these are LIVE since v14.25 — the `water` gm group (L panel) pushes them via
 `setRenderParam`, no reload needed. `edit²`.

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.114';
+  var GAME_VERSION = 'v26.115';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11074,7 +11074,7 @@
         'uniform vec4 u_terrainView;\n' +
         'void main(){\n' +
         '  vec2 wp = u_terrainView.xy + vec2(gl_FragCoord.x, u_terrainView.w - gl_FragCoord.y) * u_terrainView.z;\n' +
-        '  float open = 1.0 - texture2D(u_terrain, (wp - u_terrainRect.xy) * u_terrainRect.zw).a;\n' +
+        '  float open = 1.0 - texture2D(u_terrain, (wp - u_terrainRect.xy) * u_terrainRect.zw).r;\n' +
         '  vec2 uv = gl_PointCoord * 2.0 - 1.0;\n' +
         '  float a = clamp(1.0 - dot(uv, uv), 0.0, 1.0) * open;\n' +
         '  if (a <= 0.0) discard;\n' +
@@ -11841,6 +11841,20 @@
     mc.fillRect(m.x, m.y, w, h);
     mc.globalCompositeOperation = 'destination-out';
     mc.fill(m.openPath);
+    // Opaque data texture: R is solid coverage, G is the narrow contact
+    // band. Baking the band here keeps extra field taps off dry open sky
+    // and the interior of a pool. Alpha is no longer the coverage channel.
+    mc.globalCompositeOperation = 'source-in';
+    mc.fillStyle = '#f00';
+    mc.fillRect(m.x, m.y, w, h);
+    mc.globalCompositeOperation = 'destination-over';
+    mc.fillStyle = '#000';
+    mc.fillRect(m.x, m.y, w, h);
+    mc.globalCompositeOperation = 'lighter';
+    mc.strokeStyle = '#0f0';
+    mc.lineWidth = 12;
+    mc.lineJoin = 'round';
+    mc.stroke(m.openPath);
     mc.restore();
     m.revision++;
     return m;

@@ -2326,7 +2326,7 @@
         'uniform vec4 u_terrainView;\n' +
         'void main(){\n' +
         '  vec2 wp = u_terrainView.xy + vec2(gl_FragCoord.x, u_terrainView.w - gl_FragCoord.y) * u_terrainView.z;\n' +
-        '  float open = 1.0 - texture2D(u_terrain, (wp - u_terrainRect.xy) * u_terrainRect.zw).a;\n' +
+        '  float open = 1.0 - texture2D(u_terrain, (wp - u_terrainRect.xy) * u_terrainRect.zw).r;\n' +
         '  vec2 uv = gl_PointCoord * 2.0 - 1.0;\n' +
         '  float a = clamp(1.0 - dot(uv, uv), 0.0, 1.0) * open;\n' +
         '  if (a <= 0.0) discard;\n' +

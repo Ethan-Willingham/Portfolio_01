@@ -33,6 +33,20 @@
     mc.fillRect(m.x, m.y, w, h);
     mc.globalCompositeOperation = 'destination-out';
     mc.fill(m.openPath);
+    // Opaque data texture: R is solid coverage, G is the narrow contact
+    // band. Baking the band here keeps extra field taps off dry open sky
+    // and the interior of a pool. Alpha is no longer the coverage channel.
+    mc.globalCompositeOperation = 'source-in';
+    mc.fillStyle = '#f00';
+    mc.fillRect(m.x, m.y, w, h);
+    mc.globalCompositeOperation = 'destination-over';
+    mc.fillStyle = '#000';
+    mc.fillRect(m.x, m.y, w, h);
+    mc.globalCompositeOperation = 'lighter';
+    mc.strokeStyle = '#0f0';
+    mc.lineWidth = 12;
+    mc.lineJoin = 'round';
+    mc.stroke(m.openPath);
     mc.restore();
     m.revision++;
     return m;
