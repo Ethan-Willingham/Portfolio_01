@@ -35,7 +35,7 @@
        frees abandoned loops (the flight-pack contract for asset loops).
        rig-hum, rig-drive, jet-spin, bomb-fuse, lava-sizzle, fuel-fill.
      - flight(state): the synthesized FLIGHT pack (no assets); shared jet
-       throttle hum and ignition / sonic boom events.
+       smooth exhaust and reserved sonic boom events.
        Built lazily from oscillators + one shared noise
        loop on the first per-frame call from the flight integrator, then
        only gains/frequencies move; a watchdog silences it when the calls
@@ -942,7 +942,7 @@ var SluiceAudio = (function () {
   // Coasting and free fall are silent: no wind, whistle, or vario layer.
   // The shared node graph is built once and ramps parameters each frame.
   // Collision cues own landings; the watchdog silences abandoned jet voices.
-  var FLIGHT_ENGINE_GAIN = 0.045;  // subtle thrust bed; speed never boosts this gain
+  var FLIGHT_ENGINE_GAIN = 0.13;  // restrained exhaust bed; speed never boosts this gain
   var FLIGHT_WATCHDOG_MS = 250;   // silence the pack after this long without a flight() call
   var fl = null;                  // the lazily built node bundle (null until the first call)
   var flightDead = false;         // construction threw once: stay silent, never retry
@@ -973,11 +973,15 @@ var SluiceAudio = (function () {
       var bus = gn(1); bus.connect(sfxEffect);
       var noiseBuf = flightNoiseBuffer();
       var noise = ctx.createBufferSource(); noise.buffer = noiseBuf; noise.loop = true;
-      // Quiet thrust noise and one steady motor body.
-      var engBP = flt('bandpass', 380, 1.2), engNG = gn(0);
-      noise.connect(engBP); engBP.connect(engNG); engNG.connect(bus);
-      var engLP = flt('lowpass', 260, 0.7); engLP.connect(bus);
-      var engOsc = ctx.createOscillator(); engOsc.type = 'sawtooth'; engOsc.frequency.value = 55;
+      // Broad, softened exhaust, a little low air pressure, and a faint
+      // smooth motor tone. No beating saws, bright whistle, or bass bark.
+      var engBP = flt('bandpass', 850, 0.6), engNG = gn(0);
+      var exhaustLP = flt('lowpass', 2400, 0.7);
+      noise.connect(engBP); engBP.connect(exhaustLP); exhaustLP.connect(engNG); engNG.connect(bus);
+      var bodyLP = flt('lowpass', 300, 0.7), bodyG = gn(0);
+      noise.connect(bodyLP); bodyLP.connect(bodyG); bodyG.connect(bus);
+      var engLP = flt('lowpass', 420, 0.7); engLP.connect(bus);
+      var engOsc = ctx.createOscillator(); engOsc.type = 'triangle'; engOsc.frequency.value = 110;
       var engOG = gn(0); engOsc.connect(engOG); engOG.connect(engLP);
       // boom weight: the bass thumps route through a soft tanh saturator
       var satBus = gn(1);
@@ -991,8 +995,9 @@ var SluiceAudio = (function () {
       fl = {
         bus: bus, noiseBuf: noiseBuf,
         engBP: engBP, engNG: engNG, engOsc: engOsc, engOG: engOG,
+        bodyG: bodyG,
         satBus: satBus,
-        muted: false, lastMs: nowMs(), prevSpool: clamp01((st && st.spool) || 0),
+        muted: false, lastMs: nowMs(),
         // seed the last-seen counters from the FIRST state so a mid-flight
         // audio unlock does not replay a backlog of flight events
         seen: { boom: fx.boomN | 0, vap: fx.vaporN | 0 },
@@ -1040,12 +1045,6 @@ var SluiceAudio = (function () {
     } catch (e) {}
   }
 
-  // A small motor catch at ignition, kept at the same scale as the quiet jet.
-  function flightIgnite(cold) {
-    var t = tnow();
-    flightBurst(t, 0.03, FLIGHT_ENGINE_GAIN * (0.35 + 0.18 * cold), 'bandpass', 950, 1.1);
-    flightThump(t, 70, 0.09, FLIGHT_ENGINE_GAIN * (0.45 + 0.2 * cold));
-  }
   // the sonic boom: a double bass thump (the N-wave, soft-saturated) + a
   // broadband crack, then ONE quieter, darker slapback ~0.5 s later as the
   // mountain echo. The music makes room briefly, like the other big events.
@@ -1071,6 +1070,7 @@ var SluiceAudio = (function () {
   function flightSilence(s) {
     if (!fl) return;
     fset(fl.engNG.gain, 0, s); fset(fl.engOG.gain, 0, s);
+    fset(fl.bodyG.gain, 0, s);
     fset(fl.bus.gain, 0, s);
   }
   // WATCHDOG: flight() rides update(), which stops when the shop opens or the
@@ -1104,23 +1104,18 @@ var SluiceAudio = (function () {
 
     var spool = clamp01(st.spool || 0);
 
-    // Throttle fades the jet in and out. Motion adds no gain or pitch rise.
-    var engF = 55 + spool * 20;
+    // The jet opens smoothly and releases cleanly. There is no separate
+    // ignition impact, and motion adds no gain or pitch rise.
+    var engF = 110 + spool * 10;
     fset(fl.engOsc.frequency, engF, 0.08);
-    fset(fl.engOG.gain, FLIGHT_ENGINE_GAIN * 0.62 * spool, 0.09);
-    fset(fl.engNG.gain, FLIGHT_ENGINE_GAIN * 0.55 * spool, 0.09);
-    fset(fl.engBP.frequency, 380 + spool * 420, 0.12);
+    fset(fl.engOG.gain, FLIGHT_ENGINE_GAIN * 0.12 * spool, 0.12);
+    fset(fl.engNG.gain, FLIGHT_ENGINE_GAIN * 0.5 * spool, 0.12);
+    fset(fl.bodyG.gain, FLIGHT_ENGINE_GAIN * 0.22 * spool, 0.12);
     // events: the fx counters only ever increment; diff with last-seen
     var fx = st.fx || {};
-    // Ignition follows the shared engine, so changing direction or adding
-    // lift to an already-running lateral jet cannot retrigger another bark.
-    if (!resumed && fl.prevSpool < 0.08 && spool >= 0.08) {
-      flightIgnite(1 - clamp01(fl.prevSpool / 0.3));
-    }
     if ((fx.boomN | 0) > fl.seen.boom) { fl.seen.boom = fx.boomN | 0; flightBoom(); }
     if ((fx.vaporN | 0) > fl.seen.vap) { fl.seen.vap = fx.vaporN | 0; flightVapor(); }
     // The normal gain ramp is the jet release; no added falling cue.
-    fl.prevSpool = spool;
   }
 
   // ===== filters ============================================================

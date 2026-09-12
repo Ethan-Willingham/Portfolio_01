@@ -8,7 +8,9 @@ durations, levels and source trail are in `bank.json`.
 
 The live game uses six drill materials, ground machinery, the existing flight
 synth, impacts, bombs, slime, selling, UI, alerts, discovery, and nine
-ambience beds. Airborne steering and lift share one quiet jet voice; its volume
+ambience beds. Airborne steering and lift share a smooth exhaust voice with a
+faint motor body, soft start and release, and no ignition thump. It stays silent
+while drilling and moving through a freshly mined block. Its volume
 does not increase with airspeed or climb rate. Free fall,
 coasting, and water contact are silent; solid landings have one short, damped
 impact cue. The old `air-pulse` slot is retired. Drilling uses steady cutting

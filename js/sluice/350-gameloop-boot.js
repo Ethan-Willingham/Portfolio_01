@@ -111,10 +111,25 @@
       // sfxLoop is a per-frame drive — the engine watchdog self-silences it
       // the moment these calls stop (pause, shop, death, rover ride).
       var inShop = shopOpen || (typeof shopState !== 'undefined' && shopState !== 'closed');
+      // Resolve the jet after movement and drill initiation. Drilling can
+      // return early from update(), so this also cuts an existing flight
+      // voice immediately when the drill takes over. Bite-through glides
+      // and brief ground-flag flicker in a tunnel never count as flight.
+      if (SluiceAudio.flight) {
+        var jetAllowed = !inShop && !roverMode && !ledgerOpen && !gameWon &&
+          !drilling && !(player.drillGlideT > 0) && player.fuel > 0;
+        var lateralJet = jetAllowed && !player.onGround && !player.onJello &&
+          (!!player.lastMoveL !== !!player.lastMoveR) &&
+          !playerHasFootSupport(player.x, player.y + 2);
+        var liftJet = jetAllowed && player.lastMoveU ? (player.thrustSpool || 0) : 0;
+        SluiceAudio.flight({ spool: Math.max(liftJet, lateralJet ? 1 : 0), fx: player.fx, dt: dt });
+      }
       if (inShop && drillSfxActive) {
         SluiceAudio.sfx.drill.stop(); drillSfxActive = false; drillSfxMat = null;
       }
-      if (!inShop && !roverMode && player.onGround) {
+      // Mining can retain the entry velocity while locking the rig in place.
+      // That stale velocity must not keep the ground drive sounding either.
+      if (!inShop && !roverMode && !drilling && !(player.drillGlideT > 0) && player.onGround) {
         var spd = Math.abs(player.vx);
         if (spd > 26) {
           sfxLoop('rig-drive', {

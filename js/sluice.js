@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.86';
+  var GAME_VERSION = 'v26.87';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -14096,31 +14096,7 @@
     _fdbg.tilt = player.bodyTiltRender || 0; _fdbg.fuel = player.fuel;
     _fdbg.onGround = !!player.onGround;
 
-    // ----- Flight SFX + haptics bridge (engine facade: js/audio.js) -----
-    // Per-frame state for the shared jet audio (throttle and ignition) plus the
-    // rumble shim. Both are safe no-ops until their implementations exist.
-    if (typeof SluiceAudio !== 'undefined' && SluiceAudio && SluiceAudio.flight) {
-      try {
-        SluiceAudio.flight({
-          air: !player.onGround && !undergroundNow,
-          rot: false,
-          speed: Math.sqrt(player.vx * player.vx + player.vy * player.vy),
-          cap: flyTune.speed,
-          boomV: flyTune.speed * 2,
-          // One engine voice for lift and lateral thrust. Audio only: the
-          // vertical spool still owns lift force and fuel consumption.
-          spool: Math.max(player.thrustSpool || 0,
-            !player.onGround && moveL !== moveR && player.fuel > 0 ? 1 : 0),
-          climb: -player.vy,
-          buffet: 0,
-          stall: false,
-          over: 0,
-          ge: 0,
-          fx: player.fx,
-          dt: dt
-        });
-      } catch (e) {}
-    }
+    // Jet audio runs after collision/drill resolution in audioUpdate().
     if (typeof hapticsUpdate === 'function') hapticsUpdate(dt);
 
     // ----- Ground support check -----
@@ -58558,10 +58534,25 @@
       // sfxLoop is a per-frame drive — the engine watchdog self-silences it
       // the moment these calls stop (pause, shop, death, rover ride).
       var inShop = shopOpen || (typeof shopState !== 'undefined' && shopState !== 'closed');
+      // Resolve the jet after movement and drill initiation. Drilling can
+      // return early from update(), so this also cuts an existing flight
+      // voice immediately when the drill takes over. Bite-through glides
+      // and brief ground-flag flicker in a tunnel never count as flight.
+      if (SluiceAudio.flight) {
+        var jetAllowed = !inShop && !roverMode && !ledgerOpen && !gameWon &&
+          !drilling && !(player.drillGlideT > 0) && player.fuel > 0;
+        var lateralJet = jetAllowed && !player.onGround && !player.onJello &&
+          (!!player.lastMoveL !== !!player.lastMoveR) &&
+          !playerHasFootSupport(player.x, player.y + 2);
+        var liftJet = jetAllowed && player.lastMoveU ? (player.thrustSpool || 0) : 0;
+        SluiceAudio.flight({ spool: Math.max(liftJet, lateralJet ? 1 : 0), fx: player.fx, dt: dt });
+      }
       if (inShop && drillSfxActive) {
         SluiceAudio.sfx.drill.stop(); drillSfxActive = false; drillSfxMat = null;
       }
-      if (!inShop && !roverMode && player.onGround) {
+      // Mining can retain the entry velocity while locking the rig in place.
+      // That stale velocity must not keep the ground drive sounding either.
+      if (!inShop && !roverMode && !drilling && !(player.drillGlideT > 0) && player.onGround) {
         var spd = Math.abs(player.vx);
         if (spd > 26) {
           sfxLoop('rig-drive', {

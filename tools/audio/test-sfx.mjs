@@ -73,7 +73,7 @@ const server = createServer(async (req, res) => {
         var original = SluiceAudio.flight, state;
         SluiceAudio.flight = function (st) { state = st; original(st); };
         window.__sfxCalls = [];
-        try { update(.016); } finally { SluiceAudio.flight = original; }
+        try { update(.016); audioUpdate(.016); } finally { SluiceAudio.flight = original; }
         return {spool:state.spool, calls:window.__sfxCalls};
       };
       window.__sfxGameTest.waterAudio = function () {
@@ -84,6 +84,30 @@ const server = createServer(async (req, res) => {
           playerWaterCushion = function () { return 0; }; audioUpdate(.1);
         } finally { playerWaterCushion = original; }
         return window.__sfxCalls;
+      };
+      window.__sfxGameTest.tunnel = function (dir) {
+        window.__sfxGameTest.contact({dir:dir, type:'dirt', frames:5});
+        var r = SKY_ROWS + 12, c = 90, oldTier = upgrades.drillLevel;
+        upgrades.drillLevel = 6;
+        for (var cc = c - 12; cc <= c + 12; cc++) {
+          world[r][cc] = {type:'foundation', hp:999999};
+          world[r - 2][cc] = {type:'foundation', hp:999999};
+          world[r - 1][cc] = cc === c ? null : {type:'dirt', hp:1};
+        }
+        var flight = SluiceAudio.flight, loop = SluiceAudio.sfxLoop;
+        var spools = [], drive = [], digging = 0, gliding = 0, startX = player.x;
+        SluiceAudio.flight = function (st) { spools.push(st.spool); flight(st); };
+        SluiceAudio.sfxLoop = function (name, opts) { drive.push(name); loop(name, opts); };
+        try {
+          for (var i = 0; i < 180; i++) {
+            // Exercise the transient airborne state that caused the leak.
+            if (drilling || player.drillGlideT > 0) player.onGround = false;
+            update(.016); audioUpdate(.016);
+            if (drilling) digging++;
+            if (player.drillGlideT > 0) gliding++;
+          }
+        } finally { SluiceAudio.flight = flight; SluiceAudio.sfxLoop = loop; upgrades.drillLevel = oldTier; }
+        return {spools:spools, drive:drive, digging:digging, gliding:gliding, moved:Math.abs(player.x-startX)};
       };
     })();`));
     res.setHeader('Content-Type', types[path.extname(filename)] || 'application/octet-stream');
@@ -280,6 +304,14 @@ try {
   }
   assert.equal((await page.evaluate(() => __sfxGameTest.flightInput(['Left'], false))).spool, 0);
   assert.equal((await page.evaluate(() => __sfxGameTest.flightInput(['Left','Right'], true))).spool, 0);
+  for (const dir of ['Left', 'Right']) {
+    const tunnel = await page.evaluate(dir => __sfxGameTest.tunnel(dir), dir);
+    assert(tunnel.digging > 0 && tunnel.gliding > 0 && tunnel.moved > 32, 'Tunnel test did not mine through blocks');
+    assert.equal(tunnel.spools.length, 180, 'Drilling skipped the jet stop update');
+    assert(tunnel.spools.every(s => s === 0), 'Jet leaked into horizontal mining: ' + JSON.stringify(tunnel));
+    assert(!tunnel.drive.includes('rig-drive'), 'Stale mining velocity triggered the drive loop');
+  }
+  console.log('Horizontal tunnels: jet remains off through drilling, tile breaks and glides in both directions');
   const water = await page.evaluate(() => __sfxGameTest.waterAudio());
   assert(!water.some(c => c.name.startsWith('liquid-')));
   console.log('Contacts: one quiet cargo cue in all four directions with no held-input spam, rubble still mines, single graded landing including fatal falls, unified lateral jet, silent water');

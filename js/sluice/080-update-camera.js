@@ -775,31 +775,7 @@
     _fdbg.tilt = player.bodyTiltRender || 0; _fdbg.fuel = player.fuel;
     _fdbg.onGround = !!player.onGround;
 
-    // ----- Flight SFX + haptics bridge (engine facade: js/audio.js) -----
-    // Per-frame state for the shared jet audio (throttle and ignition) plus the
-    // rumble shim. Both are safe no-ops until their implementations exist.
-    if (typeof SluiceAudio !== 'undefined' && SluiceAudio && SluiceAudio.flight) {
-      try {
-        SluiceAudio.flight({
-          air: !player.onGround && !undergroundNow,
-          rot: false,
-          speed: Math.sqrt(player.vx * player.vx + player.vy * player.vy),
-          cap: flyTune.speed,
-          boomV: flyTune.speed * 2,
-          // One engine voice for lift and lateral thrust. Audio only: the
-          // vertical spool still owns lift force and fuel consumption.
-          spool: Math.max(player.thrustSpool || 0,
-            !player.onGround && moveL !== moveR && player.fuel > 0 ? 1 : 0),
-          climb: -player.vy,
-          buffet: 0,
-          stall: false,
-          over: 0,
-          ge: 0,
-          fx: player.fx,
-          dt: dt
-        });
-      } catch (e) {}
-    }
+    // Jet audio runs after collision/drill resolution in audioUpdate().
     if (typeof hapticsUpdate === 'function') hapticsUpdate(dt);
 
     // ----- Ground support check -----
