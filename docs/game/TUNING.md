@@ -1010,7 +1010,7 @@ The 8 documented levers live in the `Resolution config` block (grep
 | `moonPhase` step | `1/8 per day` | — | Moon-phase progression |
 
 ## 5.4 Weather — clouds / precip / storms · grep `weatherTune` · tier `live` (the `weather` gm group)
-Clouds + rain/snow + lightning (`js/sluice/155-weather.js`). A mood machine drives the SIM (coverage / precip / wind); these are the LOOK levers. Dev **N** force-cycles the mood; `PERF_DISABLE_WEATHER` / PERF ISO "no weather" / `weather.enabled` gate it. See BACKGROUND_STYLE §15. v26.21 replaced the tiled deck strips with INSTANCED cumulus sprites; v26.38 made cloud altitude CONTINUOUS (the lanes still read as rows): the sprite pool (`CLOUD_CLASSES` × `CLOUD_VARIANTS`), the geometric field rows (`CLOUD_ROWS`) and the overcast sheet consts (`VEIL_*`) are `edit`-tier code changes in 155, not live levers. Boot levers for screenshot harnesses: `?wmood=N` (0 clear … 5 storm) locks the mood from the first frame with values snapped (the weather twin of `?wdbg=`); pair with `?tod=` and `?alt=` (§5.5) for time-of-day and altitude.
+Clouds + rain/snow + lightning (`js/sluice/155-weather.js`). A mood machine drives coverage, precipitation and wind; these are the appearance controls. The September 2026 cloud rebuild uses continuous depth fields, diffuse shading and a sparse bank composition. `CLOUD_CLASSES`, `CLOUD_VARIANTS`, `CLOUD_ROWS` and `VEIL_*` are source settings. Geometry bakes one sprite per frame through a rotating queue; colour refreshes separately and responds to the live brightness and contrast controls even when the sun is paused. Dev **N** cycles moods. `PERF_DISABLE_WEATHER`, PERF ISO "no weather" and `weather.enabled` gate the system. See BACKGROUND_STYLE section 15. Screenshot boot controls: `?wmood=N` (0 clear to 5 storm), `?tod=` and `?alt=`.
 
 **One-click presets (L panel).** The `L` panel's PRESETS section has two weather button groups (defined in `380-gm-presets-boot.js`): **`weather`** flips the sky TYPE (clear / fair / cloudy / overcast / rainfall / snowfall / thunderstorm / blizzard / dynamic) by setting `weather.MOOD` (+ precip), leaving the look dials alone; **`clouds`** are full cloud-LOOK swaps (puffy cumulus, wispy cirrus, dramatic sunset, moody overcast, soft & dreamy, fast front, golden hour, plus `cloud defaults` to reset). Pick a TYPE for cover, then a LOOK, then fine-tune the dials. All also reachable from the console via `gm.preset('name')` / `gm.presetList('weather'|'clouds')`.
 | Lever | Now | Range | Effect |
@@ -1023,7 +1023,7 @@ Clouds + rain/snow + lightning (`js/sluice/155-weather.js`). A mood machine driv
 | `weather.highlight` | `1` | 0–2 | Sunlit cloud-face brightness |
 | `weather.shadow` | `1` | 0–2 | Cloud-base brightness (lower = moodier) |
 | `weather.contrast` | `1` | 0.2–2.5 | Cloud internal contrast |
-| `weather.rimGlow` | `1` | 0–3 | Silver-lining edge brightness (baked; a move re-bakes the sprite pool, one sprite per frame) |
+| `weather.rimGlow` | `1` | 0–3 | Soft crown transmission (baked; changes queue the sprite pool, one sprite per frame) |
 | `weather.softness` | `1` | 0.2–3 | Cloud-edge feather / puff hardness (baked; a move re-bakes like rimGlow) |
 | `weather.morphSpeed` | `0` | 0–1 | Cloud shape-morph rate (0 = shapes hold, drift only; >0 re-bakes the pool round-robin on a morph bucket) |
 | `weather.veil` | `1` | 0–1.5 | Overcast/storm stratus-sheet strength (eases in above ~0.7 coverage; fades out on a high climb) |

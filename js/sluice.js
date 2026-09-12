@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.76';
+  var GAME_VERSION = 'v26.77';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -28960,24 +28960,12 @@
   /* ====== WEATHER: clouds, precipitation, storms ====== */
   // Full dynamic above-ground weather. Three subsystems share one mood-driven
   // state machine:
-  //   1. Clouds  — INSTANCED cumulus sprites (v26.20, replaced the tiled deck
-  //                strips that read as horizontal bands). A small pool of
-  //                individually-baked cloud sprites (billow-fbm field × a
-  //                LOBED cumulus mound: overlapping elliptical lobes with one
-  //                dominant tower, tapered rounded ends, wavy flat base, baked
-  //                volumetric top-light + silver rim) is scattered across
-  //                one continuous 2D hash field over (x, altitude) — every
-  //                cloud has its own position, height, variant, scale, flip
-  //                and fade, nothing sits in a row, and the sky has discrete,
-  //                non-repeating clouds instead of strips. Sprites are RECOLOURED each
-  //                lighting bucket from the live atmospheric-scatter cache
-  //                (atmosHorizonRGB / atmosZenithRGB / atmosDayWeight in 150),
-  //                so clouds catch the Volcanic sunset grade and go
-  //                moon-silver at night for free, with zero shader risk.
-  //                Overcast/storm additionally ease in ONE continuous high
-  //                stratus VEIL (a soft sheet, not a strip stack). Drawn
-  //                inside drawNightSkyToScreen (clipped to the sky), behind
-  //                the mountains, drifting on surfaceWind.
+  //   1. Clouds: cached continuous volumes, scattered in broad banks with
+  //      open sky between them. Soft unions join billows BEFORE shading;
+  //      depth drives opacity, surface slope and height drive diffuse light.
+  //      One bank is one sprite, with no secondary outlines stamped over it.
+  //      Day/night recolouring, world altitude, wind and the overcast veil
+  //      share the existing weather state and tuning controls.
   //   2. Precip  — WORLD-anchored rain streaks / snow flakes, wind-skewed,
   //                pooled. Drops live at world positions (the field stays put
   //                while the camera moves) and die on the first solid tile,
@@ -29103,35 +29091,17 @@
     }
     return sum / norm;
   }
-  // Domain-warped billow — the warp shears the noise into organic, lobed cloud
-  // masses instead of uniform round blobs.
-  var CLOUD_WARP = 0.14;
-  function wCloudField(u, vv, cells, oct, seed) {
-    var wx = (wFbm(u, vv, cells, seed + 555, 2) - 0.5) * CLOUD_WARP;
-    var wy = (wFbm(u, vv, cells, seed + 911, 2) - 0.5) * CLOUD_WARP;
-    return wBillow(u + wx, vv + wy, cells, seed, oct);
-  }
-
   // ----- Cloud sprite pool -----
-  // Three appearance CLASSES × CLOUD_VARIANTS seeds = the whole sky's cast.
-  // Each sprite is ONE cloud (not a tile): field × cumulus envelope, thresholded
-  // to a solid-core / soft-edge mass, with a baked top-light march + silver rim.
-  // Per-instance flips + scales + alpha jitter keep repeats unreadable.
-  //   aniso   — vertical noise-frequency multiplier (>1 = horizontally-streaked
-  //             wisps; the cirrus class)
-  //   dome    — crown height as a fraction of tile height
-  //   baseV   — the flat cloud BASE line (fraction of tile height from the top)
-  //   worldW  — on-screen footprint at scale 1 (world px; height follows tw:th)
+  // Three scale families, each with eight deterministic silhouettes. The
+  // generous transparent gutter prevents a clipped edge under any seed.
   var CLOUD_CLASSES = [
-    { tw: 240, th: 64,  cells: 5, oct: 4, aniso: 2.6, dome: 0.34, baseV: 0.60, worldW: 340,
-      lightNS: 3, lightStep: 2, lightAbsorb: 0.24, contrast: 0.78, alpha: 0.66, cirrus: true,  baseSeed: 41011 },
-    { tw: 208, th: 112, cells: 3, oct: 5, aniso: 1.0, dome: 0.64, baseV: 0.72, worldW: 218, lobes0: 3, lobes1: 4,
-      lightNS: 6, lightStep: 3, lightAbsorb: 0.56, contrast: 0.96, alpha: 0.97, cirrus: false, baseSeed: 52021 },
-    { tw: 320, th: 160, cells: 4, oct: 5, aniso: 1.0, dome: 0.72, baseV: 0.74, worldW: 350, lobes0: 4, lobes1: 6,
-      lightNS: 10, lightStep: 3, lightAbsorb: 0.62, contrast: 1.06, alpha: 1.00, cirrus: false, baseSeed: 63031 }
+    { tw: 288, th: 80, worldW: 440, contrast: 0.66, alpha: 0.56, cirrus: true, baseSeed: 41011 },
+    { tw: 288, th: 144, worldW: 285, contrast: 0.84, alpha: 0.98, cirrus: false, baseSeed: 52021 },
+    { tw: 384, th: 176, worldW: 430, contrast: 0.88, alpha: 1.00, cirrus: false, baseSeed: 63031 }
   ];
   var CLOUD_VARIANTS = 8;          // seeds per class
   var cloudSprites = null;         // [class][variant] = { color, ctx, img, lum, den, ready, dirty }
+  var cloudBakeCursor = 0;        // carry the queue position across morph invalidations
   var cloudBakeKey = -1;           // softness/rim bake-lever bucket → re-bake on change
   var cloudLightBucket = -999999;
   var cloudMorphBucket = -999999;
@@ -29152,21 +29122,21 @@
   // the field, sizes locked (the deck-era expand/contract bug stays dodged:
   // sprites have fixed world size). Horizontal MOTION (camera parallax hPar +
   // wind drift) is shared per ROW so cell enumeration stays consistent under
-  // any camera x and unbounded drift accumulation; ~14 motion planes read as
+  // any camera x and unbounded drift accumulation; several motion planes read as
   // smooth depth while POSITIONS stay continuous. Coverage fills and empties
   // the same slots low-hash-first, so weather changes fade individual clouds.
   // Rows follow a geometric progression — short/narrow cells low (the sky is
   // bottom-heavy and the resting view needs the candidates), tall/wide cells
   // high (space thins out). Altitude stays continuous: full-height jitter
   // inside each row and the rows abut, so no boundary can show.
-  var CLOUD_FIELD_SEED = 7351;
+  var CLOUD_FIELD_SEED = 7372;
   var CLOUD_ROWS = (function () {
-    var rows = [], lo = 60, h = 120, w = 200;
+    var rows = [], lo = 70, h = 150, w = 290;
     while (lo < 3400) {
       rows.push({ lo: lo, h: h, w: w });
       lo += h; h = Math.round(h * 1.26); w = Math.round(w * 1.13);
     }
-    return rows;   // 10 rows, 60 → ~4250 world px above the surface
+    return rows;   // Geometrically increasing cells, from the ridge to ~4k altitude
   })();
   var CLOUD_ALT_TOP = CLOUD_ROWS[CLOUD_ROWS.length - 1].lo + CLOUD_ROWS[CLOUD_ROWS.length - 1].h;
 
@@ -29208,131 +29178,100 @@
     };
   }
 
-  // Bake ONE cloud sprite: cumulus envelope × warped billow field → density,
-  // then a straight-up light march (exp self-shadow → bright crowns, shaded
-  // base) + silver rim → luminance. Coverage-independent: weather changes
-  // never re-bake; only softness/rim lever moves or morphing do.
+  // A cloud is a continuous depth field. Soft unions join the billows before
+  // lighting, so a bank has one body instead of stacked translucent outlines.
+  // Bake geometry once; daylight only recolours the cached light/opacity maps.
   function weatherBakeSprite(ci, vi) {
     var C = CLOUD_CLASSES[ci], S = cloudSprites[ci][vi];
-    var tw = C.tw, th = C.th;
-    var seed = C.baseSeed + vi * 7919;
-    var mz = weather.morph * 0.5;
-    var feather = 0.06 + 0.055 * weatherTune.softness;
-    var rim = weatherTune.rimGlow;
-    var px, py, u, idx = 0;
-    // ---- Silhouette: a MOUND of overlapping elliptical LOBES (one dominant
-    // tower + smaller flanks, all hashed per sprite), not a slab. The lobes
-    // give a convex lumpy outline with tapered rounded ends and a base that
-    // exists only under the mass — the slab-era sprites read as rectangles.
-    // topAllow[px] = crown height the lobes permit above the base line;
-    // baseSoft[px] = base presence, fading past the outermost lobes.
-    var topAllow = null, baseSoft = null;
+    var tw = C.tw, th = C.th, seed = C.baseSeed + vi * 7919;
+    var depth = new Float32Array(tw * th);
+    var detail = new Float32Array(tw * th);
+    var lobes = [], li, px, py, idx;
+    var base = 0.70 + wHash(vi, 5, seed) * 0.07;
+    var tower = 0.30 + wHash(vi, 7, seed) * 0.40;
+    var count = C.cirrus ? 5 : 7;
+    for (li = 0; li < count; li++) {
+      var x = 0.16 + li / (count - 1) * 0.68;
+      x += (wHash(li, 11, seed) - 0.5) * 0.065;
+      var peak = Math.exp(-Math.pow((x - tower) / 0.25, 2));
+      var ry = C.cirrus ? 0.07 + 0.06 * wHash(li, 13, seed) :
+        0.10 + 0.19 * peak + 0.07 * wHash(li, 13, seed);
+      lobes.push({ x: x, y: C.cirrus ? 0.48 + (x - 0.5) * 0.17 : base - ry * 0.73,
+        rx: C.cirrus ? 0.14 : 0.115 + 0.060 * wHash(li, 17, seed), ry: ry,
+        z: C.cirrus ? 0.15 : 0.24 + 0.15 * wHash(li, 19, seed) });
+    }
     if (!C.cirrus) {
-      topAllow = new Float32Array(tw);
-      baseSoft = new Float32Array(tw);
-      var totW = 0.88 - 0.22 * wHash(vi, 4, seed);           // whole-sprite width varies per seed
-      var uc = 0.5 + (wHash(vi, 6, seed) - 0.5) * 0.10;      // slight off-centre mass
-      var nl = C.lobes0 + ((wHash(vi, 3, seed) * (C.lobes1 - C.lobes0 + 1)) | 0);
-      var dom = (nl * (0.30 + 0.40 * wHash(vi, 5, seed))) | 0;
-      var hCap = C.baseV - 0.04;                             // never clip the tower at the tile top
-      var lcx = [], lr = [], lh = [], maxH = 0, extLo = 1, extHi = 0;
-      for (var li = 0; li < nl; li++) {
-        var ft = (nl > 1) ? li / (nl - 1) : 0.5;
-        var cx = uc + (ft - 0.5) * totW * (0.82 + 0.16 * wHash(vi, 7 + li, seed));
-        var isDom = (li === dom);
-        var r = totW * (isDom ? 0.30 + 0.08 * wHash(vi, 20 + li, seed)
-                              : 0.15 + 0.10 * wHash(vi, 20 + li, seed));
-        var hh = C.dome * (isDom ? 0.88 + 0.24 * wHash(vi, 40 + li, seed)
-                                 : 0.38 + 0.42 * wHash(vi, 40 + li, seed));
-        lcx.push(cx); lr.push(r); lh.push(hh);
-        if (hh > maxH) maxH = hh;
-        if (cx - r < extLo) extLo = cx - r;
-        if (cx + r > extHi) extHi = cx + r;
-      }
-      // Fit the whole layout INSIDE the tile: lobes placed past the canvas
-      // edge were guillotined into hard vertical cuts, and per-lobe height
-      // clamping flattened tall crowns into plateaus. Remap x (compressing
-      // radii with the layout) and scale every height together instead.
-      var sf = Math.min(1, 0.92 / (extHi - extLo));
-      var x0map = 0.5 - (extHi - extLo) * sf * 0.5;
-      var hs = Math.min(1, hCap / maxH);
-      for (li = 0; li < nl; li++) {
-        var cx2 = x0map + (lcx[li] - extLo) * sf;
-        var r2 = lr[li] * sf;
-        var hh2 = lh[li] * hs;
-        var pA = Math.max(0, Math.round((cx2 - r2) * tw)), pB = Math.min(tw - 1, Math.round((cx2 + r2) * tw));
-        for (px = pA; px <= pB; px++) {
-          var dd2 = (px / tw - cx2) / r2;
-          var cap = hh2 * Math.sqrt(Math.max(0, 1 - dd2 * dd2));
-          if (cap > topAllow[px]) topAllow[px] = cap;
+      // Smaller billows grow from the shoulders of the broad volumes. They
+      // share the same depth union, so they add cloud detail without seams.
+      for (li = 0; li < count; li++) {
+        var parent = lobes[li];
+        for (var child = 0; child < 3; child++) {
+          var angle = 3.55 + child * 0.92 + wHash(li, child + 31, seed) * 0.42;
+          var r = 0.26 + wHash(li, child + 41, seed) * 0.16;
+          lobes.push({x: parent.x + Math.cos(angle) * parent.rx * 0.82,
+            y: parent.y + Math.sin(angle) * parent.ry * 0.78,
+            rx: parent.rx * r * 1.25, ry: parent.ry * r,
+            z: parent.z * (0.57 + r * 0.30)});
         }
-      }
-      for (px = 0; px < tw; px++) {
-        baseSoft[px] = wSmooth(wClamp01(topAllow[px] / (C.dome * 0.30)));
       }
     }
-    var d = new Float32Array(tw * th);
-    for (py = 0; py < th; py++) {
-      var v = py / th;
-      var vv = (py / tw) * C.aniso + mz;
+    var softness = 0.70 + weatherTune.softness * 0.30;
+    var mz = weather.morph * 0.035;
+    for (py = 0, idx = 0; py < th; py++) {
+      var v = py / (th - 1);
       for (px = 0; px < tw; px++, idx++) {
-        u = px / tw;
-        var E;
-        if (C.cirrus) {
-          // wispy streak: wavy centre-line, lumpy belly, ends PINCHED to
-          // nothing (the constant-width era read as long rectangles)
-          var u0 = 0.05 + 0.08 * wHash(vi, 1, seed);
-          var u1 = 0.95 - 0.08 * wHash(vi, 2, seed);
-          var tSpan = (u - u0) / (u1 - u0);
-          if (tSpan <= 0 || tSpan >= 1) { d[idx] = 0; continue; }
-          var pinch = Math.pow(Math.sin(Math.PI * tSpan), 0.55);
-          var mid = 0.42 + (wVal(u * 5, 7.7, 9999, seed + 31) - 0.5) * 0.34;
-          var wdt = 0.30 * (0.40 + 0.60 * wBillow(u, 0.71, 4, seed + 57, 2)) * pinch;
-          if (wdt < 0.015) { d[idx] = 0; continue; }
-          var g = (v - mid) / wdt;
-          E = pinch * Math.exp(-g * g);
-        } else {
-          var ta = topAllow[px];
-          if (ta <= 0.004) { d[idx] = 0; continue; }
-          var vb = C.baseV + (wVal(u * 7, 3.5, 9999, seed + 913) - 0.5) * 0.09;
-          if (v >= vb) {
-            E = baseSoft[px] * (1 - wSmooth(wClamp01((v - vb) / 0.07)));
-          } else {
-            // the lobes carry the shape; billow only ruffles the crown line
-            var crown = 0.72 + 0.28 * wBillow(u, 0.31, 4, seed + 77, 3);
-            var rise = (vb - v) / (ta * crown);
-            E = baseSoft[px] * (1 - wSmooth(wClamp01((rise - 0.70) / 0.30)));
-            // cauliflower carve — bites notches out of the crown, fades to
-            // nothing at the flat base so the underside stays coherent
-            var ch2 = wClamp01((vb - v) / C.dome);
-            var carve = wBillow(u, v * (C.tw / C.th) * 0.8, 6, seed + 241, 2);
-            E *= 1 - 0.34 * ch2 * (1 - carve);
-          }
+        var u = px / (tw - 1);
+        // Broad, low-amplitude erosion breaks perfect ellipses. Fine noise
+        // is confined to the edge: interiors stay quiet at gameplay scale.
+        var n = wFbm(u + mz, v * 0.53, 7, seed + 83, 3);
+        var warp = (n - 0.5) * 0.105;
+        var ux = u + warp * 0.55;
+        var vy = v + warp;
+        var z = 0;
+        for (li = 0; li < lobes.length; li++) {
+          var L = lobes[li];
+          var dx = (ux - L.x) / L.rx, dy = (vy - L.y) / L.ry;
+          var q = 1 - dx * dx - dy * dy;
+          if (q <= 0) continue;
+          var lz = Math.sqrt(q) * L.z;
+          // Polynomial smooth maximum, with zero outside both volumes.
+          var h = Math.max(0, 0.10 - Math.abs(z - lz)) / 0.10;
+          z = Math.max(z, lz) + h * h * 0.025;
         }
-        if (E <= 0.003) { d[idx] = 0; continue; }
-        var F = wCloudField(u, vv, C.cells, C.oct, seed);
-        var dr = (F * E - 0.36) / feather;
-        dr = wClamp01(dr);
-        d[idx] = dr * dr * (3 - 2 * dr);   // smoothstep → solid cores, soft edges
+        var taper = wSmooth(wClamp01(u / 0.08)) * wSmooth(wClamp01((1 - u) / 0.08)) *
+          wSmooth(wClamp01(v / 0.08)) * wSmooth(wClamp01((1 - v) / 0.08));
+        if (!C.cirrus) {
+          // A soft condensation base, gently broken by wind. No ruler edge.
+          var baseY = base + 0.025 + (wVal(u * 10, 3.7, 99991, seed + 91) - 0.5) * 0.055;
+          taper *= 1 - wSmooth(wClamp01((v - baseY) / 0.105));
+        }
+        var billow = wBillow(u + mz, v * 0.55, 13, seed + 107, 3);
+        var erosion = (0.78 - n) * 0.09 + (0.72 - billow) * 0.035;
+        depth[idx] = Math.max(0, z - erosion) * taper;
+        detail[idx] = n;
       }
     }
-    // light march + rim → lum/den bytes
-    idx = 0;
-    for (py = 0; py < th; py++) {
+    for (py = 0, idx = 0; py < th; py++) {
       for (px = 0; px < tw; px++, idx++) {
-        var dd = d[idx];
-        if (dd <= 0.003) { S.lum[idx] = 0; S.den[idx] = 0; continue; }
-        var occ = 0;
-        for (var k = 1; k <= C.lightNS; k++) {
-          var py2 = py - k * C.lightStep;
-          if (py2 < 0) break;
-          occ += d[py2 * tw + px];
-        }
-        var light = Math.exp(-occ * C.lightAbsorb);
-        var eg = wSmooth(wClamp01(dd / 0.14)) * (1 - wSmooth(wClamp01((dd - 0.14) / 0.5)));
-        var lum = 0.27 + 0.65 * light + rim * 0.30 * eg;
-        S.lum[idx] = (wClamp01(lum) * 255) | 0;
-        S.den[idx] = (dd * 255) | 0;
+        var d = depth[idx];
+        if (d <= 0.001) { S.lum[idx] = 0; S.den[idx] = 0; continue; }
+        var left = depth[py * tw + Math.max(0, px - 4)];
+        var right = depth[py * tw + Math.min(tw - 1, px + 4)];
+        var up = depth[Math.max(0, py - 4) * tw + px];
+        var down = depth[Math.min(th - 1, py + 4) * tw + px];
+        var nx = (left - right) * tw * 0.09;
+        var ny = (up - down) * th * 0.09;
+        var normal = (-nx * 0.35 - ny * 0.75 + 0.65) / Math.sqrt(nx * nx + ny * ny + 1);
+        var crown = 1 - wSmooth(wClamp01((py / th - 0.30) / 0.50));
+        var light = 0.38 + 0.34 * crown + 0.13 * Math.max(0, normal) + (detail[idx] - 0.5) * 0.16;
+        // Transmission is broad and faint, never a bright contour around
+        // every lobe. Dense interiors occlude the sun and the stars.
+        var edge = Math.exp(-d * 16) * wSmooth(wClamp01(d / 0.07));
+        light += weatherTune.rimGlow * edge * crown * 0.10;
+        var alpha = (1 - Math.exp(-d * (C.cirrus ? 12 : 28) / softness));
+        alpha *= wSmooth(wClamp01(d / (0.13 * softness)));
+        S.lum[idx] = wClamp01(light) * 255;
+        S.den[idx] = wClamp01(alpha) * 255;
       }
     }
     S.dirty = false;
@@ -29374,6 +29313,7 @@
     if (_wp) return _wp;
     function a(hex) { var c = nightSkyHexRGB(hex); return [c.r, c.g, c.b]; }
     _wp = {
+      sunsetHi: a(SKY.cloudSunsetHi), dayBase: a(SKY.cloudDayBase), duskBase: a(SKY.cloudDuskBase),
       sunHi: a(SKY.cloudSunHi), moonHi: a(SKY.cloudMoonHi), nightBase: a(SKY.cloudNightBase),
       stormHi: a(SKY.cloudStormHi), stormBase: a(SKY.cloudStormBase),
       rain: a(SKY.rainStreak), rainFg: a(SKY.rainStreakFg),
@@ -29613,32 +29553,6 @@
       var cirrusW = wSmooth(wClamp01((alt - 1550) / 450));
       var valley = 1 - wSmooth(wClamp01((alt - 70) / 160));
       var sBaseCum = 0.34 + 0.72 * wSmooth(wClamp01((alt - 60) / 280));
-      // ---- FRAGMENTS: up to two independent small shreds per cell, alive a
-      // hair below the main threshold too — loose ragged bits between and
-      // around the big masses are what make the sky read as cloudINESS
-      // instead of placed objects.
-      for (var si = 0; si < 2; si++) {
-        var sy2 = jy + 103 + si * 16;
-        var hsE = wHash(k, sy2, CLOUD_FIELD_SEED);
-        var aS = wClamp01((eEff * 0.85 - hsE) / 0.06);
-        if (aS <= 0.01) continue;
-        var clsS = (wHash(k, sy2 + 1, CLOUD_FIELD_SEED) < cirrusW) ? 0 : 1;
-        var SS = cloudSprites[clsS][(wHash(k, sy2 + 2, CLOUD_FIELD_SEED) * 977 | 0) % CLOUD_VARIANTS];
-        if (!SS || !SS.ready) continue;
-        var CS = CLOUD_CLASSES[clsS];
-        var sBaseS = (clsS === 0) ? 0.9 + 0.5 * wClamp01((alt - 1500) / 1800) : sBaseCum;
-        var wWS = CS.worldW * sBaseS * (0.30 + 0.28 * wHash(k, sy2 + 3, CLOUD_FIELD_SEED)) * swell;
-        var wHS = wWS * (CS.th / CS.tw) * (0.86 + 0.28 * wHash(k, sy2 + 4, CLOUD_FIELD_SEED));
-        var xS = (k + 0.5 + (wHash(k, sy2 + 5, CLOUD_FIELD_SEED) - 0.5) * 1.8) * R.w;
-        var altS = alt + (wHash(k, sy2 + 6, CLOUD_FIELD_SEED) - 0.5) * 0.9 * R.h;
-        var sxS = (xS - shift) * ws - wWS * ws * 0.5;
-        var topS = (surfaceY - altS * altScale - cam.y) * ws - wHS * ws * 0.5;
-        var wPxS = wWS * ws, hPxS = wHS * ws;
-        if (topS >= skyBottomPx || topS + hPxS <= 0 || sxS + wPxS <= 0 || sxS >= cw) continue;
-        ctx.globalAlpha = wClamp01(globalA * fadeA * aS * CS.alpha * (1 - 0.28 * valley) *
-                                   (0.82 + 0.12 * wHash(k, sy2 + 8, CLOUD_FIELD_SEED)));
-        ctx.drawImage(SS.color, sxS, topS, wPxS, hPxS);
-      }
       var aFade = wClamp01((eEff - h0) / 0.07);         // clouds fade in low-hash first
       if (aFade <= 0.01) continue;
       // class by altitude with a dithered blend: big+mid low, mid-heavy middle,
@@ -29657,7 +29571,7 @@
       // same-sized clouds counts as units.
       var sBase = (cls === 0) ? 0.9 + 0.5 * wClamp01((alt - 1500) / 1800) : sBaseCum;
       var sj = wHash(k, jy + 67, CLOUD_FIELD_SEED);
-      var scale = sBase * (0.52 + 0.95 * sj * sj) * swell;
+      var scale = sBase * (0.70 + 0.65 * sj * sj) * swell;
       var wW = C.worldW * scale;
       // per-cloud aspect squash — same sprite reads squat or towering
       var wH = wW * (C.th / C.tw) * (0.86 + 0.28 * wHash(k, jy + 73, CLOUD_FIELD_SEED));
@@ -29665,38 +29579,15 @@
       var sx = (x0 - shift) * ws - wW * ws * 0.5;
       var top = (surfaceY - alt * altScale - cam.y) * ws - wH * ws * 0.5;
       var wPx = wW * ws, hPx = wH * ws;
-      // cull with side margins wide enough for a composite companion stamp
-      if (top >= skyBottomPx || top + hPx <= 0 || sx + wPx * 1.7 <= 0 || sx - wPx * 0.7 >= cw) continue;
+      // Cull only when the whole bank has left the view.
+      if (top >= skyBottomPx || top + hPx <= 0 || sx + wPx <= 0 || sx >= cw) continue;
       // cores stay near-opaque: translucent cumulus TERRACE where they
       // overlap (repeated arc seams); merged solid masses read as one cloud
-      var instA = wClamp01(globalA * fadeA * aFade * C.alpha * (1 - 0.28 * valley) *
-                           (0.90 + 0.10 * wHash(k, jy + 97, CLOUD_FIELD_SEED)));
-      // ~1 in 3 cumulus are COMPOSITES: a second, smaller variant stamped
-      // beside the main mass with their bases aligned — combinatorial variety
-      // from the same pool, so repeats stop being findable
-      var hComp = wHash(k, jy + 71, CLOUD_FIELD_SEED);
-      if (cls !== 0 && hComp < 0.32) {
-        var S2 = cloudSprites[cls][(vi + 1 + ((hComp * 16) | 0)) % CLOUD_VARIANTS];
-        if (S2 && S2.ready) {
-          var sc2 = 0.48 + 0.22 * wHash(k, jy + 79, CLOUD_FIELD_SEED);
-          var w2 = wPx * sc2, h2 = hPx * sc2;
-          var side = (wHash(k, jy + 89, CLOUD_FIELD_SEED) < 0.5) ? -1 : 1;
-          var dx2 = side * wPx * (0.36 + 0.20 * wHash(k, jy + 91, CLOUD_FIELD_SEED));
-          var dy2 = C.baseV * (hPx - h2);   // bases share the same air-mass line
-          ctx.globalAlpha = instA * 0.9;
-          ctx.drawImage(S2.color, sx + dx2, top + dy2, w2, h2);
-        }
-      }
+      var instA = wClamp01(globalA * fadeA * aFade * C.alpha * (1 - 0.18 * valley));
       ctx.globalAlpha = instA;
-      if (wHash(k, jy + 83, CLOUD_FIELD_SEED) < 0.5) {
-        ctx.save();
-        ctx.translate(sx + wPx, top);
-        ctx.scale(-1, 1);
-        ctx.drawImage(S.color, 0, 0, wPx, hPx);
-        ctx.restore();
-      } else {
-        ctx.drawImage(S.color, sx, top, wPx, hPx);
-      }
+      // Keep the light direction consistent across the sky. Silhouette
+      // variety comes from geometry, never a mirror of the baked lighting.
+      ctx.drawImage(S.color, sx, top, wPx, hPx);
     }
   }
 
@@ -29718,9 +29609,15 @@
       }
     }
     var baked = false;
-    for (var bc = 0; bc < cloudSprites.length && !baked; bc++) {
-      for (var bv = 0; bv < CLOUD_VARIANTS && !baked; bv++) {
-        if (cloudSprites[bc][bv].dirty) { weatherBakeSprite(bc, bv); baked = true; }
+    var bakeCount = CLOUD_CLASSES.length * CLOUD_VARIANTS;
+    for (var bi = 0; bi < bakeCount; bi++) {
+      var slot = (cloudBakeCursor + bi) % bakeCount;
+      var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
+      if (cloudSprites[bc][bv].dirty) {
+        weatherBakeSprite(bc, bv);
+        cloudBakeCursor = (slot + 1) % bakeCount;
+        baked = true;
+        break;
       }
     }
     if (!baked && veilTile.dirty) weatherBakeVeil();
@@ -29729,19 +29626,20 @@
     var elev = (typeof computeSunElevation === 'function') ? computeSunElevation(timeOfDay) : 0;
     var sElev = Math.sin(elev);
     var dayW = Math.max(0, Math.min(1, (typeof atmosDayWeight !== 'undefined') ? atmosDayWeight : 0));
-    var lightB = Math.round(sElev * 16) * 100 + Math.round(weather.dark * 12) + Math.round(dayW * 6) * 4000;
+    var lightB = [Math.round(sElev * 24), Math.round(weather.dark * 24), Math.round(dayW * 24),
+      weatherTune.highlight, weatherTune.shadow, weatherTune.contrast].join(':');
     if (lightB !== cloudLightBucket) {
       cloudLightBucket = lightB;
       var wp = weatherPalette();
       var lowSun = Math.max(0, Math.min(1, 1 - sElev * 2.4));   // 1 near the horizon
       // Sunlit crowns: white high in the sky → warm gold near the horizon (driven
       // by sun elevation so they catch dusk) → moon-silver at night.
-      var dayHi = wMix(wp.sunHi, [255, 222, 150], lowSun);
-      var hi = wMix(wp.moonHi, dayHi, dayW);
+      var dayHi = wMix(wp.sunHi, wp.sunsetHi, lowSun * dayW);
+      var hi = wMix(wMix(wp.nightBase, wp.moonHi, 0.48), dayHi, dayW);
       // Shaded undersides: a cool grey high → dusky violet near the horizon →
       // deep blue at night. Kept darker + greyer than the sky so the cloud FORM
       // reads instead of blending in (the v1 sky-tinted shadow washed out).
-      var dayShadow = wMix([108, 122, 146], [122, 82, 102], lowSun);
+      var dayShadow = wMix(wp.dayBase, wp.duskBase, lowSun);
       var sh = wMix(wp.nightBase, dayShadow, dayW);
       // Storm pulls both toward flat slate.
       var dk = weather.dark;
@@ -29757,7 +29655,7 @@
       if (veilTile.ready) veilTile.recolorDirty = true;
     }
     var recolorBudget = 4;
-    var lastHi = _wLastHi || [230, 230, 235], lastSh = _wLastSh || [40, 44, 60];
+    var lastHi = _wLastHi, lastSh = _wLastSh;
     for (var qc = 0; qc < cloudSprites.length && recolorBudget > 0; qc++) {
       for (var qv = 0; qv < CLOUD_VARIANTS && recolorBudget > 0; qv++) {
         var Q = cloudSprites[qc][qv];
@@ -29802,7 +29700,7 @@
 
     // Walk the field rows top (far) → bottom (near) so low clouds overlap on
     // top. Row-level screen culling keeps the walk to the 2-4 rows in view.
-    var rowMargin = 340 * ws;   // worst-case half-sprite overhang, device px
+    var rowMargin = 520 * ws;   // worst-case half-sprite overhang, device px
     for (var j = CLOUD_ROWS.length - 1; j >= 0; j--) {
       var R = CLOUD_ROWS[j];
       var rowTopPx = (surfaceY - (R.lo + R.h) * altScale - cam.y) * ws - rowMargin;
@@ -31596,6 +31494,9 @@
     // toward these fixed anchors for night (moonlight) and storm (flat slate).
     // See BACKGROUND_STYLE.md §15.
     cloudSunHi:     '#f6f1e8',  // midday sunlit cloud face — the one allowed cloud value-pop
+    cloudSunsetHi: '#f4c59d',  // soft peach light at the horizon
+    cloudDayBase:  '#8397ab',  // cool diffuse underside in daylight
+    cloudDuskBase: '#77647c',  // violet underside at dusk
     cloudMoonHi:    '#b0c0de',  // moonlit cloud face at night — cool silver
     cloudNightBase: '#1e2538',  // cloud underside at night — deep blue-grey
     cloudStormHi:   '#787c88',  // storm sunlit face, pulled toward flat slate

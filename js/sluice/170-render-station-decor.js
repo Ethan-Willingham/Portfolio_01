@@ -106,6 +106,9 @@
     // toward these fixed anchors for night (moonlight) and storm (flat slate).
     // See BACKGROUND_STYLE.md §15.
     cloudSunHi:     '#f6f1e8',  // midday sunlit cloud face — the one allowed cloud value-pop
+    cloudSunsetHi: '#f4c59d',  // soft peach light at the horizon
+    cloudDayBase:  '#8397ab',  // cool diffuse underside in daylight
+    cloudDuskBase: '#77647c',  // violet underside at dusk
     cloudMoonHi:    '#b0c0de',  // moonlit cloud face at night — cool silver
     cloudNightBase: '#1e2538',  // cloud underside at night — deep blue-grey
     cloudStormHi:   '#787c88',  // storm sunlit face, pulled toward flat slate
