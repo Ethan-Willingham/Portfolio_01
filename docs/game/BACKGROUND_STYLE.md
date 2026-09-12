@@ -42,6 +42,7 @@ Every layer occupies a *narrower band of the value/saturation scale* than the la
 | **Sky** | 6–25 | 8–25 | `SKY.skyDeepest` `#0a0d16` → `SKY.skyHorizon` `#2c3142` (anchors; Stage 5 derives these from atmospheric scattering) |
 | **Distant stars** (sky-reserved) | 35–95 | 0–18 | `SKY.starDim` → `SKY.starHot` |
 | **Underground biome fill** (cave edges, behind-tile failsafe) | 8–35 | 8–35 | `BG.bgTopsoil` `#5a3e22` through `BG.bgMantle` |
+| **Surface cut bank** | 14–50 | 10–45 | `BG.surfaceBank*`, `surfaceHumus`, and `surfaceRoot*`; quieter than diggable topsoil |
 | **Underground wall pattern** (parallax background layer) | 5–18 | 8–30 | `BG.wallTopsoil` `#36240e` through `BG.wallCrystal`, plus shared `BG.wallMortar` `#06050a` |
 
 Note the **wall is darker than the biome fill** by design — typically ~half the value. This is what makes the cave read as "behind" rather than "loose dirt." See §10 for the architecture.
@@ -217,18 +218,40 @@ The occlusion model makes this easy: any new background layer is just another dr
 - **Add a deeper parallax layer:** draw it in the undergroundBg loop BEFORE the wall `fillRect`, with a *higher* parallax constant (more lag = further back). Each layer is one `fillRect` with its own pattern + parallax matrix. Obey §3 — every layer further back occupies a narrower, darker value band.
 - **Parallax constants** sit next to `BIOME_WALL_TILE_PX`: `BIOME_WALL_PARALLAX_X = 0.55`, `BIOME_WALL_PARALLAX_Y = 0.70`. See §8.
 
-### Surface dirt cap — static foreground topsoil lip over the wall's top (v23.21)
+### Surface cut bank (September 2026)
 
-The topsoil wall band stops at a **dead-straight line at `surfaceY`**, right where the sky starts — through any near-surface shaft the parallax background visibly "just ends" at a ruler edge. `drawSurfaceDirtCap` (next to `getBiomeWallFill`) hides that edge with a **solid foreground dirt lip**, for the **topsoil band only** and **only while the surface is on screen**:
+`172-render-surface-transition.js` replaces the old opaque, wavy foreground cap.
+The surface now reveals a shallow root mat in front of a recessed earth face.
+The face loses light and definition over five tiles until the existing parallax
+wall takes over. There is no outlined lower edge across the excavation.
 
-- A band that is **flat along the top (`surfaceY`)** and **wavy along the bottom** (`surfaceCapShape`, a sum of sines, depth ≈ 1.2–3.6 tiles below `surfaceY`, averaging ~2.4).
-- Filled in the **foreground terrain's own topsoil colours** (`TILE_MATERIALS.dirt.topsoil`: `top → mid → bot` gradient, `grit` + `warm` grain flecks, `cool` shaded rim along the wavy underside) so it reads as the same ground the player digs — *foreground*, distinctly lighter/warmer than the darker `BG.wallTopsoil` parallax wall that recedes below its wavy edge.
+- **Depth:** two horizontal motion planes. The earth face offsets by `cam.x * 0.30`,
+  the root mat by `cam.x * 0.10`; the existing cave wall offsets by `cam.x * 0.45`.
+  The bank therefore sits between foreground terrain and the deeper cave wall.
+  Both new planes stay pinned vertically to `SKY_ROWS * TILE` during flight,
+  descent, camera easing, and zoom.
+- **Material:** interrupted bedding, broad erosion patches, fine grain, a broken
+  humus shelf less than one tile thick, and sparse branching roots. No pebble
+  clusters, brick grid, heavy contour stroke, repeated sine-wave scallops, or
+  foreground material painted across the opening. Material coverage tapers
+  into the wall at a varying depth, with no hard edge at the draw cutoff.
+- **Palette:** `BG.surfaceBankLight` (`#806044`), `surfaceBankShade` (`#493925`),
+  `surfaceBankNight` (`#25262a`), `surfaceHumus` (`#3b3021`), `surfaceRoot`
+  (`#766044`), and `surfaceRootShade` (`#352c20`). These are reserved for the
+  surface bank and have lower contrast than diggable terrain. The deeper face
+  converges toward `BG.wallTopsoil`. Night cools the upper bank; underground
+  visibility stays on the existing lighting system.
+- **Occlusion:** draw in the topsoil background pass, behind all terrain and
+  gameplay. Never edit the grid, cave contour, lighting flood, or save data.
+  Sky and deep biomes receive no bank drawing.
+- **Caching:** deterministic 384-pixel strips use absolute logical coordinates,
+  including roots that cross strip boundaries. A 16-entry LRU bounds memory.
+  Geometry is baked once; 64 daylight steps recolour cached pixels without
+  changing geometry or re-randomizing grain. Ordinary frames only blit the
+  visible strips. Roots and soil keep the same shape when returning to a place.
 
-Load-bearing invariants:
-- **It is STATIC — locked to the world surface, no parallax.** The wavy shape is a pure function of world X (no `cam` term) and the top is pinned to `surfaceY`, so the cap never drifts off the seam it's hiding. This is the whole point: unlike the drifting parallax wall, the cap doesn't move relative to the ground, so it reliably covers the wall's top edge.
-- It is drawn in the `undergroundBg` pass **in front of the wall but behind the terrain chunks**, so the terrain occludes it everywhere except the caves — exactly where the seam used to show. It is opaque (a true foreground layer over the background), not a tint.
-- The cap's own flat top at `surfaceY` is just the normal ground/sky horizon (the surface), so it doesn't reintroduce a "floating layer" edge; the wavy bottom carries the cap → receding-wall transition.
-- No new palette colours — reuses `TILE_MATERIALS.dirt.topsoil`. Tuning levers: `SURFACE_CAP_MIN`, `SURFACE_CAP_WAVE`.
+Run `node tools/sluice-surface-smoke.mjs` for the disposable browser harness.
+`DUMP=/tmp/sluice-surface-qa` writes its visual specimens outside the repository.
 
 ---
 

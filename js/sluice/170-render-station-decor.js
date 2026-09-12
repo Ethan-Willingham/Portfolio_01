@@ -204,6 +204,14 @@
     wallCrystal:    '#0c0518',
     wallMortar:     '#06050a',  // shared dark mortar across all biomes
 
+    // Surface cut bank: quieter and cooler than the diggable topsoil.
+    surfaceBankLight: '#806044',
+    surfaceBankShade: '#493925',
+    surfaceBankNight: '#25262a',
+    surfaceHumus:     '#3b3021',
+    surfaceRoot:      '#766044',
+    surfaceRootShade: '#352c20',
+
     // Atmospheric haze — single horizon wash, drawn over the lowest sky
     // band to soften the seam where mountains meet sky. Cool blue-purple
     // instead of the previous warm sunset orange (wrong time-of-day).
@@ -292,98 +300,6 @@
     var fill = img ? ctx.createPattern(img, 'repeat') : null;
     biomeWallFillCache[layerName] = fill;
     return fill;
-  }
-
-  // ===== Surface dirt cap — a static foreground topsoil lip with a wavy bottom
-  // The biome wall pattern (the parallax background seen through caves) used to
-  // stop at a dead-straight line at surfaceY, right where the sky starts — an
-  // obvious "the background layer just ends here" seam through any near-surface
-  // shaft. This draws a solid FOREGROUND dirt band over that top edge: flat
-  // along the surface, WAVY along the bottom, in the foreground terrain's own
-  // topsoil colours (TILE_MATERIALS.dirt.topsoil) so it reads as the same
-  // ground the player digs. It is STATIC — locked to the world surface (no
-  // parallax drift, wavy shape is a pure function of world X), so it always
-  // sits exactly over the seam and hides it while the parallax wall recedes
-  // below its wavy underside. Drawn in the undergroundBg pass IN FRONT OF the
-  // wall but BEHIND the terrain chunks, so it shows only through caves near the
-  // surface — exactly where the seam used to show. See BACKGROUND_STYLE.md §10.
-  var SURFACE_CAP_MIN  = TILE * 1.2;   // min depth of the cap below surfaceY
-  var SURFACE_CAP_WAVE = TILE * 2.4;   // wavy underside swing (avg depth ~2.4 tiles, range ~1.2–3.6)
-  function surfaceCapShape(wx) {        // 0..1 undulation for the wavy underside
-    var n = 0.5
-      + 0.26 * Math.sin(wx * 0.017)
-      + 0.15 * Math.sin(wx * 0.041 + 1.3)
-      + 0.09 * Math.sin(wx * 0.095 + 2.7)
-      + 0.05 * Math.sin(wx * 0.180 + 0.6);
-    return n < 0 ? 0 : n > 1 ? 1 : n;
-  }
-  // v23.34 — reused scratch for drawSurfaceDirtCap's contour points; it runs
-  // every frame and was allocating two arrays the full visible width wide.
-  var dirtCapXs = [], dirtCapYs = [];
-  function drawSurfaceDirtCap(worldLeft, worldRight) {
-    var surfaceY = SKY_ROWS * TILE;
-    var M = TILE_MATERIALS.dirt.topsoil;
-    // Day/night: the topsoil colours are sunlit, so darken them toward a
-    // night-shadow tone as the sun drops, the same way the mountains track
-    // the cycle. dayW is 1 in full day (original colours) and 0 at night.
-    var dayW = scatDayWeight(computeSunElevation(timeOfDay));
-    var lit = 0.32 + 0.68 * dayW;
-    function capCol(hex) {
-      var h = hex.charAt(0) === '#' ? hex.substring(1) : hex;
-      var r = Math.round(parseInt(h.substring(0, 2), 16) * lit);
-      var g = Math.round(parseInt(h.substring(2, 4), 16) * lit);
-      var b = Math.round(parseInt(h.substring(4, 6), 16) * lit + (1 - dayW) * 5);
-      return 'rgb(' + r + ',' + g + ',' + b + ')';
-    }
-    var cTop = capCol(M.top), cMid = capCol(M.mid), cBot = capCol(M.bot);
-    var cWarm = capCol(M.warm), cGrit = capCol(M.grit), cCool = capCol(M.cool);
-    // Wavy underside contour, world-locked (f(worldX), no parallax) so the cap
-    // is nailed to the surface and never drifts off the seam. Sampled finely
-    // with NO y-rounding: the old step-4 + Math.round() quantised the contour
-    // into a chunky staircase that read as stretched blocks along the slopes.
-    var step = 2, x0 = worldLeft - step, x1 = worldRight + step;
-    var xs = dirtCapXs, ys = dirtCapYs, maxY = surfaceY;
-    xs.length = 0; ys.length = 0;
-    for (var x = x0; x <= x1; x += step) {
-      var y = surfaceY + SURFACE_CAP_MIN + surfaceCapShape(x) * SURFACE_CAP_WAVE;
-      xs.push(x); ys.push(y);
-      if (y > maxY) maxY = y;
-    }
-    ctx.save();
-    // Clip to the cap: flat top at surfaceY, wavy bottom along the contour.
-    ctx.beginPath();
-    ctx.moveTo(x0, surfaceY - 1);
-    ctx.lineTo(x1, surfaceY - 1);
-    for (var i = xs.length - 1; i >= 0; i--) ctx.lineTo(xs[i], ys[i]);
-    ctx.closePath();
-    ctx.clip();
-    // Solid foreground dirt: topsoil at the surface, to mid, to shaded base.
-    var grd = ctx.createLinearGradient(0, surfaceY, 0, maxY);
-    grd.addColorStop(0,    cTop);
-    grd.addColorStop(0.22, cMid);
-    grd.addColorStop(1,    cBot);
-    ctx.fillStyle = grd;
-    ctx.fillRect(x0, surfaceY - 1, x1 - x0, maxY - surfaceY + 2);
-    // Sparse grain (warm flecks + dark grit), world-locked so it never shimmers.
-    for (var gx = Math.floor(x0 / 7) * 7; gx < x1; gx += 7) {
-      for (var gy = surfaceY + 2; gy < maxY; gy += 7) {
-        var h = ((gx * 73856093) ^ (gy * 19349663)) & 1023;
-        if (h < 70)      { ctx.fillStyle = cGrit; ctx.fillRect(gx, gy, 1, 1); }
-        else if (h < 125){ ctx.fillStyle = cWarm; ctx.fillRect(gx, gy, 1, 1); }
-      }
-    }
-    // Shaded rim along the wavy underside, the dirt's shadowed cut edge where
-    // the receding parallax wall takes over below. A smooth stroke that FOLLOWS
-    // the curve (was axis-aligned fillRects that stair-stepped on the slopes).
-    ctx.strokeStyle = cCool;
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(xs[0], ys[0]);
-    for (var k = 1; k < xs.length; k++) ctx.lineTo(xs[k], ys[k]);
-    ctx.stroke();
-    ctx.restore();
   }
 
   function newBiomeWallCanvas() {
@@ -2231,4 +2147,3 @@
   }
 
   // Reusable UI font (defined near constants at top)
-

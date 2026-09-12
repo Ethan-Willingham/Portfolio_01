@@ -343,14 +343,11 @@
             ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
           }
 
-          // Static foreground dirt cap: a solid topsoil lip (flat top, wavy
-          // bottom) drawn over the topsoil wall's dead-straight top edge, so
-          // the parallax background never visibly "ends" at the sky line.
-          // Only when the surface is on screen; terrain occludes it everywhere
-          // except the caves where the seam used to show.
+          // Recessed cut bank and fine roots tie the surface to the wall.
+          // Both sit behind the terrain; their height stays surface-anchored.
           if (L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
-              surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_CAP_MIN + SURFACE_CAP_WAVE) {
-            drawSurfaceDirtCap(worldLeft, worldRight);
+              surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
+            drawSurfaceTransition(worldLeft, worldRight);
           }
         }
       }
