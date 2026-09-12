@@ -370,8 +370,8 @@ Built up through v10.20-v10.47. Key invariants:
 4. **Wide sub-peak height variance.**
    `subL`/`subR` heights span 0.60–0.92 of peak height. Some peaks read as twin-peaks, others as clear shoulders. Same 7-vertex silhouette, more visual variety.
 
-5. **Moon-side rim highlight on every major peak.**
-   Stroke peak → sub-right → mid-right → outer-right with `cfg.moonRimColor`. Mid uses `BG.farMtnRim`; near uses `BG.nearMtnRim`. In Stage 5c the rim *direction* will track the actual sun/moon position — currently locked to upper-right.
+5. **Sun and moon highlights on every major peak.**
+   Mid uses `BG.farMtnRim`; near uses `BG.nearMtnRim`. Both slopes carry separate strokes, with colours blended continuously from the current sun and moon direction. Snow edges follow the same light. Keep stroke coverage fixed: changing its opacity makes antialiased silhouette pixels flicker.
 
 6. **No internal shadow polygons.**
    v10.29 added a 4-vertex shadow polygon on the upper-left slope as a depth cue. Rendered as a visible darker triangle inside the mountain body ("inner peak" defect, v10.44). Removed. Snow caps + moon-side rim + asymmetric shape carry depth.
@@ -380,6 +380,13 @@ Built up through v10.20-v10.47. Key invariants:
 
 8. **Density and heights are tuned for the spawn town.**
    Step counts and max heights were trimmed in v10.46 (mid step 118→150, maxHMajor 180→130; near step 78→105, maxHMajor 105→80) because the surface compound was too visually busy. Mountain seeds shuffled in v10.47 to dodge an ugly spawn-area layout.
+
+9. **Continuous mountain lighting (September 2026).**
+   Cache world-space `Path2D` geometry for each of the four layers. Each body peak remains a separate closed, same-winding polygon inside the batched path, so overlapping peaks stay opaque. Rim subpaths remain disconnected. Rebuild geometry only when the view leaves its padded range; zoom and time changes reuse it. Never return to time-bucketed coloured bitmap strips: replacing them caused visible colour steps and periodic rebuild hitches.
+
+   Evaluate all layers from one light state every frame. Retain the BG mountain palette and atmospheric depth amounts. The existing `SKY_SUNSET_GRADE` gold/orange stops supply a restrained reflected warmth at dawn and dusk; snow cools and darkens with night, with a small moon-phase lift. A 160 ms exponential filter smooths the sky cache's integer RGB values, while directional lighting follows the continuous celestial arc. The foreground keeps the strongest contrast. No new shadow triangles, animated geometry, or fog overlay.
+
+   Run `node tools/sluice-mountain-smoke.mjs` for a real-browser boot, full-cycle directional continuity, fixed silhouette coverage, sunset pixel differences, geometry reuse, zoom, scrolling, overlap opacity, and desktop/mobile specimens. Reports and screenshots go to a temporary directory outside the checkout.
 
 ---
 

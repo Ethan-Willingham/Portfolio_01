@@ -14,8 +14,7 @@
   // (outer shoulder → mid shoulder → sub-peak → peak → sub-peak → mid
   // shoulder → outer shoulder) so the ridge reads as jagged rather than
   // triangular. Major peaks above a height threshold get a snow cap with a
-  // jagged snow line, a subtle moon-side rim highlight, and a darker
-  // shadow polygon on the opposite slope.
+  // jagged snow line and softly changing sun/moon-facing highlights.
 
   // Build the per-peak geometry. Returns 7 points (x,y) walking left→right
   // across the silhouette, plus metadata.
@@ -82,54 +81,96 @@
     };
   }
 
-  // ====== Aerial-perspective tinting helper ======
-  // Distant objects pick up the colour of the air column between viewer
-  // and object — at sunset, far mountains warm toward the horizon RGB;
-  // at noon they cool toward the high-elevation blue. Lerp the layer's
-  // base hex toward the cached scatter colour by `amt`. amt scales with
-  // dayWeight so we don't tint mountains during true night (mountains
-  // stay dark per the night palette).
-  function aerialTint(hexColor, amt) {
-    if (!hexColor) return hexColor;
-    var w = amt * (0.35 + 0.65 * atmosDayWeight);
-    if (w <= 0.001) return hexColor;
-    var h = hexColor.charAt(0) === '#' ? hexColor.substring(1) : hexColor;
-    var r = parseInt(h.substring(0, 2), 16);
-    var g = parseInt(h.substring(2, 4), 16);
-    var b = parseInt(h.substring(4, 6), 16);
-    var tr = atmosHorizonRGB.r, tg = atmosHorizonRGB.g, tb = atmosHorizonRGB.b;
-    var or = Math.round(r + (tr - r) * w);
-    var og = Math.round(g + (tg - g) * w);
-    var ob = Math.round(b + (tb - b) * w);
-    return 'rgb(' + or + ',' + og + ',' + ob + ')';
+  // Cache only geometry. Light is evaluated every frame, so there are no
+  // time buckets, bitmap replacements, or layer-by-layer colour updates.
+  // Closed, same-winding subpaths keep overlapping peaks solid; separate
+  // rim subpaths never draw connectors across valleys.
+  var MTN_CACHE_MARGIN = 4;
+  var mtnPathCache = {};
+  var mtnLight = null;
+  var mtnHexCache = {};
+
+  function mtnEase(lo, hi, value) {
+    var t = Math.max(0, Math.min(1, (value - lo) / (hi - lo)));
+    return t * t * (3 - 2 * t);
   }
 
-  // ====== Stage-3 polygon mountain renderer ======
-  //
-  // Mountains are continuous polygons filled with ctx.fill(). The earlier
-  // (v10.24) per-pixel column rasterizer produced visible vertical seams
-  // whenever ws = dpr * worldScale wasn't a clean integer: each 1-world-
-  // wide fillRect landed at a fractional device-pixel position, canvas
-  // anti-aliased both edges, and adjacent columns' AA halves didn't sum
-  // to a full pixel — leaving thin sky-show-through gaps. Polygon fill
-  // has only one set of edges (the silhouette outline), so the interior
-  // is solid and only the silhouette diagonal gets slight AA — which
-  // reads as a soft hand-painted edge, not pixel-noise.
-  //
-  // Per-layer atmospheric-perspective discipline (BACKGROUND_STYLE §3):
-  //   Far  — body polygon only. No snow, no shadow, no rim.
-  //   Mid  — body + dark-side shadow + snow caps with moon-side rim +
-  //          soft top-edge rim stroke in the FAR layer's colour, so the
-  //          silhouette feathers into the layer behind it. Also hosts
-  //          distant outpost lights.
-  //   Near — body + 1-px BG.nearMtnRim outline stroke.
+  function mtnRGB(hex) {
+    return mtnHexCache[hex] || (mtnHexCache[hex] = nightSkyHexRGB(hex));
+  }
+
+  function mtnMix(a, b, weight) {
+    return { r: a.r + (b.r - a.r) * weight,
+             g: a.g + (b.g - a.g) * weight,
+             b: a.b + (b.b - a.b) * weight };
+  }
+
+  function mtnCSS(c) {
+    // Preserve fractional colour until Canvas rasterization.
+    return 'rgb(' + c.r.toFixed(3) + ',' + c.g.toFixed(3) + ',' + c.b.toFixed(3) + ')';
+  }
+
+  function updateMountainLight(now) {
+    var arc = computeSunElevation(timeOfDay);
+    var sunY = Math.sin(arc), sunX = Math.cos(arc);
+    var day = scatDayWeight(arc);
+    var moon = (1 - Math.cos(moonPhase * Math.PI * 2)) * 0.5;
+    var sunUp = mtnEase(-0.10, 0.16, sunY);
+    var moonUp = mtnEase(-0.10, 0.16, -sunY) * (1 - day) * (0.12 + moon * 0.22);
+    var right = mtnEase(-0.55, 0.55, sunX);
+    var grade = SKY_SUNSET_GRADE;
+    var twilight = Math.pow(1 - mtnEase(0, Math.max(0.001, grade.twi), Math.abs(sunY)),
+                            Math.max(0.1, grade.twiShape));
+    var warmth = twilight * Math.min(1, Math.max(0, grade.drama));
+    var gold = grade.stops[0], peach = grade.stops[1];
+    var warm = { r: (gold[0] * 0.7 + peach[0] * 0.3) * 255,
+                 g: (gold[1] * 0.7 + peach[1] * 0.3) * 255,
+                 b: (gold[2] * 0.7 + peach[2] * 0.3) * 255 };
+    var air = mtnMix(atmosHorizonRGB, warm, warmth * 0.22);
+
+    // The sky's shared RGB cache is integer-valued. A short, time-based
+    // filter removes its one-channel stairs without delaying sun direction.
+    // Initialize immediately on first view or after an underground/pause gap.
+    var blend = !mtnLight || now - mtnLight.now > 1000 ? 1 :
+                1 - Math.exp(-Math.max(0, now - mtnLight.now) / 160);
+    if (mtnLight) air = mtnMix(mtnLight.air, air, blend);
+    mtnLight = {
+      now: now, air: air, day: day, moon: moonUp, warm: warm, warmth: warmth,
+      right: sunUp * (0.22 + 0.78 * right) + moonUp * (1 - 0.78 * right),
+      left: sunUp * (1 - 0.78 * right) + moonUp * (0.22 + 0.78 * right)
+    };
+  }
+
+  function mountainColors(cfg) {
+    var light = mtnLight;
+    var aerial = (cfg.aerialAmt || 0) * (0.35 + 0.65 * light.day);
+    var fill = mtnMix(mtnRGB(cfg.fillColor), light.air, aerial);
+    var snow = cfg.snowColor && mtnMix(mtnRGB(BG.midMtnFill), mtnRGB(cfg.snowColor),
+                                     0.20 + 0.72 * light.day + 0.20 * light.moon);
+    if (snow) {
+      snow = mtnMix(snow, light.warm, light.warmth * 0.38);
+      snow = mtnMix(snow, light.air, aerial * 0.4);
+    }
+    var snowRim = snow && mtnMix(snow, mtnRGB(cfg.snowRimColor || cfg.snowColor),
+                                0.18 + 0.30 * light.day);
+    if (snowRim) snowRim = mtnMix(snowRim, light.warm, light.warmth * 0.30);
+    var rim = cfg.rimColor && mtnMix(mtnRGB(cfg.rimColor), light.air, aerial);
+    var litRim = cfg.moonRimColor &&
+                mtnMix(mtnRGB(cfg.moonRimColor), light.air, aerial * 0.6);
+    if (litRim) litRim = mtnMix(litRim, light.warm, light.warmth * 0.16);
+    return { fill: mtnCSS(fill), snow: snow && mtnCSS(snow), rim: rim && mtnCSS(rim),
+             left: litRim && mtnCSS(mtnMix(rim || fill, litRim, light.left)),
+             right: litRim && mtnCSS(mtnMix(rim || fill, litRim, light.right)),
+             snowLeft: snowRim && mtnCSS(mtnMix(snow, snowRim, light.left)),
+             snowRight: snowRim && mtnCSS(mtnMix(snow, snowRim, light.right)) };
+  }
 
   function snowIntersect(pts, fromIdx, toIdx, snowY) {
     var step = (toIdx > fromIdx) ? 1 : -1;
     for (var i = fromIdx; i !== toIdx; i += step) {
       var a = pts[i], b = pts[i + step];
       if ((a[1] >= snowY && b[1] <= snowY) || (a[1] <= snowY && b[1] >= snowY)) {
-        var denom = (b[1] - a[1]);
+        var denom = b[1] - a[1];
         var t = denom === 0 ? 0 : (snowY - a[1]) / denom;
         return a[0] + (b[0] - a[0]) * t;
       }
@@ -137,195 +178,63 @@
     return null;
   }
 
-  function drawSnowCap(peak, cfg) {
-    var snowFrac = 0.50 + tileHash01(peak.idx, cfg.seed, 0xD710) * 0.22;
-    var snowH = peak.h * snowFrac;
-    if (snowH < cfg.snowMinH * 0.75) return;
-    var pts = peak.pts;
-    var peakY = pts[3][1];
-    var snowY = peakY + (peak.h - snowH);
-
-    var leftX  = snowIntersect(pts, 0, 3, snowY);
-    var rightX = snowIntersect(pts, 6, 3, snowY);
-    if (leftX === null || rightX === null) return;
-
-    // Cap polygon: along the silhouette from left intersection up over
-    // the peak to right intersection, then back along a jagged snow line.
-    ctx.beginPath();
-    ctx.moveTo(leftX, snowY);
-    for (var i = 0; i < pts.length; i++) {
-      if (pts[i][1] < snowY) ctx.lineTo(pts[i][0], pts[i][1]);
+  function mtnSlope(path, pts, direction, snowY, snowX) {
+    path.moveTo(pts[3][0], pts[3][1]);
+    for (var i = 3 + direction; i >= 0 && i < 7; i += direction) {
+      if (snowY !== undefined && pts[i][1] >= snowY) break;
+      path.lineTo(pts[i][0], pts[i][1]);
     }
-    ctx.lineTo(rightX, snowY);
-    var segs = 6;
-    for (var s = segs - 1; s >= 1; s--) {
-      var fx = leftX + (rightX - leftX) * (s / segs);
-      var jagY = snowY + (tileHash01(peak.idx, s + 17, 0xE712) - 0.35) * 3.6;
-      ctx.lineTo(fx, jagY);
-    }
-    ctx.closePath();
-    ctx.fillStyle = cfg.snowColor;
-    ctx.fill();
-
-    // Moon-side rim — thin highlight on the right side of the cap.
-    if (cfg.snowRimColor) {
-      ctx.strokeStyle = cfg.snowRimColor;
-      ctx.lineWidth = 0.7;
-      ctx.beginPath();
-      ctx.moveTo(pts[3][0], pts[3][1]);
-      if (pts[4][1] < snowY) ctx.lineTo(pts[4][0], pts[4][1]);
-      if (pts[5][1] < snowY) ctx.lineTo(pts[5][0], pts[5][1]);
-      ctx.lineTo(rightX, snowY);
-      ctx.stroke();
-    }
+    if (snowY !== undefined) path.lineTo(snowX, snowY);
   }
 
-  // ====== Mountain layer bitmap cache (v13.17) ======
-  // drawMountainLayer used to issue ~120 canvas path fills/strokes per
-  // frame for ~35 STATIC peaks. Path rendering (tessellation) is the slow
-  // canvas op — and the mountains never change, they only parallax-scroll.
-  // So each layer is rendered ONCE into an offscreen strip canvas and
-  // blitted (drawImage — near-free) per frame; the strip is rebuilt only
-  // when the camera scrolls a peak out of the cached idx range, or on zoom.
-  // Output is pixel-identical: the strip runs the exact same pass code.
-  // The blinking outpost lights animate, so they're drawn live after the
-  // blit. The aerial tint + moon-rim track the day/night cycle, so the
-  // strip ALSO rebuilds when timeOfDay crosses a MTN_TIME_BUCKETS bucket
-  // (v13.19) — at most one layer per frame, so the rebuild stays cheap.
-  var MTN_CACHE_MARGIN = 4;          // extra peaks cached each side
-  var MTN_TIME_BUCKETS = 600;        // day/night quantisation for rebuilds
-  var mtnStripCache = {};            // keyed by cfg.seed (unique per layer)
-  var mtnCacheFailed = false;        // permanent fallback to live drawing
-  var mtnRebuiltThisFrame = false;   // caps strip rebuilds to 1 per frame
-
-  // Aerial-perspective tint — returns a colour-tinted copy of cfg, or cfg
-  // itself when the layer has no aerial amount.
-  function aerialTintCfg(cfg) {
-    if (!(cfg.aerialAmt && cfg.aerialAmt > 0)) return cfg;
-    return {
-      parallax: cfg.parallax, step: cfg.step, seed: cfg.seed,
-      minorRatio: cfg.minorRatio,
-      minHMajor: cfg.minHMajor, maxHMajor: cfg.maxHMajor,
-      minHMinor: cfg.minHMinor, maxHMinor: cfg.maxHMinor,
-      snowMinH: cfg.snowMinH, baseYOffset: cfg.baseYOffset,
-      rimWidth: cfg.rimWidth, moonRimWidth: cfg.moonRimWidth,
-      distantLights: cfg.distantLights,
-      fillColor:    aerialTint(cfg.fillColor,    cfg.aerialAmt),
-      shadowColor:  aerialTint(cfg.shadowColor,  cfg.aerialAmt),
-      snowColor:    aerialTint(cfg.snowColor,    cfg.aerialAmt * 0.4),
-      snowRimColor: aerialTint(cfg.snowRimColor, cfg.aerialAmt * 0.4),
-      rimColor:     aerialTint(cfg.rimColor,     cfg.aerialAmt),
-      moonRimColor: aerialTint(cfg.moonRimColor, cfg.aerialAmt * 0.6)
-    };
-  }
-
-  // Build the peak array for an idx range; ox is added to every point's x.
-  function buildLayerPeaks(cfg, baseY, idxFrom, idxTo, ox) {
-    var peaks = [];
+  function buildMtnPaths(cfg, baseY, idxFrom, idxTo) {
+    var paths = { body: new Path2D(), rim: new Path2D(), snow: new Path2D(),
+                  left: new Path2D(), right: new Path2D(),
+                  snowLeft: new Path2D(), snowRight: new Path2D(),
+                  idxFrom: idxFrom, idxTo: idxTo, baseY: baseY };
     for (var idx = idxFrom; idx <= idxTo; idx++) {
-      var pk = buildMountainPeak(idx, cfg.seed, cfg.step, baseY, cfg);
-      for (var pi = 0; pi < pk.pts.length; pi++) pk.pts[pi][0] += ox;
-      peaks.push(pk);
+      var peak = buildMountainPeak(idx, cfg.seed, cfg.step, baseY, cfg);
+      var pts = peak.pts;
+      paths.body.moveTo(pts[0][0], baseY + 12);
+      for (var j = 0; j < pts.length; j++) paths.body.lineTo(pts[j][0], pts[j][1]);
+      paths.body.lineTo(pts[6][0], baseY + 12);
+      paths.body.closePath();
+      paths.rim.moveTo(pts[0][0], pts[0][1]);
+      for (var k = 1; k < pts.length; k++) paths.rim.lineTo(pts[k][0], pts[k][1]);
+      if (!peak.isMajor) continue;
+      mtnSlope(paths.left, pts, -1);
+      mtnSlope(paths.right, pts, 1);
+      if (!cfg.snowColor || !cfg.snowMinH || peak.h < cfg.snowMinH) continue;
+      var snowH = peak.h * (0.50 + tileHash01(idx, cfg.seed, 0xD710) * 0.22);
+      if (snowH < cfg.snowMinH * 0.75) continue;
+      var snowY = baseY - snowH;
+      var leftX = snowIntersect(pts, 0, 3, snowY);
+      var rightX = snowIntersect(pts, 6, 3, snowY);
+      if (leftX === null || rightX === null) continue;
+      paths.snow.moveTo(leftX, snowY);
+      for (var n = 0; n < pts.length; n++) {
+        if (pts[n][1] < snowY) paths.snow.lineTo(pts[n][0], pts[n][1]);
+      }
+      paths.snow.lineTo(rightX, snowY);
+      for (var s = 5; s >= 1; s--) {
+        paths.snow.lineTo(leftX + (rightX - leftX) * s / 6,
+                         snowY + (tileHash01(idx, s + 17, 0xE712) - 0.35) * 3.6);
+      }
+      paths.snow.closePath();
+      mtnSlope(paths.snowLeft, pts, -1, snowY, leftX);
+      mtnSlope(paths.snowRight, pts, 1, snowY, rightX);
     }
-    return peaks;
+    return paths;
   }
 
-  // Mountain passes 1-5 (body / shadow / snow / rim / moon-rim) into `ctx`.
-  // Pass 6 (blinking lights) is NOT here — it animates, so it's drawn live.
-  function drawMtnPasses(cfg, peaks, baseY) {
-    // ---- Pass 1: body silhouette, ONE POLYGON PER PEAK ----
-    // v10.45 — was a single continuous polygon walking through all peaks.
-    // With per-peak asymmetric tilt (v10.29), adjacent peaks can overlap
-    // horizontally; a single polygon then self-intersects and Canvas's
-    // nonzero fill rule leaves a bowtie hole. One closed polygon per peak
-    // avoids it — overlapping peaks just paint the same colour twice.
-    ctx.fillStyle = cfg.fillColor;
-    for (var k = 0; k < peaks.length; k++) {
-      var pts = peaks[k].pts;
-      ctx.beginPath();
-      ctx.moveTo(pts[0][0], baseY + 12);
-      for (var j = 0; j < pts.length; j++) ctx.lineTo(pts[j][0], pts[j][1]);
-      ctx.lineTo(pts[6][0], baseY + 12);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // ---- Pass 2: dark-side shadow on major peaks (mid layer only) ----
-    if (cfg.shadowColor) {
-      ctx.fillStyle = cfg.shadowColor;
-      for (var s = 0; s < peaks.length; s++) {
-        var sp = peaks[s];
-        if (!sp.isMajor) continue;
-        var sPts = sp.pts;
-        ctx.beginPath();
-        ctx.moveTo(sPts[1][0], sPts[1][1]);
-        ctx.lineTo(sPts[2][0], sPts[2][1]);
-        ctx.lineTo(sPts[3][0], sPts[3][1]);
-        ctx.lineTo(sPts[3][0] - (sPts[3][0] - sPts[1][0]) * 0.35, sPts[3][1] + (sPts[1][1] - sPts[3][1]) * 0.55);
-        ctx.closePath();
-        ctx.fill();
-      }
-    }
-
-    // ---- Pass 3: snow caps on major peaks above the snow threshold ----
-    if (cfg.snowColor && cfg.snowMinH) {
-      for (var n = 0; n < peaks.length; n++) {
-        var np = peaks[n];
-        if (!np.isMajor || np.h < cfg.snowMinH) continue;
-        drawSnowCap(np, cfg);
-      }
-    }
-
-    // ---- Pass 4: top-edge rim stroke ----
-    // §5: near layer = 1-px BG.nearMtnRim outline. Mid layer = soft top
-    // edge in the FAR fill colour. Far layer = no rim. Per-peak polyline
-    // (one moveTo per peak) so no connector strokes cross the valleys.
-    if (cfg.rimColor) {
-      ctx.strokeStyle = cfg.rimColor;
-      ctx.lineWidth = cfg.rimWidth || 1;
-      ctx.lineJoin = 'miter';
-      for (var k2 = 0; k2 < peaks.length; k2++) {
-        var pts2 = peaks[k2].pts;
-        ctx.beginPath();
-        ctx.moveTo(pts2[0][0], pts2[0][1]);
-        for (var j2 = 1; j2 < pts2.length; j2++) {
-          ctx.lineTo(pts2[j2][0], pts2[j2][1]);
-        }
-        ctx.stroke();
-      }
-    }
-
-    // ---- Pass 5: sun/moon-facing body rim ----
-    // A brighter line along the lit slope of every major peak.
-    if (cfg.moonRimColor) {
-      var sunE = computeSunElevation(timeOfDay);
-      var lightOnRight = Math.cos(sunE) > 0;
-      var rimA = 0.35 + 0.65 * Math.abs(Math.sin(sunE));
-      ctx.save();
-      ctx.globalAlpha = rimA;
-      ctx.strokeStyle = cfg.moonRimColor;
-      ctx.lineWidth = cfg.moonRimWidth || 1;
-      ctx.lineJoin = 'miter';
-      for (var mr = 0; mr < peaks.length; mr++) {
-        var mrPk = peaks[mr];
-        if (!mrPk.isMajor) continue;
-        var mrPts = mrPk.pts;
-        ctx.beginPath();
-        if (lightOnRight) {
-          ctx.moveTo(mrPts[3][0], mrPts[3][1]);  // peak
-          ctx.lineTo(mrPts[4][0], mrPts[4][1]);  // sub-right
-          ctx.lineTo(mrPts[5][0], mrPts[5][1]);  // mid-right
-          ctx.lineTo(mrPts[6][0], mrPts[6][1]);  // outer-right shoulder
-        } else {
-          ctx.moveTo(mrPts[3][0], mrPts[3][1]);  // peak
-          ctx.lineTo(mrPts[2][0], mrPts[2][1]);  // sub-left
-          ctx.lineTo(mrPts[1][0], mrPts[1][1]);  // mid-left
-          ctx.lineTo(mrPts[0][0], mrPts[0][1]);  // outer-left shoulder
-        }
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
+  function drawMtnDirectional(leftPath, rightPath, leftColor, rightColor, width) {
+    // Change colour, not coverage: varying stroke alpha makes subpixel
+    // silhouette edges breathe even though their geometry is stationary.
+    ctx.lineWidth = width;
+    ctx.strokeStyle = leftColor;
+    ctx.stroke(leftPath);
+    ctx.strokeStyle = rightColor;
+    ctx.stroke(rightPath);
   }
 
   // ---- Pass 6: distant outpost lights — drawn LIVE every frame ----
@@ -361,85 +270,43 @@
     }
   }
 
-  // Render one layer's static passes (1-5) into an offscreen strip canvas,
-  // in the layer's LOGICAL coord space (peaks at idx*step, no parallax ox).
-  function buildMtnStrip(cfg, baseY, idxFrom, idxTo, ws, reuse) {
-    var step = cfg.step;
-    var maxH = cfg.maxHMajor || 130;
-    var stripWX0 = (idxFrom - 1) * step;       // strip's world-x origin
-    var stripWY0 = baseY - maxH - 24;          // strip's world-y origin
-    var stripWW  = (idxTo - idxFrom + 3) * step;
-    var stripWH  = maxH + 48;
-    var cw = Math.max(1, Math.ceil(stripWW * ws));
-    var ch = Math.max(1, Math.ceil(stripWH * ws));
-    var canvas = reuse || document.createElement('canvas');
-    canvas.width = cw;
-    canvas.height = ch;
-    var sctx = canvas.getContext('2d');
-    sctx.setTransform(1, 0, 0, 1, 0, 0);
-    sctx.clearRect(0, 0, cw, ch);
-    // world -> strip-device: same ws scale as the main world transform,
-    // origin shifted so logical (stripWX0, stripWY0) maps to strip (0,0).
-    sctx.setTransform(ws, 0, 0, ws, -stripWX0 * ws, -stripWY0 * ws);
-    var peaks = buildLayerPeaks(cfg, baseY, idxFrom, idxTo, 0);
-    var oldCtx = ctx;
-    ctx = sctx;
-    try { drawMtnPasses(cfg, peaks, baseY); }
-    finally { ctx = oldCtx; }
-    return { canvas: canvas, ws: ws, idxFrom: idxFrom, idxTo: idxTo,
-             stripWX0: stripWX0, stripWY0: stripWY0,
-             timeKey: Math.round(timeOfDay * MTN_TIME_BUCKETS) };
-  }
-
-  // Cached entry point — blits the layer's strip, rebuilding it only on a
-  // scroll-out-of-range or zoom miss. Falls back to live drawing on error.
   function drawMountainLayer(cfg) {
-    cfg = aerialTintCfg(cfg);
     var p = cfg.parallax, step = cfg.step;
-    var baseY = (SKY_ROWS * TILE) + (cfg.baseYOffset || 0);
+    var baseY = SKY_ROWS * TILE + (cfg.baseYOffset || 0);
     var firstIdx = Math.floor((cam.x * (1 - p) - step * 2) / step);
-    var lastIdx  = Math.ceil((cam.x * (1 - p) + screenW + step * 2) / step);
-    var ws = dpr * worldScale;
-    var timeKey = Math.round(timeOfDay * MTN_TIME_BUCKETS);
-
-    if (mtnCacheFailed) {
-      drawMtnPasses(cfg, buildLayerPeaks(cfg, baseY, firstIdx, lastIdx, cam.x * p), baseY);
-      drawMtnLights(cfg, baseY);
-      return;
+    var lastIdx = Math.ceil((cam.x * (1 - p) + screenW + step * 2) / step);
+    var paths = mtnPathCache[cfg.seed];
+    if (!paths || paths.idxFrom > firstIdx || paths.idxTo < lastIdx || paths.baseY !== baseY) {
+      paths = buildMtnPaths(cfg, baseY, firstIdx - MTN_CACHE_MARGIN, lastIdx + MTN_CACHE_MARGIN);
+      mtnPathCache[cfg.seed] = paths;
     }
-
-    var sc = mtnStripCache[cfg.seed];
-    // Scroll/zoom staleness MUST rebuild now — the strip wouldn't cover the
-    // visible peaks. Day/night staleness (aerial tint + moon-rim move with
-    // timeOfDay) only needs the colours refreshed, so it's deferred to at
-    // most one layer per frame, keeping the rebuild hitch tiny.
-    var scrollStale = !sc || sc.ws !== ws || sc.idxFrom > firstIdx || sc.idxTo < lastIdx;
-    var timeStale = sc && sc.timeKey !== timeKey;
-    if (scrollStale || (timeStale && !mtnRebuiltThisFrame)) {
-      try {
-        sc = buildMtnStrip(cfg, baseY, firstIdx - MTN_CACHE_MARGIN,
-                           lastIdx + MTN_CACHE_MARGIN, ws, sc && sc.canvas);
-        mtnStripCache[cfg.seed] = sc;
-        mtnRebuiltThisFrame = true;
-      } catch (e) {
-        mtnCacheFailed = true;
-        drawMtnPasses(cfg, buildLayerPeaks(cfg, baseY, firstIdx, lastIdx, cam.x * p), baseY);
-        drawMtnLights(cfg, baseY);
-        return;
-      }
+    var colors = mountainColors(cfg);
+    ctx.save();
+    ctx.translate(cam.x * p, 0);
+    ctx.lineJoin = 'miter';
+    ctx.fillStyle = colors.fill;
+    ctx.fill(paths.body);
+    if (colors.snow) {
+      ctx.fillStyle = colors.snow;
+      ctx.fill(paths.snow);
     }
-
-    // Blit the strip under the world transform: it's device-res, so the
-    // dest world-size is canvas.width/ws — maps back to 1:1 device pixels.
-    // The logical origin is parallax-shifted by cam.x*p.
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(sc.canvas, sc.stripWX0 + cam.x * p, sc.stripWY0,
-                  sc.canvas.width / ws, sc.canvas.height / ws);
+    if (colors.rim) {
+      ctx.strokeStyle = colors.rim;
+      ctx.lineWidth = cfg.rimWidth || 1;
+      ctx.stroke(paths.rim);
+    }
+    if (colors.left) {
+      drawMtnDirectional(paths.left, paths.right, colors.left, colors.right, cfg.moonRimWidth || 1);
+    }
+    if (colors.snowLeft) {
+      drawMtnDirectional(paths.snowLeft, paths.snowRight, colors.snowLeft, colors.snowRight, 0.7);
+    }
+    ctx.restore();
     drawMtnLights(cfg, baseY);
   }
 
   function drawSkyMountains(worldLeft, worldRight, surfaceY) {
-    mtnRebuiltThisFrame = false;   // v13.19 — reset the 1-rebuild-per-frame cap
+    updateMountainLight(performance.now());
     // Layer 0 — DISTANT LAND. A low, broad, heavily-hazed ridge FAR beyond the
     // mountains. Drawn first (furthest back) so the mountains overlap it and it
     // shows through the gaps between peaks as distant land at the horizon. This
@@ -491,8 +358,7 @@
       snowRimColor: BG.midMtnSnowRim,
       rimColor:     BG.farMtnRim,
       rimWidth:     0.6,
-      // Moon-side rim — slightly brighter than fill so the right slope
-      // of every major peak picks up implied lunar illumination. Reuses
+      // Sun/moon-facing rim, smoothly shared between both slopes. Reuses
       // BG.farMtnRim so it matches the layer-behind colour discipline.
       moonRimColor: BG.farMtnRim,
       moonRimWidth: 0.8,
@@ -513,7 +379,7 @@
       rimColor:     BG.nearMtnRim,
       rimWidth:     1,
       // Near-layer moon rim — reuses nearMtnRim (slightly brighter than
-      // nearMtnFill) so the right slope picks up moon light without
+      // nearMtnFill) so the lit slope picks up moon light without
       // breaking the layer's value-range budget.
       moonRimColor: BG.nearMtnRim,
       moonRimWidth: 1,
@@ -529,4 +395,3 @@
     // separation. Haze will return in Stage 5 as a screen-space particle
     // pass (drift snow / dust) where the cells can be device-pixel-fine.
   }
-
