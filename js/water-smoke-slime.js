@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.33'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.34'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1078,6 +1078,11 @@
     var obstacleTexture = null;
     var obstacleSrcCanvas = null;
     var obstacleWidth = 0, obstacleHeight = 0;
+    var movingBoundary = null, movingActive = false;
+    var movingProgram = null, movingVBO = null, movingCapacity = 0;
+    var movingPositionLoc = -1, movingVelocityLoc = -1;
+    var movingVerts = new Float32Array(0);
+    var movingHistory = new WeakMap();
   
     // --- WebGL context / format negotiation -------------------------
     function getWebGLContext (cnv) {
@@ -1263,6 +1268,9 @@
       'uniform sampler2D uVelocity;\n' +
       'uniform sampler2D uSource;\n' +
       'uniform sampler2D uObstacle;\n' +
+      'uniform sampler2D uMoving;\n' +
+      'uniform float useMoving;\n' +
+      'uniform float velocityPass;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform vec2 dyeTexelSize;\n' +
       'uniform float dt;\n' +
@@ -1284,6 +1292,13 @@
       '  if (useObstacle > 0.5 && texture2D(uObstacle, vUv).a > 0.5) {\n' +
       '    gl_FragColor = vec4(0.0);\n' +
       '    return;\n' +
+      '  }\n' +
+      // Moving solids prescribe air velocity. Dye is extended through their
+      // ghost cells, never zeroed by a changing silhouette. The pressure solve
+      // below drives the exterior flow; the display pass occludes the interior.
+      '  if (useMoving > 0.5 && velocityPass > 0.5) {\n' +
+      '    vec4 body = texture2D(uMoving, vUv);\n' +
+      '    if (body.a > 0.5) { gl_FragColor = vec4(body.xy / texelSize, 0.0, 1.0); return; }\n' +
       '  }\n' +
       '  float windDrift = (vUv.y >= u_wind_above_y) ? dt * u_wind_x : 0.0;\n' +
       '#ifdef MANUAL_FILTERING\n' +
@@ -1352,6 +1367,9 @@
       'varying vec2 vB;\n' +
       'uniform sampler2D uVelocity;\n' +
       'uniform sampler2D uCurl;\n' +
+      'uniform sampler2D uMoving;\n' +
+      'uniform float useMoving;\n' +
+      'uniform vec2 texelSize;\n' +
       'uniform float curl;\n' +
       'uniform float dt;\n' +
       'void main () {\n' +
@@ -1367,6 +1385,12 @@
       '  vec2 velocity = texture2D(uVelocity, vUv).xy;\n' +
       '  velocity += force * dt;\n' +
       '  velocity = min(max(velocity, -1000.0), 1000.0);\n' +
+      // Prescribe gel velocity before divergence is measured. Pressure then
+      // redirects the air around it; this shares the existing vorticity pass.
+      '  if (useMoving > 0.5) {\n' +
+      '    vec4 body = texture2D(uMoving, vUv);\n' +
+      '    if (body.a > 0.5) velocity = body.xy / texelSize;\n' +
+      '  }\n' +
       '  gl_FragColor = vec4(velocity, 0.0, 1.0);\n' +
       '}\n';
   
@@ -1445,6 +1469,8 @@
       'varying vec2 vB;\n' +
       'uniform sampler2D uTexture;\n' +
       'uniform sampler2D uObstacle;\n' +
+      'uniform sampler2D uMoving;\n' +
+      'uniform float useMoving;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'void main () {\n' +
@@ -1463,6 +1489,7 @@
       '  c *= diffuse;\n' +
       '#endif\n' +
       '  float obstacle = useObstacle > 0.5 ? texture2D(uObstacle, vUv).a : 0.0;\n' +
+      '  if (useMoving > 0.5) obstacle = max(obstacle, texture2D(uMoving, vUv).a);\n' +
       '  c *= 1.0 - smoothstep(0.35, 0.85, obstacle);\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
       '  gl_FragColor = vec4(c, a);\n' +
@@ -1651,11 +1678,110 @@
       }
     }
   
+    // A separate immersed boundary carries the deforming gel's velocity.
+    // One batched ring draw, no extra fullscreen passes or dye readbacks.
+    // Velocity enforcement shares the existing vorticity/advection passes. Static walls retain their existing collision path.
+    var MOVING_VS = [
+      'precision highp float;',
+      'attribute vec2 aPosition;',
+      'attribute vec2 aVelocity;',
+      'varying vec2 vVelocity;',
+      'void main() { vVelocity = aVelocity; gl_Position = vec4(aPosition, 0.0, 1.0); }'
+    ].join('\n');
+    var MOVING_FS = [
+      'precision highp float;',
+      'varying vec2 vVelocity;',
+      'void main() { gl_FragColor = vec4(vVelocity, 0.0, 1.0); }'
+    ].join('\n');
+    function setMovingBodies (bodies, originX, originY, domainW, domainH, dt, w, h, skipGuests) {
+      if (!ready || dt <= 0) return;
+      var needed = 0;
+      for (var i = 0; i < bodies.length; i++) needed += bodies[i].ringN * 12;
+      if (movingVerts.length < needed) movingVerts = new Float32Array(Math.max(needed, movingVerts.length * 2, 4096));
+      var n = 0, verts = movingVerts;
+      // Bound the AIR impulse to 1.5 velocity cells per axis per step. A
+      // pointer can teleport gel farther than this grid can resolve; feeding
+      // that full speed to semi-Lagrangian advection artificially compresses
+      // the dye. This does not cap or alter the slime's actual motion.
+      var speedLimit = Math.min(1000, 1.5 / dt);
+      var limitX = speedLimit * velocity.texelSizeX, limitY = speedLimit * velocity.texelSizeY;
+      for (var bi = 0; bi < bodies.length; bi++) {
+        var b = bodies[bi], rn = b.ringN;
+        if (rn < 3 || (skipGuests && b.guest)) continue;
+        var history = movingHistory.get(b);
+        var fresh = !history || history.length !== rn * 4;
+        if (fresh) { history = new Float32Array(rn * 4); movingHistory.set(b, history); }
+        var cx = 0, cy = 0, vx = 0, vy = 0;
+        for (var j = 0; j < rn; j++) {
+          var ri = b.ring[j], x = b.px[ri], y = b.py[ri], hi = j * 4;
+          // Differences are in WORLD space: camera scrolling must not impart
+          // momentum. Track the actual ring, including rotation and squish,
+          // instead of the Verlet substep velocity or a stale body centroid.
+          var dx = fresh ? 0 : (x - history[hi]) / (dt * domainW);
+          var dy = fresh ? 0 : (history[hi + 1] - y) / (dt * domainH);
+          dx = Math.max(-limitX, Math.min(limitX, dx));
+          dy = Math.max(-limitY, Math.min(limitY, dy));
+          history[hi] = x; history[hi + 1] = y;
+          history[hi + 2] = dx; history[hi + 3] = dy;
+          cx += x; cy += y; vx += dx; vy += dy;
+        }
+        cx /= rn; cy /= rn; vx /= rn; vy /= rn;
+        if (!isFinite(cx + cy + vx + vy)) continue;
+        for (var k = 0; k < rn; k++) {
+          verts[n++] = (cx - originX) / domainW * 2 - 1;
+          verts[n++] = 1 - (cy - originY) / domainH * 2;
+          verts[n++] = vx; verts[n++] = vy;
+          for (var edge = 0; edge < 2; edge++) {
+            var p = ((k + edge) % rn) * 4;
+            verts[n++] = (history[p] - originX) / domainW * 2 - 1;
+            verts[n++] = 1 - (history[p + 1] - originY) / domainH * 2;
+            verts[n++] = history[p + 2]; verts[n++] = history[p + 3];
+          }
+        }
+      }
+      movingActive = n > 0;
+      if (!movingActive) return;
+      if (!movingBoundary || movingBoundary.width !== w || movingBoundary.height !== h) {
+        deleteFBO(movingBoundary);
+        var rgba = ext.formatRGBA;
+        movingBoundary = createFBO(w, h, rgba.internalFormat, rgba.format, ext.halfFloatTexType,
+          ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST);
+      }
+      if (!movingProgram) {
+        movingProgram = createProgram(compileShader(gl.VERTEX_SHADER, MOVING_VS), compileShader(gl.FRAGMENT_SHADER, MOVING_FS));
+        movingPositionLoc = gl.getAttribLocation(movingProgram, 'aPosition');
+        movingVelocityLoc = gl.getAttribLocation(movingProgram, 'aVelocity');
+        movingVBO = gl.createBuffer();
+      }
+      gl.disable(gl.BLEND);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, movingBoundary.fbo);
+      gl.viewport(0, 0, w, h);
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(movingProgram);
+      gl.bindBuffer(gl.ARRAY_BUFFER, movingVBO);
+      if (movingVerts.byteLength > movingCapacity) {
+        movingCapacity = movingVerts.byteLength;
+        gl.bufferData(gl.ARRAY_BUFFER, movingCapacity, gl.DYNAMIC_DRAW);
+      }
+      if (ext.isWebGL2) gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, n);
+      else gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts.subarray(0, n));
+      var pos = movingPositionLoc, vel = movingVelocityLoc;
+      gl.enableVertexAttribArray(pos); gl.enableVertexAttribArray(vel);
+      gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribPointer(vel, 2, gl.FLOAT, false, 16, 8);
+      gl.drawArrays(gl.TRIANGLES, 0, n / 4);
+      gl.disableVertexAttribArray(pos); gl.disableVertexAttribArray(vel);
+      gl.bindBuffer(gl.ARRAY_BUFFER, blitQuadVBO);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+
     // Bind the obstacle to a given texture unit. `obstacle.attach`-style
     // shim to match the FBO contract used in shader uniform setters.
     function attachObstacle (id) {
-      ensureObstacleTexture();
       gl.activeTexture(gl.TEXTURE0 + id);
+      ensureObstacleTexture();
       gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
       return id;
     }
@@ -1738,6 +1864,8 @@
   
     function clear () {
       if (!ready) return;
+      movingActive = false;
+      movingHistory = new WeakMap();
       // Force-zero all fields by running the clear shader with value 0.
       gl.disable(gl.BLEND);
       clearProgram.bind();
@@ -1773,6 +1901,8 @@
       gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
       gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+      gl.uniform1f(vorticityProgram.uniforms.useMoving, movingActive ? 1 : 0);
+      gl.uniform1i(vorticityProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
       gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
       gl.uniform1f(vorticityProgram.uniforms.dt, dt);
       blit(velocity.write);
@@ -1822,6 +1952,9 @@
       gl.uniform1i(advectionProgram.uniforms.uSource, velId);
       gl.uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
       gl.uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
+      gl.uniform1f(advectionProgram.uniforms.useMoving, movingActive ? 1 : 0);
+      gl.uniform1i(advectionProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(3) : attachObstacle(3));
+      gl.uniform1f(advectionProgram.uniforms.velocityPass, 1);
       gl.uniform1f(advectionProgram.uniforms.dt, dt);
       gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
       // No wind on velocity pass — keeps the pressure solve clean.
@@ -1834,6 +1967,7 @@
         gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
       gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+      gl.uniform1f(advectionProgram.uniforms.velocityPass, 0);
       // The obstacle stays bound on unit 2 from the velocity pass.
       gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
       // Wind drifts dye above the surface only. u_wind_x is in UV/sec units.
@@ -1939,6 +2073,8 @@
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
+      gl.uniform1i(displayMaterial.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
+      gl.uniform1f(displayMaterial.uniforms.useMoving, movingActive ? 1 : 0);
       if (displayMaterial.uniforms.uObstacle != null) {
         gl.uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
         gl.uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
@@ -1970,6 +2106,8 @@
       canvas.width = w;
       canvas.height = h;
       initFramebuffers();
+      movingActive = false;
+      movingHistory = new WeakMap();
     }
   
     // expose
@@ -1986,6 +2124,7 @@
       resize: resize,
       setObstacleAlpha: setObstacleAlpha,
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
+      setMovingBodies: setMovingBodies,
       clearObstacle: clearObstacle,
       isReady: isReady,
       config: config,
@@ -1996,8 +2135,8 @@
   /* ==== SMOKE DRIVER (toy host) =========================================
    * Replaces the game's smokeFluid* driver: fixed domain (the whole box,
    * no world-lock scroll), obstacles as NDC quads rasterised straight
-   * from the wall grid's horizontal runs plus a triangle fan per slime
-   * ring, and an idle gate so a dissipated field costs nothing. ==== */
+   * from the wall grid's horizontal runs, moving slime velocity boundaries,
+   * and an idle gate so a dissipated field costs nothing. ==== */
   var smokeCanvas = null;
   var smokeActive = false;
   var smokeAwakeT = 0;
@@ -2006,7 +2145,6 @@
   var smokeObH = 0;
   var smokeQuadVerts = null;
   var smokePaintedVersion = -1;
-  var smokePaintedJello = false;
   var SMOKE_IDLE_HOLD = 15;
   var SMOKE_COL = { r: 0.20, g: 0.185, b: 0.165 };   // warm gray, light enough to read on the dark box
   var SMOKE_EMITTER_COL = { r: 0.62, g: 0.58, b: 0.52 };
@@ -2084,7 +2222,8 @@
     return waterCellVY[idx] / n <= SMOKE_WATER_FLOW_MIN_VY;
   }
 
-  // Wall runs + slime rings -> NDC triangles into the obstacle mask.
+  // Static wall and pool runs go into the destructive obstacle mask.
+  // Moving gel has its own velocity boundary and never enters this mask.
   function smokeRepaintObstacle() {
     var maxVerts = gridH * 24 + 4096;
     if (!smokeQuadVerts || smokeQuadVerts.length < maxVerts) {
@@ -2115,33 +2254,8 @@
         v[n++] = u0; v[n++] = t1;
       }
     }
-    var sawJello = false;
-    if (typeof jelloBodies !== 'undefined') {
-      for (var bi = 0; bi < jelloBodies.length; bi++) {
-        var b = jelloBodies[bi];
-        if (!b || b.ringN < 3 || !b.ring) continue;
-        if (!isFinite(b.cx + b.cy)) continue;
-        sawJello = true;
-        var cxU = (b.cx * invW) * 2 - 1;
-        var cyV = 1 - 2 * (b.cy * invH);
-        var prev = b.ring[b.ringN - 1];
-        var pu = (b.px[prev] * invW) * 2 - 1;
-        var pv = 1 - 2 * (b.py[prev] * invH);
-        for (var k = 0; k < b.ringN; k++) {
-          if (n + 6 > v.length) break;
-          var ri = b.ring[k];
-          var cu = (b.px[ri] * invW) * 2 - 1;
-          var cv = 1 - 2 * (b.py[ri] * invH);
-          v[n++] = cxU; v[n++] = cyV;
-          v[n++] = pu;  v[n++] = pv;
-          v[n++] = cu;  v[n++] = cv;
-          pu = cu; pv = cv;
-        }
-      }
-    }
     SmokeFluid.paintObstacleQuads(v, n / 2, smokeObW, smokeObH);
     smokePaintedVersion = wallsVersion;
-    smokePaintedJello = sawJello;
   }
 
   var smokeObstacleTick = 0;
@@ -2225,20 +2339,13 @@
     }
     smokeWasAwake = true;
     smokeAwakeT -= dt;
-    var jelloMoving = false;
-    if (typeof jelloBodies !== 'undefined') {
-      for (var i = 0; i < jelloBodies.length; i++) {
-        var b = jelloBodies[i];
-        if (b && !b.sleeping && !b.frozen) { jelloMoving = true; break; }
-      }
-    }
     smokeObstacleTick++;
-    var jelloChanged = jelloMoving || (smokePaintedJello !== (jelloBodies && jelloBodies.length > 0));
     if (smokePaintedVersion !== wallsVersion ||
-        (jelloChanged && (smokeObstacleTick & 1) === 0) ||
         (waterCellsAny && (smokeObstacleTick % 6) === 0)) {
       smokeRepaintObstacle();
     }
+    SmokeFluid.setMovingBodies(jelloBodies, 0, 0, worldW, worldH,
+      dt * timeMul, smokeObW, smokeObH);
     smokeWaterFlowCouple();
     SmokeFluid.step(dt * timeMul);
     SmokeFluid.displayPass();
@@ -9970,11 +10077,12 @@
         0.010 * Math.max(0.6, brushR / 16) * presetSmokeScaleObj.rad);
     } else if (tool === 'poke') {
       jelloGrabTick(px, py);
-      if (smokeActive && smokeAwakeT > 0 && (pvx !== 0 || pvy !== 0)) {
-        SmokeFluid.splat(px / worldW, 1 - py / worldH,
+      // A carried slime supplies its own surface velocity to the air.
+      if (!grabBody && smokeActive && smokeAwakeT > 0 && (pvx !== 0 || pvy !== 0)) {
+        SmokeFluid.splatVelocity(px / worldW, 1 - py / worldH,
           Math.max(-420, Math.min(420, pvx * 0.34)),
           Math.max(-420, Math.min(420, -pvy * 0.34)),
-          { r: 0, g: 0, b: 0 }, 0.02);
+          0.02);
       }
     }
   }

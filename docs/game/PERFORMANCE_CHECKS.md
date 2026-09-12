@@ -74,3 +74,29 @@ improved about 10% in the initial sample; the dense pond measured about 4.17 ms
 both before and after. Dense slime control scenes measured about 3% slower.
 These are subsystem measurements, not whole-game FPS promises. Browser frame
 scheduling, evolving water geometry and concurrent workloads affect timings.
+
+## Moving slime smoke boundary (v26.94 / demo v4.34)
+
+Slime rings now carry per-point surface velocity in a separate GPU texture.
+The existing vorticity pass imposes that velocity before pressure projection;
+advection carries dye through the moving boundary's ghost cells instead of
+zeroing it. The display pass occludes the gel interior. This is an immersed
+boundary approximation, not an exactly mass-conserving solver. Fast pointer
+motion has a bounded air impulse to avoid numerical smoke compression. The
+slime solver, water engine, smoke resolution and preset tuning are unchanged.
+The game retains its existing exclusion of bath guests.
+
+```sh
+BASE_REF=2dcdc5e node tools/perf/smoke-equivalence.cjs
+node tools/perf/smoke-moving-boundary.cjs
+```
+
+The first check remains byte-identical at all 28 static-obstacle checkpoints.
+The second measures a finite cloud with emissions and dissipation disabled,
+including dye hidden by the display mask. A two-second crossing retains 94%
+(90% with manual filtering), compared with 39% under the old eraser mask, and
+moves the cloud in the travel direction. Deformation retains 95% (91% manual);
+repeated fast crossings retain 102% (99% manual). It also checks clear, body
+removal, resize, shader errors, and one batched boundary draw per frame with
+no added fullscreen passes. Desktop mouse and mobile touch drags, all four
+scenes, and the existing 41-preset UI were checked in Chrome for Testing.
