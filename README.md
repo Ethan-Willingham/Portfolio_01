@@ -12,7 +12,7 @@
 
 **Personal website & browser experiments**
 
-[![Deployed on AWS Amplify](https://img.shields.io/badge/AWS_Amplify-deployed-FF9900?style=flat-square&logo=awsamplify&logoColor=white)](https://aws.amazon.com/amplify/)
+[![Hosted on GitHub Pages](https://img.shields.io/badge/GitHub_Pages-hosted-222222?style=flat-square&logo=github&logoColor=white)](https://ethanwillingham.com/)
 [![HTML5](https://img.shields.io/badge/HTML5-pure-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
 [![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![WebGL](https://img.shields.io/badge/WebGL-fluid_sim-990000?style=flat-square&logo=webgl&logoColor=white)](https://www.khronos.org/webgl/)
@@ -93,11 +93,13 @@ Touch and D-pad are fully supported on mobile.
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Hosting | AWS Amplify | Push to `main` → auto-deploy, zero config |
+| Hosting | GitHub Pages | Push to `main` → auto-deploy |
 | Rendering | Canvas 2D + WebGL + WebGPU | Right tool per page, no abstraction over all three |
 | Fonts | Century Supra (Matthew Butterick) | Commercial serif; woff2 served locally |
 | Styling | Single `style.css` | Mobile-first, CSS custom properties, no preprocessor |
 | Scripts | Vanilla JS | No framework, no transpiler, no node_modules |
+
+The live site is [ethanwillingham.com](https://ethanwillingham.com/). GitHub Pages publishes the repository root (`/`) from `main`; `CNAME` configures the custom domain.
 
 <br>
 
