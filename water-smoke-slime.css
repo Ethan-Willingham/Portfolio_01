@@ -1,0 +1,119 @@
+/* The simulation is the page. Keep its controls outside the glass. */
+.toy-page.site-wrapper { max-width: 1120px; padding-top: 24px; }
+.toy-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.toy-header h1 { margin: 0; font: 400 clamp(24px, 2.8vw, 36px)/1.15 var(--font-heading); letter-spacing: -.035em; color: var(--text-bright); }
+.toy-header nav { display: flex; gap: 24px; flex-shrink: 0; font: 12px var(--font-body); }
+.toy-header a { color: var(--text-dim); text-decoration: none; }
+.toy-header a:hover { color: var(--accent-hover); }
+.toy-shell { position: relative; border: 1px solid var(--rule); border-radius: 14px; background: var(--bg-raised); box-shadow: 0 14px 40px rgb(0 0 0 / .12); }
+.toy-bar { position: relative; }
+.toy-shell button, .toy-shell select { font-family: var(--font-body); font-size: 12px; color: var(--text-dim); }
+.toy-shell button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.toy-shell button:hover { background: var(--d-bg); color: var(--text-bright); }
+.toy-shell button.is-on { color: var(--accent-hover); background: var(--d-bg); border-color: var(--rule); }
+.toy-shell button:disabled, .toy-shell button.is-dead { opacity: .4; cursor: not-allowed; }
+.toy-shell svg { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.toy-shell [hidden], .toy-nowater[hidden] { display: none !important; }
+.toy-top { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid var(--rule); }
+.toy-scenes, .toy-playback, .toy-tools, .toy-palettes { display: flex; align-items: center; gap: 4px; }
+.toy-scenes .toy-chip { min-height: 38px; padding: 0 18px; }
+.toy-scenes .toy-chip.is-on { border-color: transparent; }
+.toy-shell .toy-icon { width: 44px; height: 44px; padding: 0; flex-shrink: 0; }
+.toy-playback .toy-icon { width: 40px; }
+.toy-viewport { position: relative; overflow: hidden; background: var(--d-canvas-bg); height: 420px; }
+.toy-stage { position: relative; transform-origin: 0 0; background: #1d2420; overflow: hidden; }
+.toy-stage canvas { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; display: block; }
+#toy-canvas { z-index: 2; }
+#toy-input { position: absolute; inset: 0; z-index: 8; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+#toy-input:active { cursor: grabbing; }
+#toy-input:focus-visible { outline-offset: -5px; }
+.toy-shell[data-active-tool="draw"] #toy-input, .toy-shell[data-active-tool="erase"] #toy-input,
+.toy-shell[data-active-tool="water"] #toy-input, .toy-shell[data-active-tool="smoke"] #toy-input,
+.toy-shell[data-active-tool="slime"] #toy-input { cursor: crosshair; }
+.toy-shell.is-paused #toy-input { pointer-events: none; }
+.toy-shell .toy-resume { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9; padding: 12px 24px; background: var(--bg-raised); border: 1px solid var(--rule); color: var(--text-bright); box-shadow: 0 4px 24px rgb(0 0 0 / .15); }
+.toy-fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; background: var(--d-canvas-bg); color: var(--text-dim); text-align: center; z-index: 10; }
+.toy-fallback p { max-width: 28em; }
+.toy-dock { display: flex; align-items: center; gap: 16px; padding: 10px 12px 4px; border-top: 1px solid var(--rule); }
+.toy-tools .tb { min-width: 54px; min-height: 54px; flex-direction: column; gap: 3px; padding: 5px 8px; font-size: 11px; }
+.toy-palettes { margin-left: auto; gap: 8px; }
+.toy-shell .toy-material { min-height: 44px; padding: 0 12px; border-color: var(--rule); }
+.toy-material svg { width: 14px; height: 14px; opacity: .6; }
+.toy-shell [data-panel][aria-expanded="true"] { background: var(--d-bg); border-color: var(--accent); color: var(--text-bright); }
+.toy-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--material-color); }
+.toy-swatch--water { --material-color: #8fb3c7; }
+.toy-swatch--smoke { --material-color: #cf9f78; }
+.toy-swatch--slime { --material-color: #9ec79a; }
+.toy-foot { display: flex; justify-content: space-between; gap: 16px; padding: 9px 20px 13px; color: var(--text-faint); font: 11px/1.4 var(--font-body); }
+#toy-status { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+#toy-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.is-paused #toy-status::before { background: var(--text-faint); }
+.toy-panel { position: absolute; right: 12px; bottom: 112px; z-index: 12; width: min(440px, calc(100% - 24px)); max-height: min(530px, calc(100dvh - 200px)); overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 20px; background: var(--bg-raised); border: 1px solid var(--d-rule-strong); border-radius: 12px; box-shadow: 0 8px 32px rgb(0 0 0 / .25); }
+.toy-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.toy-panel h2 { margin: 0; color: var(--text-bright); font: 400 20px var(--font-heading); }
+.toy-panel-head .toy-icon { margin-right: -12px; }
+.toy-preset-body { display: flex; flex-direction: column; gap: 20px; }
+.toy-preset-body .toy-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.toy-preset-body .toy-group > label { width: 100%; margin-bottom: 3px; color: var(--text-faint); font: 10px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+.toy-panel .toy-chip { min-height: 38px; padding: 7px 12px; border-color: var(--rule); text-transform: capitalize; }
+.toy-panel .toy-chip.is-on { border-color: var(--accent); }
+.toy-shape-label { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--text-dim); }
+#toy-shape { min-width: 140px; min-height: 40px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg-raised); padding: 8px; text-transform: capitalize; }
+.toy-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; }
+.toy-slider { min-width: 0; }
+.toy-slider label { display: flex; justify-content: space-between; gap: 6px; color: var(--text-dim); font-size: 12px; }
+.toy-slider b { font: 10px/1.8 var(--font-mono); color: var(--accent); }
+.toy-slider input { display: block; width: 100%; height: 36px; margin: 0; cursor: pointer; accent-color: var(--accent); }
+.toy-settings-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.toy-details { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 11px; color: var(--text-faint); }
+.toy-details summary { cursor: pointer; padding: 5px 0; }
+.toy-readout { margin-top: 8px; font: 10px/1.7 var(--font-mono); overflow-wrap: anywhere; }
+.toy-nowater { margin: 14px 0 0; font-size: 13px; color: var(--text-dim); }
+.toy-prose { max-width: 660px; margin: 44px auto 0; font-size: 16px; line-height: 1.7; }
+.toy-prose p { margin: 0 0 1em; }
+.toy-prose p + p { color: var(--text-dim); font-size: 14px; }
+.toy-prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule); }
+.toy-prose a:hover { text-decoration-color: var(--accent); }
+.toy-page .site-footer { margin-top: 36px; padding: 24px 0 32px; }
+.toy-shell:fullscreen, .toy-shell.is-expanded { width: 100%; height: 100dvh; max-width: none; border: 0; border-radius: 0; background: var(--bg-raised); }
+.toy-shell.is-expanded { position: fixed; inset: 0; z-index: 1000; }
+body.toy-expanded { overflow: hidden; }
+.toy-shell:fullscreen .toy-bar, .toy-shell.is-expanded .toy-bar { height: 100%; display: flex; flex-direction: column; }
+.toy-shell:fullscreen .toy-viewport, .toy-shell.is-expanded .toy-viewport { min-height: 0; flex-shrink: 0; }
+.toy-shell:fullscreen .toy-stage, .toy-shell.is-expanded .toy-stage { position: absolute; }
+.toy-shell:fullscreen .toy-dock, .toy-shell.is-expanded .toy-dock { flex-shrink: 0; }
+.toy-shell:fullscreen .toy-top, .toy-shell.is-expanded .toy-top { flex-shrink: 0; }
+.toy-shell:fullscreen .toy-foot, .toy-shell.is-expanded .toy-foot { flex-shrink: 0; }
+@media (max-width: 800px) {
+  .toy-dock { gap: 8px; flex-wrap: wrap; }
+  .toy-tools { flex: 1 1 calc(100% - 60px); justify-content: space-between; order: 0; }
+  .toy-settings { order: 1; }
+  .toy-palettes { order: 2; width: 100%; margin: 4px 0 0; }
+  .toy-material { flex: 1; }
+  .toy-panel { bottom: 160px; }
+}
+@media (max-width: 520px) {
+  .physics-page { padding-left: 12px; padding-right: 12px; }
+  .toy-page.site-wrapper { padding-top: 18px; }
+  .toy-header { align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+  .toy-header h1 { max-width: 230px; font-size: 28px; }
+  .toy-header nav { flex-direction: column; align-items: flex-end; gap: 12px; padding-top: 3px; font-size: 11px; }
+  .toy-top { padding: 5px 6px; }
+  .toy-scenes { width: 100%; gap: 0; justify-content: space-between; }
+  .toy-scenes .toy-chip { min-height: 42px; padding: 0 14px; font-size: 12px; }
+  .toy-playback { position: absolute; top: 64px; right: 10px; z-index: 9; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg-raised); gap: 0; }
+  .toy-playback .toy-icon { width: 40px; }
+  .toy-tools { gap: 0; }
+  .toy-tools .tb { min-width: 0; min-height: 48px; padding: 5px 7px; flex: 1; font-size: 10px; }
+  .toy-dock { padding: 7px 6px 3px; gap: 2px; }
+  .toy-palettes { gap: 6px; }
+  .toy-shell .toy-material { padding: 0 8px; gap: 6px; }
+  .toy-foot { padding: 9px 12px 12px; gap: 8px; font-size: 10px; }
+  .toy-panel { right: 8px; width: calc(100% - 16px); padding: 6px 14px 16px; bottom: 152px; }
+  .toy-panel .toy-chip { min-height: 42px; }
+  .toy-prose { margin: 32px 12px 0; font-size: 15px; }
+  .toy-prose p + p { font-size: 13px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toy-shell button { transition: color .12s, border-color .12s, background-color .12s; }
+}

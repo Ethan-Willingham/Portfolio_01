@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.31'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v4.32'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -114,9 +114,17 @@
   var availW = Math.max(320, Math.min(viewport.clientWidth || 960, 1120));
   var portrait = window.innerHeight > window.innerWidth * 1.15;
   var worldW = Math.round(availW);
+  function stageRoom() {
+    var h = window.innerHeight - (viewport.getBoundingClientRect().top + window.scrollY) - 16;
+    ['.toy-dock', '.toy-foot'].forEach(function (selector) {
+      h -= document.querySelector(selector).getBoundingClientRect().height;
+    });
+    return Math.max(320, h);
+  }
+  var availableHeight = stageRoom();
   var worldH = portrait
-    ? Math.round(Math.max(420, Math.min(window.innerHeight * 0.58, worldW * 1.30)))
-    : Math.round(Math.max(400, Math.min(worldW * 0.60, window.innerHeight * 0.74)));
+    ? Math.round(Math.max(320, Math.min(availableHeight, window.innerHeight * 0.58, worldW * 1.30)))
+    : Math.round(Math.max(320, Math.min(worldW * 0.60, availableHeight)));
 
   stage.style.width = worldW + 'px';
   stage.style.height = worldH + 'px';
@@ -127,9 +135,21 @@
   var fitScale = 1;
   function fitStage() {
     var w = viewport.clientWidth || worldW;
-    fitScale = Math.min(1, w / worldW);
+    var shell = document.getElementById('toy');
+    var expanded = document.fullscreenElement === shell || shell.classList.contains('is-expanded');
+    var h = worldH;
+    if (expanded) {
+      h = shell.clientHeight;
+      ['.toy-top', '.toy-dock', '.toy-foot'].forEach(function (selector) {
+        h -= shell.querySelector(selector).getBoundingClientRect().height;
+      });
+      h = Math.max(1, h);
+    }
+    fitScale = Math.min(w / worldW, (expanded ? h : stageRoom()) / worldH);
     stage.style.transform = fitScale === 1 ? 'none' : 'scale(' + fitScale + ')';
-    viewport.style.height = Math.round(worldH * fitScale) + 'px';
+    stage.style.left = (w - worldW * fitScale) / 2 + 'px';
+    stage.style.top = expanded ? (h - worldH * fitScale) / 2 + 'px' : '0';
+    viewport.style.height = (expanded ? h : Math.round(worldH * fitScale)) + 'px';
   }
   window.addEventListener('resize', fitStage);
 
@@ -9743,7 +9763,7 @@
   function slimeRadius() { return Math.max(20, Math.min(46, brushR * 1.7)); }
 
   function toWorld(e) {
-    var rect = viewport.getBoundingClientRect();
+    var rect = stage.getBoundingClientRect();
     return {
       x: (e.clientX - rect.left) / fitScale,
       y: (e.clientY - rect.top) / fitScale
@@ -9753,7 +9773,7 @@
   var inputEl = document.getElementById('toy-input');
 
   inputEl.addEventListener('pointerdown', function (e) {
-    if (pointerDown) return;
+    if (pointerDown || userPaused) return;
     pointerDown = true;
     pointerId = e.pointerId;
     try { inputEl.setPointerCapture(e.pointerId); } catch (err) {}
@@ -10971,6 +10991,7 @@
   var toyFrameNo = 0;
   var fpsEMA = 60;
   var visibleFrac = 1;
+  var userPaused = false;
   var readoutEl = null;
   var readoutTick = 0;
 
@@ -11126,7 +11147,7 @@
   }
 
   function syncRunning() {
-    if (document.hidden || visibleFrac < 0.06) stopLoop();
+    if (userPaused || document.hidden || visibleFrac < 0.06) stopLoop();
     else startLoop();
   }
 
@@ -11164,8 +11185,8 @@
     if (!webgl && !(navigator.gpu && window.isSecureContext)) {
       var fb = document.getElementById('toy-fallback');
       if (fb) fb.hidden = false;
-      var bar = document.getElementById('toy-bar');
-      if (bar) bar.style.display = 'none';
+      document.querySelectorAll('[data-toy-controls]').forEach(function (control) { control.hidden = true; });
+      fitStage();
       return;
     }
     addBorder();
@@ -11208,12 +11229,23 @@
           water: liquidCount, slimes: jelloBodies.length, jelloPoints: jelloCount,
           fps: Math.round(fpsEMA), waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
-          scene: currentScene, tool: tool,
+          scene: currentScene, tool: tool, paused: userPaused,
           waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles
         };
       },
       scene: scene,
       tool: setTool,
+      resize: fitStage,
+      pause: function (paused) {
+        userPaused = !!paused;
+        if (userPaused && pointerDown) {
+          slimeGhost = null;
+          try { inputEl.releasePointerCapture(pointerId); } catch (e) {}
+          releasePointer({ pointerId: pointerId });
+        }
+        syncRunning();
+        return userPaused;
+      },
       paint: function (x0, y0, x1, y1, rad, solid) { paintWallsSeg(x0, y0, x1, y1, rad, !!solid); },
       water: function (x, y, n, vx, vy) { spawnWaterJet(x, y, 8, vx || 0, vy || 0, n || 200); },
       slime: spawnSlimeAt,
