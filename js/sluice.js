@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.92';
+  var GAME_VERSION = 'v26.93';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -31058,8 +31058,9 @@
   // Flora palette: three locked greens plus one weathered-pale birch bark.
   // Kept darker + less saturated than the grass speck #9bb963 so canopies sit
   // a step behind the play-plane grass pop; trunks and chips reuse BLD wood
-  // and every silhouette gets the mandatory BLD.outline ring (BUILDING_STYLE
-  // section 3). Do not add more greens, recolour these.
+  // and large tree silhouettes use BLD.outline (BUILDING_STYLE section 3).
+  // Bush leaf tips use the dark green, with the dark outline on undersides.
+  // Do not add more greens, recolour these.
   var TREES_GREEN_DARK = '#2e4420';   // spruce needle body / canopy undersides
   var TREES_GREEN_MID  = '#4a6631';   // birch + bush canopy body, spruce lit side
   var TREES_GREEN_LIT  = '#8f9c52';   // sparse sunlit dabs (brightest flora tone)
@@ -31288,96 +31289,84 @@
     return { cv: s.cv, w: s.w, h: s.h, ax: cx, ay: baseY };
   }
 
-  // Bushes: leafy sprays around short branching stems, with four silhouettes.
-  // Shade follows the trees' upper-right light. Only the flowering form blooms.
+  // Bushes grow from a few crooked stems. Small, flat leaf sprays leave
+  // daylight and woody forks between them instead of forming rounded domes.
   function treesBakeBush(hTiles, seed, form, flowers) {
     var h = Math.round(hTiles * TILE);
     var w = (Math.round(h * (form === 0 ? 2.0 : form === 3 ? 1.4 : 1.65)) | 1);
     var s = treesMakeSprite(w + 8, h + 7);
     var g = s.g, cx = (s.w / 2) | 0, baseY = h + 4;
-    // x, y, x-radius, y-radius as fractions of the nominal canopy size.
-    // Low spreading, compact, flowering and upright wild forms.
+    // Bend and tip coordinates, relative to the canopy width and height.
     var forms = [
-      [[-.31,.72,.21,.22],[-.13,.51,.25,.31],[.14,.60,.26,.31],[.36,.76,.17,.18],[.00,.82,.28,.16]],
-      [[-.28,.65,.21,.24],[-.06,.38,.25,.29],[.26,.53,.23,.25],[.12,.77,.29,.20],[-.26,.83,.18,.15]],
-      [[-.32,.70,.19,.22],[-.13,.45,.23,.29],[.19,.36,.21,.25],[.32,.72,.19,.23],[.00,.79,.31,.18]],
-      [[-.30,.78,.20,.19],[-.19,.46,.18,.30],[.04,.28,.20,.23],[.29,.60,.20,.26],[.04,.73,.25,.25]]
+      [[-.15,.77,-.39,.61],[-.07,.65,-.19,.34],[.08,.72,.11,.48],[.20,.79,.40,.57]],
+      [[-.13,.73,-.31,.46],[-.06,.55,-.07,.22],[.14,.69,.29,.37],[.20,.83,.38,.70]],
+      [[-.20,.74,-.37,.49],[-.11,.57,-.18,.24],[.09,.66,.16,.34],[.23,.79,.39,.59]],
+      [[-.11,.73,-.32,.52],[-.05,.55,-.09,.18],[.10,.51,.16,.28],[.18,.76,.36,.50]]
     ];
-    var lobes = forms[form || 0], mask = new Uint8Array(s.w * s.h);
-    var light = new Float32Array(mask.length), i, x, y;
-    // Stems remain visible only in the small gaps under the foliage.
+    var branches = forms[form || 0], sprays = [], mask = new Uint8Array(s.w * s.h);
+    var i, x, y;
     function twig(x0, y0, x1, y1, col) {
-      var steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      var steps = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
       g.fillStyle = col;
       for (var k = 0; k <= steps; k++) {
         var t = steps ? k / steps : 0;
         g.fillRect(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), 1, 1);
       }
     }
-    for (i = 0; i < 3; i++) {
-      var endX = cx + (i - 1) * w * .27;
-      var endY = baseY - h * (.32 + (i === 1 ? .18 : 0));
-      twig(cx + i - 1, baseY, endX - 1, endY, BLD.outline);
-      twig(cx + i, baseY - 1, endX, endY, BLD.woodDark);
+    for (i = 0; i < branches.length; i++) {
+      var b = branches[i], bx = cx + b[0] * w, by = 3 + b[1] * h;
+      var tx = cx + b[2] * w, ty = 3 + b[3] * h;
+      var rootX = cx + (i - 1.5) * 1.2;
+      twig(rootX - 1, baseY, bx - 1, by, BLD.outline);
+      twig(bx - 1, by, tx - 1, ty, BLD.outline);
+      twig(rootX, baseY - 1, bx, by, BLD.woodDark);
+      twig(bx, by, tx, ty, BLD.woodDark);
+      // A short sunward sliver makes exposed wood read at ordinary play zoom.
+      twig(bx, by, bx + (tx - bx) * .35, by + (ty - by) * .35, BLD.woodBase);
+      var dir = b[2] < 0 ? -1 : 1;
+      sprays.push({x:tx, y:ty, rx:w * .14, ry:h * .115, tilt:dir * -.22});
+      var sideX = bx + dir * w * .055, sideY = by - h * .065;
+      twig(bx, by, sideX, sideY, BLD.woodDark);
+      sprays.push({x:sideX, y:sideY, rx:w * .125, ry:h * .105, tilt:dir * .16});
     }
-    for (y = 2; y < baseY; y++) {
-      for (x = 2; x < s.w - 2; x++) {
-        var best = -1, shade = 0;
-        for (i = 0; i < lobes.length; i++) {
-          var l = lobes[i];
-          var lx = cx + l[0] * w, ly = 3 + l[1] * h;
-          var nx = (x - lx) / (l[2] * w), ny = (y - ly) / (l[3] * h);
-          var q = nx * nx + ny * ny;
-          // Two-pixel leaf tips break the silhouette without per-pixel fuzz.
-          var tip = (treesHash(seed * 29 + Math.floor(x / 2) * 17 + Math.floor(y / 2) * 131) - .5) * .17;
-          if (q > 1 + tip) continue;
-          var z = Math.sqrt(Math.max(0, 1 - q));
-          var front = z + i * .025;
-          if (front > best) {
-            best = front;
-            shade = nx * .36 - ny * .64 + z * .48;
-          }
+    // One low spray softens the roots, while the flanking forks stay visible.
+    sprays.push({x:cx - w * .06, y:baseY - h * .18, rx:w * .17, ry:h * .10, tilt:-.10});
+    for (i = 0; i < sprays.length; i++) {
+      var p = sprays[i];
+      for (y = Math.max(2, Math.floor(p.y - p.ry - 3)); y <= Math.min(baseY - 2, Math.ceil(p.y + p.ry + 3)); y++) {
+        for (x = Math.max(2, Math.floor(p.x - p.rx)); x <= Math.min(s.w - 3, Math.ceil(p.x + p.rx)); x++) {
+          var nx = (x - p.x) / p.rx, ny = (y - p.y - (x - p.x) * p.tilt) / p.ry;
+          // Tapered sprays, with a few two-pixel leaf teeth along the edge.
+          var tooth = (treesHash(seed * 31 + i * 97 + Math.floor(x / 2) * 17) - .5) * .45;
+          if (Math.abs(nx) + ny * ny > 1 + tooth) continue;
+          var col = ny > .34 ? 1 : 2;
+          // At most a short pair of light leaves on a few sunward tips.
+          if (i % 3 === 1 && ny < -.25 && nx > .05 && nx < .48) col = 3;
+          mask[y * s.w + x] = col;
         }
-        if (best < 0) continue;
-        var at = y * s.w + x;
-        mask[at] = 1; light[at] = shade;
       }
     }
-    // One joined outer outline, not a black ring around each leafy lobe.
-    g.fillStyle = BLD.outline;
+    // Leaf tips have a green edge; reserve the dark outline for undersides.
     for (y = 1; y < baseY; y++) for (x = 1; x < s.w - 1; x++) {
       var at = y * s.w + x;
-      if (!mask[at] && (mask[at - 1] || mask[at + 1] || mask[at - s.w] || mask[at + s.w]))
+      if (!mask[at] && (mask[at - 1] || mask[at + 1] || mask[at - s.w] || mask[at + s.w])) {
+        g.fillStyle = mask[at + s.w] || mask[at - 1] ? TREES_GREEN_DARK : BLD.outline;
         g.fillRect(x, y, 1, 1);
-    }
-    for (y = 2; y < baseY; y++) {
-      for (x = 2; x < s.w - 2; x++) {
-        var at = y * s.w + x;
-        if (!mask[at]) continue;
-        var shade = light[at];
-        var gx = Math.floor((x + Math.floor(y / 3)) / 4), gy = Math.floor(y / 3);
-        var cluster = treesHash(seed * 73 + gx * 37 + gy * 113);
-        var leafX = (x + Math.floor(y / 3)) % 4, leafY = y % 3;
-        // Short connected leaf pairs, with calm areas between sprays.
-        var leaf = (leafY === 0 && leafX >= 1) || (leafY === 1 && leafX === 1);
-        var col = shade < .18 ? TREES_GREEN_DARK : TREES_GREEN_MID;
-        if (leaf && cluster < .33 && shade > .52) col = TREES_GREEN_LIT;
-        else if (leaf && cluster > .65 && shade < .65) col = TREES_GREEN_DARK;
-        g.fillStyle = col; g.fillRect(x, y, 1, 1);
       }
+    }
+    for (y = 2; y < baseY; y++) for (x = 2; x < s.w - 2; x++) {
+      var col = mask[y * s.w + x];
+      if (!col) continue;
+      g.fillStyle = col === 1 ? TREES_GREEN_DARK : col === 2 ? TREES_GREEN_MID : TREES_GREEN_LIT;
+      g.fillRect(x, y, 1, 1);
     }
     if (flowers) {
-      // Three tiny blooms with shaded lower petals and a muted pollen centre.
-      for (i = 1; i <= 3; i++) {
-        var l = lobes[i];
-        var fx = Math.round(cx + (l[0] + l[2] * .15) * w);
-        var fy = Math.round(3 + (l[1] - l[3] * .20) * h);
-        g.fillStyle = TREES_GREEN_DARK; g.fillRect(fx - 1, fy + 1, 3, 2);
-        g.fillStyle = TREES_BARK_PALE; g.fillRect(fx, fy + 1, 1, 1);
-        g.fillStyle = TREES_FLOWER_PETAL;
-        g.fillRect(fx, fy - 1, 1, 1); g.fillRect(fx - 1, fy, 1, 1); g.fillRect(fx + 1, fy, 1, 1);
-        g.fillStyle = BLD.goldDark; g.fillRect(fx, fy, 1, 1);
-      }
+      // A single modest flower on a side shoot, not a row of bright blooms.
+      var p = sprays[4], fx = Math.round(p.x + 1), fy = Math.round(p.y);
+      g.fillStyle = TREES_BARK_PALE; g.fillRect(fx, fy + 1, 1, 1);
+      g.fillStyle = TREES_FLOWER_PETAL;
+      g.fillRect(fx, fy - 1, 1, 1); g.fillRect(fx - 1, fy, 1, 1); g.fillRect(fx + 1, fy, 1, 1);
+      g.fillStyle = BLD.goldDark; g.fillRect(fx, fy, 1, 1);
     }
     return { cv: s.cv, w: s.w, h: s.h, ax: cx, ay: baseY };
   }
