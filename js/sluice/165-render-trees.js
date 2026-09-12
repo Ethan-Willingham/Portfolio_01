@@ -179,131 +179,132 @@
     return { cv: cv, g: cv.getContext('2d'), w: w, h: h };
   }
 
-  // Spruce: deliberate overlapping triangular tiers (the per-row jitter of
-  // the first pass read as ragged dirt at play zoom; jitter lives per TIER
-  // now and every stepped edge is clean), one consistent sun side (right):
-  // a mid-green wedge down each row's right flank, lit crest pixels at tier
-  // tops, painter-outline underhang shadows separating the tiers, and a
-  // plank-wood trunk with a deep shade column + root flare.
-  function treesBakeSpruce(hTiles, seed) {
-    var h = Math.round(hTiles * TILE);
-    var w = (Math.round(h * 0.46) | 1);
-    var s = treesMakeSprite(w + 6, h + 4);
-    var g = s.g, cx = ((w + 6) / 2) | 0, baseY = h + 2;
-
-    var tw = h > 110 ? 4 : 3;
-    var trunkH = Math.round(h * 0.22);
-    var trunkTop = baseY - trunkH;
-    treesPaintRows(g, cx, [
-      { y: trunkTop, h: trunkH - 3, hw: tw * 0.5 },
-      { y: baseY - 3, h: 2, hw: tw * 0.5 + 1 },
-      { y: baseY - 1, h: 1, hw: tw * 0.5 + 2 }
-    ], BLD.woodDark);
-    g.fillStyle = BLD.woodDeep;
-    g.fillRect(Math.round(cx - tw * 0.5), trunkTop + 1, 1, trunkH - 2);
-    g.fillStyle = BLD.woodMid;
-    g.fillRect(Math.round(cx + tw * 0.5) - 1, baseY - 6, 1, 4);
-
-    var tiers = hTiles > 3.6 ? 5 : 4;
-    var topY = 4;
-    var botY = baseY - Math.round(h * 0.12);
-    var span = botY - topY;
-    var rows = [], ti2, y;
-    for (ti2 = 0; ti2 < tiers; ti2++) {
-      var t0 = topY + span * (ti2 / tiers) * 0.92;
-      var t1 = topY + span * ((ti2 + 1) / tiers);
-      var tierW = (w * 0.5) * (0.34 + 0.66 * ((ti2 + 1) / tiers));
-      tierW *= 0.92 + treesHash(seed * 53 + ti2 * 7) * 0.16;
-      var tdx = Math.round((treesHash(seed * 59 + ti2 * 11) - 0.5) * 2);
-      for (y = Math.round(t0); y < Math.round(t1); y += 2) {
-        var p = (y - t0) / (t1 - t0);
-        var hw = tierW * (0.18 + 0.82 * p);
-        if (hw < 1) hw = 1;
-        rows.push({ y: y, h: 2, hw: hw, dx: tdx, _tp: p });
-      }
+  // Thin pixel branches share the station's warm wood ramp. All new flora is
+  // lit from the upper left, matching the buildings rather than the moon.
+  function treesTwig(g, x0, y0, x1, y1, width, color) {
+    var steps = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
+    g.fillStyle = color;
+    for (var i = 0; i <= steps; i++) {
+      var t = steps ? i / steps : 0;
+      g.fillRect(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), width, width);
     }
-    rows.unshift({ y: topY - 2, h: 2, hw: 0.6, _tp: 0 });   // crisp spike tip
-    treesPaintRows(g, cx, rows, TREES_GREEN_DARK);
-
-    var i, r;
-    g.fillStyle = TREES_GREEN_MID;
-    for (i = 0; i < rows.length; i++) {
-      r = rows[i];
-      if (r.hw < 2.5) continue;
-      var wedge = Math.round(r.hw * 0.5 * (0.45 + r._tp * 0.55));
-      if (wedge < 1) wedge = 1;
-      g.fillRect(Math.round(cx + (r.dx || 0) + r.hw) - wedge, r.y, wedge, r.h);
-    }
-    g.fillStyle = TREES_GREEN_LIT;
-    for (i = 0; i < rows.length; i++) {
-      r = rows[i];
-      if (r._tp < 0.30 && r.hw >= 1.5 && treesHash(seed * 71 + i) < 0.8) {
-        g.fillRect(Math.round(cx + (r.dx || 0) + r.hw) - 1, r.y, 1, 1);
-      }
-    }
-    g.fillStyle = BLD.outline;   // sparse deep notches on the shade flank
-    for (i = 2; i < rows.length; i += 4) {
-      r = rows[i];
-      if (r.hw > 4 && treesHash(seed * 87 + i) < 0.5) {
-        g.fillRect(Math.round(cx + (r.dx || 0) - r.hw) + 1, r.y, 1, 1);
-      }
-    }
-    return { cv: s.cv, w: s.w, h: s.h, ax: cx, ay: baseY };
   }
 
-  // Birch: weathered-pale ticked trunk, airy 3-lobe canopy in the mid green
-  // with dark undersides and a few sunlit dabs.
+  // Bake overlapping leaf sprays into one silhouette. Shade each spray as a
+  // branchful of leaves, with a few broad sunward facets and dark undersides.
+  // Pixel teeth are grouped, never random single-pixel noise. Clear spaces
+  // between sprays expose the forks drawn underneath. No per-frame raster work.
+  function treesPaintSprays(s, sprays, seed, needles) {
+    var mask = new Uint8Array(s.w * s.h), g = s.g;
+    var x, y, i, p, at, col;
+    for (i = 0; i < sprays.length; i++) {
+      p = sprays[i];
+      for (y = Math.max(2, Math.floor(p.y - p.ry - p.rx * Math.abs(p.tilt) - 2));
+           y <= Math.min(s.h - 3, Math.ceil(p.y + p.ry + p.rx * Math.abs(p.tilt) + 2)); y++) {
+        for (x = Math.max(2, Math.floor(p.x - p.rx)); x <= Math.min(s.w - 3, Math.ceil(p.x + p.rx)); x++) {
+          var nx = (x - p.x) / p.rx, ny = (y - p.y - (x - p.x) * p.tilt) / p.ry;
+          var tooth = (treesHash(seed * 31 + i * 97 + Math.floor(x / 3) * 17) - .5) * .32;
+          var edge = needles ? Math.abs(nx) * .8 + Math.abs(ny) : nx * nx + ny * ny;
+          if (edge > 1 + tooth) continue;
+          col = ny > .27 || nx > .65 ? 1 : 2;
+          if (needles && (ny > -.12 || nx > .22)) col = 1;
+          // Short, offset light facets. Their broken edges avoid contour bands.
+          var facet = treesHash(seed + i * 73 + Math.floor(x / 4) * 23);
+          if (ny < -.23 && ny > -.72 && nx < .18 && nx > -.68 && facet > .36) {
+            col = needles ? 2 : 3;
+            if (needles && facet > .78 && ny < -.42) col = 3;
+          }
+          mask[y * s.w + x] = col;
+        }
+      }
+    }
+    for (y = 1; y < s.h - 1; y++) for (x = 1; x < s.w - 1; x++) {
+      at = y * s.w + x;
+      if (!mask[at] && (mask[at - 1] || mask[at + 1] || mask[at - s.w] || mask[at + s.w])) {
+        g.fillStyle = mask[at + s.w] || mask[at + 1] ? TREES_GREEN_DARK : BLD.outline;
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+    for (y = 2; y < s.h - 2; y++) for (x = 2; x < s.w - 2; x++) {
+      col = mask[y * s.w + x];
+      if (!col) continue;
+      g.fillStyle = col === 1 ? TREES_GREEN_DARK : col === 2 ? TREES_GREEN_MID : TREES_GREEN_LIT;
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+
+  // Spruce: a slender leader, staggered woody boughs and hanging needle fans.
+  // Unequal branch lengths leave air between tiers without Christmas triangles.
+  function treesBakeSpruce(hTiles, seed) {
+    var h = Math.round(hTiles * TILE), w = Math.round(h * .53) | 1;
+    var s = treesMakeSprite(w + 10, h + 6), g = s.g;
+    var cx = (s.w / 2) | 0, baseY = h + 3;
+    var tw = h > 110 ? 4 : 3, top = 5;
+    treesTwig(g, cx - 1, baseY - tw - 1, cx - 1, top, tw + 2, BLD.outline);
+    treesTwig(g, cx, baseY - tw, cx, top + 2, tw, BLD.woodDark);
+    treesTwig(g, cx, baseY - 3, cx, h * .54, 1, BLD.woodBase);
+    g.fillStyle = BLD.woodDark; g.fillRect(cx - 2, baseY - 2, tw + 4, 2);
+    var sprays = [], boughs = hTiles > 3.6 ? 7 : 6;
+    for (var b = boughs - 1; b >= 0; b--) {
+      var p = (b + 1) / boughs;
+      var by = top + h * (.09 + p * .71);
+      for (var side = -1; side <= 1; side += 2) {
+        var salt = seed * 47 + b * 103 + side * 19;
+        var len = w * .43 * (.14 + p * .86) * (.76 + treesHash(salt) * .24);
+        var y0 = by + (treesHash(salt + 3) - .5) * h * .07;
+        var tx = cx + side * len, ty = y0 + h * .015;
+        treesTwig(g, cx, y0 - h * .045, tx, ty, 2, BLD.outline);
+        treesTwig(g, cx, y0 - h * .045, tx, ty, 1, BLD.woodDark);
+        // Each branch carries two or three distinct, drooping needle sprays.
+        for (var f = 0; f < 3; f++) {
+          var t = .22 + f * .31;
+          sprays.push({x:cx + side * len * t, y:y0 - h * .025 + f * h * .007,
+            rx:Math.max(3, len * (.42 - f * .045)), ry:h * (.051 - f * .007), tilt:side * .26});
+        }
+      }
+    }
+    sprays.push({x:cx + 1, y:top + h * .065, rx:w * .095, ry:h * .073, tilt:-.12});
+    treesPaintSprays(s, sprays, seed, true);
+    return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
+  }
+
+  // Birch: crooked pale trunk, visible forks and an open, uneven crown.
+  // Smaller leaf groups use the same shape vocabulary as the woody scrub.
   function treesBakeBirch(hTiles, seed) {
-    var h = Math.round(hTiles * TILE);
-    var w = (Math.round(h * 0.55) | 1);
-    var s = treesMakeSprite(w + 4, h + 3);
-    var g = s.g, cx = ((w + 4) / 2) | 0, baseY = h + 1;
-    var tw = h > 80 ? 4 : 3;
-    var trunkH = Math.round(h * 0.56);
-    treesPaintRows(g, cx, [{ y: baseY - trunkH, h: trunkH, hw: tw * 0.5 }], TREES_BARK_PALE);
-    g.fillStyle = BLD.woodDark;   // warm shade column on the pale bark
-    g.fillRect(Math.round(cx - tw * 0.5), baseY - trunkH + 1, 1, trunkH - 2);
-    g.fillStyle = BLD.outline;
-    var ty = baseY - trunkH + 4, side = treesHash(seed * 17) < 0.5 ? 0 : 1;
-    while (ty < baseY - 3) {
-      g.fillRect(Math.round(cx - tw * 0.5) + (side ? Math.ceil(tw * 0.45) : 0), ty, Math.ceil(tw * 0.55), 1);
-      side = 1 - side;
-      ty += 5 + ((treesHash(seed * 29 + ty) * 4) | 0);
-    }
-    var rows = [], bi, blobs = [
-      { bx: 0,                          by: h * 0.22, rx: w * 0.46, ry: h * 0.190 },
-      { bx: -w * 0.22 - treesHash(seed * 41) * 2, by: h * 0.34, rx: w * 0.30, ry: h * 0.125 },
-      { bx: w * 0.24 + treesHash(seed * 43) * 2,  by: h * 0.31, rx: w * 0.32, ry: h * 0.135 }
+    var h = Math.round(hTiles * TILE), w = Math.round(h * .64) | 1;
+    var s = treesMakeSprite(w + 10, h + 6), g = s.g;
+    var cx = (s.w / 2) | 0, baseY = h + 3, tw = h > 80 ? 4 : 3;
+    var kink = (treesHash(seed * 19) - .5) * w * .14;
+    var forkX = cx + kink, forkY = h * .56;
+    treesTwig(g, cx - 1, baseY - tw, forkX - 1, forkY, tw + 2, BLD.outline);
+    treesTwig(g, cx, baseY - tw, forkX, forkY, tw, TREES_BARK_PALE);
+    treesTwig(g, cx + tw - 1, baseY - tw, forkX + tw - 1, forkY, 1, BLD.woodDark);
+    g.fillStyle = BLD.woodDark; g.fillRect(cx - 2, baseY - 1, tw + 4, 1);
+    var crowns = [
+      [-.28,.42,.19,.085], [.28,.38,.19,.10],
+      [-.20,.26,.22,.12], [.20,.21,.20,.115],
+      [-.06,.135,.22,.10], [.02,.36,.21,.105], [.32,.49,.14,.065]
     ];
-    for (bi = 0; bi < blobs.length; bi++) {
-      var b = blobs[bi];
-      var yA = Math.max(2, Math.round(b.by - b.ry)), yB = Math.round(b.by + b.ry);
-      for (var y = yA; y < yB; y += 2) {
-        var q = (y - b.by) / b.ry;
-        var hw = b.rx * Math.sqrt(Math.max(0, 1 - q * q));
-        hw += (treesHash(seed * 631 + bi * 97 + y * 7) - 0.5) * 1.4;
-        if (hw < 1) continue;
-        rows.push({ y: y, h: 2, hw: hw, dx: b.bx, _q: q, _bi: bi });
-      }
+    var sprays = [];
+    for (var b = 0; b < crowns.length; b++) {
+      var p = crowns[b], salt = seed * 41 + b * 137;
+      var tx = cx + w * p[0] + (treesHash(salt) - .5) * 4;
+      var ty = h * p[1] + (treesHash(salt + 9) - .5) * 4 + 3;
+      var bx = forkX + (tx - forkX) * .45, by = forkY + (ty - forkY) * .32;
+      treesTwig(g, forkX, forkY, bx, by, 3, BLD.outline);
+      treesTwig(g, bx, by, tx, ty, 2, BLD.outline);
+      treesTwig(g, forkX, forkY, bx, by, 2, TREES_BARK_PALE);
+      treesTwig(g, bx, by, tx, ty, 1, TREES_BARK_PALE);
+      sprays.push({x:tx, y:ty, rx:w * p[2], ry:h * p[3], tilt:(p[0] < 0 ? -.16 : .12)});
+      sprays.push({x:tx - w * .07, y:ty + h * .063, rx:w * .12, ry:h * .048, tilt:-.16});
     }
-    treesPaintRows(g, cx, rows, TREES_GREEN_MID);
-    var i, r;
-    g.fillStyle = TREES_GREEN_DARK;
-    for (i = 0; i < rows.length; i++) {
-      r = rows[i];
-      if (r._q > 0.45 && r.hw > 2) {
-        g.fillRect(Math.round(cx + (r.dx || 0) - r.hw * 0.7), r.y, Math.max(1, Math.round(r.hw * 1.0)), 2);
-      }
+    for (var y = Math.round(forkY + 6); y < baseY - 4; y += 7) {
+      var tx = cx + kink * (baseY - y) / (baseY - forkY);
+      g.fillStyle = BLD.woodDeep;
+      g.fillRect(Math.round(tx) + (y % 2), y, Math.ceil(tw * .6), 1);
     }
-    g.fillStyle = TREES_GREEN_LIT;
-    for (i = 0; i < rows.length; i++) {
-      r = rows[i];
-      if (r._q < -0.15 && r.hw > 2.5) {
-        var lw = Math.max(1, Math.round(r.hw * 0.34));
-        g.fillRect(Math.round(cx + (r.dx || 0) + r.hw) - lw - 1, r.y, lw, 2);
-      }
-    }
-    return { cv: s.cv, w: s.w, h: s.h, ax: cx, ay: baseY };
+    treesPaintSprays(s, sprays, seed, false);
+    return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
   }
 
   // Bushes grow from a few crooked stems. Small, flat leaf sprays leave
@@ -358,7 +359,7 @@
           if (Math.abs(nx) + ny * ny > 1 + tooth) continue;
           var col = ny > .34 ? 1 : 2;
           // At most a short pair of light leaves on a few sunward tips.
-          if (i % 3 === 1 && ny < -.25 && nx > .05 && nx < .48) col = 3;
+          if (i % 3 === 1 && ny < -.25 && nx < -.05 && nx > -.48) col = 3;
           mask[y * s.w + x] = col;
         }
       }
@@ -367,7 +368,7 @@
     for (y = 1; y < baseY; y++) for (x = 1; x < s.w - 1; x++) {
       var at = y * s.w + x;
       if (!mask[at] && (mask[at - 1] || mask[at + 1] || mask[at - s.w] || mask[at + s.w])) {
-        g.fillStyle = mask[at + s.w] || mask[at - 1] ? TREES_GREEN_DARK : BLD.outline;
+        g.fillStyle = mask[at + s.w] || mask[at + 1] ? TREES_GREEN_DARK : BLD.outline;
         g.fillRect(x, y, 1, 1);
       }
     }

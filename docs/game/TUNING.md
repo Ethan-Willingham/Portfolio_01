@@ -1056,8 +1056,15 @@ the existing three greens, sparse highlights and green upper edges; dark
 outlines belong to the undersides. The branching remains visible through the
 canopy. Only the flowering variant has one tiny warm-white blossom
 (`TREES_FLOWER_PETAL`, `#eee9d7`), with a birch-pale lower petal and muted gold
-centre. The grove picker mixes it with the three plain forms. Tree art,
-placement, sway, leaf shedding and removal keep their existing paths.
+centre. The grove picker mixes it with the three plain forms. Placement,
+sway, leaf shedding and removal keep their existing paths.
+
+The September 2026 tree pass extends that leaf-spray vocabulary to spruce and
+birch. Spruces have staggered woody boughs and uneven needle fans. Birches have
+crooked pale trunks, exposed forks and smaller overlapping leaf groups. All
+three living species use upper-left highlights, darker lower-right edges and
+the existing flora/wood palette to sit beside the station's pixel art. Sprites
+remain cached; silhouette detail adds no per-frame painting.
 
 Pixel-art flora across the whole wide surface (`js/sluice/165-render-trees.js`, v24.133): spruce/birch/bush groves in the towns, scorched snags in the No Man's Zones, nothing on oceans, ponds, or station compounds. DERIVED from the world grid, never saved: a tree stands where its ground tile at `(SKY_ROWS, c)` is still solid, so felling one (dig that tile out: tip-over, then a leaf + chip burst at ~77 degrees) persists through save/load for free. Sprites are baked once at world-px (BLD wood + the mandatory outline ring + 3 locked flora greens `#2e4420`/`#4a6631`/`#8f9c52` + birch bark `#d4c89f`; keep canopy greens under the grass speck `#9bb963`). Rig gusts are SPEED-GATED (an idle hover does nothing, the same discipline as the water player-coupling); the jet downwash shivers canopies it hovers over; a sonic boom whips every visible tree. Spruce/birch canopies hold perched birds that launch into the 205-birds boids (ambient timer, hard gust passes, and falls). Headless work: `?treeshot=COL` parks the rig at a surface column, `?treefell=COL` fells the nearest tree through the real dig path 1s in, the `[trees]` dev boot probe logs counts + the densest grove column, and `window.__trees` exposes rebuild/count/info/shoot. Pair with `?nopause=1` (020): it disables the focus auto-pause + boot pause, which otherwise freeze any headless/unfocused run a moment after boot. Gotcha: headless Chrome `--screenshot` of sluice.html directly captures a blank canvas; screenshot a same-origin wrapper page that iframes the game instead.
 
@@ -1074,6 +1081,22 @@ Pixel-art flora across the whole wide surface (`js/sluice/165-render-trees.js`, 
 | `trees.fallRate` | `1.0` | 0.2-3 | Tip-over torque (higher = faster timber) |
 
 ---
+
+## 5.7 Surface grass contact (the `grass` gm group)
+
+`140-render-maindraw.js` shares one spring field between wheel contact and jet
+downwash. Driving brushes blades in the travel direction, including reverse;
+parked wheels hold a small outward bend. Landing adds a brief splay. Blades
+recover after the rig leaves, and both leaves of a split blade follow the push.
+Contact fades within 14 world pixels above the surface and ends below it.
+Excavated ground supports no grass. New worlds and disabled motion clear the
+old field. `node tools/test-sluice-grass.cjs` checks these behavior boundaries.
+
+| Lever | Now | Range | Effect |
+|---|---|---|---|
+| `grass.rigGain` | `1.3` | 0-3 | Wheel/landing bend strength; 0 leaves only jet and ambient motion |
+| `grass.rigReach` | `14` | 1-32 | Wheel contact reach above the surface, world px |
+| `grass.rigRadius` | `12` | 1-40 | Soft contact margin outside each side of the rig, world px |
 
 # 6 · PARTICLES & EFFECTS · tier `edit`
 

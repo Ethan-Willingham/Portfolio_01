@@ -319,9 +319,12 @@
         wake_alpha:             { min: 0, max: 1.5 }
       });
 
-      // grassWindTune — the miner's jet exhaust laying the surface grass over.
+      // grassWindTune: wheel contact and jet exhaust lay the surface grass over.
       gmRegisterObject('grass', 'grass', grassWindTune, {
         enabled:  { min: 0, max: 1, step: 1 },
+        rigGain:  { min: 0, max: 3 },
+        rigReach: { min: 1, max: 32 },
+        rigRadius:{ min: 1, max: 40 },
         reach:    { min: 1, max: 24 },
         radius:   { min: 0.5, max: 8 },
         bend:     { min: 0, max: 4 },

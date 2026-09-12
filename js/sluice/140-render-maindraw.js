@@ -19,7 +19,7 @@
   }
 
   // ===== Surface grass wind (v24.62) =====
-  // The grass reacts to the miner's jet exhaust through a world-anchored 1-D wind
+  // The grass reacts to the rig's wheels and jet exhaust through a world-anchored 1-D wind
   // field: one damped spring per ~8 px of surface. The jet drives a target
   // lay-over into the cells under its footprint; each cell springs toward its
   // target with inertia, so the bend ramps in, OVERSHOOTS, trails as the rig
@@ -31,6 +31,11 @@
   // via sampleGrassWind(). Tunable via the gm 'grass' group.
   var grassWindTune = {
     enabled:     true,
+    // Wheel-height contact brushes in the travel direction. Parked wheels hold
+    // a small outward bend; vacated blades recover through the same springs.
+    rigGain:     1.3,  // contact lay-over strength
+    rigReach:    14,   // vertical reach above the surface, in world px
+    rigRadius:   12,   // soft edge beyond each side of the rig, in world px
     // --- jet footprint: what the jet WANTS (instantaneous target) ---
     // v24.67: wash spreads much further from the jet (radius 2.4 -> 4.5, reach
     // 8 -> 11) so grass well to the sides of the rig still stirs.
@@ -60,13 +65,27 @@
   // its velocity. grassWindTime accumulates dt for the flutter/ambient phases.
   var GRASS_WIND_CELL = 8;
   var gwFieldD = null, gwFieldV = null, gwFieldLen = 0;
+  var gwWorldRef = null;
   var grassWindTime = 0;
   var _gwS = { d: 0, v: 0 };                 // per-sample scratch (no alloc in the hot loop)
   var _gwFp = { active: false, cx: 0, strength: 0, dirX: 0, sigma: 1 };
+  var _gwRig = { active: false, cx: 0, strength: 0, drive: 0, edge: 1, land: 0 };
+
+  function grassWindReset() {
+    gwFieldD = null; gwFieldV = null; gwFieldLen = 0;
+    gwWorldRef = null; grassWindTime = 0;
+    _gwFp.active = false; _gwRig.active = false;
+    _grassSupCol = 2147483647;
+  }
 
   function grassWindEnsure() {
-    if (gwFieldD) return;
-    gwFieldLen = Math.ceil((WORLD_COLS * TILE) / GRASS_WIND_CELL) + 2;
+    var len = Math.ceil((WORLD_COLS * TILE) / GRASS_WIND_CELL) + 2;
+    if (gwFieldD && gwWorldRef === world && gwFieldLen === len) return;
+    // init() and saveApply() both replace the world array. A new run must not
+    // inherit bent grass or a cached support tile from the previous world.
+    grassWindReset();
+    gwWorldRef = world;
+    gwFieldLen = len;
     gwFieldD = new Float32Array(gwFieldLen);
     gwFieldV = new Float32Array(gwFieldLen);
   }
@@ -74,13 +93,14 @@
   // Grass only grows where the surface cell beneath it is solid. tileAt(SKY_ROWS,
   // col) is the topmost ground cell; null means dug out / pond pit / cave mouth, so
   // no blade is drawn there. Memoised on the last column (blades march left-to-right,
-  // so the tileAt lookup runs about once per column, not once per blade).
+  // so the tileAt lookup runs about once per column, not once per blade). Reset
+  // the memo every update/draw pass so digging never leaves a floating clump.
   var _grassSupCol = 2147483647, _grassSupVal = false;
   function grassSupported(wx) {
     var col = Math.floor(wx / TILE);
     if (col !== _grassSupCol) {
       _grassSupCol = col;
-      _grassSupVal = tileAt(SKY_ROWS, col) !== null;
+      _grassSupVal = col >= 0 && col < WORLD_COLS && tileAt(SKY_ROWS, col) != null;
     }
     return _grassSupVal;
   }
@@ -96,15 +116,46 @@
     return ((wx >= fp.cx ? 1 : -1) * grassWindTune.fanOut + fp.dirX * grassWindTune.downwind) * f;
   }
 
+  function grassRigTarget(fp, wx) {
+    if (!fp.active) return 0;
+    var dx = wx - fp.cx;
+    var edge = Math.max(0, Math.abs(dx) - PLAYER_W * 0.5) / fp.edge;
+    if (edge >= 1) return 0;
+    var weight = 1 - edge * edge * (3 - 2 * edge);
+    var side = Math.max(-1, Math.min(1, dx / (PLAYER_W * 0.5)));
+    var lay = fp.drive * 0.95 + side * (0.45 * (1 - Math.abs(fp.drive)) + fp.land);
+    return lay * weight * fp.strength;
+  }
+
   // Integrate the wind field one step. Called from the game loop with the frame dt.
   function updateGrassWind(dt) {
-    if (!grassWindTune.enabled) return;
+    if (!grassWindTune.enabled) {
+      if (gwFieldD) grassWindReset();
+      return;
+    }
     grassWindEnsure();
     if (dt > 1 / 30) dt = 1 / 30;            // cap so a frame hitch can't blow up the springs
     if (dt <= 0) return;
     grassWindTime += dt;
 
     var surfaceY = SKY_ROWS * TILE;
+
+    // Only a rig close enough for its wheels/body to touch the grass can brush
+    // it. Flying high or mining below the surface has no contact footprint.
+    var rig = _gwRig;
+    rig.active = false;
+    var gap = surfaceY - (player.y + PLAYER_H);
+    var reach = Math.max(1, grassWindTune.rigReach);
+    if (grassWindTune.rigGain > 0 && gap > -6 && gap < reach) {
+      var near = gap >= 0 ? 1 - gap / reach : 1 + gap / 6;
+      rig.cx = player.x + PLAYER_W * 0.5;
+      rig.strength = grassWindTune.rigGain * near * near;
+      rig.drive = Math.max(-1, Math.min(1, player.vx / 140));
+      rig.edge = Math.max(1, grassWindTune.rigRadius);
+      // The real landing squash survives the collision's velocity reset.
+      rig.land = player.onGround ? Math.min(0.7, Math.max(0, player.squash || 0)) : 0;
+      rig.active = true;
+    }
 
     // 1) Resolve the jet footprint (same geometry the v24.59 static version used).
     var fp = _gwFp;
@@ -134,9 +185,14 @@
     var margin = screenW;
     var lo = Math.max(0, Math.floor((cam.x - margin) / GRASS_WIND_CELL));
     var hi = Math.min(gwFieldLen - 1, Math.ceil((cam.x + screenW + margin) / GRASS_WIND_CELL));
+    _grassSupCol = 2147483647;
     for (var i = lo; i <= hi; i++) {
       var wx = i * GRASS_WIND_CELL;
-      var T = grassJetTarget(fp, wx);
+      if (!grassSupported(wx)) {
+        gwFieldD[i] = 0; gwFieldV[i] = 0;
+        continue;
+      }
+      var T = grassJetTarget(fp, wx) + grassRigTarget(rig, wx);
       if (ambAmp > 0) T += ambAmp * Math.sin(wx * ambW + ambPh);
       var d = gwFieldD[i], v = gwFieldV[i];
       v += (k * (T - d) - c * v) * dt;
@@ -151,7 +207,7 @@
   // Sample the field at world-x wx into _gwS {d, v} (linear interpolation, no alloc).
   function sampleGrassWind(wx) {
     _gwS.d = 0; _gwS.v = 0;
-    if (!gwFieldD) return;
+    if (!grassWindTune.enabled || !gwFieldD || gwWorldRef !== world) return;
     var fx = wx / GRASS_WIND_CELL;
     var i0 = Math.floor(fx);
     if (i0 < 0 || i0 >= gwFieldLen - 1) return;
@@ -749,6 +805,7 @@
 
     // Surface grass line (drawn between sky and underground, above tiles' top edge)
     if (worldTop < surfaceY && worldBottom > surfaceY - 4) {
+      _grassSupCol = 2147483647;
       var grassLeft = Math.floor(worldLeft / 4) * 4 - 16;
       var grassRight = worldRight + 12;
 
@@ -786,6 +843,7 @@
           var edgeFade = Math.min(1, (gx - patchStart) / 5, (patchStart + patchW - gx) / 5);
           var bladeH = (2.2 + bladeSeed * 5.4 + patchH * 0.45) * (0.65 + edgeFade * 0.35);
           var lean = (tileHash01(4, bladeCol, 0x6A552) - 0.5) * (2.4 + patchSeed * 1.4);
+          var restLean = lean;
           var baseY = surfaceY - 0.4 + tileHash01(5, bladeCol, 0x6A553) * 1.2;
           // Wind: sample the live spring field, add per-blade gain variance + a
           // shimmer that only flutters while the field is actually moving (|v|),
@@ -809,7 +867,8 @@
           ctx.stroke();
 
           if (bladeSeed > 0.72) {
-            var sideLean = -lean * 0.55 + (tileHash01(7, bladeCol, 0x6A555) - 0.5) * 1.8;
+            var sideLean = -restLean * 0.55 + (lean - restLean) * 0.74
+                         + (tileHash01(7, bladeCol, 0x6A555) - 0.5) * 1.8;
             ctx.strokeStyle = tone > 0.7 ? '#7b744b' : '#4d693b';
             ctx.lineWidth = 0.62;
             ctx.globalAlpha = 0.62 + edgeFade * 0.18;
@@ -850,10 +909,12 @@
       ctx.globalAlpha = 1;
       for (var gx2 = grassLeft; gx2 < grassRight; gx2 += 9) {
         if (tileHash01(10, Math.floor(gx2 / 9), 0x6A558) < 0.42) continue;
+        var pebbleX = gx2 + tileHash01(12, Math.floor(gx2 / 9), 0x6A55A) * 5;
+        if (!grassSupported(pebbleX)) continue;
         var pebbleA = 0.10 + tileHash01(11, Math.floor(gx2 / 9), 0x6A559) * 0.08;
         ctx.fillStyle = 'rgba(40,26,16,' + pebbleA.toFixed(3) + ')';
         ctx.beginPath();
-        ctx.ellipse(gx2 + tileHash01(12, Math.floor(gx2 / 9), 0x6A55A) * 5, surfaceY - 0.8, 1.4, 0.55, 0, 0, Math.PI * 2);
+        ctx.ellipse(pebbleX, surfaceY - 0.8, 1.4, 0.55, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
