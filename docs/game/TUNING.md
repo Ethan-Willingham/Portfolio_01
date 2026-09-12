@@ -263,6 +263,12 @@ in red and a narrow contact band in green, limiting extra taps to the rim.
 The regression now checks separated particle rows and a narrow cross-shaped
 pocket before and after real simulation steps, plus an intact ceiling air gap.
 
+v26.118 keeps a body-sized water footprint when real neighbours support a
+stretched sheet. The old cubed density curve could shrink a connected sheet
+into a visible lattice of dots and holes. The neighbour guard still keeps
+isolated spray small; the footprint never exceeds the existing dense-body
+size. Pressure, damping, viscosity and the fluid clock are unchanged.
+
 Drawn by `drawLiquidsWebGL` (CPU GL) / the WGSL render shader (GPU). All of
 these are LIVE since v14.25 — the `water` gm group (L panel) pushes them via
 `setRenderParam`, no reload needed. `edit²`.
@@ -863,6 +869,27 @@ was exhausted across ~15 versions.
 | `LIQUID_COHESION` `edit²` | `0` | v25.41 — detachment surface tension, **EXPERIMENTAL, KEEP 0**: both a flat negative-pressure floor and a dn<0.7-gated pull were measured EXPLOSIVE (the skin is permanently under-dense; any sustained attraction there pumps the surface limit cycle to the 600 px/s cap in seconds). The gated code remains for supervised A/B. gm `water.COHESION` |
 | `LIQUID_BURST_DAMP` | `0.985` | v24.173 — speed-gated damping: bleeds energy ONLY from FAST water (gate `LIQUID_BURST_GATE_LO/HI` 100→300 px/s), resting water untouched. A SAFEGUARD, not the fix |
 | `LIQUID_RAW_VISC` | `0` | v24.183 — optional grid viscosity in the RAW branch. **Leave at 0: >~0.2 destabilizes (dn goes negative). Anti-clump is the fix, not viscosity** |
+
+**v26.118 compression cost and recovery:** the anti-clump walk now samples
+at most 128 neighbours per bucket, weighted by the represented count and
+spread across the whole bucket. Smaller buckets retain the full walk. This
+bounds the work per particle when jets pack thousands into a tiny area;
+the pressure solve, separation strength and terrain clamp retain their
+values. Exact coincident pairs also receive opposite, stable separation
+directions. The old zero-distance skip let a compressed stack gather the
+same velocity indefinitely. A one-bucket overlap check below the density
+gate also releases the small stacks left as the larger knot decompresses.
+Non-coincident particles below that gate are never moved by this pass.
+
+Regression: `node tools/perf/liquid-compression.cjs` compares the shipped
+v26.115 solver with the current one on real WebGPU. It covers 18,000-particle
+squeezes, initial burst speed and spread, ordinary water motion, a 20-second
+two-nozzle hold and 10-second release, terrain containment, conservation,
+1,024 exactly coincident particles, a stretched sheet and an isolated bead.
+On the development GPU the extreme squeeze's median separation time fell
+from about 9.5 ms to 2.4 ms. These are GPU pass timings, not a promise of
+whole-game FPS. The ordinary-water motion and initial release checks pass;
+all 6,000 particles in the held-water test survive and recover.
 
 **The keystones are `DENS_CAP` + `DECLUMP` (+ the v24.186 terrain clamp).** RAW /
 SUBSTEP / GRAVITY set the calm liveliness baseline; MAX_VEL / BURST_DAMP are

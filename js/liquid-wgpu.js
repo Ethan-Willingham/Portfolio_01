@@ -152,8 +152,9 @@
   // world px: over-dense particles (a knot) are pushed apart from over-close
   // neighbours each substep (Jacobi positional separation via the count-sort
   // grid), so an over-pressured knot physically can't form or persist, no matter
-  // how it got over-pressured (jet, terrain, anything). Only runs for particles
-  // above DECLUMP_OVERDENSE for cost (normal water never enters the loop). edit2
+  // how it got over-pressured (jet, terrain, anything). The full stencil runs
+  // only above DECLUMP_OVERDENSE; a one-bucket check also releases exact
+  // coincident stacks below that gate. Bucket walks are bounded. edit2
   // sluice 010-constants (CPU fallback).
   var LIQUID_DECLUMP_ON        = 1;                    // master on/off (gm water.DECLUMP; skips the dispatch when 0)
   var LIQUID_DECLUMP_DMIN      = 1.1;                  // world px (rest spacing PDELTA*CELL = 1.25)
@@ -6726,8 +6727,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    * from any neighbour closer than DMIN, so particles can never pack tighter
    * than DMIN — an over-pressured knot physically can't form or persist. Jacobi
    * positional separation (read neighbours, write own pos); one iteration per
-   * substep, converges over frames. Normal water (below ODEN) returns at once,
-   * so the neighbour walk is paid only by the few knot particles. The in-place
+   * substep, converges over frames. Below ODEN only exact coincidences in the
+   * same bucket are separated. Oversized buckets use weighted stratified
+   * samples, bounding work per particle under extreme jet compression. The in-place
    * read of neighbour positions can tear by at most one displacement (~1px) and
    * is benign for a relaxation. Reads the grid built by buildGrid: cellCount /
    * cellStart / sortedIdx + GridParams. -------------------------------------- */
@@ -6777,7 +6779,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (i >= gp.count) { return; }
   let fl = flag[i];
   if (((fl >> 5u) & 1u) != 0u) { return; }   // frozen
-  if (aux[i].x < ODEN) { return; }            // only over-dense knots
+  let dense = aux[i].x >= ODEN;
   let p = pos[i].xy;
   let ox = bitcast<i32>(gp.originX);
   let oy = bitcast<i32>(gp.originY);
@@ -6786,21 +6788,54 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let gw = i32(gp.gridW);
   let gh = i32(gp.gridH);
   if (cx < 1 || cy < 1 || cx >= gw - 1 || cy >= gh - 1) { return; }
+  // Below the over-density gate, only exact overlaps need recovery. They
+  // share this one bucket; normal low-density neighbours are never moved.
+  if (!dense && cellCount[u32(cy * gw + cx)] < 2u) { return; }
   var push = vec2<f32>(0.0, 0.0);
   let dmin2 = DMIN * DMIN;
-  for (var dy = -1; dy <= 1; dy = dy + 1) {
-    for (var dx = -1; dx <= 1; dx = dx + 1) {
+  let reach = select(0, 1, dense);
+  for (var dy = -reach; dy <= reach; dy = dy + 1) {
+    for (var dx = -reach; dx <= reach; dx = dx + 1) {
       let c = u32((cy + dy) * gw + (cx + dx));
       let st = cellStart[c];
       let cn = cellCount[c];
-      for (var k = 0u; k < cn; k = k + 1u) {
-        let j = sortedIdx[st + k];
+      // A jet can pack thousands into one bucket. Walking all pairs then
+      // costs quadratically, although the relaxation move is still capped
+      // at one cell. Keep the exact walk through 128 neighbours; above that,
+      // sample across the ENTIRE bucket and weight by the represented count.
+      // Independent per-particle phases avoid choosing the same neighbours
+      // for every particle. Pressure, velocity and particle count are intact.
+      let samples = min(cn, 128u);
+      let stride = f32(cn) / f32(max(samples, 1u));
+      var phase = 0.0;
+      if (cn > samples) {
+        var h = i * 747796405u + c * 2891336453u;
+        h = (h ^ (h >> 16u)) * 2246822519u;
+        phase = f32((h ^ (h >> 13u)) & 65535u) / 65536.0;
+      }
+      for (var k = 0u; k < samples; k = k + 1u) {
+        let slot = min(u32((f32(k) + phase) * stride), cn - 1u);
+        let j = sortedIdx[st + slot];
         if (j == i) { continue; }
         let d = p - pos[j].xy;
         let dd = dot(d, d);
-        if (dd < dmin2 && dd > 1e-8) {
-          let dist = sqrt(dd);
-          push = push + (d / dist) * (DMIN - dist) * 0.5;
+        if (dd < dmin2) {
+          if (dd > 1e-8) {
+            if (!dense) { continue; }
+            let dist = sqrt(dd);
+            push = push + (d / dist) * (DMIN - dist) * (0.5 * stride);
+          } else {
+            // Prolonged compression can put particles at the exact same
+            // position. Skipping distance zero made that stack permanent:
+            // every member then gathered the same velocity forever. Give
+            // only coincident pairs a stable, opposite separation direction.
+            var pair = min(i, j) * 747796405u + max(i, j) * 2891336453u;
+            pair = (pair ^ (pair >> 16u)) * 2246822519u;
+            pair = pair ^ (pair >> 13u);
+            let axis = vec2<f32>(f32(pair & 65535u) + 0.5, f32(pair >> 16u) + 0.5) / 32768.0 - 1.0;
+            let unit = normalize(axis) * select(-1.0, 1.0, i < j);
+            push = push + unit * (DMIN * 0.5 * stride);
+          }
         }
       }
     }
@@ -7119,7 +7154,14 @@ fn vs(@builtin(vertex_index)   vid : u32,
       }
       // Looked up at the grid-build position, a real particle always counts its
       // own cell, so nb >= 1; nb 0 means a truly stale grid (boot) — keep full.
-      if (nb >= 1u) { d = d * clamp(f32(nb) / NB_FULL, 0.0, 1.0); }
+      if (nb >= 1u) {
+        d = d * clamp(f32(nb) / NB_FULL, 0.0, 1.0);
+        // A stretched but supported sheet can cross the MPM density-grid
+        // troughs. Cubing that density used to shrink its splats into a
+        // visible lattice of dots and holes. Real neighbouring particles
+        // keep a body-sized footprint; isolated spray keeps the small one.
+        d = max(d, 1.5 * smoothstep(4.0, NB_FULL, f32(nb)));
+      }
     }
   }
   let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
