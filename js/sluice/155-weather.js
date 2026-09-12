@@ -222,9 +222,9 @@
   // A cloud is a continuous depth field. Soft unions join the billows before
   // lighting, so a bank has one body instead of stacked translucent outlines.
   // Bake geometry once; daylight only recolours the cached light/opacity maps.
-  function weatherBakeSprite(ci, vi) {
-    var C = CLOUD_CLASSES[ci], S = cloudSprites[ci][vi];
+  function weatherBuildSprite(C, vi, edgeSoftness, rimGlow, morph) {
     var tw = C.tw, th = C.th, seed = C.baseSeed + vi * 7919;
+    var S = { lum: new Uint8ClampedArray(tw * th), den: new Uint8ClampedArray(tw * th) };
     var depth = new Float32Array(tw * th);
     var detail = new Float32Array(tw * th);
     var lobes = [], li, px, py, idx;
@@ -256,8 +256,8 @@
         }
       }
     }
-    var softness = 0.70 + weatherTune.softness * 0.30;
-    var mz = weather.morph * 0.035;
+    var softness = 0.70 + edgeSoftness * 0.30;
+    var mz = morph * 0.035;
     for (py = 0, idx = 0; py < th; py++) {
       var v = py / (th - 1);
       for (px = 0; px < tw; px++, idx++) {
@@ -308,22 +308,26 @@
         // Transmission is broad and faint, never a bright contour around
         // every lobe. Dense interiors occlude the sun and the stars.
         var edge = Math.exp(-d * 16) * wSmooth(wClamp01(d / 0.07));
-        light += weatherTune.rimGlow * edge * crown * 0.10;
+        light += rimGlow * edge * crown * 0.10;
         var alpha = (1 - Math.exp(-d * (C.cirrus ? 12 : 28) / softness));
         alpha *= wSmooth(wClamp01(d / (0.13 * softness)));
         S.lum[idx] = wClamp01(light) * 255;
         S.den[idx] = wClamp01(alpha) * 255;
       }
     }
-    S.dirty = false;
-    S.recolorDirty = true;
-    S.ready = true;
+    return S;
+  }
+  function weatherBakeSprite(ci, vi) {
+    var S = cloudSprites[ci][vi];
+    var data = weatherBuildSprite(CLOUD_CLASSES[ci], vi, weatherTune.softness, weatherTune.rimGlow, weather.morph);
+    S.lum = data.lum; S.den = data.den;
+    S.dirty = false; S.recolorDirty = true; S.ready = true;
   }
 
   // Bake the stratus veil tile: broad soft translucency variation (NOT
   // thresholded masses — it is a sheet), matte lighting, seamless in X.
-  function weatherBakeVeil() {
-    var T = veilTile, idx = 0;
+  function weatherBuildVeil(VEIL_TW, VEIL_TH) {
+    var T = { lum: new Uint8ClampedArray(VEIL_TW * VEIL_TH), den: new Uint8ClampedArray(VEIL_TW * VEIL_TH) }, idx = 0;
     for (var py = 0; py < VEIL_TH; py++) {
       var ny = py / VEIL_TW;
       // seamless in Y too: crossfade the last rows back into the first
@@ -339,9 +343,61 @@
         T.lum[idx] = ((0.52 + 0.34 * F) * 255) | 0;
       }
     }
-    T.dirty = false;
-    T.recolorDirty = true;
-    T.ready = true;
+    return T;
+  }
+  function weatherBakeVeil() {
+    var data = weatherBuildVeil(VEIL_TW, VEIL_TH);
+    veilTile.lum = data.lum; veilTile.den = data.den;
+    veilTile.dirty = false; veilTile.recolorDirty = true; veilTile.ready = true;
+  }
+
+  // Geometry baking is pure numeric work. Keep the same noise, resolution and
+  // lighting, but run it away from the animation thread. Only completed maps
+  // replace a sprite; clouds keep their previous image while a new one bakes.
+  var weatherBakeWorker = null, weatherBakePending = null, weatherBakeWorkerFailed = false;
+  function weatherStopBakeWorker() {
+    if (weatherBakeWorker) weatherBakeWorker.terminate();
+    weatherBakeWorker = null; weatherBakePending = null; weatherBakeWorkerFailed = true;
+  }
+  function weatherQueueBake(ci, vi) {
+    if (weatherBakePending && performance.now() - weatherBakePending.at > 3000) weatherStopBakeWorker();
+    if (weatherBakePending) return false;
+    if (!weatherBakeWorker && !weatherBakeWorkerFailed) {
+      var url;
+      try {
+        var code = [wHash, wSmooth, wClamp01, wVal, wBillow, wFbm, weatherBuildSprite, weatherBuildVeil]
+          .map(function (fn) { return fn.toString(); }).join('\n');
+        code += '\nonmessage=function(e){var p=e.data;var d=p.veil?weatherBuildVeil(p.w,p.h):weatherBuildSprite(p.c,p.vi,p.softness,p.rim,p.morph);postMessage(d,[d.lum.buffer,d.den.buffer]);};';
+        url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+        weatherBakeWorker = new Worker(url);
+        weatherBakeWorker.onmessage = function (event) {
+          var job = weatherBakePending;
+          if (!job) return;
+          var target = job.target;
+          target.lum = event.data.lum; target.den = event.data.den;
+          target.ready = true; target.recolorDirty = true;
+          target.dirty = !job.veil && (job.key !== cloudBakeKey || job.morph !== cloudMorphBucket);
+          weatherBakePending = null;
+        };
+        weatherBakeWorker.onerror = function (event) { event.preventDefault(); weatherStopBakeWorker(); };
+        weatherBakeWorker.onmessageerror = weatherStopBakeWorker;
+      } catch (e) { weatherStopBakeWorker(); }
+      finally { if (url) URL.revokeObjectURL(url); }
+    }
+    if (!weatherBakeWorker) {
+      // Worker unavailable or blocked: the original synchronous renderer is
+      // still a complete fallback, including during the loading screen.
+      if (ci < 0) weatherBakeVeil(); else weatherBakeSprite(ci, vi);
+      return true;
+    }
+    weatherBakePending = { target: ci < 0 ? veilTile : cloudSprites[ci][vi],
+      veil: ci < 0, key: cloudBakeKey, morph: cloudMorphBucket, at: performance.now() };
+    try {
+      weatherBakeWorker.postMessage({ veil: ci < 0, w: VEIL_TW, h: VEIL_TH,
+        c: ci < 0 ? null : CLOUD_CLASSES[ci], vi: vi, softness: weatherTune.softness,
+        rim: weatherTune.rimGlow, morph: weather.morph });
+    } catch (e) { weatherStopBakeWorker(); return false; }
+    return true;
   }
 
   function wMix(a, b, t) {
@@ -638,8 +694,8 @@
     if (weather.cov < 0.02 || cw <= 0 || ch <= 0) return;
     if (!cloudSprites) weatherInitSprites();
 
-    // STAGE 1 — bake one dirty sprite per frame (the whole cast is ready in
-    // ~25 frames at boot; a softness/rim lever move or morph re-runs it).
+    // STAGE 1: dispatch one dirty sprite at a time. Loading waits for the
+    // completed cast; live changes keep drawing each previous complete map.
     var bakeKey = Math.round(weatherTune.softness * 8) * 97 + Math.round(weatherTune.rimGlow * 8);
     var morphB = Math.round(weather.morph * 4);
     if (bakeKey !== cloudBakeKey || morphB !== cloudMorphBucket) {
@@ -655,13 +711,12 @@
       var slot = (cloudBakeCursor + bi) % bakeCount;
       var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
       if (cloudSprites[bc][bv].dirty) {
-        weatherBakeSprite(bc, bv);
-        cloudBakeCursor = (slot + 1) % bakeCount;
+        if (weatherQueueBake(bc, bv)) cloudBakeCursor = (slot + 1) % bakeCount;
         baked = true;
         break;
       }
     }
-    if (!baked && veilTile.dirty) weatherBakeVeil();
+    if (!baked && veilTile.dirty) weatherQueueBake(-1, 0);
 
     // STAGE 2 — recolour on lighting-bucket change (amortised, 4 tiles/frame)
     var elev = (typeof computeSunElevation === 'function') ? computeSunElevation(timeOfDay) : 0;

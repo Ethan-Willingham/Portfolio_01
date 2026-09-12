@@ -2353,7 +2353,18 @@
       // Unknown paths warn (via gm.set) but never throw.
       gm.apply = function (obj) {
         if (!obj || typeof obj !== 'object') { console.warn('gm: apply expects an object'); return; }
-        Object.keys(obj).forEach(function (path) { gm.set(path, obj[path]); });
+        resolutionBatchDepth++;
+        try {
+          Object.keys(obj).forEach(function (path) {
+            if (path.indexOf('res.') === 0 && gm.get(path) === obj[path]) return;
+            gm.set(path, obj[path]);
+          });
+        } finally {
+          resolutionBatchDepth--;
+          if (!resolutionBatchDepth && resolutionBatchPending) {
+            resolutionBatchPending = false; resize();
+          }
+        }
       };
 
       // Short usage guide.

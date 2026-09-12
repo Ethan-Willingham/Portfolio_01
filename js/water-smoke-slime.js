@@ -2051,7 +2051,7 @@
     function clearObstacle () {
       obstacleSrcCanvas = null;
     }
-  
+
     // Shift the dye + velocity fields so the simulation stays anchored
     // in world space when the camera pans. Caller passes camera delta in
     // simulation-domain fractional units. The game convention has +y down,
@@ -7611,13 +7611,14 @@
   // substep allocation). Cell size = the contact diameter 2r, so a point's contacts are exactly
   // the 3x3 neighbour cells. Points are gathered across ALL active bodies each substep.
   var JELLO_HASH_N = 8191;                 // prime bucket count
-  var JELLO_HASH_SPARSE_MAX = 256;         // small scenes avoid scanning every bucket
+  var JELLO_HASH_SPARSE_MAX = 1024;        // small scenes avoid scanning every bucket
   var jelloGPX = null, jelloGPY = null;    // gathered point positions (working copy this substep)
   var jelloGOX = null, jelloGOY = null;    // gathered previous positions (read-only, for friction)
   var jelloGR = null;                      // gathered per-point contact radius (mixed lattice densities)
   var jelloGBody = null, jelloGLocal = null, jelloGHash = null;   // gather -> active-idx, local-idx, cell hash
   var jelloHashStart = null, jelloHashCursor = null, jelloHashOrder = null;
   var jelloHashUsed = null;               // occupied buckets, rebuilt for each contact solve
+  var jelloNeighborX = null, jelloNeighborY = null, jelloNeighborHash = null;
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
@@ -7635,6 +7636,9 @@
     jelloHashCursor = new Int32Array(JELLO_HASH_N + 1);
     jelloHashOrder = new Int32Array(MP);
     jelloHashUsed = new Int32Array(JELLO_HASH_SPARSE_MAX);
+    jelloNeighborX = new Float64Array(MP); jelloNeighborX.fill(NaN);
+    jelloNeighborY = new Float64Array(MP); jelloNeighborY.fill(NaN);
+    jelloNeighborHash = new Int32Array(MP * 9);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
     jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
@@ -7748,9 +7752,19 @@
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
-      for (gx = cx - 1; gx <= cx + 1; gx++) {
-        for (gy = cy - 1; gy <= cy + 1; gy++) {
-          h = jelloHashCell(gx, gy);
+      // The nine neighbouring hash buckets depend only on this integer cell,
+      // not on the point, body or substep. Most points stay in the same cell
+      // across many solves. Reuse the exact bucket sequence until it changes.
+      var neighborBase = i * 9;
+      if (jelloNeighborX[i] !== cx || jelloNeighborY[i] !== cy) {
+        jelloNeighborX[i] = cx; jelloNeighborY[i] = cy;
+        var ni = neighborBase;
+        for (gx = cx - 1; gx <= cx + 1; gx++) {
+          for (gy = cy - 1; gy <= cy + 1; gy++) jelloNeighborHash[ni++] = jelloHashCell(gx, gy);
+        }
+      }
+      for (var neighbor = 0; neighbor < 9; neighbor++) {
+          h = jelloNeighborHash[neighborBase + neighbor];
           cend = END[h + endOffset];
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
@@ -7818,7 +7832,6 @@
             if (active[bi].sleeping)    { active[bi].sleeping = false;    active[bi]._solve = true; }
             if (active[GB[j]].sleeping) { active[GB[j]].sleeping = false; active[GB[j]]._solve = true; }
           }
-        }
       }
     }
     if (contacts === 0) break;   // v25.43 perf (owner-kept in the v25.47 A/B): a zero-contact pass

@@ -2077,49 +2077,31 @@
         };
       }
 
-      // ----- Boot: report detected tier, optionally apply it -----
+      // Resolve the graphics choice before allocating/warming the scene.
+      // An explicit URL tier wins, then the saved player choice, then the
+      // existing desktop Extreme / mobile High defaults. Art-only URL presets
+      // apply on top of that choice and never cause a second resolution pass.
       try {
         var gmBootTier = gmDetectTier();
-        if (GM_AUTO_TIER && window.gm && window.gm.preset) {
-          // Opt-in: match the auto-detected device tier instead of the default.
-          console.log('gm: GM_AUTO_TIER on (applying device tier "' + gmBootTier + '")');
-          window.gm.preset(gmBootTier);
-        } else if (window.gm && window.gm.preset) {
-          // Default look (owner request): ship the EXTREME graphics preset on
-          // DESKTOP for maximum fidelity. v25.10 — but NOT on mobile. 'extreme'
-          // sets RENDER_SCALE_MOBILE 0.85 + a 6 MP budget + 4x terrain chunks +
-          // full-res smoke; on a phone that is a ~1.85 MP main canvas stacked with
-          // the uiTop + liquid canvases and a large terrain cache. A fast phone
-          // chip (e.g. iPhone Air) renders it at 60fps, but the GPU-memory footprint
-          // pushes iOS Safari past its per-tab limit and the tab CRASHES, while a
-          // weaker phone just runs heavy (the 20fps Android). Ship the memory-sane
-          // 'high' tier on mobile — which equals the in-code defaults (0.55 scale,
-          // 3 MP budget, 3x terrain, 0.6 smoke). The L panel or ?gmpreset=NAME
-          // (below, which wins) can still switch any device any time.
-          var gmBootPreset = (typeof isMobile !== 'undefined' && isMobile) ? 'high' : 'extreme';
-          console.log('gm: applying default graphics preset "' + gmBootPreset + '" (detected device tier "' + gmBootTier + '")');
+        var gmBootPreset = isMobile ? 'high' : 'extreme';
+        if (GM_AUTO_TIER) gmBootPreset = gmBootTier;
+        var playerOptions = window.SluiceOptions;
+        var savedGraphics = playerOptions && playerOptions.graphicsPreset();
+        if (savedGraphics) gmBootPreset = savedGraphics;
+        var urlPreset = new URLSearchParams(window.location.search).get('gmpreset');
+        var urlEntry = urlPreset && GM_PRESETS[urlPreset];
+        if (urlEntry && urlEntry.cat === 'device') gmBootPreset = urlPreset;
+        if (window.gm && window.gm.preset) {
           window.gm.preset(gmBootPreset);
+          if (urlPreset && (!urlEntry || urlEntry.cat !== 'device')) window.gm.preset(urlPreset);
+        }
+        if (playerOptions) {
+          playerOptions.graphicsChoice = { potato: 'performance', low: 'performance',
+            medium: 'balanced', high: 'balanced', ultra: 'extreme', extreme: 'extreme' }[gmBootPreset] || null;
+          if (playerOptions.syncGraphics) playerOptions.syncGraphics(playerOptions.graphicsChoice);
         }
       } catch (e) {
-        try { console.warn('gm: boot tier detection failed:', e); } catch (_) {}
-      }
-
-      // v14.22 — ?gmpreset=NAME in the URL applies a preset at boot. Done
-      // here (right after the auto-tier block) so an explicit preset wins
-      // over GM_AUTO_TIER when both are given. gm.preset() warns on an
-      // unknown name; the whole thing is guarded so a junk query can't
-      // break boot.
-      try {
-        if (window.location && window.gm && window.gm.preset) {
-          var _gmpM = window.location.search.match(/[?&]gmpreset=([^&]+)/i);
-          if (_gmpM) {
-            var _gmpName = decodeURIComponent(_gmpM[1]);
-            console.log('gm: ?gmpreset=' + _gmpName + ' — applying from URL');
-            window.gm.preset(_gmpName);
-          }
-        }
-      } catch (e) {
-        try { console.warn('gm: ?gmpreset boot apply failed:', e); } catch (_) {}
+        try { console.warn('gm: boot graphics selection failed:', e); } catch (_) {}
       }
 
       // Expose for the panel's presets section (built in gmPanelBuild).

@@ -33,7 +33,9 @@ function fixture(names = ['town1', 'town2', 'travel1', 'ug-l1', 'ug-l2', 'ug-l3'
   });
   // Instrument only the fixture, leaving the production API unchanged.
   vm.runInContext(source.replace('  // ===== public API', `
-    ctx = __audio; buffers = __buffers;
+    // This fixture isolates scheduling with all songs resident; cache behavior
+    // and asynchronous loading are covered by test-music-cache.cjs.
+    ctx = __audio; buffers = __buffers; MUSIC_CACHE_LIMIT = 100;
     musicBus = __node(); depthFilter = __node(); sfxFilter = __node(); nightLP = __node(); musicDuck = __node();
     globalThis.__state = music; globalThis.__depthFilter = depthFilter;
     // ===== public API`), context);

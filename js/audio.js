@@ -223,14 +223,14 @@ var SluiceAudio = (function () {
 
   // town id -> which theme buffer it uses (8 winning town themes)
   var TOWN_THEME = { 0: 'town1', 1: 'town2', 2: 'town3', 3: 'town4', 4: 'town5', 5: 'town6', 6: 'town7', 7: 'town8' };
-  // travel3 pulled from rotation (cringe opening riff); kept in MANIFEST so it still loads + re-enables in one edit.
+  // travel3 is parked in MANIFEST; adding it to the pool restores rotation.
   // travel4/travel5 omitted: never produced (commented out of MANIFEST); re-add here when the files land.
   var TRAVEL_POOL = ['travel1', 'travel2', /* 'travel3' decringed */ 'travel6'];
-  // 8 town themes. Until towns exist to fly to, these cycle above ground with
+  // Seven town themes. Until towns exist to fly to, these cycle above ground with
   // long gaps (mode 'towns') so all of them are heard; mode 'town' (single,
   // by id) is kept for when the towns + No Man's Zone expansion ships.
   // town4 + town6 pulled from rotation (cringe opening riffs); town9 = town4 replacement (organ keeper).
-  // All three stay in MANIFEST so they load + re-enable in one edit.
+  // Parked themes stay in MANIFEST for explicit town selection.
   var TOWN_POOL = ['town1', 'town2', 'town3', /* 'town4' decringed */ 'town5', /* 'town6' decringed */ 'town7', 'town8', 'town9'];
   var TOWN_GAP_MIN_S = 90, TOWN_GAP_MAX_S = 240;  // let the town ambience breathe
 
@@ -279,13 +279,15 @@ var SluiceAudio = (function () {
   var buffers = {};               // name -> AudioBuffer (present only once loaded)
   var disabled = false, loadStarted = false;
   var userGestured = false;       // true after the first real pointer/key gesture
-  var trackRequested = {};        // name -> true once its fetch has been issued
+  var trackRequested = {};        // name -> queued / loading / ready / failed
+  var trackQueue = [], trackLoading = false, trackUsed = {}, trackClock = 0;
+  var MUSIC_CACHE_LIMIT = 4, MUSIC_PREFETCH_S = 15;
   var enabled = true, masterVol = MASTER_HEADROOM;
 
   var music = {
     mode: null,                   // 'town' | 'towns' | 'travel' | 'underground' | null
     townId: null,
-    timer: null, nextAt: 0, lastCue: null,
+    timer: null, nextAt: 0, lastCue: null, nextCue: null, nextKey: null,
     current: null,                // one world-music cue, allowed to finish across contexts
     ugBand: -1, ugDanger: false,  // selection for the next underground cue
     combat: null,                 // combat layer voice
@@ -342,11 +344,8 @@ var SluiceAudio = (function () {
       musicBus.connect(musicVolumeGate); musicVolumeGate.connect(musicDuck); musicDuck.connect(depthFilter);
       depthFilter.connect(fallFilter); fallFilter.connect(nightLP); nightLP.connect(master);
 
-      // The full music library is ~38 MB, so it only downloads after the
-      // player's first real gesture (see unlock). Pre-gesture (page load) we
-      // warm exactly ONE surface track, so the town theme is decoded and ready
-      // the moment the intro is dismissed; the pool/underground players
-      // already re-check every few seconds as the rest of the files land.
+      // Warm one opening song. Further songs decode on demand, one at a time;
+      // compressed file size badly understates their decoded PCM memory.
       if (userGestured) loadAll(); else loadTrack(TOWN_POOL[0]);
       // re-establish whatever context was requested before the gesture
       if (music.mode) { var m = music.mode, id = music.townId; music.mode = null; setMusic(m, { townId: id }); }
@@ -364,20 +363,47 @@ var SluiceAudio = (function () {
 
   // ===== asset loading (graceful: never throws, skips missing) ==============
   function loadTrack(name) {
-    if (!ctx || typeof fetch === 'undefined' || !MANIFEST[name] || trackRequested[name]) return;
-    trackRequested[name] = true;
+    if (!ctx || typeof fetch === 'undefined' || !MANIFEST[name] || has(name) || trackRequested[name]) return;
+    trackRequested[name] = 'queued'; trackQueue.push(name); pumpTracks();
+  }
+  function trimTracks() {
+    var names = Object.keys(buffers);
+    names.sort(function (a, b) { return (trackUsed[a] || 0) - (trackUsed[b] || 0); });
+    var count = names.length;
+    for (var i = 0; count > MUSIC_CACHE_LIMIT && i < names.length; i++) {
+      var name = names[i];
+      if (name === 'death' || name === music.nextCue ||
+          (music.current && name === music.current.name) ||
+          (music.combat && name === music.combat.name) ||
+          (music.oneShot && name === music.oneShot.name)) continue;
+      delete buffers[name]; delete trackRequested[name]; delete trackUsed[name]; count--;
+    }
+  }
+  function pumpTracks() {
+    if (trackLoading || !trackQueue.length) return;
+    var name = trackQueue.shift(), finished = false;
+    trackLoading = true; trackRequested[name] = 'loading';
+    function done(buf) {
+      if (finished) return; finished = true;
+      if (buf) { buffers[name] = buf; trackUsed[name] = ++trackClock; }
+      trackRequested[name] = buf ? 'ready' : 'failed'; trackLoading = false;
+      if (buf && music.combatWanted === name) setCombat(true, name === 'combat2' ? 2 : 1);
+      trimTracks(); pumpTracks();
+    }
     fetch(DIR + MANIFEST[name]).then(function (r) {
-      return r.ok ? r.arrayBuffer() : null;              // missing -> skip
+      return r.ok ? r.arrayBuffer() : null;
     }).then(function (ab) {
-      if (!ab) return;
-      ctx.decodeAudioData(ab, function (buf) { buffers[name] = buf; }, function () {});
-    }).catch(function () {});                            // swallow everything
+      if (!ab) { done(null); return; }
+      ctx.decodeAudioData(ab, done, function () { done(null); });
+    }).catch(function () { done(null); });
   }
   function loadAll() {
     if (loadStarted || !ctx || typeof fetch === 'undefined') return;
     loadStarted = true;
     loadAllSfx();
-    Object.keys(MANIFEST).forEach(loadTrack);
+    loadTrack(TOWN_POOL[0]); loadTrack('death');
+    // Short event cues remain ready for immediate one-shots when supplied.
+    Object.keys(MANIFEST).filter(function (name) { return name.indexOf('event-') === 0; }).forEach(loadTrack);
   }
   function has(name) { return !!buffers[name]; }
 
@@ -452,7 +478,7 @@ var SluiceAudio = (function () {
   // ===== world music: one cue, a quiet gap, then a fresh context pick ========
   function stopMusic() {
     if (music.timer !== null) { clearTimeout(music.timer); music.timer = null; }
-    music.nextAt = 0;
+    music.nextAt = 0; music.nextCue = null; music.nextKey = null;
     if (music.current) {
       music.current.src.onended = null;
       stopVoice(music.current, 0.8); music.current = null;
@@ -462,19 +488,38 @@ var SluiceAudio = (function () {
   function queueMusic(gap) {
     if (music.timer !== null) clearTimeout(music.timer);
     music.nextAt = tnow() + gap;
-    music.timer = setTimeout(playMusicCue, Math.max(0, gap * 1000));
+    music.timer = setTimeout(playMusicCue, Math.max(0, (gap > MUSIC_PREFETCH_S ? gap - MUSIC_PREFETCH_S : gap) * 1000));
   }
-  function nextMusicName() {
+  function prepareMusicCue() {
+    var names, key = music.mode + ':' + music.townId;
     if (music.mode === 'underground') {
       music.ugBand = ugBandForRows(music.depthRows);
-      if (music.ugDanger && has(UG_DANGER)) return UG_DANGER;
-      return ugTrackForBand(music.ugBand);
+      key += ':' + music.ugBand + ':' + music.ugDanger;
+      names = music.ugDanger ? [UG_DANGER] : [];
+      names.push(UG_BANDS[music.ugBand]);
+      for (var d = 1; d < UG_BANDS.length; d++) {
+        if (music.ugBand - d >= 0) names.push(UG_BANDS[music.ugBand - d]);
+        if (music.ugBand + d < UG_BANDS.length) names.push(UG_BANDS[music.ugBand + d]);
+      }
+    } else {
+      names = music.mode === 'town' ? [TOWN_THEME[music.townId]] :
+        (music.mode === 'travel' ? TRAVEL_POOL : TOWN_POOL);
     }
-    var names = music.mode === 'town' ? [TOWN_THEME[music.townId]] :
-      (music.mode === 'travel' ? TRAVEL_POOL : TOWN_POOL);
-    var avail = names.filter(has);
-    if (avail.length > 1) avail = avail.filter(function (name) { return name !== music.lastCue; });
-    return avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
+    if (music.nextKey !== key || !music.nextCue || trackRequested[music.nextCue] === 'failed') {
+      var avail = names.filter(function (name) {
+        return MANIFEST[name] && trackRequested[name] !== 'failed' && (typeof fetch !== 'undefined' || has(name));
+      });
+      if (music.mode !== 'underground') {
+        if (avail.length > 1) avail = avail.filter(function (name) { return name !== music.lastCue; });
+        // The opening cue can use the track warmed beneath the loading screen.
+        var warm = !music.lastCue && avail.filter(has);
+        if (warm && warm.length) avail = warm;
+      }
+      music.nextCue = avail.length ? avail[music.mode === 'underground' ? 0 : Math.floor(Math.random() * avail.length)] : null;
+      music.nextKey = key;
+    }
+    loadTrack(music.nextCue);
+    return has(music.nextCue) ? music.nextCue : null;
   }
   function playMusicCue() {
     music.timer = null;
@@ -483,10 +528,11 @@ var SluiceAudio = (function () {
     // the quiet interval on its clock, and never pile up unheard sources.
     var remaining = music.nextAt - tnow();
     if (remaining > 0 || ctx.state !== 'running') {
-      music.timer = setTimeout(playMusicCue, Math.max(1000, remaining * 1000));
+      if (remaining <= MUSIC_PREFETCH_S && ctx.state === 'running') prepareMusicCue();
+      music.timer = setTimeout(playMusicCue, Math.max(ctx.state === 'running' ? 1 : 1000, remaining * 1000));
       return;
     }
-    var name = nextMusicName();
+    var name = prepareMusicCue();
     if (!name) { queueMusic(6); return; }               // retry as assets decode
     var s = ctx.createBufferSource(); s.buffer = buffers[name]; s.loop = false;
     var g = ctx.createGain(); g.gain.value = 0;
@@ -511,7 +557,8 @@ var SluiceAudio = (function () {
     };
     try { s.start(at); }
     catch (e) { s.onended = null; s.disconnect(); g.disconnect(); queueMusic(6); return; }
-    music.current = voice; music.lastCue = name;
+    music.current = voice; music.lastCue = name; music.nextCue = null; music.nextKey = null;
+    trackUsed[name] = ++trackClock; trimTracks();
     setTimeOfDay(music.timeOfDay);
   }
 
@@ -545,8 +592,10 @@ var SluiceAudio = (function () {
   // ===== combat layer =======================================================
   function setCombat(on, which) {
     ensure();
+    music.combatWanted = on ? (which === 2 ? 'combat2' : 'combat1') : null;
     if (on) {
       if (music.combat) return;
+      loadTrack(music.combatWanted);
       music.combat = startLoop(which === 2 ? 'combat2' : 'combat1', 0);
       if (music.combat) ramp(music.combat.gain.gain, 1, 0.6);
       duck(0.4, 0.1, 0.6);
@@ -1169,6 +1218,7 @@ var SluiceAudio = (function () {
     death: function () {
       stopActionSfx(); sfxAmbience.setZone(null);
       stopMusic();
+      music.combatWanted = null;
       if (music.combat) { stopVoice(music.combat, 0.4); music.combat = null; }
       music.mode = null;
       duck(DUCK_HARD.amt, DUCK_HARD.atk, DUCK_HARD.rel);

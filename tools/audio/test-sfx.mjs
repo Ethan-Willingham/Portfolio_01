@@ -168,7 +168,7 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 let browser;
 try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_FOR_TESTING || '/Users/ethan/.local/bin/agent-chrome-for-testing', headless: true,
-    args: ['--enable-unsafe-webgpu', '--use-angle=metal', '--mute-audio'] });
+    args: ['--enable-unsafe-webgpu', '--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'), '--mute-audio'] });
   const context = await browser.newContext({ viewport: { width: 1280, height: 850 } });
   await context.addInitScript(() => {
     window.__sfxCalls = [];

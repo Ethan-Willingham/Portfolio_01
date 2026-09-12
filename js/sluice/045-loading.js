@@ -3,6 +3,19 @@
   var gameLoadingWorkPending = false;
   var gameLoadingGeneration = 0;
   var gameLoadingPauseReason = '';
+  var gameLoadingFirstReadyAt = 0;
+  var gameLoadingFence = null;
+  var gameLoadingStableFrames = 0;
+
+  function clearLoadingFence() {
+    if (gameLoadingFence) {
+      for (var i = 0; i < gameLoadingFence.gl.length; i++) {
+        var item = gameLoadingFence.gl[i];
+        try { item.gl.deleteSync(item.sync); } catch (e) {}
+      }
+    }
+    gameLoadingFence = null;
+  }
 
   function clearLoadingInput() {
     for (var k in keys) keys[k] = false;
@@ -16,6 +29,9 @@
     introPhase = 'warmup';
     introSettledFrames = 0;
     introWarmupFramesRun = 0;
+    gameLoadingFirstReadyAt = 0;
+    gameLoadingStableFrames = 0;
+    clearLoadingFence();
     terrainWarmupFrames = 3;
     clearLoadingInput();
     if (window.SluiceLoading) window.SluiceLoading.begin(label);
@@ -118,24 +134,76 @@
     return !veilTile.dirty && !veilTile.recolorDirty;
   }
 
+  function startLoadingFence() {
+    var fence = gameLoadingFence = { gpuDone: true, gl: [], at: performance.now(), frames: 0 };
+    var water = liquidWGPU;
+    if (water && water.queue && !water.failed) {
+      fence.gpuDone = false;
+      try {
+        loadingBounded(water.queue.onSubmittedWorkDone(), 2000).then(function () { fence.gpuDone = true; });
+      } catch (e) { fence.gpuDone = true; }
+    }
+    var contexts = [smokeProbeGL(), skyGL];
+    for (var i = 0; i < contexts.length; i++) {
+      var gl = contexts[i];
+      if (!gl || !gl.fenceSync || gl.isContextLost()) continue;
+      try {
+        var sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+        if (sync) fence.gl.push({ gl: gl, sync: sync });
+        gl.flush();
+      } catch (e) {}
+    }
+  }
+  function loadingFenceReady() {
+    var fence = gameLoadingFence;
+    fence.frames++;
+    for (var i = fence.gl.length - 1; i >= 0; i--) {
+      var item = fence.gl[i], status;
+      try { status = item.gl.clientWaitSync(item.sync, 0, 0); } catch (e) {}
+      if (status !== item.gl.TIMEOUT_EXPIRED || performance.now() - fence.at > 2000) {
+        try { item.gl.deleteSync(item.sync); } catch (e) {}
+        fence.gl.splice(i, 1);
+      }
+    }
+    return fence.gpuDone && !fence.gl.length && fence.frames >= 2;
+  }
+
   // Called instead of gameplay, including while a focus pause is pending.
   // No rig physics, input, hazards, economy, autosave or clock ticks run here.
   function renderLoadingScene() {
     if (gameLoadingWorkPending || !gameLoadingAssetsReady || introPhase === 'revealing') return;
     clearLoadingInput();
-    updateCamera();
-    treesUpdate(0);
-    updateWeather(0);
-    updateSmoke(0);
-    updateSurfacePondStreaming();
-    updateLiquids(1 / 60);
-    terrainWarmupFrames = 1;
-    terrainChunkPendingThisFrame = 0;
-    render();
-    introWarmupFramesRun++;
-    var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
-    introSettledFrames = ready ? introSettledFrames + 1 : 0;
-    if (introSettledFrames < 2 || introWarmupFramesRun < 4) return;
+    if (!gameLoadingFence) {
+      var warmStart = performance.now();
+      updateCamera();
+      treesUpdate(0);
+      updateWeather(0);
+      // Exercise the real advection/pressure passes while input is held. A zero
+      // dt used to leave the first actual smoke simulation to the player's turn.
+      updateSmoke(1 / 60);
+      updateSurfacePondStreaming();
+      updateLiquids(1 / 60);
+      terrainWarmupFrames = 1;
+      terrainChunkPendingThisFrame = 0;
+      render();
+      introWarmupFramesRun++;
+      var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
+      introSettledFrames = ready ? introSettledFrames + 1 : 0;
+      if (ready && !gameLoadingFirstReadyAt) gameLoadingFirstReadyAt = performance.now();
+      gameLoadingStableFrames = ready && performance.now() - warmStart <= 8 ? gameLoadingStableFrames + 1 : 0;
+      // Require complete cache frames without expensive warmup work. A busy or
+      // slower device gets a bounded fallback after readiness, never an endless
+      // demand for a frame rate its selected preset cannot sustain.
+      if (introSettledFrames < 6 || (gameLoadingStableFrames < 6 &&
+          performance.now() - gameLoadingFirstReadyAt < 2000)) return;
+      startLoadingFence();
+      if (window.SluiceLoading) window.SluiceLoading.stage('Preparing the first frame');
+      return;
+    }
+    // Stop submitting while the completed scene drains, then give the browser
+    // two presentation opportunities. Never use a blocking GPU finish here.
+    if (!loadingFenceReady()) return;
+    clearLoadingFence();
     terrainWarmupFrames = 0;
     introPhase = 'revealing';
     var ticket = gameLoadingGeneration;

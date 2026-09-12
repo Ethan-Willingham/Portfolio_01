@@ -1004,7 +1004,7 @@
     function clearObstacle () {
       obstacleSrcCanvas = null;
     }
-  
+
     // Shift the dye + velocity fields so the simulation stays anchored
     // in world space when the camera pans. Caller passes camera delta in
     // simulation-domain fractional units. The game convention has +y down,
@@ -1167,6 +1167,7 @@
   var smokeObstWaterBins = null;     // continuous particle density, reused on repaint
   var smokeObstWaterVY = null;       // density-weighted falling-water velocity
   var smokeObstWaterCanvas = null, smokeObstWaterCtx = null, smokeObstWaterImage = null;
+  var smokeObstWaterCache = null;
   // Fast water entrains the surrounding air. The CPU mirror is binned every
   // few frames and the strongest falling cells inject velocity, not dye, into
   // the smoke field. Slow pool water remains a collision boundary.
@@ -1939,65 +1940,93 @@
       var BIN = 4;                                     // world px per sample
       // Anchor samples to the world so camera motion cannot reshuffle them.
       // The padding includes the quadratic kernel beyond the visible domain.
-      var originX = Math.floor(domainX / BIN) * BIN - BIN * 2;
-      var originY = Math.floor(domainY / BIN) * BIN - BIN * 2;
-      var binsW = Math.ceil((domainX + smokeFluidDomainWorldW - originX) / BIN) + 2;
-      var binsH = Math.ceil((domainY + smokeFluidDomainWorldH - originY) / BIN) + 2;
+      // A padded 64 px window keeps the same world samples while the camera
+      // moves within it. Drawing still follows the camera at full precision.
+      var windowStep = 64;
+      var originX = Math.floor(domainX / windowStep) * windowStep - BIN * 2;
+      var originY = Math.floor(domainY / windowStep) * windowStep - BIN * 2;
+      var binsW = (Math.ceil((domainX + smokeFluidDomainWorldW) / windowStep) * windowStep - originX) / BIN + 2;
+      var binsH = (Math.ceil((domainY + smokeFluidDomainWorldH) / windowStep) * windowStep - originY) / BIN + 2;
       var nBins = binsW * binsH;
-      if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
-        smokeObstWaterBins = new Float32Array(Math.max(nBins, 16384));
-        smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
-      }
-      var bins = smokeObstWaterBins;
-      bins.fill(0, 0, nBins);
-      smokeObstWaterVY.fill(0, 0, nBins);
-      var domR = originX + (binsW - 1.5) * BIN;
-      var domB = originY + (binsH - 1.5) * BIN;
-      for (var wi = 0; wi < liquidCount; wi++) {
-        if (liquidFrozen[wi]) continue;
-        var wx = liquidX[wi], wy = liquidY[wi];
-        if (wx < originX + BIN || wx >= domR || wy < originY + BIN || wy >= domB) continue;
-        var gx = (wx - originX) / BIN, gy = (wy - originY) / BIN;
-        var ix = Math.floor(gx - 0.5), iy = Math.floor(gy - 0.5);
-        var fx = gx - ix, fy = gy - iy;
-        // Quadratic B-spline weights sum to one and have continuous slopes.
-        // Nine deposits per particle, with no per-particle allocations.
-        var x0 = 0.5 * (1.5 - fx) * (1.5 - fx);
-        var x1 = 0.75 - (fx - 1) * (fx - 1);
-        var x2 = 0.5 * (fx - 0.5) * (fx - 0.5);
-        for (var ky = 0; ky < 3; ky++) {
-          var yw = ky === 0 ? 0.5 * (1.5 - fy) * (1.5 - fy) :
-            ky === 1 ? 0.75 - (fy - 1) * (fy - 1) : 0.5 * (fy - 0.5) * (fy - 0.5);
-          var bi = (iy + ky) * binsW + ix;
-          var w0 = x0 * yw, w1 = x1 * yw, w2 = x2 * yw;
-          bins[bi] += w0; bins[bi + 1] += w1; bins[bi + 2] += w2;
-          smokeObstWaterVY[bi] += liquidVY[wi] * w0;
-          smokeObstWaterVY[bi + 1] += liquidVY[wi] * w1;
-          smokeObstWaterVY[bi + 2] += liquidVY[wi] * w2;
+      var gpu = typeof liquidWGPU !== 'undefined' && liquidWGPU;
+      var canCache = gpu && gpu.simActive && typeof gpu.readbackApplyGen === 'number' &&
+        typeof liquidMutationSeq === 'number';
+      var cached = smokeObstWaterCache;
+      var reuse = canCache && cached && cached.gpu === gpu &&
+        cached.gen === gpu.readbackApplyGen && cached.seq === liquidMutationSeq &&
+        cached.count === liquidCount && cached.x === liquidX && cached.y === liquidY &&
+        cached.vy === liquidVY && cached.ox === originX && cached.oy === originY &&
+        cached.w === binsW && cached.h === binsH && cached.flow === SMOKE_WATER_FLOW_MIN_VY;
+      // Freeze/wake runs on the CPU between GPU readbacks. A wake also zeros
+      // velocity, so check these flags before reusing that mirror's image.
+      if (reuse) {
+        for (var fi = 0; fi < liquidCount; fi++) {
+          if (cached.frozen[fi] !== liquidFrozen[fi]) { reuse = false; break; }
         }
       }
-      if (!smokeObstWaterCanvas) {
-        smokeObstWaterCanvas = document.createElement('canvas');
-        smokeObstWaterCtx = smokeObstWaterCanvas.getContext('2d');
+      if (!reuse) {
+        if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
+          smokeObstWaterBins = new Float32Array(Math.max(nBins, 16384));
+          smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
+        }
+        var bins = smokeObstWaterBins;
+        bins.fill(0, 0, nBins);
+        smokeObstWaterVY.fill(0, 0, nBins);
+        var domR = originX + (binsW - 1.5) * BIN;
+        var domB = originY + (binsH - 1.5) * BIN;
+        for (var wi = 0; wi < liquidCount; wi++) {
+          if (liquidFrozen[wi]) continue;
+          var wx = liquidX[wi], wy = liquidY[wi];
+          if (wx < originX + BIN || wx >= domR || wy < originY + BIN || wy >= domB) continue;
+          var gx = (wx - originX) / BIN, gy = (wy - originY) / BIN;
+          var ix = Math.floor(gx - 0.5), iy = Math.floor(gy - 0.5);
+          var fx = gx - ix, fy = gy - iy;
+          // Quadratic B-spline weights sum to one and have continuous slopes.
+          // Nine deposits per particle, with no per-particle allocations.
+          var x0 = 0.5 * (1.5 - fx) * (1.5 - fx);
+          var x1 = 0.75 - (fx - 1) * (fx - 1);
+          var x2 = 0.5 * (fx - 0.5) * (fx - 0.5);
+          for (var ky = 0; ky < 3; ky++) {
+            var yw = ky === 0 ? 0.5 * (1.5 - fy) * (1.5 - fy) :
+              ky === 1 ? 0.75 - (fy - 1) * (fy - 1) : 0.5 * (fy - 0.5) * (fy - 0.5);
+            var bi = (iy + ky) * binsW + ix;
+            var w0 = x0 * yw, w1 = x1 * yw, w2 = x2 * yw;
+            bins[bi] += w0; bins[bi + 1] += w1; bins[bi + 2] += w2;
+            smokeObstWaterVY[bi] += liquidVY[wi] * w0;
+            smokeObstWaterVY[bi + 1] += liquidVY[wi] * w1;
+            smokeObstWaterVY[bi + 2] += liquidVY[wi] * w2;
+          }
+        }
+        if (!smokeObstWaterCanvas) {
+          smokeObstWaterCanvas = document.createElement('canvas');
+          smokeObstWaterCtx = smokeObstWaterCanvas.getContext('2d');
+        }
+        if (!smokeObstWaterImage || smokeObstWaterCanvas.width !== binsW || smokeObstWaterCanvas.height !== binsH) {
+          smokeObstWaterCanvas.width = binsW; smokeObstWaterCanvas.height = binsH;
+          smokeObstWaterImage = smokeObstWaterCtx.createImageData(binsW, binsH);
+        }
+        var rgba = smokeObstWaterImage.data;
+        // Same density range as the old 10..24 particles per 8x8 bin, scaled
+        // by area. Pools remain solid; the rim changes continuously. Floating
+        // counts also avoid the old 255-count saturation under compression.
+        for (var bi = 0; bi < nBins; bi++) {
+          var bn = bins[bi];
+          var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
+          coverage *= coverage * (3 - 2 * coverage);
+          var falling = bn > 0 ? Math.max(0, Math.min(1,
+            (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
+          falling *= falling * (3 - 2 * falling);
+          rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+        }
+        smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
+        if (canCache) {
+          var frozenCopy = cached && cached.frozen.length === liquidCount ? cached.frozen : new Uint8Array(liquidCount);
+          for (var fi = 0; fi < liquidCount; fi++) frozenCopy[fi] = liquidFrozen[fi];
+          smokeObstWaterCache = { gpu: gpu, gen: gpu.readbackApplyGen, seq: liquidMutationSeq,
+            count: liquidCount, x: liquidX, y: liquidY, vy: liquidVY, frozen: frozenCopy,
+            ox: originX, oy: originY, w: binsW, h: binsH, flow: SMOKE_WATER_FLOW_MIN_VY };
+        } else smokeObstWaterCache = null;
       }
-      if (!smokeObstWaterImage || smokeObstWaterCanvas.width !== binsW || smokeObstWaterCanvas.height !== binsH) {
-        smokeObstWaterCanvas.width = binsW; smokeObstWaterCanvas.height = binsH;
-        smokeObstWaterImage = smokeObstWaterCtx.createImageData(binsW, binsH);
-      }
-      var rgba = smokeObstWaterImage.data;
-      // Same density range as the old 10..24 particles per 8x8 bin, scaled
-      // by area. Pools remain solid; the rim changes continuously. Floating
-      // counts also avoid the old 255-count saturation under compression.
-      for (var bi = 0; bi < nBins; bi++) {
-        var bn = bins[bi];
-        var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
-        coverage *= coverage * (3 - 2 * coverage);
-        var falling = bn > 0 ? Math.max(0, Math.min(1,
-          (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
-        falling *= falling * (3 - 2 * falling);
-        rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
-      }
-      smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
       oc.save();
       oc.imageSmoothingEnabled = true;
       // A density sample is at a pixel's centre, hence the half-cell offset.

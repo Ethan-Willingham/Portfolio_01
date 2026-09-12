@@ -30,16 +30,14 @@
     var OPT_PREFIX = 'sluice.opt.';
 
     // Pause-screen graphics choice -> GM_PRESETS device-tier name (see
-    // 380-gm-presets-boot.js). 'medium' is the tier described as "balanced
-    // fidelity and fps"; 'extreme' matches the unconditional boot preset, so
-    // an unset or 'extreme' choice changes nothing.
-    var OPT_GFX_PRESET = { performance: 'low', balanced: 'medium', extreme: 'extreme' };
+    // 380-gm-presets-boot.js). Balanced keeps the full-size scene and reduces
+    // effect detail. Extreme remains the fresh desktop profile's default.
+    var OPT_GFX_PRESET = { performance: 'low', balanced: 'high', extreme: 'extreme' };
 
     var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
 
-    // gm.set / gm.preset with a retry: this fragment evaluates long before the
-    // gm facade exists, and boot is synchronous, so the first 100 ms tick
-    // already lands after the game (and its boot preset) is up.
+    // Non-graphics levers can wait for the later gm facade. Boot graphics are
+    // resolved synchronously in 380, before world and GPU warmup begin.
     function optGmSet(path, value, tries) {
       if (tries === undefined) tries = 50;
       try {
@@ -66,6 +64,8 @@
       shakeScale: 1,
       damageFlash: true,
       lowFlash: false,
+      graphicsChoice: isMobile ? 'balanced' : 'extreme',
+      graphicsPreset: function () { return OPT_GFX_PRESET[opts.get('gfx')] || null; },
 
       get: function (key) {
         try { return localStorage.getItem(OPT_PREFIX + key); } catch (e) { return null; }
@@ -87,7 +87,12 @@
         if (mv !== null && typeof SluiceAudio !== 'undefined' && SluiceAudio.setMusicVolume) SluiceAudio.setMusicVolume(mv);
       } else if (key === 'gfx') {
         var name = OPT_GFX_PRESET[String(val)];
-        if (name) optGmPreset(name);
+        if (name) {
+          opts.graphicsChoice = String(val);
+          if (introPhase === 'done' && window.gm && window.SluiceLoading) {
+            queueSceneLoading('Applying graphics', function () { optGmPreset(name); });
+          } else optGmPreset(name);
+        }
       } else if (key === 'shake') {
         var s = optClamp01(val);
         if (s !== null) opts.shakeScale = s;
@@ -112,9 +117,11 @@
       }
     }
 
-    // Boot: apply every persisted key. Unset keys are skipped entirely, so the
-    // shipped defaults (including the 'extreme' boot preset in 380) stand.
+    // Apply persisted non-graphics options; unset keys keep their defaults.
     for (var i = 0; i < OPT_KEYS.length; i++) {
+      // 380 resolves graphics once, before world/GPU warmup. A timer here
+      // used to resize an already-started Extreme scene to the saved choice.
+      if (OPT_KEYS[i] === 'gfx') continue;
       var saved = opts.get(OPT_KEYS[i]);
       if (saved !== null) optApply(OPT_KEYS[i], saved);
     }

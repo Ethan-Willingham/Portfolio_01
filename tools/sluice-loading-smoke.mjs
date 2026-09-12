@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
@@ -12,13 +13,15 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const port=Number(process.env.PORT || 8802),debugPort=port+1000;
 const dump=process.env.DUMP && path.resolve(process.env.DUMP);
 if(dump){assert.ok(dump!==root && !dump.startsWith(root+path.sep),'DUMP must be outside the repository');fs.mkdirSync(dump,{recursive:true});}
-const profile=fs.mkdtempSync('/tmp/sluice-loading-profile-');
+const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-loading-profile-'));
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const pending=new Map(),faults=new Map(),faultHits=[],held=[],errors=[],reports=[];
 let chrome,ws,sequence=0,checks=0,scenario='startup';
 const probe=`
 window.__loadingSmoke=(function(){
   var realLoop=loop,realInit=init,initEvents=[],revealEvents=[],lastBeginFrame=-1,loadingTicks=0,hiddenMotion=0;
+  var realResize=resize,resizeCalls=0;
+  resize=function(){if(!resolutionBatchDepth)resizeCalls++;return realResize.apply(this,arguments);};
   loop=function(t){
     if(window.__loadingTestHold && introPhase!=='done') {lastTime=t;gameRafId=requestAnimationFrame(loop);return;}
     var active=SluiceLoading.active(),before={x:player.x,y:player.y,fuel:player.fuel};
@@ -32,7 +35,7 @@ window.__loadingSmoke=(function(){
   init=function(){
     initEvents.push({active:!!(window.SluiceLoading && SluiceLoading.active()),
       state:document.getElementById('game-intro').dataset.state,
-      framesSinceBegin:lastBeginFrame<0 ? null : window.__loadingFrames-lastBeginFrame});
+      framesSinceBegin:lastBeginFrame<0 ? null : window.__loadingFrames-lastBeginFrame,preset:window.gm&&gm.activePreset});
     return realInit();
   };
   var realBegin=SluiceLoading.begin;
@@ -51,7 +54,9 @@ window.__loadingSmoke=(function(){
     state:function(){return {version:GAME_VERSION,intro:introPhase,paused:gamePaused,
       x:player.x,y:player.y,fuel:player.fuel,money:money,keys:Object.keys(keys).filter(function(k){return keys[k];}),
       touch:!!touch.active,initEvents:initEvents,revealEvents:revealEvents,loadingTicks:loadingTicks,hiddenMotion:hiddenMotion,bootError:window.__bootErr || null,
-      loaderActive:SluiceLoading.active(),worldReady:!!world.length,gpuWater:!!liquidWGPU,gpuJello:!!jelloWGPU,gpuSmoke:!!smokeWGPU};},
+      loaderActive:SluiceLoading.active(),worldReady:!!world.length,gpuWater:!!liquidWGPU,gpuJello:!!jelloWGPU,gpuSmoke:!!smokeWGPU,
+      stable:gameLoadingStableFrames,settled:introSettledFrames,preset:gm.activePreset,workerFailed:weatherBakeWorkerFailed,
+      resizeCalls:resizeCalls,canvas:[canvas.width,canvas.height],cssPixels:viewW*viewH,pixelBudget:RES_PIXEL_BUDGET,choice:SluiceOptions.graphicsChoice};},
     saveMarker:function(){money=12345;saveNow('loading smoke');return money;},
     hold:function(on){window.__loadingTestHold=on;},
     evictTerrain:function(){terrainChunkCache={};terrainChunkCount=0;}
@@ -96,6 +101,9 @@ const gpuDelayProbe=`
 })();
 `;
 const earlyProbe=`
+if(location.search.indexOf('worker-blocked')>=0)window.Worker=function(){throw Error('Intentional worker denial');};
+if(location.search.indexOf('worker-hung')>=0)window.Worker=function(){this.postMessage=function(){};this.terminate=function(){};};
+if(location.search.indexOf('large-canvas-budget')>=0)addEventListener('DOMContentLoaded',function(){document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));var css=document.createElement('style');css.textContent='.game-wrapper{width:100vw!important;max-width:none!important}.game-canvas-area{width:100%!important;height:100%!important}';document.head.appendChild(css);dispatchEvent(new Event('resize'));});
 window.__loadingFrames=0;window.__loadingHistory=[];
 window.addEventListener('DOMContentLoaded',function(){if(window.__loadingAtlasState)window.__loadingAtlasAtDOMContentLoaded=__loadingAtlasState();});
 (function tick(){window.__loadingFrames++;requestAnimationFrame(tick);})();
@@ -161,11 +169,11 @@ async function navigate(name,query=''){
   await send('Page.navigate',{url});
   await until(`location.href===${JSON.stringify(url)} && !!document.getElementById("game-intro")`,'initial loading markup was not parsed');
 }
-async function ready(name,timeout=40000){
+async function ready(name,timeout=40000,paused=false){
   await until('!!window.__loadingSmoke && document.getElementById("game-intro").dataset.state === "ready" && !SluiceLoading.active()',name+' did not reveal',timeout);
   const state=await ev('__loadingSmoke.state()'),loader=await status();
   check(name+' reveals a complete world',state.worldReady && state.intro==='done' && !state.bootError);
-  check(name+' releases gameplay',!state.paused && !loader.active);
+  check(name+' restores the expected pause state',state.paused===paused && !loader.active);
   reports.push({name,state,loader,history:await ev('__loadingHistory')});
   return state;
 }
@@ -183,7 +191,9 @@ async function heldInput(){
 }
 try{
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
-  chrome=spawn(process.env.CHROME || `${process.env.HOME}/.local/bin/agent-chrome-for-testing`,['--headless=new','--enable-unsafe-webgpu','--use-angle=metal','--no-first-run','--disable-gpu-sandbox',`--user-data-dir=${profile}`,`--remote-debugging-port=${debugPort}`,'about:blank'],{stdio:'ignore'});
+  const executable=process.env.CHROME || (process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
+  const angle=process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan';
+  chrome=spawn(executable,['--headless=new','--mute-audio','--enable-unsafe-webgpu','--use-angle='+angle,'--no-first-run',`--user-data-dir=${profile}`,`--remote-debugging-port=${debugPort}`,'about:blank'],{stdio:'ignore',windowsHide:true});
   let spawnError;chrome.once('error',e=>{spawnError=e;});let target;
   for(let n=0;n<100;n++){if(spawnError)throw spawnError;try{target=(await(await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json()).find(t=>t.type==='page');if(target)break;}catch{}await sleep(100);}
   assert.ok(target,'Chrome for Testing started');ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
@@ -205,6 +215,7 @@ try{
   await visible('loader stays present during world warmup');await heldInput();await shot('world-warmup');
   await ev('__loadingSmoke.hold(false)');const first=await ready('fresh boot');await shot('fresh-ready');
   check('real loading frames do not simulate hidden gameplay',first.loadingTicks>0 && first.hiddenMotion===0);
+  check('arrival follows complete cache frames',first.settled>=6);
   check('reveal fade blocks gameplay until it completes',first.revealEvents.some(e=>e.active) && first.revealEvents.every(e=>e.stationary && e.blocked));
   await ev('__loadingSmoke.saveMarker()');
 
@@ -266,6 +277,33 @@ try{
   check('late GPU resources are removed without orphan canvases',await ev('__gpuLoadingProbe.lateDestroyed>=1 && !document.querySelector("[data-loading-gpu-probe]") && !__loadingSmoke.state().gpuWater'));
   reports.push({name:'GPU disposal',gpu:await ev('__gpuLoadingProbe')});
 
+  await ev("localStorage.setItem('sluice.opt.gfx','balanced')");
+  await navigate('saved-graphics');const balanced=await ready('saved graphics');
+  check('saved Balanced is selected before world initialization',balanced.preset==='high' && balanced.initEvents.every(e=>e.preset==='high') && balanced.choice==='balanced');
+  await navigate('url-graphics','?gmpreset=extreme');const extreme=await ready('URL graphics override');
+  await sleep(250);
+  check('URL device choice wins without a delayed saved-preset resize',extreme.preset==='extreme' && extreme.initEvents.every(e=>e.preset==='extreme') && await ev('gm.activePreset==="extreme"'));
+  await click('gm-pause-btn');await click('gm-options-btn');
+  for(const choice of ['performance','balanced','extreme']){
+    const before=await ev('__loadingSmoke.state()');
+    await ev('__loadingSmoke.hold(true);SluiceOptions.set("gfx",'+JSON.stringify(choice)+')');
+    await until('SluiceLoading.active()','graphics change did not cover the scene');
+    await visible(choice+' graphics change stays covered');
+    await sleep(100);await heldInput();await ev('__loadingSmoke.hold(false)');
+    const after=await ready(choice+' graphics change',40000,true);
+    check(choice+' applies one resize and preserves the rig',after.resizeCalls===before.resizeCalls+1 && after.x===before.x && after.y===before.y && after.fuel===before.fuel);
+    check(choice+' selection matches the actual tier',after.preset===({performance:'low',balanced:'high',extreme:'extreme'})[choice]);
+  }
+  await ev("localStorage.removeItem('sluice.opt.gfx')");
+  await size(3840,2160);await navigate('large-canvas-budget');const large=await ready('large canvas');
+  console.log('LARGE '+JSON.stringify({canvas:large.canvas,cssPixels:large.cssPixels,budget:large.pixelBudget}));
+  check('large canvas respects the chosen pixel budget',large.cssPixels>large.pixelBudget && large.canvas[0]*large.canvas[1]<=large.pixelBudget+large.canvas[0]+large.canvas[1]);
+  await size(1440,900);
+  for(const name of ['worker-blocked','worker-hung']){
+    await navigate(name,'?wmood=3');const fallback=await ready(name,50000);
+    check(name+' uses complete synchronous cloud fallback',fallback.workerFailed && fallback.settled>=6);
+  }
+
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await size(390,844,true);faults.set('/js/sluice.js','hold');await navigate('mobile-reduced-motion');
   await visible('mobile loading remains visible');
@@ -289,5 +327,8 @@ try{
   for(const h of held)h.res.destroy();
   if(ws){try{await send('Browser.close');}catch{}ws.close();}
   if(chrome && chrome.exitCode===null){chrome.kill('SIGTERM');await Promise.race([new Promise(r=>chrome.once('exit',r)),sleep(2000)]);if(chrome.exitCode===null)chrome.kill('SIGKILL');}
-  server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true});
+  server.closeAllConnections();await new Promise(r=>server.close(r));
+  assert.equal(path.dirname(path.resolve(profile)),path.resolve(os.tmpdir()));
+  assert(path.basename(profile).startsWith('sluice-loading-profile-'));
+  fs.rmSync(profile,{recursive:true,force:true});
 }

@@ -481,6 +481,8 @@
   // marker calls it every frame.
   var _ftsValue = 0;
   var _ftsTime = -1e9;
+  var ftsHeapF = [], ftsHeapId = [];
+  var ftsScores = null, ftsVisits = null, ftsEpoch = 0;
   function getFuelToSurface() {
     var now = performance.now();
     if (now - _ftsTime > 200) {
@@ -510,7 +512,16 @@
     }
 
     // ----- A* up to the surface — binary min-heap over parallel arrays -----
-    var heapF = [], heapId = [];
+    var heapF = ftsHeapF, heapId = ftsHeapId;
+    heapF.length = heapId.length = 0;
+    var cells = COLS * TOTAL_ROWS;
+    if (!ftsScores || ftsScores.length !== cells) {
+      ftsScores = new Float64Array(cells); ftsVisits = new Int32Array(cells); ftsEpoch = 0;
+    }
+    // Positive stamp: discovered this search. Negative: already closed.
+    // No full-map clear or Map/Set allocation on the HUD's 200 ms refresh.
+    if (++ftsEpoch >= 2147483647) { ftsVisits.fill(0); ftsEpoch = 1; }
+    var epoch = ftsEpoch, visits = ftsVisits, gScore = ftsScores;
     function heapPush(f, id) {
       var i = heapF.length;
       heapF.push(f); heapId.push(id);
@@ -542,26 +553,24 @@
     }
 
     var startId = prow * COLS + pcol;
-    var gScore = new Map();
-    var closed = new Set();
-    gScore.set(startId, 0);
+    visits[startId] = epoch; gScore[startId] = 0;
     heapPush((prow - SKY_ROWS) * AIR_COST, startId);
     var explored = 0, MAX_EXPLORE = 12000;
     var DR = [-1, 1, 0, 0], DC = [0, 0, -1, 1];
     while (heapF.length > 0) {
       var id = heapPopId();
-      if (closed.has(id)) continue;
-      closed.add(id);
+      if (visits[id] === -epoch) continue;
+      visits[id] = -epoch;
       var row = (id / COLS) | 0;
       var col = id - row * COLS;
-      if (row <= SKY_ROWS) return gScore.get(id);          // reached the surface
+      if (row <= SKY_ROWS) return gScore[id];              // reached the surface
       if (++explored > MAX_EXPLORE) break;                 // search budget — bail
-      var g = gScore.get(id);
+      var g = gScore[id];
       for (var d = 0; d < 4; d++) {
         var nr = row + DR[d], nc = col + DC[d];
         if (nc < 0 || nc >= COLS || nr < 0 || nr >= TOTAL_ROWS) continue;
         var nid = nr * COLS + nc;
-        if (closed.has(nid)) continue;
+        if (visits[nid] === -epoch) continue;
         var t = tileAt(nr, nc);
         var stepCost;
         if (t === null) {
@@ -574,9 +583,9 @@
           stepCost = DRILL_COST;
         }
         var ng = g + stepCost;
-        var known = gScore.get(nid);
-        if (known === undefined || ng < known) {
-          gScore.set(nid, ng);
+        var known = gScore[nid];
+        if (visits[nid] !== epoch || ng < known) {
+          visits[nid] = epoch; gScore[nid] = ng;
           heapPush(ng + Math.max(0, nr - SKY_ROWS) * AIR_COST, nid);
         }
       }
@@ -736,7 +745,9 @@
   var TERRAIN_CHUNK_RENDER_SCALE_MIN = 1.5; // terrain auto-scale floor
   var TERRAIN_CHUNK_RENDER_SCALE_MAX = 3;   // ceiling — caps zoomed-in terrain sharpness
   var TERRAIN_CHUNK_RENDER_SCALE = TERRAIN_CHUNK_RENDER_SCALE_MIN; // live; set by syncTerrainChunkRenderScale
+  var resolutionBatchDepth = 0, resolutionBatchPending = false;
   function resize() {
+    if (resolutionBatchDepth > 0) { resolutionBatchPending = true; return; }
     var wrap = canvas.parentElement;
     viewW = wrap.clientWidth;
     viewH = wrap.clientHeight;
@@ -754,22 +765,23 @@
     var maxDpr = Math.sqrt(RES_PIXEL_BUDGET / cssPixels);   // see Resolution config
     // v11.79 — apply the platform render-scale (see RENDER_SCALE_*).
     var renderScale = isMobile ? RENDER_SCALE_MOBILE : RENDER_SCALE_DESKTOP;
-    dpr = Math.max(1, Math.min(nativeDpr, maxDpr)) * renderScale;
+    dpr = Math.min(nativeDpr, maxDpr) * renderScale;
 
     // Render at native device pixels for crispness
-    canvas.width = Math.round(viewW * dpr);
-    canvas.height = Math.round(viewH * dpr);
+    var pixelW = Math.round(viewW * dpr), pixelH = Math.round(viewH * dpr);
+    if (canvas.width !== pixelW) canvas.width = pixelW;
+    if (canvas.height !== pixelH) canvas.height = pixelH;
     canvas.style.width = viewW + 'px';
     canvas.style.height = viewH + 'px';
     if (liquidGLCanvas) {
-      liquidGLCanvas.width = canvas.width;
-      liquidGLCanvas.height = canvas.height;
+      if (liquidGLCanvas.width !== pixelW) liquidGLCanvas.width = pixelW;
+      if (liquidGLCanvas.height !== pixelH) liquidGLCanvas.height = pixelH;
       if (typeof liquidGLPositionDOM === 'function') liquidGLPositionDOM();
     }
     // v23.53: keep the UI top canvas (z6) aligned to the new viewport.
     if (typeof uiTopCanvas !== 'undefined' && uiTopCanvas) {
-      uiTopCanvas.width = canvas.width;
-      uiTopCanvas.height = canvas.height;
+      if (uiTopCanvas.width !== pixelW) uiTopCanvas.width = pixelW;
+      if (uiTopCanvas.height !== pixelH) uiTopCanvas.height = pixelH;
       if (typeof uiTopPositionDOM === 'function') uiTopPositionDOM();
     }
     // v10.83 — keep the DOM-layered smoke canvas aligned to the new viewport.

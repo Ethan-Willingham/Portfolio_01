@@ -142,10 +142,10 @@
         }
         if (key === 'gfx') {
           document.getElementById('gm-gfx-note').textContent = {
-            performance: 'Fewer effects, smoother play.',
-            balanced: 'A balance of detail and performance.',
-            extreme: 'All visual effects.'
-          }[value];
+            performance: 'Lower image resolution and lighter effects for more frame-rate headroom.',
+            balanced: 'Full-size game image, with lighter smoke and terrain detail.',
+            extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
+          }[value] || 'Custom graphics settings.';
         }
       }
       for (var i = 0; i < pairs.length; i++) {
@@ -154,6 +154,7 @@
         })(pairs[i]);
       }
       var saved = read('sluice.opt.' + key);
+      if (key === 'gfx') window.SluiceOptions.syncGraphics = sync;
       var valid = pairs.some(function (pair) { return pair[1] === saved; });
       sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
     }
@@ -162,7 +163,7 @@
     wireSlider('gm-musicvol', 'musicvol', 0.65, false);
     wireSlider('gm-sfxvol', 'sfxvol', 1, false);
     wireSlider('gm-shake', 'shake', 1, false);
-    wireSegment('gfx', 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);
+    wireSegment('gfx', isMobile ? 'balanced' : 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);
     wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
     wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);

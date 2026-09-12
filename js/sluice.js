@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.121';
+  var GAME_VERSION = 'v26.122';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -4505,6 +4505,8 @@
   // marker calls it every frame.
   var _ftsValue = 0;
   var _ftsTime = -1e9;
+  var ftsHeapF = [], ftsHeapId = [];
+  var ftsScores = null, ftsVisits = null, ftsEpoch = 0;
   function getFuelToSurface() {
     var now = performance.now();
     if (now - _ftsTime > 200) {
@@ -4534,7 +4536,16 @@
     }
 
     // ----- A* up to the surface — binary min-heap over parallel arrays -----
-    var heapF = [], heapId = [];
+    var heapF = ftsHeapF, heapId = ftsHeapId;
+    heapF.length = heapId.length = 0;
+    var cells = COLS * TOTAL_ROWS;
+    if (!ftsScores || ftsScores.length !== cells) {
+      ftsScores = new Float64Array(cells); ftsVisits = new Int32Array(cells); ftsEpoch = 0;
+    }
+    // Positive stamp: discovered this search. Negative: already closed.
+    // No full-map clear or Map/Set allocation on the HUD's 200 ms refresh.
+    if (++ftsEpoch >= 2147483647) { ftsVisits.fill(0); ftsEpoch = 1; }
+    var epoch = ftsEpoch, visits = ftsVisits, gScore = ftsScores;
     function heapPush(f, id) {
       var i = heapF.length;
       heapF.push(f); heapId.push(id);
@@ -4566,26 +4577,24 @@
     }
 
     var startId = prow * COLS + pcol;
-    var gScore = new Map();
-    var closed = new Set();
-    gScore.set(startId, 0);
+    visits[startId] = epoch; gScore[startId] = 0;
     heapPush((prow - SKY_ROWS) * AIR_COST, startId);
     var explored = 0, MAX_EXPLORE = 12000;
     var DR = [-1, 1, 0, 0], DC = [0, 0, -1, 1];
     while (heapF.length > 0) {
       var id = heapPopId();
-      if (closed.has(id)) continue;
-      closed.add(id);
+      if (visits[id] === -epoch) continue;
+      visits[id] = -epoch;
       var row = (id / COLS) | 0;
       var col = id - row * COLS;
-      if (row <= SKY_ROWS) return gScore.get(id);          // reached the surface
+      if (row <= SKY_ROWS) return gScore[id];              // reached the surface
       if (++explored > MAX_EXPLORE) break;                 // search budget — bail
-      var g = gScore.get(id);
+      var g = gScore[id];
       for (var d = 0; d < 4; d++) {
         var nr = row + DR[d], nc = col + DC[d];
         if (nc < 0 || nc >= COLS || nr < 0 || nr >= TOTAL_ROWS) continue;
         var nid = nr * COLS + nc;
-        if (closed.has(nid)) continue;
+        if (visits[nid] === -epoch) continue;
         var t = tileAt(nr, nc);
         var stepCost;
         if (t === null) {
@@ -4598,9 +4607,9 @@
           stepCost = DRILL_COST;
         }
         var ng = g + stepCost;
-        var known = gScore.get(nid);
-        if (known === undefined || ng < known) {
-          gScore.set(nid, ng);
+        var known = gScore[nid];
+        if (visits[nid] !== epoch || ng < known) {
+          visits[nid] = epoch; gScore[nid] = ng;
           heapPush(ng + Math.max(0, nr - SKY_ROWS) * AIR_COST, nid);
         }
       }
@@ -4760,7 +4769,9 @@
   var TERRAIN_CHUNK_RENDER_SCALE_MIN = 1.5; // terrain auto-scale floor
   var TERRAIN_CHUNK_RENDER_SCALE_MAX = 3;   // ceiling — caps zoomed-in terrain sharpness
   var TERRAIN_CHUNK_RENDER_SCALE = TERRAIN_CHUNK_RENDER_SCALE_MIN; // live; set by syncTerrainChunkRenderScale
+  var resolutionBatchDepth = 0, resolutionBatchPending = false;
   function resize() {
+    if (resolutionBatchDepth > 0) { resolutionBatchPending = true; return; }
     var wrap = canvas.parentElement;
     viewW = wrap.clientWidth;
     viewH = wrap.clientHeight;
@@ -4778,22 +4789,23 @@
     var maxDpr = Math.sqrt(RES_PIXEL_BUDGET / cssPixels);   // see Resolution config
     // v11.79 — apply the platform render-scale (see RENDER_SCALE_*).
     var renderScale = isMobile ? RENDER_SCALE_MOBILE : RENDER_SCALE_DESKTOP;
-    dpr = Math.max(1, Math.min(nativeDpr, maxDpr)) * renderScale;
+    dpr = Math.min(nativeDpr, maxDpr) * renderScale;
 
     // Render at native device pixels for crispness
-    canvas.width = Math.round(viewW * dpr);
-    canvas.height = Math.round(viewH * dpr);
+    var pixelW = Math.round(viewW * dpr), pixelH = Math.round(viewH * dpr);
+    if (canvas.width !== pixelW) canvas.width = pixelW;
+    if (canvas.height !== pixelH) canvas.height = pixelH;
     canvas.style.width = viewW + 'px';
     canvas.style.height = viewH + 'px';
     if (liquidGLCanvas) {
-      liquidGLCanvas.width = canvas.width;
-      liquidGLCanvas.height = canvas.height;
+      if (liquidGLCanvas.width !== pixelW) liquidGLCanvas.width = pixelW;
+      if (liquidGLCanvas.height !== pixelH) liquidGLCanvas.height = pixelH;
       if (typeof liquidGLPositionDOM === 'function') liquidGLPositionDOM();
     }
     // v23.53: keep the UI top canvas (z6) aligned to the new viewport.
     if (typeof uiTopCanvas !== 'undefined' && uiTopCanvas) {
-      uiTopCanvas.width = canvas.width;
-      uiTopCanvas.height = canvas.height;
+      if (uiTopCanvas.width !== pixelW) uiTopCanvas.width = pixelW;
+      if (uiTopCanvas.height !== pixelH) uiTopCanvas.height = pixelH;
       if (typeof uiTopPositionDOM === 'function') uiTopPositionDOM();
     }
     // v10.83 — keep the DOM-layered smoke canvas aligned to the new viewport.
@@ -4856,6 +4868,19 @@
   var gameLoadingWorkPending = false;
   var gameLoadingGeneration = 0;
   var gameLoadingPauseReason = '';
+  var gameLoadingFirstReadyAt = 0;
+  var gameLoadingFence = null;
+  var gameLoadingStableFrames = 0;
+
+  function clearLoadingFence() {
+    if (gameLoadingFence) {
+      for (var i = 0; i < gameLoadingFence.gl.length; i++) {
+        var item = gameLoadingFence.gl[i];
+        try { item.gl.deleteSync(item.sync); } catch (e) {}
+      }
+    }
+    gameLoadingFence = null;
+  }
 
   function clearLoadingInput() {
     for (var k in keys) keys[k] = false;
@@ -4869,6 +4894,9 @@
     introPhase = 'warmup';
     introSettledFrames = 0;
     introWarmupFramesRun = 0;
+    gameLoadingFirstReadyAt = 0;
+    gameLoadingStableFrames = 0;
+    clearLoadingFence();
     terrainWarmupFrames = 3;
     clearLoadingInput();
     if (window.SluiceLoading) window.SluiceLoading.begin(label);
@@ -4971,24 +4999,76 @@
     return !veilTile.dirty && !veilTile.recolorDirty;
   }
 
+  function startLoadingFence() {
+    var fence = gameLoadingFence = { gpuDone: true, gl: [], at: performance.now(), frames: 0 };
+    var water = liquidWGPU;
+    if (water && water.queue && !water.failed) {
+      fence.gpuDone = false;
+      try {
+        loadingBounded(water.queue.onSubmittedWorkDone(), 2000).then(function () { fence.gpuDone = true; });
+      } catch (e) { fence.gpuDone = true; }
+    }
+    var contexts = [smokeProbeGL(), skyGL];
+    for (var i = 0; i < contexts.length; i++) {
+      var gl = contexts[i];
+      if (!gl || !gl.fenceSync || gl.isContextLost()) continue;
+      try {
+        var sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+        if (sync) fence.gl.push({ gl: gl, sync: sync });
+        gl.flush();
+      } catch (e) {}
+    }
+  }
+  function loadingFenceReady() {
+    var fence = gameLoadingFence;
+    fence.frames++;
+    for (var i = fence.gl.length - 1; i >= 0; i--) {
+      var item = fence.gl[i], status;
+      try { status = item.gl.clientWaitSync(item.sync, 0, 0); } catch (e) {}
+      if (status !== item.gl.TIMEOUT_EXPIRED || performance.now() - fence.at > 2000) {
+        try { item.gl.deleteSync(item.sync); } catch (e) {}
+        fence.gl.splice(i, 1);
+      }
+    }
+    return fence.gpuDone && !fence.gl.length && fence.frames >= 2;
+  }
+
   // Called instead of gameplay, including while a focus pause is pending.
   // No rig physics, input, hazards, economy, autosave or clock ticks run here.
   function renderLoadingScene() {
     if (gameLoadingWorkPending || !gameLoadingAssetsReady || introPhase === 'revealing') return;
     clearLoadingInput();
-    updateCamera();
-    treesUpdate(0);
-    updateWeather(0);
-    updateSmoke(0);
-    updateSurfacePondStreaming();
-    updateLiquids(1 / 60);
-    terrainWarmupFrames = 1;
-    terrainChunkPendingThisFrame = 0;
-    render();
-    introWarmupFramesRun++;
-    var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
-    introSettledFrames = ready ? introSettledFrames + 1 : 0;
-    if (introSettledFrames < 2 || introWarmupFramesRun < 4) return;
+    if (!gameLoadingFence) {
+      var warmStart = performance.now();
+      updateCamera();
+      treesUpdate(0);
+      updateWeather(0);
+      // Exercise the real advection/pressure passes while input is held. A zero
+      // dt used to leave the first actual smoke simulation to the player's turn.
+      updateSmoke(1 / 60);
+      updateSurfacePondStreaming();
+      updateLiquids(1 / 60);
+      terrainWarmupFrames = 1;
+      terrainChunkPendingThisFrame = 0;
+      render();
+      introWarmupFramesRun++;
+      var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
+      introSettledFrames = ready ? introSettledFrames + 1 : 0;
+      if (ready && !gameLoadingFirstReadyAt) gameLoadingFirstReadyAt = performance.now();
+      gameLoadingStableFrames = ready && performance.now() - warmStart <= 8 ? gameLoadingStableFrames + 1 : 0;
+      // Require complete cache frames without expensive warmup work. A busy or
+      // slower device gets a bounded fallback after readiness, never an endless
+      // demand for a frame rate its selected preset cannot sustain.
+      if (introSettledFrames < 6 || (gameLoadingStableFrames < 6 &&
+          performance.now() - gameLoadingFirstReadyAt < 2000)) return;
+      startLoadingFence();
+      if (window.SluiceLoading) window.SluiceLoading.stage('Preparing the first frame');
+      return;
+    }
+    // Stop submitting while the completed scene drains, then give the browser
+    // two presentation opportunities. Never use a blocking GPU finish here.
+    if (!loadingFenceReady()) return;
+    clearLoadingFence();
     terrainWarmupFrames = 0;
     introPhase = 'revealing';
     var ticket = gameLoadingGeneration;
@@ -6155,16 +6235,14 @@
     var OPT_PREFIX = 'sluice.opt.';
 
     // Pause-screen graphics choice -> GM_PRESETS device-tier name (see
-    // 380-gm-presets-boot.js). 'medium' is the tier described as "balanced
-    // fidelity and fps"; 'extreme' matches the unconditional boot preset, so
-    // an unset or 'extreme' choice changes nothing.
-    var OPT_GFX_PRESET = { performance: 'low', balanced: 'medium', extreme: 'extreme' };
+    // 380-gm-presets-boot.js). Balanced keeps the full-size scene and reduces
+    // effect detail. Extreme remains the fresh desktop profile's default.
+    var OPT_GFX_PRESET = { performance: 'low', balanced: 'high', extreme: 'extreme' };
 
     var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
 
-    // gm.set / gm.preset with a retry: this fragment evaluates long before the
-    // gm facade exists, and boot is synchronous, so the first 100 ms tick
-    // already lands after the game (and its boot preset) is up.
+    // Non-graphics levers can wait for the later gm facade. Boot graphics are
+    // resolved synchronously in 380, before world and GPU warmup begin.
     function optGmSet(path, value, tries) {
       if (tries === undefined) tries = 50;
       try {
@@ -6191,6 +6269,8 @@
       shakeScale: 1,
       damageFlash: true,
       lowFlash: false,
+      graphicsChoice: isMobile ? 'balanced' : 'extreme',
+      graphicsPreset: function () { return OPT_GFX_PRESET[opts.get('gfx')] || null; },
 
       get: function (key) {
         try { return localStorage.getItem(OPT_PREFIX + key); } catch (e) { return null; }
@@ -6212,7 +6292,12 @@
         if (mv !== null && typeof SluiceAudio !== 'undefined' && SluiceAudio.setMusicVolume) SluiceAudio.setMusicVolume(mv);
       } else if (key === 'gfx') {
         var name = OPT_GFX_PRESET[String(val)];
-        if (name) optGmPreset(name);
+        if (name) {
+          opts.graphicsChoice = String(val);
+          if (introPhase === 'done' && window.gm && window.SluiceLoading) {
+            queueSceneLoading('Applying graphics', function () { optGmPreset(name); });
+          } else optGmPreset(name);
+        }
       } else if (key === 'shake') {
         var s = optClamp01(val);
         if (s !== null) opts.shakeScale = s;
@@ -6237,9 +6322,11 @@
       }
     }
 
-    // Boot: apply every persisted key. Unset keys are skipped entirely, so the
-    // shipped defaults (including the 'extreme' boot preset in 380) stand.
+    // Apply persisted non-graphics options; unset keys keep their defaults.
     for (var i = 0; i < OPT_KEYS.length; i++) {
+      // 380 resolves graphics once, before world/GPU warmup. A timer here
+      // used to resize an already-started Extreme scene to the saved choice.
+      if (OPT_KEYS[i] === 'gfx') continue;
       var saved = opts.get(OPT_KEYS[i]);
       if (saved !== null) optApply(OPT_KEYS[i], saved);
     }
@@ -6390,10 +6477,10 @@
         }
         if (key === 'gfx') {
           document.getElementById('gm-gfx-note').textContent = {
-            performance: 'Fewer effects, smoother play.',
-            balanced: 'A balance of detail and performance.',
-            extreme: 'All visual effects.'
-          }[value];
+            performance: 'Lower image resolution and lighter effects for more frame-rate headroom.',
+            balanced: 'Full-size game image, with lighter smoke and terrain detail.',
+            extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
+          }[value] || 'Custom graphics settings.';
         }
       }
       for (var i = 0; i < pairs.length; i++) {
@@ -6402,6 +6489,7 @@
         })(pairs[i]);
       }
       var saved = read('sluice.opt.' + key);
+      if (key === 'gfx') window.SluiceOptions.syncGraphics = sync;
       var valid = pairs.some(function (pair) { return pair[1] === saved; });
       sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
     }
@@ -6410,7 +6498,7 @@
     wireSlider('gm-musicvol', 'musicvol', 0.65, false);
     wireSlider('gm-sfxvol', 'sfxvol', 1, false);
     wireSlider('gm-shake', 'shake', 1, false);
-    wireSegment('gfx', 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);
+    wireSegment('gfx', isMobile ? 'balanced' : 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);
     wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
     wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
@@ -29764,9 +29852,9 @@
   // A cloud is a continuous depth field. Soft unions join the billows before
   // lighting, so a bank has one body instead of stacked translucent outlines.
   // Bake geometry once; daylight only recolours the cached light/opacity maps.
-  function weatherBakeSprite(ci, vi) {
-    var C = CLOUD_CLASSES[ci], S = cloudSprites[ci][vi];
+  function weatherBuildSprite(C, vi, edgeSoftness, rimGlow, morph) {
     var tw = C.tw, th = C.th, seed = C.baseSeed + vi * 7919;
+    var S = { lum: new Uint8ClampedArray(tw * th), den: new Uint8ClampedArray(tw * th) };
     var depth = new Float32Array(tw * th);
     var detail = new Float32Array(tw * th);
     var lobes = [], li, px, py, idx;
@@ -29798,8 +29886,8 @@
         }
       }
     }
-    var softness = 0.70 + weatherTune.softness * 0.30;
-    var mz = weather.morph * 0.035;
+    var softness = 0.70 + edgeSoftness * 0.30;
+    var mz = morph * 0.035;
     for (py = 0, idx = 0; py < th; py++) {
       var v = py / (th - 1);
       for (px = 0; px < tw; px++, idx++) {
@@ -29850,22 +29938,26 @@
         // Transmission is broad and faint, never a bright contour around
         // every lobe. Dense interiors occlude the sun and the stars.
         var edge = Math.exp(-d * 16) * wSmooth(wClamp01(d / 0.07));
-        light += weatherTune.rimGlow * edge * crown * 0.10;
+        light += rimGlow * edge * crown * 0.10;
         var alpha = (1 - Math.exp(-d * (C.cirrus ? 12 : 28) / softness));
         alpha *= wSmooth(wClamp01(d / (0.13 * softness)));
         S.lum[idx] = wClamp01(light) * 255;
         S.den[idx] = wClamp01(alpha) * 255;
       }
     }
-    S.dirty = false;
-    S.recolorDirty = true;
-    S.ready = true;
+    return S;
+  }
+  function weatherBakeSprite(ci, vi) {
+    var S = cloudSprites[ci][vi];
+    var data = weatherBuildSprite(CLOUD_CLASSES[ci], vi, weatherTune.softness, weatherTune.rimGlow, weather.morph);
+    S.lum = data.lum; S.den = data.den;
+    S.dirty = false; S.recolorDirty = true; S.ready = true;
   }
 
   // Bake the stratus veil tile: broad soft translucency variation (NOT
   // thresholded masses — it is a sheet), matte lighting, seamless in X.
-  function weatherBakeVeil() {
-    var T = veilTile, idx = 0;
+  function weatherBuildVeil(VEIL_TW, VEIL_TH) {
+    var T = { lum: new Uint8ClampedArray(VEIL_TW * VEIL_TH), den: new Uint8ClampedArray(VEIL_TW * VEIL_TH) }, idx = 0;
     for (var py = 0; py < VEIL_TH; py++) {
       var ny = py / VEIL_TW;
       // seamless in Y too: crossfade the last rows back into the first
@@ -29881,9 +29973,61 @@
         T.lum[idx] = ((0.52 + 0.34 * F) * 255) | 0;
       }
     }
-    T.dirty = false;
-    T.recolorDirty = true;
-    T.ready = true;
+    return T;
+  }
+  function weatherBakeVeil() {
+    var data = weatherBuildVeil(VEIL_TW, VEIL_TH);
+    veilTile.lum = data.lum; veilTile.den = data.den;
+    veilTile.dirty = false; veilTile.recolorDirty = true; veilTile.ready = true;
+  }
+
+  // Geometry baking is pure numeric work. Keep the same noise, resolution and
+  // lighting, but run it away from the animation thread. Only completed maps
+  // replace a sprite; clouds keep their previous image while a new one bakes.
+  var weatherBakeWorker = null, weatherBakePending = null, weatherBakeWorkerFailed = false;
+  function weatherStopBakeWorker() {
+    if (weatherBakeWorker) weatherBakeWorker.terminate();
+    weatherBakeWorker = null; weatherBakePending = null; weatherBakeWorkerFailed = true;
+  }
+  function weatherQueueBake(ci, vi) {
+    if (weatherBakePending && performance.now() - weatherBakePending.at > 3000) weatherStopBakeWorker();
+    if (weatherBakePending) return false;
+    if (!weatherBakeWorker && !weatherBakeWorkerFailed) {
+      var url;
+      try {
+        var code = [wHash, wSmooth, wClamp01, wVal, wBillow, wFbm, weatherBuildSprite, weatherBuildVeil]
+          .map(function (fn) { return fn.toString(); }).join('\n');
+        code += '\nonmessage=function(e){var p=e.data;var d=p.veil?weatherBuildVeil(p.w,p.h):weatherBuildSprite(p.c,p.vi,p.softness,p.rim,p.morph);postMessage(d,[d.lum.buffer,d.den.buffer]);};';
+        url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+        weatherBakeWorker = new Worker(url);
+        weatherBakeWorker.onmessage = function (event) {
+          var job = weatherBakePending;
+          if (!job) return;
+          var target = job.target;
+          target.lum = event.data.lum; target.den = event.data.den;
+          target.ready = true; target.recolorDirty = true;
+          target.dirty = !job.veil && (job.key !== cloudBakeKey || job.morph !== cloudMorphBucket);
+          weatherBakePending = null;
+        };
+        weatherBakeWorker.onerror = function (event) { event.preventDefault(); weatherStopBakeWorker(); };
+        weatherBakeWorker.onmessageerror = weatherStopBakeWorker;
+      } catch (e) { weatherStopBakeWorker(); }
+      finally { if (url) URL.revokeObjectURL(url); }
+    }
+    if (!weatherBakeWorker) {
+      // Worker unavailable or blocked: the original synchronous renderer is
+      // still a complete fallback, including during the loading screen.
+      if (ci < 0) weatherBakeVeil(); else weatherBakeSprite(ci, vi);
+      return true;
+    }
+    weatherBakePending = { target: ci < 0 ? veilTile : cloudSprites[ci][vi],
+      veil: ci < 0, key: cloudBakeKey, morph: cloudMorphBucket, at: performance.now() };
+    try {
+      weatherBakeWorker.postMessage({ veil: ci < 0, w: VEIL_TW, h: VEIL_TH,
+        c: ci < 0 ? null : CLOUD_CLASSES[ci], vi: vi, softness: weatherTune.softness,
+        rim: weatherTune.rimGlow, morph: weather.morph });
+    } catch (e) { weatherStopBakeWorker(); return false; }
+    return true;
   }
 
   function wMix(a, b, t) {
@@ -30180,8 +30324,8 @@
     if (weather.cov < 0.02 || cw <= 0 || ch <= 0) return;
     if (!cloudSprites) weatherInitSprites();
 
-    // STAGE 1 — bake one dirty sprite per frame (the whole cast is ready in
-    // ~25 frames at boot; a softness/rim lever move or morph re-runs it).
+    // STAGE 1: dispatch one dirty sprite at a time. Loading waits for the
+    // completed cast; live changes keep drawing each previous complete map.
     var bakeKey = Math.round(weatherTune.softness * 8) * 97 + Math.round(weatherTune.rimGlow * 8);
     var morphB = Math.round(weather.morph * 4);
     if (bakeKey !== cloudBakeKey || morphB !== cloudMorphBucket) {
@@ -30197,13 +30341,12 @@
       var slot = (cloudBakeCursor + bi) % bakeCount;
       var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
       if (cloudSprites[bc][bv].dirty) {
-        weatherBakeSprite(bc, bv);
-        cloudBakeCursor = (slot + 1) % bakeCount;
+        if (weatherQueueBake(bc, bv)) cloudBakeCursor = (slot + 1) % bakeCount;
         baked = true;
         break;
       }
     }
-    if (!baked && veilTile.dirty) weatherBakeVeil();
+    if (!baked && veilTile.dirty) weatherQueueBake(-1, 0);
 
     // STAGE 2 — recolour on lighting-bucket change (amortised, 4 tiles/frame)
     var elev = (typeof computeSunElevation === 'function') ? computeSunElevation(timeOfDay) : 0;
@@ -37058,7 +37201,7 @@
     function clearObstacle () {
       obstacleSrcCanvas = null;
     }
-  
+
     // Shift the dye + velocity fields so the simulation stays anchored
     // in world space when the camera pans. Caller passes camera delta in
     // simulation-domain fractional units. The game convention has +y down,
@@ -37221,6 +37364,7 @@
   var smokeObstWaterBins = null;     // continuous particle density, reused on repaint
   var smokeObstWaterVY = null;       // density-weighted falling-water velocity
   var smokeObstWaterCanvas = null, smokeObstWaterCtx = null, smokeObstWaterImage = null;
+  var smokeObstWaterCache = null;
   // Fast water entrains the surrounding air. The CPU mirror is binned every
   // few frames and the strongest falling cells inject velocity, not dye, into
   // the smoke field. Slow pool water remains a collision boundary.
@@ -37993,65 +38137,93 @@
       var BIN = 4;                                     // world px per sample
       // Anchor samples to the world so camera motion cannot reshuffle them.
       // The padding includes the quadratic kernel beyond the visible domain.
-      var originX = Math.floor(domainX / BIN) * BIN - BIN * 2;
-      var originY = Math.floor(domainY / BIN) * BIN - BIN * 2;
-      var binsW = Math.ceil((domainX + smokeFluidDomainWorldW - originX) / BIN) + 2;
-      var binsH = Math.ceil((domainY + smokeFluidDomainWorldH - originY) / BIN) + 2;
+      // A padded 64 px window keeps the same world samples while the camera
+      // moves within it. Drawing still follows the camera at full precision.
+      var windowStep = 64;
+      var originX = Math.floor(domainX / windowStep) * windowStep - BIN * 2;
+      var originY = Math.floor(domainY / windowStep) * windowStep - BIN * 2;
+      var binsW = (Math.ceil((domainX + smokeFluidDomainWorldW) / windowStep) * windowStep - originX) / BIN + 2;
+      var binsH = (Math.ceil((domainY + smokeFluidDomainWorldH) / windowStep) * windowStep - originY) / BIN + 2;
       var nBins = binsW * binsH;
-      if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
-        smokeObstWaterBins = new Float32Array(Math.max(nBins, 16384));
-        smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
-      }
-      var bins = smokeObstWaterBins;
-      bins.fill(0, 0, nBins);
-      smokeObstWaterVY.fill(0, 0, nBins);
-      var domR = originX + (binsW - 1.5) * BIN;
-      var domB = originY + (binsH - 1.5) * BIN;
-      for (var wi = 0; wi < liquidCount; wi++) {
-        if (liquidFrozen[wi]) continue;
-        var wx = liquidX[wi], wy = liquidY[wi];
-        if (wx < originX + BIN || wx >= domR || wy < originY + BIN || wy >= domB) continue;
-        var gx = (wx - originX) / BIN, gy = (wy - originY) / BIN;
-        var ix = Math.floor(gx - 0.5), iy = Math.floor(gy - 0.5);
-        var fx = gx - ix, fy = gy - iy;
-        // Quadratic B-spline weights sum to one and have continuous slopes.
-        // Nine deposits per particle, with no per-particle allocations.
-        var x0 = 0.5 * (1.5 - fx) * (1.5 - fx);
-        var x1 = 0.75 - (fx - 1) * (fx - 1);
-        var x2 = 0.5 * (fx - 0.5) * (fx - 0.5);
-        for (var ky = 0; ky < 3; ky++) {
-          var yw = ky === 0 ? 0.5 * (1.5 - fy) * (1.5 - fy) :
-            ky === 1 ? 0.75 - (fy - 1) * (fy - 1) : 0.5 * (fy - 0.5) * (fy - 0.5);
-          var bi = (iy + ky) * binsW + ix;
-          var w0 = x0 * yw, w1 = x1 * yw, w2 = x2 * yw;
-          bins[bi] += w0; bins[bi + 1] += w1; bins[bi + 2] += w2;
-          smokeObstWaterVY[bi] += liquidVY[wi] * w0;
-          smokeObstWaterVY[bi + 1] += liquidVY[wi] * w1;
-          smokeObstWaterVY[bi + 2] += liquidVY[wi] * w2;
+      var gpu = typeof liquidWGPU !== 'undefined' && liquidWGPU;
+      var canCache = gpu && gpu.simActive && typeof gpu.readbackApplyGen === 'number' &&
+        typeof liquidMutationSeq === 'number';
+      var cached = smokeObstWaterCache;
+      var reuse = canCache && cached && cached.gpu === gpu &&
+        cached.gen === gpu.readbackApplyGen && cached.seq === liquidMutationSeq &&
+        cached.count === liquidCount && cached.x === liquidX && cached.y === liquidY &&
+        cached.vy === liquidVY && cached.ox === originX && cached.oy === originY &&
+        cached.w === binsW && cached.h === binsH && cached.flow === SMOKE_WATER_FLOW_MIN_VY;
+      // Freeze/wake runs on the CPU between GPU readbacks. A wake also zeros
+      // velocity, so check these flags before reusing that mirror's image.
+      if (reuse) {
+        for (var fi = 0; fi < liquidCount; fi++) {
+          if (cached.frozen[fi] !== liquidFrozen[fi]) { reuse = false; break; }
         }
       }
-      if (!smokeObstWaterCanvas) {
-        smokeObstWaterCanvas = document.createElement('canvas');
-        smokeObstWaterCtx = smokeObstWaterCanvas.getContext('2d');
+      if (!reuse) {
+        if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
+          smokeObstWaterBins = new Float32Array(Math.max(nBins, 16384));
+          smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
+        }
+        var bins = smokeObstWaterBins;
+        bins.fill(0, 0, nBins);
+        smokeObstWaterVY.fill(0, 0, nBins);
+        var domR = originX + (binsW - 1.5) * BIN;
+        var domB = originY + (binsH - 1.5) * BIN;
+        for (var wi = 0; wi < liquidCount; wi++) {
+          if (liquidFrozen[wi]) continue;
+          var wx = liquidX[wi], wy = liquidY[wi];
+          if (wx < originX + BIN || wx >= domR || wy < originY + BIN || wy >= domB) continue;
+          var gx = (wx - originX) / BIN, gy = (wy - originY) / BIN;
+          var ix = Math.floor(gx - 0.5), iy = Math.floor(gy - 0.5);
+          var fx = gx - ix, fy = gy - iy;
+          // Quadratic B-spline weights sum to one and have continuous slopes.
+          // Nine deposits per particle, with no per-particle allocations.
+          var x0 = 0.5 * (1.5 - fx) * (1.5 - fx);
+          var x1 = 0.75 - (fx - 1) * (fx - 1);
+          var x2 = 0.5 * (fx - 0.5) * (fx - 0.5);
+          for (var ky = 0; ky < 3; ky++) {
+            var yw = ky === 0 ? 0.5 * (1.5 - fy) * (1.5 - fy) :
+              ky === 1 ? 0.75 - (fy - 1) * (fy - 1) : 0.5 * (fy - 0.5) * (fy - 0.5);
+            var bi = (iy + ky) * binsW + ix;
+            var w0 = x0 * yw, w1 = x1 * yw, w2 = x2 * yw;
+            bins[bi] += w0; bins[bi + 1] += w1; bins[bi + 2] += w2;
+            smokeObstWaterVY[bi] += liquidVY[wi] * w0;
+            smokeObstWaterVY[bi + 1] += liquidVY[wi] * w1;
+            smokeObstWaterVY[bi + 2] += liquidVY[wi] * w2;
+          }
+        }
+        if (!smokeObstWaterCanvas) {
+          smokeObstWaterCanvas = document.createElement('canvas');
+          smokeObstWaterCtx = smokeObstWaterCanvas.getContext('2d');
+        }
+        if (!smokeObstWaterImage || smokeObstWaterCanvas.width !== binsW || smokeObstWaterCanvas.height !== binsH) {
+          smokeObstWaterCanvas.width = binsW; smokeObstWaterCanvas.height = binsH;
+          smokeObstWaterImage = smokeObstWaterCtx.createImageData(binsW, binsH);
+        }
+        var rgba = smokeObstWaterImage.data;
+        // Same density range as the old 10..24 particles per 8x8 bin, scaled
+        // by area. Pools remain solid; the rim changes continuously. Floating
+        // counts also avoid the old 255-count saturation under compression.
+        for (var bi = 0; bi < nBins; bi++) {
+          var bn = bins[bi];
+          var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
+          coverage *= coverage * (3 - 2 * coverage);
+          var falling = bn > 0 ? Math.max(0, Math.min(1,
+            (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
+          falling *= falling * (3 - 2 * falling);
+          rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+        }
+        smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
+        if (canCache) {
+          var frozenCopy = cached && cached.frozen.length === liquidCount ? cached.frozen : new Uint8Array(liquidCount);
+          for (var fi = 0; fi < liquidCount; fi++) frozenCopy[fi] = liquidFrozen[fi];
+          smokeObstWaterCache = { gpu: gpu, gen: gpu.readbackApplyGen, seq: liquidMutationSeq,
+            count: liquidCount, x: liquidX, y: liquidY, vy: liquidVY, frozen: frozenCopy,
+            ox: originX, oy: originY, w: binsW, h: binsH, flow: SMOKE_WATER_FLOW_MIN_VY };
+        } else smokeObstWaterCache = null;
       }
-      if (!smokeObstWaterImage || smokeObstWaterCanvas.width !== binsW || smokeObstWaterCanvas.height !== binsH) {
-        smokeObstWaterCanvas.width = binsW; smokeObstWaterCanvas.height = binsH;
-        smokeObstWaterImage = smokeObstWaterCtx.createImageData(binsW, binsH);
-      }
-      var rgba = smokeObstWaterImage.data;
-      // Same density range as the old 10..24 particles per 8x8 bin, scaled
-      // by area. Pools remain solid; the rim changes continuously. Floating
-      // counts also avoid the old 255-count saturation under compression.
-      for (var bi = 0; bi < nBins; bi++) {
-        var bn = bins[bi];
-        var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
-        coverage *= coverage * (3 - 2 * coverage);
-        var falling = bn > 0 ? Math.max(0, Math.min(1,
-          (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
-        falling *= falling * (3 - 2 * falling);
-        rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
-      }
-      smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
       oc.save();
       oc.imageSmoothingEnabled = true;
       // A density sample is at a pixel's centre, hence the half-cell offset.
@@ -58588,13 +58760,14 @@
   // substep allocation). Cell size = the contact diameter 2r, so a point's contacts are exactly
   // the 3x3 neighbour cells. Points are gathered across ALL active bodies each substep.
   var JELLO_HASH_N = 8191;                 // prime bucket count
-  var JELLO_HASH_SPARSE_MAX = 256;         // small scenes avoid scanning every bucket
+  var JELLO_HASH_SPARSE_MAX = 1024;        // small scenes avoid scanning every bucket
   var jelloGPX = null, jelloGPY = null;    // gathered point positions (working copy this substep)
   var jelloGOX = null, jelloGOY = null;    // gathered previous positions (read-only, for friction)
   var jelloGR = null;                      // gathered per-point contact radius (mixed lattice densities)
   var jelloGBody = null, jelloGLocal = null, jelloGHash = null;   // gather -> active-idx, local-idx, cell hash
   var jelloHashStart = null, jelloHashCursor = null, jelloHashOrder = null;
   var jelloHashUsed = null;               // occupied buckets, rebuilt for each contact solve
+  var jelloNeighborX = null, jelloNeighborY = null, jelloNeighborHash = null;
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
@@ -58612,6 +58785,9 @@
     jelloHashCursor = new Int32Array(JELLO_HASH_N + 1);
     jelloHashOrder = new Int32Array(MP);
     jelloHashUsed = new Int32Array(JELLO_HASH_SPARSE_MAX);
+    jelloNeighborX = new Float64Array(MP); jelloNeighborX.fill(NaN);
+    jelloNeighborY = new Float64Array(MP); jelloNeighborY.fill(NaN);
+    jelloNeighborHash = new Int32Array(MP * 9);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
     jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
@@ -58725,9 +58901,19 @@
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
-      for (gx = cx - 1; gx <= cx + 1; gx++) {
-        for (gy = cy - 1; gy <= cy + 1; gy++) {
-          h = jelloHashCell(gx, gy);
+      // The nine neighbouring hash buckets depend only on this integer cell,
+      // not on the point, body or substep. Most points stay in the same cell
+      // across many solves. Reuse the exact bucket sequence until it changes.
+      var neighborBase = i * 9;
+      if (jelloNeighborX[i] !== cx || jelloNeighborY[i] !== cy) {
+        jelloNeighborX[i] = cx; jelloNeighborY[i] = cy;
+        var ni = neighborBase;
+        for (gx = cx - 1; gx <= cx + 1; gx++) {
+          for (gy = cy - 1; gy <= cy + 1; gy++) jelloNeighborHash[ni++] = jelloHashCell(gx, gy);
+        }
+      }
+      for (var neighbor = 0; neighbor < 9; neighbor++) {
+          h = jelloNeighborHash[neighborBase + neighbor];
           cend = END[h + endOffset];
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
@@ -58795,7 +58981,6 @@
             if (active[bi].sleeping)    { active[bi].sleeping = false;    active[bi]._solve = true; }
             if (active[GB[j]].sleeping) { active[GB[j]].sleeping = false; active[GB[j]]._solve = true; }
           }
-        }
       }
     }
     if (contacts === 0) break;   // v25.43 perf (owner-kept in the v25.47 A/B): a zero-contact pass
@@ -63819,7 +64004,18 @@
       // Unknown paths warn (via gm.set) but never throw.
       gm.apply = function (obj) {
         if (!obj || typeof obj !== 'object') { console.warn('gm: apply expects an object'); return; }
-        Object.keys(obj).forEach(function (path) { gm.set(path, obj[path]); });
+        resolutionBatchDepth++;
+        try {
+          Object.keys(obj).forEach(function (path) {
+            if (path.indexOf('res.') === 0 && gm.get(path) === obj[path]) return;
+            gm.set(path, obj[path]);
+          });
+        } finally {
+          resolutionBatchDepth--;
+          if (!resolutionBatchDepth && resolutionBatchPending) {
+            resolutionBatchPending = false; resize();
+          }
+        }
       };
 
       // Short usage guide.
@@ -66940,49 +67136,31 @@
         };
       }
 
-      // ----- Boot: report detected tier, optionally apply it -----
+      // Resolve the graphics choice before allocating/warming the scene.
+      // An explicit URL tier wins, then the saved player choice, then the
+      // existing desktop Extreme / mobile High defaults. Art-only URL presets
+      // apply on top of that choice and never cause a second resolution pass.
       try {
         var gmBootTier = gmDetectTier();
-        if (GM_AUTO_TIER && window.gm && window.gm.preset) {
-          // Opt-in: match the auto-detected device tier instead of the default.
-          console.log('gm: GM_AUTO_TIER on (applying device tier "' + gmBootTier + '")');
-          window.gm.preset(gmBootTier);
-        } else if (window.gm && window.gm.preset) {
-          // Default look (owner request): ship the EXTREME graphics preset on
-          // DESKTOP for maximum fidelity. v25.10 — but NOT on mobile. 'extreme'
-          // sets RENDER_SCALE_MOBILE 0.85 + a 6 MP budget + 4x terrain chunks +
-          // full-res smoke; on a phone that is a ~1.85 MP main canvas stacked with
-          // the uiTop + liquid canvases and a large terrain cache. A fast phone
-          // chip (e.g. iPhone Air) renders it at 60fps, but the GPU-memory footprint
-          // pushes iOS Safari past its per-tab limit and the tab CRASHES, while a
-          // weaker phone just runs heavy (the 20fps Android). Ship the memory-sane
-          // 'high' tier on mobile — which equals the in-code defaults (0.55 scale,
-          // 3 MP budget, 3x terrain, 0.6 smoke). The L panel or ?gmpreset=NAME
-          // (below, which wins) can still switch any device any time.
-          var gmBootPreset = (typeof isMobile !== 'undefined' && isMobile) ? 'high' : 'extreme';
-          console.log('gm: applying default graphics preset "' + gmBootPreset + '" (detected device tier "' + gmBootTier + '")');
+        var gmBootPreset = isMobile ? 'high' : 'extreme';
+        if (GM_AUTO_TIER) gmBootPreset = gmBootTier;
+        var playerOptions = window.SluiceOptions;
+        var savedGraphics = playerOptions && playerOptions.graphicsPreset();
+        if (savedGraphics) gmBootPreset = savedGraphics;
+        var urlPreset = new URLSearchParams(window.location.search).get('gmpreset');
+        var urlEntry = urlPreset && GM_PRESETS[urlPreset];
+        if (urlEntry && urlEntry.cat === 'device') gmBootPreset = urlPreset;
+        if (window.gm && window.gm.preset) {
           window.gm.preset(gmBootPreset);
+          if (urlPreset && (!urlEntry || urlEntry.cat !== 'device')) window.gm.preset(urlPreset);
+        }
+        if (playerOptions) {
+          playerOptions.graphicsChoice = { potato: 'performance', low: 'performance',
+            medium: 'balanced', high: 'balanced', ultra: 'extreme', extreme: 'extreme' }[gmBootPreset] || null;
+          if (playerOptions.syncGraphics) playerOptions.syncGraphics(playerOptions.graphicsChoice);
         }
       } catch (e) {
-        try { console.warn('gm: boot tier detection failed:', e); } catch (_) {}
-      }
-
-      // v14.22 — ?gmpreset=NAME in the URL applies a preset at boot. Done
-      // here (right after the auto-tier block) so an explicit preset wins
-      // over GM_AUTO_TIER when both are given. gm.preset() warns on an
-      // unknown name; the whole thing is guarded so a junk query can't
-      // break boot.
-      try {
-        if (window.location && window.gm && window.gm.preset) {
-          var _gmpM = window.location.search.match(/[?&]gmpreset=([^&]+)/i);
-          if (_gmpM) {
-            var _gmpName = decodeURIComponent(_gmpM[1]);
-            console.log('gm: ?gmpreset=' + _gmpName + ' — applying from URL');
-            window.gm.preset(_gmpName);
-          }
-        }
-      } catch (e) {
-        try { console.warn('gm: ?gmpreset boot apply failed:', e); } catch (_) {}
+        try { console.warn('gm: boot graphics selection failed:', e); } catch (_) {}
       }
 
       // Expose for the panel's presets section (built in gmPanelBuild).
