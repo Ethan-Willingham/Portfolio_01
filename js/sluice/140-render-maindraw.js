@@ -1199,7 +1199,7 @@
     // Onboarding radio bubble (057), screen-space, above the HUD.
     if (typeof drawOnboarding === 'function') drawOnboarding();
     // General radio messages (058): showMsg's UI_NEW surface. Same plate
-    // grammar as 057, stacks below the tutorial line when both are up.
+    // grammar as 057, takes its place while feedback is up.
     // Dispatched after the shop floor on purpose so purchase feedback
     // ("Need $X") stays readable inside the shop.
     if (typeof drawRadioMsg === 'function') drawRadioMsg();

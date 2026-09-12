@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.73';
+  var GAME_VERSION = 'v26.74';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -6316,535 +6316,357 @@
     }
   }
   /* ================================================================
-     ONBOARDING RADIO (057): the first five minutes
+     ONBOARDING RADIO (057): three short, contextual tips
      ================================================================
-     A diegetic radio tutorial from the KOMENDATURA quartermaster: one
-     line at a time in a small radio panel top-center, no modals, no
-     pauses, pure state-polling. Each step shows its line until its
-     exit condition fires, then a 1s gap of silence, then the next.
-     Voice: dry Soviet quartermaster, warm under the gruff.
+     Controls, the first haul, then upgrades after the first sale.
+     Each tip expires after four seconds, whether or not the player
+     follows it. Conditions only decide when an unseen tip is useful.
+     General radio messages own the same slot and take priority.
 
-     Wiring (done in the main session): onboardingTick(dt) runs every
-     frame from the game loop (350); drawOnboarding() is dispatched in
-     the screen-space UI overlay after the HUD (140).
-
-     Persistence: tutorialDone rides in profile.tutorialDone (047,
-     saveBuild/saveApply/saveWipe, same additive pattern as
-     ledgerData/seamComplete). The var itself is declared HERE.
-     Dev escape hatch: localStorage 'sluice.opt.skipintro' = '1'
-     disables the whole system at boot.
+     Persistence: tutorialDone rides in profile.tutorialDone (047).
+     localStorage 'sluice.opt.skipintro' = '1' disables tips at boot.
+     Escape belongs to pause and never dismisses or advances a tip.
      ================================================================ */
 
-  var tutorialDone = false;   // persisted via profile.tutorialDone (047)
-
-  // Read the skip-intro opt once at boot; localStorage can throw in
-  // some privacy modes, so the whole read is fenced.
+  var tutorialDone = false;
   var ONBOARD_SKIP = false;
   try { ONBOARD_SKIP = (localStorage.getItem('sluice.opt.skipintro') === '1'); } catch (e) {}
 
+  var ONBOARD_TIP_S = 4;
   var onboardState = {
-    step: 0,          // 0..5, see the step machine below
-    lineT: 0,         // seconds the CURRENT displayed line has been up (drives type-on)
-    done: false,      // finished or ESC-dismissed; panel never returns this run
-    dismissT: 0,      // short fade-out after done
-
-    started: false,   // boot delay elapsed, radio is live
-    bootT: 0,         // boot-delay accumulator (~1s of quiet before step 0)
-    stepT: 0,         // seconds in the current step (timeout exits)
-    inGap: false,     // 1s of radio silence between lines
+    step: 0,
+    done: false,
+    started: false,
+    bootT: 0,
     gapT: 0,
-    panelA: 0,        // panel fade/slide 0..1 (200ms per new line)
-    clock: 0,         // free-running clock for the blinking diamond
-    lastLine: '',     // change detector; new text restarts type-on + slide-in
-    fuelWarned: false,// the low-fuel interject fires once per run
-    fuelT: 0,         // interject countdown; while > 0 it overrides the step line
+    lineT: 0,
+    lineStartedAt: 0,
+    panelA: 0,
+    lastLine: '',
+    earnedCash: false,
+    visitedShop: false,
+    runPlayer: null
   };
 
-  // ----- Script (all lines < 90 chars, no em dashes) -----
-  var ONBOARD_LINES = [
-    'Rig\'s fueled. First seam is ten meters down. Try not to embarrass us.',
-    '',  // step 1 is input-aware, resolved in onboardingLineFor()
-    'Good. Coal burns, coal pays. Deeper is richer.',
-    'That\'s a haul. Bring it home, the pad pays cash.',
-    'Paid. The shop is the tall door. Spend it on the rig, not vodka.',
-    'You\'re a miner now. The frontier is west. Earn your way to it.',
-  ];
-  var ONBOARD_LINE_KB    = 'Hold a direction into the dirt. The drill does the rest.';
-  var ONBOARD_LINE_TOUCH = 'D-pad into the dirt. The drill does the rest.';
-  var ONBOARD_LINE_FUEL  = 'Watch the fuel needle. Dead engine, dead miner.';
+  function onboardingReset() {
+    var st = onboardState;
+    st.step = 0; st.done = false; st.started = false;
+    st.bootT = 0; st.gapT = 0; st.lineT = 0; st.lineStartedAt = 0;
+    st.panelA = 0; st.lastLine = '';
+    st.earnedCash = false; st.visitedShop = false;
+    st.runPlayer = player;
+  }
 
   function onboardingLineFor(step) {
-    if (step === 1) return isMobile ? ONBOARD_LINE_TOUCH : ONBOARD_LINE_KB;
-    return ONBOARD_LINES[step] || '';
+    var pad = typeof gpConnected !== 'undefined' && gpConnected;
+    if (step === 0) {
+      if (pad) return 'Stick / D-pad moves. Hold into dirt to drill; hold Up to fly.';
+      if (isMobile) return 'D-pad moves. Hold into dirt to drill; hold Up to fly.';
+      return 'WASD / arrows move. Hold into dirt to drill; hold Up to fly.';
+    }
+    if (step === 1) return 'Land on the surface fuel pad to sell ore and refuel automatically.';
+    if (step === 2) {
+      if (pad) return 'At the shop door, press Y for rig upgrades.';
+      if (isMobile) return 'Tap the shop building for rig upgrades.';
+      return 'At the shop door, press E for rig upgrades.';
+    }
+    return '';
   }
 
-  // The line the panel should be showing right now ('' = silence).
   function onboardingCurrentLine() {
-    if (!onboardState.started) return '';
-    if (onboardState.fuelT > 0) return ONBOARD_LINE_FUEL;
-    if (onboardState.inGap) return '';
-    return onboardingLineFor(onboardState.step);
+    return onboardState.done ? '' : onboardState.lastLine;
   }
 
-  // Is any shop surface up? Mirrors the input handler's shopUp check so
-  // ESC keeps closing the shop instead of silencing the radio.
   function onboardingShopUp() {
     return (UI_NEW && shopState !== 'closed') || shopOpen;
   }
 
+  function onboardingObscured() {
+    return gameOver || gameWon || gamePaused || onboardingShopUp() ||
+      (typeof ledgerOpen !== 'undefined' && ledgerOpen) ||
+      (typeof seamCreditsActive === 'function' && seamCreditsActive()) ||
+      (typeof bathMode !== 'undefined' && bathMode) ||
+      (typeof introPhase !== 'undefined' && introPhase !== 'done');
+  }
+
+  function onboardingRadioBusy() {
+    return typeof radioMsg !== 'undefined' &&
+      (radioMsg.panelA > 0.01 || radioMsg.cur || radioMsg.queue.length > 0);
+  }
+
   function onboardingFinish() {
     onboardState.done = true;
-    onboardState.dismissT = 0.25;
-    tutorialDone = true;   // persists at the next autosave (047)
+    onboardState.panelA = 0;
+    onboardState.lastLine = '';
+    tutorialDone = true;
+  }
+
+  function onboardingAdvance() {
+    var st = onboardState;
+    st.step++;
+    st.lastLine = ''; st.lineT = 0; st.panelA = 0;
+    st.gapT = 1.5;
+    if (st.step >= 3) onboardingFinish();
   }
 
   function onboardingTick(dt) {
     var st = onboardState;
-    if (st.done) {
-      if (st.dismissT > 0) st.dismissT -= dt;
-      // Pause-screen Restart wipes the save (saveWipe resets tutorialDone)
-      // without reloading the page, so re-arm for the fresh run. A normal
-      // finish/dismiss always sets tutorialDone, so this only fires post-wipe.
-      if (!tutorialDone && st.dismissT <= 0) {
-        st.step = 0; st.lineT = 0; st.done = false; st.dismissT = 0;
-        st.started = false; st.bootT = 0; st.stepT = 0;
-        st.inGap = false; st.gapT = 0; st.panelA = 0;
-        st.lastLine = ''; st.fuelWarned = false; st.fuelT = 0;
+    // init() replaces the player object; respawn only moves the existing
+    // one. New Game therefore resets even a partially finished tutorial.
+    if (!tutorialDone && (st.runPlayer !== player || st.done)) onboardingReset();
+    if (tutorialDone || ONBOARD_SKIP) {
+      st.done = true; st.panelA = 0; st.lastLine = '';
+      return;
+    }
+
+    if (money > 0) st.earnedCash = true;
+    if (st.earnedCash && onboardingShopUp()) st.visitedShop = true;
+
+    // Once a line starts, its clock keeps running behind other panels.
+    // Wall time also expires it across pause, which stops the RAF loop.
+    if (st.lastLine) {
+      st.lineT = Math.max(st.lineT + dt, (performance.now() - st.lineStartedAt) / 1000);
+      var answered = (st.step === 1 && st.earnedCash) || (st.step === 2 && st.visitedShop);
+      if (st.lineT >= ONBOARD_TIP_S || answered) {
+        onboardingAdvance();
+      } else {
+        st.panelA = Math.min(1, st.lineT / 0.15, (ONBOARD_TIP_S - st.lineT) / 0.2);
       }
       return;
     }
-    if (tutorialDone || ONBOARD_SKIP) { st.done = true; return; }
-    if (gameOver) return;   // freeze; death plate owns the screen
 
-    st.clock += dt;
-
-    // Boot delay: ~1s of quiet before the quartermaster keys the mic.
+    // Skip a lesson the player has already used. Waiting never pins a
+    // plate to the screen and never delays a more useful radio message.
+    if ((st.step < 2 && st.earnedCash) || (st.step === 2 && st.visitedShop)) {
+      onboardingAdvance();
+      return;
+    }
+    st.gapT = Math.max(0, st.gapT - dt);
+    if (st.gapT > 0 || onboardingObscured() || onboardingRadioBusy()) return;
     if (!st.started) {
       st.bootT += dt;
       if (st.bootT < 1) return;
       st.started = true;
     }
+    if (st.step === 1 && cargo.length === 0) return;
+    if (st.step === 2 && !st.earnedCash) return;
 
-    // Low-fuel interject (any step, once): overrides the line for 5s.
-    if (st.fuelT > 0) st.fuelT -= dt;
-    if (!st.fuelWarned && maxFuel > 0 && player.fuel / maxFuel < 0.5) {
-      st.fuelWarned = true;
-      st.fuelT = 5;
-    }
-
-    // ----- Step machine -----
-    if (st.inGap) {
-      st.gapT -= dt;
-      if (st.gapT <= 0) {
-        st.inGap = false;
-        st.step++;
-        st.stepT = 0;
-      }
-    } else {
-      st.stepT += dt;
-      var exit = false;
-      switch (st.step) {
-        case 0:   // boot line: exits on first movement input, any drill, or 8s
-          exit = hasDrilledOnce || st.stepT >= 8 ||
-                 (st.stepT > 0.5 && (Math.abs(player.vx) > 5 || Math.abs(player.vy) > 5));
-          break;
-        case 1:   // movement/drill hint: exits on the first completed drill
-          exit = hasDrilledOnce;
-          break;
-        case 2:   // first drill done: exits at 3 cargo or 45s
-          exit = cargo.length >= 3 || st.stepT >= 45;
-          break;
-        case 3:   // haul in the bay: exits on first cash
-          exit = money > 0;
-          break;
-        case 4:   // paid: exits when the shop is first opened, or 60s
-          exit = onboardingShopUp() || st.stepT >= 60;
-          break;
-        case 5:   // sign-off: shows 6s, then done
-          if (st.stepT >= 6) { onboardingFinish(); return; }
-          break;
-      }
-      if (exit) { st.inGap = true; st.gapT = 1; }
-    }
-
-    // ----- Display bookkeeping (type-on + slide/fade per new line) -----
-    var line = onboardingCurrentLine();
-    if (line !== st.lastLine) {
-      st.lastLine = line;
-      st.lineT = 0;
-      if (line) st.panelA = 0;   // new line: restart the 200ms slide-in
-    }
-    if (line) {
-      st.lineT += dt;
-      st.panelA = Math.min(1, st.panelA + dt / 0.2);
-    } else {
-      st.panelA = Math.max(0, st.panelA - dt / 0.15);
-    }
+    st.lastLine = onboardingLineFor(st.step);
+    st.lineT = 0;
+    st.lineStartedAt = performance.now();
+    st.panelA = 0;
   }
 
-  // ----- ESC dismiss -----
-  // The pause toggle in setupInput (050) CONSUMES Escape on keydown when no
-  // shop is up, so polling keys['Escape'] in the tick never sees it. Instead
-  // we register our own capture-phase listener; this fragment evaluates
-  // before boot calls setupInput, so we run first either way. While a
-  // tutorial line is visible (and no shop owns ESC) the key silences the
-  // radio for good (a player who dismisses doesn't want it again) and we
-  // stop propagation so the same press doesn't also flicker the pause screen.
-  window.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape' || e.repeat) return;
-    var st = onboardState;
-    if (st.done || tutorialDone || !st.started) return;
-    if (!onboardingCurrentLine() || st.panelA <= 0) return;   // nothing on screen
-    if (onboardingShopUp()) return;   // shop owns ESC
-    if (gamePaused) return;           // pause overlay owns ESC
-    onboardingFinish();
-    e.stopImmediatePropagation();
-    e.preventDefault();
-  }, true);
-
-  // ----- Render: compact radio panel, top-center, under the layer banner -----
-  // Screen-space CSS px (same transform as drawHUD / drawNmzExitArrow).
-  // Dark steel plate, 1px caution-gold border, blinking radio diamond,
-  // KOMENDATURA micro-label, type-on mono line. Total height ~40 CSS px.
+  // Shared plate layout wraps full-size text on narrow screens (058).
+  // Only one radio panel is ever drawn, even during its fade-out.
   function drawOnboarding() {
     var st = onboardState;
-    if (gameOver) return;
-    var a = st.panelA;
-    if (st.done) {
-      if (st.dismissT <= 0) return;
-      a *= Math.max(0, st.dismissT / 0.25);
-    }
-    if (a <= 0) return;
-    var line = st.lastLine;
-    if (!line) return;
-
-    // Type-on at ~40 chars/sec; panel width sized from the FULL line so the
-    // plate doesn't grow while the text types.
-    var shown = line.substr(0, Math.floor(st.lineT * 40));
-
-    var escTag = !isMobile && !st.done;
-    var padL = 12, padR = escTag ? 44 : 12;
-    var maxPanelW = Math.min(viewW - 16, 560);
-
-    var fontPx = 12;
-    ctx.save();
-    ctx.font = 'bold ' + fontPx + 'px ' + UI_FONT;
-    var lineW = ctx.measureText(line).width;
-    var availW = maxPanelW - padL - padR;
-    if (lineW > availW) {   // narrow screens: shrink the type, never clip
-      fontPx = Math.max(9, Math.floor(fontPx * availW / lineW));
-      ctx.font = 'bold ' + fontPx + 'px ' + UI_FONT;
-      lineW = ctx.measureText(line).width;
-    }
-
-    var panelW = Math.min(maxPanelW, Math.max(lineW, 150) + padL + padR);
-    var panelH = 40;
-    var hudH = isMobile ? 104 : 60;   // matches drawHUD / drawLayerBanner sizing
-    var panelX = Math.round((viewW - panelW) / 2);
-    var panelY = Math.round(hudH + 10 + (a - 1) * 6);   // slides down 6px as it fades in
-
-    ctx.globalAlpha = a * 0.92;
-
-    // Plate + caution-gold border
-    ctx.fillStyle = 'rgba(10,12,17,0.88)';
-    roundRect(ctx, panelX, panelY, panelW, panelH, 4, true);
-    ctx.globalAlpha = a * 0.55;
-    ctx.strokeStyle = BLD.goldBright;
-    ctx.lineWidth = 1;
-    roundRect(ctx, panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1, 4, false, true);
-
-    // Blinking radio diamond + micro-label
-    var dx = panelX + padL + 4, dy = panelY + 11;
-    var blink = (st.clock % 1.0) < 0.55;
-    ctx.globalAlpha = a * (blink ? 0.95 : 0.30);
-    ctx.fillStyle = BLD.goldBright;
-    ctx.beginPath();
-    ctx.moveTo(dx, dy - 3.5); ctx.lineTo(dx + 3.5, dy);
-    ctx.lineTo(dx, dy + 3.5); ctx.lineTo(dx - 3.5, dy);
-    ctx.closePath(); ctx.fill();
-
-    ctx.globalAlpha = a * 0.75;
-    ctx.fillStyle = BLD.goldPale;
-    ctx.font = 'bold 8px ' + UI_FONT;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('KOMENDATURA', dx + 9, dy + 0.5);
-
-    // ESC dismiss tag, top-right corner (keyboard only)
-    if (escTag) {
-      ctx.font = 'bold 7px ' + UI_FONT;
-      var tw = ctx.measureText('ESC').width + 8;
-      var tx = panelX + panelW - tw - 7, ty = panelY + 6, th = 11;
-      ctx.globalAlpha = a * 0.35;
-      ctx.strokeStyle = BLD.goldPale;
-      roundRect(ctx, tx, ty, tw, th, 2, false, true);
-      ctx.globalAlpha = a * 0.5;
-      ctx.fillStyle = BLD.goldPale;
-      ctx.fillText('ESC', tx + 4, ty + th / 2 + 0.5);
-    }
-
-    // The line itself, typing on
-    ctx.globalAlpha = a * 0.95;
-    ctx.fillStyle = 'rgba(232,227,213,0.96)';
-    ctx.font = 'bold ' + fontPx + 'px ' + UI_FONT;
-    ctx.fillText(shown, panelX + padL, panelY + 27.5);
-
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.restore();
+    if (st.done || st.panelA <= 0 || !st.lastLine || onboardingObscured() || onboardingRadioBusy()) return;
+    var layout = radioMsgLayout(st.lastLine);
+    var y = (isMobile ? 104 : 60) + 10;
+    drawRadioPlate(st.lastLine, 'TIP', false, st.panelA, y, layout);
   }
   /* ================================================================
-     RADIO MESSAGES (058): the general comms channel
+     RADIO MESSAGES (058): brief feedback, one plate at a time
      ================================================================
-     showMsg() finally has a surface that renders under UI_NEW. Before
-     this fragment every showMsg call was a visual no-op (the only
-     renderer was the !UI_NEW pill in 140, and UI_NEW is permanently
-     true), so "Press R again", "Need $X", "OUT OF FUEL" never reached
-     the player. This is the fix: the same diegetic grammar as the
-     onboarding radio above (057). One small dark steel plate,
-     top-center, lamp-coloured border, blinking carrier diamond,
-     type-on mono line. No floating text, no toasts (UI_STYLE.md
-     section 2 axis 4 + section 10): every glyph lives on this plate.
+     showMsg(text, alert, opts) routes here from 060. Full text appears
+     immediately, then clears itself after 1.8-3s (routine) or 2.8-4s
+     (warning). Repeated warnings never rewind the timer and get a
+     quiet interval before they can return.
 
-     Routing: showMsg(text, alert, opts) in 060 calls radioMsgPush.
-     alert=true lines are caution-grade per UI_STYLE section 6: amber
-     lamp colour, hard 1 Hz blink (section 4.3), they jump the queue,
-     cut routine chatter mid-read, and hold longer. Routine lines run
-     FIFO with a beat of radio silence between them. Glyphs stay
-     stencil-paint off-white in both cases (section 7.5: signal colour
-     belongs to the lamp + border, never the letterforms).
+     The latest event replaces routine feedback. Warnings interrupt
+     immediately; at most one routine line waits behind a warning,
+     and it expires if it is no longer fresh. opts.key coalesces a
+     channel, opts.dur pins a prompt to its action's exact time window.
+     No alert backlog and no stack with the tutorial plate (057).
 
-     Queue rules (rapid-fire purchases, repeating CARGO FULL):
-       1. same text as the showing line: refresh its hold, no re-type
-       2. same opts.key as the showing line: swap the text in place
-          (purchase lines share key 'buy', so buying five items reads
-          as one live line, not a 15-second backlog)
-       3. same text or key waiting in the queue: replaced in place
-       4. queue caps at 4 (oldest routine line drops first) and a
-          routine line that waited 10s+ behind alerts drops as stale
-     opts.dur pins the TOTAL on-screen time to a game timer (the
-     R-confirm line matches restartConfirmT exactly).
-
-     The plate stacks BELOW the onboarding plate while a tutorial line
-     is up (both share the top-center slot). It hides during gameOver:
-     the death plate owns the screen (UI_STYLE section 12.4) and
-     pre-death chatter dies with the rig; the respawn line from 047
-     arrives after gameOver clears, so it still reads.
-
-     Wiring (mirrors 057): radioMsgTick(dt) runs from the loop (350,
-     beside onboardingTick); drawRadioMsg() is dispatched in the
-     screen-space UI overlay right after drawOnboarding (140), which
-     puts it above the shop floor (purchase rejections stay readable)
-     and below the death plate. init() calls radioMsgReset() so no
-     line leaks across runs. Debug: window.__radioMsg.
+     Both radio surfaces share the wrapped, fixed-size text renderer
+     below. Tick runs in 350 even in the shop; init resets this state.
      ================================================================ */
 
-  var RADIO_TYPE_CPS = 40;     // type-on speed, chars/sec (matches 057)
-
   var radioMsg = {
-    cur: null,      // showing line: {text, alert, tag, key, dur, t, hold}
-    queue: [],      // waiting lines, FIFO (alerts unshift to the front)
-    show: null,     // last shown line, kept for the fade-out frames
-    panelA: 0,      // plate fade/slide 0..1 (200ms in, 150ms out)
-    clock: 0,       // free-running clock for the carrier-diamond blink
-    gapT: 0,        // short radio silence between lines
-    y: 0,           // eased plate Y (stacks under the onboarding plate)
+    cur: null,      // showing line: {text, alert, tag, key, dur, t, expiresAt}
+    queue: [],      // at most the latest routine feedback behind a warning
+    recent: [],     // bounded repeat suppression, measured in play seconds
+    show: null,     // last shown line, kept for fade-out
+    panelA: 0,
+    clock: 0,
+    gapT: 0,
+    y: 0,
   };
 
-  // Hold time AFTER the type-on finishes. dur, when given, is the TOTAL
-  // on-screen time (type + hold). Alerts read longer: the player must act.
-  function radioMsgHold(text, alert, dur) {
-    if (dur) return Math.max(0.8, dur - text.length / RADIO_TYPE_CPS);
-    var hold = 1.0 + text.length * 0.04 + (alert ? 1.2 : 0);
-    return Math.min(alert ? 6.0 : 4.5, Math.max(alert ? 3.2 : 2.0, hold));
+  function radioMsgDuration(text, alert, dur) {
+    if (typeof dur === 'number' && isFinite(dur) && dur > 0) return dur;
+    return Math.min(alert ? 4 : 3,
+      Math.max(alert ? 2.8 : 1.8, 1.1 + text.length * 0.024));
+  }
+
+  function radioMsgStart(m) {
+    var st = radioMsg;
+    m.t = 0;
+    // Explicit prompts age from the event, including any waiting time.
+    if (m.exact) m.dur = Math.max(0, m.expiresAt - st.clock);
+    st.cur = m;
+    st.show = m;
+    st.gapT = 0;
   }
 
   function radioMsgPush(text, alert, opts) {
-    if (!text) return;
+    if (!text || gameOver) return;
     opts = opts || {};
     var st = radioMsg;
     var key = opts.key || null;
-    // Coalesce: the same line is already up (CARGO FULL re-fires on a
-    // 1.5s cooldown while bumping a full bay). Refresh its hold and
-    // rewind a finished type-on to "just typed" instead of replaying.
-    if (st.cur && st.cur.text === text) {
-      st.cur.alert = st.cur.alert || !!alert;
-      st.cur.hold = radioMsgHold(text, st.cur.alert, opts.dur || st.cur.dur);
-      st.cur.t = Math.min(st.cur.t, text.length / RADIO_TYPE_CPS);
-      return;
-    }
-    // Coalesce: same channel key showing (rapid purchases). Swap the
-    // text in place, keep the typed progress, refresh the hold.
-    if (key && st.cur && st.cur.key === key) {
-      st.cur.text = text;
-      st.cur.alert = !!alert;
-      if (opts.tag) st.cur.tag = opts.tag;
-      st.cur.dur = opts.dur || 0;
-      st.cur.hold = radioMsgHold(text, st.cur.alert, st.cur.dur);
-      st.cur.t = Math.min(st.cur.t, text.length / RADIO_TYPE_CPS);
-      return;
-    }
-    // Coalesce: a waiting line with the same text or key is replaced.
-    for (var i = 0; i < st.queue.length; i++) {
-      var q = st.queue[i];
-      if (q.text === text || (key && q.key === key)) {
-        q.text = text;
-        q.alert = q.alert || !!alert;
-        if (opts.tag) q.tag = opts.tag;
-        q.dur = opts.dur || q.dur;
-        return;
+    var exact = typeof opts.dur === 'number' && isFinite(opts.dur) && opts.dur > 0;
+    // Ignore case/punctuation so the two cargo-full callers share a cooldown.
+    var id = text.toLowerCase().replace(/[.!]+$/, '');
+    var cooldown = alert ? 10 : 5;
+    if (!exact) {
+      for (var i = 0; i < st.recent.length; i++) {
+        var seen = st.recent[i];
+        if (seen.id === id && (!alert || seen.alert) && st.clock - seen.at < cooldown) return;
       }
     }
-    var m = { text: text, alert: !!alert, tag: opts.tag || 'RIG',
-              key: key, dur: opts.dur || 0, waitT: 0, t: 0, hold: 0 };
-    if (m.alert) {
-      // Alerts jump the queue and cut routine chatter mid-read.
-      st.queue.unshift(m);
-      if (st.cur && !st.cur.alert) { st.cur = null; st.gapT = 0; }
+    st.recent.push({ id: id, alert: !!alert, at: st.clock });
+    if (st.recent.length > 32) st.recent.shift();
+    var m = { text: text, alert: !!alert, tag: opts.tag || 'RIG', key: key,
+      dur: radioMsgDuration(text, alert, opts.dur), exact: exact, t: 0,
+      expiresAt: st.clock + (exact ? opts.dur : 3),
+      deadline: performance.now() + radioMsgDuration(text, alert, opts.dur) * 1000 };
+
+    // Keep the return-to-town confirmation visible for its action window.
+    // Other feedback can wait briefly, but never restart or replace it.
+    if (st.cur && st.cur.exact && !exact) {
+      st.queue[0] = m;
+      return;
+    }
+    // A real new event may update a showing channel; repeats above cannot
+    // keep a warning pinned. Timed confirmations must appear immediately.
+    if (!st.cur || !st.cur.alert || m.alert || exact) {
+      st.queue.length = 0;
+      radioMsgStart(m);
     } else {
-      st.queue.push(m);
-      if (st.queue.length > 4) {
-        for (var j = 0; j < st.queue.length; j++) {
-          if (!st.queue[j].alert) { st.queue.splice(j, 1); break; }
-        }
-        if (st.queue.length > 4) st.queue.shift();
-      }
+      // Keep only the latest routine event, never a shopping backlog.
+      st.queue[0] = m;
     }
   }
 
-  // End the showing line right now because the action it prompted was
-  // taken (e.g. the second R press). The next line follows after a beat.
+  // The prompted action was taken (second R press). Drop pending chatter too.
   function radioMsgCut() {
-    if (radioMsg.cur) { radioMsg.cur = null; radioMsg.gapT = 0.15; }
+    radioMsg.cur = null;
+    radioMsg.queue.length = 0;
+    radioMsg.gapT = 0.2;
   }
 
-  // Full clear for init() / new runs: no line survives a restart.
   function radioMsgReset() {
     radioMsg.cur = null;
     radioMsg.queue.length = 0;
+    radioMsg.recent.length = 0;
     radioMsg.show = null;
     radioMsg.panelA = 0;
     radioMsg.gapT = 0;
+    radioMsg.clock = 0;
   }
 
   function radioMsgTick(dt) {
     var st = radioMsg;
     st.clock += dt;
-    if (gameOver) {
-      // Death plate owns the screen; pre-death chatter dies with the rig.
-      st.cur = null;
-      st.queue.length = 0;
+    if (gameOver || gameWon || ledgerOpen || seamCreditsOn) {
+      radioMsgCut();
       st.panelA = Math.max(0, st.panelA - dt / 0.15);
       return;
     }
     if (st.gapT > 0) st.gapT -= dt;
-    // Routine lines go stale while waiting behind a long alert.
-    for (var i = st.queue.length - 1; i >= 0; i--) {
-      var q = st.queue[i];
-      q.waitT += dt;
-      if (!q.alert && q.waitT > 10) st.queue.splice(i, 1);
-    }
-    if (!st.cur && st.queue.length && st.gapT <= 0) {
-      st.cur = st.queue.shift();
-      st.cur.t = 0;
-      st.cur.hold = radioMsgHold(st.cur.text, st.cur.alert, st.cur.dur);
-      st.show = st.cur;
-      st.panelA = 0;   // restart the slide-in for the new line
-    }
+    if (st.queue.length && (st.queue[0].expiresAt <= st.clock ||
+        st.queue[0].deadline <= performance.now())) st.queue.length = 0;
+    if (!st.cur && st.queue.length && st.gapT <= 0) radioMsgStart(st.queue.shift());
     if (st.cur) {
       st.cur.t += dt;
-      if (st.cur.t >= st.cur.text.length / RADIO_TYPE_CPS + st.cur.hold) {
+      // Routine feedback also expires across a pause. Timed R prompts use
+      // play time, matching restartConfirmT, which pauses with the game.
+      if (st.cur.t >= st.cur.dur || (!st.cur.exact && performance.now() >= st.cur.deadline)) {
+        if (st.cur.exact) { st.show = null; st.panelA = 0; }
         st.cur = null;
         st.gapT = 0.3;
       }
     }
-    st.panelA = st.cur ? Math.min(1, st.panelA + dt / 0.2)
+    st.panelA = st.cur ? Math.min(1, st.panelA + dt / 0.15)
                        : Math.max(0, st.panelA - dt / 0.15);
-    // Slot: top-center under the HUD band, same as the onboarding plate;
-    // drop below it while a tutorial line is up (its plate is 40 tall).
-    var hudH = isMobile ? 104 : 60;
-    var baseY = hudH + 10;
-    if (typeof onboardState !== 'undefined' && !tutorialDone &&
-        !onboardState.done && onboardState.panelA > 0.01) baseY += 48;
-    if (st.panelA <= 0.001) st.y = baseY;   // snap while invisible
-    else st.y += (baseY - st.y) * Math.min(1, dt * 10);
+    st.y = (isMobile ? 104 : 60) + 10;
   }
 
-  // ----- Render: same plate grammar as drawOnboarding (057) -----
-  // Screen-space CSS px (same transform as drawHUD). Dark steel plate,
-  // 1px lamp-coloured border, blinking carrier diamond, channel
-  // micro-label, type-on mono line. Height 40 CSS px.
-  function drawRadioMsg() {
-    if (!UI_NEW) return;    // the legacy pill renderer in 140 owns !UI_NEW
-    var st = radioMsg;
-    if (gameOver) return;
-    var a = st.panelA;
-    if (a <= 0) return;
-    var m = st.cur || st.show;
-    if (!m || !m.text) return;
-    var line = m.text;
-    var shown = st.cur ? line.substr(0, Math.floor(st.cur.t * RADIO_TYPE_CPS)) : line;
-
-    var padL = 12, padR = 12;
-    var maxPanelW = Math.min(viewW - 16, 560);
-    var fontPx = 12;
+  // Fixed 12px text wraps instead of shrinking to illegible single lines.
+  // Cache the layout: the same line is drawn every frame, on both surfaces.
+  var radioLayoutCache = { text: null, width: 0, layout: null };
+  function radioMsgLayout(text) {
+    var maxW = Math.max(40, Math.min(viewW - 16, 560));
+    if (radioLayoutCache.text === text && radioLayoutCache.width === viewW) return radioLayoutCache.layout;
+    var pad = 12, fontPx = 12, lineH = 16, avail = maxW - pad * 2;
     ctx.save();
     ctx.font = 'bold ' + fontPx + 'px ' + UI_FONT;
-    var lineW = ctx.measureText(line).width;
-    var availW = maxPanelW - padL - padR;
-    if (lineW > availW) {   // narrow screens: shrink the type, never clip
-      fontPx = Math.max(9, Math.floor(fontPx * availW / lineW));
-      ctx.font = 'bold ' + fontPx + 'px ' + UI_FONT;
-      lineW = ctx.measureText(line).width;
+    var words = text.split(/\s+/), lines = [], line = '', widest = 0;
+    for (var i = 0; i < words.length; i++) {
+      var word = words[i];
+      var next = line ? line + ' ' + word : word;
+      if (line && ctx.measureText(next).width > avail) { lines.push(line); line = ''; }
+      // Break a long unspaced identifier too, so no glyph leaves the plate.
+      while (ctx.measureText(word).width > avail && word.length > 1) {
+        var n = word.length - 1;
+        while (n > 1 && ctx.measureText(word.substr(0, n)).width > avail) n--;
+        lines.push(word.substr(0, n));
+        word = word.substr(n);
+      }
+      line = line ? line + ' ' + word : word;
     }
-    var panelW = Math.min(maxPanelW, Math.max(lineW, 150) + padL + padR);
-    var panelH = 40;
-    var panelX = Math.round((viewW - panelW) / 2);
-    var panelY = Math.round(st.y + (a - 1) * 6);   // slides down 6px fading in
+    if (line) lines.push(line);
+    for (var j = 0; j < lines.length; j++) widest = Math.max(widest, ctx.measureText(lines[j]).width);
+    ctx.restore();
+    var w = Math.min(maxW, Math.max(150, Math.ceil(widest)) + pad * 2);
+    var layout = { x: Math.round((viewW - w) / 2), w: w,
+      h: 40 + Math.max(0, lines.length - 1) * lineH,
+      lines: lines, fontPx: fontPx, lineH: lineH, pad: pad };
+    radioLayoutCache = { text: text, width: viewW, layout: layout };
+    return layout;
+  }
 
-    // Caution amber for alerts, the 057 info-gold for routine lines.
-    var lampCol = m.alert ? '#ffb030' : BLD.goldBright;
-
-    // Plate + lamp-coloured border
-    ctx.globalAlpha = a * 0.92;
-    ctx.fillStyle = 'rgba(10,12,17,0.88)';
-    roundRect(ctx, panelX, panelY, panelW, panelH, 4, true);
+  function drawRadioPlate(text, tag, alert, a, y, layout) {
+    var l = layout || radioMsgLayout(text);
+    var x = l.x, top = Math.round(y + (a - 1) * 4);
+    var lampCol = alert ? '#ffb030' : BLD.goldBright;
+    ctx.save();
+    ctx.globalAlpha = a * 0.96;
+    ctx.fillStyle = UIT_INSET;
+    roundRect(ctx, x, top, l.w, l.h, 4, true);
     ctx.globalAlpha = a * 0.55;
     ctx.strokeStyle = lampCol;
     ctx.lineWidth = 1;
-    roundRect(ctx, panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1, 4, false, true);
+    roundRect(ctx, x + 0.5, top + 0.5, l.w - 1, l.h - 1, 4, false, true);
 
-    // Carrier diamond: soft gold flicker for routine lines, hard 1 Hz
-    // caution blink for alerts (UI_STYLE.md section 4.3).
-    var dx = panelX + padL + 4, dy = panelY + 11;
-    var blink = (st.clock % 1.0) < (m.alert ? 0.5 : 0.55);
-    ctx.globalAlpha = a * (blink ? 0.95 : (m.alert ? 0.12 : 0.30));
+    // A steady carrier lamp keeps brief feedback quiet and easy to scan.
+    ctx.globalAlpha = a * 0.8;
     ctx.fillStyle = lampCol;
-    ctx.beginPath();
-    ctx.moveTo(dx, dy - 3.5); ctx.lineTo(dx + 3.5, dy);
-    ctx.lineTo(dx, dy + 3.5); ctx.lineTo(dx - 3.5, dy);
-    ctx.closePath(); ctx.fill();
-
-    // Channel micro-label: who is talking (RIG systems, KOMENDATURA)
-    ctx.globalAlpha = a * 0.75;
-    ctx.fillStyle = BLD.goldPale;
+    ctx.fillRect(x + l.pad, top + 9, 4, 4);
+    ctx.fillStyle = UIT_BODY;
     ctx.font = 'bold 8px ' + UI_FONT;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(m.tag || 'RIG', dx + 9, dy + 0.5);
-
-    // The line itself, typing on
-    ctx.globalAlpha = a * 0.95;
-    ctx.fillStyle = 'rgba(232,227,213,0.96)';
-    ctx.font = 'bold ' + fontPx + 'px ' + UI_FONT;
-    ctx.fillText(shown, panelX + padL, panelY + 27.5);
-
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(tag || 'RIG', x + l.pad + 10, top + 11);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = UIT_TEXT;
+    ctx.font = 'bold ' + l.fontPx + 'px ' + UI_FONT;
+    for (var i = 0; i < l.lines.length; i++) {
+      ctx.fillText(l.lines[i], x + l.pad, top + 27 + i * l.lineH);
+    }
     ctx.restore();
   }
 
-  // Debug handle, same pattern as window.__sluiceSave / window.__gamepad.
+  function drawRadioMsg() {
+    if (!UI_NEW || gameOver || gameWon || gamePaused || ledgerOpen || seamCreditsOn) return;
+    var st = radioMsg;
+    var m = st.cur || st.show;
+    if (st.panelA <= 0 || !m) return;
+    drawRadioPlate(m.text, m.tag, m.alert, st.panelA, st.y, radioMsgLayout(m.text));
+  }
+
   window.__radioMsg = {
     push: radioMsgPush,
     cut: radioMsgCut,
@@ -27072,7 +26894,7 @@
     // Onboarding radio bubble (057), screen-space, above the HUD.
     if (typeof drawOnboarding === 'function') drawOnboarding();
     // General radio messages (058): showMsg's UI_NEW surface. Same plate
-    // grammar as 057, stacks below the tutorial line when both are up.
+    // grammar as 057, takes its place while feedback is up.
     // Dispatched after the shop floor on purpose so purchase feedback
     // ("Need $X") stays readable inside the shop.
     if (typeof drawRadioMsg === 'function') drawRadioMsg();
