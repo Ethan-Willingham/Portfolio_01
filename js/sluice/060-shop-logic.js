@@ -741,6 +741,7 @@
     var destY = DECK_ROW * TILE - PLAYER_H;
     player.x = destX;
     player.y = destY;
+    resetLandingFeedback();
     player.vx = 0;
     player.vy = 0;
     player.slideTargetX = null;

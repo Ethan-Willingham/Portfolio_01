@@ -156,6 +156,7 @@
     flightRings.length = 0;
     flightIgniteT = 0;
     flightIgniteCooldown = 0;
+    resetLandingFeedback();
     flightFxSeen.sync = false;   // re-adopt the fx counters on the next frame, no stale replays
   }
 
@@ -236,19 +237,19 @@
     while (flightRings.length > 12) flightRings.shift();
   }
 
-  // Landing dust rides the existing wash pool so the wash pass ages + draws it
-  // with the same dusty look; only spawn parameters differ.
-  function spawnLandingDust(x, y, side, speedScale, sizeScale) {
-    var T = rocketTune;
+  // Short, low contact wisps. Independent of rocket-wash tuning so a
+  // stronger booster cannot turn a normal landing into an exhaust burst.
+  function spawnLandingDust(x, y, side, strength) {
     rocketWash.push({
-      x: x + side * (2 + Math.random() * 6),
-      y: y - 1 + (Math.random() - 0.5) * 2,
-      vx: side * (55 + Math.random() * 90) * speedScale,
-      vy: (-12 - Math.random() * 26) * speedScale,
+      x: x + side * (PLAYER_W * 0.38 + Math.random() * 2),
+      y: y - 1.2,
+      vx: side * (18 + Math.random() * 22) * (0.5 + strength),
+      vy: -3 - Math.random() * 5,
       age: 0,
-      life: rocketTuneNum(T.wash_life, 0.4) * (0.7 + Math.random() * 0.5),
-      size: rocketTuneNum(T.wash_size, 2.2) * sizeScale * (0.75 + Math.random() * 0.5),
-      phase: Math.random() * Math.PI * 2,
+      life: 0.16 + strength * 0.10 + Math.random() * 0.04,
+      size: 1.1 + strength * 0.8 + Math.random() * 0.3,
+      landing: true,
+      phase: Math.random() * Math.PI * 2
     });
     while (rocketWash.length > 240) rocketWash.shift();
   }
@@ -285,20 +286,16 @@
         }
       }
 
-      // Landing dust: hard hits (landVy > 420) kick a wide 10-puff fan out of
-      // the feet; soft touchdowns get a small 3-puff settle.
+      // Tiny drops stay quiet. Wet ground and gel already have their own
+      // contact effects; only dry impacts emit these two to six low wisps.
       if (fx.landN !== flightFxSeen.land) {
         flightFxSeen.land = fx.landN;
-        var feet = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H - 1);
         var lvy = fx.landVy || 0;
-        if (lvy > 420) {
-          var kHard = Math.min(1.8, 0.9 + lvy / 900);
-          for (var li = 0; li < 10; li++) {
-            spawnLandingDust(feet.x, feet.y, li % 2 ? 1 : -1, kHard, 1.6);
-          }
-        } else {
-          for (var lj = 0; lj < 3; lj++) {
-            spawnLandingDust(feet.x, feet.y, lj % 2 ? 1 : -1, 0.45, 0.9);
+        if (lvy > 150 && fx.landSurface !== 'jello' && !(fx.landCushion > 0.05)) {
+          var landStrength = Math.min(1, (lvy - 150) / 500);
+          var pairs = 1 + Math.floor(landStrength * 2);
+          for (var li = 0; li < pairs * 2; li++) {
+            spawnLandingDust(fx.landX, fx.landY, li % 2 ? 1 : -1, landStrength);
           }
         }
       }
@@ -612,10 +609,11 @@
         if (ws.x + 60 < cam.x || ws.x - 60 > cam.x + screenW) continue;
         if (ws.y + 60 < cam.y || ws.y - 60 > cam.y + screenH) continue;
         var f2 = 1 - ws.age / ws.life;
-        var grown2 = ws.size + washGrowth * ws.age;
-        ctx.fillStyle = washRgbaPrefix + Math.max(0, Math.min(1, washAlpha * f2 * f2)).toFixed(3) + ')';
+        var grown2 = ws.size + (ws.landing ? 3 : washGrowth) * ws.age;
+        ctx.fillStyle = washRgbaPrefix + Math.max(0, Math.min(1, (ws.landing ? 0.18 : washAlpha) * f2 * f2)).toFixed(3) + ')';
         ctx.beginPath();
-        ctx.arc(ws.x, ws.y, grown2, 0, Math.PI * 2);
+        if (ws.landing) ctx.ellipse(ws.x, ws.y, grown2, grown2 * 0.48, 0, 0, Math.PI * 2);
+        else ctx.arc(ws.x, ws.y, grown2, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();

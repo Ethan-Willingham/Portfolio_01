@@ -62,7 +62,7 @@
     if (cashPunch > 0) cashPunch = Math.max(0, cashPunch - dt / 0.5);
 
     // ----- Hit-pause -----
-    // When set by a high-impact event (drill tile-break, hard landings),
+    // When set by a drill tile-break,
     // freeze game logic for a few frames while smoke + render continue.
     // The frozen frames read as a beat of weight; the brevity (33-50ms)
     // keeps it from becoming perceived input lag during chained drills.
@@ -489,16 +489,6 @@
     // FX event counters (consumers diff the N fields; never reset).
     if (!player.fx) player.fx = { igniteN: 0, boomN: 0, vaporN: 0, landN: 0, landVy: 0, landTilt: 0 };
     if (player.onGround) {
-      if (!player._groundWas && (player.airTime || 0) > 0.22) {
-        // Touchdown event: grade by impact speed + how far from upright the
-        // hull hit. Read by audio (greaser chirp / hard thud), the plume dust
-        // burst, and the suspension squash in drawPlayer.
-        var _lt = (player.bodyTiltRender || 0) % (Math.PI * 2);
-        if (_lt > Math.PI) _lt -= Math.PI * 2; else if (_lt < -Math.PI) _lt += Math.PI * 2;
-        player.fx.landN++;
-        player.fx.landVy = player.peakFallVy || 0;
-        player.fx.landTilt = Math.abs(_lt);
-      }
       player.coyoteT = COYOTE_T;
       player.airTime = 0;
       player.peakFallVy = 0;
@@ -893,8 +883,8 @@
     var capRestY = chimneyCapCatch(player.x, player.y, ny);
     if (capRestY !== null) {
       // Perch on the surface fireplace chimney cap (one-way landing ledge).
-      player.squash = Math.max(player.squash, Math.min(0.55, player.vy / 700));
       player.y = capRestY;
+      recordLandingImpact(player.vy, capRestY + PLAYER_H, 'ledge', 0);
       player.vy = 0;
       player.onGround = true;
       player.jelloImpactVy = 0;   // solid perch voids any banked trampoline rebound
@@ -996,8 +986,8 @@
         if (!_wasJello && _impactVy > 120) {               // first hard contact: the gel FULLY cushions the fall
           // v25.59 — a slime is the safety net (owner): landing on it takes ZERO hull damage no
           // matter how fast the drop, so a slime at the bottom of a shaft saves the rig from a fall
-          // that would otherwise kill it on bare rock. Keep the squash + wet splat for feel only.
-          player.squash = Math.min(1, _impactVy / 700);    // landing squash scales with impact speed (cosmetic)
+          // that would otherwise kill it on bare rock. The gel and wet splat carry the impact.
+          recordLandingImpact(_impactVy, _surr, 'jello', 1);
           jelloLandImpact(player.x + PLAYER_W * 0.5, player.y + PLAYER_H, _impactVy);
           var _jSplN = 3 + Math.min(9, (_impactVy / 110) | 0);
           spawnJelloSplat(player.x + PLAYER_W * 0.5, _surr, _jSplN, _impactVy * 0.5, 0.85, null);
@@ -1078,43 +1068,37 @@
         }
       }
       if (!slipped) {
-        // Hard-landing impact FX (fall damage, squash, red damage-flash, and the hit-pause that
-        // briefly FREEZES the loop) are gated on FALL_IMPACT_FX, defaulted OFF for clean physics
-        // testing. The rig still lands + stops below; this block only adds the thump/freeze/damage.
-        if (player.vy > 0 && FALL_IMPACT_FX) {
-          var impactVy = player.vy;
-          var fallDmg = fallDamageForImpact(impactVy);
-          // v12.1 — water breaks the fall. A body of water around the rig
-          // at impact cushions it; a full dunk zeroes the hull damage. The
-          // squash / damage-flash / hit-pause below all scale from fallDmg,
-          // so they soften automatically with the cushioned value.
-          if (fallDmg > 0) fallDmg *= (1 - playerWaterCushion());
+        // Capture contact before velocity is stopped. Dust sits on the first
+        // supporting tile, even when the last clear physics position is above it.
+        var impactVy = player.vy;
+        var impactCushion = impactVy > 80 ? playerWaterCushion() : 0;
+        if (wasInAir && impactVy > 80) {
+          var contactY = ny + PLAYER_H;
+          var contactRow0 = Math.floor((player.y + PLAYER_H) / TILE);
+          var contactRow1 = Math.floor((ny + PLAYER_H) / TILE);
+          var contactCol0 = Math.floor(player.x / TILE);
+          var contactCol1 = Math.floor((player.x + PLAYER_W - 0.01) / TILE);
+          for (var cr = contactRow0; cr <= contactRow1; cr++) {
+            var supported = false;
+            for (var cc = contactCol0; cc <= contactCol1; cc++) {
+              if (tileAt(cr, cc) !== null) { supported = true; break; }
+            }
+            if (supported) { contactY = cr * TILE; break; }
+          }
+          recordLandingImpact(impactVy, contactY, 'ground', impactCushion);
+        }
+        // Fall damage and its existing warning/audio stay intact. Suspension
+        // is cosmetic; landing never freezes movement or queues a second squash.
+        if (impactVy > 0 && FALL_IMPACT_FX) {
+          var fallDmg = fallDamageForImpact(impactVy) * (1 - impactCushion);
           if (fallDmg > 0) {
             player.hull -= fallDmg;
-            player.squash = Math.min(1, fallDmg / 80);
-            // The crash-landing crunch scales with the damage (SFX_BIBLE §10
-            // land-damage; the sub lives in the asset, hero hits only).
             sfxPlay('land-damage', { gain: 0.6 + 0.4 * Math.min(1, fallDmg / 60) });
             damageFlashT = Math.max(damageFlashT, Math.min(1, 0.18 + fallDmg / 90));
-            // Stage 5 — hit-pause on damage-causing landings. Scales with
-            // damage magnitude, capped at 70ms so chained big falls never
-            // become perceived input lag.
-            hitPauseT = Math.max(hitPauseT, Math.min(0.07, 0.04 + fallDmg / 600));
           } else if (impactVy > 180) {
-            // Sub-damage landing — still give a tactile cue via squash.
-            var landK = (impactVy - 180) / 320;
-            if (landK > 1) landK = 1;
-            player.squash = Math.max(player.squash, 0.18 + landK * 0.55);
+            var landK = Math.min(1, (impactVy - 180) / 320);
             sfxPlay('land-hard', { gain: 0.5 + 0.5 * landK });
-            // Sub-damage hit-pause: 22-35ms, only past a clear thump
-            // threshold so soft drops stay snappy.
-            if (impactVy > 260) {
-              hitPauseT = Math.max(hitPauseT, 0.022 + landK * 0.013);
-            }
           } else if (impactVy > 80 && player.airTime > 0.25) {
-            // Soft step-down landing after a real airborne stretch — barely
-            // perceptible squash so the rig "settles" instead of clipping flat.
-            player.squash = Math.max(player.squash, 0.10);
             sfxPlay('land-soft', { gain: 0.65 });
           }
           if (player.hull <= 0) {

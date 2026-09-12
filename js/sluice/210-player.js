@@ -270,7 +270,7 @@
   }
 
   // ----- Flight FX state (render-only) -----
-  // Touchdown suspension squash + rotation smear ghosts + buffet tremble.
+  // Touchdown suspension travel + rotation smear ghosts + buffet tremble.
   // Event counters in player.fx (bumped by the flight integrator in 080) are
   // consumed here by diffing against last-seen values, the same pattern as
   // the haptics shim (057). Everything below is a draw-transform trick: no
@@ -278,13 +278,14 @@
   // the ground-cast shadow stays honest.
   var _pfxTime = 0;            // render-time accumulator, seconds
   var _pfxLast = 0;            // previous performance.now() sample
+  var _pfxPlayer = null;       // reset the envelope when init replaces the rig
   var _pfxLandSeen = 0;        // last-seen player.fx.landN
-  var _pfxLandAge = 9;         // seconds since the touchdown squash started
-  var _pfxLandDip = 0;         // squash depth captured at touchdown
+  var _pfxLandAge = 9;         // seconds since the touchdown settle started
+  var _pfxLandDip = 0;         // hull travel in world pixels at touchdown
 
   // Advance the render-time clock and diff the landing counter. Called once
   // at the top of drawPlayer; deltas come from performance.now() and clamp
-  // to 50ms so a backgrounded tab cannot fast-forward the squash spring.
+  // to 50ms so a backgrounded tab cannot fast-forward the suspension recovery.
   function playerFxTick() {
     var now = performance.now();
     var dtl = (now - _pfxLast) / 1000;
@@ -294,33 +295,31 @@
     _pfxTime += dtl;
     _pfxLandAge += dtl;
     var fx = player.fx;
+    if (_pfxPlayer !== player) {
+      _pfxPlayer = player;
+      _pfxLandSeen = fx ? fx.landN : 0;
+      _pfxLandAge = 1;
+      _pfxLandDip = 0;
+    }
     if (fx && fx.landN !== _pfxLandSeen) {
       _pfxLandSeen = fx.landN;
-      // Suspension travel: the base dip scales with impact fall speed; hard
-      // and/or tilted touchdowns compress deeper, capped at 0.20.
-      var impVy = fx.landVy || 0;
-      var dip = impVy / 3000;
-      if (dip > 0.16) dip = 0.16;
-      if (impVy > 420) dip += (impVy - 420) / 12000;
-      dip += (fx.landTilt || 0) * 0.04;
-      if (dip > 0.20) dip = 0.20;
-      _pfxLandDip = dip;
+      // Only the sprung hull moves. Maximum travel is 1.35 world pixels;
+      // the tracks keep their silhouette and gel supplies its own suspension.
+      var k = Math.max(0, Math.min(1, ((fx.landVy || 0) - 80) / 480));
+      _pfxLandDip = fx.landSurface === 'jello' ? 0 :
+        (0.25 + 1.1 * k) * (1 - 0.75 * (fx.landCushion || 0));
       _pfxLandAge = 0;
     }
   }
 
-  // Current landing-squash deflection, evaluated in closed form so any frame
-  // dt stays numerically stable: a slightly underdamped spring (w0 = 32
-  // rad/s, zeta = 0.45) starts at the touchdown depth, springs back through
-  // zero, overshoots once (~20% of the dip, near 110ms) and has settled by
-  // ~180ms. Positive = squash, negative = the brief stretch overshoot.
-  function playerFxLandSquash() {
-    if (_pfxLandDip <= 0 || _pfxLandAge >= 0.3) return 0;
-    var zw = 14.4;    // zeta * w0
-    var wd = 28.57;   // damped frequency, w0 * sqrt(1 - zeta * zeta)
-    var ta = _pfxLandAge;
-    return _pfxLandDip * Math.exp(-zw * ta) *
-      (Math.cos(wd * ta) + (zw / wd) * Math.sin(wd * ta));
+  // Fast compression, then one smooth recovery. No bounce, stretch or width
+  // change: this is short suspension travel under a rigid metal chassis.
+  function playerFxLandOffset() {
+    var t = _pfxLandAge;
+    if (_pfxLandDip <= 0 || t >= 0.20) return 0;
+    if (t < 0.028) return _pfxLandDip * Math.sin(t / 0.028 * Math.PI * 0.5);
+    var u = 1 - (t - 0.028) / 0.172;
+    return _pfxLandDip * u * u * (3 - 2 * u);
   }
 
   // The rig body draw pass (track bed, hull, cupola, stack, lamp), factored
@@ -328,7 +327,7 @@
   // draw path with an angle + alpha override. Expects the caller to have set
   // up the full body transform (translate + tilt + squash + flip); the drill
   // assembly is NOT part of this pass, it stays world-space in drawPlayer.
-  function drawPlayerRigBody(t) {
+  function drawPlayerRigBody(t, suspension) {
     var pgrad = ensurePlayerGrads();
 
     // ----- T-10M-inspired track bed -----
@@ -359,6 +358,9 @@
       ctx.arc(rx, 22.0, 0.72, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    ctx.save();
+    ctx.translate(0, suspension || 0);
 
     // ----- Heavy cast armor hull -----
     ctx.fillStyle = pgrad.hull;
@@ -481,6 +483,7 @@
     ctx.lineTo(20, 12.6);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
   }
 
   // Applies one full rig-body pass: world translate, tilt about the rig
@@ -489,7 +492,7 @@
   // The rotation smear ghosts call this with a past angle and a low alpha;
   // the main sprite calls it with alpha 1. One body pass per call, no
   // allocations, and the save/restore keeps the ghost alpha self-contained.
-  function drawRigBodyPass(ox, oy, tilt, sx, sy, flip, alpha, t) {
+  function drawRigBodyPass(ox, oy, tilt, sx, sy, flip, alpha, t, suspension) {
     ctx.save();
     if (alpha < 1) ctx.globalAlpha = alpha;
     ctx.translate(ox, oy);
@@ -507,7 +510,7 @@
       ctx.translate(PLAYER_W, 0);
       ctx.scale(-1, 1);
     }
-    drawPlayerRigBody(t);
+    drawPlayerRigBody(t, suspension);
     ctx.restore();
   }
 
@@ -546,15 +549,15 @@
     // drawPlayerShadow() BEFORE the jello (from render()), so the translucent
     // gel renders over the shadow instead of the shadow showing through it.
 
-    // Squash on landing impact (positive) + airborne stretch (driven by vy).
+    // Drill/wall recoil (positive) + airborne stretch (driven by vy).
     // Stretch is computed every frame from current motion so the rig
     // visibly elongates during a hard climb or free-fall — selling the speed
     // without any extra state. Squash always wins over stretch when present
     // so landing feedback never gets diluted.
     var sq = player.squash || 0;
-    var fxSq = playerFxLandSquash();
+    var landOffset = playerFxLandOffset();
     var stretchK = 0;
-    if (sq < 0.05 && fxSq <= 0.01 && !drilling) {
+    if (sq < 0.05 && landOffset <= 0.01 && !drilling) {
       var vyAbs = Math.abs(player.vy);
       if (vyAbs > 90) {
         stretchK = (vyAbs - 90) / 380;
@@ -573,19 +576,6 @@
       sy = 1 + stretchK * 0.18;
       sx = 1 - stretchK * 0.10;
     }
-    // Touchdown suspension squash (event-driven off player.fx.landN) rides
-    // multiplicatively on top, anchored at the same feet point, so it
-    // composes with the tilt and with whatever the physics squash is doing.
-    // Volume conserving: its scaleX is exactly 1 / scaleY.
-    var fxSy = 1, fxSx = 1;
-    if (fxSq !== 0) {
-      fxSy = 1 - fxSq;
-      if (fxSy < 0.7) fxSy = 0.7;   // safety floor, the dip caps at 0.20
-      fxSx = 1 / fxSy;
-      sy *= fxSy;
-      sx *= fxSx;
-    }
-
     // Flip horizontally if facing left. The bank is a lean, never a
     // reorientation (v25.49: the one flight model never rotates the rig),
     // so the mirror always follows the travel direction.
@@ -599,7 +589,7 @@
     // The drill assembly below renders AFTER this pass pops the mirrored
     // frame, so it can use true world-space angles without having to
     // compensate for the horizontal flip.
-    drawRigBodyPass(rigOX, rigOY, bodyTilt, sx, sy, rigFlip, 1, t);
+    drawRigBodyPass(rigOX, rigOY, bodyTilt, sx, sy, rigFlip, 1, t, landOffset);
 
     // ===== Drill assembly (world-space pivot, no mirroring) =====
     // The pivot lives on the front-bottom of the body. "Front" depends
@@ -613,19 +603,10 @@
     var pivotLocalX = player.dir > 0 ? PLAYER_W - 4.2 : 4.2;
     var pivotLocalY = 15.2;
 
-    // Apply squash to the pivot too so the drill stays attached
-    if (player.squash > 0) {
-      var sqAmt = player.squash;
-      pivotLocalY = PLAYER_H - (PLAYER_H - 15.2) * (1 - sqAmt * 0.18);
-    }
-    // Fold the touchdown suspension squash into the pivot the same way, on
-    // both axes, so the drill stays bolted to the hull through the landing
-    // dip and its overshoot (playerLocalToWorld applies translate + tilt
-    // only, so feet-anchored scales must be pre-applied in local space).
-    if (fxSy !== 1) {
-      pivotLocalY = PLAYER_H - (PLAYER_H - pivotLocalY) * fxSy;
-      pivotLocalX = PLAYER_W * 0.5 + (pivotLocalX - PLAYER_W * 0.5) * fxSx;
-    }
+    // Use the body's exact local transform so the borer stays attached
+    // through suspension travel, drill recoil and airborne stretch.
+    pivotLocalY = PLAYER_H - (PLAYER_H - pivotLocalY - landOffset) * sy;
+    pivotLocalX = PLAYER_W * 0.5 + (pivotLocalX - PLAYER_W * 0.5) * sx;
 
     var pivotWorld = playerLocalToWorld(pivotLocalX, pivotLocalY);
     var pivotWorldX = pivotWorld.x + shakeX;

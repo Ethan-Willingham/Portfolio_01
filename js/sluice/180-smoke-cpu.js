@@ -97,7 +97,7 @@
     // The pipe mouth lives at local x≈4. Rendering mirrors the body when
     // facing left, moving the visible mouth to PLAYER_W-4, so we compensate.
     var localX = player.dir > 0 ? 4 : (PLAYER_W - 4);
-    return playerLocalToWorld(localX, 0.7);
+    return playerLocalToWorld(localX, 0.7 + playerFxLandOffset());
   }
 
   function fluidIX(x, y) { return x + y * FLUID_W; }

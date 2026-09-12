@@ -378,6 +378,8 @@
     player.x = (townStationCol(ti) - 4) * TILE + TILE / 2 - PLAYER_W / 2;
     player.y = DECK_ROW * TILE - PLAYER_H;
     player.vx = 0; player.vy = 0;
+    resetLandingFeedback();
+    player.squash = 0;
     player.jelloImpactVy = 0;   // a fatal slam's banked trampoline rebound must not survive the respawn
     player.fuel = getMaxFuel();
     player.hull = getMaxHull();

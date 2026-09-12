@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.101';
+  var GAME_VERSION = 'v26.102';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -141,7 +141,7 @@
   var DEBUG_PERF_ON_MOBILE = false;
   // ---- Hard-landing impact FX master switch (testing aid, v22.17) ----
   // Everything that fires when the rig SLAMS into solid ground: fall damage,
-  // the landing squash, the red damage-flash, and the hit-pause (a brief game-loop FREEZE).
+  // the red damage-flash and impact audio. Cosmetic suspension never freezes play.
   // LIVE since v25.59 (owner: re-implement fall damage so a bad drop can kill; the rare buried
   // slimes are the cushion). Landing ON a slime fully negates the hull damage (see 080). Flip
   // the gm lever 'jello.FALL_IMPACT_FX' (top of the L panel) to mute it for physics testing.

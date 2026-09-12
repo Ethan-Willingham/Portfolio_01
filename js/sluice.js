@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.101';
+  var GAME_VERSION = 'v26.102';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -141,7 +141,7 @@
   var DEBUG_PERF_ON_MOBILE = false;
   // ---- Hard-landing impact FX master switch (testing aid, v22.17) ----
   // Everything that fires when the rig SLAMS into solid ground: fall damage,
-  // the landing squash, the red damage-flash, and the hit-pause (a brief game-loop FREEZE).
+  // the red damage-flash and impact audio. Cosmetic suspension never freezes play.
   // LIVE since v25.59 (owner: re-implement fall damage so a bad drop can kill; the rare buried
   // slimes are the cushion). Landing ON a slime fully negates the hull damage (see 080). Flip
   // the gm lever 'jello.FALL_IMPACT_FX' (top of the L panel) to mute it for physics testing.
@@ -5408,6 +5408,8 @@
     player.x = (townStationCol(ti) - 4) * TILE + TILE / 2 - PLAYER_W / 2;
     player.y = DECK_ROW * TILE - PLAYER_H;
     player.vx = 0; player.vy = 0;
+    resetLandingFeedback();
+    player.squash = 0;
     player.jelloImpactVy = 0;   // a fatal slam's banked trampoline rebound must not survive the respawn
     player.fuel = getMaxFuel();
     player.hull = getMaxHull();
@@ -7816,6 +7818,7 @@
     var destY = DECK_ROW * TILE - PLAYER_H;
     player.x = destX;
     player.y = destY;
+    resetLandingFeedback();
     player.vx = 0;
     player.vy = 0;
     player.slideTargetX = null;
@@ -13616,7 +13619,7 @@
     if (cashPunch > 0) cashPunch = Math.max(0, cashPunch - dt / 0.5);
 
     // ----- Hit-pause -----
-    // When set by a high-impact event (drill tile-break, hard landings),
+    // When set by a drill tile-break,
     // freeze game logic for a few frames while smoke + render continue.
     // The frozen frames read as a beat of weight; the brevity (33-50ms)
     // keeps it from becoming perceived input lag during chained drills.
@@ -14043,16 +14046,6 @@
     // FX event counters (consumers diff the N fields; never reset).
     if (!player.fx) player.fx = { igniteN: 0, boomN: 0, vaporN: 0, landN: 0, landVy: 0, landTilt: 0 };
     if (player.onGround) {
-      if (!player._groundWas && (player.airTime || 0) > 0.22) {
-        // Touchdown event: grade by impact speed + how far from upright the
-        // hull hit. Read by audio (greaser chirp / hard thud), the plume dust
-        // burst, and the suspension squash in drawPlayer.
-        var _lt = (player.bodyTiltRender || 0) % (Math.PI * 2);
-        if (_lt > Math.PI) _lt -= Math.PI * 2; else if (_lt < -Math.PI) _lt += Math.PI * 2;
-        player.fx.landN++;
-        player.fx.landVy = player.peakFallVy || 0;
-        player.fx.landTilt = Math.abs(_lt);
-      }
       player.coyoteT = COYOTE_T;
       player.airTime = 0;
       player.peakFallVy = 0;
@@ -14447,8 +14440,8 @@
     var capRestY = chimneyCapCatch(player.x, player.y, ny);
     if (capRestY !== null) {
       // Perch on the surface fireplace chimney cap (one-way landing ledge).
-      player.squash = Math.max(player.squash, Math.min(0.55, player.vy / 700));
       player.y = capRestY;
+      recordLandingImpact(player.vy, capRestY + PLAYER_H, 'ledge', 0);
       player.vy = 0;
       player.onGround = true;
       player.jelloImpactVy = 0;   // solid perch voids any banked trampoline rebound
@@ -14550,8 +14543,8 @@
         if (!_wasJello && _impactVy > 120) {               // first hard contact: the gel FULLY cushions the fall
           // v25.59 — a slime is the safety net (owner): landing on it takes ZERO hull damage no
           // matter how fast the drop, so a slime at the bottom of a shaft saves the rig from a fall
-          // that would otherwise kill it on bare rock. Keep the squash + wet splat for feel only.
-          player.squash = Math.min(1, _impactVy / 700);    // landing squash scales with impact speed (cosmetic)
+          // that would otherwise kill it on bare rock. The gel and wet splat carry the impact.
+          recordLandingImpact(_impactVy, _surr, 'jello', 1);
           jelloLandImpact(player.x + PLAYER_W * 0.5, player.y + PLAYER_H, _impactVy);
           var _jSplN = 3 + Math.min(9, (_impactVy / 110) | 0);
           spawnJelloSplat(player.x + PLAYER_W * 0.5, _surr, _jSplN, _impactVy * 0.5, 0.85, null);
@@ -14632,43 +14625,37 @@
         }
       }
       if (!slipped) {
-        // Hard-landing impact FX (fall damage, squash, red damage-flash, and the hit-pause that
-        // briefly FREEZES the loop) are gated on FALL_IMPACT_FX, defaulted OFF for clean physics
-        // testing. The rig still lands + stops below; this block only adds the thump/freeze/damage.
-        if (player.vy > 0 && FALL_IMPACT_FX) {
-          var impactVy = player.vy;
-          var fallDmg = fallDamageForImpact(impactVy);
-          // v12.1 — water breaks the fall. A body of water around the rig
-          // at impact cushions it; a full dunk zeroes the hull damage. The
-          // squash / damage-flash / hit-pause below all scale from fallDmg,
-          // so they soften automatically with the cushioned value.
-          if (fallDmg > 0) fallDmg *= (1 - playerWaterCushion());
+        // Capture contact before velocity is stopped. Dust sits on the first
+        // supporting tile, even when the last clear physics position is above it.
+        var impactVy = player.vy;
+        var impactCushion = impactVy > 80 ? playerWaterCushion() : 0;
+        if (wasInAir && impactVy > 80) {
+          var contactY = ny + PLAYER_H;
+          var contactRow0 = Math.floor((player.y + PLAYER_H) / TILE);
+          var contactRow1 = Math.floor((ny + PLAYER_H) / TILE);
+          var contactCol0 = Math.floor(player.x / TILE);
+          var contactCol1 = Math.floor((player.x + PLAYER_W - 0.01) / TILE);
+          for (var cr = contactRow0; cr <= contactRow1; cr++) {
+            var supported = false;
+            for (var cc = contactCol0; cc <= contactCol1; cc++) {
+              if (tileAt(cr, cc) !== null) { supported = true; break; }
+            }
+            if (supported) { contactY = cr * TILE; break; }
+          }
+          recordLandingImpact(impactVy, contactY, 'ground', impactCushion);
+        }
+        // Fall damage and its existing warning/audio stay intact. Suspension
+        // is cosmetic; landing never freezes movement or queues a second squash.
+        if (impactVy > 0 && FALL_IMPACT_FX) {
+          var fallDmg = fallDamageForImpact(impactVy) * (1 - impactCushion);
           if (fallDmg > 0) {
             player.hull -= fallDmg;
-            player.squash = Math.min(1, fallDmg / 80);
-            // The crash-landing crunch scales with the damage (SFX_BIBLE §10
-            // land-damage; the sub lives in the asset, hero hits only).
             sfxPlay('land-damage', { gain: 0.6 + 0.4 * Math.min(1, fallDmg / 60) });
             damageFlashT = Math.max(damageFlashT, Math.min(1, 0.18 + fallDmg / 90));
-            // Stage 5 — hit-pause on damage-causing landings. Scales with
-            // damage magnitude, capped at 70ms so chained big falls never
-            // become perceived input lag.
-            hitPauseT = Math.max(hitPauseT, Math.min(0.07, 0.04 + fallDmg / 600));
           } else if (impactVy > 180) {
-            // Sub-damage landing — still give a tactile cue via squash.
-            var landK = (impactVy - 180) / 320;
-            if (landK > 1) landK = 1;
-            player.squash = Math.max(player.squash, 0.18 + landK * 0.55);
+            var landK = Math.min(1, (impactVy - 180) / 320);
             sfxPlay('land-hard', { gain: 0.5 + 0.5 * landK });
-            // Sub-damage hit-pause: 22-35ms, only past a clear thump
-            // threshold so soft drops stay snappy.
-            if (impactVy > 260) {
-              hitPauseT = Math.max(hitPauseT, 0.022 + landK * 0.013);
-            }
           } else if (impactVy > 80 && player.airTime > 0.25) {
-            // Soft step-down landing after a real airborne stretch — barely
-            // perceptible squash so the rig "settles" instead of clipping flat.
-            player.squash = Math.max(player.squash, 0.10);
             sfxPlay('land-soft', { gain: 0.65 });
           }
           if (player.hull <= 0) {
@@ -35089,7 +35076,7 @@
     // The pipe mouth lives at local x≈4. Rendering mirrors the body when
     // facing left, moving the visible mouth to PLAYER_W-4, so we compensate.
     var localX = player.dir > 0 ? 4 : (PLAYER_W - 4);
-    return playerLocalToWorld(localX, 0.7);
+    return playerLocalToWorld(localX, 0.7 + playerFxLandOffset());
   }
 
   function fluidIX(x, y) { return x + y * FLUID_W; }
@@ -38190,6 +38177,7 @@
     flightRings.length = 0;
     flightIgniteT = 0;
     flightIgniteCooldown = 0;
+    resetLandingFeedback();
     flightFxSeen.sync = false;   // re-adopt the fx counters on the next frame, no stale replays
   }
 
@@ -38270,19 +38258,19 @@
     while (flightRings.length > 12) flightRings.shift();
   }
 
-  // Landing dust rides the existing wash pool so the wash pass ages + draws it
-  // with the same dusty look; only spawn parameters differ.
-  function spawnLandingDust(x, y, side, speedScale, sizeScale) {
-    var T = rocketTune;
+  // Short, low contact wisps. Independent of rocket-wash tuning so a
+  // stronger booster cannot turn a normal landing into an exhaust burst.
+  function spawnLandingDust(x, y, side, strength) {
     rocketWash.push({
-      x: x + side * (2 + Math.random() * 6),
-      y: y - 1 + (Math.random() - 0.5) * 2,
-      vx: side * (55 + Math.random() * 90) * speedScale,
-      vy: (-12 - Math.random() * 26) * speedScale,
+      x: x + side * (PLAYER_W * 0.38 + Math.random() * 2),
+      y: y - 1.2,
+      vx: side * (18 + Math.random() * 22) * (0.5 + strength),
+      vy: -3 - Math.random() * 5,
       age: 0,
-      life: rocketTuneNum(T.wash_life, 0.4) * (0.7 + Math.random() * 0.5),
-      size: rocketTuneNum(T.wash_size, 2.2) * sizeScale * (0.75 + Math.random() * 0.5),
-      phase: Math.random() * Math.PI * 2,
+      life: 0.16 + strength * 0.10 + Math.random() * 0.04,
+      size: 1.1 + strength * 0.8 + Math.random() * 0.3,
+      landing: true,
+      phase: Math.random() * Math.PI * 2
     });
     while (rocketWash.length > 240) rocketWash.shift();
   }
@@ -38319,20 +38307,16 @@
         }
       }
 
-      // Landing dust: hard hits (landVy > 420) kick a wide 10-puff fan out of
-      // the feet; soft touchdowns get a small 3-puff settle.
+      // Tiny drops stay quiet. Wet ground and gel already have their own
+      // contact effects; only dry impacts emit these two to six low wisps.
       if (fx.landN !== flightFxSeen.land) {
         flightFxSeen.land = fx.landN;
-        var feet = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H - 1);
         var lvy = fx.landVy || 0;
-        if (lvy > 420) {
-          var kHard = Math.min(1.8, 0.9 + lvy / 900);
-          for (var li = 0; li < 10; li++) {
-            spawnLandingDust(feet.x, feet.y, li % 2 ? 1 : -1, kHard, 1.6);
-          }
-        } else {
-          for (var lj = 0; lj < 3; lj++) {
-            spawnLandingDust(feet.x, feet.y, lj % 2 ? 1 : -1, 0.45, 0.9);
+        if (lvy > 150 && fx.landSurface !== 'jello' && !(fx.landCushion > 0.05)) {
+          var landStrength = Math.min(1, (lvy - 150) / 500);
+          var pairs = 1 + Math.floor(landStrength * 2);
+          for (var li = 0; li < pairs * 2; li++) {
+            spawnLandingDust(fx.landX, fx.landY, li % 2 ? 1 : -1, landStrength);
           }
         }
       }
@@ -38646,10 +38630,11 @@
         if (ws.x + 60 < cam.x || ws.x - 60 > cam.x + screenW) continue;
         if (ws.y + 60 < cam.y || ws.y - 60 > cam.y + screenH) continue;
         var f2 = 1 - ws.age / ws.life;
-        var grown2 = ws.size + washGrowth * ws.age;
-        ctx.fillStyle = washRgbaPrefix + Math.max(0, Math.min(1, washAlpha * f2 * f2)).toFixed(3) + ')';
+        var grown2 = ws.size + (ws.landing ? 3 : washGrowth) * ws.age;
+        ctx.fillStyle = washRgbaPrefix + Math.max(0, Math.min(1, (ws.landing ? 0.18 : washAlpha) * f2 * f2)).toFixed(3) + ')';
         ctx.beginPath();
-        ctx.arc(ws.x, ws.y, grown2, 0, Math.PI * 2);
+        if (ws.landing) ctx.ellipse(ws.x, ws.y, grown2, grown2 * 0.48, 0, 0, Math.PI * 2);
+        else ctx.arc(ws.x, ws.y, grown2, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
@@ -39204,6 +39189,29 @@
       }
     }
   }
+  /* ---- Landing feedback ---- */
+  // One contact event, using velocity at the surface after braking and water
+  // drag. A grounded frame or a tiny drilling step never counts as a landing.
+  function recordLandingImpact(speed, groundY, surface, cushion) {
+    if ((player.airTime || 0) < 0.12 || speed <= 80 || !player.fx) return;
+    var fx = player.fx;
+    fx.landN++;
+    fx.landVy = speed;
+    fx.landTilt = Math.abs(player.bodyTiltRender || 0);
+    fx.landX = player.x + PLAYER_W * 0.5;
+    fx.landY = groundY;
+    fx.landSurface = surface;
+    fx.landCushion = cushion;
+  }
+
+  function resetLandingFeedback() {
+    _pfxLandSeen = player.fx ? player.fx.landN : 0;
+    _hapLandN = _pfxLandSeen;
+    _pfxLandAge = 1;
+    _pfxLandDip = 0;
+    player.airTime = 0;
+    player.peakFallVy = 0;
+  }
   /* ---- Drill animation (update loop + cutter spin) ----
      Lerps drillAnim.angle / .extension toward targets driven by the
      current drilling state, and advances pumpPhase / coneSpin so the
@@ -39476,7 +39484,7 @@
   }
 
   // ----- Flight FX state (render-only) -----
-  // Touchdown suspension squash + rotation smear ghosts + buffet tremble.
+  // Touchdown suspension travel + rotation smear ghosts + buffet tremble.
   // Event counters in player.fx (bumped by the flight integrator in 080) are
   // consumed here by diffing against last-seen values, the same pattern as
   // the haptics shim (057). Everything below is a draw-transform trick: no
@@ -39484,13 +39492,14 @@
   // the ground-cast shadow stays honest.
   var _pfxTime = 0;            // render-time accumulator, seconds
   var _pfxLast = 0;            // previous performance.now() sample
+  var _pfxPlayer = null;       // reset the envelope when init replaces the rig
   var _pfxLandSeen = 0;        // last-seen player.fx.landN
-  var _pfxLandAge = 9;         // seconds since the touchdown squash started
-  var _pfxLandDip = 0;         // squash depth captured at touchdown
+  var _pfxLandAge = 9;         // seconds since the touchdown settle started
+  var _pfxLandDip = 0;         // hull travel in world pixels at touchdown
 
   // Advance the render-time clock and diff the landing counter. Called once
   // at the top of drawPlayer; deltas come from performance.now() and clamp
-  // to 50ms so a backgrounded tab cannot fast-forward the squash spring.
+  // to 50ms so a backgrounded tab cannot fast-forward the suspension recovery.
   function playerFxTick() {
     var now = performance.now();
     var dtl = (now - _pfxLast) / 1000;
@@ -39500,33 +39509,31 @@
     _pfxTime += dtl;
     _pfxLandAge += dtl;
     var fx = player.fx;
+    if (_pfxPlayer !== player) {
+      _pfxPlayer = player;
+      _pfxLandSeen = fx ? fx.landN : 0;
+      _pfxLandAge = 1;
+      _pfxLandDip = 0;
+    }
     if (fx && fx.landN !== _pfxLandSeen) {
       _pfxLandSeen = fx.landN;
-      // Suspension travel: the base dip scales with impact fall speed; hard
-      // and/or tilted touchdowns compress deeper, capped at 0.20.
-      var impVy = fx.landVy || 0;
-      var dip = impVy / 3000;
-      if (dip > 0.16) dip = 0.16;
-      if (impVy > 420) dip += (impVy - 420) / 12000;
-      dip += (fx.landTilt || 0) * 0.04;
-      if (dip > 0.20) dip = 0.20;
-      _pfxLandDip = dip;
+      // Only the sprung hull moves. Maximum travel is 1.35 world pixels;
+      // the tracks keep their silhouette and gel supplies its own suspension.
+      var k = Math.max(0, Math.min(1, ((fx.landVy || 0) - 80) / 480));
+      _pfxLandDip = fx.landSurface === 'jello' ? 0 :
+        (0.25 + 1.1 * k) * (1 - 0.75 * (fx.landCushion || 0));
       _pfxLandAge = 0;
     }
   }
 
-  // Current landing-squash deflection, evaluated in closed form so any frame
-  // dt stays numerically stable: a slightly underdamped spring (w0 = 32
-  // rad/s, zeta = 0.45) starts at the touchdown depth, springs back through
-  // zero, overshoots once (~20% of the dip, near 110ms) and has settled by
-  // ~180ms. Positive = squash, negative = the brief stretch overshoot.
-  function playerFxLandSquash() {
-    if (_pfxLandDip <= 0 || _pfxLandAge >= 0.3) return 0;
-    var zw = 14.4;    // zeta * w0
-    var wd = 28.57;   // damped frequency, w0 * sqrt(1 - zeta * zeta)
-    var ta = _pfxLandAge;
-    return _pfxLandDip * Math.exp(-zw * ta) *
-      (Math.cos(wd * ta) + (zw / wd) * Math.sin(wd * ta));
+  // Fast compression, then one smooth recovery. No bounce, stretch or width
+  // change: this is short suspension travel under a rigid metal chassis.
+  function playerFxLandOffset() {
+    var t = _pfxLandAge;
+    if (_pfxLandDip <= 0 || t >= 0.20) return 0;
+    if (t < 0.028) return _pfxLandDip * Math.sin(t / 0.028 * Math.PI * 0.5);
+    var u = 1 - (t - 0.028) / 0.172;
+    return _pfxLandDip * u * u * (3 - 2 * u);
   }
 
   // The rig body draw pass (track bed, hull, cupola, stack, lamp), factored
@@ -39534,7 +39541,7 @@
   // draw path with an angle + alpha override. Expects the caller to have set
   // up the full body transform (translate + tilt + squash + flip); the drill
   // assembly is NOT part of this pass, it stays world-space in drawPlayer.
-  function drawPlayerRigBody(t) {
+  function drawPlayerRigBody(t, suspension) {
     var pgrad = ensurePlayerGrads();
 
     // ----- T-10M-inspired track bed -----
@@ -39565,6 +39572,9 @@
       ctx.arc(rx, 22.0, 0.72, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    ctx.save();
+    ctx.translate(0, suspension || 0);
 
     // ----- Heavy cast armor hull -----
     ctx.fillStyle = pgrad.hull;
@@ -39687,6 +39697,7 @@
     ctx.lineTo(20, 12.6);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
   }
 
   // Applies one full rig-body pass: world translate, tilt about the rig
@@ -39695,7 +39706,7 @@
   // The rotation smear ghosts call this with a past angle and a low alpha;
   // the main sprite calls it with alpha 1. One body pass per call, no
   // allocations, and the save/restore keeps the ghost alpha self-contained.
-  function drawRigBodyPass(ox, oy, tilt, sx, sy, flip, alpha, t) {
+  function drawRigBodyPass(ox, oy, tilt, sx, sy, flip, alpha, t, suspension) {
     ctx.save();
     if (alpha < 1) ctx.globalAlpha = alpha;
     ctx.translate(ox, oy);
@@ -39713,7 +39724,7 @@
       ctx.translate(PLAYER_W, 0);
       ctx.scale(-1, 1);
     }
-    drawPlayerRigBody(t);
+    drawPlayerRigBody(t, suspension);
     ctx.restore();
   }
 
@@ -39752,15 +39763,15 @@
     // drawPlayerShadow() BEFORE the jello (from render()), so the translucent
     // gel renders over the shadow instead of the shadow showing through it.
 
-    // Squash on landing impact (positive) + airborne stretch (driven by vy).
+    // Drill/wall recoil (positive) + airborne stretch (driven by vy).
     // Stretch is computed every frame from current motion so the rig
     // visibly elongates during a hard climb or free-fall — selling the speed
     // without any extra state. Squash always wins over stretch when present
     // so landing feedback never gets diluted.
     var sq = player.squash || 0;
-    var fxSq = playerFxLandSquash();
+    var landOffset = playerFxLandOffset();
     var stretchK = 0;
-    if (sq < 0.05 && fxSq <= 0.01 && !drilling) {
+    if (sq < 0.05 && landOffset <= 0.01 && !drilling) {
       var vyAbs = Math.abs(player.vy);
       if (vyAbs > 90) {
         stretchK = (vyAbs - 90) / 380;
@@ -39779,19 +39790,6 @@
       sy = 1 + stretchK * 0.18;
       sx = 1 - stretchK * 0.10;
     }
-    // Touchdown suspension squash (event-driven off player.fx.landN) rides
-    // multiplicatively on top, anchored at the same feet point, so it
-    // composes with the tilt and with whatever the physics squash is doing.
-    // Volume conserving: its scaleX is exactly 1 / scaleY.
-    var fxSy = 1, fxSx = 1;
-    if (fxSq !== 0) {
-      fxSy = 1 - fxSq;
-      if (fxSy < 0.7) fxSy = 0.7;   // safety floor, the dip caps at 0.20
-      fxSx = 1 / fxSy;
-      sy *= fxSy;
-      sx *= fxSx;
-    }
-
     // Flip horizontally if facing left. The bank is a lean, never a
     // reorientation (v25.49: the one flight model never rotates the rig),
     // so the mirror always follows the travel direction.
@@ -39805,7 +39803,7 @@
     // The drill assembly below renders AFTER this pass pops the mirrored
     // frame, so it can use true world-space angles without having to
     // compensate for the horizontal flip.
-    drawRigBodyPass(rigOX, rigOY, bodyTilt, sx, sy, rigFlip, 1, t);
+    drawRigBodyPass(rigOX, rigOY, bodyTilt, sx, sy, rigFlip, 1, t, landOffset);
 
     // ===== Drill assembly (world-space pivot, no mirroring) =====
     // The pivot lives on the front-bottom of the body. "Front" depends
@@ -39819,19 +39817,10 @@
     var pivotLocalX = player.dir > 0 ? PLAYER_W - 4.2 : 4.2;
     var pivotLocalY = 15.2;
 
-    // Apply squash to the pivot too so the drill stays attached
-    if (player.squash > 0) {
-      var sqAmt = player.squash;
-      pivotLocalY = PLAYER_H - (PLAYER_H - 15.2) * (1 - sqAmt * 0.18);
-    }
-    // Fold the touchdown suspension squash into the pivot the same way, on
-    // both axes, so the drill stays bolted to the hull through the landing
-    // dip and its overshoot (playerLocalToWorld applies translate + tilt
-    // only, so feet-anchored scales must be pre-applied in local space).
-    if (fxSy !== 1) {
-      pivotLocalY = PLAYER_H - (PLAYER_H - pivotLocalY) * fxSy;
-      pivotLocalX = PLAYER_W * 0.5 + (pivotLocalX - PLAYER_W * 0.5) * fxSx;
-    }
+    // Use the body's exact local transform so the borer stays attached
+    // through suspension travel, drill recoil and airborne stretch.
+    pivotLocalY = PLAYER_H - (PLAYER_H - pivotLocalY - landOffset) * sy;
+    pivotLocalX = PLAYER_W * 0.5 + (pivotLocalX - PLAYER_W * 0.5) * sx;
 
     var pivotWorld = playerLocalToWorld(pivotLocalX, pivotLocalY);
     var pivotWorldX = pivotWorld.x + shakeX;
