@@ -101,14 +101,15 @@ body.toy-expanded { overflow: hidden; }
   .toy-top { padding: 5px 6px; }
   .toy-scenes { width: 100%; gap: 0; justify-content: space-between; }
   .toy-scenes .toy-chip { min-height: 42px; padding: 0 14px; font-size: 12px; }
-  .toy-playback { position: absolute; top: 64px; right: 10px; z-index: 9; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg-raised); gap: 0; }
-  .toy-playback .toy-icon { width: 40px; }
+  .toy-playback { position: static; flex-shrink: 0; gap: 0; }
+  .toy-playback .toy-icon { width: 36px; height: 42px; }
   .toy-tools { gap: 0; }
   .toy-tools .tb { min-width: 0; min-height: 48px; padding: 5px 7px; flex: 1; font-size: 10px; }
   .toy-dock { padding: 7px 6px 3px; gap: 2px; }
   .toy-palettes { gap: 6px; }
   .toy-shell .toy-material { padding: 0 8px; gap: 6px; }
-  .toy-foot { padding: 9px 12px 12px; gap: 8px; font-size: 10px; }
+  .toy-foot { align-items: center; min-height: 54px; padding: 4px 6px 6px 12px; gap: 8px; font-size: 10px; }
+  .toy-foot #toy-status { display: none; }
   .toy-panel { right: 8px; width: calc(100% - 16px); padding: 6px 14px 16px; bottom: 152px; }
   .toy-panel .toy-chip { min-height: 42px; }
   .toy-prose { margin: 32px 12px 0; font-size: 15px; }

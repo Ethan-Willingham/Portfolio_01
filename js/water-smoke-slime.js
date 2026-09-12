@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.32'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.33'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -263,22 +263,104 @@
     }
   }
 
-  /* ---- Wall rendering (cached offscreen layer) ------------------------
-   * Chunky mineral cells in the site's stone tones, a light top edge where
-   * a cell faces air, a darker seam below. Re-baked only when wallsVersion
-   * moves. ---- */
+  /* ---- Continuous walls, cached until the collision mask changes ------
+   * Trace the union, including holes left by the eraser. The same cells
+   * still collide with all three engines. A smooth front lip conceals their
+   * cell-sized edges. No cell texture or internal grid is drawn. */
   var wallsCanvas = document.createElement('canvas');
   wallsCanvas.width = canvas.width;
   wallsCanvas.height = canvas.height;
+  wallsCanvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:6;';
+  wallsCanvas.setAttribute('aria-hidden', 'true');
+  stage.appendChild(wallsCanvas);
   var wallsCtx = wallsCanvas.getContext('2d');
   var wallsBakedVersion = -1;
-  var WALL_SHADES = ['#454f46', '#414a42', '#48524a', '#3e4740'];
-  var WALL_EDGE = '#5d6a5e';
-  var WALL_SEAM = '#333b34';
 
-  function cellHash(r, c) {
-    var h = (r * 73856093) ^ (c * 19349663);
-    return (h >>> 2) & 3;
+  function simplifyWall(points, tolerance) {
+    if (points.length <= 2) return points;
+    var a = points[0], b = points[points.length - 1];
+    var dx = b.x - a.x, dy = b.y - a.y, lengthSq = dx * dx + dy * dy;
+    var split = 0, furthest = tolerance * tolerance;
+    for (var i = 1; i < points.length - 1; i++) {
+      var p = points[i];
+      var t = lengthSq ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSq)) : 0;
+      var ex = p.x - a.x - t * dx, ey = p.y - a.y - t * dy;
+      var distance = ex * ex + ey * ey;
+      if (distance > furthest) { furthest = distance; split = i; }
+    }
+    if (!split) return [a, b];
+    return simplifyWall(points.slice(0, split + 1), tolerance).slice(0, -1)
+      .concat(simplifyWall(points.slice(split), tolerance));
+  }
+
+  function wallOutline() {
+    function solid(r, c) {
+      return r > 0 && c > 0 && r < gridH - 1 && c < gridW - 1 && walls[r * gridW + c];
+    }
+    var edges = [], starts = new Map();
+    function edge(x, y, ex, ey, dir) {
+      var id = y * (gridW + 1) + x;
+      var list = starts.get(id);
+      if (!list) { list = []; starts.set(id, list); }
+      list.push(edges.length);
+      edges.push({ x: x, y: y, ex: ex, ey: ey, dir: dir, used: false });
+    }
+    for (var r = 0; r < gridH; r++) {
+      for (var c = 0; c < gridW; c++) {
+        var idx = r * gridW + c;
+        if (!solid(r, c)) continue;
+        if (!solid(r - 1, c)) edge(c, r, c + 1, r, 0);
+        if (!solid(r, c + 1)) edge(c + 1, r, c + 1, r + 1, 1);
+        if (!solid(r + 1, c)) edge(c + 1, r + 1, c, r + 1, 2);
+        if (!solid(r, c - 1)) edge(c, r + 1, c, r, 3);
+      }
+    }
+    var path = new Path2D();
+    for (var e = 0; e < edges.length; e++) {
+      if (edges[e].used) continue;
+      var loop = [], cur = edges[e];
+      while (cur && !cur.used) {
+        cur.used = true;
+        loop.push({ x: cur.x * TILE, y: cur.y * TILE, dir: cur.dir });
+        if (cur.ex === edges[e].x && cur.ey === edges[e].y) break;
+        var candidates = starts.get(cur.ey * (gridW + 1) + cur.ex) || [];
+        var next = null, rank = 5;
+        for (var n = 0; n < candidates.length; n++) {
+          var candidate = edges[candidates[n]];
+          if (candidate.used) continue;
+          // Turn right at a diagonal touch so separate regions stay separate.
+          var turn = (candidate.dir - cur.dir + 4) % 4;
+          var score = turn === 1 ? 0 : turn === 0 ? 1 : turn === 3 ? 2 : 3;
+          if (score < rank) { rank = score; next = candidate; }
+        }
+        cur = next;
+      }
+      var corners = loop.filter(function (point, i) {
+        return point.dir !== loop[(i + loop.length - 1) % loop.length].dir;
+      });
+      if (corners.length < 3) continue;
+      var far = 1, distance = 0;
+      for (var ci = 1; ci < corners.length; ci++) {
+        var dd = Math.hypot(corners[ci].x - corners[0].x, corners[ci].y - corners[0].y);
+        if (dd > distance) { distance = dd; far = ci; }
+      }
+      var smooth = simplifyWall(corners.slice(0, far + 1), TILE * 1.5).slice(0, -1)
+        .concat(simplifyWall(corners.slice(far).concat([corners[0]]), TILE * 1.5).slice(0, -1));
+      if (smooth.length >= 3) corners = smooth;
+      for (var k = 0; k < corners.length; k++) {
+        var p = corners[k], prev = corners[(k + corners.length - 1) % corners.length];
+        var after = corners[(k + 1) % corners.length];
+        var ax = prev.x - p.x, ay = prev.y - p.y;
+        var bx = after.x - p.x, by = after.y - p.y;
+        var al = Math.hypot(ax, ay), bl = Math.hypot(bx, by);
+        var radius = Math.min(TILE * 4, al * 0.45, bl * 0.45);
+        var ix = p.x + ax / al * radius, iy = p.y + ay / al * radius;
+        if (k === 0) path.moveTo(ix, iy); else path.lineTo(ix, iy);
+        path.quadraticCurveTo(p.x, p.y, p.x + bx / bl * radius, p.y + by / bl * radius);
+      }
+      path.closePath();
+    }
+    return path;
   }
 
   function bakeWalls() {
@@ -286,23 +368,30 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
-    for (var r = 0; r < gridH; r++) {
-      var off = r * gridW;
-      for (var c = 0; c < gridW; c++) {
-        if (!walls[off + c]) continue;
-        var x = c * TILE, y = r * TILE;
-        wallsCtx.fillStyle = WALL_SHADES[cellHash(r, c)];
-        wallsCtx.fillRect(x, y, TILE, TILE);
-        if (r > 0 && !walls[off - gridW + c]) {           // air above: lit edge
-          wallsCtx.fillStyle = WALL_EDGE;
-          wallsCtx.fillRect(x, y, TILE, 1.5);
-        }
-        if (r < gridH - 1 && !walls[off + gridW + c]) {   // air below: seam
-          wallsCtx.fillStyle = WALL_SEAM;
-          wallsCtx.fillRect(x, y + TILE - 1.5, TILE, 1.5);
-        }
-      }
-    }
+    var path = wallOutline();
+    var palette = getComputedStyle(document.documentElement);
+    var fill = wallsCtx.createLinearGradient(0, 0, worldW * 0.2, worldH);
+    fill.addColorStop(0, palette.getPropertyValue('--bg').trim() || '#303931');
+    fill.addColorStop(1, palette.getPropertyValue('--bg-raised').trim() || '#1e2420');
+    wallsCtx.fillStyle = fill;
+    wallsCtx.shadowColor = 'rgba(0,0,0,0.24)';
+    wallsCtx.shadowBlur = 10 * dpr;
+    wallsCtx.shadowOffsetY = 4 * dpr;
+    // A narrow front lip covers the staircase in the fluid mask.
+    // The bulk water and slime renderers retain their full detail.
+    wallsCtx.strokeStyle = fill;
+    wallsCtx.lineWidth = TILE * 1.5;
+    wallsCtx.lineJoin = 'round';
+    wallsCtx.stroke(path);
+    wallsCtx.fill(path);
+    wallsCtx.shadowBlur = 0;
+    wallsCtx.shadowOffsetY = 0;
+    wallsCtx.save();
+    wallsCtx.globalAlpha = 0.30;
+    wallsCtx.strokeStyle = palette.getPropertyValue('--accent').trim() || '#d4c4a0';
+    wallsCtx.lineWidth = 2;
+    wallsCtx.stroke(path);
+    wallsCtx.restore();
   }
 
   /* ==== WATER HOST ======================================================
@@ -10753,11 +10842,9 @@
   }
 
   /* ==== SCENES ==========================================================
-   * The boot scene has to be alive before the first click: a trickle
-   * cascading down two shelves into a lock that overtops into the pool,
-   * smoke curling around a shelf lip, slimes parked where the water
-   * is not (water passes through gel unless it is dense enough to melt
-   * it, so the layout keeps them honest). ==== */
+   * Four compositions built around exchanges between the three engines:
+   * spillways, drifting islands, divided plumes, and a spring-fed pool.
+   * Their shapes use the same editable collision mask as the drawing tool. */
   var emitters = [];      // {kind:'water'|'smoke', x, y, vx, vy, rate, acc}
   var POUR_CAP = Math.floor(LIQUID_MAX_PARTICLES * 0.78);
   var currentScene = 'falls';
@@ -10786,6 +10873,70 @@
       }
     }
     wallsVersion++;
+  }
+
+  // Authored curves rasterize into the existing collision mask. The visitor's
+  // drawing and erasing edits these same cells, so a dam really can be opened.
+  function wallStroke(points, width) {
+    var radius = Math.max(TILE * 0.55, width * 0.5);
+    for (var i = 1; i < points.length; i++) {
+      var a = points[i - 1], b = points[i];
+      var steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (TILE * 0.4)));
+      for (var k = 0; k <= steps; k++) {
+        wallDisc(a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps, radius);
+      }
+    }
+  }
+
+  function bowl(x0, x1, leftY, rightY, depth, width) {
+    var form = { x0: x0, x1: x1, leftY: leftY, rightY: rightY, depth: depth, width: width };
+    var points = [];
+    for (var i = 0; i <= 48; i++) {
+      var t = i / 48;
+      points.push([x0 + (x1 - x0) * t, bowlFloor(form, t)]);
+    }
+    wallStroke(points, width);
+    return form;
+  }
+
+  function bowlFloor(form, t) {
+    return form.leftY + (form.rightY - form.leftY) * t + form.depth * 4 * t * (1 - t);
+  }
+
+  function fillBowl(form, level) {
+    if (waterState === 'off') return;
+    var pitch = 1.25;
+    for (var x = form.x0 + form.width; x < form.x1 - form.width; x += pitch) {
+      var bottom = bowlFloor(form, (x - form.x0) / (form.x1 - form.x0)) - form.width * 0.5 - TILE * 0.45;
+      for (var y = level; y < bottom; y += pitch) {
+        if (liquidCount >= LIQUID_MAX_PARTICLES - 8) return;
+        if (tileAt(Math.floor(y / TILE), Math.floor(x / TILE))) continue;
+        addLiquidParticle('water', x + (Math.random() - 0.5) * 0.22, y, 0, 0, 0);
+      }
+    }
+  }
+
+  function waterOrb(cx, cy, radius, hole, vx, vy) {
+    if (waterState === 'off') return;
+    var pitch = 1.25;
+    for (var y = cy - radius; y <= cy + radius; y += pitch) {
+      for (var x = cx - radius; x <= cx + radius; x += pitch) {
+        var d = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+        if (d > radius * radius || d < hole * hole || tileAt(Math.floor(y / TILE), Math.floor(x / TILE))) continue;
+        if (liquidCount >= LIQUID_MAX_PARTICLES - 8) return;
+        addLiquidParticle('water', x, y, vx, vy, 0);
+      }
+    }
+  }
+
+  function waterSource(x, y, vx, vy, rate) {
+    emitters.push({ kind: 'water', x: x, y: y, vx: vx, vy: vy,
+      rate: rate, acc: 0, cap: Math.min(POUR_CAP, liquidCount + (isMobile ? 10000 : 22000)) });
+  }
+
+  function smokeSource(x, y, dx, dy, lift, color, spread) {
+    emitters.push({ kind: 'smoke', x: x, y: y, dx: dx, dy: dy, liftK: lift,
+      phase: emitters.length * 1.9, col: color, density: 0.7, radiusK: 1.25, spread: spread || 0 });
   }
 
   function clearWorldAll() {
@@ -10841,9 +10992,15 @@
         for (var si = 0; si < samples; si++) {
           em.age = (em.age || 0) + SMOKE_EMITTER_DT;
           var phase = em.phase || 0;
-          var sourceX = em.x +
-            Math.sin(em.age * 1.35 + phase * 2.3) * 2.2 +
-            Math.sin(em.age * 3.1 + phase) * 0.8;
+          var dirX = em.dx || 0, dirY = em.dy === undefined ? -1 : em.dy;
+          var dirLength = Math.hypot(dirX, dirY) || 1;
+          dirX /= dirLength; dirY /= dirLength;
+          var crossX = -dirY, crossY = dirX;
+          var sourceSlide = Math.sin(em.age * 1.35 + phase * 2.3) * 2.2 +
+            Math.sin(em.age * 3.1 + phase) * 0.8 +
+            Math.sin(em.age * 0.8 + phase) * (em.spread || 0);
+          var sourceX = em.x + crossX * sourceSlide;
+          var sourceY = em.y + crossY * sourceSlide;
           var sway =
             Math.sin(em.age * 1.1 + phase * 3.7) * 6.8 +
             Math.sin(em.age * 2.6 + phase * 1.4) * 2.1;
@@ -10866,9 +11023,13 @@
             g: base.g * 0.16 * dyeK,
             b: base.b * 0.16 * dyeK
           };
-          var radK = presetSmokeScaleObj.rad;
-          smokePuff(sourceX, em.y - 2, sway * 0.28, lift * 0.42, mouthDye, 0.011 * radK);
-          smokePuff(sourceX + sway * 0.08, em.y - 7, sway, lift, bodyDye, 0.025 * radK);
+          var radK = presetSmokeScaleObj.rad * (em.radiusK || 1);
+          smokePuff(sourceX + dirX * 2, sourceY + dirY * 2,
+            (dirX * lift + crossX * sway) * 0.42,
+            -(dirY * lift + crossY * sway) * 0.42, mouthDye, 0.011 * radK);
+          smokePuff(sourceX + dirX * 7 + crossX * sway * 0.08,
+            sourceY + dirY * 7 + crossY * sway * 0.08,
+            dirX * lift + crossX * sway, -(dirY * lift + crossY * sway), bodyDye, 0.025 * radK);
           smokeEmitterSplats += 2;
         }
       }
@@ -10876,118 +11037,127 @@
   }
 
   function drawEmitterFixtures() {
+    // Small inlets identify the actual sources. No hanging pipes or tiled
+    // pedestals compete with the streams; the fluid draws the rest.
+    ctx.save();
     for (var i = 0; i < emitters.length; i++) {
       var em = emitters[i];
-      if (em.kind === 'water') {
-        // A pipe hanging from the lid down to the nozzle mouth.
-        ctx.fillStyle = '#39423a';
-        ctx.fillRect(em.x - 5, 0, 10, em.y - 6);
-        ctx.fillStyle = '#4a544b';
-        ctx.fillRect(em.x - 5, 0, 2.5, em.y - 6);
-        ctx.fillStyle = '#39423a';
-        ctx.fillRect(em.x - 9, em.y - 12, 18, 8);
-        ctx.fillStyle = '#5d6a5e';
-        ctx.fillRect(em.x - 9, em.y - 12, 18, 1.6);
-        ctx.fillStyle = '#141a16';
-        ctx.fillRect(em.x - 4, em.y - 5, 8, 4);
-      } else {
-        // A squat stone vent with a dark mouth.
-        ctx.fillStyle = '#454f46';
-        ctx.fillRect(em.x - 9, em.y - 3, 18, 9);
-        ctx.fillStyle = '#5d6a5e';
-        ctx.fillRect(em.x - 9, em.y - 3, 18, 1.6);
-        ctx.fillStyle = '#141a16';
-        ctx.fillRect(em.x - 4, em.y - 6, 8, 5);
-      }
+      var dx = em.kind === 'water' ? (em.vx || 0) : (em.dx || 0);
+      var dy = em.kind === 'water' ? (em.vy || 120) : (em.dy === undefined ? -1 : em.dy);
+      var angle = Math.atan2(dy, dx) + Math.PI * 0.5;
+      ctx.beginPath();
+      ctx.ellipse(em.x, em.y, em.kind === 'water' ? 7 : Math.max(7, (em.spread || 0) + 4), 2.5, angle, 0, Math.PI * 2);
+      ctx.fillStyle = '#1e2420';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(212,196,160,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
+    ctx.restore();
   }
 
   function scene(name) {
     currentScene = name;
     clearWorldAll();
-    var W = worldW, H = worldH;
+    var W = worldW, H = worldH, S = Math.min(W, H);
+    var rim = Math.max(12, S * 0.024);
+    var R = Math.max(18, Math.min(30, S * 0.046));
+    var warm = { r: 0.62, g: 0.55, b: 0.42 };
+    var cool = { r: 0.32, g: 0.46, b: 0.58 };
     if (name === 'blank') {
       setSceneChip('blank');
       return;
     }
     if (name === 'zerog') {
+      // Open arcs leave room to pull floating water through the slimes.
+      // The two sources approach from different directions, keeping the
+      // field alive even after the initial water islands have drifted away.
       setGravityUI(0);
-      wallDisc(W * 0.28, H * 0.36, Math.min(W, H) * 0.055);
-      wallDisc(W * 0.70, H * 0.56, Math.min(W, H) * 0.075);
-      wallDisc(W * 0.48, H * 0.78, Math.min(W, H) * 0.045);
-      var s1 = spawnSlimeAt(W * 0.18, H * 0.62, 26);
-      var s2 = spawnSlimeAt(W * 0.55, H * 0.24, 32);
-      var s3 = spawnSlimeAt(W * 0.82, H * 0.30, 22);
-      var drift = [[0.9, 0.35], [-0.7, 0.5], [-0.4, -0.65]];
-      var bodies = [s1, s2, s3];
-      for (var bi = 0; bi < bodies.length; bi++) {
-        var b = bodies[bi];
+      bowl(W * 0.13, W * 0.47, H * 0.52, H * 0.43, H * 0.13, rim);
+      bowl(W * 0.57, W * 0.88, H * 0.77, H * 0.68, -H * 0.12, rim);
+      waterOrb(W * 0.28, H * 0.27, S * 0.115, 0, 9, 3);
+      waterOrb(W * 0.68, H * 0.70, S * 0.115, S * 0.066, -6, -3);
+      var drift = [[0.40, 0.24, -0.16, 0.10], [0.64, 0.36, 0.12, 0.08], [0.29, 0.75, 0.10, -0.13]];
+      for (var bi = 0; bi < drift.length; bi++) {
+        var d = drift[bi], b = spawnSlimeAt(W * d[0], H * d[1], R * (bi === 1 ? 1.12 : 0.88));
         if (!b) continue;
-        for (var p = 0; p < b.n; p++) {
-          b.ox[p] = b.px[p] - drift[bi][0];
-          b.oy[p] = b.py[p] - drift[bi][1];
-        }
+        for (var p = 0; p < b.n; p++) { b.ox[p] = b.px[p] - d[2]; b.oy[p] = b.py[p] - d[3]; }
       }
-      fillPoolRect(W * 0.13, H * 0.16, W * 0.13 + 64, H * 0.16 + 64);
-      smokePuff(W * 0.62, H * 0.72, 34, 16, { r: 0.4, g: 0.38, b: 0.35 }, 0.02);
-      smokePuff(W * 0.30, H * 0.20, -26, -14, { r: 0.4, g: 0.38, b: 0.35 }, 0.02);
+      smokeSource(W * 0.08, H * 0.72, 0.8, -0.6, 1.8, warm, S * 0.035);
+      smokeSource(W * 0.90, H * 0.27, -0.9, 0.3, 1.8, cool, S * 0.035);
       setSceneChip('zerog');
       return;
     }
     setGravityUI(1);
     if (name === 'chimney') {
-      wallRect(0, H * 0.70, W * 0.60, H * 0.70 + TILE * 2);
-      wallRect(W * 0.40, H * 0.47, W, H * 0.47 + TILE * 2);
-      wallRect(0, H * 0.24, W * 0.60, H * 0.24 + TILE * 2);
-      spawnSlimeAt(W * 0.30, H * 0.70 - 32, 30);
-      spawnSlimeAt(W * 0.52, H * 0.47 - 28, 26);
-      emitters.push({ kind: 'smoke', x: W * 0.22, y: H - TILE * 1.6, phase: 0 });
-      emitters.push({ kind: 'smoke', x: W * 0.52, y: H - TILE * 1.6, phase: 2.1 });
-      emitters.push({ kind: 'smoke', x: W * 0.80, y: H - TILE * 1.6, phase: 4.4 });
+      // Two angled plumes meet a movable obstacle, then part around the
+      // higher islands. A small spill crosses the right plume on its way down.
+      bowl(W * 0.10, W * 0.90, H * 0.89, H * 0.89, H * 0.06, rim);
+      bowl(W * 0.41, W * 0.59, H * 0.60, H * 0.60, H * 0.045, rim);
+      bowl(W * 0.22, W * 0.34, H * 0.34, H * 0.34, H * 0.045, rim);
+      bowl(W * 0.65, W * 0.77, H * 0.37, H * 0.37, H * 0.045, rim);
+      var cup = bowl(W * 0.60, W * 0.89, H * 0.185, H * 0.105, H * 0.10, rim);
+      fillBowl(cup, H * 0.17);
+      spawnSlimeAt(W * 0.50, H * 0.64 - R * 1.1, R);
+      spawnSlimeAt(W * 0.28, H * 0.38 - R, R * 0.8);
+      spawnSlimeAt(W * 0.71, H * 0.41 - R, R * 0.8);
+      smokeSource(W * 0.50, H * 0.76, 0, -1, 3.2, warm, S * 0.015);
+      smokeSource(W * 0.15, H * 0.56, 0.5, -1, 3.0, warm, S * 0.015);
+      smokeSource(W * 0.85, H * 0.59, -0.5, -1, 3.0, cool, S * 0.015);
+      emitters.forEach(function (source) { source.density = 1.3; source.radiusK = 2; });
+      waterSource(W * 0.78, H * 0.065, -15, 95, isMobile ? 80 : 130);
       setSceneChip('chimney');
       return;
     }
     if (name === 'spa') {
-      // A wide soaking tub: slimes bob at the line like the game's banya
-      // guests, a spring drips from above, steam vents sit on the rims.
-      wallRect(W * 0.20, H * 0.44, W * 0.20 + TILE * 2, H);
-      wallRect(W * 0.80 - TILE * 2, H * 0.44, W * 0.80, H);
-      fillPoolRect(W * 0.20 + TILE * 2.5, H * 0.72, W * 0.80 - TILE * 2.5, H - TILE * 1.5);
-      // URL-only regression pose: three intersecting silhouettes reproduce
-      // the old fill-and-snap bug without a timing-sensitive pointer drag.
-      // Normal visitors keep the wider spa composition.
-      var overlapTest = /[?&]guestoverlap=1(?:&|$)/.test(
-        (window.location && window.location.search) || '');
-      spawnSlimeAt(W * (overlapTest ? 0.43 : 0.36), H * 0.675, 28);
-      spawnSlimeAt(W * (overlapTest ? 0.48 : 0.47), H * 0.66, 32);
-      spawnSlimeAt(W * (overlapTest ? 0.535 : 0.64), H * 0.675, 26);
-      emitters.push({ kind: 'water', x: W * 0.56, y: H * 0.07, vx: 0, vy: 130, rate: 240, acc: 0, cap: 84000 });
-      var steam = { r: 0.32, g: 0.32, b: 0.31 };
-      emitters.push({ kind: 'smoke', x: W * 0.205 + TILE, y: H * 0.44 - 4, phase: 0, col: steam, liftK: 0.62 });
-      emitters.push({ kind: 'smoke', x: W * 0.795 - TILE, y: H * 0.44 - 4, phase: 2.6, col: steam, liftK: 0.62 });
+      // Keep the existing opt-in overlap regression pose available to probes.
+      if (/[?&]guestoverlap=1(?:&|$)/.test(location.search)) {
+        wallRect(W * 0.20, H * 0.44, W * 0.20 + TILE * 2, H);
+        wallRect(W * 0.80 - TILE * 2, H * 0.44, W * 0.80, H);
+        fillPoolRect(W * 0.20 + TILE * 2.5, H * 0.72, W * 0.80 - TILE * 2.5, H - TILE * 1.5);
+        spawnSlimeAt(W * 0.43, H * 0.675, 28);
+        spawnSlimeAt(W * 0.48, H * 0.66, 32);
+        spawnSlimeAt(W * 0.535, H * 0.675, 26);
+        waterSource(W * 0.56, H * 0.07, 0, 130, 240);
+        setSceneChip('spa');
+        return;
+      }
+      // A broad pool gives a dropped slime room to displace a visible wave.
+      // The two springs arc inward; steam rises along the open waterline.
+      var pool = bowl(W * 0.08, W * 0.92, H * 0.65, H * 0.65, H * 0.28, rim);
+      fillBowl(pool, H * 0.79);
+      bowl(W * 0.43, W * 0.57, H * 0.32, H * 0.32, H * 0.035, rim);
+      spawnSlimeAt(W * 0.50, H * 0.35 - R * 1.2, R * 1.08);
+      spawnSlimeAt(W * 0.35, H * 0.77 - R * 0.3, R * 0.86);
+      spawnSlimeAt(W * 0.58, H * 0.77 - R * 0.3, R);
+      spawnSlimeAt(W * 0.71, H * 0.77 - R * 0.3, R * 0.78);
+      var jet = Math.sqrt(S / 630);
+      waterSource(W * 0.16, H * 0.68, 420 * jet, -420 * jet, isMobile ? 135 : 220);
+      waterSource(W * 0.84, H * 0.68, -420 * jet, -420 * jet, isMobile ? 135 : 220);
+      smokeSource(W * 0.27, H * 0.73, -0.15, -1, 0.9, warm, S * 0.065);
+      smokeSource(W * 0.74, H * 0.73, 0.15, -1, 0.9, cool, S * 0.065);
+      emitters[emitters.length - 1].density = 0.28;
+      emitters[emitters.length - 2].density = 0.28;
       setSceneChip('spa');
       return;
     }
-    // ---- 'falls' (the boot scene) ----
-    // Shelf A starts AT the left wall so the trickle can only spill right;
-    // shelf B then brims and cascades again. Every slime sits on ground the
-    // water can never flood (deep water MELTS a slime; that discovery
-    // belongs to the visitor, not the idle scene), and the pour caps out
-    // once the terraces are full so the long-idle end state is glassy.
-    wallRect(0, H * 0.32, W * 0.40, H * 0.32 + TILE * 2);
-    wallRect(W * 0.30, H * 0.55, W * 0.62, H * 0.55 + TILE * 2);
-    wallRect(W * 0.66, H * 0.76, W * 0.66 + TILE * 2, H);
-    wallRect(W * 0.87, H * 0.56, W, H * 0.56 + TILE * 2);          // dry perch, right wall
-    wallRect(0, H * 0.88, W * 0.21, H * 0.88 + TILE * 2);          // dry pedestal, floor left
-    fillPoolRect(W * 0.66 + TILE * 2.5, H * 0.80, W - TILE * 1.5, H - TILE * 1.5);
-    var srk = W < 560 ? 0.78 : 1;      // narrow worlds get smaller, spread slimes
-    spawnSlimeAt(W * 0.935, H * 0.56 - 28 * srk, 26 * srk);
-    spawnSlimeAt(W * 0.055, H * 0.88 - 26 * srk, 24 * srk);
-    spawnSlimeAt(W * 0.158, H * 0.88 - 32 * srk, 30 * srk);
-    spawnSlimeAt(W * 0.84, H * 0.76, 26 * srk);   // in the pool: bobs at the line on boot
-    emitters.push({ kind: 'water', x: W * 0.165, y: H * 0.05, vx: 24, vy: 130, rate: 300, acc: 0, cap: 40000 });
-    // The vent stands on the pool lip: open column above, never flooded.
-    emitters.push({ kind: 'smoke', x: W * 0.672, y: H * 0.755, phase: 0 });
+    // Cascade is already full enough to spill when the page opens. Offset
+    // lips send the water right, then left, into a broad receiving bowl.
+    // Each slime either floats in that route or waits directly above it.
+    var upper = bowl(W * 0.065, W * 0.43, H * 0.22, H * 0.33, H * 0.15, rim);
+    var middle = bowl(W * 0.41, W * 0.84, H * 0.54, H * 0.44, H * 0.14, rim);
+    var lower = bowl(W * 0.035, W * 0.965, H * 0.76, H * 0.72, H * 0.23, rim);
+    fillBowl(upper, H * 0.295);
+    fillBowl(middle, H * 0.502);
+    fillBowl(lower, H * 0.857);
+    bowl(W * 0.055, W * 0.185, H * 0.62, H * 0.62, H * 0.045, rim);
+    spawnSlimeAt(W * 0.31, H * 0.30 - R * 0.45, R * 0.82);
+    spawnSlimeAt(W * 0.81, H * 0.455 - R * 1.1, R * 0.87);
+    spawnSlimeAt(W * 0.12, H * 0.66 - R * 1.15, R);
+    spawnSlimeAt(W * 0.62, H * 0.84 - R * 0.4, R * 1.03);
+    waterSource(W * 0.18, H * 0.09, 20, 110, isMobile ? 200 : 330);
+    smokeSource(W * 0.22, H * 0.47, 0.8, -0.4, 1.6, warm, S * 0.012);
+    smokeSource(W * 0.89, H * 0.72, -0.3, -1, 1.3, cool, S * 0.025);
     setSceneChip('falls');
   }
 
@@ -11036,7 +11206,6 @@
     bakeWalls();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, worldW, worldH);
-    ctx.drawImage(wallsCanvas, 0, 0, wallsCanvas.width, wallsCanvas.height, 0, 0, worldW, worldH);
     drawEmitterFixtures();
     drawJelloBlobs();
     drawSlimeLooks();

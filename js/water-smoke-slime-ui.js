@@ -14,6 +14,21 @@
     var status = document.getElementById('toy-status');
     var openPanel = null;
     var opener = null;
+    var phoneLayout = window.matchMedia('(max-width: 520px)');
+    var playback = shell.querySelector('.toy-playback');
+    function placePlayback() {
+      shell.querySelector(phoneLayout.matches ? '.toy-foot' : '.toy-top').appendChild(playback);
+      toy.resize();
+    }
+    // Leave the entire scene visible on phones, including the upper inlets.
+    phoneLayout.addEventListener('change', placePlayback);
+    placePlayback();
+    var sceneHints = {
+      falls: 'Drop a slime into the falling water.',
+      zerog: 'Pull a slime through the floating water.',
+      chimney: 'Move a slime into a plume and watch it split.',
+      spa: 'Drop the top slime into the pool.'
+    };
     var hints = {
       poke: 'Drag a slime or stir the water.',
       water: 'Hold to pour. Drag to make a splash.',
@@ -87,7 +102,7 @@
       resumeButton.hidden = !state.paused;
       var label = state.paused ? 'Paused' : state.waterState === 'booting' ? 'Starting water' : 'Live';
       if (status.textContent !== label) status.textContent = label;
-      var instruction = hints[state.tool] || hints.poke;
+      var instruction = state.tool === 'poke' ? (sceneHints[state.scene] || hints.poke) : hints[state.tool] || hints.poke;
       if (hint.textContent !== instruction) hint.textContent = instruction;
       bar.querySelectorAll('[data-tool], [data-scene], [data-preset]').forEach(function (button) {
         button.setAttribute('aria-pressed', String(button.classList.contains('is-on')));

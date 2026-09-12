@@ -24,7 +24,7 @@
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="water-smoke-slime.css?v=4.32">
+  <link rel="stylesheet" href="water-smoke-slime.css?v=4.33">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -37,10 +37,10 @@
       <div class="toy-bar" id="toy-bar">
         <div class="toy-top" data-toy-controls>
           <div class="toy-scenes" role="group" aria-label="Scenes">
-            <button class="toy-chip is-on" data-scene="falls" aria-pressed="true">Falls</button>
-            <button class="toy-chip" data-scene="zerog" aria-pressed="false">Zero gravity</button>
-            <button class="toy-chip" data-scene="chimney" aria-pressed="false">Chimney</button>
-            <button class="toy-chip" data-scene="spa" aria-pressed="false">Spa</button>
+            <button class="toy-chip is-on" data-scene="falls" aria-pressed="true">Cascade</button>
+            <button class="toy-chip" data-scene="zerog" aria-pressed="false">Drift</button>
+            <button class="toy-chip" data-scene="chimney" aria-pressed="false">Plumes</button>
+            <button class="toy-chip" data-scene="spa" aria-pressed="false">Spring</button>
           </div>
           <div class="toy-playback" role="group" aria-label="Playback">
             <button class="toy-icon" id="toy-pause" aria-label="Pause" title="Pause (Space)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
@@ -78,7 +78,7 @@
           <button class="toy-icon toy-settings" data-panel="settings" aria-label="Settings" title="Settings" aria-expanded="false" aria-controls="toy-panel-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
         </div>
         <div class="toy-foot" data-toy-controls>
-          <span id="toy-hint">Drag a slime or stir the water.</span>
+          <span id="toy-hint">Drop a slime into the falling water.</span>
           <span id="toy-status" role="status">Starting</span>
         </div>
 
@@ -127,7 +127,7 @@
     <p class="toy-nowater" id="toy-nowater" role="status" hidden>Water isn’t available in this browser. You can still play with smoke and slime.</p>
 
     <main class="post-body toy-prose">
-      <p>Grab a slime and throw it into the pool. Draw a dam, let the water rise, then erase a hole in it. Try a different scene, or open the water, smoke, and slime menus to change how each one moves and looks.</p>
+      <p>Lift a slime into a plume and watch the smoke part around it. Drop it through a waterfall, or into the spring to send a wave across the pool. Draw a dam, erase a hole, and see where the water goes. The material menus change how everything moves and looks.</p>
       <p>These are the physics engines from <a href="grand-motherload.html">Sluice</a>, my mining game. Built on work by <a href="https://oimo.io/works/water/">saharan</a>, <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov</a>, and <a href="https://mmacklin.com/xpbd.pdf">Macklin, Müller, and Chentanez</a>. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">The source is here.</a></p>
     </main>
 
@@ -135,7 +135,7 @@
   </div>
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
   <script src="js/liquid-wgpu.js?v=v26.92"></script>
-  <script src="js/water-smoke-slime.js?v=v4.32"></script>
-  <script src="js/water-smoke-slime-ui.js?v=4.32"></script>
+  <script src="js/water-smoke-slime.js?v=v4.33"></script>
+  <script src="js/water-smoke-slime-ui.js?v=4.33"></script>
 </body>
 </html>
