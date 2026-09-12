@@ -6,7 +6,9 @@
   },
   "after": {
     "version": "v26.123",
-    "bundleSHA256": "1badce1ae3ba774e93ddc96edc0c209261f7001fb8add81008f57cd3eef06201"
+    "bundleSHA256": "1badce1ae3ba774e93ddc96edc0c209261f7001fb8add81008f57cd3eef06201",
+    "deployedBundleSHA256": "8ae26f0cd02f971b677af5ce660640695c45d04864b03053e06f5959606e336f",
+    "lineEndings": "bundleSHA256 identifies the local tested/packaged bytes. deployedBundleSHA256 identifies the same source after Git normalizes CRLF to LF. No other source differences."
   },
   "method": {
     "cpu": "Intel Core i7-9700K",
@@ -28,7 +30,8 @@
       "Scenes pin altitude or position for repeatability; water/slime dynamics and scheduling can still vary.",
       "Headless RAF intervals measure callbacks. Visible PresentMon display intervals are recorded separately.",
       "Main-thread bucket times include API submission and stalls; they are not hardware GPU timings.",
-      "GPU-process trace spans are wall time and may contain waits. Parent and child events are not added together."
+      "GPU-process trace spans are wall time and may contain waits. Parent and child events are not added together.",
+      "Fixed-altitude nightflight reaches a pillar and includes contact, with horizontal movement during about 28 to 29 percent of frames. Drive is the uninterrupted horizontal motion fixture."
     ]
   },
   "scenes": [
@@ -402,7 +405,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 1527.021,
+        "movingTransitionsPct": 100
+      },
+      "motionAfter": {
+        "horizontalDistance": 1566.485,
+        "movingTransitionsPct": 100
+      }
     },
     {
       "scene": "pen",
@@ -768,7 +779,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 8.887,
+        "movingTransitionsPct": 61.869
+      },
+      "motionAfter": {
+        "horizontalDistance": 5.791,
+        "movingTransitionsPct": 6.486
+      }
     },
     {
       "scene": "cave",
@@ -1086,7 +1105,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      },
+      "motionAfter": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      }
     },
     {
       "scene": "deep",
@@ -1416,7 +1443,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      },
+      "motionAfter": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      }
     },
     {
       "scene": "storm",
@@ -1758,7 +1793,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      },
+      "motionAfter": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      }
     },
     {
       "scene": "nightflight",
@@ -2130,7 +2173,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 583.662,
+        "movingTransitionsPct": 27.259
+      },
+      "motionAfter": {
+        "horizontalDistance": 612.024,
+        "movingTransitionsPct": 29.13
+      }
     },
     {
       "scene": "nightpond",
@@ -2496,7 +2547,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      },
+      "motionAfter": {
+        "horizontalDistance": 0,
+        "movingTransitionsPct": 0
+      }
     },
     {
       "scene": "ascent",
@@ -2862,7 +2921,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 2320.087,
+        "movingTransitionsPct": 100
+      },
+      "motionAfter": {
+        "horizontalDistance": 2318.115,
+        "movingTransitionsPct": 100
+      }
     },
     {
       "scene": "nightascent",
@@ -3228,7 +3295,15 @@
           "samples": 4
         }
       },
-      "errors": []
+      "errors": [],
+      "motionBefore": {
+        "horizontalDistance": 2322.088,
+        "movingTransitionsPct": 100
+      },
+      "motionAfter": {
+        "horizontalDistance": 2320.087,
+        "movingTransitionsPct": 100
+      }
     }
   ],
   "display": [
@@ -3502,6 +3577,82 @@
         "meanMs": 2.789,
         "p99Ms": 4.211,
         "maxMs": 4.464
+      }
+    },
+    {
+      "runtime": "browser",
+      "side": "before",
+      "scene": "drive",
+      "raf": {
+        "samples": 616,
+        "fps": 76.864,
+        "frameIntervalMs": {
+          "mean": 13.01,
+          "p99": 20.9,
+          "max": 27.7
+        },
+        "mainThreadMs": {
+          "mean": 3.161,
+          "p99": 6.3,
+          "max": 7.9
+        },
+        "over8msPct": 80.357
+      },
+      "motion": {
+        "horizontalDistance": 1561.113,
+        "movingTransitionsPct": 100
+      },
+      "display": {
+        "n": 612,
+        "meanMs": 13.016,
+        "p99Ms": 20.865,
+        "maxMs": 27.797
+      },
+      "displayFPS": 76.831,
+      "displayOver8msPct": 83.007,
+      "gpuBusy": {
+        "n": 612,
+        "meanMs": 4.843,
+        "p99Ms": 6.254,
+        "maxMs": 7.644
+      }
+    },
+    {
+      "runtime": "browser",
+      "side": "after",
+      "scene": "drive",
+      "raf": {
+        "samples": 852,
+        "fps": 106.497,
+        "frameIntervalMs": {
+          "mean": 9.39,
+          "p99": 14,
+          "max": 20.8
+        },
+        "mainThreadMs": {
+          "mean": 3.097,
+          "p99": 6.2,
+          "max": 7.2
+        },
+        "over8msPct": 34.507
+      },
+      "motion": {
+        "horizontalDistance": 1566.896,
+        "movingTransitionsPct": 100
+      },
+      "display": {
+        "n": 849,
+        "meanMs": 9.382,
+        "p99Ms": 13.945,
+        "maxMs": 20.871
+      },
+      "displayFPS": 106.584,
+      "displayOver8msPct": 34.747,
+      "gpuBusy": {
+        "n": 849,
+        "meanMs": 3.427,
+        "p99Ms": 4.787,
+        "maxMs": 5.398
       }
     }
   ],

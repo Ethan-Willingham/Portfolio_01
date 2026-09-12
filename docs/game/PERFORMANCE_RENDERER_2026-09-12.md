@@ -21,11 +21,18 @@ was hidden. The fixture pins altitude or position while keeping effects and
 simulation running, so these are controlled scenes, not a replay of the owner's
 exact save. Water and slime dynamics can vary between runs.
 
+The fixed-altitude night-flight fixture reaches the slime pen's pillar partway
+through, then thrusts against it. Its horizontal position changes during roughly
+28% to 29% of recorded frames. It is a mixed travel/contact workload, not eight
+seconds of uninterrupted flight. The driving route continues moving throughout;
+an additional fullscreen display comparison of that route is included below.
+
 | Runtime and scene | Before displayed FPS | After displayed FPS | Display intervals over 8 ms, before -> after |
 |---|---:|---:|---:|
-| Chrome, night flight | 82.2 | 119.0 | 74.0% -> 20.9% |
+| Chrome, continuous surface drive | 76.8 | 106.6 | 83.0% -> 34.7% |
+| Chrome, night flight/contact | 82.2 | 119.0 | 74.0% -> 20.9% |
 | Chrome, hovering over lake | 91.5 | 141.7 | 57.3% -> 1.6% |
-| Desktop, night flight | 81.6 | 116.4 | 75.5% -> 23.7% |
+| Desktop, night flight/contact | 81.6 | 116.4 | 75.5% -> 23.7% |
 | Desktop, hovering over lake | 92.8 | 136.4 | 54.8% -> 5.5% |
 
 At 144 Hz, a refresh lasts 6.94 ms. Many slow frames were displayed for 13.9 ms,
@@ -33,6 +40,10 @@ with some reaching 20.8 ms before this change. That uneven cadence explains why
 the game looked rough despite a respectable average FPS. After the change,
 night-flight display p99 is still about 13.94 ms in both runtimes. The lake is
 much closer to the refresh limit, but these samples are not a locked-144 result.
+The continuous driving capture covered about 1,560 world pixels in both builds,
+with motion on every recorded frame transition. Its display p99 improved from
+20.87 to 13.95 ms. This is a roughly 39% increase in displayed FPS during sustained
+horizontal travel, while about a third of intervals still exceed one refresh.
 
 PresentMon captured the game's GPU process and its principal swap chain. No
 elevation was used. The desktop performance comparison used the local HTTP audit
@@ -240,6 +251,8 @@ frame pacing, remains separate release work.
   there were no other missing assets or remote requests in that check.
 - Bundle syntax, desktop/test syntax, whitespace, and shared toy-engine sync
   checked. The game source remains ordered fragments; the bundle is generated.
+  Deployed source matches the tested source after Git's CRLF-to-LF normalization;
+  the JSON records both byte hashes explicitly.
 
 The physical monitor captures establish that this pass improves visible cadence.
 They do not establish perfect pacing, behavior on every driver, hours-long

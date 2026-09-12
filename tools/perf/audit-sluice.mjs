@@ -75,6 +75,8 @@ window.__audit=(function(){
       if(disabled.indexOf('jello')>=0){ENABLE_JELLO=false;}
       if(disabled.indexOf('weather')>=0)PERF_DISABLE_WEATHER=true;
       pinX=(DECK_LEFT_COL-5)*TILE;pinY=SKY_ROWS*TILE-PLAYER_H;
+      // Fixed-altitude flight reaches the pen's pillar during longer captures.
+      // Use drive for uninterrupted horizontal travel; inspect raw x/cx traces.
       move=name==='drive'||name==='flight'||name==='nightflight';flying=name==='flight'||name==='nightflight';
       rising=name==='ascent'||name==='nightascent';if(rising){move=true;flying=true;}
       if(flying){pinX=80*TILE;pinY-=100;}
