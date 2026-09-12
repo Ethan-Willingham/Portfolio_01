@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.34'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.35'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -8698,7 +8698,61 @@
     ctx.fillRect(l, t, w, h);
   }
 
+  // Feather the finished gel by less than one backing pixel. Blurring individual
+  // fills cannot soften their shared clip edge, which showed stair steps inside
+  // the fringe. Reuse one cropped surface, then filter its final composite once.
+  // No supersampling: the world and solver keep their existing resolution.
+  var jelloEdgeCanvas = null, jelloEdgeCtx = null;
+  var JELLO_EDGE_PIXEL_BUDGET = 262144;   // at most 1 MiB of reusable RGBA storage
   function jelloDrawBody(b) {
+    if (b.ringN < 3 || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
+    var target = ctx;
+    var tr = target.getTransform();
+    // Classic styling and unusual host transforms retain the direct path.
+    if (JELLO_EDGE_STYLE < 1 || typeof target.filter !== 'string' ||
+        tr.b !== 0 || tr.c !== 0 || !(tr.a > 0 && tr.d > 0) ||
+        target.globalAlpha !== 1 || target.globalCompositeOperation !== 'source-over') {
+      jelloDrawBodyLayers(b, target.canvas, tr); return;
+    }
+    var outset = JELLO_RENDER_OUTSET * JELLO_CONTACT_R_FRAC * (b.spacing || (TILE / JELLO_NPT));
+    if (b.rippleOn) outset += jelloRippleCap(b.spacing) * JELLO_RIPPLE;
+    var coat = JELLO_EDGE_FUZZ * (JELLO_EDGE_STYLE >= 3 ? 16 : (JELLO_EDGE_STYLE >= 2 ? 8.4 : 3.8));
+    var pad = outset + coat;
+    // Include a three-pixel transparent gutter for the final filter, and clip
+    // to the viewport before allocating or drawing an off-screen portion.
+    var x = Math.max(0, Math.floor((b.bboxL - pad) * tr.a + tr.e) - 3);
+    var y = Math.max(0, Math.floor((b.bboxT - pad) * tr.d + tr.f) - 3);
+    var w = Math.min(target.canvas.width, Math.ceil((b.bboxR + pad) * tr.a + tr.e) + 3) - x;
+    var h = Math.min(target.canvas.height, Math.ceil((b.bboxB + pad) * tr.d + tr.f) + 3) - y;
+    if (!(w > 0 && h > 0)) return;
+    // A giant close-up must not turn a small edge fix into a full-screen pass.
+    if (w * h > JELLO_EDGE_PIXEL_BUDGET || w > 2048 || h > 2048) {
+      jelloDrawBodyLayers(b, target.canvas, tr); return;
+    }
+    if (!jelloEdgeCanvas) {
+      jelloEdgeCanvas = document.createElement('canvas');
+      jelloEdgeCtx = jelloEdgeCanvas.getContext('2d');
+    }
+    if (jelloEdgeCanvas.width < w || jelloEdgeCanvas.height < h) {
+      var nw = Math.max(jelloEdgeCanvas.width, Math.ceil(w / 32) * 32);
+      var nh = Math.max(jelloEdgeCanvas.height, Math.ceil(h / 32) * 32);
+      if (nw * nh > JELLO_EDGE_PIXEL_BUDGET) { nw = w; nh = h; }
+      jelloEdgeCanvas.width = nw; jelloEdgeCanvas.height = nh;
+    }
+    jelloEdgeCtx.setTransform(1, 0, 0, 1, 0, 0);
+    jelloEdgeCtx.clearRect(0, 0, jelloEdgeCanvas.width, jelloEdgeCanvas.height);
+    jelloEdgeCtx.setTransform(tr.a, 0, 0, tr.d, tr.e - x, tr.f - y);
+    ctx = jelloEdgeCtx;
+    try { jelloDrawBodyLayers(b, target.canvas, tr); }
+    finally { ctx = target; }
+    target.save();
+    target.setTransform(1, 0, 0, 1, 0, 0);
+    target.filter = 'blur(0.65px)';
+    target.drawImage(jelloEdgeCanvas, 0, 0, w, h, x, y, w, h);
+    target.restore();
+  }
+
+  function jelloDrawBodyLayers(b, backdrop, backdropTransform) {
     if (b.ringN < 3) return;
     // A non-finite bbox must never reach the canvas: createLinearGradient/createRadialGradient
     // THROW on NaN/Inf arguments, which would kill the whole render loop (black screen), and a
@@ -8769,13 +8823,15 @@
     //         jello) and redraws it scaled up about the body centre. ----
     if (refract > 0.001) {
       var ws = (typeof dpr !== 'undefined' ? dpr : 1) * (typeof worldScale !== 'undefined' ? worldScale : 1);
-      var refractTransform = ctx.getTransform();
+      // Source coordinates belong to the world canvas, including its camera
+      // motion, not the translated scratch surface used for edge antialiasing.
+      var refractTransform = backdropTransform || ctx.getTransform();
       var sx = l * ws + refractTransform.e, sy = t * ws + refractTransform.f;
       var sw = w * ws, sh = hgt * ws;
       if (sw > 1 && sh > 1) {
         var mag = 1 + refract;
         var dw = w * mag, dh = hgt * mag;
-        try { ctx.drawImage(ctx.canvas, sx, sy, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh); } catch (e) {}
+        try { ctx.drawImage(backdrop, sx, sy, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh); } catch (e) {}
       }
     }
 
