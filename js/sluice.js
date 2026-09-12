@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.108';
+  var GAME_VERSION = 'v26.109';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -27079,10 +27079,8 @@
     perfBuckets['render.smoke'] = (perfBuckets['render.smoke'] || 0) * 0.9 + (performance.now() - _renderT4) * 0.1;
     var _renderT5 = performance.now();
 
-    // ---- Exhaust mouth bridge: pins fluid smoke to the actual pipe opening ----
-    var _rSb = performance.now();
-    try { drawExhaustPipeSmokeBridge(); } catch (e) { if (!window.__pipeSmokeErr) { window.__pipeSmokeErr = String(e) + '\n' + (e.stack||''); console.error('drawExhaustPipeSmokeBridge threw:', e); } }
-    perfMark('render.smokeBridge', _rSb);
+    // The fluid plume supplies the exhaust. No fixed dark patch above the
+    // pipe: it used to switch on abruptly with movement or drilling.
 
     // ---- Rocket plume: smoke wake, ground wash, additive flame core ----
     var _rRp = performance.now();
@@ -39957,6 +39955,10 @@
   function ensurePlayerGrads() {
     if (_playerGrads) return _playerGrads;
     var g = {};
+    g.track = ctx.createLinearGradient(0, 18, 0, 25);
+    g.track.addColorStop(0, '#2a2f2c');
+    g.track.addColorStop(0.55, '#151817');
+    g.track.addColorStop(1, '#070808');
     g.hull = ctx.createLinearGradient(0, 5, 0, 20);
     g.hull.addColorStop(0, '#59634f');
     g.hull.addColorStop(0.42, '#3e483b');
@@ -40086,7 +40088,7 @@
     }
     a.frameTravel = moved;
     a.travel = ((a.travel + moved) % PLAYER_TRACK_LENGTH + PLAYER_TRACK_LENGTH) % PLAYER_TRACK_LENGTH;
-    a.roadAngle = (a.roadAngle + moved / 1.82) % (Math.PI * 2);
+    a.roadAngle = (a.roadAngle + moved / 1.65) % (Math.PI * 2);
     // Sprocket teeth follow the belt pitch circle, not the smaller hub face.
     a.driveAngle = (a.driveAngle + moved / PLAYER_TRACK_RADIUS) % (Math.PI * 2);
   }
@@ -40110,46 +40112,6 @@
     return { x: 4.6 + Math.cos(angle) * radius, y: 21.7 + Math.sin(angle) * radius, angle: angle + Math.PI * 0.5 };
   }
 
-  function drawPlayerTrackWheel(x, y, radius, angle, sprocket, detail) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = '#101714';
-    ctx.beginPath(); ctx.arc(0, 0, radius + 0.22, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#4b5850';
-    ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#222b28';
-    ctx.beginPath(); ctx.arc(0, 0, radius - 0.34, 0, Math.PI * 2); ctx.fill();
-    // The bevel catches the light in a fixed direction, while the machined
-    // face turns inside it. Fine details soften at speed to avoid strobing.
-    ctx.strokeStyle = '#697660';
-    ctx.lineWidth = 0.28;
-    ctx.beginPath(); ctx.arc(0, 0, radius - 0.13, Math.PI * 1.06, Math.PI * 1.68); ctx.stroke();
-    ctx.save();
-    ctx.rotate(angle);
-    ctx.globalAlpha *= detail;
-    if (sprocket) {
-      ctx.fillStyle = '#59665c';
-      for (var tooth = 0; tooth < 8; tooth++) {
-        ctx.save(); ctx.rotate(tooth * Math.PI / 4);
-        ctx.fillRect(radius - 0.2, -0.26, 0.48, 0.52); ctx.restore();
-      }
-    }
-    ctx.strokeStyle = sprocket ? '#697660' : '#4b5850';
-    ctx.lineWidth = sprocket ? 0.42 : 0.35;
-    ctx.beginPath();
-    for (var spoke = 0; spoke < 3; spoke++) {
-      var sa = spoke * Math.PI * 2 / 3;
-      ctx.moveTo(Math.cos(sa) * 0.46, Math.sin(sa) * 0.46);
-      ctx.lineTo(Math.cos(sa) * (radius - 0.57), Math.sin(sa) * (radius - 0.57));
-    }
-    ctx.stroke(); ctx.restore();
-    ctx.fillStyle = '#77816e';
-    ctx.beginPath(); ctx.arc(0, 0, 0.49, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#29332f';
-    ctx.beginPath(); ctx.arc(0.12, 0.12, 0.25, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
   function drawPlayerTracks() {
     var a = playerTrackAnim;
     var pitch = PLAYER_TRACK_LENGTH / PLAYER_TRACK_LINKS;
@@ -40157,28 +40119,14 @@
     // The body caller already mirrored the hull. This symmetric assembly
     // keeps its own world-facing frame, including its top-left metal light.
     if (player.dir < 0) { ctx.translate(PLAYER_W, 0); ctx.scale(-1, 1); }
-    ctx.fillStyle = '#121615';
-    roundRect(ctx, 1.1, 18.2, 19.8, 7.1, 3.5, true);
-    ctx.strokeStyle = '#29332f';
-    ctx.lineWidth = 1.05;
-    roundRect(ctx, 1.95, 19.05, 18.1, 5.3, 2.65, false, true);
-
-    // Recessed suspension rail and three short swing arms sit behind the
-    // road wheels. End wheels carry the belt around the nose and heel.
-    ctx.strokeStyle = '#414d42';
-    ctx.lineWidth = 0.65;
-    ctx.beginPath(); ctx.moveTo(4.6, 20.3); ctx.lineTo(17.4, 20.3);
-    for (var arm = 0; arm < 3; arm++) {
-      var ax = 7.75 + arm * 3.25;
-      ctx.moveTo(ax - 0.7, 20.3); ctx.lineTo(ax, 22.05);
-    }
-    ctx.stroke();
-    var detail = 1 / (1 + Math.pow(Math.abs(a.frameTravel) / 1.82, 2));
-    drawPlayerTrackWheel(4.6, 21.7, 2.05, a.driveAngle, true, detail);
-    drawPlayerTrackWheel(17.4, 21.7, 2.05, a.driveAngle, true, detail);
-    for (var wheel = 0; wheel < 3; wheel++) {
-      drawPlayerTrackWheel(7.75 + wheel * 3.25, 22.05, 1.82, a.roadAngle, false, detail);
-    }
+    // Keep the original compact, dark track housing and plain wheel faces.
+    ctx.fillStyle = ensurePlayerGrads().track;
+    roundRect(ctx, 1.3, 18.3, 19.4, 6.8, 2.2, true);
+    ctx.strokeStyle = '#050606';
+    ctx.lineWidth = 1;
+    roundRect(ctx, 1.3, 18.3, 19.4, 6.8, 2.2, false, true);
+    ctx.fillStyle = '#262d28';
+    roundRect(ctx, 2.2, 19.0, 17.6, 5.5, 1.6, true);
 
     // A short shutter exposure on the links suppresses the wagon-wheel
     // reversal that a tiny, repeating pattern produces at driving speed.
@@ -40195,16 +40143,27 @@
         var pt = playerTrackPoint(link * pitch + a.travel + offset);
         var light = -Math.sin(pt.angle) * 0.45 + Math.cos(pt.angle) * 0.8;
         ctx.save(); ctx.translate(pt.x, pt.y); ctx.rotate(pt.angle);
-        // Each shoe has a steel face, a raised grouser and a recessed pin.
-        // Links stay separate at rest and articulate around both sprockets.
-        ctx.fillStyle = light > 0.35 ? '#59665c' : light > -0.4 ? '#414d42' : '#29332f';
-        ctx.fillRect(-pitch * 0.39, -0.55, pitch * 0.78, 1.1);
-        ctx.fillStyle = light > 0.35 ? '#89927c' : '#697660';
-        ctx.fillRect(-pitch * 0.27, -0.60, pitch * 0.54, 0.24);
-        ctx.fillStyle = '#222b28';
-        ctx.fillRect(pitch * 0.23, 0.12, 0.24, 0.3);
+        // Low-contrast tread marks carry the motion without bright metal
+        // plates competing with the hull. The five wheels cover the web.
+        ctx.fillStyle = light > 0.35 ? '#3c413c' : '#2a2f2c';
+        ctx.fillRect(-pitch * 0.36, -0.42, pitch * 0.72, 0.84);
         ctx.restore();
       }
+    }
+    ctx.globalAlpha = alpha;
+    var detail = 1 / (1 + Math.pow(Math.abs(a.frameTravel) / 1.65, 2));
+    for (var wheel = 0; wheel < 5; wheel++) {
+      var wx = 4.0 + wheel * 3.5;
+      ctx.fillStyle = '#090a0a';
+      ctx.beginPath(); ctx.arc(wx, 22.0, 1.65, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#525a50';
+      ctx.beginPath(); ctx.arc(wx, 22.0, 0.72, 0, Math.PI * 2); ctx.fill();
+      // A tiny hub slot conveys slow rotation, without visible spokes or rims.
+      ctx.save(); ctx.translate(wx, 22.0); ctx.rotate(a.roadAngle);
+      ctx.globalAlpha = alpha * detail * 0.35;
+      ctx.fillStyle = '#262d28';
+      ctx.fillRect(-0.43, -0.09, 0.86, 0.18);
+      ctx.restore();
     }
     ctx.restore();
   }

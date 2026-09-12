@@ -984,10 +984,8 @@
     perfBuckets['render.smoke'] = (perfBuckets['render.smoke'] || 0) * 0.9 + (performance.now() - _renderT4) * 0.1;
     var _renderT5 = performance.now();
 
-    // ---- Exhaust mouth bridge: pins fluid smoke to the actual pipe opening ----
-    var _rSb = performance.now();
-    try { drawExhaustPipeSmokeBridge(); } catch (e) { if (!window.__pipeSmokeErr) { window.__pipeSmokeErr = String(e) + '\n' + (e.stack||''); console.error('drawExhaustPipeSmokeBridge threw:', e); } }
-    perfMark('render.smokeBridge', _rSb);
+    // The fluid plume supplies the exhaust. No fixed dark patch above the
+    // pipe: it used to switch on abruptly with movement or drilling.
 
     // ---- Rocket plume: smoke wake, ground wash, additive flame core ----
     var _rRp = performance.now();
