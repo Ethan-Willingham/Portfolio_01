@@ -628,6 +628,7 @@
     _ts = performance.now(); updateSurfaceWind(dt);        perfMark('update.wind',     _ts);
     _ts = performance.now(); try { updateGrassWind(dt); } catch (e) { if (!window.__grassWindErr) { window.__grassWindErr = String(e) + '\n' + (e.stack||''); console.error('updateGrassWind threw:', e); } } perfMark('update.grassWind', _ts);
     _ts = performance.now(); try { treesUpdate(dt); } catch (e) { if (!window.__treesErr) { window.__treesErr = String(e) + '\n' + (e.stack||''); console.error('treesUpdate threw:', e); } } perfMark('update.trees', _ts);
+    if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
     _ts = performance.now();
     try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }

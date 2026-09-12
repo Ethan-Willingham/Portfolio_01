@@ -4,6 +4,7 @@
   // station's stone ramp, top-left light and broad fractured faces.
   var surfaceBoulders = [], surfaceBoulderSprites = null;
   var surfaceBoulderWorld = null, surfaceBoulderDensity = -1;
+  var SURFACE_BOULDER_SETTLE = .16, SURFACE_BOULDER_LIFE = 1.05;
 
   function surfaceBoulderBake(w, h, seed) {
     var s = treesMakeSprite(w + 6, h + 6), g = s.g;
@@ -90,15 +91,117 @@
       }
       if (nearTree) continue;
       var rock = { x:x, spr:spr, cL:Math.floor((x - spr.ax + 3) / TILE),
-        cR:Math.floor((x - spr.ax + spr.w - 4) / TILE) };
+        cR:Math.floor((x - spr.ax + spr.w - 4) / TILE), fall:-1, gone:false, dir:1 };
       if (!surfaceBoulderSupported(rock)) continue;
       surfaceBoulders.push(rock); lastX = x;
     }
   }
 
+  function surfaceBoulderPieces(s) {
+    if (s.pieces) return s.pieces;
+    s.pieces = [];
+    // The three jagged slices exactly cover the original sprite. Splitting
+    // starts with the same silhouette, without flashing a replacement asset.
+    for (var k = 0; k < 3; k++) {
+      var piece = treesMakeSprite(s.w, s.h);
+      for (var y = 0; y < s.h; y++) {
+        var step = Math.floor(y / 4) % 2;
+        var a = Math.floor(s.w * .31 + y * .10) + step;
+        var b = Math.floor(s.w * .68 - y * .08) + step;
+        var left = k === 0 ? 0 : (k === 1 ? a : b);
+        var right = k === 0 ? a : (k === 1 ? b : s.w);
+        piece.g.drawImage(s.cv, left, y, right - left, 1, left, y, right - left, 1);
+      }
+      s.pieces.push(piece.cv);
+    }
+    return s.pieces;
+  }
+
+  function surfaceBouldersUpdate(dt) {
+    if (!(dt > 0) || !treesBuilt || treesWorldRef !== world) return;
+    if (surfaceBoulderWorld !== world || surfaceBoulderDensity !== treesTune.density) surfaceBouldersRebuild();
+    var surfaceY = SKY_ROWS * TILE;
+    for (var i = 0; i < surfaceBoulders.length; i++) {
+      var rock = surfaceBoulders[i];
+      if (rock.gone) continue;
+      if (rock.fall >= 0) {
+        rock.fall += dt;
+        if (rock.fall >= SURFACE_BOULDER_LIFE) rock.gone = true;
+      } else if (!surfaceBoulderSupported(rock)) {
+        // No delayed replay when returning to a stone excavated offscreen.
+        if (cam.y > surfaceY + 64 || cam.y + screenH < surfaceY - rock.spr.h ||
+            rock.x + rock.spr.w < cam.x || rock.x - rock.spr.w > cam.x + screenW) {
+          rock.gone = true; continue;
+        }
+        var missingX = 0, missing = 0;
+        for (var c = rock.cL; c <= rock.cR; c++) {
+          if (!tileAt(SKY_ROWS, c)) { missingX += (c + .5) * TILE; missing++; }
+        }
+        var lean = missing ? missingX / missing - rock.x : 0;
+        rock.dir = lean ? (lean > 0 ? 1 : -1) : (treesHash(rock.x + 91) < .5 ? -1 : 1);
+        rock.fall = 0;
+        surfaceBoulderPieces(rock.spr);
+      }
+    }
+  }
+
+  function drawSurfaceBoulderFall(rock, surfaceY) {
+    var s = rock.spr, t = rock.fall, dir = rock.dir;
+    ctx.save();
+    // Scenery is painted after terrain. Mask the collapse to air so pieces
+    // settle into the dug gap instead of being drawn over the remaining soil.
+    ctx.beginPath();
+    ctx.rect(rock.x - s.w - 20, surfaceY - s.h - 24, s.w * 2 + 40, s.h + 24);
+    for (var c = rock.cL - 1; c <= rock.cR + 1; c++) {
+      for (var r = SKY_ROWS; r < SKY_ROWS + 3; r++) {
+        if (!tileAt(r, c)) ctx.rect(c * TILE, r * TILE, TILE, TILE);
+      }
+    }
+    ctx.clip();
+    if (t < SURFACE_BOULDER_SETTLE) {
+      var p = t / SURFACE_BOULDER_SETTLE;
+      ctx.translate(rock.x + dir * p, surfaceY + p);
+      ctx.rotate(dir * .045 * p * p);
+      ctx.drawImage(s.cv, -s.ax, -s.ay);
+    } else {
+      var f = t - SURFACE_BOULDER_SETTLE;
+      var pieces = surfaceBoulderPieces(s);
+      var alpha = Math.max(0, 1 - Math.max(0, f - .30) / .42);
+      for (var k = 0; k < pieces.length; k++) {
+        ctx.save();
+        ctx.globalAlpha *= alpha;
+        ctx.translate(rock.x + dir + (dir * 9 + (k - 1) * 7) * f,
+          surfaceY + 1 + 110 * f * f + k * f * 2);
+        ctx.rotate(dir * .045 + (dir * .16 + (k - 1) * .22) * f);
+        ctx.drawImage(pieces[k], -s.ax, -s.ay);
+        ctx.restore();
+      }
+      // Four little chips and three low, faint dust motes. No camera shake,
+      // bright flash or sound competing with the player's drilling feedback.
+      var baseAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = baseAlpha * Math.max(0, 1 - f / .72) * .75;
+      for (var j = 0; j < 4; j++) {
+        var vx = (j - 1.5) * 12 + dir * 5;
+        var cy = surfaceY - 3 - (18 + j * 4) * f + 100 * f * f;
+        ctx.fillStyle = j % 2 ? BLD.stoneDark : BLD.stoneBase;
+        ctx.fillRect(Math.round(rock.x + (j - 1.5) * 3 + vx * f), Math.round(cy), 2, j % 2 + 1);
+      }
+      ctx.fillStyle = BLD.stoneBase;
+      for (var d = 0; d < 3; d++) {
+        var age = f - d * .045;
+        if (age < 0) continue;
+        ctx.globalAlpha = baseAlpha * .20 * Math.min(1, age / .06) * Math.max(0, 1 - age / .78);
+        var size = 2 + Math.floor(Math.min(1, age * 2) * 3);
+        ctx.fillRect(Math.round(rock.x + (d - 1) * (5 + age * 9) + dir * age * 4),
+          Math.round(surfaceY - 2 - age * 6), size, size);
+      }
+    }
+    ctx.restore();
+  }
+
   function drawSurfaceBoulders() {
     var surfaceY = SKY_ROWS * TILE;
-    if (cam.y >= surfaceY || cam.y + screenH < surfaceY - 32) return;
+    if (cam.y >= surfaceY + 80 || cam.y + screenH < surfaceY - 40) return;
     if (!treesBuilt || treesWorldRef !== world) return;
     if (surfaceBoulderWorld !== world || surfaceBoulderDensity !== treesTune.density) surfaceBouldersRebuild();
     var smoothing = ctx.imageSmoothingEnabled;
@@ -107,10 +210,9 @@
       var rock = surfaceBoulders[i], s = rock.spr;
       if (rock.x + s.w < cam.x) continue;
       if (rock.x - s.w > cam.x + screenW) break;
-      // Removing ANY supporting surface tile removes the decorative stone.
-      // Save/load derives the same result from the saved terrain, no new data.
-      if (!surfaceBoulderSupported(rock)) continue;
-      ctx.drawImage(s.cv, Math.round(rock.x - s.ax), surfaceY - s.ay);
+      if (rock.gone) continue;
+      if (rock.fall >= 0) drawSurfaceBoulderFall(rock, surfaceY);
+      else ctx.drawImage(s.cv, Math.round(rock.x - s.ax), surfaceY - s.ay);
     }
     ctx.imageSmoothingEnabled = smoothing;
   }

@@ -1072,7 +1072,11 @@ foliage facets. `166-render-surface-boulders.js` adds sparse cached stones in
 clearings: four angular profiles, 26 to 45 world px wide and 13 to 25 px tall,
 using the station's stone palette. Boulders are scenery behind the rig, with
 no collision. They avoid trees, ponds and the station compound. Excavating
-any tile beneath a boulder removes it; loading derives this from the terrain.
+any tile beneath a boulder starts a quiet 1.05-second collapse: a 0.16-second
+lean toward the gap, then three cached stone fragments, four small chips and
+three faint dust motes. Remaining soil occludes the falling pieces. The motion
+pauses with the game and finishes offscreen without replaying on return.
+Loading derives removed stones from the terrain, without extra save data.
 
 Pixel-art flora across the whole wide surface (`js/sluice/165-render-trees.js`, v24.133): spruce/birch/bush groves in the towns, scorched snags in the No Man's Zones, nothing on oceans, ponds, or station compounds. DERIVED from the world grid, never saved: a tree stands where its ground tile at `(SKY_ROWS, c)` is still solid, so felling one (dig that tile out: tip-over, then a leaf + chip burst at ~77 degrees) persists through save/load for free. Sprites are baked once at world-px (BLD wood + the mandatory outline ring + 3 locked flora greens `#2e4420`/`#4a6631`/`#8f9c52` + birch bark `#d4c89f`; keep canopy greens under the grass speck `#9bb963`). Rig gusts are SPEED-GATED (an idle hover does nothing, the same discipline as the water player-coupling); the jet downwash shivers canopies it hovers over; a sonic boom whips every visible tree. Spruce/birch canopies hold perched birds that launch into the 205-birds boids (ambient timer, hard gust passes, and falls). Headless work: `?treeshot=COL` parks the rig at a surface column, `?treefell=COL` fells the nearest tree through the real dig path 1s in, the `[trees]` dev boot probe logs counts + the densest grove column, and `window.__trees` exposes rebuild/count/info/shoot. Pair with `?nopause=1` (020): it disables the focus auto-pause + boot pause, which otherwise freeze any headless/unfocused run a moment after boot. Gotcha: headless Chrome `--screenshot` of sluice.html directly captures a blank canvas; screenshot a same-origin wrapper page that iframes the game instead.
 
