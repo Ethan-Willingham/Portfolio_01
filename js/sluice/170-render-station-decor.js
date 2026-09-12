@@ -383,6 +383,7 @@
     var g = c.getContext('2d'), pixels = g.createImageData(size, size);
     var base = nightSkyHexRGB(BG.wallSubsoil), light = nightSkyHexRGB(BG.wallSubsoilLight);
     var shade = nightSkyHexRGB(BG.wallSubsoilShade);
+    var contrast = 0.45; // Retain crisp rock structure while it recedes behind the terrain.
     // Wide, irregular rock planes. Their seeds repeat across the texture
     // boundary, but jitter keeps the bedding from becoming a brick grid.
     var cols = 8, rows = 16, faces = [];
@@ -424,8 +425,8 @@
         var tone = selected.tone + (facet ? -0.12 : 0.12);
         var joint = tileHash01(Math.min(faceId, nextId), Math.max(faceId, nextId), 673) < 0.23;
         if (joint && second - first < 0.035) tone = -0.88;
-        var accent = tone < 0 ? shade : light, amount = Math.abs(tone);
-        var grain = (tileHash01(x, y, 659) - 0.5) * 2;
+        var accent = tone < 0 ? shade : light, amount = Math.abs(tone) * contrast;
+        var grain = (tileHash01(x, y, 659) - 0.5) * 2 * contrast;
         var at = (y * size + x) * 4;
         pixels.data[at] = base.r + (accent.r - base.r) * amount + grain;
         pixels.data[at + 1] = base.g + (accent.g - base.g) * amount + grain;

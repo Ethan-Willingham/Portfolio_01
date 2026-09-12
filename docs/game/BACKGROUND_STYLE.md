@@ -239,6 +239,9 @@ The grey subsoil at 60 to 130 m has its own parallax wall in
   retain discrete facets so the material reads as stone. Only a few joints
   are shaded, never a complete brick grid or outlined pebble network.
   No ore glints or loose foreground pebbles.
+  Since v26.100, face, fracture and grain contrast is reduced to 45 percent
+  around the base grey. Keep the edges crisp but subdued so the foreground
+  carries the visual weight.
   It uses the existing 0.55 X and 0.70 Y camera speeds.
 - **Transition:** topsoil to subsoil and subsoil to deepcrust blend over
   six tiles centred on their actual world-depth boundary. A cached mask
