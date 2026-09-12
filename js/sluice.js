@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.81';
+  var GAME_VERSION = 'v26.82';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2134,24 +2134,18 @@
   var CONSOLE_HEIGHT_DESKTOP = 88;
   var CONSOLE_HEIGHT_MOBILE_LANDSCAPE = 72;
   var CONSOLE_HEIGHT_MOBILE_PORTRAIT = 88;
-  // Bay widths in CSS pixels, left to right. Remaining canvas width is
-  // the "free zone" (radial-wheel anchor per §8.2).
-  // v26.43 — six bays. The reserve rack folded into the FUEL bay (spare-tank
-  // pips beside the dial) and the SAVE bay collapsed into an annunciator lamp
-  // inside the CASH window, so the cluster reads as one instrument rail
-  // instead of eight boxes.
+  // Survival reads left to right first. Journey and balance are quieter.
+  // Widths are proportions when a short landscape viewport compresses the rail.
   var CONSOLE_BAYS = [
-    { id: 'fuel',    w: 116 },
-    { id: 'speed',   w: 84  },
-    { id: 'hull',    w: 92  },
-    { id: 'cargo',   w: 110 },
-    { id: 'depth',   w: 92  },
-    { id: 'cash',    w: 116 }   // wide enough that a $9XX,XXX balance keeps the big stencil
+    { id: 'fuel',  w: 154 },
+    { id: 'hull',  w: 140 },
+    { id: 'cargo', w: 176 },
+    { id: 'depth', w: 116 },
+    { id: 'speed', w: 104 },
+    { id: 'cash',  w: 154 }
   ];
-  // Reference top speed (MPH) for the SPEED readout's colour zones: the number
-  // is amber up to 60% of this, orange to 82%, red above (fall-damage
-  // territory). Uses the same px→MPH conversion as the 'FELL n MPH' fall readout
-  // (32 px = 1 m, then m/s → MPH × 2.237). Terminal fall (~740 px/s) ≈ 52 MPH.
+  // Speed caution thresholds retain the existing 60% / 82% reference bands.
+  // MPH uses the same conversion as the fall-damage readout.
   var SPEEDO_MPH_MAX = 80;
   // Material colours from UI_STYLE.md §4.1.
   // v26.20 — GUNMETAL + BRASS, the owner-picked UI skin (store-theme-lab).
@@ -2183,11 +2177,7 @@
   var UIT_GOLD_TEXT = '#241a08';   // dark text on gold
   var UIT_MONEY     = '#e8c052';   // prices / cash
   var UIT_RED       = '#ec7058';   // shortfall / denied text (AA on the field)
-  // v11.54 — responsive fold. consoleStacked() is true when the single bay
-  // row is wider than the viewport; the console then folds into 2 rows,
-  // CONSOLE_ROW_STACKED tall per row. consoleStackCols() is the per-row count
-  // (ceil(bays/2)) so the fold always fits in exactly two rows regardless of
-  // how many bays there are: 6 bays → 3 per row, 7 → 4 (a 4 + 3 split).
+  // Narrow screens use a taller survival row above a quieter journey row.
   var CONSOLE_ROW_STACKED = 72;
   function consoleStackCols() { return Math.ceil(CONSOLE_BAYS.length / 2); }
   // v23.53: In fullscreen the world zooms in (worldScale floors at 1.2 embedded
@@ -2205,12 +2195,10 @@
     return Math.max(1, Math.min(CONSOLE_SCALE_MAX, s));
   }
   function consoleStacked() {
-    var total = 0;
-    for (var i = 0; i < CONSOLE_BAYS.length; i++) total += CONSOLE_BAYS[i].w;
-    var singleRowW = total + CONSOLE_BODY_PAD * 2 + CONSOLE_CAP_W * 2;
-    // The console is laid out in a logical space magnified by consoleScale() on
-    // screen, so the fold test uses the logical width budget (viewW / scale).
-    return singleRowW > (viewW / consoleScale()) - 32;
+    // Six readable cells fit a short landscape screen at 540 logical px.
+    // Portrait gets three generous columns instead of shrinking the type.
+    var logicalW = viewW / consoleScale();
+    return logicalW < (viewW > viewH ? 540 : 740);
   }
   // Un-scaled bar height (CSS px). consoleHeight() applies the scale so every
   // external consumer (d-pad, item wheel, smoke clip, shop layouts) reserves the
@@ -2221,13 +2209,11 @@
     return viewW > viewH ? CONSOLE_HEIGHT_MOBILE_LANDSCAPE : CONSOLE_HEIGHT_MOBILE_PORTRAIT;
   }
   function consoleHeight() { return consoleBaseHeight() * consoleScale(); }
-  // v11.27 — centered console with ornate iron-and-brass end caps. Width
-  // is sized to the bay set + padding + caps, leaving the side strips of
-  // the bottom playfield visible (so the player can see Earth on either
-  // side of the toolbar).
-  var CONSOLE_CAP_W = 24;   // v26.43: slimmed with the gunmetal cap redesign (was 32)
-  var CONSOLE_BODY_PAD = 8;
-  var CONSOLE_MIN_BODY_W = 120;  // floor so a tiny viewport never makes bays negative
+  // Slim mounts terminate the continuous instrument field. Historic end-cap
+  // styles remain available in the art bench with their original 24px width.
+  var CONSOLE_CAP_W = 8;
+  var CONSOLE_BODY_PAD = 12;
+  var CONSOLE_MIN_BODY_W = 120;  // positive geometry during resize transients
   function consoleRect() {
     // v23.53: lay out in a logical space `scale`× smaller than the screen;
     // drawConsole magnifies the whole console by `scale` (× dpr) so it fills
@@ -2238,25 +2224,20 @@
     var lvH = viewH / scale;        // logical viewport height
     var h = consoleBaseHeight();    // logical (un-scaled) bar height
     var stacked = consoleStacked();
+    var capW = typeof consoleCapStyleId === 'number' && consoleCapStyleId !== 7 ? 24 : CONSOLE_CAP_W;
     var bodyW;
     if (stacked) {
-      // Folded: consoleStackCols() columns. Width follows the widest bay so the
-      // panel doesn't balloon on mid-size screens — still clamps to the viewport.
-      var maxBayW = 0;
-      for (var i = 0; i < CONSOLE_BAYS.length; i++) {
-        if (CONSOLE_BAYS[i].w > maxBayW) maxBayW = CONSOLE_BAYS[i].w;
-      }
-      bodyW = maxBayW * consoleStackCols() + CONSOLE_BODY_PAD * 2;
+      // Three equal columns spread across phones, capped on tablet portrait.
+      bodyW = Math.min(lvW, 660) - capW * 2;
     } else {
       var totalBayW = 0;
       for (var j = 0; j < CONSOLE_BAYS.length; j++) totalBayW += CONSOLE_BAYS[j].w;
       bodyW = totalBayW + CONSOLE_BODY_PAD * 2;
     }
-    var consoleW = bodyW + CONSOLE_CAP_W * 2;
-    var minMargin = 16;
-    if (consoleW > lvW - minMargin * 2) {
-      consoleW = lvW - minMargin * 2;
-      bodyW = consoleW - CONSOLE_CAP_W * 2;
+    var consoleW = bodyW + capW * 2;
+    if (consoleW > lvW) {
+      consoleW = lvW;
+      bodyW = consoleW - capW * 2;
     }
     // A near-zero viewW (a resize or layout transient, a minimized or
     // collapsed window) drives the clamp above negative, which makes the
@@ -2264,14 +2245,14 @@
     // go negative and throw. Floor the body so every bay rect stays positive.
     if (bodyW < CONSOLE_MIN_BODY_W) {
       bodyW = CONSOLE_MIN_BODY_W;
-      consoleW = bodyW + CONSOLE_CAP_W * 2;
+      consoleW = bodyW + capW * 2;
     }
     var x = Math.floor((lvW - consoleW) / 2);
     var y = lvH - h;
     return {
       x: x, y: y, w: consoleW, h: h,
-      bodyX: x + CONSOLE_CAP_W, bodyY: y, bodyW: bodyW, bodyH: h,
-      capW: CONSOLE_CAP_W, stacked: stacked,
+      bodyX: x + capW, bodyY: y, bodyW: bodyW, bodyH: h,
+      capW: capW, stacked: stacked,
       scale: scale, viewW: lvW, viewH: lvH
     };
   }
@@ -4848,6 +4829,9 @@
     } else {
       DPAD_SIZE = Math.min(170, viewW * 0.26);
     }
+    // A short landscape viewport must fit the whole touch disc above the
+    // console. The drawing and hit regions both use this same size.
+    DPAD_SIZE = Math.min(DPAD_SIZE, Math.max(56, (viewH - consoleHeight() - 16) / 1.82));
     DPAD_BTN = DPAD_SIZE * 0.38;
     DPAD_CX = viewW - DPAD_SIZE * 0.9;
     // Anchor the d-pad above the bottom console (toolbar/bays), not the
@@ -6059,10 +6043,8 @@
     };
     for (var color in colors) area.style.setProperty('--menu-' + color, colors[color]);
     var title = document.getElementById('gm-menu-title');
-    var sub = document.getElementById('gm-pause-sub');
     var back = document.getElementById('gm-opt-back');
     var save = document.getElementById('gm-pause-save');
-    var footnote = document.getElementById('gm-menu-footnote');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
     var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
@@ -6072,10 +6054,16 @@
       card.setAttribute('data-page', page);
       for (var i = 0; i < pages.length; i++) pages[i].hidden = pages[i].getAttribute('data-pause-page') !== page;
       title.textContent = titles[page];
-      sub.hidden = page !== 'main';
       back.hidden = page === 'main';
       save.hidden = page !== 'main';
-      footnote.hidden = page !== 'options';
+      if (page === 'main') {
+        // The status source retains its detailed wording for other callers.
+        save.textContent = save.textContent
+          .replace(/^autosave on, last saved /, 'Saved ')
+          .replace(/^autosave on, saves when you dock at a town$/, 'Autosave on')
+          .replace(/^autosave off .*$/, 'Autosave off')
+          .replace(/^save failing, browser storage may be full$/, 'Save failed. Storage may be full.');
+      }
       body.scrollTop = 0;
       var focus = page === 'main' ? document.getElementById(returnFocus) :
         page === 'restart' ? document.getElementById('gm-cancel-restart') : back;
@@ -6168,9 +6156,9 @@
         }
         if (key === 'gfx') {
           document.getElementById('gm-gfx-note').textContent = {
-            performance: 'Lighter effects for a smoother frame rate.',
-            balanced: 'A balance of visual detail and frame rate.',
-            extreme: 'Full visual detail.'
+            performance: 'Fewer effects, smoother play.',
+            balanced: 'A balance of detail and performance.',
+            extreme: 'All visual effects.'
           }[value];
         }
       }
@@ -39648,176 +39636,128 @@
     ctx.fillRect(cx, cy, 1, 1);
   }
 
-  // Stenciled bay-edge label drawn into the top inset of the bay.
-  // v25.63 — fit the label to the bay width. In the stacked (portrait-phone)
-  // console the bays are far narrower than the ~92-110px the labels were authored
-  // for, so a value-bearing header ('CARGO  $45,347') centred at scale 1 spilled
-  // out both sides (into the gutter and the neighbouring bay). Shrink the stencil
-  // scale just enough to fit, floored so it stays legible; short labels ('FUEL',
-  // 'RESERVE') still fit at scale 1 and are untouched.
+  // Console readouts share a baseline and a quiet, unboxed surface. Color
+  // carries a warning or a payout; a healthy rig does not light six alarms.
+  function consoleText(text, x, y, size, color, align, bold) {
+    ctx.font = (bold ? '600 ' : '400 ') + size + 'px ' + UI_FONT;
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = color || UIT_TEXT;
+    ctx.fillText(text, Math.round(x), Math.round(y));
+  }
   function drawBayLabel(bx, by, bw, text) {
-    var avail = bw - 7;
-    var w = stencilTextWidth(text, 1);
-    var s = (w > avail && w > 0) ? Math.max(0.6, avail / w) : 1;
-    var wS = stencilTextWidth(text, s);
-    drawStencilText(text, bx + Math.floor((bw - wS) / 2), by + 2, s, '#d8d2c4');
+    consoleText(text, bx, by + 11, 11, UIT_DIM);
   }
-
-  // (v26.43: the four per-bay corner bolts are gone. Six bays x four bolts
-  // was a field of dots; the frame's edge rivets carry the industrial read.)
-
-  // ===== v11.4 — Console instruments (UI_STYLE.md §5) =====
-
-  // §5.1 Fuel dial + reserve rack, one bay (v26.43). The brass-era needle
-  // gauge is retired; this is a dark-face half-dial behind glass, the one
-  // round instrument on the rail, so it anchors the cluster's left end.
-  // Keeps the green/amber/red margin arc (§6 amendment), the light-print
-  // ticks, and the fuel-to-climb-home marker. The old RESERVE bay folds in
-  // as a column of spare-tank pips on the right edge: lit amber when a tank
-  // is racked, a dark socket when not (§4.3: silence is OK).
-  function drawFuelGauge(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'FUEL');
-    var pipZone = 16;                     // right-edge column for the reserve rack
-    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
-    var cx = bx + 3 + Math.round((bw - 6 - pipZone) / 2);
-    var cy = win.y + win.h - 5;
-    // Floor at 8 so the inner arcs stay positive through resize transients.
-    var rad = Math.max(8, Math.min((bw - pipZone) * 0.44, bh * 0.58));
-
-    // -------- Machined bezel ring + dial face --------
-    ctx.strokeStyle = UI_OUTLINE;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx, cy, rad + 2, Math.PI - 0.04, 0.04); ctx.stroke();
-    ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cx, cy, rad + 2.5, Math.PI + 0.28, Math.PI + 0.85); ctx.stroke();
-    ctx.fillStyle = '#0a0d12';
-    ctx.beginPath(); ctx.arc(cx, cy, rad + 1, Math.PI, 0); ctx.closePath(); ctx.fill();
-
-    // -------- Margin arc: green / amber / red, printed not glowing --------
-    function zoneArc(from, to, color) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, rad - 3, Math.PI + Math.PI * from, Math.PI + Math.PI * to);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = color;
-      ctx.stroke();
+  function consoleValue(text, suffix, bx, by, bw, bh, color, preferred) {
+    var size = preferred || (bh >= 68 ? 26 : 22);
+    var unitW = suffix ? suffix.length * 7 + 5 : 0;
+    ctx.font = '600 ' + size + 'px ' + UI_FONT;
+    while (size > 16 && ctx.measureText(text).width + unitW > bw) {
+      size--; ctx.font = '600 ' + size + 'px ' + UI_FONT;
     }
-    zoneArc(0.00, 0.15, '#c2402c');
-    zoneArc(0.15, 0.30, '#c08a28');
-    zoneArc(0.30, 1.00, '#3f9052');
-
-    // -------- Ticks: light print on the dark face --------
-    var maxFuelLocal = (typeof maxFuel === 'number' && maxFuel > 0) ? maxFuel : 30;
-    var fuelFrac = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.fuel / maxFuelLocal)) : 0;
-    for (var t = 0; t <= 4; t++) {
-      var ang = Math.PI + Math.PI * (t / 4);
-      ctx.strokeStyle = 'rgba(216,210,196,0.85)';
-      ctx.lineWidth = (t === 0 || t === 4) ? 1.6 : 1.1;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(ang) * (rad - 6), cy + Math.sin(ang) * (rad - 6));
-      ctx.lineTo(cx + Math.cos(ang) * (rad - 10), cy + Math.sin(ang) * (rad - 10));
-      ctx.stroke();
-      if (t < 4) {
-        ctx.strokeStyle = 'rgba(216,210,196,0.30)';
-        ctx.lineWidth = 1;
-        for (var st = 1; st <= 3; st++) {
-          var sang = Math.PI + Math.PI * ((t + st / 4) / 4);
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(sang) * (rad - 6), cy + Math.sin(sang) * (rad - 6));
-          ctx.lineTo(cx + Math.cos(sang) * (rad - 8.5), cy + Math.sin(sang) * (rad - 8.5));
-          ctx.stroke();
-        }
-      }
-    }
-    drawStencilText('E', cx - rad + 13, cy - 8, 1, 'rgba(216,210,196,0.55)');
-    drawStencilText('F', cx + rad - 17, cy - 8, 1, 'rgba(216,210,196,0.55)');
-
-    // -------- Needle: cream with a red tip over a 1-px drop shadow --------
-    var needleAng = Math.PI + Math.PI * fuelFrac;
-    var nLen = rad - 6;
-    var nx = cx + Math.cos(needleAng) * nLen;
-    var ny = cy + Math.sin(needleAng) * nLen;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx + 1, cy + 1); ctx.lineTo(nx + 1, ny + 1); ctx.stroke();
-    ctx.strokeStyle = '#e8e0cc';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
-    var tipX0 = cx + Math.cos(needleAng) * (nLen - 4);
-    var tipY0 = cy + Math.sin(needleAng) * (nLen - 4);
-    ctx.strokeStyle = '#ff5436';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(tipX0, tipY0); ctx.lineTo(nx, ny); ctx.stroke();
-    ctx.lineCap = 'butt';
-
-    // -------- Hub: flush steel --------
-    ctx.fillStyle = UI_OUTLINE;
-    ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = UIMAT_PLATE_BASE;
-    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+    var y = by + (bh >= 68 ? 39 : 33);
+    consoleText(text, bx, y, size, color, 'left', true);
+    var tw = ctx.measureText(text).width;
+    if (suffix) consoleText(suffix, bx + tw + 5, y, 11, UIT_DIM);
+  }
+  function consoleMoney(amount, width, size) {
+    var n = Math.max(0, Math.floor(amount || 0));
+    var full = '$' + n.toLocaleString();
+    ctx.font = '600 ' + size + 'px ' + UI_FONT;
+    if (ctx.measureText(full).width <= width) return full;
+    // Preserve the reading size on small screens. The shop has the exact balance.
+    var divisor = n >= 1e9 ? 1e9 : n >= 1e6 ? 1e6 : 1e3;
+    var unit = divisor === 1e9 ? 'b' : divisor === 1e6 ? 'm' : 'k';
+    return '$' + (Math.floor(n / divisor * 10) / 10).toFixed(1) + unit;
+  }
+  function consoleMeter(bx, by, bw, bh, fraction, color) {
+    var y = Math.round(by + bh - 22);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(cx - 1, cy - 2, 1, 1);
-
-    // -------- "Fuel to climb home" marker (kept from v24) --------
-    // The notch slides along the dial as depth changes; keep the needle above
-    // it and you can make it back. Turns red the moment you can't.
-    var toSurface = getFuelToSurface();
-    if (toSurface > 0.5) {
-      var markFrac = Math.min(1, toSurface / maxFuelLocal);
-      var mAng = Math.PI + Math.PI * markFrac;
-      var mCos = Math.cos(mAng), mSin = Math.sin(mAng);
-      var mCol = player.fuel >= toSurface ? '#bfe9ff' : '#ff5436';
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#05070a';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(cx + mCos * (rad - 1), cy + mSin * (rad - 1));
-      ctx.lineTo(cx + mCos * (rad - 9), cy + mSin * (rad - 9));
-      ctx.stroke();
-      ctx.strokeStyle = mCol;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx + mCos * (rad - 2), cy + mSin * (rad - 2));
-      ctx.lineTo(cx + mCos * (rad - 8), cy + mSin * (rad - 8));
-      ctx.stroke();
-      ctx.lineCap = 'butt';
-      ctx.fillStyle = '#05070a';
-      ctx.beginPath();
-      ctx.arc(cx + mCos * (rad + 2), cy + mSin * (rad + 2), 2.6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = mCol;
-      ctx.beginPath();
-      ctx.arc(cx + mCos * (rad + 2), cy + mSin * (rad + 2), 1.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // -------- Glass: one top-left reflection arc (§4.4) --------
-    ctx.strokeStyle = 'rgba(220,235,255,0.13)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cx, cy, rad - 1.5, Math.PI + 0.22, Math.PI + 0.62); ctx.stroke();
-
-    // -------- Warning lamp (top-left of the glass) --------
-    var lampState = 'off';
-    if (fuelFrac < 0.15)      lampState = 'critical';
-    else if (fuelFrac < 0.30) lampState = 'caution';
-    drawWarningLamp(win.x + 6, win.y + 6, lampState);
-
-    // -------- Reserve rack: spare-tank pips down the right edge --------
-    var have = (typeof reserveFuel === 'number') ? reserveFuel : 0;
-    var n = (typeof RESERVE_FUEL_MAX === 'number') ? RESERVE_FUEL_MAX : 4;
-    var pgap = 2;
-    var ph = Math.min(10, Math.floor((win.h - 6 - (n - 1) * pgap) / n));
-    var pw = 9;
-    var px0 = win.x + win.w - pw - 3;
-    var py0 = win.y + Math.max(3, Math.round((win.h - (n * (ph + pgap) - pgap)) / 2));
-    for (var i = 0; i < n; i++) {
-      drawReservePip(px0, py0 + i * (ph + pgap), pw, ph, i < have);
+    ctx.fillRect(bx, y, bw, 4);
+    ctx.fillStyle = color;
+    ctx.fillRect(bx, y, Math.round(bw * Math.max(0, Math.min(1, fraction))), 4);
+    return y;
+  }
+  function consoleFuelReading() {
+    var capacity = Math.max(1, maxFuel);
+    var fraction = Math.max(0, Math.min(1, player.fuel / capacity));
+    var home = getFuelToSurface();
+    var shortfall = home > 0.5 && player.fuel < home;
+    return { fraction: fraction, percent: Math.floor(fraction * 100),
+      home: home, homePercent: Math.ceil(home / capacity * 100), shortfall: shortfall,
+      color: shortfall || fraction < 0.15 ? UIT_RED : fraction < 0.30 ? UIT_GOLD : UIT_BODY };
+  }
+  function drawFuelGauge(bx, by, bw, bh) {
+    var fuel = consoleFuelReading();
+    drawBayLabel(bx, by, bw, 'FUEL');
+    if (reserveFuel > 0) consoleText(reserveFuel + ' spare', bx + bw, by + 11, 11, UIT_DIM, 'right');
+    consoleValue('' + fuel.percent, '%', bx, by, bw, bh, fuel.color);
+    var y = consoleMeter(bx, by, bw, bh, fuel.fraction, fuel.color);
+    if (fuel.home > 0.5) {
+      // A labelled notch replaces the unexplained dot on the old dial.
+      var x = Math.round(bx + Math.min(1, fuel.home / maxFuel) * (bw - 2));
+      ctx.fillStyle = UIT_INSET; ctx.fillRect(x - 1, y - 2, 4, 8);
+      ctx.fillStyle = fuel.shortfall ? UIT_RED : UIT_TEXT; ctx.fillRect(x, y - 2, 2, 8);
+      consoleText('Home ~' + fuel.homePercent + '%', bx, by + bh - 3, 11, fuel.shortfall ? UIT_RED : UIT_DIM);
+    } else if (fuel.fraction < 0.30) {
+      consoleText('Refuel', bx, by + bh - 3, 11, fuel.color);
     }
   }
 
-  // One reserve-tank pip for the FUEL bay: a tiny jerry can, lit amber when
-  // racked, a dark socket when empty.
+  var speedoMphSmooth = 0;
+  // Easing runs every frame, including cache hits.
+  function consoleTickSpeedo() {
+    var spd = player ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
+    speedoMphSmooth += (spd / 32 * 2.237 - speedoMphSmooth) * 0.18;
+    if (speedoMphSmooth < 0.05) speedoMphSmooth = 0;
+  }
+  function drawSpeedDisplay(bx, by, bw, bh) {
+    var fraction = speedoMphSmooth / SPEEDO_MPH_MAX;
+    var color = fraction >= 0.82 ? UIT_RED : fraction >= 0.60 ? UIT_GOLD : UIT_BODY;
+    drawBayLabel(bx, by, bw, 'SPEED');
+    consoleValue('' + Math.round(speedoMphSmooth), 'mph', bx, by, bw, bh, color, 22);
+  }
+  function drawHullPlates(bx, by, bw, bh) {
+    var max = Math.max(1, getMaxHull());
+    var fraction = Math.max(0, Math.min(1, player.hull / max));
+    var color = fraction <= 0.25 ? UIT_RED : fraction <= 0.50 ? UIT_GOLD : UIT_BODY;
+    drawBayLabel(bx, by, bw, 'HULL');
+    consoleValue('' + Math.ceil(fraction * 100), '%', bx, by, bw, bh, color);
+    consoleMeter(bx, by, bw, bh, fraction, color);
+    consoleText(fraction <= 0.50 ? 'Repair' : max + ' HP', bx, by + bh - 3, 11, fraction <= 0.50 ? color : UIT_DIM);
+  }
+  function drawCargoBay(bx, by, bw, bh) {
+    var used = cargoUsed(), capacity = Math.max(1, maxCargo), value = 0;
+    var full = used >= capacity;
+    for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
+    drawBayLabel(bx, by, bw, 'CARGO');
+    if (full) consoleText('FULL', bx + bw, by + 11, 11, UIT_GOLD, 'right');
+    consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
+    // A single fill reports capacity consistently, even for near-black coal.
+    consoleMeter(bx, by, bw, bh, used / capacity, full ? UIT_GOLD : UIT_BODY);
+    if (value > 0) consoleText(consoleMoney(value, bw, 11), bx, by + bh - 3, 11, UIT_DIM);
+  }
+  function drawDepthDisplay(bx, by, bw, bh) {
+    var depth = Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
+    drawBayLabel(bx, by, bw, 'DEPTH');
+    consoleValue('' + depth, 'm', bx, by, bw, bh, UIT_TEXT, 24);
+  }
+  function consoleSaveState() {
+    if (SAVE_DISABLED) return 'off';
+    if (saveLastOk === false) return 'failed';
+    return saveLampT > 0 && saveLastWallMs > 0 ? 'saved' : 'idle';
+  }
+  function drawCashDisplay(bx, by, bw, bh) {
+    drawBayLabel(bx, by, bw, 'CASH');
+    var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
+    var size = bh >= 68 ? 24 : 20;
+    var amount = consoleMoney(shown, bw, size);
+    consoleValue(amount, '', bx, by, bw, bh, UIT_MONEY, size);
+    // Describe save state instead of relying on an unexplained blue lamp.
+    if (consoleSaveState() === 'failed') consoleText('Save failed', bx, by + bh - 3, 11, UIT_RED);
+    else if (consoleSaveState() === 'saved') consoleText('Saved', bx, by + bh - 3, 11, UIT_DIM);
+  }
+
   function drawReservePip(x, y, w, h, filled) {
     var capW = 3, capH = 2;
     var capX = x + ((w - capW) >> 1);
@@ -39843,489 +39783,6 @@
     ctx.fillRect(x + w - 1, y + capH, 1, h - capH);
     ctx.fillStyle = 'rgba(60,40,8,0.55)';
     ctx.fillRect(x + 1, y + capH + ((h - capH) >> 1), w - 2, 1);
-  }
-
-  // §5.1b Speed readout — the rig's |velocity| as a big lit MPH number
-  // behind glass, converted exactly as the 'FELL n MPH' fall readout does
-  // (32 px = 1 m, m/s → MPH) so the two always agree. The number is eased
-  // toward the reading so it ticks instead of strobing, and it warms amber →
-  // orange → red as you climb into fall-damage territory; the corner lamp
-  // echoes it and stays dark below the caution band (§6: silence is OK).
-  var speedoMphSmooth = 0;
-  // Per-frame speedo ease (v25.31): runs from drawConsole EVERY frame, cache
-  // hit or not — an ease inside the cached draw freezes on cache hits.
-  function consoleTickSpeedo() {
-    var spd = (typeof player !== 'undefined' && player)
-      ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
-    var mphNow = spd / 32 * 2.237;
-    speedoMphSmooth += (mphNow - speedoMphSmooth) * 0.18;
-    if (speedoMphSmooth < 0.05) speedoMphSmooth = 0;
-  }
-  function drawSpeedDisplay(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'SPEED');
-    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
-    var spdMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
-    var spdFrac = Math.max(0, Math.min(1, speedoMphSmooth / spdMax));
-    var numCol = '#d4a838';
-    if (spdFrac >= 0.82)      numCol = '#ff5436';
-    else if (spdFrac >= 0.60) numCol = '#f0902a';
-    var mphStr = '' + Math.round(speedoMphSmooth);
-    var hasLegend = win.h >= 40;
-    var numH = win.h - (hasLegend ? 10 : 0);
-    // Largest stencil scale (3 → 2 → 1) that fits the glass in both axes.
-    var scale = 3;
-    if (stencilTextWidth(mphStr, scale) > win.w - 10 || 7 * scale > numH - 4) scale = 2;
-    if (stencilTextWidth(mphStr, scale) > win.w - 10 || 7 * scale > numH - 4) scale = 1;
-    var tw = stencilTextWidth(mphStr, scale);
-    drawStencilText(mphStr, win.x + Math.floor((win.w - tw) / 2),
-      win.y + Math.floor((numH - 7 * scale) / 2) + 1, scale, numCol);
-    if (hasLegend) {
-      var lgW = stencilTextWidth('MPH', 1);
-      drawStencilText('MPH', win.x + Math.floor((win.w - lgW) / 2), win.y + win.h - 10, 1, '#454f5c');
-    }
-    // Redline lamp: dark until the caution band (no green "OK" light, §6).
-    var lampState = spdFrac >= 0.82 ? 'critical' : (spdFrac >= 0.60 ? 'caution' : 'off');
-    drawWarningLamp(win.x + win.w - 6, win.y + 6, lampState);
-  }
-
-  // §5.2 Plate counter — positional health zones (UI_STYLE.md §5.2 +
-  // §6 amendment). 8 armor plates colored green/amber/red by POSITION,
-  // not by current hull value. Damage takes plates from the right;
-  // a full hull shows the whole gradient, a critical hull shows only
-  // the green plates left. The color zones themselves communicate
-  // remaining margin; no master warning lamp needed.
-  function drawHullPlates(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'HULL');
-    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);   // v26.43 aperture
-    // v25.71 — the hull gauge is a GRID of armor tiles, and the tile COUNT tracks
-    // the Hull Plating upgrade: a stock rig has HULL_PLATE_BASE tiles and each tier
-    // bolts on HULL_PLATE_STEP more, so a maxed hull reads as a visibly denser slab
-    // of plating (not just a bigger, invisible hull number). The grid auto-sizes its
-    // tiles + row count to fit the 92 px bay at any total. Tiles still drop from the
-    // END (bottom-right) as damage lands and keep the green/amber/red margin zones,
-    // so a battered hull is down to its solid green core up top.
-    var HULL_PLATE_BASE = 6;   // tiles at hull level 1
-    var HULL_PLATE_STEP = 3;   // extra tiles per upgrade tier (L1=6 .. L7=24)
-    var hullLvl = (typeof upgrades !== 'undefined' && upgrades && upgrades.hullLevel) ? upgrades.hullLevel : 1;
-    var n = HULL_PLATE_BASE + (Math.max(1, hullLvl) - 1) * HULL_PLATE_STEP;
-    if (n > 30) n = 30;        // safety clamp (dev free-buy over-levelling)
-
-    var maxHullLocal = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
-    var hullFrac = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.hull / maxHullLocal)) : 0;
-    var intactPlates = Math.ceil(hullFrac * n);
-
-    // Position zones by tile index: green core (low) -> amber -> red margin (high).
-    var nRed    = Math.max(1, Math.round(n * 0.15));
-    var nAmber  = Math.max(1, Math.round(n * 0.25));
-    var nGreen  = n - nRed - nAmber;
-    function plateZoneColors(idx) {
-      if (idx < nGreen)               return { base: '#40c060', hi: '#7be098', sh: '#268040' };
-      else if (idx < nGreen + nAmber) return { base: '#e0a020', hi: '#ffd47a', sh: '#9c6010' };
-      else                            return { base: '#e83a26', hi: '#ff7060', sh: '#7a2418' };
-    }
-
-    // Fit N tiles into the glass: the largest square tile (<=11 px) whose
-    // wrapped rows fit the window. Small counts stay chunky in one or two
-    // rows; a maxed hull packs into a denser multi-row grid.
-    var gap = 1;
-    var availW = win.w - 8;
-    var availH = Math.max(6, win.h - 6);
-    var tile = 4, cols = 1, rows = n;
-    for (var t = 11; t >= 4; t--) {
-      var c = Math.max(1, Math.floor((availW + gap) / (t + gap)));
-      var r = Math.ceil(n / c);
-      if (r * (t + gap) - gap <= availH) { tile = t; cols = c; rows = r; break; }
-      if (t === 4) { tile = 4; cols = c; rows = r; }
-    }
-    var gridW = cols * (tile + gap) - gap;
-    var gridH = rows * (tile + gap) - gap;
-    var gx0 = win.x + Math.round((win.w - gridW) / 2);
-    var gy0 = win.y + 3 + Math.max(0, Math.round((availH - gridH) / 2));
-    // (Destroyed tiles show the dark glass of the aperture through.)
-
-    for (var i = 0; i < n; i++) {
-      var stage;
-      if (i < intactPlates - 1) stage = 0;
-      else if (i === intactPlates - 1) {
-        var subFrac = (hullFrac * n) - (intactPlates - 1);
-        stage = (subFrac > 0.4) ? 0 : 1;   // the draining tile cracks before it drops
-      } else stage = 3;
-      if (stage === 3) continue;
-
-      var col = i % cols;
-      var row = (i / cols) | 0;
-      var px = gx0 + col * (tile + gap);
-      var py = gy0 + row * (tile + gap);
-      var z = plateZoneColors(i);
-
-      ctx.fillStyle = z.base;                // tile body
-      ctx.fillRect(px, py, tile, tile);
-      ctx.fillStyle = z.hi;                  // top + left highlight
-      ctx.fillRect(px, py, tile, 1);
-      ctx.fillRect(px, py, 1, tile);
-      ctx.fillStyle = z.sh;                  // bottom + right shadow
-      ctx.fillRect(px, py + tile - 1, tile, 1);
-      ctx.fillRect(px + tile - 1, py, 1, tile);
-      ctx.fillStyle = UI_OUTLINE;            // centre rivet (industrial read)
-      ctx.fillRect(px + (tile >> 1), py + (tile >> 1), 1, 1);
-
-      if (stage >= 1) {                      // cracked: a scatter of dark hits
-        ctx.fillStyle = UI_OUTLINE;
-        ctx.fillRect(px + 2, py + 2, 1, 1);
-        ctx.fillRect(px + tile - 3, py + tile - 4, 1, 1);
-      }
-    }
-  }
-
-  // §5.3 Bay window — sized slots. Interior is divided into exactly
-  // maxCargo cells (auto-arranged into a roughly square grid that
-  // fills the chamber). Each cell is one cargo slot, fills bottom-
-  // first as the player mines. Empty cells show the dark interior;
-  // filled cells show the ORES[k].color of the held ore. Big cells
-  // when capacity is small, smaller cells when you've upgraded.
-  function drawCargoBay(bx, by, bw, bh) {
-    // v11.36 — bay header shows live total cargo value beside the CARGO
-    // label, ticking up as you mine ore and resetting when you sell.
-    var cargoVal = 0;
-    if (typeof cargo !== 'undefined' && cargo && typeof ORES !== 'undefined') {
-      for (var cvi = 0; cvi < cargo.length; cvi++) {
-        cargoVal += cargoUnitValue(cargo[cvi]);
-      }
-    }
-    var lblStr = cargoVal > 0 ? ('CARGO  $' + cargoVal.toLocaleString()) : 'CARGO';
-    drawBayLabel(bx, by, bw, lblStr);
-    // v26.43 — the hold sits behind the shared aperture glass; the brass
-    // chamber frame is gone.
-    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
-    var ix = win.x + 1;
-    var iy = win.y + 1;
-    var iw = win.w - 2;
-    var ih = win.h - 2;
-
-    // Decide grid: pick cols/rows that produce roughly square cells
-    // and fill the chamber. Aim cell ratio close to 1.
-    var maxC = (typeof maxCargo === 'number' && maxCargo > 0) ? maxCargo : 5;
-    var cargoArr = (typeof cargo !== 'undefined' && cargo) ? cargo : [];
-    var bestCols = 1, bestRows = maxC, bestScore = Infinity;
-    for (var cc = 1; cc <= maxC; cc++) {
-      var rr = Math.ceil(maxC / cc);
-      if (cc * rr < maxC) continue;
-      var cw = iw / cc;
-      var ch = ih / rr;
-      // score = how non-square the cell is (lower better) + slight
-      // preference for filling all cells (avoid trailing empties)
-      var aspect = Math.max(cw, ch) / Math.max(0.001, Math.min(cw, ch));
-      var waste = (cc * rr) - maxC;          // unused cells
-      var score = aspect + waste * 0.2;
-      if (score < bestScore) { bestScore = score; bestCols = cc; bestRows = rr; }
-    }
-    var cols = bestCols, rows = bestRows;
-    var gap = Math.max(1, Math.floor(Math.min(iw, ih) / 60));
-    var cellW = Math.floor((iw - gap * (cols + 1)) / cols);
-    var cellH = Math.floor((ih - gap * (rows + 1)) / rows);
-
-    // Rectangle-packed hold: each mined unit is drawn as ONE solid block whose
-    // footprint (in grid cells) scales with its slot cost, so a dense ore
-    // (Unobtanium = 8) reads as a single big rectangle, not eight chips. Blocks
-    // pack bottom-left first in mining order; leftover cells stay empty.
-    // Footprint [w, h] per slot count, wide-leaning to suit the wide chamber.
-    // Preferred footprint [w, h] per slot count, wide-leaning to suit the wide
-    // chamber. Chunky blocks (no thin bars), so a rare ore reads as a slab.
-    var SLOT_FOOTPRINT = { 1: [1, 1], 2: [2, 1], 3: [3, 1], 4: [2, 2], 5: [3, 2], 6: [3, 2], 7: [4, 2], 8: [4, 2] };
-    // Occupancy grid, row 0 = bottom.
-    var occ = [];
-    for (var orr = 0; orr < rows; orr++) { occ.push([]); for (var occ0 = 0; occ0 < cols; occ0++) occ[orr].push(false); }
-    function fits(gr, gc, w, h) {
-      if (gc + w > cols || gr + h > rows) return false;
-      for (var rr2 = gr; rr2 < gr + h; rr2++) { for (var cc2 = gc; cc2 < gc + w; cc2++) { if (occ[rr2][cc2]) return false; } }
-      return true;
-    }
-    function cellX(gc) { return ix + gap + gc * (cellW + gap); }
-    function cellY(gr) { return iy + ih - gap - cellH - gr * (cellH + gap); }   // gr = rows from bottom
-    // Place one unit: try its preferred block, then progressively flatter and
-    // smaller rectangles down to 1x1, so a near-full bay still shows every ore
-    // (a big block just degrades to a bar rather than vanishing). Lowest, then
-    // leftmost gap wins, so the hold fills from the bottom like the old grid.
-    function placeUnit(slots) {
-      var cand = [], seen = {};
-      function add(w, h) {
-        w = Math.min(w, cols); h = Math.min(h, rows);
-        if (w < 1 || h < 1) return;
-        var key = w + 'x' + h; if (seen[key]) return; seen[key] = 1; cand.push([w, h]);
-      }
-      var t = SLOT_FOOTPRINT[slots] || [slots, 1];
-      add(t[0], t[1]); add(t[1], t[0]);
-      for (var w = Math.min(cols, slots); w >= 1; w--) add(w, Math.ceil(slots / w));
-      add(1, 1);
-      for (var ci = 0; ci < cand.length; ci++) {
-        var cw = cand[ci][0], ch = cand[ci][1];
-        for (var pr = 0; pr <= rows - ch; pr++) {
-          for (var pc = 0; pc <= cols - cw; pc++) {
-            if (!fits(pr, pc, cw, ch)) continue;
-            for (var mr = pr; mr < pr + ch; mr++) { for (var mc = pc; mc < pc + cw; mc++) { occ[mr][mc] = true; } }
-            return { gc: pc, gr: pr, w: cw, h: ch };
-          }
-        }
-      }
-      return null;   // grid completely full: this unit overflows off-view
-    }
-    var blocks = [];
-    for (var bi = 0; bi < cargoArr.length; bi++) {
-      var bcu = cargoArr[bi];
-      var bslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(bcu) : 1;
-      var pos = placeUnit(bslots);
-      if (pos) { pos.cu = bcu; blocks.push(pos); }
-    }
-
-    // 1) Empty slot recesses for the whole grid, so unfilled capacity reads.
-    for (var er = 0; er < rows; er++) {
-      for (var ec = 0; ec < cols; ec++) {
-        var rxx = cellX(ec), ryy = cellY(er);
-        ctx.fillStyle = '#050505'; ctx.fillRect(rxx, ryy, cellW, cellH);
-        ctx.fillStyle = '#000000'; ctx.fillRect(rxx, ryy, cellW, 1); ctx.fillRect(rxx, ryy, 1, cellH);
-        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(rxx, ryy + cellH - 1, cellW, 1); ctx.fillRect(rxx + cellW - 1, ryy, 1, cellH);
-      }
-    }
-
-    // 2) Each ore as ONE solid block, spanning the inter-cell gaps so there are
-    //    no internal gridlines within a single unit.
-    var hoverOre = null, hoverCx = 0, hoverCellW = 0;
-    for (var di = 0; di < blocks.length; di++) {
-      var blk = blocks[di];
-      var ore = (typeof ORES !== 'undefined' && ORES[cargoType(blk.cu)]) ? ORES[cargoType(blk.cu)] : null;
-      var oreShiny = cargoShiny(blk.cu);
-      var col = ore ? ore.color : '#888';
-      var bxp = cellX(blk.gc);
-      var byp = cellY(blk.gr + blk.h - 1);                        // top row of the block
-      var bwp = blk.w * cellW + (blk.w - 1) * gap;
-      var bhp = blk.h * cellH + (blk.h - 1) * gap;
-      // Pointer hover: remember the ore the cursor is over (desktop).
-      if (ore && typeof mouseCursor !== 'undefined' &&
-          mouseCursor.x >= bxp && mouseCursor.x < bxp + bwp &&
-          mouseCursor.y >= byp && mouseCursor.y < byp + bhp) {
-        hoverOre = ore; hoverCx = bxp; hoverCellW = bwp;
-      }
-      // Ore body (inset 1 px so blocks keep a dark seam between them)
-      ctx.fillStyle = col;
-      ctx.fillRect(bxp + 1, byp + 1, bwp - 2, bhp - 2);
-      // Highlight + shadow for material read
-      ctx.fillStyle = 'rgba(255,255,255,0.22)';
-      ctx.fillRect(bxp + 1, byp + 1, bwp - 2, 1);
-      ctx.fillStyle = 'rgba(0,0,0,0.30)';
-      ctx.fillRect(bxp + 1, byp + bhp - 2, bwp - 2, 1);
-      if (oreShiny) {
-        // shiny unit in the hold: warm-gold corner pip + bright top/left rim
-        ctx.fillStyle = '#fff1b0';
-        ctx.fillRect(bxp + bwp - 4, byp + 1, 3, 3);
-        ctx.fillStyle = 'rgba(255,240,170,0.85)';
-        ctx.fillRect(bxp + 1, byp + 1, bwp - 2, 1);
-        ctx.fillRect(bxp + 1, byp + 1, 1, bhp - 2);
-      }
-    }
-
-    // Hover tooltip — names the ore under the cursor. Drawn above the
-    // bay so it never overlaps the slots; steel-framed to match.
-    if (hoverOre) {
-      ctx.save();
-      var tipName = hoverOre.label || 'Ore';
-      var tipSub = '$' + (hoverOre.value || 0);
-      if (hoverOre.tooltip) tipSub += '   ' + hoverOre.tooltip;
-      ctx.font = 'bold 10px ' + UI_FONT;
-      var tnW = ctx.measureText(tipName).width;
-      ctx.font = '8px ' + UI_FONT;
-      var tsW = ctx.measureText(tipSub).width;
-      var tipPad = 6;
-      var tipW = Math.ceil(Math.max(tnW, tsW)) + tipPad * 2;
-      var tipH = 30;
-      var tipX = Math.round(hoverCx + hoverCellW / 2 - tipW / 2);
-      if (tipX < bx - 6) tipX = bx - 6;
-      if (tipX + tipW > bx + bw + 6) tipX = bx + bw + 6 - tipW;
-      var tipY = Math.round(by - 4 - tipH);
-      ctx.fillStyle = 'rgba(8,8,10,0.96)';
-      ctx.fillRect(tipX, tipY, tipW, tipH);
-      ctx.fillStyle = UIMAT_WELD;
-      ctx.fillRect(tipX, tipY, tipW, 1);
-      ctx.fillRect(tipX, tipY + tipH - 1, tipW, 1);
-      ctx.fillRect(tipX, tipY, 1, tipH);
-      ctx.fillRect(tipX + tipW - 1, tipY, 1, tipH);
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'alphabetic';
-      ctx.font = 'bold 10px ' + UI_FONT;
-      ctx.fillStyle = '#f4ead0';
-      ctx.fillText(tipName, tipX + tipPad, tipY + 13);
-      ctx.font = '8px ' + UI_FONT;
-      ctx.fillStyle = UIT_DIM;
-      ctx.fillText(tipSub, tipX + tipPad, tipY + 24);
-      ctx.restore();
-    }
-  }
-
-  // §5.4 Depth odometer — four rolling drums behind glass. The drum slots,
-  // ghost digit peeks and the odometer rim survive from v11; the brass face
-  // around them is gone, so the drums sit straight in the dark window like
-  // a counter set into the panel.
-  function drawDepthDisplay(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'DEPTH');
-    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
-
-    // Depth metres
-    var depthM = 0;
-    if (typeof player !== 'undefined' && player && typeof SKY_ROWS === 'number') {
-      depthM = Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
-    }
-    var sDepth = depthM.toFixed(0);
-    while (sDepth.length < 4) sDepth = '0' + sDepth;
-
-    // Drum slot geometry. v25.63: drop to scale 1 when the scale-2 cluster
-    // won't fit the narrow portrait-stacked bay.
-    var drumGap = 1;
-    var nDigits = 4;
-    var scale = 2;
-    if ((5 * scale + 4) * nDigits + drumGap * (nDigits - 1) + 6 > win.w) scale = 1;
-    var digitW = 5 * scale;
-    var drumW = digitW + 4;
-    var totalDrums = drumW * nDigits + drumGap * (nDigits - 1);
-    var hasLegend = win.h >= 40;
-    var drumH = 7 * scale + 6;
-    var drumStartX = win.x + Math.floor((win.w - totalDrums) / 2);
-    var drumY = win.y + Math.floor((win.h - (hasLegend ? 10 : 0) - drumH) / 2) + 1;
-
-    // Per-digit drum: recessed near-black slot, amber digit, dim peeks of
-    // the neighbouring digits top + bottom for the rolling-cylinder read.
-    for (var d = 0; d < nDigits; d++) {
-      var dx = drumStartX + d * (drumW + drumGap);
-      ctx.fillStyle = '#0a0a0c';
-      ctx.fillRect(dx, drumY, drumW, drumH);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(dx, drumY, drumW, 1);
-      ctx.fillRect(dx, drumY, 1, drumH);
-      ctx.fillStyle = '#1c222b';
-      ctx.fillRect(dx, drumY + drumH - 1, drumW, 1);
-      ctx.fillRect(dx + drumW - 1, drumY, 1, drumH);
-
-      var ch = sDepth.charAt(d);
-      var digit = parseInt(ch, 10);
-      var cdx = dx + Math.floor((drumW - digitW) / 2);
-      var cdy = drumY + Math.floor((drumH - 7 * scale) / 2);
-      drawStencilText(ch, cdx, cdy, scale, '#d4a838');
-
-      var above = String((digit + 9) % 10);
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(dx + 1, drumY + 1, drumW - 2, 3);
-      ctx.clip();
-      drawStencilText(above, cdx, cdy - 7 * scale - 2, scale, 'rgba(212, 168, 56, 0.30)');
-      ctx.restore();
-
-      var below = String((digit + 1) % 10);
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(dx + 1, drumY + drumH - 4, drumW - 2, 3);
-      ctx.clip();
-      drawStencilText(below, cdx, cdy + 7 * scale + 2, scale, 'rgba(212, 168, 56, 0.30)');
-      ctx.restore();
-
-      // Glass sheen on the slot
-      ctx.fillStyle = 'rgba(220,235,255,0.16)';
-      ctx.fillRect(dx + 1, drumY + 1, drumW - 2, 1);
-    }
-
-    // Odometer rim between drums (steel, not brass)
-    var sepX = drumStartX + drumW * 2 + drumGap;
-    ctx.fillStyle = UIMAT_WELD;
-    ctx.fillRect(sepX - 1, drumY - 1, 1, drumH + 2);
-
-    // Etched-glass legend under the drums
-    if (hasLegend) {
-      var lgW = stencilTextWidth('METRES', 1);
-      drawStencilText('METRES', win.x + Math.floor((win.w - lgW) / 2), win.y + win.h - 10, 1, '#454f5c');
-    }
-  }
-
-  // (v26.43: the SAVE annunciator bay is gone; the lamp lives in the CASH
-  // window now, drawn in drawCashDisplay. State stays in 047-save.js.)
-
-  // §5.5 Cash readout — the balance in money gold behind glass, right-
-  // aligned. Shows displayMoney (the eased odometer) so a dock sale counts
-  // up beat-by-beat; the per-card payout punch (cashPunch, set in srFireBeat,
-  // decayed in update()) washes the window, flashes the figure warm-white
-  // and pulses the rim. The SAVE bay (v24.126) collapsed into the annunciator
-  // lamp in this window's top-left corner: dark when idle (§10.7 silence),
-  // steady info-blue for ~3 s after each save write, hard 1 Hz caution blink
-  // while writes fail. Lamp state lives in 047-save.js.
-  function drawCashDisplay(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'CASH');
-    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
-    var hasLegend = win.h >= 40;
-
-    // Payout wash — each beat lights the glass gold
-    var punch = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.min(1, cashPunch) : 0;
-    if (punch > 0.01) {
-      ctx.fillStyle = 'rgba(255,226,122,' + (0.30 * punch).toFixed(3) + ')';
-      ctx.fillRect(win.x, win.y, win.w, win.h);
-    }
-
-    var bankShown = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
-    var cashAmt = (typeof bankShown === 'number' && isFinite(bankShown)) ? Math.floor(bankShown) : 0;
-    var cashStr = '$' + cashAmt.toLocaleString();
-    var numH = win.h - (hasLegend ? 10 : 0);
-    // Largest stencil scale that fits; fractional floor so a 7-figure
-    // balance never clips the narrow portrait bay (v25.63).
-    var scale = stencilTextWidth(cashStr, 2) <= win.w - 6 ? 2 : 1;
-    if (stencilTextWidth(cashStr, scale) > win.w - 8) {
-      scale = Math.max(0.6, (win.w - 8) / stencilTextWidth(cashStr, 1));
-    }
-    var tw = stencilTextWidth(cashStr, scale);
-    var tx = win.x + win.w - 5 - tw;
-    if (tx < win.x + 4) tx = win.x + 4;
-    var ty = win.y + Math.floor((numH - 7 * scale) / 2) + 1;
-    drawStencilText(cashStr, tx, ty, scale, '#ffd24a');
-    if (punch > 0.01) {
-      ctx.globalAlpha = punch;
-      drawStencilText(cashStr, tx, ty, scale, '#fff4d0');
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(255,210,74,' + (0.55 * punch).toFixed(3) + ')';
-      ctx.fillRect(win.x, win.y, win.w, 1);
-      ctx.fillRect(win.x, win.y + win.h - 1, win.w, 1);
-      ctx.fillRect(win.x, win.y, 1, win.h);
-      ctx.fillRect(win.x + win.w - 1, win.y, 1, win.h);
-    }
-    if (hasLegend) {
-      var lgW = stencilTextWidth('BALANCE', 1);
-      drawStencilText('BALANCE', win.x + Math.floor((win.w - lgW) / 2), win.y + win.h - 10, 1, '#454f5c');
-    }
-
-    // ---- SAVE annunciator (top-left corner of the glass, §4.3) ----
-    var scx = win.x + 6, scy = win.y + 6;
-    ctx.fillStyle = UI_OUTLINE;
-    ctx.fillRect(scx - 3, scy - 3, 7, 7);
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(scx - 2, scy - 2, 5, 5);
-    var lit = false, core, halo, lampA = 1;
-    if (typeof saveLampFailT === 'number' && saveLampFailT > 0) {
-      lit = (saveLampFailT % 1) < 0.5;          // hard 1 Hz caution blink
-      core = '#ffb030'; halo = '#b06010';
-    } else if (typeof saveLampT === 'number' && saveLampT > 0) {
-      lit = true;                                // steady info, short fade tail
-      core = '#4080ff'; halo = '#1c3a80';
-      lampA = Math.min(1, saveLampT / 0.5);
-    }
-    if (lit) {
-      ctx.save();
-      ctx.globalAlpha = lampA;
-      ctx.fillStyle = halo; ctx.fillRect(scx - 2, scy - 2, 5, 5);
-      ctx.fillStyle = core; ctx.fillRect(scx - 1, scy - 1, 3, 3);
-      ctx.fillStyle = '#cfe0ff'; ctx.fillRect(scx, scy, 1, 1);
-      ctx.restore();
-    } else {
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(scx - 1, scy - 1, 3, 3);
-    }
-
-    // v25.37 — the dock-sale reveal draws in the full-screen HUD pass
-    // (140-render-maindraw.js, right after drawConsole()), never here: the
-    // instrument cache repaints this bay only on value changes and would
-    // freeze an animation drawn from inside it.
   }
 
   // ----- Auto-sell reveal renderer (the floaters style from autosell-lab.html) -----
@@ -48834,39 +48291,16 @@
   }
   function drawItemWheelButton() {
     var r = itemWheelButtonRect();
-    // Plate base + bevel
+    ctx.save();
     ctx.fillStyle = itemWheel.open ? UIT_PANEL_SEL : UIT_PANEL;
     ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(r.x, r.y, r.w, 1);
-    ctx.fillRect(r.x, r.y, 1, r.h);
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
-    ctx.fillRect(r.x, r.y + r.h - 1, r.w, 1);
-    ctx.fillRect(r.x + r.w - 1, r.y, 1, r.h);
-    ctx.fillStyle = UIT_EDGE;
-    ctx.fillRect(r.x - 1, r.y - 1, r.w + 2, 1);
-    ctx.fillRect(r.x - 1, r.y + r.h, r.w + 2, 1);
-    ctx.fillRect(r.x - 1, r.y - 1, 1, r.h + 2);
-    ctx.fillRect(r.x + r.w, r.y - 1, 1, r.h + 2);
-    drawConsoleRivet(r.x + 2, r.y + 2);
-    drawConsoleRivet(r.x + r.w - 4, r.y + 2);
-    drawConsoleRivet(r.x + 2, r.y + r.h - 4);
-    drawConsoleRivet(r.x + r.w - 4, r.y + r.h - 4);
-    nsText('ITEMS', r.x + r.w / 2, r.y + 6, 10, itemWheel.open ? UIT_GOLD : UIT_TEXT, 'center');
-    ctx.fillStyle = UIT_INSET_DK;
-    ctx.fillRect(r.x + 5, r.y + 21, r.w - 10, r.h - 26);
+    ctx.strokeStyle = itemWheel.open ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+    consoleText('ITEMS', r.x + r.w / 2, r.y + 14, 11, UIT_DIM, 'center');
     var total = teleporters + balloons + bombsSmall + bombsLarge;
-    var s = '×' + total;
-    var sw = stencilTextWidth(s, 2);
-    drawStencilText(s, r.x + Math.floor((r.w - sw) / 2), r.y + r.h - 20, 2, total > 0 ? UIT_GOLD : UIT_DIM);
-    // A crisp gold edge marks the open selector.
-    if (itemWheel.open) {
-      ctx.save();
-      ctx.strokeStyle = UIT_GOLD;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
-      ctx.restore();
-    }
+    consoleText('' + total, r.x + r.w / 2, r.y + 35, 18, total > 0 ? UIT_TEXT : UIT_DIM, 'center', true);
+    ctx.restore();
   }
   // Pixel-art sprites for the consumables item wheel (warp / bombs / balloon),
   // matching the shop icon language: warm palette, 1px dark outline, light from
@@ -49429,63 +48863,53 @@
   // the offscreen cache) and records each bay's rect for the live pass.
   function drawConsoleFrameContent(R) {
     consoleBayLayout.length = 0;
-    // ---- Side wings: plate steel out to the full screen width ----
-    drawConsoleSideWing(0, R.x, R.y, R.h, true);
-    drawConsoleSideWing(R.x + R.w, (R.viewW || viewW) - (R.x + R.w), R.y, R.h, false);
-    // ---- Left + right ornate end caps ----
-    drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
-    drawConsoleCap(R.x + R.w - R.capW, R.y, R.capW, R.h, 'right');
-    // ---- Plate base (body only, between the end caps) ----
-    var bx0 = R.bodyX, by0 = R.y, bw0 = R.bodyW, bh0 = R.h;
-    ctx.fillStyle = UIMAT_PLATE_BASE;
-    ctx.fillRect(bx0, by0, bw0, bh0);
-    // ---- Top edge: arc-welded seam (1-px lighter line) ----
-    ctx.fillStyle = UIMAT_WELD;
-    ctx.fillRect(bx0, by0, bw0, 1);
+    // One quiet chassis and one continuous glass field. Only the four mount
+    // screws remain; a repeating rivet pattern competed with the readouts.
+    ctx.fillStyle = UIT_PANEL;
+    ctx.fillRect(0, R.y, R.viewW, R.h);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(bx0, by0 + 1, bw0, 1);
-    // ---- Bottom edge: shadow + outline ----
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
-    ctx.fillRect(bx0, by0 + bh0 - 2, bw0, 1);
-    ctx.fillStyle = UI_OUTLINE;
-    ctx.fillRect(bx0, by0 + bh0 - 1, bw0, 1);
-    // ---- Rivets along the top + bottom edges ----
-    var rivetSpacing = 24;
-    var rivetTopY = by0 + 5;
-    var rivetBottomY = by0 + bh0 - 6;
-    for (var rx = bx0 + 12; rx < bx0 + bw0 - 8; rx += rivetSpacing) {
-      drawConsoleRivet(rx, rivetTopY);
-      drawConsoleRivet(rx, rivetBottomY);
+    ctx.fillRect(0, R.y, R.viewW, 1);
+    ctx.fillStyle = UIT_INSET;
+    ctx.fillRect(R.bodyX, R.y + 3, R.bodyW, R.stacked ? 77 : R.h - 3);
+    if (consoleCapStyleId !== 7) {
+      drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
+      drawConsoleCap(R.x + R.w - R.capW, R.y, R.capW, R.h, 'right');
+    } else if (R.capW >= 8) {
+      drawConsoleRivet(R.x + 3, R.y + 8);
+      drawConsoleRivet(R.x + 3, R.y + R.h - 9);
+      drawConsoleRivet(R.x + R.w - 5, R.y + 8);
+      drawConsoleRivet(R.x + R.w - 5, R.y + R.h - 9);
     }
-    // ---- Bays: one row of all bays, or two rows when folded ----
-    // v26.43: no per-bay recess panels and no vertical weld seams between
-    // bays. Each instrument cuts its own window into the plate (instrWindow
-    // in 220), so the plate runs unbroken behind the whole rail.
-    var bayInset = 6;
+    var pad = R.bodyW < 600 ? 8 : CONSOLE_BODY_PAD;
+    var available = R.bodyW - pad * 2;
     if (!R.stacked) {
-      var bayX = bx0 + CONSOLE_BODY_PAD - 4;
-      var bayTop = by0 + 4;
-      var bayH = bh0 - 8;
-      for (var b = 0; b < CONSOLE_BAYS.length; b++) {
-        var bay = CONSOLE_BAYS[b];
-        var ibx = bayX + bayInset / 2, iby = bayTop + 2;
-        var ibw = bay.w - bayInset, ibh = bayH - 4;
-        consoleBayLayout.push({ bay: bay, bx: ibx, by: iby, bw: ibw, bh: ibh });
-        bayX += bay.w;
+      var total = 0;
+      for (var b = 0; b < CONSOLE_BAYS.length; b++) total += CONSOLE_BAYS[b].w;
+      var used = 0;
+      for (var i = 0; i < CONSOLE_BAYS.length; i++) {
+        var left = Math.round(available * used / total);
+        used += CONSOLE_BAYS[i].w;
+        var right = Math.round(available * used / total);
+        var gap = available < 650 ? 12 : 24;
+        consoleBayLayout.push({ bay: CONSOLE_BAYS[i], bx: R.bodyX + pad + left + gap / 2,
+          by: R.y + 6, bw: Math.max(12, right - left - gap), bh: R.h - 12 });
+        if (i === 2) {
+          ctx.fillStyle = UIMAT_PLATE_SHADOW;
+          ctx.fillRect(R.bodyX + pad + right, R.y + 14, 1, R.h - 28);
+        }
       }
     } else {
-      // Folded: 2 rows, consoleStackCols() per row, every bay a uniform width.
       var cols = consoleStackCols();
-      var rowH = bh0 / 2;
-      var uniformW = Math.floor((bw0 - CONSOLE_BODY_PAD * 2) / cols);
+      var rowTop = 80;
+      ctx.fillStyle = UIMAT_PLATE_SHADOW;
+      ctx.fillRect(R.bodyX + pad, R.y + rowTop, available, 1);
       for (var sb = 0; sb < CONSOLE_BAYS.length; sb++) {
-        var col = sb % cols;
-        var row = (sb / cols) | 0;
-        var slotX = bx0 + CONSOLE_BODY_PAD + col * uniformW;
-        var slotY = by0 + row * rowH;
-        var sbx = slotX + bayInset / 2, sby = slotY + 6;
-        var sbw = uniformW - bayInset, sbh = rowH - 12;
-        consoleBayLayout.push({ bay: CONSOLE_BAYS[sb], bx: sbx, by: sby, bw: sbw, bh: sbh });
+        var col = sb % cols, row = (sb / cols) | 0;
+        var start = Math.round(available * col / cols);
+        var end = Math.round(available * (col + 1) / cols);
+        consoleBayLayout.push({ bay: CONSOLE_BAYS[sb], bx: R.bodyX + pad + start + 6,
+          by: R.y + (row ? rowTop : 0) + 6, bw: Math.max(12, end - start - 12),
+          bh: (row ? R.h - rowTop : rowTop) - 12 });
       }
     }
   }
@@ -49514,59 +48938,31 @@
   // and each bay repaints ONLY when its VALUE SIGNATURE changes. A signature
   // covers every dynamic input of its gauge, finely quantized — over-inclusion
   // is fine (an extra repaint = the old cost), a MISSED input is a stale gauge.
-  // Time-based lamp blinks are quantized with the same floor(now/period)
-  // formula the lamp itself uses, so the signature flips exactly when the
-  // lamp does. The speedo/cash eases run in update or via consoleTickSpeedo,
-  // never inside a cached draw (a draw-side ease freezes on cache hits).
+  // Displayed precision, warning thresholds, capacity, and save status all
+  // belong in the signature. Motion easing runs outside cached drawing.
   var consoleInstCache = null, consoleInstCtx = null, consoleInstKey = '';
   var consoleBaySigs = [];
   function consoleBaySig(id) {
-    var s;
     if (id === 'fuel') {
-      var mf = (typeof maxFuel === 'number' && maxFuel > 0) ? maxFuel : 30;
-      var ff = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.fuel / mf)) : 0;
-      var toSurf = (typeof getFuelToSurface === 'function') ? getFuelToSurface() : 0;
-      var blink = ff < 0.15 ? (Math.floor(performance.now() / 250) & 1)
-                : ff < 0.30 ? (Math.floor(performance.now() / 500) & 1) : -1;
-      // v26.43: the reserve rack lives in this bay now, so its count is
-      // part of the fuel signature.
-      s = ((ff * 512) | 0) + ',' + ((toSurf * 8) | 0) + ',' + (player && player.fuel >= toSurf ? 1 : 0) + ',' + blink +
-          ',' + ((typeof reserveFuel === 'number') ? reserveFuel : 0);
-    } else if (id === 'speed') {
-      // v26.43: the redline lamp blinks in the caution/critical bands, so the
-      // blink phase joins the signature (same floor(now/period) the lamp uses).
-      var sMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
-      var sFrac = speedoMphSmooth / sMax;
-      var sBlink = sFrac >= 0.82 ? (Math.floor(performance.now() / 250) & 1)
-                 : sFrac >= 0.60 ? (Math.floor(performance.now() / 500) & 1) : -1;
-      s = ((speedoMphSmooth * 8) | 0) + ',' + sBlink;
-    } else if (id === 'hull') {
-      var mh = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
-      s = ((typeof player !== 'undefined' && player) ? player.hull : 0) + '/' + mh;
-    } else if (id === 'cargo') {
-      var h = 0, cv = 0;
-      if (typeof cargo !== 'undefined' && cargo) {
-        for (var ci = 0; ci < cargo.length; ci++) {
-          var it = cargo[ci];
-          h = (h * 131 + (it && it.type ? it.type.charCodeAt(0) * 2 + it.type.length + (it.shiny ? 977 : 0) : 1)) & 0xfffffff;
-          if (typeof cargoUnitValue === 'function') cv += cargoUnitValue(it);
-        }
-      }
-      s = (cargo ? cargo.length : 0) + ',' + h + ',' + cv + ',' + ((typeof getCargoCap === 'function') ? getCargoCap() : 0);
-    } else if (id === 'cash') {
-      var dm = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
-      var pu = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.ceil(Math.min(1, cashPunch) * 32) : 0;
-      // v26.43: the SAVE annunciator lives in the cash window now, so its
-      // state (fail blink phase / info fade step / off) joins the signature.
-      var sv = (typeof saveLampFailT === 'number' && saveLampFailT > 0) ? 'F' + ((saveLampFailT % 1) < 0.5 ? 1 : 0)
-             : (typeof saveLampT === 'number' && saveLampT > 0) ? 'S' + Math.ceil(Math.min(1, saveLampT / 0.5) * 32)
-             : 'off';
-      s = Math.round(dm) + ',' + pu + ',' + sv;
-    } else if (id === 'depth') {
-      s = '' + ((typeof player !== 'undefined' && player && typeof SKY_ROWS === 'number')
-        ? Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0) : 0);
-    } else s = 'x';
-    return s;
+      var fuel = consoleFuelReading();
+      return [fuel.percent, Math.round(fuel.fraction * 1024), fuel.homePercent, fuel.home > 0.5,
+        Math.round(fuel.home / maxFuel * 1024), fuel.shortfall, fuel.color, reserveFuel].join(',');
+    }
+    if (id === 'speed') return Math.round(speedoMphSmooth) + ',' +
+      (speedoMphSmooth / SPEEDO_MPH_MAX >= 0.82 ? 2 : speedoMphSmooth / SPEEDO_MPH_MAX >= 0.60 ? 1 : 0);
+    if (id === 'hull') return player.hull + '/' + getMaxHull();
+    if (id === 'cargo') {
+      // Capacity upgrades repaint even when the hold contents stay unchanged.
+      var contents = [];
+      for (var i = 0; i < cargo.length; i++) contents.push(cargoType(cargo[i]) + ':' + cargoUnitSlots(cargo[i]) + ':' + cargoUnitValue(cargo[i]));
+      return maxCargo + '/' + cargoUsed() + '/' + contents.join(',');
+    }
+    if (id === 'cash') {
+      var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
+      return Math.floor(shown) + ',' + consoleSaveState();
+    }
+    if (id === 'depth') return '' + Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
+    return 'x';
   }
 
   function drawConsole() {
@@ -49671,7 +49067,7 @@
     // Background disc
     ctx.beginPath();
     ctx.arc(cx, cy, RO + DPAD_SIZE * 0.06, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15,11,4,0.45)';
+    ctx.fillStyle = 'rgba(20,24,31,0.72)';
     ctx.fill();
 
     // Map short keys to actual dpad state
@@ -49697,8 +49093,8 @@
       ctx.arc(cx, cy, RO, s + GAP, e - GAP);
       ctx.arc(cx, cy, RI, e - GAP, s + GAP, true);
       ctx.closePath();
-      ctx.fillStyle   = pressed ? 'rgba(239,159,39,0.55)' : 'rgba(255,255,255,0.04)';
-      ctx.strokeStyle = pressed ? '#EF9F27'                : 'rgba(255,255,255,0.15)';
+      ctx.fillStyle   = pressed ? UIT_GOLD : 'rgba(146,157,172,0.06)';
+      ctx.strokeStyle = pressed ? UIT_GOLD : 'rgba(146,157,172,0.28)';
       ctx.lineWidth   = 1;
       ctx.fill();
       ctx.stroke();
@@ -49709,7 +49105,7 @@
       var ax         = cx + Math.cos(mid) * ar;
       var ay         = cy + Math.sin(mid) * ar;
       var arrowSize  = DPAD_SIZE * 0.08;
-      var arrowColor = pressed ? '#1a1208' : 'rgba(255,255,255,0.55)';
+      var arrowColor = pressed ? UIT_GOLD_TEXT : UIT_BODY;
 
       ctx.save();
       ctx.translate(ax, ay);
@@ -49727,8 +49123,8 @@
     // Center dot — outer glow ring
     ctx.beginPath();
     ctx.arc(cx, cy, RI - DPAD_SIZE * 0.03, 0, Math.PI * 2);
-    ctx.fillStyle   = 'rgba(239,159,39,0.10)';
-    ctx.strokeStyle = 'rgba(239,159,39,0.20)';
+    ctx.fillStyle   = UIT_INSET;
+    ctx.strokeStyle = UIMAT_PLATE_SHADOW;
     ctx.lineWidth   = 1;
     ctx.fill();
     ctx.stroke();
@@ -49736,7 +49132,7 @@
     // Center dot — inner pip
     ctx.beginPath();
     ctx.arc(cx, cy, DPAD_SIZE * 0.09, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(239,159,39,0.25)';
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
     ctx.fill();
   }
 

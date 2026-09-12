@@ -817,6 +817,9 @@
     } else {
       DPAD_SIZE = Math.min(170, viewW * 0.26);
     }
+    // A short landscape viewport must fit the whole touch disc above the
+    // console. The drawing and hit regions both use this same size.
+    DPAD_SIZE = Math.min(DPAD_SIZE, Math.max(56, (viewH - consoleHeight() - 16) / 1.82));
     DPAD_BTN = DPAD_SIZE * 0.38;
     DPAD_CX = viewW - DPAD_SIZE * 0.9;
     // Anchor the d-pad above the bottom console (toolbar/bays), not the

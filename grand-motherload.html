@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v26.81">
+  <link rel="stylesheet" href="sluice-menu.css?v=v26.82">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -83,7 +83,7 @@
          the small subtraction is just the page's top padding, so the whole game
          shows from the top without scrolling. */
       height: min(96dvh, calc(100dvh - 20px));
-      min-height: 380px;
+      min-height: 0; /* Keep the console visible on short landscape screens. */
       background: #1a1008;
       overflow: hidden;
       touch-action: none;
@@ -374,16 +374,14 @@
               <div id="game-pause" aria-hidden="true">
                 <div class="pause-card" id="gm-pause-card" role="dialog" aria-modal="true" aria-labelledby="gm-menu-title" tabindex="-1">
                   <header class="pause-header">
-                    <div class="pause-brand">Sluice <span>Mining operations</span></div>
                     <h2 class="pause-title" id="gm-menu-title">Paused</h2>
-                    <p class="pause-sub" id="gm-pause-sub"></p>
                   </header>
                   <div class="pause-body">
                     <div class="pause-page" data-pause-page="main">
-                      <button id="gm-resume-btn" class="pause-primary pause-nav" type="button"><span>Resume game</span><kbd>Esc</kbd></button>
-                      <button id="gm-options-btn" class="pause-nav" type="button"><span>Options<small>Audio, display &amp; comfort</small></span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
-                      <button id="gm-controls-btn" class="pause-nav" type="button"><span>Controls<small>Movement &amp; equipment</small></span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
-                      <div class="pause-new-run"><button id="gm-new-game-btn" class="pause-quiet" type="button">New game</button><span>Start over with a fresh save.</span></div>
+                      <button id="gm-resume-btn" class="pause-primary pause-nav" type="button"><span>Resume</span><kbd>Esc</kbd></button>
+                      <button id="gm-options-btn" class="pause-nav" type="button"><span>Options</span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
+                      <button id="gm-controls-btn" class="pause-nav" type="button"><span>Controls</span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
+                      <button id="gm-new-game-btn" class="pause-quiet pause-new-run" type="button">New game</button>
                     </div>
                     <div class="pause-page" data-pause-page="options" hidden>
                       <section class="pause-section pause-audio-section" aria-labelledby="gm-audio-title">
@@ -393,27 +391,25 @@
                         <div class="pause-setting"><label for="gm-sfxvol">Sound effects</label><output for="gm-sfxvol" id="gm-sfxvol-value">100%</output><input id="gm-sfxvol" type="range" min="0" max="100" value="100"></div>
                       </section>
                       <section class="pause-section" aria-labelledby="gm-display-title">
-                        <h3 id="gm-display-title">Display</h3>
-                        <div class="pause-setting pause-setting-wide"><span id="gm-gfx-label">Graphics quality</span><div class="pause-segment" role="group" aria-labelledby="gm-gfx-label"><button id="gm-gfx-perf" type="button">Performance</button><button id="gm-gfx-bal" type="button">Balanced</button><button id="gm-gfx-ext" type="button">Extreme</button></div><p class="pause-note" id="gm-gfx-note">Full visual detail.</p></div>
+                        <h3 id="gm-display-title">Graphics</h3>
+                        <div class="pause-setting pause-setting-wide"><div class="pause-segment" role="group" aria-labelledby="gm-display-title"><button id="gm-gfx-perf" type="button">Performance</button><button id="gm-gfx-bal" type="button">Balanced</button><button id="gm-gfx-ext" type="button">Extreme</button></div><p class="pause-note" id="gm-gfx-note">Full visual detail.</p></div>
                       </section>
                       <section class="pause-section pause-motion-section" aria-labelledby="gm-comfort-title">
-                        <h3 id="gm-comfort-title">Motion &amp; flashes</h3>
+                        <h3 id="gm-comfort-title">Comfort</h3>
                         <div class="pause-setting"><label for="gm-shake">Screen shake</label><output for="gm-shake" id="gm-shake-value">100%</output><input id="gm-shake" type="range" min="0" max="100" value="100"></div>
-                        <div class="pause-setting pause-setting-switch"><div><span id="gm-dmgflash-label">Damage flash</span><p class="pause-note">Red screen flash when hit.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-dmgflash-label"><button id="gm-dmgflash-off" type="button">Off</button><button id="gm-dmgflash-on" type="button">On</button></div></div>
-                        <div class="pause-setting pause-setting-switch"><div><span id="gm-lowflash-label">Reduce lightning</span><p class="pause-note">Suppress storm flashes.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-lowflash-label"><button id="gm-lowflash-off" type="button">Off</button><button id="gm-lowflash-on" type="button">On</button></div></div>
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-dmgflash-label">Damage flash</span></div><div class="pause-segment" role="group" aria-labelledby="gm-dmgflash-label"><button id="gm-dmgflash-off" type="button">Off</button><button id="gm-dmgflash-on" type="button">On</button></div></div>
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-lowflash-label">Reduce lightning</span></div><div class="pause-segment" role="group" aria-labelledby="gm-lowflash-label"><button id="gm-lowflash-off" type="button">Off</button><button id="gm-lowflash-on" type="button">On</button></div></div>
                       </section>
-                      <section class="pause-section" aria-labelledby="gm-banya-title">
-                        <h3 id="gm-banya-title">In development</h3>
-                        <div class="pause-setting pause-setting-switch"><div><span id="gm-banya-label">Banya bathhouse</span><p class="pause-note">Add the unfinished bathhouse to town.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-banya-label"><button id="gm-banya-off" type="button">Off</button><button id="gm-banya-on" type="button">On</button></div></div>
+                      <section class="pause-section" aria-labelledby="gm-banya-label">
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-banya-label">Banya bathhouse</span><p class="pause-note">In development.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-banya-label"><button id="gm-banya-off" type="button">Off</button><button id="gm-banya-on" type="button">On</button></div></div>
                       </section>
                     </div>
                     <div class="pause-page" data-pause-page="controls" hidden>
-                      <section class="pause-section"><h3>Movement</h3><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div></dl></section>
-                      <section class="pause-section"><h3>Equipment</h3><dl class="pause-bindings"><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
-                      <section class="pause-section"><h3>Touch &amp; controller</h3><p class="pause-help">On touch screens, use the direction pad to move and fly. Tap Items to select equipment.</p><p class="pause-help">On a controller, use the left stick to move, A to fly, and Start to pause.</p></section>
+                      <section class="pause-section"><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
+                      <section class="pause-section"><p class="pause-help">Touch: use the direction pad to move and fly. Tap Items for equipment.</p><p class="pause-help">Controller: left stick to move, A to fly, Start to pause.</p></section>
                     </div>
                     <div class="pause-page" data-pause-page="restart" hidden>
-                      <p class="pause-warning">Your saved progress will be erased.</p><p class="pause-help">This resets your mine, rig upgrades, cargo, and money. Your options stay the same.</p>
+                      <p class="pause-warning">Your mine, upgrades, cargo, and money will be erased.</p><p class="pause-help">Your options stay the same.</p>
                       <button id="gm-cancel-restart" class="pause-primary" type="button">Keep playing</button>
                       <button id="gm-restart-btn" class="pause-danger" type="button">Erase save &amp; start over</button>
                     </div>
@@ -421,7 +417,6 @@
                   <footer class="pause-footer">
                     <button id="gm-opt-back" class="pause-quiet" type="button" hidden>Back <kbd>Esc</kbd></button>
                     <p class="pause-save" id="gm-pause-save"></p>
-                    <p class="pause-footnote" id="gm-menu-footnote" hidden>Changes apply immediately.</p>
                   </footer>
                 </div>
               </div>
@@ -596,10 +591,10 @@
       });
     })();
   </script>
-  <script src="js/liquid-wgpu.js?v=v26.81"></script>
-  <script src="js/smoke-wgpu.js?v=v26.81"></script>
-  <script src="js/jello-wgpu.js?v=v26.81"></script>
-  <script src="js/audio.js?v=v26.81"></script>
-  <script src="js/sluice.js?v=v26.81"></script>
+  <script src="js/liquid-wgpu.js?v=v26.82"></script>
+  <script src="js/smoke-wgpu.js?v=v26.82"></script>
+  <script src="js/jello-wgpu.js?v=v26.82"></script>
+  <script src="js/audio.js?v=v26.82"></script>
+  <script src="js/sluice.js?v=v26.82"></script>
 </body>
 </html>

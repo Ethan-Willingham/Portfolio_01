@@ -19,10 +19,8 @@
     };
     for (var color in colors) area.style.setProperty('--menu-' + color, colors[color]);
     var title = document.getElementById('gm-menu-title');
-    var sub = document.getElementById('gm-pause-sub');
     var back = document.getElementById('gm-opt-back');
     var save = document.getElementById('gm-pause-save');
-    var footnote = document.getElementById('gm-menu-footnote');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
     var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
@@ -32,10 +30,16 @@
       card.setAttribute('data-page', page);
       for (var i = 0; i < pages.length; i++) pages[i].hidden = pages[i].getAttribute('data-pause-page') !== page;
       title.textContent = titles[page];
-      sub.hidden = page !== 'main';
       back.hidden = page === 'main';
       save.hidden = page !== 'main';
-      footnote.hidden = page !== 'options';
+      if (page === 'main') {
+        // The status source retains its detailed wording for other callers.
+        save.textContent = save.textContent
+          .replace(/^autosave on, last saved /, 'Saved ')
+          .replace(/^autosave on, saves when you dock at a town$/, 'Autosave on')
+          .replace(/^autosave off .*$/, 'Autosave off')
+          .replace(/^save failing, browser storage may be full$/, 'Save failed. Storage may be full.');
+      }
       body.scrollTop = 0;
       var focus = page === 'main' ? document.getElementById(returnFocus) :
         page === 'restart' ? document.getElementById('gm-cancel-restart') : back;
@@ -128,9 +132,9 @@
         }
         if (key === 'gfx') {
           document.getElementById('gm-gfx-note').textContent = {
-            performance: 'Lighter effects for a smoother frame rate.',
-            balanced: 'A balance of visual detail and frame rate.',
-            extreme: 'Full visual detail.'
+            performance: 'Fewer effects, smoother play.',
+            balanced: 'A balance of detail and performance.',
+            extreme: 'All visual effects.'
           }[value];
         }
       }

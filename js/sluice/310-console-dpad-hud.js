@@ -5,59 +5,31 @@
   // and each bay repaints ONLY when its VALUE SIGNATURE changes. A signature
   // covers every dynamic input of its gauge, finely quantized — over-inclusion
   // is fine (an extra repaint = the old cost), a MISSED input is a stale gauge.
-  // Time-based lamp blinks are quantized with the same floor(now/period)
-  // formula the lamp itself uses, so the signature flips exactly when the
-  // lamp does. The speedo/cash eases run in update or via consoleTickSpeedo,
-  // never inside a cached draw (a draw-side ease freezes on cache hits).
+  // Displayed precision, warning thresholds, capacity, and save status all
+  // belong in the signature. Motion easing runs outside cached drawing.
   var consoleInstCache = null, consoleInstCtx = null, consoleInstKey = '';
   var consoleBaySigs = [];
   function consoleBaySig(id) {
-    var s;
     if (id === 'fuel') {
-      var mf = (typeof maxFuel === 'number' && maxFuel > 0) ? maxFuel : 30;
-      var ff = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.fuel / mf)) : 0;
-      var toSurf = (typeof getFuelToSurface === 'function') ? getFuelToSurface() : 0;
-      var blink = ff < 0.15 ? (Math.floor(performance.now() / 250) & 1)
-                : ff < 0.30 ? (Math.floor(performance.now() / 500) & 1) : -1;
-      // v26.43: the reserve rack lives in this bay now, so its count is
-      // part of the fuel signature.
-      s = ((ff * 512) | 0) + ',' + ((toSurf * 8) | 0) + ',' + (player && player.fuel >= toSurf ? 1 : 0) + ',' + blink +
-          ',' + ((typeof reserveFuel === 'number') ? reserveFuel : 0);
-    } else if (id === 'speed') {
-      // v26.43: the redline lamp blinks in the caution/critical bands, so the
-      // blink phase joins the signature (same floor(now/period) the lamp uses).
-      var sMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
-      var sFrac = speedoMphSmooth / sMax;
-      var sBlink = sFrac >= 0.82 ? (Math.floor(performance.now() / 250) & 1)
-                 : sFrac >= 0.60 ? (Math.floor(performance.now() / 500) & 1) : -1;
-      s = ((speedoMphSmooth * 8) | 0) + ',' + sBlink;
-    } else if (id === 'hull') {
-      var mh = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
-      s = ((typeof player !== 'undefined' && player) ? player.hull : 0) + '/' + mh;
-    } else if (id === 'cargo') {
-      var h = 0, cv = 0;
-      if (typeof cargo !== 'undefined' && cargo) {
-        for (var ci = 0; ci < cargo.length; ci++) {
-          var it = cargo[ci];
-          h = (h * 131 + (it && it.type ? it.type.charCodeAt(0) * 2 + it.type.length + (it.shiny ? 977 : 0) : 1)) & 0xfffffff;
-          if (typeof cargoUnitValue === 'function') cv += cargoUnitValue(it);
-        }
-      }
-      s = (cargo ? cargo.length : 0) + ',' + h + ',' + cv + ',' + ((typeof getCargoCap === 'function') ? getCargoCap() : 0);
-    } else if (id === 'cash') {
-      var dm = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
-      var pu = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.ceil(Math.min(1, cashPunch) * 32) : 0;
-      // v26.43: the SAVE annunciator lives in the cash window now, so its
-      // state (fail blink phase / info fade step / off) joins the signature.
-      var sv = (typeof saveLampFailT === 'number' && saveLampFailT > 0) ? 'F' + ((saveLampFailT % 1) < 0.5 ? 1 : 0)
-             : (typeof saveLampT === 'number' && saveLampT > 0) ? 'S' + Math.ceil(Math.min(1, saveLampT / 0.5) * 32)
-             : 'off';
-      s = Math.round(dm) + ',' + pu + ',' + sv;
-    } else if (id === 'depth') {
-      s = '' + ((typeof player !== 'undefined' && player && typeof SKY_ROWS === 'number')
-        ? Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0) : 0);
-    } else s = 'x';
-    return s;
+      var fuel = consoleFuelReading();
+      return [fuel.percent, Math.round(fuel.fraction * 1024), fuel.homePercent, fuel.home > 0.5,
+        Math.round(fuel.home / maxFuel * 1024), fuel.shortfall, fuel.color, reserveFuel].join(',');
+    }
+    if (id === 'speed') return Math.round(speedoMphSmooth) + ',' +
+      (speedoMphSmooth / SPEEDO_MPH_MAX >= 0.82 ? 2 : speedoMphSmooth / SPEEDO_MPH_MAX >= 0.60 ? 1 : 0);
+    if (id === 'hull') return player.hull + '/' + getMaxHull();
+    if (id === 'cargo') {
+      // Capacity upgrades repaint even when the hold contents stay unchanged.
+      var contents = [];
+      for (var i = 0; i < cargo.length; i++) contents.push(cargoType(cargo[i]) + ':' + cargoUnitSlots(cargo[i]) + ':' + cargoUnitValue(cargo[i]));
+      return maxCargo + '/' + cargoUsed() + '/' + contents.join(',');
+    }
+    if (id === 'cash') {
+      var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
+      return Math.floor(shown) + ',' + consoleSaveState();
+    }
+    if (id === 'depth') return '' + Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
+    return 'x';
   }
 
   function drawConsole() {
@@ -162,7 +134,7 @@
     // Background disc
     ctx.beginPath();
     ctx.arc(cx, cy, RO + DPAD_SIZE * 0.06, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15,11,4,0.45)';
+    ctx.fillStyle = 'rgba(20,24,31,0.72)';
     ctx.fill();
 
     // Map short keys to actual dpad state
@@ -188,8 +160,8 @@
       ctx.arc(cx, cy, RO, s + GAP, e - GAP);
       ctx.arc(cx, cy, RI, e - GAP, s + GAP, true);
       ctx.closePath();
-      ctx.fillStyle   = pressed ? 'rgba(239,159,39,0.55)' : 'rgba(255,255,255,0.04)';
-      ctx.strokeStyle = pressed ? '#EF9F27'                : 'rgba(255,255,255,0.15)';
+      ctx.fillStyle   = pressed ? UIT_GOLD : 'rgba(146,157,172,0.06)';
+      ctx.strokeStyle = pressed ? UIT_GOLD : 'rgba(146,157,172,0.28)';
       ctx.lineWidth   = 1;
       ctx.fill();
       ctx.stroke();
@@ -200,7 +172,7 @@
       var ax         = cx + Math.cos(mid) * ar;
       var ay         = cy + Math.sin(mid) * ar;
       var arrowSize  = DPAD_SIZE * 0.08;
-      var arrowColor = pressed ? '#1a1208' : 'rgba(255,255,255,0.55)';
+      var arrowColor = pressed ? UIT_GOLD_TEXT : UIT_BODY;
 
       ctx.save();
       ctx.translate(ax, ay);
@@ -218,8 +190,8 @@
     // Center dot — outer glow ring
     ctx.beginPath();
     ctx.arc(cx, cy, RI - DPAD_SIZE * 0.03, 0, Math.PI * 2);
-    ctx.fillStyle   = 'rgba(239,159,39,0.10)';
-    ctx.strokeStyle = 'rgba(239,159,39,0.20)';
+    ctx.fillStyle   = UIT_INSET;
+    ctx.strokeStyle = UIMAT_PLATE_SHADOW;
     ctx.lineWidth   = 1;
     ctx.fill();
     ctx.stroke();
@@ -227,7 +199,7 @@
     // Center dot — inner pip
     ctx.beginPath();
     ctx.arc(cx, cy, DPAD_SIZE * 0.09, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(239,159,39,0.25)';
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
     ctx.fill();
   }
 

@@ -76,39 +76,16 @@
   }
   function drawItemWheelButton() {
     var r = itemWheelButtonRect();
-    // Plate base + bevel
+    ctx.save();
     ctx.fillStyle = itemWheel.open ? UIT_PANEL_SEL : UIT_PANEL;
     ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(r.x, r.y, r.w, 1);
-    ctx.fillRect(r.x, r.y, 1, r.h);
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
-    ctx.fillRect(r.x, r.y + r.h - 1, r.w, 1);
-    ctx.fillRect(r.x + r.w - 1, r.y, 1, r.h);
-    ctx.fillStyle = UIT_EDGE;
-    ctx.fillRect(r.x - 1, r.y - 1, r.w + 2, 1);
-    ctx.fillRect(r.x - 1, r.y + r.h, r.w + 2, 1);
-    ctx.fillRect(r.x - 1, r.y - 1, 1, r.h + 2);
-    ctx.fillRect(r.x + r.w, r.y - 1, 1, r.h + 2);
-    drawConsoleRivet(r.x + 2, r.y + 2);
-    drawConsoleRivet(r.x + r.w - 4, r.y + 2);
-    drawConsoleRivet(r.x + 2, r.y + r.h - 4);
-    drawConsoleRivet(r.x + r.w - 4, r.y + r.h - 4);
-    nsText('ITEMS', r.x + r.w / 2, r.y + 6, 10, itemWheel.open ? UIT_GOLD : UIT_TEXT, 'center');
-    ctx.fillStyle = UIT_INSET_DK;
-    ctx.fillRect(r.x + 5, r.y + 21, r.w - 10, r.h - 26);
+    ctx.strokeStyle = itemWheel.open ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+    consoleText('ITEMS', r.x + r.w / 2, r.y + 14, 11, UIT_DIM, 'center');
     var total = teleporters + balloons + bombsSmall + bombsLarge;
-    var s = '×' + total;
-    var sw = stencilTextWidth(s, 2);
-    drawStencilText(s, r.x + Math.floor((r.w - sw) / 2), r.y + r.h - 20, 2, total > 0 ? UIT_GOLD : UIT_DIM);
-    // A crisp gold edge marks the open selector.
-    if (itemWheel.open) {
-      ctx.save();
-      ctx.strokeStyle = UIT_GOLD;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
-      ctx.restore();
-    }
+    consoleText('' + total, r.x + r.w / 2, r.y + 35, 18, total > 0 ? UIT_TEXT : UIT_DIM, 'center', true);
+    ctx.restore();
   }
   // Pixel-art sprites for the consumables item wheel (warp / bombs / balloon),
   // matching the shop icon language: warm palette, 1px dark outline, light from
@@ -671,63 +648,53 @@
   // the offscreen cache) and records each bay's rect for the live pass.
   function drawConsoleFrameContent(R) {
     consoleBayLayout.length = 0;
-    // ---- Side wings: plate steel out to the full screen width ----
-    drawConsoleSideWing(0, R.x, R.y, R.h, true);
-    drawConsoleSideWing(R.x + R.w, (R.viewW || viewW) - (R.x + R.w), R.y, R.h, false);
-    // ---- Left + right ornate end caps ----
-    drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
-    drawConsoleCap(R.x + R.w - R.capW, R.y, R.capW, R.h, 'right');
-    // ---- Plate base (body only, between the end caps) ----
-    var bx0 = R.bodyX, by0 = R.y, bw0 = R.bodyW, bh0 = R.h;
-    ctx.fillStyle = UIMAT_PLATE_BASE;
-    ctx.fillRect(bx0, by0, bw0, bh0);
-    // ---- Top edge: arc-welded seam (1-px lighter line) ----
-    ctx.fillStyle = UIMAT_WELD;
-    ctx.fillRect(bx0, by0, bw0, 1);
+    // One quiet chassis and one continuous glass field. Only the four mount
+    // screws remain; a repeating rivet pattern competed with the readouts.
+    ctx.fillStyle = UIT_PANEL;
+    ctx.fillRect(0, R.y, R.viewW, R.h);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(bx0, by0 + 1, bw0, 1);
-    // ---- Bottom edge: shadow + outline ----
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
-    ctx.fillRect(bx0, by0 + bh0 - 2, bw0, 1);
-    ctx.fillStyle = UI_OUTLINE;
-    ctx.fillRect(bx0, by0 + bh0 - 1, bw0, 1);
-    // ---- Rivets along the top + bottom edges ----
-    var rivetSpacing = 24;
-    var rivetTopY = by0 + 5;
-    var rivetBottomY = by0 + bh0 - 6;
-    for (var rx = bx0 + 12; rx < bx0 + bw0 - 8; rx += rivetSpacing) {
-      drawConsoleRivet(rx, rivetTopY);
-      drawConsoleRivet(rx, rivetBottomY);
+    ctx.fillRect(0, R.y, R.viewW, 1);
+    ctx.fillStyle = UIT_INSET;
+    ctx.fillRect(R.bodyX, R.y + 3, R.bodyW, R.stacked ? 77 : R.h - 3);
+    if (consoleCapStyleId !== 7) {
+      drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
+      drawConsoleCap(R.x + R.w - R.capW, R.y, R.capW, R.h, 'right');
+    } else if (R.capW >= 8) {
+      drawConsoleRivet(R.x + 3, R.y + 8);
+      drawConsoleRivet(R.x + 3, R.y + R.h - 9);
+      drawConsoleRivet(R.x + R.w - 5, R.y + 8);
+      drawConsoleRivet(R.x + R.w - 5, R.y + R.h - 9);
     }
-    // ---- Bays: one row of all bays, or two rows when folded ----
-    // v26.43: no per-bay recess panels and no vertical weld seams between
-    // bays. Each instrument cuts its own window into the plate (instrWindow
-    // in 220), so the plate runs unbroken behind the whole rail.
-    var bayInset = 6;
+    var pad = R.bodyW < 600 ? 8 : CONSOLE_BODY_PAD;
+    var available = R.bodyW - pad * 2;
     if (!R.stacked) {
-      var bayX = bx0 + CONSOLE_BODY_PAD - 4;
-      var bayTop = by0 + 4;
-      var bayH = bh0 - 8;
-      for (var b = 0; b < CONSOLE_BAYS.length; b++) {
-        var bay = CONSOLE_BAYS[b];
-        var ibx = bayX + bayInset / 2, iby = bayTop + 2;
-        var ibw = bay.w - bayInset, ibh = bayH - 4;
-        consoleBayLayout.push({ bay: bay, bx: ibx, by: iby, bw: ibw, bh: ibh });
-        bayX += bay.w;
+      var total = 0;
+      for (var b = 0; b < CONSOLE_BAYS.length; b++) total += CONSOLE_BAYS[b].w;
+      var used = 0;
+      for (var i = 0; i < CONSOLE_BAYS.length; i++) {
+        var left = Math.round(available * used / total);
+        used += CONSOLE_BAYS[i].w;
+        var right = Math.round(available * used / total);
+        var gap = available < 650 ? 12 : 24;
+        consoleBayLayout.push({ bay: CONSOLE_BAYS[i], bx: R.bodyX + pad + left + gap / 2,
+          by: R.y + 6, bw: Math.max(12, right - left - gap), bh: R.h - 12 });
+        if (i === 2) {
+          ctx.fillStyle = UIMAT_PLATE_SHADOW;
+          ctx.fillRect(R.bodyX + pad + right, R.y + 14, 1, R.h - 28);
+        }
       }
     } else {
-      // Folded: 2 rows, consoleStackCols() per row, every bay a uniform width.
       var cols = consoleStackCols();
-      var rowH = bh0 / 2;
-      var uniformW = Math.floor((bw0 - CONSOLE_BODY_PAD * 2) / cols);
+      var rowTop = 80;
+      ctx.fillStyle = UIMAT_PLATE_SHADOW;
+      ctx.fillRect(R.bodyX + pad, R.y + rowTop, available, 1);
       for (var sb = 0; sb < CONSOLE_BAYS.length; sb++) {
-        var col = sb % cols;
-        var row = (sb / cols) | 0;
-        var slotX = bx0 + CONSOLE_BODY_PAD + col * uniformW;
-        var slotY = by0 + row * rowH;
-        var sbx = slotX + bayInset / 2, sby = slotY + 6;
-        var sbw = uniformW - bayInset, sbh = rowH - 12;
-        consoleBayLayout.push({ bay: CONSOLE_BAYS[sb], bx: sbx, by: sby, bw: sbw, bh: sbh });
+        var col = sb % cols, row = (sb / cols) | 0;
+        var start = Math.round(available * col / cols);
+        var end = Math.round(available * (col + 1) / cols);
+        consoleBayLayout.push({ bay: CONSOLE_BAYS[sb], bx: R.bodyX + pad + start + 6,
+          by: R.y + (row ? rowTop : 0) + 6, bw: Math.max(12, end - start - 12),
+          bh: (row ? R.h - rowTop : rowTop) - 12 });
       }
     }
   }

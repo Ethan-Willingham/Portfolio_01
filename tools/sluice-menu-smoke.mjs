@@ -25,6 +25,61 @@ window.__menuSmoke = {
     shop: shopState, wheel: itemWheel.open, wheelRect: itemWheelButtonRect(),
     width: viewW, height: viewH, modal: ukModal ? ukModal.id : null,
     money: money, x: player.x, y: player.y }; },
+  seedConsole: function (scenario) {
+    update = function () {};
+    introPhase = 'done';
+    player.vx = player.vy = 0; speedoMphSmooth = 0;
+    player.y = SKY_ROWS * TILE; player.fuel = maxFuel; player.hull = getMaxHull();
+    cargo = []; reserveFuel = 0; money = displayMoney = 1250;
+    saveLastOk = true; saveLastWallMs = 0; saveLampT = saveLampFailT = 0;
+    _ftsTime = performance.now() + 1e9; _ftsValue = 0;
+    if (scenario === 'working') {
+      player.y += 182 * TILE; player.fuel = maxFuel * 0.72; player.hull = getMaxHull() * 0.86;
+      reserveFuel = 2; _ftsValue = maxFuel * 0.18;
+      cargo = [{type:'coal',shiny:false},{type:'gold',shiny:false}]; money = displayMoney = 18250;
+    }
+    if (scenario === 'critical') {
+      player.y += 380 * TILE; player.fuel = maxFuel * 0.09; player.hull = getMaxHull() * 0.18;
+      reserveFuel = 4; _ftsValue = maxFuel * 1.12;
+      cargo = [{type:'unobtanium',shiny:true}]; money = displayMoney = 12345678;
+      saveLastOk = false;
+    }
+    consoleBaySigs = []; consoleInstKey = '';
+  },
+  consoleInfo: function () { return { rect: consoleRect(), layout: consoleBayLayout, height: consoleHeight(), mobile: isMobile, dpad: {x:DPAD_CX,y:DPAD_CY,r:DPAD_SIZE*0.91},
+    used: cargoUsed(), capacity: maxCargo, fuel: consoleFuelReading(), save: consoleSaveState(),
+    signatures: CONSOLE_BAYS.map(function (bay) {return consoleBaySig(bay.id);}) }; },
+  consoleScan: function () {
+    var oldCtx = ctx, oldText = consoleText, bounds = [], current;
+    var scratch = document.createElement('canvas'); scratch.width=canvas.width; scratch.height=canvas.height;
+    ctx = scratch.getContext('2d');
+    consoleText = function (text, x, y, size, color, align, bold) {
+      oldText(text, x, y, size, color, align, bold);
+      var width = ctx.measureText(text).width;
+      bounds.push({ text:text, size:size, color:color, left:align==='right'?x-width:x,
+        right:align==='right'?x:x+width, bottom:y, bay:current });
+    };
+    try { consoleBayLayout.forEach(function (cell) {current=cell; drawConsoleInstrument(cell.bay,cell.bx,cell.by,cell.bw,cell.bh);}); }
+    finally {ctx=oldCtx;consoleText=oldText;}
+    return bounds;
+  },
+  resetConsole: function () { SAVE_DISABLED=true;localStorage.removeItem(SAVE_KEY_A);localStorage.removeItem(SAVE_KEY_B); },
+  upgradeCargo: function () { maxCargo += 4; },
+  consolePaint: function (cached) {
+    var old=PERF_CONSOLE_CACHE,oldCtx=ctx;
+    var scratch=document.createElement('canvas');scratch.width=canvas.width;scratch.height=canvas.height;
+    ctx=scratch.getContext('2d'); PERF_CONSOLE_CACHE=cached;
+    try {drawConsole();} finally {PERF_CONSOLE_CACHE=old;ctx=oldCtx;}
+    var y=Math.round((viewH-consoleHeight())*dpr);
+    var pixels=scratch.getContext('2d').getImageData(0,y,canvas.width,canvas.height-y).data;
+    var hash=0,maxDiff=0,changed=0,large=0;
+    for(var i=0;i<pixels.length;i++) {
+      hash=(hash*31+pixels[i])|0;
+      if(this.pixels) {var d=Math.abs(pixels[i]-this.pixels[i]);maxDiff=Math.max(maxDiff,d);if(d)changed++;if(d>4)large++;}
+    }
+    this.pixels=pixels;
+    return {hash:hash,maxDiff:maxDiff,changed:changed,large:large,total:pixels.length};
+  },
   seedLedger: function () { ledgerOreList().forEach(function (ore) { ledgerRecordOre(ore, false); }); },
   parkAtShop: function () { player.x = nearestTownStationCol() * TILE + TILE / 2 - PLAYER_W / 2; player.y = DECK_ROW * TILE - PLAYER_H; player.vx = player.vy = 0; player.onGround = true; },
   ledger: function () { return { page: ledgerPage, layout: ledgerLayout(), count: ledgerOreList().length }; },
@@ -83,14 +138,14 @@ async function canvasClick(expression, touch = false) {
   }
   await sleep(250);
 }
-async function size(width, height, mobile = false) {
-  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor:1, mobile });
+async function size(width, height, mobile = false, deviceScaleFactor = 1) {
+  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor, mobile });
   await send('Emulation.setTouchEmulationEnabled', { enabled:mobile });
   await sleep(120);
 }
-async function shot(name) {
+async function shot(name, clip) {
   if (!dump) return;
-  const result = await send('Page.captureScreenshot', { format:'png' });
+  const result = await send('Page.captureScreenshot', { format:'png', ...(clip ? {clip} : {}) });
   fs.writeFileSync(path.join(dump, name + '.png'), Buffer.from(result.data, 'base64'));
 }
 async function boot() {
@@ -123,6 +178,29 @@ try {
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Network.setBlockedURLs', { urls:['*googletagmanager.com*','*google-analytics.com*'] });
   await size(1440,900); await boot();
+  for (const [width,height,mobile] of [[1440,900,false],[390,844,true],[320,568,true],[568,320,true],[844,390,true],[768,1024,true],[1920,1080,false]]) {
+    await size(width,height,mobile);
+    for (const scenario of ['working','critical']) {
+      await ev(`__menuSmoke.seedConsole('${scenario}')`); await sleep(100);
+      await check(`console text fits ${scenario} ${width}x${height}`, `__menuSmoke.consoleScan().every(t=>t.size>=11 && t.left>=t.bay.bx-1 && t.right<=t.bay.bx+t.bay.bw+1 && t.bottom<=t.bay.by+t.bay.bh)`);
+      await check(`console stays inside ${width}x${height}`, `(() => {const c=__menuSmoke.consoleInfo(),r=c.rect;return c.layout.length===6 && c.layout.every(b=>b.bx*r.scale>=0 && (b.bx+b.bw)*r.scale<=__menuSmoke.state().width && b.by>=r.y && b.by+b.bh<=r.viewH) && Math.abs(r.h*r.scale-c.height)<1;})()`);
+      await shot(`console-${scenario}-${width}x${height}`);
+    }
+  }
+  await check('oversized ore counts weighted slots', '__menuSmoke.consoleInfo().used === 8 && __menuSmoke.consoleInfo().capacity === 5');
+  await check('return shortfall and expired save failure remain clear', '__menuSmoke.consoleInfo().fuel.shortfall && __menuSmoke.consoleInfo().fuel.homePercent === 113 && __menuSmoke.consoleInfo().save === "failed"');
+  const oldCargo = await ev('__menuSmoke.consoleInfo().signatures[2]');
+  const oldPixels = await ev('__menuSmoke.consolePaint(true)');
+  await ev('__menuSmoke.upgradeCargo()');
+  await check('capacity upgrades invalidate cargo reading', `__menuSmoke.consoleInfo().signatures[2] !== ${JSON.stringify(oldCargo)}`);
+  const newPixels = await ev('__menuSmoke.consolePaint(true)');
+  assert.notEqual(oldPixels.hash,newPixels.hash,'capacity upgrade repaints cached pixels');
+  const parity=await ev('__menuSmoke.consolePaint(false)');console.log('Console cache comparison',JSON.stringify(parity));
+  assert.ok(parity.maxDiff <= 1,'cached and direct console agree within compositing rounding');
+  await ev('__menuSmoke.resetConsole()');
+  await size(1440,900); await boot();
+  await sleep(600); await shot('console-live-desktop');
+  await shot('console-detail',await ev('(() => {const r=document.getElementById("game-canvas").getBoundingClientRect(),h=__menuSmoke.consoleInfo().height;return {x:r.x,y:r.bottom-h,width:r.width,height:h,scale:2};})()'));
   await click('gm-pause-btn');
   await check('pause dialog and focus', '__menuSmoke.state().paused && document.activeElement.id === "gm-resume-btn"');
   await shot('pause-desktop');
@@ -197,6 +275,21 @@ try {
   await ev('__menuSmoke.stockWheel()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'q',code:'KeyQ'});await sleep(200);await shot('item-wheel');
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'q',code:'KeyQ'});
+  await send('Emulation.setUserAgentOverride', { userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' });
+  await size(390,844,true,3); await boot();
+  await check('mobile controls boot', '__menuSmoke.consoleInfo().mobile');
+  await shot('console-live-phone');
+  for (const [width,height] of [[390,844],[320,568],[844,390],[568,320]]) {
+    await size(width,height,true,2);
+    for(const scenario of ['empty','critical']) {
+      await ev(`__menuSmoke.seedConsole('${scenario}')`); await sleep(100);
+      await check(`mobile console fits ${scenario} ${width}x${height}`, `(() => {const c=document.getElementById('game-canvas').getBoundingClientRect();const ui=__menuSmoke.consoleInfo();return c.bottom<=innerHeight && ui.dpad.y-ui.dpad.r>=0 && ui.dpad.y+ui.dpad.r<=ui.rect.y*ui.rect.scale && __menuSmoke.consoleScan().every(t=>t.size>=11 && t.left>=t.bay.bx-1 && t.right<=t.bay.bx+t.bay.bw+1 && t.bottom<=t.bay.by+t.bay.bh);})()`);
+      await shot(`console-touch-${scenario}-${width}x${height}`);
+    }
+  }
+  await click('gm-fullscreen-btn'); await sleep(400);
+  await check('fullscreen console stays visible', 'document.body.classList.contains("gm-fs") && document.getElementById("game-canvas").getBoundingClientRect().bottom<=innerHeight');
+  await shot('console-fullscreen-phone');
   assert.deepEqual(errors, [], 'browser console and runtime errors');
   console.log(`PASS ${checks} menu checks, no browser errors`);
 } finally {

@@ -8,6 +8,29 @@
 
 > **Gunmetal + Brass skin (2026-07-18, v26.20):** the owner picked the Gunmetal + Brass palette in `store-theme-lab.html` (kept as the color bench) and the whole UI now wears it: cold desaturated blue-gray steel for every chrome surface (store panel, console frame and end caps, instrument cases, pause card, radio plates), while brass, gold, the dial faces, and the §6 signal colors stay warm ("cold machine, warm lit dials"). The source of truth for chrome color is the token block in `js/sluice/020-state.js`: the retuned `UIMAT_*` plate-steel tones plus the `UIT_*` theme tokens (panel, inset, text tiers, action gold, money, danger red `#ec7058` which now clears WCAG AA on the field). The §4 materials hexes for plate steel are superseded by those tokens; brass, lamp glass, and stencil paint values in §4 still stand. Re-skinning the UI again means editing that one block, nothing else.
 
+> **Console clarity (2026-09-11, v26.82).** The bottom rail now uses one
+> continuous dark instrument field with slim gunmetal mounts. Fuel, hull,
+> and cargo come first; depth, speed, and cash use quieter readings. This
+> supersedes the dial, plate grid, cargo mosaic, rolling drums, repeating
+> rivets, and blinking console lamps described below. Commit Mono labels
+> are at least 11px, numeric readings at least 16px. Percentage and capacity
+> meters share a baseline; healthy readings are neutral, caution is gold,
+> and danger is red. Cargo reports weighted slots, including oversized ore.
+> The fuel notch is labelled with an estimated percentage needed to return
+> home. Spare fuel stays visible, and failed saves retain a written warning.
+> Large balances abbreviate only where the exact amount cannot fit.
+>
+> Phones use three survival readings above three journey readings. Short
+> landscape screens compress the single row; the canvas and touch disc
+> fit above the browser edge. Cached instruments must repaint when capacity,
+> displayed numbers, thresholds, or save status change. The menu smoke tool
+> checks these states and compares cached painting with the direct renderer.
+>
+> Pause is now a smaller plate with one title, a brass Resume action, plain
+> Options and Controls rows, and a discreet New game action. Repeated
+> subtitles, branding, corner hardware, and stacked borders are removed.
+> Native focus, settings persistence, and explicit erase confirmation stay.
+>
 > **Menu polish (2026-09-11, v26.78).** The live pause, Options, Controls,
 > and New Game confirmation use native DOM controls on an opaque gunmetal
 > plate. This supersedes the unbuilt pause proposal in section 9.3 and the

@@ -797,24 +797,18 @@
   var CONSOLE_HEIGHT_DESKTOP = 88;
   var CONSOLE_HEIGHT_MOBILE_LANDSCAPE = 72;
   var CONSOLE_HEIGHT_MOBILE_PORTRAIT = 88;
-  // Bay widths in CSS pixels, left to right. Remaining canvas width is
-  // the "free zone" (radial-wheel anchor per §8.2).
-  // v26.43 — six bays. The reserve rack folded into the FUEL bay (spare-tank
-  // pips beside the dial) and the SAVE bay collapsed into an annunciator lamp
-  // inside the CASH window, so the cluster reads as one instrument rail
-  // instead of eight boxes.
+  // Survival reads left to right first. Journey and balance are quieter.
+  // Widths are proportions when a short landscape viewport compresses the rail.
   var CONSOLE_BAYS = [
-    { id: 'fuel',    w: 116 },
-    { id: 'speed',   w: 84  },
-    { id: 'hull',    w: 92  },
-    { id: 'cargo',   w: 110 },
-    { id: 'depth',   w: 92  },
-    { id: 'cash',    w: 116 }   // wide enough that a $9XX,XXX balance keeps the big stencil
+    { id: 'fuel',  w: 154 },
+    { id: 'hull',  w: 140 },
+    { id: 'cargo', w: 176 },
+    { id: 'depth', w: 116 },
+    { id: 'speed', w: 104 },
+    { id: 'cash',  w: 154 }
   ];
-  // Reference top speed (MPH) for the SPEED readout's colour zones: the number
-  // is amber up to 60% of this, orange to 82%, red above (fall-damage
-  // territory). Uses the same px→MPH conversion as the 'FELL n MPH' fall readout
-  // (32 px = 1 m, then m/s → MPH × 2.237). Terminal fall (~740 px/s) ≈ 52 MPH.
+  // Speed caution thresholds retain the existing 60% / 82% reference bands.
+  // MPH uses the same conversion as the fall-damage readout.
   var SPEEDO_MPH_MAX = 80;
   // Material colours from UI_STYLE.md §4.1.
   // v26.20 — GUNMETAL + BRASS, the owner-picked UI skin (store-theme-lab).
@@ -846,11 +840,7 @@
   var UIT_GOLD_TEXT = '#241a08';   // dark text on gold
   var UIT_MONEY     = '#e8c052';   // prices / cash
   var UIT_RED       = '#ec7058';   // shortfall / denied text (AA on the field)
-  // v11.54 — responsive fold. consoleStacked() is true when the single bay
-  // row is wider than the viewport; the console then folds into 2 rows,
-  // CONSOLE_ROW_STACKED tall per row. consoleStackCols() is the per-row count
-  // (ceil(bays/2)) so the fold always fits in exactly two rows regardless of
-  // how many bays there are: 6 bays → 3 per row, 7 → 4 (a 4 + 3 split).
+  // Narrow screens use a taller survival row above a quieter journey row.
   var CONSOLE_ROW_STACKED = 72;
   function consoleStackCols() { return Math.ceil(CONSOLE_BAYS.length / 2); }
   // v23.53: In fullscreen the world zooms in (worldScale floors at 1.2 embedded
@@ -868,12 +858,10 @@
     return Math.max(1, Math.min(CONSOLE_SCALE_MAX, s));
   }
   function consoleStacked() {
-    var total = 0;
-    for (var i = 0; i < CONSOLE_BAYS.length; i++) total += CONSOLE_BAYS[i].w;
-    var singleRowW = total + CONSOLE_BODY_PAD * 2 + CONSOLE_CAP_W * 2;
-    // The console is laid out in a logical space magnified by consoleScale() on
-    // screen, so the fold test uses the logical width budget (viewW / scale).
-    return singleRowW > (viewW / consoleScale()) - 32;
+    // Six readable cells fit a short landscape screen at 540 logical px.
+    // Portrait gets three generous columns instead of shrinking the type.
+    var logicalW = viewW / consoleScale();
+    return logicalW < (viewW > viewH ? 540 : 740);
   }
   // Un-scaled bar height (CSS px). consoleHeight() applies the scale so every
   // external consumer (d-pad, item wheel, smoke clip, shop layouts) reserves the
@@ -884,13 +872,11 @@
     return viewW > viewH ? CONSOLE_HEIGHT_MOBILE_LANDSCAPE : CONSOLE_HEIGHT_MOBILE_PORTRAIT;
   }
   function consoleHeight() { return consoleBaseHeight() * consoleScale(); }
-  // v11.27 — centered console with ornate iron-and-brass end caps. Width
-  // is sized to the bay set + padding + caps, leaving the side strips of
-  // the bottom playfield visible (so the player can see Earth on either
-  // side of the toolbar).
-  var CONSOLE_CAP_W = 24;   // v26.43: slimmed with the gunmetal cap redesign (was 32)
-  var CONSOLE_BODY_PAD = 8;
-  var CONSOLE_MIN_BODY_W = 120;  // floor so a tiny viewport never makes bays negative
+  // Slim mounts terminate the continuous instrument field. Historic end-cap
+  // styles remain available in the art bench with their original 24px width.
+  var CONSOLE_CAP_W = 8;
+  var CONSOLE_BODY_PAD = 12;
+  var CONSOLE_MIN_BODY_W = 120;  // positive geometry during resize transients
   function consoleRect() {
     // v23.53: lay out in a logical space `scale`× smaller than the screen;
     // drawConsole magnifies the whole console by `scale` (× dpr) so it fills
@@ -901,25 +887,20 @@
     var lvH = viewH / scale;        // logical viewport height
     var h = consoleBaseHeight();    // logical (un-scaled) bar height
     var stacked = consoleStacked();
+    var capW = typeof consoleCapStyleId === 'number' && consoleCapStyleId !== 7 ? 24 : CONSOLE_CAP_W;
     var bodyW;
     if (stacked) {
-      // Folded: consoleStackCols() columns. Width follows the widest bay so the
-      // panel doesn't balloon on mid-size screens — still clamps to the viewport.
-      var maxBayW = 0;
-      for (var i = 0; i < CONSOLE_BAYS.length; i++) {
-        if (CONSOLE_BAYS[i].w > maxBayW) maxBayW = CONSOLE_BAYS[i].w;
-      }
-      bodyW = maxBayW * consoleStackCols() + CONSOLE_BODY_PAD * 2;
+      // Three equal columns spread across phones, capped on tablet portrait.
+      bodyW = Math.min(lvW, 660) - capW * 2;
     } else {
       var totalBayW = 0;
       for (var j = 0; j < CONSOLE_BAYS.length; j++) totalBayW += CONSOLE_BAYS[j].w;
       bodyW = totalBayW + CONSOLE_BODY_PAD * 2;
     }
-    var consoleW = bodyW + CONSOLE_CAP_W * 2;
-    var minMargin = 16;
-    if (consoleW > lvW - minMargin * 2) {
-      consoleW = lvW - minMargin * 2;
-      bodyW = consoleW - CONSOLE_CAP_W * 2;
+    var consoleW = bodyW + capW * 2;
+    if (consoleW > lvW) {
+      consoleW = lvW;
+      bodyW = consoleW - capW * 2;
     }
     // A near-zero viewW (a resize or layout transient, a minimized or
     // collapsed window) drives the clamp above negative, which makes the
@@ -927,14 +908,14 @@
     // go negative and throw. Floor the body so every bay rect stays positive.
     if (bodyW < CONSOLE_MIN_BODY_W) {
       bodyW = CONSOLE_MIN_BODY_W;
-      consoleW = bodyW + CONSOLE_CAP_W * 2;
+      consoleW = bodyW + capW * 2;
     }
     var x = Math.floor((lvW - consoleW) / 2);
     var y = lvH - h;
     return {
       x: x, y: y, w: consoleW, h: h,
-      bodyX: x + CONSOLE_CAP_W, bodyY: y, bodyW: bodyW, bodyH: h,
-      capW: CONSOLE_CAP_W, stacked: stacked,
+      bodyX: x + capW, bodyY: y, bodyW: bodyW, bodyH: h,
+      capW: capW, stacked: stacked,
       scale: scale, viewW: lvW, viewH: lvH
     };
   }
