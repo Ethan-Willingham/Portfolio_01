@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.116';
+  var GAME_VERSION = 'v26.117';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -25379,16 +25379,15 @@
 
   // ====== MINE BREAK FX ====================================================
   // Block-break feedback ported from the mine-lab.html chooser. Subtle,
-  // physical debris: rounded rock chips that collide with the terrain via
-  // solidAt(), bounce + settle, plus fine grit, a soft dust bloom, and a
+  // physical debris: angular rock chips that collide with the terrain via
+  // solidAt(), bounce + settle, plus fine grit, a brief dust puff, and a
   // material-hued flash/ring reserved for high-value ore (the 'rare' tier,
   // value >= 800) so common mining (dirt/stone/low ore) stays debris-only.
   // Tier (soft/hard/ore/rare) is derived from the tile's ORES entry. The
   // 'hard' (stone) and 'ore' (low-value) tiers spawn chips/grit/dust like
   // 'soft', just faster/more; only 'rare' adds the bloom + sparks.
-  // Drawn in world space in the entity
-  // pass (after explosions). Chip fill is a per-frame radial gradient — fine
-  // at these counts; bake to a sprite if it ever shows on the perf panel.
+  // Drawn in world space in the entity pass (after explosions). Flat faces
+  // keep the tiny chips legible; only the dust and rare-ore flash are soft.
   // The game's existing hit-pause + squash supply the "punch"; the screen
   // kick is intentionally left for a follow-up (needs the render transform).
   var mineChips = [], mineGrit = [], mineDust = [], mineFlashes = [];
@@ -25441,35 +25440,41 @@
   }
   function mineTier(tile) {
     var type = tile && tile.type, def = ORES[type], val = def ? def.value : 0, color = def ? def.color : '#6b4d34';
-    if (type === 'dirt' || !def) return { tier:'soft', color:color, speed:42,  dust:2, grit:6,  flash:0,    ring:0,   sparks:0 };
-    if (val === 0)              return { tier:'hard', color:color, speed:80,  dust:2, grit:8,  flash:0,    ring:0,   sparks:0 };
-    if (val >= 800)             return { tier:'rare', color:color, speed:100, dust:3, grit:10, flash:0.85, ring:1.0, sparks:3 };
-    return                            { tier:'ore',  color:color, speed:80,  dust:2, grit:8,  flash:0,    ring:0,   sparks:0 };
+    if (type === 'dirt' || !def) return { tier:'soft', color:color, speed:42,  dust:1, grit:3, flash:0,    ring:0,   sparks:0 };
+    if (val === 0)              return { tier:'hard', color:color, speed:68,  dust:1, grit:4, flash:0,    ring:0,   sparks:0 };
+    if (val >= 800)             return { tier:'rare', color:color, speed:86,  dust:2, grit:6, flash:0.85, ring:1.0, sparks:3 };
+    return                            { tier:'ore',  color:color, speed:68,  dust:1, grit:4, flash:0,    ring:0,   sparks:0 };
   }
   function spawnMineBreak(r, c, tile) {
     var P = mineTier(tile), cx = c * TILE + TILE / 2, cy = r * TILE + TILE / 2;
-    var col = P.color, hi = mineShade(col, 0.36), lo = mineShade(col, -0.28);
-    var nChips = P.tier === 'rare' ? 16 : P.tier === 'soft' ? 12 : 13, i;
+    var col = P.color, hi = mineShade(col, 0.26), lo = mineShade(col, -0.30);
+    // Earth/stone fragments inherit the local stratum, including ice.
+    var kind = tile && tile.type;
+    if (kind === 'dirt' || kind === 'stone') {
+      var pal = materialPalette(kind, cacheLayerName(getLayerAt(r, c), kind));
+      col = pal.mid; hi = pal.top; lo = pal.bot;
+    }
+    var nChips = P.tier === 'rare' ? 11 : P.tier === 'soft' ? 7 : 9, i;
     for (i = 0; i < nChips; i++) {
       var fx = cx + mineRand(-TILE * 0.34, TILE * 0.34), fy = cy + mineRand(-TILE * 0.34, TILE * 0.34);
       var ang = Math.atan2(fy - cy, fx - cx) + mineRand(-0.8, 0.8), sp = P.speed * mineRand(0.4, 1.35);
-      var cr = TILE * mineRand(0.03, 0.10), pn = 6 + ((Math.random() * 4) | 0), elong = mineRand(0.7, 1.5), outline = [];
-      for (var a2 = 0; a2 < pn; a2++) { var oa = (a2 / pn) * 6.2832 + mineRand(-0.3, 0.3), rr = cr * mineRand(0.55, 1.0);
+      var cr = TILE * mineRand(0.045, 0.085), pn = 4 + ((Math.random() * 2) | 0), elong = mineRand(0.8, 1.35), outline = [];
+      for (var a2 = 0; a2 < pn; a2++) { var oa = (a2 / pn) * 6.2832 + mineRand(-0.18, 0.18), rr = cr * mineRand(0.75, 1.0);
         outline.push([Math.cos(oa) * rr * elong, Math.sin(oa) * rr / Math.sqrt(elong)]); }
       mineChips.push({ x:fx, y:fy, outline:outline, r:cr, rest:false,
-        vx: Math.cos(ang) * sp + mineRand(-22, 22), vy: Math.sin(ang) * sp - mineRand(15, 70),
-        rot: mineRand(0, 6.28), vrot: mineRand(-7, 7), t:0, maxT: mineRand(0.45, 0.75),
-        base: col, hi: hi, lo: lo,
-        spec: P.tier === 'rare' ? '#ffffff' : P.tier === 'ore' ? mineShade(col, 0.7) : (Math.random() < 0.4 ? mineShade(col, 0.5) : null) });
+        vx: Math.cos(ang) * sp + mineRand(-16, 16), vy: Math.sin(ang) * sp - mineRand(15, 48),
+        rot: mineRand(0, 6.28), vrot: mineRand(-6, 6), t:0, maxT: mineRand(0.34, 0.54),
+        base: col, hi: hi, lo: lo });
     }
     if (mineChips.length > 500) mineChips.splice(0, mineChips.length - 500);
-    for (i = 0; i < P.grit; i++) { var ga = mineRand(0, 6.2832), gs = mineRand(30, 150);
+    for (i = 0; i < P.grit; i++) { var ga = mineRand(0, 6.2832), gs = mineRand(25, 105);
       mineGrit.push({ x: cx + mineRand(-10, 10), y: cy + mineRand(-10, 10), vx: Math.cos(ga) * gs, vy: Math.sin(ga) * gs - mineRand(15, 60),
-        t:0, maxT: mineRand(0.22, 0.45), size: mineRand(1, 2), color: mineShade(col, -0.2), stuck:false }); }
+        t:0, maxT: mineRand(0.16, 0.28), size: 1, color: i % 3 === 0 ? hi : col, stuck:false }); }
     if (mineGrit.length > 400) mineGrit.splice(0, mineGrit.length - 400);
     for (i = 0; i < P.dust; i++) {
-      mineDust.push({ x: cx + mineRand(-6, 6), y: cy + mineRand(-4, 4), vy: mineRand(-20, -42), delay: mineRand(0.03, 0.10),
-        t:0, maxT: mineRand(0.4, 0.65), r: TILE * 0.14, r1: TILE * 0.32 * mineRand(1.5, 2.2), color: mineShade(col, 0.26) }); }
+      mineDust.push({ x: cx + mineRand(-5, 5), y: cy + mineRand(-3, 3), vy: mineRand(-12, -22), delay:0,
+        t:0, maxT: mineRand(0.18, 0.28), r: TILE * 0.12, r1: TILE * mineRand(0.25, 0.34), color: hi }); }
+    if (mineDust.length > 80) mineDust.splice(0, mineDust.length - 80);
     if (P.flash > 0) mineFlashes.push({ kind:'flash', x:cx, y:cy, t:0, maxT: 0.10 + P.flash * 0.05, r: TILE * (0.45 + P.flash * 0.55),
       color: P.tier === 'rare' ? '#eafcff' : mineShade(col, 0.5), strength: P.flash, delay:0 });
     if (P.ring > 0) mineFlashes.push({ kind:'ring', x:cx, y:cy, t:0, maxT: 0.16 + P.ring * 0.06, r0: TILE * 0.25, r1: TILE * (0.8 + P.ring * 0.7),
@@ -25500,25 +25505,34 @@
   function drawMineFx() {
     if (!mineChips.length && !mineGrit.length && !mineDust.length && !mineFlashes.length) return;
     var i;
-    for (i = 0; i < mineDust.length; i++) { var d = mineDust[i]; if (d.delay > 0) continue; var da = Math.sin(Math.min(1, d.t / d.maxT) * Math.PI) * 0.26;
+    for (i = 0; i < mineDust.length; i++) { var d = mineDust[i]; if (d.delay > 0) continue; var lifeD = Math.min(1, d.t / d.maxT);
+      var da = Math.min(1, lifeD / 0.12) * (1 - lifeD) * (1 - lifeD) * 0.14;
       var gd = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r); gd.addColorStop(0, mineRgba(d.color, da)); gd.addColorStop(1, mineRgba(d.color, 0));
       ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 6.2832); ctx.fill(); }
-    for (i = 0; i < mineChips.length; i++) { var s = mineChips[i], life = s.t / s.maxT, a = life > 0.8 ? 1 - (life - 0.8) / 0.2 : 1, sh = s.rest ? 1 : 1 - life * 0.12;
+    for (i = 0; i < mineChips.length; i++) { var s = mineChips[i], life = s.t / s.maxT, a = life > 0.7 ? 1 - (life - 0.7) / 0.3 : 1;
       var scc = Math.floor(s.x / TILE), sr0 = Math.floor(s.y / TILE);
       for (var rr = sr0; rr <= sr0 + 2; rr++) { if (solidAt(scc * TILE + 1, rr * TILE + 1, 1, 1)) { var syy = rr * TILE, prox = 1 - Math.max(0, (syy - s.y)) / (TILE * 1.4);
         if (prox > 0) { ctx.globalAlpha = a * 0.18 * prox; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(s.x, syy - 1.2, s.r * (0.85 + prox * 0.5), s.r * 0.34, 0, 0, 6.2832); ctx.fill(); } break; } }
-      ctx.globalAlpha = a; ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.scale(sh, sh);
-      var o = s.outline, m0x = (o[o.length - 1][0] + o[0][0]) / 2, m0y = (o[o.length - 1][1] + o[0][1]) / 2;
-      ctx.beginPath(); ctx.moveTo(m0x, m0y);
-      for (var k = 0; k < o.length; k++) { var cu = o[k], nn = o[(k + 1) % o.length]; ctx.quadraticCurveTo(cu[0], cu[1], (cu[0] + nn[0]) / 2, (cu[1] + nn[1]) / 2); }
-      ctx.closePath();
-      var gg = ctx.createRadialGradient(-s.r * 0.4, -s.r * 0.45, 0, 0, 0, s.r * 1.35);
-      gg.addColorStop(0, s.hi); gg.addColorStop(0.55, s.base); gg.addColorStop(1, s.lo);
-      ctx.fillStyle = gg; ctx.fill();
-      if (s.spec) { ctx.globalAlpha = a * 0.6; ctx.fillStyle = s.spec; ctx.beginPath(); ctx.arc(-s.r * 0.33, -s.r * 0.4, s.r * 0.22, 0, 6.2832); ctx.fill(); }
+      ctx.globalAlpha = a; ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
+      var o = s.outline, cs = Math.cos(s.rot), sn = Math.sin(s.rot);
+      ctx.beginPath(); ctx.moveTo(o[0][0], o[0][1]);
+      for (var k = 1; k < o.length; k++) ctx.lineTo(o[k][0], o[k][1]);
+      ctx.closePath(); ctx.fillStyle = s.base; ctx.fill();
+      // Broad, solid fracture faces. Light stays above-left as a chip tumbles.
+      for (var fci = 0; fci < o.length; fci++) {
+        var cu = o[fci], nn = o[(fci + 1) % o.length];
+        var ex = nn[0] - cu[0], ey = nn[1] - cu[1], el = Math.hypot(ex, ey) || 1;
+        var light = (-(ey * cs + ex * sn) * 0.6 - (ey * sn - ex * cs) * 0.8) / el;
+        if (light > -0.35 && light < 0.45) continue;
+        ctx.fillStyle = light >= 0.45 ? s.hi : s.lo;
+        ctx.beginPath(); ctx.moveTo(-s.r * 0.12, -s.r * 0.08);
+        ctx.lineTo(cu[0], cu[1]); ctx.lineTo(nn[0], nn[1]); ctx.closePath(); ctx.fill();
+      }
       ctx.restore(); }
     ctx.globalAlpha = 1;
-    for (i = 0; i < mineGrit.length; i++) { var g2 = mineGrit[i]; ctx.globalAlpha = (1 - g2.t / g2.maxT) * 0.65; ctx.fillStyle = g2.color; ctx.beginPath(); ctx.arc(g2.x, g2.y, g2.size * 0.5, 0, 6.2832); ctx.fill(); }
+    for (i = 0; i < mineGrit.length; i++) { var g2 = mineGrit[i], gritLife = g2.t / g2.maxT;
+      ctx.globalAlpha = Math.min(1, (1 - gritLife) / 0.4) * 0.75; ctx.fillStyle = g2.color;
+      ctx.fillRect(Math.round(g2.x), Math.round(g2.y), g2.size, g2.size); }
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'lighter';
     for (i = 0; i < mineFlashes.length; i++) { var f = mineFlashes[i]; if (f.delay > 0) continue; var ft = f.t / f.maxT;
