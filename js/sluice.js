@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.100';
+  var GAME_VERSION = 'v26.101';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -38044,9 +38044,9 @@
     core_length_min: 37,
     core_width: 3,
     core_width_taper: 0.04,
-    core_jitter: 2.3,
-    core_pulse_amp: 0.28,
-    core_pulse_freq: 26.5,
+    core_jitter: 0.7,
+    core_pulse_amp: 0.065,
+    core_pulse_freq: 8.5,
     core_inner_r: 1.67, core_inner_g: 0.22, core_inner_b: 1.71,
     core_mid_r: 0.68,   core_mid_g: 0.89,   core_mid_b: 1.9,
     core_outer_r: 1.92,  core_outer_g: 1.94,  core_outer_b: 1.22,
@@ -38055,7 +38055,7 @@
     shock_count: 5,
     shock_size: 1.5,
     shock_brightness: 0.17,
-    shock_pulse_freq: 60,
+    shock_pulse_freq: 7,
     wash_enabled: true,
     wash_distance: 155,
     wash_rate: 840,
@@ -38115,17 +38115,19 @@
   var rocketWash = [];
   var rocketWashCarry = 0;
 
-  // ----- Flight FX state (ignition pop rings, landing dust) -----
+  // ----- Flight FX state (ignition pressure curls, landing dust) -----
   // Consumes the player.fx event counters from the flight integrator (080); the
   // counters only ever increment, so we diff them against this local snapshot.
-  var FLIGHT_FLAME_SHORTEN = 0.28;   // flame length shed at full airspeed response (0..1)
-  var FLIGHT_FLAME_WIDEN = 0.42;     // flame width gain at full airspeed response (0..1)
-  var FLIGHT_FLAME_BEND_MAX = 0.5;   // crosswind tail push at full response, fraction of flame length
+  var FLIGHT_FLAME_SHORTEN = 0.16;   // flame length shed at full airspeed response (0..1)
+  var FLIGHT_FLAME_WIDEN = 0.18;     // flame width gain at full airspeed response (0..1)
+  var FLIGHT_FLAME_BEND_MAX = 0.24;   // crosswind tail push at full response, fraction of flame length
   var FLIGHT_FLAME_BEND_V0 = 0.5;    // speed01 (|v| / flyTune.speed) where the airspeed response starts
   var FLIGHT_FLAME_BEND_V1 = 1.4;    // speed01 where the airspeed response reaches full strength
   var flightFxSeen = { sync: false, ignite: 0, land: 0 };
+  var FLIGHT_IGNITE_DURATION = 0.14;
+  var flightIgniteCooldown = 0; // prevents a stack of pressure puffs on rapid taps
   var flightIgniteT = 0;       // remaining ignition-pop flame overshoot (s)
-  var flightRings = [];        // expanding rings (ignition smoke + boom shock share one pool)
+  var flightRings = [];        // short-lived, directional ignition pressure curls
 
   function rocketTuneNum(v, fb) { v = Number(v); return isFinite(v) ? v : fb; }
   function rocketChan(v) { return Math.max(0, Math.min(255, Math.round(rocketTuneNum(v, 0) * 255))); }
@@ -38163,7 +38165,8 @@
   }
 
   function rocketExhaustDir() {
-    var angle = player.flightTilt || 0;
+    // Use the same eased angle as the nozzle anchors and the drawn chassis.
+    var angle = player.bodyTiltRender || 0;
     return { x: -Math.sin(angle), y: Math.cos(angle) };
   }
 
@@ -38186,6 +38189,7 @@
     rocketIntensity = 0;
     flightRings.length = 0;
     flightIgniteT = 0;
+    flightIgniteCooldown = 0;
     flightFxSeen.sync = false;   // re-adopt the fx counters on the next frame, no stale replays
   }
 
@@ -38254,14 +38258,14 @@
   }
 
 
-  // One pool serves both ring looks: shock 1 = bright sonic-boom ring,
-  // shock 0 = small gray ignition smoke ring. delay staggers birth (age < 0).
+  // Compact pressure-puff pool. Keep the existing event interface for callers.
+  // The birth angle stays fixed as the puff drifts away from the moving rig.
   function spawnFlightRing(x, y, vx, vy, r0, r1, life, w, shock, delay) {
     flightRings.push({
       x: x, y: y, vx: vx, vy: vy,
       r0: r0, r1: r1,
       age: -(delay || 0), life: life,
-      w: w, shock: shock
+      w: w, shock: shock, angle: player.bodyTiltRender || 0
     });
     while (flightRings.length > 12) flightRings.shift();
   }
@@ -38295,19 +38299,23 @@
         flightFxSeen.sync = true;
       }
 
-      // Ignition pop: brief core-flame overshoot + small smoke rings that
-      // roll off the nozzles with the exhaust.
+      // A short, eased flare and one restrained pressure curl per nozzle.
+      // Record the event even when the visible jet is gated off (menus/drilling).
       if (fx.igniteN !== flightFxSeen.ignite) {
         flightFxSeen.ignite = fx.igniteN;
-        flightIgniteT = 0.07;
-        var nzI = rocketNozzles();
-        var edI = rocketExhaustDir();
-        var nRing = 2 + (Math.random() < 0.5 ? 1 : 0);
-        for (var ri = 0; ri < nRing; ri++) {
-          var nzr = nzI[ri % 2];
-          spawnFlightRing(nzr.x, nzr.y,
-            edI.x * 26 + player.vx * 0.5, edI.y * 26 + player.vy * 0.5,
-            2, 9 + ri * 3, 0.24 + ri * 0.05, 1.4, 0, ri * 0.035);
+        if (rocketJetActive()) {
+          flightIgniteT = FLIGHT_IGNITE_DURATION;
+          if (flightIgniteCooldown <= 0) {
+            flightIgniteCooldown = 0.20;
+            var nzI = rocketNozzles();
+            var edI = rocketExhaustDir();
+            for (var ri = 0; ri < nzI.length; ri++) {
+              var nzr = nzI[ri];
+              spawnFlightRing(nzr.x + edI.x * 3, nzr.y + edI.y * 3,
+                edI.x * 32 + player.vx * 0.18, edI.y * 32 + player.vy * 0.18,
+                1.8, 7.5, 0.26, 0.75, 0, 0);
+            }
+          }
         }
       }
 
@@ -38330,7 +38338,8 @@
       }
     }
 
-    if (flightIgniteT > 0) flightIgniteT -= dt;
+    flightIgniteT = Math.max(0, flightIgniteT - dt);
+    flightIgniteCooldown = Math.max(0, flightIgniteCooldown - dt);
 
     // Advance the pools (forward in-place compaction, same pattern as above).
 
@@ -38547,6 +38556,53 @@
     { i: [1.40, 1.60, 1.95], m: [0.70, 1.10, 1.90], o: [0.40, 0.70, 1.70] }, // 4 overclock (blue-white)
     { i: [1.70, 1.85, 1.99], m: [0.90, 1.40, 1.99], o: [0.50, 0.90, 1.95] }  // 5 afterburner (hot blue-white)
   ];
+  // All flame layers and compression cells follow one continuous centreline.
+  // Root displacement and root slope are zero; only the tail catches the wind.
+  function rocketFlamePoint(nz, ed, len, width, bend, phase, f, side, reach, scale, taper) {
+    var wave = phase - f * 9;
+    var ripple = width * 0.32 * Math.max(0, Math.min(2, rocketTuneNum(rocketTune.core_jitter, 0.7)));
+    var offset = len * bend * f * f + ripple * f * f * Math.sin(wave);
+    var slope = 2 * bend * f + ripple / len * (2 * f * Math.sin(wave) - 9 * f * f * Math.cos(wave));
+    var tx = ed.x - ed.y * slope, ty = ed.y + ed.x * slope;
+    var norm = Math.sqrt(tx * tx + ty * ty);
+    var u = Math.min(1, f / reach);
+    var half = width * scale * (0.58 + 0.8 * Math.sin(u * Math.PI * 0.85)) *
+      Math.pow(1 - u, 0.8 + taper);
+    return {
+      x: nz.x + ed.x * len * f - ed.y * offset - ty / norm * half * side,
+      y: nz.y + ed.y * len * f + ed.x * offset + tx / norm * half * side
+    };
+  }
+
+  function rocketFlamePath(nz, ed, len, width, bend, phase, reach, scale, taper, clip) {
+    var end = Math.min(reach, clip);
+    var steps = 20;
+    ctx.beginPath();
+    for (var side = -1; side <= 1; side += 2) {
+      for (var i = 0; i <= steps; i++) {
+        var f = end * (side < 0 ? i : steps - i) / steps;
+        var p = rocketFlamePoint(nz, ed, len, width, bend, phase, f, side, reach, scale, taper);
+        if (side < 0 && i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+    }
+    ctx.closePath();
+  }
+
+  // Probe the curved envelope, not a straight ray, so a banked flame cannot
+  // bend through a shaft wall or a slime. Bounded to 96 samples per nozzle.
+  function rocketFlameClearance(nz, ed, len, width, bend, phase, taper) {
+    var steps = Math.min(96, Math.max(8, Math.ceil(len / 2)));
+    for (var i = 0; i <= steps; i++) {
+      var f = i / steps;
+      for (var side = -1; side <= 1; side++) {
+        var p = rocketFlamePoint(nz, ed, len, width, bend, phase, f, side, 1, 1.18, taper);
+        if (rocketInSolid(p.x, p.y) || rocketInJello(p.x, p.y)) return Math.max(0, (i - 1) / steps);
+      }
+    }
+    return 1;
+  }
+
   function drawRocketPlume() {
     if (PERF_DISABLE_ROCKET) return;   // v12.9 — rocket-plume toggle
     var T = rocketTune;
@@ -38611,15 +38667,14 @@
       var pulse = 1 + Math.sin(t * rocketTuneNum(T.core_pulse_freq, 26) * 2 * Math.PI) * rocketTuneNum(T.core_pulse_amp, 0.18);
       len *= Math.max(0.05, pulse);
       var ww = rocketTuneNum(T.core_width, 9);
-      var taper = rocketTuneNum(T.core_width_taper, 0.18);
-      var jit = rocketTuneNum(T.core_jitter, 1.6);
+      var taper = Math.max(0, rocketTuneNum(T.core_width_taper, 0.18));
       var alpha = rocketTuneNum(T.core_alpha, 0.92);
       // v23.76 — booster tier shapes the exhaust. Tier 3 keeps today's live
       // rocketTune core exactly (the anchor); other tiers shift hue + size so the
       // booster tier reads at a glance.
       var _bl = upgrades.boosterLevel || 1;
       var _szf = [1, 0.82, 0.91, 1.0, 1.12, 1.26][_bl] || 1;
-      len *= _szf; ww *= _szf;
+      len = Math.max(2, len * _szf); ww = Math.max(0.2, ww * _szf);
       var ci_r = T.core_inner_r, ci_g = T.core_inner_g, ci_b = T.core_inner_b;
       var cm_r = T.core_mid_r,   cm_g = T.core_mid_g,   cm_b = T.core_mid_b;
       var co_r = T.core_outer_r, co_g = T.core_outer_g, co_b = T.core_outer_b;
@@ -38654,49 +38709,48 @@
           ffBendY = (ffWy - exhaustDir.y * ffAx) * FLIGHT_FLAME_BEND_MAX * ffT;
         }
       }
-      if (flightIgniteT > 0) { len *= 1.35; ww *= 1.35; }   // ignition pop overshoot
+      var ignite = flightIgniteT / FLIGHT_IGNITE_DURATION;
+      ignite = ignite * ignite * (3 - 2 * ignite);
+      len *= 1 + 0.18 * ignite;
+      ww *= 1 + 0.12 * ignite;
 
       for (var n = 0; n < nozzles.length; n++) {
         var nz = nozzles[n];
         if (nz.x + len < cam.x || nz.x - len > cam.x + screenW) continue;
         if (nz.y - 20 > cam.y + screenH) continue;
-        // Clip flame length so it never punches through solid tiles below.
-        var coreLen = len;
-        var impactDist = rocketFindImpactAlong(nz.x, nz.y, exhaustDir.x, exhaustDir.y, len);
-        if (impactDist !== null) coreLen = Math.max(2, impactDist - 1);
-        var jitter = (Math.random() - 0.5) * jit;
-        var nx = nz.x + perpX * jitter;
-        var ny = nz.y + perpY * jitter;
-        // Relative-wind tail offsets grow roughly quadratically along the
-        // flame so the root stays glued to the nozzle while the tip takes the
-        // full bend. All zero below the airspeed threshold.
-        var bTipX = ffBendX * coreLen, bTipY = ffBendY * coreLen;
-        var b35X = bTipX * 0.12, b35Y = bTipY * 0.12;
-        var b85X = bTipX * 0.72, b85Y = bTipY * 0.72;
-        var endX = nx + exhaustDir.x * coreLen + bTipX;
-        var endY = ny + exhaustDir.y * coreLen + bTipY;
-        var midX = nx + exhaustDir.x * coreLen * 0.55 + bTipX * 0.3;
-        var midY = ny + exhaustDir.y * coreLen * 0.55 + bTipY * 0.3;
-        var grad = ctx.createRadialGradient(midX, midY, 0, midX, midY, Math.max(2, coreLen * 0.6));
-        grad.addColorStop(0,    rocketRgba(ci_r, ci_g, ci_b, alpha));
-        grad.addColorStop(0.4,  rocketRgba(cm_r, cm_g, cm_b, alpha * 0.62));
-        grad.addColorStop(1,    rocketRgba(co_r, co_g, co_b, 0));
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(nx - perpX * ww, ny - perpY * ww);
-        ctx.bezierCurveTo(
-          nx + exhaustDir.x * coreLen * 0.35 - perpX * ww + b35X,
-          ny + exhaustDir.y * coreLen * 0.35 - perpY * ww + b35Y,
-          nx + exhaustDir.x * coreLen * 0.85 - perpX * ww * taper + b85X,
-          ny + exhaustDir.y * coreLen * 0.85 - perpY * ww * taper + b85Y,
-          endX, endY);
-        ctx.bezierCurveTo(
-          nx + exhaustDir.x * coreLen * 0.85 + perpX * ww * taper + b85X,
-          ny + exhaustDir.y * coreLen * 0.85 + perpY * ww * taper + b85Y,
-          nx + exhaustDir.x * coreLen * 0.35 + perpX * ww + b35X,
-          ny + exhaustDir.y * coreLen * 0.35 + perpY * ww + b35Y,
-          nx + perpX * ww, ny + perpY * ww);
-        ctx.closePath();
+        var nx = nz.x, ny = nz.y;
+        var phase = t * 17 + n * 0.8;
+        var bend = ffBendX * perpX + ffBendY * perpY;
+        // core_jitter now sets a small flowing tail ripple, never root shake.
+        var flameWidth = ww;
+        var clip = rocketFlameClearance(nz, exhaustDir, len, flameWidth, bend, phase, taper);
+        if (clip <= 0) continue;
+        var end = rocketFlamePoint(nz, exhaustDir, len, flameWidth, bend, phase, 1, 0, 1, 1, taper);
+        // Soft envelope, coloured body, and a narrow hot throat. Axial ramps
+        // retain structure in both flight directions instead of a radial blob.
+        var outer = ctx.createLinearGradient(nx, ny, end.x, end.y);
+        outer.addColorStop(0, rocketRgba(co_r, co_g, co_b, alpha * 0.28));
+        outer.addColorStop(0.25, rocketRgba(cm_r, cm_g, cm_b, alpha * 0.40));
+        outer.addColorStop(1, rocketRgba(co_r, co_g, co_b, 0));
+        ctx.fillStyle = outer;
+        rocketFlamePath(nz, exhaustDir, len, flameWidth, bend, phase, 1, 1.18, taper, clip);
+        ctx.fill();
+
+        var body = ctx.createLinearGradient(nx, ny, end.x, end.y);
+        body.addColorStop(0, rocketRgba(ci_r, ci_g, ci_b, alpha * 1.35));
+        body.addColorStop(0.30, rocketRgba(cm_r, cm_g, cm_b, alpha * 0.90));
+        body.addColorStop(0.85, rocketRgba(co_r, co_g, co_b, alpha * 0.12));
+        body.addColorStop(1, rocketRgba(co_r, co_g, co_b, 0));
+        ctx.fillStyle = body;
+        rocketFlamePath(nz, exhaustDir, len, flameWidth, bend, phase, 1, 0.78, taper, clip);
+        ctx.fill();
+
+        var throat = ctx.createLinearGradient(nx, ny, nx + exhaustDir.x * len * 0.65, ny + exhaustDir.y * len * 0.65);
+        throat.addColorStop(0, rocketRgba(1, 0.94, 0.80, alpha * 1.55));
+        throat.addColorStop(0.3, rocketRgba(ci_r, ci_g, ci_b, alpha * 1.15));
+        throat.addColorStop(1, rocketRgba(ci_r, ci_g, ci_b, 0));
+        ctx.fillStyle = throat;
+        rocketFlamePath(nz, exhaustDir, len, flameWidth, bend, phase, 0.65, 0.32, taper, clip);
         ctx.fill();
 
         if (_bl >= 4) {
@@ -38717,15 +38771,26 @@
           if (_bl !== 3) nShock = _bl;  // tier 3 keeps today's count; tiers 1/2/4/5 -> that many
           var shockBright = rocketTuneNum(T.shock_brightness, 0.65);
           var shockSize = rocketTuneNum(T.shock_size, 2.4);
-          var shockPulse = 0.7 + 0.3 * Math.sin(t * rocketTuneNum(T.shock_pulse_freq, 18) * 2 * Math.PI + n * 1.3);
+          var shockPulse = 0.88 + 0.12 * Math.sin(t * rocketTuneNum(T.shock_pulse_freq, 7) * 2 * Math.PI + n * 0.8);
           for (var d = 0; d < nShock; d++) {
-            var f = (d + 1) / (nShock + 1);
-            var sx = nx + exhaustDir.x * coreLen * f * 0.55;
-            var sy = ny + exhaustDir.y * coreLen * f * 0.55;
-            ctx.fillStyle = 'rgba(255,240,200,' + Math.max(0, Math.min(1, shockBright * shockPulse)).toFixed(3) + ')';
+            var f = 0.10 + d * 0.105;
+            if (f + 0.035 >= clip || f > 0.58) break;
+            var cell = rocketFlamePoint(nz, exhaustDir, len, flameWidth, bend, phase, f, 0, 1, 1, taper);
+            var next = rocketFlamePoint(nz, exhaustDir, len, flameWidth, bend, phase, f + 0.01, 0, 1, 1, taper);
+            var cellW = Math.min(ww * 0.40, shockSize * 0.65) * (1 - f);
+            var cellL = Math.min(len * 0.036, cellW * 2.2);
+            ctx.save();
+            ctx.translate(cell.x, cell.y);
+            ctx.rotate(Math.atan2(next.y - cell.y, next.x - cell.x));
+            ctx.fillStyle = rocketRgba(ci_r, ci_g, ci_b, shockBright * shockPulse * (1 - f));
             ctx.beginPath();
-            ctx.arc(sx, sy, shockSize, 0, Math.PI * 2);
+            ctx.moveTo(-cellL, 0);
+            ctx.quadraticCurveTo(0, -cellW * 0.45, 0, -cellW);
+            ctx.quadraticCurveTo(0, -cellW * 0.45, cellL, 0);
+            ctx.quadraticCurveTo(0, cellW * 0.45, 0, cellW);
+            ctx.quadraticCurveTo(0, cellW * 0.45, -cellL, 0);
             ctx.fill();
+            ctx.restore();
           }
         }
       }
@@ -38754,7 +38819,7 @@
       ctx.restore();
     }
 
-    // ----- Pass 5: expanding rings (ignition smoke + sonic-boom shock) -----
+    // ----- Pass 5: dissolving ignition pressure curls -----
     if (flightRings.length) {
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
@@ -38767,13 +38832,24 @@
         if (rgT > 1) rgT = 1;
         var rgE = 1 - (1 - rgT) * (1 - rgT);   // ease-out radius growth
         var rgR = ring.r0 + (ring.r1 - ring.r0) * rgE;
-        ctx.lineWidth = ring.w * (1 - 0.6 * rgT);   // full stroke first, thinning as it runs
-        ctx.strokeStyle = ring.shock
-          ? 'rgba(235,242,250,' + (0.55 * (1 - rgT)).toFixed(3) + ')'
-          : 'rgba(150,150,148,' + (0.38 * (1 - rgT)).toFixed(3) + ')';
-        ctx.beginPath();
-        ctx.arc(ring.x, ring.y, rgR, 0, Math.PI * 2);
-        ctx.stroke();
+        var rgFade = Math.sin(Math.min(1, rgT * 5) * Math.PI * 0.5) * (1 - rgT) * (1 - rgT);
+        ctx.save();
+        ctx.translate(ring.x, ring.y);
+        ctx.rotate(ring.angle || 0);
+        ctx.lineCap = 'round';
+        // Two open, flattened curls drift down the exhaust axis. Their broad
+        // faint skirt dissolves first, leaving no expanding target-circle edge.
+        for (var pass = 0; pass < 2; pass++) {
+          ctx.lineWidth = ring.w * (pass ? 0.65 : 2.4) * (1 - 0.4 * rgT);
+          ctx.strokeStyle = 'rgba(183,186,171,' + (rgFade * (pass ? 0.25 : 0.07)).toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rgR, rgR * (0.28 + rgT * 0.16), 0, Math.PI * 0.10, Math.PI * 0.91);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rgR, rgR * (0.28 + rgT * 0.16), 0, Math.PI * 1.17, Math.PI * 1.86);
+          ctx.stroke();
+        }
+        ctx.restore();
       }
       ctx.restore();
     }
@@ -39380,10 +39456,14 @@
     g.cupola = ctx.createLinearGradient(0, 4, 0, 11);
     g.cupola.addColorStop(0, '#68715f');
     g.cupola.addColorStop(1, '#252c28');
-    g.pipe = ctx.createLinearGradient(2.7, 0, 5.6, 0);
-    g.pipe.addColorStop(0, '#070807');
-    g.pipe.addColorStop(0.5, '#60655f');
-    g.pipe.addColorStop(1, '#101211');
+    // Upper-left light rolls around the cylinder into a cool form shadow.
+    // A narrow reflected edge keeps the far side round instead of black.
+    g.pipe = ctx.createLinearGradient(2.6, 0, 5.4, 0);
+    g.pipe.addColorStop(0, '#59665c');
+    g.pipe.addColorStop(0.18, '#929b87');
+    g.pipe.addColorStop(0.42, '#626e60');
+    g.pipe.addColorStop(0.78, '#29332f');
+    g.pipe.addColorStop(1, '#4b5850');
     g.pod = ctx.createLinearGradient(0, -1.4, 0, 1.4);
     g.pod.addColorStop(0, '#758075');
     g.pod.addColorStop(0.52, '#303a35');
@@ -39456,9 +39536,6 @@
   // assembly is NOT part of this pass, it stays world-space in drawPlayer.
   function drawPlayerRigBody(t) {
     var pgrad = ensurePlayerGrads();
-
-    var movingRig = drilling || player.thrusting || Math.abs(player.vx) > 5;
-    var gait = player.x * 0.16;
 
     // ----- T-10M-inspired track bed -----
     ctx.fillStyle = pgrad.track;
@@ -39534,8 +39611,9 @@
     ctx.fillRect(8.8, 7.75, 5.0, 0.45);
 
     // ----- Connected rear exhaust stack -----
-    // Smoke still spawns from the stack mouth via getExhaustWorldPos().
-    ctx.fillStyle = '#171a18';
+    // The angled collector seats the pipe in the armor. Its lower/right
+    // face carries the shadow; no detached dark patch or pulsing heat stripe.
+    ctx.fillStyle = '#414d42';
     ctx.beginPath();
     ctx.moveTo(2.4, 8.0);
     ctx.lineTo(5.7, 8.0);
@@ -39544,29 +39622,50 @@
     ctx.lineTo(2.1, 10.0);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#070807';
-    ctx.lineWidth = 0.8;
+    ctx.fillStyle = '#28332d';
+    ctx.beginPath();
+    ctx.moveTo(5.7, 8.0);
+    ctx.lineTo(7.0, 11.0);
+    ctx.lineTo(3.4, 12.2);
+    ctx.lineTo(3.7, 11.3);
+    ctx.lineTo(6.1, 10.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#77816e';
+    ctx.lineWidth = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(2.5, 8.25);
+    ctx.lineTo(5.4, 8.25);
+    ctx.lineTo(6.05, 9.7);
     ctx.stroke();
 
     ctx.fillStyle = pgrad.pipe;
-    roundRect(ctx, 2.9, 0.8, 2.8, 8.0, 0.8, true);
-    // Dark mouth and warm rim.
-    ctx.fillStyle = '#050506';
+    roundRect(ctx, 2.6, 0.8, 2.8, 8.3, 0.65, true);
+    // Rolled mounting collar: lit top, cylindrical face, short contact seam.
+    ctx.fillStyle = '#4b5850';
+    roundRect(ctx, 2.35, 7.8, 3.35, 1.4, 0.35, true);
+    ctx.fillStyle = '#89927c';
+    ctx.fillRect(2.7, 7.85, 2.05, 0.35);
+    ctx.fillStyle = '#29332f';
+    ctx.fillRect(2.8, 8.85, 2.55, 0.35);
+    ctx.fillStyle = '#697660';
+    ctx.fillRect(2.65, 8.2, 0.5, 0.6);
+
+    // Recessed mouth stays centered on the smoke anchor (4, 0.7). A solid
+    // lip and dark inner wall give it thickness without an outlined black dot.
+    ctx.fillStyle = '#7f8976';
     ctx.beginPath();
-    ctx.ellipse(4, 1.0, 1.45, 0.65, 0, 0, Math.PI * 2);
+    ctx.ellipse(4, 0.85, 1.7, 0.7, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Thin coppery rim around the mouth.
-    ctx.strokeStyle = 'rgba(145,154,142,0.5)';
-    ctx.lineWidth = 0.45;
+    ctx.fillStyle = '#222b28';
     ctx.beginPath();
-    ctx.ellipse(4, 1.0, 1.55, 0.75, 0, 0, Math.PI * 2);
+    ctx.ellipse(4.05, 0.75, 1.15, 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#a5ac93';
+    ctx.lineWidth = 0.3;
+    ctx.beginPath();
+    ctx.ellipse(4, 0.85, 1.55, 0.6, 0, Math.PI, Math.PI * 1.62);
     ctx.stroke();
-    // Faint heat shimmer band at base of pipe (when running hard)
-    if (movingRig) {
-      var glowAlpha = 0.18 + Math.sin(t * 28) * 0.05;
-      ctx.fillStyle = 'rgba(180,188,170,' + glowAlpha.toFixed(3) + ')';
-      ctx.fillRect(3.6, 8.0, 1.3, 1.0);
-    }
 
     // Small running light.
     var blink = (Math.sin(t * 4) + 1) * 0.5;

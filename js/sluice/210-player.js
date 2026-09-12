@@ -250,10 +250,14 @@
     g.cupola = ctx.createLinearGradient(0, 4, 0, 11);
     g.cupola.addColorStop(0, '#68715f');
     g.cupola.addColorStop(1, '#252c28');
-    g.pipe = ctx.createLinearGradient(2.7, 0, 5.6, 0);
-    g.pipe.addColorStop(0, '#070807');
-    g.pipe.addColorStop(0.5, '#60655f');
-    g.pipe.addColorStop(1, '#101211');
+    // Upper-left light rolls around the cylinder into a cool form shadow.
+    // A narrow reflected edge keeps the far side round instead of black.
+    g.pipe = ctx.createLinearGradient(2.6, 0, 5.4, 0);
+    g.pipe.addColorStop(0, '#59665c');
+    g.pipe.addColorStop(0.18, '#929b87');
+    g.pipe.addColorStop(0.42, '#626e60');
+    g.pipe.addColorStop(0.78, '#29332f');
+    g.pipe.addColorStop(1, '#4b5850');
     g.pod = ctx.createLinearGradient(0, -1.4, 0, 1.4);
     g.pod.addColorStop(0, '#758075');
     g.pod.addColorStop(0.52, '#303a35');
@@ -326,9 +330,6 @@
   // assembly is NOT part of this pass, it stays world-space in drawPlayer.
   function drawPlayerRigBody(t) {
     var pgrad = ensurePlayerGrads();
-
-    var movingRig = drilling || player.thrusting || Math.abs(player.vx) > 5;
-    var gait = player.x * 0.16;
 
     // ----- T-10M-inspired track bed -----
     ctx.fillStyle = pgrad.track;
@@ -404,8 +405,9 @@
     ctx.fillRect(8.8, 7.75, 5.0, 0.45);
 
     // ----- Connected rear exhaust stack -----
-    // Smoke still spawns from the stack mouth via getExhaustWorldPos().
-    ctx.fillStyle = '#171a18';
+    // The angled collector seats the pipe in the armor. Its lower/right
+    // face carries the shadow; no detached dark patch or pulsing heat stripe.
+    ctx.fillStyle = '#414d42';
     ctx.beginPath();
     ctx.moveTo(2.4, 8.0);
     ctx.lineTo(5.7, 8.0);
@@ -414,29 +416,50 @@
     ctx.lineTo(2.1, 10.0);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#070807';
-    ctx.lineWidth = 0.8;
+    ctx.fillStyle = '#28332d';
+    ctx.beginPath();
+    ctx.moveTo(5.7, 8.0);
+    ctx.lineTo(7.0, 11.0);
+    ctx.lineTo(3.4, 12.2);
+    ctx.lineTo(3.7, 11.3);
+    ctx.lineTo(6.1, 10.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#77816e';
+    ctx.lineWidth = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(2.5, 8.25);
+    ctx.lineTo(5.4, 8.25);
+    ctx.lineTo(6.05, 9.7);
     ctx.stroke();
 
     ctx.fillStyle = pgrad.pipe;
-    roundRect(ctx, 2.9, 0.8, 2.8, 8.0, 0.8, true);
-    // Dark mouth and warm rim.
-    ctx.fillStyle = '#050506';
+    roundRect(ctx, 2.6, 0.8, 2.8, 8.3, 0.65, true);
+    // Rolled mounting collar: lit top, cylindrical face, short contact seam.
+    ctx.fillStyle = '#4b5850';
+    roundRect(ctx, 2.35, 7.8, 3.35, 1.4, 0.35, true);
+    ctx.fillStyle = '#89927c';
+    ctx.fillRect(2.7, 7.85, 2.05, 0.35);
+    ctx.fillStyle = '#29332f';
+    ctx.fillRect(2.8, 8.85, 2.55, 0.35);
+    ctx.fillStyle = '#697660';
+    ctx.fillRect(2.65, 8.2, 0.5, 0.6);
+
+    // Recessed mouth stays centered on the smoke anchor (4, 0.7). A solid
+    // lip and dark inner wall give it thickness without an outlined black dot.
+    ctx.fillStyle = '#7f8976';
     ctx.beginPath();
-    ctx.ellipse(4, 1.0, 1.45, 0.65, 0, 0, Math.PI * 2);
+    ctx.ellipse(4, 0.85, 1.7, 0.7, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Thin coppery rim around the mouth.
-    ctx.strokeStyle = 'rgba(145,154,142,0.5)';
-    ctx.lineWidth = 0.45;
+    ctx.fillStyle = '#222b28';
     ctx.beginPath();
-    ctx.ellipse(4, 1.0, 1.55, 0.75, 0, 0, Math.PI * 2);
+    ctx.ellipse(4.05, 0.75, 1.15, 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#a5ac93';
+    ctx.lineWidth = 0.3;
+    ctx.beginPath();
+    ctx.ellipse(4, 0.85, 1.55, 0.6, 0, Math.PI, Math.PI * 1.62);
     ctx.stroke();
-    // Faint heat shimmer band at base of pipe (when running hard)
-    if (movingRig) {
-      var glowAlpha = 0.18 + Math.sin(t * 28) * 0.05;
-      ctx.fillStyle = 'rgba(180,188,170,' + glowAlpha.toFixed(3) + ')';
-      ctx.fillRect(3.6, 8.0, 1.3, 1.0);
-    }
 
     // Small running light.
     var blink = (Math.sin(t * 4) + 1) * 0.5;
