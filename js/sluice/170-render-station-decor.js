@@ -130,6 +130,15 @@
     spaceLow:     '#080a32',
     spaceHorizon: '#0a0c38',
 
+    // Orbital surface only: quiet blue oceans and invented green continents.
+    planetOceanNight: '#101c2b',
+    planetOcean:      '#2a4c60',
+    planetLandNight:  '#182b29',
+    planetLand:       '#486548',
+    planetCoast:      '#5d7050',
+    planetCloud:      '#708587',
+    planetDusk:       '#967453',
+
     nebulaCool: '#3a4878',   // faint painted nebula band — heavily desaturated blue
     nebulaWarm: '#6a4a58'    // faint painted nebula band — desaturated rose
   };

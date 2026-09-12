@@ -40,6 +40,7 @@ Every layer occupies a *narrower band of the value/saturation scale* than the la
 | **Mid background** (mid mountain layer, snow caps) | 12–55 | 8–35 | `BG.midMtnFill` `#1c1f30`, `BG.midMtnSnow` `#c8d0dc` (snow is the one allowed value-pop, capped at V≈85) |
 | **Far background** (distant ridge, hazy peaks) | 18–35 | 5–22 | `BG.farMtnFill` `#2a2f40`, `BG.farMtnRim` `#363b4c` |
 | **Sky** | 6–25 | 8–25 | `SKY.skyDeepest` `#0a0d16` → `SKY.skyHorizon` `#2c3142` (anchors; Stage 5 derives these from atmospheric scattering) |
+| **Orbital surface** | 6 to 44 | 15 to 55 | Muted `SKY.planet*` greens and ocean blues; foreground retains the strongest contrast |
 | **Distant stars** (sky-reserved) | 35–95 | 0–18 | `SKY.starDim` → `SKY.starHot` |
 | **Underground biome fill** (cave edges, behind-tile failsafe) | 8–35 | 8–35 | `BG.bgTopsoil` `#5a3e22` through `BG.bgMantle` |
 | **Surface cut bank** | 14–50 | 10–45 | `BG.surfaceBank*`, `surfaceHumus`, and `surfaceRoot*`; quieter than diggable topsoil |
@@ -67,6 +68,7 @@ These colours appear in **exactly one place** and nowhere else. Reserving them g
 | Each `BG.wall<Biome>` colour | Wall pattern fill for *that biome only* | Other biomes' walls, all foreground |
 | Each `BG.bgPermafrostFeature` / `bgCrystalFeature` | Their biome's feature accent only (kept in palette but presently unused after the wall-pattern rewrite — Stage 6a reintroduces) | Other biomes |
 | Ore palette colours | Ore tiles only (per MINERALS_BIBLE) | Backgrounds |
+| `SKY.planet*` colours | Distant orbital land, ocean, coast and cloud streaks | Foreground, mountains, underground walls |
 
 **The `redBright` + `warmGlow` shared use** is intentional: distant outpost lights blinking on far ridges reuse the same red/amber language as the player's nearby station, so the world feels like one continuous frontier rather than two unrelated layers.
 
@@ -525,3 +527,26 @@ The ascent-horizon treatment. Code: `js/sluice/158-horizon-atmos.js` (`drawHoriz
 **The SECOND line — the shader razor, fixed in the geometry (v24.138).** Dissolving the terrain edge exposed a second hard line one layer deeper: the GL raymarch originally modelled a FLAT ground plane (`rayEnd = observerAltitude / -rayDir.y`), so a ray's lit path collapsed within a few pixels of the 0°-elevation row — a razor at a FIXED screen height (`yFrac = (1 + tan(pitch)/tan(fovY/2))/2` ≈ 0.65), hidden by the sky clip at rest and revealed on every climb (the owner's original complaint was THIS line). The fix is in the shader: the PRIMARY ray is bent over a spherical planet (`planetRadius = 6371`, units ≈ km, matching the in-file JS reference `scatComputeColor` which always used `scatRaySphere`). Rays just below 0° now clear the limb smoothly and ground chords grow gradually, so the blaze rolls off over several degrees — and because it happens inside the sky render, clouds and mountains draw over it correctly by construction. `lightMarch` + `sunlightVisibility` deliberately stay flat-slab: they carry the dialled twilight behaviour, and only the primary geometry made the razor. (A v24.136 screen-space "razor skirt" band-aided this for a few hours; it composited AFTER the world and smeared over the world-anchored cloud decks — owner-rejected, removed same day. Do not reintroduce a post-world smear for sky-internal edges; fix them in the shader.)
 
 **Harness.** Boot levers `?tod=` (clock + `SUN.paused`, 020) and `?alt=` (spawn altitude, 040) exist for headless screenshot runs: `sluice.html?nosave=1&tod=0.755&alt=1200` reproduces the sunset-ascent money shot deterministically.
+
+### Pixel planet surface (v26.89)
+
+`156-render-planet.js` fills the dark area beneath the sky's curved horizon
+with invented green continents and blue oceans. It shares the atmospheric
+shader's sphere radius, observer height, pitch and field of view. Ascent
+reveals it naturally; the resting surface and underground views hide it.
+
+- **Art:** broad deterministic land shapes, broken coastlines, quiet interior
+  tones and sparse cloud streaks. Rasterize at about three CSS pixels per art
+  pixel, with nearest-neighbour scaling. No real-world geography or outlines.
+- **Palette:** ocean `#2a4c60`, land `#486548`, coast `#5d7050`, cloud `#708587`.
+  Night shifts ocean to `#101c2b` and land to `#182b29`; dusk adds `#967453`.
+  These anchors live in `SKY.planet*` and belong only to this distant surface.
+- **Light:** use the existing clock, sun direction and twilight timing.
+  Moon phase supplies a small night lift. The grazing edge blends into the
+  live atmospheric horizon; it has no bright painted contour.
+- **Occlusion:** draw inside the sky clip after stars and celestial bodies,
+  before local weather, mountains, bank, terrain and the rig. Never overlay
+  the mine or change fog-of-war to reveal the planet.
+- **Cache:** bake geometry on the first ascent and when projection or viewport
+  changes. Recolour on clock or atmosphere buckets; ordinary frames blit only
+  the lower portion of one cached canvas. Camera travel never rerolls land.

@@ -184,6 +184,9 @@
       [0.164706, 0.078431, 0.062745]  // #2a1410  near-black ash (anti-sun)
     ]
   };
+  // Shared with the pixel planet surface so both meet at the same limb.
+  var SKY_PLANET_RADIUS = 6371;
+  var SKY_OBSERVER_ALTITUDE = 10;
   var SKY_GL_FS = [
     'precision highp float;',
     'uniform vec2  uResolution;',
@@ -211,8 +214,8 @@
     // itself). lightMarch + sunlightVisibility stay flat-slab on purpose:
     // they carry the dialled twilight behaviour, and only the primary
     // geometry makes the razor.
-    'const float planetRadius        = 6371.0;',
-    'const float observerAltitude    = 10.0;',
+    'const float planetRadius        = ' + SKY_PLANET_RADIUS.toFixed(1) + ';',
+    'const float observerAltitude    = ' + SKY_OBSERVER_ALTITUDE.toFixed(1) + ';',
     'const float atmosphereHeight    = 80.0;',
     'const float rayleighScaleHeight = 8.0;',
     'const float mieScaleHeight      = 1.2;',
@@ -1928,6 +1931,9 @@
         ctx.fillRect(st.x, st.y, st.size, st.size);
       }
     }
+
+    // The distant planet occludes stars, behind weather and the landscape.
+    drawPlanetSurface(cw, ch, skyBottomPx);
 
     // Weather clouds — drawn last in the sky clip so they sit over the stars
     // and sun/moon (cloud occlusion), behind the parallax mountains (drawn

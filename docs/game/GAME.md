@@ -99,6 +99,7 @@ quantities, unit prices, and haul value while the mine is paused).
 | `250/270/280-shop-*.js` | the STORE modal spec + routing (250) and its workshop/shelf item builders (270/280) |
 | `297-cargo-manifest.js` | current cargo inspection: grouped mineral quantities, exact prices, responsive pages, and modal input |
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
+| `156-render-planet.js` | pixel-art continents and oceans below the sky horizon, lit by the existing day/night cycle |
 | `340-jello.js` | slime soft bodies, continuous gel rendering, and the topology-independent actor-intent seam |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |
