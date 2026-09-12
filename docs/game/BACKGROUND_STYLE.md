@@ -69,6 +69,7 @@ These colours appear in **exactly one place** and nowhere else. Reserving them g
 | Each `BG.bgPermafrostFeature` / `bgCrystalFeature` | Their biome's feature accent only (kept in palette but presently unused after the wall-pattern rewrite — Stage 6a reintroduces) | Other biomes |
 | Ore palette colours | Ore tiles only (per MINERALS_BIBLE) | Backgrounds |
 | `SKY.planet*` colours | Distant orbital land, ocean, coast and cloud streaks | Foreground, mountains, underground walls |
+| `TREES_FLOWER_PETAL` `#eee9d7` | Tiny warm-white flowers on one bush variation | Other foliage, sky, underground walls |
 
 **The `redBright` + `warmGlow` shared use** is intentional: distant outpost lights blinking on far ridges reuse the same red/amber language as the player's nearby station, so the world feels like one continuous frontier rather than two unrelated layers.
 
