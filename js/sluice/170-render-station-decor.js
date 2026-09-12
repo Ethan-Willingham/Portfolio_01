@@ -206,7 +206,9 @@
     // gets a 1-px highlight in the regular bgX (which is lighter than
     // wallX), bottom-right gets a 1-px shadow in wallMortar. The contrast
     // sells the block-with-depth read without adding more colours.
-    wallTopsoil:    '#36240e',  // v10.41 lightened from #1c1208 to match the lighter bgTopsoil
+    wallTopsoil:    '#342b21',  // muted compacted earth; also anchors the shallow cut bank
+    wallTopsoilLight: '#40372c',
+    wallTopsoilShade: '#282119',
     wallBedrock:    '#2b2925',  // v16.4 lightened (was #15140e) with bgBedrock — oil renders near-black, so the bedrock cave wall must not be near-black too
     wallSubsoil:    '#24282b',
     wallSubsoilLight: '#303438',
@@ -363,7 +365,50 @@
     return c;
   }
 
-  function buildTopsoilWallPattern()    { return buildSubtleWallPattern(0x70150100, BG.wallTopsoil,    BG.bgTopsoil);    }
+  // Compacted earth has shallow, interrupted bedding, distinct from the
+  // fractured stone below and the loose material on the gameplay plane.
+  function buildTopsoilWallPattern() {
+    var c = document.createElement('canvas'), width = 768, height = 512;
+    c.width = width; c.height = height;
+    var g = c.getContext('2d'), pixels = g.createImageData(width, height);
+    var base = nightSkyHexRGB(BG.wallTopsoil), light = nightSkyHexRGB(BG.wallTopsoilLight);
+    var shade = nightSkyHexRGB(BG.wallTopsoilShade), contrast = 0.45;
+    var rows = 9, edges = [], patches = [];
+    for (var x = 0; x < width; x++) {
+      // Adjacent beds vary independently in height. Periodic anchors
+      // close both texture edges without evenly spaced horizontal rules.
+      for (var row = -1; row <= rows + 1; row++) {
+        var id = (row + rows) % rows;
+        var bend = biomeWallNoise(x, 0, width, 6, 1, 773 + id * 17);
+        var nibble = biomeWallNoise(x, 0, width, 19, 1, 941 + id * 11);
+        edges[row + 1] = row * height / rows +
+          (tileHash01(id, 0, 761) - 0.5) * 22 + (bend - 0.5) * 22 + (nibble - 0.5) * 5;
+        patches[row + 1] = biomeWallNoise(x + id * 73, 0, width, 9, 1, 1051 + id * 13);
+      }
+      var band = 0;
+      for (var y = 0; y < height; y++) {
+        while (band < rows + 1 && y >= edges[band + 1]) band++;
+        var id = (band - 1 + rows) % rows;
+        var f = (y - edges[band]) / (edges[band + 1] - edges[band]);
+        var patch = patches[band];
+        // Broad flat clay tones, with only short stretches of bedding
+        // recessed. No bright speckles, outlined clods, or cloudy wash.
+        var tone = (tileHash01(id, 0, 769) - 0.5) * 0.7 + (patch > 0.56 ? 0.18 : -0.07);
+        var reach = Math.max(0, patch - 0.42) * 0.32;
+        if (f < reach) tone -= 0.42;
+        if (patch > 0.67 && f < 0.022) tone = -0.80;
+        var accent = tone < 0 ? shade : light, amount = Math.abs(tone) * contrast;
+        var grain = (tileHash01(x, y, 1091) - 0.5) * 0.7;
+        var at = (y * width + x) * 4;
+        pixels.data[at] = base.r + (accent.r - base.r) * amount + grain;
+        pixels.data[at + 1] = base.g + (accent.g - base.g) * amount + grain;
+        pixels.data[at + 2] = base.b + (accent.b - base.b) * amount + grain;
+        pixels.data[at + 3] = 255;
+      }
+    }
+    g.putImageData(pixels, 0, 0);
+    return c;
+  }
   function buildBedrockWallPattern()    { return buildSubtleWallPattern(0xBED20CC1, BG.wallBedrock,    BG.bgBedrock);    }
 
   // Periodic value noise keeps the irregular boundary masks seamless.

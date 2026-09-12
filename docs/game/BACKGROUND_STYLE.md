@@ -44,7 +44,7 @@ Every layer occupies a *narrower band of the value/saturation scale* than the la
 | **Distant stars** (sky-reserved) | 35–95 | 0–18 | `SKY.starDim` → `SKY.starHot` |
 | **Underground biome fill** (cave edges, behind-tile failsafe) | 8–35 | 8–35 | `BG.bgTopsoil` `#5a3e22` through `BG.bgMantle` |
 | **Surface cut bank** | 14–50 | 10–45 | `BG.surfaceBank*`, `surfaceHumus`, and `surfaceRoot*`; quieter than diggable topsoil |
-| **Underground wall pattern** (parallax background layer) | 5–18 | 8–30 | `BG.wallTopsoil` `#36240e` through `BG.wallCrystal`, plus shared `BG.wallMortar` `#06050a` |
+| **Underground wall pattern** (parallax background layer) | 5–22 | 8–40 | Muted earth `BG.wallTopsoil` `#342b21` through `BG.wallCrystal`, plus legacy noise specks in `BG.wallMortar` `#06050a` |
 
 Note the **wall is darker than the biome fill** by design — typically ~half the value. This is what makes the cave read as "behind" rather than "loose dirt." See §10 for the architecture.
 
@@ -220,6 +220,26 @@ The occlusion model makes this easy: any new background layer is just another dr
 - **Restyle the wall:** edit `buildSubtleWallPattern` (or a per-biome `build<Biome>WallPattern`) and the `BG.wall*` / `BG.bg*` palette. Patterns are cached lazily — clear `biomeWallCache` + `biomeWallFillCache` for a live rebuild.
 - **Add a deeper parallax layer:** draw it in the undergroundBg loop BEFORE the wall `fillRect`, with a *higher* parallax constant (more lag = further back). Each layer is one `fillRect` with its own pattern + parallax matrix. Obey §3 — every layer further back occupies a narrower, darker value band.
 - **Parallax constants** sit next to `BIOME_WALL_TILE_PX`: `BIOME_WALL_PARALLAX_X = 0.55`, `BIOME_WALL_PARALLAX_Y = 0.70`. See §8.
+
+### Topsoil wall (September 2026)
+
+The first 60 m uses compacted earth with uneven, interrupted bedding in
+`buildTopsoilWallPattern`. This replaces the legacy repeating bright and
+dark speckles. Its broad horizontal soil layers differ from both the loose
+foreground material and the angular rock faces below.
+
+- **Palette:** `wallTopsoil` is `#342b21`, with `wallTopsoilLight` `#40372c`
+  and `wallTopsoilShade` `#282119`. Muted warm browns, 45 percent contrast
+  around the base, and fine grain keep detail behind the foreground. The
+  base also anchors the existing surface-bank bake for a coherent handoff.
+- **Texture:** one deterministic 768 by 512 canvas. Bedding varies in depth,
+  thickness, and length; occasional short recesses suggest erosion. Large
+  patches have flat tones, with no outlined clods, brick grid, glints, or
+  soft cloud shading. Roots remain confined to the shallow surface bank.
+- **Integration:** retain the wall's X/Y parallax, surface clipping, bank
+  and root fades, and the existing six-tile blend into subsoil at 60 m.
+  The cached texture repeats across both axes and never rebuilds on scroll.
+  Terrain, lighting, and gameplay keep their existing behavior.
 
 ### Subsoil wall and geological transitions (v26.95)
 
