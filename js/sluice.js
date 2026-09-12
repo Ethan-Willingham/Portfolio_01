@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.97';
+  var GAME_VERSION = 'v26.98';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -59678,8 +59678,9 @@
      -> the loop threw every frame -> black screen (v23.65/66). Keep it here.
 
      Current-game mapping (towns + No Man's Zone expansion not built yet):
-       above ground  -> 'towns'  : the 8 town themes cycle (so all are heard)
-       underground   -> 'underground' : depth picks the bed track (l1/l2/l3) + danger override
+       above ground  -> 'towns' : warm cues with quiet intervals
+       underground   -> 'underground' : depth/danger select the next cue
+       elevation     -> current songs and quiet intervals continue across boundaries
        death         -> the lament one-shot, fired once on the gameOver edge
        day/night     -> night thins/darkens the above-ground music
        fast fall     -> the filter dips for a muffled plunge */
@@ -59710,16 +59711,16 @@
 
       // surface vs underground, with a hysteresis band so it does not flap
       // when the player hovers at the lip of a shaft.
-      var down = (SKY_ROWS + 50) * TILE;                  // ~50 blocks deep: underground music takes over
-      var up   = (SKY_ROWS + 48) * TILE;                  // ~48 blocks: back to surface music (hysteresis)
+      var down = (SKY_ROWS + 50) * TILE;                  // ~50 blocks deep: prefer underground for the next cue
+      var up   = (SKY_ROWS + 48) * TILE;                  // ~48 blocks: prefer surface cues again (hysteresis)
       var underground = (_audio.mode === 'underground') ? (player.y > up) : (player.y > down);
       var mode = underground ? 'underground' : 'towns';
       if (mode !== _audio.mode) { SluiceAudio.setMusic(mode); _audio.mode = mode; _audio.depthRows = -1; }
 
       // Low-fuel / low-hull stings (Affect): ONE sting per excursion below
-      // the 30% warning band — the console lamp + the L4 danger music are
-      // the visual / musical twins (§13: never audio-only) — re-armed only
-      // after recovering past 40% so gauge jitter can't re-fire it.
+      // the 30% warning band. Warning SFX stay immediate; L4 is eligible for
+      // the next music interval. Re-arm only after recovering past 40% so
+      // gauge jitter cannot re-fire the warning.
       var fuelFrac = maxFuel ? (player.fuel / maxFuel) : 1;
       var maxH = (typeof getMaxHull === 'function') ? getMaxHull() : 0;
       var hullFrac = maxH ? (player.hull / maxH) : 1;
@@ -59728,14 +59729,15 @@
       if (hullFrac < 0.30 && !_audio.alertHull) { _audio.alertHull = true; sfxPlay('alert-hull'); }
       else if (hullFrac > 0.40) _audio.alertHull = false;
 
+      // Feed actual depth on both sides of the music-context boundary, so the
+      // filter cannot jump from zero to 50 rows when the preferred cue changes.
+      var rows = Math.max(0, Math.floor(player.y / TILE) - SKY_ROWS);
+      if (rows !== _audio.depthRows) { SluiceAudio.setDepth(rows); _audio.depthRows = rows; }
       if (underground) {
-        var rows = Math.max(0, Math.floor(player.y / TILE) - SKY_ROWS);
-        if (rows !== _audio.depthRows) { SluiceAudio.setDepth(rows); _audio.depthRows = rows; }
         var danger = (fuelFrac < 0.30) || (hullFrac < 0.30);
         if (danger !== _audio.danger) { SluiceAudio.setDanger(danger); _audio.danger = danger; }
       } else {
         if (_audio.danger) { SluiceAudio.setDanger(false); _audio.danger = false; }
-        if (_audio.depthRows !== 0) { SluiceAudio.setDepth(0); _audio.depthRows = 0; }
         // day/night: 1 at noon (bright/full), 0 at midnight (thin/dark).
         var day = 0.5 + 0.5 * Math.sin((timeOfDay - 0.25) * 6.2831853);
         if (Math.abs(day - _audio.tod) > 0.02) { SluiceAudio.setTimeOfDay(day); _audio.tod = day; }

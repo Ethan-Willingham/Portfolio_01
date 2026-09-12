@@ -8,8 +8,8 @@
 
    Implements MUSIC_BIBLE.md §5:
      - bus graph + ducking
-     - a Minecraft-cadence pool player (towns + travel)
-     - a layer mixer (underground depth, combat, day/night)
+     - one sparse cue scheduler (towns, travel, underground)
+     - depth-aware cue selection, combat layering, day/night treatment
      - depth + fast-fall lowpass filters
      - a small one-shot / SFX player
 
@@ -62,11 +62,11 @@
      SluiceAudio.setSfxVolume(0.8)                  // the SFX slider gate
 
    Design (MUSIC_BIBLE / MUSIC_PROMPT_SYSTEM Architecture v2):
-     towns      = the active town's theme loops (warmest, most present cue)
-     travel     = a 6-cue pool cycles with long silences (no immediate repeat)
-     underground= depth picks ONE bed track (l1 shallow / l2 mid / l3 deep),
-                  crossfading as you cross biome bands; l4 = danger override;
-                  depth also muffles the bed via a lowpass
+     towns      = warm themes with long quiet stretches between songs
+     travel     = a cue pool with long silences (no immediate repeat)
+     underground= depth and danger choose the NEXT cue, after a quiet gap;
+                  crossing a boundary never interrupts the current song;
+                  depth slowly muffles the score via a lowpass
      combat     = a tense layer fades in over the current bed, releases on end
      death      = hard duck + the solo-piano lament one-shot
      events     = short one-shots, tuned pickups
@@ -96,7 +96,7 @@ var SluiceAudio = (function () {
     // on every boot. Uncomment them (+ re-add to TRAVEL_POOL) when the files land.
     'travel1': 'travel1.m4a', 'travel2': 'travel2.m4a', 'travel3': 'travel3.m4a',
     /* 'travel4': 'travel4.m4a', 'travel5': 'travel5.m4a', */ 'travel6': 'travel6.m4a',
-    // underground bed layers (ride gains by depth)
+    // underground cues (chosen by depth for the next music interval)
     'ug-l1': 'ug-l1.m4a', 'ug-l2': 'ug-l2.m4a', 'ug-l3': 'ug-l3.m4a', 'ug-l4': 'ug-l4.m4a',
     // combat layers
     'combat1': 'combat1.m4a', 'combat2': 'combat2.m4a',
@@ -227,12 +227,12 @@ var SluiceAudio = (function () {
   // travel4/travel5 omitted: never produced (commented out of MANIFEST); re-add here when the files land.
   var TRAVEL_POOL = ['travel1', 'travel2', /* 'travel3' decringed */ 'travel6'];
   // 8 town themes. Until towns exist to fly to, these cycle above ground with
-  // short gaps (mode 'towns') so all of them are heard; mode 'town' (single,
+  // long gaps (mode 'towns') so all of them are heard; mode 'town' (single,
   // by id) is kept for when the towns + No Man's Zone expansion ships.
   // town4 + town6 pulled from rotation (cringe opening riffs); town9 = town4 replacement (organ keeper).
   // All three stay in MANIFEST so they load + re-enable in one edit.
   var TOWN_POOL = ['town1', 'town2', 'town3', /* 'town4' decringed */ 'town5', /* 'town6' decringed */ 'town7', 'town8', 'town9'];
-  var TOWN_GAP_MIN_S = 12, TOWN_GAP_MAX_S = 30;   // above-ground: short pauses between cues
+  var TOWN_GAP_MIN_S = 90, TOWN_GAP_MAX_S = 240;  // let the town ambience breathe
 
   // ----- tunables (MUSIC_BIBLE §5) ------------------------------------------
   var MASTER_HEADROOM = 0.6;      // ~ -6 dB
@@ -243,11 +243,8 @@ var SluiceAudio = (function () {
   var FALL_LP_HZ      = 2500;     // muffled while plunging
   var DUCK_STD = { amt: 0.35, atk: 0.06, rel: 0.5 };
   var DUCK_HARD = { amt: 0.12, atk: 0.05, rel: 1.5 };
-  // Underground: ONE track at a time (no stacking), chosen by DEPTH BAND. The
-  // band track loops until you cross into another band, then crossfades to it.
-  // L4 is the danger track (crossfades in on low fuel/hull, out when safe) and
-  // overrides the band while active. Depth ALSO muffles via the lowpass filter
-  // (setDepthFilter) on top of whichever band is playing.
+  // Underground depth and danger influence the next cue only. Songs finish
+  // once, then leave room for the drill and ambience, even in the danger band.
   var UG_BANDS = ['ug-l1', 'ug-l2', 'ug-l3'];     // depth band index -> bed track
   // Band boundaries in rows below surface, aligned to biome gates (010-constants
   // LAYERS): l1 = surface..permafrost (<130, the bomb-gated barrier band),
@@ -255,8 +252,8 @@ var SluiceAudio = (function () {
   var UG_BAND_ROWS = [130, 248];
   var UG_BAND_HYST = 12;                          // rows of slack at each boundary so hovering doesn't flap
   var UG_DANGER = 'ug-l4';                         // danger override track
-  var UG_CROSSFADE = 2.0;                         // seconds, track-to-track + entry
-  var UG_GAP_MIN_S = 120, UG_GAP_MAX_S = 240;     // long Minecraft pauses between underground cues
+  var UG_GAP_MIN_S = 150, UG_GAP_MAX_S = 300;     // deeper trips get more breathing room
+  var MUSIC_FADE_IN_S = 6, MUSIC_FADE_OUT_S = 8; // gentle cue edges, scheduled on the audio clock
 
   // ----- SFX tunables (SFX_BIBLE §5/§8) -------------------------------------
   var SFX_PITCH_JITTER  = 0.03;   // ±3% per-trigger playbackRate jitter (per-sound override via manifest j)
@@ -288,11 +285,9 @@ var SluiceAudio = (function () {
   var music = {
     mode: null,                   // 'town' | 'towns' | 'travel' | 'underground' | null
     townId: null,
-    poolTimer: null, lastPool: -1, pool: null,
-    current: null,                // current pool/town voice
-    ug: null,                     // underground voice (one track at a time)
-    ugBand: -1, ugDanger: false,  // current depth band (0/1/2; -1 = none) + danger override
-    ugGap: false, ugTimer: null,  // underground: true during the silent gap; the play/gap timer
+    timer: null, nextAt: 0, lastCue: null,
+    current: null,                // one world-music cue, allowed to finish across contexts
+    ugBand: -1, ugDanger: false,  // selection for the next underground cue
     combat: null,                 // combat layer voice
     oneShot: null,                // tracked music-bus one-shot (death sting / event cue) for the readout
     depthRows: 0,                 // last depth in rows below surface (drives the band)
@@ -454,56 +449,73 @@ var SluiceAudio = (function () {
     } catch (e) {}
   }
 
-  // ===== pool player (towns + travel) =======================================
-  function stopPool() {
-    if (music.poolTimer) { clearTimeout(music.poolTimer); music.poolTimer = null; }
-    if (music.current) { stopVoice(music.current, 0.8); music.current = null; }
-    music.pool = null;
+  // ===== world music: one cue, a quiet gap, then a fresh context pick ========
+  function stopMusic() {
+    if (music.timer !== null) { clearTimeout(music.timer); music.timer = null; }
+    music.nextAt = 0;
+    if (music.current) {
+      music.current.src.onended = null;
+      stopVoice(music.current, 0.8); music.current = null;
+    }
+    music.ugBand = -1; music.ugDanger = false;
   }
-  function townLoop() {
-    var name = TOWN_THEME[music.townId];
-    if (!has(name)) return;                              // silent until loaded
-    music.current = startLoop(name, 0);
-    if (music.current) ramp(music.current.gain.gain, 1, 1.2);
+  function queueMusic(gap) {
+    if (music.timer !== null) clearTimeout(music.timer);
+    music.nextAt = tnow() + gap;
+    music.timer = setTimeout(playMusicCue, Math.max(0, gap * 1000));
   }
-  // generic cycle pool: play one (no immediate repeat), silence for a gap, next.
-  // Used by both the travel pool and the pre-expansion town-theme cycle.
-  function poolStart(names, minGap, maxGap) { music.pool = { names: names, min: minGap, max: maxGap }; poolPlayOne(); }
-  function poolPlayOne() {
-    var cfg = music.pool; if (!cfg || !ctx) return;
-    var avail = [], i;
-    for (i = 0; i < cfg.names.length; i++) if (has(cfg.names[i])) avail.push(i);
-    if (!avail.length) { music.poolTimer = setTimeout(poolPlayOne, 8000); return; } // recheck as files load
-    var pick; do { pick = avail[Math.floor(Math.random() * avail.length)]; } while (avail.length > 1 && pick === music.lastPool);
-    music.lastPool = pick;
-    var s = ctx.createBufferSource(); s.buffer = buffers[cfg.names[pick]]; s.loop = false;
-    var g = ctx.createGain(); g.gain.value = 1; s.connect(g); g.connect(musicBus);
-    try { s.start(); } catch (e) {}
-    music.current = { src: s, gain: g, name: cfg.names[pick], t0: tnow(), dur: (buffers[cfg.names[pick]] ? buffers[cfg.names[pick]].duration : 0), loop: false };
+  function nextMusicName() {
+    if (music.mode === 'underground') {
+      music.ugBand = ugBandForRows(music.depthRows);
+      if (music.ugDanger && has(UG_DANGER)) return UG_DANGER;
+      return ugTrackForBand(music.ugBand);
+    }
+    var names = music.mode === 'town' ? [TOWN_THEME[music.townId]] :
+      (music.mode === 'travel' ? TRAVEL_POOL : TOWN_POOL);
+    var avail = names.filter(has);
+    if (avail.length > 1) avail = avail.filter(function (name) { return name !== music.lastCue; });
+    return avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
+  }
+  function playMusicCue() {
+    music.timer = null;
+    if (!music.mode || !ctx || music.current) return;
+    // Timers can keep ticking while the AudioContext is suspended. Preserve
+    // the quiet interval on its clock, and never pile up unheard sources.
+    var remaining = music.nextAt - tnow();
+    if (remaining > 0 || ctx.state !== 'running') {
+      music.timer = setTimeout(playMusicCue, Math.max(1000, remaining * 1000));
+      return;
+    }
+    var name = nextMusicName();
+    if (!name) { queueMusic(6); return; }               // retry as assets decode
+    var s = ctx.createBufferSource(); s.buffer = buffers[name]; s.loop = false;
+    var g = ctx.createGain(); g.gain.value = 0;
+    s.connect(g); g.connect(musicBus);
+    var at = tnow(), dur = s.buffer.duration;
+    var fadeIn = Math.min(MUSIC_FADE_IN_S, dur / 4);
+    var fadeOut = Math.min(MUSIC_FADE_OUT_S, dur / 4);
+    var voice = { src: s, gain: g, name: name, mode: music.mode, t0: at, dur: dur, loop: false };
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(1, at + fadeIn);
+    g.gain.setValueAtTime(1, at + dur - fadeOut);
+    g.gain.linearRampToValueAtTime(0, at + dur);
     s.onended = function () {
-      if (music.pool !== cfg) return;                    // pool switched; stop this chain
-      var gap = (cfg.min + Math.random() * (cfg.max - cfg.min)) * 1000;
-      music.poolTimer = setTimeout(poolPlayOne, gap);
+      try { s.disconnect(); g.disconnect(); } catch (e) {}
+      if (music.current !== voice) return;             // stopped / replaced elsewhere
+      music.current = null;
+      if (!music.mode) return;
+      var min = TOWN_GAP_MIN_S, max = TOWN_GAP_MAX_S;
+      if (music.mode === 'underground') { min = UG_GAP_MIN_S; max = UG_GAP_MAX_S; }
+      else if (music.mode === 'travel') { min = POOL_GAP_MIN_S; max = POOL_GAP_MAX_S; }
+      queueMusic(min + Math.random() * (max - min));
     };
+    try { s.start(at); }
+    catch (e) { s.onended = null; s.disconnect(); g.disconnect(); queueMusic(6); return; }
+    music.current = voice; music.lastCue = name;
+    setTimeOfDay(music.timeOfDay);
   }
 
-  // ===== underground: one track at a time, chosen by depth band =============
-  // The bed track is picked by how deep you are (UG_BANDS / UG_BAND_ROWS): it
-  // loops until you cross into another band, then crossfades to that band's
-  // track. The danger track (UG_DANGER) overrides the band while fuel/hull is
-  // low and crossfades back to the depth-correct band when safe. Depth also
-  // muffles via setDepthFilter, independent of which band is playing.
-  function ugStartVoice(name, loopIt, fadeIn) {
-    if (!ctx || !has(name)) return null;
-    var s = ctx.createBufferSource(); s.buffer = buffers[name]; s.loop = !!loopIt;
-    var g = ctx.createGain(); g.gain.value = 0; s.connect(g); g.connect(musicBus);
-    try { s.start(); } catch (e) {}
-    var nv = { src: s, gain: g, name: name, t0: tnow(), dur: buffers[name].duration, loop: !!loopIt };
-    ramp(nv.gain.gain, 1, fadeIn || UG_CROSSFADE);
-    if (music.ug) stopVoice(music.ug, UG_CROSSFADE);      // crossfade the old one out
-    music.ug = nv;
-    return nv;
-  }
+  // ===== underground cue selection =========================================
   // depth (rows below surface) -> band index 0/1/2, with hysteresis so hovering
   // a boundary does not flap. Multi-band jumps (teleport/rover) resolve in one
   // call. ugBand < 0 means a fresh pick (entry, or after the danger track).
@@ -524,50 +536,10 @@ var SluiceAudio = (function () {
     }
     return null;
   }
-  // Play the current depth band's cue ONCE, then a long Minecraft pause, then
-  // play again (re-picking the band for wherever you are by then). Danger
-  // overrides with a looped L4 (no pauses) until safe. The ambience bed carries
-  // the silences; depth still muffles via setDepthFilter on top.
-  function ugPlay(fadeIn) {
-    if (music.mode !== 'underground' || !ctx) return;
-    if (music.ugTimer) { clearTimeout(music.ugTimer); music.ugTimer = null; }
-    music.ugGap = false;
-    if (music.ugDanger) {                                  // danger: hold L4 looped, no gaps
-      if (has(UG_DANGER) && !(music.ug && music.ug.name === UG_DANGER)) ugStartVoice(UG_DANGER, true, fadeIn || 1.0);
-      return;
-    }
-    var b = ugBandForRows(music.depthRows || 0); music.ugBand = b;
-    var name = ugTrackForBand(b);
-    if (!name) { music.ugTimer = setTimeout(function () { ugPlay(fadeIn); }, 6000); return; } // retry as files load
-    var nv = ugStartVoice(name, false, fadeIn || UG_CROSSFADE);   // play the cue ONCE (not looping)
-    var dur = (nv && nv.dur) || 150;
-    music.ugTimer = setTimeout(function () {               // at the cue's tail: fade, long gap, then replay
-      if (music.ug) stopVoice(music.ug, 1.5);
-      music.ugGap = true;
-      var gap = (UG_GAP_MIN_S + Math.random() * (UG_GAP_MAX_S - UG_GAP_MIN_S)) * 1000;
-      music.ugTimer = setTimeout(function () { ugPlay(UG_CROSSFADE); }, gap);
-    }, Math.max(2000, (dur - 1.5) * 1000));
-  }
-  // called by setDepth: follow the depth band only while a cue is actually
-  // PLAYING; during a silent gap or danger just remember the band for next time.
-  function ugApplyBand(rows, fadeIn) {
-    if (music.mode !== 'underground' || !ctx) return;
-    music.ugBand = ugBandForRows(rows);
-    if (music.ugDanger || music.ugGap) return;             // do not break the silence / danger
-    var name = ugTrackForBand(music.ugBand);
-    if (!name || (music.ug && music.ug.name === name)) return;
-    ugPlay(fadeIn);                                        // band changed mid-cue: switch + restart the cycle
-  }
-  function startUnderground() { music.ugBand = -1; music.ugGap = false; ugPlay(2.0); }
-  function stopUnderground() {
-    if (music.ugTimer) { clearTimeout(music.ugTimer); music.ugTimer = null; }
-    if (music.ug) { stopVoice(music.ug, 1.2); music.ug = null; }
-    music.ugBand = -1; music.ugGap = false;
-  }
   function rideDanger(on) {
+    // The warning SFX remains immediate. The score never cancels a quiet gap
+    // or restarts a song when fuel/hull crosses the warning threshold.
     music.ugDanger = !!on;
-    if (music.mode !== 'underground' || !ctx) return;
-    ugPlay(1.0);                                           // on -> L4 looped; off -> resume the band/gap cycle
   }
 
   // ===== combat layer =======================================================
@@ -1124,35 +1096,34 @@ var SluiceAudio = (function () {
   // ===== filters ============================================================
   function setDepthFilter(rows) {
     var hz = Math.max(DEPTH_LP_MIN_HZ, DEPTH_LP_MAX_HZ - rows * 100);
-    ramp(depthFilter && depthFilter.frequency, hz, 0.25);
+    if (depthFilter) depthFilter.frequency.setTargetAtTime(hz, tnow(), 4);
     ramp(sfxFilter && sfxFilter.frequency, hz, 0.25);
   }
   function setFall(on) { ramp(fallFilter && fallFilter.frequency, on ? FALL_LP_HZ : DEPTH_LP_MAX_HZ, on ? 0.15 : 0.25); }
   function setTimeOfDay(t01) {
     music.timeOfDay = Math.max(0, Math.min(1, t01));
-    ramp(nightLP && nightLP.frequency, 8000 + music.timeOfDay * 12000, 2);      // night = darker
-    if (musicBus && (music.mode === 'town' || music.mode === 'travel')) {
-      ramp(musicBus.gain, 0.7 + music.timeOfDay * 0.3, 2);                       // night thins it
-    }
+    // Keep the treatment with the audible cue as the player crosses a boundary.
+    var mode = music.current ? music.current.mode : music.mode;
+    var surface = mode === 'town' || mode === 'towns' || mode === 'travel';
+    ramp(nightLP && nightLP.frequency, surface ? 8000 + music.timeOfDay * 12000 : DEPTH_LP_MAX_HZ, 8);
+    ramp(musicBus && musicBus.gain, surface ? 0.7 + music.timeOfDay * 0.3 : 1, 8);
   }
 
-  // ===== music context switch ===============================================
+  // ===== music context selection ============================================
   function setMusic(mode, opts) {
     ensure(); opts = opts || {};
-    if (mode === music.mode && (mode !== 'town' || opts.townId === music.townId)) return;
-    stopPool(); stopUnderground();
-    if (musicBus) ramp(musicBus.gain, 1, 0.3);            // reset any night-thinning for non-above-ground
     music.mode = mode;
-    if (mode === 'town') { music.townId = (opts.townId == null ? 0 : opts.townId); townLoop(); setTimeOfDay(music.timeOfDay); }
-    else if (mode === 'towns') { poolStart(TOWN_POOL, TOWN_GAP_MIN_S, TOWN_GAP_MAX_S); setTimeOfDay(music.timeOfDay); }
-    else if (mode === 'travel') { poolStart(TRAVEL_POOL, POOL_GAP_MIN_S, POOL_GAP_MAX_S); setTimeOfDay(music.timeOfDay); }
-    else if (mode === 'underground') { startUnderground(); }
+    music.townId = opts.townId == null ? 0 : opts.townId;
+    if (!mode) { stopMusic(); return; }
+    // Context is a suggestion for the NEXT song. Keep both the active cue and
+    // the existing quiet deadline when entering/leaving the mine or a town.
+    if (!music.current && music.timer === null) queueMusic(0);
   }
 
   // ===== now-playing reporter (for the in-game readout) =====================
   // Returns every currently-audible music voice with its position + length, so
   // the game can show what is playing (and ALL of them when layered, e.g. the
-  // underground stems or combat over a bed). Inaudible layers (gain ~0) and
+  // combat over a cue). Inaudible layers (gain ~0) and
   // finished one-shots (a travel/town cue mid-gap) are omitted.
   function reportVoice(v, out) {
     if (!v || !v.src) return;
@@ -1167,7 +1138,6 @@ var SluiceAudio = (function () {
     if (!ctx) return [];
     var out = [];
     reportVoice(music.current, out);
-    reportVoice(music.ug, out);
     reportVoice(music.combat, out);
     reportVoice(music.oneShot, out);
     return out;
@@ -1187,10 +1157,10 @@ var SluiceAudio = (function () {
     // the SFX slider (SFX_BIBLE §13): gates the four IEZA buses as one, under the master
     setSfxVolume: function (v) { sfxVol = Math.max(0, Math.min(1, v)); if (sfxMaster) ramp(sfxMaster.gain, sfxVol, 0.2); },
 
-    // music context: 'town' (opts.townId), 'travel', 'underground', or null
+    // music context: 'town' (opts.townId), 'towns', 'travel', 'underground', or null
     setMusic: setMusic,
-    // depth in tile-rows below the surface: drives the lowpass + underground layer mix
-    setDepth: function (rows) { rows = rows || 0; music.depthRows = rows; setDepthFilter(rows); if (music.mode === 'underground') ugApplyBand(rows); },
+    // Real depth drives a slow filter drift and selection of the NEXT cue.
+    setDepth: function (rows) { rows = Math.max(0, rows || 0); music.depthRows = rows; setDepthFilter(rows); music.ugBand = ugBandForRows(rows); },
     setDanger: rideDanger,                                // low fuel/hull -> true
     combat: setCombat,                                    // (on, which=1|2)
     setTimeOfDay: setTimeOfDay,                           // 0 night .. 1 day (above ground)
@@ -1198,7 +1168,7 @@ var SluiceAudio = (function () {
     duck: duck,
     death: function () {
       stopActionSfx(); sfxAmbience.setZone(null);
-      stopPool(); stopUnderground();
+      stopMusic();
       if (music.combat) { stopVoice(music.combat, 0.4); music.combat = null; }
       music.mode = null;
       duck(DUCK_HARD.amt, DUCK_HARD.atk, DUCK_HARD.rel);

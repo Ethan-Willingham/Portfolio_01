@@ -4,6 +4,16 @@ The canonical music + audio design reference for Sluice. Sister doc to `BUILDING
 
 **Direction (Architecture v2, 2026-05-28):** the score is one warm late-night **jazz trio**, clean and hi-fi, sparse in the Minecraft sense, refracted across a hub-and-spoke world of towns. This **supersedes** the original frontier-Soviet folk direction, which the owner rejected after hearing it. The new direction was derived from a 27-song reference list the owner supplied; see §6. The game-music principles in §2 are genre-agnostic and survived the pivot intact; only the palette (§6) and the soundtrack architecture (§3) were rewritten.
 
+**Live playback direction (2026-09-12):** In the public single-town game, composed
+music plays once, with 90 to 240 seconds of ambience between surface/travel cues
+and 150 to 300 seconds between underground cues. Songs fade in over 6 seconds
+and out over their final 8 seconds. Elevation, depth band, and low fuel/hull
+choose the next song; they never interrupt the current song or reset a quiet
+interval. Depth filtering drifts slowly using actual depth on both sides of the
+surface/underground selection boundary. Warning SFX still fire immediately.
+This supersedes the older continuous-loop and boundary-crossfade directions
+below for the live game. Death retains its immediate lament.
+
 ---
 
 ## §1. Mission
@@ -404,3 +414,5 @@ Contexts: 4 town themes, a 6-cue travel pool (Minecraft cadence), a 4-layer unde
 
 - **2026-05-28 (v1)**: Initial bible from the 8-agent game-music research pass. Frontier-Soviet folk palette. Retired.
 - **2026-05-28 (v2)**: Full pivot to a warm, clean, late-night jazz trio after the owner heard the Soviet direction and rejected it, then supplied a 27-song jazz reference list (researched in a 6-agent pass, same date). The genre-agnostic principles (§2), the Web Audio patterns (§5, plus new §5.13 pool player, §5.14 day/night, §5.15 fast-fall), the economics (§7), and the legal posture survived. Rewrote the architecture (§3) to a hub-and-spoke world (4 town themes refracted by lead, a 6-cue travel pool, a 4-layer underground bed, a combat layer, a death sting, event stingers), the palette (§6) to the warm jazz trio, and the transformation recipe (§4.3) to clean (crackle and lo-fi grit removed; the owner wants it clear). Companion prompts in `MUSIC_PROMPT_SYSTEM.md` and `audio-lab.html`.
+
+- **2026-09-12**: Owner requested room for silence and unobtrusive elevation changes. Unified world music under one cue/gap schedule; depth and danger select the next cue after the gap. Added slow fades, longer surface pauses, and continuous depth-filter input.
