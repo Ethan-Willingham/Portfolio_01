@@ -146,7 +146,7 @@
      keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
   var _pauseBtnHiddenForShop = null;
   function syncPauseBtnForShop() {
-    var up = shopOpen || shopState !== 'closed';
+    var up = shopOpen || shopState !== 'closed' || ledgerOpen;
     if (up === _pauseBtnHiddenForShop) return;
     _pauseBtnHiddenForShop = up;
     var pb = document.getElementById('gm-pause-btn');
@@ -154,6 +154,7 @@
   }
 
   /* ---- Game Loop ---- */
+  var ledgerPadHeld = {};
   function loop(time) {
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
@@ -215,6 +216,23 @@
     if (terrainChunkRebuildBoostFrames > 0) terrainChunkRebuildBoostFrames--;
     if (dt > 1 / 45) fluidPerfStress = Math.min(2, fluidPerfStress + dt * 4);
     else if (dt < 1 / 55) fluidPerfStress = Math.max(0, fluidPerfStress - dt * 1.5);
+
+    // The collection page owns input and holds the mine still while browsing.
+    // Poll the controller here because the normal poll is below gameplay input.
+    if (ledgerOpen) {
+      if (typeof gamepadTick === 'function') gamepadTick(dt);
+      var ledgerNow = {};
+      for (var ledgerKey in keys) {
+        ledgerNow[ledgerKey] = !!keys[ledgerKey];
+        if (keys[ledgerKey] && !ledgerPadHeld[ledgerKey]) ledgerKeyDown(ledgerKey);
+        keys[ledgerKey] = false;
+      }
+      ledgerPadHeld = ledgerNow;
+      render();
+      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      return;
+    }
+    ledgerPadHeld = {};
 
     // Restart confirmation. R is always available, but requires a second
     // press so an accidental tap doesn't wipe the run.

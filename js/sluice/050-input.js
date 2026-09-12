@@ -1,6 +1,13 @@
   /* ---- Input ---- */
   function setupInput() {
     window.addEventListener('keydown', function (e) {
+      // Native menu buttons and sliders own their keyboard input while paused.
+      if (gamePaused && e.key !== 'Escape') return;
+      if (!gamePaused && ledgerOpen) {
+        e.preventDefault();
+        if (!e.repeat) ledgerKeyDown(e.key);
+        return;
+      }
       keys[e.key] = true;
       if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key) !== -1) e.preventDefault();
       // Escape toggles the pause screen during normal play. If a shop/modal is
@@ -13,6 +20,12 @@
       // promising ESC. While paused the handler still owns Escape (the
       // bath's poll is frozen, so deferring there would dead-key resume).
       if (e.key === 'Escape' && !e.repeat) {
+        if (gamePaused) {
+          keys['Escape'] = false;
+          e.preventDefault();
+          if (!pauseMenuBack()) resumeGame();
+          return;
+        }
         var shopUp = (UI_NEW && shopState !== 'closed') || shopOpen ||
                      (typeof bathMode !== 'undefined' && bathMode && !gamePaused);
         if (!shopUp) {
@@ -102,11 +115,9 @@
     if (_gmResumeBtn) _gmResumeBtn.addEventListener('click', function () { resumeGame(); });
     var _gmRestartBtn = document.getElementById('gm-restart-btn');
     if (_gmRestartBtn) _gmRestartBtn.addEventListener('click', function () {
-      // Persistent-profile model (047-save.js): the pause-screen Restart is
-      // the ONLY full wipe, so it confirms and erases the save first.
-      var ok = true;
-      try { ok = window.confirm('Start a NEW GAME? Your saved progress will be erased.'); } catch (e) {}
-      if (!ok) return;
+      // This button lives on the explicit erase-save confirmation page.
+      // Death and the R bailout still use the ordinary town respawn.
+      if (!gamePaused || pauseMenuPage !== 'restart') return;
       saveWipe();
       init();
       resumeGame();
@@ -189,6 +200,7 @@
   function handleMouseMove(e) {
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
+    if (ledgerOpen) { ledgerPointerMove(p.x, p.y); return; }
     if (itemWheel.open && itemWheel.pointerId === 'mouse') {
       updateItemWheelHover(p.x, p.y);
     }
@@ -199,6 +211,7 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id) {
+    if (ledgerOpen) { ledgerPointerDown(x, y); return; }
     touch.active = true;
     touch.x = x;
     touch.y = y;
@@ -348,6 +361,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (ledgerOpen) { ledgerPointerMove(x, y); return; }
     touch.x = x;
     touch.y = y;
     // v26.20 — a drag past a small threshold means this press became a
@@ -378,6 +392,7 @@
     }
   }
   function processPointerUp(id) {
+    if (ledgerOpen) { touch.active = false; return; }
     // The item wheel is fully click-driven (handled on pointer-down), so
     // pointer-up no longer commits or closes it.
     if (UI_NEW && USE_NEW_SHOP_UI && shopState !== 'closed') {

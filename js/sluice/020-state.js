@@ -840,7 +840,7 @@
   var UIT_EDGE      = '#0a0c10';   // panel outlines
   var UIT_TEXT      = '#eee1b8';   // titles / stencil cream (warm on purpose)
   var UIT_BODY      = '#c9c7b8';   // body + secondary text
-  var UIT_DIM       = '#8590a0';   // dim labels (cool, sits in the field hue)
+  var UIT_DIM       = '#929dac';   // secondary legends, AA on gunmetal panels
   var UIT_GOLD      = '#d9ad3f';   // the one action accent
   var UIT_GOLD_HI   = '#ffe066';   // accent hover
   var UIT_GOLD_TEXT = '#241a08';   // dark text on gold
@@ -1468,7 +1468,7 @@
     var ov = document.getElementById('game-pause');
     if (!ov) return;
     var s = document.getElementById('gm-pause-sub');
-    if (s) s.textContent = sub || '';
+    if (s) s.textContent = sub === 'window lost focus' ? 'Paused while you were away.' : sub || '';
     // v24.126: autosave status on the pause card (saveStatusLine, 047-save.js).
     // Snapshot at pause time; the loop is stopped so it doesn't tick.
     var sv = document.getElementById('gm-pause-save');

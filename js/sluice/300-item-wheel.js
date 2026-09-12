@@ -8,8 +8,8 @@
   //   - PC: hold [Q] as a shortcut (cursor drives selection, release fires).
   // Existing T / B / 1 / 2 hotkeys remain as muscle-memory shortcuts.
   // ========================================================================
-  var ITEM_WHEEL_R = 70;
-  var ITEM_WHEEL_RI = 22;
+  var ITEM_WHEEL_R = 92;
+  var ITEM_WHEEL_RI = 26;
   var itemWheel = {
     open: false,
     cx: 0, cy: 0,         // wheel center, canvas px
@@ -21,10 +21,10 @@
 
   function getWheelItems() {
     return [
-      { id: 'tele',    label: 'WARP',    count: teleporters, color: '#c8a4ff' },
-      { id: 'small',   label: 'BOMB-S',  count: bombsSmall,  color: '#ff8040' },
-      { id: 'large',   label: 'BOMB-L',  count: bombsLarge,  color: '#ff3020' },
-      { id: 'balloon', label: 'BALLOON', count: balloons,    color: '#ffd060' }
+      { id: 'tele',    label: 'WARP',    count: teleporters },
+      { id: 'small',   label: 'BOMB-S',  count: bombsSmall },
+      { id: 'large',   label: 'BOMB-L',  count: bombsLarge },
+      { id: 'balloon', label: 'BALLOON', count: balloons }
     ];
   }
   function fireWheelItem(idx) {
@@ -37,7 +37,7 @@
   }
   function itemWheelButtonRect() {
     var ch = consoleHeight();
-    var bw = 56, bh = 36;
+    var bw = 56, bh = 44;
     return { x: 8, y: viewH - ch - bh - 6, w: bw, h: bh };
   }
   function pointInItemWheelButton(x, y) {
@@ -50,7 +50,7 @@
     itemWheel.open = true;
     itemWheel.cx = r.x + r.w + ITEM_WHEEL_R + 4;
     itemWheel.cy = r.y + r.h / 2 - 12;
-    if (itemWheel.cy < ITEM_WHEEL_R + 8) itemWheel.cy = ITEM_WHEEL_R + 8;
+    itemWheel.cy = Math.max(ITEM_WHEEL_R + 8, Math.min(viewH - ITEM_WHEEL_R - 8, itemWheel.cy));
     if (itemWheel.cx + ITEM_WHEEL_R > viewW - 8) itemWheel.cx = viewW - 8 - ITEM_WHEEL_R;
     itemWheel.pointerId = id;
     itemWheel.hover = -1;
@@ -77,7 +77,7 @@
   function drawItemWheelButton() {
     var r = itemWheelButtonRect();
     // Plate base + bevel
-    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillStyle = itemWheel.open ? UIT_PANEL_SEL : UIT_PANEL;
     ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
     ctx.fillRect(r.x, r.y, r.w, 1);
@@ -85,7 +85,7 @@
     ctx.fillStyle = UIMAT_PLATE_SHADOW;
     ctx.fillRect(r.x, r.y + r.h - 1, r.w, 1);
     ctx.fillRect(r.x + r.w - 1, r.y, 1, r.h);
-    ctx.fillStyle = UI_OUTLINE;
+    ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(r.x - 1, r.y - 1, r.w + 2, 1);
     ctx.fillRect(r.x - 1, r.y + r.h, r.w + 2, 1);
     ctx.fillRect(r.x - 1, r.y - 1, 1, r.h + 2);
@@ -94,19 +94,17 @@
     drawConsoleRivet(r.x + r.w - 4, r.y + 2);
     drawConsoleRivet(r.x + 2, r.y + r.h - 4);
     drawConsoleRivet(r.x + r.w - 4, r.y + r.h - 4);
-    var lbl = 'ITEMS';
-    var lw = stencilTextWidth(lbl, 1);
-    drawStencilText(lbl, r.x + Math.floor((r.w - lw) / 2), r.y + 5, 1, '#d4a838');
+    nsText('ITEMS', r.x + r.w / 2, r.y + 6, 10, itemWheel.open ? UIT_GOLD : UIT_TEXT, 'center');
+    ctx.fillStyle = UIT_INSET_DK;
+    ctx.fillRect(r.x + 5, r.y + 21, r.w - 10, r.h - 26);
     var total = teleporters + balloons + bombsSmall + bombsLarge;
     var s = '×' + total;
     var sw = stencilTextWidth(s, 2);
-    drawStencilText(s, r.x + Math.floor((r.w - sw) / 2), r.y + r.h - 18, 2, total > 0 ? '#40c060' : '#52504a');
-    // Active glow when wheel is open
+    drawStencilText(s, r.x + Math.floor((r.w - sw) / 2), r.y + r.h - 20, 2, total > 0 ? UIT_GOLD : UIT_DIM);
+    // A crisp gold edge marks the open selector.
     if (itemWheel.open) {
       ctx.save();
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = '#ffd060';
-      ctx.strokeStyle = '#ffd060';
+      ctx.strokeStyle = UIT_GOLD;
       ctx.lineWidth = 1;
       ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
       ctx.restore();
@@ -263,11 +261,11 @@
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    drawItemWheelButton();
-    if (!itemWheel.open) { ctx.restore(); return; }
+    if (!itemWheel.open) { drawItemWheelButton(); ctx.restore(); return; }
     // Dim backdrop so the wheel pops
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, 0, viewW, viewH);
+    drawItemWheelButton();
     var cx = itemWheel.cx, cy = itemWheel.cy;
     var R = ITEM_WHEEL_R, Ri = ITEM_WHEEL_RI;
     var items = getWheelItems();
@@ -281,19 +279,17 @@
       ctx.arc(cx, cy, R, a0, a1);
       ctx.arc(cx, cy, Ri, a1, a0, true);
       ctx.closePath();
-      if (hovered && enabled) ctx.fillStyle = '#5a4220';
-      else if (enabled)       ctx.fillStyle = '#241c14';
-      else                    ctx.fillStyle = '#15110d';
+      if (hovered && enabled) ctx.fillStyle = UIT_PANEL_SEL;
+      else if (enabled)       ctx.fillStyle = UIT_PANEL;
+      else                    ctx.fillStyle = UIT_INSET;
       ctx.fill();
-      ctx.strokeStyle = hovered && enabled ? items[i].color : UI_OUTLINE;
+      ctx.strokeStyle = hovered && enabled ? UIT_GOLD : UIT_EDGE;
       ctx.lineWidth = hovered ? 2 : 1;
       ctx.stroke();
-      // Hovered wedge gets a soft neon edge along the outer arc
+      // The selected segment carries the same gold edge as the menu button.
       if (hovered && enabled) {
         ctx.save();
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = items[i].color;
-        ctx.strokeStyle = items[i].color;
+        ctx.strokeStyle = UIT_GOLD;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(cx, cy, R - 1, a0 + 0.04, a1 - 0.04);
@@ -306,30 +302,25 @@
       var lx = cx + Math.cos(mid) * lr;
       var ly = cy + Math.sin(mid) * lr;
       if (!enabled) ctx.globalAlpha = 0.3;
-      drawWheelItemIcon(items[i].id, lx, ly - 9, 18);
+      drawWheelItemIcon(items[i].id, lx, ly - 12, 22);
       ctx.globalAlpha = 1;
-      var lbl = items[i].label;
-      var lw = stencilTextWidth(lbl, 1);
-      drawStencilText(lbl, Math.round(lx - lw / 2), Math.round(ly + 3), 1, enabled ? items[i].color : '#52504a');
-      var cnt = '×' + items[i].count;
-      var cw = stencilTextWidth(cnt, 1);
-      drawStencilText(cnt, Math.round(lx - cw / 2), Math.round(ly + 13), 1, enabled ? '#d4a838' : '#52504a');
+      ukMono(items[i].label, Math.round(lx), Math.round(ly + 12), 11, enabled ? UIT_TEXT : UIT_DIM, 'center');
+      ukMono('x' + items[i].count, Math.round(lx), Math.round(ly + 28), 11, enabled ? UIT_GOLD : UIT_DIM, 'center');
     }
     // Center hub
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = UIT_INSET_DK;
     ctx.beginPath(); ctx.arc(cx, cy, Ri - 1, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#5a4220'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.lineWidth = 1; ctx.stroke();
     // Center label
     var msg, msgColor;
     if (itemWheel.hover >= 0 && items[itemWheel.hover].count > 0) {
-      msg = 'FIRE'; msgColor = items[itemWheel.hover].color;
+      msg = 'FIRE'; msgColor = UIT_GOLD;
     } else if (itemWheel.hover >= 0) {
-      msg = 'EMPTY'; msgColor = '#a83020';
+      msg = 'EMPTY'; msgColor = UIT_RED;
     } else {
-      msg = 'PICK'; msgColor = '#d4a838';
+      msg = 'PICK'; msgColor = UIT_BODY;
     }
-    var mw = stencilTextWidth(msg, 1);
-    drawStencilText(msg, Math.round(cx - mw / 2), Math.round(cy - 4), 1, msgColor);
+    ukMono(msg, Math.round(cx), Math.round(cy + 4), 11, msgColor, 'center');
     ctx.restore();
   }
 

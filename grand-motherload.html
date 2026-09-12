@@ -35,6 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="sluice-menu.css?v=v26.78">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -102,178 +103,6 @@
       transition: opacity 0.5s ease;
       pointer-events: none;
     }
-
-    /* === Pause overlay (v17.82) — covers the canvas while the loop is
-       halted on focus loss. Gunmetal + Brass skin (v26.20): the site's
-       --d-* tokens are overridden HERE, scoped to the overlay, so the
-       card flips with the game theme without touching style.css. === */
-    #game-pause {
-      position: absolute;
-      inset: 0;
-      z-index: 12;                 /* above #game-intro (10) */
-      display: none;               /* JS toggles .is-visible */
-      align-items: center;
-      justify-content: center;
-      background: rgba(8,10,14,0.74);
-      -webkit-backdrop-filter: blur(2px);
-      backdrop-filter: blur(2px);
-      font-family: var(--d-mono);
-      --d-bg-raised: #252a33;      /* UIT_PANEL */
-      --d-rule: #313845;
-      --d-rule-strong: #3d4655;
-      --d-accent: #d9ad3f;         /* UIT_GOLD */
-      --d-text-bright: #eee1b8;    /* UIT_TEXT */
-      --d-text-dim: #8590a0;       /* UIT_DIM */
-    }
-    #game-pause.is-visible { display: flex; }
-    #game-pause .pause-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8em;
-      min-width: 210px;
-      padding: 1.6em 1.8em;
-      background: var(--d-bg-raised);
-      border: 1px solid var(--d-rule-strong);
-      box-shadow: 0 10px 44px rgba(0,0,0,0.55);
-    }
-    #game-pause .pause-title {
-      font-size: 0.8rem;
-      letter-spacing: 0.34em;
-      text-transform: uppercase;
-      text-align: center;
-      color: var(--d-accent);
-    }
-    #game-pause .pause-sub {
-      margin-top: -0.4em;
-      margin-bottom: 0.4em;
-      font-size: 0.58rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-align: center;
-      color: var(--d-text-dim);
-    }
-    #game-pause button {
-      font-family: var(--d-mono);
-      font-size: 0.74rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      padding: 0.7em 1.2em;
-      background: transparent;
-      border: 1px solid var(--d-rule-strong);
-      color: var(--d-text-bright);
-      cursor: pointer;
-      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-    }
-    #game-pause button:hover {
-      background: var(--d-accent);
-      border-color: var(--d-accent);
-      color: #0d0a04;
-    }
-    #game-pause button.pause-secondary { color: var(--d-text-dim); }
-    /* Autosave status footer on the pause card (filled by showPauseOverlay). */
-    #game-pause .pause-save {
-      margin-top: 0.2em;
-      font-size: 0.58rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-align: center;
-      color: var(--d-text-dim);
-    }
-    #game-pause .pause-save:empty { display: none; }
-    /* Volume control row on the pause card. Drives the SluiceAudio master. */
-    #game-pause .pause-vol {
-      display: flex;
-      align-items: center;
-      gap: 0.7em;
-      margin-top: 0.5em;
-      padding-top: 0.9em;
-      border-top: 1px solid var(--d-rule);
-    }
-    #game-pause .pause-vol-label {
-      flex: 0 0 auto;
-      font-size: 0.6rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--d-text-dim);
-    }
-    #game-pause input[type="range"] {
-      flex: 1 1 auto;
-      min-width: 0;
-      height: 2px;
-      accent-color: var(--d-accent);
-      cursor: pointer;
-    }
-    /* Segmented option rows on the OPTIONS pane. */
-    #game-pause .pause-opt {
-      display: flex;
-      align-items: center;
-      gap: 0.7em;
-      margin-top: 0.5em;
-      padding-top: 0.9em;
-      border-top: 1px solid var(--d-rule);
-    }
-    #game-pause .pause-opt button {
-      flex: 1 1 0;
-      padding: 0.55em 0.4em;
-      font-size: 0.62rem;
-    }
-    #game-pause .pause-opt button.is-active {
-      background: var(--d-accent);
-      border-color: var(--d-accent);
-      color: #0d0a04;
-    }
-    /* One-line footnote under an option row that needs a word of context. */
-    #game-pause .pause-opt-note {
-      margin: -0.3em 0 0;
-      font-size: 0.6rem;
-      line-height: 1.5;
-      opacity: 0.62;
-    }
-    /* OPTIONS pane: a second page inside the same pause card. The card swaps
-       pages via the .show-options class; the controls persist to 'sluice.opt.*'
-       through window.SluiceOptions (js/sluice/052-options.js). */
-    #game-pause .pause-page-main,
-    #game-pause .pause-page-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8em;
-    }
-    #game-pause .pause-page-options { display: none; }
-    #game-pause .pause-card.show-options .pause-page-main { display: none; }
-    #game-pause .pause-card.show-options .pause-page-options { display: flex; }
-
-    /* Manual pause button (v17.83) — small + subtle, under the top-left
-       version + FPS readout. Above the canvas but below #game-pause (12) so
-       the overlay covers it while paused. */
-    #gm-pause-btn {
-      position: absolute;
-      top: 28px;
-      left: 6px;
-      z-index: 8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      padding: 0;
-      background: rgba(15,11,4,0.5);
-      border: 1px solid var(--d-rule-strong);
-      color: var(--d-text-bright);
-      cursor: pointer;
-      opacity: 0.5;
-      transition: opacity 0.12s ease, background 0.12s ease,
-                  border-color 0.12s ease, color 0.12s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #gm-pause-btn:hover,
-    #gm-pause-btn:focus-visible {
-      opacity: 1;
-      background: var(--d-accent);
-      border-color: var(--d-accent);
-      color: #0d0a04;
-      outline: none;
-    }
-    #gm-pause-btn svg { width: 11px; height: 11px; fill: currentColor; display: block; }
 
     @media (min-width: 720px) {
       /* Desktop / wide: fill the viewport, game flush to the top. */
@@ -540,66 +369,59 @@
                 </svg>
               </button>
               <div id="game-intro"></div>
-              <!-- Pause overlay (v17.82). Shown when the window loses focus;
-                   the JS halts the render loop while it's up so the machine
-                   idles instead of cooking. -->
+              <!-- The pause menu uses the same material tokens as the canvas UI.
+                   Its controls stay native for keyboard and touch access. -->
               <div id="game-pause" aria-hidden="true">
-                <div class="pause-card" id="gm-pause-card">
-                  <div class="pause-page-main">
-                    <div class="pause-title">Paused</div>
-                    <div class="pause-sub" id="gm-pause-sub">press resume to begin</div>
-                    <button id="gm-resume-btn" type="button">Resume</button>
-                    <!-- "New Game" (was "Restart"): this button is the ONLY
-                         full save wipe (047-save.js), so the label has to say
-                         so. Death and R-bailout merely respawn at town. -->
-                    <button id="gm-restart-btn" class="pause-secondary" type="button">New Game</button>
-                    <button id="gm-options-btn" class="pause-secondary" type="button">Options</button>
-                    <!-- Autosave status footer. Filled by showPauseOverlay
-                         (020-state.js) from saveStatusLine (047-save.js). -->
-                    <div class="pause-save" id="gm-pause-save"></div>
+                <div class="pause-card" id="gm-pause-card" role="dialog" aria-modal="true" aria-labelledby="gm-menu-title" tabindex="-1">
+                  <header class="pause-header">
+                    <div class="pause-brand">Sluice <span>Mining operations</span></div>
+                    <h2 class="pause-title" id="gm-menu-title">Paused</h2>
+                    <p class="pause-sub" id="gm-pause-sub"></p>
+                  </header>
+                  <div class="pause-body">
+                    <div class="pause-page" data-pause-page="main">
+                      <button id="gm-resume-btn" class="pause-primary pause-nav" type="button"><span>Resume game</span><kbd>Esc</kbd></button>
+                      <button id="gm-options-btn" class="pause-nav" type="button"><span>Options<small>Audio, display &amp; comfort</small></span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
+                      <button id="gm-controls-btn" class="pause-nav" type="button"><span>Controls<small>Movement &amp; equipment</small></span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
+                      <div class="pause-new-run"><button id="gm-new-game-btn" class="pause-quiet" type="button">New game</button><span>Start over with a fresh save.</span></div>
+                    </div>
+                    <div class="pause-page" data-pause-page="options" hidden>
+                      <section class="pause-section pause-audio-section" aria-labelledby="gm-audio-title">
+                        <h3 id="gm-audio-title">Audio</h3>
+                        <div class="pause-setting"><label for="gm-vol">Master volume</label><output for="gm-vol" id="gm-vol-value">0%</output><input id="gm-vol" type="range" min="0" max="100" value="0"></div>
+                        <div class="pause-setting"><label for="gm-sfxvol">Sound effects</label><output for="gm-sfxvol" id="gm-sfxvol-value">100%</output><input id="gm-sfxvol" type="range" min="0" max="100" value="100"></div>
+                      </section>
+                      <section class="pause-section" aria-labelledby="gm-display-title">
+                        <h3 id="gm-display-title">Display</h3>
+                        <div class="pause-setting pause-setting-wide"><span id="gm-gfx-label">Graphics quality</span><div class="pause-segment" role="group" aria-labelledby="gm-gfx-label"><button id="gm-gfx-perf" type="button">Performance</button><button id="gm-gfx-bal" type="button">Balanced</button><button id="gm-gfx-ext" type="button">Extreme</button></div><p class="pause-note" id="gm-gfx-note">Full visual detail.</p></div>
+                      </section>
+                      <section class="pause-section pause-motion-section" aria-labelledby="gm-comfort-title">
+                        <h3 id="gm-comfort-title">Motion &amp; flashes</h3>
+                        <div class="pause-setting"><label for="gm-shake">Screen shake</label><output for="gm-shake" id="gm-shake-value">100%</output><input id="gm-shake" type="range" min="0" max="100" value="100"></div>
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-dmgflash-label">Damage flash</span><p class="pause-note">Red screen flash when hit.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-dmgflash-label"><button id="gm-dmgflash-off" type="button">Off</button><button id="gm-dmgflash-on" type="button">On</button></div></div>
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-lowflash-label">Reduce lightning</span><p class="pause-note">Suppress storm flashes.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-lowflash-label"><button id="gm-lowflash-off" type="button">Off</button><button id="gm-lowflash-on" type="button">On</button></div></div>
+                      </section>
+                      <section class="pause-section" aria-labelledby="gm-banya-title">
+                        <h3 id="gm-banya-title">In development</h3>
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-banya-label">Banya bathhouse</span><p class="pause-note">Add the unfinished bathhouse to town.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-banya-label"><button id="gm-banya-off" type="button">Off</button><button id="gm-banya-on" type="button">On</button></div></div>
+                      </section>
+                    </div>
+                    <div class="pause-page" data-pause-page="controls" hidden>
+                      <section class="pause-section"><h3>Movement</h3><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div></dl></section>
+                      <section class="pause-section"><h3>Equipment</h3><dl class="pause-bindings"><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
+                      <section class="pause-section"><h3>Touch &amp; controller</h3><p class="pause-help">On touch screens, use the direction pad to move and fly. Tap Items to select equipment.</p><p class="pause-help">On a controller, use the left stick to move, A to fly, and Start to pause.</p></section>
+                    </div>
+                    <div class="pause-page" data-pause-page="restart" hidden>
+                      <p class="pause-warning">Your saved progress will be erased.</p><p class="pause-help">This resets your mine, rig upgrades, cargo, and money. Your options stay the same.</p>
+                      <button id="gm-cancel-restart" class="pause-primary" type="button">Keep playing</button>
+                      <button id="gm-restart-btn" class="pause-danger" type="button">Erase save &amp; start over</button>
+                    </div>
                   </div>
-                  <!-- OPTIONS pane. Sliders + segmented rows persist to
-                       'sluice.opt.*' via window.SluiceOptions (052-options.js);
-                       the master slider keeps its original gm-vol wiring. -->
-                  <div class="pause-page-options">
-                    <div class="pause-title">Options</div>
-                    <div class="pause-vol">
-                      <span class="pause-vol-label">Master</span>
-                      <input id="gm-vol" type="range" min="0" max="100" value="0" aria-label="Audio volume">
-                    </div>
-                    <div class="pause-vol">
-                      <span class="pause-vol-label">SFX</span>
-                      <input id="gm-sfxvol" type="range" min="0" max="100" value="100" aria-label="Sound effects volume">
-                    </div>
-                    <div class="pause-opt">
-                      <span class="pause-vol-label">Graphics</span>
-                      <button id="gm-gfx-perf" type="button">Perf</button>
-                      <button id="gm-gfx-bal" type="button">Balanced</button>
-                      <button id="gm-gfx-ext" type="button">Extreme</button>
-                    </div>
-                    <div class="pause-vol">
-                      <span class="pause-vol-label">Shake</span>
-                      <input id="gm-shake" type="range" min="0" max="100" value="100" aria-label="Screen shake intensity">
-                    </div>
-                    <div class="pause-opt">
-                      <span class="pause-vol-label">Dmg flash</span>
-                      <button id="gm-dmgflash-on" type="button">On</button>
-                      <button id="gm-dmgflash-off" type="button">Off</button>
-                    </div>
-                    <div class="pause-opt">
-                      <span class="pause-vol-label">Low flash</span>
-                      <button id="gm-lowflash-off" type="button">Off</button>
-                      <button id="gm-lowflash-on" type="button">On</button>
-                    </div>
-                    <div class="pause-opt">
-                      <span class="pause-vol-label">Banya</span>
-                      <button id="gm-banya-off" type="button">Off</button>
-                      <button id="gm-banya-on" type="button">On</button>
-                    </div>
-                    <p class="pause-opt-note">The banya is half built. Switch it on and a bathhouse
-                      appears in town: walk in for hot water, steam, and slimes taking a soak.</p>
-                    <button id="gm-opt-back" class="pause-secondary" type="button">Back</button>
-                  </div>
+                  <footer class="pause-footer">
+                    <button id="gm-opt-back" class="pause-quiet" type="button" hidden>Back <kbd>Esc</kbd></button>
+                    <p class="pause-save" id="gm-pause-save"></p>
+                    <p class="pause-footnote" id="gm-menu-footnote" hidden>Changes apply immediately.</p>
+                  </footer>
                 </div>
               </div>
             </div>
@@ -751,6 +573,7 @@
 
       gmBtn.addEventListener('click', toggleFullscreen);
       document.addEventListener('keydown', function (e) {
+        if (document.getElementById('game-pause').classList.contains('is-visible')) return;
         if (e.key === 'f' || e.key === 'F') toggleFullscreen();
       });
 
@@ -767,109 +590,15 @@
       // Pressing Esc while in CSS-only fullscreen should also exit it,
       // matching the browser's native Esc-to-exit behavior.
       document.addEventListener('keydown', function (e) {
+        if (document.getElementById('game-pause').classList.contains('is-visible')) return;
         if (e.key === 'Escape' && cssOnlyFs) exitCssFs();
       });
     })();
   </script>
-  <script src="js/liquid-wgpu.js?v=v26.77"></script>
-  <script src="js/smoke-wgpu.js?v=v26.77"></script>
-  <script src="js/jello-wgpu.js?v=v26.77"></script>
-  <script src="js/audio.js?v=v26.77"></script>
-  <script>
-    // Pause-screen volume slider -> SluiceAudio master, persisted across sessions.
-    (function () {
-      var KEY = 'sluice.volume', slider = document.getElementById('gm-vol');
-      if (!slider) return;
-      function apply(v) { if (typeof SluiceAudio !== 'undefined' && SluiceAudio) SluiceAudio.setVolume(v); }
-      var saved = 0;   // muted by default; a returning player's saved level still wins below
-      try { var s = parseFloat(localStorage.getItem(KEY)); if (!isNaN(s)) saved = s; } catch (e) {}
-      saved = Math.max(0, Math.min(1, saved));
-      slider.value = Math.round(saved * 100);
-      apply(saved);
-      slider.addEventListener('input', function () {
-        var v = Math.max(0, Math.min(1, (parseFloat(slider.value) || 0) / 100));
-        apply(v);
-        try { localStorage.setItem(KEY, String(v)); } catch (e) {}
-      });
-    })();
-
-    // Pause-screen OPTIONS pane. The pane swaps in over the main pause page;
-    // every control persists to 'sluice.opt.*' and applies through
-    // window.SluiceOptions (js/sluice/052-options.js). This inline script runs
-    // BEFORE js/sluice.js, so initial control state is read straight from
-    // localStorage and the handlers fall back to bare persistence in the
-    // (unreachable in practice) window before the game boots; 052 re-applies
-    // every persisted key at boot anyway.
-    (function () {
-      var card = document.getElementById('gm-pause-card');
-      var openBtn = document.getElementById('gm-options-btn');
-      var backBtn = document.getElementById('gm-opt-back');
-      if (!card || !openBtn || !backBtn) return;
-      openBtn.addEventListener('click', function () { card.classList.add('show-options'); });
-      backBtn.addEventListener('click', function () { card.classList.remove('show-options'); });
-      // Snap back to the main page whenever the overlay hides, so the next
-      // pause opens on Resume/Restart, not a stale options page.
-      var pauseEl = document.getElementById('game-pause');
-      if (pauseEl && window.MutationObserver) {
-        new MutationObserver(function () {
-          if (!pauseEl.classList.contains('is-visible')) card.classList.remove('show-options');
-        }).observe(pauseEl, { attributes: true, attributeFilter: ['class'] });
-      }
-
-      var PREFIX = 'sluice.opt.';
-      function read(key) { try { return localStorage.getItem(PREFIX + key); } catch (e) { return null; } }
-      function setOpt(key, val) {
-        if (window.SluiceOptions && window.SluiceOptions.set) { window.SluiceOptions.set(key, val); return; }
-        try { localStorage.setItem(PREFIX + key, String(val)); } catch (e) {}
-      }
-
-      // A 0..100 range input persisted as a 0..1 float.
-      function wireSlider(id, key, fallback) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        var saved = parseFloat(read(key));
-        if (isNaN(saved)) saved = fallback;
-        el.value = Math.round(Math.max(0, Math.min(1, saved)) * 100);
-        el.addEventListener('input', function () {
-          setOpt(key, Math.max(0, Math.min(1, (parseFloat(el.value) || 0) / 100)));
-        });
-      }
-
-      // A row of buttons acting as a single-choice select: highlight the
-      // active one, persist + apply on click.
-      function wireSeg(key, fallback, pairs) {
-        var btns = [];
-        function sync(val) {
-          for (var i = 0; i < btns.length; i++) btns[i].el.classList.toggle('is-active', btns[i].val === val);
-        }
-        for (var i = 0; i < pairs.length; i++) {
-          var el = document.getElementById(pairs[i][0]);
-          if (!el) continue;
-          (function (b) {
-            btns.push(b);
-            b.el.addEventListener('click', function () { setOpt(key, b.val); sync(b.val); });
-          })({ el: el, val: pairs[i][1] });
-        }
-        var saved = read(key);
-        sync(saved === null ? fallback : saved);
-      }
-
-      wireSlider('gm-sfxvol', 'sfxvol', 1);   // SluiceAudio sfxMaster default = 1
-      wireSlider('gm-shake', 'shake', 1);     // full screenshake by default
-      // 'extreme' mirrors the unconditional boot preset in 380-gm-presets-boot.js.
-      wireSeg('gfx', 'extreme', [
-        ['gm-gfx-perf', 'performance'],
-        ['gm-gfx-bal', 'balanced'],
-        ['gm-gfx-ext', 'extreme']
-      ]);
-      wireSeg('dmgflash', '1', [['gm-dmgflash-on', '1'], ['gm-dmgflash-off', '0']]);
-      wireSeg('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
-      // The banya (ENABLE_BATH). Default off = the shipped flag; 052-options.js
-      // flips it live, and 010-constants.js re-reads the key at boot.
-      wireSeg('banya', '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
-    })();
-
-  </script>
-  <script src="js/sluice.js?v=v26.77"></script>
+  <script src="js/liquid-wgpu.js?v=v26.78"></script>
+  <script src="js/smoke-wgpu.js?v=v26.78"></script>
+  <script src="js/jello-wgpu.js?v=v26.78"></script>
+  <script src="js/audio.js?v=v26.78"></script>
+  <script src="js/sluice.js?v=v26.78"></script>
 </body>
 </html>

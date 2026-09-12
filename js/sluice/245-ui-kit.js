@@ -36,7 +36,7 @@
   //     pips: { cur: 2, max: 6 },     // optional tier pips
   //     stat: { label: 'POWER', cur: 'LV 2', next: 'LV 3', delta: '+1' },
   //     desc: 'One plain sentence about what it does.',
-  //     priceLabel: '$900',           // right side of the list row
+  //     priceLabel: '$900',           // right side of the secondary row line
   //     priceTier: 'gold',            // 'gold' | 'red' | 'dim'
   //     act: { label: 'BUY  $900', enabled: true,
   //            reason: 'SHORT $220', reasonKind: 'short' },
@@ -193,6 +193,36 @@
     ctx.restore();
     return w;
   }
+  // Preserve the readable type size when a label outgrows its column.
+  function ukFitText(str, maxW, px, mono) {
+    str = String(str || '');
+    var measure = mono ? ukMonoW : nsTextW;
+    if (measure(str, px) <= maxW) return str;
+    var tail = '...';
+    if (measure(tail, px) > maxW) return '';
+    while (str && measure(str + tail, px) > maxW) str = str.slice(0, -1);
+    return str.replace(/\s+$/, '') + tail;
+  }
+  function ukStencilLines(str, maxW, px, maxLines) {
+    var words = String(str || '').split(/\s+/);
+    var lines = [];
+    while (words.length && lines.length < maxLines) {
+      if (lines.length === maxLines - 1) {
+        lines.push(ukFitText(words.join(' '), maxW, px));
+        break;
+      }
+      var line = words.shift();
+      while (words.length && nsTextW(line + ' ' + words[0], px) <= maxW) line += ' ' + words.shift();
+      lines.push(ukFitText(line, maxW, px));
+    }
+    return lines;
+  }
+  function ukButtonLabel(r, label, px, color, squish) {
+    var lines = ukStencilLines(label, r.w - 16, px, 2);
+    var lineH = px + 4;
+    var top = r.y + squish + Math.round((r.h - squish - (lines.length * lineH - 4)) / 2);
+    for (var i = 0; i < lines.length; i++) nsText(lines[i], r.x + r.w / 2, top + i * lineH, px, color, 'center');
+  }
   // Word-wrapped centered mono block. Returns the number of lines drawn.
   function ukMonoWrap(str, cx, y, maxW, px, lineH, color, maxLines) {
     if (!str) return 0;
@@ -251,7 +281,7 @@
       ctx.fillRect(r.x, r.y + squish, r.w, 2);
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
       ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3);
-      nsText(label, r.x + r.w / 2, r.y + squish + (r.h - squish - px) / 2, px, UIT_GOLD_TEXT, 'center');
+      ukButtonLabel(r, label, px, UIT_GOLD_TEXT, squish);
     } else if (kind === 'ghost') {
       // Secondary affordance: hollow, brass-edged, quiet next to the gold.
       ctx.fillStyle = hover ? 'rgba(255,216,150,0.08)' : 'rgba(0,0,0,0.18)';
@@ -259,15 +289,14 @@
       ctx.strokeStyle = hover ? UIT_GOLD : '#8a6a30';
       ctx.lineWidth = 1;
       ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
-      nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px,
-             hover ? UIT_GOLD_HI : UIT_TEXT, 'center');
+      ukButtonLabel(r, label, px, hover ? UIT_GOLD_HI : UIT_TEXT, 0);
     } else {
       ctx.fillStyle = UIT_INSET;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(r.x, r.y, r.w, 2);
       var lockCol = (kind === 'short') ? UIT_RED : UIT_DIM;
-      nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px, lockCol, 'center');
+      ukButtonLabel(r, label, px, lockCol, 0);
     }
   }
 
@@ -403,6 +432,12 @@
     } else {
       w = Math.min(viewW - mx * 2, Math.round(560 * us), Math.round(viewW * 0.72));
       h = Math.min(M.bottom - my * 2, Math.round(480 * us), Math.round(M.bottom * 0.84));
+      // Short landscape screens need the available field for readable
+      // columns; retain the inset frame instead of shrinking the text.
+      if (M.bottom < 360) {
+        w = Math.min(viewW - mx * 2, Math.round(viewW * 0.90));
+        h = M.bottom - my * 2;
+      }
     }
     var x = Math.round((viewW - w) / 2);
     // Portrait: anchor to the bottom so the top band stays clear for the
@@ -410,11 +445,11 @@
     // action button sits in thumb reach. Landscape/desktop: centered.
     var y = M.portrait ? (M.bottom - my - h) : Math.round((M.bottom - h) / 2);
     var pad = Math.round(12 * us);
-    var headH = Math.round(44 * us);
+    var headH = Math.max(44, Math.round(44 * us));
     // The strip under the header holds the tab row at the root and the
     // breadcrumb (BACK + trail) inside a pushed level.
     var tabH = (ukModal.tabs.length > 1 || ukStackDepth() > 0)
-      ? Math.max(34, Math.round(36 * us)) : 0;
+      ? Math.max(42, Math.round(36 * us)) : 0;
     var bodyX = x + pad;
     var bodyY = y + headH + tabH + Math.round(8 * us);
     var bodyW = w - pad * 2;
@@ -509,7 +544,7 @@
     var tx = L.x + L.pad;
     var ty = L.y + L.headH + Math.round(6 * us);
     var th = L.tabH - Math.round(6 * us);
-    var bw = Math.max(56, Math.round(64 * us));
+    var bw = Math.max(72, Math.round(64 * us));
     var hov = (ukHover === 'uk:back');
     ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(tx - 1, ty - 1, bw + 2, th + 2);
@@ -525,7 +560,7 @@
       ctx.fillRect(cxx + a, cyy - a - 1, 2, 2);
       ctx.fillRect(cxx + a, cyy + a - 1, 2, 2);
     }
-    var bpx = Math.round(8.5 * us);
+    var bpx = Math.max(11, Math.round(8.5 * us));
     nsText('BACK', cxx + arm + Math.round(6 * us), ty + Math.round((th - bpx) / 2), bpx,
            hov ? UIT_TEXT : UIT_BODY);
     UK_HIT.push({ id: 'uk:back', x: tx - 4, y: ty - 4, w: bw + 8, h: th + 8 });
@@ -535,21 +570,18 @@
     for (var i = 0; i < ukState.stack.length; i++) {
       trail += (trail ? ' ▸ ' : '') + (ukState.stack[i].title || '');
     }
-    var tpx = Math.round(8.5 * us);
+    var tpx = Math.max(11, Math.round(8.5 * us));
     var maxW = L.w - L.pad * 2 - bw - Math.round(14 * us);
     var tw = nsTextW(trail, tpx);
-    if (tw > maxW && tw > 0) tpx = Math.max(6, tpx * maxW / tw);
-    nsText(trail, tx + bw + Math.round(10 * us), ty + Math.round((th - tpx) / 2), tpx, UIT_DIM);
+    if (tw > maxW && ukState.stack.length) trail = ukState.stack[ukState.stack.length - 1].title || trail;
+    nsText(ukFitText(trail, maxW, tpx), tx + bw + Math.round(10 * us), ty + Math.round((th - tpx) / 2), tpx, UIT_DIM);
   }
 
   function ukDrawHeader(L) {
     var us = L.us;
     var cy = L.y + Math.round(L.headH / 2);
-    // title
-    var tpx = Math.round(15 * us);
-    nsText(ukModal.title, L.x + L.pad + 2, cy - Math.round(tpx / 2), tpx, UIT_TEXT);
     // close button (top-right square)
-    var cw = Math.max(34, Math.round(30 * us));
+    var cw = Math.max(36, Math.round(30 * us));
     var cr = { x: L.x + L.w - cw - Math.round(7 * us), y: L.y + Math.round((L.headH - cw) / 2), w: cw, h: cw };
     var chov = (ukHover === 'uk:close');
     ctx.fillStyle = UIT_EDGE;
@@ -566,8 +598,16 @@
     }
     UK_HIT.push({ id: 'uk:close', x: cr.x - 4, y: cr.y - 4, w: cr.w + 8, h: cr.h + 8 });
     // money chip, right-aligned against the close button
-    var chipH = Math.round(28 * us);
-    nsDrawMoneyChip(cr.x - Math.round(10 * us), L.y + Math.round((L.headH - chipH) / 2), us, 'right');
+    var moneyScale = Math.max(11 / 15, us);
+    var chipH = Math.round(28 * moneyScale);
+    var chip = nsDrawMoneyChip(cr.x - Math.round(10 * us), L.y + Math.round((L.headH - chipH) / 2), moneyScale, 'right');
+    var tpx = Math.max(13, Math.round(15 * us));
+    var titleX = L.x + L.pad + 2;
+    var titleLines = ukStencilLines(ukModal.title, chip.x - titleX - Math.round(10 * us), tpx, 2);
+    var titleLineH = tpx + 4;
+    for (var ti = 0; ti < titleLines.length; ti++) {
+      nsText(titleLines[ti], titleX, cy - Math.round((titleLines.length * titleLineH - 4) / 2) + ti * titleLineH, tpx, UIT_TEXT);
+    }
     // hairline under the header
     ctx.fillStyle = 'rgba(0,0,0,0.42)';
     ctx.fillRect(L.x + 1, L.y + L.headH, L.w - 2, 2);
@@ -600,8 +640,8 @@
         ctx.fillStyle = 'rgba(255,216,150,0.05)';
         ctx.fillRect(rx, ty, rw, th);
       }
-      var px = Math.round(9.5 * us);
-      nsText(def.label, rx + rw / 2, ty + (th - px) / 2, px,
+      var px = Math.max(11, Math.round(9.5 * us));
+      nsText(ukFitText(def.label, rw - 12, px), rx + rw / 2, ty + (th - px) / 2, px,
              active ? UIT_TEXT : (hov ? UIT_BODY : UIT_DIM), 'center');
       UK_HIT.push({ id: 'uk:tab:' + def.id, x: rx, y: ty - 4, w: rw, h: th + 8 });
     }
@@ -614,12 +654,11 @@
     ukInset(L.listX, L.listY, L.listW, L.listH);
     if (n === 0) {
       ukMono('Nothing here yet.', L.listX + L.listW / 2, L.listY + L.listH / 2,
-             Math.max(10, Math.round(11 * us)), UIT_DIM, 'center');
+             Math.max(11, Math.round(11 * us)), UIT_DIM, 'center');
       return;
     }
     var ideal = Math.round(54 * us);
-    var rowH = Math.max(Math.max(40, Math.round(40 * us)), Math.min(ideal, Math.floor(L.listH / n)));
-    if (rowH < 44 && L.listH / n < 44) rowH = 44;   // touch floor; overflow scrolls
+    var rowH = Math.max(44, Math.round(40 * us), Math.min(ideal, Math.floor(L.listH / n)));
     var totalH = rowH * n;
     ukState.scrollMax = Math.max(0, totalH - L.listH);
     if (ukState.scroll > ukState.scrollMax) ukState.scroll = ukState.scrollMax;
@@ -657,31 +696,33 @@
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(ix, iy, iw, iw);
       if (it.icon) it.icon(ix + iw / 2, iy + iw / 2, iw * 0.82);
-      // name + sub
-      var namePx = Math.round(8.5 * us);
-      var subPx = Math.max(9, Math.round(9.5 * us));
+      // Give the name its own line; state and price share the line below.
+      // Long text truncates within its column instead of shrinking.
+      var namePx = Math.max(11, Math.round(8.5 * us));
+      var subPx = Math.max(11, Math.round(9.5 * us));
       var tx0 = ix + iw + Math.round(9 * us);
-      var pricePx = Math.round(8.5 * us);
+      var pricePx = Math.max(11, Math.round(8.5 * us));
+      var rightX = L.listX + L.listW - Math.max(10, Math.round(10 * us));
       var priceW = it.priceLabel ? nsTextW(it.priceLabel, pricePx) : 0;
-      var nameMaxW = (L.listX + L.listW - Math.round(10 * us) - priceW - Math.round(8 * us)) - tx0;
-      var npx = namePx;
-      var nw = nsTextW(it.name, npx);
-      if (nw > nameMaxW && nw > 0) npx = Math.max(6, npx * nameMaxW / nw);
+      var nameMaxW = rightX - tx0 - (isFolder ? Math.round(16 * us) : 0);
+      var hasSub = !!(it.sub || it.priceLabel);
+      var textH = hasSub ? namePx + 6 + subPx : namePx;
+      var nameY = ry + Math.round((rowH - textH) / 2);
+      var subY = nameY + namePx + 6;
+      nsText(ukFitText(it.name, nameMaxW, namePx), tx0, nameY, namePx, selected ? UIT_TEXT : UIT_BODY);
       if (it.sub) {
-        nsText(it.name, tx0, ry + Math.round(rowH * 0.24) - Math.round(npx / 2) + 2, npx, selected ? UIT_TEXT : UIT_BODY);
-        ukMono(it.sub, tx0, ry + Math.round(rowH * 0.74) + 3, subPx, UIT_DIM);
-      } else {
-        nsText(it.name, tx0, ry + Math.round((rowH - npx) / 2), npx, selected ? UIT_TEXT : UIT_BODY);
+        var subW = rightX - tx0 - (priceW ? priceW + Math.round(8 * us) : 0);
+        ukMono(ukFitText(it.sub, subW, subPx, true), tx0, subY + subPx - 2, subPx, UIT_DIM);
       }
       // right side: folders get the descend chevron, items their price
       if (isFolder) {
-        nsText('▸', L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx,
+        nsText('▸', rightX, ry + Math.round((rowH - pricePx) / 2), pricePx,
                hov ? UIT_GOLD_HI : UIT_DIM, 'right');
       } else if (it.priceLabel) {
         var pc = UIT_DIM;
         if (it.priceTier === 'gold') pc = UIT_MONEY;
         else if (it.priceTier === 'red') pc = UIT_RED;
-        nsText(it.priceLabel, L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx, pc, 'right');
+        nsText(it.priceLabel, rightX, subY, pricePx, pc, 'right');
       }
       // hairline between rows
       if (i < n - 1) {
@@ -689,7 +730,7 @@
         ctx.fillRect(L.listX + 1, ry + rowH - 1, L.listW - 2, 1);
       }
       UK_HIT.push({ id: 'uk:item:' + it.key, x: L.listX, y: Math.max(L.listY, ry), w: L.listW,
-                    h: Math.min(rowH, L.listY + L.listH - ry) });
+                    h: Math.min(ry + rowH, L.listY + L.listH) - Math.max(L.listY, ry) });
     }
     ctx.restore();
     // scrollbar
@@ -711,37 +752,46 @@
     var x = L.detX, w = L.detW;
     var pad = Math.round(10 * us);
     var bottom = L.detY + L.detailH;
+    var compact = L.detailH < 240;
+    var minimal = L.detailH < 120;
+    var pairedButtons = compact && it.act && it.children;
 
     // Stack from the bottom: action button, drill-in ghost button, desc,
     // stat, pips, state, name. The art stage takes whatever is left on
     // top. Informational rows (no act) give their button space back.
     var btnH = it.act ? Math.max(44, Math.round(44 * us)) : 0;
     var btnY = bottom - btnH;
-    var childBtnH = it.children ? Math.max(34, Math.round(34 * us)) : 0;
+    var childBtnH = it.children ? Math.max(44, Math.round(34 * us)) : 0;
     var childGap = it.children ? Math.round(6 * us) : 0;
-    var childY = btnY - childGap - childBtnH;
+    var childY = pairedButtons ? btnY : btnY - childGap - childBtnH;
+    if (pairedButtons) childBtnH = btnH;
     var cursorY = childY - Math.round(8 * us);
 
-    var descPx = Math.max(10, Math.round(10.5 * us));
+    var descPx = Math.max(11, Math.round(10.5 * us));
     var descLineH = Math.round(descPx * 1.45);
-    var descLines = it.desc ? 2 : 0;
+    var descLines = it.desc && L.detailH >= 190 ? 2 : 0;
     if (it.desc && L.detailH > Math.round(300 * us)) descLines = 3;
     var descH = descLines > 0 ? descLines * descLineH + Math.round(4 * us) : 0;
     var descY = cursorY - descH;
 
-    var statH = it.stat ? Math.round(30 * us) : 0;
+    var statH = it.stat && !minimal ? (compact ? 20 : Math.max(36, Math.round(30 * us))) : 0;
     var statY = descY - statH;
 
-    var pipsH = it.pips ? Math.round(8 * us) : 0;
-    var pipsPad = it.pips ? Math.round(8 * us) : 0;
+    var pipsH = it.pips && !minimal ? Math.round(8 * us) : 0;
+    var pipsPad = pipsH ? Math.round(8 * us) : 0;
     var pipsY = statY - pipsH - pipsPad;
 
-    var subPx = Math.max(9, Math.round(10 * us));
-    var subH = it.state ? Math.round(16 * us) : Math.round(4 * us);
+    var subPx = Math.max(11, Math.round(10 * us));
+    var subH = minimal ? 0 : (it.state ? Math.max(18, Math.round(16 * us)) : Math.round(4 * us));
     var subY = pipsY - subH;
 
-    var namePx = Math.round(12 * us);
-    var nameH = Math.round(18 * us);
+    var namePx = Math.max(12, Math.round(12 * us));
+    var nameLines = ukStencilLines(it.name, w - pad * 2, namePx, 2);
+    // At the smallest landscape heights, the selected list row supplies
+    // the item name while the detail column holds the two actions.
+    if (minimal && it.act && L.detailH < 80) nameLines = [];
+    var nameLineH = namePx + 4;
+    var nameH = nameLines.length ? nameLines.length * nameLineH + Math.round(2 * us) : 0;
     var nameY = subY - nameH;
 
     var artY = L.detY;
@@ -755,15 +805,16 @@
         artH += reclaim;
         nameY += reclaim; subY += reclaim; pipsY += reclaim; statY += reclaim; descY = statY;
       }
-      if (artH < Math.round(40 * us)) artH = Math.round(40 * us);
     }
 
-    // art stage
-    ukInset(x, artY, w, artH);
+    // Keep art within its allotted space. Very short cards already show
+    // the specimen in the list, so give the text and controls priority.
+    var showArt = artH >= 32 && !minimal;
+    if (showArt) ukInset(x, artY, w, artH);
     var acx = x + w / 2, acy = artY + artH / 2;
     // warm banded halo behind the art (stepped alpha, pixel-friendly)
     var haloR = Math.min(w, artH) * 0.44;
-    for (var hb = 4; hb >= 1; hb--) {
+    for (var hb = showArt ? 4 : 0; hb >= 1; hb--) {
       var hf = hb / 4;
       ctx.fillStyle = 'rgba(255,204,110,' + (0.10 * (1 - hf) * (1 - hf) + 0.012).toFixed(3) + ')';
       ctx.beginPath(); ctx.arc(acx, acy, haloR * 0.3 + haloR * 0.7 * hf, 0, Math.PI * 2); ctx.fill();
@@ -773,7 +824,7 @@
     var artSize = Math.min(w - Math.round(40 * us), artH - Math.round(20 * us), 190);
     var idle = Math.sin(nsRoomT * 1.6) * 2 * us;
     var pop = ukArtPopT > 0 ? 1 + 0.07 * Math.sin((ukArtPopT / 0.22) * Math.PI) : 1;
-    if (it.icon) {
+    if (it.icon && showArt) {
       ctx.save();
       ctx.translate(acx, acy + idle);
       ctx.scale(pop, pop);
@@ -781,8 +832,8 @@
       ctx.restore();
     }
     // stock corner badge on the art stage
-    if (it.badge) {
-      var bdPx = Math.max(9, Math.round(9.5 * us));
+    if (it.badge && showArt) {
+      var bdPx = Math.max(11, Math.round(9.5 * us));
       var bdW = ukMonoW(it.badge, bdPx, true) + Math.round(12 * us);
       var bdH = bdPx + Math.round(8 * us);
       ctx.fillStyle = 'rgba(8,10,14,0.85)';
@@ -793,34 +844,38 @@
     }
 
     // name
-    var dnw = nsTextW(it.name, namePx);
-    var maxNameW = w - Math.round(12 * us);
-    var dnpx = (dnw > maxNameW && dnw > 0) ? Math.max(7, namePx * maxNameW / dnw) : namePx;
-    nsText(it.name, x + w / 2, nameY + Math.round((nameH - dnpx) / 2), dnpx, UIT_TEXT, 'center');
+    for (var ni = 0; ni < nameLines.length; ni++) {
+      nsText(nameLines[ni], x + w / 2, nameY + ni * nameLineH, namePx, UIT_TEXT, 'center');
+    }
     // state line
-    if (it.state) {
-      ukMono(it.state, x + w / 2, subY + subH - Math.round(4 * us), subPx, UIT_DIM, 'center');
+    if (it.state && subH) {
+      ukMono(ukFitText(it.state, w - pad * 2, subPx, true), x + w / 2, subY + subH - Math.round(4 * us), subPx, UIT_DIM, 'center');
     }
     // pips
-    if (it.pips) {
+    if (pipsH) {
       var pw = Math.min(w - pad * 2, Math.round(190 * us));
       ukPips(x + (w - pw) / 2, pipsY, pw, pipsH, it.pips.cur, it.pips.max);
     }
     // stat delta
-    if (it.stat) {
-      var sLabPx = Math.max(9, Math.round(9.5 * us));
-      var valPx = Math.round(11 * us);
+    if (it.stat && statH) {
+      var sLabPx = Math.max(11, Math.round(9.5 * us));
+      var valPx = Math.max(11, Math.round(11 * us));
       var sY = statY + Math.round(6 * us);
-      ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, UIT_DIM, 'center');
       // '▸' is the one arrow glyph in STENCIL_FONT ('>' has no bitmap).
       var valStr = it.stat.next ? (it.stat.cur + ' ▸ ' + it.stat.next) : it.stat.cur;
       var deltaStr = it.stat.delta ? ('  ' + it.stat.delta) : '';
-      var vw = nsTextW(valStr, valPx);
-      var dw = deltaStr ? nsTextW(deltaStr, Math.round(valPx * 0.8)) : 0;
-      var startX = x + w / 2 - (vw + dw) / 2;
-      nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, UIT_TEXT);
-      if (deltaStr) {
-        nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + Math.round(valPx * 0.14), Math.round(valPx * 0.8), UIT_MONEY);
+      if (compact) {
+        ukMono(ukFitText(it.stat.label + '  ' + valStr + deltaStr, w - pad * 2, 11, true), x + w / 2, statY + 14, 11, UIT_BODY, 'center');
+      } else {
+        ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, UIT_DIM, 'center');
+        var deltaPx = Math.max(11, Math.round(valPx * 0.8));
+        var vw = nsTextW(valStr, valPx);
+        var dw = deltaStr ? nsTextW(deltaStr, deltaPx) : 0;
+        var startX = x + w / 2 - (vw + dw) / 2;
+        nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, UIT_TEXT);
+        if (deltaStr) {
+          nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + valPx - deltaPx, deltaPx, UIT_MONEY);
+        }
       }
     }
     // description
@@ -830,23 +885,24 @@
     }
     // secondary drill-in (ghost) sits above the action button
     if (it.children) {
-      var gr = { x: x + pad, y: childY, w: w - pad * 2, h: childBtnH };
+      var gr = { x: x + pad, y: childY, w: pairedButtons ? Math.floor((w - pad * 2 - childGap) / 2) : w - pad * 2, h: childBtnH };
       ukButton(gr, (it.childLabel || 'MORE') + '  ▸', 'ghost',
-               ukHover === 'uk:child', 0, Math.round(9 * us));
+               ukHover === 'uk:child', 0, Math.max(11, Math.round(9 * us)));
       UK_HIT.push({ id: 'uk:child', x: gr.x, y: gr.y, w: gr.w, h: gr.h });
     }
     // action button
     if (it.act) {
       var shake = ukDeniedT > 0 ? Math.round(Math.sin(ukDeniedT * 44) * 3) : 0;
-      var br = { x: x + pad + shake, y: btnY, w: w - pad * 2, h: btnH };
-      var bpx = Math.round(11 * us);
+      var brX = pairedButtons ? gr.x + gr.w + childGap : x + pad;
+      var br = { x: brX + shake, y: btnY, w: x + w - pad - brX, h: btnH };
+      var bpx = Math.max(11, Math.round(11 * us));
       var pressT = (ukPress && ukPress.id === 'uk:act') ? 1 : 0;
       if (it.act.enabled) {
         ukButton(br, it.act.label, 'gold', ukHover === 'uk:act', pressT, bpx);
       } else {
         var reason = it.act.reason || it.act.label;
         var kind = (it.act.reasonKind === 'short') ? 'short' : 'lock';
-        ukButton(br, reason, kind, false, 0, Math.round(9.5 * us));
+        ukButton(br, reason, kind, false, 0, Math.max(11, Math.round(9.5 * us)));
       }
       UK_HIT.push({ id: 'uk:act', x: br.x, y: br.y, w: br.w, h: br.h });
     }

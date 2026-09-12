@@ -16,6 +16,8 @@
   //                                 listeners below; any tap/click/key).
   //   ledgerRecordOre(type, shiny) -> call at ore-collect time.
   //   ledgerToggle()             -> open/close the ledger page (ledgerOpen).
+  //   ledgerPointerDown/Move(x,y) -> ledger-owned canvas input (050).
+  //   ledgerKeyDown(key)         -> consume a key while the ledger is open.
   //   drawSeamFx() / drawLedger() -> dispatched from the RENDER: UI overlay
   //                                 section in 140; both self-gate.
   //
@@ -41,6 +43,8 @@
 
   var ledgerData = {};             // ore type -> { n: count, shiny: count }; persisted (047)
   var ledgerOpen = false;
+  var ledgerPage = 0;
+  var ledgerHover = null;
 
   // ----- Cyrillic stencil glyphs (ЖИЛА) -----
   // The console stencil font (220) is Latin-only; the seam's name needs four
@@ -539,7 +543,19 @@
   }
 
   function ledgerToggle() {
+    // Recovery owns the screen after death; never open a hidden input layer.
+    if (!ledgerOpen && (gameOver || gameWon)) return false;
     ledgerOpen = !ledgerOpen;
+    ledgerHover = null;
+    // A held movement key or an in-flight wheel tap must not survive the
+    // transition into or out of this input-owning page.
+    for (var k in keys) keys[k] = false;
+    dpad.left = dpad.right = dpad.up = dpad.down = false;
+    touch.active = false;
+    dpadTouchId = null;
+    shopTapCandidate = null;
+    if (player) player.thrusting = false;
+    if (itemWheel.open) closeItemWheel(false);
     return ledgerOpen;
   }
 
@@ -601,120 +617,170 @@
     ctx.restore();
   }
 
-  // Full-screen MINERAL LEDGER page. Framed-panel look borrowed from the
-  // shop sub-pages (230): dark backdrop, red iron-bracketed title banner,
-  // stencil text throughout. Dispatched from 140 when ledgerOpen.
+  // The collection uses the same gunmetal plate as the store. Card size
+  // stays readable; extra specimens move to another page instead of being
+  // squeezed into narrower columns on a short or portrait viewport.
+  function ledgerLayout() {
+    var compact = viewH < 420;
+    var margin = compact ? 8 : 16;
+    var w = Math.min(1080, viewW - margin * 2);
+    var pad = w < 440 ? 14 : 22;
+    var gap = 8;
+    var innerW = w - pad * 2;
+    var cols = Math.max(1, Math.min(4, Math.floor((innerW + gap) / 230)));
+    var cellW = Math.floor((innerW - gap * (cols - 1)) / cols);
+    var cellH = compact ? 80 : 96;
+    var headerH = compact ? 78 : 106;
+    var footerH = 60;
+    var n = ledgerOreList().length;
+    var rows = Math.max(1, Math.min(Math.ceil(n / cols),
+      Math.floor((viewH - margin * 2 - headerH - footerH + gap) / (cellH + gap))));
+    var perPage = cols * rows;
+    var pages = Math.max(1, Math.ceil(n / perPage));
+    ledgerPage = Math.max(0, Math.min(pages - 1, ledgerPage));
+    var gridH = rows * cellH + (rows - 1) * gap;
+    var h = headerH + gridH + footerH;
+    var x = Math.floor((viewW - w) / 2);
+    var y = Math.floor((viewH - h) / 2);
+    var footY = y + headerH + gridH + 8;
+    var closeW = w < 300 ? 64 : 76;
+    return {
+      x: x, y: y, w: w, h: h, pad: pad, compact: compact,
+      gridX: x + pad, gridY: y + headerH, gridW: innerW,
+      cellW: cellW, cellH: cellH, cols: cols, rows: rows, gap: gap,
+      perPage: perPage, pages: pages,
+      close: { x: x + w - pad - closeW, y: y + (compact ? 12 : 24), w: closeW, h: 44 },
+      prev: { x: x + pad, y: footY, w: 80, h: 44 },
+      next: { x: x + w - pad - 80, y: footY, w: 80, h: 44 }
+    };
+  }
+
+  function ledgerHitAt(x, y, L) {
+    var names = ['close', 'prev', 'next'];
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var r = L[name];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return name;
+    }
+    return null;
+  }
+
+  function ledgerMovePage(dir) {
+    var L = ledgerLayout();
+    ledgerPage = Math.max(0, Math.min(L.pages - 1, ledgerPage + dir));
+  }
+
+  function ledgerPointerDown(x, y) {
+    if (!ledgerOpen) return false;
+    var hit = ledgerHitAt(x, y, ledgerLayout());
+    if (hit === 'close') ledgerToggle();
+    else if (hit === 'prev') ledgerMovePage(-1);
+    else if (hit === 'next') ledgerMovePage(1);
+    return true;
+  }
+
+  function ledgerPointerMove(x, y) {
+    if (!ledgerOpen) return false;
+    ledgerHover = ledgerHitAt(x, y, ledgerLayout());
+    return true;
+  }
+
+  function ledgerKeyDown(key) {
+    if (!ledgerOpen) return false;
+    if (key === 'Escape' || key === 'c' || key === 'C' || key === 'b' || key === 'B') ledgerToggle();
+    else if (key === 'ArrowLeft' || key === 'PageUp') ledgerMovePage(-1);
+    else if (key === 'ArrowRight' || key === 'PageDown') ledgerMovePage(1);
+    else if (key === 'Home') ledgerPage = 0;
+    else if (key === 'End') ledgerPage = ledgerLayout().pages - 1;
+    // All keys belong to this page, including otherwise-unused game actions.
+    return true;
+  }
+
   function drawLedger() {
+    if (!ledgerOpen) return;
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
+    ukFizzDraw(1);
+    // Carry the dim across the console as well as the world behind it.
+    ctx.fillStyle = 'rgba(9,11,16,0.5)';
+    ctx.fillRect(0, viewH - consoleHeight(), viewW, consoleHeight());
 
-    // Backdrop.
-    ctx.fillStyle = '#16130f';
-    ctx.fillRect(0, 0, viewW, viewH);
+    var L = ledgerLayout();
+    var lc = ledgerCounts();
+    ukPanelBox(L.x, L.y, L.w, L.h);
+    var titlePx = L.w < 300 ? 14 : (L.w < 440 ? 16 : (L.compact ? 19 : 24));
+    if (!L.compact) ukMono('FIELD COLLECTION', L.gridX, L.y + 24, 11, UIT_DIM);
+    nsText('MINERAL LEDGER', L.gridX, L.y + (L.compact ? 16 : 36), titlePx, UIT_TEXT);
+    ukButton(L.close, 'CLOSE', 'ghost', ledgerHover === 'close', 0, 11);
 
-    // Title banner (the drawShopSubPageFrame red sign, standalone copy).
-    var bannerW = Math.min(440, viewW - 96);
-    var bannerH = 44;
-    var bannerX = Math.floor((viewW - bannerW) / 2);
-    var bannerY = 14;
-    ctx.fillStyle = '#1a0a05';
-    ctx.fillRect(bannerX - 2, bannerY - 2, bannerW + 4, bannerH + 4);
-    ctx.fillStyle = '#5a1810';
-    ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
-    ctx.fillStyle = '#8c2820';
-    ctx.fillRect(bannerX + 1, bannerY + 1, bannerW - 2, bannerH - 2);
-    ctx.fillStyle = '#a83830';
-    ctx.fillRect(bannerX + 1, bannerY + 1, bannerW - 2, 2);
-    ctx.fillStyle = '#3a3530';
-    ctx.fillRect(bannerX, bannerY, 8, 8);
-    ctx.fillRect(bannerX + bannerW - 8, bannerY, 8, 8);
-    ctx.fillRect(bannerX, bannerY + bannerH - 8, 8, 8);
-    ctx.fillRect(bannerX + bannerW - 8, bannerY + bannerH - 8, 8, 8);
-    ctx.fillStyle = '#5a5550';
-    ctx.fillRect(bannerX + 2, bannerY + 2, 2, 2);
-    ctx.fillRect(bannerX + bannerW - 4, bannerY + 2, 2, 2);
-    ctx.fillRect(bannerX + 2, bannerY + bannerH - 4, 2, 2);
-    ctx.fillRect(bannerX + bannerW - 4, bannerY + bannerH - 4, 2, 2);
-    var title = 'MINERAL LEDGER';
-    var tw = stencilTextWidth(title, 3);
-    drawStencilText(title, bannerX + Math.floor((bannerW - tw) / 2), bannerY + Math.floor((bannerH - 21) / 2), 3, '#f0d088');
-
-    // ---- Grid of specimens ----
-    var list = ledgerOreList();
-    var n = list.length;
-    var gridTop = bannerY + bannerH + 16;
-    var footerH = 30;
-    var availW = viewW - 32;
-    var availH = viewH - gridTop - footerH - 10;
-    var cols = Math.max(2, Math.min(8, Math.floor(availW / 168)));
-    var rows = Math.ceil(n / cols);
-    // Widen until the rows fit the screen (min cell height 44).
-    while (rows * 44 > availH && cols < 10) {
-      cols++;
-      rows = Math.ceil(n / cols);
+    var summaryY = L.y + (L.compact ? 60 : 81);
+    var summary = lc.got + ' / ' + lc.total + ' catalogued';
+    ukMono(summary, L.gridX, summaryY, 12, UIT_BODY);
+    var shinyTotal = lc.shiny.toLocaleString() + ' shiny';
+    if (lc.shiny > 0 && ukMonoW(summary, 12) + ukMonoW(shinyTotal, 11) + 16 <= L.gridW) {
+      ukMono(shinyTotal, L.x + L.w - L.pad, summaryY, 11, UIT_MONEY, 'right');
     }
-    var cellW = Math.floor(availW / cols);
-    var cellH = Math.min(72, Math.max(44, Math.floor(availH / rows)));
-    var gridW = cols * cellW;
-    var gridX = Math.floor((viewW - gridW) / 2);
+    ctx.fillStyle = UIT_INSET_DK;
+    ctx.fillRect(L.gridX, L.gridY - 12, L.gridW, 3);
+    ctx.fillStyle = UIT_GOLD;
+    ctx.fillRect(L.gridX, L.gridY - 12, Math.round(L.gridW * lc.got / Math.max(1, lc.total)), 3);
 
-    for (var i = 0; i < n; i++) {
+    var list = ledgerOreList();
+    var start = ledgerPage * L.perPage;
+    var end = Math.min(list.length, start + L.perPage);
+    for (var i = start; i < end; i++) {
+      var slot = i - start;
       var type = list[i];
       var def = ORES[type];
       var e = ledgerData[type];
       var collected = !!(e && e.n > 0);
-      var cx = gridX + (i % cols) * cellW;
-      var cy = gridTop + Math.floor(i / cols) * cellH;
+      var cx = L.gridX + (slot % L.cols) * (L.cellW + L.gap);
+      var cy = L.gridY + Math.floor(slot / L.cols) * (L.cellH + L.gap);
+      ukInset(cx, cy, L.cellW, L.cellH);
+      ctx.fillStyle = UIT_PANEL_SEL;
+      ctx.fillRect(cx + 1, cy + L.cellH - 1, L.cellW - 2, 1);
 
-      // Recessed cell panel.
-      ctx.fillStyle = UI_OUTLINE;
-      ctx.fillRect(cx + 1, cy + 1, cellW - 2, cellH - 2);
-      ctx.fillStyle = UIMAT_BAY_RECESS;
-      ctx.fillRect(cx + 2, cy + 2, cellW - 4, cellH - 4);
-      ctx.fillStyle = UIMAT_BAY_RECESS_DARK;
-      ctx.fillRect(cx + 2, cy + 2, cellW - 4, 1);
-      ctx.fillStyle = UIMAT_BAY_RECESS_LIGHT;
-      ctx.fillRect(cx + 2, cy + cellH - 3, cellW - 4, 1);
-
-      var tileX = cx + 7;
-      var tileY = cy + Math.floor((cellH - TILE) / 2);
+      var tileX = cx + 12;
+      var tileY = cy + Math.floor((L.cellH - TILE) / 2);
       if (collected) {
         drawLedgerSpecimen(tileX, tileY, type, i);
       } else {
-        // Dark silhouette: the slot exists, the mineral is unknown.
-        ctx.fillStyle = '#0a0a0d';
+        ctx.fillStyle = UIT_INSET_DK;
         ctx.fillRect(tileX, tileY, TILE, TILE);
-        ctx.fillStyle = 'rgba(216,210,196,0.18)';
-        ctx.fillRect(tileX, tileY, TILE, 1);
+        ukMono('?', tileX + TILE / 2, tileY + 23, 19, UIT_DIM, 'center');
       }
-      // Thin frame around the specimen.
-      ctx.fillStyle = UI_OUTLINE;
-      ctx.fillRect(tileX - 1, tileY - 1, TILE + 2, 1);
-      ctx.fillRect(tileX - 1, tileY + TILE, TILE + 2, 1);
-      ctx.fillRect(tileX - 1, tileY, 1, TILE);
-      ctx.fillRect(tileX + TILE, tileY, 1, TILE);
+      ctx.strokeStyle = UIT_EDGE;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tileX - 0.5, tileY - 0.5, TILE + 1, TILE + 1);
 
-      var textX = tileX + TILE + 7;
+      var textX = tileX + TILE + 12;
+      var textW = cx + L.cellW - 12 - textX;
+      var textY = cy + Math.floor((L.cellH - 54) / 2) + 11;
       if (collected) {
-        var label = (def.label || type).toUpperCase();
-        var maxChars = Math.max(3, Math.floor((cx + cellW - 6 - textX) / 6));
-        if (label.length > maxChars) label = label.slice(0, maxChars);
-        drawStencilText(label, textX, cy + Math.floor(cellH / 2) - 15, 1, '#d8d2c4');
-        drawStencilText('$' + (def.value || 0).toLocaleString(), textX, cy + Math.floor(cellH / 2) - 3, 1, '#d4a838');
-        var countStr = 'X ' + e.n + (e.shiny ? ' !' + e.shiny : '');
-        drawStencilText(countStr, textX, cy + Math.floor(cellH / 2) + 9, 1, '#9aa0a8');
+        // Every current ore name fits at this minimum card width, including
+        // Rhodochrosite. Keep the full name, never silently slice it.
+        ukMono(def.label || type, textX, textY, 12, UIT_TEXT, 'left', true);
+        ukMono('$' + (def.value || 0).toLocaleString() + ' each', textX, textY + 19, 11, UIT_MONEY);
+        var countStr = e.n.toLocaleString() + ' found';
+        var shinyStr = e.shiny ? e.shiny.toLocaleString() + ' shiny' : '';
+        if (shinyStr && ukMonoW(countStr + ' / ' + shinyStr, 11) <= textW) {
+          countStr += ' / ' + shinyStr;
+          shinyStr = '';
+        }
+        ukMono(countStr, textX, textY + 38, 11, UIT_DIM);
+        if (shinyStr) ukMono(shinyStr, textX, textY + 52, 11, UIT_DIM);
       } else {
-        drawStencilText('???', textX, cy + Math.floor(cellH / 2) - 3, 2, 'rgba(216,210,196,0.40)');
+        ukMono('Undiscovered', textX, textY + 9, 12, UIT_DIM);
+        ukMono('Specimen ' + (i + 1 < 10 ? '0' : '') + (i + 1), textX, textY + 30, 11, UIT_DIM);
       }
     }
 
-    // ---- Footer ----
-    var lc = ledgerCounts();
-    var footStr = lc.got + ' OF ' + lc.total + ' CATALOGUED';
-    if (lc.shiny > 0) footStr += '  SHINY: ' + lc.shiny;
-    var fw = stencilTextWidth(footStr, 2);
-    drawStencilText(footStr, Math.floor((viewW - fw) / 2), viewH - footerH + 4, 2, '#d4a838');
-
+    ukButton(L.prev, 'PREV', ledgerPage > 0 ? 'ghost' : 'locked', ledgerHover === 'prev', 0, 11);
+    ukButton(L.next, 'NEXT', ledgerPage < L.pages - 1 ? 'ghost' : 'locked', ledgerHover === 'next', 0, 11);
+    var footX = L.x + L.w / 2;
+    var wide = L.gridW >= 420;
+    ukMono((ledgerPage + 1) + ' / ' + L.pages, footX, L.prev.y + (wide ? 19 : 27), 12, UIT_BODY, 'center');
+    if (wide) ukMono('LEFT / RIGHT', footX, L.prev.y + 35, 11, UIT_DIM, 'center');
     ctx.restore();
   }

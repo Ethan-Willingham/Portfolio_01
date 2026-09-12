@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.77';
+  var GAME_VERSION = 'v26.78';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2177,7 +2177,7 @@
   var UIT_EDGE      = '#0a0c10';   // panel outlines
   var UIT_TEXT      = '#eee1b8';   // titles / stencil cream (warm on purpose)
   var UIT_BODY      = '#c9c7b8';   // body + secondary text
-  var UIT_DIM       = '#8590a0';   // dim labels (cool, sits in the field hue)
+  var UIT_DIM       = '#929dac';   // secondary legends, AA on gunmetal panels
   var UIT_GOLD      = '#d9ad3f';   // the one action accent
   var UIT_GOLD_HI   = '#ffe066';   // accent hover
   var UIT_GOLD_TEXT = '#241a08';   // dark text on gold
@@ -2805,7 +2805,7 @@
     var ov = document.getElementById('game-pause');
     if (!ov) return;
     var s = document.getElementById('gm-pause-sub');
-    if (s) s.textContent = sub || '';
+    if (s) s.textContent = sub === 'window lost focus' ? 'Paused while you were away.' : sub || '';
     // v24.126: autosave status on the pause card (saveStatusLine, 047-save.js).
     // Snapshot at pause time; the loop is stopped so it doesn't tick.
     var sv = document.getElementById('gm-pause-save');
@@ -5342,6 +5342,13 @@
   /* ---- Input ---- */
   function setupInput() {
     window.addEventListener('keydown', function (e) {
+      // Native menu buttons and sliders own their keyboard input while paused.
+      if (gamePaused && e.key !== 'Escape') return;
+      if (!gamePaused && ledgerOpen) {
+        e.preventDefault();
+        if (!e.repeat) ledgerKeyDown(e.key);
+        return;
+      }
       keys[e.key] = true;
       if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key) !== -1) e.preventDefault();
       // Escape toggles the pause screen during normal play. If a shop/modal is
@@ -5354,6 +5361,12 @@
       // promising ESC. While paused the handler still owns Escape (the
       // bath's poll is frozen, so deferring there would dead-key resume).
       if (e.key === 'Escape' && !e.repeat) {
+        if (gamePaused) {
+          keys['Escape'] = false;
+          e.preventDefault();
+          if (!pauseMenuBack()) resumeGame();
+          return;
+        }
         var shopUp = (UI_NEW && shopState !== 'closed') || shopOpen ||
                      (typeof bathMode !== 'undefined' && bathMode && !gamePaused);
         if (!shopUp) {
@@ -5443,11 +5456,9 @@
     if (_gmResumeBtn) _gmResumeBtn.addEventListener('click', function () { resumeGame(); });
     var _gmRestartBtn = document.getElementById('gm-restart-btn');
     if (_gmRestartBtn) _gmRestartBtn.addEventListener('click', function () {
-      // Persistent-profile model (047-save.js): the pause-screen Restart is
-      // the ONLY full wipe, so it confirms and erases the save first.
-      var ok = true;
-      try { ok = window.confirm('Start a NEW GAME? Your saved progress will be erased.'); } catch (e) {}
-      if (!ok) return;
+      // This button lives on the explicit erase-save confirmation page.
+      // Death and the R bailout still use the ordinary town respawn.
+      if (!gamePaused || pauseMenuPage !== 'restart') return;
       saveWipe();
       init();
       resumeGame();
@@ -5530,6 +5541,7 @@
   function handleMouseMove(e) {
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
+    if (ledgerOpen) { ledgerPointerMove(p.x, p.y); return; }
     if (itemWheel.open && itemWheel.pointerId === 'mouse') {
       updateItemWheelHover(p.x, p.y);
     }
@@ -5540,6 +5552,7 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id) {
+    if (ledgerOpen) { ledgerPointerDown(x, y); return; }
     touch.active = true;
     touch.x = x;
     touch.y = y;
@@ -5689,6 +5702,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (ledgerOpen) { ledgerPointerMove(x, y); return; }
     touch.x = x;
     touch.y = y;
     // v26.20 — a drag past a small threshold means this press became a
@@ -5719,6 +5733,7 @@
     }
   }
   function processPointerUp(id) {
+    if (ledgerOpen) { touch.active = false; return; }
     // The item wheel is fully click-driven (handled on pointer-down), so
     // pointer-up no longer commits or closes it.
     if (UI_NEW && USE_NEW_SHOP_UI && shopState !== 'closed') {
@@ -6017,6 +6032,160 @@
 
     window.SluiceOptions = opts;
   })();
+  /* ---- Pause menu: material tokens, navigation, and native controls ---- */
+  var pauseMenuPage = 'main';
+  var pauseMenuShowPage = null;
+  function pauseMenuBack() {
+    if (pauseMenuPage === 'main' || !pauseMenuShowPage) return false;
+    pauseMenuShowPage('main');
+    return true;
+  }
+  function setupPauseMenu() {
+    var overlay = document.getElementById('game-pause');
+    var card = document.getElementById('gm-pause-card');
+    if (!overlay || !card) return;
+    var area = overlay.parentNode;
+    var colors = {
+      panel: UIT_PANEL, selected: UIT_PANEL_SEL, inset: UIT_INSET,
+      edge: UIT_EDGE, text: UIT_TEXT, body: UIT_BODY, dim: UIT_DIM,
+      gold: UIT_GOLD, 'gold-hi': UIT_GOLD_HI, 'gold-text': UIT_GOLD_TEXT,
+      red: UIT_RED, highlight: UIMAT_PLATE_HIGHLIGHT, weld: UIMAT_WELD
+    };
+    for (var color in colors) area.style.setProperty('--menu-' + color, colors[color]);
+    var title = document.getElementById('gm-menu-title');
+    var sub = document.getElementById('gm-pause-sub');
+    var back = document.getElementById('gm-opt-back');
+    var save = document.getElementById('gm-pause-save');
+    var footnote = document.getElementById('gm-menu-footnote');
+    var body = card.querySelector('.pause-body');
+    var pages = card.querySelectorAll('[data-pause-page]');
+    var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
+    var returnFocus = 'gm-resume-btn';
+    pauseMenuShowPage = function (page) {
+      pauseMenuPage = page;
+      card.setAttribute('data-page', page);
+      for (var i = 0; i < pages.length; i++) pages[i].hidden = pages[i].getAttribute('data-pause-page') !== page;
+      title.textContent = titles[page];
+      sub.hidden = page !== 'main';
+      back.hidden = page === 'main';
+      save.hidden = page !== 'main';
+      footnote.hidden = page !== 'options';
+      body.scrollTop = 0;
+      var focus = page === 'main' ? document.getElementById(returnFocus) :
+        page === 'restart' ? document.getElementById('gm-cancel-restart') : back;
+      if (focus) focus.focus({ preventScroll: true });
+    };
+    function openWith(id, page) {
+      document.getElementById(id).addEventListener('click', function () {
+        returnFocus = id;
+        pauseMenuShowPage(page);
+      });
+    }
+    openWith('gm-options-btn', 'options');
+    openWith('gm-controls-btn', 'controls');
+    openWith('gm-new-game-btn', 'restart');
+    back.addEventListener('click', pauseMenuBack);
+    document.getElementById('gm-cancel-restart').addEventListener('click', pauseMenuBack);
+
+    // Keep keyboard traversal on the visible page. The game key handler
+    // leaves paused native controls alone, including range arrow keys.
+    overlay.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') e.stopPropagation();
+      if (e.key !== 'Tab') return;
+      var controls = Array.prototype.filter.call(card.querySelectorAll('button, input'), function (el) {
+        return !el.disabled && el.getClientRects().length > 0;
+      });
+      if (!controls.length) return;
+      var index = controls.indexOf(document.activeElement);
+      if ((e.shiftKey && index <= 0) || (!e.shiftKey && (index < 0 || index === controls.length - 1))) {
+        e.preventDefault();
+        controls[e.shiftKey ? controls.length - 1 : 0].focus();
+      }
+    });
+    // The overlay lives inside the game's touch-action:none stage. Enable
+    // native vertical scrolling only while paused, then restore the stage.
+    var wasVisible = false;
+    new MutationObserver(function () {
+      var visible = overlay.classList.contains('is-visible');
+      if (visible === wasVisible) return;
+      wasVisible = visible;
+      area.style.touchAction = visible ? 'auto' : '';
+      var siblings = area.children;
+      for (var i = 0; i < siblings.length; i++) {
+        if (siblings[i] !== overlay) siblings[i].inert = visible;
+      }
+      if (visible) {
+        returnFocus = 'gm-resume-btn';
+        pauseMenuShowPage('main');
+      } else {
+        pauseMenuPage = 'main';
+        // Enter is also the shop key. Returning focus to a button would
+        // let its native Enter click reopen pause instead of entering town.
+        var target = document.getElementById('game-canvas');
+        if (target) target.focus({ preventScroll: true });
+      }
+    }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+
+    function read(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+    function setOpt(key, value) { window.SluiceOptions.set(key, value); }
+    function wireSlider(id, key, fallback, master) {
+      var slider = document.getElementById(id);
+      var output = document.getElementById(id + '-value');
+      var saved = parseFloat(read(master ? 'sluice.volume' : 'sluice.opt.' + key));
+      slider.value = Math.round(Math.max(0, Math.min(1, isNaN(saved) ? fallback : saved)) * 100);
+      function sync() {
+        output.value = slider.value + '%';
+        slider.setAttribute('aria-valuetext', slider.value + ' percent');
+      }
+      function apply() {
+        var value = Number(slider.value) / 100;
+        if (master) {
+          if (window.SluiceAudio) window.SluiceAudio.setVolume(value);
+          try { localStorage.setItem('sluice.volume', String(value)); } catch (e) {}
+        } else setOpt(key, value);
+        sync();
+      }
+      sync();
+      // Audio loads before the game bundle; keep the returning master level.
+      if (master && window.SluiceAudio) window.SluiceAudio.setVolume(Number(slider.value) / 100);
+      slider.addEventListener('input', apply);
+    }
+    function wireSegment(key, fallback, pairs) {
+      function sync(value) {
+        for (var i = 0; i < pairs.length; i++) {
+          var button = document.getElementById(pairs[i][0]);
+          var selected = pairs[i][1] === value;
+          button.classList.toggle('is-active', selected);
+          button.setAttribute('aria-pressed', String(selected));
+        }
+        if (key === 'gfx') {
+          document.getElementById('gm-gfx-note').textContent = {
+            performance: 'Lighter effects for a smoother frame rate.',
+            balanced: 'A balance of visual detail and frame rate.',
+            extreme: 'Full visual detail.'
+          }[value];
+        }
+      }
+      for (var i = 0; i < pairs.length; i++) {
+        (function (pair) {
+          document.getElementById(pair[0]).addEventListener('click', function () { setOpt(key, pair[1]); sync(pair[1]); });
+        })(pairs[i]);
+      }
+      var saved = read('sluice.opt.' + key);
+      var valid = pairs.some(function (pair) { return pair[1] === saved; });
+      sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
+    }
+    wireSlider('gm-vol', null, 0, true);
+    wireSlider('gm-sfxvol', 'sfxvol', 1, false);
+    wireSlider('gm-shake', 'shake', 1, false);
+    wireSegment('gfx', 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);
+    wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
+    wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
+    wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
+  }
+  setupPauseMenu();
   /* ---- Gamepad bridge (phase 1: play + pause) ---- */
   // Xbox-standard-mapping gamepad support via the browser Gamepad API.
   // Architecture: a BRIDGE that writes into the SAME keys{} object the
@@ -13191,7 +13360,7 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
-    if (gameOver || gameWon || shopOpen) return;
+    if (gameOver || gameWon || shopOpen || ledgerOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
     // Keeps the rig parked while shopping so leftover inertia doesn't
     // drift the player out by accident.
@@ -26892,12 +27061,12 @@
     // ledgerToggle(). Guarded so the build stays coherent if 295 is absent.
     if (typeof drawLedger === 'function' && ledgerOpen) drawLedger();
     // Onboarding radio bubble (057), screen-space, above the HUD.
-    if (typeof drawOnboarding === 'function') drawOnboarding();
+    if (!ledgerOpen && typeof drawOnboarding === 'function') drawOnboarding();
     // General radio messages (058): showMsg's UI_NEW surface. Same plate
     // grammar as 057, takes its place while feedback is up.
     // Dispatched after the shop floor on purpose so purchase feedback
     // ("Need $X") stays readable inside the shop.
-    if (typeof drawRadioMsg === 'function') drawRadioMsg();
+    if (!ledgerOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
 
     // v11.33 — Death screen plate (UI_NEW only). Always on top.
     if (UI_NEW && gameOver) {
@@ -43653,7 +43822,7 @@
   //     pips: { cur: 2, max: 6 },     // optional tier pips
   //     stat: { label: 'POWER', cur: 'LV 2', next: 'LV 3', delta: '+1' },
   //     desc: 'One plain sentence about what it does.',
-  //     priceLabel: '$900',           // right side of the list row
+  //     priceLabel: '$900',           // right side of the secondary row line
   //     priceTier: 'gold',            // 'gold' | 'red' | 'dim'
   //     act: { label: 'BUY  $900', enabled: true,
   //            reason: 'SHORT $220', reasonKind: 'short' },
@@ -43810,6 +43979,36 @@
     ctx.restore();
     return w;
   }
+  // Preserve the readable type size when a label outgrows its column.
+  function ukFitText(str, maxW, px, mono) {
+    str = String(str || '');
+    var measure = mono ? ukMonoW : nsTextW;
+    if (measure(str, px) <= maxW) return str;
+    var tail = '...';
+    if (measure(tail, px) > maxW) return '';
+    while (str && measure(str + tail, px) > maxW) str = str.slice(0, -1);
+    return str.replace(/\s+$/, '') + tail;
+  }
+  function ukStencilLines(str, maxW, px, maxLines) {
+    var words = String(str || '').split(/\s+/);
+    var lines = [];
+    while (words.length && lines.length < maxLines) {
+      if (lines.length === maxLines - 1) {
+        lines.push(ukFitText(words.join(' '), maxW, px));
+        break;
+      }
+      var line = words.shift();
+      while (words.length && nsTextW(line + ' ' + words[0], px) <= maxW) line += ' ' + words.shift();
+      lines.push(ukFitText(line, maxW, px));
+    }
+    return lines;
+  }
+  function ukButtonLabel(r, label, px, color, squish) {
+    var lines = ukStencilLines(label, r.w - 16, px, 2);
+    var lineH = px + 4;
+    var top = r.y + squish + Math.round((r.h - squish - (lines.length * lineH - 4)) / 2);
+    for (var i = 0; i < lines.length; i++) nsText(lines[i], r.x + r.w / 2, top + i * lineH, px, color, 'center');
+  }
   // Word-wrapped centered mono block. Returns the number of lines drawn.
   function ukMonoWrap(str, cx, y, maxW, px, lineH, color, maxLines) {
     if (!str) return 0;
@@ -43868,7 +44067,7 @@
       ctx.fillRect(r.x, r.y + squish, r.w, 2);
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
       ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3);
-      nsText(label, r.x + r.w / 2, r.y + squish + (r.h - squish - px) / 2, px, UIT_GOLD_TEXT, 'center');
+      ukButtonLabel(r, label, px, UIT_GOLD_TEXT, squish);
     } else if (kind === 'ghost') {
       // Secondary affordance: hollow, brass-edged, quiet next to the gold.
       ctx.fillStyle = hover ? 'rgba(255,216,150,0.08)' : 'rgba(0,0,0,0.18)';
@@ -43876,15 +44075,14 @@
       ctx.strokeStyle = hover ? UIT_GOLD : '#8a6a30';
       ctx.lineWidth = 1;
       ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
-      nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px,
-             hover ? UIT_GOLD_HI : UIT_TEXT, 'center');
+      ukButtonLabel(r, label, px, hover ? UIT_GOLD_HI : UIT_TEXT, 0);
     } else {
       ctx.fillStyle = UIT_INSET;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(r.x, r.y, r.w, 2);
       var lockCol = (kind === 'short') ? UIT_RED : UIT_DIM;
-      nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px, lockCol, 'center');
+      ukButtonLabel(r, label, px, lockCol, 0);
     }
   }
 
@@ -44020,6 +44218,12 @@
     } else {
       w = Math.min(viewW - mx * 2, Math.round(560 * us), Math.round(viewW * 0.72));
       h = Math.min(M.bottom - my * 2, Math.round(480 * us), Math.round(M.bottom * 0.84));
+      // Short landscape screens need the available field for readable
+      // columns; retain the inset frame instead of shrinking the text.
+      if (M.bottom < 360) {
+        w = Math.min(viewW - mx * 2, Math.round(viewW * 0.90));
+        h = M.bottom - my * 2;
+      }
     }
     var x = Math.round((viewW - w) / 2);
     // Portrait: anchor to the bottom so the top band stays clear for the
@@ -44027,11 +44231,11 @@
     // action button sits in thumb reach. Landscape/desktop: centered.
     var y = M.portrait ? (M.bottom - my - h) : Math.round((M.bottom - h) / 2);
     var pad = Math.round(12 * us);
-    var headH = Math.round(44 * us);
+    var headH = Math.max(44, Math.round(44 * us));
     // The strip under the header holds the tab row at the root and the
     // breadcrumb (BACK + trail) inside a pushed level.
     var tabH = (ukModal.tabs.length > 1 || ukStackDepth() > 0)
-      ? Math.max(34, Math.round(36 * us)) : 0;
+      ? Math.max(42, Math.round(36 * us)) : 0;
     var bodyX = x + pad;
     var bodyY = y + headH + tabH + Math.round(8 * us);
     var bodyW = w - pad * 2;
@@ -44126,7 +44330,7 @@
     var tx = L.x + L.pad;
     var ty = L.y + L.headH + Math.round(6 * us);
     var th = L.tabH - Math.round(6 * us);
-    var bw = Math.max(56, Math.round(64 * us));
+    var bw = Math.max(72, Math.round(64 * us));
     var hov = (ukHover === 'uk:back');
     ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(tx - 1, ty - 1, bw + 2, th + 2);
@@ -44142,7 +44346,7 @@
       ctx.fillRect(cxx + a, cyy - a - 1, 2, 2);
       ctx.fillRect(cxx + a, cyy + a - 1, 2, 2);
     }
-    var bpx = Math.round(8.5 * us);
+    var bpx = Math.max(11, Math.round(8.5 * us));
     nsText('BACK', cxx + arm + Math.round(6 * us), ty + Math.round((th - bpx) / 2), bpx,
            hov ? UIT_TEXT : UIT_BODY);
     UK_HIT.push({ id: 'uk:back', x: tx - 4, y: ty - 4, w: bw + 8, h: th + 8 });
@@ -44152,21 +44356,18 @@
     for (var i = 0; i < ukState.stack.length; i++) {
       trail += (trail ? ' ▸ ' : '') + (ukState.stack[i].title || '');
     }
-    var tpx = Math.round(8.5 * us);
+    var tpx = Math.max(11, Math.round(8.5 * us));
     var maxW = L.w - L.pad * 2 - bw - Math.round(14 * us);
     var tw = nsTextW(trail, tpx);
-    if (tw > maxW && tw > 0) tpx = Math.max(6, tpx * maxW / tw);
-    nsText(trail, tx + bw + Math.round(10 * us), ty + Math.round((th - tpx) / 2), tpx, UIT_DIM);
+    if (tw > maxW && ukState.stack.length) trail = ukState.stack[ukState.stack.length - 1].title || trail;
+    nsText(ukFitText(trail, maxW, tpx), tx + bw + Math.round(10 * us), ty + Math.round((th - tpx) / 2), tpx, UIT_DIM);
   }
 
   function ukDrawHeader(L) {
     var us = L.us;
     var cy = L.y + Math.round(L.headH / 2);
-    // title
-    var tpx = Math.round(15 * us);
-    nsText(ukModal.title, L.x + L.pad + 2, cy - Math.round(tpx / 2), tpx, UIT_TEXT);
     // close button (top-right square)
-    var cw = Math.max(34, Math.round(30 * us));
+    var cw = Math.max(36, Math.round(30 * us));
     var cr = { x: L.x + L.w - cw - Math.round(7 * us), y: L.y + Math.round((L.headH - cw) / 2), w: cw, h: cw };
     var chov = (ukHover === 'uk:close');
     ctx.fillStyle = UIT_EDGE;
@@ -44183,8 +44384,16 @@
     }
     UK_HIT.push({ id: 'uk:close', x: cr.x - 4, y: cr.y - 4, w: cr.w + 8, h: cr.h + 8 });
     // money chip, right-aligned against the close button
-    var chipH = Math.round(28 * us);
-    nsDrawMoneyChip(cr.x - Math.round(10 * us), L.y + Math.round((L.headH - chipH) / 2), us, 'right');
+    var moneyScale = Math.max(11 / 15, us);
+    var chipH = Math.round(28 * moneyScale);
+    var chip = nsDrawMoneyChip(cr.x - Math.round(10 * us), L.y + Math.round((L.headH - chipH) / 2), moneyScale, 'right');
+    var tpx = Math.max(13, Math.round(15 * us));
+    var titleX = L.x + L.pad + 2;
+    var titleLines = ukStencilLines(ukModal.title, chip.x - titleX - Math.round(10 * us), tpx, 2);
+    var titleLineH = tpx + 4;
+    for (var ti = 0; ti < titleLines.length; ti++) {
+      nsText(titleLines[ti], titleX, cy - Math.round((titleLines.length * titleLineH - 4) / 2) + ti * titleLineH, tpx, UIT_TEXT);
+    }
     // hairline under the header
     ctx.fillStyle = 'rgba(0,0,0,0.42)';
     ctx.fillRect(L.x + 1, L.y + L.headH, L.w - 2, 2);
@@ -44217,8 +44426,8 @@
         ctx.fillStyle = 'rgba(255,216,150,0.05)';
         ctx.fillRect(rx, ty, rw, th);
       }
-      var px = Math.round(9.5 * us);
-      nsText(def.label, rx + rw / 2, ty + (th - px) / 2, px,
+      var px = Math.max(11, Math.round(9.5 * us));
+      nsText(ukFitText(def.label, rw - 12, px), rx + rw / 2, ty + (th - px) / 2, px,
              active ? UIT_TEXT : (hov ? UIT_BODY : UIT_DIM), 'center');
       UK_HIT.push({ id: 'uk:tab:' + def.id, x: rx, y: ty - 4, w: rw, h: th + 8 });
     }
@@ -44231,12 +44440,11 @@
     ukInset(L.listX, L.listY, L.listW, L.listH);
     if (n === 0) {
       ukMono('Nothing here yet.', L.listX + L.listW / 2, L.listY + L.listH / 2,
-             Math.max(10, Math.round(11 * us)), UIT_DIM, 'center');
+             Math.max(11, Math.round(11 * us)), UIT_DIM, 'center');
       return;
     }
     var ideal = Math.round(54 * us);
-    var rowH = Math.max(Math.max(40, Math.round(40 * us)), Math.min(ideal, Math.floor(L.listH / n)));
-    if (rowH < 44 && L.listH / n < 44) rowH = 44;   // touch floor; overflow scrolls
+    var rowH = Math.max(44, Math.round(40 * us), Math.min(ideal, Math.floor(L.listH / n)));
     var totalH = rowH * n;
     ukState.scrollMax = Math.max(0, totalH - L.listH);
     if (ukState.scroll > ukState.scrollMax) ukState.scroll = ukState.scrollMax;
@@ -44274,31 +44482,33 @@
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(ix, iy, iw, iw);
       if (it.icon) it.icon(ix + iw / 2, iy + iw / 2, iw * 0.82);
-      // name + sub
-      var namePx = Math.round(8.5 * us);
-      var subPx = Math.max(9, Math.round(9.5 * us));
+      // Give the name its own line; state and price share the line below.
+      // Long text truncates within its column instead of shrinking.
+      var namePx = Math.max(11, Math.round(8.5 * us));
+      var subPx = Math.max(11, Math.round(9.5 * us));
       var tx0 = ix + iw + Math.round(9 * us);
-      var pricePx = Math.round(8.5 * us);
+      var pricePx = Math.max(11, Math.round(8.5 * us));
+      var rightX = L.listX + L.listW - Math.max(10, Math.round(10 * us));
       var priceW = it.priceLabel ? nsTextW(it.priceLabel, pricePx) : 0;
-      var nameMaxW = (L.listX + L.listW - Math.round(10 * us) - priceW - Math.round(8 * us)) - tx0;
-      var npx = namePx;
-      var nw = nsTextW(it.name, npx);
-      if (nw > nameMaxW && nw > 0) npx = Math.max(6, npx * nameMaxW / nw);
+      var nameMaxW = rightX - tx0 - (isFolder ? Math.round(16 * us) : 0);
+      var hasSub = !!(it.sub || it.priceLabel);
+      var textH = hasSub ? namePx + 6 + subPx : namePx;
+      var nameY = ry + Math.round((rowH - textH) / 2);
+      var subY = nameY + namePx + 6;
+      nsText(ukFitText(it.name, nameMaxW, namePx), tx0, nameY, namePx, selected ? UIT_TEXT : UIT_BODY);
       if (it.sub) {
-        nsText(it.name, tx0, ry + Math.round(rowH * 0.24) - Math.round(npx / 2) + 2, npx, selected ? UIT_TEXT : UIT_BODY);
-        ukMono(it.sub, tx0, ry + Math.round(rowH * 0.74) + 3, subPx, UIT_DIM);
-      } else {
-        nsText(it.name, tx0, ry + Math.round((rowH - npx) / 2), npx, selected ? UIT_TEXT : UIT_BODY);
+        var subW = rightX - tx0 - (priceW ? priceW + Math.round(8 * us) : 0);
+        ukMono(ukFitText(it.sub, subW, subPx, true), tx0, subY + subPx - 2, subPx, UIT_DIM);
       }
       // right side: folders get the descend chevron, items their price
       if (isFolder) {
-        nsText('▸', L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx,
+        nsText('▸', rightX, ry + Math.round((rowH - pricePx) / 2), pricePx,
                hov ? UIT_GOLD_HI : UIT_DIM, 'right');
       } else if (it.priceLabel) {
         var pc = UIT_DIM;
         if (it.priceTier === 'gold') pc = UIT_MONEY;
         else if (it.priceTier === 'red') pc = UIT_RED;
-        nsText(it.priceLabel, L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx, pc, 'right');
+        nsText(it.priceLabel, rightX, subY, pricePx, pc, 'right');
       }
       // hairline between rows
       if (i < n - 1) {
@@ -44306,7 +44516,7 @@
         ctx.fillRect(L.listX + 1, ry + rowH - 1, L.listW - 2, 1);
       }
       UK_HIT.push({ id: 'uk:item:' + it.key, x: L.listX, y: Math.max(L.listY, ry), w: L.listW,
-                    h: Math.min(rowH, L.listY + L.listH - ry) });
+                    h: Math.min(ry + rowH, L.listY + L.listH) - Math.max(L.listY, ry) });
     }
     ctx.restore();
     // scrollbar
@@ -44328,37 +44538,46 @@
     var x = L.detX, w = L.detW;
     var pad = Math.round(10 * us);
     var bottom = L.detY + L.detailH;
+    var compact = L.detailH < 240;
+    var minimal = L.detailH < 120;
+    var pairedButtons = compact && it.act && it.children;
 
     // Stack from the bottom: action button, drill-in ghost button, desc,
     // stat, pips, state, name. The art stage takes whatever is left on
     // top. Informational rows (no act) give their button space back.
     var btnH = it.act ? Math.max(44, Math.round(44 * us)) : 0;
     var btnY = bottom - btnH;
-    var childBtnH = it.children ? Math.max(34, Math.round(34 * us)) : 0;
+    var childBtnH = it.children ? Math.max(44, Math.round(34 * us)) : 0;
     var childGap = it.children ? Math.round(6 * us) : 0;
-    var childY = btnY - childGap - childBtnH;
+    var childY = pairedButtons ? btnY : btnY - childGap - childBtnH;
+    if (pairedButtons) childBtnH = btnH;
     var cursorY = childY - Math.round(8 * us);
 
-    var descPx = Math.max(10, Math.round(10.5 * us));
+    var descPx = Math.max(11, Math.round(10.5 * us));
     var descLineH = Math.round(descPx * 1.45);
-    var descLines = it.desc ? 2 : 0;
+    var descLines = it.desc && L.detailH >= 190 ? 2 : 0;
     if (it.desc && L.detailH > Math.round(300 * us)) descLines = 3;
     var descH = descLines > 0 ? descLines * descLineH + Math.round(4 * us) : 0;
     var descY = cursorY - descH;
 
-    var statH = it.stat ? Math.round(30 * us) : 0;
+    var statH = it.stat && !minimal ? (compact ? 20 : Math.max(36, Math.round(30 * us))) : 0;
     var statY = descY - statH;
 
-    var pipsH = it.pips ? Math.round(8 * us) : 0;
-    var pipsPad = it.pips ? Math.round(8 * us) : 0;
+    var pipsH = it.pips && !minimal ? Math.round(8 * us) : 0;
+    var pipsPad = pipsH ? Math.round(8 * us) : 0;
     var pipsY = statY - pipsH - pipsPad;
 
-    var subPx = Math.max(9, Math.round(10 * us));
-    var subH = it.state ? Math.round(16 * us) : Math.round(4 * us);
+    var subPx = Math.max(11, Math.round(10 * us));
+    var subH = minimal ? 0 : (it.state ? Math.max(18, Math.round(16 * us)) : Math.round(4 * us));
     var subY = pipsY - subH;
 
-    var namePx = Math.round(12 * us);
-    var nameH = Math.round(18 * us);
+    var namePx = Math.max(12, Math.round(12 * us));
+    var nameLines = ukStencilLines(it.name, w - pad * 2, namePx, 2);
+    // At the smallest landscape heights, the selected list row supplies
+    // the item name while the detail column holds the two actions.
+    if (minimal && it.act && L.detailH < 80) nameLines = [];
+    var nameLineH = namePx + 4;
+    var nameH = nameLines.length ? nameLines.length * nameLineH + Math.round(2 * us) : 0;
     var nameY = subY - nameH;
 
     var artY = L.detY;
@@ -44372,15 +44591,16 @@
         artH += reclaim;
         nameY += reclaim; subY += reclaim; pipsY += reclaim; statY += reclaim; descY = statY;
       }
-      if (artH < Math.round(40 * us)) artH = Math.round(40 * us);
     }
 
-    // art stage
-    ukInset(x, artY, w, artH);
+    // Keep art within its allotted space. Very short cards already show
+    // the specimen in the list, so give the text and controls priority.
+    var showArt = artH >= 32 && !minimal;
+    if (showArt) ukInset(x, artY, w, artH);
     var acx = x + w / 2, acy = artY + artH / 2;
     // warm banded halo behind the art (stepped alpha, pixel-friendly)
     var haloR = Math.min(w, artH) * 0.44;
-    for (var hb = 4; hb >= 1; hb--) {
+    for (var hb = showArt ? 4 : 0; hb >= 1; hb--) {
       var hf = hb / 4;
       ctx.fillStyle = 'rgba(255,204,110,' + (0.10 * (1 - hf) * (1 - hf) + 0.012).toFixed(3) + ')';
       ctx.beginPath(); ctx.arc(acx, acy, haloR * 0.3 + haloR * 0.7 * hf, 0, Math.PI * 2); ctx.fill();
@@ -44390,7 +44610,7 @@
     var artSize = Math.min(w - Math.round(40 * us), artH - Math.round(20 * us), 190);
     var idle = Math.sin(nsRoomT * 1.6) * 2 * us;
     var pop = ukArtPopT > 0 ? 1 + 0.07 * Math.sin((ukArtPopT / 0.22) * Math.PI) : 1;
-    if (it.icon) {
+    if (it.icon && showArt) {
       ctx.save();
       ctx.translate(acx, acy + idle);
       ctx.scale(pop, pop);
@@ -44398,8 +44618,8 @@
       ctx.restore();
     }
     // stock corner badge on the art stage
-    if (it.badge) {
-      var bdPx = Math.max(9, Math.round(9.5 * us));
+    if (it.badge && showArt) {
+      var bdPx = Math.max(11, Math.round(9.5 * us));
       var bdW = ukMonoW(it.badge, bdPx, true) + Math.round(12 * us);
       var bdH = bdPx + Math.round(8 * us);
       ctx.fillStyle = 'rgba(8,10,14,0.85)';
@@ -44410,34 +44630,38 @@
     }
 
     // name
-    var dnw = nsTextW(it.name, namePx);
-    var maxNameW = w - Math.round(12 * us);
-    var dnpx = (dnw > maxNameW && dnw > 0) ? Math.max(7, namePx * maxNameW / dnw) : namePx;
-    nsText(it.name, x + w / 2, nameY + Math.round((nameH - dnpx) / 2), dnpx, UIT_TEXT, 'center');
+    for (var ni = 0; ni < nameLines.length; ni++) {
+      nsText(nameLines[ni], x + w / 2, nameY + ni * nameLineH, namePx, UIT_TEXT, 'center');
+    }
     // state line
-    if (it.state) {
-      ukMono(it.state, x + w / 2, subY + subH - Math.round(4 * us), subPx, UIT_DIM, 'center');
+    if (it.state && subH) {
+      ukMono(ukFitText(it.state, w - pad * 2, subPx, true), x + w / 2, subY + subH - Math.round(4 * us), subPx, UIT_DIM, 'center');
     }
     // pips
-    if (it.pips) {
+    if (pipsH) {
       var pw = Math.min(w - pad * 2, Math.round(190 * us));
       ukPips(x + (w - pw) / 2, pipsY, pw, pipsH, it.pips.cur, it.pips.max);
     }
     // stat delta
-    if (it.stat) {
-      var sLabPx = Math.max(9, Math.round(9.5 * us));
-      var valPx = Math.round(11 * us);
+    if (it.stat && statH) {
+      var sLabPx = Math.max(11, Math.round(9.5 * us));
+      var valPx = Math.max(11, Math.round(11 * us));
       var sY = statY + Math.round(6 * us);
-      ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, UIT_DIM, 'center');
       // '▸' is the one arrow glyph in STENCIL_FONT ('>' has no bitmap).
       var valStr = it.stat.next ? (it.stat.cur + ' ▸ ' + it.stat.next) : it.stat.cur;
       var deltaStr = it.stat.delta ? ('  ' + it.stat.delta) : '';
-      var vw = nsTextW(valStr, valPx);
-      var dw = deltaStr ? nsTextW(deltaStr, Math.round(valPx * 0.8)) : 0;
-      var startX = x + w / 2 - (vw + dw) / 2;
-      nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, UIT_TEXT);
-      if (deltaStr) {
-        nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + Math.round(valPx * 0.14), Math.round(valPx * 0.8), UIT_MONEY);
+      if (compact) {
+        ukMono(ukFitText(it.stat.label + '  ' + valStr + deltaStr, w - pad * 2, 11, true), x + w / 2, statY + 14, 11, UIT_BODY, 'center');
+      } else {
+        ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, UIT_DIM, 'center');
+        var deltaPx = Math.max(11, Math.round(valPx * 0.8));
+        var vw = nsTextW(valStr, valPx);
+        var dw = deltaStr ? nsTextW(deltaStr, deltaPx) : 0;
+        var startX = x + w / 2 - (vw + dw) / 2;
+        nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, UIT_TEXT);
+        if (deltaStr) {
+          nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + valPx - deltaPx, deltaPx, UIT_MONEY);
+        }
       }
     }
     // description
@@ -44447,23 +44671,24 @@
     }
     // secondary drill-in (ghost) sits above the action button
     if (it.children) {
-      var gr = { x: x + pad, y: childY, w: w - pad * 2, h: childBtnH };
+      var gr = { x: x + pad, y: childY, w: pairedButtons ? Math.floor((w - pad * 2 - childGap) / 2) : w - pad * 2, h: childBtnH };
       ukButton(gr, (it.childLabel || 'MORE') + '  ▸', 'ghost',
-               ukHover === 'uk:child', 0, Math.round(9 * us));
+               ukHover === 'uk:child', 0, Math.max(11, Math.round(9 * us)));
       UK_HIT.push({ id: 'uk:child', x: gr.x, y: gr.y, w: gr.w, h: gr.h });
     }
     // action button
     if (it.act) {
       var shake = ukDeniedT > 0 ? Math.round(Math.sin(ukDeniedT * 44) * 3) : 0;
-      var br = { x: x + pad + shake, y: btnY, w: w - pad * 2, h: btnH };
-      var bpx = Math.round(11 * us);
+      var brX = pairedButtons ? gr.x + gr.w + childGap : x + pad;
+      var br = { x: brX + shake, y: btnY, w: x + w - pad - brX, h: btnH };
+      var bpx = Math.max(11, Math.round(11 * us));
       var pressT = (ukPress && ukPress.id === 'uk:act') ? 1 : 0;
       if (it.act.enabled) {
         ukButton(br, it.act.label, 'gold', ukHover === 'uk:act', pressT, bpx);
       } else {
         var reason = it.act.reason || it.act.label;
         var kind = (it.act.reasonKind === 'short') ? 'short' : 'lock';
-        ukButton(br, reason, kind, false, 0, Math.round(9.5 * us));
+        ukButton(br, reason, kind, false, 0, Math.max(11, Math.round(9.5 * us)));
       }
       UK_HIT.push({ id: 'uk:act', x: br.x, y: br.y, w: br.w, h: br.h });
     }
@@ -47679,6 +47904,8 @@
   //                                 listeners below; any tap/click/key).
   //   ledgerRecordOre(type, shiny) -> call at ore-collect time.
   //   ledgerToggle()             -> open/close the ledger page (ledgerOpen).
+  //   ledgerPointerDown/Move(x,y) -> ledger-owned canvas input (050).
+  //   ledgerKeyDown(key)         -> consume a key while the ledger is open.
   //   drawSeamFx() / drawLedger() -> dispatched from the RENDER: UI overlay
   //                                 section in 140; both self-gate.
   //
@@ -47704,6 +47931,8 @@
 
   var ledgerData = {};             // ore type -> { n: count, shiny: count }; persisted (047)
   var ledgerOpen = false;
+  var ledgerPage = 0;
+  var ledgerHover = null;
 
   // ----- Cyrillic stencil glyphs (ЖИЛА) -----
   // The console stencil font (220) is Latin-only; the seam's name needs four
@@ -48202,7 +48431,19 @@
   }
 
   function ledgerToggle() {
+    // Recovery owns the screen after death; never open a hidden input layer.
+    if (!ledgerOpen && (gameOver || gameWon)) return false;
     ledgerOpen = !ledgerOpen;
+    ledgerHover = null;
+    // A held movement key or an in-flight wheel tap must not survive the
+    // transition into or out of this input-owning page.
+    for (var k in keys) keys[k] = false;
+    dpad.left = dpad.right = dpad.up = dpad.down = false;
+    touch.active = false;
+    dpadTouchId = null;
+    shopTapCandidate = null;
+    if (player) player.thrusting = false;
+    if (itemWheel.open) closeItemWheel(false);
     return ledgerOpen;
   }
 
@@ -48264,121 +48505,171 @@
     ctx.restore();
   }
 
-  // Full-screen MINERAL LEDGER page. Framed-panel look borrowed from the
-  // shop sub-pages (230): dark backdrop, red iron-bracketed title banner,
-  // stencil text throughout. Dispatched from 140 when ledgerOpen.
+  // The collection uses the same gunmetal plate as the store. Card size
+  // stays readable; extra specimens move to another page instead of being
+  // squeezed into narrower columns on a short or portrait viewport.
+  function ledgerLayout() {
+    var compact = viewH < 420;
+    var margin = compact ? 8 : 16;
+    var w = Math.min(1080, viewW - margin * 2);
+    var pad = w < 440 ? 14 : 22;
+    var gap = 8;
+    var innerW = w - pad * 2;
+    var cols = Math.max(1, Math.min(4, Math.floor((innerW + gap) / 230)));
+    var cellW = Math.floor((innerW - gap * (cols - 1)) / cols);
+    var cellH = compact ? 80 : 96;
+    var headerH = compact ? 78 : 106;
+    var footerH = 60;
+    var n = ledgerOreList().length;
+    var rows = Math.max(1, Math.min(Math.ceil(n / cols),
+      Math.floor((viewH - margin * 2 - headerH - footerH + gap) / (cellH + gap))));
+    var perPage = cols * rows;
+    var pages = Math.max(1, Math.ceil(n / perPage));
+    ledgerPage = Math.max(0, Math.min(pages - 1, ledgerPage));
+    var gridH = rows * cellH + (rows - 1) * gap;
+    var h = headerH + gridH + footerH;
+    var x = Math.floor((viewW - w) / 2);
+    var y = Math.floor((viewH - h) / 2);
+    var footY = y + headerH + gridH + 8;
+    var closeW = w < 300 ? 64 : 76;
+    return {
+      x: x, y: y, w: w, h: h, pad: pad, compact: compact,
+      gridX: x + pad, gridY: y + headerH, gridW: innerW,
+      cellW: cellW, cellH: cellH, cols: cols, rows: rows, gap: gap,
+      perPage: perPage, pages: pages,
+      close: { x: x + w - pad - closeW, y: y + (compact ? 12 : 24), w: closeW, h: 44 },
+      prev: { x: x + pad, y: footY, w: 80, h: 44 },
+      next: { x: x + w - pad - 80, y: footY, w: 80, h: 44 }
+    };
+  }
+
+  function ledgerHitAt(x, y, L) {
+    var names = ['close', 'prev', 'next'];
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var r = L[name];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return name;
+    }
+    return null;
+  }
+
+  function ledgerMovePage(dir) {
+    var L = ledgerLayout();
+    ledgerPage = Math.max(0, Math.min(L.pages - 1, ledgerPage + dir));
+  }
+
+  function ledgerPointerDown(x, y) {
+    if (!ledgerOpen) return false;
+    var hit = ledgerHitAt(x, y, ledgerLayout());
+    if (hit === 'close') ledgerToggle();
+    else if (hit === 'prev') ledgerMovePage(-1);
+    else if (hit === 'next') ledgerMovePage(1);
+    return true;
+  }
+
+  function ledgerPointerMove(x, y) {
+    if (!ledgerOpen) return false;
+    ledgerHover = ledgerHitAt(x, y, ledgerLayout());
+    return true;
+  }
+
+  function ledgerKeyDown(key) {
+    if (!ledgerOpen) return false;
+    if (key === 'Escape' || key === 'c' || key === 'C' || key === 'b' || key === 'B') ledgerToggle();
+    else if (key === 'ArrowLeft' || key === 'PageUp') ledgerMovePage(-1);
+    else if (key === 'ArrowRight' || key === 'PageDown') ledgerMovePage(1);
+    else if (key === 'Home') ledgerPage = 0;
+    else if (key === 'End') ledgerPage = ledgerLayout().pages - 1;
+    // All keys belong to this page, including otherwise-unused game actions.
+    return true;
+  }
+
   function drawLedger() {
+    if (!ledgerOpen) return;
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
+    ukFizzDraw(1);
+    // Carry the dim across the console as well as the world behind it.
+    ctx.fillStyle = 'rgba(9,11,16,0.5)';
+    ctx.fillRect(0, viewH - consoleHeight(), viewW, consoleHeight());
 
-    // Backdrop.
-    ctx.fillStyle = '#16130f';
-    ctx.fillRect(0, 0, viewW, viewH);
+    var L = ledgerLayout();
+    var lc = ledgerCounts();
+    ukPanelBox(L.x, L.y, L.w, L.h);
+    var titlePx = L.w < 300 ? 14 : (L.w < 440 ? 16 : (L.compact ? 19 : 24));
+    if (!L.compact) ukMono('FIELD COLLECTION', L.gridX, L.y + 24, 11, UIT_DIM);
+    nsText('MINERAL LEDGER', L.gridX, L.y + (L.compact ? 16 : 36), titlePx, UIT_TEXT);
+    ukButton(L.close, 'CLOSE', 'ghost', ledgerHover === 'close', 0, 11);
 
-    // Title banner (the drawShopSubPageFrame red sign, standalone copy).
-    var bannerW = Math.min(440, viewW - 96);
-    var bannerH = 44;
-    var bannerX = Math.floor((viewW - bannerW) / 2);
-    var bannerY = 14;
-    ctx.fillStyle = '#1a0a05';
-    ctx.fillRect(bannerX - 2, bannerY - 2, bannerW + 4, bannerH + 4);
-    ctx.fillStyle = '#5a1810';
-    ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
-    ctx.fillStyle = '#8c2820';
-    ctx.fillRect(bannerX + 1, bannerY + 1, bannerW - 2, bannerH - 2);
-    ctx.fillStyle = '#a83830';
-    ctx.fillRect(bannerX + 1, bannerY + 1, bannerW - 2, 2);
-    ctx.fillStyle = '#3a3530';
-    ctx.fillRect(bannerX, bannerY, 8, 8);
-    ctx.fillRect(bannerX + bannerW - 8, bannerY, 8, 8);
-    ctx.fillRect(bannerX, bannerY + bannerH - 8, 8, 8);
-    ctx.fillRect(bannerX + bannerW - 8, bannerY + bannerH - 8, 8, 8);
-    ctx.fillStyle = '#5a5550';
-    ctx.fillRect(bannerX + 2, bannerY + 2, 2, 2);
-    ctx.fillRect(bannerX + bannerW - 4, bannerY + 2, 2, 2);
-    ctx.fillRect(bannerX + 2, bannerY + bannerH - 4, 2, 2);
-    ctx.fillRect(bannerX + bannerW - 4, bannerY + bannerH - 4, 2, 2);
-    var title = 'MINERAL LEDGER';
-    var tw = stencilTextWidth(title, 3);
-    drawStencilText(title, bannerX + Math.floor((bannerW - tw) / 2), bannerY + Math.floor((bannerH - 21) / 2), 3, '#f0d088');
-
-    // ---- Grid of specimens ----
-    var list = ledgerOreList();
-    var n = list.length;
-    var gridTop = bannerY + bannerH + 16;
-    var footerH = 30;
-    var availW = viewW - 32;
-    var availH = viewH - gridTop - footerH - 10;
-    var cols = Math.max(2, Math.min(8, Math.floor(availW / 168)));
-    var rows = Math.ceil(n / cols);
-    // Widen until the rows fit the screen (min cell height 44).
-    while (rows * 44 > availH && cols < 10) {
-      cols++;
-      rows = Math.ceil(n / cols);
+    var summaryY = L.y + (L.compact ? 60 : 81);
+    var summary = lc.got + ' / ' + lc.total + ' catalogued';
+    ukMono(summary, L.gridX, summaryY, 12, UIT_BODY);
+    var shinyTotal = lc.shiny.toLocaleString() + ' shiny';
+    if (lc.shiny > 0 && ukMonoW(summary, 12) + ukMonoW(shinyTotal, 11) + 16 <= L.gridW) {
+      ukMono(shinyTotal, L.x + L.w - L.pad, summaryY, 11, UIT_MONEY, 'right');
     }
-    var cellW = Math.floor(availW / cols);
-    var cellH = Math.min(72, Math.max(44, Math.floor(availH / rows)));
-    var gridW = cols * cellW;
-    var gridX = Math.floor((viewW - gridW) / 2);
+    ctx.fillStyle = UIT_INSET_DK;
+    ctx.fillRect(L.gridX, L.gridY - 12, L.gridW, 3);
+    ctx.fillStyle = UIT_GOLD;
+    ctx.fillRect(L.gridX, L.gridY - 12, Math.round(L.gridW * lc.got / Math.max(1, lc.total)), 3);
 
-    for (var i = 0; i < n; i++) {
+    var list = ledgerOreList();
+    var start = ledgerPage * L.perPage;
+    var end = Math.min(list.length, start + L.perPage);
+    for (var i = start; i < end; i++) {
+      var slot = i - start;
       var type = list[i];
       var def = ORES[type];
       var e = ledgerData[type];
       var collected = !!(e && e.n > 0);
-      var cx = gridX + (i % cols) * cellW;
-      var cy = gridTop + Math.floor(i / cols) * cellH;
+      var cx = L.gridX + (slot % L.cols) * (L.cellW + L.gap);
+      var cy = L.gridY + Math.floor(slot / L.cols) * (L.cellH + L.gap);
+      ukInset(cx, cy, L.cellW, L.cellH);
+      ctx.fillStyle = UIT_PANEL_SEL;
+      ctx.fillRect(cx + 1, cy + L.cellH - 1, L.cellW - 2, 1);
 
-      // Recessed cell panel.
-      ctx.fillStyle = UI_OUTLINE;
-      ctx.fillRect(cx + 1, cy + 1, cellW - 2, cellH - 2);
-      ctx.fillStyle = UIMAT_BAY_RECESS;
-      ctx.fillRect(cx + 2, cy + 2, cellW - 4, cellH - 4);
-      ctx.fillStyle = UIMAT_BAY_RECESS_DARK;
-      ctx.fillRect(cx + 2, cy + 2, cellW - 4, 1);
-      ctx.fillStyle = UIMAT_BAY_RECESS_LIGHT;
-      ctx.fillRect(cx + 2, cy + cellH - 3, cellW - 4, 1);
-
-      var tileX = cx + 7;
-      var tileY = cy + Math.floor((cellH - TILE) / 2);
+      var tileX = cx + 12;
+      var tileY = cy + Math.floor((L.cellH - TILE) / 2);
       if (collected) {
         drawLedgerSpecimen(tileX, tileY, type, i);
       } else {
-        // Dark silhouette: the slot exists, the mineral is unknown.
-        ctx.fillStyle = '#0a0a0d';
+        ctx.fillStyle = UIT_INSET_DK;
         ctx.fillRect(tileX, tileY, TILE, TILE);
-        ctx.fillStyle = 'rgba(216,210,196,0.18)';
-        ctx.fillRect(tileX, tileY, TILE, 1);
+        ukMono('?', tileX + TILE / 2, tileY + 23, 19, UIT_DIM, 'center');
       }
-      // Thin frame around the specimen.
-      ctx.fillStyle = UI_OUTLINE;
-      ctx.fillRect(tileX - 1, tileY - 1, TILE + 2, 1);
-      ctx.fillRect(tileX - 1, tileY + TILE, TILE + 2, 1);
-      ctx.fillRect(tileX - 1, tileY, 1, TILE);
-      ctx.fillRect(tileX + TILE, tileY, 1, TILE);
+      ctx.strokeStyle = UIT_EDGE;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tileX - 0.5, tileY - 0.5, TILE + 1, TILE + 1);
 
-      var textX = tileX + TILE + 7;
+      var textX = tileX + TILE + 12;
+      var textW = cx + L.cellW - 12 - textX;
+      var textY = cy + Math.floor((L.cellH - 54) / 2) + 11;
       if (collected) {
-        var label = (def.label || type).toUpperCase();
-        var maxChars = Math.max(3, Math.floor((cx + cellW - 6 - textX) / 6));
-        if (label.length > maxChars) label = label.slice(0, maxChars);
-        drawStencilText(label, textX, cy + Math.floor(cellH / 2) - 15, 1, '#d8d2c4');
-        drawStencilText('$' + (def.value || 0).toLocaleString(), textX, cy + Math.floor(cellH / 2) - 3, 1, '#d4a838');
-        var countStr = 'X ' + e.n + (e.shiny ? ' !' + e.shiny : '');
-        drawStencilText(countStr, textX, cy + Math.floor(cellH / 2) + 9, 1, '#9aa0a8');
+        // Every current ore name fits at this minimum card width, including
+        // Rhodochrosite. Keep the full name, never silently slice it.
+        ukMono(def.label || type, textX, textY, 12, UIT_TEXT, 'left', true);
+        ukMono('$' + (def.value || 0).toLocaleString() + ' each', textX, textY + 19, 11, UIT_MONEY);
+        var countStr = e.n.toLocaleString() + ' found';
+        var shinyStr = e.shiny ? e.shiny.toLocaleString() + ' shiny' : '';
+        if (shinyStr && ukMonoW(countStr + ' / ' + shinyStr, 11) <= textW) {
+          countStr += ' / ' + shinyStr;
+          shinyStr = '';
+        }
+        ukMono(countStr, textX, textY + 38, 11, UIT_DIM);
+        if (shinyStr) ukMono(shinyStr, textX, textY + 52, 11, UIT_DIM);
       } else {
-        drawStencilText('???', textX, cy + Math.floor(cellH / 2) - 3, 2, 'rgba(216,210,196,0.40)');
+        ukMono('Undiscovered', textX, textY + 9, 12, UIT_DIM);
+        ukMono('Specimen ' + (i + 1 < 10 ? '0' : '') + (i + 1), textX, textY + 30, 11, UIT_DIM);
       }
     }
 
-    // ---- Footer ----
-    var lc = ledgerCounts();
-    var footStr = lc.got + ' OF ' + lc.total + ' CATALOGUED';
-    if (lc.shiny > 0) footStr += '  SHINY: ' + lc.shiny;
-    var fw = stencilTextWidth(footStr, 2);
-    drawStencilText(footStr, Math.floor((viewW - fw) / 2), viewH - footerH + 4, 2, '#d4a838');
-
+    ukButton(L.prev, 'PREV', ledgerPage > 0 ? 'ghost' : 'locked', ledgerHover === 'prev', 0, 11);
+    ukButton(L.next, 'NEXT', ledgerPage < L.pages - 1 ? 'ghost' : 'locked', ledgerHover === 'next', 0, 11);
+    var footX = L.x + L.w / 2;
+    var wide = L.gridW >= 420;
+    ukMono((ledgerPage + 1) + ' / ' + L.pages, footX, L.prev.y + (wide ? 19 : 27), 12, UIT_BODY, 'center');
+    if (wide) ukMono('LEFT / RIGHT', footX, L.prev.y + 35, 11, UIT_DIM, 'center');
     ctx.restore();
   }
   // ========================================================================
@@ -48391,8 +48682,8 @@
   //   - PC: hold [Q] as a shortcut (cursor drives selection, release fires).
   // Existing T / B / 1 / 2 hotkeys remain as muscle-memory shortcuts.
   // ========================================================================
-  var ITEM_WHEEL_R = 70;
-  var ITEM_WHEEL_RI = 22;
+  var ITEM_WHEEL_R = 92;
+  var ITEM_WHEEL_RI = 26;
   var itemWheel = {
     open: false,
     cx: 0, cy: 0,         // wheel center, canvas px
@@ -48404,10 +48695,10 @@
 
   function getWheelItems() {
     return [
-      { id: 'tele',    label: 'WARP',    count: teleporters, color: '#c8a4ff' },
-      { id: 'small',   label: 'BOMB-S',  count: bombsSmall,  color: '#ff8040' },
-      { id: 'large',   label: 'BOMB-L',  count: bombsLarge,  color: '#ff3020' },
-      { id: 'balloon', label: 'BALLOON', count: balloons,    color: '#ffd060' }
+      { id: 'tele',    label: 'WARP',    count: teleporters },
+      { id: 'small',   label: 'BOMB-S',  count: bombsSmall },
+      { id: 'large',   label: 'BOMB-L',  count: bombsLarge },
+      { id: 'balloon', label: 'BALLOON', count: balloons }
     ];
   }
   function fireWheelItem(idx) {
@@ -48420,7 +48711,7 @@
   }
   function itemWheelButtonRect() {
     var ch = consoleHeight();
-    var bw = 56, bh = 36;
+    var bw = 56, bh = 44;
     return { x: 8, y: viewH - ch - bh - 6, w: bw, h: bh };
   }
   function pointInItemWheelButton(x, y) {
@@ -48433,7 +48724,7 @@
     itemWheel.open = true;
     itemWheel.cx = r.x + r.w + ITEM_WHEEL_R + 4;
     itemWheel.cy = r.y + r.h / 2 - 12;
-    if (itemWheel.cy < ITEM_WHEEL_R + 8) itemWheel.cy = ITEM_WHEEL_R + 8;
+    itemWheel.cy = Math.max(ITEM_WHEEL_R + 8, Math.min(viewH - ITEM_WHEEL_R - 8, itemWheel.cy));
     if (itemWheel.cx + ITEM_WHEEL_R > viewW - 8) itemWheel.cx = viewW - 8 - ITEM_WHEEL_R;
     itemWheel.pointerId = id;
     itemWheel.hover = -1;
@@ -48460,7 +48751,7 @@
   function drawItemWheelButton() {
     var r = itemWheelButtonRect();
     // Plate base + bevel
-    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillStyle = itemWheel.open ? UIT_PANEL_SEL : UIT_PANEL;
     ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
     ctx.fillRect(r.x, r.y, r.w, 1);
@@ -48468,7 +48759,7 @@
     ctx.fillStyle = UIMAT_PLATE_SHADOW;
     ctx.fillRect(r.x, r.y + r.h - 1, r.w, 1);
     ctx.fillRect(r.x + r.w - 1, r.y, 1, r.h);
-    ctx.fillStyle = UI_OUTLINE;
+    ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(r.x - 1, r.y - 1, r.w + 2, 1);
     ctx.fillRect(r.x - 1, r.y + r.h, r.w + 2, 1);
     ctx.fillRect(r.x - 1, r.y - 1, 1, r.h + 2);
@@ -48477,19 +48768,17 @@
     drawConsoleRivet(r.x + r.w - 4, r.y + 2);
     drawConsoleRivet(r.x + 2, r.y + r.h - 4);
     drawConsoleRivet(r.x + r.w - 4, r.y + r.h - 4);
-    var lbl = 'ITEMS';
-    var lw = stencilTextWidth(lbl, 1);
-    drawStencilText(lbl, r.x + Math.floor((r.w - lw) / 2), r.y + 5, 1, '#d4a838');
+    nsText('ITEMS', r.x + r.w / 2, r.y + 6, 10, itemWheel.open ? UIT_GOLD : UIT_TEXT, 'center');
+    ctx.fillStyle = UIT_INSET_DK;
+    ctx.fillRect(r.x + 5, r.y + 21, r.w - 10, r.h - 26);
     var total = teleporters + balloons + bombsSmall + bombsLarge;
     var s = '×' + total;
     var sw = stencilTextWidth(s, 2);
-    drawStencilText(s, r.x + Math.floor((r.w - sw) / 2), r.y + r.h - 18, 2, total > 0 ? '#40c060' : '#52504a');
-    // Active glow when wheel is open
+    drawStencilText(s, r.x + Math.floor((r.w - sw) / 2), r.y + r.h - 20, 2, total > 0 ? UIT_GOLD : UIT_DIM);
+    // A crisp gold edge marks the open selector.
     if (itemWheel.open) {
       ctx.save();
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = '#ffd060';
-      ctx.strokeStyle = '#ffd060';
+      ctx.strokeStyle = UIT_GOLD;
       ctx.lineWidth = 1;
       ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
       ctx.restore();
@@ -48646,11 +48935,11 @@
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    drawItemWheelButton();
-    if (!itemWheel.open) { ctx.restore(); return; }
+    if (!itemWheel.open) { drawItemWheelButton(); ctx.restore(); return; }
     // Dim backdrop so the wheel pops
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, 0, viewW, viewH);
+    drawItemWheelButton();
     var cx = itemWheel.cx, cy = itemWheel.cy;
     var R = ITEM_WHEEL_R, Ri = ITEM_WHEEL_RI;
     var items = getWheelItems();
@@ -48664,19 +48953,17 @@
       ctx.arc(cx, cy, R, a0, a1);
       ctx.arc(cx, cy, Ri, a1, a0, true);
       ctx.closePath();
-      if (hovered && enabled) ctx.fillStyle = '#5a4220';
-      else if (enabled)       ctx.fillStyle = '#241c14';
-      else                    ctx.fillStyle = '#15110d';
+      if (hovered && enabled) ctx.fillStyle = UIT_PANEL_SEL;
+      else if (enabled)       ctx.fillStyle = UIT_PANEL;
+      else                    ctx.fillStyle = UIT_INSET;
       ctx.fill();
-      ctx.strokeStyle = hovered && enabled ? items[i].color : UI_OUTLINE;
+      ctx.strokeStyle = hovered && enabled ? UIT_GOLD : UIT_EDGE;
       ctx.lineWidth = hovered ? 2 : 1;
       ctx.stroke();
-      // Hovered wedge gets a soft neon edge along the outer arc
+      // The selected segment carries the same gold edge as the menu button.
       if (hovered && enabled) {
         ctx.save();
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = items[i].color;
-        ctx.strokeStyle = items[i].color;
+        ctx.strokeStyle = UIT_GOLD;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(cx, cy, R - 1, a0 + 0.04, a1 - 0.04);
@@ -48689,30 +48976,25 @@
       var lx = cx + Math.cos(mid) * lr;
       var ly = cy + Math.sin(mid) * lr;
       if (!enabled) ctx.globalAlpha = 0.3;
-      drawWheelItemIcon(items[i].id, lx, ly - 9, 18);
+      drawWheelItemIcon(items[i].id, lx, ly - 12, 22);
       ctx.globalAlpha = 1;
-      var lbl = items[i].label;
-      var lw = stencilTextWidth(lbl, 1);
-      drawStencilText(lbl, Math.round(lx - lw / 2), Math.round(ly + 3), 1, enabled ? items[i].color : '#52504a');
-      var cnt = '×' + items[i].count;
-      var cw = stencilTextWidth(cnt, 1);
-      drawStencilText(cnt, Math.round(lx - cw / 2), Math.round(ly + 13), 1, enabled ? '#d4a838' : '#52504a');
+      ukMono(items[i].label, Math.round(lx), Math.round(ly + 12), 11, enabled ? UIT_TEXT : UIT_DIM, 'center');
+      ukMono('x' + items[i].count, Math.round(lx), Math.round(ly + 28), 11, enabled ? UIT_GOLD : UIT_DIM, 'center');
     }
     // Center hub
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = UIT_INSET_DK;
     ctx.beginPath(); ctx.arc(cx, cy, Ri - 1, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#5a4220'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.lineWidth = 1; ctx.stroke();
     // Center label
     var msg, msgColor;
     if (itemWheel.hover >= 0 && items[itemWheel.hover].count > 0) {
-      msg = 'FIRE'; msgColor = items[itemWheel.hover].color;
+      msg = 'FIRE'; msgColor = UIT_GOLD;
     } else if (itemWheel.hover >= 0) {
-      msg = 'EMPTY'; msgColor = '#a83020';
+      msg = 'EMPTY'; msgColor = UIT_RED;
     } else {
-      msg = 'PICK'; msgColor = '#d4a838';
+      msg = 'PICK'; msgColor = UIT_BODY;
     }
-    var mw = stencilTextWidth(msg, 1);
-    drawStencilText(msg, Math.round(cx - mw / 2), Math.round(cy - 4), 1, msgColor);
+    ukMono(msg, Math.round(cx), Math.round(cy + 4), 11, msgColor, 'center');
     ctx.restore();
   }
 
@@ -58798,7 +59080,7 @@
      keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
   var _pauseBtnHiddenForShop = null;
   function syncPauseBtnForShop() {
-    var up = shopOpen || shopState !== 'closed';
+    var up = shopOpen || shopState !== 'closed' || ledgerOpen;
     if (up === _pauseBtnHiddenForShop) return;
     _pauseBtnHiddenForShop = up;
     var pb = document.getElementById('gm-pause-btn');
@@ -58806,6 +59088,7 @@
   }
 
   /* ---- Game Loop ---- */
+  var ledgerPadHeld = {};
   function loop(time) {
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
@@ -58867,6 +59150,23 @@
     if (terrainChunkRebuildBoostFrames > 0) terrainChunkRebuildBoostFrames--;
     if (dt > 1 / 45) fluidPerfStress = Math.min(2, fluidPerfStress + dt * 4);
     else if (dt < 1 / 55) fluidPerfStress = Math.max(0, fluidPerfStress - dt * 1.5);
+
+    // The collection page owns input and holds the mine still while browsing.
+    // Poll the controller here because the normal poll is below gameplay input.
+    if (ledgerOpen) {
+      if (typeof gamepadTick === 'function') gamepadTick(dt);
+      var ledgerNow = {};
+      for (var ledgerKey in keys) {
+        ledgerNow[ledgerKey] = !!keys[ledgerKey];
+        if (keys[ledgerKey] && !ledgerPadHeld[ledgerKey]) ledgerKeyDown(ledgerKey);
+        keys[ledgerKey] = false;
+      }
+      ledgerPadHeld = ledgerNow;
+      render();
+      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      return;
+    }
+    ledgerPadHeld = {};
 
     // Restart confirmation. R is always available, but requires a second
     // press so an accidental tap doesn't wipe the run.

@@ -91,6 +91,7 @@ wired-but-empty SFX), save/respawn, the Great Seam endgame chamber, the Mineral 
 | `030-worldgen.js` | terrain + ore-vein placement, surface ponds (low-end lake sizing), the Great Seam |
 | `040-init-resize-resolution.js` | `init()`, `resize()`, fuel/cargo/hull/climb formulas |
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
+| `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
 | `245-ui-kit.js` | the reusable modal kit: fizzed-world backdrop + the catalog modal (tabs/list/detail/action) |
 | `250/270/280-shop-*.js` | the STORE modal spec + routing (250) and its workshop/shelf item builders (270/280) |

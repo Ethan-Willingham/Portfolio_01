@@ -8,6 +8,30 @@
 
 > **Gunmetal + Brass skin (2026-07-18, v26.20):** the owner picked the Gunmetal + Brass palette in `store-theme-lab.html` (kept as the color bench) and the whole UI now wears it: cold desaturated blue-gray steel for every chrome surface (store panel, console frame and end caps, instrument cases, pause card, radio plates), while brass, gold, the dial faces, and the §6 signal colors stay warm ("cold machine, warm lit dials"). The source of truth for chrome color is the token block in `js/sluice/020-state.js`: the retuned `UIMAT_*` plate-steel tones plus the `UIT_*` theme tokens (panel, inset, text tiers, action gold, money, danger red `#ec7058` which now clears WCAG AA on the field). The §4 materials hexes for plate steel are superseded by those tokens; brass, lamp glass, and stencil paint values in §4 still stand. Re-skinning the UI again means editing that one block, nothing else.
 
+> **Menu polish (2026-09-11, v26.78).** The live pause, Options, Controls,
+> and New Game confirmation use native DOM controls on an opaque gunmetal
+> plate. This supersedes the unbuilt pause proposal in section 9.3 and the
+> blanket DOM prohibition for these menus. `053-pause-menu.js` passes the
+> existing `UIT_*` and `UIMAT_*` tokens to `sluice-menu.css`; the site palette
+> remains separate. Cream headings, readable mono labels, inset controls,
+> and one brass Resume action establish hierarchy. Selected settings use
+> a fine gold underline instead of filling every switch with gold. The
+> body scrolls while the header and Back stay visible. Native labels,
+> percentage readouts, pressed states, focus containment, and Escape-to-back
+> are part of the design. New Game requires an explicit in-game erase step.
+>
+> The shared dim text is now `UIT_DIM #929dac`, clearing AA on the panel.
+> Catalog labels have an 11px reading floor; prices sit below names instead
+> of forcing names to shrink. Short screens prioritize actionable controls.
+> The Mineral Ledger uses the same plate/inset kit, full mineral names,
+> and pages of readable specimen cards. Close and page controls are at
+> least 44px. The item wheel uses the same gunmetal and gold hierarchy,
+> retains the item sprites, and has a 44px-tall Items trigger. The salvage
+> manifest keeps its established paper-and-ink material.
+>
+> Verify with `node tools/sluice-menu-smoke.mjs`; optional
+> `DUMP=/tmp/sluice-menus` writes review screenshots outside the repository.
+
 The canonical art-direction bible for everything the player **interacts with** in Sluice — gauges, controls, shops, end-state screens, future locations like the oil depot and space station. Read this in full before drawing any UI element. Companion to [BUILDING_STYLE.md](BUILDING_STYLE.md), [BACKGROUND_STYLE.md](BACKGROUND_STYLE.md), and [MINERALS_BIBLE.md](MINERALS_BIBLE.md).
 
 The game is undergoing a v11 UI overhaul. Pre-v11 UI (top status bar, modal shop, message toasts, layer banners) is being stripped and rebuilt against this document.
