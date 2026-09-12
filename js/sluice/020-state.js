@@ -34,15 +34,13 @@
   var terrainChunkCount = 0;
   var terrainChunkUseTick = 0;
   var terrainChunkRebuildsThisFrame = 0;
+  var terrainChunkPendingThisFrame = 0;
   var terrainWarmupFrames = 3;
   var terrainChunkRebuildBoostFrames = 0;
   var introPhase = 'warmup';
   var introHoldTimer = 0.2;
-  // Warmup leaves the dark overlay up until the renderer has actually
-  // settled — terrainChunkRebuildsThisFrame reaches 0 for a few frames in
-  // a row — instead of a hard frame count. That way restart and fresh-load
-  // both wait for the visible chunks to be fully built before fading in,
-  // and we don't see tiles popping through the fade.
+  // Loading waits for settled assets, visible terrain, and cloud caches.
+  // Gameplay remains frozen until the complete destination has faded in.
   var introSettledFrames = 0;
   var introWarmupFramesRun = 0;
   var terrainClearOverlays = [];

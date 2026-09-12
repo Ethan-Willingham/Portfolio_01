@@ -86,9 +86,13 @@
       if (visible === wasVisible) return;
       wasVisible = visible;
       area.style.touchAction = visible ? 'auto' : '';
-      var siblings = area.children;
-      for (var i = 0; i < siblings.length; i++) {
-        if (siblings[i] !== overlay) siblings[i].inert = visible;
+      var loading = window.SluiceLoading && window.SluiceLoading.active();
+      if (window.SluiceLoading) window.SluiceLoading.syncInput();
+      else {
+        var siblings = area.children;
+        for (var i = 0; i < siblings.length; i++) {
+          if (siblings[i] !== overlay) siblings[i].inert = visible;
+        }
       }
       if (visible) {
         returnFocus = 'gm-resume-btn';
@@ -98,7 +102,7 @@
         // Enter is also the shop key. Returning focus to a button would
         // let its native Enter click reopen pause instead of entering town.
         var target = document.getElementById('game-canvas');
-        if (target) target.focus({ preventScroll: true });
+        if (target && !loading) target.focus({ preventScroll: true });
       }
     }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
 

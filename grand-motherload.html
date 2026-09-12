@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v26.91">
+  <link rel="stylesheet" href="sluice-menu.css?v=v26.92">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -93,15 +93,52 @@
     }
     .game-canvas-area canvas { display: block; outline: none; }
 
-    /* === Loading overlay — plain dark fade === */
+    /* Critical loading styles live here so the first paint needs no game assets.
+       Fallback colors mirror the gunmetal/brass tokens in 020-state.js. */
     #game-intro {
       position: absolute;
       inset: 0;
-      background: #10131a;   /* gunmetal night, matches the v26.20 UI skin */
-      z-index: 10;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 28px;
+      background: var(--menu-inset, #14181f);
+      color: var(--menu-text, #eee1b8);
+      font-family: var(--font-mono, monospace);
+      text-align: center;
       opacity: 1;
-      transition: opacity 0.5s ease;
-      pointer-events: none;
+      transition: opacity 180ms ease;
+      touch-action: auto;
+    }
+    #game-intro[hidden] { display: none; }
+    #game-intro[data-state="revealing"] { opacity: 0; }
+    #game-intro[data-state="loading"], #game-intro[data-state="error"] { transition: none; }
+    #game-intro *, #game-intro *::before, #game-intro *::after { box-sizing: border-box; }
+    .loading-content { width: min(100%, 400px); margin: auto; }
+    .loading-mark { display: block; width: 112px; height: 96px; margin: 0 auto 24px; color: var(--menu-gold, #d9ad3f); }
+    .loading-mark .loading-rock { stroke: var(--menu-highlight, #46505c); }
+    #game-intro .loading-title { margin: 0; font: 700 clamp(36px, 7vw, 56px)/1.1 var(--font-mono, monospace); letter-spacing: 0.14em; padding-left: 0.14em; color: inherit; }
+    #game-intro .loading-tagline { margin: 12px 0 42px; font-size: 12px; line-height: 1.5; letter-spacing: 0.08em; color: var(--menu-dim, #929dac); }
+    .loading-track { height: 2px; width: 200px; max-width: 80%; margin: 0 auto 18px; overflow: hidden; background: var(--menu-highlight, #46505c); }
+    .loading-track::after { content: ''; display: block; width: 40%; height: 100%; background: var(--menu-gold, #d9ad3f); animation: loading-travel 1.5s ease-in-out infinite; }
+    @keyframes loading-travel { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
+    #game-intro .loading-status { margin: 0; color: var(--menu-body, #c9c7b8); font-size: 13px; line-height: 1.6; }
+    #game-intro .loading-note { margin: 16px 0 0; color: var(--menu-dim, #929dac); font-size: 12px; line-height: 1.6; }
+    #gm-loading-retry { display: block; min-height: 44px; margin: 20px auto 0; padding: 10px 20px; border: 1px solid var(--menu-gold, #d9ad3f); border-radius: 0; background: var(--menu-gold, #d9ad3f); color: var(--menu-gold-text, #241a08); font: 700 13px/1.5 var(--font-mono, monospace); cursor: pointer; }
+    #gm-loading-retry[hidden], .loading-note[hidden] { display: none; }
+    #gm-loading-retry:focus-visible { outline: 2px solid var(--menu-text, #eee1b8); outline-offset: 4px; }
+    #game-intro[data-state="error"] .loading-track::after { animation: none; width: 100%; opacity: 0.4; }
+    @media (max-height: 480px) {
+      #game-intro { padding: 18px; }
+      .loading-mark { width: 70px; height: 60px; margin-bottom: 14px; }
+      #game-intro .loading-title { font-size: 32px; }
+      #game-intro .loading-tagline { margin: 8px 0 22px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #game-intro { transition: none; }
+      .loading-track::after { animation: none; width: 100%; opacity: 0.65; }
     }
 
     @media (min-width: 720px) {
@@ -333,7 +370,7 @@
 
     <main>
       <article>
-        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+        <div class="post-body">
 
           <div class="game-wrapper">
             <div class="game-header">
@@ -368,7 +405,22 @@
                   <rect x="9" y="3" width="3" height="10"></rect>
                 </svg>
               </button>
-              <div id="game-intro"></div>
+              <div id="game-intro" data-state="loading" aria-label="Loading Sluice" aria-busy="true">
+                <div class="loading-content">
+                  <svg class="loading-mark" viewBox="0 0 112 96" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path class="loading-rock" d="M4 28h27l10 7h30l12-7h25M4 48l18-4 17 7h35l14-7 20 4M4 68l21-6 17 8h28l20-8 18 6M4 88l27-7 19 7h19l21-7 18 7"/>
+                    <path d="M44 8h24v16l-12 10-12-10zM44 16h24M50 26h12M56 34v20"/>
+                    <path d="m50 49 6 6 6-6M51 64l5-4 5 4-5 7z"/>
+                  </svg>
+                  <h2 class="loading-title">SLUICE</h2>
+                  <p class="loading-tagline">Dig. Haul. Upgrade.</p>
+                  <div class="loading-track" aria-hidden="true"></div>
+                  <p class="loading-status" id="gm-loading-status" role="status" aria-live="polite" aria-atomic="true">Loading the game</p>
+                  <p class="loading-note" id="gm-loading-note" hidden></p>
+                  <button id="gm-loading-retry" type="button" hidden>Reload game</button>
+                  <noscript><p class="loading-note">Enable JavaScript to play Sluice.</p></noscript>
+                </div>
+              </div>
               <!-- The pause menu uses the same material tokens as the canvas UI.
                    Its controls stay native for keyboard and touch access. -->
               <div id="game-pause" aria-hidden="true">
@@ -444,6 +496,100 @@
       </div>
     </footer>
   </div>
+  <script>
+    // Available before the game scripts download, including on a failed boot.
+    (function () {
+      var root = document.getElementById('game-intro');
+      var area = root.parentNode;
+      var status = document.getElementById('gm-loading-status');
+      var note = document.getElementById('gm-loading-note');
+      var retry = document.getElementById('gm-loading-retry');
+      var generation = 0, revealTimer = 0, slowTimer = 0;
+      function active() { return root.getAttribute('data-state') !== 'ready'; }
+      function syncInput() {
+        var pause = document.getElementById('game-pause');
+        var paused = pause && pause.classList.contains('is-visible');
+        for (var i = 0; i < area.children.length; i++) {
+          var child = area.children[i];
+          child.inert = child === root ? !active() : active() || (paused && child !== pause);
+        }
+      }
+      function stage(text) {
+        if (root.getAttribute('data-state') !== 'loading') return;
+        if (status.textContent !== text) status.textContent = text;
+      }
+      function begin(text) {
+        generation++;
+        clearTimeout(revealTimer); clearTimeout(slowTimer);
+        root.hidden = false;
+        root.setAttribute('data-state', 'loading');
+        root.setAttribute('aria-hidden', 'false');
+        root.setAttribute('aria-busy', 'true');
+        area.setAttribute('aria-busy', 'true');
+        status.textContent = text || 'Loading the game';
+        note.hidden = retry.hidden = true;
+        syncInput();
+        slowTimer = setTimeout(function () {
+          if (root.getAttribute('data-state') !== 'loading') return;
+          note.textContent = 'Taking longer than usual. You can wait or reload.';
+          note.hidden = retry.hidden = false;
+        }, 20000);
+      }
+      function finish(callback) {
+        if (root.getAttribute('data-state') !== 'loading') return;
+        var ticket = generation;
+        clearTimeout(slowTimer);
+        status.textContent = 'Ready';
+        root.setAttribute('data-state', 'revealing');
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        revealTimer = setTimeout(function () {
+          if (ticket !== generation) return;
+          root.setAttribute('data-state', 'ready');
+          root.setAttribute('aria-busy', 'false');
+          root.setAttribute('aria-hidden', 'true');
+          area.setAttribute('aria-busy', 'false');
+          root.hidden = true;
+          syncInput();
+          if (callback) callback();
+          if (!document.getElementById('game-pause').classList.contains('is-visible') &&
+              (document.activeElement === document.body || area.contains(document.activeElement))) {
+            document.getElementById('game-canvas').focus({ preventScroll: true });
+          }
+        }, reduce ? 0 : 190);
+      }
+      function fail() {
+        if (!active()) return;
+        generation++;
+        clearTimeout(revealTimer); clearTimeout(slowTimer);
+        root.hidden = false;
+        root.setAttribute('data-state', 'error');
+        root.setAttribute('aria-busy', 'false');
+        area.setAttribute('aria-busy', 'false');
+        status.textContent = 'The game could not start.';
+        note.textContent = 'Reload to try again.';
+        note.hidden = retry.hidden = false;
+        syncInput();
+      }
+      retry.addEventListener('click', function () { window.location.reload(); });
+      window.addEventListener('error', function (e) {
+        var target = e.target;
+        if (target && target.tagName === 'SCRIPT') {
+          if (/\/js\/sluice\.js(?:\?|$)/.test(target.src)) fail();
+        } else if (active() && /\/js\/sluice(?:\.js|\/)/.test(e.filename || '')) fail();
+      }, true);
+      // A loading screen owns game input, but browser shortcuts and Tab work.
+      window.addEventListener('keydown', function (e) {
+        if (!active() || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.target === retry && (e.key === 'Enter' || e.key === ' ' || e.key === 'Tab')) {
+          return;
+        }
+        if (e.key !== 'Tab') e.preventDefault();
+        e.stopImmediatePropagation();
+      }, true);
+      window.SluiceLoading = { begin: begin, stage: stage, finish: finish, fail: fail, active: active, syncInput: syncInput };
+      begin();
+    })();
+  </script>
   <script>
     // TEMP verification helper — patch RAF so the game loop runs even when
     // the preview tab is hidden. Activated only via ?_rafTimer=1 query.
@@ -592,10 +738,10 @@
       });
     })();
   </script>
-  <script src="js/liquid-wgpu.js?v=v26.91"></script>
-  <script src="js/smoke-wgpu.js?v=v26.91"></script>
-  <script src="js/jello-wgpu.js?v=v26.91"></script>
-  <script src="js/audio.js?v=v26.91"></script>
-  <script src="js/sluice.js?v=v26.91"></script>
+  <script defer src="js/liquid-wgpu.js?v=v26.92"></script>
+  <script defer src="js/smoke-wgpu.js?v=v26.92"></script>
+  <script defer src="js/jello-wgpu.js?v=v26.92"></script>
+  <script defer src="js/audio.js?v=v26.92"></script>
+  <script defer src="js/sluice.js?v=v26.92"></script>
 </body>
 </html>

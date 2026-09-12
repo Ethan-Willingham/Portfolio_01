@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.91';
+  var GAME_VERSION = 'v26.92';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1371,15 +1371,13 @@
   var terrainChunkCount = 0;
   var terrainChunkUseTick = 0;
   var terrainChunkRebuildsThisFrame = 0;
+  var terrainChunkPendingThisFrame = 0;
   var terrainWarmupFrames = 3;
   var terrainChunkRebuildBoostFrames = 0;
   var introPhase = 'warmup';
   var introHoldTimer = 0.2;
-  // Warmup leaves the dark overlay up until the renderer has actually
-  // settled — terrainChunkRebuildsThisFrame reaches 0 for a few frames in
-  // a row — instead of a hard frame count. That way restart and fresh-load
-  // both wait for the visible chunks to be fully built before fading in,
-  // and we don't see tiles popping through the fade.
+  // Loading waits for settled assets, visible terrain, and cloud caches.
+  // Gameplay remains frozen until the complete destination has faded in.
   var introSettledFrames = 0;
   var introWarmupFramesRun = 0;
   var terrainClearOverlays = [];
@@ -4090,6 +4088,7 @@
   }
 
   function init() {
+    if (introPhase === 'done') beginSceneLoading('Preparing your mine');
     liquidParticles = [];
     liquidCount = 0;
     liquidOps.length = 0;          // v24.109 — stale mutation ops die with the old world
@@ -4135,8 +4134,6 @@
     introHoldTimer = 0.2;
     introSettledFrames = 0;
     introWarmupFramesRun = 0;
-    var ov = document.getElementById('game-intro');
-    if (ov) { ov.style.transition = 'none'; ov.style.opacity = '1'; }
     terrainClearOverlays = [];
     terrainClearedKinds = {};
     money = 0;
@@ -4840,6 +4837,182 @@
     DPAD_CY = viewH - consoleHeight() - DPAD_SIZE * 0.9 - 8;
   }
 
+  /* ---- Scene loading: freeze play while the destination becomes drawable ---- */
+  var gameLoadingAssetsReady = false;
+  var gameLoadingWorkPending = false;
+  var gameLoadingGeneration = 0;
+  var gameLoadingPauseReason = '';
+
+  function clearLoadingInput() {
+    for (var k in keys) keys[k] = false;
+    dpad.left = dpad.right = dpad.up = dpad.down = false;
+    touch.active = false;
+    player.thrusting = false;
+  }
+
+  function beginSceneLoading(label) {
+    gameLoadingGeneration++;
+    introPhase = 'warmup';
+    introSettledFrames = 0;
+    introWarmupFramesRun = 0;
+    terrainWarmupFrames = 3;
+    clearLoadingInput();
+    if (window.SluiceLoading) window.SluiceLoading.begin(label);
+    if (window.SluiceAudio) window.SluiceAudio.setPaused(true);
+  }
+
+  // Two animation frames let the browser paint the opaque cover before any
+  // synchronous world generation. Never perform that work in a click handler.
+  function queueSceneLoading(label, work) {
+    // The art bench builds on DOMContentLoaded and needs synchronous state.
+    if (!window.SluiceLoading) {
+      work();
+      if (!gameRafId) gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+      return;
+    }
+    beginSceneLoading(label);
+    gameLoadingWorkPending = true;
+    var ticket = gameLoadingGeneration;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (ticket !== gameLoadingGeneration) return;
+        try {
+          work();
+          gameLoadingWorkPending = false;
+          if (!gameRafId) gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+        } catch (e) {
+          gameLoadingWorkPending = false;
+          window.__bootErr = String(e) + '\n' + (e.stack || '');
+          if (window.SluiceLoading) window.SluiceLoading.fail();
+          console.error('Scene preparation failed:', e);
+        }
+      });
+    });
+  }
+
+  // Optional visual assets settle on success OR fallback. A broken font,
+  // missing moon map or unavailable GPU must never strand the loading screen.
+  function loadingBounded(promise, ms, onTimeout) {
+    return new Promise(function (resolve) {
+      var ended = false;
+      function done() { if (ended) return; ended = true; clearTimeout(timer); resolve(); }
+      var timer = setTimeout(function () { if (onTimeout) onTimeout(); done(); }, ms);
+      Promise.resolve(promise).then(done, done);
+    });
+  }
+  function abandonLoadingGPU(water) {
+    if (!water || liquidWGPU !== water) return;
+    var jello = jelloWGPU, smoke = smokeWGPU;
+    liquidWGPU = jelloWGPU = smokeWGPU = null;
+    function dispose() {
+      water.failed = true;
+      if (jello) { jello.failed = true; jello.simActive = false; }
+      if (smoke) { smoke.failed = true; smoke.simActive = false; }
+      try { if (smoke && smoke.dispose) smoke.dispose(); } catch (e) {}
+      try { water.dispose(); } catch (e) {}
+    }
+    dispose();
+    // Initialization may still be waiting for a device. Dispose again once
+    // it and its dormant shared-device checks settle, including any canvas
+    // allocated after the timeout. These promises never hold up the player.
+    Promise.resolve(water.readyPromise).then(function () {
+      return loadingBounded(Promise.all([
+        jello && jello.readyPromise, smoke && smoke.readyPromise
+      ]), 1000);
+    }, function () {}).then(dispose, dispose);
+  }
+
+  function prepareLoadingAssets() {
+    function fontReady(spec) {
+      if (!document.fonts) return Promise.resolve();
+      var font = document.fonts.load(spec).then(function () {
+        // A very late successful font must invalidate cached fallback text.
+        consoleBaySigs.length = 0;
+      }, function () {});
+      return loadingBounded(font, 5000);
+    }
+    var water = liquidWGPU;
+    return Promise.all([
+      fontReady('400 14px "Commit Mono"'),
+      fontReady('700 24px "Commit Mono"'),
+      loadingBounded(moonImagePromise, 5000),
+      loadingBounded(water && water.readyPromise, 8000, function () { abandonLoadingGPU(water); })
+    ]).then(function () {
+      gameLoadingAssetsReady = true;
+      introSettledFrames = 0;
+      if (window.SluiceLoading) window.SluiceLoading.stage('Finishing the scene');
+    });
+  }
+
+  function loadingCloudsReady() {
+    if (PERF_DISABLE_NIGHTSKY || PERF_DISABLE_WEATHER || !weatherTune.enabled ||
+        cam.y >= SKY_ROWS * TILE || weather.cov < 0.02) return true;
+    if (!cloudSprites) return false;
+    for (var c = 0; c < cloudSprites.length; c++) {
+      for (var v = 0; v < cloudSprites[c].length; v++) {
+        var sprite = cloudSprites[c][v];
+        if (!sprite.ready || sprite.dirty || sprite.recolorDirty) return false;
+      }
+    }
+    return !veilTile.dirty && !veilTile.recolorDirty;
+  }
+
+  // Called instead of gameplay, including while a focus pause is pending.
+  // No rig physics, input, hazards, economy, autosave or clock ticks run here.
+  function renderLoadingScene() {
+    if (gameLoadingWorkPending || !gameLoadingAssetsReady || introPhase === 'revealing') return;
+    clearLoadingInput();
+    updateCamera();
+    treesUpdate(0);
+    updateWeather(0);
+    updateSmoke(0);
+    updateSurfacePondStreaming();
+    updateLiquids(1 / 60);
+    terrainWarmupFrames = 1;
+    terrainChunkPendingThisFrame = 0;
+    render();
+    introWarmupFramesRun++;
+    var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
+    introSettledFrames = ready ? introSettledFrames + 1 : 0;
+    if (introSettledFrames < 2 || introWarmupFramesRun < 4) return;
+    terrainWarmupFrames = 0;
+    introPhase = 'revealing';
+    var ticket = gameLoadingGeneration;
+    function reveal() {
+      if (ticket !== gameLoadingGeneration) return;
+      clearLoadingInput();
+      introPhase = 'done';
+      lastTime = performance.now();
+      if (gameLoadingPauseReason && !PAUSE_DISABLED) {
+        gamePaused = true;
+        showPauseOverlay(gameLoadingPauseReason);
+        gameLoadingPauseReason = '';
+      }
+      if (window.SluiceAudio) window.SluiceAudio.setPaused(gamePaused);
+    }
+    if (window.SluiceLoading) window.SluiceLoading.finish(reveal);
+    else reveal();
+  }
+
+  // A distant recovery can evict every destination chunk. Cached recoveries
+  // stay instant; cold ones get the same short scene warmup as arrival.
+  function prepareRecoveryScene() {
+    if (introPhase !== 'done') return;
+    updateCamera();
+    var r0 = Math.floor((Math.max(0, Math.floor(cam.y / TILE)) - 1) / TERRAIN_CHUNK_TILES);
+    var r1 = Math.floor((Math.min(TOTAL_ROWS - 1, Math.floor((cam.y + screenH) / TILE)) + 1) / TERRAIN_CHUNK_TILES);
+    var c0 = Math.floor((Math.max(0, Math.floor(cam.x / TILE)) - 1) / TERRAIN_CHUNK_TILES);
+    var c1 = Math.floor((Math.min(COLS - 1, Math.floor((cam.x + screenW) / TILE)) + 1) / TERRAIN_CHUNK_TILES);
+    for (var r = r0; r <= r1; r++) {
+      for (var c = c0; c <= c1; c++) {
+        var chunk = terrainChunkCache[terrainChunkKey(r, c)];
+        if (!chunk || !chunk.ready || chunk.dirty || Math.abs(chunk.scale - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) {
+          beginSceneLoading('Returning to town');
+          return;
+        }
+      }
+    }
+  }
   // ====== SAVE / PERSISTENCE (v1, persistent-profile model) ======
   // The game persists across sessions: money, upgrades, consumables, cargo,
   // the mutated world grid, economy state (player.market), trade goods, and
@@ -5246,6 +5419,7 @@
     teleportFx = null;
     floaters = [];
     cam.snap = true;
+    prepareRecoveryScene();
   }
 
   // ---- Autosave poll (called once per frame from the update loop) ----
@@ -5326,6 +5500,7 @@
   /* ---- Input ---- */
   function setupInput() {
     window.addEventListener('keydown', function (e) {
+      if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
       if (!gamePaused && cargoManifestOpen) {
@@ -5371,6 +5546,7 @@
     });
     window.addEventListener('keyup', function (e) {
       keys[e.key] = false;
+      if (introPhase !== 'done') return;
       // v11.10 — release [Q] fires the wheel's hovered slot
       if ((e.key === 'q' || e.key === 'Q') && itemWheel.open && itemWheel.pointerId === 'kb') {
         closeItemWheel(true);
@@ -5404,6 +5580,7 @@
     // forever. The loop is re-kicked (exactly once) by resumeGame.
     function pauseGame(reason) {
       if (PAUSE_DISABLED) return;   // ?nopause=1 harness lever (020)
+      if (introPhase !== 'done') { gameLoadingPauseReason = reason || 'Paused'; clearAllInput(); return; }
       if (gamePaused) return;
       gamePaused = true;
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
@@ -5456,10 +5633,12 @@
       // This button lives on the explicit erase-save confirmation page.
       // Death and the R bailout still use the ordinary town respawn.
       if (!gamePaused || pauseMenuPage !== 'restart') return;
-      if (cargoManifestOpen) cargoManifestToggle();
-      saveWipe();
-      init();
-      resumeGame();
+      queueSceneLoading('Preparing a new mine', function () {
+        if (cargoManifestOpen) cargoManifestToggle();
+        saveWipe();
+        init();
+        resumeGame();
+      });
     });
     // v17.83 — manual pause button (top-left, under the version/FPS readout).
     // stopPropagation so the press can't also register as a game click.
@@ -6139,9 +6318,13 @@
       if (visible === wasVisible) return;
       wasVisible = visible;
       area.style.touchAction = visible ? 'auto' : '';
-      var siblings = area.children;
-      for (var i = 0; i < siblings.length; i++) {
-        if (siblings[i] !== overlay) siblings[i].inert = visible;
+      var loading = window.SluiceLoading && window.SluiceLoading.active();
+      if (window.SluiceLoading) window.SluiceLoading.syncInput();
+      else {
+        var siblings = area.children;
+        for (var i = 0; i < siblings.length; i++) {
+          if (siblings[i] !== overlay) siblings[i].inert = visible;
+        }
       }
       if (visible) {
         returnFocus = 'gm-resume-btn';
@@ -6151,7 +6334,7 @@
         // Enter is also the shop key. Returning focus to a button would
         // let its native Enter click reopen pause instead of entering town.
         var target = document.getElementById('game-canvas');
-        if (target) target.focus({ preventScroll: true });
+        if (target && !loading) target.focus({ preventScroll: true });
       }
     }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
 
@@ -25820,6 +26003,7 @@
 
   function drawTerrainChunks(startRow, endRow, startCol, endCol) {
     terrainChunkRebuildsThisFrame = 0;
+    terrainChunkPendingThisFrame = 0;
     var chunkR0 = Math.floor((startRow - 1) / TERRAIN_CHUNK_TILES);
     var chunkR1 = Math.floor((endRow + 1) / TERRAIN_CHUNK_TILES);
     var chunkC0 = Math.floor((startCol - 1) / TERRAIN_CHUNK_TILES);
@@ -25836,6 +26020,7 @@
     for (var cr = chunkR0; cr <= chunkR1; cr++) {
       for (var cc = chunkC0; cc <= chunkC1; cc++) {
         var chunk = getTerrainChunk(cr, cc);
+        if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
         if (!chunk.ready) continue;
         var cacheScale = chunk.scale || 1;
         ctx.drawImage(
@@ -28693,7 +28878,7 @@
   // it; the procedural disc is the fallback until it's ready.
   var moonImageReady = false;
   var moonTexData = null, moonTexW = 0, moonTexH = 0;
-  (function () {
+  var moonImagePromise = new Promise(function (resolve) {
     try {
       var img = new Image();
       img.onload = function () {
@@ -28706,11 +28891,12 @@
           moonTexW = img.width; moonTexH = img.height;
           moonImageReady = true;
         } catch (e) { moonImageReady = false; }
+        resolve();
       };
-      img.onerror = function () { moonImageReady = false; };
+      img.onerror = function () { moonImageReady = false; resolve(); };
       img.src = 'assets/images/moon.jpg';
-    } catch (e) { /* procedural fallback */ }
-  })();
+    } catch (e) { resolve(); /* procedural fallback */ }
+  });
 
   function buildSunDisc(r, hueIdx) {
     var size = r * 2 + 1;
@@ -59279,6 +59465,20 @@
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
   function loop(time) {
+    gameRafId = 0;
+    if (introPhase !== 'done') {
+      lastTime = time;
+      lastFrameDt = 1 / 60;
+      if (window.SluiceLoading && document.getElementById('game-intro').getAttribute('data-state') === 'error') return;
+      try { renderLoadingScene(); } catch (e) {
+        window.__bootErr = String(e) + '\n' + (e.stack || '');
+        if (window.SluiceLoading) window.SluiceLoading.fail();
+        console.error('Loading render failed:', e);
+        return;
+      }
+      gameRafId = requestAnimationFrame(loop);
+      return;
+    }
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
     // re-kicks it. (pauseGame also cancels the pending handle; this is backup.)
@@ -59300,33 +59500,6 @@
     if (timeOfDay >= 1) { timeOfDay -= 1; moonPhase = (moonPhase + 0.125) % 1; }
     if (timeOfDay < 0)  timeOfDay += 1;
 
-    // Intro sequence: warmup → hold → fade out overlay.
-    if (introPhase !== 'done') {
-      if (introPhase === 'warmup') {
-        terrainWarmupFrames = Math.max(0, terrainWarmupFrames - 1);
-        introWarmupFramesRun++;
-        // terrainChunkRebuildsThisFrame reflects the prior frame's rebuild
-        // count (it's reset at the start of the next drawTerrainChunks).
-        // Once we see two consecutive frames where the renderer didn't need
-        // to build any new chunks, the visible world is fully populated.
-        if (terrainChunkRebuildsThisFrame === 0) introSettledFrames++;
-        else introSettledFrames = 0;
-        var minWarmup = 4;
-        var maxWarmup = 90;  // hard ceiling — never get stuck on the overlay
-        var settled = (introSettledFrames >= 2 && introWarmupFramesRun >= minWarmup);
-        if (terrainWarmupFrames === 0 && (settled || introWarmupFramesRun >= maxWarmup)) {
-          introPhase = 'hold';
-          introHoldTimer = 0.25;
-        }
-      } else if (introPhase === 'hold') {
-        introHoldTimer -= dt;
-        if (introHoldTimer <= 0) {
-          introPhase = 'done';
-          var ov = document.getElementById('game-intro');
-          if (ov) { ov.style.transition = ''; ov.style.opacity = '0'; }
-        }
-      }
-    }
     // v17.84 — once the intro has settled and the world has rendered, drop into
     // the pause menu so the game waits for the player. Fires once; the world
     // still renders THIS frame (we're past the loop's top guard), then the tail
@@ -59396,7 +59569,7 @@
         // re-init (fresh world) for testing; the save survives until the
         // next autosave because dev runs don't dock-save.
         if (typeof radioMsgCut === 'function') radioMsgCut();   // prompt answered, drop the line
-        if (devMode) init();
+        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); return; }
         else if (gameOver) respawnFromDeath();
         else bailoutToTown();
       } else {
@@ -59426,9 +59599,11 @@
       } else {
         touch.active = false;
         if (gameOver) respawnFromDeath();
-        else init();   // gameWon path (inert flag) keeps the legacy restart
+        else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); return; }
       }
     }
+
+    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); return; }
 
     // Shop toggle via keyboard. [E] is the documented key (shown in the
     // proximity prompt); [P] is kept as a hidden alias for muscle memory
@@ -65387,41 +65562,45 @@
       try { console.warn('gm: ?dev boot apply failed:', e); } catch (_) {}
     }
 
-    // Persistent save (047-save.js): read the newest valid slot BEFORE init
-    // (synchronous localStorage), run the normal fresh init, then overlay the
-    // saved world + profile. If the overlay throws, re-init so a corrupt save
-    // can never strand the player on a half-applied world.
-    var __saveEnv = null;
-    try { __saveEnv = saveLoadEnvelope(); } catch (e) {
-      try { console.warn('save: load failed, starting fresh:', e); } catch (_) {}
-    }
-    init();
-    if (__saveEnv) {
-      try {
-        saveApply(__saveEnv);
-        console.log('save: resumed (slot n=' + (__saveEnv.n || 0) + ', $' + money + ', depth record ' + depthRecord + 'm)');
-        // Dev jello pen, take two (v25.16). init() carved the pen into the FRESH
-        // grid, but saveApply just swapped in the SAVED grid and jelloRestoreBodies
-        // reset every live body, so on any boot WITH a save the pen vanished (the
-        // owner's "jello is invisible" report; pre-v25.15 the pen BODIES survived
-        // because saveApply never touched bodies). Re-carve it on the final grid.
-        // Pen blobs are devFixture-tagged (040) and skipped by jelloSaveBodies, so
-        // re-injecting every boot can never stack duplicates into the save; the
-        // extra lightingInit re-floods the fog for the re-carved opening.
-        if (devMode && ENABLE_JELLO && typeof injectJelloTestPen === 'function') {
-          injectJelloTestPen();
-          lightingInit();
-        }
-      } catch (e) {
-        try { console.error('save: apply failed, starting fresh:', e); } catch (_) {}
-        init();
+    queueSceneLoading('Preparing your mine', function () {
+      // Persistent save (047-save.js): read the newest valid slot BEFORE init
+      // (synchronous localStorage), run the normal fresh init, then overlay the
+      // saved world + profile. If the overlay throws, re-init so a corrupt save
+      // can never strand the player on a half-applied world.
+      var __saveEnv = null;
+      try { __saveEnv = saveLoadEnvelope(); } catch (e) {
+        try { console.warn('save: load failed, starting fresh:', e); } catch (_) {}
       }
-    }
-    syncFireplacePresetPanel();
-    track('game_started');
-    gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+      if (window.SluiceLoading) window.SluiceLoading.stage(__saveEnv ? 'Restoring your mine' : 'Preparing your mine');
+      init();
+      if (__saveEnv) {
+        try {
+          saveApply(__saveEnv);
+          console.log('save: resumed (slot n=' + (__saveEnv.n || 0) + ', $' + money + ', depth record ' + depthRecord + 'm)');
+          // Dev jello pen, take two (v25.16). init() carved the pen into the FRESH
+          // grid, but saveApply just swapped in the SAVED grid and jelloRestoreBodies
+          // reset every live body, so on any boot WITH a save the pen vanished (the
+          // owner's "jello is invisible" report; pre-v25.15 the pen BODIES survived
+          // because saveApply never touched bodies). Re-carve it on the final grid.
+          // Pen blobs are devFixture-tagged (040) and skipped by jelloSaveBodies, so
+          // re-injecting every boot can never stack duplicates into the save; the
+          // extra lightingInit re-floods the fog for the re-carved opening.
+          if (devMode && ENABLE_JELLO && typeof injectJelloTestPen === 'function') {
+            injectJelloTestPen();
+            lightingInit();
+          }
+        } catch (e) {
+          try { console.error('save: apply failed, starting fresh:', e); } catch (_) {}
+          init();
+        }
+      }
+      syncFireplacePresetPanel();
+      track('game_started');
+      prepareLoadingAssets();
+    });
   } catch (e) {
     window.__bootErr = String(e) + '\n' + (e.stack || '');
+    if (window.SluiceLoading) window.SluiceLoading.fail();
     try { console.error('GM boot threw:', e); } catch (_) {}
   }
 })();

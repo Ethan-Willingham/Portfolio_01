@@ -1496,7 +1496,7 @@
   // it; the procedural disc is the fallback until it's ready.
   var moonImageReady = false;
   var moonTexData = null, moonTexW = 0, moonTexH = 0;
-  (function () {
+  var moonImagePromise = new Promise(function (resolve) {
     try {
       var img = new Image();
       img.onload = function () {
@@ -1509,11 +1509,12 @@
           moonTexW = img.width; moonTexH = img.height;
           moonImageReady = true;
         } catch (e) { moonImageReady = false; }
+        resolve();
       };
-      img.onerror = function () { moonImageReady = false; };
+      img.onerror = function () { moonImageReady = false; resolve(); };
       img.src = 'assets/images/moon.jpg';
-    } catch (e) { /* procedural fallback */ }
-  })();
+    } catch (e) { resolve(); /* procedural fallback */ }
+  });
 
   function buildSunDisc(r, hueIdx) {
     var size = r * 2 + 1;

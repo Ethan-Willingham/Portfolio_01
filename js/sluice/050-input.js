@@ -1,6 +1,7 @@
   /* ---- Input ---- */
   function setupInput() {
     window.addEventListener('keydown', function (e) {
+      if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
       if (!gamePaused && cargoManifestOpen) {
@@ -46,6 +47,7 @@
     });
     window.addEventListener('keyup', function (e) {
       keys[e.key] = false;
+      if (introPhase !== 'done') return;
       // v11.10 — release [Q] fires the wheel's hovered slot
       if ((e.key === 'q' || e.key === 'Q') && itemWheel.open && itemWheel.pointerId === 'kb') {
         closeItemWheel(true);
@@ -79,6 +81,7 @@
     // forever. The loop is re-kicked (exactly once) by resumeGame.
     function pauseGame(reason) {
       if (PAUSE_DISABLED) return;   // ?nopause=1 harness lever (020)
+      if (introPhase !== 'done') { gameLoadingPauseReason = reason || 'Paused'; clearAllInput(); return; }
       if (gamePaused) return;
       gamePaused = true;
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
@@ -131,10 +134,12 @@
       // This button lives on the explicit erase-save confirmation page.
       // Death and the R bailout still use the ordinary town respawn.
       if (!gamePaused || pauseMenuPage !== 'restart') return;
-      if (cargoManifestOpen) cargoManifestToggle();
-      saveWipe();
-      init();
-      resumeGame();
+      queueSceneLoading('Preparing a new mine', function () {
+        if (cargoManifestOpen) cargoManifestToggle();
+        saveWipe();
+        init();
+        resumeGame();
+      });
     });
     // v17.83 — manual pause button (top-left, under the version/FPS readout).
     // stopPropagation so the press can't also register as a game click.

@@ -758,6 +758,7 @@
 
   function drawTerrainChunks(startRow, endRow, startCol, endCol) {
     terrainChunkRebuildsThisFrame = 0;
+    terrainChunkPendingThisFrame = 0;
     var chunkR0 = Math.floor((startRow - 1) / TERRAIN_CHUNK_TILES);
     var chunkR1 = Math.floor((endRow + 1) / TERRAIN_CHUNK_TILES);
     var chunkC0 = Math.floor((startCol - 1) / TERRAIN_CHUNK_TILES);
@@ -774,6 +775,7 @@
     for (var cr = chunkR0; cr <= chunkR1; cr++) {
       for (var cc = chunkC0; cc <= chunkC1; cc++) {
         var chunk = getTerrainChunk(cr, cc);
+        if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
         if (!chunk.ready) continue;
         var cacheScale = chunk.scale || 1;
         ctx.drawImage(

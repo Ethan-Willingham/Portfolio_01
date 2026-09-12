@@ -78,6 +78,7 @@
   }
 
   function init() {
+    if (introPhase === 'done') beginSceneLoading('Preparing your mine');
     liquidParticles = [];
     liquidCount = 0;
     liquidOps.length = 0;          // v24.109 — stale mutation ops die with the old world
@@ -123,8 +124,6 @@
     introHoldTimer = 0.2;
     introSettledFrames = 0;
     introWarmupFramesRun = 0;
-    var ov = document.getElementById('game-intro');
-    if (ov) { ov.style.transition = 'none'; ov.style.opacity = '1'; }
     terrainClearOverlays = [];
     terrainClearedKinds = {};
     money = 0;

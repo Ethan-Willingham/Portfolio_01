@@ -404,6 +404,7 @@
     teleportFx = null;
     floaters = [];
     cam.snap = true;
+    prepareRecoveryScene();
   }
 
   // ---- Autosave poll (called once per frame from the update loop) ----

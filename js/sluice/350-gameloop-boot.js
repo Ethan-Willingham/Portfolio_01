@@ -158,6 +158,20 @@
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
   function loop(time) {
+    gameRafId = 0;
+    if (introPhase !== 'done') {
+      lastTime = time;
+      lastFrameDt = 1 / 60;
+      if (window.SluiceLoading && document.getElementById('game-intro').getAttribute('data-state') === 'error') return;
+      try { renderLoadingScene(); } catch (e) {
+        window.__bootErr = String(e) + '\n' + (e.stack || '');
+        if (window.SluiceLoading) window.SluiceLoading.fail();
+        console.error('Loading render failed:', e);
+        return;
+      }
+      gameRafId = requestAnimationFrame(loop);
+      return;
+    }
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
     // re-kicks it. (pauseGame also cancels the pending handle; this is backup.)
@@ -179,33 +193,6 @@
     if (timeOfDay >= 1) { timeOfDay -= 1; moonPhase = (moonPhase + 0.125) % 1; }
     if (timeOfDay < 0)  timeOfDay += 1;
 
-    // Intro sequence: warmup → hold → fade out overlay.
-    if (introPhase !== 'done') {
-      if (introPhase === 'warmup') {
-        terrainWarmupFrames = Math.max(0, terrainWarmupFrames - 1);
-        introWarmupFramesRun++;
-        // terrainChunkRebuildsThisFrame reflects the prior frame's rebuild
-        // count (it's reset at the start of the next drawTerrainChunks).
-        // Once we see two consecutive frames where the renderer didn't need
-        // to build any new chunks, the visible world is fully populated.
-        if (terrainChunkRebuildsThisFrame === 0) introSettledFrames++;
-        else introSettledFrames = 0;
-        var minWarmup = 4;
-        var maxWarmup = 90;  // hard ceiling — never get stuck on the overlay
-        var settled = (introSettledFrames >= 2 && introWarmupFramesRun >= minWarmup);
-        if (terrainWarmupFrames === 0 && (settled || introWarmupFramesRun >= maxWarmup)) {
-          introPhase = 'hold';
-          introHoldTimer = 0.25;
-        }
-      } else if (introPhase === 'hold') {
-        introHoldTimer -= dt;
-        if (introHoldTimer <= 0) {
-          introPhase = 'done';
-          var ov = document.getElementById('game-intro');
-          if (ov) { ov.style.transition = ''; ov.style.opacity = '0'; }
-        }
-      }
-    }
     // v17.84 — once the intro has settled and the world has rendered, drop into
     // the pause menu so the game waits for the player. Fires once; the world
     // still renders THIS frame (we're past the loop's top guard), then the tail
@@ -275,7 +262,7 @@
         // re-init (fresh world) for testing; the save survives until the
         // next autosave because dev runs don't dock-save.
         if (typeof radioMsgCut === 'function') radioMsgCut();   // prompt answered, drop the line
-        if (devMode) init();
+        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); return; }
         else if (gameOver) respawnFromDeath();
         else bailoutToTown();
       } else {
@@ -305,9 +292,11 @@
       } else {
         touch.active = false;
         if (gameOver) respawnFromDeath();
-        else init();   // gameWon path (inert flag) keeps the legacy restart
+        else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); return; }
       }
     }
+
+    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); return; }
 
     // Shop toggle via keyboard. [E] is the documented key (shown in the
     // proximity prompt); [P] is kept as a hidden alias for muscle memory

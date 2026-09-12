@@ -1,5 +1,30 @@
 # UI_STYLE.md — Frontier Soviet UI
 
+> **Loading and arrival (2026-09-12).** The game stage has an opaque loading
+> screen in the initial HTML, before the deferred game scripts. A restrained
+> drill-and-strata mark, cream SLUICE wordmark, brass activity line, and plain
+> status copy share the gunmetal UI tokens. The critical styles live inline;
+> their fallback colors mirror `020-state.js` until the menu tokens are set.
+> The game container must not inherit the site's entrance fade. Reduced motion
+> stops the activity animation and removes the reveal fade.
+>
+> `045-loading.js` holds gameplay and input through preparation and reveal.
+> Startup waits for each Commit Mono weight, the moon map, and the active water
+> backend to settle, with bounded fallback for optional resources. It then
+> warms the actual destination, including terrain, cloud art, trees, smoke,
+> and the arrival pond. Readiness uses rendered cache state, never a pretend
+> percentage or an arbitrary loading duration. No music-download gate.
+>
+> New Game shows the cover and yields two animation frames before world
+> generation. Recovery to town uses it only when destination chunks are cold.
+> Shops, menus, zoom, ordinary travel, and the existing teleport/banya effects
+> keep their normal transitions. A failed startup offers Reload game without
+> erasing the saved run. A slow startup offers the same action while continuing
+> to prepare. The art bench retains its synchronous initialization contract.
+>
+> Verify with `DUMP=/tmp/sluice-loading node tools/sluice-loading-smoke.mjs`.
+
+
 > **Theme note (2026-05-28):** "Frontier Soviet" is the *current* skin, not a permanent contract. Sluice is heading toward a paid Steam release and the theme may be revisited for that build, so treat the palette and the Cyrillic / red-star / propaganda motifs as the present look to match, not as fixed law. The structural principles here (UI-is-in-world, the outline and palette discipline, diegetic walk-up shops, animation restraint) carry across any re-theme; the Soviet hexes and iconography are replaceable. Heads up too: parts of this doc spec work that was never built (per-tier sprites, oil depot, space station) or describe the removed win screen, so check a section against the live game before trusting it.
 
 > **Store modal amendment (2026-07-18, v26.18):** the live shop is now ONE catalog modal on the shared UI kit (`js/sluice/245-ui-kit.js`, owner-directed): the world stays live behind it, blurred + dimmed + vignetted (the "fizz"), with WORKSHOP / SUPPLIES tabs, a scannable item list, a detail pane, and a single action button. This supersedes the §15 walk-up room and its "no modal" rule for the shop surface; §15 describes the legacy `USE_NEW_SHOP_UI = false` path and stays as history. The kit is the template for every future view/buy/store/combine/sell popup: build item descriptors, hand them to `ukCatalogOpen`, and do not invent a new panel system (the kit's header comment documents the item spec). The in-worldness axes (§2) still steer the kit's chrome: solid plate, stencil caps for titles and prices, Commit Mono for sentences, brass accents, money gold, denied red, no floating text outside the panel.
