@@ -1090,7 +1090,9 @@ The follow-up spacing pass uses 0.68 density, smaller living sprites and wider
 gaps between trunks. Sway and leaf shedding are quieter, with fewer bright
 foliage facets. `166-render-surface-boulders.js` adds sparse cached stones in
 clearings: four angular profiles, 26 to 45 world px wide and 13 to 25 px tall,
-using the station's stone palette. Boulders are scenery behind the rig, with
+using dark slate faces from the station's stone palette. Each shape has its
+own chipped profile and short fissures; shading runs continuously over the
+crown, without a separate pale top patch. Boulders are scenery behind the rig, with
 no collision. They avoid trees, ponds and the station compound. Excavating
 any tile beneath a boulder starts a quiet 1.05-second collapse: a 0.16-second
 lean toward the gap, then three cached stone fragments, four small chips and
@@ -1134,8 +1136,9 @@ old field. `node tools/test-sluice-grass.cjs` checks these behavior boundaries.
 
 The turtle (`167-surface-turtle.js`) and solitary white heron (`206-rare-bird.js`) each
 have a one-animal cap. Their encounter clocks count time with the surface in
-view, so mining does not queue arrivals. Both enter beyond a camera edge and
-use cached pixel poses in the existing flora, stone and sky palette.
+view, so mining does not queue arrivals. The turtle enters beyond a camera
+edge; the heron waits hidden in a living spruce or birch canopy. Both use
+cached pixel poses in the existing flora, stone and sky palette.
 
 The turtle first visits after 38 to 68 seconds of surface time, then waits
 120 to 220 seconds between visits. It walks at 5 world px/s, pauses to graze,
@@ -1144,12 +1147,17 @@ about 42 seconds it wanders back toward its entry edge. Removing its support
 removes the visitor rather than leaving it suspended. It is scenery with no
 collision or reward. `window.__surfaceTurtle.info()` reports its current state.
 
-The heron waits 45 to 73 seconds before its first pass, with 90 to 180 seconds
-between later passes. Its 30-pixel profile has warm white wings, cool shaded
-feathers, a folded neck, ochre bill and long trailing legs. Nine cached poses
-give it two slow wingbeats every 4.2 to 6 seconds, with a small body lift and
-head/tail follow-through. It glides at 34 to 46 world px/s between strokes.
-There is one heron at most, separate from all flock and perched-bird behavior.
+The heron waits 45 to 73 seconds before selecting a roost, with 90 to 180
+seconds between encounters. It uses a living tall tree at least 150 px from
+the rig, then launches away when a moving rig passes within about 125 px.
+Felling that tree also releases it. Bushes, snags, missing terrain and rebuilt
+trees cannot leave a floating roost. A parked rig does not repeatedly spook it.
+The white profile is now 22.5 world px wide, drawn at 0.75 scale and 0.76 alpha
+behind the trees and buildings. Eight continuous wingbeat poses use a quicker
+power stroke and slower recovery, with gently varying pace and a stronger
+launch. It accelerates to 32 to 44 world px/s, seeking changing altitudes with
+bounded vertical speed for smooth climbs and dips. There is one heron at most,
+separate from the tiny flocks and their existing perched-bird behavior.
 It retires offscreen; following it keeps the current pass alive. Inspect it
 with `window.__rareBird.info()`. Both systems reset on world replacement.
 

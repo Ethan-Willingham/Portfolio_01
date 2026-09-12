@@ -313,7 +313,6 @@
 
   // ----- Draw (called from the 140 world-entities region, world transform on) -----
   function birdsDraw() {
-    if (typeof rareBirdDraw === 'function') rareBirdDraw();
     if (!birdsInited) return;
     var surfY = SKY_ROWS * TILE;
     if (cam.y >= surfY) return;

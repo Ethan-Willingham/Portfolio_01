@@ -9,10 +9,23 @@
   function surfaceBoulderBake(w, h, seed) {
     var s = treesMakeSprite(w + 6, h + 6), g = s.g;
     var baseY = h + 3, cx = (s.w / 2) | 0;
-    var shoulder = .18 + treesHash(seed * 17) * .13;
-    var peak = .36 + treesHash(seed * 29) * .20;
-    var pts = [[.02,.92],[.06,.48],[shoulder,.15],[peak,0],
-               [.80,.14],[.98,.60],[.94,1],[.20,1]];
+    // Each size gets a different broken profile: an upright split stone,
+    // a low slab, a rounded shoulder and a broad double-ridged block.
+    var kind = Math.floor(seed / 11) % 4;
+    var profiles = [
+      [[.03,1],[.07,.54],[.23,.49],[.19,.31],[.38,.04],[.54,0],
+        [.71,.18],[.70,.27],[.83,.29],[.96,.62],[.91,.80],[.95,1]],
+      [[.02,1],[0,.72],[.12,.37],[.29,.22],[.50,.04],[.67,0],
+        [.84,.24],[.88,.52],[1,.64],[.97,.97],[.71,1]],
+      [[.04,1],[.01,.68],[.15,.30],[.35,.09],[.59,0],[.76,.14],
+        [.81,.39],[.94,.46],[.91,.62],[1,.83],[.92,1]],
+      [[.01,1],[.06,.64],[.18,.50],[.20,.24],[.38,.16],[.43,0],
+        [.61,.05],[.70,.23],[.84,.22],[.96,.54],[1,.82],[.93,1]]
+    ];
+    var pts = profiles[kind];
+    var split = [.57, .73, .62, .48][kind];
+    var cleft = [.43, .31, .48, .35][kind];
+    var cleftLean = [-.18, .24, .17, -.14][kind];
     var mask = new Uint8Array(s.w * s.h), x, y, i;
     // Scan-convert the angular silhouette. The outline stays exactly one
     // world pixel, without antialiased paths or smooth gradients.
@@ -38,22 +51,29 @@
         continue;
       }
       var nx = (x - 3) / w, ny = (y - 3) / h;
-      var ridge = .34 + (nx - peak) * .28;
-      g.fillStyle = ny < ridge ? BLD.stoneLight : (nx > .70 - ny * .12 ? BLD.stoneDark : BLD.stoneBase);
-      // A broad broken foot seats the rock in soil. It has no bright rim.
-      if (ny > .85 + nx * .05) g.fillStyle = BLD.stoneDark;
+      // The front plane continues over the crown. Low-contrast side facets
+      // model slate without a separate bright patch laid across the top.
+      var shaded = nx > split + ny * (kind % 2 ? -.16 : .19);
+      if (kind === 0 && ny > .56 + nx * .54) shaded = true;
+      if (kind === 3 && ny > .72 - nx * .18 && nx < .62) shaded = true;
+      if (ny > .91 - nx * .04) shaded = true;
+      g.fillStyle = shaded ? BLD.stoneDark : BLD.stoneBase;
       g.fillRect(x, y, 1, 1);
-      // One stepped fissure follows the meeting of the two main faces.
-      if (ny > .37 && ny < .78 && x === Math.round(3 + w * (.59 + Math.floor(ny * 6) * .025))) {
+      // A short, bent hairline and one small split at its foot. Keep most
+      // of the face quiet; these are weathered rocks, not faceted jewels.
+      var crackX = Math.round(3 + w * (cleft + ny * cleftLean)) + (ny > .44 ? 1 : 0);
+      if (ny > .26 && ny < .67 &&
+          (x === crackX || (ny > .56 && ny < .62 && x === crackX - 1))) {
         g.fillStyle = BLD.stoneDark; g.fillRect(x, y, 1, 1);
       }
-    }
-    // A short moss seam ties some stones to the grass without making every
-    // face speckled. Three large facets remain the primary read.
-    if (seed % 2) {
-      g.fillStyle = TREES_GREEN_DARK;
-      g.fillRect(6, baseY - 3, Math.round(w * .23), 2);
-      g.fillRect(8, baseY - 4, Math.round(w * .12), 1);
+      // A couple of small fracture faces inside the shaded flank add depth
+      // without scattering bright pixels or outlining every interior plane.
+      if (shaded && ny > .54 && ny < .64 && nx > .77 && nx < .86 - ny * .035) {
+        g.fillStyle = BLD.stoneBase; g.fillRect(x, y, 1, 1);
+      }
+      if (seed % 2 && ny > .86 && nx > .14 && nx < .31 - (ny > .93 ? .05 : 0)) {
+        g.fillStyle = TREES_GREEN_DARK; g.fillRect(x, y, 1, 1);
+      }
     }
     return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
   }

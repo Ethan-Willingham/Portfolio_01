@@ -926,6 +926,7 @@
     // ---- Surface trees (165): groves + snags across the wide surface.
     //      Drawn before the stations so canopies sit behind every building,
     //      in front of the terrain tiles + grass line. ----
+    if (typeof rareBirdDraw === 'function') rareBirdDraw();   // white visitor behind canopies and buildings
     if (typeof drawTrees === 'function') drawTrees();
     if (typeof drawSurfaceBoulders === 'function') drawSurfaceBoulders();
     if (typeof drawSurfaceTurtle === 'function') drawSurfaceTurtle();
