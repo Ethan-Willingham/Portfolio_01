@@ -119,7 +119,7 @@ var SluiceAudio = (function () {
   //   g    base gain (pre-jitter), default 1
   //   j    pitch-jitter override (fraction; default SFX_PITCH_JITTER = ±3%)
   var SFX_DIR = 'assets/sfx/';
-  var SFX_BANK_VERSION = '2';
+  var SFX_BANK_VERSION = '3';
   var SFX_MANIFEST = {
     // EFFECT — the drill flagship (SFX_BIBLE §6)
     'drill-spinup':         { b: 'e', n: 1 },
@@ -165,6 +165,8 @@ var SluiceAudio = (function () {
     'liquid-exit':          { b: 'e', n: 2 },
     'lava-sizzle':          { b: 'e', n: 1, loop: true, ext: 'wav' },
     'jello-wobble':         { b: 'e', n: 3, g: 0.8 },
+    'jello-churn':          { b: 'e', n: 5, g: 0.8 },
+    'jello-slap':           { b: 'e', n: 6, g: 0.9 },
     // EFFECT — the rig movement voice (the player is a vehicle, not feet;
     // SFX_PROMPT_SYSTEM §5 Priority set — footstep-* stay reserved)
     'rig-drive':            { b: 'e', n: 1, loop: true, ext: 'wav', g: 0.7 },
@@ -1107,10 +1109,11 @@ var SluiceAudio = (function () {
     // The jet opens smoothly and releases cleanly. There is no separate
     // ignition impact, and motion adds no gain or pitch rise.
     var engF = 110 + spool * 10;
+    var jetRamp = spool > 0 ? 0.09 : 0.015;
     fset(fl.engOsc.frequency, engF, 0.08);
-    fset(fl.engOG.gain, FLIGHT_ENGINE_GAIN * 0.12 * spool, 0.12);
-    fset(fl.engNG.gain, FLIGHT_ENGINE_GAIN * 0.5 * spool, 0.12);
-    fset(fl.bodyG.gain, FLIGHT_ENGINE_GAIN * 0.22 * spool, 0.12);
+    fset(fl.engOG.gain, FLIGHT_ENGINE_GAIN * 0.12 * spool, jetRamp);
+    fset(fl.engNG.gain, FLIGHT_ENGINE_GAIN * 0.5 * spool, jetRamp);
+    fset(fl.bodyG.gain, FLIGHT_ENGINE_GAIN * 0.22 * spool, jetRamp);
     // events: the fx counters only ever increment; diff with last-seen
     var fx = st.fx || {};
     if ((fx.boomN | 0) > fl.seen.boom) { fl.seen.boom = fx.boomN | 0; flightBoom(); }

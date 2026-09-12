@@ -1,6 +1,6 @@
 # Sluice sound bank
 
-151 original procedural sounds across all 82 keys in `js/audio.js`.
+162 original procedural sounds across all 84 keys in `js/audio.js`.
 Built from filtered noise, modal resonances, motor harmonics, granular debris,
 and shaped pitch envelopes. No source recordings or external sound libraries.
 The source recipe is `tools/audio/build-sfx.py`; the complete file inventory,
@@ -8,8 +8,10 @@ durations, levels and source trail are in `bank.json`.
 
 The live game uses six drill materials, ground machinery, the existing flight
 synth, impacts, bombs, slime, selling, UI, alerts, discovery, and nine
-ambience beds. Airborne steering and lift share a smooth exhaust voice with a
-faint motor body, soft start and release, and no ignition thump. It stays silent
+ambience beds. The visible jet has a smooth exhaust voice with a
+faint motor body, soft start, fast release, and no ignition thump. Releasing
+thrust cuts the flame and voice together, even while steering or coasting.
+Residual smoke dissipates silently. The jet stays silent
 while drilling and moving through a freshly mined block. Its volume
 does not increase with airspeed or climb rate. Free fall,
 coasting, and water contact are silent; solid landings have one short, damped
@@ -20,12 +22,21 @@ combat
 sounds are supplied for completeness. Their presence does not enable those
 features or add new gameplay events.
 
+Slime uses wet compression, suction grains, and small bubble closures. Five
+churn variants respond to actual jet contact; six slap variants respond to
+body and terrain impacts. The old three wobble cues now use the same wet
+material. Strength, body size, screen position, and distance shape playback.
+Per-body and shared cooldowns keep piles from flooding the mix. Resting,
+offscreen, and paused bodies are silent. The optional observers in the shared
+physics engine leave the standalone playground unchanged.
+
 ## Rebuild
 
 From the repository root on macOS (Python, NumPy, and the system `afconvert`):
 
 ```sh
 python3 tools/audio/build-sfx.py --preview /tmp/sluice-sfx-preview.wav
+python3 tools/audio/build-sfx.py --keys jello-wobble jello-churn jello-slap
 ```
 
 The seed for each sound and variant is stable. Change a recipe once to rebake

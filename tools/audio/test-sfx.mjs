@@ -20,7 +20,7 @@ const server = createServer(async (req, res) => {
     if (!filename.startsWith(root)) { res.writeHead(403); return res.end(); }
     let data = await readFile(filename);
     if (name === '/js/audio.js') data = Buffer.from(data.toString().replace('function playSfx(name, opts) {',
-      'function playSfx(name, opts) { window.__sfxCalls.push({name:name, gain:opts && opts.gain});'));
+      'function playSfx(name, opts) { window.__sfxCalls.push({name:name, gain:opts && opts.gain, pan:opts && opts.pan, rate:opts && opts.rate});'));
     // Game state access exists only in this test server's response, never the shipped bundle.
     if (name === '/js/sluice.js') data = Buffer.from(data.toString().replace(/\}\)\(\);\s*$/, `
       window.__sfxGameTest = {
@@ -33,7 +33,7 @@ const server = createServer(async (req, res) => {
       };
       window.__sfxGameTest.contact = function (opts) {
         var r = SKY_ROWS + 12, c = 90;
-        gameOver = gameWon = shopOpen = ledgerOpen = false; shopState = 'closed';
+        gameOver = gameWon = shopOpen = ledgerOpen = cargoManifestOpen = false; shopState = 'closed';
         keys = {}; dpad.left = dpad.right = dpad.up = dpad.down = false;
         drilling = null; hitPauseT = drillBlockMsgCool = 0;
         player.drillCooldownT = player.drillGlideT = player.slideAssistT = 0;
@@ -63,7 +63,7 @@ const server = createServer(async (req, res) => {
           tile:opts.dir ? world[tr][tc] : null};
       };
       window.__sfxGameTest.flightInput = function (dirs, fuel) {
-        gameOver = gameWon = shopOpen = ledgerOpen = false; shopState = 'closed';
+        gameOver = gameWon = shopOpen = ledgerOpen = cargoManifestOpen = false; shopState = 'closed';
         keys = {}; dirs.forEach(function (d) { keys['Arrow' + d] = true; });
         drilling = null; hitPauseT = 0; player.drillGlideT = 0; player.slideTargetX = null;
         player.x = 90 * TILE; player.y = (SKY_ROWS - 20) * TILE;
@@ -73,8 +73,57 @@ const server = createServer(async (req, res) => {
         var original = SluiceAudio.flight, state;
         SluiceAudio.flight = function (st) { state = st; original(st); };
         window.__sfxCalls = [];
-        try { update(.016); audioUpdate(.016); } finally { SluiceAudio.flight = original; }
-        return {spool:state.spool, calls:window.__sfxCalls};
+        try { for (var i = 0; i < 4; i++) { update(.016); updateRocketPlume(.016); audioUpdate(.016); } }
+        finally { SluiceAudio.flight = original; }
+        return {spool:state.spool, visible:rocketJetVisible(), calls:window.__sfxCalls};
+      };
+      window.__sfxGameTest.jetRelease = function () {
+        window.__sfxGameTest.flightInput(['Up', 'Right'], true);
+        keys.ArrowUp = false;
+        var original = SluiceAudio.flight, state;
+        SluiceAudio.flight = function (st) { state = st; original(st); };
+        try { update(.016); updateRocketPlume(.016); audioUpdate(.016); }
+        finally { SluiceAudio.flight = original; }
+        return {spool:state.spool, visible:rocketJetVisible(), smoke:rocketIntensity,
+          steering:player.lastMoveR, physicalSpool:player.thrustSpool};
+      };
+      window.__sfxGameTest.slimeScene = function (mode) {
+        var r = SKY_ROWS + 10, c = 90;
+        gameOver = gameWon = shopOpen = ledgerOpen = cargoManifestOpen = false; shopState = 'closed';
+        drilling = null; player.drillGlideT = 0; player.fuel = maxFuel;
+        player.x = (c + 2) * TILE - PLAYER_W / 2; player.y = (r - 2) * TILE - PLAYER_H;
+        player.renderX = player.x; player.renderY = player.y;
+        player.flightTilt = player.bodyTiltRender = 0; player.vx = player.vy = 0;
+        player.onGround = player.onJello = false;
+        player.thrusting = player.lastMoveU = mode === 'jet' || mode === 'wall';
+        rocketIntensity = 1; slimeAudioGap = 0;
+        cam.x = (c - 5) * TILE; cam.y = (r - 5) * TILE;
+        jelloBodies.length = 0; jelloCount = 0; jelloAccum = 0;
+        for (var rr = r - 4; rr <= r + 6; rr++) for (var cc = c - 7; cc <= c + 9; cc++) {
+          world[rr][cc] = rr === r + 3 || (mode === 'wall' && rr === r - 1)
+            ? {type:'foundation', hp:999999} : null;
+        }
+        var a = jelloBuildBody([{r:r,c:c},{r:r,c:c+1},{r:r+1,c:c},{r:r+1,c:c+1}]);
+        var b = jelloBuildBody([{r:r,c:c+2},{r:r,c:c+3},{r:r+1,c:c+2},{r:r+1,c:c+3}]);
+        if (mode === 'collision') { jelloShiftBody(b, TILE, 0); jelloLaunchBody(a, 190, 0); jelloLaunchBody(b, -190, 0); }
+        if (mode === 'offscreen') { cam.x -= screenW * 4; }
+        var contacts = 0, jetContacts = 0, ripple = jelloRippleHit, jet = slimeAudioJet;
+        jelloRippleHit = function (body, k, speed, gain, cd) {
+          if (gain === .5 && speed >= 95) contacts++;
+          ripple(body, k, speed, gain, cd);
+        };
+        slimeAudioJet = function (body, x, y, force) { jetContacts++; jet(body, x, y, force); };
+        window.__sfxCalls = [];
+        try {
+          for (var i = 0; i < 180; i++) { updateJello(1/60); slimeAudioUpdate(1/60); }
+        } finally { jelloRippleHit = ripple; slimeAudioJet = jet; }
+        var active = window.__sfxCalls.filter(function (s) { return s.name.indexOf('jello-') === 0; });
+        // A resting pile must not turn solver micro-contacts into a soundtrack.
+        player.thrusting = player.lastMoveU = false;
+        for (var j = 0; j < 360; j++) { updateJello(1/60); slimeAudioUpdate(1/60); }
+        window.__sfxCalls = [];
+        for (var j = 0; j < 120; j++) { updateJello(1/60); slimeAudioUpdate(1/60); }
+        return {active:active, settled:window.__sfxCalls, contacts:contacts, jetContacts:jetContacts, ripple:JELLO_RIPPLE};
       };
       window.__sfxGameTest.waterAudio = function () {
         var original = playerWaterCushion;
@@ -240,9 +289,11 @@ try {
     'Jet grows louder with airspeed/climb: ' + JSON.stringify(jetLevels));
   assert(Math.max(...jetLevels.map(s=>s.peak)) < .05, 'Jet is louder than a subtle background cue: ' + JSON.stringify(jetLevels));
   console.log('Quiet jet at rest, moderate climb and fast climb:', JSON.stringify(jetLevels));
-  await page.evaluate(() => { __flightState.spool = 0; });
-  await page.waitForTimeout(300);
-  assert(await page.evaluate(() => __peak()) < .0001, 'Releasing the jet left a falling sound');
+  await page.evaluate(() => { __flightState.spool = 0; SluiceAudio.flight(__flightState); });
+  // Includes the analyser's 46 ms history and the compressor's lookahead.
+  await page.waitForTimeout(110);
+  const releasedPeak = await page.evaluate(() => __peak());
+  assert(releasedPeak < .0001, 'Releasing the jet left a falling sound: ' + releasedPeak);
   await page.evaluate(() => clearInterval(__flightTimer));
   console.log('Flight: silent coasting and free fall, audible shared thrust, no second ignition or landing layer');
 
@@ -299,11 +350,16 @@ try {
   }
   for (const dirs of [['Left'], ['Right'], ['Up','Left'], ['Up','Right']]) {
     const flight = await page.evaluate(dirs => __sfxGameTest.flightInput(dirs, true), dirs);
-    assert.equal(flight.spool, 1, 'Lateral thrust did not drive the shared jet');
+    assert.equal(flight.spool, dirs.includes('Up') ? 1 : 0, 'Jet sound disagrees with the visible exhaust');
+    assert.equal(flight.visible, flight.spool > 0);
     assert(!flight.calls.some(c => c.name === 'air-pulse'));
   }
   assert.equal((await page.evaluate(() => __sfxGameTest.flightInput(['Left'], false))).spool, 0);
   assert.equal((await page.evaluate(() => __sfxGameTest.flightInput(['Left','Right'], true))).spool, 0);
+  const release = await page.evaluate(() => __sfxGameTest.jetRelease());
+  assert(release.steering && release.smoke > .02, 'Release did not exercise sideways coasting and smoke: ' + JSON.stringify(release));
+  assert.equal(release.spool, 0); assert.equal(release.visible, false);
+  console.log('Jet cuts on the first released frame, even while steering, coasting and trailing smoke');
   for (const dir of ['Left', 'Right']) {
     const tunnel = await page.evaluate(dir => __sfxGameTest.tunnel(dir), dir);
     assert(tunnel.digging > 0 && tunnel.gliding > 0 && tunnel.moved > 32, 'Tunnel test did not mine through blocks');
@@ -312,9 +368,21 @@ try {
     assert(!tunnel.drive.includes('rig-drive'), 'Stale mining velocity triggered the drive loop');
   }
   console.log('Horizontal tunnels: jet remains off through drilling, tile breaks and glides in both directions');
+  for (const mode of ['jet', 'collision', 'wall', 'offscreen']) {
+    const slime = await page.evaluate(mode => __sfxGameTest.slimeScene(mode), mode);
+    assert.equal(slime.ripple, 0, 'Audio must not enable visual ripples');
+    assert(slime.active.length <= 19, 'Slime pile flooded the mix: ' + JSON.stringify(slime));
+    assert(!slime.settled.some(c => c.name.startsWith('jello-')), 'Settled slime keeps sounding: ' + JSON.stringify(slime));
+    if (mode === 'jet') assert(slime.jetContacts > 0 && slime.active.some(c => c.name === 'jello-churn'), JSON.stringify(slime));
+    if (mode === 'collision') assert(slime.contacts > 0 && slime.active.some(c => c.name === 'jello-slap'), JSON.stringify(slime));
+    if (mode === 'wall') assert(!slime.active.some(c => c.name === 'jello-churn'), 'Jet sounded through solid rock');
+    if (mode === 'offscreen') assert.equal(slime.active.length, 0, 'Offscreen slime sounded');
+    assert(slime.active.every(c => c.gain > 0 && c.gain <= .9 && Math.abs(c.pan) <= .8 && c.rate >= .82 && c.rate <= 1.12));
+    console.log('Slime', mode, JSON.stringify({cues:slime.active.length, jetContacts:slime.jetContacts, collisions:slime.contacts, settled:slime.settled.length}));
+  }
   const water = await page.evaluate(() => __sfxGameTest.waterAudio());
   assert(!water.some(c => c.name.startsWith('liquid-')));
-  console.log('Contacts: one quiet cargo cue in all four directions with no held-input spam, rubble still mines, single graded landing including fatal falls, unified lateral jet, silent water');
+  console.log('Contacts: quiet cargo cue in all four directions, rubble still mines, single graded landing including fatal falls, visible jet only, silent water');
   await page.evaluate(() => localStorage.setItem('sluice.volume','0'));
   await page.reload();
   await page.waitForFunction(() => window.gm, null, {timeout:60000});
@@ -323,6 +391,12 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(missing, []);
   console.log('Game: clean boot, mining hook, pause/resume, zone progression, shop/death/revive, saved mute and music preference');
+  await page.goto(origin + '/water-smoke-slime.html');
+  await page.waitForFunction(() => window.__toy && window.__toy.stats().fps > 0, null, {timeout:60000});
+  await page.evaluate(() => __toy.slime(400, 220));
+  await page.waitForTimeout(350);
+  assert.deepEqual(errors, []);
+  console.log('Shared physics playground boots and simulates with optional audio observers absent');
   console.log('PASS', JSON.stringify({sounds:decode.length, keys:new Set(bank.sounds.map(s=>s.key)).size, largestDecodedPeak:Math.max(...decode.map(s=>s.peak)), bytes:bank.sounds.reduce((n,s)=>n+s.bytes,0)}));
 } finally {
   if (browser) await browser.close();

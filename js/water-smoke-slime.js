@@ -4971,7 +4971,10 @@
         }
       }
     }
-    if (jetBestF > 0.05) { b._ripJetOn = 1; b._ripJetX = jetBX; b._ripJetY = jetBY; }   // churn the skin under the jet
+    if (jetBestF > 0.05) {
+      b._ripJetOn = 1; b._ripJetX = jetBX; b._ripJetY = jetBY;
+      if (typeof slimeAudioJet === 'function') slimeAudioJet(b, jetBX, jetBY, jetBestF);
+    }
     if (disturbed) {
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
       if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
@@ -6287,6 +6290,9 @@
   // explicit events (landing, bomb, fling, jet churn) bypass this by calling
   // jelloRippleInject directly.
   function jelloRippleHit(b, ringK, vReal, gain, cd) {
+    // Optional game audio observer, independent of the visual ripple toggle.
+    // The shared physics playground has no audio controller.
+    if (typeof slimeAudioImpact === 'function') slimeAudioImpact(b, ringK, vReal);
     if (JELLO_RIPPLE <= 0 || b.rippleCd > 0 || ringK < 0) return;
     if (vReal < JELLO_RIPPLE_VMIN * 1.5) return;       // threshold sites need a STRONG hit (explicit events bypass)
     var bvx = b.vx * JELLO_TIMESCALE, bvy = b.vy * JELLO_TIMESCALE;   // real px/s centroid
@@ -7461,7 +7467,10 @@
     var START = jelloHashStart, CURSOR = jelloHashCursor, ORDER = jelloHashOrder;
     var USED = jelloHashUsed, usedN = 0;
     var fric = JELLO_CONTACT_FRICTION, ndamp = JELLO_CONTACT_DAMP, MP = JELLO_MAX_POINTS;
-    var ripVnMin = (JELLO_RIPPLE > 0) ? (JELLO_RIPPLE_VMIN / JELLO_TIMESCALE) * jelloStepH : 1e18;   // px/substep
+    // Audio observes knocks even when visual ripples are disabled. The toy
+    // keeps the original fast skip because it has no slime audio observer.
+    var ripVnMin = (JELLO_RIPPLE > 0 || typeof slimeAudioImpact === 'function')
+      ? (Math.min(JELLO_RIPPLE_VMIN, 95) / JELLO_TIMESCALE) * jelloStepH : 1e18;
     var citers = (JELLO_CONTACT_ITERS | 0); if (citers < 1) citers = 1;
     var selfOn = JELLO_CONTACT_SELF;   // self-contact rest gate is per-body (b.selfMin2)
     var N = 0, ai, b, i, j, h, n, px, py, ox, oy;

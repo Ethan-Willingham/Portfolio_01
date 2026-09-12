@@ -116,13 +116,7 @@
       // voice immediately when the drill takes over. Bite-through glides
       // and brief ground-flag flicker in a tunnel never count as flight.
       if (SluiceAudio.flight) {
-        var jetAllowed = !inShop && !roverMode && !ledgerOpen && !gameWon &&
-          !drilling && !(player.drillGlideT > 0) && player.fuel > 0;
-        var lateralJet = jetAllowed && !player.onGround && !player.onJello &&
-          (!!player.lastMoveL !== !!player.lastMoveR) &&
-          !playerHasFootSupport(player.x, player.y + 2);
-        var liftJet = jetAllowed && player.lastMoveU ? (player.thrustSpool || 0) : 0;
-        SluiceAudio.flight({ spool: Math.max(liftJet, lateralJet ? 1 : 0), fx: player.fx, dt: dt });
+        SluiceAudio.flight({ spool: rocketJetVisible() ? 1 : 0, fx: player.fx, dt: dt });
       }
       if (inShop && drillSfxActive) {
         SluiceAudio.sfx.drill.stop(); drillSfxActive = false; drillSfxMat = null;
@@ -615,7 +609,6 @@
     try { if (typeof onboardingTick === 'function') onboardingTick(dt); } catch (e) { if (!window.__onboardErr) { window.__onboardErr = String(e) + '\n' + (e.stack||''); console.error('onboardingTick threw:', e); } }
     try { if (typeof radioMsgTick === 'function') radioMsgTick(dt); } catch (e) { if (!window.__radioErr) { window.__radioErr = String(e) + '\n' + (e.stack||''); console.error('radioMsgTick threw:', e); } }
     try { if (typeof gamepadTick === 'function') gamepadTick(dt); } catch (e) { if (!window.__padErr) { window.__padErr = String(e) + '\n' + (e.stack||''); console.error('gamepadTick threw:', e); } }
-    if (typeof audioUpdate === 'function') audioUpdate(dt);   // SluiceAudio (defined at top of this fragment); typeof-guarded as belt-and-suspenders
     if (typeof birdsUpdate === 'function') birdsUpdate(dt);   // ambient surface birds (205-birds.js); early-outs to zero cost when no flock is near
     // Tick the on-screen toast message timer in the loop (not inside update)
     // so it keeps counting down even while the shop is open or the game is
@@ -646,6 +639,9 @@
     _ts = performance.now();
     try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
     perfMark('update.smoke', _ts);
+    // Plume intensity is now current, so the voice and drawn flame agree
+    // on the first firing frame as well as the first released frame.
+    if (typeof audioUpdate === 'function') audioUpdate(dt);
     var _t3 = performance.now();
     _ts = performance.now(); updateDrillAnim(dt);          perfMark('update.drillAnim', _ts);
     _ts = performance.now(); updateExplosions(dt);         perfMark('update.explosions', _ts);
@@ -656,6 +652,7 @@
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);
+    slimeAudioUpdate(dt);
     var _t4 = performance.now();
     // v11.80 — render PERF_STRESS times so the true frame cost surfaces past
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
@@ -732,4 +729,3 @@
     // drives all live bodies until Stage 3 wires the islanded offload behind
     // USE_WEBGPU_JELLO.
     jelloWGPU = (window.JelloWGPU && liquidWGPU) ? window.JelloWGPU.create({ liquid: liquidWGPU }) : null;
-

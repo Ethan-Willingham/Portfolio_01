@@ -127,6 +127,14 @@ a faint smooth motor tone, with no separate ignition thump. Jet intent is
 resolved after collision and drilling, and is silent during mining and the
 move through a freshly cleared tile.
 
+Owner tuning, v26.90: only the visible firing jet drives its voice. Releasing
+lift cuts the flame and sound together, including while steering sideways;
+the remaining smoke is silent. Slime jet contact adds irregular wet churn,
+and moving bodies make damp squelches on contact. Pools, distance falloff,
+body-size pitch, and shared cooldowns keep busy piles varied and restrained.
+Resting contacts and offscreen bodies are silent. The visual ripple toggle
+remains off and is independent of these sounds.
+
 ## §6. The drill (the flagship sound)
 
 The drill is the most-heard sound in Sluice. It is also the hardest, because it is a continuous, material-aware, progress-aware loop. Treat it as a small system, not one sample.

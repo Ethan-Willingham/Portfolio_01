@@ -169,6 +169,31 @@ def ambience(key, rng, dur=16):
     return x
 
 
+def wet_slime(key, rng):
+    """Damp gel contact, suction and tiny wet breaks, without a pitched boing."""
+    churn = key == 'jello-churn'
+    dur = .44 if churn else .38
+    t = times(dur)
+    x = .30 * texture(dur, rng, 110, 650, .2) * envelope(t, .045, .004)
+    x += .22 * texture(dur, rng, 380, 2800, 0) * envelope(t, .025, .002)
+    # Irregular pockets close and release under compression. Moving noise
+    # bands give the sticky vowel texture without a sustained musical note.
+    for off in [0, *sorted(rng.uniform(.018, .27 if churn else .19, 7 if churn else 5))]:
+        gt = times(.14)
+        high = rng.uniform(650, 1800)
+        grain = texture(.14, rng, 180, high, 0)
+        phase = TAU * (rng.uniform(180, 300) * gt + rng.uniform(80, 190) * gt**2 / .14)
+        grain *= .65 + .35 * np.sin(phase)
+        grain *= envelope(gt, rng.uniform(.012, .028), rng.uniform(.0015, .005))
+        add_at(x, grain * rng.uniform(.18, .36) * np.exp(-off * 4), off)
+    # Small bubble closures sit inside the wet texture, never a bass slide.
+    for off in rng.uniform(.015, .20, 6):
+        gt = times(.055)
+        hz = rng.uniform(650, 1350)
+        add_at(x, sweep(gt, hz, hz * 1.5, .004, .0008) * rng.uniform(.025, .06), off)
+    return x, -28 if churn else -25
+
+
 def one_shot(key, rng, variant):
     if key.startswith('drill-break-'):
         mat = key.removeprefix('drill-break-')
@@ -261,12 +286,8 @@ def one_shot(key, rng, variant):
             freq = rng.uniform(450, 1300)
             x += (t >= off) * sweep(tt, freq, freq * 1.8, .014) * rng.uniform(.035, .10)
         return x, -24
-    if key == 'jello-wobble':
-        t = times(.6)
-        phase = 105 * t + 35 * .09 * (1 - np.exp(-t / .09))
-        x = np.sin(TAU * phase + 2.3 * np.sin(TAU * 7 * t) * np.exp(-t * 7)) * envelope(t, .10)
-        x += burst(rng, .6, 800, .03, 200) * .3
-        return x, -24
+    if key in ('jello-wobble', 'jello-churn', 'jello-slap'):
+        return wet_slime(key, rng)
     if key in ('ore-pickup', 'sell-tick', 'ring-collect'):
         # Common tonic with different physical transients, not a tune per pickup.
         hz = 1174.66 if key == 'ore-pickup' else 880
@@ -344,6 +365,7 @@ def write_wav(path, x):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--preview', type=Path, help='also write a short dry audition WAV outside the repo')
+    parser.add_argument('--keys', nargs='+', help='rebake only these keys, preserving other encoded assets')
     args = parser.parse_args()
     code = (ROOT / 'js/audio.js').read_text()
     block = code.split('var SFX_MANIFEST = {', 1)[1].split('\n  };', 1)[0]
@@ -357,6 +379,9 @@ def main():
              'ore-pickup', 'liquid-enter', 'jello-wobble', 'bomb-small', 'bomb-large',
              'ui-open', 'ui-confirm', 'sell-total', 'discovery']
     samples = {}
+    previous = {s['file']: s for s in json.loads((out / 'bank.json').read_text())['sounds']} if args.keys else {}
+    if args.keys and set(args.keys) - {key for key, spec in rows}:
+        parser.error('Unknown sound key')
     with tempfile.TemporaryDirectory(prefix='sluice-sfx-') as scratch:
         for key, spec in rows:
             count = int(re.search(r'n:\s*(\d+)', spec)[1])
@@ -378,10 +403,11 @@ def main():
                 ext = '.wav' if loop else '.m4a'
                 target = out / (stem + ext)
                 wav = target if loop else Path(scratch) / (stem + '.wav')
-                write_wav(wav, x)
-                if not loop:
+                bake = not args.keys or key in args.keys or not target.exists()
+                if bake: write_wav(wav, x)
+                if bake and not loop:
                     subprocess.run(['afconvert', '-f', 'm4af', '-d', 'aac', '-b', '64000', str(wav), str(target)], check=True, capture_output=True)
-                report.append({'key': key, 'file': target.name, 'loop': loop, 'seconds': round(len(x)/SR, 3),
+                report.append(previous[target.name] if not bake else {'key': key, 'file': target.name, 'loop': loop, 'seconds': round(len(x)/SR, 3),
                                'peakDb': round(20*np.log10(max(abs(x))), 2), 'rmsDb': round(20*np.log10(rms(x)), 2),
                                'seamDelta': round(float(abs(x[-1] - x[0])), 6) if loop else None,
                                'bytes': target.stat().st_size})
@@ -391,7 +417,7 @@ def main():
         demo.extend([samples[key], np.zeros(round(SR * .22))])
     if args.preview:
         write_wav(args.preview, np.concatenate(demo))
-    (out / 'bank.json').write_text(json.dumps({'version': 2, 'sampleRate': SR, 'source': 'Original procedural synthesis, tools/audio/build-sfx.py', 'sounds': report}, indent=2) + '\n')
+    (out / 'bank.json').write_text(json.dumps({'version': 3, 'sampleRate': SR, 'source': 'Original procedural synthesis, tools/audio/build-sfx.py', 'sounds': report}, indent=2) + '\n')
     print(f'Built {len(report)} sounds / {len(rows)} keys / {sum(r["bytes"] for r in report)/1e6:.2f} MB')
 
 

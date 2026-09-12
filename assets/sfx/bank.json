@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "sampleRate": 24000,
   "source": "Original procedural synthesis, tools/audio/build-sfx.py",
   "sounds": [
@@ -807,31 +807,141 @@
       "key": "jello-wobble",
       "file": "jello-wobble_1.m4a",
       "loop": false,
-      "seconds": 0.6,
-      "peakDb": -8.12,
-      "rmsDb": -24.08,
+      "seconds": 0.38,
+      "peakDb": -5.04,
+      "rmsDb": -25.42,
       "seamDelta": null,
-      "bytes": 6119
+      "bytes": 6710
     },
     {
       "key": "jello-wobble",
       "file": "jello-wobble_2.m4a",
       "loop": false,
-      "seconds": 0.6,
-      "peakDb": -7.94,
-      "rmsDb": -24.04,
+      "seconds": 0.38,
+      "peakDb": -5.07,
+      "rmsDb": -25.08,
       "seamDelta": null,
-      "bytes": 6129
+      "bytes": 6585
     },
     {
       "key": "jello-wobble",
       "file": "jello-wobble_3.m4a",
       "loop": false,
-      "seconds": 0.6,
-      "peakDb": -7.21,
-      "rmsDb": -24.05,
+      "seconds": 0.38,
+      "peakDb": -6.69,
+      "rmsDb": -25.02,
       "seamDelta": null,
-      "bytes": 6090
+      "bytes": 6716
+    },
+    {
+      "key": "jello-churn",
+      "file": "jello-churn_1.m4a",
+      "loop": false,
+      "seconds": 0.44,
+      "peakDb": -8.93,
+      "rmsDb": -28.06,
+      "seamDelta": null,
+      "bytes": 6970
+    },
+    {
+      "key": "jello-churn",
+      "file": "jello-churn_2.m4a",
+      "loop": false,
+      "seconds": 0.44,
+      "peakDb": -10.51,
+      "rmsDb": -28.06,
+      "seamDelta": null,
+      "bytes": 7456
+    },
+    {
+      "key": "jello-churn",
+      "file": "jello-churn_3.m4a",
+      "loop": false,
+      "seconds": 0.44,
+      "peakDb": -8.39,
+      "rmsDb": -28.03,
+      "seamDelta": null,
+      "bytes": 6725
+    },
+    {
+      "key": "jello-churn",
+      "file": "jello-churn_4.m4a",
+      "loop": false,
+      "seconds": 0.44,
+      "peakDb": -8.6,
+      "rmsDb": -28.06,
+      "seamDelta": null,
+      "bytes": 7108
+    },
+    {
+      "key": "jello-churn",
+      "file": "jello-churn_5.m4a",
+      "loop": false,
+      "seconds": 0.44,
+      "peakDb": -9.39,
+      "rmsDb": -28.15,
+      "seamDelta": null,
+      "bytes": 6762
+    },
+    {
+      "key": "jello-slap",
+      "file": "jello-slap_1.m4a",
+      "loop": false,
+      "seconds": 0.38,
+      "peakDb": -6.07,
+      "rmsDb": -25.14,
+      "seamDelta": null,
+      "bytes": 6760
+    },
+    {
+      "key": "jello-slap",
+      "file": "jello-slap_2.m4a",
+      "loop": false,
+      "seconds": 0.38,
+      "peakDb": -5.18,
+      "rmsDb": -25.02,
+      "seamDelta": null,
+      "bytes": 7084
+    },
+    {
+      "key": "jello-slap",
+      "file": "jello-slap_3.m4a",
+      "loop": false,
+      "seconds": 0.38,
+      "peakDb": -6.37,
+      "rmsDb": -25.04,
+      "seamDelta": null,
+      "bytes": 6499
+    },
+    {
+      "key": "jello-slap",
+      "file": "jello-slap_4.m4a",
+      "loop": false,
+      "seconds": 0.38,
+      "peakDb": -6.72,
+      "rmsDb": -25.07,
+      "seamDelta": null,
+      "bytes": 6551
+    },
+    {
+      "key": "jello-slap",
+      "file": "jello-slap_5.m4a",
+      "loop": false,
+      "seconds": 0.38,
+      "peakDb": -6.46,
+      "rmsDb": -25.04,
+      "seamDelta": null,
+      "bytes": 6959
+    },
+    {
+      "key": "jello-slap",
+      "file": "jello-slap_6.m4a",
+      "loop": false,
+      "seconds": 0.38,
+      "peakDb": -6.07,
+      "rmsDb": -25.03,
+      "seamDelta": null,
+      "bytes": 6638
     },
     {
       "key": "rig-drive",

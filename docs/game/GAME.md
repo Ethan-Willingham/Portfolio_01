@@ -121,7 +121,7 @@ the feature-flag overrides above (`?multitown=1` etc.), and the water harness
 ## Audio
 
 `js/audio.js` is wired end to end. Music lives in `assets/music/*.m4a`.
-`assets/sfx/` contains 151 original procedural sounds for all 82 manifest keys:
+`assets/sfx/` contains 162 original procedural sounds for all 84 manifest keys:
 AAC one-shots and seamless PCM loops. Rebuild the bank with
 `python3 tools/audio/build-sfx.py`. The generator needs Python, NumPy, and
 macOS `afconvert`; the game has no added runtime dependency.

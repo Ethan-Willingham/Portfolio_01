@@ -314,6 +314,19 @@
     flightRings.length = rgW;
   }
 
+  // The flame and its voice share the live trigger. Spool and smoke can
+  // coast after release, but neither means the nozzle is still firing.
+  function rocketJetActive() {
+    return !!(rocketTune && rocketTune.enabled && !PERF_DISABLE_ROCKET &&
+      player.lastMoveU && player.thrusting && player.fuel > 0 &&
+      !gameOver && !gameWon && !shopOpen && shopState === 'closed' &&
+      !ledgerOpen && !cargoManifestOpen && !roverMode &&
+      !drilling && !(player.drillGlideT > 0));
+  }
+  function rocketJetVisible() {
+    return rocketJetActive() && rocketIntensity > 0.02;
+  }
+
   function updateRocketPlume(dt) {
     if (dt > 0.05) dt = 0.05;
     var T = rocketTune;
@@ -321,7 +334,7 @@
       rocketIntensity *= Math.exp(-rocketTuneNum(T && T.ramp_down, 3.5) * dt);
       if (rocketIntensity < 0.001) rocketIntensity = 0;
     } else {
-      var emitting = !!(player.thrusting && player.fuel > 0 && !gameOver && !gameWon);
+      var emitting = rocketJetActive();
       var target = emitting ? 1 : 0;
       var rate = emitting ? rocketTuneNum(T.ramp_up, 9.0) : rocketTuneNum(T.ramp_down, 3.5);
       rocketIntensity += (target - rocketIntensity) * Math.min(1, rate * dt);
@@ -553,7 +566,7 @@
     }
 
     // ----- Pass 3: core flame (additive) -----
-    if (rocketIntensity > 0.02) {
+    if (rocketJetVisible()) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       var nozzles = rocketNozzles();
@@ -732,5 +745,4 @@
     }
 
   }
-
 

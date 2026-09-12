@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.89';
+  var GAME_VERSION = 'v26.90';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -37649,6 +37649,19 @@
     flightRings.length = rgW;
   }
 
+  // The flame and its voice share the live trigger. Spool and smoke can
+  // coast after release, but neither means the nozzle is still firing.
+  function rocketJetActive() {
+    return !!(rocketTune && rocketTune.enabled && !PERF_DISABLE_ROCKET &&
+      player.lastMoveU && player.thrusting && player.fuel > 0 &&
+      !gameOver && !gameWon && !shopOpen && shopState === 'closed' &&
+      !ledgerOpen && !cargoManifestOpen && !roverMode &&
+      !drilling && !(player.drillGlideT > 0));
+  }
+  function rocketJetVisible() {
+    return rocketJetActive() && rocketIntensity > 0.02;
+  }
+
   function updateRocketPlume(dt) {
     if (dt > 0.05) dt = 0.05;
     var T = rocketTune;
@@ -37656,7 +37669,7 @@
       rocketIntensity *= Math.exp(-rocketTuneNum(T && T.ramp_down, 3.5) * dt);
       if (rocketIntensity < 0.001) rocketIntensity = 0;
     } else {
-      var emitting = !!(player.thrusting && player.fuel > 0 && !gameOver && !gameWon);
+      var emitting = rocketJetActive();
       var target = emitting ? 1 : 0;
       var rate = emitting ? rocketTuneNum(T.ramp_up, 9.0) : rocketTuneNum(T.ramp_down, 3.5);
       rocketIntensity += (target - rocketIntensity) * Math.min(1, rate * dt);
@@ -37888,7 +37901,7 @@
     }
 
     // ----- Pass 3: core flame (additive) -----
-    if (rocketIntensity > 0.02) {
+    if (rocketJetVisible()) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       var nozzles = rocketNozzles();
@@ -38067,7 +38080,6 @@
     }
 
   }
-
 
 
   // ====== AMBIENT BIRDS (tiny surface boids) ======
@@ -54483,7 +54495,10 @@
         }
       }
     }
-    if (jetBestF > 0.05) { b._ripJetOn = 1; b._ripJetX = jetBX; b._ripJetY = jetBY; }   // churn the skin under the jet
+    if (jetBestF > 0.05) {
+      b._ripJetOn = 1; b._ripJetX = jetBX; b._ripJetY = jetBY;
+      if (typeof slimeAudioJet === 'function') slimeAudioJet(b, jetBX, jetBY, jetBestF);
+    }
     if (disturbed) {
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
       if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
@@ -55799,6 +55814,9 @@
   // explicit events (landing, bomb, fling, jet churn) bypass this by calling
   // jelloRippleInject directly.
   function jelloRippleHit(b, ringK, vReal, gain, cd) {
+    // Optional game audio observer, independent of the visual ripple toggle.
+    // The shared physics playground has no audio controller.
+    if (typeof slimeAudioImpact === 'function') slimeAudioImpact(b, ringK, vReal);
     if (JELLO_RIPPLE <= 0 || b.rippleCd > 0 || ringK < 0) return;
     if (vReal < JELLO_RIPPLE_VMIN * 1.5) return;       // threshold sites need a STRONG hit (explicit events bypass)
     var bvx = b.vx * JELLO_TIMESCALE, bvy = b.vy * JELLO_TIMESCALE;   // real px/s centroid
@@ -56973,7 +56991,10 @@
     var START = jelloHashStart, CURSOR = jelloHashCursor, ORDER = jelloHashOrder;
     var USED = jelloHashUsed, usedN = 0;
     var fric = JELLO_CONTACT_FRICTION, ndamp = JELLO_CONTACT_DAMP, MP = JELLO_MAX_POINTS;
-    var ripVnMin = (JELLO_RIPPLE > 0) ? (JELLO_RIPPLE_VMIN / JELLO_TIMESCALE) * jelloStepH : 1e18;   // px/substep
+    // Audio observes knocks even when visual ripples are disabled. The toy
+    // keeps the original fast skip because it has no slime audio observer.
+    var ripVnMin = (JELLO_RIPPLE > 0 || typeof slimeAudioImpact === 'function')
+      ? (Math.min(JELLO_RIPPLE_VMIN, 95) / JELLO_TIMESCALE) * jelloStepH : 1e18;
     var citers = (JELLO_CONTACT_ITERS | 0); if (citers < 1) citers = 1;
     var selfOn = JELLO_CONTACT_SELF;   // self-contact rest gate is per-body (b.selfMin2)
     var N = 0, ai, b, i, j, h, n, px, py, ox, oy;
@@ -58972,6 +58993,64 @@
     for (i = 0; i < list.length; i++) slimeNpcThink(list[i], dt);
     slimeNpcGuestsAny = slimeNpcBuildGuests(list, list.length);
   }
+  // Physics reports the strongest wet contact per body, then this controller
+  // selects one nearby event after all substeps. A pile is one soundscape,
+  // not a separate squelch for every point in the contact solver.
+  var slimeAudioGap = 0;
+  function slimeAudioState(b) {
+    return b._sound || (b._sound = { hit: 0, jet: 0, cool: 0, x: 0, y: 0 });
+  }
+  function slimeAudioJet(b, x, y, force) {
+    if (!rocketJetVisible()) return;
+    var s = slimeAudioState(b);
+    if (force > s.jet) { s.jet = force; s.jx = x; s.jy = y; }
+  }
+  function slimeAudioImpact(b, ringK, speed) {
+    if (ringK < 0 || speed < 95 || b.sleeping || b.frozen) return;
+    // Equilibrium pulses in a resting pile are not audible collisions.
+    var vx = b.vx * JELLO_TIMESCALE, vy = b.vy * JELLO_TIMESCALE;
+    if (vx * vx + vy * vy < 3600) return;
+    var s = slimeAudioState(b), strength = Math.min(1, (speed - 65) / 360);
+    if (strength > s.hit) {
+      var k = b.ring[ringK];
+      s.hit = strength; s.x = b.px[k]; s.y = b.py[k];
+    }
+  }
+  function slimeAudioUpdate(dt) {
+    var quiet = !ENABLE_JELLO || gamePaused || gameOver || gameWon || shopOpen ||
+      shopState !== 'closed' || ledgerOpen || cargoManifestOpen;
+    slimeAudioGap = Math.max(0, slimeAudioGap - dt);
+    var best = null, score = 0;
+    for (var i = 0; i < jelloBodies.length; i++) {
+      var b = jelloBodies[i], s = b._sound;
+      if (!s) continue;
+      s.cool = Math.max(0, s.cool - dt);
+      if (!quiet && !b.frozen && !b.sleeping && s.cool === 0 && slimeAudioGap === 0) {
+        var hit = s.hit > 0, power = hit ? s.hit : s.jet;
+        var x = hit ? s.x : s.jx, y = hit ? s.y : s.jy;
+        var dx = x - player.x - PLAYER_W / 2, dy = y - player.y - PLAYER_H / 2;
+        var distance = Math.sqrt(dx * dx + dy * dy) / (TILE * 14);
+        var near = Math.max(0, 1 - distance);
+        var visible = x >= cam.x && x <= cam.x + screenW && y >= cam.y && y <= cam.y + screenH;
+        var weight = power * near * (hit ? 1.15 : 1);
+        if (visible && weight > score && power > 0.07) {
+          score = weight;
+          best = { body: b, state: s, hit: hit, power: power, near: near, x: x };
+        }
+      }
+      // Never queue collisions across cooldowns or a paused/frozen frame.
+      s.hit = s.jet = 0;
+    }
+    if (!best) return;
+    var size = Math.sqrt(best.body.tileW * best.body.tileH);
+    var pitch = Math.max(0.82, Math.min(1.12, 1.13 - size * 0.045));
+    sfxPlay(best.hit ? 'jello-slap' : 'jello-churn', {
+      gain: (best.hit ? 0.32 + best.power * 0.58 : 0.24 + best.power * 0.50) * best.near * best.near,
+      rate: pitch, pan: sfxPanAt(best.x)
+    });
+    best.state.cool = best.hit ? 0.34 : 0.30 + Math.random() * 0.14;
+    slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
+  }
   /* ---- Audio hooks ----
      Phase B wiring between the game and the standalone SluiceAudio engine
      (js/audio.js, loaded by sluice.html). audioUpdate(dt) is called once per
@@ -59090,13 +59169,7 @@
       // voice immediately when the drill takes over. Bite-through glides
       // and brief ground-flag flicker in a tunnel never count as flight.
       if (SluiceAudio.flight) {
-        var jetAllowed = !inShop && !roverMode && !ledgerOpen && !gameWon &&
-          !drilling && !(player.drillGlideT > 0) && player.fuel > 0;
-        var lateralJet = jetAllowed && !player.onGround && !player.onJello &&
-          (!!player.lastMoveL !== !!player.lastMoveR) &&
-          !playerHasFootSupport(player.x, player.y + 2);
-        var liftJet = jetAllowed && player.lastMoveU ? (player.thrustSpool || 0) : 0;
-        SluiceAudio.flight({ spool: Math.max(liftJet, lateralJet ? 1 : 0), fx: player.fx, dt: dt });
+        SluiceAudio.flight({ spool: rocketJetVisible() ? 1 : 0, fx: player.fx, dt: dt });
       }
       if (inShop && drillSfxActive) {
         SluiceAudio.sfx.drill.stop(); drillSfxActive = false; drillSfxMat = null;
@@ -59589,7 +59662,6 @@
     try { if (typeof onboardingTick === 'function') onboardingTick(dt); } catch (e) { if (!window.__onboardErr) { window.__onboardErr = String(e) + '\n' + (e.stack||''); console.error('onboardingTick threw:', e); } }
     try { if (typeof radioMsgTick === 'function') radioMsgTick(dt); } catch (e) { if (!window.__radioErr) { window.__radioErr = String(e) + '\n' + (e.stack||''); console.error('radioMsgTick threw:', e); } }
     try { if (typeof gamepadTick === 'function') gamepadTick(dt); } catch (e) { if (!window.__padErr) { window.__padErr = String(e) + '\n' + (e.stack||''); console.error('gamepadTick threw:', e); } }
-    if (typeof audioUpdate === 'function') audioUpdate(dt);   // SluiceAudio (defined at top of this fragment); typeof-guarded as belt-and-suspenders
     if (typeof birdsUpdate === 'function') birdsUpdate(dt);   // ambient surface birds (205-birds.js); early-outs to zero cost when no flock is near
     // Tick the on-screen toast message timer in the loop (not inside update)
     // so it keeps counting down even while the shop is open or the game is
@@ -59620,6 +59692,9 @@
     _ts = performance.now();
     try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
     perfMark('update.smoke', _ts);
+    // Plume intensity is now current, so the voice and drawn flame agree
+    // on the first firing frame as well as the first released frame.
+    if (typeof audioUpdate === 'function') audioUpdate(dt);
     var _t3 = performance.now();
     _ts = performance.now(); updateDrillAnim(dt);          perfMark('update.drillAnim', _ts);
     _ts = performance.now(); updateExplosions(dt);         perfMark('update.explosions', _ts);
@@ -59630,6 +59705,7 @@
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);
+    slimeAudioUpdate(dt);
     var _t4 = performance.now();
     // v11.80 — render PERF_STRESS times so the true frame cost surfaces past
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
@@ -59706,7 +59782,6 @@
     // drives all live bodies until Stage 3 wires the islanded offload behind
     // USE_WEBGPU_JELLO.
     jelloWGPU = (window.JelloWGPU && liquidWGPU) ? window.JelloWGPU.create({ liquid: liquidWGPU }) : null;
-
     // ====== GM TUNING FACADE (window.gm) ======
     // Phase 2 of the tuning system. Exposes a `window.gm` console facade so the
     // owner can live-tune the game from the browser console, e.g.
