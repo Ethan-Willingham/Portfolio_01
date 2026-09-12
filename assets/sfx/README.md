@@ -8,7 +8,8 @@ durations, levels and source trail are in `bank.json`.
 
 The live game uses six drill materials, ground machinery, the existing flight
 synth, impacts, bombs, slime, selling, UI, alerts, discovery, and nine
-ambience beds. Airborne steering and lift share one jet voice. Free fall,
+ambience beds. Airborne steering and lift share one quiet jet voice; its volume
+does not increase with airspeed or climb rate. Free fall,
 coasting, and water contact are silent; solid landings have one short, damped
 impact cue. The old `air-pulse` slot is retired. Drilling uses steady cutting
 friction and small fractures without bass sweeps. A full cargo hold makes a

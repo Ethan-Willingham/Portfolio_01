@@ -197,6 +197,25 @@ try {
   await page.evaluate(() => { __flightState.fx.igniteN = 10; __flightState.climb = 0; });
   await page.waitForTimeout(200);
   assert.equal(await page.evaluate(() => __oscStarts), starts, 'Adding lift/direction retriggered ignition');
+  const jetLevels = [];
+  for (const speed of [0, 150, 900]) {
+    await page.evaluate(speed => { __flightState.speed = __flightState.climb = speed; }, speed);
+    await page.waitForTimeout(250);
+    jetLevels.push(await page.evaluate(async () => {
+      const x = new Float32Array(2048);
+      let energy = 0, peak = 0;
+      for (let i = 0; i < 24; i++) {
+        __meter.getFloatTimeDomainData(x);
+        for (const v of x) { energy += v*v; peak = Math.max(peak, Math.abs(v)); }
+        await new Promise(resolve => setTimeout(resolve, 16));
+      }
+      return {db:10*Math.log10(energy/(24*x.length)), peak};
+    }));
+  }
+  assert(Math.max(...jetLevels.map(s=>s.db)) - Math.min(...jetLevels.map(s=>s.db)) < 1,
+    'Jet grows louder with airspeed/climb: ' + JSON.stringify(jetLevels));
+  assert(Math.max(...jetLevels.map(s=>s.peak)) < .05, 'Jet is louder than a subtle background cue: ' + JSON.stringify(jetLevels));
+  console.log('Quiet jet at rest, moderate climb and fast climb:', JSON.stringify(jetLevels));
   await page.evaluate(() => { __flightState.spool = 0; });
   await page.waitForTimeout(300);
   assert(await page.evaluate(() => __peak()) < .0001, 'Releasing the jet left a falling sound');

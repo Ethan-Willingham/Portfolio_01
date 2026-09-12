@@ -119,6 +119,9 @@ jet. Free fall, coasting, and water contact are silent. Landings use one damped
 contact cue. A cargo-blocked mining attempt gets a quiet click on the existing
 message cooldown. Earlier flight and splash recipes below are historical.
 
+Owner tuning, v26.85: the jet is a quiet throttle hum with no speed-driven
+load layer. Airspeed and climb rate do not increase its volume or pitch.
+
 ## §6. The drill (the flagship sound)
 
 The drill is the most-heard sound in Sluice. It is also the hardest, because it is a continuous, material-aware, progress-aware loop. Treat it as a small system, not one sample.

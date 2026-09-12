@@ -776,7 +776,7 @@
     _fdbg.onGround = !!player.onGround;
 
     // ----- Flight SFX + haptics bridge (engine facade: js/audio.js) -----
-    // Per-frame state for the shared jet audio (engine load and ignition) plus the
+    // Per-frame state for the shared jet audio (throttle and ignition) plus the
     // rumble shim. Both are safe no-ops until their implementations exist.
     if (typeof SluiceAudio !== 'undefined' && SluiceAudio && SluiceAudio.flight) {
       try {

@@ -35,7 +35,7 @@
        frees abandoned loops (the flight-pack contract for asset loops).
        rig-hum, rig-drive, jet-spin, bomb-fuse, lava-sizzle, fuel-fill.
      - flight(state): the synthesized FLIGHT pack (no assets); shared jet
-       engine under load and ignition / sonic boom events.
+       throttle hum and ignition / sonic boom events.
        Built lazily from oscillators + one shared noise
        loop on the first per-frame call from the flight integrator, then
        only gains/frequencies move; a watchdog silences it when the calls
@@ -937,11 +937,12 @@ var SluiceAudio = (function () {
   };
 
   // ===== SFX: the flight pack (synthesized; SluiceAudio.flight) =============
-  // One synthesized jet for lift and lateral thrust, driven by spool and load.
+  // One quiet jet for lift and lateral thrust, driven only by throttle.
+  // Airspeed and climb rate never increase its volume or add another voice.
   // Coasting and free fall are silent: no wind, whistle, or vario layer.
   // The shared node graph is built once and ramps parameters each frame.
   // Collision cues own landings; the watchdog silences abandoned jet voices.
-  var FLIGHT_ENGINE_GAIN = 0.3;   // thrust voice peak (the saw + noise scale under this)
+  var FLIGHT_ENGINE_GAIN = 0.045;  // subtle thrust bed; speed never boosts this gain
   var FLIGHT_WATCHDOG_MS = 250;   // silence the pack after this long without a flight() call
   var fl = null;                  // the lazily built node bundle (null until the first call)
   var flightDead = false;         // construction threw once: stay silent, never retry
@@ -972,14 +973,12 @@ var SluiceAudio = (function () {
       var bus = gn(1); bus.connect(sfxEffect);
       var noiseBuf = flightNoiseBuffer();
       var noise = ctx.createBufferSource(); noise.buffer = noiseBuf; noise.loop = true;
-      // Engine thrust noise and two saws (main + detuned load).
+      // Quiet thrust noise and one steady motor body.
       var engBP = flt('bandpass', 380, 1.2), engNG = gn(0);
       noise.connect(engBP); engBP.connect(engNG); engNG.connect(bus);
       var engLP = flt('lowpass', 260, 0.7); engLP.connect(bus);
       var engOsc = ctx.createOscillator(); engOsc.type = 'sawtooth'; engOsc.frequency.value = 55;
       var engOG = gn(0); engOsc.connect(engOG); engOG.connect(engLP);
-      var loadOsc = ctx.createOscillator(); loadOsc.type = 'sawtooth'; loadOsc.frequency.value = 59;
-      var loadG = gn(0); loadOsc.connect(loadG); loadG.connect(engLP);
       // boom weight: the bass thumps route through a soft tanh saturator
       var satBus = gn(1);
       try {
@@ -988,11 +987,10 @@ var SluiceAudio = (function () {
         shaper.curve = curve;
         satBus.connect(shaper); shaper.connect(bus);
       } catch (e2) { satBus.connect(bus); }
-      try { noise.start(); engOsc.start(); loadOsc.start(); } catch (e3) {}
+      try { noise.start(); engOsc.start(); } catch (e3) {}
       fl = {
         bus: bus, noiseBuf: noiseBuf,
         engBP: engBP, engNG: engNG, engOsc: engOsc, engOG: engOG,
-        loadOsc: loadOsc, loadG: loadG,
         satBus: satBus,
         muted: false, lastMs: nowMs(), prevSpool: clamp01((st && st.spool) || 0),
         // seed the last-seen counters from the FIRST state so a mid-flight
@@ -1042,11 +1040,11 @@ var SluiceAudio = (function () {
     } catch (e) {}
   }
 
-  // ignition bark: a 30 ms noise bark + a 70 Hz thump, bigger from cold
+  // A small motor catch at ignition, kept at the same scale as the quiet jet.
   function flightIgnite(cold) {
     var t = tnow();
-    flightBurst(t, 0.03, 0.3 + 0.22 * cold, 'bandpass', 950, 1.1);
-    flightThump(t, 70, 0.09, 0.42 + 0.2 * cold);
+    flightBurst(t, 0.03, FLIGHT_ENGINE_GAIN * (0.35 + 0.18 * cold), 'bandpass', 950, 1.1);
+    flightThump(t, 70, 0.09, FLIGHT_ENGINE_GAIN * (0.45 + 0.2 * cold));
   }
   // the sonic boom: a double bass thump (the N-wave, soft-saturated) + a
   // broadband crack, then ONE quieter, darker slapback ~0.5 s later as the
@@ -1072,7 +1070,7 @@ var SluiceAudio = (function () {
   // later resume cannot blare a stale mix before the next drive lands
   function flightSilence(s) {
     if (!fl) return;
-    fset(fl.engNG.gain, 0, s); fset(fl.engOG.gain, 0, s); fset(fl.loadG.gain, 0, s);
+    fset(fl.engNG.gain, 0, s); fset(fl.engOG.gain, 0, s);
     fset(fl.bus.gain, 0, s);
   }
   // WATCHDOG: flight() rides update(), which stops when the shop opens or the
@@ -1105,18 +1103,13 @@ var SluiceAudio = (function () {
     if (resumed) { fl.muted = false; fset(fl.bus.gain, 1, 0.08); }
 
     var spool = clamp01(st.spool || 0);
-    var climb = st.climb || 0;
 
-    // engine under load: the growl + thrust noise ride spool; LOAD (spool *
-    // climb) detunes the second saw into a beat and strains the pitch up
-    var load = spool * clamp01(climb / 300);
-    var engF = 55 + spool * 20 + load * 8;
+    // Throttle fades the jet in and out. Motion adds no gain or pitch rise.
+    var engF = 55 + spool * 20;
     fset(fl.engOsc.frequency, engF, 0.08);
-    fset(fl.loadOsc.frequency, engF + 4 + load * 5, 0.08);
     fset(fl.engOG.gain, FLIGHT_ENGINE_GAIN * 0.62 * spool, 0.09);
     fset(fl.engNG.gain, FLIGHT_ENGINE_GAIN * 0.55 * spool, 0.09);
-    fset(fl.engBP.frequency, 380 + spool * 420 + load * 160, 0.12);
-    fset(fl.loadG.gain, 0.22 * load, 0.12);
+    fset(fl.engBP.frequency, 380 + spool * 420, 0.12);
     // events: the fx counters only ever increment; diff with last-seen
     var fx = st.fx || {};
     // Ignition follows the shared engine, so changing direction or adding
