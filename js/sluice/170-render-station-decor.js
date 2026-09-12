@@ -168,6 +168,7 @@
     // the tile chunks; biome cast-light hues stay in MINERALS_BIBLE §9.4.
     bgTopsoil:     '#5a3e22',   // warm earth — v10.41 lightened from #3a2818 (user wanted topsoil bg lighter)
     bgBedrock:     '#423f38',   // neutral grey-brown — v16.4 lightened (was #2c2820) so near-black oil pools read against the bedrock cave background
+    bgSubsoil:     '#42464a',   // cool grey behind the second layer's stone
     bgPermafrost:  '#162032',   // cold cyan-tinted darkness
     bgFossil:      '#332a20',   // warm sand shadow
     bgDeepcrust:   '#0a0c12',   // near-black with a hint of blue
@@ -207,6 +208,9 @@
     // sells the block-with-depth read without adding more colours.
     wallTopsoil:    '#36240e',  // v10.41 lightened from #1c1208 to match the lighter bgTopsoil
     wallBedrock:    '#2b2925',  // v16.4 lightened (was #15140e) with bgBedrock — oil renders near-black, so the bedrock cave wall must not be near-black too
+    wallSubsoil:    '#24282b',
+    wallSubsoilLight: '#303438',
+    wallSubsoilShade: '#1c2023',
     wallPermafrost: '#0c1220',
     wallFossil:    '#1a1410',
     wallDeepcrust:  '#040508',
@@ -240,6 +244,7 @@
     switch (layerName) {
       case 'topsoil':    return BG.bgTopsoil;
       case 'bedrock':    return BG.bgBedrock;
+      case 'subsoil':    return BG.bgSubsoil;
       case 'permafrost': return BG.bgPermafrost;
       case 'barrier':    return BG.bgPermafrost;   // sits at the permafrost/fossil seam, reads as permafrost
       case 'fossil':     return BG.bgFossil;
@@ -285,6 +290,7 @@
     switch (layerName) {
       case 'topsoil':    c = buildTopsoilWallPattern(); break;
       case 'bedrock':    c = buildBedrockWallPattern(); break;
+      case 'subsoil':    c = buildSubsoilWallPattern(); break;
       case 'permafrost': c = buildPermafrostWallPattern(); break;
       case 'barrier':    c = buildPermafrostWallPattern(); break;  // barrier sits in permafrost zone
       case 'fossil':     c = buildFossilWallPattern(); break;
@@ -357,6 +363,129 @@
 
   function buildTopsoilWallPattern()    { return buildSubtleWallPattern(0x70150100, BG.wallTopsoil,    BG.bgTopsoil);    }
   function buildBedrockWallPattern()    { return buildSubtleWallPattern(0xBED20CC1, BG.wallBedrock,    BG.bgBedrock);    }
+
+  // Periodic value noise keeps both the rock texture and the boundary
+  // masks seamless when repeated. Features are broad and low contrast;
+  // they must read behind the loose stone in the collision plane.
+  function biomeWallNoise(x, y, size, cols, rows, seed) {
+    var u = x * cols / size, v = y * rows / size;
+    var ix = Math.floor(u), iy = Math.floor(v), fx = u - ix, fy = v - iy;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    var x0 = ((ix % cols) + cols) % cols, x1 = (x0 + 1) % cols;
+    var y0 = ((iy % rows) + rows) % rows, y1 = (y0 + 1) % rows;
+    var a = tileHash01(x0, y0, seed), b = tileHash01(x1, y0, seed);
+    var c = tileHash01(x0, y1, seed), d = tileHash01(x1, y1, seed);
+    return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
+  }
+
+  function buildSubsoilWallPattern() {
+    var c = document.createElement('canvas'), size = 256;
+    c.width = c.height = size;
+    var g = c.getContext('2d'), pixels = g.createImageData(size, size);
+    var base = nightSkyHexRGB(BG.wallSubsoil), light = nightSkyHexRGB(BG.wallSubsoilLight);
+    var shade = nightSkyHexRGB(BG.wallSubsoilShade);
+    for (var y = 0; y < size; y++) {
+      for (var x = 0; x < size; x++) {
+        // Uneven compressed strata with interrupted shallow recesses.
+        // No outlined blocks, loose pebbles, or long horizontal rules.
+        var warp = (biomeWallNoise(x, 0, size, 7, 1, 641) - 0.5) * 28;
+        var bed = biomeWallNoise(x, y + warp, size, 5, 16, 647);
+        var broad = biomeWallNoise(x, y, size, 4, 4, 653);
+        var tone = Math.max(-1, Math.min(1, (bed - 0.5) * 1.2 + (broad - 0.5) * 0.9));
+        var accent = tone < 0 ? shade : light, amount = Math.abs(tone);
+        var grain = (tileHash01(x, y, 659) - 0.5) * 2;
+        var at = (y * size + x) * 4;
+        pixels.data[at] = base.r + (accent.r - base.r) * amount + grain;
+        pixels.data[at + 1] = base.g + (accent.g - base.g) * amount + grain;
+        pixels.data[at + 2] = base.b + (accent.b - base.b) * amount + grain;
+        pixels.data[at + 3] = 255;
+      }
+    }
+    g.putImageData(pixels, 0, 0);
+    return c;
+  }
+
+  // Only the two boundaries around subsoil use this material handoff.
+  // The geology stays world-anchored while BOTH wall textures keep their
+  // usual X/Y parallax. The mask is baked once, not rebuilt on camera travel.
+  var BIOME_WALL_BLEND_DEPTH = TILE * 6;
+  var biomeWallBlendMasks = {};
+  var biomeWallBlendCanvas = null;
+
+  function getBiomeWallBlendMask(seed) {
+    if (biomeWallBlendMasks[seed]) return biomeWallBlendMasks[seed];
+    // Opaque/transparent gutters prevent a rounded device-pixel edge
+    // from wrapping vertically into the opposite end of the blend.
+    var c = document.createElement('canvas'), w = 512, h = BIOME_WALL_BLEND_DEPTH + TILE * 2;
+    c.width = w; c.height = h;
+    var g = c.getContext('2d'), pixels = g.createImageData(w, h);
+    for (var x = 0; x < w; x++) {
+      var offset = (biomeWallNoise(x, 0, w, 4, 1, seed) - 0.5) * TILE * 1.2 +
+        (biomeWallNoise(x, 0, w, 13, 1, seed + 1) - 0.5) * TILE * 0.35;
+      for (var y = 0; y < h; y++) {
+        var t = Math.max(0, Math.min(1, (y - h * 0.5 - offset) / (TILE * 4) + 0.5));
+        pixels.data[(y * w + x) * 4 + 3] = Math.round(t * t * (3 - 2 * t) * 255);
+      }
+    }
+    g.putImageData(pixels, 0, 0);
+    var mask = g.createPattern(c, 'repeat-x');
+    biomeWallBlendMasks[seed] = mask;
+    return mask;
+  }
+
+  function drawSubsoilWallTransitions(stack, worldLeft, worldRight, worldTop, worldBottom) {
+    if (PERF_DISABLE_CAVE_WALLS) return;
+    for (var i = 1; i < stack.length; i++) {
+      var upper = stack[i - 1].name, lower = stack[i].name;
+      if (!((upper === 'topsoil' && lower === 'subsoil') ||
+            (upper === 'subsoil' && lower === 'deepcrust'))) continue;
+      var seamY = (SKY_ROWS + stack[i].minDepth) * TILE;
+      var bandTop = seamY - BIOME_WALL_BLEND_DEPTH * 0.5;
+      var top = Math.max(worldTop, bandTop);
+      var bottom = Math.min(worldBottom, bandTop + BIOME_WALL_BLEND_DEPTH);
+      if (bottom <= top) continue;
+      var upperFill = getBiomeWallFill(upper), lowerFill = getBiomeWallFill(lower);
+      if (!upperFill || !lowerFill) continue;
+      var matrix = new DOMMatrix([1, 0, 0, 1,
+        cam.x * (1 - BIOME_WALL_PARALLAX_X), cam.y * (1 - BIOME_WALL_PARALLAX_Y)]);
+      upperFill.setTransform(matrix); lowerFill.setTransform(matrix);
+
+      // Match the main canvas's device-pixel grid, including fractional
+      // zoom and shake. Otherwise the narrow composite can leave a seam
+      // against the same texture drawn directly above and below it.
+      var tr = ctx.getTransform(), scale = tr.a;
+      var x0 = Math.floor(worldLeft * scale + tr.e), x1 = Math.ceil(worldRight * scale + tr.e);
+      var y0 = Math.floor(top * scale + tr.f), y1 = Math.ceil(bottom * scale + tr.f);
+      var left = (x0 - tr.e) / scale, width = (x1 - x0) / scale;
+      top = (y0 - tr.f) / scale; bottom = (y1 - tr.f) / scale;
+      if (!biomeWallBlendCanvas) biomeWallBlendCanvas = document.createElement('canvas');
+      var c = biomeWallBlendCanvas;
+      // Reserve a whole band, even when just its edge is visible. Grow
+      // only for a larger viewport/scale, never on each pixel of descent.
+      var reserveW = Math.ceil((worldRight - worldLeft) * scale) + 2;
+      var reserveH = Math.ceil(BIOME_WALL_BLEND_DEPTH * scale) + 2;
+      if (c.width < reserveW) c.width = reserveW;
+      if (c.height < reserveH) c.height = reserveH;
+      var g = c.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, x1 - x0, y1 - y0);
+      g.setTransform(scale, 0, 0, scale, tr.e - x0, tr.f - y0);
+      g.imageSmoothingEnabled = false;
+      g.fillStyle = lowerFill;
+      g.fillRect(left, top, width, bottom - top);
+      var mask = getBiomeWallBlendMask(i === 1 ? 677 : 691);
+      mask.setTransform(new DOMMatrix([1, 0, 0, 1, 0, bandTop - TILE]));
+      g.globalCompositeOperation = 'destination-in';
+      g.fillStyle = mask; g.fillRect(left, top, width, bottom - top);
+      g.globalCompositeOperation = 'source-over';
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = upperFill; ctx.fillRect(left, top, width, bottom - top);
+      ctx.drawImage(c, 0, 0, x1 - x0, y1 - y0, left, top, width, bottom - top);
+      ctx.restore();
+    }
+  }
+
   // v16.3 — Permafrost frost wall. A deep glacial-blue background pane
   // with buried ice glints and a few faint embedded frost crystals. Low-
   // frequency detail (BACKGROUND_STYLE §2) so it reads as a receding

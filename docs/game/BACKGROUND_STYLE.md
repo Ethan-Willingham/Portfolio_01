@@ -221,6 +221,33 @@ The occlusion model makes this easy: any new background layer is just another dr
 - **Add a deeper parallax layer:** draw it in the undergroundBg loop BEFORE the wall `fillRect`, with a *higher* parallax constant (more lag = further back). Each layer is one `fillRect` with its own pattern + parallax matrix. Obey §3 — every layer further back occupies a narrower, darker value band.
 - **Parallax constants** sit next to `BIOME_WALL_TILE_PX`: `BIOME_WALL_PARALLAX_X = 0.55`, `BIOME_WALL_PARALLAX_Y = 0.70`. See §8.
 
+### Subsoil wall and geological transitions (v26.95)
+
+The grey subsoil at 60 to 130 m has its own parallax wall in
+`170-render-station-decor.js`. Register `subsoil` in both `biomeBgColor` and
+`getBiomeWallPattern`; a missing dispatch silently falls back to a flat fill.
+
+- **Palette:** `BG.bgSubsoil` (`#42464a`) is the fallback fill.
+  `wallSubsoil` (`#24282b`), `wallSubsoilLight` (`#303438`), and
+  `wallSubsoilShade` (`#1c2023`) belong only to this wall. Its low-contrast
+  grey strata occupy roughly 11 to 22 percent value, slightly extending
+  the wall budget in section 3 while staying behind the foreground stone.
+- **Texture:** a deterministic 256 by 256 canvas holds broad compressed
+  strata, shallow recesses and fine grain. Periodic noise joins the edges.
+  No brick grid, outlines, ore glints, or loose foreground pebbles.
+  It uses the existing 0.55 X and 0.70 Y camera speeds.
+- **Transition:** topsoil to subsoil and subsoil to deepcrust blend over
+  six tiles centred on their actual world-depth boundary. A cached mask
+  feathers the lower material through the upper one, with quiet irregular
+  depth variation across X. The mask stays anchored to the geology while
+  both textures scroll behind it. No horizontal dividing stroke or fog wash.
+- **Cost and occlusion:** composite only the visible part of a boundary
+  into one reusable canvas aligned with the main device-pixel grid. Masks
+  and wall textures are cached; moving the camera never regenerates them.
+  Terrain still occludes this entire pass. Surface roots, frost/heat bands,
+  lighting, the world grid and saves keep their existing behavior.
+  PERF ISO's cave-wall disable also disables these transitions.
+
 ### Surface cut bank (September 2026)
 
 `172-render-surface-transition.js` replaces the old opaque, wavy foreground cap.
