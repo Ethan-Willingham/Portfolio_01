@@ -213,7 +213,9 @@
     wallSubsoilShade: '#1c2023',
     wallPermafrost: '#0c1220',
     wallFossil:    '#1a1410',
-    wallDeepcrust:  '#040508',
+    wallDeepcrust:  '#181b20',
+    wallDeepcrustLight: '#22262c',
+    wallDeepcrustShade: '#101318',
     wallCrystal:    '#0c0518',
     wallMortar:     '#06050a',  // shared dark mortar across all biomes
 
@@ -438,7 +440,7 @@
     return c;
   }
 
-  // Only the two boundaries around subsoil use this material handoff.
+  // The stone bands blend into each other and into the first frozen wall.
   // The geology stays world-anchored while BOTH wall textures keep their
   // usual X/Y parallax. The mask is baked once, not rebuilt on camera travel.
   var BIOME_WALL_BLEND_DEPTH = TILE * 6;
@@ -466,12 +468,13 @@
     return mask;
   }
 
-  function drawSubsoilWallTransitions(stack, worldLeft, worldRight, worldTop, worldBottom) {
+  function drawRockWallTransitions(stack, worldLeft, worldRight, worldTop, worldBottom) {
     if (PERF_DISABLE_CAVE_WALLS) return;
     for (var i = 1; i < stack.length; i++) {
       var upper = stack[i - 1].name, lower = stack[i].name;
       if (!((upper === 'topsoil' && lower === 'subsoil') ||
-            (upper === 'subsoil' && lower === 'deepcrust'))) continue;
+            (upper === 'subsoil' && lower === 'deepcrust') ||
+            (upper === 'deepcrust' && lower === 'permafrost'))) continue;
       var seamY = (SKY_ROWS + stack[i].minDepth) * TILE;
       var bandTop = seamY - BIOME_WALL_BLEND_DEPTH * 0.5;
       var top = Math.max(worldTop, bandTop);
@@ -505,7 +508,7 @@
       g.imageSmoothingEnabled = false;
       g.fillStyle = lowerFill;
       g.fillRect(left, top, width, bottom - top);
-      var mask = getBiomeWallBlendMask(i === 1 ? 677 : 691);
+      var mask = getBiomeWallBlendMask(upper === 'topsoil' ? 677 : upper === 'subsoil' ? 691 : 709);
       mask.setTransform(new DOMMatrix([1, 0, 0, 1, 0, bandTop - TILE]));
       g.globalCompositeOperation = 'destination-in';
       g.fillStyle = mask; g.fillRect(left, top, width, bottom - top);
@@ -553,7 +556,66 @@
     return c;
   }
   function buildFossilWallPattern()     { return buildSubtleWallPattern(0xF0551155, BG.wallFossil,     BG.bgFossil);     }
-  function buildDeepcrustWallPattern()  { return buildSubtleWallPattern(0xDEEEEEC1, BG.wallDeepcrust,  BG.bgDeepcrust);  }
+  // Compressed slate: larger tilted sheets with a few recessed cleavage
+  // seams. Flat, quiet tones keep the bright ore and rig in front.
+  function buildDeepcrustWallPattern() {
+    var c = document.createElement('canvas'), width = 768, height = 384;
+    c.width = width; c.height = height;
+    var g = c.getContext('2d'), pixels = g.createImageData(width, height);
+    var base = nightSkyHexRGB(BG.wallDeepcrust), light = nightSkyHexRGB(BG.wallDeepcrustLight);
+    var shade = nightSkyHexRGB(BG.wallDeepcrustShade), contrast = 0.45;
+    var cols = 6, rows = 8, faces = [];
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        faces.push({
+          x: 0.15 + tileHash01(col, row, 719) * 0.70,
+          y: 0.15 + tileHash01(col, row, 727) * 0.70,
+          tone: (Math.floor(tileHash01(col, row, 733) * 5) - 2) * 0.30,
+          slope: (tileHash01(col, row, 739) - 0.5) * 0.45
+        });
+      }
+    }
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        // One complete row cycle across the width makes this shear
+        // periodic in both axes, with no rotated-canvas corner gaps.
+        var u = x * cols / width, v = y * rows / height + x * rows / width;
+        var cellX = Math.floor(u), cellY = Math.floor(v);
+        var first = Infinity, second = Infinity, faceId = 0, nextId = 0;
+        var faceX = 0, faceY = 0;
+        for (var oy = -1; oy <= 1; oy++) {
+          for (var ox = -1; ox <= 1; ox++) {
+            var cx = cellX + ox, cy = cellY + oy;
+            var id = ((cy % rows + rows) % rows) * cols + (cx % cols + cols) % cols;
+            var face = faces[id], sx = cx + face.x, sy = cy + face.y;
+            var dx = u - sx, dy = v - sy, distance = dx * dx + dy * dy;
+            if (distance < first) {
+              second = first; nextId = faceId;
+              first = distance; faceId = id; faceX = sx; faceY = sy;
+            } else if (distance < second) {
+              second = distance; nextId = id;
+            }
+          }
+        }
+        var selected = faces[faceId];
+        var cleavage = v - faceY + (u - faceX) * selected.slope;
+        var tone = selected.tone + (cleavage > 0.16 ? -0.12 : 0.12);
+        // Only isolated joints darken. Continuous outlines would turn
+        // the receding stone sheets into foreground rubble or masonry.
+        var joint = tileHash01(Math.min(faceId, nextId), Math.max(faceId, nextId), 743) < 0.18;
+        if (joint && second - first < 0.025) tone = -0.88;
+        var accent = tone < 0 ? shade : light, amount = Math.abs(tone) * contrast;
+        var grain = (tileHash01(x, y, 751) - 0.5) * 0.65;
+        var at = (y * width + x) * 4;
+        pixels.data[at] = base.r + (accent.r - base.r) * amount + grain;
+        pixels.data[at + 1] = base.g + (accent.g - base.g) * amount + grain;
+        pixels.data[at + 2] = base.b + (accent.b - base.b) * amount + grain;
+        pixels.data[at + 3] = 255;
+      }
+    }
+    g.putImageData(pixels, 0, 0);
+    return c;
+  }
   function buildCrystalWallPattern()    { return buildSubtleWallPattern(0xCC75AA10, BG.wallCrystal,    BG.bgCrystal);    }
 
   // v13.11 — drawCaveWallsParallaxed was REMOVED. Cave walls are no longer

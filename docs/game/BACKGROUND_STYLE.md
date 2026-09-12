@@ -255,6 +255,28 @@ The grey subsoil at 60 to 130 m has its own parallax wall in
   lighting, the world grid and saves keep their existing behavior.
   PERF ISO's cave-wall disable also disables these transitions.
 
+### Deep-crust wall (September 2026)
+
+At 130 to 200 m, `buildDeepcrustWallPattern` replaces the nearly black
+speckled wall with compressed graphite-slate sheets. Their long, tilted
+planes distinguish this band from the broader horizontal subsoil faces.
+
+- **Palette:** `wallDeepcrust` is `#181b20`, with `wallDeepcrustLight`
+  `#22262c` and `wallDeepcrustShade` `#101318`. These anchors belong only
+  to the deep-crust wall. Contrast is held at 45 percent around the base,
+  giving an actual value range of about 9 to 14 percent. Ore and the rig
+  retain the strongest contrast.
+- **Texture:** a deterministic 768 by 384 canvas contains elongated,
+  irregular stone planes, two flat tones per face, sparse recessed joints,
+  and barely visible grain. A periodic shear tilts the sheets without
+  introducing texture-edge gaps. No complete outlines, luminous veins,
+  loose rubble, or soft cloud shading.
+- **Motion and boundaries:** retain the existing wall parallax and cache.
+  `drawRockWallTransitions` blends subsoil into deep crust at 130 m and
+  deep crust into permafrost at 200 m, using the same six-tile handoff.
+  Each boundary has its own cached, world-anchored irregular mask. The
+  existing topsoil handoff is preserved. Terrain and gameplay are unchanged.
+
 ### Surface cut bank (September 2026)
 
 `172-render-surface-transition.js` replaces the old opaque, wavy foreground cap.

@@ -418,7 +418,7 @@
       }
       // Soften the grey layer's two material boundaries before terrain
       // occludes the walls. Visibility includes either side of each seam.
-      drawSubsoilWallTransitions(_camStk, worldLeft, worldRight, ugTop, worldBottom);
+      drawRockWallTransitions(_camStk, worldLeft, worldRight, ugTop, worldBottom);
     }
     perfMark('render.undergroundBg', _ugBg0);
 
