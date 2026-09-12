@@ -27,7 +27,7 @@
         // The crunch that precedes the lament (SFX_BIBLE §10: death's SFX
         // side is hull-hit + land-damage; the music side is death()).
         sfxPlay('hull-hit'); sfxPlay('land-damage');
-        SluiceAudio.death(); _audio.mode = null; _audio.danger = false;
+        SluiceAudio.death(); drillSfxActive = false; drillSfxMat = null; _audio.mode = null; _audio.danger = false;
       }
       // Revive edge: the player just left the death scene (respawn or restart).
       // Cut the death lament — it is a music-bus one-shot, so the resumed world
@@ -66,6 +66,7 @@
         if (danger !== _audio.danger) { SluiceAudio.setDanger(danger); _audio.danger = danger; }
       } else {
         if (_audio.danger) { SluiceAudio.setDanger(false); _audio.danger = false; }
+        if (_audio.depthRows !== 0) { SluiceAudio.setDepth(0); _audio.depthRows = 0; }
         // day/night: 1 at noon (bright/full), 0 at midnight (thin/dark).
         var day = 0.5 + 0.5 * Math.sin((timeOfDay - 0.25) * 6.2831853);
         if (Math.abs(day - _audio.tod) > 0.02) { SluiceAudio.setTimeOfDay(day); _audio.tod = day; }
@@ -82,8 +83,9 @@
       if (SluiceAudio.sfx && SluiceAudio.sfx.ambience) {
         var zone;
         if (shopOpen || (typeof shopState !== 'undefined' && shopState !== 'closed')) zone = 'station';
-        else if (!underground) {
-          zone = (day > 0.35) ? 'surface-day' : 'surface-night';
+        else if (player.y < (SKY_ROWS + 4) * TILE) {
+          var zoneDay = 0.5 + 0.5 * Math.sin((timeOfDay - 0.25) * 6.2831853);
+          zone = (zoneDay > 0.35) ? 'surface-day' : 'surface-night';
           // Weather overlay (155 mood machine): a storm always takes the bed
           // (wind + the engine's thunder emitter carry a blizzard too); the
           // rain bed only when precip actually falls as RAIN — snowfall is
@@ -97,9 +99,10 @@
         }
         else {
           var zRows = Math.max(0, Math.floor(player.y / TILE) - SKY_ROWS);
-          zone = (zRows < 120) ? 'shallow' : (zRows < 400) ? 'mid' : (zRows < 900) ? 'deep' : 'magma';
+          var zLayer = getLayerAt(Math.floor(player.y / TILE), Math.floor(player.x / TILE));
+          zone = zLayer.dangerous ? 'magma' : (zRows < 60) ? 'shallow' : (zRows < 130) ? 'mid' : 'deep';
         }
-        if (zone !== _audio.zone) { SluiceAudio.sfx.ambience.setZone(zone); _audio.zone = zone; }
+        if (zone !== _audio.zone || SluiceAudio.sfx.ambience.zone() !== zone) { SluiceAudio.sfx.ambience.setZone(zone); _audio.zone = zone; }
       }
 
       // Rig engine voice (the player is a vehicle, SFX_BIBLE §10): a deep
@@ -107,6 +110,9 @@
       // sfxLoop is a per-frame drive — the engine watchdog self-silences it
       // the moment these calls stop (pause, shop, death, rover ride).
       var inShop = shopOpen || (typeof shopState !== 'undefined' && shopState !== 'closed');
+      if (inShop && drillSfxActive) {
+        SluiceAudio.sfx.drill.stop(); drillSfxActive = false; drillSfxMat = null;
+      }
       if (!inShop && !roverMode && player.onGround) {
         var spd = Math.abs(player.vx);
         if (spd > 26) {
@@ -211,6 +217,8 @@
     if (startInPause && !PAUSE_DISABLED && !bootPauseFired && introPhase === 'done') {
       bootPauseFired = true;
       gamePaused = true;
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
+      drillSfxActive = false; drillSfxMat = null;
       showPauseOverlay('press resume to begin');
     }
     if (terrainChunkRebuildBoostFrames > 0) terrainChunkRebuildBoostFrames--;

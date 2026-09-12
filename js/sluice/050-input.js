@@ -71,6 +71,8 @@
       if (PAUSE_DISABLED) return;   // ?nopause=1 harness lever (020)
       if (gamePaused) return;
       gamePaused = true;
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
+      drillSfxActive = false; drillSfxMat = null;
       bootPauseFired = true;   // a manual/focus pause also satisfies the boot pause
       if (gameRafId) { cancelAnimationFrame(gameRafId); gameRafId = 0; }
       // Show the menu BEFORE clearing input so a hiccup in clearAllInput can
@@ -81,6 +83,7 @@
     function resumeGame() {
       if (!gamePaused) return;
       gamePaused = false;
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(false);
       var ov = document.getElementById('game-pause');
       if (ov) { ov.classList.remove('is-visible'); ov.setAttribute('aria-hidden', 'true'); }
       // Reset the clock so the long paused gap doesn't arrive as one giant dt

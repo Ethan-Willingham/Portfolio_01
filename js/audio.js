@@ -71,10 +71,9 @@
      death      = hard duck + the solo-piano lament one-shot
      events     = short one-shots, tuned pickups
 
-   SHIPS SILENT. There are no audio assets in the repo yet. The engine loads
-   from assets/music/ and silently skips any file that 404s, so every API is
-   safe to call and the game stays silent until the .webm files land. Nothing
-   here throws if Web Audio is unavailable, so it is harmless to wire up early.
+   SFX ships with the original procedural bank in assets/sfx/. Rebuild with
+   tools/audio/build-sfx.py. AAC one-shots, seamless PCM loops, no runtime
+   synthesis cost for the bank. Missing replacements still skip gracefully.
 
    Code style mirrors the game: var (not let/const), single IIFE, no deps.
    ========================================================================= */
@@ -114,20 +113,22 @@ var SluiceAudio = (function () {
   // skipped and that sound is simply silent, so the catalog ships ahead of the
   // assets and each .m4a lights up the moment it lands in assets/sfx/.
   //   b    IEZA bus (SFX_BIBLE §3): 'e' Effect | 'z' Zone | 'i' Interface | 'a' Affect
+  //   ext  optional format override; PCM wav keeps loop boundaries gapless
   //   n    pool size (§5 anti-repetition): n 1 -> 'key.m4a'; n>1 -> 'key_1.m4a'..'key_N.m4a'
   //   loop true for continuous loops (played via createLoopVoice, §2.6)
   //   g    base gain (pre-jitter), default 1
   //   j    pitch-jitter override (fraction; default SFX_PITCH_JITTER = ±3%)
   var SFX_DIR = 'assets/sfx/';
+  var SFX_BANK_VERSION = '1';
   var SFX_MANIFEST = {
     // EFFECT — the drill flagship (SFX_BIBLE §6)
     'drill-spinup':         { b: 'e', n: 1 },
-    'drill-grind-dirt':     { b: 'e', n: 1, loop: true },
-    'drill-grind-stone':    { b: 'e', n: 1, loop: true },
-    'drill-grind-ice':      { b: 'e', n: 1, loop: true },
-    'drill-grind-crystal':  { b: 'e', n: 1, loop: true },
-    'drill-grind-metal':    { b: 'e', n: 1, loop: true },
-    'drill-grind-obsidian': { b: 'e', n: 1, loop: true },
+    'drill-grind-dirt':     { b: 'e', n: 1, loop: true, ext: 'wav' },
+    'drill-grind-stone':    { b: 'e', n: 1, loop: true, ext: 'wav' },
+    'drill-grind-ice':      { b: 'e', n: 1, loop: true, ext: 'wav' },
+    'drill-grind-crystal':  { b: 'e', n: 1, loop: true, ext: 'wav' },
+    'drill-grind-metal':    { b: 'e', n: 1, loop: true, ext: 'wav' },
+    'drill-grind-obsidian': { b: 'e', n: 1, loop: true, ext: 'wav' },
     'drill-break-dirt':     { b: 'e', n: 3 },
     'drill-break-stone':    { b: 'e', n: 3 },
     'drill-break-ice':      { b: 'e', n: 3 },
@@ -141,18 +142,18 @@ var SluiceAudio = (function () {
     'footstep-grass':       { b: 'e', n: 4, g: 0.7 },
     'footstep-metal':       { b: 'e', n: 4, g: 0.7 },
     'jetpack-ignite':       { b: 'e', n: 1 },
-    'jetpack-loop':         { b: 'e', n: 1, loop: true },
+    'jetpack-loop':         { b: 'e', n: 1, loop: true, ext: 'wav' },
     'jetpack-cutoff':       { b: 'e', n: 1 },
     'land-soft':            { b: 'e', n: 2, g: 0.8 },
     'land-hard':            { b: 'e', n: 2 },
     'land-damage':          { b: 'e', n: 2 },
-    'fall-wind':            { b: 'e', n: 1, loop: true },
-    'rig-hum':              { b: 'e', n: 1, loop: true, g: 0.5 },
+    'fall-wind':            { b: 'e', n: 1, loop: true, ext: 'wav' },
+    'rig-hum':              { b: 'e', n: 1, loop: true, ext: 'wav', g: 0.5 },
     // EFFECT — pickups, cargo, damage, tools
     'ore-pickup':           { b: 'e', n: 4 },
     'cargo-full':           { b: 'e', n: 1 },
     'bomb-throw':           { b: 'e', n: 2 },
-    'bomb-fuse':            { b: 'e', n: 1, loop: true },
+    'bomb-fuse':            { b: 'e', n: 1, loop: true, ext: 'wav' },
     'bomb-small':           { b: 'e', n: 2 },
     'bomb-large':           { b: 'e', n: 2 },
     'rover-deploy':         { b: 'e', n: 2 },
@@ -161,12 +162,12 @@ var SluiceAudio = (function () {
     'teleport':             { b: 'e', n: 1 },
     'liquid-enter':         { b: 'e', n: 2 },
     'liquid-exit':          { b: 'e', n: 2 },
-    'lava-sizzle':          { b: 'e', n: 1, loop: true },
+    'lava-sizzle':          { b: 'e', n: 1, loop: true, ext: 'wav' },
     'jello-wobble':         { b: 'e', n: 3, g: 0.8 },
     // EFFECT — the rig movement voice (the player is a vehicle, not feet;
     // SFX_PROMPT_SYSTEM §5 Priority set — footstep-* stay reserved)
-    'rig-drive':            { b: 'e', n: 1, loop: true, g: 0.7 },
-    'jet-spin':             { b: 'e', n: 1, loop: true, g: 0.6 },
+    'rig-drive':            { b: 'e', n: 1, loop: true, ext: 'wav', g: 0.7 },
+    'jet-spin':             { b: 'e', n: 1, loop: true, ext: 'wav', g: 0.6 },
     'air-pulse':            { b: 'e', n: 6, g: 0.8 },
     // EFFECT — combat + the No Man's Zone course (085-combat.js /
     // 087-nmz-course.js). Auto-fire restraint: small, low-fatigue (§2.11);
@@ -181,15 +182,15 @@ var SluiceAudio = (function () {
     'obstacle-hit':         { b: 'e', n: 2 },
     'ring-collect':         { b: 'e', n: 2 },
     // ZONE — the ambience beds (SFX_BIBLE §7; depth crossfade, Stable Audio)
-    'amb-surface-day':      { b: 'z', n: 1, loop: true },
-    'amb-surface-night':    { b: 'z', n: 1, loop: true },
-    'amb-rain':             { b: 'z', n: 1, loop: true },
-    'amb-storm':            { b: 'z', n: 1, loop: true },
-    'amb-shallow':          { b: 'z', n: 1, loop: true },
-    'amb-mid':              { b: 'z', n: 1, loop: true },
-    'amb-deep':             { b: 'z', n: 1, loop: true },
-    'amb-magma':            { b: 'z', n: 1, loop: true },
-    'amb-station':          { b: 'z', n: 1, loop: true },
+    'amb-surface-day':      { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-surface-night':    { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-rain':             { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-storm':            { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-shallow':          { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-mid':              { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-deep':             { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-magma':            { b: 'z', n: 1, loop: true, ext: 'wav' },
+    'amb-station':          { b: 'z', n: 1, loop: true, ext: 'wav' },
     // ZONE — the sparse emitter pool + surface one-shots (fired by the engine)
     'thunder':              { b: 'z', n: 3 },
     'amb-bird':             { b: 'z', n: 5 },
@@ -206,7 +207,7 @@ var SluiceAudio = (function () {
     'ui-confirm':           { b: 'i', n: 1, j: 0.01 },
     'ui-denied':            { b: 'i', n: 1, j: 0.01 },
     'sell-tick':            { b: 'i', n: 4 },
-    'fuel-fill':            { b: 'i', n: 1, loop: true },
+    'fuel-fill':            { b: 'i', n: 1, loop: true, ext: 'wav' },
     'sell-total':           { b: 'i', n: 1, j: 0.01 },
     // AFFECT — emotional cues (always with a visual twin, SFX_BIBLE §13)
     'alert-fuel':           { b: 'a', n: 1, j: 0 },
@@ -268,6 +269,7 @@ var SluiceAudio = (function () {
   // ----- state --------------------------------------------------------------
   var ctx = null, master, musicBus, musicDuck, depthFilter, fallFilter, nightLP, sfxBus, sfxFilter;
   var sfxMaster, sfxEffect, sfxZone, sfxInterface, sfxAffect;   // IEZA buses (built in ensure)
+  var musicVol = 0.65, musicVolumeGate, sfxPaused = false, sfxPauseGate;
   var sfxVol = 1;                 // the SFX slider gate (sfxMaster), under the master volume
   var sfxBuffers = {};            // key -> [AudioBuffer, ...] (loaded pool variants only)
   var sfxLoadStarted = false;
@@ -304,12 +306,26 @@ var SluiceAudio = (function () {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
       ctx = new AC();
-      master = ctx.createGain(); master.gain.value = enabled ? masterVol : 0; master.connect(ctx.destination);
+      master = ctx.createGain(); master.gain.value = enabled ? masterVol : 0;
+      // Catch stacked explosions and pickups while preserving ordinary transients.
+      var limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -6; limiter.knee.value = 6; limiter.ratio.value = 12;
+      limiter.attack.value = 0.003; limiter.release.value = 0.18;
+      // The compressor has an attack window. A transparent-until-loud soft
+      // ceiling catches coincident starts in that window, before the device clips.
+      var ceiling = ctx.createWaveShaper(), curve = new Float32Array(4097);
+      for (var ci = 0; ci < curve.length; ci++) {
+        var cv = ci / (curve.length - 1) * 2 - 1, ca = Math.abs(cv);
+        curve[ci] = (cv < 0 ? -1 : 1) * (ca <= 0.7 ? ca : 0.7 + 0.25 * Math.tanh((ca - 0.7) / 0.25));
+      }
+      ceiling.curve = curve; ceiling.oversample = '2x';
+      master.connect(limiter); limiter.connect(ceiling); ceiling.connect(ctx.destination);
 
       // SFX path (IEZA, SFX_BIBLE §3/§11): four buses under one sfxMaster.
       //   Effect + Zone (diegetic)        -> sfxFilter (depth lowpass) -> sfxMaster -> master
       //   Interface + Affect (non-diegetic, dry, never depth-muffled) -> sfxMaster -> master
-      sfxMaster = ctx.createGain(); sfxMaster.gain.value = sfxVol; sfxMaster.connect(master);
+      sfxMaster = ctx.createGain(); sfxMaster.gain.value = sfxVol; sfxPauseGate = ctx.createGain(); sfxPauseGate.gain.value = sfxPaused ? 0 : 1;
+      sfxMaster.connect(sfxPauseGate); sfxPauseGate.connect(master);
       sfxFilter = mkLP(DEPTH_LP_MAX_HZ); sfxFilter.connect(sfxMaster);
       sfxEffect    = ctx.createGain(); sfxEffect.connect(sfxFilter);
       sfxZone      = ctx.createGain(); sfxZone.connect(sfxFilter);
@@ -323,7 +339,8 @@ var SluiceAudio = (function () {
       nightLP     = mkLP(DEPTH_LP_MAX_HZ);
       musicDuck = ctx.createGain(); musicDuck.gain.value = 1;
       musicBus  = ctx.createGain();
-      musicBus.connect(musicDuck); musicDuck.connect(depthFilter);
+      musicVolumeGate = ctx.createGain(); musicVolumeGate.gain.value = musicVol;
+      musicBus.connect(musicVolumeGate); musicVolumeGate.connect(musicDuck); musicDuck.connect(depthFilter);
       depthFilter.connect(fallFilter); fallFilter.connect(nightLP); nightLP.connect(master);
 
       // The full music library is ~38 MB, so it only downloads after the
@@ -360,8 +377,8 @@ var SluiceAudio = (function () {
   function loadAll() {
     if (loadStarted || !ctx || typeof fetch === 'undefined') return;
     loadStarted = true;
-    Object.keys(MANIFEST).forEach(loadTrack);
     loadAllSfx();
+    Object.keys(MANIFEST).forEach(loadTrack);
   }
   function has(name) { return !!buffers[name]; }
 
@@ -371,15 +388,18 @@ var SluiceAudio = (function () {
   function sfxFiles(key) {
     var d = SFX_MANIFEST[key], out = [], i;
     if (!d) return out;
-    if ((d.n || 1) <= 1) out.push(key + '.m4a');
-    else for (i = 1; i <= d.n; i++) out.push(key + '_' + i + '.m4a');
+    var ext = '.' + (d.ext || 'm4a');
+    if ((d.n || 1) <= 1) out.push(key + ext);
+    else for (i = 1; i <= d.n; i++) out.push(key + '_' + i + ext);
     return out;
   }
   function loadAllSfx() {
     if (sfxLoadStarted || !ctx || typeof fetch === 'undefined') return;
     sfxLoadStarted = true;
     var queue = [], inFlight = 0;
-    Object.keys(SFX_MANIFEST).forEach(function (key) {
+    // Keep small UI/warning cues ahead of machinery, with large beds last.
+    var order = { i: 0, a: 1, e: 2, z: 3 };
+    Object.keys(SFX_MANIFEST).sort(function (a, b) { return order[SFX_MANIFEST[a].b] - order[SFX_MANIFEST[b].b]; }).forEach(function (key) {
       sfxFiles(key).forEach(function (f) { queue.push({ key: key, file: f }); });
     });
     function pump() {
@@ -387,7 +407,7 @@ var SluiceAudio = (function () {
         (function (job) {
           inFlight++;
           function done() { inFlight--; pump(); }
-          fetch(SFX_DIR + job.file).then(function (r) {
+          fetch(SFX_DIR + job.file + '?v=' + SFX_BANK_VERSION).then(function (r) {
             return r.ok ? r.arrayBuffer() : null;        // missing -> skip
           }).then(function (ab) {
             if (!ab) { done(); return; }
@@ -631,7 +651,7 @@ var SluiceAudio = (function () {
   // and the §8 ducking side-effects (Interface ducks Effect; Affect ducks
   // Effect + music). opts = { bus, gain, rate, jitter, pan }.
   function playSfx(name, opts) {
-    if (!ensure()) return null; opts = opts || {};
+    if (!ensure() || sfxPaused) return null; opts = opts || {};
     var d = SFX_MANIFEST[name];
     if (!d) return playOne(name, opts);                  // legacy: music-manifest one-shots
     var pool = sfxBuffers[name];
@@ -645,7 +665,7 @@ var SluiceAudio = (function () {
     var s = ctx.createBufferSource(); s.buffer = pool[pick]; s.loop = false;
     var jit = (opts.jitter != null ? opts.jitter : (d.j != null ? d.j : SFX_PITCH_JITTER));
     try { s.playbackRate.value = (opts.rate || 1) * (1 + (Math.random() * 2 - 1) * jit); } catch (e) {}
-    var vol = (opts.gain != null ? opts.gain : (d.g != null ? d.g : 1));
+    var vol = (d.g != null ? d.g : 1) * (opts.gain != null ? opts.gain : 1);
     vol *= Math.pow(10, ((Math.random() * 2 - 1) * SFX_VOL_JITTER_DB) / 20);
     var g = ctx.createGain(); g.gain.value = vol;
     var out = g;
@@ -660,7 +680,10 @@ var SluiceAudio = (function () {
     try { s.start(); } catch (e) {}
     var v = { src: s, gain: g, name: name, t0: tnow() };
     sfxVoices.push(v);
-    s.onended = function () { var i = sfxVoices.indexOf(v); if (i >= 0) sfxVoices.splice(i, 1); };
+    s.onended = function () {
+      var i = sfxVoices.indexOf(v); if (i >= 0) sfxVoices.splice(i, 1);
+      s.disconnect(); g.disconnect(); if (out !== g) out.disconnect();
+    };
     var bc = String(opts.bus || d.b || 'e').charAt(0);   // §8 IEZA ducking
     if (bc === 'i') {
       duckGain(sfxEffect, DUCK_UI_FX.amt, DUCK_UI_FX.atk, DUCK_UI_FX.rel);
@@ -720,6 +743,8 @@ var SluiceAudio = (function () {
             g.gain.linearRampToValueAtTime(0, c + f);
             src.stop(c + f + 0.05);
           } catch (e) {}
+          var oldSrc = src, oldFilt = filt, oldGain = g;
+          oldSrc.onended = function () { oldSrc.disconnect(); oldFilt.disconnect(); oldGain.disconnect(); };
           src = null; filt = null; g = null;
         }
         return h;
@@ -755,7 +780,7 @@ var SluiceAudio = (function () {
     if (!live && sfxLoopWatchT) { clearInterval(sfxLoopWatchT); sfxLoopWatchT = null; }
   }
   function sfxLoopDrive(name, opts) {
-    if (!ensure()) return; opts = opts || {};
+    if (!ensure() || sfxPaused) return; opts = opts || {};
     var d = SFX_MANIFEST[name];
     if (!d || !d.loop) return;
     var L = sfxLoopReg[name];
@@ -780,6 +805,23 @@ var SluiceAudio = (function () {
     });
   }
 
+  function stopActionSfx() {
+    sfxDrill.stop();
+    for (var key in sfxLoopReg) sfxLoopReg[key].h.stop(80);
+    sfxLoopReg = {};
+    if (sfxLoopWatchT) { clearInterval(sfxLoopWatchT); sfxLoopWatchT = null; }
+    if (fl) { fl.muted = true; fset(fl.bus.gain, 0, 0.06); }
+  }
+  function setPaused(on) {
+    sfxPaused = !!on;
+    if (sfxPauseGate) ramp(sfxPauseGate.gain, sfxPaused ? 0 : 1, 0.06);
+    if (sfxPaused) {
+      stopActionSfx();
+      // Don't let a long one-shot reappear if the player resumes quickly.
+      sfxVoices.slice().forEach(function (v) { try { v.src.stop(tnow() + 0.07); } catch (e) {} });
+    }
+  }
+
   // ===== SFX: the drill facade (SFX_BIBLE §6, the flagship) =================
   // Wraps the loop-voice plumbing so the game wires the whole drill system in
   // one-liners. Spin-up on dig start; a material grind loop whose pitch +
@@ -796,10 +838,14 @@ var SluiceAudio = (function () {
     amber: 'crystal', painite: 'crystal', unobtanium: 'crystal',
     metal: 'metal', ore: 'metal', iron: 'metal', copper: 'metal', silver: 'metal',
     gold: 'metal', platinum: 'metal', titanium: 'metal',
+    bauxite: 'dirt', fossil: 'dirt', pyrite: 'metal', galena: 'metal',
+    magnetite: 'metal', cobalt: 'metal', cinnabar: 'metal', uranium: 'metal',
+    malachite: 'crystal', turquoise: 'crystal', jade: 'crystal', lapis: 'crystal',
+    rhodochrosite: 'crystal', garnet: 'crystal', opal: 'crystal', topaz: 'crystal',
     obsidian: 'obsidian', basalt: 'obsidian', bedrock: 'obsidian', barrier: 'obsidian'
   };
   function drillMat(m) { return DRILL_MATS[String(m || '').toLowerCase()] || 'stone'; }
-  var drill = { voice: null, alt: null, mat: null, t0: 0, speed: 0.5, progress: 0 };
+  var drill = { voice: null, alt: null, mat: null, t0: 0, speed: 0.5, progress: 0, lastMs: 0, watchT: null };
   function drillApply(rampS) {
     if (!drill.voice) return;
     var el = tnow() - drill.t0;
@@ -811,6 +857,13 @@ var SluiceAudio = (function () {
   }
   var sfxDrill = {
     start: function (material) {
+      if (sfxPaused) return;
+      drill.lastMs = nowMs();
+      if (!drill.watchT) drill.watchT = setInterval(function () {
+        // Modals can suspend gameplay without using the pause menu. Fade
+        // a stranded grind; setProgress restores it when mining resumes.
+        if (drill.voice && nowMs() - drill.lastMs > 350) drill.voice.setGain(0, 0.1);
+      }, 120);
       var m = drillMat(material);
       if (drill.voice && drill.mat === m) return;        // same material: keep grinding (fatigue clock holds)
       if (drill.voice) {                                 // material swap mid-dig: crossfade the grind bodies
@@ -824,7 +877,7 @@ var SluiceAudio = (function () {
       drillApply(0.05);
     },
     setSpeed:    function (s) { drill.speed = Math.max(0, Math.min(1, s || 0)); drillApply(); },
-    setProgress: function (p) { drill.progress = Math.max(0, Math.min(1, p || 0)); drillApply(0.08); },
+    setProgress: function (p) { drill.lastMs = nowMs(); drill.progress = Math.max(0, Math.min(1, p || 0)); drillApply(0.08); },
     breakHit: function (material) {
       drill.progress = 0;
       playSfx('drill-break-' + drillMat(material));      // the juice moment — same frame as the mine-break FX
@@ -832,6 +885,7 @@ var SluiceAudio = (function () {
     },
     bounce: function () { playSfx('drill-bounce'); },    // cannot penetrate (reqDrill/reqHeat/barrier)
     stop: function () {                                  // release = the ear-rest reward (snap-back is the next start)
+      if (drill.watchT) { clearInterval(drill.watchT); drill.watchT = null; }
       if (drill.alt) { drill.alt.stop(120); drill.alt = null; }
       if (drill.voice) { drill.voice.stop(140); drill.voice = null; }
       drill.mat = null; drill.progress = 0;
@@ -1115,6 +1169,7 @@ var SluiceAudio = (function () {
   // it. Never constructs the AudioContext itself (the unlock listeners do
   // that on the first gesture, like the other per-frame drives).
   function flightUpdate(st) {
+    if (sfxPaused) return;
     if (!st || !ctx || disabled) return;
     if (!fl && !flightBuild(st)) return;
     var resumed = fl.muted;
@@ -1239,6 +1294,8 @@ var SluiceAudio = (function () {
     isDisabled: function () { return disabled; },
     loadedCount: function () { return Object.keys(buffers).length; },
 
+    setPaused: setPaused,
+    setMusicVolume: function (v) { musicVol = clamp01(v); if (musicVolumeGate) ramp(musicVolumeGate.gain, musicVol, 0.2); },
     setEnabled: function (on) { enabled = !!on; if (master) ramp(master.gain, enabled ? masterVol : 0, 0.3); },
     setVolume: function (v) { masterVol = Math.max(0, Math.min(1, v)); if (master && enabled) ramp(master.gain, masterVol, 0.2); },
     // the SFX slider (SFX_BIBLE §13): gates the four IEZA buses as one, under the master
@@ -1254,6 +1311,7 @@ var SluiceAudio = (function () {
     fall: setFall,                                        // true while plunging
     duck: duck,
     death: function () {
+      stopActionSfx(); sfxAmbience.setZone(null);
       stopPool(); stopUnderground();
       if (music.combat) { stopVoice(music.combat, 0.4); music.combat = null; }
       music.mode = null;
@@ -1282,6 +1340,7 @@ var SluiceAudio = (function () {
       drill: sfxDrill,                                    // {start(material), setSpeed, setProgress, breakHit(material), bounce, stop}
       ambience: sfxAmbience                               // {setZone(zoneName), zone()}
     },
+    sfxStatus: function () { return { loaded: Object.keys(sfxBuffers).length, expected: Object.keys(SFX_MANIFEST).length, voices: sfxVoices.length, loops: Object.keys(sfxLoopReg), drill: drill.mat, zone: amb.zone, paused: sfxPaused, musicVolume: musicVol, sfxVolume: sfxVol, masterVolume: masterVol }; },
     sfxLoadedCount: function () { var n = 0, k; for (k in sfxBuffers) n += sfxBuffers[k].length; return n; },
     nowPlaying: nowPlaying,                               // -> [{name,t,dur,loop,gain}] audible music
     musicMode: function () { return music.mode; },        // 'town'|'towns'|'travel'|'underground'|null

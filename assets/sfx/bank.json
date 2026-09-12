@@ -1,0 +1,1517 @@
+{
+  "version": 1,
+  "sampleRate": 24000,
+  "source": "Original procedural synthesis, tools/audio/build-sfx.py",
+  "sounds": [
+    {
+      "key": "drill-spinup",
+      "file": "drill-spinup.m4a",
+      "loop": false,
+      "seconds": 0.32,
+      "peakDb": -6.94,
+      "rmsDb": -24.06,
+      "seamDelta": null,
+      "bytes": 6617
+    },
+    {
+      "key": "drill-grind-dirt",
+      "file": "drill-grind-dirt.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -14.81,
+      "rmsDb": -28.0,
+      "seamDelta": 0.004851,
+      "bytes": 192044
+    },
+    {
+      "key": "drill-grind-stone",
+      "file": "drill-grind-stone.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -13.88,
+      "rmsDb": -28.0,
+      "seamDelta": 0.006985,
+      "bytes": 192044
+    },
+    {
+      "key": "drill-grind-ice",
+      "file": "drill-grind-ice.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -14.21,
+      "rmsDb": -28.0,
+      "seamDelta": 0.009518,
+      "bytes": 192044
+    },
+    {
+      "key": "drill-grind-crystal",
+      "file": "drill-grind-crystal.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -13.08,
+      "rmsDb": -28.0,
+      "seamDelta": 0.000125,
+      "bytes": 192044
+    },
+    {
+      "key": "drill-grind-metal",
+      "file": "drill-grind-metal.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -14.57,
+      "rmsDb": -28.0,
+      "seamDelta": 0.002979,
+      "bytes": 192044
+    },
+    {
+      "key": "drill-grind-obsidian",
+      "file": "drill-grind-obsidian.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -13.88,
+      "rmsDb": -28.0,
+      "seamDelta": 0.003404,
+      "bytes": 192044
+    },
+    {
+      "key": "drill-break-dirt",
+      "file": "drill-break-dirt_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -27.56,
+      "seamDelta": null,
+      "bytes": 7490
+    },
+    {
+      "key": "drill-break-dirt",
+      "file": "drill-break-dirt_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -26.29,
+      "seamDelta": null,
+      "bytes": 7411
+    },
+    {
+      "key": "drill-break-dirt",
+      "file": "drill-break-dirt_3.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -26.02,
+      "seamDelta": null,
+      "bytes": 7359
+    },
+    {
+      "key": "drill-break-stone",
+      "file": "drill-break-stone_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -23.87,
+      "seamDelta": null,
+      "bytes": 8655
+    },
+    {
+      "key": "drill-break-stone",
+      "file": "drill-break-stone_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -25.88,
+      "seamDelta": null,
+      "bytes": 8608
+    },
+    {
+      "key": "drill-break-stone",
+      "file": "drill-break-stone_3.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -25.02,
+      "seamDelta": null,
+      "bytes": 8665
+    },
+    {
+      "key": "drill-break-ice",
+      "file": "drill-break-ice_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -23.2,
+      "seamDelta": null,
+      "bytes": 9405
+    },
+    {
+      "key": "drill-break-ice",
+      "file": "drill-break-ice_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -22.17,
+      "seamDelta": null,
+      "bytes": 9291
+    },
+    {
+      "key": "drill-break-ice",
+      "file": "drill-break-ice_3.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -24.23,
+      "seamDelta": null,
+      "bytes": 9351
+    },
+    {
+      "key": "drill-break-crystal",
+      "file": "drill-break-crystal_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -22.23,
+      "seamDelta": null,
+      "bytes": 9407
+    },
+    {
+      "key": "drill-break-crystal",
+      "file": "drill-break-crystal_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -21.37,
+      "seamDelta": null,
+      "bytes": 9361
+    },
+    {
+      "key": "drill-break-crystal",
+      "file": "drill-break-crystal_3.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -23.91,
+      "seamDelta": null,
+      "bytes": 9366
+    },
+    {
+      "key": "drill-break-metal",
+      "file": "drill-break-metal_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -24.35,
+      "seamDelta": null,
+      "bytes": 9261
+    },
+    {
+      "key": "drill-break-metal",
+      "file": "drill-break-metal_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -23.78,
+      "seamDelta": null,
+      "bytes": 9256
+    },
+    {
+      "key": "drill-break-metal",
+      "file": "drill-break-metal_3.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -22.76,
+      "seamDelta": null,
+      "bytes": 9295
+    },
+    {
+      "key": "drill-break-obsidian",
+      "file": "drill-break-obsidian_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -25.28,
+      "seamDelta": null,
+      "bytes": 8923
+    },
+    {
+      "key": "drill-break-obsidian",
+      "file": "drill-break-obsidian_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -26.82,
+      "seamDelta": null,
+      "bytes": 8813
+    },
+    {
+      "key": "drill-break-obsidian",
+      "file": "drill-break-obsidian_3.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -24.07,
+      "seamDelta": null,
+      "bytes": 8902
+    },
+    {
+      "key": "drill-bounce",
+      "file": "drill-bounce_1.m4a",
+      "loop": false,
+      "seconds": 0.3,
+      "peakDb": -7.94,
+      "rmsDb": -24.05,
+      "seamDelta": null,
+      "bytes": 6684
+    },
+    {
+      "key": "drill-bounce",
+      "file": "drill-bounce_2.m4a",
+      "loop": false,
+      "seconds": 0.3,
+      "peakDb": -8.3,
+      "rmsDb": -24.05,
+      "seamDelta": null,
+      "bytes": 6671
+    },
+    {
+      "key": "drill-bounce",
+      "file": "drill-bounce_3.m4a",
+      "loop": false,
+      "seconds": 0.3,
+      "peakDb": -8.28,
+      "rmsDb": -24.05,
+      "seamDelta": null,
+      "bytes": 6695
+    },
+    {
+      "key": "debris",
+      "file": "debris_1.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -13.07,
+      "rmsDb": -30.14,
+      "seamDelta": null,
+      "bytes": 6086
+    },
+    {
+      "key": "debris",
+      "file": "debris_2.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -12.18,
+      "rmsDb": -30.1,
+      "seamDelta": null,
+      "bytes": 6055
+    },
+    {
+      "key": "debris",
+      "file": "debris_3.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -12.42,
+      "rmsDb": -30.05,
+      "seamDelta": null,
+      "bytes": 6070
+    },
+    {
+      "key": "debris",
+      "file": "debris_4.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -13.31,
+      "rmsDb": -30.06,
+      "seamDelta": null,
+      "bytes": 6070
+    },
+    {
+      "key": "footstep-dirt",
+      "file": "footstep-dirt_1.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -14.12,
+      "rmsDb": -30.08,
+      "seamDelta": null,
+      "bytes": 6098
+    },
+    {
+      "key": "footstep-dirt",
+      "file": "footstep-dirt_2.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -13.21,
+      "rmsDb": -30.07,
+      "seamDelta": null,
+      "bytes": 6053
+    },
+    {
+      "key": "footstep-dirt",
+      "file": "footstep-dirt_3.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -11.13,
+      "rmsDb": -30.15,
+      "seamDelta": null,
+      "bytes": 6035
+    },
+    {
+      "key": "footstep-dirt",
+      "file": "footstep-dirt_4.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -12.18,
+      "rmsDb": -30.13,
+      "seamDelta": null,
+      "bytes": 6071
+    },
+    {
+      "key": "footstep-grass",
+      "file": "footstep-grass_1.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -14.64,
+      "rmsDb": -30.11,
+      "seamDelta": null,
+      "bytes": 6091
+    },
+    {
+      "key": "footstep-grass",
+      "file": "footstep-grass_2.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -13.88,
+      "rmsDb": -30.08,
+      "seamDelta": null,
+      "bytes": 6051
+    },
+    {
+      "key": "footstep-grass",
+      "file": "footstep-grass_3.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -13.52,
+      "rmsDb": -30.07,
+      "seamDelta": null,
+      "bytes": 6087
+    },
+    {
+      "key": "footstep-grass",
+      "file": "footstep-grass_4.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -12.64,
+      "rmsDb": -30.06,
+      "seamDelta": null,
+      "bytes": 6075
+    },
+    {
+      "key": "footstep-metal",
+      "file": "footstep-metal_1.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -13.8,
+      "rmsDb": -30.08,
+      "seamDelta": null,
+      "bytes": 6292
+    },
+    {
+      "key": "footstep-metal",
+      "file": "footstep-metal_2.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -15.46,
+      "rmsDb": -30.09,
+      "seamDelta": null,
+      "bytes": 6275
+    },
+    {
+      "key": "footstep-metal",
+      "file": "footstep-metal_3.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -16.07,
+      "rmsDb": -30.07,
+      "seamDelta": null,
+      "bytes": 6298
+    },
+    {
+      "key": "footstep-metal",
+      "file": "footstep-metal_4.m4a",
+      "loop": false,
+      "seconds": 0.25,
+      "peakDb": -16.1,
+      "rmsDb": -30.09,
+      "seamDelta": null,
+      "bytes": 6283
+    },
+    {
+      "key": "jetpack-ignite",
+      "file": "jetpack-ignite.m4a",
+      "loop": false,
+      "seconds": 0.32,
+      "peakDb": -5.04,
+      "rmsDb": -25.0,
+      "seamDelta": null,
+      "bytes": 6607
+    },
+    {
+      "key": "jetpack-loop",
+      "file": "jetpack-loop.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -17.13,
+      "rmsDb": -28.0,
+      "seamDelta": 0.004708,
+      "bytes": 192044
+    },
+    {
+      "key": "jetpack-cutoff",
+      "file": "jetpack-cutoff.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -8.35,
+      "rmsDb": -24.04,
+      "seamDelta": null,
+      "bytes": 5777
+    },
+    {
+      "key": "land-soft",
+      "file": "land-soft_1.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -10.55,
+      "rmsDb": -29.03,
+      "seamDelta": null,
+      "bytes": 8065
+    },
+    {
+      "key": "land-soft",
+      "file": "land-soft_2.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -12.04,
+      "rmsDb": -29.02,
+      "seamDelta": null,
+      "bytes": 8096
+    },
+    {
+      "key": "land-hard",
+      "file": "land-hard_1.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -24.91,
+      "seamDelta": null,
+      "bytes": 8079
+    },
+    {
+      "key": "land-hard",
+      "file": "land-hard_2.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -22.16,
+      "seamDelta": null,
+      "bytes": 8119
+    },
+    {
+      "key": "land-damage",
+      "file": "land-damage_1.m4a",
+      "loop": false,
+      "seconds": 0.9,
+      "peakDb": -5.04,
+      "rmsDb": -25.68,
+      "seamDelta": null,
+      "bytes": 11138
+    },
+    {
+      "key": "land-damage",
+      "file": "land-damage_2.m4a",
+      "loop": false,
+      "seconds": 0.9,
+      "peakDb": -5.04,
+      "rmsDb": -23.89,
+      "seamDelta": null,
+      "bytes": 11083
+    },
+    {
+      "key": "fall-wind",
+      "file": "fall-wind.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -15.07,
+      "rmsDb": -28.0,
+      "seamDelta": 0.003565,
+      "bytes": 192044
+    },
+    {
+      "key": "rig-hum",
+      "file": "rig-hum.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -20.01,
+      "rmsDb": -32.0,
+      "seamDelta": 0.002435,
+      "bytes": 192044
+    },
+    {
+      "key": "ore-pickup",
+      "file": "ore-pickup_1.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -12.9,
+      "rmsDb": -28.07,
+      "seamDelta": null,
+      "bytes": 6183
+    },
+    {
+      "key": "ore-pickup",
+      "file": "ore-pickup_2.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -13.51,
+      "rmsDb": -28.07,
+      "seamDelta": null,
+      "bytes": 6193
+    },
+    {
+      "key": "ore-pickup",
+      "file": "ore-pickup_3.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -11.65,
+      "rmsDb": -28.08,
+      "seamDelta": null,
+      "bytes": 6167
+    },
+    {
+      "key": "ore-pickup",
+      "file": "ore-pickup_4.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -11.8,
+      "rmsDb": -28.07,
+      "seamDelta": null,
+      "bytes": 6198
+    },
+    {
+      "key": "cargo-full",
+      "file": "cargo-full.m4a",
+      "loop": false,
+      "seconds": 0.3,
+      "peakDb": -9.35,
+      "rmsDb": -26.04,
+      "seamDelta": null,
+      "bytes": 6693
+    },
+    {
+      "key": "bomb-throw",
+      "file": "bomb-throw_1.m4a",
+      "loop": false,
+      "seconds": 0.28,
+      "peakDb": -10.3,
+      "rmsDb": -26.04,
+      "seamDelta": null,
+      "bytes": 6593
+    },
+    {
+      "key": "bomb-throw",
+      "file": "bomb-throw_2.m4a",
+      "loop": false,
+      "seconds": 0.28,
+      "peakDb": -11.95,
+      "rmsDb": -26.06,
+      "seamDelta": null,
+      "bytes": 6555
+    },
+    {
+      "key": "bomb-fuse",
+      "file": "bomb-fuse.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -20.58,
+      "rmsDb": -33.0,
+      "seamDelta": 0.012901,
+      "bytes": 192044
+    },
+    {
+      "key": "bomb-small",
+      "file": "bomb-small_1.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -27.68,
+      "seamDelta": null,
+      "bytes": 9721
+    },
+    {
+      "key": "bomb-small",
+      "file": "bomb-small_2.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -26.09,
+      "seamDelta": null,
+      "bytes": 9844
+    },
+    {
+      "key": "bomb-large",
+      "file": "bomb-large_1.m4a",
+      "loop": false,
+      "seconds": 2.4,
+      "peakDb": -5.04,
+      "rmsDb": -25.74,
+      "seamDelta": null,
+      "bytes": 15954
+    },
+    {
+      "key": "bomb-large",
+      "file": "bomb-large_2.m4a",
+      "loop": false,
+      "seconds": 2.4,
+      "peakDb": -5.04,
+      "rmsDb": -26.61,
+      "seamDelta": null,
+      "bytes": 15730
+    },
+    {
+      "key": "rover-deploy",
+      "file": "rover-deploy_1.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -6.27,
+      "rmsDb": -24.0,
+      "seamDelta": null,
+      "bytes": 10388
+    },
+    {
+      "key": "rover-deploy",
+      "file": "rover-deploy_2.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.86,
+      "rmsDb": -24.01,
+      "seamDelta": null,
+      "bytes": 10376
+    },
+    {
+      "key": "rover-pop",
+      "file": "rover-pop_1.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -10.8,
+      "rmsDb": -28.1,
+      "seamDelta": null,
+      "bytes": 5676
+    },
+    {
+      "key": "rover-pop",
+      "file": "rover-pop_2.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -13.1,
+      "rmsDb": -28.08,
+      "seamDelta": null,
+      "bytes": 5696
+    },
+    {
+      "key": "hull-hit",
+      "file": "hull-hit_1.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -23.89,
+      "seamDelta": null,
+      "bytes": 8133
+    },
+    {
+      "key": "hull-hit",
+      "file": "hull-hit_2.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -22.98,
+      "seamDelta": null,
+      "bytes": 8166
+    },
+    {
+      "key": "hull-hit",
+      "file": "hull-hit_3.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.15,
+      "rmsDb": -22.03,
+      "seamDelta": null,
+      "bytes": 8137
+    },
+    {
+      "key": "teleport",
+      "file": "teleport.m4a",
+      "loop": false,
+      "seconds": 1.1,
+      "peakDb": -8.66,
+      "rmsDb": -24.0,
+      "seamDelta": null,
+      "bytes": 12647
+    },
+    {
+      "key": "liquid-enter",
+      "file": "liquid-enter_1.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.04,
+      "rmsDb": -24.84,
+      "seamDelta": null,
+      "bytes": 10471
+    },
+    {
+      "key": "liquid-enter",
+      "file": "liquid-enter_2.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.04,
+      "rmsDb": -26.48,
+      "seamDelta": null,
+      "bytes": 10388
+    },
+    {
+      "key": "liquid-exit",
+      "file": "liquid-exit_1.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -27.41,
+      "seamDelta": null,
+      "bytes": 8745
+    },
+    {
+      "key": "liquid-exit",
+      "file": "liquid-exit_2.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -5.04,
+      "rmsDb": -26.38,
+      "seamDelta": null,
+      "bytes": 8725
+    },
+    {
+      "key": "lava-sizzle",
+      "file": "lava-sizzle.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -19.97,
+      "rmsDb": -33.0,
+      "seamDelta": 0.013538,
+      "bytes": 192044
+    },
+    {
+      "key": "jello-wobble",
+      "file": "jello-wobble_1.m4a",
+      "loop": false,
+      "seconds": 0.6,
+      "peakDb": -8.12,
+      "rmsDb": -24.08,
+      "seamDelta": null,
+      "bytes": 6119
+    },
+    {
+      "key": "jello-wobble",
+      "file": "jello-wobble_2.m4a",
+      "loop": false,
+      "seconds": 0.6,
+      "peakDb": -7.94,
+      "rmsDb": -24.04,
+      "seamDelta": null,
+      "bytes": 6129
+    },
+    {
+      "key": "jello-wobble",
+      "file": "jello-wobble_3.m4a",
+      "loop": false,
+      "seconds": 0.6,
+      "peakDb": -7.21,
+      "rmsDb": -24.05,
+      "seamDelta": null,
+      "bytes": 6090
+    },
+    {
+      "key": "rig-drive",
+      "file": "rig-drive.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -13.6,
+      "rmsDb": -28.0,
+      "seamDelta": 0.001214,
+      "bytes": 192044
+    },
+    {
+      "key": "jet-spin",
+      "file": "jet-spin.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -16.2,
+      "rmsDb": -28.0,
+      "seamDelta": 0.005531,
+      "bytes": 192044
+    },
+    {
+      "key": "air-pulse",
+      "file": "air-pulse_1.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -14.78,
+      "rmsDb": -29.07,
+      "seamDelta": null,
+      "bytes": 5715
+    },
+    {
+      "key": "air-pulse",
+      "file": "air-pulse_2.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -11.92,
+      "rmsDb": -29.06,
+      "seamDelta": null,
+      "bytes": 5703
+    },
+    {
+      "key": "air-pulse",
+      "file": "air-pulse_3.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -11.09,
+      "rmsDb": -29.07,
+      "seamDelta": null,
+      "bytes": 5727
+    },
+    {
+      "key": "air-pulse",
+      "file": "air-pulse_4.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -11.71,
+      "rmsDb": -29.05,
+      "seamDelta": null,
+      "bytes": 5697
+    },
+    {
+      "key": "air-pulse",
+      "file": "air-pulse_5.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -12.14,
+      "rmsDb": -29.07,
+      "seamDelta": null,
+      "bytes": 5703
+    },
+    {
+      "key": "air-pulse",
+      "file": "air-pulse_6.m4a",
+      "loop": false,
+      "seconds": 0.2,
+      "peakDb": -13.75,
+      "rmsDb": -29.08,
+      "seamDelta": null,
+      "bytes": 5703
+    },
+    {
+      "key": "turret-fire",
+      "file": "turret-fire_1.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -11.92,
+      "rmsDb": -28.05,
+      "seamDelta": null,
+      "bytes": 5738
+    },
+    {
+      "key": "turret-fire",
+      "file": "turret-fire_2.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -11.97,
+      "rmsDb": -28.06,
+      "seamDelta": null,
+      "bytes": 5709
+    },
+    {
+      "key": "turret-fire",
+      "file": "turret-fire_3.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -12.23,
+      "rmsDb": -28.12,
+      "seamDelta": null,
+      "bytes": 5701
+    },
+    {
+      "key": "enemy-hit",
+      "file": "enemy-hit_1.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -22.72,
+      "seamDelta": null,
+      "bytes": 8147
+    },
+    {
+      "key": "enemy-hit",
+      "file": "enemy-hit_2.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -23.13,
+      "seamDelta": null,
+      "bytes": 8115
+    },
+    {
+      "key": "enemy-hit",
+      "file": "enemy-hit_3.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -22.97,
+      "seamDelta": null,
+      "bytes": 8157
+    },
+    {
+      "key": "drone-down",
+      "file": "drone-down_1.m4a",
+      "loop": false,
+      "seconds": 0.9,
+      "peakDb": -5.04,
+      "rmsDb": -24.72,
+      "seamDelta": null,
+      "bytes": 11082
+    },
+    {
+      "key": "drone-down",
+      "file": "drone-down_2.m4a",
+      "loop": false,
+      "seconds": 0.9,
+      "peakDb": -5.04,
+      "rmsDb": -24.54,
+      "seamDelta": null,
+      "bytes": 11074
+    },
+    {
+      "key": "stinger-hit",
+      "file": "stinger-hit_1.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -22.1,
+      "seamDelta": null,
+      "bytes": 8126
+    },
+    {
+      "key": "stinger-hit",
+      "file": "stinger-hit_2.m4a",
+      "loop": false,
+      "seconds": 0.5,
+      "peakDb": -5.04,
+      "rmsDb": -22.22,
+      "seamDelta": null,
+      "bytes": 8103
+    },
+    {
+      "key": "missile-launch",
+      "file": "missile-launch_1.m4a",
+      "loop": false,
+      "seconds": 0.55,
+      "peakDb": -6.09,
+      "rmsDb": -24.02,
+      "seamDelta": null,
+      "bytes": 8200
+    },
+    {
+      "key": "missile-launch",
+      "file": "missile-launch_2.m4a",
+      "loop": false,
+      "seconds": 0.55,
+      "peakDb": -7.79,
+      "rmsDb": -24.01,
+      "seamDelta": null,
+      "bytes": 8209
+    },
+    {
+      "key": "missile-hit",
+      "file": "missile-hit_1.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -27.73,
+      "seamDelta": null,
+      "bytes": 9701
+    },
+    {
+      "key": "missile-hit",
+      "file": "missile-hit_2.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -27.02,
+      "seamDelta": null,
+      "bytes": 9675
+    },
+    {
+      "key": "flak-burst",
+      "file": "flak-burst_1.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -26.33,
+      "seamDelta": null,
+      "bytes": 9717
+    },
+    {
+      "key": "flak-burst",
+      "file": "flak-burst_2.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -27.82,
+      "seamDelta": null,
+      "bytes": 9558
+    },
+    {
+      "key": "flak-burst",
+      "file": "flak-burst_3.m4a",
+      "loop": false,
+      "seconds": 1.3,
+      "peakDb": -5.04,
+      "rmsDb": -28.37,
+      "seamDelta": null,
+      "bytes": 9646
+    },
+    {
+      "key": "obstacle-hit",
+      "file": "obstacle-hit_1.m4a",
+      "loop": false,
+      "seconds": 0.9,
+      "peakDb": -5.04,
+      "rmsDb": -25.13,
+      "seamDelta": null,
+      "bytes": 11080
+    },
+    {
+      "key": "obstacle-hit",
+      "file": "obstacle-hit_2.m4a",
+      "loop": false,
+      "seconds": 0.9,
+      "peakDb": -5.04,
+      "rmsDb": -24.64,
+      "seamDelta": null,
+      "bytes": 11059
+    },
+    {
+      "key": "ring-collect",
+      "file": "ring-collect_1.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -11.87,
+      "rmsDb": -27.1,
+      "seamDelta": null,
+      "bytes": 6263
+    },
+    {
+      "key": "ring-collect",
+      "file": "ring-collect_2.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -10.69,
+      "rmsDb": -27.08,
+      "seamDelta": null,
+      "bytes": 6260
+    },
+    {
+      "key": "amb-surface-day",
+      "file": "amb-surface-day.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -24.33,
+      "rmsDb": -40.0,
+      "seamDelta": 0.00045,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-surface-night",
+      "file": "amb-surface-night.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -25.99,
+      "rmsDb": -40.0,
+      "seamDelta": 0.001105,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-rain",
+      "file": "amb-rain.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -25.35,
+      "rmsDb": -40.0,
+      "seamDelta": 0.003636,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-storm",
+      "file": "amb-storm.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -26.21,
+      "rmsDb": -40.0,
+      "seamDelta": 0.000307,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-shallow",
+      "file": "amb-shallow.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -26.0,
+      "rmsDb": -40.0,
+      "seamDelta": 0.000212,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-mid",
+      "file": "amb-mid.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -26.16,
+      "rmsDb": -40.0,
+      "seamDelta": 0.000842,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-deep",
+      "file": "amb-deep.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -26.48,
+      "rmsDb": -40.0,
+      "seamDelta": 0.000482,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-magma",
+      "file": "amb-magma.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -26.25,
+      "rmsDb": -40.0,
+      "seamDelta": 0.001322,
+      "bytes": 768044
+    },
+    {
+      "key": "amb-station",
+      "file": "amb-station.wav",
+      "loop": true,
+      "seconds": 16.0,
+      "peakDb": -26.29,
+      "rmsDb": -40.0,
+      "seamDelta": 0.00163,
+      "bytes": 768044
+    },
+    {
+      "key": "thunder",
+      "file": "thunder_1.m4a",
+      "loop": false,
+      "seconds": 2.4,
+      "peakDb": -5.04,
+      "rmsDb": -23.9,
+      "seamDelta": null,
+      "bytes": 20162
+    },
+    {
+      "key": "thunder",
+      "file": "thunder_2.m4a",
+      "loop": false,
+      "seconds": 2.4,
+      "peakDb": -5.04,
+      "rmsDb": -24.22,
+      "seamDelta": null,
+      "bytes": 20071
+    },
+    {
+      "key": "thunder",
+      "file": "thunder_3.m4a",
+      "loop": false,
+      "seconds": 2.4,
+      "peakDb": -5.04,
+      "rmsDb": -23.88,
+      "seamDelta": null,
+      "bytes": 20184
+    },
+    {
+      "key": "amb-bird",
+      "file": "amb-bird_1.m4a",
+      "loop": false,
+      "seconds": 0.85,
+      "peakDb": -9.71,
+      "rmsDb": -22.01,
+      "seamDelta": null,
+      "bytes": 6424
+    },
+    {
+      "key": "amb-bird",
+      "file": "amb-bird_2.m4a",
+      "loop": false,
+      "seconds": 0.85,
+      "peakDb": -9.65,
+      "rmsDb": -22.01,
+      "seamDelta": null,
+      "bytes": 6270
+    },
+    {
+      "key": "amb-bird",
+      "file": "amb-bird_3.m4a",
+      "loop": false,
+      "seconds": 0.85,
+      "peakDb": -9.71,
+      "rmsDb": -22.01,
+      "seamDelta": null,
+      "bytes": 6198
+    },
+    {
+      "key": "amb-bird",
+      "file": "amb-bird_4.m4a",
+      "loop": false,
+      "seconds": 0.85,
+      "peakDb": -9.84,
+      "rmsDb": -22.01,
+      "seamDelta": null,
+      "bytes": 6195
+    },
+    {
+      "key": "amb-bird",
+      "file": "amb-bird_5.m4a",
+      "loop": false,
+      "seconds": 0.85,
+      "peakDb": -9.73,
+      "rmsDb": -22.01,
+      "seamDelta": null,
+      "bytes": 6198
+    },
+    {
+      "key": "amb-oneshot-drip",
+      "file": "amb-oneshot-drip.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.04,
+      "rmsDb": -24.87,
+      "seamDelta": null,
+      "bytes": 5467
+    },
+    {
+      "key": "amb-oneshot-settle",
+      "file": "amb-oneshot-settle.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.04,
+      "rmsDb": -26.54,
+      "seamDelta": null,
+      "bytes": 8976
+    },
+    {
+      "key": "amb-oneshot-creak",
+      "file": "amb-oneshot-creak.m4a",
+      "loop": false,
+      "seconds": 1.8,
+      "peakDb": -7.26,
+      "rmsDb": -22.0,
+      "seamDelta": null,
+      "bytes": 17342
+    },
+    {
+      "key": "amb-oneshot-rockfall",
+      "file": "amb-oneshot-rockfall.m4a",
+      "loop": false,
+      "seconds": 1.6,
+      "peakDb": -5.04,
+      "rmsDb": -23.34,
+      "seamDelta": null,
+      "bytes": 15078
+    },
+    {
+      "key": "amb-oneshot-groan",
+      "file": "amb-oneshot-groan.m4a",
+      "loop": false,
+      "seconds": 1.8,
+      "peakDb": -7.6,
+      "rmsDb": -22.0,
+      "seamDelta": null,
+      "bytes": 17270
+    },
+    {
+      "key": "amb-oneshot-pebble",
+      "file": "amb-oneshot-pebble.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.04,
+      "rmsDb": -28.41,
+      "seamDelta": null,
+      "bytes": 9005
+    },
+    {
+      "key": "amb-oneshot-metal-tick",
+      "file": "amb-oneshot-metal-tick.m4a",
+      "loop": false,
+      "seconds": 0.8,
+      "peakDb": -5.04,
+      "rmsDb": -24.0,
+      "seamDelta": null,
+      "bytes": 10422
+    },
+    {
+      "key": "amb-oneshot-air-hiss",
+      "file": "amb-oneshot-air-hiss.m4a",
+      "loop": false,
+      "seconds": 1.4,
+      "peakDb": -7.05,
+      "rmsDb": -22.0,
+      "seamDelta": null,
+      "bytes": 15049
+    },
+    {
+      "key": "ui-open",
+      "file": "ui-open.m4a",
+      "loop": false,
+      "seconds": 0.3,
+      "peakDb": -10.57,
+      "rmsDb": -26.04,
+      "seamDelta": null,
+      "bytes": 6674
+    },
+    {
+      "key": "ui-confirm",
+      "file": "ui-confirm.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -11.21,
+      "rmsDb": -25.02,
+      "seamDelta": null,
+      "bytes": 6503
+    },
+    {
+      "key": "ui-denied",
+      "file": "ui-denied.m4a",
+      "loop": false,
+      "seconds": 0.3,
+      "peakDb": -11.18,
+      "rmsDb": -26.05,
+      "seamDelta": null,
+      "bytes": 6703
+    },
+    {
+      "key": "sell-tick",
+      "file": "sell-tick_1.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -13.1,
+      "rmsDb": -27.1,
+      "seamDelta": null,
+      "bytes": 6249
+    },
+    {
+      "key": "sell-tick",
+      "file": "sell-tick_2.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -11.16,
+      "rmsDb": -27.1,
+      "seamDelta": null,
+      "bytes": 6261
+    },
+    {
+      "key": "sell-tick",
+      "file": "sell-tick_3.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -10.7,
+      "rmsDb": -27.08,
+      "seamDelta": null,
+      "bytes": 6269
+    },
+    {
+      "key": "sell-tick",
+      "file": "sell-tick_4.m4a",
+      "loop": false,
+      "seconds": 0.24,
+      "peakDb": -10.95,
+      "rmsDb": -27.08,
+      "seamDelta": null,
+      "bytes": 6287
+    },
+    {
+      "key": "fuel-fill",
+      "file": "fuel-fill.wav",
+      "loop": true,
+      "seconds": 4.0,
+      "peakDb": -21.02,
+      "rmsDb": -33.0,
+      "seamDelta": 0.003605,
+      "bytes": 192044
+    },
+    {
+      "key": "sell-total",
+      "file": "sell-total.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -11.02,
+      "rmsDb": -25.01,
+      "seamDelta": null,
+      "bytes": 6924
+    },
+    {
+      "key": "alert-fuel",
+      "file": "alert-fuel.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -10.67,
+      "rmsDb": -25.02,
+      "seamDelta": null,
+      "bytes": 6115
+    },
+    {
+      "key": "alert-hull",
+      "file": "alert-hull.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -11.05,
+      "rmsDb": -25.01,
+      "seamDelta": null,
+      "bytes": 6105
+    },
+    {
+      "key": "danger-sting",
+      "file": "danger-sting.m4a",
+      "loop": false,
+      "seconds": 0.65,
+      "peakDb": -11.72,
+      "rmsDb": -25.02,
+      "seamDelta": null,
+      "bytes": 6200
+    },
+    {
+      "key": "depth-record",
+      "file": "depth-record.m4a",
+      "loop": false,
+      "seconds": 1.4,
+      "peakDb": -8.77,
+      "rmsDb": -25.0,
+      "seamDelta": null,
+      "bytes": 8161
+    },
+    {
+      "key": "discovery",
+      "file": "discovery.m4a",
+      "loop": false,
+      "seconds": 1.4,
+      "peakDb": -8.69,
+      "rmsDb": -25.0,
+      "seamDelta": null,
+      "bytes": 9700
+    }
+  ]
+}

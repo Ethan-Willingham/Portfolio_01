@@ -143,7 +143,9 @@
       var valid = pairs.some(function (pair) { return pair[1] === saved; });
       sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
     }
-    wireSlider('gm-vol', null, 0, true);
+    // Moderate for first-time players; a saved master mute still wins.
+    wireSlider('gm-vol', null, 0.6, true);
+    wireSlider('gm-musicvol', 'musicvol', 0.65, false);
     wireSlider('gm-sfxvol', 'sfxvol', 1, false);
     wireSlider('gm-shake', 'shake', 1, false);
     wireSegment('gfx', 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);

@@ -35,7 +35,7 @@
     // an unset or 'extreme' choice changes nothing.
     var OPT_GFX_PRESET = { performance: 'low', balanced: 'medium', extreme: 'extreme' };
 
-    var OPT_KEYS = ['sfxvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
+    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
 
     // gm.set / gm.preset with a retry: this fragment evaluates long before the
     // gm facade exists, and boot is synchronous, so the first 100 ms tick
@@ -82,6 +82,9 @@
         var v = optClamp01(val);
         if (v === null) return;
         try { if (typeof SluiceAudio !== 'undefined' && SluiceAudio) SluiceAudio.setSfxVolume(v); } catch (e) {}
+      } else if (key === 'musicvol') {
+        var mv = optClamp01(val);
+        if (mv !== null && typeof SluiceAudio !== 'undefined' && SluiceAudio.setMusicVolume) SluiceAudio.setMusicVolume(mv);
       } else if (key === 'gfx') {
         var name = OPT_GFX_PRESET[String(val)];
         if (name) optGmPreset(name);

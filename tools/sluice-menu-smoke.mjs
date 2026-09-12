@@ -128,7 +128,7 @@ try {
   await shot('pause-desktop');
   await click('gm-options-btn'); await shot('options-desktop');
   await ev('document.getElementById("gm-vol").focus()'); await key('ArrowRight');
-  await check('native slider arrows apply and persist', 'document.getElementById("gm-vol-value").value === "1%" && localStorage.getItem("sluice.volume") === "0.01"');
+  await check('native slider arrows apply and persist', 'document.getElementById("gm-vol-value").value === "61%" && localStorage.getItem("sluice.volume") === "0.61"');
   await click('gm-gfx-bal'); await click('gm-dmgflash-off'); await click('gm-lowflash-on');
   await check('selected settings apply', 'SluiceOptions.damageFlash === false && SluiceOptions.lowFlash === true && gm.get("weather.lightning") === 0 && document.getElementById("gm-gfx-bal").getAttribute("aria-pressed") === "true"');
   await key('Escape');
@@ -143,7 +143,7 @@ try {
   await key('Escape');
   await check('cancel preserves progress', `__menuSmoke.state().money === ${savedMoney}`);
   await key('Escape'); await check('resume gives gameplay keyboard focus', "document.activeElement.id === 'game-canvas'"); await boot(); await click('gm-pause-btn'); await click('gm-options-btn');
-  await check('save and settings survive reload', `__menuSmoke.state().money === ${savedMoney} && document.getElementById('gm-vol').value === '1' && document.getElementById('gm-gfx-bal').getAttribute('aria-pressed') === 'true' && !SluiceOptions.damageFlash && SluiceOptions.lowFlash`);
+  await check('save and settings survive reload', `__menuSmoke.state().money === ${savedMoney} && document.getElementById('gm-vol').value === '61' && document.getElementById('gm-gfx-bal').getAttribute('aria-pressed') === 'true' && !SluiceOptions.damageFlash && SluiceOptions.lowFlash`);
   for (const [width,height,mobile] of [[390,844,true],[320,568,true],[844,390,true],[768,1024,true],[1920,1080,false]]) {
     await size(width,height,mobile);
     await check(`menu fits ${width}x${height}`, `(() => {const a=document.getElementById('game-pause').getBoundingClientRect(),c=document.getElementById('gm-pause-card').getBoundingClientRect(),b=document.getElementById('gm-opt-back').getBoundingClientRect();return c.left>=a.left && c.right<=a.right && c.top>=a.top && c.bottom<=a.bottom && b.bottom<=a.bottom && document.querySelector('.pause-body').scrollWidth<=document.querySelector('.pause-body').clientWidth;})()`);

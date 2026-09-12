@@ -1,9 +1,10 @@
 # SFX_INSTRUCTIONS.md: drop in, audition, publish Sluice sound effects
 
-The game's sound engine (`js/audio.js`) is wired end to end. It is silent only
-because `assets/sfx/` is empty. To give the game a sound, you make an audio file,
-name it for the right key, audition it, then publish it to the live site. No code
-change is needed for any of this.
+The game ships with 151 procedural sound files covering all 82 keys in
+`js/audio.js`. You do not need to generate or slice individual sounds. Run
+`python3 tools/audio/build-sfx.py` to rebuild the bank. See
+[the bank guide](assets/sfx/README.md) for recipes, tuning, and verification.
+The workflow below is still available for replacing sounds with recordings.
 
 ## Naming (the one rule that matters)
 
@@ -22,6 +23,11 @@ match the key exactly. The full key list, with bus, gain, and pitch-jitter, is t
 `SFX_MANIFEST` object in `js/audio.js`. The design intent per sound is in
 `docs/game/SFX_BIBLE.md`; ready-to-paste generation prompts are in
 `docs/game/SFX_PROMPT_SYSTEM.md` and the `sfx-prompts.html` bench.
+
+The shipped continuous loops use `.wav` with `ext: 'wav'` in the manifest,
+so their sample boundaries remain seamless. Match that extension when replacing
+a loop, or change its manifest override. Bump `SFX_BANK_VERSION` in `js/audio.js`
+when replacing assets so returning players download the new sound.
 
 ## Make the audio
 

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.78';
+  var GAME_VERSION = 'v26.79';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5412,6 +5412,8 @@
       if (PAUSE_DISABLED) return;   // ?nopause=1 harness lever (020)
       if (gamePaused) return;
       gamePaused = true;
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
+      drillSfxActive = false; drillSfxMat = null;
       bootPauseFired = true;   // a manual/focus pause also satisfies the boot pause
       if (gameRafId) { cancelAnimationFrame(gameRafId); gameRafId = 0; }
       // Show the menu BEFORE clearing input so a hiccup in clearAllInput can
@@ -5422,6 +5424,7 @@
     function resumeGame() {
       if (!gamePaused) return;
       gamePaused = false;
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(false);
       var ov = document.getElementById('game-pause');
       if (ov) { ov.classList.remove('is-visible'); ov.setAttribute('aria-hidden', 'true'); }
       // Reset the clock so the long paused gap doesn't arrive as one giant dt
@@ -5949,7 +5952,7 @@
     // an unset or 'extreme' choice changes nothing.
     var OPT_GFX_PRESET = { performance: 'low', balanced: 'medium', extreme: 'extreme' };
 
-    var OPT_KEYS = ['sfxvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
+    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
 
     // gm.set / gm.preset with a retry: this fragment evaluates long before the
     // gm facade exists, and boot is synchronous, so the first 100 ms tick
@@ -5996,6 +5999,9 @@
         var v = optClamp01(val);
         if (v === null) return;
         try { if (typeof SluiceAudio !== 'undefined' && SluiceAudio) SluiceAudio.setSfxVolume(v); } catch (e) {}
+      } else if (key === 'musicvol') {
+        var mv = optClamp01(val);
+        if (mv !== null && typeof SluiceAudio !== 'undefined' && SluiceAudio.setMusicVolume) SluiceAudio.setMusicVolume(mv);
       } else if (key === 'gfx') {
         var name = OPT_GFX_PRESET[String(val)];
         if (name) optGmPreset(name);
@@ -6177,7 +6183,9 @@
       var valid = pairs.some(function (pair) { return pair[1] === saved; });
       sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
     }
-    wireSlider('gm-vol', null, 0, true);
+    // Moderate for first-time players; a saved master mute still wins.
+    wireSlider('gm-vol', null, 0.6, true);
+    wireSlider('gm-musicvol', 'musicvol', 0.65, false);
     wireSlider('gm-sfxvol', 'sfxvol', 1, false);
     wireSlider('gm-shake', 'shake', 1, false);
     wireSegment('gfx', 'extreme', [['gm-gfx-perf', 'performance'], ['gm-gfx-bal', 'balanced'], ['gm-gfx-ext', 'extreme']]);
@@ -58961,7 +58969,7 @@
         // The crunch that precedes the lament (SFX_BIBLE §10: death's SFX
         // side is hull-hit + land-damage; the music side is death()).
         sfxPlay('hull-hit'); sfxPlay('land-damage');
-        SluiceAudio.death(); _audio.mode = null; _audio.danger = false;
+        SluiceAudio.death(); drillSfxActive = false; drillSfxMat = null; _audio.mode = null; _audio.danger = false;
       }
       // Revive edge: the player just left the death scene (respawn or restart).
       // Cut the death lament — it is a music-bus one-shot, so the resumed world
@@ -59000,6 +59008,7 @@
         if (danger !== _audio.danger) { SluiceAudio.setDanger(danger); _audio.danger = danger; }
       } else {
         if (_audio.danger) { SluiceAudio.setDanger(false); _audio.danger = false; }
+        if (_audio.depthRows !== 0) { SluiceAudio.setDepth(0); _audio.depthRows = 0; }
         // day/night: 1 at noon (bright/full), 0 at midnight (thin/dark).
         var day = 0.5 + 0.5 * Math.sin((timeOfDay - 0.25) * 6.2831853);
         if (Math.abs(day - _audio.tod) > 0.02) { SluiceAudio.setTimeOfDay(day); _audio.tod = day; }
@@ -59016,8 +59025,9 @@
       if (SluiceAudio.sfx && SluiceAudio.sfx.ambience) {
         var zone;
         if (shopOpen || (typeof shopState !== 'undefined' && shopState !== 'closed')) zone = 'station';
-        else if (!underground) {
-          zone = (day > 0.35) ? 'surface-day' : 'surface-night';
+        else if (player.y < (SKY_ROWS + 4) * TILE) {
+          var zoneDay = 0.5 + 0.5 * Math.sin((timeOfDay - 0.25) * 6.2831853);
+          zone = (zoneDay > 0.35) ? 'surface-day' : 'surface-night';
           // Weather overlay (155 mood machine): a storm always takes the bed
           // (wind + the engine's thunder emitter carry a blizzard too); the
           // rain bed only when precip actually falls as RAIN — snowfall is
@@ -59031,9 +59041,10 @@
         }
         else {
           var zRows = Math.max(0, Math.floor(player.y / TILE) - SKY_ROWS);
-          zone = (zRows < 120) ? 'shallow' : (zRows < 400) ? 'mid' : (zRows < 900) ? 'deep' : 'magma';
+          var zLayer = getLayerAt(Math.floor(player.y / TILE), Math.floor(player.x / TILE));
+          zone = zLayer.dangerous ? 'magma' : (zRows < 60) ? 'shallow' : (zRows < 130) ? 'mid' : 'deep';
         }
-        if (zone !== _audio.zone) { SluiceAudio.sfx.ambience.setZone(zone); _audio.zone = zone; }
+        if (zone !== _audio.zone || SluiceAudio.sfx.ambience.zone() !== zone) { SluiceAudio.sfx.ambience.setZone(zone); _audio.zone = zone; }
       }
 
       // Rig engine voice (the player is a vehicle, SFX_BIBLE §10): a deep
@@ -59041,6 +59052,9 @@
       // sfxLoop is a per-frame drive — the engine watchdog self-silences it
       // the moment these calls stop (pause, shop, death, rover ride).
       var inShop = shopOpen || (typeof shopState !== 'undefined' && shopState !== 'closed');
+      if (inShop && drillSfxActive) {
+        SluiceAudio.sfx.drill.stop(); drillSfxActive = false; drillSfxMat = null;
+      }
       if (!inShop && !roverMode && player.onGround) {
         var spd = Math.abs(player.vx);
         if (spd > 26) {
@@ -59145,6 +59159,8 @@
     if (startInPause && !PAUSE_DISABLED && !bootPauseFired && introPhase === 'done') {
       bootPauseFired = true;
       gamePaused = true;
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
+      drillSfxActive = false; drillSfxMat = null;
       showPauseOverlay('press resume to begin');
     }
     if (terrainChunkRebuildBoostFrames > 0) terrainChunkRebuildBoostFrames--;

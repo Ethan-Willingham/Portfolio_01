@@ -74,7 +74,7 @@ buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, 
 enables wander/hop/startle + swim states), fall damage (v25.59: `FALL_IMPACT_FX`
 on, a bad drop can kill on bare rock), flight (ONE unified model everywhere since v25.49:
 `flyTune` + the FLY FEEL presets), the night sky/weather/mountains/trees, audio (music + the
-wired-but-empty SFX), save/respawn, the Great Seam endgame chamber, the Mineral Ledger.
+procedural SFX bank), save/respawn, the Great Seam endgame chamber, the Mineral Ledger.
 
 ---
 
@@ -114,13 +114,19 @@ perf-ISO A/B; **Z** zoom; **R** restart. From the console, `gm.get('group.lever'
 the feature-flag overrides above (`?multitown=1` etc.), and the water harness
 `?pondtest=1..4` + `?wdbg=NAME:V,...`.
 
-## Audio (drop-in)
+## Audio
 
-`js/audio.js` is wired end to end. Music lives in `assets/music/*.m4a` (DIR + manifest in
-audio.js). SFX is wired but `assets/sfx/` is empty (so it is silent): drop `key.m4a` (or
-`key_1.m4a`..`key_N.m4a` for multi-variant keys) into `assets/sfx/` and it plays in-game,
-no code change. See `docs/game/SFX_BIBLE.md` + `SFX_INSTRUCTIONS.md` (repo root) for the
-audition + send-to-prod flow.
+`js/audio.js` is wired end to end. Music lives in `assets/music/*.m4a`.
+`assets/sfx/` contains 151 original procedural sounds for all 82 manifest keys:
+AAC one-shots and seamless PCM loops. Rebuild the bank with
+`python3 tools/audio/build-sfx.py`. The generator needs Python, NumPy, and
+macOS `afconvert`; the game has no added runtime dependency.
+
+See `assets/sfx/README.md` for tuning, sources, and the browser verification
+command. Master, Music, and SFX controls live in pause > Options. New players
+start at moderate volume after their first gesture; saved mute settings win.
+`docs/game/SFX_BIBLE.md` remains the design reference. Its earlier empty-bank
+notes and historical release plans describe the old state.
 
 ---
 
