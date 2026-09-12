@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.80';
+  var GAME_VERSION = 'v26.81';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -20857,11 +20857,9 @@
     ctx.fillStyle = 'rgba(0,0,0,1)';
     for (var c = startCol; c <= endCol; c++) {
       if (tileAt(r, c) !== null) continue;
-      var leftSolid = isRenderableSolid(tileAt(r, c - 1));
-      var rightSolid = isRenderableSolid(tileAt(r, c + 1));
-      var downSolid = isRenderableSolid(tileAt(r + 1, c));
-      if (!leftSolid && !rightSolid && !downSolid) continue;
-
+      // Every open surface cell reaches the sky. The contour's wobble can
+      // leave backing pixels even far from solid neighbours in a broad pit;
+      // skipping those cells leaves floating brown slivers on the horizon.
       var tx = c * TILE;
       var lip = 7.5;
       var drop = 18.5;
@@ -31769,7 +31767,7 @@
     // Surface cut bank: quieter and cooler than the diggable topsoil.
     surfaceBankLight: '#806044',
     surfaceBankShade: '#493925',
-    surfaceBankNight: '#25262a',
+    surfaceBankNight: '#2f2c26',
     surfaceHumus:     '#3b3021',
     surfaceRoot:      '#766044',
     surfaceRootShade: '#352c20',
@@ -33710,7 +33708,7 @@
 
   // Reusable UI font (defined near constants at top)
   // ===== Surface cut bank =====
-  // A shallow root mat in front of a recessed, weathered earth face. The
+  // Sparse roots and a soft soil shadow over a recessed earth face. The
   // face loses light and definition with depth until the existing cave wall
   // takes over. No outlined lower silhouette or floating foreground slab.
   // X follows two depth planes; Y always stays pinned to the world surface.
@@ -33741,7 +33739,7 @@
     var day = cx.createImageData(w, h), night = cx.createImageData(w, h);
     var light = surfaceBankRGB(near ? BG.surfaceHumus : BG.surfaceBankLight);
     var shade = surfaceBankRGB(BG.surfaceBankShade);
-    var dark = surfaceBankRGB(BG.surfaceBankNight);
+    var dark = surfaceBankRGB(near ? BG.surfaceRootShade : BG.surfaceBankNight);
     var wall = surfaceBankRGB(BG.wallTopsoil);
     for (var x = 0; x < w; x++) {
       var wx = left + x;
@@ -33756,9 +33754,12 @@
         var grain = tileHash01(wx, y, 101) - 0.5;
         var alpha, value, skyLight;
         if (near) {
-          // Broken humus crumbs, only a fraction of one tile deep.
-          alpha = Math.max(0, Math.min(1, lip - y));
-          value = grain * 7 - surfaceBankEase(2, lip, y) * 8;
+          // A slight contact shadow shares the earth face beneath it.
+          // An opaque mat plus a dark lower rim read as a separate slab,
+          // especially at night. Feather this small shadow through the
+          // same material instead of introducing a second colour band.
+          alpha = 0.30 * (1 - surfaceBankEase(0, lip + 8, y));
+          value = grain * 3;
           skyLight = 0.8;
         } else {
           // Uneven bedding is interrupted by broad erosion patches. Seams
@@ -33796,6 +33797,7 @@
         for (var pass = 0; pass < 2; pass++) {
           var rc = pass ? rn : rd;
           rc.strokeStyle = pass ? BG.surfaceRootShade : BG.surfaceRoot;
+          rc.globalAlpha = pass ? 0.50 : 0.65;
           rc.lineCap = 'round'; rc.lineJoin = 'round';
           rc.beginPath(); rc.moveTo(rx, 7);
           rc.lineTo(rx + lean * 0.25 - 1, length * 0.43);

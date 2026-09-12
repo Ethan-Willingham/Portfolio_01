@@ -207,7 +207,7 @@
     // Surface cut bank: quieter and cooler than the diggable topsoil.
     surfaceBankLight: '#806044',
     surfaceBankShade: '#493925',
-    surfaceBankNight: '#25262a',
+    surfaceBankNight: '#2f2c26',
     surfaceHumus:     '#3b3021',
     surfaceRoot:      '#766044',
     surfaceRootShade: '#352c20',

@@ -1,5 +1,5 @@
   // ===== Surface cut bank =====
-  // A shallow root mat in front of a recessed, weathered earth face. The
+  // Sparse roots and a soft soil shadow over a recessed earth face. The
   // face loses light and definition with depth until the existing cave wall
   // takes over. No outlined lower silhouette or floating foreground slab.
   // X follows two depth planes; Y always stays pinned to the world surface.
@@ -30,7 +30,7 @@
     var day = cx.createImageData(w, h), night = cx.createImageData(w, h);
     var light = surfaceBankRGB(near ? BG.surfaceHumus : BG.surfaceBankLight);
     var shade = surfaceBankRGB(BG.surfaceBankShade);
-    var dark = surfaceBankRGB(BG.surfaceBankNight);
+    var dark = surfaceBankRGB(near ? BG.surfaceRootShade : BG.surfaceBankNight);
     var wall = surfaceBankRGB(BG.wallTopsoil);
     for (var x = 0; x < w; x++) {
       var wx = left + x;
@@ -45,9 +45,12 @@
         var grain = tileHash01(wx, y, 101) - 0.5;
         var alpha, value, skyLight;
         if (near) {
-          // Broken humus crumbs, only a fraction of one tile deep.
-          alpha = Math.max(0, Math.min(1, lip - y));
-          value = grain * 7 - surfaceBankEase(2, lip, y) * 8;
+          // A slight contact shadow shares the earth face beneath it.
+          // An opaque mat plus a dark lower rim read as a separate slab,
+          // especially at night. Feather this small shadow through the
+          // same material instead of introducing a second colour band.
+          alpha = 0.30 * (1 - surfaceBankEase(0, lip + 8, y));
+          value = grain * 3;
           skyLight = 0.8;
         } else {
           // Uneven bedding is interrupted by broad erosion patches. Seams
@@ -85,6 +88,7 @@
         for (var pass = 0; pass < 2; pass++) {
           var rc = pass ? rn : rd;
           rc.strokeStyle = pass ? BG.surfaceRootShade : BG.surfaceRoot;
+          rc.globalAlpha = pass ? 0.50 : 0.65;
           rc.lineCap = 'round'; rc.lineJoin = 'round';
           rc.beginPath(); rc.moveTo(rx, 7);
           rc.lineTo(rx + lean * 0.25 - 1, length * 0.43);

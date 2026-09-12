@@ -104,6 +104,26 @@ window.__surfaceSmoke = (function () {
       return {scale:scale,minAlpha:min,defects:defects};
     } finally {ctx=old;}
   }
+  function surfaceMouths() {
+    var saved=ctx, c0=centerCol-3, c1=centerCol+3;
+    var test=document.createElement('canvas');test.width=9*TILE;test.height=2*TILE;
+    try {
+      ctx=test.getContext('2d',{willReadFrequently:true});
+      ctx.translate(-(c0-1)*TILE,-SKY_ROWS*TILE);
+      drawSmoothVoids(SKY_ROWS,SKY_ROWS+1,c0-1,c1+1);
+      var data=ctx.getImageData(0,0,test.width,test.height).data;
+      var residue=0, solid=0;
+      // A wide open mouth must meet the sky all the way across. Keep
+      // the real solid shoulders opaque on either side of the opening.
+      for(var y=0;y<6;y++)for(var x=TILE+3;x<8*TILE-3;x++)
+        if(data[(y*test.width+x)*4+3])residue++;
+      for(var y=0;y<6;y++) {
+        solid+=data[(y*test.width+4)*4+3];
+        solid+=data[(y*test.width+test.width-5)*4+3];
+      }
+      return {residue:residue,solid:solid};
+    } finally {ctx=saved;}
+  }
   function diagnostics() {
     var before=JSON.stringify(world), x=cam.x, y=cam.y;
     var seams=[seamAlpha(1.2),seamAlpha(1.5),seamAlpha(2.55),seamAlpha(3.2142857142857144)];
@@ -127,7 +147,7 @@ window.__surfaceSmoke = (function () {
       for(var run=0;run<8;run++) {var t=performance.now();for(var n=0;n<100;n++)fn(x,x+1024);timings.push((performance.now()-t)/100);}
     } finally {ctx=g;cam.x=oldX;cam.y=oldY;timeOfDay=oldTime;}
     timings.sort(function(a,b){return a-b;});
-    return { seamAlpha:seams, terrainUnchanged:before===JSON.stringify(world), roundTrip:compare(bytes,pixels(again)),
+    return { mouth:surfaceMouths(), seamAlpha:seams, terrainUnchanged:before===JSON.stringify(world), roundTrip:compare(bytes,pixels(again)),
       split:compare(bytes,pixels(split)), alphaRows:alphas,
       drawMs:{median:timings[4],max:timings[7],min:timings[0],cold:cold,paletteChange:recolor},cacheEntries:surfaceTransitionCache.size,
       surfaceImage:a.toDataURL('image/png') };
@@ -208,6 +228,9 @@ try {
   const initial=await scene('pit-day',{width:7,depth:5,scale:2.55});
   check('replacement renderer is built',initial.transition);
   const diagnostic=await ev('__surfaceSmoke.diagnostics()');
+  console.log('MOUTH '+JSON.stringify(diagnostic.mouth));
+  check('open excavation has no foreground slivers at the sky',diagnostic.mouth.residue===0);
+  check('solid surface shoulders remain opaque',diagnostic.mouth.solid===12*255);
   check('drawing preserves the terrain grid',diagnostic.terrainUnchanged);
   check('camera travel returns identical transition pixels',diagnostic.roundTrip.changed===0);
   check('drawing adjacent view strips preserves the same image',diagnostic.split.max<=8 && diagnostic.split.mean<0.05);
@@ -220,6 +243,7 @@ try {
   console.log('DRAW '+JSON.stringify(diagnostic.drawMs));
   console.log('SEAM '+JSON.stringify(diagnostic.seamAlpha));
   await scene('pit-night',{width:7,depth:5,scale:2.55,night:true});
+  await scene('wide-shallow-night',{width:17,depth:3,scale:2.55,night:true});
   await scene('narrow-shaft',{width:1,depth:9,scale:2.55});
   await scene('broad-excavation',{width:25,depth:11,zoom:'out'});
   await ev('__surfaceSmoke.move(17.25,41.5)');await shot('broad-scrolled-fractional');

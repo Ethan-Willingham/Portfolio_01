@@ -1939,11 +1939,9 @@
     ctx.fillStyle = 'rgba(0,0,0,1)';
     for (var c = startCol; c <= endCol; c++) {
       if (tileAt(r, c) !== null) continue;
-      var leftSolid = isRenderableSolid(tileAt(r, c - 1));
-      var rightSolid = isRenderableSolid(tileAt(r, c + 1));
-      var downSolid = isRenderableSolid(tileAt(r + 1, c));
-      if (!leftSolid && !rightSolid && !downSolid) continue;
-
+      // Every open surface cell reaches the sky. The contour's wobble can
+      // leave backing pixels even far from solid neighbours in a broad pit;
+      // skipping those cells leaves floating brown slivers on the horizon.
       var tx = c * TILE;
       var lip = 7.5;
       var drop = 18.5;

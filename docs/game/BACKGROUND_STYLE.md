@@ -221,34 +221,47 @@ The occlusion model makes this easy: any new background layer is just another dr
 ### Surface cut bank (September 2026)
 
 `172-render-surface-transition.js` replaces the old opaque, wavy foreground cap.
-The surface now reveals a shallow root mat in front of a recessed earth face.
+The surface now reveals sparse roots over a recessed earth face.
 The face loses light and definition over five tiles until the existing parallax
 wall takes over. There is no outlined lower edge across the excavation.
 
 - **Depth:** two horizontal motion planes. The earth face offsets by `cam.x * 0.30`,
-  the root mat by `cam.x * 0.10`; the existing cave wall offsets by `cam.x * 0.45`.
+  the roots by `cam.x * 0.10`; the existing cave wall offsets by `cam.x * 0.45`.
   The bank therefore sits between foreground terrain and the deeper cave wall.
   Both new planes stay pinned vertically to `SKY_ROWS * TILE` during flight,
   descent, camera easing, and zoom.
-- **Material:** interrupted bedding, broad erosion patches, fine grain, a broken
-  humus shelf less than one tile thick, and sparse branching roots. No pebble
+- **Material:** interrupted bedding, broad erosion patches, fine grain, a faint
+  feathered soil shadow, and sparse branching roots. No pebble
   clusters, brick grid, heavy contour stroke, repeated sine-wave scallops, or
   foreground material painted across the opening. Material coverage tapers
   into the wall at a varying depth, with no hard edge at the draw cutoff.
 - **Palette:** `BG.surfaceBankLight` (`#806044`), `surfaceBankShade` (`#493925`),
-  `surfaceBankNight` (`#25262a`), `surfaceHumus` (`#3b3021`), `surfaceRoot`
+  `surfaceBankNight` (`#2f2c26`), `surfaceHumus` (`#3b3021`), `surfaceRoot`
   (`#766044`), and `surfaceRootShade` (`#352c20`). These are reserved for the
   surface bank and have lower contrast than diggable terrain. The deeper face
-  converges toward `BG.wallTopsoil`. Night cools the upper bank; underground
-  visibility stays on the existing lighting system.
+  converges toward `BG.wallTopsoil`. Night retains a muted earth hue, avoiding
+  a charcoal strip against the brown below. The root layer's soil shadow
+  peaks at 30% coverage and feathers out within one tile; it has no opaque
+  body or dark lower rim. Underground visibility uses the existing lighting.
 - **Occlusion:** draw in the topsoil background pass, behind all terrain and
   gameplay. Never edit the grid, cave contour, lighting flood, or save data.
   Sky and deep biomes receive no bank drawing.
+- **Open surface:** `drawSurfaceVoidMouths` erases the contour backing at EVERY
+  empty surface cell. Skipping cells with no solid neighbours leaves brown
+  slivers along the sky line in wide excavations. Preserve the backing flood
+  and the normal cave contour; clean the surface opening in the cached chunk.
 - **Caching:** deterministic 384-pixel strips use absolute logical coordinates,
   including roots that cross strip boundaries. A 16-entry LRU bounds memory.
   Geometry is baked once; 64 daylight steps recolour cached pixels without
   changing geometry or re-randomizing grain. Ordinary frames only blit the
   visible strips. Roots and soil keep the same shape when returning to a place.
+
+Reference direction: [Terraria's underground renderer](https://docs.tmodloader.net/docs/stable/class_mod_underground_background_style.html)
+uses dedicated narrow sky/ground border textures. In the
+[publisher's SteamWorld Dig 2 screenshots](https://thunderfulgames.com/games/steamworld-dig-2/),
+the surface earth and its cutaway share a warm material family, while quieter
+background detail recedes behind solid terrain (visual observation). For Sluice,
+use that continuity and keep the strongest contrast on the playable terrain.
 
 Run `node tools/sluice-surface-smoke.mjs` for the disposable browser harness.
 `DUMP=/tmp/sluice-surface-qa` writes its visual specimens outside the repository.
