@@ -7,6 +7,9 @@
   var SURFACE_TRANSITION_STRIP = 384;
   var SURFACE_BANK_EDGE_DEPTH = 12;
   var surfaceTransitionCache = new Map();
+  var surfaceBankWarmJob = null;
+  var surfaceBankLastCameraX = 0;
+  var surfaceBankPlanes = [{ canvas: null, key: '' }, { canvas: null, key: '' }];
 
   function surfaceBankNoise(x, scale, seed) {
     var u = x / scale, i = Math.floor(u), t = u - i;
@@ -48,7 +51,7 @@
     return t * t * (3 - 2 * t);
   }
 
-  function buildSurfaceBankStrip(index, near) {
+  function beginSurfaceBankStrip(index, near) {
     var w = SURFACE_TRANSITION_STRIP, h = near ? 64 : SURFACE_TRANSITION_DEPTH;
     var left = index * w;
     var c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -58,7 +61,18 @@
     var shade = surfaceBankRGB(BG.surfaceBankShade);
     var dark = surfaceBankRGB(near ? BG.surfaceRootShade : BG.surfaceBankNight);
     var wall = surfaceBankRGB(BG.wallTopsoil);
-    for (var x = 0; x < w; x++) {
+    return { index: index, near: near, w: w, h: h, left: left, c: c, cx: cx,
+      day: day, night: night, light: light, shade: shade, dark: dark, wall: wall, x: 0 };
+  }
+
+  // Build a few columns at a time before a strip reaches the viewport.
+  // The same builder runs to completion during loading or a cold teleport.
+  function advanceSurfaceBankStrip(job, columns) {
+    var w = job.w, h = job.h, left = job.left, near = job.near;
+    var c = job.c, cx = job.cx, day = job.day, night = job.night;
+    var light = job.light, shade = job.shade, dark = job.dark, wall = job.wall;
+    var end = Math.min(w, job.x + columns);
+    for (var x = job.x; x < end; x++) {
       var wx = left + x;
       var broad = surfaceBankNoise(wx, 130, 29);
       var broken = surfaceBankNoise(wx, 23, 41);
@@ -99,13 +113,18 @@
         day.data[at + 3] = night.data[at + 3] = Math.round(alpha * 255);
       }
     }
+    job.x = end;
+    if (end < w) return null;
     if (near) {
       // Roots belong to this shallow rear bank, never the collision plane.
       // Enumerate beyond each strip so branches crossing a cache boundary
       // are drawn identically on both sides. All choices use world hashes.
       var rootDay = document.createElement('canvas'); rootDay.width = w; rootDay.height = h;
       var rootNight = document.createElement('canvas'); rootNight.width = w; rootNight.height = h;
-      var rd = rootDay.getContext('2d'), rn = rootNight.getContext('2d');
+      // These temporary canvases are read straight back into the CPU bitmap.
+      // A CPU backing store avoids a GPU readback stall when a warm job finishes.
+      var rd = rootDay.getContext('2d', { willReadFrequently: true });
+      var rn = rootNight.getContext('2d', { willReadFrequently: true });
       rd.putImageData(day, 0, 0); rn.putImageData(night, 0, 0);
       for (var cell = Math.floor((left - 40) / 26); cell <= Math.floor((left + w + 40) / 26); cell++) {
         if (tileHash01(cell, 317, 51) < 0.38) continue;
@@ -136,6 +155,47 @@
     }
     return { canvas: c, ctx: cx, day: day.data, night: night.data,
       pixels: cx.createImageData(w, h), light: -1 };
+  }
+
+  function buildSurfaceBankStrip(index, near) {
+    return advanceSurfaceBankStrip(beginSurfaceBankStrip(index, near), SURFACE_TRANSITION_STRIP);
+  }
+
+  function warmSurfaceBankStrips(worldLeft, worldRight) {
+    var direction = cam.x < surfaceBankLastCameraX ? -1 : 1;
+    surfaceBankLastCameraX = cam.x;
+    var wanted = [];
+    // Forward edge first, then the rear edge so a turn stays warm too.
+    for (var side = 0; side < 2; side++) {
+      for (var plane = 0; plane < 2; plane++) {
+        var near = plane === 1, ox = cam.x * (near ? 0.10 : 0.30);
+        var forward = (side === 0 ? direction : -direction) > 0;
+        var index = forward ? Math.floor((worldRight - ox) / SURFACE_TRANSITION_STRIP) + 1
+                            : Math.floor((worldLeft - ox) / SURFACE_TRANSITION_STRIP) - 1;
+        var key = (near ? 'n' : 'f') + index;
+        if (!surfaceTransitionCache.has(key)) wanted.push({ key: key, index: index, near: near });
+      }
+    }
+    var keepJob = false;
+    for (var wi = 0; wi < wanted.length; wi++) {
+      if (surfaceBankWarmJob && wanted[wi].key === surfaceBankWarmJob.key) keepJob = true;
+    }
+    if (!keepJob) surfaceBankWarmJob = null;
+    if (!surfaceBankWarmJob && wanted.length) {
+      surfaceBankWarmJob = beginSurfaceBankStrip(wanted[0].index, wanted[0].near);
+      surfaceBankWarmJob.key = wanted[0].key;
+    }
+    if (!surfaceBankWarmJob) return;
+    var deadline = performance.now() + 0.65;
+    do {
+      var entry = advanceSurfaceBankStrip(surfaceBankWarmJob, 8);
+      if (entry) {
+        surfaceTransitionCache.set(surfaceBankWarmJob.key, entry);
+        surfaceBankWarmJob = null;
+        if (surfaceTransitionCache.size > 16) surfaceTransitionCache.delete(surfaceTransitionCache.keys().next().value);
+        break;
+      }
+    } while (performance.now() < deadline);
   }
 
   function getSurfaceBankStrip(index, near, light) {
@@ -171,23 +231,33 @@
     // The caller owns the visible biome band; never tint another biome or
     // the sky, even when the camera is zoomed out across several layers.
     ctx.beginPath(); ctx.rect(worldLeft, surfaceY, worldRight - worldLeft, SURFACE_TRANSITION_DEPTH); ctx.clip();
-    ctx.imageSmoothingEnabled = false;
-    var transform = ctx.getTransform();
+    // Join cached strips at native integer coordinates, then scroll the
+    // complete plane fractionally. Individually snapping each strip makes
+    // the soil judder; separate filtered edges can expose hairline seams.
+    ctx.imageSmoothingEnabled = true;
     for (var plane = 0; plane < 2; plane++) {
       var near = plane === 1;
       var ox = cam.x * (near ? 0.10 : 0.30);
       var first = Math.floor((worldLeft - ox) / SURFACE_TRANSITION_STRIP);
       var last = Math.floor((worldRight - ox) / SURFACE_TRANSITION_STRIP);
-      for (var index = first; index <= last; index++) {
-        var sprite = getSurfaceBankStrip(index, near, light);
-        // Shared boundaries must land on the SAME device pixel. Fractional
-        // zoom/camera positions otherwise alpha-antialias each canvas edge
-        // separately and leave a dark hairline between contiguous strips.
-        var start = index * SURFACE_TRANSITION_STRIP + ox;
-        var x0 = (Math.round(start * transform.a + transform.e) - transform.e) / transform.a;
-        var x1 = (Math.round((start + SURFACE_TRANSITION_STRIP) * transform.a + transform.e) - transform.e) / transform.a;
-        ctx.drawImage(sprite, x0, surfaceY, x1 - x0, sprite.height);
+      // One source pixel beyond either viewport edge supplies the filter gutter.
+      first = Math.floor((worldLeft - ox - 1) / SURFACE_TRANSITION_STRIP);
+      last = Math.floor((worldRight - ox + 1) / SURFACE_TRANSITION_STRIP);
+      var cached = surfaceBankPlanes[plane];
+      var key = first + ':' + last + ':' + light;
+      if (!cached.canvas) cached.canvas = document.createElement('canvas');
+      if (cached.key !== key) {
+        cached.canvas.width = (last - first + 1) * SURFACE_TRANSITION_STRIP;
+        cached.canvas.height = near ? 64 : SURFACE_TRANSITION_DEPTH;
+        var joined = cached.canvas.getContext('2d');
+        for (var index = first; index <= last; index++) {
+          var sprite = getSurfaceBankStrip(index, near, light);
+          joined.drawImage(sprite, (index - first) * SURFACE_TRANSITION_STRIP, 0);
+        }
+        cached.key = key;
       }
+      ctx.drawImage(cached.canvas, first * SURFACE_TRANSITION_STRIP + ox, surfaceY);
     }
     ctx.restore();
+    warmSurfaceBankStrips(worldLeft, worldRight);
   }

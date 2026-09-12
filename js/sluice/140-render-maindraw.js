@@ -268,18 +268,16 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // ---- WORLD SPACE: scale by dpr * worldScale, translate by camera ----
-    // The camera translation is rounded to the native pixel grid so the
-    // chunk drawImage compositing lands on integer device pixels. Without
-    // this, the bilinear filter (imageSmoothingEnabled true) blurs every
-    // tile/feature edge into a 1-px soft seam that reads as a "gap"
-    // between tiles. The world internally still tracks cam.x/y as floats
-    // (smooth physics + follow); we only quantize the render transform.
+    // Preserve fractional camera motion. Rounding this translation while
+    // parallax layers use the floating-point camera makes distant scenery
+    // periodically move BACKWARDS during steady flight. Terrain chunks have
+    // overlapping stitch gutters, so their joins do not require camera snaps.
     var ws = dpr * worldScale;
     // Combat screenshake: a tiny world-space offset (trauma-based, subtle,
     // reduced-motion-gated; defined in 085-combat.js). Applied to the world
     // transform only, so the HUD + native-space night sky stay steady.
     var _shk = (typeof combatShakeOffset === 'function') ? combatShakeOffset() : { x: 0, y: 0 };
-    ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
+    ctx.setTransform(ws, 0, 0, ws, -(cam.x - _shk.x) * ws, -(cam.y - _shk.y) * ws);
     // imageSmoothingEnabled true keeps gradients smooth
     ctx.imageSmoothingEnabled = true;
 
@@ -313,7 +311,7 @@
       // painted a straight stripe across the irregular bank during ascent.
       drawHorizonLimb();
       perfMark('render.skyComposite', _rTs);
-      ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
+      ctx.setTransform(ws, 0, 0, ws, -(cam.x - _shk.x) * ws, -(cam.y - _shk.y) * ws);
 
       // Layered mountain silhouettes near the horizon
       if (!PERF_DISABLE_MOUNTAINS && worldBottom > surfaceY - TILE * 4) {

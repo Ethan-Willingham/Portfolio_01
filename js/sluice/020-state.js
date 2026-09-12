@@ -1070,20 +1070,33 @@
   // the debug overlay. 120 entries ≈ 2 seconds at 60fps so the numbers
   // react quickly to a new spike without being too jittery to read.
   var perfFrameRing = new Float32Array(120);
+  var perfIntervalRing = new Float32Array(120);
+  var perfIntervalRingIdx = 0;
+  var perfIntervalRingFilled = 0;
   var perfFrameRingIdx = 0;
   var perfFrameRingFilled = 0;
-  function perfPushFrame(ms) {
+  function perfPushFrame(ms, intervalMs) {
     perfFrameRing[perfFrameRingIdx] = ms;
     perfFrameRingIdx = (perfFrameRingIdx + 1) % perfFrameRing.length;
     if (perfFrameRingFilled < perfFrameRing.length) perfFrameRingFilled++;
+    if (intervalMs > 0 && isFinite(intervalMs)) {
+      perfIntervalRing[perfIntervalRingIdx] = intervalMs;
+      perfIntervalRingIdx = (perfIntervalRingIdx + 1) % perfIntervalRing.length;
+      if (perfIntervalRingFilled < perfIntervalRing.length) perfIntervalRingFilled++;
+    }
   }
   function perfFrameStats() {
-    var n = perfFrameRingFilled;
+    return perfRingStats(perfFrameRing, perfFrameRingFilled);
+  }
+  function perfIntervalStats() {
+    return perfRingStats(perfIntervalRing, perfIntervalRingFilled);
+  }
+  function perfRingStats(ring, n) {
     if (n === 0) return { min: 0, max: 0, p99: 0, avg: 0 };
     var min = Infinity, max = 0, sum = 0;
     var copy = new Float32Array(n);
     for (var i = 0; i < n; i++) {
-      var v = perfFrameRing[i];
+      var v = ring[i];
       copy[i] = v;
       if (v < min) min = v;
       if (v > max) max = v;
@@ -1130,15 +1143,17 @@
   // 1%-low fps (1000 / p99) — the slow tail the average hides. Shared by the
   // Smoothness row and perfDiagnose() so both read the same numbers.
   function perfJankStats() {
-    var filled = perfFrameRingFilled;
+    // Frame arrival intervals include GPU/compositor and scheduling stalls.
+    // CPU submission time alone can report smooth play while frames are missed.
+    var filled = perfIntervalRingFilled;
     var capMs = perfFpsCap > 0 ? 1000 / perfFpsCap : 16.7;
     var jankThresh = capMs * 1.35;
     var jankCount = 0;
     for (var ji = 0; ji < filled; ji++) {
-      if (perfFrameRing[ji] > jankThresh) jankCount++;
+      if (perfIntervalRing[ji] > jankThresh) jankCount++;
     }
     var jankPct = filled > 0 ? (jankCount / filled) * 100 : 0;
-    var p99 = perfFrameStats().p99;
+    var p99 = perfIntervalStats().p99;
     var low1 = p99 > 0 ? 1000 / p99 : 0;
     return { jankPct: jankPct, low1: low1 };
   }
@@ -1223,7 +1238,7 @@
   // console so a session keeps a copyable A/B history.
   var perfAB = { a: null, b: null };
   function perfCaptureSnapshot() {
-    var fs = perfFrameStats();
+    var fs = perfIntervalStats();
     var jk = perfJankStats();
     return {
       at: performance.now(),

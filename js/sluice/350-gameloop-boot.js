@@ -178,7 +178,8 @@
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
     // re-kicks it. (pauseGame also cancels the pending handle; this is backup.)
     if (gamePaused) { gameRafId = 0; return; }
-    var dt = (time - lastTime) / 1000;
+    var frameIntervalMs = time - lastTime;
+    var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
     lastFrameDt = dt;
@@ -664,7 +665,7 @@
     perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
-    perfPushFrame(_t5 - _t0);
+    perfPushFrame(_t5 - _t0, frameIntervalMs);
     perfChunkRebuilds = terrainChunkRebuildsThisFrame;
     perfFrameSamples.push(_t5);
     while (perfFrameSamples.length > 1 && perfFrameSamples[0] < _t5 - 1000) perfFrameSamples.shift();
@@ -682,10 +683,10 @@
       perfHitch.ms = ft; perfHitch.at = _t5;
       perfHitch.buckets = perfSnapshotRaw();
     }
-    // v23.41 — feed the windowed benchmark this frame's total ms + dt; it
-    // aggregates + drives the scripted auto-fly while a run is active (no-op
-    // otherwise).
-    if (typeof benchTick === 'function') benchTick(ft, dt);
+    // Benchmark arrival intervals, including time waiting for graphics or
+    // scheduling. CPU submission time does not describe visible frame pacing.
+    // The benchmark also drives scripted flight while a run is active.
+    if (typeof benchTick === 'function') benchTick(frameIntervalMs, frameIntervalMs / 1000);
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).

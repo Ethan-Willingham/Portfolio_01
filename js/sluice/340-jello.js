@@ -6397,8 +6397,8 @@
     //         jello) and redraws it scaled up about the body centre. ----
     if (refract > 0.001) {
       var ws = (typeof dpr !== 'undefined' ? dpr : 1) * (typeof worldScale !== 'undefined' ? worldScale : 1);
-      var camOffX = Math.round(cam.x * ws), camOffY = Math.round(cam.y * ws);
-      var sx = l * ws - camOffX, sy = t * ws - camOffY;
+      var refractTransform = ctx.getTransform();
+      var sx = l * ws + refractTransform.e, sy = t * ws + refractTransform.f;
       var sw = w * ws, sh = hgt * ws;
       if (sw > 1 && sh > 1) {
         var mag = 1 + refract;

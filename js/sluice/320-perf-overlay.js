@@ -10,7 +10,7 @@
     'Verdict': 'HEALTHY = hitting the display refresh cap. CPU-BOUND = JavaScript is the bottleneck. GPU-BOUND = drawing / fill-rate is. MICROSTUTTER = the average is fine but frames hitch.',
     'Cause': 'The single biggest contributor to the current verdict.',
     'Hitches': 'How many recent frames ran far longer than normal. Each one is a visible stutter.',
-    'Smoothness': 'jank% = the share of stuttery frames. 1%-low = the fps of your worst 1% of frames, which is what you actually feel.',
+    'Smoothness': 'jank% counts late animation frames. 1%-low is 1000 divided by the 99th-percentile interval between animation frames, including GPU and scheduling waits.',
     'FPS': 'Frames per second now, with the rolling average in parentheses. Capped at your monitor refresh rate.',
     'CPU frame': 'Time JavaScript spent building this frame. p99 and max are the worst recent frames.',
     'GPU/idle': 'Time left after the CPU work: GPU drawing + screen compositing + waiting for vsync. Large here while fps is low means GPU-bound.',
@@ -276,7 +276,8 @@
     // cap) = CPU bound / healthy — read the bucket list below.
     var realMs = perfFps > 0 ? 1000 / perfFps : 0;
     var gpuGap = realMs > perfFrameMs ? realMs - perfFrameMs : 0;
-    K('FPS',       perfFps + ' (' + (fs.avg > 0 ? (1000 / fs.avg).toFixed(0) : '0') + ' avg)');
+    var intervals = perfIntervalStats();
+    K('FPS',       perfFps + ' (' + (intervals.avg > 0 ? (1000 / intervals.avg).toFixed(0) : '0') + ' avg)');
     K('CPU frame', perfFrameMs.toFixed(2) + ' ms (p99 ' + fs.p99.toFixed(1) + ', max ' + fs.max.toFixed(1) + ')');
     K('GPU/idle',  gpuGap.toFixed(2) + ' ms');
     // v23.42 — Update / Render / Smoke condensed to one line (each is also its

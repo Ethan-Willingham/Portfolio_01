@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.98';
+  var GAME_VERSION = 'v26.99';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2407,20 +2407,33 @@
   // the debug overlay. 120 entries ≈ 2 seconds at 60fps so the numbers
   // react quickly to a new spike without being too jittery to read.
   var perfFrameRing = new Float32Array(120);
+  var perfIntervalRing = new Float32Array(120);
+  var perfIntervalRingIdx = 0;
+  var perfIntervalRingFilled = 0;
   var perfFrameRingIdx = 0;
   var perfFrameRingFilled = 0;
-  function perfPushFrame(ms) {
+  function perfPushFrame(ms, intervalMs) {
     perfFrameRing[perfFrameRingIdx] = ms;
     perfFrameRingIdx = (perfFrameRingIdx + 1) % perfFrameRing.length;
     if (perfFrameRingFilled < perfFrameRing.length) perfFrameRingFilled++;
+    if (intervalMs > 0 && isFinite(intervalMs)) {
+      perfIntervalRing[perfIntervalRingIdx] = intervalMs;
+      perfIntervalRingIdx = (perfIntervalRingIdx + 1) % perfIntervalRing.length;
+      if (perfIntervalRingFilled < perfIntervalRing.length) perfIntervalRingFilled++;
+    }
   }
   function perfFrameStats() {
-    var n = perfFrameRingFilled;
+    return perfRingStats(perfFrameRing, perfFrameRingFilled);
+  }
+  function perfIntervalStats() {
+    return perfRingStats(perfIntervalRing, perfIntervalRingFilled);
+  }
+  function perfRingStats(ring, n) {
     if (n === 0) return { min: 0, max: 0, p99: 0, avg: 0 };
     var min = Infinity, max = 0, sum = 0;
     var copy = new Float32Array(n);
     for (var i = 0; i < n; i++) {
-      var v = perfFrameRing[i];
+      var v = ring[i];
       copy[i] = v;
       if (v < min) min = v;
       if (v > max) max = v;
@@ -2467,15 +2480,17 @@
   // 1%-low fps (1000 / p99) — the slow tail the average hides. Shared by the
   // Smoothness row and perfDiagnose() so both read the same numbers.
   function perfJankStats() {
-    var filled = perfFrameRingFilled;
+    // Frame arrival intervals include GPU/compositor and scheduling stalls.
+    // CPU submission time alone can report smooth play while frames are missed.
+    var filled = perfIntervalRingFilled;
     var capMs = perfFpsCap > 0 ? 1000 / perfFpsCap : 16.7;
     var jankThresh = capMs * 1.35;
     var jankCount = 0;
     for (var ji = 0; ji < filled; ji++) {
-      if (perfFrameRing[ji] > jankThresh) jankCount++;
+      if (perfIntervalRing[ji] > jankThresh) jankCount++;
     }
     var jankPct = filled > 0 ? (jankCount / filled) * 100 : 0;
-    var p99 = perfFrameStats().p99;
+    var p99 = perfIntervalStats().p99;
     var low1 = p99 > 0 ? 1000 / p99 : 0;
     return { jankPct: jankPct, low1: low1 };
   }
@@ -2560,7 +2575,7 @@
   // console so a session keeps a copyable A/B history.
   var perfAB = { a: null, b: null };
   function perfCaptureSnapshot() {
-    var fs = perfFrameStats();
+    var fs = perfIntervalStats();
     var jk = perfJankStats();
     return {
       at: performance.now(),
@@ -26323,18 +26338,16 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // ---- WORLD SPACE: scale by dpr * worldScale, translate by camera ----
-    // The camera translation is rounded to the native pixel grid so the
-    // chunk drawImage compositing lands on integer device pixels. Without
-    // this, the bilinear filter (imageSmoothingEnabled true) blurs every
-    // tile/feature edge into a 1-px soft seam that reads as a "gap"
-    // between tiles. The world internally still tracks cam.x/y as floats
-    // (smooth physics + follow); we only quantize the render transform.
+    // Preserve fractional camera motion. Rounding this translation while
+    // parallax layers use the floating-point camera makes distant scenery
+    // periodically move BACKWARDS during steady flight. Terrain chunks have
+    // overlapping stitch gutters, so their joins do not require camera snaps.
     var ws = dpr * worldScale;
     // Combat screenshake: a tiny world-space offset (trauma-based, subtle,
     // reduced-motion-gated; defined in 085-combat.js). Applied to the world
     // transform only, so the HUD + native-space night sky stay steady.
     var _shk = (typeof combatShakeOffset === 'function') ? combatShakeOffset() : { x: 0, y: 0 };
-    ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
+    ctx.setTransform(ws, 0, 0, ws, -(cam.x - _shk.x) * ws, -(cam.y - _shk.y) * ws);
     // imageSmoothingEnabled true keeps gradients smooth
     ctx.imageSmoothingEnabled = true;
 
@@ -26368,7 +26381,7 @@
       // painted a straight stripe across the irregular bank during ascent.
       drawHorizonLimb();
       perfMark('render.skyComposite', _rTs);
-      ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
+      ctx.setTransform(ws, 0, 0, ws, -(cam.x - _shk.x) * ws, -(cam.y - _shk.y) * ws);
 
       // Layered mountain silhouettes near the horizon
       if (!PERF_DISABLE_MOUNTAINS && worldBottom > surfaceY - TILE * 4) {
@@ -34331,6 +34344,9 @@
   var SURFACE_TRANSITION_STRIP = 384;
   var SURFACE_BANK_EDGE_DEPTH = 12;
   var surfaceTransitionCache = new Map();
+  var surfaceBankWarmJob = null;
+  var surfaceBankLastCameraX = 0;
+  var surfaceBankPlanes = [{ canvas: null, key: '' }, { canvas: null, key: '' }];
 
   function surfaceBankNoise(x, scale, seed) {
     var u = x / scale, i = Math.floor(u), t = u - i;
@@ -34372,7 +34388,7 @@
     return t * t * (3 - 2 * t);
   }
 
-  function buildSurfaceBankStrip(index, near) {
+  function beginSurfaceBankStrip(index, near) {
     var w = SURFACE_TRANSITION_STRIP, h = near ? 64 : SURFACE_TRANSITION_DEPTH;
     var left = index * w;
     var c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -34382,7 +34398,18 @@
     var shade = surfaceBankRGB(BG.surfaceBankShade);
     var dark = surfaceBankRGB(near ? BG.surfaceRootShade : BG.surfaceBankNight);
     var wall = surfaceBankRGB(BG.wallTopsoil);
-    for (var x = 0; x < w; x++) {
+    return { index: index, near: near, w: w, h: h, left: left, c: c, cx: cx,
+      day: day, night: night, light: light, shade: shade, dark: dark, wall: wall, x: 0 };
+  }
+
+  // Build a few columns at a time before a strip reaches the viewport.
+  // The same builder runs to completion during loading or a cold teleport.
+  function advanceSurfaceBankStrip(job, columns) {
+    var w = job.w, h = job.h, left = job.left, near = job.near;
+    var c = job.c, cx = job.cx, day = job.day, night = job.night;
+    var light = job.light, shade = job.shade, dark = job.dark, wall = job.wall;
+    var end = Math.min(w, job.x + columns);
+    for (var x = job.x; x < end; x++) {
       var wx = left + x;
       var broad = surfaceBankNoise(wx, 130, 29);
       var broken = surfaceBankNoise(wx, 23, 41);
@@ -34423,13 +34450,18 @@
         day.data[at + 3] = night.data[at + 3] = Math.round(alpha * 255);
       }
     }
+    job.x = end;
+    if (end < w) return null;
     if (near) {
       // Roots belong to this shallow rear bank, never the collision plane.
       // Enumerate beyond each strip so branches crossing a cache boundary
       // are drawn identically on both sides. All choices use world hashes.
       var rootDay = document.createElement('canvas'); rootDay.width = w; rootDay.height = h;
       var rootNight = document.createElement('canvas'); rootNight.width = w; rootNight.height = h;
-      var rd = rootDay.getContext('2d'), rn = rootNight.getContext('2d');
+      // These temporary canvases are read straight back into the CPU bitmap.
+      // A CPU backing store avoids a GPU readback stall when a warm job finishes.
+      var rd = rootDay.getContext('2d', { willReadFrequently: true });
+      var rn = rootNight.getContext('2d', { willReadFrequently: true });
       rd.putImageData(day, 0, 0); rn.putImageData(night, 0, 0);
       for (var cell = Math.floor((left - 40) / 26); cell <= Math.floor((left + w + 40) / 26); cell++) {
         if (tileHash01(cell, 317, 51) < 0.38) continue;
@@ -34460,6 +34492,47 @@
     }
     return { canvas: c, ctx: cx, day: day.data, night: night.data,
       pixels: cx.createImageData(w, h), light: -1 };
+  }
+
+  function buildSurfaceBankStrip(index, near) {
+    return advanceSurfaceBankStrip(beginSurfaceBankStrip(index, near), SURFACE_TRANSITION_STRIP);
+  }
+
+  function warmSurfaceBankStrips(worldLeft, worldRight) {
+    var direction = cam.x < surfaceBankLastCameraX ? -1 : 1;
+    surfaceBankLastCameraX = cam.x;
+    var wanted = [];
+    // Forward edge first, then the rear edge so a turn stays warm too.
+    for (var side = 0; side < 2; side++) {
+      for (var plane = 0; plane < 2; plane++) {
+        var near = plane === 1, ox = cam.x * (near ? 0.10 : 0.30);
+        var forward = (side === 0 ? direction : -direction) > 0;
+        var index = forward ? Math.floor((worldRight - ox) / SURFACE_TRANSITION_STRIP) + 1
+                            : Math.floor((worldLeft - ox) / SURFACE_TRANSITION_STRIP) - 1;
+        var key = (near ? 'n' : 'f') + index;
+        if (!surfaceTransitionCache.has(key)) wanted.push({ key: key, index: index, near: near });
+      }
+    }
+    var keepJob = false;
+    for (var wi = 0; wi < wanted.length; wi++) {
+      if (surfaceBankWarmJob && wanted[wi].key === surfaceBankWarmJob.key) keepJob = true;
+    }
+    if (!keepJob) surfaceBankWarmJob = null;
+    if (!surfaceBankWarmJob && wanted.length) {
+      surfaceBankWarmJob = beginSurfaceBankStrip(wanted[0].index, wanted[0].near);
+      surfaceBankWarmJob.key = wanted[0].key;
+    }
+    if (!surfaceBankWarmJob) return;
+    var deadline = performance.now() + 0.65;
+    do {
+      var entry = advanceSurfaceBankStrip(surfaceBankWarmJob, 8);
+      if (entry) {
+        surfaceTransitionCache.set(surfaceBankWarmJob.key, entry);
+        surfaceBankWarmJob = null;
+        if (surfaceTransitionCache.size > 16) surfaceTransitionCache.delete(surfaceTransitionCache.keys().next().value);
+        break;
+      }
+    } while (performance.now() < deadline);
   }
 
   function getSurfaceBankStrip(index, near, light) {
@@ -34495,25 +34568,35 @@
     // The caller owns the visible biome band; never tint another biome or
     // the sky, even when the camera is zoomed out across several layers.
     ctx.beginPath(); ctx.rect(worldLeft, surfaceY, worldRight - worldLeft, SURFACE_TRANSITION_DEPTH); ctx.clip();
-    ctx.imageSmoothingEnabled = false;
-    var transform = ctx.getTransform();
+    // Join cached strips at native integer coordinates, then scroll the
+    // complete plane fractionally. Individually snapping each strip makes
+    // the soil judder; separate filtered edges can expose hairline seams.
+    ctx.imageSmoothingEnabled = true;
     for (var plane = 0; plane < 2; plane++) {
       var near = plane === 1;
       var ox = cam.x * (near ? 0.10 : 0.30);
       var first = Math.floor((worldLeft - ox) / SURFACE_TRANSITION_STRIP);
       var last = Math.floor((worldRight - ox) / SURFACE_TRANSITION_STRIP);
-      for (var index = first; index <= last; index++) {
-        var sprite = getSurfaceBankStrip(index, near, light);
-        // Shared boundaries must land on the SAME device pixel. Fractional
-        // zoom/camera positions otherwise alpha-antialias each canvas edge
-        // separately and leave a dark hairline between contiguous strips.
-        var start = index * SURFACE_TRANSITION_STRIP + ox;
-        var x0 = (Math.round(start * transform.a + transform.e) - transform.e) / transform.a;
-        var x1 = (Math.round((start + SURFACE_TRANSITION_STRIP) * transform.a + transform.e) - transform.e) / transform.a;
-        ctx.drawImage(sprite, x0, surfaceY, x1 - x0, sprite.height);
+      // One source pixel beyond either viewport edge supplies the filter gutter.
+      first = Math.floor((worldLeft - ox - 1) / SURFACE_TRANSITION_STRIP);
+      last = Math.floor((worldRight - ox + 1) / SURFACE_TRANSITION_STRIP);
+      var cached = surfaceBankPlanes[plane];
+      var key = first + ':' + last + ':' + light;
+      if (!cached.canvas) cached.canvas = document.createElement('canvas');
+      if (cached.key !== key) {
+        cached.canvas.width = (last - first + 1) * SURFACE_TRANSITION_STRIP;
+        cached.canvas.height = near ? 64 : SURFACE_TRANSITION_DEPTH;
+        var joined = cached.canvas.getContext('2d');
+        for (var index = first; index <= last; index++) {
+          var sprite = getSurfaceBankStrip(index, near, light);
+          joined.drawImage(sprite, (index - first) * SURFACE_TRANSITION_STRIP, 0);
+        }
+        cached.key = key;
       }
+      ctx.drawImage(cached.canvas, first * SURFACE_TRANSITION_STRIP + ox, surfaceY);
     }
     ctx.restore();
+    warmSurfaceBankStrips(worldLeft, worldRight);
   }
   /* ============================================================
      THE SLUICE (refinement station) - economy Phase 1
@@ -51109,7 +51192,7 @@
     'Verdict': 'HEALTHY = hitting the display refresh cap. CPU-BOUND = JavaScript is the bottleneck. GPU-BOUND = drawing / fill-rate is. MICROSTUTTER = the average is fine but frames hitch.',
     'Cause': 'The single biggest contributor to the current verdict.',
     'Hitches': 'How many recent frames ran far longer than normal. Each one is a visible stutter.',
-    'Smoothness': 'jank% = the share of stuttery frames. 1%-low = the fps of your worst 1% of frames, which is what you actually feel.',
+    'Smoothness': 'jank% counts late animation frames. 1%-low is 1000 divided by the 99th-percentile interval between animation frames, including GPU and scheduling waits.',
     'FPS': 'Frames per second now, with the rolling average in parentheses. Capped at your monitor refresh rate.',
     'CPU frame': 'Time JavaScript spent building this frame. p99 and max are the worst recent frames.',
     'GPU/idle': 'Time left after the CPU work: GPU drawing + screen compositing + waiting for vsync. Large here while fps is low means GPU-bound.',
@@ -51375,7 +51458,8 @@
     // cap) = CPU bound / healthy — read the bucket list below.
     var realMs = perfFps > 0 ? 1000 / perfFps : 0;
     var gpuGap = realMs > perfFrameMs ? realMs - perfFrameMs : 0;
-    K('FPS',       perfFps + ' (' + (fs.avg > 0 ? (1000 / fs.avg).toFixed(0) : '0') + ' avg)');
+    var intervals = perfIntervalStats();
+    K('FPS',       perfFps + ' (' + (intervals.avg > 0 ? (1000 / intervals.avg).toFixed(0) : '0') + ' avg)');
     K('CPU frame', perfFrameMs.toFixed(2) + ' ms (p99 ' + fs.p99.toFixed(1) + ', max ' + fs.max.toFixed(1) + ')');
     K('GPU/idle',  gpuGap.toFixed(2) + ' ms');
     // v23.42 — Update / Render / Smoke condensed to one line (each is also its
@@ -58712,8 +58796,8 @@
     //         jello) and redraws it scaled up about the body centre. ----
     if (refract > 0.001) {
       var ws = (typeof dpr !== 'undefined' ? dpr : 1) * (typeof worldScale !== 'undefined' ? worldScale : 1);
-      var camOffX = Math.round(cam.x * ws), camOffY = Math.round(cam.y * ws);
-      var sx = l * ws - camOffX, sy = t * ws - camOffY;
+      var refractTransform = ctx.getTransform();
+      var sx = l * ws + refractTransform.e, sy = t * ws + refractTransform.f;
       var sw = w * ws, sh = hgt * ws;
       if (sw > 1 && sh > 1) {
         var mag = 1 + refract;
@@ -59846,7 +59930,8 @@
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
     // re-kicks it. (pauseGame also cancels the pending handle; this is backup.)
     if (gamePaused) { gameRafId = 0; return; }
-    var dt = (time - lastTime) / 1000;
+    var frameIntervalMs = time - lastTime;
+    var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
     lastFrameDt = dt;
@@ -60332,7 +60417,7 @@
     perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
-    perfPushFrame(_t5 - _t0);
+    perfPushFrame(_t5 - _t0, frameIntervalMs);
     perfChunkRebuilds = terrainChunkRebuildsThisFrame;
     perfFrameSamples.push(_t5);
     while (perfFrameSamples.length > 1 && perfFrameSamples[0] < _t5 - 1000) perfFrameSamples.shift();
@@ -60350,10 +60435,10 @@
       perfHitch.ms = ft; perfHitch.at = _t5;
       perfHitch.buckets = perfSnapshotRaw();
     }
-    // v23.41 — feed the windowed benchmark this frame's total ms + dt; it
-    // aggregates + drives the scripted auto-fly while a run is active (no-op
-    // otherwise).
-    if (typeof benchTick === 'function') benchTick(ft, dt);
+    // Benchmark arrival intervals, including time waiting for graphics or
+    // scheduling. CPU submission time does not describe visible frame pacing.
+    // The benchmark also drives scripted flight while a run is active.
+    if (typeof benchTick === 'function') benchTick(frameIntervalMs, frameIntervalMs / 1000);
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).
