@@ -584,6 +584,7 @@
       // layer natively, exactly like the CPU renderer's liquidGLCanvas.
       mainCanvas: canvas,
       liquid: {
+        getTerrainRenderMask: liquidTerrainRenderMask,
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
         // v14.2 — GPU-residency signal; see liquidMutationSeq + runFrame.

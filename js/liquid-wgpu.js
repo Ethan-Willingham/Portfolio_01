@@ -6851,6 +6851,19 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    * worldScale), canvasW, canvasH, sizeBaseWater, sizeBaseOil, _pad.
    * dpws / sizeBase* are CPU-computed so the shader stays a pure mul-add.
    * -------------------------------------------------------------------- */
+  // Optional host visual outline. The standalone fluid demo has square
+  // obstacles and keeps its existing tile clipping when no mask is supplied.
+  var WGSL_TERRAIN_RENDER = /* wgsl */ `
+@group(1) @binding(0) var terrainRenderTex : texture_2d<f32>;
+@group(1) @binding(1) var terrainRenderSampler : sampler;
+@group(1) @binding(2) var<uniform> terrainRenderRect : vec4<f32>;
+fn terrainRenderOpen(wp : vec2<f32>) -> f32 {
+  if (terrainRenderRect.z <= 0.0) { return 1.0; }
+  let uv = (wp - terrainRenderRect.xy) * terrainRenderRect.zw;
+  return 1.0 - textureSampleLevel(terrainRenderTex, terrainRenderSampler, uv, 0.0).a;
+}
+`;
+
   var WGSL_RENDER = /* wgsl */ `
 struct RenderParams {
   camX          : f32,   // camera world x
@@ -6955,7 +6968,8 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   // Soft round disc — the exact CPU GL fragment: a = clamp(1 - r^2, 0, 1).
   let aDisc = clamp(1.0 - dot(in.uv, in.uv), 0.0, 1.0);
   if (aDisc <= 0.0) { discard; }
-  let alpha = in.color.a * aDisc;
+  let wp = vec2<f32>(rp.camX, rp.camY) + in.pos.xy / max(rp.dpws, 0.001);
+  let alpha = in.color.a * aDisc * terrainRenderOpen(wp);
   // Premultiplied-alpha output (the context is configured premultiplied).
   return vec4<f32>(in.color.rgb * alpha, alpha);
 }
@@ -7199,7 +7213,33 @@ fn bridgeTap(px : vec2<f32>, off : vec2<f32>) -> f32 {
 
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
-  let f = textureLoad(fieldTex, vec2<i32>(in.pos.xy), 0);
+  let wp = vec2<f32>(rp.camX, rp.camY) + in.pos.xy / max(rp.dpws, 0.001);
+  let open = terrainRenderOpen(wp);
+  if (open <= 0.001) { discard; }
+  var fieldPx = in.pos.xy;
+  // Rounded cutaways can expose a few pixels inside a collision tile.
+  // Continue the adjacent liquid field into just that visible sliver;
+  // never add particles or transfer water across the physical wall.
+  if (terrainRenderRect.z > 0.0 && compositeTerrainSolid(wp)) {
+    let tile = tp.worldTile;
+    let base = floor(wp / tile) * tile;
+    var nearest = wp;
+    var best = 1e9;
+    for (var side = 0; side < 4; side = side + 1) {
+      var step = vec2<f32>(-1.0, 0.0);
+      if (side == 1) { step = vec2<f32>(1.0, 0.0); }
+      if (side == 2) { step = vec2<f32>(0.0, -1.0); }
+      if (side == 3) { step = vec2<f32>(0.0, 1.0); }
+      let lo = base + step * tile;
+      if (compositeTerrainSolid(lo + vec2<f32>(tile * 0.5))) { continue; }
+      let sample = clamp(wp, lo + vec2<f32>(2.0), lo + vec2<f32>(tile - 2.0));
+      let dist = dot(sample - wp, sample - wp);
+      if (dist < best) { best = dist; nearest = sample; }
+    }
+    if (best < 144.0) { fieldPx = (nearest - vec2<f32>(rp.camX, rp.camY)) * rp.dpws; }
+  }
+  fieldPx = clamp(fieldPx, vec2<f32>(0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
+  let f = textureLoad(fieldTex, vec2<i32>(fieldPx), 0);
   let t = rp.surf.x;
   let s = max(rp.surf.y, 0.001);
   // v26.57 GAP BRIDGE + CONTACT WETTING (see the module const banner). The
@@ -7223,8 +7263,6 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   }
   var aWaterEdge = smoothstep(t - s, t + s, fw);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
-  let wp = vec2<f32>(rp.camX + in.pos.x / max(rp.dpws, 0.001),
-                     rp.camY + in.pos.y / max(rp.dpws, 0.001));
   // v26.58 CONTACT INVARIANT (the owner's cup argument): the space between
   // a body of water and the floor directly under it can never be air,
   // because water surrounds it and nothing could have let air in. The
@@ -7256,10 +7294,8 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     }
   }
   if (aWaterEdge <= 0.001 && aOilEdge <= 0.001) { discard; }
-  // Clip the finished surface once per visible pixel. This uses the exact
-  // bitmask collision reads, without paying a storage lookup for every
-  // overlapping particle splat fragment.
-  if (compositeTerrainSolid(wp)) { discard; }
+  // Hosts without a visual contour retain their square obstacle boundary.
+  if (terrainRenderRect.z <= 0.0 && compositeTerrainSolid(wp)) { discard; }
   // Water tint: foam fraction from the aeration-weighted channel.
   // v24.150 — foam needs a real BODY behind it; v24.152 softened (0.6t to
   // 1.6t) now that foam is light BLUE, not white: turbulence tint shows in
@@ -7285,7 +7321,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let oilA = aOilEdge * rp.oilColor.a;
   outRGB = outRGB * (1.0 - oilA) + rp.oilColor.rgb * oilA;
   outA   = outA   * (1.0 - oilA) + oilA;
-  return vec4<f32>(outRGB, outA);
+  return vec4<f32>(outRGB, outA) * open;
 }
 `;
 
@@ -7426,10 +7462,10 @@ fn vs(@builtin(vertex_index)   vid : u32,
 
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
-  if (dropletTerrainSolid(in.world)) { discard; }
+  if (terrainRenderRect.z <= 0.0 && dropletTerrainSolid(in.world)) { discard; }
   let r2 = dot(in.uv, in.uv);
   if (r2 >= 1.0) { discard; }
-  let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha;
+  let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha * terrainRenderOpen(in.world);
   // A trace of foam tint keeps a two-pixel airborne drop legible against
   // dark terrain while preserving the base-water identity.
   let dropRGB = mix(rp.waterColor.rgb, rp.waterFoam.rgb, 0.22);
@@ -8644,10 +8680,21 @@ struct P2GParams {
         { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } }
       ]
     });
-    var mod = dev.createShaderModule({ code: WGSL_RENDER });
+    instance.terrainRenderBGL = dev.createBindGroupLayout({
+      label: 'liquid.terrainRenderBGL',
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: {} },
+        { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: {} },
+        { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } }
+      ]
+    });
+    instance.terrainRenderBuf = dev.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    instance.terrainRenderHost = new Float32Array(4);
+    instance.terrainRenderSampler = dev.createSampler({ minFilter: 'linear', magFilter: 'linear' });
+    var mod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_RENDER });
     instance.renderPipeline = dev.createRenderPipeline({
       label: 'liquid.renderPipeline',
-      layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+      layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl, instance.terrainRenderBGL] }),
       vertex: { module: mod, entryPoint: 'vs' },
       fragment: {
         module: mod,
@@ -8740,10 +8787,10 @@ struct P2GParams {
           { binding: 3, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
         ]
       });
-      var compMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_COMPOSITE });
+      var compMod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_COMPOSITE });
       instance.surfCompositePipeline = dev.createRenderPipeline({
         label: 'liquid.surfComposite',
-        layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfCompositeBGL] }),
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfCompositeBGL, instance.terrainRenderBGL] }),
         vertex: { module: compMod, entryPoint: 'vs' },
         fragment: {
           module: compMod,
@@ -8779,10 +8826,10 @@ struct P2GParams {
           { binding: 6, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
         ]
       });
-      var dropMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
+      var dropMod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
       instance.surfDropletPipeline = dev.createRenderPipeline({
         label: 'liquid.surfDroplets',
-        layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfDropletBGL] }),
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfDropletBGL, instance.terrainRenderBGL] }),
         vertex: { module: dropMod, entryPoint: 'vs' },
         fragment: {
           module: dropMod,
@@ -8862,6 +8909,40 @@ struct P2GParams {
    * pass clears the canvas each frame — as a DOM-layered canvas the
    * previous frame's pixels persist until overwritten (same reason the
    * CPU renderer always clears). Returns the drawn particle count. */
+  function updateTerrainRenderMask(instance) {
+    var liq = instance.liquid;
+    var mask = liq && liq.getTerrainRenderMask ? liq.getTerrainRenderMask() : null;
+    var w = mask ? mask.canvas.width : 1, h = mask ? mask.canvas.height : 1;
+    var rebuilt = !instance.terrainRenderTex || instance.terrainRenderW !== w || instance.terrainRenderH !== h;
+    if (rebuilt) {
+      if (instance.terrainRenderTex) instance.terrainRenderTex.destroy();
+      instance.terrainRenderTex = instance.device.createTexture({
+        label: 'liquid.terrainRender', size: [w, h], format: 'rgba8unorm',
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+      });
+      instance.terrainRenderW = w; instance.terrainRenderH = h;
+      instance.terrainRenderBG = instance.device.createBindGroup({
+        layout: instance.terrainRenderBGL,
+        entries: [
+          { binding: 0, resource: instance.terrainRenderTex.createView() },
+          { binding: 1, resource: instance.terrainRenderSampler },
+          { binding: 2, resource: { buffer: instance.terrainRenderBuf } }
+        ]
+      });
+    }
+    if (rebuilt || instance.terrainRenderSource !== mask || (mask && instance.terrainRenderRevision !== mask.revision)) {
+      var rect = instance.terrainRenderHost;
+      rect[0] = mask ? mask.x : 0; rect[1] = mask ? mask.y : 0;
+      rect[2] = mask ? 1 / w : 0; rect[3] = mask ? 1 / h : 0;
+      instance.queue.writeBuffer(instance.terrainRenderBuf, 0, rect);
+      if (mask) {
+        instance.queue.copyExternalImageToTexture({ source: mask.canvas }, { texture: instance.terrainRenderTex }, [w, h]);
+      }
+      instance.terrainRenderSource = mask;
+      instance.terrainRenderRevision = mask ? mask.revision : -1;
+    }
+  }
+
   function runRender(instance, view) {
     if (!instance.renderReady) return 0;
     view = view || {};
@@ -8876,6 +8957,7 @@ struct P2GParams {
     if (cv.width !== cw)  cv.width  = cw;
     if (cv.height !== ch) cv.height = ch;
     liquidWGPUPositionDOM(instance, view);
+    updateTerrainRenderMask(instance);
 
     // Live particle count to draw — clamp to the allocated buffer.
     var count = (typeof view.count === 'number')
@@ -8956,6 +9038,7 @@ struct P2GParams {
       });
       compPass.setPipeline(instance.surfCompositePipeline);
       compPass.setBindGroup(0, instance.surfCompositeBG);
+      compPass.setBindGroup(1, instance.terrainRenderBG);
       compPass.draw(3);
       compPass.end();
     } else {
@@ -8971,6 +9054,7 @@ struct P2GParams {
       if (count > 0) {
         pass.setPipeline(instance.renderPipeline);
         pass.setBindGroup(0, instance.renderBG);
+        pass.setBindGroup(1, instance.terrainRenderBG);
         // 6 verts (unit quad) x `count` instances — one soft disc / particle.
         pass.draw(6, count);
       }
@@ -8990,6 +9074,7 @@ struct P2GParams {
       });
       dropPass.setPipeline(instance.surfDropletPipeline);
       dropPass.setBindGroup(0, instance.surfDropletBG);
+      dropPass.setBindGroup(1, instance.terrainRenderBG);
       dropPass.draw(6, count);
       dropPass.end();
     }
@@ -10354,6 +10439,8 @@ fn main() {
         }
         if (instance.simParamsBuf) { try { instance.simParamsBuf.destroy(); } catch (_) {} }
         if (instance.renderParamsBuf) { try { instance.renderParamsBuf.destroy(); } catch (_) {} }
+        if (instance.terrainRenderBuf) { try { instance.terrainRenderBuf.destroy(); } catch (_) {} }
+        if (instance.terrainRenderTex) { try { instance.terrainRenderTex.destroy(); } catch (_) {} }
         // Stage 8 — the readback mirror buffers. Unmap any in-flight map
         // before destroy (destroying a mapped buffer is fine, but unmap
         // keeps the teardown clean).

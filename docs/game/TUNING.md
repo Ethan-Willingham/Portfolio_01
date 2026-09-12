@@ -243,6 +243,17 @@ banner is `LIQUIDS: SURFACE WATER`. Tier `edit` unless marked `edit²`
 | `LIQUID_[OIL_]AERATION_DAMP` | `0.988` | `0.988` | Per-step foam decay |
 
 ## 2.5 Rendering — colour / size / opacity
+Water contact uses the cave's visual outline (`071-liquid-terrain-render.js`),
+including its wobbled edges, rounded corners and surface mouths. A cached,
+world-anchored bitmap masks the GPU surface, droplets and legacy discs, plus
+the WebGL fallback. Canvas2D clips the same path. Tile edits refresh it on
+the next draw; sub-tile camera motion reuses it. The GPU surface extends the
+adjacent liquid field into exposed corner slivers, without changing particle
+positions, collision, volume or flow tuning. Hosts without this optional mask
+(the standalone water demo) keep their existing square obstacle clipping.
+Regression: `node tools/sluice-water-contour-smoke.cjs` covers wet corners,
+dry pockets, excavation, camera motion, resizing and both rendering backends.
+
 Drawn by `drawLiquidsWebGL` (CPU GL) / the WGSL render shader (GPU). All of
 these are LIVE since v14.25 — the `water` gm group (L panel) pushes them via
 `setRenderParam`, no reload needed. `edit²`.

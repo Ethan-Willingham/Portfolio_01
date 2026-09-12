@@ -1969,12 +1969,10 @@
     return path;
   }
 
-  function drawSurfaceVoidMouths(startCol, endCol) {
+  function buildSurfaceVoidMouthPath(startCol, endCol) {
+    var path = new Path2D();
     var r = SKY_ROWS;
     var ty = r * TILE;
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,1)';
     for (var c = startCol; c <= endCol; c++) {
       if (tileAt(r, c) !== null) continue;
       // Every open surface cell reaches the sky. The contour's wobble can
@@ -1986,16 +1984,22 @@
       var waveA = edgeWave('dirt', 82, ty, tx + TILE * 0.33) * 0.45;
       var waveB = edgeWave('dirt', 83, ty, tx + TILE * 0.66) * 0.45;
 
-      ctx.beginPath();
-      ctx.moveTo(tx - 1.5, ty - 3);
-      ctx.lineTo(tx + TILE + 1.5, ty - 3);
-      ctx.lineTo(tx + TILE + 1.5, ty + lip);
-      ctx.quadraticCurveTo(tx + TILE * 0.94, ty + drop + waveB, tx + TILE * 0.64, ty + drop - 2 + waveB);
-      ctx.quadraticCurveTo(tx + TILE * 0.50, ty + drop + 1.5, tx + TILE * 0.36, ty + drop - 2 + waveA);
-      ctx.quadraticCurveTo(tx + TILE * 0.06, ty + drop + waveA, tx - 1.5, ty + lip);
-      ctx.closePath();
-      ctx.fill();
+      path.moveTo(tx - 1.5, ty - 3);
+      path.lineTo(tx + TILE + 1.5, ty - 3);
+      path.lineTo(tx + TILE + 1.5, ty + lip);
+      path.quadraticCurveTo(tx + TILE * 0.94, ty + drop + waveB, tx + TILE * 0.64, ty + drop - 2 + waveB);
+      path.quadraticCurveTo(tx + TILE * 0.50, ty + drop + 1.5, tx + TILE * 0.36, ty + drop - 2 + waveA);
+      path.quadraticCurveTo(tx + TILE * 0.06, ty + drop + waveA, tx - 1.5, ty + lip);
+      path.closePath();
     }
+    return path;
+  }
+
+  function drawSurfaceVoidMouths(startCol, endCol) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fill(buildSurfaceVoidMouthPath(startCol, endCol));
     ctx.restore();
   }
 

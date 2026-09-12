@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.113';
+  var GAME_VERSION = 'v26.114';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1921,6 +1921,7 @@
       // layer natively, exactly like the CPU renderer's liquidGLCanvas.
       mainCanvas: canvas,
       liquid: {
+        getTerrainRenderMask: liquidTerrainRenderMask,
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
         // v14.2 — GPU-residency signal; see liquidMutationSeq + runFrame.
@@ -11066,11 +11067,16 @@
         '  v_color = a_color;\n' +
         '}\n');
       var fs = liquidGLCompile(gl, gl.FRAGMENT_SHADER,
-        'precision mediump float;\n' +
+        'precision highp float;\n' +
         'varying vec4 v_color;\n' +
+        'uniform sampler2D u_terrain;\n' +
+        'uniform vec4 u_terrainRect;\n' +
+        'uniform vec4 u_terrainView;\n' +
         'void main(){\n' +
+        '  vec2 wp = u_terrainView.xy + vec2(gl_FragCoord.x, u_terrainView.w - gl_FragCoord.y) * u_terrainView.z;\n' +
+        '  float open = 1.0 - texture2D(u_terrain, (wp - u_terrainRect.xy) * u_terrainRect.zw).a;\n' +
         '  vec2 uv = gl_PointCoord * 2.0 - 1.0;\n' +
-        '  float a = clamp(1.0 - dot(uv, uv), 0.0, 1.0);\n' +
+        '  float a = clamp(1.0 - dot(uv, uv), 0.0, 1.0) * open;\n' +
         '  if (a <= 0.0) discard;\n' +
         '  gl_FragColor = vec4(v_color.rgb, v_color.a * a);\n' +
         '}\n');
@@ -11165,6 +11171,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT);
     if (!count) { perfMark('render.liquidsGPU', _rlu0); return true; }
     gl.useProgram(liquidGLProgram);
+    liquidGLBindTerrain(gl);
     gl.bindBuffer(gl.ARRAY_BUFFER, liquidGLBuffer);
     var _rlb0 = performance.now();
     gl.bufferData(gl.ARRAY_BUFFER, liquidGLData.subarray(0, count * 7), gl.STREAM_DRAW);
@@ -11268,6 +11275,7 @@
     }
 
     ctx.save();
+    liquidCanvasClipTerrain();
     for (var pass = 0; pass < 2; pass++) {
       var type = pass === 0 ? 'water' : 'oil';
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
@@ -11797,6 +11805,76 @@
         }
       }
     }
+  }
+  // Water is a separate DOM canvas above the terrain. Its visible contact
+  // must use the cave's carved outline, not the square physics tile mask.
+  // Keep this bitmap anchored to tiles and reuse it while the camera moves
+  // inside the same window. The shared contour cache detects all tile edits.
+  var liquidTerrainRender = null;
+  function liquidTerrainRenderMask() {
+    var c0 = Math.floor(cam.x / TILE) - 2;
+    var c1 = Math.ceil((cam.x + viewW / worldScale) / TILE) + 2;
+    var r0 = Math.floor(cam.y / TILE) - 2;
+    var r1 = Math.ceil((cam.y + viewH / worldScale) / TILE) + 2;
+    var path = buildVoidContourPath(Math.max(SKY_ROWS, r0), r1, c0, c1);
+    var m = liquidTerrainRender;
+    if (!m) {
+      var cv = document.createElement('canvas');
+      m = liquidTerrainRender = { canvas: cv, ctx: cv.getContext('2d'), revision: 0 };
+    }
+    if (m.path === path && m.c0 === c0 && m.r0 === r0 && m.c1 === c1 && m.r1 === r1) return m;
+    m.path = path; m.c0 = c0; m.r0 = r0; m.c1 = c1; m.r1 = r1;
+    m.x = c0 * TILE; m.y = r0 * TILE;
+    var w = (c1 - c0 + 1) * TILE, h = (r1 - r0 + 1) * TILE;
+    m.openPath = new Path2D(path);
+    if (m.y < SKY_ROWS * TILE) m.openPath.rect(m.x, m.y, w, SKY_ROWS * TILE - m.y);
+    if (r0 <= SKY_ROWS && r1 >= SKY_ROWS) m.openPath.addPath(buildSurfaceVoidMouthPath(c0, c1));
+    // One texel per world pixel, independent of display DPR and zoom.
+    if (m.canvas.width !== w) m.canvas.width = w;
+    if (m.canvas.height !== h) m.canvas.height = h;
+    var mc = m.ctx;
+    mc.setTransform(1, 0, 0, 1, 0, 0);
+    mc.clearRect(0, 0, w, h);
+    mc.save();
+    mc.translate(-m.x, -m.y);
+    mc.fillStyle = '#000';
+    mc.fillRect(m.x, m.y, w, h);
+    mc.globalCompositeOperation = 'destination-out';
+    mc.fill(m.openPath);
+    mc.restore();
+    m.revision++;
+    return m;
+  }
+
+  var liquidGLTerrainTexture = null, liquidGLTerrainRevision = -1;
+  var liquidGLTerrainLoc = null, liquidGLTerrainRectLoc = null, liquidGLTerrainViewLoc = null;
+  function liquidGLBindTerrain(gl) {
+    var m = liquidTerrainRenderMask();
+    if (!liquidGLTerrainTexture) {
+      liquidGLTerrainTexture = gl.createTexture();
+      liquidGLTerrainLoc = gl.getUniformLocation(liquidGLProgram, 'u_terrain');
+      liquidGLTerrainRectLoc = gl.getUniformLocation(liquidGLProgram, 'u_terrainRect');
+      liquidGLTerrainViewLoc = gl.getUniformLocation(liquidGLProgram, 'u_terrainView');
+      gl.bindTexture(gl.TEXTURE_2D, liquidGLTerrainTexture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, liquidGLTerrainTexture);
+    if (liquidGLTerrainRevision !== m.revision) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, m.canvas);
+      liquidGLTerrainRevision = m.revision;
+    }
+    gl.uniform1i(liquidGLTerrainLoc, 0);
+    gl.uniform4f(liquidGLTerrainRectLoc, m.x, m.y, 1 / m.canvas.width, 1 / m.canvas.height);
+    gl.uniform4f(liquidGLTerrainViewLoc, cam.x, cam.y, 1 / (dpr * worldScale), canvas.height);
+  }
+
+  function liquidCanvasClipTerrain() {
+    var m = liquidTerrainRenderMask();
+    ctx.clip(m.openPath);
   }
   /* ==== BANYA (v25.77): the other half of the game, first stone ==========
      Flag-gated (ENABLE_BATH, ?bath=1). Plan: docs/game/BATHHOUSE_PLAN.md
@@ -21070,12 +21148,10 @@
     return path;
   }
 
-  function drawSurfaceVoidMouths(startCol, endCol) {
+  function buildSurfaceVoidMouthPath(startCol, endCol) {
+    var path = new Path2D();
     var r = SKY_ROWS;
     var ty = r * TILE;
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,1)';
     for (var c = startCol; c <= endCol; c++) {
       if (tileAt(r, c) !== null) continue;
       // Every open surface cell reaches the sky. The contour's wobble can
@@ -21087,16 +21163,22 @@
       var waveA = edgeWave('dirt', 82, ty, tx + TILE * 0.33) * 0.45;
       var waveB = edgeWave('dirt', 83, ty, tx + TILE * 0.66) * 0.45;
 
-      ctx.beginPath();
-      ctx.moveTo(tx - 1.5, ty - 3);
-      ctx.lineTo(tx + TILE + 1.5, ty - 3);
-      ctx.lineTo(tx + TILE + 1.5, ty + lip);
-      ctx.quadraticCurveTo(tx + TILE * 0.94, ty + drop + waveB, tx + TILE * 0.64, ty + drop - 2 + waveB);
-      ctx.quadraticCurveTo(tx + TILE * 0.50, ty + drop + 1.5, tx + TILE * 0.36, ty + drop - 2 + waveA);
-      ctx.quadraticCurveTo(tx + TILE * 0.06, ty + drop + waveA, tx - 1.5, ty + lip);
-      ctx.closePath();
-      ctx.fill();
+      path.moveTo(tx - 1.5, ty - 3);
+      path.lineTo(tx + TILE + 1.5, ty - 3);
+      path.lineTo(tx + TILE + 1.5, ty + lip);
+      path.quadraticCurveTo(tx + TILE * 0.94, ty + drop + waveB, tx + TILE * 0.64, ty + drop - 2 + waveB);
+      path.quadraticCurveTo(tx + TILE * 0.50, ty + drop + 1.5, tx + TILE * 0.36, ty + drop - 2 + waveA);
+      path.quadraticCurveTo(tx + TILE * 0.06, ty + drop + waveA, tx - 1.5, ty + lip);
+      path.closePath();
     }
+    return path;
+  }
+
+  function drawSurfaceVoidMouths(startCol, endCol) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fill(buildSurfaceVoidMouthPath(startCol, endCol));
     ctx.restore();
   }
 

@@ -2319,11 +2319,16 @@
         '  v_color = a_color;\n' +
         '}\n');
       var fs = liquidGLCompile(gl, gl.FRAGMENT_SHADER,
-        'precision mediump float;\n' +
+        'precision highp float;\n' +
         'varying vec4 v_color;\n' +
+        'uniform sampler2D u_terrain;\n' +
+        'uniform vec4 u_terrainRect;\n' +
+        'uniform vec4 u_terrainView;\n' +
         'void main(){\n' +
+        '  vec2 wp = u_terrainView.xy + vec2(gl_FragCoord.x, u_terrainView.w - gl_FragCoord.y) * u_terrainView.z;\n' +
+        '  float open = 1.0 - texture2D(u_terrain, (wp - u_terrainRect.xy) * u_terrainRect.zw).a;\n' +
         '  vec2 uv = gl_PointCoord * 2.0 - 1.0;\n' +
-        '  float a = clamp(1.0 - dot(uv, uv), 0.0, 1.0);\n' +
+        '  float a = clamp(1.0 - dot(uv, uv), 0.0, 1.0) * open;\n' +
         '  if (a <= 0.0) discard;\n' +
         '  gl_FragColor = vec4(v_color.rgb, v_color.a * a);\n' +
         '}\n');
@@ -2418,6 +2423,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT);
     if (!count) { perfMark('render.liquidsGPU', _rlu0); return true; }
     gl.useProgram(liquidGLProgram);
+    liquidGLBindTerrain(gl);
     gl.bindBuffer(gl.ARRAY_BUFFER, liquidGLBuffer);
     var _rlb0 = performance.now();
     gl.bufferData(gl.ARRAY_BUFFER, liquidGLData.subarray(0, count * 7), gl.STREAM_DRAW);
@@ -2521,6 +2527,7 @@
     }
 
     ctx.save();
+    liquidCanvasClipTerrain();
     for (var pass = 0; pass < 2; pass++) {
       var type = pass === 0 ? 'water' : 'oil';
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
