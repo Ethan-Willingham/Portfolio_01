@@ -424,6 +424,7 @@
       'uniform sampler2D uObstacle;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform vec2 movingTexelSize;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'void main () {\n' +
@@ -442,8 +443,23 @@
       '  c *= diffuse;\n' +
       '#endif\n' +
       '  float obstacle = useObstacle > 0.5 ? texture2D(uObstacle, vUv).a : 0.0;\n' +
-      '  if (useMoving > 0.5) obstacle = max(obstacle, texture2D(uMoving, vUv).a);\n' +
       '  c *= 1.0 - smoothstep(0.35, 0.85, obstacle);\n' +
+      // The low-resolution collision mask is visible THROUGH translucent gel.
+      // Feather its coverage in this existing display pass, without sharpening
+      // it back into a stair-stepped inner silhouette. Simulation reads stay exact.
+      '  if (useMoving > 0.5) {\n' +
+      '    vec2 d = movingTexelSize * 1.25;\n' +
+      '    float coverage = texture2D(uMoving, vUv).a * 0.25;\n' +
+      '    coverage += (texture2D(uMoving, vUv + vec2(d.x, 0.0)).a\n' +
+      '      + texture2D(uMoving, vUv - vec2(d.x, 0.0)).a\n' +
+      '      + texture2D(uMoving, vUv + vec2(0.0, d.y)).a\n' +
+      '      + texture2D(uMoving, vUv - vec2(0.0, d.y)).a) * 0.125;\n' +
+      '    coverage += (texture2D(uMoving, vUv + d).a\n' +
+      '      + texture2D(uMoving, vUv - d).a\n' +
+      '      + texture2D(uMoving, vUv + vec2(d.x, -d.y)).a\n' +
+      '      + texture2D(uMoving, vUv + vec2(-d.x, d.y)).a) * 0.0625;\n' +
+      '    c *= 1.0 - coverage;\n' +
+      '  }\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -1028,6 +1044,8 @@
       gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
       gl.uniform1i(displayMaterial.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
       gl.uniform1f(displayMaterial.uniforms.useMoving, movingActive ? 1 : 0);
+      gl.uniform2f(displayMaterial.uniforms.movingTexelSize,
+        movingActive ? movingBoundary.texelSizeX : 1, movingActive ? movingBoundary.texelSizeY : 1);
       if (displayMaterial.uniforms.uObstacle != null) {
         gl.uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
         gl.uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
