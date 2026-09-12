@@ -602,6 +602,7 @@
     try { if (typeof radioMsgTick === 'function') radioMsgTick(dt); } catch (e) { if (!window.__radioErr) { window.__radioErr = String(e) + '\n' + (e.stack||''); console.error('radioMsgTick threw:', e); } }
     try { if (typeof gamepadTick === 'function') gamepadTick(dt); } catch (e) { if (!window.__padErr) { window.__padErr = String(e) + '\n' + (e.stack||''); console.error('gamepadTick threw:', e); } }
     if (typeof birdsUpdate === 'function') birdsUpdate(dt);   // ambient surface birds (205-birds.js); early-outs to zero cost when no flock is near
+    if (typeof surfaceTurtleUpdate === 'function') surfaceTurtleUpdate(dt);
     // Tick the on-screen toast message timer in the loop (not inside update)
     // so it keeps counting down even while the shop is open or the game is
     // over. Otherwise "Small charge stocked!" sticks on screen for as long

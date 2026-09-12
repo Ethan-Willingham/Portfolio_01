@@ -1066,17 +1066,25 @@ three living species use upper-left highlights, darker lower-right edges and
 the existing flora/wood palette to sit beside the station's pixel art. Sprites
 remain cached; silhouette detail adds no per-frame painting.
 
+The follow-up spacing pass uses 0.68 density, smaller living sprites and wider
+gaps between trunks. Sway and leaf shedding are quieter, with fewer bright
+foliage facets. `166-render-surface-boulders.js` adds sparse cached stones in
+clearings: four angular profiles, 26 to 45 world px wide and 13 to 25 px tall,
+using the station's stone palette. Boulders are scenery behind the rig, with
+no collision. They avoid trees, ponds and the station compound. Excavating
+any tile beneath a boulder removes it; loading derives this from the terrain.
+
 Pixel-art flora across the whole wide surface (`js/sluice/165-render-trees.js`, v24.133): spruce/birch/bush groves in the towns, scorched snags in the No Man's Zones, nothing on oceans, ponds, or station compounds. DERIVED from the world grid, never saved: a tree stands where its ground tile at `(SKY_ROWS, c)` is still solid, so felling one (dig that tile out: tip-over, then a leaf + chip burst at ~77 degrees) persists through save/load for free. Sprites are baked once at world-px (BLD wood + the mandatory outline ring + 3 locked flora greens `#2e4420`/`#4a6631`/`#8f9c52` + birch bark `#d4c89f`; keep canopy greens under the grass speck `#9bb963`). Rig gusts are SPEED-GATED (an idle hover does nothing, the same discipline as the water player-coupling); the jet downwash shivers canopies it hovers over; a sonic boom whips every visible tree. Spruce/birch canopies hold perched birds that launch into the 205-birds boids (ambient timer, hard gust passes, and falls). Headless work: `?treeshot=COL` parks the rig at a surface column, `?treefell=COL` fells the nearest tree through the real dig path 1s in, the `[trees]` dev boot probe logs counts + the densest grove column, and `window.__trees` exposes rebuild/count/info/shoot. Pair with `?nopause=1` (020): it disables the focus auto-pause + boot pause, which otherwise freeze any headless/unfocused run a moment after boot. Gotcha: headless Chrome `--screenshot` of sluice.html directly captures a blank canvas; screenshot a same-origin wrapper page that iframes the game instead.
 
 | Lever | Now | Range | Effect |
 |---|---|---|---|
 | `trees.enabled` | `1` | 0/1 | Master on/off (update + draw) |
-| `trees.density` | `1.0` | 0-3 | Spawn multiplier; applies on the next rebuild (`window.__trees.rebuild()`) |
-| `trees.swayAmp` | `1.0` | 0-4 | Ambient sway amplitude |
+| `trees.density` | `0.68` | 0-3 | Spawn multiplier; applies on the next rebuild (`window.__trees.rebuild()`) |
+| `trees.swayAmp` | `0.75` | 0-4 | Ambient sway amplitude |
 | `trees.windCouple` | `1.0` | 0-3 | How hard `surfaceWind` leans the canopies |
 | `trees.gustR` | `96` | 20-240 | Rig flyby gust radius around a canopy, px |
 | `trees.gustGain` | `1.0` | 0-4 | Flyby shove strength (gated above ~46 px/s rig speed) |
-| `trees.leafRate` | `1.0` | 0-4 | Leaf/chip shed master (0 = no particles) |
+| `trees.leafRate` | `0.65` | 0-4 | Leaf/chip shed master (0 = no particles) |
 | `trees.birdPeriod` | `11` | 2-60 | Mean seconds between ambient canopy bird launches |
 | `trees.fallRate` | `1.0` | 0.2-3 | Tip-over torque (higher = faster timber) |
 
@@ -1097,6 +1105,30 @@ old field. `node tools/test-sluice-grass.cjs` checks these behavior boundaries.
 | `grass.rigGain` | `1.3` | 0-3 | Wheel/landing bend strength; 0 leaves only jet and ambient motion |
 | `grass.rigReach` | `14` | 1-32 | Wheel contact reach above the surface, world px |
 | `grass.rigRadius` | `12` | 1-40 | Soft contact margin outside each side of the rig, world px |
+
+## 5.8 Rare surface visitors
+
+The turtle (`167-surface-turtle.js`) and solitary hawk (`206-rare-bird.js`) each
+have a one-animal cap. Their encounter clocks count time with the surface in
+view, so mining does not queue arrivals. Both enter beyond a camera edge and
+use tiny cached pixel poses in the existing flora/wood/stone palette.
+
+The turtle first visits after 38 to 68 seconds of surface time, then waits
+120 to 220 seconds between visits. It walks at 5 world px/s, pauses to graze,
+turns before pits and pond banks, and tucks for a nearby moving rig. After
+about 42 seconds it wanders back toward its entry edge. Removing its support
+removes the visitor rather than leaving it suspended. It is scenery with no
+collision or reward. `window.__surfaceTurtle.info()` reports its current state.
+
+The hawk waits 45 to 73 seconds before its first pass, with 90 to 180 seconds
+between later passes. Its 9-pixel wingspan is three times the flock birds'.
+It glides at 42 to 58 world px/s with one slow wingbeat every 5 to 8 seconds.
+There is one hawk at most, separate from all flock and perched-bird behavior.
+It retires offscreen; following it keeps the current pass alive. Inspect it
+with `window.__rareBird.info()`. Both systems reset on world replacement.
+
+Tests: `node tools/test-sluice-turtle.cjs` and
+`node tools/test-sluice-rare-bird.cjs`.
 
 # 6 · PARTICLES & EFFECTS · tier `edit`
 

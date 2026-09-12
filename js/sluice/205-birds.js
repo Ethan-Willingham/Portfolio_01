@@ -177,6 +177,7 @@
 
   // ----- Per-frame update (called from the 350 loop) -----
   function birdsUpdate(dt) {
+    if (typeof rareBirdUpdate === 'function') rareBirdUpdate(dt);
     if (!(dt > 0)) return;
     if (dt > 0.05) dt = 0.05;                  // clamp tab-back dt spikes
     var surfY = SKY_ROWS * TILE;
@@ -312,6 +313,7 @@
 
   // ----- Draw (called from the 140 world-entities region, world transform on) -----
   function birdsDraw() {
+    if (typeof rareBirdDraw === 'function') rareBirdDraw();
     if (!birdsInited) return;
     var surfY = SKY_ROWS * TILE;
     if (cam.y >= surfY) return;

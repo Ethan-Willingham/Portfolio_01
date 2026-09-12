@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.104';
+  var GAME_VERSION = 'v26.105';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -26984,6 +26984,8 @@
     //      Drawn before the stations so canopies sit behind every building,
     //      in front of the terrain tiles + grass line. ----
     if (typeof drawTrees === 'function') drawTrees();
+    if (typeof drawSurfaceBoulders === 'function') drawSurfaceBoulders();
+    if (typeof drawSurfaceTurtle === 'function') drawSurfaceTurtle();
 
     // ---- Surface stations (one recoloured store per town) ----
     // Only towns that ACTUALLY EXIST in REGIONS (single-town = just town 0). Iterating
@@ -31103,12 +31105,12 @@
   // ----- Tunables (gm group 'trees', registered in 360) -----
   var treesTune = {
     enabled: 1,
-    density: 1.0,     // global spawn multiplier (applies on the next rebuild)
-    swayAmp: 1.0,     // ambient sway master
+    density: 0.68,    // open woodland with room for grass and stone
+    swayAmp: 0.75,    // ambient sway master
     windCouple: 1.0,  // surfaceWind lean coupling
     gustR: 96,        // rig gust radius around a canopy, px
     gustGain: 1.0,    // rig gust strength master
-    leafRate: 1.0,    // leaf shed master
+    leafRate: 0.65,   // leaf shed master
     birdPeriod: 11,   // mean seconds between ambient canopy bird launches
     fallRate: 1.0     // tip-over torque master
   };
@@ -31257,7 +31259,7 @@
           if (needles && (ny > -.12 || nx > .22)) col = 1;
           // Short, offset light facets. Their broken edges avoid contour bands.
           var facet = treesHash(seed + i * 73 + Math.floor(x / 4) * 23);
-          if (ny < -.23 && ny > -.72 && nx < .18 && nx > -.68 && facet > .36) {
+          if (ny < -.23 && ny > -.72 && nx < .18 && nx > -.68 && facet > .56) {
             col = needles ? 2 : 3;
             if (needles && facet > .78 && ny < -.42) col = 3;
           }
@@ -31479,20 +31481,20 @@
       treesSprites.push(spr);
     }
     var i;
-    var sprS = [2.3, 3.1, 4.1];
+    var sprS = [2.0, 2.7, 3.6];
     for (i = 0; i < sprS.length; i++) {
       reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i], 11 + i * 6));
       reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i] + 0.15, 23 + i * 6));
     }
-    var brS = [2.1, 2.8];
+    var brS = [1.9, 2.5];
     for (i = 0; i < brS.length; i++) {
       reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i], 31 + i * 8));
       reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i] + 0.12, 47 + i * 8));
     }
-    reg(TREES_KIND_BUSH, treesBakeBush(0.62, 53, 0, false));
-    reg(TREES_KIND_BUSH, treesBakeBush(0.76, 67, 1, false));
-    reg(TREES_KIND_BUSH, treesBakeBush(0.84, 79, 2, true));
-    reg(TREES_KIND_BUSH, treesBakeBush(0.96, 97, 3, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.52, 53, 0, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.64, 67, 1, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.72, 79, 2, true));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.80, 97, 3, false));
     var snS = [1.6, 2.3];
     for (i = 0; i < snS.length; i++) {
       reg(TREES_KIND_SNAG, treesBakeSnag(snS[i], 71 + i * 12));
@@ -31543,9 +31545,8 @@
       if (isZone) kind = kr < 0.74 ? TREES_KIND_SNAG : (kr < 0.92 ? TREES_KIND_SPRUCE : TREES_KIND_BUSH);
       else        kind = kr < 0.44 ? TREES_KIND_SPRUCE : (kr < 0.72 ? TREES_KIND_BIRCH : TREES_KIND_BUSH);
       var spr = treesPickSprite(kind, isZone ? g * 0.6 : g, treesHash(c * 277 + 5));
-      // Grove cores let canopies just about touch (overlap reads as depth);
-      // bushes tuck in tighter still.
-      var minDx = (kind === TREES_KIND_BUSH) ? 16 : 10 + spr.w * 0.38;
+      // Small groups, with clear air between the larger silhouettes.
+      var minDx = (kind === TREES_KIND_BUSH) ? 24 : 18 + spr.w * 0.50;
       var x = c * TILE + TILE * 0.5 + (treesHash(c * 401 + 3) - 0.5) * 16;
       if (x - lastX < minDx) continue;
       lastX = x;
@@ -32002,6 +32003,249 @@
       try { render(); } catch (e) { return 'render threw: ' + e; }
       return 'ok @col ' + Math.round(wx / TILE);
     }
+  };
+  // ====== SURFACE BOULDERS ======
+  // Low, quiet stone accents between groves. Decorative, like the trees;
+  // they leave the rig's route open. Baked at world-pixel resolution with the
+  // station's stone ramp, top-left light and broad fractured faces.
+  var surfaceBoulders = [], surfaceBoulderSprites = null;
+  var surfaceBoulderWorld = null, surfaceBoulderDensity = -1;
+
+  function surfaceBoulderBake(w, h, seed) {
+    var s = treesMakeSprite(w + 6, h + 6), g = s.g;
+    var baseY = h + 3, cx = (s.w / 2) | 0;
+    var shoulder = .18 + treesHash(seed * 17) * .13;
+    var peak = .36 + treesHash(seed * 29) * .20;
+    var pts = [[.02,.92],[.06,.48],[shoulder,.15],[peak,0],
+               [.80,.14],[.98,.60],[.94,1],[.20,1]];
+    var mask = new Uint8Array(s.w * s.h), x, y, i;
+    // Scan-convert the angular silhouette. The outline stays exactly one
+    // world pixel, without antialiased paths or smooth gradients.
+    for (y = 0; y <= h; y++) {
+      var cuts = [], fy = y / h;
+      for (i = 0; i < pts.length; i++) {
+        var a = pts[i], b = pts[(i + 1) % pts.length];
+        if ((a[1] <= fy && b[1] > fy) || (b[1] <= fy && a[1] > fy)) {
+          cuts.push((a[0] + (b[0] - a[0]) * (fy - a[1]) / (b[1] - a[1])) * w + 3);
+        }
+      }
+      cuts.sort(function(a, b) { return a - b; });
+      for (i = 0; i + 1 < cuts.length; i += 2) {
+        for (x = Math.ceil(cuts[i]); x <= Math.floor(cuts[i + 1]); x++) mask[(y + 3) * s.w + x] = 1;
+      }
+    }
+    for (y = 1; y < s.h - 1; y++) for (x = 1; x < s.w - 1; x++) {
+      var at = y * s.w + x;
+      if (!mask[at]) {
+        if (y < baseY && (mask[at - 1] || mask[at + 1] || mask[at - s.w] || mask[at + s.w])) {
+          g.fillStyle = BLD.outline; g.fillRect(x, y, 1, 1);
+        }
+        continue;
+      }
+      var nx = (x - 3) / w, ny = (y - 3) / h;
+      var ridge = .34 + (nx - peak) * .28;
+      g.fillStyle = ny < ridge ? BLD.stoneLight : (nx > .70 - ny * .12 ? BLD.stoneDark : BLD.stoneBase);
+      // A broad broken foot seats the rock in soil. It has no bright rim.
+      if (ny > .85 + nx * .05) g.fillStyle = BLD.stoneDark;
+      g.fillRect(x, y, 1, 1);
+      // One stepped fissure follows the meeting of the two main faces.
+      if (ny > .37 && ny < .78 && x === Math.round(3 + w * (.59 + Math.floor(ny * 6) * .025))) {
+        g.fillStyle = BLD.stoneDark; g.fillRect(x, y, 1, 1);
+      }
+    }
+    // A short moss seam ties some stones to the grass without making every
+    // face speckled. Three large facets remain the primary read.
+    if (seed % 2) {
+      g.fillStyle = TREES_GREEN_DARK;
+      g.fillRect(6, baseY - 3, Math.round(w * .23), 2);
+      g.fillRect(8, baseY - 4, Math.round(w * .12), 1);
+    }
+    return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
+  }
+
+  function surfaceBoulderSupported(rock) {
+    for (var c = rock.cL; c <= rock.cR; c++) {
+      var t = tileAt(SKY_ROWS, c);
+      if (!t || t === 'wall' || t.type === 'foundation' || treesInPond(c)) return false;
+    }
+    return true;
+  }
+
+  function surfaceBouldersRebuild() {
+    if (!surfaceBoulderSprites) {
+      surfaceBoulderSprites = [surfaceBoulderBake(26,13,11), surfaceBoulderBake(35,19,22),
+        surfaceBoulderBake(45,22,35), surfaceBoulderBake(32,25,46)];
+    }
+    surfaceBoulders.length = 0;
+    surfaceBoulderWorld = world;
+    surfaceBoulderDensity = treesTune.density;
+    var lastX = -1e9;
+    for (var c = 3; c < COLS - 3; c++) {
+      var region = regionAt(c);
+      if (!region || region.kind !== REGION_TOWN) continue;
+      if (Math.abs(c - townCenterCol(region.townIndex)) < TREES_TOWN_CLEAR - 2) continue;
+      // More likely at the edge of a grove, but rare enough to keep clearings.
+      if (treesHash(c * 1249 + 617) > .07 + (1 - treesGrove(c)) * .03) continue;
+      var spr = surfaceBoulderSprites[Math.floor(treesHash(c * 373 + 19) * surfaceBoulderSprites.length)];
+      var x = c * TILE + TILE * .5;
+      if (x - lastX < TILE * 5) continue;
+      var nearTree = false;
+      for (var i = treesLowerBound(x - 110); i < TREES.length && TREES[i].x < x + 110; i++) {
+        var tree = TREES[i];
+        if (Math.abs(tree.x - x) < (spr.w + tree.spr.w) * .5 + 14) { nearTree = true; break; }
+      }
+      if (nearTree) continue;
+      var rock = { x:x, spr:spr, cL:Math.floor((x - spr.ax + 3) / TILE),
+        cR:Math.floor((x - spr.ax + spr.w - 4) / TILE) };
+      if (!surfaceBoulderSupported(rock)) continue;
+      surfaceBoulders.push(rock); lastX = x;
+    }
+  }
+
+  function drawSurfaceBoulders() {
+    var surfaceY = SKY_ROWS * TILE;
+    if (cam.y >= surfaceY || cam.y + screenH < surfaceY - 32) return;
+    if (!treesBuilt || treesWorldRef !== world) return;
+    if (surfaceBoulderWorld !== world || surfaceBoulderDensity !== treesTune.density) surfaceBouldersRebuild();
+    var smoothing = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    for (var i = 0; i < surfaceBoulders.length; i++) {
+      var rock = surfaceBoulders[i], s = rock.spr;
+      if (rock.x + s.w < cam.x) continue;
+      if (rock.x - s.w > cam.x + screenW) break;
+      // Removing ANY supporting surface tile removes the decorative stone.
+      // Save/load derives the same result from the saved terrain, no new data.
+      if (!surfaceBoulderSupported(rock)) continue;
+      ctx.drawImage(s.cv, Math.round(rock.x - s.ax), surfaceY - s.ay);
+    }
+    ctx.imageSmoothingEnabled = smoothing;
+  }
+  // ====== RARE SURFACE TURTLE ======
+  // One tiny passerby, with a long quiet interval between visits. It walks
+  // in from beyond the camera edge, grazes, and eventually wanders back out.
+  // Surface exposure advances the encounter clock; time in the mine does not.
+  var surfaceTurtleWorld = null, surfaceTurtleSprites = null;
+  var surfaceTurtleSerial = 0, surfaceTurtleWait = 50;
+  var surfaceTurtle = { active:false, x:0, dir:1, entryDir:1, age:0,
+    phase:0, pause:0, graze:8, shy:0, returning:false };
+
+  function surfaceTurtleDelay(first) {
+    var h = treesHash(COLS * 19 + (++surfaceTurtleSerial) * 619);
+    return first ? 38 + h * 30 : 120 + h * 100;
+  }
+
+  function surfaceTurtleCanStand(x) {
+    if (x < 10 || x > COLS * TILE - 10) return false;
+    var left = Math.floor((x - 6) / TILE), right = Math.floor((x + 6) / TILE);
+    for (var c = left; c <= right; c++) {
+      var r = regionAt(c), t = tileAt(SKY_ROWS, c);
+      if (!r || r.kind !== REGION_TOWN || !t || t === 'wall' || t.type === 'foundation' || treesInPond(c)) return false;
+    }
+    return true;
+  }
+
+  function surfaceTurtleLeave() {
+    surfaceTurtle.active = false;
+    surfaceTurtleWait = surfaceTurtleDelay(false);
+  }
+
+  function surfaceTurtleSpawn() {
+    var side = treesHash(surfaceTurtleSerial * 137 + 5) < .5 ? -1 : 1;
+    // Try either offscreen edge, never move a failed candidate onto the screen.
+    for (var i = 0; i < 2; i++, side = -side) {
+      var x = side < 0 ? cam.x - 20 : cam.x + screenW + 20;
+      var dir = -side;
+      if (!surfaceTurtleCanStand(x) || !surfaceTurtleCanStand(x + dir * 22)) continue;
+      var t = surfaceTurtle;
+      t.active = true; t.x = x; t.dir = dir; t.entryDir = dir;
+      t.age = 0; t.phase = 0; t.pause = 0; t.shy = 0;
+      t.graze = 9; t.returning = false;
+      return true;
+    }
+    return false;
+  }
+
+  function surfaceTurtleUpdate(dt) {
+    if (surfaceTurtleWorld !== world) {
+      surfaceTurtleWorld = world; surfaceTurtleSerial = 0;
+      surfaceTurtle.active = false; surfaceTurtleWait = surfaceTurtleDelay(true);
+    }
+    if (!(dt > 0) || !isFinite(dt)) return;
+    dt = Math.min(dt, .05);
+    var t = surfaceTurtle, surfaceY = SKY_ROWS * TILE;
+    var surfaceVisible = cam.y < surfaceY && cam.y + screenH > surfaceY - 12;
+    if (!t.active) {
+      if (!surfaceVisible) return;
+      surfaceTurtleWait -= dt;
+      if (surfaceTurtleWait <= 0 && !surfaceTurtleSpawn()) surfaceTurtleWait = 18;
+      return;
+    }
+    // A lost support tile must not leave an animal hovering over a shaft.
+    // It disappears with that patch of surface scenery and starts a new wait.
+    if (!surfaceTurtleCanStand(t.x)) { surfaceTurtleLeave(); return; }
+    if (!surfaceVisible || t.x < cam.x - 120 || t.x > cam.x + screenW + 120) {
+      surfaceTurtleLeave(); return;
+    }
+    t.age += dt;
+    var px = player.x + PLAYER_W * .5, py = player.y + PLAYER_H;
+    if (Math.abs(px - t.x) < 48 && Math.abs(py - surfaceY) < 38 && Math.abs(player.vx) > 30) t.shy = 2.4;
+    t.shy = Math.max(0, t.shy - dt);
+    if (t.shy > 0) return; // tuck quietly while the rig passes
+    if (t.age > 42 && !t.returning) { t.dir = -t.entryDir; t.returning = true; }
+    if (t.returning && (t.x < cam.x - 20 || t.x > cam.x + screenW + 20)) { surfaceTurtleLeave(); return; }
+    if (t.pause > 0) { t.pause = Math.max(0, t.pause - dt); return; }
+    t.graze -= dt;
+    if (t.graze <= 0) {
+      t.pause = 1.4 + treesHash(surfaceTurtleSerial + Math.floor(t.age)) * 2;
+      t.graze = 8 + treesHash(surfaceTurtleSerial * 7 + Math.floor(t.age)) * 6;
+      return;
+    }
+    var next = t.x + t.dir * 5 * dt;
+    if (!surfaceTurtleCanStand(next + t.dir * 3)) {
+      t.dir = -t.dir; t.pause = 1.2; // inspect a bank or pit, then turn away
+      return;
+    }
+    t.x = next; t.phase += dt * 3;
+  }
+
+  function surfaceTurtleBake(frame) {
+    var s = treesMakeSprite(18, 12), g = s.g;
+    var tucked = frame === 2, foot = frame === 1 ? 1 : 0;
+    g.fillStyle = BLD.outline;
+    g.fillRect(3,4,9,4); g.fillRect(4,3,7,1); g.fillRect(5,2,5,1);
+    g.fillRect(2,7,2,1);
+    g.fillStyle = TREES_GREEN_DARK;
+    g.fillRect(4,4,7,4); g.fillRect(5,3,5,1);
+    g.fillRect(4 + foot,9,2,1); g.fillRect(9 - foot,9,2,1);
+    g.fillRect(5,8,1,1); g.fillRect(9,8,1,1);
+    g.fillRect(11,6,tucked ? 2 : 4,2);
+    if (!tucked) g.fillRect(13,5,3,2);
+    g.fillStyle = TREES_GREEN_MID;
+    g.fillRect(5,4,5,2); g.fillRect(4,5,3,2);
+    if (!tucked) g.fillRect(13,5,2,1);
+    g.fillStyle = TREES_GREEN_LIT;
+    g.fillRect(5,3,3,1); g.fillRect(4,4,2,1);
+    g.fillStyle = TREES_GREEN_DARK;
+    g.fillRect(7,4,1,3); g.fillRect(8,6,2,1);
+    if (!tucked) { g.fillStyle = BLD.outline; g.fillRect(15,5,1,1); }
+    return s.cv;
+  }
+
+  function drawSurfaceTurtle() {
+    var t = surfaceTurtle, surfaceY = SKY_ROWS * TILE;
+    if (!t.active || surfaceTurtleWorld !== world || cam.y >= surfaceY || cam.y + screenH < surfaceY - 12) return;
+    if (t.x < cam.x - 10 || t.x > cam.x + screenW + 10 || !surfaceTurtleCanStand(t.x)) return;
+    if (!surfaceTurtleSprites) surfaceTurtleSprites = [surfaceTurtleBake(0), surfaceTurtleBake(1), surfaceTurtleBake(2)];
+    var frame = t.shy > 0 ? 2 : t.pause > 0 ? 0 : Math.floor(t.phase) % 2;
+    ctx.save(); ctx.imageSmoothingEnabled = false;
+    ctx.translate(Math.round(t.x), surfaceY); ctx.scale(t.dir, 1);
+    ctx.drawImage(surfaceTurtleSprites[frame], -9, -10);
+    ctx.restore();
+  }
+
+  window.__surfaceTurtle = {
+    info:function() { var t = surfaceTurtle; return {active:t.active, wait:surfaceTurtleWait,
+      x:t.x, direction:t.dir, tucked:t.shy > 0, age:t.age}; }
   };
   // ====== RENDER: Station + decor drawing functions ======
 
@@ -39082,6 +39326,7 @@
 
   // ----- Per-frame update (called from the 350 loop) -----
   function birdsUpdate(dt) {
+    if (typeof rareBirdUpdate === 'function') rareBirdUpdate(dt);
     if (!(dt > 0)) return;
     if (dt > 0.05) dt = 0.05;                  // clamp tab-back dt spikes
     var surfY = SKY_ROWS * TILE;
@@ -39217,6 +39462,7 @@
 
   // ----- Draw (called from the 140 world-entities region, world transform on) -----
   function birdsDraw() {
+    if (typeof rareBirdDraw === 'function') rareBirdDraw();
     if (!birdsInited) return;
     var surfY = SKY_ROWS * TILE;
     if (cam.y >= surfY) return;
@@ -39251,6 +39497,122 @@
       }
     }
   }
+  // ====== SOLITARY SURFACE HAWK ======
+  // A rare passing silhouette, three times the tiny flock birds' wingspan.
+  // Its quiet glide belongs to the landscape: no flock, collision or rig AI.
+  // Timers count surface exposure, so a long mining trip cannot queue a swarm.
+  var rareBirdWorld = null, rareBirdSprites = null;
+  var rareBird = { active:false, wait:0, pass:0, x:0, y:0, baseY:0,
+    dir:1, speed:0, age:0, phase:0, flapPeriod:6, maxAge:0, seen:false };
+
+  function rareBirdReset() {
+    rareBirdWorld = world;
+    rareBird.active = false;
+    rareBird.pass = 0;
+    rareBird.age = 0;
+    // Add about one second for the offscreen approach after this first wait.
+    rareBird.wait = 45 + birdsHash(COLS * 13 + 829) * 28;
+  }
+
+  function rareBirdSurfaceVisible() {
+    var surfaceY = SKY_ROWS * TILE;
+    return cam.y < surfaceY - 72 && cam.y + screenH > surfaceY - 8;
+  }
+
+  function rareBirdInView(pad) {
+    return rareBird.x >= cam.x - pad && rareBird.x <= cam.x + screenW + pad &&
+      rareBird.y >= cam.y - pad && rareBird.y <= cam.y + screenH + pad;
+  }
+
+  function rareBirdBegin() {
+    var b = rareBird, seed = ++b.pass * 137 + COLS;
+    b.dir = birdsHash(seed + 3) < 0.5 ? 1 : -1;
+    b.x = b.dir > 0 ? cam.x - 64 : cam.x + screenW + 64;
+    var surfaceY = SKY_ROWS * TILE;
+    var high = Math.max(cam.y + 24, surfaceY - 180);
+    var low = surfaceY - 56;
+    b.baseY = high + (low - high) * birdsHash(seed + 7);
+    b.y = b.baseY;
+    b.speed = 42 + birdsHash(seed + 11) * 16;
+    b.phase = birdsHash(seed + 19) * Math.PI * 2;
+    b.flapPeriod = 5 + birdsHash(seed + 23) * 3;
+    b.maxAge = (screenW + 128) / b.speed + 8;
+    b.age = 0; b.seen = false; b.active = true;
+  }
+
+  function rareBirdUpdate(dt) {
+    if (rareBirdWorld !== world) rareBirdReset();
+    if (!(dt > 0) || !isFinite(dt)) return;
+    if (dt > 0.05) dt = 0.05;
+    var b = rareBird;
+    if (!b.active) {
+      if (!rareBirdSurfaceVisible()) return;
+      b.wait -= dt;
+      if (b.wait <= 0) rareBirdBegin();
+      return;
+    }
+    b.age += dt;
+    b.x += b.dir * b.speed * dt;
+    // A shallow, slowly rising glide. Position never follows the camera.
+    b.y = b.baseY + Math.sin(b.age * 0.65 + b.phase) * 4 - b.age * 0.35;
+    if (rareBirdInView(8)) b.seen = true;
+    // Retire only outside the view. Following a hawk keeps it alive instead
+    // of deleting it on a lifetime boundary in the middle of the sky.
+    if ((b.seen && !rareBirdInView(96)) || (b.age > b.maxAge && !rareBirdInView(12))) {
+      b.active = false;
+      b.wait = 90 + birdsHash(b.pass * 271 + 947) * 90;
+    }
+  }
+
+  function rareBirdBake() {
+    // Nine-pixel profile: broad wings, a short fan tail and hooked head.
+    // Broad stone shadow + warm brown breast keep the bird below the shop's
+    // value range. No bright eye or outline halo at this small scale.
+    var poses = [
+      ['.........', '...mm....', 'dddddmdd.', '.dddddddm', 'ddd.wdd..', '.........'],
+      ['ddd......', '.dm......', '..dm..dd.', '...dddddm', 'ddd.wdd..', '...d.....'],
+      ['.........', '......dd.', 'ddddddddm', '...dddd..', 'dddmwdd..', '..dd.....']
+    ];
+    var colors = { d:BLD.stoneDark, m:BLD.stoneBase, w:BLD.woodDark };
+    rareBirdSprites = [];
+    for (var p = 0; p < poses.length; p++) {
+      var cv = document.createElement('canvas');
+      cv.width = 9; cv.height = 6;
+      var g = cv.getContext('2d');
+      for (var y = 0; y < 6; y++) for (var x = 0; x < 9; x++) {
+        var color = colors[poses[p][y].charAt(x)];
+        if (color) { g.fillStyle = color; g.fillRect(x, y, 1, 1); }
+      }
+      rareBirdSprites.push(cv);
+    }
+  }
+
+  function rareBirdPose() {
+    var flap = rareBird.age % rareBird.flapPeriod;
+    // Most of each five-to-eight-second cycle is a level glide, followed by
+    // one unhurried upstroke/downstroke before the wings settle again.
+    if (flap < rareBird.flapPeriod - 0.65) return 0;
+    return flap < rareBird.flapPeriod - 0.32 ? 1 : 2;
+  }
+
+  function rareBirdDraw() {
+    if (!rareBird.active || rareBirdWorld !== world || !rareBirdInView(8)) return;
+    if (!rareBirdSprites) rareBirdBake();
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(Math.round(rareBird.x), Math.round(rareBird.y));
+    ctx.scale(rareBird.dir, 1);
+    ctx.drawImage(rareBirdSprites[rareBirdPose()], -4, -3);
+    ctx.restore();
+  }
+
+  window.__rareBird = {
+    info: function() {
+      return { kind:'hawk', active:rareBird.active, wait:rareBird.wait,
+        passes:rareBird.pass, x:rareBird.x, y:rareBird.y, direction:rareBird.dir,
+        pose:rareBirdPose(), wingspan:9 };
+    }
+  };
   /* ---- Landing feedback ---- */
   // One contact event, using velocity at the surface after braking and water
   // drag. A grounded frame or a tiny drilling step never counts as a landing.
@@ -60561,6 +60923,7 @@
     try { if (typeof radioMsgTick === 'function') radioMsgTick(dt); } catch (e) { if (!window.__radioErr) { window.__radioErr = String(e) + '\n' + (e.stack||''); console.error('radioMsgTick threw:', e); } }
     try { if (typeof gamepadTick === 'function') gamepadTick(dt); } catch (e) { if (!window.__padErr) { window.__padErr = String(e) + '\n' + (e.stack||''); console.error('gamepadTick threw:', e); } }
     if (typeof birdsUpdate === 'function') birdsUpdate(dt);   // ambient surface birds (205-birds.js); early-outs to zero cost when no flock is near
+    if (typeof surfaceTurtleUpdate === 'function') surfaceTurtleUpdate(dt);
     // Tick the on-screen toast message timer in the loop (not inside update)
     // so it keeps counting down even while the shop is open or the game is
     // over. Otherwise "Small charge stocked!" sticks on screen for as long

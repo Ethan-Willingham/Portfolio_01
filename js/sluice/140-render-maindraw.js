@@ -927,6 +927,8 @@
     //      Drawn before the stations so canopies sit behind every building,
     //      in front of the terrain tiles + grass line. ----
     if (typeof drawTrees === 'function') drawTrees();
+    if (typeof drawSurfaceBoulders === 'function') drawSurfaceBoulders();
+    if (typeof drawSurfaceTurtle === 'function') drawSurfaceTurtle();
 
     // ---- Surface stations (one recoloured store per town) ----
     // Only towns that ACTUALLY EXIST in REGIONS (single-town = just town 0). Iterating

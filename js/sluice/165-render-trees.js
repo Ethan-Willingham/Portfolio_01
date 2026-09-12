@@ -56,12 +56,12 @@
   // ----- Tunables (gm group 'trees', registered in 360) -----
   var treesTune = {
     enabled: 1,
-    density: 1.0,     // global spawn multiplier (applies on the next rebuild)
-    swayAmp: 1.0,     // ambient sway master
+    density: 0.68,    // open woodland with room for grass and stone
+    swayAmp: 0.75,    // ambient sway master
     windCouple: 1.0,  // surfaceWind lean coupling
     gustR: 96,        // rig gust radius around a canopy, px
     gustGain: 1.0,    // rig gust strength master
-    leafRate: 1.0,    // leaf shed master
+    leafRate: 0.65,   // leaf shed master
     birdPeriod: 11,   // mean seconds between ambient canopy bird launches
     fallRate: 1.0     // tip-over torque master
   };
@@ -210,7 +210,7 @@
           if (needles && (ny > -.12 || nx > .22)) col = 1;
           // Short, offset light facets. Their broken edges avoid contour bands.
           var facet = treesHash(seed + i * 73 + Math.floor(x / 4) * 23);
-          if (ny < -.23 && ny > -.72 && nx < .18 && nx > -.68 && facet > .36) {
+          if (ny < -.23 && ny > -.72 && nx < .18 && nx > -.68 && facet > .56) {
             col = needles ? 2 : 3;
             if (needles && facet > .78 && ny < -.42) col = 3;
           }
@@ -432,20 +432,20 @@
       treesSprites.push(spr);
     }
     var i;
-    var sprS = [2.3, 3.1, 4.1];
+    var sprS = [2.0, 2.7, 3.6];
     for (i = 0; i < sprS.length; i++) {
       reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i], 11 + i * 6));
       reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i] + 0.15, 23 + i * 6));
     }
-    var brS = [2.1, 2.8];
+    var brS = [1.9, 2.5];
     for (i = 0; i < brS.length; i++) {
       reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i], 31 + i * 8));
       reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i] + 0.12, 47 + i * 8));
     }
-    reg(TREES_KIND_BUSH, treesBakeBush(0.62, 53, 0, false));
-    reg(TREES_KIND_BUSH, treesBakeBush(0.76, 67, 1, false));
-    reg(TREES_KIND_BUSH, treesBakeBush(0.84, 79, 2, true));
-    reg(TREES_KIND_BUSH, treesBakeBush(0.96, 97, 3, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.52, 53, 0, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.64, 67, 1, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.72, 79, 2, true));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.80, 97, 3, false));
     var snS = [1.6, 2.3];
     for (i = 0; i < snS.length; i++) {
       reg(TREES_KIND_SNAG, treesBakeSnag(snS[i], 71 + i * 12));
@@ -496,9 +496,8 @@
       if (isZone) kind = kr < 0.74 ? TREES_KIND_SNAG : (kr < 0.92 ? TREES_KIND_SPRUCE : TREES_KIND_BUSH);
       else        kind = kr < 0.44 ? TREES_KIND_SPRUCE : (kr < 0.72 ? TREES_KIND_BIRCH : TREES_KIND_BUSH);
       var spr = treesPickSprite(kind, isZone ? g * 0.6 : g, treesHash(c * 277 + 5));
-      // Grove cores let canopies just about touch (overlap reads as depth);
-      // bushes tuck in tighter still.
-      var minDx = (kind === TREES_KIND_BUSH) ? 16 : 10 + spr.w * 0.38;
+      // Small groups, with clear air between the larger silhouettes.
+      var minDx = (kind === TREES_KIND_BUSH) ? 24 : 18 + spr.w * 0.50;
       var x = c * TILE + TILE * 0.5 + (treesHash(c * 401 + 3) - 0.5) * 16;
       if (x - lastX < minDx) continue;
       lastX = x;
