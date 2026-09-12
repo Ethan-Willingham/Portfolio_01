@@ -26,6 +26,8 @@ window.__surfaceSmoke = (function () {
   function state() { return { version:GAME_VERSION, tile:TILE, surfaceY:SKY_ROWS*TILE,
     cam:{x:cam.x,y:cam.y}, width:viewW,height:viewH,scale:worldScale,day:timeOfDay,
     transition:typeof drawSurfaceTransition === 'function',
+    bankClip:typeof clipSurfaceBank === 'function',
+    bankEdgeDepth:typeof SURFACE_BANK_EDGE_DEPTH === 'number' ? SURFACE_BANK_EDGE_DEPTH : null,
     depth:typeof SURFACE_TRANSITION_DEPTH === 'number' ? SURFACE_TRANSITION_DEPTH : null }; }
   function stop() {
     gamePaused=true; if(gameRafId) cancelAnimationFrame(gameRafId); gameRafId=0;
@@ -70,7 +72,8 @@ window.__surfaceSmoke = (function () {
     zoomMode=o.zoom || 'out'; resize();
     if(o.scale) {worldScale=targetWorldScale=o.scale;screenW=viewW/worldScale;screenH=viewH/worldScale;syncTerrainChunkRenderScale();}
     cam.x=(centerCol+0.5)*TILE-screenW/2;
-    cam.y=deep ? (SKY_ROWS+deep+depth/2)*TILE-screenH/2 : SKY_ROWS*TILE-screenH*(o.sky || 0.27);
+    cam.y=deep ? (SKY_ROWS+deep+depth/2)*TILE-screenH/2 : SKY_ROWS*TILE-screenH*(typeof o.sky==='number' ? o.sky : 0.27);
+    if(typeof o.cameraBelowSurface==='number')cam.y=SKY_ROWS*TILE+o.cameraBelowSurface;
     for(var n=0;n<60;n++) originalRender();
     return state();
   }
@@ -83,6 +86,7 @@ window.__surfaceSmoke = (function () {
       var fn=typeof drawSurfaceTransition === 'function' ? drawSurfaceTransition : drawSurfaceDirtCap;
       for(var s=0;s<(segments || 1);s++) {
         ctx.save();ctx.beginPath();ctx.rect(cx+s*1024/(segments || 1),SKY_ROWS*TILE,1024/(segments || 1),240);ctx.clip();
+        clipSurfaceBank(cx+s*1024/(segments || 1),cx+(s+1)*1024/(segments || 1),SKY_ROWS*TILE+240);
         fn(cx+s*1024/(segments || 1),cx+(s+1)*1024/(segments || 1));ctx.restore();
       }
       return c;
@@ -98,11 +102,47 @@ window.__surfaceSmoke = (function () {
     var old=ctx,c=document.createElement('canvas');c.width=1024;c.height=240;
     try {
       ctx=c.getContext('2d',{willReadFrequently:true});ctx.setTransform(scale,0,0,scale,-cam.x*scale,-SKY_ROWS*TILE*scale);
+      clipSurfaceBank(cam.x,cam.x+1024/scale,SKY_ROWS*TILE+240/scale);
       drawSurfaceTransition(cam.x,cam.x+1024/scale);
       var a=ctx.getImageData(0,Math.round(30*scale),1024,1).data,min=255,defects=[];
       for(var x=3;x<1021;x++) {var alpha=a[x*4+3];min=Math.min(min,alpha);if(alpha<254)defects.push({x:x,alpha:alpha});}
       return {scale:scale,minAlpha:min,defects:defects};
     } finally {ctx=old;}
+  }
+  function bankSilhouette(scale,offset) {
+    var old=ctx,oldX=cam.x,c=document.createElement('canvas');
+    c.width=1024;c.height=Math.ceil(40*scale);
+    try {
+      cam.x+=offset;
+      ctx=c.getContext('2d',{willReadFrequently:true});
+      ctx.setTransform(scale,0,0,scale,-cam.x*scale,-SKY_ROWS*TILE*scale);
+      clipSurfaceBank(cam.x,cam.x+c.width/scale,SKY_ROWS*TILE+40);
+      // This is the production ordering: the cave wall and foreground bank
+      // share one silhouette clip. Sampling the actual raster catches a
+      // accidentally straight clip even if the profile formula varies.
+      ctx.fillStyle=BG.wallTopsoil;
+      ctx.fillRect(cam.x,SKY_ROWS*TILE,c.width/scale,40);
+      drawSurfaceTransition(cam.x,cam.x+c.width/scale);
+      var bytes=ctx.getImageData(0,0,c.width,c.height).data;
+      var firstRows=[],levels={},min=c.height,max=-1,skyLeaks=0,lowerGaps=0;
+      var solidRow=Math.ceil((SURFACE_BANK_EDGE_DEPTH+2)*scale);
+      for(var x=3;x<c.width-3;x++) {
+        var first=-1;
+        for(var y=0;y<c.height;y++) {
+          if(bytes[(y*c.width+x)*4+3]>=254){first=y;break;}
+        }
+        firstRows.push(first);levels[first]=true;min=Math.min(min,first);max=Math.max(max,first);
+        var wx=cam.x+(x+0.5)/scale;
+        var edge=surfaceBankEdge(wx-cam.x*0.30);
+        // Leave one world pixel for polygon interpolation and edge AA.
+        var safeSkyRow=Math.floor((edge-1)*scale)-1;
+        for(var y=0;y<=safeSkyRow;y++)if(bytes[(y*c.width+x)*4+3]>1)skyLeaks++;
+        if(bytes[(solidRow*c.width+x)*4+3]!==255)lowerGaps++;
+      }
+      return {scale:scale,offset:offset,firstOpaqueMin:min,firstOpaqueMax:max,
+        distinctEdgeRows:Object.keys(levels).length,skyLeaks:skyLeaks,lowerGaps:lowerGaps,
+        sampleRows:firstRows.filter(function(_,i){return i%16===0;})};
+    } finally {ctx=old;cam.x=oldX;}
   }
   function surfaceMouths() {
     var saved=ctx, c0=centerCol-3, c1=centerCol+3;
@@ -127,6 +167,7 @@ window.__surfaceSmoke = (function () {
   function diagnostics() {
     var before=JSON.stringify(world), x=cam.x, y=cam.y;
     var seams=[seamAlpha(1.2),seamAlpha(1.5),seamAlpha(2.55),seamAlpha(3.2142857142857144)];
+    var silhouettes=[bankSilhouette(1.2,0),bankSilhouette(1.5,0),bankSilhouette(2.55,0),bankSilhouette(3.2142857142857144,0),bankSilhouette(2.55,137.25)];
     var a=drawAt(x,y), bytes=pixels(a);
     drawAt(x+TILE*47,y+TILE*3);
     var again=drawAt(x,y), split=drawAt(x,y,4);
@@ -147,7 +188,7 @@ window.__surfaceSmoke = (function () {
       for(var run=0;run<8;run++) {var t=performance.now();for(var n=0;n<100;n++)fn(x,x+1024);timings.push((performance.now()-t)/100);}
     } finally {ctx=g;cam.x=oldX;cam.y=oldY;timeOfDay=oldTime;}
     timings.sort(function(a,b){return a-b;});
-    return { mouth:surfaceMouths(), seamAlpha:seams, terrainUnchanged:before===JSON.stringify(world), roundTrip:compare(bytes,pixels(again)),
+    return { mouth:surfaceMouths(), seamAlpha:seams, silhouettes:silhouettes, terrainUnchanged:before===JSON.stringify(world), roundTrip:compare(bytes,pixels(again)),
       split:compare(bytes,pixels(split)), alphaRows:alphas,
       drawMs:{median:timings[4],max:timings[7],min:timings[0],cold:cold,paletteChange:recolor},cacheEntries:surfaceTransitionCache.size,
       surfaceImage:a.toDataURL('image/png') };
@@ -227,6 +268,7 @@ try {
   check('game booted',ready);await ev('document.fonts.ready');await ev('__surfaceSmoke.stop()');
   const initial=await scene('pit-day',{width:7,depth:5,scale:2.55});
   check('replacement renderer is built',initial.transition);
+  check('shared irregular bank clip is built',initial.bankClip && initial.bankEdgeDepth>0);
   const diagnostic=await ev('__surfaceSmoke.diagnostics()');
   console.log('MOUTH '+JSON.stringify(diagnostic.mouth));
   check('open excavation has no foreground slivers at the sky',diagnostic.mouth.residue===0);
@@ -236,14 +278,20 @@ try {
   check('drawing adjacent view strips preserves the same image',diagnostic.split.max<=8 && diagnostic.split.mean<0.05);
   const depth=initial.depth;
   check('fractional zoom keeps cache boundaries opaque',diagnostic.seamAlpha.every(s=>s.minAlpha===255));
+  check('rendered top edge varies across every zoom and scrolled view',diagnostic.silhouettes.every(s=>s.distinctEdgeRows>=4 && s.firstOpaqueMax-s.firstOpaqueMin>=3*s.scale));
+  check('rendered bank leaves the sky above its profile transparent',diagnostic.silhouettes.every(s=>s.skyLeaks===0 && s.firstOpaqueMin>0));
+  check('rendered bank stays opaque beneath the full edge depth',diagnostic.silhouettes.every(s=>s.lowerGaps===0));
   check('transition cache stays bounded',diagnostic.cacheEntries<=16);
   check('transition fades out before its lower boundary',depth!==null && diagnostic.alphaRows[Math.min(239,Math.ceil(depth)+2)]<0.2);
   if(dump)fs.writeFileSync(path.join(dump,'transition-isolated.png'),Buffer.from(diagnostic.surfaceImage.split(',')[1],'base64'));
   delete diagnostic.surfaceImage;reports.push({diagnostic});
   console.log('DRAW '+JSON.stringify(diagnostic.drawMs));
   console.log('SEAM '+JSON.stringify(diagnostic.seamAlpha));
+  console.log('SILHOUETTE '+JSON.stringify(diagnostic.silhouettes.map(({sampleRows,...s})=>s)));
   await scene('pit-night',{width:7,depth:5,scale:2.55,night:true});
   await scene('wide-shallow-night',{width:17,depth:3,scale:2.55,night:true});
+  await scene('wide-shallow-day',{width:17,depth:3,scale:2.55});
+  await scene('horizon-just-above-viewport',{width:17,depth:5,scale:2.55,cameraBelowSurface:4});
   await scene('narrow-shaft',{width:1,depth:9,scale:2.55});
   await scene('broad-excavation',{width:25,depth:11,zoom:'out'});
   await ev('__surfaceSmoke.move(17.25,41.5)');await shot('broad-scrolled-fractional');

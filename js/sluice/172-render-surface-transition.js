@@ -5,6 +5,7 @@
   // X follows two depth planes; Y always stays pinned to the world surface.
   var SURFACE_TRANSITION_DEPTH = TILE * 5;
   var SURFACE_TRANSITION_STRIP = 384;
+  var SURFACE_BANK_EDGE_DEPTH = 12;
   var surfaceTransitionCache = new Map();
 
   function surfaceBankNoise(x, scale, seed) {
@@ -15,6 +16,31 @@
 
   function surfaceBankRGB(hex) {
     return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  }
+
+  // The rear bank sits slightly below the playable ground. Broad uneven
+  // shoulders and smaller broken edges replace the ruler-straight horizon.
+  // Keep its lowest point within the mountains' existing 12px lower skirt.
+  function surfaceBankEdge(x) {
+    return 1 + surfaceBankNoise(x, 117, 401) * 4 +
+      surfaceBankNoise(x, 37, 407) * 5 + surfaceBankNoise(x, 9, 431) * 1.5;
+  }
+
+  function clipSurfaceBank(worldLeft, worldRight, bottom) {
+    var ox = cam.x * 0.30, surfaceY = SKY_ROWS * TILE;
+    // Sample in the bank's own coordinates so the same contour scrolls
+    // with its texture. The wall and both detail planes share this mask.
+    var left = Math.floor((worldLeft - ox) / 2) * 2 - 2;
+    var right = Math.ceil((worldRight - ox) / 2) * 2 + 2;
+    ctx.beginPath();
+    ctx.moveTo(left + ox, surfaceY + surfaceBankEdge(left));
+    for (var x = left + 2; x <= right; x += 2) {
+      ctx.lineTo(x + ox, surfaceY + surfaceBankEdge(x));
+    }
+    ctx.lineTo(right + ox, bottom);
+    ctx.lineTo(left + ox, bottom);
+    ctx.closePath();
+    ctx.clip();
   }
 
   function surfaceBankEase(a, b, x) {
@@ -40,6 +66,7 @@
         surfaceBankNoise(wx, 9, 93) * 5 + tileHash01(Math.floor(wx / 2), 51, 19) * 2;
       var warp = broad * 19 + broken * 5;
       var reach = 94 + broad * 38 + broken * 14;
+      var edge = surfaceBankEdge(wx);
       for (var y = 0; y < h; y++) {
         var at = (y * w + x) * 4;
         var grain = tileHash01(wx, y, 101) - 0.5;
@@ -61,7 +88,7 @@
           var seam = (1 - surfaceBankEase(0.02, 0.19, f)) * Math.max(0, patch - 0.35) * 18;
           var facet = surfaceBankNoise(wx + y * 1.7, 32, 163) - 0.5;
           value = facet * 10 + grain * 3 - seam;
-          skyLight = Math.exp(-y / 44) * (0.72 + broad * 0.22);
+          skyLight = Math.exp(-Math.max(0, y - edge) / 44) * (0.72 + broad * 0.22);
           alpha = 1 - surfaceBankEase(reach - 52, reach, y);
         }
         for (var ch = 0; ch < 3; ch++) {

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.83';
+  var GAME_VERSION = 'v26.84';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -26102,15 +26102,16 @@
     // so the colors mean something spatial: deep space at the top, dark
     // upper atmosphere fading down to the warm horizon at the surface.
     var surfaceY = SKY_ROWS * TILE;
-    if (worldTop < surfaceY) {
+    if (worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH) {
       // Night sky is painted in NATIVE pixel space (no world scale) so the
       // pre-rendered Milky Way texture stays crisp at 1:1 with no resampling
       // blur. Switch transform → paint → switch back to world transform.
       var skyBottomWorld = Math.min(surfaceY, worldBottom);
       var skyBottomPx = Math.round((skyBottomWorld - cam.y) * ws);
+      var skyClipBottomPx = Math.round((Math.min(surfaceY + SURFACE_BANK_EDGE_DEPTH, worldBottom) - cam.y) * ws);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       var _rTs = performance.now();
-      if (!PERF_DISABLE_NIGHTSKY) drawNightSkyToScreen(skyBottomPx);
+      if (!PERF_DISABLE_NIGHTSKY) drawNightSkyToScreen(skyBottomPx, skyClipBottomPx);
       perfMark('render.skyComposite', _rTs);
       ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
 
@@ -26188,6 +26189,12 @@
           // cave shape for free. The pattern rides its own matrix for the
           // X+Y parallax drift (imageSmoothing off so the speckle stays
           // crisp, matching the old per-chunk wall fill).
+          var surfaceBankClip = L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
+            worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH;
+          if (surfaceBankClip) {
+            ctx.save();
+            clipSurfaceBank(worldLeft, worldRight, bandBotY);
+          }
           var wallFill = PERF_DISABLE_CAVE_WALLS ? null : getBiomeWallFill(L.name);
           if (wallFill) {
             wallFill.setTransform(new DOMMatrix([1, 0, 0, 1,
@@ -26208,6 +26215,7 @@
               surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
             drawSurfaceTransition(worldLeft, worldRight);
           }
+          if (surfaceBankClip) ctx.restore();
         }
       }
     }
@@ -28984,7 +28992,10 @@
   // reset the transform to identity. skyBottomPx is the y-coord (in canvas
   // device pixels) where the sky meets the ground; the texture is clipped
   // to [0..skyBottomPx] so it never paints over underground.
-  function drawNightSkyToScreen(skyBottomPx) {
+  // clipBottomPx can reveal a little more sky behind the irregular rear
+  // bank. skyBottomPx stays the true horizon for atmosphere and celestials.
+  function drawNightSkyToScreen(skyBottomPx, clipBottomPx) {
+    if (clipBottomPx === undefined) clipBottomPx = skyBottomPx;
     var cw = canvas.width;
     var ch = canvas.height;
     if (cw <= 0 || ch <= 0) return;
@@ -29012,11 +29023,11 @@
 
     ensureNightSkyTwinklers(cw, ch);
 
-    var clipNeeded = (skyBottomPx < ch);
+    var clipNeeded = (clipBottomPx < ch);
     if (clipNeeded) {
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, cw, Math.max(0, skyBottomPx));
+      ctx.rect(0, 0, cw, Math.max(0, clipBottomPx));
       ctx.clip();
     }
 
@@ -33703,6 +33714,7 @@
   // X follows two depth planes; Y always stays pinned to the world surface.
   var SURFACE_TRANSITION_DEPTH = TILE * 5;
   var SURFACE_TRANSITION_STRIP = 384;
+  var SURFACE_BANK_EDGE_DEPTH = 12;
   var surfaceTransitionCache = new Map();
 
   function surfaceBankNoise(x, scale, seed) {
@@ -33713,6 +33725,31 @@
 
   function surfaceBankRGB(hex) {
     return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  }
+
+  // The rear bank sits slightly below the playable ground. Broad uneven
+  // shoulders and smaller broken edges replace the ruler-straight horizon.
+  // Keep its lowest point within the mountains' existing 12px lower skirt.
+  function surfaceBankEdge(x) {
+    return 1 + surfaceBankNoise(x, 117, 401) * 4 +
+      surfaceBankNoise(x, 37, 407) * 5 + surfaceBankNoise(x, 9, 431) * 1.5;
+  }
+
+  function clipSurfaceBank(worldLeft, worldRight, bottom) {
+    var ox = cam.x * 0.30, surfaceY = SKY_ROWS * TILE;
+    // Sample in the bank's own coordinates so the same contour scrolls
+    // with its texture. The wall and both detail planes share this mask.
+    var left = Math.floor((worldLeft - ox) / 2) * 2 - 2;
+    var right = Math.ceil((worldRight - ox) / 2) * 2 + 2;
+    ctx.beginPath();
+    ctx.moveTo(left + ox, surfaceY + surfaceBankEdge(left));
+    for (var x = left + 2; x <= right; x += 2) {
+      ctx.lineTo(x + ox, surfaceY + surfaceBankEdge(x));
+    }
+    ctx.lineTo(right + ox, bottom);
+    ctx.lineTo(left + ox, bottom);
+    ctx.closePath();
+    ctx.clip();
   }
 
   function surfaceBankEase(a, b, x) {
@@ -33738,6 +33775,7 @@
         surfaceBankNoise(wx, 9, 93) * 5 + tileHash01(Math.floor(wx / 2), 51, 19) * 2;
       var warp = broad * 19 + broken * 5;
       var reach = 94 + broad * 38 + broken * 14;
+      var edge = surfaceBankEdge(wx);
       for (var y = 0; y < h; y++) {
         var at = (y * w + x) * 4;
         var grain = tileHash01(wx, y, 101) - 0.5;
@@ -33759,7 +33797,7 @@
           var seam = (1 - surfaceBankEase(0.02, 0.19, f)) * Math.max(0, patch - 0.35) * 18;
           var facet = surfaceBankNoise(wx + y * 1.7, 32, 163) - 0.5;
           value = facet * 10 + grain * 3 - seam;
-          skyLight = Math.exp(-y / 44) * (0.72 + broad * 0.22);
+          skyLight = Math.exp(-Math.max(0, y - edge) / 44) * (0.72 + broad * 0.22);
           alpha = 1 - surfaceBankEase(reach - 52, reach, y);
         }
         for (var ch = 0; ch < 3; ch++) {

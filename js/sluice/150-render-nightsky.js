@@ -1801,7 +1801,10 @@
   // reset the transform to identity. skyBottomPx is the y-coord (in canvas
   // device pixels) where the sky meets the ground; the texture is clipped
   // to [0..skyBottomPx] so it never paints over underground.
-  function drawNightSkyToScreen(skyBottomPx) {
+  // clipBottomPx can reveal a little more sky behind the irregular rear
+  // bank. skyBottomPx stays the true horizon for atmosphere and celestials.
+  function drawNightSkyToScreen(skyBottomPx, clipBottomPx) {
+    if (clipBottomPx === undefined) clipBottomPx = skyBottomPx;
     var cw = canvas.width;
     var ch = canvas.height;
     if (cw <= 0 || ch <= 0) return;
@@ -1829,11 +1832,11 @@
 
     ensureNightSkyTwinklers(cw, ch);
 
-    var clipNeeded = (skyBottomPx < ch);
+    var clipNeeded = (clipBottomPx < ch);
     if (clipNeeded) {
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, cw, Math.max(0, skyBottomPx));
+      ctx.rect(0, 0, cw, Math.max(0, clipBottomPx));
       ctx.clip();
     }
 

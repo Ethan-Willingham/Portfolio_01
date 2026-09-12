@@ -243,15 +243,16 @@
     // so the colors mean something spatial: deep space at the top, dark
     // upper atmosphere fading down to the warm horizon at the surface.
     var surfaceY = SKY_ROWS * TILE;
-    if (worldTop < surfaceY) {
+    if (worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH) {
       // Night sky is painted in NATIVE pixel space (no world scale) so the
       // pre-rendered Milky Way texture stays crisp at 1:1 with no resampling
       // blur. Switch transform → paint → switch back to world transform.
       var skyBottomWorld = Math.min(surfaceY, worldBottom);
       var skyBottomPx = Math.round((skyBottomWorld - cam.y) * ws);
+      var skyClipBottomPx = Math.round((Math.min(surfaceY + SURFACE_BANK_EDGE_DEPTH, worldBottom) - cam.y) * ws);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       var _rTs = performance.now();
-      if (!PERF_DISABLE_NIGHTSKY) drawNightSkyToScreen(skyBottomPx);
+      if (!PERF_DISABLE_NIGHTSKY) drawNightSkyToScreen(skyBottomPx, skyClipBottomPx);
       perfMark('render.skyComposite', _rTs);
       ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
 
@@ -329,6 +330,12 @@
           // cave shape for free. The pattern rides its own matrix for the
           // X+Y parallax drift (imageSmoothing off so the speckle stays
           // crisp, matching the old per-chunk wall fill).
+          var surfaceBankClip = L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
+            worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH;
+          if (surfaceBankClip) {
+            ctx.save();
+            clipSurfaceBank(worldLeft, worldRight, bandBotY);
+          }
           var wallFill = PERF_DISABLE_CAVE_WALLS ? null : getBiomeWallFill(L.name);
           if (wallFill) {
             wallFill.setTransform(new DOMMatrix([1, 0, 0, 1,
@@ -349,6 +356,7 @@
               surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
             drawSurfaceTransition(worldLeft, worldRight);
           }
+          if (surfaceBankClip) ctx.restore();
         }
       }
     }

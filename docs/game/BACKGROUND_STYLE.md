@@ -225,6 +225,13 @@ The surface now reveals sparse roots over a recessed earth face.
 The face loses light and definition over five tiles until the existing parallax
 wall takes over. There is no outlined lower edge across the excavation.
 
+- **Skyline:** the rear bank has shallow, irregular dips 1 to 11.5 world pixels
+  below the playable surface. Broad shoulders and smaller erosion detail use
+  continuous hash noise, with no repeating wave. `clipSurfaceBank` gives the
+  wall, soil, and roots the same top edge, moving with the earth face's parallax.
+  The sky's clip extends by 12 pixels to fill the dips while its actual horizon,
+  sun, moon, and atmosphere keep their original positions. The existing mountain
+  skirts continue behind the whole edge. No raised strip covers surface grass.
 - **Depth:** two horizontal motion planes. The earth face offsets by `cam.x * 0.30`,
   the roots by `cam.x * 0.10`; the existing cave wall offsets by `cam.x * 0.45`.
   The bank therefore sits between foreground terrain and the deeper cave wall.
