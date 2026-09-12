@@ -89,15 +89,13 @@
   // dusk shows the graded sunset blaze guillotined against unlit dirt. That
   // hard cut is the defect (owner, 2026-06-10).
   //
-  // Fix: composite the DISCARDED below-line slice of the already-rendered
-  // sky back over the ground. Alpha is 1.0 exactly at the line — it is the
-  // same texture continuing, so the seam is invisible by construction — and
-  // fades to 0 over a band whose height grows from zero as the player
-  // climbs (same zoom-independent screen-fraction lean as the parked veil
-  // above). The land edge dissolves into the planet's lit atmospheric limb:
-  // a setting sun melts into it, a low moon's corona silvers it, and night
-  // blacks it out on its own (the shader's below-horizon output is near-
-  // black after civil twilight) — no per-time-of-day branches needed.
+  // Continue the below-line slice of the already-rendered sky. Alpha is
+  // 1.0 at the line and fades to 0 over a band whose height grows as the
+  // player climbs. Draw immediately after the sky, BEFORE the mountains,
+  // bank, terrain and entities. The recessed bank now supplies the land
+  // transition; the original post-world placement painted a straight
+  // stripe across its irregular skyline whenever the player flew up.
+  // The landscape must occlude this atmospheric continuation normally.
   //
   // This is NOT the v24.53 altitude fog (vetoed: it washed the WHOLE
   // visible ground in one flat veil colour). The limb is horizon-local,
@@ -107,6 +105,8 @@
   // architecture documented in §16).
   //
   // Invariants:
+  //  - Paint with the sky, behind every landscape layer. Never restore
+  //    the old post-world placement or it cuts across the bank again.
   //  - The limb's alpha at the surface line is ALWAYS 1.0 while active; the
   //    ascent ease-in comes from the band HEIGHT growing, never from
   //    thinning the line alpha (a thinned line re-exposes the hard edge as

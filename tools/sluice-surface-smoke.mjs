@@ -1,4 +1,5 @@
 // Run: DUMP=/tmp/sluice-surface-smoke node tools/sluice-surface-smoke.mjs
+// BASELINE=1 records the known ascent-line regression without asserting its fix.
 // Uses an owned Chrome for Testing process and a disposable browser profile.
 // The probe is injected by this local server only, never into the shipped game.
 import { spawn } from 'node:child_process';
@@ -22,9 +23,16 @@ let chrome, ws, sequence = 0, checks = 0;
 const probe = `
 window.__surfaceSmoke = (function () {
   var originalRender = render;
+  var originalSkyRenderer = renderSkyGL;
+  var originalLimb = drawHorizonLimb, limbCalls=0, limbComposites=0;
+  drawHorizonLimb=function() {
+    var savedDraw=ctx.drawImage;
+    ctx.drawImage=function(){limbComposites++;return savedDraw.apply(this,arguments);};
+    try {limbCalls++;return originalLimb();} finally {ctx.drawImage=savedDraw;}
+  };
   var centerCol = 80;
   function state() { return { version:GAME_VERSION, tile:TILE, surfaceY:SKY_ROWS*TILE,
-    cam:{x:cam.x,y:cam.y}, width:viewW,height:viewH,scale:worldScale,day:timeOfDay,
+    cam:{x:cam.x,y:cam.y}, width:viewW,height:viewH,scale:worldScale,day:timeOfDay,skyPath:skyGLLastDrew ? 'WebGL' : '2D',
     transition:typeof drawSurfaceTransition === 'function',
     bankClip:typeof clipSurfaceBank === 'function',
     bankEdgeDepth:typeof SURFACE_BANK_EDGE_DEPTH === 'number' ? SURFACE_BANK_EDGE_DEPTH : null,
@@ -45,6 +53,7 @@ window.__surfaceSmoke = (function () {
     resize(); return state();
   }
   function specimen(o) {
+    renderSkyGL=o.fallback ? function(){return null;} : originalSkyRenderer;
     var depth=o.depth || 5, width=o.width || 7, deep=o.deep || 0;
     var c0=centerCol-Math.floor(width/2), c1=c0+width;
     for(var r=0;r<SKY_ROWS+100;r++) {
@@ -63,12 +72,13 @@ window.__surfaceSmoke = (function () {
     }
     player.x=(centerCol+0.5)*TILE-PLAYER_W/2;
     player.y=(SKY_ROWS+deep+depth)*TILE-PLAYER_H;
+    if(typeof o.altitude==='number')player.y=SKY_ROWS*TILE-o.altitude*TILE-PLAYER_H;
     player.renderX=player.x; player.renderY=player.y;
     player.vx=player.vy=0; player.onGround=true;
     treesRebuild(); lightingInit();
     terrainChunkCache={}; terrainChunkCount=0; terrainWarmupFrames=3;
     terrainChunkRebuildBoostFrames=100; terrainClearOverlays=[]; terrainClearedKinds={};
-    timeOfDay=o.night ? 0 : 0.5;
+    timeOfDay=typeof o.tod==='number' ? o.tod : o.night ? 0 : 0.5;
     zoomMode=o.zoom || 'out'; resize();
     if(o.scale) {worldScale=targetWorldScale=o.scale;screenW=viewW/worldScale;screenH=viewH/worldScale;syncTerrainChunkRenderScale();}
     cam.x=(centerCol+0.5)*TILE-screenW/2;
@@ -164,6 +174,53 @@ window.__surfaceSmoke = (function () {
       return {residue:residue,solid:solid};
     } finally {ctx=saved;}
   }
+  function limbComparison() {
+    var was=limbTune.enabled,scale=dpr*worldScale;
+    var sy=Math.round((SKY_ROWS*TILE-cam.y)*scale),cw=canvas.width,ch=canvas.height;
+    var start=CAMERA_SURFACE_FRAC+limbTune.startPad;
+    var lean=Math.max(0,Math.min(1,(sy/ch-start)/Math.max(0.05,limbTune.fullAt-start)));
+    var expectedBand=Math.round(ch*limbTune.band*lean*lean*(3-2*lean));
+    try {
+      limbCalls=limbComposites=0;
+      limbTune.enabled=0;for(var i=0;i<4;i++)originalRender();
+      var off=ctx.getImageData(0,0,cw,ch).data;
+      var offComposites=limbComposites;
+      limbCalls=limbComposites=0;
+      limbTune.enabled=1;for(var i=0;i<4;i++)originalRender();
+      var on=ctx.getImageData(0,0,cw,ch).data;
+      var onCalls=limbCalls,onComposites=limbComposites;
+      var samples=0,changed=0,sum=0,max=0,rows={},bankSamples=0,bankChanged=0,bankMax=0;
+      // Only inspect actual open sky in the excavation, above its recessed
+      // bank. A late atmosphere pass must not repaint that sky as a straight
+      // rectangle. Exclude the one-pixel antialias perimeter of the edge.
+      for(var x=4;x<cw-4;x++) {
+        var wx=cam.x+(x+0.5)/scale,col=Math.floor(wx/TILE);
+        if(tileAt(SKY_ROWS,col)!==null)continue;
+        var edge=surfaceBankEdge(wx-cam.x*0.30);
+        var bottom=Math.min(ch-1,Math.floor(sy+(edge-1)*scale)-1);
+        for(var y=Math.max(0,sy);y<=bottom;y++) {
+          var delta=0,at=(y*cw+x)*4;
+          for(var k=0;k<3;k++)delta=Math.max(delta,Math.abs(on[at+k]-off[at+k]));
+          samples++;sum+=delta;max=Math.max(max,delta);
+          if(delta>1){changed++;rows[y-sy]=(rows[y-sy] || 0)+1;}
+        }
+        // The approved bank appearance must also survive ascending. Keep
+        // sampling inside the excavated opening and below the full lip.
+        var bankTop=Math.max(0,Math.ceil(sy+(SURFACE_BANK_EDGE_DEPTH+2)*scale));
+        var bankBottom=Math.min(ch-2,Math.floor(sy+70*scale));
+        for(var y=bankTop;y<=bankBottom;y+=2) {
+          if(tileAt(Math.floor((cam.y+(y+0.5)/scale)/TILE),col)!==null)continue;
+          var delta=0,at=(y*cw+x)*4;
+          for(var k=0;k<3;k++)delta=Math.max(delta,Math.abs(on[at+k]-off[at+k]));
+          bankSamples++;bankMax=Math.max(bankMax,delta);if(delta>1)bankChanged++;
+        }
+      }
+      return {scale:scale,skyFraction:sy/ch,tod:timeOfDay,samples:samples,
+        configuredEnabled:was,expectedBand:expectedBand,onCalls:onCalls,onComposites:onComposites,offComposites:offComposites,
+        skyPath:skyGLLastDrew ? 'WebGL' : '2D',changed:changed,maxDelta:max,meanDelta:samples ? sum/samples : 0,
+        changedByRow:rows,bankSamples:bankSamples,bankChanged:bankChanged,bankMaxDelta:bankMax};
+    } finally {limbTune.enabled=was;originalRender();}
+  }
   function diagnostics() {
     var before=JSON.stringify(world), x=cam.x, y=cam.y;
     var seams=[seamAlpha(1.2),seamAlpha(1.5),seamAlpha(2.55),seamAlpha(3.2142857142857144)];
@@ -193,7 +250,8 @@ window.__surfaceSmoke = (function () {
       drawMs:{median:timings[4],max:timings[7],min:timings[0],cold:cold,paletteChange:recolor},cacheEntries:surfaceTransitionCache.size,
       surfaceImage:a.toDataURL('image/png') };
   }
-  return {state:state,stop:stop,specimen:specimen,diagnostics:diagnostics,
+  return {state:state,stop:stop,specimen:specimen,diagnostics:diagnostics,limbComparison:limbComparison,
+    limb:function(on){limbTune.enabled=on ? 1 : 0;for(var n=0;n<4;n++)originalRender();},
     render:function(){originalRender();}, move:function(dx,dy){cam.x+=dx;cam.y+=dy;for(var n=0;n<40;n++)originalRender();return state();}};
 })();
 `;
@@ -301,9 +359,28 @@ try {
   await scene('zoom-close',{width:7,depth:5,zoom:'in'});
   await scene('mobile-portrait',{width:7,depth:5,zoom:'out'},[390,844,true]);
   await scene('mobile-landscape',{width:7,depth:5,zoom:'out'},[844,390,true]);
+  const ascent=[];
+  for(const [name,scale,sky,tod,fallback=false] of [
+    ['dusk',2.55,0.78,0.755],['dusk-close',3.2142857142857144,0.78,0.755],
+    ['dusk-wide',1.5,0.78,0.755],['day',2.55,0.78,0.5],['night',2.55,0.78,0],
+    ['below-onset',2.55,0.4,0.755],['onset',2.55,0.58,0.755],['full',2.55,0.90,0.755],
+    ['fallback-dusk',2.55,0.78,0.755,true]
+  ]) {
+    await scene('ascent-'+name+'-limb-on',{width:17,depth:5,scale,sky,tod,fallback,altitude:2.5});
+    await ev('__surfaceSmoke.limb(false)');await shot('ascent-'+name+'-limb-off');
+    await ev('__surfaceSmoke.limb(true)');
+    const result=await ev('__surfaceSmoke.limbComparison()');ascent.push({name,...result});
+    console.log('ASCENT '+JSON.stringify({name,...result}));
+  }
+  reports.push({ascent});
+  check('ascent comparisons exercise the enabled atmosphere compositor',ascent.every(a=>a.configuredEnabled===1 && a.onCalls===4 && a.offComposites===0 && (a.expectedBand>=2 ? a.onComposites===4 : a.onComposites===0)));
+  if(!process.env.BASELINE) {
+    check('ascent atmosphere preserves open sky above the irregular bank',ascent.every(a=>a.samples>500 && a.changed===0));
+    check('ascent atmosphere preserves the recessed cave bank',ascent.every(a=>a.bankSamples>500 && a.bankChanged===0));
+  }
   check('browser reports no console or runtime errors',errors.length===0);
   if(dump)fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({checks,reports,errors},null,2));
-  console.log(`PASS ${checks} surface transition checks, ${reports.length-1} views`);
+  console.log(`PASS ${checks} surface transition checks, ${reports.filter(r=>r.name).length} views`);
 } finally {
   if(ws) {try{await send('Browser.close');}catch{}ws.close();}
   if(chrome && chrome.exitCode===null) {

@@ -504,7 +504,7 @@ Clouds draw after the stars and celestial bodies, inside the sky clip and behind
 
 ## 16. Horizon limb — the sky continues below the ground edge (v24.132)
 
-The ascent-horizon treatment. Code: `js/sluice/158-horizon-atmos.js` (`drawHorizonLimb`), dispatched from `render()` after the fog-of-war overlay, beneath precip + HUD. Levers: TUNING.md §5.5 (the `haze` gm group, `limb.*`).
+The ascent-horizon treatment. Code: `js/sluice/158-horizon-atmos.js` (`drawHorizonLimb`), dispatched from `render()` immediately after the sky, before mountains and the underground bank. Levers: TUNING.md §5.5 (the `haze` gm group, `limb.*`).
 
 **The defect it fixes.** The sky pass paints the full canvas, then clips at the surface line. On ascent the line slides down the screen and the visible sky grows — at dusk that means the brightest graded sunset band ends up hard-cut against the unlit terrain cross-section. The owner's complaint (2026-06-10): "when you fly up it shows this sharp horizon that kinda kills the immersiveness."
 
@@ -512,7 +512,10 @@ The ascent-horizon treatment. Code: `js/sluice/158-horizon-atmos.js` (`drawHoriz
 
 **The architecture.** The GL sky raymarch (`renderSkyGL`, 150) already computes the rows BELOW its in-shader horizon every frame: view rays there strike the planet and return the true "distant land seen through maximum air" colours — the bright Mie band hugging the limb, darkening with depression angle, with the Volcanic sunset grade, sun-azimuth glow and anti-twilight baked in. The clip used to discard all of it. `drawHorizonLimb` recomposites that discarded slice over the ground: alpha 1.0 exactly at the surface line (the same texture continuing — the seam is invisible by construction), fading to 0 over a band whose height grows from zero as the player climbs (zoom-independent screen-fraction lean, like the parked veil). The land edge dissolves into the planet's lit atmospheric limb: a setting sun melts into it, a low moon's corona silvers it, night blacks it out on its own — no per-time-of-day branches.
 
+**Irregular bank compatibility.** The original post-world composite assumed a flat land edge. With the recessed bank's irregular skyline, that pass drew a thin straight stripe across the exposed mountain bases during ascent. The limb now draws with the sky, behind all landscape layers. The bank supplies the surface-to-cave transition, and the mountains, terrain, and entities occlude atmosphere normally. The post-world placement described in the original architecture above is historical.
+
 **Rules (load-bearing):**
+- **Draw before the landscape.** Never composite the limb over the mountains or bank. Ascent must preserve their silhouettes and colours.
 - **Alpha at the surface line is ALWAYS 1.0 while active.** The ascent ease-in comes from the band HEIGHT growing, never from thinning the line alpha — a thinned line re-exposes the hard edge as a ghost seam at (1 − alpha).
 - **Resting framing draws nothing.** The surface view stays pristine (the v24.53 lesson). `limb.startPad` guards it.
 - **No new colours.** The limb is the sky's own output recomposited — §4 reserved colours untouched. Do not tint it.

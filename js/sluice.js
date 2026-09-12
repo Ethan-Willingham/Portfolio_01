@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.85';
+  var GAME_VERSION = 'v26.86';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -26112,6 +26112,9 @@
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       var _rTs = performance.now();
       if (!PERF_DISABLE_NIGHTSKY) drawNightSkyToScreen(skyBottomPx, skyClipBottomPx);
+      // Atmosphere belongs behind the landscape. The old post-world limb
+      // painted a straight stripe across the irregular bank during ascent.
+      drawHorizonLimb();
       perfMark('render.skyComposite', _rTs);
       ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
 
@@ -26932,18 +26935,9 @@
     drawDarknessOverlay(startRow, endRow, startCol, endCol);
     perfMark('render.lightFog', _lf0);
 
-    // ====== RENDER: Horizon atmosphere (haze veil + horizon limb) ======
-    // Screen-space; over the world + fog, beneath precip + HUD. The veil
-    // (parked since v24.53) fogged the whole ground on ascent; the LIMB
-    // (v24.132) continues the already-rendered sky a short band past the
-    // surface line, so the land edge dissolves into the lit atmospheric
-    // limb instead of hard-cutting at the sunset glow (see 158). The sky's
-    // own flat-earth horizon razor was fixed IN the shader (spherical
-    // primary ray, v24.138, 150) — the v24.136 screen-space skirt that
-    // band-aided it drew on top of the world-anchored cloud decks and was
-    // removed the same day.
+    // The optional whole-ground haze remains parked off since v24.53.
+    // The horizon limb now draws with the sky, before the landscape.
     drawHorizonHaze();
-    drawHorizonLimb();
 
     // ====== RENDER: Weather precipitation + lightning ======
     // Drops are world-anchored with tile collision (155-weather.js), drawn
@@ -30027,15 +30021,13 @@
   // dusk shows the graded sunset blaze guillotined against unlit dirt. That
   // hard cut is the defect (owner, 2026-06-10).
   //
-  // Fix: composite the DISCARDED below-line slice of the already-rendered
-  // sky back over the ground. Alpha is 1.0 exactly at the line — it is the
-  // same texture continuing, so the seam is invisible by construction — and
-  // fades to 0 over a band whose height grows from zero as the player
-  // climbs (same zoom-independent screen-fraction lean as the parked veil
-  // above). The land edge dissolves into the planet's lit atmospheric limb:
-  // a setting sun melts into it, a low moon's corona silvers it, and night
-  // blacks it out on its own (the shader's below-horizon output is near-
-  // black after civil twilight) — no per-time-of-day branches needed.
+  // Continue the below-line slice of the already-rendered sky. Alpha is
+  // 1.0 at the line and fades to 0 over a band whose height grows as the
+  // player climbs. Draw immediately after the sky, BEFORE the mountains,
+  // bank, terrain and entities. The recessed bank now supplies the land
+  // transition; the original post-world placement painted a straight
+  // stripe across its irregular skyline whenever the player flew up.
+  // The landscape must occlude this atmospheric continuation normally.
   //
   // This is NOT the v24.53 altitude fog (vetoed: it washed the WHOLE
   // visible ground in one flat veil colour). The limb is horizon-local,
@@ -30045,6 +30037,8 @@
   // architecture documented in §16).
   //
   // Invariants:
+  //  - Paint with the sky, behind every landscape layer. Never restore
+  //    the old post-world placement or it cuts across the bank again.
   //  - The limb's alpha at the surface line is ALWAYS 1.0 while active; the
   //    ascent ease-in comes from the band HEIGHT growing, never from
   //    thinning the line alpha (a thinned line re-exposes the hard edge as
@@ -59322,10 +59316,9 @@
         feather:  { min: 0, max: 0.3 }
       });
 
-      // limbTune — horizon limb (158-horizon-atmos.js, v24.132). Recomposites
-      // the BELOW-line slice of the already-rendered sky over the ground as
-      // the player climbs, so the land edge dissolves into the atmospheric
-      // limb instead of hard-cutting at the sunset glow. band/fullAt size the
+      // limbTune: horizon limb (158-horizon-atmos.js). Continues the sky's
+      // below-line slice during ascent, behind mountains and the bank.
+      // Landscape layers occlude it normally. band/fullAt size the
       // effect; shapePos/shapeA shape the downward fade. Alpha at the line is
       // always 1.0 by design (see the 158 invariants) — there is no maxA.
       gmRegisterObject('limb', 'haze', limbTune, {

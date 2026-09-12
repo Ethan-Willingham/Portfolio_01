@@ -171,10 +171,9 @@
         feather:  { min: 0, max: 0.3 }
       });
 
-      // limbTune — horizon limb (158-horizon-atmos.js, v24.132). Recomposites
-      // the BELOW-line slice of the already-rendered sky over the ground as
-      // the player climbs, so the land edge dissolves into the atmospheric
-      // limb instead of hard-cutting at the sunset glow. band/fullAt size the
+      // limbTune: horizon limb (158-horizon-atmos.js). Continues the sky's
+      // below-line slice during ascent, behind mountains and the bank.
+      // Landscape layers occlude it normally. band/fullAt size the
       // effect; shapePos/shapeA shape the downward fade. Alpha at the line is
       // always 1.0 by design (see the 158 invariants) — there is no maxA.
       gmRegisterObject('limb', 'haze', limbTune, {

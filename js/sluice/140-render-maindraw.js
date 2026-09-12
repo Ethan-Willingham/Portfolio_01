@@ -253,6 +253,9 @@
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       var _rTs = performance.now();
       if (!PERF_DISABLE_NIGHTSKY) drawNightSkyToScreen(skyBottomPx, skyClipBottomPx);
+      // Atmosphere belongs behind the landscape. The old post-world limb
+      // painted a straight stripe across the irregular bank during ascent.
+      drawHorizonLimb();
       perfMark('render.skyComposite', _rTs);
       ctx.setTransform(ws, 0, 0, ws, -Math.round((cam.x - _shk.x) * ws), -Math.round((cam.y - _shk.y) * ws));
 
@@ -1073,18 +1076,9 @@
     drawDarknessOverlay(startRow, endRow, startCol, endCol);
     perfMark('render.lightFog', _lf0);
 
-    // ====== RENDER: Horizon atmosphere (haze veil + horizon limb) ======
-    // Screen-space; over the world + fog, beneath precip + HUD. The veil
-    // (parked since v24.53) fogged the whole ground on ascent; the LIMB
-    // (v24.132) continues the already-rendered sky a short band past the
-    // surface line, so the land edge dissolves into the lit atmospheric
-    // limb instead of hard-cutting at the sunset glow (see 158). The sky's
-    // own flat-earth horizon razor was fixed IN the shader (spherical
-    // primary ray, v24.138, 150) — the v24.136 screen-space skirt that
-    // band-aided it drew on top of the world-anchored cloud decks and was
-    // removed the same day.
+    // The optional whole-ground haze remains parked off since v24.53.
+    // The horizon limb now draws with the sky, before the landscape.
     drawHorizonHaze();
-    drawHorizonLimb();
 
     // ====== RENDER: Weather precipitation + lightning ======
     // Drops are world-anchored with tile collision (155-weather.js), drawn
