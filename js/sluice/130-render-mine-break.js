@@ -791,6 +791,13 @@
         var chunk = getTerrainChunk(cr, cc);
         if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
         if (!chunk.ready) continue;
+        // Keep cache warming and invalidation unchanged so revealing a cave
+        // does not create a new burst of cold chunk builds.
+        if (lightFogFullyCovers(cr * TERRAIN_CHUNK_TILES, (cr + 1) * TERRAIN_CHUNK_TILES - 1,
+            cc * TERRAIN_CHUNK_TILES, (cc + 1) * TERRAIN_CHUNK_TILES - 1)) {
+          terrainHiddenChunks++;
+          continue;
+        }
         var cacheScale = chunk.scale || 1;
         ctx.drawImage(
           chunk.canvas,

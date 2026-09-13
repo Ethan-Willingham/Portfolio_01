@@ -666,13 +666,17 @@
     perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
+    if (_t5 >= perfDisplayCheckAt) {
+      perfDisplayCheckAt = _t5 + 1000;
+      var _ps = window.screen;
+      perfObserveDisplay([_ps.width, _ps.height, _ps.availLeft, _ps.availTop, window.devicePixelRatio].join(','));
+    }
     perfPushFrame(_t5 - _t0, frameIntervalMs);
     perfChunkRebuilds = terrainChunkRebuildsThisFrame;
     perfFrameSamples.push(_t5);
     while (perfFrameSamples.length > 1 && perfFrameSamples[0] < _t5 - 1000) perfFrameSamples.shift();
     perfFps = perfFrameSamples.length > 1 ? perfFrameSamples.length - 1 : 0;
-    // v14.21 — observed best fps (no decay): the vsync cap the panel scores
-    // "healthy" against. Captured after perfFps is computed above.
+    // Observed callback reference, reset when the display context changes.
     perfFpsCap = Math.max(perfFpsCap, perfFps);
     // v14.21 — hitch capture. A hitch is a frame well past the smoothed CPU
     // cost; record the worst one and a top-6 raw-bucket snapshot so the

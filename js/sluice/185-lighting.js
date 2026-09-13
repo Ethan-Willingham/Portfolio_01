@@ -133,13 +133,15 @@
   var lightFogCanvas = null, lightFogCtx = null, lightFogImg = null;
   var lightRev = 0;        // bumped by lightFlood — the only lightArr writer
   var lightFogSig = '';    // v25.40: the fog IMAGE rebuilds only when this changes
-  function drawDarknessOverlay(startRow, endRow, startCol, endCol) {
-    if (!lightTune.enabled || !lightArr) return;
+  var lightFogPrefix = null, lightFogCull = null;
+  var terrainHiddenChunks = 0, terrainHiddenTiles = 0;
+  function prepareDarknessOverlay(startRow, endRow, startCol, endCol) {
+    if (!lightTune.enabled || !lightArr) { lightFogCull = null; return false; }
     var pad = 1;                                      // 1-tile margin: gradient blends in from off-screen
     var c0 = startCol - pad, r0 = startRow - pad;
     var bw = (endCol - startCol + 1) + pad * 2;
     var bh = (endRow - startRow + 1) + pad * 2;
-    if (bw <= 0 || bh <= 0) return;
+    if (bw <= 0 || bh <= 0) { lightFogCull = null; return false; }
     if (!lightFogCanvas) {
       lightFogCanvas = document.createElement('canvas');
       lightFogCtx = lightFogCanvas.getContext('2d');
@@ -162,19 +164,55 @@
       lightFogSig = sig;
       var data = lightFogImg.data;
       var p = 0;
+      var stride = bw + 1, prefixSize = stride * (bh + 1);
+      if (!lightFogPrefix || lightFogPrefix.length !== prefixSize) lightFogPrefix = new Uint32Array(prefixSize);
+      lightFogPrefix.fill(0, 0, stride);
       for (var j = 0; j < bh; j++) {
         var rr = r0 + j;
+        var visible = 0;
+        lightFogPrefix[(j + 1) * stride] = 0;
         for (var i = 0; i < bw; i++) {
           data[p] = 0; data[p + 1] = 0; data[p + 2] = 0;
           var sh = lightCellShade(rr, c0 + i);
           data[p + 3] = sh <= 0 ? 0 : (sh >= 1 ? a : Math.round(a * sh));
+          visible += data[p + 3] < 255 ? 1 : 0;
+          lightFogPrefix[(j + 1) * stride + i + 1] = visible + lightFogPrefix[j * stride + i + 1];
           p += 4;
         }
       }
       lightFogCtx.putImageData(lightFogImg, 0, 0);
     }
+    if (!lightFogCull) lightFogCull = {};
+    lightFogCull.r = r0; lightFogCull.c = c0; lightFogCull.w = bw; lightFogCull.h = bh;
+    lightFogCull.rev = lightRev; lightFogCull.arr = lightArr; lightFogCull.reach = lightTune.reach;
+    lightFogCull.target = ctx.canvas; lightFogCull.cx = cam.x; lightFogCull.cy = cam.y;
+    return true;
+  }
+
+  // Count non-opaque fog texels over a rectangle in constant time. Keep two
+  // extra tiles for filtered fog edges and artwork extending beyond its tile.
+  // Only skip draws proven to end beneath solid black. Partial darkness,
+  // disabled lighting, loading and stale visibility all retain the full path.
+  function lightFogFullyCovers(r0, r1, c0, c1) {
+    var b = lightFogCull;
+    if (introPhase !== 'done' || !b || !lightTune.enabled || !(lightTune.darkAlpha >= 1) ||
+        b.rev !== lightRev || b.arr !== lightArr || b.reach !== lightTune.reach ||
+        b.target !== ctx.canvas || b.cx !== cam.x || b.cy !== cam.y) return false;
+    // The fog bitmap only extends one tile past the world's hard limits.
+    // Do not infer coverage for on-screen terrain beyond that bitmap.
+    if (cam.x < 0 || cam.x + screenW > COLS * TILE || cam.y + screenH > TOTAL_ROWS * TILE) return false;
+    var x0 = Math.max(0, c0 - 2 - b.c), x1 = Math.min(b.w, c1 + 3 - b.c);
+    var y0 = Math.max(0, r0 - 2 - b.r), y1 = Math.min(b.h, r1 + 3 - b.r);
+    if (x0 >= x1 || y0 >= y1) return false;
+    var p = lightFogPrefix, s = b.w + 1;
+    return p[y1 * s + x1] - p[y0 * s + x1] - p[y1 * s + x0] + p[y0 * s + x0] === 0;
+  }
+
+  function drawDarknessOverlay(startRow, endRow, startCol, endCol) {
+    if (!prepareDarknessOverlay(startRow, endRow, startCol, endCol)) return;
+    var b = lightFogCull;
     ctx.save();
     ctx.imageSmoothingEnabled = !!lightTune.soft;
-    ctx.drawImage(lightFogCanvas, c0 * TILE, r0 * TILE, bw * TILE, bh * TILE);
+    ctx.drawImage(lightFogCanvas, b.c * TILE, b.r * TILE, b.w * TILE, b.h * TILE);
     ctx.restore();
   }

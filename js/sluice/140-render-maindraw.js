@@ -469,6 +469,10 @@
     var tNow = performance.now() / 1000;
 
     perfMark('render.sky', _renderT0);
+    var _fogPrepareT = performance.now();
+    terrainHiddenChunks = 0; terrainHiddenTiles = 0;
+    prepareDarknessOverlay(startRow, endRow, startCol, endCol);
+    perfMark('render.lightPrepare', _fogPrepareT);
     var _renderT1 = performance.now();
     if (!PERF_DISABLE_TERRAIN_CHUNKS) drawTerrainChunks(startRow, endRow, startCol, endCol);
     // v13.11 — cave walls are no longer a post-chunk pass. The biome wall
@@ -484,6 +488,7 @@
       var rowDepth = r - SKY_ROWS;
       var rowLayer = (rowDepth >= 0 && r < TOTAL_ROWS) ? getLayerForCam(rowDepth) : null;
       for (var c = startCol; c <= endCol; c++) {
+        if (lightFogFullyCovers(r, r, c, c)) { terrainHiddenTiles++; continue; }
         var tile = world[r] ? world[r][c] : null;
         if (tile) {
           var tx = c * TILE;

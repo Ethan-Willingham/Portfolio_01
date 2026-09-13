@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.127';
+  var GAME_VERSION = 'v26.128';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2460,13 +2460,24 @@
   // The vars + helpers below let the overlay say WHAT is slow, not just THAT
   // it is slow.
   //
-  // perfFpsCap — the best fps ever observed (no decay). On a vsync-capped
-  //   display this settles at the refresh rate and becomes the "healthy"
-  //   reference: fps near the cap = fine, fps well below = a real problem.
+  // perfFpsCap is the best callback rate in this display context. It is a
+  // browser-clock reference, not a measurement of physical presentation.
   // perfHitch — the worst recent frame: its total CPU ms, when it happened,
   //   and a snapshot of the top-6 raw bucket costs from that frame so the
   //   overlay can show what was expensive ON the hitch frame specifically.
   var perfFpsCap = 0;
+  // This is a callback-rate reference. Windows can schedule callbacks from
+  // another monitor's clock, so it must not be presented as measured Hz.
+  var perfDisplayKey = '', perfDisplayCheckAt = 0;
+  function perfObserveDisplay(key) {
+    if (key === perfDisplayKey) return;
+    if (perfDisplayKey) {
+      perfFpsCap = 0;
+      perfFrameSamples.length = 0;
+      perfIntervalRingFilled = 0;
+    }
+    perfDisplayKey = key;
+  }
   var perfHitch = { ms: 0, at: -99999, buckets: null };
 
   // Top-6 [name, ms] from this frame's RAW buckets, sorted desc. Captured
@@ -2484,7 +2495,7 @@
 
   // v14.22 — microstutter metric. Average fps can sit on the refresh cap
   // while the game still FEELS bad because frame times spike often. A frame
-  // counts as "janky" when it runs longer than 1.35× the display interval
+  // counts as "janky" when it runs longer than 1.35 times the callback interval
   // (capMs). jankPct is the share of janky frames in the ring; low1 is the
   // 1%-low fps (1000 / p99) — the slow tail the average hides. Shared by the
   // Smoothness row and perfDiagnose() so both read the same numbers.
@@ -2726,7 +2737,8 @@
         var o = {}, k;
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
         return o;
-      }
+      },
+      hiddenTerrain: function () { return { chunks: terrainHiddenChunks, tiles: terrainHiddenTiles }; }
     };
   } catch (e) {}
 
@@ -26272,6 +26284,13 @@
         var chunk = getTerrainChunk(cr, cc);
         if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
         if (!chunk.ready) continue;
+        // Keep cache warming and invalidation unchanged so revealing a cave
+        // does not create a new burst of cold chunk builds.
+        if (lightFogFullyCovers(cr * TERRAIN_CHUNK_TILES, (cr + 1) * TERRAIN_CHUNK_TILES - 1,
+            cc * TERRAIN_CHUNK_TILES, (cc + 1) * TERRAIN_CHUNK_TILES - 1)) {
+          terrainHiddenChunks++;
+          continue;
+        }
         var cacheScale = chunk.scale || 1;
         ctx.drawImage(
           chunk.canvas,
@@ -26774,6 +26793,10 @@
     var tNow = performance.now() / 1000;
 
     perfMark('render.sky', _renderT0);
+    var _fogPrepareT = performance.now();
+    terrainHiddenChunks = 0; terrainHiddenTiles = 0;
+    prepareDarknessOverlay(startRow, endRow, startCol, endCol);
+    perfMark('render.lightPrepare', _fogPrepareT);
     var _renderT1 = performance.now();
     if (!PERF_DISABLE_TERRAIN_CHUNKS) drawTerrainChunks(startRow, endRow, startCol, endCol);
     // v13.11 — cave walls are no longer a post-chunk pass. The biome wall
@@ -26789,6 +26812,7 @@
       var rowDepth = r - SKY_ROWS;
       var rowLayer = (rowDepth >= 0 && r < TOTAL_ROWS) ? getLayerForCam(rowDepth) : null;
       for (var c = startCol; c <= endCol; c++) {
+        if (lightFogFullyCovers(r, r, c, c)) { terrainHiddenTiles++; continue; }
         var tile = world[r] ? world[r][c] : null;
         if (tile) {
           var tx = c * TILE;
@@ -36459,13 +36483,15 @@
   var lightFogCanvas = null, lightFogCtx = null, lightFogImg = null;
   var lightRev = 0;        // bumped by lightFlood — the only lightArr writer
   var lightFogSig = '';    // v25.40: the fog IMAGE rebuilds only when this changes
-  function drawDarknessOverlay(startRow, endRow, startCol, endCol) {
-    if (!lightTune.enabled || !lightArr) return;
+  var lightFogPrefix = null, lightFogCull = null;
+  var terrainHiddenChunks = 0, terrainHiddenTiles = 0;
+  function prepareDarknessOverlay(startRow, endRow, startCol, endCol) {
+    if (!lightTune.enabled || !lightArr) { lightFogCull = null; return false; }
     var pad = 1;                                      // 1-tile margin: gradient blends in from off-screen
     var c0 = startCol - pad, r0 = startRow - pad;
     var bw = (endCol - startCol + 1) + pad * 2;
     var bh = (endRow - startRow + 1) + pad * 2;
-    if (bw <= 0 || bh <= 0) return;
+    if (bw <= 0 || bh <= 0) { lightFogCull = null; return false; }
     if (!lightFogCanvas) {
       lightFogCanvas = document.createElement('canvas');
       lightFogCtx = lightFogCanvas.getContext('2d');
@@ -36488,20 +36514,56 @@
       lightFogSig = sig;
       var data = lightFogImg.data;
       var p = 0;
+      var stride = bw + 1, prefixSize = stride * (bh + 1);
+      if (!lightFogPrefix || lightFogPrefix.length !== prefixSize) lightFogPrefix = new Uint32Array(prefixSize);
+      lightFogPrefix.fill(0, 0, stride);
       for (var j = 0; j < bh; j++) {
         var rr = r0 + j;
+        var visible = 0;
+        lightFogPrefix[(j + 1) * stride] = 0;
         for (var i = 0; i < bw; i++) {
           data[p] = 0; data[p + 1] = 0; data[p + 2] = 0;
           var sh = lightCellShade(rr, c0 + i);
           data[p + 3] = sh <= 0 ? 0 : (sh >= 1 ? a : Math.round(a * sh));
+          visible += data[p + 3] < 255 ? 1 : 0;
+          lightFogPrefix[(j + 1) * stride + i + 1] = visible + lightFogPrefix[j * stride + i + 1];
           p += 4;
         }
       }
       lightFogCtx.putImageData(lightFogImg, 0, 0);
     }
+    if (!lightFogCull) lightFogCull = {};
+    lightFogCull.r = r0; lightFogCull.c = c0; lightFogCull.w = bw; lightFogCull.h = bh;
+    lightFogCull.rev = lightRev; lightFogCull.arr = lightArr; lightFogCull.reach = lightTune.reach;
+    lightFogCull.target = ctx.canvas; lightFogCull.cx = cam.x; lightFogCull.cy = cam.y;
+    return true;
+  }
+
+  // Count non-opaque fog texels over a rectangle in constant time. Keep two
+  // extra tiles for filtered fog edges and artwork extending beyond its tile.
+  // Only skip draws proven to end beneath solid black. Partial darkness,
+  // disabled lighting, loading and stale visibility all retain the full path.
+  function lightFogFullyCovers(r0, r1, c0, c1) {
+    var b = lightFogCull;
+    if (introPhase !== 'done' || !b || !lightTune.enabled || !(lightTune.darkAlpha >= 1) ||
+        b.rev !== lightRev || b.arr !== lightArr || b.reach !== lightTune.reach ||
+        b.target !== ctx.canvas || b.cx !== cam.x || b.cy !== cam.y) return false;
+    // The fog bitmap only extends one tile past the world's hard limits.
+    // Do not infer coverage for on-screen terrain beyond that bitmap.
+    if (cam.x < 0 || cam.x + screenW > COLS * TILE || cam.y + screenH > TOTAL_ROWS * TILE) return false;
+    var x0 = Math.max(0, c0 - 2 - b.c), x1 = Math.min(b.w, c1 + 3 - b.c);
+    var y0 = Math.max(0, r0 - 2 - b.r), y1 = Math.min(b.h, r1 + 3 - b.r);
+    if (x0 >= x1 || y0 >= y1) return false;
+    var p = lightFogPrefix, s = b.w + 1;
+    return p[y1 * s + x1] - p[y0 * s + x1] - p[y1 * s + x0] + p[y0 * s + x0] === 0;
+  }
+
+  function drawDarknessOverlay(startRow, endRow, startCol, endCol) {
+    if (!prepareDarknessOverlay(startRow, endRow, startCol, endCol)) return;
+    var b = lightFogCull;
     ctx.save();
     ctx.imageSmoothingEnabled = !!lightTune.soft;
-    ctx.drawImage(lightFogCanvas, c0 * TILE, r0 * TILE, bw * TILE, bh * TILE);
+    ctx.drawImage(lightFogCanvas, b.c * TILE, b.r * TILE, b.w * TILE, b.h * TILE);
     ctx.restore();
   }
   // Cache the smoke mask's static terrain in world space. Replaying hundreds
@@ -52704,9 +52766,10 @@
   var PERF_TIPS = {
     'Verdict': 'MAIN THREAD means measured frame work is dominant, including waits inside graphics calls. FRAME DELIVERY means more time is outside that work. Neither alone identifies a CPU or GPU hardware bottleneck.',
     'Cause': 'The single biggest contributor to the current verdict.',
-    'Hitches': 'How many recent frames ran far longer than normal. Each one is a visible stutter.',
-    'Smoothness': 'jank% counts late animation frames. 1%-low is 1000 divided by the 99th-percentile interval between animation frames, including GPU and scheduling waits.',
-    'FPS': 'Frames per second now, with the rolling average in parentheses. Capped at your monitor refresh rate.',
+    'Hitches': 'How many recent game update/render calls took far longer than normal. Displayed-frame stalls outside those calls are not counted here.',
+    'Callback gaps': 'Late animation callbacks relative to the fastest observed callback rate. 1%-low is 1000 divided by the 99th-percentile callback interval. This is not a measurement of displayed frames. On mixed-refresh monitors the browser callback clock can differ from the screen refresh rate.',
+    'Timing target': 'Fastest observed animation callback rate in the current display context. This is an estimate of the browser clock, not the monitor refresh rate. Actual displayed frames require a presentation capture.',
+    'FPS': 'Game animation callbacks per second, with the rolling average in parentheses. The browser can call the game faster than the current monitor refreshes.',
     'CPU frame': 'Wall time inside the game update and render calls, including graphics API stalls. p99 and max are the worst recent measurements.',
     'GPU/idle': 'Estimated frame interval minus measured game work. Includes graphics, browser scheduling and vsync idle; this is not a GPU execution measurement.',
     'Upd/Rnd/Smk': 'This frame split into update / render / smoke milliseconds. Each is also its own row in TOP BUCKETS.',
@@ -52957,8 +53020,9 @@
     var _jankStats = perfJankStats();
     var _jankCol = _jankStats.jankPct < 3 ? '#66ff66'
                  : _jankStats.jankPct < 10 ? '#ffcc44' : '#ff6666';
-    K('Smoothness', _jankStats.jankPct.toFixed(0) + '% jank · 1%-low ' +
+    K('Callback gaps', _jankStats.jankPct.toFixed(0) + '% late · 1%-low ' +
                     Math.round(_jankStats.low1) + 'fps', _jankCol);
+    K('Timing target', Math.round(perfFpsCap) + '/s observed');
     G();
     // v14.21 — WORST FRAME: the captured hitch + its top-6 raw buckets, so a
     // spike's culprit is visible after the EMA has smoothed it away. Shown
@@ -62010,13 +62074,17 @@
     perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
+    if (_t5 >= perfDisplayCheckAt) {
+      perfDisplayCheckAt = _t5 + 1000;
+      var _ps = window.screen;
+      perfObserveDisplay([_ps.width, _ps.height, _ps.availLeft, _ps.availTop, window.devicePixelRatio].join(','));
+    }
     perfPushFrame(_t5 - _t0, frameIntervalMs);
     perfChunkRebuilds = terrainChunkRebuildsThisFrame;
     perfFrameSamples.push(_t5);
     while (perfFrameSamples.length > 1 && perfFrameSamples[0] < _t5 - 1000) perfFrameSamples.shift();
     perfFps = perfFrameSamples.length > 1 ? perfFrameSamples.length - 1 : 0;
-    // v14.21 — observed best fps (no decay): the vsync cap the panel scores
-    // "healthy" against. Captured after perfFps is computed above.
+    // Observed callback reference, reset when the display context changes.
     perfFpsCap = Math.max(perfFpsCap, perfFps);
     // v14.21 — hitch capture. A hitch is a frame well past the smoothed CPU
     // cost; record the worst one and a top-6 raw-bucket snapshot so the

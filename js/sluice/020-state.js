@@ -1123,13 +1123,24 @@
   // The vars + helpers below let the overlay say WHAT is slow, not just THAT
   // it is slow.
   //
-  // perfFpsCap — the best fps ever observed (no decay). On a vsync-capped
-  //   display this settles at the refresh rate and becomes the "healthy"
-  //   reference: fps near the cap = fine, fps well below = a real problem.
+  // perfFpsCap is the best callback rate in this display context. It is a
+  // browser-clock reference, not a measurement of physical presentation.
   // perfHitch — the worst recent frame: its total CPU ms, when it happened,
   //   and a snapshot of the top-6 raw bucket costs from that frame so the
   //   overlay can show what was expensive ON the hitch frame specifically.
   var perfFpsCap = 0;
+  // This is a callback-rate reference. Windows can schedule callbacks from
+  // another monitor's clock, so it must not be presented as measured Hz.
+  var perfDisplayKey = '', perfDisplayCheckAt = 0;
+  function perfObserveDisplay(key) {
+    if (key === perfDisplayKey) return;
+    if (perfDisplayKey) {
+      perfFpsCap = 0;
+      perfFrameSamples.length = 0;
+      perfIntervalRingFilled = 0;
+    }
+    perfDisplayKey = key;
+  }
   var perfHitch = { ms: 0, at: -99999, buckets: null };
 
   // Top-6 [name, ms] from this frame's RAW buckets, sorted desc. Captured
@@ -1147,7 +1158,7 @@
 
   // v14.22 — microstutter metric. Average fps can sit on the refresh cap
   // while the game still FEELS bad because frame times spike often. A frame
-  // counts as "janky" when it runs longer than 1.35× the display interval
+  // counts as "janky" when it runs longer than 1.35 times the callback interval
   // (capMs). jankPct is the share of janky frames in the ring; low1 is the
   // 1%-low fps (1000 / p99) — the slow tail the average hides. Shared by the
   // Smoothness row and perfDiagnose() so both read the same numbers.
@@ -1389,7 +1400,8 @@
         var o = {}, k;
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
         return o;
-      }
+      },
+      hiddenTerrain: function () { return { chunks: terrainHiddenChunks, tiles: terrainHiddenTiles }; }
     };
   } catch (e) {}
 

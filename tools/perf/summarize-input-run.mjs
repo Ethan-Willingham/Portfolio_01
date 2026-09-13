@@ -19,6 +19,19 @@ export function summarizeInputRun(dir,limitSeconds=Infinity){
     const main=Object.values(Object.groupBy(entries,r=>r.SwapChainAddress)).sort((a,b)=>b.length-a.length)[0];
     const display=main.map(r=>Number(r.MsBetweenDisplayChange)).filter(x=>x>0);
     out.display=stats(display);out.displayFPS=round(1000/out.display.mean);
+    const displayFile=path.join(dir,'display.json');
+    const refreshHz=fs.existsSync(displayFile)?Number(JSON.parse(fs.readFileSync(displayFile)).refreshHz):144;
+    assert(refreshHz>0&&Number.isFinite(refreshHz),'Known presentation reference rate');
+    const late=display.filter(x=>x>1.35*1000/refreshHz).length;
+    out.displayRefresh={referenceHz:refreshHz,late,count:display.length,percent:round(late/display.length*100),
+      missedSlots:display.reduce((n,x)=>n+Math.max(0,Math.round(x*refreshHz/1000)-1),0)};
+    // Mixed-monitor compositor traces can report intervals from another
+    // display clock. Expose this instead of interpreting every row as a
+    // physical refresh on the selected fixed-rate monitor. VRR needs a
+    // separate interpretation and must not be judged by this check alone.
+    const offCadence=display.filter(x=>Math.abs(x-Math.max(1,Math.round(x*refreshHz/1000))*1000/refreshHz)>1).length;
+    out.displayRefresh.offCadencePercent=round(offCadence/display.length*100);
+    out.displayRefresh.fixedRateCadenceMatches=offCadence/display.length<.01;
     out.displayGaps=Object.fromEntries([8,14.5,20,33,50].map(t=>{const count=display.filter(x=>x>t).length;return [t,{count,percent:round(count/display.length*100)}];}));
     out.presentModes=Object.entries(Object.groupBy(main,r=>r.PresentMode)).map(([mode,a])=>({mode,count:a.length}));
   }

@@ -6,6 +6,8 @@
 // PROFILE=0 omits CPU sampling when measuring normal frame delivery.
 // ROOT can point at a second checkout; DUMP must stay outside the checkout.
 // BUNDLE_REF serves a committed game bundle with this checkout's other assets.
+// WINDOW_X/Y place a normal test window on a second display. FULLSCREEN=0
+// keeps that window normal; REFRESH_HZ documents the OS display mode.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -131,7 +133,7 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.wof
 const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}let data=fs.readFileSync(file);if(pathname==='/js/sluice.js'){let src=bundleSource.toString(),end=src.lastIndexOf('})();');data=Buffer.from(src.slice(0,end)+probe+src.slice(end));}if(pathname==='/js/audio.js')data=Buffer.from(data.toString().replace('  // ===== public API',audioProbe+'\n  // ===== public API'));res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch(e){res.writeHead(500);res.end(String(e));}});
 let chrome,ws,seq=0;const pending=new Map(),errors=[];
 let traceStream=null;
-async function browserCall(method){const endpoint=await(await fetch('http://127.0.0.1:'+debugPort+'/json/version')).json();return new Promise((resolve,reject)=>{const socket=new WebSocket(endpoint.webSocketDebuggerUrl);socket.onopen=()=>socket.send(JSON.stringify({id:1,method}));socket.onerror=reject;socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id===1){socket.close();m.error?reject(Error(JSON.stringify(m.error))):resolve(m.result);}};});}
+async function browserCall(method,params={}){const endpoint=await(await fetch('http://127.0.0.1:'+debugPort+'/json/version')).json();return new Promise((resolve,reject)=>{const socket=new WebSocket(endpoint.webSocketDebuggerUrl);socket.onopen=()=>socket.send(JSON.stringify({id:1,method,params}));socket.onerror=reject;socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id===1){socket.close();m.error?reject(Error(JSON.stringify(m.error))):resolve(m.result);}};});}
 function send(method,params={}){return new Promise((resolve,reject)=>{const id=++seq,t=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},45000);pending.set(id,{resolve:r=>{clearTimeout(t);resolve(r)},reject:e=>{clearTimeout(t);reject(e)}});ws.send(JSON.stringify({id,method,params}));});}
 async function ev(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result?.value;}
 function stats(values){const a=values.slice().sort((a,b)=>a-b);return a.length?{n:a.length,avg:a.reduce((a,b)=>a+b,0)/a.length,p50:a[a.length>>1],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],p999:a[Math.floor(a.length*.999)],max:a.at(-1)}:null;}
@@ -139,14 +141,29 @@ const summaries=fs.existsSync(path.join(out,'summary.json'))?JSON.parse(fs.readF
 try{
   await new Promise(r=>server.listen(port,'127.0.0.1',r));
   const executable=electron?(process.env.ELECTRON_EXE||path.join(root,'desktop/node_modules/electron/dist/electron.exe')):process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
-  const args=[...(headed?['--start-fullscreen']:['--headless=new']),'--mute-audio','--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort];
+  const positioned=process.env.WINDOW_X!==undefined,fullscreen=process.env.FULLSCREEN!=='0';
+  const args=[...(headed?(fullscreen&&!positioned?['--start-fullscreen']:[]):['--headless=new']),'--mute-audio','--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort];
   if(electron)args.push(path.join(root,'desktop'),'--fullscreen','--profile='+browserProfile,'--audit-url=http://127.0.0.1:'+port+'/grand-motherload.html');else args.push('about:blank');
   chrome=spawn(executable,args,{stdio:'ignore',windowsHide:!headed,env:{...process.env,ELECTRON_RUN_AS_NODE:undefined}});
+  fs.writeFileSync(path.join(out,'browser-pid.txt'),String(chrome.pid));
   let target;for(let i=0;i<100;i++){try{target=(await(await fetch('http://127.0.0.1:'+debugPort+'/json/list')).json()).find(t=>t.type==='page');if(target)break;}catch{}await sleep(100);}assert(target,'Chrome boot');
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
   ws.onclose=()=>{for(const p of pending.values())p.reject(Error('CDP disconnected'));pending.clear();};
   ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);if(p)m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args);if(m.method==='Tracing.tracingComplete')traceStream=m.params.stream;};
   await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setBlockedURLs',{urls:['*googletagmanager.com*','*google-analytics.com*']});
+  let windowInfo=null;
+  if(positioned){
+    const {windowId}=await browserCall('Browser.getWindowForTarget',{targetId:target.id});
+    await browserCall('Browser.setWindowBounds',{windowId,bounds:{windowState:'normal'}});
+    await browserCall('Browser.setWindowBounds',{windowId,bounds:{left:Number(process.env.WINDOW_X),top:Number(process.env.WINDOW_Y||0),width:Number(process.env.WINDOW_WIDTH||1080),height:Number(process.env.WINDOW_HEIGHT||1800)}});
+    // A per-monitor DPI transition can rescale the first bounds request.
+    await sleep(500);
+    await browserCall('Browser.setWindowBounds',{windowId,bounds:{left:Number(process.env.WINDOW_X),top:Number(process.env.WINDOW_Y||0),width:Number(process.env.WINDOW_WIDTH||1080),height:Number(process.env.WINDOW_HEIGHT||1800)}});
+    if(fullscreen)await browserCall('Browser.setWindowBounds',{windowId,bounds:{windowState:'fullscreen'}});
+    await sleep(500);
+    windowInfo=await browserCall('Browser.getWindowBounds',{windowId});
+  }
+  fs.writeFileSync(path.join(out,'display.json'),JSON.stringify({windowInfo,refreshHz:Number(process.env.REFRESH_HZ||144),screen:await ev('({x:screenX,y:screenY,width:screen.width,height:screen.height,availLeft:screen.availLeft,availTop:screen.availTop,dpr:devicePixelRatio})')},null,2));
   fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling},null,2));
   await send('Emulation.setDeviceMetricsOverride',viewport);
   await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
@@ -171,6 +188,8 @@ try{
     let inputEvents;
     if(scene==='human')inputEvents=await humanInputRoute(send,seconds);else await sleep(seconds*1000);
     const result=await ev('__audit.stop()');
+    result.hiddenTerrain=await ev('window.__perf&&__perf.hiddenTerrain?__perf.hiddenTerrain():null');
+    result.windowEnd=await browserCall('Browser.getWindowForTarget',{targetId:target.id});
     if(inputEvents)result.inputEvents=inputEvents;
     result.bundleSHA256=createHash('sha256').update(bundleSource).digest('hex');
     result.bundleRef=bundleRef;

@@ -9,9 +9,10 @@
   var PERF_TIPS = {
     'Verdict': 'MAIN THREAD means measured frame work is dominant, including waits inside graphics calls. FRAME DELIVERY means more time is outside that work. Neither alone identifies a CPU or GPU hardware bottleneck.',
     'Cause': 'The single biggest contributor to the current verdict.',
-    'Hitches': 'How many recent frames ran far longer than normal. Each one is a visible stutter.',
-    'Smoothness': 'jank% counts late animation frames. 1%-low is 1000 divided by the 99th-percentile interval between animation frames, including GPU and scheduling waits.',
-    'FPS': 'Frames per second now, with the rolling average in parentheses. Capped at your monitor refresh rate.',
+    'Hitches': 'How many recent game update/render calls took far longer than normal. Displayed-frame stalls outside those calls are not counted here.',
+    'Callback gaps': 'Late animation callbacks relative to the fastest observed callback rate. 1%-low is 1000 divided by the 99th-percentile callback interval. This is not a measurement of displayed frames. On mixed-refresh monitors the browser callback clock can differ from the screen refresh rate.',
+    'Timing target': 'Fastest observed animation callback rate in the current display context. This is an estimate of the browser clock, not the monitor refresh rate. Actual displayed frames require a presentation capture.',
+    'FPS': 'Game animation callbacks per second, with the rolling average in parentheses. The browser can call the game faster than the current monitor refreshes.',
     'CPU frame': 'Wall time inside the game update and render calls, including graphics API stalls. p99 and max are the worst recent measurements.',
     'GPU/idle': 'Estimated frame interval minus measured game work. Includes graphics, browser scheduling and vsync idle; this is not a GPU execution measurement.',
     'Upd/Rnd/Smk': 'This frame split into update / render / smoke milliseconds. Each is also its own row in TOP BUCKETS.',
@@ -262,8 +263,9 @@
     var _jankStats = perfJankStats();
     var _jankCol = _jankStats.jankPct < 3 ? '#66ff66'
                  : _jankStats.jankPct < 10 ? '#ffcc44' : '#ff6666';
-    K('Smoothness', _jankStats.jankPct.toFixed(0) + '% jank · 1%-low ' +
+    K('Callback gaps', _jankStats.jankPct.toFixed(0) + '% late · 1%-low ' +
                     Math.round(_jankStats.low1) + 'fps', _jankCol);
+    K('Timing target', Math.round(perfFpsCap) + '/s observed');
     G();
     // v14.21 — WORST FRAME: the captured hitch + its top-6 raw buckets, so a
     // spike's culprit is visible after the EMA has smoothed it away. Shown
