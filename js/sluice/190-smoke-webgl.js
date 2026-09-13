@@ -1215,7 +1215,9 @@
           marginX: smokeFluidMarginWorldX, marginY: smokeFluidMarginWorldY,
           obstW: (typeof smokeFluidObstacleW !== 'undefined') ? smokeFluidObstacleW : -1,
           obstH: (typeof smokeFluidObstacleH !== 'undefined') ? smokeFluidObstacleH : -1,
-          camX: cam.x, camY: cam.y
+          camX: cam.x, camY: cam.y,
+          terrainBuilds: smokeTerrainMaskBuilds,
+          terrainBitmap: smokeTerrainMask ? [smokeTerrainMask.canvas.width, smokeTerrainMask.canvas.height] : null
         };
       }
     };
@@ -1857,50 +1859,55 @@
     var startRow = Math.floor(domainY / TILE) - 1;
     var endRow = Math.floor((domainY + smokeFluidDomainWorldH) / TILE) + 1;
 
-    // Pass 1 — opaque coverage for every tile that has any visual material.
-    // Use sub-pixel positions (no Math.floor) so the obstacle edge moves
-    // continuously with the camera. If we snapped to integer pixels here,
-    // the obstacle would jump in 1-pixel increments while the dye texture
-    // scrolls at full sub-pixel precision — and the advection shader (which
-    // zeros dye inside obstacles) would chew through smoke at the boundary
-    // every frame the camera was moving.
-    oc.fillStyle = '#000';
-    var voidCarveTiles = [];
-    var tileW = TILE * sxScale;
-    var tileH = TILE * syScale;
-    for (var r = startRow; r <= endRow; r++) {
-      for (var c = startCol; c <= endCol; c++) {
-        var t = tileAt(r, c);
-        if (t != null && t !== 'wall') {
-          oc.fillRect((c * TILE - domainX) * sxScale, (r * TILE - domainY) * syScale, tileW, tileH);
-        } else if (t === null) {
-          if (dominantVoidBackingKind(r, c)) {
+    var _terrainMaskT = performance.now();
+    if (!smokeTerrainMaskPaint(oc, domainX, domainY, sxScale, syScale)) {
+      // Pass 1 — opaque coverage for every tile that has any visual material.
+      // Use sub-pixel positions (no Math.floor) so the obstacle edge moves
+      // continuously with the camera. If we snapped to integer pixels here,
+      // the obstacle would jump in 1-pixel increments while the dye texture
+      // scrolls at full sub-pixel precision — and the advection shader (which
+      // zeros dye inside obstacles) would chew through smoke at the boundary
+      // every frame the camera was moving.
+      oc.fillStyle = '#000';
+      var voidCarveTiles = [];
+      var tileW = TILE * sxScale;
+      var tileH = TILE * syScale;
+      for (var r = startRow; r <= endRow; r++) {
+        for (var c = startCol; c <= endCol; c++) {
+          var t = tileAt(r, c);
+          if (t != null && t !== 'wall') {
             oc.fillRect((c * TILE - domainX) * sxScale, (r * TILE - domainY) * syScale, tileW, tileH);
-            voidCarveTiles.push(r, c);
+          } else if (t === null) {
+            if (dominantVoidBackingKind(r, c)) {
+              oc.fillRect((c * TILE - domainX) * sxScale, (r * TILE - domainY) * syScale, tileW, tileH);
+              voidCarveTiles.push(r, c);
+            }
           }
         }
       }
-    }
 
-    // Pass 2 — carve out the cave interior using the SAME contour path the
-    // visual renderer fills. One destination-out fill subtracts every cave
-    // polygon at once, guaranteeing collision matches the visible boundary.
-    if (voidCarveTiles.length) {
-      oc.save();
-      oc.setTransform(sxScale, 0, 0, syScale, -domainX * sxScale, -domainY * syScale);
-      oc.globalCompositeOperation = 'destination-out';
-      oc.fillStyle = '#000';
-      var voidPath = buildVoidContourPath(startRow, endRow, startCol, endCol);
-      oc.fill(voidPath);
-      if (startRow <= SKY_ROWS && endRow >= SKY_ROWS) {
-        var oldCtx = ctx;
-        ctx = oc;
-        drawSurfaceVoidMouths(startCol, endCol);
-        ctx = oldCtx;
+      // Pass 2 — carve out the cave interior using the SAME contour path the
+      // visual renderer fills. One destination-out fill subtracts every cave
+      // polygon at once, guaranteeing collision matches the visible boundary.
+      if (voidCarveTiles.length) {
+        oc.save();
+        oc.setTransform(sxScale, 0, 0, syScale, -domainX * sxScale, -domainY * syScale);
+        oc.globalCompositeOperation = 'destination-out';
+        oc.fillStyle = '#000';
+        var voidPath = buildVoidContourPath(startRow, endRow, startCol, endCol);
+        oc.fill(voidPath);
+        if (startRow <= SKY_ROWS && endRow >= SKY_ROWS) {
+          var oldCtx = ctx;
+          ctx = oc;
+          drawSurfaceVoidMouths(startCol, endCol);
+          ctx = oldCtx;
+        }
+        oc.globalCompositeOperation = 'source-over';
+        oc.restore();
       }
-      oc.globalCompositeOperation = 'source-over';
-      oc.restore();
+
     }
+    perfMark('update.smokeTerrain', _terrainMaskT);
 
     // Pass 3 — live jello bodies are solid obstacles too, so the diesel smoke
     // flows AROUND a gel cube instead of straight through it. Fill each visible

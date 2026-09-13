@@ -5,6 +5,7 @@
 // SCENES=human uses real uneven keyboard gestures without overriding movement.
 // PROFILE=0 omits CPU sampling when measuring normal frame delivery.
 // ROOT can point at a second checkout; DUMP must stay outside the checkout.
+// BUNDLE_REF serves a committed game bundle with this checkout's other assets.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -16,6 +17,8 @@ import {createHash} from 'node:crypto';
 import {installGPUAudit} from './gpu-audit-probe.mjs';
 import {humanInputRoute} from './human-input-route.mjs';
 const root=path.resolve(process.env.ROOT || path.join(path.dirname(fileURLToPath(import.meta.url)),'../..'));
+const bundleRef=process.env.BUNDLE_REF||null;
+const bundleSource=bundleRef?execFileSync('git',['show',bundleRef+':js/sluice.js'],{cwd:root,maxBuffer:16*1024*1024}):fs.readFileSync(path.join(root,'js/sluice.js'));
 const out=process.env.DUMP || fs.mkdtempSync(path.join(os.tmpdir(),'sluice-audit-'));
 assert(!path.resolve(out).startsWith(root+path.sep)); fs.mkdirSync(out,{recursive:true});
 const port=Number(process.env.PORT || 8840), debugPort=port+1000;
@@ -70,7 +73,7 @@ window.__audit=(function(){
     if(!move){player.x=pinX;player.renderX=pinX;player.vx=0;}
     player.fuel=getMaxFuel();player.hull=getMaxHull();
   }};
-  function state(){return {version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],mountains:typeof mtnGPU!=='undefined'?{active:!!mtnGPU&&!mtnGPUFailed,failed:mtnGPUFailed,size:mtnGPU&&[mtnGPU.canvas.width,mtnGPU.canvas.height],samples:mtnGPU&&mtnGPU.gl.getParameter(mtnGPU.gl.SAMPLES)}:null,liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
+  function state(){return {smokeMask:window.__smokeObst?window.__smokeObst.info():null,version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],mountains:typeof mtnGPU!=='undefined'?{active:!!mtnGPU&&!mtnGPUFailed,failed:mtnGPUFailed,size:mtnGPU&&[mtnGPU.canvas.width,mtnGPU.canvas.height],samples:mtnGPU&&mtnGPU.gl.getParameter(mtnGPU.gl.SAMPLES)}:null,liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
   return {ready:function(){
       if(introPhase==='done'&&smokeFluidActive&&!smokeWGPUDriving&&
           (smokeDriver!==SmokeFluid||!smokeDriver.isReady()))throw Error('Smoke experiment left the active driver disconnected');
@@ -125,7 +128,7 @@ addEventListener('DOMContentLoaded',()=>{document.body.classList.add('gm-fs');do
 })();
 `;
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.m4a':'audio/mp4','.svg':'image/svg+xml'};
-const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}let data=fs.readFileSync(file);if(pathname==='/js/sluice.js'){let src=data.toString(),end=src.lastIndexOf('})();');data=Buffer.from(src.slice(0,end)+probe+src.slice(end));}if(pathname==='/js/audio.js')data=Buffer.from(data.toString().replace('  // ===== public API',audioProbe+'\n  // ===== public API'));res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch(e){res.writeHead(500);res.end(String(e));}});
+const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}let data=fs.readFileSync(file);if(pathname==='/js/sluice.js'){let src=bundleSource.toString(),end=src.lastIndexOf('})();');data=Buffer.from(src.slice(0,end)+probe+src.slice(end));}if(pathname==='/js/audio.js')data=Buffer.from(data.toString().replace('  // ===== public API',audioProbe+'\n  // ===== public API'));res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch(e){res.writeHead(500);res.end(String(e));}});
 let chrome,ws,seq=0;const pending=new Map(),errors=[];
 let traceStream=null;
 async function browserCall(method){const endpoint=await(await fetch('http://127.0.0.1:'+debugPort+'/json/version')).json();return new Promise((resolve,reject)=>{const socket=new WebSocket(endpoint.webSocketDebuggerUrl);socket.onopen=()=>socket.send(JSON.stringify({id:1,method}));socket.onerror=reject;socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id===1){socket.close();m.error?reject(Error(JSON.stringify(m.error))):resolve(m.result);}};});}
@@ -144,7 +147,7 @@ try{
   ws.onclose=()=>{for(const p of pending.values())p.reject(Error('CDP disconnected'));pending.clear();};
   ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);if(p)m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args);if(m.method==='Tracing.tracingComplete')traceStream=m.params.stream;};
   await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setBlockedURLs',{urls:['*googletagmanager.com*','*google-analytics.com*']});
-  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling},null,2));
+  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling},null,2));
   await send('Emulation.setDeviceMetricsOverride',viewport);
   await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   for(const scene of scenes){
@@ -169,7 +172,8 @@ try{
     if(scene==='human')inputEvents=await humanInputRoute(send,seconds);else await sleep(seconds*1000);
     const result=await ev('__audit.stop()');
     if(inputEvents)result.inputEvents=inputEvents;
-    result.bundleSHA256=createHash('sha256').update(fs.readFileSync(path.join(root,'js/sluice.js'))).digest('hex');
+    result.bundleSHA256=createHash('sha256').update(bundleSource).digest('hex');
+    result.bundleRef=bundleRef;
     if(presentation&&presentation.exitCode===null)await new Promise(resolve=>{presentation.once('exit',resolve);setTimeout(()=>{if(presentation.exitCode===null)presentation.kill();resolve();},5000);});
     let profile;if(cpuSampling){profile=(await send('Profiler.stop')).profile;fs.writeFileSync(path.join(out,scene+'.cpuprofile'),JSON.stringify(profile));}
     result.boot=boot;result.start=start;result.adapter=adapter;result.errors=errors.slice();result.audio=await ev('window.__audioAudit&&__audioAudit()');

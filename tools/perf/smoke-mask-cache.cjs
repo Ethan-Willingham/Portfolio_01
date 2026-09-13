@@ -16,6 +16,8 @@ function check({original,current}){
       var smokeFluidObstacleCanvas=document.createElement('canvas');smokeFluidObstacleCanvas.width=768;smokeFluidObstacleCanvas.height=576;
       var smokeFluidObstacleCtx=smokeFluidObstacleCanvas.getContext('2d',{willReadFrequently:true});
       var smokeDriver={setObstacleAlpha:function(){}},jelloBodies=[];
+      // Isolate the water-density cache; terrain reuse has its own game suite.
+      function smokeTerrainMaskPaint(){return false;}
       function tileAt(){return null;}function dominantVoidBackingKind(){return false;}function perfMark(){}
       var liquidWGPU={simActive:true,readbackApplyGen:0},liquidMutationSeq=0;
       var liquidCount=0,liquidX,liquidY,liquidVY,liquidFrozen;
