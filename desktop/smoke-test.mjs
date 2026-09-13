@@ -4,6 +4,7 @@ import os from 'node:os';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 const here=path.dirname(fileURLToPath(import.meta.url));
+const expectedVersion=fs.readFileSync(path.join(here,'../js/sluice/000-head.js'),'utf8').match(/GAME_VERSION = '([^']+)'/)[1];
 const {_electron}=await import(process.env.PLAYWRIGHT_MODULE);
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-desktop-qa-'));
 const app=await _electron.launch({executablePath:path.join(here,'dist/Sluice-win32-x64/Sluice.exe'),args:['--profile='+profile],env:{...process.env,ELECTRON_RUN_AS_NODE:undefined},timeout:30000});
@@ -12,7 +13,9 @@ try{
   page=await app.firstWindow();page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
   page.on('pageerror',e=>errors.push(String(e)));page.on('request',r=>{if(/^https?:/.test(r.url()))remote.push(r.url());});page.on('requestfailed',r=>failed.push(r.url()));
   await page.waitForFunction(()=>window.SluiceLoading&&!SluiceLoading.active(),undefined,{timeout:60000});
-  const initial=await page.evaluate(async()=>({url:location.href,secure:isSecureContext,node:typeof require,fonts:document.fonts.check('12px Commit Mono'),canvas:[document.getElementById('game-canvas').width,document.getElementById('game-canvas').height],gpu:!!navigator.gpu,controls:document.querySelectorAll('#game-pause').length,body:document.querySelectorAll('.post-header,.game-about,.site-footer').length,moon:(await fetch('assets/images/moon.jpg')).status}));
+  const initial=await page.evaluate(async()=>({url:location.href,secure:isSecureContext,node:typeof require,fonts:document.fonts.check('12px Commit Mono'),canvas:[document.getElementById('game-canvas').width,document.getElementById('game-canvas').height],gpu:!!navigator.gpu,controls:document.querySelectorAll('#game-pause').length,body:document.querySelectorAll('.post-header,.game-about,.site-footer').length,moon:(await fetch('assets/images/moon.jpg')).status,build:(await (await fetch('build.json')).json()).gameVersion,script:document.querySelector('script[src^="js/sluice.js"]').src}));
+  assert.equal(initial.build,expectedVersion,'Packaged game matches the current source version');
+  assert(initial.script.endsWith('?v='+expectedVersion),'Packaged HTML loads the current bundle');
   assert.equal(initial.url,'sluice://app/grand-motherload.html');assert(initial.secure&&initial.gpu);assert.equal(initial.node,'undefined');assert.equal(initial.controls,1);assert.equal(initial.body,0);assert.equal(initial.moon,200);
   assert.equal(await page.evaluate(()=>gm.get('perf.mountainGPU')),1);
   await page.evaluate(()=>{SluiceOptions.set('musicvol',.37);});await page.reload();

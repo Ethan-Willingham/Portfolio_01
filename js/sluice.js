@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.123';
+  var GAME_VERSION = 'v26.124';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -26680,31 +26680,57 @@
           // crisp, matching the old per-chunk wall fill).
           var surfaceBankClip = L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
             worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH;
+          // The irregular bank ends within 12 world pixels of the surface.
+          // Applying its path mask to the whole underground band makes Canvas
+          // rasterize a large clipped layer every frame. Keep that mask around
+          // the edge only; the wall below it needs just a rectangular clip.
+          // Split on a native pixel boundary so the two passes cannot leave a
+          // filtered seam, including at fractional zoom and during camera shake.
+          var bankSplit = false, bankTransform, bankCutPx, bankCut;
           if (surfaceBankClip) {
-            ctx.save();
-            clipSurfaceBank(worldLeft, worldRight, bandBotY);
+            bankTransform = ctx.getTransform();
+            bankCutPx = Math.ceil((surfaceY + SURFACE_BANK_EDGE_DEPTH) * bankTransform.d + bankTransform.f);
+            bankCut = (bankCutPx - bankTransform.f) / bankTransform.d;
+            bankSplit = bankTransform.b === 0 && bankTransform.c === 0 && bankTransform.d > 0 &&
+              bankCutPx > 0 && bankCutPx < canvas.height;
           }
-          var wallFill = PERF_DISABLE_CAVE_WALLS ? null : getBiomeWallFill(L.name);
-          if (wallFill) {
-            wallFill.setTransform(new DOMMatrix([1, 0, 0, 1,
-              cam.x * (1 - BIOME_WALL_PARALLAX_X),
-              cam.y * (1 - BIOME_WALL_PARALLAX_Y)]));
-            ctx.fillStyle = wallFill;
-            ctx.imageSmoothingEnabled = false;
-            ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
-            ctx.imageSmoothingEnabled = true;
-          } else {
-            ctx.fillStyle = biomeBgColor(L.name);
-            ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
-          }
+          for (var bankPass = 0; bankPass < (bankSplit ? 2 : 1); bankPass++) {
+            if (surfaceBankClip) {
+              ctx.save();
+              if (bankSplit) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.beginPath();
+                ctx.rect(0, bankPass === 0 ? 0 : bankCutPx, canvas.width,
+                  bankPass === 0 ? bankCutPx : canvas.height - bankCutPx);
+                ctx.clip();
+                ctx.setTransform(bankTransform);
+              }
+              if (!bankSplit || bankPass === 0) {
+                clipSurfaceBank(worldLeft, worldRight, bankSplit ? bankCut : bandBotY);
+              }
+            }
+            var wallFill = PERF_DISABLE_CAVE_WALLS ? null : getBiomeWallFill(L.name);
+            if (wallFill) {
+              wallFill.setTransform(new DOMMatrix([1, 0, 0, 1,
+                cam.x * (1 - BIOME_WALL_PARALLAX_X),
+                cam.y * (1 - BIOME_WALL_PARALLAX_Y)]));
+              ctx.fillStyle = wallFill;
+              ctx.imageSmoothingEnabled = false;
+              ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
+              ctx.imageSmoothingEnabled = true;
+            } else {
+              ctx.fillStyle = biomeBgColor(L.name);
+              ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
+            }
 
-          // Recessed cut bank and fine roots tie the surface to the wall.
-          // Both sit behind the terrain; their height stays surface-anchored.
-          if (L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
-              surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
-            drawSurfaceTransition(worldLeft, worldRight);
+            // Recessed cut bank and fine roots tie the surface to the wall.
+            // Both sit behind the terrain; their height stays surface-anchored.
+            if (L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
+                surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
+              drawSurfaceTransition(worldLeft, worldRight);
+            }
+            if (surfaceBankClip) ctx.restore();
           }
-          if (surfaceBankClip) ctx.restore();
         }
       }
       // Soften the grey layer's two material boundaries before terrain

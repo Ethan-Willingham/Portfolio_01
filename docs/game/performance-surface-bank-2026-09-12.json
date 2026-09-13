@@ -1,0 +1,3144 @@
+{
+  "date": "2026-09-12",
+  "before": {
+    "version": "v26.123",
+    "commit": "b1cb81c714198c39017f7d4db4d013eb4bfb8fec"
+  },
+  "after": {
+    "version": "v26.124",
+    "bundleSHA256": "ab80ced50b94657b6e0903d66d84d2ea3d995710f1160028bca1ea8e4fa47e63",
+    "normalizedBundleSHA256": "91d3c9f925a295b805c5eed9a7294ad419c038c788b9e6b3f805fa2e8ed6d9a5"
+  },
+  "method": {
+    "cpu": "Intel Core i7-9700K",
+    "gpu": "RTX 3080",
+    "os": "Windows",
+    "monitorHz": 144,
+    "chrome": "152.0.7977.83",
+    "preset": "Extreme",
+    "warmupSeconds": 3,
+    "measurementSeconds": 8,
+    "notes": [
+      "Sequential controlled scenes, not a replay of the user save. Single captures, not confidence intervals.",
+      "Physical capture uses CSS viewport 2048x1152 at DPR 1.25, yielding a 2560x1440 canvas. Oversized prototype experiments used 3200x1800.",
+      "Displayed intervals come from PresentMon on the game GPU process principal swap chain. RAF callback and CPU timings are separate.",
+      "Position is pinned for pen and nightpond; drive moves continuously. Water and slime dynamics can vary between runs.",
+      "Ranked CPU groups combine exclusive simulation/render groups. Nested buckets are not added to their parents. These are submission and stall times, not hardware GPU cost."
+    ]
+  },
+  "display": [
+    {
+      "side": "before",
+      "scene": "drive",
+      "raf": {
+        "canvas": [
+          2560,
+          1440
+        ],
+        "samples": 881,
+        "fps": 110.026,
+        "frameIntervalMs": {
+          "mean": 9.089,
+          "p99": 14,
+          "max": 20.8
+        },
+        "cpuMs": {
+          "mean": 2.984,
+          "p99": 5.8,
+          "max": 8.2
+        },
+        "over8msPct": 30.533
+      },
+      "displayMs": {
+        "n": 876,
+        "mean": 9.101,
+        "p99": 13.933,
+        "max": 20.826
+      },
+      "displayFPS": 109.878,
+      "displayOver8msPct": 30.708,
+      "motion": {
+        "distance": 1568.924,
+        "movingTransitionsPct": 100
+      },
+      "rank": [
+        {
+          "name": "smoke",
+          "meanMs": 0.585
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.447
+        },
+        {
+          "name": "water",
+          "meanMs": 0.423
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.291
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.248
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.153
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.102
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.1
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.084
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.078
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.075
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "meanMs": 1.708,
+          "p99Ms": 4.4,
+          "maxMs": 7
+        },
+        {
+          "name": "update.smoke",
+          "meanMs": 0.567,
+          "p99Ms": 2.3,
+          "maxMs": 2.6
+        },
+        {
+          "name": "render.terrain",
+          "meanMs": 0.447,
+          "p99Ms": 3,
+          "maxMs": 4.1
+        },
+        {
+          "name": "update.smokeObstacle",
+          "meanMs": 0.432,
+          "p99Ms": 2.1,
+          "maxMs": 2.4
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "meanMs": 0.344,
+          "p99Ms": 2,
+          "maxMs": 2.2
+        },
+        {
+          "name": "render.sky",
+          "meanMs": 0.302,
+          "p99Ms": 1.1,
+          "maxMs": 2.1
+        },
+        {
+          "name": "render.tiles",
+          "meanMs": 0.291,
+          "p99Ms": 0.6,
+          "maxMs": 1
+        },
+        {
+          "name": "update.liquids",
+          "meanMs": 0.272,
+          "p99Ms": 0.9,
+          "maxMs": 1.1
+        },
+        {
+          "name": "render.player+fx",
+          "meanMs": 0.263,
+          "p99Ms": 0.6,
+          "maxMs": 0.7
+        },
+        {
+          "name": "render.player",
+          "meanMs": 0.215,
+          "p99Ms": 0.4,
+          "maxMs": 0.6
+        },
+        {
+          "name": "render.HUD",
+          "meanMs": 0.153,
+          "p99Ms": 0.5,
+          "maxMs": 0.6
+        },
+        {
+          "name": "render.liquids",
+          "meanMs": 0.151,
+          "p99Ms": 0.6,
+          "maxMs": 0.9
+        },
+        {
+          "name": "render.mountains",
+          "meanMs": 0.102,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.undergroundBg",
+          "meanMs": 0.1,
+          "p99Ms": 0.9,
+          "maxMs": 1.9
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "meanMs": 0.084,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.skyComposite",
+          "meanMs": 0.084,
+          "p99Ms": 0.2,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.entities",
+          "meanMs": 0.075,
+          "p99Ms": 0.4,
+          "maxMs": 0.6
+        },
+        {
+          "name": "update.jello",
+          "meanMs": 0.063,
+          "p99Ms": 0.9,
+          "maxMs": 1.1
+        },
+        {
+          "name": "update.main",
+          "meanMs": 0.052,
+          "p99Ms": 0.2,
+          "maxMs": 0.5
+        },
+        {
+          "name": "update.smokeStep",
+          "meanMs": 0.051,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.console",
+          "meanMs": 0.027,
+          "p99Ms": 0.1,
+          "maxMs": 0.4
+        },
+        {
+          "name": "update.smokeEmit",
+          "meanMs": 0.026,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "jello.substepsAll",
+          "meanMs": 0.024,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "meanMs": 0.022,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeScroll",
+          "meanMs": 0.021,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.grassWind",
+          "meanMs": 0.019,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "jello.contact",
+          "meanMs": 0.018,
+          "p99Ms": 0.4,
+          "maxMs": 0.6
+        },
+        {
+          "name": "render.smoke",
+          "meanMs": 0.018,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.lightFog",
+          "meanMs": 0.015,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "render.jello",
+          "meanMs": 0.015,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.trees",
+          "meanMs": 0.01,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.weather",
+          "meanMs": 0.008,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "meanMs": 0.005,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.drillAnim",
+          "meanMs": 0.004,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "jello.internal",
+          "meanMs": 0.004,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.wind",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.pondStream",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.mineFx",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "jello.tail",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.slimeNpc",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.perfOverlay",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.rocketPlume",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "console.cash",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.explosions",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.clearOverlays",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.liveBombs",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        }
+      ],
+      "errors": [],
+      "bundleSHA256": "4751e7d0cafe4882fe41e8999830aa7c23444269874fecf6e3fe58755a1a5300"
+    },
+    {
+      "side": "before",
+      "scene": "pen",
+      "raf": {
+        "canvas": [
+          2560,
+          1440
+        ],
+        "samples": 820,
+        "fps": 102.496,
+        "frameIntervalMs": {
+          "mean": 9.756,
+          "p99": 14,
+          "max": 20.8
+        },
+        "cpuMs": {
+          "mean": 4.223,
+          "p99": 5.8,
+          "max": 8.2
+        },
+        "over8msPct": 40.366
+      },
+      "displayMs": {
+        "n": 816,
+        "mean": 9.77,
+        "p99": 13.941,
+        "max": 13.969
+      },
+      "displayFPS": 102.352,
+      "displayOver8msPct": 40.686,
+      "motion": {
+        "distance": 0.923,
+        "movingTransitionsPct": 10.745
+      },
+      "rank": [
+        {
+          "name": "slimes",
+          "meanMs": 1.996
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.365
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.361
+        },
+        {
+          "name": "water",
+          "meanMs": 0.345
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.159
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.134
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.131
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.118
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.108
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.078
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.038
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "meanMs": 2.504,
+          "p99Ms": 3.4,
+          "maxMs": 4.3
+        },
+        {
+          "name": "render.player+fx",
+          "meanMs": 1.118,
+          "p99Ms": 1.8,
+          "maxMs": 2.3
+        },
+        {
+          "name": "update.jello",
+          "meanMs": 1.037,
+          "p99Ms": 1.9,
+          "maxMs": 3.1
+        },
+        {
+          "name": "render.jello",
+          "meanMs": 0.959,
+          "p99Ms": 1.6,
+          "maxMs": 2.2
+        },
+        {
+          "name": "jello.substepsAll",
+          "meanMs": 0.954,
+          "p99Ms": 1.9,
+          "maxMs": 3
+        },
+        {
+          "name": "jello.contact",
+          "meanMs": 0.802,
+          "p99Ms": 1.6,
+          "maxMs": 2.6
+        },
+        {
+          "name": "render.terrain",
+          "meanMs": 0.365,
+          "p99Ms": 0.7,
+          "maxMs": 0.8
+        },
+        {
+          "name": "render.tiles",
+          "meanMs": 0.361,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "render.sky",
+          "meanMs": 0.327,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "update.liquids",
+          "meanMs": 0.212,
+          "p99Ms": 0.7,
+          "maxMs": 1
+        },
+        {
+          "name": "render.HUD",
+          "meanMs": 0.134,
+          "p99Ms": 0.3,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.liquids",
+          "meanMs": 0.133,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.player",
+          "meanMs": 0.13,
+          "p99Ms": 0.3,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.mountains",
+          "meanMs": 0.118,
+          "p99Ms": 0.3,
+          "maxMs": 0.5
+        },
+        {
+          "name": "jello.internal",
+          "meanMs": 0.116,
+          "p99Ms": 0.4,
+          "maxMs": 0.6
+        },
+        {
+          "name": "update.smoke",
+          "meanMs": 0.11,
+          "p99Ms": 1,
+          "maxMs": 1.3
+        },
+        {
+          "name": "render.skyComposite",
+          "meanMs": 0.108,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.undergroundBg",
+          "meanMs": 0.078,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeStep",
+          "meanMs": 0.047,
+          "p99Ms": 0.2,
+          "maxMs": 0.2
+        },
+        {
+          "name": "jello.tail",
+          "meanMs": 0.044,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeObstacle",
+          "meanMs": 0.042,
+          "p99Ms": 0.9,
+          "maxMs": 1.2
+        },
+        {
+          "name": "render.entities",
+          "meanMs": 0.038,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "meanMs": 0.033,
+          "p99Ms": 0.8,
+          "maxMs": 1.1
+        },
+        {
+          "name": "render.console",
+          "meanMs": 0.032,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.main",
+          "meanMs": 0.03,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "render.smoke",
+          "meanMs": 0.021,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.grassWind",
+          "meanMs": 0.02,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.lightFog",
+          "meanMs": 0.01,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "meanMs": 0.008,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.weather",
+          "meanMs": 0.008,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "meanMs": 0.007,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.trees",
+          "meanMs": 0.006,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.drillAnim",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeEmit",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.wind",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.pondStream",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.7
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.slimeNpc",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.rocketPlume",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.clearOverlays",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.mineFx",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeScroll",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.explosions",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.liveBombs",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.perfOverlay",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        }
+      ],
+      "errors": [],
+      "bundleSHA256": "4751e7d0cafe4882fe41e8999830aa7c23444269874fecf6e3fe58755a1a5300"
+    },
+    {
+      "side": "before",
+      "scene": "nightpond",
+      "raf": {
+        "canvas": [
+          2560,
+          1440
+        ],
+        "samples": 1127,
+        "fps": 140.75,
+        "frameIntervalMs": {
+          "mean": 7.105,
+          "p99": 13.9,
+          "max": 14
+        },
+        "cpuMs": {
+          "mean": 2.354,
+          "p99": 3.9,
+          "max": 4.6
+        },
+        "over8msPct": 2.307
+      },
+      "displayMs": {
+        "n": 1124,
+        "mean": 7.112,
+        "p99": 13.903,
+        "max": 13.942
+      },
+      "displayFPS": 140.617,
+      "displayOver8msPct": 2.402,
+      "motion": {
+        "distance": 0,
+        "movingTransitionsPct": 0
+      },
+      "rank": [
+        {
+          "name": "water",
+          "meanMs": 0.388
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.33
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.258
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.229
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.174
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.168
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.158
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.137
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.099
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.076
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.035
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "meanMs": 1.63,
+          "p99Ms": 2.5,
+          "maxMs": 3
+        },
+        {
+          "name": "render.sky",
+          "meanMs": 0.432,
+          "p99Ms": 0.8,
+          "maxMs": 1
+        },
+        {
+          "name": "render.terrain",
+          "meanMs": 0.33,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "render.player+fx",
+          "meanMs": 0.281,
+          "p99Ms": 0.9,
+          "maxMs": 1.1
+        },
+        {
+          "name": "update.liquids",
+          "meanMs": 0.262,
+          "p99Ms": 0.9,
+          "maxMs": 1.2
+        },
+        {
+          "name": "render.tiles",
+          "meanMs": 0.258,
+          "p99Ms": 0.5,
+          "maxMs": 0.7
+        },
+        {
+          "name": "render.skyComposite",
+          "meanMs": 0.229,
+          "p99Ms": 0.6,
+          "maxMs": 0.7
+        },
+        {
+          "name": "update.smoke",
+          "meanMs": 0.144,
+          "p99Ms": 1.5,
+          "maxMs": 1.9
+        },
+        {
+          "name": "render.HUD",
+          "meanMs": 0.137,
+          "p99Ms": 0.3,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.player",
+          "meanMs": 0.135,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.liquids",
+          "meanMs": 0.126,
+          "p99Ms": 0.3,
+          "maxMs": 0.6
+        },
+        {
+          "name": "render.jello",
+          "meanMs": 0.123,
+          "p99Ms": 0.7,
+          "maxMs": 0.9
+        },
+        {
+          "name": "render.mountains",
+          "meanMs": 0.099,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.undergroundBg",
+          "meanMs": 0.076,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeObstacle",
+          "meanMs": 0.059,
+          "p99Ms": 1.5,
+          "maxMs": 1.8
+        },
+        {
+          "name": "update.smokeStep",
+          "meanMs": 0.053,
+          "p99Ms": 0.2,
+          "maxMs": 0.5
+        },
+        {
+          "name": "update.jello",
+          "meanMs": 0.051,
+          "p99Ms": 0.5,
+          "maxMs": 1.6
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "meanMs": 0.05,
+          "p99Ms": 1.4,
+          "maxMs": 1.6
+        },
+        {
+          "name": "render.console",
+          "meanMs": 0.035,
+          "p99Ms": 0.2,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.entities",
+          "meanMs": 0.035,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.main",
+          "meanMs": 0.033,
+          "p99Ms": 0.2,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.smoke",
+          "meanMs": 0.023,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "meanMs": 0.016,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "update.grassWind",
+          "meanMs": 0.014,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.weather",
+          "meanMs": 0.013,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "jello.substepsAll",
+          "meanMs": 0.011,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "render.lightFog",
+          "meanMs": 0.01,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "meanMs": 0.008,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "jello.internal",
+          "meanMs": 0.006,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.trees",
+          "meanMs": 0.006,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "meanMs": 0.004,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "jello.contact",
+          "meanMs": 0.004,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.wind",
+          "meanMs": 0.004,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.drillAnim",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeEmit",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.pondStream",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "jello.tail",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.rocketPlume",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.perfOverlay",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.explosions",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.clearOverlays",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.slimeNpc",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.mineFx",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.liveBombs",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeScroll",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        }
+      ],
+      "errors": [],
+      "bundleSHA256": "4751e7d0cafe4882fe41e8999830aa7c23444269874fecf6e3fe58755a1a5300"
+    },
+    {
+      "side": "after",
+      "scene": "drive",
+      "raf": {
+        "canvas": [
+          2560,
+          1440
+        ],
+        "samples": 1034,
+        "fps": 129.021,
+        "frameIntervalMs": {
+          "mean": 7.751,
+          "p99": 14,
+          "max": 14.1
+        },
+        "cpuMs": {
+          "mean": 3.013,
+          "p99": 5.9,
+          "max": 7.4
+        },
+        "over8msPct": 11.605
+      },
+      "displayMs": {
+        "n": 1028,
+        "mean": 7.769,
+        "p99": 13.923,
+        "max": 13.968
+      },
+      "displayFPS": 128.719,
+      "displayOver8msPct": 11.868,
+      "motion": {
+        "distance": 1575.376,
+        "movingTransitionsPct": 100
+      },
+      "rank": [
+        {
+          "name": "smoke",
+          "meanMs": 0.594
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.455
+        },
+        {
+          "name": "water",
+          "meanMs": 0.421
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.298
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.262
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.15
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.121
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.102
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.089
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.072
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.029
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "meanMs": 1.749,
+          "p99Ms": 4.5,
+          "maxMs": 6.4
+        },
+        {
+          "name": "update.smoke",
+          "meanMs": 0.572,
+          "p99Ms": 2.3,
+          "maxMs": 2.7
+        },
+        {
+          "name": "render.terrain",
+          "meanMs": 0.455,
+          "p99Ms": 3.1,
+          "maxMs": 3.7
+        },
+        {
+          "name": "update.smokeObstacle",
+          "meanMs": 0.431,
+          "p99Ms": 2.1,
+          "maxMs": 2.4
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "meanMs": 0.337,
+          "p99Ms": 2.1,
+          "maxMs": 2.3
+        },
+        {
+          "name": "render.sky",
+          "meanMs": 0.329,
+          "p99Ms": 1.7,
+          "maxMs": 2.7
+        },
+        {
+          "name": "render.tiles",
+          "meanMs": 0.298,
+          "p99Ms": 0.5,
+          "maxMs": 1.2
+        },
+        {
+          "name": "update.liquids",
+          "meanMs": 0.278,
+          "p99Ms": 0.9,
+          "maxMs": 1.1
+        },
+        {
+          "name": "render.player+fx",
+          "meanMs": 0.271,
+          "p99Ms": 0.5,
+          "maxMs": 0.6
+        },
+        {
+          "name": "render.player",
+          "meanMs": 0.229,
+          "p99Ms": 0.4,
+          "maxMs": 0.6
+        },
+        {
+          "name": "render.HUD",
+          "meanMs": 0.15,
+          "p99Ms": 0.4,
+          "maxMs": 2.8
+        },
+        {
+          "name": "render.liquids",
+          "meanMs": 0.143,
+          "p99Ms": 0.6,
+          "maxMs": 0.7
+        },
+        {
+          "name": "render.undergroundBg",
+          "meanMs": 0.121,
+          "p99Ms": 1.5,
+          "maxMs": 2.4
+        },
+        {
+          "name": "render.mountains",
+          "meanMs": 0.102,
+          "p99Ms": 0.2,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.skyComposite",
+          "meanMs": 0.089,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "meanMs": 0.088,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.entities",
+          "meanMs": 0.072,
+          "p99Ms": 0.4,
+          "maxMs": 0.7
+        },
+        {
+          "name": "update.smokeStep",
+          "meanMs": 0.054,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "update.main",
+          "meanMs": 0.051,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "update.smokeEmit",
+          "meanMs": 0.029,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeScroll",
+          "meanMs": 0.024,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.console",
+          "meanMs": 0.022,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.smoke",
+          "meanMs": 0.022,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "meanMs": 0.022,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "update.jello",
+          "meanMs": 0.021,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.grassWind",
+          "meanMs": 0.02,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.lightFog",
+          "meanMs": 0.015,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.weather",
+          "meanMs": 0.013,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.trees",
+          "meanMs": 0.01,
+          "p99Ms": 0.1,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.jello",
+          "meanMs": 0.009,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.drillAnim",
+          "meanMs": 0.005,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.wind",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.pondStream",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.liveBombs",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.explosions",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.slimeNpc",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.clearOverlays",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.mineFx",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.rocketPlume",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.perfOverlay",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "console.cash",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.2
+        }
+      ],
+      "errors": [],
+      "bundleSHA256": "f41df6d13b0044d26471e6ec420d0eec9909de47ed1dc41544b9f8ad4dbec306"
+    },
+    {
+      "side": "after",
+      "scene": "pen",
+      "raf": {
+        "canvas": [
+          2560,
+          1440
+        ],
+        "samples": 985,
+        "fps": 122.907,
+        "frameIntervalMs": {
+          "mean": 8.136,
+          "p99": 14,
+          "max": 14
+        },
+        "cpuMs": {
+          "mean": 3.932,
+          "p99": 5.3,
+          "max": 6.7
+        },
+        "over8msPct": 17.157
+      },
+      "displayMs": {
+        "n": 980,
+        "mean": 8.142,
+        "p99": 13.945,
+        "max": 13.999
+      },
+      "displayFPS": 122.815,
+      "displayOver8msPct": 17.245,
+      "motion": {
+        "distance": 0,
+        "movingTransitionsPct": 0.61
+      },
+      "rank": [
+        {
+          "name": "slimes",
+          "meanMs": 1.787
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.344
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.332
+        },
+        {
+          "name": "water",
+          "meanMs": 0.329
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.158
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.135
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.13
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.104
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.096
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.092
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.035
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "meanMs": 2.387,
+          "p99Ms": 3.3,
+          "maxMs": 3.7
+        },
+        {
+          "name": "render.player+fx",
+          "meanMs": 1.081,
+          "p99Ms": 1.8,
+          "maxMs": 2.2
+        },
+        {
+          "name": "render.jello",
+          "meanMs": 0.923,
+          "p99Ms": 1.7,
+          "maxMs": 2.1
+        },
+        {
+          "name": "update.jello",
+          "meanMs": 0.864,
+          "p99Ms": 1.9,
+          "maxMs": 2.3
+        },
+        {
+          "name": "jello.substepsAll",
+          "meanMs": 0.79,
+          "p99Ms": 1.7,
+          "maxMs": 2.3
+        },
+        {
+          "name": "jello.contact",
+          "meanMs": 0.692,
+          "p99Ms": 1.6,
+          "maxMs": 1.9
+        },
+        {
+          "name": "render.tiles",
+          "meanMs": 0.344,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "render.terrain",
+          "meanMs": 0.332,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "render.sky",
+          "meanMs": 0.315,
+          "p99Ms": 0.5,
+          "maxMs": 0.6
+        },
+        {
+          "name": "update.liquids",
+          "meanMs": 0.21,
+          "p99Ms": 0.7,
+          "maxMs": 1
+        },
+        {
+          "name": "render.HUD",
+          "meanMs": 0.13,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.player",
+          "meanMs": 0.128,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.liquids",
+          "meanMs": 0.12,
+          "p99Ms": 0.3,
+          "maxMs": 0.6
+        },
+        {
+          "name": "update.smoke",
+          "meanMs": 0.111,
+          "p99Ms": 1,
+          "maxMs": 1.2
+        },
+        {
+          "name": "render.mountains",
+          "meanMs": 0.104,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.skyComposite",
+          "meanMs": 0.096,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.undergroundBg",
+          "meanMs": 0.092,
+          "p99Ms": 0.2,
+          "maxMs": 0.4
+        },
+        {
+          "name": "jello.internal",
+          "meanMs": 0.072,
+          "p99Ms": 0.3,
+          "maxMs": 0.5
+        },
+        {
+          "name": "update.smokeStep",
+          "meanMs": 0.05,
+          "p99Ms": 0.2,
+          "maxMs": 0.5
+        },
+        {
+          "name": "update.smokeObstacle",
+          "meanMs": 0.038,
+          "p99Ms": 0.9,
+          "maxMs": 1
+        },
+        {
+          "name": "render.entities",
+          "meanMs": 0.035,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "jello.tail",
+          "meanMs": 0.032,
+          "p99Ms": 0.2,
+          "maxMs": 0.6
+        },
+        {
+          "name": "update.main",
+          "meanMs": 0.032,
+          "p99Ms": 0.2,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.console",
+          "meanMs": 0.032,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "meanMs": 0.031,
+          "p99Ms": 0.8,
+          "maxMs": 0.9
+        },
+        {
+          "name": "render.smoke",
+          "meanMs": 0.023,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.grassWind",
+          "meanMs": 0.019,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "meanMs": 0.009,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.trees",
+          "meanMs": 0.008,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.lightFog",
+          "meanMs": 0.008,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.weather",
+          "meanMs": 0.008,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "meanMs": 0.006,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.drillAnim",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeEmit",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.pondStream",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.8
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.wind",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.mineFx",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.liveBombs",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeScroll",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.rocketPlume",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.explosions",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.clearOverlays",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.slimeNpc",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.perfOverlay",
+          "meanMs": 0,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        }
+      ],
+      "errors": [],
+      "bundleSHA256": "f41df6d13b0044d26471e6ec420d0eec9909de47ed1dc41544b9f8ad4dbec306"
+    },
+    {
+      "side": "after",
+      "scene": "nightpond",
+      "raf": {
+        "canvas": [
+          2560,
+          1440
+        ],
+        "samples": 1154,
+        "fps": 143.993,
+        "frameIntervalMs": {
+          "mean": 6.945,
+          "p99": 7.1,
+          "max": 7.1
+        },
+        "cpuMs": {
+          "mean": 2.357,
+          "p99": 3.7,
+          "max": 4.4
+        },
+        "over8msPct": 0
+      },
+      "displayMs": {
+        "n": 1149,
+        "mean": 6.945,
+        "p99": 6.998,
+        "max": 7.064
+      },
+      "displayFPS": 143.994,
+      "displayOver8msPct": 0,
+      "motion": {
+        "distance": 0,
+        "movingTransitionsPct": 0
+      },
+      "rank": [
+        {
+          "name": "water",
+          "meanMs": 0.376
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.32
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.256
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.228
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.217
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.161
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.153
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.13
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.098
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.097
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.033
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "meanMs": 1.66,
+          "p99Ms": 2.4,
+          "maxMs": 2.9
+        },
+        {
+          "name": "render.sky",
+          "meanMs": 0.451,
+          "p99Ms": 0.7,
+          "maxMs": 0.8
+        },
+        {
+          "name": "render.terrain",
+          "meanMs": 0.32,
+          "p99Ms": 0.5,
+          "maxMs": 1.1
+        },
+        {
+          "name": "render.player+fx",
+          "meanMs": 0.313,
+          "p99Ms": 0.8,
+          "maxMs": 1.1
+        },
+        {
+          "name": "render.tiles",
+          "meanMs": 0.256,
+          "p99Ms": 0.5,
+          "maxMs": 0.7
+        },
+        {
+          "name": "update.liquids",
+          "meanMs": 0.252,
+          "p99Ms": 0.8,
+          "maxMs": 1
+        },
+        {
+          "name": "render.skyComposite",
+          "meanMs": 0.228,
+          "p99Ms": 0.4,
+          "maxMs": 0.5
+        },
+        {
+          "name": "render.jello",
+          "meanMs": 0.16,
+          "p99Ms": 0.6,
+          "maxMs": 0.8
+        },
+        {
+          "name": "update.smoke",
+          "meanMs": 0.138,
+          "p99Ms": 1.5,
+          "maxMs": 1.8
+        },
+        {
+          "name": "render.player",
+          "meanMs": 0.131,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.HUD",
+          "meanMs": 0.13,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.liquids",
+          "meanMs": 0.124,
+          "p99Ms": 0.3,
+          "maxMs": 0.4
+        },
+        {
+          "name": "render.mountains",
+          "meanMs": 0.098,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "render.undergroundBg",
+          "meanMs": 0.097,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.jello",
+          "meanMs": 0.057,
+          "p99Ms": 0.5,
+          "maxMs": 1.3
+        },
+        {
+          "name": "update.smokeObstacle",
+          "meanMs": 0.057,
+          "p99Ms": 1.4,
+          "maxMs": 1.5
+        },
+        {
+          "name": "update.smokeStep",
+          "meanMs": 0.052,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "meanMs": 0.048,
+          "p99Ms": 1.3,
+          "maxMs": 1.4
+        },
+        {
+          "name": "render.console",
+          "meanMs": 0.033,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "render.entities",
+          "meanMs": 0.033,
+          "p99Ms": 0.1,
+          "maxMs": 0.6
+        },
+        {
+          "name": "update.main",
+          "meanMs": 0.029,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.smoke",
+          "meanMs": 0.023,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.grassWind",
+          "meanMs": 0.014,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "meanMs": 0.013,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.weather",
+          "meanMs": 0.011,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.lightFog",
+          "meanMs": 0.011,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "jello.substepsAll",
+          "meanMs": 0.011,
+          "p99Ms": 0.2,
+          "maxMs": 0.3
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "meanMs": 0.007,
+          "p99Ms": 0.2,
+          "maxMs": 0.2
+        },
+        {
+          "name": "jello.internal",
+          "meanMs": 0.007,
+          "p99Ms": 0.2,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.trees",
+          "meanMs": 0.006,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "jello.contact",
+          "meanMs": 0.004,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.wind",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeEmit",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "meanMs": 0.003,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.drillAnim",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.pondStream",
+          "meanMs": 0.002,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "render.rocketPlume",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.explosions",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.smokeScroll",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.1
+        },
+        {
+          "name": "jello.tail",
+          "meanMs": 0.001,
+          "p99Ms": 0.1,
+          "maxMs": 0.2
+        },
+        {
+          "name": "update.mineFx",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.slimeNpc",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "render.perfOverlay",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.clearOverlays",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        },
+        {
+          "name": "update.liveBombs",
+          "meanMs": 0.001,
+          "p99Ms": 0,
+          "maxMs": 0.1
+        }
+      ],
+      "errors": [],
+      "bundleSHA256": "f41df6d13b0044d26471e6ec420d0eec9909de47ed1dc41544b9f8ad4dbec306"
+    }
+  ],
+  "regressions": [
+    {
+      "scene": "cave",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "samples": 722,
+      "fps": 143.997,
+      "frameIntervalMs": {
+        "mean": 6.945,
+        "p99": 7.1,
+        "max": 7.2
+      },
+      "cpuMs": {
+        "mean": 1.419,
+        "p99": 2.5,
+        "max": 2.7
+      },
+      "over8msPct": 0,
+      "rank": [
+        {
+          "name": "terrain",
+          "meanMs": 0.37
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.183
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.172
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.135
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.131
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.127
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.016
+        },
+        {
+          "name": "water",
+          "meanMs": 0.015
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.012
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scene": "deep",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "samples": 719,
+      "fps": 143.593,
+      "frameIntervalMs": {
+        "mean": 6.964,
+        "p99": 7.1,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 2.519,
+        "p99": 3.8,
+        "max": 4.9
+      },
+      "over8msPct": 0.139,
+      "rank": [
+        {
+          "name": "tiles",
+          "meanMs": 0.637
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.372
+        },
+        {
+          "name": "water",
+          "meanMs": 0.34
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.216
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.195
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.187
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.149
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.018
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.012
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scene": "storm",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "samples": 598,
+      "fps": 119.102,
+      "frameIntervalMs": {
+        "mean": 8.396,
+        "p99": 14,
+        "max": 34.8
+      },
+      "cpuMs": {
+        "mean": 3.445,
+        "p99": 5.6,
+        "max": 6.6
+      },
+      "over8msPct": 20.401,
+      "rank": [
+        {
+          "name": "slimes",
+          "meanMs": 0.869
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.431
+        },
+        {
+          "name": "water",
+          "meanMs": 0.341
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.313
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.257
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.208
+        },
+        {
+          "name": "smoke",
+          "meanMs": 0.202
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.145
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.133
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0.095
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0.083
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scene": "nightascent",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "samples": 721,
+      "fps": 143.993,
+      "frameIntervalMs": {
+        "mean": 6.945,
+        "p99": 7.1,
+        "max": 7.2
+      },
+      "cpuMs": {
+        "mean": 1.479,
+        "p99": 2.8,
+        "max": 11.6
+      },
+      "over8msPct": 0,
+      "rank": [
+        {
+          "name": "smoke",
+          "meanMs": 0.352
+        },
+        {
+          "name": "rigEffectsLighting",
+          "meanMs": 0.274
+        },
+        {
+          "name": "skyComposite",
+          "meanMs": 0.235
+        },
+        {
+          "name": "HUD",
+          "meanMs": 0.145
+        },
+        {
+          "name": "water",
+          "meanMs": 0.111
+        },
+        {
+          "name": "slimes",
+          "meanMs": 0.059
+        },
+        {
+          "name": "entities",
+          "meanMs": 0.029
+        },
+        {
+          "name": "terrain",
+          "meanMs": 0.007
+        },
+        {
+          "name": "tiles",
+          "meanMs": 0.001
+        },
+        {
+          "name": "undergroundBackground",
+          "meanMs": 0
+        },
+        {
+          "name": "mountains",
+          "meanMs": 0
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "experiments": [
+    {
+      "name": "control",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 570,
+      "fps": 94.78,
+      "frameIntervalMs": {
+        "mean": 10.551,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.182,
+        "p99": 6.4,
+        "max": 8
+      },
+      "over8msPct": 50
+    },
+    {
+      "name": "control",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 570,
+      "fps": 94.777,
+      "frameIntervalMs": {
+        "mean": 10.551,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 4.219,
+        "p99": 6.2,
+        "max": 8.5
+      },
+      "over8msPct": 51.93
+    },
+    {
+      "name": "no-refraction",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 555,
+      "fps": 92.283,
+      "frameIntervalMs": {
+        "mean": 10.836,
+        "p99": 20.9,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.294,
+        "p99": 6.4,
+        "max": 9.9
+      },
+      "over8msPct": 52.432
+    },
+    {
+      "name": "no-refraction",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 664,
+      "fps": 110.409,
+      "frameIntervalMs": {
+        "mean": 9.057,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 3.28,
+        "p99": 4.6,
+        "max": 4.8
+      },
+      "over8msPct": 30.422
+    },
+    {
+      "name": "no-terrain",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 612,
+      "fps": 101.878,
+      "frameIntervalMs": {
+        "mean": 9.816,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 2.783,
+        "p99": 5.5,
+        "max": 6.2
+      },
+      "over8msPct": 39.869
+    },
+    {
+      "name": "no-terrain",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 601,
+      "fps": 100.047,
+      "frameIntervalMs": {
+        "mean": 9.995,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 3.99,
+        "p99": 5.4,
+        "max": 7.6
+      },
+      "over8msPct": 43.927
+    },
+    {
+      "name": "no-sky",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 646,
+      "fps": 128.839,
+      "frameIntervalMs": {
+        "mean": 7.762,
+        "p99": 14,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.574,
+        "p99": 7.1,
+        "max": 11.6
+      },
+      "over8msPct": 11.3
+    },
+    {
+      "name": "no-sky",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 640,
+      "fps": 127.816,
+      "frameIntervalMs": {
+        "mean": 7.824,
+        "p99": 14,
+        "max": 14.1
+      },
+      "cpuMs": {
+        "mean": 4.261,
+        "p99": 6.1,
+        "max": 7.3
+      },
+      "over8msPct": 12.656
+    },
+    {
+      "name": "no-tiles",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 499,
+      "fps": 99.519,
+      "frameIntervalMs": {
+        "mean": 10.048,
+        "p99": 20.8,
+        "max": 27.7
+      },
+      "cpuMs": {
+        "mean": 3.26,
+        "p99": 7.1,
+        "max": 8.1
+      },
+      "over8msPct": 42.485
+    },
+    {
+      "name": "no-tiles",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 546,
+      "fps": 108.895,
+      "frameIntervalMs": {
+        "mean": 9.183,
+        "p99": 14,
+        "max": 14.1
+      },
+      "cpuMs": {
+        "mean": 4.026,
+        "p99": 5.4,
+        "max": 5.9
+      },
+      "over8msPct": 32.234
+    },
+    {
+      "name": "no-entities",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 457,
+      "fps": 91.27,
+      "frameIntervalMs": {
+        "mean": 10.956,
+        "p99": 20.9,
+        "max": 27.8
+      },
+      "cpuMs": {
+        "mean": 3.401,
+        "p99": 7.2,
+        "max": 8.4
+      },
+      "over8msPct": 54.705
+    },
+    {
+      "name": "no-entities",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 479,
+      "fps": 95.531,
+      "frameIntervalMs": {
+        "mean": 10.468,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 4.41,
+        "p99": 6,
+        "max": 13.3
+      },
+      "over8msPct": 50.731
+    },
+    {
+      "name": "no-sky-copy",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 489,
+      "fps": 97.933,
+      "frameIntervalMs": {
+        "mean": 10.211,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.231,
+        "p99": 7,
+        "max": 8.2
+      },
+      "over8msPct": 45.194
+    },
+    {
+      "name": "no-sky-copy",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 472,
+      "fps": 94.266,
+      "frameIntervalMs": {
+        "mean": 10.608,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 3.979,
+        "p99": 5.7,
+        "max": 6.3
+      },
+      "over8msPct": 52.754
+    },
+    {
+      "name": "no-bg",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 694,
+      "fps": 138.41,
+      "frameIntervalMs": {
+        "mean": 7.225,
+        "p99": 14,
+        "max": 20.7
+      },
+      "cpuMs": {
+        "mean": 3.071,
+        "p99": 5.7,
+        "max": 6.7
+      },
+      "over8msPct": 3.746
+    },
+    {
+      "name": "no-bg",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 648,
+      "fps": 129.236,
+      "frameIntervalMs": {
+        "mean": 7.738,
+        "p99": 14,
+        "max": 14.1
+      },
+      "cpuMs": {
+        "mean": 3.697,
+        "p99": 5,
+        "max": 5.7
+      },
+      "over8msPct": 11.42
+    },
+    {
+      "name": "no-wall-pattern",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 495,
+      "fps": 98.858,
+      "frameIntervalMs": {
+        "mean": 10.116,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.199,
+        "p99": 6.2,
+        "max": 7.6
+      },
+      "over8msPct": 44.242
+    },
+    {
+      "name": "no-wall-pattern",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 480,
+      "fps": 95.866,
+      "frameIntervalMs": {
+        "mean": 10.431,
+        "p99": 14,
+        "max": 14.1
+      },
+      "cpuMs": {
+        "mean": 4.359,
+        "p99": 5.9,
+        "max": 7.2
+      },
+      "over8msPct": 50.208
+    },
+    {
+      "name": "no-bank-clip",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 701,
+      "fps": 139.806,
+      "frameIntervalMs": {
+        "mean": 7.153,
+        "p99": 13.9,
+        "max": 20.8
+      },
+      "cpuMs": {
+        "mean": 3.086,
+        "p99": 5.6,
+        "max": 7.1
+      },
+      "over8msPct": 2.853
+    },
+    {
+      "name": "no-bank-clip",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 642,
+      "fps": 128.036,
+      "frameIntervalMs": {
+        "mean": 7.81,
+        "p99": 14,
+        "max": 20.8
+      },
+      "cpuMs": {
+        "mean": 3.833,
+        "p99": 5.5,
+        "max": 8.4
+      },
+      "over8msPct": 12.305
+    },
+    {
+      "name": "no-bank-detail",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 547,
+      "fps": 108.945,
+      "frameIntervalMs": {
+        "mean": 9.179,
+        "p99": 14,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.034,
+        "p99": 5.8,
+        "max": 6.5
+      },
+      "over8msPct": 31.81
+    },
+    {
+      "name": "no-bank-detail",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 524,
+      "fps": 104.651,
+      "frameIntervalMs": {
+        "mean": 9.556,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 4.151,
+        "p99": 5.5,
+        "max": 6.1
+      },
+      "over8msPct": 37.595
+    },
+    {
+      "name": "terrain-bitmap",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 568,
+      "fps": 94.445,
+      "frameIntervalMs": {
+        "mean": 10.588,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.155,
+        "p99": 6,
+        "max": 7.9
+      },
+      "over8msPct": 50.176
+    },
+    {
+      "name": "terrain-bitmap",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 574,
+      "fps": 95.663,
+      "frameIntervalMs": {
+        "mean": 10.453,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 4.271,
+        "p99": 5.7,
+        "max": 7.6
+      },
+      "over8msPct": 50.523
+    },
+    {
+      "name": "terrain-cull",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 571,
+      "fps": 94.948,
+      "frameIntervalMs": {
+        "mean": 10.532,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.181,
+        "p99": 6.2,
+        "max": 7.6
+      },
+      "over8msPct": 49.387
+    },
+    {
+      "name": "terrain-cull",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 571,
+      "fps": 95.053,
+      "frameIntervalMs": {
+        "mean": 10.52,
+        "p99": 14,
+        "max": 20.8
+      },
+      "cpuMs": {
+        "mean": 3.951,
+        "p99": 5.3,
+        "max": 6.6
+      },
+      "over8msPct": 51.313
+    },
+    {
+      "name": "jello-snapshot",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 552,
+      "fps": 91.998,
+      "frameIntervalMs": {
+        "mean": 10.87,
+        "p99": 14,
+        "max": 20.8
+      },
+      "cpuMs": {
+        "mean": 4.287,
+        "p99": 6.2,
+        "max": 10.1
+      },
+      "over8msPct": 56.341
+    },
+    {
+      "name": "jello-crop",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 542,
+      "fps": 90.227,
+      "frameIntervalMs": {
+        "mean": 11.083,
+        "p99": 14,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 4.237,
+        "p99": 5.8,
+        "max": 6.4
+      },
+      "over8msPct": 58.672
+    },
+    {
+      "name": "foundation",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 579,
+      "fps": 96.274,
+      "frameIntervalMs": {
+        "mean": 10.387,
+        "p99": 20.8,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.501,
+        "p99": 6.8,
+        "max": 8.1
+      },
+      "over8msPct": 48.187
+    },
+    {
+      "name": "foundation",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 577,
+      "fps": 95.722,
+      "frameIntervalMs": {
+        "mean": 10.447,
+        "p99": 14,
+        "max": 14.1
+      },
+      "cpuMs": {
+        "mean": 4.437,
+        "p99": 5.8,
+        "max": 7
+      },
+      "over8msPct": 50.433
+    },
+    {
+      "name": "contact-skip",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 536,
+      "fps": 89.228,
+      "frameIntervalMs": {
+        "mean": 11.207,
+        "p99": 14,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 4.63,
+        "p99": 6.8,
+        "max": 9
+      },
+      "over8msPct": 60.634
+    },
+    {
+      "name": "contact-distance",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 460,
+      "fps": 91.868,
+      "frameIntervalMs": {
+        "mean": 10.885,
+        "p99": 14,
+        "max": 14.1
+      },
+      "cpuMs": {
+        "mean": 4.281,
+        "p99": 6.7,
+        "max": 8.7
+      },
+      "over8msPct": 56.739
+    },
+    {
+      "name": "bank-split",
+      "scene": "drive",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 809,
+      "fps": 134.519,
+      "frameIntervalMs": {
+        "mean": 7.434,
+        "p99": 13.9,
+        "max": 20.9
+      },
+      "cpuMs": {
+        "mean": 3.087,
+        "p99": 6,
+        "max": 7.2
+      },
+      "over8msPct": 6.675
+    },
+    {
+      "name": "bank-split",
+      "scene": "pen",
+      "canvas": [
+        3200,
+        1800
+      ],
+      "samples": 749,
+      "fps": 124.541,
+      "frameIntervalMs": {
+        "mean": 8.03,
+        "p99": 14,
+        "max": 14
+      },
+      "cpuMs": {
+        "mean": 3.865,
+        "p99": 5.1,
+        "max": 5.7
+      },
+      "over8msPct": 15.621
+    }
+  ],
+  "visual": {
+    "cases": 180,
+    "max": 39,
+    "interiorMax": 5,
+    "maxChangedChannels": 42517,
+    "maxMeanChannelDifference": 0.013173556857638888,
+    "edgeMax": 1,
+    "note": "Contour differences stay within one 8-bit level, interior texture resampling within five. Larger differences are confined to the outermost viewport border during fractional camera shake."
+  }
+}
