@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v27';
+  var GAME_VERSION = 'v27.1';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5057,6 +5057,61 @@
     return fence.gpuDone && !fence.gl.length && fence.frames >= 2;
   }
 
+  // Warm movement-only Canvas shaders beneath the loading cover. A snapshot
+  // requests real rasterization even while the cover occludes the game canvas.
+  var loadingRigShaders = null;
+  function prepareLoadingRigShaders() {
+    var key = [canvas.width, canvas.height, dpr * worldScale,
+      upgrades.drillLevel, upgrades.boosterLevel].join(':');
+    if (loadingRigShaders && loadingRigShaders.key === key) {
+      return loadingRigShaders.pending && performance.now() - loadingRigShaders.at < 2000;
+    }
+    var job = loadingRigShaders = { key: key, pending: true, at: performance.now() };
+    var livePlayer = player, tick = playerFxTick, tracks = playerTrackAnim;
+    var visible = rocketJetVisible, clearance = rocketFlameClearance;
+    var ground = groundYBelowPlayer, intensity = rocketIntensity, ignition = flightIgniteT;
+    var liveDrilling = drilling;
+    ctx.save();
+    try {
+      player = Object.assign({}, livePlayer);
+      playerTrackAnim = Object.assign({}, tracks);
+      playerFxTick = function () {};
+      rocketFlameClearance = function () { return 1; };
+      groundYBelowPlayer = function () { return player.renderY + PLAYER_H + (player.onGround ? 0 : 24); };
+      rocketJetVisible = function () { return !player.onGround; };
+      drilling = null;
+      var ws = dpr * worldScale;
+      ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
+      for (var i = 0; i < 4; i++) {
+        player.x = player.renderX = cam.x + screenW * (0.18 + i * 0.20);
+        player.y = player.renderY = cam.y + screenH * 0.35;
+        player.dir = i % 2 ? -1 : 1;
+        player.onGround = i < 2;
+        player.bodyTiltRender = (i % 2 ? -1 : 1) * (i < 2 ? 0.04 : 0.18);
+        player.vx = player.dir * 290; player.vy = i < 2 ? 0 : -160;
+        player.thrusting = i >= 2; player.thrustSpool = i < 2 ? 0 : 1;
+        player.lastMoveU = i >= 2; player.squash = 0; player.tremor = 0;
+        rocketIntensity = i < 2 ? 0 : 1;
+        flightIgniteT = i === 2 ? FLIGHT_IGNITE_DURATION : 0;
+        drawRocketPlume(); drawPlayerShadow(); drawPlayer();
+      }
+      // Loading-only async snapshot, never a readback during gameplay.
+      if (canvas.toBlob) canvas.toBlob(function () { job.pending = false; });
+      else job.pending = false;
+    } catch (e) {
+      job.pending = false;
+      window.__loadingRigShaderErr = String(e);
+    } finally {
+      player = livePlayer; playerFxTick = tick; playerTrackAnim = tracks;
+      rocketJetVisible = visible; rocketFlameClearance = clearance;
+      groundYBelowPlayer = ground; rocketIntensity = intensity; flightIgniteT = ignition;
+      drilling = liveDrilling;
+      ctx.restore();
+    }
+    // Require clean ordinary scene renders after the preview before revealing.
+    return true;
+  }
+
   // Called instead of gameplay, including while a focus pause is pending.
   // No rig physics, input, hazards, economy, autosave or clock ticks run here.
   function renderLoadingScene() {
@@ -5075,6 +5130,7 @@
       terrainWarmupFrames = 1;
       terrainChunkPendingThisFrame = 0;
       render();
+      if (prepareLoadingRigShaders()) { introSettledFrames = 0; gameLoadingStableFrames = 0; return; }
       // A surface-only warmup misses the art first exposed during takeoff.
       // Prepare the same viewport's planet and moon behind the loading cover.
       colourPlanetSurface(buildPlanetSurface(canvas.width, canvas.height));
