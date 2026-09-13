@@ -38,13 +38,16 @@ const SMOKE_SRC = `${root}/js/sluice/190-smoke-webgl.js`;
 const JELLO_SRC = `${root}/js/sluice/340-jello.js`;
 const HEAD_SRC = `${root}/js/sluice/000-head.js`;
 
+// Git may check files out with CRLF on Windows. Compare engine content in
+// repository form, including the sentinel and closure-anchor lines.
+const readText = (file) => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 const norm = (s) => s.replace(/\n+$/, '\n');
 let failed = false;
 const say = (m) => console.log(m);
 
 // ---- expected blocks from the game sources ---------------------------
 function smokeBlock() {
-  const text = readFileSync(SMOKE_SRC, 'utf8');
+  const text = readText(SMOKE_SRC);
   const lines = text.split('\n');
   const start = lines.findIndex((l) => l === '  var SmokeFluid = (function () {');
   if (start < 0) throw new Error('smoke anchor not found in 190-smoke-webgl.js');
@@ -58,11 +61,11 @@ function smokeBlock() {
 
 const expected = {
   'smoke-engine': smokeBlock(),
-  'jello-engine': readFileSync(JELLO_SRC, 'utf8'),
+  'jello-engine': readText(JELLO_SRC),
 };
 
 // ---- the toy's sentinel-delimited blocks -----------------------------
-const toy = readFileSync(TOY, 'utf8');
+const toy = readText(TOY);
 const parts = {};
 let rebuilt = toy;
 for (const name of Object.keys(expected)) {
