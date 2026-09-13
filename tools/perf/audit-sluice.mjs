@@ -1,5 +1,7 @@
 // Controlled scene audit. Run sequentially on an otherwise idle GPU.
 // SCENES=drive,flight,pen,pond,cave,deep,night,storm; SECONDS=8; GPU=1
+// CLOCK=1 TOD=.7 SCENES=cruise SECONDS=30 exercises moving light and bank re-entry.
+// OVERLAY=1 retains diagnostics. EXPERIMENT=tools/perf/hitch-audit-probe.js adds attribution.
 // ROOT can point at a second checkout; DUMP must stay outside the checkout.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,7 +28,7 @@ const browserProfile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-audit-chrome-'
 const probe=String.raw`
 ${experiment}
 window.__audit=(function(){
-  var rows=[],record=false,scene='',pinX=0,pinY=0,move=false,flying=false,rising=false,active=false;
+  var rows=[],record=false,scene='',pinX=0,pinY=0,move=false,flying=false,rising=false,active=false,cruise=false,cruiseTime=0,cruiseRight=true;
   var oldLoop=loop,oldUpdate=update,previous=0,gpuRows=[],gpuPending=[],glCount=0;
   var loadingRows=[],oldLoading=renderLoadingScene;
   renderLoadingScene=function(){var t=performance.now(),p=introPhase;oldLoading();loadingRows.push({at:t,ms:performance.now()-t,phase:p,next:introPhase,assets:gameLoadingAssetsReady,pending:terrainChunkPendingThisFrame,clouds:loadingCloudsReady()});};
@@ -49,7 +51,7 @@ window.__audit=(function(){
   if(typeof drawMountainsGL==='function')drawMountainsGL=query('mountains',function(){return mtnGPU&&mtnGPU.gl;},drawMountainsGL);
   loop=function(time){var t=performance.now(),dt=previous?time-previous:0;previous=time;
     var result=oldLoop(time),cpu=performance.now()-t;
-    if(record&&introPhase==='done')rows.push({dt:dt,cpu:cpu,x:player.x,y:player.y,cx:cam.x,cy:cam.y,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
+    if(record&&introPhase==='done')rows.push({at:t,tod:timeOfDay,dt:dt,cpu:cpu,x:player.x,y:player.y,cx:cam.x,cy:cam.y,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
     glCount++;
     for(var i=gpuPending.length-1;i>=0;i--){var p=gpuPending[i];if(p.gl.getQueryParameter(p.q,p.gl.QUERY_RESULT_AVAILABLE)){
       if(!p.gl.getParameter(p.ext.GPU_DISJOINT_EXT))gpuRows.push({name:p.name,ms:p.gl.getQueryParameter(p.q,p.gl.QUERY_RESULT)/1e6});
@@ -58,6 +60,7 @@ window.__audit=(function(){
     return result;
   };
   update=function(dt){oldUpdate(dt);if(active){
+    if(cruise){cruiseTime+=dt;pinY=SKY_ROWS*TILE-340-70*Math.sin(cruiseTime*.45);if(player.x>(COLS-20)*TILE)cruiseRight=false;if(player.x<20*TILE)cruiseRight=true;keys.ArrowRight=cruiseRight;keys.ArrowLeft=!cruiseRight;}
     if(rising)pinY-=200*dt;
     player.y=pinY;player.renderY=pinY;player.vy=0;player.onGround=!flying;
     if(!move){player.x=pinX;player.renderX=pinX;player.vx=0;}
@@ -66,7 +69,7 @@ window.__audit=(function(){
   function state(){return {version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],mountains:typeof mtnGPU!=='undefined'?{active:!!mtnGPU&&!mtnGPUFailed,failed:mtnGPUFailed,size:mtnGPU&&[mtnGPU.canvas.width,mtnGPU.canvas.height],samples:mtnGPU&&mtnGPU.gl.getParameter(mtnGPU.gl.SAMPLES)}:null,liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
   return {ready:function(){return introPhase==='done';},state:state,
     start:function(name,disable){
-      resize();scene=name;drawPerfOverlay=function(){};SUN.paused=true;timeOfDay=name.startsWith('night')?.02:.5;
+      resize();scene=name;if(!window.__keepOverlay)drawPerfOverlay=function(){};SUN.paused=!window.__runningClock;timeOfDay=window.__initialTOD===null?(name.startsWith('night')?.02:.5):window.__initialTOD;
       if(name==='storm')gm.preset('storm ceiling');
       var disabled=disable.split(',');
       if(disabled.indexOf('smoke')>=0){PERF_DISABLE_SMOKE_FLUID=true;PERF_DISABLE_EXHAUST_BRIDGE=true;}
@@ -79,7 +82,9 @@ window.__audit=(function(){
       // Use drive for uninterrupted horizontal travel; inspect raw x/cx traces.
       move=name==='drive'||name==='flight'||name==='nightflight';flying=name==='flight'||name==='nightflight';
       rising=name==='ascent'||name==='nightascent';if(rising){move=true;flying=true;}
+      cruise=name==='cruise';cruiseTime=0;cruiseRight=true;if(cruise){move=true;flying=true;}
       if(flying){pinX=80*TILE;pinY-=100;}
+      if(cruise){pinX=20*TILE;pinY=SKY_ROWS*TILE-340;}
       if(name==='pen')pinX=(DECK_LEFT_COL-18)*TILE;
       if(name==='pond'||name==='nightpond'){var pond=surfacePonds.find(function(p){return p.cR-p.cL>=5;})||surfacePonds[0];if(!pond)throw Error('No pond');pinX=(pond.cL+pond.cR)*TILE*.5;pinY+=name==='nightpond'?-100:TILE;flying=true;}
       if(name==='cave'||name==='deep'){
@@ -114,11 +119,11 @@ let traceEvents=[],traceEnded=false;
 async function browserCall(method){const endpoint=await(await fetch('http://127.0.0.1:'+debugPort+'/json/version')).json();return new Promise((resolve,reject)=>{const socket=new WebSocket(endpoint.webSocketDebuggerUrl);socket.onopen=()=>socket.send(JSON.stringify({id:1,method}));socket.onerror=reject;socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id===1){socket.close();m.error?reject(Error(JSON.stringify(m.error))):resolve(m.result);}};});}
 function send(method,params={}){return new Promise((resolve,reject)=>{const id=++seq,t=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},45000);pending.set(id,{resolve:r=>{clearTimeout(t);resolve(r)},reject:e=>{clearTimeout(t);reject(e)}});ws.send(JSON.stringify({id,method,params}));});}
 async function ev(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result?.value;}
-function stats(values){const a=values.slice().sort((a,b)=>a-b);return a.length?{n:a.length,avg:a.reduce((a,b)=>a+b,0)/a.length,p50:a[a.length>>1],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:a.at(-1)}:null;}
+function stats(values){const a=values.slice().sort((a,b)=>a-b);return a.length?{n:a.length,avg:a.reduce((a,b)=>a+b,0)/a.length,p50:a[a.length>>1],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],p999:a[Math.floor(a.length*.999)],max:a.at(-1)}:null;}
 const summaries=fs.existsSync(path.join(out,'summary.json'))?JSON.parse(fs.readFileSync(path.join(out,'summary.json'),'utf8')).filter(r=>!scenes.includes(r.scene)):[];
 try{
   await new Promise(r=>server.listen(port,'127.0.0.1',r));
-  const executable=electron?path.join(root,'desktop/node_modules/electron/dist/electron.exe'):process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
+  const executable=electron?(process.env.ELECTRON_EXE||path.join(root,'desktop/node_modules/electron/dist/electron.exe')):process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
   const args=[...(headed?['--start-fullscreen']:['--headless=new']),'--mute-audio','--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort];
   if(electron)args.push(path.join(root,'desktop'),'--fullscreen','--profile='+browserProfile,'--audit-url=http://127.0.0.1:'+port+'/grand-motherload.html');else args.push('about:blank');
   chrome=spawn(executable,args,{stdio:'ignore',windowsHide:!headed,env:{...process.env,ELECTRON_RUN_AS_NODE:undefined}});
@@ -127,9 +132,9 @@ try{
   ws.onclose=()=>{for(const p of pending.values())p.reject(Error('CDP disconnected'));pending.clear();};
   ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);if(p)m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args);if(m.method==='Tracing.dataCollected')traceEvents.push(...m.params.value);if(m.method==='Tracing.tracingComplete')traceEnded=true;};
   await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setBlockedURLs',{urls:['*googletagmanager.com*','*google-analytics.com*']});
-  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),seconds,scenes,viewport,headed,electron,canvasOptions,experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu},null,2));
+  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu},null,2));
   await send('Emulation.setDeviceMetricsOverride',viewport);
-  await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   for(const scene of scenes){
     errors.length=0;
     await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?dev=1&nosave=1&nopause=1&tod=.5'+(process.env.PRESET?'&gmpreset='+encodeURIComponent(process.env.PRESET):'')});
@@ -142,7 +147,7 @@ try{
     }
     const adapter=await ev('(async()=>{let a=await navigator.gpu?.requestAdapter();return a?{vendor:a.info.vendor,architecture:a.info.architecture,features:[...a.features]}:null})()');
     const start=await ev('__audit.start('+JSON.stringify(scene)+','+JSON.stringify(process.env.DISABLE||'')+')');
-    await sleep(3000);
+    await sleep(Number(process.env.WARMUP||3)*1000);
     if(process.env.TRACE==='1'){traceEvents=[];traceEnded=false;await send('Tracing.start',{categories:'devtools.timeline,cc,gpu,viz,disabled-by-default-gpu.service',transferMode:'ReportEvents'});}
     if(!gpu){await send('Profiler.enable');await send('Profiler.setSamplingInterval',{interval:1000});await send('Profiler.start');}
     let presentation;

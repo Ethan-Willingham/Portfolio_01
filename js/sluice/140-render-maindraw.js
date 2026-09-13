@@ -297,6 +297,13 @@
     // so the colors mean something spatial: deep space at the top, dark
     // upper atmosphere fading down to the warm horizon at the surface.
     var surfaceY = SKY_ROWS * TILE;
+    // Warm once per frame even while flight puts the bank below the viewport.
+    // Deep underground views can leave this surface-only cache idle.
+    var _bankWarmT = performance.now();
+    if (!PERF_DISABLE_CAVE_WALLS && worldTop < surfaceY + SURFACE_TRANSITION_DEPTH + screenH) {
+      warmSurfaceBankStrips(worldLeft, worldRight);
+    }
+    perfMark('render.bankWarm', _bankWarmT);
     if (worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH) {
       // Night sky is painted in NATIVE pixel space (no world scale) so the
       // pre-rendered Milky Way texture stays crisp at 1:1 with no resampling

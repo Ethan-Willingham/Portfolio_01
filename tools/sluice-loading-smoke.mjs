@@ -56,6 +56,7 @@ window.__loadingSmoke=(function(){
       touch:!!touch.active,initEvents:initEvents,revealEvents:revealEvents,loadingTicks:loadingTicks,hiddenMotion:hiddenMotion,bootError:window.__bootErr || null,
       loaderActive:SluiceLoading.active(),worldReady:!!world.length,gpuWater:!!liquidWGPU,gpuJello:!!jelloWGPU,gpuSmoke:!!smokeWGPU,
       stable:gameLoadingStableFrames,settled:introSettledFrames,preset:gm.activePreset,workerFailed:weatherBakeWorkerFailed,
+      planetReady:!!planetSurface && planetSurface.lightKey !== '',moonReady:!!moonPhaseDisc,moonImageReady:moonImageReady,
       resizeCalls:resizeCalls,canvas:[canvas.width,canvas.height],cssPixels:viewW*viewH,pixelBudget:RES_PIXEL_BUDGET,choice:SluiceOptions.graphicsChoice};},
     saveMarker:function(){money=12345;saveNow('loading smoke');return money;},
     hold:function(on){window.__loadingTestHold=on;},
@@ -216,6 +217,8 @@ try{
   await ev('__loadingSmoke.hold(false)');const first=await ready('fresh boot');await shot('fresh-ready');
   check('real loading frames do not simulate hidden gameplay',first.loadingTicks>0 && first.hiddenMotion===0);
   check('arrival follows complete cache frames',first.settled>=6);
+  check('orbital planet is prepared before first takeoff',first.planetReady);
+  check('moon phase is prepared before first takeoff',first.moonImageReady && first.moonReady);
   check('reveal fade blocks gameplay until it completes',first.revealEvents.some(e=>e.active) && first.revealEvents.every(e=>e.stationary && e.blocked));
   await ev('__loadingSmoke.saveMarker()');
 
@@ -306,6 +309,7 @@ try{
 
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await size(390,844,true);faults.set('/js/sluice.js','hold');await navigate('mobile-reduced-motion');
+  await until('!!window.SluiceLoading','mobile loading controller is missing');
   await visible('mobile loading remains visible');
   check('mobile loading fits its stage',await ev(`(()=>{const a=document.getElementById('game-intro').getBoundingClientRect(),s=document.getElementById('gm-loading-status').getBoundingClientRect();return s.left>=a.left && s.right<=a.right && s.top>=a.top && s.bottom<=a.bottom && a.width<=innerWidth;})()`));
   check('reduced motion removes loading animation',await ev(`(()=>{const e=document.getElementById('game-intro');return [e,...e.querySelectorAll('*')].every(n=>[null,'::before','::after'].every(p=>{const c=getComputedStyle(n,p);return c.animationName==='none'||parseFloat(c.animationDuration)<=0.01;}));})()`));

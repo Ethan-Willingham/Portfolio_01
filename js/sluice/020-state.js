@@ -1000,6 +1000,16 @@
     var pk = perfBucketsPk[name] || 0;
     perfBucketsPk[name] = dt > pk ? dt : pk * 0.96;   // snap up, slow decay
   }
+  function perfDecayIdleBuckets() {
+    // Cached instruments may go seconds without a draw. Their last repaint
+    // cost must fade on those idle frames, just like a timer recorded as zero.
+    for (var name in perfBuckets) {
+      if (perfBucketsRaw[name] === undefined) {
+        perfBuckets[name] *= 0.9;
+        perfBucketsPk[name] *= 0.96;
+      }
+    }
+  }
   // v12.4 — GPU-time probe (dev mode only). The perfMark buckets above time
   // CPU command-issue only; on a GPU-bound frame the real cost is the GPU
   // executing those commands — invisible to performance.now() because WebGL

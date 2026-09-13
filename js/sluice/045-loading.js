@@ -186,6 +186,10 @@
       terrainWarmupFrames = 1;
       terrainChunkPendingThisFrame = 0;
       render();
+      // A surface-only warmup misses the art first exposed during takeoff.
+      // Prepare the same viewport's planet and moon behind the loading cover.
+      colourPlanetSurface(buildPlanetSurface(canvas.width, canvas.height));
+      prepareMoonPhaseDisc();
       introWarmupFramesRun++;
       var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
       introSettledFrames = ready ? introSettledFrames + 1 : 0;

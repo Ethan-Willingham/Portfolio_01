@@ -97,16 +97,29 @@
       var warmth = dusk * (0.12 + 0.08 * sx * P.nx[i] * 12);
       var cloudA = P.cloud[i] * (0.35 + day * 0.65);
       var at = i * 4;
-      for (var channel = 0; channel < 3; channel++) {
-        var name = channel === 0 ? 'r' : channel === 1 ? 'g' : 'b';
-        var target = base[name] + (coast[name] - base[name]) * shore;
-        target *= 0.90 + relief * 0.20;
-        var value = night[name] * (0.82 + moon * 0.18) + (target - night[name]) * lit;
-        value += (warm[name] - value) * warmth;
-        value += (cloud[name] * (0.24 + lit * 0.76) - value) * cloudA;
-        value += (air[name] - value) * haze;
-        bytes[at + channel] = Math.round(value);
-      }
+      // Fixed channel access avoids dynamic property lookups in the hot pixel loop.
+      // Keep the operation order and rounding identical to the original painter.
+      var targetR = base.r + (coast.r - base.r) * shore;
+      targetR *= 0.90 + relief * 0.20;
+      var valueR = night.r * (0.82 + moon * 0.18) + (targetR - night.r) * lit;
+      valueR += (warm.r - valueR) * warmth;
+      valueR += (cloud.r * (0.24 + lit * 0.76) - valueR) * cloudA;
+      valueR += (air.r - valueR) * haze;
+      bytes[at] = Math.round(valueR);
+      var targetG = base.g + (coast.g - base.g) * shore;
+      targetG *= 0.90 + relief * 0.20;
+      var valueG = night.g * (0.82 + moon * 0.18) + (targetG - night.g) * lit;
+      valueG += (warm.g - valueG) * warmth;
+      valueG += (cloud.g * (0.24 + lit * 0.76) - valueG) * cloudA;
+      valueG += (air.g - valueG) * haze;
+      bytes[at + 1] = Math.round(valueG);
+      var targetB = base.b + (coast.b - base.b) * shore;
+      targetB *= 0.90 + relief * 0.20;
+      var valueB = night.b * (0.82 + moon * 0.18) + (targetB - night.b) * lit;
+      valueB += (warm.b - valueB) * warmth;
+      valueB += (cloud.b * (0.24 + lit * 0.76) - valueB) * cloudA;
+      valueB += (air.b - valueB) * haze;
+      bytes[at + 2] = Math.round(valueB);
     }
     P.ctx.putImageData(P.img, 0, 0);
   }

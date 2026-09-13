@@ -1,0 +1,3535 @@
+{
+  "date": "2026-09-12",
+  "baseline": {
+    "version": "v26.124",
+    "commit": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652"
+  },
+  "release": {
+    "version": "v26.125",
+    "bundleSHA256": "5110f96a946adf86a474f42c13cabc94dea6a4ba63f7537a7a37a98cac9430b4",
+    "normalizedBundleSHA256": "d6418c9f26b03e2e31de78ccfe6d4ba1f3966a1bd15ef82cd6391aa8270363ec"
+  },
+  "captures": [
+    {
+      "side": "before",
+      "capture": "sluice-p4-display-before-1",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.83",
+          "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "jsVersion": "15.2.124.21"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": false,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "280b8bc882c7a6afbdf9d7244ec5bc5bcb11baf49c641f20dae3458b3f16f44e",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 5336.9,
+      "cpu": {
+        "n": 4108,
+        "mean": 3.397,
+        "p99": 14.1,
+        "p999": 16.5,
+        "max": 45.5
+      },
+      "raf": {
+        "n": 4108,
+        "mean": 7.303,
+        "p99": 13.9,
+        "p999": 20.8,
+        "max": 41.6
+      },
+      "display": {
+        "n": 4107,
+        "mean": 7.301,
+        "p99": 13.915,
+        "p999": 27.773,
+        "max": 48.644
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 192,
+          "percent": 4.675,
+          "perMinute": 384.166
+        },
+        "over14.5ms": {
+          "count": 9,
+          "percent": 0.219,
+          "perMinute": 18.008
+        },
+        "over20ms": {
+          "count": 9,
+          "percent": 0.219,
+          "perMinute": 18.008
+        },
+        "over33ms": {
+          "count": 3,
+          "percent": 0.073,
+          "perMinute": 6.003
+        },
+        "over50ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        }
+      },
+      "coldBankFrames": 2,
+      "planetRecolour": {
+        "n": 291,
+        "mean": 10.104,
+        "p99": 11.2,
+        "p999": 11.4,
+        "max": 11.4
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 45.5,
+          "x": 2699.487,
+          "y": -204.85,
+          "buckets": {
+            "render.total": 44.5,
+            "render.sky": 43.3,
+            "render.undergroundBg": 43,
+            "audit.bankBuild": 34.6
+          }
+        },
+        {
+          "cpu": 21.8,
+          "x": 6747.539,
+          "y": -204.97,
+          "buckets": {
+            "render.total": 20,
+            "render.sky": 18.7,
+            "render.undergroundBg": 18.5,
+            "audit.bankBuild": 14.7,
+            "update.smoke": 1,
+            "update.smokeObstacle": 0.7,
+            "update.smokeObstacleDraw": 0.6
+          }
+        },
+        {
+          "cpu": 16.8,
+          "x": 4584.545,
+          "y": -204.025,
+          "buckets": {
+            "render.total": 12.8,
+            "render.sky": 10.5,
+            "render.skyComposite": 10.2,
+            "audit.planet": 10,
+            "audit.planetColour": 9.9,
+            "update.jello": 1.3,
+            "update.pondStream": 1.3,
+            "jello.substepsAll": 1.2,
+            "render.player+fx": 1.1,
+            "jello.contact": 1,
+            "update.liquids": 0.9,
+            "render.jello": 0.9
+          }
+        },
+        {
+          "cpu": 16.5,
+          "x": 4240.141,
+          "y": -169.715,
+          "buckets": {
+            "render.total": 15.8,
+            "render.sky": 13.4,
+            "render.skyComposite": 13.3,
+            "audit.planetColour": 10.7,
+            "audit.planet": 10.7,
+            "audit.clouds": 2.4,
+            "render.player+fx": 1.4,
+            "render.jello": 1.1,
+            "audit.cloudRecolor": 0.6
+          }
+        },
+        {
+          "cpu": 16.5,
+          "x": 4701.328,
+          "y": -216.689,
+          "buckets": {
+            "render.total": 14.5,
+            "render.sky": 11.7,
+            "render.skyComposite": 11.6,
+            "audit.planet": 11.3,
+            "audit.planetColour": 11.2,
+            "render.player+fx": 1.5,
+            "render.jello": 1.2,
+            "update.jello": 0.8,
+            "update.smoke": 0.7,
+            "jello.substepsAll": 0.6
+          }
+        },
+        {
+          "cpu": 16.4,
+          "x": 2848.489,
+          "y": -189.083,
+          "buckets": {
+            "render.total": 15.5,
+            "render.sky": 11.9,
+            "render.skyComposite": 11.5,
+            "audit.planet": 11.2,
+            "audit.planetColour": 11.1,
+            "render.terrain": 2.6
+          }
+        },
+        {
+          "cpu": 16.4,
+          "x": 7569.225,
+          "y": -143.329,
+          "buckets": {
+            "render.total": 14.6,
+            "render.sky": 13.5,
+            "render.skyComposite": 13.1,
+            "audit.planetColour": 10,
+            "audit.planet": 10,
+            "audit.moonBuild": 2.9,
+            "audit.celestials": 2.9,
+            "update.liquids": 1
+          }
+        },
+        {
+          "cpu": 16.1,
+          "x": 4729.545,
+          "y": -219.742,
+          "buckets": {
+            "render.total": 13.2,
+            "render.sky": 11,
+            "audit.planet": 10.9,
+            "render.skyComposite": 10.9,
+            "audit.planetColour": 10.8,
+            "render.player+fx": 1.6,
+            "update.smoke": 1.3,
+            "render.jello": 1.3,
+            "update.smokeObstacleDraw": 1,
+            "update.smokeObstacle": 1,
+            "update.liquids": 0.7
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 4107,
+          "display": {
+            "n": 4107,
+            "mean": 7.301,
+            "p99": 13.915,
+            "p999": 27.773,
+            "max": 48.644
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 192,
+              "percent": 4.675,
+              "perMinute": 384.166
+            },
+            "over14.5ms": {
+              "count": 9,
+              "percent": 0.219,
+              "perMinute": 18.008
+            },
+            "over20ms": {
+              "count": 9,
+              "percent": 0.219,
+              "perMinute": 18.008
+            },
+            "over33ms": {
+              "count": 3,
+              "percent": 0.073,
+              "perMinute": 6.003
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "primary"
+    },
+    {
+      "side": "after",
+      "capture": "sluice-p4-display-after-fixed-1",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.83",
+          "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "jsVersion": "15.2.124.21"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": false,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "5110f96a946adf86a474f42c13cabc94dea6a4ba63f7537a7a37a98cac9430b4",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 6454.2,
+      "cpu": {
+        "n": 4135,
+        "mean": 3.203,
+        "p99": 6.5,
+        "p999": 8.9,
+        "max": 12
+      },
+      "raf": {
+        "n": 4135,
+        "mean": 7.259,
+        "p99": 13.9,
+        "p999": 20.8,
+        "max": 34.7
+      },
+      "display": {
+        "n": 3378,
+        "mean": 8.869,
+        "p99": 13.902,
+        "p999": 31.206,
+        "max": 53.347
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 998,
+          "percent": 29.544,
+          "perMinute": 1998.794
+        },
+        "over14.5ms": {
+          "count": 13,
+          "percent": 0.385,
+          "perMinute": 26.036
+        },
+        "over20ms": {
+          "count": 12,
+          "percent": 0.355,
+          "perMinute": 24.034
+        },
+        "over33ms": {
+          "count": 3,
+          "percent": 0.089,
+          "perMinute": 6.008
+        },
+        "over50ms": {
+          "count": 1,
+          "percent": 0.03,
+          "perMinute": 2.003
+        }
+      },
+      "coldBankFrames": 0,
+      "planetRecolour": {
+        "n": 291,
+        "mean": 1.897,
+        "p99": 2.5,
+        "p999": 3.9,
+        "max": 3.9
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 12,
+          "x": 3714.899,
+          "y": -142.454,
+          "buckets": {
+            "render.total": 11,
+            "render.sky": 9.7,
+            "render.bankWarm": 9.3,
+            "render.player+fx": 0.7
+          }
+        },
+        {
+          "cpu": 10.9,
+          "x": 6943.295,
+          "y": -184.021,
+          "buckets": {
+            "render.total": 8.4,
+            "render.terrain": 3.9,
+            "render.sky": 3.3,
+            "render.undergroundBg": 2.5,
+            "update.smoke": 0.8,
+            "update.jello": 0.6
+          }
+        },
+        {
+          "cpu": 10,
+          "x": 5928.237,
+          "y": -276.285,
+          "buckets": {
+            "render.total": 5.6,
+            "render.sky": 4.4,
+            "audit.planet": 4.1,
+            "render.skyComposite": 4.1,
+            "audit.planetColour": 3.9,
+            "update.smoke": 2.9,
+            "update.smokeObstacle": 2.5,
+            "update.smokeObstacleDraw": 2.4,
+            "update.liquids": 0.9
+          }
+        },
+        {
+          "cpu": 9.3,
+          "x": 4641.333,
+          "y": -210.654,
+          "buckets": {
+            "render.total": 6.4,
+            "render.sky": 2.8,
+            "render.skyComposite": 2.1,
+            "audit.planetColour": 1.9,
+            "audit.planet": 1.9,
+            "render.player+fx": 1.6,
+            "update.smoke": 1.5,
+            "render.terrain": 1.3,
+            "render.jello": 1.2,
+            "update.jello": 1.1,
+            "update.smokeObstacle": 1.1,
+            "jello.contact": 1,
+            "jello.substepsAll": 1,
+            "update.smokeObstacleDraw": 0.8
+          }
+        },
+        {
+          "cpu": 8.9,
+          "x": 8604.821,
+          "y": -201.389,
+          "buckets": {
+            "render.total": 7.8,
+            "render.sky": 5.2,
+            "render.undergroundBg": 2.5,
+            "render.skyComposite": 2,
+            "audit.planetColour": 1.7,
+            "audit.planet": 1.7,
+            "render.terrain": 1.6,
+            "render.bankWarm": 0.6
+          }
+        },
+        {
+          "cpu": 8.7,
+          "x": 5507.331,
+          "y": -279.889,
+          "buckets": {
+            "render.total": 7.2,
+            "render.sky": 5,
+            "render.skyComposite": 4.6,
+            "audit.clouds": 2.4,
+            "audit.planet": 2.1,
+            "audit.planetColour": 2,
+            "render.terrain": 0.7,
+            "render.entities": 0.6
+          }
+        },
+        {
+          "cpu": 8.7,
+          "x": 5918.174,
+          "y": -276.71,
+          "buckets": {
+            "update.liquids": 4,
+            "update.jello": 2,
+            "render.total": 1.9,
+            "render.player+fx": 1,
+            "render.rocketPlume": 0.8
+          }
+        },
+        {
+          "cpu": 8.6,
+          "x": 6260.519,
+          "y": -254.268,
+          "buckets": {
+            "render.total": 6.3,
+            "render.sky": 5,
+            "render.skyComposite": 4.6,
+            "audit.clouds": 2.6,
+            "audit.planetColour": 1.8,
+            "audit.planet": 1.8,
+            "update.smoke": 0.8,
+            "update.liquids": 0.8,
+            "audit.cloudRecolor": 0.7,
+            "render.player+fx": 0.7
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Composed: Flip",
+          "presents": 1766,
+          "display": {
+            "n": 1017,
+            "mean": 13.055,
+            "p99": 21.571,
+            "p999": 39.972,
+            "max": 53.347
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 958,
+              "percent": 94.199,
+              "perMinute": 4329.316
+            },
+            "over14.5ms": {
+              "count": 12,
+              "percent": 1.18,
+              "perMinute": 54.229
+            },
+            "over20ms": {
+              "count": 11,
+              "percent": 1.082,
+              "perMinute": 49.71
+            },
+            "over33ms": {
+              "count": 3,
+              "percent": 0.295,
+              "perMinute": 13.557
+            },
+            "over50ms": {
+              "count": 1,
+              "percent": 0.098,
+              "perMinute": 4.519
+            }
+          }
+        },
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 2361,
+          "display": {
+            "n": 2361,
+            "mean": 7.065,
+            "p99": 13.898,
+            "p999": 13.934,
+            "max": 20.836
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 40,
+              "percent": 1.694,
+              "perMinute": 143.875
+            },
+            "over14.5ms": {
+              "count": 1,
+              "percent": 0.042,
+              "perMinute": 3.597
+            },
+            "over20ms": {
+              "count": 1,
+              "percent": 0.042,
+              "perMinute": 3.597
+            },
+            "over33ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "primary"
+    },
+    {
+      "side": "after",
+      "capture": "sluice-p4-display-after-fixed-2",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.83",
+          "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "jsVersion": "15.2.124.21"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": false,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "5110f96a946adf86a474f42c13cabc94dea6a4ba63f7537a7a37a98cac9430b4",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 5886.2,
+      "cpu": {
+        "n": 4162,
+        "mean": 3.07,
+        "p99": 6.4,
+        "p999": 8.7,
+        "max": 12.9
+      },
+      "raf": {
+        "n": 4162,
+        "mean": 7.21,
+        "p99": 13.9,
+        "p999": 20.8,
+        "max": 27.8
+      },
+      "display": {
+        "n": 4154,
+        "mean": 7.212,
+        "p99": 13.91,
+        "p999": 13.95,
+        "max": 27.77
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 154,
+          "percent": 3.707,
+          "perMinute": 308.418
+        },
+        "over14.5ms": {
+          "count": 4,
+          "percent": 0.096,
+          "perMinute": 8.011
+        },
+        "over20ms": {
+          "count": 4,
+          "percent": 0.096,
+          "perMinute": 8.011
+        },
+        "over33ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        },
+        "over50ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        }
+      },
+      "coldBankFrames": 0,
+      "planetRecolour": {
+        "n": 293,
+        "mean": 1.879,
+        "p99": 2.4,
+        "p999": 2.9,
+        "max": 2.9
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 12.9,
+          "x": 3163.052,
+          "y": -160.711,
+          "buckets": {
+            "render.total": 10.9,
+            "render.liquids": 8.8,
+            "update.jello": 1,
+            "update.smoke": 0.7,
+            "jello.substepsAll": 0.7,
+            "update.smokeObstacle": 0.6
+          }
+        },
+        {
+          "cpu": 11.5,
+          "x": 3261.739,
+          "y": -154.045,
+          "buckets": {
+            "render.total": 8.8,
+            "render.sky": 3.7,
+            "render.player+fx": 3.6,
+            "render.skyComposite": 3.3,
+            "render.lightFog": 3.3,
+            "update.jello": 1.3,
+            "jello.substepsAll": 1.2,
+            "update.smoke": 0.8,
+            "jello.contact": 0.7
+          }
+        },
+        {
+          "cpu": 10.1,
+          "x": 3205.334,
+          "y": -157.698,
+          "buckets": {
+            "render.total": 8.7,
+            "render.liquids": 7,
+            "update.smoke": 1,
+            "update.smokeObstacleDraw": 0.7,
+            "update.smokeObstacle": 0.7,
+            "render.player+fx": 0.6
+          }
+        },
+        {
+          "cpu": 9.8,
+          "x": 2591.085,
+          "y": -216.565,
+          "buckets": {
+            "render.total": 8.4,
+            "render.sky": 4.4,
+            "render.mountains": 4.2,
+            "render.terrain": 3.1,
+            "update.smoke": 1,
+            "update.smokeObstacle": 0.8,
+            "update.smokeObstacleDraw": 0.6
+          }
+        },
+        {
+          "cpu": 8.7,
+          "x": 3185.208,
+          "y": -159.104,
+          "buckets": {
+            "render.total": 7.4,
+            "render.sky": 6.1,
+            "render.skyComposite": 5.8,
+            "audit.clouds": 5.5
+          }
+        },
+        {
+          "cpu": 8.5,
+          "x": 2429.961,
+          "y": -233.706,
+          "buckets": {
+            "render.total": 6.4,
+            "render.sky": 4.9,
+            "render.skyComposite": 3.9,
+            "audit.planet": 2.3,
+            "audit.planetColour": 2.2,
+            "audit.clouds": 1.5,
+            "update.smoke": 1.4,
+            "update.smokeObstacle": 1.1,
+            "update.smokeObstacleDraw": 1,
+            "render.bankWarm": 0.8
+          }
+        },
+        {
+          "cpu": 8.2,
+          "x": 3177.146,
+          "y": -159.682,
+          "buckets": {
+            "render.total": 6.6,
+            "render.tiles": 3.5,
+            "render.sky": 1.1,
+            "audit.clouds": 0.7,
+            "render.skyComposite": 0.7,
+            "render.entities": 0.6
+          }
+        },
+        {
+          "cpu": 8.1,
+          "x": 6264.573,
+          "y": -254.263,
+          "buckets": {
+            "render.total": 6.9,
+            "render.sky": 5.3,
+            "render.skyComposite": 4.2,
+            "audit.clouds": 2.3,
+            "audit.planetColour": 1.8,
+            "audit.planet": 1.8,
+            "render.player+fx": 1.1,
+            "render.bankWarm": 1,
+            "render.jello": 0.8
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 4154,
+          "display": {
+            "n": 4154,
+            "mean": 7.212,
+            "p99": 13.91,
+            "p999": 13.95,
+            "max": 27.77
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 154,
+              "percent": 3.707,
+              "perMinute": 308.418
+            },
+            "over14.5ms": {
+              "count": 4,
+              "percent": 0.096,
+              "perMinute": 8.011
+            },
+            "over20ms": {
+              "count": 4,
+              "percent": 0.096,
+              "perMinute": 8.011
+            },
+            "over33ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "primary"
+    },
+    {
+      "side": "before",
+      "capture": "sluice-p4-display-before-2",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.83",
+          "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "jsVersion": "15.2.124.21"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": false,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "280b8bc882c7a6afbdf9d7244ec5bc5bcb11baf49c641f20dae3458b3f16f44e",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 5655.1,
+      "cpu": {
+        "n": 3995,
+        "mean": 3.804,
+        "p99": 15.3,
+        "p999": 18.9,
+        "max": 47.6
+      },
+      "raf": {
+        "n": 3995,
+        "mean": 7.511,
+        "p99": 14,
+        "p999": 27.7,
+        "max": 48.6
+      },
+      "display": {
+        "n": 3991,
+        "mean": 7.514,
+        "p99": 13.928,
+        "p999": 27.789,
+        "max": 48.574
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 297,
+          "percent": 7.442,
+          "perMinute": 594.254
+        },
+        "over14.5ms": {
+          "count": 19,
+          "percent": 0.476,
+          "perMinute": 38.016
+        },
+        "over20ms": {
+          "count": 19,
+          "percent": 0.476,
+          "perMinute": 38.016
+        },
+        "over33ms": {
+          "count": 3,
+          "percent": 0.075,
+          "perMinute": 6.003
+        },
+        "over50ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        }
+      },
+      "coldBankFrames": 2,
+      "planetRecolour": {
+        "n": 292,
+        "mean": 10.484,
+        "p99": 12.3,
+        "p999": 16.1,
+        "max": 16.1
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 47.6,
+          "x": 2693.49,
+          "y": -204.988,
+          "buckets": {
+            "render.total": 46.5,
+            "render.sky": 45.3,
+            "render.undergroundBg": 45,
+            "audit.bankBuild": 36.3
+          }
+        },
+        {
+          "cpu": 22.3,
+          "x": 6743.572,
+          "y": -204.889,
+          "buckets": {
+            "render.total": 21.3,
+            "render.sky": 19.3,
+            "render.undergroundBg": 19,
+            "audit.bankBuild": 14.9,
+            "render.player+fx": 0.8
+          }
+        },
+        {
+          "cpu": 19,
+          "x": 5529.168,
+          "y": -280.435,
+          "buckets": {
+            "render.total": 17.2,
+            "render.sky": 11.6,
+            "audit.planet": 11.4,
+            "render.skyComposite": 11.4,
+            "audit.planetColour": 11.3,
+            "render.entities": 2.7,
+            "render.player+fx": 2.6,
+            "render.player": 2.4,
+            "update.smoke": 0.7,
+            "update.liquids": 0.6
+          }
+        },
+        {
+          "cpu": 18.9,
+          "x": 6532.104,
+          "y": -227.711,
+          "buckets": {
+            "render.total": 17.2,
+            "render.sky": 16.4,
+            "audit.planet": 16.2,
+            "render.skyComposite": 16.2,
+            "audit.planetColour": 16.1,
+            "update.smoke": 0.8
+          }
+        },
+        {
+          "cpu": 18.4,
+          "x": 4584.609,
+          "y": -204.541,
+          "buckets": {
+            "render.total": 13.7,
+            "render.sky": 10.8,
+            "render.skyComposite": 10.6,
+            "audit.planetColour": 10.4,
+            "audit.planet": 10.4,
+            "update.jello": 1.8,
+            "jello.substepsAll": 1.6,
+            "render.player+fx": 1.6,
+            "update.pondStream": 1.2,
+            "jello.contact": 1.2,
+            "update.liquids": 1.1,
+            "render.jello": 1
+          }
+        },
+        {
+          "cpu": 17.3,
+          "x": 8604.502,
+          "y": -201.389,
+          "buckets": {
+            "render.total": 16.1,
+            "render.sky": 14.1,
+            "render.skyComposite": 10.5,
+            "audit.planet": 10.2,
+            "audit.planetColour": 10.1,
+            "render.undergroundBg": 3.6,
+            "render.terrain": 1.2,
+            "update.smoke": 0.7
+          }
+        },
+        {
+          "cpu": 17.2,
+          "x": 7071.852,
+          "y": -171.832,
+          "buckets": {
+            "render.total": 16.4,
+            "render.sky": 12.5,
+            "render.skyComposite": 12.2,
+            "audit.planetColour": 12,
+            "audit.planet": 12,
+            "render.terrain": 2.8
+          }
+        },
+        {
+          "cpu": 17,
+          "x": 6260.258,
+          "y": -254.263,
+          "buckets": {
+            "render.total": 15.7,
+            "render.sky": 14.3,
+            "render.skyComposite": 13.9,
+            "audit.planetColour": 10.8,
+            "audit.planet": 10.8,
+            "audit.clouds": 3,
+            "render.player+fx": 0.8,
+            "audit.cloudRecolor": 0.8
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 3991,
+          "display": {
+            "n": 3991,
+            "mean": 7.514,
+            "p99": 13.928,
+            "p999": 27.789,
+            "max": 48.574
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 297,
+              "percent": 7.442,
+              "perMinute": 594.254
+            },
+            "over14.5ms": {
+              "count": 19,
+              "percent": 0.476,
+              "perMinute": 38.016
+            },
+            "over20ms": {
+              "count": 19,
+              "percent": 0.476,
+              "perMinute": 38.016
+            },
+            "over33ms": {
+              "count": 3,
+              "percent": 0.075,
+              "perMinute": 6.003
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "primary"
+    },
+    {
+      "side": "after",
+      "capture": "sluice-p4-display-after-fixed-3",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.83",
+          "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+          "jsVersion": "15.2.124.21"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": false,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "5110f96a946adf86a474f42c13cabc94dea6a4ba63f7537a7a37a98cac9430b4",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 6143.9,
+      "cpu": {
+        "n": 4088,
+        "mean": 3.188,
+        "p99": 6.7,
+        "p999": 9.4,
+        "max": 13.3
+      },
+      "raf": {
+        "n": 4088,
+        "mean": 7.342,
+        "p99": 14,
+        "p999": 20.9,
+        "max": 34.7
+      },
+      "display": {
+        "n": 4077,
+        "mean": 7.35,
+        "p99": 13.921,
+        "p999": 20.841,
+        "max": 51.832
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 219,
+          "percent": 5.372,
+          "perMinute": 438.492
+        },
+        "over14.5ms": {
+          "count": 9,
+          "percent": 0.221,
+          "perMinute": 18.02
+        },
+        "over20ms": {
+          "count": 9,
+          "percent": 0.221,
+          "perMinute": 18.02
+        },
+        "over33ms": {
+          "count": 3,
+          "percent": 0.074,
+          "perMinute": 6.007
+        },
+        "over50ms": {
+          "count": 1,
+          "percent": 0.025,
+          "perMinute": 2.002
+        }
+      },
+      "coldBankFrames": 0,
+      "planetRecolour": {
+        "n": 290,
+        "mean": 1.897,
+        "p99": 2.7,
+        "p999": 4.6,
+        "max": 4.6
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 13.3,
+          "x": 3710.52,
+          "y": -142.318,
+          "buckets": {
+            "render.total": 6,
+            "update.smoke": 3.9,
+            "update.smokeObstacle": 2.9,
+            "render.sky": 2.4,
+            "render.bankWarm": 1.7,
+            "update.jello": 1.6,
+            "update.smokeObstacleDraw": 1.6,
+            "update.smokeObstacleUpload": 1.3,
+            "render.player+fx": 1.1,
+            "update.liquids": 1,
+            "update.smokeStep": 0.9,
+            "render.jello": 0.6
+          }
+        },
+        {
+          "cpu": 11.1,
+          "x": 4252.24,
+          "y": -170.485,
+          "buckets": {
+            "render.total": 9.4,
+            "render.sky": 4.4,
+            "render.skyComposite": 4.2,
+            "audit.clouds": 2.2,
+            "audit.planetColour": 1.9,
+            "audit.planet": 1.9,
+            "render.player+fx": 1.9,
+            "render.terrain": 1.8,
+            "render.jello": 1.3,
+            "update.smoke": 0.9,
+            "render.tiles": 0.8,
+            "update.smokeObstacle": 0.7,
+            "update.smokeObstacleDraw": 0.6,
+            "audit.cloudRecolor": 0.6
+          }
+        },
+        {
+          "cpu": 9.9,
+          "x": 8473.509,
+          "y": -186.83,
+          "buckets": {
+            "render.total": 8.2,
+            "render.sky": 7,
+            "render.undergroundBg": 3.9,
+            "render.skyComposite": 2.1,
+            "audit.planetColour": 1.8,
+            "audit.planet": 1.8,
+            "update.smoke": 0.9,
+            "render.bankWarm": 0.9
+          }
+        },
+        {
+          "cpu": 9.5,
+          "x": 7202.671,
+          "y": -161.698,
+          "buckets": {
+            "render.total": 8.2,
+            "render.sky": 7,
+            "render.mountains": 4.2,
+            "render.skyComposite": 2.6,
+            "audit.planet": 2.3,
+            "audit.planetColour": 2.2
+          }
+        },
+        {
+          "cpu": 9.4,
+          "x": 6813.984,
+          "y": -198.186,
+          "buckets": {
+            "render.total": 8.1,
+            "render.sky": 3.6,
+            "render.terrain": 3.4,
+            "render.undergroundBg": 2.6,
+            "render.bankWarm": 0.6
+          }
+        },
+        {
+          "cpu": 9,
+          "x": 4586.523,
+          "y": -203.887,
+          "buckets": {
+            "render.total": 4.5,
+            "render.sky": 2.4,
+            "render.skyComposite": 2.2,
+            "audit.planet": 2,
+            "audit.planetColour": 1.8,
+            "update.jello": 1.7,
+            "jello.substepsAll": 1.6,
+            "jello.contact": 1.4,
+            "update.pondStream": 1.2,
+            "render.player+fx": 1.2,
+            "update.liquids": 0.9,
+            "render.jello": 0.8
+          }
+        },
+        {
+          "cpu": 9,
+          "x": 6268.204,
+          "y": -254.265,
+          "buckets": {
+            "render.total": 7.6,
+            "render.sky": 6.8,
+            "render.skyComposite": 5.7,
+            "audit.clouds": 3.8,
+            "audit.planetColour": 1.8,
+            "audit.planet": 1.8,
+            "audit.cloudRecolor": 0.9,
+            "render.bankWarm": 0.7,
+            "update.smoke": 0.6
+          }
+        },
+        {
+          "cpu": 8.9,
+          "x": 1895.932,
+          "y": -275.883,
+          "buckets": {
+            "render.total": 7,
+            "render.sky": 6.1,
+            "render.bankWarm": 3.8,
+            "render.skyComposite": 2.2,
+            "audit.planet": 2.1,
+            "audit.planetColour": 2,
+            "update.smoke": 1,
+            "update.smokeObstacle": 0.6
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 4075,
+          "display": {
+            "n": 4075,
+            "mean": 7.337,
+            "p99": 13.92,
+            "p999": 20.834,
+            "max": 51.832
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 217,
+              "percent": 5.325,
+              "perMinute": 435.45
+            },
+            "over14.5ms": {
+              "count": 7,
+              "percent": 0.172,
+              "perMinute": 14.047
+            },
+            "over20ms": {
+              "count": 7,
+              "percent": 0.172,
+              "perMinute": 14.047
+            },
+            "over33ms": {
+              "count": 2,
+              "percent": 0.049,
+              "perMinute": 4.013
+            },
+            "over50ms": {
+              "count": 1,
+              "percent": 0.025,
+              "perMinute": 2.007
+            }
+          }
+        },
+        {
+          "mode": "Composed: Flip",
+          "presents": 4,
+          "display": {
+            "n": 2,
+            "mean": 33.114,
+            "p99": 34.746,
+            "p999": 34.746,
+            "max": 34.746
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 2,
+              "percent": 100,
+              "perMinute": 1811.898
+            },
+            "over14.5ms": {
+              "count": 2,
+              "percent": 100,
+              "perMinute": 1811.898
+            },
+            "over20ms": {
+              "count": 2,
+              "percent": 100,
+              "perMinute": 1811.898
+            },
+            "over33ms": {
+              "count": 1,
+              "percent": 50,
+              "perMinute": 905.949
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "followup"
+    },
+    {
+      "side": "before",
+      "capture": "sluice-p4-electron-before",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.78",
+          "revision": "@80726bde55302abc5da0e6a363cfb6b30a6fbc26",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Sluice/0.1.0 Chrome/152.0.7977.78 Electron/44.3.0 Safari/537.36",
+          "jsVersion": "15.2.124.19"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": true,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "280b8bc882c7a6afbdf9d7244ec5bc5bcb11baf49c641f20dae3458b3f16f44e",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 5439.1,
+      "cpu": {
+        "n": 4084,
+        "mean": 3.344,
+        "p99": 13.9,
+        "p999": 16.7,
+        "max": 45.1
+      },
+      "raf": {
+        "n": 4084,
+        "mean": 7.346,
+        "p99": 14,
+        "p999": 20.9,
+        "max": 41.7
+      },
+      "display": {
+        "n": 4081,
+        "mean": 7.346,
+        "p99": 13.922,
+        "p999": 27.748,
+        "max": 41.68
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 219,
+          "percent": 5.366,
+          "perMinute": 438.289
+        },
+        "over14.5ms": {
+          "count": 8,
+          "percent": 0.196,
+          "perMinute": 16.011
+        },
+        "over20ms": {
+          "count": 8,
+          "percent": 0.196,
+          "perMinute": 16.011
+        },
+        "over33ms": {
+          "count": 2,
+          "percent": 0.049,
+          "perMinute": 4.003
+        },
+        "over50ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        }
+      },
+      "coldBankFrames": 2,
+      "planetRecolour": {
+        "n": 292,
+        "mean": 10.118,
+        "p99": 11.1,
+        "p999": 11.3,
+        "max": 11.3
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 45.1,
+          "x": 2693.403,
+          "y": -204.985,
+          "buckets": {
+            "render.total": 44.2,
+            "render.sky": 42.9,
+            "render.undergroundBg": 42.7,
+            "audit.bankBuild": 34.5
+          }
+        },
+        {
+          "cpu": 20.8,
+          "x": 6743.485,
+          "y": -204.885,
+          "buckets": {
+            "render.total": 19.8,
+            "render.sky": 18.4,
+            "render.undergroundBg": 18.1,
+            "audit.bankBuild": 13.8
+          }
+        },
+        {
+          "cpu": 17.2,
+          "x": 8604.386,
+          "y": -201.389,
+          "buckets": {
+            "render.total": 16,
+            "render.sky": 13.7,
+            "render.skyComposite": 10.3,
+            "audit.planet": 10.2,
+            "audit.planetColour": 10,
+            "render.undergroundBg": 3.1,
+            "render.terrain": 1.4,
+            "update.smoke": 0.8
+          }
+        },
+        {
+          "cpu": 17,
+          "x": 7710.171,
+          "y": -142.034,
+          "buckets": {
+            "render.total": 15.1,
+            "render.sky": 11.9,
+            "render.skyComposite": 11.6,
+            "audit.planetColour": 11.3,
+            "audit.planet": 11.3,
+            "render.terrain": 2.2,
+            "update.smoke": 1.2,
+            "update.smokeObstacle": 1,
+            "update.smokeObstacleDraw": 0.9
+          }
+        },
+        {
+          "cpu": 16.7,
+          "x": 4234.086,
+          "y": -169.61,
+          "buckets": {
+            "render.total": 15,
+            "render.sky": 12.5,
+            "render.skyComposite": 12.3,
+            "audit.planetColour": 10.7,
+            "audit.planet": 10.7,
+            "render.player+fx": 1.5,
+            "render.jello": 1.4,
+            "audit.clouds": 1.3,
+            "update.smoke": 1.1,
+            "update.smokeObstacle": 0.8,
+            "update.smokeObstacleDraw": 0.7
+          }
+        },
+        {
+          "cpu": 16.5,
+          "x": 4244.149,
+          "y": -170.485,
+          "buckets": {
+            "render.total": 15.7,
+            "render.sky": 13.3,
+            "render.skyComposite": 13,
+            "audit.planetColour": 10.6,
+            "audit.planet": 10.6,
+            "audit.clouds": 2.3,
+            "render.player+fx": 1.2,
+            "render.jello": 1,
+            "render.tiles": 0.7,
+            "audit.cloudRecolor": 0.6
+          }
+        },
+        {
+          "cpu": 16.3,
+          "x": 6650.859,
+          "y": -214.933,
+          "buckets": {
+            "render.total": 13.9,
+            "render.sky": 13.2,
+            "render.skyComposite": 13,
+            "audit.planet": 10.5,
+            "audit.planetColour": 10.4,
+            "audit.clouds": 2.4,
+            "update.smoke": 2,
+            "update.smokeObstacle": 1.6,
+            "update.smokeObstacleDraw": 1.5
+          }
+        },
+        {
+          "cpu": 16.2,
+          "x": 4000.491,
+          "y": -152.612,
+          "buckets": {
+            "render.total": 15.4,
+            "render.sky": 10.5,
+            "render.skyComposite": 10.3,
+            "audit.planet": 10,
+            "audit.planetColour": 9.9,
+            "render.terrain": 2.8,
+            "render.player+fx": 1.4,
+            "render.jello": 1
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 4081,
+          "display": {
+            "n": 4081,
+            "mean": 7.346,
+            "p99": 13.922,
+            "p999": 27.748,
+            "max": 41.68
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 219,
+              "percent": 5.366,
+              "perMinute": 438.289
+            },
+            "over14.5ms": {
+              "count": 8,
+              "percent": 0.196,
+              "perMinute": 16.011
+            },
+            "over20ms": {
+              "count": 8,
+              "percent": 0.196,
+              "perMinute": 16.011
+            },
+            "over33ms": {
+              "count": 2,
+              "percent": 0.049,
+              "perMinute": 4.003
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "desktop"
+    },
+    {
+      "side": "after",
+      "capture": "sluice-p4-electron-after",
+      "environment": {
+        "browser": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/152.0.7977.78",
+          "revision": "@80726bde55302abc5da0e6a363cfb6b30a6fbc26",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Sluice/0.1.0 Chrome/152.0.7977.78 Electron/44.3.0 Safari/537.36",
+          "jsVersion": "15.2.124.19"
+        },
+        "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+        "logicalCores": 8,
+        "platform": "win32",
+        "revision": "6389e988f8d08b75c6a6f3b3e203ad9c1a42f652",
+        "seconds": 30,
+        "scenes": [
+          "cruise"
+        ],
+        "viewport": {
+          "width": 2048,
+          "height": 1152,
+          "deviceScaleFactor": 1.25,
+          "mobile": false
+        },
+        "headed": true,
+        "electron": true,
+        "canvasOptions": null,
+        "clockRunning": true,
+        "initialTimeOfDay": 0.7,
+        "overlay": false,
+        "warmupSeconds": 3,
+        "experiment": "tools/perf/hitch-audit-probe.js",
+        "isolate": null,
+        "preset": "default",
+        "disabled": null,
+        "audio": false,
+        "gpuTiming": false
+      },
+      "bundleSHA256": "5110f96a946adf86a474f42c13cabc94dea6a4ba63f7537a7a37a98cac9430b4",
+      "canvas": [
+        2560,
+        1440
+      ],
+      "preset": "extreme",
+      "bootMs": 5355.4,
+      "cpu": {
+        "n": 4158,
+        "mean": 2.785,
+        "p99": 5.8,
+        "p999": 7.8,
+        "max": 8.8
+      },
+      "raf": {
+        "n": 4158,
+        "mean": 7.215,
+        "p99": 13.9,
+        "p999": 14.1,
+        "max": 27.8
+      },
+      "display": {
+        "n": 4153,
+        "mean": 7.219,
+        "p99": 13.914,
+        "p999": 13.975,
+        "max": 27.758
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 159,
+          "percent": 3.829,
+          "perMinute": 318.21
+        },
+        "over14.5ms": {
+          "count": 4,
+          "percent": 0.096,
+          "perMinute": 8.005
+        },
+        "over20ms": {
+          "count": 4,
+          "percent": 0.096,
+          "perMinute": 8.005
+        },
+        "over33ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        },
+        "over50ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        }
+      },
+      "coldBankFrames": 0,
+      "planetRecolour": {
+        "n": 290,
+        "mean": 1.847,
+        "p99": 2.2,
+        "p999": 2.4,
+        "max": 2.4
+      },
+      "worstCPUFrames": [
+        {
+          "cpu": 8.8,
+          "x": 4258.237,
+          "y": -170.591,
+          "buckets": {
+            "render.total": 8,
+            "render.terrain": 3,
+            "render.sky": 2.3,
+            "render.skyComposite": 2.1,
+            "render.player+fx": 1.9,
+            "audit.planetColour": 1.9,
+            "audit.planet": 1.9,
+            "render.jello": 1.5
+          }
+        },
+        {
+          "cpu": 8.5,
+          "x": 8477.476,
+          "y": -186.747,
+          "buckets": {
+            "render.total": 7.2,
+            "render.sky": 5.3,
+            "render.undergroundBg": 2.5,
+            "render.skyComposite": 2.2,
+            "audit.planetColour": 2,
+            "audit.planet": 2,
+            "render.terrain": 1.1,
+            "update.smoke": 0.9,
+            "update.smokeObstacleDraw": 0.8,
+            "update.smokeObstacle": 0.8
+          }
+        },
+        {
+          "cpu": 8.2,
+          "x": 4129.332,
+          "y": -160.203,
+          "buckets": {
+            "render.total": 7.3,
+            "render.terrain": 2.4,
+            "render.sky": 2.3,
+            "render.skyComposite": 2.2,
+            "audit.planetColour": 1.8,
+            "audit.planet": 1.8,
+            "render.player+fx": 1.5,
+            "render.jello": 1.2
+          }
+        },
+        {
+          "cpu": 8.1,
+          "x": 4765.766,
+          "y": -222.776,
+          "buckets": {
+            "render.total": 6.7,
+            "render.sky": 2.6,
+            "render.terrain": 2.1,
+            "render.skyComposite": 2,
+            "audit.planetColour": 1.9,
+            "audit.planet": 1.9,
+            "render.player+fx": 1.3,
+            "render.jello": 1.1
+          }
+        },
+        {
+          "cpu": 7.8,
+          "x": 4252.234,
+          "y": -170.067,
+          "buckets": {
+            "render.total": 6.6,
+            "render.sky": 2.6,
+            "render.skyComposite": 2.3,
+            "audit.clouds": 2.2,
+            "render.player+fx": 1.5,
+            "render.terrain": 1.4,
+            "render.jello": 1.2,
+            "update.smoke": 0.7,
+            "update.smokeObstacle": 0.6,
+            "audit.cloudRecolor": 0.6,
+            "render.tiles": 0.6
+          }
+        },
+        {
+          "cpu": 7.6,
+          "x": 4620.737,
+          "y": -207.07,
+          "buckets": {
+            "render.total": 5.9,
+            "render.sky": 3.2,
+            "render.skyComposite": 2,
+            "audit.planetColour": 1.9,
+            "audit.planet": 1.9,
+            "render.jello": 1.2,
+            "render.player+fx": 1.2,
+            "update.jello": 0.8,
+            "render.bankWarm": 0.8,
+            "jello.substepsAll": 0.7,
+            "render.tiles": 0.6,
+            "jello.contact": 0.5
+          }
+        },
+        {
+          "cpu": 7.5,
+          "x": 4254.206,
+          "y": -170.239,
+          "buckets": {
+            "render.total": 6.8,
+            "render.terrain": 2.4,
+            "render.sky": 2.3,
+            "render.skyComposite": 2.1,
+            "audit.cloudRecolor": 1.9,
+            "audit.clouds": 1.9,
+            "render.player+fx": 1.2,
+            "render.jello": 1
+          }
+        },
+        {
+          "cpu": 7.4,
+          "x": 4248.174,
+          "y": -169.715,
+          "buckets": {
+            "render.total": 6.8,
+            "render.sky": 4.7,
+            "render.skyComposite": 4.5,
+            "audit.clouds": 2.3,
+            "audit.planet": 2,
+            "audit.planetColour": 1.9,
+            "render.player+fx": 1.2,
+            "render.jello": 1,
+            "audit.cloudRecolor": 0.6
+          }
+        }
+      ],
+      "errors": [],
+      "presentModes": [
+        {
+          "mode": "Hardware Composed: Independent Flip",
+          "presents": 4153,
+          "display": {
+            "n": 4153,
+            "mean": 7.219,
+            "p99": 13.914,
+            "p999": 13.975,
+            "max": 27.758
+          },
+          "displayGaps": {
+            "over8ms": {
+              "count": 159,
+              "percent": 3.829,
+              "perMinute": 318.21
+            },
+            "over14.5ms": {
+              "count": 4,
+              "percent": 0.096,
+              "perMinute": 8.005
+            },
+            "over20ms": {
+              "count": 4,
+              "percent": 0.096,
+              "perMinute": 8.005
+            },
+            "over33ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            },
+            "over50ms": {
+              "count": 0,
+              "percent": 0,
+              "perMinute": 0
+            }
+          }
+        }
+      ],
+      "cohort": "desktop"
+    }
+  ],
+  "pooled": {
+    "before": {
+      "cpu": {
+        "n": 8103,
+        "mean": 3.598,
+        "p99": 14.7,
+        "p999": 17.2,
+        "max": 47.6
+      },
+      "cpuOver8ms": 596,
+      "cpuOver16ms": 33,
+      "raf": {
+        "n": 8103,
+        "mean": 7.406,
+        "p99": 14,
+        "p999": 20.9,
+        "max": 48.6
+      },
+      "display": {
+        "n": 8098,
+        "mean": 7.406,
+        "p99": 13.923,
+        "p999": 27.779,
+        "max": 48.644
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 489,
+          "percent": 6.039,
+          "perMinute": 489.21
+        },
+        "over14.5ms": {
+          "count": 28,
+          "percent": 0.346,
+          "perMinute": 28.012
+        },
+        "over20ms": {
+          "count": 28,
+          "percent": 0.346,
+          "perMinute": 28.012
+        },
+        "over33ms": {
+          "count": 6,
+          "percent": 0.074,
+          "perMinute": 6.003
+        },
+        "over50ms": {
+          "count": 0,
+          "percent": 0,
+          "perMinute": 0
+        }
+      },
+      "coldBankFrames": 4,
+      "rank": [
+        {
+          "name": "skyComposite",
+          "ms": {
+            "n": 8103,
+            "mean": 0.973,
+            "p99": 11.3,
+            "p999": 13.3,
+            "max": 16.2
+          }
+        },
+        {
+          "name": "smoke",
+          "ms": {
+            "n": 8103,
+            "mean": 0.58,
+            "p99": 1.8,
+            "p999": 2.4,
+            "max": 3.3
+          }
+        },
+        {
+          "name": "water",
+          "ms": {
+            "n": 8103,
+            "mean": 0.391,
+            "p99": 1.1,
+            "p999": 1.4,
+            "max": 6.7
+          }
+        },
+        {
+          "name": "rigEffectsLighting",
+          "ms": {
+            "n": 8103,
+            "mean": 0.281,
+            "p99": 0.5,
+            "p999": 1.2,
+            "max": 4.1
+          }
+        },
+        {
+          "name": "slimes",
+          "ms": {
+            "n": 8103,
+            "mean": 0.257,
+            "p99": 1.8,
+            "p999": 2.2,
+            "max": 2.8
+          }
+        },
+        {
+          "name": "terrain",
+          "ms": {
+            "n": 8103,
+            "mean": 0.232,
+            "p99": 1.9,
+            "p999": 3.2,
+            "max": 4.4
+          }
+        },
+        {
+          "name": "HUD",
+          "ms": {
+            "n": 8103,
+            "mean": 0.126,
+            "p99": 0.3,
+            "p999": 0.6,
+            "max": 0.9
+          }
+        },
+        {
+          "name": "tileDetails",
+          "ms": {
+            "n": 8103,
+            "mean": 0.123,
+            "p99": 0.4,
+            "p999": 0.6,
+            "max": 1.4
+          }
+        },
+        {
+          "name": "mountains",
+          "ms": {
+            "n": 8103,
+            "mean": 0.108,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 1.3
+          }
+        },
+        {
+          "name": "undergroundBackground",
+          "ms": {
+            "n": 8103,
+            "mean": 0.092,
+            "p99": 1.5,
+            "p999": 4.4,
+            "max": 45
+          }
+        },
+        {
+          "name": "entities",
+          "ms": {
+            "n": 8103,
+            "mean": 0.061,
+            "p99": 0.4,
+            "p999": 0.8,
+            "max": 2.7
+          }
+        },
+        {
+          "name": "mainUpdate",
+          "ms": {
+            "n": 8103,
+            "mean": 0.02,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 1.1
+          }
+        },
+        {
+          "name": "surfaceBankPreparation",
+          "ms": {
+            "n": 8103,
+            "mean": 0,
+            "p99": 0,
+            "p999": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "auxiliaryUpdate",
+          "ms": {
+            "n": 8103,
+            "mean": 0,
+            "p99": 0,
+            "p999": 0,
+            "max": 0
+          }
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "ms": {
+            "n": 8103,
+            "mean": 2.306,
+            "p99": 13.3,
+            "p999": 15.8,
+            "max": 46.5
+          }
+        },
+        {
+          "name": "render.sky",
+          "ms": {
+            "n": 8103,
+            "mean": 1.194,
+            "p99": 11.5,
+            "p999": 14,
+            "max": 45.3
+          }
+        },
+        {
+          "name": "render.skyComposite",
+          "ms": {
+            "n": 8103,
+            "mean": 0.973,
+            "p99": 11.3,
+            "p999": 13.3,
+            "max": 16.2
+          }
+        },
+        {
+          "name": "audit.planet",
+          "ms": {
+            "n": 8103,
+            "mean": 0.759,
+            "p99": 10.9,
+            "p999": 11.9,
+            "max": 16.2
+          }
+        },
+        {
+          "name": "audit.planetColour",
+          "ms": {
+            "n": 8103,
+            "mean": 0.743,
+            "p99": 10.8,
+            "p999": 11.8,
+            "max": 16.1
+          }
+        },
+        {
+          "name": "update.smoke",
+          "ms": {
+            "n": 8103,
+            "mean": 0.56,
+            "p99": 1.8,
+            "p999": 2.4,
+            "max": 3.2
+          }
+        },
+        {
+          "name": "render.player+fx",
+          "ms": {
+            "n": 8103,
+            "mean": 0.413,
+            "p99": 1.6,
+            "p999": 2.4,
+            "max": 4.1
+          }
+        },
+        {
+          "name": "update.smokeObstacle",
+          "ms": {
+            "n": 8103,
+            "mean": 0.372,
+            "p99": 1.6,
+            "p999": 2,
+            "max": 2.5
+          }
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "ms": {
+            "n": 8103,
+            "mean": 0.287,
+            "p99": 1.5,
+            "p999": 1.9,
+            "max": 2.4
+          }
+        },
+        {
+          "name": "update.liquids",
+          "ms": {
+            "n": 8103,
+            "mean": 0.265,
+            "p99": 0.9,
+            "p999": 1.2,
+            "max": 6.3
+          }
+        },
+        {
+          "name": "render.terrain",
+          "ms": {
+            "n": 8103,
+            "mean": 0.232,
+            "p99": 1.9,
+            "p999": 3.2,
+            "max": 4.4
+          }
+        },
+        {
+          "name": "render.jello",
+          "ms": {
+            "n": 8103,
+            "mean": 0.132,
+            "p99": 1.3,
+            "p999": 1.9,
+            "max": 2.3
+          }
+        },
+        {
+          "name": "render.player",
+          "ms": {
+            "n": 8103,
+            "mean": 0.13,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 2.4
+          }
+        },
+        {
+          "name": "render.rocketPlume",
+          "ms": {
+            "n": 8103,
+            "mean": 0.127,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 3.6
+          }
+        },
+        {
+          "name": "render.liquids",
+          "ms": {
+            "n": 8103,
+            "mean": 0.126,
+            "p99": 0.4,
+            "p999": 0.6,
+            "max": 0.8
+          }
+        },
+        {
+          "name": "render.HUD",
+          "ms": {
+            "n": 8103,
+            "mean": 0.126,
+            "p99": 0.3,
+            "p999": 0.6,
+            "max": 0.9
+          }
+        },
+        {
+          "name": "update.jello",
+          "ms": {
+            "n": 8103,
+            "mean": 0.125,
+            "p99": 0.9,
+            "p999": 1.2,
+            "max": 1.8
+          }
+        },
+        {
+          "name": "render.tiles",
+          "ms": {
+            "n": 8103,
+            "mean": 0.123,
+            "p99": 0.4,
+            "p999": 0.6,
+            "max": 1.4
+          }
+        },
+        {
+          "name": "render.mountains",
+          "ms": {
+            "n": 8103,
+            "mean": 0.108,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 1.3
+          }
+        },
+        {
+          "name": "render.undergroundBg",
+          "ms": {
+            "n": 8103,
+            "mean": 0.092,
+            "p99": 1.5,
+            "p999": 4.4,
+            "max": 45
+          }
+        },
+        {
+          "name": "audit.clouds",
+          "ms": {
+            "n": 8103,
+            "mean": 0.083,
+            "p99": 2.1,
+            "p999": 2.6,
+            "max": 3.1
+          }
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "ms": {
+            "n": 8103,
+            "mean": 0.079,
+            "p99": 0.2,
+            "p999": 0.5,
+            "max": 1.3
+          }
+        },
+        {
+          "name": "jello.substepsAll",
+          "ms": {
+            "n": 8103,
+            "mean": 0.072,
+            "p99": 0.7,
+            "p999": 1,
+            "max": 1.6
+          }
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "ms": {
+            "n": 8103,
+            "mean": 0.07,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 2.5
+          }
+        },
+        {
+          "name": "update.smokeStep",
+          "ms": {
+            "n": 8103,
+            "mean": 0.065,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 0.6
+          }
+        },
+        {
+          "name": "render.entities",
+          "ms": {
+            "n": 8103,
+            "mean": 0.061,
+            "p99": 0.4,
+            "p999": 0.8,
+            "max": 2.7
+          }
+        },
+        {
+          "name": "jello.contact",
+          "ms": {
+            "n": 8103,
+            "mean": 0.044,
+            "p99": 0.5,
+            "p999": 0.7,
+            "max": 1.2
+          }
+        },
+        {
+          "name": "render.console",
+          "ms": {
+            "n": 8103,
+            "mean": 0.036,
+            "p99": 0.2,
+            "p999": 0.3,
+            "max": 0.7
+          }
+        },
+        {
+          "name": "audit.skyCopy",
+          "ms": {
+            "n": 8103,
+            "mean": 0.024,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 1
+          }
+        },
+        {
+          "name": "jello.internal",
+          "ms": {
+            "n": 8103,
+            "mean": 0.023,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 0.9
+          }
+        },
+        {
+          "name": "update.grassWind",
+          "ms": {
+            "n": 8103,
+            "mean": 0.022,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 0.4
+          }
+        },
+        {
+          "name": "render.smoke",
+          "ms": {
+            "n": 8103,
+            "mean": 0.02,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.9
+          }
+        },
+        {
+          "name": "update.main",
+          "ms": {
+            "n": 8103,
+            "mean": 0.02,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 1.1
+          }
+        },
+        {
+          "name": "audit.cloudRecolor",
+          "ms": {
+            "n": 8103,
+            "mean": 0.02,
+            "p99": 0.6,
+            "p999": 1.8,
+            "max": 2.3
+          }
+        },
+        {
+          "name": "update.smokeEmit",
+          "ms": {
+            "n": 8103,
+            "mean": 0.019,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 1.2
+          }
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "ms": {
+            "n": 8103,
+            "mean": 0.018,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 2.2
+          }
+        },
+        {
+          "name": "render.lightFog",
+          "ms": {
+            "n": 8103,
+            "mean": 0.015,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.5
+          }
+        },
+        {
+          "name": "update.weather",
+          "ms": {
+            "n": 8103,
+            "mean": 0.014,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.4
+          }
+        },
+        {
+          "name": "audit.skySubmit",
+          "ms": {
+            "n": 8103,
+            "mean": 0.013,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "audit.bankBuild",
+          "ms": {
+            "n": 8103,
+            "mean": 0.012,
+            "p99": 0,
+            "p999": 0,
+            "max": 36.3
+          }
+        },
+        {
+          "name": "update.trees",
+          "ms": {
+            "n": 8103,
+            "mean": 0.007,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.6
+          }
+        },
+        {
+          "name": "update.smokeScroll",
+          "ms": {
+            "n": 8103,
+            "mean": 0.007,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "jello.tail",
+          "ms": {
+            "n": 8103,
+            "mean": 0.005,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "update.pondStream",
+          "ms": {
+            "n": 8103,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.8,
+            "max": 2
+          }
+        },
+        {
+          "name": "audit.celestials",
+          "ms": {
+            "n": 8103,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 3
+          }
+        },
+        {
+          "name": "audit.planetBuild",
+          "ms": {
+            "n": 8103,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "update.wind",
+          "ms": {
+            "n": 8103,
+            "mean": 0.003,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "update.drillAnim",
+          "ms": {
+            "n": 8103,
+            "mean": 0.003,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "console.fuel",
+          "ms": {
+            "n": 8103,
+            "mean": 0.002,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "update.explosions",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "update.mineFx",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "update.clearOverlays",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "update.liveBombs",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "update.slimeNpc",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "render.perfOverlay",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "audit.moonBuild",
+          "ms": {
+            "n": 8103,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0,
+            "max": 3
+          }
+        },
+        {
+          "name": "console.speed",
+          "ms": {
+            "n": 8103,
+            "mean": 0,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        }
+      ]
+    },
+    "after": {
+      "cpu": {
+        "n": 8297,
+        "mean": 3.136,
+        "p99": 6.4,
+        "p999": 8.9,
+        "max": 12.9
+      },
+      "cpuOver8ms": 22,
+      "cpuOver16ms": 0,
+      "raf": {
+        "n": 8297,
+        "mean": 7.234,
+        "p99": 13.9,
+        "p999": 20.8,
+        "max": 34.7
+      },
+      "display": {
+        "n": 7532,
+        "mean": 7.955,
+        "p99": 13.909,
+        "p999": 26.691,
+        "max": 53.347
+      },
+      "displayGaps": {
+        "over8ms": {
+          "count": 1152,
+          "percent": 15.295,
+          "perMinute": 1153.587
+        },
+        "over14.5ms": {
+          "count": 17,
+          "percent": 0.226,
+          "perMinute": 17.023
+        },
+        "over20ms": {
+          "count": 16,
+          "percent": 0.212,
+          "perMinute": 16.022
+        },
+        "over33ms": {
+          "count": 3,
+          "percent": 0.04,
+          "perMinute": 3.004
+        },
+        "over50ms": {
+          "count": 1,
+          "percent": 0.013,
+          "perMinute": 1.001
+        }
+      },
+      "coldBankFrames": 0,
+      "rank": [
+        {
+          "name": "smoke",
+          "ms": {
+            "n": 8297,
+            "mean": 0.61,
+            "p99": 1.8,
+            "p999": 2.4,
+            "max": 4.1
+          }
+        },
+        {
+          "name": "water",
+          "ms": {
+            "n": 8297,
+            "mean": 0.387,
+            "p99": 1.1,
+            "p999": 1.4,
+            "max": 8.9
+          }
+        },
+        {
+          "name": "skyComposite",
+          "ms": {
+            "n": 8297,
+            "mean": 0.364,
+            "p99": 2.5,
+            "p999": 4.2,
+            "max": 5.8
+          }
+        },
+        {
+          "name": "rigEffectsLighting",
+          "ms": {
+            "n": 8297,
+            "mean": 0.289,
+            "p99": 0.6,
+            "p999": 1,
+            "max": 3.5
+          }
+        },
+        {
+          "name": "slimes",
+          "ms": {
+            "n": 8297,
+            "mean": 0.268,
+            "p99": 1.9,
+            "p999": 2.6,
+            "max": 3.1
+          }
+        },
+        {
+          "name": "terrain",
+          "ms": {
+            "n": 8297,
+            "mean": 0.237,
+            "p99": 2,
+            "p999": 3.3,
+            "max": 4.2
+          }
+        },
+        {
+          "name": "HUD",
+          "ms": {
+            "n": 8297,
+            "mean": 0.13,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 4.6
+          }
+        },
+        {
+          "name": "tileDetails",
+          "ms": {
+            "n": 8297,
+            "mean": 0.125,
+            "p99": 0.5,
+            "p999": 0.8,
+            "max": 3.5
+          }
+        },
+        {
+          "name": "mountains",
+          "ms": {
+            "n": 8297,
+            "mean": 0.113,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 4.2
+          }
+        },
+        {
+          "name": "surfaceBankPreparation",
+          "ms": {
+            "n": 8297,
+            "mean": 0.085,
+            "p99": 0.8,
+            "p999": 1.3,
+            "max": 9.3
+          }
+        },
+        {
+          "name": "entities",
+          "ms": {
+            "n": 8297,
+            "mean": 0.064,
+            "p99": 0.4,
+            "p999": 0.6,
+            "max": 1.6
+          }
+        },
+        {
+          "name": "undergroundBackground",
+          "ms": {
+            "n": 8297,
+            "mean": 0.053,
+            "p99": 0.3,
+            "p999": 2.7,
+            "max": 3.1
+          }
+        },
+        {
+          "name": "auxiliaryUpdate",
+          "ms": {
+            "n": 8297,
+            "mean": 0.037,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 0.8
+          }
+        },
+        {
+          "name": "mainUpdate",
+          "ms": {
+            "n": 8297,
+            "mean": 0.023,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 0.6
+          }
+        }
+      ],
+      "buckets": [
+        {
+          "name": "render.total",
+          "ms": {
+            "n": 8297,
+            "mean": 1.794,
+            "p99": 5.1,
+            "p999": 7.4,
+            "max": 11
+          }
+        },
+        {
+          "name": "render.sky",
+          "ms": {
+            "n": 8297,
+            "mean": 0.64,
+            "p99": 3.2,
+            "p999": 5,
+            "max": 9.7
+          }
+        },
+        {
+          "name": "update.smoke",
+          "ms": {
+            "n": 8297,
+            "mean": 0.589,
+            "p99": 1.8,
+            "p999": 2.4,
+            "max": 4.1
+          }
+        },
+        {
+          "name": "render.player+fx",
+          "ms": {
+            "n": 8297,
+            "mean": 0.434,
+            "p99": 1.8,
+            "p999": 2.5,
+            "max": 3.6
+          }
+        },
+        {
+          "name": "update.smokeObstacle",
+          "ms": {
+            "n": 8297,
+            "mean": 0.388,
+            "p99": 1.5,
+            "p999": 2.1,
+            "max": 3.7
+          }
+        },
+        {
+          "name": "render.skyComposite",
+          "ms": {
+            "n": 8297,
+            "mean": 0.364,
+            "p99": 2.5,
+            "p999": 4.2,
+            "max": 5.8
+          }
+        },
+        {
+          "name": "update.smokeObstacleDraw",
+          "ms": {
+            "n": 8297,
+            "mean": 0.294,
+            "p99": 1.5,
+            "p999": 2,
+            "max": 3.5
+          }
+        },
+        {
+          "name": "update.liquids",
+          "ms": {
+            "n": 8297,
+            "mean": 0.253,
+            "p99": 0.9,
+            "p999": 1.1,
+            "max": 4
+          }
+        },
+        {
+          "name": "render.terrain",
+          "ms": {
+            "n": 8297,
+            "mean": 0.237,
+            "p99": 2,
+            "p999": 3.3,
+            "max": 4.2
+          }
+        },
+        {
+          "name": "audit.planet",
+          "ms": {
+            "n": 8297,
+            "mean": 0.152,
+            "p99": 2.1,
+            "p999": 2.5,
+            "max": 4.1
+          }
+        },
+        {
+          "name": "render.jello",
+          "ms": {
+            "n": 8297,
+            "mean": 0.145,
+            "p99": 1.4,
+            "p999": 2.1,
+            "max": 2.6
+          }
+        },
+        {
+          "name": "audit.planetColour",
+          "ms": {
+            "n": 8297,
+            "mean": 0.135,
+            "p99": 2,
+            "p999": 2.4,
+            "max": 3.9
+          }
+        },
+        {
+          "name": "render.liquids",
+          "ms": {
+            "n": 8297,
+            "mean": 0.134,
+            "p99": 0.4,
+            "p999": 0.8,
+            "max": 8.8
+          }
+        },
+        {
+          "name": "render.player",
+          "ms": {
+            "n": 8297,
+            "mean": 0.132,
+            "p99": 0.3,
+            "p999": 0.6,
+            "max": 2.5
+          }
+        },
+        {
+          "name": "render.rocketPlume",
+          "ms": {
+            "n": 8297,
+            "mean": 0.13,
+            "p99": 0.3,
+            "p999": 0.6,
+            "max": 2.9
+          }
+        },
+        {
+          "name": "render.HUD",
+          "ms": {
+            "n": 8297,
+            "mean": 0.13,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 4.6
+          }
+        },
+        {
+          "name": "render.tiles",
+          "ms": {
+            "n": 8297,
+            "mean": 0.125,
+            "p99": 0.5,
+            "p999": 0.8,
+            "max": 3.5
+          }
+        },
+        {
+          "name": "update.jello",
+          "ms": {
+            "n": 8297,
+            "mean": 0.123,
+            "p99": 0.8,
+            "p999": 1.1,
+            "max": 2.3
+          }
+        },
+        {
+          "name": "render.mountains",
+          "ms": {
+            "n": 8297,
+            "mean": 0.113,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 4.2
+          }
+        },
+        {
+          "name": "update.smokeObstacleUpload",
+          "ms": {
+            "n": 8297,
+            "mean": 0.088,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 0.8
+          }
+        },
+        {
+          "name": "render.bankWarm",
+          "ms": {
+            "n": 8297,
+            "mean": 0.085,
+            "p99": 0.8,
+            "p999": 1.3,
+            "max": 9.3
+          }
+        },
+        {
+          "name": "audit.clouds",
+          "ms": {
+            "n": 8297,
+            "mean": 0.083,
+            "p99": 2.2,
+            "p999": 2.5,
+            "max": 5.5
+          }
+        },
+        {
+          "name": "update.smokeRocketPlume",
+          "ms": {
+            "n": 8297,
+            "mean": 0.074,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 0.9
+          }
+        },
+        {
+          "name": "update.smokeStep",
+          "ms": {
+            "n": 8297,
+            "mean": 0.071,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 1.4
+          }
+        },
+        {
+          "name": "render.entities",
+          "ms": {
+            "n": 8297,
+            "mean": 0.064,
+            "p99": 0.4,
+            "p999": 0.6,
+            "max": 1.6
+          }
+        },
+        {
+          "name": "jello.substepsAll",
+          "ms": {
+            "n": 8297,
+            "mean": 0.063,
+            "p99": 0.6,
+            "p999": 1,
+            "max": 2.1
+          }
+        },
+        {
+          "name": "render.undergroundBg",
+          "ms": {
+            "n": 8297,
+            "mean": 0.053,
+            "p99": 0.3,
+            "p999": 2.7,
+            "max": 3.1
+          }
+        },
+        {
+          "name": "jello.contact",
+          "ms": {
+            "n": 8297,
+            "mean": 0.038,
+            "p99": 0.4,
+            "p999": 0.7,
+            "max": 1.3
+          }
+        },
+        {
+          "name": "update.aux",
+          "ms": {
+            "n": 8297,
+            "mean": 0.037,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 0.8
+          }
+        },
+        {
+          "name": "render.console",
+          "ms": {
+            "n": 8297,
+            "mean": 0.037,
+            "p99": 0.2,
+            "p999": 0.3,
+            "max": 2.6
+          }
+        },
+        {
+          "name": "audit.skyCopy",
+          "ms": {
+            "n": 8297,
+            "mean": 0.025,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.4
+          }
+        },
+        {
+          "name": "update.grassWind",
+          "ms": {
+            "n": 8297,
+            "mean": 0.023,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.5
+          }
+        },
+        {
+          "name": "update.main",
+          "ms": {
+            "n": 8297,
+            "mean": 0.023,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 0.6
+          }
+        },
+        {
+          "name": "render.smoke",
+          "ms": {
+            "n": 8297,
+            "mean": 0.022,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.6
+          }
+        },
+        {
+          "name": "update.smokeEmit",
+          "ms": {
+            "n": 8297,
+            "mean": 0.021,
+            "p99": 0.1,
+            "p999": 0.3,
+            "max": 0.5
+          }
+        },
+        {
+          "name": "audit.cloudRecolor",
+          "ms": {
+            "n": 8297,
+            "mean": 0.021,
+            "p99": 0.6,
+            "p999": 1.9,
+            "max": 2.2
+          }
+        },
+        {
+          "name": "jello.internal",
+          "ms": {
+            "n": 8297,
+            "mean": 0.02,
+            "p99": 0.3,
+            "p999": 0.5,
+            "max": 0.7
+          }
+        },
+        {
+          "name": "update.smokeWaterFlow",
+          "ms": {
+            "n": 8297,
+            "mean": 0.018,
+            "p99": 0.2,
+            "p999": 0.4,
+            "max": 0.9
+          }
+        },
+        {
+          "name": "render.lightFog",
+          "ms": {
+            "n": 8297,
+            "mean": 0.016,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 3.3
+          }
+        },
+        {
+          "name": "update.weather",
+          "ms": {
+            "n": 8297,
+            "mean": 0.013,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.8
+          }
+        },
+        {
+          "name": "audit.skySubmit",
+          "ms": {
+            "n": 8297,
+            "mean": 0.012,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "update.smokeScroll",
+          "ms": {
+            "n": 8297,
+            "mean": 0.008,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "update.trees",
+          "ms": {
+            "n": 8297,
+            "mean": 0.007,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.7
+          }
+        },
+        {
+          "name": "jello.tail",
+          "ms": {
+            "n": 8297,
+            "mean": 0.005,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 1.4
+          }
+        },
+        {
+          "name": "update.drillAnim",
+          "ms": {
+            "n": 8297,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.3
+          }
+        },
+        {
+          "name": "update.pondStream",
+          "ms": {
+            "n": 8297,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.9,
+            "max": 2.2
+          }
+        },
+        {
+          "name": "audit.celestials",
+          "ms": {
+            "n": 8297,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "audit.planetBuild",
+          "ms": {
+            "n": 8297,
+            "mean": 0.004,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "update.wind",
+          "ms": {
+            "n": 8297,
+            "mean": 0.002,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "console.fuel",
+          "ms": {
+            "n": 8297,
+            "mean": 0.002,
+            "p99": 0.1,
+            "p999": 0.2,
+            "max": 0.4
+          }
+        },
+        {
+          "name": "update.explosions",
+          "ms": {
+            "n": 8297,
+            "mean": 0.001,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "update.mineFx",
+          "ms": {
+            "n": 8297,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "update.clearOverlays",
+          "ms": {
+            "n": 8297,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "update.liveBombs",
+          "ms": {
+            "n": 8297,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "update.slimeNpc",
+          "ms": {
+            "n": 8297,
+            "mean": 0.001,
+            "p99": 0.1,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        },
+        {
+          "name": "render.perfOverlay",
+          "ms": {
+            "n": 8297,
+            "mean": 0.001,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.1
+          }
+        },
+        {
+          "name": "console.speed",
+          "ms": {
+            "n": 8297,
+            "mean": 0,
+            "p99": 0,
+            "p999": 0.1,
+            "max": 0.2
+          }
+        }
+      ]
+    }
+  },
+  "method": {
+    "report": "PERFORMANCE_HITCHES_2026-09-12.md",
+    "monitorHz": 144,
+    "primaryCapturesPerBuild": 2,
+    "captureSeconds": 30,
+    "warmupSeconds": 3,
+    "mainThreadUnit": "milliseconds",
+    "displayUnit": "milliseconds",
+    "probeCounterExcluded": "audit.skyDirty",
+    "notes": [
+      "The primary CPU distributions pool equal-duration captures. Display results retain the release capture that changed presentation mode.",
+      "The third Chrome release capture and paired Electron captures are separate follow-ups, not included in primary pooled data.",
+      "Profiler samples at 1 ms. Both builds use identical timing probes. The clock runs and altitude is controlled; this is not a replay of a user save."
+    ]
+  },
+  "validation": {
+    "planetExactRGBACases": 84,
+    "loadingChecks": 84,
+    "surfaceChecks": 18,
+    "surfaceViews": 21,
+    "scrollChecks": 25,
+    "scrollFrames": 1160,
+    "overlayChecks": 20,
+    "scrollRegression": {
+      "callbackMaxMs": 62.5,
+      "cpuMaxMs": 21.6
+    },
+    "idleBucketRegression": "passed",
+    "packagedDesktop": "v26.125 offline boot, assets, persistence, sandbox and fullscreen passed"
+  }
+}

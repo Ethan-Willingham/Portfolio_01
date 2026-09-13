@@ -161,20 +161,31 @@
     return advanceSurfaceBankStrip(beginSurfaceBankStrip(index, near), SURFACE_TRANSITION_STRIP);
   }
 
+  function surfaceBankWarmCandidate(wanted, index, near, light) {
+    var key = (near ? 'n' : 'f') + index;
+    var entry = surfaceTransitionCache.get(key);
+    if (!entry || entry.light !== light) {
+      wanted.push({ key: key, index: index, near: near, entry: entry });
+    }
+  }
+
   function warmSurfaceBankStrips(worldLeft, worldRight) {
     var direction = cam.x < surfaceBankLastCameraX ? -1 : 1;
     surfaceBankLastCameraX = cam.x;
     var wanted = [];
-    // Forward edge first, then the rear edge so a turn stays warm too.
-    for (var side = 0; side < 2; side++) {
-      for (var plane = 0; plane < 2; plane++) {
-        var near = plane === 1, ox = cam.x * (near ? 0.10 : 0.30);
-        var forward = (side === 0 ? direction : -direction) > 0;
-        var index = forward ? Math.floor((worldRight - ox) / SURFACE_TRANSITION_STRIP) + 1
-                            : Math.floor((worldLeft - ox) / SURFACE_TRANSITION_STRIP) - 1;
-        var key = (near ? 'n' : 'f') + index;
-        if (!surfaceTransitionCache.has(key)) wanted.push({ key: key, index: index, near: near });
+    var light = Math.round(scatDayWeight(computeSunElevation(timeOfDay)) * 64);
+    // Flight can hide the whole bank for several seconds. Prepare the current
+    // horizontal footprint as well as both edges, including its lighting, so
+    // descent does not build and recolour a screenful in one visible frame.
+    for (var plane = 0; plane < 2; plane++) {
+      var near = plane === 1, ox = cam.x * (near ? 0.10 : 0.30);
+      var first = Math.floor((worldLeft - ox - 1) / SURFACE_TRANSITION_STRIP);
+      var last = Math.floor((worldRight - ox + 1) / SURFACE_TRANSITION_STRIP);
+      for (var i = 0; i <= last - first; i++) {
+        surfaceBankWarmCandidate(wanted, direction > 0 ? last - i : first + i, near, light);
       }
+      surfaceBankWarmCandidate(wanted, direction > 0 ? last + 1 : first - 1, near, light);
+      surfaceBankWarmCandidate(wanted, direction > 0 ? first - 1 : last + 1, near, light);
     }
     var keepJob = false;
     for (var wi = 0; wi < wanted.length; wi++) {
@@ -182,6 +193,12 @@
     }
     if (!keepJob) surfaceBankWarmJob = null;
     if (!surfaceBankWarmJob && wanted.length) {
+      // At most one cached strip is recoloured per warmup call. Geometry keeps
+      // the existing small column budget; neither path drains the whole queue.
+      if (wanted[0].entry) {
+        getSurfaceBankStrip(wanted[0].index, wanted[0].near, light);
+        return;
+      }
       surfaceBankWarmJob = beginSurfaceBankStrip(wanted[0].index, wanted[0].near);
       surfaceBankWarmJob.key = wanted[0].key;
     }
@@ -259,5 +276,4 @@
       ctx.drawImage(cached.canvas, first * SURFACE_TRANSITION_STRIP + ox, surfaceY);
     }
     ctx.restore();
-    warmSurfaceBankStrips(worldLeft, worldRight);
   }

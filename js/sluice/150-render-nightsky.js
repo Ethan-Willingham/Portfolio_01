@@ -1758,6 +1758,14 @@
     ctx.restore();
   }
 
+  function prepareMoonPhaseDisc() {
+    if (moonImageReady && moonTexData &&
+        (!moonPhaseDisc || moonPhaseDiscPhase !== moonPhase)) {
+      moonPhaseDisc = buildMoonPhaseDisc(Math.round(MOON_TUNE.size * MOON_TUNE.ss), moonPhase);
+      moonPhaseDiscPhase = moonPhase;
+    }
+  }
+
   function drawNightSkyCelestials(cw, ch, skyBottomPx) {
     var sun = celestialPos('sun', cw, skyBottomPx);
     // When the WebGL sky pipeline ran, the sun is already in the
@@ -1785,12 +1793,7 @@
       // v11.70 — NASA moon map projected onto a lit sphere; the phase
       // (set per in-game day) gives a real terminator. Built at MOON_TUNE.ss x
       // resolution, drawn back DOWN smoothed; rebuilt when the phase changes.
-      var moonBuildR = Math.round(MOON_TUNE.size * MOON_TUNE.ss);
-      if (moonImageReady && moonTexData &&
-          (!moonPhaseDisc || moonPhaseDiscPhase !== moonPhase)) {
-        moonPhaseDisc = buildMoonPhaseDisc(moonBuildR, moonPhase);
-        moonPhaseDiscPhase = moonPhase;
-      }
+      prepareMoonPhaseDisc();
       ctx.save();
       ctx.globalAlpha = moon.vis;
       ctx.imageSmoothingEnabled = true;

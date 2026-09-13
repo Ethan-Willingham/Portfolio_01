@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.124';
+  var GAME_VERSION = 'v26.125';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2336,6 +2336,16 @@
     perfBucketsRaw[name] = dt;
     var pk = perfBucketsPk[name] || 0;
     perfBucketsPk[name] = dt > pk ? dt : pk * 0.96;   // snap up, slow decay
+  }
+  function perfDecayIdleBuckets() {
+    // Cached instruments may go seconds without a draw. Their last repaint
+    // cost must fade on those idle frames, just like a timer recorded as zero.
+    for (var name in perfBuckets) {
+      if (perfBucketsRaw[name] === undefined) {
+        perfBuckets[name] *= 0.9;
+        perfBucketsPk[name] *= 0.96;
+      }
+    }
   }
   // v12.4 — GPU-time probe (dev mode only). The perfMark buckets above time
   // CPU command-issue only; on a GPU-bound frame the real cost is the GPU
@@ -5051,6 +5061,10 @@
       terrainWarmupFrames = 1;
       terrainChunkPendingThisFrame = 0;
       render();
+      // A surface-only warmup misses the art first exposed during takeoff.
+      // Prepare the same viewport's planet and moon behind the loading cover.
+      colourPlanetSurface(buildPlanetSurface(canvas.width, canvas.height));
+      prepareMoonPhaseDisc();
       introWarmupFramesRun++;
       var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
       introSettledFrames = ready ? introSettledFrames + 1 : 0;
@@ -26588,6 +26602,13 @@
     // so the colors mean something spatial: deep space at the top, dark
     // upper atmosphere fading down to the warm horizon at the surface.
     var surfaceY = SKY_ROWS * TILE;
+    // Warm once per frame even while flight puts the bank below the viewport.
+    // Deep underground views can leave this surface-only cache idle.
+    var _bankWarmT = performance.now();
+    if (!PERF_DISABLE_CAVE_WALLS && worldTop < surfaceY + SURFACE_TRANSITION_DEPTH + screenH) {
+      warmSurfaceBankStrips(worldLeft, worldRight);
+    }
+    perfMark('render.bankWarm', _bankWarmT);
     if (worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH) {
       // Night sky is painted in NATIVE pixel space (no world scale) so the
       // pre-rendered Milky Way texture stays crisp at 1:1 with no resampling
@@ -29467,6 +29488,14 @@
     ctx.restore();
   }
 
+  function prepareMoonPhaseDisc() {
+    if (moonImageReady && moonTexData &&
+        (!moonPhaseDisc || moonPhaseDiscPhase !== moonPhase)) {
+      moonPhaseDisc = buildMoonPhaseDisc(Math.round(MOON_TUNE.size * MOON_TUNE.ss), moonPhase);
+      moonPhaseDiscPhase = moonPhase;
+    }
+  }
+
   function drawNightSkyCelestials(cw, ch, skyBottomPx) {
     var sun = celestialPos('sun', cw, skyBottomPx);
     // When the WebGL sky pipeline ran, the sun is already in the
@@ -29494,12 +29523,7 @@
       // v11.70 — NASA moon map projected onto a lit sphere; the phase
       // (set per in-game day) gives a real terminator. Built at MOON_TUNE.ss x
       // resolution, drawn back DOWN smoothed; rebuilt when the phase changes.
-      var moonBuildR = Math.round(MOON_TUNE.size * MOON_TUNE.ss);
-      if (moonImageReady && moonTexData &&
-          (!moonPhaseDisc || moonPhaseDiscPhase !== moonPhase)) {
-        moonPhaseDisc = buildMoonPhaseDisc(moonBuildR, moonPhase);
-        moonPhaseDiscPhase = moonPhase;
-      }
+      prepareMoonPhaseDisc();
       ctx.save();
       ctx.globalAlpha = moon.vis;
       ctx.imageSmoothingEnabled = true;
@@ -30621,16 +30645,29 @@
       var warmth = dusk * (0.12 + 0.08 * sx * P.nx[i] * 12);
       var cloudA = P.cloud[i] * (0.35 + day * 0.65);
       var at = i * 4;
-      for (var channel = 0; channel < 3; channel++) {
-        var name = channel === 0 ? 'r' : channel === 1 ? 'g' : 'b';
-        var target = base[name] + (coast[name] - base[name]) * shore;
-        target *= 0.90 + relief * 0.20;
-        var value = night[name] * (0.82 + moon * 0.18) + (target - night[name]) * lit;
-        value += (warm[name] - value) * warmth;
-        value += (cloud[name] * (0.24 + lit * 0.76) - value) * cloudA;
-        value += (air[name] - value) * haze;
-        bytes[at + channel] = Math.round(value);
-      }
+      // Fixed channel access avoids dynamic property lookups in the hot pixel loop.
+      // Keep the operation order and rounding identical to the original painter.
+      var targetR = base.r + (coast.r - base.r) * shore;
+      targetR *= 0.90 + relief * 0.20;
+      var valueR = night.r * (0.82 + moon * 0.18) + (targetR - night.r) * lit;
+      valueR += (warm.r - valueR) * warmth;
+      valueR += (cloud.r * (0.24 + lit * 0.76) - valueR) * cloudA;
+      valueR += (air.r - valueR) * haze;
+      bytes[at] = Math.round(valueR);
+      var targetG = base.g + (coast.g - base.g) * shore;
+      targetG *= 0.90 + relief * 0.20;
+      var valueG = night.g * (0.82 + moon * 0.18) + (targetG - night.g) * lit;
+      valueG += (warm.g - valueG) * warmth;
+      valueG += (cloud.g * (0.24 + lit * 0.76) - valueG) * cloudA;
+      valueG += (air.g - valueG) * haze;
+      bytes[at + 1] = Math.round(valueG);
+      var targetB = base.b + (coast.b - base.b) * shore;
+      targetB *= 0.90 + relief * 0.20;
+      var valueB = night.b * (0.82 + moon * 0.18) + (targetB - night.b) * lit;
+      valueB += (warm.b - valueB) * warmth;
+      valueB += (cloud.b * (0.24 + lit * 0.76) - valueB) * cloudA;
+      valueB += (air.b - valueB) * haze;
+      bytes[at + 2] = Math.round(valueB);
     }
     P.ctx.putImageData(P.img, 0, 0);
   }
@@ -35370,20 +35407,31 @@
     return advanceSurfaceBankStrip(beginSurfaceBankStrip(index, near), SURFACE_TRANSITION_STRIP);
   }
 
+  function surfaceBankWarmCandidate(wanted, index, near, light) {
+    var key = (near ? 'n' : 'f') + index;
+    var entry = surfaceTransitionCache.get(key);
+    if (!entry || entry.light !== light) {
+      wanted.push({ key: key, index: index, near: near, entry: entry });
+    }
+  }
+
   function warmSurfaceBankStrips(worldLeft, worldRight) {
     var direction = cam.x < surfaceBankLastCameraX ? -1 : 1;
     surfaceBankLastCameraX = cam.x;
     var wanted = [];
-    // Forward edge first, then the rear edge so a turn stays warm too.
-    for (var side = 0; side < 2; side++) {
-      for (var plane = 0; plane < 2; plane++) {
-        var near = plane === 1, ox = cam.x * (near ? 0.10 : 0.30);
-        var forward = (side === 0 ? direction : -direction) > 0;
-        var index = forward ? Math.floor((worldRight - ox) / SURFACE_TRANSITION_STRIP) + 1
-                            : Math.floor((worldLeft - ox) / SURFACE_TRANSITION_STRIP) - 1;
-        var key = (near ? 'n' : 'f') + index;
-        if (!surfaceTransitionCache.has(key)) wanted.push({ key: key, index: index, near: near });
+    var light = Math.round(scatDayWeight(computeSunElevation(timeOfDay)) * 64);
+    // Flight can hide the whole bank for several seconds. Prepare the current
+    // horizontal footprint as well as both edges, including its lighting, so
+    // descent does not build and recolour a screenful in one visible frame.
+    for (var plane = 0; plane < 2; plane++) {
+      var near = plane === 1, ox = cam.x * (near ? 0.10 : 0.30);
+      var first = Math.floor((worldLeft - ox - 1) / SURFACE_TRANSITION_STRIP);
+      var last = Math.floor((worldRight - ox + 1) / SURFACE_TRANSITION_STRIP);
+      for (var i = 0; i <= last - first; i++) {
+        surfaceBankWarmCandidate(wanted, direction > 0 ? last - i : first + i, near, light);
       }
+      surfaceBankWarmCandidate(wanted, direction > 0 ? last + 1 : first - 1, near, light);
+      surfaceBankWarmCandidate(wanted, direction > 0 ? first - 1 : last + 1, near, light);
     }
     var keepJob = false;
     for (var wi = 0; wi < wanted.length; wi++) {
@@ -35391,6 +35439,12 @@
     }
     if (!keepJob) surfaceBankWarmJob = null;
     if (!surfaceBankWarmJob && wanted.length) {
+      // At most one cached strip is recoloured per warmup call. Geometry keeps
+      // the existing small column budget; neither path drains the whole queue.
+      if (wanted[0].entry) {
+        getSurfaceBankStrip(wanted[0].index, wanted[0].near, light);
+        return;
+      }
       surfaceBankWarmJob = beginSurfaceBankStrip(wanted[0].index, wanted[0].near);
       surfaceBankWarmJob.key = wanted[0].key;
     }
@@ -35468,7 +35522,6 @@
       ctx.drawImage(cached.canvas, first * SURFACE_TRANSITION_STRIP + ox, surfaceY);
     }
     ctx.restore();
-    warmSurfaceBankStrips(worldLeft, worldRight);
   }
   /* ============================================================
      THE SLUICE (refinement station) - economy Phase 1
@@ -61805,6 +61858,7 @@
     }
     updateZoomLerp(dt);
     updateCamera();
+    perfMark('update.aux', _t1);
 
     // Always integrate the visual systems even if update() bailed early
     // (e.g. while drilling holds the player still, or the shop is open).
@@ -61841,6 +61895,7 @@
     var _t5 = performance.now();
     perfRecord('update.main', _t1 - _t0);
     perfRecord('render.total', _t5 - _t4);
+    perfDecayIdleBuckets();
 
     // Async WebGPU queue completion latency. The callback can also be
     // delayed by the browser or main thread; it is not a GPU execution timer.

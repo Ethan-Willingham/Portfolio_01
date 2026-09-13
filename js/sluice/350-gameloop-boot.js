@@ -618,6 +618,7 @@
     }
     updateZoomLerp(dt);
     updateCamera();
+    perfMark('update.aux', _t1);
 
     // Always integrate the visual systems even if update() bailed early
     // (e.g. while drilling holds the player still, or the shop is open).
@@ -654,6 +655,7 @@
     var _t5 = performance.now();
     perfRecord('update.main', _t1 - _t0);
     perfRecord('render.total', _t5 - _t4);
+    perfDecayIdleBuckets();
 
     // Async WebGPU queue completion latency. The callback can also be
     // delayed by the browser or main thread; it is not a GPU execution timer.
