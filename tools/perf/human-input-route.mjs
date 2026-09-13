@@ -1,7 +1,14 @@
 // Uneven control gestures through the real keyboard handler. No pose, velocity,
 // camera, fuel, collision, or world writes during the route.
-export async function humanInputRoute(send,seconds){
-  const gestures=[
+export async function humanInputRoute(send,seconds,kind='surface'){
+  const gestures=kind==='slimes'?[
+    [.8,['ArrowRight']],[.12,['ArrowRight','ArrowUp']],[.55,['ArrowRight']],
+    [.23,[]],[.46,['ArrowLeft']],[.9,['ArrowRight']],[.23,['ArrowLeft']],
+    [.14,['ArrowUp']],[.47,['ArrowRight']],[.41,[]],[1.1,['ArrowLeft']],
+    [.16,['ArrowLeft','ArrowUp']],[.72,['ArrowLeft']],[.31,[]],
+    [.38,['ArrowRight']],[.61,['ArrowLeft']],[.18,['ArrowUp']],
+    [.95,['ArrowRight']],[.26,[]],[.44,['ArrowLeft']],[.83,['ArrowRight']]
+  ]:[
     [1.3,['ArrowRight']],[.75,['ArrowRight','ArrowUp']],[.28,['ArrowRight']],
     [.42,['ArrowRight','ArrowUp']],[.65,[]],[.31,['ArrowLeft']],
     [1.4,['ArrowRight','ArrowUp']],[.53,['ArrowRight']],[.9,[]],
@@ -28,7 +35,16 @@ export async function humanInputRoute(send,seconds){
   try{
     while(performance.now()-started<seconds*1000){
       const [duration,keys]=gestures[index++%gestures.length];
-      await set(new Set(keys));log.push({atMs:performance.now()-started,keys});
+      const next=new Set(keys);
+      if(kind==='slimes'){
+        // Turn back after observing the rig approach a pen edge, as a player
+        // would. Keep the irregular gesture timing and real collision response.
+        const state=await send('Runtime.evaluate',{expression:'__audit.inputBounds()',returnByValue:true});
+        const {x,left,right}=state.result.value;
+        if(x<left){next.delete('ArrowLeft');next.add('ArrowRight');}
+        else if(x>right){next.delete('ArrowRight');next.add('ArrowLeft');}
+      }
+      await set(next);log.push({atMs:performance.now()-started,keys:[...next]});
       await new Promise(r=>setTimeout(r,Math.max(0,Math.min(duration*1000,seconds*1000-(performance.now()-started)))));
     }
   }finally{await set(new Set());}

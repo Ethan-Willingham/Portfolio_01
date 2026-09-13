@@ -1401,7 +1401,9 @@
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
         return o;
       },
-      hiddenTerrain: function () { return { chunks: terrainHiddenChunks, tiles: terrainHiddenTiles }; }
+      hiddenTerrain: function () { return { chunks: terrainHiddenChunks, tiles: terrainHiddenTiles }; },
+      terrainSubmission: function () { return { direct: terrainDirectDraws, batches: terrainBatchDraws,
+        builds: terrainBatchBuilds, cacheEntries: terrainBatchCount, bytes: terrainBatchBytes }; }
     };
   } catch (e) {}
 

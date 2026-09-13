@@ -719,6 +719,7 @@
     ctx = oldCtx;
     chunk.dirty = false;
     chunk.ready = true;
+    chunk.paintVersion = (chunk.paintVersion || 0) + 1;
   }
 
   function trimTerrainChunkCache() {
@@ -770,51 +771,148 @@
     return chunk;
   }
 
+  // Cache short runs of neighbouring chunks at their ORIGINAL bitmap scale.
+  // The final draw retains high-quality filtering and the fractional camera
+  // transform. Integer cache scales permit an unfiltered, pixel-aligned copy;
+  // fractional scales retain the direct path to avoid resampling their seams.
+  var terrainBatches = {};
+  var terrainBatchOwner = null;
+  var terrainBatchCount = 0, terrainBatchBytes = 0, terrainBatchTick = 0;
+  var terrainBatchRun = [null, null, null, null];
+  var terrainBatchBuilds = 0, terrainBatchDraws = 0, terrainDirectDraws = 0;
+
+  function terrainBatchMakeRoom(bytes) {
+    while (terrainBatchCount >= 24 || terrainBatchBytes + bytes > 32 * 1024 * 1024) {
+      var oldest = null, tick = terrainBatchTick - 1;
+      for (var key in terrainBatches) if (terrainBatches[key].tick < tick) {
+        oldest = key; tick = terrainBatches[key].tick;
+      }
+      // A large lit view may exceed the cache. Keep its resident strips and
+      // draw the rest directly instead of evicting and rebuilding every frame.
+      if (oldest === null) return false;
+      terrainBatchBytes -= terrainBatches[oldest].bytes;
+      delete terrainBatches[oldest]; terrainBatchCount--;
+    }
+    return true;
+  }
+
+  function drawTerrainRun(cr, cc, count) {
+    if (!count) return;
+    var scale = terrainBatchRun[0].scale || 1;
+    var source = (TERRAIN_CHUNK_PAD - 1) * scale;
+    var side = (TERRAIN_CHUNK_PX + 2) * scale;
+    var x = cc * TERRAIN_CHUNK_PX - 1, y = cr * TERRAIN_CHUNK_PX - 1;
+    var batch = null, key, valid = false, i;
+    if (count > 1 && scale === Math.floor(scale)) {
+      key = cr + ':' + cc + ':' + count;
+      batch = terrainBatches[key];
+      if (batch && batch.scale !== scale) {
+        terrainBatchBytes -= batch.bytes; terrainBatchCount--;
+        delete terrainBatches[key]; batch = null;
+      }
+      valid = !!batch && batch.scale === scale;
+      if (valid) for (i = 0; i < count; i++) {
+        if (batch.chunks[i] !== terrainBatchRun[i] || batch.versions[i] !== terrainBatchRun[i].paintVersion) {
+          valid = false; break;
+        }
+      }
+      // A cold view or mining burst uses the direct path while a bounded
+      // number of strips is prepared. Never defer a changed tile's drawing.
+      var width = (count * TERRAIN_CHUNK_PX + 2) * scale;
+      if (!valid && terrainBatchBuilds < 2 && (batch || terrainBatchMakeRoom(width * side * 4))) {
+        if (!batch) {
+          var cv = document.createElement('canvas');
+          cv.width = width; cv.height = side;
+          batch = terrainBatches[key] = { canvas: cv, ctx: cv.getContext('2d'), scale: scale,
+            chunks: [], versions: [], bytes: width * side * 4, tick: 0 };
+          terrainBatchBytes += batch.bytes; terrainBatchCount++;
+        }
+        var g = batch.ctx;
+        g.clearRect(0, 0, width, side);
+        g.imageSmoothingEnabled = false;
+        for (i = 0; i < count; i++) {
+          var chunk = terrainBatchRun[i];
+          g.drawImage(chunk.canvas, source, source, side, side, i * TERRAIN_CHUNK_PX * scale, 0, side, side);
+          batch.chunks[i] = chunk; batch.versions[i] = chunk.paintVersion;
+        }
+        terrainBatchBuilds++;
+        valid = true;
+      }
+    }
+    if (valid) {
+      batch.tick = terrainBatchTick;
+      ctx.drawImage(batch.canvas, x, y, batch.canvas.width / scale, batch.canvas.height / scale);
+      terrainBatchDraws++;
+    } else {
+      for (i = 0; i < count; i++) {
+        ctx.drawImage(terrainBatchRun[i].canvas, source, source, side, side,
+          x + i * TERRAIN_CHUNK_PX, y, TERRAIN_CHUNK_PX + 2, TERRAIN_CHUNK_PX + 2);
+        terrainDirectDraws++;
+      }
+    }
+  }
+
+  function trimTerrainBatches() {
+    // Bound both texture bytes and retained source-chunk references. These
+    // caches also become invalid by identity when world/zoom caches reset.
+    while (terrainBatchCount > 24 || terrainBatchBytes > 32 * 1024 * 1024) {
+      var oldest = null, tick = Infinity;
+      for (var key in terrainBatches) if (terrainBatches[key].tick < tick) {
+        oldest = key; tick = terrainBatches[key].tick;
+      }
+      if (oldest === null) break;
+      terrainBatchBytes -= terrainBatches[oldest].bytes;
+      delete terrainBatches[oldest]; terrainBatchCount--;
+    }
+    for (var i = 0; i < 4; i++) terrainBatchRun[i] = null;
+  }
+
   function drawTerrainChunks(startRow, endRow, startCol, endCol) {
+    if (terrainBatchOwner !== terrainChunkCache) {
+      terrainBatchOwner = terrainChunkCache;
+      terrainBatches = {}; terrainBatchCount = terrainBatchBytes = 0;
+    }
     terrainChunkRebuildsThisFrame = 0;
     terrainChunkPendingThisFrame = 0;
+    terrainBatchBuilds = terrainBatchDraws = terrainDirectDraws = 0;
+    terrainBatchTick++;
     var chunkR0 = Math.floor((startRow - 1) / TERRAIN_CHUNK_TILES);
     var chunkR1 = Math.floor((endRow + 1) / TERRAIN_CHUNK_TILES);
     var chunkC0 = Math.floor((startCol - 1) / TERRAIN_CHUNK_TILES);
     var chunkC1 = Math.floor((endCol + 1) / TERRAIN_CHUNK_TILES);
-    var stitchPad = 1;
-    var srcX = TERRAIN_CHUNK_PAD - stitchPad;
-    var srcY = TERRAIN_CHUNK_PAD - stitchPad;
-    var srcW = TERRAIN_CHUNK_PX + stitchPad * 2;
-    var srcH = TERRAIN_CHUNK_PX + stitchPad * 2;
     var oldSmoothing = ctx.imageSmoothingEnabled;
     var oldQuality = ctx.imageSmoothingQuality;
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
     for (var cr = chunkR0; cr <= chunkR1; cr++) {
+      var runCount = 0, runStart = chunkC0;
       for (var cc = chunkC0; cc <= chunkC1; cc++) {
+        if (runCount && cc % 4 === 0) {
+          drawTerrainRun(cr, runStart, runCount); runCount = 0;
+        }
         var chunk = getTerrainChunk(cr, cc);
         if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
-        if (!chunk.ready) continue;
+        if (!chunk.ready) {
+          drawTerrainRun(cr, runStart, runCount); runCount = 0;
+          continue;
+        }
         // Keep cache warming and invalidation unchanged so revealing a cave
         // does not create a new burst of cold chunk builds.
         if (lightFogFullyCovers(cr * TERRAIN_CHUNK_TILES, (cr + 1) * TERRAIN_CHUNK_TILES - 1,
             cc * TERRAIN_CHUNK_TILES, (cc + 1) * TERRAIN_CHUNK_TILES - 1)) {
           terrainHiddenChunks++;
+          drawTerrainRun(cr, runStart, runCount); runCount = 0;
           continue;
         }
-        var cacheScale = chunk.scale || 1;
-        ctx.drawImage(
-          chunk.canvas,
-          srcX * cacheScale,
-          srcY * cacheScale,
-          srcW * cacheScale,
-          srcH * cacheScale,
-          cc * TERRAIN_CHUNK_PX - stitchPad,
-          cr * TERRAIN_CHUNK_PX - stitchPad,
-          srcW,
-          srcH
-        );
+        if (!runCount) runStart = cc;
+        terrainBatchRun[runCount++] = chunk;
       }
+      drawTerrainRun(cr, runStart, runCount);
     }
     ctx.imageSmoothingEnabled = oldSmoothing;
     if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = oldQuality;
     trimTerrainChunkCache();
+    trimTerrainBatches();
   }
 
   function drawTerrainClearOverlays(startRow, endRow, startCol, endCol) {

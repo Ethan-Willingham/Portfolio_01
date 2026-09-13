@@ -1,6 +1,6 @@
 // Exact contact-solver regression and isolated CPU timing. No browser or dependencies.
 // Run from any directory: node tools/perf/slime-contact-equivalence.mjs
-// BASE_REF defaults to the pre-optimization commit. BENCH=0 skips timing.
+// BASE_REF defaults to the release before v27. BENCH=0 skips timing.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const FRAGMENT = 'js/sluice/340-jello.js';
-const BASE_REF = process.env.BASE_REF || 'f392c72';
+const BASE_REF = process.env.BASE_REF || '2ca9565';
 const before = execFileSync('git', ['show', `${BASE_REF}:${FRAGMENT}`], { cwd: ROOT, encoding: 'utf8' });
 const after = fs.readFileSync(path.join(ROOT, FRAGMENT), 'utf8');
 
@@ -57,10 +57,12 @@ for (let trial = 0; trial < 200; trial++) {
   if (trial % 17 === 0) a[0].px[0] = NaN;
   if (trial % 23 === 0) a[0]._phaseMate = a[1];
   const b = structuredClone(a);
+  for(let k=0;k<a.length;k++)a[k].cr=b[k].cr=1.5+(trial+k)%4;
+  const cellSize=2*Math.max(...a.map(b=>b.cr));
   baseline.configure(trial % 2, 1 + trial % 4);
   optimized.configure(trial % 2, 1 + trial % 4);
   for (let step = 0; step < 10; step++) {
-    assert.equal(optimized.solve(b, b.length, 5), baseline.solve(a, a.length, 5),
+    assert.equal(optimized.solve(b, b.length, cellSize), baseline.solve(a, a.length, cellSize),
       `contact count at trial ${trial}, step ${step}`);
     for (let k = 0; k < a.length; k++) {
       for (const key of ['px', 'py', 'ox', 'oy']) {

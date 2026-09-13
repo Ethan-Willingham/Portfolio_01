@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.128';
+  var GAME_VERSION = 'v27';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2738,7 +2738,9 @@
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
         return o;
       },
-      hiddenTerrain: function () { return { chunks: terrainHiddenChunks, tiles: terrainHiddenTiles }; }
+      hiddenTerrain: function () { return { chunks: terrainHiddenChunks, tiles: terrainHiddenTiles }; },
+      terrainSubmission: function () { return { direct: terrainDirectDraws, batches: terrainBatchDraws,
+        builds: terrainBatchBuilds, cacheEntries: terrainBatchCount, bytes: terrainBatchBytes }; }
     };
   } catch (e) {}
 
@@ -26212,6 +26214,7 @@
     ctx = oldCtx;
     chunk.dirty = false;
     chunk.ready = true;
+    chunk.paintVersion = (chunk.paintVersion || 0) + 1;
   }
 
   function trimTerrainChunkCache() {
@@ -26263,51 +26266,148 @@
     return chunk;
   }
 
+  // Cache short runs of neighbouring chunks at their ORIGINAL bitmap scale.
+  // The final draw retains high-quality filtering and the fractional camera
+  // transform. Integer cache scales permit an unfiltered, pixel-aligned copy;
+  // fractional scales retain the direct path to avoid resampling their seams.
+  var terrainBatches = {};
+  var terrainBatchOwner = null;
+  var terrainBatchCount = 0, terrainBatchBytes = 0, terrainBatchTick = 0;
+  var terrainBatchRun = [null, null, null, null];
+  var terrainBatchBuilds = 0, terrainBatchDraws = 0, terrainDirectDraws = 0;
+
+  function terrainBatchMakeRoom(bytes) {
+    while (terrainBatchCount >= 24 || terrainBatchBytes + bytes > 32 * 1024 * 1024) {
+      var oldest = null, tick = terrainBatchTick - 1;
+      for (var key in terrainBatches) if (terrainBatches[key].tick < tick) {
+        oldest = key; tick = terrainBatches[key].tick;
+      }
+      // A large lit view may exceed the cache. Keep its resident strips and
+      // draw the rest directly instead of evicting and rebuilding every frame.
+      if (oldest === null) return false;
+      terrainBatchBytes -= terrainBatches[oldest].bytes;
+      delete terrainBatches[oldest]; terrainBatchCount--;
+    }
+    return true;
+  }
+
+  function drawTerrainRun(cr, cc, count) {
+    if (!count) return;
+    var scale = terrainBatchRun[0].scale || 1;
+    var source = (TERRAIN_CHUNK_PAD - 1) * scale;
+    var side = (TERRAIN_CHUNK_PX + 2) * scale;
+    var x = cc * TERRAIN_CHUNK_PX - 1, y = cr * TERRAIN_CHUNK_PX - 1;
+    var batch = null, key, valid = false, i;
+    if (count > 1 && scale === Math.floor(scale)) {
+      key = cr + ':' + cc + ':' + count;
+      batch = terrainBatches[key];
+      if (batch && batch.scale !== scale) {
+        terrainBatchBytes -= batch.bytes; terrainBatchCount--;
+        delete terrainBatches[key]; batch = null;
+      }
+      valid = !!batch && batch.scale === scale;
+      if (valid) for (i = 0; i < count; i++) {
+        if (batch.chunks[i] !== terrainBatchRun[i] || batch.versions[i] !== terrainBatchRun[i].paintVersion) {
+          valid = false; break;
+        }
+      }
+      // A cold view or mining burst uses the direct path while a bounded
+      // number of strips is prepared. Never defer a changed tile's drawing.
+      var width = (count * TERRAIN_CHUNK_PX + 2) * scale;
+      if (!valid && terrainBatchBuilds < 2 && (batch || terrainBatchMakeRoom(width * side * 4))) {
+        if (!batch) {
+          var cv = document.createElement('canvas');
+          cv.width = width; cv.height = side;
+          batch = terrainBatches[key] = { canvas: cv, ctx: cv.getContext('2d'), scale: scale,
+            chunks: [], versions: [], bytes: width * side * 4, tick: 0 };
+          terrainBatchBytes += batch.bytes; terrainBatchCount++;
+        }
+        var g = batch.ctx;
+        g.clearRect(0, 0, width, side);
+        g.imageSmoothingEnabled = false;
+        for (i = 0; i < count; i++) {
+          var chunk = terrainBatchRun[i];
+          g.drawImage(chunk.canvas, source, source, side, side, i * TERRAIN_CHUNK_PX * scale, 0, side, side);
+          batch.chunks[i] = chunk; batch.versions[i] = chunk.paintVersion;
+        }
+        terrainBatchBuilds++;
+        valid = true;
+      }
+    }
+    if (valid) {
+      batch.tick = terrainBatchTick;
+      ctx.drawImage(batch.canvas, x, y, batch.canvas.width / scale, batch.canvas.height / scale);
+      terrainBatchDraws++;
+    } else {
+      for (i = 0; i < count; i++) {
+        ctx.drawImage(terrainBatchRun[i].canvas, source, source, side, side,
+          x + i * TERRAIN_CHUNK_PX, y, TERRAIN_CHUNK_PX + 2, TERRAIN_CHUNK_PX + 2);
+        terrainDirectDraws++;
+      }
+    }
+  }
+
+  function trimTerrainBatches() {
+    // Bound both texture bytes and retained source-chunk references. These
+    // caches also become invalid by identity when world/zoom caches reset.
+    while (terrainBatchCount > 24 || terrainBatchBytes > 32 * 1024 * 1024) {
+      var oldest = null, tick = Infinity;
+      for (var key in terrainBatches) if (terrainBatches[key].tick < tick) {
+        oldest = key; tick = terrainBatches[key].tick;
+      }
+      if (oldest === null) break;
+      terrainBatchBytes -= terrainBatches[oldest].bytes;
+      delete terrainBatches[oldest]; terrainBatchCount--;
+    }
+    for (var i = 0; i < 4; i++) terrainBatchRun[i] = null;
+  }
+
   function drawTerrainChunks(startRow, endRow, startCol, endCol) {
+    if (terrainBatchOwner !== terrainChunkCache) {
+      terrainBatchOwner = terrainChunkCache;
+      terrainBatches = {}; terrainBatchCount = terrainBatchBytes = 0;
+    }
     terrainChunkRebuildsThisFrame = 0;
     terrainChunkPendingThisFrame = 0;
+    terrainBatchBuilds = terrainBatchDraws = terrainDirectDraws = 0;
+    terrainBatchTick++;
     var chunkR0 = Math.floor((startRow - 1) / TERRAIN_CHUNK_TILES);
     var chunkR1 = Math.floor((endRow + 1) / TERRAIN_CHUNK_TILES);
     var chunkC0 = Math.floor((startCol - 1) / TERRAIN_CHUNK_TILES);
     var chunkC1 = Math.floor((endCol + 1) / TERRAIN_CHUNK_TILES);
-    var stitchPad = 1;
-    var srcX = TERRAIN_CHUNK_PAD - stitchPad;
-    var srcY = TERRAIN_CHUNK_PAD - stitchPad;
-    var srcW = TERRAIN_CHUNK_PX + stitchPad * 2;
-    var srcH = TERRAIN_CHUNK_PX + stitchPad * 2;
     var oldSmoothing = ctx.imageSmoothingEnabled;
     var oldQuality = ctx.imageSmoothingQuality;
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
     for (var cr = chunkR0; cr <= chunkR1; cr++) {
+      var runCount = 0, runStart = chunkC0;
       for (var cc = chunkC0; cc <= chunkC1; cc++) {
+        if (runCount && cc % 4 === 0) {
+          drawTerrainRun(cr, runStart, runCount); runCount = 0;
+        }
         var chunk = getTerrainChunk(cr, cc);
         if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
-        if (!chunk.ready) continue;
+        if (!chunk.ready) {
+          drawTerrainRun(cr, runStart, runCount); runCount = 0;
+          continue;
+        }
         // Keep cache warming and invalidation unchanged so revealing a cave
         // does not create a new burst of cold chunk builds.
         if (lightFogFullyCovers(cr * TERRAIN_CHUNK_TILES, (cr + 1) * TERRAIN_CHUNK_TILES - 1,
             cc * TERRAIN_CHUNK_TILES, (cc + 1) * TERRAIN_CHUNK_TILES - 1)) {
           terrainHiddenChunks++;
+          drawTerrainRun(cr, runStart, runCount); runCount = 0;
           continue;
         }
-        var cacheScale = chunk.scale || 1;
-        ctx.drawImage(
-          chunk.canvas,
-          srcX * cacheScale,
-          srcY * cacheScale,
-          srcW * cacheScale,
-          srcH * cacheScale,
-          cc * TERRAIN_CHUNK_PX - stitchPad,
-          cr * TERRAIN_CHUNK_PX - stitchPad,
-          srcW,
-          srcH
-        );
+        if (!runCount) runStart = cc;
+        terrainBatchRun[runCount++] = chunk;
       }
+      drawTerrainRun(cr, runStart, runCount);
     }
     ctx.imageSmoothingEnabled = oldSmoothing;
     if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = oldQuality;
     trimTerrainChunkCache();
+    trimTerrainBatches();
   }
 
   function drawTerrainClearOverlays(startRow, endRow, startCol, endCol) {
@@ -59397,6 +59497,13 @@
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
             if (j <= i) continue;            // each unordered pair once (gather-index order)
+            // Reject separated points before reading rest geometry or body
+            // relationships. Hash neighbours (including bucket collisions)
+            // are only candidates. Keep the exact distance gate and pair order.
+            dx = GPX[j] - GPX[i]; dy = GPY[j] - GPY[i];
+            d2 = dx * dx + dy * dy;
+            var rr = GR[i] + GR[j];
+            if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             if (GB[j] === bi) {              // same body: self-collide ONLY points far apart in the rest
               if (!selfOn) continue;         // lattice (a genuine fold), never near-neighbours / squish
               var bb = active[bi]; if (!bb.rx) continue;
@@ -59405,13 +59512,6 @@
             }
             else if (active[bi]._phaseMate === active[GB[j]]) continue;   // phasing pair (jelloUnmergeBodies):
                                                                           // mutual contact suspended while they slide apart
-            dx = GPX[j] - GPX[i]; dy = GPY[j] - GPY[i];
-            d2 = dx * dx + dy * dy;
-            var rr = GR[i] + GR[j];   // per-pair contact distance (mixed lattice densities)
-            // !(d2 < rr*rr) instead of d2 >= rr*rr: identical for real numbers, but a NaN d2
-            // (a corrupt point) fails BOTH >= and <, fell through, and the NaN then spread
-            // through nx/ny into every body it touched. NaN must never enter the solve.
-            if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             d = Math.sqrt(d2); pen = rr - d;
             nx = dx / d; ny = dy / d; half = pen * 0.5;
             // 1. velocity-free positional separation: shift px AND ox by the same delta, so the
@@ -60277,7 +60377,8 @@
     } else jelloRingBakeN = rn;
   }
 
-  function jelloRingPath(b) {
+  function jelloRingPath(b, target) {
+    var path = target || ctx;
     var rn = jelloRingBakeN || b.ringN;   // bake runs first (scratch-survival invariant); chamfer changes the count
     if (rn < 3) return false;
     // Reads the ring jelloRingBake wrote (call order: jelloDrawBody bakes once,
@@ -60286,21 +60387,39 @@
     var k;
     var smooth = JELLO_RENDER_SMOOTH;
     if (smooth <= 0.001) {
-      ctx.moveTo(ROX[0], ROY[0]);
-      for (var i = 1; i < rn; i++) ctx.lineTo(ROX[i], ROY[i]);
-      ctx.closePath();
+      path.moveTo(ROX[0], ROY[0]);
+      for (var i = 1; i < rn; i++) path.lineTo(ROX[i], ROY[i]);
+      path.closePath();
     } else {
       // Quadratic midpoint smoothing through the offset ring vertices.
       var startX = (ROX[rn - 1] + ROX[0]) * 0.5, startY = (ROY[rn - 1] + ROY[0]) * 0.5;
-      ctx.moveTo(startX, startY);
+      path.moveTo(startX, startY);
       for (k = 0; k < rn; k++) {
         var nk = (k + 1) % rn;
         var mx = (ROX[k] + ROX[nk]) * 0.5, my = (ROY[k] + ROY[nk]) * 0.5;
-        ctx.quadraticCurveTo(ROX[k], ROY[k], mx, my);
+        path.quadraticCurveTo(ROX[k], ROY[k], mx, my);
       }
-      ctx.closePath();
+      path.closePath();
     }
     return true;
+  }
+
+  function jelloCachedRingPath(b) {
+    var n = jelloRingBakeN, smooth = JELLO_RENDER_SMOOTH > 0.001;
+    var x = b._skinX, y = b._skinY;
+    var same = !!b._skinPath && x.length === n && b._skinSmooth === smooth;
+    var i;
+    if (same) for (i = 0; i < n; i++) {
+      if (x[i] !== jelloROX[i] || y[i] !== jelloROY[i]) { same = false; break; }
+    }
+    if (!same) {
+      if (!x || x.length !== n) { x = b._skinX = new Float64Array(n); y = b._skinY = new Float64Array(n); }
+      for (i = 0; i < n; i++) { x[i] = jelloROX[i]; y[i] = jelloROY[i]; }
+      b._skinPath = new Path2D();
+      jelloRingPath(b, b._skinPath);
+      b._skinSmooth = smooth;
+    }
+    return b._skinPath;
   }
 
   // Clamp a percentage (saturation / lightness) to [0,100] for per-body hsla tints.
@@ -60398,6 +60517,10 @@
         !isFinite(b.px[b.shineI] + b.py[b.shineI] + b.px[b.glintI] + b.py[b.glintI] +
                   b.px[b.causI0] + b.py[b.causI0] + b.px[b.causI1] + b.py[b.causI1])) return;
     jelloRingBake(b);   // bake the drawn ring (outset + ripple) once; the 3 path calls read it
+    // Share the exact silhouette between the clip and all edge strokes.
+    // Compare baked coordinates, so sleep, ripples and live tuning cannot
+    // leave a stale shape. The material and refraction still draw every frame.
+    var skinPath = jelloCachedRingPath(b);
     var l = b.bboxL, r = b.bboxR, t = b.bboxT, bm = b.bboxB;
     var w = r - l, hgt = bm - t;
     if (w < 1 || hgt < 1) return;
@@ -60442,9 +60565,7 @@
     var el = l - rOut, et = t - rOut, ew = w + 2 * rOut, eh = hgt + 2 * rOut;
 
     ctx.save();
-    ctx.beginPath();
-    jelloRingPath(b);
-    ctx.clip();
+    ctx.clip(skinPath);
 
     // ---- 1. REFRACTION: magnify the world drawn behind the jelly so it acts
     //         like a glass lens. drawImage reads the canvas (which already holds
@@ -60617,33 +60738,27 @@
       var eCol = 'hsla(' + hue + ',' + jelloClampPct(82 * satMul) + '%,' + jelloClampPct(52 + lightAdd) + '%,';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.beginPath();
-      jelloRingPath(b);
       ctx.strokeStyle = eCol + (alpha * 0.28).toFixed(3) + ')';
       ctx.lineWidth = 2.2 * fz;
-      ctx.stroke();
+      ctx.stroke(skinPath);
       ctx.strokeStyle = eCol + (alpha * 0.13).toFixed(3) + ')';
       ctx.lineWidth = 4.6 * fz;
-      ctx.stroke();
+      ctx.stroke(skinPath);
       ctx.strokeStyle = eCol + (alpha * 0.055).toFixed(3) + ')';
       ctx.lineWidth = 7.6 * fz;
-      ctx.stroke();
+      ctx.stroke(skinPath);
       if (JELLO_EDGE_STYLE >= 2) jelloDrawFuzz(b, hue, satMul, lightAdd, alpha, fz * (JELLO_EDGE_STYLE >= 3 ? 1.9 : 1));
     } else if (rim > 0.001) {
       // CLASSIC style keeps the legacy Fresnel rim for per-body dev materials
       // (ships 0 since v24.121 — owner-vetoed outline).
-      ctx.beginPath();
-      jelloRingPath(b);
       ctx.strokeStyle = 'hsla(' + (hue + 14) + ', 100%, 90%, ' + (rim * 0.95).toFixed(3) + ')';
       ctx.lineWidth = 3.8;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.stroke();
-      ctx.beginPath();
-      jelloRingPath(b);
+      ctx.stroke(skinPath);
       ctx.strokeStyle = 'hsla(' + (hue - 8) + ', 70%, 30%, ' + (rim * 0.4).toFixed(3) + ')';
       ctx.lineWidth = 1.6;
-      ctx.stroke();
+      ctx.stroke(skinPath);
     }
 
     // Debug: lattice points + springs. Gated on devMode so the default-on overlay shows

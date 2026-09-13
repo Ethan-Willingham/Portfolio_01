@@ -5379,6 +5379,13 @@
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
             if (j <= i) continue;            // each unordered pair once (gather-index order)
+            // Reject separated points before reading rest geometry or body
+            // relationships. Hash neighbours (including bucket collisions)
+            // are only candidates. Keep the exact distance gate and pair order.
+            dx = GPX[j] - GPX[i]; dy = GPY[j] - GPY[i];
+            d2 = dx * dx + dy * dy;
+            var rr = GR[i] + GR[j];
+            if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             if (GB[j] === bi) {              // same body: self-collide ONLY points far apart in the rest
               if (!selfOn) continue;         // lattice (a genuine fold), never near-neighbours / squish
               var bb = active[bi]; if (!bb.rx) continue;
@@ -5387,13 +5394,6 @@
             }
             else if (active[bi]._phaseMate === active[GB[j]]) continue;   // phasing pair (jelloUnmergeBodies):
                                                                           // mutual contact suspended while they slide apart
-            dx = GPX[j] - GPX[i]; dy = GPY[j] - GPY[i];
-            d2 = dx * dx + dy * dy;
-            var rr = GR[i] + GR[j];   // per-pair contact distance (mixed lattice densities)
-            // !(d2 < rr*rr) instead of d2 >= rr*rr: identical for real numbers, but a NaN d2
-            // (a corrupt point) fails BOTH >= and <, fell through, and the NaN then spread
-            // through nx/ny into every body it touched. NaN must never enter the solve.
-            if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             d = Math.sqrt(d2); pen = rr - d;
             nx = dx / d; ny = dy / d; half = pen * 0.5;
             // 1. velocity-free positional separation: shift px AND ox by the same delta, so the
@@ -6259,7 +6259,8 @@
     } else jelloRingBakeN = rn;
   }
 
-  function jelloRingPath(b) {
+  function jelloRingPath(b, target) {
+    var path = target || ctx;
     var rn = jelloRingBakeN || b.ringN;   // bake runs first (scratch-survival invariant); chamfer changes the count
     if (rn < 3) return false;
     // Reads the ring jelloRingBake wrote (call order: jelloDrawBody bakes once,
@@ -6268,21 +6269,39 @@
     var k;
     var smooth = JELLO_RENDER_SMOOTH;
     if (smooth <= 0.001) {
-      ctx.moveTo(ROX[0], ROY[0]);
-      for (var i = 1; i < rn; i++) ctx.lineTo(ROX[i], ROY[i]);
-      ctx.closePath();
+      path.moveTo(ROX[0], ROY[0]);
+      for (var i = 1; i < rn; i++) path.lineTo(ROX[i], ROY[i]);
+      path.closePath();
     } else {
       // Quadratic midpoint smoothing through the offset ring vertices.
       var startX = (ROX[rn - 1] + ROX[0]) * 0.5, startY = (ROY[rn - 1] + ROY[0]) * 0.5;
-      ctx.moveTo(startX, startY);
+      path.moveTo(startX, startY);
       for (k = 0; k < rn; k++) {
         var nk = (k + 1) % rn;
         var mx = (ROX[k] + ROX[nk]) * 0.5, my = (ROY[k] + ROY[nk]) * 0.5;
-        ctx.quadraticCurveTo(ROX[k], ROY[k], mx, my);
+        path.quadraticCurveTo(ROX[k], ROY[k], mx, my);
       }
-      ctx.closePath();
+      path.closePath();
     }
     return true;
+  }
+
+  function jelloCachedRingPath(b) {
+    var n = jelloRingBakeN, smooth = JELLO_RENDER_SMOOTH > 0.001;
+    var x = b._skinX, y = b._skinY;
+    var same = !!b._skinPath && x.length === n && b._skinSmooth === smooth;
+    var i;
+    if (same) for (i = 0; i < n; i++) {
+      if (x[i] !== jelloROX[i] || y[i] !== jelloROY[i]) { same = false; break; }
+    }
+    if (!same) {
+      if (!x || x.length !== n) { x = b._skinX = new Float64Array(n); y = b._skinY = new Float64Array(n); }
+      for (i = 0; i < n; i++) { x[i] = jelloROX[i]; y[i] = jelloROY[i]; }
+      b._skinPath = new Path2D();
+      jelloRingPath(b, b._skinPath);
+      b._skinSmooth = smooth;
+    }
+    return b._skinPath;
   }
 
   // Clamp a percentage (saturation / lightness) to [0,100] for per-body hsla tints.
@@ -6380,6 +6399,10 @@
         !isFinite(b.px[b.shineI] + b.py[b.shineI] + b.px[b.glintI] + b.py[b.glintI] +
                   b.px[b.causI0] + b.py[b.causI0] + b.px[b.causI1] + b.py[b.causI1])) return;
     jelloRingBake(b);   // bake the drawn ring (outset + ripple) once; the 3 path calls read it
+    // Share the exact silhouette between the clip and all edge strokes.
+    // Compare baked coordinates, so sleep, ripples and live tuning cannot
+    // leave a stale shape. The material and refraction still draw every frame.
+    var skinPath = jelloCachedRingPath(b);
     var l = b.bboxL, r = b.bboxR, t = b.bboxT, bm = b.bboxB;
     var w = r - l, hgt = bm - t;
     if (w < 1 || hgt < 1) return;
@@ -6424,9 +6447,7 @@
     var el = l - rOut, et = t - rOut, ew = w + 2 * rOut, eh = hgt + 2 * rOut;
 
     ctx.save();
-    ctx.beginPath();
-    jelloRingPath(b);
-    ctx.clip();
+    ctx.clip(skinPath);
 
     // ---- 1. REFRACTION: magnify the world drawn behind the jelly so it acts
     //         like a glass lens. drawImage reads the canvas (which already holds
@@ -6599,33 +6620,27 @@
       var eCol = 'hsla(' + hue + ',' + jelloClampPct(82 * satMul) + '%,' + jelloClampPct(52 + lightAdd) + '%,';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.beginPath();
-      jelloRingPath(b);
       ctx.strokeStyle = eCol + (alpha * 0.28).toFixed(3) + ')';
       ctx.lineWidth = 2.2 * fz;
-      ctx.stroke();
+      ctx.stroke(skinPath);
       ctx.strokeStyle = eCol + (alpha * 0.13).toFixed(3) + ')';
       ctx.lineWidth = 4.6 * fz;
-      ctx.stroke();
+      ctx.stroke(skinPath);
       ctx.strokeStyle = eCol + (alpha * 0.055).toFixed(3) + ')';
       ctx.lineWidth = 7.6 * fz;
-      ctx.stroke();
+      ctx.stroke(skinPath);
       if (JELLO_EDGE_STYLE >= 2) jelloDrawFuzz(b, hue, satMul, lightAdd, alpha, fz * (JELLO_EDGE_STYLE >= 3 ? 1.9 : 1));
     } else if (rim > 0.001) {
       // CLASSIC style keeps the legacy Fresnel rim for per-body dev materials
       // (ships 0 since v24.121 — owner-vetoed outline).
-      ctx.beginPath();
-      jelloRingPath(b);
       ctx.strokeStyle = 'hsla(' + (hue + 14) + ', 100%, 90%, ' + (rim * 0.95).toFixed(3) + ')';
       ctx.lineWidth = 3.8;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.stroke();
-      ctx.beginPath();
-      jelloRingPath(b);
+      ctx.stroke(skinPath);
       ctx.strokeStyle = 'hsla(' + (hue - 8) + ', 70%, 30%, ' + (rim * 0.4).toFixed(3) + ')';
       ctx.lineWidth = 1.6;
-      ctx.stroke();
+      ctx.stroke(skinPath);
     }
 
     // Debug: lattice points + springs. Gated on devMode so the default-on overlay shows

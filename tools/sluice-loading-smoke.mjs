@@ -169,6 +169,10 @@ async function navigate(name,query=''){
   const url=`http://127.0.0.1:${port}/grand-motherload.html${query || '?'}${query ? '&' : ''}loading-smoke=${encodeURIComponent(name)}`;
   await send('Page.navigate',{url});
   await until(`location.href===${JSON.stringify(url)} && !!document.getElementById("game-intro")`,'initial loading markup was not parsed');
+  // The loading markup precedes its small controller script. CDP can observe
+  // that parsing gap on a fast navigation; the game bundle is still held by
+  // these fixtures, so wait for the controller without waiting for the game.
+  await until('!!window.SluiceLoading','early loading controller is missing');
 }
 async function ready(name,timeout=40000,paused=false){
   await until('!!window.__loadingSmoke && document.getElementById("game-intro").dataset.state === "ready" && !SluiceLoading.active()',name+' did not reveal',timeout);

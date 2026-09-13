@@ -13,6 +13,11 @@ window.__fogReady=function(){return introPhase==='done';};
 window.__fogTest=function(){
   gamePaused=true;cancelAnimationFrame(gameRafId);gameRafId=0;
   var reports=[],errors=[],covered=lightFogFullyCovers,oldCtx=ctx;
+  // This test isolates fog coverage with the SAME chunk submission on both
+  // sides. Batching can change tiny antialias blends at run boundaries;
+  // terrain-slime-render.mjs compares that complete pipeline to the old release.
+  var admission=typeof terrainBatchMakeRoom==='function'?terrainBatchMakeRoom:null;
+  if(admission){terrainBatchMakeRoom=function(){return false;};terrainBatches={};terrainBatchCount=terrainBatchBytes=0;}
   function check(ok,msg){if(!ok)errors.push(msg);}
   var cv=document.createElement('canvas');ctx=cv.getContext('2d',{willReadFrequently:true});
   var dims=[[1035,1663,1.2],[2560,1440,2.67],[390,844,.65]];
@@ -75,7 +80,7 @@ window.__fogTest=function(){
     check(reports.some(function(r){return r.hiddenChunks>0;}),'Fixture must reject real hidden chunks');
     check(reports.some(function(r){return r.hiddenTiles>0;}),'Fixture must reject hidden tile decorations');
     return {reports:reports,errors:errors};
-  }finally{ctx=oldCtx;lightFogFullyCovers=covered;}
+  }finally{ctx=oldCtx;lightFogFullyCovers=covered;if(admission)terrainBatchMakeRoom=admission;}
 };
 `;
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.woff':'font/woff','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.m4a':'audio/mp4'};

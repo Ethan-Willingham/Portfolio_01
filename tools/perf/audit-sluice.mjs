@@ -38,7 +38,7 @@ const probe=String.raw`
 ${experiment}
 window.__audit=(function(){
   var rows=[],record=false,scene='',pinX=0,pinY=0,move=false,flying=false,rising=false,active=false,cruise=false,cruiseTime=0,cruiseRight=true;
-  var oldLoop=loop,oldUpdate=update,previous=0,gpuRows=[],gpuPending=[],glCount=0;
+  var loopCalls=0,oldLoop=loop,oldUpdate=update,previous=0,gpuRows=[],gpuPending=[],glCount=0;
   var loadingRows=[],oldLoading=renderLoadingScene;
   renderLoadingScene=function(){var t=performance.now(),p=introPhase;oldLoading();loadingRows.push({at:t,ms:performance.now()-t,phase:p,next:introPhase,assets:gameLoadingAssetsReady,pending:terrainChunkPendingThisFrame,clouds:loadingCloudsReady()});};
   function query(name,getGL,fn){
@@ -58,9 +58,15 @@ window.__audit=(function(){
   smokeFluidDraw=query('smoke.draw',smokeProbeGL,smokeFluidDraw);
   renderSkyGL=query('sky',function(){return skyGL;},renderSkyGL);
   if(typeof drawMountainsGL==='function')drawMountainsGL=query('mountains',function(){return mtnGPU&&mtnGPU.gl;},drawMountainsGL);
-  loop=function(time){var t=performance.now(),dt=previous?time-previous:0;previous=time;
+  loop=function(time){loopCalls++;var t=performance.now(),dt=previous?time-previous:0;previous=time;
     var result=oldLoop(time),cpu=performance.now()-t;
     if(record&&introPhase==='done')rows.push({at:t,tod:timeOfDay,dt:dt,cpu:cpu,x:player.x,y:player.y,cx:cam.x,cy:cam.y,vx:player.vx,vy:player.vy,ground:player.onGround,fuel:player.fuel,hull:player.hull,focus:document.hasFocus(),visible:!document.hidden,maskWidth:smokeObstWaterCanvas&&smokeObstWaterCanvas.width,maskHeight:smokeObstWaterCanvas&&smokeObstWaterCanvas.height,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
+    if(record&&introPhase==='done'&&scene==='human-slimes'){
+      rows[rows.length-1].slimes={awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,contacts:jelloContactsThisFrame,steps:jelloLastSubs};
+    }
+    if(record&&introPhase==='done'&&typeof terrainBatchDraws!=='undefined'){
+      rows[rows.length-1].terrain={direct:terrainDirectDraws,batches:terrainBatchDraws,builds:terrainBatchBuilds,bytes:terrainBatchBytes};
+    }
     glCount++;
     for(var i=gpuPending.length-1;i>=0;i--){var p=gpuPending[i];if(p.gl.getQueryParameter(p.q,p.gl.QUERY_RESULT_AVAILABLE)){
       if(!p.gl.getParameter(p.ext.GPU_DISJOINT_EXT))gpuRows.push({name:p.name,ms:p.gl.getQueryParameter(p.q,p.gl.QUERY_RESULT)/1e6});
@@ -75,12 +81,12 @@ window.__audit=(function(){
     if(!move){player.x=pinX;player.renderX=pinX;player.vx=0;}
     player.fuel=getMaxFuel();player.hull=getMaxHull();
   }};
-  function state(){return {smokeMask:window.__smokeObst?window.__smokeObst.info():null,version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],mountains:typeof mtnGPU!=='undefined'?{active:!!mtnGPU&&!mtnGPUFailed,failed:mtnGPUFailed,size:mtnGPU&&[mtnGPU.canvas.width,mtnGPU.canvas.height],samples:mtnGPU&&mtnGPU.gl.getParameter(mtnGPU.gl.SAMPLES)}:null,liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
+  function state(){return {loopHealth:{calls:loopCalls,phase:introPhase,paused:gamePaused,raf:gameRafId,visible:!document.hidden,focus:document.hasFocus()},smokeMask:window.__smokeObst?window.__smokeObst.info():null,version:GAME_VERSION,preset:gm.activePreset,canvas:[canvas.width,canvas.height],scale:dpr*worldScale,player:[player.x,player.y],camera:[cam.x,cam.y],mountains:typeof mtnGPU!=='undefined'?{active:!!mtnGPU&&!mtnGPUFailed,failed:mtnGPUFailed,size:mtnGPU&&[mtnGPU.canvas.width,mtnGPU.canvas.height],samples:mtnGPU&&mtnGPU.gl.getParameter(mtnGPU.gl.SAMPLES)}:null,liquids:liquidCount,jello:jelloBodies.length,awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,bodies:jelloBodies.map(function(b){return {n:b.n,x:b.cx,y:b.cy,box:[b.bboxL,b.bboxT,b.bboxR,b.bboxB],sleep:b.sleeping,frozen:b.frozen,hits:b._cHits,cr:b.cr};}),smoke:[smokeFluidCanvas&&smokeFluidCanvas.width,smokeFluidCanvas&&smokeFluidCanvas.height],smokeTune:smokeTune,webgpu:!!(liquidWGPU&&liquidWGPU.ready),bootMs:performance.now(),warmup:loadingRows};}
   return {ready:function(){
       if(introPhase==='done'&&smokeFluidActive&&!smokeWGPUDriving&&
           (smokeDriver!==SmokeFluid||!smokeDriver.isReady()))throw Error('Smoke experiment left the active driver disconnected');
       return introPhase==='done';
-    },state:state,
+    },state:state,inputBounds:function(){return {x:player.x,left:(DECK_LEFT_COL-23)*TILE,right:(DECK_LEFT_COL-13)*TILE};},
     start:function(name,disable){
       resize();scene=name;if(!window.__keepOverlay)drawPerfOverlay=function(){};SUN.paused=!window.__runningClock;timeOfDay=window.__initialTOD===null?(name.startsWith('night')?.02:.5):window.__initialTOD;
       if(name==='storm')gm.preset('storm ceiling');
@@ -90,7 +96,12 @@ window.__audit=(function(){
       if(disabled.indexOf('sky')>=0)PERF_DISABLE_NIGHTSKY=true;
       if(disabled.indexOf('jello')>=0){ENABLE_JELLO=false;}
       if(disabled.indexOf('weather')>=0)PERF_DISABLE_WEATHER=true;
-      if(name==='human'){
+      if(name==='human'||name==='human-slimes'){
+        if(name==='human-slimes'){
+          player.x=(DECK_LEFT_COL-25)*TILE;player.y=SKY_ROWS*TILE-PLAYER_H-2;
+          player.renderX=player.x;player.renderY=player.y;player.vx=player.vy=0;
+          cam.snap=true;updateCamera();
+        }
         active=false;gamePaused=false;startInPause=false;bootPauseFired=true;
         return state();
       }
@@ -169,8 +180,10 @@ try{
   await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   for(const scene of scenes){
     errors.length=0;
+    if(headed)await send('Page.bringToFront');
     await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?dev=1&nosave=1&nopause=1&tod=.5'+(process.env.PRESET?'&gmpreset='+encodeURIComponent(process.env.PRESET):'')});
     let ready=false;for(let i=0;i<500;i++){if(await ev('!!window.__audit&&__audit.ready()')){ready=true;break;}await sleep(100);}assert(ready,'Scene load '+JSON.stringify(errors));
+    if(headed)await send('Page.bringToFront');
     const boot=await ev('__audit.state()');
     if(process.env.AUDIO==='1'){
       await send('Input.dispatchMouseEvent',{type:'mousePressed',x:800,y:100,button:'left',clickCount:1});
@@ -180,13 +193,17 @@ try{
     const adapter=await ev('(async()=>{let a=await navigator.gpu?.requestAdapter();return a?{vendor:a.info.vendor,architecture:a.info.architecture,features:[...a.features]}:null})()');
     const start=await ev('__audit.start('+JSON.stringify(scene)+','+JSON.stringify(process.env.DISABLE||'')+')');
     await sleep(Number(process.env.WARMUP||3)*1000);
+    const warmed=await ev('__audit.state()');
+    fs.writeFileSync(path.join(out,scene+'.warmup.json'),JSON.stringify({start:start.loopHealth,end:warmed.loopHealth},null,2));
+    assert(warmed.loopHealth.calls>start.loopHealth.calls+10,'Live animation loop before capture: '+JSON.stringify(warmed.loopHealth));
+    if(headed)assert(warmed.loopHealth.visible&&warmed.loopHealth.focus,'Visible, focused browser before capture');
     if(process.env.TRACE==='1'){traceStream=null;await send('Tracing.start',{categories:'devtools.timeline,cc,gpu,viz,disabled-by-default-gpu.service',transferMode:'ReturnAsStream'});}
     if(cpuSampling){await send('Profiler.enable');await send('Profiler.setSamplingInterval',{interval:1000});await send('Profiler.start');}
     let presentation;
     if(process.env.PRESENTMON){assert(headed,'Presentation capture requires a visible window');const info=await browserCall('SystemInfo.getProcessInfo'),gpuProcess=info.processInfo.find(p=>p.type==='GPU');assert(gpuProcess,'GPU process');presentation=spawn(process.env.PRESENTMON,['--process_id',String(gpuProcess.id),'--timed',String(seconds),'--terminate_after_timed','--no_console_stats','--session_name','SluiceAudit'+chrome.pid,'--output_file',path.join(out,scene+'.present.csv')],{windowsHide:true,stdio:['ignore',fs.openSync(path.join(out,scene+'.present.log'),'w'),fs.openSync(path.join(out,scene+'.present-error.log'),'w')]});}
     await sleep(150);await ev('__audit.clear()');
     let inputEvents;
-    if(scene==='human')inputEvents=await humanInputRoute(send,seconds);else await sleep(seconds*1000);
+    if(scene==='human'||scene==='human-slimes')inputEvents=await humanInputRoute(send,seconds,scene==='human-slimes'?'slimes':'surface');else await sleep(seconds*1000);
     const result=await ev('__audit.stop()');
     result.hiddenTerrain=await ev('window.__perf&&__perf.hiddenTerrain?__perf.hiddenTerrain():null');
     result.windowEnd=await browserCall('Browser.getWindowForTarget',{targetId:target.id});
@@ -212,12 +229,16 @@ try{
     const summary={scene,version:boot.version,adapter,canvas:start.canvas,bootMs:boot.bootMs,frame:stats(result.rows.map(r=>r.dt)),cpu:stats(result.rows.map(r=>r.cpu)),over8ms:result.rows.filter(r=>r.dt>8).length,buckets,gpu:[...new Set(result.gpu.map(r=>r.name))].map(k=>[k,stats(result.gpu.filter(r=>r.name===k).map(r=>r.ms))]),profile:[...hits].sort((a,b)=>b[1]-a[1]).slice(0,25),errors:result.errors};
     summaries.push(summary);fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summaries,null,2));
     console.log(JSON.stringify({...summary,buckets:buckets.slice(0,14)}));assert.equal(errors.length,0,'No game errors');assert(result.rows.length>seconds*25,'Enough live frames');
-    if(scene==='human'&&headed){
+    if((scene==='human'||scene==='human-slimes')&&headed){
       assert(result.rows.every(r=>r.focus&&r.visible),'Input route stayed focused and visible');
       if(seconds>=10){
         const xs=result.rows.map(r=>r.x);
         assert(Math.max(...xs)-Math.min(...xs)>100,'Input route actually travelled');
         assert(result.rows.some(r=>r.ground)&&result.rows.some(r=>!r.ground),'Input route included ground and air');
+        if(scene==='human-slimes'){
+          assert(result.rows.filter(r=>r.slimes.awake>0).length>100,'Slime route exercised awake physics');
+          assert(result.rows.filter(r=>r.slimes.contacts>0).length>20,'Slime route exercised body contacts');
+        }
       }
     }
   }
