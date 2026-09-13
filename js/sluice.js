@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.125';
+  var GAME_VERSION = 'v26.126';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -36940,6 +36940,9 @@
       '  vec3 tc = texture2D(uTexture, vT).rgb;\n' +
       '  vec3 bc = texture2D(uTexture, vB).rgb;\n' +
       '  vec3 c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;\n' +
+      // Empty dye remains transparent after lighting and either obstacle mask.
+      // Test all five taps so the edge filter keeps its existing footprint.
+      '  if (all(equal(c, vec3(0.0)))) { gl_FragColor = vec4(0.0); return; }\n' +
       '#ifdef SHADING\n' +
       '  float dx = length(rc) - length(lc);\n' +
       '  float dy = length(tc) - length(bc);\n' +
@@ -37475,6 +37478,8 @@
     function splat (uvX, uvY, dx, dy, color, splatRadius) {
       if (!ready) return;
       splatVelocity(uvX, uvY, dx, dy, splatRadius);
+      // Buoyancy adds velocity only. A zero-colour dye pass copies the field.
+      if (color.r === 0 && color.g === 0 && color.b === 0) return;
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
       blit(dye.write);
@@ -37542,8 +37547,9 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.clearColor(0.0, 0.0, 0.0, 0.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      // The full-screen quad writes every pixel, including transparent ones.
+      // Blending against the cleared target adds no colour or alpha.
+      gl.disable(gl.BLEND);
       displayMaterial.bind();
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -37557,7 +37563,6 @@
         gl.uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
       }
       blit(null);
-      gl.disable(gl.BLEND);
     }
 
     function getCanvas () { return canvas; }

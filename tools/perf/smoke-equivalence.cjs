@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
 const baseRef = process.env.BASE_REF || 'f392c72';
 const fragment = 'js/sluice/190-smoke-webgl.js';
-const output = process.env.DUMP || path.join('/tmp', `sluice-smoke-equivalence-${process.pid}.json`);
+const output = process.env.DUMP || path.join(os.tmpdir(), `sluice-smoke-equivalence-${process.pid}.json`);
 assert.equal(typeof WebSocket, 'function', 'This harness requires Node 22 or newer');
 function extract(source) {
   const end = source.indexOf('  // ====== Smoke:');
@@ -17,7 +17,8 @@ function extract(source) {
   return source.slice(0, end);
 }
 const original = extract(execFileSync('git', ['show', `${baseRef}:${fragment}`], { cwd: root, encoding: 'utf8' }));
-const optimized = extract(fs.readFileSync(path.join(root, fragment), 'utf8'));
+const optimized = extract(fs.readFileSync(path.join(root, fragment), 'utf8')) +
+  (process.env.EXPERIMENT ? '\n' + fs.readFileSync(process.env.EXPERIMENT, 'utf8') : '');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Runs entirely inside the browser. The small grids make exact regression checks
@@ -74,6 +75,7 @@ function compareSmoke(original, optimized) {
         if (err) throw Error(`WebGL error ${err} at frame ${frame}`);
       }
       const started = performance.now();
+      const body = {ringN:24,ring:Array.from({length:24},(_,i)=>i),px:new Float32Array(24),py:new Float32Array(24)};
       for (let i = 0; i < 48; i++) {
         if (i === 24) { smoke.resize(160, 144); obstacle.width = 80; obstacle.height = 72; }
         if (profile.mask === 'quads') smoke.paintObstacleQuads(vertices, i === 22 ? 0 : 6, obstacle.width, obstacle.height);
@@ -91,6 +93,15 @@ function compareSmoke(original, optimized) {
         smoke.splat(.4 + Math.sin(i * .16) * .04, .35 + Math.cos(i * .08) * .025,
           2 + Math.sin(i * .5), 6, { r: .18, g: .12, b: .09 }, .18);
         smoke.splatVelocity(.6, .28, Math.sin(i * .7) * 1.3, .8, .24);
+        smoke.splat(.35, .6, -.3, .9, { r: 0, g: 0, b: 0 }, .17);
+        if (profile.moving) {
+          for(let j=0;j<body.ringN;j++){
+            const angle=j/body.ringN*Math.PI*2;
+            body.px[j]=canvas.width*(.25+i*.008)+Math.cos(angle)*(12+Math.sin(i*.3)*3);
+            body.py[j]=canvas.height*.4+Math.sin(angle)*14;
+          }
+          smoke.setMovingBodies(i===22?[]:[body],0,0,canvas.width,canvas.height,1/60,96,64);
+        }
         smoke.step(i % 7 === 0 ? 1 / 30 : 1 / 60);
         if ([0, 7, 15, 23, 24, 31, 47].includes(i)) snapshot(i);
       }
@@ -108,6 +119,9 @@ function compareSmoke(original, optimized) {
     { webgl1: false, manual: false, shading: true, iters: 13, mask: 'quads' },
     { webgl1: true, manual: false, shading: true, iters: 25, mask: 'quads' },
     { webgl1: true, manual: true, shading: false, iters: 17, mask: 'canvas' },
+    { webgl1: false, manual: false, shading: true, iters: 17, mask: 'canvas', moving: true },
+    { webgl1: true, manual: false, shading: true, iters: 17, mask: 'quads', moving: true },
+    { webgl1: true, manual: true, shading: false, iters: 17, mask: 'canvas', moving: true },
   ];
   const report = [];
   for (const profile of profiles) {
@@ -130,9 +144,9 @@ function compareSmoke(original, optimized) {
 
 (async () => {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'sluice-smoke-chrome-'));
-  const chrome = spawn(path.join(os.homedir(), '.local/bin/agent-chrome-for-testing'),
-    ['--headless=new', '--use-angle=metal', '--no-first-run', '--no-default-browser-check',
-      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+  const chrome = spawn(process.env.CHROME || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : path.join(os.homedir(), '.local/bin/agent-chrome-for-testing')),
+    ['--headless=new', '--use-angle=' + (process.platform === 'win32' ? 'd3d11' : process.platform === 'darwin' ? 'metal' : 'vulkan'), '--no-first-run', '--no-default-browser-check',
+      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
   let launchError, socket;
   chrome.on('error', error => { launchError = error; });
   try {
@@ -171,7 +185,7 @@ function compareSmoke(original, optimized) {
     for (const { profile, baseline, current } of report.profiles) {
       console.log(`${JSON.stringify(profile)}: sampler calls ${baseline.counts.uniform1i} -> ${current.counts.uniform1i}, uploaded vertex bytes ${baseline.bufferUploadBytes} -> ${current.bufferUploadBytes}`);
     }
-    console.log(`PASS: byte-identical smoke at 28 checkpoints across WebGL2/WebGL1, shading, manual filtering, masks, scroll, clear, and resize. Results: ${output}`);
+    console.log(`PASS: byte-identical smoke at 49 checkpoints across WebGL2/WebGL1, shading, manual filtering, static/moving masks, scroll, clear, and resize. Results: ${output}`);
   } finally {
     socket?.close();
     if (chrome.exitCode === null && chrome.signalCode === null && chrome.pid) {

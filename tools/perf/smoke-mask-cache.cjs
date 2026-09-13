@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),cp=require('node:child_process');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'../..'),file='js/sluice/190-smoke-webgl.js';
-const original=cp.execFileSync('git',['show',(process.env.BASE_REF||'2b587fb')+':'+file],{cwd:root,encoding:'utf8'}),current=fs.readFileSync(path.join(root,file),'utf8');
+const original=cp.execFileSync('git',['show',(process.env.BASE_REF||'2b587fb')+':'+file],{cwd:root,encoding:'utf8'}),current=fs.readFileSync(process.env.CANDIDATE||path.join(root,file),'utf8');
 function check({original,current}){
   function factory(source){
     const state=source.slice(source.indexOf('  var smokeObstWaterBins'),source.indexOf('  // Fast water entrains'));

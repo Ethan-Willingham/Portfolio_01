@@ -7,9 +7,10 @@ const path = require('node:path');
 const { execFileSync, spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const output = process.env.DUMP || path.join('/tmp', `sluice-smoke-moving-${process.pid}.json`);
+const output = process.env.DUMP || path.join(os.tmpdir(), `sluice-smoke-moving-${process.pid}.json`);
 assert.equal(typeof WebSocket, 'function', 'This harness requires Node 22 or newer');
-const source = fs.readFileSync(path.join(root, 'js/sluice/190-smoke-webgl.js'), 'utf8').split('  // ====== Smoke:')[0];
+const fragment = 'js/sluice/190-smoke-webgl.js';
+const source = (process.env.SOURCE_REF ? execFileSync('git', ['show', process.env.SOURCE_REF + ':' + fragment], {cwd:root,encoding:'utf8'}) : fs.readFileSync(path.join(root, fragment), 'utf8')).split('  // ====== Smoke:')[0];
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Finite cloud, no ongoing emissions, no density dissipation. Measure all dye
@@ -118,9 +119,9 @@ function testMovingSmoke(source) {
 
 (async () => {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'sluice-smoke-chrome-'));
-  const chrome = spawn(path.join(os.homedir(), '.local/bin/agent-chrome-for-testing'),
-    ['--headless=new', '--use-angle=metal', '--no-first-run', '--no-default-browser-check',
-      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+  const chrome = spawn(process.env.CHROME || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : path.join(os.homedir(), '.local/bin/agent-chrome-for-testing')),
+    ['--headless=new', '--use-angle=' + (process.platform === 'win32' ? 'd3d11' : process.platform === 'darwin' ? 'metal' : 'vulkan'), '--no-first-run', '--no-default-browser-check',
+      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
   let launchError, socket;
   chrome.on('error', error => { launchError = error; });
   try {
