@@ -1,0 +1,659 @@
+{
+  "baseline": "9a2a07e6d8d34851984545557ac8b3fdd2863b4d",
+  "runs": [
+    {
+      "name": "trace",
+      "cpu": {
+        "n": 3961,
+        "mean": 2.848,
+        "p99": 5.9,
+        "p999": 7.6,
+        "max": 9.8
+      },
+      "display": {
+        "n": 3952,
+        "mean": 7.581,
+        "p99": 13.937,
+        "p999": 34.686,
+        "max": 34.742
+      },
+      "displayRefresh": {
+        "referenceHz": 144,
+        "late": 327,
+        "count": 3952,
+        "percent": 8.274,
+        "missedSlots": 362,
+        "offCadencePercent": 0,
+        "fixedRateCadenceMatches": true
+      },
+      "gaps": {
+        "8": {
+          "count": 327,
+          "percent": 8.274
+        },
+        "20": {
+          "count": 22,
+          "percent": 0.557
+        },
+        "33": {
+          "count": 5,
+          "percent": 0.127
+        },
+        "50": {
+          "count": 0,
+          "percent": 0
+        },
+        "14.5": {
+          "count": 22,
+          "percent": 0.557
+        }
+      },
+      "motion": {
+        "x": [
+          4869.776,
+          7967.998
+        ],
+        "y": [
+          -376.098,
+          107.309
+        ],
+        "groundFrames": 814,
+        "landings": 15,
+        "focusedFrames": 3961,
+        "visibleFrames": 3961,
+        "fuel": [
+          29.988879999999998,
+          30
+        ],
+        "hull": 100,
+        "inputChanges": 32
+      },
+      "rasterFlush": {
+        "name": "CrGpuMain / RasterDecoderImpl::DoEndRasterCHROMIUM::Flush",
+        "n": 21114,
+        "total": 8267.648,
+        "max": 32.299,
+        "over10": 11
+      },
+      "animation": {
+        "name": "CrRendererMain / FireAnimationFrame",
+        "n": 3981,
+        "total": 11676.782000000014,
+        "max": 9.84,
+        "over10": 0
+      },
+      "gc": [
+        {
+          "name": "CrRendererMain / MajorGC",
+          "n": 18,
+          "total": 64.606,
+          "max": 5.508,
+          "over10": 0
+        },
+        {
+          "name": "CrRendererMain / MinorGC",
+          "n": 31,
+          "total": 39.961,
+          "max": 2.069,
+          "over10": 0
+        }
+      ],
+      "shaderStores": 16,
+      "cacheIntervals": [
+        {
+          "ts": 41433171495,
+          "end": 41433194577,
+          "ms": 23.082
+        },
+        {
+          "ts": 41433370907,
+          "end": 41433390809,
+          "ms": 19.902
+        },
+        {
+          "ts": 41433420635,
+          "end": 41433431068,
+          "ms": 10.433
+        },
+        {
+          "ts": 41433927303,
+          "end": 41433935729,
+          "ms": 8.426
+        },
+        {
+          "ts": 41434005442,
+          "end": 41434014481,
+          "ms": 9.039
+        },
+        {
+          "ts": 41434485956,
+          "end": 41434496076,
+          "ms": 10.12
+        },
+        {
+          "ts": 41434496354,
+          "end": 41434507720,
+          "ms": 11.366
+        },
+        {
+          "ts": 41434508159,
+          "end": 41434517548,
+          "ms": 9.389
+        },
+        {
+          "ts": 41434531748,
+          "end": 41434540540,
+          "ms": 8.792
+        },
+        {
+          "ts": 41434540750,
+          "end": 41434549975,
+          "ms": 9.225
+        },
+        {
+          "ts": 41434586249,
+          "end": 41434597089,
+          "ms": 10.84
+        },
+        {
+          "ts": 41434685765,
+          "end": 41434709783,
+          "ms": 24.018
+        },
+        {
+          "ts": 41437060133,
+          "end": 41437071474,
+          "ms": 11.341
+        },
+        {
+          "ts": 41437130813,
+          "end": 41437136112,
+          "ms": 5.299
+        },
+        {
+          "ts": 41439321168,
+          "end": 41439344788,
+          "ms": 23.62
+        },
+        {
+          "ts": 41462855563,
+          "end": 41462862863,
+          "ms": 7.3
+        }
+      ],
+      "stalls": [
+        {
+          "ts": 41434485666,
+          "ms": 32.299,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41434685688,
+          "ms": 24.268,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41433170884,
+          "ms": 24.079,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41439321075,
+          "ms": 23.999,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41433370499,
+          "ms": 20.926,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41434531036,
+          "ms": 19.322,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41437059449,
+          "ms": 13.004,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41434585561,
+          "ms": 11.977,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41433420280,
+          "ms": 11.38,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41433925160,
+          "ms": 11.006,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41434004782,
+          "ms": 10.101,
+          "cacheMissWithin": true
+        }
+      ]
+    },
+    {
+      "name": "no-terrain",
+      "cpu": {
+        "n": 4115,
+        "mean": 2.481,
+        "p99": 4.9,
+        "p999": 6.4,
+        "max": 9.5
+      },
+      "display": {
+        "n": 4109,
+        "mean": 7.295,
+        "p99": 13.924,
+        "p999": 34.692,
+        "max": 41.664
+      },
+      "displayRefresh": {
+        "referenceHz": 144,
+        "late": 183,
+        "count": 4109,
+        "percent": 4.454,
+        "missedSlots": 207,
+        "offCadencePercent": 0,
+        "fixedRateCadenceMatches": true
+      },
+      "gaps": {
+        "8": {
+          "count": 183,
+          "percent": 4.454
+        },
+        "20": {
+          "count": 11,
+          "percent": 0.268
+        },
+        "33": {
+          "count": 5,
+          "percent": 0.122
+        },
+        "50": {
+          "count": 0,
+          "percent": 0
+        },
+        "14.5": {
+          "count": 11,
+          "percent": 0.268
+        }
+      },
+      "motion": {
+        "x": [
+          4869.288,
+          7967.808
+        ],
+        "y": [
+          -369.903,
+          109.479
+        ],
+        "groundFrames": 651,
+        "landings": 13,
+        "focusedFrames": 4115,
+        "visibleFrames": 4115,
+        "fuel": [
+          29.99448,
+          30
+        ],
+        "hull": 100,
+        "inputChanges": 32
+      },
+      "rasterFlush": {
+        "name": "CrGpuMain / RasterDecoderImpl::DoEndRasterCHROMIUM::Flush",
+        "n": 17122,
+        "total": 8051.748000000049,
+        "max": 32.384,
+        "over10": 10
+      },
+      "animation": {
+        "name": "CrRendererMain / FireAnimationFrame",
+        "n": 4136,
+        "total": 10616.485999999977,
+        "max": 9.591,
+        "over10": 0
+      },
+      "gc": [
+        {
+          "name": "CrRendererMain / MajorGC",
+          "n": 17,
+          "total": 52.748,
+          "max": 4.885,
+          "over10": 0
+        },
+        {
+          "name": "CrRendererMain / MinorGC",
+          "n": 29,
+          "total": 35.899,
+          "max": 2.295,
+          "over10": 0
+        }
+      ],
+      "shaderStores": 18,
+      "cacheIntervals": [
+        {
+          "ts": 41580102089,
+          "end": 41580125069,
+          "ms": 22.98
+        },
+        {
+          "ts": 41580292475,
+          "end": 41580312764,
+          "ms": 20.289
+        },
+        {
+          "ts": 41580340279,
+          "end": 41580350698,
+          "ms": 10.419
+        },
+        {
+          "ts": 41580825739,
+          "end": 41580834357,
+          "ms": 8.618
+        },
+        {
+          "ts": 41580968549,
+          "end": 41580975307,
+          "ms": 6.758
+        },
+        {
+          "ts": 41581403189,
+          "end": 41581413321,
+          "ms": 10.132
+        },
+        {
+          "ts": 41581413564,
+          "end": 41581424279,
+          "ms": 10.715
+        },
+        {
+          "ts": 41581424600,
+          "end": 41581434711,
+          "ms": 10.111
+        },
+        {
+          "ts": 41581461427,
+          "end": 41581470426,
+          "ms": 8.999
+        },
+        {
+          "ts": 41581470667,
+          "end": 41581480301,
+          "ms": 9.634
+        },
+        {
+          "ts": 41581495635,
+          "end": 41581505625,
+          "ms": 9.99
+        },
+        {
+          "ts": 41581599235,
+          "end": 41581623091,
+          "ms": 23.856
+        },
+        {
+          "ts": 41583962350,
+          "end": 41583973471,
+          "ms": 11.121
+        },
+        {
+          "ts": 41584056521,
+          "end": 41584061838,
+          "ms": 5.317
+        },
+        {
+          "ts": 41586252182,
+          "end": 41586275519,
+          "ms": 23.337
+        },
+        {
+          "ts": 41609713461,
+          "end": 41609720488,
+          "ms": 7.027
+        },
+        {
+          "ts": 41609720639,
+          "end": 41609727434,
+          "ms": 6.795
+        },
+        {
+          "ts": 41610075959,
+          "end": 41610082695,
+          "ms": 6.736
+        }
+      ],
+      "stalls": [
+        {
+          "ts": 41581402822,
+          "ms": 32.384,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41581599164,
+          "ms": 24.133,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41580101543,
+          "ms": 23.884,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41586252083,
+          "ms": 23.709,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41580292021,
+          "ms": 21.318,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41581460643,
+          "ms": 20.162,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41609712364,
+          "ms": 15.405,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41583961215,
+          "ms": 13.042,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41580339821,
+          "ms": 11.473,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41581494758,
+          "ms": 11.284,
+          "cacheMissWithin": true
+        }
+      ]
+    },
+    {
+      "name": "no-rig",
+      "cpu": {
+        "n": 4213,
+        "mean": 2.575,
+        "p99": 5.5,
+        "p999": 7.1,
+        "max": 9.3
+      },
+      "display": {
+        "n": 4207,
+        "mean": 7.126,
+        "p99": 13.897,
+        "p999": 20.837,
+        "max": 34.741
+      },
+      "displayRefresh": {
+        "referenceHz": 144,
+        "late": 95,
+        "count": 4207,
+        "percent": 2.258,
+        "missedSlots": 110,
+        "offCadencePercent": 0,
+        "fixedRateCadenceMatches": true
+      },
+      "gaps": {
+        "8": {
+          "count": 95,
+          "percent": 2.258
+        },
+        "20": {
+          "count": 9,
+          "percent": 0.214
+        },
+        "33": {
+          "count": 3,
+          "percent": 0.071
+        },
+        "50": {
+          "count": 0,
+          "percent": 0
+        },
+        "14.5": {
+          "count": 9,
+          "percent": 0.214
+        }
+      },
+      "motion": {
+        "x": [
+          4869.294,
+          7950.762
+        ],
+        "y": [
+          -371.905,
+          114.48
+        ],
+        "groundFrames": 844,
+        "landings": 18,
+        "focusedFrames": 4213,
+        "visibleFrames": 4213,
+        "fuel": [
+          29.9944,
+          30
+        ],
+        "hull": 100,
+        "inputChanges": 32
+      },
+      "rasterFlush": {
+        "name": "CrGpuMain / RasterDecoderImpl::DoEndRasterCHROMIUM::Flush",
+        "n": 22266,
+        "total": 5712.383000000082,
+        "max": 23.808,
+        "over10": 6
+      },
+      "animation": {
+        "name": "CrRendererMain / FireAnimationFrame",
+        "n": 4235,
+        "total": 11269.580999999998,
+        "max": 9.32,
+        "over10": 0
+      },
+      "gc": [
+        {
+          "name": "CrRendererMain / MajorGC",
+          "n": 15,
+          "total": 52.227000000000004,
+          "max": 4.599,
+          "over10": 0
+        },
+        {
+          "name": "CrRendererMain / MinorGC",
+          "n": 23,
+          "total": 29.687,
+          "max": 2.128,
+          "over10": 0
+        }
+      ],
+      "shaderStores": 8,
+      "cacheIntervals": [
+        {
+          "ts": 41707030397,
+          "end": 41707051012,
+          "ms": 20.615
+        },
+        {
+          "ts": 41707073973,
+          "end": 41707084616,
+          "ms": 10.643
+        },
+        {
+          "ts": 41707576111,
+          "end": 41707585025,
+          "ms": 8.914
+        },
+        {
+          "ts": 41708341910,
+          "end": 41708364974,
+          "ms": 23.064
+        },
+        {
+          "ts": 41712993303,
+          "end": 41713016635,
+          "ms": 23.332
+        },
+        {
+          "ts": 41736418099,
+          "end": 41736425558,
+          "ms": 7.459
+        },
+        {
+          "ts": 41736425726,
+          "end": 41736432700,
+          "ms": 6.974
+        },
+        {
+          "ts": 41736794808,
+          "end": 41736802545,
+          "ms": 7.737
+        }
+      ],
+      "stalls": [
+        {
+          "ts": 41712993234,
+          "ms": 23.808,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41708341841,
+          "ms": 23.337,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41707030022,
+          "ms": 21.602,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41736417551,
+          "ms": 15.475,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41707073625,
+          "ms": 11.702,
+          "cacheMissWithin": true
+        },
+        {
+          "ts": 41707574100,
+          "ms": 11.373,
+          "cacheMissWithin": true
+        }
+      ]
+    }
+  ]
+}
