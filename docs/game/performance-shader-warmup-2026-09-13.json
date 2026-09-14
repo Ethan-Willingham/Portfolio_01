@@ -1,0 +1,1405 @@
+{
+ "report": "PERFORMANCE_SHADER_WARMUP_2026-09-13.md",
+ "baseline": {
+  "version": "v27.1",
+  "commit": "bb09fff"
+ },
+ "release": {
+  "version": "v27.2",
+  "fragment": "js/sluice/046-shader-warm.js"
+ },
+ "environment": {
+  "browser": "Google Chrome for Testing 148.0.7778.96",
+  "machine": "Apple M1 Pro",
+  "os": "macOS 26.6.2",
+  "headless": true,
+  "viewport": {
+   "width": 2048,
+   "height": 1152,
+   "deviceScaleFactor": 1.25
+  },
+  "gameCanvas": [
+   2560,
+   1440
+  ],
+  "rasterBackend": "Ganesh (SkiaGraphite disabled) over ANGLE Metal",
+  "note": "A stand-in for the Windows traces (Ganesh over ANGLE Direct3D 11). No Windows or PresentMon capture in this pass."
+ },
+ "tour": {
+  "route": "idle, surface drive, pen, dig, sell, store, manifest, ledger, bombs, cave, deep, pond, altitude, night, storm, upgrade, death; uncapped frames",
+  "runs": [
+   {
+    "version": "v27.1",
+    "visit": "first",
+    "profile": "fresh",
+    "revealedAfterMs": 2084,
+    "warmUp": null,
+    "programsWhileLoading": 53,
+    "programsAfterReveal": 40,
+    "buildMsAfterReveal": 122.3,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 5,
+     "over16ms": 2,
+     "longestMs": 18
+    },
+    "afterRevealByPhase": {
+     "before route": {
+      "programs": 1,
+      "ms": 3.1
+     },
+     "idle": {
+      "programs": 2,
+      "ms": 3.5
+     },
+     "surface": {
+      "programs": 8,
+      "ms": 21.6
+     },
+     "pen": {
+      "programs": 5,
+      "ms": 15.5
+     },
+     "dig": {
+      "programs": 3,
+      "ms": 10.2
+     },
+     "shop": {
+      "programs": 5,
+      "ms": 15.8
+     },
+     "manifest": {
+      "programs": 2,
+      "ms": 6.2
+     },
+     "bomb": {
+      "programs": 3,
+      "ms": 11.1
+     },
+     "cave": {
+      "programs": 5,
+      "ms": 12.2
+     },
+     "pond": {
+      "programs": 4,
+      "ms": 16.3
+     },
+     "death": {
+      "programs": 2,
+      "ms": 6.7
+     }
+    }
+   },
+   {
+    "version": "v27.2",
+    "visit": "first",
+    "profile": "fresh",
+    "revealedAfterMs": 2312,
+    "warmUp": {
+     "ms": 355,
+     "passMs": {
+      "sky": 19,
+      "rig": 9,
+      "shadow": 0,
+      "dig": 3,
+      "slime": 14,
+      "terrain": 92,
+      "scenery": 2,
+      "underground": 48,
+      "blast": 1,
+      "hud": 1,
+      "menus": 15,
+      "raster": 151
+     },
+     "errors": []
+    },
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 1,
+    "buildMsAfterReveal": 10.2,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 1,
+     "over16ms": 0,
+     "longestMs": 11.2
+    },
+    "afterRevealByPhase": {
+     "surface": {
+      "programs": 1,
+      "ms": 10.2
+     }
+    }
+   },
+   {
+    "version": "v27.1",
+    "visit": "repeat",
+    "profile": "reused",
+    "revealedAfterMs": 1786,
+    "warmUp": null,
+    "programsWhileLoading": 57,
+    "programsAfterReveal": 34,
+    "buildMsAfterReveal": 24.9,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 6.3
+    },
+    "afterRevealByPhase": {
+     "idle": {
+      "programs": 2,
+      "ms": 0.5
+     },
+     "surface": {
+      "programs": 6,
+      "ms": 6.8
+     },
+     "dig": {
+      "programs": 7,
+      "ms": 3.7
+     },
+     "shop": {
+      "programs": 5,
+      "ms": 1.4
+     },
+     "manifest": {
+      "programs": 1,
+      "ms": 0.4
+     },
+     "bomb": {
+      "programs": 3,
+      "ms": 1.3
+     },
+     "cave": {
+      "programs": 3,
+      "ms": 5.1
+     },
+     "pond": {
+      "programs": 5,
+      "ms": 5.2
+     },
+     "storm": {
+      "programs": 2,
+      "ms": 0.7
+     }
+    }
+   },
+   {
+    "version": "v27.2",
+    "visit": "repeat",
+    "profile": "reused",
+    "revealedAfterMs": 2387,
+    "warmUp": {
+     "ms": 240,
+     "passMs": {
+      "sky": 18,
+      "rig": 9,
+      "shadow": 0,
+      "dig": 3,
+      "slime": 15,
+      "terrain": 92,
+      "scenery": 2,
+      "underground": 50,
+      "blast": 1,
+      "hud": 1,
+      "menus": 14,
+      "raster": 34
+     },
+     "errors": []
+    },
+    "programsWhileLoading": 92,
+    "programsAfterReveal": 5,
+    "buildMsAfterReveal": 6.6,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 4.4
+    },
+    "afterRevealByPhase": {
+     "surface": {
+      "programs": 1,
+      "ms": 0.3
+     },
+     "pond": {
+      "programs": 4,
+      "ms": 6.3
+     }
+    }
+   }
+  ],
+  "committedToolChecks": {
+   "v27_2": {
+    "bundleRef": null,
+    "version": "v27.2",
+    "revealedAfterMs": 2315,
+    "compiles": {
+     "total": 99,
+     "loading": 98,
+     "loadingMs": 265.8,
+     "afterReveal": 1,
+     "afterRevealMs": 4.5
+    },
+    "afterRevealByPhase": {
+     "surface": {
+      "compiles": 1,
+      "ms": 4.5
+     }
+    },
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "maxMs": 5.4
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.5,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 4.5,
+      "flushMs": 5.4
+     }
+    ],
+    "pageErrors": 0,
+    "routeErrors": 0,
+    "maxCompilesCheck": "MAX_COMPILES=3, expected to pass"
+   },
+   "v27_1": {
+    "bundleRef": "bb09fff",
+    "version": "v27.1",
+    "revealedAfterMs": 2211,
+    "compiles": {
+     "total": 93,
+     "loading": 53,
+     "loadingMs": 126.2,
+     "afterReveal": 40,
+     "afterRevealMs": 123.8
+    },
+    "afterRevealByPhase": {
+     "before route": {
+      "compiles": 1,
+      "ms": 3.2
+     },
+     "idle": {
+      "compiles": 2,
+      "ms": 4.3
+     },
+     "surface": {
+      "compiles": 8,
+      "ms": 24.4
+     },
+     "pen": {
+      "compiles": 5,
+      "ms": 15.2
+     },
+     "dig": {
+      "compiles": 3,
+      "ms": 10.7
+     },
+     "shop": {
+      "compiles": 5,
+      "ms": 16.5
+     },
+     "manifest": {
+      "compiles": 2,
+      "ms": 6.1
+     },
+     "bomb": {
+      "compiles": 3,
+      "ms": 11.2
+     },
+     "cave": {
+      "compiles": 5,
+      "ms": 11
+     },
+     "pond": {
+      "compiles": 4,
+      "ms": 15
+     },
+     "storm": {
+      "compiles": 2,
+      "ms": 6.3
+     }
+    },
+    "rasterFlushesAfterReveal": {
+     "over8ms": 4,
+     "over16ms": 2,
+     "maxMs": 17.3
+    },
+    "bursts": [
+     {
+      "atSeconds": 0.1,
+      "phase": "before route",
+      "programs": 1,
+      "ms": 3.2,
+      "flushMs": 3.7
+     },
+     {
+      "atSeconds": 1.4,
+      "phase": "idle",
+      "programs": 2,
+      "ms": 4.3,
+      "flushMs": 5.1
+     },
+     {
+      "atSeconds": 2.4,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 5.9,
+      "flushMs": 6.9
+     },
+     {
+      "atSeconds": 2.5,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 4,
+      "flushMs": 4.9
+     },
+     {
+      "atSeconds": 2.9,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 1.8,
+      "flushMs": 2.7
+     },
+     {
+      "atSeconds": 3.1,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 1.7,
+      "flushMs": 2.1
+     },
+     {
+      "atSeconds": 3.7,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 3.6,
+      "flushMs": 4.1
+     },
+     {
+      "atSeconds": 6.4,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 4.2,
+      "flushMs": 4.7
+     },
+     {
+      "atSeconds": 13.3,
+      "phase": "surface",
+      "programs": 2,
+      "ms": 3.2,
+      "flushMs": 4
+     },
+     {
+      "atSeconds": 14.5,
+      "phase": "pen",
+      "programs": 5,
+      "ms": 15.2,
+      "flushMs": 17.3
+     },
+     {
+      "atSeconds": 18.8,
+      "phase": "dig",
+      "programs": 1,
+      "ms": 4.7,
+      "flushMs": 5.7
+     },
+     {
+      "atSeconds": 19,
+      "phase": "dig",
+      "programs": 1,
+      "ms": 2,
+      "flushMs": 2.8
+     },
+     {
+      "atSeconds": 19,
+      "phase": "dig",
+      "programs": 1,
+      "ms": 4,
+      "flushMs": 4.9
+     },
+     {
+      "atSeconds": 32,
+      "phase": "shop",
+      "programs": 4,
+      "ms": 12.7,
+      "flushMs": 14.3
+     },
+     {
+      "atSeconds": 32,
+      "phase": "shop",
+      "programs": 1,
+      "ms": 3.8,
+      "flushMs": 4.4
+     },
+     {
+      "atSeconds": 35.4,
+      "phase": "manifest",
+      "programs": 2,
+      "ms": 6.1,
+      "flushMs": 7.9
+     },
+     {
+      "atSeconds": 39.6,
+      "phase": "bomb",
+      "programs": 1,
+      "ms": 3.6,
+      "flushMs": 4.1
+     },
+     {
+      "atSeconds": 40.5,
+      "phase": "bomb",
+      "programs": 2,
+      "ms": 7.6,
+      "flushMs": 4.6
+     },
+     {
+      "atSeconds": 42.3,
+      "phase": "cave",
+      "programs": 3,
+      "ms": 8.3,
+      "flushMs": 9.5
+     },
+     {
+      "atSeconds": 42.3,
+      "phase": "cave",
+      "programs": 2,
+      "ms": 2.7,
+      "flushMs": 3.7
+     },
+     {
+      "atSeconds": 47.2,
+      "phase": "pond",
+      "programs": 4,
+      "ms": 14.9,
+      "flushMs": 16.4
+     },
+     {
+      "atSeconds": 56.9,
+      "phase": "storm",
+      "programs": 2,
+      "ms": 6.4,
+      "flushMs": 7.1
+     }
+    ],
+    "pageErrors": 0,
+    "routeErrors": 0,
+    "maxCompilesCheck": "MAX_COMPILES=3, expected to fail"
+   }
+  }
+ },
+ "loading": {
+  "vsync60Hz": {
+   "frames": "vsync-paced at 60 Hz",
+   "rounds": 5,
+   "medians": {
+    "v27.1 first": {
+     "revealedMs": 1642,
+     "firstReadyMs": 1146,
+     "fenceWaitMs": 31,
+     "warmUpMs": null,
+     "warmUpRasterMs": null
+    },
+    "v27.2 first": {
+     "revealedMs": 1912,
+     "firstReadyMs": 1421,
+     "fenceWaitMs": 32,
+     "warmUpMs": 348,
+     "warmUpRasterMs": 144
+    },
+    "v27.1 repeat": {
+     "revealedMs": 1499,
+     "firstReadyMs": 997,
+     "fenceWaitMs": 32,
+     "warmUpMs": null,
+     "warmUpRasterMs": null
+    },
+    "v27.2 repeat": {
+     "revealedMs": 1666,
+     "firstReadyMs": 1173,
+     "fenceWaitMs": 32,
+     "warmUpMs": 224,
+     "warmUpRasterMs": 23
+    }
+   },
+   "boots": [
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 0,
+     "revealedMs": 1671,
+     "warmUpStartMs": 844,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1161,
+     "fenceMs": 1244,
+     "revealStartMs": 1275,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 0,
+     "revealedMs": 1473,
+     "warmUpStartMs": 622,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 971,
+     "fenceMs": 1054,
+     "revealStartMs": 1086,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 0,
+     "revealedMs": 1958,
+     "warmUpStartMs": 550,
+     "warmUpMs": 359,
+     "warmUpRasterMs": 144,
+     "firstReadyMs": 1455,
+     "fenceMs": 1537,
+     "revealStartMs": 1569,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 0,
+     "revealedMs": 1690,
+     "warmUpStartMs": 484,
+     "warmUpMs": 234,
+     "warmUpRasterMs": 27,
+     "firstReadyMs": 1185,
+     "fenceMs": 1268,
+     "revealStartMs": 1300,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 1,
+     "revealedMs": 1987,
+     "warmUpStartMs": 564,
+     "warmUpMs": 386,
+     "warmUpRasterMs": 178,
+     "firstReadyMs": 1489,
+     "fenceMs": 1570,
+     "revealStartMs": 1602,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 1,
+     "revealedMs": 1659,
+     "warmUpStartMs": 491,
+     "warmUpMs": 227,
+     "warmUpRasterMs": 23,
+     "firstReadyMs": 1166,
+     "fenceMs": 1249,
+     "revealStartMs": 1281,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 1,
+     "revealedMs": 1653,
+     "warmUpStartMs": 854,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1154,
+     "fenceMs": 1237,
+     "revealStartMs": 1268,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 1,
+     "revealedMs": 1520,
+     "warmUpStartMs": 674,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1024,
+     "fenceMs": 1107,
+     "revealStartMs": 1139,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 2,
+     "revealedMs": 1633,
+     "warmUpStartMs": 841,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1142,
+     "fenceMs": 1224,
+     "revealStartMs": 1255,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 2,
+     "revealedMs": 1499,
+     "warmUpStartMs": 664,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 997,
+     "fenceMs": 1080,
+     "revealStartMs": 1112,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 2,
+     "revealedMs": 1912,
+     "warmUpStartMs": 534,
+     "warmUpMs": 348,
+     "warmUpRasterMs": 147,
+     "firstReadyMs": 1420,
+     "fenceMs": 1503,
+     "revealStartMs": 1534,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 2,
+     "revealedMs": 1666,
+     "warmUpStartMs": 504,
+     "warmUpMs": 223,
+     "warmUpRasterMs": 22,
+     "firstReadyMs": 1173,
+     "fenceMs": 1256,
+     "revealStartMs": 1288,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 3,
+     "revealedMs": 1912,
+     "warmUpStartMs": 544,
+     "warmUpMs": 341,
+     "warmUpRasterMs": 141,
+     "firstReadyMs": 1421,
+     "fenceMs": 1504,
+     "revealStartMs": 1536,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 3,
+     "revealedMs": 1661,
+     "warmUpStartMs": 489,
+     "warmUpMs": 224,
+     "warmUpRasterMs": 25,
+     "firstReadyMs": 1167,
+     "fenceMs": 1250,
+     "revealStartMs": 1282,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 3,
+     "revealedMs": 1642,
+     "warmUpStartMs": 843,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1144,
+     "fenceMs": 1226,
+     "revealStartMs": 1258,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 3,
+     "revealedMs": 1500,
+     "warmUpStartMs": 673,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1007,
+     "fenceMs": 1089,
+     "revealStartMs": 1121,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 4,
+     "revealedMs": 1639,
+     "warmUpStartMs": 829,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1146,
+     "fenceMs": 1229,
+     "revealStartMs": 1261,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 4,
+     "revealedMs": 1493,
+     "warmUpStartMs": 680,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 997,
+     "fenceMs": 1080,
+     "revealStartMs": 1112,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 4,
+     "revealedMs": 1909,
+     "warmUpStartMs": 538,
+     "warmUpMs": 343,
+     "warmUpRasterMs": 144,
+     "firstReadyMs": 1417,
+     "fenceMs": 1500,
+     "revealStartMs": 1531,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 4,
+     "revealedMs": 1668,
+     "warmUpStartMs": 490,
+     "warmUpMs": 222,
+     "warmUpRasterMs": 22,
+     "firstReadyMs": 1176,
+     "fenceMs": 1259,
+     "revealStartMs": 1291,
+     "pageErrors": 0
+    }
+   ]
+  },
+  "uncapped": {
+   "frames": "uncapped",
+   "rounds": 5,
+   "medians": {
+    "v27.1 first": {
+     "revealedMs": 1905,
+     "firstReadyMs": 1455,
+     "fenceWaitMs": 97,
+     "warmUpMs": null,
+     "warmUpRasterMs": null
+    },
+    "v27.2 first": {
+     "revealedMs": 2231,
+     "firstReadyMs": 1447,
+     "fenceWaitMs": 427,
+     "warmUpMs": 342,
+     "warmUpRasterMs": 142
+    },
+    "v27.1 repeat": {
+     "revealedMs": 1777,
+     "firstReadyMs": 1008,
+     "fenceWaitMs": 17,
+     "warmUpMs": null,
+     "warmUpRasterMs": null
+    },
+    "v27.2 repeat": {
+     "revealedMs": 2055,
+     "firstReadyMs": 1508,
+     "fenceWaitMs": 190,
+     "warmUpMs": 226,
+     "warmUpRasterMs": 30
+    }
+   },
+   "boots": [
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 0,
+     "revealedMs": 1905,
+     "warmUpStartMs": 964,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1455,
+     "fenceMs": 1461,
+     "revealStartMs": 1558,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 0,
+     "revealedMs": 1747,
+     "warmUpStartMs": 680,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 999,
+     "fenceMs": 1387,
+     "revealStartMs": 1401,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 0,
+     "revealedMs": 2255,
+     "warmUpStartMs": 541,
+     "warmUpMs": 342,
+     "warmUpRasterMs": 142,
+     "firstReadyMs": 1450,
+     "fenceMs": 1480,
+     "revealStartMs": 1907,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 0,
+     "revealedMs": 2258,
+     "warmUpStartMs": 521,
+     "warmUpMs": 544,
+     "warmUpRasterMs": 348,
+     "firstReadyMs": 1543,
+     "fenceMs": 1548,
+     "revealStartMs": 1911,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 1,
+     "revealedMs": 2211,
+     "warmUpStartMs": 533,
+     "warmUpMs": 332,
+     "warmUpRasterMs": 135,
+     "firstReadyMs": 1425,
+     "fenceMs": 1458,
+     "revealStartMs": 1862,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 1,
+     "revealedMs": 2089,
+     "warmUpStartMs": 522,
+     "warmUpMs": 229,
+     "warmUpRasterMs": 32,
+     "firstReadyMs": 1508,
+     "fenceMs": 1514,
+     "revealStartMs": 1738,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 1,
+     "revealedMs": 2014,
+     "warmUpStartMs": 870,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1463,
+     "fenceMs": 1468,
+     "revealStartMs": 1665,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 1,
+     "revealedMs": 1785,
+     "warmUpStartMs": 695,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1408,
+     "fenceMs": 1413,
+     "revealStartMs": 1436,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 2,
+     "revealedMs": 2144,
+     "warmUpStartMs": 929,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1488,
+     "fenceMs": 1493,
+     "revealStartMs": 1795,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 2,
+     "revealedMs": 1777,
+     "warmUpStartMs": 660,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1008,
+     "fenceMs": 1411,
+     "revealStartMs": 1428,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 2,
+     "revealedMs": 2231,
+     "warmUpStartMs": 542,
+     "warmUpMs": 347,
+     "warmUpRasterMs": 145,
+     "firstReadyMs": 1457,
+     "fenceMs": 1465,
+     "revealStartMs": 1880,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 2,
+     "revealedMs": 2002,
+     "warmUpStartMs": 516,
+     "warmUpMs": 223,
+     "warmUpRasterMs": 24,
+     "firstReadyMs": 1491,
+     "fenceMs": 1496,
+     "revealStartMs": 1644,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 3,
+     "revealedMs": 2277,
+     "warmUpStartMs": 543,
+     "warmUpMs": 351,
+     "warmUpRasterMs": 148,
+     "firstReadyMs": 1447,
+     "fenceMs": 1482,
+     "revealStartMs": 1929,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 3,
+     "revealedMs": 2015,
+     "warmUpStartMs": 514,
+     "warmUpMs": 222,
+     "warmUpRasterMs": 29,
+     "firstReadyMs": 1505,
+     "fenceMs": 1511,
+     "revealStartMs": 1667,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 3,
+     "revealedMs": 1828,
+     "warmUpStartMs": 959,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1421,
+     "fenceMs": 1428,
+     "revealStartMs": 1480,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 3,
+     "revealedMs": 1804,
+     "warmUpStartMs": 684,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1399,
+     "fenceMs": 1404,
+     "revealStartMs": 1452,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "first",
+     "round": 4,
+     "revealedMs": 1827,
+     "warmUpStartMs": 865,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1419,
+     "fenceMs": 1426,
+     "revealStartMs": 1480,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.1",
+     "visit": "repeat",
+     "round": 4,
+     "revealedMs": 1733,
+     "warmUpStartMs": 662,
+     "warmUpMs": 0,
+     "warmUpRasterMs": null,
+     "firstReadyMs": 1005,
+     "fenceMs": 1366,
+     "revealStartMs": 1382,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "first",
+     "round": 4,
+     "revealedMs": 2211,
+     "warmUpStartMs": 534,
+     "warmUpMs": 338,
+     "warmUpRasterMs": 139,
+     "firstReadyMs": 1376,
+     "fenceMs": 1410,
+     "revealStartMs": 1863,
+     "pageErrors": 0
+    },
+    {
+     "version": "v27.2",
+     "visit": "repeat",
+     "round": 4,
+     "revealedMs": 2055,
+     "warmUpStartMs": 522,
+     "warmUpMs": 226,
+     "warmUpRasterMs": 30,
+     "firstReadyMs": 1514,
+     "fenceMs": 1519,
+     "revealStartMs": 1709,
+     "pageErrors": 0
+    }
+   ]
+  },
+  "committedToolCheck": {
+   "rounds": 2,
+   "vsync": true,
+   "revealedMs": [
+    {
+     "version": "bb09fff",
+     "kind": "cold",
+     "revealedMs": 1589,
+     "warmUpMs": 77
+    },
+    {
+     "version": "bb09fff",
+     "kind": "repeat",
+     "revealedMs": 1522,
+     "warmUpMs": 64
+    },
+    {
+     "version": "checkout",
+     "kind": "cold",
+     "revealedMs": 1905,
+     "warmUpMs": 347
+    },
+    {
+     "version": "checkout",
+     "kind": "repeat",
+     "revealedMs": 1654,
+     "warmUpMs": 224
+    },
+    {
+     "version": "checkout",
+     "kind": "cold",
+     "revealedMs": 2050,
+     "warmUpMs": 388
+    },
+    {
+     "version": "checkout",
+     "kind": "repeat",
+     "revealedMs": 1654,
+     "warmUpMs": 223
+    },
+    {
+     "version": "bb09fff",
+     "kind": "cold",
+     "revealedMs": 1599,
+     "warmUpMs": 86
+    },
+    {
+     "version": "bb09fff",
+     "kind": "repeat",
+     "revealedMs": 1473,
+     "warmUpMs": 56
+    }
+   ]
+  },
+  "assetTimeline": {
+   "note": "Four cold vsync boots (two rounds, both versions) with a 2 ms poll: fonts, the moon image and the WebGPU water resolved 122 to 259 ms after navigation. The v27.2 warm-up, which needs the generated world, started 490 to 535 ms after navigation.",
+   "fontsMs": [
+    127,
+    122,
+    249,
+    242
+   ],
+   "moonMs": [
+    130,
+    124,
+    251,
+    244
+   ],
+   "waterMs": [
+    139,
+    133,
+    259,
+    252
+   ]
+  }
+ },
+ "equivalence": {
+  "boots": [
+   "bb09fff: 17 scenes, page errors 0",
+   "checkout: 17 scenes, page errors 0, warm-up 361 ms, warm-up errors []",
+   "checkout, warm-up disabled: 17 scenes, page errors 0"
+  ],
+  "pairs": [
+   {
+    "comparison": "warm-up disabled against enabled",
+    "scenes": {
+     "spawn": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "spawn-fraction": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "grass": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "deck": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "topsoil-cave": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-topsoil": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-subsoil": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-deepcrust": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-permafrost": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-magma": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-mantle": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "altitude": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "bank-edge": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "floater": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "damage": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "explosion": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "death": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     }
+    },
+    "matching": 17,
+    "scenes_total": 17,
+    "exact": 17
+   },
+   {
+    "comparison": "bb09fff against this checkout",
+    "scenes": {
+     "spawn": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "spawn-fraction": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "grass": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "deck": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "topsoil-cave": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-topsoil": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-subsoil": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-deepcrust": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-permafrost": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-magma": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "layer-mantle": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "altitude": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "bank-edge": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "floater": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "damage": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "explosion": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     },
+     "death": {
+      "match": true,
+      "main": "exact",
+      "ui": "exact"
+     }
+    },
+    "matching": 17,
+    "scenes_total": 17,
+    "exact": 17
+   }
+  ]
+ },
+ "loadingSmoke": {
+  "passLines": 85,
+  "failLines": 0,
+  "summary": "PASS 84 loading checks"
+ },
+ "otherBackends": {
+  "graphiteDefault": {
+   "warmUpMs": 250,
+   "warmUpRasterMs": 47,
+   "errors": [],
+   "note": "12-second surface drive; Graphite pipeline events are not counted as programs"
+  },
+  "phone": {
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3
+   },
+   "gameCanvas": [
+    1170,
+    2532
+   ],
+   "warmUpMs": 567,
+   "warmUpRasterMs": 326,
+   "errors": [],
+   "programsWhileLoading": 94,
+   "programsAfterReveal": 2,
+   "note": "12-second surface drive"
+  }
+ },
+ "remaining": [
+  {
+   "program": "3319251728428862184",
+   "where": "a pond with slimes in view, variable (0 to 4 programs at the tour pond)",
+   "contents": "slime material volume: two-point conical gradient, natively focal and well behaved, dual-interval colours, dither, analytic rounded-rect coverage (aa_bloat_multiplier 2), path mask atlas clip",
+   "loadingForm": "same fill without the mask-atlas lookup; its vertex stage sets aa_bloat_multiplier 1, read as the multisampled path",
+   "investigation": {
+    "pondRuns": "3 runs, 1 program each, 0.48 to 0.52 s after reveal, 4.0 to 4.6 ms",
+    "callSites": "the only focal radial gradient draw after the reveal is jelloDrawMaterialVolume",
+    "drawLog": "teleport at frame 7110, slime draws every frame from 7111, program at frame 7285 while the rig fell into the pond; slime size and position unchanged",
+    "isolatedFills": "the fill drawn alone on a hidden canvas, the game canvas and the HUD canvas built only programs 14449064811968576769 and 16737281369521738708 (vertex stage aa_bloat_multiplier 1)"
+   }
+  },
+  {
+   "program": "3161627727885422259",
+   "where": "surface drive, about 2.5 s in",
+   "contents": "rounded-rect geometry with an analytic rectangle clip and a solid colour",
+   "tried": [
+    "hazard stripes",
+    "deck-edge terrain layouts",
+    "rig poses at other screen positions",
+    "clipped fills on the main, HUD and hidden canvases"
+   ]
+  }
+ ]
+}

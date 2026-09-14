@@ -261,6 +261,383 @@
     return uiTopCtx;
   }
 
+  // Layered walls behind the terrain chunks, one band per visible biome.
+  // The shader warm-up (046) draws the same bands at other camera depths.
+  function drawUndergroundBackground(worldLeft, worldRight, worldTop, worldBottom, surfaceY) {
+    var ugTop = Math.max(worldTop, surfaceY);
+    var tBg = performance.now() / 1000;
+    // Walk the on-screen town's layer stack and fill bands
+    var _camStk = camLayerStack();
+    for (var li = 0; li < _camStk.length; li++) {
+      var L = _camStk[li];
+      var bandTopY = surfaceY + L.minDepth * TILE;
+      var bandBotY = surfaceY + L.maxDepth * TILE;
+      if (bandBotY < ugTop) continue;
+      if (bandTopY > worldBottom) break;
+      var visTop = Math.max(bandTopY, ugTop);
+      var visBot = Math.min(bandBotY, worldBottom);
+      // Magma & mantle: dramatic animated background — deep red→orange
+      // gradient with a slow heat pulse and floating embers. Replaces the
+      // flat brown-black fill that used to make these layers look like
+      // every other layer with red bits.
+      if (L.name === 'magma' || L.name === 'mantle') {
+        // Vertical heat gradient — biome-fill colour at the top from
+        // BG.* palette, then transitioning to hotter colours toward the
+        // bottom of the band. The hotter mid/bottom stops are *heat*
+        // (not biome fill) so they stay as literals; if we promote them
+        // to BG later we'd want `bgMagmaHot1` / `bgMagmaHot2` etc.
+        var hg = ctx.createLinearGradient(0, bandTopY, 0, bandBotY);
+        if (L.name === 'magma') {
+          hg.addColorStop(0,    BG.bgMagma);
+          hg.addColorStop(0.5,  '#4a1208');
+          hg.addColorStop(1,    '#6e1c0a');
+        } else {
+          hg.addColorStop(0,    BG.bgMantle);
+          hg.addColorStop(0.5,  '#5e0808');
+          hg.addColorStop(1,    '#8a1010');
+        }
+        ctx.fillStyle = hg;
+        ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
+        // Heat pulse — slow breathing orange wash
+        var pulseHeat = 0.5 + 0.5 * Math.sin(tBg * 0.6);
+        ctx.fillStyle = 'rgba(255,90,30,' + (0.05 + pulseHeat * 0.06).toFixed(3) + ')';
+        ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
+        // Lava streak: a soft horizontal glow band that drifts slowly down
+        var streakY = bandTopY + ((tBg * 18) % (bandBotY - bandTopY));
+        if (streakY > visTop - 60 && streakY < visBot + 60) {
+          var streakGrad = ctx.createLinearGradient(0, streakY - 40, 0, streakY + 40);
+          streakGrad.addColorStop(0,   'rgba(255,120,40,0)');
+          streakGrad.addColorStop(0.5, 'rgba(255,150,60,0.18)');
+          streakGrad.addColorStop(1,   'rgba(255,120,40,0)');
+          ctx.fillStyle = streakGrad;
+          ctx.fillRect(worldLeft, Math.max(visTop, streakY - 40), screenW, 80);
+        }
+        // Floating embers — pseudo-random per visible cell, drifting upward
+        drawEmbers(worldLeft, worldRight, visTop, visBot, L.name === 'mantle');
+        // Magma/mantle keep the heat gradient + embers as their wall —
+        // no biome wall pattern needed (and adding one would compete
+        // with the heat treatment).
+      } else {
+        // v13.11 — the biome wall pattern IS the underground background
+        // now: ONE fillRect per visible biome band, drawn BEHIND the
+        // terrain chunks. The chunks erase their cave voids to
+        // transparent (see drawSmoothVoids), so this wall shows through
+        // every cave; the rock occludes it everywhere else. No per-chunk
+        // contour mask, no parallax clip — terrain occlusion gives the
+        // cave shape for free. The pattern rides its own matrix for the
+        // X+Y parallax drift (imageSmoothing off so the speckle stays
+        // crisp, matching the old per-chunk wall fill).
+        var surfaceBankClip = L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
+          worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH;
+        // The irregular bank ends within 12 world pixels of the surface.
+        // Applying its path mask to the whole underground band makes Canvas
+        // rasterize a large clipped layer every frame. Keep that mask around
+        // the edge only; the wall below it needs just a rectangular clip.
+        // Split on a native pixel boundary so the two passes cannot leave a
+        // filtered seam, including at fractional zoom and during camera shake.
+        var bankSplit = false, bankTransform, bankCutPx, bankCut;
+        if (surfaceBankClip) {
+          bankTransform = ctx.getTransform();
+          bankCutPx = Math.ceil((surfaceY + SURFACE_BANK_EDGE_DEPTH) * bankTransform.d + bankTransform.f);
+          bankCut = (bankCutPx - bankTransform.f) / bankTransform.d;
+          bankSplit = bankTransform.b === 0 && bankTransform.c === 0 && bankTransform.d > 0 &&
+            bankCutPx > 0 && bankCutPx < canvas.height;
+        }
+        for (var bankPass = 0; bankPass < (bankSplit ? 2 : 1); bankPass++) {
+          if (surfaceBankClip) {
+            ctx.save();
+            if (bankSplit) {
+              ctx.setTransform(1, 0, 0, 1, 0, 0);
+              ctx.beginPath();
+              ctx.rect(0, bankPass === 0 ? 0 : bankCutPx, canvas.width,
+                bankPass === 0 ? bankCutPx : canvas.height - bankCutPx);
+              ctx.clip();
+              ctx.setTransform(bankTransform);
+            }
+            if (!bankSplit || bankPass === 0) {
+              clipSurfaceBank(worldLeft, worldRight, bankSplit ? bankCut : bandBotY);
+            }
+          }
+          var wallFill = PERF_DISABLE_CAVE_WALLS ? null : getBiomeWallFill(L.name);
+          if (wallFill) {
+            wallFill.setTransform(new DOMMatrix([1, 0, 0, 1,
+              cam.x * (1 - BIOME_WALL_PARALLAX_X),
+              cam.y * (1 - BIOME_WALL_PARALLAX_Y)]));
+            ctx.fillStyle = wallFill;
+            ctx.imageSmoothingEnabled = false;
+            ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
+            ctx.imageSmoothingEnabled = true;
+          } else {
+            ctx.fillStyle = biomeBgColor(L.name);
+            ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
+          }
+
+          // Recessed cut bank and fine roots tie the surface to the wall.
+          // Both sit behind the terrain; their height stays surface-anchored.
+          if (L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
+              surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
+            drawSurfaceTransition(worldLeft, worldRight);
+          }
+          if (surfaceBankClip) ctx.restore();
+        }
+      }
+    }
+    // Soften the grey layer's two material boundaries before terrain
+    // occludes the walls. Visibility includes either side of each seam.
+    drawRockWallTransitions(_camStk, worldLeft, worldRight, ugTop, worldBottom);
+  }
+
+  // Grass tufts, soil patches, seed stalks and pebbles along the surface line.
+  // The shader warm-up (046) also draws it over open ground.
+  function drawSurfaceGrassLine(worldLeft, worldRight, surfaceY) {
+    _grassSupCol = 2147483647;
+    var grassLeft = Math.floor(worldLeft / 4) * 4 - 16;
+    var grassRight = worldRight + 12;
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    for (var patchX = Math.floor(worldLeft / 28) * 28 - 28; patchX < worldRight + 28; patchX += 28) {
+      var patchCol = Math.floor(patchX / 28);
+      var patchSeed = tileHash01(0, patchCol, 0x6A540);
+      var gapSeed = tileHash01(0, Math.floor(patchX / 84), 0x6A541);
+      if (patchSeed < 0.46 || gapSeed < 0.18) continue;
+
+      var patchW = 12 + tileHash01(1, patchCol, 0x6A542) * 20;
+      var patchStart = patchX + tileHash01(2, patchCol, 0x6A543) * Math.max(1, 28 - patchW);
+      var patchCenter = patchStart + patchW * 0.5;
+      var patchH = 3 + patchSeed * 4;
+
+      if (grassSupported(patchCenter)) drawSoilPatch(patchCenter, patchW, patchSeed, surfaceY);
+
+      for (var gx = patchStart; gx < patchStart + patchW; gx += 2.6) {
+        if (!grassSupported(gx)) continue;   // no block beneath -> no blade
+        var bladeCol = Math.floor(gx * 3);
+        var bladeSeed = tileHash01(3, bladeCol, 0x6A551);
+        if (bladeSeed < 0.18) continue;
+        var edgeFade = Math.min(1, (gx - patchStart) / 5, (patchStart + patchW - gx) / 5);
+        var bladeH = (2.2 + bladeSeed * 5.4 + patchH * 0.45) * (0.65 + edgeFade * 0.35);
+        var lean = (tileHash01(4, bladeCol, 0x6A552) - 0.5) * (2.4 + patchSeed * 1.4);
+        var restLean = lean;
+        var baseY = surfaceY - 0.4 + tileHash01(5, bladeCol, 0x6A553) * 1.2;
+        // Wind: sample the live spring field, add per-blade gain variance + a
+        // shimmer that only flutters while the field is actually moving (|v|),
+        // so settling grass shivers and resting grass stays calm.
+        sampleGrassWind(gx);
+        if (_gwS.d !== 0 || _gwS.v !== 0) {
+          var bGain = 1 + (tileHash01(13, bladeCol, 0x6A560) - 0.5) * 2 * grassWindTune.vary;
+          var bFlut = Math.sin(grassWindTime * 6.2832 * grassWindTune.flutterFreq * (0.7 + tileHash01(14, bladeCol, 0x6A561) * 0.6) + bladeCol * 0.7)
+                    * grassWindTune.flutter * Math.min(1, Math.abs(_gwS.v) * 0.06);
+          var bLay = _gwS.d * bGain + bFlut;
+          lean += bLay * bladeH * grassWindTune.bend;
+          bladeH *= 1 - grassWindTune.flatten * Math.min(1, Math.abs(bLay));
+        }
+        var tone = tileHash01(6, bladeCol, 0x6A554);
+        ctx.strokeStyle = tone > 0.76 ? '#9a8f58' : (tone > 0.44 ? '#5f783f' : '#3d5b31');
+        ctx.lineWidth = tone > 0.82 ? 0.85 : 0.72;
+        ctx.globalAlpha = 0.72 + edgeFade * 0.24;
+        ctx.beginPath();
+        ctx.moveTo(gx, baseY);
+        ctx.quadraticCurveTo(gx + lean * 0.35, baseY - bladeH * 0.58, gx + lean, baseY - bladeH);
+        ctx.stroke();
+
+        if (bladeSeed > 0.72) {
+          var sideLean = -restLean * 0.55 + (lean - restLean) * 0.74
+                       + (tileHash01(7, bladeCol, 0x6A555) - 0.5) * 1.8;
+          ctx.strokeStyle = tone > 0.7 ? '#7b744b' : '#4d693b';
+          ctx.lineWidth = 0.62;
+          ctx.globalAlpha = 0.62 + edgeFade * 0.18;
+          ctx.beginPath();
+          ctx.moveTo(gx + 0.8, baseY);
+          ctx.quadraticCurveTo(gx + sideLean * 0.28, baseY - bladeH * 0.45, gx + sideLean, baseY - bladeH * 0.74);
+          ctx.stroke();
+        }
+      }
+
+      if (patchSeed > 0.88 && grassSupported(patchCenter + (tileHash01(8, patchCol, 0x6A556) - 0.5) * patchW * 0.55)) {
+        var seedHeadX = patchCenter + (tileHash01(8, patchCol, 0x6A556) - 0.5) * patchW * 0.55;
+        var stemH = 7 + tileHash01(9, patchCol, 0x6A557) * 4;
+        var stemDx = 0;   // wind lay-over of the tall seed stalk
+        sampleGrassWind(seedHeadX);
+        if (_gwS.d !== 0 || _gwS.v !== 0) {
+          var sGain = 1 + (tileHash01(13, patchCol, 0x6A560) - 0.5) * 2 * grassWindTune.vary;
+          var sFlut = Math.sin(grassWindTime * 6.2832 * grassWindTune.flutterFreq * (0.7 + tileHash01(14, patchCol, 0x6A561) * 0.6) + patchCol * 1.3)
+                    * grassWindTune.flutter * Math.min(1, Math.abs(_gwS.v) * 0.06);
+          var sLay = _gwS.d * sGain + sFlut;
+          stemDx = sLay * stemH * grassWindTune.bend;
+          stemH *= 1 - grassWindTune.flatten * Math.min(1, Math.abs(sLay)) * 0.6;
+        }
+        ctx.globalAlpha = 0.72;
+        ctx.strokeStyle = '#786f49';
+        ctx.lineWidth = 0.65;
+        ctx.beginPath();
+        ctx.moveTo(seedHeadX, surfaceY - 0.5);
+        ctx.quadraticCurveTo(seedHeadX + 1.2 + stemDx * 0.45, surfaceY - stemH * 0.55, seedHeadX + 0.2 + stemDx, surfaceY - stemH);
+        ctx.stroke();
+        ctx.fillStyle = '#a49562';
+        ctx.beginPath();
+        ctx.ellipse(seedHeadX + 0.2 + stemDx, surfaceY - stemH - 0.8, 1.0, 1.7, -0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    for (var gx2 = grassLeft; gx2 < grassRight; gx2 += 9) {
+      if (tileHash01(10, Math.floor(gx2 / 9), 0x6A558) < 0.42) continue;
+      var pebbleX = gx2 + tileHash01(12, Math.floor(gx2 / 9), 0x6A55A) * 5;
+      if (!grassSupported(pebbleX)) continue;
+      var pebbleA = 0.10 + tileHash01(11, Math.floor(gx2 / 9), 0x6A559) * 0.08;
+      ctx.fillStyle = 'rgba(40,26,16,' + pebbleA.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.ellipse(pebbleX, surfaceY - 0.8, 1.4, 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // One poured-concrete station foundation panel, clipped to its tile.
+  // The shader warm-up (046) draws it off the pixel grid.
+  function drawFoundationTile(r, c, tx, ty) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(tx, ty, TILE, TILE);
+    ctx.clip();
+
+    // 1-px mortar joint frame (stoneDark) — the panel face insets
+    // by 1 px on left + right so two adjacent tiles share a 1-px
+    // dark seam between them. No top or bottom inset (foundation
+    // is a single row, so the band reads as continuous).
+    ctx.fillStyle = BLD.stoneDark;
+    ctx.fillRect(tx, ty, TILE, TILE);
+
+    // Face tone — three variants for cross-tile variation
+    var faceHash = tileHash01(r, c, 0xFA0);
+    var faceColor = faceHash > 0.66 ? '#615d56'
+                   : faceHash > 0.33 ? '#5a5650'
+                                      : '#544f48';
+    ctx.fillStyle = faceColor;
+    ctx.fillRect(tx + 1, ty, TILE - 2, TILE);
+
+    // Top wear surface (3 px lighter — foot traffic + sun bleach)
+    ctx.fillStyle = '#6f6c66';
+    ctx.fillRect(tx + 1, ty + 1, TILE - 2, 2);
+    ctx.fillStyle = '#797670';
+    ctx.fillRect(tx + 1, ty + 1, TILE - 2, 1);
+    // Brightest 1-px rim along the very top
+    ctx.fillStyle = '#8c8a85';
+    ctx.fillRect(tx + 1, ty, TILE - 2, 1);
+
+    // Bottom water-staining (darker base — moisture wicks up)
+    ctx.fillStyle = '#403d36';
+    ctx.fillRect(tx + 1, ty + TILE - 3, TILE - 2, 2);
+    ctx.fillStyle = '#322f29';
+    ctx.fillRect(tx + 1, ty + TILE - 1, TILE - 2, 1);
+
+    // Aggregate specks (5 per panel — varied tones suggest pebbles
+    // in poured concrete)
+    for (var fh = 0; fh < 5; fh++) {
+      var apX = tx + 2 + Math.floor(tileHash01(r, c, 0xFB0 + fh) * (TILE - 4));
+      var apY = ty + 5 + Math.floor(tileHash01(r, c, 0xFC0 + fh) * (TILE - 10));
+      var aColor = fh === 0 ? '#9c9994'           // bright
+                  : fh === 1 ? '#7c7972'           // mid-light
+                  : fh === 2 ? '#2a2826'           // dark
+                  : fh === 3 ? '#666260'           // mid
+                              : '#403d36';          // dim
+      ctx.fillStyle = aColor;
+      ctx.fillRect(apX, apY, 1, 1);
+    }
+
+    // Diagonal hairline crack (~20% of panels)
+    if (tileHash01(r, c, 0xFD0) > 0.80) {
+      var crX = tx + 5 + Math.floor(tileHash01(r, c, 0xFD1) * (TILE - 14));
+      var crY = ty + 6 + Math.floor(tileHash01(r, c, 0xFD2) * (TILE - 14));
+      var crLen = 6 + Math.floor(tileHash01(r, c, 0xFD3) * 5);
+      var crSlope = tileHash01(r, c, 0xFD4) > 0.5 ? 1 : -1;
+      ctx.fillStyle = '#2a2826';
+      for (var ci = 0; ci < crLen; ci++) {
+        ctx.fillRect(crX + ci, crY + Math.floor(ci * 0.5) * crSlope + (ci % 3 === 1 ? crSlope : 0), 1, 1);
+      }
+    }
+
+    // Moss / water stain patch (~12% of panels)
+    if (tileHash01(r, c, 0xFE0) > 0.88) {
+      var msX = tx + 4 + Math.floor(tileHash01(r, c, 0xFE1) * (TILE - 14));
+      var msY = ty + 10 + Math.floor(tileHash01(r, c, 0xFE2) * (TILE - 18));
+      ctx.fillStyle = 'rgba(45,60,28,0.35)';
+      ctx.fillRect(msX, msY, 6, 4);
+      ctx.fillRect(msX + 1, msY - 1, 4, 1);
+      ctx.fillRect(msX + 1, msY + 4, 4, 1);
+      ctx.fillStyle = 'rgba(30,40,18,0.45)';
+      ctx.fillRect(msX + 2, msY + 1, 2, 2);
+    }
+
+    // Weep hole at the base (~10% of panels — drainage in real
+    // concrete foundations)
+    if (tileHash01(r, c, 0xFF0) > 0.90) {
+      var whX = tx + 6 + Math.floor(tileHash01(r, c, 0xFF1) * (TILE - 14));
+      var whY = ty + TILE - 6;
+      ctx.fillStyle = '#1a1816';
+      ctx.fillRect(whX, whY, 2, 2);
+      ctx.fillStyle = BLD.rustDark;
+      ctx.fillRect(whX + 1, whY + 2, 1, 1);             // tiny rust drip
+    }
+
+    // Exposed rebar — rust streak from inside (~5% of panels)
+    if (tileHash01(r, c, 0xF80) > 0.95) {
+      var rbX = tx + TILE - 4 + Math.floor(tileHash01(r, c, 0xF81) * 2);
+      ctx.fillStyle = BLD.rustDark;
+      ctx.fillRect(rbX, ty + 5, 1, TILE - 9);
+      ctx.fillStyle = BLD.rustBase;
+      ctx.fillRect(rbX, ty + 9, 1, 5);
+    }
+
+    ctx.restore();
+  }
+
+  // Soft damp soil under a grass tuft. Shared with the shader warm-up (046).
+  function drawSoilPatch(patchCenter, patchW, patchSeed, surfaceY) {
+    var soilGrad = ctx.createRadialGradient(patchCenter, surfaceY - 1, 1, patchCenter, surfaceY - 1, patchW * 0.62);
+    soilGrad.addColorStop(0, 'rgba(74,94,45,0.34)');
+    soilGrad.addColorStop(0.62, 'rgba(55,72,36,0.20)');
+    soilGrad.addColorStop(1, 'rgba(55,72,36,0)');
+    ctx.fillStyle = soilGrad;
+    ctx.beginPath();
+    ctx.ellipse(patchCenter, surfaceY - 1.4, patchW * 0.55, 2.2 + patchSeed * 1.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Outlined world-space pickup text. Shared with the shader warm-up (046).
+  function drawFloaterText(text, x, y, color, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = 'bold 9px ' + UI_FONT;
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  // Full-screen red hull-damage vignette plus tint, in CSS-pixel space.
+  // Shared with the shader warm-up (046).
+  function drawDamageFlash(dfA) {
+    // Edge vignette (darker red at the corners, transparent in the center)
+    var vg = ctx.createRadialGradient(
+      viewW / 2, viewH / 2, Math.min(viewW, viewH) * 0.25,
+      viewW / 2, viewH / 2, Math.max(viewW, viewH) * 0.75
+    );
+    vg.addColorStop(0, 'rgba(180,20,20,0)');
+    vg.addColorStop(1, 'rgba(180,20,20,' + (0.65 * dfA).toFixed(3) + ')');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, viewW, viewH);
+    // Brief uniform tint on top to sell the impact
+    ctx.fillStyle = 'rgba(255,40,40,' + (0.18 * dfA).toFixed(3) + ')';
+    ctx.fillRect(0, 0, viewW, viewH);
+  }
+
   function render() {
     var _renderT0 = performance.now();
     // ---- Reset to native pixel space and clear ----
@@ -330,129 +707,7 @@
 
     // Underground bg — drawn per-layer for visual variety
     var _ugBg0 = performance.now();
-    if (worldBottom > surfaceY) {
-      var ugTop = Math.max(worldTop, surfaceY);
-      var tBg = performance.now() / 1000;
-      // Walk the on-screen town's layer stack and fill bands
-      var _camStk = camLayerStack();
-      for (var li = 0; li < _camStk.length; li++) {
-        var L = _camStk[li];
-        var bandTopY = surfaceY + L.minDepth * TILE;
-        var bandBotY = surfaceY + L.maxDepth * TILE;
-        if (bandBotY < ugTop) continue;
-        if (bandTopY > worldBottom) break;
-        var visTop = Math.max(bandTopY, ugTop);
-        var visBot = Math.min(bandBotY, worldBottom);
-        // Magma & mantle: dramatic animated background — deep red→orange
-        // gradient with a slow heat pulse and floating embers. Replaces the
-        // flat brown-black fill that used to make these layers look like
-        // every other layer with red bits.
-        if (L.name === 'magma' || L.name === 'mantle') {
-          // Vertical heat gradient — biome-fill colour at the top from
-          // BG.* palette, then transitioning to hotter colours toward the
-          // bottom of the band. The hotter mid/bottom stops are *heat*
-          // (not biome fill) so they stay as literals; if we promote them
-          // to BG later we'd want `bgMagmaHot1` / `bgMagmaHot2` etc.
-          var hg = ctx.createLinearGradient(0, bandTopY, 0, bandBotY);
-          if (L.name === 'magma') {
-            hg.addColorStop(0,    BG.bgMagma);
-            hg.addColorStop(0.5,  '#4a1208');
-            hg.addColorStop(1,    '#6e1c0a');
-          } else {
-            hg.addColorStop(0,    BG.bgMantle);
-            hg.addColorStop(0.5,  '#5e0808');
-            hg.addColorStop(1,    '#8a1010');
-          }
-          ctx.fillStyle = hg;
-          ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
-          // Heat pulse — slow breathing orange wash
-          var pulseHeat = 0.5 + 0.5 * Math.sin(tBg * 0.6);
-          ctx.fillStyle = 'rgba(255,90,30,' + (0.05 + pulseHeat * 0.06).toFixed(3) + ')';
-          ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
-          // Lava streak: a soft horizontal glow band that drifts slowly down
-          var streakY = bandTopY + ((tBg * 18) % (bandBotY - bandTopY));
-          if (streakY > visTop - 60 && streakY < visBot + 60) {
-            var streakGrad = ctx.createLinearGradient(0, streakY - 40, 0, streakY + 40);
-            streakGrad.addColorStop(0,   'rgba(255,120,40,0)');
-            streakGrad.addColorStop(0.5, 'rgba(255,150,60,0.18)');
-            streakGrad.addColorStop(1,   'rgba(255,120,40,0)');
-            ctx.fillStyle = streakGrad;
-            ctx.fillRect(worldLeft, Math.max(visTop, streakY - 40), screenW, 80);
-          }
-          // Floating embers — pseudo-random per visible cell, drifting upward
-          drawEmbers(worldLeft, worldRight, visTop, visBot, L.name === 'mantle');
-          // Magma/mantle keep the heat gradient + embers as their wall —
-          // no biome wall pattern needed (and adding one would compete
-          // with the heat treatment).
-        } else {
-          // v13.11 — the biome wall pattern IS the underground background
-          // now: ONE fillRect per visible biome band, drawn BEHIND the
-          // terrain chunks. The chunks erase their cave voids to
-          // transparent (see drawSmoothVoids), so this wall shows through
-          // every cave; the rock occludes it everywhere else. No per-chunk
-          // contour mask, no parallax clip — terrain occlusion gives the
-          // cave shape for free. The pattern rides its own matrix for the
-          // X+Y parallax drift (imageSmoothing off so the speckle stays
-          // crisp, matching the old per-chunk wall fill).
-          var surfaceBankClip = L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
-            worldTop < surfaceY + SURFACE_BANK_EDGE_DEPTH;
-          // The irregular bank ends within 12 world pixels of the surface.
-          // Applying its path mask to the whole underground band makes Canvas
-          // rasterize a large clipped layer every frame. Keep that mask around
-          // the edge only; the wall below it needs just a rectangular clip.
-          // Split on a native pixel boundary so the two passes cannot leave a
-          // filtered seam, including at fractional zoom and during camera shake.
-          var bankSplit = false, bankTransform, bankCutPx, bankCut;
-          if (surfaceBankClip) {
-            bankTransform = ctx.getTransform();
-            bankCutPx = Math.ceil((surfaceY + SURFACE_BANK_EDGE_DEPTH) * bankTransform.d + bankTransform.f);
-            bankCut = (bankCutPx - bankTransform.f) / bankTransform.d;
-            bankSplit = bankTransform.b === 0 && bankTransform.c === 0 && bankTransform.d > 0 &&
-              bankCutPx > 0 && bankCutPx < canvas.height;
-          }
-          for (var bankPass = 0; bankPass < (bankSplit ? 2 : 1); bankPass++) {
-            if (surfaceBankClip) {
-              ctx.save();
-              if (bankSplit) {
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.beginPath();
-                ctx.rect(0, bankPass === 0 ? 0 : bankCutPx, canvas.width,
-                  bankPass === 0 ? bankCutPx : canvas.height - bankCutPx);
-                ctx.clip();
-                ctx.setTransform(bankTransform);
-              }
-              if (!bankSplit || bankPass === 0) {
-                clipSurfaceBank(worldLeft, worldRight, bankSplit ? bankCut : bandBotY);
-              }
-            }
-            var wallFill = PERF_DISABLE_CAVE_WALLS ? null : getBiomeWallFill(L.name);
-            if (wallFill) {
-              wallFill.setTransform(new DOMMatrix([1, 0, 0, 1,
-                cam.x * (1 - BIOME_WALL_PARALLAX_X),
-                cam.y * (1 - BIOME_WALL_PARALLAX_Y)]));
-              ctx.fillStyle = wallFill;
-              ctx.imageSmoothingEnabled = false;
-              ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
-              ctx.imageSmoothingEnabled = true;
-            } else {
-              ctx.fillStyle = biomeBgColor(L.name);
-              ctx.fillRect(worldLeft, visTop, screenW, visBot - visTop);
-            }
-
-            // Recessed cut bank and fine roots tie the surface to the wall.
-            // Both sit behind the terrain; their height stays surface-anchored.
-            if (L.name === 'topsoil' && !PERF_DISABLE_CAVE_WALLS &&
-                surfaceY <= worldBottom && worldTop <= surfaceY + SURFACE_TRANSITION_DEPTH) {
-              drawSurfaceTransition(worldLeft, worldRight);
-            }
-            if (surfaceBankClip) ctx.restore();
-          }
-        }
-      }
-      // Soften the grey layer's two material boundaries before terrain
-      // occludes the walls. Visibility includes either side of each seam.
-      drawRockWallTransitions(_camStk, worldLeft, worldRight, ugTop, worldBottom);
-    }
+    if (worldBottom > surfaceY) drawUndergroundBackground(worldLeft, worldRight, worldTop, worldBottom, surfaceY);
     perfMark('render.undergroundBg', _ugBg0);
 
     // ====== RENDER: Tiles + ores ======
@@ -500,100 +755,7 @@
           // cracks, moss patches, weep holes, or exposed rebar — sells
           // weathered industrial concrete instead of clean repeating tiles.
           if (tile.type === 'foundation') {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(tx, ty, TILE, TILE);
-            ctx.clip();
-
-            // 1-px mortar joint frame (stoneDark) — the panel face insets
-            // by 1 px on left + right so two adjacent tiles share a 1-px
-            // dark seam between them. No top or bottom inset (foundation
-            // is a single row, so the band reads as continuous).
-            ctx.fillStyle = BLD.stoneDark;
-            ctx.fillRect(tx, ty, TILE, TILE);
-
-            // Face tone — three variants for cross-tile variation
-            var faceHash = tileHash01(r, c, 0xFA0);
-            var faceColor = faceHash > 0.66 ? '#615d56'
-                           : faceHash > 0.33 ? '#5a5650'
-                                              : '#544f48';
-            ctx.fillStyle = faceColor;
-            ctx.fillRect(tx + 1, ty, TILE - 2, TILE);
-
-            // Top wear surface (3 px lighter — foot traffic + sun bleach)
-            ctx.fillStyle = '#6f6c66';
-            ctx.fillRect(tx + 1, ty + 1, TILE - 2, 2);
-            ctx.fillStyle = '#797670';
-            ctx.fillRect(tx + 1, ty + 1, TILE - 2, 1);
-            // Brightest 1-px rim along the very top
-            ctx.fillStyle = '#8c8a85';
-            ctx.fillRect(tx + 1, ty, TILE - 2, 1);
-
-            // Bottom water-staining (darker base — moisture wicks up)
-            ctx.fillStyle = '#403d36';
-            ctx.fillRect(tx + 1, ty + TILE - 3, TILE - 2, 2);
-            ctx.fillStyle = '#322f29';
-            ctx.fillRect(tx + 1, ty + TILE - 1, TILE - 2, 1);
-
-            // Aggregate specks (5 per panel — varied tones suggest pebbles
-            // in poured concrete)
-            for (var fh = 0; fh < 5; fh++) {
-              var apX = tx + 2 + Math.floor(tileHash01(r, c, 0xFB0 + fh) * (TILE - 4));
-              var apY = ty + 5 + Math.floor(tileHash01(r, c, 0xFC0 + fh) * (TILE - 10));
-              var aColor = fh === 0 ? '#9c9994'           // bright
-                          : fh === 1 ? '#7c7972'           // mid-light
-                          : fh === 2 ? '#2a2826'           // dark
-                          : fh === 3 ? '#666260'           // mid
-                                      : '#403d36';          // dim
-              ctx.fillStyle = aColor;
-              ctx.fillRect(apX, apY, 1, 1);
-            }
-
-            // Diagonal hairline crack (~20% of panels)
-            if (tileHash01(r, c, 0xFD0) > 0.80) {
-              var crX = tx + 5 + Math.floor(tileHash01(r, c, 0xFD1) * (TILE - 14));
-              var crY = ty + 6 + Math.floor(tileHash01(r, c, 0xFD2) * (TILE - 14));
-              var crLen = 6 + Math.floor(tileHash01(r, c, 0xFD3) * 5);
-              var crSlope = tileHash01(r, c, 0xFD4) > 0.5 ? 1 : -1;
-              ctx.fillStyle = '#2a2826';
-              for (var ci = 0; ci < crLen; ci++) {
-                ctx.fillRect(crX + ci, crY + Math.floor(ci * 0.5) * crSlope + (ci % 3 === 1 ? crSlope : 0), 1, 1);
-              }
-            }
-
-            // Moss / water stain patch (~12% of panels)
-            if (tileHash01(r, c, 0xFE0) > 0.88) {
-              var msX = tx + 4 + Math.floor(tileHash01(r, c, 0xFE1) * (TILE - 14));
-              var msY = ty + 10 + Math.floor(tileHash01(r, c, 0xFE2) * (TILE - 18));
-              ctx.fillStyle = 'rgba(45,60,28,0.35)';
-              ctx.fillRect(msX, msY, 6, 4);
-              ctx.fillRect(msX + 1, msY - 1, 4, 1);
-              ctx.fillRect(msX + 1, msY + 4, 4, 1);
-              ctx.fillStyle = 'rgba(30,40,18,0.45)';
-              ctx.fillRect(msX + 2, msY + 1, 2, 2);
-            }
-
-            // Weep hole at the base (~10% of panels — drainage in real
-            // concrete foundations)
-            if (tileHash01(r, c, 0xFF0) > 0.90) {
-              var whX = tx + 6 + Math.floor(tileHash01(r, c, 0xFF1) * (TILE - 14));
-              var whY = ty + TILE - 6;
-              ctx.fillStyle = '#1a1816';
-              ctx.fillRect(whX, whY, 2, 2);
-              ctx.fillStyle = BLD.rustDark;
-              ctx.fillRect(whX + 1, whY + 2, 1, 1);             // tiny rust drip
-            }
-
-            // Exposed rebar — rust streak from inside (~5% of panels)
-            if (tileHash01(r, c, 0xF80) > 0.95) {
-              var rbX = tx + TILE - 4 + Math.floor(tileHash01(r, c, 0xF81) * 2);
-              ctx.fillStyle = BLD.rustDark;
-              ctx.fillRect(rbX, ty + 5, 1, TILE - 9);
-              ctx.fillStyle = BLD.rustBase;
-              ctx.fillRect(rbX, ty + 9, 1, 5);
-            }
-
-            ctx.restore();
+            drawFoundationTile(r, c, tx, ty);
             continue;
           }
 
@@ -840,121 +1002,7 @@
     }
 
     // Surface grass line (drawn between sky and underground, above tiles' top edge)
-    if (worldTop < surfaceY && worldBottom > surfaceY - 4) {
-      _grassSupCol = 2147483647;
-      var grassLeft = Math.floor(worldLeft / 4) * 4 - 16;
-      var grassRight = worldRight + 12;
-
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      for (var patchX = Math.floor(worldLeft / 28) * 28 - 28; patchX < worldRight + 28; patchX += 28) {
-        var patchCol = Math.floor(patchX / 28);
-        var patchSeed = tileHash01(0, patchCol, 0x6A540);
-        var gapSeed = tileHash01(0, Math.floor(patchX / 84), 0x6A541);
-        if (patchSeed < 0.46 || gapSeed < 0.18) continue;
-
-        var patchW = 12 + tileHash01(1, patchCol, 0x6A542) * 20;
-        var patchStart = patchX + tileHash01(2, patchCol, 0x6A543) * Math.max(1, 28 - patchW);
-        var patchCenter = patchStart + patchW * 0.5;
-        var patchH = 3 + patchSeed * 4;
-
-        if (grassSupported(patchCenter)) {
-          var soilGrad = ctx.createRadialGradient(patchCenter, surfaceY - 1, 1, patchCenter, surfaceY - 1, patchW * 0.62);
-          soilGrad.addColorStop(0, 'rgba(74,94,45,0.34)');
-          soilGrad.addColorStop(0.62, 'rgba(55,72,36,0.20)');
-          soilGrad.addColorStop(1, 'rgba(55,72,36,0)');
-          ctx.fillStyle = soilGrad;
-          ctx.beginPath();
-          ctx.ellipse(patchCenter, surfaceY - 1.4, patchW * 0.55, 2.2 + patchSeed * 1.2, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        for (var gx = patchStart; gx < patchStart + patchW; gx += 2.6) {
-          if (!grassSupported(gx)) continue;   // no block beneath -> no blade
-          var bladeCol = Math.floor(gx * 3);
-          var bladeSeed = tileHash01(3, bladeCol, 0x6A551);
-          if (bladeSeed < 0.18) continue;
-          var edgeFade = Math.min(1, (gx - patchStart) / 5, (patchStart + patchW - gx) / 5);
-          var bladeH = (2.2 + bladeSeed * 5.4 + patchH * 0.45) * (0.65 + edgeFade * 0.35);
-          var lean = (tileHash01(4, bladeCol, 0x6A552) - 0.5) * (2.4 + patchSeed * 1.4);
-          var restLean = lean;
-          var baseY = surfaceY - 0.4 + tileHash01(5, bladeCol, 0x6A553) * 1.2;
-          // Wind: sample the live spring field, add per-blade gain variance + a
-          // shimmer that only flutters while the field is actually moving (|v|),
-          // so settling grass shivers and resting grass stays calm.
-          sampleGrassWind(gx);
-          if (_gwS.d !== 0 || _gwS.v !== 0) {
-            var bGain = 1 + (tileHash01(13, bladeCol, 0x6A560) - 0.5) * 2 * grassWindTune.vary;
-            var bFlut = Math.sin(grassWindTime * 6.2832 * grassWindTune.flutterFreq * (0.7 + tileHash01(14, bladeCol, 0x6A561) * 0.6) + bladeCol * 0.7)
-                      * grassWindTune.flutter * Math.min(1, Math.abs(_gwS.v) * 0.06);
-            var bLay = _gwS.d * bGain + bFlut;
-            lean += bLay * bladeH * grassWindTune.bend;
-            bladeH *= 1 - grassWindTune.flatten * Math.min(1, Math.abs(bLay));
-          }
-          var tone = tileHash01(6, bladeCol, 0x6A554);
-          ctx.strokeStyle = tone > 0.76 ? '#9a8f58' : (tone > 0.44 ? '#5f783f' : '#3d5b31');
-          ctx.lineWidth = tone > 0.82 ? 0.85 : 0.72;
-          ctx.globalAlpha = 0.72 + edgeFade * 0.24;
-          ctx.beginPath();
-          ctx.moveTo(gx, baseY);
-          ctx.quadraticCurveTo(gx + lean * 0.35, baseY - bladeH * 0.58, gx + lean, baseY - bladeH);
-          ctx.stroke();
-
-          if (bladeSeed > 0.72) {
-            var sideLean = -restLean * 0.55 + (lean - restLean) * 0.74
-                         + (tileHash01(7, bladeCol, 0x6A555) - 0.5) * 1.8;
-            ctx.strokeStyle = tone > 0.7 ? '#7b744b' : '#4d693b';
-            ctx.lineWidth = 0.62;
-            ctx.globalAlpha = 0.62 + edgeFade * 0.18;
-            ctx.beginPath();
-            ctx.moveTo(gx + 0.8, baseY);
-            ctx.quadraticCurveTo(gx + sideLean * 0.28, baseY - bladeH * 0.45, gx + sideLean, baseY - bladeH * 0.74);
-            ctx.stroke();
-          }
-        }
-
-        if (patchSeed > 0.88 && grassSupported(patchCenter + (tileHash01(8, patchCol, 0x6A556) - 0.5) * patchW * 0.55)) {
-          var seedHeadX = patchCenter + (tileHash01(8, patchCol, 0x6A556) - 0.5) * patchW * 0.55;
-          var stemH = 7 + tileHash01(9, patchCol, 0x6A557) * 4;
-          var stemDx = 0;   // wind lay-over of the tall seed stalk
-          sampleGrassWind(seedHeadX);
-          if (_gwS.d !== 0 || _gwS.v !== 0) {
-            var sGain = 1 + (tileHash01(13, patchCol, 0x6A560) - 0.5) * 2 * grassWindTune.vary;
-            var sFlut = Math.sin(grassWindTime * 6.2832 * grassWindTune.flutterFreq * (0.7 + tileHash01(14, patchCol, 0x6A561) * 0.6) + patchCol * 1.3)
-                      * grassWindTune.flutter * Math.min(1, Math.abs(_gwS.v) * 0.06);
-            var sLay = _gwS.d * sGain + sFlut;
-            stemDx = sLay * stemH * grassWindTune.bend;
-            stemH *= 1 - grassWindTune.flatten * Math.min(1, Math.abs(sLay)) * 0.6;
-          }
-          ctx.globalAlpha = 0.72;
-          ctx.strokeStyle = '#786f49';
-          ctx.lineWidth = 0.65;
-          ctx.beginPath();
-          ctx.moveTo(seedHeadX, surfaceY - 0.5);
-          ctx.quadraticCurveTo(seedHeadX + 1.2 + stemDx * 0.45, surfaceY - stemH * 0.55, seedHeadX + 0.2 + stemDx, surfaceY - stemH);
-          ctx.stroke();
-          ctx.fillStyle = '#a49562';
-          ctx.beginPath();
-          ctx.ellipse(seedHeadX + 0.2 + stemDx, surfaceY - stemH - 0.8, 1.0, 1.7, -0.35, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      ctx.globalAlpha = 1;
-      for (var gx2 = grassLeft; gx2 < grassRight; gx2 += 9) {
-        if (tileHash01(10, Math.floor(gx2 / 9), 0x6A558) < 0.42) continue;
-        var pebbleX = gx2 + tileHash01(12, Math.floor(gx2 / 9), 0x6A55A) * 5;
-        if (!grassSupported(pebbleX)) continue;
-        var pebbleA = 0.10 + tileHash01(11, Math.floor(gx2 / 9), 0x6A559) * 0.08;
-        ctx.fillStyle = 'rgba(40,26,16,' + pebbleA.toFixed(3) + ')';
-        ctx.beginPath();
-        ctx.ellipse(pebbleX, surfaceY - 0.8, 1.4, 0.55, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
+    if (worldTop < surfaceY && worldBottom > surfaceY - 4) drawSurfaceGrassLine(worldLeft, worldRight, surfaceY);
 
     perfMark('render.tiles', _renderT2Tiles);
     var _renderT2Ent = performance.now();
@@ -1142,16 +1190,7 @@
         else if (lifeProg > 0.6) alpha = Math.max(0, (1 - lifeProg) / 0.4);
         else alpha = 1;
         // Outline + fill for legibility against busy backgrounds
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.font = 'bold 9px ' + UI_FONT;
-        ctx.textAlign = 'center';
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-        ctx.strokeText(f.text, f.x, f.y);
-        ctx.fillStyle = f.color;
-        ctx.fillText(f.text, f.x, f.y);
-        ctx.restore();
+        drawFloaterText(f.text, f.x, f.y, f.color, alpha);
       }
       ctx.textAlign = 'left';
     }
@@ -1231,19 +1270,7 @@
           (window.SluiceOptions.damageFlash === false || window.SluiceOptions.lowFlash === true))) {
       // Player options (052-options.js): damage-flash toggle + photosensitive
       // low-flash mode both suppress the full-screen red wash.
-      var dfA = Math.min(1, damageFlashT);
-      // Edge vignette (darker red at the corners, transparent in the center)
-      var vg = ctx.createRadialGradient(
-        viewW / 2, viewH / 2, Math.min(viewW, viewH) * 0.25,
-        viewW / 2, viewH / 2, Math.max(viewW, viewH) * 0.75
-      );
-      vg.addColorStop(0, 'rgba(180,20,20,0)');
-      vg.addColorStop(1, 'rgba(180,20,20,' + (0.65 * dfA).toFixed(3) + ')');
-      ctx.fillStyle = vg;
-      ctx.fillRect(0, 0, viewW, viewH);
-      // Brief uniform tint on top to sell the impact
-      ctx.fillStyle = 'rgba(255,40,40,' + (0.18 * dfA).toFixed(3) + ')';
-      ctx.fillRect(0, 0, viewW, viewH);
+      drawDamageFlash(Math.min(1, damageFlashT));
     }
 
     // HUD — v11.2 gated behind UI_NEW. Will be replaced by the

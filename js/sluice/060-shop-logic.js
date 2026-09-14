@@ -857,6 +857,55 @@
   // live in 065-bombs.js. detonateBomb below is still the blast they call
   // into when a fuse runs out (or a large charge lands hard enough).
 
+  // Visual blast state: billows and dust streaks around the impact. Shared
+  // by detonation and the shader warm-up (046).
+  function buildExplosion(cx, cy, blastR, isLarge) {
+    // Billows: overlapping circles that expand outward with drift,
+    // each with its own color temperature and top-lit shading.
+    var billows = [];
+    var billowCount = isLarge ? 14 : 8;
+    for (var bi = 0; bi < billowCount; bi++) {
+      var ang = Math.random() * Math.PI * 2;
+      var dist = Math.random() * blastR * 0.3;
+      var drift = 20 + Math.random() * (isLarge ? 60 : 35);
+      billows.push({
+        x: cx + Math.cos(ang) * dist,
+        y: cy + Math.sin(ang) * dist,
+        vx: Math.cos(ang) * drift,
+        vy: Math.sin(ang) * drift - 15 - Math.random() * 25,
+        r: 4 + Math.random() * (isLarge ? 8 : 5),
+        maxR: (isLarge ? 22 : 14) + Math.random() * (isLarge ? 16 : 10),
+        delay: Math.random() * 0.12,
+        heat: Math.random(),
+      });
+    }
+
+    // Dust streaks: fast radial lines that fade quickly.
+    var streaks = [];
+    var streakCount = isLarge ? 16 : 10;
+    for (var si = 0; si < streakCount; si++) {
+      var sa = Math.random() * Math.PI * 2;
+      streaks.push({
+        ang: sa,
+        len: (isLarge ? 28 : 16) + Math.random() * (isLarge ? 24 : 14),
+        speed: 120 + Math.random() * (isLarge ? 200 : 120),
+        dist: 0,
+        width: 1 + Math.random() * 1.5,
+        bright: 0.4 + Math.random() * 0.6,
+      });
+    }
+
+    return {
+      cx: cx, cy: cy,
+      r: blastR,
+      t: 0,
+      life: 0.7,
+      billows: billows,
+      streaks: streaks,
+      large: isLarge,
+    };
+  }
+
   // Shared detonation — runs the actual blast for a live bomb that has
   // finished fuse-burning. Extracted from the old activateBomb so the
   // dropped-bomb flow can reuse it.
@@ -926,50 +975,7 @@
     // Shove any live jello blobs caught in the blast (they never break).
     jelloBombShove(cx, cy, blastR * 1.7, isLarge ? 17 : 9);
 
-    // Billows — overlapping circles that expand outward with drift,
-    // each with its own color temperature and top-lit shading.
-    var billows = [];
-    var billowCount = isLarge ? 14 : 8;
-    for (var bi = 0; bi < billowCount; bi++) {
-      var ang = Math.random() * Math.PI * 2;
-      var dist = Math.random() * blastR * 0.3;
-      var drift = 20 + Math.random() * (isLarge ? 60 : 35);
-      billows.push({
-        x: cx + Math.cos(ang) * dist,
-        y: cy + Math.sin(ang) * dist,
-        vx: Math.cos(ang) * drift,
-        vy: Math.sin(ang) * drift - 15 - Math.random() * 25,
-        r: 4 + Math.random() * (isLarge ? 8 : 5),
-        maxR: (isLarge ? 22 : 14) + Math.random() * (isLarge ? 16 : 10),
-        delay: Math.random() * 0.12,
-        heat: Math.random(),
-      });
-    }
-
-    // Dust streaks — fast radial lines that fade quickly
-    var streaks = [];
-    var streakCount = isLarge ? 16 : 10;
-    for (var si = 0; si < streakCount; si++) {
-      var sa = Math.random() * Math.PI * 2;
-      streaks.push({
-        ang: sa,
-        len: (isLarge ? 28 : 16) + Math.random() * (isLarge ? 24 : 14),
-        speed: 120 + Math.random() * (isLarge ? 200 : 120),
-        dist: 0,
-        width: 1 + Math.random() * 1.5,
-        bright: 0.4 + Math.random() * 0.6,
-      });
-    }
-
-    explosions.push({
-      cx: cx, cy: cy,
-      r: blastR,
-      t: 0,
-      life: 0.7,
-      billows: billows,
-      streaks: streaks,
-      large: isLarge,
-    });
+    explosions.push(buildExplosion(cx, cy, blastR, isLarge));
 
 
     // ---- Player damage if standing too close ----

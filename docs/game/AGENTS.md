@@ -121,6 +121,8 @@ The game is split across **fragment files in `js/sluice/`** so a session can ope
 | `020-state.js` | Game State, Day/night cycle, Smoke STATE (CPU-fallback fields), Drill animation state |
 | `030-worldgen.js` | World Generation (Earth + barrier band + bedrock) |
 | `040-init-resize-resolution.js` | `init()`, `resize()`, Resolution config block |
+| `045-loading.js` | SCENE LOADING: holds play under the loading cover while the destination becomes drawable (assets, terrain chunks, clouds, GPU fence), then reveals; `beginSceneLoading`, `renderLoadingScene` |
+| `046-shader-warm.js` | SHADER WARM-UP (v27.2): during loading, draws rig poses for every tier, dig effects, slimes, canonical terrain layouts, scenery, blasts, HUD plates and menus into a hidden canvas so Chrome compiles their first-use GPU programs under the cover; `prepareShaderWarmup`, `window.__shaderWarm`. A new draw effect needs a matching warm-up draw here |
 | `047-save.js` | SAVE / PERSISTENCE: world-grid RLE serializer, save slots, autosave poll, death-respawn + town bailout, `window.__sluiceSave` |
 | `052-options.js` | PLAYER OPTIONS: applies persisted `sluice.opt.*` keys at boot (SFX volume, graphics preset, shake, flash toggles); `window.SluiceOptions`. DOM lives in sluice.html's pause overlay |
 | `055-gamepad.js` | GAMEPAD bridge (phase 1, play+pause): Xbox-standard pad -> the `keys` object (Arrow*/space + pulse keys), edge/ownership rules, `window.__gamepad` |

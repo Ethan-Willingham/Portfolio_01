@@ -352,6 +352,26 @@
     drawStencilText(valStr, rightX - stencilTextWidth(valStr, sc), ly, sc, colV);
   }
 
+  // Desaturating veil (q) and edge vignette (v) under the death plate.
+  // Shared with the shader warm-up (046).
+  function drawDeathVeil(q, v) {
+    if (q > 0.01) {
+      ctx.globalCompositeOperation = 'saturation';
+      ctx.fillStyle = 'rgba(128,128,128,' + (0.62 * q).toFixed(3) + ')';
+      ctx.fillRect(0, 0, viewW, viewH);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(30,38,48,' + (0.11 * q).toFixed(3) + ')';
+      ctx.fillRect(0, 0, viewW, viewH);
+    }
+    if (v > 0.01) {
+      var vignette = ctx.createRadialGradient(viewW / 2, viewH * 0.5, viewW * 0.2, viewW / 2, viewH * 0.5, viewW * 0.78);
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,' + v.toFixed(3) + ')');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, viewW, viewH);
+    }
+  }
+
   function drawDeathScreen(dt) {
     if (!UI_NEW || !gameOver) return;
     // First frame of a new death: snapshot the incident before any
@@ -371,22 +391,8 @@
     // since the world has already been composited; the veil reads as the
     // light going out of the scene).
     var q = deathSmooth(0.45, 1.5, deathPhaseT);
-    if (q > 0.01) {
-      ctx.globalCompositeOperation = 'saturation';
-      ctx.fillStyle = 'rgba(128,128,128,' + (0.62 * q).toFixed(3) + ')';
-      ctx.fillRect(0, 0, viewW, viewH);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(30,38,48,' + (0.11 * q).toFixed(3) + ')';
-      ctx.fillRect(0, 0, viewW, viewH);
-    }
     var v = 0.5 * deathSmooth(0.3, 1.4, deathPhaseT);
-    if (v > 0.01) {
-      var vignette = ctx.createRadialGradient(viewW / 2, viewH * 0.5, viewW * 0.2, viewW / 2, viewH * 0.5, viewW * 0.78);
-      vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,' + v.toFixed(3) + ')');
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, viewW, viewH);
-    }
+    drawDeathVeil(q, v);
 
     // Phase 2: drop the plate the full playfield with cubic ease-out +
     // landing bounce. It locks onto the console's top edge.

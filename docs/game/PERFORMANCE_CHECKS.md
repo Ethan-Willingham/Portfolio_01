@@ -1,5 +1,23 @@
 # Sluice performance checks
 
+## First-use shader warm-up (v27.2)
+
+Chrome builds a GPU program the first time a page draws a new Canvas state,
+and the frame waiting on it presents late. `046-shader-warm.js` draws
+representative rig, digging, slime, terrain, scenery, underground, blast, HUD
+and menu states into a hidden canvas while the game loads. On the scripted tour
+in a fresh profile, programs built after the reveal fell from 40 to 1; loading
+grew by about 0.27 s. Method, limits and the two remaining programs are in
+[PERFORMANCE_SHADER_WARMUP_2026-09-13.md](PERFORMANCE_SHADER_WARMUP_2026-09-13.md).
+
+```sh
+node tools/perf/shader-warmup-trace.mjs
+node tools/perf/shader-warmup-equivalence.mjs
+```
+
+A new visual effect needs a matching warm-up draw. `MAX_COMPILES=3` on the
+trace tool fails when one is missed, and `SIGNATURES=1` names the draw.
+
 ## Diagnostic overhead and missing render spikes (v26.111)
 
 A surface-driving screenshot showed 133 ms hitches with only 16 ms accounted

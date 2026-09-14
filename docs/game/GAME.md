@@ -92,6 +92,7 @@ quantities, unit prices, and haul value while the mine is paused).
 | `020-state.js` | game state, the `shop` upgrade-cost arrays, pause overlay text |
 | `030-worldgen.js` | terrain + ore-vein placement, surface ponds (low-end lake sizing), the Great Seam |
 | `040-init-resize-resolution.js` | `init()`, `resize()`, fuel/cargo/hull/climb formulas |
+| `045-loading.js` / `046-shader-warm.js` | the loading cover and the first-use GPU shader warm-up; give any new visual effect (a new gradient, clip, blend mode, particle or menu art) a representative draw in 046 so it compiles under the cover instead of stalling play |
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
