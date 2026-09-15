@@ -12,7 +12,7 @@ export function summarizeInputRun(dir,limitSeconds=Infinity,scene='human'){
   const out={version:raw.boot.version,bundleSHA256:raw.bundleSHA256,canvas:raw.start.canvas,cpu:stats(rows.map(r=>r.cpu)),callback:stats(rows.map(r=>r.dt)),cpuOver8:rows.filter(r=>r.cpu>8).length,buckets,errors:raw.errors,
     motion:{x:[Math.min(...rows.map(r=>r.x)),Math.max(...rows.map(r=>r.x))].map(round),y:[Math.min(...rows.map(r=>r.y)),Math.max(...rows.map(r=>r.y))].map(round),groundFrames:rows.filter(r=>r.ground).length,landings:rows.slice(1).filter((r,i)=>r.ground&&!rows[i].ground).length,focusedFrames:rows.filter(r=>r.focus).length,visibleFrames:rows.filter(r=>r.visible).length,fuel:[rows[0].fuel,rows.at(-1).fuel],hull:rows.at(-1).hull,inputChanges:raw.inputEvents.filter(e=>e.atMs<limitSeconds*1000).length},
     worst:rows.slice().sort((a,b)=>b.cpu-a.cpu).slice(0,8).map(r=>({cpu:round(r.cpu),at:round(r.at-start),x:round(r.x),y:round(r.y),buckets:Object.fromEntries(Object.entries(r.buckets).filter(([k,v])=>v>.5).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,round(v)]))}))};
-  if(scene==='human-slimes')out.slimes={awakeFrames:rows.filter(r=>r.slimes.awake>0).length,contactFrames:rows.filter(r=>r.slimes.contacts>0).length,maxAwake:Math.max(...rows.map(r=>r.slimes.awake))};
+  if(scene==='human-slimes'||scene==='human-flyover')out.slimes={awakeFrames:rows.filter(r=>r.slimes.awake>0).length,contactFrames:rows.filter(r=>r.slimes.contacts>0).length,maxAwake:Math.max(...rows.map(r=>r.slimes.awake))};
   const csv=path.join(dir,scene+'.present.csv');
   if(fs.existsSync(csv)){
     const lines=fs.readFileSync(csv,'utf8').trim().split(/\r?\n/),head=lines.shift().split(',');

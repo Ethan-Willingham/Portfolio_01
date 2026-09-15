@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v27.2';
+  var GAME_VERSION = 'v27.3';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5441,7 +5441,9 @@
         jelloDrawBody(body);
         ctx.restore();
       }
-      jelloBodies = [];
+      // The frame's own path: splats, then the bodies through the shared
+      // refraction backdrop, where overlapping lenses read the canvas.
+      jelloBodies = temp;
       jelloSplats = [
         { x: cx - 30, y: cy, r: 3, hue: JELLO_RENDER_HUE, life: 0.5, maxLife: 1 },
         { x: cx + 30, y: cy, r: 6, hue: JELLO_RENDER_HUE, life: 1, maxLife: 1 }
@@ -29301,14 +29303,22 @@
     // re-renders the cached shader immediately instead of waiting for the next
     // time-of-day bucket. Constant in normal play, so it adds no extra renders.
     var _sg = SKY_SUNSET_GRADE;
-    // Camera altitude is not a shader input. The horizon clip below already
-    // tracks its visible effect; celestials are anchored to the canvas.
+    // Camera altitude is not a shader input; celestials are anchored to the
+    // canvas. The raymarch renders the whole view into an offscreen texture
+    // once per key, and skyGLPresent() copies the rows the horizon clip keeps.
+    // Flying up or down used to re-run the full-screen shader every frame
+    // just to move that cut.
     var skyKey = Math.round(timeOfDay * 2400) +
-                 '|' + Math.round(skyBottomPx) + '|' + worldScale.toFixed(3) +
+                 '|' + worldScale.toFixed(3) +
                  '|' + rw + 'x' + rh + '|' + Math.round(moonPhase * 1000) +
                  '|' + (_sg.drama + _sg.twi * 3 + _sg.twiShape + _sg.sat + _sg.contrast +
                         _sg.gain + _sg.radial + _sg.ozone + _sg.multi + _sg.floor).toFixed(2);
-    if (skyKey === skyGLLastKey) return skyGLCanvas;
+    var skyRaw = skyGLEnsureRaw(gl, rw, rh);
+    // Without the texture, clip in the shader and re-render as the cut moves.
+    if (!skyRaw) skyKey += '|' + Math.round(skyBottomPx);
+    if (skyKey === skyGLLastKey) {
+      return skyRaw ? skyGLPresent(gl, rw, rh, skyBottomPx, skyS) : skyGLCanvas;
+    }
     skyGLLastKey = skyKey;
 
     // True perspective camera + 3D sun vector.
@@ -29335,13 +29345,15 @@
     var sunDirY = Math.sin(altitude);
     var sunDirZ = Math.cos(altitude) * Math.cos(azimuth);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, skyRaw ? skyGLRawFBO : null);
     gl.viewport(0, 0, rw, rh);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(skyGLProgram);
     gl.uniform2f(skyGLU.uResolution, rw, rh);
-    gl.uniform1f(skyGLU.uSkyBottomPx, skyBottomPx * skyS);
+    // The texture keeps every row (yTop never exceeds the height); presenting
+    // applies the horizon cut.
+    gl.uniform1f(skyGLU.uSkyBottomPx, skyRaw ? rh : skyBottomPx * skyS);
     gl.uniform1f(skyGLU.uFovY, fovY);
     gl.uniform1f(skyGLU.uPitch, pitch);
     gl.uniform1f(skyGLU.uAspect, aspect);
@@ -29402,6 +29414,94 @@
     bindFullscreenQuad(gl);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
+    if (!skyRaw) return skyGLCanvas;
+    skyGLRawGen++;
+    return skyGLPresent(gl, rw, rh, skyBottomPx, skyS);
+  }
+
+  // ---- Horizon-independent sky cache (v27.3) ----
+  // skyGLRawTex holds the whole raymarch at render resolution. skyGLPresent()
+  // copies the rows the shader's own horizon clip kept (yTop = row + 0.5 not
+  // past the cut, compared as float32) into the canvas with a scissored
+  // NEAREST copy, so the canvas bytes match a clipped render exactly. The cut
+  // moves when its whole-pixel value changes or the raymarch re-renders, the
+  // same moments the old cache key re-rendered. Without a complete
+  // framebuffer, renderSkyGL clips in the shader as before.
+  var SKY_GL_FS_COPY = [
+    '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+    'precision highp float;',
+    '#else',
+    'precision mediump float;',
+    '#endif',
+    'uniform sampler2D uSrc;',
+    'uniform vec2 uSize;',
+    'void main(){',
+    '  gl_FragColor = texture2D(uSrc, gl_FragCoord.xy / uSize);',
+    '}'
+  ].join('\n');
+  var skyGLRawOk = null, skyGLRawFBO = null, skyGLRawTex = null, skyGLRawW = 0, skyGLRawH = 0;
+  var skyGLCopyProg = null, skyGLCopyU = null;
+  var skyGLRawGen = 0, skyGLPresentGen = -1, skyGLPresentRows = -1;
+  var skyGLCutKey = null, skyGLCutValue = 0;
+
+  function skyGLEnsureRaw(gl, rw, rh) {
+    if (skyGLRawOk === false) return false;
+    if (!skyGLCopyProg) {
+      skyGLCopyProg = buildSkyGLProgram(gl, SKY_GL_FS_COPY);
+      if (!skyGLCopyProg) { skyGLRawOk = false; return false; }
+      skyGLCopyU = {
+        uSrc:  gl.getUniformLocation(skyGLCopyProg, 'uSrc'),
+        uSize: gl.getUniformLocation(skyGLCopyProg, 'uSize')
+      };
+      skyGLRawTex = gl.createTexture();
+      skyGLRawFBO = gl.createFramebuffer();
+    }
+    if (skyGLRawW !== rw || skyGLRawH !== rh) {
+      gl.bindTexture(gl.TEXTURE_2D, skyGLRawTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, rw, rh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, skyGLRawFBO);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, skyGLRawTex, 0);
+      var complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (!complete) { skyGLRawOk = false; return false; }
+      skyGLRawW = rw;
+      skyGLRawH = rh;
+    }
+    skyGLRawOk = true;
+    return true;
+  }
+
+  function skyGLPresent(gl, rw, rh, skyBottomPx, skyS) {
+    var cutKey = Math.round(skyBottomPx);
+    if (cutKey !== skyGLCutKey || skyGLPresentGen !== skyGLRawGen) {
+      skyGLCutKey = cutKey;
+      skyGLCutValue = skyBottomPx * skyS;
+    }
+    var cut = Math.fround(skyGLCutValue);
+    var rows = cut < 0.5 ? 0 : Math.min(rh, Math.floor(cut - 0.5) + 1);
+    if (rows === skyGLPresentRows && skyGLPresentGen === skyGLRawGen) return skyGLCanvas;
+    skyGLPresentRows = rows;
+    skyGLPresentGen = skyGLRawGen;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, rw, rh);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    if (rows > 0) {
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(0, rh - rows, rw, rows);
+      gl.useProgram(skyGLCopyProg);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, skyGLRawTex);
+      gl.uniform1i(skyGLCopyU.uSrc, 0);
+      gl.uniform2f(skyGLCopyU.uSize, rw, rh);
+      bindFullscreenQuad(gl);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.disable(gl.SCISSOR_TEST);
+    }
     return skyGLCanvas;
   }
 
@@ -61268,7 +61368,13 @@
       if (sw > 1 && sh > 1) {
         var mag = 1 + refract;
         var dw = w * mag, dh = hgt * mag;
-        try { ctx.drawImage(ctx.canvas, sx, sy, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh); } catch (e) {}
+        // The frame's shared backdrop copy holds this lens unless it overlaps
+        // an earlier body or the view edge (jelloBackdropBegin below).
+        var bd = jelloBackdropFor(sx, sy, sw, sh);
+        try {
+          if (bd) ctx.drawImage(bd.canvas, sx - bd.x, sy - bd.y, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh);
+          else ctx.drawImage(ctx.canvas, sx, sy, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh);
+        } catch (e) {}
       }
     }
 
@@ -61513,11 +61619,103 @@
     var mx = TILE;   // small margin
     var visL = cam.x - mx, visR = cam.x + screenW + mx;
     var visT = cam.y - mx, visB = cam.y + screenH + mx;
-    for (var bi = 0; bi < jelloBodies.length; bi++) {
-      var b = jelloBodies[bi];
-      if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
-      jelloDrawBody(b);
+    jelloBackdropBegin(visL, visR, visT, visB);
+    try {
+      for (var bi = 0; bi < jelloBodies.length; bi++) {
+        var b = jelloBodies[bi];
+        if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
+        jelloDrawBody(b);
+        jelloBackdropMark(b);
+      }
+    } finally {
+      jelloBackdrop = null;
     }
+  }
+
+  // ---- Shared refraction backdrop ----
+  // Each lens magnifies the scene already drawn behind its body. Drawing the
+  // game canvas into itself made the browser snapshot and copy the whole
+  // canvas once per body, every frame, and wait on the GPU for each copy.
+  // One exact copy of the region behind every visible lens now serves them
+  // all. A lens that overlaps a body drawn earlier this frame, or reaches past
+  // the copy, still reads the canvas directly, so the pixels never change.
+  var jelloBackdrop = null;
+  var jelloBackdropCanvas = null, jelloBackdropCtx = null;
+  function jelloBackdropBegin(visL, visR, visT, visB) {
+    jelloBackdrop = null;
+    var m = ctx.getTransform();
+    if (m.b !== 0 || m.c !== 0) return;
+    var ws = (typeof dpr !== 'undefined' ? dpr : 1) * (typeof worldScale !== 'undefined' ? worldScale : 1);
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (var i = 0; i < jelloBodies.length; i++) {
+      var b = jelloBodies[i];
+      if (b.ringN < 3 || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
+      if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
+      var refract = (b.refract != null) ? b.refract : JELLO_REFRACT;
+      if (!(refract > 0.001)) continue;
+      var lx = b.bboxL * ws + m.e, ly = b.bboxT * ws + m.f;
+      var rx = b.bboxR * ws + m.e, ry = b.bboxB * ws + m.f;
+      if (lx < x0) x0 = lx;
+      if (ly < y0) y0 = ly;
+      if (rx > x1) x1 = rx;
+      if (ry > y1) y1 = ry;
+    }
+    if (!(x1 > x0 && y1 > y0)) return;
+    // Two spare pixels keep the lens edge filtering on real neighbours.
+    var cw = ctx.canvas.width, ch = ctx.canvas.height;
+    x0 = Math.max(0, Math.floor(x0) - 2);
+    y0 = Math.max(0, Math.floor(y0) - 2);
+    x1 = Math.min(cw, Math.ceil(x1) + 2);
+    y1 = Math.min(ch, Math.ceil(y1) + 2);
+    var w = x1 - x0, h = y1 - y0;
+    if (w < 2 || h < 2) return;
+    if (!jelloBackdropCanvas) {
+      jelloBackdropCanvas = document.createElement('canvas');
+      jelloBackdropCtx = jelloBackdropCanvas.getContext('2d');
+      if (!jelloBackdropCtx) { jelloBackdropCanvas = null; return; }
+    }
+    if (jelloBackdropCanvas.width < w || jelloBackdropCanvas.height < h) {
+      jelloBackdropCanvas.width = Math.max(jelloBackdropCanvas.width, w);
+      jelloBackdropCanvas.height = Math.max(jelloBackdropCanvas.height, h);
+    }
+    var bc = jelloBackdropCtx;
+    bc.setTransform(1, 0, 0, 1, 0, 0);
+    bc.globalAlpha = 1;
+    bc.globalCompositeOperation = 'source-over';
+    bc.imageSmoothingEnabled = false;
+    bc.clearRect(0, 0, w, h);
+    try { bc.drawImage(ctx.canvas, x0, y0, w, h, 0, 0, w, h); } catch (e) { return; }
+    jelloBackdrop = { canvas: jelloBackdropCanvas, source: ctx.canvas, ws: ws,
+      x: x0, y: y0, w: w, h: h, drawn: [] };
+  }
+
+  // The backdrop when it covers this lens's source rectangle and no body drawn
+  // earlier this frame reaches into it; null means read the canvas.
+  function jelloBackdropFor(sx, sy, sw, sh) {
+    var bd = jelloBackdrop;
+    if (!bd || bd.source !== ctx.canvas) return null;
+    var l = sx - 1, t = sy - 1, r = sx + sw + 1, bm = sy + sh + 1;
+    if (l < bd.x || t < bd.y || r > bd.x + bd.w || bm > bd.y + bd.h) return null;
+    for (var i = 0; i < bd.drawn.length; i++) {
+      var d = bd.drawn[i];
+      if (l < d.x1 && r > d.x0 && t < d.y1 && bm > d.y0) return null;
+    }
+    return bd;
+  }
+
+  // After a body draws, record how far its gel, edge fringe and hair reach.
+  function jelloBackdropMark(b) {
+    var bd = jelloBackdrop;
+    if (!bd) return;
+    var m = ctx.getTransform();
+    var hair = JELLO_EDGE_FUZZ * (JELLO_EDGE_STYLE >= 3 ? 1.9 : 1);
+    var reach = JELLO_RENDER_OUTSET * JELLO_CONTACT_R_FRAC * (b.spacing || (TILE / JELLO_NPT)) +
+      (b.rippleOn ? jelloRippleCap(b.spacing) * JELLO_RIPPLE : 0) +
+      (JELLO_EDGE_STYLE >= 1 ? 4 * JELLO_EDGE_FUZZ + (JELLO_EDGE_STYLE >= 2 ? 9 * hair : 0) : 2) + 2;
+    bd.drawn.push({
+      x0: (b.bboxL - reach) * bd.ws + m.e, y0: (b.bboxT - reach) * bd.ws + m.f,
+      x1: (b.bboxR + reach) * bd.ws + m.e, y1: (b.bboxB + reach) * bd.ws + m.f
+    });
   }
 
   // ----- Save / restore (047 calls these): live bodies persist across reload ---------

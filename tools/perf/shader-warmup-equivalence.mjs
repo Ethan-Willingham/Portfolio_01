@@ -5,8 +5,10 @@
 // with the warm-up disabled. The warm-up must leave every scene unchanged, and a
 // refactor must match the baseline; a deliberate visual change will not.
 // A scene passes when hashes match or every 32 px block's channel sums differ by
-// under half a level per pixel. PORT, GANESH, VSYNC and CHROME work as in
-// shader-warmup-trace.mjs. Exits 1 on any difference or page error.
+// under half a level per pixel. The two slime pen scenes render whenever the
+// world has slimes; DEV=1 boots the dev world, whose pen puts eight refracting
+// bodies in them. PORT, GANESH, VSYNC and CHROME
+// work as in shader-warmup-trace.mjs. Exits 1 on any difference or page error.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -37,7 +39,8 @@ window.__eq=(function(){
 `;
 // Evaluated inside the game IIFE. Uses only names present since v27.1.
 const helpers=`(function(){
-  window.__eqSetup=function(){var fixed=123456.789;performance.now=function(){return fixed;};Date.now=function(){return 1757700000000;};timeOfDay=0.5;GAME_VERSION='vEQ';};
+  window.__eqSetup=function(){var fixed=123456.789;performance.now=function(){return fixed;};Date.now=function(){return 1757700000000;};timeOfDay=0.5;GAME_VERSION='vEQ';
+    if(typeof drawPerfOverlay==='function')drawPerfOverlay=function(){};};
   window.__eqSeed=function(seed){var s=seed>>>0;Math.random=function(){s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};};
   window.__eqHash=function(cv){
     if(!cv)return null;var d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;
@@ -62,6 +65,11 @@ const scenes=`(function(){
   for(var i=0;i<stack.length;i++){__eqSeed(10+i);at(100*TILE+0.4,surfaceY+stack[i].minDepth*TILE-screenH*0.5+0.27);__eqSettle(12);__eqShot('layer-'+stack[i].name,out);}
   __eqSeed(20);at(base.x,surfaceY-screenH*1.2);__eqSettle(4);__eqShot('altitude',out);
   __eqSeed(21);at(base.x,surfaceY-screenH+10);__eqSettle(4);__eqShot('bank-edge',out);
+  __eqSeed(22);at(base.x+0.41,surfaceY-screenH*0.72+0.19);__eqSettle(4);__eqShot('horizon-limb',out);
+  if(jelloBodies.length){
+    __eqSeed(30);at((DECK_LEFT_COL-17)*TILE-screenW*0.5+0.33,surfaceY-screenH*0.5+0.17);__eqSettle(8);__eqShot('slime-pen',out);
+    __eqSeed(31);at((DECK_LEFT_COL-17)*TILE-screenW*0.5+0.71,surfaceY-screenH*0.55+0.49);__eqSettle(8);__eqShot('slime-pen-fraction',out);
+  }
   __eqSeed(22);at(base.x+0.37,base.y+0.21);__eqSettle(3);
   floaters.push({x:cam.x+200,y:cam.y+150,text:'+$120 Gold',color:'#ffd24a',t:0.8,maxT:1.2,vy:-20,show:true});
   render();__eqShot('floater',out);floaters.length=0;
@@ -111,7 +119,7 @@ async function render(boot,debugPort){
     await send('Page.enable');await send('Runtime.enable');
     await send('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
     await send('Page.addScriptToEvaluateOnNewDocument',{source:'(()=>{let s=48271;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);})();'});
-    await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?nosave=1&nopause=1&tod=.5'});
+    await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?nosave=1&nopause=1&tod=.5'+(process.env.DEV==='1'?'&dev=1':'')});
     let frozen=false;
     for(let i=0;i<600;i++){try{if(await ev('!!window.__eqFreeze')){frozen=true;break;}}catch{}await sleep(100);}
     if(!frozen)throw Error(boot.name+' never revealed (a sleeping display stops vsync-paced frames): '+JSON.stringify(errors));

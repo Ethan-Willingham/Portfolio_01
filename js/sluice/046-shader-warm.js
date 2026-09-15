@@ -302,7 +302,9 @@
         jelloDrawBody(body);
         ctx.restore();
       }
-      jelloBodies = [];
+      // The frame's own path: splats, then the bodies through the shared
+      // refraction backdrop, where overlapping lenses read the canvas.
+      jelloBodies = temp;
       jelloSplats = [
         { x: cx - 30, y: cy, r: 3, hue: JELLO_RENDER_HUE, life: 0.5, maxLife: 1 },
         { x: cx + 30, y: cy, r: 6, hue: JELLO_RENDER_HUE, life: 1, maxLife: 1 }

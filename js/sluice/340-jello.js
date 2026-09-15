@@ -6461,7 +6461,13 @@
       if (sw > 1 && sh > 1) {
         var mag = 1 + refract;
         var dw = w * mag, dh = hgt * mag;
-        try { ctx.drawImage(ctx.canvas, sx, sy, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh); } catch (e) {}
+        // The frame's shared backdrop copy holds this lens unless it overlaps
+        // an earlier body or the view edge (jelloBackdropBegin below).
+        var bd = jelloBackdropFor(sx, sy, sw, sh);
+        try {
+          if (bd) ctx.drawImage(bd.canvas, sx - bd.x, sy - bd.y, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh);
+          else ctx.drawImage(ctx.canvas, sx, sy, sw, sh, cx - dw * 0.5, cy - dh * 0.5, dw, dh);
+        } catch (e) {}
       }
     }
 
@@ -6706,11 +6712,103 @@
     var mx = TILE;   // small margin
     var visL = cam.x - mx, visR = cam.x + screenW + mx;
     var visT = cam.y - mx, visB = cam.y + screenH + mx;
-    for (var bi = 0; bi < jelloBodies.length; bi++) {
-      var b = jelloBodies[bi];
-      if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
-      jelloDrawBody(b);
+    jelloBackdropBegin(visL, visR, visT, visB);
+    try {
+      for (var bi = 0; bi < jelloBodies.length; bi++) {
+        var b = jelloBodies[bi];
+        if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
+        jelloDrawBody(b);
+        jelloBackdropMark(b);
+      }
+    } finally {
+      jelloBackdrop = null;
     }
+  }
+
+  // ---- Shared refraction backdrop ----
+  // Each lens magnifies the scene already drawn behind its body. Drawing the
+  // game canvas into itself made the browser snapshot and copy the whole
+  // canvas once per body, every frame, and wait on the GPU for each copy.
+  // One exact copy of the region behind every visible lens now serves them
+  // all. A lens that overlaps a body drawn earlier this frame, or reaches past
+  // the copy, still reads the canvas directly, so the pixels never change.
+  var jelloBackdrop = null;
+  var jelloBackdropCanvas = null, jelloBackdropCtx = null;
+  function jelloBackdropBegin(visL, visR, visT, visB) {
+    jelloBackdrop = null;
+    var m = ctx.getTransform();
+    if (m.b !== 0 || m.c !== 0) return;
+    var ws = (typeof dpr !== 'undefined' ? dpr : 1) * (typeof worldScale !== 'undefined' ? worldScale : 1);
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (var i = 0; i < jelloBodies.length; i++) {
+      var b = jelloBodies[i];
+      if (b.ringN < 3 || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
+      if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
+      var refract = (b.refract != null) ? b.refract : JELLO_REFRACT;
+      if (!(refract > 0.001)) continue;
+      var lx = b.bboxL * ws + m.e, ly = b.bboxT * ws + m.f;
+      var rx = b.bboxR * ws + m.e, ry = b.bboxB * ws + m.f;
+      if (lx < x0) x0 = lx;
+      if (ly < y0) y0 = ly;
+      if (rx > x1) x1 = rx;
+      if (ry > y1) y1 = ry;
+    }
+    if (!(x1 > x0 && y1 > y0)) return;
+    // Two spare pixels keep the lens edge filtering on real neighbours.
+    var cw = ctx.canvas.width, ch = ctx.canvas.height;
+    x0 = Math.max(0, Math.floor(x0) - 2);
+    y0 = Math.max(0, Math.floor(y0) - 2);
+    x1 = Math.min(cw, Math.ceil(x1) + 2);
+    y1 = Math.min(ch, Math.ceil(y1) + 2);
+    var w = x1 - x0, h = y1 - y0;
+    if (w < 2 || h < 2) return;
+    if (!jelloBackdropCanvas) {
+      jelloBackdropCanvas = document.createElement('canvas');
+      jelloBackdropCtx = jelloBackdropCanvas.getContext('2d');
+      if (!jelloBackdropCtx) { jelloBackdropCanvas = null; return; }
+    }
+    if (jelloBackdropCanvas.width < w || jelloBackdropCanvas.height < h) {
+      jelloBackdropCanvas.width = Math.max(jelloBackdropCanvas.width, w);
+      jelloBackdropCanvas.height = Math.max(jelloBackdropCanvas.height, h);
+    }
+    var bc = jelloBackdropCtx;
+    bc.setTransform(1, 0, 0, 1, 0, 0);
+    bc.globalAlpha = 1;
+    bc.globalCompositeOperation = 'source-over';
+    bc.imageSmoothingEnabled = false;
+    bc.clearRect(0, 0, w, h);
+    try { bc.drawImage(ctx.canvas, x0, y0, w, h, 0, 0, w, h); } catch (e) { return; }
+    jelloBackdrop = { canvas: jelloBackdropCanvas, source: ctx.canvas, ws: ws,
+      x: x0, y: y0, w: w, h: h, drawn: [] };
+  }
+
+  // The backdrop when it covers this lens's source rectangle and no body drawn
+  // earlier this frame reaches into it; null means read the canvas.
+  function jelloBackdropFor(sx, sy, sw, sh) {
+    var bd = jelloBackdrop;
+    if (!bd || bd.source !== ctx.canvas) return null;
+    var l = sx - 1, t = sy - 1, r = sx + sw + 1, bm = sy + sh + 1;
+    if (l < bd.x || t < bd.y || r > bd.x + bd.w || bm > bd.y + bd.h) return null;
+    for (var i = 0; i < bd.drawn.length; i++) {
+      var d = bd.drawn[i];
+      if (l < d.x1 && r > d.x0 && t < d.y1 && bm > d.y0) return null;
+    }
+    return bd;
+  }
+
+  // After a body draws, record how far its gel, edge fringe and hair reach.
+  function jelloBackdropMark(b) {
+    var bd = jelloBackdrop;
+    if (!bd) return;
+    var m = ctx.getTransform();
+    var hair = JELLO_EDGE_FUZZ * (JELLO_EDGE_STYLE >= 3 ? 1.9 : 1);
+    var reach = JELLO_RENDER_OUTSET * JELLO_CONTACT_R_FRAC * (b.spacing || (TILE / JELLO_NPT)) +
+      (b.rippleOn ? jelloRippleCap(b.spacing) * JELLO_RIPPLE : 0) +
+      (JELLO_EDGE_STYLE >= 1 ? 4 * JELLO_EDGE_FUZZ + (JELLO_EDGE_STYLE >= 2 ? 9 * hair : 0) : 2) + 2;
+    bd.drawn.push({
+      x0: (b.bboxL - reach) * bd.ws + m.e, y0: (b.bboxT - reach) * bd.ws + m.f,
+      x1: (b.bboxR + reach) * bd.ws + m.e, y1: (b.bboxB + reach) * bd.ws + m.f
+    });
   }
 
   // ----- Save / restore (047 calls these): live bodies persist across reload ---------

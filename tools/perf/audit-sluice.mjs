@@ -3,6 +3,10 @@
 // CLOCK=1 TOD=.7 SCENES=cruise SECONDS=30 exercises moving light and bank re-entry.
 // OVERLAY=1 retains diagnostics. EXPERIMENT=tools/perf/hitch-audit-probe.js adds attribution.
 // SCENES=human uses real uneven keyboard gestures without overriding movement.
+// SCENES=human-flyover flies up and down between the slime pen and the far end
+// of the town (the dev boot builds the pen). NOVSYNC=1 uncaps frames, so each
+// callback interval is that frame's cost; GANESH=1 forces Chrome's Ganesh raster
+// backend, the one in the Windows traces. TRACE_CATEGORIES overrides TRACE=1's.
 // PROFILE=0 omits CPU sampling when measuring normal frame delivery.
 // ROOT can point at a second checkout; DUMP must stay outside the checkout.
 // BUNDLE_REF serves a committed game bundle with this checkout's other assets.
@@ -60,8 +64,8 @@ window.__audit=(function(){
   if(typeof drawMountainsGL==='function')drawMountainsGL=query('mountains',function(){return mtnGPU&&mtnGPU.gl;},drawMountainsGL);
   loop=function(time){loopCalls++;var t=performance.now(),dt=previous?time-previous:0;previous=time;
     var result=oldLoop(time),cpu=performance.now()-t;
-    if(record&&introPhase==='done')rows.push({at:t,tod:timeOfDay,dt:dt,cpu:cpu,x:player.x,y:player.y,cx:cam.x,cy:cam.y,vx:player.vx,vy:player.vy,ground:player.onGround,fuel:player.fuel,hull:player.hull,focus:document.hasFocus(),visible:!document.hidden,maskWidth:smokeObstWaterCanvas&&smokeObstWaterCanvas.width,maskHeight:smokeObstWaterCanvas&&smokeObstWaterCanvas.height,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame});
-    if(record&&introPhase==='done'&&scene==='human-slimes'){
+    if(record&&introPhase==='done')rows.push({at:t,tod:timeOfDay,dt:dt,cpu:cpu,x:player.x,y:player.y,cx:cam.x,cy:cam.y,vx:player.vx,vy:player.vy,ground:player.onGround,fuel:player.fuel,hull:player.hull,focus:document.hasFocus(),visible:!document.hidden,maskWidth:smokeObstWaterCanvas&&smokeObstWaterCanvas.width,maskHeight:smokeObstWaterCanvas&&smokeObstWaterCanvas.height,buckets:Object.assign({},perfBucketsRaw),chunks:terrainChunkRebuildsThisFrame,heap:performance.memory?performance.memory.usedJSHeapSize:0});
+    if(record&&introPhase==='done'&&(scene==='human-slimes'||scene==='human-flyover')){
       rows[rows.length-1].slimes={awake:jelloBodies.filter(function(b){return !b.sleeping&&!b.frozen;}).length,contacts:jelloContactsThisFrame,steps:jelloLastSubs};
     }
     if(record&&introPhase==='done'&&typeof terrainBatchDraws!=='undefined'){
@@ -87,6 +91,7 @@ window.__audit=(function(){
           (smokeDriver!==SmokeFluid||!smokeDriver.isReady()))throw Error('Smoke experiment left the active driver disconnected');
       return introPhase==='done';
     },state:state,inputBounds:function(){return {x:player.x,left:(DECK_LEFT_COL-23)*TILE,right:(DECK_LEFT_COL-13)*TILE};},
+    flyState:function(){return {x:player.x,altitude:SKY_ROWS*TILE-(player.y+PLAYER_H),left:(DECK_LEFT_COL-24)*TILE,right:(DECK_RIGHT_COL+4)*TILE,ceiling:900};},
     start:function(name,disable){
       resize();scene=name;if(!window.__keepOverlay)drawPerfOverlay=function(){};SUN.paused=!window.__runningClock;timeOfDay=window.__initialTOD===null?(name.startsWith('night')?.02:.5):window.__initialTOD;
       if(name==='storm')gm.preset('storm ceiling');
@@ -96,9 +101,9 @@ window.__audit=(function(){
       if(disabled.indexOf('sky')>=0)PERF_DISABLE_NIGHTSKY=true;
       if(disabled.indexOf('jello')>=0){ENABLE_JELLO=false;}
       if(disabled.indexOf('weather')>=0)PERF_DISABLE_WEATHER=true;
-      if(name==='human'||name==='human-slimes'){
-        if(name==='human-slimes'){
-          player.x=(DECK_LEFT_COL-25)*TILE;player.y=SKY_ROWS*TILE-PLAYER_H-2;
+      if(name==='human'||name==='human-slimes'||name==='human-flyover'){
+        if(name==='human-slimes'||name==='human-flyover'){
+          player.x=(DECK_LEFT_COL-(name==='human-flyover'?5:25))*TILE;player.y=SKY_ROWS*TILE-PLAYER_H-2;
           player.renderX=player.x;player.renderY=player.y;player.vx=player.vy=0;
           cam.snap=true;updateCamera();
         }
@@ -153,7 +158,7 @@ try{
   await new Promise(r=>server.listen(port,'127.0.0.1',r));
   const executable=electron?(process.env.ELECTRON_EXE||path.join(root,'desktop/node_modules/electron/dist/electron.exe')):process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
   const positioned=process.env.WINDOW_X!==undefined,fullscreen=process.env.FULLSCREEN!=='0';
-  const args=[...(headed?(fullscreen&&!positioned?['--start-fullscreen']:[]):['--headless=new']),'--mute-audio','--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort];
+  const args=[...(headed?(fullscreen&&!positioned?['--start-fullscreen']:[]):['--headless=new']),'--mute-audio',...(process.env.NOVSYNC==='1'?['--disable-gpu-vsync','--disable-frame-rate-limit']:[]),...(process.env.GANESH==='1'?['--disable-features=SkiaGraphite']:[]),'--enable-precise-memory-info','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run','--user-data-dir='+browserProfile,'--remote-debugging-port='+debugPort];
   if(electron)args.push(path.join(root,'desktop'),'--fullscreen','--profile='+browserProfile,'--audit-url=http://127.0.0.1:'+port+'/grand-motherload.html');else args.push('about:blank');
   chrome=spawn(executable,args,{stdio:'ignore',windowsHide:!headed,env:{...process.env,ELECTRON_RUN_AS_NODE:undefined}});
   fs.writeFileSync(path.join(out,'browser-pid.txt'),String(chrome.pid));
@@ -175,7 +180,7 @@ try{
     windowInfo=await browserCall('Browser.getWindowBounds',{windowId});
   }
   fs.writeFileSync(path.join(out,'display.json'),JSON.stringify({windowInfo,refreshHz:Number(process.env.REFRESH_HZ||144),screen:await ev('({x:screenX,y:screenY,width:screen.width,height:screen.height,availLeft:screen.availLeft,availTop:screen.availTop,dpr:devicePixelRatio})')},null,2));
-  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling},null,2));
+  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling,novsync:process.env.NOVSYNC==='1',ganesh:process.env.GANESH==='1'},null,2));
   await send('Emulation.setDeviceMetricsOverride',viewport);
   await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   for(const scene of scenes){
@@ -197,14 +202,17 @@ try{
     fs.writeFileSync(path.join(out,scene+'.warmup.json'),JSON.stringify({start:start.loopHealth,end:warmed.loopHealth},null,2));
     assert(warmed.loopHealth.calls>start.loopHealth.calls+10,'Live animation loop before capture: '+JSON.stringify(warmed.loopHealth));
     if(headed)assert(warmed.loopHealth.visible&&warmed.loopHealth.focus,'Visible, focused browser before capture');
-    if(process.env.TRACE==='1'){traceStream=null;await send('Tracing.start',{categories:'devtools.timeline,cc,gpu,viz,disabled-by-default-gpu.service',transferMode:'ReturnAsStream'});}
+    if(process.env.TRACE==='1'){traceStream=null;await send('Tracing.start',{categories:process.env.TRACE_CATEGORIES||'devtools.timeline,cc,gpu,viz,disabled-by-default-gpu.service',transferMode:'ReturnAsStream'});}
     if(cpuSampling){await send('Profiler.enable');await send('Profiler.setSamplingInterval',{interval:1000});await send('Profiler.start');}
     let presentation;
     if(process.env.PRESENTMON){assert(headed,'Presentation capture requires a visible window');const info=await browserCall('SystemInfo.getProcessInfo'),gpuProcess=info.processInfo.find(p=>p.type==='GPU');assert(gpuProcess,'GPU process');presentation=spawn(process.env.PRESENTMON,['--process_id',String(gpuProcess.id),'--timed',String(seconds),'--terminate_after_timed','--no_console_stats','--session_name','SluiceAudit'+chrome.pid,'--output_file',path.join(out,scene+'.present.csv')],{windowsHide:true,stdio:['ignore',fs.openSync(path.join(out,scene+'.present.log'),'w'),fs.openSync(path.join(out,scene+'.present-error.log'),'w')]});}
     await sleep(150);await ev('__audit.clear()');
     let inputEvents;
-    if(scene==='human'||scene==='human-slimes')inputEvents=await humanInputRoute(send,seconds,scene==='human-slimes'?'slimes':'surface');else await sleep(seconds*1000);
-    const result=await ev('__audit.stop()');
+    if(scene.startsWith('human'))inputEvents=await humanInputRoute(send,seconds,scene==='human-slimes'?'slimes':scene==='human-flyover'?'flyover':'surface');else await sleep(seconds*1000);
+    // Uncapped captures can hold tens of thousands of rows; fetch them in slices
+    // so one oversized protocol message cannot drop the debugging connection.
+    const result=await ev('(()=>{const r=__audit.stop();window.__auditRows=r.rows;r.rowCount=r.rows.length;r.rows=[];return r;})()');
+    for(let i=0;i<result.rowCount;i+=1000)result.rows.push(...await ev('__auditRows.slice('+i+','+(i+1000)+')'));
     result.hiddenTerrain=await ev('window.__perf&&__perf.hiddenTerrain?__perf.hiddenTerrain():null');
     result.windowEnd=await browserCall('Browser.getWindowForTarget',{targetId:target.id});
     if(inputEvents)result.inputEvents=inputEvents;
@@ -229,7 +237,7 @@ try{
     const summary={scene,version:boot.version,adapter,canvas:start.canvas,bootMs:boot.bootMs,frame:stats(result.rows.map(r=>r.dt)),cpu:stats(result.rows.map(r=>r.cpu)),over8ms:result.rows.filter(r=>r.dt>8).length,buckets,gpu:[...new Set(result.gpu.map(r=>r.name))].map(k=>[k,stats(result.gpu.filter(r=>r.name===k).map(r=>r.ms))]),profile:[...hits].sort((a,b)=>b[1]-a[1]).slice(0,25),errors:result.errors};
     summaries.push(summary);fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summaries,null,2));
     console.log(JSON.stringify({...summary,buckets:buckets.slice(0,14)}));assert.equal(errors.length,0,'No game errors');assert(result.rows.length>seconds*25,'Enough live frames');
-    if((scene==='human'||scene==='human-slimes')&&headed){
+    if(scene.startsWith('human')&&headed){
       assert(result.rows.every(r=>r.focus&&r.visible),'Input route stayed focused and visible');
       if(seconds>=10){
         const xs=result.rows.map(r=>r.x);

@@ -1,6 +1,7 @@
 // Uneven control gestures through the real keyboard handler. No pose, velocity,
 // camera, fuel, collision, or world writes during the route.
 export async function humanInputRoute(send,seconds,kind='surface'){
+  if(kind==='flyover')return flyoverRoute(send,seconds);
   const gestures=kind==='slimes'?[
     [.8,['ArrowRight']],[.12,['ArrowRight','ArrowUp']],[.55,['ArrowRight']],
     [.23,[]],[.46,['ArrowLeft']],[.9,['ArrowRight']],[.23,['ArrowLeft']],
@@ -45,6 +46,43 @@ export async function humanInputRoute(send,seconds,kind='surface'){
         else if(x>right){next.delete('ArrowRight');next.add('ArrowLeft');}
       }
       await set(next);log.push({atMs:performance.now()-started,keys:[...next]});
+      await new Promise(r=>setTimeout(r,Math.max(0,Math.min(duration*1000,seconds*1000-(performance.now()-started)))));
+    }
+  }finally{await set(new Set());}
+  return log;
+}
+
+// Flying the way a player crosses town: climbs of uneven length, glides, drops,
+// short hops and the odd backtrack between the slime pen and the far end of the
+// station deck. Each gesture reads the rig's position (__audit.flyState) to pick
+// its heading and to stop climbing above a ceiling. Only keys are sent.
+async function flyoverRoute(send,seconds){
+  const steps=[
+    [1.1,'climb'],[.6,'glide'],[.35,'drop'],[.9,'climb'],[1.4,'glide'],[.5,'hop'],[.8,'drop'],
+    [2.2,'climb'],[.7,'glide'],[1.2,'drop'],[.45,'hop'],[.3,'glide'],[1.6,'rise'],[.9,'glide'],
+    [1.5,'drop'],[.6,'climb'],[.25,'drop'],[.55,'climb'],[1.8,'glide'],[.4,'reverse'],[1.3,'climb'],
+    [2.6,'drop'],[.7,'hop'],[1.1,'glide'],[2.4,'climb'],[.5,'glide'],[1.9,'drop'],[.35,'hop'],
+    [.9,'climb'],[1.2,'glide'],[.6,'drop'],[1.7,'rise'],[.8,'glide'],[1.4,'drop'],[.5,'hop'],
+    [1,'climb'],[2,'glide'],[1.6,'drop']
+  ];
+  const virtual={ArrowLeft:37,ArrowRight:39,ArrowUp:38,ArrowDown:40};
+  const started=performance.now(),log=[];let held=new Set(),index=0,heading='ArrowRight';
+  async function set(next){
+    for(const key of held)if(!next.has(key))await send('Input.dispatchKeyEvent',{type:'keyUp',key,code:key,windowsVirtualKeyCode:virtual[key]});
+    for(const key of next)if(!held.has(key))await send('Input.dispatchKeyEvent',{type:'rawKeyDown',key,code:key,windowsVirtualKeyCode:virtual[key]});
+    held=next;
+  }
+  try{
+    while(performance.now()-started<seconds*1000){
+      const [duration,action]=steps[index++%steps.length];
+      const s=(await send('Runtime.evaluate',{expression:'__audit.flyState()',returnByValue:true})).result.value;
+      if(s.x>s.right)heading='ArrowLeft';else if(s.x<s.left)heading='ArrowRight';
+      const back=heading==='ArrowRight'?'ArrowLeft':'ArrowRight',high=s.altitude>s.ceiling;
+      const keys=action==='climb'?(high?[heading]:['ArrowUp',heading]):action==='rise'?(high?[]:['ArrowUp']):
+        action==='glide'?[heading]:action==='hop'?['ArrowUp',heading]:action==='reverse'?[back]:[];
+      const next=new Set(keys);
+      await set(next);
+      log.push({atMs:performance.now()-started,action,keys:[...next],x:Math.round(s.x),altitude:Math.round(s.altitude)});
       await new Promise(r=>setTimeout(r,Math.max(0,Math.min(duration*1000,seconds*1000-(performance.now()-started)))));
     }
   }finally{await set(new Set());}

@@ -764,14 +764,22 @@
     // re-renders the cached shader immediately instead of waiting for the next
     // time-of-day bucket. Constant in normal play, so it adds no extra renders.
     var _sg = SKY_SUNSET_GRADE;
-    // Camera altitude is not a shader input. The horizon clip below already
-    // tracks its visible effect; celestials are anchored to the canvas.
+    // Camera altitude is not a shader input; celestials are anchored to the
+    // canvas. The raymarch renders the whole view into an offscreen texture
+    // once per key, and skyGLPresent() copies the rows the horizon clip keeps.
+    // Flying up or down used to re-run the full-screen shader every frame
+    // just to move that cut.
     var skyKey = Math.round(timeOfDay * 2400) +
-                 '|' + Math.round(skyBottomPx) + '|' + worldScale.toFixed(3) +
+                 '|' + worldScale.toFixed(3) +
                  '|' + rw + 'x' + rh + '|' + Math.round(moonPhase * 1000) +
                  '|' + (_sg.drama + _sg.twi * 3 + _sg.twiShape + _sg.sat + _sg.contrast +
                         _sg.gain + _sg.radial + _sg.ozone + _sg.multi + _sg.floor).toFixed(2);
-    if (skyKey === skyGLLastKey) return skyGLCanvas;
+    var skyRaw = skyGLEnsureRaw(gl, rw, rh);
+    // Without the texture, clip in the shader and re-render as the cut moves.
+    if (!skyRaw) skyKey += '|' + Math.round(skyBottomPx);
+    if (skyKey === skyGLLastKey) {
+      return skyRaw ? skyGLPresent(gl, rw, rh, skyBottomPx, skyS) : skyGLCanvas;
+    }
     skyGLLastKey = skyKey;
 
     // True perspective camera + 3D sun vector.
@@ -798,13 +806,15 @@
     var sunDirY = Math.sin(altitude);
     var sunDirZ = Math.cos(altitude) * Math.cos(azimuth);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, skyRaw ? skyGLRawFBO : null);
     gl.viewport(0, 0, rw, rh);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(skyGLProgram);
     gl.uniform2f(skyGLU.uResolution, rw, rh);
-    gl.uniform1f(skyGLU.uSkyBottomPx, skyBottomPx * skyS);
+    // The texture keeps every row (yTop never exceeds the height); presenting
+    // applies the horizon cut.
+    gl.uniform1f(skyGLU.uSkyBottomPx, skyRaw ? rh : skyBottomPx * skyS);
     gl.uniform1f(skyGLU.uFovY, fovY);
     gl.uniform1f(skyGLU.uPitch, pitch);
     gl.uniform1f(skyGLU.uAspect, aspect);
@@ -865,6 +875,94 @@
     bindFullscreenQuad(gl);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
+    if (!skyRaw) return skyGLCanvas;
+    skyGLRawGen++;
+    return skyGLPresent(gl, rw, rh, skyBottomPx, skyS);
+  }
+
+  // ---- Horizon-independent sky cache (v27.3) ----
+  // skyGLRawTex holds the whole raymarch at render resolution. skyGLPresent()
+  // copies the rows the shader's own horizon clip kept (yTop = row + 0.5 not
+  // past the cut, compared as float32) into the canvas with a scissored
+  // NEAREST copy, so the canvas bytes match a clipped render exactly. The cut
+  // moves when its whole-pixel value changes or the raymarch re-renders, the
+  // same moments the old cache key re-rendered. Without a complete
+  // framebuffer, renderSkyGL clips in the shader as before.
+  var SKY_GL_FS_COPY = [
+    '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+    'precision highp float;',
+    '#else',
+    'precision mediump float;',
+    '#endif',
+    'uniform sampler2D uSrc;',
+    'uniform vec2 uSize;',
+    'void main(){',
+    '  gl_FragColor = texture2D(uSrc, gl_FragCoord.xy / uSize);',
+    '}'
+  ].join('\n');
+  var skyGLRawOk = null, skyGLRawFBO = null, skyGLRawTex = null, skyGLRawW = 0, skyGLRawH = 0;
+  var skyGLCopyProg = null, skyGLCopyU = null;
+  var skyGLRawGen = 0, skyGLPresentGen = -1, skyGLPresentRows = -1;
+  var skyGLCutKey = null, skyGLCutValue = 0;
+
+  function skyGLEnsureRaw(gl, rw, rh) {
+    if (skyGLRawOk === false) return false;
+    if (!skyGLCopyProg) {
+      skyGLCopyProg = buildSkyGLProgram(gl, SKY_GL_FS_COPY);
+      if (!skyGLCopyProg) { skyGLRawOk = false; return false; }
+      skyGLCopyU = {
+        uSrc:  gl.getUniformLocation(skyGLCopyProg, 'uSrc'),
+        uSize: gl.getUniformLocation(skyGLCopyProg, 'uSize')
+      };
+      skyGLRawTex = gl.createTexture();
+      skyGLRawFBO = gl.createFramebuffer();
+    }
+    if (skyGLRawW !== rw || skyGLRawH !== rh) {
+      gl.bindTexture(gl.TEXTURE_2D, skyGLRawTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, rw, rh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, skyGLRawFBO);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, skyGLRawTex, 0);
+      var complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (!complete) { skyGLRawOk = false; return false; }
+      skyGLRawW = rw;
+      skyGLRawH = rh;
+    }
+    skyGLRawOk = true;
+    return true;
+  }
+
+  function skyGLPresent(gl, rw, rh, skyBottomPx, skyS) {
+    var cutKey = Math.round(skyBottomPx);
+    if (cutKey !== skyGLCutKey || skyGLPresentGen !== skyGLRawGen) {
+      skyGLCutKey = cutKey;
+      skyGLCutValue = skyBottomPx * skyS;
+    }
+    var cut = Math.fround(skyGLCutValue);
+    var rows = cut < 0.5 ? 0 : Math.min(rh, Math.floor(cut - 0.5) + 1);
+    if (rows === skyGLPresentRows && skyGLPresentGen === skyGLRawGen) return skyGLCanvas;
+    skyGLPresentRows = rows;
+    skyGLPresentGen = skyGLRawGen;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, rw, rh);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    if (rows > 0) {
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(0, rh - rows, rw, rows);
+      gl.useProgram(skyGLCopyProg);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, skyGLRawTex);
+      gl.uniform1i(skyGLCopyU.uSrc, 0);
+      gl.uniform2f(skyGLCopyU.uSize, rw, rh);
+      bindFullscreenQuad(gl);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.disable(gl.SCISSOR_TEST);
+    }
     return skyGLCanvas;
   }
 

@@ -14,7 +14,9 @@
 // GANESH=0 keeps the browser default, which may not emit the counted events.
 // MOBILE=1 emulates a phone. VSYNC=1 keeps vsync-paced frames; the uncapped
 // default also runs while the display sleeps. DUMP keeps the raw trace and a
-// summary outside the checkout. CHROME overrides the browser executable.
+// summary outside the checkout. SHADER_DUMP=<dir> also writes the source of each
+// shader ANGLE compiles there, which needs the GPU sandbox off. CHROME overrides
+// the browser executable.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -104,8 +106,10 @@ const args=['--headless=new','--mute-audio','--enable-unsafe-webgpu','--no-first
 if(process.platform==='darwin')args.push('--use-angle=metal');
 if(process.env.VSYNC!=='1')args.push('--disable-gpu-vsync','--disable-frame-rate-limit');
 if(ganesh)args.push('--disable-features=SkiaGraphite');
+const shaderDump=process.env.SHADER_DUMP?path.resolve(process.env.SHADER_DUMP):null;
+if(shaderDump){fs.mkdirSync(shaderDump,{recursive:true});args.push('--enable-angle-features=dumpShaderSource','--disable-gpu-sandbox');}
 args.push('about:blank');
-const chrome=spawn(executable,args,{stdio:'ignore'});
+const chrome=spawn(executable,args,{stdio:'ignore',env:shaderDump?{...process.env,ANGLE_SHADER_DUMP_PATH:shaderDump}:process.env});
 let ws=null,seq=0,traceStream=null;
 const pending=new Map(),errors=[],phaseErrors=[];
 function send(method,params={},ms=60000){return new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},ms);

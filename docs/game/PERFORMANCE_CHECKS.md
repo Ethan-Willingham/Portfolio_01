@@ -1,5 +1,29 @@
 # Sluice performance checks
 
+## Flying across town (v27.3)
+
+Flying up and down between the dev slime pen and the far end of the station
+deck, two costs repeated every frame. Each refracting slime drew the game
+canvas into itself, which copies the whole canvas and waits on the GPU, and the
+sky's raymarch re-ran whenever the horizon moved on screen. The slimes now
+magnify from one shared copy per frame, and the sky renders once per time step
+and copies the rows above the horizon. In alternating 45-second uncapped
+flights on an M1 Pro with Ganesh forced, frames per second rose from 167 and
+166 to 198 and 195, and frame intervals over 25 ms fell from 270 and 266 to 83
+and 78. Scenes render the same. Method, isolation runs and what remains are in
+[PERFORMANCE_FLYOVER_2026-09-14.md](PERFORMANCE_FLYOVER_2026-09-14.md).
+
+```sh
+SCENES=human-flyover SECONDS=45 NOVSYNC=1 GANESH=1 WIDTH=2048 HEIGHT=1152 DPR=1.25 PROFILE=0 CLOCK=1 TOD=.5 EXPERIMENT=tools/perf/hitch-audit-probe.js node tools/perf/audit-sluice.mjs
+DEV=1 node tools/perf/shader-warmup-equivalence.mjs
+```
+
+`EXPERIMENT=tools/perf/sync-audit-probe.js` times, per frame, each call that can
+make the main thread wait on the GPU: a canvas drawn into itself, a canvas
+uploaded to WebGL, a readback. In uncapped runs the GPU never catches up, so
+its backlog lands on whichever of those calls comes first; the timers find the
+calls, and frames per second across alternating runs measures what they cost.
+
 ## First-use shader warm-up (v27.2)
 
 Chrome builds a GPU program the first time a page draws a new Canvas state,

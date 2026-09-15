@@ -1,0 +1,4705 @@
+{
+ "report": "PERFORMANCE_FLYOVER_2026-09-14.md",
+ "baseline": {
+  "version": "v27.2",
+  "commit": "68551eb"
+ },
+ "release": {
+  "version": "v27.3",
+  "fragments": {
+   "js/sluice/340-jello.js": "one refraction backdrop per frame: the region behind every visible lens is copied once, and each lens magnifies from the copy unless it reaches past it or overlaps a body already drawn",
+   "js/sluice/150-render-nightsky.js": "the atmosphere raymarch renders once per time step into a texture; a scissored nearest-neighbour copy writes the rows the old in-shader horizon clip kept",
+   "js/sluice/046-shader-warm.js": "the slime warm-up draws its bodies through the shared backdrop path"
+  }
+ },
+ "environment": {
+  "browser": "Google Chrome for Testing 148.0.7778.96",
+  "machine": "Apple M1 Pro",
+  "os": "macOS 26.6.2",
+  "headless": true,
+  "viewport": {
+   "width": 2048,
+   "height": 1152,
+   "deviceScaleFactor": 1.25
+  },
+  "gameCanvas": [
+   2560,
+   1440
+  ],
+  "rasterBackend": "Ganesh (SkiaGraphite disabled) over ANGLE Metal",
+  "note": "A stand-in for Windows Chrome (Ganesh over ANGLE Direct3D 11). No Windows or PresentMon capture in this pass; the owner reports the stutter most clearly at 144 Hz and 2560 x 1440."
+ },
+ "route": {
+  "scene": "human-flyover",
+  "tool": "tools/perf/audit-sluice.mjs",
+  "seconds": 45,
+  "description": "Key presses only: climbs of uneven length, glides, drops, short hops and reversals between the dev slime pen and the far end of the station deck, turning at either end and climbing no higher than about 28 tiles. Dev boot (the pen holds 8 slimes, 7 of them refracting), day clock running from time of day 0.5."
+ },
+ "batches": [
+  {
+   "name": "isolation",
+   "frames": "uncapped",
+   "note": "One system switched off per run by a test-only switch.",
+   "runs": [
+    {
+     "label": "base",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 6295,
+     "fps": 139.9,
+     "intervalMs": {
+      "p50": 2.3,
+      "p90": 19.3,
+      "p99": 45,
+      "max": 78.1
+     },
+     "intervalsOver": {
+      "ms6_94": 1635,
+      "ms10": 1295,
+      "ms16_7": 895,
+      "ms25": 452
+     },
+     "mainThreadMs": {
+      "p50": 1.6,
+      "p90": 7.3,
+      "p99": 47.9,
+      "max": 77.2
+     },
+     "mainThreadOver": {
+      "ms6_94": 652,
+      "ms10": 508
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.52,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 10.6
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.4
+      },
+      "planetColour": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 10.6
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.3
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "base2",
+     "measures": "v27.2, repeat",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 6175,
+     "fps": 137.2,
+     "intervalMs": {
+      "p50": 2.5,
+      "p90": 20,
+      "p99": 47.2,
+      "max": 129.5
+     },
+     "intervalsOver": {
+      "ms6_94": 1492,
+      "ms10": 1193,
+      "ms16_7": 840,
+      "ms25": 457
+     },
+     "mainThreadMs": {
+      "p50": 1.8,
+      "p90": 8.2,
+      "p99": 48.6,
+      "max": 128.8
+     },
+     "mainThreadOver": {
+      "ms6_94": 706,
+      "ms10": 542
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.52,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.5
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.5
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.3
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.5
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 1.2
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "norefract",
+     "measures": "v27.2, slime refraction off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "exp-norefract.js",
+     "seconds": 45,
+     "frameCount": 7264,
+     "fps": 161.4,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 18.8,
+      "p99": 40.5,
+      "max": 79.9
+     },
+     "intervalsOver": {
+      "ms6_94": 1676,
+      "ms10": 1366,
+      "ms16_7": 975,
+      "ms25": 323
+     },
+     "mainThreadMs": {
+      "p50": 1.3,
+      "p90": 3.3,
+      "p99": 10.5,
+      "max": 61.7
+     },
+     "mainThreadOver": {
+      "ms6_94": 163,
+      "ms10": 75
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.51,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.8
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.1
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "nojello",
+     "measures": "v27.2, slimes off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7310,
+     "fps": 162.3,
+     "intervalMs": {
+      "p50": 1.8,
+      "p90": 18.7,
+      "p99": 39.4,
+      "max": 79.1
+     },
+     "intervalsOver": {
+      "ms6_94": 1700,
+      "ms10": 1375,
+      "ms16_7": 970,
+      "ms25": 402
+     },
+     "mainThreadMs": {
+      "p50": 1.1,
+      "p90": 2.8,
+      "p99": 9.7,
+      "max": 61.4
+     },
+     "mainThreadOver": {
+      "ms6_94": 195,
+      "ms10": 68
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.5,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.7
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.5
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.7
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "nosmoke",
+     "measures": "v27.2, smoke off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 8480,
+     "fps": 188.4,
+     "intervalMs": {
+      "p50": 1.8,
+      "p90": 18.2,
+      "p99": 38.9,
+      "max": 64.1
+     },
+     "intervalsOver": {
+      "ms6_94": 1732,
+      "ms10": 1363,
+      "ms16_7": 972,
+      "ms25": 287
+     },
+     "mainThreadMs": {
+      "p50": 1.2,
+      "p90": 4.8,
+      "p99": 40.1,
+      "max": 64.5
+     },
+     "mainThreadOver": {
+      "ms6_94": 681,
+      "ms10": 586
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.46,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 1.6
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.8
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 3.4
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 3.3
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "nosky",
+     "measures": "v27.2, night sky and atmosphere off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7413,
+     "fps": 164.6,
+     "intervalMs": {
+      "p50": 2.2,
+      "p90": 19.1,
+      "p99": 40.2,
+      "max": 76.4
+     },
+     "intervalsOver": {
+      "ms6_94": 1776,
+      "ms10": 1404,
+      "ms16_7": 969,
+      "ms25": 233
+     },
+     "mainThreadMs": {
+      "p50": 1.5,
+      "p90": 5.7,
+      "p99": 39.1,
+      "max": 71.9
+     },
+     "mainThreadOver": {
+      "ms6_94": 574,
+      "ms10": 480
+     },
+     "waitTimers": {
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "noweather",
+     "measures": "v27.2, weather clouds off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 6185,
+     "fps": 137.4,
+     "intervalMs": {
+      "p50": 2.3,
+      "p90": 19.8,
+      "p99": 45.7,
+      "max": 77
+     },
+     "intervalsOver": {
+      "ms6_94": 1602,
+      "ms10": 1262,
+      "ms16_7": 884,
+      "ms25": 460
+     },
+     "mainThreadMs": {
+      "p50": 1.5,
+      "p90": 7.4,
+      "p99": 48.7,
+      "max": 77.5
+     },
+     "mainThreadOver": {
+      "ms6_94": 656,
+      "ms10": 487
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.52,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 3.8
+      },
+      "planetColour": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 3.7
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.4
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "nowater",
+     "measures": "v27.2, water off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 6096,
+     "fps": 135.4,
+     "intervalMs": {
+      "p50": 2.4,
+      "p90": 20.1,
+      "p99": 45.1,
+      "max": 81.6
+     },
+     "intervalsOver": {
+      "ms6_94": 1632,
+      "ms10": 1283,
+      "ms16_7": 891,
+      "ms25": 440
+     },
+     "mainThreadMs": {
+      "p50": 1.6,
+      "p90": 8.3,
+      "p99": 49.2,
+      "max": 79.8
+     },
+     "mainThreadOver": {
+      "ms6_94": 692,
+      "ms10": 527
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.53,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.9,
+       "maxMs": 2.8
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.6
+      },
+      "planetColour": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.8
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.2
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  {
+   "name": "town animation and refraction prototype",
+   "frames": "uncapped",
+   "note": "Wait timers from an earlier form of tools/perf/sync-audit-probe.js.",
+   "runs": [
+    {
+     "label": "ubase",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "exp-sync.js",
+     "seconds": 45,
+     "frameCount": 6144,
+     "fps": 136.5,
+     "intervalMs": {
+      "p50": 2.4,
+      "p90": 20.1,
+      "p99": 47.7,
+      "max": 99.4
+     },
+     "intervalsOver": {
+      "ms6_94": 1556,
+      "ms10": 1183,
+      "ms16_7": 848,
+      "ms25": 472
+     },
+     "mainThreadMs": {
+      "p50": 1.6,
+      "p90": 8.2,
+      "p99": 49.4,
+      "max": 101.2
+     },
+     "mainThreadOver": {
+      "ms6_94": 700,
+      "ms10": 518
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 2.59,
+       "p99Ms": 46.3,
+       "maxMs": 98.1
+      },
+      "canvasToGL": {
+       "meanMs": 0.16,
+       "p99Ms": 4.9,
+       "maxMs": 10
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.09,
+       "p99Ms": 0.3,
+       "maxMs": 51.6
+      },
+      "rocketPlume": {
+       "meanMs": 0.09,
+       "p99Ms": 0.3,
+       "maxMs": 33
+      },
+      "ent.station": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 40.1
+      },
+      "ent.fireplace": {
+       "meanMs": 0.08,
+       "p99Ms": 0.1,
+       "maxMs": 56.9
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 45
+      },
+      "player": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 3.4
+      },
+      "ent.birds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 43.6
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 35.4
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 8.1
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 8.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.7
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.4
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "ubase2",
+     "measures": "v27.2, repeat",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "exp-sync.js",
+     "seconds": 45,
+     "frameCount": 5986,
+     "fps": 133,
+     "intervalMs": {
+      "p50": 2.6,
+      "p90": 20,
+      "p99": 56.5,
+      "max": 96.6
+     },
+     "intervalsOver": {
+      "ms6_94": 1506,
+      "ms10": 1169,
+      "ms16_7": 832,
+      "ms25": 445
+     },
+     "mainThreadMs": {
+      "p50": 1.8,
+      "p90": 8.2,
+      "p99": 51.1,
+      "max": 90
+     },
+     "mainThreadOver": {
+      "ms6_94": 696,
+      "ms10": 518
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 2.67,
+       "p99Ms": 48.5,
+       "maxMs": 83.3
+      },
+      "canvasToGL": {
+       "meanMs": 0.17,
+       "p99Ms": 5,
+       "maxMs": 12.1
+      },
+      "ent.fireplace": {
+       "meanMs": 0.13,
+       "p99Ms": 0.2,
+       "maxMs": 68.5
+      },
+      "rocketPlume": {
+       "meanMs": 0.12,
+       "p99Ms": 0.3,
+       "maxMs": 36.1
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.11,
+       "p99Ms": 0.3,
+       "maxMs": 62.1
+      },
+      "ent.station": {
+       "meanMs": 0.1,
+       "p99Ms": 0.2,
+       "maxMs": 67.3
+      },
+      "player": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 3.8
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 43.9
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 7.1
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 6.5
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 5.5
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.3
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "unoanim",
+     "measures": "v27.2, station, pump pad and fireplace held on one animation frame",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "exp-noanim.js",
+     "seconds": 45,
+     "frameCount": 5709,
+     "fps": 126.8,
+     "intervalMs": {
+      "p50": 2.6,
+      "p90": 20.9,
+      "p99": 56.3,
+      "max": 94
+     },
+     "intervalsOver": {
+      "ms6_94": 1506,
+      "ms10": 1137,
+      "ms16_7": 771,
+      "ms25": 512
+     },
+     "mainThreadMs": {
+      "p50": 1.8,
+      "p90": 9,
+      "p99": 53.1,
+      "max": 92.6
+     },
+     "mainThreadOver": {
+      "ms6_94": 730,
+      "ms10": 520
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 3.23,
+       "p99Ms": 50.1,
+       "maxMs": 90
+      },
+      "canvasToGL": {
+       "meanMs": 0.2,
+       "p99Ms": 5.5,
+       "maxMs": 11.5
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.11,
+       "p99Ms": 0.3,
+       "maxMs": 56
+      },
+      "player": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 3.6
+      },
+      "rocketPlume": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 36.8
+      },
+      "ent.fireplace": {
+       "meanMs": 0.04,
+       "p99Ms": 0.1,
+       "maxMs": 51.9
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.04,
+       "p99Ms": 0.1,
+       "maxMs": 46.4
+      },
+      "ent.station": {
+       "meanMs": 0.03,
+       "p99Ms": 0.2,
+       "maxMs": 39.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 5.5
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 6.7
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.trees": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.4
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "ushared",
+     "measures": "v27.2 with a prototype of the shared refraction copy",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "exp-sharedrefract.js",
+     "seconds": 45,
+     "frameCount": 6894,
+     "fps": 153.1,
+     "intervalMs": {
+      "p50": 2.4,
+      "p90": 19.7,
+      "p99": 41.7,
+      "max": 73.7
+     },
+     "intervalsOver": {
+      "ms6_94": 1536,
+      "ms10": 1229,
+      "ms16_7": 888,
+      "ms25": 383
+     },
+     "mainThreadMs": {
+      "p50": 1.6,
+      "p90": 5.7,
+      "p99": 39.3,
+      "max": 70.8
+     },
+     "mainThreadOver": {
+      "ms6_94": 539,
+      "ms10": 421
+     },
+     "waitTimers": {
+      "bigCanvasDraw": {
+       "meanMs": 1.6,
+       "p99Ms": 36.4,
+       "maxMs": 67.2
+      },
+      "sharedCopy": {
+       "meanMs": 1.51,
+       "p99Ms": 36.3,
+       "maxMs": 67.2
+      },
+      "canvasToGL": {
+       "meanMs": 0.14,
+       "p99Ms": 4.1,
+       "maxMs": 8.1
+      },
+      "player": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 6.7
+      },
+      "selfCopy": {
+       "meanMs": 0.08,
+       "p99Ms": 0.1,
+       "maxMs": 37.3
+      },
+      "ent.station": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 59.8
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 43.9
+      },
+      "rocketPlume": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 23.2
+      },
+      "ent.fireplace": {
+       "meanMs": 0.03,
+       "p99Ms": 0.1,
+       "maxMs": 35.1
+      },
+      "ent.birds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 36
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 29.6
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 5.8
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 4.5
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 2.8
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.3
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  {
+   "name": "paced v27.2",
+   "frames": "paced at 60 Hz",
+   "note": "Main-thread health with the same early probe.",
+   "runs": [
+    {
+     "label": "vbase",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "paced at 60 Hz",
+     "probe": "exp-sync.js",
+     "seconds": 45,
+     "frameCount": 2701,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 22.5
+     },
+     "intervalsOver": {
+      "ms6_94": 2700,
+      "ms10": 2699,
+      "ms16_7": 978,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 2.6,
+      "p90": 3.6,
+      "p99": 4.9,
+      "max": 8.8
+     },
+     "mainThreadOver": {
+      "ms6_94": 3,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 0.15,
+       "p99Ms": 0.5,
+       "maxMs": 0.6
+      },
+      "player": {
+       "meanMs": 0.09,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 0.6
+      },
+      "rocketPlume": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "canvasToGL": {
+       "meanMs": 0.04,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.station": {
+       "meanMs": 0.04,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "vbase2",
+     "measures": "v27.2, repeat",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "paced at 60 Hz",
+     "probe": "exp-sync.js",
+     "seconds": 45,
+     "frameCount": 2700,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 25
+     },
+     "intervalsOver": {
+      "ms6_94": 2699,
+      "ms10": 2699,
+      "ms16_7": 953,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 3,
+      "p90": 3.8,
+      "p99": 5.1,
+      "max": 7.4
+     },
+     "mainThreadOver": {
+      "ms6_94": 2,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 0.18,
+       "p99Ms": 0.5,
+       "maxMs": 0.7
+      },
+      "player": {
+       "meanMs": 0.08,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "rocketPlume": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 0.8
+      },
+      "ent.station": {
+       "meanMs": 0.05,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "canvasToGL": {
+       "meanMs": 0.04,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "vnorefract",
+     "measures": "v27.2, slime refraction off",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "paced at 60 Hz",
+     "probe": "exp-norefract.js",
+     "seconds": 45,
+     "frameCount": 2700,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 25
+     },
+     "intervalsOver": {
+      "ms6_94": 2699,
+      "ms10": 2699,
+      "ms16_7": 1140,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 2.3,
+      "p90": 3.3,
+      "p99": 4.6,
+      "max": 10.4
+     },
+     "mainThreadOver": {
+      "ms6_94": 1,
+      "ms10": 1
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.77,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.05,
+       "p99Ms": 1.1,
+       "maxMs": 1.4
+      },
+      "planet": {
+       "meanMs": 0.04,
+       "p99Ms": 0.9,
+       "maxMs": 2.2
+      },
+      "planetColour": {
+       "meanMs": 0.03,
+       "p99Ms": 0.9,
+       "maxMs": 2.1
+      },
+      "skySubmit": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "cloudRecolor": {
+       "meanMs": 0.01,
+       "p99Ms": 0.3,
+       "maxMs": 1.1
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "vshared",
+     "measures": "v27.2 with a prototype of the shared refraction copy",
+     "version": "v27.2",
+     "bundleRef": null,
+     "frames": "paced at 60 Hz",
+     "probe": "exp-sharedrefract.js",
+     "seconds": 45,
+     "frameCount": 2698,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 39.1
+     },
+     "intervalsOver": {
+      "ms6_94": 2697,
+      "ms10": 2697,
+      "ms16_7": 1012,
+      "ms25": 2
+     },
+     "mainThreadMs": {
+      "p50": 2.5,
+      "p90": 3.4,
+      "p99": 4.7,
+      "max": 8.6
+     },
+     "mainThreadOver": {
+      "ms6_94": 2,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "bigCanvasDraw": {
+       "meanMs": 0.15,
+       "p99Ms": 0.4,
+       "maxMs": 0.6
+      },
+      "player": {
+       "meanMs": 0.1,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "sharedCopy": {
+       "meanMs": 0.09,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "rocketPlume": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "canvasToGL": {
+       "meanMs": 0.04,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.station": {
+       "meanMs": 0.04,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.2,
+       "maxMs": 0.4
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "selfCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.3
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  {
+   "name": "refraction change",
+   "frames": "uncapped",
+   "note": "Alternating order, then the sky hold experiment.",
+   "runs": [
+    {
+     "label": "rbase1",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": "HEAD",
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7616,
+     "fps": 169.2,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 18.9,
+      "p99": 40.4,
+      "max": 61.3
+     },
+     "intervalsOver": {
+      "ms6_94": 1764,
+      "ms10": 1342,
+      "ms16_7": 962,
+      "ms25": 257
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 6,
+      "p99": 39.1,
+      "max": 63.2
+     },
+     "mainThreadOver": {
+      "ms6_94": 675,
+      "ms10": 497
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.49,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 1.4
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.6
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.6
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.2
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "rnew1",
+     "measures": "refraction change only",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 8128,
+     "fps": 180.6,
+     "intervalMs": {
+      "p50": 2,
+      "p90": 18.9,
+      "p99": 37.1,
+      "max": 63.7
+     },
+     "intervalsOver": {
+      "ms6_94": 1804,
+      "ms10": 1501,
+      "ms16_7": 1025,
+      "ms25": 136
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 4.9,
+      "p99": 33.3,
+      "max": 62.5
+     },
+     "mainThreadOver": {
+      "ms6_94": 576,
+      "ms10": 511
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.49,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.4
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.1
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "rnew2",
+     "measures": "refraction change only, repeat",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7972,
+     "fps": 177.1,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 18.8,
+      "p99": 38.9,
+      "max": 64
+     },
+     "intervalsOver": {
+      "ms6_94": 1729,
+      "ms10": 1378,
+      "ms16_7": 961,
+      "ms25": 201
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 5.6,
+      "p99": 36.9,
+      "max": 63.2
+     },
+     "mainThreadOver": {
+      "ms6_94": 626,
+      "ms10": 547
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.51,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.3,
+       "maxMs": 1.6
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.6
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.6
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "rbase2",
+     "measures": "v27.2, repeat",
+     "version": "v27.2",
+     "bundleRef": "HEAD",
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7610,
+     "fps": 169,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 19.1,
+      "p99": 39.7,
+      "max": 61.3
+     },
+     "intervalsOver": {
+      "ms6_94": 1759,
+      "ms10": 1366,
+      "ms16_7": 976,
+      "ms25": 246
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 6,
+      "p99": 39.3,
+      "max": 67.9
+     },
+     "mainThreadOver": {
+      "ms6_94": 661,
+      "ms10": 503
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.48,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 1.5
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "rskyhold",
+     "measures": "refraction change, sky held still while only the horizon moves (upper bound for the sky cache)",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "exp-skyhold.js",
+     "seconds": 45,
+     "frameCount": 9193,
+     "fps": 204.3,
+     "intervalMs": {
+      "p50": 1.9,
+      "p90": 18.2,
+      "p99": 23.8,
+      "max": 61.5
+     },
+     "intervalsOver": {
+      "ms6_94": 1731,
+      "ms10": 1289,
+      "ms16_7": 979,
+      "ms25": 79
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 4.5,
+      "p99": 28.2,
+      "max": 60.4
+     },
+     "mainThreadOver": {
+      "ms6_94": 552,
+      "ms10": 489
+     },
+     "waitTimers": {
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 1.4
+      },
+      "skyDirty": {
+       "meanMs": 0.02,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 5
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 5
+      },
+      "skyCopy": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "skySubmit": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  {
+   "name": "final comparison",
+   "frames": "uncapped",
+   "note": "Alternating order; the report's results table.",
+   "runs": [
+    {
+     "label": "sbase1",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": "HEAD",
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7506,
+     "fps": 166.7,
+     "intervalMs": {
+      "p50": 2.2,
+      "p90": 19.1,
+      "p99": 40.3,
+      "max": 65.8
+     },
+     "intervalsOver": {
+      "ms6_94": 1703,
+      "ms10": 1320,
+      "ms16_7": 926,
+      "ms25": 270
+     },
+     "mainThreadMs": {
+      "p50": 1.5,
+      "p90": 6,
+      "p99": 38.9,
+      "max": 63.9
+     },
+     "mainThreadOver": {
+      "ms6_94": 645,
+      "ms10": 497
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.52,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.2
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 1.3
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.1
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "snew1",
+     "measures": "v27.3",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 8902,
+     "fps": 197.7,
+     "intervalMs": {
+      "p50": 2,
+      "p90": 18.3,
+      "p99": 24.7,
+      "max": 71.6
+     },
+     "intervalsOver": {
+      "ms6_94": 1784,
+      "ms10": 1344,
+      "ms16_7": 995,
+      "ms25": 83
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 4.2,
+      "p99": 29.6,
+      "max": 63.1
+     },
+     "mainThreadOver": {
+      "ms6_94": 561,
+      "ms10": 527
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.03,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 1.5
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 3.7
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 3.7
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 3.7
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "snew2",
+     "measures": "v27.3, repeat",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 8780,
+     "fps": 195.1,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 18.4,
+      "p99": 24.6,
+      "max": 66.6
+     },
+     "intervalsOver": {
+      "ms6_94": 1816,
+      "ms10": 1406,
+      "ms16_7": 974,
+      "ms25": 78
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 4.5,
+      "p99": 30.1,
+      "max": 59.9
+     },
+     "mainThreadOver": {
+      "ms6_94": 524,
+      "ms10": 484
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.03,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 3.6
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planet": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.3
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.2
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.2
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "sbase2",
+     "measures": "v27.2, repeat",
+     "version": "v27.2",
+     "bundleRef": "HEAD",
+     "frames": "uncapped",
+     "probe": "hitch-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7456,
+     "fps": 165.6,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 19.2,
+      "p99": 40.8,
+      "max": 101
+     },
+     "intervalsOver": {
+      "ms6_94": 1721,
+      "ms10": 1356,
+      "ms16_7": 954,
+      "ms25": 266
+     },
+     "mainThreadMs": {
+      "p50": 1.4,
+      "p90": 5.6,
+      "p99": 39.6,
+      "max": 91.5
+     },
+     "mainThreadOver": {
+      "ms6_94": 605,
+      "ms10": 468
+     },
+     "waitTimers": {
+      "skyDirty": {
+       "meanMs": 0.5,
+       "p99Ms": 1,
+       "maxMs": 1
+      },
+      "planet": {
+       "meanMs": 0.02,
+       "p99Ms": 0.8,
+       "maxMs": 2.7
+      },
+      "clouds": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 1.5
+      },
+      "skySubmit": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "skyCopy": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "planetColour": {
+       "meanMs": 0.01,
+       "p99Ms": 0.8,
+       "maxMs": 2.7
+      },
+      "celestials": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "planetBuild": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "cloudRecolor": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      },
+      "bankBuild": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 1.1
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  {
+   "name": "paced comparison",
+   "frames": "paced at 60 Hz",
+   "note": "Alternating order with tools/perf/sync-audit-probe.js.",
+   "runs": [
+    {
+     "label": "pbase1",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": "68551eb",
+     "frames": "paced at 60 Hz",
+     "probe": "sync-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 2701,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 16.8
+     },
+     "intervalsOver": {
+      "ms6_94": 2700,
+      "ms10": 2700,
+      "ms16_7": 933,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 2.4,
+      "p90": 3.4,
+      "p99": 4.6,
+      "max": 8.6
+     },
+     "mainThreadOver": {
+      "ms6_94": 2,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 0.14,
+       "p99Ms": 0.5,
+       "maxMs": 0.6
+      },
+      "player": {
+       "meanMs": 0.09,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.9
+      },
+      "rocketPlume": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.station": {
+       "meanMs": 0.05,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "canvasToGL": {
+       "meanMs": 0.03,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "pnew1",
+     "measures": "v27.3",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "paced at 60 Hz",
+     "probe": "sync-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 2700,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 22.1
+     },
+     "intervalsOver": {
+      "ms6_94": 2699,
+      "ms10": 2699,
+      "ms16_7": 1072,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 3.1,
+      "p90": 3.9,
+      "p99": 5.1,
+      "max": 7.5
+     },
+     "mainThreadOver": {
+      "ms6_94": 1,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "bigCanvasDraw": {
+       "meanMs": 0.17,
+       "p99Ms": 0.5,
+       "maxMs": 0.6
+      },
+      "player": {
+       "meanMs": 0.09,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "rocketPlume": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.station": {
+       "meanMs": 0.05,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "canvasToGL": {
+       "meanMs": 0.03,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.3,
+       "maxMs": 0.5
+      },
+      "selfCopy": {
+       "meanMs": 0.03,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.9
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "pnew2",
+     "measures": "v27.3, repeat",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "paced at 60 Hz",
+     "probe": "sync-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 2700,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 16.8
+     },
+     "intervalsOver": {
+      "ms6_94": 2699,
+      "ms10": 2699,
+      "ms16_7": 922,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 3,
+      "p90": 3.8,
+      "p99": 5.1,
+      "max": 7.2
+     },
+     "mainThreadOver": {
+      "ms6_94": 1,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "bigCanvasDraw": {
+       "meanMs": 0.16,
+       "p99Ms": 0.5,
+       "maxMs": 0.7
+      },
+      "player": {
+       "meanMs": 0.09,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "rocketPlume": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.station": {
+       "meanMs": 0.05,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "canvasToGL": {
+       "meanMs": 0.03,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "selfCopy": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.3
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "pbase2",
+     "measures": "v27.2, repeat",
+     "version": "v27.2",
+     "bundleRef": "68551eb",
+     "frames": "paced at 60 Hz",
+     "probe": "sync-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 2700,
+     "fps": 60,
+     "intervalMs": {
+      "p50": 16.7,
+      "p90": 16.7,
+      "p99": 16.8,
+      "max": 22.8
+     },
+     "intervalsOver": {
+      "ms6_94": 2699,
+      "ms10": 2699,
+      "ms16_7": 1087,
+      "ms25": 0
+     },
+     "mainThreadMs": {
+      "p50": 2.5,
+      "p90": 3.4,
+      "p99": 4.6,
+      "max": 7.3
+     },
+     "mainThreadOver": {
+      "ms6_94": 1,
+      "ms10": 0
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 0.15,
+       "p99Ms": 0.5,
+       "maxMs": 0.6
+      },
+      "player": {
+       "meanMs": 0.09,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.5
+      },
+      "rocketPlume": {
+       "meanMs": 0.06,
+       "p99Ms": 0.3,
+       "maxMs": 0.4
+      },
+      "ent.station": {
+       "meanMs": 0.05,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "canvasToGL": {
+       "meanMs": 0.03,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.03,
+       "p99Ms": 0.3,
+       "maxMs": 0.3
+      },
+      "ent.fireplace": {
+       "meanMs": 0.02,
+       "p99Ms": 0.2,
+       "maxMs": 0.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "canvasToGPU": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  {
+   "name": "wait timers, uncapped",
+   "frames": "uncapped",
+   "note": "tools/perf/sync-audit-probe.js; stall lengths here show where the GPU backlog lands, not display stalls.",
+   "runs": [
+    {
+     "label": "ynew1",
+     "measures": "v27.3",
+     "version": "v27.3",
+     "bundleRef": null,
+     "frames": "uncapped",
+     "probe": "sync-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 9098,
+     "fps": 202.1,
+     "intervalMs": {
+      "p50": 2.1,
+      "p90": 17.6,
+      "p99": 24.6,
+      "max": 63.7
+     },
+     "intervalsOver": {
+      "ms6_94": 1660,
+      "ms10": 1266,
+      "ms16_7": 937,
+      "ms25": 80
+     },
+     "mainThreadMs": {
+      "p50": 1.5,
+      "p90": 4.7,
+      "p99": 29.2,
+      "max": 61
+     },
+     "mainThreadOver": {
+      "ms6_94": 587,
+      "ms10": 539
+     },
+     "waitTimers": {
+      "bigCanvasDraw": {
+       "meanMs": 1.36,
+       "p99Ms": 27,
+       "maxMs": 58.8
+      },
+      "canvasToGL": {
+       "meanMs": 0.1,
+       "p99Ms": 3,
+       "maxMs": 6.3
+      },
+      "rocketPlume": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 23.4
+      },
+      "player": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 3.4
+      },
+      "ent.fireplace": {
+       "meanMs": 0.06,
+       "p99Ms": 0.1,
+       "maxMs": 33.5
+      },
+      "selfCopy": {
+       "meanMs": 0.06,
+       "p99Ms": 0.2,
+       "maxMs": 26.7
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.05,
+       "p99Ms": 0.2,
+       "maxMs": 31.6
+      },
+      "ent.station": {
+       "meanMs": 0.04,
+       "p99Ms": 0.2,
+       "maxMs": 27.7
+      },
+      "drawSmoke": {
+       "meanMs": 0.02,
+       "p99Ms": 0.1,
+       "maxMs": 6.3
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 3.8
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.trees": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    },
+    {
+     "label": "ybase1",
+     "measures": "v27.2",
+     "version": "v27.2",
+     "bundleRef": "68551eb",
+     "frames": "uncapped",
+     "probe": "sync-audit-probe.js",
+     "seconds": 45,
+     "frameCount": 7438,
+     "fps": 165.3,
+     "intervalMs": {
+      "p50": 2.3,
+      "p90": 19.1,
+      "p99": 41.5,
+      "max": 63.3
+     },
+     "intervalsOver": {
+      "ms6_94": 1634,
+      "ms10": 1318,
+      "ms16_7": 948,
+      "ms25": 263
+     },
+     "mainThreadMs": {
+      "p50": 1.6,
+      "p90": 6,
+      "p99": 40.7,
+      "max": 70.4
+     },
+     "mainThreadOver": {
+      "ms6_94": 636,
+      "ms10": 487
+     },
+     "waitTimers": {
+      "selfCopy": {
+       "meanMs": 1.94,
+       "p99Ms": 37.3,
+       "maxMs": 68.9
+      },
+      "canvasToGL": {
+       "meanMs": 0.13,
+       "p99Ms": 3.7,
+       "maxMs": 7.1
+      },
+      "rocketPlume": {
+       "meanMs": 0.12,
+       "p99Ms": 0.3,
+       "maxMs": 53.9
+      },
+      "bigCanvasDraw": {
+       "meanMs": 0.07,
+       "p99Ms": 0.3,
+       "maxMs": 42.1
+      },
+      "ent.fireplace": {
+       "meanMs": 0.07,
+       "p99Ms": 0.1,
+       "maxMs": 54.4
+      },
+      "ent.pumpPad": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 42.8
+      },
+      "player": {
+       "meanMs": 0.07,
+       "p99Ms": 0.2,
+       "maxMs": 4.1
+      },
+      "ent.station": {
+       "meanMs": 0.04,
+       "p99Ms": 0.2,
+       "maxMs": 37.4
+      },
+      "mountainsToCanvas": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 0.2
+      },
+      "ent.trees": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 33.4
+      },
+      "ent.fireSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 5.4
+      },
+      "drawSmoke": {
+       "meanMs": 0.01,
+       "p99Ms": 0.1,
+       "maxMs": 6.1
+      },
+      "ent.bird": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.boulders": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.turtle": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.doorGlow": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.banners": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "ent.birds": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 0.1
+      },
+      "ent.leaves": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.1
+      },
+      "canvasToGPU": {
+       "meanMs": 0,
+       "p99Ms": 0.1,
+       "maxMs": 1.9
+      },
+      "readback": {
+       "meanMs": 0,
+       "p99Ms": 0,
+       "maxMs": 0.2
+      }
+     },
+     "pageErrors": 0
+    }
+   ]
+  }
+ ],
+ "derived": {
+  "budget144HzMs": 6.94,
+  "isolationBaselineMsPerFrame": 7.22,
+  "isolationSavingsMsPerFrame": {
+   "slime refraction off": 1.02,
+   "slimes off": 1.06,
+   "smoke off": 1.91,
+   "night sky and atmosphere off": 1.14,
+   "weather clouds off": -0.06,
+   "water off": -0.17
+  },
+  "finalComparison": {
+   "v27_2Fps": [
+    166.7,
+    165.6
+   ],
+   "v27_3Fps": [
+    197.7,
+    195.1
+   ],
+   "v27_2MsPerFrame": 6.02,
+   "v27_3MsPerFrame": 5.09,
+   "spareAt144HzMs": {
+    "v27_2": 0.93,
+    "v27_3": 1.85
+   }
+  },
+  "note": "Uncapped frames per second measures the CPU and GPU work of a frame together. Baselines differed between batches on this machine (137 to 169 frames per second), so compare runs only within a batch."
+ },
+ "equivalence": [
+  {
+   "boot": "dev boot, both changes",
+   "boots": [
+    "HEAD: 20 scenes, page errors 0, warm-up 343 ms, warm-up errors []",
+    "checkout: 20 scenes, page errors 0, warm-up 345 ms, warm-up errors []",
+    "checkout, warm-up disabled: 20 scenes, page errors 0"
+   ],
+   "pairs": [
+    {
+     "comparison": "warm-up disabled against enabled",
+     "scenes": {
+      "spawn": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "spawn-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "grass": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "deck": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "topsoil-cave": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-topsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-subsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-deepcrust": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-permafrost": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-magma": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-mantle": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "altitude": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "bank-edge": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "horizon-limb": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "floater": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "damage": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "explosion": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "death": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      }
+     },
+     "matching": 20,
+     "total": 20,
+     "exact": 20
+    },
+    {
+     "comparison": "v27.2 (68551eb) against v27.3",
+     "scenes": {
+      "spawn": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "spawn-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "grass": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "deck": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "topsoil-cave": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-topsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-subsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-deepcrust": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-permafrost": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-magma": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-mantle": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "altitude": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "bank-edge": {
+       "match": true,
+       "main": "blocks 1, worst 0.003 levels per pixel",
+       "ui": "exact"
+      },
+      "horizon-limb": {
+       "match": true,
+       "main": "blocks 2, worst 0.001 levels per pixel",
+       "ui": "exact"
+      },
+      "slime-pen": {
+       "match": true,
+       "main": "blocks 1, worst 0.001 levels per pixel",
+       "ui": "exact"
+      },
+      "slime-pen-fraction": {
+       "match": true,
+       "main": "blocks 1, worst 0.001 levels per pixel",
+       "ui": "exact"
+      },
+      "floater": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "damage": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "explosion": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "death": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      }
+     },
+     "matching": 20,
+     "total": 20,
+     "exact": 16
+    }
+   ]
+  },
+  {
+   "boot": "normal boot, both changes",
+   "boots": [
+    "HEAD: 20 scenes, page errors 0, warm-up 345 ms, warm-up errors []",
+    "checkout: 20 scenes, page errors 0, warm-up 338 ms, warm-up errors []",
+    "checkout, warm-up disabled: 20 scenes, page errors 0"
+   ],
+   "pairs": [
+    {
+     "comparison": "warm-up disabled against enabled",
+     "scenes": {
+      "spawn": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "spawn-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "grass": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "deck": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "topsoil-cave": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-topsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-subsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-deepcrust": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-permafrost": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-magma": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-mantle": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "altitude": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "bank-edge": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "horizon-limb": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "floater": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "damage": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "explosion": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "death": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      }
+     },
+     "matching": 20,
+     "total": 20,
+     "exact": 20
+    },
+    {
+     "comparison": "v27.2 (68551eb) against v27.3",
+     "scenes": {
+      "spawn": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "spawn-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "grass": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "deck": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "topsoil-cave": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-topsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-subsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-deepcrust": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-permafrost": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-magma": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-mantle": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "altitude": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "bank-edge": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "horizon-limb": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "floater": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "damage": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "explosion": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "death": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      }
+     },
+     "matching": 20,
+     "total": 20,
+     "exact": 20
+    }
+   ]
+  },
+  {
+   "boot": "dev boot, refraction change only (before the horizon limb scene was added)",
+   "boots": [
+    "HEAD: 19 scenes, page errors 0, warm-up 382 ms, warm-up errors []",
+    "checkout: 19 scenes, page errors 0, warm-up 338 ms, warm-up errors []",
+    "checkout, warm-up disabled: 19 scenes, page errors 0"
+   ],
+   "pairs": [
+    {
+     "comparison": "warm-up disabled against enabled",
+     "scenes": {
+      "spawn": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "spawn-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "grass": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "deck": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "topsoil-cave": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-topsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-subsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-deepcrust": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-permafrost": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-magma": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-mantle": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "altitude": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "bank-edge": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "slime-pen-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "floater": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "damage": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "explosion": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "death": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      }
+     },
+     "matching": 19,
+     "total": 19,
+     "exact": 19
+    },
+    {
+     "comparison": "v27.2 (68551eb) against v27.3",
+     "scenes": {
+      "spawn": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "spawn-fraction": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "grass": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "deck": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "topsoil-cave": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-topsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-subsoil": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-deepcrust": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-permafrost": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-magma": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "layer-mantle": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "altitude": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "bank-edge": {
+       "match": true,
+       "main": "blocks 1, worst 0.003 levels per pixel",
+       "ui": "exact"
+      },
+      "slime-pen": {
+       "match": true,
+       "main": "blocks 1, worst 0.001 levels per pixel",
+       "ui": "exact"
+      },
+      "slime-pen-fraction": {
+       "match": true,
+       "main": "blocks 1, worst 0.001 levels per pixel",
+       "ui": "exact"
+      },
+      "floater": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "damage": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "explosion": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      },
+      "death": {
+       "match": true,
+       "main": "exact",
+       "ui": "exact"
+      }
+     },
+     "matching": 19,
+     "total": 19,
+     "exact": 16
+    }
+   ]
+  }
+ ],
+ "tours": {
+  "tool": "tools/perf/shader-warmup-trace.mjs, fresh profile, uncapped frames",
+  "runs": [
+   {
+    "label": "v27.2, previous report",
+    "version": "v27.2",
+    "revealedAfterMs": 2315,
+    "warmUpMs": 380,
+    "warmUpRasterMs": 169,
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 1,
+    "buildMsAfterReveal": 4.5,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 5.4
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.5,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 4.5,
+      "flushMs": 5.4
+     }
+    ]
+   },
+   {
+    "label": "v27.2, SIGNATURES=1",
+    "version": "v27.2",
+    "revealedAfterMs": 2399,
+    "warmUpMs": 512,
+    "warmUpRasterMs": 53,
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 1,
+    "buildMsAfterReveal": 4.4,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 5.4
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.2,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 4.4,
+      "flushMs": 5.4
+     }
+    ]
+   },
+   {
+    "label": "v27.3 validation chain one, MAX_COMPILES=3",
+    "version": "v27.3",
+    "revealedAfterMs": 2434,
+    "warmUpMs": 357,
+    "warmUpRasterMs": 153,
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 2,
+    "buildMsAfterReveal": 7.6,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 5.3
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.6,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 3.1,
+      "flushMs": 4
+     },
+     {
+      "atSeconds": 18.9,
+      "phase": "dig",
+      "programs": 1,
+      "ms": 4.5,
+      "flushMs": 5.3
+     }
+    ]
+   },
+   {
+    "label": "v27.3, MAX_COMPILES=3",
+    "version": "v27.3",
+    "revealedAfterMs": 2343,
+    "warmUpMs": 345,
+    "warmUpRasterMs": 145,
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 3,
+    "buildMsAfterReveal": 11.9,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 5.8
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.7,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 2.8,
+      "flushMs": 3.6
+     },
+     {
+      "atSeconds": 7,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 4.3,
+      "flushMs": 4.8
+     },
+     {
+      "atSeconds": 18.9,
+      "phase": "dig",
+      "programs": 1,
+      "ms": 4.9,
+      "flushMs": 5.8
+     }
+    ]
+   },
+   {
+    "label": "v27.3, SIGNATURES=1",
+    "version": "v27.3",
+    "revealedAfterMs": 2443,
+    "warmUpMs": 525,
+    "warmUpRasterMs": 53,
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 1,
+    "buildMsAfterReveal": 9,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 1,
+     "over16ms": 0,
+     "longestMs": 10.1
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.2,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 9,
+      "flushMs": 10.1
+     }
+    ]
+   },
+   {
+    "label": "v27.3, SIGNATURES=1, repeat",
+    "version": "v27.3",
+    "revealedAfterMs": 2391,
+    "warmUpMs": 522,
+    "warmUpRasterMs": 55,
+    "programsWhileLoading": 98,
+    "programsAfterReveal": 2,
+    "buildMsAfterReveal": 11,
+    "rasterFlushesAfterReveal": {
+     "over8ms": 0,
+     "over16ms": 0,
+     "longestMs": 7.5
+    },
+    "bursts": [
+     {
+      "atSeconds": 2.2,
+      "phase": "surface",
+      "programs": 1,
+      "ms": 6.5,
+      "flushMs": 7.5
+     },
+     {
+      "atSeconds": 18.9,
+      "phase": "dig",
+      "programs": 1,
+      "ms": 4.5,
+      "flushMs": 5.4
+     }
+    ]
+   }
+  ],
+  "alternating": {
+   "note": "v27.2 alternated with a v27.3 warm-up variant (backdrop bodies warmed before the poses, not shipped) under SHADER_DUMP, to identify the late program seen while digging and check whether v27.2 builds it too.",
+   "runs": [
+    {
+     "label": "v27.2, run 1",
+     "version": "v27.2",
+     "revealedAfterMs": 2275,
+     "warmUpMs": 417,
+     "warmUpRasterMs": 212,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 10,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 6.3
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 4.6,
+       "flushMs": 5.6
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 5.3,
+       "flushMs": 6.3
+      }
+     ]
+    },
+    {
+     "label": "v27.3 variant, run 1",
+     "version": "v27.3",
+     "revealedAfterMs": 2328,
+     "warmUpMs": 385,
+     "warmUpRasterMs": 179,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 1,
+     "buildMsAfterReveal": 4.2,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 5.1
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.6,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 4.2,
+       "flushMs": 5.1
+      }
+     ]
+    },
+    {
+     "label": "v27.2, run 2",
+     "version": "v27.2",
+     "revealedAfterMs": 2249,
+     "warmUpMs": 396,
+     "warmUpRasterMs": 193,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 10.4,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 6.2
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 5,
+       "flushMs": 6
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 5.4,
+       "flushMs": 6.2
+      }
+     ]
+    },
+    {
+     "label": "v27.3 variant, run 2",
+     "version": "v27.3",
+     "revealedAfterMs": 2282,
+     "warmUpMs": 393,
+     "warmUpRasterMs": 189,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 8.7,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 6.2
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 3.4,
+       "flushMs": 4.3
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 5.3,
+       "flushMs": 6.2
+      }
+     ]
+    },
+    {
+     "label": "v27.2, run 3",
+     "version": "v27.2",
+     "revealedAfterMs": 2244,
+     "warmUpMs": 393,
+     "warmUpRasterMs": 191,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 9.1,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 6.3
+     },
+     "bursts": [
+      {
+       "atSeconds": 5.5,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 3.8,
+       "flushMs": 4.5
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 5.3,
+       "flushMs": 6.3
+      }
+     ]
+    }
+   ]
+  },
+  "digProgram": {
+   "program": "12414374534287149317",
+   "vertexStage": "GPU stroke tessellation (17083482094434170563.essl: pts01Attr, pts23Attr, argsAttr, round joins)",
+   "fragmentStage": "solid colour inside an analytic rectangle clip (6218965917068506243.essl: ucolor_S0, urectUniform_S1_c0)",
+   "note": "Both shaders compile during loading in every run; this pairing links at about 18.9 s into the tour, in the dig phase, in some runs of both versions."
+  },
+  "investigation": {
+   "note": "Before the alternating runs, v27.3 variants that did not remove the dig program: the shared backdrop switched off, the slime warm-up reordered two ways, and the sky cache switched off (1 of 3 tours).",
+   "runs": [
+    {
+     "label": "backdrop switched off",
+     "version": "v27.3",
+     "revealedAfterMs": 2266,
+     "warmUpMs": 355,
+     "warmUpRasterMs": 152,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 8.3,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 6.1
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.7,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 3.2,
+       "flushMs": 4.2
+      },
+      {
+       "atSeconds": 19,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 5.1,
+       "flushMs": 6.1
+      }
+     ]
+    },
+    {
+     "label": "splats warmed after the backdrop bodies",
+     "version": "v27.3",
+     "revealedAfterMs": 2281,
+     "warmUpMs": 358,
+     "warmUpRasterMs": 155,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 11,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 7.4
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 6.3,
+       "flushMs": 7.4
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 4.7,
+       "flushMs": 5.6
+      }
+     ]
+    },
+    {
+     "label": "backdrop bodies warmed before the poses",
+     "version": "v27.3",
+     "revealedAfterMs": 2265,
+     "warmUpMs": 382,
+     "warmUpRasterMs": 169,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 8.7,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 5.6
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 4.1,
+       "flushMs": 5
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 4.7,
+       "flushMs": 5.6
+      }
+     ]
+    },
+    {
+     "label": "sky cache switched off, run 1",
+     "version": "v27.3",
+     "revealedAfterMs": 2243,
+     "warmUpMs": 347,
+     "warmUpRasterMs": 147,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 1,
+     "buildMsAfterReveal": 6.4,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 7.5
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 6.4,
+       "flushMs": 7.5
+      }
+     ]
+    },
+    {
+     "label": "sky cache switched off, run 2",
+     "version": "v27.3",
+     "revealedAfterMs": 2279,
+     "warmUpMs": 359,
+     "warmUpRasterMs": 155,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 1,
+     "buildMsAfterReveal": 3,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 3.9
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 3,
+       "flushMs": 3.9
+      }
+     ]
+    },
+    {
+     "label": "sky cache switched off, run 3",
+     "version": "v27.3",
+     "revealedAfterMs": 2307,
+     "warmUpMs": 355,
+     "warmUpRasterMs": 151,
+     "programsWhileLoading": 98,
+     "programsAfterReveal": 2,
+     "buildMsAfterReveal": 8,
+     "rasterFlushesAfterReveal": {
+      "over8ms": 0,
+      "over16ms": 0,
+      "longestMs": 5.9
+     },
+     "bursts": [
+      {
+       "atSeconds": 2.4,
+       "phase": "surface",
+       "programs": 1,
+       "ms": 3.1,
+       "flushMs": 4
+      },
+      {
+       "atSeconds": 18.9,
+       "phase": "dig",
+       "programs": 1,
+       "ms": 5,
+       "flushMs": 5.9
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "autosave": {
+  "note": "Dev world, paced at 60 Hz, one forced save every 240 frames through saveNow with persistence re-enabled. A docked autosave runs this path in one frame.",
+  "saves": [
+   {
+    "saveMs": 21.6,
+    "worldSerializeMs": 24.3,
+    "buildAndJsonMs": 21.5,
+    "kb": 74
+   },
+   {
+    "saveMs": 21,
+    "worldSerializeMs": 22.4,
+    "buildAndJsonMs": 22.7,
+    "kb": 73
+   },
+   {
+    "saveMs": 19.9,
+    "worldSerializeMs": 24.8,
+    "buildAndJsonMs": 19.7,
+    "kb": 73
+   },
+   {
+    "saveMs": 20,
+    "worldSerializeMs": 27.8,
+    "buildAndJsonMs": 21.5,
+    "kb": 73
+   },
+   {
+    "saveMs": 19.8,
+    "worldSerializeMs": 22,
+    "buildAndJsonMs": 19.7,
+    "kb": 73
+   },
+   {
+    "saveMs": 19.8,
+    "worldSerializeMs": 23.4,
+    "buildAndJsonMs": 19.9,
+    "kb": 73
+   },
+   {
+    "saveMs": 20.3,
+    "worldSerializeMs": 20.9,
+    "buildAndJsonMs": 19.8,
+    "kb": 73
+   },
+   {
+    "saveMs": 20.1,
+    "worldSerializeMs": 22.4,
+    "buildAndJsonMs": 20.1,
+    "kb": 73
+   }
+  ]
+ },
+ "loadingSmoke": {
+  "passLines": 85,
+  "failLines": 0,
+  "summary": "PASS 84 loading checks"
+ },
+ "toyBoot": {
+  "page": "water-smoke-slime.html",
+  "toyVersion": "v4.38",
+  "frames": "uncapped",
+  "seconds": 8,
+  "frameCount": 3718,
+  "canvases": 4,
+  "pageErrors": 0,
+  "missingFiles": 0
+ }
+}
