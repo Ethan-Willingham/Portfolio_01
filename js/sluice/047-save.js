@@ -197,6 +197,7 @@
       },
       cargo: cargo,
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, filled: false }; }),   // v24.148 — d = lake depth
+      pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
       world: saveSerializeWorld(),
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
       // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
@@ -272,6 +273,7 @@
     surfacePonds.length = 0;
     var ponds = env.ponds || [];
     for (var i = 0; i < ponds.length; i++) surfacePonds.push({ cL: ponds[i].cL, cR: ponds[i].cR, d: ponds[i].d || 1, filled: false });   // v24.148 — pre-deep saves default d=1
+    worldPondStyle = POND_STYLES[env.pondStyle] ? env.pondStyle : 'regular';   // v27.4: pre-style saves were regular
     // Profile
     var p = env.profile || {};
     money = p.money || 0;

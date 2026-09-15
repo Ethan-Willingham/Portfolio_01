@@ -784,36 +784,94 @@
     // normal player. gmTuningButtonSync() drives its visibility and is
     // called from the panel show/hide path and from setDevMode().
     var gmTuneBtnEl = null;
+    var gmSlimeBtnEl = null;
+    function gmDevButton(id, label, top, onPress) {
+      var el = document.createElement('button');
+      el.id = id;
+      el.type = 'button';
+      el.textContent = label;
+      el.style.cssText =
+        'position:fixed;left:0;top:' + top + ';width:64px;height:26px;' +
+        'z-index:100000;background:#0c0c0c;color:#dddddd;' +
+        'border:1px solid #444;border-left:none;' +
+        'font:11px/1 "Commit Mono",ui-monospace,monospace;' +
+        'letter-spacing:0.5px;padding:0;cursor:pointer;' +
+        'box-shadow:2px 2px 8px rgba(0,0,0,0.6);' +
+        'pointer-events:auto;-webkit-user-select:none;user-select:none;';
+      el.addEventListener('click', function (ev) {
+        try { ev.preventDefault(); ev.stopPropagation(); } catch (_) {}
+        onPress();
+      });
+      document.body.appendChild(el);
+      return el;
+    }
     function gmTuningButtonSync() {
       try {
         if (typeof document === 'undefined' || !document.body) return;
         var wantVisible = !!devMode && !gmPanelVisible;
         if (!gmTuneBtnEl) {
           if (!wantVisible) return;     // don't build it for normal players
-          gmTuneBtnEl = document.createElement('button');
-          gmTuneBtnEl.id = 'gmTuneBtn';
-          gmTuneBtnEl.type = 'button';
-          gmTuneBtnEl.textContent = '⚙ TUNE';
-          gmTuneBtnEl.style.cssText =
-            'position:fixed;left:0;top:42%;width:64px;height:26px;' +
-            'z-index:100000;background:#0c0c0c;color:#dddddd;' +
-            'border:1px solid #444;border-left:none;' +
-            'font:11px/1 "Commit Mono",ui-monospace,monospace;' +
-            'letter-spacing:0.5px;padding:0;cursor:pointer;' +
-            'box-shadow:2px 2px 8px rgba(0,0,0,0.6);' +
-            'pointer-events:auto;-webkit-user-select:none;user-select:none;';
-          gmTuneBtnEl.addEventListener('click', function (ev) {
-            try { ev.preventDefault(); ev.stopPropagation(); } catch (_) {}
+          gmTuneBtnEl = gmDevButton('gmTuneBtn', 'TUNE', '42%', function () {
             if (typeof gmTuningPanelToggle === 'function') gmTuningPanelToggle();
           });
-          document.body.appendChild(gmTuneBtnEl);
+          gmSlimeBtnEl = gmDevButton('gmSlimeBtn', '+ SLIME', 'calc(42% + 32px)', devDropSlimeOverhead);
         }
         gmTuneBtnEl.style.display = wantVisible ? '' : 'none';
+        gmSlimeBtnEl.style.display = wantVisible ? '' : 'none';
       } catch (e) {
         try { console.warn('gm tune button sync failed:', e); } catch (_) {}
       }
     }
     window.gmTuningButtonSync = gmTuningButtonSync;
+
+    // Dev + SLIME button: drops a slime straight above the rig's head, one per
+    // press. Each body takes the lowest open cell 3 to 40 rows up, trying the
+    // rig's column and then up to two columns either side at each height, that
+    // no tile or live body covers, so a run of presses piles them up instead
+    // of building one inside another. Rows above the world grid are open sky,
+    // so on the surface the pile grows up into it. In a tunnel with no room
+    // overhead, the C key's drop beside the rig takes over. The body cap grows
+    // with the presses; the lattice point budget, sized once in 340, is the
+    // real ceiling (about 160 one-tile slimes).
+    function devDropSlimeOverhead() {
+      if (!devMode || !player) return;
+      if (!ENABLE_JELLO) { showMsg('Slimes are disabled (boot with ?jello=1)'); return; }
+      var need = (JELLO_NPT + 1) * (JELLO_NPT + 1);
+      if (jelloCount + need > JELLO_MAX_POINTS) { showMsg('Slime limit reached (' + jelloBodies.length + ' slimes)'); return; }
+      if (jelloBodies.length >= JELLO_MAX_BODIES) JELLO_MAX_BODIES = jelloBodies.length + 16;
+      var headC = Math.floor((player.x + PLAYER_W * 0.5) / TILE);
+      var headR = Math.floor(player.y / TILE);
+      function bodyCovers(r, c) {
+        var x0 = c * TILE, y0 = r * TILE;
+        for (var i = 0; i < jelloBodies.length; i++) {
+          var b = jelloBodies[i];
+          if (b.bboxR > x0 && b.bboxL < x0 + TILE && b.bboxB > y0 && b.bboxT < y0 + TILE) return true;
+        }
+        return false;
+      }
+      var offsets = [0, 1, -1, 2, -2];
+      var found = false, row = 0, col = headC;
+      for (var up = 3; up <= 40 && !found; up++) {
+        var r = headR - up;
+        for (var oi = 0; oi < offsets.length; oi++) {
+          var c = headC + offsets[oi];
+          if (c < 1 || c > COLS - 2) continue;
+          if (tileAt(r, c) === null && !bodyCovers(r, c)) { found = true; row = r; col = c; break; }
+        }
+      }
+      var dropped = false;
+      if (found) {
+        var body = jelloBuildBody([{ r: row, c: col }], 'slime');
+        if (body) {
+          body.hue = Math.floor(Math.random() * 360);
+          spawnJelloSplat((col + 0.5) * TILE, (row + 0.5) * TILE, 5, 60, 0.8, null);
+          dropped = true;
+        }
+      } else {
+        dropped = jelloDevSpawnOne();
+      }
+      showMsg(dropped ? 'Slime dropped (' + jelloBodies.length + ' live)' : 'No room for a slime here');
+    }
 
     // Show/hide the panel. Builds it lazily on first show; re-syncs every
     // control from live values each time it opens.

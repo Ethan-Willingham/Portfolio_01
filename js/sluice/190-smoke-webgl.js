@@ -1443,6 +1443,52 @@
   };
   window.smokeTune = smokeTune;
 
+  // ----- Heavy yellow smoke (pause > Options > World, SluiceOptions.heavySmoke) -----
+  // Read live every frame, so it switches on and off without a reload. Every
+  // dye splat (exhaust, chimney, bombs, the rocket plume) is recoloured and
+  // widened in one place, a wrapper on the active driver's splat(); velocity
+  // only splats carry no dye and pass through untouched. The display alpha is
+  // max(r, g, b), so this balance reads yellow at any density. While it is on,
+  // the diesel keeps pouring when the rig is parked and the dye barely fades.
+  var SMOKE_HEAVY = {
+    r: 1.0, g: 0.8, b: 0.08,          // dye balance per splat, scaled by the source's strongest channel
+    dye_gain: 2.6,                    // per-splat dye relative to the normal source
+    radius_mul: 1.9,                  // wider puffs
+    rate_mul: 2.5,                    // diesel output
+    idle_rate: 0.05,                  // diesel output while parked (normally 0)
+    density_dissipation: 0.1,         // normal 1.5 halves the dye in about 2 s
+    velocity_dissipation: 0.015,
+    curl: 36,
+    splat_radius: 0.4
+  };
+  var smokeHeavyCol = { r: 0, g: 0, b: 0 };
+  function smokeHeavyOn() {
+    return !!(window.SluiceOptions && window.SluiceOptions.heavySmoke);
+  }
+  function smokeHeavyEnsureWrap() {
+    var driver = smokeDriver;
+    if (!driver || typeof driver.splat !== 'function' || driver.smokeHeavySplat) return;
+    var plain = driver.splat;
+    driver.smokeHeavySplat = plain;
+    driver.splat = function (x, y, dx, dy, color, radius) {
+      var k = color ? Math.max(color.r || 0, color.g || 0, color.b || 0) : 0;
+      if (k > 0 && smokeHeavyOn()) {
+        k *= SMOKE_HEAVY.dye_gain;
+        smokeHeavyCol.r = k * SMOKE_HEAVY.r;
+        smokeHeavyCol.g = k * SMOKE_HEAVY.g;
+        smokeHeavyCol.b = k * SMOKE_HEAVY.b;
+        return plain.call(driver, x, y, dx, dy, smokeHeavyCol, radius * SMOKE_HEAVY.radius_mul);
+      }
+      return plain.call(driver, x, y, dx, dy, color, radius);
+    };
+  }
+  function smokeHeavyConfig(SC) {
+    SC.DENSITY_DISSIPATION = Math.min(SC.DENSITY_DISSIPATION, SMOKE_HEAVY.density_dissipation);
+    SC.VELOCITY_DISSIPATION = Math.min(SC.VELOCITY_DISSIPATION, SMOKE_HEAVY.velocity_dissipation);
+    SC.CURL = Math.max(SC.CURL, SMOKE_HEAVY.curl);
+    SC.SPLAT_RADIUS = Math.max(SC.SPLAT_RADIUS, SMOKE_HEAVY.splat_radius);
+  }
+
   // ----- Fireplace chimney smoke tune -----
   // Independent of smokeTune so the chimney can have its own look + rise
   // rate distinct from the miner's diesel exhaust. velY uses the same
@@ -2191,6 +2237,11 @@
       var surfaceSyN2 = domainH2 > 0 ? (SKY_ROWS * TILE - domainY2) / domainH2 : 0;
       SC.wind_above_y = Math.max(0, Math.min(1, 1.0 - surfaceSyN2));
     }
+    var heavy = smokeHeavyOn();
+    if (heavy) {
+      smokeHeavyEnsureWrap();
+      if (SC) smokeHeavyConfig(SC);
+    }
 
     // Pulse modulation (rate breathes between (1-depth) and 1)
     var pulse = 1.0;
@@ -2204,11 +2255,12 @@
     var euv = smokeFluidWorldToUV(ex.x, ex.y);
     var isActive = !!drilling;
     var moving = Math.abs(player.vx) > 8 || player.thrusting;
-    if (smokeTune.diesel_enabled && euv.inView && (isActive || moving)) {
+    if (smokeTune.diesel_enabled && euv.inView && (isActive || moving || heavy)) {
       smokeMarkActive();   // v23.32 — dye is about to be injected; keep the sim awake
       var rate = isActive ? smokeTune.diesel_rate_active
                : (moving   ? smokeTune.diesel_rate_moving
                            : smokeTune.diesel_rate_idle);
+      if (heavy) rate = Math.max(rate, SMOKE_HEAVY.idle_rate) * SMOKE_HEAVY.rate_mul;
       rate *= pulse;
       // v11.58 — pace dye output off real time so a low-fps device emits
       // the same smoke-per-second as a fast one (emitDt is dt capped at

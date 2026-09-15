@@ -133,6 +133,9 @@
       slider.addEventListener('input', apply);
     }
     function wireSegment(key, fallback, pairs) {
+      function valid(value) {
+        return pairs.some(function (pair) { return pair[1] === value; });
+      }
       function sync(value) {
         for (var i = 0; i < pairs.length; i++) {
           var button = document.getElementById(pairs[i][0]);
@@ -147,6 +150,7 @@
             extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
           }[value] || 'Custom graphics settings.';
         }
+        if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }
       for (var i = 0; i < pairs.length; i++) {
         (function (pair) {
@@ -155,8 +159,23 @@
       }
       var saved = read('sluice.opt.' + key);
       if (key === 'gfx') window.SluiceOptions.syncGraphics = sync;
-      var valid = pairs.some(function (pair) { return pair[1] === saved; });
-      sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
+      sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid(saved) ? saved : fallback);
+      return function () {
+        var now = read('sluice.opt.' + key);
+        sync(valid(now) ? now : fallback);
+      };
+    }
+    // Ponds shape the next generated world, not the one in play, so the note
+    // says whether this world already has the chosen ponds.
+    function pondsNote(value) {
+      var looks = {
+        regular: 'Small stone-lined ponds.',
+        wide: 'Huge ponds, two tiles deep and very wide. Heavier on graphics.',
+        deep: 'Narrow ponds, 13 to 16 tiles deep. Heavier on graphics.'
+      };
+      var current = looks[worldPondStyle] ? worldPondStyle : 'regular';
+      return (looks[value] || looks.regular) +
+        (value === current ? ' This world has them.' : ' Applies to your next new game.');
     }
     // Moderate for first-time players; a saved master mute still wins.
     wireSlider('gm-vol', null, 0.6, true);
@@ -167,5 +186,10 @@
     wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
     wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
+    var resyncPonds = wireSegment('ponds', 'regular', [['gm-ponds-regular', 'regular'], ['gm-ponds-wide', 'wide'], ['gm-ponds-deep', 'deep']]);
+    // A new game or a loaded save changes this world's ponds after the menu
+    // was built, so the note refreshes whenever Options opens.
+    document.getElementById('gm-options-btn').addEventListener('click', resyncPonds);
+    wireSegment('heavysmoke', '0', [['gm-heavysmoke-off', '0'], ['gm-heavysmoke-on', '1']]);
   }
   setupPauseMenu();

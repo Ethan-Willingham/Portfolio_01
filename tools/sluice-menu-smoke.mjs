@@ -238,8 +238,11 @@ try {
   await check('Back and close occupy header corners', `(() => {const c=document.getElementById('gm-pause-card').getBoundingClientRect(),b=document.getElementById('gm-opt-back').getBoundingClientRect(),x=document.getElementById('gm-menu-close').getBoundingClientRect(),t=document.getElementById('gm-menu-title').getBoundingClientRect();return b.x<c.x+c.width/2 && x.x>c.x+c.width/2 && b.bottom<=t.top && x.y<t.top && b.height>=44 && x.width>=44 && x.height>=44;})()`);
   await ev('document.getElementById("gm-vol").focus()'); await key('ArrowRight');
   await check('native slider arrows apply and persist', 'document.getElementById("gm-vol-value").value === "61%" && localStorage.getItem("sluice.volume") === "0.61"');
-  await click('gm-gfx-bal'); await click('gm-dmgflash-off'); await click('gm-lowflash-on');
+  // Apply ordinary live options before graphics, whose scene-loading overlay
+  // intentionally blocks further clicks until the preset finishes.
+  await click('gm-dmgflash-off'); await click('gm-lowflash-on'); await click('gm-gfx-bal');
   await check('selected settings apply', 'SluiceOptions.damageFlash === false && SluiceOptions.lowFlash === true && gm.get("weather.lightning") === 0 && document.getElementById("gm-gfx-bal").getAttribute("aria-pressed") === "true"');
+  for (let i=0; i<200 && await ev('window.SluiceLoading && window.SluiceLoading.active()'); i++) await sleep(50);
   await key('Escape');
   await check('Escape backs out and restores focus', '__menuSmoke.state().paused && __menuSmoke.state().page === "main" && document.activeElement.id === "gm-options-btn"');
   await click('gm-controls-btn'); await shot('controls-desktop'); await key('Escape');
@@ -272,9 +275,11 @@ try {
   await ev('document.querySelector(".pause-body").scrollTop=0');
   const scrollArea=await ev('document.querySelector(".pause-body").getBoundingClientRect().toJSON()');
   const scrollX=scrollArea.x+8, scrollStart=scrollArea.bottom-20;
-  await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:scrollX,y:scrollStart}]});
-  for(let y=scrollStart-25;y>=scrollArea.y+15;y-=25){await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:scrollX,y}]});await sleep(20);}
-  await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(350);
+  for(let swipe=0;swipe<2;swipe++){
+    await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:scrollX,y:scrollStart}]});
+    for(let y=scrollStart-25;y>=scrollArea.y+15;y-=25){await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:scrollX,y}]});await sleep(20);}
+    await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(350);
+  }
   await check('touch scroll reaches lower settings', `(() => {const b=document.querySelector('.pause-body'); return b.scrollTop > 0 && b.scrollTop >= b.scrollHeight-b.clientHeight-2;})()`);
   await key('Escape'); await click('gm-new-game-btn'); await click('gm-restart-btn');
   await check('explicit confirmation resets run only', `!__menuSmoke.state().paused && __menuSmoke.state().money < ${savedMoney} && localStorage.getItem('sluice.opt.gfx') === 'balanced'`);

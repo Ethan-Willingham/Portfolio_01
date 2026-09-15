@@ -3,6 +3,28 @@
   // list, but updateSurfacePondStreaming() (070) only spawns water in the
   // pool(s) near the camera. Module-scope so the streamer + worldgen share it.
   var surfacePonds = [];
+  // Pond style of the world in play (v27.4): pause > Options > World > Ponds,
+  // stored by 052 as sluice.opt.ponds. A NEW world takes the stored choice
+  // (?ponds=regular|wide|deep overrides it per load); a loaded save restores
+  // the style its world was built with (047). Every style keeps one pond live
+  // at a time: the gaps stay wider than the ~81-tile liquid region, and the
+  // big styles cap a pond near 96 tiles of water (at most about 64k of the
+  // 120k particle budget, under the stray sweep's 60% trigger). Regular draws
+  // the same random numbers as before, so seeded worlds are unchanged.
+  var worldPondStyle = 'regular';
+  var POND_STYLES = {
+    regular: { wMin: 6, wSpan: 4, dMin: 3, dSpan: 2, maxTiles: 24, gapMin: 130, gapSpan: 80 },
+    wide:    { wMin: 40, wSpan: 9, dMin: 2, dSpan: 1, maxTiles: 96, gapMin: 100, gapSpan: 51 },
+    deep:    { wMin: 6, wSpan: 2, dMin: 13, dSpan: 4, maxTiles: 98, gapMin: 100, gapSpan: 51 }
+  };
+  function worldPondStyleForNewWorld() {
+    try {
+      var q = /[?&]ponds=(regular|wide|deep)(&|$)/.exec(window.location.search || '');
+      if (q) return q[1];
+    } catch (e) {}
+    var chosen = window.SluiceOptions && window.SluiceOptions.pondStyle;
+    return POND_STYLES[chosen] ? chosen : 'regular';
+  }
   function generateWorld() {
     world = [];
     // Live jello bodies never survive a world rebuild (New Game / dev restart): a body
@@ -190,19 +212,32 @@
     // a time, gap > the active region width. pond.d carries the depth
     // (saves without it mean an old 1-deep world: default 1 everywhere).
     surfacePonds.length = 0;
+    worldPondStyle = worldPondStyleForNewWorld();
+    var _pondStyle = POND_STYLES[worldPondStyle];
+    var _pondBig = worldPondStyle !== 'regular';
     var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
     var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_RIGHT_COL + 8;  // keep clear of spawn/station
+    // Keep clear of spawn/station. The big styles also clear the dev slime pen,
+    // which sits 16 to 24 columns left of the deck.
+    var _pondDeckL = DECK_LEFT_COL - (_pondBig ? 26 : 8), _pondDeckR = DECK_RIGHT_COL + 8;
     var _px = _pondLo + ((Math.random() * 30) | 0);
     while (_px < _pondHi - 12) {
-      // Small lakes, sized for LOW-END GPUs (Phase C, free-forever relaunch).
-      // Density stays FULL (655/tile, owner-locked); we shrink the TILE COUNT so
-      // the one streamed-live lake is light. Was 9-14 x 5-8 (up to ~65k particles);
-      // now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x lighter). See TUNING.md.
-      var _pw = 6 + ((Math.random() * 4) | 0);     // 6..9 wide — still reads as a lake, not a strip
-      var _pd = 3 + ((Math.random() * 2) | 0);     // 3..4 tiles of water depth
-      if (_pw * _pd > 24) _pd = (24 / _pw) | 0;    // budget clamp: area x 655/tile <= ~15.7k particles
+      // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
+      // relaunch). Density stays FULL (655/tile, owner-locked); we shrink the
+      // TILE COUNT so the one streamed-live lake is light. Was 9-14 x 5-8 (up to
+      // ~65k particles); now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x
+      // lighter). See TUNING.md. Wide: 40-48 x 2. Deep: 6-7 x 13-16, capped at
+      // 98 tiles.
+      var _pw = _pondStyle.wMin + ((Math.random() * _pondStyle.wSpan) | 0);
+      var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
+      if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
       var _pr = _px + _pw - 1;
+      // A big pond that lands on the station slides past the deck instead of
+      // being dropped, so the town keeps a pond on each side.
+      if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
+        _px = _pondDeckR + 1;
+        _pr = _px + _pw - 1;
+      }
       if (_pr < _pondHi && !(_pr >= _pondDeckL && _px <= _pondDeckR) &&
           world[SKY_ROWS] && world[SKY_ROWS + _pd]) {
         // carve the deep pit: stone walls down both sides, stone floor,
@@ -217,7 +252,7 @@
         surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
         seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
       }
-      _px = _pr + 1 + 130 + ((Math.random() * 80) | 0);  // gap 130..210 — wider (fewer lakes for low-end), still > the ~81-tile active region so only one streams in at a time
+      _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
     }
   }
 

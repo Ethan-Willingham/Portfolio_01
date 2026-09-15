@@ -114,11 +114,13 @@ quantities, unit prices, and haul value while the mine is paused).
 Press backtick to toggle **dev mode** (money 999,999, free purchases, the perf overlay).
 Then the useful keys: **L** opens the `window.gm` slider panel (every tunable, grouped);
 **X** cycles the water debug kit; **N** cycles weather moods; **G** the GPU probe; **H** the
-perf-ISO A/B; **Z** zoom; **R** restart. From the console, `gm.get('group.lever')` /
+perf-ISO A/B; **Z** zoom; **R** restart. The on-screen **+ SLIME** button under TUNE drops
+a slime above the rig on every press. From the console, `gm.get('group.lever')` /
 `gm.set('group.lever', v)` change anything live; the groups you will reach for most are
 `water.*` (the liquid sim, see TUNING.md §2), `light.*` (fog of war), `weather.*`, `fly.*`
 (mode + feel), `trees.*`, `haze.*`. Boot levers: `?nosave=1` (fresh world, no save), `?dev=1`,
-the feature-flag overrides above (`?multitown=1` etc.), and the water harness
+the feature-flag overrides above (`?multitown=1` etc.), `?ponds=wide` or `?ponds=deep` (the
+pause > Options > World pond style, for a fresh world), and the water harness
 `?pondtest=1..4` + `?wdbg=NAME:V,...`.
 
 ## Audio

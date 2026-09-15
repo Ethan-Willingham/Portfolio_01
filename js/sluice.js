@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v27.3';
+  var GAME_VERSION = 'v27.4';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3017,6 +3017,28 @@
   // list, but updateSurfacePondStreaming() (070) only spawns water in the
   // pool(s) near the camera. Module-scope so the streamer + worldgen share it.
   var surfacePonds = [];
+  // Pond style of the world in play (v27.4): pause > Options > World > Ponds,
+  // stored by 052 as sluice.opt.ponds. A NEW world takes the stored choice
+  // (?ponds=regular|wide|deep overrides it per load); a loaded save restores
+  // the style its world was built with (047). Every style keeps one pond live
+  // at a time: the gaps stay wider than the ~81-tile liquid region, and the
+  // big styles cap a pond near 96 tiles of water (at most about 64k of the
+  // 120k particle budget, under the stray sweep's 60% trigger). Regular draws
+  // the same random numbers as before, so seeded worlds are unchanged.
+  var worldPondStyle = 'regular';
+  var POND_STYLES = {
+    regular: { wMin: 6, wSpan: 4, dMin: 3, dSpan: 2, maxTiles: 24, gapMin: 130, gapSpan: 80 },
+    wide:    { wMin: 40, wSpan: 9, dMin: 2, dSpan: 1, maxTiles: 96, gapMin: 100, gapSpan: 51 },
+    deep:    { wMin: 6, wSpan: 2, dMin: 13, dSpan: 4, maxTiles: 98, gapMin: 100, gapSpan: 51 }
+  };
+  function worldPondStyleForNewWorld() {
+    try {
+      var q = /[?&]ponds=(regular|wide|deep)(&|$)/.exec(window.location.search || '');
+      if (q) return q[1];
+    } catch (e) {}
+    var chosen = window.SluiceOptions && window.SluiceOptions.pondStyle;
+    return POND_STYLES[chosen] ? chosen : 'regular';
+  }
   function generateWorld() {
     world = [];
     // Live jello bodies never survive a world rebuild (New Game / dev restart): a body
@@ -3204,19 +3226,32 @@
     // a time, gap > the active region width. pond.d carries the depth
     // (saves without it mean an old 1-deep world: default 1 everywhere).
     surfacePonds.length = 0;
+    worldPondStyle = worldPondStyleForNewWorld();
+    var _pondStyle = POND_STYLES[worldPondStyle];
+    var _pondBig = worldPondStyle !== 'regular';
     var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
     var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_RIGHT_COL + 8;  // keep clear of spawn/station
+    // Keep clear of spawn/station. The big styles also clear the dev slime pen,
+    // which sits 16 to 24 columns left of the deck.
+    var _pondDeckL = DECK_LEFT_COL - (_pondBig ? 26 : 8), _pondDeckR = DECK_RIGHT_COL + 8;
     var _px = _pondLo + ((Math.random() * 30) | 0);
     while (_px < _pondHi - 12) {
-      // Small lakes, sized for LOW-END GPUs (Phase C, free-forever relaunch).
-      // Density stays FULL (655/tile, owner-locked); we shrink the TILE COUNT so
-      // the one streamed-live lake is light. Was 9-14 x 5-8 (up to ~65k particles);
-      // now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x lighter). See TUNING.md.
-      var _pw = 6 + ((Math.random() * 4) | 0);     // 6..9 wide — still reads as a lake, not a strip
-      var _pd = 3 + ((Math.random() * 2) | 0);     // 3..4 tiles of water depth
-      if (_pw * _pd > 24) _pd = (24 / _pw) | 0;    // budget clamp: area x 655/tile <= ~15.7k particles
+      // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
+      // relaunch). Density stays FULL (655/tile, owner-locked); we shrink the
+      // TILE COUNT so the one streamed-live lake is light. Was 9-14 x 5-8 (up to
+      // ~65k particles); now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x
+      // lighter). See TUNING.md. Wide: 40-48 x 2. Deep: 6-7 x 13-16, capped at
+      // 98 tiles.
+      var _pw = _pondStyle.wMin + ((Math.random() * _pondStyle.wSpan) | 0);
+      var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
+      if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
       var _pr = _px + _pw - 1;
+      // A big pond that lands on the station slides past the deck instead of
+      // being dropped, so the town keeps a pond on each side.
+      if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
+        _px = _pondDeckR + 1;
+        _pr = _px + _pw - 1;
+      }
       if (_pr < _pondHi && !(_pr >= _pondDeckL && _px <= _pondDeckR) &&
           world[SKY_ROWS] && world[SKY_ROWS + _pd]) {
         // carve the deep pit: stone walls down both sides, stone floor,
@@ -3231,7 +3266,7 @@
         surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
         seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
       }
-      _px = _pr + 1 + 130 + ((Math.random() * 80) | 0);  // gap 130..210 — wider (fewer lakes for low-end), still > the ~81-tile active region so only one streams in at a time
+      _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
     }
   }
 
@@ -5986,6 +6021,7 @@
       },
       cargo: cargo,
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, filled: false }; }),   // v24.148 — d = lake depth
+      pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
       world: saveSerializeWorld(),
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
       // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
@@ -6061,6 +6097,7 @@
     surfacePonds.length = 0;
     var ponds = env.ponds || [];
     for (var i = 0; i < ponds.length; i++) surfacePonds.push({ cL: ponds[i].cL, cR: ponds[i].cR, d: ponds[i].d || 1, filled: false });   // v24.148 — pre-deep saves default d=1
+    worldPondStyle = POND_STYLES[env.pondStyle] ? env.pondStyle : 'regular';   // v27.4: pre-style saves were regular
     // Profile
     var p = env.profile || {};
     money = p.money || 0;
@@ -6901,9 +6938,13 @@
   //                              weather.lightning gm lever (155-weather.js)
   //                              and is exposed for other full-screen flash
   //                              sources to honour
+  //   SluiceOptions.pondStyle    'regular' | 'wide' | 'deep'; generateWorld
+  //                              (030) builds the NEXT world's ponds from it
+  //   SluiceOptions.heavySmoke   thick yellow smoke, read live by 190
   // Persisted keys (all under 'sluice.opt.'): sfxvol (0..1), gfx
   // ('performance'|'balanced'|'extreme'), shake (0..1), dmgflash ('1'|'0'),
-  // lowflash ('1'|'0'), banya ('1'|'0'). Unset keys keep the shipped defaults
+  // lowflash ('1'|'0'), banya ('1'|'0'), ponds ('regular'|'wide'|'deep'),
+  // heavysmoke ('1'|'0'). Unset keys keep the shipped defaults
   // and apply nothing, so a fresh profile boots exactly as before this
   // fragment existed.
   //
@@ -6919,7 +6960,7 @@
     // effect detail. Extreme remains the fresh desktop profile's default.
     var OPT_GFX_PRESET = { performance: 'low', balanced: 'high', extreme: 'extreme' };
 
-    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
+    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash', 'ponds', 'heavysmoke'];
 
     // Non-graphics levers can wait for the later gm facade. Boot graphics are
     // resolved synchronously in 380, before world and GPU warmup begin.
@@ -6949,6 +6990,8 @@
       shakeScale: 1,
       damageFlash: true,
       lowFlash: false,
+      pondStyle: 'regular',
+      heavySmoke: false,
       graphicsChoice: isMobile ? 'balanced' : 'extreme',
       graphicsPreset: function () { return OPT_GFX_PRESET[opts.get('gfx')] || null; },
 
@@ -6999,6 +7042,13 @@
         if (!bathOn && typeof bathMode !== 'undefined' && bathMode &&
             typeof bathExit === 'function') bathExit();
         ENABLE_BATH = bathOn;
+      } else if (key === 'ponds') {
+        // Worldgen reads this for the next new world; the world in play keeps
+        // the ponds it was generated with (047 saves the style with it).
+        var ps = String(val);
+        if (ps === 'regular' || ps === 'wide' || ps === 'deep') opts.pondStyle = ps;
+      } else if (key === 'heavysmoke') {
+        opts.heavySmoke = optTruthy(val);
       }
     }
 
@@ -7148,6 +7198,9 @@
       slider.addEventListener('input', apply);
     }
     function wireSegment(key, fallback, pairs) {
+      function valid(value) {
+        return pairs.some(function (pair) { return pair[1] === value; });
+      }
       function sync(value) {
         for (var i = 0; i < pairs.length; i++) {
           var button = document.getElementById(pairs[i][0]);
@@ -7162,6 +7215,7 @@
             extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
           }[value] || 'Custom graphics settings.';
         }
+        if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }
       for (var i = 0; i < pairs.length; i++) {
         (function (pair) {
@@ -7170,8 +7224,23 @@
       }
       var saved = read('sluice.opt.' + key);
       if (key === 'gfx') window.SluiceOptions.syncGraphics = sync;
-      var valid = pairs.some(function (pair) { return pair[1] === saved; });
-      sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid ? saved : fallback);
+      sync(key === 'banya' ? (ENABLE_BATH ? '1' : '0') : valid(saved) ? saved : fallback);
+      return function () {
+        var now = read('sluice.opt.' + key);
+        sync(valid(now) ? now : fallback);
+      };
+    }
+    // Ponds shape the next generated world, not the one in play, so the note
+    // says whether this world already has the chosen ponds.
+    function pondsNote(value) {
+      var looks = {
+        regular: 'Small stone-lined ponds.',
+        wide: 'Huge ponds, two tiles deep and very wide. Heavier on graphics.',
+        deep: 'Narrow ponds, 13 to 16 tiles deep. Heavier on graphics.'
+      };
+      var current = looks[worldPondStyle] ? worldPondStyle : 'regular';
+      return (looks[value] || looks.regular) +
+        (value === current ? ' This world has them.' : ' Applies to your next new game.');
     }
     // Moderate for first-time players; a saved master mute still wins.
     wireSlider('gm-vol', null, 0.6, true);
@@ -7182,6 +7251,11 @@
     wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
     wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
+    var resyncPonds = wireSegment('ponds', 'regular', [['gm-ponds-regular', 'regular'], ['gm-ponds-wide', 'wide'], ['gm-ponds-deep', 'deep']]);
+    // A new game or a loaded save changes this world's ponds after the menu
+    // was built, so the note refreshes whenever Options opens.
+    document.getElementById('gm-options-btn').addEventListener('click', resyncPonds);
+    wireSegment('heavysmoke', '0', [['gm-heavysmoke-off', '0'], ['gm-heavysmoke-on', '1']]);
   }
   setupPauseMenu();
   /* ---- Gamepad bridge (phase 1: play + pause) ---- */
@@ -38986,6 +39060,52 @@
   };
   window.smokeTune = smokeTune;
 
+  // ----- Heavy yellow smoke (pause > Options > World, SluiceOptions.heavySmoke) -----
+  // Read live every frame, so it switches on and off without a reload. Every
+  // dye splat (exhaust, chimney, bombs, the rocket plume) is recoloured and
+  // widened in one place, a wrapper on the active driver's splat(); velocity
+  // only splats carry no dye and pass through untouched. The display alpha is
+  // max(r, g, b), so this balance reads yellow at any density. While it is on,
+  // the diesel keeps pouring when the rig is parked and the dye barely fades.
+  var SMOKE_HEAVY = {
+    r: 1.0, g: 0.8, b: 0.08,          // dye balance per splat, scaled by the source's strongest channel
+    dye_gain: 2.6,                    // per-splat dye relative to the normal source
+    radius_mul: 1.9,                  // wider puffs
+    rate_mul: 2.5,                    // diesel output
+    idle_rate: 0.05,                  // diesel output while parked (normally 0)
+    density_dissipation: 0.1,         // normal 1.5 halves the dye in about 2 s
+    velocity_dissipation: 0.015,
+    curl: 36,
+    splat_radius: 0.4
+  };
+  var smokeHeavyCol = { r: 0, g: 0, b: 0 };
+  function smokeHeavyOn() {
+    return !!(window.SluiceOptions && window.SluiceOptions.heavySmoke);
+  }
+  function smokeHeavyEnsureWrap() {
+    var driver = smokeDriver;
+    if (!driver || typeof driver.splat !== 'function' || driver.smokeHeavySplat) return;
+    var plain = driver.splat;
+    driver.smokeHeavySplat = plain;
+    driver.splat = function (x, y, dx, dy, color, radius) {
+      var k = color ? Math.max(color.r || 0, color.g || 0, color.b || 0) : 0;
+      if (k > 0 && smokeHeavyOn()) {
+        k *= SMOKE_HEAVY.dye_gain;
+        smokeHeavyCol.r = k * SMOKE_HEAVY.r;
+        smokeHeavyCol.g = k * SMOKE_HEAVY.g;
+        smokeHeavyCol.b = k * SMOKE_HEAVY.b;
+        return plain.call(driver, x, y, dx, dy, smokeHeavyCol, radius * SMOKE_HEAVY.radius_mul);
+      }
+      return plain.call(driver, x, y, dx, dy, color, radius);
+    };
+  }
+  function smokeHeavyConfig(SC) {
+    SC.DENSITY_DISSIPATION = Math.min(SC.DENSITY_DISSIPATION, SMOKE_HEAVY.density_dissipation);
+    SC.VELOCITY_DISSIPATION = Math.min(SC.VELOCITY_DISSIPATION, SMOKE_HEAVY.velocity_dissipation);
+    SC.CURL = Math.max(SC.CURL, SMOKE_HEAVY.curl);
+    SC.SPLAT_RADIUS = Math.max(SC.SPLAT_RADIUS, SMOKE_HEAVY.splat_radius);
+  }
+
   // ----- Fireplace chimney smoke tune -----
   // Independent of smokeTune so the chimney can have its own look + rise
   // rate distinct from the miner's diesel exhaust. velY uses the same
@@ -39734,6 +39854,11 @@
       var surfaceSyN2 = domainH2 > 0 ? (SKY_ROWS * TILE - domainY2) / domainH2 : 0;
       SC.wind_above_y = Math.max(0, Math.min(1, 1.0 - surfaceSyN2));
     }
+    var heavy = smokeHeavyOn();
+    if (heavy) {
+      smokeHeavyEnsureWrap();
+      if (SC) smokeHeavyConfig(SC);
+    }
 
     // Pulse modulation (rate breathes between (1-depth) and 1)
     var pulse = 1.0;
@@ -39747,11 +39872,12 @@
     var euv = smokeFluidWorldToUV(ex.x, ex.y);
     var isActive = !!drilling;
     var moving = Math.abs(player.vx) > 8 || player.thrusting;
-    if (smokeTune.diesel_enabled && euv.inView && (isActive || moving)) {
+    if (smokeTune.diesel_enabled && euv.inView && (isActive || moving || heavy)) {
       smokeMarkActive();   // v23.32 — dye is about to be injected; keep the sim awake
       var rate = isActive ? smokeTune.diesel_rate_active
                : (moving   ? smokeTune.diesel_rate_moving
                            : smokeTune.diesel_rate_idle);
+      if (heavy) rate = Math.max(rate, SMOKE_HEAVY.idle_rate) * SMOKE_HEAVY.rate_mul;
       rate *= pulse;
       // v11.58 — pace dye output off real time so a low-fps device emits
       // the same smoke-per-second as a fast one (emitDt is dt capped at
@@ -66321,36 +66447,94 @@
     // normal player. gmTuningButtonSync() drives its visibility and is
     // called from the panel show/hide path and from setDevMode().
     var gmTuneBtnEl = null;
+    var gmSlimeBtnEl = null;
+    function gmDevButton(id, label, top, onPress) {
+      var el = document.createElement('button');
+      el.id = id;
+      el.type = 'button';
+      el.textContent = label;
+      el.style.cssText =
+        'position:fixed;left:0;top:' + top + ';width:64px;height:26px;' +
+        'z-index:100000;background:#0c0c0c;color:#dddddd;' +
+        'border:1px solid #444;border-left:none;' +
+        'font:11px/1 "Commit Mono",ui-monospace,monospace;' +
+        'letter-spacing:0.5px;padding:0;cursor:pointer;' +
+        'box-shadow:2px 2px 8px rgba(0,0,0,0.6);' +
+        'pointer-events:auto;-webkit-user-select:none;user-select:none;';
+      el.addEventListener('click', function (ev) {
+        try { ev.preventDefault(); ev.stopPropagation(); } catch (_) {}
+        onPress();
+      });
+      document.body.appendChild(el);
+      return el;
+    }
     function gmTuningButtonSync() {
       try {
         if (typeof document === 'undefined' || !document.body) return;
         var wantVisible = !!devMode && !gmPanelVisible;
         if (!gmTuneBtnEl) {
           if (!wantVisible) return;     // don't build it for normal players
-          gmTuneBtnEl = document.createElement('button');
-          gmTuneBtnEl.id = 'gmTuneBtn';
-          gmTuneBtnEl.type = 'button';
-          gmTuneBtnEl.textContent = '⚙ TUNE';
-          gmTuneBtnEl.style.cssText =
-            'position:fixed;left:0;top:42%;width:64px;height:26px;' +
-            'z-index:100000;background:#0c0c0c;color:#dddddd;' +
-            'border:1px solid #444;border-left:none;' +
-            'font:11px/1 "Commit Mono",ui-monospace,monospace;' +
-            'letter-spacing:0.5px;padding:0;cursor:pointer;' +
-            'box-shadow:2px 2px 8px rgba(0,0,0,0.6);' +
-            'pointer-events:auto;-webkit-user-select:none;user-select:none;';
-          gmTuneBtnEl.addEventListener('click', function (ev) {
-            try { ev.preventDefault(); ev.stopPropagation(); } catch (_) {}
+          gmTuneBtnEl = gmDevButton('gmTuneBtn', 'TUNE', '42%', function () {
             if (typeof gmTuningPanelToggle === 'function') gmTuningPanelToggle();
           });
-          document.body.appendChild(gmTuneBtnEl);
+          gmSlimeBtnEl = gmDevButton('gmSlimeBtn', '+ SLIME', 'calc(42% + 32px)', devDropSlimeOverhead);
         }
         gmTuneBtnEl.style.display = wantVisible ? '' : 'none';
+        gmSlimeBtnEl.style.display = wantVisible ? '' : 'none';
       } catch (e) {
         try { console.warn('gm tune button sync failed:', e); } catch (_) {}
       }
     }
     window.gmTuningButtonSync = gmTuningButtonSync;
+
+    // Dev + SLIME button: drops a slime straight above the rig's head, one per
+    // press. Each body takes the lowest open cell 3 to 40 rows up, trying the
+    // rig's column and then up to two columns either side at each height, that
+    // no tile or live body covers, so a run of presses piles them up instead
+    // of building one inside another. Rows above the world grid are open sky,
+    // so on the surface the pile grows up into it. In a tunnel with no room
+    // overhead, the C key's drop beside the rig takes over. The body cap grows
+    // with the presses; the lattice point budget, sized once in 340, is the
+    // real ceiling (about 160 one-tile slimes).
+    function devDropSlimeOverhead() {
+      if (!devMode || !player) return;
+      if (!ENABLE_JELLO) { showMsg('Slimes are disabled (boot with ?jello=1)'); return; }
+      var need = (JELLO_NPT + 1) * (JELLO_NPT + 1);
+      if (jelloCount + need > JELLO_MAX_POINTS) { showMsg('Slime limit reached (' + jelloBodies.length + ' slimes)'); return; }
+      if (jelloBodies.length >= JELLO_MAX_BODIES) JELLO_MAX_BODIES = jelloBodies.length + 16;
+      var headC = Math.floor((player.x + PLAYER_W * 0.5) / TILE);
+      var headR = Math.floor(player.y / TILE);
+      function bodyCovers(r, c) {
+        var x0 = c * TILE, y0 = r * TILE;
+        for (var i = 0; i < jelloBodies.length; i++) {
+          var b = jelloBodies[i];
+          if (b.bboxR > x0 && b.bboxL < x0 + TILE && b.bboxB > y0 && b.bboxT < y0 + TILE) return true;
+        }
+        return false;
+      }
+      var offsets = [0, 1, -1, 2, -2];
+      var found = false, row = 0, col = headC;
+      for (var up = 3; up <= 40 && !found; up++) {
+        var r = headR - up;
+        for (var oi = 0; oi < offsets.length; oi++) {
+          var c = headC + offsets[oi];
+          if (c < 1 || c > COLS - 2) continue;
+          if (tileAt(r, c) === null && !bodyCovers(r, c)) { found = true; row = r; col = c; break; }
+        }
+      }
+      var dropped = false;
+      if (found) {
+        var body = jelloBuildBody([{ r: row, c: col }], 'slime');
+        if (body) {
+          body.hue = Math.floor(Math.random() * 360);
+          spawnJelloSplat((col + 0.5) * TILE, (row + 0.5) * TILE, 5, 60, 0.8, null);
+          dropped = true;
+        }
+      } else {
+        dropped = jelloDevSpawnOne();
+      }
+      showMsg(dropped ? 'Slime dropped (' + jelloBodies.length + ' live)' : 'No room for a slime here');
+    }
 
     // Show/hide the panel. Builds it lazily on first show; re-syncs every
     // control from live values each time it opens.

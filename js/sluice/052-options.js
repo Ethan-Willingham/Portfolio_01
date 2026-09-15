@@ -16,9 +16,13 @@
   //                              weather.lightning gm lever (155-weather.js)
   //                              and is exposed for other full-screen flash
   //                              sources to honour
+  //   SluiceOptions.pondStyle    'regular' | 'wide' | 'deep'; generateWorld
+  //                              (030) builds the NEXT world's ponds from it
+  //   SluiceOptions.heavySmoke   thick yellow smoke, read live by 190
   // Persisted keys (all under 'sluice.opt.'): sfxvol (0..1), gfx
   // ('performance'|'balanced'|'extreme'), shake (0..1), dmgflash ('1'|'0'),
-  // lowflash ('1'|'0'), banya ('1'|'0'). Unset keys keep the shipped defaults
+  // lowflash ('1'|'0'), banya ('1'|'0'), ponds ('regular'|'wide'|'deep'),
+  // heavysmoke ('1'|'0'). Unset keys keep the shipped defaults
   // and apply nothing, so a fresh profile boots exactly as before this
   // fragment existed.
   //
@@ -34,7 +38,7 @@
     // effect detail. Extreme remains the fresh desktop profile's default.
     var OPT_GFX_PRESET = { performance: 'low', balanced: 'high', extreme: 'extreme' };
 
-    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash'];
+    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash', 'ponds', 'heavysmoke'];
 
     // Non-graphics levers can wait for the later gm facade. Boot graphics are
     // resolved synchronously in 380, before world and GPU warmup begin.
@@ -64,6 +68,8 @@
       shakeScale: 1,
       damageFlash: true,
       lowFlash: false,
+      pondStyle: 'regular',
+      heavySmoke: false,
       graphicsChoice: isMobile ? 'balanced' : 'extreme',
       graphicsPreset: function () { return OPT_GFX_PRESET[opts.get('gfx')] || null; },
 
@@ -114,6 +120,13 @@
         if (!bathOn && typeof bathMode !== 'undefined' && bathMode &&
             typeof bathExit === 'function') bathExit();
         ENABLE_BATH = bathOn;
+      } else if (key === 'ponds') {
+        // Worldgen reads this for the next new world; the world in play keeps
+        // the ponds it was generated with (047 saves the style with it).
+        var ps = String(val);
+        if (ps === 'regular' || ps === 'wide' || ps === 'deep') opts.pondStyle = ps;
+      } else if (key === 'heavysmoke') {
+        opts.heavySmoke = optTruthy(val);
       }
     }
 

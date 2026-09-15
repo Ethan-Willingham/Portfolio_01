@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v27.3">
+  <link rel="stylesheet" href="sluice-menu.css?v=v27.4">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -454,6 +454,11 @@
                         <div class="pause-setting pause-setting-switch"><div><span id="gm-dmgflash-label">Damage flash</span></div><div class="pause-segment" role="group" aria-labelledby="gm-dmgflash-label"><button id="gm-dmgflash-off" type="button">Off</button><button id="gm-dmgflash-on" type="button">On</button></div></div>
                         <div class="pause-setting pause-setting-switch"><div><span id="gm-lowflash-label">Reduce lightning</span></div><div class="pause-segment" role="group" aria-labelledby="gm-lowflash-label"><button id="gm-lowflash-off" type="button">Off</button><button id="gm-lowflash-on" type="button">On</button></div></div>
                       </section>
+                      <section class="pause-section" aria-labelledby="gm-world-title">
+                        <h3 id="gm-world-title">World</h3>
+                        <div class="pause-setting pause-setting-wide"><span id="gm-ponds-label">Ponds</span><div class="pause-segment" role="group" aria-labelledby="gm-ponds-label"><button id="gm-ponds-regular" type="button">Regular</button><button id="gm-ponds-wide" type="button">Wide</button><button id="gm-ponds-deep" type="button">Deep</button></div><p class="pause-note" id="gm-ponds-note">Small stone-lined ponds.</p></div>
+                        <div class="pause-setting pause-setting-switch"><div><span id="gm-heavysmoke-label">Heavy yellow smoke</span><p class="pause-note">Thick yellow smoke that lingers and spreads.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-heavysmoke-label"><button id="gm-heavysmoke-off" type="button">Off</button><button id="gm-heavysmoke-on" type="button">On</button></div></div>
+                      </section>
                       <section class="pause-section" aria-labelledby="gm-banya-label">
                         <div class="pause-setting pause-setting-switch"><div><span id="gm-banya-label">Banya bathhouse</span><p class="pause-note">In development.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-banya-label"><button id="gm-banya-off" type="button">Off</button><button id="gm-banya-on" type="button">On</button></div></div>
                       </section>
@@ -738,10 +743,10 @@
       });
     })();
   </script>
-  <script defer src="js/liquid-wgpu.js?v=v27.3"></script>
-  <script defer src="js/smoke-wgpu.js?v=v27.3"></script>
-  <script defer src="js/jello-wgpu.js?v=v27.3"></script>
-  <script defer src="js/audio.js?v=v27.3"></script>
-  <script defer src="js/sluice.js?v=v27.3"></script>
+  <script defer src="js/liquid-wgpu.js?v=v27.4"></script>
+  <script defer src="js/smoke-wgpu.js?v=v27.4"></script>
+  <script defer src="js/jello-wgpu.js?v=v27.4"></script>
+  <script defer src="js/audio.js?v=v27.4"></script>
+  <script defer src="js/sluice.js?v=v27.4"></script>
 </body>
 </html>
