@@ -1,82 +1,5 @@
   /* ---- Init ---- */
 
-  // ----- Dev slime test pen (dev mode only) -----
-  // An open-top pen ABOVE GROUND, a short fly LEFT of spawn: a stone platform on
-  // the surface with two stone walls rising out of it, and a row of tile-sized
-  // jello blobs sitting on top between them. Every blob is the SAME one-tile size
-  // and the SAME default 'slime' physics, so they all interact identically, but
-  // each is dressed as a wildly different MATERIAL via per-body render overrides:
-  // hue, saturation, brightness, translucency, refraction (glassiness), shimmer
-  // (inner caustics), gloss (sheen + glint), and rim (Fresnel edge glow). The
-  // sim never sees these; only jelloDrawBody reads them. Auto-activated on spawn
-  // so they are live + vivid the moment you arrive. Dev-only; never in normal
-  // play. Toggle dev with ` then press R to regenerate.
-  function injectJelloTestPen() {
-    function setTile(rr, cc, t) {
-      if (rr >= 0 && rr < TOTAL_ROWS && cc >= 0 && cc < COLS && world[rr]) world[rr][cc] = t;
-    }
-    function stone() { return { type: 'stone', hp: ORES.stone.hp }; }
-    // Each entry is ONE slime's material: a distinct look, identical physics.
-    // sat = saturation x, light = lightness offset (% pts), alpha = opacity,
-    // refract = glassy lens, shimmer = inner caustics, gloss = sheen + glint,
-    // rim = Fresnel edge glow. (Defaults if omitted: see jelloDrawBody.)
-    var MATS = [
-      { name: 'candy',    hue:   0, sat: 1.15, light:   4, alpha: 0.96, refract: 0.04, shimmer: 0.10, gloss: 1.7, rim: 0.9 },  // hard glossy cherry candy
-      { name: 'frost',    hue: 150, sat: 0.50, light:  24, alpha: 0.92, refract: 0.00, shimmer: 0.05, gloss: 0.12, rim: 0.25 }, // pale matte frosted sugar
-      { name: 'glass',    hue: 190, sat: 0.70, light:  10, alpha: 0.30, refract: 0.32, shimmer: 0.12, gloss: 0.7, rim: 1.3 },   // clear refractive crystal
-      { name: 'chrome',   hue: 250, sat: 0.32, light:   6, alpha: 0.98, refract: 0.06, shimmer: 0.28, gloss: 1.8, rim: 1.0 },   // liquid-metal mirror sheen
-      { name: 'neon',     hue: 110, sat: 1.50, light:   8, alpha: 0.72, refract: 0.08, shimmer: 0.42, gloss: 0.9, rim: 1.7 },   // electric glowing-edge neon
-      { name: 'pearl',    hue:  32, sat: 0.85, light:  16, alpha: 0.85, refract: 0.14, shimmer: 0.75, gloss: 1.0, rim: 0.6 },   // iridescent pearlescent
-      { name: 'gummy',    hue:  40, sat: 1.25, light:  -2, alpha: 0.58, refract: 0.18, shimmer: 0.12, gloss: 0.7, rim: 0.5 },   // classic translucent gummy
-      { name: 'hologram', hue: 300, sat: 1.10, light:   6, alpha: 0.78, refract: 0.28, shimmer: 0.95, gloss: 1.4, rim: 1.1 }    // oil-slick holographic
-    ];
-    var N = MATS.length;
-    var gap = 1, margin = 2;                    // air between blobs / from the walls
-    var interiorW = margin * 2 + N + (N - 1) * gap;
-    var penR = DECK_LEFT_COL - 8;              // interior right edge (short fly left of spawn)
-    var penL = penR - (interiorW - 1);         // interior left edge
-    var wallL = penL - 1, wallR = penR + 1;    // the two containing walls
-    var floorRow = SKY_ROWS;                    // stone platform AT the surface
-    var blobRow = floorRow - 1;                // blobs sit ON the platform, above ground
-    var wallTop = floorRow - 5;                // walls rise 5 tiles above the platform
-    // Drop any peppered surface pond overlapping the pen so the streaming water
-    // sim never floods it (the pen sits just left of the deck-clear zone).
-    for (var sp = surfacePonds.length - 1; sp >= 0; sp--) {
-      var P = surfacePonds[sp];
-      if (!(P.cR < wallL || P.cL > wallR)) surfacePonds.splice(sp, 1);
-    }
-    // Clear the above-ground interior (sky already, but be safe), lay the stone
-    // platform, then raise the two walls out of it. Open top.
-    for (var r = wallTop; r < floorRow; r++) {
-      for (var c = penL; c <= penR; c++) setTile(r, c, null);
-    }
-    for (var fc = wallL; fc <= wallR; fc++) setTile(floorRow, fc, stone());
-    for (var wr = wallTop; wr <= floorRow; wr++) { setTile(wr, wallL, stone()); setTile(wr, wallR, stone()); }
-    // Above ground: one tile-sized blob per material, auto-activated so it is
-    // live + vivid on spawn. The material rides on the tile (jelloMat); activation
-    // copies it onto the body, so the SAME path also dresses the buried slimes
-    // below. jellyType stays 'slime' so the SIM is identical across all of them.
-    for (var i = 0; i < N; i++) {
-      var bc = penL + margin + i * (gap + 1);
-      setTile(blobRow, bc, { type: 'jello', jellyType: 'slime', hp: 999999, jelloMat: MATS[i] });
-      var _nB = jelloBodies.length;
-      activateJelloCluster(blobRow, bc);
-      // Tag the pen blob as a per-boot FIXTURE: jelloSaveBodies skips these. The
-      // pen is re-injected on every dev boot (including after saveApply, see the
-      // 380 boot), so persisting its bodies would stack a duplicate set per session.
-      if (jelloBodies.length > _nB) jelloBodies[jelloBodies.length - 1].devFixture = true;
-    }
-    // A few BURIED material-slimes 5 blocks below the platform: dig straight down
-    // from the pen to expose them. They are NOT pre-activated, so they sit as
-    // plain jello tiles until you mine beside one, then wake KEEPING their
-    // material (the jelloMat the tile carries). Spread across the pen, 2 apart.
-    var ugRow = SKY_ROWS + 5;
-    var ugMats = [MATS[0], MATS[2], MATS[3], MATS[4], MATS[7]];  // candy, glass, chrome, neon, hologram
-    for (var u = 0; u < ugMats.length; u++) {
-      setTile(ugRow, penL + 3 + u * 3, { type: 'jello', jellyType: 'slime', hp: 999999, jelloMat: ugMats[u] });
-    }
-  }
-
   function init() {
     if (introPhase === 'done') beginSceneLoading('Preparing your mine');
     mineralLiquidReset();
@@ -109,14 +32,6 @@
     timeOfDay = (TOD_BOOT >= 0) ? TOD_BOOT : TIME_OF_DAY_START;
     moonPhase = MOON_PHASE_START;
     generateWorld();
-    // Dev-only: a small two-wall pen of vibrant tile-sized test slimes a short
-    // fly LEFT of spawn (never injected in normal play). Carve BEFORE
-    // lightingInit so the opening gets lit. Toggle dev with ` then press R.
-    // ALSO gated on ENABLE_JELLO (v25.15): with the flag off, a ?dev=1 boot
-    // still built the pen — visible stone walls near spawn, undrillable buried
-    // jello tiles, and 8 invisible ghost bodies (update + draw are flag-gated,
-    // the injection was not). A disabled system must be inert, dev mode included.
-    if (devMode && ENABLE_JELLO && /[?&]slimepen=1\b/.test(location.search)) injectJelloTestPen();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;
