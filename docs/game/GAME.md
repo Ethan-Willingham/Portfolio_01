@@ -19,6 +19,20 @@ Dig down through one town, collect ore, fly up to the surface station to sell + 
 the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and a ~1.5 hr
 normal playthrough (see `BALANCE.md`).
 
+**Surface garden (v28.0):** clay sky slimes arrive like meteors and bounce to rest.
+Four lots west of town become 11-wide, 2-deep stone, copper, iron, and crystal baths.
+Buy land with cash and bring the later baths' construction ores in cargo. The free
+siphon (`F`) draws real liquid with left mouse and pours with right mouse; `R` selects
+a fluid chamber while equipped. It also carries one cooled slime. Touch players tap
+SIPHON, choose IN or OUT, then hold on the world. `E` or a sign tap builds/collects.
+
+Fill a bath and add a slime to grow a pearl. Water starts the loop; shallow brine,
+nectar below the heated-drill gate, and deep lumen unlock richer recipes. Each pearl
+incorporates actual liquid, and one finished pearl waits per lot. Purchased baths,
+residents, tank contents, progress, and poured liquids persist. Offscreen liquid is
+parked to preserve the shared particle budget. This is independent of the optional
+indoor banya and the disabled underground slime brains. See `SLIME_GARDEN.md`.
+
 ---
 
 ## Build & run
@@ -67,7 +81,7 @@ slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the
 
 **ACTIVE for the simple game:** worldgen (single town, 400 m, 6 layers, all 32 ores), drilling, fuel,
 cargo, the surface station shop (Workshop + Supply Shelf only), upgrades (drill/fuel/cargo/
-hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water only), smoke, rare
+hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water and mineral liquids), smoke, rare
 buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, tuned by
 `JELLO_PATCH_CHANCE` in 030) that fully cushion a fall (the v26.69 NPC brains in
 345-slime-npc.js are PARKED OFF since v26.73, owner call; `?npc=1` or gm `slime.NPC`
@@ -94,6 +108,10 @@ quantities, unit prices, and haul value while the mine is paused).
 | `040-init-resize-resolution.js` | `init()`, `resize()`, fuel/cargo/hull/climb formulas |
 | `045-loading.js` / `046-shader-warm.js` | the loading cover and the first-use GPU shader warm-up; give any new visual effect (a new gradient, clip, blend mode, particle or menu art) a representative draw in 046 so it compiles under the cover instead of stalling play |
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
+| `071-liquid-catalog.js` | fluid identities, conserved transfer, samples, and sky-slime liquid boundaries |
+| `073-liquid-deposits.js` | finite mineral pockets, offscreen liquid storage, and liquid persistence |
+| `074-slime-garden.js` | four surface lots, construction, recipes, and pearl rewards |
+| `075-liquid-tool.js` / `076-siphon-audio.js` | aimed siphon, fluid chambers, one passenger, touch controls, and sound |
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
 | `245-ui-kit.js` | the reusable modal kit: fizzed-world backdrop + the catalog modal (tabs/list/detail/action) |
@@ -104,6 +122,7 @@ quantities, unit prices, and haul value while the mine is paused).
 | `165-render-trees.js` / `166-render-surface-boulders.js` | open woodland and scattered surface stones, derived from supporting terrain |
 | `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary white heron |
 | `340-jello.js` | slime soft bodies, continuous gel rendering, and the topology-independent actor-intent seam |
+| `348-sky-slimes.js` | clay meteor arrivals, elastic rebounds, eye animation, capture, and persistence |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |
 

@@ -1047,6 +1047,18 @@
         gv11 *= liquidMotionEff;
       }
 
+      // Shared pressure, distinct flow. Preserve the water baseline exactly.
+      var material = liquidType[i];
+      if (material >= 2) {
+        var shearRate = material === 3 ? 16 : material === 4 ? 8 : 0.9;
+        var lateralRate = material === 3 ? 3 : material === 4 ? 1.5 : 0.35;
+        var shearKeep = 1 / (1 + shearRate * stepDt);
+        var lateralKeep = 1 / (1 + lateralRate * stepDt);
+        vx *= lateralKeep;
+        gv00 *= shearKeep; gv01 *= shearKeep;
+        gv10 *= shearKeep; gv11 *= shearKeep;
+      }
+
       // v26.13 — the velocity ceiling is a transport invariant, so apply
       // it while vx/vy are still this substep's grid-cell displacement.
       // The old clamp below ran after liquidX/Y were committed and could
@@ -2205,6 +2217,7 @@
     var _lts;
     for (var s = 0; s < steps; s++) {
       _lts = performance.now(); updateOilSuction(stepDt);   perfMark('liquids.oilSuck', _lts);
+      liquidSkyBoundariesCPU();
       _lts = performance.now(); liquidP2G(stepDt);          perfMark('liquids.P2G', _lts);
       _lts = performance.now(); liquidApplyGridPressure();  perfMark('liquids.pressure', _lts);
       _lts = performance.now(); liquidUpdateGrid(stepDt);   perfMark('liquids.gridUpdate', _lts);
@@ -2404,6 +2417,13 @@
         data[o + 4] = wG + a * fG;
         data[o + 5] = wB + a * fB;
         data[o + 6] = wA;
+      } else if (typ >= 2 && liquidCatalog[typ]) {
+        var tint = liquidCatalog[typ].rgb;
+        var foam = Math.min(1, Math.max(0, liquidAeration[i])) * 0.35;
+        data[o + 3] = tint[0] + (0.93 - tint[0]) * foam;
+        data[o + 4] = tint[1] + (0.91 - tint[1]) * foam;
+        data[o + 5] = tint[2] + (0.82 - tint[2]) * foam;
+        data[o + 6] = wA;
       } else {
         data[o + 3] = oR;
         data[o + 4] = oG;
@@ -2528,10 +2548,11 @@
 
     ctx.save();
     liquidCanvasClipTerrain();
-    for (var pass = 0; pass < 2; pass++) {
+    for (var pass = 0; pass < liquidCatalog.length; pass++) {
       var type = pass === 0 ? 'water' : 'oil';
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
-      var typeId = pass === 0 ? 0 : 1;
+      var typeId = pass;
+      if (typeId >= 2) ctx.fillStyle = liquidCatalog[typeId].color;
       for (var i = 0; i < liquidCount; i++) {
         if (liquidType[i] !== typeId) continue;
         if (liquidX[i] < left || liquidX[i] > right || liquidY[i] < top || liquidY[i] > bottom) continue;
@@ -2546,7 +2567,7 @@
             : 'rgba(230,190,110,' + Math.min(0.52, liquidAeration[i] * 0.7).toFixed(3) + ')';
           var fr = Math.max(0.45, rr * 0.32);
           ctx.fillRect(liquidX[i] - rr * 0.25 - fr, liquidY[i] - rr * 0.35 - fr, fr * 2, fr * 2);
-          ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
+          ctx.fillStyle = typeId >= 2 ? liquidCatalog[typeId].color : type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
         }
       }
     }

@@ -217,9 +217,9 @@
     var _pondBig = worldPondStyle !== 'regular';
     var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
     var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    // Keep clear of spawn/station. The big styles also clear the dev slime pen,
-    // which sits 16 to 24 columns left of the deck.
-    var _pondDeckL = DECK_LEFT_COL - (_pondBig ? 26 : 8), _pondDeckR = DECK_RIGHT_COL + 8;
+    // Treat the garden and station as one reserved span. Wide/deep ponds
+    // overlapping a lot slide east intact, just as they do at the station.
+    var _pondDeckL = DECK_LEFT_COL - 63, _pondDeckR = DECK_RIGHT_COL + 8;
     var _px = _pondLo + ((Math.random() * 30) | 0);
     while (_px < _pondHi - 12) {
       // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
@@ -232,7 +232,7 @@
       var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
       if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
       var _pr = _px + _pw - 1;
-      // A big pond that lands on the station slides past the deck instead of
+      // A big pond that lands on the garden or station slides past the deck instead of
       // being dropped, so the town keeps a pond on each side.
       if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
         _px = _pondDeckR + 1;
@@ -254,6 +254,29 @@
       }
       _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
     }
+    // Keep the selected pond style intact. A naturally generated east lake
+    // already supplies the garden; replacing its metadata with a 6x3 source
+    // would strand the rest of a wide or deep excavation without water.
+    var eastSource = false;
+    for (var pond = 0; pond < surfacePonds.length; pond++) {
+      if (surfacePonds[pond].cL > DECK_RIGHT_COL + 2) { eastSource = true; break; }
+    }
+    var sourceL = _pondDeckR + 1;
+    var sourceW = _pondStyle.wMin, sourceD = _pondStyle.dMin;
+    if (sourceW * sourceD > _pondStyle.maxTiles) sourceD = Math.floor(_pondStyle.maxTiles / sourceW);
+    var sourceR = sourceL + sourceW - 1;
+    if (!eastSource && sourceR + 1 < _pondHi && world[SKY_ROWS + sourceD]) {
+      for (var sy = SKY_ROWS; sy < SKY_ROWS + sourceD; sy++) {
+        world[sy][sourceL - 1] = { type: 'stone', hp: ORES.stone.hp };
+        world[sy][sourceR + 1] = { type: 'stone', hp: ORES.stone.hp };
+        for (var sx = sourceL; sx <= sourceR; sx++) world[sy][sx] = null;
+      }
+      for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
+      surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
+      seedLakeShoreSlimes(sourceL, sourceR);
+    }
+    slimeGardenPrepareWorld();
+    mineralLiquidGenerate(false);
   }
 
   // ----- The Great Seam chamber (the "proper end that doesn't end the game") -----
@@ -383,7 +406,7 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;   // v14.2 — flag the WebGPU solver to re-seed
-    liquidType[id] = type === 'oil' ? 1 : 0;
+    liquidType[id] = typeof type === 'number' ? (type >= 0 && type <= 4 ? type | 0 : 0) : ({ water: 0, oil: 1, brine: 2, nectar: 3, lumen: 4 }[type] || 0);
     liquidOrigin[id] = origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;
@@ -1066,4 +1089,3 @@
       }
     }
   }
-

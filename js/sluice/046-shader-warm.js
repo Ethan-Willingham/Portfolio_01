@@ -43,7 +43,7 @@
     if (!warmCtx) return state;
     var passes = [
       ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
-      ['slime', shaderWarmSlime], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
+      ['slime', shaderWarmSlime], ['garden', shaderWarmGarden], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
       ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
       ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
     ];
@@ -333,6 +333,76 @@
     }
     b.bboxL = l; b.bboxR = r; b.bboxT = t; b.bboxB = bm;
     b.shFrame = -1;   // refit the sheen deformation for this pose
+  }
+
+  // The garden's first purchase, pearl, meteor wake and active nozzle all
+  // introduce paints absent from a fresh spawn. Draw temporary specimens,
+  // never construction or simulation, and restore every borrowed reference.
+  function shaderWarmGarden(ws, ox, oy) {
+    if (typeof slimeGardenDraw !== 'function' || typeof skySlimeDraw !== 'function' ||
+        typeof siphonDraw !== 'function') return;
+    var liveLots = slimeGardenLots, liveSlimes = skySlimes, liveDust = skySlimeDust;
+    var liveSiphon = siphon, liveButtons = siphonButtons, available = siphonAvailable;
+    var livePlayer = player;
+    var x = cam.x + screenW * 0.5, y = cam.y + screenH * 0.48;
+    try {
+      player = Object.assign({}, livePlayer);
+      player.x = x - PLAYER_W * 0.5; player.y = y - PLAYER_H * 0.5;
+      shaderWarmWorld(ws, ox, oy);
+      for (var material = 0; material < 4; material++) {
+        var recipe = SLIME_GARDEN_RECIPES[material];
+        var lot = { index: material, x0: x - TILE * 5.5, x1: x + TILE * 5.5,
+          y0: y, y1: y + TILE * 2, owned: false, ready: false,
+          progress: 0, sample: [9000, 0, 2200, 2200, 2200], status: 'FILL TO THE BRASS MARK' };
+        slimeGardenLots = [lot];
+        slimeGardenDraw();
+        lot.owned = true; lot.progress = recipe.seconds * 0.42; lot.status = 'GROWING 42%';
+        slimeGardenDraw();
+        lot.ready = true; lot.progress = recipe.seconds; lot.status = 'PEARL READY';
+        slimeGardenDraw();
+      }
+
+      skySlimes = [];
+      skySlimeDust = [{ x: x - 45, y: y + 24, r: 2.4, life: 0.2, max: 0.5 }];
+      for (var pose = 0; pose < 3; pose++) {
+        var s = { x: x - 80 + pose * 80, y: y - 60, r: 25,
+          vx: pose ? 0 : -110, vy: pose ? 0 : 480, oval: 0.95 + pose * 0.045,
+          eyeSize: 0.33 + pose * 0.04, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
+          squash: pose === 1 ? 0.2 : 0, eye: pose === 1 ? 0.12 : 0.86,
+          pupilX: 1.3, pupilY: -0.9, entry: pose ? 0 : 0.9,
+          wet: pose === 2 ? 0.8 : 0, pearlProgress: pose === 2 ? 0.72 : 0,
+          _ground: pose === 1, _trail: [] };
+        if (!pose) {
+          for (var t = 0; t < 8; t++) s._trail.push({ x: s.x + (7 - t) * 7,
+            y: s.y - (7 - t) * 15, r: 20, life: 0.08 + t * 0.055 });
+        }
+        skySlimes.push(s);
+      }
+      skySlimeDraw();
+
+      siphon = Object.assign({}, liveSiphon);
+      siphonAvailable = function () { return true; };  // loading normally hides this tool
+      siphon.equipped = true; siphon.power = 0.85; siphon.clock = 0.27;
+      siphon.aimX = (x - cam.x + 110) * worldScale;
+      siphon.aimY = (y - cam.y - 70) * worldScale;
+      siphon.tank = [3600, 0, 1400, 2400, 900]; siphon.selected = 0;
+      siphon.mode = 'suck'; siphon.passenger = null;
+      siphon.notice = 'Passenger secured. Pour to set it in a bath.'; siphon.noticeT = 1;
+      siphon.fx = [{ x: x + 100, y: y - 60, type: 2, t: 0.1, life: 0.3 },
+        { x: x + 76, y: y - 40, type: 3, t: 0.17, life: 0.3 }];
+      siphonDraw();
+      ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
+      siphonHUD();
+      shaderWarmWorld(ws, ox, oy);
+      siphon.mode = 'pour'; siphon.selected = 4; siphon.passenger = skySlimes[2];
+      siphonDraw();
+      ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
+      siphonHUD();
+    } finally {
+      slimeGardenLots = liveLots; skySlimes = liveSlimes; skySlimeDust = liveDust;
+      siphon = liveSiphon; siphonButtons = liveButtons; siphonAvailable = available;
+      player = livePlayer;
+    }
   }
 
   // Terrain chunks: the first chunks built for new ground compile programs of

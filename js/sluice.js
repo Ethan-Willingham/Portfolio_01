@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v27.4';
+  var GAME_VERSION = 'v28.0';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2080,6 +2080,9 @@
                     bathGuestColliders.length) ? bathGuestColliders
                  : ((typeof slimeNpcGuestsAny !== 'undefined' &&
                      slimeNpcGuestsAny) ? slimeNpcGuests : null);
+          if (!bathMode && typeof liquidSkyGuestShapes === 'function') {
+            gs = (gs || []).concat(liquidSkyGuestShapes()).slice(0, 8);
+          }
           return { player: pl, rocket: rk, explosions: ex, guests: gs };
         }
       }
@@ -3231,9 +3234,9 @@
     var _pondBig = worldPondStyle !== 'regular';
     var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
     var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    // Keep clear of spawn/station. The big styles also clear the dev slime pen,
-    // which sits 16 to 24 columns left of the deck.
-    var _pondDeckL = DECK_LEFT_COL - (_pondBig ? 26 : 8), _pondDeckR = DECK_RIGHT_COL + 8;
+    // Treat the garden and station as one reserved span. Wide/deep ponds
+    // overlapping a lot slide east intact, just as they do at the station.
+    var _pondDeckL = DECK_LEFT_COL - 63, _pondDeckR = DECK_RIGHT_COL + 8;
     var _px = _pondLo + ((Math.random() * 30) | 0);
     while (_px < _pondHi - 12) {
       // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
@@ -3246,7 +3249,7 @@
       var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
       if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
       var _pr = _px + _pw - 1;
-      // A big pond that lands on the station slides past the deck instead of
+      // A big pond that lands on the garden or station slides past the deck instead of
       // being dropped, so the town keeps a pond on each side.
       if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
         _px = _pondDeckR + 1;
@@ -3268,6 +3271,29 @@
       }
       _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
     }
+    // Keep the selected pond style intact. A naturally generated east lake
+    // already supplies the garden; replacing its metadata with a 6x3 source
+    // would strand the rest of a wide or deep excavation without water.
+    var eastSource = false;
+    for (var pond = 0; pond < surfacePonds.length; pond++) {
+      if (surfacePonds[pond].cL > DECK_RIGHT_COL + 2) { eastSource = true; break; }
+    }
+    var sourceL = _pondDeckR + 1;
+    var sourceW = _pondStyle.wMin, sourceD = _pondStyle.dMin;
+    if (sourceW * sourceD > _pondStyle.maxTiles) sourceD = Math.floor(_pondStyle.maxTiles / sourceW);
+    var sourceR = sourceL + sourceW - 1;
+    if (!eastSource && sourceR + 1 < _pondHi && world[SKY_ROWS + sourceD]) {
+      for (var sy = SKY_ROWS; sy < SKY_ROWS + sourceD; sy++) {
+        world[sy][sourceL - 1] = { type: 'stone', hp: ORES.stone.hp };
+        world[sy][sourceR + 1] = { type: 'stone', hp: ORES.stone.hp };
+        for (var sx = sourceL; sx <= sourceR; sx++) world[sy][sx] = null;
+      }
+      for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
+      surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
+      seedLakeShoreSlimes(sourceL, sourceR);
+    }
+    slimeGardenPrepareWorld();
+    mineralLiquidGenerate(false);
   }
 
   // ----- The Great Seam chamber (the "proper end that doesn't end the game") -----
@@ -3397,7 +3423,7 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;   // v14.2 — flag the WebGPU solver to re-seed
-    liquidType[id] = type === 'oil' ? 1 : 0;
+    liquidType[id] = typeof type === 'number' ? (type >= 0 && type <= 4 ? type | 0 : 0) : ({ water: 0, oil: 1, brine: 2, nectar: 3, lumen: 4 }[type] || 0);
     liquidOrigin[id] = origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;
@@ -4080,7 +4106,6 @@
       }
     }
   }
-
   /* ---- Init ---- */
 
   // ----- Dev slime test pen (dev mode only) -----
@@ -4162,6 +4187,10 @@
 
   function init() {
     if (introPhase === 'done') beginSceneLoading('Preparing your mine');
+    mineralLiquidReset();
+    slimeGardenReset();
+    skySlimeReset();
+    siphonReset();
     liquidParticles = [];
     liquidCount = 0;
     liquidOps.length = 0;          // v24.109 — stale mutation ops die with the old world
@@ -4195,7 +4224,7 @@
     // still built the pen — visible stone walls near spawn, undrillable buried
     // jello tiles, and 8 invisible ghost bodies (update + draw are flag-gated,
     // the injection was not). A disabled system must be inert, dev mode included.
-    if (devMode && ENABLE_JELLO) injectJelloTestPen();
+    if (devMode && ENABLE_JELLO && /[?&]slimepen=1\b/.test(location.search)) injectJelloTestPen();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;
@@ -4921,7 +4950,6 @@
     // mobile. consoleHeight() + an 8 px gap clears it in every orientation.
     DPAD_CY = viewH - consoleHeight() - DPAD_SIZE * 0.9 - 8;
   }
-
   /* ---- Scene loading: freeze play while the destination becomes drawable ---- */
   var gameLoadingAssetsReady = false;
   var gameLoadingWorkPending = false;
@@ -5217,7 +5245,7 @@
     if (!warmCtx) return state;
     var passes = [
       ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
-      ['slime', shaderWarmSlime], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
+      ['slime', shaderWarmSlime], ['garden', shaderWarmGarden], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
       ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
       ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
     ];
@@ -5507,6 +5535,76 @@
     }
     b.bboxL = l; b.bboxR = r; b.bboxT = t; b.bboxB = bm;
     b.shFrame = -1;   // refit the sheen deformation for this pose
+  }
+
+  // The garden's first purchase, pearl, meteor wake and active nozzle all
+  // introduce paints absent from a fresh spawn. Draw temporary specimens,
+  // never construction or simulation, and restore every borrowed reference.
+  function shaderWarmGarden(ws, ox, oy) {
+    if (typeof slimeGardenDraw !== 'function' || typeof skySlimeDraw !== 'function' ||
+        typeof siphonDraw !== 'function') return;
+    var liveLots = slimeGardenLots, liveSlimes = skySlimes, liveDust = skySlimeDust;
+    var liveSiphon = siphon, liveButtons = siphonButtons, available = siphonAvailable;
+    var livePlayer = player;
+    var x = cam.x + screenW * 0.5, y = cam.y + screenH * 0.48;
+    try {
+      player = Object.assign({}, livePlayer);
+      player.x = x - PLAYER_W * 0.5; player.y = y - PLAYER_H * 0.5;
+      shaderWarmWorld(ws, ox, oy);
+      for (var material = 0; material < 4; material++) {
+        var recipe = SLIME_GARDEN_RECIPES[material];
+        var lot = { index: material, x0: x - TILE * 5.5, x1: x + TILE * 5.5,
+          y0: y, y1: y + TILE * 2, owned: false, ready: false,
+          progress: 0, sample: [9000, 0, 2200, 2200, 2200], status: 'FILL TO THE BRASS MARK' };
+        slimeGardenLots = [lot];
+        slimeGardenDraw();
+        lot.owned = true; lot.progress = recipe.seconds * 0.42; lot.status = 'GROWING 42%';
+        slimeGardenDraw();
+        lot.ready = true; lot.progress = recipe.seconds; lot.status = 'PEARL READY';
+        slimeGardenDraw();
+      }
+
+      skySlimes = [];
+      skySlimeDust = [{ x: x - 45, y: y + 24, r: 2.4, life: 0.2, max: 0.5 }];
+      for (var pose = 0; pose < 3; pose++) {
+        var s = { x: x - 80 + pose * 80, y: y - 60, r: 25,
+          vx: pose ? 0 : -110, vy: pose ? 0 : 480, oval: 0.95 + pose * 0.045,
+          eyeSize: 0.33 + pose * 0.04, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
+          squash: pose === 1 ? 0.2 : 0, eye: pose === 1 ? 0.12 : 0.86,
+          pupilX: 1.3, pupilY: -0.9, entry: pose ? 0 : 0.9,
+          wet: pose === 2 ? 0.8 : 0, pearlProgress: pose === 2 ? 0.72 : 0,
+          _ground: pose === 1, _trail: [] };
+        if (!pose) {
+          for (var t = 0; t < 8; t++) s._trail.push({ x: s.x + (7 - t) * 7,
+            y: s.y - (7 - t) * 15, r: 20, life: 0.08 + t * 0.055 });
+        }
+        skySlimes.push(s);
+      }
+      skySlimeDraw();
+
+      siphon = Object.assign({}, liveSiphon);
+      siphonAvailable = function () { return true; };  // loading normally hides this tool
+      siphon.equipped = true; siphon.power = 0.85; siphon.clock = 0.27;
+      siphon.aimX = (x - cam.x + 110) * worldScale;
+      siphon.aimY = (y - cam.y - 70) * worldScale;
+      siphon.tank = [3600, 0, 1400, 2400, 900]; siphon.selected = 0;
+      siphon.mode = 'suck'; siphon.passenger = null;
+      siphon.notice = 'Passenger secured. Pour to set it in a bath.'; siphon.noticeT = 1;
+      siphon.fx = [{ x: x + 100, y: y - 60, type: 2, t: 0.1, life: 0.3 },
+        { x: x + 76, y: y - 40, type: 3, t: 0.17, life: 0.3 }];
+      siphonDraw();
+      ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
+      siphonHUD();
+      shaderWarmWorld(ws, ox, oy);
+      siphon.mode = 'pour'; siphon.selected = 4; siphon.passenger = skySlimes[2];
+      siphonDraw();
+      ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
+      siphonHUD();
+    } finally {
+      slimeGardenLots = liveLots; skySlimes = liveSlimes; skySlimeDust = liveDust;
+      siphon = liveSiphon; siphonButtons = liveButtons; siphonAvailable = available;
+      player = livePlayer;
+    }
   }
 
   // Terrain chunks: the first chunks built for new ground compile programs of
@@ -5871,6 +5969,7 @@
   var saveLastCargoN = -1;
   var saveLastDepth = -1;
   var saveLastUpgradeSum = -1;
+  var saveLastGardenKey = '';
   var saveCooldownT = 0;         // min seconds between docked autosaves
   var savePeriodicT = 0;         // background safety-save clock
   var saveCounter = 0;           // monotonic slot counter
@@ -6026,6 +6125,10 @@
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
       // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
       jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
+      garden: slimeGardenSave(),
+      skySlimes: skySlimeSave(),
+      siphon: siphonSave(),
+      mineralLiquids: mineralLiquidSave(),
     };
   }
 
@@ -6044,6 +6147,7 @@
       saveLastCargoN = cargo.length;
       saveLastDepth = depthRecord;
       saveLastUpgradeSum = saveUpgradeSum();
+      saveLastGardenKey = saveGardenKey();
       saveCooldownT = 10;
       savePeriodicT = 0;
       saveLampT = 3.0;          // console SAVE lamp: one steady info pulse
@@ -6132,6 +6236,11 @@
     player.renderX = player.x;
     player.renderY = player.y;
     cam.snap = true;
+    // Additive expansion fields preserve older saves and migrate their lots.
+    slimeGardenRestore(env.garden);
+    mineralLiquidRestore(env.mineralLiquids);
+    skySlimeRestore(env.skySlimes);
+    siphonRestore(env.siphon);
     // Re-derive world-dependent caches against the swapped grid.
     lightingInit();
     terrainChunkCache = {};
@@ -6145,6 +6254,7 @@
     saveLastCargoN = cargo.length;
     saveLastDepth = depthRecord;
     saveLastUpgradeSum = saveUpgradeSum();
+    saveLastGardenKey = saveGardenKey();
   }
 
   function saveWipe() {
@@ -6236,6 +6346,10 @@
   }
 
   // ---- Autosave poll (called once per frame from the update loop) ----
+  function saveGardenKey() {
+    return siphon.tank.join(',') + '/' + (siphon.passenger ? siphon.passenger.id : 0) + '/' + skySlimes.length + '/' +
+      slimeGardenLots.map(function (lot) { return (+lot.owned) + ':' + (+lot.ready) + ':' + Math.floor(lot.progress / 8); }).join(',');
+  }
   function saveTick(dt) {
     // Lamp timers decay before the gameOver early-return so the annunciator
     // still settles on the death screen.
@@ -6247,7 +6361,7 @@
     var dirty = (money !== saveLastMoney) ||
                 (cargo.length !== saveLastCargoN) ||
                 (depthRecord !== saveLastDepth) ||
-                (saveUpgradeSum() !== saveLastUpgradeSum);
+                (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey);
     if (!dirty) return;
     // Docked save: on solid ground inside a town, shortly after anything
     // meaningful changed (a sale, a purchase, a new record).
@@ -6316,6 +6430,7 @@
       if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (siphonKey(e)) { e.preventDefault(); return; }
       if (!gamePaused && cargoManifestOpen) {
         e.preventDefault();
         if (!e.repeat) cargoManifestKeyDown(e.key);
@@ -6378,6 +6493,7 @@
       dpad.left = dpad.right = dpad.up = dpad.down = false;
       touch.active = false;
       player.thrusting = false;
+      siphonStop();
       // Forget any in-flight multi-touch state too — otherwise the next
       // touch after returning to the tab might look like a continuation
       // of a touch the OS already cancelled, and the d-pad would lock on.
@@ -6471,6 +6587,8 @@
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', function () { siphonPointerUp('mouse'); });
+    canvas.addEventListener('contextmenu', function (e) { if (siphon.equipped) e.preventDefault(); });
 
     // Mouse wheel — only consumed when the shop is open (so page scrolling
     // outside of an open shop still works). passive:false because we call
@@ -6534,11 +6652,13 @@
   }
   function handleMouseDown(e) {
     var p = canvasPos(e.clientX, e.clientY);
-    processPointerDown(p.x, p.y, 'mouse');
+    if (e.button === 2 && !siphon.equipped) return;
+    processPointerDown(p.x, p.y, 'mouse', e.button === 2);
   }
   function handleMouseMove(e) {
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
+    siphonPointerMove(p.x, p.y, 'mouse');
     if (cargoManifestOpen) { cargoManifestPointerMove(p.x, p.y); return; }
     if (ledgerOpen) { canvas.style.cursor = ''; ledgerPointerMove(p.x, p.y); return; }
     canvas.style.cursor = cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
@@ -6551,7 +6671,7 @@
   }
   function handleMouseUp() { processPointerUp('mouse'); }
 
-  function processPointerDown(x, y, id) {
+  function processPointerDown(x, y, id, right) {
     if (gamePaused) return;
     if (cargoManifestOpen) { cargoManifestPointerDown(x, y); return; }
     if (ledgerOpen) { ledgerPointerDown(x, y); return; }
@@ -6647,6 +6767,10 @@
       }
     }
 
+    // Equipment buttons and buildings keep priority over world aiming.
+    if (!isInDpadZone(x, y) && slimeGardenPointer(x, y)) { touch.active = false; return; }
+    if (siphonPointerDown(x, y, id, right)) { touch.active = false; return; }
+
     // Anything else inside the d-pad zone becomes a d-pad touch. We
     // remember the touch identifier so subsequent touchmove/touchend
     // events for OTHER fingers (e.g. tapping a HUD chip) don't clobber
@@ -6708,6 +6832,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (siphonPointerMove(x, y, id)) return;
     if (cargoManifestOpen) { cargoManifestPointerMove(x, y); return; }
     if (ledgerOpen) { ledgerPointerMove(x, y); return; }
     touch.x = x;
@@ -6740,6 +6865,7 @@
     }
   }
   function processPointerUp(id) {
+    siphonPointerUp(id);
     if (cargoManifestOpen) { touch.active = false; return; }
     if (ledgerOpen) { touch.active = false; return; }
     // The item wheel is fully click-driven (handled on pointer-down), so
@@ -6919,7 +7045,6 @@
     }
     return false;
   }
-
   // ====== PLAYER OPTIONS ======
   // Player-facing options behind the pause-screen OPTIONS pane (sluice.html).
   // On boot this reads every persisted 'sluice.opt.*' key and applies it, then
@@ -10643,6 +10768,18 @@
         gv11 *= liquidMotionEff;
       }
 
+      // Shared pressure, distinct flow. Preserve the water baseline exactly.
+      var material = liquidType[i];
+      if (material >= 2) {
+        var shearRate = material === 3 ? 16 : material === 4 ? 8 : 0.9;
+        var lateralRate = material === 3 ? 3 : material === 4 ? 1.5 : 0.35;
+        var shearKeep = 1 / (1 + shearRate * stepDt);
+        var lateralKeep = 1 / (1 + lateralRate * stepDt);
+        vx *= lateralKeep;
+        gv00 *= shearKeep; gv01 *= shearKeep;
+        gv10 *= shearKeep; gv11 *= shearKeep;
+      }
+
       // v26.13 — the velocity ceiling is a transport invariant, so apply
       // it while vx/vy are still this substep's grid-cell displacement.
       // The old clamp below ran after liquidX/Y were committed and could
@@ -11801,6 +11938,7 @@
     var _lts;
     for (var s = 0; s < steps; s++) {
       _lts = performance.now(); updateOilSuction(stepDt);   perfMark('liquids.oilSuck', _lts);
+      liquidSkyBoundariesCPU();
       _lts = performance.now(); liquidP2G(stepDt);          perfMark('liquids.P2G', _lts);
       _lts = performance.now(); liquidApplyGridPressure();  perfMark('liquids.pressure', _lts);
       _lts = performance.now(); liquidUpdateGrid(stepDt);   perfMark('liquids.gridUpdate', _lts);
@@ -12000,6 +12138,13 @@
         data[o + 4] = wG + a * fG;
         data[o + 5] = wB + a * fB;
         data[o + 6] = wA;
+      } else if (typ >= 2 && liquidCatalog[typ]) {
+        var tint = liquidCatalog[typ].rgb;
+        var foam = Math.min(1, Math.max(0, liquidAeration[i])) * 0.35;
+        data[o + 3] = tint[0] + (0.93 - tint[0]) * foam;
+        data[o + 4] = tint[1] + (0.91 - tint[1]) * foam;
+        data[o + 5] = tint[2] + (0.82 - tint[2]) * foam;
+        data[o + 6] = wA;
       } else {
         data[o + 3] = oR;
         data[o + 4] = oG;
@@ -12124,10 +12269,11 @@
 
     ctx.save();
     liquidCanvasClipTerrain();
-    for (var pass = 0; pass < 2; pass++) {
+    for (var pass = 0; pass < liquidCatalog.length; pass++) {
       var type = pass === 0 ? 'water' : 'oil';
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
-      var typeId = pass === 0 ? 0 : 1;
+      var typeId = pass;
+      if (typeId >= 2) ctx.fillStyle = liquidCatalog[typeId].color;
       for (var i = 0; i < liquidCount; i++) {
         if (liquidType[i] !== typeId) continue;
         if (liquidX[i] < left || liquidX[i] > right || liquidY[i] < top || liquidY[i] > bottom) continue;
@@ -12142,7 +12288,7 @@
             : 'rgba(230,190,110,' + Math.min(0.52, liquidAeration[i] * 0.7).toFixed(3) + ')';
           var fr = Math.max(0.45, rr * 0.32);
           ctx.fillRect(liquidX[i] - rr * 0.25 - fr, liquidY[i] - rr * 0.35 - fr, fr * 2, fr * 2);
-          ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
+          ctx.fillStyle = typeId >= 2 ? liquidCatalog[typeId].color : type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
         }
       }
     }
@@ -12651,6 +12797,218 @@
           roverMode = null;
           showMsg('Touchdown!');
         }
+      }
+    }
+  }
+  // Mineral liquids keep identity while sharing the existing MLS-MPM pressure
+  // field. Quantities everywhere are actual particles, including tank transfer.
+  // Palette twin: mineralRGB in liquid-wgpu.js.
+  var liquidCatalog = [
+    { id: 0, key: 'water', name: 'Water', color: '#64b4cc', rgb: [0.39, 0.71, 0.80], feel: 'Clear and quick', depth: 'Surface lakes' },
+    { id: 1, key: 'oil', name: 'Oil', color: '#342717', rgb: [0.20, 0.15, 0.09], feel: 'Heavy and slick', depth: 'Legacy deposits' },
+    { id: 2, key: 'brine', name: 'Brine', color: '#91c9ad', rgb: [0.57, 0.79, 0.68], feel: 'Dense mineral wash', depth: 'Shallow salt pockets' },
+    { id: 3, key: 'nectar', name: 'Nectar', color: '#de9c4d', rgb: [0.87, 0.61, 0.30], feel: 'Thick golden ribbons', depth: 'Warm amber pockets' },
+    { id: 4, key: 'lumen', name: 'Lumen', color: '#ad87cc', rgb: [0.68, 0.53, 0.80], feel: 'Soft violet currents', depth: 'Deep mineral pockets' }
+  ];
+  var liquidToolCandidates = [];
+  var liquidToolRemovalIndices = [];
+
+  function liquidToolSync() {
+    // Take the last ready GPU snapshot BEFORE mutations. Continuous suction
+    // otherwise invalidates every readback and leaves the CPU mirror stale.
+    if (liquidWGPU && liquidWGPU.simActive && liquidWGPU.syncReadback) liquidWGPU.syncReadback();
+  }
+
+  function liquidToolExtract(x, y, radius, maxCount) {
+    var counts = [0, 0, 0, 0, 0];
+    if (!isFinite(x) || !isFinite(y) || !(radius > 0) || !(maxCount > 0)) return counts;
+    liquidToolSync();
+    var cap = Math.min(2048, Math.floor(maxCount));
+    var r2 = radius * radius;
+    var candidates = liquidToolCandidates;
+    candidates.length = 0;
+    for (var i = 0; i < liquidCount; i++) {
+      var dx = liquidX[i] - x, dy = liquidY[i] - y;
+      var d2 = dx * dx + dy * dy;
+      if (d2 > r2 || !liquidLineClear(x, y, liquidX[i], liquidY[i])) continue;
+      candidates.push({ index: i, distance: d2 });
+    }
+    candidates.sort(function (a, b) { return a.distance - b.distance; });
+    var indices = liquidToolRemovalIndices;
+    indices.length = 0;
+    for (var c = 0; c < Math.min(cap, candidates.length); c++) {
+      indices.push(candidates[c].index);
+      counts[liquidType[candidates[c].index]]++;
+    }
+    // Descending original indices remain valid under the solver's swap-remove.
+    indices.sort(function (a, b) { return b - a; });
+    for (var n = 0; n < indices.length; n++) removeLiquidParticle(indices[n]);
+    if (indices.length) liquidToolWake(x, y, radius + TILE);
+    return counts;
+  }
+
+  function liquidToolEmit(type, count, x, y, vx, vy) {
+    type = Number(type);
+    if (!liquidCatalog[type] || !isFinite(x) || !isFinite(y) || !isFinite(vx) || !isFinite(vy)) return 0;
+    if (liquidWorldSolidAt(x, y)) return 0;
+    liquidToolSync();
+    var cap = Math.min(2048, Math.max(0, Math.floor(count)), LIQUID_MAX_PARTICLES - liquidCount);
+    if (!cap) return 0;
+    var speed = Math.sqrt(vx * vx + vy * vy);
+    var alongX = speed > 0.1 ? vx / speed : 0;
+    var alongY = speed > 0.1 ? vy / speed : 1;
+    var step = LIQUID_CELL * LIQUID_PDELTA;
+    var cols = Math.min(14, Math.max(3, Math.ceil(Math.sqrt(cap * 0.65))));
+    var added = 0;
+    for (var i = 0; i < cap; i++) {
+      var side = ((i % cols) - (cols - 1) * 0.5) * step;
+      var forward = Math.floor(i / cols) * step;
+      var px = x - alongY * side + alongX * forward;
+      var py = y + alongX * side + alongY * forward;
+      // The packet is laid at rest spacing and clipped against real terrain.
+      // A blocked nozzle keeps its liquid in the tank.
+      if (liquidWorldSolidAt(px, py) || !liquidLineClear(x, y, px, py)) continue;
+      if (addLiquidParticle(type, px, py, vx, vy, 0) >= 0) added++;
+    }
+    if (added) liquidToolWake(x, y, TILE * 2);
+    return added;
+  }
+
+  function liquidSampleRect(x0, y0, x1, y1) {
+    var counts = [0, 0, 0, 0, 0];
+    for (var i = 0; i < liquidCount; i++) {
+      var px = liquidX[i], py = liquidY[i];
+      if (px >= x0 && px < x1 && py >= y0 && py < y1) counts[liquidType[i]]++;
+    }
+    if (typeof mineralLiquidParkedSampleRect === 'function') {
+      var parked = mineralLiquidParkedSampleRect(x0, y0, x1, y1);
+      for (var k = 0; k < counts.length; k++) counts[k] += parked[k] || 0;
+    }
+    return counts;
+  }
+
+  function liquidExtractRect(x0, y0, x1, y1, type, maxCount) {
+    if (!liquidCatalog[type] || !(maxCount > 0)) return 0;
+    liquidToolSync();
+    var cap = Math.floor(maxCount), removed = 0;
+    for (var i = liquidCount - 1; i >= 0 && removed < cap; i--) {
+      if (liquidType[i] !== type) continue;
+      var px = liquidX[i], py = liquidY[i];
+      if (px < x0 || px >= x1 || py < y0 || py >= y1) continue;
+      removeLiquidParticle(i);
+      removed++;
+    }
+    if (removed < cap && typeof mineralLiquidParkedExtractRect === 'function') {
+      removed += mineralLiquidParkedExtractRect(x0, y0, x1, y1, type, cap - removed);
+    }
+    if (removed) liquidToolWake((x0 + x1) * 0.5, (y0 + y1) * 0.5, Math.max(x1 - x0, y1 - y0));
+    return removed;
+  }
+
+  function liquidSampleCircle(x, y, radius) {
+    var counts = [0, 0, 0, 0, 0], total = 0, dominant = 0, best = 0;
+    var r2 = radius * radius;
+    for (var i = 0; i < liquidCount; i++) {
+      var dx = liquidX[i] - x, dy = liquidY[i] - y;
+      if (dx * dx + dy * dy > r2) continue;
+      counts[liquidType[i]]++;
+      total++;
+    }
+    for (var k = 0; k < counts.length; k++) if (counts[k] > best) { dominant = k; best = counts[k]; }
+    var spacing = LIQUID_CELL * LIQUID_PDELTA;
+    return { counts: counts, total: total, type: dominant, wet: Math.min(1, total * spacing * spacing / Math.max(1, Math.PI * r2)) };
+  }
+
+  function liquidToolImpulse(x, y, radius, vx, vy) {
+    if (!(radius > 0) || !isFinite(vx) || !isFinite(vy)) return 0;
+    liquidToolSync();
+    var r2 = radius * radius, affected = 0;
+    for (var i = 0; i < liquidCount; i++) {
+      var dx = liquidX[i] - x, dy = liquidY[i] - y;
+      var d2 = dx * dx + dy * dy;
+      if (d2 > r2 || !liquidLineClear(x, y, liquidX[i], liquidY[i])) continue;
+      var falloff = 1 - Math.sqrt(d2) / radius;
+      liquidVX[i] += vx * falloff;
+      liquidVY[i] += vy * falloff;
+      var v2 = liquidVX[i] * liquidVX[i] + liquidVY[i] * liquidVY[i];
+      var maxV = Math.max(1, LIQUID_MAX_VEL);
+      if (v2 > maxV * maxV) {
+        var sc = maxV / Math.sqrt(v2);
+        liquidVX[i] *= sc; liquidVY[i] *= sc;
+      }
+      liquidSleeping[i] = 0;
+      liquidFrozen[i] = 0;
+      liquidRestFrames[i] = 0;
+      if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(3, i, liquidVX[i], liquidVY[i], liquidAeration[i], liquidType[i], liquidOrigin[i]);
+      else liquidOpsOverflow = true;
+      affected++;
+    }
+    if (affected) liquidMutationSeq++;
+    return affected;
+  }
+
+  function liquidToolWake(x, y, radius) {
+    var woke = 0, r2 = radius * radius;
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidFrozen[i] || !liquidSleeping[i]) continue;
+      var dx = liquidX[i] - x, dy = liquidY[i] - y;
+      if (dx * dx + dy * dy > r2) continue;
+      liquidSleeping[i] = 0;
+      liquidRestFrames[i] = 0;
+      if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+      else liquidOpsOverflow = true;
+      woke++;
+    }
+    if (woke) liquidMutationSeq++;
+  }
+
+  var liquidSkyGuestCache = [];
+  function liquidSkyGuestShapes() {
+    var out = liquidSkyGuestCache;
+    if (typeof skySlimes === 'undefined') { out.length = 0; return out; }
+    var count = Math.min(8, skySlimes.length);
+    for (var i = 0; i < count; i++) {
+      var b = skySlimes[i];
+      var g = out[i] || { pts: [] };
+      var rx = b.rx || b.r, ry = b.ry || b.r;
+      g.x = b.x; g.y = b.y; g.hw = rx; g.hh = ry;
+      g.mvx = b.vx || 0; g.mvy = b.vy || 0;
+      g.pts.length = 64;
+      for (var k = 0; k < 16; k++) {
+        var a = k * Math.PI * 2 / 16;
+        g.pts[k * 4] = b.x + Math.cos(a) * rx;
+        g.pts[k * 4 + 1] = b.y + Math.sin(a) * ry;
+        g.pts[k * 4 + 2] = g.mvx;
+        g.pts[k * 4 + 3] = g.mvy;
+      }
+      out[i] = g;
+    }
+    out.length = count;
+    return out;
+  }
+
+  function liquidSkyBoundariesCPU() {
+    if (typeof skySlimes === 'undefined' || !skySlimes.length) return;
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidFrozen[i]) continue;
+      for (var j = 0; j < skySlimes.length; j++) {
+        var b = skySlimes[j], rx = (b.rx || b.r) + 1.1, ry = (b.ry || b.r) + 1.1;
+        var dx = liquidX[i] - b.x, dy = liquidY[i] - b.y;
+        if (Math.abs(dx) >= rx || Math.abs(dy) >= ry) continue;
+        var q = dx * dx / (rx * rx) + dy * dy / (ry * ry);
+        if (q >= 1) continue;
+        var inv = 1 / Math.sqrt(Math.max(q, 0.0001));
+        var nx = b.x + dx * inv, ny = b.y + dy * inv;
+        if (q < 0.0001) { nx = b.x; ny = b.y - ry; }
+        // A moving boundary must not squeeze its displaced water into rock.
+        if (liquidWorldSolidAt(nx, ny)) continue;
+        liquidX[i] = nx; liquidY[i] = ny;
+        var speed = Math.sqrt((b.vx || 0) * (b.vx || 0) + (b.vy || 0) * (b.vy || 0));
+        if (speed > 8) {
+          liquidVX[i] = (b.vx || 0) * 0.65;
+          liquidVY[i] = (b.vy || 0) * 0.65;
+          liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
+        } else { liquidVX[i] = 0; liquidVY[i] = 0; }
       }
     }
   }
@@ -14493,6 +14851,1010 @@
       canvas.addEventListener('wheel', bathWheelScroll, { passive: false });
     } catch (e) {}
   }
+  /* ---- Mineral springs and persistent liquid storage ---- */
+  // Pockets are finite. Off-camera poured liquid is parked at its real position,
+  // freeing the particle budget for the next lake without losing a filled bath.
+  var mineralDeposits = [];
+  var mineralLiquidParked = {};
+  var mineralLiquidClock = 0;
+  function mineralLiquidReset() {
+    mineralDeposits = [];
+    mineralLiquidParked = {};
+    mineralLiquidClock = 0;
+  }
+  function mineralLiquidBin(x, y) {
+    return Math.floor(x / 256) + ':' + Math.floor(y / 256);
+  }
+  function mineralLiquidPark(type, x, y) {
+    var key = mineralLiquidBin(x, y);
+    if (!mineralLiquidParked[key]) mineralLiquidParked[key] = [];
+    mineralLiquidParked[key].push(type, Math.round(x * 4) / 4, Math.round(y * 4) / 4);
+  }
+  function mineralLiquidParkedSampleRect(x0, y0, x1, y1) {
+    var counts = [0, 0, 0, 0, 0];
+    for (var bx = Math.floor(x0 / 256); bx <= Math.floor(x1 / 256); bx++) {
+      for (var by = Math.floor(y0 / 256); by <= Math.floor(y1 / 256); by++) {
+        var data = mineralLiquidParked[bx + ':' + by];
+        if (!data) continue;
+        for (var i = 0; i < data.length; i += 3) {
+          if (data[i + 1] >= x0 && data[i + 1] <= x1 && data[i + 2] >= y0 && data[i + 2] <= y1) counts[data[i]]++;
+        }
+      }
+    }
+    return counts;
+  }
+  function mineralLiquidGenerate(migrating) {
+    var center = townCenterCol(0);
+    var depths = [12, 26, 42, 80, 124, 168, 216, 244, 292, 328, 365];
+    var types = [0, 0, 2, 2, 2, 2, 3, 3, 4, 4, 4];
+    for (var n = 0; n < depths.length; n++) {
+      var c = center + (n % 2 ? -14 : 9) + Math.floor((Math.random() - 0.5) * 12);
+      var r = SKY_ROWS + depths[n];
+      if (c < 2 || c + 5 >= COLS || r + 3 >= BEDROCK_ROW) continue;
+      var safe = false;
+      // Old mines often have open shafts at the first candidate. Search the
+      // same depth band for intact host rock instead of silently losing a tier.
+      for (var attempt = 0; attempt < 64 && !safe; attempt++) {
+        if (attempt) c = center + (attempt % 2 ? -1 : 1) * (6 + Math.floor(attempt / 2) * 5);
+        if (c < 2 || c + 5 >= COLS) continue;
+        safe = true;
+        for (var sy = r; sy <= r + 2; sy++) for (var sx = c - 1; sx <= c + 4; sx++) {
+          var cell = world[sy] && world[sy][sx];
+          if (cell && (cell.type === 'bedrock' || cell.type === 'foundation' || cell.type === 'barrier' || cell.type === 'greatseam' || cell.type === 'jello')) safe = false;
+          if (migrating && !cell) safe = false;
+        }
+      }
+      if (!safe) continue;
+      for (var rr = r; rr < r + 2; rr++) {
+        world[rr][c - 1] = { type: 'stone', hp: ORES.stone.hp };
+        world[rr][c + 4] = { type: 'stone', hp: ORES.stone.hp };
+        for (var cc = c; cc < c + 4; cc++) world[rr][cc] = null;
+      }
+      for (var fc = c - 1; fc <= c + 4; fc++) world[r + 2][fc] = { type: 'stone', hp: ORES.stone.hp };
+      mineralDeposits.push({ c: c, r: r, type: types[n], seeded: false });
+    }
+  }
+  function mineralLiquidParkedExtractRect(x0, y0, x1, y1, type, maxCount) {
+    var removed = 0;
+    for (var bx = Math.floor(x0 / 256); bx <= Math.floor(x1 / 256) && removed < maxCount; bx++) {
+      for (var by = Math.floor(y0 / 256); by <= Math.floor(y1 / 256) && removed < maxCount; by++) {
+        var key = bx + ':' + by, data = mineralLiquidParked[key];
+        if (!data) continue;
+        for (var i = data.length - 3; i >= 0 && removed < maxCount; i -= 3) {
+          if (data[i] !== type || data[i + 1] < x0 || data[i + 1] >= x1 || data[i + 2] < y0 || data[i + 2] >= y1) continue;
+          var last = data.length - 3;
+          data[i] = data[last]; data[i + 1] = data[last + 1]; data[i + 2] = data[last + 2]; data.length -= 3;
+          removed++;
+        }
+        if (!data.length) delete mineralLiquidParked[key];
+      }
+    }
+    return removed;
+  }
+  function mineralLiquidTick(dt) {
+    mineralLiquidClock -= dt;
+    if (mineralLiquidClock > 0) return;
+    mineralLiquidClock = 0.35;
+    var margin = 240;
+    var x0 = cam.x - margin, x1 = cam.x + viewW / worldScale + margin;
+    var y0 = cam.y - margin, y1 = cam.y + viewH / worldScale + margin;
+    // All operations use the same ordered swap-remove journal as the GPU.
+    for (var i = liquidCount - 1; i >= 0; i--) {
+      if (liquidOrigin[i] !== 0) continue;
+      var x = liquidX[i], y = liquidY[i];
+      if (x >= x0 && x <= x1 && y >= y0 && y <= y1) continue;
+      mineralLiquidPark(liquidType[i], x, y);
+      removeLiquidParticle(i);
+    }
+    var budget = Math.min(3600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 512));
+    for (var bx = Math.floor(x0 / 256); bx <= Math.floor(x1 / 256) && budget > 0; bx++) {
+      for (var by = Math.floor(y0 / 256); by <= Math.floor(y1 / 256) && budget > 0; by++) {
+        var key = bx + ':' + by, data = mineralLiquidParked[key];
+        if (!data) continue;
+        // Only restore particles inside the residency rectangle. Restoring an
+        // entire intersecting bin would bounce its outside edge in and out.
+        for (var j = data.length - 3; j >= 0 && budget > 0; j -= 3) {
+          var px = data[j + 1], py = data[j + 2];
+          if (px < x0 || px > x1 || py < y0 || py > y1) continue;
+          if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
+          var end = data.length - 3;
+          data[j] = data[end]; data[j + 1] = data[end + 1]; data[j + 2] = data[end + 2];
+          data.length -= 3;
+          budget--;
+        }
+        if (!data.length) delete mineralLiquidParked[key];
+      }
+    }
+    for (var d = 0; d < mineralDeposits.length; d++) {
+      var p = mineralDeposits[d], dx = (p.c + 2) * TILE, dy = (p.r + 1) * TILE;
+      if (p.seeded || dx < x0 || dx > x1 || dy < y0 || dy > y1) continue;
+      p.seeded = true;
+      // ~4300 real particles at the solver's 1.25 px rest spacing. Park first,
+      // then stream them through the same budget as carried and poured fluid.
+      for (var fy = p.r * TILE + 8; fy < (p.r + 2) * TILE - 2; fy += 1.25) {
+        for (var fx = p.c * TILE + 2; fx < (p.c + 4) * TILE - 2; fx += 1.25) mineralLiquidPark(p.type, fx, fy);
+      }
+    }
+  }
+  function mineralLiquidSave() {
+    liquidToolSync();
+    var parked = {};
+    Object.keys(mineralLiquidParked).forEach(function (key) { parked[key] = mineralLiquidParked[key].slice(); });
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidOrigin[i] !== 0) continue;
+      var key = mineralLiquidBin(liquidX[i], liquidY[i]);
+      if (!parked[key]) parked[key] = [];
+      parked[key].push(liquidType[i], Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
+    }
+    return { deposits: mineralDeposits, parked: parked };
+  }
+  function mineralLiquidRestore(data) {
+    mineralLiquidReset();
+    if (!data) { mineralLiquidGenerate(true); return; }
+    mineralDeposits = Array.isArray(data.deposits) ? data.deposits : [];
+    var source = data.parked || {};
+    Object.keys(source).forEach(function (key) {
+      var values = source[key];
+      if (!Array.isArray(values)) return;
+      for (var i = 0; i + 2 < values.length; i += 3) {
+        var t = values[i], x = values[i + 1], y = values[i + 2];
+        if (t >= 0 && t <= 4 && isFinite(x) && isFinite(y) && x >= 0 && x < COLS * TILE && y > -20000 && y < TOTAL_ROWS * TILE) mineralLiquidPark(t | 0, x, y);
+      }
+    });
+  }
+  /* ---- Slime garden: purchased surface baths and mineral pearls ---- */
+  // This is the public surface loop, independent of the optional indoor banya.
+  // Each lot owns real collision tiles. Its water is the same particle liquid
+  // the player carries from lakes and deposits, never a painted fill meter.
+  var SLIME_GARDEN_RECIPES = [
+    { name: 'STONE BATH', pearl: 'River pearl', price: 180, materials: [],
+      liquids: [0], liquidText: 'WATER', seconds: 40, value: 260, dose: 1800,
+      source: 'Water: lake east of town.' },
+    { name: 'COPPER BATH', pearl: 'Salt pearl', price: 650, materials: [['copper', 3]],
+      liquids: [0, 2], liquidText: 'WATER + BRINE', seconds: 48, value: 900, dose: 1800,
+      source: 'Brine: 42-168 m underground.' },
+    { name: 'IRON BATH', pearl: 'Honey pearl', price: 1800, materials: [['iron', 3], ['amber', 1]],
+      liquids: [0, 3], liquidText: 'WATER + NECTAR', seconds: 56, value: 2600, dose: 1800,
+      source: 'Nectar: 216-244 m. Heated drill required.' },
+    { name: 'CRYSTAL BATH', pearl: 'Aurora pearl', price: 4800, materials: [['amethyst', 2], ['gold', 1]],
+      liquids: [2, 3, 4], liquidText: 'BRINE + NECTAR + LUMEN', seconds: 65, value: 6000, dose: 1800,
+      source: 'Lumen: 292 m and deeper. Bring heat shielding.' }
+  ];
+  var SLIME_GARDEN_MIN_FILL = 6200;
+  var SLIME_GARDEN_CAPACITY = 11 * 2 * 655;
+  var slimeGardenLots = [];
+  var slimeGardenClock = 0;
+  var slimeGardenSampleT = 0;
+  var slimeGardenHinted = false;
+
+  function slimeGardenReset() {
+    slimeGardenLots.length = 0;
+    slimeGardenClock = 0;
+    slimeGardenSampleT = 0;
+    slimeGardenHinted = false;
+    for (var i = 0; i < 4; i++) {
+      var cL = DECK_LEFT_COL - 16 - i * 15;
+      slimeGardenLots.push({ index: i, cL: cL, cR: cL + 10,
+        x0: cL * TILE, x1: (cL + 11) * TILE,
+        y0: SKY_ROWS * TILE, y1: (SKY_ROWS + 2) * TILE,
+        owned: false, progress: 0, ready: false, harvests: 0,
+        sample: [0, 0, 0, 0, 0], resident: null, valid: false, status: 'FOR SALE',
+        constructionT: 0, pearlPulse: 0 });
+    }
+  }
+
+  function slimeGardenReservedCol(c) {
+    return c >= DECK_LEFT_COL - 63 && c <= DECK_LEFT_COL - 4;
+  }
+
+  function slimeGardenCarve(lot) {
+    for (var r = SKY_ROWS; r <= SKY_ROWS + 2; r++) {
+      if (!world[r]) continue;
+      for (var c = lot.cL - 1; c <= lot.cR + 1; c++) {
+        if (c < 0 || c >= COLS) continue;
+        var shell = r === SKY_ROWS + 2 || c === lot.cL - 1 || c === lot.cR + 1;
+        world[r][c] = shell ? { type: 'foundation', hp: 999999 } : null;
+        if (!shell) terrainClearedKinds[r + ':' + c] = 'stone';
+        if (typeof invalidateTerrainAround === 'function') invalidateTerrainAround(r, c);
+      }
+    }
+    // The light field must see the new open cut on an in-run purchase.
+    if (typeof lightingOnClear === 'function') {
+      for (var lr = SKY_ROWS; lr < SKY_ROWS + 2; lr++) {
+        for (var lc = lot.cL; lc <= lot.cR; lc++) lightingOnClear(lr, lc);
+      }
+    }
+  }
+
+  function slimeGardenPrepareWorld(restoring) {
+    if (!slimeGardenLots.length) slimeGardenReset();
+    // An older save may have generated a lake across newly designated land.
+    // Retire its refill metadata before any bowl can be purchased; leave the
+    // saved excavation itself intact until that particular lot is built.
+    if (typeof surfacePonds !== 'undefined') {
+      for (var pi = surfacePonds.length - 1; pi >= 0; pi--) {
+        if (surfacePonds[pi].cR >= DECK_LEFT_COL - 63 && surfacePonds[pi].cL <= DECK_LEFT_COL - 4) {
+          surfacePonds.splice(pi, 1);
+        }
+      }
+    }
+    for (var i = 0; i < slimeGardenLots.length; i++) {
+      var lot = slimeGardenLots[i];
+      if (lot.owned) { slimeGardenCarve(lot); continue; }
+      if (restoring) continue;
+      // Undeveloped lots remain walkable. Only construction opens the bowl.
+      for (var r = SKY_ROWS; r <= SKY_ROWS + 2; r++) {
+        if (!world[r]) continue;
+        for (var c = lot.cL - 1; c <= lot.cR + 1; c++) {
+          if (c >= 0 && c < COLS) world[r][c] = { type: 'dirt', hp: ORES.dirt.hp };
+        }
+      }
+    }
+  }
+
+  function slimeGardenAt(x, y) {
+    for (var i = 0; i < slimeGardenLots.length; i++) {
+      var lot = slimeGardenLots[i];
+      if (lot.owned && x >= lot.x0 && x <= lot.x1 && y >= lot.y0 - 12 && y < lot.y1 + 6) return lot;
+    }
+    return null;
+  }
+
+  function slimeGardenNearest() {
+    if (!player || !isFinite(player.x) || !isFinite(player.y)) return null;
+    var px = player.x + PLAYER_W * 0.5;
+    var py = player.y + PLAYER_H * 0.5;
+    var closest = null, best = Infinity;
+    for (var i = 0; i < slimeGardenLots.length; i++) {
+      var lot = slimeGardenLots[i];
+      if (py < lot.y0 - 150 || py > lot.y1 + 40) continue;
+      if (px < lot.x0 - 2 * TILE || px > lot.x1 + 2 * TILE) continue;
+      var dist = Math.abs(px - (lot.x0 + lot.x1) * 0.5);
+      if (dist < best) { best = dist; closest = lot; }
+    }
+    return closest;
+  }
+
+  function skySlimeLandingX() {
+    if (!slimeGardenLots.length) slimeGardenReset();
+    var near = slimeGardenNearest();
+    var lot = near || slimeGardenLots[0];
+    // A stone shoulder gives the first arrivals their full bounce sequence.
+    // The player moves their chosen creature into the bath with the nozzle.
+    return lot.x1 + TILE * 0.5;
+  }
+
+  function slimeGardenMaterialCount(type) {
+    var n = 0;
+    for (var i = 0; i < cargo.length; i++) if (cargo[i].type === type) n++;
+    return n;
+  }
+
+  function slimeGardenMaterialsText(recipe, count) {
+    if (!recipe.materials.length) return 'STONE PROVIDED';
+    return recipe.materials.map(function (m) {
+      return (count ? slimeGardenMaterialCount(m[0]) + '/' : '') + m[1] + ' ' + ORES[m[0]].label.toUpperCase();
+    }).join(' + ');
+  }
+
+  function slimeGardenSourceHint(index) {
+    var recipe = SLIME_GARDEN_RECIPES[index];
+    var hint = index ? recipe.source : '';
+    if (recipe.liquids.indexOf(0) === -1) return hint;
+    var best = null, distance = Infinity;
+    var px = player.x + PLAYER_W * 0.5;
+    for (var i = 0; i < surfacePonds.length; i++) {
+      var pond = surfacePonds[i], center = (pond.cL + pond.cR + 1) * TILE * 0.5;
+      if (Math.abs(center - px) < distance) { best = center; distance = Math.abs(center - px); }
+    }
+    var water = best === null ? 'Water: shallow pockets at 12-26 m.' :
+      ('Water: surface lake ' + Math.max(1, Math.round(distance / TILE)) + ' m ' + (best < px ? 'west' : 'east') + '.');
+    return water + (hint ? ' ' + hint : '');
+  }
+
+  function slimeGardenBuy(index) {
+    var lot = slimeGardenLots[index];
+    if (!lot || lot.owned) return false;
+    var recipe = SLIME_GARDEN_RECIPES[index];
+    if (!devMode && money < recipe.price) {
+      showMsg('Lot ' + (index + 1) + ' costs $' + recipe.price + '. Mine and sell a haul first.', true,
+        { key: 'garden', tag: 'BATH LOTS' });
+      return false;
+    }
+    if (!devMode) {
+      for (var i = 0; i < recipe.materials.length; i++) {
+        var need = recipe.materials[i];
+        if (slimeGardenMaterialCount(need[0]) < need[1]) {
+          showMsg('Bring ' + slimeGardenMaterialsText(recipe, false).toLowerCase() + ' in your cargo to build this bath.', true,
+            { key: 'garden', tag: 'BATH LOTS' });
+          return false;
+        }
+      }
+      money -= recipe.price;
+      for (var mi = 0; mi < recipe.materials.length; mi++) {
+        var mat = recipe.materials[mi], remaining = mat[1];
+        // Spend ordinary specimens first, preserving shiny cargo if possible.
+        for (var shinyPass = 0; shinyPass < 2 && remaining; shinyPass++) {
+          for (var ci = cargo.length - 1; ci >= 0 && remaining; ci--) {
+            if (cargo[ci].type === mat[0] && (!!cargo[ci].shiny) === !!shinyPass) {
+              cargo.splice(ci, 1); remaining--;
+            }
+          }
+        }
+      }
+    }
+    lot.owned = true;
+    lot.constructionT = 1;
+    lot.status = 'FILL THE BATH';
+    slimeGardenCarve(lot);
+    slimeGardenSampleT = 0;
+    showMsg('Bath built. ' + (isMobile ? 'Tap SIPHON; choose IN or OUT.' : 'F equips the siphon. Left draws in; right pours.') +
+      ' Bring ' + recipe.liquidText.toLowerCase() + ' and one settled sky slime.', false,
+      { key: 'garden', tag: 'BATH LOTS' });
+    if (typeof sfxPlay === 'function') sfxPlay('ui-confirm');
+    if (typeof saveNow === 'function') saveNow('bath-built');
+    return true;
+  }
+
+  function slimeGardenCollect(index) {
+    var lot = slimeGardenLots[index];
+    if (!lot || !lot.ready) return false;
+    var recipe = SLIME_GARDEN_RECIPES[index];
+    money += recipe.value;
+    lot.ready = false;
+    lot.progress = 0;
+    lot.harvests++;
+    lot.pearlPulse = 1;
+    slimeGardenSampleT = 0;
+    showMsg(recipe.pearl + ' sold for $' + recipe.value + '. Top up the bath to keep it growing.', false,
+      { key: 'garden', tag: 'PEARL SALE' });
+    if (typeof sfxPlay === 'function') sfxPlay('sell-total');
+    if (typeof saveNow === 'function') saveNow('pearl-collected');
+    return true;
+  }
+
+  function slimeGardenInteract() {
+    var lot = slimeGardenNearest();
+    if (!lot) return false;
+    if (!lot.owned) slimeGardenBuy(lot.index);
+    else if (lot.ready) slimeGardenCollect(lot.index);
+    else {
+      var recipe = SLIME_GARDEN_RECIPES[lot.index];
+      showMsg(lot.status + '. ' + slimeGardenSourceHint(lot.index) +
+        (isMobile ? ' Tap this sign when the pearl is ready.' : ' E collects the finished pearl.'), false,
+        { key: 'garden', tag: 'BATH ' + (lot.index + 1) });
+    }
+    return true;
+  }
+
+  function slimeGardenSignRect(lot) {
+    return { x: (lot.x0 + lot.x1) * 0.5 - 86, y: lot.y0 - 92, w: 172, h: 72 };
+  }
+
+  function slimeGardenPointer(sx, sy) {
+    var wx = sx / worldScale + cam.x;
+    var wy = sy / worldScale + cam.y;
+    for (var i = 0; i < slimeGardenLots.length; i++) {
+      var lot = slimeGardenLots[i], box = slimeGardenSignRect(lot);
+      if (wx < box.x || wx > box.x + box.w || wy < box.y || wy > box.y + box.h) continue;
+      if (slimeGardenNearest() !== lot) {
+        showMsg('Move closer to this bath sign.', false, { key: 'garden', tag: 'BATH LOTS' });
+        return true;
+      }
+      return slimeGardenInteract();
+    }
+    return false;
+  }
+
+  function slimeGardenRecipeStatus(lot) {
+    var recipe = SLIME_GARDEN_RECIPES[lot.index];
+    var total = 0;
+    for (var i = 0; i < lot.sample.length; i++) total += lot.sample[i] || 0;
+    if (total < SLIME_GARDEN_MIN_FILL) return 'FILL TO THE BRASS MARK';
+    for (var ri = 0; ri < recipe.liquids.length; ri++) {
+      var type = recipe.liquids[ri];
+      var threshold = recipe.liquids.length === 1 ? 5200 : 1000;
+      if ((lot.sample[type] || 0) < threshold) {
+        return 'ADD ' + ['WATER', 'OIL', 'BRINE', 'NECTAR', 'LUMEN'][type];
+      }
+    }
+    if (!lot.resident) return 'ADD ONE SKY SLIME';
+    return '';
+  }
+
+  function slimeGardenComplete(lot) {
+    var recipe = SLIME_GARDEN_RECIPES[lot.index];
+    if (typeof liquidExtractRect !== 'function') return false;
+    // Re-sample at the transaction boundary: the nozzle may have drained the
+    // bath since its half-second status refresh.
+    if (typeof liquidToolSync === 'function') liquidToolSync();
+    lot.sample = liquidSampleRect(lot.x0, lot.y0, lot.x1, lot.y1);
+    if (slimeGardenRecipeStatus(lot)) return false;
+    // A pearl incorporates a real dose of its recipe. One waiting pearl per
+    // bath and finite liquid prevent an unattended, unbounded money engine.
+    var each = Math.floor(recipe.dose / recipe.liquids.length);
+    for (var check = 0; check < recipe.liquids.length; check++) {
+      if ((lot.sample[recipe.liquids[check]] || 0) < each) return false;
+    }
+    for (var i = 0; i < recipe.liquids.length; i++) {
+      var type = recipe.liquids[i];
+      var used = liquidExtractRect(lot.x0, lot.y0, lot.x1, lot.y1, type, each);
+      lot.sample[type] = Math.max(0, lot.sample[type] - used);
+      // Sampling and extraction read the same mirror. A transient backend
+      // handoff can remove less; it must never create a pearl for no material.
+      if (used < each) { lot.progress = Math.max(0, recipe.seconds - 1); return false; }
+    }
+    lot.ready = true;
+    lot.progress = recipe.seconds;
+    lot.pearlPulse = 1;
+    if (slimeGardenNearest() === lot) showMsg(recipe.pearl + ' ready. Use the bath sign to collect $' + recipe.value + '.', false,
+      { key: 'garden', tag: 'PEARL READY' });
+    return true;
+  }
+
+  function slimeGardenTick(dt) {
+    if (!slimeGardenLots.length) return;
+    slimeGardenClock += dt;
+    slimeGardenSampleT -= dt;
+    var sampleNow = slimeGardenSampleT <= 0;
+    if (sampleNow) slimeGardenSampleT = 0.5;
+    var slimes = typeof skySlimes !== 'undefined' ? skySlimes : [];
+    for (var si = 0; si < slimes.length; si++) {
+      slimes[si].gardenLot = -1;
+      slimes[si].pearlProgress = 0;
+    }
+    for (var i = 0; i < slimeGardenLots.length; i++) {
+      var lot = slimeGardenLots[i], recipe = SLIME_GARDEN_RECIPES[i];
+      lot.constructionT = Math.max(0, lot.constructionT - dt);
+      lot.pearlPulse = Math.max(0, lot.pearlPulse - dt * 0.6);
+      if (!lot.owned) continue;
+      if (sampleNow && typeof liquidSampleRect === 'function') {
+        lot.sample = liquidSampleRect(lot.x0, lot.y0, lot.x1, lot.y1);
+      }
+      lot.resident = null;
+      for (var s = 0; s < slimes.length; s++) {
+        var slime = slimes[s];
+        if (slime.captured || slime.x - slime.r < lot.x0 || slime.x + slime.r > lot.x1) continue;
+        if (slime.y + slime.r < lot.y0 + TILE * 0.55 || slime.y - slime.r > lot.y1) continue;
+        if (Math.abs(slime.vy || 0) > 95 || Math.abs(slime.vx || 0) > 70) continue;
+        lot.resident = slime;
+        slime.gardenLot = i;
+        slime.pearlProgress = Math.min(1, lot.progress / recipe.seconds);
+        break;
+      }
+      if (lot.ready) { lot.status = 'PEARL READY'; lot.valid = false; continue; }
+      var missing = slimeGardenRecipeStatus(lot);
+      lot.valid = !missing;
+      lot.status = missing || ('GROWING ' + Math.floor(lot.progress / recipe.seconds * 100) + '%');
+      if (!lot.valid) continue;
+      lot.progress = Math.min(recipe.seconds, lot.progress + dt);
+      if (lot.progress >= recipe.seconds) slimeGardenComplete(lot);
+    }
+    if (!slimeGardenHinted && slimeGardenNearest()) {
+      slimeGardenHinted = true;
+      showMsg('Baths turn sky slimes and mineral liquids into pearls. ' +
+        (isMobile ? 'Tap a sign to build. Tap SIPHON to carry liquid and a settled slime.' : 'E or tap a sign to build. F equips the liquid and slime siphon.'), false,
+        { key: 'garden', tag: 'BATH LOTS' });
+    }
+  }
+
+  function slimeGardenDrawMasonry(x, y, w, h, index) {
+    drawStoneFoundation(x, y, w, h);
+    if (index === 0) {
+      // Hand-laid large slate blocks, a soft worn cap, crisp mortar below.
+      ctx.fillStyle = BLD.stoneLight; ctx.fillRect(x + 1, y + 1, w - 2, 3);
+      ctx.fillStyle = BLD.stonePale;
+      for (var p = 11; p < w - 7; p += 43) ctx.fillRect(x + p, y + 1, 9, 1);
+    } else {
+      var base = index === 1 ? BLD.woodMid : (index === 2 ? BLD.metalBase : BLD.metalLight);
+      var light = index === 1 ? BLD.woodPale : (index === 2 ? BLD.metalPale : BLD.waterFoam);
+      var dark = index === 1 ? BLD.woodDark : BLD.metalDark;
+      ctx.fillStyle = base; ctx.fillRect(x + 2, y + 2, w - 4, h - 5);
+      ctx.fillStyle = light; ctx.fillRect(x + 2, y + 2, w - 4, 2);
+      ctx.fillStyle = dark; ctx.fillRect(x + 2, y + h - 5, w - 4, 2);
+      for (var s = 18; s < w - 8; s += 34) {
+        ctx.fillStyle = dark; ctx.fillRect(x + s, y + 5, 1, h - 12);
+        ctx.fillStyle = light; ctx.fillRect(x + s + 3, y + 6, 2, 2);
+        ctx.fillRect(x + s + 3, y + h - 10, 2, 2);
+      }
+      if (index === 3) {
+        for (var g = 24; g < w - 12; g += 48) {
+          ctx.fillStyle = BLD.waterBase;
+          ctx.beginPath(); ctx.moveTo(x + g, y + 7); ctx.lineTo(x + g + 8, y + 14);
+          ctx.lineTo(x + g, y + 23); ctx.lineTo(x + g - 7, y + 14); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = BLD.outline; ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = BLD.waterFoam; ctx.fillRect(x + g - 2, y + 11, 3, 2);
+        }
+      }
+    }
+    strokeRect1(x, y, w, h, BLD.outline);
+  }
+
+  function slimeGardenDrawPearl(x, y, index, scale) {
+    var tint = [BLD.cream, BLD.goldPale, BLD.woodPale, BLD.waterFoam][index];
+    ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+    ctx.fillStyle = BLD.outline; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = tint; ctx.beginPath(); ctx.arc(0, -0.3, 6.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = BLD.goldDark; ctx.globalAlpha = 0.35;
+    ctx.beginPath(); ctx.ellipse(2.1, 3, 4.4, 2.2, -0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.fillStyle = BLD.waterFoam;
+    ctx.fillRect(-3, -4, 3, 2); ctx.fillRect(-4, -2, 1, 1);
+    ctx.restore();
+  }
+
+  function slimeGardenDrawLadder(x, y, h) {
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x, y, 3, h); ctx.fillRect(x + 10, y, 3, h);
+    ctx.fillStyle = BLD.metalLight;
+    ctx.fillRect(x + 1, y + 1, 1, h - 2); ctx.fillRect(x + 11, y + 1, 1, h - 2);
+    for (var r = 5; r < h - 3; r += 10) {
+      ctx.fillStyle = BLD.outline; ctx.fillRect(x + 2, y + r, 9, 3);
+      ctx.fillStyle = BLD.metalPale; ctx.fillRect(x + 2, y + r, 9, 1);
+    }
+  }
+
+  function slimeGardenDrawSign(lot, near) {
+    var box = slimeGardenSignRect(lot), recipe = SLIME_GARDEN_RECIPES[lot.index];
+    var x = box.x, y = box.y, w = box.w, h = box.h;
+    // Reused prospecting board: slate footings, old planks, a bolted metal
+    // recipe plate and a small static star preserve the town's materials.
+    for (var side = 0; side < 2; side++) {
+      var postX = x + (side ? w - 16 : 11);
+      drawStoneFoundation(postX - 3, lot.y0 - 5, 11, 5);
+      ctx.fillStyle = BLD.woodDark; ctx.fillRect(postX, y + h - 3, 5, lot.y0 - y - h + 3);
+      strokeRect1(postX, y + h - 3, 5, lot.y0 - y - h + 3, BLD.outline);
+    }
+    drawWoodPlanking(x, y, w, h, 8);
+    strokeRect1(x, y, w, h, BLD.outline);
+    drawRivetedPlate(x + 4, y + 18, w - 8, h - 22);
+    drawSignBoard(x + 4, y + 3, w - 8, 14, '');
+    drawRedStar(x + w - 13, y + 10, 3, 0.1);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.font = 'bold 9.5px ' + UI_FONT;
+    ctx.fillStyle = BLD.woodDeep; ctx.fillText('0' + (lot.index + 1) + '  ' + recipe.name, x + 10, y + 5);
+    ctx.font = '9px ' + UI_FONT;
+    ctx.fillStyle = BLD.metalPale;
+    if (!lot.owned) {
+      ctx.fillText(slimeGardenMaterialsText(recipe, !!near), x + 10, y + 23);
+      ctx.fillStyle = BLD.cream; ctx.fillText(recipe.liquidText, x + 10, y + 37);
+      ctx.fillStyle = BLD.goldPale;
+      ctx.font = 'bold 10px ' + UI_FONT;
+      ctx.fillText((near ? (isMobile ? 'TAP: BUILD ' : 'E: BUILD ') : 'LOT + BATH ') + '$' + recipe.price, x + 10, y + 55);
+    } else {
+      ctx.fillText(recipe.liquidText, x + 10, y + 23);
+      ctx.fillStyle = lot.ready ? BLD.goldPale : BLD.cream;
+      ctx.fillText(lot.ready ? recipe.pearl.toUpperCase() : lot.status, x + 10, y + 37);
+      var progress = Math.min(1, lot.progress / recipe.seconds);
+      ctx.fillStyle = BLD.outline; ctx.fillRect(x + 10, y + 50, w - 38, 3);
+      ctx.fillStyle = lot.ready ? BLD.goldPale : BLD.goldBase;
+      ctx.fillRect(x + 10, y + 50, Math.floor((w - 38) * progress), 3);
+      ctx.fillStyle = lot.ready ? BLD.goldPale : BLD.metalPale;
+      ctx.font = '9px ' + UI_FONT;
+      var footer = lot.ready ? ((isMobile ? 'TAP: ' : 'E: ') + 'COLLECT $' + recipe.value) :
+        (Math.ceil(Math.max(0, recipe.seconds - lot.progress)) + 's / $' + recipe.value + ' PER PEARL');
+      ctx.fillText(footer, x + 10, y + 58);
+      if (lot.ready) slimeGardenDrawPearl(x + w - 17, y + 57, lot.index, 0.8);
+    }
+    if (near) strokeRect1(x - 2, y - 2, w + 4, h + 4, BLD.goldBase);
+  }
+
+  function slimeGardenDraw() {
+    var near = slimeGardenNearest();
+    ctx.save();
+    for (var i = 0; i < slimeGardenLots.length; i++) {
+      var lot = slimeGardenLots[i];
+      if (lot.x1 + TILE < cam.x || lot.x0 - TILE > cam.x + screenW || lot.y1 + TILE < cam.y || lot.y0 - 135 > cam.y + screenH) continue;
+      var left = lot.x0 - TILE, outerW = 13 * TILE;
+      if (lot.owned) {
+        slimeGardenDrawMasonry(left, lot.y1, outerW, TILE, i);
+        slimeGardenDrawMasonry(left, lot.y0, TILE, 2 * TILE, i);
+        slimeGardenDrawMasonry(lot.x1, lot.y0, TILE, 2 * TILE, i);
+        // The minimum fill mark is a physical brass inlay inside the wall.
+        var markY = lot.y1 - 2 * TILE * SLIME_GARDEN_MIN_FILL / SLIME_GARDEN_CAPACITY;
+        ctx.fillStyle = BLD.goldPale;
+        ctx.fillRect(lot.x0 - 7, Math.round(markY), 7, 3);
+        ctx.fillRect(lot.x1, Math.round(markY), 7, 3);
+        // Small ruled depth marks make poured volume readable at a glance.
+        ctx.fillStyle = BLD.stonePale;
+        for (var t = 1; t < 5; t++) {
+          ctx.fillRect(lot.x0 - 4, lot.y1 - t * 12, 4, 1);
+          ctx.fillRect(lot.x1, lot.y1 - t * 12, 4, 1);
+        }
+        slimeGardenDrawLadder(lot.x1 - 14, lot.y0 - 4, 2 * TILE + 3);
+        if (lot.ready) {
+          var px = lot.x0 + 36, py = lot.y0 - 9;
+          drawCrate(px - 13, py, 26, 11);
+          slimeGardenDrawPearl(px, py - 5, i, 1.15);
+        }
+      } else {
+        // Survey stakes and a low dashed line designate land before payment.
+        ctx.fillStyle = BLD.woodDark;
+        ctx.fillRect(left + 9, lot.y0 - 18, 4, 20);
+        ctx.fillRect(left + outerW - 13, lot.y0 - 18, 4, 20);
+        ctx.fillStyle = BLD.cream;
+        ctx.fillRect(left + 9, lot.y0 - 17, 4, 3);
+        ctx.fillRect(left + outerW - 13, lot.y0 - 17, 4, 3);
+        ctx.fillStyle = BLD.goldDark;
+        for (var dash = left + 21; dash < left + outerW - 20; dash += 18) ctx.fillRect(dash, lot.y0 - 2, 8, 1);
+      }
+      slimeGardenDrawSign(lot, near === lot);
+    }
+    ctx.restore();
+  }
+
+  function slimeGardenHUD() {
+    // The nearby physical sign carries status and the action. No second panel.
+  }
+
+  function slimeGardenSave() {
+    return { version: 1, hinted: slimeGardenHinted, lots: slimeGardenLots.map(function (lot) {
+      return { owned: lot.owned, progress: lot.progress, ready: lot.ready, harvests: lot.harvests };
+    }) };
+  }
+
+  function slimeGardenRestore(saved) {
+    slimeGardenReset();
+    if (!saved || !Array.isArray(saved.lots)) { slimeGardenPrepareWorld(true); return; }
+    slimeGardenHinted = !!saved.hinted;
+    for (var i = 0; i < Math.min(4, saved.lots.length); i++) {
+      var input = saved.lots[i], lot = slimeGardenLots[i];
+      if (!input || !input.owned) continue;
+      lot.owned = true;
+      lot.progress = Math.max(0, Math.min(SLIME_GARDEN_RECIPES[i].seconds, Number(input.progress) || 0));
+      lot.ready = !!input.ready;
+      lot.harvests = Math.max(0, Math.floor(Number(input.harvests) || 0));
+      lot.status = lot.ready ? 'PEARL READY' : 'CHECKING BATH';
+    }
+    // Old envelopes have no garden field and remain untouched. Owned bowls
+    // restore their collision shell; water restore belongs to the liquid save.
+    slimeGardenPrepareWorld(true);
+  }
+  /* ---- The siphon: separate fluid chambers and one passenger cradle ---- */
+  var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0], selected: 0,
+    capacity: 16000, passenger: null, pointer: null, aimX: 0, aimY: 0,
+    power: 0, carry: 0, capture: 0, released: false, clock: 0, fx: [], notice: '', noticeT: 0 };
+  var siphonButtons = [];
+  function siphonReset() {
+    siphon.equipped = false; siphon.tank = [0, 0, 0, 0, 0]; siphon.selected = 0;
+    siphon.passenger = null; siphon.power = 0; siphon.fx = []; siphon.clock = 0;
+    siphonStop();
+  }
+  function siphonStop() {
+    siphon.pointer = null; siphon.capture = 0; siphon.carry = 0; siphon.released = false;
+  }
+  function siphonAvailable() {
+    return introPhase === 'done' && !gamePaused && !gameOver && !gameWon && !shopOpen &&
+      shopState === 'closed' && !ledgerOpen && !cargoManifestOpen && !itemWheel.open && !bathMode;
+  }
+  function siphonTotal() { return siphon.tank.reduce(function (sum, n) { return sum + n; }, 0); }
+  function siphonNotice(text) { siphon.notice = text; siphon.noticeT = 2.5; }
+  function siphonToggle() {
+    siphonStop(); siphon.equipped = !siphon.equipped;
+    siphon.aimX = viewW * 0.6; siphon.aimY = viewH * 0.5;
+    if (siphon.equipped) siphonNotice(isMobile ? 'Choose IN or OUT, then hold on the world.' : 'Aim and hold: left draws in, right pours. R changes chamber.');
+  }
+  function siphonCycle() {
+    for (var i = 1; i <= 5; i++) {
+      var next = (siphon.selected + i) % 5;
+      if (siphon.tank[next] > 0) { siphon.selected = next; return; }
+    }
+    siphon.selected = 0;
+  }
+  function siphonKey(e) {
+    if (!siphonAvailable()) return false;
+    var key = e.key.toLowerCase();
+    if (key === 'f') { if (!e.repeat) siphonToggle(); return true; }
+    if (key === 'r' && siphon.equipped) { if (!e.repeat) siphonCycle(); return true; }
+    if (key === 'e' && !e.repeat && slimeGardenInteract()) return true;
+    return false;
+  }
+  function siphonHit(button, x, y) {
+    return x >= button.x && x <= button.x + button.w && y >= button.y && y <= button.y + button.h;
+  }
+  function siphonPointerDown(x, y, id, right) {
+    if (!siphonAvailable()) return false;
+    for (var b = 0; b < siphonButtons.length; b++) {
+      var button = siphonButtons[b];
+      if (!siphonHit(button, x, y)) continue;
+      if (button.action === 'equip') siphonToggle();
+      if (button.action === 'mode') { siphon.mode = siphon.mode === 'suck' ? 'pour' : 'suck'; siphonStop(); }
+      if (button.action === 'cycle') siphonCycle();
+      return true;
+    }
+    if (!siphon.equipped || isInDpadZone(x, y) || y > consoleRect().y * consoleScale() - 6) return false;
+    if (siphon.pointer !== null) return true;
+    siphon.pointer = id; siphon.aimX = x; siphon.aimY = y;
+    if (id === 'mouse') siphon.mode = right ? 'pour' : 'suck';
+    siphon.released = false;
+    return true;
+  }
+  function siphonPointerMove(x, y, id) {
+    if (id === siphon.pointer || (id === 'mouse' && siphon.pointer === null)) {
+      siphon.aimX = x; siphon.aimY = y;
+    }
+    return id === siphon.pointer;
+  }
+  function siphonPointerUp(id) {
+    if (id !== siphon.pointer) return false;
+    siphonStop(); return true;
+  }
+  function siphonAim() {
+    var cx = player.x + PLAYER_W * 0.5, cy = player.y + PLAYER_H * 0.5;
+    var dx = siphon.aimX / worldScale + cam.x - cx;
+    var dy = siphon.aimY / worldScale + cam.y - cy;
+    var length = Math.sqrt(dx * dx + dy * dy) || 1;
+    dx /= length; dy /= length;
+    var reach = Math.min(length, TILE * 4.8);
+    // Clip against terrain from the miner out. The nozzle cannot vacuum a
+    // pocket through its roof or project a jet through a wall.
+    for (var d = 12; d <= reach; d += 4) {
+      if (liquidWorldSolidAt(cx + dx * d, cy + dy * d)) { reach = Math.max(8, d - 5); break; }
+    }
+    var neck = Math.min(PLAYER_W * 0.65 + 8, Math.max(7, reach - 3));
+    return { cx: cx, cy: cy, nx: cx + dx * neck, ny: cy + dy * neck,
+      x: cx + dx * reach, y: cy + dy * reach, dx: dx, dy: dy, reach: reach };
+  }
+  function siphonTick(dt) {
+    siphon.flow = 0;
+    siphon.clock += dt;
+    siphon.noticeT = Math.max(0, siphon.noticeT - dt);
+    var active = siphon.equipped && siphonAvailable() && siphon.pointer !== null;
+    if (!siphonAvailable()) siphonStop();
+    siphon.power += ((active ? 1 : 0) - siphon.power) * (1 - Math.exp(-dt * (active ? 16 : 10)));
+    for (var f = siphon.fx.length - 1; f >= 0; f--) {
+      siphon.fx[f].t += dt;
+      if (siphon.fx[f].t > siphon.fx[f].life) siphon.fx.splice(f, 1);
+    }
+    if (!active) return;
+    var a = siphonAim();
+    if (siphon.mode === 'suck') {
+      if (siphonTotal() >= siphon.capacity && !siphon.passenger) siphonNotice(isMobile ? 'Tank full. Choose OUT to pour.' : 'Fluid tank full. Right mouse pours a chamber.');
+      siphon.carry += 6200 * siphon.power * dt;
+      var count = Math.min(Math.floor(siphon.carry), siphon.capacity - siphonTotal(), 700);
+      siphon.carry -= Math.floor(siphon.carry);
+      if (count > 0) {
+        var taken = liquidToolExtract(a.x, a.y, 29, count);
+        var total = 0;
+        for (var t = 0; t < taken.length; t++) {
+          siphon.tank[t] += taken[t]; total += taken[t];
+          if (taken[t] && siphon.tank[siphon.selected] === 0) siphon.selected = t;
+          if (taken[t]) for (var q = 0; q < Math.min(5, Math.ceil(taken[t] / 15)); q++) {
+            if (siphon.fx.length > 140) break;
+            siphon.fx.push({ x: a.x + (Math.random() - 0.5) * 36, y: a.y + (Math.random() - 0.5) * 30,
+              tx: a.nx, ty: a.ny, type: t, t: 0, life: 0.18 + Math.random() * 0.15 });
+          }
+        }
+        siphon.flow = total;
+        if (!total && siphon.clock % 3 < dt) siphonNotice('Bring the intake closer to the liquid.');
+      }
+      if (!siphon.passenger) {
+        siphon.capture += dt;
+        if (siphon.capture > 0.5) {
+          var caught = skySlimeCapture(a.x, a.y, 30);
+          if (caught) { siphon.passenger = caught; siphonNotice('Passenger secured. Pour to set it in a bath.'); }
+          siphon.capture = 0;
+        }
+      }
+    } else if (siphon.passenger) {
+      if (!siphon.released) {
+        var p = siphon.passenger;
+        var launch = PLAYER_W * 0.5 + p.r + 5;
+        var rx = a.cx + a.dx * launch, ry = a.cy + a.dy * launch;
+        var blocked = false;
+        for (var k = 0; k < 12; k++) {
+          var theta = k / 12 * Math.PI * 2;
+          if (liquidWorldSolidAt(rx + Math.cos(theta) * p.r, ry + Math.sin(theta) * p.r)) blocked = true;
+        }
+        if (blocked || !liquidLineClear(a.nx, a.ny, rx, ry)) { siphonNotice('Aim into clear space to release the slime.'); return; }
+        if (skySlimeRelease(p, rx, ry, a.dx * 130 + player.vx * 0.3, a.dy * 130)) {
+          siphon.passenger = null; siphon.released = true;
+          siphonNotice('Passenger released. Release the button before pouring liquid.');
+        }
+      }
+    } else if (!siphon.released) {
+      var type = siphon.selected;
+      if (siphon.tank[type] < 1) { siphonNotice(isMobile ? 'Empty chamber. Tap TANK to switch.' : 'This chamber is empty. R selects another.'); return; }
+      siphon.carry += 6200 * siphon.power * dt;
+      var wanted = Math.min(Math.floor(siphon.carry), siphon.tank[type], 700);
+      siphon.carry -= Math.floor(siphon.carry);
+      // A fan narrow enough to feel like a hose, widening under gravity.
+      var speed = Math.min(520, Math.max(210, a.reach * 3));
+      var sent = liquidToolEmit(type, wanted, a.nx + a.dx * 5, a.ny + a.dy * 5,
+        a.dx * speed + player.vx * 0.35, a.dy * speed + player.vy * 0.2);
+      siphon.tank[type] -= sent;
+      siphon.flow = sent;
+      if (sent < wanted) siphonNotice('No room at the nozzle. Aim into open space.');
+    }
+  }
+  function siphonDraw() {
+    if (!siphon.equipped || !siphonAvailable()) return;
+    var a = siphonAim(), angle = Math.atan2(a.dy, a.dx);
+    ctx.save();
+    // The hose has slack while idle and draws taut when the pump spools up.
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(a.cx - 8, a.cy + 7);
+    ctx.quadraticCurveTo(a.cx - 21, a.cy + 26 - siphon.power * 7, a.nx - a.dx * 12, a.ny - a.dy * 12);
+    ctx.strokeStyle = BLD.outline; ctx.lineWidth = 8; ctx.stroke();
+    ctx.strokeStyle = BLD.metalBase; ctx.lineWidth = 5; ctx.stroke();
+    ctx.save(); ctx.translate(a.nx, a.ny); ctx.rotate(angle);
+    ctx.fillStyle = BLD.outline; ctx.fillRect(-19, -7, 25, 14);
+    ctx.fillStyle = BLD.metalBase; ctx.fillRect(-18, -5, 19, 10);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(-17, -5, 18, 2);
+    ctx.fillStyle = BLD.goldBase; ctx.fillRect(-5, -6, 5, 12);
+    ctx.fillStyle = BLD.outline; ctx.fillRect(1, -4, 5, 8);
+    ctx.fillStyle = siphon.mode === 'suck' ? BLD.waterLight : liquidCatalog[siphon.selected].color;
+    ctx.globalAlpha = 0.4 + siphon.power * 0.6; ctx.fillRect(-12, -3, 3, 6);
+    ctx.restore();
+    var col = siphon.mode === 'suck' ? BLD.waterLight : liquidCatalog[siphon.selected].color;
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.28 + siphon.power * 0.3;
+    ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.moveTo(a.nx, a.ny); ctx.lineTo(a.x, a.y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(a.x, a.y, 9 + siphon.power * 5, 0, Math.PI * 2); ctx.stroke();
+    if (siphon.mode === 'suck' && siphon.power > 0.03) {
+      for (var w = 0; w < 3; w++) {
+        var progress = (siphon.clock * 1.9 + w / 3) % 1;
+        var x = a.x + (a.nx - a.x) * progress, y = a.y + (a.ny - a.y) * progress;
+        ctx.globalAlpha = Math.sin(progress * Math.PI) * siphon.power * 0.33;
+        ctx.beginPath(); ctx.ellipse(x, y, 4, 18 * (1 - progress) + 3, angle, 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    for (var i = 0; i < siphon.fx.length; i++) {
+      var f = siphon.fx[i], t = f.t / f.life, ease = t * t;
+      var fx = f.x + (a.nx - f.x) * ease, fy = f.y + (a.ny - f.y) * ease - Math.sin(t * Math.PI) * 9;
+      ctx.fillStyle = liquidCatalog[f.type].color; ctx.globalAlpha = 1 - t * 0.55;
+      ctx.beginPath(); ctx.ellipse(fx, fy, 2.3 * (1 - t * 0.5), 1.4, angle, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function siphonDrawButton(x, y, w, h, label, action, active) {
+    ctx.fillStyle = active ? UIT_PANEL_SEL : UIMAT_PLATE_BASE; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = active ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    ctx.fillStyle = active ? UIT_GOLD : UIT_TEXT; ctx.font = 'bold 11px ' + UI_FONT;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h / 2);
+    siphonButtons.push({ x: x, y: y, w: w, h: h, action: action });
+  }
+  function siphonHUD() {
+    siphonButtons = [];
+    if (!siphonAvailable()) return;
+    var x = 14, bottom = itemWheelButtonRect().y - 10, w = isMobile ? 206 : 302;
+    if (isMobile && viewW < 520) {
+      var padLeft = DPAD_CX - DPAD_SIZE * 0.85;
+      w = Math.min(206, Math.max(156, padLeft - x - 10));
+      if (x + w + 8 > padLeft) bottom = Math.min(bottom, DPAD_CY - DPAD_SIZE * 0.85 - 10);
+    }
+    w = Math.min(w, viewW - 28);
+    var h = siphon.equipped ? (isMobile ? 132 : 126) : 42;
+    var y = Math.max(56, bottom - h);
+    ctx.save();
+    if (!siphon.equipped) {
+      siphonDrawButton(x, y, isMobile ? 106 : 126, 40, isMobile ? 'SIPHON' : 'F  SIPHON', 'equip', false);
+      ctx.restore(); return;
+    }
+    ctx.fillStyle = UIT_PANEL; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
+    var bw = Math.floor((w - 16) / 3);
+    siphonDrawButton(x + 4, y + 4, bw, 36, isMobile ? 'STOW' : 'F  STOW', 'equip', true);
+    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, siphon.mode === 'suck' ? 'IN' : 'OUT', 'mode', true);
+    siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 36, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
+    var total = siphonTotal(), info = liquidCatalog[siphon.selected];
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '11px ' + UI_FONT;
+    ctx.fillStyle = UIT_TEXT;
+    ctx.fillText(info.name + '  ' + Math.round(siphon.tank[siphon.selected] / 100) + ' L', x + 10, y + 57);
+    ctx.textAlign = 'right'; ctx.fillStyle = UIT_DIM;
+    ctx.fillText(Math.round(total / 100) + '/160 L', x + w - 10, y + 57);
+    ctx.fillStyle = UIT_INSET; ctx.fillRect(x + 10, y + 65, w - 20, 8);
+    var barX = x + 10;
+    for (var type = 0; type < 5; type++) {
+      var length = siphon.tank[type] / siphon.capacity * (w - 20);
+      ctx.fillStyle = liquidCatalog[type].color; ctx.fillRect(barX, y + 65, length, 8); barX += length;
+    }
+    ctx.textAlign = 'left'; ctx.fillStyle = siphon.passenger ? UIT_GOLD : UIT_DIM;
+    ctx.fillText(siphon.passenger ? 'PASSENGER  1 / 1' : 'PASSENGER  empty', x + 10, y + 91);
+    ctx.fillStyle = UIT_BODY; ctx.font = '10px ' + UI_FONT;
+    var hint = isMobile ? 'Hold on the world to ' + (siphon.mode === 'suck' ? 'draw in' : 'pour') : 'LEFT draw in   RIGHT pour / release';
+    if (isMobile && w < 200) {
+      ctx.fillText('Hold on the world', x + 10, y + 109);
+      ctx.fillText('to ' + (siphon.mode === 'suck' ? 'draw in' : 'pour'), x + 10, y + 123);
+    } else ctx.fillText(hint, x + 10, y + 111);
+    if (siphon.noticeT > 0) {
+      var noticeW = Math.min(viewW - 28, isMobile ? w : 490), words = siphon.notice.split(' '), lines = [], line = '';
+      ctx.font = '10px ' + UI_FONT;
+      for (var wi = 0; wi < words.length; wi++) {
+        var next = line ? line + ' ' + words[wi] : words[wi];
+        if (ctx.measureText(next).width > noticeW - 18 && line) { lines.push(line); line = words[wi]; } else line = next;
+      }
+      if (line) lines.push(line);
+      var noticeH = lines.length * 14 + 12;
+      ctx.fillStyle = UIT_PANEL; ctx.fillRect(x - 1, y - noticeH - 5, noticeW, noticeH);
+      ctx.fillStyle = UIT_TEXT;
+      for (var li = 0; li < lines.length; li++) ctx.fillText(lines[li], x + 8, y - noticeH + 10 + li * 14);
+    }
+    ctx.restore();
+  }
+  function siphonSave() { return { tank: siphon.tank.slice(), selected: siphon.selected, passenger: siphon.passenger }; }
+  function siphonRestore(data) {
+    siphonReset();
+    if (!data) return;
+    var left = siphon.capacity;
+    for (var i = 0; i < 5; i++) {
+      var value = data.tank && data.tank[i];
+      siphon.tank[i] = Math.min(left, Math.max(0, isFinite(value) ? Math.floor(value) : 0)); left -= siphon.tank[i];
+    }
+    siphon.selected = data.selected >= 0 && data.selected < 5 ? data.selected | 0 : 0;
+    if (data.passenger && isFinite(data.passenger.r) && data.passenger.r >= 10 && data.passenger.r <= 50) siphon.passenger = data.passenger;
+  }
+  window.__siphon = { state: siphon, aim: siphonAim, equip: siphonToggle, save: siphonSave,
+    restore: siphonRestore, total: siphonTotal, tick: siphonTick };
+  /* ---- Siphon and sky-guest sound: one quiet pressure voice ----
+     Reuse the existing filtered fuel-pump asset and pooled gel contacts.
+     All calls go through the normal audio shims, so gesture unlock, volume,
+     pause, tab-hide, and the engine's abandoned-loop watchdog still own them.
+     No air-only motor: actual transferred particles are the audio source. */
+  var siphonAudioFlow = 0;
+  var siphonAudioDriving = false;
+  var siphonAudioImpactGap = 0;
+
+  function siphonAudioTick(dt) {
+    if (!(dt > 0)) return;
+    dt = Math.min(0.1, dt);
+    var quiet = gamePaused || gameOver || gameWon || shopOpen || shopState !== 'closed' ||
+      ledgerOpen || cargoManifestOpen || bathMode || introPhase !== 'done' ||
+      (typeof document !== 'undefined' && document.hidden);
+    var available = !quiet && typeof siphon !== 'undefined' && siphon &&
+      siphon.equipped && siphon.pointer !== null && siphonAvailable();
+    var moving = available && siphon.flow > 0;
+    var transfer = moving ? Math.min(1, siphon.flow / Math.max(1, dt * 6200)) : 0;
+    siphonAudioFlow += (transfer - siphonAudioFlow) * (1 - Math.exp(-dt * (moving ? 12 : 24)));
+    // The station uses the same asset key. Yield that voice while docking;
+    // a zero-gain siphon stop must never mute an active station fuel fill.
+    var stationOwnsPump = shopOpen || shopState !== 'closed' || player.refueling;
+    if (moving && !stationOwnsPump) {
+      var fullness = Math.min(1, siphonTotal() / Math.max(1, siphon.capacity));
+      var pouring = siphon.mode === 'pour';
+      var pressure = Math.max(0, Math.min(1, siphon.power));
+      sfxLoop('fuel-fill', {
+        gain: (0.12 + 0.28 * Math.sqrt(siphonAudioFlow)) * pressure,
+        pitch: (pouring ? 0.97 : 0.84) + siphonAudioFlow * 0.10 + fullness * 0.045,
+        filter: (pouring ? 900 : 680) + siphonAudioFlow * 360,
+        ramp: 0.065
+      });
+      siphonAudioDriving = true;
+    } else if (siphonAudioDriving) {
+      if (!stationOwnsPump) sfxLoop('fuel-fill', { gain: 0, ramp: 0.055 });
+      siphonAudioDriving = false;
+    }
+    if (!available) siphonAudioFlow = 0;
+
+    // Count edges rather than polling contact. At rest a body can touch the
+    // floor thousands of times without making another sound. First seeing
+    // a saved guest establishes its baseline; it never replays old bounces.
+    siphonAudioImpactGap = Math.max(0, siphonAudioImpactGap - dt);
+    var guests = typeof skySlimes !== 'undefined' ? skySlimes : [];
+    var best = null, bestWeight = 0;
+    for (var i = 0; i < guests.length; i++) {
+      var s = guests[i], previous = s._audioBounces;
+      s._audioBounces = s.bounces;
+      if (previous === undefined || s.bounces <= previous || quiet || siphonAudioImpactGap > 0) continue;
+      if (s.x + s.r < cam.x || s.x - s.r > cam.x + screenW ||
+          s.y + s.r < cam.y || s.y - s.r > cam.y + screenH) continue;
+      var speed = Math.hypot(s.vx, s.vy);
+      if (speed < 38) continue;
+      var dx = s.x - player.x - PLAYER_W * 0.5, dy = s.y - player.y - PLAYER_H * 0.5;
+      var near = Math.max(0, 1 - Math.hypot(dx, dy) / (TILE * 14));
+      var power = Math.min(1, (speed - 28) / 430), weight = power * near * near;
+      if (weight > bestWeight) { best = s; bestWeight = weight; }
+    }
+    if (best && bestWeight > 0.02) {
+      sfxPlay(best.wet > 0.2 ? 'jello-slap' : 'jello-wobble', {
+        gain: 0.08 + bestWeight * 0.30,
+        rate: 1.05 - (best.r - 22) * 0.026 + Math.min(4, best.bounces) * 0.014,
+        pan: sfxPanAt(best.x)
+      });
+      siphonAudioImpactGap = 0.13;
+    }
+  }
+
   /* ---- Update ---- */
   // ----- Drill SFX bridge state (engine facade: js/audio.js SluiceAudio.sfx.drill) -----
   // Persistent across frames; the per-frame logic lives in the drilling section
@@ -28188,6 +29550,7 @@
     drawSurfaceFireplace();
     // ---- v25.77 BANYA exterior (072-bath.js): the bathhouse tower + door ----
     if (typeof drawBanyaExterior === 'function') drawBanyaExterior();
+    slimeGardenDraw();
     // v11.46 — Fireplace smoke emission runs every frame regardless of
     // camera position. Combined with the wider smoke fluid domain
     // (overscan 1.6), the chimney keeps emitting into the sim even
@@ -28250,6 +29613,8 @@
     // ---- Player ----
     var _rPl = performance.now();
     drawPlayer();
+    skySlimeDraw();
+    siphonDraw();
     perfMark('render.player', _rPl);
 
     // ---- Combat: enemy turrets, rig auto-turret, bullets + sparks (world space) ----
@@ -28404,6 +29769,9 @@
       ctx = _uiCtx;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    slimeGardenHUD();
+    siphonHUD();
 
     // D-pad (mobile) — single overlay in the bottom-RIGHT corner. Most
     // players drive with their right thumb, so reach is best on that side.
@@ -28610,7 +29978,6 @@
     // the top canvas). World drawing next frame must land on the main canvas.
     ctx = _mainCtx;
   }
-
   // ====== RENDER: Background helpers (embers, stars) ======
 
   // ----- Helper: drifting embers in magma/mantle background -----
@@ -32951,6 +34318,7 @@
     treesByCol = new Int32Array(COLS);
     var lastX = -1e9;
     for (var c = 2; c < COLS - 2; c++) {
+      if (typeof slimeGardenReservedCol === 'function' && slimeGardenReservedCol(c)) continue;
       var reg = regionAt(c);
       if (!reg || reg.kind === REGION_OCEAN) continue;
       var isZone = reg.kind === REGION_NOMANS;
@@ -33531,6 +34899,7 @@
     surfaceBoulderDensity = treesTune.density;
     var lastX = -1e9;
     for (var c = 3; c < COLS - 3; c++) {
+      if (typeof slimeGardenReservedCol === 'function' && slimeGardenReservedCol(c)) continue;
       var region = regionAt(c);
       if (!region || region.kind !== REGION_TOWN) continue;
       if (Math.abs(c - townCenterCol(region.townIndex)) < TREES_TOWN_CLEAR - 2) continue;
@@ -62534,6 +63903,468 @@
     best.state.cool = best.hit ? 0.34 : 0.30 + Math.random() * 0.14;
     slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
   }
+  /* ---- Sky slimes: warm clay meteor guests for the surface garden ----
+     Bulk motion is a hard elastic circle with swept-size substeps. The
+     outline and eye have their own damped springs, so a bounce stays crisp
+     without ever feeding render deformation back into collision energy.
+     These are guests, independent of the parked underground NPC brains. */
+  var skySlimes = [];
+  var skySlimeNext = 7;
+  var skySlimeSerial = 1;
+  var skySlimeDust = [];
+  var SKY_SLIME_MAX = 8;
+  var SKY_SLIME_GRAVITY = 480;
+  var SKY_SLIME_RAMP = ['#563b32', '#82503b', '#af754c', '#cf9f78', '#e0bd8e', '#ede0c0'];
+
+  function skySlimeClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function skySlimeFresh(x, y) {
+    var seed = Math.random();
+    return {
+      id: skySlimeSerial++, x: x, y: y, vx: 0, vy: 0,
+      r: 22 + Math.random() * 5, oval: 0.94 + Math.random() * 0.12,
+      eyeSize: 0.32 + Math.random() * 0.1, seed: seed,
+      age: 0, bounces: 0, wet: 0, settled: false, entry: 1,
+      bounce: 0.79 + Math.random() * 0.035,
+      angle: (Math.random() - 0.5) * 0.24, spin: (Math.random() - 0.5) * 1.5,
+      squash: 0, squashV: 0, eye: 0.85, eyeV: 0,
+      pupilX: 0, pupilY: 0, pupilVX: 0, pupilVY: 0,
+      blink: 0, blinkIn: 1.4 + Math.random() * 2.8,
+      _trail: [], _trailT: 0, _liquidT: 0, _wetTarget: 0,
+      _ground: false, _impactT: 0, _sleepT: 0
+    };
+  }
+
+  function skySlimeSpawn(x, y) {
+    if (skySlimes.length >= SKY_SLIME_MAX) return null;
+    var automatic = !isFinite(x);
+    var landX = automatic ? (typeof skySlimeLandingX === 'function' ? skySlimeLandingX() :
+      (DECK_LEFT_COL - 18) * TILE) : x;
+    landX = skySlimeClamp(landX, TILE * 3, (COLS - 3) * TILE);
+    var sx = automatic ? landX + 105 + Math.random() * 55 : landX;
+    var sy = isFinite(y) ? y : SKY_ROWS * TILE - 380 - Math.random() * 90;
+    var s = skySlimeFresh(sx, sy);
+    s.vy = 125 + Math.random() * 32;
+    // A diagonal arrival is legible against the vertical town silhouettes.
+    var fallTime = (Math.sqrt(s.vy * s.vy + 2 * SKY_SLIME_GRAVITY *
+      Math.max(40, SKY_ROWS * TILE - s.r - sy)) - s.vy) / SKY_SLIME_GRAVITY;
+    s.vx = automatic ? (landX - sx) / Math.max(0.4, fallTime) : (Math.random() - 0.5) * 95;
+    skySlimes.push(s);
+    return s;
+  }
+
+  function skySlimeReset() {
+    skySlimes.length = 0;
+    skySlimeDust.length = 0;
+    skySlimeNext = 7;
+    skySlimeSerial = 1;
+  }
+
+  function skySlimeRecord(s) {
+    var out = {};
+    // Garden recipe/progress fields travel with the guest when carried.
+    Object.keys(s).forEach(function (key) {
+      if (key.charAt(0) !== '_' && s[key] !== undefined) out[key] = s[key];
+    });
+    return JSON.parse(JSON.stringify(out));
+  }
+
+  function skySlimeSave() {
+    return { next: skySlimeNext, serial: skySlimeSerial, slimes: skySlimes.map(skySlimeRecord) };
+  }
+
+  function skySlimeHydrate(data) {
+    if (!data || !isFinite(data.x) || !isFinite(data.y)) return null;
+    var s = skySlimeFresh(data.x, data.y);
+    Object.keys(data).forEach(function (key) {
+      if (key.charAt(0) !== '_' && key !== '__proto__' && key !== 'constructor') s[key] = data[key];
+    });
+    s.r = skySlimeClamp(isFinite(s.r) ? s.r : 25, 22, 27);
+    s.vx = skySlimeClamp(isFinite(s.vx) ? s.vx : 0, -700, 700);
+    s.vy = skySlimeClamp(isFinite(s.vy) ? s.vy : 0, -700, 700);
+    s.oval = skySlimeClamp(isFinite(s.oval) ? s.oval : 1, 0.94, 1.06);
+    s.eyeSize = skySlimeClamp(isFinite(s.eyeSize) ? s.eyeSize : 0.38, 0.32, 0.42);
+    s.id = Math.max(1, Math.floor(isFinite(s.id) ? s.id : skySlimeSerial++));
+    skySlimeSerial = Math.max(skySlimeSerial, s.id + 1);
+    return s;
+  }
+
+  function skySlimeRestore(data) {
+    skySlimes.length = 0;
+    skySlimeDust.length = 0;
+    skySlimeSerial = data && isFinite(data.serial) ? Math.max(1, data.serial) : 1;
+    skySlimeNext = data && isFinite(data.next) ? skySlimeClamp(data.next, 3, 100) : 7;
+    var list = Array.isArray(data) ? data : data && data.slimes;
+    if (!Array.isArray(list)) return;
+    for (var i = 0; i < Math.min(SKY_SLIME_MAX, list.length); i++) {
+      var s = skySlimeHydrate(list[i]);
+      if (s) skySlimes.push(s);
+    }
+  }
+
+  function skySlimeCapture(x, y, radius) {
+    var best = -1, bestD = Infinity;
+    for (var i = 0; i < skySlimes.length; i++) {
+      var s = skySlimes[i], dx = s.x - x, dy = s.y - y, d = dx * dx + dy * dy;
+      if (s.age < 1.5 || s.entry > 0.12 || Math.hypot(s.vx, s.vy) > 95 ||
+          (!s._ground && !s.settled && s.wet < 0.18)) continue;
+      if (typeof liquidLineClear === 'function' && !liquidLineClear(x, y, s.x, s.y)) continue;
+      if (d < (radius + s.r) * (radius + s.r) && d < bestD) { best = i; bestD = d; }
+    }
+    if (best < 0) return null;
+    return skySlimeRecord(skySlimes.splice(best, 1)[0]);
+  }
+
+  function skySlimeRelease(data, x, y, vx, vy) {
+    if (skySlimes.length >= SKY_SLIME_MAX || !isFinite(x + y)) return null;
+    var s = skySlimeHydrate(data || { x: x, y: y });
+    if (!s) return null;
+    s.x = skySlimeClamp(x, s.r + 1, COLS * TILE - s.r - 1);
+    s.y = y;
+    // A full-size guest cannot spawn inside the nozzle's supporting ledge.
+    // Find clearance above the intended release, preserving horizontal aim.
+    for (var k = 0; k < 14 && solidAt(s.x - s.r, s.y - s.r,
+      s.r * 2, s.r * 2); k++) s.y -= 8;
+    s.vx = skySlimeClamp(isFinite(vx) ? vx : 70, -280, 280);
+    s.vy = skySlimeClamp(isFinite(vy) ? vy : -110, -280, 280);
+    s.age = Math.max(3, s.age);
+    s.entry = 0; s.settled = false; s.bounces = 0;
+    s.squash = -0.1; s.squashV = 1.6;
+    skySlimes.push(s);
+    return s;
+  }
+
+  function skySlimeImpact(s, nx, ny, speed) {
+    if (speed < 25 || s._impactT > 0) return;
+    s._impactT = 0.065;
+    s.bounces++;
+    s.squashV += Math.min(11, speed * 0.014);
+    s.pupilVX += nx * Math.min(50, speed * 0.1);
+    s.pupilVY += ny * Math.min(70, speed * 0.13);
+    s.blink = Math.max(s.blink, 0.09 + s.seed * 0.045);
+    s.entry *= 0.12;
+    if (speed < 75 || s.wet > 0.28) return;
+    var count = Math.min(11, 3 + Math.floor(speed / 70));
+    for (var i = 0; i < count; i++) {
+      if (skySlimeDust.length >= 90) skySlimeDust.shift();
+      var tangent = (Math.random() - 0.5) * speed * 0.33;
+      var lift = 15 + Math.random() * Math.min(95, speed * 0.2);
+      skySlimeDust.push({ x: s.x - nx * s.r, y: s.y - ny * s.r,
+        vx: -ny * tangent + nx * lift, vy: nx * tangent + ny * lift,
+        life: 0.34 + Math.random() * 0.26, max: 0.6, r: 0.9 + Math.random() * 1.6 });
+    }
+  }
+
+  function skySlimeTerrain(s) {
+    s._ground = false;
+    // Two projection sweeps resolve adjoining floor/wall corners without
+    // the diagonal drift that a tile-center repulsion creates on flat soil.
+    for (var pass = 0; pass < 2; pass++) {
+      var c0 = Math.floor((s.x - s.r) / TILE), c1 = Math.floor((s.x + s.r) / TILE);
+      var r0 = Math.floor((s.y - s.r) / TILE), r1 = Math.floor((s.y + s.r) / TILE);
+      for (var rr = r0; rr <= r1; rr++) for (var cc = c0; cc <= c1; cc++) {
+        var tile = tileAt(rr, cc);
+        if (!tile || (tile !== 'wall' && tile.type === 'jello')) continue;
+        var qx = skySlimeClamp(s.x, cc * TILE, (cc + 1) * TILE);
+        var qy = skySlimeClamp(s.y, rr * TILE, (rr + 1) * TILE);
+        var dx = s.x - qx, dy = s.y - qy, d2 = dx * dx + dy * dy;
+        if (d2 >= s.r * s.r) continue;
+        var nx, ny, overlap;
+        if (d2 > 0.000001) {
+          var dist = Math.sqrt(d2); nx = dx / dist; ny = dy / dist; overlap = s.r - dist;
+        } else {
+          // Only restores/spawning can start with the center inside a tile.
+          var left = s.x - cc * TILE, right = (cc + 1) * TILE - s.x;
+          var top = s.y - rr * TILE, bottom = (rr + 1) * TILE - s.y;
+          var nearest = Math.min(left, right, top, bottom);
+          nx = nearest === left ? -1 : nearest === right ? 1 : 0;
+          ny = nx ? 0 : nearest === top ? -1 : 1;
+          overlap = s.r + nearest;
+        }
+        s.x += nx * (overlap + 0.006); s.y += ny * (overlap + 0.006);
+        if (ny < -0.6) s._ground = true;
+        var vn = s.vx * nx + s.vy * ny;
+        if (vn < 0) {
+          var restitution = -vn < 34 ? 0 : Math.max(0.54, s.bounce - Math.min(0.2, s.bounces * 0.027));
+          if (s.wet > 0.12) restitution *= 1 - Math.min(0.65, s.wet * 0.65);
+          s.vx -= (1 + restitution) * vn * nx;
+          s.vy -= (1 + restitution) * vn * ny;
+          if (ny < -0.6) {
+            s.vx *= -vn > 34 ? 0.84 : 0.96;
+            s.spin = s.vx / Math.max(1, s.r) * 0.36;
+          }
+          skySlimeImpact(s, nx, ny, -vn);
+        }
+      }
+    }
+    // The separation skin can exceed a very small high-refresh gravity
+    // step. Keep foot support through that gap, so rest/capture never
+    // alternates on successive frames at 120 Hz and above.
+    if (!s._ground && s.vy >= 0 && s.vy < 12) {
+      var foot = tileAt(Math.floor((s.y + s.r + 0.08) / TILE), Math.floor(s.x / TILE));
+      if (foot && (foot === 'wall' || foot.type !== 'jello')) s._ground = true;
+    }
+  }
+
+  function skySlimeBodies() {
+    for (var i = 0; i < skySlimes.length; i++) for (var j = i + 1; j < skySlimes.length; j++) {
+      var a = skySlimes[i], b = skySlimes[j], dx = b.x - a.x, dy = b.y - a.y;
+      var min = a.r + b.r, d2 = dx * dx + dy * dy;
+      if (d2 >= min * min) continue;
+      var d = Math.sqrt(d2), nx = d > 0.001 ? dx / d : 1, ny = d > 0.001 ? dy / d : 0;
+      var invA = 1 / (a.r * a.r), invB = 1 / (b.r * b.r), sum = invA + invB;
+      var overlap = min - d + 0.01;
+      a.x -= nx * overlap * invA / sum; a.y -= ny * overlap * invA / sum;
+      b.x += nx * overlap * invB / sum; b.y += ny * overlap * invB / sum;
+      var relative = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (relative < 0) {
+        var impulse = -(1 + (relative < -34 ? 0.71 : 0)) * relative / sum;
+        a.vx -= nx * impulse * invA; a.vy -= ny * impulse * invA;
+        b.vx += nx * impulse * invB; b.vy += ny * impulse * invB;
+        skySlimeImpact(a, -nx, -ny, -relative * 0.6);
+        skySlimeImpact(b, nx, ny, -relative * 0.6);
+      }
+      a.settled = b.settled = false;
+    }
+  }
+
+  function skySlimeExpression(s, h) {
+    var danger = 0;
+    if (s.vy > 70) {
+      var reach = s.r + s.vy * (0.13 + s.seed * 0.065);
+      var px = s.x + s.vx * 0.12;
+      for (var probe = s.r; probe < reach; probe += TILE * 0.5) {
+        if (tileAt(Math.floor((s.y + probe) / TILE), Math.floor(px / TILE))) { danger = 1; break; }
+      }
+    }
+    s.blinkIn -= h;
+    if (s.blinkIn <= 0) {
+      s.blink = 0.1 + Math.random() * 0.065;
+      s.blinkIn = 2 + Math.random() * 4.4;
+    }
+    s.blink = Math.max(0, s.blink - h);
+    var eyeTarget = s.blink > 0 ? 0.08 : danger ? 0.17 + s.seed * 0.1 :
+      s.wet > 0.18 ? 0.65 + 0.05 * Math.sin(s.age * 0.9 + s.seed * 8) :
+      s.settled ? 0.7 : 0.87 + Math.sin(s.age * 1.7 + s.seed * 11) * 0.045;
+    s.eyeV += ((eyeTarget - s.eye) * 150 - s.eyeV * 18) * h;
+    s.eye = skySlimeClamp(s.eye + s.eyeV * h, 0.07, 1.05);
+    var tx = Math.sin(s.age * 0.85 + s.seed * 23) * 1.8 - s.vx * 0.008;
+    var ty = s.vy * 0.005 + Math.sin(s.age * 1.3 + s.seed * 17) * 0.55;
+    if (typeof player !== 'undefined' && Math.abs(player.x - s.x) < TILE * 6 && s.settled) {
+      tx = skySlimeClamp((player.x + PLAYER_W * 0.5 - s.x) * 0.035, -3.5, 3.5);
+      ty = skySlimeClamp((player.y + PLAYER_H * 0.5 - s.y) * 0.035, -2, 2.5);
+    }
+    s.pupilVX += ((tx - s.pupilX) * 92 - s.pupilVX * 9) * h;
+    s.pupilVY += ((ty - s.pupilY) * 92 - s.pupilVY * 9) * h;
+    s.pupilX = skySlimeClamp(s.pupilX + s.pupilVX * h, -5, 5);
+    s.pupilY = skySlimeClamp(s.pupilY + s.pupilVY * h, -5, 5);
+    s.squashV += (-s.squash * 255 - s.squashV * 13) * h;
+    s.squash = skySlimeClamp(s.squash + s.squashV * h, -0.13, 0.24);
+  }
+
+  function skySlimeTick(dt) {
+    if (!(dt > 0)) return;
+    dt = Math.min(dt, 0.1);
+    // A deep mining trip never fills the surface with unseen arrivals.
+    var carried = typeof siphon !== 'undefined' && siphon && siphon.passenger ? 1 : 0;
+    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried < SKY_SLIME_MAX) {
+      skySlimeNext -= dt;
+      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 66 + Math.random() * 32; }
+    }
+    for (var di = skySlimeDust.length - 1; di >= 0; di--) {
+      var dust = skySlimeDust[di]; dust.life -= dt;
+      if (dust.life <= 0) { skySlimeDust.splice(di, 1); continue; }
+      dust.vy += 160 * dt; dust.x += dust.vx * dt; dust.y += dust.vy * dt;
+    }
+    var steps = Math.max(1, Math.ceil(dt * 180)), h = dt / steps;
+    for (var i = 0; i < skySlimes.length; i++) {
+      var s = skySlimes[i];
+      s._liquidT -= dt;
+      if (s._liquidT <= 0 && typeof liquidSampleCircle === 'function') {
+        s._liquidT = 0.1;
+        // Water is displaced from the collision disk. Sample its surrounding
+        // annulus and normalize that area, so buoyancy remains after contact.
+        var sample = liquidSampleCircle(s.x, s.y, s.r * 1.45);
+        s._wetTarget = sample ? skySlimeClamp(sample.wet * 1.7, 0, 1) : 0;
+        s.liquidType = sample ? sample.type : 0;
+        if (s._wetTarget > 0.12 && s.wet < 0.07 && s.vy > 85 &&
+            typeof liquidToolImpulse === 'function') {
+          liquidToolImpulse(s.x, s.y + s.r * 0.3, s.r * 1.9, s.vx * 0.28, -Math.min(190, s.vy * 0.43));
+          s.squashV += Math.min(4, s.vy * 0.008);
+        }
+      }
+      s._trailT += dt;
+      if (s.entry > 0.025 && s._trailT > 0.018) {
+        s._trailT = 0;
+        s._trail.push({ x: s.x, y: s.y, life: 0.5, r: s.r * (0.7 + s.entry * 0.1) });
+        if (s._trail.length > 26) s._trail.shift();
+      }
+      for (var ti = s._trail.length - 1; ti >= 0; ti--) {
+        s._trail[ti].life -= dt;
+        if (s._trail[ti].life <= 0) s._trail.splice(ti, 1);
+      }
+    }
+    for (var step = 0; step < steps; step++) {
+      for (var si = 0; si < skySlimes.length; si++) {
+        var b = skySlimes[si];
+        b.age += h; b._impactT = Math.max(0, b._impactT - h);
+        b.wet += (b._wetTarget - b.wet) * Math.min(1, h * 8);
+        b.entry = Math.max(0, b.entry - h * (b.bounces ? 0.8 : 0.035));
+        b.vy += SKY_SLIME_GRAVITY * (1 - Math.min(1.2, b.wet * 1.95)) * h;
+        var drag = Math.exp(-(0.025 + b.wet * 3.2) * h);
+        b.vx *= drag; b.vy *= drag;
+        b.vy = skySlimeClamp(b.vy, -700, 660);
+        b.vx = skySlimeClamp(b.vx, -550, 550);
+        b.x += b.vx * h; b.y += b.vy * h;
+        skySlimeTerrain(b);
+        if (b._ground && Math.abs(b.vy) < 12) {
+          b.vx *= Math.exp(-8 * h);
+          if (Math.abs(b.vx) < 0.4) b.vx = 0;
+        }
+        b.settled = (b._ground || b.wet > 0.18) && Math.hypot(b.vx, b.vy) < 22;
+        b.angle += b.spin * h;
+        b.spin *= Math.exp(-(b._ground ? 5 : b.wet > 0.18 ? 3 : 0.5) * h);
+        skySlimeExpression(b, h);
+      }
+      skySlimeBodies();
+    }
+  }
+
+  function skySlimePath(s, rx, ry) {
+    ctx.beginPath();
+    var count = 44;
+    for (var i = 0; i <= count; i++) {
+      var a = i / count * Math.PI * 2;
+      var wobble = 1 + Math.sin(a * 3 + s.seed * 23) * 0.022 + Math.sin(a * 5 + s.seed * 11) * 0.011;
+      var x = Math.cos(a) * rx * wobble, y = Math.sin(a) * ry * wobble;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+
+  function skySlimeDrawBody(s) {
+    var stretch = Math.min(0.09, Math.abs(s.vy) / 7000);
+    var rx = s.r * s.oval * (1 + s.squash - stretch);
+    var ry = s.r / s.oval * (1 - s.squash + stretch);
+    ctx.save();
+    // Contact squash is pinned at the floor, rather than floating upward.
+    ctx.translate(s.x, s.y + (s._ground ? s.r - ry : 0));
+    ctx.rotate(Math.sin(s.angle) * 0.15);
+    skySlimePath(s, rx, ry);
+    ctx.fillStyle = SKY_SLIME_RAMP[1]; ctx.fill();
+    ctx.save(); ctx.clip();
+    var body = ctx.createLinearGradient(-rx * 0.75, -ry, rx * 0.6, ry);
+    body.addColorStop(0, SKY_SLIME_RAMP[4]); body.addColorStop(0.22, SKY_SLIME_RAMP[3]);
+    body.addColorStop(0.58, SKY_SLIME_RAMP[2]); body.addColorStop(1, SKY_SLIME_RAMP[1]);
+    ctx.fillStyle = body; ctx.fillRect(-rx * 1.1, -ry * 1.1, rx * 2.2, ry * 2.2);
+    // Broad off-center sheen and sparse pores keep the clay tangible.
+    ctx.globalAlpha = 0.27; ctx.fillStyle = SKY_SLIME_RAMP[5];
+    ctx.beginPath(); ctx.ellipse(-rx * 0.32, -ry * 0.5, rx * 0.32, ry * 0.11, -0.55, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.28; ctx.fillStyle = SKY_SLIME_RAMP[0];
+    for (var p = 0; p < 7; p++) {
+      var a = s.seed * 29 + p * 2.39996, dist = 0.53 + (p % 3) * 0.11;
+      ctx.beginPath(); ctx.ellipse(Math.cos(a) * rx * dist, Math.sin(a) * ry * dist,
+        0.75 + p % 2 * 0.35, 0.55, a, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    if (s.pearlProgress > 0.02) {
+      var pearlR = 1.2 + Math.min(1, s.pearlProgress) * 3.2;
+      var glow = ctx.createRadialGradient(rx * 0.12, ry * 0.53, 0, rx * 0.12, ry * 0.53, pearlR * 2.6);
+      glow.addColorStop(0, 'rgba(237,224,192,0.55)'); glow.addColorStop(1, 'rgba(237,224,192,0)');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(rx * 0.12, ry * 0.53, pearlR * 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = SKY_SLIME_RAMP[5]; ctx.globalAlpha = 0.55 + s.pearlProgress * 0.3;
+      ctx.beginPath(); ctx.arc(rx * 0.12, ry * 0.53, pearlR, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    skySlimePath(s, rx, ry); ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.15; ctx.stroke();
+    if (s.entry > 0.08) {
+      ctx.globalAlpha = s.entry * 0.48;
+      ctx.strokeStyle = SKY_SLIME_RAMP[5]; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(0, 0, rx * 0.99, ry * 0.99, 0, 0.06, Math.PI * 0.96); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // One large, independently sprung googly eye. The socket barely turns
+    // with the body, while the loose pupil keeps the sense of weight.
+    var ex = -rx * 0.055, ey = -ry * 0.08, er = s.r * s.eyeSize;
+    ctx.fillStyle = SKY_SLIME_RAMP[0];
+    ctx.beginPath(); ctx.ellipse(ex + 0.6, ey + 1.4, er + 1.5, er + 1.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = SKY_SLIME_RAMP[3];
+    ctx.beginPath(); ctx.ellipse(ex, ey, er + 1.1, er + 1.1, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(ex, ey, er, Math.max(0.65, er * s.eye), 0, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#ede0c0'; ctx.fillRect(ex - er, ey - er, er * 2, er * 2);
+    ctx.fillStyle = '#cbb994';
+    ctx.beginPath(); ctx.ellipse(ex + 1.2, ey + er * 0.73, er, er * 0.24, 0, 0, Math.PI * 2); ctx.fill();
+    var px = ex + skySlimeClamp(s.pupilX, -er * 0.32, er * 0.32);
+    var py = ey + skySlimeClamp(s.pupilY, -er * 0.32, er * 0.32);
+    ctx.fillStyle = '#563b32'; ctx.beginPath(); ctx.arc(px, py, er * 0.49, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#282b25'; ctx.beginPath(); ctx.arc(px + 0.2, py + 0.35, er * 0.34, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f5f1ea'; ctx.beginPath(); ctx.arc(px - er * 0.13, py - er * 0.18, er * 0.115, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 0.85;
+    ctx.beginPath(); ctx.ellipse(ex, ey, er, Math.max(0.65, er * s.eye), 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+
+  function skySlimeDraw() {
+    ctx.save();
+    for (var i = 0; i < skySlimes.length; i++) {
+      var s = skySlimes[i];
+      if (!isFinite(s.x + s.y) || s.x + 120 < cam.x || s.x - 120 > cam.x + screenW ||
+          s.y + 70 < cam.y || s.y - 250 > cam.y + screenH) continue;
+      if (s.wet < 0.18) {
+        var shadowRow = Math.floor((s.y + s.r + 0.1) / TILE), shadowCol = Math.floor(s.x / TILE);
+        for (var sh = 0; sh < 9; sh++) {
+          if (tileAt(shadowRow + sh, shadowCol)) {
+            var floorY = (shadowRow + sh) * TILE;
+            var shadowNear = 1 - skySlimeClamp((floorY - s.y - s.r) / 230, 0, 1);
+            ctx.globalAlpha = shadowNear * 0.24;
+            ctx.fillStyle = '#282b25'; ctx.beginPath();
+            ctx.ellipse(s.x, floorY + 0.6, s.r * (0.45 + shadowNear * 0.42),
+              1.4 + shadowNear * 1.1, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1; break;
+          }
+        }
+      }
+      var trail = s._trail;
+      // Fill each wake once. Overlapping translucent line caps produce a
+      // string of visible beads, especially against the pale daytime sky.
+      if (trail.length > 1) {
+        var first = trail[0], last = trail[trail.length - 1];
+        for (var layer = 0; layer < 2; layer++) {
+          ctx.filter = layer ? 'blur(0.6px)' : 'blur(2.8px)';
+          var wake = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
+          wake.addColorStop(0, layer ? 'rgba(237,224,192,0)' : 'rgba(207,159,120,0)');
+          wake.addColorStop(0.45, layer ? 'rgba(223,194,136,0.10)' : 'rgba(207,159,120,0.08)');
+          wake.addColorStop(1, layer ? 'rgba(237,224,192,0.50)' : 'rgba(207,159,120,0.31)');
+          ctx.fillStyle = wake; ctx.beginPath();
+          for (var edge = 0; edge < 2; edge++) {
+            for (var wt = 0; wt < trail.length; wt++) {
+              var t = edge ? trail.length - 1 - wt : wt;
+              var point = trail[t], before = trail[Math.max(0, t - 1)], after = trail[Math.min(trail.length - 1, t + 1)];
+              var dx = after.x - before.x, dy = after.y - before.y, length = Math.hypot(dx, dy) || 1;
+              var fade = skySlimeClamp(point.life / 0.5, 0, 1);
+              var width = point.r * (layer ? 0.22 : 1.03) * fade *
+                (1 + Math.sin(t * 0.65 + s.seed * 13) * 0.09) * (edge ? -1 : 1);
+              var wx = point.x - dy / length * width, wy = point.y + dx / length * width;
+              if (!edge && wt === 0) ctx.moveTo(wx, wy); else ctx.lineTo(wx, wy);
+            }
+          }
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.filter = 'none';
+      }
+      ctx.globalAlpha = 1;
+      skySlimeDrawBody(s);
+    }
+    for (var di = 0; di < skySlimeDust.length; di++) {
+      var dust = skySlimeDust[di];
+      ctx.globalAlpha = Math.min(0.65, dust.life / dust.max);
+      ctx.fillStyle = SKY_SLIME_RAMP[3];
+      ctx.fillRect(dust.x - dust.r, dust.y - dust.r, dust.r * 2, dust.r * 1.3);
+    }
+    ctx.restore();
+  }
   /* ---- Audio hooks ----
      Phase B wiring between the game and the standalone SluiceAudio engine
      (js/audio.js, loaded by sluice.html). audioUpdate(dt) is called once per
@@ -63179,6 +65010,13 @@
     _ts = performance.now(); try { updateMineFx(dt); } catch (e) {} perfMark('update.mineFx', _ts);
     _ts = performance.now(); updateTerrainClearOverlays(dt); perfMark('update.clearOverlays', _ts);
     _ts = performance.now(); updateLiveBombs(dt);          perfMark('update.liveBombs', _ts);
+    _ts = performance.now();
+    liquidToolSync();
+    mineralLiquidTick(dt);
+    siphonTick(dt);
+    if (!gameOver && !gameWon && !bathMode) { skySlimeTick(dt); slimeGardenTick(dt); }
+    siphonAudioTick(dt);
+    perfMark('update.garden', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
@@ -68881,7 +70719,7 @@
           // Pen blobs are devFixture-tagged (040) and skipped by jelloSaveBodies, so
           // re-injecting every boot can never stack duplicates into the save; the
           // extra lightingInit re-floods the fog for the re-carved opening.
-          if (devMode && ENABLE_JELLO && typeof injectJelloTestPen === 'function') {
+          if (devMode && ENABLE_JELLO && /[?&]slimepen=1\b/.test(location.search) && typeof injectJelloTestPen === 'function') {
             injectJelloTestPen();
             lightingInit();
           }

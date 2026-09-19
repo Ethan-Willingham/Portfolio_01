@@ -96,6 +96,7 @@
     surfaceBoulderDensity = treesTune.density;
     var lastX = -1e9;
     for (var c = 3; c < COLS - 3; c++) {
+      if (typeof slimeGardenReservedCol === 'function' && slimeGardenReservedCol(c)) continue;
       var region = regionAt(c);
       if (!region || region.kind !== REGION_TOWN) continue;
       if (Math.abs(c - townCenterCol(region.townIndex)) < TREES_TOWN_CLEAR - 2) continue;

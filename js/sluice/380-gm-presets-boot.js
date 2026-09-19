@@ -2146,7 +2146,7 @@
           // Pen blobs are devFixture-tagged (040) and skipped by jelloSaveBodies, so
           // re-injecting every boot can never stack duplicates into the save; the
           // extra lightingInit re-floods the fog for the re-carved opening.
-          if (devMode && ENABLE_JELLO && typeof injectJelloTestPen === 'function') {
+          if (devMode && ENABLE_JELLO && /[?&]slimepen=1\b/.test(location.search) && typeof injectJelloTestPen === 'function') {
             injectJelloTestPen();
             lightingInit();
           }

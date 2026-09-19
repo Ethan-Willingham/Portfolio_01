@@ -635,7 +635,7 @@
    *   pos     vec4<f32>   (x, y, vx, vy)
    *   affine  vec4<f32>   (G00, G01, G10, G11)  — the APIC "C" matrix
    *   aux     vec4<f32>   (density, aeration, _, _)  — 2 spare lanes
-   *   flag    u32         bitpack: type[0:1] origin[2:3] sleeping[4]
+   *   flag    u32         bitpack: type[0:1,6] origin[2:3] sleeping[4]
    *                       frozen[5] restFrames[8:23]
    *
    * 52 bytes/particle. Per-step scratch (LX/LY/W/Nbrs/...) and the
@@ -869,7 +869,7 @@
       sa[p + 2] = a.g10[i]; sa[p + 3] = a.g11[i];
       sx[p]     = a.density[i]; sx[p + 1] = a.aeration[i];
       sx[p + 2] = 0; sx[p + 3] = 0;
-      sf[i] = (a.type[i] & 3) | ((a.origin[i] & 3) << 2) |
+      sf[i] = (a.type[i] & 3) | ((a.type[i] & 4) << 4) | ((a.origin[i] & 3) << 2) |
               ((a.sleeping[i] & 1) << 4) |
               (stripFrozen ? 0 : ((a.frozen[i] & 1) << 5)) |
               ((a.restFrames[i] & 0xffff) << 8);
@@ -1605,7 +1605,7 @@
         if (d2 > maxPosDiff) maxPosDiff = d2;
         if (d3 > maxPosDiff) maxPosDiff = d3;
         var f = flag[i];
-        if ((f & 3) !== snap.type[i] ||
+        if (((f & 3) | ((f >> 4) & 4)) !== snap.type[i] ||
             ((f >> 4) & 1) !== snap.sleeping[i] ||
             ((f >> 5) & 1) !== snap.frozen[i] ||
             ((f >> 8) & 0xffff) !== snap.restFrames[i]) flagFails++;
@@ -2857,6 +2857,17 @@
         gv11 = fr(gv11 * refMotion);
       }
 
+      var materialR = snap.type[i];
+      if (materialR >= 2) {
+        var shearRateR = materialR === 3 ? 16 : materialR === 4 ? 8 : 0.9;
+        var lateralRateR = materialR === 3 ? 3 : materialR === 4 ? 1.5 : 0.35;
+        var shearKeepR = fr(1 / fr(1 + fr(fr(shearRateR) * dt)));
+        var lateralKeepR = fr(1 / fr(1 + fr(fr(lateralRateR) * dt)));
+        vx = fr(vx * lateralKeepR);
+        gv00 = fr(gv00 * shearKeepR); gv01 = fr(gv01 * shearKeepR);
+        gv10 = fr(gv10 * shearKeepR); gv11 = fr(gv11 * shearKeepR);
+      }
+
       // v26.13 — mirror the kernel's pre-advection CFL cap. MAX_VEL is
       // world px/s; vx/vy are cell displacement for this substep.
       if (!oilG && LIQUID_MAX_VEL > 0) {
@@ -3112,7 +3123,7 @@
         // velocities may differ within the accepted numeric tolerance but
         // land on opposite sides of the hard |v| < 3 sleep comparison.
         var f = gFlag[p];
-        var identityWrong = (f & 3) !== snap.type[p] ||
+        var identityWrong = ((f & 3) | ((f >> 4) & 4)) !== snap.type[p] ||
           ((f >> 2) & 3) !== snap.origin[p];
         var sleepWrong = ((f >> 4) & 1) !== refSleep[p] ||
           ((f >> 8) & 0xffff) !== refRest[p];
@@ -4101,7 +4112,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
-  // flag bitpack: type[0:1] origin[2:3] sleeping[4] frozen[5] rest[8:23].
+  // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   let frozen = (fl >> 5u) & 1u;
   if (frozen != 0u) { return; }
   if (outOfRegion(pos[i].xy)) { return; }   // v14.31 - skip off-region
@@ -4136,7 +4147,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let cvx = pvx + g00 * dx + g01 * dy;
   let cvy = pvy + g10 * dx + g11 * dy;
   let aer = aux[i].y;
-  let oilWeight = select(0.0, 1.0, (fl & 3u) == 1u);
+  let oilWeight = select(0.0, 1.0, ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u);
 
   // Base cell for the dense grid; the 1-cell margin keeps the whole
   // 3x3 in range so no clamp is needed.
@@ -4998,7 +5009,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
-  // flag bitpack: type[0:1] origin[2:3] sleeping[4] frozen[5] rest[8:23].
+  // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   let sleeping = (fl >> 4u) & 1u;
   let frozen   = (fl >> 5u) & 1u;
   if (frozen != 0u || sleeping != 0u) { return; }
@@ -5050,7 +5061,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     aeration = aeration + w * (f32(atomicLoad(&cellAeration[c])) / FIXED_SCALE);
   }
 
-  let oil = (fl & 3u) == 1u;
+  let oil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
   // v14.26 — feel consts from the SimParams uniform (sp.aer / sp.grav).
   let aerDamp = select(sp.aer.y, sp.aer.w, oil);
   let aerBlur = select(sp.aer.x, sp.aer.z, oil);
@@ -5849,7 +5860,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
-  // flag bitpack: type[0:1] origin[2:3] sleeping[4] frozen[5] rest[8:23].
+  // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   let frozen   = (fl >> 5u) & 1u;
   if (frozen != 0u) { return; }
   if (outOfRegion(pos[i].xy)) { return; }   // v14.31 - skip off-region
@@ -6006,7 +6017,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   gv10 = 4.0 * (gv10 + vy * ddx);
   gv11 = 4.0 * (gv11 + vy * ddy);
 
-  let oil = (fl & 3u) == 1u;
+  let oil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
   if (!oil) {
     // v14.26 — water motion scale is live in the SimParams uniform.
     let motion = sp.g2pA.x;
@@ -6016,6 +6027,22 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     gv01 = gv01 * motion;
     gv10 = gv10 * motion;
     gv11 = gv11 * motion;
+  }
+
+  // Mineral liquids share the pressure field with water. Only their carried
+  // shear and lateral spray are damped; there is no standing body-force that
+  // can restart a calm basin. Keep the CPU/reference twins in lockstep.
+  let material = ((fl & 3u) | ((fl >> 4u) & 4u));
+  if (material >= 2u) {
+    var shearRate = 0.9;
+    var lateralRate = 0.35;
+    if (material == 3u) { shearRate = 16.0; lateralRate = 3.0; }
+    if (material == 4u) { shearRate = 8.0; lateralRate = 1.5; }
+    let shearKeep = 1.0 / (1.0 + shearRate * gp.stepDt);
+    let lateralKeep = 1.0 / (1.0 + lateralRate * gp.stepDt);
+    vx = vx * lateralKeep;
+    gv00 = gv00 * shearKeep; gv01 = gv01 * shearKeep;
+    gv10 = gv10 * shearKeep; gv11 = gv11 * shearKeep;
   }
 
   // v26.13 — CFL/transport invariant. vx/vy are grid-cell displacement
@@ -6209,12 +6236,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   } else {
     rest = 0u;
   }
-  // Rebuild the flag: keep type[0:1]+origin[2:3], set sleeping[4],
+  // Rebuild the flag: keep type[0:1,6]+origin[2:3], set sleeping[4],
   // clear frozen[5] (a frozen particle never reaches here), set rest[8:23].
   // v25.56 BATH B1: bits 24:31 carry the particle heat, floor-encoded so
   // cooling always reaches true 0 (and 0 when the bath is off = old bits).
   let tBits = u32(clamp(floor(tHeat * 127.5), 0.0, 255.0));
-  flag[i] = (fl & 0xfu) | (sleepBit << 4u) | (rest << 8u) | (tBits << 24u);
+  flag[i] = (fl & 0x4fu) | (sleepBit << 4u) | (rest << 8u) | (tBits << 24u);
 }
 `;
 
@@ -6373,7 +6400,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
-  // flag bitpack: type[0:1] origin[2:3] sleeping[4] frozen[5] rest[8:23].
+  // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   // The CPU move loop skips frozen AND sleeping particles (they never
   // call liquidMoveParticle), so the kernel skips exactly that set.
   let sleeping = (fl >> 4u) & 1u;
@@ -6383,7 +6410,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
   let r = COLLIDE_RADIUS;
   // v14.26 — terrain restitution is live in the SimParams uniform.
-  let bounce = select(sp.coll.x, sp.coll.y, (fl & 3u) == 1u);
+  let bounce = select(sp.coll.x, sp.coll.y, ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u);
 
   let pp = pos[i];
   var x  = pp.x;
@@ -6685,7 +6712,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     x = terrainX; y = terrainY;
     vx = terrainVX; vy = terrainVY;
   }
-  if ((fl & 3u) != 1u) {
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) != 1u) {
     let guestMaxVel = sp.g2pC.x;
     if (guestMaxVel > 0.0) {
       let guestSp2 = vx * vx + vy * vy;
@@ -6920,6 +6947,15 @@ struct RenderParams {
   oilColor      : vec4<f32>,   // rgb = oil colour,   a = oil alpha
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
+
+// Same palette as liquidCatalog in 071. Pigment follows actual particles.
+fn mineralRGB(material : u32) -> vec3<f32> {
+  if (material == 2u) { return vec3<f32>(0.57, 0.79, 0.68); }
+  if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
+  if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
+  return rp.waterColor.rgb;
+}
+
 @group(0) @binding(1) var<storage, read> pos  : array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read> aux  : array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read> flag : array<u32>;
@@ -6951,7 +6987,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
       @builtin(instance_index) iid : u32) -> VOut {
   var out : VOut;
   let fl = flag[iid];
-  // flag bitpack: type[0:1] origin[2:3] sleeping[4] frozen[5] rest[8:23].
+  // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   // Frozen particles are off-screen / not drawn — collapse their quad to
   // a degenerate point so the rasterizer discards it (matches the CPU
   // renderer skipping frozen particles in drawLiquidsWebGL).
@@ -6970,7 +7006,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   var d = density * INV_DENSITY + 0.5;
   d = min(d, 1.5);
 
-  let isOil = (fl & 3u) == 1u;
+  let isOil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
   let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
   // pointSize is the DIAMETER in device px; floor at 1.15 like the CPU.
   var pointSize = sizeBase * d;
@@ -6996,7 +7032,10 @@ fn vs(@builtin(vertex_index)   vid : u32,
     out.color = vec4<f32>(rp.oilColor.rgb, rp.oilColor.a);
   } else {
     let a = clamp(aux[iid].y, 0.0, 1.0);
-    out.color = vec4<f32>(mix(rp.waterColor.rgb, rp.waterFoam.rgb, a), rp.waterColor.a);
+    let material = ((fl & 3u) | ((fl >> 4u) & 4u));
+    let base = mineralRGB(material);
+    let foam = select(rp.waterFoam.rgb, mix(base, vec3<f32>(0.93, 0.91, 0.82), 0.35), material >= 2u);
+    out.color = vec4<f32>(mix(base, foam, a), rp.waterColor.a);
   }
   return out;
 }
@@ -7045,6 +7084,15 @@ struct RenderParams {
   bridge        : vec4<f32>,   // v26.57: x = gap-bridge strength, y = tap radius px, z/w spare
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
+
+// Same palette as liquidCatalog in 071. Pigment follows actual particles.
+fn mineralRGB(material : u32) -> vec3<f32> {
+  if (material == 2u) { return vec3<f32>(0.57, 0.79, 0.68); }
+  if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
+  if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
+  return rp.waterColor.rgb;
+}
+
 `;
 
   var WGSL_SURFACE_FIELD = /* wgsl */ `
@@ -7073,6 +7121,7 @@ struct VOut {
   @location(0)       uv     : vec2<f32>,
   @location(1)       weight : vec3<f32>,   // x = water, y = water aeration, z = oil
   @location(2)       heat   : f32,         // v25.57 bath: temperature (0 when off)
+  @location(3)       pigment : vec4<f32>,
 };
 
 fn quadCorner(vid : u32) -> vec2<f32> {
@@ -7090,6 +7139,9 @@ fn vs(@builtin(vertex_index)   vid : u32,
       @builtin(instance_index) iid : u32) -> VOut {
   var out : VOut;
   let fl = flag[iid];
+  let material = ((fl & 3u) | ((fl >> 4u) & 4u));
+  out.pigment = vec4<f32>(0.0);
+  if (material >= 2u) { out.pigment = vec4<f32>(mineralRGB(material), 1.0); }
   let frozen = (fl >> 5u) & 1u;
   if (frozen != 0u) {
     out.pos    = vec4<f32>(0.0, 0.0, 0.0, 1.0);
@@ -7125,7 +7177,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   var d = select(1.5 * dnc * dnc * dnc, 1.5, dn >= 1.0);
   let sleepBit = (fl >> 4u) & 1u;
   if (sleepBit != 0u) { d = min(d, 1.0); }
-  let isOil = (fl & 3u) == 1u;
+  let isOil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
   // v24.179 — gate the size by REAL neighbour count (water only; oil keeps its
   // own look). The density-based size above says a jet-stranded single particle
   // is full size; counting its actual neighbours (the 3x3 grid cell-count)
@@ -7190,19 +7242,27 @@ fn vs(@builtin(vertex_index)   vid : u32,
   return out;
 }
 
+struct FieldOut {
+  @location(0) density : vec4<f32>,
+  @location(1) pigment : vec4<f32>,
+};
 @fragment
-fn fs(in : VOut) -> @location(0) vec4<f32> {
+fn fs(in : VOut) -> FieldOut {
   let w = clamp(1.0 - dot(in.uv, in.uv), 0.0, 1.0);
   if (w <= 0.0) { discard; }
   // Additive accumulation into the field: R water, G aeration, B oil, and
   // A = temperature-weighted (v25.57 bath). A stays 0 with the bath off, so
   // the composite's heat tint is a no-op then.
-  return vec4<f32>(in.weight * w, in.heat * w);
+  var out : FieldOut;
+  out.density = vec4<f32>(in.weight * w, in.heat * w);
+  out.pigment = in.pigment * w;
+  return out;
 }
 `;
 
   var WGSL_SURFACE_COMPOSITE = /* wgsl */ `
 @group(0) @binding(1) var fieldTex : texture_2d<f32>;
+@group(0) @binding(4) var pigmentTex : texture_2d<f32>;
 struct TerrainParams {
   c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32,
   stepDt:f32, invCell:f32,
@@ -7281,6 +7341,10 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   }
   fieldPx = clamp(fieldPx, vec2<f32>(0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
   let f = textureLoad(fieldTex, vec2<i32>(fieldPx), 0);
+  // Contour cutaways and contact seams borrow their body from another pixel.
+  // Material pigment must follow the same sample and normalization mass.
+  var pigmentPx = fieldPx;
+  var pigmentMass = f.r;
   let t = rp.surf.x;
   let s = max(rp.surf.y, 0.001);
   // v26.57 GAP BRIDGE + CONTACT WETTING (see the module const banner). The
@@ -7340,7 +7404,11 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
         let sp = (source - vec2<f32>(rp.camX, rp.camY)) * rp.dpws;
         if (sp.x < 0.0 || sp.y < 0.0 || sp.x >= rp.canvasW || sp.y >= rp.canvasH) { break; }
         let body = textureLoad(fieldTex, vec2<i32>(sp), 0).r;
-        if (body >= t + s) { aWaterEdge = 1.0; }
+        if (body >= t + s) {
+          aWaterEdge = 1.0;
+          pigmentPx = sp;
+          pigmentMass = body;
+        }
         if (aWaterEdge >= 0.999) { break; }
       }
       if (aWaterEdge >= 0.999) { break; }
@@ -7365,14 +7433,22 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       var pUp = clamp(in.pos.xy + vec2<f32>(0.0, -r),
                       vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
       var fUp = textureLoad(fieldTex, vec2<i32>(pUp), 0).r;
+      var pigmentUp = pUp;
       pUp = clamp(in.pos.xy + vec2<f32>(0.0, -2.0 * r),
                   vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
-      fUp = max(fUp, textureLoad(fieldTex, vec2<i32>(pUp), 0).r);
+      let fUp2 = textureLoad(fieldTex, vec2<i32>(pUp), 0).r;
+      if (fUp2 > fUp) { fUp = fUp2; pigmentUp = pUp; }
       pUp = clamp(in.pos.xy + vec2<f32>(0.0, -3.0 * r),
                   vec2<f32>(0.0, 0.0), vec2<f32>(rp.canvasW - 1.0, rp.canvasH - 1.0));
-      fUp = max(fUp, textureLoad(fieldTex, vec2<i32>(pUp), 0).r);
+      let fUp3 = textureLoad(fieldTex, vec2<i32>(pUp), 0).r;
+      if (fUp3 > fUp) { fUp = fUp3; pigmentUp = pUp; }
       if (fUp >= t) {
-        aWaterEdge = max(aWaterEdge, smoothstep(t - s, t + s, fUp));
+        let contactAlpha = smoothstep(t - s, t + s, fUp);
+        if (contactAlpha > aWaterEdge) {
+          pigmentPx = pigmentUp;
+          pigmentMass = fUp;
+          aWaterEdge = contactAlpha;
+        }
       }
     }
   }
@@ -7398,6 +7474,13 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let midRGB = mix(rp.waterColor.rgb, rp.bathTint.rgb, 0.45) * 1.08;
   waterRGB = mix(waterRGB, midRGB, clamp(warmK * 1.6, 0.0, 1.0));
   waterRGB = mix(waterRGB, rp.bathTint.rgb, clamp(warmK * warmK, 0.0, 1.0));
+  let pigment = textureLoad(pigmentTex, vec2<i32>(pigmentPx), 0);
+  if (pigment.a > 0.001) {
+    let pigmentFraction = clamp(pigment.a / max(pigmentMass, 0.001), 0.0, 1.0);
+    let pigmentRGB = pigment.rgb / pigment.a;
+    let pigmentFoam = mix(pigmentRGB, vec3<f32>(0.93, 0.91, 0.82), foam * 0.35);
+    waterRGB = mix(waterRGB, pigmentFoam, pigmentFraction);
+  }
   var outA = aWaterEdge * rp.waterColor.a;
   var outRGB = waterRGB * outA;
   // Oil composites over water.
@@ -7441,6 +7524,7 @@ struct VOut {
   @location(0)       uv    : vec2<f32>,
   @location(1)       alpha : f32,
   @location(2)       world : vec2<f32>,
+  @location(3)       color : vec3<f32>,
 };
 
 fn dropletTerrainSolid(wp : vec2<f32>) -> bool {
@@ -7470,10 +7554,12 @@ fn vs(@builtin(vertex_index)   vid : u32,
   out.pos = vec4<f32>(0.0, 0.0, 0.0, 1.0);
   out.uv  = vec2<f32>(0.0, 0.0);
   out.alpha = 0.0;
+  out.color = rp.waterColor.rgb;
   out.world = vec2<f32>(0.0, 0.0);
   let fl = flag[iid];
+  out.color = mineralRGB((fl & 3u) | ((fl >> 4u) & 4u));
   let frozen = (fl >> 5u) & 1u;
-  let isOil  = (fl & 3u) == 1u;
+  let isOil  = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
   if (frozen != 0u || isOil) { return out; }
   let p = pos[iid];
   let scrX = (p.x - rp.camX) * rp.dpws;
@@ -7551,7 +7637,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha * terrainRenderOpen(in.world);
   // A trace of foam tint keeps a two-pixel airborne drop legible against
   // dark terrain while preserving the base-water identity.
-  let dropRGB = mix(rp.waterColor.rgb, rp.waterFoam.rgb, 0.22);
+  let dropRGB = mix(in.color, rp.waterFoam.rgb, 0.22);
   return vec4<f32>(dropRGB * a, a);
 }
 `;
@@ -8857,6 +8943,12 @@ struct P2GParams {
               color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
               alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
             }
+          }, {
+            format: 'rgba16float',
+            blend: {
+              color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+            }
           }]
         },
         primitive: { topology: 'triangle-list' }
@@ -8867,7 +8959,8 @@ struct P2GParams {
           { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
           { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } },
           { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-          { binding: 3, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
+          { binding: 3, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+          { binding: 4, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } }
         ]
       });
       var compMod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_COMPOSITE });
@@ -8948,6 +9041,14 @@ struct P2GParams {
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
       });
       instance.surfTexView = instance.surfTex.createView();
+      if (instance.surfPigmentTex) { try { instance.surfPigmentTex.destroy(); } catch (_) {} }
+      instance.surfPigmentTex = instance.device.createTexture({
+        label: 'liquid.surfPigment',
+        size: { width: Math.max(1, cw), height: Math.max(1, ch) },
+        format: 'rgba16float',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+      });
+      instance.surfPigmentTexView = instance.surfPigmentTex.createView();
       instance.surfTexW = cw;
       instance.surfTexH = ch;
       instance.surfCompositeBG = instance.device.createBindGroup({
@@ -8957,7 +9058,8 @@ struct P2GParams {
           { binding: 0, resource: { buffer: instance.renderParamsBuf } },
           { binding: 1, resource: instance.surfTexView },
           { binding: 2, resource: { buffer: instance.paramsBuf } },
-          { binding: 3, resource: { buffer: instance.buf.terrainMask } }
+          { binding: 3, resource: { buffer: instance.buf.terrainMask } },
+          { binding: 4, resource: instance.surfPigmentTexView }
         ]
       });
       if (instance.surfDropletBGL) {
@@ -9099,6 +9201,11 @@ struct P2GParams {
         label: 'liquid.surfFieldPass',
         colorAttachments: [{
           view: instance.surfTexView,
+          clearValue: { r: 0, g: 0, b: 0, a: 0 },
+          loadOp: 'clear',
+          storeOp: 'store'
+        }, {
+          view: instance.surfPigmentTexView,
           clearValue: { r: 0, g: 0, b: 0, a: 0 },
           loadOp: 'clear',
           storeOp: 'store'
@@ -9312,10 +9419,10 @@ struct P2GParams {
           a.density[i]  = aux[p];
           a.aeration[i] = aux[p + 1];
           var f = flag[i];
-          // flag bitpack: type[0:1] origin[2:3] sleeping[4] frozen[5]
+          // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5]
           // restFrames[8:23]. type/origin are GPU-immutable but harmless
           // to restore; sleeping/frozen/restFrames are the live sim state.
-          a.type[i]       = f & 3;
+          a.type[i]       = (f & 3) | ((f >> 4) & 4);
           a.origin[i]     = (f >> 2) & 3;
           a.sleeping[i]   = (f >> 4) & 1;
           a.frozen[i]     = (f >> 5) & 1;
@@ -9416,7 +9523,7 @@ fn main() {
       pos[cnt] = vec4<f32>(ops[k + 1u], ops[k + 2u], ops[k + 3u], ops[k + 4u]);
       affine[cnt] = vec4<f32>(0.0, 0.0, 0.0, 0.0);
       aux[cnt] = vec4<f32>(${LIQUID_DENSITY.toFixed(1)}, 0.0, 0.0, 0.0);
-      flag[cnt] = (u32(ops[k + 5u]) & 3u) | ((u32(ops[k + 6u]) & 3u) << 2u);
+      flag[cnt] = (u32(ops[k + 5u]) & 3u) | ((u32(ops[k + 5u]) & 4u) << 4u) | ((u32(ops[k + 6u]) & 3u) << 2u);
       cnt = cnt + 1u;
       k = k + 7u;
     } else if (tag == 2u) {     // REMOVE: swap-remove, moving the LIVE tail row
@@ -9433,11 +9540,11 @@ fn main() {
       let i = u32(ops[k + 1u]);
       pos[i] = vec4<f32>(pos[i].x, pos[i].y, ops[k + 2u], ops[k + 3u]);
       aux[i] = vec4<f32>(aux[i].x, ops[k + 4u], aux[i].z, aux[i].w);
-      flag[i] = (u32(ops[k + 5u]) & 3u) | ((u32(ops[k + 6u]) & 3u) << 2u);
+      flag[i] = (u32(ops[k + 5u]) & 3u) | ((u32(ops[k + 5u]) & 4u) << 4u) | ((u32(ops[k + 6u]) & 3u) << 2u);
       k = k + 7u;
     } else if (tag == 4u) {     // WAKE: clear sleeping + restFrames
       let i = u32(ops[k + 1u]);
-      flag[i] = (u32(ops[k + 2u]) & 3u) | ((u32(ops[k + 3u]) & 3u) << 2u);
+      flag[i] = (u32(ops[k + 2u]) & 3u) | ((u32(ops[k + 2u]) & 4u) << 4u) | ((u32(ops[k + 3u]) & 3u) << 2u);
       k = k + 4u;
     } else {                    // corrupt tag (CPU validates; never expected)
       break;
@@ -10198,6 +10305,9 @@ fn main() {
       // renderActive false so the CPU solver takes over from the next
       // frame — the fallback must always hold; a GPU fault never bricks
       // the game.
+      syncReadback: function () {
+        if (instance.simActive) applyReadback(instance);
+      },
       update: function (dt) {
         if (!instance.simActive) return;
         try {

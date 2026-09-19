@@ -1032,6 +1032,7 @@
     drawSurfaceFireplace();
     // ---- v25.77 BANYA exterior (072-bath.js): the bathhouse tower + door ----
     if (typeof drawBanyaExterior === 'function') drawBanyaExterior();
+    slimeGardenDraw();
     // v11.46 — Fireplace smoke emission runs every frame regardless of
     // camera position. Combined with the wider smoke fluid domain
     // (overscan 1.6), the chimney keeps emitting into the sim even
@@ -1094,6 +1095,8 @@
     // ---- Player ----
     var _rPl = performance.now();
     drawPlayer();
+    skySlimeDraw();
+    siphonDraw();
     perfMark('render.player', _rPl);
 
     // ---- Combat: enemy turrets, rig auto-turret, bullets + sparks (world space) ----
@@ -1248,6 +1251,9 @@
       ctx = _uiCtx;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    slimeGardenHUD();
+    siphonHUD();
 
     // D-pad (mobile) — single overlay in the bottom-RIGHT corner. Most
     // players drive with their right thumb, so reach is best on that side.
@@ -1454,4 +1460,3 @@
     // the top canvas). World drawing next frame must land on the main canvas.
     ctx = _mainCtx;
   }
-

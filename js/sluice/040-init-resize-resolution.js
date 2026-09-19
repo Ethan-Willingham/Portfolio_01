@@ -79,6 +79,10 @@
 
   function init() {
     if (introPhase === 'done') beginSceneLoading('Preparing your mine');
+    mineralLiquidReset();
+    slimeGardenReset();
+    skySlimeReset();
+    siphonReset();
     liquidParticles = [];
     liquidCount = 0;
     liquidOps.length = 0;          // v24.109 — stale mutation ops die with the old world
@@ -112,7 +116,7 @@
     // still built the pen — visible stone walls near spawn, undrillable buried
     // jello tiles, and 8 invisible ghost bodies (update + draw are flag-gated,
     // the injection was not). A disabled system must be inert, dev mode included.
-    if (devMode && ENABLE_JELLO) injectJelloTestPen();
+    if (devMode && ENABLE_JELLO && /[?&]slimepen=1\b/.test(location.search)) injectJelloTestPen();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;
@@ -838,4 +842,3 @@
     // mobile. consoleHeight() + an 8 px gap clears it in every orientation.
     DPAD_CY = viewH - consoleHeight() - DPAD_SIZE * 0.9 - 8;
   }
-

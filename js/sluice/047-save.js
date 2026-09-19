@@ -47,6 +47,7 @@
   var saveLastCargoN = -1;
   var saveLastDepth = -1;
   var saveLastUpgradeSum = -1;
+  var saveLastGardenKey = '';
   var saveCooldownT = 0;         // min seconds between docked autosaves
   var savePeriodicT = 0;         // background safety-save clock
   var saveCounter = 0;           // monotonic slot counter
@@ -202,6 +203,10 @@
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
       // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
       jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
+      garden: slimeGardenSave(),
+      skySlimes: skySlimeSave(),
+      siphon: siphonSave(),
+      mineralLiquids: mineralLiquidSave(),
     };
   }
 
@@ -220,6 +225,7 @@
       saveLastCargoN = cargo.length;
       saveLastDepth = depthRecord;
       saveLastUpgradeSum = saveUpgradeSum();
+      saveLastGardenKey = saveGardenKey();
       saveCooldownT = 10;
       savePeriodicT = 0;
       saveLampT = 3.0;          // console SAVE lamp: one steady info pulse
@@ -308,6 +314,11 @@
     player.renderX = player.x;
     player.renderY = player.y;
     cam.snap = true;
+    // Additive expansion fields preserve older saves and migrate their lots.
+    slimeGardenRestore(env.garden);
+    mineralLiquidRestore(env.mineralLiquids);
+    skySlimeRestore(env.skySlimes);
+    siphonRestore(env.siphon);
     // Re-derive world-dependent caches against the swapped grid.
     lightingInit();
     terrainChunkCache = {};
@@ -321,6 +332,7 @@
     saveLastCargoN = cargo.length;
     saveLastDepth = depthRecord;
     saveLastUpgradeSum = saveUpgradeSum();
+    saveLastGardenKey = saveGardenKey();
   }
 
   function saveWipe() {
@@ -412,6 +424,10 @@
   }
 
   // ---- Autosave poll (called once per frame from the update loop) ----
+  function saveGardenKey() {
+    return siphon.tank.join(',') + '/' + (siphon.passenger ? siphon.passenger.id : 0) + '/' + skySlimes.length + '/' +
+      slimeGardenLots.map(function (lot) { return (+lot.owned) + ':' + (+lot.ready) + ':' + Math.floor(lot.progress / 8); }).join(',');
+  }
   function saveTick(dt) {
     // Lamp timers decay before the gameOver early-return so the annunciator
     // still settles on the death screen.
@@ -423,7 +439,7 @@
     var dirty = (money !== saveLastMoney) ||
                 (cargo.length !== saveLastCargoN) ||
                 (depthRecord !== saveLastDepth) ||
-                (saveUpgradeSum() !== saveLastUpgradeSum);
+                (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey);
     if (!dirty) return;
     // Docked save: on solid ground inside a town, shortly after anything
     // meaningful changed (a sale, a purchase, a new record).

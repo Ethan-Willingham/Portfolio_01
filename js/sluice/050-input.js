@@ -4,6 +4,7 @@
       if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (siphonKey(e)) { e.preventDefault(); return; }
       if (!gamePaused && cargoManifestOpen) {
         e.preventDefault();
         if (!e.repeat) cargoManifestKeyDown(e.key);
@@ -66,6 +67,7 @@
       dpad.left = dpad.right = dpad.up = dpad.down = false;
       touch.active = false;
       player.thrusting = false;
+      siphonStop();
       // Forget any in-flight multi-touch state too — otherwise the next
       // touch after returning to the tab might look like a continuation
       // of a touch the OS already cancelled, and the d-pad would lock on.
@@ -159,6 +161,8 @@
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', function () { siphonPointerUp('mouse'); });
+    canvas.addEventListener('contextmenu', function (e) { if (siphon.equipped) e.preventDefault(); });
 
     // Mouse wheel — only consumed when the shop is open (so page scrolling
     // outside of an open shop still works). passive:false because we call
@@ -222,11 +226,13 @@
   }
   function handleMouseDown(e) {
     var p = canvasPos(e.clientX, e.clientY);
-    processPointerDown(p.x, p.y, 'mouse');
+    if (e.button === 2 && !siphon.equipped) return;
+    processPointerDown(p.x, p.y, 'mouse', e.button === 2);
   }
   function handleMouseMove(e) {
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
+    siphonPointerMove(p.x, p.y, 'mouse');
     if (cargoManifestOpen) { cargoManifestPointerMove(p.x, p.y); return; }
     if (ledgerOpen) { canvas.style.cursor = ''; ledgerPointerMove(p.x, p.y); return; }
     canvas.style.cursor = cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
@@ -239,7 +245,7 @@
   }
   function handleMouseUp() { processPointerUp('mouse'); }
 
-  function processPointerDown(x, y, id) {
+  function processPointerDown(x, y, id, right) {
     if (gamePaused) return;
     if (cargoManifestOpen) { cargoManifestPointerDown(x, y); return; }
     if (ledgerOpen) { ledgerPointerDown(x, y); return; }
@@ -335,6 +341,10 @@
       }
     }
 
+    // Equipment buttons and buildings keep priority over world aiming.
+    if (!isInDpadZone(x, y) && slimeGardenPointer(x, y)) { touch.active = false; return; }
+    if (siphonPointerDown(x, y, id, right)) { touch.active = false; return; }
+
     // Anything else inside the d-pad zone becomes a d-pad touch. We
     // remember the touch identifier so subsequent touchmove/touchend
     // events for OTHER fingers (e.g. tapping a HUD chip) don't clobber
@@ -396,6 +406,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (siphonPointerMove(x, y, id)) return;
     if (cargoManifestOpen) { cargoManifestPointerMove(x, y); return; }
     if (ledgerOpen) { ledgerPointerMove(x, y); return; }
     touch.x = x;
@@ -428,6 +439,7 @@
     }
   }
   function processPointerUp(id) {
+    siphonPointerUp(id);
     if (cargoManifestOpen) { touch.active = false; return; }
     if (ledgerOpen) { touch.active = false; return; }
     // The item wheel is fully click-driven (handled on pointer-down), so
@@ -607,4 +619,3 @@
     }
     return false;
   }
-

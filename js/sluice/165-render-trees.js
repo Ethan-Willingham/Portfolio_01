@@ -473,6 +473,7 @@
     treesByCol = new Int32Array(COLS);
     var lastX = -1e9;
     for (var c = 2; c < COLS - 2; c++) {
+      if (typeof slimeGardenReservedCol === 'function' && slimeGardenReservedCol(c)) continue;
       var reg = regionAt(c);
       if (!reg || reg.kind === REGION_OCEAN) continue;
       var isZone = reg.kind === REGION_NOMANS;
