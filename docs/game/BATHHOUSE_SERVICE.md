@@ -55,7 +55,7 @@ not guest recipes. All visitors currently ask only for a warm bath.
 values. `348-sky-slimes.js` owns surface arrivals, wander, approach, and departure.
 Underground NPC brains remain disabled by their existing flag.
 
-## Sky visitor physics and appearance (v28.7)
+## Sky visitor physics and appearance (v28.10)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
@@ -65,9 +65,22 @@ collision radius. Existing visitors acquire this appearance when loaded.
 Ground contacts keep a fixed restitution (0.86 to 0.875, multiplied by 0.88 on
 soil), with friction transferring slide into spin and rolling slowing gradually.
 At least 240 physics substeps per second prevent fast visitors passing through
-terrain. Rig contacts use the rig's traveled path, transfer momentum both ways,
-and delay intentional hopping for 2.5 seconds. A stationary rig can be hopped over.
-Natural rebounds finish before the visitor starts another intentional hop.
+terrain. Rig contacts sweep a low convex hull along the rig's traveled path.
+The sloped shoulders lift a grounded ball; the same geometry sets the direction
+of airborne hits. Restitution is 0.90, contact friction 0.04, and the rig has six
+times the mass of a radius-25 guest. Tangential friction exchanges spin as well
+as linear momentum. There is no minimum launch, automatic aim, catch radius,
+aerial boost, or change to gravity/flight controls. Speed and contact height
+control the shot: get underneath to lift, strike level to drive sideways, and
+hit from above to spike. A ground pop followed by a timed jet can chain aerials.
+
+A player-driven contact pauses the guest's navigation, door admission, and
+scheduled departure. It resumes after 1.5 seconds at rest, at least 2.5 seconds
+after contact, and once the player is five tiles away. This state survives saves
+and passes between colliding guests. A stationary rig can still be hopped over
+by ordinary visitors, who also hop out when they reach a pond bank. These
+navigation hops stay disabled during play. Natural rebounds finish before
+another intentional hop.
 
 Water response measures the waterline beside the solid body and computes its
 submerged circular area. Shallow puddles cushion a floor bounce; deeper water
@@ -96,8 +109,11 @@ The old garden renderer, construction, production loop, and tests are retired.
 - `node tools/test-sky-slimes.cjs`: collision, capture, identity, population.
 - `node tools/test-sky-slime-physics.cjs`: restitution, rolling, rig momentum,
   fast wall collisions, water depth, buoyancy, and eye motion at 30/60/144 Hz.
-- `node tools/sky-slime-smoke.mjs`: browser art views, normal drive input,
-  real WebGPU water entry/bobbing and particle conservation.
+- `node tools/test-slime-aerials.cjs`: ground pop at 30/60/144 Hz, directional
+  airborne contacts, energy and spin exchange, misses, and navigation suppression.
+- `node tools/sky-slime-smoke.mjs`: browser art views, normal drive input and
+  a timed jet sequence with two airborne contacts, plus real WebGPU water
+  entry/bobbing and particle conservation.
 - `node tools/test-bathhouse.cjs`: navigation at 30/60/144 Hz, ten-coal startup,
   shared resources, warmth, payment, reload, departure, migration, floor drains.
 - `node tools/bathhouse-smoke.mjs`: real browser, water solver, shared stove,

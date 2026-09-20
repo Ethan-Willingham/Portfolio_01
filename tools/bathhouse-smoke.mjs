@@ -66,7 +66,7 @@ try {
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;skySlimes=[];skySlimeNext=0.01;player.x=banyaDoorX0-150;player.y=SKY_ROWS*TILE-PLAYER_H;player.renderX=player.x;player.renderY=player.y;cam.snap=true;updateCamera()');
   await game('skySlimeTick(0.05);render()');await screenshot('arrival');
   await game('for(var n=0;n<900;n++){skySlimeTick(0.1);bathGuestTick(0.1);}render()');
-  console.log('VISITORS',await game('({outside:skySlimes.map(function(s){return {visit:s.visit,x:s.x,y:s.y,age:s.age};}),inside:bathGuests.length,door:banyaDoorX0})'));
+  console.log('VISITORS',await game('({outside:skySlimes.map(function(s){return {visit:s.visit,x:s.x,y:s.y,age:s.age,playing:s.playing,wet:s.wet};}),inside:bathGuests.length,door:banyaDoorX0})'));
   check('sky visitors find the real world door',await game('bathGuests.length===2 && bathGuests.every(function(g){return g.st==="wait";})'));
   await game('bathEnter()');await sleep(600);await game('updateCamera();render()');
   check('new bath starts dry and unheated',await game('bathWater===0 && bathFire===0 && bathHeat===0'));

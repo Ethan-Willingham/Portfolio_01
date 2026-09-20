@@ -12,6 +12,12 @@
   // Shared warm stone ramp from PIXEL_ART.md.
   var SKY_SLIME_RAMP = ['#252320', '#3e3830', '#5a5248', '#7a706a', '#9e9488', '#c0b8b0'];
   var skySlimeRigLast = null;
+  // Low, sloped shoulders follow the compact rig's hull. The same convex
+  // shape is used on land and in flight, so contact height controls a shot.
+  var SKY_SLIME_RIG_HULL = [0.40,0.18, 0.60,0.18, 1.25,0.80,
+    0.94,0.98, 0.06,0.98, -0.25,0.80];
+  var SKY_SLIME_RIG_RESTITUTION = 0.90;
+  var SKY_SLIME_RIG_FRICTION = 0.04;
 
   function skySlimeClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -229,6 +235,7 @@
         var impulse = -(1 + (relative < -18 ? 0.84 : 0)) * relative / sum;
         a.vx -= nx * impulse * invA; a.vy -= ny * impulse * invA;
         b.vx += nx * impulse * invB; b.vy += ny * impulse * invB;
+        if (a.playing || b.playing) { skySlimePlayContact(a); skySlimePlayContact(b); }
         skySlimeImpact(a, -nx, -ny, -relative * 0.6);
         skySlimeImpact(b, nx, ny, -relative * 0.6);
       }
@@ -271,30 +278,57 @@
     s.squash = skySlimeClamp(s.squash + s.squashV * h, -0.055, 0.115);
   }
 
+  function skySlimePlayContact(s) {
+    s.playing = true; s.playRest = 0;
+    s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5);
+  }
+
   function skySlimePlayer(s, rx, ry, rvx, rvy) {
     if (typeof bathMode !== 'undefined' && bathMode) return;
-    var qx = skySlimeClamp(s.x, rx, rx + PLAYER_W);
-    var qy = skySlimeClamp(s.y, ry, ry + PLAYER_H);
-    var dx = s.x - qx, dy = s.y - qy, dist = Math.hypot(dx, dy);
-    if (dist >= s.r) return;
-    var nx, ny;
-    if (dist > 0.001) { nx = dx / dist; ny = dy / dist; }
-    else {
-      var sides = [s.x - rx, rx + PLAYER_W - s.x, s.y - ry, ry + PLAYER_H - s.y];
-      var face = sides.indexOf(Math.min.apply(null, sides));
-      nx = face === 0 ? -1 : face === 1 ? 1 : 0;
-      ny = face === 2 ? -1 : face === 3 ? 1 : 0;
-      dist = -sides[face];
+    if (s.x + s.r < rx - 6 || s.x - s.r > rx + PLAYER_W + 6 ||
+        s.y + s.r < ry || s.y - s.r > ry + PLAYER_H + 1) return;
+    // Closest point on the convex hull gives both separation and impulse
+    // direction. Its lower shoulders meet a grounded ball below its center.
+    // No minimum pop, target velocity, aiming, or airborne-only impulse.
+    var hull = SKY_SLIME_RIG_HULL, best = Infinity, inside = true;
+    var dx = 0, dy = 0, faceX = 0, faceY = 0;
+    for (var i = 0; i < hull.length; i += 2) {
+      var j = (i + 2) % hull.length;
+      var ax = rx + hull[i] * PLAYER_W, ay = ry + hull[i + 1] * PLAYER_H;
+      var ex = (hull[j] - hull[i]) * PLAYER_W, ey = (hull[j + 1] - hull[i + 1]) * PLAYER_H;
+      var px = s.x - ax, py = s.y - ay, edge2 = ex * ex + ey * ey;
+      if (ex * py - ey * px < 0) inside = false;
+      var t = skySlimeClamp((px * ex + py * ey) / edge2, 0, 1);
+      var qx = px - ex * t, qy = py - ey * t, d2 = qx * qx + qy * qy;
+      if (d2 < best) {
+        best = d2; dx = qx; dy = qy;
+        var edge = Math.sqrt(edge2); faceX = ey / edge; faceY = -ex / edge;
+      }
     }
-    s.x += nx * (s.r - dist + 0.02); s.y += ny * (s.r - dist + 0.02);
+    var radius = s.r + 0.5, dist = Math.sqrt(best);
+    if (!inside && dist >= radius) return;
+    var nx = inside || dist < 0.001 ? faceX : dx / dist;
+    var ny = inside || dist < 0.001 ? faceY : dy / dist;
+    var depth = radius + (inside ? dist : -dist) + 0.006;
+    s.x += nx * depth; s.y += ny * depth;
     var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
     if (relative >= 0) return;
-    var mass = s.r * s.r / 625, invRig = 1 / 6;
-    var impulse = -(1 + (relative < -18 ? 0.62 : 0)) * relative / (1 / mass + invRig);
-    s.vx += impulse * nx / mass; s.vy += impulse * ny / mass;
+    var mass = s.r * s.r / 625, invMass = 1 / mass, invRig = 1 / 6;
+    var impulse = -(1 + (relative < -18 ? SKY_SLIME_RIG_RESTITUTION : 0)) * relative / (invMass + invRig);
+    s.vx += impulse * nx * invMass; s.vy += impulse * ny * invMass;
     player.vx = (player.vx || 0) - impulse * nx * invRig;
     player.vy = (player.vy || 0) - impulse * ny * invRig;
-    s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5);
+    // A brush can roll the ball off the hull. Friction exchanges tangent
+    // momentum and spin with the same 2/5 mr^2 inertia as ground contact.
+    var tx = -ny, ty = nx;
+    var slip = (s.vx - rvx) * tx + (s.vy - rvy) * ty - s.spin * s.r;
+    var friction = skySlimeClamp(-slip / (3.5 * invMass + invRig),
+      -impulse * SKY_SLIME_RIG_FRICTION, impulse * SKY_SLIME_RIG_FRICTION);
+    s.vx += friction * tx * invMass; s.vy += friction * ty * invMass;
+    s.spin -= friction / (0.4 * mass * s.r);
+    player.vx -= friction * tx * invRig; player.vy -= friction * ty * invRig;
+    if (s.playing || Math.hypot(rvx, rvy) > 8) skySlimePlayContact(s);
+    else { s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5); }
     s.settled = false;
     skySlimeImpact(s, nx, ny, -relative);
   }
@@ -326,7 +360,17 @@
     var door = (banyaDoorX0 + banyaDoorX1) * 0.5;
     for (var i = skySlimes.length - 1; i >= 0; i--) {
       var s = skySlimes[i];
-      s.visitT += dt; s.hopIn -= dt;
+      s.hopIn -= dt;
+      if (s.playing) {
+        // Flight remains ballistic for as long as the player keeps it going.
+        // Navigation resumes only after physical rest and stepping away.
+        var resting = (s._ground || s.wet > 0.18) && Math.hypot(s.vx, s.vy) < 12;
+        s.playRest = resting && !(s._interactT > 0) ? (s.playRest || 0) + dt : 0;
+        var nearby = Math.hypot(player.x + PLAYER_W / 2 - s.x, player.y + PLAYER_H / 2 - s.y) < TILE * 5;
+        if (s.playRest < 1.5 || nearby) continue;
+        s.playing = false; s.playRest = 0; s.hopIn = 0.6;
+      }
+      s.visitT += dt;
       if (s.visit === 'land') {
         if (s.age > 4 && s.entry < 0.05 && (s.settled || s.wet > 0.18)) {
           s.visit = 'wander'; s.visitT = 0; s.hopIn = 0.6;
@@ -356,7 +400,8 @@
         dir = s.wanderDir;
       }
       var ahead = tileAt(Math.floor((s.y + s.r - 12) / TILE), Math.floor((s.x + dir * (s.r + 20)) / TILE));
-      if (s.wet > 0.18) {
+      var shoreHop = s.wet > 0.18 && ahead && Math.abs(s.vy) < 30;
+      if (s.wet > 0.18 && !shoreHop) {
         s.vx += skySlimeClamp(dir * 80 - s.vx, -65 * dt, 65 * dt);
         continue;
       }
@@ -366,7 +411,7 @@
         (player.x + PLAYER_W / 2 - s.x) * dir > 0 &&
         Math.abs(player.x + PLAYER_W / 2 - s.x) < s.r + TILE * 2 &&
         Math.abs(player.y + PLAYER_H - s.y - s.r) < TILE;
-      s.vy = parkedRig ? -290 : ahead ? -235 : -170;
+      s.vy = shoreHop ? -310 : parkedRig ? -290 : ahead ? -235 : -170;
       s.squashV = -2; s._ground = false; s.settled = false;
       s.hopIn = 0.9 + s.seed * 0.35;
     }

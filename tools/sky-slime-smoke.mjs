@@ -80,6 +80,32 @@ try {
   })()`));
   await screenshot('rig-contact');
   console.log('CONTACT',await game('skySlimes.map(function(s){return {x:s.x,y:s.y,vx:s.vx,vy:s.vy};})'));
+  // A fixed drive + jet sequence uses the existing controls and no ball
+  // steering. It must turn a ground pop into two separated aerial contacts.
+  const aerial=await game(`(function(){
+    var original=skySlimePlayer,frame=0,events=[],peak=Infinity;
+    skySlimePlayer=function(s,rx,ry,vx,vy){
+      var before=s.vy;original(s,rx,ry,vx,vy);
+      if(s.vy<before-15 && (!events.length || frame-events[events.length-1].frame>4))
+        events.push({frame:frame,air:!player.onGround,vy:s.vy});
+    };
+    try {
+      ENABLE_BATH=true;skySlimeReset();skySlimeNext=100000;
+      player.x=(DECK_LEFT_COL-4)*TILE-110;player.y=SKY_ROWS*TILE-PLAYER_H;
+      player.vx=player.vy=0;player.lastMoveU=player.lastMoveR=false;player.onGround=true;
+      player.thrustSpool=0;player.jetPulse=0;player.fuel=100;
+      var b=skySlimeFresh(player.x+110,SKY_ROWS*TILE-25);b.r=25;b.spin=0;b.entry=0;b.seed=.3;skySlimes.push(b);
+      keys.ArrowRight=true;
+      for(frame=0;frame<66;frame++){
+        keys.ArrowUp=frame>=26 && frame<50;
+        update(1/60);skySlimeTick(1/60);updateCamera();peak=Math.min(peak,b.y);
+      }
+      render();return {hits:events,height:SKY_ROWS*TILE-25-peak,playing:b.playing};
+    } finally {skySlimePlayer=original;keys.ArrowUp=keys.ArrowRight=false;ENABLE_BATH=false;}
+  })()`);
+  console.log('AERIAL',aerial);
+  check('ordinary drive and jet controls can chain two aerial contacts',aerial.playing&&aerial.height>60&&aerial.hits.filter(h=>h.air).length>=2);
+  await screenshot('aerial');
   // Fill a real stone-lined basin next to the active camera and run the
   // normal CPU/GPU water update. All particles are real solver particles.
   await game(`(function(){
