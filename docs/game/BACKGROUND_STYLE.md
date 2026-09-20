@@ -593,15 +593,15 @@ rain palettes. These bounded, fading marks draw before scenery and fog, with
 no new simulated particles or terrain-cache invalidation. See [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for
 the bounded water cycle and persistence rules.
 
-**Physical snow.** Snow worlds replace the cosmetic dots with slow, world-anchored
-flakes. Each grain flutters in the existing wind and changes projected area as
-it tumbles. Three batched size bands use the existing snow, moon, cloud-shadow
-and sunset palettes; no blurred foreground veil or additive glitter. Settled
-powder and snow thrown by tracks, jets and blasts use the existing liquid
-solver's particle pass with matte, overlapping grains and a daylight/moonlight
-tint. Snow does not enter the glossy water surface pass. There is no separate
-column-bank cover or artificial track surface. Shader warmup includes the
-flake renderer; the shared particle shader compiles with the water engine.
+**Physical snow.** Snow worlds use fine, world-anchored grains drifting in the
+existing wind. Falling flakes, resting powder and snow thrown by tracks,
+jets and blasts all use the same 1.8-world-pixel grain and the same particle
+shader. They retain their size and daylight/moonlight tint when touching
+down. A denser field of small grains replaces the former large clumps and
+separate tumbling silhouettes. GPU flight positions use a small render-only
+buffer in the existing liquid pass, without activating a sky-wide physics
+grid. Snow does not enter the glossy water surface pass. There is no separate
+column-bank cover or artificial track surface.
 See [PARTICLE_SNOW.md](PARTICLE_SNOW.md) for physics and acceptance checks.
 
 **Storms.** Coverage→1, dark clouds, heavy precip, and full-screen lightning (`SKY.lightningFlash`, additive, fast decay, occasional double-strike) that lights the whole scene.

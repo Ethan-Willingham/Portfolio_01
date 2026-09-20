@@ -1141,6 +1141,7 @@
         var shearKeep = 1 / (1 + shearRate * stepDt);
         var lateralKeep = 1 / (1 + lateralRate * stepDt);
         vx *= lateralKeep;
+        if (material === 5) vy *= lateralKeep;
         gv00 *= shearKeep; gv01 *= shearKeep;
         gv10 *= shearKeep; gv11 *= shearKeep;
       }
@@ -2507,7 +2508,7 @@
       var d = liquidDensity[i] * LIQUID_INV_DENSITY + 0.5;
       if (d > 1.5) d = 1.5;
       var typ = liquidType[i];
-      var pointSize = typ === 5 ? 3.8 * dpws : (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
+      var pointSize = typ === 5 ? LIQUID_SNOW_DIAMETER * dpws : (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
       if (pointSize < 1.15) pointSize = 1.15;
       var o = count * 7;
       data[o    ] = (px - camX) * dpws;
@@ -2537,6 +2538,18 @@
       }
       count++;
     }
+    // Same vertex format, shader, colour and size before and after contact.
+    // Only the inexpensive flight integrator differs from the ground solver.
+    if (snowDrawEnabled()) for (var si = 0; si < snow.grains.length; si++) {
+      var sp = snow.grains[si];
+      if (sp.x < left || sp.x > right || sp.y < top || sp.y > bottom) continue;
+      var so = count * 7;
+      data[so] = (sp.x - camX) * dpws; data[so + 1] = (sp.y - camY) * dpws;
+      data[so + 2] = Math.max(1.15, LIQUID_SNOW_DIAMETER * dpws);
+      data[so + 3] = snowRGB[0]; data[so + 4] = snowRGB[1]; data[so + 5] = snowRGB[2]; data[so + 6] = 1;
+      count++;
+    }
+    liquidGLDrawCount = count;
     perfMark('render.liquidsCPU', _rlc0);
     var _rlu0 = performance.now();
     // v10.90 — always clear, even when count=0. As a DOM-layered
@@ -2590,7 +2603,7 @@
       // short tail after water leaves so the GPU-resident count (which lags the CPU
       // liquidCount) drains and the composite pass (loadOp:'clear') wipes the canvas
       // transparent, then stop dispatching entirely.
-      if (liquidCount > 0) {
+      if (liquidCount > 0 || (snowDrawEnabled() && snow.grains.length)) {
         liquidWGPU.draw();
         liquidWGPUIdleDrawFrames = 10;
       } else if (liquidWGPUIdleDrawFrames > 0) {
@@ -2625,7 +2638,11 @@
       liquidGLCanvas.style.display = 'block';
     }
     if (PERF_DISABLE_WATER) return;   // v11.75 — optimization-session toggle
-    if (!liquidCount && !oilSuckFx.length) return;
+    if (!liquidCount && !oilSuckFx.length && !(snowDrawEnabled() && snow.grains.length)) {
+      // Erase the last flake when it leaves the view or weather is disabled.
+      if (liquidGLDrawCount) drawLiquidsWebGL(0, 0, 0, 0);
+      return;
+    }
     var left = cam.x - 24;
     var right = cam.x + screenW + 24;
     var top = cam.y - 24;
@@ -2658,14 +2675,14 @@
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
       var typeId = pass;
       if (typeId >= 2 && typeId < 5) ctx.fillStyle = liquidCatalog[typeId].color;
-      if (typeId === 5) ctx.fillStyle = snowColors().body;
+      if (typeId === 5) ctx.fillStyle = snowCanvasColor();
       for (var i = 0; i < liquidCount; i++) {
         if (liquidType[i] !== typeId) continue;
         if (liquidX[i] < left || liquidX[i] > right || liquidY[i] < top || liquidY[i] > bottom) continue;
         var d = liquidDensity[i] * LIQUID_INV_DENSITY;
         var sizeMul = typeId === 1 ? LIQUID_OIL_PARTICLE_SIZE : LIQUID_WATER_PARTICLE_SIZE;
         var pointSize = LIQUID_CELL * LIQUID_PDELTA * 0.85 * Math.min(d + 0.5, 1.5) * 2 * sizeMul;
-        var rr = typeId === 5 ? 1.9 : Math.max(0.65, pointSize * 0.5);
+        var rr = typeId === 5 ? LIQUID_SNOW_DIAMETER * 0.5 : Math.max(0.65, pointSize * 0.5);
         ctx.fillRect(liquidX[i] - rr, liquidY[i] - rr, rr * 2, rr * 2);
         if (typeId !== 5 && liquidAeration[i] > 0.08) {
           ctx.fillStyle = type === 'water'

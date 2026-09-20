@@ -113,13 +113,16 @@
                                      // fine on WebGPU. CPU-fallback rest cost stays ~0 via the
                                      // v24.146 whole-body freeze.
   var LIQUID_MAX_CELLS = LIQUID_MAX_PARTICLES * 9;
-  // Dry snow, material 5 in the existing MLS-MPM solver. About four times
-  // water's volume per unit, soft compression, frictional slip and little rebound.
+  // Fine dry snow, material 5 in the existing MLS-MPM solver. Close-packed
+  // micrograins, soft compression, frictional slip and little rebound.
   // edit2: js/liquid-wgpu.js (GPU kernels and f32 self-test reference).
-  var LIQUID_SNOW_DENSITY = 1.1;
+  var LIQUID_SNOW_DENSITY = 3.2;
+  var LIQUID_SNOW_DIAMETER = 1.8;
+  var SNOW_RATE = 345, SNOW_FLAKE_CAP = 5400, SNOW_MASS_CAP = 120000;
+  var SNOW_ACTIVE_CAP = 36000, SNOW_CPU_CAP = 7000;
   var LIQUID_SNOW_STIFF = 1.25;
   var LIQUID_SNOW_SHEAR = 32;
-  var LIQUID_SNOW_DRAG = 5;
+  var LIQUID_SNOW_DRAG = 8;
   var LIQUID_SNOW_FRICTION = 180;
   var LIQUID_SNOW_BOUNCE = 0.025;
   var LIQUID_PDELTA = 0.5;

@@ -2,8 +2,6 @@
   // Type 5 is dry snow, origin 3 is weather. No column banks, synthetic
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
-  var SNOW_RATE = 115, SNOW_FLAKE_CAP = 1800, SNOW_MASS_CAP = 60000;
-  var SNOW_ACTIVE_CAP = 18000, SNOW_CPU_CAP = 5000;
   var snow = { time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
     cells: {}, active: 0, mass: 0, emitted: 0, melted: 0, collected: 0, temperature: -4 };
 
@@ -42,9 +40,9 @@
     for (var x = 3; x < COLS * TILE - 3; x += spacing) {
       var tile = tileAt(SKY_ROWS, Math.floor(x / TILE));
       if (!tile || tile.type === 'foundation' || !liquidWorldSolidAt(x, base + 1)) continue;
-      var layers = 1 + (wHash(Math.floor(x / 16), 0, 731) > 0.45 ? 1 : 0);
+      var layers = 2 + (wHash(Math.floor(x / 16), 0, 731) > 0.45 ? 1 : 0);
       for (var row = 0; row < layers; row++) {
-        if (snowStore(x + (row % 2) * spacing * 0.5, base - 1.2 - row * spacing, 0, 0)) {
+        if (snowStore(x + (row % 2) * spacing * 0.5, base - 1.2 - (row + wHash(Math.floor(x / spacing), row, 733) * 0.35) * spacing, 0, 0)) {
           snow.mass++; snow.emitted++;
         }
       }
@@ -136,11 +134,11 @@
     rainCatchLakes(dt, sky, left, right);
     var rate = SNOW_RATE * Math.min(1.7, width / 1100) * rain.intensity;
     if (sky && !snow.primed && rain.intensity > 0) {
-      var initial = Math.min(700, Math.round(rate * (surf - top) / 60));
+      var initial = Math.min(2100, Math.round(rate * (surf - top) / 60));
       for (var n = 0; n < initial; n++) snowSpawn(top, left, width, true);
       snow.primed = true;
     }
-    snow.credit = sky && rain.intensity > 0 ? Math.min(40, snow.credit + rate * dt) : 0;
+    snow.credit = sky && rain.intensity > 0 ? Math.min(80, snow.credit + rate * dt) : 0;
     var births = Math.min(Math.floor(snow.credit), SNOW_FLAKE_CAP - snow.grains.length);
     for (var b = 0; b < births; b++) snowSpawn(top, left, width, false);
     snow.credit -= births;
@@ -156,7 +154,7 @@
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
         var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) || (snow.cells[key] || 0) > 0 || (rain.cells[key] || 0) > 1;
-        if (contact) { remove = snowParticle(p.x, p.y, p.vx * 0.4, p.vy * 0.3); break; }
+        if (contact) { remove = snowParticle(p.x, p.y, p.vx, p.vy); break; }
         p.x = nx; p.y = ny;
       }
       if (!remove && !snowVisible(p.x, p.y) && p.y > surf - 10) remove = snowStore(p.x, p.y, p.vx, p.vy);

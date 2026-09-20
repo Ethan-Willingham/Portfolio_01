@@ -80,11 +80,11 @@ try {
     for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=rc-8;c<rc+45;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
     player.x=(rc+2)*TILE;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;drilling=null;cam.snap=true;timeOfDay=0.35;updateCamera();
   }; clearSnowFixture();
-  for(var x=(rc+5)*TILE;x<(rc+18)*TILE;x+=2.4)for(var h=1.4;h<Math.min(32,(x-(rc+5)*TILE)/4,((rc+18)*TILE-x)/4);h+=2.4){addLiquidParticle(5,x,sy-h,0,0,3);snow.active++;}
+  for(var x=(rc+5)*TILE;x<(rc+18)*TILE;x+=1.4)for(var h=1.4;h<Math.min(32,(x-(rc+5)*TILE)/4,((rc+18)*TILE-x)/4);h+=1.4){addLiquidParticle(5,x+(wHash(Math.floor(x*10),Math.floor(h*10),911)-0.5)*0.5,sy-h+(wHash(Math.floor(x*10),Math.floor(h*10),912)-0.5)*0.5,0,0,3);snow.active++;}
   snow.mass=snow.emitted=snow.active;window.seedCount=snow.active;`);
   await sleep(5000);await screenshot('snow-pile');
   const beforeDrive=await game(`({count:__particleSnow.stats().active,moving:__particleSnow.stats().moving,depth:sy-Math.min.apply(null,Array.from(liquidY.slice(0,liquidCount)))})`);console.log('RESTING PILE',beforeDrive);
-  check('snow holds a low pile without boiling or losing material',beforeDrive.count>1200 && beforeDrive.moving<30 && beforeDrive.depth>15 && beforeDrive.depth<50);
+  check('snow holds a low pile without boiling or losing material',beforeDrive.count>3500 && beforeDrive.moving<30 && beforeDrive.depth>15 && beforeDrive.depth<50);
   await game('window.driveStart=player.x;window.driveSamples=[];keys.ArrowRight=true');
   for(let i=0;i<9;i++){
     await sleep(320);
@@ -98,8 +98,12 @@ try {
   await sleep(1800);await screenshot('snow-tracks');
   await game('keys.ArrowLeft=true');await sleep(2300);await game('keys.ArrowLeft=false');
   check('the same particle collision works driving left',await game('player.onGround && __particleSnow.stats().moving>20'));
-  await game('window.jetMelt=snow.melted;keys.ArrowUp=true');await sleep(700);await screenshot('snow-jet');await game('keys.ArrowUp=false');
-  check('existing jet forces lift powder and exhaust warms it',await game('__particleSnow.stats().moving>50 && snow.melted>jetMelt'));
+  await game('window.jetMelt=snow.melted;keys.ArrowUp=true');
+  let jetMoving=0;
+  for(let i=0;i<7;i++) { await sleep(100);jetMoving=Math.max(jetMoving,await game('__particleSnow.stats().moving'));if(i===3)await screenshot('snow-jet'); }
+  await game('keys.ArrowUp=false');
+  console.log('JET',jetMoving,await game('({before:jetMelt,after:snow.melted})'));
+  check('existing jet forces lift powder and exhaust warms it',jetMoving>50 && await game('snow.melted>jetMelt'));
   await game('player.x=(rc+10)*TILE+3;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;keys.ArrowDown=true');await sleep(1600);await game('keys.ArrowDown=false');
   check('ordinary digging remains available through snow',await game('world[SKY_ROWS][rc+10]===null'));
 
@@ -124,15 +128,42 @@ try {
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;clearSnowFixture();world[SKY_ROWS][rc]={type:"stone",hp:10};for(var i=0;i<50;i++)addLiquidParticle(0,rc*TILE+5+i%20,sy-2,0,0,0);rainScan(10)');
   check('stone still holds water',await game('liquidCount===50'));
 
+  // Freeze the scene and compare a flake against that exact particle after
+  // transfer. Both must produce identical nonempty pixels in the surface
+  // renderer and with the legacy renderer selected.
+  await game('clearSnowFixture();liquidWGPU.uploadParticles();render()');
+  const clip=await game('({x:canvas.getBoundingClientRect().left+120*worldScale-12,y:canvas.getBoundingClientRect().top+100*worldScale-12,width:24,height:24,scale:1})');
+  for (const surface of [1,0]) {
+    await game(`liquidWGPU.setRenderParam('SURFACE_RENDER',${surface});snow.grains=[];while(liquidCount)removeLiquidParticle(liquidCount-1);liquidWGPU.uploadParticles();liquidWGPU.draw()`);
+    const blank=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+    await game('snow.grains=[{x:cam.x+120,y:cam.y+100,vx:0,vy:0,size:0.8,phase:1}];liquidWGPU.draw()');
+    const airborne=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+    await game('var flake=snow.grains.pop();snowParticle(flake.x,flake.y,flake.vx,flake.vy);liquidWGPU.uploadParticles();liquidWGPU.draw()');
+    const landed=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+    check('airborne and solver snow have identical visible pixels (surface='+surface+')',airborne!==blank && airborne===landed);
+  }
+  await game("liquidWGPU.setRenderParam('SURFACE_RENDER',1)");
+
   if(process.argv.includes('--soak')) {
-    await game('init();SNOW_RATE=115;weatherForce=4;weatherSetMood(4,true);gameRafId=requestAnimationFrame(loop)');await sleep(60000);await screenshot('snow-deep');
+    await game('init();SNOW_RATE=345;weatherForce=4;weatherSetMood(4,true);gameRafId=requestAnimationFrame(loop)');await sleep(60000);await screenshot('snow-deep');
     const stats=await ev('__particleSnow.stats()');console.log('LONG SNOW',stats);
-    check('sustained snowfall respects the real particle budgets',stats.active<=18000 && stats.mass<=60000 && stats.airborne<=1800);
+    check('sustained snowfall respects the real particle budgets',stats.active<=36000 && stats.mass<=120000 && stats.airborne<=5400);
   }
   if(process.argv.includes('--cpu')) {
     await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?snow=1&cpuwater=1&nosave=1&nopause=1&tod=0.35`});await ready();await sleep(6000);
     check('CPU fallback runs the same snow material',await game('(!liquidWGPU || !liquidWGPU.simActive) && snow.active>100 && Array.from(liquidType.slice(0,liquidCount)).some(function(t){return t===5;})'));
     await screenshot('snow-cpu');
+    await game('cancelAnimationFrame(gameRafId);gameRafId=0;while(liquidCount)removeLiquidParticle(liquidCount-1);snow.grains=[];render()');
+    const cpuClip=await game('({x:canvas.getBoundingClientRect().left+120*worldScale-12,y:canvas.getBoundingClientRect().top+100*worldScale-12,width:24,height:24,scale:1})');
+    const cpuBlank=(await send('Page.captureScreenshot',{format:'png',clip:cpuClip})).data;
+    await game('snow.grains=[{x:cam.x+120,y:cam.y+100,vx:0,vy:0,size:0.8,phase:1}];drawLiquids()');
+    const cpuAir=(await send('Page.captureScreenshot',{format:'png',clip:cpuClip})).data;
+    await game('var flake=snow.grains.pop();snowParticle(flake.x,flake.y,0,0);drawLiquids()');
+    const cpuGround=(await send('Page.captureScreenshot',{format:'png',clip:cpuClip})).data;
+    check('CPU snow keeps identical visible pixels on landing',cpuAir!==cpuBlank && cpuAir===cpuGround);
+    await game('while(liquidCount)removeLiquidParticle(liquidCount-1);drawLiquids()');
+    check('removing the last CPU grain clears its pixels',(await send('Page.captureScreenshot',{format:'png',clip:cpuClip})).data===cpuBlank);
+
   }
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await game('PAUSE_DISABLED=false');await ev("document.getElementById('gm-pause-btn').click()");await ev("document.getElementById('gm-options-btn').click()");await screenshot('snow-options-mobile');

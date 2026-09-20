@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.31';
+  var GAME_VERSION = 'v28.32';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -261,13 +261,16 @@
                                      // fine on WebGPU. CPU-fallback rest cost stays ~0 via the
                                      // v24.146 whole-body freeze.
   var LIQUID_MAX_CELLS = LIQUID_MAX_PARTICLES * 9;
-  // Dry snow, material 5 in the existing MLS-MPM solver. About four times
-  // water's volume per unit, soft compression, frictional slip and little rebound.
+  // Fine dry snow, material 5 in the existing MLS-MPM solver. Close-packed
+  // micrograins, soft compression, frictional slip and little rebound.
   // edit2: js/liquid-wgpu.js (GPU kernels and f32 self-test reference).
-  var LIQUID_SNOW_DENSITY = 1.1;
+  var LIQUID_SNOW_DENSITY = 3.2;
+  var LIQUID_SNOW_DIAMETER = 1.8;
+  var SNOW_RATE = 345, SNOW_FLAKE_CAP = 5400, SNOW_MASS_CAP = 120000;
+  var SNOW_ACTIVE_CAP = 36000, SNOW_CPU_CAP = 7000;
   var LIQUID_SNOW_STIFF = 1.25;
   var LIQUID_SNOW_SHEAR = 32;
-  var LIQUID_SNOW_DRAG = 5;
+  var LIQUID_SNOW_DRAG = 8;
   var LIQUID_SNOW_FRICTION = 180;
   var LIQUID_SNOW_BOUNCE = 0.025;
   var LIQUID_PDELTA = 0.5;
@@ -1909,8 +1912,9 @@
   var liquidGLLocSize = -1;
   var liquidGLLocColor = -1;
   var liquidGLLocResolution = null;
-  var liquidGLData = new Float32Array(LIQUID_MAX_PARTICLES * 7);
+  var liquidGLData = new Float32Array((LIQUID_MAX_PARTICLES + SNOW_FLAKE_CAP) * 7);
   var liquidGLDisabled = false;
+  var liquidGLDrawCount = 0;
   // v14.30 — WebGPU engine switches. The game has two engines for smoke +
   // water: the WebGPU pair (js/liquid-wgpu.js + js/smoke-wgpu.js) and the
   // original WebGL-smoke + CPU-water path. WebGPU only works in a SECURE
@@ -2010,6 +2014,7 @@
           return {
             camX: cam.x, camY: cam.y,
             snowLight: scatDayWeight(computeSunElevation(timeOfDay)),
+            airborneSnow: snowDrawEnabled() ? snow.grains : null,
             dpr: dpr, worldScale: worldScale,
             canvasW: canvas.width, canvasH: canvas.height,
             viewW: viewW, viewH: viewH,
@@ -10853,6 +10858,7 @@
         var shearKeep = 1 / (1 + shearRate * stepDt);
         var lateralKeep = 1 / (1 + lateralRate * stepDt);
         vx *= lateralKeep;
+        if (material === 5) vy *= lateralKeep;
         gv00 *= shearKeep; gv01 *= shearKeep;
         gv10 *= shearKeep; gv11 *= shearKeep;
       }
@@ -12219,7 +12225,7 @@
       var d = liquidDensity[i] * LIQUID_INV_DENSITY + 0.5;
       if (d > 1.5) d = 1.5;
       var typ = liquidType[i];
-      var pointSize = typ === 5 ? 3.8 * dpws : (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
+      var pointSize = typ === 5 ? LIQUID_SNOW_DIAMETER * dpws : (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
       if (pointSize < 1.15) pointSize = 1.15;
       var o = count * 7;
       data[o    ] = (px - camX) * dpws;
@@ -12249,6 +12255,18 @@
       }
       count++;
     }
+    // Same vertex format, shader, colour and size before and after contact.
+    // Only the inexpensive flight integrator differs from the ground solver.
+    if (snowDrawEnabled()) for (var si = 0; si < snow.grains.length; si++) {
+      var sp = snow.grains[si];
+      if (sp.x < left || sp.x > right || sp.y < top || sp.y > bottom) continue;
+      var so = count * 7;
+      data[so] = (sp.x - camX) * dpws; data[so + 1] = (sp.y - camY) * dpws;
+      data[so + 2] = Math.max(1.15, LIQUID_SNOW_DIAMETER * dpws);
+      data[so + 3] = snowRGB[0]; data[so + 4] = snowRGB[1]; data[so + 5] = snowRGB[2]; data[so + 6] = 1;
+      count++;
+    }
+    liquidGLDrawCount = count;
     perfMark('render.liquidsCPU', _rlc0);
     var _rlu0 = performance.now();
     // v10.90 — always clear, even when count=0. As a DOM-layered
@@ -12302,7 +12320,7 @@
       // short tail after water leaves so the GPU-resident count (which lags the CPU
       // liquidCount) drains and the composite pass (loadOp:'clear') wipes the canvas
       // transparent, then stop dispatching entirely.
-      if (liquidCount > 0) {
+      if (liquidCount > 0 || (snowDrawEnabled() && snow.grains.length)) {
         liquidWGPU.draw();
         liquidWGPUIdleDrawFrames = 10;
       } else if (liquidWGPUIdleDrawFrames > 0) {
@@ -12337,7 +12355,11 @@
       liquidGLCanvas.style.display = 'block';
     }
     if (PERF_DISABLE_WATER) return;   // v11.75 — optimization-session toggle
-    if (!liquidCount && !oilSuckFx.length) return;
+    if (!liquidCount && !oilSuckFx.length && !(snowDrawEnabled() && snow.grains.length)) {
+      // Erase the last flake when it leaves the view or weather is disabled.
+      if (liquidGLDrawCount) drawLiquidsWebGL(0, 0, 0, 0);
+      return;
+    }
     var left = cam.x - 24;
     var right = cam.x + screenW + 24;
     var top = cam.y - 24;
@@ -12370,14 +12392,14 @@
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
       var typeId = pass;
       if (typeId >= 2 && typeId < 5) ctx.fillStyle = liquidCatalog[typeId].color;
-      if (typeId === 5) ctx.fillStyle = snowColors().body;
+      if (typeId === 5) ctx.fillStyle = snowCanvasColor();
       for (var i = 0; i < liquidCount; i++) {
         if (liquidType[i] !== typeId) continue;
         if (liquidX[i] < left || liquidX[i] > right || liquidY[i] < top || liquidY[i] > bottom) continue;
         var d = liquidDensity[i] * LIQUID_INV_DENSITY;
         var sizeMul = typeId === 1 ? LIQUID_OIL_PARTICLE_SIZE : LIQUID_WATER_PARTICLE_SIZE;
         var pointSize = LIQUID_CELL * LIQUID_PDELTA * 0.85 * Math.min(d + 0.5, 1.5) * 2 * sizeMul;
-        var rr = typeId === 5 ? 1.9 : Math.max(0.65, pointSize * 0.5);
+        var rr = typeId === 5 ? LIQUID_SNOW_DIAMETER * 0.5 : Math.max(0.65, pointSize * 0.5);
         ctx.fillRect(liquidX[i] - rr, liquidY[i] - rr, rr * 2, rr * 2);
         if (typeId !== 5 && liquidAeration[i] > 0.08) {
           ctx.fillStyle = type === 'water'
@@ -35078,8 +35100,6 @@
   // Type 5 is dry snow, origin 3 is weather. No column banks, synthetic
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
-  var SNOW_RATE = 115, SNOW_FLAKE_CAP = 1800, SNOW_MASS_CAP = 60000;
-  var SNOW_ACTIVE_CAP = 18000, SNOW_CPU_CAP = 5000;
   var snow = { time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
     cells: {}, active: 0, mass: 0, emitted: 0, melted: 0, collected: 0, temperature: -4 };
 
@@ -35118,9 +35138,9 @@
     for (var x = 3; x < COLS * TILE - 3; x += spacing) {
       var tile = tileAt(SKY_ROWS, Math.floor(x / TILE));
       if (!tile || tile.type === 'foundation' || !liquidWorldSolidAt(x, base + 1)) continue;
-      var layers = 1 + (wHash(Math.floor(x / 16), 0, 731) > 0.45 ? 1 : 0);
+      var layers = 2 + (wHash(Math.floor(x / 16), 0, 731) > 0.45 ? 1 : 0);
       for (var row = 0; row < layers; row++) {
-        if (snowStore(x + (row % 2) * spacing * 0.5, base - 1.2 - row * spacing, 0, 0)) {
+        if (snowStore(x + (row % 2) * spacing * 0.5, base - 1.2 - (row + wHash(Math.floor(x / spacing), row, 733) * 0.35) * spacing, 0, 0)) {
           snow.mass++; snow.emitted++;
         }
       }
@@ -35212,11 +35232,11 @@
     rainCatchLakes(dt, sky, left, right);
     var rate = SNOW_RATE * Math.min(1.7, width / 1100) * rain.intensity;
     if (sky && !snow.primed && rain.intensity > 0) {
-      var initial = Math.min(700, Math.round(rate * (surf - top) / 60));
+      var initial = Math.min(2100, Math.round(rate * (surf - top) / 60));
       for (var n = 0; n < initial; n++) snowSpawn(top, left, width, true);
       snow.primed = true;
     }
-    snow.credit = sky && rain.intensity > 0 ? Math.min(40, snow.credit + rate * dt) : 0;
+    snow.credit = sky && rain.intensity > 0 ? Math.min(80, snow.credit + rate * dt) : 0;
     var births = Math.min(Math.floor(snow.credit), SNOW_FLAKE_CAP - snow.grains.length);
     for (var b = 0; b < births; b++) snowSpawn(top, left, width, false);
     snow.credit -= births;
@@ -35232,7 +35252,7 @@
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
         var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) || (snow.cells[key] || 0) > 0 || (rain.cells[key] || 0) > 1;
-        if (contact) { remove = snowParticle(p.x, p.y, p.vx * 0.4, p.vy * 0.3); break; }
+        if (contact) { remove = snowParticle(p.x, p.y, p.vx, p.vy); break; }
         p.x = nx; p.y = ny;
       }
       if (!remove && !snowVisible(p.x, p.y) && p.y > surf - 10) remove = snowStore(p.x, p.y, p.vx, p.vy);
@@ -35290,53 +35310,39 @@
       mass: active + snow.parked.length / 4 + snow.grains.length, airborne: snow.grains.length, moving: moving,
       emitted: snow.emitted, melted: snow.melted, collected: snow.collected, temperature: snow.temperature };
   } };
-  /* ---- Snow optics: slowly tumbling atmospheric flakes ---- */
-  function snowColors() {
-    var wp = weatherPalette(), arc = computeSunElevation(timeOfDay);
-    var day = scatDayWeight(arc), dusk = Math.max(0, 1 - Math.abs(Math.sin(arc)) * 5);
-    var light = wMix(wp.moonHi, wp.snow, 0.25 + day * 0.65);
-    light = wMix(light, wp.sunsetHi, dusk * 0.16);
-    var shade = wMix(wp.nightBase, wp.dayBase, 0.25 + day * 0.58);
-    return { top: wRGBA(light, 1), body: wRGBA(wMix(shade, light, 0.77), 1),
-      packed: wRGBA(wMix(shade, light, 0.51), 1), shade: wRGBA(wMix(shade, light, 0.36), 1),
-      far: wRGBA(light, 0.47), flake: wRGBA(light, 0.78), near: wRGBA(light, 0.95) };
-  }
+  /* ---- Snow optics: one grain from sky to ground ---- */
   function snowRenderRGB() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
     return [0.48 + 0.43 * day, 0.61 + 0.33 * day, 0.73 + 0.23 * day];
   }
+  function snowDrawEnabled() {
+    return worldSnowEnabled && !bathMode && !PERF_DISABLE_WEATHER && weatherTune.enabled;
+  }
+  function snowCanvasColor() {
+    var rgb = snowRenderRGB();
+    return 'rgb(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ')';
+  }
+  // GPU and WebGL draw airborne flakes in the SAME pass as material 5.
+  // This is only the Canvas fallback, using the same grain as its snow pile.
   function drawSnowflakes() {
-    if (!worldSnowEnabled || bathMode || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
-    var colors = snowColors(), ws = dpr * worldScale;
+    if (!snowDrawEnabled() || (liquidWGPU && liquidWGPU.renderActive) || (liquidGL && liquidGLProgram)) return;
+    var ws = dpr * worldScale, radius = LIQUID_SNOW_DIAMETER * 0.5;
     ctx.save();
     ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
-    for (var band = 0; band < 3; band++) {
-      ctx.fillStyle = band === 0 ? colors.far : band === 1 ? colors.flake : colors.near;
-      ctx.beginPath();
-      for (var i = 0; i < snow.grains.length; i++) {
-        var p = snow.grains[i];
-        if (Math.min(2, Math.floor(p.size * 3)) !== band || p.x < cam.x - 8 || p.x > cam.x + screenW + 8 || p.y < cam.y - 8 || p.y > cam.y + screenH + 8) continue;
-        // Projected area changes as each flake tumbles. After contact, the
-        // shared solver renders this mass using its own particle pass.
-        var face = 0.45 + 0.55 * Math.abs(Math.sin(snow.time * (1.1 + p.size) + p.phase));
-        var size = 0.65 + p.size * 1.35;
-        var x = Math.round(p.x * ws) / ws, y = Math.round(p.y * ws) / ws;
-        ctx.rect(x - size * 0.5, y - size * face * 0.5, size, Math.max(0.55, size * face));
-        if (band === 2) {
-          ctx.rect(x - size * 0.23, y - size * 0.7, size * 0.46, size * 1.4);
-        }
-      }
-      ctx.fill();
+    liquidCanvasClipTerrain();
+    ctx.fillStyle = snowCanvasColor();
+    for (var i = 0; i < snow.grains.length; i++) {
+      var p = snow.grains[i];
+      if (p.x < cam.x - 8 || p.x > cam.x + screenW + 8 || p.y < cam.y - 8 || p.y > cam.y + screenH + 8) continue;
+      ctx.fillRect(p.x - radius, p.y - radius, radius * 2, radius * 2);
     }
     ctx.restore();
   }
   function shaderWarmSnow() {
-    var enabled = worldSnowEnabled, grains = snow.grains;
-    try {
-      worldSnowEnabled = true; snow.grains = [];
-      for (var n = 0; n < 12; n++) snow.grains.push({ x: cam.x + 40 + n * 9, y: cam.y + 70, size: (n % 3) * 0.4, phase: n });
-      drawSnowflakes();
-    } finally { worldSnowEnabled = enabled; snow.grains = grains; }
+    // Shared snow shaders are compiled with the liquid renderer. Prime its
+    // small atmospheric upload too, without touching simulation particles.
+    if (liquidWGPU && liquidWGPU.renderActive) liquidWGPU.draw();
+    else drawSnowflakes();
   }
   // ====== RENDER: Parallax mountain layers ======
   //

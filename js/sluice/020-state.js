@@ -554,8 +554,9 @@
   var liquidGLLocSize = -1;
   var liquidGLLocColor = -1;
   var liquidGLLocResolution = null;
-  var liquidGLData = new Float32Array(LIQUID_MAX_PARTICLES * 7);
+  var liquidGLData = new Float32Array((LIQUID_MAX_PARTICLES + SNOW_FLAKE_CAP) * 7);
   var liquidGLDisabled = false;
+  var liquidGLDrawCount = 0;
   // v14.30 — WebGPU engine switches. The game has two engines for smoke +
   // water: the WebGPU pair (js/liquid-wgpu.js + js/smoke-wgpu.js) and the
   // original WebGL-smoke + CPU-water path. WebGPU only works in a SECURE
@@ -655,6 +656,7 @@
           return {
             camX: cam.x, camY: cam.y,
             snowLight: scatDayWeight(computeSunElevation(timeOfDay)),
+            airborneSnow: snowDrawEnabled() ? snow.grains : null,
             dpr: dpr, worldScale: worldScale,
             canvasW: canvas.width, canvasH: canvas.height,
             viewW: viewW, viewH: viewH,

@@ -21,10 +21,11 @@ Water, oil and the three mineral liquids keep their own existing behavior.
 
 | Constant | Value | Effect |
 |---|---:|---|
-| `LIQUID_SNOW_DENSITY` | 1.1 | About 3.6 times water's resting volume per particle |
+| `LIQUID_SNOW_DENSITY` | 3.2 | Fine grains pack at about 1.4 world pixels apart |
+| `LIQUID_SNOW_DIAMETER` | 1.8 | Same small grain in flight, piles and spray |
 | `LIQUID_SNOW_STIFF` | 1.25 | Softer pressure response under compression |
 | `LIQUID_SNOW_SHEAR` | 32 | Dissipates internal shearing instead of storing spring energy |
-| `LIQUID_SNOW_DRAG` | 5 | Settles lateral movement after disturbance |
+| `LIQUID_SNOW_DRAG` | 8 | Settles lateral and vertical movement after disturbance |
 | `LIQUID_SNOW_FRICTION` | 180 | Frictional yielding holds small piles against sideways creep |
 | `LIQUID_SNOW_BOUNCE` | 0.025 | Soft terrain contact |
 
@@ -36,10 +37,19 @@ use the same material parameters.
 
 Slow atmospheric flakes retain the rain system's inexpensive ballistic
 approach until their first contact, then become actual solver particles.
-Their lateral flutter and turning silhouettes follow the existing wind.
-The solver draws settled and thrown snow as matte overlapping grains in its
-existing particle pass. They never enter the glossy water surface pass.
-Lighting follows daylight and moonlight. There are no new textures or canvases.
+Lateral flutter follows the existing wind. Falling, settled and thrown snow
+all use the same particle shader, diameter, tint and canvas. The GPU uploads
+flight positions into a small reusable render-only buffer; flight does not
+activate physics cells across the sky. WebGL likewise appends the flakes to
+its existing vertex stream. Canvas uses the same small square before and
+after contact. Transfer preserves position and velocity, with no size change,
+colour change or intermediate visual phase. Grains never enter the glossy
+water surface pass. Lighting follows daylight and moonlight.
+
+Snowfall emits 345 grains per second at full intensity over the reference
+width, three times the former rate. The denser rest spacing keeps the smaller
+grains together in piles without making each storm three times as deep.
+The initial dusting uses two or three closely spaced rows.
 
 ## Thaw, storage and limits
 
@@ -56,8 +66,8 @@ The ordered identity-change operation cannot duplicate or teleport it.
 A full weather-water reservoir defers melting with the snow intact. Meltwater
 uses normal water physics, including soil absorption and finite lake storage.
 
-Active snow is capped at 18,000 particles on WebGPU or 5,000 on CPU, with
-1,800 airborne weather flakes and a 60,000-particle total snow allowance.
+Active snow is capped at 36,000 particles on WebGPU or 7,000 on CPU, with
+5,400 airborne weather flakes and a 120,000-particle total snow allowance.
 Offscreen particles are parked at their real coordinates and velocities;
 returning to the area restores them into the same solver. Parked snow can
 thaw into parked water. The shared solver reserves 4,096 slots for other liquids.
@@ -77,7 +87,10 @@ for Testing process and writes screenshots under `/tmp/sluice-snow-qa`.
 It checks native settings, boot, actual GPU snow, pile stability, driving both
 ways without alternate foot support, jets, digging, scoop conservation,
 in-place melting, exact save/load, legacy migration, budgets and CPU fallback.
-It also tests live GPU absorption for ordinary, poured, pond and rain water.
+It also compares rendered pixels before and after sky-to-solver transfer in
+both GPU rendering modes and the CPU fallback, checks that the last grain
+clears cleanly, and tests live GPU absorption for ordinary, poured, pond and
+rain water.
 
 `node tools/perf/liquid-materials.mjs --gpu` verifies the five existing liquids
 and snow together through GPU identity packing, physics and readback. Run

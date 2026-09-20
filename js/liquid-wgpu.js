@@ -139,13 +139,14 @@
    * literals) draw from one source. Values must track the CPU side; if
    * they drift, the self-test diff catches it.
    * -------------------------------------------------------------------- */
-  // Dry snow, material 5 in the existing MLS-MPM solver. About four times
-  // water's volume per unit, soft compression, frictional slip and little rebound.
+  // Fine dry snow, material 5 in the existing MLS-MPM solver. Close-packed
+  // micrograins, soft compression, frictional slip and little rebound.
   // edit2: js/liquid-wgpu.js (GPU kernels and f32 self-test reference).
-  var LIQUID_SNOW_DENSITY = 1.1;
+  var LIQUID_SNOW_DENSITY = 3.2;
+  var LIQUID_SNOW_DIAMETER = 1.8;
   var LIQUID_SNOW_STIFF = 1.25;
   var LIQUID_SNOW_SHEAR = 32;
-  var LIQUID_SNOW_DRAG = 5;
+  var LIQUID_SNOW_DRAG = 8;
   var LIQUID_SNOW_FRICTION = 180;
   var LIQUID_SNOW_BOUNCE = 0.025;
   var LIQUID_PDELTA            = 0.5;
@@ -2875,6 +2876,7 @@
         var shearKeepR = fr(1 / fr(1 + fr(fr(shearRateR) * dt)));
         var lateralKeepR = fr(1 / fr(1 + fr(fr(lateralRateR) * dt)));
         vx = fr(vx * lateralKeepR);
+        if (materialR === 5) vy = fr(vy * lateralKeepR);
         gv00 = fr(gv00 * shearKeepR); gv01 = fr(gv01 * shearKeepR);
         gv10 = fr(gv10 * shearKeepR); gv11 = fr(gv11 * shearKeepR);
       }
@@ -6059,6 +6061,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let shearKeep = 1.0 / (1.0 + shearRate * gp.stepDt);
     let lateralKeep = 1.0 / (1.0 + lateralRate * gp.stepDt);
     vx = vx * lateralKeep;
+    if (material == 5u) { vy = vy * lateralKeep; }
     gv00 = gv00 * shearKeep; gv01 = gv01 * shearKeep;
     gv10 = gv10 * shearKeep; gv11 = gv11 * shearKeep;
   }
@@ -7097,7 +7100,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
   // pointSize is the DIAMETER in device px; floor at 1.15 like the CPU.
   var pointSize = sizeBase * d;
-  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { pointSize = 3.8 * rp.dpws; }
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { pointSize = f32(${LIQUID_SNOW_DIAMETER}) * rp.dpws; }
   pointSize = max(pointSize, 1.15);
   let halfPx = pointSize * 0.5;
 
@@ -7615,6 +7618,7 @@ struct VOut {
   @location(1)       alpha : f32,
   @location(2)       world : vec2<f32>,
   @location(3)       color : vec3<f32>,
+  @location(4) @interpolate(flat) drySnow : u32,
 };
 
 fn dropletTerrainSolid(wp : vec2<f32>) -> bool {
@@ -7644,6 +7648,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   out.pos = vec4<f32>(0.0, 0.0, 0.0, 1.0);
   out.uv  = vec2<f32>(0.0, 0.0);
   out.alpha = 0.0;
+  out.drySnow = 0u;
   out.color = rp.waterColor.rgb;
   out.world = vec2<f32>(0.0, 0.0);
   let fl = flag[iid];
@@ -7656,16 +7661,16 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let scrY = (p.y - rp.camY) * rp.dpws;
   if (scrX < 0.0 || scrY < 0.0 || scrX >= rp.canvasW || scrY >= rp.canvasH) { return out; }
   if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) {
+    out.drySnow = 1u;
     let c = corner(vid);
-    let radius = (1.8 + f32(iid % 3u) * 0.12) * rp.dpws;
+    let radius = f32(${LIQUID_SNOW_DIAMETER * 0.5}) * rp.dpws;
     let off = c * radius;
     out.pos = vec4<f32>((scrX + off.x) / (rp.canvasW * 0.5) - 1.0,
                         1.0 - (scrY + off.y) / (rp.canvasH * 0.5), 0.0, 1.0);
-    out.uv = c * 0.85;
+    out.uv = c;
     out.alpha = 1.0;
     out.world = p.xy + off / max(rp.dpws, 0.001);
-    // Subtle fixed crystal variation, driven by real particle positions.
-    out.color = out.color * (0.94 + f32(iid % 4u) * 0.02);
+    // No index-based size/tint: a swap or sky-to-ground transfer must not pop.
     return out;
   }
   let dims = vec2<i32>(textureDimensions(fieldTex));
@@ -7740,7 +7745,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha * terrainRenderOpen(in.world);
   // A trace of foam tint keeps a two-pixel airborne drop legible against
   // dark terrain while preserving the base-water identity.
-  let dropRGB = mix(in.color, rp.waterFoam.rgb, 0.22);
+  let dropRGB = mix(in.color, rp.waterFoam.rgb, select(0.22, 0.0, in.drySnow != 0u));
   return vec4<f32>(dropRGB * a, a);
 }
 `;
@@ -8985,6 +8990,7 @@ struct P2GParams {
       },
       primitive: { topology: 'triangle-list' }
     });
+    instance.renderBGL = bgl;
     instance.renderBG = dev.createBindGroup({
       label: 'liquid.renderBG',
       layout: bgl,
@@ -9231,6 +9237,51 @@ struct P2GParams {
     }
   }
 
+  // Render-only weather positions use the identical material-5 shader and
+  // canvas as simulated snow. They never enter the physics grid or readback.
+  // The two small buffers are allocated once; no per-flake GPU objects.
+  function uploadAirborneSnow(instance, flakes) {
+    var count = flakes ? Math.min(flakes.length, 8192) : 0;
+    if (!count) return 0;
+    var dev = instance.device;
+    if (!instance.snowRenderPos) {
+      instance.snowRenderHost = new Float32Array(8192 * 4);
+      instance.snowRenderPos = dev.createBuffer({ label: 'liquid.snowFlightPos', size: 8192 * 16,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+      instance.snowRenderFlags = dev.createBuffer({ label: 'liquid.snowFlightFlags', size: 8192 * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+      // type 5 in bits [0:1,6], weather origin 3 in bits [2:3].
+      instance.queue.writeBuffer(instance.snowRenderFlags, 0, new Uint32Array(8192).fill(77));
+      instance.snowRenderBG = dev.createBindGroup({ layout: instance.renderBGL, entries: [
+        { binding: 0, resource: { buffer: instance.renderParamsBuf } },
+        { binding: 1, resource: { buffer: instance.snowRenderPos } },
+        // Snow's fixed diameter/colour ignores aux; reuse the position buffer.
+        { binding: 2, resource: { buffer: instance.snowRenderPos } },
+        { binding: 3, resource: { buffer: instance.snowRenderFlags } },
+        { binding: 4, resource: { buffer: instance.paramsBuf } },
+        { binding: 5, resource: { buffer: instance.buf.cellCount } }
+      ] });
+    }
+    if (instance.surfDropletBGL && instance.surfTexView && instance.snowRenderField !== instance.surfTexView) {
+      instance.snowDropletBG = dev.createBindGroup({ layout: instance.surfDropletBGL, entries: [
+        { binding: 0, resource: { buffer: instance.renderParamsBuf } },
+        { binding: 1, resource: { buffer: instance.snowRenderPos } },
+        { binding: 3, resource: { buffer: instance.snowRenderFlags } },
+        { binding: 4, resource: instance.surfTexView },
+        { binding: 5, resource: { buffer: instance.paramsBuf } },
+        { binding: 6, resource: { buffer: instance.buf.terrainMask } }
+      ] });
+      instance.snowRenderField = instance.surfTexView;
+    }
+    var host = instance.snowRenderHost;
+    for (var i = 0; i < count; i++) {
+      var p = flakes[i], k = i * 4;
+      host[k] = p.x; host[k + 1] = p.y; host[k + 2] = p.vx; host[k + 3] = p.vy;
+    }
+    instance.queue.writeBuffer(instance.snowRenderPos, 0, host.buffer, 0, count * 16);
+    return count;
+  }
+
   function runRender(instance, view) {
     if (!instance.renderReady) return 0;
     view = view || {};
@@ -9298,6 +9349,7 @@ struct P2GParams {
     var useSurface = LIQUID_SURFACE_RENDER >= 0.5 &&
       ensureSurfaceTargets(instance, cw, ch);
 
+    var snowCount = uploadAirborneSnow(instance, view.airborneSnow);
     var enc = dev.createCommandEncoder({ label: 'liquid.runRender' });
     if (useSurface) {
       var fieldPass = enc.beginRenderPass({
@@ -9351,12 +9403,18 @@ struct P2GParams {
         // 6 verts (unit quad) x `count` instances — one soft disc / particle.
         pass.draw(6, count);
       }
+      if (snowCount > 0) {
+        pass.setPipeline(instance.renderPipeline);
+        pass.setBindGroup(0, instance.snowRenderBG);
+        pass.setBindGroup(1, instance.terrainRenderBG);
+        pass.draw(6, snowCount);
+      }
       pass.end();
     }
     // v26.16: particles not covered by the actual field composite draw as
     // small visible droplets. Interior particles remain surface-only.
     if (useSurface && LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline &&
-        instance.surfDropletBG && count > 0) {
+        instance.surfDropletBG && (count > 0 || snowCount > 0)) {
       var dropPass = enc.beginRenderPass({
         label: 'liquid.dropletPass',
         colorAttachments: [{
@@ -9368,7 +9426,11 @@ struct P2GParams {
       dropPass.setPipeline(instance.surfDropletPipeline);
       dropPass.setBindGroup(0, instance.surfDropletBG);
       dropPass.setBindGroup(1, instance.terrainRenderBG);
-      dropPass.draw(6, count);
+      if (count > 0) dropPass.draw(6, count);
+      if (snowCount > 0 && instance.snowDropletBG) {
+        dropPass.setBindGroup(0, instance.snowDropletBG);
+        dropPass.draw(6, snowCount);
+      }
       dropPass.end();
     }
     // v24.160 — PARTICLE PROOF overlay: draw each particle as one hard dot
@@ -10735,6 +10797,8 @@ fn main() {
         }
         if (instance.simParamsBuf) { try { instance.simParamsBuf.destroy(); } catch (_) {} }
         if (instance.renderParamsBuf) { try { instance.renderParamsBuf.destroy(); } catch (_) {} }
+        if (instance.snowRenderPos) { try { instance.snowRenderPos.destroy(); } catch (_) {} }
+        if (instance.snowRenderFlags) { try { instance.snowRenderFlags.destroy(); } catch (_) {} }
         if (instance.terrainRenderBuf) { try { instance.terrainRenderBuf.destroy(); } catch (_) {} }
         if (instance.terrainRenderTex) { try { instance.terrainRenderTex.destroy(); } catch (_) {} }
         // Stage 8 — the readback mirror buffers. Unmap any in-flight map
