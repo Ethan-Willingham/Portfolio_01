@@ -111,4 +111,21 @@ for (const x of [0, 320 * 32 - 960]) {
   assert.ok(nearRig() > 100);
   assert.ok(s.snow.grains.every(p => p.x >= 2 && p.x < s.COLS * s.TILE));
 }
-console.log('PASS horizontal flight, reversals, world anchoring, streaming conservation, save/load, zoom, altitude and budgets');
+
+// Airflow must carry a flake's settling speed with it. Weak crosswind or
+// downwash cannot behave like an invisible shelf; real updrafts still lift.
+function settleInAir(air) {
+  reset(); s.SNOW_RATE = 0; s.rain.intensity = 0;
+  const flake = {x: 2400, y: -700, vx: 0, vy: 53, size: .5, phase: 1};
+  s.snow.grains = [flake]; s.snow.mass = 1;
+  s.snowAirAt = () => air;
+  step(0, 0, 90);
+  return flake.vy;
+}
+const calm = settleInAir([0, 0]), crosswind = settleInAir([8, 0]);
+const downwash = settleInAir([0, 15]), updraft = settleInAir([0, -120]);
+console.log('SETTLING', {calm, crosswind, downwash, updraft});
+assert.ok(crosswind > calm * .8, 'weak lateral air preserves the flake settling speed');
+assert.ok(downwash > calm, 'downward air accelerates falling snow');
+assert.ok(updraft < -40, 'strong upward air still entrains snow');
+console.log('PASS coverage, conservation, save/load, zoom, budgets and settling relative to airflow');

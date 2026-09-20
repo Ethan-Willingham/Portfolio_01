@@ -14,6 +14,7 @@ let left=0,right=0,up=0,inside=0,energy=0;
 for(let y=0;y<a.h;y++)for(let x=0;x<a.w;x++){
  const i=(y*a.w+x)*4,wx=a.x+(x+.5)*a.cell,wy=a.y+(y+.5)*a.cell,u=a.field[i],v=a.field[i+1];
  assert.ok(Number.isFinite(u)&&Number.isFinite(v));energy+=u*u+v*v;
+ if(x===0||y===0||x===a.w-1||y===a.h-1)assert.equal(Math.abs(u)+Math.abs(v),0,'exported airflow reaches ambient at every domain edge');
  if(wy>=128)inside=Math.max(inside,Math.abs(u)+Math.abs(v));
  if(wy>90&&wy<128&&wx<0)left=Math.min(left,u);
  if(wy>90&&wy<128&&wx>22)right=Math.max(right,u);

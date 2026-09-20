@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.36';
+  var GAME_VERSION = 'v28.37';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -35228,6 +35228,12 @@
       var bi = by * w + bx, f = bi * 4;
       var ux = a.solid[bi] ? 0 : (a.u[bi] + a.u[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
       var vy = a.solid[bi] ? 0 : (a.v[bi] + a.v[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
+      // Blend the exported disturbance into ambient air over four cells.
+      // The finite solve's rectangle is not a physical boundary. Exporting
+      // zero at its outer samples gives CPU and GPU the same continuous edge.
+      var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
+      edge = edge * edge * (3 - 2 * edge);
+      ux *= edge; vy *= edge;
       a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = 0;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }
@@ -35493,13 +35499,15 @@
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
       var flutter = Math.sin(snow.time * (1.4 + p.size) + p.phase) * (13 + p.size * 16);
-      p.vx += (wind + flutter - p.vx) * Math.min(1, dt * 1.5);
-      p.vy += (32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9 - p.vy) * Math.min(1, dt * 2);
+      var fall = 32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9;
       var air = snowAirAt(p.x, p.y);
-      if (Math.abs(air[0]) + Math.abs(air[1]) > 2) {
-        var airDrag = 1 - Math.exp(-12 * dt);
-        p.vx += (air[0] - p.vx) * airDrag; p.vy += (air[1] - p.vy) * airDrag;
-      }
+      // Flakes settle RELATIVE to the air. Relaxing toward raw jet velocity
+      // cancels their fall even in a weak crosswind, exposing the MAC box as
+      // a shelf of stalled snow. Add the jet disturbance to the ambient drift
+      // and settling speed; only a real updraft can hold a flake aloft.
+      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + air[1] * air[1]) / 80);
+      p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
+      p.vy += (fall + air[1] - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {

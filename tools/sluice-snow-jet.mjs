@@ -100,7 +100,13 @@ try {
     window.flightDensity=function(){return snow.grains.filter(function(p){
       return Math.abs(p.x-player.x-PLAYER_W/2)<180&&Math.abs(p.y-player.y)<140;
     }).length;};`);
-  await sleep(1800);
+  await sleep(4800);
+  const overhead=await game(`(function(){var parts=snow.grains.filter(function(p){
+    return Math.abs(p.x-player.x-PLAYER_W/2)<180&&p.y>player.y-105&&p.y<player.y-45;
+  });return {count:parts.length,vy:parts.reduce(function(sum,p){return sum+p.vy;},0)/Math.max(1,parts.length)};})()`);
+  console.log('OVERHEAD FALL',overhead);
+  check('flakes keep falling through the top of the jet airflow area',overhead.count>20&&overhead.vy>35);
+  await screenshot('snow-overhead-flow');
   const baseline=await game('flightDensity()'), densities=[];
   check('falling snow surrounds the airborne rig',baseline>100);
   for(const direction of [1,-1]) {

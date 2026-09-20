@@ -83,12 +83,17 @@ projection resolve the impinging jet, lateral wall flows and returning eddies.
 Terrain and the rig block normal flow. The moving window preserves overlapping
 world-space face velocities instead of dragging its wake with the camera.
 The airflow decays after thrust stops and idles after three seconds.
+Its exported velocity blends into ambient air over the outer four cells,
+so the finite simulation rectangle has no abrupt influence boundary.
 
 Aerodynamic drag entrains existing snow, with reduced exposure inside dense
 powder. The WebGPU kernel updates resident particle velocity before P2G;
 CPU fallback samples the same field and applies the same drag. It wakes the
 entrained grains without changing their identity or mass. Atmospheric flakes
-also feel the field. No decorative snow, launch wedges or prescribed upward
+settle relative to the moving air: the jet velocity adds to their normal falling
+and drifting motion. A weak crosswind cannot cancel gravity or build a shelf
+of slow flakes above the rig; an actual updraft can still lift them.
+No decorative snow, launch wedges or prescribed upward
 arcs are created. The existing liquid cone wake continues to work alongside
 the resolved air field. Jet heat is confined to a shorter, narrower core, so
 the cold return flow can carry powder without instantly turning it into water.
@@ -157,7 +162,9 @@ soil contact, stored-water drainage and a resting puddle on the live solver.
 projection, occlusion through a solid roof, window translation and shutdown.
 `node tools/sluice-snow-jet.mjs` runs a controlled live hover and low pass,
 checks entrainment outside the core and exact material accounting, then flies
-through several view widths in both directions and checks surrounding snowfall. It writes
+through several view widths in both directions and checks surrounding snowfall.
+An airborne hover also checks that flakes keep falling through the top of the
+jet airflow area without stalling. It writes
 its screenshots to `/tmp/sluice-snow-jet-qa`. Add `--cpu` to exercise the
 same interactions on the CPU solver.
 

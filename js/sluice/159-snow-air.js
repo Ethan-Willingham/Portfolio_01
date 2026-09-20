@@ -128,6 +128,12 @@
       var bi = by * w + bx, f = bi * 4;
       var ux = a.solid[bi] ? 0 : (a.u[bi] + a.u[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
       var vy = a.solid[bi] ? 0 : (a.v[bi] + a.v[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
+      // Blend the exported disturbance into ambient air over four cells.
+      // The finite solve's rectangle is not a physical boundary. Exporting
+      // zero at its outer samples gives CPU and GPU the same continuous edge.
+      var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
+      edge = edge * edge * (3 - 2 * edge);
+      ux *= edge; vy *= edge;
       a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = 0;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }

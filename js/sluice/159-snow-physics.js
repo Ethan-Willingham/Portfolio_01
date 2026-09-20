@@ -230,13 +230,15 @@
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
       var flutter = Math.sin(snow.time * (1.4 + p.size) + p.phase) * (13 + p.size * 16);
-      p.vx += (wind + flutter - p.vx) * Math.min(1, dt * 1.5);
-      p.vy += (32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9 - p.vy) * Math.min(1, dt * 2);
+      var fall = 32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9;
       var air = snowAirAt(p.x, p.y);
-      if (Math.abs(air[0]) + Math.abs(air[1]) > 2) {
-        var airDrag = 1 - Math.exp(-12 * dt);
-        p.vx += (air[0] - p.vx) * airDrag; p.vy += (air[1] - p.vy) * airDrag;
-      }
+      // Flakes settle RELATIVE to the air. Relaxing toward raw jet velocity
+      // cancels their fall even in a weak crosswind, exposing the MAC box as
+      // a shelf of stalled snow. Add the jet disturbance to the ambient drift
+      // and settling speed; only a real updraft can hold a flake aloft.
+      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + air[1] * air[1]) / 80);
+      p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
+      p.vy += (fall + air[1] - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {
