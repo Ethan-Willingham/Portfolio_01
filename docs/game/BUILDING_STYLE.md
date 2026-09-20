@@ -339,7 +339,7 @@ bath. The forge has an anvil, weighted hammer animation, and a quench pail.
 These explicit user-operated fixture animations extend the old exterior-only
 animation table; no surface-building theme or palette is changed.
 
-## 18. Bathhouse exterior (v28.26)
+## 18. Bathhouse exterior (v28.29)
 
 The tiered banya uses the gas station canopy's warm timber and red trim family.
 Its painted iron roofs use `redDark` faces, `redDeep` folds and right returns,
@@ -353,9 +353,13 @@ foundation beneath the bench and tower, including in older saves. Preserve
 ponds when an older world places the banya away from the town.
 
 The entrance has red stage velvet that sweeps into side gathers as the rig
-approaches. Each upper drape curves inward to a small brass tie, with a
-gently flared skirt below. The local `velvetBand()` helper follows one shared
-curve for the silhouette and broad folds, using `redDeep`, `redDark`, and
-restrained `redBase` highlights. Keep the dark doorway clear through the
-center, with a warm threshold. A simple rod replaces a deep valance; omit
-tassels and fine seams. Preserve the four-tier silhouette and deliberate entry.
+approaches. Each upper drape gathers into a small gold cord; the bundle
+below settles into an almost vertical, weighted hem. The local
+`velvetBand()` helper follows the cloth for both silhouette and folds.
+Layer the existing `redDeep`, `redDark`, and `redBase` ramp into broad, matte
+fold shoulders with narrow crests. Add small pleat pockets under the rod
+and slight differences in gather height and width between the panels.
+Avoid shiny edges, looping curves, and idle rippling. Keep the dark doorway
+clear through the center, with a warm threshold. A simple rod replaces a
+deep valance; omit tassels and fine seams. Preserve the four-tier silhouette
+and deliberate entry.

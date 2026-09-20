@@ -1087,8 +1087,8 @@
     ctx.fillText('Н', cx - 62, gy - 56);
     ctx.fillText('Я', cx - 62, gy - 34);
 
-    // Stage velvet: broad upper drapes sweep into a side gather, then
-    // flare gently toward the hem. Three red tones keep the folds quiet.
+    // Heavy stage velvet: soft fold shoulders, small gathers at the rod,
+    // and weighted skirts below the ties. The cloth rests when fully open.
     var dw = banyaDoorX1 - banyaDoorX0;
     var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
     var cxD = (banyaDoorX0 + banyaDoorX1) / 2;
@@ -1103,41 +1103,71 @@
     ctx.fillRect(banyaDoorX0 + 3, hemY - 10, dw - 6, 10);
     ctx.fillStyle = BLD.woodMid;
     ctx.fillRect(banyaDoorX0 + 3, hemY - 1, dw - 6, 2);
-    var clothH = hemY - clothY, pullY = clothH * 0.62;
-    var topW = dw / 2 - 6 * ct;
-    var pullW = dw / 2 - 18 * ct;
-    var hemW = dw / 2 - 13 * ct;
-    // Every fold follows the same drape, so it bends with the fabric.
-    // Fractions measure inward from the jamb; reverse the other edge to
-    // close each ribbon without clips, a cloth simulation, or tiny seams.
-    function velvetBand(from, to, color) {
+    var clothH = hemY - clothY, pullY, topW, pullW, hemW;
+    // All shading follows the drape. Broad shoulders around narrow crests
+    // describe the velvet's rounded folds without a glossy highlight.
+    function velvetBand(from, to, color, opacity) {
+      var alpha = ctx.globalAlpha;
+      ctx.globalAlpha *= opacity === undefined ? 1 : opacity;
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(topW * from, 0); ctx.lineTo(topW * to, 0);
       ctx.bezierCurveTo((topW + ct) * to, clothH * 0.23,
         (pullW + ct) * to, clothH * 0.44, pullW * to, pullY);
-      ctx.quadraticCurveTo(pullW * to, clothH * 0.83, hemW * to, clothH);
+      // The lower bundle opens just below the tie, then falls almost
+      // straight under its own weight instead of curling out at the foot.
+      ctx.bezierCurveTo((pullW + 3 * ct) * to, pullY + 9,
+        (hemW + 0.4 * ct) * to, clothH - 8, hemW * to, clothH);
       ctx.quadraticCurveTo(hemW * (from + to) / 2, clothH + 1.5, hemW * from, clothH);
-      ctx.quadraticCurveTo(pullW * from, clothH * 0.83, pullW * from, pullY);
+      ctx.bezierCurveTo((hemW + 0.4 * ct) * from, clothH - 8,
+        (pullW + 3 * ct) * from, pullY + 9, pullW * from, pullY);
       ctx.bezierCurveTo((pullW + ct) * from, clothH * 0.44,
         (topW + ct) * from, clothH * 0.23, topW * from, 0);
       ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = alpha;
     }
     for (var side = 0; side < 2; side++) {
+      // Small differences in the gathers avoid a mirrored cutout.
+      topW = dw / 2 - (side === 0 ? 5.5 : 6.5) * ct;
+      pullW = dw / 2 - (side === 0 ? 16.3 : 16.8) * ct;
+      hemW = dw / 2 - (side === 0 ? 14 : 13.4) * ct;
+      pullY = clothH * (side === 0 ? 0.61 : 0.635);
       ctx.save();
       ctx.translate(side === 0 ? banyaDoorX0 : banyaDoorX1, clothY);
       ctx.scale(side === 0 ? 1 : -1, 1);
       velvetBand(0, 1, BLD.redDark);
-      velvetBand(0.10, 0.27, BLD.redDeep);
-      velvetBand(side === 0 ? 0.40 : 0.48, 0.72, BLD.redBase);
-      velvetBand(0.86, 1, BLD.redDeep);
-      // One understated brass tie explains where the cloth is pulled.
+      var nap = side === 0 ? 1 : 0.82;
+      velvetBand(0.13, 0.39, BLD.redBase, 0.20 * nap);
+      velvetBand(0.17, 0.32, BLD.redBase, 0.24 * nap);
+      velvetBand(0.20, 0.26, BLD.redBase, 0.22 * nap);
+      velvetBand(0.49, 0.86, BLD.redBase, 0.24 * nap);
+      velvetBand(0.54, 0.76, BLD.redBase, 0.30 * nap);
+      velvetBand(0.59, 0.68, BLD.redBase, 0.25 * nap);
+      velvetBand(0, 0.07, BLD.redDeep, 0.75);
+      velvetBand(0.40, 0.47, BLD.redDeep, 0.65);
+      velvetBand(0.91, 1, BLD.redDeep);
+      // Pleat pockets under the rod anchor the folds to the hanging cloth.
+      ctx.fillStyle = BLD.redDeep;
+      ctx.fillRect(0, 0, topW, 2);
+      for (var pleat = 0; pleat < 3; pleat++) {
+        var pleatX = topW * (0.10 + pleat * 0.36);
+        ctx.beginPath(); ctx.moveTo(pleatX, 1);
+        ctx.lineTo(pleatX + 1.5, 1);
+        ctx.lineTo(pleatX + 0.8, 5 + pleat % 2);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.strokeStyle = BLD.redDeep; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, clothH);
+      ctx.quadraticCurveTo(hemW / 2, clothH + 1.5, hemW, clothH); ctx.stroke();
+      // A shallow cord follows the bundle instead of reading as a metal bar.
       if (ct > 0.65) {
         ctx.globalAlpha = (ct - 0.65) / 0.35;
-        ctx.fillStyle = BLD.goldDark;
-        ctx.fillRect(0, pullY - 1, pullW + 1, 3);
-        ctx.fillStyle = BLD.goldBase;
-        ctx.fillRect(0, pullY - 1, pullW + 1, 1);
+        ctx.lineWidth = 2; ctx.strokeStyle = BLD.goldDark;
+        ctx.beginPath(); ctx.moveTo(0, pullY - 1);
+        ctx.quadraticCurveTo(pullW / 2, pullY + 2, pullW + 0.5, pullY); ctx.stroke();
+        ctx.lineWidth = 0.8; ctx.strokeStyle = BLD.goldBase;
+        ctx.beginPath(); ctx.moveTo(0, pullY - 1.5);
+        ctx.quadraticCurveTo(pullW / 2, pullY + 1, pullW + 0.5, pullY - 0.5); ctx.stroke();
       }
       ctx.restore();
     }
