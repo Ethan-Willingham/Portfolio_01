@@ -146,17 +146,19 @@ try {
   // controls: a unit-only circle solver would miss the ledge-fall nudge.
   const landings=await game(`(function(){
     var results=[];
-    for(var fps of [30,60,144]){
+    for(var fps of [30,60,144])for(var offset of [-16,-8,0,8,16]){
       skySlimeReset();skySlimeNext=100000;ENABLE_BATH=false;
       var x=(DECK_LEFT_COL-4)*TILE, floor=SKY_ROWS*TILE;
-      Object.assign(player,{x:x-PLAYER_W/2,y:floor-PLAYER_H-140,vx:0,vy:0,
-        renderX:x-PLAYER_W/2,renderY:floor-PLAYER_H-140,onGround:false,onJello:false,
+      Object.assign(player,{x:x-PLAYER_W/2+offset,y:floor-PLAYER_H-140,vx:0,vy:0,
+        renderX:x-PLAYER_W/2+offset,renderY:floor-PLAYER_H-140,onGround:false,onJello:false,
         thrustSpool:0,jetForce:0,jetPulse:0,drillGlideT:0,fuel:100,
         lastMoveU:false,lastMoveR:false,lastMoveL:false});
       var b=skySlimeFresh(x,floor-25);b.r=25;b.spin=0;b.entry=0;b.playing=true;skySlimes.push(b);
-      var overlap=0,rebound=0,restSpeed=0;
+      var overlap=0,rebound=0,restSpeed=0,bounces=0,drift=0;
       for(var frame=0;frame<fps*10;frame++){
-        update(1/fps);skySlimeTick(1/fps);
+        update(1/fps);var incoming=player.vy;skySlimeTick(1/fps);
+        if(incoming>20&&player.vy< -15)bounces++;
+        drift=Math.max(drift,Math.abs(b.x-x),Math.abs(player.x-(x-PLAYER_W/2+offset)));
         var c=skySlimeRigContact(b,player.x,player.y);
         overlap=Math.max(overlap,c?c.depth:0);
         rebound=Math.max(rebound,-player.vy);
@@ -167,14 +169,21 @@ try {
       keys.ArrowUp=true;
       for(var frame=0;frame<fps*.4;frame++){update(1/fps);skySlimeTick(1/fps);}
       keys.ArrowUp=false;
-      results.push({fps:fps,overlap:overlap,rebound:rebound,restSpeed:restSpeed,
+      results.push({fps:fps,offset:offset,bounces:bounces,drift:drift,overlap:overlap,rebound:rebound,restSpeed:restSpeed,
         supported:supported,takeoff:startY-player.y,airborne:!player.onGround});
     }
     return results;
   })()`);
-  console.log('LANDINGS',landings);
+  console.log('LANDINGS',[30,60,144].map(fps=>{
+    const cases=landings.filter(l=>l.fps===fps);
+    return {fps,cases:cases.length,minBounces:Math.min(...cases.map(l=>l.bounces)),
+      maxDrift:Math.max(...cases.map(l=>l.drift)),maxOverlap:Math.max(...cases.map(l=>l.overlap)),
+      rebound:cases[0].rebound,minTakeoff:Math.min(...cases.map(l=>l.takeoff))};
+  }));
   check('landing gives a moderate bounce and settles at 30, 60 and 144 Hz',
     landings.every(l=>l.overlap<.05&&l.rebound>110&&l.rebound<155&&l.restSpeed<2&&l.supported));
+  check('slightly misplaced landings allow repeat bounces without sideways kicks',
+    landings.every(l=>l.bounces>=2&&l.drift<.05));
   check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));
   await screenshot('landing-rest');
   await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');

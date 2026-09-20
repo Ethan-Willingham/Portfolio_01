@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.29';
+  var GAME_VERSION = 'v28.30';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -67002,8 +67002,10 @@
   // A broader roof tolerates small header offsets. Moving the shoulders
   // out by the same amount keeps their ground-launch slope unchanged.
   // Land and air use this same hull; contact height still controls a shot.
+  // The broad, flat track base keeps a mostly centered landing vertical.
+  // Only its outer corners turn that load into a sideways knock.
   var SKY_SLIME_RIG_HULL = [0.30,0.18, 0.70,0.18, 1.35,0.80,
-    0.94,0.98, 0.06,0.98, -0.35,0.80];
+    1.25,0.98, -0.25,0.98, -0.35,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
   var SKY_SLIME_ROOF_RESTITUTION = 0.96;
   var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.38;

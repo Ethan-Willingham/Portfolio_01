@@ -149,7 +149,36 @@ for(const fps of [30,60,144]){
   assert(!w.skySlimeSupportsRig(w.player.x+70,w.player.y),'walking away loses support');
   landings.push({fps,rebound,restY:w.player.y});
 }
-// Off-center landings roll the ball out from under the rig, with no aiming.
+// A small landing error should allow another natural bounce. Keep both
+// bodies free to move so this would fail if a corner knocked them apart.
+function bounceRun(fps,offset,tuning={}){
+  const {w,s}=fixture(tuning);Object.assign(w.player,{x:489+offset,y:350,vx:0,vy:0});
+  let bounces=0,maxDrift=0;
+  for(let n=0;n<fps*3;n++){
+    w.player.vy+=760/fps;w.player.x+=w.player.vx/fps;w.player.y+=w.player.vy/fps;w.player.onGround=false;
+    if(w.player.y+26>512){w.player.y=486;w.player.vy=0;w.player.onGround=true;}
+    const incoming=w.player.vy;w.skySlimeTick(1/fps);
+    if(incoming>20&&w.player.vy< -15)bounces++;
+    maxDrift=Math.max(maxDrift,Math.abs(s.x-500),Math.abs(w.player.x-489-offset));
+  }
+  return {bounces,maxDrift,w,s};
+}
+const oldBase={SKY_SLIME_RIG_HULL:[.3,.18,.7,.18,1.35,.8,.94,.98,.06,.98,-.35,.8]};
+assert(bounceRun(60,12,oldBase).bounces<2,'reproduces the old corner knocking a second landing out of reach');
+for(const fps of [30,60,144])for(const offset of [-16,-12,-8,0,8,12,16]){
+  const run=bounceRun(fps,offset);
+  assert(run.bounces>=2,'mostly centered landings chain natural rebounds');
+  assert(run.maxDrift<.05,'vertical landings do not introduce sideways motion');
+}
+// Existing sideways motion still carries through a flat landing. The
+// broader base is contact geometry, never a horizontal brake or magnet.
+{
+  const {w,s}=fixture();Object.assign(w.player,{x:497,y:440,vx:65,vy:200});
+  Object.assign(s,{vx:65,spin:0});w.skySlimeTerrain(s);
+  w.skySlimePlayer(s,w.player.x,w.player.y,65,200);
+  assert(Math.abs(s.vx-65)<.001&&Math.abs(w.player.vx-65)<.001,'a landing preserves shared sideways motion');
+}
+// Deliberate edge landings still roll the ball away, with no aiming.
 for(const offset of [-20,20]){
   const {w,s}=fixture();Object.assign(w.player,{x:489+offset,y:440,vx:0,vy:200});
   w.skySlimeTerrain(s);w.skySlimePlayer(s,w.player.x,w.player.y,0,200);w.skySlimeTerrain(s);

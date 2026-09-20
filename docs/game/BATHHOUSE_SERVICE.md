@@ -104,7 +104,7 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.27)
+## Sky visitor physics and appearance (v28.30)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
@@ -158,13 +158,19 @@ Contact separation moves both bodies according to their mass. Terrain carries
 the load on any blocked axis, so a slime on the floor supports the falling rig
 instead of being repeatedly pushed into the floor and back inside the miner.
 A grounded miner also returns the roof bounce without recoiling into the soil.
-Off-center landings can roll the guest away. Small landing contacts settle;
+The flat underside spans 33 pixels, up from 19.4. Landings within 16.5 pixels
+of center load the guest vertically, so a modest aiming error no longer kicks
+it away before the miner can land for a second bounce. Both bodies remain free
+to move; shared sideways motion carries through, and outer-corner landings
+still knock the guest away. The existing 0.38 rebound loses energy normally.
+Small landing contacts settle;
 a resting guest counts as foot support, and normal jets can lift off it.
 The swept collision path includes position corrections without treating them
 as velocity on the next frame. Drawing receives only the small separation
 offset, preserving the miner's existing motion smoothing. The previous full
 sprite snap on every touch caused visible stutter during dribbling.
-Landing, resting, and takeoff checks run at 30, 60, and 144 Hz; the browser
+Landing, repeat bounces at several offsets, resting, and takeoff checks run
+at 30, 60, and 144 Hz; the browser
 dribble check also limits contact-induced sprite jumps to less than one pixel.
 
 Live jets now apply pressure to sky guests. Eleven rays from each of the two
