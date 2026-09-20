@@ -132,7 +132,7 @@ try {
     world[SKY_ROWS][rc-1]=null;world[SKY_ROWS+1][rc]=null;
     for(var i=0;i<1000;i++)addLiquidParticle(0,rc*TILE+2+(i%28),sy-2,0,0,3);
     rainScan(0.16);`);
-  check('dirt absorbs a puddle gradually over multiple scans',await game('liquidCount>400 && liquidCount<850 && rain.absorbed>150 && rain.damp.length>0'));
+  check('dirt absorbs a puddle quickly across multiple scans',await game('liquidCount>300 && liquidCount<550 && rain.absorbed>450 && rain.damp.length>0'));
   await game(`rainScan(10);
     for(var c=rc+1;c<=rc+3;c++)for(var i=0;i<100;i++)addLiquidParticle(0,c*TILE+16,sy-2,0,0,3);
     for(var i=0;i<100;i++)addLiquidParticle(0,rc*TILE+16,sy-14,0,0,3);
@@ -152,22 +152,24 @@ try {
   check('digging removes the old dirt wetting mark',await game('rain.damp.length===0'));
 
   await game(`liquidCount=0;rainReset(true);rain.time=10;
-    for(var c=rc;c<rc+12;c++)world[SKY_ROWS][c]={type:'dirt'};
+    for(var c=rc-2;c<rc+12;c++)world[SKY_ROWS][c]={type:'dirt'};
     player.x=rc*TILE;player.y=sy-PLAYER_H;player.vx=90;player.vy=0;player.onGround=true;
     for(var i=0;i<1000;i++)addLiquidParticle(0,player.x+PLAYER_W+16,sy-2,0,0,3);
     for(var i=0;i<100;i++)addLiquidParticle(0,player.x+TILE*10,sy-2,0,0,3);
+    for(var i=0;i<100;i++)addLiquidParticle(0,player.x-16,sy-2,0,0,3);
+    for(var i=0;i<100;i++)addLiquidParticle(0,player.x+PLAYER_W+52,sy-2,0,0,3);
     rainUpdatePlow();rainScan(10);`);
-  check('driving preserves the compressed bow wave while distant dirt still drains',await game('liquidCount===1000 && rain.absorbed===100'));
+  check('driving protects only a small crest, draining excess and water behind the rig',await game('liquidCount===RAIN_PLOW_CAP && rain.absorbed===1300-RAIN_PLOW_CAP'));
   await game('rainRecycle(1000)');
-  check('reservoir recycling does not eat the bow wave',await game('liquidCount===1000 && rain.recycled===0'));
-  await game('player.vx=0;rain.time+=0.4;for(var i=0;i<liquidCount;i++)liquidVX[i]=70;rainScan(10)');
-  check('moving wake survives briefly after the rig stops',await game('liquidCount===1000'));
+  check('reservoir recycling does not eat the bow wave',await game('liquidCount===RAIN_PLOW_CAP && rain.recycled===0'));
+  await game('player.vx=0;rain.time+=0.2;for(var i=0;i<liquidCount;i++)liquidVX[i]=70;rainScan(10)');
+  check('moving wake survives briefly after the rig stops',await game('liquidCount===RAIN_PLOW_CAP'));
   await game('for(var i=0;i<liquidCount;i++)liquidVX[i]=0;rainScan(10)');
   check('settled wake resumes dirt absorption',await game('liquidCount===0'));
   await game(`player.x=(rc+5)*TILE;player.vx=-90;rainUpdatePlow();
-    addLiquidParticle(0,player.x-50,sy-2,-50,0,3);rainScan(10);`);
+    addLiquidParticle(0,player.x-16,sy-2,-50,0,3);addLiquidParticle(0,player.x-50,sy-2,-50,0,3);rainScan(10);`);
   check('leftward driving protects the advancing side too',await game('liquidCount===1'));
-  await game('player.vx=0;rain.time+=1.3;rainScan(10)');
+  await game('player.vx=0;rain.time+=0.5;rainScan(10)');
   check('old wake protection expires even if liquid keeps jittering',await game('liquidCount===0'));
   await game(`rainReset(true);player.onGround=false;player.vx=90;rainUpdatePlow();
     addLiquidParticle(0,player.x+PLAYER_W+16,sy-2,0,0,3);rainScan(10);player.vx=0;`);
@@ -185,7 +187,7 @@ try {
     return result;
   })()`);
   console.log('One second of dirt contact:',drainage);
-  check('drainage rate stays consistent across 30, 60 and 144 FPS',drainage.every(v=>v.remaining>=75&&v.remaining<=210));
+  check('dirt removes at least 98% of the contact film within one second at 30, 60 and 144 FPS',drainage.every(v=>v.remaining<=40));
   await game(`liquidCount=0;rainReset(true);
     for(var i=0;i<RAIN_DAMP_CAP+100;i++)rainDampEdge(SKY_ROWS,20+i,0,(20+i)*TILE+4,sy);`);
   check('damp visuals have a hard cache budget',await game('rain.damp.length===RAIN_DAMP_CAP && Object.keys(rain.dampCells).length===RAIN_DAMP_CAP'));
@@ -211,6 +213,7 @@ try {
     await game(`timeOfDay=0.35;tutorialDone=true;
       window.plowSamples=[];window.plowStart=player.x;
       keys.ArrowLeft=true;`);
+    let peakFront=0;
     for(let i=0;i<10;i++) {
       await sleep(500);
       const state=await game(`(function(){liquidToolSync();var front=0,moving=0,maxHeight=0;
@@ -223,10 +226,11 @@ try {
       })()`);
       console.log('Driving rain:',state);
       await game(`plowSamples.push(${JSON.stringify(state)})`);
+      if(state.ground && state.moving>=8 && state.front>peakFront){peakFront=state.front;await screenshot('rain-plow-peak');}
     }
     await screenshot('rain-plow');
     await game('keys.ArrowLeft=false');
-    check('live GPU driving gathers moving rain in front of the rig',await game('player.x<plowStart-100 && plowSamples.some(function(s){return s.ground && s.front>30 && s.moving>10;})'));
+    check('live GPU driving still gathers a small moving crest',await game('player.x<plowStart-100 && plowSamples.some(function(s){return s.ground && s.front>=16 && s.moving>=8 && s.height>=3;})'));
     check('driving stays within the original small rain budget',await game('rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP'));
     await sleep(2500);await screenshot('rain-plow-settled');
   }
@@ -237,6 +241,31 @@ try {
   await ev("document.getElementById('gm-options-btn').click();document.getElementById('gm-rain-label').scrollIntoView({block:'center'})");
   await screenshot('options-mobile');
   check('mobile rain setting fits the viewport',await ev("(function(){var r=document.getElementById('gm-rain-on').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.height>=40;})()"));
+  if (process.argv.includes('--drain')) {
+    await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&rain=1&tod=0.35`});await ready();
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'))");
+    await game(`liquidToolSync();liquidCount=0;rainReset(true);rain.primed=true;rainSpawn=function(){};
+      surfacePonds=[];surfacePondBasins=[];surfaceBasinByCol=null;
+      var sy=SKY_ROWS*TILE;var rc=80;
+      for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=rc-5;c<rc+20;c++){
+        world[r][c]={type:'dirt',hp:10};invalidateTerrainAround(r,c);
+      }
+      player.x=(rc+9)*TILE;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;
+      for(var j=0;j<20;j++)for(var k=0;k<100;k++){
+        var i=addLiquidParticle(0,rc*TILE+k*1.25,sy-1.3-j*1.25,0,0,3);
+        liquidSleeping[i]=1;liquidRestFrames[i]=LIQUID_SLEEP_FRAMES;
+      }
+      liquidOps.length=0;liquidOpsOverflow=true;liquidMutationSeq++;`);
+    for(let n=0;n<3;n++){
+      await sleep(2000);
+      console.log('Resting dirt puddle at '+(n+1)*2+'s:',await game(`(function(){liquidToolSync();var count=0,sleeping=0,minGap=Infinity,maxGap=0;
+        for(var i=0;i<liquidCount;i++)if(liquidOrigin[i]===3){count++;sleeping+=liquidSleeping[i];minGap=Math.min(minGap,SKY_ROWS*TILE-liquidY[i]);maxGap=Math.max(maxGap,SKY_ROWS*TILE-liquidY[i]);}
+        return {count:count,sleeping:sleeping,minGap:minGap,maxGap:maxGap,absorbed:rain.absorbed};})()`));
+    }
+    await screenshot('rain-deep-puddle-drained');
+    check('a sleeping 2000-particle puddle drains completely into dirt',await game('liquidCount<20'));
+  }
   console.log('Errors:',JSON.stringify(errors));
   check('no runtime or shader errors',errors.length===0);
   console.log('Screenshots: '+out);

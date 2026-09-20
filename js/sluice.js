@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.10';
+  var GAME_VERSION = 'v28.11';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -32911,6 +32911,7 @@
   var RAIN_WATER_CAP = 6000;
   var RAIN_CPU_CAP = 2400;
   var RAIN_DAMP_CAP = 256;
+  var RAIN_PLOW_CAP = 96;
   var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, waterCount: 0,
     drops: [], impacts: [], parked: [], cells: {}, intensity: 0.8,
     plow: { x0: 0, x1: 0, y0: 0, y1: 0, freshUntil: 0, until: 0 },
@@ -32944,13 +32945,13 @@
   function rainUpdatePlow() {
     if (!player || !player.onGround || gameOver || gameWon || Math.abs(player.vx) < 12) return;
     var p = rain.plow, right = player.vx > 0, feet = player.y + PLAYER_H;
-    // A short bow-wave pocket follows the tracks in either direction. Protect
-    // its compressed, momentarily still water too, before the solver kicks it.
-    p.x0 = player.x - (right ? 24 : 72);
-    p.x1 = player.x + PLAYER_W + (right ? 72 : 24);
-    p.y0 = feet - 32; p.y1 = feet + 6;
-    p.freshUntil = rain.time + 0.35;
-    p.until = rain.time + 1.25;
+    // Only the advancing track gets a small pocket. Soil behind the rig and
+    // beyond the bow wave keeps draining even during sustained driving.
+    p.x0 = right ? player.x + PLAYER_W - 4 : player.x - 48;
+    p.x1 = right ? player.x + PLAYER_W + 48 : player.x + 4;
+    p.y0 = feet - 18; p.y1 = feet + 4;
+    p.freshUntil = rain.time + 0.12;
+    p.until = rain.time + 0.45;
   }
   function rainPlowHolds(i) {
     var p = rain.plow, x = liquidX[i], y = liquidY[i];
@@ -32995,11 +32996,11 @@
   // One slow scan maintains contact occupancy and streams rain outside the
   // solver's camera window. Saved rain uses this same bounded coordinate list.
   function rainScan(dt) {
-    var cells = {}, count = 0, margin = 220;
+    var cells = {}, count = 0, held = 0, margin = 220;
     // Exponential removal gives the same drainage per second at any frame
     // rate. Individual subpixel particles disappear over several scans, so
     // a puddle subsides instead of an entire tile's water blinking away.
-    var soakChance = 1 - Math.exp(-2.8 * (dt || 0));
+    var soakChance = 1 - Math.exp(-5.5 * (dt || 0));
     var x0 = cam.x - margin, x1 = cam.x + screenW + margin;
     var y0 = cam.y - margin, y1 = cam.y + screenH + margin;
     for (var d = rain.damp.length - 1; d >= 0; d--) {
@@ -33016,7 +33017,10 @@
           removeLiquidParticle(i);
           continue;
         }
-        if (!rainPlowHolds(i) && Math.random() < soakChance && rainSoakAt(x, y, true)) {
+        // Protect enough water for a little crest, never an entire puddle.
+        var plowed = held < RAIN_PLOW_CAP && rainPlowHolds(i);
+        if (plowed) held++;
+        if (!plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
           removeLiquidParticle(i);
           continue;
         }
