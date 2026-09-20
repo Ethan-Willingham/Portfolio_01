@@ -10,28 +10,29 @@
 > intentional material effect; steel panels and labels retain flat, solid fills.
 > The bath continues to use real liquid and steam behind its separate view.
 
-> **Loading and arrival (2026-09-12).** The game stage has an opaque loading
-> screen in the initial HTML, before the deferred game scripts. A restrained
-> drill-and-strata mark, cream SLUICE wordmark, brass activity line, and plain
-> status copy share the gunmetal UI tokens. The critical styles live inline;
-> their fallback colors mirror `020-state.js` until the menu tokens are set.
-> The game container must not inherit the site's entrance fade. Reduced motion
-> stops the activity animation and removes the reveal fade.
+> **Loading and arrival (2026-09-20, v28.49).** The initial HTML contains an
+> opaque gunmetal loading screen, a cream SLUICE wordmark and a drill/strata mark.
+> Its segmented rail counts actual settled startup gates, with an explicit
+> "Completed steps, not time remaining" label. Five rows group game scripts,
+> world preparation, optional assets, scene/effect preparation and GPU queues.
+> The active operation, real draw counts and elapsed time sit above the rows.
+> No timer advances the rail. Reduced motion removes the reveal fade.
 >
-> `045-loading.js` holds gameplay and input through preparation and reveal.
-> Startup waits for each Commit Mono weight, the moon map, and the active water
-> backend to settle, with bounded fallback for optional resources. It then
-> warms the actual destination, including terrain, cloud art, trees, smoke,
-> and the arrival pond. Readiness uses rendered cache state, never a pretend
-> percentage or an arbitrary loading duration. No music-download gate.
+> Loading details opens the live diagnostic report and Copy report. Failures
+> identify the resource or exception, keep the cover in place and offer Reload
+> game. Optional timeouts record the fallback actually selected. The same report
+> remains in Pause > Loading report, along with the initial startup when a later
+> scene rebuild replaces the current report. See [LOADING.md](LOADING.md).
 >
-> New Game shows the cover and yields two animation frames before world
-> generation. Recovery to town uses it only when destination chunks are cold.
-> Shops, menus, zoom, ordinary travel, and the existing teleport/banya effects
-> keep their normal transitions. A failed startup offers Reload game without
-> erasing the saved run. A slow startup offers the same action while continuing
-> to prepare. The art bench retains its synchronous initialization contract.
+> `045-loading.js` freezes gameplay through preparation and reveal. It waits for
+> both HUD font weights, the moon map and water startup, then warms destination
+> caches. `046-shader-warm.js` yields between representative drawing passes;
+> each pass restores borrowed state. Complete cache frames and bounded GPU waits
+> still govern arrival. Audio downloads are deferred until interaction.
 >
+> New Game paints the cover before synchronous world generation. Cold recovery
+> and graphics changes use the same instrumentation; cached effects explicitly
+> report reuse. The art bench retains synchronous initialization without a cover.
 > Verify with `DUMP=/tmp/sluice-loading node tools/sluice-loading-smoke.mjs`.
 
 

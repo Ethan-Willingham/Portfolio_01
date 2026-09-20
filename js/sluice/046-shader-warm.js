@@ -21,63 +21,73 @@
     return canvas.width + ':' + canvas.height + ':' + dpr * worldScale + ':' + TERRAIN_CHUNK_RENDER_SCALE;
   }
 
-  // Called by renderLoadingScene after its ordinary scene render. Returns true
-  // on the frame that ran the passes, so loading counts fresh frames after it.
+  // One representative draw per frame keeps the loading report responsive.
+  // Each pass restores borrowed world state before yielding back to the browser.
   function prepareShaderWarmup() {
     var key = shaderWarmKey();
-    if (shaderWarmState && shaderWarmState.key === key) return false;
-    shaderWarmState = runShaderWarmup(key);
-    window.__shaderWarm = shaderWarmState;
-    return true;
-  }
-
-  function runShaderWarmup(key) {
-    var state = { key: key, ms: 0, passes: 0, errors: [], times: {} };
-    var warm = document.createElement('canvas');
-    // Two spare pixels keep a full-view opaque fill (a magma band, a cave
-    // wall) from counting as a whole-canvas overwrite, which would discard
-    // the passes queued before it.
-    warm.width = canvas.width + 2;
-    warm.height = canvas.height + 2;
-    var warmCtx = warm.getContext('2d');
-    if (!warmCtx) return state;
-    var passes = [
-      ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
-      ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
-      ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
-      ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); }],
-      ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
-    ];
-    var mainCtx = ctx, ws = dpr * worldScale, t0 = performance.now();
-    ctx = warmCtx;
-    try {
-      // Once on the camera's pixel grid and once a fraction off it: moving
-      // edges select anti-aliased variants that a resting view never uses.
-      for (var round = 0; round < 2; round++) {
-        for (var i = 0; i < passes.length; i++) {
-          var name = passes[i][0];
-          if (round && (name === 'menus' || name === 'terrain' || name === 'sky')) continue;
-          var tp = performance.now();
-          ctx.save();
-          try {
-            passes[i][1](ws, round ? 0.37 : 0, round ? 0.21 : 0);
-            state.passes++;
-          } catch (e) {
-            state.errors.push(name + ': ' + e);
-          }
-          ctx.restore();
-          state.times[name] = Math.round((state.times[name] || 0) + performance.now() - tp);
-        }
-      }
-    } finally {
-      ctx = mainCtx;
+    if (shaderWarmState && shaderWarmState.key === key && shaderWarmState.done) {
+      var reused = shaderWarmState.generation !== gameLoadingGeneration;
+      loadingTask('shaders', shaderWarmState.errors.length ? 'fallback' : reused ? 'skipped' : 'done',
+        (reused ? 'Reusing previous warm-up. ' : '') + shaderWarmState.passes + '/' + shaderWarmState.total + ' draws succeeded. ' +
+        (shaderWarmState.errors.length ? shaderWarmState.errors.join('; ') : 'Drawing programs are warm.') +
+        ' Pass times (ms): ' + JSON.stringify(shaderWarmState.times),
+        { done: shaderWarmState.attempted, total: shaderWarmState.total, unit: 'draws' });
+      return false;
     }
-    var tr = performance.now();
-    try { warmCtx.getImageData(0, 0, 1, 1); } catch (e) { state.errors.push('readback: ' + e); }
-    state.times.raster = Math.round(performance.now() - tr);
-    warm.width = warm.height = 0;
-    state.ms = Math.round(performance.now() - t0);
-    return state;
+    if (!shaderWarmState || shaderWarmState.key !== key) {
+      if (shaderWarmState && shaderWarmState.canvas) shaderWarmState.canvas.width = shaderWarmState.canvas.height = 0;
+      var passes = [
+        ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
+        ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
+        ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
+        ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); }],
+        ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
+      ];
+      var jobs = [];
+      for (var round = 0; round < 2; round++) for (var i = 0; i < passes.length; i++) {
+        if (round && (passes[i][0] === 'menus' || passes[i][0] === 'terrain' || passes[i][0] === 'sky')) continue;
+        jobs.push({ name: passes[i][0], draw: passes[i][1], round: round });
+      }
+      var warm = document.createElement('canvas');
+      warm.width = canvas.width + 2; warm.height = canvas.height + 2;
+      shaderWarmState = { key: key, ms: 0, passes: 0, attempted: 0, total: jobs.length, errors: [], times: {},
+        jobs: jobs, canvas: warm, context: warm.getContext('2d'), done: false, generation: gameLoadingGeneration };
+      window.__shaderWarm = shaderWarmState;
+      loadingTask('shaders', 'running', 'Preparing rig, terrain, weather, slime, and menu drawing programs.', { done: 0, total: jobs.length, unit: 'draws' });
+      return true;
+    }
+    var state = shaderWarmState, mainCtx = ctx, t0 = performance.now();
+    if (!state.context) {
+      state.errors.push('Warm-up canvas unavailable; drawing programs will compile during play.');
+      state.done = true;
+    } else {
+      var job = state.jobs[state.attempted];
+      ctx = state.context;
+      ctx.save();
+      try {
+        job.draw(dpr * worldScale, job.round ? 0.37 : 0, job.round ? 0.21 : 0);
+        state.passes++;
+      } catch (e) {
+        state.errors.push(job.name + ': ' + e);
+      } finally {
+        ctx.restore(); ctx = mainCtx;
+      }
+      state.attempted++;
+      state.times[job.name] = Math.round((state.times[job.name] || 0) + performance.now() - t0);
+      state.done = state.attempted === state.total;
+      loadingTask('shaders', 'running', 'Drew ' + job.name + (job.round ? ' at a moving edge.' : '.') +
+        (state.done ? ' Flushing the warm-up canvas.' : ' Next: ' + state.jobs[state.attempted].name + '.'),
+        { done: state.attempted, total: state.total, unit: 'draws' });
+    }
+    if (state.done) {
+      var tr = performance.now();
+      try { if (state.context) state.context.getImageData(0, 0, 1, 1); } catch (e) { state.errors.push('readback: ' + e); }
+      state.times.raster = Math.round(performance.now() - tr);
+      state.canvas.width = state.canvas.height = 0;
+      delete state.canvas; delete state.context; delete state.jobs;
+    }
+    state.ms += Math.round(performance.now() - t0);
+    return true;
   }
 
   // The whole scene from high above the town, where the sky, bank edge and

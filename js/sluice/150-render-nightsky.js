@@ -1600,6 +1600,7 @@
   // it; the procedural disc is the fallback until it's ready.
   var moonImageReady = false;
   var moonTexData = null, moonTexW = 0, moonTexH = 0;
+  loadingTask('moon', 'running', 'Loading and decoding assets/images/moon.jpg.');
   var moonImagePromise = new Promise(function (resolve) {
     try {
       var img = new Image();

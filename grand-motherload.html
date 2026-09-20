@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.48">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.49">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -116,30 +116,55 @@
     #game-intro[data-state="revealing"] { opacity: 0; }
     #game-intro[data-state="loading"], #game-intro[data-state="error"] { transition: none; }
     #game-intro *, #game-intro *::before, #game-intro *::after { box-sizing: border-box; }
-    .loading-content { width: min(100%, 400px); margin: auto; }
-    .loading-mark { display: block; width: 112px; height: 96px; margin: 0 auto 24px; color: var(--menu-gold, #d9ad3f); }
+    .loading-content { width: min(100%, 560px); margin: auto; text-align: left; }
+    .loading-mark { float: right; width: 84px; height: 72px; margin: 0; color: var(--menu-gold, #d9ad3f); }
     .loading-mark .loading-rock { stroke: var(--menu-highlight, #46505c); }
-    #game-intro .loading-title { margin: 0; font: 700 clamp(36px, 7vw, 56px)/1.1 var(--font-mono, monospace); letter-spacing: 0.14em; padding-left: 0.14em; color: inherit; }
-    #game-intro .loading-tagline { margin: 12px 0 42px; font-size: 12px; line-height: 1.5; letter-spacing: 0.08em; color: var(--menu-dim, #929dac); }
-    .loading-track { height: 2px; width: 200px; max-width: 80%; margin: 0 auto 18px; overflow: hidden; background: var(--menu-highlight, #46505c); }
-    .loading-track::after { content: ''; display: block; width: 40%; height: 100%; background: var(--menu-gold, #d9ad3f); animation: loading-travel 1.5s ease-in-out infinite; }
-    @keyframes loading-travel { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
-    #game-intro .loading-status { margin: 0; color: var(--menu-body, #c9c7b8); font-size: 13px; line-height: 1.6; }
+    #game-intro .loading-title { margin: 0; font: 700 clamp(32px, 7vw, 52px)/1.1 var(--font-mono, monospace); letter-spacing: 0.12em; color: inherit; }
+    #game-intro .loading-tagline { margin: 10px 0 34px; font-size: 12px; letter-spacing: 0.06em; color: var(--menu-dim, #929dac); }
+    .loading-readings { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; align-items: baseline; color: var(--menu-dim, #929dac); }
+    .loading-readings b { color: var(--menu-text, #eee1b8); font-size: 24px; font-weight: 400; }
+    #gm-loading-elapsed { font-variant-numeric: tabular-nums; }
+    .loading-track { display: flex; gap: 4px; height: 10px; margin: 12px 0 8px; }
+    .loading-track i { flex: 1; background: var(--menu-highlight, #46505c); }
+    .loading-track i[data-state="done"], .loading-track i[data-state="skipped"] { background: var(--menu-text, #eee1b8); }
+    .loading-track i[data-state="running"] { border: 1px solid var(--menu-gold, #d9ad3f); }
+    .loading-track i[data-state="fallback"] { background: var(--menu-gold, #d9ad3f); }
+    .loading-track i[data-state="error"] { background: var(--menu-red, #ec7058); }
+    #game-intro .loading-measure { margin: 0 0 26px; font-size: 11px; line-height: 1.5; color: var(--menu-dim, #929dac); }
+    #game-intro .loading-status { margin: 0; color: var(--menu-text, #eee1b8); font-size: 15px; line-height: 1.6; }
+    #game-intro .loading-current { margin: 4px 0 22px; min-height: 3em; font-size: 12px; line-height: 1.5; color: var(--menu-dim, #929dac); overflow-wrap: anywhere; }
+    #game-intro .loading-steps { list-style: none; padding: 0; margin: 0; font-size: 12px; }
+    .loading-steps li { display: grid; grid-template-columns: 24px 1fr 34px 68px; gap: 8px; align-items: center; padding: 12px 0; border-top: 1px solid var(--menu-highlight, #46505c); color: var(--menu-dim, #929dac); }
+    .loading-steps li[hidden] { display: none; }
+    .loading-steps li[data-state="running"] { color: var(--menu-gold, #d9ad3f); }
+    .loading-steps li[data-state="done"] { color: var(--menu-body, #c9c7b8); }
+    .loading-steps li[data-state="error"] { color: var(--menu-red, #ec7058); }
+    .loading-step-number { font-size: 10px; }
+    .loading-step-count, .loading-step-state { text-align: right; }
+    .loading-details { border-top: 1px solid var(--menu-highlight, #46505c); margin-top: 10px; }
+    .loading-details summary { cursor: pointer; padding: 14px 0; min-height: 44px; font-size: 12px; color: var(--menu-body, #c9c7b8); }
+    #game-pause .pause-card[data-page="loading"] { width: 640px; }
+    .loading-copy { min-height: 44px; padding: 8px 14px; border: 1px solid var(--menu-highlight, #46505c); color: var(--menu-text, #eee1b8); background: var(--menu-panel, #222831); font: 12px var(--font-mono, monospace); cursor: pointer; }
+    #game-intro .loading-log, #game-pause .loading-log { border-radius: 0; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; padding: 12px; background: var(--menu-inset, #14181f); color: var(--menu-body, #c9c7b8); font: 12px/1.65 var(--font-mono, monospace); user-select: text; touch-action: pan-y; }
     #game-intro .loading-note { margin: 16px 0 0; color: var(--menu-dim, #929dac); font-size: 12px; line-height: 1.6; }
-    #gm-loading-retry { display: block; min-height: 44px; margin: 20px auto 0; padding: 10px 20px; border: 1px solid var(--menu-gold, #d9ad3f); border-radius: 0; background: var(--menu-gold, #d9ad3f); color: var(--menu-gold-text, #241a08); font: 700 13px/1.5 var(--font-mono, monospace); cursor: pointer; }
+    #gm-loading-retry { display: block; min-height: 44px; margin: 20px 0 0; padding: 10px 20px; border: 1px solid var(--menu-gold, #d9ad3f); border-radius: 0; background: var(--menu-gold, #d9ad3f); color: var(--menu-gold-text, #241a08); font: 700 13px/1.5 var(--font-mono, monospace); cursor: pointer; }
     #gm-loading-retry[hidden], .loading-note[hidden] { display: none; }
-    #gm-loading-retry:focus-visible { outline: 2px solid var(--menu-text, #eee1b8); outline-offset: 4px; }
-    #game-intro[data-state="error"] .loading-track::after { animation: none; width: 100%; opacity: 0.4; }
-    @media (max-height: 480px) {
+    #game-intro :focus-visible { outline: 2px solid var(--menu-text, #eee1b8); outline-offset: 3px; }
+    @media (max-width: 440px) {
+      #game-intro { padding: 20px; }
+      .loading-mark { width: 60px; height: 52px; }
+      .loading-steps li { grid-template-columns: 18px 1fr 28px 60px; gap: 5px; font-size: 11px; }
+    }
+    @media (max-height: 540px) {
       #game-intro { padding: 18px; }
-      .loading-mark { width: 70px; height: 60px; margin-bottom: 14px; }
-      #game-intro .loading-title { font-size: 32px; }
-      #game-intro .loading-tagline { margin: 8px 0 22px; }
+      .loading-mark { width: 56px; height: 48px; }
+      #game-intro .loading-title { font-size: 28px; }
+      #game-intro .loading-tagline { margin: 8px 0 16px; }
+      #game-intro .loading-measure { margin-bottom: 12px; }
+      #game-intro .loading-current { margin-bottom: 10px; min-height: 0; }
+      .loading-steps li { padding: 8px 0; }
     }
-    @media (prefers-reduced-motion: reduce) {
-      #game-intro { transition: none; }
-      .loading-track::after { animation: none; width: 100%; opacity: 0.65; }
-    }
+    @media (prefers-reduced-motion: reduce) { #game-intro { transition: none; } }
 
     @media (min-width: 720px) {
       /* Desktop / wide: fill the viewport, game flush to the top. */
@@ -414,8 +439,13 @@
                   </svg>
                   <h2 class="loading-title">SLUICE</h2>
                   <p class="loading-tagline">Dig. Haul. Upgrade.</p>
-                  <div class="loading-track" aria-hidden="true"></div>
+                  <div class="loading-readings"><span><b id="gm-loading-count">0 / 14</b> steps settled</span><span id="gm-loading-elapsed">0.0 s</span></div>
+                  <div class="loading-track" id="gm-loading-progress" role="progressbar" aria-label="Startup steps settled" aria-valuemin="0" aria-valuemax="14" aria-valuenow="0"></div>
+                  <p class="loading-measure">Completed steps, not time remaining.</p>
                   <p class="loading-status" id="gm-loading-status" role="status" aria-live="polite" aria-atomic="true">Loading the game</p>
+                  <p class="loading-current" id="gm-loading-current">Waiting for game files.</p>
+                  <ol class="loading-steps" id="gm-loading-steps"><li data-state="queued"><span class="loading-step-number">01</span><span>Game files</span><span class="loading-step-count">0/6</span><span class="loading-step-state">Waiting</span></li><li data-state="queued"><span class="loading-step-number">02</span><span>Your mine</span><span class="loading-step-count">0/1</span><span class="loading-step-state">Waiting</span></li><li data-state="queued"><span class="loading-step-number">03</span><span>Fonts, moon &amp; water</span><span class="loading-step-count">0/4</span><span class="loading-step-state">Waiting</span></li><li data-state="queued"><span class="loading-step-number">04</span><span>Scene &amp; effects</span><span class="loading-step-count">0/2</span><span class="loading-step-state">Waiting</span></li><li data-state="queued"><span class="loading-step-number">05</span><span>Graphics queue</span><span class="loading-step-count">0/1</span><span class="loading-step-state">Waiting</span></li></ol>
+                  <details class="loading-details" id="gm-loading-details"><summary>Loading details</summary><button type="button" class="loading-copy" data-loading-copy>Copy report</button><pre class="loading-log" id="gm-loading-log" tabindex="0"></pre></details>
                   <p class="loading-note" id="gm-loading-note" hidden></p>
                   <button id="gm-loading-retry" type="button" hidden>Reload game</button>
                   <noscript><p class="loading-note">Enable JavaScript to play Sluice.</p></noscript>
@@ -435,6 +465,7 @@
                       <button id="gm-resume-btn" class="pause-primary pause-nav" type="button"><span>Resume</span><kbd>Esc</kbd></button>
                       <button id="gm-options-btn" class="pause-nav" type="button"><span>Options</span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
                       <button id="gm-controls-btn" class="pause-nav" type="button"><span>Controls</span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
+                      <button id="gm-loading-report-btn" class="pause-nav" type="button"><span>Loading report</span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
                       <button id="gm-new-game-btn" class="pause-quiet pause-new-run" type="button">New game</button>
                     </div>
                     <div class="pause-page" data-pause-page="options" hidden>
@@ -478,6 +509,7 @@
                       </section>
                       <button id="gm-exhaust-restore" type="button" disabled>Restore recipe</button>
                     </div>
+                    <div class="pause-page" data-pause-page="loading" hidden><button class="loading-copy" type="button" data-loading-copy>Copy report</button><pre class="loading-log" id="gm-loading-saved-log" tabindex="0"></pre></div>
                     <div class="pause-page" data-pause-page="controls" hidden>
                       <section class="pause-section"><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Fullscreen</dt><dd><kbd>Alt + Enter</kbd></dd></div><div><dt>Scoop</dt><dd><kbd>F</kbd><span>toggle collection below the rig</span></dd></div><div><dt>Dump / launch</dt><dd><kbd>Right mouse</kbd><span>press once to empty the tank and lift off</span></dd></div><div><dt>Fluid chamber</dt><dd><kbd>R</kbd><span>while carrying liquid</span></dd></div><div><dt>Soft slimes</dt><dd><kbd>Drag</kbd><span>lift and stretch; release while moving to toss</span></dd></div><div><dt>Bathhouse</dt><dd><kbd>E</kbd><span>enter at the door; serve in Bath</span></dd></div><div><dt>Bath / boiler / forge</dt><dd><kbd>1 / 2 / 3</kbd><span>inside the banya</span></dd></div><div><dt>Coal / bellows</dt><dd><kbd>C / B</kbd><span>at the boiler or forge</span></dd></div><div><dt>Strike / rake ash</dt><dd><kbd>F / A</kbd><span>at the boiler</span></dd></div><div><dt>Forge work</dt><dd><kbd>E</kbd><span>heat, hammer, quench, collect</span></dd></div><div><dt>Cargo</dt><dd><kbd>I</kbd></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
                       <section class="pause-section"><p class="pause-help">Touch: use the direction pad to move and fly. Tap Items for equipment. Tap SCOOP to collect water as you move, or DUMP to empty the whole tank and launch the rig. Inside the banya, drag coal from the bunker onto the grate, or tap to drop a chunk. The forge makes a reusable steel striker from two iron: heat it, hammer it, then quench with 2 L of water. Mine stone for flint. Use flint and steel to light the boiler; bellows feed the fire. In Bath, tap ADD WATER and then a ready guest bubble.</p><p class="pause-help">Controller: left stick to move, A to fly, Start to pause.</p></section>
@@ -517,15 +549,26 @@
     </footer>
   </div>
   <script>
-    // Available before the game scripts download, including on a failed boot.
+    // This controller is inline so failed game downloads still have diagnostics.
     (function () {
-      var root = document.getElementById('game-intro');
-      var area = root.parentNode;
+      var root = document.getElementById('game-intro'), area = root.parentNode;
       var status = document.getElementById('gm-loading-status');
-      var note = document.getElementById('gm-loading-note');
-      var retry = document.getElementById('gm-loading-retry');
-      var generation = 0, revealTimer = 0, slowTimer = 0;
+      var note = document.getElementById('gm-loading-note'), retry = document.getElementById('gm-loading-retry');
+      var details = document.getElementById('gm-loading-details');
+      var progress = document.getElementById('gm-loading-progress');
+      var generation = 0, revealTimer = 0, ticker = 0, run = null, history = [];
+      var groups = ['Game files', 'Your mine', 'Fonts, moon & water', 'Scene & effects', 'Graphics queue'];
+      var definitions = [
+        ['script-liquid-wgpu', 'Water code', 0], ['script-smoke-wgpu', 'Smoke code', 0],
+        ['script-jello-wgpu', 'Slime code', 0], ['script-audio', 'Audio code', 0],
+        ['script-smoke-presets', 'Smoke recipes', 0], ['script-sluice', 'Game code', 0],
+        ['world', 'Prepare the mine', 1], ['font-regular', 'Regular HUD font', 2],
+        ['font-bold', 'Bold HUD font', 2], ['moon', 'Moon image', 2], ['water', 'Water physics', 2],
+        ['scene', 'Draw the destination', 3], ['shaders', 'Warm drawing effects', 3], ['fence', 'Finish graphics work', 4]
+      ];
       function active() { return root.getAttribute('data-state') !== 'ready'; }
+      function settled(t) { return t.state === 'done' || t.state === 'fallback' || t.state === 'skipped'; }
+      function clock(ms) { return (ms / 1000).toFixed(1) + ' s'; }
       function syncInput() {
         var pause = document.getElementById('game-pause');
         var paused = pause && pause.classList.contains('is-visible');
@@ -535,79 +578,187 @@
         }
       }
       function stage(text) {
-        if (root.getAttribute('data-state') !== 'loading') return;
-        if (status.textContent !== text) status.textContent = text;
+        if (root.getAttribute('data-state') === 'loading' && status.textContent !== text) status.textContent = text;
       }
-      function begin(text) {
+      function snapshot() {
+        if (!run) return null;
+        var now = run.end === null ? performance.now() : run.end;
+        var result = JSON.parse(JSON.stringify(run));
+        result.elapsedMs = Math.round(now - run.start);
+        result.tasks.forEach(function (t) {
+          t.elapsedMs = t.start === null ? 0 : Math.round((t.end === null ? now : t.end) - t.start);
+        });
+        result.completed = result.tasks.filter(settled).length;
+        result.total = result.tasks.length;
+        return result;
+      }
+      function task(id, state, detail, counts) {
+        if (!run || run.end !== null) return;
+        var t = run.tasks.find(function (item) { return item.id === id; });
+        if (!t || settled(t) || t.state === 'error') return;
+        var now = performance.now();
+        if (t.start === null && state !== 'queued') t.start = now;
+        if (t.state !== state || t.detail !== detail || JSON.stringify(t.counts) !== JSON.stringify(counts || null)) run.lastChange = now;
+        t.state = state; t.detail = detail || ''; t.counts = counts || null;
+        t.end = settled(t) || state === 'error' ? now : null;
+        // Rendering is coalesced by the clock. A task's counter only changes here.
+      }
+      function reportText(data) {
+        if (!data) return 'No loading report yet.';
+        var lines = ['SLUICE LOADING REPORT', data.label + ' | ' + data.state + ' | ' + clock(data.elapsedMs),
+          data.completed + '/' + data.total + ' steps settled (not a time estimate)',
+          'Build: ' + (data.environment.version || 'game code unavailable'),
+          'Display: ' + data.environment.viewport + ' | ' + data.environment.browser];
+        Object.keys(data.environment).forEach(function (key) {
+          if (key !== 'browser' && key !== 'viewport' && key !== 'version') lines.push(key + ': ' + data.environment[key]);
+        });
+        lines.push('', 'Times below overlap when tasks run together.');
+        data.tasks.forEach(function (t) { lines.push(t.state.toUpperCase() + '  ' + t.label + '  ' + t.elapsedMs + ' ms' + '\n  ' + t.detail); });
+        if (data.error) lines.push('', data.error);
+        lines.push('', 'Audio files start after interaction. They are not a loading gate.');
+        if (data.resources) {
+          lines.push('', 'Completed resource timings (not live download percentages):');
+          data.resources.forEach(function (r) { lines.push(r.file + ': ' + r.durationMs + ' ms; ' + (r.bytes ? r.bytes + ' encoded bytes' : 'size unavailable')); });
+        }
+        return lines.join('\n');
+      }
+      function renderReport() {
+        if (run && run.end === null) collectResources();
+        var data = snapshot();
+        document.getElementById('gm-loading-log').textContent = reportText(data);
+        // Preserve the original startup alongside the latest scene rebuild.
+        var boot = history.find(function (item) { return item.kind === 'boot'; });
+        document.getElementById('gm-loading-saved-log').textContent = reportText(data) +
+          (boot && run.kind !== 'boot' ? '\n\n' + reportText(boot) : '');
+      }
+      function paint() {
+        if (!run) return;
+        var data = snapshot(), done = data.completed;
+        progress.setAttribute('aria-valuemax', data.total);
+        progress.setAttribute('aria-valuenow', done);
+        progress.setAttribute('aria-valuetext', done + ' of ' + data.total + ' steps settled');
+        document.getElementById('gm-loading-count').textContent = done + ' / ' + data.total;
+        document.getElementById('gm-loading-elapsed').textContent = clock(data.elapsedMs);
+        var segments = progress.children;
+        data.tasks.forEach(function (t, i) { segments[i].setAttribute('data-state', t.state); segments[i].title = t.label + ': ' + t.state; });
+        var rows = document.getElementById('gm-loading-steps').children;
+        groups.forEach(function (name, i) {
+          var tasks = data.tasks.filter(function (t) { return t.group === i; });
+          rows[i].hidden = !tasks.length;
+          var complete = tasks.filter(settled).length, running = tasks.find(function (t) { return t.state === 'running'; });
+          var failed = tasks.some(function (t) { return t.state === 'error'; });
+          var fallback = tasks.some(function (t) { return t.state === 'fallback'; });
+          rows[i].setAttribute('data-state', failed ? 'error' : running ? 'running' : complete === tasks.length ? 'done' : 'queued');
+          rows[i].querySelector('.loading-step-state').textContent = failed ? 'Failed' : complete === tasks.length ? (fallback ? 'Fallback' : 'Ready') : running ? 'Working' : 'Waiting';
+          rows[i].querySelector('.loading-step-count').textContent = complete + '/' + tasks.length;
+        });
+        if (run.state === 'loading') {
+          var current = data.tasks.find(function (t) { return t.id === 'shaders' && t.state === 'running'; }) || data.tasks.find(function (t) { return t.state === 'running'; });
+          if (current) stage(current.label + (current.counts ? ' · ' + current.counts.done + '/' + current.counts.total + ' ' + current.counts.unit : ''));
+          document.getElementById('gm-loading-current').textContent = current ? current.detail : 'Waiting for the next startup step.';
+          var quiet = performance.now() - run.lastChange;
+          if (quiet > 8000 || data.elapsedMs > 20000) {
+            note.hidden = retry.hidden = false;
+            note.textContent = 'Still waiting' + (current ? ' on ' + current.label.toLowerCase() : '') + '. No reported progress for ' + clock(quiet) + '. You can wait or reload.';
+          } else { note.hidden = retry.hidden = true; }
+        }
+        if (details.open || run.state !== 'loading') renderReport();
+      }
+      function begin(text, kind, hasWork) {
         generation++;
-        clearTimeout(revealTimer); clearTimeout(slowTimer);
+        clearTimeout(revealTimer); clearInterval(ticker);
+        if (!run || kind !== 'boot') {
+          if (run) history.push(snapshot());
+          if (history.length > 6) history.splice(1, 1);
+          var now = performance.now();
+          run = { kind: kind || 'scene', label: text || 'Starting Sluice', state: 'loading', start: now, end: null, lastChange: now,
+            environment: { viewport: innerWidth + 'x' + innerHeight + ' @ ' + devicePixelRatio, browser: navigator.userAgent }, tasks: [] };
+          definitions.forEach(function (d) {
+            if (kind !== 'boot' && d[2] !== 3 && d[2] !== 4 && !(hasWork && d[0] === 'world')) return;
+            run.tasks.push({ id: d[0], label: d[1], group: d[2], state: 'queued', detail: '', start: null, end: null, counts: null });
+          });
+          progress.replaceChildren();
+          run.tasks.forEach(function () { progress.appendChild(document.createElement('i')); });
+          if (kind === 'boot') run.tasks.filter(function (t) { return t.group === 0; }).forEach(function (t) {
+            task(t.id, 'running', 'Waiting for the browser to download and run js/' + t.id.slice(7) + '.js.');
+          });
+        }
         root.hidden = false;
-        root.setAttribute('data-state', 'loading');
-        root.setAttribute('aria-hidden', 'false');
-        root.setAttribute('aria-busy', 'true');
-        area.setAttribute('aria-busy', 'true');
-        status.textContent = text || 'Loading the game';
-        note.hidden = retry.hidden = true;
-        syncInput();
-        slowTimer = setTimeout(function () {
-          if (root.getAttribute('data-state') !== 'loading') return;
-          note.textContent = 'Taking longer than usual. You can wait or reload.';
-          note.hidden = retry.hidden = false;
-        }, 20000);
+        root.setAttribute('data-state', 'loading'); root.setAttribute('aria-hidden', 'false');
+        root.setAttribute('aria-busy', 'true'); area.setAttribute('aria-busy', 'true');
+        stage(text || 'Loading game files'); note.hidden = retry.hidden = true;
+        syncInput(); paint(); ticker = setInterval(paint, 150);
+      }
+      function collectResources() {
+        run.resources = performance.getEntriesByType('resource').filter(function (r) {
+          return /\/(js\/(sluice|liquid-wgpu|smoke-wgpu|jello-wgpu|audio|smoke-presets)\.js|assets\/fonts\/commit_mono|assets\/images\/moon\.jpg)/.test(r.name);
+        }).map(function (r) { return { file: new URL(r.name).pathname, durationMs: Math.round(r.duration), bytes: r.encodedBodySize }; });
       }
       function finish(callback) {
         if (root.getAttribute('data-state') !== 'loading') return;
+        // A missed instrumented gate is a bug, never silently manufacture 100%.
+        var pending = run.tasks.filter(function (t) { return !settled(t); });
+        if (pending.length) { fail('Startup finished without a readiness result for: ' + pending.map(function (t) { return t.label; }).join(', '), pending[0].id); return; }
         var ticket = generation;
-        clearTimeout(slowTimer);
-        status.textContent = 'Ready';
+        run.state = 'ready'; run.end = performance.now(); collectResources();
+        clearInterval(ticker); stage('Ready'); paint();
         root.setAttribute('data-state', 'revealing');
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         revealTimer = setTimeout(function () {
           if (ticket !== generation) return;
-          root.setAttribute('data-state', 'ready');
-          root.setAttribute('aria-busy', 'false');
-          root.setAttribute('aria-hidden', 'true');
-          area.setAttribute('aria-busy', 'false');
-          root.hidden = true;
-          syncInput();
-          if (callback) callback();
+          root.setAttribute('data-state', 'ready'); root.setAttribute('aria-busy', 'false');
+          root.setAttribute('aria-hidden', 'true'); area.setAttribute('aria-busy', 'false'); root.hidden = true;
+          syncInput(); if (callback) callback();
           if (!document.getElementById('game-pause').classList.contains('is-visible') &&
-              (document.activeElement === document.body || area.contains(document.activeElement))) {
-            document.getElementById('game-canvas').focus({ preventScroll: true });
-          }
+              (document.activeElement === document.body || area.contains(document.activeElement))) document.getElementById('game-canvas').focus({ preventScroll: true });
         }, reduce ? 0 : 190);
       }
-      function fail() {
-        if (!active()) return;
-        generation++;
-        clearTimeout(revealTimer); clearTimeout(slowTimer);
-        root.hidden = false;
-        root.setAttribute('data-state', 'error');
-        root.setAttribute('aria-busy', 'false');
-        area.setAttribute('aria-busy', 'false');
+      function fail(error, id) {
+        if (!active() || run.state === 'error') return;
+        var t = id || (run.tasks.find(function (item) { return item.state === 'running'; }) || {}).id;
+        if (t) task(t, 'error', String(error && (error.stack || error.message) || error || 'Startup failed.'));
+        generation++; clearTimeout(revealTimer); clearInterval(ticker);
+        run.state = 'error'; run.error = String(error && (error.stack || error.message) || error || window.__bootErr || 'Unknown startup error');
+        run.end = performance.now(); collectResources();
+        root.hidden = false; root.setAttribute('data-state', 'error');
+        root.setAttribute('aria-busy', 'false'); area.setAttribute('aria-busy', 'false');
         status.textContent = 'The game could not start.';
-        note.textContent = 'Reload to try again.';
-        note.hidden = retry.hidden = false;
-        syncInput();
+        document.getElementById('gm-loading-current').textContent = run.error.split('\n')[0];
+        note.textContent = 'Your saved run has not been erased. Copy the report or reload to try again.';
+        note.hidden = retry.hidden = false; details.open = true; syncInput(); paint();
       }
       retry.addEventListener('click', function () { window.location.reload(); });
+      details.addEventListener('toggle', renderReport);
+      document.querySelectorAll('[data-loading-copy]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var text = reportText(snapshot());
+          var boot = history.find(function (item) { return item.kind === 'boot'; });
+          if (boot && run.kind !== 'boot') text += '\n\n' + reportText(boot);
+          if (!navigator.clipboard) { button.textContent = 'Select report text to copy'; return; }
+          navigator.clipboard.writeText(text).then(function () { button.textContent = 'Report copied'; }, function () { button.textContent = 'Select report text to copy'; });
+        });
+      });
+      function scriptId(target) { return target && target.getAttribute && target.getAttribute('data-loading-task'); }
+      document.addEventListener('load', function (e) { var id = scriptId(e.target); if (id) task(id, 'done', 'Downloaded and executed ' + new URL(e.target.src).pathname); }, true);
       window.addEventListener('error', function (e) {
-        var target = e.target;
-        if (target && target.tagName === 'SCRIPT') {
-          if (/\/js\/sluice\.js(?:\?|$)/.test(target.src)) fail();
-        } else if (active() && /\/js\/sluice(?:\.js|\/)/.test(e.filename || '')) fail();
+        var id = scriptId(e.target);
+        if (id === 'script-sluice') fail('Could not download js/sluice.js', id);
+        else if (id) task(id, 'fallback', 'Could not download ' + new URL(e.target.src).pathname + '. ' + ({ 'script-audio': 'Sound unavailable.', 'script-liquid-wgpu': 'Using CPU water.', 'script-smoke-wgpu': 'Optional WebGPU smoke unavailable.', 'script-jello-wgpu': 'Using CPU slime physics.', 'script-smoke-presets': 'Using built-in smoke recipes.' })[id]);
+        else if (active() && /\/js\/sluice(?:\.js|\/)/.test(e.filename || '')) fail(e.error || e.message);
       }, true);
-      // A loading screen owns game input, but browser shortcuts and Tab work.
+      window.addEventListener('unhandledrejection', function (e) {
+        if (active() && /sluice|liquid-wgpu|shaderWarm|prepareLoading/.test(String(e.reason && e.reason.stack || e.reason))) fail(e.reason);
+      });
       window.addEventListener('keydown', function (e) {
         if (!active() || e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.target === retry && (e.key === 'Enter' || e.key === ' ' || e.key === 'Tab')) {
-          return;
-        }
+        if (e.target && e.target.nodeType && root.contains(e.target) && /^(BUTTON|SUMMARY|PRE)$/.test(e.target.tagName)) { e.stopPropagation(); return; }
         if (e.key !== 'Tab') e.preventDefault();
         e.stopImmediatePropagation();
       }, true);
-      window.SluiceLoading = { begin: begin, stage: stage, finish: finish, fail: fail, active: active, syncInput: syncInput };
-      begin();
+      window.SluiceLoading = { begin: begin, stage: stage, task: task, finish: finish, fail: fail, active: active, syncInput: syncInput,
+        report: snapshot, reports: function () { return JSON.parse(JSON.stringify(history.concat([snapshot()]))); }, renderReport: renderReport,
+        environment: function (values) { Object.assign(run.environment, values); } };
+      begin('Starting Sluice', 'boot');
     })();
   </script>
   <script>
@@ -762,11 +913,11 @@
       });
     })();
   </script>
-  <script defer src="js/liquid-wgpu.js?v=v28.48"></script>
-  <script defer src="js/smoke-wgpu.js?v=v28.48"></script>
-  <script defer src="js/jello-wgpu.js?v=v28.48"></script>
-  <script defer src="js/audio.js?v=v28.48"></script>
-  <script defer src="js/smoke-presets.js?v=v28.48"></script>
-  <script defer src="js/sluice.js?v=v28.48"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.49"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.49"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.49"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.49"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.49"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.49"></script>
 </body>
 </html>

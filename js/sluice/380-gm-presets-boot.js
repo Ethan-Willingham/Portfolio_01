@@ -2130,15 +2130,19 @@
       // can never strand the player on a half-applied world.
       var __saveEnv = null;
       try { __saveEnv = saveLoadEnvelope(); } catch (e) {
+        if (window.SluiceLoading) window.SluiceLoading.environment({ saveWarning: 'Save read failed: ' + e });
         try { console.warn('save: load failed, starting fresh:', e); } catch (_) {}
       }
-      if (window.SluiceLoading) window.SluiceLoading.stage(__saveEnv ? 'Restoring your mine' : 'Preparing your mine');
+      gameLoadingWorldDetail = __saveEnv ? 'Restored saved mine' : 'Created a fresh mine';
+      loadingTask('world', 'running', __saveEnv ? 'Restoring the saved world and rig.' : 'Generating the terrain, ore, lakes, and starting rig.');
       init();
       if (__saveEnv) {
         try {
           saveApply(__saveEnv);
           console.log('save: resumed (slot n=' + (__saveEnv.n || 0) + ', $' + money + ', depth record ' + depthRecord + 'm)');
         } catch (e) {
+          gameLoadingWorldDetail = 'Save restore failed; created a fresh mine';
+          if (window.SluiceLoading) window.SluiceLoading.environment({ saveWarning: 'Save restore failed: ' + e });
           try { console.error('save: apply failed, starting fresh:', e); } catch (_) {}
           init();
         }
@@ -2149,6 +2153,6 @@
     });
   } catch (e) {
     window.__bootErr = String(e) + '\n' + (e.stack || '');
-    if (window.SluiceLoading) window.SluiceLoading.fail();
+    if (window.SluiceLoading) window.SluiceLoading.fail(e);
     try { console.error('GM boot threw:', e); } catch (_) {}
   }

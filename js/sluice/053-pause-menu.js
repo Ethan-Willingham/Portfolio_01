@@ -24,7 +24,7 @@
     var footer = card.querySelector('.pause-footer');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
-    var titles = { main: 'Paused', options: 'Options', exhaust: 'Exhaust', controls: 'Controls', restart: 'Start a new game?' };
+    var titles = { main: 'Paused', options: 'Options', exhaust: 'Exhaust', controls: 'Controls', loading: 'Loading report', restart: 'Start a new game?' };
     var returnFocus = 'gm-resume-btn';
     pauseMenuShowPage = function (page) {
       var previousPage = pauseMenuPage;
@@ -45,6 +45,7 @@
           .replace(/^save failing, browser storage may be full$/, 'Save failed. Storage may be full.');
       }
       if (page === 'exhaust') syncExhaust();
+      if (page === 'loading' && window.SluiceLoading) window.SluiceLoading.renderReport();
       body.scrollTop = 0;
       var focus = page === 'main' ? document.getElementById(returnFocus) :
         page === 'options' && previousPage === 'exhaust' ? document.getElementById('gm-exhaust-btn') :
@@ -60,6 +61,7 @@
     openWith('gm-options-btn', 'options');
     openWith('gm-exhaust-btn', 'exhaust');
     openWith('gm-controls-btn', 'controls');
+    openWith('gm-loading-report-btn', 'loading');
     openWith('gm-new-game-btn', 'restart');
     back.addEventListener('click', pauseMenuBack);
     document.getElementById('gm-menu-close').addEventListener('click', function () {
@@ -73,7 +75,7 @@
     overlay.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') e.stopPropagation();
       if (e.key !== 'Tab') return;
-      var controls = Array.prototype.filter.call(card.querySelectorAll('button, input'), function (el) {
+      var controls = Array.prototype.filter.call(card.querySelectorAll('button, input, pre[tabindex]'), function (el) {
         return !el.disabled && el.getClientRects().length > 0;
       });
       if (!controls.length) return;

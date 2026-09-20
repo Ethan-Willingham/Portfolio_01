@@ -167,7 +167,7 @@
       if (window.SluiceLoading && document.getElementById('game-intro').getAttribute('data-state') === 'error') return;
       try { renderLoadingScene(); } catch (e) {
         window.__bootErr = String(e) + '\n' + (e.stack || '');
-        if (window.SluiceLoading) window.SluiceLoading.fail();
+        if (window.SluiceLoading) window.SluiceLoading.fail(e);
         console.error('Loading render failed:', e);
         return;
       }
@@ -723,6 +723,7 @@
     // WebGPU-vs-CPU water A/B can be flipped on one device via the URL.
     var _wantWGPULiquid = USE_WEBGPU_LIQUID &&
       !/[?&]cpuwater=1/i.test((window.location && window.location.search) || '');
+    loadingTask('water', 'running', 'Creating the water backend and running its startup checks.');
     liquidWGPU = (_wantWGPULiquid && window.LiquidWGPU) ? window.LiquidWGPU.create(liquidWGPUOpts()) : null;
     // v14.8 — WebGPU smoke port, Stage 1. Created dormant; it shares the
     // liquid module's GPUDevice (one WebGPU device for the whole game).

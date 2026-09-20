@@ -18,6 +18,7 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const pending=new Map(),faults=new Map(),faultHits=[],held=[],errors=[],reports=[];
 let chrome,ws,sequence=0,checks=0,scenario='startup';
 const probe=`
+if(location.search.indexOf('shader-failure')>=0)shaderWarmRig=function(){throw Error('Intentional drawing warm-up failure');};
 window.__loadingSmoke=(function(){
   var realLoop=loop,realInit=init,initEvents=[],revealEvents=[],lastBeginFrame=-1,loadingTicks=0,hiddenMotion=0;
   var realResize=resize,resizeCalls=0;
@@ -105,7 +106,7 @@ const earlyProbe=`
 if(location.search.indexOf('worker-blocked')>=0)window.Worker=function(){throw Error('Intentional worker denial');};
 if(location.search.indexOf('worker-hung')>=0)window.Worker=function(){this.postMessage=function(){};this.terminate=function(){};};
 if(location.search.indexOf('large-canvas-budget')>=0)addEventListener('DOMContentLoaded',function(){document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));var css=document.createElement('style');css.textContent='.game-wrapper{width:100vw!important;max-width:none!important}.game-canvas-area{width:100%!important;height:100%!important}';document.head.appendChild(css);dispatchEvent(new Event('resize'));});
-window.__loadingFrames=0;window.__loadingHistory=[];
+window.__loadingFrames=0;window.__loadingHistory=[];window.__loadingProgress=[];
 window.addEventListener('DOMContentLoaded',function(){if(window.__loadingAtlasState)window.__loadingAtlasAtDOMContentLoaded=__loadingAtlasState();});
 (function tick(){window.__loadingFrames++;requestAnimationFrame(tick);})();
 (function(){
@@ -116,6 +117,11 @@ window.addEventListener('DOMContentLoaded',function(){if(window.__loadingAtlasSt
     var entry={state:root.dataset.state || '',text:status ? status.textContent.trim() : '',frame:window.__loadingFrames};
     var key=entry.state+'|'+entry.text;
     if(key!==previous){previous=key;window.__loadingHistory.push(entry);}
+    if(window.SluiceLoading && SluiceLoading.report){
+      var report=SluiceLoading.report(),warm=report.tasks.find(function(t){return t.id==='shaders';});
+      var reading={completed:report.completed,total:report.total,draws:warm&&warm.counts?warm.counts.done:0,kind:report.kind};
+      if(JSON.stringify(window.__loadingProgress[window.__loadingProgress.length-1])!==JSON.stringify(reading))window.__loadingProgress.push(reading);
+    }
   }).observe(document,{subtree:true,attributes:true,childList:true,characterData:true});
 })();
 `;
@@ -177,9 +183,12 @@ async function navigate(name,query=''){
 async function ready(name,timeout=40000,paused=false){
   await until('!!window.__loadingSmoke && document.getElementById("game-intro").dataset.state === "ready" && !SluiceLoading.active()',name+' did not reveal',timeout);
   const state=await ev('__loadingSmoke.state()'),loader=await status();
+  if (!state.worldReady || state.intro !== 'done' || state.bootError) console.log('FAILED STATE '+JSON.stringify({state,loader,report:await ev('SluiceLoading.report()')}));
   check(name+' reveals a complete world',state.worldReady && state.intro==='done' && !state.bootError);
   check(name+' restores the expected pause state',state.paused===paused && !loader.active);
-  reports.push({name,state,loader,history:await ev('__loadingHistory')});
+  const report=await ev('SluiceLoading.report()');
+  check(name+' report settles every real gate',report.completed===report.total && report.state==='ready' && report.tasks.every(t=>['done','fallback','skipped'].includes(t.state)));
+  reports.push({name,state,loader,report,history:await ev('__loadingHistory')});
   return state;
 }
 async function visible(name){const s=await status();const valid=s && s.state==='loading' && s.active && s.opacity>0.95 && s.display!=='none' && s.visibility!=='hidden' && s.ancestors.every(a=>a.opacity>0.95 && a.display!=='none' && a.visibility!=='hidden') && s.ownsCenter && s.text.length>3 && s.rect.width>200 && s.rect.height>200 && !s.inert;if(!valid)console.log('LOADER '+JSON.stringify(s));check(name,valid);return s;}
@@ -214,6 +223,12 @@ try{
   const early=await visible('cold load has visible status before game bundle');
   check('loading status is announced accessibly',early.live);
   check('game bundle is still unavailable',!await ev('!!window.__loadingSmoke'));
+  await until('SluiceLoading.report().tasks.filter(t=>t.group===0&&t.state==="done").length===5','support scripts did not execute');
+  const stalled=await ev('SluiceLoading.report()');await sleep(350);const stalledLater=await ev('SluiceLoading.report()');
+  check('elapsed time never manufactures download progress',stalled.completed===stalledLater.completed && stalledLater.elapsedMs>stalled.elapsedMs+200 && stalledLater.tasks.find(t=>t.id==='script-sluice').state==='running');
+  await ev('document.querySelector("#gm-loading-details summary").focus()');await tap('Enter','Enter');
+  check('loading details opens with the keyboard',await ev('document.getElementById("gm-loading-details").open && document.getElementById("gm-loading-log").textContent.includes("js/sluice.js")'));
+  await ev('document.getElementById("gm-loading-details").open=false');
   await shot('cold-loading');
   await ev('window.__loadingTestHold=true');release('/js/sluice.js');
   await until('!!window.__loadingSmoke && __loadingSmoke.state().worldReady','game initialization did not reach warmup');
@@ -224,6 +239,17 @@ try{
   check('orbital planet is prepared before first takeoff',first.planetReady);
   check('moon phase is prepared before first takeoff',first.moonImageReady && first.moonReady);
   check('reveal fade blocks gameplay until it completes',first.revealEvents.some(e=>e.active) && first.revealEvents.every(e=>e.stationary && e.blocked));
+  const warmReadings=await ev('__loadingProgress.filter(p=>p.kind==="boot")');
+  check('drawing progress is observable between actual passes',warmReadings.some(p=>p.draws>0&&p.draws<29));
+  check('settled step counts never move backwards during boot',warmReadings.every((p,i)=>i===0||p.completed>=warmReadings[i-1].completed));
+  const finalTime=await ev('SluiceLoading.report().elapsedMs');await sleep(200);
+  check('completed report freezes its measured duration',await ev('SluiceLoading.report().elapsedMs')===finalTime);
+  await click('gm-pause-btn');await click('gm-loading-report-btn');
+  check('pause retains the detailed loading report',await ev('document.getElementById("gm-pause-card").dataset.page==="loading" && document.getElementById("gm-loading-saved-log").textContent.includes("29/29")'));
+  await ev('window.__copiedLoadingReport="";Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{window.__copiedLoadingReport=text;}}})');
+  await ev('document.querySelector("[data-pause-page=loading] [data-loading-copy]").click()');
+  check('copy includes actual timings and backend',await ev('__copiedLoadingReport.includes("WebGPU") && __copiedLoadingReport.includes("ms") && __copiedLoadingReport.includes("14/14")'));
+  await shot('pause-loading-report');await tap('Escape','Escape');await tap('Escape','Escape');
   await ev('__loadingSmoke.saveMarker()');
 
   faults.set('/js/sluice.js','hold');await navigate('returning-save');
@@ -241,12 +267,15 @@ try{
   check('new game paints loading before heavy initialization',init.active && init.state==='loading' && init.framesSinceBegin>=2);
   await heldInput();await shot('new-game-loading');
   await ev('__loadingSmoke.hold(false)');const fresh=await ready('new game');check('confirmed new game resets progress',fresh.money<12345);
+  check('new scene report retains original boot and reports cached effects',await ev('SluiceLoading.reports()[0].kind==="boot" && SluiceLoading.report().total===4 && SluiceLoading.report().tasks.find(t=>t.id==="shaders").state==="skipped"'));
   await ev('__loadingSmoke.saveMarker()');
 
   faults.set('/js/sluice.js','fail');await navigate('critical-resource-failure');
   await until('document.getElementById("game-intro").dataset.state === "error"','failed critical bundle did not show recovery');
   const failed=await status();
   check('critical failure provides a visible retry',failed.active && failed.opacity>0.95 && await ev('document.getElementById("gm-loading-retry").getClientRects().length>0'));
+  const failureReport=await ev('SluiceLoading.report()');
+  check('fatal report names the failed file without counting it as ready',failureReport.completed<failureReport.total && failureReport.error.includes('js/sluice.js') && failureReport.tasks.find(t=>t.id==='script-sluice').state==='error');
   await shot('critical-failure');faults.delete('/js/sluice.js');
   scenario='retry-recovery';await ev('document.getElementById("gm-loading-retry").focus()');await tap('Enter','Enter');
   const retry=await ready('retry recovery');check('keyboard retry preserves the existing save',retry.money===12345);
@@ -264,6 +293,8 @@ try{
   faults.set('fonts','fail');faults.set('/assets/images/moon.jpg','fail');
   await navigate('optional-assets-failure');await ready('optional resource fallback',50000);await shot('optional-fallback-ready');
   check('optional fallback exercised failed font and moon requests',faultHits.some(f=>f.scenario==='optional-assets-failure' && f.pathname.startsWith('/assets/fonts/')) && faultHits.some(f=>f.scenario==='optional-assets-failure' && f.pathname==='/assets/images/moon.jpg'));
+  const assetReport=await ev('SluiceLoading.report()');
+  check('optional resource report records actual fallbacks', ['font-regular','font-bold','moon'].every(id=>assetReport.tasks.find(t=>t.id===id).state==='fallback') && assetReport.tasks.find(t=>t.id==='moon').detail.includes('procedural'));
   faults.delete('fonts');faults.delete('/assets/images/moon.jpg');
 
   const regular='/assets/fonts/commit_mono_regular.woff2',bold='/assets/fonts/commit_mono_bold.woff2';
@@ -279,10 +310,19 @@ try{
   const cpu=await ready('GPU timeout fallback',25000);
   const gpuFirst=await ev('__gpuLoadingProbe');
   check('GPU timeout switches to CPU and disposes current resources',!cpu.gpuWater&&!cpu.gpuJello&&!cpu.gpuSmoke&&gpuFirst.disposeTimes.length>=1&&gpuFirst.currentCanvasRemoved&&gpuFirst.disposeTimes[0]-gpuFirst.createdAt>=7800);
+  const gpuReport=await ev('SluiceLoading.report()');
+  check('GPU timeout report says CPU and preserves its deadline',gpuReport.environment.water==='CPU' && gpuReport.tasks.find(t=>t.id==='water').state==='fallback' && gpuReport.tasks.find(t=>t.id==='water').detail.includes('8 s'));
   await shot('gpu-timeout-ready');
   await until('__gpuLoadingProbe.settled && __gpuLoadingProbe.disposeTimes.length>=2','late GPU initialization did not receive disposal',10000);
   check('late GPU resources are removed without orphan canvases',await ev('__gpuLoadingProbe.lateDestroyed>=1 && !document.querySelector("[data-loading-gpu-probe]") && !__loadingSmoke.state().gpuWater'));
+  check('late GPU completion does not rewrite timeout history',await ev('SluiceLoading.report().tasks.find(t=>t.id==="water").state==="fallback"'));
   reports.push({name:'GPU disposal',gpu:await ev('__gpuLoadingProbe')});
+
+  faults.set('/js/audio.js','fail');await navigate('optional-code-failure');await ready('optional code fallback');
+  check('failed audio code remains a named fallback',await ev('SluiceLoading.report().tasks.find(t=>t.id==="script-audio").state==="fallback" && SluiceLoading.report().tasks.find(t=>t.id==="script-audio").detail.includes("Sound unavailable")'));
+  faults.delete('/js/audio.js');
+  await navigate('shader-failure');await ready('shader warm-up fallback');
+  check('failed drawing passes stay visible in the report',await ev('SluiceLoading.report().tasks.find(t=>t.id==="shaders").state==="fallback" && SluiceLoading.report().tasks.find(t=>t.id==="shaders").detail.includes("27/29")'));
 
   await ev("localStorage.setItem('sluice.opt.gfx','balanced')");
   await navigate('saved-graphics');const balanced=await ready('saved graphics');

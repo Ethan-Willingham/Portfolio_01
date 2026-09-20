@@ -27,7 +27,7 @@ const checkout=fs.readFileSync(path.join(root,'js/sluice.js'),'utf8');
 const warmNeedle='  function prepareShaderWarmup() {\n';
 const boots=[{name:'baseline',label:bundleRef,source:execFileSync('git',['show',bundleRef+':js/sluice.js'],{cwd:root,maxBuffer:64*1024*1024}).toString()},
   {name:'checkout',label:'checkout',source:checkout}];
-if(checkout.includes(warmNeedle))boots.push({name:'nowarm',label:'checkout, warm-up disabled',source:checkout.replace(warmNeedle,warmNeedle+'    return false;\n')});
+if(checkout.includes(warmNeedle))boots.push({name:'nowarm',label:'checkout, warm-up disabled',source:checkout.replace(warmNeedle,warmNeedle+'    if(typeof loadingTask===\"function\")loadingTask(\"shaders\",\"skipped\",\"Disabled by equivalence test.\"); return false;\n')});
 else console.log('this checkout has no prepareShaderWarmup; skipping the warm-up comparison');
 
 const probe=`
@@ -83,16 +83,18 @@ const scenes=`(function(){
   return out;
 })()`;
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.woff':'font/woff','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.m4a':'audio/mp4','.svg':'image/svg+xml','.json':'application/json'};
-let current=null;
+let current=null,currentHTML=null;
+const baselineHTML=execFileSync('git',['show',bundleRef+':grand-motherload.html'],{cwd:root,maxBuffer:4*1024*1024});
 const server=http.createServer((req,res)=>{try{
   const p=decodeURIComponent(new URL(req.url,'http://x').pathname),file=path.resolve(root,'.'+p);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});
-  res.end(p==='/js/sluice.js'?current:fs.readFileSync(file));
+  res.end(p==='/js/sluice.js'?current:p==='/grand-motherload.html'?currentHTML:fs.readFileSync(file));
 }catch(e){res.writeHead(500);res.end(String(e));}});
 await new Promise(r=>server.listen(port,'127.0.0.1',r));
 
 async function render(boot,debugPort){
+  currentHTML=boot.name==='baseline'?baselineHTML:fs.readFileSync(path.join(root,'grand-motherload.html'));
   const end=boot.source.lastIndexOf('})();');
   current=Buffer.from(boot.source.slice(0,end)+probe+boot.source.slice(end));
   const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-equivalence-chrome-'));

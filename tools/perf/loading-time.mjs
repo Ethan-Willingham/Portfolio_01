@@ -35,7 +35,7 @@ const probe=`
 window.__loadTime=(function(){
   var t={warmStart:0,warmMs:0,firstReady:0,fence:0,revealing:0,done:0},waiters=[];
   function timed(fn,edge){return function(){var s=performance.now(),r=fn.apply(this,arguments);if(edge(r)){t.warmStart=s;t.warmMs=performance.now()-s;}return r;};}
-  if(typeof runShaderWarmup==='function')runShaderWarmup=timed(runShaderWarmup,function(){return true;});
+  if(typeof prepareShaderWarmup==='function')prepareShaderWarmup=timed(prepareShaderWarmup,function(){return true;});
   // v27.1 drew a rig preview and waited for an asynchronous snapshot instead.
   if(typeof prepareLoadingRigShaders==='function')prepareLoadingRigShaders=timed(prepareLoadingRigShaders,function(r){return r&&!t.warmStart;});
   var oldLoop=loop;

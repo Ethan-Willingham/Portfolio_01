@@ -51,7 +51,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const probe=`
 window.__warmTrace=(function(){
   var frames=0,revealed=false,oldLoop=loop,frameMarks=${signatures};
-  if(typeof runShaderWarmup==='function'){var oldWarm=runShaderWarmup;runShaderWarmup=function(){performance.mark('ST:warm:start');try{return oldWarm.apply(this,arguments);}finally{performance.mark('ST:warm:end');}};}
+  if(typeof prepareShaderWarmup==='function'){var oldWarm=prepareShaderWarmup;prepareShaderWarmup=function(){performance.mark('ST:warm:start');try{return oldWarm.apply(this,arguments);}finally{performance.mark('ST:warm:end');}};}
   loop=function(t){
     window.__stFrame=frames+1;var r=oldLoop(t);frames++;
     if(!revealed&&introPhase==='done'){revealed=true;window.__stRevealed=true;performance.mark('ST:reveal');}
