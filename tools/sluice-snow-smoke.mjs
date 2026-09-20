@@ -141,6 +141,15 @@ try {
     await game('var flake=snow.grains.pop();snowParticle(flake.x,flake.y,flake.vx,flake.vy);liquidWGPU.uploadParticles();liquidWGPU.draw()');
     const landed=(await send('Page.captureScreenshot',{format:'png',clip})).data;
     check('airborne and solver snow have identical visible pixels (surface='+surface+')',airborne!==blank && airborne===landed);
+    if(surface===1){
+      await game('while(liquidCount)removeLiquidParticle(liquidCount-1);snow.grains=[];for(var x=114;x<=126;x+=1.4)for(var y=94;y<=106;y+=1.4)snow.grains.push({x:cam.x+x,y:cam.y+y,vx:0,vy:0,size:.5,phase:0});liquidWGPU.uploadParticles();liquidWGPU.draw()');
+      const clusterAir=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+      await game('for(var i=0;i<snow.grains.length;i++){var p=snow.grains[i];snowParticle(p.x,p.y,0,0);}snow.grains=[];liquidWGPU.uploadParticles();liquidWGPU.draw()');
+      const clusterGround=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+      check('dense snow uses the same mass reconstruction through landing',clusterAir===clusterGround && clusterAir!==airborne);
+      await game('while(liquidCount)removeLiquidParticle(liquidCount-1);liquidWGPU.uploadParticles();liquidWGPU.draw()');
+      check('removing snow mass removes the reconstructed surface',(await send('Page.captureScreenshot',{format:'png',clip})).data===blank);
+    }
   }
   await game("liquidWGPU.setRenderParam('SURFACE_RENDER',1)");
 
@@ -168,5 +177,5 @@ try {
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await game('PAUSE_DISABLED=false');await ev("document.getElementById('gm-pause-btn').click()");await ev("document.getElementById('gm-options-btn').click()");await screenshot('snow-options-mobile');
   check('Snow remains tappable on mobile',await ev('(function(){var b=document.getElementById("gm-snow-on").getBoundingClientRect();return b.width>=40 && b.right<=innerWidth;})()'));
-  assert.deepEqual(errors,[]);assert.deepEqual(await ev('__shaderWarm.errors'),[]);console.log('PASS no runtime or shader errors; screenshots '+out);
-} finally { if(errors.length)console.log('ERRORS',errors);cleanup(); }
+  assert.equal(errors.length,0,"no runtime or GPU validation errors");assert.deepEqual(await ev('__shaderWarm.errors'),[]);console.log('PASS no runtime or shader errors; screenshots '+out);
+} finally { if(errors.length)console.log('ERRORS',errors.slice(0,8));cleanup(); }

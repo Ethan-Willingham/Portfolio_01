@@ -2235,6 +2235,7 @@
     // WebGPU solver delegate — dormant until the GPU port goes live
     // (simActive flips on at Stage 8); until then the CPU solver runs.
     if (liquidWGPU && liquidWGPU.simActive) { updateLiquidsGPU(dt); return; }
+    snowAirCoupleCPU(dt);
     // v24.109 — the GPU consumes liquidOps; on the CPU path nothing does
     // (the CPU arrays ARE the live state), so drop them here.
     liquidOps.length = 0;

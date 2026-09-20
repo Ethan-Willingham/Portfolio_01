@@ -43,13 +43,53 @@ flight positions into a small reusable render-only buffer; flight does not
 activate physics cells across the sky. WebGL likewise appends the flakes to
 its existing vertex stream. Canvas uses the same small square before and
 after contact. Transfer preserves position and velocity, with no size change,
-colour change or intermediate visual phase. Grains never enter the glossy
-water surface pass. Lighting follows daylight and moonlight.
+colour change or intermediate visual phase. On WebGPU, an independent additive snow-density channel in the existing
+surface pass reconstructs a continuous matte boundary. Each real particle
+contributes a fixed compact kernel (3.2 world-pixel radius, peak 0.34);
+a solitary flake stays below the 0.66 surface threshold. Packed snow joins
+into a body, and thinning powder separates continuously into the original
+1.8-pixel grains. Falling and simulated snow contribute identical kernels.
+The density gradient supplies diffuse shading; snow gets no water foam,
+gloss or artificial gap bridging. Removing particles removes the surface.
+The WebGL/Canvas fallback retains fine grain rendering. Lighting follows
+daylight and moonlight.
 
 Snowfall emits 345 grains per second at full intensity over the reference
 width, three times the former rate. The denser rest spacing keeps the smaller
 grains together in piles without making each storm three times as deep.
 The initial dusting uses two or three closely spaced rows.
+
+## Jet airflow
+
+`159-snow-air.js` solves a local 64 by 48 staggered MAC grid at 8 world pixels
+per cell. The inlet follows the actual banked nozzles and thrust intensity.
+Semi-Lagrangian velocity advection and a 28-iteration red/black pressure
+projection resolve the impinging jet, lateral wall flows and returning eddies.
+Terrain and the rig block normal flow. The moving window preserves overlapping
+world-space face velocities instead of dragging its wake with the camera.
+The airflow decays after thrust stops and idles after three seconds.
+
+Aerodynamic drag entrains existing snow, with reduced exposure inside dense
+powder. The WebGPU kernel updates resident particle velocity before P2G;
+CPU fallback samples the same field and applies the same drag. It wakes the
+entrained grains without changing their identity or mass. Atmospheric flakes
+also feel the field. No decorative snow, launch wedges or prescribed upward
+arcs are created. The existing liquid cone wake continues to work alongside
+the resolved air field. Jet heat is confined to a shorter, narrower core, so
+the cold return flow can carry powder without instantly turning it into water.
+
+This is a bounded 2D, one-way air-to-snow coupling, not a compressible rocket
+exhaust model or a two-way multiphase solver. Snow retains the existing dry
+granular MPM material rather than a full elastic/plastic snow constitutive
+law. The projection approach follows standard incompressible fluid simulation;
+see [Bridson's course material](https://www.cs.ubc.ca/~rbridson/fluidsimulation/).
+
+The dedicated hover/low-pass test retained all 3,290 starting particles through
+snow, meltwater and absorption. More than 1,000 grains rose above 25 world
+pixels, including outside the jet core. The local air solve measured about
+1 to 1.6 ms per update in that headless browser run; hardware and scene load
+will affect total frame time. All buffers are bounded and reused. The air
+coupling shader is compiled during the existing GPU startup warmup.
 
 ## Thaw, storage and limits
 
@@ -89,10 +129,18 @@ ways without alternate foot support, jets, digging, scoop conservation,
 in-place melting, exact save/load, legacy migration, budgets and CPU fallback.
 It also compares rendered pixels before and after sky-to-solver transfer in
 both GPU rendering modes and the CPU fallback, checks that the last grain
-clears cleanly, and tests live GPU absorption for ordinary, poured, pond and
+clears cleanly, verifies that removing snow mass removes its reconstructed
+surface, and tests live GPU absorption for ordinary, poured, pond and
 rain water.
 
 `node tools/perf/liquid-materials.mjs --gpu` verifies the five existing liquids
 and snow together through GPU identity packing, physics and readback. Run
 `node tools/sluice-rain-smoke.mjs --drain` for rain, finite lakes, plow protection,
 soil contact, stored-water drainage and a resting puddle on the live solver.
+
+`node tools/perf/snow-air.mjs` checks wall flow, recirculation, pressure
+projection, occlusion through a solid roof, window translation and shutdown.
+`node tools/sluice-snow-jet.mjs` runs a controlled live hover and low pass,
+checks entrainment outside the core and exact material accounting, and writes
+its screenshots to `/tmp/sluice-snow-jet-qa`. Add `--cpu` to exercise the
+same interactions on the CPU solver.

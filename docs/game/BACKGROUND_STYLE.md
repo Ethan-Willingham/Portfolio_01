@@ -594,15 +594,15 @@ no new simulated particles or terrain-cache invalidation. See [PARTICLE_RAIN.md]
 the bounded water cycle and persistence rules.
 
 **Physical snow.** Snow worlds use fine, world-anchored grains drifting in the
-existing wind. Falling flakes, resting powder and snow thrown by tracks,
-jets and blasts all use the same 1.8-world-pixel grain and the same particle
-shader. They retain their size and daylight/moonlight tint when touching
-down. A denser field of small grains replaces the former large clumps and
-separate tumbling silhouettes. GPU flight positions use a small render-only
-buffer in the existing liquid pass, without activating a sky-wide physics
-grid. Snow does not enter the glossy water surface pass. There is no separate
-column-bank cover or artificial track surface.
-See [PARTICLE_SNOW.md](PARTICLE_SNOW.md) for physics and acceptance checks.
+existing wind. On WebGPU the real particle mass also feeds an independent
+density channel in the liquid surface renderer. Packed snow forms a continuous
+matte body shaded by its density gradient. Loose powder resolves into the same
+1.8-world-pixel grains used for falling flakes, with no material-switch visual
+phase. Snow uses its daylight/moonlight tint without water foam or gloss.
+The WebGL/Canvas fallback retains fine grains. Jet-driven air entrains the
+existing snow into wall flows and returning eddies; it does not add decorative
+snow particles. The snow surface follows every moved or removed particle.
+See [PARTICLE_SNOW.md](PARTICLE_SNOW.md) for physics, limits and acceptance checks.
 
 **Storms.** Coverage→1, dark clouds, heavy precip, and full-screen lightning (`SKY.lightningFlash`, additive, fast decay, occasional double-strike) that lights the whole scene.
 

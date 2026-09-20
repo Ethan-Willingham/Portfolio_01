@@ -16,6 +16,7 @@
     snow.time = snow.tick = snow.credit = snow.active = snow.mass = 0;
     snow.emitted = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
+    snowAirReset();
     snow.cells = {}; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
@@ -59,7 +60,7 @@
     if (tile && tile.type === 'foundation') heat += 0.24;
     var dx = Math.abs(x - player.x - PLAYER_W * 0.5), dy = y - player.y - PLAYER_H;
     if (dx < 32 && dy > -30 && dy < 20) heat += 0.015;
-    if (player.thrusting && player.jetForce > 1 && !gameOver && !gameWon && dy > -6 && dy < 130 && dx < 20 + dy * 0.3) heat += 2.5;
+    if (player.thrusting && player.jetForce > 1 && !gameOver && !gameWon && dy > -6 && dy < 80 && dx < 10 + dy * 0.09) heat += 0.85;
     if ((rain.cells[rainCell(x, y)] || 0) >= 10) heat += 5;
     return heat;
   }
@@ -125,6 +126,7 @@
     snow.mass++; snow.emitted++;
   }
   function updateSnow(dt) {
+    updateSnowAir(dt);
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
     if (snow.tick >= 0.12) { snowScan(snow.tick); snow.tick = 0; }
@@ -148,6 +150,11 @@
       var flutter = Math.sin(snow.time * (1.4 + p.size) + p.phase) * (13 + p.size * 16);
       p.vx += (wind + flutter - p.vx) * Math.min(1, dt * 1.5);
       p.vy += (32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9 - p.vy) * Math.min(1, dt * 2);
+      var air = snowAirAt(p.x, p.y);
+      if (Math.abs(air[0]) + Math.abs(air[1]) > 2) {
+        var airDrag = 1 - Math.exp(-12 * dt);
+        p.vx += (air[0] - p.vx) * airDrag; p.vy += (air[1] - p.vy) * airDrag;
+      }
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {
@@ -210,5 +217,6 @@
     for (var i = 0; i < liquidCount; i++) if (liquidType[i] === 5) { active++; if (Math.abs(liquidVX[i]) + Math.abs(liquidVY[i]) > 30) moving++; }
     return { enabled: worldSnowEnabled, model: 'shared-particles', active: active, parked: snow.parked.length / 4,
       mass: active + snow.parked.length / 4 + snow.grains.length, airborne: snow.grains.length, moving: moving,
+      airflow: { active: snowAir.active, ms: snowAir.ms, peak: snowAir.peak },
       emitted: snow.emitted, melted: snow.melted, collected: snow.collected, temperature: snow.temperature };
   } };

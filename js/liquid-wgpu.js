@@ -7215,6 +7215,7 @@ struct VOut {
   @location(1)       weight : vec3<f32>,   // x = water, y = water aeration, z = oil
   @location(2)       heat   : f32,         // v25.57 bath: temperature (0 when off)
   @location(3)       pigment : vec4<f32>,
+  @location(4)       snow : f32,
 };
 
 fn quadCorner(vid : u32) -> vec2<f32> {
@@ -7234,9 +7235,10 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let fl = flag[iid];
   let material = ((fl & 3u) | ((fl >> 4u) & 4u));
   out.pigment = vec4<f32>(0.0);
+  out.snow = 0.0;
   if (material >= 2u) { out.pigment = vec4<f32>(mineralRGB(material), 1.0); }
   let frozen = (fl >> 5u) & 1u;
-  if (frozen != 0u || material == 5u) {
+  if (frozen != 0u) {
     out.pos    = vec4<f32>(0.0, 0.0, 0.0, 1.0);
     out.uv     = vec2<f32>(0.0, 0.0);
     out.weight = vec3<f32>(0.0, 0.0, 0.0);
@@ -7244,6 +7246,14 @@ fn vs(@builtin(vertex_index)   vid : u32,
     return out;
   }
   let p = pos[iid];
+  if (material == 5u) {
+    let c = quadCorner(vid);
+    let xy = (p.xy - vec2<f32>(rp.camX, rp.camY)) * rp.dpws + c * (3.2 * rp.dpws);
+    out.pos = vec4<f32>(xy.x / (rp.canvasW * 0.5) - 1.0, 1.0 - xy.y / (rp.canvasH * 0.5), 0.0, 1.0);
+    out.uv = c; out.weight = vec3<f32>(0.0); out.heat = 0.0;
+    out.pigment = vec4<f32>(0.0); out.snow = 0.34;
+    return out;
+  }
   // v24.155 — density-scaled size RESTORED (v24.154 removed it and the
   // lake interior went "static TV": the merged body field NEEDS the fat
   // overlapping splats to stay past threshold between particles). The
@@ -7338,6 +7348,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
 struct FieldOut {
   @location(0) density : vec4<f32>,
   @location(1) pigment : vec4<f32>,
+  @location(2) snow : f32,
 };
 @fragment
 fn fs(in : VOut) -> FieldOut {
@@ -7349,12 +7360,14 @@ fn fs(in : VOut) -> FieldOut {
   var out : FieldOut;
   out.density = vec4<f32>(in.weight * w, in.heat * w);
   out.pigment = in.pigment * w;
+  out.snow = in.snow * w * w;
   return out;
 }
 `;
 
   var WGSL_SURFACE_COMPOSITE = /* wgsl */ `
 @group(0) @binding(1) var fieldTex : texture_2d<f32>;
+@group(0) @binding(5) var snowTex : texture_2d<f32>;
 @group(0) @binding(4) var pigmentTex : texture_2d<f32>;
 struct TerrainParams {
   c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32,
@@ -7545,7 +7558,9 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       }
     }
   }
-  if (aWaterEdge <= 0.001 && aOilEdge <= 0.001) { discard; }
+  let snowMass = textureLoad(snowTex, vec2<i32>(in.pos.xy), 0).r;
+  let snowAlpha = smoothstep(0.66, 0.95, snowMass);
+  if (aWaterEdge <= 0.001 && aOilEdge <= 0.001 && snowAlpha <= 0.001) { discard; }
   // Hosts without a visual contour retain their square obstacle boundary.
   if (terrainRenderRect.z <= 0.0 && compositeTerrainSolid(wp)) { discard; }
   // Water tint: foam fraction from the aeration-weighted channel.
@@ -7580,6 +7595,22 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let oilA = aOilEdge * rp.oilColor.a;
   outRGB = outRGB * (1.0 - oilA) + rp.oilColor.rgb * oilA;
   outA   = outA   * (1.0 - oilA) + oilA;
+  if (snowAlpha > 0.001) {
+    let dims = vec2<i32>(textureDimensions(snowTex));
+    let q = vec2<i32>(in.pos.xy);
+    let radius = max(1, i32(rp.dpws * 1.5));
+    let lo = vec2<i32>(0); let hi = dims - vec2<i32>(1);
+    let l = textureLoad(snowTex, clamp(q - vec2<i32>(radius,0),lo,hi),0).r;
+    let r = textureLoad(snowTex, clamp(q + vec2<i32>(radius,0),lo,hi),0).r;
+    let u = textureLoad(snowTex, clamp(q - vec2<i32>(0,radius),lo,hi),0).r;
+    let d = textureLoad(snowTex, clamp(q + vec2<i32>(0,radius),lo,hi),0).r;
+    let normal = normalize(vec3<f32>(l-r,u-d,2.4));
+    let diffuse = clamp(dot(normal,normalize(vec3<f32>(-0.45,-0.65,0.8))),0.0,1.0);
+    let base = mineralRGB(5u);
+    let shade = mix(base * vec3<f32>(0.77,0.84,0.92),base,0.55+diffuse*0.45);
+    outRGB = outRGB * (1.0-snowAlpha) + shade * snowAlpha;
+    outA = outA * (1.0-snowAlpha) + snowAlpha;
+  }
   return vec4<f32>(outRGB, outA) * open;
 }
 `;
@@ -7601,6 +7632,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   var WGSL_SURFACE_DROPLETS = /* wgsl */ `
 @group(0) @binding(1) var<storage, read> pos  : array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read> flag : array<u32>;
+@group(0) @binding(7) var snowTex : texture_2d<f32>;
 @group(0) @binding(4) var fieldTex : texture_2d<f32>;
 struct TerrainParams {
   c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32,
@@ -7668,7 +7700,8 @@ fn vs(@builtin(vertex_index)   vid : u32,
     out.pos = vec4<f32>((scrX + off.x) / (rp.canvasW * 0.5) - 1.0,
                         1.0 - (scrY + off.y) / (rp.canvasH * 0.5), 0.0, 1.0);
     out.uv = c;
-    out.alpha = 1.0;
+    let mass = textureLoad(snowTex, vec2<i32>(vec2<f32>(scrX,scrY)),0).r;
+    out.alpha = 1.0 - smoothstep(0.38,0.95,mass);
     out.world = p.xy + off / max(rp.dpws, 0.001);
     // No index-based size/tint: a swap or sky-to-ground transfer must not pop.
     return out;
@@ -8663,6 +8696,7 @@ struct P2GParams {
       ]
     });
     instance.g2pReady = true;
+    if (instance.liquid && instance.liquid.getSnowAir) buildSnowAirPipeline(instance);
   }
 
   /* ---- Stage 6 — collide pipeline + bind group -----------------------
@@ -9058,6 +9092,10 @@ struct P2GParams {
               color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
               alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
             }
+          }, {
+            format: 'r16float',
+            blend: { color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } }
           }]
         },
         primitive: { topology: 'triangle-list' }
@@ -9069,7 +9107,8 @@ struct P2GParams {
           { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } },
           { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
           { binding: 3, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-          { binding: 4, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } }
+          { binding: 4, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } },
+          { binding: 5, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } }
         ]
       });
       var compMod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_COMPOSITE });
@@ -9108,7 +9147,8 @@ struct P2GParams {
           { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
           { binding: 4, visibility: GPUShaderStage.VERTEX, texture: { sampleType: 'unfilterable-float' } },
           { binding: 5, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-          { binding: 6, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
+          { binding: 6, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+          { binding: 7, visibility: GPUShaderStage.VERTEX, texture: { sampleType: 'unfilterable-float' } }
         ]
       });
       var dropMod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
@@ -9158,6 +9198,11 @@ struct P2GParams {
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
       });
       instance.surfPigmentTexView = instance.surfPigmentTex.createView();
+      if (instance.surfSnowTex) instance.surfSnowTex.destroy();
+      instance.surfSnowTex = instance.device.createTexture({ label: 'liquid.snowDensity',
+        size: [Math.max(1,cw),Math.max(1,ch)], format: 'r16float',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
+      instance.surfSnowView = instance.surfSnowTex.createView();
       instance.surfTexW = cw;
       instance.surfTexH = ch;
       instance.surfCompositeBG = instance.device.createBindGroup({
@@ -9168,7 +9213,8 @@ struct P2GParams {
           { binding: 1, resource: instance.surfTexView },
           { binding: 2, resource: { buffer: instance.paramsBuf } },
           { binding: 3, resource: { buffer: instance.buf.terrainMask } },
-          { binding: 4, resource: instance.surfPigmentTexView }
+          { binding: 4, resource: instance.surfPigmentTexView },
+          { binding: 5, resource: instance.surfSnowView }
         ]
       });
       if (instance.surfDropletBGL) {
@@ -9181,7 +9227,8 @@ struct P2GParams {
             { binding: 3, resource: { buffer: instance.buf.flag } },
             { binding: 4, resource: instance.surfTexView },
             { binding: 5, resource: { buffer: instance.paramsBuf } },
-            { binding: 6, resource: { buffer: instance.buf.terrainMask } }
+            { binding: 6, resource: { buffer: instance.buf.terrainMask } },
+            { binding: 7, resource: instance.surfSnowView }
           ]
         });
       } else {
@@ -9269,7 +9316,8 @@ struct P2GParams {
         { binding: 3, resource: { buffer: instance.snowRenderFlags } },
         { binding: 4, resource: instance.surfTexView },
         { binding: 5, resource: { buffer: instance.paramsBuf } },
-        { binding: 6, resource: { buffer: instance.buf.terrainMask } }
+        { binding: 6, resource: { buffer: instance.buf.terrainMask } },
+            { binding: 7, resource: instance.surfSnowView }
       ] });
       instance.snowRenderField = instance.surfTexView;
     }
@@ -9364,12 +9412,20 @@ struct P2GParams {
           clearValue: { r: 0, g: 0, b: 0, a: 0 },
           loadOp: 'clear',
           storeOp: 'store'
+        }, {
+          view: instance.surfSnowView,
+          clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: 'clear', storeOp: 'store'
         }]
       });
       if (count > 0) {
         fieldPass.setPipeline(instance.surfFieldPipeline);
         fieldPass.setBindGroup(0, instance.renderBG);
         fieldPass.draw(6, count);
+      }
+      if (snowCount > 0) {
+        fieldPass.setPipeline(instance.surfFieldPipeline);
+        fieldPass.setBindGroup(0, instance.snowRenderBG);
+        fieldPass.draw(6, snowCount);
       }
       fieldPass.end();
       var compPass = enc.beginRenderPass({
@@ -9867,6 +9923,78 @@ fn main() {
    * to 0.05 s, one substep. A thrown error anywhere flips simActive false
    * (the caller wrapper) so the CPU solver takes over from the next frame.
    * -------------------------------------------------------------------- */
+  // Aerodynamic drag acts on GPU-resident snow velocities before P2G.
+  // The MAC field is tiny and uploaded once per frame; no particle readback.
+  var WGSL_SNOW_AIR = /* wgsl */ `
+struct AirParams { rect:vec4<f32>, domain:vec4<f32> };
+@group(0) @binding(0) var<uniform> ap:AirParams;
+@group(0) @binding(1) var<storage, read_write> pos:array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> aux:array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read_write> flag:array<u32>;
+@group(0) @binding(4) var air:texture_2d<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) id:vec3<u32>) {
+  let i=id.x;
+  if (i>=u32(ap.domain.z)) { return; }
+  let fl=flag[i];
+  if (((fl&3u)|((fl>>4u)&4u))!=5u || (fl&32u)!=0u) { return; }
+  let p=pos[i];
+  let q=(p.xy-ap.rect.xy)/ap.rect.z-vec2<f32>(0.5);
+  if (any(q<vec2<f32>(0.0)) || any(q>=ap.domain.xy-vec2<f32>(1.0))) { return; }
+  let c=vec2<i32>(floor(q)); let f=fract(q);
+  let a=mix(textureLoad(air,c,0).xy,textureLoad(air,c+vec2<i32>(1,0),0).xy,f.x);
+  let b=mix(textureLoad(air,c+vec2<i32>(0,1),0).xy,textureLoad(air,c+vec2<i32>(1,1),0).xy,f.x);
+  let velocity=mix(a,b,f.y);
+  if (length(velocity)<2.0) { return; }
+  let exposure=clamp((4.2-aux[i].x)/3.0,0.06,1.0);
+  let drag=1.0-exp(-22.0*exposure*ap.rect.w);
+  pos[i]=vec4<f32>(p.xy,mix(p.zw,velocity,drag));
+  flag[i]=fl & ~0x00ffff10u;
+}
+`;
+  function buildSnowAirPipeline(instance) {
+    if (instance.snowAirPipeline) return;
+    var dev = instance.device;
+    // Matches the fixed local MAC domain in 159-snow-air.js.
+    var a = { w: 64, h: 48 };
+    instance.snowAirTexture = dev.createTexture({ label: 'snow.air', size: [a.w, a.h], format: 'rgba32float',
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
+    instance.snowAirParams = dev.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    instance.snowAirHost = new Float32Array(8);
+    var mod = dev.createShaderModule({ code: WGSL_SNOW_AIR });
+    var bgl = dev.createBindGroupLayout({ entries: [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 4, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'unfilterable-float' } }
+    ] });
+    instance.snowAirPipeline = dev.createComputePipeline({ label: 'snow.airDrag', layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }), compute: { module: mod, entryPoint: 'main' } });
+    instance.snowAirBG = dev.createBindGroup({ layout: instance.snowAirPipeline.getBindGroupLayout(0), entries: [
+      { binding: 0, resource: { buffer: instance.snowAirParams } },
+      { binding: 1, resource: { buffer: instance.buf.pos } },
+      { binding: 2, resource: { buffer: instance.buf.aux } },
+      { binding: 3, resource: { buffer: instance.buf.flag } },
+      { binding: 4, resource: instance.snowAirTexture.createView() }
+    ] });
+
+  }
+  function runSnowAir(instance, dt) {
+    var a = instance.liquid && instance.liquid.getSnowAir ? instance.liquid.getSnowAir() : null;
+    if (!a || !a.active || !instance.uploadedCount) return;
+    buildSnowAirPipeline(instance);
+    instance.queue.writeTexture({ texture: instance.snowAirTexture }, a.field, { bytesPerRow: a.w * 16 }, [a.w, a.h]);
+    var host = instance.snowAirHost;
+    host[0]=a.x; host[1]=a.y; host[2]=a.cell; host[3]=dt;
+    host[4]=a.w; host[5]=a.h; host[6]=instance.uploadedCount; host[7]=0;
+    instance.queue.writeBuffer(instance.snowAirParams, 0, host);
+    var enc = liquidEncoder(instance, 'snow.airDrag');
+    var pass = enc.beginComputePass({ label: 'snow.airDrag' });
+    pass.setPipeline(instance.snowAirPipeline); pass.setBindGroup(0, instance.snowAirBG);
+    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount / 256)); pass.end();
+    liquidSubmit(instance, enc);
+  }
+
   function runFrame(instance, dt) {
     // 1. Fold last frame's GPU result into the CPU mirror. Always runs
     // (even on a bad-dt frame) so the buffers free up for the next kick.
@@ -9999,6 +10127,7 @@ fn main() {
     var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
     instance.frameEncoder = frameEncoder;
     try {
+      runSnowAir(instance, instance.stepDt * subSteps);
       for (var ss = 0; ss < subSteps; ss++) {
         buildGrid(instance, ss > 0);
         runDeclump(instance);
@@ -10797,6 +10926,9 @@ fn main() {
         }
         if (instance.simParamsBuf) { try { instance.simParamsBuf.destroy(); } catch (_) {} }
         if (instance.renderParamsBuf) { try { instance.renderParamsBuf.destroy(); } catch (_) {} }
+        if (instance.surfSnowTex) { try { instance.surfSnowTex.destroy(); } catch (_) {} }
+        if (instance.snowAirTexture) { try { instance.snowAirTexture.destroy(); } catch (_) {} }
+        if (instance.snowAirParams) { try { instance.snowAirParams.destroy(); } catch (_) {} }
         if (instance.snowRenderPos) { try { instance.snowRenderPos.destroy(); } catch (_) {} }
         if (instance.snowRenderFlags) { try { instance.snowRenderFlags.destroy(); } catch (_) {} }
         if (instance.terrainRenderBuf) { try { instance.terrainRenderBuf.destroy(); } catch (_) {} }
