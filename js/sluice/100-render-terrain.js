@@ -303,6 +303,7 @@
   // connected veins looking like a single mass while still rounding exposed
   // outside corners. Unlike the old marching-square shape, it does not bulge
   // halfway into neighboring dirt or mined-out cells.
+  var SURFACE_STONE_CORNER_RADIUS = 5;
   function buildUnifiedStonePatchPath(rowStart, rowEnd, colStart, colEnd) {
     var outgoing = {};
     var edges = [];
@@ -372,6 +373,12 @@
       return out;
     }
     function stoneBoundaryCurveTo(path, x1, y1, x2, y2) {
+      // The cap meets the surface exactly. An inward wobble here exposes
+      // the dirt backing as a brown seam across the top of the rock.
+      if (y1 === SKY_ROWS * TILE && y2 === y1) {
+        path.lineTo(x2, y2);
+        return;
+      }
       var dx = x2 - x1;
       var dy = y2 - y1;
       var len = Math.hypot(dx, dy);
@@ -415,6 +422,13 @@
         var inDy = (cur.y - prev.y) / inLen;
         var outDx = (next.x - cur.x) / outLen;
         var outDy = (next.y - cur.y) / outLen;
+        if (cur.y === SKY_ROWS * TILE && (inDx === 1 || outDx === 1)) {
+          // Stay flush with the soil on the bank side, with a small worn
+          // shoulder facing open water. The shared surface-mouth mask
+          // removes the dirt backing around that same shoulder.
+          var bankCol = Math.round(cur.x / TILE) + (outDy === 1 ? 0 : -1);
+          radius = tileAt(SKY_ROWS, bankCol) === null ? SURFACE_STONE_CORNER_RADIUS : 0;
+        }
         corners.push({
           inX: cur.x - inDx * radius,
           inY: cur.y - inDy * radius,
@@ -1979,18 +1993,44 @@
       // leave backing pixels even far from solid neighbours in a broad pit;
       // skipping those cells leaves floating brown slivers on the horizon.
       var tx = c * TILE;
+      var stoneLeft = isStoneRenderMassTile(r, c - 1);
+      var stoneRight = isStoneRenderMassTile(r, c + 1);
+      var mouthLeft = tx - (stoneLeft ? 0 : 1.5);
+      var mouthRight = tx + TILE + (stoneRight ? 0 : 1.5);
       var lip = 7.5;
       var drop = 18.5;
       var waveA = edgeWave('dirt', 82, ty, tx + TILE * 0.33) * 0.45;
       var waveB = edgeWave('dirt', 83, ty, tx + TILE * 0.66) * 0.45;
 
-      path.moveTo(tx - 1.5, ty - 3);
-      path.lineTo(tx + TILE + 1.5, ty - 3);
-      path.lineTo(tx + TILE + 1.5, ty + lip);
+      path.moveTo(mouthLeft, ty - 3);
+      path.lineTo(mouthRight, ty - 3);
+      path.lineTo(mouthRight, ty + lip);
       path.quadraticCurveTo(tx + TILE * 0.94, ty + drop + waveB, tx + TILE * 0.64, ty + drop - 2 + waveB);
       path.quadraticCurveTo(tx + TILE * 0.50, ty + drop + 1.5, tx + TILE * 0.36, ty + drop - 2 + waveA);
-      path.quadraticCurveTo(tx + TILE * 0.06, ty + drop + waveA, tx - 1.5, ty + lip);
+      path.quadraticCurveTo(tx + TILE * 0.06, ty + drop + waveA, mouthLeft, ty + lip);
       path.closePath();
+
+      // These cutouts follow the exposed stone caps, for both the cached
+      // terrain and the liquid mask. Never leave a square of soil behind
+      // a rounded shoreline corner, or clip water against that old square.
+      var cap = SURFACE_STONE_CORNER_RADIUS;
+      if (stoneLeft) {
+        path.moveTo(tx - cap, ty - 3);
+        path.lineTo(tx + 1.5, ty - 3);
+        path.lineTo(tx + 1.5, ty + cap);
+        path.lineTo(tx, ty + cap);
+        path.quadraticCurveTo(tx, ty, tx - cap, ty);
+        path.closePath();
+      }
+      if (stoneRight) {
+        var edgeX = tx + TILE;
+        path.moveTo(edgeX - 1.5, ty - 3);
+        path.lineTo(edgeX + cap, ty - 3);
+        path.lineTo(edgeX + cap, ty);
+        path.quadraticCurveTo(edgeX, ty, edgeX, ty + cap);
+        path.lineTo(edgeX - 1.5, ty + cap);
+        path.closePath();
+      }
     }
     return path;
   }

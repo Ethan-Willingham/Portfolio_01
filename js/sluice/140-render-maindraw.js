@@ -90,9 +90,9 @@
     gwFieldV = new Float32Array(gwFieldLen);
   }
 
-  // Grass only grows where the surface cell beneath it is solid. tileAt(SKY_ROWS,
-  // col) is the topmost ground cell; null means dug out / pond pit / cave mouth, so
-  // no blade is drawn there. Memoised on the last column (blades march left-to-right,
+  // Grass grows on solid ground, but not on bare stone shoreline caps.
+  // tileAt(SKY_ROWS, col) is the topmost ground cell; null means dug out / pond
+  // pit / cave mouth. Memoised on the last column (blades march left-to-right,
   // so the tileAt lookup runs about once per column, not once per blade). Reset
   // the memo every update/draw pass so digging never leaves a floating clump.
   var _grassSupCol = 2147483647, _grassSupVal = false;
@@ -100,7 +100,8 @@
     var col = Math.floor(wx / TILE);
     if (col !== _grassSupCol) {
       _grassSupCol = col;
-      _grassSupVal = col >= 0 && col < WORLD_COLS && tileAt(SKY_ROWS, col) != null;
+      _grassSupVal = col >= 0 && col < WORLD_COLS && tileAt(SKY_ROWS, col) != null &&
+        !isStoneRenderMassTile(SKY_ROWS, col);
     }
     return _grassSupVal;
   }

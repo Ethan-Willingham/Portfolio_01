@@ -440,7 +440,9 @@
     // Where the station deck ends: foundation beside dirt, ore pockets and voids.
     ['........', '........', 'Fddddddd', 'dddddddd', 'dddodddd', 'doood...', 'ooodd...', 'oodooo..'],
     ['dddodddd', 'doood...', 'ooodd...', 'oodooo..', 'doddoo..', 'ddddodd.', 'ddddddSd', 'ddddSSSd'],
-    ['doddoo..', 'ddddodd.', 'ddddddSd', 'ddddSSSd', 'dddSSSdd', 'dddSSSdd', 'Sddddddd', 'Sddddddd']
+    ['doddoo..', 'ddddodd.', 'ddddddSd', 'ddddSSSd', 'dddSSSdd', 'dddSSSdd', 'Sddddddd', 'Sddddddd'],
+    // Both shoreline caps, including the shared rounded water cutouts.
+    ['........', '........', 'dS....Sd', 'dS....Sd', 'dSSSSSSd', 'dddddddd', 'dddddddd', 'dddddddd']
   ];
   var SHADER_WARM_DEEP = [0, 3, 5, 7];
 
