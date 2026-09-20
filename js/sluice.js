@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.7';
+  var GAME_VERSION = 'v28.8';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -32840,6 +32840,7 @@
   var RAIN_DAMP_CAP = 256;
   var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, waterCount: 0,
     drops: [], impacts: [], parked: [], cells: {}, intensity: 0.8,
+    plow: { x0: 0, x1: 0, y0: 0, y1: 0, freshUntil: 0, until: 0 },
     damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false };
 
   function rainNewWorldEnabled() {
@@ -32852,6 +32853,7 @@
     rain.emitted = rain.landed = rain.recycled = rain.absorbed = 0;
     rain.drops.length = rain.impacts.length = rain.parked.length = rain.damp.length = 0;
     rain.dampCells = {};
+    rain.plow.freshUntil = rain.plow.until = 0;
     rain.cells = {}; rain.primed = false; rain.intensity = 0.8;
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
     // Reset the wet mood too when making a normal world after a rain world.
@@ -32865,6 +32867,25 @@
     weather.tpcp = rain.intensity; weather.twind = 0.62;
   }
   function rainCell(x, y) { return Math.floor(y / 6) * (Math.ceil(COLS * TILE / 6) + 1) + Math.floor(x / 6); }
+
+  function rainUpdatePlow() {
+    if (!player || !player.onGround || gameOver || gameWon || Math.abs(player.vx) < 12) return;
+    var p = rain.plow, right = player.vx > 0, feet = player.y + PLAYER_H;
+    // A short bow-wave pocket follows the tracks in either direction. Protect
+    // its compressed, momentarily still water too, before the solver kicks it.
+    p.x0 = player.x - (right ? 24 : 72);
+    p.x1 = player.x + PLAYER_W + (right ? 72 : 24);
+    p.y0 = feet - 32; p.y1 = feet + 6;
+    p.freshUntil = rain.time + 0.35;
+    p.until = rain.time + 1.25;
+  }
+  function rainPlowHolds(i) {
+    var p = rain.plow, x = liquidX[i], y = liquidY[i];
+    if (rain.time >= p.until || x < p.x0 || x > p.x1 || y < p.y0 || y > p.y1) return false;
+    // Once the rig stops, let the moving wake finish, then resume soaking.
+    // Tiny solver jitter is not motion. No particle timers or extra readbacks.
+    return rain.time < p.freshUntil || liquidVX[i] * liquidVX[i] + liquidVY[i] * liquidVY[i] > 144;
+  }
 
   function rainDampEdge(r, c, face, x, y) {
     // Merge nearby absorption into a tiny face cache, never one FX per drop.
@@ -32922,7 +32943,7 @@
           removeLiquidParticle(i);
           continue;
         }
-        if (Math.random() < soakChance && rainSoakAt(x, y, true)) {
+        if (!rainPlowHolds(i) && Math.random() < soakChance && rainSoakAt(x, y, true)) {
           removeLiquidParticle(i);
           continue;
         }
@@ -32964,7 +32985,7 @@
     while (count > 0 && attempts-- > 0 && liquidCount) {
       rain.cursor %= liquidCount;
       var i = rain.cursor++;
-      if (liquidOrigin[i] !== RAIN_ORIGIN) continue;
+      if (liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i)) continue;
       removeLiquidParticle(i); rain.waterCount--; rain.recycled++; count--;
       rain.cursor--;
     }
@@ -32997,6 +33018,7 @@
     if (!worldRainEnabled || bathMode || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     dt = Math.min(0.05, Math.max(0, dt));
     rain.time += dt;
+    rainUpdatePlow();
     rain.scan -= dt; rain.scanDt += dt;
     if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
     var gpu = liquidWGPU && liquidWGPU.simActive;

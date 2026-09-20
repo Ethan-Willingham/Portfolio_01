@@ -18,6 +18,15 @@ glint show the damp soil, then fade over six seconds. Stone, ore and foundation
 blocks do not absorb it. Ponds, minerals and water already collected and poured
 by the player keep their usual behavior.
 
+Driving along the ground gathers a small bow wave. At speeds above 12 pixels
+per second, the rig protects rainwater within 72 pixels ahead of its tracks
+and 24 pixels behind, in a shallow band around ground contact. Compressed
+water is protected even when briefly stationary. After stopping, that pocket
+holds for 0.35 seconds; water still moving above 12 pixels per second can finish
+its wake for up to 1.25 seconds. Then normal soaking resumes. Flying does not
+renew the pocket, and distant dirt keeps absorbing throughout. Reservoir
+recycling also skips this pocket; the overall rain cap stays the same.
+
 The atmosphere uses ballistic particles until contact because isolated drops
 do not need the dense liquid solver's pressure grid. The water solver handles
 impacts, pooling and flow. The little impact crowns and expanding rings are
@@ -63,6 +72,8 @@ The damp effect merges contacts into eight-pixel face segments with a hard
 256-entry cap. It uses the current dirt and weather palettes, plain paths,
 and no extra simulated particles, gradients, canvases or terrain rebuilds.
 Terrain edits invalidate wet marks. The real draw is included in shader warmup.
+The plow pocket uses one shared rectangle and expiry times, checked in that
+same scan. It adds no per-particle state or liquid readback.
 
 Integration points: 040 initializes the new world's choice, 047 saves it,
 052/053 expose it in Options, 155 supplies clouds and the precipitation draw
@@ -76,6 +87,9 @@ shaft versus a sealed roof, collection, persistence, budget pressure, pause,
 desktop and mobile layouts, gradual dirt absorption, wall contact, protected
 materials and liquids, parked drainage, wet-mark cleanup and budget, and
 drainage at 30, 60 and 144 FPS. Screenshots do not belong in the repository.
+Add `--plow` to drive through live GPU rain, measure the moving bow wave, and
+capture driving and settled views. Controlled checks cover both directions,
+stopping, flying, distant dirt, and reservoir recycling of other rain.
 
 Validation for v28.6: `node tools/sluice-rain-smoke.mjs --soak` passed with
 no runtime or shader errors. The live WebGPU storm processed more than 47,000
@@ -87,3 +101,9 @@ GPU solver and rendering cost. After one second of dirt contact, a controlled
 2,000-particle puddle had 158, 171 and 177 particles left at 30, 60 and 144 FPS.
 These are local measurements, not a performance guarantee for other devices.
 Liquid-transfer conservation tests also passed.
+
+Validation for v28.8: `node tools/sluice-rain-smoke.mjs --plow` passed with
+no runtime or shader errors. The live GPU drive gathered a visible bow wave
+over roughly 1,000 pixels of dirt, then returned to a thin wet surface after
+stopping. Both directional protections, expiry, and the unchanged reservoir
+cap passed. Rain's CPU update remained 0.1 ms median and 0.5 ms p95 locally.

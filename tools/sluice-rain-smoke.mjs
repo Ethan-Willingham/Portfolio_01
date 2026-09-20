@@ -151,6 +151,28 @@ try {
   await game('rainDampEdge(SKY_ROWS,rc,0,rc*TILE+4,sy);world[SKY_ROWS][rc]=null;rainScan()');
   check('digging removes the old dirt wetting mark',await game('rain.damp.length===0'));
 
+  await game(`liquidCount=0;rainReset(true);rain.time=10;
+    for(var c=rc;c<rc+12;c++)world[SKY_ROWS][c]={type:'dirt'};
+    player.x=rc*TILE;player.y=sy-PLAYER_H;player.vx=90;player.vy=0;player.onGround=true;
+    for(var i=0;i<1000;i++)addLiquidParticle(0,player.x+PLAYER_W+16,sy-2,0,0,3);
+    for(var i=0;i<100;i++)addLiquidParticle(0,player.x+TILE*10,sy-2,0,0,3);
+    rainUpdatePlow();rainScan(10);`);
+  check('driving preserves the compressed bow wave while distant dirt still drains',await game('liquidCount===1000 && rain.absorbed===100'));
+  await game('rainRecycle(1000)');
+  check('reservoir recycling does not eat the bow wave',await game('liquidCount===1000 && rain.recycled===0'));
+  await game('player.vx=0;rain.time+=0.4;for(var i=0;i<liquidCount;i++)liquidVX[i]=70;rainScan(10)');
+  check('moving wake survives briefly after the rig stops',await game('liquidCount===1000'));
+  await game('for(var i=0;i<liquidCount;i++)liquidVX[i]=0;rainScan(10)');
+  check('settled wake resumes dirt absorption',await game('liquidCount===0'));
+  await game(`player.x=(rc+5)*TILE;player.vx=-90;rainUpdatePlow();
+    addLiquidParticle(0,player.x-50,sy-2,-50,0,3);rainScan(10);`);
+  check('leftward driving protects the advancing side too',await game('liquidCount===1'));
+  await game('player.vx=0;rain.time+=1.3;rainScan(10)');
+  check('old wake protection expires even if liquid keeps jittering',await game('liquidCount===0'));
+  await game(`rainReset(true);player.onGround=false;player.vx=90;rainUpdatePlow();
+    addLiquidParticle(0,player.x+PLAYER_W+16,sy-2,0,0,3);rainScan(10);player.vx=0;`);
+  check('flying over dirt does not suspend ground absorption',await game('liquidCount===0'));
+
   const drainage=await game(`(function(){var result=[],random=Math.random;
     try {for(var hz=0;hz<3;hz++){
       var fps=[30,60,144][hz],seed=731;
@@ -185,6 +207,29 @@ try {
   await sleep(2500);
   const timings=await game(`(function(){var samples=[];for(var n=0;n<200;n++){var t=performance.now();updateParticleRain(1/60);samples.push(performance.now()-t);}samples.sort(function(a,b){return a-b;});return {p50:samples[100],p95:samples[190],max:samples[199]};})()`);
   console.log('Rain CPU update milliseconds:',timings);
+  if (process.argv.includes('--plow')) {
+    await game(`timeOfDay=0.35;tutorialDone=true;
+      window.plowSamples=[];window.plowStart=player.x;
+      keys.ArrowLeft=true;`);
+    for(let i=0;i<10;i++) {
+      await sleep(500);
+      const state=await game(`(function(){liquidToolSync();var front=0,moving=0,maxHeight=0;
+        for(var i=0;i<liquidCount;i++){
+          if(liquidOrigin[i]!==3 || liquidX[i]<player.x-72 || liquidX[i]>player.x+4 || liquidY[i]<player.y-6 || liquidY[i]>player.y+PLAYER_H+6)continue;
+          front++;maxHeight=Math.max(maxHeight,player.y+PLAYER_H-liquidY[i]);
+          if(Math.abs(liquidVX[i])>12)moving++;
+        }
+        return {x:player.x,ground:player.onGround,front:front,moving:moving,height:maxHeight,water:rain.waterCount};
+      })()`);
+      console.log('Driving rain:',state);
+      await game(`plowSamples.push(${JSON.stringify(state)})`);
+    }
+    await screenshot('rain-plow');
+    await game('keys.ArrowLeft=false');
+    check('live GPU driving gathers moving rain in front of the rig',await game('player.x<plowStart-100 && plowSamples.some(function(s){return s.ground && s.front>30 && s.moving>10;})'));
+    check('driving stays within the original small rain budget',await game('rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP'));
+    await sleep(2500);await screenshot('rain-plow-settled');
+  }
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await game('isMobile=true;resize()');await sleep(1500);await screenshot('rain-mobile');
   await game("PAUSE_DISABLED=false");
