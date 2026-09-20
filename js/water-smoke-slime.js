@@ -4855,6 +4855,11 @@
       for (k = 0; k < G; k++) { var r2 = botRow + 1; if (tileAt(r2, col) === null && tileAt(r2, col - 1) !== null && tileAt(r2, col + 1) !== null) botRow = r2; else break; }
       var topOpen = tileAt(topRow - 1, col) === null;   // open space just above the channel top?
       var botOpen = tileAt(botRow + 1, col) === null;
+      // Living gel uses real wall grips and gravity in an open shaft. The
+      // legacy cube eject below pulls each entering node toward the bottom,
+      // which launches an exploring resident down the pit a tile per frame.
+      // Keep ordinary terrain contacts, including falls after a player shove.
+      if (botOpen && b.surfaceSlime) return;
       // GAP FIT — a 1-wide body fits a 1-wide channel (the core mechanic: dig a
       // cube out, then drop it down a shaft as an elevator-landing cushion or push
       // it into an oil/acid pool for a reaction). Reconciled with the owner bug

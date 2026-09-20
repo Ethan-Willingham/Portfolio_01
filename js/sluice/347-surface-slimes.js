@@ -210,7 +210,17 @@
     var m = b.surfaceSlime;
     if (!m || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
     jelloRingBake(b);
-    var path = jelloCachedRingPath(b), r = m.radius, hue = m.hue;
+    // Round the actual moving skin vertices into a continuous gel surface.
+    // No extra draw-time wave: the contour follows the colliding soft body.
+    var path = new Path2D(), count = jelloRingBakeN;
+    path.moveTo((jelloROX[count - 1] + jelloROX[0]) * 0.5, (jelloROY[count - 1] + jelloROY[0]) * 0.5);
+    for (var k = 0; k < count; k++) {
+      var next = (k + 1) % count;
+      path.quadraticCurveTo(jelloROX[k], jelloROY[k],
+        (jelloROX[k] + jelloROX[next]) * 0.5, (jelloROY[k] + jelloROY[next]) * 0.5);
+    }
+    path.closePath();
+    var r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
     if (!m.climb && jelloSupportedBelowTile(b)) {

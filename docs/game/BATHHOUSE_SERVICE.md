@@ -120,7 +120,7 @@ limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak 
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Bath-born residents (v28.51)
+## Bath-born residents (v28.53)
 
 Five soft residents appear around the starting town for playtesting, including
 on existing saves. A completed warm bath changes a rocky guest into the same
@@ -134,6 +134,9 @@ softly irregular radial rest shape, spring network and pressure constraints gove
 with terrain, the rig, other gel bodies, and rocky guests. Softer edge and shear
 constraints and lower internal damping let them slump, stretch, and wobble.
 A travelling muscle wave changes local spring lengths and the target shape.
+A broad wave along the contact skin drives the crawl while larger, shorter
+ripples travel through the exposed back and sides. The rounded outline follows
+these actual moving physics points, including their collisions.
 The material has no authored feet or permanently upright face. After a roll or
 throw, the next supporting surface becomes its underside; the muscle target
 retains that material orientation. At a ledge, leading skin grips the top and
@@ -141,12 +144,19 @@ curls the rest over relative to its current pose. It does not reset to birth-up.
 Each resident smoothly varies wave speed, amplitude, and length over time, with
 independently timed rests, occasional turns, and a gradual start to each stride.
 Patches of skin grip fixed terrain contacts during their contraction and release
-during their forward stroke; this contact drives crawling. The muscles have
-zero net translation in free space. At a wall the same wave turns upward, then
-rounds an exposed top corner onto the ledge. Terrain bonds have finite reach and
+during their forward stroke; this contact drives crawling. Wall grips overlap,
+so the slower, elongated snail-like crawl keeps at least two existing patches
+until another can take over. A resting resident keeps its wall grip while its
+walking wave pauses. The muscles have zero net translation in free space.
+At a wall the same wave turns upward, then rounds an exposed top corner onto
+the ledge. Terrain bonds have finite reach and
 strength, and disappear when their supporting tile is mined. Rig impacts, jets,
 grabbing and tossing suspend adhesion so a resident can peel off and fall.
-They avoid walking into shafts and stay near their own surface neighborhood.
+They probe the actual supporting terrain ahead, including every intervening
+column, then briefly grip and smoothly reverse before an unsupported edge.
+The old narrow-shaft downward ejection does not apply to these residents;
+gravity and ordinary terrain collisions govern a real fall. They stay near
+their own surface neighborhood.
 Player pushes can still send them underground. Underground slime brains remain
 disabled by default.
 
@@ -174,7 +184,9 @@ climbing in both directions at those frame rates, loss of propulsion with the
 wave disabled, wall knock-off, jets, and mined handholds.
 `node tools/surface-slime-orientation.mjs` checks recovery from quarter, half,
 and arbitrary rolls, rolled ledge climbs, naturally changing gaits, and the
-pupil's inertial response and containment. Screenshots go to `/tmp`.
+pupil's inertial response and containment. `node tools/surface-slime-snail.mjs`
+checks pit approaches, sustained wall grip, idle wall pauses, player knock-off,
+and stronger deformation of the real skin. Screenshots go to `/tmp`.
 
 ## Sky visitor physics and appearance (v28.34)
 

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.52';
+  var GAME_VERSION = 'v28.53';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -62301,6 +62301,11 @@
       for (k = 0; k < G; k++) { var r2 = botRow + 1; if (tileAt(r2, col) === null && tileAt(r2, col - 1) !== null && tileAt(r2, col + 1) !== null) botRow = r2; else break; }
       var topOpen = tileAt(topRow - 1, col) === null;   // open space just above the channel top?
       var botOpen = tileAt(botRow + 1, col) === null;
+      // Living gel uses real wall grips and gravity in an open shaft. The
+      // legacy cube eject below pulls each entering node toward the bottom,
+      // which launches an exploring resident down the pit a tile per frame.
+      // Keep ordinary terrain contacts, including falls after a player shove.
+      if (botOpen && b.surfaceSlime) return;
       // GAP FIT — a 1-wide body fits a 1-wide channel (the core mechanic: dig a
       // cube out, then drop it down a shaft as an elevator-landing cushion or push
       // it into an oil/acid pool for a reaction). Reconciled with the owner bug
@@ -67499,7 +67504,7 @@
     slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
   }
   /* ---- Active gel: travelling muscle waves and breakable terrain adhesion ---- */
-  var SURFACE_SLIME_WAVE = 0.29;
+  var SURFACE_SLIME_WAVE = 0.36;
   var SURFACE_SLIME_WAVE_SPEED = 6.4;
   var SURFACE_SLIME_GRIP_RANGE = 11;
 
@@ -67509,6 +67514,7 @@
     m.detach = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.anchors = new Array(b.n);
     m.waveCos = new Float32Array(b.n);
     m.materialAngle = 0; m.poseAngle = 0; m.reorient = true; m.power = 0;
+    m.edgePause = 0; m.edgeTurn = 0; m.floorY = null; m.strideDir = m.dir;
     m.rng = ((m.seed * 1000000000) ^ Math.imul(m.id | 0, 2654435761)) >>> 0;
     m.gaitSpeed = 1; m.gaitAmplitude = 1; m.gaitLength = 2.8;
     surfaceSlimeChooseGait(m);
@@ -67549,6 +67555,7 @@
     m.detach = Math.max(m.detach || 0, seconds || 1.3);
     m.anchors.fill(null); m.contacts = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.drive = false;
     m.state = 'tumble'; m.timer = m.detach; m.reorient = true; m.power = 0;
+    m.floorY = null; m.edgePause = 0;
     b.sleeping = false; b.sleepFrames = 0;
   }
 
@@ -67581,6 +67588,8 @@
     m.gaitLength += (m.targetLength - m.gaitLength) * blend;
     m.detach = Math.max(0, m.detach - dt);
     m.crest = Math.max(0, m.crest - dt);
+    m.edgePause = Math.max(0, m.edgePause - dt);
+    m.edgeTurn = Math.max(0, m.edgeTurn - dt);
     var touched = b._plyMs && b._plyMs !== m.lastPlayerMs;
     m.lastPlayerMs = b._plyMs;
     if (b._grabbed || b._carried || touched) {
@@ -67588,18 +67597,20 @@
     }
     if (!m.drive || m.reorient) m.poseAngle = m.materialAngle;
     if (m.detach > 0) { m.drive = false; return; }
-    var wall = null, supported = false, crestTop = null;
+    var wall = null, supported = false, crestTop = null, floorY = null;
     for (var k = 0; k < b.ringN; k++) {
       var p = b.ring[k];
       var near = surfaceSlimeTerrainNear(b.px[p], b.py[p], 12);
       if (!near) continue;
       if (near.ny < -0.5 || near.nx * m.dir < -0.7) supported = true;
+      if (near.ny < -0.8 && Math.abs(b.px[p] - b.cx) < m.radius * 1.4) floorY = near.y;
       if (m.climb && near.c === m.wallCol && near.ny < -0.55 && !tileAt(near.r - 1, near.c) &&
-          b.cy < near.y + m.radius * 0.6) crestTop = near.y;
+          b.cy < near.y + m.radius * 1.05) crestTop = near.y;
       // A rim brushing a top corner is not a new vertical wall to climb.
       if ((b.px[p] - b.cx) * m.dir >= 0 && near.nx * m.dir < -0.7 &&
           near.r * TILE < b.cy + m.radius * 0.2) wall = near;
     }
+    if (floorY !== null) m.floorY = floorY;
     if (m.reorient) {
       // Keep tumbling in the air. The first new support becomes the base;
       // there is no return to the points that were underneath at birth.
@@ -67608,7 +67619,7 @@
       m.anchors.fill(null);
     }
     if (m.timer <= 0 || m.state === 'tumble') {
-      m.state = m.state === 'crawl' ? 'idle' : 'crawl';
+      m.state = (m.state === 'crawl' || m.state === 'climb') ? 'idle' : 'crawl';
       m.timer = m.state === 'crawl' ? 3.5 + surfaceSlimeRandom(m) * 5 : 0.35 + surfaceSlimeRandom(m) * 1.6;
       if (!m.climb) {
         if (Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
@@ -67617,7 +67628,6 @@
     }
     if (wall && !m.crest && m.state !== 'idle') {
       m.climb = true; m.wallCol = wall.c;
-      m.timer = Math.max(m.timer, 2);
     }
     if (m.climb) {
       // Round an exposed top corner by turning the same contact wave back
@@ -67626,26 +67636,38 @@
       var clearTop = !tileAt(row, m.wallCol) && !tileAt(row - 1, m.wallCol);
       if (crestTop !== null || (clearTop && b.cy < Math.floor((b.bboxB + 8) / TILE) * TILE - m.radius * 0.32)) {
         m.crestTop = crestTop === null ? Math.floor((b.bboxB + 8) / TILE) * TILE : crestTop;
-        m.climb = false; m.crest = 3.5; m.topGrip = false;
+        m.climb = false; m.crest = 5; m.topGrip = false;
         m.crestTurn = m.poseAngle; m.state = 'crawl'; m.timer = 4;
       }
-      if (m.climb) m.state = 'climb';
+      if (m.climb && m.state !== 'idle') m.state = 'climb';
     }
-    if (!m.climb && m.state === 'crawl' && jelloSupportedBelowTile(b)) {
-      var aheadX = b.cx + m.dir * (m.radius + 18);
-      var aheadY = b.bboxB + 16;
-      if (!wall && !tileAt(Math.floor(aheadY / TILE), Math.floor(aheadX / TILE))) m.dir *= -1;
+    if (!m.climb && !m.crest && !m.wet && !wall && !m.edgeTurn && m.floorY !== null &&
+        m.floorY > b.cy && m.floorY - b.cy < m.radius * 1.8) {
+      // Probe the actual support plane, not the bouncing lowest skin point.
+      // Check every intervening column so a narrow shaft is not skipped by
+      // a long look-ahead. Keep the center of mass on this bank while turning.
+      var look = m.radius * 1.6 + Math.max(0, b.vx * JELLO_TIMESCALE * m.dir) * 0.22;
+      for (var ahead = 4; ahead <= look; ahead += 4) {
+        if (jelloWorldSolidAt(b.cx + m.dir * ahead, m.floorY + 2)) continue;
+        m.dir *= -1; m.edgePause = 0.38; m.edgeTurn = 1.1;
+        m.state = 'crawl'; m.timer = Math.max(m.timer, 2.5);
+        break;
+      }
     }
-    m.drive = m.state === 'crawl' || m.climb || !!m.wet;
+    // A resting snail still holds the wall. Drive means a living supported
+    // shape; power below determines whether its foot is taking a stride.
+    m.drive = m.state === 'crawl' || m.climb || m.edgePause > 0 || !!m.wet;
     b.sleeping = false; b.sleepFrames = 0;
   }
 
   function surfaceSlimeMuscleStep(b, h) {
     var m = b.surfaceSlime, dt = h / JELLO_TIMESCALE;
-    var active = m.drive && !m.detach && !b._grabbed && !m.reorient;
+    var active = m.drive && m.state !== 'idle' && !m.edgePause && !m.detach && !b._grabbed && !m.reorient;
     m.power += ((active ? 1 : 0) - m.power) * Math.min(1, dt * 5);
+    m.strideDir += (m.dir - m.strideDir) * Math.min(1, dt * 6);
     var tempo = m.gaitSpeed * (1 + 0.07 * Math.sin(m.age * 0.91 + m.seed * 9));
-    m.phase += (active ? SURFACE_SLIME_WAVE_SPEED * tempo : 2.6) * dt;
+    var restingTempo = m.climb || m.edgePause ? 0 : 2.6;
+    m.phase += (active ? SURFACE_SLIME_WAVE_SPEED * tempo * (m.climb ? 0.82 : 1) : restingTempo) * dt;
     var desiredAngle = m.climb ? -m.dir * Math.PI / 2 :
       m.crest && b.cy > m.crestTop - m.radius * 0.35 ? -m.dir * Math.PI / 4 : 0;
     m.angle += (desiredAngle - m.angle) * Math.min(1, dt * 4);
@@ -67664,16 +67686,21 @@
       // The contact frame chooses this stride's underside independently of
       // the material rotation. These can be entirely different skin points.
       var qx = ca * wx + sa * wy, qy = -sa * wx + ca * wy;
-      var u = qx * m.dir / m.radius;
+      var u = qx * m.strideDir / m.radius;
       var phase = m.phase + u * m.gaitLength;
       var cs = Math.cos(phase);
       var sn = Math.sin(phase) + 0.10 * Math.sin(phase * 2 + m.seed * 5);
-      var skin = 0.42 + 0.58 * skySlimeClamp((qy / m.radius + 0.6) / 1.2, 0, 1);
-      var dx = m.dir * amplitude * sn * skin;
-      var dy = -amplitude * cs * skin * 0.85;
+      var foot = skySlimeClamp((qy / m.radius + 0.6) / 1.2, 0, 1);
+      var skin = 0.42 + 0.58 * foot;
+      var dx = m.strideDir * amplitude * sn * skin * 0.82;
+      // A broad pedal wave works against the terrain while a larger wave
+      // ripples through the free back and sides. This bends actual material,
+      // including its collision boundary, rather than wobbling a draw path.
+      var backWave = Math.sin(m.phase + u * (m.gaitLength + 2.1) + m.seed * 2);
+      var dy = -amplitude * (cs * foot * 0.70 + backWave * (1 - foot) * 1.55);
       // Spread along the support and gather across it, whichever material
       // side is touching. At a corner this makes a reaching lobe, not a jump.
-      var stretch = 1 + m.power * (m.crest ? 0.30 : 0.16);
+      var stretch = 1 + (m.climb ? 0.28 : m.power * (m.crest ? 0.30 : 0.24));
       var tx = qx * stretch + dx, ty = qy / stretch + dy;
       b.muscleX[i] = ca * tx - sa * ty;
       b.muscleY[i] = sa * tx + ca * ty;
@@ -67686,14 +67713,14 @@
     for (var s = 0; s < b.springN; s++) {
       var a = b.sA[s], c = b.sB[s];
       var length = Math.hypot(b.muscleX[a] - b.muscleX[c], b.muscleY[a] - b.muscleY[c]);
-      b.sRest[s] = skySlimeClamp(length, b.muscleRest[s] * 0.65, b.muscleRest[s] * 1.4);
+      b.sRest[s] = skySlimeClamp(length, b.muscleRest[s] * 0.60, b.muscleRest[s] * 1.5);
     }
   }
 
   function surfaceSlimeAdhesionStep(b, h) {
     var m = b.surfaceSlime;
     if (!m.drive || m.detach > 0 || b._grabbed || b._carried) { m.anchors.fill(null); m.contacts = 0; return; }
-    var contacts = 0;
+    var contacts = 0, holding = m.state === 'idle' || m.edgePause > 0;
     if (m.crest && !m.topGrip) {
       var topPoints = 0, materialX = 0, materialY = 0;
       for (var a = 0; a < m.anchors.length; a++) {
@@ -67711,14 +67738,23 @@
         m.crestTurn = m.poseAngle + Math.atan2(gx, gy);
       }
     }
+    // Count only surviving bonds before releasing a foot patch. Overlapping
+    // patches keep the gel attached throughout each snail-like pedal wave.
+    var attached = 0;
     for (var k = 0; k < b.ringN; k++) {
       var p = b.ring[k], anchor = m.anchors[p];
+      if (anchor && ((m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6) ||
+          !tileAt(anchor.r, anchor.c) || Math.hypot(b.px[p] - anchor.x, b.py[p] - anchor.y) > 22)) m.anchors[p] = null;
+      else if (anchor) attached++;
+    }
+    for (k = 0; k < b.ringN; k++) {
+      var p = b.ring[k], anchor = m.anchors[p];
       // Briefly bridge both faces at a crest, then release the old wall.
-      if (anchor && ((m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6) || !tileAt(anchor.r, anchor.c) || m.waveCos[p] > 0.25 ||
-          Math.hypot(b.px[p] - anchor.x, b.py[p] - anchor.y) > 22)) anchor = null;
-      if (!anchor && m.waveCos[p] < 0.1) {
+      if (anchor && !holding && m.waveCos[p] > 0.45 && attached > (m.climb ? 2 : 0)) { anchor = null; attached--; }
+      if (!anchor && (holding || m.waveCos[p] < 0.25)) {
         anchor = surfaceSlimeTerrainNear(b.px[p], b.py[p], SURFACE_SLIME_GRIP_RANGE);
         if (anchor && (m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6)) anchor = null;
+        if (anchor) attached++;
       }
       m.anchors[p] = anchor;
       if (!anchor) continue;
@@ -67945,7 +67981,17 @@
     var m = b.surfaceSlime;
     if (!m || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
     jelloRingBake(b);
-    var path = jelloCachedRingPath(b), r = m.radius, hue = m.hue;
+    // Round the actual moving skin vertices into a continuous gel surface.
+    // No extra draw-time wave: the contour follows the colliding soft body.
+    var path = new Path2D(), count = jelloRingBakeN;
+    path.moveTo((jelloROX[count - 1] + jelloROX[0]) * 0.5, (jelloROY[count - 1] + jelloROY[0]) * 0.5);
+    for (var k = 0; k < count; k++) {
+      var next = (k + 1) % count;
+      path.quadraticCurveTo(jelloROX[k], jelloROY[k],
+        (jelloROX[k] + jelloROX[next]) * 0.5, (jelloROY[k] + jelloROY[next]) * 0.5);
+    }
+    path.closePath();
+    var r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
     if (!m.climb && jelloSupportedBelowTile(b)) {
