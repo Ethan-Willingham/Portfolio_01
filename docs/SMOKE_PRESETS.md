@@ -192,7 +192,12 @@ time and converted to each solver's cells; widths are converted from world
 pixels. The jet follows the tilted nozzles, stops at terrain or slimes, and
 spreads along an impact surface. Releasing thrust stops new jet impulses.
 The moving chassis joins the existing slime boundary batch so driving through
-smoke displaces it. These are bounded 2D fluid interactions, not a full 3D
+smoke displaces it. Its reusable boundary follows the curved hull and tracks,
+including facing, bank and suspension. It leaves the open air beside the
+cupola clear, avoiding the former rectangular smoke cutout around the miner.
+The thin exhaust pipe is outside this coarse air boundary so its mouth stays
+open. The shape uses the existing boundary draw and adds no rendering passes.
+These are bounded 2D fluid interactions, not a full 3D
 compressible exhaust model. The CPU fallback receives the same bounded jet.
 
 Stock and purchased exhaust share the live surface wind, including gusts and
@@ -209,7 +214,9 @@ Recipe preview wind settings do not override the game's weather.
   and desktop/phone store and pause controls.
 - `node tools/sluice-smoke-coupling.mjs`: rocket transfer to both smoke fields,
   direction, release, blockers, cadence, zoom, moving chassis boundaries and
-  live surface wind on active and fading exhaust.
+  live surface wind on active and fading exhaust. Pixel checks keep smoke
+  visible beside the cupola and hidden inside the chassis in both fields,
+  facing either direction and banked left or right.
 - `node tools/smoke-presets-smoke.mjs`: retained data, all rendered presets,
   live switching, UI tuning, favorites, downloads, phone layout and game boot.
 - `node tools/perf/smoke-physics.cjs`: measured thermal rise, weight, independent

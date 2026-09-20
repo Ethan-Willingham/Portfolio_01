@@ -357,8 +357,46 @@ try {
   check('all exhaust recipes share the current wind and surface boundary at every camera height',
     wind.configs.length >= 21 && wind.configs.every(sample => sample.actual.every(c =>
       close(c.wind, -0.04) && close(c.above, sample.expected))), wind.configs);
+  const silhouettes = await game(`(function(){
+    cam.x=player.renderX-screenW/2;cam.y=player.renderY-screenH/2;
+    var results=[],originX=cam.x-smokeFluidMarginWorldX,originY=cam.y-smokeFluidMarginWorldY;
+    function sample(driver,point){
+      driver.displayPass();var c=driver.getCanvas(),gl=c.getContext('webgl2')||c.getContext('webgl');
+      var uv=smokeFluidWorldToUV(point.x,point.y),pixel=new Uint8Array(4);
+      gl.readPixels(Math.floor(uv.uvX*c.width),Math.floor(uv.uvY*c.height),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+      return pixel[3];
+    }
+    [smokeDriver,rigExhaustFluid].forEach(function(driver,index){
+      driver.clear();driver.clearObstacle();driver.config.SHADING=false;driver.config.OPTICAL_DENSITY=0;
+      driver.config.EDGE_SHARPNESS=0;
+      driver.setLiquidField([],[],[],[],0,0,0,1,1,1);
+      var c=driver.getCanvas(),uv=smokeFluidWorldToUV(player.renderX+11,player.renderY+13);
+      driver.splat(uv.uvX,uv.uvY,0,0,{r:0.8,g:0.4,b:0.1},
+        100*Math.pow(45/smokeFluidDomainWorldH,2)/Math.max(1,c.width/c.height));
+      [-1,1].forEach(function(facing){[0,-0.55,0.55].forEach(function(tilt){
+        player.dir=facing;player.bodyTiltRender=tilt;
+        // Open air beside the cupola, inside the former rectangular mask.
+        var gap=playerLocalToWorld(facing<0?PLAYER_W-19.5:19.5,4);
+        var core=playerLocalToWorld(PLAYER_W/2,16);
+        driver.setMovingBodies([],originX,originY,smokeFluidDomainWorldW,smokeFluidDomainWorldH,
+          1/60,smokeFluidObstacleW,smokeFluidObstacleH,true);
+        var open=sample(driver,gap),inside=sample(driver,core);
+        driver.setMovingBodies(smokeFluidMovingBodies(),originX,originY,smokeFluidDomainWorldW,smokeFluidDomainWorldH,
+          1/60,smokeFluidObstacleW,smokeFluidObstacleH,true);
+        results.push({field:index?'custom':'ambient',facing:facing,tilt:tilt,
+          open:open,gap:sample(driver,gap),inside:inside,core:sample(driver,core)});
+      });});
+    });
+    player.bodyTiltRender=0;player.dir=1;return results;
+  })()`);
+  for(const r of silhouettes){
+    check(r.field+' smoke remains in open air beside the roof ('+r.facing+', '+r.tilt+')',
+      r.open>100&&r.gap/r.open>0.8,r);
+    check(r.field+' solid chassis still occludes smoke ('+r.facing+', '+r.tilt+')',
+      r.inside>100&&r.core/r.inside<0.1,r);
+  }
   check('browser reports no runtime or shader errors', errors.length === 0, errors);
-  const report = { routing, clouds, boundary, wind: { cases: wind.cases, afterStock: wind.afterStock } };
+  const report = { routing, clouds, boundary, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
   if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {

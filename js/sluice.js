@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.54';
+  var GAME_VERSION = 'v28.55';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -43543,18 +43543,34 @@
     if (typeof rigExhaustPositionDOM === 'function') rigExhaustPositionDOM();
   }
 
-  // The chassis displaces air just like a moving slime. Keep its identity
-  // stable: each fluid instance stores its own previous world-space ring.
-  var smokeRigBody = { ringN: 4, ring: [0, 1, 2, 3], px: new Float32Array(4), py: new Float32Array(4) };
+  // Fit the moving air boundary inside the curved hull and running gear.
+  // The old collision-box quad hid open air above the cupola, leaving a
+  // rectangular cutout in both smoke layers. The thin pipe stays outside
+  // this coarse fluid boundary so its mouth cannot choke its own plume.
+  // Reuse one ring: each solver keeps its own world-space motion history.
+  var smokeRigOutline = new Float32Array([
+    3.5, 18.8, 4.1, 10.4, 7, 9, 9.2, 6.3,
+    13.7, 5.2, 15.8, 6.2, 17.2, 9.2, 20.5, 10.7,
+    20.5, 14, 18.6, 17.8, 20.2, 19.1, 20.2, 23.2,
+    18.8, 24.6, 3.2, 24.6, 1.8, 23.2, 1.8, 20.6
+  ]);
+  var smokeRigBody = { ringN: 16, ring: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    px: new Float32Array(16), py: new Float32Array(16) };
   var smokeMovingBodies = [];
   function smokeFluidMovingBodies() {
     smokeMovingBodies.length = 0;
     for (var i = 0; i < jelloBodies.length; i++) smokeMovingBodies.push(jelloBodies[i]);
     if (roverMode || !isFinite(player.renderX + player.renderY)) return smokeMovingBodies;
-    for (var corner = 0; corner < 4; corner++) {
-      var point = playerLocalToWorld(corner === 1 || corner === 2 ? PLAYER_W - 1 : 1,
-        corner >= 2 ? PLAYER_H - 1 : 3);
-      smokeRigBody.px[corner] = point.x; smokeRigBody.py[corner] = point.y;
+    var suspension = playerFxLandOffset();
+    var angle = player.bodyTiltRender || 0, ca = Math.cos(angle), sa = Math.sin(angle);
+    var cx = PLAYER_W * 0.5, cy = PLAYER_H * 0.56;
+    for (var corner = 0; corner < smokeRigBody.ringN; corner++) {
+      var x = smokeRigOutline[corner * 2], y = smokeRigOutline[corner * 2 + 1];
+      if (corner < 10) y += suspension;
+      // Same pose as playerLocalToWorld, without a temporary object per vertex.
+      var dx = (player.dir < 0 ? PLAYER_W - x : x) - cx, dy = y - cy;
+      smokeRigBody.px[corner] = player.renderX + cx + dx * ca - dy * sa;
+      smokeRigBody.py[corner] = player.renderY + cy + dx * sa + dy * ca;
     }
     smokeMovingBodies.push(smokeRigBody);
     return smokeMovingBodies;
