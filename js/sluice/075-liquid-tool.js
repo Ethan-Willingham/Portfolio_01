@@ -39,7 +39,6 @@
     var key = e.key.toLowerCase();
     if (key === 'f') { if (!e.repeat) siphonToggle(); return true; }
     if (key === 'r' && (siphon.equipped || siphonTotal() > 0 || siphon.passenger)) { if (!e.repeat) siphonCycle(); return true; }
-    if (key === 'e' && !e.repeat && slimeGardenInteract()) return true;
     return false;
   }
   function siphonHit(button, x, y) {
@@ -111,7 +110,7 @@
         siphon.capture += dt;
         if (siphon.capture > 0.5) {
           var caught = skySlimeCapture(a.x, a.y, 36);
-          if (caught) { siphon.passenger = caught; siphonNotice('Passenger secured. Pour to set it in a bath.'); }
+          if (caught) { siphon.passenger = caught; siphonNotice('Passenger secured. Release it on the surface to visit the bathhouse.'); }
           siphon.capture = 0;
         }
       }

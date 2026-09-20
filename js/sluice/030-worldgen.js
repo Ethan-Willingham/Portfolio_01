@@ -217,9 +217,8 @@
     var _pondBig = worldPondStyle !== 'regular';
     var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
     var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    // Treat the garden and station as one reserved span. Wide/deep ponds
-    // overlapping a lot slide east intact, just as they do at the station.
-    var _pondDeckL = DECK_LEFT_COL - 63, _pondDeckR = DECK_RIGHT_COL + 8;
+    // Keep the station and the bathhouse approach on solid ground.
+    var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_CENTER_COL + 25;
     var _px = _pondLo + ((Math.random() * 30) | 0);
     while (_px < _pondHi - 12) {
       // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
@@ -232,7 +231,7 @@
       var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
       if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
       var _pr = _px + _pw - 1;
-      // A big pond that lands on the garden or station slides past the deck instead of
+      // A big pond that lands on the bathhouse or station slides past the deck instead of
       // being dropped, so the town keeps a pond on each side.
       if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
         _px = _pondDeckR + 1;
@@ -255,7 +254,7 @@
       _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
     }
     // Keep the selected pond style intact. A naturally generated east lake
-    // already supplies the garden; replacing its metadata with a 6x3 source
+    // already supplies the bathhouse; replacing its metadata with a 6x3 source
     // would strand the rest of a wide or deep excavation without water.
     var eastSource = false;
     for (var pond = 0; pond < surfacePonds.length; pond++) {
@@ -275,7 +274,6 @@
       surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
       seedLakeShoreSlimes(sourceL, sourceR);
     }
-    slimeGardenPrepareWorld();
     mineralLiquidGenerate(false);
   }
 

@@ -42,9 +42,12 @@ panel tokens) and the three fonts; otherwise they do not overlap.
 > (`js/sluice/010-constants.js`). They are NOT bugs and NOT missing
 > features; do not re-enable a flag without asking the owner. Each can be spot-checked per
 > page-load with a URL param (e.g. `?multitown=1`, `?combat=1`); see the flag block.
-> (The in-progress **banya** is still flag-off by default, but since v26.07 it is the one flag
-> with a player-facing switch: pause > Options > Banya, persisted as `sluice.opt.banya` and read
-> at boot by the flag block. It flips live; `?bath=1` remains the dev override and still wins.)
+> (The **bathhouse** is enabled by default since v28.5, by owner request.
+> Pause > Options > Banya remains a persisted switch; `?bath=0` disables it
+> for testing and `?bath=1` enables it. Sky slimes visit, wait, soak, pay, and leave.
+> Ten coal lights the shared stove. Spilled bath water is permanently lost on
+> the floor. Individual guest recipes are undecided. See
+> `docs/game/BATHHOUSE_SERVICE.md`. Outdoor pearl gardens have been removed.)
 > (Jello/slime soft bodies used to be on this list but are **LIVE** in production,
 > `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls. The
 > v26.69 slime-NPC brains (`js/sluice/345-slime-npc.js`: wander/hop/startle + swim

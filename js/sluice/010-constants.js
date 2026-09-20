@@ -20,11 +20,11 @@
        ?multitown=1  wide 4-town world      ?combat=1  enemies + turret
        ?nmz=1        No Man's Zone courses   ?board=1   the Trade Board
        ?jello=1      jello/slime bodies      ?oil=1     oil seams + pump
-       ?refine=1     ore-refinement catalog  ?bath=1    the banya (WIP)
+       ?refine=1     ore-refinement catalog  ?bath=0    hide the bathhouse
 
      ENABLE_BATH is the one flag with a PLAYER-FACING switch as well:
      pause > Options > Banya, persisted as 'sluice.opt.banya' and read
-     below. Default is still off, so a fresh profile boots unchanged.
+     below. New profiles start with the bathhouse open.
      ============================================================ */
   var SINGLE_TOWN        = true;   // one coherent town; false = the wide 4-town world
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
@@ -33,7 +33,7 @@
   var ENABLE_JELLO       = true;   // squishy jello / slime soft bodies — LIVE (v25.59): rare buried slimes cushion big falls
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
-  var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): the banya, in progress; player switch in Options
+  var ENABLE_BATH        = true;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): sky-slime visitors; player switch in Options
   // Per-load URL overrides for spot-checking a disabled system (see above).
   try {
     var _ffq = (window.location && window.location.search) || '';
@@ -48,13 +48,14 @@
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
     if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
   } catch (e) {}
-  // The banya's player switch (pause > Options > Banya). Read HERE, not in
-  // 052-options.js, because it must be settled before 072-bath.js evaluates
-  // its boot block; ?bath=1 above already won, so the dev override still
-  // beats a stored 'off'. 052 owns writing this key + the live flip.
+  // Explicit options are respected; per-load flags take precedence.
   try {
-    if (!ENABLE_BATH && localStorage.getItem('sluice.opt.banya') === '1') ENABLE_BATH = true;
+    var _bathOption = localStorage.getItem('sluice.opt.banya');
+    if (_bathOption === '0') ENABLE_BATH = false;
+    if (_bathOption === '1') ENABLE_BATH = true;
   } catch (e) {}
+  if (/[?&]bath=0(?:&|$)/.test(_ffq)) ENABLE_BATH = false;
+  if (/[?&]bath=1(?:&|$)/.test(_ffq)) ENABLE_BATH = true;
 
   var TILE = 32;
   var COLS = 160;            // single-town width; reassigned to WORLD_COLS in 015-regions.js once the wide world is built

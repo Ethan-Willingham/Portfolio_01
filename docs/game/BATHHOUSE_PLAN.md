@@ -1,5 +1,11 @@
 # BATHHOUSE_PLAN.md: Sluice's second half (dig by day, bathhouse by night)
 
+**Current playable slice (v28.5):** see [BATHHOUSE_SERVICE.md](BATHHOUSE_SERVICE.md).
+The bathhouse is now enabled by default. Sky visitors use one shared heated tub;
+ten coal lights its stove, and water splashed onto the floor is permanently lost.
+Individual guest requests are undecided. These owner decisions supersede the
+earlier recipe and flag-off planning below.
+
 This is the **living main plan** for the bathhouse: a Spirited-Away-structured hot
 spring venue the player builds above the mine and runs at dusk. It is the game's
 "Dave the Diver sushi shop": the mine supplies heat, water, salts, fuel, and guests;
@@ -808,3 +814,9 @@ supply, payment, ramp = B7; exterior + transition = B8.
   heat, so calm hot water holds its temperature (a resting tub stays hot, nice)
   but the cell field dilutes near sleep boundaries (mild artificial surface
   cooling). Revisit only if the owner's feel-check flags it.
+
+- 2026-09-19 (v28.5, owner): retire pearl production and outdoor pool lots.
+  Enable the indoor bathhouse by default and use the same clay sky visitors
+  outside and inside. Ten coal starts one shared fire; no per-guest coal or
+  water fee. Water is heated and splashed onto an absorbing floor. Guest
+  requests remain undecided. See BATHHOUSE_SERVICE.md for the shipped slice.

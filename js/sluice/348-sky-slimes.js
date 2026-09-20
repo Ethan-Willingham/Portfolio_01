@@ -1,4 +1,4 @@
-  /* ---- Sky slimes: warm clay meteor guests for the surface garden ----
+  /* ---- Sky slimes: warm clay meteor guests for the bathhouse ----
      Bulk motion is a hard elastic circle with swept-size substeps. The
      outline and eye have their own damped springs, so a bounce stays crisp
      without ever feeding render deformation back into collision energy.
@@ -24,6 +24,7 @@
       angle: (Math.random() - 0.5) * 0.24, spin: (Math.random() - 0.5) * 1.5,
       squash: 0, squashV: 0, eye: 0.85, eyeV: 0,
       pupilX: 0, pupilY: 0, pupilVX: 0, pupilVY: 0,
+      visit: 'land', visitT: 0, hopIn: 1, wanderDir: Math.random() < 0.5 ? -1 : 1,
       blink: 0, blinkIn: 1.4 + Math.random() * 2.8,
       _trail: [], _trailT: 0, _liquidT: 0, _wetTarget: 0,
       _ground: false, _impactT: 0, _sleepT: 0
@@ -31,7 +32,8 @@
   }
 
   function skySlimeSpawn(x, y) {
-    if (skySlimes.length >= SKY_SLIME_MAX) return null;
+    if (skySlimes.length + (typeof bathGuests !== 'undefined' ? bathGuests.length : 0) +
+        (typeof siphon !== 'undefined' && siphon.passenger ? 1 : 0) >= SKY_SLIME_MAX) return null;
     var automatic = !isFinite(x);
     var landX = automatic ? (typeof skySlimeLandingX === 'function' ? skySlimeLandingX() :
       (DECK_LEFT_COL - 18) * TILE) : x;
@@ -57,9 +59,9 @@
 
   function skySlimeRecord(s) {
     var out = {};
-    // Garden recipe/progress fields travel with the guest when carried.
+    // Identity and the visit state travel with a carried guest.
     Object.keys(s).forEach(function (key) {
-      if (key.charAt(0) !== '_' && s[key] !== undefined) out[key] = s[key];
+      if (key.charAt(0) !== '_' && key !== 'pearlProgress' && key !== 'gardenLot' && s[key] !== undefined) out[key] = s[key];
     });
     return JSON.parse(JSON.stringify(out));
   }
@@ -81,6 +83,8 @@
     s.eyeSize = skySlimeClamp(isFinite(s.eyeSize) ? s.eyeSize : 0.38, 0.32, 0.42);
     s.id = Math.max(1, Math.floor(isFinite(s.id) ? s.id : skySlimeSerial++));
     skySlimeSerial = Math.max(skySlimeSerial, s.id + 1);
+    delete s.pearlProgress; delete s.gardenLot;
+    if (['land', 'wander', 'seek', 'depart', 'inside'].indexOf(s.visit) < 0) s.visit = 'land';
     return s;
   }
 
@@ -257,15 +261,71 @@
     s.squash = skySlimeClamp(s.squash + s.squashV * h, -0.13, 0.24);
   }
 
+  function skySlimeLandingX() {
+    if (typeof bathPickSite === 'function' && bathPickSite()) {
+      // Land on the dry approach within sight of the tower. Natural ponds
+      // remain water sources, not construction lots.
+      var door = (banyaDoorX0 + banyaDoorX1) * 0.5;
+      for (var k = 0; k < 16; k++) {
+        var x = door - TILE * (3 + Math.random() * 7);
+        if (tileAt(SKY_ROWS, Math.floor(x / TILE))) return x;
+      }
+      return door - TILE * 2;
+    }
+    return (DECK_LEFT_COL - 5) * TILE;
+  }
+
+  function skySlimeVisitTick(dt) {
+    if (typeof ENABLE_BATH === 'undefined' || !ENABLE_BATH || !bathPickSite()) return;
+    var door = (banyaDoorX0 + banyaDoorX1) * 0.5;
+    for (var i = skySlimes.length - 1; i >= 0; i--) {
+      var s = skySlimes[i];
+      s.visitT += dt; s.hopIn -= dt;
+      if (s.visit === 'land') {
+        if (s.age > 4 && s.entry < 0.05 && (s.settled || s.wet > 0.18)) {
+          s.visit = 'wander'; s.visitT = 0; s.hopIn = 0.6;
+        }
+        continue;
+      }
+      if (s.visit === 'wander' && s.visitT > 7 + s.seed * 6) {
+        s.visit = 'seek'; s.visitT = 0;
+      }
+      if (s.visit === 'depart' && (s.visitT > 14 || Math.abs(s.x - s.departX) > TILE * 9)) {
+        skySlimes.splice(i, 1); continue;
+      }
+      if (s.visit === 'seek' && Math.abs(s.x - door) < 30 &&
+          s.y + s.r > SKY_ROWS * TILE - 20 && s.y < SKY_ROWS * TILE + 18) {
+        if (bathGuestAccept(s)) { skySlimes.splice(i, 1); continue; }
+        // A full room leaves newcomers waiting outside, keeping every
+        // visitor visible and preserving the population cap.
+        s.vx *= Math.exp(-6 * dt);
+        continue;
+      }
+      if (s.hopIn > 0 || (!s._ground && s.wet < 0.18)) continue;
+      var dir = s.visit === 'depart' ? s.departDir : s.visit === 'seek' ? (door > s.x ? 1 : -1) : s.wanderDir;
+      if (s.visit === 'wander') {
+        if (Math.random() < 0.28 || Math.abs(s.x - door) > TILE * 12) s.wanderDir = door > s.x ? 1 : -1;
+        dir = s.wanderDir;
+      }
+      var ahead = tileAt(Math.floor((s.y + s.r - 12) / TILE), Math.floor((s.x + dir * (s.r + 20)) / TILE));
+      s.vx = dir * (s.visit === 'wander' ? 56 : 96);
+      s.vy = ahead ? -235 : s.wet > 0.18 ? -145 : -170;
+      s.squashV = -2; s._ground = false; s.settled = false;
+      s.hopIn = s.wet > 0.18 ? 0.6 : 0.9 + s.seed * 0.35;
+    }
+  }
+
   function skySlimeTick(dt) {
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
     // A deep mining trip never fills the surface with unseen arrivals.
+    var indoor = typeof bathGuests !== 'undefined' ? bathGuests.length : 0;
     var carried = typeof siphon !== 'undefined' && siphon && siphon.passenger ? 1 : 0;
-    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried < SKY_SLIME_MAX) {
+    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried + indoor < SKY_SLIME_MAX) {
       skySlimeNext -= dt;
-      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 66 + Math.random() * 32; }
+      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 28 + Math.random() * 18; }
     }
+    skySlimeVisitTick(dt);
     for (var di = skySlimeDust.length - 1; di >= 0; di--) {
       var dust = skySlimeDust[di]; dust.life -= dt;
       if (dust.life <= 0) { skySlimeDust.splice(di, 1); continue; }
@@ -363,14 +423,6 @@
     }
     ctx.globalAlpha = 1;
     ctx.restore();
-    if (s.pearlProgress > 0.02) {
-      var pearlR = 1.2 + Math.min(1, s.pearlProgress) * 3.2;
-      var glow = ctx.createRadialGradient(rx * 0.12, ry * 0.53, 0, rx * 0.12, ry * 0.53, pearlR * 2.6);
-      glow.addColorStop(0, 'rgba(237,224,192,0.55)'); glow.addColorStop(1, 'rgba(237,224,192,0)');
-      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(rx * 0.12, ry * 0.53, pearlR * 2.6, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = SKY_SLIME_RAMP[5]; ctx.globalAlpha = 0.55 + s.pearlProgress * 0.3;
-      ctx.beginPath(); ctx.arc(rx * 0.12, ry * 0.53, pearlR, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    }
     skySlimePath(s, rx, ry); ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.15; ctx.stroke();
     if (s.entry > 0.08) {
       ctx.globalAlpha = s.entry * 0.48;

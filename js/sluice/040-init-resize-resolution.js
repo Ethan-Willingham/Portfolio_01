@@ -3,7 +3,7 @@
   function init() {
     if (introPhase === 'done') beginSceneLoading('Preparing your mine');
     mineralLiquidReset();
-    slimeGardenReset();
+    bathServiceReset();
     skySlimeReset();
     siphonReset();
     liquidParticles = [];

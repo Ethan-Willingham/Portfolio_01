@@ -647,9 +647,9 @@
     liquidToolSync();
     mineralLiquidTick(dt);
     siphonTick(dt);
-    if (!gameOver && !gameWon && !bathMode) { skySlimeTick(dt); slimeGardenTick(dt); }
+    if (!gameOver && !gameWon) { skySlimeTick(dt); bathGuestTick(dt); }
     siphonAudioTick(dt);
-    perfMark('update.garden', _ts);
+    perfMark('update.bathhouse', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
     _ts = performance.now(); updateParticleRain(dt);       perfMark('update.rain', _ts);

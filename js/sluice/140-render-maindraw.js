@@ -1032,7 +1032,6 @@
     drawSurfaceFireplace();
     // ---- v25.77 BANYA exterior (072-bath.js): the bathhouse tower + door ----
     if (typeof drawBanyaExterior === 'function') drawBanyaExterior();
-    slimeGardenDraw();
     // v11.46 — Fireplace smoke emission runs every frame regardless of
     // camera position. Combined with the wider smoke fluid domain
     // (overscan 1.6), the chimney keeps emitting into the sim even
@@ -1252,7 +1251,6 @@
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    slimeGardenHUD();
     siphonHUD();
 
     // D-pad (mobile) — single overlay in the bottom-RIGHT corner. Most

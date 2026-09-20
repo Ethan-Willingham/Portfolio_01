@@ -204,7 +204,7 @@
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
       // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
       jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
-      garden: slimeGardenSave(),
+      bathhouse: bathServiceSave(),
       skySlimes: skySlimeSave(),
       siphon: siphonSave(),
       mineralLiquids: mineralLiquidSave(),
@@ -316,11 +316,12 @@
     player.renderY = player.y;
     cam.snap = true;
     // Additive expansion fields preserve older saves and migrate their lots.
-    slimeGardenRestore(env.garden);
     mineralLiquidRestore(env.mineralLiquids);
     rainRestore(env.rain);
     skySlimeRestore(env.skySlimes);
     siphonRestore(env.siphon);
+    bathServiceRestore(env.bathhouse);
+    if (!env.bathhouse) bathRetireGarden(env.garden);
     // Re-derive world-dependent caches against the swapped grid.
     lightingInit();
     terrainChunkCache = {};
@@ -428,7 +429,7 @@
   // ---- Autosave poll (called once per frame from the update loop) ----
   function saveGardenKey() {
     return siphon.tank.join(',') + '/' + (siphon.passenger ? siphon.passenger.id : 0) + '/' + skySlimes.length + '/' +
-      slimeGardenLots.map(function (lot) { return (+lot.owned) + ':' + (+lot.ready) + ':' + Math.floor(lot.progress / 8); }).join(',');
+      bathGuests.map(function (g) { return g.s.id + ':' + g.st + ':' + Math.floor(g.soak / 4); }).join(',') + '/' + bathServed;
   }
   function saveTick(dt) {
     // Lamp timers decay before the gameOver early-return so the annunciator

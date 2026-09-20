@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.4';
+  var GAME_VERSION = 'v28.5';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -168,11 +168,11 @@
        ?multitown=1  wide 4-town world      ?combat=1  enemies + turret
        ?nmz=1        No Man's Zone courses   ?board=1   the Trade Board
        ?jello=1      jello/slime bodies      ?oil=1     oil seams + pump
-       ?refine=1     ore-refinement catalog  ?bath=1    the banya (WIP)
+       ?refine=1     ore-refinement catalog  ?bath=0    hide the bathhouse
 
      ENABLE_BATH is the one flag with a PLAYER-FACING switch as well:
      pause > Options > Banya, persisted as 'sluice.opt.banya' and read
-     below. Default is still off, so a fresh profile boots unchanged.
+     below. New profiles start with the bathhouse open.
      ============================================================ */
   var SINGLE_TOWN        = true;   // one coherent town; false = the wide 4-town world
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
@@ -181,7 +181,7 @@
   var ENABLE_JELLO       = true;   // squishy jello / slime soft bodies — LIVE (v25.59): rare buried slimes cushion big falls
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
-  var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): the banya, in progress; player switch in Options
+  var ENABLE_BATH        = true;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): sky-slime visitors; player switch in Options
   // Per-load URL overrides for spot-checking a disabled system (see above).
   try {
     var _ffq = (window.location && window.location.search) || '';
@@ -196,13 +196,14 @@
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
     if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
   } catch (e) {}
-  // The banya's player switch (pause > Options > Banya). Read HERE, not in
-  // 052-options.js, because it must be settled before 072-bath.js evaluates
-  // its boot block; ?bath=1 above already won, so the dev override still
-  // beats a stored 'off'. 052 owns writing this key + the live flip.
+  // Explicit options are respected; per-load flags take precedence.
   try {
-    if (!ENABLE_BATH && localStorage.getItem('sluice.opt.banya') === '1') ENABLE_BATH = true;
+    var _bathOption = localStorage.getItem('sluice.opt.banya');
+    if (_bathOption === '0') ENABLE_BATH = false;
+    if (_bathOption === '1') ENABLE_BATH = true;
   } catch (e) {}
+  if (/[?&]bath=0(?:&|$)/.test(_ffq)) ENABLE_BATH = false;
+  if (/[?&]bath=1(?:&|$)/.test(_ffq)) ENABLE_BATH = true;
 
   var TILE = 32;
   var COLS = 160;            // single-town width; reassigned to WORLD_COLS in 015-regions.js once the wide world is built
@@ -3234,9 +3235,8 @@
     var _pondBig = worldPondStyle !== 'regular';
     var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
     var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    // Treat the garden and station as one reserved span. Wide/deep ponds
-    // overlapping a lot slide east intact, just as they do at the station.
-    var _pondDeckL = DECK_LEFT_COL - 63, _pondDeckR = DECK_RIGHT_COL + 8;
+    // Keep the station and the bathhouse approach on solid ground.
+    var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_CENTER_COL + 25;
     var _px = _pondLo + ((Math.random() * 30) | 0);
     while (_px < _pondHi - 12) {
       // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
@@ -3249,7 +3249,7 @@
       var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
       if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
       var _pr = _px + _pw - 1;
-      // A big pond that lands on the garden or station slides past the deck instead of
+      // A big pond that lands on the bathhouse or station slides past the deck instead of
       // being dropped, so the town keeps a pond on each side.
       if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
         _px = _pondDeckR + 1;
@@ -3272,7 +3272,7 @@
       _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
     }
     // Keep the selected pond style intact. A naturally generated east lake
-    // already supplies the garden; replacing its metadata with a 6x3 source
+    // already supplies the bathhouse; replacing its metadata with a 6x3 source
     // would strand the rest of a wide or deep excavation without water.
     var eastSource = false;
     for (var pond = 0; pond < surfacePonds.length; pond++) {
@@ -3292,7 +3292,6 @@
       surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
       seedLakeShoreSlimes(sourceL, sourceR);
     }
-    slimeGardenPrepareWorld();
     mineralLiquidGenerate(false);
   }
 
@@ -4111,7 +4110,7 @@
   function init() {
     if (introPhase === 'done') beginSceneLoading('Preparing your mine');
     mineralLiquidReset();
-    slimeGardenReset();
+    bathServiceReset();
     skySlimeReset();
     siphonReset();
     liquidParticles = [];
@@ -5161,7 +5160,7 @@
     if (!warmCtx) return state;
     var passes = [
       ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
-      ['slime', shaderWarmSlime], ['garden', shaderWarmGarden], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
+      ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
       ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
       ['rain', shaderWarmRain], ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
     ];
@@ -5453,13 +5452,13 @@
     b.shFrame = -1;   // refit the sheen deformation for this pose
   }
 
-  // The garden's first purchase, pearl, meteor wake and active nozzle all
+  // Visitor order bubbles, meteor wakes and the active nozzle all
   // introduce paints absent from a fresh spawn. Draw temporary specimens,
   // never construction or simulation, and restore every borrowed reference.
-  function shaderWarmGarden(ws, ox, oy) {
-    if (typeof slimeGardenDraw !== 'function' || typeof skySlimeDraw !== 'function' ||
+  function shaderWarmVisitors(ws, ox, oy) {
+    if (typeof bathDrawOrder !== 'function' || typeof skySlimeDraw !== 'function' ||
         typeof siphonDraw !== 'function') return;
-    var liveLots = slimeGardenLots, liveSlimes = skySlimes, liveDust = skySlimeDust;
+    var liveSlimes = skySlimes, liveDust = skySlimeDust;
     var liveSiphon = siphon, liveButtons = siphonButtons, available = siphonAvailable;
     var livePlayer = player;
     var x = cam.x + screenW * 0.5, y = cam.y + screenH * 0.48;
@@ -5467,18 +5466,6 @@
       player = Object.assign({}, livePlayer);
       player.x = x - PLAYER_W * 0.5; player.y = y - PLAYER_H * 0.5;
       shaderWarmWorld(ws, ox, oy);
-      for (var material = 0; material < 4; material++) {
-        var recipe = SLIME_GARDEN_RECIPES[material];
-        var lot = { index: material, x0: x - TILE * 5.5, x1: x + TILE * 5.5,
-          y0: y, y1: y + TILE * 2, owned: false, ready: false,
-          progress: 0, sample: [9000, 0, 2200, 2200, 2200], status: 'FILL TO THE BRASS MARK' };
-        slimeGardenLots = [lot];
-        slimeGardenDraw();
-        lot.owned = true; lot.progress = recipe.seconds * 0.42; lot.status = 'GROWING 42%';
-        slimeGardenDraw();
-        lot.ready = true; lot.progress = recipe.seconds; lot.status = 'PEARL READY';
-        slimeGardenDraw();
-      }
 
       skySlimes = [];
       skySlimeDust = [{ x: x - 45, y: y + 24, r: 2.4, life: 0.2, max: 0.5 }];
@@ -5488,7 +5475,7 @@
           eyeSize: 0.33 + pose * 0.04, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
           squash: pose === 1 ? 0.2 : 0, eye: pose === 1 ? 0.12 : 0.86,
           pupilX: 1.3, pupilY: -0.9, entry: pose ? 0 : 0.9,
-          wet: pose === 2 ? 0.8 : 0, pearlProgress: pose === 2 ? 0.72 : 0,
+          wet: pose === 2 ? 0.8 : 0,
           _ground: pose === 1, _trail: [] };
         if (!pose) {
           for (var t = 0; t < 8; t++) s._trail.push({ x: s.x + (7 - t) * 7,
@@ -5497,6 +5484,10 @@
         skySlimes.push(s);
       }
       skySlimeDraw();
+      ctx.save();
+      ctx.translate(x - 884, y - (BATH_FLOORS[0].fr * TILE - 164));
+      bathDrawOrder({ slot: 0, s: { x: 904, y: BATH_FLOORS[0].fr * TILE - 25, r: 25 } });
+      ctx.restore();
 
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool
@@ -5515,7 +5506,7 @@
       ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
       siphonHUD();
     } finally {
-      slimeGardenLots = liveLots; skySlimes = liveSlimes; skySlimeDust = liveDust;
+      skySlimes = liveSlimes; skySlimeDust = liveDust;
       siphon = liveSiphon; siphonButtons = liveButtons; siphonAvailable = available;
       player = livePlayer;
     }
@@ -6040,7 +6031,7 @@
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
       // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
       jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
-      garden: slimeGardenSave(),
+      bathhouse: bathServiceSave(),
       skySlimes: skySlimeSave(),
       siphon: siphonSave(),
       mineralLiquids: mineralLiquidSave(),
@@ -6152,11 +6143,12 @@
     player.renderY = player.y;
     cam.snap = true;
     // Additive expansion fields preserve older saves and migrate their lots.
-    slimeGardenRestore(env.garden);
     mineralLiquidRestore(env.mineralLiquids);
     rainRestore(env.rain);
     skySlimeRestore(env.skySlimes);
     siphonRestore(env.siphon);
+    bathServiceRestore(env.bathhouse);
+    if (!env.bathhouse) bathRetireGarden(env.garden);
     // Re-derive world-dependent caches against the swapped grid.
     lightingInit();
     terrainChunkCache = {};
@@ -6264,7 +6256,7 @@
   // ---- Autosave poll (called once per frame from the update loop) ----
   function saveGardenKey() {
     return siphon.tank.join(',') + '/' + (siphon.passenger ? siphon.passenger.id : 0) + '/' + skySlimes.length + '/' +
-      slimeGardenLots.map(function (lot) { return (+lot.owned) + ':' + (+lot.ready) + ':' + Math.floor(lot.progress / 8); }).join(',');
+      bathGuests.map(function (g) { return g.s.id + ':' + g.st + ':' + Math.floor(g.soak / 4); }).join(',') + '/' + bathServed;
   }
   function saveTick(dt) {
     // Lamp timers decay before the gameOver early-return so the annunciator
@@ -6684,7 +6676,6 @@
     }
 
     // Equipment buttons and buildings keep priority over world aiming.
-    if (!isInDpadZone(x, y) && slimeGardenPointer(x, y)) { touch.active = false; return; }
     if (siphonPointerDown(x, y, id, right)) { touch.active = false; return; }
 
     // Anything else inside the d-pad zone becomes a d-pad touch. We
@@ -13120,7 +13111,8 @@
     ctx.clip(m.openPath);
   }
   /* ==== BANYA (v25.77): the other half of the game, first stone ==========
-     Flag-gated (ENABLE_BATH, ?bath=1). Plan: docs/game/BATHHOUSE_PLAN.md
+     Enabled by default (ENABLE_BATH, ?bath=0 disables). Live service rules:
+     docs/game/BATHHOUSE_SERVICE.md; 074-bath-service.js owns the visitors.
      (section 0 pivot, B-D11, stages B6/B8). This fragment owns BOTH halves
      of the B6 slice:
 
@@ -13254,7 +13246,7 @@
       }
     };
   }
-  var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
+  var bathFloorsOwned = [true, false, false, false, false];   // persisted with the bathhouse
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
   var BATH_BOT_ROW = 613;                       // F1 floor slab row
@@ -13263,8 +13255,9 @@
   var BATH_EXIT_Y0 = 606 * TILE, BATH_EXIT_Y1 = 610 * TILE;
 
   var bathMode = false;        // true while inside the scene
-  var bathRoomReady = false;   // room carved + water spawned + heat armed
+  var bathRoomReady = false;   // room carved; fill and heat are supplied by the player
   var bathDoorT = 0;           // door-open progress 0..1 (shopDoorT pattern)
+  var bathTransitionSerial = 0;
   var bathFading = false;      // transition lock
   var bathFadeEl = null;       // DOM fade overlay
   var bathPromptT = 0;         // pulse clock for the door hint
@@ -13392,42 +13385,19 @@
   // Fill a floor's tubs with water (on unlock). fill mode 2 also arms the
   // ONE B1 heat rect there (the crown pool) and turns the channel on.
   function bathFillFloor(f) {
-    var F = BATH_FLOORS[f];
-    for (var i = 0; i < F.tubs.length; i++) {
-      if (!F.fill[i]) continue;
-      var tb = F.tubs[i];
-      var wy0 = (F.fr - F.lip) * TILE + 10, wy1 = (F.fr + F.sink + 1) * TILE - 3;
-      for (var wy = wy0; wy < wy1; wy += 1.3) {
-        for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.3) {
-          if (world[(wy / TILE) | 0][(wx / TILE) | 0]) continue;   // bowl body
-          addLiquidParticle('water', wx, wy, 0, 0, 0);
-        }
-      }
-      if (F.fill[i] === 2) {
-        // v25.96 THE WIDE BURNER. The v25.95 narrow vent was a momentum
-        // cannon: a continuous Old Faithful that piled a standing mound.
-        // A gas stove under the copper bowl heats a WIDE band hugging the
-        // bowl's belly instead, so heat enters as a broad rolling simmer.
-        // The source band crosses the catenary, which trims it to the
-        // water that actually touches the heated bottom. Cooling is the
-        // other half of the loop: strong enough that risen water sheds
-        // its heat in one circuit, so the tub never saturates uniformly
-        // hot and the boil stays alive forever.
-        var ventCx = ((tb[0] + tb[1] + 1) / 2) * TILE;
-        var vcrv = bathTubCurve(F, tb);
-        var ventBy = vcrv.y0 + vcrv.depthAt(ventCx);
-        bathTune('BATH_SRC_X0', ventCx - 68);
-        bathTune('BATH_SRC_Y0', ventBy - 30);
-        bathTune('BATH_SRC_X1', ventCx + 68);
-        bathTune('BATH_SRC_Y1', ventBy + 12);
-        bathTune('BATH_SRC_T', 1.55);
-        bathTune('BATH_SRC_RATE', 0.05);
-        bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 240);
-        bathTune('BATH_COOL', 0.28);
-        bathHotTub = { F: F, tb: tb, ventX: ventCx, ventHalf: 68 };
-      }
-    }
+    // Newly opened tubs are dry. Only water brought in the rig fills them.
+    if (f === 0) bathArmHeat();
+  }
+
+  function bathArmHeat() {
+    var F = BATH_FLOORS[0], tb = F.tubs[0];
+    var curve = bathTubCurve(F, tb);
+    var cx = (curve.x0 + curve.x1) / 2, by = curve.y0 + curve.depthAt(cx);
+    bathTune('BATH_SRC_X0', cx - 68); bathTune('BATH_SRC_X1', cx + 68);
+    bathTune('BATH_SRC_Y0', by - 30); bathTune('BATH_SRC_Y1', by + 12);
+    bathTune('BATH_SRC_T', Math.max(0, bathHeat) * 1.55); bathTune('BATH_SRC_RATE', bathFire > 0 ? 0.05 : 0);
+    bathTune('BATH_ON', bathHeat > 0.01 && bathWater > 0 ? 1 : 0); bathTune('BATH_BUOY', 240); bathTune('BATH_COOL', 0.28);
+    bathHotTub = { F: F, tb: tb, ventX: cx, ventHalf: 68 };
   }
 
   // Purchase-button rect for a locked floor (world px). One source of truth
@@ -13451,7 +13421,8 @@
     }
     money -= F.price;
     bathFloorsOwned[f] = true;
-    bathFillFloor(f);
+    if (bathRoomReady) bathFillFloor(f);
+    saveNow('bath-floor');
     try { console.log('[bath] floor ' + (f + 1) + ' purchased for $' + F.price); } catch (e) {}
     return true;
   }
@@ -13477,11 +13448,14 @@
     // Stale world smoke is dropped by clearAllSmokeVisuals() on enter.
   }
   function bathSwap(toInside) {
-    if (bathFading || !ENABLE_BATH) return;
+    if (bathFading || (toInside && !ENABLE_BATH)) return;
     bathFading = true;
+    var ticket = ++bathTransitionSerial;
     var el = bathFadeEnsure();
     el.style.opacity = '1';
     setTimeout(function () {
+      if (ticket !== bathTransitionSerial) return;
+      if (toInside && !ENABLE_BATH) toInside = false;
       if (toInside) {
         bathCarveRoom();
         bathScrollT = 1e9;   // enter at the BOTTOM floor
@@ -13489,11 +13463,12 @@
         bathMode = true;
         bathDoorT = 1;       // step back out through an open door
         // Steam era (v25.85): drop the world's stale smoke, retune the
-        // fluid for steam, and book the first guest's arrival.
+        // fluid for steam. Existing sky visitors keep their service states.
         try { if (typeof clearAllSmokeVisuals === 'function') clearAllSmokeVisuals(); } catch (e2) {}
         bathSteamPush();
         bathScalePush();
-        if (!bathGuests.length) bathGuestTimer = 1.6;
+        bathArmHeat();
+        siphonStop();
       } else {
         bathMode = false;
         bathScalePop();
@@ -13502,7 +13477,7 @@
       }
       bathLayerVis(toInside);
       el.style.opacity = '0';
-      setTimeout(function () { bathFading = false; }, 240);
+      setTimeout(function () { if (ticket === bathTransitionSerial) bathFading = false; }, 240);
     }, 240);
   }
   function bathEnter() { if (!bathMode) bathSwap(true); }
@@ -13519,7 +13494,7 @@
   // ---- Hook 1: update() top (080). Returns true while the scene owns the
   // frame (world logic freezes; liquids/smoke tick from the loop). ---------
   function bathFrame(dt) {
-    if (!ENABLE_BATH) return false;
+    if (!ENABLE_BATH && !bathMode) return false;
     bathPromptT += dt;
     if (!bathMode) {
       if (!bathPickSite()) return false;
@@ -13548,7 +13523,12 @@
     }
     if (keys['Escape']) { keys['Escape'] = false; bathExit(); }
     bathSteamTick(dt);
-    bathGuestTick(dt);
+    if (keys['e'] || keys['E'] || keys['Enter']) {
+      keys['e'] = false; keys['E'] = false; keys['Enter'] = false;
+      for (var gi = 0; gi < bathGuests.length; gi++) {
+        if (bathGuests[gi].st === 'wait') { bathServe(bathGuests[gi].s.id); break; }
+      }
+    }
     return true;
   }
 
@@ -13559,12 +13539,9 @@
      HOT tub (fill mode 2) and left to pool under the rafters. Values are
      scaled from the live smokeTune fields and restored exactly on exit, so
      the world's smoke look is untouched whatever its tuning.
-     GUEST: one slime customer (a real ENABLE_JELLO soft body, dissolve-
-     immune via b.guest) spawns by the elevator, hops to tub 1, plunges in
-     with a real splash of spawned droplets, and SOAKS: one-way buoyancy
-     against the analytic waterline (b.bathBuoy, applied in jelloIntegrate;
-     the water is never force-coupled back, plan B-D5). The waterline is
-     analytic for now; the hose era reads the live level instead.
+     GUESTS: the clay sky visitors are shared with the surface. Service,
+     hop paths, buoyancy, fluid colliders, and permanent splash loss live
+     in 074-bath-service.js. No independent indoor guest spawner remains.
      ======================================================================= */
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteamSaved = null;
@@ -13710,6 +13687,7 @@
     return w < 0.12 ? 0.12 : (w > 1 ? 1 : w);
   }
   function bathSteamTick(dt) {
+    if (bathHeat < 0.35 || bathWater < 500) return;
     bathDbg.steamCalls++;
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
@@ -13820,60 +13798,6 @@
     }
   }
 
-  var bathGuests = [];
-  var bathGuestTimer = -1;
-  var bathGuestCap = 2;
-  var bathFloats = [];        // rising "+$" payment texts {x, y, t, s}
-  function bathDespawnGuest(gi) {
-    var g = bathGuests[gi];
-    if (g && g.b) {
-      var di = jelloBodies.indexOf(g.b);
-      if (di >= 0) jelloBodies.splice(di, 1);
-      if (typeof jelloTotalPoints === 'function') jelloCount = jelloTotalPoints();
-    }
-    bathGuests.splice(gi, 1);
-  }
-  function bathImpulse(b, ivx, ivy) {
-    // Verlet velocity add: v = (p - o) / h, so o -= dv * h. The true-scale
-    // stretch rides here (x 1/sqrt(k) while inside): same arcs, giant
-    // timing, one multiply for every hop, plunge, bob and leap.
-    var sv = bathScaleV();
-    var dvx = ivx * sv, dvy = ivy * sv;
-    var n = b.n;
-    for (var i = 0; i < n; i++) { b.ox[i] -= dvx * JELLO_H; b.oy[i] -= dvy * JELLO_H; }
-    b.sleeping = false; b.sleepFrames = 0;
-  }
-  function bathSpawnGuest() {
-    if (!ENABLE_JELLO || typeof jelloBuildBody !== 'function' || !bathRoomReady) return null;
-    var F = BATH_FLOORS[0];
-    var b = jelloBuildBody([{ r: F.fr - 1, c: 28 }], 'slime');
-    if (!b) return null;
-    b.guest = true;
-    b.sleeping = false; b.sleepFrames = 0;
-    var tb = F.tubs[0];
-    bathGuests.push({
-      b: b, st: 'walk', t: 0, cd: 0.7,
-      cx: ((tb[0] + tb[1] + 1) / 2) * TILE,
-      x0: tb[0] * TILE + 6, x1: (tb[1] + 1) * TILE - 6,
-      line: (F.fr - F.lip) * TILE + 12,
-      fy: F.fr * TILE, px: 0, py: 0, stall: 0,
-      soakT: 14 + Math.random() * 18,
-      homeX: 28 * TILE + 16
-    });
-    try { console.log('[bath] a guest arrives (guest slimes never dissolve).'); } catch (e) {}
-    return b;
-  }
-  // v26.04 THE SIMULATED SPLASH. The v26.03 choreographed impulse was
-  // owner-rejected ("go to the fundamentals"): guests are now MOVING
-  // BOUNDARIES in the fluid sim itself. Each scene frame this registry
-  // carries every live guest body (center, half-extents, velocity) to
-  // the grid-update kernel through getGameState -> GameParams, where the
-  // rig-silhouette law applies: a moving body plows a speed-scaled eject
-  // blended toward its motion direction, a still body pins its cells
-  // rigid. The crown, the cavity, the exit drag-out and every ripple of
-  // a bob EMERGE from the solver; nothing is authored. (Water still
-  // never pushes the slime back: B-D5 one-way, in the correct direction.)
-  var bathGuestColliders = [];
   // The fog reacts to a plunge with a white poof and a momentum shove
   // that parts the blanket (guests are not smoke obstacles, so the steam
   // layer cannot see the body on its own).
@@ -13891,152 +13815,6 @@
         0.05 * k, 0.024);
     }
   }
-  function bathGuestTick(dt) {
-    if (bathGuestTimer > 0) {
-      bathGuestTimer -= dt;
-      if (bathGuestTimer <= 0 && bathGuests.length < bathGuestCap) {
-        bathSpawnGuest();
-        bathGuestTimer = 9 + Math.random() * 9;   // the queue keeps coming
-      } else if (bathGuestTimer <= 0) {
-        bathGuestTimer = 4;
-      }
-    }
-    for (var fi2 = bathFloats.length - 1; fi2 >= 0; fi2--) {
-      bathFloats[fi2].t += dt;
-      if (bathFloats[fi2].t > 1.3) bathFloats.splice(fi2, 1);
-    }
-    bathGuestColliders.length = 0;
-    for (var i = 0; i < bathGuests.length; i++) {
-      var g = bathGuests[i], b = g.b;
-      if (!b || b._melting) continue;
-      g.t += dt; g.cd -= dt;
-      // v26.05: register this body's EXACT deforming silhouette as a
-      // moving fluid boundary for the frame: the ordered jello boundary
-      // ring resampled to <= 20 vertices, each carrying its own Verlet
-      // velocity ((p - o) / h), so the kernels feel the true shape and
-      // the true local motion of every face, every frame.
-      if (bathGuestColliders.length < 3 && b.ringN >= 3 && b.ring) {
-        var rn = b.ringN | 0;
-        var take = rn < 20 ? rn : 20;
-        var ih = 1 / ((typeof jelloStepH === 'number' && jelloStepH > 0)
-                      ? jelloStepH : (1 / 240));
-        var pts = new Array(take * 4);
-        for (var rk2 = 0; rk2 < take; rk2++) {
-          var ri = b.ring[((rk2 * rn) / take) | 0];
-          var pvx = (b.px[ri] - b.ox[ri]) * ih;
-          var pvy = (b.py[ri] - b.oy[ri]) * ih;
-          if (pvx > 1200) pvx = 1200; else if (pvx < -1200) pvx = -1200;
-          if (pvy > 1200) pvy = 1200; else if (pvy < -1200) pvy = -1200;
-          pts[rk2 * 4]     = b.px[ri];
-          pts[rk2 * 4 + 1] = b.py[ri];
-          pts[rk2 * 4 + 2] = pvx;
-          pts[rk2 * 4 + 3] = pvy;
-        }
-        var ghw = (b.bboxR - b.bboxL) / 2 + 3;
-        var ghh = (b.bboxB - b.bboxT) / 2 + 3;
-        bathGuestColliders.push({
-          x: (b.bboxL + b.bboxR) / 2, y: (b.bboxT + b.bboxB) / 2,
-          hw: ghw < 8 ? 8 : (ghw > 34 ? 34 : ghw),
-          hh: ghh < 8 ? 8 : (ghh > 34 ? 34 : ghh),
-          pts: pts
-        });
-      }
-      // "Standing" is POSITIONAL, never velocity: a wedged body churns
-      // with high phantom solver velocity while pinned (deadlocked the old
-      // velocity gate). Two ways to count as standing: bottom near the
-      // slab, OR simply STALLED anywhere (friction-pinned on a tub wall
-      // face was the second deadlock): no positional progress for half a
-      // second means hop again, wherever you are.
-      // The brain's clock stretches with the true scale (v26.06): slowed
-      // arcs move fewer px per frame and hang longer, so the stall gate
-      // and every recovery window scale by sqrt(k) or they would misread
-      // a giant's glide as a wedge and spam hops.
-      var rt = bathScaleSaved ? Math.sqrt(bathScaleK) : 1;
-      var mvd = Math.abs(b.cx - g.px) + Math.abs(b.cy - g.py);
-      g.px = b.cx; g.py = b.cy;
-      if (mvd < 1.6 / rt) g.stall += dt; else g.stall = 0;
-      var standing = (b.bboxB >= g.fy - 14 && b.bboxB <= g.fy + 6) || g.stall > 0.5 * rt;
-      // Landed in ANY tub's water, whatever state the brain thought it was
-      // in: start soaking (walkers can trip into a bath; that is a feature).
-      if (g.st !== 'soak' && b.cy > g.line - 26) {
-        var HF0 = BATH_FLOORS[0];
-        for (var ti0 = 0; ti0 < HF0.tubs.length; ti0++) {
-          var ts0 = HF0.tubs[ti0];
-          var wx0 = ts0[0] * TILE + 6, wx1 = (ts0[1] + 1) * TILE - 6;
-          if (b.cx > wx0 && b.cx < wx1) {
-            g.st = 'soak'; g.cd = 1.2 * rt;
-            b.bathBuoy = { line: g.line + 10, x0: wx0, x1: wx1, lift: 2.1, drag: 0.965 };
-            // The splash itself is the collider's job (v26.04); the fog
-            // just puffs aside.
-            bathSplashPoof(b.cx, g.line, 0.6);
-            break;
-          }
-        }
-      }
-      if (g.st === 'walk') {
-        if (g.cd <= 0 && standing) {
-          var dx = g.cx - b.cx;
-          if (Math.abs(dx) < 130) {
-            bathImpulse(b, dx > 0 ? 150 : -150, -325);
-            g.st = 'plunge'; g.cd = 1.1 * rt;
-          } else {
-            bathImpulse(b, dx > 0 ? 120 : -120, -215);
-            g.cd = 0.85 * rt;
-          }
-        }
-      } else if (g.st === 'plunge') {
-        // Any tub on the home floor counts: guests pick whichever they
-        // land in (the overshoot into tub 2 was too charming to forbid).
-        var landed = null;
-        var HF = BATH_FLOORS[0];
-        for (var ti = 0; ti < HF.tubs.length; ti++) {
-          var tspan = HF.tubs[ti];
-          var lx0 = tspan[0] * TILE + 6, lx1 = (tspan[1] + 1) * TILE - 6;
-          if (b.cx > lx0 && b.cx < lx1 && b.cy > g.line - 26) { landed = { x0: lx0, x1: lx1 }; break; }
-        }
-        if (landed) {
-          g.st = 'soak';
-          b.bathBuoy = { line: g.line + 6, x0: landed.x0, x1: landed.x1, lift: 1.75, drag: 0.965 };
-          // The cannonball crown is the collider's job now (v26.04): the
-          // falling body plows the pool itself. The fog parts off it.
-          bathSplashPoof(b.cx, g.line, 0.8);
-        } else {
-          // Assisted climb: a small steady up-and-over push while airborne,
-          // so the rim is a scramble, not a brick wall.
-          bathImpulse(b, (g.cx > b.cx ? 250 : -250) * dt, -420 * dt);
-          if (g.cd <= 0) { g.st = 'walk'; g.cd = 0.3 * rt; }   // recover, retry
-        }
-      } else if (g.st === 'soak') {
-        g.soakT -= dt;
-        if (g.soakT <= 0) {
-          // Done: LEAP out toward home (the physics moment the owner asked
-          // for), then waddle to the elevator and pay on the way out. The
-          // rising body is a fast collider, so the drag-out column and
-          // the sheet-back are the solver's (v26.04).
-          b.bathBuoy = null;
-          bathImpulse(b, b.cx > g.homeX ? -200 : 200, -430);
-          bathSplashPoof(b.cx, g.line, 0.5);
-          g.st = 'leave'; g.cd = 1.0 * rt;
-        } else if (g.cd <= 0) {
-          bathImpulse(b, 0, -26);   // a contented bob
-          g.cd = (2.6 + Math.random() * 2.2) * rt;
-        }
-      } else if (g.st === 'leave') {
-        if (g.cd <= 0 && standing) {
-          var dxh = g.homeX - b.cx;
-          if (Math.abs(dxh) < 34) {
-            if (typeof money === 'number') money += 25;
-            bathFloats.push({ x: b.cx, y: b.cy - 40, t: 0, s: '+$25' });
-            bathDespawnGuest(i); i--;
-            continue;
-          }
-          bathImpulse(b, dxh > 0 ? 120 : -120, -215);
-          g.cd = 0.85;
-        }
-      }
-    }
-  }
-
   // ---- Hook 2: updateCamera() top (080). The scene OWNS the zoom: fit the
   // tower WIDTH to the canvas (any window, any dpr) and scroll VERTICALLY
   // through the floors (wheel / drag / touch feed bathScrollT). Overriding
@@ -14067,7 +13845,7 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH;
+    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH + 96 / worldScale;
     if (maxY < minY) maxY = minY;
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
@@ -14133,6 +13911,11 @@
     if (bathPtrMoved >= 10) return;   // it was a drag, not a tap
     var p = bathClientToWorld(e);
     if (!p) return;
+    var rct = canvas.getBoundingClientRect();
+    var cssX = (e.clientX - rct.left) * (canvas.width / dpr / rct.width);
+    var cssY = (e.clientY - rct.top) * (canvas.height / dpr / rct.height);
+    if (cssY < 74 && cssX > canvas.width / dpr - 144) { bathExit(); return; }
+    if (gamePaused || bathServicePointer(cssX, cssY) || bathOrderPointer(p.x, p.y)) return;
     // Purchase buttons on locked floors take priority over the exit door.
     for (var bf = 1; bf <= 4; bf++) {
       if (bathFloorsOwned[bf]) continue;
@@ -14771,7 +14554,7 @@
             uiFg.fillStyle = '#565b63';
             uiFg.fillRect(vcx - bw, barY, bw * 2, 2);
             var ni = 0;
-            for (var nx = vcx - bw + 5; nx <= vcx + bw - 5; nx += 6) {
+            for (var nx = vcx - bw + 5; bathFire > 0 && nx <= vcx + bw - 5; nx += 6) {
               var capY = crv2.y0 + crv2.depthAt(nx) + 3;
               var hMax = barY - capY;
               if (hMax < 6) hMax = 6;
@@ -14797,7 +14580,7 @@
             }
             uiFg.stroke();
             uiFg.strokeStyle = 'rgba(255,150,60,' +
-              (0.16 + 0.10 * Math.sin(ft * 3.1)).toFixed(3) + ')';
+              (bathHeat * (0.16 + 0.10 * Math.sin(ft * 3.1))).toFixed(3) + ')';
             uiFg.lineWidth = 7;
             uiFg.beginPath();
             uiFg.moveTo(vcx - bw, crv2.y0 + crv2.depthAt(vcx - bw) + 1);
@@ -14812,17 +14595,6 @@
         }
       }
     }
-    // Payment floats: little "+$25" thanks rising off departing guests.
-    for (var pf = 0; pf < bathFloats.length; pf++) {
-      var FF = bathFloats[pf];
-      ctx.fillStyle = 'rgba(232,181,58,' + (1 - FF.t / 1.3).toFixed(3) + ')';
-      ctx.font = 'bold 15px "Commit Mono", monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(FF.s, FF.x, FF.y - FF.t * 26);
-    }
-    // The guests (jello renders on the main canvas; the world render that
-    // normally draws them is skipped in bathMode, so the scene calls it).
-    if (ENABLE_JELLO && typeof drawJelloBlobs === 'function') drawJelloBlobs();
     // Exit door + «ВЫХОД».
     ctx.fillStyle = '#0c0906';
     ctx.fillRect(BATH_EXIT_X0, BATH_EXIT_Y0, BATH_EXIT_X1 - BATH_EXIT_X0, BATH_EXIT_Y1 - BATH_EXIT_Y0);
@@ -14838,22 +14610,18 @@
     // path this scene skips, so the scene drives it too (found the hard
     // way: dye was injected and stepped but never painted).
     if (typeof drawSmoke === 'function') drawSmoke();
-    // Screen-space caption.
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = 'rgba(224,176,96,0.75)';
-    ctx.font = '13px "Commit Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('scroll or drag to climb the tower · tap ВЫХОД (or ESC) to leave', canvas.width / 2, canvas.height - 26);
-    // Wallet, top right, so buying a floor has visible consequence.
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(240,223,174,0.9)';
-    ctx.font = 'bold 14px "Commit Mono", monospace';
-    ctx.fillText('$' + bathFmtMoney(typeof money === 'number' ? money : 0), canvas.width - 16, 30);
-    ctx.textAlign = 'left';
+    var bathDrawContext = ctx;
+    try {
+      if (uiFg) ctx = uiFg;
+      ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
+      bathDrawGuests();
+      bathDrawServiceHUD();
+    } finally { ctx = bathDrawContext; }
     return true;
   }
 
-  if (ENABLE_BATH) {
+  {
+    // Install listeners even when a saved option starts the bathhouse off.
     window.bathTune = bathTune;
     window.__bath = { tune: bathTune, enter: bathEnter, exit: bathExit,
                       floor: bathScrollToFloor,
@@ -14861,7 +14629,9 @@
                       guest: function () { return !!bathSpawnGuest(); },
                       scale: bathScaleSet,
                       steamTune: bathSteam,
-                      dbg: function () { var g = bathGuests[0]; return JSON.stringify({ steam: bathDbg, uv: (typeof smokeFluidWorldToUV === 'function' ? smokeFluidWorldToUV(1100, 19560) : null), camY: Math.round(cam.y), guests: bathGuests.length, bodies: (typeof jelloBodies !== 'undefined' ? jelloBodies.length : -1), g: g ? { st: g.st, cx: Math.round(g.b.cx || -1), cy: Math.round(g.b.cy || -1), bb: [Math.round(g.b.bboxL), Math.round(g.b.bboxT), Math.round(g.b.bboxR), Math.round(g.b.bboxB)], vy: Math.round(g.b.vy || 0), slp: !!g.b.sleeping, tgt: Math.round(g.cx) } : null, solid: (function () { var out = []; for (var cc = 28; cc <= 33; cc++) { var t612 = world[612][cc], t613 = world[613][cc]; out.push(cc + ':' + (t612 ? t612.type[0] : '.') + (t613 ? t613.type[0] : '.')); } out.push('jws@' + (g ? Math.round(g.b.cx) : 0) + ',' + (g ? Math.round(g.b.bboxB + 4) : 0) + '=' + (g && typeof jelloWorldSolidAt === 'function' ? jelloWorldSolidAt(g.b.cx, g.b.bboxB + 4) : '?')); return out.join(' '); })() }); },
+                      dbg: function () { return { guests: bathGuests.map(function (g) {
+                        return { id: g.s.id, state: g.st, soak: g.soak, paid: g.paid };
+                      }), served: bathServed, water: bathWaterCount(), coal: bathCoalCount() }; },
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
                       warp: bathWarp,
                       get mode() { return bathMode; },
@@ -15025,512 +14795,491 @@
       }
     });
   }
-  /* ---- Slime garden: purchased surface baths and mineral pearls ---- */
-  // This is the public surface loop, independent of the optional indoor banya.
-  // Each lot owns real collision tiles. Its water is the same particle liquid
-  // the player carries from lakes and deposits, never a painted fill meter.
-  var SLIME_GARDEN_RECIPES = [
-    { name: 'STONE BATH', pearl: 'River pearl', price: 180, materials: [],
-      liquids: [0], liquidText: 'WATER', seconds: 40, value: 260, dose: 1800,
-      source: 'Water: lake east of town.' },
-    { name: 'COPPER BATH', pearl: 'Salt pearl', price: 650, materials: [['copper', 3]],
-      liquids: [0, 2], liquidText: 'WATER + BRINE', seconds: 48, value: 900, dose: 1800,
-      source: 'Brine: 42-168 m underground.' },
-    { name: 'IRON BATH', pearl: 'Honey pearl', price: 1800, materials: [['iron', 3], ['amber', 1]],
-      liquids: [0, 3], liquidText: 'WATER + NECTAR', seconds: 56, value: 2600, dose: 1800,
-      source: 'Nectar: 216-244 m. Heated drill required.' },
-    { name: 'CRYSTAL BATH', pearl: 'Aurora pearl', price: 4800, materials: [['amethyst', 2], ['gold', 1]],
-      liquids: [2, 3, 4], liquidText: 'BRINE + NECTAR + LUMEN', seconds: 65, value: 6000, dose: 1800,
-      source: 'Lumen: 292 m and deeper. Bring heat shielding.' }
-  ];
-  var SLIME_GARDEN_MIN_FILL = 6200;
-  var SLIME_GARDEN_CAPACITY = 11 * 2 * 655;
-  var slimeGardenLots = [];
-  var slimeGardenClock = 0;
-  var slimeGardenSampleT = 0;
-  var slimeGardenHinted = false;
+  /* ---- Bathhouse visitors: sky arrival, an order, a soak, and payment ---- */
+  // Individual guest recipes are intentionally undecided. These are shared
+  // operating resources, never a per-guest water or coal charge.
+  var BATH_VISIT = { seconds: 18, pay: 75 };
+  var BATH_FIRE_COAL = 10, BATH_FIRE_SECONDS = 240;
+  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 15000;
+  var bathFire = 0, bathHeat = 0, bathWater = 0, bathPour = 0;
+  var bathDrainT = 0, bathLostWater = 0, bathWetFloor = [];
+  var bathServiceButtons = [];
+  var bathGuests = [];
+  var bathGuestCap = 2;
+  var bathGuestColliders = [];
+  var bathFloats = [];
+  var bathServed = 0;
+  var bathNotice = '', bathNoticeT = 0;
+  var bathSupplies = [0, 0, 0, 0, 0]; // liquid recovered when retiring old garden lots
+  var bathIntroSeen = false;
 
-  function slimeGardenReset() {
-    slimeGardenLots.length = 0;
-    slimeGardenClock = 0;
-    slimeGardenSampleT = 0;
-    slimeGardenHinted = false;
-    for (var i = 0; i < 4; i++) {
-      var cL = DECK_LEFT_COL - 16 - i * 15;
-      slimeGardenLots.push({ index: i, cL: cL, cR: cL + 10,
-        x0: cL * TILE, x1: (cL + 11) * TILE,
-        y0: SKY_ROWS * TILE, y1: (SKY_ROWS + 2) * TILE,
-        owned: false, progress: 0, ready: false, harvests: 0,
-        sample: [0, 0, 0, 0, 0], resident: null, valid: false, status: 'FOR SALE',
-        constructionT: 0, pearlPulse: 0 });
-    }
+  function bathServiceReset() {
+    bathScalePop(); bathSteamPop();
+    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
+    bathTransitionSerial++;
+    bathMode = false; bathRoomReady = false; bathFading = false;
+    bathFloorsOwned = [true, false, false, false, false];
+    bathFire = 0; bathHeat = 0; bathWater = 0; bathPour = 0;
+    bathLostWater = 0; bathDrainT = 0; bathWetFloor = []; bathServiceButtons = [];
+    bathServed = 0; bathNotice = ''; bathNoticeT = 0; bathIntroSeen = false;
+    bathSupplies = [0, 0, 0, 0, 0];
+    banyaX = -1; bathHotTub = null; bathDoorT = 0;
+    bathCamPin(); bathCamY = -1;
+    if (bathFadeEl) bathFadeEl.style.opacity = '0';
   }
 
-  function slimeGardenReservedCol(c) {
-    return c >= DECK_LEFT_COL - 63 && c <= DECK_LEFT_COL - 4;
-  }
-
-  function slimeGardenCarve(lot) {
-    for (var r = SKY_ROWS; r <= SKY_ROWS + 2; r++) {
-      if (!world[r]) continue;
-      for (var c = lot.cL - 1; c <= lot.cR + 1; c++) {
-        if (c < 0 || c >= COLS) continue;
-        var shell = r === SKY_ROWS + 2 || c === lot.cL - 1 || c === lot.cR + 1;
-        world[r][c] = shell ? { type: 'foundation', hp: 999999 } : null;
-        if (!shell) terrainClearedKinds[r + ':' + c] = 'stone';
-        if (typeof invalidateTerrainAround === 'function') invalidateTerrainAround(r, c);
-      }
+  function bathCoalIndex() {
+    var shiny = -1;
+    for (var i = 0; i < cargo.length; i++) {
+      if (cargo[i].type !== 'coal') continue;
+      if (!cargo[i].shiny) return i;
+      shiny = i;
     }
-    // The light field must see the new open cut on an in-run purchase.
-    if (typeof lightingOnClear === 'function') {
-      for (var lr = SKY_ROWS; lr < SKY_ROWS + 2; lr++) {
-        for (var lc = lot.cL; lc <= lot.cR; lc++) lightingOnClear(lr, lc);
-      }
-    }
+    return shiny;
   }
-
-  function slimeGardenPrepareWorld(restoring) {
-    if (!slimeGardenLots.length) slimeGardenReset();
-    // An older save may have generated a lake across newly designated land.
-    // Retire its refill metadata before any bowl can be purchased; leave the
-    // saved excavation itself intact until that particular lot is built.
-    if (typeof surfacePonds !== 'undefined') {
-      for (var pi = surfacePonds.length - 1; pi >= 0; pi--) {
-        if (surfacePonds[pi].cR >= DECK_LEFT_COL - 63 && surfacePonds[pi].cL <= DECK_LEFT_COL - 4) {
-          surfacePonds.splice(pi, 1);
-        }
-      }
-    }
-    for (var i = 0; i < slimeGardenLots.length; i++) {
-      var lot = slimeGardenLots[i];
-      if (lot.owned) { slimeGardenCarve(lot); continue; }
-      if (restoring) continue;
-      // Undeveloped lots remain walkable. Only construction opens the bowl.
-      for (var r = SKY_ROWS; r <= SKY_ROWS + 2; r++) {
-        if (!world[r]) continue;
-        for (var c = lot.cL - 1; c <= lot.cR + 1; c++) {
-          if (c >= 0 && c < COLS) world[r][c] = { type: 'dirt', hp: ORES.dirt.hp };
-        }
-      }
-    }
-  }
-
-  function slimeGardenAt(x, y) {
-    for (var i = 0; i < slimeGardenLots.length; i++) {
-      var lot = slimeGardenLots[i];
-      if (lot.owned && x >= lot.x0 && x <= lot.x1 && y >= lot.y0 - 12 && y < lot.y1 + 6) return lot;
-    }
-    return null;
-  }
-
-  function slimeGardenNearest() {
-    if (!player || !isFinite(player.x) || !isFinite(player.y)) return null;
-    var px = player.x + PLAYER_W * 0.5;
-    var py = player.y + PLAYER_H * 0.5;
-    var closest = null, best = Infinity;
-    for (var i = 0; i < slimeGardenLots.length; i++) {
-      var lot = slimeGardenLots[i];
-      if (py < lot.y0 - 150 || py > lot.y1 + 40) continue;
-      if (px < lot.x0 - 2 * TILE || px > lot.x1 + 2 * TILE) continue;
-      var dist = Math.abs(px - (lot.x0 + lot.x1) * 0.5);
-      if (dist < best) { best = dist; closest = lot; }
-    }
-    return closest;
-  }
-
-  function skySlimeLandingX() {
-    if (!slimeGardenLots.length) slimeGardenReset();
-    var near = slimeGardenNearest();
-    var lot = near || slimeGardenLots[0];
-    // A stone shoulder gives the first arrivals their full bounce sequence.
-    // The player moves their chosen creature into the bath with the nozzle.
-    return lot.x1 + TILE * 0.5;
-  }
-
-  function slimeGardenMaterialCount(type) {
+  function bathCoalCount() {
     var n = 0;
-    for (var i = 0; i < cargo.length; i++) if (cargo[i].type === type) n++;
+    for (var i = 0; i < cargo.length; i++) if (cargo[i].type === 'coal') n++;
     return n;
   }
+  function bathWaterCount() { return siphon.tank[0] + bathSupplies[0]; }
+  function bathCanServe() { return bathWater >= BATH_MIN_WATER && bathHeat >= 0.35; }
+  function bathSetNotice(s) { bathNotice = s; bathNoticeT = 5; }
 
-  function slimeGardenMaterialsText(recipe, count) {
-    if (!recipe.materials.length) return 'STONE PROVIDED';
-    return recipe.materials.map(function (m) {
-      return (count ? slimeGardenMaterialCount(m[0]) + '/' : '') + m[1] + ' ' + ORES[m[0]].label.toUpperCase();
-    }).join(' + ');
+  function bathBasinCount() {
+    var F = BATH_FLOORS[0], tb = F.tubs[0];
+    return liquidSampleRect(tb[0] * TILE, (F.fr - F.lip - 1) * TILE,
+      (tb[1] + 1) * TILE, (F.fr + F.sink + 1) * TILE)[0];
   }
-
-  function slimeGardenSourceHint(index) {
-    var recipe = SLIME_GARDEN_RECIPES[index];
-    var hint = index ? recipe.source : '';
-    if (recipe.liquids.indexOf(0) === -1) return hint;
-    var best = null, distance = Infinity;
-    var px = player.x + PLAYER_W * 0.5;
-    for (var i = 0; i < surfacePonds.length; i++) {
-      var pond = surfacePonds[i], center = (pond.cL + pond.cR + 1) * TILE * 0.5;
-      if (Math.abs(center - px) < distance) { best = center; distance = Math.abs(center - px); }
+  function bathWaterline() {
+    var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
+    // Invert the actual vessel cross-section at the liquid rest spacing.
+    // This also gives parked/offscreen guests the same buoyancy level.
+    var low = curve.y0, high = curve.y0 + curve.D;
+    for (var n = 0; n < 10; n++) {
+      var line = (low + high) * 0.5, volume = 0;
+      for (var x = curve.x0 + 4; x < curve.x1; x += 8) volume += Math.max(0, curve.y0 + curve.depthAt(x) - line) * 8 / 1.5625;
+      if (volume > bathWater) low = line; else high = line;
     }
-    var water = best === null ? 'Water: shallow pockets at 12-26 m.' :
-      ('Water: surface lake ' + Math.max(1, Math.round(distance / TILE)) + ' m ' + (best < px ? 'west' : 'east') + '.');
-    return water + (hint ? ' ' + hint : '');
+    return (low + high) * 0.5;
   }
-
-  function slimeGardenBuy(index) {
-    var lot = slimeGardenLots[index];
-    if (!lot || lot.owned) return false;
-    var recipe = SLIME_GARDEN_RECIPES[index];
-    if (!devMode && money < recipe.price) {
-      showMsg('Lot ' + (index + 1) + ' costs $' + recipe.price + '. Mine and sell a haul first.', true,
-        { key: 'garden', tag: 'BATH LOTS' });
+  function bathLightStove() {
+    if (!bathMode || bathFading || gamePaused) return false;
+    if (bathFire > 0) { bathSetNotice('The fire is already burning. One fire warms the whole tub.'); return false; }
+    if (bathCoalCount() < BATH_FIRE_COAL) { bathSetNotice('Bring 10 coal in cargo to light the stove.'); return false; }
+    for (var n = 0; n < BATH_FIRE_COAL; n++) cargo.splice(bathCoalIndex(), 1);
+    bathFire = BATH_FIRE_SECONDS;
+    bathArmHeat(); sfxPlay('ui-confirm'); saveNow('bath-stove');
+    return true;
+  }
+  function bathAddWater() {
+    if (!bathMode || bathFading || gamePaused || !bathRoomReady) return false;
+    bathWater = bathBasinCount();
+    var count = Math.floor(Math.min(bathWaterCount(), BATH_MAX_WATER - bathWater - bathPour));
+    if (count <= 0) {
+      bathSetNotice(bathWaterCount() ? 'The tub is full.' : 'Scoop water from a lake, then bring it back in your tank.');
       return false;
     }
-    if (!devMode) {
-      for (var i = 0; i < recipe.materials.length; i++) {
-        var need = recipe.materials[i];
-        if (slimeGardenMaterialCount(need[0]) < need[1]) {
-          showMsg('Bring ' + slimeGardenMaterialsText(recipe, false).toLowerCase() + ' in your cargo to build this bath.', true,
-            { key: 'garden', tag: 'BATH LOTS' });
-          return false;
-        }
+    var stored = Math.min(bathSupplies[0], count);
+    bathSupplies[0] -= stored; siphon.tank[0] -= count - stored;
+    bathPour += count;
+    saveNow('bath-water');
+    return true;
+  }
+  function bathFloorAt(x, y) {
+    if (x < 27 * TILE || x > 46 * TILE || y < BATH_TOP_ROW * TILE || y > (BATH_BOT_ROW + 2) * TILE) return 0;
+    for (var f = 0; f < BATH_FLOORS.length; f++) {
+      var F = BATH_FLOORS[f];
+      if (x < F.c0 * TILE || x > (F.c1 + 1) * TILE || y < F.fr * TILE - 5 || y > (F.fr + 5) * TILE) continue;
+      var inTub = false;
+      for (var t = 0; t < F.tubs.length; t++) {
+        var tb = F.tubs[t];
+        if (x >= tb[0] * TILE - 2 && x <= (tb[1] + 1) * TILE + 2) { inTub = true; break; }
       }
-      money -= recipe.price;
-      for (var mi = 0; mi < recipe.materials.length; mi++) {
-        var mat = recipe.materials[mi], remaining = mat[1];
-        // Spend ordinary specimens first, preserving shiny cargo if possible.
-        for (var shinyPass = 0; shinyPass < 2 && remaining; shinyPass++) {
-          for (var ci = cargo.length - 1; ci >= 0 && remaining; ci--) {
-            if (cargo[ci].type === mat[0] && (!!cargo[ci].shiny) === !!shinyPass) {
-              cargo.splice(ci, 1); remaining--;
-            }
+      if (!inTub) return F.fr * TILE;
+    }
+    return 0;
+  }
+  function bathFloorLoss(x, y) {
+    bathLostWater++;
+    if (bathMode && bathWetFloor.length < 28 && bathLostWater % 8 === 0) bathWetFloor.push({ x: x, y: bathFloorAt(x, y), t: 0 });
+  }
+  function bathDrainFloor() {
+    // Remove spilled particles through the shared CPU/GPU mutation journal.
+    // Scan parked water too, so leaving or saving cannot recover a floor spill.
+    liquidToolSync();
+    for (var i = liquidCount - 1; i >= 0; i--) {
+      if (bathFloorAt(liquidX[i], liquidY[i])) {
+        bathFloorLoss(liquidX[i], liquidY[i]); removeLiquidParticle(i);
+      }
+    }
+    Object.keys(mineralLiquidParked).forEach(function (key) {
+      var data = mineralLiquidParked[key];
+      for (var i = data.length - 3; i >= 0; i -= 3) {
+        if (!bathFloorAt(data[i + 1], data[i + 2])) continue;
+        bathFloorLoss(data[i + 1], data[i + 2]);
+        var last = data.length - 3;
+        data[i] = data[last]; data[i + 1] = data[last + 1]; data[i + 2] = data[last + 2]; data.length -= 3;
+      }
+      if (!data.length) delete mineralLiquidParked[key];
+    });
+  }
+  function bathSplashWater(g, count) {
+    var F = BATH_FLOORS[0], tb = F.tubs[0];
+    var used = liquidExtractRect(tb[0] * TILE, (F.fr - F.lip - 1) * TILE,
+      (tb[1] + 1) * TILE, (F.fr + F.sink + 1) * TILE, 0, count);
+    var dir = g.slot ? 1 : -1;
+    var x = (dir > 0 ? tb[1] + 1 : tb[0]) * TILE + dir * 44;
+    for (var n = 0; n < used; n++) {
+      var px = x + dir * (n % 8) * 1.5, py = F.fr * TILE - 60 - Math.floor(n / 8) * 1.5;
+      if (bathMode && addLiquidParticle(0, px, py, dir * (25 + n % 13), -60 - n % 20, 0) >= 0) continue;
+      // Offscreen simulation has no live liquid solver. The same water is
+      // parked on the floor, where the drain consumes it on the next tick.
+      mineralLiquidPark(0, px, F.fr * TILE - 2);
+    }
+    bathWater = Math.max(0, bathWater - used);
+  }
+  function bathOperationsTick(dt) {
+    if (bathFire > 0) bathFire = Math.max(0, bathFire - dt);
+    var target = bathFire > 0 && bathWater > 0 ? 1 : 0;
+    var heatRate = target ? 0.09 * Math.min(2, 8000 / Math.max(2000, bathWater)) : 0.012;
+    bathHeat += (target - bathHeat) * (1 - Math.exp(-dt * heatRate));
+    bathDrainT -= dt;
+    if (bathDrainT <= 0) {
+      bathDrainT = 0.15;
+      if (bathRoomReady || bathWater > 0) bathDrainFloor();
+      bathWater = bathBasinCount();
+      bathArmHeat();
+    }
+    if (bathMode && bathRoomReady && bathPour > 0) {
+      var F = BATH_FLOORS[0], tb = F.tubs[0];
+      var before = bathWater;
+      var count = liquidToolEmit(0, Math.min(bathPour, Math.ceil(2400 * dt)),
+        (tb[0] + 4) * TILE, (F.fr - 4) * TILE, 0, 100);
+      bathPour -= count;
+      if (count > 0) { bathHeat *= before / (before + count); bathWater += count; }
+    }
+    for (var i = bathWetFloor.length - 1; i >= 0; i--) {
+      bathWetFloor[i].t += dt;
+      if (bathWetFloor[i].t >= 1.3) bathWetFloor.splice(i, 1);
+    }
+  }
+
+  function bathBeginHop(g, x, y, duration, height, next) {
+    g.hop = { x: g.s.x, y: g.s.y, tx: x, ty: y, duration: duration, height: height, t: 0, next: next };
+    g.st = 'hop'; g.s.settled = false; g.s._ground = false;
+    g.s.squashV = -1.8;
+  }
+  function bathGuestAccept(s) {
+    if (!ENABLE_BATH || bathGuests.length >= bathGuestCap || s.visit === 'depart') return false;
+    if (bathGuests.some(function (g) { return g.s.id === s.id; })) return false;
+    var slot = bathGuests.some(function (g) { return g.slot === 0; }) ? 1 : 0;
+    var F = BATH_FLOORS[0];
+    s.x = 28.5 * TILE; s.y = F.fr * TILE - s.r;
+    s.vx = 0; s.vy = 0; s.entry = 0; s.wet = 0; s._trail = [];
+    s.visit = 'inside';
+    var g = { s: s, slot: slot, st: 'arrive', t: 0, paid: false, served: false, soak: 0 };
+    bathGuests.push(g);
+    bathBeginHop(g, (slot ? 30.25 : 28.25) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
+    if (!bathIntroSeen) {
+      bathIntroSeen = true;
+      showMsg('A sky slime entered the bathhouse. Fill the tub from your water tank and bring 10 coal to light the shared stove.', false,
+        { key: 'bath-arrival', tag: 'BATHHOUSE' });
+    }
+    return true;
+  }
+  // The developer helper creates a real surface visitor, never a paying phantom.
+  function bathSpawnGuest() {
+    if (!bathPickSite()) return null;
+    return skySlimeSpawn((banyaDoorX0 + banyaDoorX1) / 2 - TILE * 3, SKY_ROWS * TILE - 360);
+  }
+  function bathServe(id) {
+    if (!ENABLE_BATH || !bathMode || bathFading || gamePaused) return false;
+    var g = bathGuests.find(function (guest) { return guest.s.id === id && guest.st === 'wait'; });
+    if (!g) return false;
+    if (!bathCanServe()) {
+      bathSetNotice(bathWater < BATH_MIN_WATER ? 'Fill the tub from your water tank.' : 'Light the stove with 10 coal, then let the water warm.');
+      return false;
+    }
+    // Admission uses the shared warm bath. No guest recipe is charged.
+    g.served = true;
+    bathBeginHop(g, (BATH_FLOORS[0].tubs[0][0] - 0.1) * TILE,
+      (BATH_FLOORS[0].fr - 1) * TILE - g.s.r, 0.85, 52, 'plunge');
+    bathNoticeT = 0;
+    sfxPlay('ui-confirm');
+    saveNow('bath-order');
+    return true;
+  }
+  function bathFinishGuest(g) {
+    if (g.paid) return;
+    g.paid = true;
+    bathSplashWater(g, 65);
+    bathServed++;
+    money += BATH_VISIT.pay;
+    bathFloats.push({ x: g.s.x, y: g.s.y - 38, t: 0, s: '+$' + BATH_VISIT.pay });
+    if (bathMode) sfxPlay('sell-total');
+    bathBeginHop(g, 30.1 * TILE, BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
+    saveNow('bath-payment');
+  }
+  function bathReleaseGuest(g) {
+    if (!bathPickSite()) return false;
+    var s = g.s;
+    s.x = (banyaDoorX0 + banyaDoorX1) / 2;
+    s.y = SKY_ROWS * TILE - s.r - 2;
+    s.vx = 60; s.vy = -130; s.wet = 0; s._wetTarget = 0;
+    s.visit = 'depart'; s.visitT = 0; s.hopIn = 0.7;
+    s.departX = s.x; s.departDir = s.x < COLS * TILE * 0.7 ? 1 : -1;
+    s._ground = false; s.settled = false; s._trail = [];
+    skySlimes.push(s); // same identity leaves the building, then wanders away
+    return true;
+  }
+  function bathGuestTick(dt) {
+    if (!ENABLE_BATH || !(dt > 0) || gameOver || gameWon) return;
+    dt = Math.min(dt, 0.1);
+    bathOperationsTick(dt);
+    bathNoticeT = Math.max(0, bathNoticeT - dt);
+    bathGuestColliders.length = 0;
+    for (var f = bathFloats.length - 1; f >= 0; f--) {
+      bathFloats[f].t += dt;
+      if (bathFloats[f].t > 2) bathFloats.splice(f, 1);
+    }
+    for (var i = bathGuests.length - 1; i >= 0; i--) {
+      var g = bathGuests[i], s = g.s, oldX = s.x, oldY = s.y;
+      g.t += dt; s.age += dt;
+      if (g.st === 'hop') {
+        var h = g.hop;
+        h.t = Math.min(h.duration, h.t + dt);
+        var k = h.t / h.duration;
+        s.x = h.x + (h.tx - h.x) * k;
+        s.y = h.y + (h.ty - h.y) * k - Math.sin(k * Math.PI) * h.height;
+        if (k >= 1) {
+          g.st = h.next; g.t = 0; g.hop = null; s.squashV = 2;
+          s._ground = g.st === 'wait' || g.st === 'leave';
+          if (g.st === 'soak') {
+            s.wet = 0.6;
+            bathSplashWater(g, 45);
+            if (bathMode) bathSplashPoof(s.x, bathWaterline(), 0.6);
           }
         }
+      } else if (g.st === 'plunge') {
+        var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
+        bathBeginHop(g, (g.slot ? 38 : 35.5) * TILE, bathWaterline() + 6, 0.95, 74, 'soak');
+      } else if (g.st === 'soak') {
+        if (bathCanServe()) g.soak = Math.min(BATH_VISIT.seconds, g.soak + dt);
+        g.splash = (g.splash || 0) + dt;
+        if (g.splash >= 1.4) { g.splash = 0; bathSplashWater(g, 12); }
+        var waterline = bathWaterline();
+        s.x = (g.slot ? 38 : 35.5) * TILE + Math.sin(g.t * 0.65 + s.seed * 6) * 13;
+        s.y = waterline + 6 + Math.sin(g.t * 1.7 + s.seed * 8) * 3.5;
+        s.wet = 0.6;
+        if (g.soak >= BATH_VISIT.seconds) bathFinishGuest(g);
+      } else if (g.st === 'leave') {
+        s.wet = 0;
+        bathBeginHop(g, 28.5 * TILE, BATH_FLOORS[0].fr * TILE - s.r, 0.85, 32, 'exit');
+      } else if (g.st === 'exit') {
+        if (bathReleaseGuest(g)) bathGuests.splice(i, 1);
+        continue;
       }
+      s.vx = (s.x - oldX) / dt; s.vy = (s.y - oldY) / dt;
+      s.settled = g.st === 'wait' || g.st === 'soak';
+      skySlimeExpression(s, Math.min(dt, 1 / 60));
+      if (g.st === 'soak') s.eye = 0.2 + Math.sin(g.t * 0.8) * 0.035;
+      if (bathMode) bathGuestColliders.push({ x: s.x, y: s.y, hw: s.r, hh: s.r,
+        vx: s.vx, vy: s.vy, pts: null });
     }
-    lot.owned = true;
-    lot.constructionT = 1;
-    lot.status = 'FILL THE BATH';
-    slimeGardenCarve(lot);
-    slimeGardenSampleT = 0;
-    showMsg('Bath built. ' + (isMobile ? 'Tap SCOOP, then drive over liquid. POUR empties below the rig.' : 'F toggles the scoop. Drive over liquid; right mouse pours below.') +
-      ' Bring ' + recipe.liquidText.toLowerCase() + ' and one settled sky slime.', false,
-      { key: 'garden', tag: 'BATH LOTS' });
-    if (typeof sfxPlay === 'function') sfxPlay('ui-confirm');
-    if (typeof saveNow === 'function') saveNow('bath-built');
-    return true;
   }
 
-  function slimeGardenCollect(index) {
-    var lot = slimeGardenLots[index];
-    if (!lot || !lot.ready) return false;
-    var recipe = SLIME_GARDEN_RECIPES[index];
-    money += recipe.value;
-    lot.ready = false;
-    lot.progress = 0;
-    lot.harvests++;
-    lot.pearlPulse = 1;
-    slimeGardenSampleT = 0;
-    showMsg(recipe.pearl + ' sold for $' + recipe.value + '. Top up the bath to keep it growing.', false,
-      { key: 'garden', tag: 'PEARL SALE' });
-    if (typeof sfxPlay === 'function') sfxPlay('sell-total');
-    if (typeof saveNow === 'function') saveNow('pearl-collected');
-    return true;
+  function bathOrderRect(g) {
+    var scale = Math.max(1, 0.85 / Math.max(0.1, worldScale));
+    var x = g.slot ? 976 : 804;
+    if (scale > 1) x = cam.x + (g.slot ? canvas.width / dpr / 2 + 8 : 14) / worldScale;
+    return { x: x, y: BATH_FLOORS[0].fr * TILE - 164 * scale, w: 160 * scale, h: 96 * scale, scale: scale };
   }
-
-  function slimeGardenInteract() {
-    var lot = slimeGardenNearest();
-    if (!lot) return false;
-    if (!lot.owned) slimeGardenBuy(lot.index);
-    else if (lot.ready) slimeGardenCollect(lot.index);
-    else {
-      var recipe = SLIME_GARDEN_RECIPES[lot.index];
-      showMsg(lot.status + '. ' + slimeGardenSourceHint(lot.index) +
-        (isMobile ? ' Tap this sign when the pearl is ready.' : ' E collects the finished pearl.'), false,
-        { key: 'garden', tag: 'BATH ' + (lot.index + 1) });
-    }
-    return true;
-  }
-
-  function slimeGardenSignRect(lot) {
-    return { x: (lot.x0 + lot.x1) * 0.5 - 86, y: lot.y0 - 92, w: 172, h: 72 };
-  }
-
-  function slimeGardenPointer(sx, sy) {
-    var wx = sx / worldScale + cam.x;
-    var wy = sy / worldScale + cam.y;
-    for (var i = 0; i < slimeGardenLots.length; i++) {
-      var lot = slimeGardenLots[i], box = slimeGardenSignRect(lot);
-      if (wx < box.x || wx > box.x + box.w || wy < box.y || wy > box.y + box.h) continue;
-      if (slimeGardenNearest() !== lot) {
-        showMsg('Move closer to this bath sign.', false, { key: 'garden', tag: 'BATH LOTS' });
-        return true;
-      }
-      return slimeGardenInteract();
+  function bathOrderPointer(x, y) {
+    for (var i = 0; i < bathGuests.length; i++) {
+      var g = bathGuests[i];
+      if (g.st !== 'wait') continue;
+      var r = bathOrderRect(g);
+      if ((x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) ||
+          Math.hypot(x - g.s.x, y - g.s.y) < g.s.r + 10) { bathServe(g.s.id); return true; }
     }
     return false;
   }
-
-  function slimeGardenRecipeStatus(lot) {
-    var recipe = SLIME_GARDEN_RECIPES[lot.index];
-    var total = 0;
-    for (var i = 0; i < lot.sample.length; i++) total += lot.sample[i] || 0;
-    if (total < SLIME_GARDEN_MIN_FILL) return 'FILL TO THE BRASS MARK';
-    for (var ri = 0; ri < recipe.liquids.length; ri++) {
-      var type = recipe.liquids[ri];
-      var threshold = recipe.liquids.length === 1 ? 5200 : 1000;
-      if ((lot.sample[type] || 0) < threshold) {
-        return 'ADD ' + ['WATER', 'OIL', 'BRINE', 'NECTAR', 'LUMEN'][type];
-      }
-    }
-    if (!lot.resident) return 'ADD ONE SKY SLIME';
-    return '';
-  }
-
-  function slimeGardenComplete(lot) {
-    var recipe = SLIME_GARDEN_RECIPES[lot.index];
-    if (typeof liquidExtractRect !== 'function') return false;
-    // Re-sample at the transaction boundary: the nozzle may have drained the
-    // bath since its half-second status refresh.
-    if (typeof liquidToolSync === 'function') liquidToolSync();
-    lot.sample = liquidSampleRect(lot.x0, lot.y0, lot.x1, lot.y1);
-    if (slimeGardenRecipeStatus(lot)) return false;
-    // A pearl incorporates a real dose of its recipe. One waiting pearl per
-    // bath and finite liquid prevent an unattended, unbounded money engine.
-    var each = Math.floor(recipe.dose / recipe.liquids.length);
-    for (var check = 0; check < recipe.liquids.length; check++) {
-      if ((lot.sample[recipe.liquids[check]] || 0) < each) return false;
-    }
-    for (var i = 0; i < recipe.liquids.length; i++) {
-      var type = recipe.liquids[i];
-      var used = liquidExtractRect(lot.x0, lot.y0, lot.x1, lot.y1, type, each);
-      lot.sample[type] = Math.max(0, lot.sample[type] - used);
-      // Sampling and extraction read the same mirror. A transient backend
-      // handoff can remove less; it must never create a pearl for no material.
-      if (used < each) { lot.progress = Math.max(0, recipe.seconds - 1); return false; }
-    }
-    lot.ready = true;
-    lot.progress = recipe.seconds;
-    lot.pearlPulse = 1;
-    if (slimeGardenNearest() === lot) showMsg(recipe.pearl + ' ready. Use the bath sign to collect $' + recipe.value + '.', false,
-      { key: 'garden', tag: 'PEARL READY' });
-    return true;
-  }
-
-  function slimeGardenTick(dt) {
-    if (!slimeGardenLots.length) return;
-    slimeGardenClock += dt;
-    slimeGardenSampleT -= dt;
-    var sampleNow = slimeGardenSampleT <= 0;
-    if (sampleNow) slimeGardenSampleT = 0.5;
-    var slimes = typeof skySlimes !== 'undefined' ? skySlimes : [];
-    for (var si = 0; si < slimes.length; si++) {
-      slimes[si].gardenLot = -1;
-      slimes[si].pearlProgress = 0;
-    }
-    for (var i = 0; i < slimeGardenLots.length; i++) {
-      var lot = slimeGardenLots[i], recipe = SLIME_GARDEN_RECIPES[i];
-      lot.constructionT = Math.max(0, lot.constructionT - dt);
-      lot.pearlPulse = Math.max(0, lot.pearlPulse - dt * 0.6);
-      if (!lot.owned) continue;
-      if (sampleNow && typeof liquidSampleRect === 'function') {
-        lot.sample = liquidSampleRect(lot.x0, lot.y0, lot.x1, lot.y1);
-      }
-      lot.resident = null;
-      for (var s = 0; s < slimes.length; s++) {
-        var slime = slimes[s];
-        if (slime.captured || slime.x - slime.r < lot.x0 || slime.x + slime.r > lot.x1) continue;
-        if (slime.y + slime.r < lot.y0 + TILE * 0.55 || slime.y - slime.r > lot.y1) continue;
-        if (Math.abs(slime.vy || 0) > 95 || Math.abs(slime.vx || 0) > 70) continue;
-        lot.resident = slime;
-        slime.gardenLot = i;
-        slime.pearlProgress = Math.min(1, lot.progress / recipe.seconds);
-        break;
-      }
-      if (lot.ready) { lot.status = 'PEARL READY'; lot.valid = false; continue; }
-      var missing = slimeGardenRecipeStatus(lot);
-      lot.valid = !missing;
-      lot.status = missing || ('GROWING ' + Math.floor(lot.progress / recipe.seconds * 100) + '%');
-      if (!lot.valid) continue;
-      lot.progress = Math.min(recipe.seconds, lot.progress + dt);
-      if (lot.progress >= recipe.seconds) slimeGardenComplete(lot);
-    }
-    if (!slimeGardenHinted && slimeGardenNearest()) {
-      slimeGardenHinted = true;
-      showMsg('Baths turn sky slimes and mineral liquids into pearls. ' +
-        (isMobile ? 'Tap a sign to build. Tap SCOOP to collect liquid and a settled slime as you move.' : 'E or tap a sign to build. F toggles the liquid and slime scoop.'), false,
-        { key: 'garden', tag: 'BATH LOTS' });
-    }
-  }
-
-  function slimeGardenDrawMasonry(x, y, w, h, index) {
-    drawStoneFoundation(x, y, w, h);
-    if (index === 0) {
-      // Hand-laid large slate blocks, a soft worn cap, crisp mortar below.
-      ctx.fillStyle = BLD.stoneLight; ctx.fillRect(x + 1, y + 1, w - 2, 3);
-      ctx.fillStyle = BLD.stonePale;
-      for (var p = 11; p < w - 7; p += 43) ctx.fillRect(x + p, y + 1, 9, 1);
-    } else {
-      var base = index === 1 ? BLD.woodMid : (index === 2 ? BLD.metalBase : BLD.metalLight);
-      var light = index === 1 ? BLD.woodPale : (index === 2 ? BLD.metalPale : BLD.waterFoam);
-      var dark = index === 1 ? BLD.woodDark : BLD.metalDark;
-      ctx.fillStyle = base; ctx.fillRect(x + 2, y + 2, w - 4, h - 5);
-      ctx.fillStyle = light; ctx.fillRect(x + 2, y + 2, w - 4, 2);
-      ctx.fillStyle = dark; ctx.fillRect(x + 2, y + h - 5, w - 4, 2);
-      for (var s = 18; s < w - 8; s += 34) {
-        ctx.fillStyle = dark; ctx.fillRect(x + s, y + 5, 1, h - 12);
-        ctx.fillStyle = light; ctx.fillRect(x + s + 3, y + 6, 2, 2);
-        ctx.fillRect(x + s + 3, y + h - 10, 2, 2);
-      }
-      if (index === 3) {
-        for (var g = 24; g < w - 12; g += 48) {
-          ctx.fillStyle = BLD.waterBase;
-          ctx.beginPath(); ctx.moveTo(x + g, y + 7); ctx.lineTo(x + g + 8, y + 14);
-          ctx.lineTo(x + g, y + 23); ctx.lineTo(x + g - 7, y + 14); ctx.closePath(); ctx.fill();
-          ctx.strokeStyle = BLD.outline; ctx.lineWidth = 1; ctx.stroke();
-          ctx.fillStyle = BLD.waterFoam; ctx.fillRect(x + g - 2, y + 11, 3, 2);
-        }
-      }
-    }
-    strokeRect1(x, y, w, h, BLD.outline);
-  }
-
-  function slimeGardenDrawPearl(x, y, index, scale) {
-    var tint = [BLD.cream, BLD.goldPale, BLD.woodPale, BLD.waterFoam][index];
-    ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-    ctx.fillStyle = BLD.outline; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = tint; ctx.beginPath(); ctx.arc(0, -0.3, 6.8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = BLD.goldDark; ctx.globalAlpha = 0.35;
-    ctx.beginPath(); ctx.ellipse(2.1, 3, 4.4, 2.2, -0.5, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1; ctx.fillStyle = BLD.waterFoam;
-    ctx.fillRect(-3, -4, 3, 2); ctx.fillRect(-4, -2, 1, 1);
-    ctx.restore();
-  }
-
-  function slimeGardenDrawLadder(x, y, h) {
-    ctx.fillStyle = BLD.outline;
-    ctx.fillRect(x, y, 3, h); ctx.fillRect(x + 10, y, 3, h);
-    ctx.fillStyle = BLD.metalLight;
-    ctx.fillRect(x + 1, y + 1, 1, h - 2); ctx.fillRect(x + 11, y + 1, 1, h - 2);
-    for (var r = 5; r < h - 3; r += 10) {
-      ctx.fillStyle = BLD.outline; ctx.fillRect(x + 2, y + r, 9, 3);
-      ctx.fillStyle = BLD.metalPale; ctx.fillRect(x + 2, y + r, 9, 1);
-    }
-  }
-
-  function slimeGardenDrawSign(lot, near) {
-    var box = slimeGardenSignRect(lot), recipe = SLIME_GARDEN_RECIPES[lot.index];
-    var x = box.x, y = box.y, w = box.w, h = box.h;
-    // Reused prospecting board: slate footings, old planks, a bolted metal
-    // recipe plate and a small static star preserve the town's materials.
-    for (var side = 0; side < 2; side++) {
-      var postX = x + (side ? w - 16 : 11);
-      drawStoneFoundation(postX - 3, lot.y0 - 5, 11, 5);
-      ctx.fillStyle = BLD.woodDark; ctx.fillRect(postX, y + h - 3, 5, lot.y0 - y - h + 3);
-      strokeRect1(postX, y + h - 3, 5, lot.y0 - y - h + 3, BLD.outline);
-    }
-    drawWoodPlanking(x, y, w, h, 8);
-    strokeRect1(x, y, w, h, BLD.outline);
-    drawRivetedPlate(x + 4, y + 18, w - 8, h - 22);
-    drawSignBoard(x + 4, y + 3, w - 8, 14, '');
-    drawRedStar(x + w - 13, y + 10, 3, 0.1);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.font = 'bold 9.5px ' + UI_FONT;
-    ctx.fillStyle = BLD.woodDeep; ctx.fillText('0' + (lot.index + 1) + '  ' + recipe.name, x + 10, y + 5);
-    ctx.font = '9px ' + UI_FONT;
-    ctx.fillStyle = BLD.metalPale;
-    if (!lot.owned) {
-      ctx.fillText(slimeGardenMaterialsText(recipe, !!near), x + 10, y + 23);
-      ctx.fillStyle = BLD.cream; ctx.fillText(recipe.liquidText, x + 10, y + 37);
-      ctx.fillStyle = BLD.goldPale;
-      ctx.font = 'bold 10px ' + UI_FONT;
-      ctx.fillText((near ? (isMobile ? 'TAP: BUILD ' : 'E: BUILD ') : 'LOT + BATH ') + '$' + recipe.price, x + 10, y + 55);
-    } else {
-      ctx.fillText(recipe.liquidText, x + 10, y + 23);
-      ctx.fillStyle = lot.ready ? BLD.goldPale : BLD.cream;
-      ctx.fillText(lot.ready ? recipe.pearl.toUpperCase() : lot.status, x + 10, y + 37);
-      var progress = Math.min(1, lot.progress / recipe.seconds);
-      ctx.fillStyle = BLD.outline; ctx.fillRect(x + 10, y + 50, w - 38, 3);
-      ctx.fillStyle = lot.ready ? BLD.goldPale : BLD.goldBase;
-      ctx.fillRect(x + 10, y + 50, Math.floor((w - 38) * progress), 3);
-      ctx.fillStyle = lot.ready ? BLD.goldPale : BLD.metalPale;
-      ctx.font = '9px ' + UI_FONT;
-      var footer = lot.ready ? ((isMobile ? 'TAP: ' : 'E: ') + 'COLLECT $' + recipe.value) :
-        (Math.ceil(Math.max(0, recipe.seconds - lot.progress)) + 's / $' + recipe.value + ' PER PEARL');
-      ctx.fillText(footer, x + 10, y + 58);
-      if (lot.ready) slimeGardenDrawPearl(x + w - 17, y + 57, lot.index, 0.8);
-    }
-    if (near) strokeRect1(x - 2, y - 2, w + 4, h + 4, BLD.goldBase);
-  }
-
-  function slimeGardenDraw() {
-    var near = slimeGardenNearest();
+  function bathDrawOrder(g) {
+    var r = bathOrderRect(g), ready = bathCanServe();
     ctx.save();
-    for (var i = 0; i < slimeGardenLots.length; i++) {
-      var lot = slimeGardenLots[i];
-      if (lot.x1 + TILE < cam.x || lot.x0 - TILE > cam.x + screenW || lot.y1 + TILE < cam.y || lot.y0 - 135 > cam.y + screenH) continue;
-      var left = lot.x0 - TILE, outerW = 13 * TILE;
-      if (lot.owned) {
-        slimeGardenDrawMasonry(left, lot.y1, outerW, TILE, i);
-        slimeGardenDrawMasonry(left, lot.y0, TILE, 2 * TILE, i);
-        slimeGardenDrawMasonry(lot.x1, lot.y0, TILE, 2 * TILE, i);
-        // The minimum fill mark is a physical brass inlay inside the wall.
-        var markY = lot.y1 - 2 * TILE * SLIME_GARDEN_MIN_FILL / SLIME_GARDEN_CAPACITY;
-        ctx.fillStyle = BLD.goldPale;
-        ctx.fillRect(lot.x0 - 7, Math.round(markY), 7, 3);
-        ctx.fillRect(lot.x1, Math.round(markY), 7, 3);
-        // Small ruled depth marks make poured volume readable at a glance.
-        ctx.fillStyle = BLD.stonePale;
-        for (var t = 1; t < 5; t++) {
-          ctx.fillRect(lot.x0 - 4, lot.y1 - t * 12, 4, 1);
-          ctx.fillRect(lot.x1, lot.y1 - t * 12, 4, 1);
-        }
-        slimeGardenDrawLadder(lot.x1 - 14, lot.y0 - 4, 2 * TILE + 3);
-        if (lot.ready) {
-          var px = lot.x0 + 36, py = lot.y0 - 9;
-          drawCrate(px - 13, py, 26, 11);
-          slimeGardenDrawPearl(px, py - 5, i, 1.15);
-        }
-      } else {
-        // Survey stakes and a low dashed line designate land before payment.
-        ctx.fillStyle = BLD.woodDark;
-        ctx.fillRect(left + 9, lot.y0 - 18, 4, 20);
-        ctx.fillRect(left + outerW - 13, lot.y0 - 18, 4, 20);
-        ctx.fillStyle = BLD.cream;
-        ctx.fillRect(left + 9, lot.y0 - 17, 4, 3);
-        ctx.fillRect(left + outerW - 13, lot.y0 - 17, 4, 3);
-        ctx.fillStyle = BLD.goldDark;
-        for (var dash = left + 21; dash < left + outerW - 20; dash += 18) ctx.fillRect(dash, lot.y0 - 2, 8, 1);
-      }
-      slimeGardenDrawSign(lot, near === lot);
-    }
+    ctx.fillStyle = BLD.cream; ctx.strokeStyle = BLD.outline; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(r.x + r.w / 2 - 6, r.y + r.h - 1);
+    ctx.lineTo(g.s.x, g.s.y - g.s.r - 5); ctx.lineTo(r.x + r.w / 2 + 6, r.y + r.h - 1);
+    ctx.fill(); ctx.stroke();
+    ctx.fillRect(r.x, r.y, r.w, r.h); ctx.strokeRect(r.x, r.y, r.w, r.h);
+    ctx.translate(r.x, r.y); ctx.scale(r.scale, r.scale);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = BLD.outline; ctx.font = 'bold 13px ' + UI_FONT;
+    ctx.fillText('WARM BATH', 10, 15);
+    ctx.font = '12px ' + UI_FONT;
+    ctx.fillText(bathWater >= BATH_MIN_WATER ? 'Water ready' : 'Needs water', 10, 36);
+    ctx.fillText(bathHeat >= 0.35 ? 'Warm enough' : 'Waiting for heat', 10, 54);
+    ctx.fillStyle = ready ? BLD.goldDark : BLD.woodDark;
+    ctx.fillRect(6, 68, 148, 22);
+    ctx.fillStyle = BLD.cream; ctx.font = 'bold 11px ' + UI_FONT;
+    ctx.textAlign = 'center'; ctx.fillText(ready ? 'SERVE  /  $75' : 'WAITING', 80, 79);
     ctx.restore();
   }
-
-  function slimeGardenHUD() {
-    // The nearby physical sign carries status and the action. No second panel.
-  }
-
-  function slimeGardenSave() {
-    return { version: 1, hinted: slimeGardenHinted, lots: slimeGardenLots.map(function (lot) {
-      return { owned: lot.owned, progress: lot.progress, ready: lot.ready, harvests: lot.harvests };
-    }) };
-  }
-
-  function slimeGardenRestore(saved) {
-    slimeGardenReset();
-    if (!saved || !Array.isArray(saved.lots)) { slimeGardenPrepareWorld(true); return; }
-    slimeGardenHinted = !!saved.hinted;
-    for (var i = 0; i < Math.min(4, saved.lots.length); i++) {
-      var input = saved.lots[i], lot = slimeGardenLots[i];
-      if (!input || !input.owned) continue;
-      lot.owned = true;
-      lot.progress = Math.max(0, Math.min(SLIME_GARDEN_RECIPES[i].seconds, Number(input.progress) || 0));
-      lot.ready = !!input.ready;
-      lot.harvests = Math.max(0, Math.floor(Number(input.harvests) || 0));
-      lot.status = lot.ready ? 'PEARL READY' : 'CHECKING BATH';
+  function bathDrawGuests() {
+    ctx.save();
+    for (var w = 0; w < bathWetFloor.length; w++) {
+      var wet = bathWetFloor[w];
+      ctx.globalAlpha = (1 - wet.t / 1.3) * 0.6; ctx.fillStyle = BLD.metalPale;
+      ctx.fillRect(wet.x - 5 - wet.t * 5, wet.y - 2, 10 + wet.t * 10, 2);
     }
-    // Old envelopes have no garden field and remain untouched. Owned bowls
-    // restore their collision shell; water restore belongs to the liquid save.
-    slimeGardenPrepareWorld(true);
+    ctx.restore();
+    for (var i = 0; i < bathGuests.length; i++) {
+      var g = bathGuests[i];
+      skySlimeDrawBody(g.s);
+      if (g.st === 'soak') {
+        ctx.fillStyle = BLD.woodDeep; ctx.fillRect(g.s.x - 22, g.s.y - g.s.r - 16, 44, 5);
+        ctx.fillStyle = BLD.goldPale; ctx.fillRect(g.s.x - 21, g.s.y - g.s.r - 15, 42 * g.soak / BATH_VISIT.seconds, 3);
+      }
+    }
+    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait') bathDrawOrder(bathGuests[b]);
+    for (var f = 0; f < bathFloats.length; f++) {
+      var p = bathFloats[f];
+      ctx.save(); ctx.globalAlpha = 1 - p.t / 2;
+      ctx.font = 'bold 22px ' + UI_FONT; ctx.textAlign = 'center'; ctx.fillStyle = BLD.goldPale;
+      ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
+    }
+  }
+  function bathDrawServiceHUD() {
+    var w = canvas.width / dpr, h = canvas.height / dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = BLD.woodDeep; ctx.fillRect(0, 0, w, 96);
+    ctx.fillStyle = BLD.cream; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.font = 'bold 14px ' + UI_FONT; ctx.fillText('BATHHOUSE', 14, 18);
+    ctx.font = '12px ' + UI_FONT;
+    ctx.fillText('Tub ' + Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 66, 40);
+    ctx.font = '11px ' + UI_FONT;
+    ctx.fillText('Tank ' + Math.floor(bathWaterCount() / 100) + ' L  /  Coal ' + bathCoalCount(), 66, 59);
+    ctx.fillStyle = BLD.goldPale; ctx.textAlign = 'right';
+    ctx.fillText('$' + bathFmtMoney(money), w - 14, 18);
+    ctx.fillStyle = BLD.cream; ctx.fillText('LEAVE [ESC]', w - 14, 43);
+    ctx.textAlign = 'left';
+    ctx.fillText(bathGuests.length ? 'Tap a bubble when the bath is ready.' : 'Sky slimes will find their way here.', 14, 82);
+    bathServiceButtons = [];
+    var bw = Math.min(190, (w - 38) / 2), by = h - 77;
+    var buttons = [
+      { x: 14, y: by, w: bw, h: 40, action: 'water', label: bathPour > 0 ? 'POURING...' : 'ADD WATER', ready: bathWaterCount() > 0 },
+      { x: w - 14 - bw, y: by, w: bw, h: 40, action: 'fire',
+        label: bathFire > 0 ? 'FIRE ' + Math.ceil(bathFire) + 's' : 'LIGHT / 10 COAL', ready: bathCoalCount() >= BATH_FIRE_COAL }
+    ];
+    ctx.fillStyle = BLD.woodDeep; ctx.fillRect(0, h - (bathNoticeT ? 132 : 89), w, bathNoticeT ? 132 : 89);
+    for (var i = 0; i < buttons.length; i++) {
+      var b = buttons[i];
+      ctx.fillStyle = b.ready ? BLD.woodDark : BLD.stoneDark; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.strokeStyle = BLD.goldDark; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = BLD.cream; ctx.font = 'bold 11px ' + UI_FONT; ctx.textAlign = 'center';
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2);
+      bathServiceButtons.push(b);
+    }
+    ctx.fillStyle = BLD.cream; ctx.textAlign = 'center'; ctx.font = '11px ' + UI_FONT;
+    ctx.fillText('Coal heats the tub. Floor spills drain away.', w / 2, h - 20);
+    if (bathNoticeT) {
+      ctx.fillStyle = BLD.goldPale;
+      var words = bathNotice.split(' '), lines = [], line = '';
+      for (var j = 0; j < words.length; j++) {
+        var next = line ? line + ' ' + words[j] : words[j];
+        if (ctx.measureText(next).width > w - 28 && line) { lines.push(line); line = words[j]; }
+        else line = next;
+      }
+      lines.push(line);
+      for (var l = 0; l < Math.min(2, lines.length); l++) ctx.fillText(lines[l], w / 2, h - 119 + l * 15);
+    }
+  }
+  function bathServicePointer(x, y) {
+    for (var i = 0; i < bathServiceButtons.length; i++) {
+      var b = bathServiceButtons[i];
+      if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
+        if (b.action === 'fire') bathLightStove(); else bathAddWater();
+        return true;
+      }
+    }
+    return false;
+  }
+  function bathServiceSave() {
+    return { version: 2, fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+      floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
+      guests: bathGuests.map(function (g) {
+        return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
+          served: g.served, soak: g.soak, hop: g.hop ? Object.assign({}, g.hop) : null };
+      }) };
+  }
+  function bathServiceRestore(data) {
+    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
+    bathRoomReady = false; banyaX = -1; bathDrainT = 0;
+    bathFloorsOwned = [true, false, false, false, false];
+    bathSupplies = [0, 0, 0, 0, 0];
+    bathFire = 0; bathHeat = 0; bathPour = 0; bathWater = 0; bathLostWater = 0;
+    if (!data) return;
+    bathFire = skySlimeClamp(Number(data.fire) || 0, 0, BATH_FIRE_SECONDS);
+    bathHeat = skySlimeClamp(Number(data.heat) || 0, 0, 1);
+    bathPour = skySlimeClamp(Number(data.pour) || 0, 0, BATH_MAX_WATER);
+    bathLostWater = Math.max(0, Number(data.lost) || 0);
+    bathServed = Math.max(0, Number(data.served) || 0);
+    bathIntroSeen = !!data.introSeen;
+    for (var f = 0; f < 5; f++) {
+      bathFloorsOwned[f] = f === 0 || !!(data.floors && data.floors[f]);
+      bathSupplies[f] = Math.max(0, Math.floor(Number(data.supplies && data.supplies[f]) || 0));
+    }
+    // The carved grid and real water are already in the world/liquid save.
+    // Re-arm the heater on next entry without filling the bath a second time.
+    bathRoomReady = !!data.ready;
+    var list = Array.isArray(data.guests) ? data.guests : [];
+    for (var i = 0; i < Math.min(bathGuestCap, list.length); i++) {
+      var src = list[i], s = skySlimeHydrate(src.s);
+      if (!s || bathGuests.some(function (g) { return g.s.id === s.id; })) continue;
+      var st = ['hop', 'wait', 'plunge', 'soak', 'leave', 'exit'].indexOf(src.st) >= 0 ? src.st : 'wait';
+      var hop = src.hop;
+      if (st === 'hop' && (!hop || !isFinite(hop.x + hop.y + hop.tx + hop.ty + hop.duration + hop.height + hop.t) || hop.duration <= 0)) st = 'wait';
+      var slot = src.slot === 1 ? 1 : 0;
+      if (bathGuests.some(function (guest) { return guest.slot === slot; })) slot = 1 - slot;
+      var g = { s: s, slot: slot, st: st, t: Number(src.t) || 0, paid: !!src.paid,
+        served: !!src.served, soak: skySlimeClamp(Number(src.soak) || 0, 0, BATH_VISIT.seconds),
+        hop: st === 'hop' ? Object.assign({}, hop) : null };
+      if (!g.served && st !== 'wait' && !(st === 'hop' && hop.next === 'wait')) g.st = 'wait';
+      if (g.paid && g.st === 'soak') g.st = 'leave';
+      s.visit = 'inside'; bathGuests.push(g);
+      // Save migrations and interrupted transitions cannot duplicate a visitor.
+      for (var j = skySlimes.length - 1; j >= 0; j--) if (skySlimes[j].id === s.id) skySlimes.splice(j, 1);
+    }
+  }
+
+  function bathRetireGarden(saved) {
+    if (!saved || !Array.isArray(saved.lots)) return;
+    var prices = [180, 650, 1800, 4800], rewards = [260, 900, 2600, 6000];
+    var materials = [[], [['copper', 3]], [['iron', 3], ['amber', 1]], [['amethyst', 2], ['gold', 1]]];
+    for (var i = 0; i < Math.min(4, saved.lots.length); i++) {
+      var lot = saved.lots[i];
+      if (!lot || !lot.owned) continue;
+      money += prices[i] + (lot.ready ? rewards[i] : 0);
+      materials[i].forEach(function (m) { money += (ORES[m[0]].value || 0) * m[1]; });
+      var cL = DECK_LEFT_COL - 16 - i * 15, x0 = (cL - 1) * TILE, x1 = (cL + 12) * TILE;
+      var y0 = SKY_ROWS * TILE, y1 = (SKY_ROWS + 3) * TILE;
+      for (var t = 0; t < 5; t++) bathSupplies[t] += liquidExtractRect(x0, y0, x1, y1, t, 200000);
+      for (var r = SKY_ROWS; r <= SKY_ROWS + 2; r++) for (var c = cL - 1; c <= cL + 11; c++) {
+        if (!world[r] || c < 0 || c >= COLS) continue;
+        if (!world[r][c] || world[r][c].type === 'foundation') world[r][c] = { type: 'dirt', hp: ORES.dirt.hp };
+        delete terrainClearedKinds[r + ':' + c];
+      }
+      for (var s = 0; s < skySlimes.length; s++) {
+        var guest = skySlimes[s];
+        if (guest.x >= x0 - guest.r && guest.x <= x1 + guest.r && guest.y > y0 - guest.r && guest.y < y1) {
+          guest.y = y0 - guest.r - 2; guest.vx = 0; guest.vy = 0;
+        }
+      }
+      if (player.x + PLAYER_W > x0 && player.x < x1 && player.y + PLAYER_H > y0 && player.y < y1) {
+        player.y = y0 - PLAYER_H - 2; player.renderY = player.y;
+      }
+    }
   }
   /* ---- The siphon: separate fluid chambers and one passenger cradle ---- */
   var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0], selected: 0,
@@ -15573,7 +15322,6 @@
     var key = e.key.toLowerCase();
     if (key === 'f') { if (!e.repeat) siphonToggle(); return true; }
     if (key === 'r' && (siphon.equipped || siphonTotal() > 0 || siphon.passenger)) { if (!e.repeat) siphonCycle(); return true; }
-    if (key === 'e' && !e.repeat && slimeGardenInteract()) return true;
     return false;
   }
   function siphonHit(button, x, y) {
@@ -15645,7 +15393,7 @@
         siphon.capture += dt;
         if (siphon.capture > 0.5) {
           var caught = skySlimeCapture(a.x, a.y, 36);
-          if (caught) { siphon.passenger = caught; siphonNotice('Passenger secured. Pour to set it in a bath.'); }
+          if (caught) { siphon.passenger = caught; siphonNotice('Passenger secured. Release it on the surface to visit the bathhouse.'); }
           siphon.capture = 0;
         }
       }
@@ -29565,7 +29313,6 @@
     drawSurfaceFireplace();
     // ---- v25.77 BANYA exterior (072-bath.js): the bathhouse tower + door ----
     if (typeof drawBanyaExterior === 'function') drawBanyaExterior();
-    slimeGardenDraw();
     // v11.46 — Fireplace smoke emission runs every frame regardless of
     // camera position. Combined with the wider smoke fluid domain
     // (overscan 1.6), the chimney keeps emitting into the sim even
@@ -29785,7 +29532,6 @@
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    slimeGardenHUD();
     siphonHUD();
 
     // D-pad (mobile) — single overlay in the bottom-RIGHT corner. Most
@@ -34619,7 +34365,7 @@
     treesByCol = new Int32Array(COLS);
     var lastX = -1e9;
     for (var c = 2; c < COLS - 2; c++) {
-      if (typeof slimeGardenReservedCol === 'function' && slimeGardenReservedCol(c)) continue;
+      if (ENABLE_BATH && c >= DECK_CENTER_COL + 13 && c <= DECK_CENTER_COL + 23) continue;
       var reg = regionAt(c);
       if (!reg || reg.kind === REGION_OCEAN) continue;
       var isZone = reg.kind === REGION_NOMANS;
@@ -35200,7 +34946,7 @@
     surfaceBoulderDensity = treesTune.density;
     var lastX = -1e9;
     for (var c = 3; c < COLS - 3; c++) {
-      if (typeof slimeGardenReservedCol === 'function' && slimeGardenReservedCol(c)) continue;
+      if (ENABLE_BATH && c >= DECK_CENTER_COL + 13 && c <= DECK_CENTER_COL + 23) continue;
       var region = regionAt(c);
       if (!region || region.kind !== REGION_TOWN) continue;
       if (Math.abs(c - townCenterCol(region.townIndex)) < TREES_TOWN_CLEAR - 2) continue;
@@ -64204,7 +63950,7 @@
     best.state.cool = best.hit ? 0.34 : 0.30 + Math.random() * 0.14;
     slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
   }
-  /* ---- Sky slimes: warm clay meteor guests for the surface garden ----
+  /* ---- Sky slimes: warm clay meteor guests for the bathhouse ----
      Bulk motion is a hard elastic circle with swept-size substeps. The
      outline and eye have their own damped springs, so a bounce stays crisp
      without ever feeding render deformation back into collision energy.
@@ -64230,6 +63976,7 @@
       angle: (Math.random() - 0.5) * 0.24, spin: (Math.random() - 0.5) * 1.5,
       squash: 0, squashV: 0, eye: 0.85, eyeV: 0,
       pupilX: 0, pupilY: 0, pupilVX: 0, pupilVY: 0,
+      visit: 'land', visitT: 0, hopIn: 1, wanderDir: Math.random() < 0.5 ? -1 : 1,
       blink: 0, blinkIn: 1.4 + Math.random() * 2.8,
       _trail: [], _trailT: 0, _liquidT: 0, _wetTarget: 0,
       _ground: false, _impactT: 0, _sleepT: 0
@@ -64237,7 +63984,8 @@
   }
 
   function skySlimeSpawn(x, y) {
-    if (skySlimes.length >= SKY_SLIME_MAX) return null;
+    if (skySlimes.length + (typeof bathGuests !== 'undefined' ? bathGuests.length : 0) +
+        (typeof siphon !== 'undefined' && siphon.passenger ? 1 : 0) >= SKY_SLIME_MAX) return null;
     var automatic = !isFinite(x);
     var landX = automatic ? (typeof skySlimeLandingX === 'function' ? skySlimeLandingX() :
       (DECK_LEFT_COL - 18) * TILE) : x;
@@ -64263,9 +64011,9 @@
 
   function skySlimeRecord(s) {
     var out = {};
-    // Garden recipe/progress fields travel with the guest when carried.
+    // Identity and the visit state travel with a carried guest.
     Object.keys(s).forEach(function (key) {
-      if (key.charAt(0) !== '_' && s[key] !== undefined) out[key] = s[key];
+      if (key.charAt(0) !== '_' && key !== 'pearlProgress' && key !== 'gardenLot' && s[key] !== undefined) out[key] = s[key];
     });
     return JSON.parse(JSON.stringify(out));
   }
@@ -64287,6 +64035,8 @@
     s.eyeSize = skySlimeClamp(isFinite(s.eyeSize) ? s.eyeSize : 0.38, 0.32, 0.42);
     s.id = Math.max(1, Math.floor(isFinite(s.id) ? s.id : skySlimeSerial++));
     skySlimeSerial = Math.max(skySlimeSerial, s.id + 1);
+    delete s.pearlProgress; delete s.gardenLot;
+    if (['land', 'wander', 'seek', 'depart', 'inside'].indexOf(s.visit) < 0) s.visit = 'land';
     return s;
   }
 
@@ -64463,15 +64213,71 @@
     s.squash = skySlimeClamp(s.squash + s.squashV * h, -0.13, 0.24);
   }
 
+  function skySlimeLandingX() {
+    if (typeof bathPickSite === 'function' && bathPickSite()) {
+      // Land on the dry approach within sight of the tower. Natural ponds
+      // remain water sources, not construction lots.
+      var door = (banyaDoorX0 + banyaDoorX1) * 0.5;
+      for (var k = 0; k < 16; k++) {
+        var x = door - TILE * (3 + Math.random() * 7);
+        if (tileAt(SKY_ROWS, Math.floor(x / TILE))) return x;
+      }
+      return door - TILE * 2;
+    }
+    return (DECK_LEFT_COL - 5) * TILE;
+  }
+
+  function skySlimeVisitTick(dt) {
+    if (typeof ENABLE_BATH === 'undefined' || !ENABLE_BATH || !bathPickSite()) return;
+    var door = (banyaDoorX0 + banyaDoorX1) * 0.5;
+    for (var i = skySlimes.length - 1; i >= 0; i--) {
+      var s = skySlimes[i];
+      s.visitT += dt; s.hopIn -= dt;
+      if (s.visit === 'land') {
+        if (s.age > 4 && s.entry < 0.05 && (s.settled || s.wet > 0.18)) {
+          s.visit = 'wander'; s.visitT = 0; s.hopIn = 0.6;
+        }
+        continue;
+      }
+      if (s.visit === 'wander' && s.visitT > 7 + s.seed * 6) {
+        s.visit = 'seek'; s.visitT = 0;
+      }
+      if (s.visit === 'depart' && (s.visitT > 14 || Math.abs(s.x - s.departX) > TILE * 9)) {
+        skySlimes.splice(i, 1); continue;
+      }
+      if (s.visit === 'seek' && Math.abs(s.x - door) < 30 &&
+          s.y + s.r > SKY_ROWS * TILE - 20 && s.y < SKY_ROWS * TILE + 18) {
+        if (bathGuestAccept(s)) { skySlimes.splice(i, 1); continue; }
+        // A full room leaves newcomers waiting outside, keeping every
+        // visitor visible and preserving the population cap.
+        s.vx *= Math.exp(-6 * dt);
+        continue;
+      }
+      if (s.hopIn > 0 || (!s._ground && s.wet < 0.18)) continue;
+      var dir = s.visit === 'depart' ? s.departDir : s.visit === 'seek' ? (door > s.x ? 1 : -1) : s.wanderDir;
+      if (s.visit === 'wander') {
+        if (Math.random() < 0.28 || Math.abs(s.x - door) > TILE * 12) s.wanderDir = door > s.x ? 1 : -1;
+        dir = s.wanderDir;
+      }
+      var ahead = tileAt(Math.floor((s.y + s.r - 12) / TILE), Math.floor((s.x + dir * (s.r + 20)) / TILE));
+      s.vx = dir * (s.visit === 'wander' ? 56 : 96);
+      s.vy = ahead ? -235 : s.wet > 0.18 ? -145 : -170;
+      s.squashV = -2; s._ground = false; s.settled = false;
+      s.hopIn = s.wet > 0.18 ? 0.6 : 0.9 + s.seed * 0.35;
+    }
+  }
+
   function skySlimeTick(dt) {
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
     // A deep mining trip never fills the surface with unseen arrivals.
+    var indoor = typeof bathGuests !== 'undefined' ? bathGuests.length : 0;
     var carried = typeof siphon !== 'undefined' && siphon && siphon.passenger ? 1 : 0;
-    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried < SKY_SLIME_MAX) {
+    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried + indoor < SKY_SLIME_MAX) {
       skySlimeNext -= dt;
-      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 66 + Math.random() * 32; }
+      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 28 + Math.random() * 18; }
     }
+    skySlimeVisitTick(dt);
     for (var di = skySlimeDust.length - 1; di >= 0; di--) {
       var dust = skySlimeDust[di]; dust.life -= dt;
       if (dust.life <= 0) { skySlimeDust.splice(di, 1); continue; }
@@ -64569,14 +64375,6 @@
     }
     ctx.globalAlpha = 1;
     ctx.restore();
-    if (s.pearlProgress > 0.02) {
-      var pearlR = 1.2 + Math.min(1, s.pearlProgress) * 3.2;
-      var glow = ctx.createRadialGradient(rx * 0.12, ry * 0.53, 0, rx * 0.12, ry * 0.53, pearlR * 2.6);
-      glow.addColorStop(0, 'rgba(237,224,192,0.55)'); glow.addColorStop(1, 'rgba(237,224,192,0)');
-      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(rx * 0.12, ry * 0.53, pearlR * 2.6, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = SKY_SLIME_RAMP[5]; ctx.globalAlpha = 0.55 + s.pearlProgress * 0.3;
-      ctx.beginPath(); ctx.arc(rx * 0.12, ry * 0.53, pearlR, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    }
     skySlimePath(s, rx, ry); ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.15; ctx.stroke();
     if (s.entry > 0.08) {
       ctx.globalAlpha = s.entry * 0.48;
@@ -65315,9 +65113,9 @@
     liquidToolSync();
     mineralLiquidTick(dt);
     siphonTick(dt);
-    if (!gameOver && !gameWon && !bathMode) { skySlimeTick(dt); slimeGardenTick(dt); }
+    if (!gameOver && !gameWon) { skySlimeTick(dt); bathGuestTick(dt); }
     siphonAudioTick(dt);
-    perfMark('update.garden', _ts);
+    perfMark('update.bathhouse', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
     _ts = performance.now(); updateParticleRain(dt);       perfMark('update.rain', _ts);

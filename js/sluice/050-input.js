@@ -342,7 +342,6 @@
     }
 
     // Equipment buttons and buildings keep priority over world aiming.
-    if (!isInDpadZone(x, y) && slimeGardenPointer(x, y)) { touch.active = false; return; }
     if (siphonPointerDown(x, y, id, right)) { touch.active = false; return; }
 
     // Anything else inside the d-pad zone becomes a d-pad touch. We

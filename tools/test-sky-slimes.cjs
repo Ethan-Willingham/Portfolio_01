@@ -24,14 +24,14 @@ for (const fps of [30,60,144]) {
  assert(impacts.length>=5,`fps ${fps} bounce count ${impacts.length}`);
  for(let i=1;i<impacts.length;i++)assert(impacts[i].outgoing<impacts[i-1].outgoing,'decay');
  assert(maxBelow<.02,'tunnel');assert(s.settled,'settled');assert(Math.abs(s.vy)<3,'rest speed');
- s.pearlProgress=.43;s.gardenLot=2;
+ s.visit='wander';s.visitT=2.5;
  const save=JSON.parse(JSON.stringify(w.skySlimeSave()));w.skySlimeReset();w.skySlimeRestore(save);
- assert.equal(w.skySlimes.length,1);assert.equal(w.skySlimes[0].pearlProgress,.43);
- const body=w.skySlimes[0];assert.equal(body.gardenLot,2);
+ assert.equal(w.skySlimes.length,1);assert.equal(w.skySlimes[0].visit,'wander');
+ const body=w.skySlimes[0];assert.equal(body.visitT,2.5);
  const grabbed=w.skySlimeCapture(body.x,body.y,50);assert(grabbed);assert.equal(w.skySlimes.length,0);
  const released=w.skySlimeRelease(grabbed,4200,110,0,-100);assert(released);assert(released.y+released.r<128);
  for(let n=0;n<fps*10;n++)w.skySlimeTick(1/fps);
- assert(released.settled);assert.equal(released.pearlProgress,.43);
+ assert(released.settled);assert.equal(released.visit,'wander');
  reports.push({fps,bounces:impacts.length,outgoing:impacts.map(x=>Math.round(x.outgoing)),restY:Math.round(s.y*100)/100,r:Math.round(s.r*100)/100,maxBelow});
 }
 const w=world();w.skySlimeSpawn(3000,-100);assert.equal(w.skySlimeCapture(3000,-100,100),null);

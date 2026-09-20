@@ -19,22 +19,24 @@ Dig down through one town, collect ore, fly up to the surface station to sell + 
 the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and a ~1.5 hr
 normal playthrough (see `BALANCE.md`).
 
-**Surface garden (v28.0):** clay sky slimes arrive like meteors and bounce to rest.
-Four lots west of town become 11-wide, 2-deep stone, copper, iron, and crystal baths.
-Buy land with cash and bring the later baths' construction ores in cargo. The free
-scoop (`F`) collects real liquid beneath and beside the rig as you drive or fly.
-There is no held tool or aiming reticle. Hold right mouse to pour straight down;
-release stops pouring without collecting the same water again. `R` selects a
-fluid chamber. The scoop also carries one cooled slime. Touch players tap SCOOP
-to collect continuously or POUR to dispense; tap the lit button to stop.
-`E` or a sign tap builds/collects.
+**Bathhouse visitors (v28.5):** clay sky slimes fall like meteors, bounce, meander
+on the surface, then find the bathhouse. It is enabled by default. Two guests
+can wait inside with warm-bath bubbles. Fill the first tub with water from the
+rig's tank, and spend **10 coal to light the shared stove**. The fire heats the
+real water. Tap a ready bubble (or E) to admit a visitor; after a warm soak it
+pays and leaves. The same guest is visible on the surface again as it departs.
 
-Fill a bath and add a slime to grow a pearl. Water starts the loop; shallow brine,
-nectar below the heated-drill gate, and deep lumen unlock richer recipes. Each pearl
-incorporates actual liquid, and one finished pearl waits per lot. Purchased baths,
-residents, tank contents, progress, and poured liquids persist. Offscreen liquid is
-parked to preserve the shared particle budget. This is independent of the optional
-indoor banya and the disabled underground slime brains. See `SLIME_GARDEN.md`.
+Coal and water operate the whole bath. There are **no per-guest ingredient
+recipes yet**; the owner has not chosen those. Guests splash actual water out
+of the tub. Water that reaches the bathhouse floor is permanently absorbed,
+including offscreen spills, so the tub needs topping up. Surface construction
+lots and pearl production were removed. Existing purchases are refunded,
+ready pearls paid out, and recovered lot water stored at the bathhouse.
+The scoop, mineral liquids, sky arrivals, and underground slime settings remain.
+The free scoop (`F`) collects below the rig while driving or flying. Hold right
+mouse to pour; `R` selects a chamber. Touch players tap SCOOP or POUR and tap
+the lit button to stop. Alt+Enter toggles fullscreen. See
+`BATHHOUSE_SERVICE.md` for bathhouse controls, persistence, and current tuning.
 
 ---
 
@@ -80,6 +82,7 @@ before everything, and each flag is URL-overridable for a no-build spot-check.
 | No Man's Zone courses | `ENABLE_NMZ` | off | `?nmz=1` |
 | Cross-town Trade Board | `ENABLE_TRADE_BOARD` | off | `?board=1` |
 | Jello / slime soft bodies | `ENABLE_JELLO` | **on** (v25.59) | `?jello=0` boots without slimes |
+| Bathhouse visitors | `ENABLE_BATH` | **on** | `?bath=0`; Options > Banya |
 | Underground oil + pump | `ENABLE_OIL` | off | `?oil=1` |
 | Ore refinement catalog | `ENABLE_REFINEMENT` | off | `?refine=1` |
 
@@ -118,7 +121,7 @@ quantities, unit prices, and haul value while the mine is paused).
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
 | `071-liquid-catalog.js` | fluid identities, conserved transfer, samples, and sky-slime liquid boundaries |
 | `073-liquid-deposits.js` | finite mineral pockets, offscreen liquid storage, and liquid persistence |
-| `074-slime-garden.js` | four surface lots, construction, recipes, and pearl rewards |
+| `074-bath-service.js` | visitor queue, shared stove, water supply, floor drain, payments, and migration |
 | `075-liquid-tool.js` / `076-siphon-audio.js` | aimed siphon, fluid chambers, one passenger, touch controls, and sound |
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |

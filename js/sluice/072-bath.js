@@ -1,5 +1,6 @@
   /* ==== BANYA (v25.77): the other half of the game, first stone ==========
-     Flag-gated (ENABLE_BATH, ?bath=1). Plan: docs/game/BATHHOUSE_PLAN.md
+     Enabled by default (ENABLE_BATH, ?bath=0 disables). Live service rules:
+     docs/game/BATHHOUSE_SERVICE.md; 074-bath-service.js owns the visitors.
      (section 0 pivot, B-D11, stages B6/B8). This fragment owns BOTH halves
      of the B6 slice:
 
@@ -133,7 +134,7 @@
       }
     };
   }
-  var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
+  var bathFloorsOwned = [true, false, false, false, false];   // persisted with the bathhouse
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
   var BATH_BOT_ROW = 613;                       // F1 floor slab row
@@ -142,8 +143,9 @@
   var BATH_EXIT_Y0 = 606 * TILE, BATH_EXIT_Y1 = 610 * TILE;
 
   var bathMode = false;        // true while inside the scene
-  var bathRoomReady = false;   // room carved + water spawned + heat armed
+  var bathRoomReady = false;   // room carved; fill and heat are supplied by the player
   var bathDoorT = 0;           // door-open progress 0..1 (shopDoorT pattern)
+  var bathTransitionSerial = 0;
   var bathFading = false;      // transition lock
   var bathFadeEl = null;       // DOM fade overlay
   var bathPromptT = 0;         // pulse clock for the door hint
@@ -271,42 +273,19 @@
   // Fill a floor's tubs with water (on unlock). fill mode 2 also arms the
   // ONE B1 heat rect there (the crown pool) and turns the channel on.
   function bathFillFloor(f) {
-    var F = BATH_FLOORS[f];
-    for (var i = 0; i < F.tubs.length; i++) {
-      if (!F.fill[i]) continue;
-      var tb = F.tubs[i];
-      var wy0 = (F.fr - F.lip) * TILE + 10, wy1 = (F.fr + F.sink + 1) * TILE - 3;
-      for (var wy = wy0; wy < wy1; wy += 1.3) {
-        for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.3) {
-          if (world[(wy / TILE) | 0][(wx / TILE) | 0]) continue;   // bowl body
-          addLiquidParticle('water', wx, wy, 0, 0, 0);
-        }
-      }
-      if (F.fill[i] === 2) {
-        // v25.96 THE WIDE BURNER. The v25.95 narrow vent was a momentum
-        // cannon: a continuous Old Faithful that piled a standing mound.
-        // A gas stove under the copper bowl heats a WIDE band hugging the
-        // bowl's belly instead, so heat enters as a broad rolling simmer.
-        // The source band crosses the catenary, which trims it to the
-        // water that actually touches the heated bottom. Cooling is the
-        // other half of the loop: strong enough that risen water sheds
-        // its heat in one circuit, so the tub never saturates uniformly
-        // hot and the boil stays alive forever.
-        var ventCx = ((tb[0] + tb[1] + 1) / 2) * TILE;
-        var vcrv = bathTubCurve(F, tb);
-        var ventBy = vcrv.y0 + vcrv.depthAt(ventCx);
-        bathTune('BATH_SRC_X0', ventCx - 68);
-        bathTune('BATH_SRC_Y0', ventBy - 30);
-        bathTune('BATH_SRC_X1', ventCx + 68);
-        bathTune('BATH_SRC_Y1', ventBy + 12);
-        bathTune('BATH_SRC_T', 1.55);
-        bathTune('BATH_SRC_RATE', 0.05);
-        bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 240);
-        bathTune('BATH_COOL', 0.28);
-        bathHotTub = { F: F, tb: tb, ventX: ventCx, ventHalf: 68 };
-      }
-    }
+    // Newly opened tubs are dry. Only water brought in the rig fills them.
+    if (f === 0) bathArmHeat();
+  }
+
+  function bathArmHeat() {
+    var F = BATH_FLOORS[0], tb = F.tubs[0];
+    var curve = bathTubCurve(F, tb);
+    var cx = (curve.x0 + curve.x1) / 2, by = curve.y0 + curve.depthAt(cx);
+    bathTune('BATH_SRC_X0', cx - 68); bathTune('BATH_SRC_X1', cx + 68);
+    bathTune('BATH_SRC_Y0', by - 30); bathTune('BATH_SRC_Y1', by + 12);
+    bathTune('BATH_SRC_T', Math.max(0, bathHeat) * 1.55); bathTune('BATH_SRC_RATE', bathFire > 0 ? 0.05 : 0);
+    bathTune('BATH_ON', bathHeat > 0.01 && bathWater > 0 ? 1 : 0); bathTune('BATH_BUOY', 240); bathTune('BATH_COOL', 0.28);
+    bathHotTub = { F: F, tb: tb, ventX: cx, ventHalf: 68 };
   }
 
   // Purchase-button rect for a locked floor (world px). One source of truth
@@ -330,7 +309,8 @@
     }
     money -= F.price;
     bathFloorsOwned[f] = true;
-    bathFillFloor(f);
+    if (bathRoomReady) bathFillFloor(f);
+    saveNow('bath-floor');
     try { console.log('[bath] floor ' + (f + 1) + ' purchased for $' + F.price); } catch (e) {}
     return true;
   }
@@ -356,11 +336,14 @@
     // Stale world smoke is dropped by clearAllSmokeVisuals() on enter.
   }
   function bathSwap(toInside) {
-    if (bathFading || !ENABLE_BATH) return;
+    if (bathFading || (toInside && !ENABLE_BATH)) return;
     bathFading = true;
+    var ticket = ++bathTransitionSerial;
     var el = bathFadeEnsure();
     el.style.opacity = '1';
     setTimeout(function () {
+      if (ticket !== bathTransitionSerial) return;
+      if (toInside && !ENABLE_BATH) toInside = false;
       if (toInside) {
         bathCarveRoom();
         bathScrollT = 1e9;   // enter at the BOTTOM floor
@@ -368,11 +351,12 @@
         bathMode = true;
         bathDoorT = 1;       // step back out through an open door
         // Steam era (v25.85): drop the world's stale smoke, retune the
-        // fluid for steam, and book the first guest's arrival.
+        // fluid for steam. Existing sky visitors keep their service states.
         try { if (typeof clearAllSmokeVisuals === 'function') clearAllSmokeVisuals(); } catch (e2) {}
         bathSteamPush();
         bathScalePush();
-        if (!bathGuests.length) bathGuestTimer = 1.6;
+        bathArmHeat();
+        siphonStop();
       } else {
         bathMode = false;
         bathScalePop();
@@ -381,7 +365,7 @@
       }
       bathLayerVis(toInside);
       el.style.opacity = '0';
-      setTimeout(function () { bathFading = false; }, 240);
+      setTimeout(function () { if (ticket === bathTransitionSerial) bathFading = false; }, 240);
     }, 240);
   }
   function bathEnter() { if (!bathMode) bathSwap(true); }
@@ -398,7 +382,7 @@
   // ---- Hook 1: update() top (080). Returns true while the scene owns the
   // frame (world logic freezes; liquids/smoke tick from the loop). ---------
   function bathFrame(dt) {
-    if (!ENABLE_BATH) return false;
+    if (!ENABLE_BATH && !bathMode) return false;
     bathPromptT += dt;
     if (!bathMode) {
       if (!bathPickSite()) return false;
@@ -427,7 +411,12 @@
     }
     if (keys['Escape']) { keys['Escape'] = false; bathExit(); }
     bathSteamTick(dt);
-    bathGuestTick(dt);
+    if (keys['e'] || keys['E'] || keys['Enter']) {
+      keys['e'] = false; keys['E'] = false; keys['Enter'] = false;
+      for (var gi = 0; gi < bathGuests.length; gi++) {
+        if (bathGuests[gi].st === 'wait') { bathServe(bathGuests[gi].s.id); break; }
+      }
+    }
     return true;
   }
 
@@ -438,12 +427,9 @@
      HOT tub (fill mode 2) and left to pool under the rafters. Values are
      scaled from the live smokeTune fields and restored exactly on exit, so
      the world's smoke look is untouched whatever its tuning.
-     GUEST: one slime customer (a real ENABLE_JELLO soft body, dissolve-
-     immune via b.guest) spawns by the elevator, hops to tub 1, plunges in
-     with a real splash of spawned droplets, and SOAKS: one-way buoyancy
-     against the analytic waterline (b.bathBuoy, applied in jelloIntegrate;
-     the water is never force-coupled back, plan B-D5). The waterline is
-     analytic for now; the hose era reads the live level instead.
+     GUESTS: the clay sky visitors are shared with the surface. Service,
+     hop paths, buoyancy, fluid colliders, and permanent splash loss live
+     in 074-bath-service.js. No independent indoor guest spawner remains.
      ======================================================================= */
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteamSaved = null;
@@ -589,6 +575,7 @@
     return w < 0.12 ? 0.12 : (w > 1 ? 1 : w);
   }
   function bathSteamTick(dt) {
+    if (bathHeat < 0.35 || bathWater < 500) return;
     bathDbg.steamCalls++;
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
@@ -699,60 +686,6 @@
     }
   }
 
-  var bathGuests = [];
-  var bathGuestTimer = -1;
-  var bathGuestCap = 2;
-  var bathFloats = [];        // rising "+$" payment texts {x, y, t, s}
-  function bathDespawnGuest(gi) {
-    var g = bathGuests[gi];
-    if (g && g.b) {
-      var di = jelloBodies.indexOf(g.b);
-      if (di >= 0) jelloBodies.splice(di, 1);
-      if (typeof jelloTotalPoints === 'function') jelloCount = jelloTotalPoints();
-    }
-    bathGuests.splice(gi, 1);
-  }
-  function bathImpulse(b, ivx, ivy) {
-    // Verlet velocity add: v = (p - o) / h, so o -= dv * h. The true-scale
-    // stretch rides here (x 1/sqrt(k) while inside): same arcs, giant
-    // timing, one multiply for every hop, plunge, bob and leap.
-    var sv = bathScaleV();
-    var dvx = ivx * sv, dvy = ivy * sv;
-    var n = b.n;
-    for (var i = 0; i < n; i++) { b.ox[i] -= dvx * JELLO_H; b.oy[i] -= dvy * JELLO_H; }
-    b.sleeping = false; b.sleepFrames = 0;
-  }
-  function bathSpawnGuest() {
-    if (!ENABLE_JELLO || typeof jelloBuildBody !== 'function' || !bathRoomReady) return null;
-    var F = BATH_FLOORS[0];
-    var b = jelloBuildBody([{ r: F.fr - 1, c: 28 }], 'slime');
-    if (!b) return null;
-    b.guest = true;
-    b.sleeping = false; b.sleepFrames = 0;
-    var tb = F.tubs[0];
-    bathGuests.push({
-      b: b, st: 'walk', t: 0, cd: 0.7,
-      cx: ((tb[0] + tb[1] + 1) / 2) * TILE,
-      x0: tb[0] * TILE + 6, x1: (tb[1] + 1) * TILE - 6,
-      line: (F.fr - F.lip) * TILE + 12,
-      fy: F.fr * TILE, px: 0, py: 0, stall: 0,
-      soakT: 14 + Math.random() * 18,
-      homeX: 28 * TILE + 16
-    });
-    try { console.log('[bath] a guest arrives (guest slimes never dissolve).'); } catch (e) {}
-    return b;
-  }
-  // v26.04 THE SIMULATED SPLASH. The v26.03 choreographed impulse was
-  // owner-rejected ("go to the fundamentals"): guests are now MOVING
-  // BOUNDARIES in the fluid sim itself. Each scene frame this registry
-  // carries every live guest body (center, half-extents, velocity) to
-  // the grid-update kernel through getGameState -> GameParams, where the
-  // rig-silhouette law applies: a moving body plows a speed-scaled eject
-  // blended toward its motion direction, a still body pins its cells
-  // rigid. The crown, the cavity, the exit drag-out and every ripple of
-  // a bob EMERGE from the solver; nothing is authored. (Water still
-  // never pushes the slime back: B-D5 one-way, in the correct direction.)
-  var bathGuestColliders = [];
   // The fog reacts to a plunge with a white poof and a momentum shove
   // that parts the blanket (guests are not smoke obstacles, so the steam
   // layer cannot see the body on its own).
@@ -770,152 +703,6 @@
         0.05 * k, 0.024);
     }
   }
-  function bathGuestTick(dt) {
-    if (bathGuestTimer > 0) {
-      bathGuestTimer -= dt;
-      if (bathGuestTimer <= 0 && bathGuests.length < bathGuestCap) {
-        bathSpawnGuest();
-        bathGuestTimer = 9 + Math.random() * 9;   // the queue keeps coming
-      } else if (bathGuestTimer <= 0) {
-        bathGuestTimer = 4;
-      }
-    }
-    for (var fi2 = bathFloats.length - 1; fi2 >= 0; fi2--) {
-      bathFloats[fi2].t += dt;
-      if (bathFloats[fi2].t > 1.3) bathFloats.splice(fi2, 1);
-    }
-    bathGuestColliders.length = 0;
-    for (var i = 0; i < bathGuests.length; i++) {
-      var g = bathGuests[i], b = g.b;
-      if (!b || b._melting) continue;
-      g.t += dt; g.cd -= dt;
-      // v26.05: register this body's EXACT deforming silhouette as a
-      // moving fluid boundary for the frame: the ordered jello boundary
-      // ring resampled to <= 20 vertices, each carrying its own Verlet
-      // velocity ((p - o) / h), so the kernels feel the true shape and
-      // the true local motion of every face, every frame.
-      if (bathGuestColliders.length < 3 && b.ringN >= 3 && b.ring) {
-        var rn = b.ringN | 0;
-        var take = rn < 20 ? rn : 20;
-        var ih = 1 / ((typeof jelloStepH === 'number' && jelloStepH > 0)
-                      ? jelloStepH : (1 / 240));
-        var pts = new Array(take * 4);
-        for (var rk2 = 0; rk2 < take; rk2++) {
-          var ri = b.ring[((rk2 * rn) / take) | 0];
-          var pvx = (b.px[ri] - b.ox[ri]) * ih;
-          var pvy = (b.py[ri] - b.oy[ri]) * ih;
-          if (pvx > 1200) pvx = 1200; else if (pvx < -1200) pvx = -1200;
-          if (pvy > 1200) pvy = 1200; else if (pvy < -1200) pvy = -1200;
-          pts[rk2 * 4]     = b.px[ri];
-          pts[rk2 * 4 + 1] = b.py[ri];
-          pts[rk2 * 4 + 2] = pvx;
-          pts[rk2 * 4 + 3] = pvy;
-        }
-        var ghw = (b.bboxR - b.bboxL) / 2 + 3;
-        var ghh = (b.bboxB - b.bboxT) / 2 + 3;
-        bathGuestColliders.push({
-          x: (b.bboxL + b.bboxR) / 2, y: (b.bboxT + b.bboxB) / 2,
-          hw: ghw < 8 ? 8 : (ghw > 34 ? 34 : ghw),
-          hh: ghh < 8 ? 8 : (ghh > 34 ? 34 : ghh),
-          pts: pts
-        });
-      }
-      // "Standing" is POSITIONAL, never velocity: a wedged body churns
-      // with high phantom solver velocity while pinned (deadlocked the old
-      // velocity gate). Two ways to count as standing: bottom near the
-      // slab, OR simply STALLED anywhere (friction-pinned on a tub wall
-      // face was the second deadlock): no positional progress for half a
-      // second means hop again, wherever you are.
-      // The brain's clock stretches with the true scale (v26.06): slowed
-      // arcs move fewer px per frame and hang longer, so the stall gate
-      // and every recovery window scale by sqrt(k) or they would misread
-      // a giant's glide as a wedge and spam hops.
-      var rt = bathScaleSaved ? Math.sqrt(bathScaleK) : 1;
-      var mvd = Math.abs(b.cx - g.px) + Math.abs(b.cy - g.py);
-      g.px = b.cx; g.py = b.cy;
-      if (mvd < 1.6 / rt) g.stall += dt; else g.stall = 0;
-      var standing = (b.bboxB >= g.fy - 14 && b.bboxB <= g.fy + 6) || g.stall > 0.5 * rt;
-      // Landed in ANY tub's water, whatever state the brain thought it was
-      // in: start soaking (walkers can trip into a bath; that is a feature).
-      if (g.st !== 'soak' && b.cy > g.line - 26) {
-        var HF0 = BATH_FLOORS[0];
-        for (var ti0 = 0; ti0 < HF0.tubs.length; ti0++) {
-          var ts0 = HF0.tubs[ti0];
-          var wx0 = ts0[0] * TILE + 6, wx1 = (ts0[1] + 1) * TILE - 6;
-          if (b.cx > wx0 && b.cx < wx1) {
-            g.st = 'soak'; g.cd = 1.2 * rt;
-            b.bathBuoy = { line: g.line + 10, x0: wx0, x1: wx1, lift: 2.1, drag: 0.965 };
-            // The splash itself is the collider's job (v26.04); the fog
-            // just puffs aside.
-            bathSplashPoof(b.cx, g.line, 0.6);
-            break;
-          }
-        }
-      }
-      if (g.st === 'walk') {
-        if (g.cd <= 0 && standing) {
-          var dx = g.cx - b.cx;
-          if (Math.abs(dx) < 130) {
-            bathImpulse(b, dx > 0 ? 150 : -150, -325);
-            g.st = 'plunge'; g.cd = 1.1 * rt;
-          } else {
-            bathImpulse(b, dx > 0 ? 120 : -120, -215);
-            g.cd = 0.85 * rt;
-          }
-        }
-      } else if (g.st === 'plunge') {
-        // Any tub on the home floor counts: guests pick whichever they
-        // land in (the overshoot into tub 2 was too charming to forbid).
-        var landed = null;
-        var HF = BATH_FLOORS[0];
-        for (var ti = 0; ti < HF.tubs.length; ti++) {
-          var tspan = HF.tubs[ti];
-          var lx0 = tspan[0] * TILE + 6, lx1 = (tspan[1] + 1) * TILE - 6;
-          if (b.cx > lx0 && b.cx < lx1 && b.cy > g.line - 26) { landed = { x0: lx0, x1: lx1 }; break; }
-        }
-        if (landed) {
-          g.st = 'soak';
-          b.bathBuoy = { line: g.line + 6, x0: landed.x0, x1: landed.x1, lift: 1.75, drag: 0.965 };
-          // The cannonball crown is the collider's job now (v26.04): the
-          // falling body plows the pool itself. The fog parts off it.
-          bathSplashPoof(b.cx, g.line, 0.8);
-        } else {
-          // Assisted climb: a small steady up-and-over push while airborne,
-          // so the rim is a scramble, not a brick wall.
-          bathImpulse(b, (g.cx > b.cx ? 250 : -250) * dt, -420 * dt);
-          if (g.cd <= 0) { g.st = 'walk'; g.cd = 0.3 * rt; }   // recover, retry
-        }
-      } else if (g.st === 'soak') {
-        g.soakT -= dt;
-        if (g.soakT <= 0) {
-          // Done: LEAP out toward home (the physics moment the owner asked
-          // for), then waddle to the elevator and pay on the way out. The
-          // rising body is a fast collider, so the drag-out column and
-          // the sheet-back are the solver's (v26.04).
-          b.bathBuoy = null;
-          bathImpulse(b, b.cx > g.homeX ? -200 : 200, -430);
-          bathSplashPoof(b.cx, g.line, 0.5);
-          g.st = 'leave'; g.cd = 1.0 * rt;
-        } else if (g.cd <= 0) {
-          bathImpulse(b, 0, -26);   // a contented bob
-          g.cd = (2.6 + Math.random() * 2.2) * rt;
-        }
-      } else if (g.st === 'leave') {
-        if (g.cd <= 0 && standing) {
-          var dxh = g.homeX - b.cx;
-          if (Math.abs(dxh) < 34) {
-            if (typeof money === 'number') money += 25;
-            bathFloats.push({ x: b.cx, y: b.cy - 40, t: 0, s: '+$25' });
-            bathDespawnGuest(i); i--;
-            continue;
-          }
-          bathImpulse(b, dxh > 0 ? 120 : -120, -215);
-          g.cd = 0.85;
-        }
-      }
-    }
-  }
-
   // ---- Hook 2: updateCamera() top (080). The scene OWNS the zoom: fit the
   // tower WIDTH to the canvas (any window, any dpr) and scroll VERTICALLY
   // through the floors (wheel / drag / touch feed bathScrollT). Overriding
@@ -946,7 +733,7 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH;
+    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH + 96 / worldScale;
     if (maxY < minY) maxY = minY;
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
@@ -1012,6 +799,11 @@
     if (bathPtrMoved >= 10) return;   // it was a drag, not a tap
     var p = bathClientToWorld(e);
     if (!p) return;
+    var rct = canvas.getBoundingClientRect();
+    var cssX = (e.clientX - rct.left) * (canvas.width / dpr / rct.width);
+    var cssY = (e.clientY - rct.top) * (canvas.height / dpr / rct.height);
+    if (cssY < 74 && cssX > canvas.width / dpr - 144) { bathExit(); return; }
+    if (gamePaused || bathServicePointer(cssX, cssY) || bathOrderPointer(p.x, p.y)) return;
     // Purchase buttons on locked floors take priority over the exit door.
     for (var bf = 1; bf <= 4; bf++) {
       if (bathFloorsOwned[bf]) continue;
@@ -1650,7 +1442,7 @@
             uiFg.fillStyle = '#565b63';
             uiFg.fillRect(vcx - bw, barY, bw * 2, 2);
             var ni = 0;
-            for (var nx = vcx - bw + 5; nx <= vcx + bw - 5; nx += 6) {
+            for (var nx = vcx - bw + 5; bathFire > 0 && nx <= vcx + bw - 5; nx += 6) {
               var capY = crv2.y0 + crv2.depthAt(nx) + 3;
               var hMax = barY - capY;
               if (hMax < 6) hMax = 6;
@@ -1676,7 +1468,7 @@
             }
             uiFg.stroke();
             uiFg.strokeStyle = 'rgba(255,150,60,' +
-              (0.16 + 0.10 * Math.sin(ft * 3.1)).toFixed(3) + ')';
+              (bathHeat * (0.16 + 0.10 * Math.sin(ft * 3.1))).toFixed(3) + ')';
             uiFg.lineWidth = 7;
             uiFg.beginPath();
             uiFg.moveTo(vcx - bw, crv2.y0 + crv2.depthAt(vcx - bw) + 1);
@@ -1691,17 +1483,6 @@
         }
       }
     }
-    // Payment floats: little "+$25" thanks rising off departing guests.
-    for (var pf = 0; pf < bathFloats.length; pf++) {
-      var FF = bathFloats[pf];
-      ctx.fillStyle = 'rgba(232,181,58,' + (1 - FF.t / 1.3).toFixed(3) + ')';
-      ctx.font = 'bold 15px "Commit Mono", monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(FF.s, FF.x, FF.y - FF.t * 26);
-    }
-    // The guests (jello renders on the main canvas; the world render that
-    // normally draws them is skipped in bathMode, so the scene calls it).
-    if (ENABLE_JELLO && typeof drawJelloBlobs === 'function') drawJelloBlobs();
     // Exit door + «ВЫХОД».
     ctx.fillStyle = '#0c0906';
     ctx.fillRect(BATH_EXIT_X0, BATH_EXIT_Y0, BATH_EXIT_X1 - BATH_EXIT_X0, BATH_EXIT_Y1 - BATH_EXIT_Y0);
@@ -1717,22 +1498,18 @@
     // path this scene skips, so the scene drives it too (found the hard
     // way: dye was injected and stepped but never painted).
     if (typeof drawSmoke === 'function') drawSmoke();
-    // Screen-space caption.
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = 'rgba(224,176,96,0.75)';
-    ctx.font = '13px "Commit Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('scroll or drag to climb the tower · tap ВЫХОД (or ESC) to leave', canvas.width / 2, canvas.height - 26);
-    // Wallet, top right, so buying a floor has visible consequence.
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(240,223,174,0.9)';
-    ctx.font = 'bold 14px "Commit Mono", monospace';
-    ctx.fillText('$' + bathFmtMoney(typeof money === 'number' ? money : 0), canvas.width - 16, 30);
-    ctx.textAlign = 'left';
+    var bathDrawContext = ctx;
+    try {
+      if (uiFg) ctx = uiFg;
+      ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
+      bathDrawGuests();
+      bathDrawServiceHUD();
+    } finally { ctx = bathDrawContext; }
     return true;
   }
 
-  if (ENABLE_BATH) {
+  {
+    // Install listeners even when a saved option starts the bathhouse off.
     window.bathTune = bathTune;
     window.__bath = { tune: bathTune, enter: bathEnter, exit: bathExit,
                       floor: bathScrollToFloor,
@@ -1740,7 +1517,9 @@
                       guest: function () { return !!bathSpawnGuest(); },
                       scale: bathScaleSet,
                       steamTune: bathSteam,
-                      dbg: function () { var g = bathGuests[0]; return JSON.stringify({ steam: bathDbg, uv: (typeof smokeFluidWorldToUV === 'function' ? smokeFluidWorldToUV(1100, 19560) : null), camY: Math.round(cam.y), guests: bathGuests.length, bodies: (typeof jelloBodies !== 'undefined' ? jelloBodies.length : -1), g: g ? { st: g.st, cx: Math.round(g.b.cx || -1), cy: Math.round(g.b.cy || -1), bb: [Math.round(g.b.bboxL), Math.round(g.b.bboxT), Math.round(g.b.bboxR), Math.round(g.b.bboxB)], vy: Math.round(g.b.vy || 0), slp: !!g.b.sleeping, tgt: Math.round(g.cx) } : null, solid: (function () { var out = []; for (var cc = 28; cc <= 33; cc++) { var t612 = world[612][cc], t613 = world[613][cc]; out.push(cc + ':' + (t612 ? t612.type[0] : '.') + (t613 ? t613.type[0] : '.')); } out.push('jws@' + (g ? Math.round(g.b.cx) : 0) + ',' + (g ? Math.round(g.b.bboxB + 4) : 0) + '=' + (g && typeof jelloWorldSolidAt === 'function' ? jelloWorldSolidAt(g.b.cx, g.b.bboxB + 4) : '?')); return out.join(' '); })() }); },
+                      dbg: function () { return { guests: bathGuests.map(function (g) {
+                        return { id: g.s.id, state: g.st, soak: g.soak, paid: g.paid };
+                      }), served: bathServed, water: bathWaterCount(), coal: bathCoalCount() }; },
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
                       warp: bathWarp,
                       get mode() { return bathMode; },
