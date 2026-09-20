@@ -1,116 +1,177 @@
-/* Portable exhaust recipes. No DOM, game state, randomness, or solver ownership.
- * sample() returns two source-local splats at a fixed 30 Hz. x/vx are lateral;
- * y/vy point out of the nozzle. The host rotates them into its smoke field.
- * Colors are dye concentrations, not display RGB. See docs/SMOKE_PRESETS.md. */
+/* Exhaust collection 2. The two exported recipes use the exact v1 sampler.
+ * New looks combine balanced fluid sources with a portable shape renderer.
+ * This file owns data and deterministic injection only. No DOM or game state. */
 (function (root) {
   'use strict';
-  var recipes = [];
-  function add(id, name, family, description, colors, fluid, source) {
-    recipes.push({ id: id, name: name, family: family, description: description,
-      colors: colors,
-      fluid: Object.assign({ CURL: 14, DENSITY_DISSIPATION: 0.24,
-        VELOCITY_DISSIPATION: 0.08, wind_x: 0, wind_above_y: 0 }, fluid),
-      source: Object.assign({ radius: 1, density: 1, lift: 1, sway: 1,
-        spread: 2, frequency: 1, pulse: 0, pulseHz: 1, sharpness: 2,
-        split: 0, fan: 0, colorRate: 0, colorOffset: 0.55, core: 0.28,
-        idleHold: 20 }, source)
+  var recipes = [
+  {
+    "id": "copperhead",
+    "name": "Copperhead",
+    "family": "Your exports",
+    "description": "Dense copper folds roll outward from a narrow gold seam.",
+    "colors": [
+      "#e49b38",
+      "#8f482d"
+    ],
+    "fluid": {
+      "CURL": 24,
+      "DENSITY_DISSIPATION": 0.4,
+      "VELOCITY_DISSIPATION": 0.4,
+      "wind_x": 0,
+      "wind_above_y": 0
+    },
+    "source": {
+      "radius": 2.7,
+      "density": 1.35,
+      "lift": 0.65,
+      "sway": 0.65,
+      "spread": 2,
+      "frequency": 1,
+      "pulse": 0,
+      "pulseHz": 1,
+      "sharpness": 2,
+      "split": 0,
+      "fan": 0,
+      "colorRate": 0,
+      "colorOffset": 0.55,
+      "core": 0.18,
+      "idleHold": 20
+    },
+    "palette": [
+      [
+        0.8941176470588236,
+        0.6078431372549019,
+        0.2196078431372549
+      ],
+      [
+        0.5607843137254902,
+        0.2823529411764706,
+        0.17647058823529413
+      ]
+    ],
+    "saved": {
+      "scale": {
+        "id": "tower",
+        "values": {
+          "rad": 2.6,
+          "dye": 0.75,
+          "lift": 1.8,
+          "curl": 4
+        }
+      },
+      "tuning": {
+        "mass": 0.25,
+        "motion": 0.65,
+        "size": 0.65
+      }
+    },
+    "samplerVersion": 1
+  },
+  {
+    "id": "dragon",
+    "name": "Jade dragon",
+    "family": "Your exports",
+    "description": "Two jade jets lash apart and fold back around a gold center.",
+    "colors": [
+      "#d4bc38",
+      "#179b75"
+    ],
+    "fluid": {
+      "CURL": 32,
+      "DENSITY_DISSIPATION": 0.48,
+      "VELOCITY_DISSIPATION": 0.08,
+      "wind_x": 0,
+      "wind_above_y": 0
+    },
+    "source": {
+      "radius": 1.15,
+      "density": 1.3,
+      "lift": 2.1,
+      "sway": 1,
+      "spread": 2,
+      "frequency": 1.6,
+      "pulse": 0,
+      "pulseHz": 1,
+      "sharpness": 2,
+      "split": 8,
+      "fan": 20,
+      "colorRate": 0,
+      "colorOffset": 1,
+      "core": 0.28,
+      "idleHold": 20
+    },
+    "palette": [
+      [
+        0.8313725490196079,
+        0.7372549019607844,
+        0.2196078431372549
+      ],
+      [
+        0.09019607843137255,
+        0.6078431372549019,
+        0.4588235294117647
+      ]
+    ],
+    "saved": {
+      "scale": {
+        "id": "tower",
+        "values": {
+          "rad": 2.6,
+          "dye": 0.75,
+          "lift": 1.8,
+          "curl": 4
+        }
+      },
+      "tuning": {
+        "mass": 0.4,
+        "motion": 0.25,
+        "size": 0.6
+      }
+    },
+    "samplerVersion": 1
+  }
+];
+  function add(id, name, description, colors, effect, source, fluid) {
+    recipes.push({ id: id, name: name, family: 'New experiments', description: description,
+      colors: colors, samplerVersion: 2,
+      fluid: Object.assign({ CURL: 12, DENSITY_DISSIPATION: 0.65,
+        VELOCITY_DISSIPATION: 0.3, wind_x: 0, wind_above_y: 0 }, fluid),
+      source: Object.assign({ mode: 'paired', density: 0.09, radius: 0.75,
+        lift: 1, idleHold: 18 }, source),
+      effect: Object.assign({ rate: 2, life: 3.5, speed: 45, radius: 14,
+        spread: 0.3, gravity: -5, trail: 0 }, effect)
     });
   }
-  // The original six remain available alongside the new collection.
-  add('default', 'Workshop', 'Originals', 'A warm, steady exhaust with soft rolling edges.',
-    ['#9e9485', '#b0a698'], {}, {});
-  add('ember', 'Ember', 'Originals', 'Orange embers tumble through a restless red plume.',
-    ['#ed6618', '#a82008'], { CURL: 34, DENSITY_DISSIPATION: 0.3 }, { lift: 1.4, colorRate: 0.3 });
-  add('ink', 'Ink', 'Originals', 'Indigo blooms stay close to where you release them.',
-    ['#24386e', '#5264b8'], { CURL: 3, DENSITY_DISSIPATION: 0.06, VELOCITY_DISSIPATION: 1.3 },
-    { lift: 0.05, radius: 1.8, density: 0.12, idleHold: 45, sway: 0.3 });
-  add('aurora', 'Aurora', 'Originals', 'Long green, teal, and violet ribbons drift sideways.',
-    ['#24b47c', '#287bce', '#a54ccc'], { CURL: 8, DENSITY_DISSIPATION: 0.16, wind_x: 0.008 },
-    { colorRate: 0.2, radius: 0.85, sway: 1.2, lift: 1.3 });
-  add('fog', 'Dry ice', 'Originals', 'Pale vapor spills downward and gathers along ledges.',
-    ['#8d9e8d', '#b4c4ae'], { CURL: 4, DENSITY_DISSIPATION: 0.18, VELOCITY_DISSIPATION: 0.6 },
-    { lift: -0.5, radius: 2, sway: 0.3, density: 0.26 });
-  add('storm', 'Thunderhead', 'Originals', 'Violet clouds pulse with pale blue centers.',
-    ['#504875', '#a2bfea'], { CURL: 38, DENSITY_DISSIPATION: 0.7 },
-    { radius: 1.7, density: 1.4, pulse: 0.75, pulseHz: 0.45, sharpness: 7 });
-
-  add('locomotive', 'Locomotive', 'Foundry', 'Regular ivory chuffs expand into broad, copper-gray clouds.',
-    ['#c4bdac', '#786251'], { CURL: 18, DENSITY_DISSIPATION: 0.32, VELOCITY_DISSIPATION: 0.3 },
-    { radius: 2.2, density: 1.2, lift: 1.4, pulse: 0.96, pulseHz: 1.1, sharpness: 5, sway: 0.4 });
-  add('copperhead', 'Copperhead', 'Foundry', 'Dense copper folds roll outward from a narrow gold seam.',
-    ['#e49b38', '#8f482d'], { CURL: 24, DENSITY_DISSIPATION: 0.4, VELOCITY_DISSIPATION: 0.4 },
-    { radius: 2.7, lift: 0.65, density: 1.35, sway: 0.65, core: 0.18 });
-  add('afterburner', 'Afterburner', 'Foundry', 'A tight blue jet with a bright ice-colored core and a short wake.',
-    ['#8bd9ef', '#2358c2'], { CURL: 5, DENSITY_DISSIPATION: 1.15, VELOCITY_DISSIPATION: 0.06 },
-    { radius: 0.62, lift: 4.5, density: 1.45, sway: 0.12, spread: 0.3, core: 0.5 });
-  add('coalroller', 'Coal roller', 'Foundry', 'Heavy bronze-gray exhaust lurches out in uneven, low billows.',
-    ['#766856', '#494958'], { CURL: 12, DENSITY_DISSIPATION: 0.24, VELOCITY_DISSIPATION: 0.7 },
-    { radius: 3.3, density: 0.6, lift: 0.32, pulse: 0.65, pulseHz: 1.7, sway: 0.5, frequency: 0.6 });
-
-  add('opal', 'Opal', 'Prismatic', 'Slow pearl folds trade rose, mint, and lavender highlights.',
-    ['#9bccb9', '#c091b1', '#858ed4'], { CURL: 10, DENSITY_DISSIPATION: 0.23, VELOCITY_DISSIPATION: 0.3 },
-    { radius: 2.1, density: 0.65, lift: 0.7, colorRate: 0.16, sway: 0.7 });
-  add('oil-slick', 'Oil slick', 'Prismatic', 'Teal and magenta strands braid around each other.',
-    ['#11baad', '#b12bc0'], { CURL: 18, DENSITY_DISSIPATION: 0.3 },
-    { radius: 0.85, split: 10, fan: 9, frequency: 2.7, lift: 1.6, colorRate: 0.08, colorOffset: 1 });
-  add('prism', 'Prism', 'Prismatic', 'A continuous ribbon cycles through coral, gold, green, blue, and violet.',
-    ['#dc4861', '#dca12f', '#43b85d', '#248bcf', '#9c4ed4'], { CURL: 7, DENSITY_DISSIPATION: 0.36 },
-    { radius: 0.9, lift: 2.1, sway: 1.8, colorRate: 0.85, colorOffset: 0.15, frequency: 0.8 });
-  add('gilded', 'Gilded', 'Prismatic', 'A fine gold stream unwinds inside a larger purple cloud.',
-    ['#e8b442', '#633f95'], { CURL: 16, DENSITY_DISSIPATION: 0.32, VELOCITY_DISSIPATION: 0.18 },
-    { radius: 2.4, lift: 1.05, core: 0.65, density: 0.9, sway: 0.55, colorOffset: 1 });
-
-  add('spore', 'Spore cloud', 'Living', 'Slow sage puffs open sideways like small mushroom caps.',
-    ['#b8c34c', '#4c9664'], { CURL: 9, DENSITY_DISSIPATION: 0.34, VELOCITY_DISSIPATION: 0.65 },
-    { radius: 2.6, split: 8, fan: 15, lift: 0.5, pulse: 0.93, pulseHz: 0.65, sharpness: 5, sway: 0.25 });
-  add('dragon', 'Jade dragon', 'Living', 'Two jade jets lash apart and fold back around a gold center.',
-    ['#d4bc38', '#179b75'], { CURL: 32, DENSITY_DISSIPATION: 0.48 },
-    { radius: 1.15, split: 8, fan: 20, lift: 2.1, frequency: 1.6, density: 1.3, colorOffset: 1 });
-  add('jellyfish', 'Jellyfish', 'Living', 'Soft violet bells swell between fine cyan tendrils.',
-    ['#56b7c8', '#a661bd'], { CURL: 6, DENSITY_DISSIPATION: 0.28, VELOCITY_DISSIPATION: 0.4 },
-    { radius: 2.5, pulse: 0.9, pulseHz: 0.55, sharpness: 3, lift: 0.8, fan: 12, split: 5, sway: 0.35 });
-  add('fireflies', 'Fireflies', 'Living', 'Small gold-green packets flick away from the nozzle and fade quickly.',
-    ['#e8bb36', '#5cad40'], { CURL: 4, DENSITY_DISSIPATION: 1.5, VELOCITY_DISSIPATION: 0.8 },
-    { radius: 0.3, pulse: 1, pulseHz: 3.3, sharpness: 7, spread: 15, fan: 25, lift: 1.6, density: 2.2, frequency: 4 });
-
-  add('nebula', 'Nebula', 'Cosmic', 'Broad violet clouds carry slow blue and rose eddies.',
-    ['#8641c4', '#287fb8', '#b64284'], { CURL: 26, DENSITY_DISSIPATION: 0.26, VELOCITY_DISSIPATION: 0.2 },
-    { radius: 3.1, density: 0.85, lift: 0.65, sway: 1.1, colorRate: 0.25, colorOffset: 1.2 });
-  add('solar', 'Solar flare', 'Cosmic', 'Hot orange curls peel off a narrow yellow jet.',
-    ['#efb32c', '#d02d14'], { CURL: 44, DENSITY_DISSIPATION: 0.8, VELOCITY_DISSIPATION: 0.05 },
-    { radius: 1.45, lift: 2.6, sway: 1.8, frequency: 2.2, core: 0.55, density: 1.1 });
-  add('comet', 'Comet', 'Cosmic', 'A clean cyan streamer leaves a long, thin blue tail.',
-    ['#86d8da', '#316aba'], { CURL: 3, DENSITY_DISSIPATION: 0.25, VELOCITY_DISSIPATION: 0.04 },
-    { radius: 0.48, lift: 3.2, sway: 0.1, spread: 0.25, density: 0.85, core: 0.6 });
-  add('eclipse', 'Eclipse', 'Cosmic', 'Amber crescents roll out inside a wide indigo shroud.',
-    ['#d6852c', '#3d327e'], { CURL: 20, DENSITY_DISSIPATION: 0.36, VELOCITY_DISSIPATION: 0.28 },
-    { radius: 2.8, pulse: 0.7, pulseHz: 0.4, split: 4, fan: 6, lift: 0.7, density: 1.25, colorOffset: 1 });
-
-  add('ectoplasm', 'Ectoplasm', 'Arcane', 'Acid-green wisps writhe out of a pale mint core.',
-    ['#91d998', '#36a32a'], { CURL: 42, DENSITY_DISSIPATION: 0.54, VELOCITY_DISSIPATION: 0.05 },
-    { radius: 1.1, lift: 1.35, sway: 2.5, frequency: 1.9, core: 0.25 });
-  add('witchfire', 'Witchfire', 'Arcane', 'Violet and green flames trade places in sharp, restless spurts.',
-    ['#a636dc', '#70cf35'], { CURL: 35, DENSITY_DISSIPATION: 0.7 },
-    { radius: 0.95, pulse: 0.7, pulseHz: 2.2, lift: 2, split: 5, fan: 10, colorRate: 0.7, colorOffset: 1 });
-  add('void', 'Void bloom', 'Arcane', 'Deep blue-violet ink opens outward and barely rises.',
-    ['#5340aa', '#2c4989'], { CURL: 22, DENSITY_DISSIPATION: 0.15, VELOCITY_DISSIPATION: 0.9 },
-    { radius: 3.8, density: 0.22, lift: 0.12, split: 8, fan: 10, sway: 0.2, pulse: 0.5, pulseHz: 0.3, idleHold: 35 });
-  add('phoenix', 'Phoenix', 'Arcane', 'Red and gold wings flare outward with each slow breath.',
-    ['#eaac2e', '#ce344e'], { CURL: 30, DENSITY_DISSIPATION: 0.55 },
-    { radius: 1.8, split: 13, fan: 30, pulse: 0.85, pulseHz: 0.72, sharpness: 3, lift: 1.7, colorOffset: 1 });
-
-  add('candyfloss', 'Candyfloss', 'Strange', 'Loose pink and blue clouds pile into soft, slow folds.',
-    ['#d079ad', '#699dcc'], { CURL: 8, DENSITY_DISSIPATION: 0.3, VELOCITY_DISSIPATION: 0.55 },
-    { radius: 3, density: 0.42, lift: 0.55, sway: 0.65, colorRate: 0.26, colorOffset: 1 });
-  add('bubblegum', 'Bubblegum', 'Strange', 'Round raspberry puffs march out in a bouncy, repeating rhythm.',
-    ['#e070a3', '#a92770'], { CURL: 5, DENSITY_DISSIPATION: 0.55, VELOCITY_DISSIPATION: 0.3 },
-    { radius: 1.9, pulse: 1, pulseHz: 1.5, sharpness: 6, lift: 1.8, sway: 0.2, density: 1.3 });
-  add('inkblossom', 'Ink blossom', 'Strange', 'Magenta and blue petals slowly spread into a floating ink flower.',
-    ['#b33c93', '#3952b7'], { CURL: 2, DENSITY_DISSIPATION: 0.12, VELOCITY_DISSIPATION: 1.1 },
-    { radius: 2.2, density: 0.3, lift: 0, split: 12, fan: 16, frequency: 0.65, pulse: 0.8, pulseHz: 0.4, colorRate: 0.2, idleHold: 40 });
-  add('cryo', 'Cryovent', 'Strange', 'Cold cyan vapor jets downward in short bursts and spreads across the floor.',
-    ['#a3d3d7', '#3c86b4'], { CURL: 9, DENSITY_DISSIPATION: 0.42, VELOCITY_DISSIPATION: 0.4 },
-    { radius: 1.7, lift: -1.6, density: 0.9, sway: 0.7, pulse: 0.75, pulseHz: 0.9 });
+  add('smoke-rings', 'Smoke rings', 'Hollow vapor hoops roll out one at a time, widen, then unravel.',
+    ['#d4c7ac', '#759db4'], { kind: 'rings', rate: 1.15, life: 4.5, radius: 17, speed: 58 },
+    { density: 0.035, mode: 'ring', lift: 1.4 }, { CURL: 5, DENSITY_DISSIPATION: 0.8 });
+  add('soap-engine', 'Soap engine', 'Iridescent bubbles carry the exhaust upward, then burst into little clouds.',
+    ['#84d9d0', '#d899ca', '#dece8d'], { kind: 'bubbles', rate: 3.2, life: 3.8, radius: 20, speed: 34, spread: 0.55 },
+    { density: 0.025 }, { CURL: 8 });
+  add('star-forge', 'Star forge', 'A fountain of hot metal sparks cools from white to copper and leaves ash behind.',
+    ['#f4dba0', '#e88532', '#a24c39'], { kind: 'sparks', rate: 19, life: 2.5, radius: 2.5, speed: 165, spread: 1, gravity: 92, trail: 14 },
+    { density: 0.11, lift: 0.55 }, { CURL: 23 });
+  add('silk-engine', 'Silk engine', 'Three translucent vapor ribbons weave through each other and stretch into your wake.',
+    ['#85c9c0', '#bb88d4', '#d9b475'], { kind: 'silk', rate: 30, life: 3.4, radius: 8, speed: 74, spread: 0, gravity: 0 },
+    { density: 0.016, lift: 1.5 }, { CURL: 3 });
+  add('ink-garden', 'Ink garden', 'Branching ink flowers open around the nozzle and drift away, with no repeating sideways sweep.',
+    ['#ac83d5', '#5a91c1', '#d591b9'], { kind: 'garden', rate: 0.85, life: 4.8, radius: 34, speed: 19, spread: 0.15 },
+    { density: 0.11, mode: 'bloom', lift: 0.3 }, { CURL: 4, DENSITY_DISSIPATION: 0.5 });
+  add('lanterns', 'Paper lanterns', 'Warm, translucent ember shells inflate, tumble upward, and fold away.',
+    ['#eaa759', '#d1636c'], { kind: 'lanterns', rate: 2.1, life: 4, radius: 21, speed: 36, spread: 0.4, gravity: -9 },
+    { density: 0.045, lift: 0.5 }, { CURL: 9 });
+  add('pixel-kiln', 'Pixel kiln', 'Chunky square clouds rise, split into smaller tiles, and crumble out of the trail.',
+    ['#89bca0', '#d4b787', '#7798bd'], { kind: 'pixels', rate: 4, life: 3.5, radius: 14, speed: 45, spread: 0.5 },
+    { density: 0 }, { CURL: 0 });
+  add('return-to-sender', 'Return to sender', 'Loose curls escape, turn in midair, and stream back into the moving nozzle.',
+    ['#87cccf', '#ab86db'], { kind: 'return', rate: 8, life: 3.8, radius: 9, speed: 52, spread: 0.8, trail: 20 },
+    { density: 0.015, lift: 0.2 }, { CURL: 5, DENSITY_DISSIPATION: 1.2 });
+  add('storm-cell', 'Pocket storm', 'Small storm clouds grow a web of blue light inside, then dissolve into violet haze.',
+    ['#8caad4', '#695982', '#bccfe4'], { kind: 'storm', rate: 1.6, life: 4.5, radius: 34, speed: 33, spread: 0.25 },
+    { density: 0.08, lift: 0.5 }, { CURL: 24 });
+  add('black-pearls', 'Black pearls', 'Glossy dark droplets arc out of the rig and break into pale smoke when they land.',
+    ['#889cab', '#374248', '#c5bdac'], { kind: 'pearls', rate: 3.7, life: 3.5, radius: 13, speed: 105, spread: 0.8, gravity: 74 },
+    { density: 0.01, lift: 0.2 }, { CURL: 18 });
 
   var byId = Object.create(null);
   recipes.forEach(function (recipe) {
@@ -129,7 +190,7 @@
       g: (a[1] + (b[1] - a[1]) * t) * amount,
       b: (a[2] + (b[2] - a[2]) * t) * amount };
   }
-  function sample(recipe, seconds, phase, tuning, scale, throttle) {
+  function legacySample(recipe, seconds, phase, tuning, scale, throttle) {
     var s = recipe.source;
     var t = seconds * s.frequency * tuning.motion;
     var beat = Math.pow(0.5 + 0.5 * Math.sin(seconds * s.pulseHz * Math.PI * 2), s.sharpness);
@@ -150,5 +211,29 @@
         color: colorAt(recipe, colorPhase + s.colorOffset, 0.8 * density), radius: 0.025 * radius }
     ];
   }
-  root.SmokePresets = { version: 1, recipes: recipes, byId: byId, sample: sample };
+  function sample(recipe, seconds, phase, tuning, scale, throttle) {
+    if (recipe.samplerVersion === 1) return legacySample(recipe, seconds, phase, tuning, scale, throttle);
+    var s = recipe.source, mode = s.mode;
+    if (!s.density) return [];
+    var step = Math.round(seconds * 30);
+    var count = mode === 'bloom' ? 8 : mode === 'ring' ? 6 : 2;
+    if (mode === 'bloom' && step % 45 !== 1) return [];
+    if (mode === 'ring' && step % 26 !== 1) return [];
+    var packets = [], size = tuning.size * scale.rad;
+    var amount = s.density * tuning.mass * scale.dye * throttle;
+    // Opposite packets carry equal dye and opposite lateral momentum.
+    // There is no oscillator moving the whole nozzle from side to side.
+    for (var i = 0; i < count; i++) {
+      var angle = i * Math.PI * 2 / count;
+      var cx = Math.cos(angle), cy = Math.sin(angle);
+      var ring = mode === 'ring' ? 13 : mode === 'bloom' ? 9 : 2;
+      packets.push({ x: cx * ring * size, y: 5 + cy * ring * size,
+        vx: cx * (mode === 'bloom' ? 17 : 2) * tuning.motion,
+        vy: 11.5 * s.lift * tuning.motion * scale.lift + cy * (mode === 'bloom' ? 17 : 2) * tuning.motion,
+        color: colorAt(recipe, (Math.floor(seconds * 0.7) + (i % (count / 2))) / 3, amount),
+        radius: 0.012 * s.radius * size });
+    }
+    return packets;
+  }
+  root.SmokePresets = { version: 2, defaultId: 'copperhead', recipes: recipes, byId: byId, sample: sample };
 })(typeof window !== 'undefined' ? window : globalThis);

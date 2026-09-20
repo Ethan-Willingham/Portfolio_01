@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.40'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.41'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -10431,7 +10431,7 @@
    * re-stamp each presetTick, and water levers persist in the engine.
    * -------------------------------------------------------------------- */
   var PRESET_ACTIVE = { water: 'default', waterLook: 'default',
-                        smoke: 'default', smokeScale: 'default',
+                        smoke: 'copperhead', smokeScale: 'default',
                         slime: 'default', slimeLook: 'default' };
   // v4.29 second layer: each system gains an independent stackable row.
   // smokeScale = plume size and energy over any smoke material (the owner:
@@ -10633,20 +10633,27 @@
       VELOCITY_DISSIPATION: c.VELOCITY_DISSIPATION, PRESSURE: c.PRESSURE,
       PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS };
   }
-  var smokeRecipe = window.SmokePresets.byId.default;
+  var smokeRecipe = window.SmokePresets.byId.copperhead;
   var smokeTuning = { mass: 1, motion: 1, size: 1 };
   var smokeCleanSwitch = true;
   var smokeRigMode = 'idle';
   var smokeRig = { x: 0, y: 0, clock: 0, throttle: 1 };
 
+  var smokeEffects = window.SmokeEffects.create(isMobile ? 110 : 180);
+  var smokeEffectCanvas = null, smokeEffectCtx = null;
   function clearSmokeOnly() {
+    smokeEffects.clear();
+    if (smokeEffectCtx) smokeEffectCtx.clearRect(0, 0, worldW, worldH);
     if (smokeActive) { SmokeFluid.clear(); SmokeFluid.displayPass(); }
     smokeAwakeT = 0;
     smokeWasAwake = false;
   }
   function presetApplySmoke(name) {
     presetSmokeSnapshot();
-    smokeRecipe = window.SmokePresets.byId[name] || window.SmokePresets.byId.default;
+    smokeRecipe = window.SmokePresets.byId[name] || window.SmokePresets.byId.copperhead;
+    var saved = smokeRecipe.saved;
+    PRESET_ACTIVE.smokeScale = saved ? saved.scale.id : 'default';
+    smokeTuning = saved ? Object.assign({}, saved.tuning) : { mass: 1, motion: 1, size: 1 };
     var c = SmokeFluid && SmokeFluid.config;
     if (!c) return;
     if (smokeCfgDefault) for (var k in smokeCfgDefault) c[k] = smokeCfgDefault[k];
@@ -10672,7 +10679,9 @@
     smokeRig.throttle = smokeRigMode === 'boost' ? 1.5 : smokeRigMode === 'drive' ? 1 : 0.65;
     if (emitters[0]) { emitters[0].x = smokeRig.x - 12; emitters[0].y = smokeRig.y - 23; }
   }
-  function emitSmokeRecipe(x, y, dx, dy, age, phase, strength, radius, throttle, carryX, carryY) {
+  function emitSmokeRecipe(x, y, dx, dy, age, phase, strength, radius, throttle, carryX, carryY, sourceKey) {
+    smokeEffects.emit(smokeRecipe, sourceKey || 'brush', x, y, dx, dy, age,
+      smokeTuning, presetSmokeScaleObj, throttle, strength, radius);
     var packets = window.SmokePresets.sample(smokeRecipe, age, phase, smokeTuning,
       presetSmokeScaleObj, throttle);
     var crossX = -dy, crossY = dx;
@@ -11213,6 +11222,7 @@
   }
 
   function clearWorldAll() {
+    clearSmokeOnly();
     walls.fill(0);
     addBorder();
     clearLiquid();
@@ -11220,11 +11230,6 @@
     jelloGrabEnd();
     pokeGuest = null;
     emitters.length = 0;
-    if (smokeActive) {
-      try { SmokeFluid.clear(); SmokeFluid.displayPass(); } catch (e) {}
-    }
-    smokeAwakeT = 0;
-    smokeWasAwake = false;
   }
 
   function setGravityUI(g) { gravMul = g; applyGravity(); syncSliderUI(); }
@@ -11259,10 +11264,25 @@
           var dirLength = Math.hypot(dirX, dirY) || 1;
           emitSmokeRecipe(em.x, em.y, dirX / dirLength, dirY / dirLength,
             em.age, em.phase || 0, (em.liftK || 1) * (0.25 + 0.75 * gravMul),
-            em.radiusK || 1, currentScene === 'rig' ? smokeRig.throttle : 1, 0, 0);
+            em.radiusK || 1, currentScene === 'rig' ? smokeRig.throttle : 1, 0, 0, 'vent-' + i);
         }
       }
     }
+  }
+
+  function stepSmokeEffects(dt) {
+    smokeEffects.step(dt * timeMul, {
+      solid: function (x, y) {
+        if (x < 0 || y < 0 || x >= worldW || y >= worldH) return true;
+        return !!walls[Math.floor(y / TILE) * gridW + Math.floor(x / TILE)];
+      },
+      puff: smokePuff
+    });
+  }
+  function drawSmokeEffects() {
+    if (!smokeEffectCtx) return;
+    smokeEffectCtx.clearRect(0, 0, worldW, worldH);
+    smokeEffects.draw(smokeEffectCtx);
   }
 
   function drawSmokeRig() {
@@ -11465,6 +11485,7 @@
     ctx.clearRect(0, 0, worldW, worldH);
     drawEmitterFixtures();
     drawSmokeRig();
+    drawSmokeEffects();
     drawJelloBlobs();
     drawSlimeLooks();
     drawCursor();
@@ -11563,6 +11584,7 @@
         dbgE.cyPost = dbgB.cy;
       }
     }
+    stepSmokeEffects(dt);
     smokeFrame(dt);
     render();
 
@@ -11628,11 +11650,18 @@
     addBorder();
     bootLiquid();
     bootSmoke();
+    smokeEffectCanvas = document.createElement('canvas');
+    smokeEffectCanvas.width = canvas.width; smokeEffectCanvas.height = canvas.height;
+    smokeEffectCanvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;';
+    smokeEffectCanvas.setAttribute('aria-hidden', 'true');
+    stage.appendChild(smokeEffectCanvas);
+    smokeEffectCtx = smokeEffectCanvas.getContext('2d');
+    smokeEffectCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wireUI();
     var smokeQuery = new URLSearchParams(location.search);
     var smokeName = smokeQuery.get('smoke');
     scene(smokeQuery.get('scene') === 'rig' || window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
-    presetSet('smoke', window.SmokePresets.byId[smokeName] ? smokeName : 'default');
+    presetSet('smoke', window.SmokePresets.byId[smokeName] ? smokeName : 'copperhead');
     if (Object.prototype.hasOwnProperty.call(SMOKE_SCALES, smokeQuery.get('scale'))) presetSet('smokeScale', smokeQuery.get('scale'));
     ['mass', 'motion', 'size'].forEach(function (key) {
       if (smokeQuery.has(key)) window.__toy.smokeTune(key, smokeQuery.get(key));
@@ -11690,9 +11719,10 @@
       smokeRigMode: function (mode) {
         if (['idle', 'drive', 'boost'].indexOf(mode) >= 0) smokeRigMode = mode;
       },
+      smokeEffects: function () { return smokeEffects.stats(); },
       smokeExport: function () {
-        return JSON.parse(JSON.stringify({ schema: 'sluice-smoke-recipe', version: 1,
-          samplerVersion: window.SmokePresets.version, preset: smokeRecipe,
+        return JSON.parse(JSON.stringify({ schema: 'sluice-smoke-recipe', version: smokeRecipe.effect ? 2 : 1,
+          samplerVersion: smokeRecipe.samplerVersion, rendererVersion: smokeRecipe.effect ? window.SmokeEffects.version : 0, preset: smokeRecipe,
           scale: { id: PRESET_ACTIVE.smokeScale, values: presetSmokeScaleObj }, tuning: smokeTuning }));
       },
       scene: scene,
