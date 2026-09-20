@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.17';
+  var GAME_VERSION = 'v28.18';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3239,66 +3239,69 @@
     // (saves without it mean an old 1-deep world: default 1 everywhere).
     surfacePonds.length = 0;
     worldPondStyle = worldPondStyleForNewWorld();
-    var _pondStyle = POND_STYLES[worldPondStyle];
-    var _pondBig = worldPondStyle !== 'regular';
-    var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
-    var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    // Keep the station and the bathhouse approach on solid ground.
-    var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_CENTER_COL + 25;
-    var _px = _pondLo + ((Math.random() * 30) | 0);
-    while (_px < _pondHi - 12) {
-      // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
-      // relaunch). Density stays FULL (655/tile, owner-locked); we shrink the
-      // TILE COUNT so the one streamed-live lake is light. Was 9-14 x 5-8 (up to
-      // ~65k particles); now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x
-      // lighter). See TUNING.md. Wide: 40-48 x 2. Deep: 6-7 x 13-16, capped at
-      // 98 tiles.
-      var _pw = _pondStyle.wMin + ((Math.random() * _pondStyle.wSpan) | 0);
-      var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
-      if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
-      var _pr = _px + _pw - 1;
-      // A big pond that lands on the bathhouse or station slides past the deck instead of
-      // being dropped, so the town keeps a pond on each side.
-      if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
-        _px = _pondDeckR + 1;
-        _pr = _px + _pw - 1;
-      }
-      if (_pr < _pondHi && !(_pr >= _pondDeckL && _px <= _pondDeckR) &&
-          world[SKY_ROWS] && world[SKY_ROWS + _pd]) {
-        // carve the deep pit: stone walls down both sides, stone floor,
-        // hollow the full water body.
-        for (var _wr = SKY_ROWS; _wr < SKY_ROWS + _pd; _wr++) {
-          if (!world[_wr]) continue;
-          world[_wr][_px - 1] = { type: 'stone', hp: ORES.stone.hp };       // left wall
-          world[_wr][_pr + 1] = { type: 'stone', hp: ORES.stone.hp };       // right wall
-          for (var _cc = _px; _cc <= _pr; _cc++) world[_wr][_cc] = null;    // hollow the water body
+    if (worldRainEnabled) rainGenerateLakes();
+    else {
+      var _pondStyle = POND_STYLES[worldPondStyle];
+      var _pondBig = worldPondStyle !== 'regular';
+      var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
+      var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
+      // Keep the station and the bathhouse approach on solid ground.
+      var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_CENTER_COL + 25;
+      var _px = _pondLo + ((Math.random() * 30) | 0);
+      while (_px < _pondHi - 12) {
+        // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
+        // relaunch). Density stays FULL (655/tile, owner-locked); we shrink the
+        // TILE COUNT so the one streamed-live lake is light. Was 9-14 x 5-8 (up to
+        // ~65k particles); now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x
+        // lighter). See TUNING.md. Wide: 40-48 x 2. Deep: 6-7 x 13-16, capped at
+        // 98 tiles.
+        var _pw = _pondStyle.wMin + ((Math.random() * _pondStyle.wSpan) | 0);
+        var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
+        if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
+        var _pr = _px + _pw - 1;
+        // A big pond that lands on the bathhouse or station slides past the deck instead of
+        // being dropped, so the town keeps a pond on each side.
+        if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
+          _px = _pondDeckR + 1;
+          _pr = _px + _pw - 1;
         }
-        for (var _fc = _px - 1; _fc <= _pr + 1; _fc++) world[SKY_ROWS + _pd][_fc] = { type: 'stone', hp: ORES.stone.hp }; // floor
-        surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
-        seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
+        if (_pr < _pondHi && !(_pr >= _pondDeckL && _px <= _pondDeckR) &&
+            world[SKY_ROWS] && world[SKY_ROWS + _pd]) {
+          // carve the deep pit: stone walls down both sides, stone floor,
+          // hollow the full water body.
+          for (var _wr = SKY_ROWS; _wr < SKY_ROWS + _pd; _wr++) {
+            if (!world[_wr]) continue;
+            world[_wr][_px - 1] = { type: 'stone', hp: ORES.stone.hp };       // left wall
+            world[_wr][_pr + 1] = { type: 'stone', hp: ORES.stone.hp };       // right wall
+            for (var _cc = _px; _cc <= _pr; _cc++) world[_wr][_cc] = null;    // hollow the water body
+          }
+          for (var _fc = _px - 1; _fc <= _pr + 1; _fc++) world[SKY_ROWS + _pd][_fc] = { type: 'stone', hp: ORES.stone.hp }; // floor
+          surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
+          seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
+        }
+        _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
       }
-      _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
-    }
-    // Keep the selected pond style intact. A naturally generated east lake
-    // already supplies the bathhouse; replacing its metadata with a 6x3 source
-    // would strand the rest of a wide or deep excavation without water.
-    var eastSource = false;
-    for (var pond = 0; pond < surfacePonds.length; pond++) {
-      if (surfacePonds[pond].cL > DECK_RIGHT_COL + 2) { eastSource = true; break; }
-    }
-    var sourceL = _pondDeckR + 1;
-    var sourceW = _pondStyle.wMin, sourceD = _pondStyle.dMin;
-    if (sourceW * sourceD > _pondStyle.maxTiles) sourceD = Math.floor(_pondStyle.maxTiles / sourceW);
-    var sourceR = sourceL + sourceW - 1;
-    if (!eastSource && sourceR + 1 < _pondHi && world[SKY_ROWS + sourceD]) {
-      for (var sy = SKY_ROWS; sy < SKY_ROWS + sourceD; sy++) {
-        world[sy][sourceL - 1] = { type: 'stone', hp: ORES.stone.hp };
-        world[sy][sourceR + 1] = { type: 'stone', hp: ORES.stone.hp };
-        for (var sx = sourceL; sx <= sourceR; sx++) world[sy][sx] = null;
+      // Keep the selected pond style intact. A naturally generated east lake
+      // already supplies the bathhouse; replacing its metadata with a 6x3 source
+      // would strand the rest of a wide or deep excavation without water.
+      var eastSource = false;
+      for (var pond = 0; pond < surfacePonds.length; pond++) {
+        if (surfacePonds[pond].cL > DECK_RIGHT_COL + 2) { eastSource = true; break; }
       }
-      for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
-      surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
-      seedLakeShoreSlimes(sourceL, sourceR);
+      var sourceL = _pondDeckR + 1;
+      var sourceW = _pondStyle.wMin, sourceD = _pondStyle.dMin;
+      if (sourceW * sourceD > _pondStyle.maxTiles) sourceD = Math.floor(_pondStyle.maxTiles / sourceW);
+      var sourceR = sourceL + sourceW - 1;
+      if (!eastSource && sourceR + 1 < _pondHi && world[SKY_ROWS + sourceD]) {
+        for (var sy = SKY_ROWS; sy < SKY_ROWS + sourceD; sy++) {
+          world[sy][sourceL - 1] = { type: 'stone', hp: ORES.stone.hp };
+          world[sy][sourceR + 1] = { type: 'stone', hp: ORES.stone.hp };
+          for (var sx = sourceL; sx <= sourceR; sx++) world[sy][sx] = null;
+        }
+        for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
+        surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
+        seedLakeShoreSlimes(sourceL, sourceR);
+      }
     }
     mineralLiquidGenerate(false);
   }
@@ -4146,8 +4149,9 @@
     // need the override to survive this reset.
     timeOfDay = (TOD_BOOT >= 0) ? TOD_BOOT : TIME_OF_DAY_START;
     moonPhase = MOON_PHASE_START;
-    generateWorld();
     rainReset(rainNewWorldEnabled());
+    generateWorld();
+    rainSeedLakes();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;
@@ -6034,7 +6038,7 @@
         tradeGoods: player.tradeGoods || {},
       },
       cargo: cargo,
-      ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, filled: false }; }),   // v24.148 — d = lake depth
+      ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, rainFed: p.rainFed === true, filled: false }; }),   // v24.148 — d = lake depth
       rain: rainSave(),
       pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
       world: saveSerializeWorld(),
@@ -6116,7 +6120,7 @@
     // Worldgen side-outputs that must match the saved grid, not the fresh one.
     surfacePonds.length = 0;
     var ponds = env.ponds || [];
-    for (var i = 0; i < ponds.length; i++) surfacePonds.push({ cL: ponds[i].cL, cR: ponds[i].cR, d: ponds[i].d || 1, filled: false });   // v24.148 — pre-deep saves default d=1
+    for (var i = 0; i < ponds.length; i++) surfacePonds.push({ cL: ponds[i].cL, cR: ponds[i].cR, d: ponds[i].d || 1, rainFed: ponds[i].rainFed === true, filled: false });   // v24.148 — pre-deep saves default d=1
     worldPondStyle = POND_STYLES[env.pondStyle] ? env.pondStyle : 'regular';   // v27.4: pre-style saves were regular
     // Profile
     var p = env.profile || {};
@@ -7267,9 +7271,12 @@
             extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
           }[value] || 'Custom graphics settings.';
         }
-        if (key === 'rain') document.getElementById('gm-rain-note').textContent =
-          'Wind-driven water fills hollows and runs into open mines. Experimental.' +
+        if (key === 'rain') {
+          document.getElementById('gm-ponds-note').textContent = pondsNote(read('sluice.opt.ponds') || 'regular');
+          document.getElementById('gm-rain-note').textContent =
+          'Passing showers feed three small stone-lined lakes. New lakes start low. Experimental.' +
           ((value === '1') === worldRainEnabled ? ' This world: ' + (worldRainEnabled ? 'on.' : 'off.') : ' Applies to your next new game.');
+        }
         if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }
       for (var i = 0; i < pairs.length; i++) {
@@ -7293,6 +7300,7 @@
         wide: 'Huge ponds, two tiles deep and very wide. Heavier on graphics.',
         deep: 'Narrow ponds, 13 to 16 tiles deep. Heavier on graphics.'
       };
+      if (worldRainEnabled || window.SluiceOptions.particleRain) return (looks[value] || looks.regular) + ' Particle rain uses three small rain-fed lakes instead.';
       var current = looks[worldPondStyle] ? worldPondStyle : 'regular';
       return (looks[value] || looks.regular) +
         (value === current ? ' This world has them.' : ' Applies to your next new game.');
@@ -9994,6 +10002,8 @@
   // settling when I roll up"). Spawning at rest density removes the
   // transient entirely; the settled level is unchanged.
   function fillSurfacePond(pond) {
+    // Finite rain lakes stream their saved particles in rainScan, never refill.
+    if (pond.rainFed) return true;
     var need = surfacePondNeed(pond);
     if (liquidCount + need > LIQUID_MAX_PARTICLES) return false;
     var wo = liquidSurfaceOriginForType('water');
@@ -10028,6 +10038,7 @@
     return true;
   }
   function drainSurfacePond(pond) {
+    if (pond.rainFed) return;
     var so = liquidSurfaceOriginForType('water');     // surface-water origin (1)
     var wx0 = pond.cL * TILE, wx1 = (pond.cR + 1) * TILE;
     for (var i = liquidCount - 1; i >= 0; i--) {
@@ -34208,17 +34219,18 @@
   /* ---- Particle rain: a bounded, collectable water cycle ---- */
   // Airborne drops use ballistic motion, then hand ONE particle to the ordinary
   // water solver on contact. No decorative rain layer or multiplied water mass.
-  // Origin 3 belongs exclusively to rain; ponds, poured water and minerals are
-  // never recycled. Scooping rain transfers it into ordinary persistent water.
+  // Origin 3 belongs to rain and finite rain lakes. Stored lake water,
+  // legacy ponds, poured water and minerals are never recycled. Scooping rain transfers it into ordinary persistent water.
   var worldRainEnabled = false;
   var RAIN_ORIGIN = 3;
   var RAIN_DROP_CAP = 1800;
   var RAIN_WATER_CAP = 6000;
   var RAIN_CPU_CAP = 2400;
+  var RAIN_STORAGE_CAP = 40000; // Three finite lakes plus loose rain, including offscreen storage.
   var RAIN_DAMP_CAP = 256;
   var RAIN_PLOW_CAP = 96;
-  var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, waterCount: 0,
-    drops: [], impacts: [], parked: [], cells: {}, intensity: 0.8,
+  var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, parkedCursor: 0, waterCount: 0, lakeCount: 0, climate: null,
+    drops: [], impacts: [], parked: [], cells: {}, intensity: 0,
     plow: { x0: 0, x1: 0, y0: 0, y1: 0, freshUntil: 0, until: 0 },
     damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false };
 
@@ -34228,22 +34240,29 @@
   }
   function rainReset(enabled) {
     worldRainEnabled = enabled === true;
-    rain.time = rain.credit = rain.scan = rain.scanDt = rain.cursor = rain.waterCount = 0;
+    rain.time = rain.credit = rain.scan = rain.scanDt = rain.cursor = rain.parkedCursor = rain.waterCount = rain.lakeCount = 0;
     rain.emitted = rain.landed = rain.recycled = rain.absorbed = 0;
     rain.drops.length = rain.impacts.length = rain.parked.length = rain.damp.length = 0;
     rain.dampCells = {};
     rain.plow.freshUntil = rain.plow.until = 0;
-    rain.cells = {}; rain.primed = false; rain.intensity = 0.8;
+    rain.cells = {}; rain.primed = false; rain.intensity = 0;
+    rain.climate = { phase: 0, elapsed: 0, duration: 55 + Math.random() * 25, strength: 0.7 };
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
     // Reset the wet mood too when making a normal world after a rain world.
-    weatherSetMood(worldRainEnabled ? 4 : (weatherForce >= 0 ? weatherForce : 1), true);
+    weatherSetMood(weatherForce >= 0 ? weatherForce : 1, true);
   }
   function rainWeather() {
-    // Slow fronts plus faster gusts avoid a perfectly uniform particle curtain.
-    rain.intensity = 0.72 + 0.18 * Math.sin(rain.time * 0.071) + 0.09 * Math.sin(rain.time * 0.31);
-    weather.mood = 4;
-    weather.tcov = 0.97; weather.tdark = 0.61;
-    weather.tpcp = rain.intensity; weather.twind = 0.62;
+    if (weatherForce >= 0) { weatherSetMood(weatherForce, false); return; }
+    var front = rain.climate, phase = front.phase;
+    weatherSetMood([1, 3, 4, 2][phase], false);
+    // Clouds arrive before the shower, and clear after its last drops.
+    weather.tpcp = 0;
+    if (phase === 2) {
+      var edge = Math.min(1, front.elapsed / 7, (front.duration - front.elapsed) / 7);
+      var gust = 0.9 + 0.07 * Math.sin(rain.time * 0.31) + 0.03 * Math.sin(rain.time * 0.071);
+      weather.tpcp = front.strength * Math.max(0, edge) * gust;
+      weather.twind = 0.5;
+    }
   }
   function rainCell(x, y) { return Math.floor(y / 6) * (Math.ceil(COLS * TILE / 6) + 1) + Math.floor(x / 6); }
 
@@ -34283,15 +34302,15 @@
     mark.stamp = rain.time;
   }
   function rainSoakAt(x, y, visible) {
-    // Only the first few pixels touching a dirt face drain. Water above that
+    // Only the first few pixels touching dirt or a foundation face drain. Water above that
     // film still falls and flows through the real solver. Four cheap probes
     // include shaft walls; no neighbor search or extra GPU readback.
     for (var face = 0; face < 4; face++) {
       var px = x + (face === 2 ? 6 : face === 3 ? -6 : 0);
       var py = y + (face === 0 ? 6 : face === 1 ? -6 : 0);
       var r = Math.floor(py / TILE), c = Math.floor(px / TILE), t = tileAt(r, c);
-      if (!t || t.type !== 'dirt' || t.pondBasin || !liquidWorldSolidAt(px, py)) continue;
-      if (visible) rainDampEdge(r, c, face, x, y);
+      if (!t || (t.type !== 'dirt' && t.type !== 'foundation') || t.pondBasin || !liquidWorldSolidAt(px, py)) continue;
+      if (visible && t.type === 'dirt') rainDampEdge(r, c, face, x, y);
       rain.absorbed++;
       return true;
     }
@@ -34308,6 +34327,21 @@
     var soakChance = 1 - Math.exp(-5.5 * (dt || 0));
     var x0 = cam.x - margin, x1 = cam.x + screenW + margin;
     var y0 = cam.y - margin, y1 = cam.y + screenH + margin;
+    rain.lakeCount = 0;
+    for (var p = 0; p < surfacePonds.length; p++) {
+      var pond = surfacePonds[p];
+      if (!pond.rainFed) continue;
+      pond.rainCount = pond.otherCount = 0;
+      var stored = mineralLiquidParkedSampleRect(pond.cL * TILE, SKY_ROWS * TILE,
+        (pond.cR + 1) * TILE, (SKY_ROWS + pond.d) * TILE);
+      for (var kind = 0; kind < stored.length; kind++) pond.otherCount += stored[kind];
+      pond.catchable = rainLakeLined(pond);
+      // Keep a visible lake whole, matching the solver's active-region expansion.
+      if (pond.filled && y0 < (SKY_ROWS + pond.d) * TILE && y1 > SKY_ROWS * TILE) {
+        x0 = Math.min(x0, pond.cL * TILE - 8);
+        x1 = Math.max(x1, (pond.cR + 1) * TILE + 8);
+      }
+    }
     for (var d = rain.damp.length - 1; d >= 0; d--) {
       var mark = rain.damp[d], tile = tileAt(mark.r, mark.c);
       if (rain.time - mark.stamp < 6 && tile && tile.type === 'dirt') continue;
@@ -34315,21 +34349,23 @@
       rain.damp[d] = rain.damp[rain.damp.length - 1]; rain.damp.pop();
     }
     for (var i = liquidCount - 1; i >= 0; i--) {
-      var x = liquidX[i], y = liquidY[i];
+      var x = liquidX[i], y = liquidY[i], lake = rainLakeAt(x, y);
+      if (lake && liquidOrigin[i] !== RAIN_ORIGIN) lake.otherCount++;
       if (liquidOrigin[i] === RAIN_ORIGIN) {
         if (x < x0 || x > x1 || y < y0 || y > y1) {
-          if (rain.parked.length < RAIN_WATER_CAP * 2) rain.parked.push(x, y);
+          if (rain.parked.length < RAIN_STORAGE_CAP * 2) rain.parked.push(x, y);
           removeLiquidParticle(i);
           continue;
         }
         // Protect enough water for a little crest, never an entire puddle.
         var plowed = held < RAIN_PLOW_CAP && rainPlowHolds(i);
         if (plowed) held++;
-        if (!plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
+        if (!lake && !plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
           removeLiquidParticle(i);
           continue;
         }
         count++;
+        if (lake) { lake.rainCount++; rain.lakeCount++; }
       }
       // All liquid surfaces receive raindrops, including mineral baths.
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
@@ -34339,14 +34375,15 @@
     }
     var budget = Math.min(600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 4096));
     for (var j = rain.parked.length - 2; j >= 0; j -= 2) {
-      var px = rain.parked[j], py = rain.parked[j + 1];
+      var px = rain.parked[j], py = rain.parked[j + 1], lake = rainLakeAt(px, py);
       // Parked rain drains as well, including spills left behind the camera.
-      if (Math.random() < soakChance && rainSoakAt(px, py, false)) {
+      if (!lake && Math.random() < soakChance && rainSoakAt(px, py, false)) {
         rain.parked[j] = rain.parked[rain.parked.length - 2];
         rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
         rain.parked.length -= 2;
         continue;
       }
+      if (lake) { lake.rainCount++; rain.lakeCount++; }
       if (budget <= 0) continue;
       if (px < x0 || px > x1 || py < y0 || py > y1) continue;
       if (liquidWorldSolidAt(px, py)) continue;
@@ -34361,13 +34398,21 @@
   function rainRecycle(count) {
     // A finite atmospheric reservoir: reclaim offscreen rain first, then spread
     // evaporation across live rain. Never touch any other origin or material.
-    var parked = Math.min(count, rain.parked.length / 2);
-    rain.parked.length -= parked * 2; count -= parked; rain.recycled += parked;
+    var parkedTries = Math.min(512, rain.parked.length / 2);
+    while (count > 0 && parkedTries-- > 0 && rain.parked.length) {
+      rain.parkedCursor %= rain.parked.length;
+      var at = rain.parkedCursor; rain.parkedCursor += 2;
+      if (rainLakeAt(rain.parked[at], rain.parked[at + 1])) continue;
+      rain.parked[at] = rain.parked[rain.parked.length - 2];
+      rain.parked[at + 1] = rain.parked[rain.parked.length - 1];
+      rain.parked.length -= 2; rain.parkedCursor = at;
+      count--; rain.recycled++;
+    }
     var attempts = liquidCount;
     while (count > 0 && attempts-- > 0 && liquidCount) {
       rain.cursor %= liquidCount;
       var i = rain.cursor++;
-      if (liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i)) continue;
+      if (liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i) || rainLakeAt(liquidX[i], liquidY[i])) continue;
       removeLiquidParticle(i); rain.waterCount--; rain.recycled++; count--;
       rain.cursor--;
     }
@@ -34392,6 +34437,8 @@
     // mixing, scoop transfer and rig interaction from here onward.
     if (addLiquidParticle(0, x, y, p.vx * 0.55, Math.min(260, p.vy), RAIN_ORIGIN) < 0) return false;
     rain.waterCount++; rain.landed++;
+    var lake = rainLakeAt(x, y);
+    if (lake) { lake.rainCount = (lake.rainCount || 0) + 1; rain.lakeCount++; }
     if (hit) rainImpact(x, y + 2, wet, p.size);
     return true;
   }
@@ -34400,6 +34447,8 @@
     if (!worldRainEnabled || bathMode || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     dt = Math.min(0.05, Math.max(0, dt));
     rain.time += dt;
+    rainAdvanceWeather(dt);
+    rain.intensity = weather.pcp > 0.015 ? weather.pcp : 0;
     rainUpdatePlow();
     rain.scan -= dt; rain.scanDt += dt;
     if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
@@ -34411,19 +34460,20 @@
     var width = Math.max(0, right - left);
     var top = Math.max(surf - 2400, Math.min(cam.y - 24, surf - 180));
     var rate = (gpu ? 760 : 280) * Math.min(1.7, width / 1100) * rain.intensity;
-    if (sky && !rain.primed && width > 0) {
+    rainCatchLakes(dt, sky, left, right);
+    if (sky && !rain.primed && width > 0 && rain.intensity > 0) {
       // Only prime open sky. Never seed below ground or inside a sealed cave.
       var initial = Math.max(0, Math.min(700, Math.round(rate * (surf - top) / 650),
-        limit - rain.waterCount - rain.parked.length / 2 - rain.drops.length,
+        rainRoom(limit),
         LIQUID_MAX_PARTICLES - liquidCount - 4096 - rain.drops.length));
       for (var s = 0; s < initial; s++) rainSpawn(top, left, width, true);
       rain.primed = true;
     }
-    var total = rain.waterCount + rain.parked.length / 2 + rain.drops.length;
+    var total = rain.waterCount + rain.parked.length / 2 + rain.drops.length - rain.lakeCount;
     var incoming = sky ? Math.ceil(rate * dt) : 0;
     if (total + incoming > limit) rainRecycle(Math.min(80, total + incoming - limit));
-    var room = Math.max(0, limit - rain.waterCount - rain.parked.length / 2 - rain.drops.length);
-    rain.credit = sky ? Math.min(80, rain.credit + rate * dt) : 0;
+    var room = rainRoom(limit);
+    rain.credit = sky && rain.intensity > 0 ? Math.min(80, rain.credit + rate * dt) : 0;
     var births = Math.min(Math.floor(rain.credit), RAIN_DROP_CAP - rain.drops.length, room,
       Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 4096 - rain.drops.length));
     for (var b = 0; b < births; b++) rainSpawn(top, left, width, false);
@@ -34562,11 +34612,12 @@
   function rainSave() {
     if (!worldRainEnabled) return { enabled: false };
     liquidToolSync();
-    var water = rain.parked.slice(0, RAIN_WATER_CAP * 2);
-    for (var i = 0; i < liquidCount && water.length < RAIN_WATER_CAP * 2; i++) {
+    var water = rain.parked.slice(0, RAIN_STORAGE_CAP * 2);
+    for (var i = 0; i < liquidCount && water.length < RAIN_STORAGE_CAP * 2; i++) {
       if (liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
     }
-    return { enabled: true, water: water };
+    return { enabled: true, water: water, climate: { phase: rain.climate.phase,
+      elapsed: rain.climate.elapsed, duration: rain.climate.duration, strength: rain.climate.strength } };
   }
   function rainParkedInRect(x0, y0, x1, y1, take) {
     if (!worldRainEnabled) return 0;
@@ -34587,8 +34638,19 @@
   function rainRestore(data) {
     for (var n = liquidCount - 1; n >= 0; n--) if (liquidOrigin[n] === RAIN_ORIGIN) removeLiquidParticle(n);
     rainReset(!!(data && data.enabled === true));
-    if (!worldRainEnabled || !Array.isArray(data.water)) return;
-    for (var i = 0; i + 1 < data.water.length && rain.parked.length < RAIN_WATER_CAP * 2; i += 2) {
+    if (!worldRainEnabled) return;
+    var front = data.climate;
+    if (front && Number.isInteger(front.phase) && front.phase >= 0 && front.phase <= 3 &&
+        Number.isFinite(front.duration) && front.duration >= 1 && front.duration <= 300 &&
+        Number.isFinite(front.elapsed) && front.elapsed >= 0 && front.elapsed <= front.duration &&
+        Number.isFinite(front.strength) && front.strength >= 0.5 && front.strength <= 1) {
+      rain.climate = { phase: front.phase, elapsed: front.elapsed, duration: front.duration, strength: front.strength };
+      rainWeather();
+      weather.cov = weather.tcov; weather.dark = weather.tdark;
+      weather.pcp = weather.tpcp; weather.wind = weather.twind;
+    }
+    if (!Array.isArray(data.water)) return;
+    for (var i = 0; i + 1 < data.water.length && rain.parked.length < RAIN_STORAGE_CAP * 2; i += 2) {
       var x = data.water[i], y = data.water[i + 1];
       if (typeof x === 'number' && typeof y === 'number' && isFinite(x) && isFinite(y) &&
           x > 0 && x < COLS * TILE && y > -20000 && y < TOTAL_ROWS * TILE) rain.parked.push(x, y);
@@ -34619,7 +34681,9 @@
     stats: function () { return { enabled: worldRainEnabled, airborne: rain.drops.length,
       water: rain.waterCount, parked: rain.parked.length / 2, emitted: rain.emitted,
       landed: rain.landed, recycled: rain.recycled, absorbed: rain.absorbed,
-      dampEdges: rain.damp.length, intensity: rain.intensity,
+      dampEdges: rain.damp.length, intensity: rain.intensity, lakeWater: rain.lakeCount,
+      weather: ['fair', 'gathering', 'shower', 'clearing'][rain.climate.phase],
+      weatherRemaining: Math.max(0, rain.climate.duration - rain.climate.elapsed),
       backend: liquidWGPU && liquidWGPU.simActive ? 'webgpu' : 'cpu' }; }
   };
   /* ====== HORIZON ATMOSPHERE: aerial-perspective haze ====== */
@@ -34811,6 +34875,113 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(limbBuf, 0, 0, cw, dstH, 0, sy, cw, dstH);
     ctx.restore();
+  }
+  /* ---- Passing showers and finite, stone-lined rain lakes ---- */
+  function rainAdvanceWeather(dt) {
+    if (weatherForce >= 0) return; // Keep the existing weather test controls usable.
+    var front = rain.climate;
+    front.elapsed += dt;
+    if (front.elapsed < front.duration) return;
+    front.phase = (front.phase + 1) % 4;
+    front.elapsed = 0;
+    front.duration = [150 + Math.random() * 90, 20, 35 + Math.random() * 20, 20][front.phase];
+    if (front.phase === 2) front.strength = 0.65 + Math.random() * 0.2;
+    if (front.phase === 0) rain.primed = false;
+  }
+
+  function rainRoom(limit) {
+    var total = rain.waterCount + rain.parked.length / 2 + rain.drops.length;
+    return Math.max(0, Math.min(limit - (total - rain.lakeCount), RAIN_STORAGE_CAP - total));
+  }
+
+  function rainGenerateLakes() {
+    // Three small basins, with one on either side of the town. The east basin
+    // clears the bathhouse approach. Ordinary worlds keep their pond styles.
+    var sites = [Math.floor(COLS * 0.13), DECK_LEFT_COL - 28, DECK_CENTER_COL + 27];
+    for (var i = 0; i < sites.length; i++) {
+      var left = sites[i], width = 6 + Math.floor(Math.random() * 3), right = left + width - 1, depth = 2;
+      if (left < 2 || right >= COLS - 2) continue;
+      for (var r = SKY_ROWS; r < SKY_ROWS + depth; r++) {
+        world[r][left - 1] = { type: 'stone', hp: ORES.stone.hp };
+        world[r][right + 1] = { type: 'stone', hp: ORES.stone.hp };
+        for (var c = left; c <= right; c++) world[r][c] = null;
+      }
+      for (var c = left - 1; c <= right + 1; c++) world[SKY_ROWS + depth][c] = { type: 'stone', hp: ORES.stone.hp };
+      surfacePonds.push({ cL: left, cR: right, d: depth, rainFed: true, filled: false });
+      seedLakeShoreSlimes(left, right);
+    }
+  }
+
+  function rainLakeAt(x, y) {
+    if (y < SKY_ROWS * TILE) return null;
+    var col = Math.floor(x / TILE);
+    for (var p = 0; p < surfacePonds.length; p++) {
+      var lake = surfacePonds[p];
+      if (lake.rainFed && col >= lake.cL && col <= lake.cR && y < (SKY_ROWS + lake.d) * TILE) return lake;
+    }
+    return null;
+  }
+
+  function rainLakeLined(lake) {
+    // A mined floor or wall stops the offscreen catchment approximation. Real
+    // water still falls through the opening when the lake is simulated.
+    for (var c = lake.cL - 1; c <= lake.cR + 1; c++) {
+      var floor = tileAt(SKY_ROWS + lake.d, c);
+      if (!floor || floor.type !== 'stone') return false;
+    }
+    for (var r = SKY_ROWS; r < SKY_ROWS + lake.d; r++) {
+      var left = tileAt(r, lake.cL - 1), right = tileAt(r, lake.cR + 1);
+      if (!left || !right || left.type !== 'stone' || right.type !== 'stone') return false;
+    }
+    return true;
+  }
+
+  function rainStoreInLake(lake, count) {
+    var step = LIQUID_CELL * LIQUID_PDELTA, inset = step * 0.85;
+    var left = lake.cL * TILE + inset, width = (lake.cR - lake.cL + 1) * TILE - inset * 2;
+    var columns = Math.floor(width / step), floor = (SKY_ROWS + lake.d) * TILE;
+    var occupied = (lake.rainCount || 0) + (lake.otherCount || 0);
+    // Leave a little freeboard. Incoming visible drops can still overflow.
+    var capacity = columns * Math.floor((lake.d * TILE - 4) / step);
+    var room = RAIN_STORAGE_CAP - rain.waterCount - rain.parked.length / 2 - rain.drops.length;
+    count = Math.max(0, Math.min(count, capacity - occupied, room));
+    for (var n = 0; n < count; n++) {
+      var index = occupied + n;
+      rain.parked.push(left + (index % columns + 0.5) * width / columns,
+        floor - inset - Math.floor(index / columns) * step);
+    }
+    lake.rainCount = (lake.rainCount || 0) + count;
+    rain.lakeCount += count;
+    return count;
+  }
+
+  function rainSeedLakes() {
+    if (!worldRainEnabled) return;
+    for (var i = 0; i < surfacePonds.length; i++) {
+      var lake = surfacePonds[i];
+      if (!lake.rainFed) continue;
+      lake.rainCount = lake.otherCount = lake.rainCredit = 0;
+      rainStoreInLake(lake, Math.floor(surfacePondNeed(lake) * 0.16));
+    }
+  }
+
+  function rainCatchLakes(dt, sky, left, right) {
+    if (rain.intensity <= 0) return;
+    for (var i = 0; i < surfacePonds.length; i++) {
+      var lake = surfacePonds[i];
+      if (!lake.rainFed || !lake.catchable) continue;
+      var x0 = lake.cL * TILE, x1 = (lake.cR + 1) * TILE;
+      // Only the part beyond the emitted drop strip needs bookkeeping. This
+      // lets lakes fill while mining without running offscreen fluid physics.
+      var covered = sky ? Math.max(0, Math.min(x1, right) - Math.max(x0, left)) : 0;
+      var width = x1 - x0 - covered;
+      if (width <= 0) continue;
+      lake.rainCredit = (lake.rainCredit || 0) + width * (760 / 1100) * rain.intensity * dt;
+      var count = Math.floor(lake.rainCredit);
+      if (!count) continue;
+      lake.rainCredit -= count;
+      rainStoreInLake(lake, count);
+    }
   }
   // ====== RENDER: Parallax mountain layers ======
   //

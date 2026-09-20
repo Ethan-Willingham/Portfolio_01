@@ -67,8 +67,11 @@ try {
   await sleep(300);await ready();
   check('New game latches the rain setting',await game('worldRainEnabled'));
   check('rain shader warmup succeeds',await ev('!!window.__shaderWarm && window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.rain>=0'));
+  check('rain worlds start dry with three shallow stone-lined lakes',await game(`surfacePonds.length===3 && surfacePonds.every(function(p){return p.rainFed && p.d===2 && rainLakeLined(p) && p.rainCount>1000 && p.rainCount<surfacePondNeed(p)*0.2;}) && rain.drops.length===0 && rain.climate.phase===0`));
+  await screenshot('lakes-dry-start');
+  await game('weatherForce=4;weatherSetMood(4,true);rainWeather()');
   await sleep(10000);
-  console.log('Live rain:',await ev('__particleRain.stats()'));
+  console.log('Live rain:' ,await ev('__particleRain.stats()'));
   check('real rain joins the live GPU water solver',await game('liquidWGPU.simActive && rain.landed>500 && rain.waterCount>200 && rain.drops.length>80'));
   check('rendered drops stay finite and behind their collision point',await game('rain.drops.every(function(p){return isFinite(p.x+p.y+p.vx+p.vy) && !liquidWorldSolidAt(p.x,p.y);})'));
   await screenshot('rain-day');
@@ -82,7 +85,7 @@ try {
     check('live GPU storm absorbs rain and keeps finite particle state',await game(`(function(){
       liquidToolSync();var count=0;
       for(var i=0;i<liquidCount;i++){if(!isFinite(liquidX[i]+liquidY[i]+liquidVX[i]+liquidVY[i]))return false;if(liquidOrigin[i]===3)count++;}
-      return rain.absorbed>1000 && rain.damp.length<=RAIN_DAMP_CAP && count+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP;
+      return rain.absorbed>1000 && rain.damp.length<=RAIN_DAMP_CAP && count+rain.parked.length/2+rain.drops.length-rain.lakeCount<=RAIN_WATER_CAP;
     })()`));
     const frames=await ev(`new Promise(function(resolve){var a=[],last=performance.now();function tick(t){a.push(t-last);last=t;if(a.length<240)requestAnimationFrame(tick);else{a.sort(function(x,y){return x-y;});resolve({median:a[120],p95:a[228]});}}requestAnimationFrame(tick);})`);
     console.log('Frame milliseconds during sustained rain:',frames);
@@ -100,6 +103,47 @@ try {
   check('streaming does not duplicate saved rain',await game('rain.waterCount+rain.parked.length/2===savedRainCount'));
   await game('rainRestore(null)');
   check('old saves remain dry regardless of global choice',await game('!worldRainEnabled && rain.parked.length===0 && rain.drops.length===0'));
+
+  // Exercise the real save loader, weather cycle, and offscreen lake ledger.
+  await game('saveApply(rainEnvelope);weatherForce=-1;rainScan();window.savedClimate=JSON.stringify(rain.climate)');
+  check('save loader preserves finite lake identity and water',await game('surfacePonds.length===3 && surfacePonds.every(function(p){return p.rainFed;}) && rain.waterCount+rain.parked.length/2===savedRainCount'));
+  const climate=await game(`(function(){
+    rainReset(true);var first=rain.climate.duration,result=[];
+    for(var second=0;second<450;second++){
+      rainAdvanceWeather(1);rainWeather();
+      result.push({phase:rain.climate.phase,pcp:weather.tpcp});
+    }
+    return {first:first,wet:result.filter(function(s){return s.pcp>0;}).length,
+      cloud:result.some(function(s){return s.phase===1 && s.pcp===0;}),
+      dry:result.filter(function(s){return s.phase===0 && s.pcp===0;}).length};
+  })()`);
+  console.log('450 seconds of scheduled weather:',climate);
+  check('weather has a dry opening, cloud buildup, short showers and long dry spells',climate.first>=55 && climate.first<=80 && climate.wet>=35 && climate.wet<=110 && climate.dry>220 && climate.cloud);
+  await game(`rain.climate={phase:2,elapsed:17,duration:45,strength:0.75};window.weatherSave=rainSave();rainRestore(weatherSave)`);
+  check('saving mid-shower preserves its progress instead of restarting the rain',await game('rain.climate.phase===2 && rain.climate.elapsed===17 && rain.climate.duration===45 && weather.pcp>0.5'));
+  await game(`liquidCount=0;rainReset(true);rainSeedLakes();cam.x=0;cam.y=2000;rainScan();
+    window.lakeInitial=rain.parked.length/2;rain.intensity=0.7;
+    for(var n=0;n<450;n++)rainCatchLakes(0.1,false,0,0);
+    window.lakeAfterShower=rain.parked.length/2;rainScan();`);
+  check('a shower gradually fills all three offscreen lakes without running fluid physics',await game('lakeAfterShower>lakeInitial+8000 && lakeAfterShower<lakeInitial+18000 && liquidCount===0 && surfacePonds.every(function(p){return p.rainCount>surfacePondNeed(p)*0.4 && p.rainCount<surfacePondNeed(p);})'));
+  await game('rainRecycle(40000)');
+  check('rain recycling preserves stored lake water',await game('rain.parked.length/2===lakeAfterShower'));
+  await game(`window.lake=surfacePonds[0];window.beforeTake=rain.parked.length/2;
+    window.taken=liquidExtractRect(lake.cL*TILE,SKY_ROWS*TILE,(lake.cR+1)*TILE,(SKY_ROWS+lake.d)*TILE,0,500);
+    cam.x=lake.cL*TILE;cam.y=SKY_ROWS*TILE-100;updateSurfacePondStreaming();
+    for(var i=0;i<30;i++)rainScan();
+    cam.x=COLS*TILE;updateSurfacePondStreaming();rainScan();
+    cam.x=lake.cL*TILE;updateSurfacePondStreaming();for(var i=0;i<30;i++)rainScan();`);
+  check('scooping and revisiting a rain lake never refills or duplicates its water',await game('taken===500 && rain.waterCount+rain.parked.length/2===beforeTake-500'));
+  await game(`cam.y=2000;rainScan();window.beforeBreach=surfacePonds[0].rainCount;
+    world[SKY_ROWS+lake.d][lake.cL]=null;rainScan();rain.intensity=1;
+    for(var i=0;i<100;i++)rainCatchLakes(0.1,false,0,0);`);
+  check('mining the stone lining stops offscreen catchment in that lake',await game('!lake.catchable && lake.rainCount===beforeBreach'));
+  await game(`world[SKY_ROWS+lake.d][lake.cL]={type:'stone',hp:ORES.stone.hp};rainScan();
+    for(var i=0;i<2000;i++)rainCatchLakes(0.1,false,0,0);window.fullLakes=rain.parked.length/2;
+    window.largeSave=rainSave();rainRestore(largeSave);rainScan();`);
+  check('full lake storage stays bounded and saves more than the old 6000-particle limit',await game('fullLakes>RAIN_WATER_CAP && fullLakes<RAIN_STORAGE_CAP && rain.waterCount+rain.parked.length/2===fullLakes'));
+  await game('weatherForce=4;weatherSetMood(4,true)');
 
   // Controlled collision fixture: a solid surface, one open shaft, and a
   // sealed void below an intact roof. Disable spawning while stepping physics.
@@ -139,13 +183,13 @@ try {
     for(var i=0;i<3;i++)addLiquidParticle(i===2?2:0,rc*TILE+16,sy-2,0,0,i);
     for(var i=0;i<100;i++){addLiquidParticle(0,rc*TILE-2,sy+16,0,0,3);addLiquidParticle(0,rc*TILE+16,sy+TILE+2,0,0,3);}
     rainScan(10);`);
-  check('only rain touching dirt drains, including walls and ceilings',await game('liquidCount===403 && rain.absorbed===1200'));
-  check('stone, foundations, ore and falling water retain their particles',await game('rain.waterCount===400'));
+  check('rain touching dirt or foundation drains, including walls and ceilings',await game('liquidCount===303 && rain.absorbed===1300'));
+  check('stone, ore and falling water retain their particles',await game('rain.waterCount===300'));
   check('dirt absorption preserves ordinary water, pond water and minerals',await game('(function(){var count=0;for(var i=0;i<liquidCount;i++)if(liquidOrigin[i]!==3)count++;return count===3;})()'));
   await game(`var parkedCol=rc+40;world[SKY_ROWS][parkedCol]={type:'dirt'};
     for(var i=0;i<100;i++)rain.parked.push(parkedCol*TILE+16,sy-2);
     rainScan(10);`);
-  check('offscreen dirt absorbs parked rain without resurrecting it',await game('rain.parked.length===0 && liquidCount===403 && rain.absorbed===1300'));
+  check('offscreen dirt absorbs parked rain without resurrecting it',await game('rain.parked.length===0 && liquidCount===303 && rain.absorbed===1400'));
   await game('rain.time+=7;rainScan()');
   check('damp marks fade away and release their cache entries',await game('rain.damp.length===0 && Object.keys(rain.dampCells).length===0'));
   await game('rainDampEdge(SKY_ROWS,rc,0,rc*TILE+4,sy);world[SKY_ROWS][rc]=null;rainScan()');
@@ -195,10 +239,10 @@ try {
   await game(`rainReset(true);cam.y=sy-280;rain.parked=[];
     for(var i=0;i<RAIN_WATER_CAP;i++)rain.parked.push(10,-4000);
     updateParticleRain(1/60);`);
-  check('loading a full reservoir cannot overfill it when priming the sky',await game('rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP'));
+  check('loading a full reservoir cannot overfill it when priming the sky',await game('rain.waterCount+rain.parked.length/2+rain.drops.length-rain.lakeCount<=RAIN_WATER_CAP'));
   await game(`
     for(var step=0;step<1800;step++)updateParticleRain(1/60);`);
-  check('sustained storm stays inside the finite rain reservoir',await game('rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP && rain.drops.length<=RAIN_DROP_CAP && rain.recycled>100'));
+  check('sustained storm stays inside the finite rain reservoir',await game('rain.waterCount+rain.parked.length/2+rain.drops.length-rain.lakeCount<=RAIN_WATER_CAP && rain.drops.length<=RAIN_DROP_CAP && rain.recycled>100'));
   check('full shared solver does not erase or fabricate landed water',await game(`(function(){var count=liquidCount;liquidCount=LIQUID_MAX_PARTICLES;var landed=rain.landed;var ok=!rainLand({vx:0,vy:600,size:0.5},100,100,false,true)&&rain.landed===landed;liquidCount=count;return ok;})()`));
   check('CPU fallback has a lower bounded rain budget',await game(`(function(){var gpu=liquidWGPU;liquidWGPU=null;rainReset(true);rain.primed=true;for(var f=0;f<600;f++)updateParticleRain(1/60);var ok=rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_CPU_CAP;liquidWGPU=gpu;return ok;})()`));
   check('malformed saved rain is rejected and bounded',await game("rainRestore({enabled:true,water:[NaN,0,2,Infinity,-1,10,20,30,'40',50]});rain.parked.length===2 && rain.parked[0]===20"));
@@ -206,6 +250,7 @@ try {
   // Reload a clean live scene for mobile layout and performance sampling.
   await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&rain=1&tod=0.35`});await ready();
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'))");
+  await game('weatherForce=4;weatherSetMood(4,true);rainWeather()');
   await sleep(2500);
   const timings=await game(`(function(){var samples=[];for(var n=0;n<200;n++){var t=performance.now();updateParticleRain(1/60);samples.push(performance.now()-t);}samples.sort(function(a,b){return a-b;});return {p50:samples[100],p95:samples[190],max:samples[199]};})()`);
   console.log('Rain CPU update milliseconds:',timings);
@@ -231,7 +276,7 @@ try {
     await screenshot('rain-plow');
     await game('keys.ArrowLeft=false');
     check('live GPU driving still gathers a small moving crest',await game('player.x<plowStart-100 && plowSamples.some(function(s){return s.ground && s.front>=16 && s.moving>=8 && s.height>=3;})'));
-    check('driving stays within the original small rain budget',await game('rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP'));
+    check('driving stays within the original small rain budget',await game('rain.waterCount+rain.parked.length/2+rain.drops.length-rain.lakeCount<=RAIN_WATER_CAP'));
     await sleep(2500);await screenshot('rain-plow-settled');
   }
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -265,6 +310,26 @@ try {
     }
     await screenshot('rain-deep-puddle-drained');
     check('a sleeping 2000-particle puddle drains completely into dirt',await game('liquidCount<20'));
+  }
+  if (process.argv.includes('--lakes')) {
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&rain=1&tod=0.35`});await ready();
+    await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'))");
+    await game(`window.lake=surfacePonds[1];tutorialDone=true;
+      player.x=(lake.cL-3)*TILE;player.y=SKY_ROWS*TILE-PLAYER_H;player.vx=player.vy=0;cam.snap=true;updateCamera();`);
+    await sleep(4000);await screenshot('lake-before-shower');
+    const low=await game('liquidToolSync();rainScan();lake.rainCount');
+    await game(`liquidToolSync();rainScan();rain.intensity=0.7;
+      for(var f=0;f<450;f++)rainCatchLakes(0.1,false,0,0);
+      weatherForce=4;weatherSetMood(4,true);`);
+    await sleep(6500);await screenshot('lake-after-shower');
+    const full=await game(`liquidToolSync();rainScan();({count:lake.rainCount,capacity:surfacePondNeed(lake),stats:__particleRain.stats()})`);
+    console.log('Lake before and after a shower:',{low,...full});
+    check('live GPU lake visibly rises after rainfall',full.count>low*2 && full.count<full.capacity);
+    await game('weatherForce=0;weatherSetMood(0,false)');
+    await sleep(4000);await screenshot('lake-clearing');
+    const cost=await game(`(function(){var a=[];for(var i=0;i<200;i++){var t=performance.now();updateParticleRain(1/60);a.push(performance.now()-t);}a.sort(function(a,b){return a-b;});return {median:a[100],p95:a[190],max:a[199]};})()`);
+    console.log('Rain update with partly filled lakes, milliseconds:',cost);
   }
   console.log('Errors:',JSON.stringify(errors));
   check('no runtime or shader errors',errors.length===0);

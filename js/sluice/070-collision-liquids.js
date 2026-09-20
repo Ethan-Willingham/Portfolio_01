@@ -338,6 +338,8 @@
   // settling when I roll up"). Spawning at rest density removes the
   // transient entirely; the settled level is unchanged.
   function fillSurfacePond(pond) {
+    // Finite rain lakes stream their saved particles in rainScan, never refill.
+    if (pond.rainFed) return true;
     var need = surfacePondNeed(pond);
     if (liquidCount + need > LIQUID_MAX_PARTICLES) return false;
     var wo = liquidSurfaceOriginForType('water');
@@ -372,6 +374,7 @@
     return true;
   }
   function drainSurfacePond(pond) {
+    if (pond.rainFed) return;
     var so = liquidSurfaceOriginForType('water');     // surface-water origin (1)
     var wx0 = pond.cL * TILE, wx1 = (pond.cR + 1) * TILE;
     for (var i = liquidCount - 1; i >= 0; i--) {

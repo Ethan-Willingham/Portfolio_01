@@ -11,12 +11,12 @@ solver when it strikes terrain, the rig, or a liquid surface. Drops pass
 through open shafts and stop at solid roofs. The scoop can collect the
 resulting water, and it can fill a bath or mix with mineral liquids.
 
-Rainwater touching dirt soaks away gradually. Only a six-pixel contact film
+Rainwater touching dirt or town foundations soaks away gradually. Only a six-pixel contact film
 drains, including along shaft walls and ceilings; water above it still falls
 and spreads through the real solver. A small darkened edge and a receding
-glint show the damp soil, then fade over six seconds. Stone, ore and foundation
-blocks do not absorb it. Ponds, minerals and water already collected and poured
-by the player keep their usual behavior.
+glint show the damp soil, then fade over six seconds. Foundations use the same
+absorption rate without the soil stain. Stone and ore retain water. Minerals
+and water already collected and poured by the player keep their usual behavior.
 
 Driving along the ground gathers a small bow wave. At speeds above 12 pixels
 per second, the rig protects at most 96 rainwater particles within 48 pixels
@@ -34,17 +34,39 @@ impacts, pooling and flow. The little impact crowns and expanding rings are
 visual cues; they add no extra water. Droplet trails run behind their heads,
 so the renderer does not paint a trail through the ground after a collision.
 
-The storm has slow changes in intensity, smaller travelling gusts, three
-drop-size bands, and the existing overcast cloud palette and rain ambience.
-It produces rain even in the cold starting biome. Ordinary worlds keep their
-existing weather. Pause freezes the storm, and the banya has its own weather.
+New rain worlds open with 55 to 80 seconds of fair weather, then 20 seconds
+of gathering clouds. Showers last 35 to 55 seconds, easing in and out over
+seven seconds with smaller travelling gusts. Clearing clouds last 20 seconds;
+later fair spells last 150 to 240 seconds. The existing cloud palette, wind
+and rain ambience follow the same front. It rains even in the cold starting
+biome. Ordinary worlds keep their existing weather. Pause freezes the weather,
+and the banya has its own weather. The current phase and elapsed time persist.
+The development override `?wmood=4` locks steady rain for testing.
+
+Rain worlds generate three small lakes, six to eight tiles wide and two deep.
+Stone walls and floors retain water while neighboring dirt absorbs it. Each
+starts at 16% of its nominal capacity, about ten pixels of water. The near-town
+lakes sit outside the station and bathhouse approach. This layout replaces the
+ordinary pond-style choice for rain worlds; non-rain worlds keep that choice.
+Existing worlds retain their saved terrain and pond behavior.
+
+These lakes are finite. Scooping lowers them, and streaming or reloading cannot
+refill them. Stored lake water is excluded from rain recycling. Offscreen
+basins collect the same shower using width and intensity accounting, placing
+water at rest spacing without running fluid physics. Only the portion outside
+the emitted rain strip receives this accounting, to avoid counting visible rain
+twice. A broken stone wall or floor disables offscreen catchment until repaired;
+visible water still uses the ordinary solver and can escape through the breach.
+Full offscreen basins stop collecting at their brim. Visible rain can overflow
+onto the absorbent soil. Poured liquid also counts toward available capacity.
 
 ## Limits of the experiment
 
 This is a local, finite water cycle, not a planet-wide flood simulation.
 Rain is generated near the visible sky. Up to 1,800 drops can be airborne;
-the rain reservoir targets 6,000 particles on WebGPU, or 2,400 with the CPU
-fallback. At capacity, offscreen rain is recycled first, followed by gradual
+loose rain targets 6,000 particles on WebGPU, or 2,400 with the CPU
+fallback. Lake water has a separate finite allowance within a 40,000-particle
+hard storage cap for all settled rain and airborne drops. At capacity, offscreen rain is recycled first, followed by gradual
 recycling of live rain. Ponds, mineral deposits, poured water and water already
 collected into the scoop are never recycled by this system. The storm leaves
 4,096 slots free in the shared solver for other liquids.
@@ -61,12 +83,13 @@ plane are scenery; their painted roofs do not create new liquid colliders.
 ## Implementation and checks
 
 `js/sluice/157-particle-rain.js` owns the simulation, drawing, persistence,
-residency and budget. Rain uses liquid origin 3; origin 0 is persistent world
+residency and budget. `158-rain-lakes.js` owns the front schedule, lake generation
+and offscreen catchment. Rain uses liquid origin 3; origin 0 is persistent world
 and poured liquid, and origins 1 and 2 are streamed pond water and oil.
 All adds and removals use the existing ordered CPU/GPU mutation journal.
 `window.__particleRain.stats()` exposes counts without enabling cheats.
 
-Dirt contact reuses the existing 160 ms occupancy scan and liquid readback.
+Dirt and foundation contact reuse the existing 160 ms occupancy scan and liquid readback.
 Its removal probability is `1 - exp(-5.5 * elapsedSeconds)`, independent of
 frame rate. It checks only rain, using at most four tile probes per candidate.
 The damp effect merges contacts into eight-pixel face segments with a hard
@@ -104,3 +127,10 @@ one second at 30, 60 and 144 FPS. A deeper sleeping puddle had only 7 of its
 none after four seconds. Rain's CPU update measured 0.1 ms median and 0.3 ms
 p95 in the final run, excluding GPU solver and rendering cost. These are local
 measurements, not a performance guarantee for other devices.
+
+Add `--lakes` for before/after/clearing lake screenshots and a live GPU check
+that rainfall raises the water. The standard run also checks the dry opening,
+front schedule, mid-shower persistence, offscreen filling, finite lake save/load,
+scooping and revisiting, lining breaches, protected storage, and foundation
+absorption. The v28.18 run passed with no runtime or shader errors; the original
+plow and deep-puddle drainage checks also passed.

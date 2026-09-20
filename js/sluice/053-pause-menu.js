@@ -150,9 +150,12 @@
             extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
           }[value] || 'Custom graphics settings.';
         }
-        if (key === 'rain') document.getElementById('gm-rain-note').textContent =
-          'Wind-driven water fills hollows and runs into open mines. Experimental.' +
+        if (key === 'rain') {
+          document.getElementById('gm-ponds-note').textContent = pondsNote(read('sluice.opt.ponds') || 'regular');
+          document.getElementById('gm-rain-note').textContent =
+          'Passing showers feed three small stone-lined lakes. New lakes start low. Experimental.' +
           ((value === '1') === worldRainEnabled ? ' This world: ' + (worldRainEnabled ? 'on.' : 'off.') : ' Applies to your next new game.');
+        }
         if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }
       for (var i = 0; i < pairs.length; i++) {
@@ -176,6 +179,7 @@
         wide: 'Huge ponds, two tiles deep and very wide. Heavier on graphics.',
         deep: 'Narrow ponds, 13 to 16 tiles deep. Heavier on graphics.'
       };
+      if (worldRainEnabled || window.SluiceOptions.particleRain) return (looks[value] || looks.regular) + ' Particle rain uses three small rain-fed lakes instead.';
       var current = looks[worldPondStyle] ? worldPondStyle : 'regular';
       return (looks[value] || looks.regular) +
         (value === current ? ' This world has them.' : ' Applies to your next new game.');

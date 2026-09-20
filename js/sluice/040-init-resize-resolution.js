@@ -31,8 +31,9 @@
     // need the override to survive this reset.
     timeOfDay = (TOD_BOOT >= 0) ? TOD_BOOT : TIME_OF_DAY_START;
     moonPhase = MOON_PHASE_START;
-    generateWorld();
     rainReset(rainNewWorldEnabled());
+    generateWorld();
+    rainSeedLakes();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;

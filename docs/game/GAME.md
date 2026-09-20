@@ -51,8 +51,9 @@ current pouring controls live in `075-liquid-tool.js` and the Controls menu.
 ## Build & run
 
 **Particle rain experiment:** pause > Options > World > Particle rain, then
-start a new game. Wind-driven drops become collectable water, leave small pools,
-soak into dirt, and fall down open shafts. The choice persists with the world. The bounded
+start a new game. Passing showers feed three small stone-lined lakes that start
+with a shallow layer of water. Wind-driven drops become collectable water, soak
+into dirt and town foundations, and fall down open shafts. The choice persists with the world. The bounded
 rain reservoir and verification harness are described in [PARTICLE_RAIN.md](PARTICLE_RAIN.md).
 
 The game is ONE IIFE split into ordered fragments in `js/sluice/NNN-*.js`, concatenated into

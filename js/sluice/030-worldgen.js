@@ -213,66 +213,69 @@
     // (saves without it mean an old 1-deep world: default 1 everywhere).
     surfacePonds.length = 0;
     worldPondStyle = worldPondStyleForNewWorld();
-    var _pondStyle = POND_STYLES[worldPondStyle];
-    var _pondBig = worldPondStyle !== 'regular';
-    var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
-    var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
-    // Keep the station and the bathhouse approach on solid ground.
-    var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_CENTER_COL + 25;
-    var _px = _pondLo + ((Math.random() * 30) | 0);
-    while (_px < _pondHi - 12) {
-      // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
-      // relaunch). Density stays FULL (655/tile, owner-locked); we shrink the
-      // TILE COUNT so the one streamed-live lake is light. Was 9-14 x 5-8 (up to
-      // ~65k particles); now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x
-      // lighter). See TUNING.md. Wide: 40-48 x 2. Deep: 6-7 x 13-16, capped at
-      // 98 tiles.
-      var _pw = _pondStyle.wMin + ((Math.random() * _pondStyle.wSpan) | 0);
-      var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
-      if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
-      var _pr = _px + _pw - 1;
-      // A big pond that lands on the bathhouse or station slides past the deck instead of
-      // being dropped, so the town keeps a pond on each side.
-      if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
-        _px = _pondDeckR + 1;
-        _pr = _px + _pw - 1;
-      }
-      if (_pr < _pondHi && !(_pr >= _pondDeckL && _px <= _pondDeckR) &&
-          world[SKY_ROWS] && world[SKY_ROWS + _pd]) {
-        // carve the deep pit: stone walls down both sides, stone floor,
-        // hollow the full water body.
-        for (var _wr = SKY_ROWS; _wr < SKY_ROWS + _pd; _wr++) {
-          if (!world[_wr]) continue;
-          world[_wr][_px - 1] = { type: 'stone', hp: ORES.stone.hp };       // left wall
-          world[_wr][_pr + 1] = { type: 'stone', hp: ORES.stone.hp };       // right wall
-          for (var _cc = _px; _cc <= _pr; _cc++) world[_wr][_cc] = null;    // hollow the water body
+    if (worldRainEnabled) rainGenerateLakes();
+    else {
+      var _pondStyle = POND_STYLES[worldPondStyle];
+      var _pondBig = worldPondStyle !== 'regular';
+      var _pondLo = SINGLE_TOWN ? 4 : OCEAN_WIDTH + 4;            // single town has no ocean caps to skip
+      var _pondHi = SINGLE_TOWN ? COLS - 4 : COLS - OCEAN_WIDTH - 4;
+      // Keep the station and the bathhouse approach on solid ground.
+      var _pondDeckL = DECK_LEFT_COL - 8, _pondDeckR = DECK_CENTER_COL + 25;
+      var _px = _pondLo + ((Math.random() * 30) | 0);
+      while (_px < _pondHi - 12) {
+        // Regular: small lakes, sized for LOW-END GPUs (Phase C, free-forever
+        // relaunch). Density stays FULL (655/tile, owner-locked); we shrink the
+        // TILE COUNT so the one streamed-live lake is light. Was 9-14 x 5-8 (up to
+        // ~65k particles); now 6-9 x 3-4 capped at 24 tiles (~15.7k particles, ~4x
+        // lighter). See TUNING.md. Wide: 40-48 x 2. Deep: 6-7 x 13-16, capped at
+        // 98 tiles.
+        var _pw = _pondStyle.wMin + ((Math.random() * _pondStyle.wSpan) | 0);
+        var _pd = _pondStyle.dMin + ((Math.random() * _pondStyle.dSpan) | 0);
+        if (_pw * _pd > _pondStyle.maxTiles) _pd = (_pondStyle.maxTiles / _pw) | 0;   // budget clamp: area x 655/tile
+        var _pr = _px + _pw - 1;
+        // A big pond that lands on the bathhouse or station slides past the deck instead of
+        // being dropped, so the town keeps a pond on each side.
+        if (_pondBig && _pr >= _pondDeckL && _px <= _pondDeckR) {
+          _px = _pondDeckR + 1;
+          _pr = _px + _pw - 1;
         }
-        for (var _fc = _px - 1; _fc <= _pr + 1; _fc++) world[SKY_ROWS + _pd][_fc] = { type: 'stone', hp: ORES.stone.hp }; // floor
-        surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
-        seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
+        if (_pr < _pondHi && !(_pr >= _pondDeckL && _px <= _pondDeckR) &&
+            world[SKY_ROWS] && world[SKY_ROWS + _pd]) {
+          // carve the deep pit: stone walls down both sides, stone floor,
+          // hollow the full water body.
+          for (var _wr = SKY_ROWS; _wr < SKY_ROWS + _pd; _wr++) {
+            if (!world[_wr]) continue;
+            world[_wr][_px - 1] = { type: 'stone', hp: ORES.stone.hp };       // left wall
+            world[_wr][_pr + 1] = { type: 'stone', hp: ORES.stone.hp };       // right wall
+            for (var _cc = _px; _cc <= _pr; _cc++) world[_wr][_cc] = null;    // hollow the water body
+          }
+          for (var _fc = _px - 1; _fc <= _pr + 1; _fc++) world[SKY_ROWS + _pd][_fc] = { type: 'stone', hp: ORES.stone.hp }; // floor
+          surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
+          seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
+        }
+        _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
       }
-      _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
-    }
-    // Keep the selected pond style intact. A naturally generated east lake
-    // already supplies the bathhouse; replacing its metadata with a 6x3 source
-    // would strand the rest of a wide or deep excavation without water.
-    var eastSource = false;
-    for (var pond = 0; pond < surfacePonds.length; pond++) {
-      if (surfacePonds[pond].cL > DECK_RIGHT_COL + 2) { eastSource = true; break; }
-    }
-    var sourceL = _pondDeckR + 1;
-    var sourceW = _pondStyle.wMin, sourceD = _pondStyle.dMin;
-    if (sourceW * sourceD > _pondStyle.maxTiles) sourceD = Math.floor(_pondStyle.maxTiles / sourceW);
-    var sourceR = sourceL + sourceW - 1;
-    if (!eastSource && sourceR + 1 < _pondHi && world[SKY_ROWS + sourceD]) {
-      for (var sy = SKY_ROWS; sy < SKY_ROWS + sourceD; sy++) {
-        world[sy][sourceL - 1] = { type: 'stone', hp: ORES.stone.hp };
-        world[sy][sourceR + 1] = { type: 'stone', hp: ORES.stone.hp };
-        for (var sx = sourceL; sx <= sourceR; sx++) world[sy][sx] = null;
+      // Keep the selected pond style intact. A naturally generated east lake
+      // already supplies the bathhouse; replacing its metadata with a 6x3 source
+      // would strand the rest of a wide or deep excavation without water.
+      var eastSource = false;
+      for (var pond = 0; pond < surfacePonds.length; pond++) {
+        if (surfacePonds[pond].cL > DECK_RIGHT_COL + 2) { eastSource = true; break; }
       }
-      for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
-      surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
-      seedLakeShoreSlimes(sourceL, sourceR);
+      var sourceL = _pondDeckR + 1;
+      var sourceW = _pondStyle.wMin, sourceD = _pondStyle.dMin;
+      if (sourceW * sourceD > _pondStyle.maxTiles) sourceD = Math.floor(_pondStyle.maxTiles / sourceW);
+      var sourceR = sourceL + sourceW - 1;
+      if (!eastSource && sourceR + 1 < _pondHi && world[SKY_ROWS + sourceD]) {
+        for (var sy = SKY_ROWS; sy < SKY_ROWS + sourceD; sy++) {
+          world[sy][sourceL - 1] = { type: 'stone', hp: ORES.stone.hp };
+          world[sy][sourceR + 1] = { type: 'stone', hp: ORES.stone.hp };
+          for (var sx = sourceL; sx <= sourceR; sx++) world[sy][sx] = null;
+        }
+        for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
+        surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
+        seedLakeShoreSlimes(sourceL, sourceR);
+      }
     }
     mineralLiquidGenerate(false);
   }
