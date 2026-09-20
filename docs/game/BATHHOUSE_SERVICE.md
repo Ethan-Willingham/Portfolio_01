@@ -120,7 +120,7 @@ limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak 
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Bath-born residents (v28.47)
+## Bath-born residents (v28.51)
 
 Five soft residents appear around the starting town for playtesting, including
 on existing saves. A completed warm bath changes a rocky guest into the same
@@ -130,10 +130,16 @@ stays in the world, and saves separately from the rocky population. Reloading
 does not add another five. The payment still happens once per completed bath.
 
 These are 37- or 61-point deformable meshes in the existing XPBD solver. Their
-lobed resting shape, spring network and pressure constraints govern collisions
+softly irregular radial rest shape, spring network and pressure constraints govern collisions
 with terrain, the rig, other gel bodies, and rocky guests. Softer edge and shear
 constraints and lower internal damping let them slump, stretch, and wobble.
 A travelling muscle wave changes local spring lengths and the target shape.
+The material has no authored feet or permanently upright face. After a roll or
+throw, the next supporting surface becomes its underside; the muscle target
+retains that material orientation. At a ledge, leading skin grips the top and
+curls the rest over relative to its current pose. It does not reset to birth-up.
+Each resident smoothly varies wave speed, amplitude, and length over time, with
+independently timed rests, occasional turns, and a gradual start to each stride.
 Patches of skin grip fixed terrain contacts during their contraction and release
 during their forward stroke; this contact drives crawling. The muscles have
 zero net translation in free space. At a wall the same wave turns upward, then
@@ -150,8 +156,11 @@ active; cancel, pause, focus loss, and entering the banya release it. The liquid
 tool and mobile driving controls retain their input. Drive into the residents,
 land on them, or brush them with jet exhaust to play without dragging.
 
-Pastel gel, highlights, blinks, smiles, and startled faces follow the deforming
-mesh. Pond water provides buoyancy; the real boundary displaces WebGPU water, with contour collision in the CPU fallback.
+Pastel gel and internal highlights follow the deforming mesh. Each resident has
+one cream googly eye with a loose dark pupil, no mouth or cheeks. The pupil lags
+local body acceleration and rebounds inside its cup, with small glances and
+brief blinks. The eye compresses with the central gel and stays readable through
+any roll. Pond water provides buoyancy; the real boundary displaces WebGPU water, with contour collision in the CPU fallback.
 Residents do not dissolve. Off-camera bodies use the existing simulation culling.
 The five starting residents do not count toward either rocky-visitor limit.
 
@@ -162,7 +171,10 @@ The five starting residents do not count toward either rocky-visitor limit.
 30/60/144 Hz impacts and launches, mouse/touch input, water, guest conversion,
 and full-game save restoration. `node tools/surface-slime-crawl.mjs` verifies
 climbing in both directions at those frame rates, loss of propulsion with the
-wave disabled, wall knock-off, jets, and mined handholds. Screenshots go to `/tmp`.
+wave disabled, wall knock-off, jets, and mined handholds.
+`node tools/surface-slime-orientation.mjs` checks recovery from quarter, half,
+and arbitrary rolls, rolled ledge climbs, naturally changing gaits, and the
+pupil's inertial response and containment. Screenshots go to `/tmp`.
 
 ## Sky visitor physics and appearance (v28.34)
 

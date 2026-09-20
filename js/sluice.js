@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.50';
+  var GAME_VERSION = 'v28.51';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -67503,20 +67503,49 @@
   function surfaceSlimeMotorInit(b) {
     var m = b.surfaceSlime;
     m.phase = m.seed * Math.PI * 2; m.angle = 0; m.drive = false;
-    m.detach = 0; m.climb = false; m.crest = 0; m.anchors = new Array(b.n);
+    m.detach = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.anchors = new Array(b.n);
     m.waveCos = new Float32Array(b.n);
+    m.materialAngle = 0; m.poseAngle = 0; m.reorient = true; m.power = 0;
+    m.rng = ((m.seed * 1000000000) ^ Math.imul(m.id | 0, 2654435761)) >>> 0;
+    m.gaitSpeed = 1; m.gaitAmplitude = 1; m.gaitLength = 2.8;
+    surfaceSlimeChooseGait(m);
     b.muscleX = Float64Array.from(b.qx); b.muscleY = Float64Array.from(b.qy);
     b.muscleRest = Float32Array.from(b.sRest);
     b.materialSoftness = 3.5;
     b.materialDamping = 0.28;
   }
 
+  function surfaceSlimeRandom(m) {
+    m.rng = (Math.imul(m.rng, 1664525) + 1013904223) >>> 0;
+    return m.rng / 4294967296;
+  }
+
+  function surfaceSlimeChooseGait(m) {
+    m.gaitIn = 1.8 + surfaceSlimeRandom(m) * 3.2;
+    m.targetSpeed = 0.82 + surfaceSlimeRandom(m) * 0.40;
+    m.targetAmplitude = 0.84 + surfaceSlimeRandom(m) * 0.30;
+    m.targetLength = 2.45 + surfaceSlimeRandom(m) * 0.65;
+  }
+
+  function surfaceSlimeMaterialFrame(b) {
+    // Fit the current rotation of the material, never a world-up target.
+    // Any point can become a foot after a roll; material identity is retained.
+    var m = b.surfaceSlime, real = 0, imag = 0;
+    for (var i = 0; i < b.n; i++) {
+      var x = b.px[i] - b.cx, y = b.py[i] - b.cy;
+      real += b.qx[i] * x + b.qy[i] * y;
+      imag += b.qx[i] * y - b.qy[i] * x;
+    }
+    var angle = Math.atan2(imag, real), delta = angle - m.materialAngle;
+    m.materialAngle += Math.atan2(Math.sin(delta), Math.cos(delta));
+  }
+
   function surfaceSlimeDetach(b, seconds) {
     var m = b && b.surfaceSlime;
     if (!m) return;
     m.detach = Math.max(m.detach || 0, seconds || 1.3);
-    m.anchors.fill(null); m.contacts = 0; m.climb = false; m.crest = 0; m.drive = false;
-    m.state = 'tumble'; m.timer = m.detach;
+    m.anchors.fill(null); m.contacts = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.drive = false;
+    m.state = 'tumble'; m.timer = m.detach; m.reorient = true; m.power = 0;
     b.sleeping = false; b.sleepFrames = 0;
   }
 
@@ -67540,27 +67569,48 @@
 
   function surfaceSlimeThink(b, dt) {
     var m = b.surfaceSlime;
+    surfaceSlimeMaterialFrame(b);
+    m.gaitIn -= dt;
+    if (m.gaitIn <= 0) surfaceSlimeChooseGait(m);
+    var blend = 1 - Math.exp(-dt * 1.6);
+    m.gaitSpeed += (m.targetSpeed - m.gaitSpeed) * blend;
+    m.gaitAmplitude += (m.targetAmplitude - m.gaitAmplitude) * blend;
+    m.gaitLength += (m.targetLength - m.gaitLength) * blend;
     m.detach = Math.max(0, m.detach - dt);
     m.crest = Math.max(0, m.crest - dt);
-    var speed = Math.hypot(b.vx || 0, b.vy || 0) * JELLO_TIMESCALE;
     var touched = b._plyMs && b._plyMs !== m.lastPlayerMs;
     m.lastPlayerMs = b._plyMs;
-    if (b._grabbed || b._carried || (touched && (m.climb || speed > 35))) {
+    if (b._grabbed || b._carried || touched) {
       surfaceSlimeDetach(b, 1.1);
     }
+    if (!m.drive || m.reorient) m.poseAngle = m.materialAngle;
     if (m.detach > 0) { m.drive = false; return; }
-    if (m.timer <= 0 || m.state === 'tumble') {
-      m.state = m.state === 'crawl' ? 'idle' : 'crawl';
-      m.timer = m.state === 'crawl' ? 5 + m.seed * 4 : 0.8 + m.seed;
-      if (!m.climb && Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
-    }
-    var wall = null;
+    var wall = null, supported = false, crestTop = null;
     for (var k = 0; k < b.ringN; k++) {
       var p = b.ring[k];
-      if ((b.px[p] - b.cx) * m.dir < 0) continue;
       var near = surfaceSlimeTerrainNear(b.px[p], b.py[p], 12);
+      if (!near) continue;
+      if (near.ny < -0.5 || near.nx * m.dir < -0.7) supported = true;
+      if (m.climb && near.c === m.wallCol && near.ny < -0.55 && !tileAt(near.r - 1, near.c) &&
+          b.cy < near.y + m.radius * 0.6) crestTop = near.y;
       // A rim brushing a top corner is not a new vertical wall to climb.
-      if (near && near.nx * m.dir < -0.7 && near.r * TILE < b.cy + m.radius * 0.2) { wall = near; break; }
+      if ((b.px[p] - b.cx) * m.dir >= 0 && near.nx * m.dir < -0.7 &&
+          near.r * TILE < b.cy + m.radius * 0.2) wall = near;
+    }
+    if (m.reorient) {
+      // Keep tumbling in the air. The first new support becomes the base;
+      // there is no return to the points that were underneath at birth.
+      if (!supported && !m.wet) { m.drive = false; return; }
+      m.poseAngle = m.materialAngle; m.reorient = false; m.angle = wall ? -m.dir * Math.PI / 2 : 0;
+      m.anchors.fill(null);
+    }
+    if (m.timer <= 0 || m.state === 'tumble') {
+      m.state = m.state === 'crawl' ? 'idle' : 'crawl';
+      m.timer = m.state === 'crawl' ? 3.5 + surfaceSlimeRandom(m) * 5 : 0.35 + surfaceSlimeRandom(m) * 1.6;
+      if (!m.climb) {
+        if (Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
+        else if (m.state === 'crawl' && surfaceSlimeRandom(m) < 0.14) m.dir *= -1;
+      }
     }
     if (wall && !m.crest && m.state !== 'idle') {
       m.climb = true; m.wallCol = wall.c;
@@ -67571,8 +67621,10 @@
       // onto the horizontal surface. No centroid path or ledge teleport.
       var row = Math.floor(b.cy / TILE);
       var clearTop = !tileAt(row, m.wallCol) && !tileAt(row - 1, m.wallCol);
-      if (clearTop && b.cy < Math.floor((b.bboxB + 8) / TILE) * TILE - m.radius * 0.32) {
-        m.climb = false; m.crest = 1.5; m.state = 'crawl'; m.timer = 4;
+      if (crestTop !== null || (clearTop && b.cy < Math.floor((b.bboxB + 8) / TILE) * TILE - m.radius * 0.32)) {
+        m.crestTop = crestTop === null ? Math.floor((b.bboxB + 8) / TILE) * TILE : crestTop;
+        m.climb = false; m.crest = 3.5; m.topGrip = false;
+        m.crestTurn = m.poseAngle; m.state = 'crawl'; m.timer = 4;
       }
       if (m.climb) m.state = 'climb';
     }
@@ -67587,22 +67639,39 @@
 
   function surfaceSlimeMuscleStep(b, h) {
     var m = b.surfaceSlime, dt = h / JELLO_TIMESCALE;
-    var active = m.drive && !m.detach && !b._grabbed;
-    m.phase += (active ? SURFACE_SLIME_WAVE_SPEED : 2.6) * dt;
-    var desiredAngle = m.climb ? -m.dir * Math.PI / 2 : 0;
+    var active = m.drive && !m.detach && !b._grabbed && !m.reorient;
+    m.power += ((active ? 1 : 0) - m.power) * Math.min(1, dt * 5);
+    var tempo = m.gaitSpeed * (1 + 0.07 * Math.sin(m.age * 0.91 + m.seed * 9));
+    m.phase += (active ? SURFACE_SLIME_WAVE_SPEED * tempo : 2.6) * dt;
+    var desiredAngle = m.climb ? -m.dir * Math.PI / 2 :
+      m.crest && b.cy > m.crestTop - m.radius * 0.35 ? -m.dir * Math.PI / 4 : 0;
     m.angle += (desiredAngle - m.angle) * Math.min(1, dt * 4);
     var ca = Math.cos(m.angle), sa = Math.sin(m.angle);
-    var amplitude = m.radius * (active ? SURFACE_SLIME_WAVE : 0.065);
+    // Once the leading skin has a real handhold on top, curl around it.
+    // The turn is relative to the current material pose, never back to birth.
+    if (m.crest && m.topGrip) {
+      m.poseAngle += skySlimeClamp(m.crestTurn - m.poseAngle, -dt * 1.7, dt * 1.7);
+    }
+    var bodyC = Math.cos(m.poseAngle), bodyS = Math.sin(m.poseAngle);
+    var amplitude = m.radius * (0.045 * (1 - m.power) + SURFACE_SLIME_WAVE * m.gaitAmplitude * m.power);
     var sumX = 0, sumY = 0;
     for (var i = 0; i < b.n; i++) {
-      var qx = b.qx[i], qy = b.qy[i], u = qx * m.dir / m.radius;
-      var phase = m.phase + u * 2.8;
-      var sn = Math.sin(phase), cs = Math.cos(phase);
-      // A lower patch moves forward while lifted, then contracts backward
-      // while planted. A smaller wave travels through the crown as well.
+      var wx = bodyC * b.qx[i] - bodyS * b.qy[i];
+      var wy = bodyS * b.qx[i] + bodyC * b.qy[i];
+      // The contact frame chooses this stride's underside independently of
+      // the material rotation. These can be entirely different skin points.
+      var qx = ca * wx + sa * wy, qy = -sa * wx + ca * wy;
+      var u = qx * m.dir / m.radius;
+      var phase = m.phase + u * m.gaitLength;
+      var cs = Math.cos(phase);
+      var sn = Math.sin(phase) + 0.10 * Math.sin(phase * 2 + m.seed * 5);
       var skin = 0.42 + 0.58 * skySlimeClamp((qy / m.radius + 0.6) / 1.2, 0, 1);
-      var tx = qx + m.dir * amplitude * sn * skin;
-      var ty = qy - amplitude * cs * skin * 0.85;
+      var dx = m.dir * amplitude * sn * skin;
+      var dy = -amplitude * cs * skin * 0.85;
+      // Spread along the support and gather across it, whichever material
+      // side is touching. At a corner this makes a reaching lobe, not a jump.
+      var stretch = 1 + m.power * (m.crest ? 0.30 : 0.16);
+      var tx = qx * stretch + dx, ty = qy / stretch + dy;
       b.muscleX[i] = ca * tx - sa * ty;
       b.muscleY[i] = sa * tx + ca * ty;
       m.waveCos[i] = cs;
@@ -67622,14 +67691,31 @@
     var m = b.surfaceSlime;
     if (!m.drive || m.detach > 0 || b._grabbed || b._carried) { m.anchors.fill(null); m.contacts = 0; return; }
     var contacts = 0;
+    if (m.crest && !m.topGrip) {
+      var topPoints = 0, materialX = 0, materialY = 0;
+      for (var a = 0; a < m.anchors.length; a++) {
+        var grip = m.anchors[a];
+        if (grip && grip.ny < -0.6 && Math.abs(grip.y - m.crestTop) < 3) {
+          topPoints++; materialX += b.qx[a]; materialY += b.qy[a];
+        }
+      }
+      if (topPoints >= 2) {
+        m.topGrip = true;
+        // The skin already holding the ledge becomes the new underside.
+        // A previously rolled body may need a different amount of curl.
+        var c = Math.cos(m.poseAngle), s = Math.sin(m.poseAngle);
+        var gx = c * materialX - s * materialY, gy = s * materialX + c * materialY;
+        m.crestTurn = m.poseAngle + Math.atan2(gx, gy);
+      }
+    }
     for (var k = 0; k < b.ringN; k++) {
       var p = b.ring[k], anchor = m.anchors[p];
       // Briefly bridge both faces at a crest, then release the old wall.
-      if (anchor && ((m.climb ? anchor.nx * m.dir > -0.6 : !m.crest && anchor.ny > -0.6) || !tileAt(anchor.r, anchor.c) || m.waveCos[p] > 0.25 ||
+      if (anchor && ((m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6) || !tileAt(anchor.r, anchor.c) || m.waveCos[p] > 0.25 ||
           Math.hypot(b.px[p] - anchor.x, b.py[p] - anchor.y) > 22)) anchor = null;
       if (!anchor && m.waveCos[p] < 0.1) {
         anchor = surfaceSlimeTerrainNear(b.px[p], b.py[p], SURFACE_SLIME_GRIP_RANGE);
-        if (anchor && (m.climb ? anchor.nx * m.dir > -0.6 : !m.crest && anchor.ny > -0.6)) anchor = null;
+        if (anchor && (m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6)) anchor = null;
       }
       m.anchors[p] = anchor;
       if (!anchor) continue;
@@ -67665,18 +67751,19 @@
       home: isFinite(identity.home) ? identity.home : x,
       hue: isFinite(identity.hue) ? identity.hue : surfaceSlimeHues[Math.floor(seed * 5) % 5],
       age: 0, state: 'idle', timer: 0.6 + seed * 2, dir: seed < 0.5 ? -1 : 1,
-      blink: 0, blinkIn: 1.5 + seed * 4, look: 0, wet: 0, sense: 0,
+      blink: 0, blinkIn: 1.5 + seed * 4, wet: 0, sense: 0,
       radius: radius
     };
     skySlimeSerial = Math.max(skySlimeSerial, b.surfaceSlime.id + 1);
     b.hue = b.surfaceSlime.hue;
-    // Author the REST mesh, including its little foot lobes. Rendering and
-    // contacts share this shape; there is no circular invisible collider.
+    // A radial rest mesh has no feet or preferred top. Small, seed-specific
+    // irregularities belong to the gel itself and rotate when it rolls.
     for (var p = 0; p < b.n; p++) {
-      var u = (b.rx[p] - x) / radius, v = (b.ry[p] - y) / radius;
-      var foot = Math.max(0, v) * (0.07 + 0.1 * Math.cos(u * 8));
-      b.px[p] = b.ox[p] = b.rx[p] = x + u * radius * (1.13 + v * 0.13);
-      b.py[p] = b.oy[p] = b.ry[p] = y + radius * (v * (v > 0 ? 0.65 : 0.9) + foot);
+      var u = b.rx[p] - x, v = b.ry[p] - y, angle = Math.atan2(v, u);
+      var radial = 0.94 * (1 + 0.045 * Math.sin(angle * 3 + seed * 6.28) +
+        0.025 * Math.cos(angle * 5 - seed * 9));
+      b.px[p] = b.ox[p] = b.rx[p] = x + u * radial;
+      b.py[p] = b.oy[p] = b.ry[p] = y + v * radial;
     }
     for (var si = 0; si < b.springN; si++) {
       var a = b.sA[si], c = b.sB[si];
@@ -67688,7 +67775,7 @@
       area += (b.rx[i] - x) * (b.ry[j] - y) - (b.rx[j] - x) * (b.ry[i] - y);
     }
     b.restArea = Math.abs(area) * 0.5;
-    b.tileH *= 0.82;
+    b.tileW *= 0.94; b.tileH *= 0.94;
     jelloComputeRest(b); jelloInstallSpringHealthMesh(b); jelloShadeAnchors(b);
     jelloUpdateBody(b, JELLO_H);
     surfaceSlimeMotorInit(b);
@@ -67729,7 +67816,9 @@
       var rigDX = player.x + PLAYER_W / 2 - b.cx;
       var rigDY = player.y + PLAYER_H / 2 - b.cy;
       var nearRig = Math.hypot(rigDX, rigDY) < 145;
-      m.look += ((nearRig ? skySlimeClamp(rigDX / 85, -1, 1) : m.dir * 0.4) - m.look) * Math.min(1, dt * 5);
+      surfaceSlimeEyeTick(m, b.px[0] * 0.75 + b.cx * 0.25,
+        b.py[0] * 0.75 + b.cy * 0.25, m.radius, dt,
+        nearRig ? rigDX : null, nearRig ? rigDY : null);
       m.sense -= dt;
       if (m.sense <= 0) {
         m.sense = 0.12;
@@ -67755,27 +67844,98 @@
     }
   }
 
-  function surfaceSlimeFace(m, r, surprise) {
-    var eyeY = -r * 0.16, look = (m.look || 0) * r * 0.07;
-    ctx.fillStyle = '#252e29'; ctx.strokeStyle = '#252e29'; ctx.lineCap = 'round';
-    for (var side = -1; side <= 1; side += 2) {
-      var x = side * r * 0.31 + look;
-      if (m.blink > 0) {
-        ctx.lineWidth = r * 0.07; ctx.beginPath();
-        ctx.moveTo(x - r * 0.065, eyeY); ctx.quadraticCurveTo(x, eyeY - r * 0.07, x + r * 0.065, eyeY); ctx.stroke();
-      } else {
-        ctx.beginPath(); ctx.ellipse(x, eyeY, r * 0.065, r * (surprise ? 0.12 : 0.095), 0, 0, Math.PI * 2); ctx.fill();
+  // A loose pupil moves inside a circular cup. Coordinates are radius-normalized
+  // and world-oriented: rolling the gel never makes its eye upside down.
+  function surfaceSlimeEyeTick(m, x, y, r, dt, lookX, lookY) {
+    var e = m.eye;
+    if (!e) e = m.eye = { x: 0, y: 0.065, vx: 0, vy: 0,
+      anchorX: x, anchorY: y, bodyVX: 0, bodyVY: 0,
+      glance: 0.5 + (m.seed || 0) * 2, gazeX: 0, gazeY: 0 };
+    if (!(dt > 0)) return;
+    e.glance -= dt;
+    if (e.glance <= 0) {
+      var a = Math.random() * Math.PI * 2, d = 0.02 + Math.random() * 0.075;
+      e.gazeX = Math.cos(a) * d; e.gazeY = Math.sin(a) * d;
+      e.glance = 0.7 + Math.random() * 3.4;
+    }
+    var dx = x - e.anchorX, dy = y - e.anchorY;
+    // A camera-independent material anchor sees local wobbles and impacts.
+    // Teleports and restoring a save must not launch the pupil.
+    var teleported = Math.hypot(dx, dy) > r * 8;
+    var vx = teleported ? 0 : dx / dt, vy = teleported ? 0 : dy / dt;
+    var dvx = teleported ? 0 : skySlimeClamp(vx - e.bodyVX, -180, 180);
+    var dvy = teleported ? 0 : skySlimeClamp(vy - e.bodyVY, -180, 180);
+    // Apply acceleration as a velocity impulse, independent of render rate.
+    e.vx -= dvx / r * 0.22; e.vy -= dvy / r * 0.22;
+    e.anchorX = x; e.anchorY = y; e.bodyVX = vx; e.bodyVY = vy;
+    var gx = e.gazeX, gy = e.gazeY + 0.045;
+    if (lookX !== null && lookY !== null && isFinite(lookX) && isFinite(lookY)) {
+      var lookD = Math.hypot(lookX, lookY) || 1;
+      gx = lookX / lookD * 0.09; gy = lookY / lookD * 0.09 + 0.025;
+    }
+    var steps = Math.max(1, Math.ceil(dt * 120)), h = dt / steps, limit = 0.175;
+    for (var n = 0; n < steps; n++) {
+      e.vx += (gx - e.x) * 19 * h;
+      e.vy += ((gy - e.y) * 19 + 0.45) * h;
+      var drag = Math.exp(-2.8 * h); e.vx *= drag; e.vy *= drag;
+      e.x += e.vx * h; e.y += e.vy * h;
+      var length = Math.hypot(e.x, e.y);
+      if (length > limit) {
+        var nx = e.x / length, ny = e.y / length;
+        e.x = nx * limit; e.y = ny * limit;
+        var outward = e.vx * nx + e.vy * ny;
+        if (outward > 0) { e.vx -= nx * outward * 1.56; e.vy -= ny * outward * 1.56; }
       }
     }
-    ctx.lineWidth = r * 0.06;
-    ctx.beginPath();
-    if (surprise) ctx.ellipse(look, r * 0.08, r * 0.08, r * 0.11, 0, 0, Math.PI * 2);
-    else { ctx.moveTo(-r * 0.16 + look, r * 0.025); ctx.quadraticCurveTo(look, r * 0.24, r * 0.16 + look, r * 0.025); }
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(222,185,207,0.40)';
-    for (side = -1; side <= 1; side += 2) {
-      ctx.beginPath(); ctx.ellipse(side * r * 0.48 + look, r * 0.025, r * 0.1, r * 0.045, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function surfaceSlimeFace(m, r) {
+    var e = m.eye || { x: 0, y: 0.065 }, cup = r * 0.355, pupil = r * 0.145;
+    ctx.save();
+    ctx.fillStyle = 'rgba(30,36,32,0.23)';
+    ctx.beginPath(); ctx.arc(r * 0.018, r * 0.045, cup * 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#b8b2a2';
+    ctx.beginPath(); ctx.arc(0, 0, cup * 1.035, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f5f1ea';
+    ctx.beginPath(); ctx.arc(0, 0, cup, 0, Math.PI * 2); ctx.fill();
+    // Closing the lid is brief and soft; the loose pupil keeps simulating.
+    var open = m.blink > 0 ? Math.max(0.08, Math.abs(m.blink - 0.08) / 0.08) : 1;
+    ctx.save(); ctx.beginPath(); ctx.ellipse(0, 0, cup, cup * open, 0, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#252e29';
+    ctx.beginPath(); ctx.arc(e.x * r, e.y * r, pupil, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(245,241,234,0.82)';
+    ctx.beginPath(); ctx.arc(e.x * r - pupil * 0.25, e.y * r - pupil * 0.3, pupil * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    if (open < 1) {
+      ctx.fillStyle = 'hsla(' + (m.hue || 133) + ',38%,66%,0.98)';
+      ctx.beginPath(); ctx.arc(0, 0, cup * 0.98, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, cup, cup * open, 0, 0, Math.PI * 2); ctx.fill('evenodd');
+      ctx.strokeStyle = 'hsla(' + (m.hue || 133) + ',30%,45%,0.8)';
+      ctx.lineWidth = r * 0.035; ctx.beginPath();
+      ctx.ellipse(0, 0, cup * 0.94, Math.max(r * 0.025, cup * open), 0, 0, Math.PI * 2); ctx.stroke();
     }
+    ctx.strokeStyle = 'rgba(245,241,234,0.65)'; ctx.lineWidth = r * 0.035;
+    ctx.beginPath(); ctx.arc(-r * 0.014, -r * 0.014, cup * 0.8, 3.65, 4.7); ctx.stroke();
+    ctx.restore();
+  }
+
+  function surfaceSlimeDrawEye(b) {
+    var m = b.surfaceSlime;
+    // Left stretch (sqrt(M M^T)) keeps the cup round under pure rotation but
+    // lets a squeeze in any direction deform it a little with the central gel.
+    var a = b.shM00 * b.shM00 + b.shM01 * b.shM01;
+    var d = b.shM10 * b.shM10 + b.shM11 * b.shM11;
+    var c = b.shM00 * b.shM10 + b.shM01 * b.shM11;
+    var determinant = Math.sqrt(Math.max(0.0001, a * d - c * c));
+    var divisor = Math.sqrt(Math.max(0.0001, a + d + 2 * determinant));
+    var sx = skySlimeClamp(1 + ((a + determinant) / divisor - 1) * 0.42, 0.78, 1.2);
+    var sy = skySlimeClamp(1 + ((d + determinant) / divisor - 1) * 0.42, 0.78, 1.2);
+    var shear = skySlimeClamp(c / divisor * 0.42, -0.15, 0.15);
+    ctx.save();
+    ctx.translate(b.px[0] * 0.75 + b.cx * 0.25, b.py[0] * 0.75 + b.cy * 0.25);
+    ctx.transform(sx, shear, shear, sy, 0, 0);
+    surfaceSlimeFace(m, m.radius);
+    ctx.restore();
   }
 
   function surfaceSlimeDraw(b) {
@@ -67795,10 +67955,10 @@
     gel.addColorStop(0.45, 'hsla(' + hue + ',38%,66%,0.94)');
     gel.addColorStop(1, 'hsla(' + (hue + 9) + ',34%,40%,0.98)');
     ctx.fillStyle = gel; ctx.fillRect(b.bboxL - 12, b.bboxT - 12, w + 24, h + 24);
-    // Fit the face and internal highlights to the physical mesh, so impacts
-    // stretch, rotate and compress their features with the body.
+    // Internal highlights stay attached to the gel as it rolls. The eye below
+    // has a circular cup rather than a permanently upright face.
     jelloShadeMatrix(b);
-    ctx.translate(b.cx, b.cy);
+    ctx.save(); ctx.translate(b.cx, b.cy);
     ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
     var sheen = ctx.createRadialGradient(-r * 0.35, -r * 0.48, 0, -r * 0.35, -r * 0.48, r * 0.55);
     sheen.addColorStop(0, 'rgba(245,241,234,0.6)'); sheen.addColorStop(1, 'rgba(245,241,234,0)');
@@ -67809,23 +67969,33 @@
     for (var n = 0; n < 3; n++) {
       ctx.beginPath(); ctx.arc((n - 1) * r * 0.43, r * (0.34 + Math.sin(n * 3 + m.seed * 8) * 0.12), r * (0.05 + n * 0.013), 0, Math.PI * 2); ctx.fill();
     }
-    surfaceSlimeFace(m, r, m.state === 'tumble' && Math.hypot(b.vx, b.vy) * JELLO_TIMESCALE > 140);
+    ctx.restore();
+    surfaceSlimeDrawEye(b);
     ctx.restore(); ctx.restore();
   }
 
   // Bath departure animation uses the new material immediately upon the
   // completed soak. Its physical resident is created at the surface door.
   function surfaceSlimeDrawGuest(s) {
-    var r = s.r, pulse = Math.sin(s.age * 8) * 0.035;
+    var r = s.r, pulse = Math.sin(s.age * 5.3 + s.seed * 7) * 0.035;
     var hue = surfaceSlimeHues[Math.floor(s.seed * 5) % 5];
-    ctx.save(); ctx.translate(s.x, s.y); ctx.scale(1.12 + pulse, 0.88 - pulse);
-    ctx.beginPath(); ctx.moveTo(-r, r * 0.25);
-    ctx.bezierCurveTo(-r * 1.1, -r * 1.05, r * 0.9, -r * 1.2, r, r * 0.2);
-    ctx.bezierCurveTo(r * 1.18, r * 0.83, r * 0.25, r * 0.7, 0, r * 0.65);
-    ctx.bezierCurveTo(-r * 0.45, r * 0.82, -r * 1.18, r * 0.75, -r, r * 0.25);
+    var m = s._softEye;
+    if (!m) m = s._softEye = { seed: s.seed, hue: hue, blink: s.blink || 0, age: s.age };
+    surfaceSlimeEyeTick(m, s.x, s.y, r, Math.max(0, Math.min(0.05, s.age - m.age)), null, null);
+    m.age = s.age; m.blink = s.blink || 0;
+    ctx.save(); ctx.translate(s.x, s.y); ctx.scale(1 + pulse, 1 - pulse);
+    ctx.beginPath();
+    for (var n = 0; n <= 40; n++) {
+      var angle = n / 40 * Math.PI * 2;
+      var radial = r * 0.94 * (1 + 0.045 * Math.sin(angle * 3 + s.seed * 6.28) +
+        0.025 * Math.cos(angle * 5 - s.seed * 9));
+      var x = Math.cos(angle) * radial, y = Math.sin(angle) * radial;
+      if (n === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
     var gel = ctx.createLinearGradient(0, -r, 0, r);
     gel.addColorStop(0, 'hsl(' + hue + ',42%,81%)'); gel.addColorStop(1, 'hsl(' + hue + ',34%,44%)');
-    ctx.fillStyle = gel; ctx.fill(); surfaceSlimeFace({ blink: s.blink, look: 0 }, r, false);
+    ctx.fillStyle = gel; ctx.fill(); surfaceSlimeFace(m, r);
     ctx.restore();
   }
 
