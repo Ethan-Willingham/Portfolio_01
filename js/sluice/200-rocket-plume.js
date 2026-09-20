@@ -342,6 +342,67 @@
     return rocketJetActive() && rocketIntensity > 0.02;
   }
 
+  // Push existing smoke with air, never dye. Both fluid instances receive
+  // the same world-space jet after their camera scroll and before projection.
+  // Acceleration and Gaussian widths are in world pixels, independent of
+  // frame rate, zoom and the solver's grid resolution.
+  function rocketSmokeCouple(driver, dt) {
+    if (!rocketJetVisible() || dt <= 0) return;
+    var dims, aspect;
+    if (driver) {
+      dims = driver.simW > 0 && driver.simH > 0 ? { w: driver.simW, h: driver.simH } :
+        smokeWGPUResDims(driver.config.SIM_RESOLUTION, smokeFluidWidth, smokeFluidHeight);
+      aspect = smokeFluidWidth / smokeFluidHeight;
+    } else if (!fluidU) return;
+    var strength = 1800 * rocketIntensity * rocketIntensity * Math.min(dt, 0.05);
+    function impulse(x, y, ax, ay, radius) {
+      if (rocketInSolid(x, y) || rocketInJello(x, y) || rocketInSkySlime(x, y)) return;
+      if (driver) {
+        var uv = smokeFluidWorldToUV(x, y);
+        if (!uv.inView) return;
+        var rad = 100 * Math.pow(radius / smokeFluidDomainWorldH, 2) / Math.max(1, aspect);
+        var vx = ax * strength * dims.w / smokeFluidDomainWorldW;
+        var vy = -ay * strength * dims.h / smokeFluidDomainWorldH;
+        if (driver.splatVelocity) driver.splatVelocity(uv.uvX, uv.uvY, vx, vy, rad);
+        else driver.splat(uv.uvX, uv.uvY, vx, vy, SMOKE_ZERO_COL, rad);
+      } else {
+        var gx = (x - fluidGridX) / FLUID_CELL, gy = (y - fluidGridY) / FLUID_CELL;
+        fluidSplatDisc(fluidU, gx, gy, radius / FLUID_CELL, ax * strength);
+        fluidSplatDisc(fluidV, gx, gy, radius / FLUID_CELL, ay * strength);
+      }
+    }
+    var nozzles = rocketNozzles(), dir = rocketExhaustDir();
+    var distances = [5, 18, 36, 60, 90, 124], reach = TILE * 4;
+    for (var ni = 0; ni < nozzles.length; ni++) {
+      var nz = nozzles[ni];
+      var hit = rocketFindImpactAlong(nz.x, nz.y, dir.x, dir.y, reach);
+      for (var i = 0; i < distances.length; i++) {
+        var d = distances[i], radius = 4 + d * 0.12;
+        if (hit !== null) radius = Math.min(radius, (hit - d) * 0.45);
+        if (radius < 1) break;
+        var falloff = Math.pow(1 - d / (reach + 20), 2);
+        impulse(nz.x + dir.x * d, nz.y + dir.y * d, dir.x * falloff, dir.y * falloff, radius);
+      }
+      // At an impact, redirect some flow along the surface. Sample the local
+      // solid normal so a tilted jet meeting a floor still washes sideways.
+      if (hit !== null) {
+        var hx = nz.x + dir.x * hit, hy = nz.y + dir.y * hit;
+        var nx = Number(rocketInSolid(hx - 4, hy)) - Number(rocketInSolid(hx + 4, hy));
+        var ny = Number(rocketInSolid(hx, hy - 4)) - Number(rocketInSolid(hx, hy + 4));
+        var normalLength = Math.hypot(nx, ny);
+        if (normalLength) { nx /= normalLength; ny /= normalLength; }
+        else { nx = -dir.x; ny = -dir.y; }
+        var wash = 0.55 * Math.pow(1 - hit / (reach + 20), 2);
+        for (var side = -1; side <= 1; side += 2) {
+          var tx = -ny * side, ty = nx * side;
+          var bx = hx + nx * 7, by = hy + ny * 7;
+          if (rocketFindImpactAlong(bx, by, tx, ty, 12) !== null) continue;
+          impulse(bx + tx * 12, by + ty * 12, tx * wash, ty * wash, 5);
+        }
+      }
+    }
+  }
+
   function updateRocketPlume(dt) {
     if (dt > 0.05) dt = 0.05;
     var T = rocketTune;
@@ -353,54 +414,6 @@
       var target = emitting ? 1 : 0;
       var rate = emitting ? rocketTuneNum(T.ramp_up, 9.0) : rocketTuneNum(T.ramp_down, 3.5);
       rocketIntensity += (target - rocketIntensity) * Math.min(1, rate * dt);
-    }
-
-    // Inject rocket exhaust into the smoke fluid sim from the actual paired
-    // nozzles, so smoke/liquid response starts at the rocket mouths.
-    if (rocketIntensity > 0.02) {
-      var nozzlesFluid = rocketNozzles();
-      var exhaustDir = rocketExhaustDir();
-      var thrustStr = rocketIntensity * rocketIntensity;
-      var columnDepth = TILE * 24;
-      var steps = 10;
-      if (smokeFluidActive && typeof SmokeFluid !== 'undefined') {
-        for (var ni = 0; ni < nozzlesFluid.length; ni++) {
-          var nz = nozzlesFluid[ni];
-          for (var si = 0; si < steps; si++) {
-            var frac = si / (steps - 1);
-            var wx = nz.x + exhaustDir.x * frac * columnDepth;
-            var wy = nz.y + exhaustDir.y * frac * columnDepth;
-            var uv = smokeFluidWorldToUV(wx, wy);
-            if (!uv.inView) continue;
-            var falloff = (1 - frac * 0.6) * 0.62;
-            var mouthBoost = frac < 0.001 ? 1.55 : 1;
-            // Cone shape: readable right at the nozzle, wider lower down.
-            var rad = 0.026 + frac * frac * 0.15;
-            smokeDriver.splat(uv.uvX, uv.uvY,
-              (exhaustDir.x * 10 + (Math.random() - 0.5) * 0.8) * thrustStr * falloff * mouthBoost,
-              -exhaustDir.y * 18.0 * thrustStr * falloff * mouthBoost,
-              { r: 0, g: 0, b: 0 },
-              rad);
-          }
-        }
-      } else if (fluidU) {
-        for (var ni2 = 0; ni2 < nozzlesFluid.length; ni2++) {
-          var nz2 = nozzlesFluid[ni2];
-          for (var si2 = 0; si2 < steps; si2++) {
-            var frac2 = si2 / (steps - 1);
-            var wx2 = nz2.x + exhaustDir.x * frac2 * columnDepth;
-            var wy2 = nz2.y + exhaustDir.y * frac2 * columnDepth;
-            var gx = (wx2 - fluidGridX) / FLUID_CELL;
-            var gy = (wy2 - fluidGridY) / FLUID_CELL;
-            if (gx < 1 || gx >= FLUID_W - 1 || gy < 1 || gy >= FLUID_H - 1) continue;
-            var falloff2 = (1 - frac2 * 0.6) * 0.62;
-            var mouthBoost2 = frac2 < 0.001 ? 1.55 : 1;
-            var coneRad = 3.2 + frac2 * frac2 * 7;
-            fluidSplatDisc(fluidV, gx, gy, coneRad, exhaustDir.y * 200 * thrustStr * falloff2 * mouthBoost2 * dt);
-            fluidSplatDisc(fluidU, gx, gy, coneRad * 0.6, exhaustDir.x * 140 * thrustStr * falloff2 * mouthBoost2 * dt);
-          }
-        }
-      }
     }
 
     if (T && T.enabled && rocketIntensity > 0.02) {
@@ -828,4 +841,3 @@
     }
 
   }
-

@@ -7,6 +7,7 @@
   var rigExhaustAwake = 0, rigExhaustClock = 0, rigExhaustAccumulator = 0;
   var rigExhaustPrevX = null, rigExhaustPrevY = null, rigExhaustUnits = 0;
   var rigExhaustWaterTick = 0, rigExhaustDirty = false;
+  var rigExhaustMaterial = null;
   var RIG_EXHAUST_SCALE = 0.4; // 24-world-pixel rig / 60-pixel demo fixture
   var RIG_EXHAUST_DT = 1 / 30;
 
@@ -39,6 +40,7 @@
     if (!rigExhaustAvailable()) return;
     var def = rigExhaustGet();
     if (!def) return;
+    rigExhaustMaterial = rigExhaustSettings();
     rigExhaustApplied = def.id;
     rigExhaustUnits = rigExhaustUnitScale();
     if (!def.recipe) return; // Old colored smoke keeps its last material until it fades.
@@ -46,12 +48,13 @@
     c.OPTICAL_DENSITY = recipe.fluid.OPTICAL_DENSITY || 0;
     c.OPTICAL_BRIGHTNESS = recipe.fluid.OPTICAL_BRIGHTNESS == null ? 0.9 : recipe.fluid.OPTICAL_BRIGHTNESS;
     c.OPTICAL_ABSORPTION = recipe.fluid.OPTICAL_ABSORPTION == null ? 1 : recipe.fluid.OPTICAL_ABSORPTION;
-    c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION;
+    c.EDGE_SHARPNESS = rigExhaustMaterial.appearance.sharpness;
+    c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION / rigExhaustMaterial.appearance.lifetime;
     c.VELOCITY_DISSIPATION = recipe.fluid.VELOCITY_DISSIPATION;
-    c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * def.tuning.motion + def.scale.values.curl));
+    c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * rigExhaustMaterial.tuning.motion + def.scale.values.curl));
     c.wind_x = recipe.fluid.wind_x || 0;
     c.wind_above_y = recipe.fluid.wind_above_y || 0;
-    var physics = Object.assign({}, def.physics);
+    var physics = Object.assign({}, rigExhaustMaterial.physics);
     ['BUOYANCY', 'WEIGHT', 'EDGE_SPIN'].forEach(function (key) { physics[key] *= rigExhaustUnits; });
     rigExhaustFluid.setPhysics(physics, immediate === true ? 0 : 0.35);
     // A new source can wake in a stationary world. Refresh its terrain mask.
@@ -88,8 +91,10 @@
       rigExhaustFluid.splat(0.5, 0.5, 0, 1, { r: 0.01, g: 0.005, b: 0.003 }, 0.02);
       rigExhaustFluid.step(1 / 60);
       rigExhaustFluid.config.OPTICAL_DENSITY = 1;
+      rigExhaustFluid.config.EDGE_SHARPNESS = 1;
       rigExhaustFluid.displayPass();
       rigExhaustFluid.config.OPTICAL_DENSITY = 0;
+      rigExhaustFluid.config.EDGE_SHARPNESS = 0;
       rigExhaustFluid.setPhysics({}, 0);
       rigExhaustFluid.setMovingBodies([], 0, 0, 1, 1, 1 / 60, smokeFluidObstacleW, smokeFluidObstacleH, true);
       rigExhaustFluid.setLiquidField([], [], [], [], 0, 0, 0, 1, 1, 1);
@@ -134,7 +139,7 @@
       var radiusScale = Math.pow(Math.sqrt(1120 * 640) * RIG_EXHAUST_SCALE / Math.max(1, basis), 2);
       for (var n = 0; n < samples; n++) {
         var time = rigExhaustClock - rigExhaustAccumulator - (samples - n - 1) * RIG_EXHAUST_DT;
-        var packets = window.SmokePresets.sample(def.recipe, time, 0, def.tuning, def.scale.values, throttle);
+        var packets = window.SmokePresets.sample(def.recipe, time, 0, rigExhaustMaterial.tuning, def.scale.values, throttle);
         for (var i = 0; i < packets.length; i++) {
           var p = packets[i];
           var uv = smokeFluidWorldToUV(ex.x + (crossX * p.x + outwardX * p.y) * RIG_EXHAUST_SCALE,
@@ -144,19 +149,20 @@
             (crossX * p.vx + outwardX * p.vy) * 2 * rigExhaustUnits,
             -(crossY * p.vx + outwardY * p.vy) * 2 * rigExhaustUnits,
             p.color, p.radius * 0.9 * radiusScale);
-          rigExhaustAwake = Math.max(8, def.recipe.source.idleHold || 24);
+          rigExhaustAwake = Math.max(8, def.recipe.source.idleHold || 24) * rigExhaustMaterial.appearance.lifetime;
         }
       }
     } else rigExhaustAccumulator = 0;
     if (rigExhaustAwake <= 0) return;
     rigExhaustAwake -= dt;
     var ox = cam.x - smokeFluidMarginWorldX, oy = cam.y - smokeFluidMarginWorldY;
-    rigExhaustFluid.setMovingBodies(jelloBodies, ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH,
+    rigExhaustFluid.setMovingBodies(smokeFluidMovingBodies(), ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH,
       dt, smokeFluidObstacleW, smokeFluidObstacleH, true);
     if ((rigExhaustWaterTick++ % 4) === 0 || liquidCount === 0) {
       rigExhaustFluid.setLiquidField(liquidX, liquidY, liquidVX, liquidVY, liquidCount,
         ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / (LIQUID_CELL * LIQUID_CELL * LIQUID_PDELTA * LIQUID_PDELTA), liquidFrozen);
     }
+    rocketSmokeCouple(rigExhaustFluid, dt);
     rigExhaustFluid.step(dt);
     rigExhaustDirty = true;
     if (rigExhaustAwake <= 0) { rigExhaustFluid.clear(); rigExhaustDirty = true; }

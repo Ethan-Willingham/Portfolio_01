@@ -96,7 +96,7 @@
     "id": "spiral-kiln",
     "name": "Spiral kiln",
     "family": "Fluid experiments",
-    "description": "The smoke stirs along its own edges, winding gold and red layers into living coils. Reverse Edge spin to reverse the twist.",
+    "description": "The smoke stirs along its own edges, winding gold and red layers into living coils.",
     "colors": ["#e3ae61","#b36176"],
     "samplerVersion": 3,
     "physics": {"HEAT": 2,"COOLING": 0.45,"BUOYANCY": 65,"WEIGHT": 28,"VISCOSITY": 4,"EDGE_SPIN": 230},
@@ -117,7 +117,73 @@
     Object.assign({}, rigExhaustRainbow.physics), 25000
   );
 
-  var rigExhaustState = { owned: { stock: true }, equipped: 'stock' };
+  var rigExhaustState = { owned: { stock: true }, equipped: 'stock', settings: {} };
+  var rigExhaustSaveTimer = 0;
+  var RIG_EXHAUST_LIMITS = {
+    tuning: { mass: [0.1, 2] },
+    appearance: { sharpness: [0, 1], lifetime: [0.5, 3] }
+  };
+
+  function rigExhaustCleanSettings(data) {
+    var result = {};
+    if (!data || typeof data !== 'object') return result;
+    Object.keys(RIG_EXHAUST_LIMITS).forEach(function (group) {
+      var values = data[group];
+      if (!values || typeof values !== 'object') return;
+      Object.keys(RIG_EXHAUST_LIMITS[group]).forEach(function (key) {
+        var value = values[key], limits = RIG_EXHAUST_LIMITS[group][key];
+        if (typeof value !== 'number' || !isFinite(value)) return;
+        if (!result[group]) result[group] = {};
+        result[group][key] = Math.max(limits[0], Math.min(limits[1], value));
+      });
+    });
+    return result;
+  }
+
+  // Copies in recipe units: UI values stay stable across zoom/resolution,
+  // and edits never mutate a catalog entry or another exhaust's settings.
+  function rigExhaustSettings() {
+    var def = rigExhaustGet(), saved = rigExhaustState.settings[def.id] || {};
+    return { id: def.id, name: def.name, description: def.description, custom: !!def.recipe,
+      tuning: Object.assign({}, def.tuning, saved.tuning),
+      appearance: Object.assign({ sharpness: 0, lifetime: 1 }, saved.appearance),
+      physics: Object.assign({}, def.physics) };
+  }
+
+  function rigExhaustFlushSettings() {
+    if (!rigExhaustSaveTimer) return;
+    clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    saveNow('exhaust-settings');
+  }
+
+  function rigExhaustSetSetting(group, key, value) {
+    var def = rigExhaustGet();
+    if (!def.recipe || !Object.prototype.hasOwnProperty.call(RIG_EXHAUST_LIMITS, group) ||
+        !Object.prototype.hasOwnProperty.call(RIG_EXHAUST_LIMITS[group], key) ||
+        typeof value !== 'number' || !isFinite(value)) return false;
+    var limits = RIG_EXHAUST_LIMITS[group][key];
+    var saved = rigExhaustState.settings[def.id] || (rigExhaustState.settings[def.id] = {});
+    if (!saved[group]) saved[group] = {};
+    saved[group][key] = Math.max(limits[0], Math.min(limits[1], value));
+    rigExhaustApply();
+    // A dragged range can send dozens of events. Apply each one live, but
+    // serialize the world only after the gesture or a short idle interval.
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = setTimeout(rigExhaustFlushSettings, 180);
+    return true;
+  }
+
+  function rigExhaustRestoreSettings() {
+    var def = rigExhaustGet();
+    if (!def.recipe) return false;
+    delete rigExhaustState.settings[def.id];
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    rigExhaustApply();
+    saveNow('exhaust-restore');
+    return true;
+  }
 
   function rigExhaustGet(id) {
     if (id == null) id = rigExhaustState.equipped;
@@ -165,7 +231,9 @@
   }
 
   function rigExhaustReset() {
-    rigExhaustState = { owned: { stock: true }, equipped: 'stock' };
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    rigExhaustState = { owned: { stock: true }, equipped: 'stock', settings: {} };
     if (typeof rigExhaustApply === 'function') rigExhaustApply();
   }
 
@@ -174,7 +242,8 @@
       owned: RIG_EXHAUST_CATALOG.filter(function (item) {
         return rigExhaustIsOwned(item.id);
       }).map(function (item) { return item.id; }),
-      equipped: rigExhaustState.equipped
+      equipped: rigExhaustState.equipped,
+      settings: JSON.parse(JSON.stringify(rigExhaustState.settings))
     };
   }
 
@@ -190,6 +259,14 @@
     }
     var equipped = data && typeof data.equipped === 'string' &&
       owned[data.equipped] === true && rigExhaustGet(data.equipped) ? data.equipped : 'stock';
-    rigExhaustState = { owned: owned, equipped: equipped };
+    var settings = {};
+    RIG_EXHAUST_CATALOG.forEach(function (def) {
+      if (!def.recipe || !owned[def.id] || !data || !data.settings) return;
+      var clean = rigExhaustCleanSettings(data.settings[def.id]);
+      if (Object.keys(clean).length) settings[def.id] = clean;
+    });
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    rigExhaustState = { owned: owned, equipped: equipped, settings: settings };
     if (typeof rigExhaustApply === 'function') rigExhaustApply();
   }

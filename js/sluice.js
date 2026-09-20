@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.47';
+  var GAME_VERSION = 'v28.48';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -7233,7 +7233,7 @@
   var pauseMenuShowPage = null;
   function pauseMenuBack() {
     if (pauseMenuPage === 'main' || !pauseMenuShowPage) return false;
-    pauseMenuShowPage('main');
+    pauseMenuShowPage(pauseMenuPage === 'exhaust' ? 'options' : 'main');
     return true;
   }
   function setupPauseMenu() {
@@ -7254,14 +7254,16 @@
     var footer = card.querySelector('.pause-footer');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
-    var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
+    var titles = { main: 'Paused', options: 'Options', exhaust: 'Exhaust', controls: 'Controls', restart: 'Start a new game?' };
     var returnFocus = 'gm-resume-btn';
     pauseMenuShowPage = function (page) {
+      var previousPage = pauseMenuPage;
       pauseMenuPage = page;
       card.setAttribute('data-page', page);
       for (var i = 0; i < pages.length; i++) pages[i].hidden = pages[i].getAttribute('data-pause-page') !== page;
       title.textContent = titles[page];
       back.hidden = page === 'main';
+      back.setAttribute('aria-label', page === 'exhaust' ? 'Back to options' : 'Back to pause menu');
       save.hidden = page !== 'main';
       footer.hidden = page !== 'main';
       if (page === 'main') {
@@ -7272,18 +7274,21 @@
           .replace(/^autosave off .*$/, 'Autosave off')
           .replace(/^save failing, browser storage may be full$/, 'Save failed. Storage may be full.');
       }
+      if (page === 'exhaust') syncExhaust();
       body.scrollTop = 0;
       var focus = page === 'main' ? document.getElementById(returnFocus) :
+        page === 'options' && previousPage === 'exhaust' ? document.getElementById('gm-exhaust-btn') :
         page === 'restart' ? document.getElementById('gm-cancel-restart') : back;
       if (focus) focus.focus({ preventScroll: true });
     };
     function openWith(id, page) {
       document.getElementById(id).addEventListener('click', function () {
-        returnFocus = id;
+        if (pauseMenuPage === 'main') returnFocus = id;
         pauseMenuShowPage(page);
       });
     }
     openWith('gm-options-btn', 'options');
+    openWith('gm-exhaust-btn', 'exhaust');
     openWith('gm-controls-btn', 'controls');
     openWith('gm-new-game-btn', 'restart');
     back.addEventListener('click', pauseMenuBack);
@@ -7340,6 +7345,48 @@
       try { return localStorage.getItem(key); } catch (e) { return null; }
     }
     function setOpt(key, value) { window.SluiceOptions.set(key, value); }
+    var exhaustControls = card.querySelectorAll('[data-exhaust-group]');
+    var exhaustRestore = document.getElementById('gm-exhaust-restore');
+    function syncExhaust() {
+      var settings = typeof rigExhaustSettings === 'function' ? rigExhaustSettings() : null;
+      var stock = !settings || settings.id === 'stock';
+      document.getElementById('gm-exhaust-name').textContent = settings ? settings.name : 'Stock exhaust';
+      document.getElementById('gm-exhaust-description').textContent = settings ? settings.description : "The rig's original gold exhaust.";
+      document.getElementById('gm-exhaust-note').textContent = stock ?
+        'Buy and equip a smoke recipe in Store > Exhaust to adjust its appearance.' :
+        'Changes are saved separately for each exhaust. Resume to see them in motion.';
+      for (var i = 0; i < exhaustControls.length; i++) {
+        var slider = exhaustControls[i];
+        var group = slider.getAttribute('data-exhaust-group');
+        var key = slider.getAttribute('data-exhaust-key');
+        var value = settings && settings[group] ? Number(settings[group][key]) : Number(slider.defaultValue);
+        if (!isFinite(value)) value = Number(slider.defaultValue);
+        slider.value = value;
+        slider.disabled = stock;
+        var percent = Math.round(value * 100);
+        var label = key === 'lifetime' ? value.toFixed(1) + 'x' :
+          key === 'sharpness' && value === 0 ? 'Soft' :
+          key === 'sharpness' && value === 1 ? 'Crisp' : percent + '%';
+        document.getElementById(slider.id + '-value').value = stock ? '-' : label;
+        slider.setAttribute('aria-valuetext', stock ? 'Equip a smoke recipe to adjust' :
+          key === 'lifetime' ? value.toFixed(1) + ' times the original duration' :
+          key === 'sharpness' ? percent + ' percent edge definition' : percent + ' percent');
+      }
+      exhaustRestore.disabled = stock;
+    }
+    for (var exhaustIndex = 0; exhaustIndex < exhaustControls.length; exhaustIndex++) {
+      exhaustControls[exhaustIndex].addEventListener('input', function () {
+        rigExhaustSetSetting(this.getAttribute('data-exhaust-group'), this.getAttribute('data-exhaust-key'), Number(this.value));
+        syncExhaust();
+      });
+      exhaustControls[exhaustIndex].addEventListener('change', function () {
+        rigExhaustFlushSettings();
+      });
+    }
+    exhaustRestore.addEventListener('click', function () {
+      rigExhaustRestoreSettings();
+      syncExhaust();
+    });
     function wireSlider(id, key, fallback, master) {
       var slider = document.getElementById(id);
       var output = document.getElementById(id + '-value');
@@ -41595,6 +41642,7 @@
       OPTICAL_DENSITY: 0,
       OPTICAL_BRIGHTNESS: 0.9,
       OPTICAL_ABSORPTION: 1,
+      EDGE_SHARPNESS: 0,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -42085,6 +42133,7 @@
       'uniform float opticalDensity;\n' +
       'uniform float opticalBrightness;\n' +
       'uniform float opticalAbsorption;\n' +
+      'uniform float edgeSharpness;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -42092,6 +42141,7 @@
       '  vec3 tc = texture2D(uTexture, vT).rgb;\n' +
       '  vec3 bc = texture2D(uTexture, vB).rgb;\n' +
       '  vec3 c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;\n' +
+      '  if (edgeSharpness > 0.0) c = mix(c, cc, edgeSharpness);\n' +
       // Empty dye remains transparent after lighting and either obstacle mask.
       // Test all five taps so the edge filter keeps its existing footprint.
       '  if (all(equal(c, vec3(0.0)))) { gl_FragColor = vec4(0.0); return; }\n' +
@@ -42138,6 +42188,13 @@
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
       '    c = opticalBrightness * unmasked / max(density, 0.0001);\n' +
       '    a = (1.0 - exp(-density * opticalAbsorption)) * visibility;\n' +
+      '  }\n' +
+      // Sharpen the smoke's opacity before applying coverage. Solid/water/gel
+      // silhouettes must keep their own antialiasing even at full definition.
+      '  if (edgeSharpness > 0.0) {\n' +
+      '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
+      '    float baseAlpha = opticalDensity > 0.5 ? 1.0 - exp(-density * opticalAbsorption) : clamp(density, 0.0, 1.0);\n' +
+      '    a = mix(baseAlpha, smoothstep(0.06, 0.72, baseAlpha), edgeSharpness) * visibility;\n' +
       '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -42823,6 +42880,7 @@
       gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
       gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
       gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
+      gl.uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -43385,6 +43443,23 @@
       'inset(' + overscanY + 'px ' + overscanX + 'px ' +
       (overscanY + smokeBottomMargin) + 'px ' + overscanX + 'px)';
     if (typeof rigExhaustPositionDOM === 'function') rigExhaustPositionDOM();
+  }
+
+  // The chassis displaces air just like a moving slime. Keep its identity
+  // stable: each fluid instance stores its own previous world-space ring.
+  var smokeRigBody = { ringN: 4, ring: [0, 1, 2, 3], px: new Float32Array(4), py: new Float32Array(4) };
+  var smokeMovingBodies = [];
+  function smokeFluidMovingBodies() {
+    smokeMovingBodies.length = 0;
+    for (var i = 0; i < jelloBodies.length; i++) smokeMovingBodies.push(jelloBodies[i]);
+    if (roverMode || !isFinite(player.renderX + player.renderY)) return smokeMovingBodies;
+    for (var corner = 0; corner < 4; corner++) {
+      var point = playerLocalToWorld(corner === 1 || corner === 2 ? PLAYER_W - 1 : 1,
+        corner >= 2 ? PLAYER_H - 1 : 3);
+      smokeRigBody.px[corner] = point.x; smokeRigBody.py[corner] = point.y;
+    }
+    smokeMovingBodies.push(smokeRigBody);
+    return smokeMovingBodies;
   }
 
   function smokeFluidUpdateDomain() {
@@ -44199,10 +44274,11 @@
       var smokeRun = !PERF_SMOKE_IDLE_SKIP || smokeAwakeT > 0;
       var _us5 = performance.now();
       if (smokeRun) {
-        if (smokeDriver.setMovingBodies) smokeDriver.setMovingBodies(jelloBodies,
+        if (smokeDriver.setMovingBodies) smokeDriver.setMovingBodies(smokeFluidMovingBodies(),
           cam.x - smokeFluidMarginWorldX, cam.y - smokeFluidMarginWorldY,
           smokeFluidDomainWorldW, smokeFluidDomainWorldH, smokeStepDt,
           smokeFluidObstacleW, smokeFluidObstacleH, true);
+        rocketSmokeCouple(smokeDriver, smokeStepDt);
         smokeDriver.step(smokeStepDt);
       }
       perfMark('update.smokeStep', _us5);
@@ -44215,6 +44291,7 @@
 
     fluidUpdateGridOrigin();
     fluidBuildObstacles();
+    rocketSmokeCouple(null, dt);
     fluidInjectSources(dt);
     fluidAddBuoyancy(dt);
     fluidApplySurfaceWind(dt);
@@ -44382,6 +44459,7 @@
   var rigExhaustAwake = 0, rigExhaustClock = 0, rigExhaustAccumulator = 0;
   var rigExhaustPrevX = null, rigExhaustPrevY = null, rigExhaustUnits = 0;
   var rigExhaustWaterTick = 0, rigExhaustDirty = false;
+  var rigExhaustMaterial = null;
   var RIG_EXHAUST_SCALE = 0.4; // 24-world-pixel rig / 60-pixel demo fixture
   var RIG_EXHAUST_DT = 1 / 30;
 
@@ -44414,6 +44492,7 @@
     if (!rigExhaustAvailable()) return;
     var def = rigExhaustGet();
     if (!def) return;
+    rigExhaustMaterial = rigExhaustSettings();
     rigExhaustApplied = def.id;
     rigExhaustUnits = rigExhaustUnitScale();
     if (!def.recipe) return; // Old colored smoke keeps its last material until it fades.
@@ -44421,12 +44500,13 @@
     c.OPTICAL_DENSITY = recipe.fluid.OPTICAL_DENSITY || 0;
     c.OPTICAL_BRIGHTNESS = recipe.fluid.OPTICAL_BRIGHTNESS == null ? 0.9 : recipe.fluid.OPTICAL_BRIGHTNESS;
     c.OPTICAL_ABSORPTION = recipe.fluid.OPTICAL_ABSORPTION == null ? 1 : recipe.fluid.OPTICAL_ABSORPTION;
-    c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION;
+    c.EDGE_SHARPNESS = rigExhaustMaterial.appearance.sharpness;
+    c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION / rigExhaustMaterial.appearance.lifetime;
     c.VELOCITY_DISSIPATION = recipe.fluid.VELOCITY_DISSIPATION;
-    c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * def.tuning.motion + def.scale.values.curl));
+    c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * rigExhaustMaterial.tuning.motion + def.scale.values.curl));
     c.wind_x = recipe.fluid.wind_x || 0;
     c.wind_above_y = recipe.fluid.wind_above_y || 0;
-    var physics = Object.assign({}, def.physics);
+    var physics = Object.assign({}, rigExhaustMaterial.physics);
     ['BUOYANCY', 'WEIGHT', 'EDGE_SPIN'].forEach(function (key) { physics[key] *= rigExhaustUnits; });
     rigExhaustFluid.setPhysics(physics, immediate === true ? 0 : 0.35);
     // A new source can wake in a stationary world. Refresh its terrain mask.
@@ -44463,8 +44543,10 @@
       rigExhaustFluid.splat(0.5, 0.5, 0, 1, { r: 0.01, g: 0.005, b: 0.003 }, 0.02);
       rigExhaustFluid.step(1 / 60);
       rigExhaustFluid.config.OPTICAL_DENSITY = 1;
+      rigExhaustFluid.config.EDGE_SHARPNESS = 1;
       rigExhaustFluid.displayPass();
       rigExhaustFluid.config.OPTICAL_DENSITY = 0;
+      rigExhaustFluid.config.EDGE_SHARPNESS = 0;
       rigExhaustFluid.setPhysics({}, 0);
       rigExhaustFluid.setMovingBodies([], 0, 0, 1, 1, 1 / 60, smokeFluidObstacleW, smokeFluidObstacleH, true);
       rigExhaustFluid.setLiquidField([], [], [], [], 0, 0, 0, 1, 1, 1);
@@ -44509,7 +44591,7 @@
       var radiusScale = Math.pow(Math.sqrt(1120 * 640) * RIG_EXHAUST_SCALE / Math.max(1, basis), 2);
       for (var n = 0; n < samples; n++) {
         var time = rigExhaustClock - rigExhaustAccumulator - (samples - n - 1) * RIG_EXHAUST_DT;
-        var packets = window.SmokePresets.sample(def.recipe, time, 0, def.tuning, def.scale.values, throttle);
+        var packets = window.SmokePresets.sample(def.recipe, time, 0, rigExhaustMaterial.tuning, def.scale.values, throttle);
         for (var i = 0; i < packets.length; i++) {
           var p = packets[i];
           var uv = smokeFluidWorldToUV(ex.x + (crossX * p.x + outwardX * p.y) * RIG_EXHAUST_SCALE,
@@ -44519,19 +44601,20 @@
             (crossX * p.vx + outwardX * p.vy) * 2 * rigExhaustUnits,
             -(crossY * p.vx + outwardY * p.vy) * 2 * rigExhaustUnits,
             p.color, p.radius * 0.9 * radiusScale);
-          rigExhaustAwake = Math.max(8, def.recipe.source.idleHold || 24);
+          rigExhaustAwake = Math.max(8, def.recipe.source.idleHold || 24) * rigExhaustMaterial.appearance.lifetime;
         }
       }
     } else rigExhaustAccumulator = 0;
     if (rigExhaustAwake <= 0) return;
     rigExhaustAwake -= dt;
     var ox = cam.x - smokeFluidMarginWorldX, oy = cam.y - smokeFluidMarginWorldY;
-    rigExhaustFluid.setMovingBodies(jelloBodies, ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH,
+    rigExhaustFluid.setMovingBodies(smokeFluidMovingBodies(), ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH,
       dt, smokeFluidObstacleW, smokeFluidObstacleH, true);
     if ((rigExhaustWaterTick++ % 4) === 0 || liquidCount === 0) {
       rigExhaustFluid.setLiquidField(liquidX, liquidY, liquidVX, liquidVY, liquidCount,
         ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / (LIQUID_CELL * LIQUID_CELL * LIQUID_PDELTA * LIQUID_PDELTA), liquidFrozen);
     }
+    rocketSmokeCouple(rigExhaustFluid, dt);
     rigExhaustFluid.step(dt);
     rigExhaustDirty = true;
     if (rigExhaustAwake <= 0) { rigExhaustFluid.clear(); rigExhaustDirty = true; }
@@ -44648,7 +44731,7 @@
     "id": "spiral-kiln",
     "name": "Spiral kiln",
     "family": "Fluid experiments",
-    "description": "The smoke stirs along its own edges, winding gold and red layers into living coils. Reverse Edge spin to reverse the twist.",
+    "description": "The smoke stirs along its own edges, winding gold and red layers into living coils.",
     "colors": ["#e3ae61","#b36176"],
     "samplerVersion": 3,
     "physics": {"HEAT": 2,"COOLING": 0.45,"BUOYANCY": 65,"WEIGHT": 28,"VISCOSITY": 4,"EDGE_SPIN": 230},
@@ -44669,7 +44752,73 @@
     Object.assign({}, rigExhaustRainbow.physics), 25000
   );
 
-  var rigExhaustState = { owned: { stock: true }, equipped: 'stock' };
+  var rigExhaustState = { owned: { stock: true }, equipped: 'stock', settings: {} };
+  var rigExhaustSaveTimer = 0;
+  var RIG_EXHAUST_LIMITS = {
+    tuning: { mass: [0.1, 2] },
+    appearance: { sharpness: [0, 1], lifetime: [0.5, 3] }
+  };
+
+  function rigExhaustCleanSettings(data) {
+    var result = {};
+    if (!data || typeof data !== 'object') return result;
+    Object.keys(RIG_EXHAUST_LIMITS).forEach(function (group) {
+      var values = data[group];
+      if (!values || typeof values !== 'object') return;
+      Object.keys(RIG_EXHAUST_LIMITS[group]).forEach(function (key) {
+        var value = values[key], limits = RIG_EXHAUST_LIMITS[group][key];
+        if (typeof value !== 'number' || !isFinite(value)) return;
+        if (!result[group]) result[group] = {};
+        result[group][key] = Math.max(limits[0], Math.min(limits[1], value));
+      });
+    });
+    return result;
+  }
+
+  // Copies in recipe units: UI values stay stable across zoom/resolution,
+  // and edits never mutate a catalog entry or another exhaust's settings.
+  function rigExhaustSettings() {
+    var def = rigExhaustGet(), saved = rigExhaustState.settings[def.id] || {};
+    return { id: def.id, name: def.name, description: def.description, custom: !!def.recipe,
+      tuning: Object.assign({}, def.tuning, saved.tuning),
+      appearance: Object.assign({ sharpness: 0, lifetime: 1 }, saved.appearance),
+      physics: Object.assign({}, def.physics) };
+  }
+
+  function rigExhaustFlushSettings() {
+    if (!rigExhaustSaveTimer) return;
+    clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    saveNow('exhaust-settings');
+  }
+
+  function rigExhaustSetSetting(group, key, value) {
+    var def = rigExhaustGet();
+    if (!def.recipe || !Object.prototype.hasOwnProperty.call(RIG_EXHAUST_LIMITS, group) ||
+        !Object.prototype.hasOwnProperty.call(RIG_EXHAUST_LIMITS[group], key) ||
+        typeof value !== 'number' || !isFinite(value)) return false;
+    var limits = RIG_EXHAUST_LIMITS[group][key];
+    var saved = rigExhaustState.settings[def.id] || (rigExhaustState.settings[def.id] = {});
+    if (!saved[group]) saved[group] = {};
+    saved[group][key] = Math.max(limits[0], Math.min(limits[1], value));
+    rigExhaustApply();
+    // A dragged range can send dozens of events. Apply each one live, but
+    // serialize the world only after the gesture or a short idle interval.
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = setTimeout(rigExhaustFlushSettings, 180);
+    return true;
+  }
+
+  function rigExhaustRestoreSettings() {
+    var def = rigExhaustGet();
+    if (!def.recipe) return false;
+    delete rigExhaustState.settings[def.id];
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    rigExhaustApply();
+    saveNow('exhaust-restore');
+    return true;
+  }
 
   function rigExhaustGet(id) {
     if (id == null) id = rigExhaustState.equipped;
@@ -44717,7 +44866,9 @@
   }
 
   function rigExhaustReset() {
-    rigExhaustState = { owned: { stock: true }, equipped: 'stock' };
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    rigExhaustState = { owned: { stock: true }, equipped: 'stock', settings: {} };
     if (typeof rigExhaustApply === 'function') rigExhaustApply();
   }
 
@@ -44726,7 +44877,8 @@
       owned: RIG_EXHAUST_CATALOG.filter(function (item) {
         return rigExhaustIsOwned(item.id);
       }).map(function (item) { return item.id; }),
-      equipped: rigExhaustState.equipped
+      equipped: rigExhaustState.equipped,
+      settings: JSON.parse(JSON.stringify(rigExhaustState.settings))
     };
   }
 
@@ -44742,7 +44894,15 @@
     }
     var equipped = data && typeof data.equipped === 'string' &&
       owned[data.equipped] === true && rigExhaustGet(data.equipped) ? data.equipped : 'stock';
-    rigExhaustState = { owned: owned, equipped: equipped };
+    var settings = {};
+    RIG_EXHAUST_CATALOG.forEach(function (def) {
+      if (!def.recipe || !owned[def.id] || !data || !data.settings) return;
+      var clean = rigExhaustCleanSettings(data.settings[def.id]);
+      if (Object.keys(clean).length) settings[def.id] = clean;
+    });
+    if (rigExhaustSaveTimer) clearTimeout(rigExhaustSaveTimer);
+    rigExhaustSaveTimer = 0;
+    rigExhaustState = { owned: owned, equipped: equipped, settings: settings };
     if (typeof rigExhaustApply === 'function') rigExhaustApply();
   }
   // ====== ROCKET PLUME ======
@@ -45089,6 +45249,67 @@
     return rocketJetActive() && rocketIntensity > 0.02;
   }
 
+  // Push existing smoke with air, never dye. Both fluid instances receive
+  // the same world-space jet after their camera scroll and before projection.
+  // Acceleration and Gaussian widths are in world pixels, independent of
+  // frame rate, zoom and the solver's grid resolution.
+  function rocketSmokeCouple(driver, dt) {
+    if (!rocketJetVisible() || dt <= 0) return;
+    var dims, aspect;
+    if (driver) {
+      dims = driver.simW > 0 && driver.simH > 0 ? { w: driver.simW, h: driver.simH } :
+        smokeWGPUResDims(driver.config.SIM_RESOLUTION, smokeFluidWidth, smokeFluidHeight);
+      aspect = smokeFluidWidth / smokeFluidHeight;
+    } else if (!fluidU) return;
+    var strength = 1800 * rocketIntensity * rocketIntensity * Math.min(dt, 0.05);
+    function impulse(x, y, ax, ay, radius) {
+      if (rocketInSolid(x, y) || rocketInJello(x, y) || rocketInSkySlime(x, y)) return;
+      if (driver) {
+        var uv = smokeFluidWorldToUV(x, y);
+        if (!uv.inView) return;
+        var rad = 100 * Math.pow(radius / smokeFluidDomainWorldH, 2) / Math.max(1, aspect);
+        var vx = ax * strength * dims.w / smokeFluidDomainWorldW;
+        var vy = -ay * strength * dims.h / smokeFluidDomainWorldH;
+        if (driver.splatVelocity) driver.splatVelocity(uv.uvX, uv.uvY, vx, vy, rad);
+        else driver.splat(uv.uvX, uv.uvY, vx, vy, SMOKE_ZERO_COL, rad);
+      } else {
+        var gx = (x - fluidGridX) / FLUID_CELL, gy = (y - fluidGridY) / FLUID_CELL;
+        fluidSplatDisc(fluidU, gx, gy, radius / FLUID_CELL, ax * strength);
+        fluidSplatDisc(fluidV, gx, gy, radius / FLUID_CELL, ay * strength);
+      }
+    }
+    var nozzles = rocketNozzles(), dir = rocketExhaustDir();
+    var distances = [5, 18, 36, 60, 90, 124], reach = TILE * 4;
+    for (var ni = 0; ni < nozzles.length; ni++) {
+      var nz = nozzles[ni];
+      var hit = rocketFindImpactAlong(nz.x, nz.y, dir.x, dir.y, reach);
+      for (var i = 0; i < distances.length; i++) {
+        var d = distances[i], radius = 4 + d * 0.12;
+        if (hit !== null) radius = Math.min(radius, (hit - d) * 0.45);
+        if (radius < 1) break;
+        var falloff = Math.pow(1 - d / (reach + 20), 2);
+        impulse(nz.x + dir.x * d, nz.y + dir.y * d, dir.x * falloff, dir.y * falloff, radius);
+      }
+      // At an impact, redirect some flow along the surface. Sample the local
+      // solid normal so a tilted jet meeting a floor still washes sideways.
+      if (hit !== null) {
+        var hx = nz.x + dir.x * hit, hy = nz.y + dir.y * hit;
+        var nx = Number(rocketInSolid(hx - 4, hy)) - Number(rocketInSolid(hx + 4, hy));
+        var ny = Number(rocketInSolid(hx, hy - 4)) - Number(rocketInSolid(hx, hy + 4));
+        var normalLength = Math.hypot(nx, ny);
+        if (normalLength) { nx /= normalLength; ny /= normalLength; }
+        else { nx = -dir.x; ny = -dir.y; }
+        var wash = 0.55 * Math.pow(1 - hit / (reach + 20), 2);
+        for (var side = -1; side <= 1; side += 2) {
+          var tx = -ny * side, ty = nx * side;
+          var bx = hx + nx * 7, by = hy + ny * 7;
+          if (rocketFindImpactAlong(bx, by, tx, ty, 12) !== null) continue;
+          impulse(bx + tx * 12, by + ty * 12, tx * wash, ty * wash, 5);
+        }
+      }
+    }
+  }
+
   function updateRocketPlume(dt) {
     if (dt > 0.05) dt = 0.05;
     var T = rocketTune;
@@ -45100,54 +45321,6 @@
       var target = emitting ? 1 : 0;
       var rate = emitting ? rocketTuneNum(T.ramp_up, 9.0) : rocketTuneNum(T.ramp_down, 3.5);
       rocketIntensity += (target - rocketIntensity) * Math.min(1, rate * dt);
-    }
-
-    // Inject rocket exhaust into the smoke fluid sim from the actual paired
-    // nozzles, so smoke/liquid response starts at the rocket mouths.
-    if (rocketIntensity > 0.02) {
-      var nozzlesFluid = rocketNozzles();
-      var exhaustDir = rocketExhaustDir();
-      var thrustStr = rocketIntensity * rocketIntensity;
-      var columnDepth = TILE * 24;
-      var steps = 10;
-      if (smokeFluidActive && typeof SmokeFluid !== 'undefined') {
-        for (var ni = 0; ni < nozzlesFluid.length; ni++) {
-          var nz = nozzlesFluid[ni];
-          for (var si = 0; si < steps; si++) {
-            var frac = si / (steps - 1);
-            var wx = nz.x + exhaustDir.x * frac * columnDepth;
-            var wy = nz.y + exhaustDir.y * frac * columnDepth;
-            var uv = smokeFluidWorldToUV(wx, wy);
-            if (!uv.inView) continue;
-            var falloff = (1 - frac * 0.6) * 0.62;
-            var mouthBoost = frac < 0.001 ? 1.55 : 1;
-            // Cone shape: readable right at the nozzle, wider lower down.
-            var rad = 0.026 + frac * frac * 0.15;
-            smokeDriver.splat(uv.uvX, uv.uvY,
-              (exhaustDir.x * 10 + (Math.random() - 0.5) * 0.8) * thrustStr * falloff * mouthBoost,
-              -exhaustDir.y * 18.0 * thrustStr * falloff * mouthBoost,
-              { r: 0, g: 0, b: 0 },
-              rad);
-          }
-        }
-      } else if (fluidU) {
-        for (var ni2 = 0; ni2 < nozzlesFluid.length; ni2++) {
-          var nz2 = nozzlesFluid[ni2];
-          for (var si2 = 0; si2 < steps; si2++) {
-            var frac2 = si2 / (steps - 1);
-            var wx2 = nz2.x + exhaustDir.x * frac2 * columnDepth;
-            var wy2 = nz2.y + exhaustDir.y * frac2 * columnDepth;
-            var gx = (wx2 - fluidGridX) / FLUID_CELL;
-            var gy = (wy2 - fluidGridY) / FLUID_CELL;
-            if (gx < 1 || gx >= FLUID_W - 1 || gy < 1 || gy >= FLUID_H - 1) continue;
-            var falloff2 = (1 - frac2 * 0.6) * 0.62;
-            var mouthBoost2 = frac2 < 0.001 ? 1.55 : 1;
-            var coneRad = 3.2 + frac2 * frac2 * 7;
-            fluidSplatDisc(fluidV, gx, gy, coneRad, exhaustDir.y * 200 * thrustStr * falloff2 * mouthBoost2 * dt);
-            fluidSplatDisc(fluidU, gx, gy, coneRad * 0.6, exhaustDir.x * 140 * thrustStr * falloff2 * mouthBoost2 * dt);
-          }
-        }
-      }
     }
 
     if (T && T.enabled && rocketIntensity > 0.02) {
@@ -45575,7 +45748,6 @@
     }
 
   }
-
 
   // ====== AMBIENT BIRDS (tiny surface boids) ======
   //

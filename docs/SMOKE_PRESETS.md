@@ -167,11 +167,42 @@ boundaries. Ambient smoke keeps its own material settings, heavy-smoke tint
 and emission cadence. Cosmetic forces apply only inside the rig smoke field;
 they do not retune the ambient instance.
 
+### In-game appearance controls and rig interaction
+
+Pause > Options > Exhaust has three controls for the equipped purchased look:
+
+- Smoke amount changes source density from 10% to 200%.
+- Edge definition reduces the display filter and tightens the opacity edge,
+  from Soft to Crisp. It never changes the stored smoke or its material forces.
+- Linger time changes visible density decay from 0.5x to 3x the recipe's
+  normal duration. It does not slow cooling or the velocity field.
+
+Changes apply live and are saved separately per owned exhaust. Restore recipe
+returns all three controls to that look's defaults. Original recipe physics,
+source motion, colors and export fixtures remain unchanged. Stock exhaust has
+no separate appearance controls because it shares the ambient smoke field.
+The additive `profile.rigExhaust.settings` map validates known keys and finite
+numbers, clamps supported ranges, and ignores unowned/unknown recipes. Old
+saves keep their original appearance. Range changes apply immediately, with
+save serialization deferred until the native change event or a short idle.
+
+Both smoke fields now receive the rocket's air jet after camera scrolling and
+before the pressure solve. World-space acceleration is integrated with elapsed
+time and converted to each solver's cells; widths are converted from world
+pixels. The jet follows the tilted nozzles, stops at terrain or slimes, and
+spreads along an impact surface. Releasing thrust stops new jet impulses.
+The moving chassis joins the existing slime boundary batch so driving through
+smoke displaces it. These are bounded 2D fluid interactions, not a full 3D
+compressible exhaust model. The CPU fallback receives the same bounded jet.
+
 ## Verification
 
 - `node tools/sluice-exhaust-smoke.mjs`: export fidelity, crimson and rainbow
   rendering, purchases, free switching, save migration, death retention,
-  New Game reset, isolated fluid resources and desktop/phone store controls.
+  New Game reset, appearance controls and persistence, isolated fluid resources
+  and desktop/phone store and pause controls.
+- `node tools/sluice-smoke-coupling.mjs`: rocket transfer to both smoke fields,
+  direction, release, blockers, cadence, zoom and moving chassis boundaries.
 - `node tools/smoke-presets-smoke.mjs`: retained data, all rendered presets,
   live switching, UI tuning, favorites, downloads, phone layout and game boot.
 - `node tools/perf/smoke-physics.cjs`: measured thermal rise, weight, independent

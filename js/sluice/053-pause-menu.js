@@ -3,7 +3,7 @@
   var pauseMenuShowPage = null;
   function pauseMenuBack() {
     if (pauseMenuPage === 'main' || !pauseMenuShowPage) return false;
-    pauseMenuShowPage('main');
+    pauseMenuShowPage(pauseMenuPage === 'exhaust' ? 'options' : 'main');
     return true;
   }
   function setupPauseMenu() {
@@ -24,14 +24,16 @@
     var footer = card.querySelector('.pause-footer');
     var body = card.querySelector('.pause-body');
     var pages = card.querySelectorAll('[data-pause-page]');
-    var titles = { main: 'Paused', options: 'Options', controls: 'Controls', restart: 'Start a new game?' };
+    var titles = { main: 'Paused', options: 'Options', exhaust: 'Exhaust', controls: 'Controls', restart: 'Start a new game?' };
     var returnFocus = 'gm-resume-btn';
     pauseMenuShowPage = function (page) {
+      var previousPage = pauseMenuPage;
       pauseMenuPage = page;
       card.setAttribute('data-page', page);
       for (var i = 0; i < pages.length; i++) pages[i].hidden = pages[i].getAttribute('data-pause-page') !== page;
       title.textContent = titles[page];
       back.hidden = page === 'main';
+      back.setAttribute('aria-label', page === 'exhaust' ? 'Back to options' : 'Back to pause menu');
       save.hidden = page !== 'main';
       footer.hidden = page !== 'main';
       if (page === 'main') {
@@ -42,18 +44,21 @@
           .replace(/^autosave off .*$/, 'Autosave off')
           .replace(/^save failing, browser storage may be full$/, 'Save failed. Storage may be full.');
       }
+      if (page === 'exhaust') syncExhaust();
       body.scrollTop = 0;
       var focus = page === 'main' ? document.getElementById(returnFocus) :
+        page === 'options' && previousPage === 'exhaust' ? document.getElementById('gm-exhaust-btn') :
         page === 'restart' ? document.getElementById('gm-cancel-restart') : back;
       if (focus) focus.focus({ preventScroll: true });
     };
     function openWith(id, page) {
       document.getElementById(id).addEventListener('click', function () {
-        returnFocus = id;
+        if (pauseMenuPage === 'main') returnFocus = id;
         pauseMenuShowPage(page);
       });
     }
     openWith('gm-options-btn', 'options');
+    openWith('gm-exhaust-btn', 'exhaust');
     openWith('gm-controls-btn', 'controls');
     openWith('gm-new-game-btn', 'restart');
     back.addEventListener('click', pauseMenuBack);
@@ -110,6 +115,48 @@
       try { return localStorage.getItem(key); } catch (e) { return null; }
     }
     function setOpt(key, value) { window.SluiceOptions.set(key, value); }
+    var exhaustControls = card.querySelectorAll('[data-exhaust-group]');
+    var exhaustRestore = document.getElementById('gm-exhaust-restore');
+    function syncExhaust() {
+      var settings = typeof rigExhaustSettings === 'function' ? rigExhaustSettings() : null;
+      var stock = !settings || settings.id === 'stock';
+      document.getElementById('gm-exhaust-name').textContent = settings ? settings.name : 'Stock exhaust';
+      document.getElementById('gm-exhaust-description').textContent = settings ? settings.description : "The rig's original gold exhaust.";
+      document.getElementById('gm-exhaust-note').textContent = stock ?
+        'Buy and equip a smoke recipe in Store > Exhaust to adjust its appearance.' :
+        'Changes are saved separately for each exhaust. Resume to see them in motion.';
+      for (var i = 0; i < exhaustControls.length; i++) {
+        var slider = exhaustControls[i];
+        var group = slider.getAttribute('data-exhaust-group');
+        var key = slider.getAttribute('data-exhaust-key');
+        var value = settings && settings[group] ? Number(settings[group][key]) : Number(slider.defaultValue);
+        if (!isFinite(value)) value = Number(slider.defaultValue);
+        slider.value = value;
+        slider.disabled = stock;
+        var percent = Math.round(value * 100);
+        var label = key === 'lifetime' ? value.toFixed(1) + 'x' :
+          key === 'sharpness' && value === 0 ? 'Soft' :
+          key === 'sharpness' && value === 1 ? 'Crisp' : percent + '%';
+        document.getElementById(slider.id + '-value').value = stock ? '-' : label;
+        slider.setAttribute('aria-valuetext', stock ? 'Equip a smoke recipe to adjust' :
+          key === 'lifetime' ? value.toFixed(1) + ' times the original duration' :
+          key === 'sharpness' ? percent + ' percent edge definition' : percent + ' percent');
+      }
+      exhaustRestore.disabled = stock;
+    }
+    for (var exhaustIndex = 0; exhaustIndex < exhaustControls.length; exhaustIndex++) {
+      exhaustControls[exhaustIndex].addEventListener('input', function () {
+        rigExhaustSetSetting(this.getAttribute('data-exhaust-group'), this.getAttribute('data-exhaust-key'), Number(this.value));
+        syncExhaust();
+      });
+      exhaustControls[exhaustIndex].addEventListener('change', function () {
+        rigExhaustFlushSettings();
+      });
+    }
+    exhaustRestore.addEventListener('click', function () {
+      rigExhaustRestoreSettings();
+      syncExhaust();
+    });
     function wireSlider(id, key, fallback, master) {
       var slider = document.getElementById(id);
       var output = document.getElementById(id + '-value');

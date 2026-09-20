@@ -23,6 +23,7 @@
       OPTICAL_DENSITY: 0,
       OPTICAL_BRIGHTNESS: 0.9,
       OPTICAL_ABSORPTION: 1,
+      EDGE_SHARPNESS: 0,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -513,6 +514,7 @@
       'uniform float opticalDensity;\n' +
       'uniform float opticalBrightness;\n' +
       'uniform float opticalAbsorption;\n' +
+      'uniform float edgeSharpness;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -520,6 +522,7 @@
       '  vec3 tc = texture2D(uTexture, vT).rgb;\n' +
       '  vec3 bc = texture2D(uTexture, vB).rgb;\n' +
       '  vec3 c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;\n' +
+      '  if (edgeSharpness > 0.0) c = mix(c, cc, edgeSharpness);\n' +
       // Empty dye remains transparent after lighting and either obstacle mask.
       // Test all five taps so the edge filter keeps its existing footprint.
       '  if (all(equal(c, vec3(0.0)))) { gl_FragColor = vec4(0.0); return; }\n' +
@@ -566,6 +569,13 @@
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
       '    c = opticalBrightness * unmasked / max(density, 0.0001);\n' +
       '    a = (1.0 - exp(-density * opticalAbsorption)) * visibility;\n' +
+      '  }\n' +
+      // Sharpen the smoke's opacity before applying coverage. Solid/water/gel
+      // silhouettes must keep their own antialiasing even at full definition.
+      '  if (edgeSharpness > 0.0) {\n' +
+      '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
+      '    float baseAlpha = opticalDensity > 0.5 ? 1.0 - exp(-density * opticalAbsorption) : clamp(density, 0.0, 1.0);\n' +
+      '    a = mix(baseAlpha, smoothstep(0.06, 0.72, baseAlpha), edgeSharpness) * visibility;\n' +
       '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -1251,6 +1261,7 @@
       gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
       gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
       gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
+      gl.uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -1813,6 +1824,23 @@
       'inset(' + overscanY + 'px ' + overscanX + 'px ' +
       (overscanY + smokeBottomMargin) + 'px ' + overscanX + 'px)';
     if (typeof rigExhaustPositionDOM === 'function') rigExhaustPositionDOM();
+  }
+
+  // The chassis displaces air just like a moving slime. Keep its identity
+  // stable: each fluid instance stores its own previous world-space ring.
+  var smokeRigBody = { ringN: 4, ring: [0, 1, 2, 3], px: new Float32Array(4), py: new Float32Array(4) };
+  var smokeMovingBodies = [];
+  function smokeFluidMovingBodies() {
+    smokeMovingBodies.length = 0;
+    for (var i = 0; i < jelloBodies.length; i++) smokeMovingBodies.push(jelloBodies[i]);
+    if (roverMode || !isFinite(player.renderX + player.renderY)) return smokeMovingBodies;
+    for (var corner = 0; corner < 4; corner++) {
+      var point = playerLocalToWorld(corner === 1 || corner === 2 ? PLAYER_W - 1 : 1,
+        corner >= 2 ? PLAYER_H - 1 : 3);
+      smokeRigBody.px[corner] = point.x; smokeRigBody.py[corner] = point.y;
+    }
+    smokeMovingBodies.push(smokeRigBody);
+    return smokeMovingBodies;
   }
 
   function smokeFluidUpdateDomain() {
@@ -2627,10 +2655,11 @@
       var smokeRun = !PERF_SMOKE_IDLE_SKIP || smokeAwakeT > 0;
       var _us5 = performance.now();
       if (smokeRun) {
-        if (smokeDriver.setMovingBodies) smokeDriver.setMovingBodies(jelloBodies,
+        if (smokeDriver.setMovingBodies) smokeDriver.setMovingBodies(smokeFluidMovingBodies(),
           cam.x - smokeFluidMarginWorldX, cam.y - smokeFluidMarginWorldY,
           smokeFluidDomainWorldW, smokeFluidDomainWorldH, smokeStepDt,
           smokeFluidObstacleW, smokeFluidObstacleH, true);
+        rocketSmokeCouple(smokeDriver, smokeStepDt);
         smokeDriver.step(smokeStepDt);
       }
       perfMark('update.smokeStep', _us5);
@@ -2643,6 +2672,7 @@
 
     fluidUpdateGridOrigin();
     fluidBuildObstacles();
+    rocketSmokeCouple(null, dt);
     fluidInjectSources(dt);
     fluidAddBuoyancy(dt);
     fluidApplySurfaceWind(dt);

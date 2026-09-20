@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.47">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.48">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -448,6 +448,7 @@
                         <h3 id="gm-display-title">Graphics</h3>
                         <div class="pause-setting pause-setting-wide"><div class="pause-segment" role="group" aria-labelledby="gm-display-title"><button id="gm-gfx-perf" type="button">Performance</button><button id="gm-gfx-bal" type="button">Balanced</button><button id="gm-gfx-ext" type="button">Extreme</button></div><p class="pause-note" id="gm-gfx-note">Full visual detail.</p></div>
                       </section>
+                      <button id="gm-exhaust-btn" class="pause-nav" type="button"><span>Exhaust</span><span class="pause-arrow" aria-hidden="true">&gt;</span></button>
                       <section class="pause-section pause-motion-section" aria-labelledby="gm-comfort-title">
                         <h3 id="gm-comfort-title">Comfort</h3>
                         <div class="pause-setting"><label for="gm-shake">Screen shake</label><output for="gm-shake" id="gm-shake-value">100%</output><input id="gm-shake" type="range" min="0" max="100" value="100"></div>
@@ -463,6 +464,19 @@
                       <section class="pause-section" aria-labelledby="gm-banya-label">
                         <div class="pause-setting pause-setting-switch"><div><span id="gm-banya-label">Banya bathhouse</span><p class="pause-note">Sky slimes visit for a warm bath.</p></div><div class="pause-segment" role="group" aria-labelledby="gm-banya-label"><button id="gm-banya-off" type="button">Off</button><button id="gm-banya-on" type="button">On</button></div></div>
                       </section>
+                    </div>
+                    <div class="pause-page" data-pause-page="exhaust" hidden>
+                      <section class="pause-section" aria-labelledby="gm-exhaust-name">
+                        <h3 id="gm-exhaust-name">Stock exhaust</h3>
+                        <p class="pause-help" id="gm-exhaust-description">The rig's original gold exhaust.</p>
+                        <p class="pause-note" id="gm-exhaust-note">Buy and equip a smoke recipe in Store &gt; Exhaust to adjust its appearance.</p>
+                      </section>
+                      <section class="pause-section" aria-label="Exhaust appearance">
+                        <div class="pause-setting"><label for="gm-exhaust-mass">Smoke amount</label><output for="gm-exhaust-mass" id="gm-exhaust-mass-value">100%</output><input id="gm-exhaust-mass" data-exhaust-group="tuning" data-exhaust-key="mass" type="range" min="0.1" max="2" step="0.05" value="1" disabled></div>
+                        <div class="pause-setting"><label for="gm-exhaust-sharpness">Edge definition</label><output for="gm-exhaust-sharpness" id="gm-exhaust-sharpness-value">Soft</output><input id="gm-exhaust-sharpness" data-exhaust-group="appearance" data-exhaust-key="sharpness" type="range" min="0" max="1" step="0.05" value="0" aria-describedby="gm-exhaust-sharpness-note" disabled><p class="pause-note pause-exhaust-help" id="gm-exhaust-sharpness-note">From soft haze to crisp folds.</p></div>
+                        <div class="pause-setting"><label for="gm-exhaust-lifetime">Linger time</label><output for="gm-exhaust-lifetime" id="gm-exhaust-lifetime-value">1.0x</output><input id="gm-exhaust-lifetime" data-exhaust-group="appearance" data-exhaust-key="lifetime" type="range" min="0.5" max="3" step="0.1" value="1" aria-describedby="gm-exhaust-lifetime-note" disabled><p class="pause-note pause-exhaust-help" id="gm-exhaust-lifetime-note">How long smoke stays before fading.</p></div>
+                      </section>
+                      <button id="gm-exhaust-restore" type="button" disabled>Restore recipe</button>
                     </div>
                     <div class="pause-page" data-pause-page="controls" hidden>
                       <section class="pause-section"><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Fullscreen</dt><dd><kbd>Alt + Enter</kbd></dd></div><div><dt>Scoop</dt><dd><kbd>F</kbd><span>toggle collection below the rig</span></dd></div><div><dt>Dump / launch</dt><dd><kbd>Right mouse</kbd><span>press once to empty the tank and lift off</span></dd></div><div><dt>Fluid chamber</dt><dd><kbd>R</kbd><span>while carrying liquid</span></dd></div><div><dt>Soft slimes</dt><dd><kbd>Drag</kbd><span>lift and stretch; release while moving to toss</span></dd></div><div><dt>Bathhouse</dt><dd><kbd>E</kbd><span>enter at the door; serve in Bath</span></dd></div><div><dt>Bath / boiler / forge</dt><dd><kbd>1 / 2 / 3</kbd><span>inside the banya</span></dd></div><div><dt>Coal / bellows</dt><dd><kbd>C / B</kbd><span>at the boiler or forge</span></dd></div><div><dt>Strike / rake ash</dt><dd><kbd>F / A</kbd><span>at the boiler</span></dd></div><div><dt>Forge work</dt><dd><kbd>E</kbd><span>heat, hammer, quench, collect</span></dd></div><div><dt>Cargo</dt><dd><kbd>I</kbd></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
@@ -748,11 +762,11 @@
       });
     })();
   </script>
-  <script defer src="js/liquid-wgpu.js?v=v28.47"></script>
-  <script defer src="js/smoke-wgpu.js?v=v28.47"></script>
-  <script defer src="js/jello-wgpu.js?v=v28.47"></script>
-  <script defer src="js/audio.js?v=v28.47"></script>
-  <script defer src="js/smoke-presets.js?v=v28.47"></script>
-  <script defer src="js/sluice.js?v=v28.47"></script>
+  <script defer src="js/liquid-wgpu.js?v=v28.48"></script>
+  <script defer src="js/smoke-wgpu.js?v=v28.48"></script>
+  <script defer src="js/jello-wgpu.js?v=v28.48"></script>
+  <script defer src="js/audio.js?v=v28.48"></script>
+  <script defer src="js/smoke-presets.js?v=v28.48"></script>
+  <script defer src="js/sluice.js?v=v28.48"></script>
 </body>
 </html>
