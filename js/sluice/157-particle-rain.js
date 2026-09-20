@@ -247,12 +247,12 @@
     var width = Math.max(0, right - left), height = Math.max(0, rect.bottom - top);
     var wind = surfaceWind.current * 110 + 42 * Math.sin(rain.time * 0.43) + 22 * Math.sin(rain.time * 1.17);
     var density = (gpu ? 760 : 280) / (1100 * 645);
-    var target = Math.min(RAIN_DROP_CAP * 0.72, density * width * height) * rain.intensity;
+    var target = sky ? Math.min(RAIN_DROP_CAP * 0.72, density * width * height) * Math.max(rain.intensity, rain.field.strength) : 0;
     var room = rainRoom(limit);
     if (room < target - rain.drops.length) rainRecycle(Math.ceil(target - rain.drops.length - room));
-    particleWeatherField(rain.field, rect, rain.drops, density, RAIN_DROP_CAP, sky ? rain.intensity : 0,
+    particleWeatherField(rain.field, rect, rain.drops, density, RAIN_DROP_CAP, rain.intensity,
       wind, [480, 645, 810], dt, rainSpawn, function () { rain.recycled++; });
-    rainCatchLakes(dt, sky, left, right);
+    rainCatchLakes(dt, sky, left, right, rain.field.strength);
     for (var i = rain.drops.length - 1; i >= 0; i--) {
       var p = rain.drops[i];
       p.age += dt;

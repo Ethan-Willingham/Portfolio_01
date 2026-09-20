@@ -3,7 +3,7 @@
     return { left: Math.max(3, cam.x - 160), right: Math.min(COLS * TILE - 3, cam.x + screenW + 160),
       top: cam.y - 160, bottom: Math.min(SKY_ROWS * TILE - 8, cam.y + screenH + 160) };
   }
-  function particleWeatherState() { return { time: 0, wind: 0, seen: {}, tick: 0, rect: null, level: -1 }; }
+  function particleWeatherState() { return { time: 0, wind: 0, seen: {}, tick: 0, rect: null, level: -1, strength: -1 }; }
   function particleWeatherHash(c, r, salt) {
     var n = Math.imul(c, 374761393) ^ Math.imul(r, 668265263) ^ Math.imul(salt, 1274126177);
     n = Math.imul(n ^ (n >>> 13), 1274126177);
@@ -11,10 +11,15 @@
   }
   function particleWeatherField(state, rect, parts, density, cap, intensity, wind, speeds, dt, spawn, retire) {
     state.time += dt; state.wind += wind * dt; state.tick += dt;
-    // A fixed world lattice moves with the air. Intensity selects the same
-    // scattered fraction everywhere, including places never visited. No
-    // top-edge curtain, camera-shaped refill strips or frozen old storms.
-    var level = Math.max(0, Math.min(1, intensity)) * Math.min(1,
+    // Ease the source down globally, including while the camera is underground.
+    // A typical snow front takes at least half a minute to stop supplying
+    // flakes. Existing visible particles always finish their own trajectories.
+    intensity = Math.max(0, Math.min(1, intensity));
+    if (state.strength < 0 || intensity >= state.strength) state.strength = intensity;
+    else state.strength = Math.max(intensity, state.strength - dt * (speeds[0] < 100 ? 0.02 : 0.12));
+    // The moving world lattice selects the same scattered fraction everywhere.
+    // A broad offscreen margin hides thinning even during upward flight.
+    var level = state.strength * Math.min(1,
       cap * 0.72 / Math.max(1, density * (screenW + 320) * (screenH + 320)));
     var old = state.rect;
     if (state.tick < 0.1 && old && Math.abs(rect.left - old.left) < 32 && Math.abs(rect.right - old.right) < 32 &&
@@ -23,12 +28,13 @@
     var active = {};
     for (var i = parts.length - 1; i >= 0; i--) {
       var p = parts[i], outside = p.x < rect.left - 32 || p.x > rect.right + 32 || p.y < rect.top - 32 || p.y > rect.bottom + 32;
+      var hidden = p.x < cam.x - 96 || p.x > cam.x + screenW + 96 || p.y < cam.y - 96 || p.y > cam.y + screenH + 96;
       // Physical powder and shaft water keep their own life after contact.
-      if (!p.physical && p.y < SKY_ROWS * TILE - 10 && ((p.weatherRank !== undefined && p.weatherRank >= level) || outside)) {
+      if (hidden && !p.physical && p.y < SKY_ROWS * TILE - 10 && ((p.weatherRank !== undefined && p.weatherRank >= level) || outside)) {
         retire(p); parts[i] = parts[parts.length - 1]; parts.pop();
       } else if (p.weatherKey !== undefined) active[p.weatherKey] = 1;
     }
-    if (density <= 0 || level <= 0 || rect.bottom <= rect.top || rect.right <= rect.left) { state.seen = {}; return; }
+    if (cam.y >= SKY_ROWS * TILE || density <= 0 || level <= 0 || rect.bottom <= rect.top || rect.right <= rect.left) { state.seen = {}; return; }
     var pitch = Math.sqrt(speeds.length / density), seen = {};
     for (var layer = 0; layer < speeds.length; layer++) {
       var speed = speeds[layer], offsetY = state.time * speed, salt = 31 + layer * 11;
@@ -53,12 +59,13 @@
     state.seen = seen;
   }
   function particleWeatherSave(state) {
-    return { time: state.time, wind: state.wind, seen: Object.keys(state.seen) };
+    return { time: state.time, wind: state.wind, strength: state.strength, seen: Object.keys(state.seen) };
   }
   function particleWeatherRestore(data) {
     var state = particleWeatherState();
     if (!data || !Number.isFinite(data.time) || data.time < 0 || !Number.isFinite(data.wind)) return state;
     state.time = data.time; state.wind = data.wind;
+    if (Number.isFinite(data.strength) && data.strength >= 0 && data.strength <= 1) state.strength = data.strength;
     if (Array.isArray(data.seen)) for (var i = 0; i < Math.min(30000, data.seen.length); i++) {
       var key = data.seen[i];
       if (typeof key === 'string' && /^[0-2]:-?\d{1,10}:-?\d{1,10}$/.test(key)) state.seen[key] = 1;

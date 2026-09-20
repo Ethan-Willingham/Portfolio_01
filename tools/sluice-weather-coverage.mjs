@@ -90,6 +90,28 @@ try {
     check(`${mode} builds equally in visited and unvisited sky`,ratio>.8&&ratio<1.25);
     check(`${mode} has no horizontal or vertical curtain`,Math.min(...transition.waiting)>Math.max(...transition.waiting)*.4);
     await screenshot(`${mode}-buildup-travel`);
+    await game(`while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,${mode==='snow'});
+      cam.x=2000;cam.y=-1000;player.x=2500;player.y=-650;weather.pcp=.65;updateParticleRain(0);
+      window.thinningRemoved=0;window.thinningPopped=0;window.originalWeatherField=particleWeatherField;
+      particleWeatherField=function(state,rect,parts,density,cap,intensity,wind,speeds,dt,spawn,retire){
+        return originalWeatherField(state,rect,parts,density,cap,intensity,wind,speeds,dt,spawn,function(p){
+          thinningRemoved++;if(p.x>=cam.x-96&&p.x<=cam.x+screenW+96&&p.y>=cam.y-96&&p.y<=cam.y+screenH+96)thinningPopped++;
+          retire(p);
+        });};`);
+    try {
+      for(let stage=0;stage<3;stage++) {
+        const sample=await game(`(function(){for(var n=0;n<240;n++){
+          weather.pcp=0;
+          if(${stage}>0){cam.y-=4;cam.x+=${stage}===1?3:-3;}
+          player.x=cam.x+screenW*.5;player.y=cam.y+screenH*.5;updateParticleRain(1/60);
+        }render();return {removed:thinningRemoved,popped:thinningPopped,strength:(worldSnowEnabled?snow.field:rain.field).strength};})()`);
+        console.log(mode,'offscreen thinning',stage,sample);
+        check(`${mode} never thins visible particles during stage ${stage}`,sample.popped===0);
+        if(mode==='snow')check(`snow supply eases gradually during stage ${stage}`,Math.abs(sample.strength-(.65-.08*(stage+1)))<.001);
+        if(stage===1)await screenshot(`${mode}-thinning-climb`);
+      }
+      check(`${mode} test exercised offscreen retirement`,await game('thinningRemoved>100'));
+    } finally {await game('particleWeatherField=originalWeatherField');}
     await game('cam.y=SKY_ROWS*TILE+100;window.beforeUnderground=rain.emitted+snow.emitted;updateParticleRain(1/60)');
     check(`${mode} does not seed weather inside the mine`,await game('rain.emitted+snow.emitted===beforeUnderground'));
     if(mode==='snow') {

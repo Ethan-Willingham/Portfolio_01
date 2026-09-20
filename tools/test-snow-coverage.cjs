@@ -94,9 +94,13 @@ function stormTransition(update, parts, setIntensity) {
   const clearing=total(densityAcrossView(parts()));s.cam.x=oldX;update(0);
   const returning=total(densityAcrossView(parts()));
   console.log('CLEARING', {clearing,returning});
-  assert.ok(returning<clearing*1.6&&returning>clearing*.6, 'returning cannot revive the earlier heavy storm');
-  setIntensity(0);update(.11);
-  assert.equal(parts().filter(p=>p.weatherKey!==undefined).length,0,'storm ends throughout the sky');
+  assert.ok(returning<clearing*1.6, 'returning cannot revive the earlier heavy storm');
+  assert.ok(Math.abs(returning-clearing)<total(waiting)*.25, 'finishing visible particles create only a modest difference from the current source');
+  const visible=parts().filter(p=>p.x>s.cam.x+8&&p.x<s.cam.x+s.screenW-8&&p.y>s.cam.y+8&&p.y<s.cam.y+s.screenH-8);
+  setIntensity(0);update(1/60);
+  assert.ok(visible.every(p=>parts().includes(p)),'a storm ending never deletes a visible particle');
+  for(let i=0;i<1400;i++){setIntensity(0);update(.05);}
+  assert.equal(densityAcrossView(parts()).reduce((a,b)=>a+b,0),0,'remaining weather falls out naturally after the source clears');
 }
 s.snowReset(true); s.cam.x=2000;
 stormTransition(dt=>s.updateSnow(dt),()=>s.snow.grains,v=>{s.rain.intensity=v;});
@@ -106,9 +110,33 @@ assert.ok(count({left:s.cam.x+1050,right:s.cam.x+1400,top:-700,bottom:-300})>100
 step(0,-5,120); assert.ok(nearRig()>100); step(0,5,120); assert.ok(nearRig()>100);
 for(const x of [0,320*32-960]){reset();s.cam.x=x;s.cam.y=-4500;s.updateSnow(0);assert.ok(nearRig()>100);}
 for(const scene of ['fair','underground']){
-  reset(); if(scene==='fair')s.rain.intensity=0;else s.cam.y=600;
+  reset(); if(scene==='fair'){s.snowReset(true);s.rain.intensity=0;}else s.cam.y=s.SKY_ROWS*s.TILE+1;
   const emitted=s.snow.emitted;step(8,0,60);assert.equal(s.snow.emitted,emitted);
 }
+// Audit every atmospheric retirement during an abrupt shutdown, climbing,
+// reversal and zoom. No weather controller may remove a visible grain.
+reset();
+let retired=0;
+const retire=s.snowRetire;
+s.snowRetire=p=>{
+  assert.ok(p.x<s.cam.x-96||p.x>s.cam.x+s.screenW+96||p.y<s.cam.y-96||p.y>s.cam.y+s.screenH+96,'thinning remains outside the protected view');
+  retired++;retire(p);
+};
+for(let i=0;i<600;i++){
+  s.rain.intensity=0;
+  if(i>120&&i<420){s.cam.y-=5;s.cam.x+=i<270?4:-4;}
+  if(i===420){s.screenW=1200;s.screenH=750;}
+  s.updateSnow(1/60);
+}
+assert.ok(retired>1000,'audit exercised real offscreen retirement');
+assert.ok(s.snow.field.strength>.449&&s.snow.field.strength<.451,'snow supply falls by at most two percentage points each second');
+const thinningSave=JSON.parse(JSON.stringify(s.snowSave()));
+s.snowReset(true);s.snowRestore(thinningSave);
+assert.equal(s.snow.field.strength,thinningSave.field.strength,'saving during thinning preserves the gradual transition');
+s.snowRetire=retire;
+// Going underground must not locally weaken an ongoing world-wide front.
+reset();s.cam.y=600;step(0,0,180);
+assert.equal(s.snow.field.strength,.65);
 reset();s.snow.active=s.SNOW_CPU_CAP;
 assert.ok(s.snowSpawn(2400,-700));assert.ok(s.snowParticle(2400,-700,0,53));
 assert.equal(s.snow.parked.length,4,'full solver stores contact material without stopping weather');
@@ -124,6 +152,7 @@ s.snowAirAt=()=>[0,0];s.SNOW_RATE=345;
 
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/158-rain-lakes.js'),'utf8'),s);
+const catchLakes=s.rainCatchLakes;
 s.weatherForce=4;s.weather={pcp:.65};s.weatherTune={enabled:true};s.weatherSetMood=noop;
 s.bathMode=s.PERF_DISABLE_WATER=s.PERF_DISABLE_WEATHER=false;
 s.rainScan=noop;s.rainCatchLakes=noop;s.rainAdvanceWeather=noop;
@@ -134,4 +163,11 @@ assert.equal(s.snow.grains.length,0,'rain has no snow weather');
 const shaft={x:2400,y:s.SKY_ROWS*s.TILE+40,vx:0,vy:645,size:.5,age:0,weatherRank:.5};
 s.rain.drops=[shaft];s.weather.pcp=0;s.cam.y=s.SKY_ROWS*s.TILE;s.updateParticleRain(.11);
 assert.ok(s.rain.drops.includes(shaft),'ending a storm cannot delete water already falling into a shaft');
+let caught=0;
+s.surfacePonds=[{rainFed:true,catchable:true,cL:10,cR:12,rainCredit:0}];
+s.rainStoreInLake=(lake,n)=>{caught+=n;};s.rain.intensity=0;
+catchLakes(1,false,0,0,.5);
+assert.equal(caught,33,'offscreen lakes receive the same fading supply as visible sky');
+catchLakes(1,false,0,0,0);
+assert.equal(caught,33,'catchment stops when the eased source finishes');
 console.log('PASS evolving whole-world rain/snow, both flight directions, no curtains, clearing, saves, budgets and jet settling');

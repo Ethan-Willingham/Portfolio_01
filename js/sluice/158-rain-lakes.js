@@ -88,8 +88,9 @@
     }
   }
 
-  function rainCatchLakes(dt, sky, left, right) {
-    if (rain.intensity <= 0) return;
+  function rainCatchLakes(dt, sky, left, right, intensity) {
+    if (intensity === undefined) intensity = rain.intensity;
+    if (intensity <= 0) return;
     for (var i = 0; i < surfacePonds.length; i++) {
       var lake = surfacePonds[i];
       if (!lake.rainFed || !lake.catchable) continue;
@@ -99,7 +100,7 @@
       var covered = sky ? Math.max(0, Math.min(x1, right) - Math.max(x0, left)) : 0;
       var width = x1 - x0 - covered;
       if (width <= 0) continue;
-      lake.rainCredit = (lake.rainCredit || 0) + width * ((worldSnowEnabled ? SNOW_RATE : 760) / 1100) * rain.intensity * dt;
+      lake.rainCredit = (lake.rainCredit || 0) + width * ((worldSnowEnabled ? SNOW_RATE : 760) / 1100) * intensity * dt;
       var count = Math.floor(lake.rainCredit);
       if (!count) continue;
       lake.rainCredit -= count;

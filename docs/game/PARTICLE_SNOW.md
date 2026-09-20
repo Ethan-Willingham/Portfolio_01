@@ -62,9 +62,14 @@ The initial dusting uses two or three closely spaced rows.
 Snowfall samples one moving world-space field, with a simulation window padded
 160 world pixels beyond the view. Three settling speeds and independently
 jittered positions prevent rows. A stable per-flake rank selects the same
-fraction of that field everywhere as intensity rises or falls. A storm builds
-and clears throughout the sky, including unvisited areas, without a curtain
-travelling down from the screen edge. Camera movement never translates existing
+fraction of that field everywhere as the storm builds. During clearing, the
+source loses at most 0.02 intensity per second: a 65% front takes at least
+32.5 seconds to stop supplying flakes. Visible flakes are never removed to
+reduce density; they finish falling, land or get collected. Retirement happens
+at least 96 world pixels beyond the view, inside the larger simulation margin.
+Climbing into the thinning source can reveal a gradual density change, with
+no visible culling edge. The source strength belongs to the world and persists
+through saves and underground travel. Offscreen lake catchment follows it too. Camera movement never translates existing
 flakes or refills the rig's wake. There is no altitude cutoff.
 
 `156-particle-weather.js` supplies the same field logic for rain. It remembers
@@ -78,8 +83,9 @@ weather. The legacy `parkedAirborne` statistic remains zero.
 The v28.42 coverage test ramps intensity while waiting, then moves to unvisited
 sky. The old implementation produced 33 versus 197 flakes near the rig. The
 new field produced 1,239 versus 1,240 across the full test view, with similar
-counts in all twelve horizontal/vertical bins. Clearing and reversals are
-checked too, rather than only testing a forced steady storm.
+counts in all twelve horizontal/vertical bins. Later clearing checks preserve
+visible particle identities, audit the position of every retirement during
+climbing and reversal, and wait for the remaining flakes to fall out naturally.
 
 ## Jet airflow
 

@@ -46,8 +46,11 @@ The development override `?wmood=4` locks steady rain for testing.
 
 The same front covers the entire outdoor map. Rain and snow sample one moving
 world-space field inside a window padded 160 world pixels beyond the view.
-Stable particle ranks make intensity rise and fall throughout the field at the
-same time. Waiting, moving sideways, climbing and returning all encounter the
+Stable particle ranks select a consistent supply throughout the field. When
+a front clears, new rain eases down by at most 0.12 intensity per second;
+snow uses 0.02. Visible particles finish falling. Weather retirement stays at
+least 96 world pixels beyond the view, so density never decreases by making
+visible drops disappear. The eased source also feeds offscreen lake catchment. Waiting, moving sideways, climbing and returning all encounter the
 current storm. New weather does not arrive as a line from the viewport edge,
 and old offscreen weather is not cached. Existing particles keep their world
 positions, and consumed source identities preserve the rig's wake.

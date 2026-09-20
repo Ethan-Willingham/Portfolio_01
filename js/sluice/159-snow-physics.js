@@ -61,7 +61,7 @@
   function snowTemperature() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
     var cold = weatherForce >= 0 ? WEATHER_MOODS[weatherForce].pcp > 0.05 : rain.climate.phase === 2 || rain.climate.phase === 1;
-    return cold || weather.pcp > 0.015 ? -5 + day : 1.5 + day * 3;
+    return cold || weather.pcp > 0.015 || snow.field.strength > 0.015 ? -5 + day : 1.5 + day * 3;
   }
   function snowHeat(x, y) {
     // Cold airborne powder stays snow, even beside the exhaust. Melt only
@@ -157,8 +157,8 @@
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
     var width = Math.max(0, right - left), height = Math.max(0, bottom - top);
     particleWeatherField(snow.field, rect, snow.grains, SNOW_RATE / (1100 * 53), SNOW_FLAKE_CAP,
-      sky ? rain.intensity : 0, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
-    rainCatchLakes(dt, sky, left, right);
+      rain.intensity, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
+    rainCatchLakes(dt, sky, left, right, snow.field.strength);
     for (var i = snow.grains.length - 1; i >= 0; i--) {
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
