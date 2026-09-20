@@ -23,7 +23,7 @@ for(const fps of [30,60,144]) {
   const shots=[20,80,200,290].map(speed=>groundHit(speed,fps));
   assert(shots[0].vy>-12,'gentle push has no minimum launch speed');
   for(let i=1;i<shots.length;i++)assert(shots[i].vy<shots[i-1].vy,'more closing speed gives more lift');
-  assert(shots[2].vy< -130&&shots[2].vx>180,'full-speed ground shot leaves the floor');
+  assert(shots[2].vy< -130&&shots[2].vx>160,'full-speed ground shot leaves the floor');
   const left=groundHit(200,fps,-1);
   assert(Math.abs(left.vy-shots[2].vy)<.1&&Math.abs(left.vx+shots[2].vx)<.1,'mirrored ground shots');
   results.push({fps,vx:shots[2].vx,vy:shots[2].vy});
@@ -32,17 +32,41 @@ assert(Math.max(...results.map(s=>s.vy))-Math.min(...results.map(s=>s.vy))<2,'la
 function airHit(x,y,bvx,bvy,rvx,rvy) {
   const {w,s}=fixture();Object.assign(s,{x,y,vx:bvx,vy:bvy,spin:0});Object.assign(w.player,{x:500,y:200,vx:rvx,vy:rvy});
   const energy=()=>.5*(s.vx*s.vx+s.vy*s.vy)+.2*s.r*s.r*s.spin*s.spin+3*(w.player.vx*w.player.vx+w.player.vy*w.player.vy);
-  const before=energy();w.skySlimePlayer(s,500,200,rvx,rvy);
+  const before=energy(),px=s.vx+6*rvx,py=s.vy+6*rvy;
+  w.skySlimePlayer(s,500,200,rvx,rvy);
+  assert(Math.abs(s.vx+6*w.player.vx-px)<1e-8&&Math.abs(s.vy+6*w.player.vy-py)<1e-8,'contact conserves linear momentum');
   assert(energy()<=before+.001,'rig impact and spin exchange cannot create energy');return {w,s};
 }
 const side=airHit(548.25,220.8,40,0,200,0).s;
-assert(side.vx>250&&Math.abs(side.vy)<.001,'centered aerial strike redirects sideways without a pop');
+assert(side.vx>200&&side.vx<235&&Math.abs(side.vy)<.001,'side bumper absorbs rebound without adding a pop');
+// An already-moving ball hit at flight cruise plus upward thrust used to
+// leave at 397 to 454 px/s. Hard glances should now stay near flight cruise
+// (290), while the impulse still follows the actual contact normal.
+const glances=[];
+for(const dir of [-1,1])for(const degrees of [0,10,20,30,40]){
+  const angle=degrees*Math.PI/180;
+  const hit=airHit(511+dir*(16.5+25*Math.cos(angle)),220.8-25*Math.sin(angle),dir*120,20,dir*290,-160).s;
+  assert(dir*hit.vx>250&&dir*hit.vx<340,'hard glancing aerial avoids the old runaway rebound');
+  glances.push({degrees,dir,vx:Math.round(hit.vx),vy:Math.round(hit.vy)});
+}
+// Compression changes continuously: faster strikes cannot give a weaker
+// normal shot. Test the same geometric contacts across the whole speed range.
+for(const degrees of [0,15,30,45,60,75,90]){
+  const angle=degrees*Math.PI/180;let last=0;
+  for(let speed=20;speed<=800;speed+=5){
+    const hit=airHit(527.5+25*Math.cos(angle),220.8-25*Math.sin(angle),0,0,speed,0).s;
+    const motion=Math.hypot(hit.vx,hit.vy);
+    assert(motion>=last-1e-8,'more impact speed always produces more momentum');last=motion;
+  }
+}
+const fast=airHit(548.25,220.8,0,0,700,0).s;
+assert(fast.vx>600,'power shots remain possible, with no imposed speed limit');
 const under=airHit(511,179.69,0,40,0,-160).s;
 assert(under.vy< -260,'rising under a falling ball creates a deliberate aerial lift');
 const over=airHit(511,250.47,0,-40,0,160).s;
 assert(over.vy>260,'a descending hit spikes downward');
 const brush=airHit(548.25,220.8,40,100,200,-100).s;
-assert(Math.abs(brush.spin)>1&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
+assert(Math.abs(brush.spin)>.6&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
 const away=airHit(548.25,220.8,300,0,100,0).s;
 assert.equal(away.vx,300);assert.equal(away.vy,0);assert(!away.playing,'separating contact adds no impulse');
 const miss=airHit(551,160,0,0,300,-250).s;
@@ -61,7 +85,7 @@ const restored=w.skySlimeHydrate(w.skySlimeRecord(s));assert(restored.playing,'s
 w.player.x=s.x-1000;s.x=900;s.playRest=0;
 for(let n=0;n<91;n++)w.skySlimeVisitTick(1/60);
 assert(!s.playing,'navigation resumes after rest and stepping away');
-console.log(results);console.log('PASS: ground pop, aim/speed control, aerial lifts/spikes, spin, energy, misses, and visitor autonomy.');
+console.log(results);console.log('GLANCES',glances);console.log('PASS: ground pop, aim/speed control, aerial lifts/spikes, spin, energy, misses, and visitor autonomy.');
 // Ordinary visitors may hop out at a bank; a played ball never receives it.
 for(const playing of [false,true]){
  const {w,s}=fixture();w.ENABLE_BATH=true;w.bathPickSite=()=>true;

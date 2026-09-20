@@ -19,13 +19,14 @@ Dig down through one town, collect ore, fly up to the surface station to sell + 
 the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and a ~1.5 hr
 normal playthrough (see `BALANCE.md`).
 
-**Bathhouse visitors (v28.10):** round, stone-crusted sky slimes fall like meteors, bounce, meander
+**Bathhouse visitors (v28.12):** round, stone-crusted sky slimes fall like meteors, bounce, meander
 on the surface, then find the bathhouse. It is enabled by default. Two guests
 can wait inside with warm-bath bubbles. Fill the first tub with water from the
 rig's tank, and spend **10 coal to light the shared stove**. The fire heats the
 real water. Tap a ready bubble (or E) to admit a visitor; after a warm soak it
 pays and leaves. The same guest is visible on the surface again as it departs.
 Driving into a slime pops it upward; timed jet contacts let you juggle it.
+The rig absorbs more rebound from hard sideways hits, making glances easier to recover.
 Touched guests pause their route until they settle and you move away.
 
 Coal and water operate the whole bath. There are **no per-guest ingredient

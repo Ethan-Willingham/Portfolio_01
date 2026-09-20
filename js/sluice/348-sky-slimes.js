@@ -17,6 +17,8 @@
   var SKY_SLIME_RIG_HULL = [0.40,0.18, 0.60,0.18, 1.25,0.80,
     0.94,0.98, 0.06,0.98, -0.25,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
+  var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
+  var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
 
   function skySlimeClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -314,7 +316,17 @@
     var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
     if (relative >= 0) return;
     var mass = s.r * s.r / 625, invMass = 1 / mass, invRig = 1 / 6;
-    var impulse = -(1 + (relative < -18 ? SKY_SLIME_RIG_RESTITUTION : 0)) * relative / (invMass + invRig);
+    // The bumper yields under a hard sideways load. Gentle touches and
+    // square roof/belly strikes keep their spring; fast glances lose rebound.
+    // Smooth compression response keeps stronger hits stronger. It changes
+    // only restitution, never the normal, free-flight speed, or shot direction.
+    var vertical2 = ny * ny;
+    var sideLoad = -relative * Math.abs(nx) / SKY_SLIME_RIG_SIDE_YIELD;
+    var sideLoad2 = sideLoad * sideLoad, sideLoad4 = sideLoad2 * sideLoad2;
+    var cushion = (1 - vertical2 * vertical2) * sideLoad4 / (1 + sideLoad4);
+    var restitution = SKY_SLIME_RIG_RESTITUTION -
+      (SKY_SLIME_RIG_RESTITUTION - SKY_SLIME_RIG_SIDE_RESTITUTION) * cushion;
+    var impulse = -(1 + (relative < -18 ? restitution : 0)) * relative / (invMass + invRig);
     s.vx += impulse * nx * invMass; s.vy += impulse * ny * invMass;
     player.vx = (player.vx || 0) - impulse * nx * invRig;
     player.vy = (player.vy || 0) - impulse * ny * invRig;
