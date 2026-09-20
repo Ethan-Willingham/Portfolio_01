@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.27';
+  var GAME_VERSION = 'v28.28';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -4167,6 +4167,7 @@
     terrainClearOverlays = [];
     terrainClearedKinds = {};
     money = 0;
+    rigExhaustReset();
     cargo = [];
     teleporters = 0;
     teleportFx = null;
@@ -5023,7 +5024,7 @@
         loadingBounded(water.queue.onSubmittedWorkDone(), 2000).then(function () { fence.gpuDone = true; });
       } catch (e) { fence.gpuDone = true; }
     }
-    var contexts = [smokeProbeGL(), skyGL, mtnGPU && !mtnGPUFailed ? mtnGPU.gl : null];
+    var contexts = [smokeProbeGL(), rigExhaustGL(), skyGL, mtnGPU && !mtnGPUFailed ? mtnGPU.gl : null];
     for (var i = 0; i < contexts.length; i++) {
       var gl = contexts[i];
       if (!gl || !gl.fenceSync || gl.isContextLost()) continue;
@@ -5836,6 +5837,8 @@
         ukCatalogDraw(nsMetrics());
         ukSwitchTab('shelf');
         ukCatalogDraw(nsMetrics());
+        ukSwitchTab('exhaust');
+        ukCatalogDraw(nsMetrics());
         ukCatalogReset();
       }
       for (var level = 1; level <= 6; level++) {
@@ -5844,6 +5847,8 @@
         drawUpgradeIconBig('drill', 40 + level * 120, 180, 110, level);
       }
       ctx.globalAlpha = 1;
+      nsDrawExhaustSwatch(RIG_EXHAUST_CATALOG[0], 80, 300, 96);
+      nsDrawExhaustSwatch(rigExhaustGet('prismatic'), 200, 300, 96);
       cargo = [];
       var types = ['coal', 'silver', 'amber', 'gold'];
       for (var i = 0; i < types.length; i++) {
@@ -5912,6 +5917,7 @@
   var saveLastDepth = -1;
   var saveLastUpgradeSum = -1;
   var saveLastGardenKey = '';
+  var saveLastExhaustKey = '';
   var saveCooldownT = 0;         // min seconds between docked autosaves
   var savePeriodicT = 0;         // background safety-save clock
   var saveCounter = 0;           // monotonic slot counter
@@ -6053,6 +6059,7 @@
         ledgerData: ledgerData,
         seamComplete: seamComplete,
         tutorialDone: tutorialDone,   // onboarding radio (057): additive, old saves lack it
+        rigExhaust: rigExhaustSave(), // cosmetic ownership and equipped look, additive
       },
       player: {
         x: player.x, y: player.y,
@@ -6091,6 +6098,7 @@
       saveLastDepth = depthRecord;
       saveLastUpgradeSum = saveUpgradeSum();
       saveLastGardenKey = saveGardenKey();
+      saveLastExhaustKey = JSON.stringify(rigExhaustSave());
       saveCooldownT = 10;
       savePeriodicT = 0;
       saveLampT = 3.0;          // console SAVE lamp: one steady info pulse
@@ -6164,6 +6172,7 @@
     ledgerData = p.ledgerData || {};
     seamComplete = !!p.seamComplete;
     tutorialDone = !!p.tutorialDone;   // onboarding radio (057): defaults false on old saves
+    rigExhaustLoad(p.rigExhaust);
     maxCargo = getMaxCargo();
     maxFuel = getMaxFuel();
     cargo = env.cargo || [];
@@ -6200,6 +6209,7 @@
     saveLastDepth = depthRecord;
     saveLastUpgradeSum = saveUpgradeSum();
     saveLastGardenKey = saveGardenKey();
+    saveLastExhaustKey = JSON.stringify(rigExhaustSave());
   }
 
   function saveWipe() {
@@ -6218,6 +6228,7 @@
     seamExtractTiles = null;
     seamCreditsOn = false;
     ledgerOpen = false;
+    rigExhaustReset();
   }
 
   // ---- Death -> respawn (replaces the old init() wipe) ----
@@ -6308,7 +6319,8 @@
     var dirty = (money !== saveLastMoney) ||
                 (cargo.length !== saveLastCargoN) ||
                 (depthRecord !== saveLastDepth) ||
-                (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey);
+                (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey) ||
+                (JSON.stringify(rigExhaustSave()) !== saveLastExhaustKey);
     if (!dirty) return;
     // Docked save: on solid ground inside a town, shortly after anything
     // meaningful changed (a sale, a purchase, a new record).
@@ -12075,6 +12087,7 @@
   function syncDomEffectLayerVisibility() {
     var hidden = uiCoversDomEffectLayers();
     setDomEffectLayerHidden(smokeFluidCanvas, hidden);
+    setDomEffectLayerHidden(rigExhaustCanvas, hidden);
     setDomEffectLayerHidden(liquidGLCanvas, hidden);
     if (liquidWGPU && liquidWGPU.renderCanvas) {
       setDomEffectLayerHidden(liquidWGPU.renderCanvas, hidden);
@@ -41304,9 +41317,10 @@
   /* ---- SmokeFluid — WebGL fluid sim (adapted from Pavel Dobryakov, MIT 2017) ---- */
   /* Inlined from smokeFluid.js. Original: https://github.com/PavelDoGreat/WebGL-Fluid-Simulation */
   var SmokeFluid = (function () {
+    function createSmokeFluid() {
     'use strict';
   
-    // --- module state (singleton) -----------------------------------
+    // --- independent instance state -----------------------------------
     var canvas = null;
     var gl = null;
     var ext = null;
@@ -41323,6 +41337,8 @@
       SPLAT_RADIUS: 0.22,
       SHADING: true,
       OPTICAL_DENSITY: 0,
+      OPTICAL_BRIGHTNESS: 0.9,
+      OPTICAL_ABSORPTION: 1,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -41811,6 +41827,8 @@
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'uniform float opticalDensity;\n' +
+      'uniform float opticalBrightness;\n' +
+      'uniform float opticalAbsorption;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -41862,8 +41880,8 @@
       // Legacy materials retain their original RGB/alpha transfer exactly.
       '  if (opticalDensity > 0.5) {\n' +
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
-      '    c = 0.9 * unmasked / max(density, 0.0001);\n' +
-      '    a = (1.0 - exp(-density)) * visibility;\n' +
+      '    c = opticalBrightness * unmasked / max(density, 0.0001);\n' +
+      '    a = (1.0 - exp(-density * opticalAbsorption)) * visibility;\n' +
       '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -42547,6 +42565,8 @@
       gl.disable(gl.BLEND);
       displayMaterial.bind();
       gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
+      gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
+      gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -42612,7 +42632,10 @@
       setPhysics: setPhysics,
       getPhysics: getPhysics,
       physicsVersion: 1,
+      create: createSmokeFluid,
     };
+    }
+    return createSmokeFluid();
   })();
 
   // ====== Smoke: WebGL fluid sim (Pavel Dobryakov port via SmokeFluid) ======
@@ -43105,6 +43128,7 @@
     smokeFluidCanvas.style.clipPath =
       'inset(' + overscanY + 'px ' + overscanX + 'px ' +
       (overscanY + smokeBottomMargin) + 'px ' + overscanX + 'px)';
+    if (typeof rigExhaustPositionDOM === 'function') rigExhaustPositionDOM();
   }
 
   function smokeFluidUpdateDomain() {
@@ -43389,6 +43413,8 @@
       verts[n++] = ju0; verts[n++] = jv1;
     }
     smokeDriver.paintObstacleQuads(verts, n / 2, smokeFluidObstacleW, smokeFluidObstacleH);
+    if (rigExhaustFluid && rigExhaustNeedsStep())
+      rigExhaustFluid.paintObstacleQuads(verts, n / 2, smokeFluidObstacleW, smokeFluidObstacleH);
     perfMark('update.smokeObstacleGL', _opg0);
   }
 
@@ -43492,6 +43518,11 @@
       }
       oc.restore();
     }
+
+    // The rig material shares terrain, but water enters its live coupling
+    // field instead of deleting dye through the ambient smoke's water mask.
+    if (rigExhaustFluid && rigExhaustNeedsStep())
+      rigExhaustFluid.setObstacleAlpha(smokeFluidObstacleCanvas);
 
     // Pass 4: water still blocks smoke using the asynchronous CPU mirror.
     // Reconstruct a continuous density mask instead of switching whole 8 px
@@ -43763,7 +43794,7 @@
     var euv = smokeFluidWorldToUV(ex.x, ex.y);
     var isActive = !!drilling;
     var moving = Math.abs(player.vx) > 8 || player.thrusting;
-    if (smokeTune.diesel_enabled && euv.inView && (isActive || moving || heavy)) {
+    if (!rigExhaustIsCustom() && smokeTune.diesel_enabled && euv.inView && (isActive || moving || heavy)) {
       smokeMarkActive();   // v23.32 — dye is about to be injected; keep the sim awake
       var rate = isActive ? smokeTune.diesel_rate_active
                : (moving   ? smokeTune.diesel_rate_moving
@@ -43865,6 +43896,7 @@
     // Prefer the GPU path (WebGPU smoke, else the WebGL SmokeFluid). Falls
     // through to the SPH grid below only if neither GPU path can run.
     if (smokeFluidEnsure()) {
+      rigExhaustEnsure();
       if (dt > 0.05) dt = 0.05;
       var smokeStepDt = dt * Math.max(0.02, smokeTuneNum(smokeTune.sim_time_scale, 1));
       var _gpuT = devMode ? performance.now() : 0;
@@ -43896,10 +43928,11 @@
       // Repaint the collision mask only when awake AND something reshaped it.
       // && short-circuits the dirty-check while asleep, so its trackers stay
       // stale and a pan made during sleep still repaints on the next wake.
-      if (smokeRunPre && smokeObstacleNeedsRepaint()) smokeFluidPaintObstacle();
+      if ((smokeRunPre || rigExhaustNeedsStep()) && smokeObstacleNeedsRepaint()) smokeFluidPaintObstacle();
       perfMark('update.smokeObstacle', _us3);
       var _us4 = performance.now();
       smokeFluidEmit(dt);
+      rigExhaustUpdate(dt);
       perfMark('update.smokeEmit', _us4);
       var _usFlow = performance.now();
       if (smokeRunPre || smokeAwakeT > 0) smokeWaterFlowCouple();
@@ -43953,6 +43986,7 @@
 
   function drawSmoke() {
     if (PERF_DISABLE_SMOKE_FLUID) return;   // v12.9 — fluid sim toggle
+    rigExhaustDraw();
     if (smokeFluidActive) {
       if (devMode && !smokeWGPUDriving) {
         var _gpuDrawT = performance.now();
@@ -44027,6 +44061,7 @@
   }
 
   function clearAllSmokeVisuals() {
+    rigExhaustClear();
     smokeResetPool();
     clearRocketPlume();
     smokeFluidShedPhase = 0;
@@ -44042,6 +44077,7 @@
   }
 
   function drawExhaustPipeSmokeBridge() {
+    if (rigExhaustIsCustom()) return;
     if (PERF_DISABLE_EXHAUST_BRIDGE) return;   // v12.9 — exhaust-bridge toggle
     if (!smokeTune || !smokeTune.enabled || !smokeTune.diesel_enabled) return;
     if (gameOver || gameWon) return;
@@ -44080,6 +44116,378 @@
     ctx.ellipse(ex.x, ex.y + 0.2, 1.25, 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+  }
+  // Purchased exhaust has an independent fluid field. Ambient smoke keeps its
+  // own material, heavy-smoke option and source cadence. One instance is warmed
+  // under the loading cover and reused for every cosmetic, including switching
+  // back to stock while the old colored plume finishes fading.
+  var rigExhaustFluid = null, rigExhaustCanvas = null, rigExhaustContext = null;
+  var rigExhaustFailed = false, rigExhaustApplied = null;
+  var rigExhaustAwake = 0, rigExhaustClock = 0, rigExhaustAccumulator = 0;
+  var rigExhaustPrevX = null, rigExhaustPrevY = null, rigExhaustUnits = 0;
+  var rigExhaustWaterTick = 0, rigExhaustDirty = false;
+  var RIG_EXHAUST_SCALE = 0.4; // 24-world-pixel rig / 60-pixel demo fixture
+  var RIG_EXHAUST_DT = 1 / 30;
+
+  function rigExhaustAvailable() {
+    return !!(rigExhaustFluid && rigExhaustFluid.isReady() && !rigExhaustFailed &&
+      rigExhaustContext && !rigExhaustContext.isContextLost());
+  }
+  function rigExhaustGL() { return rigExhaustContext; }
+  function rigExhaustIsCustom() {
+    return rigExhaustAvailable() && rigExhaustState && rigExhaustState.equipped !== 'stock';
+  }
+  function rigExhaustNeedsStep() { return rigExhaustIsCustom() || rigExhaustAwake > 0; }
+
+  function rigExhaustPositionDOM() {
+    if (!rigExhaustCanvas || !smokeFluidCanvas) return;
+    ['left', 'top', 'width', 'height', 'clipPath'].forEach(function (key) {
+      var value = smokeFluidCanvas.style[key];
+      if (rigExhaustCanvas.style[key] !== value) rigExhaustCanvas.style[key] = value;
+    });
+  }
+  function rigExhaustUnitScale() {
+    // The sampler uses the demo's simulation-cell velocity units. Convert to
+    // this domain's cells so zoom and screen shape do not change world speed.
+    var sim = rigExhaustFluid.config.SIM_RESOLUTION;
+    return (640 / 224) * RIG_EXHAUST_SCALE * sim /
+      Math.max(1, Math.min(smokeFluidDomainWorldW, smokeFluidDomainWorldH));
+  }
+  function rigExhaustApply(immediate) {
+    rigExhaustApplied = null;
+    if (!rigExhaustAvailable()) return;
+    var def = rigExhaustGet();
+    if (!def) return;
+    rigExhaustApplied = def.id;
+    rigExhaustUnits = rigExhaustUnitScale();
+    if (!def.recipe) return; // Old colored smoke keeps its last material until it fades.
+    var c = rigExhaustFluid.config, recipe = def.recipe;
+    c.OPTICAL_DENSITY = recipe.fluid.OPTICAL_DENSITY || 0;
+    c.OPTICAL_BRIGHTNESS = recipe.fluid.OPTICAL_BRIGHTNESS == null ? 0.9 : recipe.fluid.OPTICAL_BRIGHTNESS;
+    c.OPTICAL_ABSORPTION = recipe.fluid.OPTICAL_ABSORPTION == null ? 1 : recipe.fluid.OPTICAL_ABSORPTION;
+    c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION;
+    c.VELOCITY_DISSIPATION = recipe.fluid.VELOCITY_DISSIPATION;
+    c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * def.tuning.motion + def.scale.values.curl));
+    c.wind_x = recipe.fluid.wind_x || 0;
+    c.wind_above_y = recipe.fluid.wind_above_y || 0;
+    var physics = Object.assign({}, def.physics);
+    ['BUOYANCY', 'WEIGHT', 'EDGE_SPIN'].forEach(function (key) { physics[key] *= rigExhaustUnits; });
+    rigExhaustFluid.setPhysics(physics, immediate === true ? 0 : 0.35);
+    // A new source can wake in a stationary world. Refresh its terrain mask.
+    smokeObstPrevCamX = NaN;
+  }
+  function rigExhaustEnsure() {
+    if (rigExhaustFailed || !smokeFluidCanvas || !SmokeFluid.create) return false;
+    if (!rigExhaustFluid) {
+      rigExhaustCanvas = document.createElement('canvas');
+      rigExhaustCanvas.width = smokeFluidWidth;
+      rigExhaustCanvas.height = smokeFluidHeight;
+      rigExhaustCanvas.setAttribute('aria-hidden', 'true');
+      rigExhaustCanvas.style.cssText = 'position:absolute;pointer-events:none;z-index:5;display:block;';
+      rigExhaustFluid = SmokeFluid.create();
+      if (!rigExhaustFluid.init(rigExhaustCanvas, {
+        SIM_RESOLUTION: isMobile ? 112 : 224, DYE_RESOLUTION: isMobile ? 320 : 640,
+        PRESSURE_ITERATIONS: isMobile ? 13 : 20, SHADING: false,
+        DENSITY_DISSIPATION: 0.3, VELOCITY_DISSIPATION: 0.15, CURL: 12
+      })) {
+        rigExhaustFailed = true; rigExhaustCanvas = null; rigExhaustFluid = null;
+        return false;
+      }
+      rigExhaustContext = rigExhaustCanvas.getContext('webgl2') || rigExhaustCanvas.getContext('webgl');
+      canvas.parentElement.appendChild(rigExhaustCanvas);
+      // Exercise every new material branch before gameplay is revealed.
+      // Warm interaction textures too, so the first purchase does not compile
+      // a new boundary program when its smoke encounters water or a slime.
+      rigExhaustFluid.paintObstacleQuads(new Float32Array(0), 0, smokeFluidObstacleW, smokeFluidObstacleH);
+      rigExhaustFluid.setMovingBodies([{ ringN: 3, ring: [0, 1, 2], px: [0, 1, 0], py: [0, 0, 1] }],
+        0, 0, smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / 60, smokeFluidObstacleW, smokeFluidObstacleH, true);
+      rigExhaustFluid.setLiquidField([1], [1], [0], [0], 1, 0, 0,
+        smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / (LIQUID_CELL * LIQUID_CELL * LIQUID_PDELTA * LIQUID_PDELTA));
+      rigExhaustFluid.setPhysics({ HEAT: 1, BUOYANCY: 20, WEIGHT: 5, VISCOSITY: 2, EDGE_SPIN: 20 }, 0);
+      rigExhaustFluid.splat(0.5, 0.5, 0, 1, { r: 0.01, g: 0.005, b: 0.003 }, 0.02);
+      rigExhaustFluid.step(1 / 60);
+      rigExhaustFluid.config.OPTICAL_DENSITY = 1;
+      rigExhaustFluid.displayPass();
+      rigExhaustFluid.config.OPTICAL_DENSITY = 0;
+      rigExhaustFluid.setPhysics({}, 0);
+      rigExhaustFluid.setMovingBodies([], 0, 0, 1, 1, 1 / 60, smokeFluidObstacleW, smokeFluidObstacleH, true);
+      rigExhaustFluid.setLiquidField([], [], [], [], 0, 0, 0, 1, 1, 1);
+      rigExhaustFluid.clear(); rigExhaustFluid.clearObstacle(); rigExhaustFluid.displayPass();
+      rigExhaustApply(true);
+      smokeObstPrevCamX = NaN;
+    }
+    if (rigExhaustCanvas.width !== smokeFluidWidth || rigExhaustCanvas.height !== smokeFluidHeight) {
+      rigExhaustFluid.resize(smokeFluidWidth, smokeFluidHeight);
+      rigExhaustPrevX = rigExhaustPrevY = null;
+      rigExhaustDirty = true;
+      rigExhaustApply(true);
+    }
+    rigExhaustPositionDOM();
+    if (rigExhaustApplied !== rigExhaustState.equipped || Math.abs(rigExhaustUnitScale() - rigExhaustUnits) > 0.01)
+      rigExhaustApply();
+    return rigExhaustAvailable();
+  }
+
+  function rigExhaustUpdate(dt) {
+    if (!rigExhaustAvailable() || dt <= 0) return;
+    dt = Math.min(0.05, dt);
+    if (rigExhaustPrevX !== null && rigExhaustNeedsStep()) {
+      var dx = (cam.x - rigExhaustPrevX) / smokeFluidDomainWorldW;
+      var dy = (cam.y - rigExhaustPrevY) / smokeFluidDomainWorldH;
+      if (dx || dy) rigExhaustFluid.scroll(dx, dy);
+    }
+    rigExhaustPrevX = cam.x; rigExhaustPrevY = cam.y;
+    rigExhaustClock += dt;
+    var def = rigExhaustGet();
+    var emitting = def && def.recipe && smokeTune.enabled && smokeTune.diesel_enabled && !gameOver && !gameWon;
+    if (emitting) {
+      rigExhaustAccumulator = Math.min(RIG_EXHAUST_DT * 3, rigExhaustAccumulator + dt);
+      var samples = Math.floor(rigExhaustAccumulator / RIG_EXHAUST_DT);
+      rigExhaustAccumulator -= samples * RIG_EXHAUST_DT;
+      var ex = getExhaustWorldPos();
+      var tilt = player.bodyTiltRender || 0;
+      var outwardX = Math.sin(tilt), outwardY = -Math.cos(tilt);
+      var crossX = -outwardY, crossY = outwardX;
+      var throttle = player.thrusting ? 1.5 : (drilling || Math.abs(player.vx) > 8 ? 1 : 0.65);
+      var basis = smokeFluidDomainWorldH * Math.sqrt(Math.max(1, smokeFluidDomainWorldW / smokeFluidDomainWorldH));
+      var radiusScale = Math.pow(Math.sqrt(1120 * 640) * RIG_EXHAUST_SCALE / Math.max(1, basis), 2);
+      for (var n = 0; n < samples; n++) {
+        var time = rigExhaustClock - rigExhaustAccumulator - (samples - n - 1) * RIG_EXHAUST_DT;
+        var packets = window.SmokePresets.sample(def.recipe, time, 0, def.tuning, def.scale.values, throttle);
+        for (var i = 0; i < packets.length; i++) {
+          var p = packets[i];
+          var uv = smokeFluidWorldToUV(ex.x + (crossX * p.x + outwardX * p.y) * RIG_EXHAUST_SCALE,
+            ex.y + (crossY * p.x + outwardY * p.y) * RIG_EXHAUST_SCALE);
+          if (!uv.inView) continue;
+          rigExhaustFluid.splat(uv.uvX, uv.uvY,
+            (crossX * p.vx + outwardX * p.vy) * 2 * rigExhaustUnits,
+            -(crossY * p.vx + outwardY * p.vy) * 2 * rigExhaustUnits,
+            p.color, p.radius * 0.9 * radiusScale);
+          rigExhaustAwake = Math.max(8, def.recipe.source.idleHold || 24);
+        }
+      }
+    } else rigExhaustAccumulator = 0;
+    if (rigExhaustAwake <= 0) return;
+    rigExhaustAwake -= dt;
+    var ox = cam.x - smokeFluidMarginWorldX, oy = cam.y - smokeFluidMarginWorldY;
+    rigExhaustFluid.setMovingBodies(jelloBodies, ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH,
+      dt, smokeFluidObstacleW, smokeFluidObstacleH, true);
+    if ((rigExhaustWaterTick++ % 4) === 0 || liquidCount === 0) {
+      rigExhaustFluid.setLiquidField(liquidX, liquidY, liquidVX, liquidVY, liquidCount,
+        ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / (LIQUID_CELL * LIQUID_CELL * LIQUID_PDELTA * LIQUID_PDELTA), liquidFrozen);
+    }
+    rigExhaustFluid.step(dt);
+    rigExhaustDirty = true;
+    if (rigExhaustAwake <= 0) { rigExhaustFluid.clear(); rigExhaustDirty = true; }
+  }
+  function rigExhaustDraw() {
+    if (rigExhaustAvailable() && rigExhaustDirty) {
+      rigExhaustFluid.displayPass();
+      rigExhaustDirty = false;
+    }
+  }
+  function rigExhaustClear() {
+    if (rigExhaustAvailable()) {
+      rigExhaustFluid.clear(); rigExhaustFluid.clearObstacle(); rigExhaustFluid.displayPass();
+    }
+    rigExhaustAwake = rigExhaustClock = rigExhaustAccumulator = 0;
+    rigExhaustPrevX = rigExhaustPrevY = null;
+    rigExhaustWaterTick = 0; rigExhaustDirty = false;
+  }
+  // Rig exhausts are cosmetic, owned for the lifetime of this save. The six
+  // imported recipes retain the owner's demo export settings. Only Velvet
+  // rope's color changes: crimson replaces the original pale rose.
+  var RIG_EXHAUST_CATALOG = [{
+    id: 'stock', name: 'Stock exhaust', price: 0,
+    description: "The rig's original gold exhaust.",
+    colors: ['#ffd119', '#ad6e0d'], recipe: null,
+    physics: { HEAT: 0, COOLING: 1, BUOYANCY: 0, WEIGHT: 0, VISCOSITY: 0, EDGE_SPIN: 0 },
+    scale: { id: 'default', values: { rad: 1, dye: 1, lift: 1, curl: 0 } },
+    tuning: { mass: 1, motion: 1, size: 1 }
+  }];
+
+  function rigExhaustAddExport(recipe, scale, tuning, physics, price) {
+    RIG_EXHAUST_CATALOG.push({
+      id: recipe.id, name: recipe.name, price: price,
+      description: recipe.description, colors: recipe.colors,
+      recipe: recipe, scale: scale, tuning: tuning,
+      physics: physics || { HEAT: 0, COOLING: 1, BUOYANCY: 0, WEIGHT: 0, VISCOSITY: 0, EDGE_SPIN: 0 }
+    });
+  }
+
+  rigExhaustAddExport({
+    "id": "copperhead",
+    "name": "Copperhead",
+    "family": "Foundry",
+    "description": "Dense copper folds roll outward from a narrow gold seam.",
+    "colors": ["#e49b38","#8f482d"],
+    "fluid": {"CURL": 24,"DENSITY_DISSIPATION": 0.4,"VELOCITY_DISSIPATION": 0.4,"wind_x": 0,"wind_above_y": 0},
+    "source": {"radius": 2.7,"density": 1.35,"lift": 0.65,"sway": 0.65,"spread": 2,"frequency": 1,"pulse": 0,"pulseHz": 1,"sharpness": 2,"split": 0,"fan": 0,"colorRate": 0,"colorOffset": 0.55,"core": 0.18,"idleHold": 20},
+    "palette": [[0.8941176470588236,0.6078431372549019,0.2196078431372549],[0.5607843137254902,0.2823529411764706,0.17647058823529413]],
+    "samplerVersion": 1
+  }, {"id": "tower","values": {"rad": 2.6,"dye": 0.75,"lift": 1.8,"curl": 4}},
+    {"mass": 0.25,"motion": 0.65,"size": 0.65},
+    null, 750);
+
+  rigExhaustAddExport({
+    "id": "dragon",
+    "name": "Jade dragon",
+    "family": "Living",
+    "description": "Two jade jets lash apart and fold back around a gold center.",
+    "colors": ["#d4bc38","#179b75"],
+    "fluid": {"CURL": 32,"DENSITY_DISSIPATION": 0.48,"VELOCITY_DISSIPATION": 0.08,"wind_x": 0,"wind_above_y": 0},
+    "source": {"radius": 1.15,"density": 1.3,"lift": 2.1,"sway": 1,"spread": 2,"frequency": 1.6,"pulse": 0,"pulseHz": 1,"sharpness": 2,"split": 8,"fan": 20,"colorRate": 0,"colorOffset": 1,"core": 0.28,"idleHold": 20},
+    "palette": [[0.8313725490196079,0.7372549019607844,0.2196078431372549],[0.09019607843137255,0.6078431372549019,0.4588235294117647]],
+    "samplerVersion": 1
+  }, {"id": "tower","values": {"rad": 2.6,"dye": 0.75,"lift": 1.8,"curl": 4}},
+    {"mass": 0.4,"motion": 0.25,"size": 0.6},
+    null, 1500);
+
+  rigExhaustAddExport({
+    "id": "velvet-rope",
+    "name": "Velvet rope",
+    "family": "Fluid experiments",
+    "description": "A slow, thick crimson plume stretches into smooth folds. Strong internal friction keeps the flow together.",
+    "colors": ["#b51238","#6e0927"],
+    "samplerVersion": 3,
+    "physics": {"HEAT": 1.3,"COOLING": 0.22,"BUOYANCY": 40,"WEIGHT": 18,"VISCOSITY": 28,"EDGE_SPIN": 0},
+    "fluid": {"OPTICAL_DENSITY": 1,"OPTICAL_BRIGHTNESS": 0.64,"OPTICAL_ABSORPTION": 3.2,"CURL": 2,"DENSITY_DISSIPATION": 0.2,"VELOCITY_DISSIPATION": 0.45,"wind_x": 0,"wind_above_y": 0},
+    "source": {"mode": "jet","density": 0.2,"radius": 2.7,"width": 2,"lift": 0.4,"fan": 0,"pulse": 0,"period": 2.6,"duty": 0.32,"colorRate": 0,"idleHold": 24},
+    "palette": [[0.7098039215686275,0.07058823529411765,0.2196078431372549],[0.43137254901960786,0.03529411764705882,0.15294117647058825]]
+  }, {"id": "default","values": {"rad": 1,"dye": 1,"lift": 1,"curl": 0}},
+    {"mass": 1.05,"motion": 1.1,"size": 0.55},
+    {"HEAT": 1.3,"COOLING": 0.22,"BUOYANCY": 40,"WEIGHT": 18,"VISCOSITY": 28,"EDGE_SPIN": 0}, 2500);
+
+  rigExhaustAddExport({
+    "id": "countercurrent",
+    "name": "Countercurrent",
+    "family": "Fluid experiments",
+    "description": "A pale central jet tears through slower teal edges. Opposing streams curl into a ragged, interlocking wake.",
+    "colors": ["#acd7cb","#638cbd"],
+    "samplerVersion": 3,
+    "physics": {"HEAT": 1.6,"COOLING": 0.35,"BUOYANCY": 50,"WEIGHT": 25,"VISCOSITY": 1,"EDGE_SPIN": 0},
+    "fluid": {"OPTICAL_DENSITY": 1,"CURL": 26,"DENSITY_DISSIPATION": 0.3,"VELOCITY_DISSIPATION": 0.12,"wind_x": 0,"wind_above_y": 0},
+    "source": {"mode": "shear","density": 0.16,"radius": 2.2,"width": 15,"lift": 1.3,"fan": 0,"pulse": 0,"period": 2.6,"duty": 0.32,"colorRate": 0,"idleHold": 24},
+    "palette": [[0.6745098039215687,0.8431372549019608,0.796078431372549],[0.38823529411764707,0.5490196078431373,0.7411764705882353]]
+  }, {"id": "default","values": {"rad": 1,"dye": 1,"lift": 1,"curl": 0}},
+    {"mass": 1,"motion": 0.75,"size": 1.2},
+    {"HEAT": 1.6,"COOLING": 0.35,"BUOYANCY": 50,"WEIGHT": 25,"VISCOSITY": 1,"EDGE_SPIN": 0}, 4500);
+
+  rigExhaustAddExport({
+    "id": "witchfire",
+    "name": "Witchfire",
+    "family": "Fluid experiments",
+    "description": "Thin green smoke accelerates as it rises, pulling into sharp tongues and shedding restless green wisps.",
+    "colors": ["#b4e869","#52bca3"],
+    "samplerVersion": 3,
+    "physics": {"HEAT": 4,"COOLING": 1.15,"BUOYANCY": 240,"WEIGHT": 3,"VISCOSITY": 0.5,"EDGE_SPIN": 0},
+    "fluid": {"OPTICAL_DENSITY": 1,"CURL": 34,"DENSITY_DISSIPATION": 0.52,"VELOCITY_DISSIPATION": 0.07,"wind_x": 0,"wind_above_y": 0},
+    "source": {"mode": "jet","density": 0.15,"radius": 2.5,"width": 3,"lift": 0.5,"fan": 0,"pulse": 0,"period": 2.6,"duty": 0.32,"colorRate": 0.12,"idleHold": 24},
+    "palette": [[0.7058823529411765,0.9098039215686274,0.4117647058823529],[0.3215686274509804,0.7372549019607844,0.6392156862745098]]
+  }, {"id": "default","values": {"rad": 1,"dye": 1,"lift": 1,"curl": 0}},
+    {"mass": 1,"motion": 1,"size": 1},
+    {"HEAT": 4,"COOLING": 1.15,"BUOYANCY": 240,"WEIGHT": 3,"VISCOSITY": 0.5,"EDGE_SPIN": 0}, 7500);
+
+  rigExhaustAddExport({
+    "id": "spiral-kiln",
+    "name": "Spiral kiln",
+    "family": "Fluid experiments",
+    "description": "The smoke stirs along its own edges, winding gold and red layers into living coils. Reverse Edge spin to reverse the twist.",
+    "colors": ["#e3ae61","#b36176"],
+    "samplerVersion": 3,
+    "physics": {"HEAT": 2,"COOLING": 0.45,"BUOYANCY": 65,"WEIGHT": 28,"VISCOSITY": 4,"EDGE_SPIN": 230},
+    "fluid": {"OPTICAL_DENSITY": 1,"CURL": 8,"DENSITY_DISSIPATION": 0.24,"VELOCITY_DISSIPATION": 0.12,"wind_x": 0,"wind_above_y": 0},
+    "source": {"mode": "jet","density": 0.17,"radius": 3.8,"width": 10,"lift": 0.25,"fan": 0,"pulse": 0,"period": 2.6,"duty": 0.32,"colorRate": 0,"idleHold": 24},
+    "palette": [[0.8901960784313725,0.6823529411764706,0.3803921568627451],[0.7019607843137254,0.3803921568627451,0.4627450980392157]]
+  }, {"id": "default","values": {"rad": 1,"dye": 1,"lift": 1,"curl": 0}},
+    {"mass": 1,"motion": 1,"size": 1},
+    {"HEAT": 2,"COOLING": 0.45,"BUOYANCY": 65,"WEIGHT": 28,"VISCOSITY": 4,"EDGE_SPIN": 230}, 12000);
+
+  // The rainbow edition shares the demo sampler, so exported experiments
+  // and the purchased plume follow the same source/color path.
+  var rigExhaustRainbow = window.SmokePresets && window.SmokePresets.byId.prismatic;
+  if (rigExhaustRainbow) rigExhaustAddExport(
+    JSON.parse(JSON.stringify(rigExhaustRainbow)),
+    { id: 'default', values: { rad: 1, dye: 1, lift: 1, curl: 0 } },
+    { mass: 1, motion: 1, size: 1 },
+    Object.assign({}, rigExhaustRainbow.physics), 25000
+  );
+
+  var rigExhaustState = { owned: { stock: true }, equipped: 'stock' };
+
+  function rigExhaustGet(id) {
+    if (id == null) id = rigExhaustState.equipped;
+    for (var i = 0; i < RIG_EXHAUST_CATALOG.length; i++) {
+      if (RIG_EXHAUST_CATALOG[i].id === id) return RIG_EXHAUST_CATALOG[i];
+    }
+    return null;
+  }
+
+  function rigExhaustIsOwned(id) {
+    return !!rigExhaustGet(id) && rigExhaustState.owned[id] === true;
+  }
+
+  function rigExhaustSelect(id) {
+    if (!rigExhaustIsOwned(id)) return false;
+    if (id !== 'stock' && typeof rigExhaustAvailable === 'function' && !rigExhaustAvailable()) return false;
+    if (rigExhaustState.equipped === id) return true;
+    rigExhaustState.equipped = id;
+    if (typeof rigExhaustApply === 'function') rigExhaustApply();
+    saveNow('exhaust-equip');
+    return true;
+  }
+
+  function rigExhaustPurchase(id) {
+    var item = rigExhaustGet(id);
+    if (!item) return { ok: false, reason: 'Unknown exhaust' };
+    if (id !== 'stock' && typeof rigExhaustAvailable === 'function' && !rigExhaustAvailable()) {
+      return { ok: false, reason: 'Smoke effects unavailable' };
+    }
+    // Validate against live state. A stale shop action or double tap cannot
+    // charge twice, and an owned look is always free to equip again.
+    if (rigExhaustIsOwned(id)) return { ok: rigExhaustSelect(id) };
+    if (!devMode && (!isFinite(money) || money < item.price)) {
+      return { ok: false, reason: 'Need $' + item.price.toLocaleString() };
+    }
+    if (!devMode) money -= item.price;
+    rigExhaustState.owned[id] = true;
+    rigExhaustState.equipped = id;
+    if (typeof rigExhaustApply === 'function') rigExhaustApply();
+    saveNow('exhaust-purchase');
+    if (typeof track === 'function') track('shop_purchase', {
+      item: 'exhaust:' + id, cost: item.price, depth: depthRecord, dev: !!devMode
+    });
+    return { ok: true };
+  }
+
+  function rigExhaustReset() {
+    rigExhaustState = { owned: { stock: true }, equipped: 'stock' };
+    if (typeof rigExhaustApply === 'function') rigExhaustApply();
+  }
+
+  function rigExhaustSave() {
+    return {
+      owned: RIG_EXHAUST_CATALOG.filter(function (item) {
+        return rigExhaustIsOwned(item.id);
+      }).map(function (item) { return item.id; }),
+      equipped: rigExhaustState.equipped
+    };
+  }
+
+  function rigExhaustLoad(data) {
+    // Additive save field: legacy saves keep stock, unknown IDs are ignored,
+    // and a damaged save cannot equip an exhaust the player does not own.
+    var owned = { stock: true };
+    if (data && Array.isArray(data.owned)) {
+      for (var i = 0; i < data.owned.length; i++) {
+        var id = data.owned[i];
+        if (typeof id === 'string' && rigExhaustGet(id)) owned[id] = true;
+      }
+    }
+    var equipped = data && typeof data.equipped === 'string' &&
+      owned[data.equipped] === true && rigExhaustGet(data.equipped) ? data.equipped : 'stock';
+    rigExhaustState = { owned: owned, equipped: equipped };
+    if (typeof rigExhaustApply === 'function') rigExhaustApply();
   }
   // ====== ROCKET PLUME ======
   // Independent from the diesel exhaust fluid sim. Procedural flame core,
@@ -51884,9 +52292,9 @@
   // ====================================================================
   // v26.18: the old three-counter hub (station cards, per-counter pages,
   // two-level navigation) is gone. Entering the shop opens ONE catalog
-  // modal over the fizzed-out world: WORKSHOP and SUPPLIES tabs, a
+  // modal over the fizzed-out world: WORKSHOP, SUPPLIES, and EXHAUST tabs, a
   // scannable item list, a detail pane, one action button. The item
-  // builders live beside their data in 270 (workshop) and 280 (shelf).
+  // builders live in 270 (workshop), 275 (exhaust), and 280 (shelf).
   // The flag-off Trade Board page (260) is untouched; when its flag is
   // on it appears as a MARKET tab that hands off to the bespoke page.
 
@@ -51903,7 +52311,8 @@
   function storeSpec() {
     var tabs = [
       { id: 'workshop', label: 'WORKSHOP', build: nsWorkshopTabItems },
-      { id: 'shelf',    label: 'SUPPLIES', build: nsShelfTabItems }
+      { id: 'shelf',    label: 'SUPPLIES', build: nsShelfTabItems },
+      { id: 'exhaust',  label: 'EXHAUST', build: nsExhaustTabItems }
     ];
     if (ENABLE_TRADE_BOARD) {
       tabs.push({ id: 'board', label: 'MARKET', open: function () { nsEnterStation('board'); } });
@@ -51997,7 +52406,6 @@
     }
     return ukWheel(d);
   }
-
   // ====================================================================
   //  COMMODITY SPRITES — a 32x32 baked pixel-art engine for the Trade
   //  Board goods. Same technique as the workshop's shopGearSprites: a
@@ -54076,6 +54484,116 @@
     return it;
   }
 
+  // ====================================================================
+  //  EXHAUST -- permanent smoke cosmetics on the shared catalog kit (245).
+  // ====================================================================
+  // The swatch is a static color specimen. Equipping changes the rig's
+  // real smoke field; the store does not run a second smoke simulation.
+  var NS_EXHAUST_SWATCH_ROWS = [
+    [11, 9], [8, 15], [6, 19], [5, 21], [5, 21], [6, 19],
+    [8, 15], [10, 11], [8, 14], [6, 18], [5, 20], [5, 20],
+    [6, 18], [8, 15], [11, 11], [13, 8], [14, 6], [13, 6],
+    [12, 7], [12, 6], [13, 5], [14, 4]
+  ];
+
+  function nsDrawExhaustSwatch(def, cx, cy, px) {
+    var colors = def.colors && def.colors.length ? def.colors : [UIT_BODY, UIT_DIM];
+    var unit = Math.max(0.5, px / 32);
+    var x = Math.round(cx - unit * 16), y = Math.round(cy - unit * 16);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(unit, unit);
+    // Stepped color bands follow the illustrated plume. Palette colors
+    // describe the product, while all surrounding chrome uses UI tokens.
+    for (var r = 0; r < NS_EXHAUST_SWATCH_ROWS.length; r++) {
+      var row = NS_EXHAUST_SWATCH_ROWS[r];
+      var colorIndex = Math.min(colors.length - 1, Math.floor(r * colors.length / NS_EXHAUST_SWATCH_ROWS.length));
+      ctx.fillStyle = colors[colorIndex];
+      ctx.fillRect(row[0], r + 3, row[1], 1);
+    }
+    // Negative-space folds keep the small specimen legible as smoke.
+    ctx.fillStyle = UIT_INSET_DK;
+    ctx.fillRect(11, 8, 8, 1);
+    ctx.fillRect(10, 9, 4, 1);
+    ctx.fillRect(10, 10, 2, 1);
+    ctx.fillRect(13, 14, 9, 1);
+    ctx.fillRect(19, 15, 3, 1);
+    ctx.fillRect(19, 16, 2, 1);
+    ctx.fillRect(13, 20, 2, 1);
+    // A short steel exhaust outlet anchors every specimen to the rig.
+    ctx.fillStyle = UIT_EDGE;
+    ctx.fillRect(10, 24, 12, 7);
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillRect(11, 25, 10, 5);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+    ctx.fillRect(11, 25, 10, 1);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    ctx.fillRect(11, 29, 10, 1);
+    ctx.fillStyle = UIT_INSET_DK;
+    ctx.fillRect(13, 24, 6, 2);
+    ctx.restore();
+  }
+
+  function nsExhaustDescription(def) {
+    var descriptions = {
+      stock: 'The rig\'s original exhaust.',
+      copperhead: 'Dense copper folds around a narrow gold seam.',
+      dragon: 'Jade jets fold around a gold center.',
+      'velvet-rope': 'Thick crimson smoke pulls into slow, smooth folds.',
+      countercurrent: 'Pale and teal streams curl into a ragged wake.',
+      witchfire: 'Restless green wisps climb in sharp tongues.',
+      'spiral-kiln': 'Gold and red smoke twists into living coils.',
+      prismatic: 'Rolling coils cycle through the full rainbow.'
+    };
+    return descriptions[def.id] || def.description;
+  }
+
+  function nsExhaustTabItems() {
+    return RIG_EXHAUST_CATALOG.map(nsExhaustItem);
+  }
+
+  function nsExhaustItem(def) {
+    var equipped = rigExhaustState.equipped === def.id;
+    var owned = rigExhaustIsOwned(def.id);
+    var available = def.id === 'stock' || rigExhaustAvailable();
+    var afford = devMode || money >= def.price;
+    var price = '$' + def.price.toLocaleString();
+    var act;
+    if (equipped) {
+      act = { label: 'EQUIPPED', enabled: false };
+    } else if (!available) {
+      act = { label: 'UNAVAILABLE', enabled: false, reason: 'SMOKE EFFECTS UNAVAILABLE' };
+    } else if (owned) {
+      act = { label: 'EQUIP', enabled: true };
+    } else {
+      act = afford
+        ? { label: 'BUY + EQUIP  ' + price, enabled: true }
+        : { label: 'BUY + EQUIP  ' + price, enabled: false,
+            reason: 'SHORT $' + Math.max(0, def.price - money).toLocaleString(), reasonKind: 'short' };
+    }
+    return {
+      key: 'exhaust:' + def.id,
+      name: def.name.toUpperCase(),
+      sub: 'Cosmetic',
+      state: equipped ? 'EQUIPPED' : (owned ? 'OWNED / SWITCH FREE' : 'PERMANENT EXHAUST'),
+      icon: function (cx, cy, px) { nsDrawExhaustSwatch(def, cx, cy, px); },
+      desc: nsExhaustDescription(def),
+      priceLabel: equipped ? 'EQUIPPED' : (owned ? 'OWNED' : price),
+      priceTier: owned || !available ? 'dim' : (afford ? 'gold' : 'red'),
+      act: act,
+      onAct: function () {
+        // Re-read ownership at click time. A previously built BUY button
+        // must become a free switch after the player already owns it.
+        if (!rigExhaustGet(def.id)) return { ok: false };
+        if (def.id !== 'stock' && !rigExhaustAvailable()) return { ok: false, reason: 'SMOKE EFFECTS UNAVAILABLE' };
+        if (rigExhaustIsOwned(def.id)) {
+          return { ok: rigExhaustSelect(def.id), float: 'EQUIPPED' };
+        }
+        var result = rigExhaustPurchase(def.id);
+        return result.ok ? { ok: true, float: 'EQUIPPED' } : result;
+      }
+    };
+  }
   // ====================================================================
   //  SHELF -- consumables as catalog items for the UI kit (245).
   // ====================================================================

@@ -48,6 +48,7 @@
   var saveLastDepth = -1;
   var saveLastUpgradeSum = -1;
   var saveLastGardenKey = '';
+  var saveLastExhaustKey = '';
   var saveCooldownT = 0;         // min seconds between docked autosaves
   var savePeriodicT = 0;         // background safety-save clock
   var saveCounter = 0;           // monotonic slot counter
@@ -189,6 +190,7 @@
         ledgerData: ledgerData,
         seamComplete: seamComplete,
         tutorialDone: tutorialDone,   // onboarding radio (057): additive, old saves lack it
+        rigExhaust: rigExhaustSave(), // cosmetic ownership and equipped look, additive
       },
       player: {
         x: player.x, y: player.y,
@@ -227,6 +229,7 @@
       saveLastDepth = depthRecord;
       saveLastUpgradeSum = saveUpgradeSum();
       saveLastGardenKey = saveGardenKey();
+      saveLastExhaustKey = JSON.stringify(rigExhaustSave());
       saveCooldownT = 10;
       savePeriodicT = 0;
       saveLampT = 3.0;          // console SAVE lamp: one steady info pulse
@@ -300,6 +303,7 @@
     ledgerData = p.ledgerData || {};
     seamComplete = !!p.seamComplete;
     tutorialDone = !!p.tutorialDone;   // onboarding radio (057): defaults false on old saves
+    rigExhaustLoad(p.rigExhaust);
     maxCargo = getMaxCargo();
     maxFuel = getMaxFuel();
     cargo = env.cargo || [];
@@ -336,6 +340,7 @@
     saveLastDepth = depthRecord;
     saveLastUpgradeSum = saveUpgradeSum();
     saveLastGardenKey = saveGardenKey();
+    saveLastExhaustKey = JSON.stringify(rigExhaustSave());
   }
 
   function saveWipe() {
@@ -354,6 +359,7 @@
     seamExtractTiles = null;
     seamCreditsOn = false;
     ledgerOpen = false;
+    rigExhaustReset();
   }
 
   // ---- Death -> respawn (replaces the old init() wipe) ----
@@ -444,7 +450,8 @@
     var dirty = (money !== saveLastMoney) ||
                 (cargo.length !== saveLastCargoN) ||
                 (depthRecord !== saveLastDepth) ||
-                (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey);
+                (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey) ||
+                (JSON.stringify(rigExhaustSave()) !== saveLastExhaustKey);
     if (!dirty) return;
     // Docked save: on solid ground inside a town, shortly after anything
     // meaningful changed (a sale, a purchase, a new record).

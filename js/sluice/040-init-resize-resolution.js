@@ -49,6 +49,7 @@
     terrainClearOverlays = [];
     terrainClearedKinds = {};
     money = 0;
+    rigExhaustReset();
     cargo = [];
     teleporters = 0;
     teleportFx = null;

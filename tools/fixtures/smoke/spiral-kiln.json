@@ -1,0 +1,80 @@
+{
+  "schema": "sluice-smoke-recipe",
+  "version": 3,
+  "samplerVersion": 3,
+  "solverVersion": 1,
+  "physics": {
+    "HEAT": 2,
+    "COOLING": 0.45,
+    "BUOYANCY": 65,
+    "WEIGHT": 28,
+    "VISCOSITY": 4,
+    "EDGE_SPIN": 230
+  },
+  "preset": {
+    "id": "spiral-kiln",
+    "name": "Spiral kiln",
+    "family": "Fluid experiments",
+    "description": "The smoke stirs along its own edges, winding gold and red layers into living coils. Reverse Edge spin to reverse the twist.",
+    "colors": [
+      "#e3ae61",
+      "#b36176"
+    ],
+    "samplerVersion": 3,
+    "physics": {
+      "HEAT": 2,
+      "COOLING": 0.45,
+      "BUOYANCY": 65,
+      "WEIGHT": 28,
+      "VISCOSITY": 4,
+      "EDGE_SPIN": 230
+    },
+    "fluid": {
+      "OPTICAL_DENSITY": 1,
+      "CURL": 8,
+      "DENSITY_DISSIPATION": 0.24,
+      "VELOCITY_DISSIPATION": 0.12,
+      "wind_x": 0,
+      "wind_above_y": 0
+    },
+    "source": {
+      "mode": "jet",
+      "density": 0.17,
+      "radius": 3.8,
+      "width": 10,
+      "lift": 0.25,
+      "fan": 0,
+      "pulse": 0,
+      "period": 2.6,
+      "duty": 0.32,
+      "colorRate": 0,
+      "idleHold": 24
+    },
+    "palette": [
+      [
+        0.8901960784313725,
+        0.6823529411764706,
+        0.3803921568627451
+      ],
+      [
+        0.7019607843137254,
+        0.3803921568627451,
+        0.4627450980392157
+      ]
+    ]
+  },
+  "scale": {
+    "id": "default",
+    "values": {
+      "rad": 1,
+      "dye": 1,
+      "lift": 1,
+      "curl": 0
+    }
+  },
+  "tuning": {
+    "mass": 1,
+    "motion": 1,
+    "size": 1
+  }
+}

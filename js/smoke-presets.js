@@ -152,11 +152,12 @@
     { WEIGHT: 165, VISCOSITY: 12 },
     { mode: 'sheet', radius: 2.7, density: 0.07, width: 13, lift: 0.1, fan: 15 },
     { CURL: 9, DENSITY_DISSIPATION: 0.25, VELOCITY_DISSIPATION: 0.25 });
-  add('velvet-rope', 'Velvet rope', 'A slow, thick rose plume stretches into smooth folds. Strong internal friction keeps the flow together.',
-    ['#d699a5', '#ae718c'],
+  add('velvet-rope', 'Velvet rope', 'A slow, thick crimson plume stretches into smooth folds. Strong internal friction keeps the flow together.',
+    ['#b51238', '#6e0927'],
     { HEAT: 1.3, COOLING: 0.22, BUOYANCY: 40, WEIGHT: 18, VISCOSITY: 28 },
     { density: 0.2, radius: 2.7, lift: 0.4, width: 2 },
-    { CURL: 2, VELOCITY_DISSIPATION: 0.45, DENSITY_DISSIPATION: 0.2 });
+    { CURL: 2, VELOCITY_DISSIPATION: 0.45, DENSITY_DISSIPATION: 0.2,
+      OPTICAL_BRIGHTNESS: 0.64, OPTICAL_ABSORPTION: 3.2 });
   add('vortex-cannon', 'Vortex cannon', 'Each short pressure pulse rolls its edges backward into a drifting mushroom. The next pulse pushes through its wake.',
     ['#d4c5a5', '#849ba6'],
     { HEAT: 1.4, COOLING: 0.3, BUOYANCY: 20, VISCOSITY: 2 },
@@ -182,6 +183,12 @@
     { HEAT: 3.8, COOLING: 2.2, BUOYANCY: 180, WEIGHT: 165, VISCOSITY: 5 },
     { pulse: 1, period: 3.6, duty: 0.3, density: 0.36, radius: 4.2, width: 7, lift: 1.3, fan: 5 },
     { CURL: 17, DENSITY_DISSIPATION: 0.2, VELOCITY_DISSIPATION: 0.18 });
+
+  add('prismatic', 'Prismatic', 'A full spectrum flows through the plume. Fresh color rolls into older bands as the smoke curls and cools.',
+    ['#e43d54', '#f39235', '#e6d84b', '#5bcc72', '#45ccd6', '#527be8', '#b261db'],
+    { HEAT: 1.8, COOLING: 0.45, BUOYANCY: 70, WEIGHT: 18, VISCOSITY: 9, EDGE_SPIN: 40 },
+    { density: 0.2, radius: 3.1, width: 3, lift: 0.55, colorRate: 1.15 },
+    { CURL: 10, DENSITY_DISSIPATION: 0.23, VELOCITY_DISSIPATION: 0.22, OPTICAL_ABSORPTION: 2.4 });
 
   var byId = Object.create(null);
   recipes.forEach(function (recipe) {

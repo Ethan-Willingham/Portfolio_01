@@ -19,13 +19,13 @@
     panel.querySelector('h2').textContent = 'Exhaust library';
     var intro = document.createElement('div');
     intro.className = 'smoke-library-intro';
-    intro.innerHTML = '<p>Your two exported looks, plus eight experiments in smoke physics. Switch looks while the rig runs; the smoke already in the air stays.</p>' +
+    intro.innerHTML = '<p>Your two exported looks, plus nine experiments in smoke physics. Switch looks while the rig runs; the smoke already in the air stays.</p>' +
       '<button class="toy-chip" id="smoke-audition">Preview on rig</button>' +
       '<div class="smoke-selection" aria-live="polite"><p id="smoke-origin"></p><h3 id="smoke-name"></h3><p id="smoke-description"></p></div>' +
       '<div class="smoke-actions"><button class="toy-chip" id="smoke-favorite" aria-pressed="false">Save favorite</button>' +
       '<button class="toy-chip" id="smoke-export">Export this look</button></div>' +
       '<label class="smoke-filter-label" for="smoke-family">Collection</label>' +
-      '<select id="smoke-family"><option value="all">All 10 exhausts</option><option value="favorites">Favorites</option></select>';
+      '<select id="smoke-family"><option value="all">All 11 exhausts</option><option value="favorites">Favorites</option></select>';
     body.insertBefore(intro, row);
     row.querySelector('label').remove();
     row.className = 'smoke-catalog';

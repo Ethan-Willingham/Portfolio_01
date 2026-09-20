@@ -63,7 +63,7 @@ try {
   check('rig preview and smoke engine boot',await ev("__toy.stats().scene === 'rig' && __toy.stats().smoke"));
   await game('stopLoop();userPaused=false;');
   const ids=await ev('SmokePresets.recipes.map(p=>p.id)');
-  check('two retained looks and eight fluid experiments',ids.length===10 && new Set(ids).size===10 && !ids.includes('inkblossom') && !ids.includes('default'));
+  check('two retained looks and nine fluid experiments',ids.length===11 && new Set(ids).size===11 && !ids.includes('inkblossom') && !ids.includes('default'));
   for(const id of ['copperhead','dragon']) {
     const saved=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/smoke',id+'.json'),'utf8'));
     const current=await ev(`__toy.set('smokePreset','${id}');__toy.smokeExport()`);

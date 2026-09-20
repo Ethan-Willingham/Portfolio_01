@@ -706,6 +706,8 @@
         ukCatalogDraw(nsMetrics());
         ukSwitchTab('shelf');
         ukCatalogDraw(nsMetrics());
+        ukSwitchTab('exhaust');
+        ukCatalogDraw(nsMetrics());
         ukCatalogReset();
       }
       for (var level = 1; level <= 6; level++) {
@@ -714,6 +716,8 @@
         drawUpgradeIconBig('drill', 40 + level * 120, 180, 110, level);
       }
       ctx.globalAlpha = 1;
+      nsDrawExhaustSwatch(RIG_EXHAUST_CATALOG[0], 80, 300, 96);
+      nsDrawExhaustSwatch(rigExhaustGet('prismatic'), 200, 300, 96);
       cargo = [];
       var types = ['coal', 'silver', 'amber', 'gold'];
       for (var i = 0; i < types.length; i++) {

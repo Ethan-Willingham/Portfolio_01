@@ -49,7 +49,7 @@ Use dev mode (backtick = money 999,999 + free purchases) to move fast.
       confirm the 6 layers read distinctly and the deep gems feel weighty + rare.
 - [ ] **Flight**: ONE model everywhere (v25.49, `flyTune`): gentle launch, ~0.9 s fall-catch,
       identical above/underground; the plain d-pad drives it on mobile; FLY FEEL presets in the L panel.
-- [ ] **Shop**: exactly two counters (Workshop + Supply Shelf), no Trade Board.
+- [ ] **Shop**: Workshop, Supply Shelf and Exhaust counters, no Trade Board.
 - [ ] **Audio**: drop a real key.m4a (or key_N.m4a) into assets/sfx, confirm it fires in-game.
       Then run the publish flow: sfx-test.html to audition, sfx-publish.html to send to prod
       (needs your password). See SFX_INSTRUCTIONS.md.

@@ -2384,6 +2384,7 @@
   function syncDomEffectLayerVisibility() {
     var hidden = uiCoversDomEffectLayers();
     setDomEffectLayerHidden(smokeFluidCanvas, hidden);
+    setDomEffectLayerHidden(rigExhaustCanvas, hidden);
     setDomEffectLayerHidden(liquidGLCanvas, hidden);
     if (liquidWGPU && liquidWGPU.renderCanvas) {
       setDomEffectLayerHidden(liquidWGPU.renderCanvas, hidden);

@@ -3,9 +3,9 @@
   // ====================================================================
   // v26.18: the old three-counter hub (station cards, per-counter pages,
   // two-level navigation) is gone. Entering the shop opens ONE catalog
-  // modal over the fizzed-out world: WORKSHOP and SUPPLIES tabs, a
+  // modal over the fizzed-out world: WORKSHOP, SUPPLIES, and EXHAUST tabs, a
   // scannable item list, a detail pane, one action button. The item
-  // builders live beside their data in 270 (workshop) and 280 (shelf).
+  // builders live in 270 (workshop), 275 (exhaust), and 280 (shelf).
   // The flag-off Trade Board page (260) is untouched; when its flag is
   // on it appears as a MARKET tab that hands off to the bespoke page.
 
@@ -22,7 +22,8 @@
   function storeSpec() {
     var tabs = [
       { id: 'workshop', label: 'WORKSHOP', build: nsWorkshopTabItems },
-      { id: 'shelf',    label: 'SUPPLIES', build: nsShelfTabItems }
+      { id: 'shelf',    label: 'SUPPLIES', build: nsShelfTabItems },
+      { id: 'exhaust',  label: 'EXHAUST', build: nsExhaustTabItems }
     ];
     if (ENABLE_TRADE_BOARD) {
       tabs.push({ id: 'board', label: 'MARKET', open: function () { nsEnterStation('board'); } });
@@ -116,4 +117,3 @@
     }
     return ukWheel(d);
   }
-

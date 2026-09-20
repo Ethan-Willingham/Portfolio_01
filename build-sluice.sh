@@ -38,7 +38,7 @@ echo "build-sluice: wrote $out from ${#frags[@]} fragments ($(wc -l < "$out") li
 # Commit grand-motherload.html alongside the bundle when the stamp changes.
 ver="$(sed -nE "s/.*GAME_VERSION = '([^']+)'.*/\1/p" js/sluice/000-head.js | head -1)"
 if [ -n "$ver" ]; then
-  sed -i '' -E 's#src="js/(sluice|liquid-wgpu|smoke-wgpu|jello-wgpu|audio)\.js(\?v=[^"]*)?"#src="js/\1.js?v='"$ver"'"#g' grand-motherload.html
+  sed -i '' -E 's#src="js/(sluice|liquid-wgpu|smoke-wgpu|jello-wgpu|audio|smoke-presets)\.js(\?v=[^"]*)?"#src="js/\1.js?v='"$ver"'"#g' grand-motherload.html
   sed -i '' -E 's#href="sluice-menu\.css(\?v=[^"]*)?"#href="sluice-menu.css?v='"$ver"'"#g' grand-motherload.html
   echo "build-sluice: stamped grand-motherload.html game assets with ?v=$ver"
 fi

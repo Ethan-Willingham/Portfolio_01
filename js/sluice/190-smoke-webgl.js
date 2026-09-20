@@ -1,9 +1,10 @@
   /* ---- SmokeFluid — WebGL fluid sim (adapted from Pavel Dobryakov, MIT 2017) ---- */
   /* Inlined from smokeFluid.js. Original: https://github.com/PavelDoGreat/WebGL-Fluid-Simulation */
   var SmokeFluid = (function () {
+    function createSmokeFluid() {
     'use strict';
   
-    // --- module state (singleton) -----------------------------------
+    // --- independent instance state -----------------------------------
     var canvas = null;
     var gl = null;
     var ext = null;
@@ -20,6 +21,8 @@
       SPLAT_RADIUS: 0.22,
       SHADING: true,
       OPTICAL_DENSITY: 0,
+      OPTICAL_BRIGHTNESS: 0.9,
+      OPTICAL_ABSORPTION: 1,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -508,6 +511,8 @@
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'uniform float opticalDensity;\n' +
+      'uniform float opticalBrightness;\n' +
+      'uniform float opticalAbsorption;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -559,8 +564,8 @@
       // Legacy materials retain their original RGB/alpha transfer exactly.
       '  if (opticalDensity > 0.5) {\n' +
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
-      '    c = 0.9 * unmasked / max(density, 0.0001);\n' +
-      '    a = (1.0 - exp(-density)) * visibility;\n' +
+      '    c = opticalBrightness * unmasked / max(density, 0.0001);\n' +
+      '    a = (1.0 - exp(-density * opticalAbsorption)) * visibility;\n' +
       '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -1244,6 +1249,8 @@
       gl.disable(gl.BLEND);
       displayMaterial.bind();
       gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
+      gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
+      gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -1309,7 +1316,10 @@
       setPhysics: setPhysics,
       getPhysics: getPhysics,
       physicsVersion: 1,
+      create: createSmokeFluid,
     };
+    }
+    return createSmokeFluid();
   })();
 
   // ====== Smoke: WebGL fluid sim (Pavel Dobryakov port via SmokeFluid) ======
@@ -1802,6 +1812,7 @@
     smokeFluidCanvas.style.clipPath =
       'inset(' + overscanY + 'px ' + overscanX + 'px ' +
       (overscanY + smokeBottomMargin) + 'px ' + overscanX + 'px)';
+    if (typeof rigExhaustPositionDOM === 'function') rigExhaustPositionDOM();
   }
 
   function smokeFluidUpdateDomain() {
@@ -2086,6 +2097,8 @@
       verts[n++] = ju0; verts[n++] = jv1;
     }
     smokeDriver.paintObstacleQuads(verts, n / 2, smokeFluidObstacleW, smokeFluidObstacleH);
+    if (rigExhaustFluid && rigExhaustNeedsStep())
+      rigExhaustFluid.paintObstacleQuads(verts, n / 2, smokeFluidObstacleW, smokeFluidObstacleH);
     perfMark('update.smokeObstacleGL', _opg0);
   }
 
@@ -2189,6 +2202,11 @@
       }
       oc.restore();
     }
+
+    // The rig material shares terrain, but water enters its live coupling
+    // field instead of deleting dye through the ambient smoke's water mask.
+    if (rigExhaustFluid && rigExhaustNeedsStep())
+      rigExhaustFluid.setObstacleAlpha(smokeFluidObstacleCanvas);
 
     // Pass 4: water still blocks smoke using the asynchronous CPU mirror.
     // Reconstruct a continuous density mask instead of switching whole 8 px
@@ -2460,7 +2478,7 @@
     var euv = smokeFluidWorldToUV(ex.x, ex.y);
     var isActive = !!drilling;
     var moving = Math.abs(player.vx) > 8 || player.thrusting;
-    if (smokeTune.diesel_enabled && euv.inView && (isActive || moving || heavy)) {
+    if (!rigExhaustIsCustom() && smokeTune.diesel_enabled && euv.inView && (isActive || moving || heavy)) {
       smokeMarkActive();   // v23.32 — dye is about to be injected; keep the sim awake
       var rate = isActive ? smokeTune.diesel_rate_active
                : (moving   ? smokeTune.diesel_rate_moving
@@ -2562,6 +2580,7 @@
     // Prefer the GPU path (WebGPU smoke, else the WebGL SmokeFluid). Falls
     // through to the SPH grid below only if neither GPU path can run.
     if (smokeFluidEnsure()) {
+      rigExhaustEnsure();
       if (dt > 0.05) dt = 0.05;
       var smokeStepDt = dt * Math.max(0.02, smokeTuneNum(smokeTune.sim_time_scale, 1));
       var _gpuT = devMode ? performance.now() : 0;
@@ -2593,10 +2612,11 @@
       // Repaint the collision mask only when awake AND something reshaped it.
       // && short-circuits the dirty-check while asleep, so its trackers stay
       // stale and a pan made during sleep still repaints on the next wake.
-      if (smokeRunPre && smokeObstacleNeedsRepaint()) smokeFluidPaintObstacle();
+      if ((smokeRunPre || rigExhaustNeedsStep()) && smokeObstacleNeedsRepaint()) smokeFluidPaintObstacle();
       perfMark('update.smokeObstacle', _us3);
       var _us4 = performance.now();
       smokeFluidEmit(dt);
+      rigExhaustUpdate(dt);
       perfMark('update.smokeEmit', _us4);
       var _usFlow = performance.now();
       if (smokeRunPre || smokeAwakeT > 0) smokeWaterFlowCouple();
@@ -2650,6 +2670,7 @@
 
   function drawSmoke() {
     if (PERF_DISABLE_SMOKE_FLUID) return;   // v12.9 — fluid sim toggle
+    rigExhaustDraw();
     if (smokeFluidActive) {
       if (devMode && !smokeWGPUDriving) {
         var _gpuDrawT = performance.now();
@@ -2724,6 +2745,7 @@
   }
 
   function clearAllSmokeVisuals() {
+    rigExhaustClear();
     smokeResetPool();
     clearRocketPlume();
     smokeFluidShedPhase = 0;
@@ -2739,6 +2761,7 @@
   }
 
   function drawExhaustPipeSmokeBridge() {
+    if (rigExhaustIsCustom()) return;
     if (PERF_DISABLE_EXHAUST_BRIDGE) return;   // v12.9 — exhaust-bridge toggle
     if (!smokeTune || !smokeTune.enabled || !smokeTune.diesel_enabled) return;
     if (gameOver || gameWon) return;

@@ -143,7 +143,7 @@
         loadingBounded(water.queue.onSubmittedWorkDone(), 2000).then(function () { fence.gpuDone = true; });
       } catch (e) { fence.gpuDone = true; }
     }
-    var contexts = [smokeProbeGL(), skyGL, mtnGPU && !mtnGPUFailed ? mtnGPU.gl : null];
+    var contexts = [smokeProbeGL(), rigExhaustGL(), skyGL, mtnGPU && !mtnGPUFailed ? mtnGPU.gl : null];
     for (var i = 0; i < contexts.length; i++) {
       var gl = contexts[i];
       if (!gl || !gl.fenceSync || gl.isContextLost()) continue;

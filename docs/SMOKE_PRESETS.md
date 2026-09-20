@@ -1,10 +1,14 @@
 # Exhaust physics experiments
 
-The collection keeps Copperhead and Jade dragon at the owner's exported
-settings and adds eight fluid experiments. The two Copperhead downloads were
-identical. Original exports in `tools/fixtures/smoke/` protect their source,
-color, sampler, scale and tuning data. They retain the legacy display transfer
-and have all new forces disabled once the brief transition finishes.
+The demo contains eleven recipes: Copperhead, Jade dragon and nine fluid
+experiments. Six owner-selected exports are sold in Sluice's Store > Exhaust,
+alongside free stock exhaust and the premium rainbow look, Prismatic.
+Original exports in `tools/fixtures/smoke/` record the chosen source, color,
+sampler, scale, tuning and physics data. The two Copperhead downloads were
+identical and count as one look.
+
+Copperhead and Jade dragon retain their exported settings, legacy display
+transfer and disabled material forces once the brief transition finishes.
 
 | Retained look | Scale | Density | Liveliness | Size |
 | --- | --- | --- | --- | --- |
@@ -20,12 +24,13 @@ particles, traced ribbons, drawn rings or bubble sprites.
 | --- | --- |
 | Cauldron | Hot smoke rises, cools, becomes heavy and overturns. |
 | Dry ice | Negative buoyancy carries fog down onto ledges and over edges. |
-| Velvet rope | Strong velocity diffusion keeps a slow plume smooth. |
+| Velvet rope | Strong velocity diffusion keeps a slow crimson plume smooth. |
 | Vortex cannon | Brief jet impulses shed rolling mushroom fronts. These are 2D vortex pairs, not 3D toroidal rings. |
 | Countercurrent | A fast core meets slower reverse flow along the edges. |
 | Witchfire | Strong thermal lift stretches thin green smoke into tongues. |
 | Spiral kiln | A signed force tangent to concentration gradients stirs the plume's edges. This is an artistic force, not a model of ordinary exhaust. |
 | Falling bloom | Discrete hot bursts cool quickly and collapse into heavy lobes. |
+| Prismatic | A continuous rainbow rolls through a viscous plume with gentle edge circulation. |
 
 Ink Blossom's repeated sweep came from a shared sideways sine oscillator,
 unequal stream weights and a separate pulse clock. The new sources have
@@ -57,7 +62,13 @@ high concentration. The two retained exports use the original renderer.
 `js/sluice/190-smoke-webgl.js` is the source of truth. The toy's engine is an
 exact generated copy maintained by `tools/toy-engine-sync.mjs`. The material
 extension is in the active WebGL engine, not the parked WebGPU smoke port or
-the CPU fallback. All controls default to disabled forces in Sluice.
+the CPU fallback. The ambient Sluice smoke instance keeps disabled material
+forces by default; purchased rig exhaust uses an independent instance.
+
+`SmokeFluid.create()` returns a new solver with its own config, canvas, GPU
+fields and material profile. Initialize it once, then reuse it across live
+material changes. The original `SmokeFluid` instance remains available to
+existing callers.
 
 Temperature lives in dye alpha, which was unused by the display shader.
 Emission adds heat proportional to injected dye; advection transports it with
@@ -89,10 +100,46 @@ fields. Direct `config` changes also apply live on the next step.
 Force coefficients are solver tuning units, not physical SI measurements.
 Viscosity is bounded explicit diffusion, not a converged implicit viscous solve.
 `config.OPTICAL_DENSITY = 1` enables the new absorption display; zero retains
-legacy display. In the running game, `gm.smokePhysics(profile)` changes these
-material controls without restarting, and `gm.smokePhysics()` reads them.
+legacy display. `OPTICAL_BRIGHTNESS` and `OPTICAL_ABSORPTION` are display-only
+controls, defaulting to 0.9 and 1. Velvet rope uses 0.64 and 3.2 to keep its
+crimson body visible without the previous pale finish. Prismatic uses absorption
+2.4. These values live in `recipe.fluid` and do not change the exported motion
+or material forces. In the running game, `gm.smokePhysics(profile)` changes
+the ambient material controls without restarting, and `gm.smokePhysics()`
+reads them.
 
-## Export and future game integration
+## Store and ownership
+
+Store > Exhaust sells cosmetics for in-game cash. Buying equips the look
+immediately. Owned looks can be equipped again for free, including stock.
+They do not change rig performance or upgrade levels.
+
+| Exhaust | Price |
+| --- | ---: |
+| Stock exhaust | Free |
+| Copperhead | $750 |
+| Jade dragon | $1,500 |
+| Velvet rope | $2,500 |
+| Countercurrent | $4,500 |
+| Witchfire | $7,500 |
+| Spiral kiln | $12,000 |
+| Prismatic | $25,000 |
+
+`195-exhaust-catalog.js` contains the six selected export snapshots, prices,
+ownership and purchase validation. Their scale, tuning and physics remain as
+exported. Velvet rope's palette changes to crimson (`#b51238`, `#6e0927`)
+with the display settings above. Prismatic uses the shared demo recipe.
+`275-shop-exhaust.js` presents the catalog and free equip actions.
+
+Ownership lasts for the current save. Purchases and equip changes save
+immediately through the existing save system. The optional
+`profile.rigExhaust` field contains known owned IDs and an equipped ID;
+legacy saves default to stock, unknown IDs are ignored, and unowned equipment
+is rejected. Death and recovery retain the collection. New Game clears it.
+An unavailable smoke renderer disables custom purchases and equips without
+charging, while previously saved ownership remains intact.
+
+## Export and game integration
 
 `js/smoke-presets.js` owns recipes and the deterministic source sampler.
 New downloads use `sluice-smoke-recipe` version 3 with `solverVersion: 1`,
@@ -108,15 +155,23 @@ legacy splats. Rotate source-local lateral `x/vx` and outward `y/vy` through
 the nozzle orientation and negate world Y velocity for the solver's UV space.
 `emitSmokeRecipe()` in the toy is the reference adapter.
 
-The game shop is not connected to these exports yet. Material forces currently
-apply to the entire fluid domain, including old smoke. A rig-only cosmetic
-integration must isolate its fluid domain or deliberately accept shared forces.
-The game host also has a heavy-smoke tint wrapper and per-frame legacy tuning
-assignments that an equip adapter must account for. The new physics API itself
-is independent of those legacy assignments and can change while the game runs.
+`191-rig-exhaust.js` adapts this sampler to the game's nozzle, scales the demo
+fixture to the rig and converts velocity and force units to the current fluid
+domain. It creates and warms one independent rig solver during loading.
+Equipping reuses its fields and GPU resources, transitions material forces,
+and introduces the new color through fresh emissions. No game reset is needed.
+Switching to stock lets the previous colored plume fade.
+
+The rig solver follows the camera and receives terrain, water and slime
+boundaries. Ambient smoke keeps its own material settings, heavy-smoke tint
+and emission cadence. Cosmetic forces apply only inside the rig smoke field;
+they do not retune the ambient instance.
 
 ## Verification
 
+- `node tools/sluice-exhaust-smoke.mjs`: export fidelity, crimson and rainbow
+  rendering, purchases, free switching, save migration, death retention,
+  New Game reset, isolated fluid resources and desktop/phone store controls.
 - `node tools/smoke-presets-smoke.mjs`: retained data, all rendered presets,
   live switching, UI tuning, favorites, downloads, phone layout and game boot.
 - `node tools/perf/smoke-physics.cjs`: measured thermal rise, weight, independent

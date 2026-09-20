@@ -1,0 +1,80 @@
+{
+  "schema": "sluice-smoke-recipe",
+  "version": 3,
+  "samplerVersion": 3,
+  "solverVersion": 1,
+  "physics": {
+    "HEAT": 4,
+    "COOLING": 1.15,
+    "BUOYANCY": 240,
+    "WEIGHT": 3,
+    "VISCOSITY": 0.5,
+    "EDGE_SPIN": 0
+  },
+  "preset": {
+    "id": "witchfire",
+    "name": "Witchfire",
+    "family": "Fluid experiments",
+    "description": "Thin green smoke accelerates as it rises, pulling into sharp tongues and shedding restless green wisps.",
+    "colors": [
+      "#b4e869",
+      "#52bca3"
+    ],
+    "samplerVersion": 3,
+    "physics": {
+      "HEAT": 4,
+      "COOLING": 1.15,
+      "BUOYANCY": 240,
+      "WEIGHT": 3,
+      "VISCOSITY": 0.5,
+      "EDGE_SPIN": 0
+    },
+    "fluid": {
+      "OPTICAL_DENSITY": 1,
+      "CURL": 34,
+      "DENSITY_DISSIPATION": 0.52,
+      "VELOCITY_DISSIPATION": 0.07,
+      "wind_x": 0,
+      "wind_above_y": 0
+    },
+    "source": {
+      "mode": "jet",
+      "density": 0.15,
+      "radius": 2.5,
+      "width": 3,
+      "lift": 0.5,
+      "fan": 0,
+      "pulse": 0,
+      "period": 2.6,
+      "duty": 0.32,
+      "colorRate": 0.12,
+      "idleHold": 24
+    },
+    "palette": [
+      [
+        0.7058823529411765,
+        0.9098039215686274,
+        0.4117647058823529
+      ],
+      [
+        0.3215686274509804,
+        0.7372549019607844,
+        0.6392156862745098
+      ]
+    ]
+  },
+  "scale": {
+    "id": "default",
+    "values": {
+      "rad": 1,
+      "dye": 1,
+      "lift": 1,
+      "curl": 0
+    }
+  },
+  "tuning": {
+    "mass": 1,
+    "motion": 1,
+    "size": 1
+  }
+}

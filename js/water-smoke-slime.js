@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.42'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.43'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1048,9 +1048,10 @@
    * The pre-commit hook runs --check and refuses drift. ==== */
   /* >>> ENGINE SYNC: BEGIN smoke-engine (verbatim js/sluice/190-smoke-webgl.js closure) <<< */
   var SmokeFluid = (function () {
+    function createSmokeFluid() {
     'use strict';
   
-    // --- module state (singleton) -----------------------------------
+    // --- independent instance state -----------------------------------
     var canvas = null;
     var gl = null;
     var ext = null;
@@ -1067,6 +1068,8 @@
       SPLAT_RADIUS: 0.22,
       SHADING: true,
       OPTICAL_DENSITY: 0,
+      OPTICAL_BRIGHTNESS: 0.9,
+      OPTICAL_ABSORPTION: 1,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -1555,6 +1558,8 @@
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'uniform float opticalDensity;\n' +
+      'uniform float opticalBrightness;\n' +
+      'uniform float opticalAbsorption;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -1606,8 +1611,8 @@
       // Legacy materials retain their original RGB/alpha transfer exactly.
       '  if (opticalDensity > 0.5) {\n' +
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
-      '    c = 0.9 * unmasked / max(density, 0.0001);\n' +
-      '    a = (1.0 - exp(-density)) * visibility;\n' +
+      '    c = opticalBrightness * unmasked / max(density, 0.0001);\n' +
+      '    a = (1.0 - exp(-density * opticalAbsorption)) * visibility;\n' +
       '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -2291,6 +2296,8 @@
       gl.disable(gl.BLEND);
       displayMaterial.bind();
       gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
+      gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
+      gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -2356,7 +2363,10 @@
       setPhysics: setPhysics,
       getPhysics: getPhysics,
       physicsVersion: 1,
+      create: createSmokeFluid,
     };
+    }
+    return createSmokeFluid();
   })();
   /* >>> ENGINE SYNC: END smoke-engine <<< */
 
@@ -10711,7 +10721,8 @@
     var c = SmokeFluid.config;
     smokeCfgDefault = { CURL: c.CURL, DENSITY_DISSIPATION: c.DENSITY_DISSIPATION,
       VELOCITY_DISSIPATION: c.VELOCITY_DISSIPATION, PRESSURE: c.PRESSURE,
-      PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS, OPTICAL_DENSITY: c.OPTICAL_DENSITY };
+      PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS, OPTICAL_DENSITY: c.OPTICAL_DENSITY,
+      OPTICAL_BRIGHTNESS: c.OPTICAL_BRIGHTNESS, OPTICAL_ABSORPTION: c.OPTICAL_ABSORPTION };
   }
   var smokeRecipe = window.SmokePresets.byId.copperhead;
   var smokeTuning = { mass: 1, motion: 1, size: 1 };

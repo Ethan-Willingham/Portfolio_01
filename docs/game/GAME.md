@@ -46,6 +46,13 @@ purchases are refunded and recovered water is stored at the bathhouse. The free
 scoop (`F`) collects below the rig while driving or flying; the liquid tool's
 current pouring controls live in `075-liquid-tool.js` and the Controls menu.
 
+**Rig exhaust:** Store > Exhaust sells six selected smoke looks for in-game
+cash, plus Prismatic, the $25,000 rainbow look. Stock exhaust is free. Purchase
+once per save and switch owned looks live without resetting the game. Death
+retains them; New Game starts a fresh collection. The rig's separate fluid
+instance preserves ambient smoke settings. See [SMOKE_PRESETS.md](../SMOKE_PRESETS.md)
+for prices, exported tuning, runtime integration and verification.
+
 ---
 
 ## Build & run
@@ -103,7 +110,7 @@ functions; the code still compiles and keeps its gm levers). Missing enemies / z
 slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the owner.
 
 **ACTIVE for the simple game:** worldgen (single town, 400 m, 6 layers, all 32 ores), drilling, fuel,
-cargo, the surface station shop (Workshop + Supply Shelf only), upgrades (drill/fuel/cargo/
+cargo, the surface station shop (Workshop, Supply Shelf and Exhaust), upgrades (drill/fuel/cargo/
 hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water and mineral liquids), smoke, rare
 buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, tuned by
 `JELLO_PATCH_CHANCE` in 030) that fully cushion a fall (the v26.69 NPC brains in
@@ -140,7 +147,8 @@ quantities, unit prices, and haul value while the mine is paused).
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
 | `245-ui-kit.js` | the reusable modal kit: fizzed-world backdrop + the catalog modal (tabs/list/detail/action) |
-| `250/270/280-shop-*.js` | the STORE modal spec + routing (250) and its workshop/shelf item builders (270/280) |
+| `250/270/275/280-shop-*.js` | the STORE modal spec + routing (250) and its workshop, exhaust and shelf item builders (270/275/280) |
+| `190-smoke-webgl.js` / `191-rig-exhaust.js` / `195-exhaust-catalog.js` | independent smoke solver instances, live rig exhaust adapter, cosmetic catalog, ownership and persistence |
 | `297-cargo-manifest.js` | current cargo inspection: grouped mineral quantities, exact prices, responsive pages, and modal input |
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
 | `157-particle-rain.js` / `158-rain-lakes.js` / `159-snow-*.js` | physical weather, finite lakes, compressible snow and melting |
