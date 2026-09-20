@@ -173,8 +173,8 @@ try {
     return results;
   })()`);
   console.log('LANDINGS',landings);
-  check('landing cushions and settles on the guest at 30, 60 and 144 Hz',
-    landings.every(l=>l.overlap<.05&&l.rebound>20&&l.rebound<55&&l.restSpeed<2&&l.supported));
+  check('landing gives a moderate bounce and settles at 30, 60 and 144 Hz',
+    landings.every(l=>l.overlap<.05&&l.rebound>110&&l.rebound<155&&l.restSpeed<2&&l.supported));
   check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));
   await screenshot('landing-rest');
   await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');

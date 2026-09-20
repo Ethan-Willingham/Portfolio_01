@@ -104,7 +104,7 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.25)
+## Sky visitor physics and appearance (v28.27)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
@@ -125,18 +125,27 @@ at a slower pace. Existing saved guests use the current mass and gravity.
 
 Ground contacts keep a fixed restitution (0.86 to 0.875, multiplied by 0.88 on
 soil), with friction transferring slide into spin and rolling slowing gradually.
+Sliding friction is 0.24 on stone and 0.30 on soil. Landing deformation also
+removes tangential travel and spin together, proportional to impact load, so
+a guest already rolling without slip still loses some sideways speed when it
+lands. Rolling deceleration is 34 px/s squared on stone and 52 on soil, up
+from 22 and 36. These losses act only at ground contact.
 At least 240 physics substeps per second prevent fast visitors passing through
 terrain. Rig contacts sweep a low convex hull along the rig's traveled path.
-The sloped shoulders lift a grounded ball; the same geometry sets the direction
+The flat roof is 8.8 pixels wide, up from 4.4. Its shoulders move outward by
+2.2 pixels on each side, preserving their slope. This gives slightly misplaced
+headers more lift and less sideways speed. The sloped shoulders lift a grounded ball; the same geometry sets the direction
 of airborne hits. The rig's bumper yields under strong sideways loads: restitution
 smoothly drops from 0.90 toward 0.10 as lateral closing load rises around 130 px/s.
-A fourth-power blend keeps roof hits springy and softens glances. The roof
-uses the ordinary 0.90 material, with no additional dribbling boost. The tracked
-underbody absorbs landings: restitution blends toward 0.12 on a square downward
-hit, giving the miner a small rebound instead of launching it off the guest.
+A fourth-power blend keeps roof hits springy and softens glances. Roof
+restitution rises gently from 0.90 to 0.96 toward a square upward contact.
+The tracked underbody uses 0.38 restitution on a square downward hit, between
+the earlier 0.90 trampoline response and the nearly flat 0.12 landing.
 This absorbs rebound along the real contact normal, with equal opposite recoil
 when both bodies are free. Gentle touches retain their spring; stronger hits still give stronger
-shots. Contact friction is 0.04. Tangential friction exchanges spin as well as
+shots. Contact friction is 0.04 on the sides and rises toward 0.16 on the roof.
+The added roof grip further reduces sideways deflection on misplaced headers.
+Tangential friction exchanges spin as well as
 linear momentum. There is no minimum launch, automatic aim, catch radius, or
 aerial boost. Player gravity and flight controls are unchanged. Speed and
 contact height control the shot: get underneath to lift, strike level to drive

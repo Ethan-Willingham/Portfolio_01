@@ -15,15 +15,18 @@
   // Shared warm stone ramp from PIXEL_ART.md.
   var SKY_SLIME_RAMP = ['#252320', '#3e3830', '#5a5248', '#7a706a', '#9e9488', '#c0b8b0'];
   var skySlimeRigLast = null;
-  // Low, sloped shoulders follow the compact rig's hull. The same convex
-  // shape is used on land and in flight, so contact height controls a shot.
-  var SKY_SLIME_RIG_HULL = [0.40,0.18, 0.60,0.18, 1.25,0.80,
-    0.94,0.98, 0.06,0.98, -0.25,0.80];
+  // A broader roof tolerates small header offsets. Moving the shoulders
+  // out by the same amount keeps their ground-launch slope unchanged.
+  // Land and air use this same hull; contact height still controls a shot.
+  var SKY_SLIME_RIG_HULL = [0.30,0.18, 0.70,0.18, 1.35,0.80,
+    0.94,0.98, 0.06,0.98, -0.35,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
-  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.12;
+  var SKY_SLIME_ROOF_RESTITUTION = 0.96;
+  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.38;
   var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
+  var SKY_SLIME_ROOF_FRICTION = 0.16;
   var SKY_SLIME_JET_RANGE = 160;
   var SKY_SLIME_JET_SPREAD = 0.46;
   var SKY_SLIME_JET_COUPLING = 1.4; // pressure includes gas deflected back off the crust
@@ -220,10 +223,22 @@
           // the sphere's rolling inertia (I = 2/5 mr^2).
           var tx = -ny, ty = nx;
           var slip = s.vx * tx + s.vy * ty - s.spin * s.r;
-          var friction = skySlimeClamp(-slip / 3.5, -normalDV * 0.17, normalDV * 0.17);
+          var frictionLimit = normalDV * (soft ? 0.30 : 0.24);
+          var friction = skySlimeClamp(-slip / 3.5, -frictionLimit, frictionLimit);
           s.vx += friction * tx; s.vy += friction * ty;
           s.spin -= friction / (0.4 * s.r);
-          if (ny < -0.6) s._rollingDrag = soft ? 36 : 22;
+          if (ny < -0.6) {
+            // Crust deformation absorbs some rolling energy on landing,
+            // even when spin already matches travel and there is no slip.
+            // Scale translation and spin together, without reversing either.
+            var tangentSpeed = s.vx * tx + s.vy * ty;
+            var loss = Math.min(Math.abs(tangentSpeed), Math.max(0, normalDV - 18) * (soft ? 0.055 : 0.035));
+            var grip = Math.abs(tangentSpeed) > 0.001 ? 1 - loss / Math.abs(tangentSpeed) : 1;
+            s.vx -= tangentSpeed * (1 - grip) * tx;
+            s.vy -= tangentSpeed * (1 - grip) * ty;
+            s.spin *= grip;
+            s._rollingDrag = soft ? 52 : 34;
+          }
           if (ny < -0.6 && vn < -55) skySlimeBlink(s);
           skySlimeImpact(s, nx, ny, -vn);
         }
@@ -306,7 +321,7 @@
   }
 
   function skySlimeRigContact(s, rx, ry) {
-    if (s.x + s.r < rx - 7 || s.x - s.r > rx + PLAYER_W + 7 ||
+    if (s.x + s.r < rx - 10 || s.x - s.r > rx + PLAYER_W + 10 ||
         s.y + s.r < ry - 1 || s.y - s.r > ry + PLAYER_H + 2) return null;
     // Closest point on the convex hull gives both separation and impulse
     // direction. Its lower shoulders meet a grounded ball below its center.
@@ -405,8 +420,9 @@
     var cushion = (1 - vertical2 * vertical2) * sideLoad4 / (1 + sideLoad4);
     var restitution = SKY_SLIME_RIG_RESTITUTION -
       (SKY_SLIME_RIG_RESTITUTION - SKY_SLIME_RIG_SIDE_RESTITUTION) * cushion;
+    if (ny < 0) restitution += (SKY_SLIME_ROOF_RESTITUTION - SKY_SLIME_RIG_RESTITUTION) * vertical2 * vertical2;
     // The tracked underbody absorbs a landing. Its damping blends with
-    // the side bumper on oblique hits; the roof uses the ordinary material.
+    // the side bumper on oblique hits, retaining a modest landing bounce.
     if (ny > 0) restitution += (SKY_SLIME_RIG_LANDING_RESTITUTION - restitution) * ny * ny;
     // A resting rig receives up to one frame of gravity before this pass.
     // Absorb that small load rather than making a perpetual tiny trampoline.
@@ -421,8 +437,10 @@
     var tx = -ny, ty = nx;
     var slip = (s.vx - rvx - rigDVX) * tx + (s.vy - rvy - rigDVY) * ty - s.spin * s.r;
     var tangentMobility = tx * tx * (bx + rxMass) + ty * ty * (by + ryMass) + 2.5 * invMass;
+    var contactFriction = SKY_SLIME_RIG_FRICTION;
+    if (ny < 0) contactFriction += (SKY_SLIME_ROOF_FRICTION - contactFriction) * vertical2;
     var friction = skySlimeClamp(-slip / tangentMobility,
-      -impulse * SKY_SLIME_RIG_FRICTION, impulse * SKY_SLIME_RIG_FRICTION);
+      -impulse * contactFriction, impulse * contactFriction);
     s.vx += friction * tx * bx; s.vy += friction * ty * by;
     s.spin -= friction / (0.4 * mass * s.r);
     player.vx -= friction * tx * rxMass; player.vy -= friction * ty * ryMass;
@@ -685,7 +703,7 @@
           rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
         skySlimeTerrain(b);
         if (b._ground && Math.abs(b.vy) < 12) {
-          var rolling = (b._rollingDrag || 22) * h;
+          var rolling = (b._rollingDrag || 34) * h;
           b.vx -= skySlimeClamp(b.vx, -rolling, rolling);
           b.spin = b.vx / b.r;
         }

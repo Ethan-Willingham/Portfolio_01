@@ -79,7 +79,7 @@ assert(fast.vx>500,'power shots remain possible, with no imposed speed limit');
 const under=airHit(511,179.69,0,40,0,-160).s;
 assert(under.vy< -220,'rising under a falling ball creates a deliberate aerial lift');
 const over=airHit(511,250.47,0,-40,0,160).s;
-assert(over.vy>110&&over.vy<150,'a descending hit pushes the ball down while the underbody absorbs rebound');
+assert(over.vy>150&&over.vy<180,'a descending hit pushes the ball down with a moderate underbody rebound');
 const brush=airHit(548.25,220.8,40,100,200,-100).s;
 assert(Math.abs(brush.spin)>.5&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
 const away=airHit(548.25,220.8,300,0,100,0).s;
@@ -92,14 +92,39 @@ for(const grounded of [false,true]){
   const {w,s}=fixture();Object.assign(w.player,{x:489,y:grounded?486:200,vx:0,vy:0,onGround:grounded});
   Object.assign(s,{x:500,y:w.player.y+26*.18-25.49,vy:100});
   w.skySlimePlayer(s,w.player.x,w.player.y,0,0);
-  if(grounded){assert(Math.abs(s.vy+90)<.001,'roof uses ordinary restitution without a dribbling boost');assert.equal(w.player.vy,0,'floor carries roof recoil');}
-  else {assert(s.vy< -30&&s.vy> -40&&w.player.vy>50,'airborne roof shares the ordinary material and still recoils');}
+  if(grounded){assert(Math.abs(s.vy+96)<.001,'roof has a modest elastic rebound without adding energy');assert.equal(w.player.vy,0,'floor carries roof recoil');}
+  else {assert(s.vy< -35&&s.vy> -40&&w.player.vy>50,'airborne roof retains more height and still recoils');}
 }
+// Compare the same header offsets against the narrower, slippery roof.
+// Find actual contact height for each hull instead of changing the normal
+// or aiming an impulse toward a preferred trajectory.
+const oldRoof={SKY_SLIME_RIG_HULL:[.4,.18,.6,.18,1.25,.8,.94,.98,.06,.98,-.25,.8],
+  SKY_SLIME_ROOF_RESTITUTION:.9,SKY_SLIME_ROOF_FRICTION:.04};
+function header(offset,tuning={}){
+  const {w,s}=fixture(tuning);Object.assign(w.player,{x:500,y:200,vx:0,vy:-140});
+  Object.assign(s,{x:511+offset,vx:0,vy:60});
+  let lo=160,hi=226;
+  for(let n=0;n<35;n++){
+    s.y=(lo+hi)/2;const c=w.skySlimeRigContact(s,500,200);
+    if(c&&c.depth>0)hi=s.y;else lo=s.y;
+  }
+  s.y=hi+.05;w.skySlimePlayer(s,500,200,0,-140);return s;
+}
+const headers=[];
+for(const offset of [6,12,18]){
+  const before=header(offset,oldRoof),after=header(offset),left=header(-offset);
+  assert(after.vx>0&&after.vx<before.vx*.85,'small header errors create less sideways speed');
+  assert(after.vy<before.vy,'off-center header retains more useful lift');
+  assert(Math.abs(after.vx+left.vx)<.001&&Math.abs(after.vy-left.vy)<.001,'headers stay symmetric');
+  headers.push({offset,before:{vx:before.vx,vy:before.vy},after:{vx:after.vx,vy:after.vy}});
+}
+assert(header(24).vx>100,'farther outside contact can still deliberately send a ball sideways');
+console.log('HEADERS',headers);
 // A shallow contact must not teleport a sprite that is normally easing
 // behind the moving rig. Preserve its existing lag through the collision.
 {
   const {w,s}=fixture();Object.assign(w.player,{x:500,y:200,vx:200,vy:-100,renderX:492,renderY:206});
-  Object.assign(s,{x:552.75,y:220.8,vx:40,vy:100});
+  Object.assign(s,{x:554.95,y:220.8,vx:40,vy:100});
   w.skySlimePlayer(s,500,200,200,-100);
   assert(Math.abs(w.player.renderX-492)<.2&&Math.abs(w.player.renderY-206)<.2,'small contact cannot make an eight-pixel sprite snap');
   assert(Math.abs(w.player.x-w.player.renderX-8)<.001,'horizontal easing survives a touch');
@@ -118,7 +143,7 @@ for(const fps of [30,60,144]){
     rebound=Math.max(rebound,-w.player.vy);
     if(n>fps*9)settledSpeed=Math.max(settledSpeed,Math.abs(w.player.vy));
   }
-  assert(rebound>20&&rebound<55,'landing gives a small cushioned rebound instead of a trampoline launch');
+  assert(rebound>110&&rebound<155,'landing has a fun moderate bounce without the old trampoline launch');
   assert(settledSpeed<1&&w.player.onGround,'small contacts settle without perpetual hopping');
   assert(w.skySlimeSupportsRig(w.player.x,w.player.y),'guest counts as real foot support');
   assert(!w.skySlimeSupportsRig(w.player.x+70,w.player.y),'walking away loses support');

@@ -27,8 +27,8 @@ for(const fps of [30,60,144]){
  assert(s.settled&&Math.abs(s.vy)<2,'eventually rests');assert(s.y+s.r<=512.01,'floor containment');
  report.push({fps,first:hits[0].outgoing,bounces:hits.length});
  const roll=world(),r=ball(roll,500,487,150,0);r.spin=150/25;
- step(roll,1,fps);assert(r.x>620&&r.vx>115,'rolling retains momentum');
- step(roll,9,fps);assert(r.vx<1&&r.x>900,'rolling friction eventually stops ball');
+ step(roll,1,fps);assert(r.x>620&&r.vx>100&&r.vx<120,'rolling slows progressively while retaining momentum');
+ step(roll,5,fps);assert(r.vx<1&&r.x>790&&r.x<860,'rolling stops sooner instead of coasting across the surface');
  for(const dir of [-1,1]){
    const ram=world(),b=ball(ram,500,487);ram.player={x:500-dir*110-11,y:486,vx:dir*240,vy:0,onGround:true};
    for(let n=0;n<fps*.65;n++){ram.player.x+=ram.player.vx/fps;ram.skySlimeTick(1/fps);}
@@ -55,6 +55,18 @@ for(const fps of [30,60,144]){
  assert(rebound>200&&rebound<report[report.length-1].first,'shallow water damps but preserves floor rebound');
 }
 assert(Math.max(...report.map(r=>r.first))-Math.min(...report.map(r=>r.first))<3,'frame-rate consistent first rebound');
+const impactGrip=[];
+for(const material of ['stone','dirt']){
+ const w=world({material}),b=ball(w,500,488,150,200);b.spin=6;
+ const energy=()=>.5*(b.vx*b.vx+b.vy*b.vy)+.2*b.r*b.r*b.spin*b.spin;
+ const before=energy();w.skySlimeTerrain(b);
+ assert(b.vx>120&&b.vx<145,'landing slows horizontal travel even when spin already matches rolling');
+ assert(Math.abs(b.spin*b.r-b.vx)<.001,'impact keeps matching travel and spin together');
+ assert(energy()<before,'ground grip only removes energy');
+ impactGrip.push({material,vx:b.vx,vy:b.vy});
+}
+assert(impactGrip[1].vx<impactGrip[0].vx,'soil takes more horizontal speed than stone');
+console.log('IMPACT GRIP',impactGrip);
 const w=world(),s=ball(w);s.y=487;w.player={x:530,y:470,vx:0,vy:0};s.settled=true;s.glanceIn=0;
 let looking=0;for(let n=0;n<60*60;n++){w.skySlimeExpression(s,1/60);looking+=s.glanceT>0?1:0;assert(Math.hypot(s.pupilX,s.pupilY)<=s.r*s.eyeSize*.47+.001,'pupil contained in plastic cup');}
 assert(looking>0&&looking<60*60*.2,'eye glances sometimes but does not stare continuously');
