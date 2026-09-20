@@ -67,6 +67,31 @@ for(const material of ['stone','dirt']){
 }
 assert(impactGrip[1].vx<impactGrip[0].vx,'soil takes more horizontal speed than stone');
 console.log('IMPACT GRIP',impactGrip);
+// A missed volley must become catchable while retaining its vertical arc.
+// Compare against an untouched guest so arrivals and navigation keep their
+// original motion, and exercise both directions across refresh rates.
+const recovery=[];
+for(const fps of [30,60,144])for(const material of ['stone','dirt'])for(const dir of [-1,1]){
+ const free=world({material}),untouched=ball(free,4000,487,dir*300,-220);
+ const play=world({material}),played=ball(play,4000,487,dir*300,-220);
+ untouched.spin=played.spin=dir*12;play.skySlimePlayContact(played);
+ step(free,1,fps);step(play,1,fps);
+ assert(Math.abs(played.vx)>70&&Math.abs(played.vx)<130,'a missed volley slows below driving speed within one second');
+ assert(Math.abs(played.vx)<Math.abs(untouched.vx)*.45,'play loses sideways speed while untouched arrivals retain it');
+ assert(Math.abs(played.y-untouched.y)<.001&&Math.abs(played.vy-untouched.vy)<.001,'sideways damping preserves the vertical flight arc');
+ assert(dir*played.vx>0&&dir*played.spin>0,'drag never reverses a shot or its spin');
+ step(play,11,fps);
+ assert(Math.abs(played.x-4000)<384&&Math.abs(played.vx)<1,'a hard missed volley stays within twelve tiles');
+ const roll=world({material}),r=ball(roll,4000,487,dir*150,0);r.spin=dir*6;roll.skySlimePlayContact(r);
+ step(roll,2,fps);
+ assert(Math.abs(r.vx)<1&&Math.abs(r.x-4000)<80,'a missed rolling ball stops within two seconds and two and a half tiles');
+ recovery.push({fps,material,dir,volleyDistance:Math.abs(played.x-4000),rollDistance:Math.abs(r.x-4000)});
+}
+for(const material of ['stone','dirt'])for(const dir of [-1,1]){
+ const cases=recovery.filter(r=>r.material===material&&r.dir===dir);
+ assert(Math.max(...cases.map(r=>r.volleyDistance))-Math.min(...cases.map(r=>r.volleyDistance))<1,'miss recovery is refresh-rate consistent in either direction');
+}
+console.log('RECOVERY',recovery);
 const w=world(),s=ball(w);s.y=487;w.player={x:530,y:470,vx:0,vy:0};s.settled=true;s.glanceIn=0;
 let looking=0;for(let n=0;n<60*60;n++){w.skySlimeExpression(s,1/60);looking+=s.glanceT>0?1:0;assert(Math.hypot(s.pupilX,s.pupilY)<=s.r*s.eyeSize*.47+.001,'pupil contained in plastic cup');}
 assert(looking>0&&looking<60*60*.2,'eye glances sometimes but does not stare continuously');

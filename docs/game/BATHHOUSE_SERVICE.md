@@ -128,8 +128,15 @@ soil), with friction transferring slide into spin and rolling slowing gradually.
 Sliding friction is 0.24 on stone and 0.30 on soil. Landing deformation also
 removes tangential travel and spin together, proportional to impact load, so
 a guest already rolling without slip still loses some sideways speed when it
-lands. Rolling deceleration is 34 px/s squared on stone and 52 on soil, up
-from 22 and 36. These losses act only at ground contact.
+lands. Rolling deceleration is 34 px/s squared on stone and 52 on soil.
+Once a guest is bumped into play, rolling resistance ramps up above 35 px/s,
+reaching triple strength at 120 px/s: 102 on stone and 156 on soil. Gentle
+nudges and jet wash retain the original ground resistance. Horizontal travel
+and spin also decay at 0.9 per second (about 59 percent of sideways speed lost
+in one second), so a missed header
+stays within reach. This extra drag fades with submersion into the existing
+water resistance. It does not alter vertical velocity, gravity, or restitution.
+Ordinary meteor arrivals and autonomous visitor hops retain their original drag.
 At least 240 physics substeps per second prevent fast visitors passing through
 terrain. Rig contacts sweep a low convex hull along the rig's traveled path.
 The flat roof is 8.8 pixels wide, up from 4.4. Its shoulders move outward by
@@ -155,10 +162,11 @@ Tangential friction exchanges spin as well as
 linear momentum. There is no minimum launch, automatic aim, catch radius, or
 aerial boost. Player gravity and flight controls are unchanged. Speed and
 contact height control the shot: get underneath to lift, strike level to drive
-sideways, and hit from above to spike. Free-flight motion has no new drag or
-speed limit. A ground pop followed by a timed jet can chain aerials. The fixed
-drive/jet browser test checks consecutive aerial touches. Its separate shallow
-angle impact checks now leave at 276 to 298 px/s sideways, close to flight cruise.
+sideways, and hit from above to spike. Sideways drag during play slows the
+resulting shot without imposing a speed limit. A ground pop followed by a timed
+jet can chain aerials. The fixed drive/jet browser test checks consecutive aerial
+touches. Its separate shallow angle impact checks now leave at 276 to 298 px/s
+sideways, close to flight cruise.
 
 Contact separation moves both bodies according to their mass. Terrain carries
 the load on any blocked axis, so a slime on the floor supports the falling rig

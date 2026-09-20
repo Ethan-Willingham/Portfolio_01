@@ -12,6 +12,10 @@
   // gravity are separate: these guests resist a shove without falling faster.
   var SKY_SLIME_GRAVITY = 300;
   var SKY_SLIME_MASS = 2.5; // radius-25 guest; the rig has mass 6
+  // Once bumped into play, lose sideways momentum within the next bounce
+  // so a missed header stays catchable. Vertical springs keep their lift.
+  var SKY_SLIME_PLAY_DRAG = 0.9; // per second, horizontal travel and spin
+  var SKY_SLIME_PLAY_ROLL_GRIP = 3; // maximum multiplier on rolling resistance
   // Shared warm stone ramp from PIXEL_ART.md.
   var SKY_SLIME_RAMP = ['#252320', '#3e3830', '#5a5248', '#7a706a', '#9e9488', '#c0b8b0'];
   var skySlimeRigLast = null;
@@ -587,7 +591,7 @@
       var s = skySlimes[i];
       s.hopIn -= dt;
       if (s.playing) {
-        // Flight remains ballistic for as long as the player keeps it going.
+        // Player contacts keep control for as long as play continues.
         // Navigation resumes only after physical rest and stepping away.
         var resting = (s._ground || s.wet > 0.18) && Math.hypot(s.vx, s.vy) < 12;
         s.playRest = resting && !(s._interactT > 0) ? (s.playRest || 0) + dt : 0;
@@ -725,6 +729,14 @@
         var relativeSpeed = Math.hypot(b.vx - flowX, b.vy - flowY);
         var drag = Math.exp(-0.008 * h) / (1 + b.wet * (4.5 + relativeSpeed * 0.018) * h);
         b.vx = flowX + (b.vx - flowX) * drag; b.vy = flowY + (b.vy - flowY) * drag;
+        if (b.playing) {
+          // Fade into the existing water resistance as the guest submerges.
+          // Spin loses the same fraction, so landing cannot restore the
+          // sideways speed from a still-fast rolling crust.
+          var playDrag = Math.exp(-SKY_SLIME_PLAY_DRAG * (1 - b.wet) * h);
+          b.vx = flowX + (b.vx - flowX) * playDrag;
+          b.spin *= playDrag;
+        }
         b.vy = skySlimeClamp(b.vy, -1000, 1000);
         b.vx = skySlimeClamp(b.vx, -1000, 1000);
         b.x += b.vx * h; b.y += b.vy * h;
@@ -734,6 +746,10 @@
         skySlimeTerrain(b);
         if (b._ground && Math.abs(b.vy) < 12) {
           var rolling = (b._rollingDrag || 34) * h;
+          // Extra grip arrests fast rolls; gentle nudges and jet wash can
+          // still move a slow guest with the original ground resistance.
+          if (b.playing) rolling *= 1 + (SKY_SLIME_PLAY_ROLL_GRIP - 1) *
+            skySlimeClamp((Math.abs(b.vx) - 35) / 85, 0, 1);
           b.vx -= skySlimeClamp(b.vx, -rolling, rolling);
           b.spin = b.vx / b.r;
         }
