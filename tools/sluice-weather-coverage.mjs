@@ -97,8 +97,8 @@ try {
         rainRestore({enabled:true,mode:'snow',snow:{version:2,particles:[],grains:[],airParked:[[7000,-700,0,53,1,0,.5,0]]},water:[2400,-700,2400,SKY_ROWS*TILE+8]});
         cam.x=2000;cam.y=-1000;player.x=2400;player.y=-650;`);
       check('old snow saves cannot revive cached storm strips',await game('snow.airCount===0&&snow.grains.length===0'));
-      check('legacy sky water becomes snow with the same mass; surface water stays water',await game('snow.mass===1&&snow.parked[1]===-700&&rain.parked.length===2&&rain.parked[1]===SKY_ROWS*TILE+8'));
-      await game('snowScan(.12);snowScan(.12)');
+      check('legacy atmospheric water retires without creating another snow patch; surface water stays water',await game('snow.mass===0&&snow.parked.length===0&&rain.recycled===1&&rain.parked.length===2&&rain.parked[1]===SKY_ROWS*TILE+8'));
+      await game('snowStore(2400,-700,0,53);snow.mass=1;snowScan(.12);snowScan(.12)');
       check('isolated physical snow returns to slow flight without changing mass',await game('snow.grains.length===1&&snow.grains[0].physical&&snow.mass===1'));
       check('jet heat cannot make rain out of airborne powder',await game('player.thrusting=true;player.jetForce=200;snow.temperature=4;snowHeat(player.x+PLAYER_W*.5,player.y+PLAYER_H+15)===0'));
       check('clearing cannot thaw the world while snow is still falling',await game('weatherForce=-1;rain.climate.phase=3;weather.pcp=.4;snowTemperature()<0'));

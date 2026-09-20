@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.42';
+  var GAME_VERSION = 'v28.43';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -34926,12 +34926,12 @@
       var x = data.water[i], y = data.water[i + 1];
       if (typeof x === 'number' && typeof y === 'number' && isFinite(x) && isFinite(y) &&
           x > 0 && x < COLS * TILE && y > -20000 && y < TOTAL_ROWS * TILE) {
-        // Older snow saves could contain melted weather high in the sky.
-        // Restore that weather as snow, preserving its water-equivalent mass.
-        // Player-poured water has another origin and does not enter this store.
-        if (worldSnowEnabled && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24 &&
-            snow.mass < SNOW_MASS_CAP && snowStore(x, y, 0, 53)) {
-          snow.mass++; snow.emitted++;
+        // The old cached-sky system could thaw an unlanded storm patch
+        // into stored water overhead. Retire that legacy weather cache;
+        // turning it into physical snow would preserve the same dense wall.
+        // Current saves and player-poured water are not migrated this way.
+        if (worldSnowEnabled && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24) {
+          rain.recycled++;
         } else rain.parked.push(x, y);
       }
     }

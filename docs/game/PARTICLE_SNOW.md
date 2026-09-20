@@ -153,8 +153,8 @@ existing offscreen catchment accounting at the snowfall rate.
 
 Saves contain the individual solver particles and airborne flakes separately
 from existing water, plus the field clock, drift and consumed source identities.
-Older saves discard transient atmospheric patches and convert their stored sky
-water back into snow with the same water equivalent. Current saves preserve
+Older saves discard transient atmospheric patches and their stored sky water;
+converting that cache into physical snow would preserve its uneven density. Current saves preserve
 local meltwater, physical snow and collected/poured water. Pause freezes weather and thaw. Outdoor weather pauses
 inside the banya. `window.__particleSnow.stats()` reports the shared-particle
 model, active and parked counts, moving powder, collected mass and thaw.

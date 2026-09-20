@@ -53,7 +53,7 @@ and old offscreen weather is not cached. Existing particles keep their world
 positions, and consumed source identities preserve the rig's wake.
 
 A snow world clears the rain drop/impact pools and suppresses rain drawing.
-Airborne powder stays snow beside the jet. Legacy snow saves repair atmospheric
+Airborne powder stays snow beside the jet. Legacy snow saves retire atmospheric
 water overhead and discard old cached sky patches; local surface meltwater and
 player-owned water remain physical liquids.
 

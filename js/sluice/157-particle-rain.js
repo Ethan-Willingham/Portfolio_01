@@ -429,12 +429,12 @@
       var x = data.water[i], y = data.water[i + 1];
       if (typeof x === 'number' && typeof y === 'number' && isFinite(x) && isFinite(y) &&
           x > 0 && x < COLS * TILE && y > -20000 && y < TOTAL_ROWS * TILE) {
-        // Older snow saves could contain melted weather high in the sky.
-        // Restore that weather as snow, preserving its water-equivalent mass.
-        // Player-poured water has another origin and does not enter this store.
-        if (worldSnowEnabled && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24 &&
-            snow.mass < SNOW_MASS_CAP && snowStore(x, y, 0, 53)) {
-          snow.mass++; snow.emitted++;
+        // The old cached-sky system could thaw an unlanded storm patch
+        // into stored water overhead. Retire that legacy weather cache;
+        // turning it into physical snow would preserve the same dense wall.
+        // Current saves and player-poured water are not migrated this way.
+        if (worldSnowEnabled && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24) {
+          rain.recycled++;
         } else rain.parked.push(x, y);
       }
     }
