@@ -14,7 +14,7 @@
       ledgerOpen || cargoManifestOpen || bathMode || introPhase !== 'done' ||
       (typeof document !== 'undefined' && document.hidden);
     var available = !quiet && typeof siphon !== 'undefined' && siphon &&
-      siphon.equipped && siphonAvailable();
+      (siphon.equipped || siphon.dump) && siphonAvailable();
     var moving = available && siphon.flow > 0;
     var transfer = moving ? Math.min(1, siphon.flow / Math.max(1, dt * 6200)) : 0;
     siphonAudioFlow += (transfer - siphonAudioFlow) * (1 - Math.exp(-dt * (moving ? 12 : 24)));
@@ -23,7 +23,7 @@
     var stationOwnsPump = shopOpen || shopState !== 'closed' || player.refueling;
     if (moving && !stationOwnsPump) {
       var fullness = Math.min(1, siphonTotal() / Math.max(1, siphon.capacity));
-      var pouring = siphon.mode === 'pour';
+      var pouring = !!siphon.dump;
       var pressure = Math.max(0, Math.min(1, siphon.power));
       sfxLoop('fuel-fill', {
         gain: (0.12 + 0.28 * Math.sqrt(siphonAudioFlow)) * pressure,

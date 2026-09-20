@@ -335,7 +335,7 @@
     b.shFrame = -1;   // refit the sheen deformation for this pose
   }
 
-  // Visitor order bubbles, meteor wakes and the active nozzle all
+  // Visitor order bubbles, meteor wakes and the scoop/dump effects all
   // introduce paints absent from a fresh spawn. Draw temporary specimens,
   // never construction or simulation, and restore every borrowed reference.
   function shaderWarmVisitors(ws, ox, oy) {
@@ -377,14 +377,15 @@
       siphon.equipped = true; siphon.power = 0.85; siphon.clock = 0.27;
       siphon.tank = [3600, 0, 1400, 2400, 900]; siphon.selected = 0;
       siphon.mode = 'suck'; siphon.passenger = null;
-      siphon.notice = 'Passenger secured. Pour to set it in a bath.'; siphon.noticeT = 1;
+      siphon.notice = 'Dumping the whole load.'; siphon.noticeT = 1;
       siphon.fx = [{ x: x + 20, y: y + 44, type: 2, t: 0.1, life: 0.3 },
         { x: x + 76, y: y - 40, type: 3, t: 0.17, life: 0.3 }];
       siphonDraw();
       ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
       siphonHUD();
       shaderWarmWorld(ws, ox, oy);
-      siphon.mode = 'pour'; siphon.selected = 4; siphon.passenger = skySlimes[2];
+      siphon.mode = 'dump'; siphon.selected = 4; siphon.passenger = skySlimes[2];
+      siphon.dump = { started: true, age: 0.12, initial: 16000, sent: 4000 };
       siphonDraw();
       ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
       siphonHUD();

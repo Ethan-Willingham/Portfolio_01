@@ -33,9 +33,10 @@ including offscreen spills, so the tub needs topping up. Surface construction
 lots and pearl production were removed. Existing purchases are refunded,
 ready pearls paid out, and recovered lot water stored at the bathhouse.
 The scoop, mineral liquids, sky arrivals, and underground slime settings remain.
-The free scoop (`F`) collects below the rig while driving or flying. Hold right
-mouse to pour; `R` selects a chamber. Touch players tap SCOOP or POUR and tap
-the lit button to stop. Alt+Enter toggles fullscreen. See
+The free scoop (`F`) collects below the rig while driving or flying. Press right
+mouse or tap DUMP once to discharge every chamber in one burst and launch the
+rig. Fuller loads give stronger lift; `R` inspects chambers. SCOOP stays off
+after a dump. Alt+Enter toggles fullscreen. See
 `BATHHOUSE_SERVICE.md` for bathhouse controls, persistence, and current tuning.
 
 ---

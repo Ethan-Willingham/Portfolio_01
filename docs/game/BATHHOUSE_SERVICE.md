@@ -37,6 +37,15 @@ mutation journal and briefly darkens/wets the floor. Parked offscreen spills
 are drained too. No floor spill returns to the tank or survives in a save.
 Natural lakes and underground liquids remain available for the scoop.
 
+Outside, right click or tap DUMP to discharge the entire tank in a short,
+wide burst. The recoil lifts the rig, with strength based on liquid actually
+released. Ground starts spray beside the tracks before the rig rises; air
+starts discharge below the belly. Steering stays available throughout.
+A carried visitor is released into nearby clear space with the same action.
+An empty tank gives no boost, repeat clicks do not restart a burst, and
+blocked exits or a full particle budget retain any unreleased contents.
+ADD WATER inside the bathhouse remains a direct transfer without launching.
+
 ## Current tuning
 
 Two indoor guests, eight total visitors including carried and indoor guests.

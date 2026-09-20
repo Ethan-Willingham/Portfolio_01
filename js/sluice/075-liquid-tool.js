@@ -1,11 +1,11 @@
   /* ---- The siphon: separate fluid chambers and one passenger cradle ---- */
   var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0], selected: 0,
-    capacity: 16000, passenger: null, pointer: null,
+    capacity: 16000, passenger: null, pointer: null, dump: null,
     power: 0, carry: 0, capture: 0, released: false, clock: 0, fx: [], notice: '', noticeT: 0 };
   var siphonButtons = [];
   function siphonReset() {
     siphon.equipped = false; siphon.mode = 'suck'; siphon.tank = [0, 0, 0, 0, 0]; siphon.selected = 0;
-    siphon.passenger = null; siphon.power = 0; siphon.fx = []; siphon.clock = 0;
+    siphon.passenger = null; siphon.dump = null; siphon.power = 0; siphon.fx = []; siphon.clock = 0;
     siphonStop();
   }
   function siphonStop() {
@@ -18,14 +18,78 @@
   function siphonTotal() { return siphon.tank.reduce(function (sum, n) { return sum + n; }, 0); }
   function siphonNotice(text) { siphon.notice = text; siphon.noticeT = 2.5; }
   function siphonToggle() {
+    if (siphon.dump) return;
     var wasScooping = siphon.equipped && siphon.mode === 'suck';
     siphonStop(); siphon.mode = 'suck'; siphon.equipped = !wasScooping;
     if (siphon.equipped) siphonNotice('Scoop on. Drive or fly over liquid and settled slimes.');
   }
-  function siphonPourToggle() {
-    var wasPouring = siphon.equipped && siphon.mode === 'pour';
-    siphonStop(); siphon.mode = 'pour'; siphon.equipped = !wasPouring;
-    if (siphon.equipped) siphonNotice('Pouring below the rig. Tap POUR again to stop.');
+  function siphonDump() {
+    if (!siphonAvailable() || siphon.dump) return;
+    var total = siphonTotal();
+    if (!total && !siphon.passenger) { siphonNotice('Tank empty. Scoop up a load first.'); return; }
+    siphonStop(); siphon.mode = 'dump'; siphon.equipped = true;
+    siphon.dump = { initial: total, sent: 0, kick: 0, age: 0, blocked: 0, carry: 0, started: false };
+    siphonNotice('Dumping the whole load.');
+  }
+  function siphonReleasePassenger() {
+    var p = siphon.passenger;
+    if (!p) return true;
+    var a = siphonAim(), dir = player.dir < 0 ? -1 : 1;
+    var spots = [
+      [a.cx, player.y + PLAYER_H + p.r + 3, player.vx * 0.3, 100],
+      [a.cx + dir * (PLAYER_W * 0.5 + p.r + 8), player.y + PLAYER_H - p.r - 2, dir * 60 + player.vx * 0.3, -35],
+      [a.cx - dir * (PLAYER_W * 0.5 + p.r + 8), player.y + PLAYER_H - p.r - 2, -dir * 45, -35]
+    ];
+    for (var i = 0; i < spots.length; i++) {
+      var spot = spots[i], blocked = false;
+      for (var k = 0; k < 16; k++) {
+        var theta = k / 16 * Math.PI * 2;
+        if (liquidWorldSolidAt(spot[0] + Math.cos(theta) * (p.r + 1), spot[1] + Math.sin(theta) * (p.r + 1))) blocked = true;
+      }
+      if (blocked || !liquidLineClear(a.nx, a.ny, spot[0], spot[1])) continue;
+      if (skySlimeRelease(p, spot[0], spot[1], spot[2], spot[3])) { siphon.passenger = null; return true; }
+    }
+    return false;
+  }
+  function siphonDumpTick(dt) {
+    var d = siphon.dump, a = siphonAim();
+    d.age += dt;
+    var total = siphonTotal(), sent = 0;
+    if (total) {
+      d.carry += siphon.capacity / 0.60 * dt;
+      var wanted = Math.min(total, Math.floor(d.carry), 2048);
+      d.carry -= Math.floor(d.carry);
+      // On the ground, the opening fans out beside the tracks. As soon as
+      // the rig lifts, the whole curtain falls from beneath its belly.
+      var y = player.y + PLAYER_H + 2;
+      if (liquidWorldSolidAt(a.cx, y)) y = a.ny;
+      var counts = liquidToolDump(siphon.tank, wanted, a.cx, y,
+        28 + 36 * Math.sqrt(d.initial / siphon.capacity), player.vx);
+      for (var k = 0; k < 5; k++) { siphon.tank[k] -= counts[k]; sent += counts[k]; }
+      d.sent += sent; siphon.flow = sent;
+      if (sent) {
+        // Recoil is earned only by real discharged volume. One empty click
+        // cannot jump, and repeated clicks cannot recharge an active burst.
+        var earned = 820 * Math.sqrt(d.sent / siphon.capacity);
+        player.vy = Math.max(-840, player.vy - Math.max(0, earned - d.kick));
+        d.kick = earned;
+        player.onGround = false; player.onJello = false;
+        player.drillGlideT = 0; player.drillGlideLockX = player.drillGlideLockY = null;
+        drilling = null;
+        player.tremor = Math.max(player.tremor || 0, 0.10 + 0.22 * Math.sqrt(d.initial / siphon.capacity));
+        if (!d.started) {
+          d.started = true;
+          sfxPlay('jello-slap', { gain: 0.18 + 0.30 * Math.sqrt(d.initial / siphon.capacity), rate: 0.78 });
+        }
+      }
+      d.blocked = sent ? 0 : d.blocked + dt;
+    }
+    var released = siphonReleasePassenger();
+    if ((!siphonTotal() && released) || d.blocked > 0.45 || d.age > 2.5) {
+      siphon.dump = null; siphon.equipped = false; siphon.mode = 'suck';
+      siphonNotice(siphonTotal() ? 'No room for the rest. Move into open space and dump again.' :
+        (!released ? 'The passenger needs more room to get out.' : 'Load released.'));
+    }
   }
   function siphonCycle() {
     for (var i = 1; i <= 5; i++) {
@@ -46,27 +110,25 @@
   }
   function siphonPointerDown(x, y, id, right) {
     if (!siphonAvailable()) return false;
+    if (id === 'mouse' && right) {
+      siphonDump(); siphon.pointer = id;
+      return true;
+    }
     for (var b = 0; b < siphonButtons.length; b++) {
       var button = siphonButtons[b];
       if (!siphonHit(button, x, y)) continue;
       if (button.action === 'equip') siphonToggle();
-      if (button.action === 'mode') siphonPourToggle();
+      if (button.action === 'mode') siphonDump();
       if (button.action === 'cycle') siphonCycle();
       return true;
     }
-    // Ordinary pointing stays available for driving and drilling. Only a
-    // held right button overrides the scoop to pour straight below the rig.
-    if (id !== 'mouse' || !right || isInDpadZone(x, y) ||
-        y > consoleRect().y * consoleScale() - 6) return false;
-    if (!siphon.equipped && !siphon.passenger && siphonTotal() === 0) return false;
-    siphonStop(); siphon.pointer = id; siphon.mode = 'pour'; siphon.equipped = true;
-    return true;
+    return false;
   }
   function siphonPointerMove(x, y, id) { return id === siphon.pointer; }
   function siphonPointerUp(id) {
     if (id !== siphon.pointer) return false;
-    // Do not immediately vacuum the liquid that was just poured.
-    siphon.equipped = false; siphonStop(); return true;
+    // Releasing the button never cuts a committed burst short.
+    siphonStop(); return true;
   }
   function siphonAim() {
     var cx = player.x + PLAYER_W * 0.5, cy = player.y + PLAYER_H * 0.5;
@@ -77,7 +139,7 @@
     siphon.flow = 0;
     siphon.clock += dt;
     siphon.noticeT = Math.max(0, siphon.noticeT - dt);
-    var active = siphon.equipped && siphonAvailable();
+    var active = (siphon.equipped || siphon.dump) && siphonAvailable();
     if (!siphonAvailable()) siphonStop();
     siphon.power += ((active ? 1 : 0) - siphon.power) * (1 - Math.exp(-dt * (active ? 16 : 10)));
     for (var f = siphon.fx.length - 1; f >= 0; f--) {
@@ -86,8 +148,9 @@
     }
     if (!active) return;
     var a = siphonAim();
+    if (siphon.dump) { siphonDumpTick(dt); return; }
     if (siphon.mode === 'suck') {
-      if (siphonTotal() >= siphon.capacity) siphonNotice('Tank full. Pour into a bath to make room.');
+      if (siphonTotal() >= siphon.capacity) siphonNotice('Tank full. DUMP releases the load and launches the rig.');
       siphon.carry += 6200 * siphon.power * dt;
       var count = Math.min(Math.floor(siphon.carry), siphon.capacity - siphonTotal(), 700);
       siphon.carry -= Math.floor(siphon.carry);
@@ -114,41 +177,19 @@
           siphon.capture = 0;
         }
       }
-    } else if (siphon.passenger) {
-      if (!siphon.released) {
-        var p = siphon.passenger;
-        var launch = PLAYER_W * 0.5 + p.r + 5;
-        var rx = a.cx + a.dx * launch, ry = a.cy + a.dy * launch;
-        var blocked = false;
-        for (var k = 0; k < 12; k++) {
-          var theta = k / 12 * Math.PI * 2;
-          if (liquidWorldSolidAt(rx + Math.cos(theta) * p.r, ry + Math.sin(theta) * p.r)) blocked = true;
-        }
-        if (blocked || !liquidLineClear(a.nx, a.ny, rx, ry)) { siphonNotice('Move over open water or fly higher to release the slime.'); return; }
-        if (skySlimeRelease(p, rx, ry, a.dx * 130 + player.vx * 0.3, a.dy * 130)) {
-          siphon.passenger = null; siphon.released = true; siphon.equipped = false;
-          siphonNotice('Passenger released.');
-        }
-      }
-    } else if (!siphon.released) {
-      var type = siphon.selected;
-      if (siphon.tank[type] < 1) { siphon.equipped = false; siphonNotice(isMobile ? 'Empty chamber. Tap TANK to switch.' : 'This chamber is empty. R selects another.'); return; }
-      siphon.carry += 6200 * siphon.power * dt;
-      var wanted = Math.min(Math.floor(siphon.carry), siphon.tank[type], 700);
-      siphon.carry -= Math.floor(siphon.carry);
-      // A fan narrow enough to feel like a hose, widening under gravity.
-      var speed = Math.min(520, Math.max(210, a.reach * 3));
-      var sent = liquidToolEmit(type, wanted, a.nx + a.dx * 5, a.ny + a.dy * 5,
-        a.dx * speed + player.vx * 0.35, a.dy * speed + player.vy * 0.2);
-      siphon.tank[type] -= sent;
-      siphon.flow = sent;
-      if (sent < wanted) siphonNotice('Move over a bath or open ground to pour.');
     }
   }
+
   function siphonDraw() {
-    if (!siphon.equipped || !siphonAvailable()) return;
+    if ((!siphon.equipped && !siphon.dump) || !siphonAvailable()) return;
     var a = siphonAim();
     ctx.save(); ctx.lineCap = 'round';
+    if (siphon.dump && siphon.dump.started && siphon.dump.age < 0.30) {
+      var burst = siphon.dump.age / 0.30;
+      ctx.strokeStyle = liquidCatalog[siphon.selected].color;
+      ctx.lineWidth = 2.4 * (1 - burst); ctx.globalAlpha = 0.5 * (1 - burst);
+      ctx.beginPath(); ctx.ellipse(a.nx, a.ny + 8 + burst * 14, 12 + burst * 35, 4 + burst * 10, 0, 0, Math.PI * 2); ctx.stroke();
+    }
     // No tool or reticle. Small curved gusts gather under the chassis.
     if (siphon.mode === 'suck' && siphonTotal() < siphon.capacity && siphon.power > 0.03) {
       ctx.strokeStyle = BLD.waterLight; ctx.lineWidth = 1.2;
@@ -203,7 +244,7 @@
       if (x + w + 8 > padLeft) bottom = Math.min(bottom, DPAD_CY - DPAD_SIZE * 0.85 - 10);
     }
     w = Math.min(w, viewW - 28);
-    var expanded = siphon.equipped || siphonTotal() > 0 || siphon.passenger;
+    var expanded = siphon.equipped || siphon.dump || siphon.noticeT > 0 || siphonTotal() > 0 || siphon.passenger;
     var h = expanded ? (isMobile ? 132 : 126) : 42;
     var y = Math.max(56, bottom - h);
     ctx.save();
@@ -215,7 +256,7 @@
     ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
     var bw = Math.floor((w - 16) / 3);
     siphonDrawButton(x + 4, y + 4, bw, 36, isMobile ? 'SCOOP' : 'F SCOOP', 'equip', siphon.equipped && siphon.mode === 'suck');
-    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, 'POUR', 'mode', siphon.equipped && siphon.mode === 'pour');
+    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, 'DUMP', 'mode', !!siphon.dump);
     siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 36, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
     var total = siphonTotal(), info = liquidCatalog[siphon.selected];
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '11px ' + UI_FONT;
@@ -232,10 +273,10 @@
     ctx.textAlign = 'left'; ctx.fillStyle = siphon.passenger ? UIT_GOLD : UIT_DIM;
     ctx.fillText(siphon.passenger ? 'PASSENGER  1 / 1' : 'PASSENGER  empty', x + 10, y + 91);
     ctx.fillStyle = UIT_BODY; ctx.font = '10px ' + UI_FONT;
-    var hint = siphon.equipped ? (siphon.mode === 'suck' ? 'Scooping below as you move' : 'Pouring below the rig') : 'Scoop off. Tank stored.';
+    var hint = siphon.dump ? 'Dumping all liquids. Lift off.' : (siphon.equipped ? 'Scooping below as you move' : 'DUMP all liquids + launch');
     if (isMobile && w < 200) {
-      ctx.fillText(siphon.equipped ? (siphon.mode === 'suck' ? 'Scooping below' : 'Pouring below') : 'Scoop off', x + 10, y + 109);
-      ctx.fillText(siphon.equipped ? 'Tap lit button to stop' : 'Tank stored', x + 10, y + 123);
+      ctx.fillText(siphon.dump ? 'Dumping the load' : (siphon.equipped ? 'Scooping below' : 'DUMP all liquids'), x + 10, y + 109);
+      ctx.fillText(siphon.dump ? 'Lift off' : (siphon.equipped ? 'Tap SCOOP to stop' : '+ launch the rig'), x + 10, y + 123);
     } else ctx.fillText(hint, x + 10, y + 111);
     if (siphon.noticeT > 0) {
       var noticeW = Math.min(viewW - 28, isMobile ? w : 490), words = siphon.notice.split(' '), lines = [], line = '';
@@ -264,5 +305,5 @@
     siphon.selected = data.selected >= 0 && data.selected < 5 ? data.selected | 0 : 0;
     if (data.passenger && isFinite(data.passenger.r) && data.passenger.r >= 10 && data.passenger.r <= 50) siphon.passenger = data.passenger;
   }
-  window.__siphon = { state: siphon, aim: siphonAim, equip: siphonToggle, save: siphonSave,
+  window.__siphon = { state: siphon, aim: siphonAim, equip: siphonToggle, dump: siphonDump, save: siphonSave,
     restore: siphonRestore, total: siphonTotal, tick: siphonTick };

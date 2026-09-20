@@ -247,6 +247,8 @@
 
   function processPointerDown(x, y, id, right) {
     if (gamePaused) return;
+    // Right click is a location-independent dump, including over buildings.
+    if (right) { siphonPointerDown(x, y, id, true); return; }
     if (cargoManifestOpen) { cargoManifestPointerDown(x, y); return; }
     if (ledgerOpen) { ledgerPointerDown(x, y); return; }
     if (cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), x, y)) {

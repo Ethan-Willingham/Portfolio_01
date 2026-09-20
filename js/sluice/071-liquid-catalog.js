@@ -78,6 +78,35 @@
     return added;
   }
 
+  // A wide, interleaved discharge, laid at rest spacing. Unlike separate
+  // per-chamber pours, mixed loads never spawn different liquids atop each other.
+  function liquidToolDump(tank, maxCount, x, y, width, rigVX) {
+    var counts = [0, 0, 0, 0, 0], total = 0;
+    for (var t = 0; t < 5; t++) total += tank[t];
+    var cap = Math.min(2048, Math.floor(maxCount), total, LIQUID_MAX_PARTICLES - liquidCount);
+    if (!(cap > 0)) return counts;
+    liquidToolSync();
+    var step = LIQUID_CELL * LIQUID_PDELTA;
+    var cols = Math.max(12, Math.ceil(width / step));
+    for (var i = 0; i < cap; i++) {
+      var row = Math.floor(i / cols), side = (i % cols) - (cols - 1) * 0.5;
+      var dx = side * step * (1 + row * 0.018);
+      var px = x + dx, py = y + row * step;
+      if (liquidWorldSolidAt(px, py) || !liquidLineClear(x, y, px, py) || liquidPointInMiner(px, py)) continue;
+      var type = -1, score = Infinity;
+      for (var k = 0; k < 5; k++) {
+        if (counts[k] >= tank[k]) continue;
+        var next = (counts[k] + 0.5) / tank[k];
+        if (next < score) { score = next; type = k; }
+      }
+      if (type < 0) break;
+      if (addLiquidParticle(type, px, py, rigVX * 0.45 + dx * 3.4, 610 + Math.abs(dx) * 0.8, 0) >= 0) counts[type]++;
+    }
+    var sent = counts.reduce(function (n, v) { return n + v; }, 0);
+    if (sent) liquidToolWake(x, y, TILE * 2);
+    return counts;
+  }
+
   function liquidSampleRect(x0, y0, x1, y1) {
     var counts = [0, 0, 0, 0, 0];
     for (var i = 0; i < liquidCount; i++) {
