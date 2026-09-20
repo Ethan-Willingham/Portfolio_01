@@ -17,10 +17,12 @@
     damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false };
 
   function rainNewWorldEnabled() {
+    if (snowNewWorldEnabled()) return true;
     var q = /[?&]rain=([01])(?:&|$)/.exec(window.location.search || '');
     return q ? q[1] === '1' : !!(window.SluiceOptions && window.SluiceOptions.particleRain);
   }
-  function rainReset(enabled) {
+  function rainReset(enabled, snowMode) {
+    snowReset(enabled === true && snowMode === true);
     worldRainEnabled = enabled === true;
     rain.time = rain.credit = rain.scan = rain.scanDt = rain.cursor = rain.parkedCursor = rain.waterCount = rain.lakeCount = 0;
     rain.emitted = rain.landed = rain.recycled = rain.absorbed = 0;
@@ -29,9 +31,10 @@
     rain.plow.freshUntil = rain.plow.until = 0;
     rain.cells = {}; rain.primed = false; rain.intensity = 0;
     rain.climate = { phase: 0, elapsed: 0, duration: 55 + Math.random() * 25, strength: 0.7 };
+    if (worldSnowEnabled) rain.climate = { phase: 2, elapsed: 10, duration: 70, strength: 0.65 };
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
     // Reset the wet mood too when making a normal world after a rain world.
-    weatherSetMood(weatherForce >= 0 ? weatherForce : 1, true);
+    weatherSetMood(weatherForce >= 0 ? weatherForce : worldSnowEnabled ? 4 : 1, true);
   }
   function rainWeather() {
     if (weatherForce >= 0) { weatherSetMood(weatherForce, false); return; }
@@ -234,6 +237,7 @@
     rainUpdatePlow();
     rain.scan -= dt; rain.scanDt += dt;
     if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
+    if (worldSnowEnabled) { updateSnow(dt); return; }
     var gpu = liquidWGPU && liquidWGPU.simActive;
     var limit = gpu ? RAIN_WATER_CAP : RAIN_CPU_CAP;
     var surf = SKY_ROWS * TILE;
@@ -398,7 +402,7 @@
     for (var i = 0; i < liquidCount && water.length < RAIN_STORAGE_CAP * 2; i++) {
       if (liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
     }
-    return { enabled: true, water: water, climate: { phase: rain.climate.phase,
+    return { enabled: true, mode: worldSnowEnabled ? 'snow' : 'rain', snow: snowSave(), water: water, climate: { phase: rain.climate.phase,
       elapsed: rain.climate.elapsed, duration: rain.climate.duration, strength: rain.climate.strength } };
   }
   function rainParkedInRect(x0, y0, x1, y1, take) {
@@ -419,7 +423,8 @@
   }
   function rainRestore(data) {
     for (var n = liquidCount - 1; n >= 0; n--) if (liquidOrigin[n] === RAIN_ORIGIN) removeLiquidParticle(n);
-    rainReset(!!(data && data.enabled === true));
+    rainReset(!!(data && data.enabled === true), !!(data && data.mode === 'snow'));
+    if (worldSnowEnabled) snowRestore(data.snow);
     if (!worldRainEnabled) return;
     var front = data.climate;
     if (front && Number.isInteger(front.phase) && front.phase >= 0 && front.phase <= 3 &&
@@ -466,5 +471,6 @@
       dampEdges: rain.damp.length, intensity: rain.intensity, lakeWater: rain.lakeCount,
       weather: ['fair', 'gathering', 'shower', 'clearing'][rain.climate.phase],
       weatherRemaining: Math.max(0, rain.climate.duration - rain.climate.elapsed),
+      mode: worldSnowEnabled ? 'snow' : 'rain',
       backend: liquidWGPU && liquidWGPU.simActive ? 'webgpu' : 'cpu' }; }
   };

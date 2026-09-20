@@ -7,6 +7,7 @@
     front.phase = (front.phase + 1) % 4;
     front.elapsed = 0;
     front.duration = [150 + Math.random() * 90, 20, 35 + Math.random() * 20, 20][front.phase];
+    if (worldSnowEnabled) front.duration = [120 + Math.random() * 70, 18, 55 + Math.random() * 25, 24][front.phase];
     if (front.phase === 2) front.strength = 0.65 + Math.random() * 0.2;
     if (front.phase === 0) rain.primed = false;
   }
@@ -98,7 +99,7 @@
       var covered = sky ? Math.max(0, Math.min(x1, right) - Math.max(x0, left)) : 0;
       var width = x1 - x0 - covered;
       if (width <= 0) continue;
-      lake.rainCredit = (lake.rainCredit || 0) + width * (760 / 1100) * rain.intensity * dt;
+      lake.rainCredit = (lake.rainCredit || 0) + width * ((worldSnowEnabled ? SNOW_RATE : 760) / 1100) * rain.intensity * dt;
       var count = Math.floor(lake.rainCredit);
       if (!count) continue;
       lake.rainCredit -= count;

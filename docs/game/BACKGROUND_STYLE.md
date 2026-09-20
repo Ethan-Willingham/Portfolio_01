@@ -593,6 +593,15 @@ rain palettes. These bounded, fading marks draw before scenery and fog, with
 no new simulated particles or terrain-cache invalidation. See [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for
 the bounded water cycle and persistence rules.
 
+**Physical snow.** Snow worlds replace the cosmetic dots with slow, world-anchored
+flakes. Each grain flutters in the existing wind and changes projected area as
+it tumbles. Three batched size bands use the existing snow, moon, cloud-shadow
+and sunset palettes; no blurred foreground veil or additive glitter. Settled
+powder draws as connected banks with a restrained shaded foot, broken light
+crowns and darker compressed track marks. Powder thrown by tracks, jets and
+blasts carries real snow mass. Both render passes are included in shader warmup.
+See [PARTICLE_SNOW.md](PARTICLE_SNOW.md) for physics and acceptance checks.
+
 **Storms.** Coverage→1, dark clouds, heavy precip, and full-screen lightning (`SKY.lightningFlash`, additive, fast decay, occasional double-strike) that lights the whole scene.
 
 **The one deliberate bible deviation — and why.** Clouds are *smooth-upscaled*, not pure-hash dithered like the §6 sky gradient. The brief was "gorgeous, don't skimp, overdone" — the smooth upscale matches the live GL sky (also upscaled) and is what makes the clouds read as voluminous rather than as the chunky device-pixel noise §6/§12 warns about. The compensating discipline: clouds stay inside the §3 *Sky* value band, well away from the gameplay plane; they fade with altitude; and the single bright value-pop (`cloudSunHi`, the sunlit midday face) is treated like the one allowed snow-cap pop in §3. If a perf/low-detail pass is ever needed, `weatherTune.softness` plus a dither toggle are the levers to add.

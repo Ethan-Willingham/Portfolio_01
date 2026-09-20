@@ -73,6 +73,7 @@
   // v23.33 — hoisted out of playerHasFootSupport; the offsets are constant.
   var PLAYER_FOOT_OFFSETS = [4, PLAYER_W / 2, PLAYER_W - 4];
   function playerHasFootSupport(px, py) {
+    if (worldSnowEnabled && snowFootSupport(px, py)) return true;
     // Perched on the fireplace chimney cap counts as foot support —
     // unless the player is dropping through it.
     if (chimneyCapDropT <= 0 && playerRestingOnChimneyCap(px, py)) {

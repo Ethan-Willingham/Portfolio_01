@@ -153,8 +153,9 @@
         if (key === 'rain') {
           document.getElementById('gm-ponds-note').textContent = pondsNote(read('sluice.opt.ponds') || 'regular');
           document.getElementById('gm-rain-note').textContent =
-          'Passing showers feed three small stone-lined lakes. New lakes start low. Experimental.' +
-          ((value === '1') === worldRainEnabled ? ' This world: ' + (worldRainEnabled ? 'on.' : 'off.') : ' Applies to your next new game.');
+            (value === 'snow' ? 'Soft flakes settle into powder. Drive, scoop or blast through it; thaw feeds the lakes.' :
+             'Passing showers feed three small stone-lined lakes. New lakes start low.') +
+            ' Next new game. This world: ' + (worldSnowEnabled ? 'snow.' : worldRainEnabled ? 'rain.' : 'off.');
         }
         if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }
@@ -179,7 +180,7 @@
         wide: 'Huge ponds, two tiles deep and very wide. Heavier on graphics.',
         deep: 'Narrow ponds, 13 to 16 tiles deep. Heavier on graphics.'
       };
-      if (worldRainEnabled || window.SluiceOptions.particleRain) return (looks[value] || looks.regular) + ' Particle rain uses three small rain-fed lakes instead.';
+      if (worldRainEnabled || window.SluiceOptions.particleRain) return (looks[value] || looks.regular) + ' Particle weather uses three small lakes instead.';
       var current = looks[worldPondStyle] ? worldPondStyle : 'regular';
       return (looks[value] || looks.regular) +
         (value === current ? ' This world has them.' : ' Applies to your next new game.');
@@ -193,7 +194,7 @@
     wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
     wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
-    var resyncRain = wireSegment('rain', '0', [['gm-rain-off', '0'], ['gm-rain-on', '1']]);
+    var resyncRain = wireSegment('rain', '0', [['gm-rain-off', '0'], ['gm-rain-on', '1'], ['gm-snow-on', 'snow']]);
     document.getElementById('gm-options-btn').addEventListener('click', resyncRain);
     var resyncPonds = wireSegment('ponds', 'regular', [['gm-ponds-regular', 'regular'], ['gm-ponds-wide', 'wide'], ['gm-ponds-deep', 'deep']]);
     // A new game or a loaded save changes this world's ponds after the menu

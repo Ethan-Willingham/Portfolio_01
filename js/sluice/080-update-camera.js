@@ -758,6 +758,8 @@
       }
     }
 
+    snowRigDrag(dt);
+
     // Dev probe (window.__trees / __course pattern): read-only flight state,
     // refreshed every update — for headless harness checks + owner bug
     // reports ("what does __flight say"). Never read by game code.
@@ -887,7 +889,19 @@
     // (No upward clamp — players can fly as high as they want. The world
     //  above the surface is open sky.)
     var capRestY = chimneyCapCatch(player.x, player.y, ny);
-    if (capRestY !== null) {
+    var snowRestY = snowRigCatch(player.x, player.y, ny, player.onSnow);
+    player.onSnow = false;
+    if (snowRestY !== null) {
+      var snowImpact = player.vy;
+      player.y = snowRestY;
+      player.onGround = true;
+      player.onSnow = true;
+      player.onJello = false;
+      player.jelloImpactVy = 0;
+      if (wasInAir && snowImpact > 80) snowLanding(snowImpact);
+      player.vy = 0;
+      resetFlightBank();
+    } else if (capRestY !== null) {
       // Perch on the surface fireplace chimney cap (one-way landing ledge).
       player.y = capRestY;
       recordLandingImpact(player.vy, capRestY + PLAYER_H, 'ledge', 0);

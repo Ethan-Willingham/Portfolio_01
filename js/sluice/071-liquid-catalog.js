@@ -47,6 +47,7 @@
     // Descending original indices remain valid under the solver's swap-remove.
     indices.sort(function (a, b) { return b - a; });
     for (var n = 0; n < indices.length; n++) removeLiquidParticle(indices[n]);
+    counts[0] += snowScoop(x, y, radius, ry, fromX, fromY, cap - indices.length);
     if (indices.length) liquidToolWake(x, y, radius + TILE);
     return counts;
   }

@@ -45,7 +45,7 @@
       ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
       ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
       ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
-      ['rain', shaderWarmRain], ['hearth', function () { hearthArtWarm(ctx); }],
+      ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); }],
       ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
     ];
     var mainCtx = ctx, ws = dpr * worldScale, t0 = performance.now();

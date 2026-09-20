@@ -71,6 +71,7 @@
       pondStyle: 'regular',
       heavySmoke: false,
       particleRain: false,
+      particleSnow: false,
       graphicsChoice: isMobile ? 'balanced' : 'extreme',
       graphicsPreset: function () { return OPT_GFX_PRESET[opts.get('gfx')] || null; },
 
@@ -127,7 +128,8 @@
         var ps = String(val);
         if (ps === 'regular' || ps === 'wide' || ps === 'deep') opts.pondStyle = ps;
       } else if (key === 'rain') {
-        opts.particleRain = optTruthy(val); // Latched by init for the next new world.
+        opts.particleSnow = String(val) === 'snow';
+        opts.particleRain = optTruthy(val) || opts.particleSnow; // Latched for the next world.
       } else if (key === 'heavysmoke') {
         opts.heavySmoke = optTruthy(val);
       }

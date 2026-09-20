@@ -82,6 +82,7 @@
   // worldgen, key this to surface temperature instead.
   function weatherCold() { return true; }
   function weatherPrecipType() {
+    if (typeof worldSnowEnabled !== 'undefined' && worldSnowEnabled) return 'snow';
     if (typeof worldRainEnabled !== 'undefined' && worldRainEnabled) return 'rain';
     if (weatherTune.precipMode === 1) return 'rain';
     if (weatherTune.precipMode === 2) return 'snow';
@@ -824,6 +825,7 @@
       ctx.fillRect(0, 0, cw, ch);
       ctx.restore();
     }
+    if (worldSnowEnabled) { drawSnowflakes(); return; }
     if (worldRainEnabled) { drawParticleRain(); return; }
     if (!precipParts || precipActive <= 0 || weather.pcp <= 0.01) return;
     var snow = (weatherPrecipType() === 'snow');

@@ -1060,6 +1060,7 @@
     drawLiquids();
     if (devMode) gpuProbe('liquid', _gpuLiqT, liquidGL);   // v12.13 — liquid GPU probe
     drawSurfacePondBasinOverlays(startCol, endCol);
+    drawSnowCover();
     perfMark('render.liquids', _renderT3);
     var _renderT4 = performance.now();
 

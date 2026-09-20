@@ -1,6 +1,6 @@
 # Particle rain
 
-Pause > Options > World > Particle rain > On, then start a new game from
+Pause > Options > World > Particle weather > Rain, then start a new game from
 the pause menu. The mode belongs to that world and survives save loading.
 Changing the option only changes the next new game. Existing saves without
 the rain field stay dry. `?rain=1&nosave=1` starts a disposable rain world.
@@ -134,3 +134,7 @@ front schedule, mid-shower persistence, offscreen filling, finite lake save/load
 scooping and revisiting, lining breaches, protected storage, and foundation
 absorption. The v28.18 run passed with no runtime or shader errors; the original
 plow and deep-puddle drainage checks also passed.
+
+Snow uses the same weather and meltwater storage through a separate material
+simulation. See [PARTICLE_SNOW.md](PARTICLE_SNOW.md). Existing rain saves retain
+rain; choosing Snow only changes the next new world.
