@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.46';
+  var GAME_VERSION = 'v28.47';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -60800,6 +60800,7 @@
   }
 
   function jelloActuateBody(b, h) {
+    if (b.surfaceSlime) { surfaceSlimeMuscleStep(b, h); return; }
     var a = b.actor;
     if (!a || !a.enabled || b._carried || !(h > 0)) return;
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
@@ -60875,6 +60876,7 @@
     }
     b._launchVMax = maxPointSpeed / ts;
     b._launchHit = false;
+    if (b.surfaceSlime) surfaceSlimeDetach(b);
     b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     b._plyMs = performance.now();
     return { vx: vx, vy: vy, speed: speed, omega: omega };
@@ -61818,6 +61820,7 @@
 
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
+    if (b.surfaceSlime) stiff *= b.surfaceSlime.drive && !b.surfaceSlime.detach ? 1.3 : 0.14;
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
     // shape is near-colinear) has an ILL-CONDITIONED best-fit rotation: the polar decomposition
     // R jitters frame to frame, and a full-strength pull toward that spinning goal injects
@@ -61879,6 +61882,9 @@
       var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
       var gx = T00 * pqx + T01 * pqy + cx;
       var gy = T10 * pqx + T11 * pqy + cy;
+      if (b.surfaceSlime && b.surfaceSlime.drive && !b.surfaceSlime.detach) {
+        gx = cx + b.muscleX[i]; gy = cy + b.muscleY[i];
+      }
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
     }
@@ -62510,6 +62516,7 @@
       if (typeof slimeAudioJet === 'function') slimeAudioJet(b, jetBX, jetBY, jetBestF);
     }
     if (disturbed) {
+      if (b.surfaceSlime && b.surfaceSlime.climb && (Math.hypot(vx, vy) > 35 || jetBestF > 0.03)) surfaceSlimeDetach(b);
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
       if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
     }
@@ -62810,7 +62817,7 @@
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
     if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !b._carried &&
-          !(b.actor && b.actor.enabled) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
+          !(b.actor && b.actor.enabled) && !(b.surfaceSlime && b.surfaceSlime.drive) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
       b.sleepFrames++;
       if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
         b._forceSleep = false;
@@ -63934,6 +63941,7 @@
     // Surface residents install the same compliant grip for mouse and touch.
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
+    if (b.surfaceSlime) surfaceSlimeAdhesionStep(b, h);
     if (m === 'pbd') {
       for (var it = 0; it < JELLO_ITERS; it++) {
         jelloSolveSprings(b);
@@ -63975,7 +63983,7 @@
   // LIVE velocities (Gauss-Seidel style), which self-limits accumulation at lattice
   // points shared by many springs; f is clamped for stability at extreme lever values.
   function jelloDampInternal(b, h) {
-    var f = JELLO_INT_DAMP * h;
+    var f = JELLO_INT_DAMP * h * (b.materialDamping || 1);
     if (f <= 0) return;
     if (f > 0.25) f = 0.25;
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
@@ -64635,8 +64643,9 @@
     var px = b.px, py = b.py, sA = b.sA, sB = b.sB, sRest = b.sRest, sType = b.sType;
     var sLam = b.sLambda, springN = b.springN;
     var invh2 = 1 / (h * h);
-    var aStruct = JELLO_XPBD_COMPLIANCE * invh2;
-    var aShear  = JELLO_XPBD_SHEAR_COMPLIANCE * invh2;
+    var softness = b.materialSoftness || 1;
+    var aStruct = JELLO_XPBD_COMPLIANCE * invh2 * softness;
+    var aShear  = JELLO_XPBD_SHEAR_COMPLIANCE * invh2 * softness;
     for (var s = 0; s < springN; s++) {
       var i0 = sA[s], i1 = sB[s];
       var dx = px[i1] - px[i0], dy = py[i1] - py[i0];
@@ -67210,9 +67219,158 @@
     best.state.cool = best.hit ? 0.34 : 0.30 + Math.random() * 0.14;
     slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
   }
+  /* ---- Active gel: travelling muscle waves and breakable terrain adhesion ---- */
+  var SURFACE_SLIME_WAVE = 0.29;
+  var SURFACE_SLIME_WAVE_SPEED = 6.4;
+  var SURFACE_SLIME_GRIP_RANGE = 11;
+
+  function surfaceSlimeMotorInit(b) {
+    var m = b.surfaceSlime;
+    m.phase = m.seed * Math.PI * 2; m.angle = 0; m.drive = false;
+    m.detach = 0; m.climb = false; m.crest = 0; m.anchors = new Array(b.n);
+    m.waveCos = new Float32Array(b.n);
+    b.muscleX = Float64Array.from(b.qx); b.muscleY = Float64Array.from(b.qy);
+    b.muscleRest = Float32Array.from(b.sRest);
+    b.materialSoftness = 3.5;
+    b.materialDamping = 0.28;
+  }
+
+  function surfaceSlimeDetach(b, seconds) {
+    var m = b && b.surfaceSlime;
+    if (!m) return;
+    m.detach = Math.max(m.detach || 0, seconds || 1.3);
+    m.anchors.fill(null); m.contacts = 0; m.climb = false; m.crest = 0; m.drive = false;
+    m.state = 'tumble'; m.timer = m.detach;
+    b.sleeping = false; b.sleepFrames = 0;
+  }
+
+  function surfaceSlimeTerrainNear(x, y, reach) {
+    var left = Math.floor((x - reach) / TILE), right = Math.floor((x + reach) / TILE);
+    var top = Math.floor((y - reach) / TILE), bottom = Math.floor((y + reach) / TILE);
+    var best = null, bestD = reach * reach;
+    for (var r = top; r <= bottom; r++) for (var c = left; c <= right; c++) {
+      if (!tileAt(r, c)) continue;
+      var x0 = c * TILE, x1 = x0 + TILE, y0 = r * TILE, y1 = y0 + TILE;
+      var qx = skySlimeClamp(x, x0, x1), qy = skySlimeClamp(y, y0, y1);
+      var dx = x - qx, dy = y - qy, d2 = dx * dx + dy * dy;
+      if (!(d2 < bestD) || d2 < 0.00001) continue;
+      var d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+      // Interior faces cannot become hidden handholds inside a solid wall.
+      if (jelloWorldSolidAt(qx + nx * 0.6, qy + ny * 0.6)) continue;
+      bestD = d2; best = { x: qx + nx * 0.6, y: qy + ny * 0.6, nx: nx, ny: ny, r: r, c: c };
+    }
+    return best;
+  }
+
+  function surfaceSlimeThink(b, dt) {
+    var m = b.surfaceSlime;
+    m.detach = Math.max(0, m.detach - dt);
+    m.crest = Math.max(0, m.crest - dt);
+    var speed = Math.hypot(b.vx || 0, b.vy || 0) * JELLO_TIMESCALE;
+    var touched = b._plyMs && b._plyMs !== m.lastPlayerMs;
+    m.lastPlayerMs = b._plyMs;
+    if (b._grabbed || b._carried || (touched && (m.climb || speed > 35))) {
+      surfaceSlimeDetach(b, 1.1);
+    }
+    if (m.detach > 0) { m.drive = false; return; }
+    if (m.timer <= 0 || m.state === 'tumble') {
+      m.state = m.state === 'crawl' ? 'idle' : 'crawl';
+      m.timer = m.state === 'crawl' ? 5 + m.seed * 4 : 0.8 + m.seed;
+      if (!m.climb && Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
+    }
+    var wall = null;
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k];
+      if ((b.px[p] - b.cx) * m.dir < 0) continue;
+      var near = surfaceSlimeTerrainNear(b.px[p], b.py[p], 12);
+      // A rim brushing a top corner is not a new vertical wall to climb.
+      if (near && near.nx * m.dir < -0.7 && near.r * TILE < b.cy + m.radius * 0.2) { wall = near; break; }
+    }
+    if (wall && !m.crest && m.state !== 'idle') {
+      m.climb = true; m.wallCol = wall.c;
+      m.timer = Math.max(m.timer, 2);
+    }
+    if (m.climb) {
+      // Round an exposed top corner by turning the same contact wave back
+      // onto the horizontal surface. No centroid path or ledge teleport.
+      var row = Math.floor(b.cy / TILE);
+      var clearTop = !tileAt(row, m.wallCol) && !tileAt(row - 1, m.wallCol);
+      if (clearTop && b.cy < Math.floor((b.bboxB + 8) / TILE) * TILE - m.radius * 0.32) {
+        m.climb = false; m.crest = 1.5; m.state = 'crawl'; m.timer = 4;
+      }
+      if (m.climb) m.state = 'climb';
+    }
+    if (!m.climb && m.state === 'crawl' && jelloSupportedBelowTile(b)) {
+      var aheadX = b.cx + m.dir * (m.radius + 18);
+      var aheadY = b.bboxB + 16;
+      if (!wall && !tileAt(Math.floor(aheadY / TILE), Math.floor(aheadX / TILE))) m.dir *= -1;
+    }
+    m.drive = m.state === 'crawl' || m.climb || !!m.wet;
+    b.sleeping = false; b.sleepFrames = 0;
+  }
+
+  function surfaceSlimeMuscleStep(b, h) {
+    var m = b.surfaceSlime, dt = h / JELLO_TIMESCALE;
+    var active = m.drive && !m.detach && !b._grabbed;
+    m.phase += (active ? SURFACE_SLIME_WAVE_SPEED : 2.6) * dt;
+    var desiredAngle = m.climb ? -m.dir * Math.PI / 2 : 0;
+    m.angle += (desiredAngle - m.angle) * Math.min(1, dt * 4);
+    var ca = Math.cos(m.angle), sa = Math.sin(m.angle);
+    var amplitude = m.radius * (active ? SURFACE_SLIME_WAVE : 0.065);
+    var sumX = 0, sumY = 0;
+    for (var i = 0; i < b.n; i++) {
+      var qx = b.qx[i], qy = b.qy[i], u = qx * m.dir / m.radius;
+      var phase = m.phase + u * 2.8;
+      var sn = Math.sin(phase), cs = Math.cos(phase);
+      // A lower patch moves forward while lifted, then contracts backward
+      // while planted. A smaller wave travels through the crown as well.
+      var skin = 0.42 + 0.58 * skySlimeClamp((qy / m.radius + 0.6) / 1.2, 0, 1);
+      var tx = qx + m.dir * amplitude * sn * skin;
+      var ty = qy - amplitude * cs * skin * 0.85;
+      b.muscleX[i] = ca * tx - sa * ty;
+      b.muscleY[i] = sa * tx + ca * ty;
+      m.waveCos[i] = cs;
+      sumX += b.muscleX[i]; sumY += b.muscleY[i];
+    }
+    // Internal muscles cannot manufacture translation in free space.
+    sumX /= b.n; sumY /= b.n;
+    for (i = 0; i < b.n; i++) { b.muscleX[i] -= sumX; b.muscleY[i] -= sumY; }
+    for (var s = 0; s < b.springN; s++) {
+      var a = b.sA[s], c = b.sB[s];
+      var length = Math.hypot(b.muscleX[a] - b.muscleX[c], b.muscleY[a] - b.muscleY[c]);
+      b.sRest[s] = skySlimeClamp(length, b.muscleRest[s] * 0.65, b.muscleRest[s] * 1.4);
+    }
+  }
+
+  function surfaceSlimeAdhesionStep(b, h) {
+    var m = b.surfaceSlime;
+    if (!m.drive || m.detach > 0 || b._grabbed || b._carried) { m.anchors.fill(null); m.contacts = 0; return; }
+    var contacts = 0;
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k], anchor = m.anchors[p];
+      // Briefly bridge both faces at a crest, then release the old wall.
+      if (anchor && ((m.climb ? anchor.nx * m.dir > -0.6 : !m.crest && anchor.ny > -0.6) || !tileAt(anchor.r, anchor.c) || m.waveCos[p] > 0.25 ||
+          Math.hypot(b.px[p] - anchor.x, b.py[p] - anchor.y) > 22)) anchor = null;
+      if (!anchor && m.waveCos[p] < 0.1) {
+        anchor = surfaceSlimeTerrainNear(b.px[p], b.py[p], SURFACE_SLIME_GRIP_RANGE);
+        if (anchor && (m.climb ? anchor.nx * m.dir > -0.6 : !m.crest && anchor.ny > -0.6)) anchor = null;
+      }
+      m.anchors[p] = anchor;
+      if (!anchor) continue;
+      contacts++;
+      // Compliant, finite-strength bonds. The anchor is fixed on the terrain
+      // until its material patch lifts. Muscles do the work between anchors.
+      var gain = 1 / (1 + 0.0000015 / (h * h));
+      var dx = (anchor.x - b.px[p]) * gain, dy = (anchor.y - b.py[p]) * gain;
+      var cap = 320 * h / JELLO_TIMESCALE, length = Math.hypot(dx, dy);
+      if (length > cap) { dx *= cap / length; dy *= cap / length; }
+      b.px[p] += dx; b.py[p] += dy;
+    }
+    m.contacts = contacts;
+  }
   /* ---- Bath-born surface slimes ----
      These residents use the shared XPBD lattice, terrain/rig contacts, jets,
-     pressure, and inter-body solve. The brain supplies muscle intents only.
+     pressure, and inter-body solve. Travelling muscles work against skin grips.
      Underground NPCs keep their independent, normally disabled switch. */
   var SURFACE_SLIME_STARTERS = 5;
   var surfaceSlimesSeeded = false;
@@ -67231,8 +67389,8 @@
       home: isFinite(identity.home) ? identity.home : x,
       hue: isFinite(identity.hue) ? identity.hue : surfaceSlimeHues[Math.floor(seed * 5) % 5],
       age: 0, state: 'idle', timer: 0.6 + seed * 2, dir: seed < 0.5 ? -1 : 1,
-      blink: 0, blinkIn: 1.5 + seed * 4, look: 0, wet: 0, sense: 0, hop: 0,
-      radius: radius, lastX: x, stall: 0
+      blink: 0, blinkIn: 1.5 + seed * 4, look: 0, wet: 0, sense: 0,
+      radius: radius
     };
     skySlimeSerial = Math.max(skySlimeSerial, b.surfaceSlime.id + 1);
     b.hue = b.surfaceSlime.hue;
@@ -67257,6 +67415,7 @@
     b.tileH *= 0.82;
     jelloComputeRest(b); jelloInstallSpringHealthMesh(b); jelloShadeAnchors(b);
     jelloUpdateBody(b, JELLO_H);
+    surfaceSlimeMotorInit(b);
     return b;
   }
 
@@ -67288,7 +67447,7 @@
     for (var i = 0; i < jelloBodies.length; i++) {
       var b = jelloBodies[i], m = b.surfaceSlime;
       if (!m || !jelloBodyOnCamera(b)) continue;
-      m.age += dt; m.timer -= dt; m.hop = Math.max(0, m.hop - dt);
+      m.age += dt; m.timer -= dt;
       m.blink = Math.max(0, m.blink - dt); m.blinkIn -= dt;
       if (m.blinkIn <= 0) { m.blink = 0.16; m.blinkIn = 2.5 + Math.random() * 4; }
       var rigDX = player.x + PLAYER_W / 2 - b.cx;
@@ -67302,49 +67461,7 @@
         m.wet = water && water.bottom > b.bboxT && water.surface < b.bboxB ? 1 : 0;
         b.bathBuoy = m.wet ? { line: water.surface, x0: b.bboxL - 12, x1: b.bboxR + 12, lift: 2.2, drag: 0.985 } : null;
       }
-      var supported = jelloSupportedBelowTile(b);
-      var speed = Math.hypot(b.vx || 0, b.vy || 0) * JELLO_TIMESCALE;
-      // Let an external shove or launch play out before muscles take over.
-      var beingPlayed = b._grabbed || b._carried || speed > 115 ||
-        (b._plyMs && performance.now() - b._plyMs < 650);
-      if (beingPlayed) {
-        jelloClearActorIntent(b); m.state = 'tumble'; m.timer = 0.65;
-      } else {
-        if (m.timer <= 0 || m.state === 'tumble') {
-          m.state = m.state === 'walk' ? 'idle' : 'walk';
-          m.timer = m.state === 'walk' ? 2.2 + m.seed * 3 : 1.2 + Math.random() * 2;
-          if (Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
-          else if (Math.random() < 0.35) m.dir *= -1;
-        }
-        var edgeX = b.cx + m.dir * (m.radius + 22);
-        // Avoid voluntary shaft dives. Physical pushes still obey gravity.
-        var edge = !tileAt(Math.floor((b.bboxB + 14) / TILE), Math.floor(edgeX / TILE));
-        var wall = jelloWorldSolidAt(edgeX, b.cy);
-        if (supported && edge && !m.wet) m.dir *= -1;
-        m.stall = Math.abs(b.cx - m.lastX) < dt * 3 && m.state === 'walk' ? m.stall + dt : 0;
-        m.lastX = b.cx;
-        if ((supported || (m.wet && wall)) && m.hop <= 0 && (wall || m.stall > 0.8 || (m.state === 'walk' && m.timer < 0.4))) {
-          m.state = 'crouch'; m.timer = 0.2; m.hop = 2.2 + m.seed;
-        }
-        var crouch = m.state === 'crouch';
-        if (crouch && m.timer < 0.04) {
-          jelloClearActorIntent(b);
-          jelloLaunchBody(b, m.dir * 70, -175 - m.seed * 30, { h: jelloStepH || JELLO_H });
-          m.state = 'hop'; m.timer = 0.5;
-        }
-        if (m.state !== 'hop') {
-          var walk = m.state === 'walk' || m.wet;
-          jelloSetActorIntent(b, {
-            moveX: walk ? m.dir : 0, moveY: null,
-            speed: m.wet ? 105 : 75 + m.seed * 40,
-            accel: supported || m.wet ? 600 : 100, follow: supported || m.wet ? 6 : 0.5,
-            poseX: crouch ? 1.2 : walk ? 1.06 : 1,
-            poseY: crouch ? 0.8 : walk ? 0.94 : 1,
-            wobble: walk ? 0.095 : 0.025, phaseSpeed: walk ? 15 + m.seed * 4 : 4,
-            poseFollow: 12, state: m.state
-          });
-        }
-      }
+      surfaceSlimeThink(b, dt);
       // The same deforming boundary goes to the water solver. Speeds are
       // converted from solver time to real time, with resting noise removed.
       if (surfaceSlimeGuests.length < 6) {
@@ -67367,7 +67484,7 @@
     ctx.fillStyle = '#252e29'; ctx.strokeStyle = '#252e29'; ctx.lineCap = 'round';
     for (var side = -1; side <= 1; side += 2) {
       var x = side * r * 0.31 + look;
-      if (m.blink > 0 || m.state === 'crouch') {
+      if (m.blink > 0) {
         ctx.lineWidth = r * 0.07; ctx.beginPath();
         ctx.moveTo(x - r * 0.065, eyeY); ctx.quadraticCurveTo(x, eyeY - r * 0.07, x + r * 0.065, eyeY); ctx.stroke();
       } else {
@@ -67392,7 +67509,7 @@
     var path = jelloCachedRingPath(b), r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
-    if (jelloSupportedBelowTile(b)) {
+    if (!m.climb && jelloSupportedBelowTile(b)) {
       ctx.fillStyle = 'rgba(30,36,32,0.18)'; ctx.beginPath();
       ctx.ellipse(b.cx, b.bboxB + 3, w * 0.43, 3, 0, 0, Math.PI * 2); ctx.fill();
     }
@@ -68436,6 +68553,7 @@
       for (k = 0; k < b.n; k++) { weights[k] /= total; ax += b.px[k] * weights[k]; ay += b.py[k] * weights[k]; }
       surfaceSlimeGrip = { body: b, id: id, weights: weights, x: wx, y: wy,
         dx: ax - wx, dy: ay - wy, vx: 0, vy: 0, t: performance.now(), motion: 0 };
+      surfaceSlimeDetach(b);
       b._grabbed = true; b._recoverT = 0; b.sleeping = false; b.sleepFrames = 0;
       jelloClearActorIntent(b); b.surfaceSlime.state = 'tumble';
       return true;
@@ -68520,6 +68638,7 @@
         var dv = impulse / gelMass * b.n * weights[p] / sum;
         b.ox[p] += nx * dv * step; b.oy[p] += ny * dv * step;
       }
+      surfaceSlimeDetach(b, 0.9);
       b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now();
       skySlimePlayContact(s);
     }

@@ -1093,6 +1093,7 @@
   }
 
   function jelloActuateBody(b, h) {
+    if (b.surfaceSlime) { surfaceSlimeMuscleStep(b, h); return; }
     var a = b.actor;
     if (!a || !a.enabled || b._carried || !(h > 0)) return;
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
@@ -1168,6 +1169,7 @@
     }
     b._launchVMax = maxPointSpeed / ts;
     b._launchHit = false;
+    if (b.surfaceSlime) surfaceSlimeDetach(b);
     b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     b._plyMs = performance.now();
     return { vx: vx, vy: vy, speed: speed, omega: omega };
@@ -2111,6 +2113,7 @@
 
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
+    if (b.surfaceSlime) stiff *= b.surfaceSlime.drive && !b.surfaceSlime.detach ? 1.3 : 0.14;
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
     // shape is near-colinear) has an ILL-CONDITIONED best-fit rotation: the polar decomposition
     // R jitters frame to frame, and a full-strength pull toward that spinning goal injects
@@ -2172,6 +2175,9 @@
       var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
       var gx = T00 * pqx + T01 * pqy + cx;
       var gy = T10 * pqx + T11 * pqy + cy;
+      if (b.surfaceSlime && b.surfaceSlime.drive && !b.surfaceSlime.detach) {
+        gx = cx + b.muscleX[i]; gy = cy + b.muscleY[i];
+      }
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
     }
@@ -2803,6 +2809,7 @@
       if (typeof slimeAudioJet === 'function') slimeAudioJet(b, jetBX, jetBY, jetBestF);
     }
     if (disturbed) {
+      if (b.surfaceSlime && b.surfaceSlime.climb && (Math.hypot(vx, vy) > 35 || jetBestF > 0.03)) surfaceSlimeDetach(b);
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
       if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
     }
@@ -3103,7 +3110,7 @@
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
     if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !b._carried &&
-          !(b.actor && b.actor.enabled) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
+          !(b.actor && b.actor.enabled) && !(b.surfaceSlime && b.surfaceSlime.drive) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
       b.sleepFrames++;
       if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
         b._forceSleep = false;
@@ -4227,6 +4234,7 @@
     // Surface residents install the same compliant grip for mouse and touch.
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
+    if (b.surfaceSlime) surfaceSlimeAdhesionStep(b, h);
     if (m === 'pbd') {
       for (var it = 0; it < JELLO_ITERS; it++) {
         jelloSolveSprings(b);
@@ -4268,7 +4276,7 @@
   // LIVE velocities (Gauss-Seidel style), which self-limits accumulation at lattice
   // points shared by many springs; f is clamped for stability at extreme lever values.
   function jelloDampInternal(b, h) {
-    var f = JELLO_INT_DAMP * h;
+    var f = JELLO_INT_DAMP * h * (b.materialDamping || 1);
     if (f <= 0) return;
     if (f > 0.25) f = 0.25;
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
@@ -4928,8 +4936,9 @@
     var px = b.px, py = b.py, sA = b.sA, sB = b.sB, sRest = b.sRest, sType = b.sType;
     var sLam = b.sLambda, springN = b.springN;
     var invh2 = 1 / (h * h);
-    var aStruct = JELLO_XPBD_COMPLIANCE * invh2;
-    var aShear  = JELLO_XPBD_SHEAR_COMPLIANCE * invh2;
+    var softness = b.materialSoftness || 1;
+    var aStruct = JELLO_XPBD_COMPLIANCE * invh2 * softness;
+    var aShear  = JELLO_XPBD_SHEAR_COMPLIANCE * invh2 * softness;
     for (var s = 0; s < springN; s++) {
       var i0 = sA[s], i1 = sB[s];
       var dx = px[i1] - px[i0], dy = py[i1] - py[i0];

@@ -22,7 +22,8 @@ normal playthrough (see `BALANCE.md`).
 **Bathhouse and fire room (v28.13):** sky slimes land, meander to the banya,
 wait, soak in warm water, pay, and become soft surface residents. Five friendly
 residents spawn around the starting town for playtesting; drag and toss them,
-push them with the rig, or use the jets. Rocky visitors are capped at two outside
+push them with the rig, or use the jets. Travelling skin waves propel their soft
+bodies across terrain and up walls and ledges. Grabs and impacts break their grip. Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to work at the boiler,
 forge, or bath. Drag individual coal chunks from the bunker onto a grate, or
@@ -161,7 +162,7 @@ quantities, unit prices, and haul value while the mine is paused).
 | `165-render-trees.js` / `166-render-surface-boulders.js` | open woodland and scattered surface stones, derived from supporting terrain |
 | `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary white heron |
 | `340-jello.js` | slime soft bodies, continuous gel rendering, and the topology-independent actor-intent seam |
-| `347-surface-slimes.js` / `349-slime-touch.js` | bath-born gel residents, actor forces, deforming faces, mouse/touch grip, rock contacts, and saves |
+| `347-slime-locomotion.js` / `347-surface-slimes.js` / `349-slime-touch.js` | bath-born gel residents, muscle waves, breakable wall grips, deforming faces, mouse/touch grip, rock contacts, and saves |
 | `348-sky-slimes.js` | clay meteor arrivals, elastic rebounds, eye animation, capture, and persistence |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |

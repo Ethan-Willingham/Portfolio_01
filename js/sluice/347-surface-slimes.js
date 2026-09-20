@@ -1,6 +1,6 @@
   /* ---- Bath-born surface slimes ----
      These residents use the shared XPBD lattice, terrain/rig contacts, jets,
-     pressure, and inter-body solve. The brain supplies muscle intents only.
+     pressure, and inter-body solve. Travelling muscles work against skin grips.
      Underground NPCs keep their independent, normally disabled switch. */
   var SURFACE_SLIME_STARTERS = 5;
   var surfaceSlimesSeeded = false;
@@ -19,8 +19,8 @@
       home: isFinite(identity.home) ? identity.home : x,
       hue: isFinite(identity.hue) ? identity.hue : surfaceSlimeHues[Math.floor(seed * 5) % 5],
       age: 0, state: 'idle', timer: 0.6 + seed * 2, dir: seed < 0.5 ? -1 : 1,
-      blink: 0, blinkIn: 1.5 + seed * 4, look: 0, wet: 0, sense: 0, hop: 0,
-      radius: radius, lastX: x, stall: 0
+      blink: 0, blinkIn: 1.5 + seed * 4, look: 0, wet: 0, sense: 0,
+      radius: radius
     };
     skySlimeSerial = Math.max(skySlimeSerial, b.surfaceSlime.id + 1);
     b.hue = b.surfaceSlime.hue;
@@ -45,6 +45,7 @@
     b.tileH *= 0.82;
     jelloComputeRest(b); jelloInstallSpringHealthMesh(b); jelloShadeAnchors(b);
     jelloUpdateBody(b, JELLO_H);
+    surfaceSlimeMotorInit(b);
     return b;
   }
 
@@ -76,7 +77,7 @@
     for (var i = 0; i < jelloBodies.length; i++) {
       var b = jelloBodies[i], m = b.surfaceSlime;
       if (!m || !jelloBodyOnCamera(b)) continue;
-      m.age += dt; m.timer -= dt; m.hop = Math.max(0, m.hop - dt);
+      m.age += dt; m.timer -= dt;
       m.blink = Math.max(0, m.blink - dt); m.blinkIn -= dt;
       if (m.blinkIn <= 0) { m.blink = 0.16; m.blinkIn = 2.5 + Math.random() * 4; }
       var rigDX = player.x + PLAYER_W / 2 - b.cx;
@@ -90,49 +91,7 @@
         m.wet = water && water.bottom > b.bboxT && water.surface < b.bboxB ? 1 : 0;
         b.bathBuoy = m.wet ? { line: water.surface, x0: b.bboxL - 12, x1: b.bboxR + 12, lift: 2.2, drag: 0.985 } : null;
       }
-      var supported = jelloSupportedBelowTile(b);
-      var speed = Math.hypot(b.vx || 0, b.vy || 0) * JELLO_TIMESCALE;
-      // Let an external shove or launch play out before muscles take over.
-      var beingPlayed = b._grabbed || b._carried || speed > 115 ||
-        (b._plyMs && performance.now() - b._plyMs < 650);
-      if (beingPlayed) {
-        jelloClearActorIntent(b); m.state = 'tumble'; m.timer = 0.65;
-      } else {
-        if (m.timer <= 0 || m.state === 'tumble') {
-          m.state = m.state === 'walk' ? 'idle' : 'walk';
-          m.timer = m.state === 'walk' ? 2.2 + m.seed * 3 : 1.2 + Math.random() * 2;
-          if (Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
-          else if (Math.random() < 0.35) m.dir *= -1;
-        }
-        var edgeX = b.cx + m.dir * (m.radius + 22);
-        // Avoid voluntary shaft dives. Physical pushes still obey gravity.
-        var edge = !tileAt(Math.floor((b.bboxB + 14) / TILE), Math.floor(edgeX / TILE));
-        var wall = jelloWorldSolidAt(edgeX, b.cy);
-        if (supported && edge && !m.wet) m.dir *= -1;
-        m.stall = Math.abs(b.cx - m.lastX) < dt * 3 && m.state === 'walk' ? m.stall + dt : 0;
-        m.lastX = b.cx;
-        if ((supported || (m.wet && wall)) && m.hop <= 0 && (wall || m.stall > 0.8 || (m.state === 'walk' && m.timer < 0.4))) {
-          m.state = 'crouch'; m.timer = 0.2; m.hop = 2.2 + m.seed;
-        }
-        var crouch = m.state === 'crouch';
-        if (crouch && m.timer < 0.04) {
-          jelloClearActorIntent(b);
-          jelloLaunchBody(b, m.dir * 70, -175 - m.seed * 30, { h: jelloStepH || JELLO_H });
-          m.state = 'hop'; m.timer = 0.5;
-        }
-        if (m.state !== 'hop') {
-          var walk = m.state === 'walk' || m.wet;
-          jelloSetActorIntent(b, {
-            moveX: walk ? m.dir : 0, moveY: null,
-            speed: m.wet ? 105 : 75 + m.seed * 40,
-            accel: supported || m.wet ? 600 : 100, follow: supported || m.wet ? 6 : 0.5,
-            poseX: crouch ? 1.2 : walk ? 1.06 : 1,
-            poseY: crouch ? 0.8 : walk ? 0.94 : 1,
-            wobble: walk ? 0.095 : 0.025, phaseSpeed: walk ? 15 + m.seed * 4 : 4,
-            poseFollow: 12, state: m.state
-          });
-        }
-      }
+      surfaceSlimeThink(b, dt);
       // The same deforming boundary goes to the water solver. Speeds are
       // converted from solver time to real time, with resting noise removed.
       if (surfaceSlimeGuests.length < 6) {
@@ -155,7 +114,7 @@
     ctx.fillStyle = '#252e29'; ctx.strokeStyle = '#252e29'; ctx.lineCap = 'round';
     for (var side = -1; side <= 1; side += 2) {
       var x = side * r * 0.31 + look;
-      if (m.blink > 0 || m.state === 'crouch') {
+      if (m.blink > 0) {
         ctx.lineWidth = r * 0.07; ctx.beginPath();
         ctx.moveTo(x - r * 0.065, eyeY); ctx.quadraticCurveTo(x, eyeY - r * 0.07, x + r * 0.065, eyeY); ctx.stroke();
       } else {
@@ -180,7 +139,7 @@
     var path = jelloCachedRingPath(b), r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
-    if (jelloSupportedBelowTile(b)) {
+    if (!m.climb && jelloSupportedBelowTile(b)) {
       ctx.fillStyle = 'rgba(30,36,32,0.18)'; ctx.beginPath();
       ctx.ellipse(b.cx, b.bboxB + 3, w * 0.43, 3, 0, 0, Math.PI * 2); ctx.fill();
     }

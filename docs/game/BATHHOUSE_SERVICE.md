@@ -120,7 +120,7 @@ limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak 
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Bath-born residents (v28.46)
+## Bath-born residents (v28.47)
 
 Five soft residents appear around the starting town for playtesting, including
 on existing saves. A completed warm bath changes a rocky guest into the same
@@ -131,11 +131,18 @@ does not add another five. The payment still happens once per completed bath.
 
 These are 37- or 61-point deformable meshes in the existing XPBD solver. Their
 lobed resting shape, spring network and pressure constraints govern collisions
-with terrain, the rig, other gel bodies, and rocky guests. Walking, a brief
-crouch, and hopping apply actor forces; external launches suspend their muscles
-so they can tumble freely. They avoid walking into shafts and stay near their
-own surface neighborhood. Player pushes can still send them underground.
-Underground slime brains remain disabled by default.
+with terrain, the rig, other gel bodies, and rocky guests. Softer edge and shear
+constraints and lower internal damping let them slump, stretch, and wobble.
+A travelling muscle wave changes local spring lengths and the target shape.
+Patches of skin grip fixed terrain contacts during their contraction and release
+during their forward stroke; this contact drives crawling. The muscles have
+zero net translation in free space. At a wall the same wave turns upward, then
+rounds an exposed top corner onto the ledge. Terrain bonds have finite reach and
+strength, and disappear when their supporting tile is mined. Rig impacts, jets,
+grabbing and tossing suspend adhesion so a resident can peel off and fall.
+They avoid walking into shafts and stay near their own surface neighborhood.
+Player pushes can still send them underground. Underground slime brains remain
+disabled by default.
 
 Click or touch a soft resident and drag to lift it by a compliant patch of gel.
 Release while moving to toss it. The grip keeps terrain and body contacts
@@ -148,11 +155,14 @@ mesh. Pond water provides buoyancy; the real boundary displaces WebGPU water, wi
 Residents do not dissolve. Off-camera bodies use the existing simulation culling.
 The five starting residents do not count toward either rocky-visitor limit.
 
-`347-surface-slimes.js` owns the mesh, behavior, appearance and persistence;
-`349-slime-touch.js` owns the grip and rock/gel contact. Run
-`node tools/surface-slime-smoke.mjs` for real-browser checks of walking,
-30/60/144 Hz impacts and launches, mouse input, water, guest conversion,
-and full-game save restoration. Screenshots are written under `/tmp`.
+`347-surface-slimes.js` owns the mesh, appearance and persistence;
+`347-slime-locomotion.js` owns muscles, crawling and terrain adhesion;
+`349-slime-touch.js` owns the pointer grip and rock/gel contact. Run
+`node tools/surface-slime-smoke.mjs` for real-browser checks of movement,
+30/60/144 Hz impacts and launches, mouse/touch input, water, guest conversion,
+and full-game save restoration. `node tools/surface-slime-crawl.mjs` verifies
+climbing in both directions at those frame rates, loss of propulsion with the
+wave disabled, wall knock-off, jets, and mined handholds. Screenshots go to `/tmp`.
 
 ## Sky visitor physics and appearance (v28.34)
 

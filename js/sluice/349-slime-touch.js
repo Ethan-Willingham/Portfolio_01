@@ -21,6 +21,7 @@
       for (k = 0; k < b.n; k++) { weights[k] /= total; ax += b.px[k] * weights[k]; ay += b.py[k] * weights[k]; }
       surfaceSlimeGrip = { body: b, id: id, weights: weights, x: wx, y: wy,
         dx: ax - wx, dy: ay - wy, vx: 0, vy: 0, t: performance.now(), motion: 0 };
+      surfaceSlimeDetach(b);
       b._grabbed = true; b._recoverT = 0; b.sleeping = false; b.sleepFrames = 0;
       jelloClearActorIntent(b); b.surfaceSlime.state = 'tumble';
       return true;
@@ -105,6 +106,7 @@
         var dv = impulse / gelMass * b.n * weights[p] / sum;
         b.ox[p] += nx * dv * step; b.oy[p] += ny * dv * step;
       }
+      surfaceSlimeDetach(b, 0.9);
       b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now();
       skySlimePlayContact(s);
     }
