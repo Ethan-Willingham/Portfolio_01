@@ -127,6 +127,34 @@
     return { counts: counts, total: total, type: dominant, wet: Math.min(1, total * spacing * spacing / Math.max(1, Math.PI * r2)) };
   }
 
+  // Read the waterline beside a solid visitor, whose own collider has
+  // displaced all particles from its interior. Sparse spray is not a pool.
+  function liquidSampleBall(x, y, radius) {
+    var rowH = 4, span = radius * 1.8, top = y - span;
+    var rows = Math.ceil(span * 2 / rowH), bins = new Array(rows);
+    for (var b = 0; b < rows; b++) bins[b] = 0;
+    var inner = radius + 2, outer = radius * 1.75;
+    var vx = 0, vy = 0, count = 0;
+    for (var i = 0; i < liquidCount; i++) {
+      var dx = Math.abs(liquidX[i] - x), row = Math.floor((liquidY[i] - top) / rowH);
+      if (dx < inner || dx > outer || row < 0 || row >= rows) continue;
+      bins[row]++;
+      vx += liquidVX[i]; vy += liquidVY[i]; count++;
+    }
+    var spacing = LIQUID_CELL * LIQUID_PDELTA;
+    var dense = Math.max(3, (outer - inner) * 2 * rowH / (spacing * spacing) * 0.22);
+    var first = -1, last = -1, start = -1, best = 0;
+    for (var j = 0; j <= rows; j++) {
+      if (j < rows && bins[j] >= dense) { if (start < 0) start = j; continue; }
+      if (start >= 0 && j - start > best) { first = start; last = j - 1; best = j - start; }
+      start = -1;
+    }
+    return { surface: first < 0 ? Infinity : top + first * rowH,
+      bottom: last < 0 || last === rows - 1 ? Infinity : top + (last + 1) * rowH,
+      vx: count ? Math.max(-160, Math.min(160, vx / count)) : 0,
+      vy: count ? Math.max(-160, Math.min(160, vy / count)) : 0 };
+  }
+
   function liquidToolImpulse(x, y, radius, vx, vy) {
     if (!(radius > 0) || !isFinite(vx) || !isFinite(vy)) return 0;
     liquidToolSync();

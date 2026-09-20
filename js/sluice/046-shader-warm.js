@@ -354,9 +354,9 @@
       skySlimeDust = [{ x: x - 45, y: y + 24, r: 2.4, life: 0.2, max: 0.5 }];
       for (var pose = 0; pose < 3; pose++) {
         var s = { x: x - 80 + pose * 80, y: y - 60, r: 25,
-          vx: pose ? 0 : -110, vy: pose ? 0 : 480, oval: 0.95 + pose * 0.045,
-          eyeSize: 0.33 + pose * 0.04, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
-          squash: pose === 1 ? 0.2 : 0, eye: pose === 1 ? 0.12 : 0.86,
+          vx: pose ? 0 : -110, vy: pose ? 0 : 480, oval: 1,
+          eyeSize: 0.40 + pose * 0.01, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
+          squash: pose === 1 ? 0.11 : 0, eye: pose === 1 ? 0.12 : 0.86,
           pupilX: 1.3, pupilY: -0.9, entry: pose ? 0 : 0.9,
           wet: pose === 2 ? 0.8 : 0,
           _ground: pose === 1, _trail: [] };

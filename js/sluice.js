@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.6';
+  var GAME_VERSION = 'v28.7';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5471,9 +5471,9 @@
       skySlimeDust = [{ x: x - 45, y: y + 24, r: 2.4, life: 0.2, max: 0.5 }];
       for (var pose = 0; pose < 3; pose++) {
         var s = { x: x - 80 + pose * 80, y: y - 60, r: 25,
-          vx: pose ? 0 : -110, vy: pose ? 0 : 480, oval: 0.95 + pose * 0.045,
-          eyeSize: 0.33 + pose * 0.04, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
-          squash: pose === 1 ? 0.2 : 0, eye: pose === 1 ? 0.12 : 0.86,
+          vx: pose ? 0 : -110, vy: pose ? 0 : 480, oval: 1,
+          eyeSize: 0.40 + pose * 0.01, seed: 0.17 + pose * 0.23, angle: pose * 0.4,
+          squash: pose === 1 ? 0.11 : 0, eye: pose === 1 ? 0.12 : 0.86,
           pupilX: 1.3, pupilY: -0.9, entry: pose ? 0 : 0.9,
           wet: pose === 2 ? 0.8 : 0,
           _ground: pose === 1, _trail: [] };
@@ -12931,6 +12931,34 @@
     for (var k = 0; k < counts.length; k++) if (counts[k] > best) { dominant = k; best = counts[k]; }
     var spacing = LIQUID_CELL * LIQUID_PDELTA;
     return { counts: counts, total: total, type: dominant, wet: Math.min(1, total * spacing * spacing / Math.max(1, Math.PI * r2)) };
+  }
+
+  // Read the waterline beside a solid visitor, whose own collider has
+  // displaced all particles from its interior. Sparse spray is not a pool.
+  function liquidSampleBall(x, y, radius) {
+    var rowH = 4, span = radius * 1.8, top = y - span;
+    var rows = Math.ceil(span * 2 / rowH), bins = new Array(rows);
+    for (var b = 0; b < rows; b++) bins[b] = 0;
+    var inner = radius + 2, outer = radius * 1.75;
+    var vx = 0, vy = 0, count = 0;
+    for (var i = 0; i < liquidCount; i++) {
+      var dx = Math.abs(liquidX[i] - x), row = Math.floor((liquidY[i] - top) / rowH);
+      if (dx < inner || dx > outer || row < 0 || row >= rows) continue;
+      bins[row]++;
+      vx += liquidVX[i]; vy += liquidVY[i]; count++;
+    }
+    var spacing = LIQUID_CELL * LIQUID_PDELTA;
+    var dense = Math.max(3, (outer - inner) * 2 * rowH / (spacing * spacing) * 0.22);
+    var first = -1, last = -1, start = -1, best = 0;
+    for (var j = 0; j <= rows; j++) {
+      if (j < rows && bins[j] >= dense) { if (start < 0) start = j; continue; }
+      if (start >= 0 && j - start > best) { first = start; last = j - 1; best = j - start; }
+      start = -1;
+    }
+    return { surface: first < 0 ? Infinity : top + first * rowH,
+      bottom: last < 0 || last === rows - 1 ? Infinity : top + (last + 1) * rowH,
+      vx: count ? Math.max(-160, Math.min(160, vx / count)) : 0,
+      vy: count ? Math.max(-160, Math.min(160, vy / count)) : 0 };
   }
 
   function liquidToolImpulse(x, y, radius, vx, vy) {
@@ -64061,7 +64089,7 @@
     best.state.cool = best.hit ? 0.34 : 0.30 + Math.random() * 0.14;
     slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
   }
-  /* ---- Sky slimes: warm clay meteor guests for the bathhouse ----
+  /* ---- Sky slimes: rock-crusted rubber-ball guests for the bathhouse ----
      Bulk motion is a hard elastic circle with swept-size substeps. The
      outline and eye have their own damped springs, so a bounce stays crisp
      without ever feeding render deformation back into collision energy.
@@ -64072,7 +64100,9 @@
   var skySlimeDust = [];
   var SKY_SLIME_MAX = 8;
   var SKY_SLIME_GRAVITY = 480;
-  var SKY_SLIME_RAMP = ['#563b32', '#82503b', '#af754c', '#cf9f78', '#e0bd8e', '#ede0c0'];
+  // Shared warm stone ramp from PIXEL_ART.md.
+  var SKY_SLIME_RAMP = ['#252320', '#3e3830', '#5a5248', '#7a706a', '#9e9488', '#c0b8b0'];
+  var skySlimeRigLast = null;
 
   function skySlimeClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -64080,14 +64110,15 @@
     var seed = Math.random();
     return {
       id: skySlimeSerial++, x: x, y: y, vx: 0, vy: 0,
-      r: 22 + Math.random() * 5, oval: 0.94 + Math.random() * 0.12,
-      eyeSize: 0.32 + Math.random() * 0.1, seed: seed,
+      r: 22 + Math.random() * 5, oval: 1,
+      eyeSize: 0.40 + Math.random() * 0.025, seed: seed,
       age: 0, bounces: 0, wet: 0, settled: false, entry: 1,
-      bounce: 0.79 + Math.random() * 0.035,
+      bounce: 0.86 + Math.random() * 0.015,
       angle: (Math.random() - 0.5) * 0.24, spin: (Math.random() - 0.5) * 1.5,
       squash: 0, squashV: 0, eye: 0.85, eyeV: 0,
       pupilX: 0, pupilY: 0, pupilVX: 0, pupilVY: 0,
       visit: 'land', visitT: 0, hopIn: 1, wanderDir: Math.random() < 0.5 ? -1 : 1,
+      glanceIn: 3 + seed * 5, glanceT: 0,
       blink: 0, blinkIn: 1.4 + Math.random() * 2.8,
       _trail: [], _trailT: 0, _liquidT: 0, _wetTarget: 0,
       _ground: false, _impactT: 0, _sleepT: 0
@@ -64118,6 +64149,7 @@
     skySlimeDust.length = 0;
     skySlimeNext = 7;
     skySlimeSerial = 1;
+    skySlimeRigLast = null;
   }
 
   function skySlimeRecord(s) {
@@ -64142,8 +64174,9 @@
     s.r = skySlimeClamp(isFinite(s.r) ? s.r : 25, 22, 27);
     s.vx = skySlimeClamp(isFinite(s.vx) ? s.vx : 0, -700, 700);
     s.vy = skySlimeClamp(isFinite(s.vy) ? s.vy : 0, -700, 700);
-    s.oval = skySlimeClamp(isFinite(s.oval) ? s.oval : 1, 0.94, 1.06);
-    s.eyeSize = skySlimeClamp(isFinite(s.eyeSize) ? s.eyeSize : 0.38, 0.32, 0.42);
+    s.oval = 1;
+    s.bounce = s.bounce >= 0.86 ? skySlimeClamp(s.bounce, 0.86, 0.875) : 0.86 + s.seed * 0.015;
+    s.eyeSize = skySlimeClamp(isFinite(s.eyeSize) ? s.eyeSize : 0.41, 0.40, 0.425);
     s.id = Math.max(1, Math.floor(isFinite(s.id) ? s.id : skySlimeSerial++));
     skySlimeSerial = Math.max(skySlimeSerial, s.id + 1);
     delete s.pearlProgress; delete s.gardenLot;
@@ -64200,10 +64233,8 @@
     if (speed < 25 || s._impactT > 0) return;
     s._impactT = 0.065;
     s.bounces++;
-    s.squashV += Math.min(11, speed * 0.014);
-    s.pupilVX += nx * Math.min(50, speed * 0.1);
-    s.pupilVY += ny * Math.min(70, speed * 0.13);
-    s.blink = Math.max(s.blink, 0.09 + s.seed * 0.045);
+    s._impactNX = nx; s._impactNY = ny;
+    s.squashV += Math.min(4.2, speed * 0.007);
     s.entry *= 0.12;
     if (speed < 75 || s.wet > 0.28) return;
     var count = Math.min(11, 3 + Math.floor(speed / 70));
@@ -64247,14 +64278,20 @@
         if (ny < -0.6) s._ground = true;
         var vn = s.vx * nx + s.vy * ny;
         if (vn < 0) {
-          var restitution = -vn < 34 ? 0 : Math.max(0.54, s.bounce - Math.min(0.2, s.bounces * 0.027));
-          if (s.wet > 0.12) restitution *= 1 - Math.min(0.65, s.wet * 0.65);
-          s.vx -= (1 + restitution) * vn * nx;
-          s.vy -= (1 + restitution) * vn * ny;
-          if (ny < -0.6) {
-            s.vx *= -vn > 34 ? 0.84 : 0.96;
-            s.spin = s.vx / Math.max(1, s.r) * 0.36;
-          }
+          var soft = tile !== 'wall' && (tile.type === 'dirt' || tile.type === 'sand');
+          // A given surface keeps its restitution. Energy decays by e^2
+          // each bounce; the material never gets less springy with age.
+          var restitution = -vn < 18 ? 0 : s.bounce * (soft ? 0.88 : 1);
+          var normalDV = -(1 + restitution) * vn;
+          s.vx += normalDV * nx; s.vy += normalDV * ny;
+          // Coulomb contact friction transfers slide into spin, conserving
+          // the sphere's rolling inertia (I = 2/5 mr^2).
+          var tx = -ny, ty = nx;
+          var slip = s.vx * tx + s.vy * ty - s.spin * s.r;
+          var friction = skySlimeClamp(-slip / 3.5, -normalDV * 0.17, normalDV * 0.17);
+          s.vx += friction * tx; s.vy += friction * ty;
+          s.spin -= friction / (0.4 * s.r);
+          if (ny < -0.6) s._rollingDrag = soft ? 36 : 22;
           skySlimeImpact(s, nx, ny, -vn);
         }
       }
@@ -64280,7 +64317,7 @@
       b.x += nx * overlap * invB / sum; b.y += ny * overlap * invB / sum;
       var relative = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
       if (relative < 0) {
-        var impulse = -(1 + (relative < -34 ? 0.71 : 0)) * relative / sum;
+        var impulse = -(1 + (relative < -18 ? 0.84 : 0)) * relative / sum;
         a.vx -= nx * impulse * invA; a.vy -= ny * impulse * invA;
         b.vx += nx * impulse * invB; b.vy += ny * impulse * invB;
         skySlimeImpact(a, -nx, -ny, -relative * 0.6);
@@ -64291,37 +64328,74 @@
   }
 
   function skySlimeExpression(s, h) {
-    var danger = 0;
-    if (s.vy > 70) {
-      var reach = s.r + s.vy * (0.13 + s.seed * 0.065);
-      var px = s.x + s.vx * 0.12;
-      for (var probe = s.r; probe < reach; probe += TILE * 0.5) {
-        if (tileAt(Math.floor((s.y + probe) / TILE), Math.floor(px / TILE))) { danger = 1; break; }
-      }
+    // A loose black disk inside a white plastic eye, not a flesh eyelid.
+    // The disk lags changes in body velocity and rebounds off its cup.
+    s.glanceIn = (isFinite(s.glanceIn) ? s.glanceIn : 4) - h;
+    s.glanceT = Math.max(0, (s.glanceT || 0) - h);
+    var near = typeof player !== 'undefined' && Math.hypot(player.x - s.x, player.y - s.y) < TILE * 6;
+    if (s.glanceIn <= 0) {
+      s.glanceIn = 5 + Math.random() * 7;
+      if (near && s.settled && Math.random() < 0.45) s.glanceT = 0.7 + Math.random() * 0.7;
     }
-    s.blinkIn -= h;
-    if (s.blinkIn <= 0) {
-      s.blink = 0.1 + Math.random() * 0.065;
-      s.blinkIn = 2 + Math.random() * 4.4;
+    var ax = isFinite(s._eyeVX) ? (s.vx - s._eyeVX) / h : 0;
+    var ay = isFinite(s._eyeVY) ? (s.vy - s._eyeVY) / h : 0;
+    s._eyeVX = s.vx; s._eyeVY = s.vy;
+    s.pupilVX += -skySlimeClamp(ax, -4000, 4000) * 0.04 * h;
+    s.pupilVY += (28 - skySlimeClamp(ay, -4000, 4000) * 0.04) * h;
+    if (s.glanceT > 0 && near) {
+      var dx = player.x + PLAYER_W / 2 - s.x, dy = player.y + PLAYER_H / 2 - s.y;
+      var len = Math.max(1, Math.hypot(dx, dy));
+      s.pupilVX += (dx / len * 3 - s.pupilX) * 65 * h;
+      s.pupilVY += (dy / len * 3 - s.pupilY) * 65 * h;
     }
-    s.blink = Math.max(0, s.blink - h);
-    var eyeTarget = s.blink > 0 ? 0.08 : danger ? 0.17 + s.seed * 0.1 :
-      s.wet > 0.18 ? 0.65 + 0.05 * Math.sin(s.age * 0.9 + s.seed * 8) :
-      s.settled ? 0.7 : 0.87 + Math.sin(s.age * 1.7 + s.seed * 11) * 0.045;
-    s.eyeV += ((eyeTarget - s.eye) * 150 - s.eyeV * 18) * h;
-    s.eye = skySlimeClamp(s.eye + s.eyeV * h, 0.07, 1.05);
-    var tx = Math.sin(s.age * 0.85 + s.seed * 23) * 1.8 - s.vx * 0.008;
-    var ty = s.vy * 0.005 + Math.sin(s.age * 1.3 + s.seed * 17) * 0.55;
-    if (typeof player !== 'undefined' && Math.abs(player.x - s.x) < TILE * 6 && s.settled) {
-      tx = skySlimeClamp((player.x + PLAYER_W * 0.5 - s.x) * 0.035, -3.5, 3.5);
-      ty = skySlimeClamp((player.y + PLAYER_H * 0.5 - s.y) * 0.035, -2, 2.5);
+    var drag = Math.exp(-2.4 * h);
+    s.pupilVX *= drag; s.pupilVY *= drag;
+    s.pupilX += s.pupilVX * h; s.pupilY += s.pupilVY * h;
+    var limit = s.r * s.eyeSize * 0.47, len = Math.hypot(s.pupilX, s.pupilY);
+    if (len > limit) {
+      var nx = s.pupilX / len, ny = s.pupilY / len;
+      s.pupilX = nx * limit; s.pupilY = ny * limit;
+      var speed = s.pupilVX * nx + s.pupilVY * ny;
+      if (speed > 0) { s.pupilVX -= 1.62 * speed * nx; s.pupilVY -= 1.62 * speed * ny; }
     }
-    s.pupilVX += ((tx - s.pupilX) * 92 - s.pupilVX * 9) * h;
-    s.pupilVY += ((ty - s.pupilY) * 92 - s.pupilVY * 9) * h;
-    s.pupilX = skySlimeClamp(s.pupilX + s.pupilVX * h, -5, 5);
-    s.pupilY = skySlimeClamp(s.pupilY + s.pupilVY * h, -5, 5);
-    s.squashV += (-s.squash * 255 - s.squashV * 13) * h;
-    s.squash = skySlimeClamp(s.squash + s.squashV * h, -0.13, 0.24);
+    s.squashV += (-s.squash * 390 - s.squashV * 19) * h;
+    s.squash = skySlimeClamp(s.squash + s.squashV * h, -0.055, 0.115);
+  }
+
+  function skySlimePlayer(s, rx, ry, rvx, rvy) {
+    if (typeof bathMode !== 'undefined' && bathMode) return;
+    var qx = skySlimeClamp(s.x, rx, rx + PLAYER_W);
+    var qy = skySlimeClamp(s.y, ry, ry + PLAYER_H);
+    var dx = s.x - qx, dy = s.y - qy, dist = Math.hypot(dx, dy);
+    if (dist >= s.r) return;
+    var nx, ny;
+    if (dist > 0.001) { nx = dx / dist; ny = dy / dist; }
+    else {
+      var sides = [s.x - rx, rx + PLAYER_W - s.x, s.y - ry, ry + PLAYER_H - s.y];
+      var face = sides.indexOf(Math.min.apply(null, sides));
+      nx = face === 0 ? -1 : face === 1 ? 1 : 0;
+      ny = face === 2 ? -1 : face === 3 ? 1 : 0;
+      dist = -sides[face];
+    }
+    s.x += nx * (s.r - dist + 0.02); s.y += ny * (s.r - dist + 0.02);
+    var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
+    if (relative >= 0) return;
+    var mass = s.r * s.r / 625, invRig = 1 / 6;
+    var impulse = -(1 + (relative < -18 ? 0.62 : 0)) * relative / (1 / mass + invRig);
+    s.vx += impulse * nx / mass; s.vy += impulse * ny / mass;
+    player.vx = (player.vx || 0) - impulse * nx * invRig;
+    player.vy = (player.vy || 0) - impulse * ny * invRig;
+    s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5);
+    s.settled = false;
+    skySlimeImpact(s, nx, ny, -relative);
+  }
+
+  function skySlimeSubmerged(s, surface, bottom) {
+    function below(line) {
+      var h = skySlimeClamp((s.y - line) / s.r, -1, 1);
+      return (Math.acos(-h) + h * Math.sqrt(Math.max(0, 1 - h * h))) / Math.PI;
+    }
+    return Math.max(0, below(surface) - below(bottom));
   }
 
   function skySlimeLandingX() {
@@ -64357,24 +64431,35 @@
         skySlimes.splice(i, 1); continue;
       }
       if (s.visit === 'seek' && Math.abs(s.x - door) < 30 &&
-          s.y + s.r > SKY_ROWS * TILE - 20 && s.y < SKY_ROWS * TILE + 18) {
+          s.y + s.r > SKY_ROWS * TILE - 20 && s.y < SKY_ROWS * TILE + 18 &&
+          Math.hypot(s.vx, s.vy) < 70 && !(s._interactT > 0)) {
         if (bathGuestAccept(s)) { skySlimes.splice(i, 1); continue; }
         // A full room leaves newcomers waiting outside, keeping every
         // visitor visible and preserving the population cap.
         s.vx *= Math.exp(-6 * dt);
         continue;
       }
-      if (s.hopIn > 0 || (!s._ground && s.wet < 0.18)) continue;
+      if (s.hopIn > 0 || s._interactT > 0) continue;
+      if (s.wet < 0.18 && (!s._ground || Math.abs(s.vy) > 10 || Math.abs(s.vx) > 35)) continue;
       var dir = s.visit === 'depart' ? s.departDir : s.visit === 'seek' ? (door > s.x ? 1 : -1) : s.wanderDir;
       if (s.visit === 'wander') {
         if (Math.random() < 0.28 || Math.abs(s.x - door) > TILE * 12) s.wanderDir = door > s.x ? 1 : -1;
         dir = s.wanderDir;
       }
       var ahead = tileAt(Math.floor((s.y + s.r - 12) / TILE), Math.floor((s.x + dir * (s.r + 20)) / TILE));
+      if (s.wet > 0.18) {
+        s.vx += skySlimeClamp(dir * 80 - s.vx, -65 * dt, 65 * dt);
+        continue;
+      }
       s.vx = dir * (s.visit === 'wander' ? 56 : 96);
-      s.vy = ahead ? -235 : s.wet > 0.18 ? -145 : -170;
+      var rigSpeed = skySlimeRigLast ? (player.x - skySlimeRigLast.x) / dt : (player.vx || 0);
+      var parkedRig = Math.abs(rigSpeed) < 25 &&
+        (player.x + PLAYER_W / 2 - s.x) * dir > 0 &&
+        Math.abs(player.x + PLAYER_W / 2 - s.x) < s.r + TILE * 2 &&
+        Math.abs(player.y + PLAYER_H - s.y - s.r) < TILE;
+      s.vy = parkedRig ? -290 : ahead ? -235 : -170;
       s.squashV = -2; s._ground = false; s.settled = false;
-      s.hopIn = s.wet > 0.18 ? 0.6 : 0.9 + s.seed * 0.35;
+      s.hopIn = 0.9 + s.seed * 0.35;
     }
   }
 
@@ -64394,21 +64479,23 @@
       if (dust.life <= 0) { skySlimeDust.splice(di, 1); continue; }
       dust.vy += 160 * dt; dust.x += dust.vx * dt; dust.y += dust.vy * dt;
     }
-    var steps = Math.max(1, Math.ceil(dt * 180)), h = dt / steps;
+    var steps = Math.max(1, Math.ceil(dt * 240)), h = dt / steps;
+    var rigX = player.x, rigY = player.y;
+    var previous = skySlimeRigLast || { x: rigX - (player.vx || 0) * dt, y: rigY - (player.vy || 0) * dt };
+    if (Math.hypot(rigX - previous.x, rigY - previous.y) > Math.max(100, dt * 1000)) previous = { x: rigX, y: rigY };
+    var rigVX = (rigX - previous.x) / dt, rigVY = (rigY - previous.y) / dt;
+    var impulseVX = player.vx || 0, impulseVY = player.vy || 0;
+    skySlimeRigLast = { x: rigX, y: rigY };
     for (var i = 0; i < skySlimes.length; i++) {
       var s = skySlimes[i];
       s._liquidT -= dt;
-      if (s._liquidT <= 0 && typeof liquidSampleCircle === 'function') {
-        s._liquidT = 0.1;
-        // Water is displaced from the collision disk. Sample its surrounding
-        // annulus and normalize that area, so buoyancy remains after contact.
-        var sample = liquidSampleCircle(s.x, s.y, s.r * 1.45);
-        s._wetTarget = sample ? skySlimeClamp(sample.wet * 1.7, 0, 1) : 0;
-        s.liquidType = sample ? sample.type : 0;
-        if (s._wetTarget > 0.12 && s.wet < 0.07 && s.vy > 85 &&
-            typeof liquidToolImpulse === 'function') {
-          liquidToolImpulse(s.x, s.y + s.r * 0.3, s.r * 1.9, s.vx * 0.28, -Math.min(190, s.vy * 0.43));
-          s.squashV += Math.min(4, s.vy * 0.008);
+      if (s._liquidT <= 0) {
+        s._liquidT = Math.hypot(s.vx, s.vy) > 120 ? 0 : 1 / 30;
+        var sample = typeof liquidSampleBall === 'function' ? liquidSampleBall(s.x, s.y, s.r) : null;
+        s._water = sample;
+        if (!sample && typeof liquidSampleCircle === 'function') {
+          var fallback = liquidSampleCircle(s.x, s.y, s.r * 1.45);
+          s._wetTarget = fallback ? skySlimeClamp(fallback.wet * 1.7, 0, 1) : 0;
         }
       }
       s._trailT += dt;
@@ -64426,93 +64513,140 @@
       for (var si = 0; si < skySlimes.length; si++) {
         var b = skySlimes[si];
         b.age += h; b._impactT = Math.max(0, b._impactT - h);
-        b.wet += (b._wetTarget - b.wet) * Math.min(1, h * 8);
+        b._interactT = Math.max(0, (b._interactT || 0) - h);
+        var wetBefore = b.wet;
+        b.wet = b._water ? skySlimeSubmerged(b, b._water.surface, b._water.bottom) : b._wetTarget;
+        if (wetBefore < 0.04 && b.wet >= 0.04 && b.vy > 100 && !b._splashT && typeof liquidToolImpulse === 'function') {
+          liquidToolImpulse(b.x, b.y + b.r * 0.65, b.r * 1.65, b.vx * 0.15, -Math.min(125, b.vy * 0.22));
+          b._splashT = 0.4;
+        }
+        b._splashT = Math.max(0, (b._splashT || 0) - h);
         b.entry = Math.max(0, b.entry - h * (b.bounces ? 0.8 : 0.035));
-        b.vy += SKY_SLIME_GRAVITY * (1 - Math.min(1.2, b.wet * 1.95)) * h;
-        var drag = Math.exp(-(0.025 + b.wet * 3.2) * h);
-        b.vx *= drag; b.vy *= drag;
-        b.vy = skySlimeClamp(b.vy, -700, 660);
-        b.vx = skySlimeClamp(b.vx, -550, 550);
+        // Archimedes lift uses submerged area; drag is relative to the
+        // surrounding water and grows with speed. A shallow puddle damps
+        // the landing; deeper water arrests a plunge and lets the ball bob.
+        b.vy += SKY_SLIME_GRAVITY * (1 - b.wet / 0.72) * h;
+        // The GPU mirror includes the wake this very ball just produced.
+        // Couple only the slow ambient current, not its own delayed impact
+        // jet, which otherwise feeds energy back into repeated water hops.
+        var flowBlend = 1 - Math.exp(-h / 0.18);
+        b._flowX = (b._flowX || 0) + ((b._water ? skySlimeClamp(b._water.vx, -60, 60) : 0) - (b._flowX || 0)) * flowBlend;
+        b._flowY = (b._flowY || 0) + ((b._water ? skySlimeClamp(b._water.vy, -30, 30) : 0) - (b._flowY || 0)) * flowBlend;
+        var flowX = b._flowX, flowY = b._flowY;
+        var relativeSpeed = Math.hypot(b.vx - flowX, b.vy - flowY);
+        var drag = Math.exp(-0.008 * h) / (1 + b.wet * (4.5 + relativeSpeed * 0.018) * h);
+        b.vx = flowX + (b.vx - flowX) * drag; b.vy = flowY + (b.vy - flowY) * drag;
+        b.vy = skySlimeClamp(b.vy, -1000, 1000);
+        b.vx = skySlimeClamp(b.vx, -1000, 1000);
         b.x += b.vx * h; b.y += b.vy * h;
         skySlimeTerrain(b);
+        var kRig = (step + 1) / steps;
+        skySlimePlayer(b, previous.x + (rigX - previous.x) * kRig, previous.y + (rigY - previous.y) * kRig,
+          rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
+        skySlimeTerrain(b);
         if (b._ground && Math.abs(b.vy) < 12) {
-          b.vx *= Math.exp(-8 * h);
-          if (Math.abs(b.vx) < 0.4) b.vx = 0;
+          var rolling = (b._rollingDrag || 22) * h;
+          b.vx -= skySlimeClamp(b.vx, -rolling, rolling);
+          b.spin = b.vx / b.r;
         }
         b.settled = (b._ground || b.wet > 0.18) && Math.hypot(b.vx, b.vy) < 22;
         b.angle += b.spin * h;
-        b.spin *= Math.exp(-(b._ground ? 5 : b.wet > 0.18 ? 3 : 0.5) * h);
+        b.spin *= Math.exp(-(b.wet * 2 + 0.015) * h);
         skySlimeExpression(b, h);
       }
       skySlimeBodies();
+      for (var contact = 0; contact < skySlimes.length; contact++) skySlimeTerrain(skySlimes[contact]);
     }
   }
 
-  function skySlimePath(s, rx, ry) {
-    ctx.beginPath();
-    var count = 44;
-    for (var i = 0; i <= count; i++) {
-      var a = i / count * Math.PI * 2;
-      var wobble = 1 + Math.sin(a * 3 + s.seed * 23) * 0.022 + Math.sin(a * 5 + s.seed * 11) * 0.011;
-      var x = Math.cos(a) * rx * wobble, y = Math.sin(a) * ry * wobble;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  function skySlimeCrust(s) {
+    if (s._crust) return s._crust;
+    // Bake each guest's crust once. A circular cutout contains broad broken
+    // plates and chipped edges; the texture rolls with the collision body.
+    var sprite = document.createElement('canvas'); sprite.width = sprite.height = 128;
+    var c = sprite.getContext('2d'), r = 60;
+    c.translate(64, 64);
+    c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
+    c.fillStyle = SKY_SLIME_RAMP[1]; c.fillRect(-64, -64, 128, 128);
+    var random = (Math.floor(s.seed * 2147483646) + 1) >>> 0;
+    function next() { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random / 4294967296; }
+    var sites = [];
+    for (var row = -2; row <= 2; row++) for (var col = -2; col <= 2; col++) {
+      sites.push({ x: col * 30 + (next() - 0.5) * 22,
+        y: row * 30 + (next() - 0.5) * 22 });
     }
-    ctx.closePath();
+    for (var i = 0; i < sites.length; i++) {
+      var site = sites[i], points = [{x:-80,y:-80},{x:80,y:-80},{x:80,y:80},{x:-80,y:80}];
+      // Intersect bisector half-planes to make uneven, fitted crust plates.
+      // Independent seams avoid a regular wheel/spoke pattern around the eye.
+      for (var k = 0; k < sites.length && points.length; k++) {
+        if (k === i) continue;
+        var other = sites[k], nx = other.x - site.x, ny = other.y - site.y;
+        var edge = (other.x * other.x + other.y * other.y - site.x * site.x - site.y * site.y) / 2;
+        var clipped = [];
+        for (var j = 0; j < points.length; j++) {
+          var a = points[j], b = points[(j + 1) % points.length];
+          var da = a.x * nx + a.y * ny - edge, db = b.x * nx + b.y * ny - edge;
+          if (da <= 0) clipped.push(a);
+          if ((da < 0) !== (db < 0)) {
+            var t = da / (da - db);
+            clipped.push({x:a.x + (b.x - a.x) * t,y:a.y + (b.y - a.y) * t});
+          }
+        }
+        points = clipped;
+      }
+      if (!points.length) continue;
+      var tone = 2 + Math.floor(next() * 3);
+      c.beginPath(); c.moveTo(points[0].x, points[0].y);
+      for (var p = 1; p < points.length; p++) c.lineTo(points[p].x, points[p].y);
+      c.closePath(); c.fillStyle = SKY_SLIME_RAMP[tone]; c.fill();
+      c.strokeStyle = SKY_SLIME_RAMP[1]; c.lineWidth = 1.4; c.stroke();
+      c.beginPath(); c.moveTo(points[0].x + 0.7, points[0].y - 0.7);
+      c.lineTo(points[1].x + 0.7, points[1].y - 0.7);
+      c.strokeStyle = SKY_SLIME_RAMP[Math.min(5, tone + 1)]; c.lineWidth = 0.9; c.stroke();
+    }
+    for (var f = 0; f < 27; f++) {
+      var a = next() * Math.PI * 2, d = Math.sqrt(next()) * 58;
+      var x = Math.cos(a) * d, y = Math.sin(a) * d, size = 1.5 + next() * 2.5;
+      c.fillStyle = SKY_SLIME_RAMP[next() < 0.5 ? 2 : 5];
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + size, y - 1);
+      c.lineTo(x + size * 0.6, y + size * 0.55); c.closePath(); c.fill();
+    }
+    s._crust = sprite; return sprite;
   }
 
   function skySlimeDrawBody(s) {
-    var stretch = Math.min(0.09, Math.abs(s.vy) / 7000);
-    var rx = s.r * s.oval * (1 + s.squash - stretch);
-    var ry = s.r / s.oval * (1 - s.squash + stretch);
+    var squash = skySlimeClamp(s.squash || 0, -0.055, 0.115);
+    var angle = Math.atan2(s._impactNY === undefined ? -1 : s._impactNY, s._impactNX || 0) + Math.PI / 2;
     ctx.save();
-    // Contact squash is pinned at the floor, rather than floating upward.
-    ctx.translate(s.x, s.y + (s._ground ? s.r - ry : 0));
-    ctx.rotate(Math.sin(s.angle) * 0.15);
-    skySlimePath(s, rx, ry);
-    ctx.fillStyle = SKY_SLIME_RAMP[1]; ctx.fill();
-    ctx.save(); ctx.clip();
-    var body = ctx.createLinearGradient(-rx * 0.75, -ry, rx * 0.6, ry);
-    body.addColorStop(0, SKY_SLIME_RAMP[4]); body.addColorStop(0.22, SKY_SLIME_RAMP[3]);
-    body.addColorStop(0.58, SKY_SLIME_RAMP[2]); body.addColorStop(1, SKY_SLIME_RAMP[1]);
-    ctx.fillStyle = body; ctx.fillRect(-rx * 1.1, -ry * 1.1, rx * 2.2, ry * 2.2);
-    // Broad off-center sheen and sparse pores keep the clay tangible.
-    ctx.globalAlpha = 0.27; ctx.fillStyle = SKY_SLIME_RAMP[5];
-    ctx.beginPath(); ctx.ellipse(-rx * 0.32, -ry * 0.5, rx * 0.32, ry * 0.11, -0.55, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 0.28; ctx.fillStyle = SKY_SLIME_RAMP[0];
-    for (var p = 0; p < 7; p++) {
-      var a = s.seed * 29 + p * 2.39996, dist = 0.53 + (p % 3) * 0.11;
-      ctx.beginPath(); ctx.ellipse(Math.cos(a) * rx * dist, Math.sin(a) * ry * dist,
-        0.75 + p % 2 * 0.35, 0.55, a, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+    var support = s.r * Math.hypot((1 + squash) * Math.sin(angle), Math.cos(angle) / (1 + squash));
+    ctx.translate(s.x, s.y + (s._ground ? s.r - support : 0));
+    ctx.rotate(angle); ctx.scale(1 + squash, 1 / (1 + squash)); ctx.rotate(-angle);
+    ctx.save(); ctx.rotate(s.angle);
+    ctx.drawImage(skySlimeCrust(s), -s.r * 64 / 60, -s.r * 64 / 60, s.r * 128 / 60, s.r * 128 / 60);
     ctx.restore();
-    skySlimePath(s, rx, ry); ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.15; ctx.stroke();
-    if (s.entry > 0.08) {
-      ctx.globalAlpha = s.entry * 0.48;
-      ctx.strokeStyle = SKY_SLIME_RAMP[5]; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.ellipse(0, 0, rx * 0.99, ry * 0.99, 0, 0.06, Math.PI * 0.96); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    // One large, independently sprung googly eye. The socket barely turns
-    // with the body, while the loose pupil keeps the sense of weight.
-    var ex = -rx * 0.055, ey = -ry * 0.08, er = s.r * s.eyeSize;
+    // Lighting stays in world space while the crust rolls underneath it.
+    var shade = ctx.createLinearGradient(-s.r * 0.7, -s.r, s.r * 0.7, s.r);
+    shade.addColorStop(0, 'rgba(192,184,176,0.16)');
+    shade.addColorStop(0.45, 'rgba(37,35,32,0)');
+    shade.addColorStop(1, 'rgba(37,35,32,0.48)');
+    ctx.beginPath(); ctx.arc(0, 0, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = shade; ctx.fill();
+    ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1; ctx.stroke();
+    // Classic craft googly eye: white round cup, loose black disk. No iris,
+    // fleshy socket, eyelid, or constant tracking of the player.
+    var ex = -s.r * 0.055, ey = -s.r * 0.08, er = s.r * s.eyeSize;
     ctx.fillStyle = SKY_SLIME_RAMP[0];
-    ctx.beginPath(); ctx.ellipse(ex + 0.6, ey + 1.4, er + 1.5, er + 1.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = SKY_SLIME_RAMP[3];
-    ctx.beginPath(); ctx.ellipse(ex, ey, er + 1.1, er + 1.1, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.save();
-    ctx.beginPath(); ctx.ellipse(ex, ey, er, Math.max(0.65, er * s.eye), 0, 0, Math.PI * 2); ctx.clip();
-    ctx.fillStyle = '#ede0c0'; ctx.fillRect(ex - er, ey - er, er * 2, er * 2);
-    ctx.fillStyle = '#cbb994';
-    ctx.beginPath(); ctx.ellipse(ex + 1.2, ey + er * 0.73, er, er * 0.24, 0, 0, Math.PI * 2); ctx.fill();
-    var px = ex + skySlimeClamp(s.pupilX, -er * 0.32, er * 0.32);
-    var py = ey + skySlimeClamp(s.pupilY, -er * 0.32, er * 0.32);
-    ctx.fillStyle = '#563b32'; ctx.beginPath(); ctx.arc(px, py, er * 0.49, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#282b25'; ctx.beginPath(); ctx.arc(px + 0.2, py + 0.35, er * 0.34, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f5f1ea'; ctx.beginPath(); ctx.arc(px - er * 0.13, py - er * 0.18, er * 0.115, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 0.85;
-    ctx.beginPath(); ctx.ellipse(ex, ey, er, Math.max(0.65, er * s.eye), 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(ex + 0.5, ey + 0.9, er + 0.9, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c0b8b0';
+    ctx.beginPath(); ctx.arc(ex, ey, er + 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f5f1ea';
+    ctx.beginPath(); ctx.arc(ex, ey, er - 0.25, 0, Math.PI * 2); ctx.fill();
+    var px = s.pupilX || 0, py = s.pupilY || 0;
+    var d = Math.hypot(px, py), limit = er * 0.47;
+    if (d > limit) { px *= limit / d; py *= limit / d; }
+    ctx.fillStyle = SKY_SLIME_RAMP[0];
+    ctx.beginPath(); ctx.arc(ex + px, ey + py, er * 0.44, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 

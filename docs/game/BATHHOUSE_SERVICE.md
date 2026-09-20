@@ -46,6 +46,28 @@ not guest recipes. All visitors currently ask only for a warm bath.
 values. `348-sky-slimes.js` owns surface arrivals, wander, approach, and departure.
 Underground NPC brains remain disabled by their existing flag.
 
+## Sky visitor physics and appearance (v28.7)
+
+Sky guests are circular bouncy bodies with a rotating stone crust and one classic
+white googly eye. Its loose black disk responds to acceleration and only sometimes
+glances at a nearby player. Impact squash is brief and visual; it never changes the
+collision radius. Existing visitors acquire this appearance when loaded.
+
+Ground contacts keep a fixed restitution (0.86 to 0.875, multiplied by 0.88 on
+soil), with friction transferring slide into spin and rolling slowing gradually.
+At least 240 physics substeps per second prevent fast visitors passing through
+terrain. Rig contacts use the rig's traveled path, transfer momentum both ways,
+and delay intentional hopping for 2.5 seconds. A stationary rig can be hopped over.
+Natural rebounds finish before the visitor starts another intentional hop.
+
+Water response measures the waterline beside the solid body and computes its
+submerged circular area. Shallow puddles cushion a floor bounce; deeper water
+slows the plunge and supports the guest at roughly 72 percent immersion. Drag
+increases with speed. The existing CPU/GPU guest colliders displace real water,
+and the entry splash changes velocity only. Sparse spray is excluded from the
+waterline, and ambient flow coupling is filtered so the guest does not repeatedly
+accelerate from its own delayed GPU wake.
+
 ## Save behavior and retired gardens
 
 The additive `bathhouse` save field retains guests and their movement states,
@@ -63,6 +85,10 @@ The old garden renderer, construction, production loop, and tests are retired.
 ## Verification
 
 - `node tools/test-sky-slimes.cjs`: collision, capture, identity, population.
+- `node tools/test-sky-slime-physics.cjs`: restitution, rolling, rig momentum,
+  fast wall collisions, water depth, buoyancy, and eye motion at 30/60/144 Hz.
+- `node tools/sky-slime-smoke.mjs`: browser art views, normal drive input,
+  real WebGPU water entry/bobbing and particle conservation.
 - `node tools/test-bathhouse.cjs`: navigation at 30/60/144 Hz, ten-coal startup,
   shared resources, warmth, payment, reload, departure, migration, floor drains.
 - `node tools/bathhouse-smoke.mjs`: real browser, water solver, shared stove,
