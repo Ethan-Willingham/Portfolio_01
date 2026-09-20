@@ -14,7 +14,7 @@
       ledgerOpen || cargoManifestOpen || bathMode || introPhase !== 'done' ||
       (typeof document !== 'undefined' && document.hidden);
     var available = !quiet && typeof siphon !== 'undefined' && siphon &&
-      siphon.equipped && siphon.pointer !== null && siphonAvailable();
+      siphon.equipped && siphonAvailable();
     var moving = available && siphon.flow > 0;
     var transfer = moving ? Math.min(1, siphon.flow / Math.max(1, dt * 6200)) : 0;
     siphonAudioFlow += (transfer - siphonAudioFlow) * (1 - Math.exp(-dt * (moving ? 12 : 24)));

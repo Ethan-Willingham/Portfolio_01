@@ -481,6 +481,88 @@
     return false;
   }
 
+  // Moving rig contact must wake resting water immediately, even below the
+  // general activity speed gate. Limit this work to the rig's swept footprint.
+  var liquidRigLastX = null, liquidRigLastY = null, liquidRigTouch = false;
+  function liquidRigContactTick() {
+    liquidRigTouch = false;
+    if (!player || gameWon || LIQUID_DBG_NO_PLAYER) { liquidRigLastX = null; return; }
+    var px = player.x, py = player.y;
+    var ox = liquidRigLastX === null ? px : liquidRigLastX;
+    var oy = liquidRigLastX === null ? py : liquidRigLastY;
+    liquidRigLastX = px; liquidRigLastY = py;
+    if (Math.abs(px - ox) + Math.abs(py - oy) > TILE * 4) { ox = px; oy = py; }
+    var moving = Math.abs(px - ox) + Math.abs(py - oy) > 0.02;
+    var l = Math.min(px, ox) - 4, r = Math.max(px, ox) + PLAYER_W + 4;
+    var t = Math.min(py, oy) - 4, b = Math.max(py, oy) + PLAYER_H + 4;
+    var woke = 0, radius = LIQUID_CELL * LIQUID_PDELTA * 0.85;
+    for (var i = 0; i < liquidCount; i++) {
+      var x = liquidX[i], y = liquidY[i];
+      if (x < l || x > r || y < t || y > b) continue;
+      if (!moving && !liquidMinerContains(x, y, radius)) continue;
+      liquidRigTouch = true;
+      if (!liquidSleeping[i]) continue;
+      liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
+      if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+      else liquidOpsOverflow = true;
+      woke++;
+    }
+    if (woke) liquidMutationSeq++;
+  }
+
+  function liquidMinerRect(which, pad) {
+    var l = which ? LIQUID_MINER_TRACK_L : LIQUID_MINER_HULL_L;
+    var r = which ? LIQUID_MINER_TRACK_R : LIQUID_MINER_HULL_R;
+    var t = which ? LIQUID_MINER_TRACK_T : LIQUID_MINER_HULL_T;
+    var b = which ? LIQUID_MINER_TRACK_B : LIQUID_MINER_HULL_B;
+    return [player.x + (player.dir < 0 ? PLAYER_W - r : l) - pad,
+      player.y + t - pad, player.x + (player.dir < 0 ? PLAYER_W - l : r) + pad,
+      player.y + b + pad];
+  }
+  function liquidMinerContains(x, y, radius) {
+    if (!player || gameWon || LIQUID_DBG_NO_PLAYER) return false;
+    var lx = x - player.x, ly = y - player.y, p = radius + 0.15;
+    if (player.dir < 0) lx = PLAYER_W - lx;
+    return (lx >= LIQUID_MINER_HULL_L - p && lx <= LIQUID_MINER_HULL_R + p &&
+      ly >= LIQUID_MINER_HULL_T - p && ly <= LIQUID_MINER_HULL_B + p) ||
+      (lx >= LIQUID_MINER_TRACK_L - p && lx <= LIQUID_MINER_TRACK_R + p &&
+      ly >= LIQUID_MINER_TRACK_T - p && ly <= LIQUID_MINER_TRACK_B + p);
+  }
+  function liquidMinerExitClear(x, y, tx, ty, radius) {
+    var steps = Math.max(1, Math.ceil(Math.hypot(tx - x, ty - y) / Math.max(1, radius)));
+    for (var s = 1; s <= steps; s++) {
+      var px = x + (tx - x) * s / steps, py = y + (ty - y) * s / steps;
+      if (liquidWorldSolidAt(px - radius, py) || liquidWorldSolidAt(px + radius, py) ||
+          liquidWorldSolidAt(px, py - radius) || liquidWorldSolidAt(px, py + radius)) return false;
+    }
+    return true;
+  }
+  function liquidProjectMiner(x, y, vx, vy, radius) {
+    if (!liquidMinerContains(x, y, radius)) return null;
+    var best = Infinity, result = null, vlen = Math.hypot(player.vx, player.vy);
+    for (var rect = 0; rect < 2; rect++) {
+      var box = liquidMinerRect(rect, radius + 0.3);
+      for (var face = 0; face < 4; face++) {
+        var tx = Math.max(box[0], Math.min(box[2], x));
+        var ty = Math.max(box[1], Math.min(box[3], y));
+        var nx = 0, ny = 0;
+        if (face === 0) { tx = box[0]; nx = -1; }
+        if (face === 1) { tx = box[2]; nx = 1; }
+        if (face === 2) { ty = box[1]; ny = -1; }
+        if (face === 3) { ty = box[3]; ny = 1; }
+        if (liquidMinerContains(tx, ty, radius)) continue;
+        var dx = tx - x, dy = ty - y;
+        // Prefer the advancing face: a moving track plows water ahead,
+        // while a stationary hull simply clears its nearest open face.
+        var score = Math.hypot(dx, dy) - (vlen > 0.5 ? (dx * player.vx + dy * player.vy) / vlen * 0.65 : 0);
+        if (score >= best || !liquidMinerExitClear(x, y, tx, ty, radius)) continue;
+        var relative = Math.min(0, (vx - player.vx) * nx + (vy - player.vy) * ny);
+        best = score; result = [tx, ty, vx - nx * relative, vy - ny * relative];
+      }
+    }
+    return result;
+  }
+
   function liquidGridWorldSolid(gx, gy) {
     // Tile-only for the grid boundary bounce. The miner is handled by the
     // wake function (eject); making it a "solid" here caused the boundary
@@ -1373,7 +1455,7 @@
       vx *= -bounce;
       vy *= -bounce;
       liquidAeration[i] = Math.min(1, liquidAeration[i] + 0.12);
-      if (liquidSolidAt(x, y, r)) {
+      if (liquidSolidAt(x, y, r) && !liquidMinerContains(x, y, r)) {
         var nudges = LIQ_NUDGES;
         for (var ni = 0; ni < 8; ni++) {
           var n = nudges[ni];
@@ -1386,6 +1468,11 @@
           }
         }
       }
+    }
+    var projected = liquidProjectMiner(x, y, vx, vy, r);
+    if (projected) {
+      x = projected[0]; y = projected[1]; vx = projected[2]; vy = projected[3];
+      liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
     }
     if (x < r) { x = r; vx = Math.abs(vx) * bounce; }
     var maxX = COLS * TILE - r;
@@ -1529,7 +1616,7 @@
     // gate, explosions, rocket wash. SOFT only thaws + holds the settle
     // timer: streamed fills/drains/sweeps (ADD/REMOVE ops), so a pond
     // arriving on screen stays serene instead of sloshing awake.
-    var hard = false, soft = false;
+    var hard = liquidRigTouch, soft = false;
     // v25.93 BANYA: inside the bathhouse scene the water NEVER settles:
     // sleeping particles still carry mass, so a half-asleep tub froze into
     // a tilted sculpture the convection could not level. In-scene = hard
@@ -2011,7 +2098,7 @@
     var playerCalm = !player ||
       (Math.abs(player.vx) < LIQUID_SIM_PLAYER_VEL_GATE &&
        Math.abs(player.vy) < LIQUID_SIM_PLAYER_VEL_GATE * 4);
-    var noPerturb = !explosions.length &&
+    var noPerturb = !liquidRigTouch && !explosions.length &&
       !(rocketIntensity > 0.02 && player && player.thrusting);
     // Idle = every particle asleep, no add/remove this frame, player calm,
     // nothing perturbing the water — the GPU sim step would be a no-op, so
@@ -2103,6 +2190,7 @@
     // v24.145 — drive the water state machine (calm ramp + freeze latch)
     // before either solver path runs; uses the REAL frame dt, not the
     // debug-kit injected one (state timers are wall-clock).
+    liquidRigContactTick();
     liquidStateTick(dt);
     // v24.150 — orphan wake (housekeeping; skipped while the whole body is
     // frozen — a frozen lake has no draining support to lose).
@@ -2165,7 +2253,7 @@
     var playerCalm = !player ||
       (Math.abs(player.vx) < LIQUID_SIM_PLAYER_VEL_GATE &&
        Math.abs(player.vy) < LIQUID_SIM_PLAYER_VEL_GATE * 4);
-    var noPerturb = !explosions.length &&
+    var noPerturb = !liquidRigTouch && !explosions.length &&
       !(rocketIntensity > 0.02 && player && player.thrusting);
     if (!LIQUID_DBG_NO_IDLESKIP && awakeCount === 0 && playerCalm && noPerturb) {
       liquidSimSkipFrames++;
@@ -2232,7 +2320,8 @@
       // probes (and up to 9× that when a particle is stuck)" to "only
       // the active swimmers", which is a small fraction of N.
       for (var mi = liquidCount - 1; mi >= 0; mi--) {
-        if (liquidFrozen[mi] || liquidSleeping[mi]) continue;
+        if (liquidFrozen[mi]) continue;
+        if (liquidSleeping[mi] && !liquidMinerContains(liquidX[mi], liquidY[mi], LIQUID_CELL * LIQUID_PDELTA * 0.85)) continue;
         if (!liquidMoveParticle(mi, stepDt)) removeLiquidParticle(mi);
       }
       perfMark('liquids.move', _lts);

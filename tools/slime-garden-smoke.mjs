@@ -97,20 +97,24 @@ try {
   check('right mouse releases carried slime through real input routing',await game('!siphon.passenger && skySlimes.length===1'));
   const tankBefore=await game('siphonTotal()');
   await game(`siphon.passenger=skySlimeCapture(skySlimes[0].x,skySlimes[0].y,90);
-    var wx=player.x+PLAYER_W/2, wy=slimeGardenLots[0].y1-10;
-    processPointerDown((wx-cam.x)*worldScale,(wy-cam.y)*worldScale,'mouse',false);
-    for(var step=0;step<18;step++)siphonTick(1/60);processPointerUp('mouse');`);
-  check('left mouse draws actual bath liquid into tank',await game(`siphonTotal()>${tankBefore}`));
+    siphonToggle();
+    for(var step=0;step<18;step++){player.x+=1;siphonTick(1/60);}`);
+  check('scoop collects while moving with no held pointer',await game(`siphon.pointer===null && siphonTotal()>${tankBefore}`));
+  check('left mouse remains available for movement',await game('!siphonPointerDown(viewW*0.65,viewH*0.35,"mouse",false)'));
+  const pausedTank=await game('siphonTotal()');
+  await game('gamePaused=true;siphonTick(0.1);gamePaused=false');
+  check('paused scoop leaves liquids untouched',await game(`siphonTotal()===${pausedTank}`));
   const waterBefore=await game('siphon.tank[0]');
   await game(`siphon.passenger=null;siphon.selected=0;
     var wx=player.x+PLAYER_W/2+30, wy=slimeGardenLots[0].y0+10;
     processPointerDown((wx-cam.x)*worldScale,(wy-cam.y)*worldScale,'mouse',true);
     for(var step=0;step<12;step++)siphonTick(1/60);processPointerUp('mouse');`);
-  check('right mouse emits stored liquid without inventing volume',await game(`siphon.tank[0]<${waterBefore} && siphon.tank[0]>=0`));
-  check('HUD input stays separate from equipment aiming',await game(`render();var b=drawHUD._zoomBtn;if(b){processPointerDown(b.x+b.w/2,b.y+b.h/2,'mouse');processPointerUp('mouse');}siphon.pointer===null`));
+  check('right mouse pours downward without inventing volume',await game(`siphon.tank[0]<${waterBefore} && siphon.tank[0]>=0`));
+  check('releasing pour does not restart suction',await game('!siphon.equipped'));
+  check('HUD input stays separate from pouring',await game(`render();var b=drawHUD._zoomBtn;if(b){processPointerDown(b.x+b.w/2,b.y+b.h/2,'mouse');processPointerUp('mouse');}siphon.pointer===null`));
   await game(`var l=slimeGardenLots[0];skySlimes=[];var s=skySlimeSpawn(l.x0+110,l.y1-25);s.age=10;s.entry=0;s.vx=s.vy=0;s.wet=0.3;
     for(var y=l.y1-36;y>l.y1-50;y-=1.25) for(var x=l.x0+3;x<l.x1-3;x+=1.25) addLiquidParticle(0,x,y,0,0,0);
-    player.x=l.x1+3;player.y=l.y0-PLAYER_H;player.renderX=player.x;player.renderY=player.y;cam.snap=true;updateCamera();siphon.noticeT=0;`);
+    player.x=l.x1+3;player.y=l.y0-PLAYER_H;player.renderX=player.x;player.renderY=player.y;cam.snap=true;updateCamera();siphon.noticeT=0;siphonToggle();`);
   await game('gameRafId=requestAnimationFrame(loop)');await sleep(2000);
   await screenshot('bath-and-tool');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -119,6 +123,54 @@ try {
   check('mobile dpad pointer never owns siphon',await game("processPointerDown(DPAD_CX,DPAD_CY,99);var ok=dpadTouchId===99 && siphon.pointer===null;processPointerUp(99);ok"));
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;mineralLiquidReset();mineralLiquidGenerate(true)');
   check('old mined worlds retain every mineral-liquid tier',await game('[2,3,4].every(function(t){return mineralDeposits.some(function(p){return p.type===t;});})'));
-  check('no runtime or shader errors',errors.length===0);
+  check('GPU fluid backend stays active',await game('liquidWGPU.simActive && liquidWGPU.renderActive'));
+  const contact = await game(`(async function(){
+    var l=liquidWGPU, n=20, r=LIQUID_CELL*LIQUID_PDELTA*0.85;
+    var ground=(SKY_ROWS+2)*TILE;
+    player.x=slimeGardenLots[0].x0+160;player.y=ground-PLAYER_H;
+    player.thrusting=false;rocketIntensity=0;explosions=[];skySlimes=[];jelloBodies=[];
+    surfacePonds=[];mineralDeposits=[];mineralLiquidParked={};siphon.equipped=false;
+    cam.snap=true;updateCamera();
+    var results=[];
+    for(var dir of [-1,1]) for(var speed of [2,160,500]) {
+      player.dir=dir;player.vx=dir*speed;player.vy=0;
+      liquidCount=0;liquidOps.length=0;liquidMutationSeq++;liquidOpsOverflow=true;
+      var positions=new Float32Array(n*4), auxiliary=new Float32Array(n*4), flags=new Uint32Array(n);
+      for(var i=0;i<n;i++) {
+        var px=player.x+8+(i%5)*1.25, py=player.y+20+Math.floor(i/5)*1.25;
+        addLiquidParticle(i%5,px,py,0,0,0);liquidSleeping[i]=1;liquidRestFrames[i]=90;
+        positions[i*4]=px;positions[i*4+1]=py;
+        auxiliary[i*4]=4;auxiliary[i*4+2]=px;auxiliary[i*4+3]=py;
+        flags[i]=((i%5)&3)|(((i%5)&4)<<4)|16|(90<<8);
+      }
+      liquidStimSeq=liquidMutationSeq;liquidFrozenAll=true;liquidRigLastX=player.x-dir*0.25;liquidRigLastY=player.y;
+      updateLiquids(1/60);
+      if(liquidFrozenAll) throw new Error('slow rig contact failed to thaw water');
+      // Execute the real compiled collision kernel against sleeping, embedded
+      // particles. It must work independently of a pressure wake threshold.
+      l.queue.writeBuffer(l.buf.pos,0,positions);
+      l.queue.writeBuffer(l.buf.aux,0,auxiliary);
+      l.queue.writeBuffer(l.buf.flag,0,flags);
+      var rb=l.device.createBuffer({size:n*20,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+      var enc=l.device.createCommandEncoder(), pass=enc.beginComputePass();
+      pass.setPipeline(l.collidePipe.collide);pass.setBindGroup(0,l.collideBGs[l.collideBGs.length-1]);
+      pass.dispatchWorkgroups(1);pass.end();
+      enc.copyBufferToBuffer(l.buf.pos,0,rb,0,n*16);enc.copyBufferToBuffer(l.buf.flag,0,rb,n*16,n*4);
+      l.queue.submit([enc.finish()]);await rb.mapAsync(GPUMapMode.READ);
+      var data=rb.getMappedRange(), p=new Float32Array(data,0,n*4), f=new Uint32Array(data,n*16,n);
+      for(var i=0;i<n;i++) {
+        var cpu=liquidProjectMiner(positions[i*4],positions[i*4+1],0,0,r);
+        if(!cpu) throw new Error('fixture expected an overlap');
+        if(liquidMinerContains(p[i*4],p[i*4+1],r)) throw new Error('GPU left water in the rig');
+        if(!liquidMinerExitClear(positions[i*4],positions[i*4+1],p[i*4],p[i*4+1],r)) throw new Error('GPU crossed terrain');
+        if(((f[i]&3)|((f[i]>>4)&4))!==i%5 || (f[i]&16)) throw new Error('GPU changed material or left water sleeping');
+        for(var lane=0;lane<4;lane++) if(Math.abs(p[i*4+lane]-cpu[lane])>0.02) throw new Error('CPU/GPU contact mismatch');
+      }
+      rb.unmap();rb.destroy();results.push({direction:dir,speed:speed,particles:n});
+    }
+    return results;
+  })()`);
+  check('slow/fast rig contact thaws and plows all five fluids on GPU and CPU',contact.length===6);
+  assert.deepEqual(errors, [], 'no runtime or shader errors');
   console.log('Screenshots: '+out);
 } finally {cleanup();}

@@ -383,12 +383,10 @@
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool
       siphon.equipped = true; siphon.power = 0.85; siphon.clock = 0.27;
-      siphon.aimX = (x - cam.x + 110) * worldScale;
-      siphon.aimY = (y - cam.y - 70) * worldScale;
       siphon.tank = [3600, 0, 1400, 2400, 900]; siphon.selected = 0;
       siphon.mode = 'suck'; siphon.passenger = null;
       siphon.notice = 'Passenger secured. Pour to set it in a bath.'; siphon.noticeT = 1;
-      siphon.fx = [{ x: x + 100, y: y - 60, type: 2, t: 0.1, life: 0.3 },
+      siphon.fx = [{ x: x + 20, y: y + 44, type: 2, t: 0.1, life: 0.3 },
         { x: x + 76, y: y - 40, type: 3, t: 0.17, life: 0.3 }];
       siphonDraw();
       ctx.setTransform(dpr, 0, 0, dpr, ox, oy);

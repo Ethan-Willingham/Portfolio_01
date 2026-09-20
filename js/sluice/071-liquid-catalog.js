@@ -17,18 +17,20 @@
     if (liquidWGPU && liquidWGPU.simActive && liquidWGPU.syncReadback) liquidWGPU.syncReadback();
   }
 
-  function liquidToolExtract(x, y, radius, maxCount) {
+  function liquidToolExtract(x, y, radius, maxCount, intake) {
     var counts = [0, 0, 0, 0, 0];
     if (!isFinite(x) || !isFinite(y) || !(radius > 0) || !(maxCount > 0)) return counts;
     liquidToolSync();
     var cap = Math.min(2048, Math.floor(maxCount));
     var r2 = radius * radius;
+    var ry = intake && intake.ry > 0 ? intake.ry : radius;
+    var fromX = intake ? intake.fromX : x, fromY = intake ? intake.fromY : y;
     var candidates = liquidToolCandidates;
     candidates.length = 0;
     for (var i = 0; i < liquidCount; i++) {
       var dx = liquidX[i] - x, dy = liquidY[i] - y;
-      var d2 = dx * dx + dy * dy;
-      if (d2 > r2 || !liquidLineClear(x, y, liquidX[i], liquidY[i])) continue;
+      var d2 = dx * dx + dy * dy * r2 / (ry * ry);
+      if (d2 > r2 || !liquidLineClear(fromX, fromY, liquidX[i], liquidY[i])) continue;
       candidates.push({ index: i, distance: d2 });
     }
     candidates.sort(function (a, b) { return a.distance - b.distance; });
@@ -36,7 +38,11 @@
     indices.length = 0;
     for (var c = 0; c < Math.min(cap, candidates.length); c++) {
       indices.push(candidates[c].index);
-      counts[liquidType[candidates[c].index]]++;
+      var picked = candidates[c].index;
+      counts[liquidType[picked]]++;
+      if (intake && intake.samples && intake.samples.length < 8 && c % 12 === 0) {
+        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] });
+      }
     }
     // Descending original indices remain valid under the solver's swap-remove.
     indices.sort(function (a, b) { return b - a; });

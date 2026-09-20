@@ -38,7 +38,7 @@ idle payout. Copper gives a reachable second goal before the heated drill.
 ## The player's routine
 
 1. Buy the lot at its sign with E or a tap.
-2. Gather lake water or a mineral liquid with the nozzle and pour it into the
+2. Gather lake water or a mineral liquid by switching on the scoop and driving or flying over it. Pour it into the
    bath. The sign lists the recipe; brass marks inside the walls show the
    minimum working level.
 3. Catch a settled sky slime and release it into the bath.
@@ -61,6 +61,19 @@ At completion, the pearl incorporates a real dose of 1,800 liquid particles,
 divided equally among the named recipe liquids. This consumes volume from the
 actual simulation, including parked offscreen liquid. A ready pearl remains
 collectable if the player later moves the slime or drains the bath.
+
+## Scoop controls
+
+F toggles collection beneath and slightly beside the rig. Suction runs while
+moving or hovering and needs no pointer input. Curved gusts and collected drops
+converge beneath the chassis; there is no visible hose or aiming reticle.
+Terrain blocks the intake, so buried liquid still needs an opening.
+
+Hold right mouse to pour straight down. Releasing stops the pump and leaves
+collection off so freshly poured water stays in the bath. R changes the liquid
+chamber. Touch players tap SCOOP or POUR for continuous collection or pouring;
+tapping the active button stops it. The tank stays visible while holding liquid
+or a passenger. A successful slime release stops pouring.
 
 ## Art and interaction amendment
 

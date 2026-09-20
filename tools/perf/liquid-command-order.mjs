@@ -17,6 +17,14 @@ const baseline = path => execFileSync('git', ['show', `${baseRef}:${path}`], { c
 const current = path => readFileSync(resolve(root, path), 'utf8');
 const liquidPath = 'js/liquid-wgpu.js';
 const sources = { before: baseline(liquidPath), after: current(liquidPath) };
+// v28.2 intentionally interpolates the moving rig as well as bath guests.
+// Give the pre-optimization reference that same pose calculation so this
+// regression continues to isolate dispatch ordering and uniform lifetime.
+sources.before = sources.before.replace(
+  'gh[1] = pl.x || 0;\n        gh[2] = pl.y || 0;',
+  'gh[1] = (pl.x || 0) - (pl.vx || 0) * backTime;\n        gh[2] = (pl.y || 0) - (pl.vy || 0) * backTime;'
+);
+
 
 function instrument(source) {
   const marker = '  window.LiquidWGPU = { create: create, stage: STAGE, last: null };';

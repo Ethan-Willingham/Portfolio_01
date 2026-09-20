@@ -67,7 +67,7 @@
       dpad.left = dpad.right = dpad.up = dpad.down = false;
       touch.active = false;
       player.thrusting = false;
-      siphonStop();
+      siphon.equipped = false; siphonStop();
       // Forget any in-flight multi-touch state too — otherwise the next
       // touch after returning to the tab might look like a continuation
       // of a touch the OS already cancelled, and the d-pad would lock on.
@@ -162,7 +162,7 @@
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mouseup', function () { siphonPointerUp('mouse'); });
-    canvas.addEventListener('contextmenu', function (e) { if (siphon.equipped) e.preventDefault(); });
+    canvas.addEventListener('contextmenu', function (e) { if (siphon.equipped || siphonTotal() || siphon.passenger) e.preventDefault(); });
 
     // Mouse wheel — only consumed when the shop is open (so page scrolling
     // outside of an open shop still works). passive:false because we call
@@ -226,7 +226,7 @@
   }
   function handleMouseDown(e) {
     var p = canvasPos(e.clientX, e.clientY);
-    if (e.button === 2 && !siphon.equipped) return;
+    if (e.button === 2 && !siphon.equipped && !siphonTotal() && !siphon.passenger) return;
     processPointerDown(p.x, p.y, 'mouse', e.button === 2);
   }
   function handleMouseMove(e) {

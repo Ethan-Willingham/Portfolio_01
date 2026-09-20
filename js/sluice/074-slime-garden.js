@@ -184,7 +184,7 @@
     lot.status = 'FILL THE BATH';
     slimeGardenCarve(lot);
     slimeGardenSampleT = 0;
-    showMsg('Bath built. ' + (isMobile ? 'Tap SIPHON; choose IN or OUT.' : 'F equips the siphon. Left draws in; right pours.') +
+    showMsg('Bath built. ' + (isMobile ? 'Tap SCOOP, then drive over liquid. POUR empties below the rig.' : 'F toggles the scoop. Drive over liquid; right mouse pours below.') +
       ' Bring ' + recipe.liquidText.toLowerCase() + ' and one settled sky slime.', false,
       { key: 'garden', tag: 'BATH LOTS' });
     if (typeof sfxPlay === 'function') sfxPlay('ui-confirm');
@@ -329,7 +329,7 @@
     if (!slimeGardenHinted && slimeGardenNearest()) {
       slimeGardenHinted = true;
       showMsg('Baths turn sky slimes and mineral liquids into pearls. ' +
-        (isMobile ? 'Tap a sign to build. Tap SIPHON to carry liquid and a settled slime.' : 'E or tap a sign to build. F equips the liquid and slime siphon.'), false,
+        (isMobile ? 'Tap a sign to build. Tap SCOOP to collect liquid and a settled slime as you move.' : 'E or tap a sign to build. F toggles the liquid and slime scoop.'), false,
         { key: 'garden', tag: 'BATH LOTS' });
     }
   }

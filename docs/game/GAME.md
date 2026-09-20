@@ -22,9 +22,12 @@ normal playthrough (see `BALANCE.md`).
 **Surface garden (v28.0):** clay sky slimes arrive like meteors and bounce to rest.
 Four lots west of town become 11-wide, 2-deep stone, copper, iron, and crystal baths.
 Buy land with cash and bring the later baths' construction ores in cargo. The free
-siphon (`F`) draws real liquid with left mouse and pours with right mouse; `R` selects
-a fluid chamber while equipped. It also carries one cooled slime. Touch players tap
-SIPHON, choose IN or OUT, then hold on the world. `E` or a sign tap builds/collects.
+scoop (`F`) collects real liquid beneath and beside the rig as you drive or fly.
+There is no held tool or aiming reticle. Hold right mouse to pour straight down;
+release stops pouring without collecting the same water again. `R` selects a
+fluid chamber. The scoop also carries one cooled slime. Touch players tap SCOOP
+to collect continuously or POUR to dispense; tap the lit button to stop.
+`E` or a sign tap builds/collects.
 
 Fill a bath and add a slime to grow a pearl. Water starts the loop; shallow brine,
 nectar below the heated-drill gate, and deep lumen unlock richer recipes. Each pearl

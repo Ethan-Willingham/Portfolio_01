@@ -1156,8 +1156,8 @@
       var pl = gs.player;
       if (pl && pl.active) {
         gh[0] = 1;
-        gh[1] = pl.x || 0;
-        gh[2] = pl.y || 0;
+        gh[1] = (pl.x || 0) - (pl.vx || 0) * backTime;
+        gh[2] = (pl.y || 0) - (pl.vy || 0) * backTime;
         gh[3] = (pl.dir < 0) ? -1 : 1;
       }
       // rocket vec4 — lanes 4-7: (active, intensity, exDirX, exDirY).
@@ -6293,7 +6293,7 @@ struct P2GParams {
 @group(0) @binding(0) var<uniform> gp : P2GParams;
 @group(0) @binding(1) var<storage, read_write> pos         : array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read_write> aux         : array<vec4<f32>>;
-@group(0) @binding(3) var<storage, read>       flag        : array<u32>;
+@group(0) @binding(3) var<storage, read_write> flag        : array<u32>;
 @group(0) @binding(4) var<storage, read>       terrainMask : array<u32>;
 // Stage 8 — the GameParams uniform (binding 5) carries the player pose so
 // the collide ring can also test the moving miner silhouette.
@@ -6354,6 +6354,60 @@ fn pointInMiner(x : f32, y : f32) -> bool {
   return false;
 }
 
+// A moving hull needs a full geometric exit, not an r-sized static nudge.
+// CPU twin: liquidMinerContains / liquidProjectMiner in 070.
+fn minerRect(which : i32, pad : f32) -> vec4<f32> {
+  let l = select(MINER_HULL_L, MINER_TRACK_L, which == 1);
+  let r = select(MINER_HULL_R, MINER_TRACK_R, which == 1);
+  let t = select(MINER_HULL_T, MINER_TRACK_T, which == 1);
+  let b = select(MINER_HULL_B, MINER_TRACK_B, which == 1);
+  let mirrored = gameP.player.w < 0.0;
+  return vec4<f32>(gameP.player.y + select(l, PLAYER_W - r, mirrored) - pad,
+    gameP.player.z + t - pad, gameP.player.y + select(r, PLAYER_W - l, mirrored) + pad,
+    gameP.player.z + b + pad);
+}
+fn minerContains(p : vec2<f32>, radius : f32) -> bool {
+  if (gameP.player.x < 0.5) { return false; }
+  let a = minerRect(0, radius + 0.15);
+  let b = minerRect(1, radius + 0.15);
+  return (all(p >= a.xy) && all(p <= a.zw)) || (all(p >= b.xy) && all(p <= b.zw));
+}
+fn minerExitClear(p : vec2<f32>, q : vec2<f32>, r : f32) -> bool {
+  let steps = max(1.0, ceil(length(q - p) / max(1.0, r)));
+  for (var s : f32 = 1.0; s <= steps; s = s + 1.0) {
+    let v = mix(p, q, s / steps);
+    if (terrainSolidAt(v.x - r, v.y) || terrainSolidAt(v.x + r, v.y) ||
+        terrainSolidAt(v.x, v.y - r) || terrainSolidAt(v.x, v.y + r)) { return false; }
+  }
+  return true;
+}
+fn projectMiner(p : vec2<f32>, vel : vec2<f32>, radius : f32) -> vec4<f32> {
+  if (!minerContains(p, radius)) { return vec4<f32>(p, vel); }
+  let pv = gameP.counts.zw;
+  let vlen = length(pv);
+  var best : f32 = 1e9;
+  var result = vec4<f32>(p, vel);
+  for (var rect : i32 = 0; rect < 2; rect = rect + 1) {
+    let box = minerRect(rect, radius + 0.3);
+    for (var face : i32 = 0; face < 4; face = face + 1) {
+      var q = clamp(p, box.xy, box.zw);
+      var n = vec2<f32>(0.0);
+      if (face == 0) { q.x = box.x; n.x = -1.0; }
+      if (face == 1) { q.x = box.z; n.x = 1.0; }
+      if (face == 2) { q.y = box.y; n.y = -1.0; }
+      if (face == 3) { q.y = box.w; n.y = 1.0; }
+      if (minerContains(q, radius)) { continue; }
+      var score = length(q - p);
+      if (vlen > 0.5) { score = score - dot(q - p, pv) / vlen * 0.65; }
+      if (score >= best || !minerExitClear(p, q, radius)) { continue; }
+      let relative = min(0.0, dot(vel - pv, n));
+      best = score;
+      result = vec4<f32>(q, vel - n * relative);
+    }
+  }
+  return result;
+}
+
 // v26.11 — guests left the terrain probe. v26.05 ran them through the
 // solidRing rollback+reflect path, which is correct for STATIC solids
 // only: when a fast-moving ring sweeps over a still particle, the
@@ -6405,7 +6459,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // call liquidMoveParticle), so the kernel skips exactly that set.
   let sleeping = (fl >> 4u) & 1u;
   let frozen   = (fl >> 5u) & 1u;
-  if (frozen != 0u || sleeping != 0u) { return; }
+  if (frozen != 0u) { return; }
+  if (sleeping != 0u && !minerContains(pos[i].xy, COLLIDE_RADIUS)) { return; }
   if (outOfRegion(pos[i].xy)) { return; }   // v14.31 - skip off-region
 
   let r = COLLIDE_RADIUS;
@@ -6481,7 +6536,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     vx = vx * (-bounce);
     vy = vy * (-bounce);
     aux[i].y = min(1.0, auxv.y + 0.12);
-    if (solidRing(x, y, r)) {
+    if (solidRing(x, y, r) && !minerContains(vec2<f32>(x, y), r)) {
       // 8 nudge directions (CPU LIQ_NUDGES order), first clear one wins.
       var nudged = false;
       let step = r * 0.9;
@@ -6511,6 +6566,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       if (!nudged) { nx = x + step; ny = y + step;
         if (!solidRing(nx, ny, r)) { x = nx; y = ny; nudged = true; } }
     }
+  }
+
+  if (minerContains(vec2<f32>(x, y), r)) {
+    let projected = projectMiner(vec2<f32>(x, y), vec2<f32>(vx, vy), r);
+    x = projected.x; y = projected.y; vx = projected.z; vy = projected.w;
+    flag[i] = fl & 0xff00004fu; // preserve liquid identity/heat; clear rest/sleep
   }
 
   // Preserve the terrain-resolved state. Guest correction runs after the
@@ -8579,7 +8640,7 @@ struct P2GParams {
         { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
         // Stage 8 — the GameParams uniform (binding 5) for the miner test.
         { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },

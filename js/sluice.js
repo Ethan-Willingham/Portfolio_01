@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.1';
+  var GAME_VERSION = 'v28.2';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5500,12 +5500,10 @@
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool
       siphon.equipped = true; siphon.power = 0.85; siphon.clock = 0.27;
-      siphon.aimX = (x - cam.x + 110) * worldScale;
-      siphon.aimY = (y - cam.y - 70) * worldScale;
       siphon.tank = [3600, 0, 1400, 2400, 900]; siphon.selected = 0;
       siphon.mode = 'suck'; siphon.passenger = null;
       siphon.notice = 'Passenger secured. Pour to set it in a bath.'; siphon.noticeT = 1;
-      siphon.fx = [{ x: x + 100, y: y - 60, type: 2, t: 0.1, life: 0.3 },
+      siphon.fx = [{ x: x + 20, y: y + 44, type: 2, t: 0.1, life: 0.3 },
         { x: x + 76, y: y - 40, type: 3, t: 0.17, life: 0.3 }];
       siphonDraw();
       ctx.setTransform(dpr, 0, 0, dpr, ox, oy);
@@ -6408,7 +6406,7 @@
       dpad.left = dpad.right = dpad.up = dpad.down = false;
       touch.active = false;
       player.thrusting = false;
-      siphonStop();
+      siphon.equipped = false; siphonStop();
       // Forget any in-flight multi-touch state too — otherwise the next
       // touch after returning to the tab might look like a continuation
       // of a touch the OS already cancelled, and the d-pad would lock on.
@@ -6503,7 +6501,7 @@
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mouseup', function () { siphonPointerUp('mouse'); });
-    canvas.addEventListener('contextmenu', function (e) { if (siphon.equipped) e.preventDefault(); });
+    canvas.addEventListener('contextmenu', function (e) { if (siphon.equipped || siphonTotal() || siphon.passenger) e.preventDefault(); });
 
     // Mouse wheel — only consumed when the shop is open (so page scrolling
     // outside of an open shop still works). passive:false because we call
@@ -6567,7 +6565,7 @@
   }
   function handleMouseDown(e) {
     var p = canvasPos(e.clientX, e.clientY);
-    if (e.button === 2 && !siphon.equipped) return;
+    if (e.button === 2 && !siphon.equipped && !siphonTotal() && !siphon.passenger) return;
     processPointerDown(p.x, p.y, 'mouse', e.button === 2);
   }
   function handleMouseMove(e) {
@@ -10117,6 +10115,88 @@
     return false;
   }
 
+  // Moving rig contact must wake resting water immediately, even below the
+  // general activity speed gate. Limit this work to the rig's swept footprint.
+  var liquidRigLastX = null, liquidRigLastY = null, liquidRigTouch = false;
+  function liquidRigContactTick() {
+    liquidRigTouch = false;
+    if (!player || gameWon || LIQUID_DBG_NO_PLAYER) { liquidRigLastX = null; return; }
+    var px = player.x, py = player.y;
+    var ox = liquidRigLastX === null ? px : liquidRigLastX;
+    var oy = liquidRigLastX === null ? py : liquidRigLastY;
+    liquidRigLastX = px; liquidRigLastY = py;
+    if (Math.abs(px - ox) + Math.abs(py - oy) > TILE * 4) { ox = px; oy = py; }
+    var moving = Math.abs(px - ox) + Math.abs(py - oy) > 0.02;
+    var l = Math.min(px, ox) - 4, r = Math.max(px, ox) + PLAYER_W + 4;
+    var t = Math.min(py, oy) - 4, b = Math.max(py, oy) + PLAYER_H + 4;
+    var woke = 0, radius = LIQUID_CELL * LIQUID_PDELTA * 0.85;
+    for (var i = 0; i < liquidCount; i++) {
+      var x = liquidX[i], y = liquidY[i];
+      if (x < l || x > r || y < t || y > b) continue;
+      if (!moving && !liquidMinerContains(x, y, radius)) continue;
+      liquidRigTouch = true;
+      if (!liquidSleeping[i]) continue;
+      liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
+      if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+      else liquidOpsOverflow = true;
+      woke++;
+    }
+    if (woke) liquidMutationSeq++;
+  }
+
+  function liquidMinerRect(which, pad) {
+    var l = which ? LIQUID_MINER_TRACK_L : LIQUID_MINER_HULL_L;
+    var r = which ? LIQUID_MINER_TRACK_R : LIQUID_MINER_HULL_R;
+    var t = which ? LIQUID_MINER_TRACK_T : LIQUID_MINER_HULL_T;
+    var b = which ? LIQUID_MINER_TRACK_B : LIQUID_MINER_HULL_B;
+    return [player.x + (player.dir < 0 ? PLAYER_W - r : l) - pad,
+      player.y + t - pad, player.x + (player.dir < 0 ? PLAYER_W - l : r) + pad,
+      player.y + b + pad];
+  }
+  function liquidMinerContains(x, y, radius) {
+    if (!player || gameWon || LIQUID_DBG_NO_PLAYER) return false;
+    var lx = x - player.x, ly = y - player.y, p = radius + 0.15;
+    if (player.dir < 0) lx = PLAYER_W - lx;
+    return (lx >= LIQUID_MINER_HULL_L - p && lx <= LIQUID_MINER_HULL_R + p &&
+      ly >= LIQUID_MINER_HULL_T - p && ly <= LIQUID_MINER_HULL_B + p) ||
+      (lx >= LIQUID_MINER_TRACK_L - p && lx <= LIQUID_MINER_TRACK_R + p &&
+      ly >= LIQUID_MINER_TRACK_T - p && ly <= LIQUID_MINER_TRACK_B + p);
+  }
+  function liquidMinerExitClear(x, y, tx, ty, radius) {
+    var steps = Math.max(1, Math.ceil(Math.hypot(tx - x, ty - y) / Math.max(1, radius)));
+    for (var s = 1; s <= steps; s++) {
+      var px = x + (tx - x) * s / steps, py = y + (ty - y) * s / steps;
+      if (liquidWorldSolidAt(px - radius, py) || liquidWorldSolidAt(px + radius, py) ||
+          liquidWorldSolidAt(px, py - radius) || liquidWorldSolidAt(px, py + radius)) return false;
+    }
+    return true;
+  }
+  function liquidProjectMiner(x, y, vx, vy, radius) {
+    if (!liquidMinerContains(x, y, radius)) return null;
+    var best = Infinity, result = null, vlen = Math.hypot(player.vx, player.vy);
+    for (var rect = 0; rect < 2; rect++) {
+      var box = liquidMinerRect(rect, radius + 0.3);
+      for (var face = 0; face < 4; face++) {
+        var tx = Math.max(box[0], Math.min(box[2], x));
+        var ty = Math.max(box[1], Math.min(box[3], y));
+        var nx = 0, ny = 0;
+        if (face === 0) { tx = box[0]; nx = -1; }
+        if (face === 1) { tx = box[2]; nx = 1; }
+        if (face === 2) { ty = box[1]; ny = -1; }
+        if (face === 3) { ty = box[3]; ny = 1; }
+        if (liquidMinerContains(tx, ty, radius)) continue;
+        var dx = tx - x, dy = ty - y;
+        // Prefer the advancing face: a moving track plows water ahead,
+        // while a stationary hull simply clears its nearest open face.
+        var score = Math.hypot(dx, dy) - (vlen > 0.5 ? (dx * player.vx + dy * player.vy) / vlen * 0.65 : 0);
+        if (score >= best || !liquidMinerExitClear(x, y, tx, ty, radius)) continue;
+        var relative = Math.min(0, (vx - player.vx) * nx + (vy - player.vy) * ny);
+        best = score; result = [tx, ty, vx - nx * relative, vy - ny * relative];
+      }
+    }
+    return result;
+  }
+
   function liquidGridWorldSolid(gx, gy) {
     // Tile-only for the grid boundary bounce. The miner is handled by the
     // wake function (eject); making it a "solid" here caused the boundary
@@ -11009,7 +11089,7 @@
       vx *= -bounce;
       vy *= -bounce;
       liquidAeration[i] = Math.min(1, liquidAeration[i] + 0.12);
-      if (liquidSolidAt(x, y, r)) {
+      if (liquidSolidAt(x, y, r) && !liquidMinerContains(x, y, r)) {
         var nudges = LIQ_NUDGES;
         for (var ni = 0; ni < 8; ni++) {
           var n = nudges[ni];
@@ -11022,6 +11102,11 @@
           }
         }
       }
+    }
+    var projected = liquidProjectMiner(x, y, vx, vy, r);
+    if (projected) {
+      x = projected[0]; y = projected[1]; vx = projected[2]; vy = projected[3];
+      liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
     }
     if (x < r) { x = r; vx = Math.abs(vx) * bounce; }
     var maxX = COLS * TILE - r;
@@ -11165,7 +11250,7 @@
     // gate, explosions, rocket wash. SOFT only thaws + holds the settle
     // timer: streamed fills/drains/sweeps (ADD/REMOVE ops), so a pond
     // arriving on screen stays serene instead of sloshing awake.
-    var hard = false, soft = false;
+    var hard = liquidRigTouch, soft = false;
     // v25.93 BANYA: inside the bathhouse scene the water NEVER settles:
     // sleeping particles still carry mass, so a half-asleep tub froze into
     // a tilted sculpture the convection could not level. In-scene = hard
@@ -11647,7 +11732,7 @@
     var playerCalm = !player ||
       (Math.abs(player.vx) < LIQUID_SIM_PLAYER_VEL_GATE &&
        Math.abs(player.vy) < LIQUID_SIM_PLAYER_VEL_GATE * 4);
-    var noPerturb = !explosions.length &&
+    var noPerturb = !liquidRigTouch && !explosions.length &&
       !(rocketIntensity > 0.02 && player && player.thrusting);
     // Idle = every particle asleep, no add/remove this frame, player calm,
     // nothing perturbing the water — the GPU sim step would be a no-op, so
@@ -11739,6 +11824,7 @@
     // v24.145 — drive the water state machine (calm ramp + freeze latch)
     // before either solver path runs; uses the REAL frame dt, not the
     // debug-kit injected one (state timers are wall-clock).
+    liquidRigContactTick();
     liquidStateTick(dt);
     // v24.150 — orphan wake (housekeeping; skipped while the whole body is
     // frozen — a frozen lake has no draining support to lose).
@@ -11801,7 +11887,7 @@
     var playerCalm = !player ||
       (Math.abs(player.vx) < LIQUID_SIM_PLAYER_VEL_GATE &&
        Math.abs(player.vy) < LIQUID_SIM_PLAYER_VEL_GATE * 4);
-    var noPerturb = !explosions.length &&
+    var noPerturb = !liquidRigTouch && !explosions.length &&
       !(rocketIntensity > 0.02 && player && player.thrusting);
     if (!LIQUID_DBG_NO_IDLESKIP && awakeCount === 0 && playerCalm && noPerturb) {
       liquidSimSkipFrames++;
@@ -11868,7 +11954,8 @@
       // probes (and up to 9× that when a particle is stuck)" to "only
       // the active swimmers", which is a small fraction of N.
       for (var mi = liquidCount - 1; mi >= 0; mi--) {
-        if (liquidFrozen[mi] || liquidSleeping[mi]) continue;
+        if (liquidFrozen[mi]) continue;
+        if (liquidSleeping[mi] && !liquidMinerContains(liquidX[mi], liquidY[mi], LIQUID_CELL * LIQUID_PDELTA * 0.85)) continue;
         if (!liquidMoveParticle(mi, stepDt)) removeLiquidParticle(mi);
       }
       perfMark('liquids.move', _lts);
@@ -12734,18 +12821,20 @@
     if (liquidWGPU && liquidWGPU.simActive && liquidWGPU.syncReadback) liquidWGPU.syncReadback();
   }
 
-  function liquidToolExtract(x, y, radius, maxCount) {
+  function liquidToolExtract(x, y, radius, maxCount, intake) {
     var counts = [0, 0, 0, 0, 0];
     if (!isFinite(x) || !isFinite(y) || !(radius > 0) || !(maxCount > 0)) return counts;
     liquidToolSync();
     var cap = Math.min(2048, Math.floor(maxCount));
     var r2 = radius * radius;
+    var ry = intake && intake.ry > 0 ? intake.ry : radius;
+    var fromX = intake ? intake.fromX : x, fromY = intake ? intake.fromY : y;
     var candidates = liquidToolCandidates;
     candidates.length = 0;
     for (var i = 0; i < liquidCount; i++) {
       var dx = liquidX[i] - x, dy = liquidY[i] - y;
-      var d2 = dx * dx + dy * dy;
-      if (d2 > r2 || !liquidLineClear(x, y, liquidX[i], liquidY[i])) continue;
+      var d2 = dx * dx + dy * dy * r2 / (ry * ry);
+      if (d2 > r2 || !liquidLineClear(fromX, fromY, liquidX[i], liquidY[i])) continue;
       candidates.push({ index: i, distance: d2 });
     }
     candidates.sort(function (a, b) { return a.distance - b.distance; });
@@ -12753,7 +12842,11 @@
     indices.length = 0;
     for (var c = 0; c < Math.min(cap, candidates.length); c++) {
       indices.push(candidates[c].index);
-      counts[liquidType[candidates[c].index]]++;
+      var picked = candidates[c].index;
+      counts[liquidType[picked]]++;
+      if (intake && intake.samples && intake.samples.length < 8 && c % 12 === 0) {
+        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] });
+      }
     }
     // Descending original indices remain valid under the solver's swap-remove.
     indices.sort(function (a, b) { return b - a; });
@@ -15103,7 +15196,7 @@
     lot.status = 'FILL THE BATH';
     slimeGardenCarve(lot);
     slimeGardenSampleT = 0;
-    showMsg('Bath built. ' + (isMobile ? 'Tap SIPHON; choose IN or OUT.' : 'F equips the siphon. Left draws in; right pours.') +
+    showMsg('Bath built. ' + (isMobile ? 'Tap SCOOP, then drive over liquid. POUR empties below the rig.' : 'F toggles the scoop. Drive over liquid; right mouse pours below.') +
       ' Bring ' + recipe.liquidText.toLowerCase() + ' and one settled sky slime.', false,
       { key: 'garden', tag: 'BATH LOTS' });
     if (typeof sfxPlay === 'function') sfxPlay('ui-confirm');
@@ -15248,7 +15341,7 @@
     if (!slimeGardenHinted && slimeGardenNearest()) {
       slimeGardenHinted = true;
       showMsg('Baths turn sky slimes and mineral liquids into pearls. ' +
-        (isMobile ? 'Tap a sign to build. Tap SIPHON to carry liquid and a settled slime.' : 'E or tap a sign to build. F equips the liquid and slime siphon.'), false,
+        (isMobile ? 'Tap a sign to build. Tap SCOOP to collect liquid and a settled slime as you move.' : 'E or tap a sign to build. F toggles the liquid and slime scoop.'), false,
         { key: 'garden', tag: 'BATH LOTS' });
     }
   }
@@ -15426,11 +15519,11 @@
   }
   /* ---- The siphon: separate fluid chambers and one passenger cradle ---- */
   var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0], selected: 0,
-    capacity: 16000, passenger: null, pointer: null, aimX: 0, aimY: 0,
+    capacity: 16000, passenger: null, pointer: null,
     power: 0, carry: 0, capture: 0, released: false, clock: 0, fx: [], notice: '', noticeT: 0 };
   var siphonButtons = [];
   function siphonReset() {
-    siphon.equipped = false; siphon.tank = [0, 0, 0, 0, 0]; siphon.selected = 0;
+    siphon.equipped = false; siphon.mode = 'suck'; siphon.tank = [0, 0, 0, 0, 0]; siphon.selected = 0;
     siphon.passenger = null; siphon.power = 0; siphon.fx = []; siphon.clock = 0;
     siphonStop();
   }
@@ -15444,9 +15537,14 @@
   function siphonTotal() { return siphon.tank.reduce(function (sum, n) { return sum + n; }, 0); }
   function siphonNotice(text) { siphon.notice = text; siphon.noticeT = 2.5; }
   function siphonToggle() {
-    siphonStop(); siphon.equipped = !siphon.equipped;
-    siphon.aimX = viewW * 0.6; siphon.aimY = viewH * 0.5;
-    if (siphon.equipped) siphonNotice(isMobile ? 'Choose IN or OUT, then hold on the world.' : 'Aim and hold: left draws in, right pours. R changes chamber.');
+    var wasScooping = siphon.equipped && siphon.mode === 'suck';
+    siphonStop(); siphon.mode = 'suck'; siphon.equipped = !wasScooping;
+    if (siphon.equipped) siphonNotice('Scoop on. Drive or fly over liquid and settled slimes.');
+  }
+  function siphonPourToggle() {
+    var wasPouring = siphon.equipped && siphon.mode === 'pour';
+    siphonStop(); siphon.mode = 'pour'; siphon.equipped = !wasPouring;
+    if (siphon.equipped) siphonNotice('Pouring below the rig. Tap POUR again to stop.');
   }
   function siphonCycle() {
     for (var i = 1; i <= 5; i++) {
@@ -15459,7 +15557,7 @@
     if (!siphonAvailable()) return false;
     var key = e.key.toLowerCase();
     if (key === 'f') { if (!e.repeat) siphonToggle(); return true; }
-    if (key === 'r' && siphon.equipped) { if (!e.repeat) siphonCycle(); return true; }
+    if (key === 'r' && (siphon.equipped || siphonTotal() > 0 || siphon.passenger)) { if (!e.repeat) siphonCycle(); return true; }
     if (key === 'e' && !e.repeat && slimeGardenInteract()) return true;
     return false;
   }
@@ -15472,48 +15570,34 @@
       var button = siphonButtons[b];
       if (!siphonHit(button, x, y)) continue;
       if (button.action === 'equip') siphonToggle();
-      if (button.action === 'mode') { siphon.mode = siphon.mode === 'suck' ? 'pour' : 'suck'; siphonStop(); }
+      if (button.action === 'mode') siphonPourToggle();
       if (button.action === 'cycle') siphonCycle();
       return true;
     }
-    if (!siphon.equipped || isInDpadZone(x, y) || y > consoleRect().y * consoleScale() - 6) return false;
-    if (siphon.pointer !== null) return true;
-    siphon.pointer = id; siphon.aimX = x; siphon.aimY = y;
-    if (id === 'mouse') siphon.mode = right ? 'pour' : 'suck';
-    siphon.released = false;
+    // Ordinary pointing stays available for driving and drilling. Only a
+    // held right button overrides the scoop to pour straight below the rig.
+    if (id !== 'mouse' || !right || isInDpadZone(x, y) ||
+        y > consoleRect().y * consoleScale() - 6) return false;
+    if (!siphon.equipped && !siphon.passenger && siphonTotal() === 0) return false;
+    siphonStop(); siphon.pointer = id; siphon.mode = 'pour'; siphon.equipped = true;
     return true;
   }
-  function siphonPointerMove(x, y, id) {
-    if (id === siphon.pointer || (id === 'mouse' && siphon.pointer === null)) {
-      siphon.aimX = x; siphon.aimY = y;
-    }
-    return id === siphon.pointer;
-  }
+  function siphonPointerMove(x, y, id) { return id === siphon.pointer; }
   function siphonPointerUp(id) {
     if (id !== siphon.pointer) return false;
-    siphonStop(); return true;
+    // Do not immediately vacuum the liquid that was just poured.
+    siphon.equipped = false; siphonStop(); return true;
   }
   function siphonAim() {
     var cx = player.x + PLAYER_W * 0.5, cy = player.y + PLAYER_H * 0.5;
-    var dx = siphon.aimX / worldScale + cam.x - cx;
-    var dy = siphon.aimY / worldScale + cam.y - cy;
-    var length = Math.sqrt(dx * dx + dy * dy) || 1;
-    dx /= length; dy /= length;
-    var reach = Math.min(length, TILE * 4.8);
-    // Clip against terrain from the miner out. The nozzle cannot vacuum a
-    // pocket through its roof or project a jet through a wall.
-    for (var d = 12; d <= reach; d += 4) {
-      if (liquidWorldSolidAt(cx + dx * d, cy + dy * d)) { reach = Math.max(8, d - 5); break; }
-    }
-    var neck = Math.min(PLAYER_W * 0.65 + 8, Math.max(7, reach - 3));
-    return { cx: cx, cy: cy, nx: cx + dx * neck, ny: cy + dy * neck,
-      x: cx + dx * reach, y: cy + dy * reach, dx: dx, dy: dy, reach: reach };
+    return { cx: cx, cy: cy, nx: cx, ny: player.y + PLAYER_H - 4,
+      x: cx, y: player.y + PLAYER_H + 10, dx: 0, dy: 1, reach: 48 };
   }
   function siphonTick(dt) {
     siphon.flow = 0;
     siphon.clock += dt;
     siphon.noticeT = Math.max(0, siphon.noticeT - dt);
-    var active = siphon.equipped && siphonAvailable() && siphon.pointer !== null;
+    var active = siphon.equipped && siphonAvailable();
     if (!siphonAvailable()) siphonStop();
     siphon.power += ((active ? 1 : 0) - siphon.power) * (1 - Math.exp(-dt * (active ? 16 : 10)));
     for (var f = siphon.fx.length - 1; f >= 0; f--) {
@@ -15523,29 +15607,29 @@
     if (!active) return;
     var a = siphonAim();
     if (siphon.mode === 'suck') {
-      if (siphonTotal() >= siphon.capacity && !siphon.passenger) siphonNotice(isMobile ? 'Tank full. Choose OUT to pour.' : 'Fluid tank full. Right mouse pours a chamber.');
+      if (siphonTotal() >= siphon.capacity) siphonNotice('Tank full. Pour into a bath to make room.');
       siphon.carry += 6200 * siphon.power * dt;
       var count = Math.min(Math.floor(siphon.carry), siphon.capacity - siphonTotal(), 700);
       siphon.carry -= Math.floor(siphon.carry);
       if (count > 0) {
-        var taken = liquidToolExtract(a.x, a.y, 29, count);
+        var samples = [];
+        var taken = liquidToolExtract(a.x, a.y, 42, count, { ry: 38, fromX: a.nx, fromY: a.ny, samples: samples });
         var total = 0;
         for (var t = 0; t < taken.length; t++) {
           siphon.tank[t] += taken[t]; total += taken[t];
           if (taken[t] && siphon.tank[siphon.selected] === 0) siphon.selected = t;
-          if (taken[t]) for (var q = 0; q < Math.min(5, Math.ceil(taken[t] / 15)); q++) {
-            if (siphon.fx.length > 140) break;
-            siphon.fx.push({ x: a.x + (Math.random() - 0.5) * 36, y: a.y + (Math.random() - 0.5) * 30,
-              tx: a.nx, ty: a.ny, type: t, t: 0, life: 0.18 + Math.random() * 0.15 });
-          }
+        }
+        for (var q = 0; q < samples.length && siphon.fx.length < 140; q++) {
+          var sample = samples[q];
+          siphon.fx.push({ x: sample.x, y: sample.y, type: sample.type,
+            t: 0, life: 0.18 + Math.random() * 0.15 });
         }
         siphon.flow = total;
-        if (!total && siphon.clock % 3 < dt) siphonNotice('Bring the intake closer to the liquid.');
       }
       if (!siphon.passenger) {
         siphon.capture += dt;
         if (siphon.capture > 0.5) {
-          var caught = skySlimeCapture(a.x, a.y, 30);
+          var caught = skySlimeCapture(a.x, a.y, 36);
           if (caught) { siphon.passenger = caught; siphonNotice('Passenger secured. Pour to set it in a bath.'); }
           siphon.capture = 0;
         }
@@ -15560,15 +15644,15 @@
           var theta = k / 12 * Math.PI * 2;
           if (liquidWorldSolidAt(rx + Math.cos(theta) * p.r, ry + Math.sin(theta) * p.r)) blocked = true;
         }
-        if (blocked || !liquidLineClear(a.nx, a.ny, rx, ry)) { siphonNotice('Aim into clear space to release the slime.'); return; }
+        if (blocked || !liquidLineClear(a.nx, a.ny, rx, ry)) { siphonNotice('Move over open water or fly higher to release the slime.'); return; }
         if (skySlimeRelease(p, rx, ry, a.dx * 130 + player.vx * 0.3, a.dy * 130)) {
-          siphon.passenger = null; siphon.released = true;
-          siphonNotice('Passenger released. Release the button before pouring liquid.');
+          siphon.passenger = null; siphon.released = true; siphon.equipped = false;
+          siphonNotice('Passenger released.');
         }
       }
     } else if (!siphon.released) {
       var type = siphon.selected;
-      if (siphon.tank[type] < 1) { siphonNotice(isMobile ? 'Empty chamber. Tap TANK to switch.' : 'This chamber is empty. R selects another.'); return; }
+      if (siphon.tank[type] < 1) { siphon.equipped = false; siphonNotice(isMobile ? 'Empty chamber. Tap TANK to switch.' : 'This chamber is empty. R selects another.'); return; }
       siphon.carry += 6200 * siphon.power * dt;
       var wanted = Math.min(Math.floor(siphon.carry), siphon.tank[type], 700);
       siphon.carry -= Math.floor(siphon.carry);
@@ -15578,47 +15662,47 @@
         a.dx * speed + player.vx * 0.35, a.dy * speed + player.vy * 0.2);
       siphon.tank[type] -= sent;
       siphon.flow = sent;
-      if (sent < wanted) siphonNotice('No room at the nozzle. Aim into open space.');
+      if (sent < wanted) siphonNotice('Move over a bath or open ground to pour.');
     }
   }
   function siphonDraw() {
     if (!siphon.equipped || !siphonAvailable()) return;
-    var a = siphonAim(), angle = Math.atan2(a.dy, a.dx);
-    ctx.save();
-    // The hose has slack while idle and draws taut when the pump spools up.
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath(); ctx.moveTo(a.cx - 8, a.cy + 7);
-    ctx.quadraticCurveTo(a.cx - 21, a.cy + 26 - siphon.power * 7, a.nx - a.dx * 12, a.ny - a.dy * 12);
-    ctx.strokeStyle = BLD.outline; ctx.lineWidth = 8; ctx.stroke();
-    ctx.strokeStyle = BLD.metalBase; ctx.lineWidth = 5; ctx.stroke();
-    ctx.save(); ctx.translate(a.nx, a.ny); ctx.rotate(angle);
-    ctx.fillStyle = BLD.outline; ctx.fillRect(-19, -7, 25, 14);
-    ctx.fillStyle = BLD.metalBase; ctx.fillRect(-18, -5, 19, 10);
-    ctx.fillStyle = BLD.metalLight; ctx.fillRect(-17, -5, 18, 2);
-    ctx.fillStyle = BLD.goldBase; ctx.fillRect(-5, -6, 5, 12);
-    ctx.fillStyle = BLD.outline; ctx.fillRect(1, -4, 5, 8);
-    ctx.fillStyle = siphon.mode === 'suck' ? BLD.waterLight : liquidCatalog[siphon.selected].color;
-    ctx.globalAlpha = 0.4 + siphon.power * 0.6; ctx.fillRect(-12, -3, 3, 6);
-    ctx.restore();
-    var col = siphon.mode === 'suck' ? BLD.waterLight : liquidCatalog[siphon.selected].color;
-    ctx.strokeStyle = col; ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.28 + siphon.power * 0.3;
-    ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.moveTo(a.nx, a.ny); ctx.lineTo(a.x, a.y); ctx.stroke(); ctx.setLineDash([]);
-    ctx.beginPath(); ctx.arc(a.x, a.y, 9 + siphon.power * 5, 0, Math.PI * 2); ctx.stroke();
-    if (siphon.mode === 'suck' && siphon.power > 0.03) {
-      for (var w = 0; w < 3; w++) {
-        var progress = (siphon.clock * 1.9 + w / 3) % 1;
-        var x = a.x + (a.nx - a.x) * progress, y = a.y + (a.ny - a.y) * progress;
-        ctx.globalAlpha = Math.sin(progress * Math.PI) * siphon.power * 0.33;
-        ctx.beginPath(); ctx.ellipse(x, y, 4, 18 * (1 - progress) + 3, angle, 0, Math.PI * 2); ctx.stroke();
+    var a = siphonAim();
+    ctx.save(); ctx.lineCap = 'round';
+    // No tool or reticle. Small curved gusts gather under the chassis.
+    if (siphon.mode === 'suck' && siphonTotal() < siphon.capacity && siphon.power > 0.03) {
+      ctx.strokeStyle = BLD.waterLight; ctx.lineWidth = 1.2;
+      for (var w = 0; w < 7; w++) {
+        var theta = Math.PI * (0.05 + w / 6 * 0.90);
+        var ex = a.nx + Math.cos(theta) * 42;
+        var ey = a.ny + Math.sin(theta) * 49;
+        var reach = 1;
+        for (var probe = 0.1; probe <= 1; probe += 0.1) {
+          if (liquidWorldSolidAt(a.nx + (ex - a.nx) * probe, a.ny + (ey - a.ny) * probe)) {
+            reach = Math.max(0, probe - 0.1); break;
+          }
+        }
+        if (reach < 0.15) continue;
+        ex = a.nx + (ex - a.nx) * reach; ey = a.ny + (ey - a.ny) * reach;
+        var t = (siphon.clock * 2.1 + w * 0.27) % 1;
+        var u = Math.min(1, t + 0.24);
+        var bend = Math.cos(theta) * 8 * reach;
+        ctx.globalAlpha = Math.sin(t * Math.PI) * siphon.power * 0.48;
+        ctx.beginPath();
+        for (var seg = 0; seg <= 5; seg++) {
+          var z = t + (u - t) * seg / 5, ease = z * z;
+          var px = ex + (a.nx - ex) * ease + Math.sin(z * Math.PI) * bend;
+          var py = ey + (a.ny - ey) * z;
+          if (!seg) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
       }
     }
-    ctx.globalAlpha = 1;
     for (var i = 0; i < siphon.fx.length; i++) {
       var f = siphon.fx[i], t = f.t / f.life, ease = t * t;
-      var fx = f.x + (a.nx - f.x) * ease, fy = f.y + (a.ny - f.y) * ease - Math.sin(t * Math.PI) * 9;
+      var fx = f.x + (a.nx - f.x) * ease, fy = f.y + (a.ny - f.y) * ease - Math.sin(t * Math.PI) * 7;
       ctx.fillStyle = liquidCatalog[f.type].color; ctx.globalAlpha = 1 - t * 0.55;
-      ctx.beginPath(); ctx.ellipse(fx, fy, 2.3 * (1 - t * 0.5), 1.4, angle, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(fx, fy, 2.3 * (1 - t * 0.5), 1.4, -Math.PI / 2, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
@@ -15639,18 +15723,19 @@
       if (x + w + 8 > padLeft) bottom = Math.min(bottom, DPAD_CY - DPAD_SIZE * 0.85 - 10);
     }
     w = Math.min(w, viewW - 28);
-    var h = siphon.equipped ? (isMobile ? 132 : 126) : 42;
+    var expanded = siphon.equipped || siphonTotal() > 0 || siphon.passenger;
+    var h = expanded ? (isMobile ? 132 : 126) : 42;
     var y = Math.max(56, bottom - h);
     ctx.save();
-    if (!siphon.equipped) {
-      siphonDrawButton(x, y, isMobile ? 106 : 126, 40, isMobile ? 'SIPHON' : 'F  SIPHON', 'equip', false);
+    if (!expanded) {
+      siphonDrawButton(x, y, isMobile ? 106 : 126, 40, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
       ctx.restore(); return;
     }
     ctx.fillStyle = UIT_PANEL; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
     ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
     var bw = Math.floor((w - 16) / 3);
-    siphonDrawButton(x + 4, y + 4, bw, 36, isMobile ? 'STOW' : 'F  STOW', 'equip', true);
-    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, siphon.mode === 'suck' ? 'IN' : 'OUT', 'mode', true);
+    siphonDrawButton(x + 4, y + 4, bw, 36, isMobile ? 'SCOOP' : 'F SCOOP', 'equip', siphon.equipped && siphon.mode === 'suck');
+    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, 'POUR', 'mode', siphon.equipped && siphon.mode === 'pour');
     siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 36, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
     var total = siphonTotal(), info = liquidCatalog[siphon.selected];
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '11px ' + UI_FONT;
@@ -15667,10 +15752,10 @@
     ctx.textAlign = 'left'; ctx.fillStyle = siphon.passenger ? UIT_GOLD : UIT_DIM;
     ctx.fillText(siphon.passenger ? 'PASSENGER  1 / 1' : 'PASSENGER  empty', x + 10, y + 91);
     ctx.fillStyle = UIT_BODY; ctx.font = '10px ' + UI_FONT;
-    var hint = isMobile ? 'Hold on the world to ' + (siphon.mode === 'suck' ? 'draw in' : 'pour') : 'LEFT draw in   RIGHT pour / release';
+    var hint = siphon.equipped ? (siphon.mode === 'suck' ? 'Scooping below as you move' : 'Pouring below the rig') : 'Scoop off. Tank stored.';
     if (isMobile && w < 200) {
-      ctx.fillText('Hold on the world', x + 10, y + 109);
-      ctx.fillText('to ' + (siphon.mode === 'suck' ? 'draw in' : 'pour'), x + 10, y + 123);
+      ctx.fillText(siphon.equipped ? (siphon.mode === 'suck' ? 'Scooping below' : 'Pouring below') : 'Scoop off', x + 10, y + 109);
+      ctx.fillText(siphon.equipped ? 'Tap lit button to stop' : 'Tank stored', x + 10, y + 123);
     } else ctx.fillText(hint, x + 10, y + 111);
     if (siphon.noticeT > 0) {
       var noticeW = Math.min(viewW - 28, isMobile ? w : 490), words = siphon.notice.split(' '), lines = [], line = '';
@@ -15717,7 +15802,7 @@
       ledgerOpen || cargoManifestOpen || bathMode || introPhase !== 'done' ||
       (typeof document !== 'undefined' && document.hidden);
     var available = !quiet && typeof siphon !== 'undefined' && siphon &&
-      siphon.equipped && siphon.pointer !== null && siphonAvailable();
+      siphon.equipped && siphonAvailable();
     var moving = available && siphon.flow > 0;
     var transfer = moving ? Math.min(1, siphon.flow / Math.max(1, dt * 6200)) : 0;
     siphonAudioFlow += (transfer - siphonAudioFlow) * (1 - Math.exp(-dt * (moving ? 12 : 24)));
