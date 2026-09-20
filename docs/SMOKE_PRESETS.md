@@ -195,6 +195,12 @@ The moving chassis joins the existing slime boundary batch so driving through
 smoke displaces it. These are bounded 2D fluid interactions, not a full 3D
 compressible exhaust model. The CPU fallback receives the same bounded jet.
 
+Stock and purchased exhaust share the live surface wind, including gusts and
+direction changes. Every active field refreshes its wind and camera-relative
+surface cutoff even when emission is off or a previous colored plume is fading
+after switching back to stock. Underground smoke stays below the wind cutoff.
+Recipe preview wind settings do not override the game's weather.
+
 ## Verification
 
 - `node tools/sluice-exhaust-smoke.mjs`: export fidelity, crimson and rainbow
@@ -202,7 +208,8 @@ compressible exhaust model. The CPU fallback receives the same bounded jet.
   New Game reset, appearance controls and persistence, isolated fluid resources
   and desktop/phone store and pause controls.
 - `node tools/sluice-smoke-coupling.mjs`: rocket transfer to both smoke fields,
-  direction, release, blockers, cadence, zoom and moving chassis boundaries.
+  direction, release, blockers, cadence, zoom, moving chassis boundaries and
+  live surface wind on active and fading exhaust.
 - `node tools/smoke-presets-smoke.mjs`: retained data, all rendered presets,
   live switching, UI tuning, favorites, downloads, phone layout and game boot.
 - `node tools/perf/smoke-physics.cjs`: measured thermal rise, weight, independent

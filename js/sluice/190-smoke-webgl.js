@@ -2451,6 +2451,17 @@
     }
   }
 
+  // Wind belongs to the world, not an exhaust recipe or its emission switch.
+  // Refresh it for every active field, including a plume fading after equip,
+  // and move the surface cutoff with the camera so cave smoke stays sheltered.
+  function smokeFluidApplyWind(driver) {
+    if (!driver || !driver.config) return;
+    driver.config.wind_x = smokeTune.wind_x;
+    var originY = cam.y - smokeFluidMarginWorldY;
+    var surfaceY = (SKY_ROWS * TILE - originY) / Math.max(1, smokeFluidDomainWorldH);
+    driver.config.wind_above_y = Math.max(0, Math.min(1, 1 - surfaceY));
+  }
+
   // Splat dye + velocity at the rig's exhaust mouth. Rates are per-frame;
   // emitDt scales them so a long frame doesn't dump a huge pulse all at once.
   function smokeFluidEmit(dt) {
@@ -2478,15 +2489,6 @@
         ? Math.min(13, smokeTune.sim_pressure_iters)
         : smokeTune.sim_pressure_iters) | 0;
       SC.SPLAT_RADIUS = smokeTune.sim_splat_radius;
-      // Wind: push dye above the surface via shader uniform — zero extra passes.
-      // u_wind_x is in UV/sec; scale wind_x (which is ~0-0.65) so visible effect.
-      SC.wind_x = smokeTune.wind_x;
-      // Compute the UV Y threshold above which wind applies.
-      // uvY = 1 - syN; surface syN = (surfaceWorldY - domainY) / domainH.
-      var domainY2 = cam.y - smokeFluidMarginWorldY;
-      var domainH2 = smokeFluidDomainWorldH;
-      var surfaceSyN2 = domainH2 > 0 ? (SKY_ROWS * TILE - domainY2) / domainH2 : 0;
-      SC.wind_above_y = Math.max(0, Math.min(1, 1.0 - surfaceSyN2));
     }
     var heavy = smokeHeavyOn();
     if (heavy) {
@@ -2655,6 +2657,7 @@
       var smokeRun = !PERF_SMOKE_IDLE_SKIP || smokeAwakeT > 0;
       var _us5 = performance.now();
       if (smokeRun) {
+        smokeFluidApplyWind(smokeDriver);
         if (smokeDriver.setMovingBodies) smokeDriver.setMovingBodies(smokeFluidMovingBodies(),
           cam.x - smokeFluidMarginWorldX, cam.y - smokeFluidMarginWorldY,
           smokeFluidDomainWorldW, smokeFluidDomainWorldH, smokeStepDt,

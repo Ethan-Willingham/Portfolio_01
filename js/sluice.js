@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.51';
+  var GAME_VERSION = 'v28.52';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -44166,6 +44166,17 @@
     }
   }
 
+  // Wind belongs to the world, not an exhaust recipe or its emission switch.
+  // Refresh it for every active field, including a plume fading after equip,
+  // and move the surface cutoff with the camera so cave smoke stays sheltered.
+  function smokeFluidApplyWind(driver) {
+    if (!driver || !driver.config) return;
+    driver.config.wind_x = smokeTune.wind_x;
+    var originY = cam.y - smokeFluidMarginWorldY;
+    var surfaceY = (SKY_ROWS * TILE - originY) / Math.max(1, smokeFluidDomainWorldH);
+    driver.config.wind_above_y = Math.max(0, Math.min(1, 1 - surfaceY));
+  }
+
   // Splat dye + velocity at the rig's exhaust mouth. Rates are per-frame;
   // emitDt scales them so a long frame doesn't dump a huge pulse all at once.
   function smokeFluidEmit(dt) {
@@ -44193,15 +44204,6 @@
         ? Math.min(13, smokeTune.sim_pressure_iters)
         : smokeTune.sim_pressure_iters) | 0;
       SC.SPLAT_RADIUS = smokeTune.sim_splat_radius;
-      // Wind: push dye above the surface via shader uniform — zero extra passes.
-      // u_wind_x is in UV/sec; scale wind_x (which is ~0-0.65) so visible effect.
-      SC.wind_x = smokeTune.wind_x;
-      // Compute the UV Y threshold above which wind applies.
-      // uvY = 1 - syN; surface syN = (surfaceWorldY - domainY) / domainH.
-      var domainY2 = cam.y - smokeFluidMarginWorldY;
-      var domainH2 = smokeFluidDomainWorldH;
-      var surfaceSyN2 = domainH2 > 0 ? (SKY_ROWS * TILE - domainY2) / domainH2 : 0;
-      SC.wind_above_y = Math.max(0, Math.min(1, 1.0 - surfaceSyN2));
     }
     var heavy = smokeHeavyOn();
     if (heavy) {
@@ -44370,6 +44372,7 @@
       var smokeRun = !PERF_SMOKE_IDLE_SKIP || smokeAwakeT > 0;
       var _us5 = performance.now();
       if (smokeRun) {
+        smokeFluidApplyWind(smokeDriver);
         if (smokeDriver.setMovingBodies) smokeDriver.setMovingBodies(smokeFluidMovingBodies(),
           cam.x - smokeFluidMarginWorldX, cam.y - smokeFluidMarginWorldY,
           smokeFluidDomainWorldW, smokeFluidDomainWorldH, smokeStepDt,
@@ -44600,8 +44603,7 @@
     c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION / rigExhaustMaterial.appearance.lifetime;
     c.VELOCITY_DISSIPATION = recipe.fluid.VELOCITY_DISSIPATION;
     c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * rigExhaustMaterial.tuning.motion + def.scale.values.curl));
-    c.wind_x = recipe.fluid.wind_x || 0;
-    c.wind_above_y = recipe.fluid.wind_above_y || 0;
+    smokeFluidApplyWind(rigExhaustFluid);
     var physics = Object.assign({}, rigExhaustMaterial.physics);
     ['BUOYANCY', 'WEIGHT', 'EDGE_SPIN'].forEach(function (key) { physics[key] *= rigExhaustUnits; });
     rigExhaustFluid.setPhysics(physics, immediate === true ? 0 : 0.35);
@@ -44710,6 +44712,7 @@
       rigExhaustFluid.setLiquidField(liquidX, liquidY, liquidVX, liquidVY, liquidCount,
         ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / (LIQUID_CELL * LIQUID_CELL * LIQUID_PDELTA * LIQUID_PDELTA), liquidFrozen);
     }
+    smokeFluidApplyWind(rigExhaustFluid);
     rocketSmokeCouple(rigExhaustFluid, dt);
     rigExhaustFluid.step(dt);
     rigExhaustDirty = true;

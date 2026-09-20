@@ -61,6 +61,18 @@ async function ev(expression) {
   return r.result?.value;
 }
 const game = source => ev(`__exhaustTest(${JSON.stringify(source)})`);
+async function settleScene() {
+  // Save/death checks can start a real recovery warmup while RAF is stopped.
+  // Complete its readiness gates instead of forcing the loading cover away.
+  await game(`(async function(){
+    var deadline=performance.now()+30000;
+    while(introPhase!=='done'){
+      if(performance.now()>deadline)throw Error('Recovery scene did not finish loading');
+      renderLoadingScene();await new Promise(requestAnimationFrame);
+    }
+    cancelAnimationFrame(gameRafId);gameRafId=0;
+  })()`);
+}
 function check(label, condition) { assert.ok(condition, label); console.log('PASS ' + label); }
 async function screenshot(name) {
   // The game loop is stopped for deterministic checks. Let transaction
@@ -244,8 +256,13 @@ try {
     }finally{SAVE_DISABLED=disabled;}
   })()`));
   check('death recovery keeps purchased exhaust and equipped choice', await game(`(function(){var before=JSON.stringify(rigExhaustSave());gameOver=true;respawnFromDeath();return !gameOver&&JSON.stringify(rigExhaustSave())===before;})()`));
-  await game("shopState='closed';shopOpen=false;ukCatalogReset();introPhase='done';if(window.SluiceLoading)window.SluiceLoading.finish(function(){});");
+  await game("shopState='closed';shopOpen=false;ukCatalogReset();");
 
+  await settleScene();
+
+  // Color/appearance fixtures use still air; the coupling harness exercises
+  // live wind separately so randomized weather cannot sweep these away.
+  await game('smokeTune.wind_x=0;');
   // The real engine emits the chosen source into its own fluid domain. A
   // preset switch must leave both worlds and every GPU allocation intact.
   await game(`money=10000000;RIG_EXHAUST_CATALOG.forEach(function(p){rigExhaustPurchase(p.id);});rigExhaustSelect(${JSON.stringify(velvet.id)});`);
@@ -355,7 +372,9 @@ try {
   check('exported material forces reach the separate game solver in world units', true);
   check('exhausts have distinct source motion and material behavior beyond color',
     new Set(effectiveMaterials.map(p => JSON.stringify([p.geometry, p.physics, p.curl]))).size === paid.length);
-  await game(`rigExhaustSelect(${JSON.stringify(velvet.id)});shopState='closed';shopOpen=false;ukCatalogReset();introPhase='done';if(window.SluiceLoading)window.SluiceLoading.finish(function(){});`);
+  await game(`rigExhaustSelect(${JSON.stringify(velvet.id)});shopState='closed';shopOpen=false;ukCatalogReset();`);
+  await settleScene();
+  await game('smokeTune.wind_x=0;rigExhaustClear();rigExhaustApply(true);');
   await game(`(async function(){
     player.x=(DECK_LEFT_COL-4)*TILE;player.y=SKY_ROWS*TILE-PLAYER_H;
     player.renderX=player.x;player.renderY=player.y;player.vx=0;player.vy=0;cam.snap=true;updateCamera();

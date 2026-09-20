@@ -106,7 +106,7 @@ try {
     player.drillGlideT=0;player.lastMoveU=true;player.thrusting=true;player.fuel=100;player.vx=player.vy=0;
     player.bodyTiltRender=0;player.x=COLS*TILE/2;player.y=-200;player.renderX=player.x;player.renderY=player.y;
     cam.x=player.x-screenW/2;cam.y=player.y-screenH/2;
-    jelloBodies=[];skySlimes=[];liquidCount=0;smokeTune.diesel_enabled=false;
+    jelloBodies=[];skySlimes=[];liquidCount=0;smokeTune.diesel_enabled=false;smokeTune.wind_x=0;
     smokeFluidEnsure();rigExhaustEnsure();rocketIntensity=0.8;`);
 
   const impulses = await game(`(function(){
@@ -280,8 +280,85 @@ try {
   })()`);
   check('the rig boundary retains identity and uses world motion without camera motion', boundary &&
     boundary.count >= 4 && boundary.stable && boundary.cameraStable && close(boundary.dx, 12), boundary);
+
+  // Exercise the real update path with finite clouds and all emitters off.
+  // Wind must keep acting when emission stops, changes sign, or the player
+  // returns to stock while an older colored plume is still in the air.
+  const wind = await game(`(function(){
+    var drivers=[smokeDriver,rigExhaustFluid],result={cases:{},configs:[]};
+    var cx=COLS*TILE/2,surface=SKY_ROWS*TILE,speed=0.04;
+    player.thrusting=false;player.lastMoveU=false;rocketIntensity=0;
+    smokeTune.enabled=false;smokeTune.diesel_enabled=false;smokeTune.sim_time_scale=1;smokeTune.world_lock=true;
+    RIG_EXHAUST_CATALOG.forEach(function(p){rigExhaustState.owned[p.id]=true;});
+    // An empty underground chamber isolates the surface-wind boundary from
+    // terrain occlusion, without bypassing the game's obstacle painter.
+    for(var r=SKY_ROWS;r<SKY_ROWS+14;r++)for(var c=Math.floor(cx/TILE)-12;c<=Math.floor(cx/TILE)+12;c++)world[r][c]=null;
+    function measure(driver){
+      driver.displayPass();var c=driver.getCanvas(),gl=c.getContext('webgl2')||c.getContext('webgl');
+      var bytes=new Uint8Array(c.width*c.height*4);gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
+      var mass=0,x=0;
+      for(var i=0;i<bytes.length;i+=4){mass+=bytes[i];x+=bytes[i]*(i/4%c.width+0.5);}
+      if(gl.getError())throw Error('Wind cloud readback failed');
+      return {mass:mass,x:cam.x-smokeFluidMarginWorldX+x/mass/c.width*smokeFluidDomainWorldW};
+    }
+    function both(){return drivers.map(measure);}
+    function advance(){for(var frame=0;frame<30;frame++)updateSmoke(1/60);return both();}
+    function delta(start,end){return end.map(function(p,i){return {dx:p.x-start[i].x,retention:p.mass/start[i].mass};});}
+    [['positive',surface-180,speed],['negative',surface-180,-speed],['still',surface-180,0],
+      ['underground',surface+180,speed],['reverseAfterStock',surface-180,speed]].forEach(function(test){
+      rigExhaustSelect('copperhead');
+      cam.x=cx-screenW/2;cam.y=test[1]-screenH/2;
+      smokeFluidEnsure();rigExhaustEnsure();smokeTune.wind_x=test[2];
+      drivers.forEach(function(d){
+        d.clear();d.config.CURL=0;d.config.DENSITY_DISSIPATION=0;d.config.VELOCITY_DISSIPATION=0;
+        d.config.OPTICAL_DENSITY=0;d.setPhysics({},0);
+      });
+      smokeFluidPrevCamX=cam.x;smokeFluidPrevCamY=cam.y;
+      smokeFluidPrevScreenW=screenW;smokeFluidPrevScreenH=screenH;
+      rigExhaustPrevX=cam.x;rigExhaustPrevY=cam.y;smokeObstPrevCamX=NaN;
+      smokeAwakeT=10;rigExhaustAwake=10;updateSmoke(1/60);
+      var uv=smokeFluidWorldToUV(cx,test[1]);
+      drivers.forEach(function(d){var c=d.getCanvas();
+        var radius=100*Math.pow(18/smokeFluidDomainWorldH,2)/Math.max(1,c.width/c.height);
+        d.splat(uv.uvX,uv.uvY,0,0,{r:0.25,g:0.10,b:0.04},radius);
+      });
+      var start=both(),end=advance();result.cases[test[0]]=delta(start,end);
+      if(test[0]==='reverseAfterStock'){
+        rigExhaustSelect('stock');smokeTune.wind_x=-speed;
+        var reversed=advance();result.afterStock=delta(end,reversed);
+        result.stockEquipped=rigExhaustState.equipped==='stock';
+      }
+    });
+    // Every recipe and camera height must read the same current world wind.
+    RIG_EXHAUST_CATALOG.filter(function(p){return !!p.recipe;}).forEach(function(p){
+      [surface-screenH*3,surface-screenH/2,surface+screenH*2].forEach(function(y){
+        cam.y=y;smokeTune.wind_x=-speed;rigExhaustSelect(p.id);
+        smokeAwakeT=2;rigExhaustAwake=2;updateSmoke(1/60);
+        var expected=Math.max(0,Math.min(1,1-(surface-(cam.y-smokeFluidMarginWorldY))/smokeFluidDomainWorldH));
+        result.configs.push({id:p.id,expected:expected,actual:drivers.map(function(d){
+          return {wind:d.config.wind_x,above:d.config.wind_above_y};
+        })});
+      });
+    });
+    return result;
+  })()`);
+  for (const [index, name] of ['ambient', 'custom'].entries()) {
+    const positive = wind.cases.positive[index], negative = wind.cases.negative[index];
+    check(name + ' existing smoke follows positive and negative surface wind with emitters off',
+      positive.dx > 5 && negative.dx < -5 && positive.retention > 0.8 && negative.retention > 0.8,
+      { positive, negative });
+    check(name + ' calm air and underground smoke remain still',
+      Math.abs(wind.cases.still[index].dx) < 1 && Math.abs(wind.cases.underground[index].dx) < 1,
+      { still: wind.cases.still[index], underground: wind.cases.underground[index] });
+    check(name + ' live reversal carries the surviving cloud after equipping stock',
+      wind.stockEquipped && wind.cases.reverseAfterStock[index].dx > 5 &&
+      wind.afterStock[index].dx < -5 && wind.afterStock[index].retention > 0.8, wind.afterStock[index]);
+  }
+  check('all exhaust recipes share the current wind and surface boundary at every camera height',
+    wind.configs.length >= 21 && wind.configs.every(sample => sample.actual.every(c =>
+      close(c.wind, -0.04) && close(c.above, sample.expected))), wind.configs);
   check('browser reports no runtime or shader errors', errors.length === 0, errors);
-  const report = { routing, clouds, boundary };
+  const report = { routing, clouds, boundary, wind: { cases: wind.cases, afterStock: wind.afterStock } };
   if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {

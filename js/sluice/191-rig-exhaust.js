@@ -52,8 +52,7 @@
     c.DENSITY_DISSIPATION = recipe.fluid.DENSITY_DISSIPATION / rigExhaustMaterial.appearance.lifetime;
     c.VELOCITY_DISSIPATION = recipe.fluid.VELOCITY_DISSIPATION;
     c.CURL = Math.max(0, Math.min(50, recipe.fluid.CURL * rigExhaustMaterial.tuning.motion + def.scale.values.curl));
-    c.wind_x = recipe.fluid.wind_x || 0;
-    c.wind_above_y = recipe.fluid.wind_above_y || 0;
+    smokeFluidApplyWind(rigExhaustFluid);
     var physics = Object.assign({}, rigExhaustMaterial.physics);
     ['BUOYANCY', 'WEIGHT', 'EDGE_SPIN'].forEach(function (key) { physics[key] *= rigExhaustUnits; });
     rigExhaustFluid.setPhysics(physics, immediate === true ? 0 : 0.35);
@@ -162,6 +161,7 @@
       rigExhaustFluid.setLiquidField(liquidX, liquidY, liquidVX, liquidVY, liquidCount,
         ox, oy, smokeFluidDomainWorldW, smokeFluidDomainWorldH, 1 / (LIQUID_CELL * LIQUID_CELL * LIQUID_PDELTA * LIQUID_PDELTA), liquidFrozen);
     }
+    smokeFluidApplyWind(rigExhaustFluid);
     rocketSmokeCouple(rigExhaustFluid, dt);
     rigExhaustFluid.step(dt);
     rigExhaustDirty = true;
