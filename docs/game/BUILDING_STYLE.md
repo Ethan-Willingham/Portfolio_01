@@ -339,7 +339,7 @@ bath. The forge has an anvil, weighted hammer animation, and a quench pail.
 These explicit user-operated fixture animations extend the old exterior-only
 animation table; no surface-building theme or palette is changed.
 
-## 18. Bathhouse exterior (v28.19)
+## 18. Bathhouse exterior (v28.21)
 
 The tiered banya uses the gas station canopy's warm timber and red trim family.
 Its painted iron roofs use `redDark` faces, `redDeep` folds and right returns,
@@ -348,4 +348,12 @@ below the brightness of the lanterns and carved window casings. The local
 `tier()` helper in `drawBanyaExterior` composes eight-pixel wood planking,
 corner posts, a shaded right return, and a lower rail. The wider board rhythm
 leaves more red-brown face visible. The plinth uses `drawStoneFoundation` and
-a pale step edge. Preserve the four-tier silhouette and the existing door.
+a pale step edge. A real, unmineable surface apron continues the nearby town
+foundation beneath the bench and tower, including in older saves. Preserve
+ponds when an older world places the banya away from the town.
+
+The entrance is two plain cream linen panels hanging from a visible rod.
+They gather horizontally as the rig approaches, revealing a tall, dark
+doorway and a warm threshold. Use two quiet folds per panel and a slight
+scallop at the hem. Keep the full opening visible, without a deep valance,
+tiebacks, or tassels. Preserve the four-tier silhouette and deliberate entry.

@@ -5,9 +5,9 @@
      of the B6 slice:
 
      EXTERIOR: a tall banya tower drawn on the town surface (deck-relative
-     siting, v25.78). Entry works like the shop (v26.31): a felt CURTAIN
-     gathers open theater-tieback style as the rig approaches (bathDoorT,
-     the shopDoorT ramp; curtain art v26.37), and getting in is deliberate:
+     siting, v25.78). Entry works like the shop: two linen curtain panels
+     slide apart as the rig approaches (bathDoorT, the shopDoorT ramp),
+     and getting in is deliberate:
      click/tap the tower whenever it is on screen (processPointerDown in
      050, beside isPointOnShop), or park at the door and press Enter/E.
      The old walk-in auto-enter is gone.
@@ -35,11 +35,15 @@
   // right of the rightmost left-half pond, clamped left of the deck apron.
   var BANYA_W = 5 * TILE;               // v25.79: skinny tiered tower (160 px base)
   var banyaX = -1;                      // set by bathPickSite()
+  var bathFoundationReady = false;
   var banyaDoorX0 = 0, banyaDoorX1 = 0;
   var BANYA_DOOR_Y0 = SKY_ROWS * TILE - 80;
   var BANYA_DOOR_Y1 = SKY_ROWS * TILE;
   function bathPickSite() {
-    if (banyaX >= 0) return true;
+    if (banyaX >= 0) {
+      if (ENABLE_BATH && !bathFoundationReady) bathLayFoundation();
+      return true;
+    }
     if (typeof surfacePonds === 'undefined' || typeof world === 'undefined' ||
         !world.length) return false;
     // v25.78: the banya must be VISIBLE FROM SPAWN, no commands, no hunting
@@ -70,8 +74,36 @@
     banyaX = col * TILE;
     banyaDoorX0 = banyaX + 100;
     banyaDoorX1 = banyaX + 144;
+    if (ENABLE_BATH) bathLayFoundation();
     try { console.log('[bath] banya sited at cols ' + col + '-' + (col + 6)); } catch (e) {}
     return true;
+  }
+
+  function bathLayFoundation() {
+    var row = world[SKY_ROWS];
+    if (!row || banyaX < 0) return;
+    var col = Math.floor(banyaX / TILE), left = col - 2, right = col + 6;
+    // Continue the nearby town apron through the bench and past the tower.
+    // Older worlds can site the banya across a lake; keep that plinth local.
+    if (left > DECK_RIGHT_COL && left <= DECK_RIGHT_COL + 8) left = DECK_RIGHT_COL + 1;
+    if (right < DECK_LEFT_COL && right >= DECK_LEFT_COL - 8) right = DECK_LEFT_COL - 1;
+    for (var c = Math.max(0, left); c <= Math.min(COLS - 1, right); c++) {
+      var pond = false;
+      for (var p = 0; p < surfacePonds.length; p++) {
+        if (c >= surfacePonds[p].cL - 1 && c <= surfacePonds[p].cR + 1) { pond = true; break; }
+      }
+      if (pond || (row[c] && row[c].type === 'foundation')) continue;
+      row[c] = { type: 'foundation', hp: 999999 };
+      delete terrainClearedKinds[SKY_ROWS + ':' + c];
+      invalidateTerrainAround(SKY_ROWS, c);
+      // A returning rig can be parked in a shallow excavation in this row.
+      if (player && player.x + PLAYER_W > c * TILE && player.x < (c + 1) * TILE &&
+          player.y + PLAYER_H > SKY_ROWS * TILE && player.y < (SKY_ROWS + 1) * TILE) {
+        player.y = player.renderY = SKY_ROWS * TILE - PLAYER_H;
+        player.vy = 0;
+      }
+    }
+    bathFoundationReady = true;
   }
 
   // ---- The pocket TOWER (world tiles; deep in the inert bedrock fill) ----
@@ -389,8 +421,8 @@
     bathPromptT += dt;
     if (!bathMode) {
       if (!bathPickSite()) return false;
-      // v26.31 (owner): entry works like the shop. The felt curtain
-      // gathers open as the rig approaches (same ramp rates as shopDoorT,
+      // Entry works like the shop. The two curtain panels slide apart
+      // as the rig approaches (same ramp rates as shopDoorT,
       // 350) and getting in is DELIBERATE: tap/click the tower (050) or
       // park at the door and press Enter/E/P (the shop's drive-up keys).
       // The old walk-in auto-enter swallowed drive-bys.
@@ -1055,178 +1087,49 @@
     ctx.fillText('Н', cx - 62, gy - 56);
     ctx.fillText('Я', cx - 62, gy - 34);
 
-    // Door (v26.39, owner: "way more attention and detail"): the FELT
-    // CURTAIN detail pass. Two halves gather open theater-tieback style
-    // on bathDoorT (smoothstepped): fuller along the pelmet-hidden rod,
-    // a swag bowing toward center to a pinch at 0.66 height, a skirt
-    // kicking back with a slight hem lift. PIXEL_ART.md applied: ONE
-    // hue-shifted FELT ramp (cool-plum shadow end, warm highlight,
-    // saturation peaking at base), FOUR fold bands per half at uneven
-    // fractions with per-band bow/pinch jitter (anti-banding), seams
-    // embossed as dark+light line pairs (no coloring-book outlines),
-    // shadows as explicit ramp[0] pixels, a wavy hem (dark selout) that
-    // sways under a pixel, a warm rim on the inner edge scaling with
-    // the hall light, a BRASS tieback (left-biased glint, top-left
-    // light) with a hanging tassel, and jamb AO where the fabric tucks
-    // into the frame. The hall behind gets floorboard seams in the lamp
-    // pool; the pelmet gains a top light, gather stripes, under-scallop
-    // shadow and brass drop tassels; a pale nalichnik casing + crown
-    // frames the door in the tower's own window language (win()).
+    // Two plain linen panels on a visible rod. The center seam separates
+    // into a tall, clear opening; only two folds describe each cloth panel.
     var dw = banyaDoorX1 - banyaDoorX0;
     var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
     var cxD = (banyaDoorX0 + banyaDoorX1) / 2;
-    var FELT0 = '#3a1f1e', FELT1 = '#572d26', FELT2 = '#8a4a3a',
-        FELT3 = '#a55f42', FELT4 = '#c17a4e';
-    var BRS0 = '#5c3010', BRS1 = '#a06020', BRS2 = '#e8b040';
-    ctx.fillStyle = '#14100e';
-    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh);
-    if (bathDoorT > 0.04) {
-      for (var dry = 2; dry < dh - 2; dry += 2) {
-        var df = dry / (dh - 3), dwarm = df * df;   // quadratic: top stays dark
-        ctx.fillStyle = 'rgba(' + ((148 + 88 * dwarm) | 0) + ',' +
-          ((66 + 78 * dwarm) | 0) + ',' + ((26 + 40 * dwarm) | 0) + ',' +
-          (bathDoorT * (0.05 + 0.4 * dwarm)).toFixed(3) + ')';
-        ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + dry, dw - 2, 2);
-      }
-      // The oil lamp's pool, with floorboard seams catching the light.
-      ctx.fillStyle = 'rgba(236,176,98,' + (bathDoorT * 0.30).toFixed(3) + ')';
-      ctx.fillRect(banyaDoorX0 + 3, BANYA_DOOR_Y0 + dh - 7, dw - 6, 4);
-      ctx.fillStyle = 'rgba(90,46,20,' + (bathDoorT * 0.55).toFixed(3) + ')';
-      ctx.fillRect(banyaDoorX0 + 4, BANYA_DOOR_Y0 + dh - 9, dw - 8, 1);
-      ctx.fillRect(banyaDoorX0 + 4, BANYA_DOOR_Y0 + dh - 5, dw - 8, 1);
-    }
-    // Fabric geometry. Distances run from the door CENTER toward the
-    // jamb; -1 at closed overlaps the halves a pixel so no light leaks.
     var ct = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);
-    var cHalf = dw / 2;
-    var cdT  = -1 + 14 * ct;          // inner edge along the rod
-    var cdTi = -1 + 19 * ct;          // the tieback pinch (nearest the jamb)
-    var cdB  = -1 + 16 * ct;          // hem corner (skirt kicks back in)
-    var yTie = BANYA_DOOR_Y0 + dh * 0.66;
-    var yBot = BANYA_DOOR_Y0 + dh - 5 * ct;
-    // Four fold bands at uneven fractions of the remaining width (base
-    // widest, per the flat-face rule); jitter breaks concentric edges.
-    var bandFr  = [0, 0.20, 0.56, 0.82];
-    var bandCol = [FELT3, FELT2, FELT1, FELT0];
-    function bandD(d, bk) { return d + bandFr[bk] * (cHalf - d); }
-    // Inner-edge trace, rod to hem corner. Each band bows a touch more
-    // and pins its tieback a pixel off its neighbours; the open swag
-    // breathes about a third of a pixel so tied fabric never sits dead.
-    function curtainEdge(dir, bk, asMove, off) {
-      var dT = bandD(cdT, bk) - off, dTi = bandD(cdTi, bk) - off,
-          dB = bandD(cdB, bk) - off;
-      var bow = (5 + 0.8 * bk) * ct + 0.35 * ct * Math.sin(t * 0.8 + dir * 1.7);
-      var yT2 = yTie + ((bk * 7) % 5) - 2;
-      if (asMove) ctx.moveTo(cxD + dir * dT, BANYA_DOOR_Y0);
-      else        ctx.lineTo(cxD + dir * dT, BANYA_DOOR_Y0);
-      ctx.quadraticCurveTo(cxD + dir * ((dT + dTi) / 2 - bow),
-        (BANYA_DOOR_Y0 + yT2) / 2 + 4, cxD + dir * dTi, yT2);
-      ctx.quadraticCurveTo(cxD + dir * (dTi + 1.5),
-        (yT2 + yBot) / 2, cxD + dir * dB, yBot);
-    }
-    // Wavy hem from the band's hem corner back to the jamb floor line;
-    // the wave phase drifts slowly, so the hem sways.
-    function curtainHem(dir, bk) {
-      var jx = cxD + dir * cHalf, fy = BANYA_DOOR_Y0 + dh;
-      var hx = cxD + dir * bandD(cdB, bk), hy = yBot;
-      for (var hs = 1; hs <= 3; hs++) {
-        var nx = hx + (jx - hx) * hs / 3;
-        var ny = hy + (fy - hy) * hs / 3;
-        var mx = hx + (jx - hx) * (hs - 0.5) / 3;
-        var my = hy + (fy - hy) * (hs - 0.5) / 3;
-        ctx.quadraticCurveTo(mx,
-          my - (1.6 + 0.8 * Math.sin(mx * 0.55 + dir * 2.1 + t * 1.15)),
-          nx, ny);
-      }
-    }
-    ctx.save();
-    ctx.beginPath(); ctx.rect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh); ctx.clip();
-    for (var cs = 0; cs < 2; cs++) {
-      var cDir = cs === 0 ? -1 : 1;
-      var jxS = cxD + cDir * cHalf;
-      // Band fills, lit inner band first, deep jamb band last.
-      for (var cb = 0; cb < 4; cb++) {
-        ctx.fillStyle = bandCol[cb];
-        ctx.beginPath();
-        ctx.moveTo(jxS, BANYA_DOOR_Y0);
-        curtainEdge(cDir, cb, false, 0);
-        curtainHem(cDir, cb);
-        ctx.closePath();
-        ctx.fill();
-      }
-      // Embossed fold seams: a ramp[0] crease plus a 1px lit line on
-      // the brighter side (value-step seams, not outlines).
-      ctx.lineWidth = 1.2;
-      for (var sm = 1; sm < 4; sm++) {
-        ctx.strokeStyle = FELT0;
-        ctx.beginPath(); curtainEdge(cDir, sm, true, 0); ctx.stroke();
-        if (sm < 3) {
-          ctx.strokeStyle = sm === 1 ? FELT4 : FELT3;
-          ctx.beginPath(); curtainEdge(cDir, sm, true, 1.3); ctx.stroke();
-        }
-      }
-      // Hem selout in ramp[0] (the fabric's shadow side).
-      ctx.strokeStyle = FELT0; ctx.lineWidth = 1;
+    var panelW = dw / 2 - (dw / 2 - 7) * ct;
+    var clothY = BANYA_DOOR_Y0 + 5, hemY = BANYA_DOOR_Y1 - 6;
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh);
+    // Recessed hall and a lit threshold, readable even in daylight.
+    ctx.fillStyle = BLD.woodDeep;
+    ctx.fillRect(banyaDoorX0 + 3, clothY + 14, dw - 6, dh - 25);
+    ctx.fillStyle = BLD.woodDark;
+    ctx.fillRect(banyaDoorX0 + 3, hemY - 10, dw - 6, 10);
+    ctx.fillStyle = BLD.woodMid;
+    ctx.fillRect(banyaDoorX0 + 3, hemY - 1, dw - 6, 2);
+    for (var side = 0; side < 2; side++) {
+      var px = side === 0 ? banyaDoorX0 : banyaDoorX1 - panelW;
+      ctx.fillStyle = BLD.cream;
       ctx.beginPath();
-      ctx.moveTo(cxD + cDir * cdB, yBot);
-      curtainHem(cDir, 0);
-      ctx.stroke();
-      // Warm rim on the inner edge: the hall's lamp catching the felt.
-      ctx.strokeStyle = 'rgba(255,196,124,' + (0.12 + 0.32 * ct).toFixed(3) + ')';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); curtainEdge(cDir, 0, true, 0); ctx.stroke();
-      // Brass tieback across the bunch + a hanging tassel.
-      if (ct > 0.55) {
-        var cAl = (ct - 0.55) / 0.45;
-        var tbw = cHalf - cdTi + 1;
-        var tbx = cDir < 0 ? cxD - cHalf : cxD + cdTi - 1;
-        ctx.globalAlpha = cAl;
-        ctx.fillStyle = BRS0; ctx.fillRect(tbx, yTie - 3, tbw, 6);
-        ctx.fillStyle = BRS1; ctx.fillRect(tbx, yTie - 2, tbw, 3);
-        ctx.fillStyle = BRS2; ctx.fillRect(tbx + 1, yTie - 2, 2, 1);
-        var tsx = Math.round(cxD + cDir * (cdTi + (cHalf - cdTi) * 0.5));
-        ctx.fillStyle = FELT0; ctx.fillRect(tsx, yTie + 3, 1, 3);
-        ctx.fillStyle = BRS1; ctx.fillRect(tsx - 1, yTie + 6, 3, 3);
-        ctx.fillStyle = BRS2; ctx.fillRect(tsx - 1, yTie + 6, 1, 1);
-        ctx.fillStyle = BRS0;
-        ctx.fillRect(tsx - 1, yTie + 9, 1, 4);
-        ctx.fillRect(tsx + 1, yTie + 9, 1, 4);
-        ctx.fillStyle = BRS1; ctx.fillRect(tsx, yTie + 9, 1, 5);
-        ctx.globalAlpha = 1;
-      }
+      ctx.moveTo(px, clothY); ctx.lineTo(px + panelW, clothY);
+      ctx.lineTo(px + panelW, hemY - 1);
+      ctx.quadraticCurveTo(px + panelW * 0.75, hemY + 1, px + panelW * 0.5, hemY - 1);
+      ctx.quadraticCurveTo(px + panelW * 0.25, hemY + 1, px, hemY - 1);
+      ctx.closePath(); ctx.fill();
+      // Folds narrow as the fabric gathers at the sides of the frame.
+      ctx.fillStyle = BLD.woodPale;
+      ctx.fillRect(px + panelW * 0.24, clothY + 1, Math.max(1, panelW * 0.15), hemY - clothY - 2);
+      ctx.fillRect(px + panelW * 0.68, clothY + 1, Math.max(1, panelW * 0.13), hemY - clothY - 2);
+      ctx.fillStyle = BLD.woodMid;
+      var edge = side === 0 ? px + panelW - 1 : px;
+      ctx.fillRect(edge, clothY + 1, 1, hemY - clothY - 2);
+      // Two small cloth loops make the hanging mechanism unmistakable.
+      ctx.fillStyle = BLD.cream;
+      ctx.fillRect(px + 1, clothY - 3, 2, 3);
+      ctx.fillRect(px + panelW - 3, clothY - 3, 2, 3);
     }
-    // AO where the fabric tucks into the frame (explicit ramp[0]).
-    ctx.fillStyle = FELT0;
-    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, 1, dh);
-    ctx.fillRect(banyaDoorX1 - 1, BANYA_DOOR_Y0, 1, dh);
-    ctx.restore();
-    // Felt pelmet over the lintel: top light, gather stripes, scallop
-    // with an under-shadow, and brass drop tassels at the dips.
-    ctx.fillStyle = FELT2;
-    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, 32);
-    ctx.fillStyle = FELT3;
-    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, 1);
-    ctx.fillStyle = FELT1;
-    for (var pgx = banyaDoorX0 + 7; pgx < banyaDoorX1 - 3; pgx += 10)
-      ctx.fillRect(pgx, BANYA_DOOR_Y0 + 3, 1, 26);
-    ctx.strokeStyle = FELT0; ctx.lineWidth = 1;      // scallop cast shadow
-    ctx.beginPath();
-    ctx.moveTo(banyaDoorX0, BANYA_DOOR_Y0 + 34);
-    ctx.quadraticCurveTo(banyaDoorX0 + 11, BANYA_DOOR_Y0 + 42, banyaDoorX0 + 22, BANYA_DOOR_Y0 + 34);
-    ctx.quadraticCurveTo(banyaDoorX0 + 33, BANYA_DOOR_Y0 + 42, banyaDoorX1, BANYA_DOOR_Y0 + 34);
-    ctx.stroke();
-    ctx.strokeStyle = FELT1; ctx.lineWidth = 3;      // the scallop edge
-    ctx.beginPath();
-    ctx.moveTo(banyaDoorX0, BANYA_DOOR_Y0 + 32);
-    ctx.quadraticCurveTo(banyaDoorX0 + 11, BANYA_DOOR_Y0 + 40, banyaDoorX0 + 22, BANYA_DOOR_Y0 + 32);
-    ctx.quadraticCurveTo(banyaDoorX0 + 33, BANYA_DOOR_Y0 + 40, banyaDoorX1, BANYA_DOOR_Y0 + 32);
-    ctx.stroke();
-    ctx.fillStyle = BRS1;                            // drop tassels at the dips
-    ctx.fillRect(banyaDoorX0 + 10, BANYA_DOOR_Y0 + 37, 2, 4);
-    ctx.fillRect(banyaDoorX0 + 32, BANYA_DOOR_Y0 + 37, 2, 4);
-    ctx.fillStyle = BRS2;
-    ctx.fillRect(banyaDoorX0 + 10, BANYA_DOOR_Y0 + 37, 1, 1);
-    ctx.fillRect(banyaDoorX0 + 32, BANYA_DOOR_Y0 + 37, 1, 1);
+    ctx.fillStyle = BLD.metalDark;
+    ctx.fillRect(banyaDoorX0 - 2, BANYA_DOOR_Y0 + 1, dw + 4, 2);
+    ctx.fillStyle = BLD.goldBase;
+    ctx.fillRect(banyaDoorX0 - 3, BANYA_DOOR_Y0, 3, 4);
+    ctx.fillRect(banyaDoorX1, BANYA_DOOR_Y0, 3, 4);
     // Nalichnik casing: the pale carved door surround, in the same
     // language as the tower's window casings: side boards standing on
     // the step, a head board, and the little crown peak.
@@ -1277,7 +1180,7 @@
       ctx.restore();
     }
 
-    // Entry hint once the door has swung open (tap the tower or press E).
+    // Entry hint once the curtains have opened (tap the tower or press E).
     if (bathDoorT > 0.35 && !bathMode) {
       var pa = 0.55 + 0.35 * Math.sin(bathPromptT * 4);
       ctx.fillStyle = 'rgba(224,176,96,' + pa + ')';

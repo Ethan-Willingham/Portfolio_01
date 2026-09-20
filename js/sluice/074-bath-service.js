@@ -27,7 +27,7 @@
     bathLostWater = 0; bathDrainT = 0; bathWetFloor = []; bathServiceButtons = [];
     bathServed = 0; bathNotice = ''; bathNoticeT = 0; bathIntroSeen = false;
     bathSupplies = [0, 0, 0, 0, 0];
-    banyaX = -1; bathHotTub = null; bathDoorT = 0;
+    banyaX = -1; bathFoundationReady = false; bathHotTub = null; bathDoorT = 0;
     bathCamPin(); bathCamY = -1;
     if (bathFadeEl) bathFadeEl.style.opacity = '0';
   }
@@ -376,7 +376,7 @@
   }
   function bathServiceRestore(data) {
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
-    bathRoomReady = false; banyaX = -1; bathDrainT = 0;
+    bathRoomReady = false; banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
     bathFloorsOwned = [true, false, false, false, false];
     bathSupplies = [0, 0, 0, 0, 0];
     bathFire = 0; bathHeat = 0; bathPour = 0; bathWater = 0; bathLostWater = 0;

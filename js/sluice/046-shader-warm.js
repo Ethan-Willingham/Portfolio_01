@@ -44,7 +44,7 @@
     var passes = [
       ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
       ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
-      ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
+      ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
       ['rain', shaderWarmRain], ['hearth', function () { hearthArtWarm(ctx); }],
       ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
     ];
@@ -99,6 +99,28 @@
   function shaderWarmWorld(ws, ox, oy) {
     ctx.setTransform(ws, 0, 0, ws, -cam.x * ws + ox, -cam.y * ws + oy);
     ctx.imageSmoothingEnabled = true;
+  }
+
+  // Exercise the whole tower and both curtain states even when the spawn
+  // camera only catches its lower tiers. Restore the real scene afterward.
+  function shaderWarmBanya(ws, ox, oy) {
+    if (!ENABLE_BATH || !bathPickSite()) return;
+    var camX = cam.x, camY = cam.y, door = bathDoorT;
+    var night = bathNightOverride, inside = bathMode;
+    try {
+      cam.x = banyaX + BANYA_W / 2 - screenW / 2;
+      cam.y = SKY_ROWS * TILE - 500;
+      bathMode = false;
+      shaderWarmWorld(ws, ox, oy);
+      for (var i = 0; i < 3; i++) {
+        bathDoorT = i / 2;
+        bathNightOverride = i === 2 ? 1 : 0;
+        drawBanyaExterior();
+      }
+    } finally {
+      cam.x = camX; cam.y = camY; bathDoorT = door;
+      bathNightOverride = night; bathMode = inside;
+    }
   }
 
   // Rig art for every drill and booster tier (upgrades swap the art), in the

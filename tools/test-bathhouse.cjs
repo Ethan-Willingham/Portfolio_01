@@ -7,14 +7,14 @@ function fixture(fps = 60) {
   const s = { Math: math, console: { log() {} }, window: {}, performance: { now: () => 1000 },
     canvas: { width: 1000, height: 750, addEventListener() {}, setPointerCapture() {},
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 750 }) }, dpr: 1,
-    TILE: 32, SKY_ROWS: 4, COLS: 320, DECK_CENTER_COL: 160, DECK_LEFT_COL: 149,
+    TILE: 32, SKY_ROWS: 4, COLS: 320, DECK_CENTER_COL: 160, DECK_LEFT_COL: 149, DECK_RIGHT_COL: 171,
     PLAYER_W: 22, PLAYER_H: 26, ENABLE_BATH: true, ENABLE_JELLO: true,
     world: Array.from({length:620},(_,r)=>Array.from({length:320},()=>r<4?null:{type:'dirt',hp:1})),
     surfacePonds: [], terrainClearedKinds: {}, cargo: [], money: 0,
     gameOver: false, gameWon: false, gamePaused: false, player: {x:5200,y:90},
     siphon: {tank:[0,0,0,0,0],passenger:null},
     ORES: {dirt:{hp:1},copper:{value:15},iron:{value:25},amber:{value:80},amethyst:{value:200},gold:{value:150}},
-    showMsg() {}, sfxPlay() {}, saveNow() {}, liquidWGPU:null,
+    showMsg() {}, sfxPlay() {}, saveNow() {}, invalidateTerrainAround() {}, liquidWGPU:null,
     cargoType: unit => typeof unit === 'string' ? unit : unit.type,
     cargoShiny: unit => !!(unit && unit.shiny),
     liquidCount:0, liquidX:[],liquidY:[],liquidType:[],mineralLiquidParked:{},
@@ -38,11 +38,37 @@ function loadBoiler(s) {
   for (const x of [125, 160, 195]) assert(s.hearthLoadCoal('boiler', x, 180));
 }
 function boilerTools(s) { s.forgeGive('flint', 1); s.forgeGive('steel', 1); }
+{
+  const {s}=fixture();
+  const bathCol=s.banyaX/s.TILE;
+  for(let c=s.DECK_RIGHT_COL+1;c<=bathCol+6;c++)
+    assert.equal(s.world[4][c].type,'foundation','continuous apron from town through the whole banya');
+  assert.equal(s.world[4][bathCol+7].type,'dirt','ground beyond the apron stays mineable');
+  assert.equal(s.world[5][bathCol].type,'dirt','only the surface row is reinforced');
+  s.world[4][bathCol]=null;s.terrainClearedKinds['4:'+bathCol]='dirt';
+  s.player.x=bathCol*32;s.player.y=140;s.player.vy=100;
+  s.bathServiceRestore(null);s.bathPickSite();
+  assert.equal(s.world[4][bathCol].type,'foundation','old saves gain the same supporting slab');
+  assert.equal(s.terrainClearedKinds['4:'+bathCol],undefined);
+  assert.equal(s.player.y+s.PLAYER_H,128,'a saved rig in the new slab returns to the surface');
+  assert.equal(s.player.renderY,s.player.y);
+  assert.equal(s.player.vy,0);
+  s.surfacePonds=[{cL:172,cR:172}];s.world[4][172]=null;
+  s.bathServiceRestore(null);s.bathPickSite();
+  assert.equal(s.world[4][172],null,'the connection never fills a pond');
+  s.ENABLE_BATH=false;s.bathServiceRestore(null);s.world[4][bathCol]=null;
+  s.bathPickSite();assert.equal(s.world[4][bathCol],null,'disabled banya does not build');
+  s.ENABLE_BATH=true;s.bathPickSite();
+  assert.equal(s.world[4][bathCol].type,'foundation','enabling a pre-sited banya lays its foundation');
+  console.log('PASS banya foundation, legacy excavation recovery, pond preservation and live enable');
+}
 for (const fps of [30,60,144]) {
   const f=fixture(fps), s=f.s;
-  const guest=s.skySlimeSpawn(); const id=guest.id;
+  s.skySlimeSpawn();
   f.advance(85);
-  assert(s.bathGuests.some(g=>g.s.id===id),'meteor meanders and enters on its own');
+  assert(s.bathGuests.length>0,'meteor meanders and enters on its own');
+  // Natural hops can reorder arrivals; follow a guest who reached the room.
+  const id=s.bathGuests[0].s.id;
   assert.equal(s.bathGuests.length,2,'bounded indoor queue');
   assert(s.bathGuests.every(g=>g.st==='wait'));
   assert.equal(s.money,0,'waiting never earns money');
