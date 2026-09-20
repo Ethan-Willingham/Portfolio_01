@@ -185,8 +185,8 @@ try {
       rebound:cases[0].rebound,minRigHeight:Math.min(...cases.map(l=>l.rigHeight)),
       minBallHeight:Math.min(...cases.map(l=>l.ballHeight)),minTakeoff:Math.min(...cases.map(l=>l.takeoff))};
   }));
-  check('landing springs both miner and guest upward and settles at 30, 60 and 144 Hz',
-    landings.every(l=>l.overlap<.05&&l.rebound>200&&l.rebound<290&&l.rigHeight>23&&l.ballHeight>12&&l.restSpeed<2&&l.supported));
+  check('landing gives both bodies a high rebound and settles at 30, 60 and 144 Hz',
+    landings.every(l=>l.overlap<.05&&l.rebound>295&&l.rebound<350&&l.rigHeight>50&&l.ballHeight>32&&l.restSpeed<2&&l.supported));
   check('slightly misplaced landings allow repeat bounces without sideways kicks',
     landings.every(l=>l.bounces>=2&&l.drift<.05));
   check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));

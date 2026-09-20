@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.33';
+  var GAME_VERSION = 'v28.34';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -66770,7 +66770,10 @@
     1.25,0.98, -0.25,0.98, -0.35,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
   var SKY_SLIME_ROOF_RESTITUTION = 0.96;
-  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.90;
+  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.98;
+  // A compressed guest stores most of the landing energy in its springy
+  // body. Keep only this fraction of normal ground damping under that load.
+  var SKY_SLIME_COMPRESSION_LOSS = 0.20;
   var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
@@ -67189,7 +67192,7 @@
       tileAt(Math.floor((s.y + s.r + share * invMass + 0.08) / TILE), Math.floor(s.x / TILE)) : null;
     if (foot && (foot === 'wall' || foot.type !== 'jello')) {
       var soft = foot !== 'wall' && (foot.type === 'dirt' || foot.type === 'sand');
-      var groundRestitution = s.bounce * (soft ? 0.88 : 1);
+      var groundRestitution = 1 - (1 - s.bounce * (soft ? 0.88 : 1)) * SKY_SLIME_COMPRESSION_LOSS;
       var ballVY = s.vy, rigVY = rvy, contactImpulse = 0;
       for (var pass = 0; pass < 8; pass++) {
         if (ballVY >= rigVY && ballVY <= 0) break;

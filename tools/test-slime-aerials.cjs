@@ -79,7 +79,7 @@ assert(fast.vx>500,'power shots remain possible, with no imposed speed limit');
 const under=airHit(511,179.69,0,40,0,-160).s;
 assert(under.vy< -220,'rising under a falling ball creates a deliberate aerial lift');
 const over=airHit(511,250.47,0,-40,0,160).s;
-assert(over.vy>220&&over.vy<235,'a descending hit pushes the ball down with an elastic underbody rebound');
+assert(over.vy>235&&over.vy<245,'a descending hit pushes the ball down with an elastic underbody rebound');
 const brush=airHit(548.25,220.8,40,100,200,-100).s;
 assert(Math.abs(brush.spin)>.5&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
 const away=airHit(548.25,220.8,300,0,100,0).s;
@@ -146,8 +146,8 @@ for(const fps of [30,60,144]){
     ballHeight=Math.max(ballHeight,487-s.y);
     if(n>fps*9)settledSpeed=Math.max(settledSpeed,Math.abs(w.player.vy),Math.abs(s.vy));
   }
-  assert(rebound>230&&rebound<270&&rigHeight>30,'landing gives the miner a substantial upward bounce');
-  assert(ballHeight>17&&ballHeight<27,'the floor rebound also lifts the guest clear of the ground');
+  assert(rebound>300&&rebound<350&&rigHeight>55,'landing gives the miner a strong upward bounce');
+  assert(ballHeight>34&&ballHeight<45,'the floor rebound also lifts the guest clear of the ground');
   assert(settledSpeed<2&&w.player.onGround,'small contacts settle without perpetual hopping');
   assert(w.skySlimeSupportsRig(w.player.x,w.player.y),'guest counts as real foot support');
   assert(!w.skySlimeSupportsRig(w.player.x+70,w.player.y),'walking away loses support');
