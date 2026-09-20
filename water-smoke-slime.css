@@ -118,3 +118,46 @@ body.toy-expanded { overflow: hidden; }
 @media (prefers-reduced-motion: no-preference) {
   .toy-shell button { transition: color .12s, border-color .12s, background-color .12s; }
 }
+
+/* The exhaust library uses a side panel where there is room to keep playing. */
+.toy-top { flex-wrap: wrap; }
+.toy-rig-controls { display: flex; flex: 1 0 100%; align-items: center; justify-content: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--rule); }
+.toy-rig-controls .toy-chip { min-height: 36px; padding: 6px 10px; }
+.toy-rig-controls .smoke-now { color: var(--accent); min-width: 110px; min-height: 36px; font-family: var(--font-heading); font-size: 17px; }
+.toy-rig-controls label { color: var(--text-faint); font-size: 11px; margin-left: auto; }
+.toy-rig-controls select, #smoke-family { color: var(--text); background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 6px; padding: 9px; }
+.smoke-library-intro > p, .smoke-library-footer p, .smoke-empty { color: var(--text-faint); font: 12px/1.55 var(--font-body); margin: 0 0 12px; }
+.smoke-selection { margin: 16px 0; }
+.smoke-selection h3 { color: var(--text-bright); font: 24px/1.2 var(--font-heading); margin: 0 0 6px; }
+.smoke-selection p { min-height: 3em; margin: 0; color: var(--text-dim); font: 13px/1.5 var(--font-body); }
+.smoke-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.smoke-actions .toy-chip, .smoke-library-intro .toy-chip, .smoke-library-footer .toy-chip { text-transform: none; }
+.smoke-filter-label { display: block; color: var(--text-faint); font: 10px var(--font-mono); margin: 18px 0 8px; }
+#smoke-family { width: 100%; min-height: 40px; }
+.smoke-catalog { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.toy-panel .smoke-recipe { justify-content: flex-start; min-height: 43px; text-align: left; text-transform: none; padding: 7px 9px; font-size: 12px; }
+.smoke-recipe-swatch { display: block; flex: 0 0 18px; height: 24px; border-radius: 50% 50% 35% 35%; opacity: .85; }
+.smoke-tuning { margin: 0; }
+.smoke-tuning .toy-sliders { margin: 12px 0; gap: 12px; grid-template-columns: 1fr; }
+.smoke-tuning .toy-group { margin: 12px 0; }
+.smoke-library-footer { border-top: 1px solid var(--rule); padding-top: 14px; }
+.smoke-library-footer > label { display: flex; gap: 8px; align-items: center; color: var(--text-dim); font-size: 12px; margin-bottom: 14px; }
+.smoke-library-footer input { accent-color: var(--accent); }
+.smoke-library-footer p { margin: 12px 0 0; }
+@media (min-width: 1050px) {
+  .smoke-library-open .toy-bar { padding-right: 340px; }
+  .smoke-library-open #toy-panel-smoke { inset: 0 0 0 auto; width: 340px; max-height: none; border-width: 0 0 0 1px; border-radius: 0 14px 14px 0; box-shadow: none; }
+  .smoke-library-open .toy-dock { flex-wrap: wrap; gap: 6px; }
+  .smoke-library-open .toy-tools { flex: 1; justify-content: space-between; }
+  .smoke-library-open .toy-palettes { order: 2; width: 100%; margin: 4px 0 0; }
+  .smoke-library-open .toy-material { flex: 1; }
+  .smoke-library-open .toy-scenes .toy-chip { padding: 0 10px; }
+}
+@media (max-width: 520px) {
+  .toy-scenes .toy-chip { padding: 0 7px; font-size: 11px; }
+  .toy-rig-controls { gap: 3px; flex-wrap: wrap; }
+  .toy-rig-controls .toy-chip { padding: 6px; font-size: 10px; }
+  .toy-rig-controls .smoke-now { min-width: 90px; max-width: 118px; font-size: 15px; }
+  .toy-rig-controls label { display: none; }
+  .toy-rig-controls select { max-width: 78px; font-size: 11px; padding: 7px 4px; margin-left: auto; }
+}

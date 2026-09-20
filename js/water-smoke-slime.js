@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.38'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.39'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -10225,6 +10225,7 @@
     waterInputT = performance.now();   // v4.9 liveliness: poking is input
   }
 
+  var pointerSmokeAcc = 0, pointerSmokeAge = 0;
   function toolTick(dt) {
     updatePokeGuest();
     if (!pointerDown) return;
@@ -10240,14 +10241,14 @@
       spawnWaterJet(px, py, Math.max(6, brushR * 0.6),
         pvx * 0.35, pvy * 0.35 + 150 * gravMul, n);
     } else if (tool === 'smoke') {
-      // Pointer velocity carries the smoke (Pavel-style): world px/s maps
-      // to texel/s at ~0.28, and world +y (down) is UV -y (down).
-      var pulse = 0.6 + 0.4 * Math.sin(performance.now() * 0.0017);
-      smokePuff(px, py,
-        pvx * 0.28,
-        -pvy * 0.28 + 26 * pulse * (0.25 + 0.75 * gravMul) * presetSmokeLift * presetSmokeScaleObj.lift,
-        presetSmokeColFor ? presetSmokeColFor(pvx, pvy) : SMOKE_COL,
-        0.010 * Math.max(0.6, brushR / 16) * presetSmokeScaleObj.rad);
+      // Use the same recipe for painted smoke and automatic exhaust.
+      pointerSmokeAcc = Math.min(0.1, pointerSmokeAcc + dt * timeMul);
+      while (pointerSmokeAcc >= SMOKE_EMITTER_DT) {
+        pointerSmokeAcc -= SMOKE_EMITTER_DT;
+        pointerSmokeAge += SMOKE_EMITTER_DT;
+        emitSmokeRecipe(px, py, 0, -1, pointerSmokeAge, 0,
+          0.25 + 0.75 * gravMul, Math.max(0.6, brushR / 16), 1, pvx * 0.28, pvy * 0.28);
+      }
     } else if (tool === 'poke') {
       jelloGrabTick(px, py);
       // A carried slime supplies its own surface velocity to the air.
@@ -10401,32 +10402,28 @@
   // "you can barely even see it coming out of the default chimney");
   // waterLook / slimeLook = pure appearance over any behavior preset.
   var SMOKE_SCALES = {
-    'default': { rad: 1,    dye: 1,    lift: 1,    curl: 0,   samples: 1 },
-    billow:    { rad: 1.9,  dye: 0.85, lift: 1.15, curl: 0,   samples: 1 },
-    tower:     { rad: 2.6,  dye: 0.75, lift: 1.8,  curl: 4,   samples: 2 },
-    flood:     { rad: 4.2,  dye: 0.55, lift: 0.9,  curl: -4,  samples: 2 },
-    chill:     { rad: 1.3,  dye: 0.9,  lift: 0.45, curl: -9,  samples: 1 },
-    frenzy:    { rad: 1.45, dye: 1,    lift: 1.35, curl: 18,  samples: 2 }
+    'default': { rad: 1,    dye: 1,    lift: 1,    curl: 0 },
+    billow:    { rad: 1.9,  dye: 0.85, lift: 1.15, curl: 0 },
+    tower:     { rad: 2.6,  dye: 0.75, lift: 1.8,  curl: 4 },
+    flood:     { rad: 4.2,  dye: 0.55, lift: 0.9,  curl: -4 },
+    chill:     { rad: 1.3,  dye: 0.9,  lift: 0.45, curl: -9 },
+    frenzy:    { rad: 1.45, dye: 1,    lift: 1.35, curl: 18 }
   };
   var presetSmokeScaleObj = SMOKE_SCALES['default'];
   var smokeCurlBase = 14;         // what the active smoke MATERIAL wants; scale adds on top
   var presetGravScale = 1;        // water gravity multiplier (tide breathes it)
   var presetWaterTimeScale = 1;   // water clock multiplier (magma runs slow)
-  var presetSmokeColFor = null;   // fn(pvx, pvy) -> {r,g,b} for pointer smoke
-  var presetSmokeLift = 1;        // pointer + emitter lift multiplier (fog sinks at -0.5)
-  var presetEmCol = null;         // emitter color override (aurora rotates it live)
-  var presetEmDensity = 0;        // emitter density override (0 = leave em.density)
-  var presetEmLiftK = 0;          // emitter liftK override (0 = leave em.liftK)
   var presetIdleHold = 0;         // smoke idle-gate override seconds (0 = SMOKE_IDLE_HOLD)
   var waterPresetReassert = null; // re-push overlapping levers after the flow slider
   var presetClock = 0;
   var presetFreezeT = 0;          // deep-freeze progress 0..1
-  var presetFlashT = 0;           // thunderhead countdown
   var smokeCfgDefault = null;     // SmokeFluid.config snapshot, taken pre-first-switch
   var slimeSnap = null;           // jello closure-var snapshot, taken pre-first-switch
 
   function presetSet(sys, name) {
     if (!PRESET_ACTIVE.hasOwnProperty(sys)) return;
+    if (sys === 'smoke' && !window.SmokePresets.byId[name]) return;
+    if (sys === 'smokeScale' && !Object.prototype.hasOwnProperty.call(SMOKE_SCALES, name)) return;
     PRESET_ACTIVE[sys] = name;
     if (sys === 'water') presetApplyWater(name);
     else if (sys === 'waterLook') presetApplyWaterLook(name);
@@ -10600,96 +10597,55 @@
       VELOCITY_DISSIPATION: c.VELOCITY_DISSIPATION, PRESSURE: c.PRESSURE,
       PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS };
   }
+  var smokeRecipe = window.SmokePresets.byId.default;
+  var smokeTuning = { mass: 1, motion: 1, size: 1 };
+  var smokeCleanSwitch = true;
+  var smokeRigMode = 'idle';
+  var smokeRig = { x: 0, y: 0, clock: 0, throttle: 1 };
+
+  function clearSmokeOnly() {
+    if (smokeActive) { SmokeFluid.clear(); SmokeFluid.displayPass(); }
+    smokeAwakeT = 0;
+    smokeWasAwake = false;
+  }
   function presetApplySmoke(name) {
     presetSmokeSnapshot();
+    smokeRecipe = window.SmokePresets.byId[name] || window.SmokePresets.byId.default;
     var c = SmokeFluid && SmokeFluid.config;
     if (!c) return;
-    // Reset to boot, then layer.
     if (smokeCfgDefault) for (var k in smokeCfgDefault) c[k] = smokeCfgDefault[k];
-    c.wind_x = 0; c.wind_above_y = 0;
-    presetSmokeColFor = null; presetSmokeLift = 1;
-    presetEmCol = null; presetEmDensity = 0; presetEmLiftK = 0;
-    presetIdleHold = 0; presetFlashT = 0;
-    if (name === 'ember') {
-      // Born fire-hot, cools to soot. Pointer speed picks the flame color:
-      // slow strokes smolder deep red, fast strokes flash near white.
-      c.CURL = 34; c.DENSITY_DISSIPATION = 0.10;
-      presetEmCol = { r: 0.9, g: 0.30, b: 0.06 }; presetEmLiftK = 1.4;
-      presetSmokeColFor = function (pvx, pvy) {
-        var s = Math.min(1, Math.hypot(pvx, pvy) / 900);
-        return { r: 0.55 + 0.40 * s, g: 0.10 + 0.55 * s, b: 0.03 + 0.45 * s };
-      };
-    } else if (name === 'ink') {
-      // Sumi ink in still water: no lift, strokes die where you leave
-      // them, blooms feather for most of a minute.
-      c.DENSITY_DISSIPATION = 0.02; c.VELOCITY_DISSIPATION = 1.3; c.CURL = 3;
-      presetSmokeLift = 0; presetIdleHold = 45;
-      presetEmCol = { r: 0.10, g: 0.14, b: 0.45 };
-      presetSmokeColFor = function () { return { r: 0.05, g: 0.08, b: 0.22 }; };
-    } else if (name === 'aurora') {
-      // Northern lights: continuous low-luminance hue slide on ribbons
-      // that ride the engine's never-used wind lever. Tick owns the hue.
-      c.VELOCITY_DISSIPATION = 0.005; c.CURL = 8; c.DENSITY_DISSIPATION = 0.08;
-      c.wind_x = 0.012; c.wind_above_y = 0.05;
-      presetEmCol = { r: 0.1, g: 0.5, b: 0.3 };
-      presetSmokeColFor = function () { return presetEmCol; };
-    } else if (name === 'fog') {
-      // Dry ice: heavier than air, pours downhill, banks on walls and
-      // creeps flat across standing water (already a smoke obstacle).
-      c.CURL = 4; c.DENSITY_DISSIPATION = 0.05; c.VELOCITY_DISSIPATION = 0.6;
-      presetSmokeLift = -0.5;
-      presetEmCol = { r: 0.55, g: 0.62, b: 0.55 };
-      presetSmokeColFor = function () { return { r: 0.22, g: 0.25, b: 0.22 }; };
-    } else if (name === 'storm') {
-      // A brooding cell with interior lightning: the flash is one bright
-      // additive splat (a deliberate brief clip that decays), the thunder
-      // is four radial velocity-only shoves.
-      c.CURL = 38; c.DENSITY_DISSIPATION = 1.0;
-      presetEmCol = { r: 0.28, g: 0.26, b: 0.40 }; presetEmDensity = 1.6;
-      presetSmokeColFor = function () { return { r: 0.24, g: 0.22, b: 0.34 }; };
-      presetFlashT = 3 + Math.random() * 4;
-    }
-    // The size layer stacks on whatever curl the material just chose.
+    for (var key in smokeRecipe.fluid) c[key] = smokeRecipe.fluid[key];
+    presetIdleHold = smokeRecipe.source.idleHold;
     smokeCurlBase = c.CURL;
     presetApplySmokeScale(PRESET_ACTIVE.smokeScale);
+    if (smokeCleanSwitch) clearSmokeOnly();
+    emitters.forEach(function (em) { if (em.kind === 'smoke') { em.age = 0; em.acc = 0; } });
   }
   function presetApplySmokeScale(name) {
-    // Snapshot BEFORE the first config mutation from either layer, or a
-    // size preset chosen first poisons the boot snapshot with scaled curl.
     presetSmokeSnapshot();
-    presetSmokeScaleObj = SMOKE_SCALES[name] || SMOKE_SCALES['default'];
+    presetSmokeScaleObj = SMOKE_SCALES[name] || SMOKE_SCALES.default;
     var c = SmokeFluid && SmokeFluid.config;
-    if (c) {
-      var curl = smokeCurlBase + presetSmokeScaleObj.curl;
-      c.CURL = curl < 0 ? 0 : (curl > 50 ? 50 : curl);
-    }
+    if (c) c.CURL = Math.max(0, Math.min(50, smokeCurlBase * smokeTuning.motion + presetSmokeScaleObj.curl));
   }
   function presetTickSmoke(dt) {
-    var name = PRESET_ACTIVE.smoke;
-    if (name === 'aurora' && presetEmCol) {
-      // Low-luminance HSV sweep, green -> teal -> violet band.
-      var h = (presetClock * 14) % 360;
-      var rad = h * Math.PI / 180;
-      presetEmCol.r = 0.10 + 0.09 * Math.max(0, Math.cos(rad));
-      presetEmCol.g = 0.10 + 0.11 * Math.max(0, Math.cos(rad - 2.1));
-      presetEmCol.b = 0.10 + 0.13 * Math.max(0, Math.cos(rad - 4.2));
-    } else if (name === 'storm' && smokeActive) {
-      presetFlashT -= dt;
-      if (presetFlashT <= 0) {
-        presetFlashT = 4 + Math.random() * 5;
-        // Place the flash at an emitter plume if one exists, else upper mid.
-        var fx = worldW * (0.35 + 0.3 * Math.random());
-        var fy = worldH * 0.30;
-        for (var ei = 0; ei < emitters.length; ei++) {
-          if (emitters[ei].kind === 'smoke') { fx = emitters[ei].x; fy = emitters[ei].y - worldH * 0.22; break; }
-        }
-        smokePuff(fx, fy, 0, 0, { r: 0.7, g: 0.7, b: 0.85 }, 0.05);
-        for (var q = 0; q < 4; q++) {
-          var an = q * Math.PI / 2 + Math.random() * 0.6;
-          SmokeFluid.splat(fx / worldW, 1 - fy / worldH,
-            Math.cos(an) * 260, Math.sin(an) * 260, { r: 0, g: 0, b: 0 }, 0.03);
-        }
-      }
+    if (currentScene !== 'rig') return;
+    smokeRig.clock += dt * timeMul;
+    var t = smokeRig.clock;
+    smokeRig.x = worldW * (smokeRigMode === 'drive' ? 0.5 + 0.28 * Math.sin(t * 0.55) : 0.5);
+    smokeRig.y = worldH * (smokeRigMode === 'boost' ? 0.69 + 0.1 * Math.sin(t * 0.8) : 0.81);
+    smokeRig.throttle = smokeRigMode === 'boost' ? 1.5 : smokeRigMode === 'drive' ? 1 : 0.65;
+    if (emitters[0]) { emitters[0].x = smokeRig.x - 12; emitters[0].y = smokeRig.y - 23; }
+  }
+  function emitSmokeRecipe(x, y, dx, dy, age, phase, strength, radius, throttle, carryX, carryY) {
+    var packets = window.SmokePresets.sample(smokeRecipe, age, phase, smokeTuning,
+      presetSmokeScaleObj, throttle);
+    var crossX = -dy, crossY = dx;
+    for (var i = 0; i < packets.length; i++) {
+      var p = packets[i];
+      smokePuff(x + crossX * p.x + dx * p.y, y + crossY * p.x + dy * p.y,
+        (crossX * p.vx + dx * p.vy) * strength + (carryX || 0),
+        -(crossY * p.vx + dy * p.vy) * strength - (carryY || 0), p.color, p.radius * radius);
+      smokeEmitterSplats++;
     }
   }
 
@@ -11007,7 +10963,7 @@
   var PRESET_GROUPS = [
     { sys: 'water', label: 'water', names: ['default', 'blacklight', 'magma', 'freeze', 'tide', 'boil', 'syrup', 'geyser'] },
     { sys: 'waterLook', label: 'water look', names: ['default', 'pearl', 'abyss', 'toxic', 'wine', 'chrome', 'candy'] },
-    { sys: 'smoke', label: 'smoke', names: ['default', 'ember', 'ink', 'aurora', 'fog', 'storm'] },
+    { sys: 'smoke', label: 'smoke', names: window.SmokePresets.recipes.map(function (p) { return p.id; }) },
     { sys: 'smokeScale', label: 'smoke size', names: ['default', 'billow', 'tower', 'flood', 'chill', 'frenzy'] },
     { sys: 'slime', label: 'slime', names: ['default', 'mood', 'lava', 'oobleck', 'clay', 'jelly'] },
     { sys: 'slimeLook', label: 'slime look', names: ['default', 'tiedye', 'static', 'zebra', 'galaxy', 'portal', 'eyes', 'holo'] }
@@ -11037,7 +10993,7 @@
         var chip = document.createElement('button');
         chip.className = 'toy-chip';
         chip.setAttribute('data-preset', grp.sys + ':' + grp.names[n]);
-        chip.textContent = grp.names[n];
+        chip.textContent = grp.sys === 'smoke' ? window.SmokePresets.byId[grp.names[n]].name : grp.names[n];
         (function (sys, name) {
           chip.addEventListener('click', function () { presetSet(sys, name); });
         })(grp.sys, grp.names[n]);
@@ -11257,64 +11213,40 @@
         }
       } else if (em.kind === 'smoke') {
         if (!smokeActive) continue;
-        // A fixed 30 Hz source produces one connected plume. The old
-        // half-second burst injected a huge velocity/dye packet, left a gap,
-        // then repeated, which is exactly the visible "puff, puff" cadence.
-        // Small fixed samples preserve the same fluid solver while removing
-        // that source discontinuity. The accumulator follows simulation time
-        // so the ordinary time slider slows emission and advection together.
-        em.acc = Math.min(SMOKE_EMITTER_DT * 3,
-          (em.acc || 0) + dt * Math.max(0.05, timeMul));
-        var samples = Math.floor(em.acc / SMOKE_EMITTER_DT);
-        if (samples <= 0) continue;
+        // Fixed source time and a bounded splat budget, independent of frame rate.
+        em.acc = Math.min(SMOKE_EMITTER_DT * 3, (em.acc || 0) + dt * Math.max(0.05, timeMul));
+        var samples = Math.min(3, Math.floor(em.acc / SMOKE_EMITTER_DT));
         em.acc -= samples * SMOKE_EMITTER_DT;
-        if (samples > 3) samples = 3;
-        samples = Math.min(4, samples * presetSmokeScaleObj.samples);
         for (var si = 0; si < samples; si++) {
           em.age = (em.age || 0) + SMOKE_EMITTER_DT;
-          var phase = em.phase || 0;
           var dirX = em.dx || 0, dirY = em.dy === undefined ? -1 : em.dy;
           var dirLength = Math.hypot(dirX, dirY) || 1;
-          dirX /= dirLength; dirY /= dirLength;
-          var crossX = -dirY, crossY = dirX;
-          var sourceSlide = Math.sin(em.age * 1.35 + phase * 2.3) * 2.2 +
-            Math.sin(em.age * 3.1 + phase) * 0.8 +
-            Math.sin(em.age * 0.8 + phase) * (em.spread || 0);
-          var sourceX = em.x + crossX * sourceSlide;
-          var sourceY = em.y + crossY * sourceSlide;
-          var sway =
-            Math.sin(em.age * 1.1 + phase * 3.7) * 6.8 +
-            Math.sin(em.age * 2.6 + phase * 1.4) * 2.1;
-          var lift = (0.25 + 0.75 * gravMul) *
-            (11.5 + Math.sin(em.age * 1.7 + phase) * 1.2) *
-            (presetEmLiftK || em.liftK || 1) * presetSmokeLift * presetSmokeScaleObj.lift;
-          // The dark stage needs a light warm-gray field. Dye is split
-          // between a narrow mouth and a softer body so the source stays
-          // legible without turning into a clipped white ball.
-          var base = presetEmCol || em.col || SMOKE_EMITTER_COL;
-          var amount = presetEmDensity || em.density || 1;
-          var dyeK = amount * presetSmokeScaleObj.dye;
-          var mouthDye = {
-            r: base.r * 0.045 * dyeK,
-            g: base.g * 0.045 * dyeK,
-            b: base.b * 0.045 * dyeK
-          };
-          var bodyDye = {
-            r: base.r * 0.16 * dyeK,
-            g: base.g * 0.16 * dyeK,
-            b: base.b * 0.16 * dyeK
-          };
-          var radK = presetSmokeScaleObj.rad * (em.radiusK || 1);
-          smokePuff(sourceX + dirX * 2, sourceY + dirY * 2,
-            (dirX * lift + crossX * sway) * 0.42,
-            -(dirY * lift + crossY * sway) * 0.42, mouthDye, 0.011 * radK);
-          smokePuff(sourceX + dirX * 7 + crossX * sway * 0.08,
-            sourceY + dirY * 7 + crossY * sway * 0.08,
-            dirX * lift + crossX * sway, -(dirY * lift + crossY * sway), bodyDye, 0.025 * radK);
-          smokeEmitterSplats += 2;
+          emitSmokeRecipe(em.x, em.y, dirX / dirLength, dirY / dirLength,
+            em.age, em.phase || 0, (em.liftK || 1) * (0.25 + 0.75 * gravMul),
+            em.radiusK || 1, currentScene === 'rig' ? smokeRig.throttle : 1, 0, 0);
         }
       }
     }
+  }
+
+  function drawSmokeRig() {
+    if (currentScene !== 'rig') return;
+    var x = smokeRig.x, y = smokeRig.y;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = '#171d19';
+    ctx.beginPath(); ctx.roundRect(-31, 6, 62, 15, 7); ctx.fill();
+    ctx.strokeStyle = '#767d71'; ctx.lineWidth = 2;
+    for (var i = -21; i <= 21; i += 14) {
+      ctx.beginPath(); ctx.arc(i, 13, 4, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.fillStyle = '#bc9d65';
+    ctx.beginPath(); ctx.roundRect(-26, -13, 52, 23, 4); ctx.fill();
+    ctx.fillStyle = '#5a675c'; ctx.fillRect(-17, -26, 9, 16);
+    ctx.fillStyle = '#8fb3c7'; ctx.fillRect(5, -9, 15, 11);
+    ctx.strokeStyle = '#d4c4a0'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(27, -4); ctx.lineTo(38, 5); ctx.lineTo(27, 12); ctx.stroke();
+    ctx.restore();
   }
 
   function drawEmitterFixtures() {
@@ -11347,6 +11279,14 @@
     var cool = { r: 0.32, g: 0.46, b: 0.58 };
     if (name === 'blank') {
       setSceneChip('blank');
+      return;
+    }
+    if (name === 'rig') {
+      setGravityUI(1);
+      smokeRig.clock = 0; smokeRig.x = W * 0.5; smokeRig.y = H * 0.81;
+      smokeSource(smokeRig.x - 12, smokeRig.y - 23, 0, -1, 2, null, 0);
+      emitters[0].radiusK = 0.9;
+      setSceneChip('rig');
       return;
     }
     if (name === 'zerog') {
@@ -11488,6 +11428,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, worldW, worldH);
     drawEmitterFixtures();
+    drawSmokeRig();
     drawJelloBlobs();
     drawSlimeLooks();
     drawCursor();
@@ -11652,7 +11593,14 @@
     bootLiquid();
     bootSmoke();
     wireUI();
-    scene('falls');
+    var smokeQuery = new URLSearchParams(location.search);
+    var smokeName = smokeQuery.get('smoke');
+    scene(smokeQuery.get('scene') === 'rig' || window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
+    presetSet('smoke', window.SmokePresets.byId[smokeName] ? smokeName : 'default');
+    if (Object.prototype.hasOwnProperty.call(SMOKE_SCALES, smokeQuery.get('scale'))) presetSet('smokeScale', smokeQuery.get('scale'));
+    ['mass', 'motion', 'size'].forEach(function (key) {
+      if (smokeQuery.has(key)) window.__toy.smokeTune(key, smokeQuery.get(key));
+    });
     // Opt-in browser probe for the public actor-intent seam. It deliberately
     // speaks only in whole-body motion and pose, never solver topology.
     if (location.search.indexOf('actortest=1') >= 0 && jelloBodies[2]) {
@@ -11691,6 +11639,25 @@
           scene: currentScene, tool: tool, paused: userPaused,
           waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles
         };
+      },
+      smokePreset: function () {
+        return { id: PRESET_ACTIVE.smoke, scale: PRESET_ACTIVE.smokeScale,
+          tuning: Object.assign({}, smokeTuning), clean: smokeCleanSwitch, rig: smokeRigMode };
+      },
+      smokeTune: function (key, value) {
+        if (!Object.prototype.hasOwnProperty.call(smokeTuning, key) || !Number.isFinite(+value)) return;
+        smokeTuning[key] = Math.max(0.25, Math.min(2.5, +value));
+        presetApplySmokeScale(PRESET_ACTIVE.smokeScale);
+      },
+      smokeClean: function (value) { smokeCleanSwitch = !!value; },
+      clearSmoke: clearSmokeOnly,
+      smokeRigMode: function (mode) {
+        if (['idle', 'drive', 'boost'].indexOf(mode) >= 0) smokeRigMode = mode;
+      },
+      smokeExport: function () {
+        return JSON.parse(JSON.stringify({ schema: 'sluice-smoke-recipe', version: 1,
+          samplerVersion: window.SmokePresets.version, preset: smokeRecipe,
+          scale: { id: PRESET_ACTIVE.smokeScale, values: presetSmokeScaleObj }, tuning: smokeTuning }));
       },
       scene: scene,
       tool: setTool,

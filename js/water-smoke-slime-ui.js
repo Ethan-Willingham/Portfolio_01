@@ -27,7 +27,8 @@
       falls: 'Drop a slime into the falling water.',
       zerog: 'Pull a slime through the floating water.',
       chimney: 'Move a slime into a plume and watch it split.',
-      spa: 'Drop the top slime into the pool.'
+      spa: 'Drop the top slime into the pool.',
+      rig: 'Try an exhaust at idle, on the move, or under boost.'
     };
     var hints = {
       poke: 'Drag a slime or stir the water.',
