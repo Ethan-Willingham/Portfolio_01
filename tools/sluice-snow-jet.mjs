@@ -87,6 +87,31 @@ try {
   console.log('CONSERVATION',totals,'peak airflow CPU ms',airMs);
   check('jet moves or melts snow without creating or losing its mass',totals.initial===totals.accounted);
   await game('cancelAnimationFrame(hoverRaf)');
+  // Keep altitude controlled, but run the real frame loop, jet and renderer.
+  // This crosses multiple view widths in both directions at 480 world px/s.
+  await game(`while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,true);
+    SNOW_RATE=345;weatherForce=4;weatherSetMood(4,true);player.x=2400;player.y=-650;
+    player.vx=player.vy=0;cam.snap=true;updateCamera();
+    window.flightX=2400;window.flightVX=0;window.flightLast=0;
+    window.pinFlight=function(t){var dt=flightLast?Math.min(.05,(t-flightLast)/1000):0;flightLast=t;
+      flightX+=flightVX*dt;player.x=flightX;player.y=-650;player.vx=flightVX;player.vy=0;
+      player.onGround=false;keys.ArrowUp=true;window.flightRaf=requestAnimationFrame(pinFlight);};
+    window.flightRaf=requestAnimationFrame(pinFlight);
+    window.flightDensity=function(){return snow.grains.filter(function(p){
+      return Math.abs(p.x-player.x-PLAYER_W/2)<180&&Math.abs(p.y-player.y)<140;
+    }).length;};`);
+  await sleep(1800);
+  const baseline=await game('flightDensity()'), densities=[];
+  check('falling snow surrounds the airborne rig',baseline>100);
+  for(const direction of [1,-1]) {
+    await game(`flightVX=${direction*480}`);
+    for(let t=0;t<8;t++) { await sleep(500);densities.push(await game('flightDensity()')); }
+    await screenshot(direction>0?'snow-flight-right':'snow-flight-left');
+  }
+  await game('cancelAnimationFrame(flightRaf);keys.ArrowUp=false');
+  console.log('FLIGHT COVERAGE',{baseline,min:Math.min(...densities),max:Math.max(...densities),stats:await ev('__particleSnow.stats()')});
+  check('snow surrounds the rig throughout left and right jet flight',Math.min(...densities)>baseline*.45);
+  check('flight streams distant flakes out of the active budget',await game('snow.airCount>1000&&snow.grains.length<=SNOW_FLAKE_CAP'));
   assert.equal(errors.length,0,'no runtime or GPU validation errors');
   console.log('PASS live hover and low pass; screenshots '+out);
 } finally { if(errors.length)console.log('ERRORS',errors.slice(0,8));cleanup(); }

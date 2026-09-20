@@ -109,7 +109,7 @@ try {
 
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;liquidToolSync();window.beforeSave=__particleSnow.stats().mass;window.snowEnvelope=JSON.parse(JSON.stringify(saveBuild()));saveApply(snowEnvelope)');
   check('save/load retains exactly the shared snow and airborne mass',await game('__particleSnow.stats().mass===beforeSave && snowEnvelope.rain.snow.version===2'));
-  check('water save does not duplicate snow',await game('snowEnvelope.rain.snow.particles.length/4+snowEnvelope.rain.snow.grains.length===beforeSave'));
+  check('water save does not duplicate snow',await game('snowEnvelope.rain.snow.particles.length/4+snowEnvelope.rain.snow.grains.length+snowEnvelope.rain.snow.airParked.length===beforeSave'));
   await game('clearSnowFixture();liquidToolSync();for(var i=0;i<20;i++)addLiquidParticle(5,rc*TILE+10+(i%5)*2.4,sy-2-Math.floor(i/5)*2.4,0,0,3);window.taken=liquidToolExtract(rc*TILE+15,sy-6,30,7)');
   check('native scoop transfers exactly one water unit per snow particle',await game('taken.length===5 && taken[0]===7 && liquidCount===13 && Array.from(liquidType.slice(0,liquidCount)).every(function(t){return t===5;})'));
   await game('window.beforeMelt=liquidCount;window.mx=liquidX[0];window.my=liquidY[0];snowMeltParticle(0)');

@@ -59,6 +59,21 @@ width, three times the former rate. The denser rest spacing keeps the smaller
 grains together in piles without making each storm three times as deep.
 The initial dusting uses two or three closely spaced rows.
 
+Snowfall covers a moving rectangle of open sky, padded 160 world pixels beyond
+the view. Horizontal flight, climbing, descending and zooming seed only newly
+exposed strips, at a density derived from the snowfall rate and mean fall speed.
+Flakes already in the overlapping area keep their world positions and velocities,
+including the wake cleared by the rig. New snowfall also enters at the top and
+upwind edge. The sky volume reserves a quarter of the airborne budget for drift,
+jet interaction and flakes falling through shafts.
+
+Airborne flakes leaving the simulation window are stored in world-column buckets
+with their position, velocity and flutter phase. Returning restores the same
+flakes before filling any density deficit in newly revealed air. Stored flight
+is paused offscreen, like stored solver snow; it does not become heavy solver
+snow on return. It can thaw during warm weather and is included in saves and
+the total mass cap. `parkedAirborne` in the snow stats reports this storage.
+
 ## Jet airflow
 
 `159-snow-air.js` solves a local 64 by 48 staggered MAC grid at 8 world pixels
@@ -107,7 +122,7 @@ A full weather-water reservoir defers melting with the snow intact. Meltwater
 uses normal water physics, including soil absorption and finite lake storage.
 
 Active snow is capped at 36,000 particles on WebGPU or 7,000 on CPU, with
-5,400 airborne weather flakes and a 120,000-particle total snow allowance.
+5,400 active airborne weather flakes and a 120,000-particle total snow allowance.
 Offscreen particles are parked at their real coordinates and velocities;
 returning to the area restores them into the same solver. Parked snow can
 thaw into parked water. The shared solver reserves 4,096 slots for other liquids.
@@ -141,6 +156,11 @@ soil contact, stored-water drainage and a resting puddle on the live solver.
 `node tools/perf/snow-air.mjs` checks wall flow, recirculation, pressure
 projection, occlusion through a solid roof, window translation and shutdown.
 `node tools/sluice-snow-jet.mjs` runs a controlled live hover and low pass,
-checks entrainment outside the core and exact material accounting, and writes
+checks entrainment outside the core and exact material accounting, then flies
+through several view widths in both directions and checks surrounding snowfall. It writes
 its screenshots to `/tmp/sluice-snow-jet-qa`. Add `--cpu` to exercise the
 same interactions on the CPU solver.
+
+`node tools/test-snow-coverage.cjs` checks sustained sideways travel, reversals,
+unchanged world positions in the overlapping view, offscreen restoration,
+exact atmospheric save/load, zoom, altitude, world edges and particle budgets.
