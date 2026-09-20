@@ -338,3 +338,14 @@ The cast-iron boiler vessel carries a temperature dial and copper pipe to the
 bath. The forge has an anvil, weighted hammer animation, and a quench pail.
 These explicit user-operated fixture animations extend the old exterior-only
 animation table; no surface-building theme or palette is changed.
+
+## 18. Bathhouse exterior (v28.19)
+
+The tiered banya uses the gas station canopy's warm timber and red trim family.
+Its painted iron roofs use `redDark` faces, `redDeep` folds and right returns,
+and restrained `woodBase` / `woodMid` catches on the lit side. Keep the red
+below the brightness of the lanterns and carved window casings. The local
+`tier()` helper in `drawBanyaExterior` composes eight-pixel wood planking,
+corner posts, a shaded right return, and a lower rail. The wider board rhythm
+leaves more red-brown face visible. The plinth uses `drawStoneFoundation` and
+a pale step edge. Preserve the four-tier silhouette and the existing door.

@@ -830,8 +830,8 @@
 
   // ---- Exterior: the tiered tower (v25.79, owner direction) ---------------
   // A skinny, tall, TIERED silhouette: four shrinking timber tiers with
-  // flared iron skirt roofs, a tented top, copper cap and a red star. The
-  // reference is the wooden tiered towers of the Russian North (Kizhi
+  // flared painted-iron skirt roofs, a tented top, copper cap and a red star.
+  // The reference is the wooden tiered towers of the Russian North (Kizhi
   // style), which read pagoda-like from a distance while staying Russian.
   // Paper lanterns hang from every eave tip and light with the real sun:
   // off at noon, fading in through dusk, full at night (bathNightK).
@@ -899,7 +899,10 @@
     }
     function eave(yB, half) {
       var yT = yB - 13;
-      ctx.fillStyle = '#39424c';
+      // Weathered oxide paint shares the station canopy's red-brown ramp.
+      // Keep the right return and the folded lip dark so metal reads apart
+      // from the timber, even when both belong to the same warm family.
+      ctx.fillStyle = BLD.redDark;
       ctx.beginPath();
       ctx.moveTo(cx - half, yB - 9);            // flared left tip
       ctx.lineTo(cx - half + 22, yB);
@@ -908,41 +911,76 @@
       ctx.lineTo(cx + half - 30, yT);
       ctx.lineTo(cx - half + 30, yT);
       ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#2c343c';
+      ctx.strokeStyle = BLD.outline; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = BLD.redDeep;
+      ctx.beginPath();
+      ctx.moveTo(cx + half - 30, yT);
+      ctx.lineTo(cx + half, yB - 9);
+      ctx.lineTo(cx + half - 22, yB);
+      ctx.lineTo(cx + half - 38, yB - 3);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = BLD.redDeep;
       ctx.fillRect(cx - half + 28, yT, half * 2 - 56, 3);
-      ctx.strokeStyle = '#b5723a'; ctx.lineWidth = 2;
+      ctx.fillRect(cx - half + 22, yB - 3, half * 2 - 44, 3);
+      ctx.fillStyle = BLD.woodBase;
+      ctx.fillRect(cx - half + 23, yB - 4, half * 2 - 46, 1);
+      // Sparse standing seams, with small catches on their left edges.
+      for (var ex = cx - half + 42; ex < cx + half - 34; ex += 22) {
+        ctx.fillStyle = BLD.redDeep;
+        ctx.fillRect(ex, yT + 4, 1, 5);
+        ctx.fillStyle = BLD.woodBase;
+        ctx.fillRect(ex - 1, yT + 4, 1, 4);
+      }
+      ctx.strokeStyle = BLD.redDeep; ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(cx - half + 22, yB); ctx.lineTo(cx + half - 22, yB);
       ctx.stroke();
       // Carved fringe board (prichelina): pale sawtooth lacework hanging
       // off the drip edge, the classic Russian eave trim at pixel size.
-      ctx.fillStyle = '#d68a5a';
+      ctx.fillStyle = BLD.woodMid;
       for (var fx = cx - half + 24; fx < cx + half - 28; fx += 8) {
         ctx.beginPath();
         ctx.moveTo(fx, yB + 1); ctx.lineTo(fx + 4, yB + 6); ctx.lineTo(fx + 8, yB + 1);
         ctx.closePath(); ctx.fill();
       }
-      ctx.fillStyle = 'rgba(0,0,0,0.20)';
-      ctx.fillRect(cx - half + 26, yB + 7, half * 2 - 52, 6);
+      ctx.fillStyle = BLD.woodDark;
+      ctx.fillRect(cx - half + 26, yB + 7, half * 2 - 52, 4);
       lantern(cx - half + 4, yB - 7);
       lantern(cx + half - 4, yB - 7);
     }
+    function tier(half, top, height) {
+      var tx = cx - half, ty = gy - top, tw = half * 2;
+      // Wider boards leave more of the station's red-brown face visible.
+      // A shaded right return gives the tall walls depth without a wash.
+      drawWoodPlanking(tx, ty, tw, height, 8);
+      ctx.fillStyle = BLD.woodDark;
+      ctx.fillRect(tx + tw - 15, ty + 1, 14, height - 2);
+      ctx.fillStyle = BLD.woodBase;
+      ctx.fillRect(tx + tw - 12, ty + 2, 1, height - 4);
+      ctx.fillRect(tx + tw - 5, ty + 2, 1, height - 4);
+      ctx.fillStyle = BLD.woodDark;
+      ctx.fillRect(tx + 1, ty + 1, 4, height - 2);
+      ctx.fillRect(tx + 1, ty + height - 5, tw - 2, 4);
+      ctx.fillStyle = BLD.woodMid;
+      ctx.fillRect(tx + 2, ty + 2, 1, height - 4);
+      ctx.fillRect(tx + 1, ty + height - 6, tw - 17, 1);
+      strokeRect1(tx, ty, tw, height, BLD.outline);
+    }
 
     // Stone plinth + door step.
-    ctx.fillStyle = '#6f6f6f'; ctx.fillRect(x - 6, gy - 20, w + 12, 20);
-    ctx.fillStyle = '#5a5a5a'; ctx.fillRect(x - 6, gy - 11, w + 12, 2);
-    ctx.fillStyle = '#7c7c7c';
+    drawStoneFoundation(x - 6, gy - 20, w + 12, 20);
+    ctx.fillStyle = BLD.stoneDark;
+    ctx.fillRect(x - 6, gy - 10, w + 12, 1);
+    ctx.fillStyle = BLD.stoneBase;
     ctx.fillRect(banyaDoorX0 - 6, gy - 6, (banyaDoorX1 - banyaDoorX0) + 12, 6);
+    ctx.fillStyle = BLD.stoneLight;
+    ctx.fillRect(banyaDoorX0 - 6, gy - 6, (banyaDoorX1 - banyaDoorX0) + 12, 1);
 
-    // Four tiers, bottom-up: planking body (darkening wash with height),
-    // then the flared eave with its pair of lanterns.
-    drawWoodPlanking(cx - 80, gy - 118, 160, 98, 4);
-    drawWoodPlanking(cx - 66, gy - 208, 132, 84, 4);
-    ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(cx - 66, gy - 208, 132, 84);
-    drawWoodPlanking(cx - 52, gy - 288, 104, 74, 4);
-    ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.fillRect(cx - 52, gy - 288, 104, 74);
-    drawWoodPlanking(cx - 38, gy - 356, 76, 62, 4);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(cx - 38, gy - 356, 76, 62);
+    // Four tiers, bottom-up, with quiet framing and a shaded right side.
+    tier(80, 118, 98);
+    tier(66, 208, 84);
+    tier(52, 288, 74);
+    tier(38, 356, 62);
 
     // Windows before the eaves so glow halos sit over the wood cleanly.
     win(cx - 40, gy - 194, 22, 30); win(cx + 18, gy - 194, 22, 30);
@@ -955,18 +993,36 @@
     eave(gy - 356, 58);
 
     // Tent roof + copper cap + the red star (glows at night).
-    ctx.fillStyle = '#39424c';
+    ctx.fillStyle = BLD.redDark;
     ctx.beginPath();
     ctx.moveTo(cx - 46, gy - 365); ctx.lineTo(cx, gy - 436);
     ctx.lineTo(cx + 46, gy - 365); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#2c343c'; ctx.lineWidth = 2;
+    ctx.strokeStyle = BLD.outline; ctx.lineWidth = 1; ctx.stroke();
+    // Broad lit and shaded returns keep the red roof separate from timber.
+    ctx.fillStyle = BLD.woodBase;
     ctx.beginPath();
-    ctx.moveTo(cx, gy - 434); ctx.lineTo(cx - 38, gy - 372);
-    ctx.moveTo(cx, gy - 434); ctx.lineTo(cx + 38, gy - 372);
+    ctx.moveTo(cx, gy - 434); ctx.lineTo(cx - 22, gy - 365);
+    ctx.lineTo(cx - 45, gy - 365); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = BLD.redDeep;
+    ctx.beginPath();
+    ctx.moveTo(cx, gy - 434); ctx.lineTo(cx + 46, gy - 365);
+    ctx.lineTo(cx + 9, gy - 365); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = BLD.redDeep; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, gy - 432); ctx.lineTo(cx - 22, gy - 368);
+    ctx.moveTo(cx + 1, gy - 432); ctx.lineTo(cx + 9, gy - 368);
     ctx.stroke();
-    ctx.fillStyle = '#b5723a';
+    ctx.strokeStyle = BLD.woodMid;
+    ctx.beginPath();
+    ctx.moveTo(cx - 1, gy - 433); ctx.lineTo(cx - 44, gy - 365);
+    ctx.moveTo(cx - 1, gy - 432); ctx.lineTo(cx - 23, gy - 368);
+    ctx.stroke();
+    ctx.fillStyle = BLD.goldDark;
     ctx.beginPath(); ctx.arc(cx, gy - 436, 9, Math.PI, 0); ctx.fill();
     ctx.fillRect(cx - 2, gy - 458, 4, 14);
+    ctx.fillStyle = BLD.goldBase;
+    ctx.fillRect(cx - 7, gy - 440, 5, 1);
+    ctx.fillRect(cx - 2, gy - 458, 1, 13);
     if (lit) {
       ctx.fillStyle = 'rgba(226,75,74,' + (0.20 * night) + ')';
       ctx.beginPath(); ctx.arc(cx, gy - 466, 17, 0, 6.283); ctx.fill();
