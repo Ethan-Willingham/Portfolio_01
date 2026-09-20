@@ -150,6 +150,9 @@
             extreme: 'Maximum image and effect detail. Requires more graphics headroom.'
           }[value] || 'Custom graphics settings.';
         }
+        if (key === 'rain') document.getElementById('gm-rain-note').textContent =
+          'Wind-driven water fills hollows and runs into open mines. Experimental.' +
+          ((value === '1') === worldRainEnabled ? ' This world: ' + (worldRainEnabled ? 'on.' : 'off.') : ' Applies to your next new game.');
         if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }
       for (var i = 0; i < pairs.length; i++) {
@@ -186,6 +189,8 @@
     wireSegment('dmgflash', '1', [['gm-dmgflash-off', '0'], ['gm-dmgflash-on', '1']]);
     wireSegment('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     wireSegment('banya', ENABLE_BATH ? '1' : '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
+    var resyncRain = wireSegment('rain', '0', [['gm-rain-off', '0'], ['gm-rain-on', '1']]);
+    document.getElementById('gm-options-btn').addEventListener('click', resyncRain);
     var resyncPonds = wireSegment('ponds', 'regular', [['gm-ponds-regular', 'regular'], ['gm-ponds-wide', 'wide'], ['gm-ponds-deep', 'deep']]);
     // A new game or a loaded save changes this world's ponds after the menu
     // was built, so the note refreshes whenever Options opens.

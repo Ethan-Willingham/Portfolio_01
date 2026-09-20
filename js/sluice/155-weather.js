@@ -82,6 +82,7 @@
   // worldgen, key this to surface temperature instead.
   function weatherCold() { return true; }
   function weatherPrecipType() {
+    if (typeof worldRainEnabled !== 'undefined' && worldRainEnabled) return 'rain';
     if (weatherTune.precipMode === 1) return 'rain';
     if (weatherTune.precipMode === 2) return 'snow';
     return weatherCold() ? 'snow' : 'rain';
@@ -539,7 +540,8 @@
     if (!precipParts) weatherInitPrecip();
     weatherBootMoodCheck();
     // mood timing
-    if (weatherForce < 0) {
+    if (worldRainEnabled) rainWeather();
+    else if (weatherForce < 0) {
       weather.moodT -= dt;
       if (weather.moodT <= 0) weatherRollMood();
     }
@@ -578,6 +580,7 @@
     // precip particles — world-anchored; new drops only spawn while the sky
     // is on screen (active ones keep falling, e.g. down an open shaft, and
     // drain out on their own collisions/culls)
+    if (worldRainEnabled) { precipActive = 0; return; }
     var skyVisible = (cam.y < SKY_ROWS * TILE + screenH * 0.4);
     var snow = (weatherPrecipType() === 'snow');
     var windV = (sw * 110 * (1 + weather.wind)) * (snow ? 0.7 : 1);   // world px/s
@@ -821,6 +824,7 @@
       ctx.fillRect(0, 0, cw, ch);
       ctx.restore();
     }
+    if (worldRainEnabled) { drawParticleRain(); return; }
     if (!precipParts || precipActive <= 0 || weather.pcp <= 0.01) return;
     var snow = (weatherPrecipType() === 'snow');
     var a = Math.max(0, Math.min(1, weather.pcp * 1.15));

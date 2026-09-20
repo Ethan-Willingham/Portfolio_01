@@ -1230,7 +1230,7 @@
     // drains out on its own; SPAWNING stays sky-gated in updateWeather, so
     // there's still no rain in a sealed shaft). Clouds draw earlier, inside
     // the sky pass.
-    if (!PERF_DISABLE_WEATHER && (worldTop < surfaceY || precipActive > 0)) {
+    if (!PERF_DISABLE_WEATHER && (worldTop < surfaceY || precipActive > 0 || worldRainEnabled)) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       drawWeatherPrecip(canvas.width, canvas.height);
     }

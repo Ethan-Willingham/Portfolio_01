@@ -198,6 +198,7 @@
       },
       cargo: cargo,
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, filled: false }; }),   // v24.148 — d = lake depth
+      rain: rainSave(),
       pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
       world: saveSerializeWorld(),
       // Live jello bodies (additive; old saves lack it and load as "none", exactly
@@ -317,6 +318,7 @@
     // Additive expansion fields preserve older saves and migrate their lots.
     slimeGardenRestore(env.garden);
     mineralLiquidRestore(env.mineralLiquids);
+    rainRestore(env.rain);
     skySlimeRestore(env.skySlimes);
     siphonRestore(env.siphon);
     // Re-derive world-dependent caches against the swapped grid.

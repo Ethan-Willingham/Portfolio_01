@@ -580,6 +580,16 @@ Clouds draw after the stars and celestial bodies, inside the sky clip and behind
 
 **Precipitation.** Screen-space pooled particles, drawn over the world and beneath the HUD, only while the sky is on screen (no rain in a sealed shaft). Rain = wind-skewed streaks (one batched stroke); snow = drifting flakes with lateral wobble. Type comes from `weatherPrecipType()` — **snow** in the current single cold (permafrost) spawn biome; when the horizontal town/biome expansion (`015-regions.js`) feeds worldgen, key it to surface temperature. Colours: `SKY.rainStreak / rainStreakFg / snowFlake`.
 
+**Particle rain experiment.** `157-particle-rain.js` replaces cosmetic precipitation
+only in worlds created with Particle rain enabled. Three optical size bands
+share `SKY.rainStreak` and `SKY.rainStreakFg`; trails follow each drop's velocity
+and end at its real collision point. Small impact crowns and foreshortened
+rings use the same palette. Slow fronts and travelling gusts vary the field;
+the existing overcast veil provides the atmosphere. Each airborne drop hands
+one collectable particle to the water solver. No additional mist or opaque
+foreground veil obscures the rig. See [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for
+the bounded water cycle and persistence rules.
+
 **Storms.** Coverage→1, dark clouds, heavy precip, and full-screen lightning (`SKY.lightningFlash`, additive, fast decay, occasional double-strike) that lights the whole scene.
 
 **The one deliberate bible deviation — and why.** Clouds are *smooth-upscaled*, not pure-hash dithered like the §6 sky gradient. The brief was "gorgeous, don't skimp, overdone" — the smooth upscale matches the live GL sky (also upscaled) and is what makes the clouds read as voluminous rather than as the chunky device-pixel noise §6/§12 warns about. The compensating discipline: clouds stay inside the §3 *Sky* value band, well away from the gameplay plane; they fade with altitude; and the single bright value-pop (`cloudSunHi`, the sunlit midday face) is treated like the one allowed snow-cap pop in §3. If a perf/low-detail pass is ever needed, `weatherTune.softness` plus a dither toggle are the levers to add.

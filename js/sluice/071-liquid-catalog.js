@@ -88,6 +88,7 @@
       var parked = mineralLiquidParkedSampleRect(x0, y0, x1, y1);
       for (var k = 0; k < counts.length; k++) counts[k] += parked[k] || 0;
     }
+    if (typeof rainParkedInRect === 'function') counts[0] += rainParkedInRect(x0, y0, x1, y1, 0);
     return counts;
   }
 
@@ -104,6 +105,9 @@
     }
     if (removed < cap && typeof mineralLiquidParkedExtractRect === 'function') {
       removed += mineralLiquidParkedExtractRect(x0, y0, x1, y1, type, cap - removed);
+    }
+    if (type === 0 && removed < cap && typeof rainParkedInRect === 'function') {
+      removed += rainParkedInRect(x0, y0, x1, y1, cap - removed);
     }
     if (removed) liquidToolWake((x0 + x1) * 0.5, (y0 + y1) * 0.5, Math.max(x1 - x0, y1 - y0));
     return removed;

@@ -45,7 +45,7 @@
       ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
       ['slime', shaderWarmSlime], ['garden', shaderWarmGarden], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
       ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
-      ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
+      ['rain', shaderWarmRain], ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
     ];
     var mainCtx = ctx, ws = dpr * worldScale, t0 = performance.now();
     ctx = warmCtx;

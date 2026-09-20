@@ -38,7 +38,7 @@
     // effect detail. Extreme remains the fresh desktop profile's default.
     var OPT_GFX_PRESET = { performance: 'low', balanced: 'high', extreme: 'extreme' };
 
-    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash', 'ponds', 'heavysmoke'];
+    var OPT_KEYS = ['sfxvol', 'musicvol', 'gfx', 'shake', 'dmgflash', 'lowflash', 'ponds', 'heavysmoke', 'rain'];
 
     // Non-graphics levers can wait for the later gm facade. Boot graphics are
     // resolved synchronously in 380, before world and GPU warmup begin.
@@ -70,6 +70,7 @@
       lowFlash: false,
       pondStyle: 'regular',
       heavySmoke: false,
+      particleRain: false,
       graphicsChoice: isMobile ? 'balanced' : 'extreme',
       graphicsPreset: function () { return OPT_GFX_PRESET[opts.get('gfx')] || null; },
 
@@ -125,6 +126,8 @@
         // the ponds it was generated with (047 saves the style with it).
         var ps = String(val);
         if (ps === 'regular' || ps === 'wide' || ps === 'deep') opts.pondStyle = ps;
+      } else if (key === 'rain') {
+        opts.particleRain = optTruthy(val); // Latched by init for the next new world.
       } else if (key === 'heavysmoke') {
         opts.heavySmoke = optTruthy(val);
       }
