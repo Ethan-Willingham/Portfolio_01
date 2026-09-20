@@ -24,7 +24,8 @@
 
      ENABLE_BATH is the one flag with a PLAYER-FACING switch as well:
      pause > Options > Banya, persisted as 'sluice.opt.banya' and read
-     below. New profiles start with the bathhouse open.
+     below. New and returning profiles start with the bathhouse open;
+     a one-time migration retires the old experimental 'off' setting.
      ============================================================ */
   var SINGLE_TOWN        = true;   // one coherent town; false = the wide 4-town world
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
@@ -48,8 +49,15 @@
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
     if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
   } catch (e) {}
-  // Explicit options are respected; per-load flags take precedence.
+  // v28.16: open the now-shipped banya for returning players too. Older
+  // profiles can retain 'off' from the experiment. Migrate once, then keep
+  // every subsequent Options choice. This marker is not the game version.
+  // Per-load URL flags below still take precedence without being persisted.
   try {
+    if (localStorage.getItem('sluice.opt.banya-default') !== 'open-v1') {
+      localStorage.setItem('sluice.opt.banya', '1');
+      localStorage.setItem('sluice.opt.banya-default', 'open-v1');
+    }
     var _bathOption = localStorage.getItem('sluice.opt.banya');
     if (_bathOption === '0') ENABLE_BATH = false;
     if (_bathOption === '1') ENABLE_BATH = true;

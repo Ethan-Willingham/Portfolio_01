@@ -4,6 +4,11 @@ The banya uses physical coal fires as of v28.13. The old ten-coal ignition
 button and fixed four-minute fuel timer have been replaced. The visitor loop
 remains enabled, and individual guest recipes are still undecided.
 
+Since v28.16, the banya opens by default for returning profiles as well as
+new ones. A one-time `sluice.opt.banya-default=open-v1` migration replaces
+the old saved off setting. Later choices in Pause > Options > Banya persist
+normally. `?bath=0` and `?bath=1` override the setting for that page load.
+
 ## First visit
 
 1. Mine coal and two iron. Iron appears from 55 m and needs no drill upgrade.

@@ -1,5 +1,6 @@
 // Full bathhouse regression. Uses its own Chrome for Testing process and profile.
 // Run: node tools/bathhouse-smoke.mjs (screenshots go to /tmp, never the repo).
+// Use --defaults-only for boot migration, menu persistence, and tower entry.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -61,6 +62,37 @@ try {
   for(let i=0;i<300;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))break;await sleep(100);}
   check('normal boot enables bathhouse',await game("introPhase === 'done' && ENABLE_BATH"));
   check('visitor shaders warm without errors',await ev('window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.visitors>=0'));
+  if (process.argv.includes('--defaults-only')) {
+    async function reload(query = '') {
+      await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35${query}`});
+      await sleep(300);
+      for(let i=0;i<300;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))return;await sleep(100);}
+      throw Error('reload did not finish');
+    }
+    await ev("localStorage.setItem('sluice.opt.banya','0');localStorage.removeItem('sluice.opt.banya-default');localStorage.setItem('sluice.banya-test-save','keep')");
+    await reload();
+    check('returning off profile now sees the banya',await game("ENABLE_BATH && bathPickSite() && isPointOnBanya(banyaX+BANYA_W/2,SKY_ROWS*TILE-100)"));
+    check('options show the migrated on setting',await ev("document.getElementById('gm-banya-on').getAttribute('aria-pressed')==='true' && localStorage.getItem('sluice.banya-test-save')==='keep'"));
+    await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
+    await game('player.x=banyaDoorX0-80;player.y=SKY_ROWS*TILE-PLAYER_H;player.renderX=player.x;player.renderY=player.y;cam.snap=true;updateCamera();render()');
+    await screenshot('default-banya');
+    await press('({x:(banyaX+BANYA_W/2-cam.x)*worldScale,y:(SKY_ROWS*TILE-120-cam.y)*worldScale})');
+    await sleep(700);
+    check('visible tower click opens the boiler',await game("bathMode && hearthView==='boiler'"));
+    await screenshot('default-boiler');
+    await game('bathExit()');await sleep(700);
+    await ev("document.getElementById('gm-banya-off').click()");
+    await reload();
+    check('later deliberate off choice persists',await game("!ENABLE_BATH && !isPointOnBanya(banyaX+BANYA_W/2,SKY_ROWS*TILE-100)"));
+    await reload('&bath=1');
+    check('URL on overrides without overwriting off',await game("ENABLE_BATH && localStorage.getItem('sluice.opt.banya')==='0'"));
+    await ev("document.getElementById('gm-banya-on').click()");
+    await reload('&bath=0');
+    check('URL off overrides without overwriting on',await game("!ENABLE_BATH && localStorage.getItem('sluice.opt.banya')==='1'"));
+    await reload();
+    check('ordinary reload restores selected on',await game('ENABLE_BATH'));
+    check('preference migration has no browser errors',errors.length===0);
+  } else {
   await ev("document.body.classList.add('gm-fs'); document.body.appendChild(document.querySelector('.game-wrapper')); window.dispatchEvent(new Event('resize')); window.scrollTo(0,0)");
   await sleep(500);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;skySlimes=[];skySlimeNext=0.01;player.x=banyaDoorX0-150;player.y=SKY_ROWS*TILE-PLAYER_H;player.renderX=player.x;player.renderY=player.y;cam.snap=true;updateCamera()');
@@ -116,4 +148,5 @@ try {
   check('phone tap admits the waiting visitor',await game('bathGuests.every(function(g){return g.st!=="wait";})'));
   check('no runtime or shader errors',errors.length===0);
   console.log('Screenshots: '+out);
+  }
 } finally {if(errors.length)console.error(JSON.stringify(errors));cleanup();}
