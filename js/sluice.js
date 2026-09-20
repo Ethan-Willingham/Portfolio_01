@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.30';
+  var GAME_VERSION = 'v28.31';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -261,6 +261,15 @@
                                      // fine on WebGPU. CPU-fallback rest cost stays ~0 via the
                                      // v24.146 whole-body freeze.
   var LIQUID_MAX_CELLS = LIQUID_MAX_PARTICLES * 9;
+  // Dry snow, material 5 in the existing MLS-MPM solver. About four times
+  // water's volume per unit, soft compression, frictional slip and little rebound.
+  // edit2: js/liquid-wgpu.js (GPU kernels and f32 self-test reference).
+  var LIQUID_SNOW_DENSITY = 1.1;
+  var LIQUID_SNOW_STIFF = 1.25;
+  var LIQUID_SNOW_SHEAR = 32;
+  var LIQUID_SNOW_DRAG = 5;
+  var LIQUID_SNOW_FRICTION = 180;
+  var LIQUID_SNOW_BOUNCE = 0.025;
   var LIQUID_PDELTA = 0.5;
   var LIQUID_DENSITY = 1 / (LIQUID_PDELTA * LIQUID_PDELTA);
   var LIQUID_INV_DENSITY = 1 / LIQUID_DENSITY;
@@ -1515,7 +1524,7 @@
   // ?pondtest=1&wdbg=DBG_DRAW:1,DBG_NO_SLEEP:1
   var pondTestWdbg = '';
   var pondTestProbeTick = 0;
-  var liquidType = new Uint8Array(LIQUID_MAX_PARTICLES);       // 0 water, 1 oil
+  var liquidType = new Uint8Array(LIQUID_MAX_PARTICLES);       // 0 water, 1 oil, 2-4 minerals, 5 dry snow
   var liquidX = new Float32Array(LIQUID_MAX_PARTICLES);
   var liquidY = new Float32Array(LIQUID_MAX_PARTICLES);
   var liquidVX = new Float32Array(LIQUID_MAX_PARTICLES);
@@ -2000,6 +2009,7 @@
           }
           return {
             camX: cam.x, camY: cam.y,
+            snowLight: scatDayWeight(computeSunElevation(timeOfDay)),
             dpr: dpr, worldScale: worldScale,
             canvasW: canvas.width, canvasH: canvas.height,
             viewW: viewW, viewH: viewH,
@@ -3433,7 +3443,7 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;   // v14.2 — flag the WebGPU solver to re-seed
-    liquidType[id] = typeof type === 'number' ? (type >= 0 && type <= 4 ? type | 0 : 0) : ({ water: 0, oil: 1, brine: 2, nectar: 3, lumen: 4 }[type] || 0);
+    liquidType[id] = typeof type === 'number' ? (type >= 0 && type <= 5 ? type | 0 : 0) : ({ water: 0, oil: 1, brine: 2, nectar: 3, lumen: 4 }[type] || 0);
     liquidOrigin[id] = origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;
@@ -9489,7 +9499,6 @@
     if (tileAt(r, c) === null && below !== null && below !== 'wall') r += 1;
     b.r = r; b.c = c;
     detonateBomb(b);
-    snowBlast(b.x, b.y, TILE * (isLarge ? 7 : 4.5));
 
     var cx = c * TILE + TILE / 2;
     var cy = r * TILE + TILE / 2;
@@ -9776,7 +9785,6 @@
   // v23.33 — hoisted out of playerHasFootSupport; the offsets are constant.
   var PLAYER_FOOT_OFFSETS = [4, PLAYER_W / 2, PLAYER_W - 4];
   function playerHasFootSupport(px, py) {
-    if (worldSnowEnabled && snowFootSupport(px, py)) return true;
     // Perched on the fireplace chimney cap counts as foot support —
     // unless the player is dropping through it.
     if (chimneyCapDropT <= 0 && playerRestingOnChimneyCap(px, py)) {
@@ -10408,8 +10416,9 @@
       var aerDamp = oil ? LIQUID_OIL_AERATION_DAMP : LIQUID_AERATION_DAMP;
       var aerBlur = oil ? LIQUID_OIL_AERATION_BLUR : LIQUID_AERATION_BLUR;
       liquidAeration[i] = aerDamp * (liquidAeration[i] + (aeration - liquidAeration[i]) * aerBlur);
-      var stiff = oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
-      var pressure = (density / LIQUID_DENSITY - 1) * stiff;
+      var drySnow = liquidType[i] === 5;
+      var stiff = drySnow ? LIQUID_SNOW_STIFF : oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
+      var pressure = (density / (drySnow ? LIQUID_SNOW_DENSITY : LIQUID_DENSITY) - 1) * stiff;
       // v25.41 — DETACHMENT COHESION (water only): material leaving the body
       // (dn < 0.7, full pull by 0.4) feels a small negative pressure that
       // hauls it back = surface tension at the skin; the shallow-popcorn
@@ -10421,7 +10430,7 @@
         var dnR = density / LIQUID_DENSITY;
         var ck = (0.7 - dnR) / 0.3;
         if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
-        pressure = oil ? 0 : -(LIQUID_COHESION * stiff) * ck;
+        pressure = oil || drySnow ? 0 : -(LIQUID_COHESION * stiff) * ck;
       }
       if (density <= 0) pressure = 0;
       var volume = density > 0 ? 1 / density : 0;
@@ -10839,13 +10848,21 @@
       // Shared pressure, distinct flow. Preserve the water baseline exactly.
       var material = liquidType[i];
       if (material >= 2) {
-        var shearRate = material === 3 ? 16 : material === 4 ? 8 : 0.9;
-        var lateralRate = material === 3 ? 3 : material === 4 ? 1.5 : 0.35;
+        var shearRate = material === 5 ? LIQUID_SNOW_SHEAR : material === 3 ? 16 : material === 4 ? 8 : 0.9;
+        var lateralRate = material === 5 ? LIQUID_SNOW_DRAG : material === 3 ? 3 : material === 4 ? 1.5 : 0.35;
         var shearKeep = 1 / (1 + shearRate * stepDt);
         var lateralKeep = 1 / (1 + lateralRate * stepDt);
         vx *= lateralKeep;
         gv00 *= shearKeep; gv01 *= shearKeep;
         gv10 *= shearKeep; gv11 *= shearKeep;
+      }
+
+      if (material === 5) {
+        // Coulomb-style yielding in supported powder. Small pressure noise
+        // cannot keep creeping sideways; a track or jet easily exceeds it.
+        var support = Math.max(0, Math.min(1, (liquidDensity[i] - 0.3) / 0.55));
+        var slip = LIQUID_SNOW_FRICTION * stepDt * stepDt / LIQUID_CELL * support;
+        vx = Math.sign(vx) * Math.max(0, Math.abs(vx) - slip);
       }
 
       // v26.13 — the velocity ceiling is a transport invariant, so apply
@@ -11127,7 +11144,7 @@
   var LIQ_NUDGES = [[0,-1],[-1,0],[1,0],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
   function liquidMoveParticle(i, dt) {
     var r = LIQUID_CELL * LIQUID_PDELTA * 0.85;
-    var bounce = liquidType[i] === 1 ? LIQUID_BOUNCE_OIL : LIQUID_BOUNCE_WATER;
+    var bounce = liquidType[i] === 5 ? LIQUID_SNOW_BOUNCE : liquidType[i] === 1 ? LIQUID_BOUNCE_OIL : LIQUID_BOUNCE_WATER;
     var x = liquidX[i], y = liquidY[i];
     var vx = liquidVX[i], vy = liquidVY[i];
     if (!isFinite(x) || !isFinite(y) || !isFinite(vx) || !isFinite(vy)) return false;
@@ -12182,6 +12199,7 @@
     var dpws = dpr * worldScale;
     var camX = cam.x, camY = cam.y;
     var sizeBase = LIQUID_CELL * LIQUID_PDELTA * 0.85 * 2 * dpws;
+    var snowRGB = snowRenderRGB();
     var sizeBaseWater = sizeBase * LIQUID_WATER_PARTICLE_SIZE;
     var sizeBaseOil   = sizeBase * LIQUID_OIL_PARTICLE_SIZE;
     var wR = LIQUID_WATER_R, wG = LIQUID_WATER_G, wB = LIQUID_WATER_B, wA = LIQUID_WATER_ALPHA;
@@ -12201,7 +12219,7 @@
       var d = liquidDensity[i] * LIQUID_INV_DENSITY + 0.5;
       if (d > 1.5) d = 1.5;
       var typ = liquidType[i];
-      var pointSize = (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
+      var pointSize = typ === 5 ? 3.8 * dpws : (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
       if (pointSize < 1.15) pointSize = 1.15;
       var o = count * 7;
       data[o    ] = (px - camX) * dpws;
@@ -12214,6 +12232,8 @@
         data[o + 4] = wG + a * fG;
         data[o + 5] = wB + a * fB;
         data[o + 6] = wA;
+      } else if (typ === 5) {
+        data[o + 3] = snowRGB[0]; data[o + 4] = snowRGB[1]; data[o + 5] = snowRGB[2]; data[o + 6] = 1;
       } else if (typ >= 2 && liquidCatalog[typ]) {
         var tint = liquidCatalog[typ].rgb;
         var foam = Math.min(1, Math.max(0, liquidAeration[i])) * 0.35;
@@ -12345,20 +12365,21 @@
 
     ctx.save();
     liquidCanvasClipTerrain();
-    for (var pass = 0; pass < liquidCatalog.length; pass++) {
+    for (var pass = 0; pass < 6; pass++) {
       var type = pass === 0 ? 'water' : 'oil';
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
       var typeId = pass;
-      if (typeId >= 2) ctx.fillStyle = liquidCatalog[typeId].color;
+      if (typeId >= 2 && typeId < 5) ctx.fillStyle = liquidCatalog[typeId].color;
+      if (typeId === 5) ctx.fillStyle = snowColors().body;
       for (var i = 0; i < liquidCount; i++) {
         if (liquidType[i] !== typeId) continue;
         if (liquidX[i] < left || liquidX[i] > right || liquidY[i] < top || liquidY[i] > bottom) continue;
         var d = liquidDensity[i] * LIQUID_INV_DENSITY;
         var sizeMul = typeId === 1 ? LIQUID_OIL_PARTICLE_SIZE : LIQUID_WATER_PARTICLE_SIZE;
         var pointSize = LIQUID_CELL * LIQUID_PDELTA * 0.85 * Math.min(d + 0.5, 1.5) * 2 * sizeMul;
-        var rr = Math.max(0.65, pointSize * 0.5);
+        var rr = typeId === 5 ? 1.9 : Math.max(0.65, pointSize * 0.5);
         ctx.fillRect(liquidX[i] - rr, liquidY[i] - rr, rr * 2, rr * 2);
-        if (liquidAeration[i] > 0.08) {
+        if (typeId !== 5 && liquidAeration[i] > 0.08) {
           ctx.fillStyle = type === 'water'
             ? 'rgba(220,250,255,' + Math.min(0.78, liquidAeration[i]).toFixed(3) + ')'
             : 'rgba(230,190,110,' + Math.min(0.52, liquidAeration[i] * 0.7).toFixed(3) + ')';
@@ -12917,9 +12938,10 @@
     for (var c = 0; c < Math.min(cap, candidates.length); c++) {
       indices.push(candidates[c].index);
       var picked = candidates[c].index;
-      counts[liquidType[picked]]++;
+      counts[liquidType[picked] === 5 ? 0 : liquidType[picked]]++;
+      if (liquidType[picked] === 5) snow.collected++;
       if (intake && intake.samples && intake.samples.length < 8 && c % 12 === 0) {
-        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] });
+        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] === 5 ? 0 : liquidType[picked] });
       }
     }
     // Descending original indices remain valid under the solver's swap-remove.
@@ -12989,8 +13011,9 @@
   function liquidSampleRect(x0, y0, x1, y1) {
     var counts = [0, 0, 0, 0, 0];
     for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] === 5) continue;
       var px = liquidX[i], py = liquidY[i];
-      if (px >= x0 && px < x1 && py >= y0 && py < y1) counts[liquidType[i]]++;
+      if (liquidType[i] < 5 && px >= x0 && px < x1 && py >= y0 && py < y1) counts[liquidType[i]]++;
     }
     if (typeof mineralLiquidParkedSampleRect === 'function') {
       var parked = mineralLiquidParkedSampleRect(x0, y0, x1, y1);
@@ -13025,6 +13048,7 @@
     var counts = [0, 0, 0, 0, 0], total = 0, dominant = 0, best = 0;
     var r2 = radius * radius;
     for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] === 5) continue;
       var dx = liquidX[i] - x, dy = liquidY[i] - y;
       if (dx * dx + dy * dy > r2) continue;
       counts[liquidType[i]]++;
@@ -13044,6 +13068,7 @@
     var inner = radius + 2, outer = radius * 1.75;
     var vx = 0, vy = 0, count = 0;
     for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] === 5) continue;
       var dx = Math.abs(liquidX[i] - x), row = Math.floor((liquidY[i] - top) / rowH);
       if (dx < inner || dx > outer || row < 0 || row >= rows) continue;
       bins[row]++;
@@ -14839,6 +14864,11 @@
         // entire intersecting bin would bounce its outside edge in and out.
         for (var j = data.length - 3; j >= 0 && budget > 0; j -= 3) {
           var px = data[j + 1], py = data[j + 2];
+          if (worldRainEnabled && !bathMode && data[j] === 0 && Math.random() < 0.85 && rainSoakAt(px, py, false)) {
+            var tail = data.length - 3;
+            data[j] = data[tail]; data[j + 1] = data[tail + 1]; data[j + 2] = data[tail + 2];
+            data.length -= 3; continue;
+          }
           if (px < x0 || px > x1 || py < y0 || py > y1) continue;
           if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
           var end = data.length - 3;
@@ -17838,8 +17868,6 @@
       }
     }
 
-    snowRigDrag(dt);
-
     // Dev probe (window.__trees / __course pattern): read-only flight state,
     // refreshed every update — for headless harness checks + owner bug
     // reports ("what does __flight say"). Never read by game code.
@@ -17969,19 +17997,7 @@
     // (No upward clamp — players can fly as high as they want. The world
     //  above the surface is open sky.)
     var capRestY = chimneyCapCatch(player.x, player.y, ny);
-    var snowRestY = snowRigCatch(player.x, player.y, ny, player.onSnow);
-    player.onSnow = false;
-    if (snowRestY !== null) {
-      var snowImpact = player.vy;
-      player.y = snowRestY;
-      player.onGround = true;
-      player.onSnow = true;
-      player.onJello = false;
-      player.jelloImpactVy = 0;
-      if (wasInAir && snowImpact > 80) snowLanding(snowImpact);
-      player.vy = 0;
-      resetFlightBank();
-    } else if (capRestY !== null) {
+    if (capRestY !== null) {
       // Perch on the surface fireplace chimney cap (one-way landing ledge).
       player.y = capRestY;
       recordLandingImpact(player.vy, capRestY + PLAYER_H, 'ledge', 0);
@@ -30821,7 +30837,6 @@
     drawLiquids();
     if (devMode) gpuProbe('liquid', _gpuLiqT, liquidGL);   // v12.13 — liquid GPU probe
     drawSurfacePondBasinOverlays(startCol, endCol);
-    drawSnowCover();
     perfMark('render.liquids', _renderT3);
     var _renderT4 = performance.now();
 
@@ -34389,6 +34404,7 @@
   // One slow scan maintains contact occupancy and streams rain outside the
   // solver's camera window. Saved rain uses this same bounded coordinate list.
   function rainScan(dt) {
+    liquidToolSync();
     var cells = {}, count = 0, held = 0, margin = 220;
     // Exponential removal gives the same drainage per second at any frame
     // rate. Individual subpixel particles disappear over several scans, so
@@ -34418,18 +34434,19 @@
       rain.damp[d] = rain.damp[rain.damp.length - 1]; rain.damp.pop();
     }
     for (var i = liquidCount - 1; i >= 0; i--) {
+      if (liquidType[i] === 5) continue;
       var x = liquidX[i], y = liquidY[i], lake = rainLakeAt(x, y);
+      var plowed = liquidType[i] === 0 && held < RAIN_PLOW_CAP && rainPlowHolds(i);
+      if (plowed) held++;
+      // Water remains absorbable after scooping/pouring. Stone lining, not
+      // particle provenance or an old lake rectangle, keeps a lake sealed.
+      if (liquidType[i] === 0 && !plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
+        removeLiquidParticle(i); continue;
+      }
       if (lake && liquidOrigin[i] !== RAIN_ORIGIN) lake.otherCount++;
       if (liquidOrigin[i] === RAIN_ORIGIN) {
         if (x < x0 || x > x1 || y < y0 || y > y1) {
           if (rain.parked.length < RAIN_STORAGE_CAP * 2) rain.parked.push(x, y);
-          removeLiquidParticle(i);
-          continue;
-        }
-        // Protect enough water for a little crest, never an entire puddle.
-        var plowed = held < RAIN_PLOW_CAP && rainPlowHolds(i);
-        if (plowed) held++;
-        if (!lake && !plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
           removeLiquidParticle(i);
           continue;
         }
@@ -34446,7 +34463,7 @@
     for (var j = rain.parked.length - 2; j >= 0; j -= 2) {
       var px = rain.parked[j], py = rain.parked[j + 1], lake = rainLakeAt(px, py);
       // Parked rain drains as well, including spills left behind the camera.
-      if (!lake && Math.random() < soakChance && rainSoakAt(px, py, false)) {
+      if (Math.random() < soakChance && rainSoakAt(px, py, false)) {
         rain.parked[j] = rain.parked[rain.parked.length - 2];
         rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
         rain.parked.length -= 2;
@@ -34481,7 +34498,7 @@
     while (count > 0 && attempts-- > 0 && liquidCount) {
       rain.cursor %= liquidCount;
       var i = rain.cursor++;
-      if (liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i) || rainLakeAt(liquidX[i], liquidY[i])) continue;
+      if (liquidType[i] !== 0 || liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i) || rainLakeAt(liquidX[i], liquidY[i])) continue;
       removeLiquidParticle(i); rain.waterCount--; rain.recycled++; count--;
       rain.cursor--;
     }
@@ -34515,6 +34532,7 @@
   function updateParticleRain(dt) {
     if (!worldRainEnabled || bathMode || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     dt = Math.min(0.05, Math.max(0, dt));
+    liquidToolSync();
     rain.time += dt;
     rainAdvanceWeather(dt);
     rain.intensity = weather.pcp > 0.015 ? weather.pcp : 0;
@@ -34684,7 +34702,7 @@
     liquidToolSync();
     var water = rain.parked.slice(0, RAIN_STORAGE_CAP * 2);
     for (var i = 0; i < liquidCount && water.length < RAIN_STORAGE_CAP * 2; i++) {
-      if (liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
+      if (liquidType[i] === 0 && liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
     }
     return { enabled: true, mode: worldSnowEnabled ? 'snow' : 'rain', snow: snowSave(), water: water, climate: { phase: rain.climate.phase,
       elapsed: rain.climate.elapsed, duration: rain.climate.duration, strength: rain.climate.strength } };
@@ -35056,19 +35074,14 @@
       rainStoreInLake(lake, count);
     }
   }
-  /* ---- Snow: drifting grains, compressible banks, conserved meltwater ---- */
-  // Resting snow uses sparse four-pixel columns, not thousands of awake fluid
-  // particles. Mass is measured in whole water particles. Packing changes its
-  // volume, never its mass; only disturbed material returns to ballistic grains.
+  /* ---- Snow weather feeding the shared MLS-MPM particle solver ---- */
+  // Type 5 is dry snow, origin 3 is weather. No column banks, synthetic
+  // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
-  var SNOW_CELL = 4, SNOW_RATE = 115, SNOW_MAX_DEPTH = 88;
-  var SNOW_FLAKE_CAP = 1800, SNOW_POWDER_CAP = 384;
-  var SNOW_BANK_CAP = 8192, SNOW_MASS_CAP = 60000;
-  var SNOW_SETTLE_OFFSETS = [0, -1, 1, -2, 2];
-  var snow = { time: 0, tick: 0, credit: 0, outsideCredit: 0, primed: false,
-    banks: [], cells: {}, grains: [], mass: 0, emitted: 0, melted: 0, collected: 0,
-    escaped: 0, powder: 0, packed: 0, temperature: -4, rigDepth: 0,
-    rigX: null, rigY: null, pass: 0 };
+  var SNOW_RATE = 115, SNOW_FLAKE_CAP = 1800, SNOW_MASS_CAP = 60000;
+  var SNOW_ACTIVE_CAP = 18000, SNOW_CPU_CAP = 5000;
+  var snow = { time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
+    cells: {}, active: 0, mass: 0, emitted: 0, melted: 0, collected: 0, temperature: -4 };
 
   function snowNewWorldEnabled() {
     var q = /[?&]snow=([01])(?:&|$)/.exec(window.location.search || '');
@@ -35078,304 +35091,125 @@
   }
   function snowReset(enabled) {
     worldSnowEnabled = enabled === true;
-    snow.time = snow.tick = snow.credit = snow.outsideCredit = 0;
-    snow.mass = snow.emitted = snow.melted = snow.collected = snow.escaped = snow.powder = snow.packed = snow.pass = 0;
-    snow.banks.length = snow.grains.length = 0;
-    snow.cells = {}; snow.primed = false; snow.rigX = snow.rigY = null; snow.rigDepth = 0;
-    snow.temperature = -4;
+    snow.time = snow.tick = snow.credit = snow.active = snow.mass = 0;
+    snow.emitted = snow.melted = snow.collected = 0;
+    snow.grains.length = snow.parked.length = 0;
+    snow.cells = {}; snow.primed = false; snow.temperature = -4;
   }
-  function snowKey(col, row) { return row * Math.ceil(COLS * TILE / SNOW_CELL) + col; }
-  function snowVolume(pack) { return 11 - 7.5 * pack; }
-  function snowHeight(bank) { return bank.mass * snowVolume(bank.pack) / SNOW_CELL; }
-  function snowBank(col, row, create) {
-    if (col < 1 || col >= Math.floor(COLS * TILE / SNOW_CELL) - 1 || row < 0 || row >= TOTAL_ROWS) return null;
-    var key = snowKey(col, row), bank = snow.cells[key];
-    if (!bank && create && snow.banks.length < SNOW_BANK_CAP) {
-      bank = { key: key, col: col, row: row, mass: 0, pack: 0, melt: 0 };
-      snow.cells[key] = bank; snow.banks.push(bank);
-    }
-    return bank;
+  function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
+  function snowVisible(x, y) {
+    return x > cam.x - 180 && x < cam.x + screenW + 180 && y > cam.y - 180 && y < cam.y + screenH + 180;
   }
-  function snowDeposit(col, row, mass, pack) {
-    if (!(mass > 0)) return false;
-    var bank = snowBank(col, row, true);
-    if (!bank || snowHeight(bank) >= SNOW_MAX_DEPTH) return false;
-    bank.pack = (bank.pack * bank.mass + pack * mass) / (bank.mass + mass);
-    bank.mass += mass;
-    return true;
+  function snowStore(x, y, vx, vy) {
+    if (snow.parked.length >= SNOW_MASS_CAP * 4) return false;
+    snow.parked.push(x, y, vx || 0, vy || 0); return true;
   }
-  function snowSettle(x, row, count, pack, spread) {
-    var center = Math.floor(x / SNOW_CELL), placed = 0;
-    for (var n = 0; n < count; n++) {
-      var offset = count > 1 ? SNOW_SETTLE_OFFSETS[n % 5] * (spread || 1) : 0;
-      var col = center + offset, bx = (col + 0.5) * SNOW_CELL;
-      if (!liquidWorldSolidAt(bx, row * TILE + 1) || liquidWorldSolidAt(bx, row * TILE - 1)) continue;
-      if (snowDeposit(col, row, 1, pack)) placed++;
-    }
-    return placed;
-  }
-  function snowSupportRow(x, y, maxRows) {
-    var start = Math.max(0, Math.floor(y / TILE)), col = Math.floor(x / TILE);
-    for (var row = start; row < Math.min(TOTAL_ROWS, start + maxRows); row++) {
-      if (liquidWorldSolidAt(x, row * TILE + 1)) return row;
-    }
-    return -1;
-  }
-  function snowAt(x, y, reach) {
-    var col = Math.floor(x / SNOW_CELL), start = Math.max(0, Math.floor((y - reach) / TILE));
-    for (var row = start; row <= Math.min(TOTAL_ROWS - 1, Math.floor((y + SNOW_MAX_DEPTH + reach) / TILE)); row++) {
-      var bank = snowBank(col, row, false);
-      if (!bank || bank.mass <= 0) continue;
-      var base = row * TILE, top = base - snowHeight(bank);
-      if (y + reach >= top && y - reach <= base + 1) return bank;
-    }
-    return null;
+  function snowParticle(x, y, vx, vy) {
+    if (!snowVisible(x, y)) return snowStore(x, y, vx, vy);
+    if (snow.active >= snowActiveCap() || liquidCount >= LIQUID_MAX_PARTICLES - 4096) return false;
+    if (addLiquidParticle(5, x, y, vx, vy, RAIN_ORIGIN) < 0) return false;
+    snow.active++; return true;
   }
   function snowSeedWorld() {
     if (!worldSnowEnabled) return;
-    // A thin, uneven dusting makes the material available on the first drive.
-    // Lake water stays liquid; no decorative ice lid changes its collision.
-    for (var col = 1; col < COLS * TILE / SNOW_CELL - 1; col++) {
-      var x = (col + 0.5) * SNOW_CELL, tile = tileAt(SKY_ROWS, Math.floor(x / TILE));
-      if (!tile || tile.type === 'foundation' || !liquidWorldSolidAt(x, SKY_ROWS * TILE + 1)) continue;
-      var mass = 1 + (wHash(Math.floor(col / 4), 0, 731) > 0.45 ? 1 : 0);
-      if (snowDeposit(col, SKY_ROWS, mass, 0)) { snow.mass += mass; snow.emitted += mass; }
+    // A thin dusting, laid at the new material's rest spacing. These are
+    // ordinary solver particles, including the initially parked ones.
+    var spacing = LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY), base = SKY_ROWS * TILE;
+    for (var x = 3; x < COLS * TILE - 3; x += spacing) {
+      var tile = tileAt(SKY_ROWS, Math.floor(x / TILE));
+      if (!tile || tile.type === 'foundation' || !liquidWorldSolidAt(x, base + 1)) continue;
+      var layers = 1 + (wHash(Math.floor(x / 16), 0, 731) > 0.45 ? 1 : 0);
+      for (var row = 0; row < layers; row++) {
+        if (snowStore(x + (row % 2) * spacing * 0.5, base - 1.2 - row * spacing, 0, 0)) {
+          snow.mass++; snow.emitted++;
+        }
+      }
     }
   }
-
-  function snowAddGrain(x, y, vx, vy, mass, powder) {
-    if (snow.grains.length >= SNOW_FLAKE_CAP + SNOW_POWDER_CAP || (powder && snow.powder >= SNOW_POWDER_CAP)) return false;
-    snow.grains.push({ x: x, y: y, vx: vx, vy: vy, mass: mass, powder: powder ? 1 : 0,
-      size: Math.random(), phase: Math.random() * Math.PI * 2, age: 0 });
-    if (powder) snow.powder++;
-    return true;
-  }
-  function snowLift(bank, count, vx, vy) {
-    count = Math.min(bank.mass, Math.max(0, Math.floor(count)), 12);
-    if (!count) return 0;
-    var x = (bank.col + 0.5) * SNOW_CELL, y = bank.row * TILE - snowHeight(bank) - 1;
-    if (!snowAddGrain(x, y, vx, vy, count, true)) return 0;
-    bank.mass -= count;
-    return count;
-  }
-  function snowMelt(x, y, count, vx, vy) {
-    // Commit the state change only after the water has a destination. Solver
-    // pressure cannot silently destroy snow or mint a second copy of its mass.
-    var gpu = liquidWGPU && liquidWGPU.simActive;
-    count = Math.max(0, Math.min(Math.floor(count), rainRoom(gpu ? RAIN_WATER_CAP : RAIN_CPU_CAP)));
-    if (!count || liquidWorldSolidAt(x, y)) return 0;
-    var visible = x >= cam.x - 220 && x <= cam.x + screenW + 220 &&
-      y >= cam.y - 220 && y <= cam.y + screenH + 220;
-    if (visible) count = Math.min(count, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 4096));
-    var made = 0;
-    for (; made < count; made++) {
-      if (visible) {
-        if (addLiquidParticle(0, x + (made % 2) * 0.65, y - Math.floor(made / 2) * 1.25, vx || 0, vy || 0, RAIN_ORIGIN) < 0) break;
-        rain.waterCount++;
-      } else rain.parked.push(x, y);
-      var lake = rainLakeAt(x, y);
-      if (lake) { lake.rainCount = (lake.rainCount || 0) + 1; rain.lakeCount++; }
-    }
-    snow.mass -= made; snow.melted += made;
-    return made;
-  }
-
   function snowTemperature() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
-    // Cold fronts lay down powder. The milder air behind them thaws it over
-    // the following dry spell, with sunlight accelerating the change.
-    var wet = weatherForce >= 0 ? WEATHER_MOODS[weatherForce].pcp > 0.05 : rain.climate.phase === 2 || rain.climate.phase === 1;
-    return wet ? -5 + day : 1.5 + day * 3;
+    var cold = weatherForce >= 0 ? WEATHER_MOODS[weatherForce].pcp > 0.05 : rain.climate.phase === 2 || rain.climate.phase === 1;
+    return cold ? -5 + day : 1.5 + day * 3;
   }
-  function snowBankTick(dt) {
-    snow.pass++;
-    for (var n = snow.banks.length - 1; n >= 0; n--) {
-      var bank = snow.banks[n], x = (bank.col + 0.5) * SNOW_CELL, base = bank.row * TILE;
-      if (bank.mass <= 0) {
-        delete snow.cells[bank.key]; snow.banks[n] = snow.banks[snow.banks.length - 1]; snow.banks.pop(); continue;
+  function snowHeat(x, y) {
+    var heat = Math.max(0, snow.temperature) * 0.007;
+    var tile = tileAt(Math.floor((y + 4) / TILE), Math.floor(x / TILE));
+    if (tile && tile.type === 'foundation') heat += 0.24;
+    var dx = Math.abs(x - player.x - PLAYER_W * 0.5), dy = y - player.y - PLAYER_H;
+    if (dx < 32 && dy > -30 && dy < 20) heat += 0.015;
+    if (player.thrusting && player.jetForce > 1 && !gameOver && !gameWon && dy > -6 && dy < 130 && dx < 20 + dy * 0.3) heat += 2.5;
+    if ((rain.cells[rainCell(x, y)] || 0) >= 10) heat += 5;
+    return heat;
+  }
+  function snowMeltParticle(i) {
+    // Change material IN PLACE, retaining the solver's current position and
+    // velocity. WAKE is an ordered GPU identity op, not a stale CPU respawn.
+    if (liquidType[i] !== 5 || rain.waterCount + rain.parked.length / 2 >= RAIN_STORAGE_CAP) return false;
+    liquidType[i] = 0; liquidOrigin[i] = RAIN_ORIGIN;
+    liquidSleeping[i] = liquidRestFrames[i] = 0;
+    if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, 0, RAIN_ORIGIN);
+    else liquidOpsOverflow = true;
+    liquidMutationSeq++; snow.melted++; snow.active--; rain.waterCount++;
+    return true;
+  }
+  function snowScan(dt) {
+    liquidToolSync();
+    var cells = {}, active = 0;
+    for (var i = liquidCount - 1; i >= 0; i--) {
+      if (liquidType[i] !== 5) continue;
+      var x = liquidX[i], y = liquidY[i];
+      if (!snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
+      if (Math.random() < 1 - Math.exp(-snowHeat(x, y) * dt) && snowMeltParticle(i)) continue;
+      var key = rainCell(x, y); cells[key] = (cells[key] || 0) + 1; active++;
+    }
+    snow.active = active;
+    var budget = Math.min(600, snowActiveCap() - active, LIQUID_MAX_PARTICLES - liquidCount - 4096);
+    for (var j = snow.parked.length - 4; j >= 0; j -= 4) {
+      var px = snow.parked[j], py = snow.parked[j + 1], remove = false;
+      if (Math.random() < 1 - Math.exp(-snowHeat(px, py) * dt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
+        rain.parked.push(px, py); snow.melted++; remove = true;
+      } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
+        if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
+          budget--; snow.active++; remove = true;
+        }
       }
-      if (!liquidWorldSolidAt(x, base + 1)) {
-        // Mining or a blast removes the support, so the actual bank falls.
-        snowLift(bank, 12, (Math.random() - 0.5) * 25, 25);
-        continue;
-      }
-      var tile = tileAt(bank.row, Math.floor(x / TILE));
-      var heat = Math.max(0, snow.temperature) * 0.035 + (tile && tile.type === 'foundation' ? 0.14 : 0.002);
-      var rigDX = x - (player.x + PLAYER_W * 0.5), rigDY = base - player.y - PLAYER_H;
-      var close = Math.abs(rigDX) < 65 && rigDY > -8 && rigDY < 35;
-      if (close) heat += 0.2 * (1 - Math.abs(rigDX) / 65);
-      if ((rain.cells[rainCell(x, base - 2)] || 0) >= 4) heat += 4;
-      var jet = player.thrusting && player.jetForce > 1 && !gameOver && !gameWon && rigDY >= -4 && rigDY < 135 && Math.abs(rigDX) < 15 + rigDY * 0.5;
-      if (jet) {
-        heat += (1 - rigDY / 150) * (player.thrustSpool || 0) * 3;
-        snowLift(bank, 1 + Math.floor((player.thrustSpool || 0) * 4),
-          (rigDX < 0 ? -1 : 1) * (70 + Math.random() * 100), -50 - Math.random() * 110);
-      }
-      bank.melt = Math.min(bank.mass, bank.melt + heat * dt);
-      if (bank.melt >= 1) {
-        var lost = snowMelt(x, base - 1.6, Math.min(4, Math.floor(bank.melt)), 0, 0);
-        bank.mass -= lost; bank.melt -= lost;
-      }
-      // Slow sintering settles undisturbed powder without deleting water.
-      bank.pack += Math.max(0, 0.75 - bank.pack) * dt * (snow.temperature > 0 ? 0.002 : 0.0005);
-      var dir = (snow.pass + bank.col) % 2 ? 1 : -1;
-      var neighborX = x + dir * SNOW_CELL, neighbor = snowBank(bank.col + dir, bank.row, false);
-      var height = snowHeight(bank), otherHeight = neighbor ? snowHeight(neighbor) : 0;
-      var excess = height - otherHeight - (3.5 + bank.pack * 5);
-      if (bank.mass > 1 && excess > 0.5) {
-        var move = Math.min(bank.mass - 1, 12, Math.max(1, Math.floor(excess * SNOW_CELL /
-          (snowVolume(bank.pack) + snowVolume(neighbor ? neighbor.pack : bank.pack)))));
-        if (liquidWorldSolidAt(neighborX, base + 1)) {
-          // A higher ledge is a wall, not somewhere to bury displaced snow.
-          if (!liquidWorldSolidAt(neighborX, base - 1) && snowDeposit(bank.col + dir, bank.row, move, bank.pack)) bank.mass -= move;
-        } else snowLift(bank, move, dir * 28, -8);
+      if (remove) {
+        var tail = snow.parked.length - 4;
+        for (var k = 0; k < 4; k++) snow.parked[j + k] = snow.parked[tail + k];
+        snow.parked.length -= 4;
       }
     }
-  }
-
-  function snowFootBank(px, py) {
-    var best = null;
-    for (var i = 0; i < PLAYER_FOOT_OFFSETS.length; i++) {
-      var bank = snowAt(px + PLAYER_FOOT_OFFSETS[i], py + PLAYER_H, 10);
-      if (!bank || snowHeight(bank) < 0.8 || !liquidWorldSolidAt((bank.col + 0.5) * SNOW_CELL, bank.row * TILE + 1)) continue;
-      if (!best || bank.row < best.row) best = bank;
-    }
-    return best;
-  }
-  function snowRestFeet(bank) { return bank.row * TILE - Math.min(9, snowHeight(bank) * 0.35); }
-  function snowFootSupport(px, py) {
-    if (!worldSnowEnabled || bathMode || player.lastMoveD) return false;
-    var bank = snowFootBank(px, py);
-    return !!bank && Math.abs(py + PLAYER_H - snowRestFeet(bank)) < (player.onSnow ? 9 : 5);
-  }
-  function snowRigCatch(px, oldY, newY, wasSupported) {
-    if (!worldSnowEnabled || bathMode || player.vy < 0 || drilling || player.onJello || player.lastMoveD) return null;
-    var bank = snowFootBank(px, newY);
-    if (!bank) return null;
-    var rest = snowRestFeet(bank);
-    if (oldY + PLAYER_H > rest + 10 || newY + PLAYER_H < rest - (wasSupported ? 12 : 0)) return null;
-    var result = rest - PLAYER_H;
-    if (solidAt(px, result, PLAYER_W, PLAYER_H)) return null;
-    snow.rigDepth = snowHeight(bank);
-    return result;
-  }
-  function snowRigDrag(dt) {
-    if (!worldSnowEnabled || bathMode) return;
-    var bank = snowFootBank(player.x, player.y);
-    if (!bank || player.y + PLAYER_H < bank.row * TILE - snowHeight(bank) - 2) return;
-    var depth = snowHeight(bank);
-    player.vx *= Math.exp(-Math.min(1.6, depth / 25) * dt);
-  }
-  function snowLanding(speed) {
-    var cushion = Math.min(0.8, snow.rigDepth / 60);
-    recordLandingImpact(speed, player.y + PLAYER_H, 'snow', cushion);
-    snowBlast(player.x + PLAYER_W * 0.5, player.y + PLAYER_H, Math.min(52, 15 + speed * 0.035));
-    var damage = FALL_IMPACT_FX ? fallDamageForImpact(speed) * (1 - cushion) : 0;
-    if (damage > 0) {
-      player.hull -= damage; damageFlashT = Math.max(damageFlashT, Math.min(1, damage / 90));
-      sfxPlay('land-damage', { gain: 0.6 });
-      if (player.hull <= 0) endGame({ type: 'fall', speed: speed, damage: damage });
-    } else sfxPlay('land-soft', { gain: 0.5 });
-  }
-  function snowRigPlow(dt) {
-    var moved = snow.rigX === null ? 0 : player.x - snow.rigX;
-    snow.rigX = player.x; snow.rigY = player.y;
-    if (Math.abs(moved) > 80 || gameOver || gameWon) return;
-    var feet = player.y + PLAYER_H, dir = player.vx < 0 ? -1 : 1;
-    for (var col = Math.floor(player.x / SNOW_CELL); col <= Math.floor((player.x + PLAYER_W) / SNOW_CELL); col++) {
-      var bank = snowAt((col + 0.5) * SNOW_CELL, feet, 4);
-      if (!bank || feet < bank.row * TILE - snowHeight(bank) - 1) continue;
-      var before = bank.pack;
-      bank.pack += (0.92 - bank.pack) * (1 - Math.exp(-dt * 14));
-      if (before < 0.5 && bank.pack >= 0.5) snow.packed++;
-      if (player.lastMoveD) {
-        // Down reaches the terrain under the powder using the normal drill.
-        snowLift(bank, 6, (col * SNOW_CELL < player.x + PLAYER_W * 0.5 ? -1 : 1) * 55, -40);
-        continue;
-      }
-      if (Math.abs(moved) < 0.03) continue;
-      var clearance = Math.max(3, bank.row * TILE - feet + 3);
-      var keep = Math.floor(clearance * SNOW_CELL / snowVolume(bank.pack));
-      var amount = Math.min(8, Math.max(0, bank.mass - keep));
-      if (!amount) continue;
-      var forward = dir > 0 ? player.x + PLAYER_W + 6 : player.x - 6;
-      var row = snowSupportRow(forward, feet - 12, 5), movedMass = 0;
-      // Most snow rolls into the bow bank; a small fraction breaks into powder.
-      var roll = Math.floor(amount * 0.7);
-      if (row >= 0 && row * TILE - feet < 16 && !liquidWorldSolidAt(forward, row * TILE - 1)) {
-        // A track-wide wedge rolls ahead of the hull, not one needle column.
-        movedMass = snowSettle(forward + dir * 12, row, roll, 0.25, 2);
-      }
-      bank.mass -= movedMass;
-      snowLift(bank, amount - movedMass, dir * (45 + Math.abs(player.vx) * 0.38), -45 - Math.random() * 65);
-    }
-  }
-  function snowBlast(x, y, radius) {
-    if (!worldSnowEnabled || bathMode) return;
-    for (var i = 0; i < snow.banks.length; i++) {
-      var bank = snow.banks[i], bx = (bank.col + 0.5) * SNOW_CELL, by = bank.row * TILE - snowHeight(bank) * 0.5;
-      var dx = bx - x, dy = by - y, dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > radius) continue;
-      var strength = 1 - dist / radius;
-      snowLift(bank, Math.ceil(bank.mass * strength), dx / Math.max(1, dist) * 220 * strength, -80 - 180 * strength);
-    }
+    snow.cells = cells; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
-    if (!worldSnowEnabled || bathMode || count <= 0) return 0;
+    // Landed snow is already extracted by the ordinary liquid tool. This
+    // handles only slow weather flakes before their first solver contact.
+    if (!worldSnowEnabled || count <= 0) return 0;
     var taken = 0;
-    for (var i = 0; i < snow.banks.length && taken < count; i++) {
-      var bank = snow.banks[i], bx = (bank.col + 0.5) * SNOW_CELL, by = bank.row * TILE - snowHeight(bank) * 0.5;
-      var dx = (bx - x) / radius, dy = (by - y) / ry;
-      if (dx * dx + dy * dy > 1 || !liquidLineClear(fromX, fromY, bx, by)) continue;
-      var amount = Math.min(bank.mass, count - taken);
-      bank.mass -= amount; taken += amount;
+    for (var i = snow.grains.length - 1; i >= 0 && taken < count; i--) {
+      var p = snow.grains[i], dx = (p.x - x) / radius, dy = (p.y - y) / ry;
+      if (dx * dx + dy * dy > 1 || !liquidLineClear(fromX, fromY, p.x, p.y)) continue;
+      snow.grains[i] = snow.grains[snow.grains.length - 1]; snow.grains.pop(); taken++;
     }
-    for (var j = snow.grains.length - 1; j >= 0 && taken < count; j--) {
-      var p = snow.grains[j], gx = (p.x - x) / radius, gy = (p.y - y) / ry;
-      if (gx * gx + gy * gy > 1 || !liquidLineClear(fromX, fromY, p.x, p.y)) continue;
-      var grab = Math.min(p.mass, count - taken);
-      p.mass -= grab; taken += grab;
-      if (!p.mass) { if (p.powder) snow.powder--; snow.grains[j] = snow.grains[snow.grains.length - 1]; snow.grains.pop(); }
-    }
-    // The rig's warm tank receives water, at exactly the snow's water mass.
-    snow.mass -= taken; snow.collected += taken;
-    return taken;
+    snow.collected += taken; snow.mass -= taken; return taken;
   }
-
   function snowSpawn(top, left, width, prime) {
-    if (snow.mass >= SNOW_MASS_CAP || snow.grains.length - snow.powder >= SNOW_FLAKE_CAP) return;
+    if (snow.mass >= SNOW_MASS_CAP || snow.grains.length >= SNOW_FLAKE_CAP || snow.active >= snowActiveCap()) return;
     var x = left + Math.random() * width;
     var y = prime ? top + Math.random() * Math.max(0, SKY_ROWS * TILE - top - 8) : top;
     if (liquidWorldSolidAt(x, y)) return;
-    if (snowAddGrain(x, y, surfaceWind.current * 28, 35 + Math.random() * 32, 1, false)) {
-      snow.mass++; snow.emitted++;
-    }
-  }
-  function snowOutside(dt, sky, left, right) {
-    // The unseen surface uses the same snowfall rate without airborne physics.
-    // Sampling the uncovered width avoids double-counting the visible strip.
-    var covered = sky ? Math.max(0, right - left) : 0;
-    snow.outsideCredit += Math.max(0, COLS * TILE - covered) * SNOW_RATE / 1100 * rain.intensity * dt;
-    var count = Math.min(80, Math.floor(snow.outsideCredit), SNOW_MASS_CAP - snow.mass);
-    snow.outsideCredit = Math.min(80, snow.outsideCredit - count);
-    for (var i = 0; i < count; i++) {
-      var x = 3 + Math.random() * (COLS * TILE - covered - 6);
-      if (sky && x >= left) x += covered;
-      if (x >= COLS * TILE - 3 || rainLakeAt(x, SKY_ROWS * TILE + 1)) continue;
-      var row = snowSupportRow(x, SKY_ROWS * TILE, 16);
-      if (row >= 0 && snowDeposit(Math.floor(x / SNOW_CELL), row, 1, 0)) { snow.mass++; snow.emitted++; }
-    }
+    snow.grains.push({ x: x, y: y, vx: surfaceWind.current * 28, vy: 35 + Math.random() * 32,
+      size: Math.random(), phase: Math.random() * Math.PI * 2 });
+    snow.mass++; snow.emitted++;
   }
   function updateSnow(dt) {
     snow.time += dt; snow.temperature = snowTemperature();
-    snowRigPlow(dt);
     snow.tick += dt;
-    while (snow.tick >= 0.05) { snowBankTick(0.05); snow.tick -= 0.05; }
+    if (snow.tick >= 0.12) { snowScan(snow.tick); snow.tick = 0; }
     var surf = SKY_ROWS * TILE, sky = cam.y < surf && cam.y + screenH > surf - 2000;
-    var left = Math.max(3, cam.x - 140), right = Math.min(COLS * TILE - 3, cam.x + screenW + 140);
+    var left = Math.max(3, cam.x - 100), right = Math.min(COLS * TILE - 3, cam.x + screenW + 100);
     var width = Math.max(0, right - left), top = Math.max(surf - 2200, Math.min(cam.y - 18, surf - 150));
     rainCatchLakes(dt, sky, left, right);
-    snowOutside(dt, sky, left, right);
     var rate = SNOW_RATE * Math.min(1.7, width / 1100) * rain.intensity;
     if (sky && !snow.primed && rain.intensity > 0) {
       var initial = Math.min(700, Math.round(rate * (surf - top) / 60));
@@ -35383,109 +35217,80 @@
       snow.primed = true;
     }
     snow.credit = sky && rain.intensity > 0 ? Math.min(40, snow.credit + rate * dt) : 0;
-    var births = Math.min(Math.floor(snow.credit), SNOW_FLAKE_CAP - snow.grains.length + snow.powder);
+    var births = Math.min(Math.floor(snow.credit), SNOW_FLAKE_CAP - snow.grains.length);
     for (var b = 0; b < births; b++) snowSpawn(top, left, width, false);
     snow.credit -= births;
     for (var i = snow.grains.length - 1; i >= 0; i--) {
-      var p = snow.grains[i]; p.age += dt;
-      var wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
+      var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
-      if (p.powder) { p.vx += (wind - p.vx) * Math.min(1, dt * 1.1); p.vy = Math.min(240, p.vy + 360 * dt); }
-      else {
-        var flutter = Math.sin(snow.time * (1.4 + p.size) + p.phase) * (13 + p.size * 16);
-        p.vx += (wind + flutter - p.vx) * Math.min(1, dt * 1.5);
-        p.vy += (32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9 - p.vy) * Math.min(1, dt * 2);
-      }
-      var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 3));
+      var flutter = Math.sin(snow.time * (1.4 + p.size) + p.phase) * (13 + p.size * 16);
+      p.vx += (wind + flutter - p.vx) * Math.min(1, dt * 1.5);
+      p.vy += (32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9 - p.vy) * Math.min(1, dt * 2);
+      var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
-      for (var s = 0; s < steps; s++) {
+      for (var step = 0; step < steps; step++) {
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
-        if ((rain.cells[rainCell(nx, ny)] || 0) >= 4) {
-          var melted = snowMelt(p.x, p.y, p.mass, p.vx * 0.3, 30);
-          p.mass -= melted;
-          if (!p.mass) remove = true;
-          break;
-        }
-        if (liquidPointInMiner(nx, ny)) {
-          // The warm hull sheds flakes. Cold powder kicked by the tracks fans
-          // out around it instead of sticking inside the moving collider.
-          var side = nx < player.x + PLAYER_W * 0.5 ? -1 : 1;
-          p.x = side < 0 ? player.x - 3 : player.x + PLAYER_W + 3;
-          p.vx = player.vx * 0.4 + side * 35; p.vy = -12;
-          break;
-        }
-        var bank = snowAt(nx, ny, 0), solid = liquidWorldSolidAt(nx, ny + 1);
-        if ((bank && p.vy >= 0) || solid) {
-          var row = bank ? bank.row : Math.floor((ny + 1) / TILE);
-          if (!solid || p.vy >= 0 && p.y <= row * TILE + 1) {
-            p.mass -= snowSettle(nx, row, p.mass, p.powder ? 0.15 : 0, 1);
-            remove = p.mass === 0;
-          }
-          if (!remove) { p.vx = -p.vx * 0.35; p.vy = Math.abs(p.vy) * 0.3; }
-          break;
-        }
+        var key = rainCell(nx, ny + 2);
+        var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) || (snow.cells[key] || 0) > 0 || (rain.cells[key] || 0) > 1;
+        if (contact) { remove = snowParticle(p.x, p.y, p.vx * 0.4, p.vy * 0.3); break; }
         p.x = nx; p.y = ny;
       }
-      if (!remove && (p.x < 2 || p.x >= COLS * TILE - 2 || p.y >= TOTAL_ROWS * TILE)) {
-        snow.mass -= p.mass; snow.escaped += p.mass; remove = true;
+      if (!remove && !snowVisible(p.x, p.y) && p.y > surf - 10) remove = snowStore(p.x, p.y, p.vx, p.vy);
+      if (p.x < 2 || p.x >= COLS * TILE - 2 || p.y >= TOTAL_ROWS * TILE) {
+        p.x = Math.max(2, Math.min(COLS * TILE - 2, p.x)); p.y = Math.min(TOTAL_ROWS * TILE - 2, p.y);
+        if (!remove) remove = snowStore(p.x, p.y, 0, 0);
       }
-      // Distant grains settle at the first actual support, never disappear
-      // when the camera moves. Open shafts remain open all the way down.
-      if (!remove && (p.x < cam.x - screenW || p.x > cam.x + screenW * 2 || p.y > cam.y + screenH + 200)) {
-        var support = snowSupportRow(p.x, p.y, TOTAL_ROWS);
-        if (support >= 0) {
-          var lake = rainLakeAt(p.x, support * TILE - 2);
-          if (lake && lake.rainCount > 0) {
-            var waterY = (SKY_ROWS + lake.d) * TILE - Math.max(2, lake.rainCount * 1.5625 / ((lake.cR - lake.cL + 1) * TILE));
-            p.mass -= snowMelt(p.x, waterY, p.mass, 0, 0);
-          } else p.mass -= snowSettle(p.x, support, p.mass, p.powder ? 0.15 : 0, 1);
-          remove = p.mass === 0;
-        }
-      }
-      if (remove) { if (p.powder) snow.powder--; snow.grains[i] = snow.grains[snow.grains.length - 1]; snow.grains.pop(); }
+      if (remove) { snow.grains[i] = snow.grains[snow.grains.length - 1]; snow.grains.pop(); }
     }
   }
-
   function snowSave() {
     if (!worldSnowEnabled) return null;
-    return { banks: snow.banks.filter(function (b) { return b.mass > 0; }).map(function (b) {
-      return [b.col, b.row, b.mass, Math.round(b.pack * 1000) / 1000, b.melt];
-    }), grains: snow.grains.map(function (p) { return [p.x, p.y, p.vx, p.vy, p.mass, p.powder, p.size, p.phase]; }) };
+    liquidToolSync();
+    var particles = snow.parked.slice();
+    for (var i = 0; i < liquidCount; i++) if (liquidType[i] === 5) particles.push(liquidX[i], liquidY[i], liquidVX[i], liquidVY[i]);
+    return { version: 2, particles: particles, grains: snow.grains.map(function (p) { return [p.x, p.y, p.vx, p.vy, 1, 0, p.size, p.phase]; }) };
   }
   function snowRestore(data) {
     if (!worldSnowEnabled || !data) return;
-    var banks = Array.isArray(data.banks) ? data.banks : [];
-    for (var i = 0; i < Math.min(SNOW_BANK_CAP, banks.length); i++) {
-      var b = banks[i];
-      if (!Array.isArray(b) || b.length < 4 || !b.every(Number.isFinite) || !Number.isInteger(b[0]) ||
-          !Number.isInteger(b[1]) || !Number.isInteger(b[2]) || b[2] <= 0 || b[2] > 128 || b[3] < 0 || b[3] > 1 ||
-          b[2] * snowVolume(b[3]) / SNOW_CELL > SNOW_MAX_DEPTH + 3) continue;
-      if (snow.mass + b[2] > SNOW_MASS_CAP || snowBank(b[0], b[1], false)) continue;
-      var bank = snowBank(b[0], b[1], true);
-      if (!bank) continue;
-      bank.mass = b[2]; bank.pack = b[3]; bank.melt = Math.max(0, Math.min(bank.mass, b[4] || 0)); snow.mass += b[2];
+    var valid = function (x, y, vx, vy) {
+      return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(vx) && Number.isFinite(vy) &&
+        x >= 1 && x < COLS * TILE && y >= -20000 && y < TOTAL_ROWS * TILE && Math.abs(vx) <= 1200 && Math.abs(vy) <= 1200;
+    };
+    var particles = Array.isArray(data.particles) ? data.particles : [];
+    for (var i = 0; i + 3 < particles.length && snow.parked.length < SNOW_MASS_CAP * 4; i += 4) {
+      if (valid(particles[i], particles[i + 1], particles[i + 2], particles[i + 3])) snowStore(particles[i], particles[i + 1], particles[i + 2], particles[i + 3]);
+    }
+    // Migrate the short-lived column saves without losing their water mass.
+    var banks = Array.isArray(data.banks) ? data.banks : [], seen = {};
+    for (var b = 0; b < Math.min(8192, banks.length); b++) {
+      var bank = banks[b];
+      if (!Array.isArray(bank) || bank.length < 4 || !bank.every(Number.isFinite) || !Number.isInteger(bank[0]) || !Number.isInteger(bank[1]) ||
+          !Number.isInteger(bank[2]) || bank[2] <= 0 || bank[2] > 128 || bank[3] < 0 || bank[3] > 1) continue;
+      var bx = bank[0] * 4, by = bank[1] * TILE, key = bank[0] + ':' + bank[1];
+      if (seen[key] || !valid(bx + 2, by - 2, 0, 0)) continue;
+      seen[key] = true;
+      for (var m = 0; m < bank[2]; m++) snowStore(bx + 0.7 + (m % 3) * 1.3, by - 1.3 - Math.floor(m / 3) * 1.3, 0, 0);
     }
     var grains = Array.isArray(data.grains) ? data.grains : [];
-    for (var j = 0; j < Math.min(SNOW_FLAKE_CAP + SNOW_POWDER_CAP, grains.length); j++) {
-      var p = grains[j];
-      if (!Array.isArray(p) || p.length < 8 || !p.every(Number.isFinite) || p[0] < 2 || p[0] >= COLS * TILE - 2 ||
-          p[1] < -20000 || p[1] >= TOTAL_ROWS * TILE || Math.abs(p[2]) > 1000 || Math.abs(p[3]) > 1000 ||
-          !Number.isInteger(p[4]) || p[4] <= 0 || p[4] > 12 || snow.mass + p[4] > SNOW_MASS_CAP) continue;
-      if (snowAddGrain(p[0], p[1], p[2], p[3], p[4], p[5] === 1)) {
-        var grain = snow.grains[snow.grains.length - 1]; grain.size = Math.max(0, Math.min(1, p[6])); grain.phase = p[7];
-        snow.mass += p[4];
+    for (var g = 0; g < Math.min(SNOW_FLAKE_CAP + 384, grains.length); g++) {
+      var p = grains[g];
+      if (!Array.isArray(p) || p.length < 8 || !p.every(Number.isFinite) || !valid(p[0], p[1], p[2], p[3]) || !Number.isInteger(p[4]) || p[4] < 1 || p[4] > 12) continue;
+      if (p[5] || p[4] > 1) {
+        for (var n = 0; n < p[4]; n++) snowStore(p[0] + (n % 3) * 1.3, p[1] - Math.floor(n / 3) * 1.3, p[2], p[3]);
+      } else if (snow.grains.length < SNOW_FLAKE_CAP && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP) {
+        snow.grains.push({ x: p[0], y: p[1], vx: p[2], vy: p[3], size: Math.max(0, Math.min(1, p[6])), phase: p[7] });
       }
     }
-    snow.emitted = snow.mass; snow.primed = true;
+    snow.mass = snow.parked.length / 4 + snow.grains.length; snow.emitted = snow.mass; snow.primed = true;
   }
   window.__particleSnow = { stats: function () {
-    var packedMass = 0, maxDepth = 0;
-    for (var i = 0; i < snow.banks.length; i++) { packedMass += snow.banks[i].mass; maxDepth = Math.max(maxDepth, snowHeight(snow.banks[i])); }
-    return { enabled: worldSnowEnabled, mass: snow.mass, groundMass: packedMass, banks: snow.banks.length,
-      airborne: snow.grains.length, powder: snow.powder, emitted: snow.emitted, melted: snow.melted,
-      collected: snow.collected, escaped: snow.escaped, packed: snow.packed, maxDepth: maxDepth, temperature: snow.temperature };
+    var active = 0, moving = 0;
+    for (var i = 0; i < liquidCount; i++) if (liquidType[i] === 5) { active++; if (Math.abs(liquidVX[i]) + Math.abs(liquidVY[i]) > 30) moving++; }
+    return { enabled: worldSnowEnabled, model: 'shared-particles', active: active, parked: snow.parked.length / 4,
+      mass: active + snow.parked.length / 4 + snow.grains.length, airborne: snow.grains.length, moving: moving,
+      emitted: snow.emitted, melted: snow.melted, collected: snow.collected, temperature: snow.temperature };
   } };
-  /* ---- Snow optics: lit powder banks and slowly tumbling flakes ---- */
+  /* ---- Snow optics: slowly tumbling atmospheric flakes ---- */
   function snowColors() {
     var wp = weatherPalette(), arc = computeSunElevation(timeOfDay);
     var day = scatDayWeight(arc), dusk = Math.max(0, 1 - Math.abs(Math.sin(arc)) * 5);
@@ -35496,52 +35301,9 @@
       packed: wRGBA(wMix(shade, light, 0.51), 1), shade: wRGBA(wMix(shade, light, 0.36), 1),
       far: wRGBA(light, 0.47), flake: wRGBA(light, 0.78), near: wRGBA(light, 0.95) };
   }
-  function drawSnowCover() {
-    if (!worldSnowEnabled || bathMode || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
-    var colors = snowColors();
-    ctx.save();
-    var ws = dpr * worldScale;
-    ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
-    // Adjacent columns share the same edge height. The bed stays coherent
-    // while mass slumps sideways or compresses beneath the tracks.
-    for (var layer = 0; layer < 4; layer++) {
-      ctx.fillStyle = layer === 0 ? colors.shade : layer === 1 ? colors.body : layer === 2 ? colors.packed : colors.top;
-      ctx.beginPath();
-      for (var i = 0; i < snow.banks.length; i++) {
-        var b = snow.banks[i], x = b.col * SNOW_CELL, base = b.row * TILE, height = snowHeight(b);
-        if (b.mass <= 0 || x + SNOW_CELL < cam.x || x > cam.x + screenW || base < cam.y || base - height > cam.y + screenH) continue;
-        var left = snowBank(b.col - 1, b.row, false), right = snowBank(b.col + 1, b.row, false);
-        var lh = left && left.mass ? (height + snowHeight(left)) * 0.5 : Math.min(1, height * 0.3);
-        var rh = right && right.mass ? (height + snowHeight(right)) * 0.5 : Math.min(1, height * 0.3);
-        var yl = base - lh, yr = base - rh;
-        if (layer === 2 && b.pack < 0.45) continue;
-        if (layer === 3) {
-          // Broken soft crowns, not a bright outline around every column.
-          var grain = wHash(b.col, b.row, 391);
-          if (b.pack > 0.7 || grain < 0.28) continue;
-          var lip = Math.min(1.4, height * 0.2);
-          ctx.moveTo(x, yl); ctx.lineTo(x + SNOW_CELL, yr);
-          ctx.lineTo(x + SNOW_CELL, yr + lip); ctx.lineTo(x, yl + lip);
-        } else {
-          var lower = layer === 2 ? Math.min(base, Math.max(yl, yr) + 2.5) :
-            layer === 1 ? base - Math.min(3, Math.min(lh, rh) * 0.18) : base;
-          ctx.moveTo(x, yl); ctx.lineTo(x + SNOW_CELL, yr);
-          ctx.lineTo(x + SNOW_CELL, lower); ctx.lineTo(x, lower);
-        }
-        ctx.closePath();
-      }
-      ctx.fill();
-    }
-    // Packed tread grooves and a few fixed crystals share the material's
-    // light. No animated glitter noise, glow pass, or terrain cache rebuild.
-    ctx.fillStyle = colors.shade;
-    ctx.beginPath();
-    for (var j = 0; j < snow.banks.length; j++) {
-      var bank = snow.banks[j], bx = bank.col * SNOW_CELL, by = bank.row * TILE - snowHeight(bank);
-      if (bank.mass <= 0 || bank.pack < 0.68 || bank.col % 3 || bx < cam.x || bx > cam.x + screenW || by < cam.y || by > cam.y + screenH) continue;
-      ctx.rect(bx + 0.7, by + 1.3, 2, 0.7);
-    }
-    ctx.fill(); ctx.restore();
+  function snowRenderRGB() {
+    var day = scatDayWeight(computeSunElevation(timeOfDay));
+    return [0.48 + 0.43 * day, 0.61 + 0.33 * day, 0.73 + 0.23 * day];
   }
   function drawSnowflakes() {
     if (!worldSnowEnabled || bathMode || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
@@ -35554,13 +35316,13 @@
       for (var i = 0; i < snow.grains.length; i++) {
         var p = snow.grains[i];
         if (Math.min(2, Math.floor(p.size * 3)) !== band || p.x < cam.x - 8 || p.x > cam.x + screenW + 8 || p.y < cam.y - 8 || p.y > cam.y + screenH + 8) continue;
-        // Projected area changes as each flake tumbles. Powder fragments have
-        // more volume than individual flakes and retain their physical mass.
+        // Projected area changes as each flake tumbles. After contact, the
+        // shared solver renders this mass using its own particle pass.
         var face = 0.45 + 0.55 * Math.abs(Math.sin(snow.time * (1.1 + p.size) + p.phase));
-        var size = p.powder ? Math.min(3.7, 1.2 + Math.sqrt(p.mass) * 0.55) : 0.65 + p.size * 1.35;
+        var size = 0.65 + p.size * 1.35;
         var x = Math.round(p.x * ws) / ws, y = Math.round(p.y * ws) / ws;
         ctx.rect(x - size * 0.5, y - size * face * 0.5, size, Math.max(0.55, size * face));
-        if (band === 2 || p.powder) {
+        if (band === 2) {
           ctx.rect(x - size * 0.23, y - size * 0.7, size * 0.46, size * 1.4);
         }
       }
@@ -35569,18 +35331,12 @@
     ctx.restore();
   }
   function shaderWarmSnow() {
-    var enabled = worldSnowEnabled, banks = snow.banks, cells = snow.cells, grains = snow.grains;
+    var enabled = worldSnowEnabled, grains = snow.grains;
     try {
-      worldSnowEnabled = true; snow.banks = []; snow.cells = {}; snow.grains = [];
-      var row = Math.max(0, Math.floor((cam.y + 100) / TILE)), col = Math.floor((cam.x + 60) / SNOW_CELL);
-      for (var n = 0; n < 12; n++) {
-        var b = snowBank(col + n, row, true);
-        if (b) { b.mass = 3 + n % 4; b.pack = (n % 3) * 0.4; }
-        snow.grains.push({ x: cam.x + 40 + n * 9, y: cam.y + 70, size: (n % 3) * 0.4,
-          mass: 1 + n % 5, phase: n, powder: n % 2 });
-      }
-      drawSnowCover(); drawSnowflakes();
-    } finally { worldSnowEnabled = enabled; snow.banks = banks; snow.cells = cells; snow.grains = grains; }
+      worldSnowEnabled = true; snow.grains = [];
+      for (var n = 0; n < 12; n++) snow.grains.push({ x: cam.x + 40 + n * 9, y: cam.y + 70, size: (n % 3) * 0.4, phase: n });
+      drawSnowflakes();
+    } finally { worldSnowEnabled = enabled; snow.grains = grains; }
   }
   // ====== RENDER: Parallax mountain layers ======
   //

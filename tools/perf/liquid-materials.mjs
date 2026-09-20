@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Transfer conservation and five-material GPU identity regression.
+// Transfer conservation and six-material GPU identity regression.
 // node tools/perf/liquid-materials.mjs
 // node tools/perf/liquid-materials.mjs --gpu
 // --gpu uses the owner's safe Chrome-for-Testing shim, a private profile,
@@ -19,7 +19,7 @@ function getFunction(text, name) {
   return text.slice(start, text.indexOf('\n  }', start) + 4);
 }
 const state = {
-  console, Math, Number, isFinite, liquidWGPU: null,
+  console, Math, Number, isFinite, liquidWGPU: null, snowScoop: () => 0, snow: { collected: 0 },
   LIQUID_MAX_PARTICLES: 3000, LIQUID_OPS_MAX: 100000,
   LIQUID_MAX_VEL: 740, LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5,
   LIQUID_DENSITY: 4, TILE: 32, liquidCount: 0, liquidMutationSeq: 0,
@@ -177,7 +177,8 @@ async function checkGPU() {
       // cannot overwrite the deliberately changed material fixture.
       var originalSequence = l.liquid.getMutationSeq;
       l.liquid.getMutationSeq = function () { return originalSequence() + 1; };
-      for (var i = 0; i < n; i++) a.type[i] = i % 5;
+      // Keep this solver fixture outside the surface-pond litter collector.
+      for (var i = 0; i < n; i++) { a.type[i] = i % 6; a.origin[i] = 3; }
       l.residentSeeded = false;
       return n;
     })()`);
@@ -185,10 +186,10 @@ async function checkGPU() {
     await sleep(7000);
     const result = await evaluate(`(function () {
       var l = LiquidWGPU.last, a = l.liquid.arrays, n = l.liquid.getCount();
-      var types = [0, 0, 0, 0, 0], bad = 0, nonfinite = 0;
+      var types = [0, 0, 0, 0, 0, 0], bad = 0, nonfinite = 0;
       for (var i = 0; i < n; i++) {
         types[a.type[i]]++;
-        if (a.type[i] !== i % 5) bad++;
+        if (a.type[i] !== i % 6) bad++;
         if (!isFinite(a.x[i]) || !isFinite(a.y[i]) || !isFinite(a.vx[i]) || !isFinite(a.vy[i])) nonfinite++;
       }
       return { count: n, types: types, bad: bad, nonfinite: nonfinite,
@@ -201,7 +202,7 @@ async function checkGPU() {
     assert.equal(result.count, seeded, 'GPU fixture conserves particles');
     assert.equal(result.bad, 0, 'every material survives packing, G2P, sleep flags, collision and readback');
     assert.equal(result.nonfinite, 0, 'all mixed-liquid positions and velocities remain finite');
-    assert.ok(result.types.every(count => count > 0), 'all five materials coexist');
+    assert.ok(result.types.every(count => count > 0), 'all five liquids and snow coexist');
     console.log(`PASS: real WebGPU shaders and ${result.count} mixed particles retain identity: ${result.types.join(', ')}.`);
   } finally {
     stop();

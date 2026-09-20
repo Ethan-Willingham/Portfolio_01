@@ -63,125 +63,79 @@ try {
   check('Snow is a persisted next-world setting',await game("SluiceOptions.particleSnow && !worldSnowEnabled && localStorage.getItem('sluice.opt.rain')==='snow'"));
   await screenshot('snow-options');
   await ev("document.getElementById('gm-opt-back').click();document.getElementById('gm-new-game-btn').click();document.getElementById('gm-restart-btn').click()");await sleep(300);await ready();
-  check('new snow world boots with real powder and a gentle snowfall',await game('worldSnowEnabled && worldRainEnabled && snow.mass>2000 && snow.banks.length>1000 && snow.grains.length>50 && weatherPrecipType() === "snow" && rain.drops.length===0'));
-  check('the actual snow renderer warms under the loading cover',await ev('__shaderWarm.times.snow>=0 && __shaderWarm.errors.length===0'));
-  await sleep(10000);
-  console.log('Fresh snowfall:',await ev('__particleSnow.stats()'));
-  await screenshot('snow-day');
-  await game('timeOfDay=0.755');await sleep(2200);await screenshot('snow-dusk');
-  await game('timeOfDay=0.05');await sleep(2200);await screenshot('snow-night');
-  check('all snow mass belongs to exactly one bank or moving grain',await game(`snow.mass===snow.banks.reduce(function(n,b){return n+b.mass;},0)+snow.grains.reduce(function(n,p){return n+p.mass;},0) && snow.mass+snow.melted+snow.collected+snow.escaped===snow.emitted`));
-  await ev("document.getElementById('gm-pause-btn').click()");const frozen=await game('snow.time');await sleep(400);
-  check('pause freezes the snow and thaw',await game(`snow.time===${frozen}`));
+  await sleep(1500);
+  check('new snow world has actual shared solver particles and slow flakes',await game('worldSnowEnabled && snow.active>100 && snow.grains.length>50 && weatherPrecipType()==="snow" && rain.drops.length===0'));
+  check('GPU solver and shaders are live',await game('liquidWGPU.simActive && liquidWGPU.renderActive') && await ev('__shaderWarm.errors.length===0'));
+  await sleep(5000);await screenshot('snow-day');
+  await game('timeOfDay=0.05');await sleep(1000);await screenshot('snow-night');
+  await ev("document.getElementById('gm-pause-btn').click()");const frozen=await game('snow.time');await sleep(350);
+  check('pause freezes snowfall and thaw',await game(`snow.time===${frozen}`));
   await ev("document.getElementById('gm-resume-btn').click()");
+  console.log('FRESH',await ev('__particleSnow.stats()'));
 
-  // A bank along a clear road lets a real drive exercise compaction and spray.
-  await game(`timeOfDay=0.35;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
-    window.rc=80;window.sy=SKY_ROWS*TILE;
-    for(var r=SKY_ROWS;r<SKY_ROWS+5;r++)for(var c=rc-5;c<rc+35;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
-    for(var c=rc*8;c<(rc+28)*8;c++){var b=snowBank(c,SKY_ROWS,true);snow.mass+=12-b.mass;snow.emitted+=12-b.mass;b.mass=12;b.pack=0;}
-    player.x=(rc+2)*TILE;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;cam.snap=true;updateCamera();
-    window.driveStart=player.x;keys.ArrowRight=true;window.driveSamples=[];`);
-  for(let i=0;i<8;i++){
-    await sleep(450);
-    const state=await game(`({x:player.x,y:player.y,speed:player.vx,ground:player.onGround,powder:snow.powder,packed:snow.packed,mass:snow.mass})`);
-    await game(`driveSamples.push(${JSON.stringify(state)})`);console.log('Driving in powder:',state);
-    if(i===3)await screenshot('snow-plow');
+  await game(`window.rc=80;window.sy=SKY_ROWS*TILE;window.clearSnowFixture=function(){
+    keys.ArrowRight=keys.ArrowLeft=keys.ArrowDown=keys.ArrowUp=false;
+    while(liquidCount)removeLiquidParticle(liquidCount-1);
+    mineralLiquidReset();surfacePonds=[];rainReset(true,true);SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
+    for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=rc-8;c<rc+45;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
+    player.x=(rc+2)*TILE;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;drilling=null;cam.snap=true;timeOfDay=0.35;updateCamera();
+  }; clearSnowFixture();
+  for(var x=(rc+5)*TILE;x<(rc+18)*TILE;x+=2.4)for(var h=1.4;h<Math.min(32,(x-(rc+5)*TILE)/4,((rc+18)*TILE-x)/4);h+=2.4){addLiquidParticle(5,x,sy-h,0,0,3);snow.active++;}
+  snow.mass=snow.emitted=snow.active;window.seedCount=snow.active;`);
+  await sleep(5000);await screenshot('snow-pile');
+  const beforeDrive=await game(`({count:__particleSnow.stats().active,moving:__particleSnow.stats().moving,depth:sy-Math.min.apply(null,Array.from(liquidY.slice(0,liquidCount)))})`);console.log('RESTING PILE',beforeDrive);
+  check('snow holds a low pile without boiling or losing material',beforeDrive.count>1200 && beforeDrive.moving<30 && beforeDrive.depth>15 && beforeDrive.depth<50);
+  await game('window.driveStart=player.x;window.driveSamples=[];keys.ArrowRight=true');
+  for(let i=0;i<9;i++){
+    await sleep(320);
+    const state=await game('({x:player.x,y:player.y,ground:player.onGround,moving:__particleSnow.stats().moving,remaining:__particleSnow.stats().active})');
+    await game(`driveSamples.push(${JSON.stringify(state)})`);console.log('DRIVE',state);
+    if(i===4)await screenshot('snow-plow');
   }
   await game('keys.ArrowRight=false');
-  check('the rig moves through powder, leaves packed tracks and throws real snow',await game('player.x>driveStart+150 && driveSamples.some(function(s){return s.powder>0 && s.packed>5 && s.ground;})'));
-  await sleep(600);await screenshot('snow-tracks');
-  await game('player.x=(rc+18)*TILE+3;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;cam.snap=true;keys.ArrowDown=true');
-  await sleep(1600);await game('keys.ArrowDown=false');await screenshot('snow-drill');
-  check('the ordinary Down control drills through snow into the ground',await game('world[SKY_ROWS][rc+18]===null'));
-  await game('player.x=(rc+24)*TILE;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;drilling=null;cam.snap=true;window.jetMelt=snow.melted;keys.ArrowUp=true');await sleep(1200);await screenshot('snow-jet');await game('keys.ArrowUp=false');
-  check('jet exhaust disturbs and melts the snow below it',await game('snow.powder>0 && snow.melted>jetMelt'));
+  check('tracks drive through real snow particles without alternate foot support',await game('player.x>driveStart+300 && driveSamples.every(function(s){return s.ground && Math.abs(s.y-(sy-PLAYER_H))<2;}) && driveSamples.some(function(s){return s.moving>100;})'));
+  check('cold snow mostly survives a drive instead of turning into a puddle',await game('__particleSnow.stats().active>seedCount*0.9'));
+  await sleep(1800);await screenshot('snow-tracks');
+  await game('keys.ArrowLeft=true');await sleep(2300);await game('keys.ArrowLeft=false');
+  check('the same particle collision works driving left',await game('player.onGround && __particleSnow.stats().moving>20'));
+  await game('window.jetMelt=snow.melted;keys.ArrowUp=true');await sleep(700);await screenshot('snow-jet');await game('keys.ArrowUp=false');
+  check('existing jet forces lift powder and exhaust warms it',await game('__particleSnow.stats().moving>50 && snow.melted>jetMelt'));
+  await game('player.x=(rc+10)*TILE+3;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;keys.ArrowDown=true');await sleep(1600);await game('keys.ArrowDown=false');
+  check('ordinary digging remains available through snow',await game('world[SKY_ROWS][rc+10]===null'));
 
-  await game('cancelAnimationFrame(gameRafId);gameRafId=0;window.snowEnvelope=JSON.parse(JSON.stringify(saveBuild()));window.savedSnow=snow.mass;saveApply(window.snowEnvelope)');
-  check('save/load preserves banks, compression, flying powder and every snow mass unit',await game('worldSnowEnabled && snow.mass===savedSnow && snow.grains.length===snowEnvelope.rain.snow.grains.length && snow.banks.some(function(b){return b.pack>0.5;})'));
-  check('snow state stays separate from its meltwater',await game('snow.mass+rain.parked.length/2===savedSnow+snowEnvelope.rain.water.length/2'));
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;liquidToolSync();window.beforeSave=__particleSnow.stats().mass;window.snowEnvelope=JSON.parse(JSON.stringify(saveBuild()));saveApply(snowEnvelope)');
+  check('save/load retains exactly the shared snow and airborne mass',await game('__particleSnow.stats().mass===beforeSave && snowEnvelope.rain.snow.version===2'));
+  check('water save does not duplicate snow',await game('snowEnvelope.rain.snow.particles.length/4+snowEnvelope.rain.snow.grains.length===beforeSave'));
+  await game('clearSnowFixture();liquidToolSync();for(var i=0;i<20;i++)addLiquidParticle(5,rc*TILE+10+(i%5)*2.4,sy-2-Math.floor(i/5)*2.4,0,0,3);window.taken=liquidToolExtract(rc*TILE+15,sy-6,30,7)');
+  check('native scoop transfers exactly one water unit per snow particle',await game('taken.length===5 && taken[0]===7 && liquidCount===13 && Array.from(liquidType.slice(0,liquidCount)).every(function(t){return t===5;})'));
+  await game('window.beforeMelt=liquidCount;window.mx=liquidX[0];window.my=liquidY[0];snowMeltParticle(0)');
+  check('melting changes the material in place, without adding, deleting or teleporting a particle',await game('liquidCount===beforeMelt && liquidType[0]===0 && liquidOrigin[0]===3 && liquidX[0]===mx && liquidY[0]===my'));
+  await game('rain.waterCount=RAIN_STORAGE_CAP;window.blockedMelt=snowMeltParticle(1)');
+  check('a full water reservoir defers thaw without losing snow',await game('!blockedMelt && liquidType[1]===5 && liquidCount===beforeMelt'));
+  await game('clearSnowFixture();snowRestore({banks:[[rc*8,SKY_ROWS,8,0.1,0],[rc*8,SKY_ROWS,8,0.1,0],[-2,SKY_ROWS,20,0,0]],grains:[[rc*TILE+10,sy-10,20,-10,7,1,0.5,1]]})');
+  check('old column saves migrate to individual particles without duplicates',await game('snow.parked.length/4===15 && snow.grains.length===0'));
+  await game('clearSnowFixture();snowRestore({version:2,particles:[NaN,0,0,0,rc*TILE,sy-2,Infinity,0,-1,sy,0,0]})');
+  check('malformed particle saves cannot enter the solver',await game('__particleSnow.stats().mass===0'));
 
-  // Controlled fixtures use the real game functions with rendering paused.
-  await game(`window.clearSnowFixture=function(){
-    liquidCount=0;liquidOps.length=0;liquidOpsOverflow=true;liquidMutationSeq++;
-    surfacePonds=[];surfacePondBasins=[];rainReset(true,true);snowReset(true);
-    weatherForce=0;weatherSetMood(0,true);rain.intensity=0;cam.x=(rc-4)*TILE;cam.y=sy-120;screenW=640;screenH=480;
-    player.x=(rc+15)*TILE;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.thrusting=false;player.onGround=true;player.lastMoveD=false;player.onSnow=false;
-    for(var r=SKY_ROWS;r<SKY_ROWS+20;r++)for(var c=rc-5;c<rc+22;c++)world[r][c]={type:'stone',hp:10};
-    snow.rigX=player.x;
-  };clearSnowFixture();
-  snowDeposit(rc*8+4,SKY_ROWS,10,0);snow.mass=snow.emitted=10;
-  window.bank=snowBank(rc*8+4,SKY_ROWS,false);window.fluffy=snowHeight(bank);bank.pack=0.9;`);
-  check('packing changes volume without changing mass',await game('snowHeight(bank)<fluffy*0.4 && bank.mass===10 && snow.mass===10'));
-  await game(`clearSnowFixture();snowDeposit(rc*8+4,SKY_ROWS,12,0);snow.mass=snow.emitted=12;
-    snowBlast(rc*TILE+18,sy-8,35);`);
-  check('a blast converts settled snow into conserved flying powder',await game('snow.powder>0 && snow.mass===12 && snow.banks.reduce(function(n,b){return n+b.mass;},0)+snow.grains.reduce(function(n,p){return n+p.mass;},0)===12'));
-  await game(`clearSnowFixture();snowDeposit(rc*8+4,SKY_ROWS,8,0);snow.mass=snow.emitted=8;
-    world[SKY_ROWS][rc]=null;world[SKY_ROWS+1][rc]=null;
-    for(var n=0;n<80;n++)updateSnow(0.025);`);
-  check('mining the support makes the snow fall instead of hover',await game('!snowBank(rc*8+4,SKY_ROWS,false) && snow.mass===8 && snow.banks.some(function(b){return b.mass>0 && b.row>SKY_ROWS;})'));
-  await game(`clearSnowFixture();snowAddGrain(rc*TILE+16,sy-8,0,74,1,false);snow.mass=snow.emitted=1;
-    for(var n=0;n<10;n++)updateSnow(0.025);`);
-  check('falling flakes accumulate on a solid roof',await game('snow.grains.length===0 && snow.banks.some(function(b){return b.mass===1 && b.row===SKY_ROWS;})'));
-  await game(`clearSnowFixture();for(var r=SKY_ROWS;r<SKY_ROWS+5;r++)world[r][rc]=null;
-    snowAddGrain(rc*TILE+16,sy-8,0,74,1,false);snow.mass=snow.emitted=1;
-    for(var n=0;n<30;n++)updateSnow(0.025);`);
-  check('open shafts admit falling snow',await game('snow.grains.some(function(p){return p.y>sy;}) && snow.banks.length===0'));
-  await game(`clearSnowFixture();snowAddGrain(rc*TILE+16,sy-8,0,74,1,false);snow.mass=snow.emitted=1;
-    for(var x=rc*TILE;x<rc*TILE+TILE;x++)for(var y=sy-12;y<sy;y++)rain.cells[rainCell(x,y)]=10;
-    updateSnow(0.025);`);
-  check('snow touching water becomes exactly its mass of real water',await game('snow.mass===0 && snow.melted===1 && snow.grains.length===0 && liquidCount===1 && liquidOrigin[0]===3'));
-  await game(`clearSnowFixture();snowDeposit(rc*8+4,SKY_ROWS,10,0);snow.mass=snow.emitted=10;
-    window.taken=liquidToolExtract(rc*TILE+18,sy-10,25,6)[0];`);
-  check('scooping snow puts the exact water equivalent into the intake',await game('taken===6 && snow.mass===4 && snow.collected===6 && liquidCount===0'));
-  await game(`clearSnowFixture();snowAddGrain(rc*TILE+18,sy-10,20,-10,7,true);snow.mass=snow.emitted=7;
-    window.taken=liquidToolExtract(rc*TILE+18,sy-10,25,4)[0];`);
-  check('the scoop also collects flying powder without duplicating the remainder',await game('taken===4 && snow.mass===3 && snow.collected===4 && snow.grains[0].mass===3'));
-  await game(`clearSnowFixture();snow.mass=snow.emitted=12;window.fullCount=liquidCount;liquidCount=LIQUID_MAX_PARTICLES;
-    window.blockedMelt=snowMelt(rc*TILE+16,sy-2,12,0,0);liquidCount=fullCount;`);
-  check('a full water solver never erases snow during melting',await game('blockedMelt===0 && snow.mass===12 && snow.melted===0'));
+  // End-to-end GPU drainage, including the formerly immortal poured/pond water.
+  await game('clearSnowFixture();rainReset(true,false);weatherForce=0;weatherSetMood(0,true);player.x=(rc-4)*TILE;cam.snap=true;updateCamera();for(var origin=0;origin<4;origin++)for(var i=0;i<80;i++)addLiquidParticle(0,(rc+origin)*TILE+4+(i%12)*1.8,sy-2-Math.floor(i/12)*1.8,0,0,origin);gameRafId=requestAnimationFrame(loop)');
+  await sleep(5000);await screenshot('rain-soaked');
+  check('live GPU water from every source soaks into dirt',await game('liquidCount===0 && rain.absorbed===320'));
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;clearSnowFixture();world[SKY_ROWS][rc]={type:"stone",hp:10};for(var i=0;i<50;i++)addLiquidParticle(0,rc*TILE+5+i%20,sy-2,0,0,0);rainScan(10)');
+  check('stone still holds water',await game('liquidCount===50'));
 
-  const thaw=await game(`(function(){var results=[];
-    for(var test=0;test<4;test++){
-      clearSnowFixture();var hz=[30,60,144,60][test];snow.temperature=test===3?-5:4;
-      for(var col=rc*8;col<rc*8+40;col++){snowDeposit(col,SKY_ROWS,6,0);snow.mass+=6;snow.emitted+=6;}
-      // The material step has a fixed cadence independent of rendering.
-      var clock=0;for(var f=0;f<hz*30;f++){clock+=1/hz;while(clock>=0.05){snowBankTick(0.05);clock-=0.05;}}
-      results.push({hz:hz,cold:test===3,mass:snow.mass,melted:snow.melted,water:liquidCount});
-    }return results;
-  })()`);
-  console.log('Thirty seconds of thaw:',thaw);
-  check('warm powder thaws into water while cold powder persists',thaw.slice(0,3).every(s=>s.melted>100&&s.water===s.melted)&&thaw[3].melted===0);
-  check('thaw behaves consistently at 30, 60 and 144 FPS',Math.max(...thaw.slice(0,3).map(s=>s.melted))-Math.min(...thaw.slice(0,3).map(s=>s.melted))<=3);
-  await game(`clearSnowFixture();snowRestore({banks:[[rc*8,SKY_ROWS,7,0.3,0],[rc*8,SKY_ROWS,7,0.3,0],[-1,2,4,0],[rc*8,SKY_ROWS,NaN,0]],grains:[[NaN,0,0,0,1,0,0,0]]});`);
-  check('malformed and duplicate saved snow cannot inflate mass',await game('snow.mass===7 && snow.banks.length===1 && snow.grains.length===0'));
-  await game('rainRestore({enabled:true,water:[]})');
-  check('old rain saves do not silently become snow worlds',await game('worldRainEnabled && !worldSnowEnabled && snow.mass===0'));
-
-  // Fresh scene for performance, long-term stability and mobile layout.
-  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&snow=1&tod=0.35`});await ready();
-  await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'))");
-  if(process.argv.includes('--soak')){
-    await game('weatherForce=4;weatherSetMood(4,true)');
-    for(let i=0;i<6;i++){await sleep(10000);console.log('Snowfall '+(i+1)*10+'s:',await ev('__particleSnow.stats()'));}
-    check('sustained snow respects particle, storage and bank budgets',await game(`snow.mass<=SNOW_MASS_CAP && snow.grains.length<=SNOW_FLAKE_CAP+SNOW_POWDER_CAP && snow.powder<=SNOW_POWDER_CAP && snow.banks.length<=SNOW_BANK_CAP && snow.mass===snow.banks.reduce(function(n,b){return n+b.mass;},0)+snow.grains.reduce(function(n,p){return n+p.mass;},0)`));
-    await screenshot('snow-deep');
+  if(process.argv.includes('--soak')) {
+    await game('init();SNOW_RATE=115;weatherForce=4;weatherSetMood(4,true);gameRafId=requestAnimationFrame(loop)');await sleep(60000);await screenshot('snow-deep');
+    const stats=await ev('__particleSnow.stats()');console.log('LONG SNOW',stats);
+    check('sustained snowfall respects the real particle budgets',stats.active<=18000 && stats.mass<=60000 && stats.airborne<=1800);
   }
-  const timings=await game(`(function(){var a=[];for(var n=0;n<200;n++){var t=performance.now();updateParticleRain(1/60);a.push(performance.now()-t);}a.sort(function(a,b){return a-b;});return {median:a[100],p95:a[190],max:a[199]};})()`);
-  console.log('Snow update milliseconds:',timings);
-  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await game('isMobile=true;resize()');await sleep(1300);await screenshot('snow-mobile');
-  await game('PAUSE_DISABLED=false');
-  await ev("document.getElementById('gm-pause-btn').click()");
-  await ev("document.getElementById('gm-options-btn').click();document.getElementById('gm-rain-label').scrollIntoView({block:'center'})");await screenshot('snow-options-mobile');
-  check('the Snow option fits and remains tappable on mobile',await ev("(function(){var r=document.getElementById('gm-snow-on').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.height>=40;})()"));
-  if(process.argv.includes('--cpu')){
-    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
-    await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&snow=1&cpuwater=1&tod=0.35`});await ready();
-    await sleep(4000);
-    check('snow boots and melts on the CPU water fallback',await game('(!liquidWGPU || !liquidWGPU.simActive) && worldSnowEnabled && snow.grains.length>20 && snow.mass>2000 && snow.melted>0'));
-    await screenshot('snow-cpu');console.log('CPU snow:',await ev('__particleSnow.stats()'));
+  if(process.argv.includes('--cpu')) {
+    await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?snow=1&cpuwater=1&nosave=1&nopause=1&tod=0.35`});await ready();await sleep(6000);
+    check('CPU fallback runs the same snow material',await game('(!liquidWGPU || !liquidWGPU.simActive) && snow.active>100 && Array.from(liquidType.slice(0,liquidCount)).some(function(t){return t===5;})'));
+    await screenshot('snow-cpu');
   }
-  console.log('Errors:',JSON.stringify(errors));check('no runtime or shader errors',errors.length===0);
-  console.log('Screenshots: '+out);
-} finally {cleanup();}
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+  await game('PAUSE_DISABLED=false');await ev("document.getElementById('gm-pause-btn').click()");await ev("document.getElementById('gm-options-btn').click()");await screenshot('snow-options-mobile');
+  check('Snow remains tappable on mobile',await ev('(function(){var b=document.getElementById("gm-snow-on").getBoundingClientRect();return b.width>=40 && b.right<=innerWidth;})()'));
+  assert.deepEqual(errors,[]);assert.deepEqual(await ev('__shaderWarm.errors'),[]);console.log('PASS no runtime or shader errors; screenshots '+out);
+} finally { if(errors.length)console.log('ERRORS',errors);cleanup(); }

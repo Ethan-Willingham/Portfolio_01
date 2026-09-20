@@ -11,12 +11,13 @@ solver when it strikes terrain, the rig, or a liquid surface. Drops pass
 through open shafts and stop at solid roofs. The scoop can collect the
 resulting water, and it can fill a bath or mix with mineral liquids.
 
-Rainwater touching dirt or town foundations soaks away gradually. Only a six-pixel contact film
+Water in a rain or snow world touching dirt or town foundations soaks away gradually. Only a six-pixel contact film
 drains, including along shaft walls and ceilings; water above it still falls
 and spreads through the real solver. A small darkened edge and a receding
 glint show the damp soil, then fade over six seconds. Foundations use the same
-absorption rate without the soil stain. Stone and ore retain water. Minerals
-and water already collected and poured by the player keep their usual behavior.
+absorption rate without the soil stain. Stone and ore retain water. Mineral liquids keep their usual behavior. Scooping, pouring or spilling water
+from a pond does not make it waterproof. The actual stone lining retains lake
+water; an old lake rectangle does not protect water touching exposed dirt.
 
 Driving along the ground gathers a small bow wave. At speeds above 12 pixels
 per second, the rig protects at most 96 rainwater particles within 48 pixels
@@ -91,7 +92,10 @@ All adds and removals use the existing ordered CPU/GPU mutation journal.
 
 Dirt and foundation contact reuse the existing 160 ms occupancy scan and liquid readback.
 Its removal probability is `1 - exp(-5.5 * elapsedSeconds)`, independent of
-frame rate. It checks only rain, using at most four tile probes per candidate.
+frame rate. It checks all ordinary water, using at most four tile probes per candidate.
+A ready GPU mirror is consumed before the scan. Parked poured water uses the
+same contact rule when its storage region is visited. Dry snow stays frozen
+until the snow material changes into water.
 The damp effect merges contacts into eight-pixel face segments with a hard
 256-entry cap. It uses the current dirt and weather palettes, plain paths,
 and no extra simulated particles, gradients, canvases or terrain rebuilds.

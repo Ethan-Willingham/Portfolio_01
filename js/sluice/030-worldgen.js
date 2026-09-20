@@ -407,7 +407,7 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;   // v14.2 — flag the WebGPU solver to re-seed
-    liquidType[id] = typeof type === 'number' ? (type >= 0 && type <= 4 ? type | 0 : 0) : ({ water: 0, oil: 1, brine: 2, nectar: 3, lumen: 4 }[type] || 0);
+    liquidType[id] = typeof type === 'number' ? (type >= 0 && type <= 5 ? type | 0 : 0) : ({ water: 0, oil: 1, brine: 2, nectar: 3, lumen: 4 }[type] || 0);
     liquidOrigin[id] = origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;

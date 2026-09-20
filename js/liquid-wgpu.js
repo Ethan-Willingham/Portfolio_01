@@ -139,6 +139,15 @@
    * literals) draw from one source. Values must track the CPU side; if
    * they drift, the self-test diff catches it.
    * -------------------------------------------------------------------- */
+  // Dry snow, material 5 in the existing MLS-MPM solver. About four times
+  // water's volume per unit, soft compression, frictional slip and little rebound.
+  // edit2: js/liquid-wgpu.js (GPU kernels and f32 self-test reference).
+  var LIQUID_SNOW_DENSITY = 1.1;
+  var LIQUID_SNOW_STIFF = 1.25;
+  var LIQUID_SNOW_SHEAR = 32;
+  var LIQUID_SNOW_DRAG = 5;
+  var LIQUID_SNOW_FRICTION = 180;
+  var LIQUID_SNOW_BOUNCE = 0.025;
   var LIQUID_PDELTA            = 0.5;
   var LIQUID_DENSITY           = 1 / (LIQUID_PDELTA * LIQUID_PDELTA);  // 4
   // v24.182 — density blow-up cap (edit2 sluice 010-constants). Clamps the
@@ -2162,16 +2171,17 @@
       var oil = snap.type[i] === 1;
       var aerDamp = oil ? LIQUID_OIL_AERATION_DAMP : LIQUID_AERATION_DAMP;
       var aerBlur = oil ? LIQUID_OIL_AERATION_BLUR : LIQUID_AERATION_BLUR;
-      var stiff   = oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
+      var drySnow = snap.type[i] === 5;
+      var stiff = drySnow ? LIQUID_SNOW_STIFF : oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
       var oldAer = fr(snap.aeration[i]);
       var newAer = fr(fr(aerDamp) * fr(oldAer + fr(fr(aeration - oldAer) * fr(aerBlur))));
       density = Math.min(density, LIQUID_DENS_CAP);   // v24.182 — anti-runaway cap (matches the WGSL min)
       refDensity[i] = density;
       refAerationOut[i] = newAer;
-      var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
+      var pressure = fr(fr(fr(density / fr(drySnow ? LIQUID_SNOW_DENSITY : LIQUID_DENSITY)) - 1) * fr(stiff));
       // v26.55 knee hinge twin (see the WGSL gridPressure block): exact
       // no-op at LIQUID_KNEE_W 0, so the numbered self-tests hold.
-      if (LIQUID_KNEE_W > 0 && !oil && pressure > 0) {
+      if (LIQUID_KNEE_W > 0 && !oil && !drySnow && pressure > 0) {
         var xgK = fr(fr(density / fr(LIQUID_DENSITY)) - 1);
         if (xgK < fr(LIQUID_KNEE_W)) {
           pressure = fr(fr(fr(fr(stiff) * xgK) * xgK) / fr(2 * fr(LIQUID_KNEE_W)));
@@ -2184,7 +2194,7 @@
         var dnR = fr(density / fr(LIQUID_DENSITY));
         var ck = fr(fr(fr(0.7) - dnR) * fr(1 / 0.3));
         if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
-        pressure = oil ? 0 : fr(-fr(fr(LIQUID_COHESION) * fr(stiff)) * ck);
+        pressure = oil || drySnow ? 0 : fr(-fr(fr(LIQUID_COHESION) * fr(stiff)) * ck);
       }
       if (density <= 0) pressure = 0;
       var volume = density > 0 ? fr(1 / density) : 0;
@@ -2539,16 +2549,17 @@
       var oilP = snap.type[i] === 1;
       var aerDamp = oilP ? LIQUID_OIL_AERATION_DAMP : LIQUID_AERATION_DAMP;
       var aerBlur = oilP ? LIQUID_OIL_AERATION_BLUR : LIQUID_AERATION_BLUR;
-      var stiff   = oilP ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
+      var drySnow = snap.type[i] === 5;
+      var stiff = drySnow ? LIQUID_SNOW_STIFF : oilP ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
       var oldAer = fr(snap.aeration[i]);
       var newAerP = fr(fr(aerDamp) * fr(oldAer + fr(fr(aeration - oldAer) * fr(aerBlur))));
       density = Math.min(density, LIQUID_DENS_CAP);   // v24.182 — anti-runaway cap (matches the WGSL min)
       refDensity[i] = density;
       refAerationOut[i] = newAerP;
-      var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
+      var pressure = fr(fr(fr(density / fr(drySnow ? LIQUID_SNOW_DENSITY : LIQUID_DENSITY)) - 1) * fr(stiff));
       // v26.55 knee hinge twin (see the WGSL gridPressure block): exact
       // no-op at LIQUID_KNEE_W 0, so the numbered self-tests hold.
-      if (LIQUID_KNEE_W > 0 && !oilP && pressure > 0) {
+      if (LIQUID_KNEE_W > 0 && !oilP && !drySnow && pressure > 0) {
         var xgK2 = fr(fr(density / fr(LIQUID_DENSITY)) - 1);
         if (xgK2 < fr(LIQUID_KNEE_W)) {
           pressure = fr(fr(fr(fr(stiff) * xgK2) * xgK2) / fr(2 * fr(LIQUID_KNEE_W)));
@@ -2561,7 +2572,7 @@
         var dnR = fr(density / fr(LIQUID_DENSITY));
         var ck = fr(fr(fr(0.7) - dnR) * fr(1 / 0.3));
         if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
-        pressure = oilP ? 0 : fr(-fr(fr(LIQUID_COHESION) * fr(stiff)) * ck);
+        pressure = oilP || drySnow ? 0 : fr(-fr(fr(LIQUID_COHESION) * fr(stiff)) * ck);
       }
       if (density <= 0) pressure = 0;
       var volume = density > 0 ? fr(1 / density) : 0;
@@ -2859,8 +2870,8 @@
 
       var materialR = snap.type[i];
       if (materialR >= 2) {
-        var shearRateR = materialR === 3 ? 16 : materialR === 4 ? 8 : 0.9;
-        var lateralRateR = materialR === 3 ? 3 : materialR === 4 ? 1.5 : 0.35;
+        var shearRateR = materialR === 5 ? LIQUID_SNOW_SHEAR : materialR === 3 ? 16 : materialR === 4 ? 8 : 0.9;
+        var lateralRateR = materialR === 5 ? LIQUID_SNOW_DRAG : materialR === 3 ? 3 : materialR === 4 ? 1.5 : 0.35;
         var shearKeepR = fr(1 / fr(1 + fr(fr(shearRateR) * dt)));
         var lateralKeepR = fr(1 / fr(1 + fr(fr(lateralRateR) * dt)));
         vx = fr(vx * lateralKeepR);
@@ -2868,6 +2879,11 @@
         gv10 = fr(gv10 * shearKeepR); gv11 = fr(gv11 * shearKeepR);
       }
 
+      if (materialR === 5) {
+        var supportR = fr(Math.max(0, Math.min(1, fr(fr(refDensity[i] - fr(0.3)) / fr(0.55)))));
+        var slipR = fr(fr(fr(fr(LIQUID_SNOW_FRICTION * dt) * dt) * inv) * supportR);
+        vx = fr(Math.sign(vx) * Math.max(0, fr(Math.abs(vx) - slipR)));
+      }
       // v26.13 — mirror the kernel's pre-advection CFL cap. MAX_VEL is
       // world px/s; vx/vy are cell displacement for this substep.
       if (!oilG && LIQUID_MAX_VEL > 0) {
@@ -3406,7 +3422,7 @@
         if (!(vx === vx)) { vx = 0; }
         if (!(vy === vy)) { vy = 0; }
         // bounce as f32 — the GPU's select() picks an f32 const.
-        var bounce = fr(snap.type[i] === 1 ? LIQUID_BOUNCE_OIL : LIQUID_BOUNCE_WATER);
+        var bounce = fr(snap.type[i] === 5 ? LIQUID_SNOW_BOUNCE : snap.type[i] === 1 ? LIQUID_BOUNCE_OIL : LIQUID_BOUNCE_WATER);
         // Rollback target — the pre-step world position the g2p kernel
         // stashed into aux.zw. The WGSL `select(x, aux.z, aux.z != 0)`
         // falls back to the current x on a 0 prev — mirror that.
@@ -5065,7 +5081,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // v14.26 — feel consts from the SimParams uniform (sp.aer / sp.grav).
   let aerDamp = select(sp.aer.y, sp.aer.w, oil);
   let aerBlur = select(sp.aer.x, sp.aer.z, oil);
-  let stiff   = select(sp.grav.z, sp.grav.w, oil);
+  let drySnow = ((fl & 3u) | ((fl >> 4u) & 4u)) == 5u;
+  let stiff = select(select(sp.grav.z, sp.grav.w, oil), f32(${LIQUID_SNOW_STIFF}), drySnow);
 
   // v24.182 — clamp the density blow-up before it feeds aux.x + the pressure
   // (anti-runaway cap; LIQUID_DENS_CAP, edit2 sluice 010-constants).
@@ -5087,7 +5104,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // (attraction amplifies density noise; the test pond exploded to the
   // 600 px/s cap within seconds). Oil keeps the old clamp everywhere.
   // sp.feel.x = 0 restores the exact old behavior.
-  var pressure = (density / LIQUID_DENSITY - 1.0) * stiff;
+  var pressure = (density / select(LIQUID_DENSITY, f32(${LIQUID_SNOW_DENSITY}), drySnow) - 1.0) * stiff;
   // v26.55: KNEE HINGE (sp.turb.w = hinge width in density-ratio units;
   // 0 = the exact legacy hard knee). The one-sided EOS is a RECTIFIER at
   // the free surface: density-aliasing noise around d = rest only ever
@@ -5100,7 +5117,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // by the constant w/2 the hinge absorbs, which cancels out of the
   // hydrostatic gradient). Water only; oil keeps the hard knee.
   let kneeW = sp.turb.w;
-  if (kneeW > 0.0 && !oil && pressure > 0.0) {
+  if (kneeW > 0.0 && !oil && !drySnow && pressure > 0.0) {
     let xg = density / LIQUID_DENSITY - 1.0;
     if (xg < kneeW) { pressure = stiff * xg * xg / (2.0 * kneeW); }
     else            { pressure = stiff * (xg - kneeW * 0.5); }
@@ -5109,7 +5126,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let dnR = density / LIQUID_DENSITY;
     var ck = (0.7 - dnR) * ${1 / 0.3};
     ck = clamp(ck, 0.0, 1.0);
-    let coh = select(sp.feel.x, 0.0, oil);
+    let coh = select(sp.feel.x, 0.0, oil || drySnow);
     pressure = (-(coh * stiff)) * ck;
   }
   if (density <= 0.0) { pressure = 0.0; }
@@ -6038,11 +6055,18 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     var lateralRate = 0.35;
     if (material == 3u) { shearRate = 16.0; lateralRate = 3.0; }
     if (material == 4u) { shearRate = 8.0; lateralRate = 1.5; }
+    if (material == 5u) { shearRate = f32(${LIQUID_SNOW_SHEAR}); lateralRate = f32(${LIQUID_SNOW_DRAG}); }
     let shearKeep = 1.0 / (1.0 + shearRate * gp.stepDt);
     let lateralKeep = 1.0 / (1.0 + lateralRate * gp.stepDt);
     vx = vx * lateralKeep;
     gv00 = gv00 * shearKeep; gv01 = gv01 * shearKeep;
     gv10 = gv10 * shearKeep; gv11 = gv11 * shearKeep;
+  }
+
+  if (material == 5u) {
+    let support = clamp((aux[i].x - 0.3) / 0.55, 0.0, 1.0);
+    let slip = f32(${LIQUID_SNOW_FRICTION}) * gp.stepDt * gp.stepDt * gp.invCell * support;
+    vx = sign(vx) * max(0.0, abs(vx) - slip);
   }
 
   // v26.13 — CFL/transport invariant. vx/vy are grid-cell displacement
@@ -6465,7 +6489,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
   let r = COLLIDE_RADIUS;
   // v14.26 — terrain restitution is live in the SimParams uniform.
-  let bounce = select(sp.coll.x, sp.coll.y, ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u);
+  let material = ((fl & 3u) | ((fl >> 4u) & 4u));
+  let bounce = select(select(sp.coll.x, sp.coll.y, material == 1u), f32(${LIQUID_SNOW_BOUNCE}), material == 5u);
 
   let pp = pos[i];
   var x  = pp.x;
@@ -7004,13 +7029,14 @@ struct RenderParams {
   // 32 bytes, so this first vec4 lands naturally 16-byte aligned. Fed every
   // frame from the CPU LIQUID_* render vars; no shader recompile on change.
   waterColor    : vec4<f32>,   // rgb = water colour, a = water alpha
-  waterFoam     : vec4<f32>,   // rgb = foam colour,  a = unused
+  waterFoam     : vec4<f32>,   // rgb = foam colour, a = snow daylight
   oilColor      : vec4<f32>,   // rgb = oil colour,   a = oil alpha
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 
 // Same palette as liquidCatalog in 071. Pigment follows actual particles.
 fn mineralRGB(material : u32) -> vec3<f32> {
+  if (material == 5u) { return mix(vec3<f32>(0.48, 0.61, 0.73), vec3<f32>(0.91, 0.94, 0.96), rp.waterFoam.a); }
   if (material == 2u) { return vec3<f32>(0.57, 0.79, 0.68); }
   if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
   if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
@@ -7071,6 +7097,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
   // pointSize is the DIAMETER in device px; floor at 1.15 like the CPU.
   var pointSize = sizeBase * d;
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { pointSize = 3.8 * rp.dpws; }
   pointSize = max(pointSize, 1.15);
   let halfPx = pointSize * 0.5;
 
@@ -7097,6 +7124,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
     let base = mineralRGB(material);
     let foam = select(rp.waterFoam.rgb, mix(base, vec3<f32>(0.93, 0.91, 0.82), 0.35), material >= 2u);
     out.color = vec4<f32>(mix(base, foam, a), rp.waterColor.a);
+    if (material == 5u) { out.color = vec4<f32>(base, 1.0); }
   }
   return out;
 }
@@ -7148,6 +7176,7 @@ struct RenderParams {
 
 // Same palette as liquidCatalog in 071. Pigment follows actual particles.
 fn mineralRGB(material : u32) -> vec3<f32> {
+  if (material == 5u) { return mix(vec3<f32>(0.48, 0.61, 0.73), vec3<f32>(0.91, 0.94, 0.96), rp.waterFoam.a); }
   if (material == 2u) { return vec3<f32>(0.57, 0.79, 0.68); }
   if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
   if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
@@ -7204,7 +7233,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   out.pigment = vec4<f32>(0.0);
   if (material >= 2u) { out.pigment = vec4<f32>(mineralRGB(material), 1.0); }
   let frozen = (fl >> 5u) & 1u;
-  if (frozen != 0u) {
+  if (frozen != 0u || material == 5u) {
     out.pos    = vec4<f32>(0.0, 0.0, 0.0, 1.0);
     out.uv     = vec2<f32>(0.0, 0.0);
     out.weight = vec3<f32>(0.0, 0.0, 0.0);
@@ -7626,6 +7655,19 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let scrX = (p.x - rp.camX) * rp.dpws;
   let scrY = (p.y - rp.camY) * rp.dpws;
   if (scrX < 0.0 || scrY < 0.0 || scrX >= rp.canvasW || scrY >= rp.canvasH) { return out; }
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) {
+    let c = corner(vid);
+    let radius = (1.8 + f32(iid % 3u) * 0.12) * rp.dpws;
+    let off = c * radius;
+    out.pos = vec4<f32>((scrX + off.x) / (rp.canvasW * 0.5) - 1.0,
+                        1.0 - (scrY + off.y) / (rp.canvasH * 0.5), 0.0, 1.0);
+    out.uv = c * 0.85;
+    out.alpha = 1.0;
+    out.world = p.xy + off / max(rp.dpws, 0.001);
+    // Subtle fixed crystal variation, driven by real particle positions.
+    out.color = out.color * (0.94 + f32(iid % 4u) * 0.02);
+    return out;
+  }
   let dims = vec2<i32>(textureDimensions(fieldTex));
   let samplePx = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5)),
                        vec2<i32>(0), dims - vec2<i32>(1));
@@ -9233,7 +9275,7 @@ struct P2GParams {
     rh[8]  = LIQUID_WATER_R;      rh[9]  = LIQUID_WATER_G;
     rh[10] = LIQUID_WATER_B;     rh[11] = LIQUID_WATER_ALPHA;
     rh[12] = LIQUID_WATER_FOAM_R; rh[13] = LIQUID_WATER_FOAM_G;
-    rh[14] = LIQUID_WATER_FOAM_B; rh[15] = 0;
+    rh[14] = LIQUID_WATER_FOAM_B; rh[15] = typeof view.snowLight === 'number' ? view.snowLight : 1;
     rh[16] = LIQUID_OIL_R;       rh[17] = LIQUID_OIL_G;
     rh[18] = LIQUID_OIL_B;       rh[19] = LIQUID_OIL_ALPHA;
     // v24.113 — surface-render params (threshold, softness, splat scale, on).

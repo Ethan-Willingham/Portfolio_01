@@ -73,7 +73,6 @@
   // v23.33 — hoisted out of playerHasFootSupport; the offsets are constant.
   var PLAYER_FOOT_OFFSETS = [4, PLAYER_W / 2, PLAYER_W - 4];
   function playerHasFootSupport(px, py) {
-    if (worldSnowEnabled && snowFootSupport(px, py)) return true;
     // Perched on the fireplace chimney cap counts as foot support —
     // unless the player is dropping through it.
     if (chimneyCapDropT <= 0 && playerRestingOnChimneyCap(px, py)) {
@@ -705,8 +704,9 @@
       var aerDamp = oil ? LIQUID_OIL_AERATION_DAMP : LIQUID_AERATION_DAMP;
       var aerBlur = oil ? LIQUID_OIL_AERATION_BLUR : LIQUID_AERATION_BLUR;
       liquidAeration[i] = aerDamp * (liquidAeration[i] + (aeration - liquidAeration[i]) * aerBlur);
-      var stiff = oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
-      var pressure = (density / LIQUID_DENSITY - 1) * stiff;
+      var drySnow = liquidType[i] === 5;
+      var stiff = drySnow ? LIQUID_SNOW_STIFF : oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
+      var pressure = (density / (drySnow ? LIQUID_SNOW_DENSITY : LIQUID_DENSITY) - 1) * stiff;
       // v25.41 — DETACHMENT COHESION (water only): material leaving the body
       // (dn < 0.7, full pull by 0.4) feels a small negative pressure that
       // hauls it back = surface tension at the skin; the shallow-popcorn
@@ -718,7 +718,7 @@
         var dnR = density / LIQUID_DENSITY;
         var ck = (0.7 - dnR) / 0.3;
         if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
-        pressure = oil ? 0 : -(LIQUID_COHESION * stiff) * ck;
+        pressure = oil || drySnow ? 0 : -(LIQUID_COHESION * stiff) * ck;
       }
       if (density <= 0) pressure = 0;
       var volume = density > 0 ? 1 / density : 0;
@@ -1136,13 +1136,21 @@
       // Shared pressure, distinct flow. Preserve the water baseline exactly.
       var material = liquidType[i];
       if (material >= 2) {
-        var shearRate = material === 3 ? 16 : material === 4 ? 8 : 0.9;
-        var lateralRate = material === 3 ? 3 : material === 4 ? 1.5 : 0.35;
+        var shearRate = material === 5 ? LIQUID_SNOW_SHEAR : material === 3 ? 16 : material === 4 ? 8 : 0.9;
+        var lateralRate = material === 5 ? LIQUID_SNOW_DRAG : material === 3 ? 3 : material === 4 ? 1.5 : 0.35;
         var shearKeep = 1 / (1 + shearRate * stepDt);
         var lateralKeep = 1 / (1 + lateralRate * stepDt);
         vx *= lateralKeep;
         gv00 *= shearKeep; gv01 *= shearKeep;
         gv10 *= shearKeep; gv11 *= shearKeep;
+      }
+
+      if (material === 5) {
+        // Coulomb-style yielding in supported powder. Small pressure noise
+        // cannot keep creeping sideways; a track or jet easily exceeds it.
+        var support = Math.max(0, Math.min(1, (liquidDensity[i] - 0.3) / 0.55));
+        var slip = LIQUID_SNOW_FRICTION * stepDt * stepDt / LIQUID_CELL * support;
+        vx = Math.sign(vx) * Math.max(0, Math.abs(vx) - slip);
       }
 
       // v26.13 — the velocity ceiling is a transport invariant, so apply
@@ -1424,7 +1432,7 @@
   var LIQ_NUDGES = [[0,-1],[-1,0],[1,0],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
   function liquidMoveParticle(i, dt) {
     var r = LIQUID_CELL * LIQUID_PDELTA * 0.85;
-    var bounce = liquidType[i] === 1 ? LIQUID_BOUNCE_OIL : LIQUID_BOUNCE_WATER;
+    var bounce = liquidType[i] === 5 ? LIQUID_SNOW_BOUNCE : liquidType[i] === 1 ? LIQUID_BOUNCE_OIL : LIQUID_BOUNCE_WATER;
     var x = liquidX[i], y = liquidY[i];
     var vx = liquidVX[i], vy = liquidVY[i];
     if (!isFinite(x) || !isFinite(y) || !isFinite(vx) || !isFinite(vy)) return false;
@@ -2479,6 +2487,7 @@
     var dpws = dpr * worldScale;
     var camX = cam.x, camY = cam.y;
     var sizeBase = LIQUID_CELL * LIQUID_PDELTA * 0.85 * 2 * dpws;
+    var snowRGB = snowRenderRGB();
     var sizeBaseWater = sizeBase * LIQUID_WATER_PARTICLE_SIZE;
     var sizeBaseOil   = sizeBase * LIQUID_OIL_PARTICLE_SIZE;
     var wR = LIQUID_WATER_R, wG = LIQUID_WATER_G, wB = LIQUID_WATER_B, wA = LIQUID_WATER_ALPHA;
@@ -2498,7 +2507,7 @@
       var d = liquidDensity[i] * LIQUID_INV_DENSITY + 0.5;
       if (d > 1.5) d = 1.5;
       var typ = liquidType[i];
-      var pointSize = (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
+      var pointSize = typ === 5 ? 3.8 * dpws : (typ === 1 ? sizeBaseOil : sizeBaseWater) * d;
       if (pointSize < 1.15) pointSize = 1.15;
       var o = count * 7;
       data[o    ] = (px - camX) * dpws;
@@ -2511,6 +2520,8 @@
         data[o + 4] = wG + a * fG;
         data[o + 5] = wB + a * fB;
         data[o + 6] = wA;
+      } else if (typ === 5) {
+        data[o + 3] = snowRGB[0]; data[o + 4] = snowRGB[1]; data[o + 5] = snowRGB[2]; data[o + 6] = 1;
       } else if (typ >= 2 && liquidCatalog[typ]) {
         var tint = liquidCatalog[typ].rgb;
         var foam = Math.min(1, Math.max(0, liquidAeration[i])) * 0.35;
@@ -2642,20 +2653,21 @@
 
     ctx.save();
     liquidCanvasClipTerrain();
-    for (var pass = 0; pass < liquidCatalog.length; pass++) {
+    for (var pass = 0; pass < 6; pass++) {
       var type = pass === 0 ? 'water' : 'oil';
       ctx.fillStyle = type === 'water' ? 'rgba(93,199,238,0.70)' : 'rgba(13,10,5,0.92)';
       var typeId = pass;
-      if (typeId >= 2) ctx.fillStyle = liquidCatalog[typeId].color;
+      if (typeId >= 2 && typeId < 5) ctx.fillStyle = liquidCatalog[typeId].color;
+      if (typeId === 5) ctx.fillStyle = snowColors().body;
       for (var i = 0; i < liquidCount; i++) {
         if (liquidType[i] !== typeId) continue;
         if (liquidX[i] < left || liquidX[i] > right || liquidY[i] < top || liquidY[i] > bottom) continue;
         var d = liquidDensity[i] * LIQUID_INV_DENSITY;
         var sizeMul = typeId === 1 ? LIQUID_OIL_PARTICLE_SIZE : LIQUID_WATER_PARTICLE_SIZE;
         var pointSize = LIQUID_CELL * LIQUID_PDELTA * 0.85 * Math.min(d + 0.5, 1.5) * 2 * sizeMul;
-        var rr = Math.max(0.65, pointSize * 0.5);
+        var rr = typeId === 5 ? 1.9 : Math.max(0.65, pointSize * 0.5);
         ctx.fillRect(liquidX[i] - rr, liquidY[i] - rr, rr * 2, rr * 2);
-        if (liquidAeration[i] > 0.08) {
+        if (typeId !== 5 && liquidAeration[i] > 0.08) {
           ctx.fillStyle = type === 'water'
             ? 'rgba(220,250,255,' + Math.min(0.78, liquidAeration[i]).toFixed(3) + ')'
             : 'rgba(230,190,110,' + Math.min(0.52, liquidAeration[i] * 0.7).toFixed(3) + ')';

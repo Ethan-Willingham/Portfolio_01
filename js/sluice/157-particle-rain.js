@@ -105,6 +105,7 @@
   // One slow scan maintains contact occupancy and streams rain outside the
   // solver's camera window. Saved rain uses this same bounded coordinate list.
   function rainScan(dt) {
+    liquidToolSync();
     var cells = {}, count = 0, held = 0, margin = 220;
     // Exponential removal gives the same drainage per second at any frame
     // rate. Individual subpixel particles disappear over several scans, so
@@ -134,18 +135,19 @@
       rain.damp[d] = rain.damp[rain.damp.length - 1]; rain.damp.pop();
     }
     for (var i = liquidCount - 1; i >= 0; i--) {
+      if (liquidType[i] === 5) continue;
       var x = liquidX[i], y = liquidY[i], lake = rainLakeAt(x, y);
+      var plowed = liquidType[i] === 0 && held < RAIN_PLOW_CAP && rainPlowHolds(i);
+      if (plowed) held++;
+      // Water remains absorbable after scooping/pouring. Stone lining, not
+      // particle provenance or an old lake rectangle, keeps a lake sealed.
+      if (liquidType[i] === 0 && !plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
+        removeLiquidParticle(i); continue;
+      }
       if (lake && liquidOrigin[i] !== RAIN_ORIGIN) lake.otherCount++;
       if (liquidOrigin[i] === RAIN_ORIGIN) {
         if (x < x0 || x > x1 || y < y0 || y > y1) {
           if (rain.parked.length < RAIN_STORAGE_CAP * 2) rain.parked.push(x, y);
-          removeLiquidParticle(i);
-          continue;
-        }
-        // Protect enough water for a little crest, never an entire puddle.
-        var plowed = held < RAIN_PLOW_CAP && rainPlowHolds(i);
-        if (plowed) held++;
-        if (!lake && !plowed && Math.random() < soakChance && rainSoakAt(x, y, true)) {
           removeLiquidParticle(i);
           continue;
         }
@@ -162,7 +164,7 @@
     for (var j = rain.parked.length - 2; j >= 0; j -= 2) {
       var px = rain.parked[j], py = rain.parked[j + 1], lake = rainLakeAt(px, py);
       // Parked rain drains as well, including spills left behind the camera.
-      if (!lake && Math.random() < soakChance && rainSoakAt(px, py, false)) {
+      if (Math.random() < soakChance && rainSoakAt(px, py, false)) {
         rain.parked[j] = rain.parked[rain.parked.length - 2];
         rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
         rain.parked.length -= 2;
@@ -197,7 +199,7 @@
     while (count > 0 && attempts-- > 0 && liquidCount) {
       rain.cursor %= liquidCount;
       var i = rain.cursor++;
-      if (liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i) || rainLakeAt(liquidX[i], liquidY[i])) continue;
+      if (liquidType[i] !== 0 || liquidOrigin[i] !== RAIN_ORIGIN || rainPlowHolds(i) || rainLakeAt(liquidX[i], liquidY[i])) continue;
       removeLiquidParticle(i); rain.waterCount--; rain.recycled++; count--;
       rain.cursor--;
     }
@@ -231,6 +233,7 @@
   function updateParticleRain(dt) {
     if (!worldRainEnabled || bathMode || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     dt = Math.min(0.05, Math.max(0, dt));
+    liquidToolSync();
     rain.time += dt;
     rainAdvanceWeather(dt);
     rain.intensity = weather.pcp > 0.015 ? weather.pcp : 0;
@@ -400,7 +403,7 @@
     liquidToolSync();
     var water = rain.parked.slice(0, RAIN_STORAGE_CAP * 2);
     for (var i = 0; i < liquidCount && water.length < RAIN_STORAGE_CAP * 2; i++) {
-      if (liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
+      if (liquidType[i] === 0 && liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
     }
     return { enabled: true, mode: worldSnowEnabled ? 'snow' : 'rain', snow: snowSave(), water: water, climate: { phase: rain.climate.phase,
       elapsed: rain.climate.elapsed, duration: rain.climate.duration, strength: rain.climate.strength } };

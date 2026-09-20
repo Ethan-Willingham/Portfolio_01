@@ -183,13 +183,13 @@ try {
     for(var i=0;i<3;i++)addLiquidParticle(i===2?2:0,rc*TILE+16,sy-2,0,0,i);
     for(var i=0;i<100;i++){addLiquidParticle(0,rc*TILE-2,sy+16,0,0,3);addLiquidParticle(0,rc*TILE+16,sy+TILE+2,0,0,3);}
     rainScan(10);`);
-  check('rain touching dirt or foundation drains, including walls and ceilings',await game('liquidCount===303 && rain.absorbed===1300'));
+  check('rain touching dirt or foundation drains, including walls and ceilings',await game('liquidCount===301 && rain.absorbed===1302'));
   check('stone, ore and falling water retain their particles',await game('rain.waterCount===300'));
-  check('dirt absorption preserves ordinary water, pond water and minerals',await game('(function(){var count=0;for(var i=0;i<liquidCount;i++)if(liquidOrigin[i]!==3)count++;return count===3;})()'));
+  check('soil absorbs ordinary and escaped pond water while preserving minerals',await game('(function(){var count=0;for(var i=0;i<liquidCount;i++)if(liquidOrigin[i]!==3)count++;return count===1;})()'));
   await game(`var parkedCol=rc+40;world[SKY_ROWS][parkedCol]={type:'dirt'};
     for(var i=0;i<100;i++)rain.parked.push(parkedCol*TILE+16,sy-2);
     rainScan(10);`);
-  check('offscreen dirt absorbs parked rain without resurrecting it',await game('rain.parked.length===0 && liquidCount===303 && rain.absorbed===1400'));
+  check('offscreen dirt absorbs parked rain without resurrecting it',await game('rain.parked.length===0 && liquidCount===301 && rain.absorbed===1402'));
   await game('rain.time+=7;rainScan()');
   check('damp marks fade away and release their cache entries',await game('rain.damp.length===0 && Object.keys(rain.dampCells).length===0'));
   await game('rainDampEdge(SKY_ROWS,rc,0,rc*TILE+4,sy);world[SKY_ROWS][rc]=null;rainScan()');

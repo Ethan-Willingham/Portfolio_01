@@ -597,9 +597,11 @@ the bounded water cycle and persistence rules.
 flakes. Each grain flutters in the existing wind and changes projected area as
 it tumbles. Three batched size bands use the existing snow, moon, cloud-shadow
 and sunset palettes; no blurred foreground veil or additive glitter. Settled
-powder draws as connected banks with a restrained shaded foot, broken light
-crowns and darker compressed track marks. Powder thrown by tracks, jets and
-blasts carries real snow mass. Both render passes are included in shader warmup.
+powder and snow thrown by tracks, jets and blasts use the existing liquid
+solver's particle pass with matte, overlapping grains and a daylight/moonlight
+tint. Snow does not enter the glossy water surface pass. There is no separate
+column-bank cover or artificial track surface. Shader warmup includes the
+flake renderer; the shared particle shader compiles with the water engine.
 See [PARTICLE_SNOW.md](PARTICLE_SNOW.md) for physics and acceptance checks.
 
 **Storms.** Coverage→1, dark clouds, heavy precip, and full-screen lightning (`SKY.lightningFlash`, additive, fast decay, occasional double-strike) that lights the whole scene.

@@ -244,7 +244,6 @@
     if (tileAt(r, c) === null && below !== null && below !== 'wall') r += 1;
     b.r = r; b.c = c;
     detonateBomb(b);
-    snowBlast(b.x, b.y, TILE * (isLarge ? 7 : 4.5));
 
     var cx = c * TILE + TILE / 2;
     var cy = r * TILE + TILE / 2;

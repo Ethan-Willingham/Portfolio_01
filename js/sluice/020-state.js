@@ -169,7 +169,7 @@
   // ?pondtest=1&wdbg=DBG_DRAW:1,DBG_NO_SLEEP:1
   var pondTestWdbg = '';
   var pondTestProbeTick = 0;
-  var liquidType = new Uint8Array(LIQUID_MAX_PARTICLES);       // 0 water, 1 oil
+  var liquidType = new Uint8Array(LIQUID_MAX_PARTICLES);       // 0 water, 1 oil, 2-4 minerals, 5 dry snow
   var liquidX = new Float32Array(LIQUID_MAX_PARTICLES);
   var liquidY = new Float32Array(LIQUID_MAX_PARTICLES);
   var liquidVX = new Float32Array(LIQUID_MAX_PARTICLES);
@@ -654,6 +654,7 @@
           }
           return {
             camX: cam.x, camY: cam.y,
+            snowLight: scatDayWeight(computeSunElevation(timeOfDay)),
             dpr: dpr, worldScale: worldScale,
             canvasW: canvas.width, canvasH: canvas.height,
             viewW: viewW, viewH: viewH,

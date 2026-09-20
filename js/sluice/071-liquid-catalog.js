@@ -39,9 +39,10 @@
     for (var c = 0; c < Math.min(cap, candidates.length); c++) {
       indices.push(candidates[c].index);
       var picked = candidates[c].index;
-      counts[liquidType[picked]]++;
+      counts[liquidType[picked] === 5 ? 0 : liquidType[picked]]++;
+      if (liquidType[picked] === 5) snow.collected++;
       if (intake && intake.samples && intake.samples.length < 8 && c % 12 === 0) {
-        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] });
+        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] === 5 ? 0 : liquidType[picked] });
       }
     }
     // Descending original indices remain valid under the solver's swap-remove.
@@ -111,8 +112,9 @@
   function liquidSampleRect(x0, y0, x1, y1) {
     var counts = [0, 0, 0, 0, 0];
     for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] === 5) continue;
       var px = liquidX[i], py = liquidY[i];
-      if (px >= x0 && px < x1 && py >= y0 && py < y1) counts[liquidType[i]]++;
+      if (liquidType[i] < 5 && px >= x0 && px < x1 && py >= y0 && py < y1) counts[liquidType[i]]++;
     }
     if (typeof mineralLiquidParkedSampleRect === 'function') {
       var parked = mineralLiquidParkedSampleRect(x0, y0, x1, y1);
@@ -147,6 +149,7 @@
     var counts = [0, 0, 0, 0, 0], total = 0, dominant = 0, best = 0;
     var r2 = radius * radius;
     for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] === 5) continue;
       var dx = liquidX[i] - x, dy = liquidY[i] - y;
       if (dx * dx + dy * dy > r2) continue;
       counts[liquidType[i]]++;
@@ -166,6 +169,7 @@
     var inner = radius + 2, outer = radius * 1.75;
     var vx = 0, vy = 0, count = 0;
     for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] === 5) continue;
       var dx = Math.abs(liquidX[i] - x), row = Math.floor((liquidY[i] - top) / rowH);
       if (dx < inner || dx > outer || row < 0 || row >= rows) continue;
       bins[row]++;
