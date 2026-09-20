@@ -75,16 +75,32 @@ try {
       check(`${mode} retains one precipitation identity at map stop ${index}`,sample.type===mode&&sample.legacy===0&&(mode==='snow'?sample.rain===0:sample.snow===0));
       if(index===1||index===3)await screenshot(`${mode}-map-${index}`);
     }
+    const transition=await game(`(function(){
+      while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,${mode==='snow'});
+      player.x=2500;player.y=-650;player.thrusting=false;cam.x=2000;cam.y=-1000;
+      function bins(){var b=[0,0,0,0,0,0,0,0,0,0,0,0],p=worldSnowEnabled?snow.grains:rain.drops;
+        for(var f of p)if(f.x>=cam.x&&f.x<cam.x+screenW&&f.y>=cam.y&&f.y<cam.y+screenH)
+          b[Math.floor((f.x-cam.x)/screenW*4)+4*Math.floor((f.y-cam.y)/screenH*3)]++;
+        return b;}
+      for(var n=0;n<600;n++){weather.pcp=.02+.63*n/600;updateParticleRain(1/60);}
+      var waiting=bins();cam.x=6500;player.x=7000;updateParticleRain(0);var arriving=bins();
+      render();return {waiting:waiting,arriving:arriving};})()`);
+    const sum=b=>b.reduce((a,n)=>a+n,0),ratio=sum(transition.arriving)/sum(transition.waiting);
+    console.log(mode,'evolving front',transition,ratio);
+    check(`${mode} builds equally in visited and unvisited sky`,ratio>.8&&ratio<1.25);
+    check(`${mode} has no horizontal or vertical curtain`,Math.min(...transition.waiting)>Math.max(...transition.waiting)*.4);
+    await screenshot(`${mode}-buildup-travel`);
     await game('cam.y=SKY_ROWS*TILE+100;window.beforeUnderground=rain.emitted+snow.emitted;updateParticleRain(1/60)');
     check(`${mode} does not seed weather inside the mine`,await game('rain.emitted+snow.emitted===beforeUnderground'));
     if(mode==='snow') {
-      await game(`while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,true);
-        cam.x=2000;cam.y=-1000;player.x=2400;player.y=-650;
-        for(var i=0;i<500;i++)snowParkAir({x:7000+i*.1,y:-700,vx:0,vy:53,size:.5,phase:0});
-        snow.mass=snow.emitted=500;snow.temperature=4;snowScan(10000);`);
-      check('stored atmospheric snow never creates rain overhead',await game('snow.airCount===500&&rain.parked.length===0&&snow.melted===0'));
-      await game('rain.intensity=0;snowStreamAir(particleWeatherRect())');
-      check('clear weather retires old offscreen snowfall without creating water',await game('snow.airCount===0&&snow.recycled===500&&snow.mass===0&&rain.parked.length===0'));
+      await game(`while(liquidCount)removeLiquidParticle(liquidCount-1);
+        rainRestore({enabled:true,mode:'snow',snow:{version:2,particles:[],grains:[],airParked:[[7000,-700,0,53,1,0,.5,0]]},water:[2400,-700,2400,SKY_ROWS*TILE+8]});
+        cam.x=2000;cam.y=-1000;player.x=2400;player.y=-650;`);
+      check('old snow saves cannot revive cached storm strips',await game('snow.airCount===0&&snow.grains.length===0'));
+      check('legacy sky water becomes snow with the same mass; surface water stays water',await game('snow.mass===1&&snow.parked[1]===-700&&rain.parked.length===2&&rain.parked[1]===SKY_ROWS*TILE+8'));
+      await game('snowScan(.12);snowScan(.12)');
+      check('isolated physical snow returns to slow flight without changing mass',await game('snow.grains.length===1&&snow.grains[0].physical&&snow.mass===1'));
+      check('jet heat cannot make rain out of airborne powder',await game('player.thrusting=true;player.jetForce=200;snow.temperature=4;snowHeat(player.x+PLAYER_W*.5,player.y+PLAYER_H+15)===0'));
       check('clearing cannot thaw the world while snow is still falling',await game('weatherForce=-1;rain.climate.phase=3;weather.pcp=.4;snowTemperature()<0'));
       check('rain rendering rejects a snow world',await game(`(function(){var strokes=0,old=ctx.stroke;try{ctx.stroke=function(){strokes++;};drawParticleRain();}finally{ctx.stroke=old;}return strokes===0;})()`));
     }

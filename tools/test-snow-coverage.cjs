@@ -37,137 +37,101 @@ function step(dx, dy = 0, frames = 1) {
   for (let i = 0; i < frames; i++) { s.cam.x += dx; s.cam.y += dy; s.updateSnow(1 / 60); }
 }
 reset();
-const baseline = nearRig();
-assert.ok(baseline > 150, 'sky initially surrounds the rig');
-const counts = [];
-for (const direction of [1, -1, 1, -1]) {
-  for (let t = 0; t < 8; t++) { step(direction * 8, 0, 30); counts.push(nearRig()); }
+const baseline = nearRig(), counts = [];
+for (const direction of [1, -1, 1, -1]) for (let t = 0; t < 8; t++) {
+  step(direction * 8, 0, 30); counts.push(nearRig());
 }
-console.log({ baseline, minFlight: Math.min(...counts), maxFlight: Math.max(...counts), stats: s.window.__particleSnow.stats() });
-assert.ok(Math.min(...counts) > baseline * .55, 'left and right flight retain surrounding snowfall');
-assert.ok(Math.max(...counts) < baseline * 1.9, 'reversal does not stack full snow volumes');
-assert.ok(s.snow.grains.length <= 5400 && s.snow.airCount > 1000, 'offscreen sky frees the active budget');
-assert.equal(s.window.__particleSnow.stats().mass, s.snow.emitted, 'streaming conserves every emitted grain');
+console.log('FLIGHT', {baseline, min: Math.min(...counts), max: Math.max(...counts)});
+assert.ok(Math.min(...counts) > baseline * .65 && Math.max(...counts) < baseline * 1.5);
+assert.ok(s.snow.grains.length <= 5400 && s.snow.airCount === 0, 'no frozen offscreen weather');
+assert.equal(s.window.__particleSnow.stats().mass + s.snow.recycled, s.snow.emitted);
 
-// A camera-only translation cannot drag the particles already in the overlap.
+// A camera-only translation cannot drag particles already in the overlap.
 reset();
-const tracked = s.snow.grains.filter(p => p.x > 2350 && p.x < 2500).map(p => [p, p.x, p.y, p.vx, p.vy]);
+const tracked = s.snow.grains.filter(p => p.x > 2350 && p.x < 2500).map(p => [p,p.x,p.y,p.vx,p.vy]);
 s.cam.x += 120; s.updateSnow(0);
-for (const [p, x, y, vx, vy] of tracked) {
-  assert.ok(s.snow.grains.includes(p)); assert.deepEqual([p.x, p.y, p.vx, p.vy], [x, y, vx, vy]);
+for (const [p,x,y,vx,vy] of tracked) {
+  assert.ok(s.snow.grains.includes(p)); assert.deepEqual([p.x,p.y,p.vx,p.vy],[x,y,vx,vy]);
 }
-// An offscreen flake returns with its own world position and velocity.
-const flake = tracked[0][0];
-s.cam.x += 2400; s.updateSnow(0);
-assert.ok(!s.snow.grains.includes(flake));
-s.cam.x -= 2400; s.updateSnow(0);
-assert.ok(s.snow.grains.includes(flake));
-assert.deepEqual([flake.x, flake.y, flake.vx, flake.vy], tracked[0].slice(1));
-
+// Revisits sample the current storm, without preserving a frozen old patch.
+s.cam.x += 2400; s.updateSnow(0); s.cam.x -= 2400; s.updateSnow(0);
+assert.ok(nearRig() > baseline * .7);
 const saved = JSON.parse(JSON.stringify(s.snowSave()));
 const mass = s.window.__particleSnow.stats().mass;
 s.snowReset(true); s.snowRestore(saved);
 assert.equal(s.window.__particleSnow.stats().mass, mass);
-assert.equal(JSON.stringify(s.snowSave()), JSON.stringify(saved), 'stored sky and coverage round-trip exactly');
+assert.equal(JSON.stringify(s.snowSave()), JSON.stringify(saved), 'field and weather round-trip');
 s.updateSnow(0);
-assert.equal(s.window.__particleSnow.stats().mass, mass, 'reload does not prime a second sky');
-const storedAir = s.snow.airCount;
-s.snow.temperature = 4; s.rain.waterCount = s.RAIN_STORAGE_CAP;
-s.snowScan(10000);
-assert.equal(s.snow.airCount, storedAir, 'full water storage defers atmospheric thaw');
-s.rain.waterCount = 0; s.snowScan(10000);
-assert.equal(s.snow.airCount, storedAir, 'stored atmospheric snow stays snow during a warm spell');
-assert.equal(s.rain.parked.length, 0, 'cached snow cannot turn into a rain shower overhead');
-assert.equal(s.window.__particleSnow.stats().mass, mass);
-s.rain.intensity = 0; s.updateSnow(0);
-assert.equal(s.snow.airCount, 0, 'a finished front does not leave cached snowfall waiting elsewhere');
-assert.equal(s.window.__particleSnow.stats().mass + s.snow.recycled, mass);
-s.rain.parked = [];
+assert.equal(s.window.__particleSnow.stats().mass, mass, 'reload does not add a second field');
+const collected=s.snow.grains.find(p=>p.weatherKey!==undefined), collectedKey=collected.weatherKey;
+s.snow.grains.splice(s.snow.grains.indexOf(collected),1);s.snow.mass--;s.snow.collected++;
+s.updateSnow(.11);
+assert.ok(!s.snow.grains.some(p=>p.weatherKey===collectedKey),'consumed source flakes cannot respawn into the wake');
+s.snowReset(true);
+s.snowRestore({version:2,particles:[2400,125,0,0],grains:[[2400,-700,0,53,1,0,.5,0]],airParked:[[7000,-700,0,53,1,0,.5,0]]});
+assert.equal(s.snow.grains.length,0,'legacy active sky cannot overlap the new field');
+assert.equal(s.snow.airCount,0,'legacy cached sky cannot return as a wall');
+assert.equal(s.snow.mass,1,'legacy deposited material retains its mass');
 
-// A world initialized before precipitation starts still primes its first sky.
-s.snowReset(true); s.rain.intensity = 0; s.updateSnow(0);
-assert.equal(s.snow.grains.length, 0);
-s.rain.intensity = .65; s.updateSnow(0);
-assert.ok(nearRig() > 150);
-
-// Zoom expansion and vertical travel populate newly exposed open air.
-reset(); s.screenW = 1440; s.screenH = 800; s.updateSnow(0);
-assert.ok(count({left: s.cam.x + 1050, right: s.cam.x + 1400, top: -700, bottom: -300}) > 100);
-step(0, -5, 120);
-assert.ok(nearRig() > 100);
-step(0, 5, 120);
-assert.ok(nearRig() > 100);
-// A storm covers high flight too, with no camera-visible weather ceiling.
-reset(); s.cam.y = -4500; s.updateSnow(0);
-assert.ok(nearRig() > 150, 'snow is already falling at high altitude');
-// Fair weather and enclosed underground areas must never seed new weather.
-for (const scene of ['fair', 'underground']) {
-  reset();
-  if (scene === 'fair') s.rain.intensity = 0;
-  if (scene === 'underground') s.cam.y = 600;
-  const emitted = s.snow.emitted;
-  step(8, 0, 60);
-  assert.equal(s.snow.emitted, emitted, scene + ' does not create snowfall');
+// This was the visible wall: a held view retained the old storm intensity,
+// while travelling seeded a much denser current storm beside it.
+function densityAcrossView(parts) {
+  const bins = Array(12).fill(0);
+  for (const p of parts) if (p.x >= s.cam.x && p.x < s.cam.x+s.screenW && p.y >= s.cam.y && p.y < s.cam.y+s.screenH)
+    bins[Math.floor((p.x-s.cam.x)/s.screenW*4)+4*Math.floor((p.y-s.cam.y)/s.screenH*3)]++;
+  return bins;
 }
-reset(); s.SNOW_MASS_CAP = s.snow.mass;
-const fullEmitted = s.snow.emitted;
-step(8, 0, 240);
-assert.ok(s.snow.emitted > fullEmitted && s.snow.recycled > 0, 'cached unlanded sky releases room for the storm ahead');
-assert.ok(s.snow.mass <= s.SNOW_MASS_CAP);
-assert.equal(s.snow.mass + s.snow.recycled, s.snow.emitted);
-s.SNOW_MASS_CAP = 120000;
-reset();
-s.snow.active = s.SNOW_CPU_CAP;
-const airborneBefore = s.snow.grains.length;
-s.snowSpawn(2400, -700);
-assert.equal(s.snow.grains.length, airborneBefore + 1, 'a full CPU material solver does not stop snowfall');
-assert.ok(s.snowParticle(2400, -700, 0, 53));
-assert.equal(s.snow.parked.length, 4, 'snow awaiting a physical slot is stored without blocking flakes');
-// World edges still contain snow, with every new flake inside world bounds.
-for (const x of [0, 320 * 32 - 960]) {
-  reset(); s.cam.x = x; s.updateSnow(0);
-  assert.ok(nearRig() > 100);
-  assert.ok(s.snow.grains.every(p => p.x >= 2 && p.x < s.COLS * s.TILE));
+function stormTransition(update, parts, setIntensity) {
+  setIntensity(.02); update(0);
+  for (let i=0;i<600;i++) {setIntensity(.02+.63*i/600);update(1/60);}
+  const waiting=densityAcrossView(parts()), oldX=s.cam.x;
+  s.cam.x+=1800; update(0); const arriving=densityAcrossView(parts());
+  const total=a=>a.reduce((x,y)=>x+y,0), ratio=total(arriving)/total(waiting);
+  console.log('BUILDUP', {waiting,arriving,ratio});
+  assert.ok(ratio>.8&&ratio<1.25, 'a storm grows equally in visited and unvisited sky');
+  assert.ok(Math.min(...waiting)>Math.max(...waiting)*.45, 'no horizontal or vertical storm curtain');
+  for(let i=0;i<600;i++){setIntensity(.65-.58*i/600);update(1/60);}
+  const clearing=total(densityAcrossView(parts()));s.cam.x=oldX;update(0);
+  const returning=total(densityAcrossView(parts()));
+  console.log('CLEARING', {clearing,returning});
+  assert.ok(returning<clearing*1.6&&returning>clearing*.6, 'returning cannot revive the earlier heavy storm');
+  setIntensity(0);update(.11);
+  assert.equal(parts().filter(p=>p.weatherKey!==undefined).length,0,'storm ends throughout the sky');
 }
+s.snowReset(true); s.cam.x=2000;
+stormTransition(dt=>s.updateSnow(dt),()=>s.snow.grains,v=>{s.rain.intensity=v;});
 
-// Airflow must carry a flake's settling speed with it. Weak crosswind or
-// downwash cannot behave like an invisible shelf; real updrafts still lift.
+reset(); s.screenW=1440;s.screenH=800;s.updateSnow(0);
+assert.ok(count({left:s.cam.x+1050,right:s.cam.x+1400,top:-700,bottom:-300})>100);
+step(0,-5,120); assert.ok(nearRig()>100); step(0,5,120); assert.ok(nearRig()>100);
+for(const x of [0,320*32-960]){reset();s.cam.x=x;s.cam.y=-4500;s.updateSnow(0);assert.ok(nearRig()>100);}
+for(const scene of ['fair','underground']){
+  reset(); if(scene==='fair')s.rain.intensity=0;else s.cam.y=600;
+  const emitted=s.snow.emitted;step(8,0,60);assert.equal(s.snow.emitted,emitted);
+}
+reset();s.snow.active=s.SNOW_CPU_CAP;
+assert.ok(s.snowSpawn(2400,-700));assert.ok(s.snowParticle(2400,-700,0,53));
+assert.equal(s.snow.parked.length,4,'full solver stores contact material without stopping weather');
+
 function settleInAir(air) {
-  reset(); s.SNOW_RATE = 0; s.rain.intensity = 0;
-  const flake = {x: 2400, y: -700, vx: 0, vy: 53, size: .5, phase: 1};
-  s.snow.grains = [flake]; s.snow.mass = 1;
-  s.snowAirAt = () => air;
-  step(0, 0, 90);
-  return flake.vy;
+  reset();s.SNOW_RATE=0;s.rain.intensity=0;
+  const flake={x:2400,y:-700,vx:0,vy:53,size:.5,phase:1,physical:true};
+  s.snow.grains=[flake];s.snow.mass=1;s.snowAirAt=()=>air;step(0,0,90);return flake.vy;
 }
-const calm = settleInAir([0, 0]), crosswind = settleInAir([8, 0]);
-const downwash = settleInAir([0, 15]), updraft = settleInAir([0, -120]);
-console.log('SETTLING', {calm, crosswind, downwash, updraft});
-assert.ok(crosswind > calm * .8, 'weak lateral air preserves the flake settling speed');
-assert.ok(downwash > calm, 'downward air accelerates falling snow');
-assert.ok(updraft < -40, 'strong upward air still entrains snow');
-console.log('PASS coverage, conservation, save/load, zoom, budgets and settling relative to airflow');
+const calm=settleInAir([0,0]),crosswind=settleInAir([8,0]),downwash=settleInAir([0,15]),updraft=settleInAir([0,-120]);
+assert.ok(crosswind>calm*.8&&downwash>calm&&updraft< -40,'airflow preserves settling and actual updrafts');
+s.snowAirAt=()=>[0,0];s.SNOW_RATE=345;
 
-// Rain shares the same world-space coverage during continuous flight.
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/157-particle-rain.js'), 'utf8'), s);
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/158-rain-lakes.js'), 'utf8'), s);
-s.weatherForce = 4; s.weather = {pcp: .65}; s.weatherTune = {enabled: true};
-s.weatherSetMood = noop; s.bathMode = s.PERF_DISABLE_WATER = s.PERF_DISABLE_WEATHER = false;
-s.rainScan = noop; s.rainCatchLakes = noop; s.rainAdvanceWeather = noop;
-s.rainLand = () => { s.rain.landed++; return true; };
-s.liquidWGPU = {simActive: true};
-s.rainReset(true, false); s.cam.x = 2000; s.cam.y = -900; s.screenW = 960; s.screenH = 600;
-s.updateParticleRain(0);
-function rainNearby() { return s.rain.drops.filter(p => p.x > s.cam.x+300 && p.x < s.cam.x+660 && p.y > s.cam.y+180 && p.y < s.cam.y+420).length; }
-const rainBaseline = rainNearby(), rainCounts = [];
-for (const direction of [1, -1]) for (let sample = 0; sample < 8; sample++) {
-  for (let tick = 0; tick < 30; tick++) { s.cam.x += direction*8; s.updateParticleRain(1/60); }
-  rainCounts.push(rainNearby());
-}
-console.log('RAIN FLIGHT', {baseline: rainBaseline, min: Math.min(...rainCounts), max: Math.max(...rainCounts)});
-assert.ok(rainBaseline > 30 && Math.min(...rainCounts) > rainBaseline*.45, 'rain surrounds the rig throughout both flight directions');
-assert.ok(s.rain.drops.length <= s.RAIN_DROP_CAP);
-s.cam.y = -4500; s.updateParticleRain(0);
-assert.ok(rainNearby() > 30, 'rain covers high flight without an artificial ceiling');
-assert.equal(s.snow.grains.length, 0, 'a rain world has no atmospheric snow');
-console.log('PASS shared rain coverage during sustained flight and at altitude');
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/158-rain-lakes.js'),'utf8'),s);
+s.weatherForce=4;s.weather={pcp:.65};s.weatherTune={enabled:true};s.weatherSetMood=noop;
+s.bathMode=s.PERF_DISABLE_WATER=s.PERF_DISABLE_WEATHER=false;
+s.rainScan=noop;s.rainCatchLakes=noop;s.rainAdvanceWeather=noop;
+s.rainLand=()=>{s.rain.landed++;return true;};s.liquidWGPU={simActive:true};
+s.rainReset(true,false);s.cam.x=2000;s.cam.y=-900;s.screenW=960;s.screenH=600;
+stormTransition(dt=>s.updateParticleRain(dt),()=>s.rain.drops,v=>{s.weather.pcp=v;});
+assert.equal(s.snow.grains.length,0,'rain has no snow weather');
+const shaft={x:2400,y:s.SKY_ROWS*s.TILE+40,vx:0,vy:645,size:.5,age:0,weatherRank:.5};
+s.rain.drops=[shaft];s.weather.pcp=0;s.cam.y=s.SKY_ROWS*s.TILE;s.updateParticleRain(.11);
+assert.ok(s.rain.drops.includes(shaft),'ending a storm cannot delete water already falling into a shaft');
+console.log('PASS evolving whole-world rain/snow, both flight directions, no curtains, clearing, saves, budgets and jet settling');

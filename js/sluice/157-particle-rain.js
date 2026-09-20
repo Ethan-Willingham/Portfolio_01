@@ -11,7 +11,7 @@
   var RAIN_STORAGE_CAP = 40000; // Three finite lakes plus loose rain, including offscreen storage.
   var RAIN_DAMP_CAP = 256;
   var RAIN_PLOW_CAP = 96;
-  var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, parkedCursor: 0, waterCount: 0, lakeCount: 0, climate: null,
+  var rain = { field: particleWeatherState(), time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, parkedCursor: 0, waterCount: 0, lakeCount: 0, climate: null,
     drops: [], impacts: [], parked: [], cells: {}, intensity: 0,
     plow: { x0: 0, x1: 0, y0: 0, y1: 0, freshUntil: 0, until: 0 },
     damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false, coverage: null, sideCredit: 0 };
@@ -29,7 +29,7 @@
     rain.drops.length = rain.impacts.length = rain.parked.length = rain.damp.length = 0;
     rain.dampCells = {};
     rain.plow.freshUntil = rain.plow.until = 0;
-    rain.cells = {}; rain.primed = false; rain.coverage = null; rain.sideCredit = 0; rain.intensity = 0;
+    rain.field = particleWeatherState(); rain.cells = {}; rain.primed = false; rain.coverage = null; rain.sideCredit = 0; rain.intensity = 0;
     rain.climate = { phase: 0, elapsed: 0, duration: 55 + Math.random() * 25, strength: 0.7 };
     if (worldSnowEnabled) rain.climate = { phase: 2, elapsed: 10, duration: 70, strength: 0.65 };
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
@@ -206,25 +206,12 @@
   }
 
   function rainActiveLimit() { return liquidWGPU && liquidWGPU.simActive ? RAIN_WATER_CAP : RAIN_CPU_CAP; }
-  function rainSpawn(x, y) {
+  function rainSpawn(x, y, size) {
     if (rain.drops.length >= RAIN_DROP_CAP || rainRoom(rainActiveLimit()) <= 0 || liquidWorldSolidAt(x, y)) return;
-    var size = Math.random();
-    rain.drops.push({ x: x, y: y, vx: surfaceWind.current * 95,
-      vy: 480 + size * 330, size: size, age: 0 });
-    rain.emitted++;
-  }
-  function rainFillSky(left, right, top, bottom, density) {
-    if (right <= left || bottom <= top || density <= 0) return;
-    var need = (right - left) * (bottom - top) * density;
-    for (var i = 0; i < rain.drops.length; i++) {
-      var p = rain.drops[i];
-      if (p.x >= left && p.x < right && p.y >= top && p.y < bottom) need--;
-    }
-    need = Math.min(Math.floor(Math.max(0, need) + Math.random()), RAIN_DROP_CAP - rain.drops.length);
-    var room = rainRoom(rainActiveLimit());
-    if (need > room) rainRecycle(need - room);
-    need = Math.min(need, rainRoom(rainActiveLimit()));
-    for (var n = 0; n < need; n++) rainSpawn(left + Math.random() * (right - left), top + Math.random() * (bottom - top));
+    if (size === undefined) size = Math.random();
+    var p = { x: x, y: y, vx: surfaceWind.current * 95,
+      vy: 480 + size * 330, size: size, age: 0 };
+    rain.drops.push(p); rain.emitted++; return p;
   }
   function rainImpact(x, y, wet, size) {
     if (rain.impacts.length >= 220 || Math.random() > 0.62) return;
@@ -252,43 +239,20 @@
     rainUpdatePlow();
     rain.scan -= dt; rain.scanDt += dt;
     if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
-    if (worldSnowEnabled) { updateSnow(dt); return; }
+    if (worldSnowEnabled) { rain.drops.length = rain.impacts.length = 0; updateSnow(dt); return; }
     var gpu = liquidWGPU && liquidWGPU.simActive;
     var limit = gpu ? RAIN_WATER_CAP : RAIN_CPU_CAP;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top;
     var width = Math.max(0, right - left), height = Math.max(0, rect.bottom - top);
-    // Drops already outside the view return to the existing atmospheric
-    // reservoir before newly exposed sky spends the finite airborne budget.
-    for (var d = rain.drops.length - 1; d >= 0; d--) {
-      var drop = rain.drops[d];
-      if (drop.y >= surf || (drop.x > cam.x - 180 && drop.x < cam.x + screenW + 180 &&
-          drop.y > cam.y - 180 && drop.y < cam.y + screenH + 180)) continue;
-      rain.drops[d] = rain.drops[rain.drops.length - 1]; rain.drops.pop(); rain.recycled++;
-    }
-    var density = Math.min((gpu ? 760 : 280) / (1100 * 645), RAIN_DROP_CAP * 0.75 / Math.max(1, width * height)) * rain.intensity;
-    if (sky && rain.intensity > 0) {
-      particleWeatherReveal(rect, rain.primed ? rain.coverage : null, function (x0, x1, y0, y1) {
-        rainFillSky(x0, x1, y0, y1, density);
-      });
-      rain.primed = true;
-    }
-    if (rain.intensity <= 0) rain.primed = false;
-    rain.coverage = rect;
-    var rate = density * width * 645;
-    rainCatchLakes(dt, sky, left, right);
     var wind = surfaceWind.current * 110 + 42 * Math.sin(rain.time * 0.43) + 22 * Math.sin(rain.time * 1.17);
-    var total = rain.waterCount + rain.parked.length / 2 + rain.drops.length - rain.lakeCount;
-    var incoming = sky ? Math.ceil((rate + Math.abs(wind) * height * density) * dt) : 0;
-    if (total + incoming > limit) rainRecycle(Math.min(80, total + incoming - limit));
-    rain.credit = sky && height > 0 ? Math.min(80, rain.credit + rate * dt) : 0;
-    var births = Math.floor(rain.credit);
-    for (var b = 0; b < births; b++) rainSpawn(left + Math.random() * width, top);
-    rain.credit -= births;
-    rain.sideCredit = sky && height > 0 ? Math.min(80, rain.sideCredit + Math.abs(wind) * height * density * dt) : 0;
-    var sideBirths = Math.floor(rain.sideCredit);
-    for (var side = 0; side < sideBirths; side++) rainSpawn(wind >= 0 ? left : right - 0.01, top + Math.random() * height);
-    rain.sideCredit -= sideBirths;
+    var density = (gpu ? 760 : 280) / (1100 * 645);
+    var target = Math.min(RAIN_DROP_CAP * 0.72, density * width * height) * rain.intensity;
+    var room = rainRoom(limit);
+    if (room < target - rain.drops.length) rainRecycle(Math.ceil(target - rain.drops.length - room));
+    particleWeatherField(rain.field, rect, rain.drops, density, RAIN_DROP_CAP, sky ? rain.intensity : 0,
+      wind, [480, 645, 810], dt, rainSpawn, function () { rain.recycled++; });
+    rainCatchLakes(dt, sky, left, right);
     for (var i = rain.drops.length - 1; i >= 0; i--) {
       var p = rain.drops[i];
       p.age += dt;
@@ -464,7 +428,15 @@
     for (var i = 0; i + 1 < data.water.length && rain.parked.length < RAIN_STORAGE_CAP * 2; i += 2) {
       var x = data.water[i], y = data.water[i + 1];
       if (typeof x === 'number' && typeof y === 'number' && isFinite(x) && isFinite(y) &&
-          x > 0 && x < COLS * TILE && y > -20000 && y < TOTAL_ROWS * TILE) rain.parked.push(x, y);
+          x > 0 && x < COLS * TILE && y > -20000 && y < TOTAL_ROWS * TILE) {
+        // Older snow saves could contain melted weather high in the sky.
+        // Restore that weather as snow, preserving its water-equivalent mass.
+        // Player-poured water has another origin and does not enter this store.
+        if (worldSnowEnabled && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24 &&
+            snow.mass < SNOW_MASS_CAP && snowStore(x, y, 0, 53)) {
+          snow.mass++; snow.emitted++;
+        } else rain.parked.push(x, y);
+      }
     }
   }
   function shaderWarmRain() {

@@ -59,26 +59,27 @@ width, three times the former rate. The denser rest spacing keeps the smaller
 grains together in piles without making each storm three times as deep.
 The initial dusting uses two or three closely spaced rows.
 
-Snowfall covers a moving rectangle of open sky, padded 160 world pixels beyond
-the view. Horizontal flight, climbing, descending and zooming seed only newly
-exposed strips, at a density derived from the snowfall rate and mean fall speed.
-Flakes already in the overlapping area keep their world positions and velocities,
-including the wake cleared by the rig. New snowfall also enters at the top and
-upwind edge. The sky volume reserves a quarter of the airborne budget for drift,
-jet interaction and flakes falling through shafts.
-The storm's type and intensity apply across the outdoor world. There is no
-altitude cutoff or map region without snowfall during a front. Rain uses the
-same coverage bounds and exposed-strip calculation in `156-particle-weather.js`.
+Snowfall samples one moving world-space field, with a simulation window padded
+160 world pixels beyond the view. Three settling speeds and independently
+jittered positions prevent rows. A stable per-flake rank selects the same
+fraction of that field everywhere as intensity rises or falls. A storm builds
+and clears throughout the sky, including unvisited areas, without a curtain
+travelling down from the screen edge. Camera movement never translates existing
+flakes or refills the rig's wake. There is no altitude cutoff.
 
-Airborne flakes leaving the simulation window are stored in world-column buckets
-with their position, velocity and flutter phase. Returning restores the same
-flakes before filling any density deficit in newly revealed air. Stored flight
-is paused offscreen, like stored solver snow; it does not become heavy solver
-snow on return. These atmospheric flakes cannot thaw into stored sky water.
-They return to the atmosphere when the front ends or when the budget needs room
-for snowfall elsewhere. Deposited and scooped material is never recycled this
-way. Cached flight is included in saves and the total mass cap.
-`parkedAirborne` and `recycled` in the snow stats report storage and retirement.
+`156-particle-weather.js` supplies the same field logic for rain. It remembers
+consumed source particles until their source leaves the window, so a landed or
+scooped flake cannot appear twice. Unlanded weather leaving the window returns
+to the atmosphere instead of waiting in frozen offscreen strips. Revisits sample
+the current storm. Deposited and scooped material retains its mass; lofted
+physical powder is stored if it leaves the window. `recycled` counts retired
+weather. The legacy `parkedAirborne` statistic remains zero.
+
+The v28.42 coverage test ramps intensity while waiting, then moves to unvisited
+sky. The old implementation produced 33 versus 197 flakes near the rig. The
+new field produced 1,239 versus 1,240 across the full test view, with similar
+counts in all twelve horizontal/vertical bins. Clearing and reversals are
+checked too, rather than only testing a forced steady storm.
 
 ## Jet airflow
 
@@ -126,6 +127,10 @@ Air stays cold until precipitation finishes, then gradually thaws deposited snow
 Foundations, jet exhaust and contact with
 a body of water accelerate thaw; a few droplets do not dissolve an entire pile.
 The rig's warm scoop collects snow directly into its water chamber.
+Airborne powder more than 24 world pixels above the surface cannot thaw beside
+the jet. Isolated solver grains above the surface return to light flake motion,
+keeping their position, velocity and mass. They no longer accelerate as liquid
+drops after a brief rig contact; dense piles still use the shared solver.
 
 Melting changes material 5 to water in place, retaining the GPU's current
 position and velocity. One snow particle is exactly one water particle.
@@ -147,7 +152,10 @@ strip keeps its dusting and parked snow; the finite lakes still use their
 existing offscreen catchment accounting at the snowfall rate.
 
 Saves contain the individual solver particles and airborne flakes separately
-from existing water. Pause freezes weather and thaw. Outdoor weather pauses
+from existing water, plus the field clock, drift and consumed source identities.
+Older saves discard transient atmospheric patches and convert their stored sky
+water back into snow with the same water equivalent. Current saves preserve
+local meltwater, physical snow and collected/poured water. Pause freezes weather and thaw. Outdoor weather pauses
 inside the banya. `window.__particleSnow.stats()` reports the shared-particle
 model, active and parked counts, moving powder, collected mass and thaw.
 
@@ -180,10 +188,10 @@ its screenshots to `/tmp/sluice-snow-jet-qa`. Add `--cpu` to exercise the
 same interactions on the CPU solver.
 
 `node tools/test-snow-coverage.cjs` checks sustained sideways travel, reversals,
-unchanged world positions in the overlapping view, offscreen restoration,
+unchanged world positions in the overlapping view, current weather on revisits,
 exact atmospheric save/load, zoom, altitude, world edges and particle budgets.
 It also checks continuous rain coverage during flight, atmospheric recycling,
-and that stored sky flakes cannot turn into rain.
+storm buildup and clearing, and the absence of horizontal or vertical curtains.
 
 `node tools/sluice-weather-coverage.mjs` checks both modes across distant map
 locations and high-altitude views, four-column coverage, underground gating,

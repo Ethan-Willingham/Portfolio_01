@@ -72,12 +72,13 @@ try {
     await sleep(250);
     const stats=await game(`(function(){liquidToolSync();var lifted=0,side=0,minY=sy;
       for(var i=0;i<liquidCount;i++)if(liquidType[i]===5){minY=Math.min(minY,liquidY[i]);if(liquidY[i]<sy-25)lifted++;if(liquidY[i]<sy-20&&Math.abs(liquidX[i]-cx)>45)side++;}
+      for(var p of snow.grains)if(p.physical){minY=Math.min(minY,p.y);if(p.y<sy-25)lifted++;if(p.y<sy-20&&Math.abs(p.x-cx)>45)side++;}
       return {lifted:lifted,side:side,height:sy-minY,snow:__particleSnow.stats().active,melted:snow.melted,air:snowAir.peak,ms:snowAir.ms,div:snowAir.divergenceAfter};})()`);
     peakLift=Math.max(peakLift,stats.lifted);peakSide=Math.max(peakSide,stats.side);airMs=Math.max(airMs,stats.ms);
     console.log('HOVER',t,stats);if(t===3||t===7||t===11)await screenshot('snow-hover-'+t);
   }
   check('hover entrains actual snow beyond the jet core',peakLift>150&&peakSide>100);
-  check('powder survives a hover instead of becoming a water blast',await game('__particleSnow.stats().active>initialSnow*.65'));
+  check('powder survives a hover instead of becoming a water blast',await game('__particleSnow.stats().mass>initialSnow*.65'));
   await game('jetX=cx-160');
   for(let t=0;t<18;t++){await game('jetX+=18');await sleep(80);}
   await screenshot('snow-low-pass');await game('jetOn=false');
@@ -114,10 +115,11 @@ try {
     for(let t=0;t<8;t++) { await sleep(500);densities.push(await game('flightDensity()')); }
     await screenshot(direction>0?'snow-flight-right':'snow-flight-left');
   }
+  check('high flight and exhaust never create rain in snow weather',await game(`(function(){liquidToolSync();for(var i=0;i<liquidCount;i++)if(liquidType[i]===0&&liquidOrigin[i]===3&&liquidY[i]<SKY_ROWS*TILE-32)return false;return rain.drops.length===0;})()`));
   await game('cancelAnimationFrame(flightRaf);keys.ArrowUp=false');
   console.log('FLIGHT COVERAGE',{baseline,min:Math.min(...densities),max:Math.max(...densities),stats:await ev('__particleSnow.stats()')});
   check('snow surrounds the rig throughout left and right jet flight',Math.min(...densities)>baseline*.45);
-  check('flight streams distant flakes out of the active budget',await game('snow.airCount>1000&&snow.grains.length<=SNOW_FLAKE_CAP'));
+  check('flight streams distant flakes out of the active budget',await game('snow.airCount===0&&snow.recycled>1000&&snow.grains.length<=SNOW_FLAKE_CAP'));
   assert.equal(errors.length,0,'no runtime or GPU validation errors');
   console.log('PASS live hover and low pass; screenshots '+out);
 } finally { if(errors.length)console.log('ERRORS',errors.slice(0,8));cleanup(); }
