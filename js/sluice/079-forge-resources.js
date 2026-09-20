@@ -16,14 +16,25 @@
   function forgeCargoMatches(unit, type) {
     return (type === 'coal' || type === 'iron') && cargoType(unit) === type && !cargoShiny(unit);
   }
+  function hearthDevSupplies() {
+    return typeof devMode !== 'undefined' && devMode;
+  }
+  function hearthHasTool(type) {
+    return (type === 'flint' || type === 'steel') && (hearthDevSupplies() || forgeCount(type) > 0);
+  }
   function forgeCount(type) {
     if (!forgeResourceKnown(type)) return 0;
+    // The virtual supply never enters saved stock. Keep crafted steel real so
+    // the forge can still walk through its complete recipe during a playtest.
+    if (hearthDevSupplies() && type !== 'steel') return 999999;
     var n = forgeStock[type];
     for (var i = 0; i < cargo.length; i++) if (forgeCargoMatches(cargo[i], type)) n++;
     return n;
   }
   function forgeTake(type, n) {
-    if (!forgeResourceKnown(type) || !isFinite(n) || n < 0 || Math.floor(n) !== n || forgeCount(type) < n) return false;
+    if (!forgeResourceKnown(type) || !isFinite(n) || n < 0 || Math.floor(n) !== n) return false;
+    if (hearthDevSupplies()) return true;
+    if (forgeCount(type) < n) return false;
     var stored = Math.min(forgeStock[type], n);
     forgeStock[type] -= stored;
     n -= stored;

@@ -358,6 +358,9 @@
     return bathFadeEl;
   }
   function bathLayerVis(inside) {
+    var pauseButton = document.getElementById('gm-pause-btn');
+    if (pauseButton) pauseButton.style.top = inside ? '3px' : '';
+    if (typeof window.gmTuningButtonSync === 'function') window.gmTuningButtonSync();
     // The HUD/toast layer (uiTopCanvas, z:6, 140) and the smoke canvas (z:5,
     // 190) sit ABOVE the main canvas in the DOM, so the scene cannot paint
     // over them: hide both while inside. The liquid canvas (z:4) stays, it
@@ -747,6 +750,7 @@
   var bathSaved = null;          // { ws, sw, sh } world view state, restored on exit
   var bathScrollT = 1e9;          // scroll target (world y); huge = clamp to bottom
   var bathCamY = -1;              // smoothed camera y; -1 = snap on first pin
+  var bathViewportKey = '';
   var bathViewH = 0;              // visible height in world px (set per frame)
   function bathCamPin() {
     if (!bathMode) {
@@ -757,7 +761,14 @@
       return false;
     }
     if (!bathSaved) bathSaved = { ws: worldScale, sw: screenW, sh: screenH };
-    worldScale = canvas.width / dpr / BATH_VIEW_W;
+    var width = canvas.width / dpr, height = canvas.height / dpr;
+    var nav = hearthNavHeight(), hud = bathHUDHeight();
+    // Reserve the fixed controls before fitting the entire ground-floor tub.
+    worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / (12 * TILE));
+    var viewportKey = width + ':' + height + ':' + nav;
+    if (bathViewportKey !== viewportKey) {
+      bathViewportKey = viewportKey; bathScrollT = 1e9; bathCamY = -1;
+    }
     var iws = 1 / (dpr * worldScale);
     bathViewH = canvas.height * iws;
     // The scene owns the WHOLE canvas, so the shared view globals must
@@ -768,7 +779,7 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH + 96 / worldScale;
+    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH + (hud + 6) / worldScale;
     if (maxY < minY) maxY = minY;
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;

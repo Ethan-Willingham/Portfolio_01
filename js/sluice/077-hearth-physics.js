@@ -210,7 +210,7 @@
         var b = bed.chunks[i];
         chunks.push({ id: b.id, x: b.x, y: b.y, vx: b.held ? 0 : b.vx, vy: b.held ? 0 : b.vy,
           r: b.r, angle: b.angle, spin: b.held ? 0 : b.spin, seed: b.seed,
-          life: b.life, fuel: b.fuel, heat: b.heat, lit: b.lit, ash: b.ash });
+          life: b.life, fuel: b.fuel, heat: b.heat, lit: b.lit, ash: b.ash, devSupplied: b.devSupplied === true });
       }
       result[kinds[k]] = { chunks: chunks, nextId: bed.nextId, time: bed.time,
         heat: bed.heat, air: bed.air };
@@ -246,7 +246,7 @@
         b.ash = raw.ash === true || b.fuel <= 0;
         if (b.ash) b.fuel = 0;
         b.lit = raw.lit === true && !b.ash;
-        b.held = false;
+        b.held = false; b.devSupplied = raw.devSupplied === true;
       }
       bed.nextId = Math.max(bed.nextId, Math.floor(hearthNumber(src.nextId, bed.nextId, 1, 1e9)));
       hearthMeasure(bed);

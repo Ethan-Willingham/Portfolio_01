@@ -1,6 +1,6 @@
 // Full bathhouse regression. Uses its own Chrome for Testing process and profile.
 // Run: node tools/bathhouse-smoke.mjs (screenshots go to /tmp, never the repo).
-// Use --defaults-only for boot migration, menu persistence, and tower entry.
+// Use --defaults-only for boot preferences, or --layout-only for responsive dev playtests.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -62,7 +62,64 @@ try {
   for(let i=0;i<300;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))break;await sleep(100);}
   check('normal boot enables bathhouse',await game("introPhase === 'done' && ENABLE_BATH"));
   check('visitor shaders warm without errors',await ev('window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.visitors>=0'));
-  if (process.argv.includes('--defaults-only')) {
+  if (process.argv.includes('--layout-only')) {
+    await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
+    await game('bathEnter()'); await sleep(700);
+    async function key(key, code) {
+      await send('Input.dispatchKeyEvent',{type:'keyDown',key,code});
+      await send('Input.dispatchKeyEvent',{type:'keyUp',key,code});
+    }
+    await key('`', 'Backquote');
+    check('backtick enables dev mode inside the banya',await game('devMode'));
+    check('world debug buttons are hidden in the banya',await ev("['gmTuneBtn','gmSlimeBtn'].every(id=>!document.getElementById(id)||getComputedStyle(document.getElementById(id)).display==='none')"));
+    const stock = await game('JSON.stringify({stock:forgeStock,tank:siphon.tank,supplies:bathSupplies,cargo:cargo})');
+    await game('skySlimes=[];bathGuests=[];render()');
+    await press('(function(){var b=hearthButtons.find(b=>b.action===\'kit\');return {x:b.x+b.w/2,y:b.y+b.h/2};})()');
+    check('prepare bath starts real heat and a bounded water pour',await game('hearthView===\'bath\' && bathHeat>0.35 && bathPour>0 && bathPour<=BATH_MAX_WATER'));
+    for(var wait=0;wait<40;wait++){if(await game('bathWater>=BATH_MIN_WATER && bathCanServe()'))break;await sleep(500);}
+    console.log('DEV BATH',await game('({water:bathWater,pour:bathPour,heat:bathHeat,power:hearthBeds.boiler.power})'));
+    check('dev supply water reaches the real basin',await game('bathWater>=BATH_MIN_WATER && bathCanServe()'));
+    await press('(function(){var b=hearthButtons.find(b=>b.action===\'guest\');return {x:b.x+b.w/2,y:b.y+b.h/2};})()');
+    await sleep(900);
+    check('guest button places a real waiting guest',await game('bathGuests.length===1 && bathGuests[0].st===\'wait\''));
+    await game('cancelAnimationFrame(gameRafId);gameRafId=0');
+    for(const [width,height] of [[1280,900],[800,600],[390,844],[320,568],[844,390],[667,375],[568,320],[540,320],[520,320]]) {
+      await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
+      await game('isMobile='+String(width<500)+';resize()');
+      for(const view of ['boiler','forge','bath']) {
+        await game('hearthSetView('+JSON.stringify(view)+');updateCamera();render()');
+        check(width+'x'+height+' '+view+' controls fit without overlap',await game(`(function(){
+          var bs=hearthButtons,w=canvas.width/dpr,h=canvas.height/dpr;
+          for(var i=0;i<bs.length;i++){
+            var a=bs[i];if(a.x<0||a.y<0||a.x+a.w>w||a.y+a.h>h||a.h<40)return false;
+            for(var j=i+1;j<bs.length;j++){var b=bs[j];if(a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y)return false;}
+          }
+          if(hearthView==='bath'){
+            var tub=BATH_FLOORS[0];
+            return ((tub.fr-tub.lip)*TILE-cam.y)*worldScale>=hearthNavHeight()&&
+              ((tub.fr+tub.sink+1)*TILE-cam.y)*worldScale<=h-bathHUDHeight()&&
+              bathGuests.filter(g=>g.st==='wait').every(g=>{var r=bathOrderRect(g);return (r.y-cam.y)*worldScale>=hearthNavHeight()&&(r.y+r.h-cam.y)*worldScale<=h-bathHUDHeight();});
+          }
+          var L=hearthRoomLayout();
+          return [L.box,L.bench].every(r=>r.w>0&&r.h>0&&r.y>=L.top&&r.y+r.h<L.footer)&&
+            [L.bin,L.pump,L.action,L.ash].every(r=>r.y+r.h<L.footer);
+        })()`));
+        await screenshot('layout-'+width+'x'+height+'-'+view);
+      }
+    }
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await sleep(300);
+    await game('isMobile=true;resize();updateCamera();render()');
+    await press('(function(){var r=bathOrderRect(bathGuests[0]);return {x:(r.x+r.w/2-cam.x)*worldScale,y:(r.y+r.h/2-cam.y)*worldScale};})()',true);
+    await sleep(100);
+    check('phone touch serves dev guest through the visible order',await game('bathGuests[0].st!==\'wait\''));
+    check('dev interactions preserve the real supply inventory',await game('JSON.stringify({stock:forgeStock,tank:siphon.tank,supplies:bathSupplies,cargo:cargo})')===stock);
+    await key('`','Backquote');
+    await game('render()');
+    check('backtick restores normal supplies and hides dev controls',await game('!devMode && !hearthButtons.some(b=>b.action===\'kit\'||b.action===\'guest\') && forgeCount(\'coal\')===forgeStock.coal'));
+    check('no layout, shader or runtime errors',errors.length===0);
+    console.log('Screenshots: '+out);
+  } else if (process.argv.includes('--defaults-only')) {
     async function reload(query = '') {
       await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35${query}`});
       await sleep(300);

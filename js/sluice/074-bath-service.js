@@ -22,6 +22,7 @@
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
     bathTransitionSerial++;
     bathMode = false; bathRoomReady = false; bathFading = false;
+    if (typeof document !== 'undefined') bathLayerVis(false);
     bathFloorsOwned = [true, false, false, false, false];
     bathFire = 0; bathHeat = 0; bathWater = 0; bathPour = 0;
     bathLostWater = 0; bathDrainT = 0; bathWetFloor = []; bathServiceButtons = [];
@@ -35,7 +36,17 @@
   function bathCoalCount() {
     return forgeCount('coal');
   }
-  function bathWaterCount() { return siphon.tank[0] + bathSupplies[0]; }
+  function bathWaterCount() {
+    return hearthDevSupplies() ? BATH_MAX_WATER : siphon.tank[0] + bathSupplies[0];
+  }
+  function bathTakeWater(n) {
+    if (!isFinite(n) || n < 0 || Math.floor(n) !== n) return false;
+    if (hearthDevSupplies()) return true;
+    if (bathWaterCount() < n) return false;
+    var stored = Math.min(bathSupplies[0], n);
+    bathSupplies[0] -= stored; siphon.tank[0] -= n - stored;
+    return true;
+  }
   function bathCanServe() { return bathWater >= BATH_MIN_WATER && bathHeat >= 0.35; }
   function bathSetNotice(s) { bathNotice = s; bathNoticeT = 5; }
 
@@ -68,8 +79,7 @@
       bathSetNotice(bathWaterCount() ? 'The tub is full.' : 'Scoop water from a lake, then bring it back in your tank.');
       return false;
     }
-    var stored = Math.min(bathSupplies[0], count);
-    bathSupplies[0] -= stored; siphon.tank[0] -= count - stored;
+    if (!bathTakeWater(count)) return false;
     bathPour += count;
     saveNow('bath-water');
     return true;
@@ -283,7 +293,9 @@
     var scale = Math.max(1, 0.85 / Math.max(0.1, worldScale));
     var x = g.slot ? 976 : 804;
     if (scale > 1) x = cam.x + (g.slot ? canvas.width / dpr / 2 + 8 : 14) / worldScale;
-    return { x: x, y: BATH_FLOORS[0].fr * TILE - 164 * scale, w: 160 * scale, h: 96 * scale, scale: scale };
+    var y = BATH_FLOORS[0].fr * TILE - 164 * scale;
+    if (bathMode) y = Math.max(y, cam.y + (hearthNavHeight() + 6) / worldScale);
+    return { x: x, y: y, w: 160 * scale, h: 96 * scale, scale: scale };
   }
   function bathOrderPointer(x, y) {
     for (var i = 0; i < bathGuests.length; i++) {
@@ -340,21 +352,23 @@
       ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
     }
   }
+  function bathHUDHeight() { return canvas.height / dpr < 500 ? 110 : 132; }
   function bathDrawServiceHUD() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
-    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, h - 105, w, 105);
-    hearthText(ctx, 'BATH ' + Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 18, h - 85, 12);
-    hearthText(ctx, '$' + bathFmtMoney(money), w - 18, h - 85, 12, BLD.goldPale, 'right');
+    var hud = bathHUDHeight();
+    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, h - hud, w, hud);
+    hearthText(ctx, 'BATH ' + Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 18, h - hud + 20, 12);
+    hearthText(ctx, '$' + bathFmtMoney(money), w - 18, h - hud + 20, 12, BLD.goldPale, 'right');
     bathServiceButtons = [
-      { x: 16, y: h - 67, w: Math.min(200, (w - 44) / 2), h: 44, action: 'water' },
-      { x: w - 16 - Math.min(200, (w - 44) / 2), y: h - 67, w: Math.min(200, (w - 44) / 2), h: 44, action: 'boiler' }
+      { x: 16, y: h - hud + 37, w: Math.min(200, (w - 44) / 2), h: 44, action: 'water' },
+      { x: w - 16 - Math.min(200, (w - 44) / 2), y: h - hud + 37, w: Math.min(200, (w - 44) / 2), h: 44, action: 'boiler' }
     ];
-    hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
+    hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : hearthDevSupplies() ? 'FREE WATER [W]' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
     hearthButton(ctx, bathServiceButtons[1], 'TEND THE FIRE', 'boiler', true);
-    if (bathNoticeT) hearthWrap(ctx, bathNotice, 18, h - 132, w - 36, BLD.goldPale, 2);
-    else hearthText(ctx, 'Warm water brings paying guests.', w / 2, h - 10, 11, UIT_DIM, 'center');
+    if (bathNoticeT > 0) hearthWrap(ctx, bathNotice, 18, h - (hud > 110 ? 35 : 14), w - 36, BLD.goldPale, hud > 110 ? 2 : 1);
+    else hearthText(ctx, hearthDevSupplies() ? 'DEV: unlimited supplies' : 'Warm water brings paying guests.', w / 2, h - 16, 11, UIT_DIM, 'center');
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {

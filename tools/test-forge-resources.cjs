@@ -1,4 +1,4 @@
-// Fire room stock must survive both sales paths without consuming shiny ore.
+// Fire room stock survives sales; dev supplies never debit saved resources.
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
@@ -9,6 +9,9 @@ function fixture() {
   const notices = [], saves = [], cleared = [];
   const s = {
     Math: math, ENABLE_BATH: true, cargo: [], money: 0, oilGallons: 0, devMode: false,
+    siphon: { tank: [0, 0, 0, 0, 0] }, bathMode: true, bathFading: false, gamePaused: false,
+    bathRoomReady: true, bathFloorsOwned: [true, false, false, false, false],
+    hearthRoomSave: () => ({ resources: s.forgeResourcesSave() }),
     ORES: { coal: { value: 5 }, iron: { value: 35 }, copper: { value: 12 }, stone: { value: 0 } },
     LIQUID_OIL_VALUE: 18,
     cargoType: u => (u && u.type) || u, cargoShiny: u => !!(u && u.shiny),
@@ -20,7 +23,7 @@ function fixture() {
     spawnMineBreak() {}, sfxPanAt: () => 0, jelloBombShove() {}, explosions: []
   };
   vm.createContext(s);
-  for (const name of ['060-shop-logic', '079-forge-resources']) {
+  for (const name of ['060-shop-logic', '074-bath-service', '079-forge-resources']) {
     vm.runInContext(fs.readFileSync('js/sluice/' + name + '.js', 'utf8'), s);
   }
   s.showMsg = text => notices.push(text);
@@ -64,6 +67,87 @@ for (const sale of ['instant', 'auto', 'reveal']) {
   for (const amount of [-1, 1.5, Infinity, NaN]) assert.equal(s.forgeTake('coal', amount), false);
   assert.equal(s.forgeGive('__proto__', 1), false);
   console.log('PASS atomic recipes, protected shiny ore, legacy cargo and lossless refunds');
+}
+
+{
+  const { s } = fixture();
+  s.forgeGive('coal', 3); s.forgeGive('iron', 2);
+  s.cargo = [...units('coal', 2), ...units('iron', 2), ...units('coal', 1, true)];
+  const before = JSON.stringify({ resources: s.forgeResourcesSave(), cargo: s.cargo });
+  assert.equal(s.hearthHasTool('flint'), false);
+  assert.equal(s.hearthHasTool('steel'), false);
+  s.devMode = true;
+  assert.equal(s.hearthDevSupplies(), true);
+  for (const type of ['coal', 'iron', 'flint']) {
+    assert(s.forgeCount(type) > 100);
+    assert(Number.isFinite(s.forgeCount(type)), 'virtual stock is finite');
+    for (let i = 0; i < 100; i++) assert.equal(s.forgeTake(type, 10), true);
+  }
+  assert.equal(s.forgeCount('steel'), 0, 'virtual striker does not hide the forge recipe');
+  assert.equal(s.hearthHasTool('flint'), true);
+  assert.equal(s.hearthHasTool('steel'), true);
+  assert.equal(s.hearthHasTool('coal'), false);
+  assert.equal(s.forgeTake('steel', 1), true, 'dev tools do not require stored steel');
+  for (const amount of [-1, 1.5, Infinity, NaN, '1']) assert.equal(s.forgeTake('coal', amount), false);
+  assert.equal(s.forgeTake('__proto__', 1), false);
+  assert.equal(JSON.stringify({ resources: s.forgeResourcesSave(), cargo: s.cargo }), before,
+    'dev consumption leaves real stock, cargo, and save payload unchanged');
+  s.forgeResourcesRestore(plain(s.forgeResourcesSave()));
+  s.devMode = false;
+  assert.equal(s.forgeCount('coal'), 5);
+  assert.equal(s.forgeCount('iron'), 4);
+  assert.equal(s.hearthHasTool('flint'), false);
+  assert.equal(s.hearthHasTool('steel'), false);
+  s.forgeGive('steel', 1);
+  assert.equal(s.hearthHasTool('steel'), true, 'a crafted tool remains available in normal play');
+  console.log('PASS unlimited dev fuel and tools without consuming or serializing virtual inventory');
+}
+
+{
+  const { s } = fixture();
+  s.bathSupplies[0] = 100; s.siphon.tank[0] = 120;
+  assert.equal(s.bathWaterCount(), 220);
+  const before = JSON.stringify({ supplies: s.bathSupplies, tank: s.siphon.tank });
+  assert.equal(s.bathTakeWater(221), false);
+  for (const amount of [-1, 1.5, Infinity, NaN, '1']) assert.equal(s.bathTakeWater(amount), false);
+  assert.equal(JSON.stringify({ supplies: s.bathSupplies, tank: s.siphon.tank }), before,
+    'insufficient or invalid water withdrawals spend nothing');
+  assert.equal(s.bathTakeWater(200), true);
+  assert.equal(s.bathSupplies[0], 0, 'recovered water is consumed first');
+  assert.equal(s.siphon.tank[0], 20, 'the tank covers only the remainder');
+  s.bathBasinCount = () => 0;
+  assert.equal(s.bathAddWater(), true);
+  assert.equal(s.bathPour, 20, 'the bath queues only available water');
+  assert.equal(s.bathWaterCount(), 0);
+  assert.equal(s.bathAddWater(), false);
+  console.log('PASS normal water conservation and atomic quench and bath transfers');
+}
+
+{
+  const { s } = fixture();
+  s.bathSupplies[0] = 17; s.siphon.tank[0] = 23;
+  const before = JSON.stringify({ supplies: s.bathSupplies, tank: s.siphon.tank });
+  s.devMode = true;
+  assert.equal(s.bathWaterCount(), s.BATH_MAX_WATER);
+  for (let i = 0; i < 100; i++) assert.equal(s.bathTakeWater(200), true);
+  for (const amount of [-1, 1.5, Infinity, NaN, '1']) assert.equal(s.bathTakeWater(amount), false);
+  s.bathBasinCount = () => 0;
+  assert.equal(s.bathAddWater(), true);
+  assert.equal(s.bathPour, s.BATH_MAX_WATER);
+  assert.equal(s.bathAddWater(), false, 'unlimited supply still respects the tub and pending pour capacity');
+  const saved = s.bathServiceSave();
+  assert.equal(saved.pour, s.BATH_MAX_WATER);
+  assert.equal(saved.supplies[0], 17, 'saved water records real inventory');
+  assert.equal(JSON.stringify({ supplies: s.bathSupplies, tank: s.siphon.tank }), before);
+  assert(!JSON.stringify(saved).includes('null'), 'save payload contains no non-finite virtual water');
+  s.bathPour = 0;
+  s.bathBasinCount = () => s.BATH_MAX_WATER - 123;
+  assert.equal(s.bathAddWater(), true);
+  assert.equal(s.bathPour, 123, 'dev filling accounts for existing basin water');
+  s.devMode = false;
+  assert.equal(s.bathWaterCount(), 40);
+  assert.equal(s.bathTakeWater(200), false, 'normal costs resume immediately');
+  console.log('PASS unlimited dev water, bounded pours, preserved tank and finite serialization');
 }
 
 {

@@ -166,6 +166,9 @@ quantities, unit prices, and haul value while the mine is paused).
 ## Live tuning + dev hotkeys
 
 Press backtick to toggle **dev mode** (money 999,999, free purchases, the perf overlay).
+Inside the banya, dev mode also supplies unlimited coal, iron, water, and ignition
+tools. **PREPARE BATH / T** starts a warm, filling bath; **ADD GUEST / G** brings
+a test visitor into a free waiting place. Backtick also works inside the banya.
 Then the useful keys: **L** opens the `window.gm` slider panel (every tunable, grouped);
 **X** cycles the water debug kit; **N** cycles weather moods; **G** the GPU probe; **H** the
 perf-ISO A/B; **Z** zoom; **R** restart. The on-screen **+ SLIME** button under TUNE drops

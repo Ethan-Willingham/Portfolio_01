@@ -808,7 +808,7 @@
     function gmTuningButtonSync() {
       try {
         if (typeof document === 'undefined' || !document.body) return;
-        var wantVisible = !!devMode && !gmPanelVisible;
+        var wantVisible = !!devMode && !gmPanelVisible && !bathMode;
         if (!gmTuneBtnEl) {
           if (!wantVisible) return;     // don't build it for normal players
           gmTuneBtnEl = gmDevButton('gmTuneBtn', 'TUNE', '42%', function () {

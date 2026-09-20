@@ -51,14 +51,30 @@ A simple tap on the bunker drops one piece, for players who prefer not to drag.
 - W: fill the bath from stored water while viewing Bath.
 - Escape: leave the banya.
 
-The fire room uses a compact layout on short landscape screens. The upper bath
-floors and existing floor purchases remain available by scrolling the Bath view.
+The fire room keeps the boiler vessel, flint/steel board, anvil, and quench
+pail visible on desktop, phone, and short landscape screens. The scene reserves
+space for its navigation and controls before sizing the fixtures. The Bath camera
+fits the complete ground-floor tub below its controls, and returns to that floor
+when entering the Bath tab or resizing. Upper floors remain available by scrolling.
 
-For a quick developer playtest, enable dev mode with backtick before entering.
-TEST SUPPLIES (or T inside) stocks coal, iron, flint, and water. It leaves the
-steel striker to be forged, so the complete first-fire interaction stays visible.
-The control is unavailable in normal play. Dev mode also enables the existing
-free purchases and 999,999 money clamp.
+For a quick developer playtest, enable dev mode with backtick, including while
+inside the banya, or load `?dev=1`. Coal, iron, water, flint, and ignition steel
+are available without limit. Loading coal, adding water, and quenching leave your
+real stock, cargo, and rig tank unchanged. Supplies immediately return to their
+ordinary counts when dev mode is turned off. The fire still burns and the tub
+still spills, so tending and refilling remain testable.
+
+- PREPARE BATH / T lights at least three real boiler coals, warms the bath, and
+  starts filling it through the normal water pour. It opens the Bath view.
+- ADD GUEST / G brings a real visitor into a free waiting place. Tap its order
+  once the bath is ready. The normal two-place and total visitor limits apply.
+- Forge work can be repeated in dev mode even after collecting a striker.
+
+These buttons remain visible on touch screens and disappear outside dev mode.
+Dev supplies are virtual finite counts, never saved infinite inventory. Created
+water, physical fuel, finished forge work, and guests follow ordinary persistence.
+A coal created in dev mode cannot refund itself into real stock after a reload.
+Dev mode retains its existing free purchases and 999,999 money clamp.
 
 ## Coal and heat
 
@@ -258,3 +274,7 @@ save screenshots under `/tmp`.
 terrain/body shielding, live gating, visual clipping, and 30/60/144 Hz behavior.
 `node tools/sky-slime-smoke.mjs` verifies ground launches, chained aerials,
 real jet-driven rolling without chassis contact, and WebGPU water response.
+
+Responsive developer UI verification: `node tools/bathhouse-smoke.mjs --layout-only`
+checks desktop, phone, and landscape layouts, real pointer input, preparation,
+water emission, guest admission, and toggling dev mode inside the bathhouse.

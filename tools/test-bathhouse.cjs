@@ -11,7 +11,8 @@ function fixture(fps = 60) {
     PLAYER_W: 22, PLAYER_H: 26, ENABLE_BATH: true, ENABLE_JELLO: true,
     world: Array.from({length:620},(_,r)=>Array.from({length:320},()=>r<4?null:{type:'dirt',hp:1})),
     surfacePonds: [], terrainClearedKinds: {}, cargo: [], money: 0,
-    gameOver: false, gameWon: false, gamePaused: false, player: {x:5200,y:90},
+    gameOver: false, gameWon: false, gamePaused: false, devMode: false, player: {x:5200,y:90},
+    setDevMode(on) { s.devMode = !!on; },
     siphon: {tank:[0,0,0,0,0],passenger:null},
     ORES: {dirt:{hp:1},copper:{value:15},iron:{value:25},amber:{value:80},amethyst:{value:200},gold:{value:150}},
     showMsg() {}, sfxPlay() {}, saveNow() {}, invalidateTerrainAround() {}, liquidWGPU:null,
@@ -219,6 +220,156 @@ for (const fps of [30, 60, 144]) {
   assert.equal(s.forgeCount('coal'), 2, 'switching stations cancels a held fresh piece');
   assert.equal(s.hearthBeds.boiler.chunks.length, 0);
   console.log('PASS pointer pickup, canceled and misplaced coal, station switch and exact refund');
+}
+
+{
+  const { s } = fixture();
+  s.bathMode = true; s.hearthView = 'boiler'; s.devMode = true;
+  s.forgeGive('coal', 2); s.cargo = [{ type: 'coal' }];
+  const before = JSON.stringify({ stock: s.forgeStock, cargo: s.cargo });
+  function takeFromBin() {
+    const bin = s.hearthRoomLayout().bin;
+    s.hearthButtons = [Object.assign({ action: 'coal' }, bin)];
+    assert(s.hearthPointerDown({ pointerId: 7, button: 0, clientX: bin.x + 30, clientY: bin.y + 30 }));
+    assert(s.hearthDrag && s.hearthDrag.fresh && s.hearthDrag.b.devSupplied);
+  }
+  function returnColdChunk() {
+    const b = s.hearthBeds.boiler.chunks[0], box = s.hearthRoomLayout().box;
+    s.hearthButtons = [];
+    assert(s.hearthPointerDown({ pointerId: 7, button: 0,
+      clientX: box.x + b.x * box.w / 320, clientY: box.y + b.y * box.h / 210 }));
+    assert(s.hearthDrag && !s.hearthDrag.fresh);
+    assert(s.hearthPointerUp({ pointerId: 7, clientX: 0, clientY: 740 }));
+    assert.equal(s.hearthBeds.boiler.chunks.length, 0);
+  }
+  for (let i = 0; i < 5; i++) {
+    takeFromBin(); s.hearthCancelDrag();
+    takeFromBin(); assert(s.hearthPointerUp({ pointerId: 7, clientX: 0, clientY: 740 }));
+  }
+  takeFromBin();
+  s.devMode = false; s.hearthCancelDrag();
+  assert.equal(s.hearthBeds.boiler.chunks.length, 0, 'turning dev off during a fresh drag cannot produce a refund');
+  s.devMode = true;
+  assert(s.hearthLoadCoal('boiler', 160, 150));
+  returnColdChunk();
+  assert(s.hearthLoadCoal('boiler', 160, 150));
+  const saved = JSON.parse(JSON.stringify(s.bathServiceSave()));
+  assert.equal(saved.workshop.beds.boiler.chunks[0].devSupplied, true);
+  s.devMode = false; s.bathServiceRestore(saved);
+  assert.equal(s.hearthBeds.boiler.chunks[0].devSupplied, true, 'saved test coal keeps its supply origin');
+  returnColdChunk();
+  assert.equal(JSON.stringify({ stock: s.forgeStock, cargo: s.cargo }), before,
+    'canceling, returning and reloading dev coal never mints or spends real resources');
+  assert(s.hearthRoomKey({ key: '`', repeat: false }));
+  assert.equal(s.devMode, true, 'backtick enables dev mode inside the bathhouse');
+  takeFromBin();
+  assert(s.hearthRoomKey({ key: '`', repeat: false }));
+  assert.equal(s.devMode, false); assert.equal(s.hearthDrag, null);
+  assert.equal(JSON.stringify({ stock: s.forgeStock, cargo: s.cargo }), before);
+  console.log('PASS unlimited coal drag cancellation, cold returns, dev toggles and saved supply origin');
+}
+
+{
+  const { s } = fixture();
+  s.bathMode = true; s.bathRoomReady = true; s.devMode = true;
+  assert(s.hearthLoadCoal('boiler', 160, 150));
+  assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 0);
+  assert(s.bathLightStove(), 'virtual flint and steel can ignite real boiler fuel');
+  assert(s.hearthBeds.boiler.chunks[0].lit);
+  assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 0);
+  s.forgeGive('steel', 1); s.forgeGive('iron', 3);
+  s.siphon.tank[0] = 17; s.bathSupplies[0] = 9;
+  assert(s.hearthLoadCoal('forge', 160, 24));
+  function workFor(seconds) { for (let i = 0; i < seconds * 60; i++) s.hearthRoomTick(1 / 60); }
+  for (let craft = 0; craft < 2; craft++) {
+    assert(s.hearthForgeAction(), 'dev mode can start a craft even with a finished striker in stock');
+    let elapsed = 0;
+    while (s.hearthJob.stage === 'heating' && elapsed < 35) {
+      s.hearthPump('forge'); workFor(0.5); elapsed += 0.5;
+    }
+    assert.equal(s.hearthJob.stage, 'hammer');
+    for (let hit = 0; hit < 3; hit++) { workFor(0.2); assert(s.hearthForgeAction()); }
+    assert.equal(s.hearthJob.stage, 'quench');
+    assert(s.hearthForgeAction(), 'dev quench succeeds with less than 2 L of actual water');
+    assert.equal(s.siphon.tank[0], 17); assert.equal(s.bathSupplies[0], 9);
+    assert.equal(s.hearthForgeAction(), false, 'cooling still prevents duplicate quench actions');
+    workFor(3.2); assert.equal(s.hearthJob.stage, 'ready');
+    assert(s.hearthForgeAction());
+    assert.equal(s.forgeStock.steel, craft + 2, 'each completed craft creates one actual striker');
+    assert.equal(s.forgeStock.iron, 3, 'repeated dev recipes preserve stored iron');
+  }
+  s.devMode = false;
+  assert.equal(s.hearthForgeAction(), false, 'normal mode resumes the finished-striker gate');
+  console.log('PASS virtual ignition tools, repeat dev crafting, unchanged quench water and normal recipe gates');
+}
+
+{
+  const f = fixture(), s = f.s;
+  s.bathMode = true; s.bathRoomReady = true; s.devMode = true;
+  s.forgeGive('coal', 2); s.forgeGive('iron', 1);
+  s.siphon.tank[0] = 19; s.bathSupplies[0] = 7;
+  const resources = JSON.stringify({ stock: s.forgeStock, tank: s.siphon.tank, supplies: s.bathSupplies });
+  s.hearthRoomAction('kit');
+  assert.equal(s.hearthView, 'bath');
+  assert.equal(s.hearthBeds.boiler.chunks.length, 3);
+  assert(s.hearthBeds.boiler.chunks.every(b => b.lit && b.devSupplied));
+  assert.equal(s.bathHeat, 0.75);
+  assert.equal(s.bathPour, s.BATH_MAX_WATER, 'the test kit queues a real, bounded water transfer');
+  s.hearthRoomAction('kit');
+  assert.equal(s.bathPour, s.BATH_MAX_WATER, 'a repeated kit does not overfill the pending reservoir');
+  assert.equal(s.hearthBeds.boiler.chunks.length, 3, 'a repeated kit does not duplicate fuel');
+  f.inside(15);
+  assert.equal(s.bathPour, 0, 'the queued test water is emitted through the ordinary liquid path');
+  assert(s.bathWater >= s.BATH_MIN_WATER && s.bathWater <= s.BATH_MAX_WATER);
+  assert(s.bathHeat >= 0.35, 'the actual lit boiler warms the newly poured bath');
+  assert.equal(JSON.stringify({ stock: s.forgeStock, tank: s.siphon.tank, supplies: s.bathSupplies }), resources);
+  const saved = s.bathServiceSave();
+  function finiteNumbers(value) {
+    if (typeof value === 'number') assert(Number.isFinite(value), 'dev save contains only finite numbers');
+    else if (value && typeof value === 'object') Object.values(value).forEach(finiteNumbers);
+  }
+  finiteNumbers(saved);
+  assert.deepEqual(JSON.parse(JSON.stringify(saved)).workshop.stock.stock,
+    { coal: 2, iron: 1, flint: 0, steel: 0 }, 'virtual tools and supply counts never enter saved stock');
+  assert.equal(saved.supplies[0], 7);
+  console.log('PASS test bath preparation, bounded actual pouring, physical boiler warmth and finite saves');
+}
+
+{
+  const f = fixture(), s = f.s;
+  s.bathMode = true; s.bathRoomReady = true;
+  const before = JSON.stringify(s.bathServiceSave());
+  s.hearthRoomAction('kit'); s.hearthRoomAction('guest');
+  assert.equal(JSON.stringify(s.bathServiceSave()), before, 'normal play cannot invoke the developer kit or guest action');
+  assert.equal(s.skySlimes.length, 0);
+  s.devMode = true;
+  for (const field of ['gamePaused', 'bathFading']) {
+    s[field] = true; s.hearthRoomAction('kit'); s.hearthRoomAction('guest'); s[field] = false;
+    assert.equal(JSON.stringify(s.bathServiceSave()), before, 'developer actions respect ' + field);
+  }
+  s.bathMode = false; s.hearthRoomAction('kit'); s.hearthRoomAction('guest'); s.bathMode = true;
+  assert.equal(JSON.stringify(s.bathServiceSave()), before, 'developer bath actions require entering the bathhouse');
+  const spawn = s.bathSpawnGuest, spawned = [];
+  s.bathSpawnGuest = () => { const guest = spawn(); if (guest) spawned.push(guest); return guest; };
+  s.hearthRoomAction('guest');
+  assert.equal(s.bathGuests.length, 1);
+  assert.equal(s.bathGuests[0].s, spawned[0], 'the indoor visitor is the actual spawned sky slime');
+  assert.equal(s.skySlimes.length, 0, 'admitting a test guest removes its surface copy');
+  assert.equal(s.bathGuests[0].s.visit, 'inside');
+  s.hearthRoomAction('guest'); s.hearthRoomAction('guest');
+  assert.equal(s.bathGuests.length, 2); assert.equal(spawned.length, 2, 'indoor capacity blocks spawning a third guest');
+  assert.notEqual(s.bathGuests[0].s.id, s.bathGuests[1].s.id);
+  f.inside(0.8);
+  assert(s.bathGuests.every(g => g.st === 'wait'));
+  assert.equal(s.money, 0); assert.equal(s.bathServed, 0, 'test guests still require service and a soak before payment');
+  s.bathServiceRestore(JSON.parse(JSON.stringify(s.bathServiceSave())));
+  assert.equal(s.bathGuests.length, 2); assert.equal(s.skySlimes.length, 0);
+  s.bathGuests.length = 0;
+  for (let i = 0; i < s.SKY_SLIME_MAX; i++) assert(s.skySlimeSpawn(1000, -100));
+  s.hearthRoomAction('guest');
+  assert.equal(s.bathGuests.length, 0, 'the test guest respects total sky slime capacity');
+  assert.equal(s.skySlimes.length, s.SKY_SLIME_MAX);
+  console.log('PASS developer action gates, real guest identity, admission persistence and population limits');
 }
 
 {
