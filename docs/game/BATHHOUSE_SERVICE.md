@@ -104,7 +104,7 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.14)
+## Sky visitor physics and appearance (v28.17)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
@@ -137,6 +137,18 @@ sideways, and hit from above to spike. Free-flight motion has no new drag or
 speed limit. A ground pop followed by a timed jet can chain aerials. The fixed
 drive/jet browser test still produces two aerial touches. Its separate shallow
 angle impact checks now leave at 276 to 298 px/s sideways, close to flight cruise.
+
+Live jets now apply pressure to sky guests. Eleven rays from each of the two
+banked nozzles cover a spreading cone up to 160 pixels long. Pressure follows
+the actual engine force, including spool, boosters, and the flight envelope,
+and falls with distance. The curved surface redirects pressure outward on an
+off-center hit; skin drag transfers spin. A grounded guest compresses slightly
+under the load, using its visual spring without changing collision energy.
+Walls, buried gel, and closer guests intercept the gas. Physics follows the
+rig's real path, independent of render smoothing or smoke rendering. Releasing
+thrust, running out of fuel, and entering an interior stop the force. The flame
+and ground wash also stop on the round guest's surface. Jet contact pauses its
+navigation through the same free-play state as a chassis contact.
 
 A player-driven contact pauses the guest's navigation, door admission, and
 scheduled departure. It resumes after 1.5 seconds at rest, at least 2.5 seconds
@@ -188,3 +200,8 @@ save restoration, and desktop/phone/short-landscape views. `node
 tools/bathhouse-smoke.mjs` retains the focused bath/visitor visual checks. Both
 own a separate Chrome for Testing child process, close that exact child, and
 save screenshots under `/tmp`.
+
+`node tools/test-sky-slime-jets.cjs` checks nozzle pressure, spread, mass, spin,
+terrain/body shielding, live gating, visual clipping, and 30/60/144 Hz behavior.
+`node tools/sky-slime-smoke.mjs` verifies ground launches, chained aerials,
+real jet-driven rolling without chassis contact, and WebGPU water response.

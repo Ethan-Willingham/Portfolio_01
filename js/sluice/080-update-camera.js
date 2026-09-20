@@ -39,6 +39,7 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
+    player.jetForce = 0; // no stale exhaust pressure when an early return freezes the rig
     if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
     // Keeps the rig parked while shopping so leftover inertia doesn't
@@ -676,6 +677,8 @@
       if (player.fuel < 0) player.fuel = 0;
     }
     player.thrusting = player.thrustSpool > 0.15;
+    // Physical exhaust consumers share the force already lifting the rig.
+    player.jetForce = _flyForce;
 
     // 4. Gravity with relief while lit + apex hang near vy=0 + hover-settle
     //    on release. gravScale is read again downstream (water medium, jello

@@ -106,6 +106,43 @@ try {
   console.log('AERIAL',aerial);
   check('ordinary drive and jet controls can chain two aerial contacts',aerial.playing&&aerial.height>60&&aerial.hits.filter(h=>h.air).length>=2);
   await screenshot('aerial');
+  // Actual UP input and a moving pass must create pressure without contact.
+  const jets=await game(`(function(){
+    var original=skySlimePlayer,contacts=0,results=[];
+    skySlimePlayer=function(s,rx,ry,vx,vy){
+      var beforeX=s.vx,beforeY=s.vy;original(s,rx,ry,vx,vy);
+      if(Math.hypot(s.vx-beforeX,s.vy-beforeY)>0.001)contacts++;
+    };
+    try {
+      for(var pass=0;pass<2;pass++){
+        skySlimeReset();skySlimeNext=100000;ENABLE_BATH=false;contacts=0;
+        var x=(DECK_LEFT_COL-4)*TILE;
+        player.x=x-26;player.y=SKY_ROWS*TILE-75;player.vx=pass?200:0;player.vy=0;
+        player.renderX=player.x;player.renderY=player.y;player.lastMoveU=player.lastMoveR=false;
+        player.onGround=false;player.flightTilt=player.flightTiltVel=player.bodyTiltRender=0;
+        player.thrustSpool=player.jetForce=0;player.fuel=100;
+        var b=skySlimeFresh(x,SKY_ROWS*TILE-25);b.r=25;b.spin=0;b.entry=0;skySlimes.push(b);
+        keys.ArrowLeft=false;keys.ArrowRight=!!pass;keys.ArrowUp=true;
+        var peakSpeed=0,peakSquash=0;
+        for(var frame=0;frame<24;frame++){
+          update(1/60);updateCamera();updateRocketPlume(1/60);skySlimeTick(1/60);
+          peakSpeed=Math.max(peakSpeed,Math.abs(b.vx));peakSquash=Math.max(peakSquash,b.squash);
+          if(pass&&frame===8)render();
+        }
+        results.push({flyover:!!pass,dx:b.x-x,peakSpeed:peakSpeed,peakSquash:peakSquash,
+          playing:b.playing,contacts:contacts,force:player.jetForce});
+      }
+      return results;
+    } finally {skySlimePlayer=original;keys.ArrowUp=keys.ArrowRight=false;}
+  })()`);
+  console.log('JETS',jets);
+  check('live jets roll and compress a guest without touching it',jets.every(j=>j.contacts===0&&j.playing&&j.peakSpeed>8&&j.peakSquash>.025&&j.force>0)&&jets[0].dx>5);
+  await screenshot('jet-wash');
+  await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');
+  check('frozen flight clears stored thrust',await game(`(function(){
+    var old=shopOpen;try{shopOpen=true;player.jetForce=880;update(1/60);return player.jetForce===0;}
+    finally{shopOpen=old;}
+  })()`));
   // Fill a real stone-lined basin next to the active camera and run the
   // normal CPU/GPU water update. All particles are real solver particles.
   await game(`(function(){

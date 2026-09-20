@@ -108,7 +108,7 @@
       var px = wx + dirX * d;
       var py = wy + dirY * d;
       if (tileAt(Math.floor(py / TILE), Math.floor(px / TILE)) !== null) return d;
-      if (rocketInJello(px, py)) return d;   // a slime stops the exhaust too -> wash + flame land ON it, not below
+      if (rocketInJello(px, py) || rocketInSkySlime(px, py)) return d;   // a slime stops the exhaust too -> wash + flame land ON it, not below
     }
     return null;
   }
@@ -126,6 +126,15 @@
       if (b.ringN < 3) continue;
       if (wx < b.bboxL || wx > b.bboxR || wy < b.bboxT || wy > b.bboxB) continue;
       if (jelloPointInRing(b, wx, wy)) return true;
+    }
+    return false;
+  }
+
+  function rocketInSkySlime(wx, wy) {
+    if (typeof skySlimes === 'undefined') return false;
+    for (var i = 0; i < skySlimes.length; i++) {
+      var s = skySlimes[i], dx = wx - s.x, dy = wy - s.y;
+      if (dx * dx + dy * dy < s.r * s.r) return true;
     }
     return false;
   }
@@ -560,7 +569,7 @@
       var f = i / steps;
       for (var side = -1; side <= 1; side++) {
         var p = rocketFlamePoint(nz, ed, len, width, bend, phase, f, side, 1, 1.18, taper);
-        if (rocketInSolid(p.x, p.y) || rocketInJello(p.x, p.y)) return Math.max(0, (i - 1) / steps);
+        if (rocketInSolid(p.x, p.y) || rocketInJello(p.x, p.y) || rocketInSkySlime(p.x, p.y)) return Math.max(0, (i - 1) / steps);
       }
     }
     return 1;

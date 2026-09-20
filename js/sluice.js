@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.16';
+  var GAME_VERSION = 'v28.17';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -17061,6 +17061,7 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
+    player.jetForce = 0; // no stale exhaust pressure when an early return freezes the rig
     if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
     // Keeps the rig parked while shopping so leftover inertia doesn't
@@ -17698,6 +17699,8 @@
       if (player.fuel < 0) player.fuel = 0;
     }
     player.thrusting = player.thrustSpool > 0.15;
+    // Physical exhaust consumers share the force already lifting the rig.
+    player.jetForce = _flyForce;
 
     // 4. Gravity with relief while lit + apex hang near vy=0 + hover-settle
     //    on release. gravScale is read again downstream (water medium, jello
@@ -43381,7 +43384,7 @@
       var px = wx + dirX * d;
       var py = wy + dirY * d;
       if (tileAt(Math.floor(py / TILE), Math.floor(px / TILE)) !== null) return d;
-      if (rocketInJello(px, py)) return d;   // a slime stops the exhaust too -> wash + flame land ON it, not below
+      if (rocketInJello(px, py) || rocketInSkySlime(px, py)) return d;   // a slime stops the exhaust too -> wash + flame land ON it, not below
     }
     return null;
   }
@@ -43399,6 +43402,15 @@
       if (b.ringN < 3) continue;
       if (wx < b.bboxL || wx > b.bboxR || wy < b.bboxT || wy > b.bboxB) continue;
       if (jelloPointInRing(b, wx, wy)) return true;
+    }
+    return false;
+  }
+
+  function rocketInSkySlime(wx, wy) {
+    if (typeof skySlimes === 'undefined') return false;
+    for (var i = 0; i < skySlimes.length; i++) {
+      var s = skySlimes[i], dx = wx - s.x, dy = wy - s.y;
+      if (dx * dx + dy * dy < s.r * s.r) return true;
     }
     return false;
   }
@@ -43833,7 +43845,7 @@
       var f = i / steps;
       for (var side = -1; side <= 1; side++) {
         var p = rocketFlamePoint(nz, ed, len, width, bend, phase, f, side, 1, 1.18, taper);
-        if (rocketInSolid(p.x, p.y) || rocketInJello(p.x, p.y)) return Math.max(0, (i - 1) / steps);
+        if (rocketInSolid(p.x, p.y) || rocketInJello(p.x, p.y) || rocketInSkySlime(p.x, p.y)) return Math.max(0, (i - 1) / steps);
       }
     }
     return 1;
@@ -65640,6 +65652,10 @@
   var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
+  var SKY_SLIME_JET_RANGE = 160;
+  var SKY_SLIME_JET_SPREAD = 0.46;
+  var SKY_SLIME_JET_COUPLING = 1.4; // pressure includes gas deflected back off the crust
+  var SKY_SLIME_JET_SPEED = 480;
 
   function skySlimeClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -65965,6 +65981,83 @@
     skySlimeImpact(s, nx, ny, -relative);
   }
 
+  function skySlimeJetFrame() {
+    if (!skySlimes.length || (typeof bathMode !== 'undefined' && bathMode) ||
+        typeof rocketJetActive !== 'function' || !rocketJetActive() || !(player.jetForce > 0)) return null;
+    var nozzles = rocketNozzles(), ed = rocketExhaustDir(), rays = [], weightSum = 0;
+    // Draw anchors use the eased render position. Move them onto the actual
+    // rig path for collision; camera/render smoothing cannot drag a guest.
+    var shiftX = player.x - (isFinite(player.renderX) ? player.renderX : player.x);
+    var shiftY = player.y - (isFinite(player.renderY) ? player.renderY : player.y);
+    for (var i = 0; i < nozzles.length; i++) {
+      nozzles[i].x += shiftX; nozzles[i].y += shiftY;
+    }
+    for (var j = -5; j <= 5; j++) {
+      var fraction = j / 5, angle = fraction * SKY_SLIME_JET_SPREAD;
+      var ca = Math.cos(angle), sa = Math.sin(angle), weight = 1 - 0.75 * fraction * fraction;
+      rays.push({ x: ed.x * ca - ed.y * sa, y: ed.x * sa + ed.y * ca, weight: weight });
+      weightSum += weight;
+    }
+    // Share a finite exhaust momentum budget across the two fans. The rig
+    // already received engine thrust in update(); do not add that recoil twice.
+    return { nozzles: nozzles, rays: rays,
+      force: player.jetForce * 6 * SKY_SLIME_JET_COUPLING / (weightSum * nozzles.length) };
+  }
+
+  function skySlimeJetClear(x, y, dx, dy, distance) {
+    var steps = Math.max(1, Math.ceil(distance / 4));
+    for (var i = 0; i <= steps; i++) {
+      var d = distance * i / steps, px = x + dx * d, py = y + dy * d;
+      if (tileAt(Math.floor(py / TILE), Math.floor(px / TILE))) return false;
+      if (typeof rocketInJello === 'function' && rocketInJello(px, py)) return false;
+    }
+    return true;
+  }
+
+  function skySlimeJetStep(jet, h, shiftX, shiftY, rigVX, rigVY) {
+    if (!jet) return;
+    for (var ni = 0; ni < jet.nozzles.length; ni++) {
+      var nozzle = jet.nozzles[ni], ox = nozzle.x + shiftX, oy = nozzle.y + shiftY;
+      for (var ri = 0; ri < jet.rays.length; ri++) {
+        var ray = jet.rays[ri], nearest = SKY_SLIME_JET_RANGE, target = null;
+        // The first circular surface catches this gas, shielding guests behind it.
+        for (var si = 0; si < skySlimes.length; si++) {
+          var s = skySlimes[si], dx = s.x - ox, dy = s.y - oy;
+          var along = dx * ray.x + dy * ray.y;
+          if (along <= 0 || along - s.r >= nearest) continue;
+          var across2 = dx * dx + dy * dy - along * along;
+          if (across2 >= s.r * s.r) continue;
+          var distance = along - Math.sqrt(Math.max(0, s.r * s.r - across2));
+          if (distance >= 0 && distance < nearest) { nearest = distance; target = s; }
+        }
+        if (!target || !skySlimeJetClear(ox, oy, ray.x, ray.y, nearest)) continue;
+        var hitX = ox + ray.x * nearest - target.x, hitY = oy + ray.y * nearest - target.y;
+        var nx = hitX / target.r, ny = hitY / target.r;
+        var incidence = Math.max(0, -ray.x * nx - ray.y * ny);
+        var falloff = 1 - nearest / SKY_SLIME_JET_RANGE;
+        var relative = (target.vx - rigVX) * ray.x + (target.vy - rigVY) * ray.y;
+        var closing = skySlimeClamp(1 - relative / SKY_SLIME_JET_SPEED, 0, 1.5);
+        var impulse = jet.force * ray.weight * falloff * falloff * closing * h;
+        // Pressure acts into the curved face, naturally rolling an offset
+        // ball out of the plume. A small skin drag transfers off-center torque.
+        var ix = (-nx * incidence * 0.82 + ray.x * 0.18) * impulse;
+        var iy = (-ny * incidence * 0.82 + ray.y * 0.18) * impulse;
+        var mass = SKY_SLIME_MASS * target.r * target.r / 625;
+        target.vx += ix / mass; target.vy += iy / mass;
+        target.spin += (hitX * iy - hitY * ix) / (0.4 * mass * target.r * target.r);
+        if (target._ground && iy > 0) {
+          // The floor carries the downward load. Show a small compression
+          // through the existing visual spring, leaving collision energy alone.
+          target.squashV += iy / mass * 0.025;
+          target._impactNX = 0; target._impactNY = -1;
+        }
+        if (Math.hypot(ix, iy) / (mass * h) > 2) {
+          skySlimePlayContact(target); target.settled = false;
+        }
+      }
+    }
+  }
+
   function skySlimeSubmerged(s, surface, bottom) {
     function below(line) {
       var h = skySlimeClamp((s.y - line) / s.r, -1, 1);
@@ -66074,6 +66167,7 @@
     if (Math.hypot(rigX - previous.x, rigY - previous.y) > Math.max(100, dt * 1000)) previous = { x: rigX, y: rigY };
     var rigVX = (rigX - previous.x) / dt, rigVY = (rigY - previous.y) / dt;
     var impulseVX = player.vx || 0, impulseVY = player.vy || 0;
+    var jet = skySlimeJetFrame();
     skySlimeRigLast = { x: rigX, y: rigY };
     for (var i = 0; i < skySlimes.length; i++) {
       var s = skySlimes[i];
@@ -66099,6 +66193,9 @@
       }
     }
     for (var step = 0; step < steps; step++) {
+      var kRig = (step + 1) / steps;
+      skySlimeJetStep(jet, h, previous.x + (rigX - previous.x) * kRig - rigX,
+        previous.y + (rigY - previous.y) * kRig - rigY, rigVX, rigVY);
       for (var si = 0; si < skySlimes.length; si++) {
         var b = skySlimes[si];
         b.age += h; b._impactT = Math.max(0, b._impactT - h);
@@ -66129,7 +66226,6 @@
         b.vx = skySlimeClamp(b.vx, -1000, 1000);
         b.x += b.vx * h; b.y += b.vy * h;
         skySlimeTerrain(b);
-        var kRig = (step + 1) / steps;
         skySlimePlayer(b, previous.x + (rigX - previous.x) * kRig, previous.y + (rigY - previous.y) * kRig,
           rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
         skySlimeTerrain(b);
