@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.2">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.3">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -376,7 +376,7 @@
             <div class="game-header">
               <span class="demo-label">Sluice</span>
               <div id="gm-header-right">
-                <button id="gm-fullscreen-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+                <button id="gm-fullscreen-btn" title="Toggle fullscreen (Alt+Enter)" aria-label="Toggle fullscreen (Alt+Enter)">
                   <!-- Expand icon (shown when not fullscreen) -->
                   <svg class="gm-expand" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
                     <polyline points="1,5 1,1 5,1"/>
@@ -464,7 +464,7 @@
                       </section>
                     </div>
                     <div class="pause-page" data-pause-page="controls" hidden>
-                      <section class="pause-section"><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Scoop</dt><dd><kbd>F</kbd><span>toggle collection below the rig</span></dd></div><div><dt>Pour / release</dt><dd><kbd>Right mouse</kbd><span>hold to pour below the rig</span></dd></div><div><dt>Fluid chamber</dt><dd><kbd>R</kbd><span>while carrying liquid</span></dd></div><div><dt>Bath lot / pearls</dt><dd><kbd>E</kbd><span>near a lot sign</span></dd></div><div><dt>Cargo</dt><dd><kbd>I</kbd></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
+                      <section class="pause-section"><dl class="pause-bindings"><div><dt>Drive &amp; drill</dt><dd><kbd>W A S D</kbd><span>or arrow keys</span></dd></div><div><dt>Fly</dt><dd><kbd>Space</kbd></dd></div><div><dt>Pause / back</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Item wheel</dt><dd><kbd>Q</kbd><span>hold, aim, release</span></dd></div><div><dt>Station shop</dt><dd><kbd>E</kbd><span>near the station</span></dd></div><div><dt>Fullscreen</dt><dd><kbd>Alt + Enter</kbd></dd></div><div><dt>Scoop</dt><dd><kbd>F</kbd><span>toggle collection below the rig</span></dd></div><div><dt>Pour / release</dt><dd><kbd>Right mouse</kbd><span>hold to pour below the rig</span></dd></div><div><dt>Fluid chamber</dt><dd><kbd>R</kbd><span>while carrying liquid</span></dd></div><div><dt>Bath lot / pearls</dt><dd><kbd>E</kbd><span>near a lot sign</span></dd></div><div><dt>Cargo</dt><dd><kbd>I</kbd></dd></div><div><dt>Mineral ledger</dt><dd><kbd>C</kbd></dd></div></dl></section>
                       <section class="pause-section"><p class="pause-help">Touch: use the direction pad to move and fly. Tap Items for equipment. Tap Siphon, choose IN or OUT, then hold on the world to aim. Tap a bath sign to build or collect.</p><p class="pause-help">Controller: left stick to move, A to fly, Start to pause.</p></section>
                     </div>
                     <div class="pause-page" data-pause-page="restart" hidden>
@@ -722,7 +722,11 @@
       gmBtn.addEventListener('click', toggleFullscreen);
       document.addEventListener('keydown', function (e) {
         if (document.getElementById('game-pause').classList.contains('is-visible')) return;
-        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        if (e.altKey && e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation(); // Keep Enter out of the game's shop controls.
+          if (!e.repeat) toggleFullscreen();
+        }
       });
 
       function onFsChange() {
@@ -743,10 +747,10 @@
       });
     })();
   </script>
-  <script defer src="js/liquid-wgpu.js?v=v28.2"></script>
-  <script defer src="js/smoke-wgpu.js?v=v28.2"></script>
-  <script defer src="js/jello-wgpu.js?v=v28.2"></script>
-  <script defer src="js/audio.js?v=v28.2"></script>
-  <script defer src="js/sluice.js?v=v28.2"></script>
+  <script defer src="js/liquid-wgpu.js?v=v28.3"></script>
+  <script defer src="js/smoke-wgpu.js?v=v28.3"></script>
+  <script defer src="js/jello-wgpu.js?v=v28.3"></script>
+  <script defer src="js/audio.js?v=v28.3"></script>
+  <script defer src="js/sluice.js?v=v28.3"></script>
 </body>
 </html>

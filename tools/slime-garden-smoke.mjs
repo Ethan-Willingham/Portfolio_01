@@ -50,6 +50,16 @@ try {
   for(let i=0;i<300;i++){if(await ev(`typeof __gardenTest==='function' && __gardenTest("introPhase === 'done'")`))break;await sleep(100);}
   check('game completes normal loading',await game("introPhase === 'done'"));
   check('new effects warm without changing gameplay state',await ev('!!window.__shaderWarm && window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.garden>=0'));
+  await ev(`window.__savedFullscreen=document.documentElement.requestFullscreen;
+    window.__fullscreenCalls=0;
+    document.documentElement.requestFullscreen=function(){window.__fullscreenCalls++;return Promise.resolve();};
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',bubbles:true,cancelable:true}));`);
+  check('F activates only the scoop',await game('siphon.equipped') && await ev('window.__fullscreenCalls===0 && !document.body.classList.contains("gm-fs")'));
+  await ev(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',altKey:true,bubbles:true,cancelable:true}));
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',altKey:true,repeat:true,bubbles:true,cancelable:true}));`);
+  check('Alt+Enter requests fullscreen once without opening the shop',await ev('window.__fullscreenCalls===1') && await game('!keys.Enter && !shopOpen && siphon.equipped'));
+  await ev(`document.documentElement.requestFullscreen=window.__savedFullscreen;
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',bubbles:true,cancelable:true}));`);
   await ev("document.body.classList.add('gm-fs'); document.body.appendChild(document.querySelector('.game-wrapper')); window.dispatchEvent(new Event('resize')); window.scrollTo(0,0)");
   await sleep(1500);
   check('four lots and finite underground liquid pockets',await game('slimeGardenLots.length === 4 && mineralDeposits.length >= 8'));
