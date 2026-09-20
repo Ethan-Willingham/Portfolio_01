@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.39'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.40'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1083,6 +1083,11 @@
     var movingPositionLoc = -1, movingVelocityLoc = -1;
     var movingVerts = new Float32Array(0);
     var movingHistory = new WeakMap();
+    var liquidTexture = null, liquidActive = false;
+    var liquidFieldW = 0, liquidFieldH = 0;
+    var liquidScaleX = 0, liquidScaleY = 0;
+    var liquidField = new Float32Array(0), liquidPixels = new Uint8Array(0);
+    var liquidWeightsX = new Float32Array(3), liquidWeightsY = new Float32Array(3);
   
     // --- WebGL context / format negotiation -------------------------
     function getWebGLContext (cnv) {
@@ -1270,6 +1275,9 @@
       'uniform sampler2D uObstacle;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform vec2 liquidVelocityScale;\n' +
       'uniform float velocityPass;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform vec2 dyeTexelSize;\n' +
@@ -1313,7 +1321,14 @@
       '    return;\n' +
       '  }\n' +
       '  float decay = 1.0 + dissipation * dt;\n' +
-      '  gl_FragColor = result / decay;\n' +
+      '  result /= decay;\n' +
+      '  if (useLiquid > 0.5 && velocityPass > 0.5) {\n' +
+      '    vec4 water = texture2D(uLiquid, vUv);\n' +
+      '    vec2 target = (water.rg * 255.0 - 128.0) / 127.0 * liquidVelocityScale / texelSize;\n' +
+      '    target = clamp(target, vec2(-1.0 / dt), vec2(1.0 / dt));\n' +
+      '    result.xy = mix(result.xy, target, water.b * (1.0 - exp(-12.0 * dt)));\n' +
+      '  }\n' +
+      '  gl_FragColor = result;\n' +
       '}\n';
   
     var DIVERGENCE_FS = '\n' +
@@ -1369,6 +1384,9 @@
       'uniform sampler2D uCurl;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform vec2 liquidVelocityScale;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float curl;\n' +
       'uniform float dt;\n' +
@@ -1385,6 +1403,15 @@
       '  vec2 velocity = texture2D(uVelocity, vUv).xy;\n' +
       '  velocity += force * dt;\n' +
       '  velocity = min(max(velocity, -1000.0), 1000.0);\n' +
+      // Limit air travel to one simulation cell per step. Fast water keeps
+      // its own speed; an unresolved air impulse would compress the smoke.
+      '  if (useLiquid > 0.5) {\n' +
+      '    vec4 water = texture2D(uLiquid, vUv);\n' +
+      '    vec2 target = (water.rg * 255.0 - 128.0) / 127.0 * liquidVelocityScale / texelSize;\n' +
+      '    target = clamp(target, vec2(-1.0 / dt), vec2(1.0 / dt));\n' +
+      '    float follow = water.b * (1.0 - exp(-24.0 * dt));\n' +
+      '    velocity = mix(velocity, target, follow);\n' +
+      '  }\n' +
       // Prescribe gel velocity before divergence is measured. Pressure then
       // redirects the air around it; this shares the existing vorticity pass.
       '  if (useMoving > 0.5) {\n' +
@@ -1471,6 +1498,9 @@
       'uniform sampler2D uObstacle;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform vec2 liquidVelocityScale;\n' +
       'uniform vec2 movingTexelSize;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
@@ -1510,6 +1540,9 @@
       '      + texture2D(uMoving, vUv + vec2(-d.x, d.y)).a) * 0.0625;\n' +
       '    c *= 1.0 - coverage;\n' +
       '  }\n' +
+      // Water only occludes the displayed dye. Its motion never deletes dye
+      // from the simulation, so smoke rolls back into the wake after a splash.
+      '  if (useLiquid > 0.5) c *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -1796,6 +1829,92 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
+    // Reconstruct a continuous water field from the existing particle mirror.
+    // Quadratic weights follow sub-cell motion without hard occupancy switches.
+    // RGB carries velocity and air coupling, alpha is display-only coverage.
+    // The compact RGBA8 upload needs no GPU readback or new fullscreen pass.
+    function setLiquidField (x, y, vx, vy, count, originX, originY, domainW, domainH, restDensity, frozen) {
+      liquidActive = false;
+      if (!ready || !count || domainW <= 0 || domainH <= 0) return;
+      var w = Math.max(2, Math.min(256, Math.ceil(domainW / 5)));
+      var h = Math.max(2, Math.min(192, Math.ceil(domainH / 5)));
+      var changed = w !== liquidFieldW || h !== liquidFieldH;
+      if (changed) {
+        liquidFieldW = w; liquidFieldH = h;
+        liquidField = new Float32Array(w * h * 3);
+        liquidPixels = new Uint8Array(w * h * 4);
+      }
+      liquidField.fill(0);
+      var sx = w / domainW, sy = h / domainH;
+      // Match the water solver's world-pixel density; resolution changes must
+      // not change the volume or turn spray into a solid smoke obstacle.
+      var rest = Math.max(0.001, restDensity / (sx * sy));
+      var wx = liquidWeightsX, wy = liquidWeightsY;
+      for (var i = 0; i < count; i++) {
+        if (frozen && frozen[i]) continue;
+        var px = (x[i] - originX) * sx - 0.5;
+        var py = (domainH - y[i] + originY) * sy - 0.5;
+        var ux = vx[i], uy = -vy[i];
+        if (!isFinite(px + py + ux + uy) || px < -1 || px > w || py < -1 || py > h) continue;
+        var bx = Math.floor(px - 0.5), by = Math.floor(py - 0.5);
+        var fx = px - bx, fy = py - by;
+        wx[0] = 0.5 * (1.5 - fx) * (1.5 - fx);
+        wx[1] = 0.75 - (fx - 1) * (fx - 1);
+        wx[2] = 0.5 * (fx - 0.5) * (fx - 0.5);
+        wy[0] = 0.5 * (1.5 - fy) * (1.5 - fy);
+        wy[1] = 0.75 - (fy - 1) * (fy - 1);
+        wy[2] = 0.5 * (fy - 0.5) * (fy - 0.5);
+        for (var r = 0; r < 3; r++) {
+          var row = by + r;
+          if (row < 0 || row >= h) continue;
+          for (var c = 0; c < 3; c++) {
+            var col = bx + c;
+            if (col < 0 || col >= w) continue;
+            var weight = wx[c] * wy[r], at = (row * w + col) * 3;
+            liquidField[at] += weight;
+            liquidField[at + 1] += weight * ux;
+            liquidField[at + 2] += weight * uy;
+          }
+        }
+        liquidActive = true;
+      }
+      if (!liquidActive) return;
+      var maxSpeed = 600;
+      liquidScaleX = maxSpeed / domainW; liquidScaleY = maxSpeed / domainH;
+      for (var j = 0, k = 0; j < liquidField.length; j += 3, k += 4) {
+        var n = liquidField[j], density = n / rest;
+        var dx = n > 0.0001 ? liquidField[j + 1] / n : 0;
+        var dy = n > 0.0001 ? liquidField[j + 2] / n : 0;
+        liquidPixels[k] = Math.round(128 + 127 * Math.max(-1, Math.min(1, dx / maxSpeed)));
+        liquidPixels[k + 1] = Math.round(128 + 127 * Math.max(-1, Math.min(1, dy / maxSpeed)));
+        liquidPixels[k + 2] = Math.round(255 * Math.min(1, density * 1.6));
+        var coverage = Math.max(0, Math.min(1, (density - 0.35) / 0.65));
+        liquidPixels[k + 3] = Math.round(255 * coverage * coverage * (3 - 2 * coverage));
+      }
+      gl.activeTexture(gl.TEXTURE4);
+      if (!liquidTexture) {
+        liquidTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, liquidTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        changed = true;
+      } else gl.bindTexture(gl.TEXTURE_2D, liquidTexture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      if (changed) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, liquidPixels);
+      else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, liquidPixels);
+    }
+
+    function bindLiquidField (uniforms) {
+      gl.uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
+      gl.uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
+      gl.uniform1i(uniforms.uLiquid, 4);
+      gl.activeTexture(gl.TEXTURE4);
+      if (!liquidTexture) ensureObstacleTexture();
+      gl.bindTexture(gl.TEXTURE_2D, liquidTexture || obstacleTexture);
+    }
+
     // Bind the obstacle to a given texture unit. `obstacle.attach`-style
     // shim to match the FBO contract used in shader uniform setters.
     function attachObstacle (id) {
@@ -1884,6 +2003,7 @@
     function clear () {
       if (!ready) return;
       movingActive = false;
+      liquidActive = false;
       movingHistory = new WeakMap();
       // Force-zero all fields by running the clear shader with value 0.
       gl.disable(gl.BLEND);
@@ -1917,6 +2037,7 @@
       blit(curl);
   
       vorticityProgram.bind();
+      bindLiquidField(vorticityProgram.uniforms);
       gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
       gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
@@ -1963,6 +2084,7 @@
       velocity.swap();
   
       advectionProgram.bind();
+      bindLiquidField(advectionProgram.uniforms);
       gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       if (!ext.supportLinearFiltering)
         gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
@@ -2092,6 +2214,7 @@
       // Blending against the cleared target adds no colour or alpha.
       gl.disable(gl.BLEND);
       displayMaterial.bind();
+      bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
@@ -2130,6 +2253,7 @@
       canvas.height = h;
       initFramebuffers();
       movingActive = false;
+      liquidActive = false;
       movingHistory = new WeakMap();
     }
   
@@ -2148,6 +2272,7 @@
       setObstacleAlpha: setObstacleAlpha,
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
+      setLiquidField: setLiquidField,
       clearObstacle: clearObstacle,
       isReady: isReady,
       config: config,
@@ -2173,21 +2298,7 @@
   var SMOKE_EMITTER_COL = { r: 0.62, g: 0.58, b: 0.52 };
   var SMOKE_EMITTER_DT = 1 / 30;
   var smokeEmitterSplats = 0;
-  var SMOKE_WATER_FLOW_MIN_VY = 55;
-  // Keep the waterfall legible without pinning the whole plume to it.
-  var SMOKE_WATER_FLOW_FORCE = 0.16;
-  // The falling column entrains a wider sleeve of surrounding air.
-  var SMOKE_WATER_FLOW_RADIUS = 0.085;
-  var smokeWaterFlowTick = 0;
-  var smokeWaterFlowCandidates = [];
-  var smokeWaterFlowSelected = [];
-  var smokeWaterFlowNext = [];
-  var smokeWaterFlowBinsW = Math.ceil(gridW / 2);
-  var smokeWaterFlowBinsH = Math.ceil(gridH / 2);
-  var smokeWaterFlowCount = new Uint16Array(smokeWaterFlowBinsW * smokeWaterFlowBinsH);
-  var smokeWaterFlowVX = new Float32Array(smokeWaterFlowCount.length);
-  var smokeWaterFlowVY = new Float32Array(smokeWaterFlowCount.length);
-  var smokeWaterFlowSplats = 0;
+  var smokeWaterFlowFrames = 0;
 
   function bootSmoke() {
     if (typeof WebGLRenderingContext === 'undefined') return;
@@ -2236,17 +2347,8 @@
     SmokeFluid.splat(wx / worldW, 1 - wy / worldH, dvx, dvy, col || SMOKE_COL, rad || 0.013);
   }
 
-  function smokeCellObstacle(idx) {
-    if (walls[idx]) return true;
-    var n = waterCellCount[idx];
-    if (n < WATER_CELL_WET) return false;
-    // Slow pool water is a boundary. A falling stream is handled as moving
-    // air below, so treating it as a solid square would erase the plume.
-    return waterCellVY[idx] / n <= SMOKE_WATER_FLOW_MIN_VY;
-  }
-
-  // Static wall and pool runs go into the destructive obstacle mask.
-  // Moving gel has its own velocity boundary and never enters this mask.
+  // Only drawn walls belong in the destructive mask. All water, including
+  // standing pools, uses the continuous velocity field and display coverage.
   function smokeRepaintObstacle() {
     var maxVerts = gridH * 24 + 4096;
     if (!smokeQuadVerts || smokeQuadVerts.length < maxVerts) {
@@ -2255,15 +2357,14 @@
     var v = smokeQuadVerts;
     var n = 0;
     var invW = 1 / worldW, invH = 1 / worldH;
-    // A cell is an obstacle if it is drawn wall OR standing water (the
-    // mirror-bucketed count): plumes bank off pools and streams.
+    // Static wall runs are cached until the visitor edits the terrain.
     for (var r = 0; r < gridH; r++) {
       var off = r * gridW;
       var c = 0;
       while (c < gridW) {
-        if (!smokeCellObstacle(off + c)) { c++; continue; }
+        if (!walls[off + c]) { c++; continue; }
         var c0 = c;
-        while (c < gridW && smokeCellObstacle(off + c)) c++;
+        while (c < gridW && walls[off + c]) c++;
         if (n + 12 > v.length) break;
         var u0 = (c0 * TILE) * invW * 2 - 1;
         var u1 = (c * TILE) * invW * 2 - 1;
@@ -2281,74 +2382,11 @@
     smokePaintedVersion = wallsVersion;
   }
 
-  var smokeObstacleTick = 0;
   function smokeWaterFlowCouple() {
-    smokeWaterFlowTick++;
-    if (smokeWaterFlowTick < 4 || !waterCellsAny || !SmokeFluid.splatVelocity) return;
-    smokeWaterFlowTick = 0;
-    smokeWaterFlowCount.fill(0);
-    smokeWaterFlowVX.fill(0);
-    smokeWaterFlowVY.fill(0);
-    // The shared water map is 8 px. Aggregate 2x2 cells so a thinning
-    // stream does not blink off whenever particles straddle cell edges.
-    for (var wi = 0; wi < waterCellCount.length; wi++) {
-      var wn = waterCellCount[wi];
-      if (!wn) continue;
-      var wc = wi % gridW, wr = (wi / gridW) | 0;
-      var wbi = (wr >> 1) * smokeWaterFlowBinsW + (wc >> 1);
-      smokeWaterFlowCount[wbi] += wn;
-      smokeWaterFlowVX[wbi] += waterCellVX[wi];
-      smokeWaterFlowVY[wbi] += waterCellVY[wi];
-    }
-    var candidates = smokeWaterFlowCandidates;
-    candidates.length = 0;
-    for (var idx = 0; idx < smokeWaterFlowCount.length; idx++) {
-      var n = smokeWaterFlowCount[idx];
-      if (n >= 1 && smokeWaterFlowVY[idx] / n > SMOKE_WATER_FLOW_MIN_VY) candidates.push(idx);
-    }
-    candidates.sort(function (a, b) {
-      return smokeWaterFlowVY[b] / smokeWaterFlowCount[b] -
-        smokeWaterFlowVY[a] / smokeWaterFlowCount[a];
-    });
-    var previous = smokeWaterFlowSelected;
-    var selected = smokeWaterFlowNext;
-    selected.length = 0;
-    for (var pk = 0; pk < previous.length && selected.length < 5; pk++) {
-      var held = previous[pk];
-      var heldN = smokeWaterFlowCount[held];
-      if (heldN < 1 || smokeWaterFlowVY[held] / heldN <= SMOKE_WATER_FLOW_MIN_VY) continue;
-      selected.push(held);
-    }
-    for (var ck = 0; ck < candidates.length && selected.length < 5; ck++) {
-      var pick = candidates[ck];
-      var pickX = pick % smokeWaterFlowBinsW;
-      var pickY = (pick / smokeWaterFlowBinsW) | 0;
-      var nearPick = false;
-      for (var sk = 0; sk < selected.length; sk++) {
-        var prior = selected[sk];
-        if (Math.abs(pickX - prior % smokeWaterFlowBinsW) <= 1 &&
-            Math.abs(pickY - ((prior / smokeWaterFlowBinsW) | 0)) <= 1) {
-          nearPick = true; break;
-        }
-      }
-      if (!nearPick) selected.push(pick);
-    }
-    smokeWaterFlowSelected = selected;
-    smokeWaterFlowNext = previous;
-    var limit = selected.length;
-    for (var k = 0; k < limit; k++) {
-      var ci = selected[k];
-      var count = smokeWaterFlowCount[ci];
-      var col = ci % smokeWaterFlowBinsW, row = (ci / smokeWaterFlowBinsW) | 0;
-      var avx = smokeWaterFlowVX[ci] / count;
-      var avy = smokeWaterFlowVY[ci] / count;
-      var fx = Math.max(-65, Math.min(65, avx * SMOKE_WATER_FLOW_FORCE));
-      var fy = -Math.min(80, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
-      var radius = SMOKE_WATER_FLOW_RADIUS + Math.min(0.018, count * 0.0012);
-      SmokeFluid.splatVelocity((col * 2 + 1) * TILE / worldW,
-        1 - (row * 2 + 1) * TILE / worldH, fx, fy, radius);
-      smokeWaterFlowSplats++;
-    }
+    SmokeFluid.setLiquidField(liquidX, liquidY, liquidVX, liquidVY,
+      waterState === 'on' ? liquidCount : 0, 0, 0, worldW, worldH,
+      WATER_CELL_REST / (TILE * TILE), liquidFrozen);
+    smokeWaterFlowFrames++;
   }
 
   function smokeFrame(dt) {
@@ -2362,9 +2400,7 @@
     }
     smokeWasAwake = true;
     smokeAwakeT -= dt;
-    smokeObstacleTick++;
-    if (smokePaintedVersion !== wallsVersion ||
-        (waterCellsAny && (smokeObstacleTick % 6) === 0)) {
+    if (smokePaintedVersion !== wallsVersion) {
       smokeRepaintObstacle();
     }
     SmokeFluid.setMovingBodies(jelloBodies, 0, 0, worldW, worldH,
@@ -11449,7 +11485,7 @@
     readoutEl.textContent = parts.join(' · ');
     // Headless/browser probe for the water-to-smoke handoff. Kept out of
     // the visible readout so the toy stays compact.
-    readoutEl.setAttribute('data-smoke-water-flow-splats', String(smokeWaterFlowSplats));
+    readoutEl.setAttribute('data-smoke-water-flow-frames', String(smokeWaterFlowFrames));
     readoutEl.setAttribute('data-smoke-emitter-splats', String(smokeEmitterSplats));
     readoutEl.setAttribute('data-pointer-down', pointerDown ? 'true' : 'false');
     readoutEl.setAttribute('data-pointer-x', px.toFixed(2));
@@ -11714,7 +11750,7 @@
       },
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
-          waterFlowSplats: smokeWaterFlowSplats, emitterSplats: smokeEmitterSplats };
+          waterFlowFrames: smokeWaterFlowFrames, emitterSplats: smokeEmitterSplats };
       },
       poke: function (x, y, vx, vy, R, ms) {
         R = R || 20;

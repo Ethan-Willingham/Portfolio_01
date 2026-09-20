@@ -36,6 +36,11 @@
     var movingPositionLoc = -1, movingVelocityLoc = -1;
     var movingVerts = new Float32Array(0);
     var movingHistory = new WeakMap();
+    var liquidTexture = null, liquidActive = false;
+    var liquidFieldW = 0, liquidFieldH = 0;
+    var liquidScaleX = 0, liquidScaleY = 0;
+    var liquidField = new Float32Array(0), liquidPixels = new Uint8Array(0);
+    var liquidWeightsX = new Float32Array(3), liquidWeightsY = new Float32Array(3);
   
     // --- WebGL context / format negotiation -------------------------
     function getWebGLContext (cnv) {
@@ -223,6 +228,9 @@
       'uniform sampler2D uObstacle;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform vec2 liquidVelocityScale;\n' +
       'uniform float velocityPass;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform vec2 dyeTexelSize;\n' +
@@ -266,7 +274,14 @@
       '    return;\n' +
       '  }\n' +
       '  float decay = 1.0 + dissipation * dt;\n' +
-      '  gl_FragColor = result / decay;\n' +
+      '  result /= decay;\n' +
+      '  if (useLiquid > 0.5 && velocityPass > 0.5) {\n' +
+      '    vec4 water = texture2D(uLiquid, vUv);\n' +
+      '    vec2 target = (water.rg * 255.0 - 128.0) / 127.0 * liquidVelocityScale / texelSize;\n' +
+      '    target = clamp(target, vec2(-1.0 / dt), vec2(1.0 / dt));\n' +
+      '    result.xy = mix(result.xy, target, water.b * (1.0 - exp(-12.0 * dt)));\n' +
+      '  }\n' +
+      '  gl_FragColor = result;\n' +
       '}\n';
   
     var DIVERGENCE_FS = '\n' +
@@ -322,6 +337,9 @@
       'uniform sampler2D uCurl;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform vec2 liquidVelocityScale;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float curl;\n' +
       'uniform float dt;\n' +
@@ -338,6 +356,15 @@
       '  vec2 velocity = texture2D(uVelocity, vUv).xy;\n' +
       '  velocity += force * dt;\n' +
       '  velocity = min(max(velocity, -1000.0), 1000.0);\n' +
+      // Limit air travel to one simulation cell per step. Fast water keeps
+      // its own speed; an unresolved air impulse would compress the smoke.
+      '  if (useLiquid > 0.5) {\n' +
+      '    vec4 water = texture2D(uLiquid, vUv);\n' +
+      '    vec2 target = (water.rg * 255.0 - 128.0) / 127.0 * liquidVelocityScale / texelSize;\n' +
+      '    target = clamp(target, vec2(-1.0 / dt), vec2(1.0 / dt));\n' +
+      '    float follow = water.b * (1.0 - exp(-24.0 * dt));\n' +
+      '    velocity = mix(velocity, target, follow);\n' +
+      '  }\n' +
       // Prescribe gel velocity before divergence is measured. Pressure then
       // redirects the air around it; this shares the existing vorticity pass.
       '  if (useMoving > 0.5) {\n' +
@@ -424,6 +451,9 @@
       'uniform sampler2D uObstacle;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform vec2 liquidVelocityScale;\n' +
       'uniform vec2 movingTexelSize;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
@@ -463,6 +493,9 @@
       '      + texture2D(uMoving, vUv + vec2(-d.x, d.y)).a) * 0.0625;\n' +
       '    c *= 1.0 - coverage;\n' +
       '  }\n' +
+      // Water only occludes the displayed dye. Its motion never deletes dye
+      // from the simulation, so smoke rolls back into the wake after a splash.
+      '  if (useLiquid > 0.5) c *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
@@ -749,6 +782,92 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
+    // Reconstruct a continuous water field from the existing particle mirror.
+    // Quadratic weights follow sub-cell motion without hard occupancy switches.
+    // RGB carries velocity and air coupling, alpha is display-only coverage.
+    // The compact RGBA8 upload needs no GPU readback or new fullscreen pass.
+    function setLiquidField (x, y, vx, vy, count, originX, originY, domainW, domainH, restDensity, frozen) {
+      liquidActive = false;
+      if (!ready || !count || domainW <= 0 || domainH <= 0) return;
+      var w = Math.max(2, Math.min(256, Math.ceil(domainW / 5)));
+      var h = Math.max(2, Math.min(192, Math.ceil(domainH / 5)));
+      var changed = w !== liquidFieldW || h !== liquidFieldH;
+      if (changed) {
+        liquidFieldW = w; liquidFieldH = h;
+        liquidField = new Float32Array(w * h * 3);
+        liquidPixels = new Uint8Array(w * h * 4);
+      }
+      liquidField.fill(0);
+      var sx = w / domainW, sy = h / domainH;
+      // Match the water solver's world-pixel density; resolution changes must
+      // not change the volume or turn spray into a solid smoke obstacle.
+      var rest = Math.max(0.001, restDensity / (sx * sy));
+      var wx = liquidWeightsX, wy = liquidWeightsY;
+      for (var i = 0; i < count; i++) {
+        if (frozen && frozen[i]) continue;
+        var px = (x[i] - originX) * sx - 0.5;
+        var py = (domainH - y[i] + originY) * sy - 0.5;
+        var ux = vx[i], uy = -vy[i];
+        if (!isFinite(px + py + ux + uy) || px < -1 || px > w || py < -1 || py > h) continue;
+        var bx = Math.floor(px - 0.5), by = Math.floor(py - 0.5);
+        var fx = px - bx, fy = py - by;
+        wx[0] = 0.5 * (1.5 - fx) * (1.5 - fx);
+        wx[1] = 0.75 - (fx - 1) * (fx - 1);
+        wx[2] = 0.5 * (fx - 0.5) * (fx - 0.5);
+        wy[0] = 0.5 * (1.5 - fy) * (1.5 - fy);
+        wy[1] = 0.75 - (fy - 1) * (fy - 1);
+        wy[2] = 0.5 * (fy - 0.5) * (fy - 0.5);
+        for (var r = 0; r < 3; r++) {
+          var row = by + r;
+          if (row < 0 || row >= h) continue;
+          for (var c = 0; c < 3; c++) {
+            var col = bx + c;
+            if (col < 0 || col >= w) continue;
+            var weight = wx[c] * wy[r], at = (row * w + col) * 3;
+            liquidField[at] += weight;
+            liquidField[at + 1] += weight * ux;
+            liquidField[at + 2] += weight * uy;
+          }
+        }
+        liquidActive = true;
+      }
+      if (!liquidActive) return;
+      var maxSpeed = 600;
+      liquidScaleX = maxSpeed / domainW; liquidScaleY = maxSpeed / domainH;
+      for (var j = 0, k = 0; j < liquidField.length; j += 3, k += 4) {
+        var n = liquidField[j], density = n / rest;
+        var dx = n > 0.0001 ? liquidField[j + 1] / n : 0;
+        var dy = n > 0.0001 ? liquidField[j + 2] / n : 0;
+        liquidPixels[k] = Math.round(128 + 127 * Math.max(-1, Math.min(1, dx / maxSpeed)));
+        liquidPixels[k + 1] = Math.round(128 + 127 * Math.max(-1, Math.min(1, dy / maxSpeed)));
+        liquidPixels[k + 2] = Math.round(255 * Math.min(1, density * 1.6));
+        var coverage = Math.max(0, Math.min(1, (density - 0.35) / 0.65));
+        liquidPixels[k + 3] = Math.round(255 * coverage * coverage * (3 - 2 * coverage));
+      }
+      gl.activeTexture(gl.TEXTURE4);
+      if (!liquidTexture) {
+        liquidTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, liquidTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        changed = true;
+      } else gl.bindTexture(gl.TEXTURE_2D, liquidTexture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      if (changed) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, liquidPixels);
+      else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, liquidPixels);
+    }
+
+    function bindLiquidField (uniforms) {
+      gl.uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
+      gl.uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
+      gl.uniform1i(uniforms.uLiquid, 4);
+      gl.activeTexture(gl.TEXTURE4);
+      if (!liquidTexture) ensureObstacleTexture();
+      gl.bindTexture(gl.TEXTURE_2D, liquidTexture || obstacleTexture);
+    }
+
     // Bind the obstacle to a given texture unit. `obstacle.attach`-style
     // shim to match the FBO contract used in shader uniform setters.
     function attachObstacle (id) {
@@ -837,6 +956,7 @@
     function clear () {
       if (!ready) return;
       movingActive = false;
+      liquidActive = false;
       movingHistory = new WeakMap();
       // Force-zero all fields by running the clear shader with value 0.
       gl.disable(gl.BLEND);
@@ -870,6 +990,7 @@
       blit(curl);
   
       vorticityProgram.bind();
+      bindLiquidField(vorticityProgram.uniforms);
       gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
       gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
@@ -916,6 +1037,7 @@
       velocity.swap();
   
       advectionProgram.bind();
+      bindLiquidField(advectionProgram.uniforms);
       gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       if (!ext.supportLinearFiltering)
         gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
@@ -1045,6 +1167,7 @@
       // Blending against the cleared target adds no colour or alpha.
       gl.disable(gl.BLEND);
       displayMaterial.bind();
+      bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
@@ -1083,6 +1206,7 @@
       canvas.height = h;
       initFramebuffers();
       movingActive = false;
+      liquidActive = false;
       movingHistory = new WeakMap();
     }
   
@@ -1101,6 +1225,7 @@
       setObstacleAlpha: setObstacleAlpha,
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
+      setLiquidField: setLiquidField,
       clearObstacle: clearObstacle,
       isReady: isReady,
       config: config,
