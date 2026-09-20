@@ -139,6 +139,42 @@ try {
   check('live jets roll and compress a guest without touching it',jets.every(j=>j.contacts===0&&j.playing&&j.peakSpeed>8&&j.peakSquash>.025&&j.force>0)&&jets[0].dx>5);
   await screenshot('jet-wash');
   await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');
+  // Use the real player gravity, terrain sweep, support checks and jet
+  // controls: a unit-only circle solver would miss the ledge-fall nudge.
+  const landings=await game(`(function(){
+    var results=[];
+    for(var fps of [30,60,144]){
+      skySlimeReset();skySlimeNext=100000;ENABLE_BATH=false;
+      var x=(DECK_LEFT_COL-4)*TILE, floor=SKY_ROWS*TILE;
+      Object.assign(player,{x:x-PLAYER_W/2,y:floor-PLAYER_H-140,vx:0,vy:0,
+        renderX:x-PLAYER_W/2,renderY:floor-PLAYER_H-140,onGround:false,onJello:false,
+        thrustSpool:0,jetForce:0,jetPulse:0,drillGlideT:0,fuel:100,
+        lastMoveU:false,lastMoveR:false,lastMoveL:false});
+      var b=skySlimeFresh(x,floor-25);b.r=25;b.spin=0;b.entry=0;b.playing=true;skySlimes.push(b);
+      var overlap=0,rebound=0,restSpeed=0;
+      for(var frame=0;frame<fps*10;frame++){
+        update(1/fps);skySlimeTick(1/fps);
+        var c=skySlimeRigContact(b,player.x,player.y);
+        overlap=Math.max(overlap,c?c.depth:0);
+        rebound=Math.max(rebound,-player.vy);
+        if(frame>fps*9)restSpeed=Math.max(restSpeed,Math.abs(player.vy));
+      }
+      updateCamera();render();
+      var supported=player.onGround&&skySlimeSupportsRig(player.x,player.y),startY=player.y;
+      keys.ArrowUp=true;
+      for(var frame=0;frame<fps*.4;frame++){update(1/fps);skySlimeTick(1/fps);}
+      keys.ArrowUp=false;
+      results.push({fps:fps,overlap:overlap,rebound:rebound,restSpeed:restSpeed,
+        supported:supported,takeoff:startY-player.y,airborne:!player.onGround});
+    }
+    return results;
+  })()`);
+  console.log('LANDINGS',landings);
+  check('landing rebounds and settles on the guest at 30, 60 and 144 Hz',
+    landings.every(l=>l.overlap<.05&&l.rebound>180&&l.restSpeed<2&&l.supported));
+  check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));
+  await screenshot('landing-rest');
+  await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');
   check('frozen flight clears stored thrust',await game(`(function(){
     var old=shopOpen;try{shopOpen=true;player.jetForce=880;update(1/60);return player.jetForce===0;}
     finally{shopOpen=old;}

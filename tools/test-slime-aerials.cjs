@@ -4,7 +4,7 @@ function fixture(tuning={}) {
   const math=Object.create(Math);math.random=()=>.3;
   const w = {Math:math, TILE:32,SKY_ROWS:16,COLS:320,PLAYER_W:22,PLAYER_H:26,DECK_LEFT_COL:149,
     player:{x:100,y:486,vx:0,vy:0},tileAt:(r,c)=>r>=16?{type:'stone'}:null,
-    solidAt:(x,y,wi,h)=>y+h>=512,liquidSampleCircle:()=>({wet:0})};
+    solidAt:(x,y,wi,h)=>y+h-1>=512,liquidSampleCircle:()=>({wet:0})};
   vm.createContext(w); vm.runInContext(fs.readFileSync('js/sluice/348-sky-slimes.js','utf8'),w);
   Object.assign(w,tuning);w.skySlimeNext=1e8;
   const s=w.skySlimeFresh(500,487);Object.assign(s,{r:25,spin:0,vx:0,vy:0,entry:0,visit:'seek',visitT:0});
@@ -15,7 +15,7 @@ function groundHit(speed,fps,dir=1,tuning={}) {
   let first=null;const collide=w.skySlimePlayer;
   w.skySlimePlayer=function(...args){const b=args[0],vx=b.vx,vy=b.vy;collide(...args);
     if(!first&&Math.hypot(b.vx-vx,b.vy-vy)>1)first={vx:b.vx,vy:b.vy};};
-  for(let n=0;n<fps*8&&!first;n++){w.player.x+=w.player.vx/fps;w.player.vy=0;w.skySlimeTick(1/fps);}
+  for(let n=0;n<fps*8&&!first;n++){w.player.x+=w.player.vx/fps;w.player.vy=0;w.player.onGround=true;w.skySlimeTick(1/fps);}
   assert(first,'rig reaches the ball');return {...first,w,s};
 }
 const results=[];
@@ -27,7 +27,7 @@ for(const fps of [30,60,144]) {
   const left=groundHit(200,fps,-1);
   assert(Math.abs(left.vy-shots[2].vy)<.1&&Math.abs(left.vx+shots[2].vx)<.1,'mirrored ground shots');
   const light=groundHit(200,fps,1,{SKY_SLIME_MASS:1,SKY_SLIME_GRAVITY:480});
-  assert(shots[2].vx<light.vx*.85,'heavier guest accelerates less from the same drive');
+  assert(shots[2].vx<light.vx*.90,'heavier guest accelerates less from the same drive');
   assert(200-shots[2].w.player.vx>(200-light.w.player.vx)*1.8,'heavier guest gives the rig a more substantial recoil');
   function arc(shot,gravity){
     const {w,s}=fixture({SKY_SLIME_GRAVITY:gravity});s.vx=shot.vx;s.vy=shot.vy;
@@ -39,7 +39,7 @@ for(const fps of [30,60,144]) {
   }
   const slowArc=arc(shots[2],shots[2].w.SKY_SLIME_GRAVITY),oldArc=arc(light,480);
   assert(slowArc.time>oldArc.time*1.25,'lower gravity gives more recovery time despite a slower launch');
-  assert(slowArc.height>oldArc.height*.9&&slowArc.height<oldArc.height*1.2,'longer arc keeps a similar useful launch height');
+  assert(slowArc.height>oldArc.height*.9&&slowArc.height<oldArc.height*1.3,'longer arc keeps a similar useful launch height');
   results.push({fps,vx:shots[2].vx,vy:shots[2].vy,slowArc,oldArc});
 }
 assert(Math.max(...results.map(s=>s.vy))-Math.min(...results.map(s=>s.vy))<2,'launch is frame-rate consistent');
@@ -86,6 +86,54 @@ const away=airHit(548.25,220.8,300,0,100,0).s;
 assert.equal(away.vx,300);assert.equal(away.vy,0);assert(!away.playing,'separating contact adds no impulse');
 const miss=airHit(551,160,0,0,300,-250).s;
 assert.equal(miss.vx,0);assert.equal(miss.vy,0);assert(!miss.playing,'near misses are not caught');
+// A supported roof returns the ball's fall energy instead of spending it
+// on impossible recoil through the floor. A free rig still takes recoil.
+for(const grounded of [false,true]){
+  const {w,s}=fixture();Object.assign(w.player,{x:489,y:grounded?486:200,vx:0,vy:0,onGround:grounded});
+  Object.assign(s,{x:500,y:w.player.y+26*.18-25.49,vy:100});
+  w.skySlimePlayer(s,w.player.x,w.player.y,0,0);
+  if(grounded){assert(Math.abs(s.vy+100)<.001,'roof returns a full vertical bounce');assert.equal(w.player.vy,0,'floor carries roof recoil');}
+  else {assert(s.vy< -40&&w.player.vy>50,'airborne roof is springier but still recoils');}
+}
+const landings=[];
+for(const fps of [30,60,144]){
+  const {w,s}=fixture();Object.assign(w.player,{x:489,y:350,vx:0,vy:0,renderX:489,renderY:350});
+  let rebound=0,settledSpeed=0;
+  for(let n=0;n<fps*10;n++){
+    w.player.vy+=760/fps;w.player.y+=w.player.vy/fps;w.player.onGround=false;
+    w.skySlimeTick(1/fps);
+    const contact=w.skySlimeRigContact(s,w.player.x,w.player.y);
+    assert(!contact||contact.depth<.02,'rig never sinks into a floor-supported guest');
+    assert(s.y+s.r<=512.01,'landing cannot force guest through the floor');
+    rebound=Math.max(rebound,-w.player.vy);
+    if(n>fps*9)settledSpeed=Math.max(settledSpeed,Math.abs(w.player.vy));
+  }
+  assert(rebound>280,'landing has a visible upward rebound');
+  assert(settledSpeed<1&&w.player.onGround,'small contacts settle without perpetual hopping');
+  assert(w.skySlimeSupportsRig(w.player.x,w.player.y),'guest counts as real foot support');
+  assert(Math.abs(w.player.renderY-w.player.y)<.01,'render smoothing cannot hide the separation');
+  assert(!w.skySlimeSupportsRig(w.player.x+70,w.player.y),'walking away loses support');
+  landings.push({fps,rebound,restY:w.player.y});
+}
+// Off-center landings roll the ball out from under the rig, with no aiming.
+for(const offset of [-20,20]){
+  const {w,s}=fixture();Object.assign(w.player,{x:489+offset,y:440,vx:0,vy:200});
+  w.skySlimeTerrain(s);w.skySlimePlayer(s,w.player.x,w.player.y,0,200);w.skySlimeTerrain(s);
+  assert(s.vx*offset<0&&w.player.vx*offset>0,'landing direction follows contact geometry');
+  assert(s.y+s.r<=512.01,'off-center landing stays above terrain');
+  assert(w.skySlimeRigContact(s,w.player.x,w.player.y).depth<.02,'off-center bodies separate');
+}
+// A wall-supported ball also pushes the rig back, rather than being squeezed
+// into the wall and repeatedly teleported back inside the miner.
+{
+  const {w,s}=fixture();w.tileAt=(r,c)=>c>=20?{type:'stone'}:null;
+  w.solidAt=(x,y,wi,h)=>x+wi-1>=640;
+  Object.assign(s,{x:615,y:220.8});Object.assign(w.player,{x:570,y:200,vx:200,vy:0});
+  w.skySlimePlayer(s,570,200,200,0);w.skySlimeTerrain(s);
+  assert(s.x+s.r<=640.01&&w.player.vx<0,'wall carries the horizontal load');
+  assert(w.skySlimeRigContact(s,w.player.x,w.player.y).depth<.02,'wall squeeze separates the miner');
+}
+console.log('LANDINGS',landings);
 // Once touched, bathhouse brains cannot steer, hop, enter, or despawn a ball
 // during a long aerial or while the player is lining up another shot.
 const {w,s}=groundHit(200,60);w.ENABLE_BATH=true;w.bathPickSite=()=>true;

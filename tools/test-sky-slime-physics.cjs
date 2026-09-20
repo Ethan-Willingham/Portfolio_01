@@ -8,7 +8,7 @@ function world({floor=512,material='stone',water=null}={}) {
   const w={console,Math:math,TILE:32,SKY_ROWS:16,COLS:320,PLAYER_W:22,PLAYER_H:26,DECK_LEFT_COL:149,
     player:{x:4500,y:1000,vx:0,vy:0},liquidCount:0,LIQUID_CELL:2.5,LIQUID_PDELTA:.5,
     liquidX:[],liquidY:[],liquidVX:[],liquidVY:[],tileAt:(r,c)=>r*32>=floor?{type:material}:null,
-    solidAt:(x,y,wi,h)=>y+h>=floor};
+    solidAt:(x,y,wi,h)=>y+h-1>=floor};
   vm.createContext(w); vm.runInContext(source,w);
   w.splashes=0;w.liquidToolImpulse=()=>++w.splashes;w.skySlimeNext=1e8;
   if(water!==null) for(let y=water+.625;y<floor;y+=1.25)for(let x=400;x<600;x+=1.25){w.liquidX.push(x);w.liquidY.push(y);w.liquidVX.push(0);w.liquidVY.push(0);w.liquidCount++;}
@@ -30,7 +30,7 @@ for(const fps of [30,60,144]){
  step(roll,1,fps);assert(r.x>620&&r.vx>115,'rolling retains momentum');
  step(roll,9,fps);assert(r.vx<1&&r.x>900,'rolling friction eventually stops ball');
  for(const dir of [-1,1]){
-   const ram=world(),b=ball(ram,500,487);ram.player={x:500-dir*110-11,y:486,vx:dir*240,vy:0};
+   const ram=world(),b=ball(ram,500,487);ram.player={x:500-dir*110-11,y:486,vx:dir*240,vy:0,onGround:true};
    for(let n=0;n<fps*.65;n++){ram.player.x+=ram.player.vx/fps;ram.skySlimeTick(1/fps);}
    assert(dir*b.vx>100&&dir*(b.x-500)>50,'moving rig transfers momentum in either direction');
    assert(Math.abs(ram.player.vx)<240,'rig recoils');assert(b._interactT>0,'navigation yields to impact');

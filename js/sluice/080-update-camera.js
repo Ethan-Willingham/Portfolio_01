@@ -777,7 +777,8 @@
     // owns the result. As soon as no foot sample has actual tile support
     // underneath, the rig becomes airborne and starts dropping into the gap.
     if (player.onGround && !drilling && player.drillGlideT <= 0 &&
-        !player.onJello && !playerHasFootSupport(player.x, player.y)) {
+        !player.onJello && !playerHasFootSupport(player.x, player.y) &&
+        !skySlimeSupportsRig(player.x, player.y)) {
       // Walked off a ledge: drop the ground flag + nudge into a fall. Skipped
       // when standing on jello (onJello) — jello has no solid tiles under the
       // foot, so playerHasFootSupport is always false there; without this guard
@@ -860,7 +861,8 @@
     } // end of !glideOwnsX
 
     if (player.onGround && !drilling && player.drillGlideT <= 0 &&
-        !player.onJello && !playerHasFootSupport(player.x, player.y)) {
+        !player.onJello && !playerHasFootSupport(player.x, player.y) &&
+        !skySlimeSupportsRig(player.x, player.y)) {
       // Walked off a ledge: drop the ground flag + nudge into a fall. Skipped
       // when standing on jello (onJello) — jello has no solid tiles under the
       // foot, so playerHasFootSupport is always false there; without this guard

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.22';
+  var GAME_VERSION = 'v28.23';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -17791,7 +17791,8 @@
     // owns the result. As soon as no foot sample has actual tile support
     // underneath, the rig becomes airborne and starts dropping into the gap.
     if (player.onGround && !drilling && player.drillGlideT <= 0 &&
-        !player.onJello && !playerHasFootSupport(player.x, player.y)) {
+        !player.onJello && !playerHasFootSupport(player.x, player.y) &&
+        !skySlimeSupportsRig(player.x, player.y)) {
       // Walked off a ledge: drop the ground flag + nudge into a fall. Skipped
       // when standing on jello (onJello) — jello has no solid tiles under the
       // foot, so playerHasFootSupport is always false there; without this guard
@@ -17874,7 +17875,8 @@
     } // end of !glideOwnsX
 
     if (player.onGround && !drilling && player.drillGlideT <= 0 &&
-        !player.onJello && !playerHasFootSupport(player.x, player.y)) {
+        !player.onJello && !playerHasFootSupport(player.x, player.y) &&
+        !skySlimeSupportsRig(player.x, player.y)) {
       // Walked off a ledge: drop the ground flag + nudge into a fall. Skipped
       // when standing on jello (onJello) — jello has no solid tiles under the
       // foot, so playerHasFootSupport is always false there; without this guard
@@ -65881,6 +65883,7 @@
   var SKY_SLIME_RIG_HULL = [0.40,0.18, 0.60,0.18, 1.25,0.80,
     0.94,0.98, 0.06,0.98, -0.25,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
+  var SKY_SLIME_ROOF_RESTITUTION = 1.0;
   var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
@@ -66165,10 +66168,9 @@
     s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5);
   }
 
-  function skySlimePlayer(s, rx, ry, rvx, rvy) {
-    if (typeof bathMode !== 'undefined' && bathMode) return;
-    if (s.x + s.r < rx - 6 || s.x - s.r > rx + PLAYER_W + 6 ||
-        s.y + s.r < ry || s.y - s.r > ry + PLAYER_H + 1) return;
+  function skySlimeRigContact(s, rx, ry) {
+    if (s.x + s.r < rx - 7 || s.x - s.r > rx + PLAYER_W + 7 ||
+        s.y + s.r < ry - 1 || s.y - s.r > ry + PLAYER_H + 2) return null;
     // Closest point on the convex hull gives both separation and impulse
     // direction. Its lower shoulders meet a grounded ball below its center.
     // No minimum pop, target velocity, aiming, or airborne-only impulse.
@@ -66188,14 +66190,72 @@
       }
     }
     var radius = s.r + 0.5, dist = Math.sqrt(best);
-    if (!inside && dist >= radius) return;
+    if (!inside && dist > radius + 1) return null;
     var nx = inside || dist < 0.001 ? faceX : dx / dist;
     var ny = inside || dist < 0.001 ? faceY : dy / dist;
-    var depth = radius + (inside ? dist : -dist) + 0.006;
-    s.x += nx * depth; s.y += ny * depth;
+    return { nx: nx, ny: ny, depth: radius + (inside ? dist : -dist) + 0.006 };
+  }
+
+  function skySlimeSupportsRig(px, py) {
+    if (typeof bathMode !== 'undefined' && bathMode) return false;
+    for (var i = 0; i < skySlimes.length; i++) {
+      var s = skySlimes[i];
+      if (!s._ground || Math.abs(s.vy) >= 12) continue;
+      var contact = skySlimeRigContact(s, px, py);
+      if (contact && contact.ny > 0.6 && contact.depth < 2) return true;
+    }
+    return false;
+  }
+
+  function skySlimeTerrainBlocked(s, x, y) {
+    var radius = s.r - 0.001;
+    for (var r = Math.floor((y - radius) / TILE); r <= Math.floor((y + radius) / TILE); r++) {
+      for (var c = Math.floor((x - radius) / TILE); c <= Math.floor((x + radius) / TILE); c++) {
+        var tile = tileAt(r, c);
+        if (!tile || (tile !== 'wall' && tile.type === 'jello')) continue;
+        var dx = x - skySlimeClamp(x, c * TILE, (c + 1) * TILE);
+        var dy = y - skySlimeClamp(y, r * TILE, (r + 1) * TILE);
+        if (dx * dx + dy * dy < radius * radius) return true;
+      }
+    }
+    return false;
+  }
+
+  function skySlimePlayer(s, rx, ry, rvx, rvy) {
+    if (typeof bathMode !== 'undefined' && bathMode) return;
+    var contact = skySlimeRigContact(s, rx, ry);
+    if (!contact || contact.depth <= 0) return;
+    var nx = contact.nx, ny = contact.ny, depth = contact.depth;
+    var mass = SKY_SLIME_MASS * s.r * s.r / 625, invMass = 1 / mass, invRig = 1 / 6;
+    // Separate both bodies. A floor or wall takes the load on its blocked
+    // axis: a grounded guest cannot be pushed through the floor, and a
+    // grounded rig cannot lose a roof bounce to downward recoil into soil.
+    var bx = invMass, by = invMass, rxMass = invRig, ryMass = invRig;
+    var share = depth / (invMass + invRig);
+    if (skySlimeTerrainBlocked(s, s.x + nx * share * invMass, s.y)) bx = 0;
+    if (skySlimeTerrainBlocked(s, s.x, s.y + ny * share * invMass)) by = 0;
+    if (solidAt(player.x - nx * share * invRig, player.y, PLAYER_W, PLAYER_H)) rxMass = 0;
+    if (solidAt(player.x, player.y - ny * share * invRig, PLAYER_W, PLAYER_H)) ryMass = 0;
+    if (ny < 0 && rvy >= -1 && player.onGround && !player.onJello) ryMass = 0;
+    var mobility = nx * nx * (bx + rxMass) + ny * ny * (by + ryMass);
+    if (mobility < 0.000001) return;
+    var correction = depth / mobility;
+    var moveX = -nx * correction * rxMass, moveY = -ny * correction * ryMass;
+    // The two axis probes can each clear a corner while the diagonal does
+    // not. Keep terrain authoritative in that rare fully wedged contact.
+    if (solidAt(player.x + moveX, player.y + moveY, PLAYER_W, PLAYER_H)) {
+      rxMass = ryMass = 0;
+      mobility = nx * nx * bx + ny * ny * by;
+      if (mobility < 0.000001) return;
+      correction = depth / mobility; moveX = moveY = 0;
+    }
+    s.x += nx * correction * bx; s.y += ny * correction * by;
+    player.x += moveX; player.y += moveY;
+    // Render easing must not leave the visible hull inside a solid guest.
+    if (moveX && isFinite(player.renderX)) player.renderX = player.x;
+    if (moveY && isFinite(player.renderY)) player.renderY = player.y;
     var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
     if (relative >= 0) return;
-    var mass = SKY_SLIME_MASS * s.r * s.r / 625, invMass = 1 / mass, invRig = 1 / 6;
     // The bumper yields under a hard sideways load. Gentle touches and
     // square roof/belly strikes keep their spring; fast glances lose rebound.
     // Smooth compression response keeps stronger hits stronger. It changes
@@ -66206,19 +66266,28 @@
     var cushion = (1 - vertical2 * vertical2) * sideLoad4 / (1 + sideLoad4);
     var restitution = SKY_SLIME_RIG_RESTITUTION -
       (SKY_SLIME_RIG_RESTITUTION - SKY_SLIME_RIG_SIDE_RESTITUTION) * cushion;
-    var impulse = -(1 + (relative < -18 ? restitution : 0)) * relative / (invMass + invRig);
-    s.vx += impulse * nx * invMass; s.vy += impulse * ny * invMass;
-    player.vx = (player.vx || 0) - impulse * nx * invRig;
-    player.vy = (player.vy || 0) - impulse * ny * invRig;
+    var roof = skySlimeClamp((-ny - 0.8) / 0.2, 0, 1);
+    roof = roof * roof * (3 - 2 * roof);
+    restitution += (SKY_SLIME_ROOF_RESTITUTION - restitution) * roof;
+    // A resting rig receives up to one frame of gravity before this pass.
+    // Absorb that small load rather than making a perpetual tiny trampoline.
+    var resting = ny > 0.6 && by === 0;
+    var impulse = -(1 + (relative < -(resting ? 40 : 18) ? restitution : 0)) * relative / mobility;
+    s.vx += impulse * nx * bx; s.vy += impulse * ny * by;
+    var rigDVX = -impulse * nx * rxMass, rigDVY = -impulse * ny * ryMass;
+    player.vx = (player.vx || 0) + rigDVX;
+    player.vy = (player.vy || 0) + rigDVY;
     // A brush can roll the ball off the hull. Friction exchanges tangent
     // momentum and spin with the same 2/5 mr^2 inertia as ground contact.
     var tx = -ny, ty = nx;
-    var slip = (s.vx - rvx) * tx + (s.vy - rvy) * ty - s.spin * s.r;
-    var friction = skySlimeClamp(-slip / (3.5 * invMass + invRig),
+    var slip = (s.vx - rvx - rigDVX) * tx + (s.vy - rvy - rigDVY) * ty - s.spin * s.r;
+    var tangentMobility = tx * tx * (bx + rxMass) + ty * ty * (by + ryMass) + 2.5 * invMass;
+    var friction = skySlimeClamp(-slip / tangentMobility,
       -impulse * SKY_SLIME_RIG_FRICTION, impulse * SKY_SLIME_RIG_FRICTION);
-    s.vx += friction * tx * invMass; s.vy += friction * ty * invMass;
+    s.vx += friction * tx * bx; s.vy += friction * ty * by;
     s.spin -= friction / (0.4 * mass * s.r);
-    player.vx -= friction * tx * invRig; player.vy -= friction * ty * invRig;
+    player.vx -= friction * tx * rxMass; player.vy -= friction * ty * ryMass;
+    if (ny > 0.6) player.onGround = resting && Math.abs(player.vy) < 8;
     if (s.playing || Math.hypot(rvx, rvy) > 8) skySlimePlayContact(s);
     else { s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5); }
     s.settled = false;
@@ -66412,7 +66481,6 @@
     var rigVX = (rigX - previous.x) / dt, rigVY = (rigY - previous.y) / dt;
     var impulseVX = player.vx || 0, impulseVY = player.vy || 0;
     var jet = skySlimeJetFrame();
-    skySlimeRigLast = { x: rigX, y: rigY };
     for (var i = 0; i < skySlimes.length; i++) {
       var s = skySlimes[i];
       s._liquidT -= dt;
@@ -66438,8 +66506,12 @@
     }
     for (var step = 0; step < steps; step++) {
       var kRig = (step + 1) / steps;
-      skySlimeJetStep(jet, h, previous.x + (rigX - previous.x) * kRig - rigX,
-        previous.y + (rigY - previous.y) * kRig - rigY, rigVX, rigVY);
+      var pathX = previous.x + (rigX - previous.x) * kRig;
+      var pathY = previous.y + (rigY - previous.y) * kRig;
+      // Carry collision separation through the rest of this swept path.
+      // Store the corrected endpoint below, so it adds no next-frame speed.
+      skySlimeJetStep(jet, h, pathX - rigX + (player.x - rigX),
+        pathY - rigY + (player.y - rigY), rigVX, rigVY);
       for (var si = 0; si < skySlimes.length; si++) {
         var b = skySlimes[si];
         b.age += h; b._impactT = Math.max(0, b._impactT - h);
@@ -66470,7 +66542,7 @@
         b.vx = skySlimeClamp(b.vx, -1000, 1000);
         b.x += b.vx * h; b.y += b.vy * h;
         skySlimeTerrain(b);
-        skySlimePlayer(b, previous.x + (rigX - previous.x) * kRig, previous.y + (rigY - previous.y) * kRig,
+        skySlimePlayer(b, pathX + (player.x - rigX), pathY + (player.y - rigY),
           rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
         skySlimeTerrain(b);
         if (b._ground && Math.abs(b.vy) < 12) {
@@ -66486,6 +66558,7 @@
       skySlimeBodies();
       for (var contact = 0; contact < skySlimes.length; contact++) skySlimeTerrain(skySlimes[contact]);
     }
+    skySlimeRigLast = { x: player.x, y: player.y };
   }
 
   function skySlimeCrust(s) {
