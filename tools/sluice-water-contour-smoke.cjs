@@ -72,6 +72,25 @@ window.__waterContourTest = {
     liquidWGPU.liquid.getTerrainRenderMask = mode === 'square' ? null : liquidTerrainRenderMask;
     liquidWGPU.setRenderParam('SURFACE_RENDER', mode === 'legacy' ? 0 : 1);
   },
+  discovery: function (mode) {
+    var row = this.row, col = this.col;
+    if (mode === 'sealed') {
+      // A surface-connected shaft, separated from the full basin by one wall.
+      for (var r = SKY_ROWS; r <= row + 4; r++) world[r][col - 2] = null;
+      lightingInit();
+      lightTune.enabled = 1;
+    } else if (mode === 'breach') {
+      world[row + 4][col - 1] = null;
+      markTerrainCleared(row + 4, col - 1);
+    } else if (mode === 'disable') {
+      lightTune.enabled = 0;
+    } else if (mode === 'enable') {
+      lightTune.enabled = 1;
+    } else if (mode === 'reload') {
+      lightingInit();
+    }
+    return { discovered: !!lightArr[(row + 4) * lightCols + col], count: liquidCount };
+  },
   pixels: async function () {
     var gpu = liquidWGPU && liquidWGPU.renderActive;
     var w = canvas.width, h = canvas.height, bytes, stride = w * 4;
@@ -156,7 +175,11 @@ window.__waterContourTest = {
       ceilingProbes++;
       if (alpha(px, py) > 100) ceilingFilm++;
     }
-    return { gapSamples: gapSamples, bankGaps: bankGaps, ceilingFilm: ceilingFilm, ceilingProbes: ceilingProbes, ceilingAir: ceilingAir, contacts: contacts, contactGaps: contactGaps, blocked: blocked, leaking: leaking, cutaway: cutaway, wetCutaway: wetCutaway, wet: wet,
+    var painted = 0;
+    for (var py = 0; py < h; py++) for (var px = 0; px < w; px++) {
+      if (bytes[py * stride + px * 4 + 3]) painted++;
+    }
+    return { painted: painted, gapSamples: gapSamples, bankGaps: bankGaps, ceilingFilm: ceilingFilm, ceilingProbes: ceilingProbes, ceilingAir: ceilingAir, contacts: contacts, contactGaps: contactGaps, blocked: blocked, leaking: leaking, cutaway: cutaway, wetCutaway: wetCutaway, wet: wet,
       dry: alpha((this.col + 13.5) * TILE, (this.row + 4.5) * TILE), revision: m.revision };
   },
   cache: function () {
@@ -176,7 +199,7 @@ window.__waterContourTest = {
 async function main() {
   const liquidSource = process.env.LIQUID_REF ? cp.execFileSync('git', ['show', process.env.LIQUID_REF + ':js/liquid-wgpu.js'], { cwd: root, encoding: 'utf8', maxBuffer: 4e6 }) : null;
   const bundle = process.env.SOURCE ? fs.readdirSync(path.join(root, 'js/sluice')).filter(n => /^\d{3}-.*\.js$/.test(n)).sort()
-    .map(n => fs.readFileSync(path.join(root, 'js/sluice', n), 'utf8')).join('') : fs.readFileSync(path.join(root, 'js/sluice.js'), 'utf8');
+    .map(n => fs.readFileSync(path.join(root, 'js/sluice', n), 'utf8')).join('') : fs.readFileSync(process.env.BUNDLE || path.join(root, 'js/sluice.js'), 'utf8');
   const end = bundle.lastIndexOf('})();'); assert(end > 0);
   const server = http.createServer((req, res) => {
     const name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -196,9 +219,10 @@ async function main() {
       args: ['--enable-unsafe-webgpu', '--disable-background-timer-throttling'] });
     for (const cpu of [false, true]) {
       const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });
+      await page.route('https://www.googletagmanager.com/**', route => route.fulfill({ status: 200, body: '' }));
       const errors = [];
       page.on('pageerror', e => errors.push(String(e)));
-      page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+      page.on('console', m => { if (m.type() === 'error') errors.push(m.text() + ' ' + m.location().url); });
       const url = 'http://127.0.0.1:' + server.address().port;
       await page.goto(url + '/grand-motherload.html?dev=1&nosave=1&nopause=1' + (cpu ? '&cpuwater=1' : ''), { waitUntil: 'load', timeout: 60000 });
       await page.waitForFunction(() => window.__waterContourTest && window.gm && window.SluiceLoading && !window.SluiceLoading.active(), { timeout: 60000 });
@@ -206,6 +230,35 @@ async function main() {
       const call = (fn, ...args) => page.evaluate(({ fn, args }) => window.__waterContourTest[fn](...args), { fn, args });
       console.log('Boot', await call('stop'));
       console.log('Scene', await call('scene'));
+      const sealed = await call('discovery', 'sealed');
+      assert.equal(sealed.discovered, false, 'The fixture starts undiscovered behind a single wall');
+      await call('draw');
+      const hidden = await call('pixels');
+      console.log(cpu ? 'CPU hidden pocket' : 'GPU hidden pocket', { painted: hidden.painted, revision: hidden.revision });
+      assert.equal(hidden.painted, 0, 'Undiscovered water is completely invisible, including curved edges');
+      await call('discovery', 'disable');
+      const debugVisible = await call('pixels');
+      assert(debugVisible.wet > 1000, 'Disabling fog reveals water for debugging');
+      await call('discovery', 'enable');
+      const hiddenAgain = await call('pixels');
+      assert.equal(hiddenAgain.painted, 0, 'Re-enabling fog hides the same pocket without changing terrain');
+      assert(hiddenAgain.revision > debugVisible.revision, 'Lighting changes invalidate the liquid mask');
+      if (!cpu) {
+        await call('mode', 'legacy');
+        assert.equal((await call('pixels')).painted, 0, 'Legacy GPU particles cannot expose undiscovered water');
+        await call('mode', 'surface');
+      }
+      const breached = await call('discovery', 'breach');
+      assert.equal(breached.discovered, true, 'Digging through the wall discovers the basin');
+      assert.equal(breached.count, sealed.count, 'Discovery preserves the water supply');
+      const revealed = await call('pixels');
+      assert(revealed.wet > 1000, 'Water appears immediately when the pocket is opened');
+      assert(revealed.revision > hiddenAgain.revision, 'Digging refreshes the visible water contour');
+      await call('discovery', 'reload');
+      assert((await call('pixels')).wet > 1000, 'Rebuilding lighting after a load keeps connected water visible');
+      // Resume the existing geometry checks with their original fixture.
+      await call('discovery', 'disable');
+      await call('scene');
       await call('draw');
       const pixels = await call('pixels'); console.log(cpu ? 'CPU' : 'GPU', pixels);
       if (process.env.DUMP) {
@@ -258,7 +311,8 @@ async function main() {
         }
       }
       await page.setViewportSize({ width: 700, height: 600 });
-      await call('scene', true); await call('draw');
+      await call('scene', true); await call('discovery', 'reload');
+      await call('discovery', 'enable'); await call('draw');
       const surface = await call('pixels');
       assert(surface.wet > 1000 && surface.leaking === 0, 'Resized surface pond retains its curved boundary');
       assert.deepEqual(errors, [], 'No browser or GPU validation errors');
@@ -268,6 +322,6 @@ async function main() {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
   }
-  console.log('Water contour, corner contact, dry pocket, cache and renderer checks passed.');
+  console.log('Water discovery, contour, corner contact, dry pocket, cache and renderer checks passed.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -1773,10 +1773,12 @@
   // Compare actual occupancy so drilling, bombs, save loads and dev edits
   // all invalidate immediately, including mutations without a dirty hook.
   // Paths are shared read-only by terrain rendering and smoke collision.
+  // The liquid layer requests revealed air only: its separate DOM canvas
+  // sits above the world's fog, so sealed pockets need their own clipping.
   var voidContourCache = [];
   var VOID_CONTOUR_CACHE_LIMIT = 12;
-  function buildVoidContourPath(startRow, endRow, startCol, endCol) {
-    var key = [startRow, endRow, startCol, endCol, TILE,
+  function buildVoidContourPath(startRow, endRow, startCol, endCol, revealedOnly) {
+    var key = [startRow, endRow, startCol, endCol, !!revealedOnly, TILE,
       VOID_CONVEX_INSET, VOID_CONCAVE_INSET, VOID_RUN_FADE,
       WOBBLE_AMP_LOW, WOBBLE_AMP_HIGH, WOBBLE_WAVELEN_LOW,
       WOBBLE_WAVELEN_HIGH, WOBBLE_SAMPLE_STEP].join(',');
@@ -1786,18 +1788,18 @@
     }
     var count = Math.max(0, endRow - startRow + 1) * Math.max(0, endCol - startCol + 1);
     // An unusually large dev query should not become a persistent allocation.
-    if (count > 65536) return buildVoidContourPathUncached(startRow, endRow, startCol, endCol);
+    if (count > 65536) return buildVoidContourPathUncached(startRow, endRow, startCol, endCol, revealedOnly);
     var changed = !entry;
     if (!entry) entry = { key: key, cells: new Uint8Array(count), path: null };
     var cells = entry.cells, at = 0;
     for (var r = startRow; r <= endRow; r++) {
       for (var c = startCol; c <= endCol; c++) {
-        var empty = tileAt(r, c) === null ? 1 : 0;
+        var empty = tileAt(r, c) === null && (!revealedOnly || lightArr[r * lightCols + c]) ? 1 : 0;
         if (cells[at] !== empty) { cells[at] = empty; changed = true; }
         at++;
       }
     }
-    if (changed) entry.path = buildVoidContourPathUncached(startRow, endRow, startCol, endCol);
+    if (changed) entry.path = buildVoidContourPathUncached(startRow, endRow, startCol, endCol, revealedOnly);
     if (index !== 0) {
       if (index > 0) voidContourCache.splice(index, 1);
       voidContourCache.unshift(entry);
@@ -1806,18 +1808,17 @@
     return entry.path;
   }
 
-  function buildVoidContourPathUncached(startRow, endRow, startCol, endCol) {
+  function buildVoidContourPathUncached(startRow, endRow, startCol, endCol, revealedOnly) {
     var path = new Path2D();
     var T = TILE;
 
     // Boundary detector: out-of-rect counts as solid so loops close locally.
     function isVoidIn(r, c) {
       if (r < startRow || r > endRow || c < startCol || c > endCol) return false;
-      return tileAt(r, c) === null;
+      return tileAt(r, c) === null && (!revealedOnly || lightArr[r * lightCols + c]);
     }
     function isSolidIn(r, c) {
-      if (r < startRow || r > endRow || c < startCol || c > endCol) return true;
-      return tileAt(r, c) !== null;
+      return !isVoidIn(r, c);
     }
 
     // Edge dirs: 0=Right(+X), 1=Down(+Y), 2=Left(-X), 3=Up(-Y).

@@ -1,14 +1,15 @@
   // Water is a separate DOM canvas above the terrain. Its visible contact
   // must use the cave's carved outline, not the square physics tile mask.
   // Keep this bitmap anchored to tiles and reuse it while the camera moves
-  // inside the same window. The shared contour cache detects all tile edits.
+  // inside the same window. The shared contour cache detects tile edits and
+  // newly discovered air, hiding sealed pockets until a tunnel reaches them.
   var liquidTerrainRender = null;
   function liquidTerrainRenderMask() {
     var c0 = Math.floor(cam.x / TILE) - 2;
     var c1 = Math.ceil((cam.x + viewW / worldScale) / TILE) + 2;
     var r0 = Math.floor(cam.y / TILE) - 2;
     var r1 = Math.ceil((cam.y + viewH / worldScale) / TILE) + 2;
-    var path = buildVoidContourPath(Math.max(SKY_ROWS, r0), r1, c0, c1);
+    var path = buildVoidContourPath(Math.max(SKY_ROWS, r0), r1, c0, c1, !!(lightTune.enabled && lightArr));
     var m = liquidTerrainRender;
     if (!m) {
       var cv = document.createElement('canvas');
