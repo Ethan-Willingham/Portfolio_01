@@ -83,9 +83,10 @@ try {
   // A fixed drive + jet sequence uses the existing controls and no ball
   // steering. It must turn a ground pop into two separated aerial contacts.
   const aerial=await game(`(function(){
-    var original=skySlimePlayer,frame=0,events=[],peak=Infinity;
+    var original=skySlimePlayer,frame=0,events=[],peak=Infinity,maxContactSnap=0;
     skySlimePlayer=function(s,rx,ry,vx,vy){
-      var before=s.vy;original(s,rx,ry,vx,vy);
+      var before=s.vy,drawX=player.renderX,drawY=player.renderY;original(s,rx,ry,vx,vy);
+      maxContactSnap=Math.max(maxContactSnap,Math.hypot(player.renderX-drawX,player.renderY-drawY));
       if(s.vy<before-15 && (!events.length || frame-events[events.length-1].frame>4))
         events.push({frame:frame,air:!player.onGround,vy:s.vy});
     };
@@ -93,6 +94,7 @@ try {
       ENABLE_BATH=true;skySlimeReset();skySlimeNext=100000;
       player.x=(DECK_LEFT_COL-4)*TILE-110;player.y=SKY_ROWS*TILE-PLAYER_H;
       player.vx=player.vy=0;player.lastMoveU=player.lastMoveR=false;player.onGround=true;
+      player.renderX=player.x;player.renderY=player.y;
       player.thrustSpool=0;player.jetPulse=0;player.fuel=100;
       var b=skySlimeFresh(player.x+110,SKY_ROWS*TILE-25);b.r=25;b.spin=0;b.entry=0;b.seed=.3;skySlimes.push(b);
       keys.ArrowRight=true;
@@ -100,11 +102,12 @@ try {
         keys.ArrowUp=frame>=26 && frame<50;
         update(1/60);skySlimeTick(1/60);updateCamera();peak=Math.min(peak,b.y);
       }
-      render();return {hits:events,height:SKY_ROWS*TILE-25-peak,playing:b.playing};
+      render();return {hits:events,height:SKY_ROWS*TILE-25-peak,playing:b.playing,maxContactSnap:maxContactSnap};
     } finally {skySlimePlayer=original;keys.ArrowUp=keys.ArrowRight=false;ENABLE_BATH=false;}
   })()`);
   console.log('AERIAL',aerial);
   check('ordinary drive and jet controls can chain two aerial contacts',aerial.playing&&aerial.height>60&&aerial.hits.filter(h=>h.air).length>=2);
+  check('dribble contacts preserve continuous sprite motion',aerial.maxContactSnap<1);
   await screenshot('aerial');
   // Actual UP input and a moving pass must create pressure without contact.
   const jets=await game(`(function(){
@@ -170,8 +173,8 @@ try {
     return results;
   })()`);
   console.log('LANDINGS',landings);
-  check('landing rebounds and settles on the guest at 30, 60 and 144 Hz',
-    landings.every(l=>l.overlap<.05&&l.rebound>180&&l.restSpeed<2&&l.supported));
+  check('landing cushions and settles on the guest at 30, 60 and 144 Hz',
+    landings.every(l=>l.overlap<.05&&l.rebound>20&&l.rebound<55&&l.restSpeed<2&&l.supported));
   check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));
   await screenshot('landing-rest');
   await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');

@@ -79,7 +79,7 @@ assert(fast.vx>500,'power shots remain possible, with no imposed speed limit');
 const under=airHit(511,179.69,0,40,0,-160).s;
 assert(under.vy< -220,'rising under a falling ball creates a deliberate aerial lift');
 const over=airHit(511,250.47,0,-40,0,160).s;
-assert(over.vy>220,'a descending hit spikes downward');
+assert(over.vy>110&&over.vy<150,'a descending hit pushes the ball down while the underbody absorbs rebound');
 const brush=airHit(548.25,220.8,40,100,200,-100).s;
 assert(Math.abs(brush.spin)>.5&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
 const away=airHit(548.25,220.8,300,0,100,0).s;
@@ -92,8 +92,18 @@ for(const grounded of [false,true]){
   const {w,s}=fixture();Object.assign(w.player,{x:489,y:grounded?486:200,vx:0,vy:0,onGround:grounded});
   Object.assign(s,{x:500,y:w.player.y+26*.18-25.49,vy:100});
   w.skySlimePlayer(s,w.player.x,w.player.y,0,0);
-  if(grounded){assert(Math.abs(s.vy+100)<.001,'roof returns a full vertical bounce');assert.equal(w.player.vy,0,'floor carries roof recoil');}
-  else {assert(s.vy< -40&&w.player.vy>50,'airborne roof is springier but still recoils');}
+  if(grounded){assert(Math.abs(s.vy+90)<.001,'roof uses ordinary restitution without a dribbling boost');assert.equal(w.player.vy,0,'floor carries roof recoil');}
+  else {assert(s.vy< -30&&s.vy> -40&&w.player.vy>50,'airborne roof shares the ordinary material and still recoils');}
+}
+// A shallow contact must not teleport a sprite that is normally easing
+// behind the moving rig. Preserve its existing lag through the collision.
+{
+  const {w,s}=fixture();Object.assign(w.player,{x:500,y:200,vx:200,vy:-100,renderX:492,renderY:206});
+  Object.assign(s,{x:552.75,y:220.8,vx:40,vy:100});
+  w.skySlimePlayer(s,500,200,200,-100);
+  assert(Math.abs(w.player.renderX-492)<.2&&Math.abs(w.player.renderY-206)<.2,'small contact cannot make an eight-pixel sprite snap');
+  assert(Math.abs(w.player.x-w.player.renderX-8)<.001,'horizontal easing survives a touch');
+  assert(Math.abs(w.player.y-w.player.renderY+6)<.001,'vertical easing survives a touch');
 }
 const landings=[];
 for(const fps of [30,60,144]){
@@ -108,10 +118,9 @@ for(const fps of [30,60,144]){
     rebound=Math.max(rebound,-w.player.vy);
     if(n>fps*9)settledSpeed=Math.max(settledSpeed,Math.abs(w.player.vy));
   }
-  assert(rebound>280,'landing has a visible upward rebound');
+  assert(rebound>20&&rebound<55,'landing gives a small cushioned rebound instead of a trampoline launch');
   assert(settledSpeed<1&&w.player.onGround,'small contacts settle without perpetual hopping');
   assert(w.skySlimeSupportsRig(w.player.x,w.player.y),'guest counts as real foot support');
-  assert(Math.abs(w.player.renderY-w.player.y)<.01,'render smoothing cannot hide the separation');
   assert(!w.skySlimeSupportsRig(w.player.x+70,w.player.y),'walking away loses support');
   landings.push({fps,rebound,restY:w.player.y});
 }

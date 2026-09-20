@@ -104,7 +104,7 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.23)
+## Sky visitor physics and appearance (v28.25)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
@@ -130,28 +130,33 @@ terrain. Rig contacts sweep a low convex hull along the rig's traveled path.
 The sloped shoulders lift a grounded ball; the same geometry sets the direction
 of airborne hits. The rig's bumper yields under strong sideways loads: restitution
 smoothly drops from 0.90 toward 0.10 as lateral closing load rises around 130 px/s.
-A fourth-power blend keeps square roof/belly hits springy and softens glances.
-Roof restitution rises smoothly to 1.0 for an upright hit, retaining height
-between dribbles. This absorbs rebound along the real contact normal, with
-equal opposite recoil when both bodies are free. Gentle touches retain their spring; stronger hits still give stronger
+A fourth-power blend keeps roof hits springy and softens glances. The roof
+uses the ordinary 0.90 material, with no additional dribbling boost. The tracked
+underbody absorbs landings: restitution blends toward 0.12 on a square downward
+hit, giving the miner a small rebound instead of launching it off the guest.
+This absorbs rebound along the real contact normal, with equal opposite recoil
+when both bodies are free. Gentle touches retain their spring; stronger hits still give stronger
 shots. Contact friction is 0.04. Tangential friction exchanges spin as well as
 linear momentum. There is no minimum launch, automatic aim, catch radius, or
 aerial boost. Player gravity and flight controls are unchanged. Speed and
 contact height control the shot: get underneath to lift, strike level to drive
 sideways, and hit from above to spike. Free-flight motion has no new drag or
 speed limit. A ground pop followed by a timed jet can chain aerials. The fixed
-drive/jet browser test produces three aerial touches. Its separate shallow
+drive/jet browser test checks consecutive aerial touches. Its separate shallow
 angle impact checks now leave at 276 to 298 px/s sideways, close to flight cruise.
 
 Contact separation moves both bodies according to their mass. Terrain carries
-the load on any blocked axis, so a slime on the floor rebounds the falling rig
+the load on any blocked axis, so a slime on the floor supports the falling rig
 instead of being repeatedly pushed into the floor and back inside the miner.
 A grounded miner also returns the roof bounce without recoiling into the soil.
 Off-center landings can roll the guest away. Small landing contacts settle;
 a resting guest counts as foot support, and normal jets can lift off it.
 The swept collision path includes position corrections without treating them
-as velocity on the next frame. Drawing follows that separation immediately.
-Landing, resting, and takeoff checks run at 30, 60, and 144 Hz.
+as velocity on the next frame. Drawing receives only the small separation
+offset, preserving the miner's existing motion smoothing. The previous full
+sprite snap on every touch caused visible stutter during dribbling.
+Landing, resting, and takeoff checks run at 30, 60, and 144 Hz; the browser
+dribble check also limits contact-induced sprite jumps to less than one pixel.
 
 Live jets now apply pressure to sky guests. Eleven rays from each of the two
 banked nozzles cover a spreading cone up to 160 pixels long. Pressure follows

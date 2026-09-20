@@ -20,7 +20,7 @@
   var SKY_SLIME_RIG_HULL = [0.40,0.18, 0.60,0.18, 1.25,0.80,
     0.94,0.98, 0.06,0.98, -0.25,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
-  var SKY_SLIME_ROOF_RESTITUTION = 1.0;
+  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.12;
   var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
@@ -388,13 +388,15 @@
     }
     s.x += nx * correction * bx; s.y += ny * correction * by;
     player.x += moveX; player.y += moveY;
-    // Render easing must not leave the visible hull inside a solid guest.
-    if (moveX && isFinite(player.renderX)) player.renderX = player.x;
-    if (moveY && isFinite(player.renderY)) player.renderY = player.y;
+    // Carry only the separation into the sprite. Snapping all the way to
+    // the logical position erased its normal motion lag at every touch,
+    // producing a visible forward jump followed by another easing cycle.
+    if (isFinite(player.renderX)) player.renderX += moveX;
+    if (isFinite(player.renderY)) player.renderY += moveY;
     var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
     if (relative >= 0) return;
     // The bumper yields under a hard sideways load. Gentle touches and
-    // square roof/belly strikes keep their spring; fast glances lose rebound.
+    // square roof strikes keep their spring; fast glances lose rebound.
     // Smooth compression response keeps stronger hits stronger. It changes
     // only restitution, never the normal, free-flight speed, or shot direction.
     var vertical2 = ny * ny;
@@ -403,9 +405,9 @@
     var cushion = (1 - vertical2 * vertical2) * sideLoad4 / (1 + sideLoad4);
     var restitution = SKY_SLIME_RIG_RESTITUTION -
       (SKY_SLIME_RIG_RESTITUTION - SKY_SLIME_RIG_SIDE_RESTITUTION) * cushion;
-    var roof = skySlimeClamp((-ny - 0.8) / 0.2, 0, 1);
-    roof = roof * roof * (3 - 2 * roof);
-    restitution += (SKY_SLIME_ROOF_RESTITUTION - restitution) * roof;
+    // The tracked underbody absorbs a landing. Its damping blends with
+    // the side bumper on oblique hits; the roof uses the ordinary material.
+    if (ny > 0) restitution += (SKY_SLIME_RIG_LANDING_RESTITUTION - restitution) * ny * ny;
     // A resting rig receives up to one frame of gravity before this pass.
     // Absorb that small load rather than making a perpetual tiny trampoline.
     var resting = ny > 0.6 && by === 0;
