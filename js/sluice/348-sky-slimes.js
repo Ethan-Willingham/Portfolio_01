@@ -153,6 +153,13 @@
     return s;
   }
 
+  function skySlimeBlink(s) {
+    if (s.blink > 0 || s._blinkCool > 0) return;
+    s.blink = 0.16;
+    s._blinkCool = 0.45;
+    s.blinkIn = 3.5 + Math.random() * 4.5;
+  }
+
   function skySlimeImpact(s, nx, ny, speed) {
     if (speed < 25 || s._impactT > 0) return;
     s._impactT = 0.065;
@@ -216,6 +223,7 @@
           s.vx += friction * tx; s.vy += friction * ty;
           s.spin -= friction / (0.4 * s.r);
           if (ny < -0.6) s._rollingDrag = soft ? 36 : 22;
+          if (ny < -0.6 && vn < -55) skySlimeBlink(s);
           skySlimeImpact(s, nx, ny, -vn);
         }
       }
@@ -253,6 +261,10 @@
   }
 
   function skySlimeExpression(s, h) {
+    s.blink = Math.max(0, (s.blink || 0) - h);
+    s._blinkCool = Math.max(0, (s._blinkCool || 0) - h);
+    s.blinkIn = (isFinite(s.blinkIn) ? s.blinkIn : 3.5 + s.seed * 4.5) - h;
+    if (s.blinkIn <= 0) skySlimeBlink(s);
     // A loose black disk inside a white plastic eye, not a flesh eyelid.
     // The disk lags changes in body velocity and rebounds off its cup.
     s.glanceIn = (isFinite(s.glanceIn) ? s.glanceIn : 4) - h;
@@ -689,9 +701,22 @@
     ctx.beginPath(); ctx.arc(0, 0, s.r, 0, Math.PI * 2);
     ctx.fillStyle = shade; ctx.fill();
     ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1; ctx.stroke();
-    // Classic craft googly eye: white round cup, loose black disk. No iris,
-    // fleshy socket, eyelid, or constant tracking of the player.
+    // The whole craft eye briefly pinches into a cartoon crease. A fast
+    // close and softer reopen read as a blink without adding a fleshy lid.
     var ex = -s.r * 0.055, ey = -s.r * 0.08, er = s.r * s.eyeSize;
+    var shut = 0;
+    if (s.blink > 0) {
+      var elapsed = 0.16 - s.blink;
+      shut = elapsed < 0.045 ? elapsed / 0.045 : elapsed < 0.065 ? 1 : s.blink / 0.095;
+      shut = skySlimeClamp(shut, 0, 1); shut = shut * shut * (3 - 2 * shut);
+    }
+    if (shut > 0.9) {
+      ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(ex - er * 0.78, ey);
+      ctx.quadraticCurveTo(ex, ey + er * 0.2, ex + er * 0.78, ey); ctx.stroke();
+      ctx.restore(); return;
+    }
+    ctx.translate(ex, ey); ctx.scale(1, 1 - shut); ctx.translate(-ex, -ey);
     ctx.fillStyle = SKY_SLIME_RAMP[0];
     ctx.beginPath(); ctx.arc(ex + 0.5, ey + 0.9, er + 0.9, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#c0b8b0';

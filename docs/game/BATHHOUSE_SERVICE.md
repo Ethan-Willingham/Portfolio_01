@@ -104,12 +104,16 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.17)
+## Sky visitor physics and appearance (v28.20)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
 glances at a nearby player. Impact squash is brief and visual; it never changes the
 collision radius. Existing visitors acquire this appearance when loaded.
+The eye makes a subtle 160 ms cartoon blink on ground impacts above 55 px/s
+and occasionally at random (3.5 to 8 seconds between blinks). It pinches into a
+small curved line, then reopens. A short cooldown prevents contact chatter;
+blinks affect only drawing, never body or pupil physics.
 
 Guests have 2.5 times their former collision mass, with gravity reduced from
 480 to 300 px/s squared. The rig has mass 6 and a radius-25 guest has mass 2.5;
