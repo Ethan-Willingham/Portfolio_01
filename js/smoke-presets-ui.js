@@ -19,13 +19,13 @@
     panel.querySelector('h2').textContent = 'Exhaust library';
     var intro = document.createElement('div');
     intro.className = 'smoke-library-intro';
-    intro.innerHTML = '<p>Your two exported looks, plus ten experiments in what exhaust can be.</p>' +
+    intro.innerHTML = '<p>Your two exported looks, plus eight experiments in smoke physics. Switch looks while the rig runs; the smoke already in the air stays.</p>' +
       '<button class="toy-chip" id="smoke-audition">Preview on rig</button>' +
       '<div class="smoke-selection" aria-live="polite"><p id="smoke-origin"></p><h3 id="smoke-name"></h3><p id="smoke-description"></p></div>' +
       '<div class="smoke-actions"><button class="toy-chip" id="smoke-favorite" aria-pressed="false">Save favorite</button>' +
       '<button class="toy-chip" id="smoke-export">Export this look</button></div>' +
       '<label class="smoke-filter-label" for="smoke-family">Collection</label>' +
-      '<select id="smoke-family"><option value="all">All 12 exhausts</option><option value="favorites">Favorites</option></select>';
+      '<select id="smoke-family"><option value="all">All 10 exhausts</option><option value="favorites">Favorites</option></select>';
     body.insertBefore(intro, row);
     row.querySelector('label').remove();
     row.className = 'smoke-catalog';
@@ -59,7 +59,7 @@
     tuning.innerHTML = '<summary>Tune this exhaust</summary><div class="toy-sliders"></div>';
     body.appendChild(tuning);
     tuning.appendChild(scaleRow);
-    [['mass', 'Mass'], ['motion', 'Liveliness'], ['size', 'Size']].forEach(function (pair) {
+    [['mass', 'Density'], ['motion', 'Liveliness'], ['size', 'Size']].forEach(function (pair) {
       var wrap = document.createElement('div'); wrap.className = 'toy-slider';
       wrap.innerHTML = '<label for="smoke-' + pair[0] + '">' + pair[1] + '<b>100%</b></label>' +
         '<input type="range" id="smoke-' + pair[0] + '" min="25" max="250" value="100" step="5">';
@@ -68,13 +68,33 @@
       });
       tuning.querySelector('.toy-sliders').appendChild(wrap);
     });
+    var physicsFields = [
+      ['HEAT', 'Emission heat', 0, 4, 0.05],
+      ['BUOYANCY', 'Lift from heat', 0, 500, 5],
+      ['WEIGHT', 'Smoke weight', 0, 300, 5],
+      ['COOLING', 'Cooling speed', 0, 6, 0.05],
+      ['VISCOSITY', 'Internal friction', 0, 30, 0.5],
+      ['EDGE_SPIN', 'Edge spin', -250, 250, 5]
+    ];
+    var physics = document.createElement('details'); physics.className = 'toy-details smoke-tuning';
+    physics.innerHTML = '<summary>Change the physics live</summary><div class="toy-sliders"></div>';
+    physicsFields.forEach(function (field) {
+      var wrap = document.createElement('div'); wrap.className = 'toy-slider';
+      wrap.innerHTML = '<label for="smoke-physics-' + field[0] + '">' + field[1] + '<b></b></label>' +
+        '<input type="range" id="smoke-physics-' + field[0] + '" min="' + field[2] + '" max="' + field[3] + '" step="' + field[4] + '">';
+      wrap.querySelector('input').addEventListener('input', function (event) {
+        toy.smokePhysics(field[0], Number(event.target.value)); sync();
+      });
+      physics.querySelector('.toy-sliders').appendChild(wrap);
+    });
+    body.appendChild(physics);
     var reset = document.createElement('button'); reset.className = 'toy-chip'; reset.textContent = 'Restore recipe';
     reset.addEventListener('click', function () {
-      toy.set('smokePreset', toy.smokePreset().id); toy.clearSmoke(); sync();
+      toy.set('smokePreset', toy.smokePreset().id); sync();
     });
-    tuning.appendChild(reset);
+    physics.appendChild(reset);
     var footer = document.createElement('div'); footer.className = 'smoke-library-footer';
-    footer.innerHTML = '<label><input type="checkbox" id="smoke-clean" checked> Clear smoke when switching</label>' +
+    footer.innerHTML = '<label><input type="checkbox" id="smoke-clean"> Clear smoke when switching</label>' +
       '<div class="smoke-actions"><button class="toy-chip" id="smoke-clear">Clear smoke</button>' +
       '<button class="toy-chip" id="smoke-export-favorites">Export favorites</button></div>' +
       '<p id="smoke-notice" role="status">Favorites stay in this browser. Exports include your tuning.</p>';
@@ -97,6 +117,8 @@
       if (!saved) return;
       if (saved.scale) toy.set('smokeScale', saved.scale.id);
       if (saved.tuning) ['mass', 'motion', 'size'].forEach(function (k) { toy.smokeTune(k, saved.tuning[k]); });
+      var values = saved.physics || saved.preset.physics;
+      if (values) Object.keys(values).forEach(function (k) { toy.smokePhysics(k, values[k]); });
     }
     function next(direction) {
       var list = visibleRecipes(); if (!list.length) return;
@@ -109,7 +131,7 @@
     function sync() {
       var state = toy.smokePreset(), recipe = library.byId[state.id];
       document.getElementById('smoke-name').textContent = recipe.name;
-      document.getElementById('smoke-origin').textContent = recipe.saved ? 'Your exported tuning' : 'New experiment';
+      document.getElementById('smoke-origin').textContent = recipe.saved ? 'Your exported tuning' : 'Fluid experiment';
       document.getElementById('smoke-description').textContent = recipe.description;
       document.getElementById('smoke-current').textContent = recipe.name;
       var favorite = document.getElementById('smoke-favorite');
@@ -129,6 +151,12 @@
         input.value = Math.round(state.tuning[key] * 100);
         input.previousElementSibling.querySelector('b').textContent = input.value + '%';
       });
+      physicsFields.forEach(function (field) {
+        var input = document.getElementById('smoke-physics-' + field[0]);
+        input.value = state.physics[field[0]];
+        input.previousElementSibling.querySelector('b').textContent = String(Math.round(state.physics[field[0]] * 100) / 100);
+      });
+      document.getElementById('smoke-clean').checked = state.clean;
       transport.hidden = toy.stats().scene !== 'rig';
       shell.classList.toggle('smoke-library-open', !panel.hidden);
       toy.resize();

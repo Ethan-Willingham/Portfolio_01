@@ -120,6 +120,20 @@ the *effective* sim settings on both WebGPU and WebGL.
 | `sim_pressure_iters` | `17` | 1–30 | **Jacobi pressure iterations — bulk of the sim cost.** Perf knob |
 | `sim_splat_radius` | `0.255` | 0.05–0.5 | Global splat radius — **↑ = blurrier/softer smoke** |
 
+### Runtime material physics (v28.22)
+
+`gm.smokePhysics(profile, transitionSeconds)` applies heat, cooling, buoyancy,
+smoke weight, velocity diffusion and signed edge circulation to the current
+WebGL domain. `gm.smokePhysics()` reads the target profile. All forces default
+to zero. Switching preserves existing fields and needs no restart, allocation
+or shader compilation. The default transition is 0.35 simulation seconds.
+This API is independent of the legacy `smokeTune` assignments above.
+
+See [Exhaust physics experiments](../SMOKE_PRESETS.md) for coefficient ranges,
+the eight demo recipes, export format, solver details and the remaining
+rig-only cosmetic integration boundary. These forces currently affect the
+whole smoke domain. The shop is not connected to the demo exports yet.
+
 ## 1.2 Smoke resolution / sharpness · tier `edit`
 
 grep `function smokeFluidScaledRes` and `SMOKE_RENDER_SCALE_DESKTOP`. **These

@@ -2262,6 +2262,11 @@
       // Direct references to the three tuning objects, so both
       // `gm.set('smoke.sim_curl', 38)` and `gm.smoke.sim_curl = 38` work.
       gm.smoke = smokeTune;
+      // Runtime material changes preserve the existing GPU fluid domain.
+      gm.smokePhysics = function (values, seconds) {
+        if (values === undefined) return SmokeFluid.getPhysics();
+        return SmokeFluid.setPhysics(values, seconds);
+      };
       gm.fireplace = fireplaceTune;
       gm.rocket = rocketTune;
       gm.fly = flyTune;

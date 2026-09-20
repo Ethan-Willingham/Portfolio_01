@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.41'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.42'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1066,8 +1066,30 @@
       CURL: 26,
       SPLAT_RADIUS: 0.22,
       SHADING: true,
+      OPTICAL_DENSITY: 0,
     };
   
+    // Runtime material controls. Temperature uses the dye texture's unused
+    // alpha channel, so changing a material never replaces GPU fields.
+    var physicsDefaults = { HEAT: 0, COOLING: 1, BUOYANCY: 0, WEIGHT: 0, VISCOSITY: 0, EDGE_SPIN: 0 };
+    var physicsLimits = { HEAT: [0, 4], COOLING: [0, 6], BUOYANCY: [0, 500],
+      WEIGHT: [0, 300], VISCOSITY: [0, 30], EDGE_SPIN: [-250, 250] };
+    var physics = Object.assign({}, physicsDefaults);
+    var physicsTarget = Object.assign({}, physicsDefaults);
+    var physicsTransition = 0;
+    function setPhysics(values, seconds) {
+      values = values || {};
+      for (var key in physicsDefaults) {
+        var value = Number(values[key]);
+        if (values[key] == null || !Number.isFinite(value)) value = physicsDefaults[key];
+        physicsTarget[key] = Math.max(physicsLimits[key][0], Math.min(physicsLimits[key][1], value));
+      }
+      physicsTransition = Number.isFinite(seconds) ? Math.max(0, Math.min(5, seconds)) : 0.35;
+      if (!physicsTransition) Object.assign(physics, physicsTarget);
+      return getPhysics();
+    }
+    function getPhysics() { return Object.assign({}, physicsTarget); }
+
     var dye, velocity, divergence, curl, pressure;
     var copyProgram, clearProgram, splatProgram, advectionProgram,
         divergenceProgram, curlProgram, vorticityProgram, pressureProgram,
@@ -1256,14 +1278,16 @@
       'uniform sampler2D uTarget;\n' +
       'uniform float aspectRatio;\n' +
       'uniform vec3 color;\n' +
+      'uniform float heat;\n' +
       'uniform vec2 point;\n' +
       'uniform float radius;\n' +
       'void main () {\n' +
       '  vec2 p = vUv - point.xy;\n' +
       '  p.x *= aspectRatio;\n' +
       '  vec3 splat = exp(-dot(p, p) / radius) * color;\n' +
-      '  vec3 base = texture2D(uTarget, vUv).xyz;\n' +
-      '  gl_FragColor = vec4(base + splat, 1.0);\n' +
+      '  vec4 base = texture2D(uTarget, vUv);\n' +
+      '  float temperature = min(64.0, base.a + exp(-dot(p, p) / radius) * heat);\n' +
+      '  gl_FragColor = vec4(base.rgb + splat, temperature);\n' +
       '}\n';
   
     var ADVECTION_FS = '\n' +
@@ -1283,6 +1307,7 @@
       'uniform vec2 dyeTexelSize;\n' +
       'uniform float dt;\n' +
       'uniform float dissipation;\n' +
+      'uniform float cooling;\n' +
       'uniform float useObstacle;\n' +
       'uniform float u_wind_x;\n' +
       'uniform float u_wind_above_y;\n' +
@@ -1321,7 +1346,9 @@
       '    return;\n' +
       '  }\n' +
       '  float decay = 1.0 + dissipation * dt;\n' +
+      '  float temperature = result.a;\n' +
       '  result /= decay;\n' +
+      '  if (velocityPass < 0.5) result.a = temperature * exp(-cooling * dt);\n' +
       '  if (useLiquid > 0.5 && velocityPass > 0.5) {\n' +
       '    vec4 water = texture2D(uLiquid, vUv);\n' +
       '    vec2 target = (water.rg * 255.0 - 128.0) / 127.0 * liquidVelocityScale / texelSize;\n' +
@@ -1382,6 +1409,9 @@
       'varying vec2 vB;\n' +
       'uniform sampler2D uVelocity;\n' +
       'uniform sampler2D uCurl;\n' +
+      'uniform sampler2D uDye;\n' +
+      'uniform vec3 materialForces;\n' +
+      'uniform float viscosity;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
       'uniform sampler2D uLiquid;\n' +
@@ -1390,6 +1420,10 @@
       'uniform vec2 texelSize;\n' +
       'uniform float curl;\n' +
       'uniform float dt;\n' +
+      'float density(vec2 uv) {\n' +
+      '  vec3 c = texture2D(uDye, uv).rgb;\n' +
+      '  float d = max(c.r, max(c.g, c.b)); return d / (1.0 + d);\n' +
+      '}\n' +
       'void main () {\n' +
       '  float L = texture2D(uCurl, vL).x;\n' +
       '  float R = texture2D(uCurl, vR).x;\n' +
@@ -1401,6 +1435,22 @@
       '  force *= curl * C;\n' +
       '  force.y *= -1.0;\n' +
       '  vec2 velocity = texture2D(uVelocity, vUv).xy;\n' +
+      // Convex explicit diffusion stays bounded at every supported time step.
+      '  if (viscosity > 0.0) {\n' +
+      '    vec2 mean = (texture2D(uVelocity, vL).xy + texture2D(uVelocity, vR).xy\n' +
+      '      + texture2D(uVelocity, vT).xy + texture2D(uVelocity, vB).xy) * 0.25;\n' +
+      '    velocity = mix(velocity, mean, 1.0 - exp(-viscosity * dt));\n' +
+      '  }\n' +
+      '  if (any(notEqual(materialForces, vec3(0.0)))) {\n' +
+      '    float heat = max(0.0, texture2D(uDye, vUv).a);\n' +
+      '    force.y += materialForces.x * heat / (1.0 + heat) - materialForces.y * density(vUv);\n' +
+      // An optional chiral force follows the dye boundary. It stirs actual
+      // velocity, which the pressure solve projects with all other forces.
+      '    if (materialForces.z != 0.0) {\n' +
+      '      vec2 gradient = 0.5 * vec2(density(vR) - density(vL), density(vT) - density(vB));\n' +
+      '      force += materialForces.z * vec2(-gradient.y, gradient.x);\n' +
+      '    }\n' +
+      '  }\n' +
       '  velocity += force * dt;\n' +
       '  velocity = min(max(velocity, -1000.0), 1000.0);\n' +
       // Limit air travel to one simulation cell per step. Fast water keeps
@@ -1504,6 +1554,7 @@
       'uniform vec2 movingTexelSize;\n' +
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
+      'uniform float opticalDensity;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -1522,7 +1573,10 @@
       '  float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);\n' +
       '  c *= diffuse;\n' +
       '#endif\n' +
+      '  vec3 unmasked = c;\n' +
+      '  float visibility = 1.0;\n' +
       '  float obstacle = useObstacle > 0.5 ? texture2D(uObstacle, vUv).a : 0.0;\n' +
+      '  visibility *= 1.0 - smoothstep(0.35, 0.85, obstacle);\n' +
       '  c *= 1.0 - smoothstep(0.35, 0.85, obstacle);\n' +
       // The low-resolution collision mask is visible THROUGH translucent gel.
       // Feather its coverage in this existing display pass, without sharpening
@@ -1538,12 +1592,23 @@
       '      + texture2D(uMoving, vUv - d).a\n' +
       '      + texture2D(uMoving, vUv + vec2(d.x, -d.y)).a\n' +
       '      + texture2D(uMoving, vUv + vec2(-d.x, d.y)).a) * 0.0625;\n' +
+      '    visibility *= 1.0 - coverage;\n' +
       '    c *= 1.0 - coverage;\n' +
       '  }\n' +
       // Water only occludes the displayed dye. Its motion never deletes dye
       // from the simulation, so smoke rolls back into the wake after a splash.
-      '  if (useLiquid > 0.5) c *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
+      '  if (useLiquid > 0.5) {\n' +
+      '    visibility *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
+      '    c *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
+      '  }\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
+      // Straight-alpha absorption preserves hue in dense experimental smoke.
+      // Legacy materials retain their original RGB/alpha transfer exactly.
+      '  if (opticalDensity > 0.5) {\n' +
+      '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
+      '    c = 0.9 * unmasked / max(density, 0.0001);\n' +
+      '    a = (1.0 - exp(-density)) * visibility;\n' +
+      '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
   
@@ -2024,6 +2089,11 @@
     function step (dt) {
       if (!ready) return;
       if (dt <= 0) return;
+      if (physicsTransition > 0) {
+        var blend = Math.min(1, dt / physicsTransition);
+        for (var key in physics) physics[key] += (physicsTarget[key] - physics[key]) * blend;
+        physicsTransition = Math.max(0, physicsTransition - dt);
+      }
       var useObstacle = obstacleSrcCanvas ? 1.0 : 0.0;
       var pressureDecay = config.PRESSURE;
       if (pressureDecay < 0) pressureDecay = 0;
@@ -2043,6 +2113,9 @@
       gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
       gl.uniform1f(vorticityProgram.uniforms.useMoving, movingActive ? 1 : 0);
       gl.uniform1i(vorticityProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
+      gl.uniform1i(vorticityProgram.uniforms.uDye, dye.read.attach(3));
+      gl.uniform3f(vorticityProgram.uniforms.materialForces, physics.BUOYANCY, physics.WEIGHT, physics.EDGE_SPIN);
+      gl.uniform1f(vorticityProgram.uniforms.viscosity, physics.VISCOSITY);
       gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
       gl.uniform1f(vorticityProgram.uniforms.dt, dt);
       blit(velocity.write);
@@ -2097,6 +2170,7 @@
       gl.uniform1i(advectionProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(3) : attachObstacle(3));
       gl.uniform1f(advectionProgram.uniforms.velocityPass, 1);
       gl.uniform1f(advectionProgram.uniforms.dt, dt);
+      gl.uniform1f(advectionProgram.uniforms.cooling, physics.COOLING);
       gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
       // No wind on velocity pass — keeps the pressure solve clean.
       gl.uniform1f(advectionProgram.uniforms.u_wind_x, 0.0);
@@ -2132,6 +2206,7 @@
       gl.uniform1f(splatProgram.uniforms.aspectRatio, aspect);
       gl.uniform2f(splatProgram.uniforms.point, uvX, uvY);
       gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+      gl.uniform1f(splatProgram.uniforms.heat, 0);
       gl.uniform1f(splatProgram.uniforms.radius, radius);
       blit(velocity.write);
       velocity.swap();
@@ -2145,6 +2220,7 @@
       if (color.r === 0 && color.g === 0 && color.b === 0) return;
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+      gl.uniform1f(splatProgram.uniforms.heat, physics.HEAT * Math.max(color.r, color.g, color.b));
       blit(dye.write);
       dye.swap();
     }
@@ -2214,6 +2290,7 @@
       // Blending against the cleared target adds no colour or alpha.
       gl.disable(gl.BLEND);
       displayMaterial.bind();
+      gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -2276,6 +2353,9 @@
       clearObstacle: clearObstacle,
       isReady: isReady,
       config: config,
+      setPhysics: setPhysics,
+      getPhysics: getPhysics,
+      physicsVersion: 1,
     };
   })();
   /* >>> ENGINE SYNC: END smoke-engine <<< */
@@ -10631,19 +10711,15 @@
     var c = SmokeFluid.config;
     smokeCfgDefault = { CURL: c.CURL, DENSITY_DISSIPATION: c.DENSITY_DISSIPATION,
       VELOCITY_DISSIPATION: c.VELOCITY_DISSIPATION, PRESSURE: c.PRESSURE,
-      PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS };
+      PRESSURE_ITERATIONS: c.PRESSURE_ITERATIONS, OPTICAL_DENSITY: c.OPTICAL_DENSITY };
   }
   var smokeRecipe = window.SmokePresets.byId.copperhead;
   var smokeTuning = { mass: 1, motion: 1, size: 1 };
-  var smokeCleanSwitch = true;
+  var smokeCleanSwitch = false;
   var smokeRigMode = 'idle';
   var smokeRig = { x: 0, y: 0, clock: 0, throttle: 1 };
 
-  var smokeEffects = window.SmokeEffects.create(isMobile ? 110 : 180);
-  var smokeEffectCanvas = null, smokeEffectCtx = null;
   function clearSmokeOnly() {
-    smokeEffects.clear();
-    if (smokeEffectCtx) smokeEffectCtx.clearRect(0, 0, worldW, worldH);
     if (smokeActive) { SmokeFluid.clear(); SmokeFluid.displayPass(); }
     smokeAwakeT = 0;
     smokeWasAwake = false;
@@ -10661,8 +10737,8 @@
     presetIdleHold = smokeRecipe.source.idleHold;
     smokeCurlBase = c.CURL;
     presetApplySmokeScale(PRESET_ACTIVE.smokeScale);
+    SmokeFluid.setPhysics(smokeRecipe.physics || {});
     if (smokeCleanSwitch) clearSmokeOnly();
-    emitters.forEach(function (em) { if (em.kind === 'smoke') { em.age = 0; em.acc = 0; } });
   }
   function presetApplySmokeScale(name) {
     presetSmokeSnapshot();
@@ -10680,8 +10756,6 @@
     if (emitters[0]) { emitters[0].x = smokeRig.x - 12; emitters[0].y = smokeRig.y - 23; }
   }
   function emitSmokeRecipe(x, y, dx, dy, age, phase, strength, radius, throttle, carryX, carryY, sourceKey) {
-    smokeEffects.emit(smokeRecipe, sourceKey || 'brush', x, y, dx, dy, age,
-      smokeTuning, presetSmokeScaleObj, throttle, strength, radius);
     var packets = window.SmokePresets.sample(smokeRecipe, age, phase, smokeTuning,
       presetSmokeScaleObj, throttle);
     var crossX = -dy, crossY = dx;
@@ -11270,21 +11344,6 @@
     }
   }
 
-  function stepSmokeEffects(dt) {
-    smokeEffects.step(dt * timeMul, {
-      solid: function (x, y) {
-        if (x < 0 || y < 0 || x >= worldW || y >= worldH) return true;
-        return !!walls[Math.floor(y / TILE) * gridW + Math.floor(x / TILE)];
-      },
-      puff: smokePuff
-    });
-  }
-  function drawSmokeEffects() {
-    if (!smokeEffectCtx) return;
-    smokeEffectCtx.clearRect(0, 0, worldW, worldH);
-    smokeEffects.draw(smokeEffectCtx);
-  }
-
   function drawSmokeRig() {
     if (currentScene !== 'rig') return;
     var x = smokeRig.x, y = smokeRig.y;
@@ -11485,7 +11544,6 @@
     ctx.clearRect(0, 0, worldW, worldH);
     drawEmitterFixtures();
     drawSmokeRig();
-    drawSmokeEffects();
     drawJelloBlobs();
     drawSlimeLooks();
     drawCursor();
@@ -11584,7 +11642,6 @@
         dbgE.cyPost = dbgB.cy;
       }
     }
-    stepSmokeEffects(dt);
     smokeFrame(dt);
     render();
 
@@ -11650,13 +11707,6 @@
     addBorder();
     bootLiquid();
     bootSmoke();
-    smokeEffectCanvas = document.createElement('canvas');
-    smokeEffectCanvas.width = canvas.width; smokeEffectCanvas.height = canvas.height;
-    smokeEffectCanvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;';
-    smokeEffectCanvas.setAttribute('aria-hidden', 'true');
-    stage.appendChild(smokeEffectCanvas);
-    smokeEffectCtx = smokeEffectCanvas.getContext('2d');
-    smokeEffectCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wireUI();
     var smokeQuery = new URLSearchParams(location.search);
     var smokeName = smokeQuery.get('smoke');
@@ -11707,7 +11757,7 @@
       },
       smokePreset: function () {
         return { id: PRESET_ACTIVE.smoke, scale: PRESET_ACTIVE.smokeScale,
-          tuning: Object.assign({}, smokeTuning), clean: smokeCleanSwitch, rig: smokeRigMode };
+          tuning: Object.assign({}, smokeTuning), physics: SmokeFluid.getPhysics(), clean: smokeCleanSwitch, rig: smokeRigMode };
       },
       smokeTune: function (key, value) {
         if (!Object.prototype.hasOwnProperty.call(smokeTuning, key) || !Number.isFinite(+value)) return;
@@ -11719,10 +11769,16 @@
       smokeRigMode: function (mode) {
         if (['idle', 'drive', 'boost'].indexOf(mode) >= 0) smokeRigMode = mode;
       },
-      smokeEffects: function () { return smokeEffects.stats(); },
+      smokePhysics: function (key, value) {
+        var values = SmokeFluid.getPhysics();
+        if (!Object.prototype.hasOwnProperty.call(values, key) || !Number.isFinite(+value)) return;
+        values[key] = +value;
+        return SmokeFluid.setPhysics(values);
+      },
       smokeExport: function () {
-        return JSON.parse(JSON.stringify({ schema: 'sluice-smoke-recipe', version: smokeRecipe.effect ? 2 : 1,
-          samplerVersion: smokeRecipe.samplerVersion, rendererVersion: smokeRecipe.effect ? window.SmokeEffects.version : 0, preset: smokeRecipe,
+        return JSON.parse(JSON.stringify({ schema: 'sluice-smoke-recipe', version: 3,
+          samplerVersion: smokeRecipe.samplerVersion, solverVersion: SmokeFluid.physicsVersion,
+          physics: SmokeFluid.getPhysics(), preset: smokeRecipe,
           scale: { id: PRESET_ACTIVE.smokeScale, values: presetSmokeScaleObj }, tuning: smokeTuning }));
       },
       scene: scene,
