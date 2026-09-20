@@ -724,9 +724,6 @@
     player.tremor = (player.tremor || 0) * Math.exp(-dt / 0.14);
     if (player.tremor < 0.01) player.tremor = 0;
 
-    // Terminal fall: one cap, every regime (a live lever like the rest).
-    if (player.vy > flyTune.maxFall) player.vy = flyTune.maxFall;
-
     // v23.82 — eased visual body tilt: the SINGLE source for both drawPlayer and
     // the exhaust/smoke (via playerLocalToWorld), so they rotate in lockstep.
     // Eases toward the flight bank (or upright in the mining pose) so entering
@@ -738,25 +735,12 @@
     player.bodyTiltRender = (player.bodyTiltRender || 0) + _btD * (1 - Math.exp(-12 * dt));
     if (Math.abs(_btD) < 0.002) player.bodyTiltRender = _btTarget;
 
-    // ----- v24.148 WATER MEDIUM (deep lakes) -----
-    // One shared step after every flight branch (upright, rotation, VTOL):
-    // measured submersion (playerWaterFrac, 040) drives velocity drag, a
-    // partial-buoyancy relief on this frame's gravity pull, and a terminal
-    // sink speed, so plunging into a 5-8 deep lake decelerates like water,
-    // the rig settles to the lakebed gently (under the 340 px/s damage
-    // floor), and jetpack thrust still climbs out (thrust >> drag at low
-    // speed). Pure function of the rig's own state + water presence.
-    var wFrac = (typeof playerWaterFrac === 'function') ? playerWaterFrac() : 0;
-    player.waterFrac = wFrac;
-    if (wFrac > 0.05) {
-      var wDragK = Math.exp(-WATER_RIG_DRAG * wFrac * dt);
-      player.vx *= wDragK;
-      player.vy *= wDragK;
-      player.vy -= flyTune.gravity * gravScale * dt * WATER_RIG_BUOY * wFrac;
-      if (wFrac > 0.5 && player.vy > WATER_RIG_SINK_VMAX) {
-        player.vy += (WATER_RIG_SINK_VMAX - player.vy) * (1 - Math.exp(-6 * dt));
-      }
-    }
+    // Water resistance follows local flow and actual hull contact. The
+    // landing cushion is separate from these continuous movement forces.
+    applyPlayerWater(dt, flyTune.gravity * gravScale);
+
+    // One world-space fall cap, including motion imparted by flowing water.
+    if (player.vy > flyTune.maxFall) player.vy = flyTune.maxFall;
 
     // Dev probe (window.__trees / __course pattern): read-only flight state,
     // refreshed every update — for headless harness checks + owner bug
@@ -768,6 +752,8 @@
     _fdbg.vx = player.vx; _fdbg.vy = player.vy; _fdbg.spool = player.thrustSpool || 0;
     _fdbg.tilt = player.bodyTiltRender || 0; _fdbg.fuel = player.fuel;
     _fdbg.onGround = !!player.onGround;
+    _fdbg.waterFrac = player.waterFrac;
+    _fdbg.waterVx = player.waterFlowVx; _fdbg.waterVy = player.waterFlowVy;
 
     // Jet audio runs after collision/drill resolution in audioUpdate().
     if (typeof hapticsUpdate === 'function') hapticsUpdate(dt);

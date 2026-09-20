@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.39';
+  var GAME_VERSION = 'v28.40';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1855,19 +1855,14 @@
                                       // a stimulus (a single GC-hitch frame spikes |vy| via gravity*dt
                                       // and otherwise snaps a sleeping pond lively for nothing)
   var liquidStateName = 'live';       // probe/meter label: live | settling | settled | frozen
-  // ---- v24.148 RIG WATER MEDIUM (deep lakes) ----
-  // The lakes are 5-8 tiles deep, so the rig genuinely submerges. One
-  // shared step in 080 (after every flight branch) applies drag + partial
-  // buoyancy + a terminal sink speed, scaled by measured submersion
-  // (playerWaterFrac, 040). The rig is iron: it SINKS, drives the lakebed,
-  // and jets out — never bobs (a floating-vehicle model is a deliberately
-  // avoided tuning pit). Net-in-water gravity 760*(1-BUOY) with DRAG /s
-  // gives ~150 px/s natural terminal; SINK_VMAX pulls that to ~95, well
-  // under the 340 px/s fall-damage floor, so lakebed landings are gentle
-  // even before the water cushion. gm water.RIG_* levers.
-  var WATER_RIG_DRAG = 2.2;           // /s exponential velocity drag at full submersion
-  var WATER_RIG_BUOY = 0.55;          // fraction of gravity cancelled at full submersion
-  var WATER_RIG_SINK_VMAX = 95;       // px/s terminal sink speed in deep coverage
+  // ---- Rig water forces ----
+  // Density-weighted hull contact and local flow are sampled in 040.
+  // Quadratic drag opposes motion RELATIVE to that flow. A heavy rig keeps
+  // its entry momentum and sinks at roughly 430 px/s in a still lake;
+  // there is no separate water speed cap. Falling streams supply drag
+  // but no hydrostatic lift. Landing cushioning is handled separately.
+  var WATER_RIG_DRAG = 1.4;          // /s drag rate at 400 px/s relative speed
+  var WATER_RIG_BUOY = 0.14;         // gravity displaced by a fully submerged rig
   // v24.120 WATER DEBUG KIT — live A/B toggles for the resting-pond
   // "firecracker" hunt (whole sections jolt in sync ~1/s, then relax).
   // Each lever disables ONE suspect mechanism so the culprit can be
@@ -4499,32 +4494,71 @@
     return (covered - 4) / 6;
   }
 
-  // v24.148 — per-frame submersion fraction for the rig WATER MEDIUM step
-  // (080: drag + slow sink in the deep lakes). playerWaterCushion's scan is
-  // O(liquidCount), so gate it: scan every frame only while inside a filled
-  // lake's rect (cheap test) or while the cached value is still wet (keeps
-  // swimming in player-made flood water responsive); otherwise a 16-frame
-  // heartbeat probe catches flooded digs anywhere at ~zero average cost.
-  var playerWaterFracV = 0;
-  var playerWaterFracTk = 0;
-  function playerWaterFrac() {
-    playerWaterFracTk++;
-    var need = playerWaterFracV > 0.01 || (playerWaterFracTk & 15) === 0;
-    if (!need && typeof surfacePonds !== 'undefined' && surfacePonds.length && player) {
-      var pl = player.x, pr = player.x + PLAYER_W, pt = player.y, pb = player.y + PLAYER_H;
-      for (var i = 0; i < surfacePonds.length; i++) {
-        var p = surfacePonds[i];
-        if (!p.filled) continue;
-        var d = p.d || 1;
-        if (pr < (p.cL - 1) * TILE || pl > (p.cR + 2) * TILE) continue;
-        if (pb < (SKY_ROWS - 1) * TILE || pt > (SKY_ROWS + d + 1) * TILE) continue;
-        need = true;
-        break;
+  // Sample sixteen patches just outside the hull: four along each face.
+  // The collider evacuates the interior, so an interior particle count
+  // would incorrectly make an immersed rig dry. Each patch needs actual
+  // liquid volume, not a single droplet, and contributes at most its area.
+  // Use the shared particle mirror on both GPU and CPU paths. Scanning
+  // every update also catches poured water and flooded shafts immediately.
+  var rigWaterN = new Float32Array(36);
+  var rigWaterVX = new Float32Array(36), rigWaterVY = new Float32Array(36);
+  var rigWaterSample = { wet: 0, buoy: 0, vx: 0, vy: 0 };
+  function playerWaterSample() {
+    var sample = rigWaterSample;
+    sample.wet = sample.buoy = sample.vx = sample.vy = 0;
+    if (!player || !liquidCount) return sample;
+    rigWaterN.fill(0); rigWaterVX.fill(0); rigWaterVY.fill(0);
+    var cw = PLAYER_W / 4, ch = PLAYER_H / 4;
+    var x0 = player.x - cw, y0 = player.y - ch;
+    var x1 = x0 + cw * 6, y1 = y0 + ch * 6;
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] !== 0) continue;
+      var x = liquidX[i], y = liquidY[i];
+      if (x < x0 || x >= x1 || y < y0 || y >= y1) continue;
+      var col = Math.floor((x - x0) / cw), row = Math.floor((y - y0) / ch);
+      var side = col === 0 || col === 5, end = row === 0 || row === 5;
+      if (side === end) continue; // skip the hull interior and the four corners
+      var bin = row * 6 + col;
+      rigWaterN[bin]++;
+      rigWaterVX[bin] += liquidVX[i]; rigWaterVY[bin] += liquidVY[i];
+    }
+    var spacing = LIQUID_CELL * LIQUID_PDELTA;
+    var particleArea = spacing * spacing / (cw * ch);
+    var coverage = 0, lift = 0, vx = 0, vy = 0;
+    for (var b = 0; b < 36; b++) {
+      var n = rigWaterN[b];
+      if (!n) continue;
+      // Sparse spray is air. Ramp to full coverage at ordinary pool density
+      // so compression cannot turn a narrow stream into full immersion.
+      var wet = Math.max(0, Math.min(1, (n * particleArea - 0.12) / 0.53));
+      wet = wet * wet * (3 - 2 * wet);
+      var flowX = rigWaterVX[b] / n, flowY = rigWaterVY[b] / n;
+      coverage += wet; vx += flowX * wet; vy += flowY * wet;
+      if (b % 6 === 0 || b % 6 === 5) {
+        // Hydrostatic lift requires supported water. Fade it out as the
+        // local water falls; a free stream is not a standing water column.
+        var falling = Math.max(0, Math.min(1, (flowY - 60) / 180));
+        lift += wet * (1 - falling * falling * (3 - 2 * falling));
       }
     }
-    if (need) playerWaterFracV = playerWaterCushion();
-    else playerWaterFracV = 0;
-    return playerWaterFracV;
+    sample.wet = coverage / 16;
+    sample.buoy = lift / 8;
+    if (coverage > 0) { sample.vx = vx / coverage; sample.vy = vy / coverage; }
+    return sample;
+  }
+
+  function applyPlayerWater(dt, gravity) {
+    var water = playerWaterSample();
+    player.waterFrac = water.wet;
+    player.waterFlowVx = water.vx; player.waterFlowVy = water.vy;
+    if (water.wet <= 0) return;
+    player.vy -= gravity * WATER_RIG_BUOY * water.buoy * dt;
+    var rx = player.vx - water.vx, ry = player.vy - water.vy;
+    // Exact drag-only decay for dv/dt = -k |v| v. It cannot overshoot the
+    // flow or reverse relative velocity, even at the largest frame step.
+    var decay = 1 / (1 + WATER_RIG_DRAG / 400 * water.wet * Math.hypot(rx, ry) * dt);
+    player.vx = water.vx + rx * decay;
+    player.vy = water.vy + ry * decay;
   }
 
   // ----- Fuel-to-surface estimate (A* pathfinding) -----
@@ -17858,9 +17892,6 @@
     player.tremor = (player.tremor || 0) * Math.exp(-dt / 0.14);
     if (player.tremor < 0.01) player.tremor = 0;
 
-    // Terminal fall: one cap, every regime (a live lever like the rest).
-    if (player.vy > flyTune.maxFall) player.vy = flyTune.maxFall;
-
     // v23.82 — eased visual body tilt: the SINGLE source for both drawPlayer and
     // the exhaust/smoke (via playerLocalToWorld), so they rotate in lockstep.
     // Eases toward the flight bank (or upright in the mining pose) so entering
@@ -17872,25 +17903,12 @@
     player.bodyTiltRender = (player.bodyTiltRender || 0) + _btD * (1 - Math.exp(-12 * dt));
     if (Math.abs(_btD) < 0.002) player.bodyTiltRender = _btTarget;
 
-    // ----- v24.148 WATER MEDIUM (deep lakes) -----
-    // One shared step after every flight branch (upright, rotation, VTOL):
-    // measured submersion (playerWaterFrac, 040) drives velocity drag, a
-    // partial-buoyancy relief on this frame's gravity pull, and a terminal
-    // sink speed, so plunging into a 5-8 deep lake decelerates like water,
-    // the rig settles to the lakebed gently (under the 340 px/s damage
-    // floor), and jetpack thrust still climbs out (thrust >> drag at low
-    // speed). Pure function of the rig's own state + water presence.
-    var wFrac = (typeof playerWaterFrac === 'function') ? playerWaterFrac() : 0;
-    player.waterFrac = wFrac;
-    if (wFrac > 0.05) {
-      var wDragK = Math.exp(-WATER_RIG_DRAG * wFrac * dt);
-      player.vx *= wDragK;
-      player.vy *= wDragK;
-      player.vy -= flyTune.gravity * gravScale * dt * WATER_RIG_BUOY * wFrac;
-      if (wFrac > 0.5 && player.vy > WATER_RIG_SINK_VMAX) {
-        player.vy += (WATER_RIG_SINK_VMAX - player.vy) * (1 - Math.exp(-6 * dt));
-      }
-    }
+    // Water resistance follows local flow and actual hull contact. The
+    // landing cushion is separate from these continuous movement forces.
+    applyPlayerWater(dt, flyTune.gravity * gravScale);
+
+    // One world-space fall cap, including motion imparted by flowing water.
+    if (player.vy > flyTune.maxFall) player.vy = flyTune.maxFall;
 
     // Dev probe (window.__trees / __course pattern): read-only flight state,
     // refreshed every update — for headless harness checks + owner bug
@@ -17902,6 +17920,8 @@
     _fdbg.vx = player.vx; _fdbg.vy = player.vy; _fdbg.spool = player.thrustSpool || 0;
     _fdbg.tilt = player.bodyTiltRender || 0; _fdbg.fuel = player.fuel;
     _fdbg.onGround = !!player.onGround;
+    _fdbg.waterFrac = player.waterFrac;
+    _fdbg.waterVx = player.waterFlowVx; _fdbg.waterVy = player.waterFlowVy;
 
     // Jet audio runs after collision/drill resolution in audioUpdate().
     if (typeof hapticsUpdate === 'function') hapticsUpdate(dt);
@@ -69753,7 +69773,7 @@
           function (v) { LIQUID_STIM_MAX = v; },
           2.0, 15.0, undefined);
       }
-      // v24.148 RIG WATER MEDIUM — swim/sink feel in the deep lakes (080).
+      // Rig water forces (040/080): relative drag and displaced gravity.
       if (typeof WATER_RIG_DRAG !== 'undefined') {
         gmRegisterLever('water.RIG_DRAG', 'water', 'RIG_DRAG',
           function () { return WATER_RIG_DRAG; },
@@ -69765,12 +69785,6 @@
           function () { return WATER_RIG_BUOY; },
           function (v) { WATER_RIG_BUOY = v; },
           0, 0.95, undefined);
-      }
-      if (typeof WATER_RIG_SINK_VMAX !== 'undefined') {
-        gmRegisterLever('water.RIG_SINK_VMAX', 'water', 'RIG_SINK_VMAX',
-          function () { return WATER_RIG_SINK_VMAX; },
-          function (v) { WATER_RIG_SINK_VMAX = v; },
-          40, 250, undefined);
       }
       // v24.120 WATER DEBUG KIT — firecracker-hunt toggles. Each lever
       // disables ONE mechanism suspected of the resting-pond "sections

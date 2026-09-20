@@ -1025,7 +1025,7 @@
           function (v) { LIQUID_STIM_MAX = v; },
           2.0, 15.0, undefined);
       }
-      // v24.148 RIG WATER MEDIUM — swim/sink feel in the deep lakes (080).
+      // Rig water forces (040/080): relative drag and displaced gravity.
       if (typeof WATER_RIG_DRAG !== 'undefined') {
         gmRegisterLever('water.RIG_DRAG', 'water', 'RIG_DRAG',
           function () { return WATER_RIG_DRAG; },
@@ -1037,12 +1037,6 @@
           function () { return WATER_RIG_BUOY; },
           function (v) { WATER_RIG_BUOY = v; },
           0, 0.95, undefined);
-      }
-      if (typeof WATER_RIG_SINK_VMAX !== 'undefined') {
-        gmRegisterLever('water.RIG_SINK_VMAX', 'water', 'RIG_SINK_VMAX',
-          function () { return WATER_RIG_SINK_VMAX; },
-          function (v) { WATER_RIG_SINK_VMAX = v; },
-          40, 250, undefined);
       }
       // v24.120 WATER DEBUG KIT — firecracker-hunt toggles. Each lever
       // disables ONE mechanism suspected of the resting-pond "sections

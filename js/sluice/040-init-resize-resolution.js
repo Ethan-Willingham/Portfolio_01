@@ -365,32 +365,71 @@
     return (covered - 4) / 6;
   }
 
-  // v24.148 — per-frame submersion fraction for the rig WATER MEDIUM step
-  // (080: drag + slow sink in the deep lakes). playerWaterCushion's scan is
-  // O(liquidCount), so gate it: scan every frame only while inside a filled
-  // lake's rect (cheap test) or while the cached value is still wet (keeps
-  // swimming in player-made flood water responsive); otherwise a 16-frame
-  // heartbeat probe catches flooded digs anywhere at ~zero average cost.
-  var playerWaterFracV = 0;
-  var playerWaterFracTk = 0;
-  function playerWaterFrac() {
-    playerWaterFracTk++;
-    var need = playerWaterFracV > 0.01 || (playerWaterFracTk & 15) === 0;
-    if (!need && typeof surfacePonds !== 'undefined' && surfacePonds.length && player) {
-      var pl = player.x, pr = player.x + PLAYER_W, pt = player.y, pb = player.y + PLAYER_H;
-      for (var i = 0; i < surfacePonds.length; i++) {
-        var p = surfacePonds[i];
-        if (!p.filled) continue;
-        var d = p.d || 1;
-        if (pr < (p.cL - 1) * TILE || pl > (p.cR + 2) * TILE) continue;
-        if (pb < (SKY_ROWS - 1) * TILE || pt > (SKY_ROWS + d + 1) * TILE) continue;
-        need = true;
-        break;
+  // Sample sixteen patches just outside the hull: four along each face.
+  // The collider evacuates the interior, so an interior particle count
+  // would incorrectly make an immersed rig dry. Each patch needs actual
+  // liquid volume, not a single droplet, and contributes at most its area.
+  // Use the shared particle mirror on both GPU and CPU paths. Scanning
+  // every update also catches poured water and flooded shafts immediately.
+  var rigWaterN = new Float32Array(36);
+  var rigWaterVX = new Float32Array(36), rigWaterVY = new Float32Array(36);
+  var rigWaterSample = { wet: 0, buoy: 0, vx: 0, vy: 0 };
+  function playerWaterSample() {
+    var sample = rigWaterSample;
+    sample.wet = sample.buoy = sample.vx = sample.vy = 0;
+    if (!player || !liquidCount) return sample;
+    rigWaterN.fill(0); rigWaterVX.fill(0); rigWaterVY.fill(0);
+    var cw = PLAYER_W / 4, ch = PLAYER_H / 4;
+    var x0 = player.x - cw, y0 = player.y - ch;
+    var x1 = x0 + cw * 6, y1 = y0 + ch * 6;
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidType[i] !== 0) continue;
+      var x = liquidX[i], y = liquidY[i];
+      if (x < x0 || x >= x1 || y < y0 || y >= y1) continue;
+      var col = Math.floor((x - x0) / cw), row = Math.floor((y - y0) / ch);
+      var side = col === 0 || col === 5, end = row === 0 || row === 5;
+      if (side === end) continue; // skip the hull interior and the four corners
+      var bin = row * 6 + col;
+      rigWaterN[bin]++;
+      rigWaterVX[bin] += liquidVX[i]; rigWaterVY[bin] += liquidVY[i];
+    }
+    var spacing = LIQUID_CELL * LIQUID_PDELTA;
+    var particleArea = spacing * spacing / (cw * ch);
+    var coverage = 0, lift = 0, vx = 0, vy = 0;
+    for (var b = 0; b < 36; b++) {
+      var n = rigWaterN[b];
+      if (!n) continue;
+      // Sparse spray is air. Ramp to full coverage at ordinary pool density
+      // so compression cannot turn a narrow stream into full immersion.
+      var wet = Math.max(0, Math.min(1, (n * particleArea - 0.12) / 0.53));
+      wet = wet * wet * (3 - 2 * wet);
+      var flowX = rigWaterVX[b] / n, flowY = rigWaterVY[b] / n;
+      coverage += wet; vx += flowX * wet; vy += flowY * wet;
+      if (b % 6 === 0 || b % 6 === 5) {
+        // Hydrostatic lift requires supported water. Fade it out as the
+        // local water falls; a free stream is not a standing water column.
+        var falling = Math.max(0, Math.min(1, (flowY - 60) / 180));
+        lift += wet * (1 - falling * falling * (3 - 2 * falling));
       }
     }
-    if (need) playerWaterFracV = playerWaterCushion();
-    else playerWaterFracV = 0;
-    return playerWaterFracV;
+    sample.wet = coverage / 16;
+    sample.buoy = lift / 8;
+    if (coverage > 0) { sample.vx = vx / coverage; sample.vy = vy / coverage; }
+    return sample;
+  }
+
+  function applyPlayerWater(dt, gravity) {
+    var water = playerWaterSample();
+    player.waterFrac = water.wet;
+    player.waterFlowVx = water.vx; player.waterFlowVy = water.vy;
+    if (water.wet <= 0) return;
+    player.vy -= gravity * WATER_RIG_BUOY * water.buoy * dt;
+    var rx = player.vx - water.vx, ry = player.vy - water.vy;
+    // Exact drag-only decay for dv/dt = -k |v| v. It cannot overshoot the
+    // flow or reverse relative velocity, even at the largest frame step.
+    var decay = 1 / (1 + WATER_RIG_DRAG / 400 * water.wet * Math.hypot(rx, ry) * dt);
+    player.vx = water.vx + rx * decay;
+    player.vy = water.vy + ry * decay;
   }
 
   // ----- Fuel-to-surface estimate (A* pathfinding) -----

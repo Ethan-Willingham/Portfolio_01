@@ -383,9 +383,16 @@ factor; the density-size scale (`≤1.5` clamp); the `1.15`px min point size.
 | `LIQUID_STIM_MAX` | `6.0` | 2–15 | Hard cap: settle regardless of the fast-water hold (convergence guarantee). gm `water.STIM_MAX` |
 | `LIQUID_FAST_VSQ` | `576` | — | "Still really flowing" metric (24 px/s squared): fast-count above ~0.4% of particles holds the body lively so flows are never braked mid-stream |
 | (v24.150 wave/blob pass) | — | — | While LIVELY (calm < 0.5): sleep never latches + the wake bar drops ~8x, so swells recruit the whole body (big demo waves); ORPHAN WAKE (every ~30 frames, 070) wakes sleepers with <8 neighbours in a 3x3 of 16px cells so droplets can't freeze mid-air as water drains; composite foam is body-gated (smoothstep t..2.2t on the field) so spray/strays render water-blue, not white-rimmed |
-| `WATER_RIG_DRAG` | `2.2` | 0–6 | v24.148 rig water medium: exponential velocity drag at full submersion (deep lakes). gm `water.RIG_DRAG` |
-| `WATER_RIG_BUOY` | `0.55` | 0–0.95 | Fraction of gravity cancelled while submerged (rig sinks slowly, never floats). gm `water.RIG_BUOY` |
-| `WATER_RIG_SINK_VMAX` | `95` | 40–250 | Terminal sink speed at deep coverage (under the 340 px/s fall-damage floor). gm `water.RIG_SINK_VMAX` |
+| `WATER_RIG_DRAG` | `1.4` | 0–6 | Quadratic drag relative to local water flow; rate at 400 px/s with full hull contact. Density rejects spray. gm `water.RIG_DRAG` |
+| `WATER_RIG_BUOY` | `0.14` | 0–0.95 | Fraction of gravity displaced in a standing lake. Falling water fades out lift. gm `water.RIG_BUOY` |
+
+Rig water forces sample sixteen patches outside the hull, using particle volume
+and velocity on both CPU and WebGPU. There is no separate water sink-speed limit:
+the heavy rig retains entry momentum and approaches roughly 430 px/s in still
+water. Waterfall drag follows the stream instead of braking toward rest. Sparse
+spray has no movement effect. The existing water cushion still protects lakebed
+landings. Verify with `node tools/test-rig-water.cjs` and
+`node tools/sluice-rig-water-smoke.mjs`.
 
 **v25.x LOW-END LAKE SIZING (free-forever relaunch, Phase C):** the carve loop in
 030 was shrunk so the one streamed-live lake is light enough for low-end GPUs. The

@@ -497,19 +497,14 @@
                                       // a stimulus (a single GC-hitch frame spikes |vy| via gravity*dt
                                       // and otherwise snaps a sleeping pond lively for nothing)
   var liquidStateName = 'live';       // probe/meter label: live | settling | settled | frozen
-  // ---- v24.148 RIG WATER MEDIUM (deep lakes) ----
-  // The lakes are 5-8 tiles deep, so the rig genuinely submerges. One
-  // shared step in 080 (after every flight branch) applies drag + partial
-  // buoyancy + a terminal sink speed, scaled by measured submersion
-  // (playerWaterFrac, 040). The rig is iron: it SINKS, drives the lakebed,
-  // and jets out — never bobs (a floating-vehicle model is a deliberately
-  // avoided tuning pit). Net-in-water gravity 760*(1-BUOY) with DRAG /s
-  // gives ~150 px/s natural terminal; SINK_VMAX pulls that to ~95, well
-  // under the 340 px/s fall-damage floor, so lakebed landings are gentle
-  // even before the water cushion. gm water.RIG_* levers.
-  var WATER_RIG_DRAG = 2.2;           // /s exponential velocity drag at full submersion
-  var WATER_RIG_BUOY = 0.55;          // fraction of gravity cancelled at full submersion
-  var WATER_RIG_SINK_VMAX = 95;       // px/s terminal sink speed in deep coverage
+  // ---- Rig water forces ----
+  // Density-weighted hull contact and local flow are sampled in 040.
+  // Quadratic drag opposes motion RELATIVE to that flow. A heavy rig keeps
+  // its entry momentum and sinks at roughly 430 px/s in a still lake;
+  // there is no separate water speed cap. Falling streams supply drag
+  // but no hydrostatic lift. Landing cushioning is handled separately.
+  var WATER_RIG_DRAG = 1.4;          // /s drag rate at 400 px/s relative speed
+  var WATER_RIG_BUOY = 0.14;         // gravity displaced by a fully submerged rig
   // v24.120 WATER DEBUG KIT — live A/B toggles for the resting-pond
   // "firecracker" hunt (whole sections jolt in sync ~1/s, then relax).
   // Each lever disables ONE suspect mechanism so the culprit can be
