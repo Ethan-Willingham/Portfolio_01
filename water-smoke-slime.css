@@ -161,3 +161,5 @@ body.toy-expanded { overflow: hidden; }
   .toy-rig-controls label { display: none; }
   .toy-rig-controls select { max-width: 78px; font-size: 11px; padding: 7px 4px; margin-left: auto; }
 }
+
+#smoke-origin { min-height: 0; margin-bottom: 8px; color: var(--accent); font: 10px var(--font-mono); }

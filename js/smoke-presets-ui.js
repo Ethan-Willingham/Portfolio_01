@@ -7,7 +7,7 @@
     var shell = document.getElementById('toy');
     var panel = document.getElementById('toy-panel-smoke');
     var body = panel.querySelector('[data-presets]');
-    var row = body.querySelector('[data-preset="smoke:default"]').parentNode;
+    var row = body.querySelector('[data-preset^="smoke:"]').parentNode;
     var scaleRow = body.querySelector('[data-preset="smokeScale:default"]').parentNode;
     var favorites = {}, storageKey = 'sluice-smoke-favorites-v1';
     try {
@@ -19,13 +19,13 @@
     panel.querySelector('h2').textContent = 'Exhaust library';
     var intro = document.createElement('div');
     intro.className = 'smoke-library-intro';
-    intro.innerHTML = '<p>30 exhausts. Choose a look, then try it at idle, on the move, or under boost.</p>' +
+    intro.innerHTML = '<p>Your two exported looks, plus ten experiments in what exhaust can be.</p>' +
       '<button class="toy-chip" id="smoke-audition">Preview on rig</button>' +
-      '<div class="smoke-selection" aria-live="polite"><h3 id="smoke-name"></h3><p id="smoke-description"></p></div>' +
+      '<div class="smoke-selection" aria-live="polite"><p id="smoke-origin"></p><h3 id="smoke-name"></h3><p id="smoke-description"></p></div>' +
       '<div class="smoke-actions"><button class="toy-chip" id="smoke-favorite" aria-pressed="false">Save favorite</button>' +
       '<button class="toy-chip" id="smoke-export">Export this look</button></div>' +
       '<label class="smoke-filter-label" for="smoke-family">Collection</label>' +
-      '<select id="smoke-family"><option value="all">All 30 exhausts</option><option value="favorites">Favorites</option></select>';
+      '<select id="smoke-family"><option value="all">All 12 exhausts</option><option value="favorites">Favorites</option></select>';
     body.insertBefore(intro, row);
     row.querySelector('label').remove();
     row.className = 'smoke-catalog';
@@ -68,10 +68,9 @@
       });
       tuning.querySelector('.toy-sliders').appendChild(wrap);
     });
-    var reset = document.createElement('button'); reset.className = 'toy-chip'; reset.textContent = 'Reset tuning';
+    var reset = document.createElement('button'); reset.className = 'toy-chip'; reset.textContent = 'Restore recipe';
     reset.addEventListener('click', function () {
-      ['mass', 'motion', 'size'].forEach(function (key) { toy.smokeTune(key, 1); });
-      toy.set('smokeScale', 'default'); toy.clearSmoke(); sync();
+      toy.set('smokePreset', toy.smokePreset().id); toy.clearSmoke(); sync();
     });
     tuning.appendChild(reset);
     var footer = document.createElement('div'); footer.className = 'smoke-library-footer';
@@ -110,6 +109,7 @@
     function sync() {
       var state = toy.smokePreset(), recipe = library.byId[state.id];
       document.getElementById('smoke-name').textContent = recipe.name;
+      document.getElementById('smoke-origin').textContent = recipe.saved ? 'Your exported tuning' : 'New experiment';
       document.getElementById('smoke-description').textContent = recipe.description;
       document.getElementById('smoke-current').textContent = recipe.name;
       var favorite = document.getElementById('smoke-favorite');

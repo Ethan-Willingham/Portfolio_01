@@ -1,0 +1,65 @@
+{
+  "schema": "sluice-smoke-recipe",
+  "version": 1,
+  "samplerVersion": 1,
+  "preset": {
+    "id": "copperhead",
+    "name": "Copperhead",
+    "family": "Foundry",
+    "description": "Dense copper folds roll outward from a narrow gold seam.",
+    "colors": [
+      "#e49b38",
+      "#8f482d"
+    ],
+    "fluid": {
+      "CURL": 24,
+      "DENSITY_DISSIPATION": 0.4,
+      "VELOCITY_DISSIPATION": 0.4,
+      "wind_x": 0,
+      "wind_above_y": 0
+    },
+    "source": {
+      "radius": 2.7,
+      "density": 1.35,
+      "lift": 0.65,
+      "sway": 0.65,
+      "spread": 2,
+      "frequency": 1,
+      "pulse": 0,
+      "pulseHz": 1,
+      "sharpness": 2,
+      "split": 0,
+      "fan": 0,
+      "colorRate": 0,
+      "colorOffset": 0.55,
+      "core": 0.18,
+      "idleHold": 20
+    },
+    "palette": [
+      [
+        0.8941176470588236,
+        0.6078431372549019,
+        0.2196078431372549
+      ],
+      [
+        0.5607843137254902,
+        0.2823529411764706,
+        0.17647058823529413
+      ]
+    ]
+  },
+  "scale": {
+    "id": "tower",
+    "values": {
+      "rad": 2.6,
+      "dye": 0.75,
+      "lift": 1.8,
+      "curl": 4
+    }
+  },
+  "tuning": {
+    "mass": 0.25,
+    "motion": 0.65,
+    "size": 0.65
+  }
+}
