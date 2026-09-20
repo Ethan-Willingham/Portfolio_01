@@ -44,6 +44,16 @@ biome. Ordinary worlds keep their existing weather. Pause freezes the weather,
 and the banya has its own weather. The current phase and elapsed time persist.
 The development override `?wmood=4` locks steady rain for testing.
 
+The same front covers the entire outdoor map. A sky rectangle extends 160
+world pixels beyond the view and fills newly exposed strips during sideways
+flight, climbing, descending or zooming. Rain is already falling when another
+area comes into view, at any altitude. Existing drops keep their world positions
+in the overlap; the rig's wake is not refilled. Top and upwind edge emission
+sustain the density between camera movements. Snow uses the same bounds and
+coverage calculation, with its own fall speed and particle budget. A snow
+world suppresses rain drawing, and cached atmospheric snow cannot thaw into
+water overhead. Physical snow can still melt from local heat after contact.
+
 Rain worlds generate three small lakes, six to eight tiles wide and two deep.
 Stone walls and floors retain water while neighboring dirt absorbs it. Each
 starts at 16% of its nominal capacity, about ten pixels of water. The near-town
@@ -64,7 +74,9 @@ onto the absorbent soil. Poured liquid also counts toward available capacity.
 ## Limits of the experiment
 
 This is a local, finite water cycle, not a planet-wide flood simulation.
-Rain is generated near the visible sky. Up to 1,800 drops can be airborne;
+Only nearby sky needs active drops to present that map-wide storm. Drops
+leaving the padded view return to the atmosphere before newly exposed sky
+uses the budget. Up to 1,800 drops can be airborne;
 loose rain targets 6,000 particles on WebGPU, or 2,400 with the CPU
 fallback. Lake water has a separate finite allowance within a 40,000-particle
 hard storage cap for all settled rain and airborne drops. At capacity, offscreen rain is recycled first, followed by gradual
@@ -83,7 +95,8 @@ plane are scenery; their painted roofs do not create new liquid colliders.
 
 ## Implementation and checks
 
-`js/sluice/157-particle-rain.js` owns the simulation, drawing, persistence,
+`js/sluice/156-particle-weather.js` owns the shared rain/snow sky bounds and
+newly exposed strips. `157-particle-rain.js` owns the simulation, drawing, persistence,
 residency and budget. `158-rain-lakes.js` owns the front schedule, lake generation
 and offscreen catchment. Rain uses liquid origin 3; origin 0 is persistent world
 and poured liquid, and origins 1 and 2 are streamed pond water and oil.
@@ -142,3 +155,8 @@ plow and deep-puddle drainage checks also passed.
 Snow uses the same weather and meltwater storage through a separate material
 simulation. See [PARTICLE_SNOW.md](PARTICLE_SNOW.md). Existing rain saves retain
 rain; choosing Snow only changes the next new world.
+
+`node tools/sluice-weather-coverage.mjs` checks both modes across distant map
+locations and high flight, underground gating and rain/snow exclusivity.
+Add `--cpu` for the fallback. `node tools/test-snow-coverage.cjs` also checks
+continuous sideways rain and snow coverage with reversals and budget pressure.

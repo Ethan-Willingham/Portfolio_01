@@ -23,6 +23,7 @@ const s = { Math: math, window: { location: { search: '' } },
   liquidLineClear: () => true, rainCell: (x, y) => Math.floor(y / 6) * 2000 + Math.floor(x / 6)
 };
 vm.createContext(s);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/156-particle-weather.js'), 'utf8'), s);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/159-snow-physics.js'), 'utf8'), s);
 s.snowTemperature = () => -4;
 function reset() {
@@ -75,9 +76,12 @@ s.snow.temperature = 4; s.rain.waterCount = s.RAIN_STORAGE_CAP;
 s.snowScan(10000);
 assert.equal(s.snow.airCount, storedAir, 'full water storage defers atmospheric thaw');
 s.rain.waterCount = 0; s.snowScan(10000);
-assert.equal(s.snow.airCount, 0);
-assert.equal(s.rain.parked.length / 2, storedAir, 'stored sky melts one for one into stored water');
-assert.equal(s.window.__particleSnow.stats().mass + s.rain.parked.length / 2, mass);
+assert.equal(s.snow.airCount, storedAir, 'stored atmospheric snow stays snow during a warm spell');
+assert.equal(s.rain.parked.length, 0, 'cached snow cannot turn into a rain shower overhead');
+assert.equal(s.window.__particleSnow.stats().mass, mass);
+s.rain.intensity = 0; s.updateSnow(0);
+assert.equal(s.snow.airCount, 0, 'a finished front does not leave cached snowfall waiting elsewhere');
+assert.equal(s.window.__particleSnow.stats().mass + s.snow.recycled, mass);
 s.rain.parked = [];
 
 // A world initialized before precipitation starts still primes its first sky.
@@ -93,18 +97,32 @@ step(0, -5, 120);
 assert.ok(nearRig() > 100);
 step(0, 5, 120);
 assert.ok(nearRig() > 100);
-// No births in fair weather, underground, above the weather ceiling or at cap.
-for (const scene of ['fair', 'underground', 'space', 'full']) {
+// A storm covers high flight too, with no camera-visible weather ceiling.
+reset(); s.cam.y = -4500; s.updateSnow(0);
+assert.ok(nearRig() > 150, 'snow is already falling at high altitude');
+// Fair weather and enclosed underground areas must never seed new weather.
+for (const scene of ['fair', 'underground']) {
   reset();
   if (scene === 'fair') s.rain.intensity = 0;
   if (scene === 'underground') s.cam.y = 600;
-  if (scene === 'space') s.cam.y = -4000;
-  if (scene === 'full') s.SNOW_MASS_CAP = s.snow.mass;
   const emitted = s.snow.emitted;
   step(8, 0, 60);
   assert.equal(s.snow.emitted, emitted, scene + ' does not create snowfall');
-  s.SNOW_MASS_CAP = 120000;
 }
+reset(); s.SNOW_MASS_CAP = s.snow.mass;
+const fullEmitted = s.snow.emitted;
+step(8, 0, 240);
+assert.ok(s.snow.emitted > fullEmitted && s.snow.recycled > 0, 'cached unlanded sky releases room for the storm ahead');
+assert.ok(s.snow.mass <= s.SNOW_MASS_CAP);
+assert.equal(s.snow.mass + s.snow.recycled, s.snow.emitted);
+s.SNOW_MASS_CAP = 120000;
+reset();
+s.snow.active = s.SNOW_CPU_CAP;
+const airborneBefore = s.snow.grains.length;
+s.snowSpawn(2400, -700);
+assert.equal(s.snow.grains.length, airborneBefore + 1, 'a full CPU material solver does not stop snowfall');
+assert.ok(s.snowParticle(2400, -700, 0, 53));
+assert.equal(s.snow.parked.length, 4, 'snow awaiting a physical slot is stored without blocking flakes');
 // World edges still contain snow, with every new flake inside world bounds.
 for (const x of [0, 320 * 32 - 960]) {
   reset(); s.cam.x = x; s.updateSnow(0);
@@ -129,3 +147,27 @@ assert.ok(crosswind > calm * .8, 'weak lateral air preserves the flake settling 
 assert.ok(downwash > calm, 'downward air accelerates falling snow');
 assert.ok(updraft < -40, 'strong upward air still entrains snow');
 console.log('PASS coverage, conservation, save/load, zoom, budgets and settling relative to airflow');
+
+// Rain shares the same world-space coverage during continuous flight.
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/157-particle-rain.js'), 'utf8'), s);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/158-rain-lakes.js'), 'utf8'), s);
+s.weatherForce = 4; s.weather = {pcp: .65}; s.weatherTune = {enabled: true};
+s.weatherSetMood = noop; s.bathMode = s.PERF_DISABLE_WATER = s.PERF_DISABLE_WEATHER = false;
+s.rainScan = noop; s.rainCatchLakes = noop; s.rainAdvanceWeather = noop;
+s.rainLand = () => { s.rain.landed++; return true; };
+s.liquidWGPU = {simActive: true};
+s.rainReset(true, false); s.cam.x = 2000; s.cam.y = -900; s.screenW = 960; s.screenH = 600;
+s.updateParticleRain(0);
+function rainNearby() { return s.rain.drops.filter(p => p.x > s.cam.x+300 && p.x < s.cam.x+660 && p.y > s.cam.y+180 && p.y < s.cam.y+420).length; }
+const rainBaseline = rainNearby(), rainCounts = [];
+for (const direction of [1, -1]) for (let sample = 0; sample < 8; sample++) {
+  for (let tick = 0; tick < 30; tick++) { s.cam.x += direction*8; s.updateParticleRain(1/60); }
+  rainCounts.push(rainNearby());
+}
+console.log('RAIN FLIGHT', {baseline: rainBaseline, min: Math.min(...rainCounts), max: Math.max(...rainCounts)});
+assert.ok(rainBaseline > 30 && Math.min(...rainCounts) > rainBaseline*.45, 'rain surrounds the rig throughout both flight directions');
+assert.ok(s.rain.drops.length <= s.RAIN_DROP_CAP);
+s.cam.y = -4500; s.updateParticleRain(0);
+assert.ok(rainNearby() > 30, 'rain covers high flight without an artificial ceiling');
+assert.equal(s.snow.grains.length, 0, 'a rain world has no atmospheric snow');
+console.log('PASS shared rain coverage during sustained flight and at altitude');

@@ -66,13 +66,19 @@ Flakes already in the overlapping area keep their world positions and velocities
 including the wake cleared by the rig. New snowfall also enters at the top and
 upwind edge. The sky volume reserves a quarter of the airborne budget for drift,
 jet interaction and flakes falling through shafts.
+The storm's type and intensity apply across the outdoor world. There is no
+altitude cutoff or map region without snowfall during a front. Rain uses the
+same coverage bounds and exposed-strip calculation in `156-particle-weather.js`.
 
 Airborne flakes leaving the simulation window are stored in world-column buckets
 with their position, velocity and flutter phase. Returning restores the same
 flakes before filling any density deficit in newly revealed air. Stored flight
 is paused offscreen, like stored solver snow; it does not become heavy solver
-snow on return. It can thaw during warm weather and is included in saves and
-the total mass cap. `parkedAirborne` in the snow stats reports this storage.
+snow on return. These atmospheric flakes cannot thaw into stored sky water.
+They return to the atmosphere when the front ends or when the budget needs room
+for snowfall elsewhere. Deposited and scooped material is never recycled this
+way. Cached flight is included in saves and the total mass cap.
+`parkedAirborne` and `recycled` in the snow stats report storage and retirement.
 
 ## Jet airflow
 
@@ -116,7 +122,8 @@ coupling shader is compiled during the existing GPU startup warmup.
 A new world starts with a light dusting and a gentle snowfall. The opening
 front lasts about a minute. Later fronts last 55 to 80 seconds, separated by
 120 to 190 seconds of milder fair weather, with cloud buildup and clearing.
-Warm air gradually thaws the snow. Foundations, jet exhaust and contact with
+Air stays cold until precipitation finishes, then gradually thaws deposited snow.
+Foundations, jet exhaust and contact with
 a body of water accelerate thaw; a few droplets do not dissolve an entire pile.
 The rig's warm scoop collects snow directly into its water chamber.
 
@@ -128,10 +135,14 @@ uses normal water physics, including soil absorption and finite lake storage.
 
 Active snow is capped at 36,000 particles on WebGPU or 7,000 on CPU, with
 5,400 active airborne weather flakes and a 120,000-particle total snow allowance.
+New deposition leaves 5,400 of those slots for atmosphere, so a full pile budget
+does not stop the storm. At that limit, excess unlanded flakes return to the
+atmosphere on contact. Existing physical snow retains its mass.
 Offscreen particles are parked at their real coordinates and velocities;
 returning to the area restores them into the same solver. Parked snow can
 thaw into parked water. The shared solver reserves 4,096 slots for other liquids.
-Snowfall pauses when its budget is full. Ground beyond the visible snowfall
+The local solver limit does not stop airborne snowfall; new contact material
+waits in storage if the solver is full. Ground beyond the visible snowfall
 strip keeps its dusting and parked snow; the finite lakes still use their
 existing offscreen catchment accounting at the snowfall rate.
 
@@ -171,3 +182,10 @@ same interactions on the CPU solver.
 `node tools/test-snow-coverage.cjs` checks sustained sideways travel, reversals,
 unchanged world positions in the overlapping view, offscreen restoration,
 exact atmospheric save/load, zoom, altitude, world edges and particle budgets.
+It also checks continuous rain coverage during flight, atmospheric recycling,
+and that stored sky flakes cannot turn into rain.
+
+`node tools/sluice-weather-coverage.mjs` checks both modes across distant map
+locations and high-altitude views, four-column coverage, underground gating,
+and rain/snow exclusivity. Add `--cpu` for the fallback. Screenshots go to
+`/tmp/sluice-weather-qa`; use `DUMP` and `PORT` for concurrent runs.

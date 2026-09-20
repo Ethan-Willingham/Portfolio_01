@@ -3,7 +3,7 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    cells: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, active: 0, mass: 0, emitted: 0, melted: 0, collected: 0, temperature: -4 };
+    cells: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
 
   function snowNewWorldEnabled() {
     var q = /[?&]snow=([01])(?:&|$)/.exec(window.location.search || '');
@@ -14,7 +14,7 @@
   function snowReset(enabled) {
     worldSnowEnabled = enabled === true;
     snow.time = snow.tick = snow.credit = snow.active = snow.mass = 0;
-    snow.emitted = snow.melted = snow.collected = 0;
+    snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset();
     snow.cells = {}; snow.airParked = {}; snow.airCount = snow.sideCredit = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
@@ -29,9 +29,17 @@
   }
   function snowParticle(x, y, vx, vy) {
     if (!snowVisible(x, y)) return snowStore(x, y, vx, vy);
-    if (snow.active >= snowActiveCap() || liquidCount >= LIQUID_MAX_PARTICLES - 4096) return false;
+    if (snow.active >= snowActiveCap() || liquidCount >= LIQUID_MAX_PARTICLES - 4096) return snowStore(x, y, vx, vy);
     if (addLiquidParticle(5, x, y, vx, vy, RAIN_ORIGIN) < 0) return false;
     snow.active++; return true;
+  }
+  function snowLand(p, parked) {
+    // Deposited material owns its mass permanently. Only excess unlanded
+    // weather can return to the atmosphere when the deposition budget fills.
+    if (snow.active + snow.parked.length / 4 >= SNOW_MASS_CAP - SNOW_FLAKE_CAP) {
+      snow.mass--; snow.recycled++; return true;
+    }
+    return parked ? snowStore(p.x, p.y, p.vx, p.vy) : snowParticle(p.x, p.y, p.vx, p.vy);
   }
   function snowSeedWorld() {
     if (!worldSnowEnabled) return;
@@ -52,7 +60,7 @@
   function snowTemperature() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
     var cold = weatherForce >= 0 ? WEATHER_MOODS[weatherForce].pcp > 0.05 : rain.climate.phase === 2 || rain.climate.phase === 1;
-    return cold ? -5 + day : 1.5 + day * 3;
+    return cold || weather.pcp > 0.015 ? -5 + day : 1.5 + day * 3;
   }
   function snowHeat(x, y) {
     var heat = Math.max(0, snow.temperature) * 0.007;
@@ -102,19 +110,9 @@
         snow.parked.length -= 4;
       }
     }
-    // Stored sky is cold powder too. During a warm front it thaws into the
-    // existing offscreen water store, subject to the same water budget.
-    var airThaw = 1 - Math.exp(-Math.max(0, snow.temperature) * 0.007 * dt);
-    if (airThaw > 0) Object.keys(snow.airParked).forEach(function (key) {
-      var bucket = snow.airParked[key];
-      for (var a = bucket.length - 1; a >= 0; a--) {
-        if (rain.waterCount + rain.parked.length / 2 >= RAIN_STORAGE_CAP) break;
-        if (Math.random() >= airThaw) continue;
-        rain.parked.push(bucket[a].x, bucket[a].y); snow.melted++; snow.airCount--;
-        bucket[a] = bucket[bucket.length - 1]; bucket.pop();
-      }
-      if (!bucket.length) delete snow.airParked[key];
-    });
+    // Atmospheric snow keeps the storm's identity. Thawing a stored sky
+    // flake here created water high overhead, then rain on the return trip.
+    // Only deposited or rig-contact material can thaw, including stored snow.
     snow.cells = cells; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
@@ -137,6 +135,15 @@
   function snowInRect(p, rect) {
     return p.x >= rect.left && p.x < rect.right && p.y >= rect.top && p.y < rect.bottom;
   }
+  function snowRecycleAir(count) {
+    var keys = Object.keys(snow.airParked);
+    for (var k = 0; k < keys.length && count > 0; k++) {
+      var bucket = snow.airParked[keys[k]], take = Math.min(count, bucket.length);
+      bucket.length -= take; snow.airCount -= take; snow.mass -= take;
+      snow.recycled += take; count -= take;
+      if (!bucket.length) delete snow.airParked[keys[k]];
+    }
+  }
   function snowStreamAir(rect) {
     // Keep the same objects and velocities. In particular, leaving the camera
     // must not turn a slow airborne flake into a heavy landed solver particle.
@@ -144,10 +151,13 @@
       var p = snow.grains[i];
       if (snowVisible(p.x, p.y)) continue;
       if (p.y >= SKY_ROWS * TILE - 10) {
-        if (!snowStore(p.x, p.y, p.vx, p.vy)) continue;
+        if (!snowLand(p, true)) continue;
       } else snowParkAir(p);
       snow.grains[i] = snow.grains[snow.grains.length - 1]; snow.grains.pop();
     }
+    // A finished front must not leave a frozen storm waiting offscreen.
+    // Unlanded weather returns to the atmosphere, never to the water store.
+    if (rain.intensity <= 0) { snowRecycleAir(snow.airCount); snow.primed = false; return; }
     // Column buckets avoid scanning the entire world's stored snowfall.
     for (var c = Math.floor(rect.left / 128); c <= Math.floor(rect.right / 128); c++) {
       var bucket = snow.airParked[c];
@@ -161,7 +171,9 @@
     }
   }
   function snowSpawn(x, y) {
-    if (snow.mass >= SNOW_MASS_CAP || snow.grains.length >= SNOW_FLAKE_CAP || snow.active >= snowActiveCap()) return;
+    if (snow.grains.length >= SNOW_FLAKE_CAP) return;
+    if (snow.mass >= SNOW_MASS_CAP) snowRecycleAir(snow.mass - SNOW_MASS_CAP + 1);
+    if (snow.mass >= SNOW_MASS_CAP) return;
     if (liquidWorldSolidAt(x, y)) return;
     var size = Math.random();
     snow.grains.push({ x: x, y: y, vx: surfaceWind.current * 28, vy: 32 + size * 42,
@@ -175,27 +187,14 @@
     // Restored flakes already occupy this air. Revisiting a strip must not
     // add another full layer on top of them.
     for (var i = 0; i < snow.grains.length; i++) if (snowInRect(snow.grains[i], rect)) need--;
-    need = Math.min(Math.floor(Math.max(0, need) + Math.random()), SNOW_FLAKE_CAP - snow.grains.length,
-      SNOW_MASS_CAP - snow.mass);
+    need = Math.min(Math.floor(Math.max(0, need) + Math.random()), SNOW_FLAKE_CAP - snow.grains.length);
+    if (snow.mass + need > SNOW_MASS_CAP) snowRecycleAir(snow.mass + need - SNOW_MASS_CAP);
     for (var n = 0; n < need; n++) snowSpawn(left + Math.random() * (right - left), top + Math.random() * (bottom - top));
   }
   function snowRevealSky(rect, density) {
-    var old = snow.coverage;
-    if (!old || !snow.primed) {
-      if (!snow.primed) snowFillSky(rect.left, rect.right, rect.top, rect.bottom, density);
-    } else {
-      var left = Math.max(rect.left, old.left), right = Math.min(rect.right, old.right);
-      if (right <= left || rect.bottom <= old.top || rect.top >= old.bottom) {
-        snowFillSky(rect.left, rect.right, rect.top, rect.bottom, density);
-      } else {
-        // Disjoint strips of the new rectangle. The overlap (including the
-        // rig's cleared wake) is never reseeded or translated with the camera.
-        snowFillSky(rect.left, left, rect.top, rect.bottom, density);
-        snowFillSky(right, rect.right, rect.top, rect.bottom, density);
-        snowFillSky(left, right, rect.top, Math.min(rect.bottom, old.top), density);
-        snowFillSky(left, right, Math.max(rect.top, old.bottom), rect.bottom, density);
-      }
-    }
+    if (density > 0) particleWeatherReveal(rect, snow.primed ? snow.coverage : null, function (left, right, top, bottom) {
+      snowFillSky(left, right, top, bottom, density);
+    });
     snow.coverage = rect;
     if (density > 0) snow.primed = true;
   }
@@ -204,10 +203,8 @@
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
     if (snow.tick >= 0.12) { snowScan(snow.tick); snow.tick = 0; }
-    var surf = SKY_ROWS * TILE, sky = cam.y < surf && cam.y + screenH > surf - 2000;
-    var left = Math.max(3, cam.x - 160), right = Math.min(COLS * TILE - 3, cam.x + screenW + 160);
-    var top = Math.max(surf - 2200, cam.y - 160), bottom = Math.min(surf - 8, cam.y + screenH + 160);
-    var rect = { left: left, right: right, top: top, bottom: bottom };
+    var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
+    var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
     var width = Math.max(0, right - left), height = Math.max(0, bottom - top);
     snowStreamAir(rect);
     // Flux / mean fall speed gives grains per square world pixel. Reserve
@@ -245,13 +242,13 @@
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
         var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) || (snow.cells[key] || 0) > 0 || (rain.cells[key] || 0) > 1;
-        if (contact) { remove = snowParticle(p.x, p.y, p.vx, p.vy); break; }
+        if (contact) { remove = snowLand(p, false); break; }
         p.x = nx; p.y = ny;
       }
-      if (!remove && !snowVisible(p.x, p.y) && p.y > surf - 10) remove = snowStore(p.x, p.y, p.vx, p.vy);
+      if (!remove && !snowVisible(p.x, p.y) && p.y > surf - 10) remove = snowLand(p, true);
       if (p.x < 2 || p.x >= COLS * TILE - 2 || p.y >= TOTAL_ROWS * TILE) {
         p.x = Math.max(2, Math.min(COLS * TILE - 2, p.x)); p.y = Math.min(TOTAL_ROWS * TILE - 2, p.y);
-        if (!remove) remove = snowStore(p.x, p.y, 0, 0);
+        if (!remove) { p.vx = p.vy = 0; remove = snowLand(p, true); }
       }
       if (remove) { snow.grains[i] = snow.grains[snow.grains.length - 1]; snow.grains.pop(); }
     }
@@ -318,5 +315,5 @@
     return { enabled: worldSnowEnabled, model: 'shared-particles', active: active, parked: snow.parked.length / 4,
       mass: active + snow.parked.length / 4 + snow.grains.length + snow.airCount, airborne: snow.grains.length, parkedAirborne: snow.airCount, moving: moving,
       airflow: { active: snowAir.active, ms: snowAir.ms, peak: snowAir.peak },
-      emitted: snow.emitted, melted: snow.melted, collected: snow.collected, temperature: snow.temperature };
+      emitted: snow.emitted, recycled: snow.recycled, melted: snow.melted, collected: snow.collected, temperature: snow.temperature };
   } };

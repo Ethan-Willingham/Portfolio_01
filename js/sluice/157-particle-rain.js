@@ -14,7 +14,7 @@
   var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, parkedCursor: 0, waterCount: 0, lakeCount: 0, climate: null,
     drops: [], impacts: [], parked: [], cells: {}, intensity: 0,
     plow: { x0: 0, x1: 0, y0: 0, y1: 0, freshUntil: 0, until: 0 },
-    damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false };
+    damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false, coverage: null, sideCredit: 0 };
 
   function rainNewWorldEnabled() {
     if (snowNewWorldEnabled()) return true;
@@ -29,7 +29,7 @@
     rain.drops.length = rain.impacts.length = rain.parked.length = rain.damp.length = 0;
     rain.dampCells = {};
     rain.plow.freshUntil = rain.plow.until = 0;
-    rain.cells = {}; rain.primed = false; rain.intensity = 0;
+    rain.cells = {}; rain.primed = false; rain.coverage = null; rain.sideCredit = 0; rain.intensity = 0;
     rain.climate = { phase: 0, elapsed: 0, duration: 55 + Math.random() * 25, strength: 0.7 };
     if (worldSnowEnabled) rain.climate = { phase: 2, elapsed: 10, duration: 70, strength: 0.65 };
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
@@ -205,14 +205,26 @@
     }
   }
 
-  function rainSpawn(top, left, width, seed) {
-    var x = left + Math.random() * width;
-    var y = seed ? top + Math.random() * Math.max(0, SKY_ROWS * TILE - top - 12) : top;
-    if (liquidWorldSolidAt(x, y)) return;
+  function rainActiveLimit() { return liquidWGPU && liquidWGPU.simActive ? RAIN_WATER_CAP : RAIN_CPU_CAP; }
+  function rainSpawn(x, y) {
+    if (rain.drops.length >= RAIN_DROP_CAP || rainRoom(rainActiveLimit()) <= 0 || liquidWorldSolidAt(x, y)) return;
     var size = Math.random();
     rain.drops.push({ x: x, y: y, vx: surfaceWind.current * 95,
       vy: 480 + size * 330, size: size, age: 0 });
     rain.emitted++;
+  }
+  function rainFillSky(left, right, top, bottom, density) {
+    if (right <= left || bottom <= top || density <= 0) return;
+    var need = (right - left) * (bottom - top) * density;
+    for (var i = 0; i < rain.drops.length; i++) {
+      var p = rain.drops[i];
+      if (p.x >= left && p.x < right && p.y >= top && p.y < bottom) need--;
+    }
+    need = Math.min(Math.floor(Math.max(0, need) + Math.random()), RAIN_DROP_CAP - rain.drops.length);
+    var room = rainRoom(rainActiveLimit());
+    if (need > room) rainRecycle(need - room);
+    need = Math.min(need, rainRoom(rainActiveLimit()));
+    for (var n = 0; n < need; n++) rainSpawn(left + Math.random() * (right - left), top + Math.random() * (bottom - top));
   }
   function rainImpact(x, y, wet, size) {
     if (rain.impacts.length >= 220 || Math.random() > 0.62) return;
@@ -243,31 +255,40 @@
     if (worldSnowEnabled) { updateSnow(dt); return; }
     var gpu = liquidWGPU && liquidWGPU.simActive;
     var limit = gpu ? RAIN_WATER_CAP : RAIN_CPU_CAP;
-    var surf = SKY_ROWS * TILE;
-    var sky = cam.y < surf && cam.y + screenH > surf - 2200;
-    var left = Math.max(3, cam.x - 130), right = Math.min(COLS * TILE - 3, cam.x + screenW + 130);
-    var width = Math.max(0, right - left);
-    var top = Math.max(surf - 2400, Math.min(cam.y - 24, surf - 180));
-    var rate = (gpu ? 760 : 280) * Math.min(1.7, width / 1100) * rain.intensity;
-    rainCatchLakes(dt, sky, left, right);
-    if (sky && !rain.primed && width > 0 && rain.intensity > 0) {
-      // Only prime open sky. Never seed below ground or inside a sealed cave.
-      var initial = Math.max(0, Math.min(700, Math.round(rate * (surf - top) / 650),
-        rainRoom(limit),
-        LIQUID_MAX_PARTICLES - liquidCount - 4096 - rain.drops.length));
-      for (var s = 0; s < initial; s++) rainSpawn(top, left, width, true);
+    var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
+    var left = rect.left, right = rect.right, top = rect.top;
+    var width = Math.max(0, right - left), height = Math.max(0, rect.bottom - top);
+    // Drops already outside the view return to the existing atmospheric
+    // reservoir before newly exposed sky spends the finite airborne budget.
+    for (var d = rain.drops.length - 1; d >= 0; d--) {
+      var drop = rain.drops[d];
+      if (drop.y >= surf || (drop.x > cam.x - 180 && drop.x < cam.x + screenW + 180 &&
+          drop.y > cam.y - 180 && drop.y < cam.y + screenH + 180)) continue;
+      rain.drops[d] = rain.drops[rain.drops.length - 1]; rain.drops.pop(); rain.recycled++;
+    }
+    var density = Math.min((gpu ? 760 : 280) / (1100 * 645), RAIN_DROP_CAP * 0.75 / Math.max(1, width * height)) * rain.intensity;
+    if (sky && rain.intensity > 0) {
+      particleWeatherReveal(rect, rain.primed ? rain.coverage : null, function (x0, x1, y0, y1) {
+        rainFillSky(x0, x1, y0, y1, density);
+      });
       rain.primed = true;
     }
-    var total = rain.waterCount + rain.parked.length / 2 + rain.drops.length - rain.lakeCount;
-    var incoming = sky ? Math.ceil(rate * dt) : 0;
-    if (total + incoming > limit) rainRecycle(Math.min(80, total + incoming - limit));
-    var room = rainRoom(limit);
-    rain.credit = sky && rain.intensity > 0 ? Math.min(80, rain.credit + rate * dt) : 0;
-    var births = Math.min(Math.floor(rain.credit), RAIN_DROP_CAP - rain.drops.length, room,
-      Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 4096 - rain.drops.length));
-    for (var b = 0; b < births; b++) rainSpawn(top, left, width, false);
-    rain.credit -= births;
+    if (rain.intensity <= 0) rain.primed = false;
+    rain.coverage = rect;
+    var rate = density * width * 645;
+    rainCatchLakes(dt, sky, left, right);
     var wind = surfaceWind.current * 110 + 42 * Math.sin(rain.time * 0.43) + 22 * Math.sin(rain.time * 1.17);
+    var total = rain.waterCount + rain.parked.length / 2 + rain.drops.length - rain.lakeCount;
+    var incoming = sky ? Math.ceil((rate + Math.abs(wind) * height * density) * dt) : 0;
+    if (total + incoming > limit) rainRecycle(Math.min(80, total + incoming - limit));
+    rain.credit = sky && height > 0 ? Math.min(80, rain.credit + rate * dt) : 0;
+    var births = Math.floor(rain.credit);
+    for (var b = 0; b < births; b++) rainSpawn(left + Math.random() * width, top);
+    rain.credit -= births;
+    rain.sideCredit = sky && height > 0 ? Math.min(80, rain.sideCredit + Math.abs(wind) * height * density * dt) : 0;
+    var sideBirths = Math.floor(rain.sideCredit);
+    for (var side = 0; side < sideBirths; side++) rainSpawn(wind >= 0 ? left : right - 0.01, top + Math.random() * height);
+    rain.sideCredit -= sideBirths;
     for (var i = rain.drops.length - 1; i >= 0; i--) {
       var p = rain.drops[i];
       p.age += dt;
@@ -351,7 +372,7 @@
   }
 
   function drawParticleRain() {
-    if (!worldRainEnabled || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
+    if (!worldRainEnabled || worldSnowEnabled || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     var ws = dpr * worldScale, wp = weatherPalette();
     ctx.save();
     ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
@@ -447,9 +468,9 @@
     }
   }
   function shaderWarmRain() {
-    var enabled = worldRainEnabled, drops = rain.drops, impacts = rain.impacts, damp = rain.damp;
+    var enabled = worldRainEnabled, snowEnabled = worldSnowEnabled, drops = rain.drops, impacts = rain.impacts, damp = rain.damp;
     try {
-      worldRainEnabled = true;
+      worldRainEnabled = true; worldSnowEnabled = false;
       rain.drops = []; rain.impacts = [];
       for (var i = 0; i < 3; i++) {
         rain.drops.push({ x: cam.x + 40 + i * 12, y: cam.y + 60, vx: 90, vy: 650, size: i * 0.4 });
@@ -465,7 +486,7 @@
       ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
       drawRainDamp();
       ctx.restore();
-    } finally { worldRainEnabled = enabled; rain.drops = drops; rain.impacts = impacts; rain.damp = damp; }
+    } finally { worldRainEnabled = enabled; worldSnowEnabled = snowEnabled; rain.drops = drops; rain.impacts = impacts; rain.damp = damp; }
   }
   window.__particleRain = {
     stats: function () { return { enabled: worldRainEnabled, airborne: rain.drops.length,
