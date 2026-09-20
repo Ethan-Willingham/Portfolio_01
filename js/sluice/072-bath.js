@@ -372,6 +372,7 @@
   }
   function bathSwap(toInside) {
     if (bathFading || (toInside && !ENABLE_BATH)) return;
+    surfaceSlimeGrabEnd(undefined, true);
     bathFading = true;
     var ticket = ++bathTransitionSerial;
     var el = bathFadeEnsure();

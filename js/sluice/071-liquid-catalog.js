@@ -258,6 +258,7 @@
   }
 
   function liquidSkyBoundariesCPU() {
+    if (typeof surfaceSlimeWaterCPU === 'function') surfaceSlimeWaterCPU();
     if (typeof skySlimes === 'undefined' || !skySlimes.length) return;
     for (var i = 0; i < liquidCount; i++) {
       if (liquidFrozen[i]) continue;

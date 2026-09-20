@@ -208,6 +208,7 @@
       jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
       bathhouse: bathServiceSave(),
       skySlimes: skySlimeSave(),
+      surfaceSlimes: surfaceSlimeSave(),
       siphon: siphonSave(),
       mineralLiquids: mineralLiquidSave(),
     };
@@ -324,6 +325,7 @@
     rainRestore(env.rain);
     skySlimeRestore(env.skySlimes);
     siphonRestore(env.siphon);
+    if (siphon.passenger && skySlimes.length >= SKY_SLIME_MAX) skySlimes.length = SKY_SLIME_MAX - 1;
     bathServiceRestore(env.bathhouse);
     if (!env.bathhouse) bathRetireGarden(env.garden);
     // Re-derive world-dependent caches against the swapped grid.
@@ -334,6 +336,7 @@
     // Live jello bodies: rebuild the wanderers the grid can't carry (their tiles were
     // nulled at activation). Absent/empty field (old saves) leaves the world body-free.
     if (typeof jelloRestoreBodies === 'function') jelloRestoreBodies(env.jello);
+    surfaceSlimeRestore(env.surfaceSlimes);
     // Baseline the dirtiness signals so we don't immediately re-save.
     saveLastMoney = money;
     saveLastCargoN = cargo.length;

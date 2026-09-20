@@ -652,6 +652,7 @@
     perfMark('update.bathhouse', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
+    surfaceSlimeTick(dt);
     _ts = performance.now(); updateParticleRain(dt);       perfMark('update.rain', _ts);
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);

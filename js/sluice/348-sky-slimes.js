@@ -7,7 +7,7 @@
   var skySlimeNext = 7;
   var skySlimeSerial = 1;
   var skySlimeDust = [];
-  var SKY_SLIME_MAX = 8;
+  var SKY_SLIME_MAX = 2; // outdoor rocks, including a carried visitor; two more fit inside
   // More inertia against the rig, but slower ballistic arcs. Mass and
   // gravity are separate: these guests resist a shove without falling faster.
   var SKY_SLIME_GRAVITY = 300;
@@ -63,8 +63,7 @@
   }
 
   function skySlimeSpawn(x, y) {
-    if (skySlimes.length + (typeof bathGuests !== 'undefined' ? bathGuests.length : 0) +
-        (typeof siphon !== 'undefined' && siphon.passenger ? 1 : 0) >= SKY_SLIME_MAX) return null;
+    if (skySlimes.length + (typeof siphon !== 'undefined' && siphon.passenger ? 1 : 0) >= SKY_SLIME_MAX) return null;
     var automatic = !isFinite(x);
     var landX = automatic ? (typeof skySlimeLandingX === 'function' ? skySlimeLandingX() :
       (DECK_LEFT_COL - 18) * TILE) : x;
@@ -653,9 +652,8 @@
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
     // A deep mining trip never fills the surface with unseen arrivals.
-    var indoor = typeof bathGuests !== 'undefined' ? bathGuests.length : 0;
     var carried = typeof siphon !== 'undefined' && siphon && siphon.passenger ? 1 : 0;
-    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried + indoor < SKY_SLIME_MAX) {
+    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried < SKY_SLIME_MAX) {
       skySlimeNext -= dt;
       if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 28 + Math.random() * 18; }
     }
@@ -743,6 +741,7 @@
         skySlimeTerrain(b);
         skySlimePlayer(b, pathX + (player.x - rigX), pathY + (player.y - rigY),
           rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
+        if (typeof surfaceSlimeRockContact === 'function') surfaceSlimeRockContact(b, h);
         skySlimeTerrain(b);
         if (b._ground && Math.abs(b.vy) < 12) {
           var rolling = (b._rollingDrag || 34) * h;
@@ -821,6 +820,15 @@
   }
 
   function skySlimeDrawBody(s) {
+    var morph = ENABLE_JELLO ? (s.bathed ? 1 : s._bathMorph || 0) : 0;
+    if (morph > 0) {
+      ctx.save(); ctx.globalAlpha *= morph; surfaceSlimeDrawGuest(s); ctx.restore();
+    }
+    if (morph >= 1) return;
+    ctx.save(); ctx.globalAlpha *= 1 - morph; skySlimeDrawRockBody(s); ctx.restore();
+  }
+
+  function skySlimeDrawRockBody(s) {
     var squash = skySlimeClamp(s.squash || 0, -0.055, 0.115);
     var angle = Math.atan2(s._impactNY === undefined ? -1 : s._impactNY, s._impactNX || 0) + Math.PI / 2;
     ctx.save();

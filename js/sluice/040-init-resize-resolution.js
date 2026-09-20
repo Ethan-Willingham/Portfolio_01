@@ -5,6 +5,8 @@
     mineralLiquidReset();
     bathServiceReset();
     skySlimeReset();
+    surfaceSlimesSeeded = false;
+    surfaceSlimeGuests.length = 0;
     siphonReset();
     liquidParticles = [];
     liquidCount = 0;

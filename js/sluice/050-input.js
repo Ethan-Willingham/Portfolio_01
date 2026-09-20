@@ -84,6 +84,7 @@
     // the CPU/GPU drop to idle instead of redrawing the same frame ~120×/sec
     // forever. The loop is re-kicked (exactly once) by resumeGame.
     function pauseGame(reason) {
+      surfaceSlimeGrabEnd(undefined, true);
       if (PAUSE_DISABLED) return;   // ?nopause=1 harness lever (020)
       if (introPhase !== 'done') { gameLoadingPauseReason = reason || 'Paused'; clearAllInput(); return; }
       if (gamePaused) return;
@@ -221,6 +222,7 @@
     }
   }
   function handleTouchEnd(e) {
+    if (e.type === 'touchcancel') surfaceSlimeGrabEnd(undefined, true);
     e.preventDefault();
     for (var i = 0; i < e.changedTouches.length; i++) {
       processPointerUp(e.changedTouches[i].identifier);
@@ -329,6 +331,11 @@
       return;
     }
 
+    // Visible soft residents own a direct grab ahead of the building behind
+    // them. HUD, menus, the liquid tool and the mobile d-pad keep priority.
+    if (!right && !siphon.equipped && !isInDpadZone(x, y) && y < screenH * worldScale &&
+        surfaceSlimeGrabStart(x / worldScale + cam.x, y / worldScale + cam.y, id)) return;
+
     // v15.1 — Click / tap the shop building to enter. isPointOnShop is a
     // generous whole-building hit target (+ margin). The shop is drawn in
     // world space, so translate the canvas point through the camera. No
@@ -410,6 +417,7 @@
   }
 
   function processPointerMove(x, y, id) {
+    if (surfaceSlimeGrabMove(x / worldScale + cam.x, y / worldScale + cam.y, id)) return;
     if (siphonPointerMove(x, y, id)) return;
     if (cargoManifestOpen) { cargoManifestPointerMove(x, y); return; }
     if (ledgerOpen) { ledgerPointerMove(x, y); return; }
@@ -443,6 +451,7 @@
     }
   }
   function processPointerUp(id) {
+    surfaceSlimeGrabEnd(id, false);
     siphonPointerUp(id);
     if (cargoManifestOpen) { touch.active = false; return; }
     if (ledgerOpen) { touch.active = false; return; }

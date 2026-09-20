@@ -115,10 +115,44 @@ through the solver mutation journal, including parked offscreen spills. No
 spill returns to the tank or survives a save. Quenching separately consumes 2 L
 from tank/stock water exactly once; it does not empty the guest bath.
 
-Two visitors can wait inside, with eight total visitors including those carried
-and outdoors. An eighteen-second warm soak pays $75. These are initial service
+Two rocky visitors can roam outdoors, counting a carried visitor toward that
+limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
+
+## Bath-born residents (v28.46)
+
+Five soft residents appear around the starting town for playtesting, including
+on existing saves. A completed warm bath changes a rocky guest into the same
+kind of creature. Its shell fades during the last part of the soak, and its
+surface body spawns at the door after departure. It keeps its visitor identity,
+stays in the world, and saves separately from the rocky population. Reloading
+does not add another five. The payment still happens once per completed bath.
+
+These are 37- or 61-point deformable meshes in the existing XPBD solver. Their
+lobed resting shape, spring network and pressure constraints govern collisions
+with terrain, the rig, other gel bodies, and rocky guests. Walking, a brief
+crouch, and hopping apply actor forces; external launches suspend their muscles
+so they can tumble freely. They avoid walking into shafts and stay near their
+own surface neighborhood. Player pushes can still send them underground.
+Underground slime brains remain disabled by default.
+
+Click or touch a soft resident and drag to lift it by a compliant patch of gel.
+Release while moving to toss it. The grip keeps terrain and body contacts
+active; cancel, pause, focus loss, and entering the banya release it. The liquid
+tool and mobile driving controls retain their input. Drive into the residents,
+land on them, or brush them with jet exhaust to play without dragging.
+
+Pastel gel, highlights, blinks, smiles, and startled faces follow the deforming
+mesh. Pond water provides buoyancy; the real boundary displaces WebGPU water, with contour collision in the CPU fallback.
+Residents do not dissolve. Off-camera bodies use the existing simulation culling.
+The five starting residents do not count toward either rocky-visitor limit.
+
+`347-surface-slimes.js` owns the mesh, behavior, appearance and persistence;
+`349-slime-touch.js` owns the grip and rock/gel contact. Run
+`node tools/surface-slime-smoke.mjs` for real-browser checks of walking,
+30/60/144 Hz impacts and launches, mouse input, water, guest conversion,
+and full-game save restoration. Screenshots are written under `/tmp`.
 
 ## Sky visitor physics and appearance (v28.34)
 

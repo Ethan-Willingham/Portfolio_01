@@ -213,6 +213,7 @@
   function bathFinishGuest(g) {
     if (g.paid) return;
     g.paid = true;
+    g.s.bathed = true;
     bathSplashWater(g, 65);
     bathServed++;
     money += BATH_VISIT.pay;
@@ -224,6 +225,16 @@
   function bathReleaseGuest(g) {
     if (!bathPickSite()) return false;
     var s = g.s;
+    if (ENABLE_JELLO && s.bathed) {
+      // A full solver keeps the paid guest indoors until there is room.
+      // Retrying cannot duplicate the payment or discard their identity.
+      var resident = surfaceSlimeBuild((banyaDoorX0 + banyaDoorX1) / 2,
+        SKY_ROWS * TILE - 38, s);
+      if (!resident) return false;
+      jelloLaunchBody(resident, 65, -110, { h: jelloStepH || JELLO_H });
+      return true;
+    }
+    if (skySlimes.length >= SKY_SLIME_MAX) return false;
     s.x = (banyaDoorX0 + banyaDoorX1) / 2;
     s.y = SKY_ROWS * TILE - s.r - 2;
     s.vx = 60; s.vy = -130; s.wet = 0; s._wetTarget = 0;
@@ -246,6 +257,7 @@
     for (var i = bathGuests.length - 1; i >= 0; i--) {
       var g = bathGuests[i], s = g.s, oldX = s.x, oldY = s.y;
       g.t += dt; s.age += dt;
+      s._bathMorph = skySlimeClamp((g.soak / BATH_VISIT.seconds - 0.7) / 0.3, 0, 1);
       if (g.st === 'hop') {
         var h = g.hop;
         h.t = Math.min(h.duration, h.t + dt);
@@ -424,6 +436,7 @@
         served: !!src.served, soak: skySlimeClamp(Number(src.soak) || 0, 0, BATH_VISIT.seconds),
         hop: st === 'hop' ? Object.assign({}, hop) : null };
       if (!g.served && st !== 'wait' && !(st === 'hop' && hop.next === 'wait')) g.st = 'wait';
+      if (g.paid) s.bathed = true;
       if (g.paid && g.st === 'soak') g.st = 'leave';
       s.visit = 'inside'; bathGuests.push(g);
       // Save migrations and interrupted transitions cannot duplicate a visitor.

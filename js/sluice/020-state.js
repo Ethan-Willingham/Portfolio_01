@@ -743,7 +743,7 @@
                  : ((typeof slimeNpcGuestsAny !== 'undefined' &&
                      slimeNpcGuestsAny) ? slimeNpcGuests : null);
           if (!bathMode && typeof liquidSkyGuestShapes === 'function') {
-            gs = (gs || []).concat(liquidSkyGuestShapes()).slice(0, 8);
+            gs = (gs || []).concat(liquidSkyGuestShapes(), surfaceSlimeGuests).slice(0, 8);
           }
           return { player: pl, rocket: rk, explosions: ex, guests: gs };
         }

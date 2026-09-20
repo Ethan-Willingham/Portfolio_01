@@ -488,7 +488,7 @@
     var list = [], i, b;
     for (i = 0; i < jelloBodies.length; i++) {
       b = jelloBodies[i];
-      if (b.guest || b.devFixture || b._melting) continue;
+      if (b.guest || b.surfaceSlime || b.devFixture || b._melting) continue;
       if (!b.npc) slimeNpcAttach(b);
       if (b.frozen || b.n <= 0) {
         // Off-camera bodies get zero solver time; drop their buoy so a

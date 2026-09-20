@@ -3495,6 +3495,7 @@
 
   // ----- Reset -----
   function resetJello() {
+    if (typeof surfaceSlimeGrabEnd === 'function') surfaceSlimeGrabEnd(undefined, true);
     jelloBodies.length = 0;
     jelloSplats.length = 0;
     jelloCount = 0;
@@ -6744,7 +6745,7 @@
     jelloActuateBody(b, h);
     jelloIntegrate(b, h);
     // The public physics toy installs this optional compliant pointer grip.
-    // The game has no direct mouse grab, so the typeof branch is a clean no-op.
+    // Surface residents install the same compliant grip for mouse and touch.
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
     if (m === 'pbd') {
@@ -8222,7 +8223,7 @@
       b = active[ai];
       // v25.85 BANYA: guest slimes are customers, not solutes (plan B-D5).
       // v26.69: NPC slimes are creatures that swim; they never dissolve.
-      if (b.guest || b.npc) { b._dslT = 0; b._dslNear = 0; continue; }
+      if (b.guest || b.npc || b.surfaceSlime) { b._dslT = 0; b._dslNear = 0; continue; }
       var bx0 = Math.floor((b.bboxL - JELLO_DISSOLVE_R) * 0.0625);
       var bx1 = Math.floor((b.bboxR + JELLO_DISSOLVE_R) * 0.0625);
       var by0 = Math.floor((b.bboxT - JELLO_DISSOLVE_R) * 0.0625);
@@ -8904,6 +8905,7 @@
   }
 
   function jelloDrawBody(b) {
+    if (b.surfaceSlime) { surfaceSlimeDraw(b); return; }
     if (b.ringN < 3) return;
     // A non-finite bbox must never reach the canvas: createLinearGradient/createRadialGradient
     // THROW on NaN/Inf arguments, which would kill the whole render loop (black screen), and a

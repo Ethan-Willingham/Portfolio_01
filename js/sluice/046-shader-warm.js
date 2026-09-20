@@ -325,6 +325,12 @@
         jelloDrawBody(body);
         ctx.restore();
       }
+      var resident = surfaceSlimeBuild(cx + 80, cy, { id: -1, seed: 0.4, hue: 133 });
+      if (resident) {
+        temp.push(resident);
+        surfaceSlimeDraw(resident);
+        surfaceSlimeDrawGuest({ x: cx - 80, y: cy, r: 25, seed: 0.4, age: 1, blink: 0 });
+      }
       // The frame's own path: splats, then the bodies through the shared
       // refraction backdrop, where overlapping lenses read the canvas.
       jelloBodies = temp;

@@ -7,6 +7,9 @@ function fixture(fps = 60) {
   const s = { Math: math, console: { log() {} }, window: {}, performance: { now: () => 1000 },
     canvas: { width: 1000, height: 750, addEventListener() {}, setPointerCapture() {},
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 750 }) }, dpr: 1,
+    residents: [], JELLO_H: 1/120, jelloStepH: 1/240,
+    surfaceSlimeBuild(x,y,guest) { const b={x,y,id:guest.id};s.residents.push(b);return b; },
+    jelloLaunchBody() {}, surfaceSlimeGrabEnd() {},
     TILE: 32, SKY_ROWS: 4, COLS: 320, DECK_CENTER_COL: 160, DECK_LEFT_COL: 149, DECK_RIGHT_COL: 171,
     PLAYER_W: 22, PLAYER_H: 26, ENABLE_BATH: true, ENABLE_JELLO: true,
     world: Array.from({length:620},(_,r)=>Array.from({length:320},()=>r<4?null:{type:'dirt',hp:1})),
@@ -104,8 +107,9 @@ for (const fps of [30,60,144]) {
   const paid=JSON.parse(JSON.stringify(s.bathServiceSave()));
   s.bathServiceRestore(paid); f.inside(8);
   assert.equal(s.money,75,'reload after payment cannot duplicate the payout');
-  assert(s.skySlimes.some(g=>g.id===id&&g.visit==='depart'),'same visitor leaves on the surface');
-  f.advance(25); assert(!s.skySlimes.some(g=>g.id===id),'departed guest clears its population slot');
+  assert(s.residents.some(g=>g.id===id),'same visitor becomes a surface resident');
+  f.advance(25); assert.equal(s.residents.filter(g=>g.id===id).length,1,'resident persists without duplicating');
+  assert(s.skySlimes.length<=2,'only two rocky visitors roam outside');
   console.log('PASS visit, resources, save during soak/payment, departure at '+fps+' FPS');
 }
 {
