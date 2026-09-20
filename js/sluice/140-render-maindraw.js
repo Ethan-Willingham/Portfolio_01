@@ -1009,6 +1009,8 @@
 
     // ====== RENDER: World entities (stations, player, effects) ======
 
+    drawRainDamp();
+
     // ---- Surface trees (165): groves + snags across the wide surface.
     //      Drawn before the stations so canopies sit behind every building,
     //      in front of the terrain tiles + grass line. ----

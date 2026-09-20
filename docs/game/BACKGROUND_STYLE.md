@@ -587,7 +587,10 @@ and end at its real collision point. Small impact crowns and foreshortened
 rings use the same palette. Slow fronts and travelling gusts vary the field;
 the existing overcast veil provides the atmosphere. Each airborne drop hands
 one collectable particle to the water solver. No additional mist or opaque
-foreground veil obscures the rig. See [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for
+foreground veil obscures the rig. Rainwater gradually soaks into dirt, leaving
+a faint darkened contact edge and a shrinking glint in the existing dirt and
+rain palettes. These bounded, fading marks draw before scenery and fog, with
+no new simulated particles or terrain-cache invalidation. See [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for
 the bounded water cycle and persistence rules.
 
 **Storms.** Coverage→1, dark clouds, heavy precip, and full-screen lightning (`SKY.lightningFlash`, additive, fast decay, occasional double-strike) that lights the whole scene.

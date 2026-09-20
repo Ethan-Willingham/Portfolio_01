@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.5';
+  var GAME_VERSION = 'v28.6';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -29290,6 +29290,8 @@
 
     // ====== RENDER: World entities (stations, player, effects) ======
 
+    drawRainDamp();
+
     // ---- Surface trees (165): groves + snags across the wide surface.
     //      Drawn before the stations so canopies sit behind every building,
     //      in front of the terrain tiles + grass line. ----
@@ -32805,10 +32807,12 @@
   var worldRainEnabled = false;
   var RAIN_ORIGIN = 3;
   var RAIN_DROP_CAP = 1800;
-  var RAIN_WATER_CAP = 24000;
-  var rain = { time: 0, credit: 0, scan: 0, cursor: 0, waterCount: 0,
+  var RAIN_WATER_CAP = 6000;
+  var RAIN_CPU_CAP = 2400;
+  var RAIN_DAMP_CAP = 256;
+  var rain = { time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, waterCount: 0,
     drops: [], impacts: [], parked: [], cells: {}, intensity: 0.8,
-    emitted: 0, landed: 0, recycled: 0, primed: false };
+    damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false };
 
   function rainNewWorldEnabled() {
     var q = /[?&]rain=([01])(?:&|$)/.exec(window.location.search || '');
@@ -32816,9 +32820,10 @@
   }
   function rainReset(enabled) {
     worldRainEnabled = enabled === true;
-    rain.time = rain.credit = rain.scan = rain.cursor = rain.waterCount = 0;
-    rain.emitted = rain.landed = rain.recycled = 0;
-    rain.drops.length = rain.impacts.length = rain.parked.length = 0;
+    rain.time = rain.credit = rain.scan = rain.scanDt = rain.cursor = rain.waterCount = 0;
+    rain.emitted = rain.landed = rain.recycled = rain.absorbed = 0;
+    rain.drops.length = rain.impacts.length = rain.parked.length = rain.damp.length = 0;
+    rain.dampCells = {};
     rain.cells = {}; rain.primed = false; rain.intensity = 0.8;
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
     // Reset the wet mood too when making a normal world after a rain world.
@@ -32833,17 +32838,63 @@
   }
   function rainCell(x, y) { return Math.floor(y / 6) * (Math.ceil(COLS * TILE / 6) + 1) + Math.floor(x / 6); }
 
+  function rainDampEdge(r, c, face, x, y) {
+    // Merge nearby absorption into a tiny face cache, never one FX per drop.
+    var along = face < 2 ? x - c * TILE : y - r * TILE;
+    var segment = Math.max(0, Math.min(3, Math.floor(along / 8)));
+    var key = (r * COLS + c) * 16 + face * 4 + segment;
+    var mark = rain.dampCells[key];
+    if (!mark) {
+      if (rain.damp.length >= RAIN_DAMP_CAP) return;
+      mark = { key: key, r: r, c: c, face: face, segment: segment,
+        born: rain.time, stamp: rain.time, strength: 0,
+        shade: materialPalette('dirt', materialLayer(getLayerAt(r, c))).cool };
+      rain.dampCells[key] = mark; rain.damp.push(mark);
+    }
+    mark.strength = Math.min(1, mark.strength * Math.max(0, 1 - (rain.time - mark.stamp) / 6) + 0.12);
+    mark.stamp = rain.time;
+  }
+  function rainSoakAt(x, y, visible) {
+    // Only the first few pixels touching a dirt face drain. Water above that
+    // film still falls and flows through the real solver. Four cheap probes
+    // include shaft walls; no neighbor search or extra GPU readback.
+    for (var face = 0; face < 4; face++) {
+      var px = x + (face === 2 ? 6 : face === 3 ? -6 : 0);
+      var py = y + (face === 0 ? 6 : face === 1 ? -6 : 0);
+      var r = Math.floor(py / TILE), c = Math.floor(px / TILE), t = tileAt(r, c);
+      if (!t || t.type !== 'dirt' || t.pondBasin || !liquidWorldSolidAt(px, py)) continue;
+      if (visible) rainDampEdge(r, c, face, x, y);
+      rain.absorbed++;
+      return true;
+    }
+    return false;
+  }
+
   // One slow scan maintains contact occupancy and streams rain outside the
   // solver's camera window. Saved rain uses this same bounded coordinate list.
-  function rainScan() {
+  function rainScan(dt) {
     var cells = {}, count = 0, margin = 220;
+    // Exponential removal gives the same drainage per second at any frame
+    // rate. Individual subpixel particles disappear over several scans, so
+    // a puddle subsides instead of an entire tile's water blinking away.
+    var soakChance = 1 - Math.exp(-2.8 * (dt || 0));
     var x0 = cam.x - margin, x1 = cam.x + screenW + margin;
     var y0 = cam.y - margin, y1 = cam.y + screenH + margin;
+    for (var d = rain.damp.length - 1; d >= 0; d--) {
+      var mark = rain.damp[d], tile = tileAt(mark.r, mark.c);
+      if (rain.time - mark.stamp < 6 && tile && tile.type === 'dirt') continue;
+      delete rain.dampCells[mark.key];
+      rain.damp[d] = rain.damp[rain.damp.length - 1]; rain.damp.pop();
+    }
     for (var i = liquidCount - 1; i >= 0; i--) {
       var x = liquidX[i], y = liquidY[i];
       if (liquidOrigin[i] === RAIN_ORIGIN) {
         if (x < x0 || x > x1 || y < y0 || y > y1) {
           if (rain.parked.length < RAIN_WATER_CAP * 2) rain.parked.push(x, y);
+          removeLiquidParticle(i);
+          continue;
+        }
+        if (Math.random() < soakChance && rainSoakAt(x, y, true)) {
           removeLiquidParticle(i);
           continue;
         }
@@ -32856,8 +32907,16 @@
       }
     }
     var budget = Math.min(600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 4096));
-    for (var j = rain.parked.length - 2; j >= 0 && budget > 0; j -= 2) {
+    for (var j = rain.parked.length - 2; j >= 0; j -= 2) {
       var px = rain.parked[j], py = rain.parked[j + 1];
+      // Parked rain drains as well, including spills left behind the camera.
+      if (Math.random() < soakChance && rainSoakAt(px, py, false)) {
+        rain.parked[j] = rain.parked[rain.parked.length - 2];
+        rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
+        rain.parked.length -= 2;
+        continue;
+      }
+      if (budget <= 0) continue;
       if (px < x0 || px > x1 || py < y0 || py > y1) continue;
       if (liquidWorldSolidAt(px, py)) continue;
       if (addLiquidParticle(0, px, py, 0, 0, RAIN_ORIGIN) < 0) break;
@@ -32910,10 +32969,10 @@
     if (!worldRainEnabled || bathMode || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     dt = Math.min(0.05, Math.max(0, dt));
     rain.time += dt;
-    rain.scan -= dt;
-    if (rain.scan <= 0) { rainScan(); rain.scan = 0.16; }
+    rain.scan -= dt; rain.scanDt += dt;
+    if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
     var gpu = liquidWGPU && liquidWGPU.simActive;
-    var limit = gpu ? RAIN_WATER_CAP : 8000;
+    var limit = gpu ? RAIN_WATER_CAP : RAIN_CPU_CAP;
     var surf = SKY_ROWS * TILE;
     var sky = cam.y < surf && cam.y + screenH > surf - 2200;
     var left = Math.max(3, cam.x - 130), right = Math.min(COLS * TILE - 3, cam.x + screenW + 130);
@@ -32976,6 +33035,48 @@
         rain.impacts[f] = rain.impacts[rain.impacts.length - 1]; rain.impacts.pop();
       }
     }
+  }
+
+  function drawRainDamp() {
+    if (!worldRainEnabled || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
+    // Draw on the soil before scenery and fog. Two feathered bands darken
+    // existing terrain, with a tiny receding glint where the water went in.
+    // No gradients, new canvases, terrain-cache rebuilds or simulated FX.
+    var wp = weatherPalette();
+    ctx.save();
+    for (var i = 0; i < rain.damp.length; i++) {
+      var m = rain.damp[i], age = rain.time - m.stamp;
+      var wet = m.strength * Math.max(0, 1 - age / 6) * Math.min(1, (rain.time - m.born) * 4);
+      var tx = m.c * TILE, ty = m.r * TILE;
+      if (wet <= 0 || tx + TILE < cam.x || tx > cam.x + screenW || ty + TILE < cam.y || ty > cam.y + screenH) continue;
+      var horizontal = m.face < 2, dir = m.face === 0 || m.face === 2 ? 1 : -1;
+      var along = m.segment * 8, jitter = tileHash01(m.r, m.c, m.segment + m.face * 17);
+      var x = horizontal ? tx + along : tx + (dir > 0 ? 0 : TILE);
+      var y = horizontal ? ty + (dir > 0 ? 0 : TILE) : ty + along;
+      ctx.fillStyle = m.shade;
+      for (var band = 0; band < 2; band++) {
+        var depth = (band ? 2 : 4 + jitter * 3) * (0.5 + wet * 0.5);
+        ctx.globalAlpha = wet * (band ? 0.14 : 0.07);
+        ctx.beginPath();
+        if (horizontal) {
+          ctx.moveTo(x + 0.5, y + dir * 0.8); ctx.lineTo(x + 7.5, y + dir * 0.8);
+          ctx.lineTo(x + 6.5, y + dir * depth); ctx.lineTo(x + 2, y + dir * depth * 0.7);
+        } else {
+          ctx.moveTo(x + dir * 0.8, y + 0.5); ctx.lineTo(x + dir * 0.8, y + 7.5);
+          ctx.lineTo(x + dir * depth, y + 6.5); ctx.lineTo(x + dir * depth * 0.7, y + 2);
+        }
+        ctx.closePath(); ctx.fill();
+      }
+      var glint = Math.max(0, 1 - age / 0.65) * wet;
+      if (glint <= 0) continue;
+      ctx.globalAlpha = glint * 0.18;
+      ctx.strokeStyle = wRGBA(wp.rain, 1); ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      if (horizontal) { ctx.moveTo(x + 2, y + dir); ctx.lineTo(x + 2 + 3 * glint, y + dir); }
+      else { ctx.moveTo(x + dir, y + 2); ctx.lineTo(x + dir, y + 2 + 3 * glint); }
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawParticleRain() {
@@ -33062,7 +33163,7 @@
     }
   }
   function shaderWarmRain() {
-    var enabled = worldRainEnabled, drops = rain.drops, impacts = rain.impacts;
+    var enabled = worldRainEnabled, drops = rain.drops, impacts = rain.impacts, damp = rain.damp;
     try {
       worldRainEnabled = true;
       rain.drops = []; rain.impacts = [];
@@ -33071,12 +33172,22 @@
         rain.impacts.push({ x: cam.x + 80, y: cam.y + 100, size: 0.7, wet: true, t: 0.04 + i * 0.11 });
       }
       drawParticleRain();
-    } finally { worldRainEnabled = enabled; rain.drops = drops; rain.impacts = impacts; }
+      rain.damp = [];
+      for (var face = 0; face < 4; face++) rain.damp.push({ r: Math.floor(cam.y / TILE) + 2,
+        c: Math.floor(cam.x / TILE) + 2, face: face, segment: face, born: rain.time - 1,
+        stamp: rain.time, strength: 1, shade: TILE_MATERIALS.dirt.topsoil.cool });
+      ctx.save();
+      var ws = dpr * worldScale;
+      ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
+      drawRainDamp();
+      ctx.restore();
+    } finally { worldRainEnabled = enabled; rain.drops = drops; rain.impacts = impacts; rain.damp = damp; }
   }
   window.__particleRain = {
     stats: function () { return { enabled: worldRainEnabled, airborne: rain.drops.length,
       water: rain.waterCount, parked: rain.parked.length / 2, emitted: rain.emitted,
-      landed: rain.landed, recycled: rain.recycled, intensity: rain.intensity,
+      landed: rain.landed, recycled: rain.recycled, absorbed: rain.absorbed,
+      dampEdges: rain.damp.length, intensity: rain.intensity,
       backend: liquidWGPU && liquidWGPU.simActive ? 'webgpu' : 'cpu' }; }
   };
   /* ====== HORIZON ATMOSPHERE: aerial-perspective haze ====== */

@@ -79,13 +79,13 @@ try {
       await sleep(10000);
       console.log('Storm soak '+(i+1)*10+'s:',await ev('__particleRain.stats()'));
     }
-    check('live GPU storm reaches the recycling limit with finite particle state',await game(`(function(){
+    check('live GPU storm absorbs rain and keeps finite particle state',await game(`(function(){
       liquidToolSync();var count=0;
       for(var i=0;i<liquidCount;i++){if(!isFinite(liquidX[i]+liquidY[i]+liquidVX[i]+liquidVY[i]))return false;if(liquidOrigin[i]===3)count++;}
-      return rain.recycled>1000 && count+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP;
+      return rain.absorbed>1000 && rain.damp.length<=RAIN_DAMP_CAP && count+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP;
     })()`));
     const frames=await ev(`new Promise(function(resolve){var a=[],last=performance.now();function tick(t){a.push(t-last);last=t;if(a.length<240)requestAnimationFrame(tick);else{a.sort(function(x,y){return x-y;});resolve({median:a[120],p95:a[228]});}}requestAnimationFrame(tick);})`);
-    console.log('Frame milliseconds at full rain capacity:',frames);
+    console.log('Frame milliseconds during sustained rain:',frames);
     await screenshot('rain-capacity');
   }
   await ev("document.getElementById('gm-pause-btn').click()");
@@ -123,6 +123,51 @@ try {
   check('rain recycling preserves mineral, poured and pond water',await game('liquidCount===2 && liquidOrigin[0]!==3 && liquidOrigin[1]!==3 && rain.parked.length===0'));
   await game('rain.parked=[100,100,101,101,102,102]');
   check('offscreen baths can sample and consume rain without duplicating it',await game('liquidSampleRect(90,90,110,110)[0]===3 && liquidExtractRect(90,90,110,110,0,2)===2 && rain.parked.length===2'));
+
+  // Water loss must be gradual, material-aware and safe for other liquids.
+  await game(`liquidCount=0;liquidOps.length=0;liquidOpsOverflow=true;liquidMutationSeq++;rainReset(true);
+    cam.y=sy-120;screenW=640;screenH=480;
+    world[SKY_ROWS][rc]={type:'dirt'};world[SKY_ROWS][rc+1]={type:'stone'};
+    world[SKY_ROWS][rc+2]={type:'foundation'};world[SKY_ROWS][rc+3]={type:'copper'};
+    world[SKY_ROWS][rc-1]=null;world[SKY_ROWS+1][rc]=null;
+    for(var i=0;i<1000;i++)addLiquidParticle(0,rc*TILE+2+(i%28),sy-2,0,0,3);
+    rainScan(0.16);`);
+  check('dirt absorbs a puddle gradually over multiple scans',await game('liquidCount>400 && liquidCount<850 && rain.absorbed>150 && rain.damp.length>0'));
+  await game(`rainScan(10);
+    for(var c=rc+1;c<=rc+3;c++)for(var i=0;i<100;i++)addLiquidParticle(0,c*TILE+16,sy-2,0,0,3);
+    for(var i=0;i<100;i++)addLiquidParticle(0,rc*TILE+16,sy-14,0,0,3);
+    for(var i=0;i<3;i++)addLiquidParticle(i===2?2:0,rc*TILE+16,sy-2,0,0,i);
+    for(var i=0;i<100;i++){addLiquidParticle(0,rc*TILE-2,sy+16,0,0,3);addLiquidParticle(0,rc*TILE+16,sy+TILE+2,0,0,3);}
+    rainScan(10);`);
+  check('only rain touching dirt drains, including walls and ceilings',await game('liquidCount===403 && rain.absorbed===1200'));
+  check('stone, foundations, ore and falling water retain their particles',await game('rain.waterCount===400'));
+  check('dirt absorption preserves ordinary water, pond water and minerals',await game('(function(){var count=0;for(var i=0;i<liquidCount;i++)if(liquidOrigin[i]!==3)count++;return count===3;})()'));
+  await game(`var parkedCol=rc+40;world[SKY_ROWS][parkedCol]={type:'dirt'};
+    for(var i=0;i<100;i++)rain.parked.push(parkedCol*TILE+16,sy-2);
+    rainScan(10);`);
+  check('offscreen dirt absorbs parked rain without resurrecting it',await game('rain.parked.length===0 && liquidCount===403 && rain.absorbed===1300'));
+  await game('rain.time+=7;rainScan()');
+  check('damp marks fade away and release their cache entries',await game('rain.damp.length===0 && Object.keys(rain.dampCells).length===0'));
+  await game('rainDampEdge(SKY_ROWS,rc,0,rc*TILE+4,sy);world[SKY_ROWS][rc]=null;rainScan()');
+  check('digging removes the old dirt wetting mark',await game('rain.damp.length===0'));
+
+  const drainage=await game(`(function(){var result=[],random=Math.random;
+    try {for(var hz=0;hz<3;hz++){
+      var fps=[30,60,144][hz],seed=731;
+      Math.random=function(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+      liquidCount=0;rainReset(true);rain.primed=true;cam.y=sy+1;world[SKY_ROWS][rc]={type:'dirt'};
+      for(var i=0;i<2000;i++)addLiquidParticle(0,rc*TILE+16,sy-2,0,0,3);
+      for(var f=0;f<fps;f++)updateParticleRain(1/fps);
+      result.push({fps:fps,remaining:liquidCount});
+    }} finally {Math.random=random;}
+    return result;
+  })()`);
+  console.log('One second of dirt contact:',drainage);
+  check('drainage rate stays consistent across 30, 60 and 144 FPS',drainage.every(v=>v.remaining>=75&&v.remaining<=210));
+  await game(`liquidCount=0;rainReset(true);
+    for(var i=0;i<RAIN_DAMP_CAP+100;i++)rainDampEdge(SKY_ROWS,20+i,0,(20+i)*TILE+4,sy);`);
+  check('damp visuals have a hard cache budget',await game('rain.damp.length===RAIN_DAMP_CAP && Object.keys(rain.dampCells).length===RAIN_DAMP_CAP'));
+
   await game(`rainReset(true);cam.y=sy-280;rain.parked=[];
     for(var i=0;i<RAIN_WATER_CAP;i++)rain.parked.push(10,-4000);
     updateParticleRain(1/60);`);
@@ -131,7 +176,7 @@ try {
     for(var step=0;step<1800;step++)updateParticleRain(1/60);`);
   check('sustained storm stays inside the finite rain reservoir',await game('rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_WATER_CAP && rain.drops.length<=RAIN_DROP_CAP && rain.recycled>100'));
   check('full shared solver does not erase or fabricate landed water',await game(`(function(){var count=liquidCount;liquidCount=LIQUID_MAX_PARTICLES;var landed=rain.landed;var ok=!rainLand({vx:0,vy:600,size:0.5},100,100,false,true)&&rain.landed===landed;liquidCount=count;return ok;})()`));
-  check('CPU fallback has a lower bounded rain budget',await game(`(function(){var gpu=liquidWGPU;liquidWGPU=null;rainReset(true);rain.primed=true;for(var f=0;f<600;f++)updateParticleRain(1/60);var ok=rain.waterCount+rain.parked.length/2+rain.drops.length<=8000;liquidWGPU=gpu;return ok;})()`));
+  check('CPU fallback has a lower bounded rain budget',await game(`(function(){var gpu=liquidWGPU;liquidWGPU=null;rainReset(true);rain.primed=true;for(var f=0;f<600;f++)updateParticleRain(1/60);var ok=rain.waterCount+rain.parked.length/2+rain.drops.length<=RAIN_CPU_CAP;liquidWGPU=gpu;return ok;})()`));
   check('malformed saved rain is rejected and bounded',await game("rainRestore({enabled:true,water:[NaN,0,2,Infinity,-1,10,20,30,'40',50]});rain.parked.length===2 && rain.parked[0]===20"));
 
   // Reload a clean live scene for mobile layout and performance sampling.

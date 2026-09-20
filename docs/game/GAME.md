@@ -43,8 +43,8 @@ the lit button to stop. Alt+Enter toggles fullscreen. See
 ## Build & run
 
 **Particle rain experiment:** pause > Options > World > Particle rain, then
-start a new game. Wind-driven drops become collectable water, pool in hollows,
-and fall down open shafts. The choice persists with the world. The bounded
+start a new game. Wind-driven drops become collectable water, leave small pools,
+soak into dirt, and fall down open shafts. The choice persists with the world. The bounded
 rain reservoir and verification harness are described in [PARTICLE_RAIN.md](PARTICLE_RAIN.md).
 
 The game is ONE IIFE split into ordered fragments in `js/sluice/NNN-*.js`, concatenated into
