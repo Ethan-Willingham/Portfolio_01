@@ -8,6 +8,8 @@
 // callback interval is that frame's cost; GANESH=1 forces Chrome's Ganesh raster
 // backend, the one in the Windows traces. TRACE_CATEGORIES overrides TRACE=1's.
 // PROFILE=0 omits CPU sampling when measuring normal frame delivery.
+// QUERY=snow=1 EXHAUST=copperhead SCENES=town measures a normal snow world
+// with the chosen exhaust; the default query retains the dev-mode fixtures.
 // ROOT can point at a second checkout; DUMP must stay outside the checkout.
 // BUNDLE_REF serves a committed game bundle with this checkout's other assets.
 // WINDOW_X/Y place a normal test window on a second display. FULLSCREEN=0
@@ -94,6 +96,7 @@ window.__audit=(function(){
     flyState:function(){return {x:player.x,altitude:SKY_ROWS*TILE-(player.y+PLAYER_H),left:(DECK_LEFT_COL-24)*TILE,right:(DECK_RIGHT_COL+4)*TILE,ceiling:900};},
     start:function(name,disable){
       resize();scene=name;if(!window.__keepOverlay)drawPerfOverlay=function(){};SUN.paused=!window.__runningClock;timeOfDay=window.__initialTOD===null?(name.startsWith('night')?.02:.5):window.__initialTOD;
+      if(window.__auditExhaust){var savedMoney=money;money=999999;var bought=rigExhaustPurchase(window.__auditExhaust);money=savedMoney;if(!bought.ok)throw Error('Audit exhaust unavailable: '+window.__auditExhaust);}
       if(name==='storm')gm.preset('storm ceiling');
       var disabled=disable.split(',');
       if(disabled.indexOf('smoke')>=0){PERF_DISABLE_SMOKE_FLUID=true;PERF_DISABLE_EXHAUST_BRIDGE=true;}
@@ -118,6 +121,7 @@ window.__audit=(function(){
       cruise=name==='cruise';cruiseTime=0;cruiseRight=true;if(cruise){move=true;flying=true;}
       if(flying){pinX=80*TILE;pinY-=100;}
       if(cruise){pinX=20*TILE;pinY=SKY_ROWS*TILE-340;}
+      if(name==='town')pinX=DECK_CENTER_COL*TILE;
       if(name==='pen')pinX=(DECK_LEFT_COL-18)*TILE;
       if(name==='pond'||name==='nightpond'){var pond=surfacePonds.find(function(p){return p.cR-p.cL>=5;})||surfacePonds[0];if(!pond)throw Error('No pond');pinX=(pond.cL+pond.cR)*TILE*.5;pinY+=name==='nightpond'?-100:TILE;flying=true;}
       if(name==='cave'||name==='deep'){
@@ -180,13 +184,13 @@ try{
     windowInfo=await browserCall('Browser.getWindowBounds',{windowId});
   }
   fs.writeFileSync(path.join(out,'display.json'),JSON.stringify({windowInfo,refreshHz:Number(process.env.REFRESH_HZ||144),screen:await ev('({x:screenX,y:screenY,width:screen.width,height:screen.height,availLeft:screen.availLeft,availTop:screen.availTop,dpr:devicePixelRatio})')},null,2));
-  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling,novsync:process.env.NOVSYNC==='1',ganesh:process.env.GANESH==='1'},null,2));
+  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,query:process.env.QUERY??'dev=1',exhaust:process.env.EXHAUST||null,seconds,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling,novsync:process.env.NOVSYNC==='1',ganesh:process.env.GANESH==='1'},null,2));
   await send('Emulation.setDeviceMetricsOverride',viewport);
-  await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__auditExhaust='+JSON.stringify(process.env.EXHAUST||'')+';window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   for(const scene of scenes){
     errors.length=0;
     if(headed)await send('Page.bringToFront');
-    await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?dev=1&nosave=1&nopause=1&tod=.5'+(process.env.PRESET?'&gmpreset='+encodeURIComponent(process.env.PRESET):'')});
+    await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?'+(process.env.QUERY===undefined?'dev=1':process.env.QUERY)+'&nosave=1&nopause=1&tod=.5'+(process.env.PRESET?'&gmpreset='+encodeURIComponent(process.env.PRESET):'')});
     let ready=false;for(let i=0;i<500;i++){if(await ev('!!window.__audit&&__audit.ready()')){ready=true;break;}await sleep(100);}assert(ready,'Scene load '+JSON.stringify(errors));
     if(headed)await send('Page.bringToFront');
     const boot=await ev('__audit.state()');

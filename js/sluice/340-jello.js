@@ -6469,7 +6469,11 @@
       var refractTransform = ctx.getTransform();
       var sx = l * ws + refractTransform.e, sy = t * ws + refractTransform.f;
       var sw = w * ws, sh = hgt * ws;
-      if (sw > 1 && sh > 1) {
+      // The draw cull includes a world-space margin. A glass body inside
+      // that margin can still have no source pixels on the actual canvas.
+      // Even an empty self-copy can flush GPU work before Canvas clips it.
+      if (sw > 1 && sh > 1 && sx < ctx.canvas.width && sy < ctx.canvas.height &&
+          sx + sw > 0 && sy + sh > 0) {
         var mag = 1 + refract;
         var dw = w * mag, dh = hgt * mag;
         // The frame's shared backdrop copy holds this lens unless it overlaps
@@ -6753,7 +6757,11 @@
     var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (var i = 0; i < jelloBodies.length; i++) {
       var b = jelloBodies[i];
-      if (b.ringN < 3 || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
+      // Surface residents draw their gel without sampling a backdrop.
+      // Including them here forces a GPU canvas snapshot every frame for
+      // an image nobody reads. Keep marking them after drawing so a later
+      // glass slime overlapping a resident still uses the live canvas.
+      if (b.surfaceSlime || b.ringN < 3 || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
       if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
       var refract = (b.refract != null) ? b.refract : JELLO_REFRACT;
       if (!(refract > 0.001)) continue;
