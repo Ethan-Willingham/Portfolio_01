@@ -7,7 +7,7 @@ function world({floor=512,material='stone',water=null}={}) {
   math.random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
   const w={console,Math:math,TILE:32,SKY_ROWS:16,COLS:320,PLAYER_W:22,PLAYER_H:26,DECK_LEFT_COL:149,
     player:{x:4500,y:1000,vx:0,vy:0},liquidCount:0,LIQUID_CELL:2.5,LIQUID_PDELTA:.5,
-    liquidX:[],liquidY:[],liquidVX:[],liquidVY:[],tileAt:(r,c)=>r*32>=floor?{type:material}:null,
+    liquidX:[],liquidY:[],liquidVX:[],liquidVY:[],liquidType:[],tileAt:(r,c)=>r*32>=floor?{type:material}:null,
     solidAt:(x,y,wi,h)=>y+h-1>=floor};
   vm.createContext(w); vm.runInContext(source,w);
   w.splashes=0;w.liquidToolImpulse=()=>++w.splashes;w.skySlimeNext=1e8;

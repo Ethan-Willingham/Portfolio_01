@@ -154,7 +154,7 @@ try {
         thrustSpool:0,jetForce:0,jetPulse:0,drillGlideT:0,fuel:100,
         lastMoveU:false,lastMoveR:false,lastMoveL:false});
       var b=skySlimeFresh(x,floor-25);b.r=25;b.spin=0;b.entry=0;b.playing=true;skySlimes.push(b);
-      var overlap=0,rebound=0,restSpeed=0,bounces=0,drift=0;
+      var overlap=0,rebound=0,restSpeed=0,bounces=0,drift=0,firstHitY=null,rigHeight=0,ballHeight=0;
       for(var frame=0;frame<fps*10;frame++){
         update(1/fps);var incoming=player.vy;skySlimeTick(1/fps);
         if(incoming>20&&player.vy< -15)bounces++;
@@ -162,7 +162,10 @@ try {
         var c=skySlimeRigContact(b,player.x,player.y);
         overlap=Math.max(overlap,c?c.depth:0);
         rebound=Math.max(rebound,-player.vy);
-        if(frame>fps*9)restSpeed=Math.max(restSpeed,Math.abs(player.vy));
+        if(firstHitY===null&&player.vy< -20)firstHitY=player.y;
+        if(firstHitY!==null)rigHeight=Math.max(rigHeight,firstHitY-player.y);
+        ballHeight=Math.max(ballHeight,floor-25-b.y);
+        if(frame>fps*9)restSpeed=Math.max(restSpeed,Math.abs(player.vy),Math.abs(b.vy));
       }
       updateCamera();render();
       var supported=player.onGround&&skySlimeSupportsRig(player.x,player.y),startY=player.y;
@@ -170,6 +173,7 @@ try {
       for(var frame=0;frame<fps*.4;frame++){update(1/fps);skySlimeTick(1/fps);}
       keys.ArrowUp=false;
       results.push({fps:fps,offset:offset,bounces:bounces,drift:drift,overlap:overlap,rebound:rebound,restSpeed:restSpeed,
+        rigHeight:rigHeight,ballHeight:ballHeight,
         supported:supported,takeoff:startY-player.y,airborne:!player.onGround});
     }
     return results;
@@ -178,10 +182,11 @@ try {
     const cases=landings.filter(l=>l.fps===fps);
     return {fps,cases:cases.length,minBounces:Math.min(...cases.map(l=>l.bounces)),
       maxDrift:Math.max(...cases.map(l=>l.drift)),maxOverlap:Math.max(...cases.map(l=>l.overlap)),
-      rebound:cases[0].rebound,minTakeoff:Math.min(...cases.map(l=>l.takeoff))};
+      rebound:cases[0].rebound,minRigHeight:Math.min(...cases.map(l=>l.rigHeight)),
+      minBallHeight:Math.min(...cases.map(l=>l.ballHeight)),minTakeoff:Math.min(...cases.map(l=>l.takeoff))};
   }));
-  check('landing gives a moderate bounce and settles at 30, 60 and 144 Hz',
-    landings.every(l=>l.overlap<.05&&l.rebound>110&&l.rebound<155&&l.restSpeed<2&&l.supported));
+  check('landing springs both miner and guest upward and settles at 30, 60 and 144 Hz',
+    landings.every(l=>l.overlap<.05&&l.rebound>200&&l.rebound<290&&l.rigHeight>23&&l.ballHeight>12&&l.restSpeed<2&&l.supported));
   check('slightly misplaced landings allow repeat bounces without sideways kicks',
     landings.every(l=>l.bounces>=2&&l.drift<.05));
   check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.32';
+  var GAME_VERSION = 'v28.33';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -66770,7 +66770,7 @@
     1.25,0.98, -0.25,0.98, -0.35,0.80];
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
   var SKY_SLIME_ROOF_RESTITUTION = 0.96;
-  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.38;
+  var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.90;
   var SKY_SLIME_RIG_SIDE_RESTITUTION = 0.10;
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
@@ -67169,8 +67169,8 @@
     var restitution = SKY_SLIME_RIG_RESTITUTION -
       (SKY_SLIME_RIG_RESTITUTION - SKY_SLIME_RIG_SIDE_RESTITUTION) * cushion;
     if (ny < 0) restitution += (SKY_SLIME_ROOF_RESTITUTION - SKY_SLIME_RIG_RESTITUTION) * vertical2 * vertical2;
-    // The tracked underbody absorbs a landing. Its damping blends with
-    // the side bumper on oblique hits, retaining a modest landing bounce.
+    // The tracked underbody springs back on a square landing. Its response
+    // blends with the yielding side bumper on oblique hits.
     if (ny > 0) restitution += (SKY_SLIME_RIG_LANDING_RESTITUTION - restitution) * ny * ny;
     // A resting rig receives up to one frame of gravity before this pass.
     // Absorb that small load rather than making a perpetual tiny trampoline.
@@ -67178,6 +67178,31 @@
     var impulse = -(1 + (relative < -(resting ? 40 : 18) ? restitution : 0)) * relative / mobility;
     s.vx += impulse * nx * bx; s.vy += impulse * ny * by;
     var rigDVX = -impulse * nx * rxMass, rigDVY = -impulse * ny * ryMass;
+    // A guest squeezed between a flat track and the floor has two contacts.
+    // Resolve their velocity exchange together: the landing compresses the
+    // guest against the floor, whose rebound can lift BOTH moving bodies.
+    // Position support above still prevents either body entering terrain.
+    // Waiting for a later frame made the guest immovable or chattered as the
+    // two contacts alternately corrected each other. Each impulse here loses
+    // energy through restitution; no launch speed or upward force is added.
+    var foot = resting && ny > 0 && Math.abs(nx) < 0.000001 && ryMass > 0 && relative < -40 ?
+      tileAt(Math.floor((s.y + s.r + share * invMass + 0.08) / TILE), Math.floor(s.x / TILE)) : null;
+    if (foot && (foot === 'wall' || foot.type !== 'jello')) {
+      var soft = foot !== 'wall' && (foot.type === 'dirt' || foot.type === 'sand');
+      var groundRestitution = s.bounce * (soft ? 0.88 : 1);
+      var ballVY = s.vy, rigVY = rvy, contactImpulse = 0;
+      for (var pass = 0; pass < 8; pass++) {
+        if (ballVY >= rigVY && ballVY <= 0) break;
+        if (ballVY < rigVY) {
+          var exchange = (1 + restitution) * (rigVY - ballVY) / (invMass + ryMass);
+          ballVY += exchange * invMass;
+          rigVY -= exchange * ryMass;
+          contactImpulse += exchange;
+        }
+        if (ballVY > 0) ballVY = ballVY < 18 ? 0 : -ballVY * groundRestitution;
+      }
+      s.vy = ballVY; rigDVY = rigVY - rvy; impulse = contactImpulse;
+    }
     player.vx = (player.vx || 0) + rigDVX;
     player.vy = (player.vy || 0) + rigDVY;
     // A brush can roll the ball off the hull. Friction exchanges tangent
@@ -67192,7 +67217,7 @@
     s.vx += friction * tx * bx; s.vy += friction * ty * by;
     s.spin -= friction / (0.4 * mass * s.r);
     player.vx -= friction * tx * rxMass; player.vy -= friction * ty * ryMass;
-    if (ny > 0.6) player.onGround = resting && Math.abs(player.vy) < 8;
+    if (ny > 0.6) player.onGround = resting && Math.abs(s.vy) < 8 && Math.abs(player.vy) < 8;
     if (s.playing || Math.hypot(rvx, rvy) > 8) skySlimePlayContact(s);
     else { s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5); }
     s.settled = false;

@@ -79,7 +79,7 @@ assert(fast.vx>500,'power shots remain possible, with no imposed speed limit');
 const under=airHit(511,179.69,0,40,0,-160).s;
 assert(under.vy< -220,'rising under a falling ball creates a deliberate aerial lift');
 const over=airHit(511,250.47,0,-40,0,160).s;
-assert(over.vy>150&&over.vy<180,'a descending hit pushes the ball down with a moderate underbody rebound');
+assert(over.vy>220&&over.vy<235,'a descending hit pushes the ball down with an elastic underbody rebound');
 const brush=airHit(548.25,220.8,40,100,200,-100).s;
 assert(Math.abs(brush.spin)>.5&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
 const away=airHit(548.25,220.8,300,0,100,0).s;
@@ -133,7 +133,7 @@ console.log('HEADERS',headers);
 const landings=[];
 for(const fps of [30,60,144]){
   const {w,s}=fixture();Object.assign(w.player,{x:489,y:350,vx:0,vy:0,renderX:489,renderY:350});
-  let rebound=0,settledSpeed=0;
+  let rebound=0,settledSpeed=0,firstHitY=null,rigHeight=0,ballHeight=0;
   for(let n=0;n<fps*10;n++){
     w.player.vy+=760/fps;w.player.y+=w.player.vy/fps;w.player.onGround=false;
     w.skySlimeTick(1/fps);
@@ -141,13 +141,32 @@ for(const fps of [30,60,144]){
     assert(!contact||contact.depth<.02,'rig never sinks into a floor-supported guest');
     assert(s.y+s.r<=512.01,'landing cannot force guest through the floor');
     rebound=Math.max(rebound,-w.player.vy);
-    if(n>fps*9)settledSpeed=Math.max(settledSpeed,Math.abs(w.player.vy));
+    if(firstHitY===null&&w.player.vy< -20)firstHitY=w.player.y;
+    if(firstHitY!==null)rigHeight=Math.max(rigHeight,firstHitY-w.player.y);
+    ballHeight=Math.max(ballHeight,487-s.y);
+    if(n>fps*9)settledSpeed=Math.max(settledSpeed,Math.abs(w.player.vy),Math.abs(s.vy));
   }
-  assert(rebound>110&&rebound<155,'landing has a fun moderate bounce without the old trampoline launch');
-  assert(settledSpeed<1&&w.player.onGround,'small contacts settle without perpetual hopping');
+  assert(rebound>230&&rebound<270&&rigHeight>30,'landing gives the miner a substantial upward bounce');
+  assert(ballHeight>17&&ballHeight<27,'the floor rebound also lifts the guest clear of the ground');
+  assert(settledSpeed<2&&w.player.onGround,'small contacts settle without perpetual hopping');
   assert(w.skySlimeSupportsRig(w.player.x,w.player.y),'guest counts as real foot support');
   assert(!w.skySlimeSupportsRig(w.player.x+70,w.player.y),'walking away loses support');
-  landings.push({fps,rebound,restY:w.player.y});
+  landings.push({fps,rebound,rigHeight,ballHeight,restY:w.player.y});
+}
+// The coupled floor/guest/rig impact can lift both masses, but cannot grant
+// energy. Check the real guest size range and soft as well as hard terrain.
+for(const radius of [22,25,27])for(const material of ['stone','dirt'])for(const speed of [45,100,360,700]){
+  const {w,s}=fixture();w.tileAt=(r,c)=>r>=16?{type:material}:null;
+  Object.assign(s,{r:radius,y:512-radius});w.skySlimeTerrain(s);
+  Object.assign(w.player,{x:489,y:s.y-radius-.5-26*.98+.02,vx:0,vy:speed});
+  const mass=w.SKY_SLIME_MASS*radius*radius/625,before=3*speed*speed;
+  w.skySlimePlayer(s,w.player.x,w.player.y,0,speed);
+  const after=.5*mass*s.vy*s.vy+3*w.player.vy*w.player.vy;
+  assert(after<=before+.001,'floor and underbody restitution never add energy');
+  assert(w.player.vy<0&&s.vy<=0,'a supported landing rebounds upward');
+  assert(w.player.vy<=s.vy+.001,'coupled contacts finish separating');
+  if(speed>=360)assert(s.vy< -15,'a substantial landing lifts both bodies');
+  assert(!w.player.onGround,'a rising miner is airborne');
 }
 // A small landing error should allow another natural bounce. Keep both
 // bodies free to move so this would fail if a corner knocked them apart.

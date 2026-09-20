@@ -104,7 +104,7 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.30)
+## Sky visitor physics and appearance (v28.33)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
@@ -139,9 +139,13 @@ of airborne hits. The rig's bumper yields under strong sideways loads: restituti
 smoothly drops from 0.90 toward 0.10 as lateral closing load rises around 130 px/s.
 A fourth-power blend keeps roof hits springy and softens glances. Roof
 restitution rises gently from 0.90 to 0.96 toward a square upward contact.
-The tracked underbody uses 0.38 restitution on a square downward hit, between
-the earlier 0.90 trampoline response and the nearly flat 0.12 landing.
-This absorbs rebound along the real contact normal, with equal opposite recoil
+The tracked underbody uses 0.90 restitution on a square downward hit. A grounded
+guest resolves the track and floor impulses together, so the miner rebounds
+strongly and the guest also springs off the ground. The floor uses the guest's
+normal material restitution, including softer dirt and sand. Each exchange loses
+energy; landing strength and mass determine the result. The earlier 0.38 landing
+left only a small miner bounce and treated the guest as vertically immovable.
+Airborne contacts follow the real contact normal, with equal opposite recoil
 when both bodies are free. Gentle touches retain their spring; stronger hits still give stronger
 shots. Contact friction is 0.04 on the sides and rises toward 0.16 on the roof.
 The added roof grip further reduces sideways deflection on misplaced headers.
@@ -162,7 +166,9 @@ The flat underside spans 33 pixels, up from 19.4. Landings within 16.5 pixels
 of center load the guest vertically, so a modest aiming error no longer kicks
 it away before the miner can land for a second bounce. Both bodies remain free
 to move; shared sideways motion carries through, and outer-corner landings
-still knock the guest away. The existing 0.38 rebound loses energy normally.
+still knock the guest away. A standard test drop onto stone gives the miner 34
+to 39 pixels of rise and the radius-25 guest about 21 pixels, followed by smaller
+rebounds. The full-game soil landing gives about 25 and 14 pixels respectively.
 Small landing contacts settle;
 a resting guest counts as foot support, and normal jets can lift off it.
 The swept collision path includes position corrections without treating them
