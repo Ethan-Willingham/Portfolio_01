@@ -5,8 +5,8 @@
      of the B6 slice:
 
      EXTERIOR: a tall banya tower drawn on the town surface (deck-relative
-     siting, v25.78). Entry works like the shop: two linen curtain panels
-     slide apart as the rig approaches (bathDoorT, the shopDoorT ramp),
+     siting, v25.78). Entry works like the shop: red velvet curtains
+     gather back at the sides as the rig approaches (bathDoorT, the shopDoorT ramp),
      and getting in is deliberate:
      click/tap the tower whenever it is on screen (processPointerDown in
      050, beside isPointOnShop), or park at the door and press Enter/E.
@@ -421,7 +421,7 @@
     bathPromptT += dt;
     if (!bathMode) {
       if (!bathPickSite()) return false;
-      // Entry works like the shop. The two curtain panels slide apart
+      // Entry works like the shop. The velvet curtains gather back
       // as the rig approaches (same ramp rates as shopDoorT,
       // 350) and getting in is DELIBERATE: tap/click the tower (050) or
       // park at the door and press Enter/E/P (the shop's drive-up keys).
@@ -1087,13 +1087,12 @@
     ctx.fillText('Н', cx - 62, gy - 56);
     ctx.fillText('Я', cx - 62, gy - 34);
 
-    // Two plain linen panels on a visible rod. The center seam separates
-    // into a tall, clear opening; only two folds describe each cloth panel.
+    // Stage velvet: broad upper drapes sweep into a side gather, then
+    // flare gently toward the hem. Three red tones keep the folds quiet.
     var dw = banyaDoorX1 - banyaDoorX0;
     var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
     var cxD = (banyaDoorX0 + banyaDoorX1) / 2;
     var ct = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);
-    var panelW = dw / 2 - (dw / 2 - 7) * ct;
     var clothY = BANYA_DOOR_Y0 + 5, hemY = BANYA_DOOR_Y1 - 6;
     ctx.fillStyle = BLD.outline;
     ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh);
@@ -1104,26 +1103,43 @@
     ctx.fillRect(banyaDoorX0 + 3, hemY - 10, dw - 6, 10);
     ctx.fillStyle = BLD.woodMid;
     ctx.fillRect(banyaDoorX0 + 3, hemY - 1, dw - 6, 2);
-    for (var side = 0; side < 2; side++) {
-      var px = side === 0 ? banyaDoorX0 : banyaDoorX1 - panelW;
-      ctx.fillStyle = BLD.cream;
+    var clothH = hemY - clothY, pullY = clothH * 0.62;
+    var topW = dw / 2 - 6 * ct;
+    var pullW = dw / 2 - 18 * ct;
+    var hemW = dw / 2 - 13 * ct;
+    // Every fold follows the same drape, so it bends with the fabric.
+    // Fractions measure inward from the jamb; reverse the other edge to
+    // close each ribbon without clips, a cloth simulation, or tiny seams.
+    function velvetBand(from, to, color) {
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.moveTo(px, clothY); ctx.lineTo(px + panelW, clothY);
-      ctx.lineTo(px + panelW, hemY - 1);
-      ctx.quadraticCurveTo(px + panelW * 0.75, hemY + 1, px + panelW * 0.5, hemY - 1);
-      ctx.quadraticCurveTo(px + panelW * 0.25, hemY + 1, px, hemY - 1);
+      ctx.moveTo(topW * from, 0); ctx.lineTo(topW * to, 0);
+      ctx.bezierCurveTo((topW + ct) * to, clothH * 0.23,
+        (pullW + ct) * to, clothH * 0.44, pullW * to, pullY);
+      ctx.quadraticCurveTo(pullW * to, clothH * 0.83, hemW * to, clothH);
+      ctx.quadraticCurveTo(hemW * (from + to) / 2, clothH + 1.5, hemW * from, clothH);
+      ctx.quadraticCurveTo(pullW * from, clothH * 0.83, pullW * from, pullY);
+      ctx.bezierCurveTo((pullW + ct) * from, clothH * 0.44,
+        (topW + ct) * from, clothH * 0.23, topW * from, 0);
       ctx.closePath(); ctx.fill();
-      // Folds narrow as the fabric gathers at the sides of the frame.
-      ctx.fillStyle = BLD.woodPale;
-      ctx.fillRect(px + panelW * 0.24, clothY + 1, Math.max(1, panelW * 0.15), hemY - clothY - 2);
-      ctx.fillRect(px + panelW * 0.68, clothY + 1, Math.max(1, panelW * 0.13), hemY - clothY - 2);
-      ctx.fillStyle = BLD.woodMid;
-      var edge = side === 0 ? px + panelW - 1 : px;
-      ctx.fillRect(edge, clothY + 1, 1, hemY - clothY - 2);
-      // Two small cloth loops make the hanging mechanism unmistakable.
-      ctx.fillStyle = BLD.cream;
-      ctx.fillRect(px + 1, clothY - 3, 2, 3);
-      ctx.fillRect(px + panelW - 3, clothY - 3, 2, 3);
+    }
+    for (var side = 0; side < 2; side++) {
+      ctx.save();
+      ctx.translate(side === 0 ? banyaDoorX0 : banyaDoorX1, clothY);
+      ctx.scale(side === 0 ? 1 : -1, 1);
+      velvetBand(0, 1, BLD.redDark);
+      velvetBand(0.10, 0.27, BLD.redDeep);
+      velvetBand(side === 0 ? 0.40 : 0.48, 0.72, BLD.redBase);
+      velvetBand(0.86, 1, BLD.redDeep);
+      // One understated brass tie explains where the cloth is pulled.
+      if (ct > 0.65) {
+        ctx.globalAlpha = (ct - 0.65) / 0.35;
+        ctx.fillStyle = BLD.goldDark;
+        ctx.fillRect(0, pullY - 1, pullW + 1, 3);
+        ctx.fillStyle = BLD.goldBase;
+        ctx.fillRect(0, pullY - 1, pullW + 1, 1);
+      }
+      ctx.restore();
     }
     ctx.fillStyle = BLD.metalDark;
     ctx.fillRect(banyaDoorX0 - 2, BANYA_DOOR_Y0 + 1, dw + 4, 2);
