@@ -8,7 +8,10 @@
   var skySlimeSerial = 1;
   var skySlimeDust = [];
   var SKY_SLIME_MAX = 8;
-  var SKY_SLIME_GRAVITY = 480;
+  // More inertia against the rig, but slower ballistic arcs. Mass and
+  // gravity are separate: these guests resist a shove without falling faster.
+  var SKY_SLIME_GRAVITY = 300;
+  var SKY_SLIME_MASS = 2.5; // radius-25 guest; the rig has mass 6
   // Shared warm stone ramp from PIXEL_ART.md.
   var SKY_SLIME_RAMP = ['#252320', '#3e3830', '#5a5248', '#7a706a', '#9e9488', '#c0b8b0'];
   var skySlimeRigLast = null;
@@ -315,7 +318,7 @@
     s.x += nx * depth; s.y += ny * depth;
     var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
     if (relative >= 0) return;
-    var mass = s.r * s.r / 625, invMass = 1 / mass, invRig = 1 / 6;
+    var mass = SKY_SLIME_MASS * s.r * s.r / 625, invMass = 1 / mass, invRig = 1 / 6;
     // The bumper yields under a hard sideways load. Gentle touches and
     // square roof/belly strikes keep their spring; fast glances lose rebound.
     // Smooth compression response keeps stronger hits stronger. It changes
@@ -417,13 +420,16 @@
         s.vx += skySlimeClamp(dir * 80 - s.vx, -65 * dt, 65 * dt);
         continue;
       }
-      s.vx = dir * (s.visit === 'wander' ? 56 : 96);
+      // Preserve navigation hop height/range as gravity changes, with a
+      // slower cadence. This never runs while the player is juggling a guest.
+      var hopScale = Math.sqrt(SKY_SLIME_GRAVITY / 480);
+      s.vx = dir * (s.visit === 'wander' ? 56 : 96) * hopScale;
       var rigSpeed = skySlimeRigLast ? (player.x - skySlimeRigLast.x) / dt : (player.vx || 0);
       var parkedRig = Math.abs(rigSpeed) < 25 &&
         (player.x + PLAYER_W / 2 - s.x) * dir > 0 &&
         Math.abs(player.x + PLAYER_W / 2 - s.x) < s.r + TILE * 2 &&
         Math.abs(player.y + PLAYER_H - s.y - s.r) < TILE;
-      s.vy = shoreHop ? -310 : parkedRig ? -290 : ahead ? -235 : -170;
+      s.vy = (shoreHop ? -310 : parkedRig ? -290 : ahead ? -235 : -170) * hopScale;
       s.squashV = -2; s._ground = false; s.settled = false;
       s.hopIn = 0.9 + s.seed * 0.35;
     }

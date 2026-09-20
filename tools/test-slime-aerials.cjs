@@ -1,17 +1,17 @@
 // Rig/sky-slime contact contract. Run: node tools/test-slime-aerials.cjs
 const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict');
-function fixture() {
+function fixture(tuning={}) {
   const math=Object.create(Math);math.random=()=>.3;
   const w = {Math:math, TILE:32,SKY_ROWS:16,COLS:320,PLAYER_W:22,PLAYER_H:26,DECK_LEFT_COL:149,
     player:{x:100,y:486,vx:0,vy:0},tileAt:(r,c)=>r>=16?{type:'stone'}:null,
     solidAt:(x,y,wi,h)=>y+h>=512,liquidSampleCircle:()=>({wet:0})};
   vm.createContext(w); vm.runInContext(fs.readFileSync('js/sluice/348-sky-slimes.js','utf8'),w);
-  w.skySlimeNext=1e8;
+  Object.assign(w,tuning);w.skySlimeNext=1e8;
   const s=w.skySlimeFresh(500,487);Object.assign(s,{r:25,spin:0,vx:0,vy:0,entry:0,visit:'seek',visitT:0});
   w.skySlimes.push(s);return {w,s};
 }
-function groundHit(speed,fps,dir=1) {
-  const {w,s}=fixture();w.player.x=s.x-dir*110-11;w.player.vx=dir*speed;
+function groundHit(speed,fps,dir=1,tuning={}) {
+  const {w,s}=fixture(tuning);w.player.x=s.x-dir*110-11;w.player.vx=dir*speed;
   let first=null;const collide=w.skySlimePlayer;
   w.skySlimePlayer=function(...args){const b=args[0],vx=b.vx,vy=b.vy;collide(...args);
     if(!first&&Math.hypot(b.vx-vx,b.vy-vy)>1)first={vx:b.vx,vy:b.vy};};
@@ -23,22 +23,37 @@ for(const fps of [30,60,144]) {
   const shots=[20,80,200,290].map(speed=>groundHit(speed,fps));
   assert(shots[0].vy>-12,'gentle push has no minimum launch speed');
   for(let i=1;i<shots.length;i++)assert(shots[i].vy<shots[i-1].vy,'more closing speed gives more lift');
-  assert(shots[2].vy< -130&&shots[2].vx>160,'full-speed ground shot leaves the floor');
+  assert(shots[2].vy< -105&&shots[2].vx>130,'full-speed ground shot leaves the floor');
   const left=groundHit(200,fps,-1);
   assert(Math.abs(left.vy-shots[2].vy)<.1&&Math.abs(left.vx+shots[2].vx)<.1,'mirrored ground shots');
-  results.push({fps,vx:shots[2].vx,vy:shots[2].vy});
+  const light=groundHit(200,fps,1,{SKY_SLIME_MASS:1,SKY_SLIME_GRAVITY:480});
+  assert(shots[2].vx<light.vx*.85,'heavier guest accelerates less from the same drive');
+  assert(200-shots[2].w.player.vx>(200-light.w.player.vx)*1.8,'heavier guest gives the rig a more substantial recoil');
+  function arc(shot,gravity){
+    const {w,s}=fixture({SKY_SLIME_GRAVITY:gravity});s.vx=shot.vx;s.vy=shot.vy;
+    let peak=s.y;for(let frame=1;frame<fps*3;frame++){
+      w.skySlimeTick(1/fps);peak=Math.min(peak,s.y);
+      if(s.bounces)return {time:frame/fps,height:487-peak};
+    }
+    throw Error('ball never returns to ground');
+  }
+  const slowArc=arc(shots[2],shots[2].w.SKY_SLIME_GRAVITY),oldArc=arc(light,480);
+  assert(slowArc.time>oldArc.time*1.25,'lower gravity gives more recovery time despite a slower launch');
+  assert(slowArc.height>oldArc.height*.9&&slowArc.height<oldArc.height*1.2,'longer arc keeps a similar useful launch height');
+  results.push({fps,vx:shots[2].vx,vy:shots[2].vy,slowArc,oldArc});
 }
 assert(Math.max(...results.map(s=>s.vy))-Math.min(...results.map(s=>s.vy))<2,'launch is frame-rate consistent');
 function airHit(x,y,bvx,bvy,rvx,rvy) {
   const {w,s}=fixture();Object.assign(s,{x,y,vx:bvx,vy:bvy,spin:0});Object.assign(w.player,{x:500,y:200,vx:rvx,vy:rvy});
-  const energy=()=>.5*(s.vx*s.vx+s.vy*s.vy)+.2*s.r*s.r*s.spin*s.spin+3*(w.player.vx*w.player.vx+w.player.vy*w.player.vy);
-  const before=energy(),px=s.vx+6*rvx,py=s.vy+6*rvy;
+  const mass=w.SKY_SLIME_MASS*s.r*s.r/625;
+  const energy=()=>.5*mass*(s.vx*s.vx+s.vy*s.vy)+.2*mass*s.r*s.r*s.spin*s.spin+3*(w.player.vx*w.player.vx+w.player.vy*w.player.vy);
+  const before=energy(),px=mass*s.vx+6*rvx,py=mass*s.vy+6*rvy;
   w.skySlimePlayer(s,500,200,rvx,rvy);
-  assert(Math.abs(s.vx+6*w.player.vx-px)<1e-8&&Math.abs(s.vy+6*w.player.vy-py)<1e-8,'contact conserves linear momentum');
+  assert(Math.abs(mass*s.vx+6*w.player.vx-px)<1e-8&&Math.abs(mass*s.vy+6*w.player.vy-py)<1e-8,'contact conserves linear momentum');
   assert(energy()<=before+.001,'rig impact and spin exchange cannot create energy');return {w,s};
 }
 const side=airHit(548.25,220.8,40,0,200,0).s;
-assert(side.vx>200&&side.vx<235&&Math.abs(side.vy)<.001,'side bumper absorbs rebound without adding a pop');
+assert(side.vx>180&&side.vx<205&&Math.abs(side.vy)<.001,'side bumper absorbs rebound without adding a pop');
 // An already-moving ball hit at flight cruise plus upward thrust used to
 // leave at 397 to 454 px/s. Hard glances should now stay near flight cruise
 // (290), while the impulse still follows the actual contact normal.
@@ -46,7 +61,7 @@ const glances=[];
 for(const dir of [-1,1])for(const degrees of [0,10,20,30,40]){
   const angle=degrees*Math.PI/180;
   const hit=airHit(511+dir*(16.5+25*Math.cos(angle)),220.8-25*Math.sin(angle),dir*120,20,dir*290,-160).s;
-  assert(dir*hit.vx>250&&dir*hit.vx<340,'hard glancing aerial avoids the old runaway rebound');
+  assert(dir*hit.vx>250&&dir*hit.vx<310,'hard glancing aerial avoids the old runaway rebound');
   glances.push({degrees,dir,vx:Math.round(hit.vx),vy:Math.round(hit.vy)});
 }
 // Compression changes continuously: faster strikes cannot give a weaker
@@ -60,13 +75,13 @@ for(const degrees of [0,15,30,45,60,75,90]){
   }
 }
 const fast=airHit(548.25,220.8,0,0,700,0).s;
-assert(fast.vx>600,'power shots remain possible, with no imposed speed limit');
+assert(fast.vx>500,'power shots remain possible, with no imposed speed limit');
 const under=airHit(511,179.69,0,40,0,-160).s;
-assert(under.vy< -260,'rising under a falling ball creates a deliberate aerial lift');
+assert(under.vy< -220,'rising under a falling ball creates a deliberate aerial lift');
 const over=airHit(511,250.47,0,-40,0,160).s;
-assert(over.vy>260,'a descending hit spikes downward');
+assert(over.vy>220,'a descending hit spikes downward');
 const brush=airHit(548.25,220.8,40,100,200,-100).s;
-assert(Math.abs(brush.spin)>.6&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
+assert(Math.abs(brush.spin)>.5&&brush.vy>0,'glancing contact transfers spin without forcing upward aim');
 const away=airHit(548.25,220.8,300,0,100,0).s;
 assert.equal(away.vx,300);assert.equal(away.vy,0);assert(!away.playing,'separating contact adds no impulse');
 const miss=airHit(551,160,0,0,300,-250).s;

@@ -99,12 +99,20 @@ and outdoors. An eighteen-second warm soak pays $75. These are initial service
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Sky visitor physics and appearance (v28.12)
+## Sky visitor physics and appearance (v28.14)
 
 Sky guests are circular bouncy bodies with a rotating stone crust and one classic
 white googly eye. Its loose black disk responds to acceleration and only sometimes
 glances at a nearby player. Impact squash is brief and visual; it never changes the
 collision radius. Existing visitors acquire this appearance when loaded.
+
+Guests have 2.5 times their former collision mass, with gravity reduced from
+480 to 300 px/s squared. The rig has mass 6 and a radius-25 guest has mass 2.5;
+guest mass scales with radius squared. Hits move a guest less and recoil the
+rig more. A full-speed ground shot leaves about 18 percent slower but hangs
+for roughly one third longer at a similar height. Unassisted navigation hop
+speeds scale with the square root of gravity, retaining their height and range
+at a slower pace. Existing saved guests use the current mass and gravity.
 
 Ground contacts keep a fixed restitution (0.86 to 0.875, multiplied by 0.88 on
 soil), with friction transferring slide into spin and rolling slowing gradually.
@@ -116,16 +124,14 @@ smoothly drops from 0.90 toward 0.10 as lateral closing load rises around 130 px
 A fourth-power blend keeps square roof/belly hits springy and softens glances.
 This absorbs rebound along the real contact normal, with equal opposite recoil
 on the rig. Gentle touches retain their spring; stronger hits still give stronger
-shots. Contact friction is 0.04 and the rig has six times the mass of a radius-25
-guest. Tangential friction exchanges spin as well as linear momentum. There is
-no minimum launch, automatic aim, catch radius, aerial boost, or change to
-gravity/flight controls. Speed and contact height
-control the shot: get underneath to lift, strike level to drive sideways, and
-hit from above to spike. Free-flight motion has no new drag or speed limit.
-A ground pop followed by a timed jet can chain aerials. In the fixed drive/jet
-browser test, the softer bumper permits three aerial touches. Boosting through a
-moving ball at shallow angles now sends it sideways at 310 to 336 px/s, compared
-with 397 to 454 before; a full-speed ground pop keeps about 88% of its upward speed.
+shots. Contact friction is 0.04. Tangential friction exchanges spin as well as
+linear momentum. There is no minimum launch, automatic aim, catch radius, or
+aerial boost. Player gravity and flight controls are unchanged. Speed and
+contact height control the shot: get underneath to lift, strike level to drive
+sideways, and hit from above to spike. Free-flight motion has no new drag or
+speed limit. A ground pop followed by a timed jet can chain aerials. The fixed
+drive/jet browser test still produces two aerial touches. Its separate shallow
+angle impact checks now leave at 276 to 298 px/s sideways, close to flight cruise.
 
 A player-driven contact pauses the guest's navigation, door admission, and
 scheduled departure. It resumes after 1.5 seconds at rest, at least 2.5 seconds

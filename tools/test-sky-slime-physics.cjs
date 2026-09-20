@@ -39,10 +39,17 @@ for(const fps of [30,60,144]){
  const fast=ball(wall,560,200,1000,0);step(wall,.3,fps);
  assert(fast.x+fast.r<=640.01&&fast.vx<0,'fast wall strike rebounds without tunneling');
  const wet=world({water:280}),floating=ball(wet);
- let down=0;for(let n=0;n<fps*12;n++){wet.skySlimeTick(1/fps);down=Math.max(down,floating.y);}
+ let down=0,wetSum=0,wetSamples=0;
+ for(let n=0;n<fps*12;n++){
+   wet.skySlimeTick(1/fps);down=Math.max(down,floating.y);
+   if(n>=fps*10){wetSum+=floating.wet;wetSamples++;}
+ }
  assert(down<430,'water arrests a fast plunge before the deep floor');
  assert(floating.y>280&&floating.y<300&&Math.abs(floating.vy)<5,'buoyant equilibrium');
- assert(wet.splashes===1,'one entry splash');assert(floating.wet>.64&&floating.wet<.8,'displaced water does not erase buoyancy');
+ assert(wet.splashes===1,'one entry splash');
+ // The waterline uses 4 px rows, so a quiet bob can cross a sampling row.
+ // Verify settled immersion over time instead of one arbitrary final sample.
+ assert(wetSum/wetSamples>.68&&wetSum/wetSamples<.76,'displaced water does not erase buoyancy');
  const shallow=world({water:496}),p=ball(shallow);let rebound=0;
  for(let n=0;n<fps*3;n++){shallow.skySlimeTick(1/fps);rebound=Math.max(rebound,-p.vy);assert(p.y+p.r<=512.01,'puddle floor containment');}
  assert(rebound>200&&rebound<report[report.length-1].first,'shallow water damps but preserves floor rebound');
