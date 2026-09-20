@@ -1,59 +1,103 @@
-# Bathhouse service
+# Bathhouse, boiler, and forge
 
-The owner replaced surface pearl gardens with visiting sky slimes in v28.5.
-This is the current playable slice. Individual guest requests have not been
-chosen. The earlier planning document remains background for future work.
+The banya uses physical coal fires as of v28.13. The old ten-coal ignition
+button and fixed four-minute fuel timer have been replaced. The visitor loop
+remains enabled, and individual guest recipes are still undecided.
 
-## Player routine
+## First visit
 
-1. Gather water with the rig's scoop and mine coal near the surface.
-2. Tap the bathhouse, or park at its door and press E, to enter.
-3. ADD WATER pours stored water into the real tub. LIGHT / 10 COAL spends
-   ten coal once to start the shared stove. New tubs start dry and cold.
-4. Sky slimes arrive, bounce, wander, and enter on their own. Tap a warm-bath
-   bubble, or press E, when the water level and warmth are sufficient.
-5. Guests hop into the tub, relax, pay, and hop out. They leave through the
-   entrance and reappear outside before wandering away.
+1. Mine coal and two iron. Iron appears from 55 m and needs no drill upgrade.
+2. Break stone for flint. Each stone has a 12 percent chance; a piece is
+   guaranteed after twelve unsuccessful eligible breaks. Up to three are kept.
+3. Scoop water into the rig tank. The forge needs 2 L; the bath needs at least
+   40 L and can hold up to 150 L.
+4. Enter the banya and choose Forge. Load two iron and drag a coal chunk from
+   the bunker onto the forge grate. The forge's banked ember starts this fire,
+   so making the first steel striker never requires a striker you do not have.
+5. Work the bellows while the iron heats. Once it is ready, hammer three times,
+   quench with 2 L, let it cool, and collect the steel striker.
+6. Choose Boiler. Load three coal chunks for strong heat, then strike flint
+   and steel. Both tools are reusable. Add coal while the fire burns, work the
+   bellows for more heat, and rake away spent ash when the grate fills.
+7. Choose Bath and ADD WATER. Tap a visitor's bubble once the bath is warm.
+   It soaks, pays, and returns outside. The same visitor identity is preserved.
 
-The stove serves the whole tub. Admission never spends a per-guest dose of
-water or coal. A low or cold tub pauses earned soaking time until restored.
-The visitor loop continues while the player mines. The global pause stops it.
+The coal/iron locker keeps up to 24 ordinary coal and 8 ordinary iron on entry
+or before a station sale. A radio line reports the transfer. Shiny ores and
+surplus materials still sell. Coal can also be drawn directly from ordinary
+cargo, so arriving at the banya before selling works. Tools and stored supplies
+survive a rig recovery; cargo still follows normal death rules.
 
-## Heat and water
+## Direct controls
 
-The current fuel batch is ten coal for a four-minute fire. The stove warms
-water gradually; adding cold water dilutes the warmth, and the tub cools after
-the fire expires. The stored thermal state drives the existing GPU heat source,
-water tint, convection, steam, and the visible flame. The CPU fallback uses the
-same service warmth state. The temperature display is a game-scale estimate.
+Mouse and touch share the same pointer path. Drag a chunk from the bunker into
+the firebox and release: it falls, rolls, collides, and settles. Existing pieces
+can be picked up and rearranged. Dropping fresh coal outside the firebox returns
+it; moving a burning piece outside returns it to its previous grate position.
+Pointer cancellation and leaving the room restore an unfinished drag safely.
+A simple tap on the bunker drops one piece, for players who prefer not to drag.
 
-Water is counted in the shared liquid particles (100 particles per displayed
-litre). ADD WATER transfers actual tank contents to a saved pouring reservoir,
-then emits them into the tub. A blocked or full solver retains pending water.
-The working level is 40 L and the refill cap is 150 L. Guests splash small
-amounts across the rim while entering, bathing, and leaving. Physical contact
-can spill more water. Floor contact deletes the liquid through the solver's
-mutation journal and briefly darkens/wets the floor. Parked offscreen spills
-are drained too. No floor spill returns to the tank or survives in a save.
-Natural lakes and underground liquids remain available for the scoop.
+- 1 / 2 / 3: Bath / Boiler / Forge.
+- C: place one coal in the current firebox.
+- B: work its bellows.
+- F: strike flint and steel at the boiler.
+- A: rake spent ash.
+- E / Enter: advance ready forge work, or admit a ready visitor in Bath.
+- W: fill the bath from stored water while viewing Bath.
+- Escape: leave the banya.
 
-Outside, right click or tap DUMP to discharge the entire tank in a short,
-wide burst. The recoil lifts the rig, with strength based on liquid actually
-released. Ground starts spray beside the tracks before the rig rises; air
-starts discharge below the belly. Steering stays available throughout.
-A carried visitor is released into nearby clear space with the same action.
-An empty tank gives no boost, repeat clicks do not restart a burst, and
-blocked exits or a full particle budget retain any unreleased contents.
-ADD WATER inside the bathhouse remains a direct transfer without launching.
+The fire room uses a compact layout on short landscape screens. The upper bath
+floors and existing floor purchases remain available by scrolling the Bath view.
 
-## Current tuning
+For a quick developer playtest, enable dev mode with backtick before entering.
+TEST SUPPLIES (or T inside) stocks coal, iron, flint, and water. It leaves the
+steel striker to be forged, so the complete first-fire interaction stays visible.
+The control is unavailable in normal play. Dev mode also enables the existing
+free purchases and 999,999 money clamp.
 
-Two indoor guests, eight total visitors including carried and indoor guests.
-An 18-second warm soak pays $75. These are initial timing/payment values,
-not guest recipes. All visitors currently ask only for a warm bath.
-`074-bath-service.js` contains the fuel, fill, warmth, duration, and payout
-values. `348-sky-slimes.js` owns surface arrivals, wander, approach, and departure.
-Underground NPC brains remain disabled by their existing flag.
+## Coal and heat
+
+Both beds simulate in fixed 1/120-second steps, with a maximum of eighteen
+pieces per bed. Chunks have gravity, contact friction, spin, low restitution,
+and saved fuel and heat. Held chunks are detached from pile contacts. Cold coal
+cannot ignite in the boiler without a spark or a hot neighbor. The forge's
+banked ember is local to its bed and never heats the bath for free.
+
+A chunk burns for roughly 48 to 60 seconds at normal air. Bellows raise output
+and burn rate together, then settle back. Multiple pieces can burn together;
+total remaining fuel is an energy reserve, not a promise of that many seconds
+of fire. Coal becomes a physical ash piece and cools when spent. Raking removes
+only spent ash, never usable fuel. Small collisions, ignition, and bellows throw
+sparks from the actual bodies. The flame field is a bounded visual simulation,
+independent of the saved thermal and contact model.
+
+Boiler output warms the bath gradually. Three fully burning pieces can provide
+full heat; one provides a weaker fire. Adding cold water dilutes warmth, and the
+bath cools when the fire dies. This stored thermal state drives the existing GPU
+heat source, water tint, convection, steam, and the copper heat exchanger under
+the tub. The CPU fallback uses the same service warmth state. Temperatures on
+the dial are a game-scale estimate.
+
+Fuel, heat, forge work, and admitted visitors continue while the player mines.
+Pause stops all of them. There is no offline catch-up or day/night service gate.
+
+## Water and visitors
+
+Water uses the shared liquid particles, with 100 particles per displayed litre.
+ADD WATER transfers existing rig/stock water to a saved pouring reservoir before
+emitting into the tub. A blocked solver retains pending water. Admission never
+charges a per-guest dose of coal or water. A low or cold tub pauses earned soak
+time until restored.
+
+Guests splash actual water out. Contact with the floor permanently deletes it
+through the solver mutation journal, including parked offscreen spills. No
+spill returns to the tank or survives a save. Quenching separately consumes 2 L
+from tank/stock water exactly once; it does not empty the guest bath.
+
+Two visitors can wait inside, with eight total visitors including those carried
+and outdoors. An eighteen-second warm soak pays $75. These are initial service
+values, not guest recipes. Sky arrivals still use their existing surface-distance
+rules. This change does not implement the earlier day/night proposal.
 
 ## Sky visitor physics and appearance (v28.12)
 
@@ -99,32 +143,37 @@ and the entry splash changes velocity only. Sparse spray is excluded from the
 waterline, and ambient flow coupling is filtered so the guest does not repeatedly
 accelerate from its own delayed GPU wake.
 
-## Save behavior and retired gardens
+## Saves and migrations
 
-The additive `bathhouse` save field retains guests and their movement states,
-soak progress, payment status, floor purchases, fire time, warmth, pending
-water, recovered supplies, and irreversible spill totals. World and mineral
-liquid saves retain the carved room and its actual water. Restoring re-arms
-the stove without refilling it, charging guests again, or repeating payments.
+The additive `bathhouse.workshop` field saves both fuel beds, supply stock,
+flint-discovery progress, the reusable striker, and committed forge work. A
+saved job cannot charge its iron twice, quench twice, or pay out a second tool.
+Reloaded held chunks settle back into their bed without duplicating the bunker.
+Older bathhouse fire charges become equivalent coal fuel once, preserving paid
+fuel without requiring new tools to keep an already-lit fire going.
 
-A legacy `garden` envelope refunds purchased land, credits construction ores
-at their ordinary value and any ready pearl, replaces only the former bowl
-footprint with dirt, lifts trapped actors onto its surface, and recovers its
-liquid as bathhouse stock. New saves omit `garden`, so conversion happens once.
-The old garden renderer, construction, production loop, and tests are retired.
+The surrounding bathhouse save retains guests, service progress, payment state,
+floor ownership, heat, pending water, recovered supplies, and permanent loss.
+The actual basin water remains in the existing world/liquid save. Legacy garden
+saves still refund retired land/materials and ready pearls, recover their water,
+and remove only the former pool footprints. No pearl production is restored.
 
-## Verification
+## Implementation and checks
 
-- `node tools/test-sky-slimes.cjs`: collision, capture, identity, population.
-- `node tools/test-sky-slime-physics.cjs`: restitution, rolling, rig momentum,
-  fast wall collisions, water depth, buoyancy, and eye motion at 30/60/144 Hz.
-- `node tools/test-slime-aerials.cjs`: ground pop at 30/60/144 Hz, directional
-  airborne contacts, energy and spin exchange, misses, and navigation suppression.
-- `node tools/sky-slime-smoke.mjs`: browser art views, normal drive input and
-  a timed jet sequence with two airborne contacts, plus real WebGPU water
-  entry/bobbing and particle conservation.
-- `node tools/test-bathhouse.cjs`: navigation at 30/60/144 Hz, ten-coal startup,
-  shared resources, warmth, payment, reload, departure, migration, floor drains.
-- `node tools/bathhouse-smoke.mjs`: real browser, water solver, shared stove,
-  visitor service, persistence, desktop and phone views. Uses the dedicated
-  Chrome for Testing launcher and closes its own child process.
+- `077-hearth-physics.js`: bounded pile contacts, ignition, combustion, air, saves.
+- `078-hearth-art.js`: faceted coal, hot cracks, ash, flame transport, event sparks.
+- `078-hearth-room.js`: direct controls, boiler/forge fixtures, craft transactions.
+- `079-forge-resources.js`: mining flint, supply reservation, protected shiny ores.
+- `074-bath-service.js`: real bath heat/water, guests, permanent drains, migration.
+
+Run `node tools/test-hearth-physics.cjs`, `node tools/test-forge-resources.cjs`,
+and `node tools/test-bathhouse.cjs` for fixed-step contacts, material conservation,
+frame-rate independence, first ignition, forge transactions, reloads, visitor
+payments, cancellation refunds, and legacy migration.
+
+`node tools/hearth-smoke.mjs` checks real mouse and touch coal handling, first
+striker crafting, boiler ignition, actual WebGPU bath heating, guest service,
+save restoration, and desktop/phone/short-landscape views. `node
+tools/bathhouse-smoke.mjs` retains the focused bath/visitor visual checks. Both
+own a separate Chrome for Testing child process, close that exact child, and
+save screenshots under `/tmp`.

@@ -45,8 +45,8 @@ panel tokens) and the three fonts; otherwise they do not overlap.
 > (The **bathhouse** is enabled by default since v28.5, by owner request.
 > Pause > Options > Banya remains a persisted switch; `?bath=0` disables it
 > for testing and `?bath=1` enables it. Sky slimes visit, wait, soak, pay, and leave.
-> Ten coal lights the shared stove. Spilled bath water is permanently lost on
-> the floor. Individual guest recipes are undecided. See
+> Physical coal chunks fuel the boiler; flint and a forged steel striker light it.
+> Spilled bath water is permanently lost on the floor. Guest recipes are undecided. See
 > `docs/game/BATHHOUSE_SERVICE.md`. Outdoor pearl gardens have been removed.)
 > (Jello/slime soft bodies used to be on this list but are **LIVE** in production,
 > `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls. The

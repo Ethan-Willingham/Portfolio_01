@@ -324,3 +324,17 @@ For every distinct surface structure (station, windsock, gas-station, watchtower
 If you add a new helper or motif, document it here in §5 / §7 *before* shipping the code. The doc is the source of truth; code follows the doc. If you find yourself doing something the doc forbids, either update the doc with a justified exception or change the code.
 
 This file is short on purpose. When it gets longer than ~400 lines, split by domain (palette, materials, motifs, animation) into separate files under a `docs/style/` folder.
+
+
+## 17. Fire room fixtures (2026-09-19)
+
+The banya fire room uses the existing wood, stone, iron, brass, and warm-glow
+palette. Its open firebrick grate is the focal point. Coal fragments use broad
+facets, rotating cleavage planes, heat-driven cracks, and a pale ash crust.
+The combustion field and event sparks originate at actual fuel pieces.
+`hearthDrawFirebox` and `hearthDrawCoal` in `078-hearth-art.js` are the shared
+render helpers; the shader warm-up exercises hot, cold, ash, and spark states.
+The cast-iron boiler vessel carries a temperature dial and copper pipe to the
+bath. The forge has an anvil, weighted hammer animation, and a quench pail.
+These explicit user-operated fixture animations extend the old exterior-only
+animation table; no surface-building theme or palette is changed.

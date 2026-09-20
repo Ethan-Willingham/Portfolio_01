@@ -1,5 +1,15 @@
 # UI_STYLE.md — Frontier Soviet UI
 
+> **Fire room (2026-09-19, v28.13).** The banya opens onto a physical coal
+> boiler, with Bath / Boiler / Forge locations across its plate header. This is
+> a direct manipulation scene: coal is dragged from a bunker into a live grate;
+> bellows, striker, anvil, and quench pail are working fixtures. A tap on the
+> bunker provides the same action as dragging. All targets are shared by mouse
+> and touch, with a separate compact arrangement on short landscape screens.
+> Firelight is emitted by the actual hot fuel. The moving flame field is an
+> intentional material effect; steel panels and labels retain flat, solid fills.
+> The bath continues to use real liquid and steam behind its separate view.
+
 > **Loading and arrival (2026-09-12).** The game stage has an opaque loading
 > screen in the initial HTML, before the deferred game scripts. A restrained
 > drill-and-strata mark, cream SLUICE wordmark, brass activity line, and plain

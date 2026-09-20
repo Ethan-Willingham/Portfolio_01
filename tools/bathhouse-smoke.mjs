@@ -66,21 +66,26 @@ try {
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;skySlimes=[];skySlimeNext=0.01;player.x=banyaDoorX0-150;player.y=SKY_ROWS*TILE-PLAYER_H;player.renderX=player.x;player.renderY=player.y;cam.snap=true;updateCamera()');
   await game('skySlimeTick(0.05);render()');await screenshot('arrival');
   await game('for(var n=0;n<900;n++){skySlimeTick(0.1);bathGuestTick(0.1);}render()');
+  // Random ponds can delay one arrival. Give the real navigation a bounded
+  // second window, while retaining two guests for the later phone admission.
+  await game('for(var n=0;n<1500 && bathGuests.length<2;n++){skySlimeTick(0.1);bathGuestTick(0.1);}render()');
+  await game('for(var n=0;n<20;n++)bathGuestTick(0.1);render()');
   console.log('VISITORS',await game('({outside:skySlimes.map(function(s){return {visit:s.visit,x:s.x,y:s.y,age:s.age,playing:s.playing,wet:s.wet};}),inside:bathGuests.length,door:banyaDoorX0})'));
   check('sky visitors find the real world door',await game('bathGuests.length===2 && bathGuests.every(function(g){return g.st==="wait";})'));
-  await game('bathEnter()');await sleep(600);await game('updateCamera();render()');
+  await game('bathEnter()');await sleep(600);await game('hearthSetView("bath");updateCamera();render()');
   check('new bath starts dry and unheated',await game('bathWater===0 && bathFire===0 && bathHeat===0'));
   await screenshot('waiting-dry');
   check('cold dry tub refuses admission',await game('!bathServe(bathGuests[0].s.id)'));
-  await game('cargo=Array.from({length:9},function(){return {type:"coal"};})');
-  check('startup needs the entire ten coal',await game('!bathLightStove() && cargo.length===9'));
-  await game('cargo.push({type:"coal"});siphon.tank[0]=12000');
-  await press('({x:bathServiceButtons[1].x+80,y:bathServiceButtons[1].y+20})');
-  check('mouse lighting charges exactly ten coal',await game('cargo.length===0 && bathFire===BATH_FIRE_SECONDS'));
-  check('burning stove cannot charge twice',await game('!bathLightStove() && bathFire===BATH_FIRE_SECONDS'));
+  await game('cargo=Array.from({length:3},function(){return {type:"coal"};});siphon.tank[0]=12000;hearthSetView("boiler");hearthLoadCoal("boiler",120,12);hearthLoadCoal("boiler",150,12);hearthLoadCoal("boiler",180,12);for(var n=0;n<60;n++)bathGuestTick(1/60);render()');
+  check('three physical chunks consume exactly three coal',await game('cargo.length===0 && forgeCount("coal")===0 && hearthBeds.boiler.chunks.length===3'));
+  check('ignition needs reusable flint and steel',await game('!hearthStrike() && hearthBeds.boiler.chunks.every(function(b){return !b.lit;})'));
+  await game('forgeGive("flint",1);forgeGive("steel",1);render()');
+  await press('(function(){var b=hearthButtons.find(function(b){return b.action==="strike";});return {x:b.x+b.w/2,y:b.y+b.h/2};})()');
+  check('mouse strike lights physical fuel without consuming tools',await game('hearthBeds.boiler.chunks.some(function(b){return b.lit;}) && forgeCount("flint")===1 && forgeCount("steel")===1 && forgeCount("coal")===0'));
+  await game('for(var n=0;n<180;n++)bathGuestTick(1/60);hearthSetView("bath");render()');
   await press('({x:bathServiceButtons[0].x+80,y:bathServiceButtons[0].y+20})');
   check('mouse refill transfers existing tank water',await game('siphon.tank[0]===0 && bathPour===12000'));
-  await game('gameRafId=requestAnimationFrame(loop)');await sleep(9000);
+  await game('gameRafId=requestAnimationFrame(loop)');await sleep(12000);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0');
   console.log('WATER',await game('({water:bathWater,heat:bathHeat,pour:bathPour,liquid:liquidCount,lost:bathLostWater})'));
   await screenshot('warming');
@@ -98,7 +103,7 @@ try {
   check('splashed water is permanently drained',await game('bathLostWater>0 && bathWater<12000'));
   await screenshot('paid');
   const saved=await game('({money:money,water:bathBasinCount(),lost:bathLostWater,heat:bathHeat,fire:bathFire})');
-  await game('var envelope=JSON.parse(JSON.stringify(saveBuild()));init();saveApply(envelope);introPhase="done";bathMode=true;bathWater=bathBasinCount();bathArmHeat();bathCamPin();render()');
+  await game('var envelope=JSON.parse(JSON.stringify(saveBuild()));init();saveApply(envelope);introPhase="done";bathMode=true;hearthSetView("bath");bathWater=bathBasinCount();bathArmHeat();bathCamPin();render()');
   check('reload preserves fire, heat, water and permanent loss',await game(`money===${saved.money} && bathWater===${saved.water} && bathLostWater===${saved.lost} && bathHeat===${saved.heat} && bathFire===${saved.fire}`));
   await game('for(var n=0;n<70;n++)bathGuestTick(0.1)');
   check('reload does not repeat payment',await game(`money===${saved.money}`));

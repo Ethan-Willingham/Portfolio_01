@@ -2,7 +2,7 @@
   // Individual guest recipes are intentionally undecided. These are shared
   // operating resources, never a per-guest water or coal charge.
   var BATH_VISIT = { seconds: 18, pay: 75 };
-  var BATH_FIRE_COAL = 10, BATH_FIRE_SECONDS = 240;
+  var BATH_LEGACY_FIRE_SECONDS = 240;
   var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 15000;
   var bathFire = 0, bathHeat = 0, bathWater = 0, bathPour = 0;
   var bathDrainT = 0, bathLostWater = 0, bathWetFloor = [];
@@ -18,6 +18,7 @@
 
   function bathServiceReset() {
     bathScalePop(); bathSteamPop();
+    hearthRoomReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
     bathTransitionSerial++;
     bathMode = false; bathRoomReady = false; bathFading = false;
@@ -31,19 +32,8 @@
     if (bathFadeEl) bathFadeEl.style.opacity = '0';
   }
 
-  function bathCoalIndex() {
-    var shiny = -1;
-    for (var i = 0; i < cargo.length; i++) {
-      if (cargo[i].type !== 'coal') continue;
-      if (!cargo[i].shiny) return i;
-      shiny = i;
-    }
-    return shiny;
-  }
   function bathCoalCount() {
-    var n = 0;
-    for (var i = 0; i < cargo.length; i++) if (cargo[i].type === 'coal') n++;
-    return n;
+    return forgeCount('coal');
   }
   function bathWaterCount() { return siphon.tank[0] + bathSupplies[0]; }
   function bathCanServe() { return bathWater >= BATH_MIN_WATER && bathHeat >= 0.35; }
@@ -68,12 +58,7 @@
   }
   function bathLightStove() {
     if (!bathMode || bathFading || gamePaused) return false;
-    if (bathFire > 0) { bathSetNotice('The fire is already burning. One fire warms the whole tub.'); return false; }
-    if (bathCoalCount() < BATH_FIRE_COAL) { bathSetNotice('Bring 10 coal in cargo to light the stove.'); return false; }
-    for (var n = 0; n < BATH_FIRE_COAL; n++) cargo.splice(bathCoalIndex(), 1);
-    bathFire = BATH_FIRE_SECONDS;
-    bathArmHeat(); sfxPlay('ui-confirm'); saveNow('bath-stove');
-    return true;
+    return hearthStrike();
   }
   function bathAddWater() {
     if (!bathMode || bathFading || gamePaused || !bathRoomReady) return false;
@@ -143,8 +128,10 @@
     bathWater = Math.max(0, bathWater - used);
   }
   function bathOperationsTick(dt) {
-    if (bathFire > 0) bathFire = Math.max(0, bathFire - dt);
-    var target = bathFire > 0 && bathWater > 0 ? 1 : 0;
+    hearthRoomTick(dt);
+    var boiler = hearthBeds.boiler;
+    bathFire = boiler.power > 0.01 ? boiler.fuelSeconds : 0;
+    var target = bathWater > 0 ? boiler.power : 0;
     var heatRate = target ? 0.09 * Math.min(2, 8000 / Math.max(2000, bathWater)) : 0.012;
     bathHeat += (target - bathHeat) * (1 - Math.exp(-dt * heatRate));
     bathDrainT -= dt;
@@ -186,7 +173,7 @@
     bathBeginHop(g, (slot ? 30.25 : 28.25) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
     if (!bathIntroSeen) {
       bathIntroSeen = true;
-      showMsg('A sky slime entered the bathhouse. Fill the tub from your water tank and bring 10 coal to light the shared stove.', false,
+      showMsg('A sky slime is waiting. Bring water and coal to the banya. Its forge makes a steel striker from two iron; stone sometimes drops flint.', false,
         { key: 'bath-arrival', tag: 'BATHHOUSE' });
     }
     return true;
@@ -201,7 +188,7 @@
     var g = bathGuests.find(function (guest) { return guest.s.id === id && guest.st === 'wait'; });
     if (!g) return false;
     if (!bathCanServe()) {
-      bathSetNotice(bathWater < BATH_MIN_WATER ? 'Fill the tub from your water tank.' : 'Light the stove with 10 coal, then let the water warm.');
+      bathSetNotice(bathWater < BATH_MIN_WATER ? 'Fill the tub from your water tank.' : 'Load coal in the boiler, strike flint and steel, and let the water warm.');
       return false;
     }
     // Admission uses the shared warm bath. No guest recipe is charged.
@@ -356,60 +343,31 @@
   function bathDrawServiceHUD() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = BLD.woodDeep; ctx.fillRect(0, 0, w, 96);
-    ctx.fillStyle = BLD.cream; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    ctx.font = 'bold 14px ' + UI_FONT; ctx.fillText('BATHHOUSE', 14, 18);
-    ctx.font = '12px ' + UI_FONT;
-    ctx.fillText('Tub ' + Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 66, 40);
-    ctx.font = '11px ' + UI_FONT;
-    ctx.fillText('Tank ' + Math.floor(bathWaterCount() / 100) + ' L  /  Coal ' + bathCoalCount(), 66, 59);
-    ctx.fillStyle = BLD.goldPale; ctx.textAlign = 'right';
-    ctx.fillText('$' + bathFmtMoney(money), w - 14, 18);
-    ctx.fillStyle = BLD.cream; ctx.fillText('LEAVE [ESC]', w - 14, 43);
-    ctx.textAlign = 'left';
-    ctx.fillText(bathGuests.length ? 'Tap a bubble when the bath is ready.' : 'Sky slimes will find their way here.', 14, 82);
-    bathServiceButtons = [];
-    var bw = Math.min(190, (w - 38) / 2), by = h - 77;
-    var buttons = [
-      { x: 14, y: by, w: bw, h: 40, action: 'water', label: bathPour > 0 ? 'POURING...' : 'ADD WATER', ready: bathWaterCount() > 0 },
-      { x: w - 14 - bw, y: by, w: bw, h: 40, action: 'fire',
-        label: bathFire > 0 ? 'FIRE ' + Math.ceil(bathFire) + 's' : 'LIGHT / 10 COAL', ready: bathCoalCount() >= BATH_FIRE_COAL }
+    hearthDrawNav(ctx, 'bath');
+    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, h - 105, w, 105);
+    hearthText(ctx, 'BATH ' + Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 18, h - 85, 12);
+    hearthText(ctx, '$' + bathFmtMoney(money), w - 18, h - 85, 12, BLD.goldPale, 'right');
+    bathServiceButtons = [
+      { x: 16, y: h - 67, w: Math.min(200, (w - 44) / 2), h: 44, action: 'water' },
+      { x: w - 16 - Math.min(200, (w - 44) / 2), y: h - 67, w: Math.min(200, (w - 44) / 2), h: 44, action: 'boiler' }
     ];
-    ctx.fillStyle = BLD.woodDeep; ctx.fillRect(0, h - (bathNoticeT ? 132 : 89), w, bathNoticeT ? 132 : 89);
-    for (var i = 0; i < buttons.length; i++) {
-      var b = buttons[i];
-      ctx.fillStyle = b.ready ? BLD.woodDark : BLD.stoneDark; ctx.fillRect(b.x, b.y, b.w, b.h);
-      ctx.strokeStyle = BLD.goldDark; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h);
-      ctx.fillStyle = BLD.cream; ctx.font = 'bold 11px ' + UI_FONT; ctx.textAlign = 'center';
-      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2);
-      bathServiceButtons.push(b);
-    }
-    ctx.fillStyle = BLD.cream; ctx.textAlign = 'center'; ctx.font = '11px ' + UI_FONT;
-    ctx.fillText('Coal heats the tub. Floor spills drain away.', w / 2, h - 20);
-    if (bathNoticeT) {
-      ctx.fillStyle = BLD.goldPale;
-      var words = bathNotice.split(' '), lines = [], line = '';
-      for (var j = 0; j < words.length; j++) {
-        var next = line ? line + ' ' + words[j] : words[j];
-        if (ctx.measureText(next).width > w - 28 && line) { lines.push(line); line = words[j]; }
-        else line = next;
-      }
-      lines.push(line);
-      for (var l = 0; l < Math.min(2, lines.length); l++) ctx.fillText(lines[l], w / 2, h - 119 + l * 15);
-    }
+    hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
+    hearthButton(ctx, bathServiceButtons[1], 'TEND THE FIRE', 'boiler', true);
+    if (bathNoticeT) hearthWrap(ctx, bathNotice, 18, h - 132, w - 36, BLD.goldPale, 2);
+    else hearthText(ctx, 'Warm water brings paying guests.', w / 2, h - 10, 11, UIT_DIM, 'center');
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {
       var b = bathServiceButtons[i];
-      if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
-        if (b.action === 'fire') bathLightStove(); else bathAddWater();
+      if (hearthContains(b, x, y)) {
+        if (b.action === 'boiler') hearthSetView('boiler'); else bathAddWater();
         return true;
       }
     }
     return false;
   }
   function bathServiceSave() {
-    return { version: 2, fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+    return { version: 3, workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
@@ -422,8 +380,11 @@
     bathFloorsOwned = [true, false, false, false, false];
     bathSupplies = [0, 0, 0, 0, 0];
     bathFire = 0; bathHeat = 0; bathPour = 0; bathWater = 0; bathLostWater = 0;
+    hearthRoomRestore(data && data.workshop, data && Number(data.fire) || 0);
+    bathServed = 0; bathIntroSeen = false; bathNotice = ''; bathNoticeT = 0;
     if (!data) return;
-    bathFire = skySlimeClamp(Number(data.fire) || 0, 0, BATH_FIRE_SECONDS);
+    bathFire = data.workshop ? (hearthBeds.boiler.power > 0.01 ? hearthBeds.boiler.fuelSeconds : 0) :
+      skySlimeClamp(Number(data.fire) || 0, 0, BATH_LEGACY_FIRE_SECONDS);
     bathHeat = skySlimeClamp(Number(data.heat) || 0, 0, 1);
     bathPour = skySlimeClamp(Number(data.pour) || 0, 0, BATH_MAX_WATER);
     bathLostWater = Math.max(0, Number(data.lost) || 0);

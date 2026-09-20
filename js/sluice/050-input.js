@@ -4,6 +4,7 @@
       if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (hearthRoomKey(e)) { e.preventDefault(); return; }
       if (siphonKey(e)) { e.preventDefault(); return; }
       if (!gamePaused && cargoManifestOpen) {
         e.preventDefault();
@@ -74,6 +75,7 @@
       dpadTouchId = null;
       shopTapCandidate = null;
       shopDrag = null;
+      hearthCancelDrag(); bathPtrDown = false;
       if (itemWheel.open) closeItemWheel(false);
     }
     // v17.82 — pause the game when the window loses focus (or the tab is
@@ -247,6 +249,7 @@
 
   function processPointerDown(x, y, id, right) {
     if (gamePaused) return;
+    if (bathMode) return; // The room owns pointer input, including right clicks.
     // Right click is a location-independent dump, including over buildings.
     if (right) { siphonPointerDown(x, y, id, true); return; }
     if (cargoManifestOpen) { cargoManifestPointerDown(x, y); return; }

@@ -1,10 +1,12 @@
 # BATHHOUSE_PLAN.md: Sluice's second half (dig by day, bathhouse by night)
 
-**Current playable slice (v28.5):** see [BATHHOUSE_SERVICE.md](BATHHOUSE_SERVICE.md).
-The bathhouse is now enabled by default. Sky visitors use one shared heated tub;
-ten coal lights its stove, and water splashed onto the floor is permanently lost.
-Individual guest requests are undecided. These owner decisions supersede the
-earlier recipe and flag-off planning below.
+**Current playable slice (v28.13):** see [BATHHOUSE_SERVICE.md](BATHHOUSE_SERVICE.md).
+Sky visitors share a real heated tub. Physical coal chunks now fuel its boiler;
+flint and a steel striker light it. The indoor forge makes that striker from two
+iron, coal heat, three hammer strokes, and a 2 L quench. The fire room replaces
+the old ten-coal button. Floor spills remain permanently lost. Guest recipes and
+the earlier day/night service proposal remain undecided. These shipped rules
+supersede the earlier recipes, timer, and flag-off planning below.
 
 This is the **living main plan** for the bathhouse: a Spirited-Away-structured hot
 spring venue the player builds above the mine and runs at dusk. It is the game's
@@ -820,3 +822,13 @@ supply, payment, ramp = B7; exterior + transition = B8.
   outside and inside. Ten coal starts one shared fire; no per-guest coal or
   water fee. Water is heated and splashed onto an absorbing floor. Guest
   requests remain undecided. See BATHHOUSE_SERVICE.md for the shipped slice.
+
+
+- 2026-09-19 (v28.13, owner): prioritize physical coal and a forge. The banya
+  opens into a fire room with draggable coal, interacting piles, glowing cracks,
+  flames, sparks, bellows, and spent ash. Stone yields reusable flint; the forge
+  turns two iron into a reusable steel striker through heat, hammering, and a
+  two-litre quench. Its banked ember avoids an ignition dependency cycle. The
+  boiler heats the real shared bath. Day/night service gating was not added.
+  The interior is still open to redesign; current rules and checks are in
+  BATHHOUSE_SERVICE.md.

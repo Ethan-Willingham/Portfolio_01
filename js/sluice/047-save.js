@@ -429,7 +429,9 @@
   // ---- Autosave poll (called once per frame from the update loop) ----
   function saveGardenKey() {
     return siphon.tank.join(',') + '/' + (siphon.passenger ? siphon.passenger.id : 0) + '/' + skySlimes.length + '/' +
-      bathGuests.map(function (g) { return g.s.id + ':' + g.st + ':' + Math.floor(g.soak / 4); }).join(',') + '/' + bathServed;
+      bathGuests.map(function (g) { return g.s.id + ':' + g.st + ':' + Math.floor(g.soak / 4); }).join(',') + '/' + bathServed + '/' +
+      forgeStock.coal + ',' + forgeStock.iron + ',' + forgeStock.flint + ',' + forgeStock.steel + '/' +
+      hearthJob.stage + ':' + hearthJob.hits + '/' + Math.floor(hearthBeds.boiler.fuelSeconds / 8) + ':' + Math.floor(hearthBeds.forge.fuelSeconds / 8);
   }
   function saveTick(dt) {
     // Lamp timers decay before the gameOver early-return so the annunciator

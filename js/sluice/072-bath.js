@@ -349,6 +349,8 @@
         bathScrollT = 1e9;   // enter at the BOTTOM floor
         bathCamY = -1;       // snap, no cross-tower pan on the first frame
         bathMode = true;
+        hearthSetView('boiler');
+        forgeStockCargo();
         bathDoorT = 1;       // step back out through an open door
         // Steam era (v25.85): drop the world's stale smoke, retune the
         // fluid for steam. Existing sky visitors keep their service states.
@@ -358,6 +360,7 @@
         bathArmHeat();
         siphonStop();
       } else {
+        hearthCancelDrag();
         bathMode = false;
         bathScalePop();
         bathSteamPop();
@@ -764,7 +767,8 @@
     };
   }
   function bathPointer(e) {
-    if (!ENABLE_BATH || bathFading) return;
+    if (!ENABLE_BATH || bathFading || gamePaused) return;
+    if (hearthPointerDown(e)) return;
     if (bathMode) {
       bathPtrDown = true; bathPtrX = e.clientX; bathPtrY = e.clientY;
       bathPtrMoved = 0;
@@ -783,6 +787,7 @@
     return wx >= cx - 110 && wx <= cx + 110 && wy >= gy - 480 && wy <= gy;
   }
   function bathPointerMove(e) {
+    if (bathMode && hearthPointerMove(e)) return;
     if (!bathMode || !bathPtrDown) return;
     var dy = e.clientY - bathPtrY;
     bathPtrMoved += Math.abs(dy) + Math.abs(e.clientX - bathPtrX);
@@ -793,6 +798,7 @@
     if (rct.height) bathScrollT -= dy * (canvas.height / rct.height) / (dpr * worldScale);
   }
   function bathPointerUp(e) {
+    if (bathMode && hearthPointerUp(e)) return;
     var wasDown = bathPtrDown;
     bathPtrDown = false;
     if (!bathMode || !wasDown || bathFading) return;
@@ -802,7 +808,6 @@
     var rct = canvas.getBoundingClientRect();
     var cssX = (e.clientX - rct.left) * (canvas.width / dpr / rct.width);
     var cssY = (e.clientY - rct.top) * (canvas.height / dpr / rct.height);
-    if (cssY < 74 && cssX > canvas.width / dpr - 144) { bathExit(); return; }
     if (gamePaused || bathServicePointer(cssX, cssY) || bathOrderPointer(p.x, p.y)) return;
     // Purchase buttons on locked floors take priority over the exit door.
     for (var bf = 1; bf <= 4; bf++) {
@@ -819,6 +824,7 @@
   function bathWheelScroll(e) {
     if (!bathMode) return;
     e.preventDefault();
+    if (hearthView !== 'bath') return;
     bathScrollT += (e.deltaY || 0) / Math.max(worldScale, 0.001);
   }
 
@@ -1231,6 +1237,7 @@
   // canvas above this one, so calling drawLiquids() keeps the water live. --
   function bathRenderScene() {
     if (!bathMode) return false;
+    if (hearthRoomRender()) return true;
     // Own the WHOLE canvas: the world viewport excludes the console strip,
     // so without this full-screen clear the strip keeps last frame's stale
     // console pixels (found the hard way). Then rebuild the world transform
@@ -1412,70 +1419,19 @@
           uiFg.fillStyle = '#b5723a';
           uiFg.fillRect(fx0 - 4, lipY - 8, TILE + 10, 6);
           uiFg.fillRect(fx1 - TILE - 6, lipY - 8, TILE + 10, 6);
-          // v25.96 THE STOVE. An industrial gas burner under the copper
-          // bowl: a dark fire chamber hugging the bowl's underside, a
-          // steel manifold with a row of nozzles, and flickering
-          // blue-core flames licking a glowing copper bottom. Everything
-          // paints strictly BELOW the catenary shell, so the water hole
-          // above stays untouched.
-          var vcx = (crv2.x0 + crv2.x1) / 2;
+          // The fire room boiler feeds this copper heat exchanger. Its glow
+          // follows stored bath heat; no unrelated gas flames under the tub.
           if (FG.fill[fti] === 2) {
-            var bw = 68, barY = botY - 16;
-            var ft = performance.now() / 1000;
-            uiFg.fillStyle = '#17110c';
+            var vcx = (crv2.x0 + crv2.x1) / 2;
+            uiFg.strokeStyle = BLD.goldDark; uiFg.lineWidth = 6;
             uiFg.beginPath();
-            uiFg.moveTo(vcx - bw - 12, botY - 4);
-            for (var cxq = vcx - bw - 12; cxq <= vcx + bw + 12; cxq += 6) {
-              uiFg.lineTo(cxq, crv2.y0 + crv2.depthAt(cxq) + 4);
+            uiFg.moveTo(fx0 + 8, botY - 16); uiFg.lineTo(vcx - 64, botY - 16);
+            for (var hx = vcx - 64; hx <= vcx + 64; hx += 8) {
+              uiFg.lineTo(hx, crv2.y0 + crv2.depthAt(hx) + 10);
             }
-            uiFg.lineTo(vcx + bw + 12, botY - 4);
-            uiFg.closePath();
-            uiFg.fill();
-            uiFg.fillStyle = 'rgba(255,120,40,0.10)';
-            uiFg.fillRect(vcx - bw, barY + 7, bw * 2, botY - 11 - barY);
-            uiFg.fillStyle = '#3a3e44';
-            uiFg.fillRect(vcx + bw, barY + 2, fx1 - vcx - bw - 2, 4);
-            uiFg.fillStyle = '#33363c';
-            uiFg.fillRect(vcx - bw, barY, bw * 2, 7);
-            uiFg.fillRect(vcx - bw + 4, barY + 7, 5, botY - 11 - barY);
-            uiFg.fillRect(vcx + bw - 9, barY + 7, 5, botY - 11 - barY);
-            uiFg.fillStyle = '#565b63';
-            uiFg.fillRect(vcx - bw, barY, bw * 2, 2);
-            var ni = 0;
-            for (var nx = vcx - bw + 5; bathFire > 0 && nx <= vcx + bw - 5; nx += 6) {
-              var capY = crv2.y0 + crv2.depthAt(nx) + 3;
-              var hMax = barY - capY;
-              if (hMax < 6) hMax = 6;
-              var flick = 0.66 +
-                0.34 * (0.5 + 0.5 * Math.sin(ft * 11 + ni * 2.63)) *
-                       (0.5 + 0.5 * Math.sin(ft * 5.7 + ni * 4.1));
-              var fh = Math.round(hMax * flick / 2) * 2;
-              if (fh < 6) fh = 6;
-              uiFg.fillStyle = 'rgba(96,158,240,0.85)';
-              uiFg.fillRect(nx - 2, barY - fh * 0.45, 4, fh * 0.45);
-              uiFg.fillStyle = 'rgba(255,138,40,0.88)';
-              uiFg.fillRect(nx - 1.5, barY - fh * 0.85, 3, fh * 0.42);
-              uiFg.fillStyle = 'rgba(255,214,120,0.9)';
-              uiFg.fillRect(nx - 1, barY - fh, 2, fh * 0.22);
-              ni++;
-            }
-            uiFg.strokeStyle = '#b5723a';
-            uiFg.lineWidth = 3.5;
-            uiFg.beginPath();
-            uiFg.moveTo(vcx - bw - 14, crv2.y0 + crv2.depthAt(vcx - bw - 14) + 1);
-            for (var shx = vcx - bw - 14; shx <= vcx + bw + 14; shx += 6) {
-              uiFg.lineTo(shx, crv2.y0 + crv2.depthAt(shx) + 1);
-            }
-            uiFg.stroke();
-            uiFg.strokeStyle = 'rgba(255,150,60,' +
-              (bathHeat * (0.16 + 0.10 * Math.sin(ft * 3.1))).toFixed(3) + ')';
-            uiFg.lineWidth = 7;
-            uiFg.beginPath();
-            uiFg.moveTo(vcx - bw, crv2.y0 + crv2.depthAt(vcx - bw) + 1);
-            for (var glx = vcx - bw; glx <= vcx + bw; glx += 6) {
-              uiFg.lineTo(glx, crv2.y0 + crv2.depthAt(glx) + 1);
-            }
-            uiFg.stroke();
+            uiFg.lineTo(fx1 - 8, botY - 16); uiFg.stroke();
+            uiFg.globalAlpha = Math.min(1, bathHeat); uiFg.strokeStyle = BLD.warmGlow; uiFg.lineWidth = 2;
+            uiFg.stroke(); uiFg.globalAlpha = 1;
           }
           uiFg.fillStyle = '#2b2b2b';
           uiFg.fillRect(fx0 + 6, botY - 22, 3, 3);
@@ -1528,7 +1484,7 @@
       canvas.addEventListener('pointerdown', bathPointer);
       canvas.addEventListener('pointermove', bathPointerMove);
       canvas.addEventListener('pointerup', bathPointerUp);
-      canvas.addEventListener('pointercancel', function () { bathPtrDown = false; });
+      canvas.addEventListener('pointercancel', function () { bathPtrDown = false; hearthCancelDrag(); });
       canvas.addEventListener('wheel', bathWheelScroll, { passive: false });
     } catch (e) {}
   }

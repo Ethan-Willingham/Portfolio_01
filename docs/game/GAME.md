@@ -19,28 +19,32 @@ Dig down through one town, collect ore, fly up to the surface station to sell + 
 the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and a ~1.5 hr
 normal playthrough (see `BALANCE.md`).
 
-**Bathhouse visitors (v28.12):** round, stone-crusted sky slimes fall like meteors, bounce, meander
-on the surface, then find the bathhouse. It is enabled by default. Two guests
-can wait inside with warm-bath bubbles. Fill the first tub with water from the
-rig's tank, and spend **10 coal to light the shared stove**. The fire heats the
-real water. Tap a ready bubble (or E) to admit a visitor; after a warm soak it
-pays and leaves. The same guest is visible on the surface again as it departs.
-Driving into a slime pops it upward; timed jet contacts let you juggle it.
-The rig absorbs more rebound from hard sideways hits, making glances easier to recover.
-Touched guests pause their route until they settle and you move away.
+**Bathhouse and fire room (v28.13):** sky slimes land, meander to the banya,
+wait, soak in warm water, pay, and leave. Enter the tower to work at the boiler,
+forge, or bath. Drag individual coal chunks from the bunker onto a grate, or
+tap the bunker to drop one. They collide, tumble, catch from neighboring fuel,
+glow, and burn down to ash. Bellows increase heat and fuel consumption.
 
-Coal and water operate the whole bath. There are **no per-guest ingredient
-recipes yet**; the owner has not chosen those. Guests splash actual water out
-of the tub. Water that reaches the bathhouse floor is permanently absorbed,
-including offscreen spills, so the tub needs topping up. Surface construction
-lots and pearl production were removed. Existing purchases are refunded,
-ready pearls paid out, and recovered lot water stored at the bathhouse.
-The scoop, mineral liquids, sky arrivals, and underground slime settings remain.
-The free scoop (`F`) collects below the rig while driving or flying. Press right
-mouse or tap DUMP once to discharge every chamber in one burst and launch the
-rig. Fuller loads give stronger lift; `R` inspects chambers. SCOOP stays off
-after a dump. Alt+Enter toggles fullscreen. See
-`BATHHOUSE_SERVICE.md` for bathhouse controls, persistence, and current tuning.
+The first fire has a short mining loop: stone sometimes drops durable flint
+(guaranteed within twelve stone breaks); two iron become a reusable steel
+striker at the forge. Its banked ember lights the first coal without a striker.
+Heat the iron, hammer three times, quench with **2 L from the rig tank**, then
+collect the tool. Flint and steel light the boiler without being consumed.
+The boiler's actual burning coal heats the shared bath. Start with three chunks
+for strong heat; more fuel extends tending capacity, and cold neighbors ignite
+from nearby coals. Rake spent ash to free space on the grate.
+
+The fuel locker automatically keeps up to 24 ordinary coal and 8 ordinary iron
+when entering the banya or selling at the station. Surplus and shiny ore sell
+normally. Fuel, tools, and unfinished forge work persist. Water still comes from
+the rig's scoop, and water spilled on the bathhouse floor is permanently lost.
+Guest-specific recipes and night-only opening hours are not implemented.
+See `BATHHOUSE_SERVICE.md` for controls, resource conservation, and verification.
+
+Surface construction lots and pearl production remain retired. Existing garden
+purchases are refunded and recovered water is stored at the bathhouse. The free
+scoop (`F`) collects below the rig while driving or flying; the liquid tool's
+current pouring controls live in `075-liquid-tool.js` and the Controls menu.
 
 ---
 
@@ -125,7 +129,9 @@ quantities, unit prices, and haul value while the mine is paused).
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
 | `071-liquid-catalog.js` | fluid identities, conserved transfer, samples, and sky-slime liquid boundaries |
 | `073-liquid-deposits.js` | finite mineral pockets, offscreen liquid storage, and liquid persistence |
-| `074-bath-service.js` | visitor queue, shared stove, water supply, floor drain, payments, and migration |
+| `074-bath-service.js` | visitor queue, coal-powered bath heat, water supply, floor drain, payments, and migration |
+| `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, boiler and forge interactions |
+| `079-forge-resources.js` | reserved coal/iron, durable flint, steel, and supply persistence |
 | `075-liquid-tool.js` / `076-siphon-audio.js` | aimed siphon, fluid chambers, one passenger, touch controls, and sound |
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |

@@ -325,6 +325,7 @@
               }
               dArr[dIdx][drilling.c] = null;
               markTerrainCleared(drilling.r, drilling.c, tile);
+              forgeStoneDrop(oreType);
               // Break payoff fires on the same frame as the mine-break FX
               // (SFX_BIBLE: sound + visual share the frame or feel detached).
               var _bsfx = drillSfx();

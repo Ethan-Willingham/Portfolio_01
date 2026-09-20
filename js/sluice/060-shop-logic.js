@@ -398,6 +398,7 @@
   }
 
   function sellCargo(auto) {
+    forgeStockCargo();
     // The pump-pad dock sale is a REVEAL: the haul sells one ore type at a time
     // (ascending, richest last) while the brass balance window counts up. The
     // shop "sell" button stays instant — that's a menu action, not a dock moment.
@@ -524,6 +525,7 @@
 
   function startSellReveal() {
     if (sellReveal) return;            // one reveal at a time; fresh cargo waits its turn
+    forgeStockCargo();
     var groups = {};                   // group the loose ore array into per-type stacks
     for (var i = 0; i < cargo.length; i++) {                 // shiny units form their own stack
       var u = cargo[i];
@@ -960,6 +962,7 @@
       }
       arr[idx][cell.c] = null;
       markTerrainCleared(cell.r, cell.c, tile);
+      forgeStoneDrop(oreType);
       // Physical debris: reuse the mine-break chips/grit/dust per cleared
       // cell, so the blast throws colored rubble that bounces and settles.
       try { spawnMineBreak(cell.r, cell.c, tile); } catch (e) {}
