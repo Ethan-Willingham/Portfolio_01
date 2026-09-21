@@ -45,13 +45,8 @@
     var shape = hearthArtShapes.get(body);
     if (shape) return shape;
     var seed = ((Number(body.seed) || 0) * 65537 + Number(body.id || 0) * 97) | 0;
-    var vertices = [], cracks = [], crust = [], i;
-    var count = 6 + Math.floor(hearthArtHash(seed + 421) * 4);
-    for (i = 0; i < count; i++) {
-      var angle = i * Math.PI * 2 / count + (hearthArtHash(seed + i * 7) - 0.5) * 0.36;
-      var radius = 0.71 + hearthArtHash(seed + i * 11 + 41) * 0.31;
-      vertices.push([Math.cos(angle) * radius, Math.sin(angle) * radius]);
-    }
+    var vertices = hearthHull(body).vertices, cracks = [], crust = [], strata = [], pores = [], i;
+    var count = vertices.length;
     var cx = (hearthArtHash(seed + 819) - 0.5) * 0.27;
     var cy = (hearthArtHash(seed + 311) - 0.5) * 0.29;
     var upper = vertices[Math.floor(count * 0.68)], lower = vertices[Math.floor(count * 0.19)];
@@ -67,13 +62,24 @@
         end[1] * 0.69 + (hearthArtHash(seed + i * 29) - 0.5) * 0.13,
         end[0], end[1]]);
     }
-    for (i = 0; i < 9; i++) crust.push([
+    for (i = 0; i < 22; i++) crust.push([
       (hearthArtHash(seed + i * 53 + 981) - 0.5) * 1.3,
       (hearthArtHash(seed + i * 41 + 721) - 0.5) * 1.25,
       0.07 + hearthArtHash(seed + i * 37 + 367) * 0.17,
       hearthArtHash(seed + i * 67 + 63)
     ]);
-    shape = { vertices: vertices, cracks: cracks, crust: crust, seed: seed, cx: cx, cy: cy };
+    for (i = 0; i < 17; i++) strata.push([
+      (hearthArtHash(seed + i * 47 + 412) - 0.5) * 1.7,
+      (hearthArtHash(seed + i * 31 + 608) - 0.5) * 1.55,
+      0.16 + hearthArtHash(seed + i * 73) * 0.48,
+      hearthArtHash(seed + i * 109)
+    ]);
+    for (i = 0; i < 30; i++) pores.push([
+      (hearthArtHash(seed + i * 83 + 21) - 0.5) * 1.6,
+      (hearthArtHash(seed + i * 67 + 75) - 0.5) * 1.5,
+      0.013 + hearthArtHash(seed + i * 43 + 123) * 0.034
+    ]);
+    shape = { vertices: vertices, strata: strata, pores: pores, cracks: cracks, crust: crust, seed: seed, cx: cx, cy: cy };
     hearthArtShapes.set(body, shape);
     return shape;
   }
@@ -93,9 +99,9 @@
     var radius = Math.max(2, Number(body.r) || 16) * (scale == null ? 1 : scale);
     var heat = Math.max(0, Math.min(1, Number(body.heat) || 0));
     var fuel = Math.max(0, Math.min(1, body.fuel == null ? 1 : Number(body.fuel)));
-    var ash = body.ash ? 1 : Math.max(0, (0.72 - fuel) / 0.72);
+    var ash = body.ash ? 1 : Math.max(0, Number(body.coating) || 0);
     var angle = Number(body.angle) || 0, pulse = 0.92 + Math.sin((time || 0) * 4.1 + shape.seed) * 0.08;
-    var emission = Math.max(0, (heat - 0.12) / 0.88) * pulse;
+    var emission = Math.max(0, (heat - 0.30) / 0.70) * pulse;
     var i, a, b;
     c.save();
     c.translate(x, y);
@@ -113,7 +119,7 @@
     c.fill();
     c.strokeStyle = BLD.outline;
     c.lineJoin = 'bevel';
-    c.lineWidth = Math.max(1, radius * 0.095);
+    c.lineWidth = Math.max(0.6, radius * 0.025);
     c.stroke();
     c.save();
     c.clip();
@@ -129,7 +135,7 @@
       c.lineTo(b[0] * radius, b[1] * radius);
       c.closePath();
       c.fillStyle = light > 0.44 ? BLD.metalBase : light < -0.2 ? BLD.outline : BLD.metalDark;
-      c.globalAlpha = light > 0.44 ? 0.55 + light * 0.16 : 0.72;
+      c.globalAlpha = light > 0.44 ? 0.28 + light * 0.15 : 0.72;
       c.fill();
       if (ash > 0.12 && hearthArtHash(shape.seed + i * 101) < ash) {
         c.globalAlpha = 0.32 + ash * 0.51;
@@ -138,6 +144,16 @@
       }
     }
     c.globalAlpha = 1;
+    // Thin, broken bedding planes and dull black pits distinguish coal from
+    // polished ore. The little glossy cleavage lips turn with the actual lump.
+    for (i = 0; i < shape.strata.length; i++) {
+      var layer = shape.strata[i], lx = layer[0] * radius, ly = layer[1] * radius, lw = layer[2] * radius;
+      c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + lw * 0.42, ly - lw * 0.15); c.lineTo(lx + lw, ly - lw * 0.11);
+      c.strokeStyle = hearthArtColor(BLD.outline, 0.8); c.lineWidth = Math.max(0.8, radius * 0.033); c.stroke();
+      c.beginPath(); c.moveTo(lx + lw * 0.08, ly - 1); c.lineTo(lx + lw * 0.4, ly - lw * 0.15 - 1);
+      c.strokeStyle = hearthArtColor(ash > 0.5 ? BLD.stonePale : BLD.metalLight, 0.12 + layer[3] * 0.14);
+      c.lineWidth = Math.max(0.5, radius * 0.016); c.stroke();
+    }
     if (emission > 0.015) {
       c.beginPath();
       for (i = 0; i < shape.cracks.length; i++) {
@@ -147,14 +163,14 @@
         c.lineTo(crack[4] * radius, crack[5] * radius);
         c.lineTo(crack[6] * radius, crack[7] * radius);
       }
-      c.lineWidth = Math.max(1.4, radius * 0.115);
+      c.lineWidth = Math.max(1.4, radius * 0.080);
       c.strokeStyle = hearthArtColor(BLD.redBase, emission * 0.94);
       c.stroke();
-      c.lineWidth = Math.max(0.7, radius * 0.051);
+      c.lineWidth = Math.max(0.7, radius * 0.027);
       c.strokeStyle = hearthArtColor(heat > 0.72 ? BLD.warmGlow : BLD.redBright, emission);
       c.stroke();
       if (heat > 0.75) {
-        c.lineWidth = Math.max(0.5, radius * 0.025);
+        c.lineWidth = Math.max(0.5, radius * 0.009);
         c.strokeStyle = hearthArtColor(BLD.goldPale, (heat - 0.75) * 2.8);
         c.stroke();
       }
@@ -185,6 +201,11 @@
       c.fill();
     }
     c.globalAlpha = 1;
+    for (i = 0; i < shape.pores.length; i++) {
+      var pore = shape.pores[i], pr = pore[2] * radius;
+      c.fillStyle = hearthArtColor(BLD.outline, 0.65 - ash * 0.3);
+      c.fillRect(pore[0] * radius, pore[1] * radius, pr * 1.8, pr);
+    }
     // One broken cleft catches daylight. No all-round specular rim.
     c.strokeStyle = hearthArtColor(ash > 0.45 ? BLD.cream : BLD.metalLight, ash > 0.45 ? 0.37 : 0.28);
     c.lineWidth = Math.max(0.6, radius * 0.04);
@@ -198,6 +219,27 @@
     }
     c.restore();
     c.restore();
+  }
+
+  function hearthArtFlame(body) {
+    var flame = body.flame == null ? 1 : body.flame;
+    return Math.max(0, Math.min(1, body.heat)) * (0.20 + flame * 0.80);
+  }
+  function hearthArtVapors(c, chunks, time) {
+    for (var i = 0; i < chunks.length; i++) {
+      var b = chunks[i]; if (b.held) continue;
+      var smoke = Number(b.smoke) || 0, steam = Number(b.steam) || 0;
+      if (smoke + steam < 0.01) continue;
+      for (var j = 0; j < 6; j++) {
+        var age = (time * (0.28 + j * 0.007) + hearthArtHash(b.id * 97 + j * 73)) % 1;
+        var x = b.x + Math.sin(age * 5 + b.seed * 30 + j) * (5 + age * 13);
+        var y = b.y - b.r * 0.55 - age * (58 + steam * 32);
+        c.globalAlpha = Math.sin(age * Math.PI) * Math.min(0.24, smoke * 0.18 + steam * 0.16);
+        c.fillStyle = steam > smoke ? BLD.stonePale : BLD.stoneBase;
+        c.beginPath(); c.ellipse(x, y, 3 + age * 15, 2 + age * 7, -0.3, 0, Math.PI * 2); c.fill();
+      }
+    }
+    c.globalAlpha = 1;
   }
 
   function hearthArtField(bed) {
@@ -259,7 +301,7 @@
     for (var i = 0; i < sources.length; i++) {
       var body = sources[i], bx = body.x * w / 320, by = (body.y - body.r * 0.42) * h / 210;
       var radius = Math.max(2, body.r * w / 320 * 0.95);
-      var intensity = Math.max(0, Math.min(1, body.heat)) * (0.84 + air * 0.16);
+      var intensity = hearthArtFlame(body) * (0.84 + air * 0.16);
       var flicker = 0.88 + noise[((body.id || i) * 53 + ((t * 13) | 0)) & 1023] * 0.12;
       var minX = Math.max(1, Math.floor(bx - radius)), maxX = Math.min(w - 2, Math.ceil(bx + radius));
       var minY = Math.max(1, Math.floor(by - radius * 0.48)), maxY = Math.min(h - 2, Math.ceil(by + radius * 0.58));
@@ -282,7 +324,7 @@
     // the ordinary transport take over. Work is bounded by the coal cap and
     // field size; no simulation ticks, fuel changes, or long visual pre-roll.
     for (var i = 0; i < field.sources.length; i++) {
-      var body = field.sources[i], heat = Math.max(0, Math.min(1, body.heat));
+      var body = field.sources[i], heat = hearthArtFlame(body);
       if (heat < 0.7) continue;
       var bx = body.x * w / 320, by = (body.y - body.r * 0.42) * h / 210;
       var radius = body.r * w / 320 * (0.83 + air * 0.25);
@@ -327,7 +369,7 @@
     for (i = 0; i < chunks.length; i++) {
       var body = chunks[i];
       if (body.held || body.ash || !body.lit || body.fuel <= 0 || body.heat <= 0.12) continue;
-      field.sources.push(body); heatSum += body.heat; hottest = Math.max(hottest, body.heat);
+      field.sources.push(body); heatSum += body.heat; hottest = Math.max(hottest, hearthArtFlame(body));
     }
     if (gap > 0.4) {
       // Old plumes must not survive a return to an empty or rearranged grate.
@@ -447,22 +489,26 @@
       glow.addColorStop(1, hearthArtColor(BLD.redDeep, 0));
       c.fillStyle = glow; c.fillRect(0, 0, 320, 210);
     }
-    c.fillStyle = BLD.metalDark; c.fillRect(0, 201, 320, 9);
-    c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 201, 320, 1);
+    c.fillStyle = BLD.metalDark; c.fillRect(0, 208, 320, 2);
+    c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 209, 320, 1);
     // Ash powder lives on the grate rather than drifting like snow.
     for (i = 0; i < 38; i++) {
-      var dustX = hearthArtHash(i * 17 + 1) * 320, dustY = 202 + hearthArtHash(i * 31 + 43) * 6;
+      var dustX = hearthArtHash(i * 17 + 1) * 320, dustY = 207 + hearthArtHash(i * 31 + 43) * 2;
       c.fillStyle = hearthArtColor(BLD.stoneBase, 0.44);
       c.fillRect(Math.round(dustX), Math.round(dustY), 1 + (i % 3), 1);
     }
+    hearthArtVapors(c, chunks, Number(time) || 0);
     c.imageSmoothingEnabled = false;
     c.drawImage(field.canvas, 0, 0, 320, 210);
-    // Chunk shadows establish contact before the sharply lit fracture faces.
+    // Contact shadows stay close to each actual hull.
     for (i = 0; i < chunks.length; i++) {
       var body = chunks[i];
       if (body.held) continue;
       c.fillStyle = hearthArtColor(BLD.outline, 0.47);
-      c.beginPath(); c.ellipse(body.x + 3, Math.min(207, body.y + body.r * 0.76), body.r * 0.93, body.r * 0.2, 0, 0, Math.PI * 2); c.fill();
+      var hull = hearthWorldHull(body);
+      c.beginPath(); c.moveTo(hull[0][0] + 1.5, hull[0][1] + 2);
+      for (var hv = 1; hv < hull.length; hv++) c.lineTo(hull[hv][0] + 1.5, hull[hv][1] + 2);
+      c.closePath(); c.fill();
       hearthDrawCoal(c, body, body.x, body.y, 1, time);
     }
     hearthArtEmbers(c, field.sources, air, Number(time) || 0);
@@ -483,9 +529,9 @@
       { x: 153, y: 145, vx: -37, vy: -91, t: 0.12, life: 0.8, r: 1.4, heat: 0.85 },
       { x: 164, y: 132, vx: 25, vy: -65, t: 0.42, life: 0.7, r: 1, heat: 0.4 }
     ], chunks: [
-      { id: 1, seed: 1.31, x: 142, y: 191, r: 18, angle: 0.4, heat: 0.95, fuel: 0.8, lit: true },
-      { id: 2, seed: 4.18, x: 175, y: 192, r: 17, angle: -0.3, heat: 0, fuel: 1 },
-      { id: 3, seed: 2.71, x: 160, y: 165, r: 16, angle: 1.3, heat: 0.6, fuel: 0.1, lit: true }
+      { id: 1, seed: 1.31, x: 142, y: 191, r: 33, angle: 0.4, heat: 0.95, fuel: 0.8, lit: true, flame: 1, smoke: 0.4, steam: 0.2 },
+      { id: 2, seed: 4.18, x: 175, y: 192, r: 29, angle: -0.3, heat: 0, fuel: 1 },
+      { id: 3, seed: 2.71, x: 160, y: 165, r: 22, angle: 1.3, heat: 0.6, fuel: 0.1, lit: true, flame: 0, coating: 0.8 }
     ] };
     hearthDrawFirebox(c, bed, 0, 0, 160, 105, 0);
     hearthDrawFirebox(c, bed, 0, 0, 160, 105, 0.1);

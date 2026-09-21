@@ -2,10 +2,13 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const source = fs.readFileSync('js/sluice/077-hearth-physics.js', 'utf8');
+const source = ['combustion', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
 function fixture(fps = 60) {
   const s = { Math, console };
-  vm.createContext(s); vm.runInContext(source, s);
+  vm.createContext(s);
+  const functions = [...source.matchAll(/^  function (\w+)\(/gm)].map(m => m[1]);
+  vm.runInContext('(function(){' + source + '\nObject.assign(globalThis, {' + functions.join(',') + '});' +
+    'globalThis.hearthHullCache=hearthHullCache;Object.defineProperty(globalThis,"hearthBeds",{get:function(){return hearthBeds;}});})();', s);
   return { s, advance(seconds) {
     for (let i = 0; i < Math.round(seconds * fps); i++) s.hearthTick(1 / fps);
   } };
@@ -18,8 +21,8 @@ function checkBodies(bed) {
     for (const key of ['x', 'y', 'vx', 'vy', 'r', 'angle', 'spin', 'seed', 'fuel', 'heat']) {
       assert(Number.isFinite(b[key]), `finite ${key}`);
     }
-    assert(b.x >= b.r - 1e-7 && b.x <= 320 - b.r + 1e-7, 'side containment');
-    assert(b.y <= 210 - b.r + 1e-7, 'floor containment');
+    assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 320.4 && p[1] <= 210.4), 'polygon containment');
+    near(b.fuel, b.volatile + b.carbon, 1e-10, 'combustible mass is conserved');
     assert(b.fuel >= 0 && b.fuel <= 1, 'bounded fuel');
     assert(b.heat >= 0 && b.heat <= 1, 'bounded coal heat');
   }
@@ -36,7 +39,7 @@ function checkBodies(bed) {
   lower.held = true;
   const bookmark = { x: lower.x, y: lower.y };
   advance(2);
-  near(upper.y + upper.r, 210, 0.05, 'coal falls through the detached hand bookmark to the floor');
+  near(Math.max(...s.hearthWorldHull(upper).map(p => p[1])), 210, 0.1, 'coal falls through the detached hand bookmark to the floor');
   near(lower.x, bookmark.x); near(lower.y, bookmark.y);
   assert.equal(lower.fuel, 1, 'detaching a piece does not consume fuel');
   console.log('PASS picking up a support detaches it from all bed contacts');
@@ -56,7 +59,7 @@ function checkBodies(bed) {
     const a = bed.chunks[i]; speed = Math.max(speed, Math.hypot(a.vx, a.vy));
     for (let j = i + 1; j < bed.chunks.length; j++) {
       const b = bed.chunks[j];
-      overlap = Math.max(overlap, a.r + b.r - Math.hypot(a.x - b.x, a.y - b.y));
+      overlap = Math.max(overlap, -Math.max(s.hearthFaceSeparation(s.hearthWorldHull(a), s.hearthWorldHull(b)).gap, s.hearthFaceSeparation(s.hearthWorldHull(b), s.hearthWorldHull(a)).gap));
     }
   }
   assert(overlap < 0.5, `settled coal overlap ${overlap}`);
@@ -70,16 +73,18 @@ function checkBodies(bed) {
 {
   const { s, advance } = fixture();
   const bed = s.hearthBeds.boiler;
-  const a = s.hearthAddChunk('boiler', 100, 190), b = s.hearthAddChunk('boiler', 133, 190);
+  const a = s.hearthAddChunk('boiler', 80, 190), b = s.hearthAddChunk('boiler', 136, 190);
   const far = s.hearthAddChunk('boiler', 285, 190);
   advance(1);
-  assert(s.hearthIgnite('boiler')); advance(6);
+  b.x += Math.max(...s.hearthWorldHull(a).map(p => p[0])) - Math.min(...s.hearthWorldHull(b).map(p => p[0])) - 0.1;
+  advance(0.1); assert(s.hearthLightChunk(bed, a)); advance(10);
   assert(a.lit && b.lit, 'adjacent loaded coal catches from a live chunk');
   assert(!far.lit && far.fuel === 1, 'a separated chunk cannot ignite through empty space');
   const fuel = bed.fuelSeconds;
-  advance(10); near(fuel - bed.fuelSeconds, 20, 1e-6, 'two burning chunks consume two fuel-seconds per second');
+  advance(10); assert(fuel > bed.fuelSeconds, 'reactions consume finite fuel');
+  assert(a.core < a.heat, 'the large core heats more slowly than the surface');
   const hot = bed.heat;
-  advance(65);
+  advance(150);
   assert(a.ash && b.ash && a.fuel === 0 && b.fuel === 0, 'burned pieces remain as ash');
   assert(bed.heat < hot && a.heat < 0.02, 'spent fire cools');
   assert.equal(bed.chunks.length, 3, 'fuel depletion does not remove physical ash');
@@ -95,11 +100,11 @@ function checkBodies(bed) {
   const normal = s.hearthBeds.forge.power;
   s.hearthPump('forge'); s.hearthPump('forge'); s.hearthPump('forge');
   advance(1);
-  assert(s.hearthBeds.forge.power > 0.8 && s.hearthBeds.forge.power > normal, 'bellows reaches forging output with one coal');
+  assert(s.hearthBeds.forge.power > 0.8 && s.hearthBeds.forge.power >= normal, 'bellows reaches forging output with one coal');
   const before = b.fuel * b.life;
   advance(1);
   assert(before - b.fuel * b.life > 1.3, 'extra air costs extra fuel');
-  advance(60);
+  advance(150);
   const next = s.hearthAddChunk('forge', 200, 30);
   advance(4); assert(next.lit, 'pilot still works after previous fire burns out');
   console.log('PASS forge bootstrap, air boost, fuel cost and relighting');
@@ -177,5 +182,100 @@ function checkBodies(bed) {
   assert.equal(s.hearthAddChunk('invalid', 0, 0), null);
   assert.equal(s.hearthIgnite('invalid'), false);
   console.log('PASS malformed save repair, capacity, bounded events and invalid input');
+}
+{
+  function block(s, x, y) {
+    const b = s.hearthAddChunk('boiler', x, y);
+    b.angle = 0; b.r = b.baseR = 30;
+    s.hearthHullCache.set(b, { vertices: [[-1,-0.5],[1,-0.5],[1,0.5],[-1,0.5]], area: 2, inertia: 5/12 });
+    s.hearthMass(b); s.hearthWorldHull(b); return b;
+  }
+  const { s, advance } = fixture();
+  const lower = block(s, 160, 195), upper = block(s, 160, 150);
+  advance(4);
+  near(upper.x, 160, 0.15, 'a centered face stack balances without sliding');
+  near(upper.angle, 0, 0.003, 'flat contacts preserve the resting face');
+  near(upper.y + 15, lower.y - 15, 0.15, 'visible faces touch despite overlapping bounding circles');
+  assert(s.hearthInside(upper, upper.x + 28, upper.y + 13), 'picking includes a visible polygon corner');
+  assert(!s.hearthInside(upper, upper.x, upper.y + 22), 'picking excludes empty space inside the old circle');
+  upper.x = 204; upper.y = 150; s.hearthBeds.boiler.contacts = {};
+  advance(2);
+  assert(upper.y > 175, 'an unsupported center of mass tips off the lower piece');
+  assert(Math.abs(upper.angle) > 0.2, 'off-center contacts impart real torque');
+  lower.held = true;
+  const slider = block(s, 60, 194); slider.vx = 170;
+  advance(2);
+  assert(slider.x < 150 && Math.abs(slider.vx) < 0.5, 'grate friction stops a sliding flat piece');
+  console.log('PASS two-point face support, exact picking, overbalance torque and static friction');
+}
+
+{
+  const { s, advance } = fixture();
+  const b = s.hearthAddChunk('boiler', 160, 10), phases = new Set();
+  advance(1); s.hearthLightChunk(s.hearthBeds.boiler, b);
+  let maxSmoke = 0, maxSteam = 0, lastFuel = b.fuel;
+  for (let i = 0; i < 140 * 30; i++) {
+    s.hearthTick(1/30); phases.add(b.stage);
+    assert(b.fuel <= lastFuel + 1e-12, 'combustion never creates fuel'); lastFuel = b.fuel;
+    near(b.fuel, b.volatile + b.carbon, 1e-12);
+    maxSmoke = Math.max(maxSmoke, b.smoke); maxSteam = Math.max(maxSteam, b.steam);
+    if (b.stage === 'coke') assert.equal(b.flame, 0, 'coke glow is not a persistent volatile flame');
+  }
+  for (const stage of ['drying','flaming','coke','embers','cooling ash','ash']) assert(phases.has(stage), 'observable phase: ' + stage);
+  assert(maxSmoke > 0.1 && maxSteam > 0.1, 'gas release and drying drive distinct visible emissions');
+  assert(b.r < b.baseR * 0.46 && b.ash, 'fuel loss changes the collision hull and leaves an ash skeleton');
+  assert(b.heat < 0.01 && b.core > b.heat, 'the core retains heat during cooling');
+  console.log('PASS drying, gas release, coke, embers, cooling ash and conserved burn reservoirs');
+}
+
+{
+  const f = fixture(), s = f.s;
+  for (let i = 0; i < 18; i++) s.hearthAddChunk('boiler', 160, 12);
+  f.advance(12);
+  const bed = s.hearthBeds.boiler;
+  const buried = bed.chunks.reduce((a,b) => a.oxygen < b.oxygen ? a : b);
+  const crowdedAir = buried.oxygen;
+  assert(crowdedAir < 0.45, 'surrounding faces obstruct oxygen');
+  for (const b of [...bed.chunks]) if (b !== buried) s.hearthRemoveChunk('boiler', b.id);
+  f.advance(2);
+  assert(buried.oxygen > crowdedAir + 0.3, 'opening the pile restores oxygen');
+  s.hearthLightChunk(bed, buried); f.advance(28);
+  const saved = JSON.parse(JSON.stringify(s.hearthSave()));
+  f.advance(5); const normal = buried.fuel;
+  s.hearthRestore(saved);
+  for (let i = 0; i < 10; i++) { s.hearthPump('boiler'); f.advance(0.5); }
+  assert(s.hearthBeds.boiler.chunks[0].fuel < normal, 'bellows consume more carbon from identical saved conditions');
+  const cold = s.hearthAddChunk('boiler', 270, 20);
+  f.advance(1); s.hearthWorldHull(cold);
+  const openAir = s.hearthSurfaceAir(s.hearthBeds.boiler, cold);
+  for (let i = 0; i < 4; i++) {
+    const ash = s.hearthAddChunk('boiler', 30 + i * 30, 190);
+    ash.fuel = ash.volatile = ash.carbon = 0; ash.ash = true; ash.coating = 1;
+  }
+  f.advance(2);
+  assert(s.hearthSurfaceAir(s.hearthBeds.boiler, cold) < openAir, 'spent ash restricts the grate air supply');
+  for (const b of [...s.hearthBeds.boiler.chunks]) if (b.ash) s.hearthRemoveChunk('boiler', b.id);
+  f.advance(2);
+  assert(s.hearthBeds.boiler.ashLoad === 0, 'raked ash no longer obstructs underfire air');
+  console.log('PASS packed-bed starvation, rearrangement, bellows fuel cost and ash obstruction');
+}
+
+{
+  const { s, advance } = fixture();
+  const old = { version: 1, boiler: { chunks: [
+    { id: 51, x: 160, y: 190, r: 17, seed: 0.31, fuel: 0.4, life: 54, heat: 0.8, lit: true },
+    { id: 82, x: 230, y: 190, r: 19, seed: 0.77, fuel: 1, life: 60, heat: 0, lit: false }
+  ] } };
+  s.hearthRestore(old);
+  const b = s.hearthBeds.boiler.chunks[0];
+  near(s.hearthBeds.boiler.fuelSeconds, 81.6, 1e-10, 'old paid fuel survives migration');
+  assert.equal(b.volatile, 0, 'old partly burned coal resumes as carbon, without fresh volatile gas');
+  assert.equal(b.baseR, 17, 'old paid coal retains its size');
+  assert.equal(b.vertices.length, s.hearthHull(b).vertices.length, 'restored hull never retains vertices from the temporary seed');
+  const shape = JSON.stringify(s.hearthHull(b).vertices), saved = s.hearthSave();
+  s.hearthRestore(saved);
+  assert.equal(JSON.stringify(s.hearthHull(s.hearthBeds.boiler.chunks[0]).vertices), shape, 'saved coal restores the same visible/contact geometry');
+  advance(1); checkBodies(s.hearthBeds.boiler);
+  console.log('PASS legacy fuel/size migration, carbon phase and seeded hull round-trip');
 }
 console.log('All hearth physics checks passed.');

@@ -4,7 +4,7 @@
 
   function hearthMakeBed(pilot) {
     return { chunks: [], sparks: [], pilot: !!pilot, nextId: 1, time: 0,
-      heat: 0, power: 0, fuelSeconds: 0, air: 0, impact: 0, bank: 0, sparkId: 0 };
+      heat: 0, power: 0, fuelSeconds: 0, air: 0, impact: 0, bank: 0, sparkId: 0, burnClock: 0, ashLoad: 0, contacts: {} };
   }
   function hearthNumber(value, fallback, lo, hi) {
     return typeof value === 'number' && isFinite(value) ? Math.max(lo, Math.min(hi, value)) : fallback;
@@ -17,11 +17,12 @@
     var bed = hearthBeds[kind];
     if (!bed || bed.chunks.length >= HEARTH_CAP) return null;
     var id = bed.nextId++, seed = hearthSeed(id + (bed.pilot ? 193 : 0));
-    var r = 13 + seed * 7;
+    var r = 29 + seed * 10;
     var b = { id: id, x: hearthNumber(x, 160, r, 320 - r),
-      y: hearthNumber(y, 12, -80, 210 - r), vx: 0, vy: 0, r: r,
+      y: hearthNumber(y, 12, -80, 210 - r), vx: 0, vy: 0, r: r, baseR: r,
       angle: seed * Math.PI * 2, spin: 0, seed: seed,
-      life: 48 + seed * 12, fuel: 1, heat: 0, lit: false, ash: false, held: false };
+      life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false };
+    hearthFuelState(b); hearthMass(b); hearthWorldHull(b);
     bed.chunks.push(b); hearthMeasure(bed);
     return b;
   }
@@ -45,7 +46,8 @@
   }
   function hearthLightChunk(bed, b) {
     if (b.ash || b.fuel <= 0 || b.held || b.lit) return false;
-    b.lit = true; b.heat = Math.max(b.heat, 0.64);
+    hearthFuelState(b);
+    b.lit = true; b.heat = Math.max(b.heat, 0.72); b.core = Math.max(b.core, 0.32);
     hearthSparks(bed, b.x, b.y - b.r * 0.6, 9, 1);
     return true;
   }
@@ -74,111 +76,28 @@
     for (var i = 0; i < bed.chunks.length; i++) {
       var b = bed.chunks[i];
       fuel += b.fuel * b.life;
-      if (b.lit && !b.held) output += b.heat * Math.min(1, b.fuel * 12);
+      if (b.lit && !b.held) output += b.reaction * Math.min(1, b.fuel * 16);
     }
     bed.fuelSeconds = fuel;
     // The forge concentrates one piece under the work. The wide boiler grate
     // needs three pieces for full output, or fewer with steady bellows work.
     bed.power = Math.min(1, output * (bed.pilot ? 0.80 + bed.air * 0.35 : 0.39 + bed.air * 0.19));
   }
-  function hearthBounds(b, bed) {
-    var hit = 0;
-    if (b.x < b.r) { b.x = b.r; if (b.vx < 0) { hit = -b.vx; b.vx *= -0.12; } }
-    if (b.x > 320 - b.r) { b.x = 320 - b.r; if (b.vx > 0) { hit = b.vx; b.vx *= -0.12; } }
-    if (b.y > 210 - b.r) {
-      b.y = 210 - b.r;
-      if (b.vy > 0) { hit = Math.max(hit, b.vy); b.vy = b.vy > 45 ? -b.vy * 0.12 : 0; }
-      b.vx *= 0.89; b.spin *= 0.88;
-    }
-    if (hit > 45) {
-      bed.impact = Math.max(bed.impact, Math.min(1, hit / 360));
-      if (b.lit) hearthSparks(bed, b.x, b.y, Math.min(5, Math.floor(hit / 70)), 0.7);
-    }
-  }
-  function hearthContact(a, b, bed) {
-    // Picking a piece up detaches it from the grate. Its stored bed coordinates
-    // are only a cancellation bookmark, not an invisible support for the pile.
-    if (a.held || b.held) return;
-    var ia = 256 / (a.r * a.r), ib = 256 / (b.r * b.r);
-    var dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r, ds = dx * dx + dy * dy;
-    if (ds >= rr * rr) return;
-    var d = Math.sqrt(ds), nx, ny;
-    if (d < 0.00001) {
-      var angle = hearthSeed(a.id * 31 + b.id * 17) * Math.PI * 2;
-      nx = Math.cos(angle); ny = Math.sin(angle);
-    } else { nx = dx / d; ny = dy / d; }
-    var inv = ia + ib, correction = Math.max(0, rr - d - 0.015) * 0.87 / inv;
-    a.x -= nx * correction * ia; a.y -= ny * correction * ia;
-    b.x += nx * correction * ib; b.y += ny * correction * ib;
-    var rvx = (b.held ? 0 : b.vx) - (a.held ? 0 : a.vx);
-    var rvy = (b.held ? 0 : b.vy) - (a.held ? 0 : a.vy);
-    var closing = rvx * nx + rvy * ny;
-    if (closing >= 0) return;
-    var impulse = -closing * (closing < -45 ? 1.10 : 1) / inv;
-    a.vx -= nx * impulse * ia; a.vy -= ny * impulse * ia;
-    b.vx += nx * impulse * ib; b.vy += ny * impulse * ib;
-    var slip = -rvx * ny + rvy * nx;
-    var friction = Math.max(-impulse * 0.38, Math.min(impulse * 0.38, -slip / inv));
-    a.vx += ny * friction * ia; a.vy -= nx * friction * ia;
-    b.vx -= ny * friction * ib; b.vy += nx * friction * ib;
-    if (!a.held) a.spin = a.spin * 0.96 - friction * ia / a.r * 0.2;
-    if (!b.held) b.spin = b.spin * 0.96 - friction * ib / b.r * 0.2;
-    if (closing < -60) {
-      bed.impact = Math.max(bed.impact, Math.min(1, -closing / 360));
-      if (a.lit || b.lit) hearthSparks(bed, a.x + nx * a.r, a.y + ny * a.r, 2, 0.7);
-    }
-  }
   function hearthStepBed(bed) {
-    var h = HEARTH_STEP, bodies = bed.chunks, i, j, b;
+    var h = HEARTH_STEP, bodies = bed.chunks, i, b;
     bed.time += h; bed.air *= Math.exp(-h / 2.7); bed.impact *= Math.exp(-h * 7);
     for (i = 0; i < bodies.length; i++) {
       b = bodies[i];
       if (b.held) continue;
-      b.vx = hearthNumber(b.vx, 0, -600, 600) * 0.999;
+      b.vx = hearthNumber(b.vx, 0, -600, 600) * 0.9998;
       b.vy = hearthNumber(b.vy, 0, -600, 600) + 520 * h;
-      b.spin = hearthNumber(b.spin, 0, -12, 12) * 0.995;
+      b.spin = hearthNumber(b.spin, 0, -18, 18) * 0.9995;
       b.x += b.vx * h; b.y += b.vy * h; b.angle += b.spin * h;
-      hearthBounds(b, bed);
     }
-    // Contacts correct position without turning overlap into kinetic energy.
-    // Eight bounded passes also untangle a load dropped directly onto a pile.
-    for (var pass = 0; pass < 8; pass++) {
-      for (i = 0; i < bodies.length; i++) {
-        for (j = i + 1; j < bodies.length; j++) hearthContact(bodies[i], bodies[j], bed);
-      }
-      for (i = 0; i < bodies.length; i++) if (!bodies[i].held) hearthBounds(bodies[i], bed);
-    }
-    // Compute heating from one snapshot so array order cannot accelerate a fire.
-    var targets = [];
-    for (i = 0; i < bodies.length; i++) {
-      b = bodies[i];
-      var target = 0, response = 0.36;
-      if (!b.held && !b.ash) {
-        if (b.lit) { target = 0.90 + bed.air * 0.10; response = 1.8; }
-        else {
-          if (bed.pilot && b.y + b.r >= 194) { target = 0.86; response = 0.85; }
-          for (j = 0; j < bodies.length; j++) {
-            var other = bodies[j];
-            if (j === i || !other.lit || other.held) continue;
-            var dx = other.x - b.x, dy = other.y - b.y;
-            var gap = Math.sqrt(dx * dx + dy * dy) - b.r - other.r;
-            if (gap >= 26) continue;
-            var local = other.heat * (1 - Math.max(0, gap) / 45);
-            if (local > target) { target = local; response = 0.65 + bed.air * 0.4; }
-          }
-        }
-      }
-      targets.push([target, response]);
-    }
-    for (i = 0; i < bodies.length; i++) {
-      b = bodies[i];
-      b.heat += (targets[i][0] - b.heat) * (1 - Math.exp(-targets[i][1] * h));
-      if (b.held) continue;
-      if (!b.ash && !b.lit && b.heat >= 0.68) hearthLightChunk(bed, b);
-      if (!b.lit) continue;
-      b.fuel = Math.max(0, b.fuel - h * (1 + bed.air * 0.85) / b.life);
-      if (b.fuel <= 0) { b.fuel = 0; b.lit = false; b.ash = true; }
-    }
+    if (bodies.length) hearthSolve(bed);
+    // Chemistry runs at 30 Hz, on the same fixed clock as the 120 Hz contacts.
+    bed.burnClock++;
+    if (bed.burnClock >= 4) { hearthBurnStep(bed, h * 4); bed.burnClock = 0; }
     hearthMeasure(bed);
     bed.heat += (bed.power - bed.heat) * (1 - Math.exp(-h / (bed.power > bed.heat ? 2.6 : 9)));
     for (i = bed.sparks.length - 1; i >= 0; i--) {
@@ -203,17 +122,19 @@
     }
   }
   function hearthSave() {
-    var result = { version: 1 }, kinds = ['boiler', 'forge'];
+    var result = { version: 2 }, kinds = ['boiler', 'forge'];
     for (var k = 0; k < kinds.length; k++) {
       var bed = hearthBeds[kinds[k]], chunks = [];
       for (var i = 0; i < bed.chunks.length; i++) {
         var b = bed.chunks[i];
         chunks.push({ id: b.id, x: b.x, y: b.y, vx: b.held ? 0 : b.vx, vy: b.held ? 0 : b.vy,
-          r: b.r, angle: b.angle, spin: b.held ? 0 : b.spin, seed: b.seed,
-          life: b.life, fuel: b.fuel, heat: b.heat, lit: b.lit, ash: b.ash, devSupplied: b.devSupplied === true });
+          r: b.r, baseR: b.baseR, angle: b.angle, spin: b.held ? 0 : b.spin, seed: b.seed,
+          life: b.life, fuel: b.fuel, heat: b.heat, lit: b.lit, ash: b.ash,
+          volatile: b.volatile, carbon: b.carbon, moisture: b.moisture, core: b.core, oxygen: b.oxygen,
+          flame: b.flame, smoke: b.smoke, steam: b.steam, reaction: b.reaction, coating: b.coating, stage: b.stage, devSupplied: b.devSupplied === true });
       }
       result[kinds[k]] = { chunks: chunks, nextId: bed.nextId, time: bed.time,
-        heat: bed.heat, air: bed.air };
+        heat: bed.heat, air: bed.air, burnClock: bed.burnClock, ashLoad: bed.ashLoad };
     }
     return result;
   }
@@ -227,6 +148,8 @@
       restored = true;
       bed.time = hearthNumber(src.time, 0, 0, 1e9);
       bed.heat = hearthNumber(src.heat, 0, 0, 1); bed.air = hearthNumber(src.air, 0, 0, 1);
+      bed.burnClock = Math.floor(hearthNumber(src.burnClock, 0, 0, 3));
+      bed.ashLoad = hearthNumber(src.ashLoad, 0, 0, 0.92);
       var used = {};
       for (var i = 0; i < Math.min(HEARTH_CAP, src.chunks.length); i++) {
         var raw = src.chunks[i];
@@ -236,17 +159,35 @@
         while (used[id]) id++;
         used[id] = true; b.id = id; bed.nextId = Math.max(bed.nextId, id + 1);
         b.seed = hearthNumber(raw.seed, b.seed, 0, 1);
-        b.r = hearthNumber(raw.r, b.r, 13, 20);
-        b.x = hearthNumber(raw.x, 160, b.r, 320 - b.r);
-        b.y = hearthNumber(raw.y, 12, -80, 210 - b.r);
+        // Keep old paid fuel/lifetime and existing positions. Older small lumps
+        // retain their size; newly mined coal uses the larger hulls.
+        b.baseR = hearthNumber(raw.baseR, hearthNumber(raw.r, b.r, 13, 39), 13, 39);
+        b.r = hearthNumber(raw.r, b.baseR, b.baseR * 0.4, b.baseR);
+        b.x = hearthNumber(raw.x, 160, -40, 360);
+        b.y = hearthNumber(raw.y, 12, -320, 250);
         b.vx = hearthNumber(raw.vx, 0, -600, 600); b.vy = hearthNumber(raw.vy, 0, -600, 600);
-        b.angle = hearthNumber(raw.angle, 0, -1e6, 1e6); b.spin = hearthNumber(raw.spin, 0, -12, 12);
-        b.life = hearthNumber(raw.life, 48 + b.seed * 12, 48, 60);
+        b.angle = hearthNumber(raw.angle, 0, -1e6, 1e6); b.spin = hearthNumber(raw.spin, 0, -18, 18);
+        b.life = hearthNumber(raw.life, 90 + b.seed * 30, 48, 120);
         b.fuel = hearthNumber(raw.fuel, 1, 0, 1); b.heat = hearthNumber(raw.heat, 0, 0, 1);
         b.ash = raw.ash === true || b.fuel <= 0;
         if (b.ash) b.fuel = 0;
         b.lit = raw.lit === true && !b.ash;
         b.held = false; b.devSupplied = raw.devSupplied === true;
+        b.volatile = null; hearthFuelState(b);
+        if (data.version >= 2) {
+          b.volatile = hearthNumber(raw.volatile, b.volatile, 0, Math.min(0.28, b.fuel));
+          b.carbon = hearthNumber(raw.carbon, b.fuel - b.volatile, 0, 1);
+          if (Math.abs(b.carbon + b.volatile - b.fuel) > 1e-10) b.carbon = b.fuel - b.volatile;
+          b.moisture = hearthNumber(raw.moisture, b.moisture, 0, 0.1);
+          b.core = hearthNumber(raw.core, b.core, 0, 1);
+          b.oxygen = hearthNumber(raw.oxygen, 1, 0, 1.25);
+          b.flame = hearthNumber(raw.flame, 0, 0, 1); b.smoke = hearthNumber(raw.smoke, 0, 0, 1);
+          b.steam = hearthNumber(raw.steam, 0, 0, 1); b.reaction = hearthNumber(raw.reaction, 0, 0, 1.5);
+          b.coating = hearthNumber(raw.coating, b.coating, 0, 1);
+          var stages = ['cold', 'kindling', 'drying', 'warming', 'smoldering', 'flaming', 'coke', 'embers', 'cooling ash', 'ash'];
+          if (stages.indexOf(raw.stage) >= 0) b.stage = raw.stage;
+        }
+        hearthHullCache.delete(b); hearthMass(b); hearthWorldHull(b);
       }
       bed.nextId = Math.max(bed.nextId, Math.floor(hearthNumber(src.nextId, bed.nextId, 1, 1e9)));
       hearthMeasure(bed);
