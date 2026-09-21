@@ -181,12 +181,15 @@
         ash: { x: rx + cw + 10, y: top + 108, w: cw, h: 44 } };
     }
     if (split) {
-      var sceneH = Math.max(72, available - controls - 38);
-      var leftW = w * 0.72 - 52;
-      var bh = Math.min(sceneH - 30, leftW * 210 / 320), bw = bh * 320 / 210;
-      box = { x: 24 + (leftW - bw) / 2, y: top + 28, w: bw, h: bh };
-      bench = { x: w * 0.72 + 18, y: top + 25, w: w * 0.28 - 42, h: sceneH - 20 };
-      row = top + sceneH + 22;
+      // Keep the furnace at a readable working distance on large monitors.
+      // Its physical 320 by 210 chamber and pointer coordinates stay unchanged.
+      var stationW = Math.min(900, w - 48), stationX = (w - stationW) / 2;
+      var benchW = Math.min(220, stationW * 0.26), leftW = stationW - benchW - 52;
+      var bh = Math.min(378, available - 164, (leftW - 30) * 210 / 320), bw = bh * 320 / 210;
+      var stationY = top + Math.max(0, (available - bh - 164) / 2);
+      box = { x: stationX + (leftW - bw) / 2, y: stationY + 52, w: bw, h: bh };
+      bench = { x: stationX + stationW - benchW, y: box.y - 14, w: benchW, h: bh + 33 };
+      row = box.y + bh + 40;
     } else {
       var artH = available - controls - 52;
       var bh = Math.min((w - 64) * 210 / 320, artH * 0.55), bw = bh * 320 / 210;
@@ -197,6 +200,7 @@
     var gap = 10, left = 18, inner = w - 36, half = (inner - gap) / 2;
     var bin, pump, action, ash;
     if (w >= 620) {
+      left = stationX; inner = stationW;
       var quarter = (inner - gap * 3) / 4;
       bin = { x: left, y: row, w: quarter, h: 72 };
       pump = { x: left + quarter + gap, y: row, w: quarter, h: 72 };
@@ -459,8 +463,9 @@
     c.fillStyle = BLD.stoneDark; c.fillRect(0, floorY, L.w, L.h - floorY);
     c.fillStyle = BLD.outline; c.fillRect(0, floorY, L.w, 5);
     for (var slab = 0; slab < L.w; slab += 154) { c.fillStyle = BLD.stoneBase; c.fillRect(slab, floorY + 5, 151, 2); }
-    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(box.x + box.w * 0.46, L.top, box.w * 0.18, 40);
-    c.fillStyle = BLD.metalLight; c.fillRect(box.x + box.w * 0.46 + 4, L.top, 3, 38);
+    var flueH = box.y - L.top;
+    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(box.x + box.w * 0.46, L.top, box.w * 0.18, flueH);
+    c.fillStyle = BLD.metalLight; c.fillRect(box.x + box.w * 0.46 + 4, L.top, 3, flueH);
     hearthPlate(c, { x: box.x - 15, y: box.y - 14, w: box.w + 30, h: box.h + 33 }, true);
     c.fillStyle = BLD.metalDark; c.fillRect(box.x - 13, box.y + box.h + 18, box.w + 26, 10);
     hearthDrawFirebox(c, bed, box.x, box.y, box.w, box.h, t);
@@ -470,7 +475,7 @@
       c.fillStyle = BLD.metalLight; c.fillRect(gx, box.y + box.h, 8, 2);
       c.fillStyle = BLD.outline; c.fillRect(gx + 8, box.y + box.h + 2, 6, 5);
     }
-    hearthText(c, 'COAL-FIRED BOILER', box.x, L.top + 10, 11, BLD.cream);
+    hearthText(c, 'COAL-FIRED BOILER', box.x, box.y - 18, 11, BLD.cream);
     // The coal bunker is the source of every movable chunk.
     hearthPlate(c, L.bin, true);
     var columns = Math.max(2, Math.min(4, Math.floor((L.bin.w - 24) / 24)));

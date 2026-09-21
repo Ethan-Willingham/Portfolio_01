@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { checkFireKernels } from './fire-kernel-checks.mjs';
 import { checkFireMaterials } from './fire-material-checks.mjs';
+import { checkFireRendering } from './fire-render-checks.mjs';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -97,6 +98,8 @@ try {
   for(const r of kernelResults) { console.log('KERNEL',r);check(r.label,r.pass); }
   const materialResults = await game('(' + checkFireMaterials.toString() + ')(liquidWGPU.device)');
   for(const r of materialResults){console.log('MATERIAL',r);check(r.label,r.pass);}
+  const renderResults = await game('(' + checkFireRendering.toString() + ')(liquidWGPU.device)');
+  for(const r of renderResults){console.log('RENDER',r);check(r.label,r.pass);}
   async function run(seconds) {
     for(let f=0;f<Math.ceil(seconds*60);f+=12){
       await game(`for(var i=0;i<${Math.min(12,Math.ceil(seconds*60)-f)};i++)bathGuestTick(1/60)`);
@@ -127,6 +130,16 @@ try {
   await game('hearthReset();for(var x of [95,160,225])hearthAddChunk("boiler",x,175)');await run(1);
   await game('for(var b of hearthBeds.boiler.chunks)hearthLightChunk(hearthBeds.boiler,b)');await run(8);await screenshot('full-fire');
   console.log('FULL FIRE',await stats());
+  for (const screen of [{width:1920,height:1080,deviceScaleFactor:2},{width:844,height:390,deviceScaleFactor:1}]) {
+    await send('Emulation.setDeviceMetricsOverride',{...screen,mobile:false});
+    await game('resize();render()');
+    const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
+    check('bounded chamber and accessible controls at '+screen.width,layout.box.w<=576.01 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
+    check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w)<1 && Math.abs(layout.overlay.h-layout.box.h)<1);
+    await screenshot('fire-'+screen.width);
+  }
+  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+  await game('resize();render()');
   const cost=await game('(async function(){var cpu=[],wall=[],device=liquidWGPU.device;for(var i=0;i<120;i++){var t=performance.now();bathGuestTick(1/60);render();cpu.push(hearthFireGPU.cpuMs);await device.queue.onSubmittedWorkDone();wall.push(performance.now()-t);}function summary(a){a.sort(function(a,b){return a-b});return {avg:a.reduce(function(a,b){return a+b},0)/a.length,p95:a[Math.floor(a.length*.95)]};}return {fireSubmissionMs:summary(cpu),fireRoomAndQueueMs:summary(wall),buffers:hearthFireGPU.bufferBytes};})()');
   console.log('PERFORMANCE',cost);check('fire CPU submissions stay within the frame budget',cost.fireSubmissionMs.p95<3);
   await game('bathMode=false;bathEnter()');await sleep(600);
@@ -156,7 +169,7 @@ try {
   await game('hearthFireCancel();hearthAddChunk("boiler",160,170);hearthIgnite("boiler");for(var i=0;i<600;i++)bathGuestTick(1/60);render()');
   check('CPU fallback continues consuming fuel after fire device disposal',await game('hearthBeds.boiler.chunks.some(function(b){return b.fuel<1}) && hearthBeds.boiler.power>0'));
   check('no browser runtime errors', errors.length===0);
-  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,performance:cost,fullGame:fullGame},null,2));
+  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,performance:cost,fullGame:fullGame},null,2));
 } finally {
   if (errors.length) console.error(JSON.stringify(errors.slice(0,4)));
   cleanup();

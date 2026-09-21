@@ -26,6 +26,7 @@ struct Params { grid: vec4f, flow: vec4f, view: vec4f, misc: vec4f, bodies: arra
 @group(0) @binding(12) var<storage,read_write> stats: array<vec4f>;
 @group(0) @binding(13) var<storage,read> remapInfo: array<vec2i>;
 @group(0) @binding(14) var<storage,read> remapNext: array<i32>;
+@group(0) @binding(15) var<storage,read> hullEdges: array<vec4f>;
 fn dims() -> vec2i { return vec2i(p.grid.xy); }
 fn at(q:vec2i) -> u32 { let c=clamp(q,vec2i(0),dims()-1); return u32(c.y*dims().x+c.x); }
 fn inside(q:vec2i)->bool { return all(q>=vec2i(0)) && all(q<dims()); }
@@ -234,6 +235,39 @@ fn sampleG(uv:vec2f)->Gas {
  let a=gi[at(c)];let b=gi[at(c+vec2i(1,0))];let d=gi[at(c+vec2i(0,1))];let e=gi[at(c+vec2i(1,1))];
  return Gas(mix(mix(a.a,b.a,f.x),mix(d.a,e.a,f.x),f.y),mix(mix(a.b,b.b,f.x),mix(d.b,e.b,f.x),f.y));
 }
+// Positive cubic B-spline weights reconstruct a continuous display field.
+// Normalize over fluid samples so empty solid cells cannot darken hot surfaces.
+// This is presentation only: the conservative solver retains its own fields.
+fn cubicWeights(t:f32)->vec4f {
+ let t2=t*t;let t3=t2*t;let u=1.-t;
+ return vec4f(u*u*u,3.*t3-6.*t2+4.,-3.*t3+3.*t2+3.*t+1.,t3)/6.;
+}
+fn smoothGas(uv:vec2f)->Gas {
+ let q=uv*p.grid.xy-0.5;let c=vec2i(floor(q));let f=fract(q);
+ let wx=cubicWeights(f.x);let wy=cubicWeights(f.y);
+ var a=vec4f(0.);var b=vec4f(0.);var total=0.;
+ for(var y=0;y<4;y++){for(var x=0;x<4;x++){
+  let i=at(c+vec2i(x-1,y-1));let weight=wx[x]*wy[y]*select(0.,1.,mask[i].x == -1);
+  a+=gi[i].a*weight;b+=gi[i].b*weight;total+=weight;
+ }}
+ return Gas(a/max(total,0.00001),b/max(total,0.00001));
+}
+// Four nearby grid cells nominate polygons; their actual edge planes, rather
+// than the stair-stepped simulation mask, clip the light at display resolution.
+fn fuelCoverage(uv:vec2f,aa:f32)->f32 {
+ let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(320.,210.);
+ var coverage=1.;var visited=0u;
+ for(var k=0;k<4;k++){
+  let body=mask[at(c+vec2i(k%2,k/2))].x;
+  if(body<0){continue;}let bit=1u<<u32(body);if((visited&bit)!=0u){continue;}visited|=bit;
+  let count=i32(p.bodies[body].d.y);var distance=-10000.;
+  for(var edge=0;edge<count;edge++){
+   let plane=hullEdges[body*16+edge];distance=max(distance,dot(plane.xy,point)-plane.z);
+  }
+  coverage*=smoothstep(-aa,aa,distance);
+ }
+ return coverage;
+}
 fn light(g:Gas)->vec3f {
  let T=clamp(temp(g),300.,2600.);
  let black=vec3f(1.,1.91,4.24)/(exp(vec3f(22135.,26159.,31973.)/T)-1.)*24000000.;
@@ -242,15 +276,19 @@ fn light(g:Gas)->vec3f {
  return incandescence+reaction;
 }
 @fragment fn fragment(v:Vertex)->@location(0) vec4f {
- let cell=at(vec2i(v.uv*p.grid.xy));if(mask[cell].x != -1){return vec4f(0.);}
- let g=sampleG(v.uv);let T=temp(g);let mode=i32(p.view.x);
+ let point=v.uv*vec2f(320.,210.);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
+ let cell=at(vec2i(v.uv*p.grid.xy));let mode=i32(p.view.x);
  if(mode>0){
+  if(mask[cell].x != -1){return vec4f(0.);}let g=sampleG(v.uv);let T=temp(g);
   var c=vec3f(0.);if(mode==1){c=vec3f(1.,0.3,0.04)*clamp((T-300.)/1600.,0.,1.);}
   if(mode==2){c=vec3f(0.15,0.55,1.)*clamp(g.a.y/0.275,0.,1.);}
   if(mode==3){c=vec3f(0.15,1.,0.35)*(1.-exp(-g.a.x*3.));}
   if(mode==4){c=vec3f(0.5+vi[cell].x*2.,0.5-vi[cell].y*2.,abs(vi[cell].z)*12.);}
   if(mode==5){c=vec3f(1.,0.4,0.1)*(1.-exp(-g.b.z*2.));}return vec4f(c,0.96);
  }
+ if(mask[cell].x == -2){return vec4f(0.);}
+ let coverage=fuelCoverage(v.uv,aa);if(coverage<=0.){return vec4f(0.);}
+ let g=smoothGas(v.uv);let T=temp(g);
  let center=light(g);var halo=vec3f(0.);
  for(var k=0;k<4;k++){let offset=select(select(vec2f(0.,-1.),vec2f(0.,1.),k==2),select(vec2f(-1.,0.),vec2f(1.,0.),k==0),k<2);
   halo+=light(sampleG(v.uv+offset*vec2f(5.)/p.grid.xy));}
@@ -259,25 +297,27 @@ fn light(g:Gas)->vec3f {
  let smoke=1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3);
  let color=vec3f(1.)-exp(-emitted*3.8);
  let alpha=clamp(max(max(color.r,color.g),color.b)+smoke*0.7,0.,0.98);
- return vec4f(color+vec3f(0.15,0.145,0.12)*smoke*(1.-color.r),alpha);
+ return vec4f(color+vec3f(0.15,0.145,0.12)*smoke*(1.-color.r),alpha)*coverage;
 }
 `;
 
   function create(options) {
     options = options || {};
     var device = options.device, w = options.width || 192, h = Math.round(w * 210 / 320), n = w * h;
-    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*132+(w+h)*32+6720, steps: 0, submissions: 0,
+    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*132+(w+h)*32+11328, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
     var buffers = [], pipelines = {}, groups = {}, gasIndex = 0, velIndex = 0, bank = 0, time = 0;
     var slots = new Array(CAP).fill(null), masks = new Int32Array(n * 2), lists = new Uint32Array(n), uniform = new Float32Array(304);
     var rbPending = false, revision = 0, resetGeneration = 0, signature = '', contacts = new Uint32Array(CAP), geometryFresh = true;
     var previousMasks = new Int32Array(n*2), owners = new Int32Array(n), frontier = new Int32Array(n);
     var remapData = new Int32Array(n*2), remapLinks = new Int32Array(n);
+    var edgeData = new Float32Array(CAP*16*4);
     var ignition = new Map(), quenches = new Map(), commands = new Map(), commandSerial = 0, lost = false;
     function buffer(size, extra) { var b = device.createBuffer({ size: size, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | (extra || 0) }); buffers.push(b); return b; }
     var g = [buffer(n * 32), buffer(n * 32)], v = [buffer((n+w+h) * 16), buffer((n+w+h) * 16)];
     var m = buffer(n * 8), bodies = [buffer(CAP * 64), buffer(CAP * 64)], surfaceBuffer = buffer(n * 4);
     var remapBuffer = buffer(n*8), remapLinkBuffer = buffer(n*4);
+    var edgeBuffer = buffer(edgeData.byteLength);
     var pressures = [buffer(n * 4), buffer(n * 4)], div = buffer(n * 4), statsBuffer = buffer(64 * 16);
     var ub = device.createBuffer({ size: uniform.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST }); buffers.push(ub);
     var rbSize = CAP * 64 + 64 * 16;
@@ -285,15 +325,15 @@ fn light(g:Gas)->vec3f {
     var surfaceStart = new Int32Array(CAP), surfaceCount = new Int32Array(CAP);
     var gpuCanvas = document.createElement('canvas'), context = gpuCanvas.getContext('webgpu');
     gpuCanvas.className = 'sluice-fire-layer'; gpuCanvas.setAttribute('aria-hidden', 'true');
-    gpuCanvas.style.cssText = 'position:absolute;pointer-events:none;z-index:9;display:none;';
+    gpuCanvas.style.cssText = 'position:absolute;pointer-events:none;z-index:9;display:none;image-rendering:auto;';
     sim.canvas = gpuCanvas;
     context.configure({ device: device, format: navigator.gpu.getPreferredCanvasFormat(), alphaMode: 'premultiplied' });
     var definitions = {
       init: [0,2,4,10], remap: [0,1,2,5,13,14], advectVelocity: [0,1,3,4,5], diverge: [0,1,3,5,11],
       pressureStep: [0,5,9,10,11], project: [0,3,4,5,9], transport: [0,1,2,3,5],
-      react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], fragment: [0,1,3,5]
+      react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], fragment: [0,1,3,5,15]
     };
-    function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer]; }
+    function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer]; }
     function bind(name, gi, vi, pr) {
       var key = name + gi + vi + pr;
       if (!groups[key]) { var res = resources(gi,vi,pr); groups[key] = device.createBindGroup({ layout: pipelines[name].getBindGroupLayout(0), entries: definitions[name].map(function (id) { return { binding: id, resource: { buffer: res[id] } }; }) }); }
@@ -314,6 +354,7 @@ fn light(g:Gas)->vec3f {
           body ? commands.get(body) || 0 : 0,body ? ignition.get(body) || 0 : 0,body ? quenches.get(body) || 0 : 0,body && body.material === 'wood' ? 1 : 0,
           body ? body.x : 0,body ? body.y : 0,body ? body.r : 0,body && body.held ? 1 : 0,0,0,0,0],o);
         uniform[o+12]=contacts[b];
+        uniform[o+13]=body && !body.held && body.vertices ? Math.min(16,body.vertices.length) : 0;
       }
       device.queue.writeBuffer(ub,0,uniform);
     }
@@ -344,8 +385,14 @@ fn light(g:Gas)->vec3f {
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b]|=1<<other;contacts[other]|=1<<b;}
       }
       for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(y<h*0.50||y>h*0.64))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*320/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
+      edgeData.fill(0);
       for(var b=0;b<CAP;b++) {
         var body=slots[b];if(!body||body.held||!body.vertices)continue;var hull=body.vertices;
+        for(var j=0;j<Math.min(16,hull.length);j++){
+          var a=hull[j],c=hull[(j+1)%hull.length],len=Math.hypot(c[0]-a[0],c[1]-a[1]);
+          var nx=(c[1]-a[1])/len,ny=(a[0]-c[0])/len,o=(b*16+j)*4;
+          edgeData.set([nx,ny,nx*a[0]+ny*a[1],0],o);
+        }
         var x0=w,x1=0,y0=h,y1=0;
         hull.forEach(function(p){x0=Math.min(x0,Math.floor(p[0]*w/320));x1=Math.max(x1,Math.ceil(p[0]*w/320));y0=Math.min(y0,Math.floor(p[1]*h/210));y1=Math.max(y1,Math.ceil(p[1]*h/210));});
         for(var y=Math.max(0,y0);y<=Math.min(h-1,y1);y++)for(var x=Math.max(0,x0);x<=Math.min(w-1,x1);x++){
@@ -354,6 +401,7 @@ fn light(g:Gas)->vec3f {
           if(inside)masks[(y*w+x)*2]=b;
         }
       }
+      device.queue.writeBuffer(edgeBuffer,0,edgeData);
       // A multi-source breadth-first search maps covered cells to their
       // nearest fluid cell in O(grid size), even after a fast drag or teleport.
       // The GPU gathers linked donor lists without floating point atomics.

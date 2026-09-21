@@ -107,6 +107,18 @@ transitions and leaving the room. Display resolution is capped at 1.5 device
 pixels per CSS pixel. No GPU canvas is copied through Canvas2D. Fully cold fire
 sleeps after a five-second vent period, with no continuing compute submissions.
 
+Since v28.64, the desktop tending view caps the chamber at 576 by 378 CSS pixels
+and centers the furnace, instruments and controls together. This is a camera/layout
+change; fuel size, chamber dimensions and burn rates retain their physical scale.
+Phone and short landscape layouts keep their usable touch targets.
+
+The normal image reconstructs gas with positive cubic B-spline weights, normalized
+over fluid cells. These display samples do not modify simulation mass or heat.
+Flame occlusion uses the fuel's actual convex edge planes with a subpixel transition,
+instead of magnifying the simulation's square solid mask. A retained 4,608-byte edge
+buffer updates with changed geometry. Diagnostic views retain the raw cell mask.
+The fire canvas explicitly uses smooth browser scaling.
+
 For inspection, `window.__fire.debug` selects 0 for the normal image, 1 for
 heat, 2 for oxygen, 3 for fuel, 4 for velocity and 5 for reaction rate. An active
 simulation updates the selection on its next step. `snapshot()` is a diagnostic
@@ -118,16 +130,16 @@ Desktop uses 192 by 126 cells; mobile uses 128 by 84. There are at most eighteen
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch
 up its missed burn time. Buffers, pipelines and bind groups are retained, and
 all steps in one game update share one queue submission. The desktop simulation
-buffers occupy 3,210,240 bytes, excluding presentation textures and CPU geometry
+buffers occupy 3,214,848 bytes, excluding presentation textures and CPU geometry
 arrays. The module requests no second GPU device.
 
-On the development Apple M1 Pro, Chrome for Testing with Metal, at 1280 by 900:
+On the development Apple M1 Pro, Chrome for Testing with Metal, v28.64 at 1280 by 900:
 
 | Measurement | Result |
 | --- | --- |
-| Fire CPU geometry and submission, 120 frames with three burning pieces | 0.74 ms average, 0.90 ms p95 |
-| Fire-room update/render plus a GPU queue fence | 5.17 ms average, 8.40 ms p95 |
-| Full bath frame CPU time, about 55,000 liquid particles, steam and a guest | 3.00 ms average, 5.20 ms p99 |
+| Fire CPU geometry and submission, 120 frames with three burning pieces | 0.75 ms average, 0.90 ms p95 |
+| Fire-room update/render plus a GPU queue fence | 5.20 ms average, 8.00 ms p95 |
+| Full bath frame CPU time, about 51,000 liquid particles, steam and a guest | 3.05 ms average, 5.40 ms p99 |
 | Full bath frame interval | 16.67 ms average, 16.80 ms p99 |
 
 The queue-fenced measurement includes browser/driver scheduling and room drawing;
@@ -150,6 +162,8 @@ to `/tmp/sluice-fire-qa`. The supporting browser checks verify:
 - Neighbor ignition through heat exchange, exact material save round trips,
   mobile layout and real touch ignition, sleep/wake and CPU fallback.
 - Full-game water/steam/guest operation and clean browser/shader execution.
+- GPU pixel checks for opaque polygon interiors, continuous diagonal boundaries
+  and subpixel coverage, plus 1920px Retina and short landscape layout checks.
 
 `node tools/test-hearth-physics.cjs` covers the rigid bodies and fallback material
 model. `node tools/test-bathhouse.cjs` covers service, resource conservation,
