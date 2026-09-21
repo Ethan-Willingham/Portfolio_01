@@ -4645,7 +4645,8 @@
 
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
-    if (b.surfaceSlime) stiff *= b.surfaceSlime.drive && !b.surfaceSlime.detach ? 1.3 : 0.14;
+    var muscleBlend = b.surfaceSlime ? b.surfaceSlime.motorBlend || 0 : 0;
+    if (b.surfaceSlime) stiff *= 0.14 + 1.16 * muscleBlend;
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
     // shape is near-colinear) has an ILL-CONDITIONED best-fit rotation: the polar decomposition
     // R jitters frame to frame, and a full-strength pull toward that spinning goal injects
@@ -4707,8 +4708,9 @@
       var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
       var gx = T00 * pqx + T01 * pqy + cx;
       var gy = T10 * pqx + T11 * pqy + cy;
-      if (b.surfaceSlime && b.surfaceSlime.drive && !b.surfaceSlime.detach) {
-        gx = cx + b.muscleX[i]; gy = cy + b.muscleY[i];
+      if (muscleBlend > 0) {
+        gx += (cx + b.muscleX[i] - gx) * muscleBlend;
+        gy += (cy + b.muscleY[i] - gy) * muscleBlend;
       }
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
@@ -6800,6 +6802,15 @@
       jelloCollideRingEdges(b);
     }
     if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (b.surfaceSlime && !b._grabbed) {
+      for (var skinPass = 0; skinPass < 3; skinPass++) {
+        if (!jelloLimitOrientation(b)) break;
+        for (ci = 0; ci < b.n; ci++) {
+          if (jelloWorldSolidAt(b.px[ci], b.py[ci])) jelloCollidePointWorld(b, ci, h);
+        }
+      }
+      surfaceSlimeDampMotion(b, h);
+    }
     if (resilienceGuard) jelloRejectTerrainInside(b);
     if (resilienceGuard) jelloResilienceStepEnd(b);
   }
@@ -6876,13 +6887,27 @@
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
       var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
       var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      if (!(ratio < JELLO_ORIENT_MIN)) continue;
+      var orientMin = b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
+      var orientTarget = b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
+      if (!(ratio < orientMin)) continue;
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
       var g2x = (py[i0] - py[i1]) * detInv, g2y = (px[i1] - px[i0]) * detInv;
+      if (b.surfaceSlime) {
+        // A foot already on the floor cannot contribute motion INTO it.
+        // Without this contact-aware gradient the area constraint moved feet
+        // through terrain, collision flattened them again, and the frame-level
+        // emergency healer repeatedly snapped the whole living body straight.
+        if (jelloWorldSolidAt(px[i0] + Math.sign(g0x) * 0.7, py[i0])) g0x = 0;
+        if (jelloWorldSolidAt(px[i0], py[i0] + Math.sign(g0y) * 0.7)) g0y = 0;
+        if (jelloWorldSolidAt(px[i1] + Math.sign(g1x) * 0.7, py[i1])) g1x = 0;
+        if (jelloWorldSolidAt(px[i1], py[i1] + Math.sign(g1y) * 0.7)) g1y = 0;
+        if (jelloWorldSolidAt(px[i2] + Math.sign(g2x) * 0.7, py[i2])) g2x = 0;
+        if (jelloWorldSolidAt(px[i2], py[i2] + Math.sign(g2y) * 0.7)) g2y = 0;
+      }
       var den = g0x * g0x + g0y * g0y + g1x * g1x + g1y * g1y + g2x * g2x + g2y * g2y;
       if (!(den > 1e-12)) continue;
-      var dl = (JELLO_ORIENT_TARGET - ratio) / den;
+      var dl = (orientTarget - ratio) / den;
       var c0x = dl * g0x, c0y = dl * g0y;
       var c1x = dl * g1x, c1y = dl * g1y;
       var c2x = dl * g2x, c2y = dl * g2y;
@@ -8476,6 +8501,12 @@
     var _phInternal = 0, _phContact = 0, _phTail = 0, _phT0 = 0;
     for (step = 0; step < totalSteps; step++) {
       if (devMode) _phT0 = performance.now();
+      if (step % K === 0 && typeof surfaceSlimeSnapshot === 'function') {
+        for (ai = 0; ai < nActive; ai++) {
+          b = active[ai];
+          if (b.surfaceSlime && b._solve) surfaceSlimeSnapshot(b);
+        }
+      }
       // Sleeping bodies still participate in contact and can be woken by the
       // held body after their internal step was skipped. Give those static
       // participants a fresh rollback pose too; never reuse an old snapshot.

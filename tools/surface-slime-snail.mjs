@@ -89,6 +89,7 @@ try {
       for(n=0;n<60;n++)window.__snailStep(60);
     }
     b.surfaceSlime.dir=dir;b.surfaceSlime.state='crawl';b.surfaceSlime.timer=100;
+    b.surfaceSlime.goalX=b.cx+dir*TILE*12;
     b.surfaceSlime.home=b.cx;
     return b;
   };
@@ -117,7 +118,7 @@ try {
           finite:true,embedded:0,maxDepth:-Infinity,maxDownSpeed:0,maxBodyDownSpeed:0,maxAdvance:0,closest:Infinity,
           unsupported:0,turned:false,crossed:false,trail:[]};
         var unsupported=0,lastY=b.cy,ys=[b.cy],speedFrames=Math.ceil(fps*.1);
-        for(var n=0;n<fps*20;n++){
+        for(var n=0;n<fps*35;n++){
           window.__snailStep(fps);
           r.maxDepth=Math.max(r.maxDepth,b.cy-floor);
           r.maxBodyDownSpeed=Math.max(r.maxBodyDownSpeed,(b.cy-lastY)*fps);lastY=b.cy;
@@ -213,11 +214,12 @@ try {
         }
         b=surfaceSlimeBuild(wall-dir*40,11*TILE-32,{id:500,seed:.46,home:wall-dir*40});
         window.__snailBody=b;b.surfaceSlime.dir=dir;b.surfaceSlime.state='crawl';b.surfaceSlime.timer=100;
+        b.surfaceSlime.goalX=b.cx+dir*TILE*12;
         var gap=wall+dir*platform*TILE;
         var r={fps:fps,dir:dir,platform:platform,finite:true,embedded:0,gotOnTop:false,
           maxPitDepth:-Infinity,maxPitDownSpeed:0,closest:Infinity,trail:[]};
         var ys=[b.cy],speedFrames=Math.ceil(fps*.1);
-        for(var n=0;n<fps*38;n++){
+        for(var n=0;n<fps*65;n++){
           window.__snailStep(fps);
           ys.push(b.cy);if(ys.length>speedFrames+1)ys.shift();
           var along=(b.cx-wall)*dir,pitX=(b.cx-gap)*dir,speed=(b.cy-ys[0])*fps/(ys.length-1);
@@ -252,7 +254,7 @@ try {
         var b=window.__snailSetup('wall',dir,0,seed,0),start=b.cy,acquired=null;
         var r={fps:fps,dir:dir,seed:seed,finite:true,embedded:0,maxSlip:0,maxNoGrip:0,trail:[]};
         var highY=b.cy,noGrip=0,firstY=null;
-        for(var n=0;n<fps*24;n++){
+        for(var n=0;n<fps*70;n++){
           window.__snailStep(fps);
           if(acquired===null&&b.surfaceSlime.climb&&start-b.cy>40){acquired=n/fps;highY=b.cy;firstY=b.cy;}
           if(acquired!==null){
@@ -261,7 +263,7 @@ try {
           }
           window.__snailIntegrity(b,r);
           if(n%fps===0)r.trail.push({t:n/fps,y:Math.round(b.cy),contacts:b.surfaceSlime.contacts,state:b.surfaceSlime.state});
-          if(acquired!==null&&n/fps-acquired>=8)break;
+          if(acquired!==null&&n/fps-acquired>=22)break;
         }
         r.acquired=acquired;r.rise=start-b.cy;r.continuedRise=firstY===null?0:firstY-b.cy;
         // A normal idle intent must hold the wall without a motor gait. This
@@ -309,25 +311,54 @@ try {
         for(var trial=0;trial<2;trial++){
           SURFACE_SLIME_WAVE=trial===0?saved:0;
           var b=window.__snailSetup('wave',1,0,.46,0),mins=[],maxs=[],minH=Infinity,maxH=0,start=b.cx;
-          for(var k=0;k<b.ringN;k++){mins[k]=Infinity;maxs[k]=-Infinity;}
-          for(var n=0;n<60*9;n++){
+          var radialSum=[],cosineSum=[],sineSum=[],samples=0,sumC=0,sumS=0,sumCC=0,sumSS=0,sumCS=0;
+          for(var k=0;k<b.ringN;k++){
+            mins[k]=Infinity;maxs[k]=-Infinity;radialSum[k]=cosineSum[k]=sineSum[k]=0;
+          }
+          for(var n=0;n<60*12;n++){
             window.__snailStep(60);
             if(n<60*3)continue;
             minH=Math.min(minH,b.bboxB-b.bboxT);maxH=Math.max(maxH,b.bboxB-b.bboxT);
+            var c=Math.cos(b.surfaceSlime.phase),s=Math.sin(b.surfaceSlime.phase);
+            samples++;sumC+=c;sumS+=s;sumCC+=c*c;sumSS+=s*s;sumCS+=c*s;
             for(k=0;k<b.ringN;k++){
               var p=b.ring[k],radius=Math.hypot(b.px[p]-b.cx,b.py[p]-b.cy);
               mins[k]=Math.min(mins[k],radius);maxs[k]=Math.max(maxs[k],radius);
+              radialSum[k]+=radius;cosineSum[k]+=radius*c;sineSum[k]+=radius*s;
             }
           }
           var swings=maxs.map(function(v,i){return v-mins[i];});
+          // Fit the first harmonic of actual material radii, which cannot be
+          // changed by rigid rotation or translation. A travelling contour has
+          // a coherent phase delay across the free back; synchronous breathing
+          // does not. Slow crawling need not bounce the entire body vertically.
+          var cc=sumCC-sumC*sumC/samples,ss=sumSS-sumS*sumS/samples;
+          var cs=sumCS-sumC*sumS/samples,det=cc*ss-cs*cs,back=[];
+          for(k=0;k<b.ringN;k++){
+            var p=b.ring[k];if(b.qy[p]>=-b.surfaceSlime.radius*.3)continue;
+            var rc=cosineSum[k]-radialSum[k]*sumC/samples;
+            var rs=sineSum[k]-radialSum[k]*sumS/samples;
+            var a=(rc*ss-rs*cs)/det,d=(rs*cc-rc*cs)/det;
+            var amplitude=Math.hypot(a,d);
+            if(amplitude>=b.surfaceSlime.radius*.08)back.push({x:b.qx[p],phase:Math.atan2(d,a),amplitude:amplitude});
+          }
+          back.sort(function(a,b){return a.x-b.x;});
+          var phaseTotal=0,phaseTravel=0;
+          for(k=1;k<back.length;k++){
+            var difference=back[k].phase-back[k-1].phase;
+            var delta=Math.atan2(Math.sin(difference),Math.cos(difference));
+            phaseTotal+=delta;phaseTravel+=Math.abs(delta);
+          }
           results.push({wave:trial===0,travel:b.cx-start,radius:b.surfaceSlime.radius,heightSwing:maxH-minH,
-            meanSkinSwing:swings.reduce(function(a,v){return a+v;},0)/swings.length,maxSkinSwing:Math.max.apply(null,swings)});
+            meanSkinSwing:swings.reduce(function(a,v){return a+v;},0)/swings.length,maxSkinSwing:Math.max.apply(null,swings),
+            backWavePoints:back.length,backPhaseSpan:Math.abs(phaseTotal),backPhaseCoherence:phaseTravel?Math.abs(phaseTotal)/phaseTravel:0});
         }
       }finally{SURFACE_SLIME_WAVE=saved;}
       return results;
     })()`);
     console.log('PHYSICAL BODY WAVES',JSON.stringify(waves,null,2));
-    check('travelling waves visibly change the real skin, beyond translation or rigid rotation',waves[0].meanSkinSwing>=waves[0].radius*.5&&waves[0].heightSwing>=14&&waves[0].meanSkinSwing>waves[1].meanSkinSwing*2);
+    check('travelling waves visibly change the real skin, beyond translation or rigid rotation',waves[0].meanSkinSwing>=waves[0].radius*.35&&waves[0].meanSkinSwing>waves[1].meanSkinSwing*4);
+    check('deformation propagates across the free back instead of breathing in place',waves[0].backWavePoints>=5&&waves[0].backPhaseSpan>=1&&waves[0].backPhaseCoherence>=.75);
     check('the physical waves produce crawling rather than a renderer-only effect',waves[0].travel>45&&Math.abs(waves[1].travel)<15);
   }
   check('no browser exceptions',errors.length===0);

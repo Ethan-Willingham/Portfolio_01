@@ -65,6 +65,7 @@ try {
     var x=height?160*TILE-dir*40:155*TILE;
     var b=surfaceSlimeBuild(x,8*TILE-32,{id:500,seed:seed===undefined?.4:seed,home:x});
     b.surfaceSlime.dir=dir;b.surfaceSlime.state='crawl';b.surfaceSlime.timer=100;
+    b.surfaceSlime.goalX=x+dir*TILE*12;
     player.x=140*TILE;player.y=8*TILE-PLAYER_H;player.vx=player.vy=0;player.thrusting=false;
     player.onJello=false;player.jelloGroundT=0;
     cam.x=x-screenW/2;cam.y=8*TILE-screenH*.6;
@@ -79,7 +80,7 @@ try {
     for(var rate=0;rate<3;rate++)for(var dir=-1;dir<=1;dir+=2){
       var fps=[30,60,144][rate],b=window.__crawlSetup(dir,3),x=b.cx;
       var minHeight=1000,maxHeight=0,embedded=0;
-      for(var n=0;n<fps*22;n++){
+      for(var n=0;n<fps*55;n++){
         surfaceSlimeTick(1/fps);updateJello(1/fps);
         minHeight=Math.min(minHeight,b.bboxB-b.bboxT);maxHeight=Math.max(maxHeight,b.bboxB-b.bboxT);
         for(var p=0;p<b.n;p++)if(jelloWorldSolidAt(b.px[p],b.py[p]))embedded++;
@@ -93,7 +94,7 @@ try {
     var out=[];
     for(var i=0;i<3;i++){
       var seed=[.08,.65,.84][i],height=i===1?1:3,b=window.__crawlSetup(1,height,seed),x=b.cx;
-      window.__crawlStep(60,26);
+      window.__crawlStep(60,60);
       out.push({seed:seed,points:b.n,height:height,travel:b.cx-x,y:b.cy});
     }return out;
   })()`);
@@ -105,7 +106,7 @@ try {
       for(var trial=0;trial<2;trial++){
         SURFACE_SLIME_WAVE=trial===0?wave:0;
         var b=window.__crawlSetup(1,0),x=b.cx;
-        window.__crawlStep(60,8);out.push(b.cx-x);
+        window.__crawlStep(60,12);out.push(b.cx-x);
       }
     }finally{SURFACE_SLIME_WAVE=wave;}
     var b=window.__crawlSetup(1,0);
@@ -118,7 +119,7 @@ try {
   check('terrain contact and travelling muscle waves produce the locomotion',propulsion.wave>60&&Math.abs(propulsion.still)<15&&Math.abs(propulsion.airDrift)<1);
   const wall=await game(`(function(){
     var b=window.__crawlSetup(1,7),start=b.cy;
-    window.__crawlStep(60,12);
+    window.__crawlStep(60,40);
     var climbY=b.cy,climbing=b.surfaceSlime.climb,grips=b.surfaceSlime.contacts;
     // A real rig contact invokes jelloPlayerCouple, not a test-only detach.
     player.x=b.cx-PLAYER_W*.7;player.y=b.cy-PLAYER_H*.5;player.vx=145;player.vy=-20;
@@ -131,7 +132,7 @@ try {
   console.log('WALL AND KNOCK',wall);
   check('a tall wall is climbable and a rig impact breaks adhesion and drops the body',wall.rise>55&&wall.climbing&&wall.grips>0&&wall.detached&&wall.fall>10);
   const jets=await game(`(function(){
-    var b=window.__crawlSetup(-1,7);window.__crawlStep(60,10);
+    var b=window.__crawlSetup(-1,7);window.__crawlStep(60,25);
     var climbing=b.surfaceSlime.climb;
     player.x=b.cx-PLAYER_W/2;player.y=b.bboxT-PLAYER_H-14;
     player.thrusting=true;player.fuel=100;player.renderX=player.x;player.renderY=player.y;player.bodyTiltRender=0;
@@ -143,7 +144,7 @@ try {
   console.log('JET RELEASE',jets);
   check('ordinary exhaust peels a climbing resident off the wall',jets.climbing&&jets.detached);
   const broken=await game(`(function(){
-    var b=window.__crawlSetup(1,7);window.__crawlStep(60,8);
+    var b=window.__crawlSetup(1,7);window.__crawlStep(60,22);
     var before=b.surfaceSlime.contacts,y=b.cy;
     for(var r=0;r<8;r++)for(var c=160;c<180;c++)world[r][c]=null;
     window.__crawlStep(60,.1);var after=b.surfaceSlime.contacts;
@@ -153,7 +154,7 @@ try {
   console.log('REMOVED WALL',broken);
   check('mining supporting terrain releases every wall bond',broken.before>0&&broken.after===0&&broken.fall>10);
   // Enlarged views of actual simulated points, no renderer-only deformation.
-  await game('window.__crawlSetup(1,3);window.__crawlStep(60,8)');
+  await game('window.__crawlSetup(1,3);window.__crawlStep(60,22)');
   for(let frame=0;frame<4;frame++){
     await game(`(function(){
       window.__crawlStep(60,.22);var b=window.__crawlBody;

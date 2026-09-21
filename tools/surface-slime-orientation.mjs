@@ -63,6 +63,7 @@ try {
     }
     var x=156*TILE,b=surfaceSlimeBuild(x,8*TILE-34,{id:500,seed:seed,home:x});
     b.surfaceSlime.dir=1;b.surfaceSlime.state='crawl';b.surfaceSlime.timer=100;
+    b.surfaceSlime.goalX=x+TILE*12;
     player.x=120*TILE;player.y=8*TILE-PLAYER_H;player.vx=player.vy=0;player.thrusting=false;
     player.onJello=false;player.jelloGroundT=0;
     cam.x=x-screenW/2;cam.y=8*TILE-screenH*.6;
@@ -110,7 +111,7 @@ try {
       var startAngle=window.__orientationAngle(b),firstActive=null,firstX=null;
       var recoveryMax=0,maxJump=0,lastAngle=startAngle,finite=true,embedded=0,gripFrames=0;
       var reportedError=0,trail=[];
-      for(n=0;n<fps*6;n++){
+      for(n=0;n<fps*10;n++){
         window.__orientationStep(fps);
         var m=b.surfaceSlime,material=window.__orientationAngle(b);
         maxJump=Math.max(maxJump,Math.abs(window.__orientationDifference(material,lastAngle)));
@@ -156,10 +157,10 @@ try {
       window.__orientationRoll(b,angle);
       var startAngle=window.__orientationAngle(b),learnedPose=null,intentSet=false;
       var crossedAt=null,finite=true,embedded=0,sawClimb=false,sawTopGrip=false,trail=[];
-      for(n=0;n<60*30;n++){
+      for(n=0;n<60*60;n++){
         var m=b.surfaceSlime;
         if(!intentSet&&!m.detach&&!m.reorient){
-          m.dir=1;m.state='crawl';m.timer=60;intentSet=true;learnedPose=m.poseAngle;
+          m.dir=1;m.goalX=b.cx+TILE*12;m.state='crawl';m.timer=100;intentSet=true;learnedPose=m.poseAngle;
         }
         window.__orientationStep(60);
         sawClimb=sawClimb||m.climb;sawTopGrip=sawTopGrip||m.topGrip;
@@ -177,7 +178,7 @@ try {
     }return out;
   })()`);
   console.log('ROLLED THREE-TILE LEDGES',JSON.stringify(rolledLedges,null,2));
-  check('quarter, half and arbitrary rolls climb and cross a three-tile ledge within 30 seconds',rolledLedges.every(r=>r.crossedAt!==null&&r.crossedAt<30&&r.sawClimb));
+  check('quarter, half and arbitrary rolls climb and cross a three-tile ledge within 60 seconds',rolledLedges.every(r=>r.crossedAt!==null&&r.crossedAt<60&&r.sawClimb));
   check('rolled ledge climbing stays finite and outside terrain',rolledLedges.every(r=>r.finite&&r.embedded===0));
 
   // Let the normal decision timer choose successive gaits. Do not directly

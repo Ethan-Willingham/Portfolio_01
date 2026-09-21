@@ -206,7 +206,38 @@
     ctx.restore();
   }
 
+  function surfaceSlimeSnapshot(b) {
+    var m = b.surfaceSlime;
+    if (!m.previousX) { m.previousX = new Float64Array(b.n); m.previousY = new Float64Array(b.n); }
+    m.previousX.set(b.px); m.previousY.set(b.py); m.renderFrame = jelloFrameNo;
+  }
+
+  function surfaceSlimeRenderBody(b) {
+    var m = b.surfaceSlime;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
+    var view = m.renderBody;
+    if (!view) {
+      view = m.renderBody = Object.create(b);
+      view.px = new Float64Array(b.n); view.py = new Float64Array(b.n);
+    }
+    // The solver ticks at 120 Hz. Display its two latest poses one tick behind
+    // real time, so 144 Hz and variable-rate screens never repeat a skin frame.
+    // Physics, contacts, grabs, saves and water continue to use the live body.
+    var alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1), x = 0, y = 0;
+    view.bboxL = view.bboxT = Infinity; view.bboxR = view.bboxB = -Infinity;
+    for (var p = 0; p < b.n; p++) {
+      var px = m.previousX[p] + (b.px[p] - m.previousX[p]) * alpha;
+      var py = m.previousY[p] + (b.py[p] - m.previousY[p]) * alpha;
+      view.px[p] = px; view.py[p] = py; x += px; y += py;
+      view.bboxL = Math.min(view.bboxL, px); view.bboxR = Math.max(view.bboxR, px);
+      view.bboxT = Math.min(view.bboxT, py); view.bboxB = Math.max(view.bboxB, py);
+    }
+    view.cx = x / b.n; view.cy = y / b.n; view.shFrame = -1;
+    return view;
+  }
+
   function surfaceSlimeDraw(b) {
+    b = surfaceSlimeRenderBody(b);
     var m = b.surfaceSlime;
     if (!m || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
     jelloRingBake(b);

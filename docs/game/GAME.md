@@ -23,9 +23,10 @@ normal playthrough (see `BALANCE.md`).
 wait, soak in warm water, pay, and become soft surface residents. Five friendly
 residents spawn around the starting town for playtesting; drag and toss them,
 push them with the rig, or use the jets. Travelling skin waves propel their soft
-bodies across terrain and up walls and ledges, with larger ripples across the
-free skin and a slower snail-like grip on walls. They sense unsupported edges
-and turn before pits. A single googly eye follows each
+bodies across terrain and up walls and ledges. They crawl slowly toward nearby
+destinations, with gradual starts, turns and overlapping wall grips. A continuous
+body wave and interpolation between physics ticks keep the outline fluid.
+They sense unsupported edges and turn before pits. A single googly eye follows each
 body, which finds a new underside after rolling and varies its pace and stride.
 Grabs and impacts break their grip. Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
