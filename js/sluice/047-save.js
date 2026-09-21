@@ -17,11 +17,9 @@
   // WHAT IS NOT SAVED (v1, by design):
   //   - Live sims: liquid particles (ponds re-stream from surfacePonds),
   //     smoke, explosions, combat entities (zones respawn fresh each boot).
-  //     (Activated jello blobs used to be on this list — their origin cells
-  //     are nulled at activation, so they just vanished on reload. They now
-  //     persist via the additive `jello` envelope field: original cluster
-  //     cells + type + centroid, rebuilt at rest pose by jelloRestoreBodies.
-  //     Pose/velocity are not saved; a restored body settles and sleeps.)
+  //   - Retired pond-bank and underground glass slimes. Legacy jello tiles
+  //     become air on load, and the old live-body field is ignored.
+  //     Bathhouse visitors and surface residents persist in their own fields.
   //   - Fog-of-war: lightingInit() re-floods from the sky through the saved
   //     tunnels, so connectivity reveal reconstructs itself exactly.
   //
@@ -142,9 +140,9 @@
         if (isAir) {
           row[c] = null;
           if (kind) clearedKinds[r + ':' + c] = kind;
-        } else if (key.lastIndexOf('jello#', 0) === 0) {
-          // Typed jello palette entry (v24.154): 'jello#<jellyType>'.
-          row[c] = { type: 'jello', hp: ORES.jello.hp, jellyType: key.slice(6), shiny: false };
+        } else if (key === 'jello' || key.lastIndexOf('jello#', 0) === 0) {
+          // Retire both plain and typed glass slimes from existing worlds.
+          row[c] = null;
         } else {
           row[c] = { type: key, hp: (ORES[key] ? ORES[key].hp : 1), shiny: false };
         }
@@ -203,9 +201,6 @@
       rain: rainSave(),
       pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
       world: saveSerializeWorld(),
-      // Live jello bodies (additive; old saves lack it and load as "none", exactly
-      // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
-      jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
       bathhouse: bathServiceSave(),
       skySlimes: skySlimeSave(),
       surfaceSlimes: surfaceSlimeSave(),
@@ -333,9 +328,8 @@
     terrainChunkCache = {};
     terrainChunkCount = 0;
     terrainWarmupFrames = 3;
-    // Live jello bodies: rebuild the wanderers the grid can't carry (their tiles were
-    // nulled at activation). Absent/empty field (old saves) leaves the world body-free.
-    if (typeof jelloRestoreBodies === 'function') jelloRestoreBodies(env.jello);
+    // Discard retired glass bodies from old saves before restoring residents.
+    resetJello();
     surfaceSlimeRestore(env.surfaceSlimes);
     // Baseline the dirtiness signals so we don't immediately re-save.
     saveLastMoney = money;

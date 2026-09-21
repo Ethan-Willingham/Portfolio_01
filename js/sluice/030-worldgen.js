@@ -27,10 +27,8 @@
   }
   function generateWorld() {
     world = [];
-    // Live jello bodies never survive a world rebuild (New Game / dev restart): a body
-    // from the previous grid would float as a ghost in the new one. generateJelloPatches
-    // used to carry this reset, but the live path does not call it (see the surface-
-    // features note below), so the rebuild resets directly. (340 hoists resetJello.)
+    // Live soft bodies never survive a world rebuild (New Game / dev restart).
+    // Surface residents seed themselves against the new terrain.
     resetJello();
     var OCEAN_FLOOR = 8;   // ocean shelf depth; real water + horizon are a P0.6 follow-up
     for (var r = 0; r < TOTAL_ROWS; r++) {
@@ -182,11 +180,6 @@
     // The legendary one-time find (see 295-collection-ledger.js). Carved
     // after the terrain passes so nothing regrows over it.
     carveGreatSeamChamber();
-    // v25.59 — scatter the rare buried slimes (region-aware, one creature per
-    // patch). Runs AFTER the ore deposit + host-ring lock so a slime overwrites
-    // ore rather than being perturbed by it, and after the void carve so no
-    // slime seeds into open cave. No-op when ENABLE_JELLO is off.
-    if (ENABLE_JELLO) generateJelloPatches();
     // ----- P0.4 WIP deferrals -----
     // Surface ponds, oil pockets, and the reinforced barrier band assume a single
     // 160-col town or global positions; they return per-town in a follow-up. The
@@ -251,7 +244,6 @@
           }
           for (var _fc = _px - 1; _fc <= _pr + 1; _fc++) world[SKY_ROWS + _pd][_fc] = { type: 'stone', hp: ORES.stone.hp }; // floor
           surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
-          seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
         }
         _px = _pr + 1 + _pondStyle.gapMin + ((Math.random() * _pondStyle.gapSpan) | 0);  // regular gap 130..210 (fewer lakes for low-end); every style stays > the ~81-tile active region so only one streams in at a time
       }
@@ -274,7 +266,6 @@
         }
         for (var floor = sourceL - 1; floor <= sourceR + 1; floor++) world[SKY_ROWS + sourceD][floor] = { type: 'stone', hp: ORES.stone.hp };
         surfacePonds.push({ cL: sourceL, cR: sourceR, d: sourceD, filled: false });
-        seedLakeShoreSlimes(sourceL, sourceR);
       }
     }
     mineralLiquidGenerate(false);
@@ -863,147 +854,6 @@
       var rx = 2.6 + Math.random() * 4.2;
       var ry = 1.5 + Math.random() * 2.5;
       if (carveOilPocket(centerR, centerC, rx, ry)) made++;
-    }
-  }
-
-  // ----- Jello patches -----
-  // Scatter single 'jello' tiles (squishy slimes) through the diggable rock.
-  // v25.64 (owner): every buried slime is EXACTLY ONE tile. No more grown
-  // clusters (they read as random 2..15-tile globs of different sizes); each
-  // seed places one isolated tile, and a seed touching existing jello is
-  // rejected so two slimes never share an edge (an edge touch would flood-fill
-  // into one 2-tile body on activation, breaking the one-tile rule).
-  // v25.59 — density of the scattered buried slimes, as a chance per diggable
-  // tile. Each slime spans exactly one column, so a straight-down 1-tile shaft
-  // meets about chance*150 of them per 150 m. Owner dialed the rareness down to
-  // v26.73 owner call: halved again to 0.00175, roughly one buried slime
-  // every ~570 m of descent (history: 0.0068 -> 0.0035 -> here). Rare enough
-  // to read as a real find; ?jello=0 removes them entirely; scale to taste.
-  var JELLO_PATCH_CHANCE = 0.00175;
-  function generateJelloPatches() {
-    resetJello();
-    if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
-    function jelloCellOk(r, c) {
-      if (c < 3 || c >= COLS - 3) return false;
-      if (r < SKY_ROWS || r >= BEDROCK_ROW) return false;
-      var row = world[r];
-      if (!row) return false;
-      var t = row[c];
-      if (!t) return false;                  // don't seed jello into open caves
-      if (t.type === 'foundation' || t.type === 'barrier' ||
-          t.type === 'bedrock' || t.type === 'jello') return false;
-      return true;
-    }
-    // Scatter single-tile slimes through every town, at JELLO_PATCH_CHANCE per
-    // diggable tile. Region-aware (works for the single town and the wide
-    // multitown world alike): each town gets its own floor + column span, and
-    // slimes start a couple of metres under the surface so the station apron
-    // never sits on gel. jelloCellOk rejects air / bedrock / foundation, so a
-    // seed that misses is just retried.
-    for (var ri = 0; ri < REGIONS.length; ri++) {
-      var reg = REGIONS[ri];
-      if (reg.kind !== REGION_TOWN) continue;
-      var ti = (reg.townIndex >= 0 && reg.townIndex < TOWN_DEPTHS.length) ? reg.townIndex : 0;
-      var floor = TOWN_DEPTHS[ti];               // diggable depth in rows (= metres)
-      var width = reg.c1 - reg.c0;
-      var seeds = Math.round(width * floor * JELLO_PATCH_CHANCE);
-      var placed = 0, tries = 0;
-      while (placed < seeds && tries < seeds * 16) {
-        tries++;
-        var sr = SKY_ROWS + 3 + Math.floor(Math.random() * (floor - 3));
-        var sc = reg.c0 + Math.floor(Math.random() * width);
-        if (!jelloCellOk(sr, sc)) continue;
-        // Every slime is EXACTLY ONE tile, no cluster growth. Reject a spot that
-        // shares an edge with existing jello: an edge touch flood-fills into one
-        // 2-tile body on activation, which is the "different sizes" the owner
-        // called out. (4-neighbours only, a diagonal jello tile activates as its
-        // own separate body, so a corner touch is fine.)
-        if ((world[sr - 1] && world[sr - 1][sc] && world[sr - 1][sc].type === 'jello') ||
-            (world[sr + 1] && world[sr + 1][sc] && world[sr + 1][sc].type === 'jello') ||
-            (world[sr][sc - 1] && world[sr][sc - 1].type === 'jello') ||
-            (world[sr][sc + 1] && world[sr][sc + 1].type === 'jello')) continue;
-        // One jelly TYPE per slime (v24.154, owner: vary the underground ones in
-        // colours like the test-pen set). JELLO_TYPES lives in 340 (hoisted var,
-        // assigned before init() runs); the type rides on the tile (render hue +
-        // activation), and the save palette carries it as 'jello#<type>' (047).
-        var jType = (typeof JELLO_TYPE_KEYS !== 'undefined' && JELLO_TYPE_KEYS.length)
-                    ? JELLO_TYPE_KEYS[Math.floor(Math.random() * JELLO_TYPE_KEYS.length)] : null;
-        var jTile = { type: 'jello', hp: 999999 };
-        if (jType) jTile.jellyType = jType;
-        world[sr][sc] = jTile;
-        placed++;
-      }
-    }
-  }
-
-  // ----- Lake-shore slimes (v25.68) -----
-  // A few single 'jello' tiles perch ABOVE GROUND on the banks of every surface
-  // lake (owner request: slimes by the water, mobile + desktop). Each is EXACTLY
-  // ONE tile, the same one-tile rule as the buried slimes: it sits at row
-  // SKY_ROWS-1 (the sky cell directly on top of the shore) resting on the solid
-  // bank, so it reads as a little slime on the grass at the water's edge. Placed
-  // AFTER the pit + walls are carved. They are woken into LIVE soft bodies as the
-  // lake enters view (wakeLakeShoreSlimes, from the pond streamer) so they are
-  // already wobbling when the player arrives, no digging needed. Spaced >=2 cols
-  // apart so no two share an edge (an edge touch would flood-fill into one 2-tile
-  // body, breaking the one-tile rule).
-  // ENABLE_JELLO gated so ?jello=0 clears them too.
-  function seedLakeShoreSlimes(cL, cR) {
-    if (!ENABLE_JELLO) return;
-    var aboveR = SKY_ROWS - 1;                 // the sky cell directly on top of the shore surface
-    if (aboveR < 0) return;
-    var above = world[aboveR], ground = world[aboveR + 1];   // ground = row SKY_ROWS, the shore surface
-    if (!above || !ground) return;
-    // One perch per bank (v26.73 owner call: slime population halved), snug
-    // against the wall. Never the wall itself (cL-1 / cR+1) or the water
-    // (cL..cR); each perch is a separate one-tile creature.
-    var cols = [cL - 2, cR + 2];
-    for (var i = 0; i < cols.length; i++) {
-      var c = cols[i];
-      if (c < 3 || c >= COLS - 3) continue;
-      if (c >= DECK_LEFT_COL - 1 && c <= DECK_RIGHT_COL + 1) continue;   // clear of the station apron
-      if (above[c] != null) continue;                                   // the perch must be open sky
-      var g = ground[c];
-      if (!g || (g.type !== 'dirt' && g.type !== 'stone')) continue;     // rest on solid shore only
-      // One-tile rule: never let a perch share an edge with existing jello.
-      if ((above[c - 1] && above[c - 1].type === 'jello') ||
-          (above[c + 1] && above[c + 1].type === 'jello')) continue;
-      var jType = (typeof JELLO_TYPE_KEYS !== 'undefined' && JELLO_TYPE_KEYS.length)
-                  ? JELLO_TYPE_KEYS[(Math.random() * JELLO_TYPE_KEYS.length) | 0] : null;
-      var jTile = { type: 'jello', hp: 999999 };
-      if (jType) jTile.jellyType = jType;
-      above[c] = jTile;
-    }
-  }
-
-  // ----- Wake the lake-shore slimes (v25.75) -----
-  // Turn a lake's above-ground bank slimes from inert tiles into LIVE soft bodies
-  // the moment the lake enters view, so they are already alive when the player
-  // arrives (owner: no digging to activate them). Called from the pond streamer
-  // (updateSurfacePondStreaming, 070) once per pond, on the same proximity gate the
-  // water uses. Off-screen bodies are frozen by updateJello, so a woken slime left
-  // behind is ~free. Idempotent: activateJelloCluster nulls the tile, so a re-scan
-  // (or a lake reloaded with its slimes already live) finds nothing. The only jello
-  // at SKY_ROWS-1 near a lake is a shore slime (buried ones live at SKY_ROWS+3 and
-  // deeper), so scanning the bank row is safe.
-  function wakeLakeShoreSlimes(pond) {
-    if (!ENABLE_JELLO || !pond) return;
-    var r = SKY_ROWS - 1;
-    if (r < 0) return;
-    var row = world[r];
-    if (!row) return;
-    for (var c = pond.cL - 5; c <= pond.cR + 5; c++) {
-      if (c < 0 || c >= COLS) continue;
-      var t = row[c];
-      if (t && t.type === 'jello') {
-        activateJelloCluster(r, c);
-        // The tile is now air; relight the cell so the fog overlay does not leave a
-        // dark square where the slime spawned. activateJelloCluster nulls the tile
-        // but never touches lighting; buried slimes get lit by the mining flood via
-        // markTerrainCleared, but this runtime path has no such flood. r < SKY_ROWS
-        // so lightingOnClear lights it immediately (open sky is always lit).
-        lightingOnClear(r, c);
-      }
     }
   }
 

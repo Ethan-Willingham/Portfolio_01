@@ -48,8 +48,9 @@ panel tokens) and the three fonts; otherwise they do not overlap.
 > Physical coal chunks fuel the boiler; flint and a forged steel striker light it.
 > Spilled bath water is permanently lost on the floor. Guest recipes are undecided. See
 > `docs/game/BATHHOUSE_SERVICE.md`. Outdoor pearl gardens have been removed.)
-> (Jello/slime soft bodies used to be on this list but are **LIVE** in production,
-> `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls. The
+> (Jello/slime soft bodies are **LIVE** for surface residents and bathhouse slimes.
+> Pond-bank glass slimes and buried slimes were removed in v28.58, including from
+> existing saves. Keep `ENABLE_JELLO = true` for the remaining soft bodies. The
 > v26.69 slime-NPC brains (`js/sluice/345-slime-npc.js`: wander/hop/startle + swim
 > states) are PARKED OFF since v26.73 by owner call, shipped but disabled; enable per
 > boot with `?npc=1` or live with gm `slime.NPC`.)

@@ -122,16 +122,17 @@ slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the
 
 **ACTIVE for the simple game:** worldgen (single town, 400 m, 6 layers, all 32 ores), drilling, fuel,
 cargo, the surface station shop (Workshop, Supply Shelf and Exhaust), upgrades (drill/fuel/cargo/
-hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water and mineral liquids), smoke, rare
-buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, tuned by
-`JELLO_PATCH_CHANCE` in 030) that fully cushion a fall (the v26.69 NPC brains in
-345-slime-npc.js are PARKED OFF since v26.73, owner call; `?npc=1` or gm `slime.NPC`
-enables wander/hop/startle + swim states), fall damage (v25.59: `FALL_IMPACT_FX`
+hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water and mineral liquids), smoke,
+bathhouse visitors and soft surface residents (`ENABLE_JELLO` on), fall damage (v25.59: `FALL_IMPACT_FX`
 on, a bad drop can kill on bare rock), flight (ONE unified model everywhere since v25.49:
 `flyTune` + the FLY FEEL presets), the night sky/weather/mountains/trees, audio (music + the
 procedural SFX bank), save/respawn, the Great Seam endgame chamber, the Mineral Ledger,
 and the Cargo Hold inspector (click the console's Cargo hatch or press I to see
 quantities, unit prices, and haul value while the mine is paused).
+
+**Retired wild slimes (v28.58):** glass slimes no longer spawn on pond banks or
+underground. Loading an existing save removes their dormant tiles and live bodies.
+Bathhouse visitors and round surface residents remain enabled and keep their saves.
 
 ---
 

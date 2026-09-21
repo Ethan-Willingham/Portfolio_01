@@ -31,7 +31,6 @@
       }
       for (var c = left - 1; c <= right + 1; c++) world[SKY_ROWS + depth][c] = { type: 'stone', hp: ORES.stone.hp };
       surfacePonds.push({ cL: left, cR: right, d: depth, rainFed: true, filled: false });
-      seedLakeShoreSlimes(left, right);
     }
   }
 

@@ -31,7 +31,7 @@
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
   var ENABLE_NMZ         = false;  // No Man's Zone obstacle courses + exit-arrow HUD
   var ENABLE_TRADE_BOARD = false;  // the cross-town commodity Trade Board station
-  var ENABLE_JELLO       = true;   // squishy jello / slime soft bodies — LIVE (v25.59): rare buried slimes cushion big falls
+  var ENABLE_JELLO       = true;   // shared soft-body physics for surface residents and bathhouse slimes
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
   var ENABLE_BATH        = true;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): sky-slime visitors; player switch in Options
@@ -441,7 +441,7 @@
     // Jello — squishy unminable soft-body block. The drill bounces off it
     // like barrier; the player mines AROUND it, shoves it out of its socket,
     // and it becomes a live PBD soft body (see the JELLO SOFT BODIES banner).
-    // Spawned only in small clusters by generateJelloPatches(), so chance 0.
+    // Dev fixtures only; natural glass-slime spawns were removed in v28.58.
     jello:      { color: '#3ce9bf', value: 0,     minDepth: 0,   maxDepth: 0,   chance: 0,    hp: 999999, label: 'Jello', tooltip: 'Squishy — unminable' },
 
     // ---- Shallow crust: the dirt/stone intro pair ----
