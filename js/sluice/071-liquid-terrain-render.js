@@ -9,7 +9,9 @@
     var c1 = Math.ceil((cam.x + viewW / worldScale) / TILE) + 2;
     var r0 = Math.floor(cam.y / TILE) - 2;
     var r1 = Math.ceil((cam.y + viewH / worldScale) / TILE) + 2;
-    var path = buildVoidContourPath(Math.max(SKY_ROWS, r0), r1, c0, c1, !!(lightTune.enabled && lightArr));
+    // The off-map bath is lit by its own room scene, outside mine discovery.
+    // Applying the mine fog here masks every bath particle despite real water.
+    var path = buildVoidContourPath(Math.max(SKY_ROWS, r0), r1, c0, c1, !!(lightTune.enabled && lightArr && !bathMode));
     var m = liquidTerrainRender;
     if (!m) {
       var cv = document.createElement('canvas');

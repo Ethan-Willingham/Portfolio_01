@@ -1,13 +1,14 @@
-  /* ---- Fire room supplies: saved stock, stone flint, and cargo transfer ---- */
+  /* ---- Boiler supplies: saved stock, stone flint, and cargo transfer ---- */
   // These are bathhouse tools and fuel, independent of the parked ore refinery.
   // Reserve limits apply only to automatic deliveries, never to returned fuel.
-  var FORGE_RESERVE = { coal: 24, iron: 8 };
+  // Keep legacy iron stock, but new iron cargo sells normally.
+  var FORGE_RESERVE = { coal: 24, iron: 0 };
   var FORGE_FLINT_MAX = 3, FORGE_FLINT_CHANCE = 0.12, FORGE_FLINT_GUARANTEE = 12;
-  var forgeStock = { coal: 0, iron: 0, flint: 0, steel: 0 };
+  var forgeStock = { coal: 0, iron: 0, flint: 0, steel: 1 };
   var forgeStoneSinceFlint = 0;
 
   function forgeResourcesReset() {
-    forgeStock = { coal: 0, iron: 0, flint: 0, steel: 0 };
+    forgeStock = { coal: 0, iron: 0, flint: 0, steel: 1 };
     forgeStoneSinceFlint = 0;
   }
   function forgeResourceKnown(type) {
@@ -24,8 +25,8 @@
   }
   function forgeCount(type) {
     if (!forgeResourceKnown(type)) return 0;
-    // The virtual supply never enters saved stock. Keep crafted steel real so
-    // the forge can still walk through its complete recipe during a playtest.
+    // Virtual dev supplies never enter saved stock. The boiler includes one
+    // real, reusable steel striker in every new and restored game.
     if (hearthDevSupplies() && type !== 'steel') return 999999;
     var n = forgeStock[type];
     for (var i = 0; i < cargo.length; i++) if (forgeCargoMatches(cargo[i], type)) n++;
@@ -61,7 +62,7 @@
     var parts = [];
     if (added.coal) parts.push(added.coal + ' coal');
     if (added.iron) parts.push(added.iron + ' iron');
-    showMsg('Stored ' + parts.join(' + ') + ' for the fire room.', false, { key: 'forge-stock', tag: 'FIRE ROOM' });
+    showMsg('Stored ' + parts.join(' + ') + ' for the boiler.', false, { key: 'forge-stock', tag: 'BANYA' });
     saveNow('forge-stock');
     return true;
   }
@@ -71,7 +72,7 @@
     if (forgeStoneSinceFlint < FORGE_FLINT_GUARANTEE && Math.random() >= FORGE_FLINT_CHANCE) return false;
     forgeStoneSinceFlint = 0;
     forgeStock.flint++;
-    showMsg('Flint found. Keep it with a steel striker to light the boiler.', false, { key: 'forge-flint', tag: 'FIRE ROOM' });
+    showMsg('Flint found. Use the boiler striker to light coal. Both tools last.', false, { key: 'forge-flint', tag: 'BANYA' });
     sfxPlay('ore-pickup');
     saveNow('forge-flint');
     return true;
@@ -87,6 +88,7 @@
       var n = Number(data.stock[type]);
       forgeStock[type] = isFinite(n) && n > 0 ? Math.floor(n) : 0;
     });
+    forgeStock.steel = Math.max(1, forgeStock.steel);
     var stone = Number(data.stoneSinceFlint);
     forgeStoneSinceFlint = isFinite(stone) ? Math.max(0, Math.min(FORGE_FLINT_GUARANTEE - 1, Math.floor(stone))) : 0;
   }

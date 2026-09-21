@@ -5,7 +5,7 @@ function fixture(fps = 60) {
   const math = Object.create(Math);
   math.random = () => ((seed = Math.imul(seed, 1664525) + 1013904223 >>> 0) / 4294967296);
   const s = { Math: math, console: { log() {} }, window: {}, performance: { now: () => 1000 },
-    canvas: { width: 1000, height: 750, addEventListener() {}, setPointerCapture() {},
+    canvas: { width: 1000, height: 750, style: {}, addEventListener() {}, setPointerCapture() {},
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 750 }) }, dpr: 1,
     residents: [], JELLO_H: 1/120, jelloStepH: 1/240,
     surfaceSlimeBuild(x,y,guest) { const b={x,y,id:guest.id};s.residents.push(b);return b; },
@@ -33,7 +33,7 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','074-bath-service','077-hearth-physics','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','077-hearth-combustion','077-hearth-geometry','077-hearth-physics','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
     inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };
@@ -41,7 +41,37 @@ function fixture(fps = 60) {
 function loadBoiler(s) {
   for (const x of [125, 160, 195]) assert(s.hearthLoadCoal('boiler', x, 180));
 }
-function boilerTools(s) { s.forgeGive('flint', 1); s.forgeGive('steel', 1); }
+function boilerTools(s) { s.forgeGive('flint', 1); }
+{
+  const {s}=fixture(), floor=s.BATH_FLOORS[0], current={...floor,tubs:floor.tubs};
+  Object.assign(floor,{c0:27,c1:45,sink:3,tubs:[[32,41]]});
+  s.bathCarveRoom();
+  Object.assign(floor,current);
+  const guest=s.skySlimeSpawn(1100,100);
+  assert(s.bathGuestAccept(guest));
+  s.bathGuests[0].st='wait';s.bathGuests[0].hop=null;s.bathGuests[0].s.x=30*s.TILE;
+  s.addLiquidParticle(0,1150,19550);s.bathSupplies[0]=123;s.siphon.tank[0]=456;s.bathPour=17;
+  const saved=JSON.parse(JSON.stringify(s.bathServiceSave()));saved.version=3;saved.ready=true;
+  const water=JSON.stringify({x:s.liquidX,y:s.liquidY,type:s.liquidType});
+  assert(s.world[floor.fr][25],'the former narrow room has a solid tile in the new basin');
+  s.bathServiceRestore(saved);
+  assert.equal(s.bathRoomReady,false,'old carved rooms rebuild once for the wider basin');
+  assert.equal(JSON.stringify({x:s.liquidX,y:s.liquidY,type:s.liquidType}),water,'migration preserves existing real water');
+  assert.equal(s.bathSupplies[0],123);assert.equal(s.siphon.tank[0],456);assert.equal(s.bathPour,17);
+  assert(s.bathGuests[0].s.x<floor.tubs[0][0]*s.TILE,'a waiting guest migrates onto the dry landing');
+  assert.equal(s.bathGuests[0].s.id,guest.id,'migration preserves guest identity');
+  s.bathCarveRoom();
+  assert.equal(s.world[floor.fr][25],null,'migration opens the wider basin');
+  assert.equal(s.bathRoomReady,true);
+  assert.equal(JSON.stringify({x:s.liquidX,y:s.liquidY,type:s.liquidType}),water,'recarving does not refill or discard water');
+  const migrated=JSON.parse(JSON.stringify(s.bathServiceSave()));
+  assert.equal(migrated.version,4);
+  s.bathServiceRestore(migrated);
+  assert.equal(s.bathRoomReady,true,'new room saves retain their carved geometry');
+  const sentinel={type:'foundation',hp:17};s.world[floor.fr][25]=sentinel;s.bathCarveRoom();
+  assert.equal(s.world[floor.fr][25],sentinel,'subsequent entry does not recarve a migrated room');
+  console.log('PASS wider-room migration, conserved water and supplies, dry guest landing and one-time recarve');
+}
 {
   const {s}=fixture();
   const bathCol=s.banyaX/s.TILE;
@@ -84,8 +114,7 @@ for (const fps of [30,60,144]) {
   loadBoiler(s); assert.equal(s.cargo.length,6,'physical loading consumes exactly one coal per piece');
   assert.equal(s.bathLightStove(),false,'boiler requires flint');
   s.forgeGive('flint',1);
-  assert.equal(s.bathLightStove(),false,'boiler requires a forged steel striker');
-  s.forgeGive('steel',1);
+  assert.equal(s.hearthHasTool('steel'),true,'the boiler includes a reusable steel striker');
   assert(s.bathLightStove());assert.equal(s.cargo.length,6,'striking consumes no extra coal');
   assert.equal(s.forgeCount('flint'),1);assert.equal(s.forgeCount('steel'),1,'ignition tools are reusable');
   assert.equal(s.bathServe(id),false,'heat alone cannot admit a guest to a dry tub');
@@ -144,8 +173,9 @@ for (const fps of [30,60,144]) {
 
 {
  const {s}=fixture();s.bathRoomReady=true;
- s.addLiquidParticle(0,1400,19518);s.addLiquidParticle(0,1150,19550);
- s.mineralLiquidPark(0,900,19518);s.mineralLiquidPark(0,1150,19550);
+ const floor=s.BATH_FLOORS[0],curve=s.bathTubCurve(floor,floor.tubs[0]);
+ s.addLiquidParticle(0,curve.x1+20,floor.fr*s.TILE);s.addLiquidParticle(0,1150,19550);
+ s.mineralLiquidPark(0,curve.x0-20,floor.fr*s.TILE);s.mineralLiquidPark(0,1150,19550);
  s.bathDrainFloor();
  assert.equal(s.bathLostWater,2,'live and parked floor spills permanently disappear');
  assert.equal(s.liquidCount,1,'water inside bowl remains');
@@ -154,52 +184,30 @@ for (const fps of [30,60,144]) {
  console.log('PASS permanent floor absorption, active and parked fluid');
 }
 
-for (const fps of [30, 60, 144]) {
-  const f = fixture(fps), s = f.s;
+{
+  const f = fixture(), s = f.s;
   s.bathMode = true; s.bathRoomReady = true;
-  s.forgeGive('iron', 2); s.forgeGive('coal', 1);
-  assert(s.hearthForgeAction());
-  assert.equal(s.forgeCount('iron'), 0, 'forge reserves two iron exactly once');
-  assert.equal(s.hearthForgeAction(), false, 'heating cannot debit another iron charge');
-  assert.equal(s.hearthJob.stage, 'heating');
-  assert.equal(s.hearthJob.heat, 0, 'iron starts cold');
-  const coal = s.hearthLoadCoal('forge', 160, 24);
-  assert(coal); assert.equal(s.forgeCount('coal'), 0);
-  assert.equal(s.hearthLoadCoal('forge', 120, 24), null, 'empty bunker cannot make coal');
-  let elapsed = 0;
-  while (s.hearthJob.stage === 'heating' && elapsed < 35) {
-    s.hearthPump('forge'); f.inside(0.5); elapsed += 0.5;
-  }
-  assert.equal(s.hearthJob.stage, 'hammer', 'one real coal and bellows heat a blank to forging temperature');
-  assert(coal.lit && coal.fuel > 0 && coal.fuel < 1, 'forging heat is paid from physical fuel');
-  assert(s.hearthForgeAction()); assert.equal(s.hearthJob.hits, 1);
-  assert.equal(s.hearthForgeAction(), false, 'one input cannot double-count a hammer blow');
-  const snapshot = JSON.parse(JSON.stringify(s.bathServiceSave()));
-  const fuel = s.hearthBeds.forge.fuelSeconds;
-  s.bathServiceRestore(snapshot);
-  assert.equal(s.hearthJob.stage, 'hammer'); assert.equal(s.hearthJob.hits, 1);
-  assert.equal(s.forgeCount('iron'), 0, 'midcraft reload does not refund committed iron');
-  assert(Math.abs(s.hearthBeds.forge.fuelSeconds - fuel) < 1e-7, 'midcraft reload preserves remaining coal');
-  f.inside(0.2); assert(s.hearthForgeAction());
-  f.inside(0.2); assert(s.hearthForgeAction());
-  assert.equal(s.hearthJob.hits, 3); assert.equal(s.hearthJob.stage, 'quench');
-  s.siphon.tank[0] = 199;
-  assert.equal(s.hearthForgeAction(), false, 'quench requires all 2 L before taking water');
-  assert.equal(s.siphon.tank[0], 199);
-  s.siphon.tank[0] = 100; s.bathSupplies[0] = 100;
-  assert(s.hearthForgeAction());
-  assert.equal(s.siphon.tank[0], 0); assert.equal(s.bathSupplies[0], 0);
-  assert.equal(s.hearthForgeAction(), false, 'cooling cannot consume another quench dose');
-  f.inside(1);
-  s.bathServiceRestore(JSON.parse(JSON.stringify(s.bathServiceSave())));
-  f.inside(2.1); assert.equal(s.hearthJob.stage, 'ready', 'quench resumes after reload');
-  assert(s.hearthForgeAction()); assert.equal(s.forgeCount('steel'), 1);
-  assert.equal(s.hearthForgeAction(), false, 'finished striker cannot be collected twice');
-  s.bathServiceRestore(JSON.parse(JSON.stringify(s.bathServiceSave())));
-  assert.equal(s.forgeCount('steel'), 1);
-  assert.equal(s.hearthForgeAction(), false, 'reload cannot duplicate finished steel');
-  assert.equal(s.forgeCount('iron'), 0); assert.equal(s.forgeCount('coal'), 0);
-  console.log('PASS one-coal forge, reserved iron, hammer debounce, quench, midcraft reload and single output at ' + fps + ' FPS');
+  s.forgeGive('iron', 2); s.forgeGive('coal', 2);
+  const oldCoal = s.hearthLoadCoal('forge', 160, 180);
+  assert(oldCoal); oldCoal.lit = true; oldCoal.heat = 0.85;
+  s.hearthJob = { stage: 'hammer', heat: 0.8, hits: 2, quench: 0 };
+  s.hearthRoomRestore(JSON.parse(JSON.stringify(s.hearthRoomSave())));
+  const legacy = JSON.stringify({ bed: s.hearthSave().forge, job: s.hearthJob, stock: s.forgeResourcesSave() });
+  assert.equal(s.hearthView, 'bath', 'old forge sessions restore into the bath');
+  for (const action of ['forge', 'work']) s.hearthRoomAction(action);
+  s.hearthSetView('forge');
+  assert.equal(s.hearthView, 'bath', 'retired forge cannot be opened by an old view request');
+  s.hearthSetView('boiler');
+  s.hearthRoomKey({ key: '3', repeat: false });
+  assert.equal(s.hearthView, 'boiler', 'old forge shortcut is inert');
+  f.inside(30);
+  assert.equal(JSON.stringify({ bed: s.hearthSave().forge, job: s.hearthJob, stock: s.forgeResourcesSave() }), legacy,
+    'legacy forge work and paid fuel remain frozen without spending stock');
+  s.hearthRoomRestore(JSON.parse(JSON.stringify(s.hearthRoomSave())));
+  assert.equal(JSON.stringify({ bed: s.hearthSave().forge, job: s.hearthJob, stock: s.forgeResourcesSave() }), legacy,
+    'retired work survives repeated save and restore without duplication');
+  assert.equal(s.forgeCount('steel'), 1, 'old unfinished work does not block the built-in striker');
+  console.log('PASS retired forge navigation, frozen legacy work and fuel, and save roundtrip');
 }
 
 {
@@ -220,10 +228,28 @@ for (const fps of [30, 60, 144]) {
   assert.equal(s.forgeCount('coal'), 2, 'dropping a new piece outside refunds the bunker');
   assert.equal(s.hearthBeds.boiler.chunks.length, 0);
   assert(s.hearthPointerDown(down));
-  s.hearthSetView('forge');
-  assert.equal(s.forgeCount('coal'), 2, 'switching stations cancels a held fresh piece');
+  s.hearthSetView('bath');
+  assert.equal(s.forgeCount('coal'), 2, 'returning to the bath cancels a held fresh piece');
   assert.equal(s.hearthBeds.boiler.chunks.length, 0);
   console.log('PASS pointer pickup, canceled and misplaced coal, station switch and exact refund');
+}
+
+{
+  const speeds=[];
+  for(const held of [0,1000]){
+    const {s}=fixture();let now=1000;s.performance.now=()=>now;
+    s.bathMode=true;s.hearthSetView('boiler');s.forgeGive('coal',1);
+    const b=s.hearthLoadCoal('boiler',160,100),box=s.hearthRoomLayout().box;
+    const x=box.x+b.x*box.w/320,y=box.y+b.y*box.h/210;
+    assert(s.hearthPointerDown({pointerId:11,button:0,clientX:x,clientY:y}));
+    now+=16;s.hearthPointerMove({pointerId:11,clientX:x+18,clientY:y});
+    now+=held;assert(s.hearthPointerUp({pointerId:11,clientX:x+18,clientY:y}));
+    speeds.push(Math.hypot(b.vx,b.vy));
+    assert.equal(b.held,false);
+  }
+  assert(speeds[0]>20,'a release immediately after movement retains the throw');
+  assert(speeds[1]<0.1,'holding still before release removes stale throw momentum');
+  console.log('PASS fresh coal throw and stationary release velocity decay');
 }
 
 {
@@ -238,6 +264,7 @@ for (const fps of [30, 60, 144]) {
     assert(s.hearthDrag && s.hearthDrag.fresh && s.hearthDrag.b.devSupplied);
   }
   function returnColdChunk() {
+    s.hearthSetView('boiler');
     const b = s.hearthBeds.boiler.chunks[0], box = s.hearthRoomLayout().box;
     s.hearthButtons = [];
     assert(s.hearthPointerDown({ pointerId: 7, button: 0,
@@ -277,34 +304,14 @@ for (const fps of [30, 60, 144]) {
   const { s } = fixture();
   s.bathMode = true; s.bathRoomReady = true; s.devMode = true;
   assert(s.hearthLoadCoal('boiler', 160, 150));
-  assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 0);
-  assert(s.bathLightStove(), 'virtual flint and steel can ignite real boiler fuel');
+  assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 1);
+  assert(s.bathLightStove(), 'virtual flint and the built-in striker ignite real boiler fuel');
   assert(s.hearthBeds.boiler.chunks[0].lit);
-  assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 0);
-  s.forgeGive('steel', 1); s.forgeGive('iron', 3);
-  s.siphon.tank[0] = 17; s.bathSupplies[0] = 9;
-  assert(s.hearthLoadCoal('forge', 160, 24));
-  function workFor(seconds) { for (let i = 0; i < seconds * 60; i++) s.hearthRoomTick(1 / 60); }
-  for (let craft = 0; craft < 2; craft++) {
-    assert(s.hearthForgeAction(), 'dev mode can start a craft even with a finished striker in stock');
-    let elapsed = 0;
-    while (s.hearthJob.stage === 'heating' && elapsed < 35) {
-      s.hearthPump('forge'); workFor(0.5); elapsed += 0.5;
-    }
-    assert.equal(s.hearthJob.stage, 'hammer');
-    for (let hit = 0; hit < 3; hit++) { workFor(0.2); assert(s.hearthForgeAction()); }
-    assert.equal(s.hearthJob.stage, 'quench');
-    assert(s.hearthForgeAction(), 'dev quench succeeds with less than 2 L of actual water');
-    assert.equal(s.siphon.tank[0], 17); assert.equal(s.bathSupplies[0], 9);
-    assert.equal(s.hearthForgeAction(), false, 'cooling still prevents duplicate quench actions');
-    workFor(3.2); assert.equal(s.hearthJob.stage, 'ready');
-    assert(s.hearthForgeAction());
-    assert.equal(s.forgeStock.steel, craft + 2, 'each completed craft creates one actual striker');
-    assert.equal(s.forgeStock.iron, 3, 'repeated dev recipes preserve stored iron');
-  }
+  assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 1);
   s.devMode = false;
-  assert.equal(s.hearthForgeAction(), false, 'normal mode resumes the finished-striker gate');
-  console.log('PASS virtual ignition tools, repeat dev crafting, unchanged quench water and normal recipe gates');
+  assert.equal(s.hearthHasTool('flint'), false, 'normal play still needs mined flint');
+  assert.equal(s.hearthHasTool('steel'), true, 'the built-in striker remains available');
+  console.log('PASS virtual flint ignition, preserved stock and normal mined-tool gate');
 }
 
 {
@@ -322,7 +329,7 @@ for (const fps of [30, 60, 144]) {
   s.hearthRoomAction('kit');
   assert.equal(s.bathPour, s.BATH_MAX_WATER, 'a repeated kit does not overfill the pending reservoir');
   assert.equal(s.hearthBeds.boiler.chunks.length, 3, 'a repeated kit does not duplicate fuel');
-  f.inside(15);
+  for(let wait=0;wait<90&&(s.bathPour>0||s.bathHeat<0.35);wait++)f.inside(1);
   assert.equal(s.bathPour, 0, 'the queued test water is emitted through the ordinary liquid path');
   assert(s.bathWater >= s.BATH_MIN_WATER && s.bathWater <= s.BATH_MAX_WATER);
   assert(s.bathHeat >= 0.35, 'the actual lit boiler warms the newly poured bath');
@@ -334,7 +341,7 @@ for (const fps of [30, 60, 144]) {
   }
   finiteNumbers(saved);
   assert.deepEqual(JSON.parse(JSON.stringify(saved)).workshop.stock.stock,
-    { coal: 2, iron: 1, flint: 0, steel: 0 }, 'virtual tools and supply counts never enter saved stock');
+    { coal: 2, iron: 1, flint: 0, steel: 1 }, 'virtual tools and supply counts never enter saved stock');
   assert.equal(saved.supplies[0], 7);
   console.log('PASS test bath preparation, bounded actual pouring, physical boiler warmth and finite saves');
 }
@@ -392,7 +399,8 @@ for (const fps of [30, 60, 144]) {
   assert.equal(s.hearthToolTime, 0); assert.equal(s.hearthToolPulse, 0); assert.equal(s.hearthQuenchSteam, 0);
   assert.equal(s.forgeStoneSinceFlint, 10, 'resource progression survives a reload');
   s.bathServiceReset();
-  for (const type of ['coal', 'iron', 'flint', 'steel']) assert.equal(s.forgeCount(type), 0);
+  for (const type of ['coal', 'iron', 'flint']) assert.equal(s.forgeCount(type), 0);
+  assert.equal(s.forgeCount('steel'), 1, 'new game includes the reusable boiler striker');
   assert.equal(s.forgeStoneSinceFlint, 0, 'new game resets the stone drop counter');
   assert.equal(s.hearthBeds.boiler.chunks.length, 0); assert.equal(s.hearthBeds.forge.chunks.length, 0);
   assert.equal(s.hearthJob.stage, 'empty'); assert.equal(s.hearthToolPulse, 0);

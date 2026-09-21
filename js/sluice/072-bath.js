@@ -132,7 +132,7 @@
   // simple while holding 3+ tiles of REAL water depth (deep water is calm
   // water; the shallow popcorn problem dies here, no sim-scale tricks).
   var BATH_FLOORS = [
-    { c0: 27, c1: 45, fr: 610, lip: 1, sink: 3, tubs: [[32,41]], fill: [2], price: 0 },
+    { c0: 20, c1: 53, fr: 610, lip: 1, sink: 5, tubs: [[24,49]], fill: [2], price: 0 },
     { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[32,41]], fill: [1], price: 2000 },
     { c0: 27, c1: 43, fr: 588, lip: 0, sink: 0, tubs: [], fill: [], sauna: true, price: 8000 },
     { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[30,39]], fill: [1], price: 20000 },
@@ -169,8 +169,8 @@
   var bathFloorsOwned = [true, false, false, false, false];   // persisted with the bathhouse
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
-  var BATH_BOT_ROW = 613;                       // F1 floor slab row
-  var BATH_VIEW_W = 29 * TILE;                  // width-fit + headroom for the F2 peek
+  var BATH_BOT_ROW = 616;                       // F1 floor slab row
+  var BATH_VIEW_W = 36 * TILE;                  // width-fit + headroom for the F2 peek
   var BATH_EXIT_X0 = 43 * TILE, BATH_EXIT_X1 = 46 * TILE;   // F1 right-wall door
   var BATH_EXIT_Y0 = 606 * TILE, BATH_EXIT_Y1 = 610 * TILE;
 
@@ -256,7 +256,7 @@
     // shared frozen fill prototypes are never mutated, only de-referenced),
     // then carve each floor's cavity out of it.
     for (r = BATH_TOP_ROW; r <= BATH_BOT_ROW + 1; r++) {
-      for (c = BATH_CX_COL - 14; c <= BATH_CX_COL + 14; c++) {
+      for (c = 18; c <= 55; c++) {
         world[r][c] = { type: 'foundation', hp: 999999 };
       }
     }
@@ -279,7 +279,7 @@
           if (!isRim) {
             var dL = crv.depthAt(cc * TILE), dR = crv.depthAt((cc + 1) * TILE);
             var dC = crv.depthAt(cc * TILE + TILE / 2);
-            needY = crv.y0 + Math.max(dL, dR, dC) + 10;   // curve + margin
+            needY = crv.y0 + Math.max(dL, dR, dC) + 1;    // curve plus one pixel of liner clearance
           }
           for (r = F.fr; r <= F.fr + F.sink; r++) {
             if (isRim) { world[r][cc] = { type: 'foundation', hp: 999999 }; continue; }
@@ -385,7 +385,7 @@
         bathScrollT = 1e9;   // enter at the BOTTOM floor
         bathCamY = -1;       // snap, no cross-tower pan on the first frame
         bathMode = true;
-        hearthSetView('boiler');
+        hearthSetView('bath');
         forgeStockCargo();
         bathDoorT = 1;       // step back out through an open door
         // Steam era (v25.85): drop the world's stale smoke, retune the
@@ -396,7 +396,7 @@
         bathArmHeat();
         siphonStop();
       } else {
-        hearthCancelDrag();
+        hearthCancelDrag(); hearthClearBoilerHover();
         bathMode = false;
         bathScalePop();
         bathSteamPop();
@@ -448,7 +448,10 @@
       }
       return false;
     }
-    if (keys['Escape']) { keys['Escape'] = false; bathExit(); }
+    if (keys['Escape']) {
+      keys['Escape'] = false;
+      if (hearthView === 'boiler') hearthSetView('bath'); else bathExit();
+    }
     bathSteamTick(dt);
     if (keys['e'] || keys['E'] || keys['Enter']) {
       keys['e'] = false; keys['E'] = false; keys['Enter'] = false;
@@ -765,7 +768,7 @@
     var width = canvas.width / dpr, height = canvas.height / dpr;
     var nav = hearthNavHeight(), hud = bathHUDHeight();
     // Reserve the fixed controls before fitting the entire ground-floor tub.
-    worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / (12 * TILE));
+    worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / (13 * TILE));
     var viewportKey = width + ':' + height + ':' + nav;
     if (bathViewportKey !== viewportKey) {
       bathViewportKey = viewportKey; bathScrollT = 1e9; bathCamY = -1;
@@ -780,17 +783,18 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH + (hud + 6) / worldScale;
-    if (maxY < minY) maxY = minY;
+    var maxY = bathInteriorBottom() - bathViewH + (hud + 12) / worldScale;
+    if (maxY < minY) minY = maxY;
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
     if (bathCamY < 0) bathCamY = bathScrollT;
     bathCamY += (bathScrollT - bathCamY) * 0.22;
-    cam.x = BATH_CX_COL * TILE - canvas.width * iws / 2;
+    cam.x = 37 * TILE - canvas.width * iws / 2;
     cam.y = bathCamY;
     return true;
   }
   function bathScrollToFloor(n) {   // dev + future UI: centre floor n (1..5)
+    if (n === 1) { bathScrollT = 1e9; bathCamY = -1; return; }
     var F = BATH_FLOORS[Math.max(1, Math.min(5, n)) - 1];
     bathScrollT = (F.fr - 4) * TILE + 16 - bathViewH / 2;
   }
@@ -853,6 +857,8 @@
     var cssX = (e.clientX - rct.left) * (canvas.width / dpr / rct.width);
     var cssY = (e.clientY - rct.top) * (canvas.height / dpr / rct.height);
     if (gamePaused || bathServicePointer(cssX, cssY) || bathOrderPointer(p.x, p.y)) return;
+    // Main-room walls do not expose the hidden legacy floor purchase targets.
+    if (bathMainRoomVisible()) return;
     // Purchase buttons on locked floors take priority over the exit door.
     for (var bf = 1; bf <= 4; bf++) {
       if (bathFloorsOwned[bf]) continue;
@@ -862,7 +868,7 @@
         return;
       }
     }
-    if (p.x >= BATH_EXIT_X0 && p.x <= BATH_EXIT_X1 &&
+    if (!bathMainRoomVisible() && p.x >= BATH_EXIT_X0 && p.x <= BATH_EXIT_X1 &&
         p.y >= BATH_EXIT_Y0 && p.y <= BATH_EXIT_Y1) bathExit();
   }
   function bathWheelScroll(e) {
@@ -1255,6 +1261,7 @@
   function bathRenderScene() {
     if (!bathMode) return false;
     if (hearthRoomRender()) return true;
+    if (bathMainRoomVisible()) return bathDrawInterior();
     // Own the WHOLE canvas: the world viewport excludes the console strip,
     // so without this full-screen clear the strip keeps last frame's stale
     // console pixels (found the hard way). Then rebuild the world transform
@@ -1501,7 +1508,8 @@
       canvas.addEventListener('pointerdown', bathPointer);
       canvas.addEventListener('pointermove', bathPointerMove);
       canvas.addEventListener('pointerup', bathPointerUp);
-      canvas.addEventListener('pointercancel', function () { bathPtrDown = false; hearthCancelDrag(); });
+      canvas.addEventListener('pointercancel', function () { bathPtrDown = false; hearthCancelDrag(); hearthClearBoilerHover(); });
+      canvas.addEventListener('pointerleave', hearthClearBoilerHover);
       canvas.addEventListener('wheel', bathWheelScroll, { passive: false });
     } catch (e) {}
   }

@@ -239,7 +239,8 @@
     siphonPointerMove(p.x, p.y, 'mouse');
     if (cargoManifestOpen) { cargoManifestPointerMove(p.x, p.y); return; }
     if (ledgerOpen) { canvas.style.cursor = ''; ledgerPointerMove(p.x, p.y); return; }
-    canvas.style.cursor = cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
+    canvas.style.cursor = bathMode ? (bathBoilerHover ? 'pointer' : '') :
+      cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
     if (itemWheel.open && itemWheel.pointerId === 'mouse') {
       updateItemWheelHover(p.x, p.y);
     }

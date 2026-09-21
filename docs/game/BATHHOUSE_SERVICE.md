@@ -1,4 +1,4 @@
-# Bathhouse, boiler, and forge
+# Bathhouse and integrated boiler
 
 The banya uses physical coal fires as of v28.13. The old ten-coal ignition
 button and fixed four-minute fuel timer have been replaced. The visitor loop
@@ -11,86 +11,90 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
 
 ## First visit
 
-1. Mine coal and two iron. Iron appears from 55 m and needs no drill upgrade.
-2. Break stone for flint. Each stone has a 12 percent chance; a piece is
-   guaranteed after twelve unsuccessful eligible breaks. Up to three are kept.
-3. Scoop water into the rig tank. The forge needs 2 L; the bath needs at least
-   40 L and can hold up to 150 L.
-4. Enter the banya and choose Forge. Load two iron and drag a coal chunk from
-   the bunker onto the forge grate. The forge's banked ember starts this fire,
-   so making the first steel striker never requires a striker you do not have.
-5. Work the bellows while the iron heats. Once it is ready, hammer three times,
-   quench with 2 L, let it cool, and collect the steel striker.
-6. Choose Boiler. Load three coal chunks for strong heat, then strike flint
-   and steel. Both tools are reusable. Add coal while the fire burns, work the
-   bellows for more heat, and rake away spent ash when the grate fills.
-7. Choose Bath and ADD WATER. Tap a visitor's bubble once the bath is warm.
-   It soaks, pays, and returns outside. The same visitor identity is preserved.
+1. Mine coal. Break stone for flint, which is guaranteed after twelve eligible
+   misses. The boiler already has a reusable steel striker.
+2. Scoop water into the rig tank. The bath needs at least 40 L and holds 450 L.
+3. Enter the banya. The main room fills the viewport around a wide catenary tub,
+   with a copper lining, curved rows of bolts, and the boiler built beneath it.
+4. Hover the boiler hatch to highlight it, then click or tap to open the firebox.
+   Load three coal chunks and strike flint and steel. Both tools are reusable.
+   Work the bellows for more heat and rake spent ash when needed.
+5. Choose BACK TO BATH or press Escape. ADD WATER fills the tub. Tap a visitor's
+   order once the bath is warm. It soaks, pays, and returns outside.
 
-The coal/iron locker keeps up to 24 ordinary coal and 8 ordinary iron on entry
-or before a station sale. A radio line reports the transfer. Shiny ores and
-surplus materials still sell. Coal can also be drawn directly from ordinary
-cargo, so arriving at the banya before selling works. Tools and stored supplies
-survive a rig recovery; cargo still follows normal death rules.
+The forge and its crafting requirement are retired. New and returning games
+receive a supplied striker. Old stored iron, forge fuel, and unfinished work
+remain in the save without progressing or burning. Ordinary iron now sells
+normally; the fuel locker reserves up to 24 ordinary coal on entry or before a
+station sale. Shiny coal and surplus coal sell normally. Coal can also be drawn
+directly from ordinary cargo. Stored supplies survive rig recovery.
 
 ## Direct controls
 
-Mouse and touch share the same pointer path. Drag a chunk from the bunker into
-the firebox and release: it falls, rolls, collides, and settles. Existing pieces
-can be picked up and rearranged. Dropping fresh coal outside the firebox returns
-it; moving a burning piece outside returns it to its previous grate position.
-Pointer cancellation and leaving the room restore an unfinished drag safely.
-A simple tap on the bunker drops one piece, for players who prefer not to drag.
+Mouse and touch share the same pointer path. The room opens directly to the
+bath. Hovering the integrated boiler highlights its metal surround and changes
+the cursor. A click or tap opens it; dragging across the hatch does not. In the
+close view, drag a chunk from the bunker into the firebox and release: it falls,
+rolls, collides, and settles. Existing pieces can be rearranged. Dropping fresh
+coal outside the firebox returns it; moving a burning piece outside restores
+its grate position. Pointer cancellation and leaving restore unfinished drags.
+A simple tap on the bunker drops one piece.
 
-- 1 / 2 / 3: Bath / Boiler / Forge.
-- C: place one coal in the current firebox.
-- B: work its bellows.
-- F: strike flint and steel at the boiler.
+- C: place one coal in the open boiler.
+- B: work the bellows.
+- F: strike flint and steel.
 - A: rake spent ash.
-- E / Enter: advance ready forge work, or admit a ready visitor in Bath.
-- W: fill the bath from stored water while viewing Bath.
-- Escape: leave the banya.
+- E / Enter: admit a ready visitor while viewing the bath.
+- W: fill the bath from stored water while viewing the bath.
+- Escape: return from the boiler to the bath, or leave from the bath.
 
-The fire room keeps the boiler vessel, flint/steel board, anvil, and quench
-pail visible on desktop, phone, and short landscape screens. The scene reserves
-space for its navigation and controls before sizing the fixtures. The Bath camera
-fits the complete ground-floor tub below its controls, and returns to that floor
-when entering the Bath tab or resizing. Upper floors remain available by scrolling.
+The room fits the tub and boiler between compact navigation and a single water
+control rail. The main basin spans 26 tiles and retains the original catenary
+formula. The drawn lining and carved liquid cavity use the same curve. The carve leaves
+only one pixel of clearance, and guest buoyancy includes the remaining tile
+clearance beneath the visible lining. Existing
+saves recarve the larger room on entry without adding water or charging again.
+Old waiting guests move to the dry landing. Purchased upper floors remain
+available by scrolling.
 
-For a quick developer playtest, enable dev mode with backtick, including while
-inside the banya, or load `?dev=1`. Coal, iron, water, flint, and ignition steel
-are available without limit. Loading coal, adding water, and quenching leave your
-real stock, cargo, and rig tank unchanged. Supplies immediately return to their
-ordinary counts when dev mode is turned off. The fire still burns and the tub
-still spills, so tending and refilling remain testable.
+Enable dev mode with backtick, including inside the banya, or load `?dev=1`.
+Coal, water, flint, and ignition steel are available without limit. Loading coal
+and adding water leave real stock, cargo, and the rig tank unchanged. Supplies
+return to their ordinary counts when dev mode is turned off. The fire still
+burns and the tub still spills.
 
 - PREPARE BATH / T lights at least three real boiler coals, warms the bath, and
-  starts filling it through the normal water pour. It opens the Bath view.
+  starts filling it through the normal water pour. It opens the bath room.
 - ADD GUEST / G brings a real visitor into a free waiting place. Tap its order
-  once the bath is ready. The normal two-place and total visitor limits apply.
-- Forge work can be repeated in dev mode even after collecting a striker.
+  once the bath is ready. The normal visitor limits apply.
 
 These buttons remain visible on touch screens and disappear outside dev mode.
-Dev supplies are virtual finite counts, never saved infinite inventory. Created
-water, physical fuel, finished forge work, and guests follow ordinary persistence.
-A coal created in dev mode cannot refund itself into real stock after a reload.
-Dev mode retains its existing free purchases and 999,999 money clamp.
+Dev supplies are virtual finite counts. Created water, physical fuel, and guests
+follow ordinary persistence. A dev coal cannot refund itself into real stock
+after reloading. Dev mode keeps its free purchases and 999,999 money clamp.
 
 ## Coal and heat
 
-Both beds simulate in fixed 1/120-second steps, with a maximum of eighteen
-pieces per bed. Chunks have gravity, contact friction, spin, low restitution,
-and saved fuel and heat. Held chunks are detached from pile contacts. Cold coal
-cannot ignite in the boiler without a spark or a hot neighbor. The forge's
-banked ember is local to its bed and never heats the bath for free.
+Coal uses large, seeded convex hulls shared by drawing, picking and collisions.
+The 120 Hz solver uses face contacts, actual mass and rotational inertia, low
+restitution and static friction. Pieces balance on their faces, tip when their
+center of mass overhangs a support, and settle as burning fuel shrinks their
+geometry. Held chunks detach from the pile. Each bed holds at most eighteen
+pieces, including physical ash.
 
-A chunk burns for roughly 48 to 60 seconds at normal air. Bellows raise output
-and burn rate together, then settle back. Multiple pieces can burn together;
-total remaining fuel is an energy reserve, not a promise of that many seconds
-of fire. Coal becomes a physical ash piece and cools when spent. Raking removes
-only spent ash, never usable fuel. Small collisions, ignition, and bellows throw
-sparks from the actual bodies. The flame field is a bounded visual simulation,
-independent of the saved thermal and contact model.
+The 30 Hz burn model separates moisture, volatile fuel and fixed carbon. Coal
+warms and dries, releases smoky gases, flames, burns as glowing coke, then leaves
+cooling ash. The surface heats before the core. Neighboring hot faces spread
+ignition; exposed faces and grate air control oxidation. Crowded coal can
+smolder, bellows raise reaction rate and fuel use, and raking spent ash restores
+underfire air. A cold boiler still needs a spark or a hot neighbor.
+
+New lumps are roughly twice the former diameter and carry a longer fuel reserve.
+Remaining fuel is an energy reserve, not a burn-time countdown. Previously saved
+coal keeps its remaining paid fuel and lifetime. Art follows the actual state:
+pale drying vapor, smoky ignition, volatile flames, incandescent cracks, mineral
+crust and cooling ash. See [COAL_FURNACE.md](COAL_FURNACE.md) for model details,
+limits, persistence and verification.
 
 Boiler output warms the bath gradually. Three fully burning pieces can provide
 full heat; one provides a weaker fire. Adding cold water dilutes warmth, and the
@@ -99,7 +103,8 @@ heat source, water tint, convection, steam, and the copper heat exchanger under
 the tub. The CPU fallback uses the same service warmth state. Temperatures on
 the dial are a game-scale estimate.
 
-Fuel, heat, forge work, and admitted visitors continue while the player mines.
+Boiler fuel, heat, and admitted visitors continue while the player mines.
+Retired forge work and its fuel remain frozen in the save.
 Pause stops all of them. There is no offline catch-up or day/night service gate.
 
 ## Water and visitors
@@ -112,8 +117,7 @@ time until restored.
 
 Guests splash actual water out. Contact with the floor permanently deletes it
 through the solver mutation journal, including parked offscreen spills. No
-spill returns to the tank or survives a save. Quenching separately consumes 2 L
-from tank/stock water exactly once; it does not empty the guest bath.
+spill returns to the tank or survives a save. The supplied striker removes the former forge quenching cost.
 
 Two rocky visitors can roam outdoors, counting a carried visitor toward that
 limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak pays $75. These are initial service

@@ -3,7 +3,7 @@
   // operating resources, never a per-guest water or coal charge.
   var BATH_VISIT = { seconds: 18, pay: 75 };
   var BATH_LEGACY_FIRE_SECONDS = 240;
-  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 15000;
+  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 45000;
   var bathFire = 0, bathHeat = 0, bathWater = 0, bathPour = 0;
   var bathDrainT = 0, bathLostWater = 0, bathWetFloor = [];
   var bathServiceButtons = [];
@@ -56,13 +56,20 @@
       (tb[1] + 1) * TILE, (F.fr + F.sink + 1) * TILE)[0];
   }
   function bathWaterline() {
-    var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
-    // Invert the actual vessel cross-section at the liquid rest spacing.
+    var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
+    // Include the concealed tile clearance as well as the visible bowl.
+    // Otherwise guests float above the actual water in a wider vessel.
+    // Invert the carved cross-section at the liquid rest spacing.
     // This also gives parked/offscreen guests the same buoyancy level.
     var low = curve.y0, high = curve.y0 + curve.D;
     for (var n = 0; n < 10; n++) {
       var line = (low + high) * 0.5, volume = 0;
-      for (var x = curve.x0 + 4; x < curve.x1; x += 8) volume += Math.max(0, curve.y0 + curve.depthAt(x) - line) * 8 / 1.5625;
+      for (var x = curve.x0 + 4; x < curve.x1; x += 8) {
+        var colX = Math.floor(x / TILE) * TILE;
+        var depth = Math.max(curve.depthAt(colX), curve.depthAt(colX + TILE / 2), curve.depthAt(colX + TILE));
+        var floorY = Math.min((F.fr + F.sink + 1) * TILE, Math.ceil((curve.y0 + depth + 1) / TILE) * TILE);
+        volume += Math.max(0, floorY - line) * 8 / 1.5625;
+      }
       if (volume > bathWater) low = line; else high = line;
     }
     return (low + high) * 0.5;
@@ -85,7 +92,7 @@
     return true;
   }
   function bathFloorAt(x, y) {
-    if (x < 27 * TILE || x > 46 * TILE || y < BATH_TOP_ROW * TILE || y > (BATH_BOT_ROW + 2) * TILE) return 0;
+    if (x < 19 * TILE || x > 55 * TILE || y < BATH_TOP_ROW * TILE || y > (BATH_BOT_ROW + 2) * TILE) return 0;
     for (var f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f];
       if (x < F.c0 * TILE || x > (F.c1 + 1) * TILE || y < F.fr * TILE - 5 || y > (F.fr + 5) * TILE) continue;
@@ -155,7 +162,7 @@
       var F = BATH_FLOORS[0], tb = F.tubs[0];
       var before = bathWater;
       var count = liquidToolEmit(0, Math.min(bathPour, Math.ceil(2400 * dt)),
-        (tb[0] + 4) * TILE, (F.fr - 4) * TILE, 0, 100);
+        (tb[0] + 2) * TILE, (F.fr - 4) * TILE, 0, 100);
       bathPour -= count;
       if (count > 0) { bathHeat *= before / (before + count); bathWater += count; }
     }
@@ -175,15 +182,15 @@
     if (bathGuests.some(function (g) { return g.s.id === s.id; })) return false;
     var slot = bathGuests.some(function (g) { return g.slot === 0; }) ? 1 : 0;
     var F = BATH_FLOORS[0];
-    s.x = 28.5 * TILE; s.y = F.fr * TILE - s.r;
+    s.x = 20.5 * TILE; s.y = F.fr * TILE - s.r;
     s.vx = 0; s.vy = 0; s.entry = 0; s.wet = 0; s._trail = [];
     s.visit = 'inside';
     var g = { s: s, slot: slot, st: 'arrive', t: 0, paid: false, served: false, soak: 0 };
     bathGuests.push(g);
-    bathBeginHop(g, (slot ? 30.25 : 28.25) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
+    bathBeginHop(g, (slot ? 22.5 : 20.75) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
     if (!bathIntroSeen) {
       bathIntroSeen = true;
-      showMsg('A sky slime is waiting. Bring water and coal to the banya. Its forge makes a steel striker from two iron; stone sometimes drops flint.', false,
+      showMsg('A sky slime is waiting. Bring water and coal to the banya. Click the boiler beneath the tub to tend its fire. A striker is supplied; stone sometimes drops flint.', false,
         { key: 'bath-arrival', tag: 'BATHHOUSE' });
     }
     return true;
@@ -219,7 +226,7 @@
     money += BATH_VISIT.pay;
     bathFloats.push({ x: g.s.x, y: g.s.y - 38, t: 0, s: '+$' + BATH_VISIT.pay });
     if (bathMode) sfxPlay('sell-total');
-    bathBeginHop(g, 30.1 * TILE, BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
+    bathBeginHop(g, 21.5 * TILE, BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
     saveNow('bath-payment');
   }
   function bathReleaseGuest(g) {
@@ -287,7 +294,7 @@
         if (g.soak >= BATH_VISIT.seconds) bathFinishGuest(g);
       } else if (g.st === 'leave') {
         s.wet = 0;
-        bathBeginHop(g, 28.5 * TILE, BATH_FLOORS[0].fr * TILE - s.r, 0.85, 32, 'exit');
+        bathBeginHop(g, 20.5 * TILE, BATH_FLOORS[0].fr * TILE - s.r, 0.85, 32, 'exit');
       } else if (g.st === 'exit') {
         if (bathReleaseGuest(g)) bathGuests.splice(i, 1);
         continue;
@@ -302,12 +309,13 @@
   }
 
   function bathOrderRect(g) {
-    var scale = Math.max(1, 0.85 / Math.max(0.1, worldScale));
-    var x = g.slot ? 976 : 804;
-    if (scale > 1) x = cam.x + (g.slot ? canvas.width / dpr / 2 + 8 : 14) / worldScale;
-    var y = BATH_FLOORS[0].fr * TILE - 164 * scale;
-    if (bathMode) y = Math.max(y, cam.y + (hearthNavHeight() + 6) / worldScale);
-    return { x: x, y: y, w: 160 * scale, h: 96 * scale, scale: scale };
+    var width = canvas.width / dpr, short = canvas.height / dpr < 500;
+    var scale = Math.min(1, (width - 40) / 340) / Math.max(0.1, worldScale);
+    var sx = g.slot ? width - 18 - 160 * scale * worldScale : 18;
+    var sy = Math.max(hearthNavHeight() + 8,
+      (BATH_FLOORS[0].fr * TILE - cam.y) * worldScale - (short ? 106 : 148));
+    return { x: cam.x + sx / worldScale, y: cam.y + sy / worldScale,
+      w: 160 * scale, h: (short ? 62 : 96) * scale, scale: scale, compact: short };
   }
   function bathOrderPointer(x, y) {
     for (var i = 0; i < bathGuests.length; i++) {
@@ -332,12 +340,12 @@
     ctx.fillStyle = BLD.outline; ctx.font = 'bold 13px ' + UI_FONT;
     ctx.fillText('WARM BATH', 10, 15);
     ctx.font = '12px ' + UI_FONT;
-    ctx.fillText(bathWater >= BATH_MIN_WATER ? 'Water ready' : 'Needs water', 10, 36);
-    ctx.fillText(bathHeat >= 0.35 ? 'Warm enough' : 'Waiting for heat', 10, 54);
+    if (!r.compact) ctx.fillText(bathWater >= BATH_MIN_WATER ? 'Water ready' : 'Needs water', 10, 36);
+    if (!r.compact) ctx.fillText(bathHeat >= 0.35 ? 'Warm enough' : 'Waiting for heat', 10, 54);
     ctx.fillStyle = ready ? BLD.goldDark : BLD.woodDark;
-    ctx.fillRect(6, 68, 148, 22);
+    ctx.fillRect(6, r.compact ? 32 : 68, 148, 22);
     ctx.fillStyle = BLD.cream; ctx.font = 'bold 11px ' + UI_FONT;
-    ctx.textAlign = 'center'; ctx.fillText(ready ? 'SERVE  /  $75' : 'WAITING', 80, 79);
+    ctx.textAlign = 'center'; ctx.fillText(ready ? 'SERVE  /  $75' : 'WAITING', 80, r.compact ? 43 : 79);
     ctx.restore();
   }
   function bathDrawGuests() {
@@ -364,23 +372,22 @@
       ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
     }
   }
-  function bathHUDHeight() { return canvas.height / dpr < 500 ? 110 : 132; }
+  function bathHUDHeight() { return canvas.width / dpr < 520 ? 92 : 76; }
   function bathDrawServiceHUD() {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
+    var w = canvas.width / dpr, h = canvas.height / dpr, narrow = w < 520;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
-    var hud = bathHUDHeight();
-    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, h - hud, w, hud);
-    hearthText(ctx, 'BATH ' + Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 18, h - hud + 20, 12);
-    hearthText(ctx, '$' + bathFmtMoney(money), w - 18, h - hud + 20, 12, BLD.goldPale, 'right');
-    bathServiceButtons = [
-      { x: 16, y: h - hud + 37, w: Math.min(200, (w - 44) / 2), h: 44, action: 'water' },
-      { x: w - 16 - Math.min(200, (w - 44) / 2), y: h - hud + 37, w: Math.min(200, (w - 44) / 2), h: 44, action: 'boiler' }
-    ];
-    hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : hearthDevSupplies() ? 'FREE WATER [W]' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
-    hearthButton(ctx, bathServiceButtons[1], 'TEND THE FIRE', 'boiler', true);
-    if (bathNoticeT > 0) hearthWrap(ctx, bathNotice, 18, h - (hud > 110 ? 35 : 14), w - 36, BLD.goldPale, hud > 110 ? 2 : 1);
-    else hearthText(ctx, hearthDevSupplies() ? 'DEV: unlimited supplies' : 'Warm water brings paying guests.', w / 2, h - 16, 11, UIT_DIM, 'center');
+    var hud = bathHUDHeight(), top = h - hud;
+    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, top, w, hud);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(0, top, w, 1);
+    var bw = narrow ? 132 : 174;
+    bathServiceButtons = [{ x: w - bw - 14, y: top + 10, w: bw, h: 44, action: 'water' }];
+    hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
+    hearthText(ctx, Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 18, top + 23, 14, BLD.cream);
+    hearthText(ctx, bathCanServe() ? 'READY FOR GUESTS' : bathWater < BATH_MIN_WATER ? 'FILL THE BATH' : 'WARM THE WATER', 18, top + 44, 10, UIT_DIM);
+    if (!narrow && w > 740) hearthText(ctx, '$' + bathFmtMoney(money), w * 0.5, top + 28, 15, BLD.goldPale, 'center');
+    var notice = bathNoticeT > 0 ? bathNotice : 'Click the boiler beneath the tub to tend the fire.';
+    hearthWrap(ctx, notice, 18, top + 66, w - 36, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, narrow ? 2 : 1);
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {
@@ -393,7 +400,7 @@
     return false;
   }
   function bathServiceSave() {
-    return { version: 3, workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+    return { version: 4, workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
@@ -422,7 +429,7 @@
     }
     // The carved grid and real water are already in the world/liquid save.
     // Re-arm the heater on next entry without filling the bath a second time.
-    bathRoomReady = !!data.ready;
+    bathRoomReady = !!data.ready && data.version >= 4;
     var list = Array.isArray(data.guests) ? data.guests : [];
     for (var i = 0; i < Math.min(bathGuestCap, list.length); i++) {
       var src = list[i], s = skySlimeHydrate(src.s);
@@ -436,6 +443,10 @@
         served: !!src.served, soak: skySlimeClamp(Number(src.soak) || 0, 0, BATH_VISIT.seconds),
         hop: st === 'hop' ? Object.assign({}, hop) : null };
       if (!g.served && st !== 'wait' && !(st === 'hop' && hop.next === 'wait')) g.st = 'wait';
+      if ((Number(data.version) || 0) < 4 && !g.served) {
+        g.st = 'wait'; g.hop = null;
+        s.x = (slot ? 22.5 : 20.75) * TILE; s.y = BATH_FLOORS[0].fr * TILE - s.r;
+      }
       if (g.paid) s.bathed = true;
       if (g.paid && g.st === 'soak') g.st = 'leave';
       s.visit = 'inside'; bathGuests.push(g);

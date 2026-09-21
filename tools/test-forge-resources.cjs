@@ -38,9 +38,9 @@ for (const sale of ['instant', 'auto', 'reveal']) {
   if (sale === 'instant') s.sellCargo(false);
   else if (sale === 'auto') s.sellCargo(true);
   else s.startSellReveal();
-  assert.deepEqual(plain(s.forgeStock), { coal: 24, iron: 8, flint: 0, steel: 0 });
+  assert.deepEqual(plain(s.forgeStock), { coal: 24, iron: 0, flint: 0, steel: 1 });
   assert.equal(s.cargo.length, 0, 'excess and shiny stock remain saleable');
-  const expected = 2 * 5 + 2 * 35 + 3 * 5 + 3 * 35 + 2 * 12;
+  const expected = 2 * 5 + 10 * 35 + 3 * 5 + 3 * 35 + 2 * 12;
   assert.equal(sale === 'instant' ? s.money : s.sellReveal.grand, expected);
   assert.equal(notices.filter(n => n.startsWith('Stored ')).length, 1, 'nested sale paths reserve once');
   console.log('PASS bounded stock and correct sale value through ' + sale);
@@ -75,7 +75,7 @@ for (const sale of ['instant', 'auto', 'reveal']) {
   s.cargo = [...units('coal', 2), ...units('iron', 2), ...units('coal', 1, true)];
   const before = JSON.stringify({ resources: s.forgeResourcesSave(), cargo: s.cargo });
   assert.equal(s.hearthHasTool('flint'), false);
-  assert.equal(s.hearthHasTool('steel'), false);
+  assert.equal(s.hearthHasTool('steel'), true, 'the boiler includes a reusable steel striker');
   s.devMode = true;
   assert.equal(s.hearthDevSupplies(), true);
   for (const type of ['coal', 'iron', 'flint']) {
@@ -83,7 +83,7 @@ for (const sale of ['instant', 'auto', 'reveal']) {
     assert(Number.isFinite(s.forgeCount(type)), 'virtual stock is finite');
     for (let i = 0; i < 100; i++) assert.equal(s.forgeTake(type, 10), true);
   }
-  assert.equal(s.forgeCount('steel'), 0, 'virtual striker does not hide the forge recipe');
+  assert.equal(s.forgeCount('steel'), 1, 'dev mode keeps the real built-in striker in saved stock');
   assert.equal(s.hearthHasTool('flint'), true);
   assert.equal(s.hearthHasTool('steel'), true);
   assert.equal(s.hearthHasTool('coal'), false);
@@ -97,9 +97,9 @@ for (const sale of ['instant', 'auto', 'reveal']) {
   assert.equal(s.forgeCount('coal'), 5);
   assert.equal(s.forgeCount('iron'), 4);
   assert.equal(s.hearthHasTool('flint'), false);
-  assert.equal(s.hearthHasTool('steel'), false);
+  assert.equal(s.hearthHasTool('steel'), true);
   s.forgeGive('steel', 1);
-  assert.equal(s.hearthHasTool('steel'), true, 'a crafted tool remains available in normal play');
+  assert.equal(s.hearthHasTool('steel'), true, 'legacy crafted tools remain available in normal play');
   console.log('PASS unlimited dev fuel and tools without consuming or serializing virtual inventory');
 }
 
@@ -120,7 +120,7 @@ for (const sale of ['instant', 'auto', 'reveal']) {
   assert.equal(s.bathPour, 20, 'the bath queues only available water');
   assert.equal(s.bathWaterCount(), 0);
   assert.equal(s.bathAddWater(), false);
-  console.log('PASS normal water conservation and atomic quench and bath transfers');
+  console.log('PASS normal water conservation and atomic bath transfers');
 }
 
 {
@@ -168,11 +168,16 @@ for (const sale of ['instant', 'auto', 'reveal']) {
   s.forgeGive('steel', 1); s.forgeGive('coal', 31);
   const saved = plain(s.forgeResourcesSave());
   s.forgeResourcesReset();
-  assert.equal(s.forgeCount('steel'), 0);
+  assert.equal(s.forgeCount('steel'), 1);
   s.forgeResourcesRestore(saved);
   assert.deepEqual(plain(s.forgeResourcesSave()), saved);
   s.forgeResourcesRestore();
-  assert.deepEqual(plain(s.forgeStock), { coal: 0, iron: 0, flint: 0, steel: 0 }, 'older saves start with empty stock');
+  assert.deepEqual(plain(s.forgeStock), { coal: 0, iron: 0, flint: 0, steel: 1 }, 'older saves receive the built-in striker');
+  s.forgeResourcesRestore({ stock: { coal: 6, iron: 7, flint: 1, steel: 0 }, stoneSinceFlint: 8 });
+  assert.deepEqual(plain(s.forgeStock), { coal: 6, iron: 7, flint: 1, steel: 1 }, 'migration preserves old stock and supplies the retired forge reward');
+  const migrated = plain(s.forgeResourcesSave());
+  s.forgeResourcesRestore(migrated);
+  assert.deepEqual(plain(s.forgeResourcesSave()), migrated, 'repeated restores do not duplicate supplies');
   console.log('PASS bounded flint discovery, progress persistence and additive save defaults');
 }
 

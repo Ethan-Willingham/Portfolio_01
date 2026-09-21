@@ -30,24 +30,24 @@ They sense unsupported edges and turn before pits. A single googly eye follows e
 body, which finds a new underside after rolling and varies its pace and stride.
 Grabs and impacts break their grip. Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
-`BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to work at the boiler,
-forge, or bath. Drag individual coal chunks from the bunker onto a grate, or
-tap the bunker to drop one. They collide, tumble, catch from neighboring fuel,
-glow, and burn down to ash. Bellows increase heat and fuel consumption.
+`BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
+an integrated boiler beneath the basin. Hover the boiler hatch to highlight it,
+then click or tap to open the coal view. Back to Bath (or Escape) returns to the
+room. Drag individual coal chunks from the bunker onto the grate, or tap the
+bunker to drop one. They collide, tumble, catch from neighboring fuel, glow,
+and burn down to ash. Bellows increase heat and fuel consumption.
 
-The first fire has a short mining loop: stone sometimes drops durable flint
-(guaranteed within twelve stone breaks); two iron become a reusable steel
-striker at the forge. Its banked ember lights the first coal without a striker.
-Heat the iron, hammer three times, quench with **2 L from the rig tank**, then
-collect the tool. Flint and steel light the boiler without being consumed.
-The boiler's actual burning coal heats the shared bath. Start with three chunks
-for strong heat; more fuel extends tending capacity, and cold neighbors ignite
-from nearby coals. Rake spent ash to free space on the grate.
+The forge has been retired. A reusable steel striker is supplied beside the
+boiler for new and existing saves. Stone still sometimes drops durable flint
+(guaranteed within twelve stone breaks). Flint and steel light the boiler
+without being consumed. Start with three chunks for strong heat; more fuel
+extends tending capacity, and cold neighbors ignite from nearby coals. Rake
+spent ash to free space on the grate.
 
-The fuel locker automatically keeps up to 24 ordinary coal and 8 ordinary iron
-when entering the banya or selling at the station. Surplus and shiny ore sell
-normally. Fuel, tools, and unfinished forge work persist. Water still comes from
-the rig's scoop, and water spilled on the bathhouse floor is permanently lost.
+The fuel locker automatically keeps up to 24 ordinary coal when entering the
+banya or selling at the station. Iron, surplus coal, and shiny ore sell normally.
+Fuel, tools, existing stored iron, and retired forge work persist. Water still
+comes from the rig's scoop, and spilled bath water is permanently lost.
 Guest-specific recipes and night-only opening hours are not implemented.
 See `BATHHOUSE_SERVICE.md` for controls, resource conservation, and verification.
 
@@ -152,9 +152,10 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
 | `071-liquid-catalog.js` | fluid identities, conserved transfer, samples, and sky-slime liquid boundaries |
 | `073-liquid-deposits.js` | finite mineral pockets, offscreen liquid storage, and liquid persistence |
+| `073-bath-interior.js` | wide bath room, curved vessel, integrated boiler rendering and hit geometry |
 | `074-bath-service.js` | visitor queue, coal-powered bath heat, water supply, floor drain, payments, and migration |
-| `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, boiler and forge interactions |
-| `079-forge-resources.js` | reserved coal/iron, durable flint, steel, and supply persistence |
+| `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, boiler controls and bath navigation |
+| `079-forge-resources.js` | reserved coal, durable flint, supplied steel, and legacy supply persistence |
 | `075-liquid-tool.js` / `076-siphon-audio.js` | aimed siphon, fluid chambers, one passenger, touch controls, and sound |
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
@@ -178,7 +179,7 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 ## Live tuning + dev hotkeys
 
 Press backtick to toggle **dev mode** (money 999,999, free purchases, the perf overlay).
-Inside the banya, dev mode also supplies unlimited coal, iron, water, and ignition
+Inside the banya, dev mode also supplies unlimited coal, water, and ignition
 tools. **PREPARE BATH / T** starts a warm, filling bath; **ADD GUEST / G** brings
 a test visitor into a free waiting place. Backtick also works inside the banya.
 Then the useful keys: **L** opens the `window.gm` slider panel (every tunable, grouped);

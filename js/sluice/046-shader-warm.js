@@ -40,7 +40,7 @@
         ['sky', shaderWarmSky], ['rig', shaderWarmRig], ['shadow', shaderWarmShadow], ['dig', shaderWarmDig],
         ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
         ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
-        ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); }],
+        ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); bathInteriorWarm(ctx); }],
         ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
       ];
       var jobs = [];
