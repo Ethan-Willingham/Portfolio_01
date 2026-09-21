@@ -134,14 +134,24 @@
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
       edge = edge * edge * (3 - 2 * edge);
       ux *= edge; vy *= edge;
-      a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = 0;
+      // The 8px air grid cannot resolve grain-scale turbulent lift at the
+      // ground. Strong tangential flow scours exposed powder into the wall
+      // jet; the resolved eddies then carry it. Keep this entrainment speed
+      // separate from the projected velocity, bounded and local to a floor.
+      // No lift inside solids, under ceilings, or in still air.
+      var surface = 0;
+      if (!a.solid[bi]) for (var below = 1; below <= 3 && by + below < h; below++) {
+        if (a.solid[bi + below * w]) { surface = (4 - below) / 3; break; }
+      }
+      var lift = Math.min(420, Math.max(0, Math.abs(ux) - 28) * 2.6) * surface;
+      a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = lift;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }
     a.revision++; a.ms = performance.now() - start;
   }
-  var snowAirSample = [0, 0];
+  var snowAirSample = [0, 0, 0];
   function snowAirAt(x, y) {
-    var a = snowAir, out = snowAirSample; out[0] = out[1] = 0;
+    var a = snowAir, out = snowAirSample; out[0] = out[1] = out[2] = 0;
     if (!a.active) return out;
     var gx = (x - a.x) / a.cell - 0.5, gy = (y - a.y) / a.cell - 0.5;
     if (gx < 0 || gy < 0 || gx >= a.w - 1 || gy >= a.h - 1) return out;
@@ -149,6 +159,7 @@
     for (var r = 0; r < 2; r++) for (var c = 0; c < 2; c++) {
       var i = ((iy + r) * a.w + ix + c) * 4, weight = (c ? fx : 1 - fx) * (r ? fy : 1 - fy);
       out[0] += a.field[i] * weight; out[1] += a.field[i + 1] * weight;
+      out[2] += a.field[i + 3] * weight;
     }
     return out;
   }
@@ -158,12 +169,13 @@
     for (var i = 0; i < liquidCount; i++) {
       if (liquidType[i] !== 5 || liquidFrozen[i]) continue;
       var air = snowAirAt(liquidX[i], liquidY[i]);
-      var speed = Math.sqrt(air[0] * air[0] + air[1] * air[1]);
+      var liftVY = air[1] - air[2];
+      var speed = Math.sqrt(air[0] * air[0] + liftVY * liftVY);
       if (speed < 2) continue;
       var exposure = Math.max(0.06, Math.min(1, (4.2 - liquidDensity[i]) / 3));
       var drag = 1 - Math.exp(-22 * exposure * dt);
       liquidVX[i] += (air[0] - liquidVX[i]) * drag;
-      liquidVY[i] += (air[1] - liquidVY[i]) * drag;
+      liquidVY[i] += (liftVY - liquidVY[i]) * drag;
       liquidSleeping[i] = liquidRestFrames[i] = 0;
     }
   }

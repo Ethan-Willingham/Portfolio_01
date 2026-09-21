@@ -17,7 +17,7 @@ const s = { Math: math, window: { location: { search: '' } },
   liquidX: [], liquidY: [], liquidVX: [], liquidVY: [], liquidType: [],
   rain: { intensity: .65, cells: {}, parked: [], waterCount: 0 },
   surfaceWind: { current: .3 }, player: {x: 2465, y: -620},
-  snowAir: {}, snowAirReset: noop, updateSnowAir: noop, snowAirAt: () => [0, 0],
+  snowAir: {}, snowAirReset: noop, updateSnowAir: noop, snowAirAt: () => [0, 0, 0],
   liquidToolSync: noop, rainCatchLakes: noop,
   tileAt: () => null, liquidWorldSolidAt: () => false, liquidPointInMiner: () => false,
   liquidLineClear: () => true, rainCell: (x, y) => Math.floor(y / 6) * 2000 + Math.floor(x / 6)
@@ -146,9 +146,9 @@ function settleInAir(air) {
   const flake={x:2400,y:-700,vx:0,vy:53,size:.5,phase:1,physical:true};
   s.snow.grains=[flake];s.snow.mass=1;s.snowAirAt=()=>air;step(0,0,90);return flake.vy;
 }
-const calm=settleInAir([0,0]),crosswind=settleInAir([8,0]),downwash=settleInAir([0,15]),updraft=settleInAir([0,-120]);
+const calm=settleInAir([0,0,0]),crosswind=settleInAir([8,0,0]),downwash=settleInAir([0,15,0]),updraft=settleInAir([0,-120,0]);
 assert.ok(crosswind>calm*.8&&downwash>calm&&updraft< -40,'airflow preserves settling and actual updrafts');
-s.snowAirAt=()=>[0,0];s.SNOW_RATE=345;
+s.snowAirAt=()=>[0,0,0];s.SNOW_RATE=345;
 
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/158-rain-lakes.js'),'utf8'),s);

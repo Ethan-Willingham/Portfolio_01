@@ -97,7 +97,11 @@
       // A separated grain becomes light airborne powder again. Leaving it
       // in the dense liquid solver makes it accelerate like a water drop.
       // Keep its mass, position and velocity, including the jet's momentum.
-      if (y < SKY_ROWS * TILE - 32 && (snow.cells[rainCell(x, y)] || 0) < 3 &&
+      // Let an upward-moving, loosened jet plume separate close to the
+      // ground. Quiet pile edges keep their support in the dense solver.
+      var lofted = snowAir.active && liquidVY[i] < -20 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 0.6;
+      if (y < SKY_ROWS * TILE - (lofted ? 10 : 32) &&
+          (lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
           !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + 8) && snow.grains.length < SNOW_FLAKE_CAP) {
         snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i], size: 0.5,
           phase: Math.random() * Math.PI * 2, physical: true });
@@ -169,9 +173,10 @@
       // cancels their fall even in a weak crosswind, exposing the MAC box as
       // a shelf of stalled snow. Add the jet disturbance to the ambient drift
       // and settling speed; only a real updraft can hold a flake aloft.
-      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + air[1] * air[1]) / 80);
+      var liftVY = air[1] - air[2];
+      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + liftVY * liftVY) / 80);
       p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
-      p.vy += (fall + air[1] - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
+      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {

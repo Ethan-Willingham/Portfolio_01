@@ -1,5 +1,5 @@
-// Physical snow integration, material conservation, interaction and visual checks. Uses its own Chrome for Testing process and profile.
-// Run: node tools/sluice-snow-smoke.mjs (screenshots go to /tmp, never the repo).
+// Physical snow jet checks. Uses its own Chrome for Testing process and profile.
+// Run: node tools/sluice-snow-jet.mjs [--cpu] [--passes-only]. Screenshots stay in /tmp.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -56,7 +56,54 @@ try {
   }
 
   await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?snow=1&nosave=1&nopause=1&tod=0.35${process.argv.includes("--cpu")?"&cpuwater=1":""}`});await ready();
+  check('requested particle solver is active',await game(process.argv.includes('--cpu')
+    ? '(!liquidWGPU || !liquidWGPU.simActive)' : '!!(liquidWGPU && liquidWGPU.simActive)'));
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
+  // A brief pass over untouched snow must lift powder before a long hover
+  // has time to build an eddy. No snowfall or prior pass supplies this plume.
+  for (const [depth, direction] of [[4.2,1],[15,-1]]) {
+    await game(`keys.ArrowUp=false;while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);
+      SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
+      window.sy=SKY_ROWS*TILE;window.cx=82*TILE;
+      for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=62;c<103;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
+      player.x=cx-(${direction})*280-PLAYER_W/2;player.y=sy-PLAYER_H-36;player.vx=player.vy=0;cam.snap=true;updateCamera();
+      for(var x=cx-220;x<cx+220;x+=1.4)for(var h=1.3;h<${depth};h+=1.4){
+        addLiquidParticle(5,x+(wHash(Math.floor(x*10),Math.floor(h*10),915)-.5)*.4,sy-h,0,0,3);snow.active++;}
+      snow.mass=snow.emitted=snow.active;window.passInitial=snow.active;
+      window.passX=player.x;window.passDistance=0;window.passGo=false;window.passLast=0;
+      window.pinPass=function(t){var dt=passLast?Math.min(.05,(t-passLast)/1000):0;passLast=t;
+        var moving=passGo&&passDistance<560;var dx=moving?Math.min(220*dt,560-passDistance):0;passDistance+=dx;passX+=${direction}*dx;
+        player.x=passX;player.y=sy-PLAYER_H-36;player.vx=moving?${direction}*220:0;player.vy=0;player.dir=${direction};
+        player.onGround=false;keys.ArrowUp=moving;window.passRaf=requestAnimationFrame(pinPass);};window.passRaf=requestAnimationFrame(pinPass);
+      window.passStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0;
+        function grain(x,y){minY=Math.min(minY,y);if(y<sy-25)lifted++;if(y<sy-55)high++;}
+        for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i]);else if(liquidType[i]===0)water++;}
+        for(var p of snow.grains)if(p.physical)grain(p.x,p.y);
+        return {lifted:lifted,high:high,height:sy-minY,distance:passDistance,initial:passInitial,
+          accounted:__particleSnow.stats().mass+water+rain.parked.length/2+rain.absorbed};};`);
+    await sleep(1800);
+    const resting=await game('passStats()');
+    check('fresh bed stays settled before the pass',resting.lifted===0&&resting.accounted===resting.initial);
+    await game('passGo=true');
+    let peak=0, high=0, height=0, samples=[];
+    for(let t=0;t<40;t++) {
+      await sleep(100);
+      const s=await game('passStats()');samples.push(s);
+      peak=Math.max(peak,s.lifted);high=Math.max(high,s.high);height=Math.max(height,s.height);
+      assert.equal(s.accounted,s.initial,'a low pass conserves every snow and meltwater particle');
+      if(t===12||t===20)await screenshot(`snow-fresh-pass-${depth}-${t}`);
+      if(s.distance>=560)break;
+    }
+    console.log('FRESH PASS',{depth,direction,initial:resting.initial,peak,high,height,liftedFraction:peak/resting.initial,samples:samples.map(s=>[Math.round(s.distance),s.lifted])});
+    check('a moving pass lifts a plume from fresh snow',peak>resting.initial*.08&&high>5&&height>60);
+    await game('cancelAnimationFrame(passRaf);keys.ArrowUp=false');
+    await sleep(5000);
+    check('pass airflow shuts down',await game('!snowAir.active'));
+    const settled=await game('passStats()');
+    check('lofted powder settles after the pass',settled.lifted<peak*.15+5);
+    assert.equal(settled.accounted,settled.initial,'settling preserves all material');
+  }
+  if (!process.argv.includes('--passes-only')) {
   await game(`keys.ArrowUp=false;while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
     window.sy=SKY_ROWS*TILE;window.cx=82*TILE;
     for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=68;c<99;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
@@ -120,6 +167,7 @@ try {
   console.log('FLIGHT COVERAGE',{baseline,min:Math.min(...densities),max:Math.max(...densities),stats:await ev('__particleSnow.stats()')});
   check('snow surrounds the rig throughout left and right jet flight',Math.min(...densities)>baseline*.45);
   check('flight streams distant flakes out of the active budget',await game('snow.airCount===0&&snow.recycled>1000&&snow.grains.length<=SNOW_FLAKE_CAP'));
+  }
   assert.equal(errors.length,0,'no runtime or GPU validation errors');
   console.log('PASS live hover and low pass; screenshots '+out);
 } finally { if(errors.length)console.log('ERRORS',errors.slice(0,8));cleanup(); }

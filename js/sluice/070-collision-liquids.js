@@ -208,6 +208,10 @@
   //   LIQUID_OIL_VALUE ....... dollars per gallon of oil sold
   //   LIQUID_OIL_PER_PARTICLE  gallons one oil particle is worth
   // ============================================================
+  // Snow shares pressure with liquids, but its jet force comes from the
+  // resolved airflow. Track its grid mass so the liquid cone cannot count
+  // the same exhaust twice and press dry powder into the ground.
+  var liquidCellSnowMass = new Float32Array(LIQUID_MAX_CELLS);
   function liquidGetCell(gx, gy) {
     // Composite unique key for (gx, gy) — valid range ±4096.
     var key = (gx + 4096) + (gy + 4096) * 8192;
@@ -228,6 +232,7 @@
     liquidCellGY[idx] = gy;
     liquidCellMass[idx] = 0;
     liquidCellOilMass[idx] = 0;
+    liquidCellSnowMass[idx] = 0;
     liquidCellAeration[idx] = 0;
     liquidCellVX[idx] = 0;
     liquidCellVY[idx] = 0;
@@ -613,6 +618,7 @@
       var aer = liquidAeration[i];
       var base = i * 9;
       var oilWeight = liquidType[i] === 1 ? 1 : 0;
+      var drySnow = liquidType[i] === 5;
 
       // v10.94 — split the inner stencil into water and oil paths.
       // Water particles (the vast majority) skip the OilMass write
@@ -649,25 +655,25 @@
         // Water path — skip the OilMass write entirely.
         rowY = gy - 1;
         w = wx0 * wy0; liquidW[base + 0] = w; c = liquidGetCell(gx - 1, rowY); liquidNbrs[base + 0] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 - g01); liquidCellVY[c] += w * (cvy - g10 - g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 - g01); liquidCellVY[c] += w * (cvy - g10 - g11); }
         w = wx1 * wy0; liquidW[base + 1] = w; c = liquidGetCell(gx,     rowY); liquidNbrs[base + 1] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g01); liquidCellVY[c] += w * (cvy - g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g01); liquidCellVY[c] += w * (cvy - g11); }
         w = wx2 * wy0; liquidW[base + 2] = w; c = liquidGetCell(gx + 1, rowY); liquidNbrs[base + 2] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 - g01); liquidCellVY[c] += w * (cvy + g10 - g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 - g01); liquidCellVY[c] += w * (cvy + g10 - g11); }
         rowY = gy;
         w = wx0 * wy1; liquidW[base + 3] = w; c = liquidGetCell(gx - 1, rowY); liquidNbrs[base + 3] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00); liquidCellVY[c] += w * (cvy - g10); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00); liquidCellVY[c] += w * (cvy - g10); }
         w = wx1 * wy1; liquidW[base + 4] = w; c = liquidGetCell(gx,     rowY); liquidNbrs[base + 4] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * cvx; liquidCellVY[c] += w * cvy; }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * cvx; liquidCellVY[c] += w * cvy; }
         w = wx2 * wy1; liquidW[base + 5] = w; c = liquidGetCell(gx + 1, rowY); liquidNbrs[base + 5] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00); liquidCellVY[c] += w * (cvy + g10); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00); liquidCellVY[c] += w * (cvy + g10); }
         rowY = gy + 1;
         w = wx0 * wy2; liquidW[base + 6] = w; c = liquidGetCell(gx - 1, rowY); liquidNbrs[base + 6] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 + g01); liquidCellVY[c] += w * (cvy - g10 + g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 + g01); liquidCellVY[c] += w * (cvy - g10 + g11); }
         w = wx1 * wy2; liquidW[base + 7] = w; c = liquidGetCell(gx,     rowY); liquidNbrs[base + 7] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g01); liquidCellVY[c] += w * (cvy + g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g01); liquidCellVY[c] += w * (cvy + g11); }
         w = wx2 * wy2; liquidW[base + 8] = w; c = liquidGetCell(gx + 1, rowY); liquidNbrs[base + 8] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 + g01); liquidCellVY[c] += w * (cvy + g10 + g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 + g01); liquidCellVY[c] += w * (cvy + g10 + g11); }
       }
     }
 
@@ -824,6 +830,8 @@
 
   function liquidApplyRocketGridWake(c, stepDt) {
     if (rocketIntensity <= 0.02 || !player || !player.thrusting) return;
+    var liquidShare = 1 - Math.min(1, liquidCellSnowMass[c] / liquidCellMass[c]);
+    if (liquidShare <= 0) return;
     var ed = rocketExhaustDir();
     var nozzles = rocketNozzles();
     var gx = (liquidCellGX[c] + 0.5) * LIQUID_CELL;
@@ -843,7 +851,7 @@
       if (!liquidLineClear(base.x, base.y, gx, gy)) continue;
       var mouthBoost = alongPos < 18 ? 1.35 : 1;
       var falloff = (1 - alongPos / (TILE * 5.5)) * (1 - perp / cone) * mouthBoost;
-      var force = 560 * rocketIntensity * falloff * stepDt / LIQUID_CELL;
+      var force = 560 * rocketIntensity * falloff * stepDt / LIQUID_CELL * liquidShare;
       wakeVX += ed.x * force;
       wakeVY += ed.y * force;
     }

@@ -689,12 +689,14 @@
        * the gridW*gridH prefix is cleared + used per build. Decode is
        * f32(x) / FIXED_SCALE.
        *   cellMass    : mass accumulator (sum of B-spline weights).
-       *   cellOilMass : oil-only mass (oilWeight 1 for oil, 0 water).
+       *   cellOilMass : two fixed-point planes, oil mass followed by snow
+       *                 mass at GRID_MAX_CELLS. Sharing the allocation keeps
+       *                 the existing storage-binding requirements.
        *   cellAeration: weighted aeration; mass-normalized post-scatter.
        *   cellVX/VY   : APIC momentum, affine-corrected per stencil
        *                 corner — signed, two's-complement atomicAdd. */
       cellMass:    mk('liquid.cellMass',    GRID_MAX_CELLS * 4),
-      cellOilMass: mk('liquid.cellOilMass', GRID_MAX_CELLS * 4),
+      cellOilMass: mk('liquid.cellOilSnowMass', GRID_MAX_CELLS * 8),
       cellAeration:mk('liquid.cellAeration',GRID_MAX_CELLS * 4),
       cellVX:      mk('liquid.cellVX',      GRID_MAX_CELLS * 4),
       cellVY:      mk('liquid.cellVY',      GRID_MAX_CELLS * 4),
@@ -848,7 +850,7 @@
     enc.clearBuffer(b.cellStart);
     enc.clearBuffer(b.cellCursor);
     enc.clearBuffer(b.cellMass);
-    enc.clearBuffer(b.cellOilMass);
+    enc.clearBuffer(b.cellOilMass);  // both oil and snow mass planes
     enc.clearBuffer(b.cellAeration);
     enc.clearBuffer(b.cellVX);
     enc.clearBuffer(b.cellVY);
@@ -1554,7 +1556,7 @@
   // Debug only: copy a storage buffer back to the CPU via a transient
   // MAP_READ buffer. Returns a Promise<ArrayBuffer>. The shipped hot
   // path never reads back — this is for stage verification.
-  function readbackBuffer(instance, srcBuf, byteLen) {
+  function readbackBuffer(instance, srcBuf, byteLen, byteOffset) {
     var dev = instance.device;
     var rb = dev.createBuffer({
       label: 'liquid.readback',
@@ -1562,7 +1564,7 @@
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
     });
     var enc = dev.createCommandEncoder();
-    enc.copyBufferToBuffer(srcBuf, 0, rb, 0, byteLen);
+    enc.copyBufferToBuffer(srcBuf, byteOffset || 0, rb, 0, byteLen);
     instance.queue.submit([enc.finish()]);
     return rb.mapAsync(GPUMapMode.READ).then(function () {
       var copy = rb.getMappedRange().slice(0);
@@ -1851,6 +1853,7 @@
     var ox = g.originX, oy = g.originY, gw = g.w;
     // Fixed-point cell accumulators — mirror the GPU's atomic<i32>.
     var refMassFx = new Int32Array(cells);
+    var refSnowFx = new Int32Array(cells);
     var refAerFx  = new Int32Array(cells);
     var refVXFx   = new Int32Array(cells);
     var refVYFx   = new Int32Array(cells);
@@ -1899,6 +1902,7 @@
         var w = corner[s][1];
         // Mirror the GPU splat(): quantize each term then i32-add.
         refMassFx[c] += enc(w);
+        if (snap.type[i] === 5) refSnowFx[c] += enc(w);
         refAerFx[c]  += enc(fr(w * aer));
         refVXFx[c]   += enc(fr(w * corner[s][2]));
         refVYFx[c]   += enc(fr(w * corner[s][3]));
@@ -1934,12 +1938,14 @@
       readbackBuffer(instance, instance.buf.cellMass,     cells * 4),
       readbackBuffer(instance, instance.buf.cellVX,       cells * 4),
       readbackBuffer(instance, instance.buf.cellVY,       cells * 4),
-      readbackBuffer(instance, instance.buf.cellAeration, cells * 4)
+      readbackBuffer(instance, instance.buf.cellAeration, cells * 4),
+      readbackBuffer(instance, instance.buf.cellOilMass, cells * 4, GRID_MAX_CELLS * 4)
     ]).then(function (res) {
       var gm = new Int32Array(res[0]);
       var gvx = new Int32Array(res[1]);
       var gvy = new Int32Array(res[2]);
       var ga = new Int32Array(res[3]);
+      var gs = new Int32Array(res[4]);
       var dec = 1 / FIXED_SCALE;
       var maxCellDiff = 0, worstCell = -1, worstField = '';
       var gpuTotalMass = 0;
@@ -1953,10 +1959,12 @@
         var dX = Math.abs(gVX - refVX[k]);
         var dY = Math.abs(gVY - refVY[k]);
         var dA = Math.abs(gAer - refAer[k]);
+        var dS = Math.abs(gs[k] - refSnowFx[k]) * dec;
         if (dM > maxCellDiff) { maxCellDiff = dM; worstCell = k; worstField = 'mass'; }
         if (dX > maxCellDiff) { maxCellDiff = dX; worstCell = k; worstField = 'vx'; }
         if (dY > maxCellDiff) { maxCellDiff = dY; worstCell = k; worstField = 'vy'; }
         if (dA > maxCellDiff) { maxCellDiff = dA; worstCell = k; worstField = 'aeration'; }
+        if (dS > maxCellDiff) { maxCellDiff = dS; worstCell = k; worstField = 'snow mass'; }
       }
       // Mass conservation: each non-frozen particle's 9 weights sum to
       // 1 exactly, so the grid total must equal the awake count (within
@@ -4082,7 +4090,7 @@ fn outOfRegion(p : vec2<f32>) -> bool {
 }
 `;
 
-  // 1. clearP2GCells — zero the 5 fixed-point accumulators over the
+  // 1. clearP2GCells: zero the six fixed-point accumulator planes over the
   //    active grid. One thread per cell.
   var WGSL_P2G_CLEAR = /* wgsl */ `
 @compute @workgroup_size(256)
@@ -4091,6 +4099,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (i >= gp.cells) { return; }
   atomicStore(&cellMass[i], 0);
   atomicStore(&cellOilMass[i], 0);
+  atomicStore(&cellOilMass[i + ${GRID_MAX_CELLS}u], 0);
   atomicStore(&cellAeration[i], 0);
   atomicStore(&cellVX[i], 0);
   atomicStore(&cellVY[i], 0);
@@ -4115,11 +4124,14 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    *    so the dense index is computed directly with no clamp/hash. */
   var WGSL_P2G_SCATTER = /* wgsl */ `
 // One stencil-corner contribution: mass += w, oilMass += oilWeight*w,
-// aeration += w*aer, momentum += w*cornerVel. Each term is quantized
+// snowMass += snowWeight*w, aeration += w*aer, momentum += w*cornerVel. Each term is quantized
 // then atomicAdd'd into the fixed-point accumulator.
-fn splat(cell : u32, w : f32, oilWeight : f32, aer : f32, cvx : f32, cvy : f32) {
+fn splat(cell : u32, w : f32, oilWeight : f32, snowWeight : f32, aer : f32, cvx : f32, cvy : f32) {
   atomicAdd(&cellMass[cell],     encodeFx(w));
   atomicAdd(&cellOilMass[cell],  encodeFx(oilWeight * w));
+  if (snowWeight > 0.0) {
+    atomicAdd(&cellOilMass[cell + ${GRID_MAX_CELLS}u], encodeFx(w));
+  }
   atomicAdd(&cellAeration[cell], encodeFx(w * aer));
   atomicAdd(&cellVX[cell],       encodeFx(w * cvx));
   atomicAdd(&cellVY[cell],       encodeFx(w * cvy));
@@ -4165,7 +4177,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let cvx = pvx + g00 * dx + g01 * dy;
   let cvy = pvy + g10 * dx + g11 * dy;
   let aer = aux[i].y;
-  let oilWeight = select(0.0, 1.0, ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u);
+  let material = (fl & 3u) | ((fl >> 4u) & 4u);
+  let oilWeight = select(0.0, 1.0, material == 1u);
+  let snowWeight = select(0.0, 1.0, material == 5u);
 
   // Base cell for the dense grid; the 1-cell margin keeps the whole
   // 3x3 in range so no clamp is needed.
@@ -4184,17 +4198,17 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let row2 = u32((by + 1) * i32(gp.gridW) + bx);
 
   // --- top row (gy - 1) ---
-  splat(row0 - 1u, wx0 * wy0, oilWeight, aer, cvx - g00 - g01, cvy - g10 - g11);
-  splat(row0,      wx1 * wy0, oilWeight, aer, cvx - g01,       cvy - g11);
-  splat(row0 + 1u, wx2 * wy0, oilWeight, aer, cvx + g00 - g01, cvy + g10 - g11);
+  splat(row0 - 1u, wx0 * wy0, oilWeight, snowWeight, aer, cvx - g00 - g01, cvy - g10 - g11);
+  splat(row0,      wx1 * wy0, oilWeight, snowWeight, aer, cvx - g01,       cvy - g11);
+  splat(row0 + 1u, wx2 * wy0, oilWeight, snowWeight, aer, cvx + g00 - g01, cvy + g10 - g11);
   // --- middle row (gy) ---
-  splat(row1 - 1u, wx0 * wy1, oilWeight, aer, cvx - g00,       cvy - g10);
-  splat(row1,      wx1 * wy1, oilWeight, aer, cvx,             cvy);
-  splat(row1 + 1u, wx2 * wy1, oilWeight, aer, cvx + g00,       cvy + g10);
+  splat(row1 - 1u, wx0 * wy1, oilWeight, snowWeight, aer, cvx - g00,       cvy - g10);
+  splat(row1,      wx1 * wy1, oilWeight, snowWeight, aer, cvx,             cvy);
+  splat(row1 + 1u, wx2 * wy1, oilWeight, snowWeight, aer, cvx + g00,       cvy + g10);
   // --- bottom row (gy + 1) ---
-  splat(row2 - 1u, wx0 * wy2, oilWeight, aer, cvx - g00 + g01, cvy - g10 + g11);
-  splat(row2,      wx1 * wy2, oilWeight, aer, cvx + g01,       cvy + g11);
-  splat(row2 + 1u, wx2 * wy2, oilWeight, aer, cvx + g00 + g01, cvy + g10 + g11);
+  splat(row2 - 1u, wx0 * wy2, oilWeight, snowWeight, aer, cvx - g00 + g01, cvy - g10 + g11);
+  splat(row2,      wx1 * wy2, oilWeight, snowWeight, aer, cvx + g01,       cvy + g11);
+  splat(row2 + 1u, wx2 * wy2, oilWeight, snowWeight, aer, cvx + g00 + g01, cvy + g10 + g11);
 }
 `;
 
@@ -4248,7 +4262,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   var WGSL_P2G_NORMALIZE = cellEntryDense(WGSL_P2G_NORMALIZE_BODY);
 
   // v15.0 — end-of-sub-step clear, p2g-layout share: re-zero the active
-  // blocks' five fixed-point accumulators (the grid share clears
+  // blocks' six fixed-point accumulator planes (the grid share clears
   // cellCount, the grid2 share clears the DV impulses + resolved
   // velocity). Together they restore the global-zero invariant, which is
   // what lets the sparse chain skip the per-sub-step full-grid clears
@@ -4257,6 +4271,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (c >= gp.cells) { return; }
   atomicStore(&cellMass[c], 0);
   atomicStore(&cellOilMass[c], 0);
+  atomicStore(&cellOilMass[c + ${GRID_MAX_CELLS}u], 0);
   atomicStore(&cellAeration[c], 0);
   atomicStore(&cellVX[c], 0);
   atomicStore(&cellVY[c], 0);
@@ -4906,12 +4921,17 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
     cellVelY[c] = (bestVY + goy * min(gdep, 10.0) * GUEST_PUSH) * guestToGrid;
   }
 
-  // --- rocket-plume wake — per-nozzle cone push along the exhaust dir ---
+  // Snow receives the resolved air field instead of this liquid-only cone.
+  // The second material-mass plane uses the same stencil as total mass;
+  // pure liquid keeps a factor of exactly one, pure snow gets zero.
+  // --- rocket-plume wake: per-nozzle cone push along the exhaust dir ---
   if (gameP.rocket.x > 0.5) {
+    let snowMass = f32(atomicLoad(&cellOilMass[c + ${GRID_MAX_CELLS}u]));
+    let liquidShare = 1.0 - min(1.0, snowMass / max(1.0, f32(atomicLoad(&cellMass[c]))));
     let intensity = gameP.rocket.y;
     let edx = gameP.rocket.z;
     let edy = gameP.rocket.w;
-    let nCount = i32(gameP.counts.x);
+    let nCount = select(0, i32(gameP.counts.x), liquidShare > 0.0);
     var wakeVX : f32 = 0.0;
     var wakeVY : f32 = 0.0;
     for (var n : i32 = 0; n < nCount; n = n + 1) {
@@ -4931,7 +4951,7 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       var mouthBoost : f32 = 1.0;
       if (alongPos < 18.0) { mouthBoost = 1.35; }
       let falloff = (1.0 - alongPos / 176.0) * (1.0 - perp / cone) * mouthBoost;
-      let force = 560.0 * intensity * falloff * stepDt / CELL;
+      let force = 560.0 * intensity * falloff * stepDt / CELL * liquidShare;
       wakeVX = wakeVX + edx * force;
       wakeVY = wakeVY + edy * force;
     }
@@ -9942,9 +9962,10 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
   let q=(p.xy-ap.rect.xy)/ap.rect.z-vec2<f32>(0.5);
   if (any(q<vec2<f32>(0.0)) || any(q>=ap.domain.xy-vec2<f32>(1.0))) { return; }
   let c=vec2<i32>(floor(q)); let f=fract(q);
-  let a=mix(textureLoad(air,c,0).xy,textureLoad(air,c+vec2<i32>(1,0),0).xy,f.x);
-  let b=mix(textureLoad(air,c+vec2<i32>(0,1),0).xy,textureLoad(air,c+vec2<i32>(1,1),0).xy,f.x);
-  let velocity=mix(a,b,f.y);
+  let a=mix(textureLoad(air,c,0).xyw,textureLoad(air,c+vec2<i32>(1,0),0).xyw,f.x);
+  let b=mix(textureLoad(air,c+vec2<i32>(0,1),0).xyw,textureLoad(air,c+vec2<i32>(1,1),0).xyw,f.x);
+  let flow=mix(a,b,f.y);
+  let velocity=vec2<f32>(flow.x,flow.y-flow.z);
   if (length(velocity)<2.0) { return; }
   let exposure=clamp((4.2-aux[i].x)/3.0,0.06,1.0);
   let drag=1.0-exp(-22.0*exposure*ap.rect.w);

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.58';
+  var GAME_VERSION = 'v28.59';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -9968,6 +9968,10 @@
   //   LIQUID_OIL_VALUE ....... dollars per gallon of oil sold
   //   LIQUID_OIL_PER_PARTICLE  gallons one oil particle is worth
   // ============================================================
+  // Snow shares pressure with liquids, but its jet force comes from the
+  // resolved airflow. Track its grid mass so the liquid cone cannot count
+  // the same exhaust twice and press dry powder into the ground.
+  var liquidCellSnowMass = new Float32Array(LIQUID_MAX_CELLS);
   function liquidGetCell(gx, gy) {
     // Composite unique key for (gx, gy) — valid range ±4096.
     var key = (gx + 4096) + (gy + 4096) * 8192;
@@ -9988,6 +9992,7 @@
     liquidCellGY[idx] = gy;
     liquidCellMass[idx] = 0;
     liquidCellOilMass[idx] = 0;
+    liquidCellSnowMass[idx] = 0;
     liquidCellAeration[idx] = 0;
     liquidCellVX[idx] = 0;
     liquidCellVY[idx] = 0;
@@ -10373,6 +10378,7 @@
       var aer = liquidAeration[i];
       var base = i * 9;
       var oilWeight = liquidType[i] === 1 ? 1 : 0;
+      var drySnow = liquidType[i] === 5;
 
       // v10.94 — split the inner stencil into water and oil paths.
       // Water particles (the vast majority) skip the OilMass write
@@ -10409,25 +10415,25 @@
         // Water path — skip the OilMass write entirely.
         rowY = gy - 1;
         w = wx0 * wy0; liquidW[base + 0] = w; c = liquidGetCell(gx - 1, rowY); liquidNbrs[base + 0] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 - g01); liquidCellVY[c] += w * (cvy - g10 - g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 - g01); liquidCellVY[c] += w * (cvy - g10 - g11); }
         w = wx1 * wy0; liquidW[base + 1] = w; c = liquidGetCell(gx,     rowY); liquidNbrs[base + 1] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g01); liquidCellVY[c] += w * (cvy - g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g01); liquidCellVY[c] += w * (cvy - g11); }
         w = wx2 * wy0; liquidW[base + 2] = w; c = liquidGetCell(gx + 1, rowY); liquidNbrs[base + 2] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 - g01); liquidCellVY[c] += w * (cvy + g10 - g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 - g01); liquidCellVY[c] += w * (cvy + g10 - g11); }
         rowY = gy;
         w = wx0 * wy1; liquidW[base + 3] = w; c = liquidGetCell(gx - 1, rowY); liquidNbrs[base + 3] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00); liquidCellVY[c] += w * (cvy - g10); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00); liquidCellVY[c] += w * (cvy - g10); }
         w = wx1 * wy1; liquidW[base + 4] = w; c = liquidGetCell(gx,     rowY); liquidNbrs[base + 4] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * cvx; liquidCellVY[c] += w * cvy; }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * cvx; liquidCellVY[c] += w * cvy; }
         w = wx2 * wy1; liquidW[base + 5] = w; c = liquidGetCell(gx + 1, rowY); liquidNbrs[base + 5] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00); liquidCellVY[c] += w * (cvy + g10); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00); liquidCellVY[c] += w * (cvy + g10); }
         rowY = gy + 1;
         w = wx0 * wy2; liquidW[base + 6] = w; c = liquidGetCell(gx - 1, rowY); liquidNbrs[base + 6] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 + g01); liquidCellVY[c] += w * (cvy - g10 + g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx - g00 + g01); liquidCellVY[c] += w * (cvy - g10 + g11); }
         w = wx1 * wy2; liquidW[base + 7] = w; c = liquidGetCell(gx,     rowY); liquidNbrs[base + 7] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g01); liquidCellVY[c] += w * (cvy + g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g01); liquidCellVY[c] += w * (cvy + g11); }
         w = wx2 * wy2; liquidW[base + 8] = w; c = liquidGetCell(gx + 1, rowY); liquidNbrs[base + 8] = c;
-        if (c >= 0) { liquidCellMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 + g01); liquidCellVY[c] += w * (cvy + g10 + g11); }
+        if (c >= 0) { liquidCellMass[c] += w; if (drySnow) liquidCellSnowMass[c] += w; liquidCellAeration[c] += w * aer; liquidCellVX[c] += w * (cvx + g00 + g01); liquidCellVY[c] += w * (cvy + g10 + g11); }
       }
     }
 
@@ -10584,6 +10590,8 @@
 
   function liquidApplyRocketGridWake(c, stepDt) {
     if (rocketIntensity <= 0.02 || !player || !player.thrusting) return;
+    var liquidShare = 1 - Math.min(1, liquidCellSnowMass[c] / liquidCellMass[c]);
+    if (liquidShare <= 0) return;
     var ed = rocketExhaustDir();
     var nozzles = rocketNozzles();
     var gx = (liquidCellGX[c] + 0.5) * LIQUID_CELL;
@@ -10603,7 +10611,7 @@
       if (!liquidLineClear(base.x, base.y, gx, gy)) continue;
       var mouthBoost = alongPos < 18 ? 1.35 : 1;
       var falloff = (1 - alongPos / (TILE * 5.5)) * (1 - perp / cone) * mouthBoost;
-      var force = 560 * rocketIntensity * falloff * stepDt / LIQUID_CELL;
+      var force = 560 * rocketIntensity * falloff * stepDt / LIQUID_CELL * liquidShare;
       wakeVX += ed.x * force;
       wakeVY += ed.y * force;
     }
@@ -35470,14 +35478,24 @@
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
       edge = edge * edge * (3 - 2 * edge);
       ux *= edge; vy *= edge;
-      a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = 0;
+      // The 8px air grid cannot resolve grain-scale turbulent lift at the
+      // ground. Strong tangential flow scours exposed powder into the wall
+      // jet; the resolved eddies then carry it. Keep this entrainment speed
+      // separate from the projected velocity, bounded and local to a floor.
+      // No lift inside solids, under ceilings, or in still air.
+      var surface = 0;
+      if (!a.solid[bi]) for (var below = 1; below <= 3 && by + below < h; below++) {
+        if (a.solid[bi + below * w]) { surface = (4 - below) / 3; break; }
+      }
+      var lift = Math.min(420, Math.max(0, Math.abs(ux) - 28) * 2.6) * surface;
+      a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = lift;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }
     a.revision++; a.ms = performance.now() - start;
   }
-  var snowAirSample = [0, 0];
+  var snowAirSample = [0, 0, 0];
   function snowAirAt(x, y) {
-    var a = snowAir, out = snowAirSample; out[0] = out[1] = 0;
+    var a = snowAir, out = snowAirSample; out[0] = out[1] = out[2] = 0;
     if (!a.active) return out;
     var gx = (x - a.x) / a.cell - 0.5, gy = (y - a.y) / a.cell - 0.5;
     if (gx < 0 || gy < 0 || gx >= a.w - 1 || gy >= a.h - 1) return out;
@@ -35485,6 +35503,7 @@
     for (var r = 0; r < 2; r++) for (var c = 0; c < 2; c++) {
       var i = ((iy + r) * a.w + ix + c) * 4, weight = (c ? fx : 1 - fx) * (r ? fy : 1 - fy);
       out[0] += a.field[i] * weight; out[1] += a.field[i + 1] * weight;
+      out[2] += a.field[i + 3] * weight;
     }
     return out;
   }
@@ -35494,12 +35513,13 @@
     for (var i = 0; i < liquidCount; i++) {
       if (liquidType[i] !== 5 || liquidFrozen[i]) continue;
       var air = snowAirAt(liquidX[i], liquidY[i]);
-      var speed = Math.sqrt(air[0] * air[0] + air[1] * air[1]);
+      var liftVY = air[1] - air[2];
+      var speed = Math.sqrt(air[0] * air[0] + liftVY * liftVY);
       if (speed < 2) continue;
       var exposure = Math.max(0.06, Math.min(1, (4.2 - liquidDensity[i]) / 3));
       var drag = 1 - Math.exp(-22 * exposure * dt);
       liquidVX[i] += (air[0] - liquidVX[i]) * drag;
-      liquidVY[i] += (air[1] - liquidVY[i]) * drag;
+      liquidVY[i] += (liftVY - liquidVY[i]) * drag;
       liquidSleeping[i] = liquidRestFrames[i] = 0;
     }
   }
@@ -35602,7 +35622,11 @@
       // A separated grain becomes light airborne powder again. Leaving it
       // in the dense liquid solver makes it accelerate like a water drop.
       // Keep its mass, position and velocity, including the jet's momentum.
-      if (y < SKY_ROWS * TILE - 32 && (snow.cells[rainCell(x, y)] || 0) < 3 &&
+      // Let an upward-moving, loosened jet plume separate close to the
+      // ground. Quiet pile edges keep their support in the dense solver.
+      var lofted = snowAir.active && liquidVY[i] < -20 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 0.6;
+      if (y < SKY_ROWS * TILE - (lofted ? 10 : 32) &&
+          (lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
           !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + 8) && snow.grains.length < SNOW_FLAKE_CAP) {
         snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i], size: 0.5,
           phase: Math.random() * Math.PI * 2, physical: true });
@@ -35674,9 +35698,10 @@
       // cancels their fall even in a weak crosswind, exposing the MAC box as
       // a shelf of stalled snow. Add the jet disturbance to the ambient drift
       // and settling speed; only a real updraft can hold a flake aloft.
-      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + air[1] * air[1]) / 80);
+      var liftVY = air[1] - air[2];
+      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + liftVY * liftVY) / 80);
       p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
-      p.vy += (fall + air[1] - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
+      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {

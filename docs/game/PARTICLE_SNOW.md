@@ -106,9 +106,20 @@ entrained grains without changing their identity or mass. Atmospheric flakes
 settle relative to the moving air: the jet velocity adds to their normal falling
 and drifting motion. A weak crosswind cannot cancel gravity or build a shelf
 of slow flakes above the rig; an actual updraft can still lift them.
-No decorative snow, launch wedges or prescribed upward
-arcs are created. The existing liquid cone wake continues to work alongside
-the resolved air field. Jet heat is confined to a shorter, narrower core, so
+Strong sideways flow close to a floor also entrains powder through a bounded
+surface-scouring term. This approximates turbulent grain lift below the air
+grid's 8-pixel resolution: flow above 28 pixels per second can lift exposed
+snow, with a 420-pixel-per-second entrainment ceiling and a three-cell reach.
+It vanishes in still air, inside solids and away from a supporting surface.
+The same term reaches GPU snow, CPU snow and airborne flakes.
+
+The direct liquid cone wake is weighted by the nonsnow mass in each physics
+cell. Pure water keeps its original splash force; dry powder follows the air
+without receiving a second downward impulse every substep. Mixed cells blend
+by their actual material mass. The GPU stores snow mass beside oil mass in
+the existing buffer binding, with both dense and sparse clears covering it.
+No decorative snow or prescribed flight arcs are created.
+Jet heat is confined to a shorter, narrower core, so
 the cold return flow can carry powder without instantly turning it into water.
 
 This is a bounded 2D, one-way air-to-snow coupling, not a compressible rocket
@@ -117,12 +128,12 @@ granular MPM material rather than a full elastic/plastic snow constitutive
 law. The projection approach follows standard incompressible fluid simulation;
 see [Bridson's course material](https://www.cs.ubc.ca/~rbridson/fluidsimulation/).
 
-The dedicated hover/low-pass test retained all 3,290 starting particles through
-snow, meltwater and absorption. More than 1,000 grains rose above 25 world
-pixels, including outside the jet core. The local air solve measured about
-1 to 1.6 ms per update in that headless browser run; hardware and scene load
-will affect total frame time. All buffers are bounded and reused. The air
-coupling shader is compiled during the existing GPU startup warmup.
+The dedicated flyover test crosses fresh thin dusting and a deeper bed at
+220 world pixels per second, in opposite directions. It requires a visible
+plume during the pass, settling afterward, and exact accounting through
+snow, meltwater and absorption. The older long-hover check remains too.
+All buffers are bounded and reused. The air coupling shader is compiled
+during the existing GPU startup warmup.
 
 ## Thaw, storage and limits
 
@@ -134,8 +145,11 @@ Foundations, jet exhaust and contact with
 a body of water accelerate thaw; a few droplets do not dissolve an entire pile.
 The rig's warm scoop collects snow directly into its water chamber.
 Airborne powder more than 24 world pixels above the surface cannot thaw beside
-the jet. Isolated solver grains above the surface return to light flake motion,
-keeping their position, velocity and mass. They no longer accelerate as liquid
+the jet. Grains moving upward in the jet's airflow return to light flake
+motion above 10 world pixels once their local density falls below 60% of
+packed snow. Other isolated grains retain the 32-pixel release height.
+Both keep their position, velocity and mass. Quiet pile edges retain their
+support in the dense solver. Released grains no longer accelerate as liquid
 drops after a brief rig contact; dense piles still use the shared solver.
 
 Melting changes material 5 to water in place, retaining the GPU's current
@@ -185,13 +199,15 @@ soil contact, stored-water drainage and a resting puddle on the live solver.
 
 `node tools/perf/snow-air.mjs` checks wall flow, recirculation, pressure
 projection, occlusion through a solid roof, window translation and shutdown.
-`node tools/sluice-snow-jet.mjs` runs a controlled live hover and low pass,
+`node tools/sluice-snow-jet.mjs` first runs moving passes over fresh thin and
+deep beds, then a controlled live hover and low pass,
 checks entrainment outside the core and exact material accounting, then flies
 through several view widths in both directions and checks surrounding snowfall.
 An airborne hover also checks that flakes keep falling through the top of the
 jet airflow area without stalling. It writes
 its screenshots to `/tmp/sluice-snow-jet-qa`. Add `--cpu` to exercise the
 same interactions on the CPU solver.
+Add `--passes-only` to run just the fresh-bed flyover regressions.
 
 `node tools/test-snow-coverage.cjs` checks sustained sideways travel, reversals,
 unchanged world positions in the overlapping view, current weather on revisits,
