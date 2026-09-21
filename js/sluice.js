@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.56';
+  var GAME_VERSION = 'v28.57';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -67913,7 +67913,11 @@
     if (!ENABLE_JELLO || !isFinite(x + y) || jelloCount + 61 > JELLO_MAX_POINTS) return null;
     identity = identity || {};
     var seed = isFinite(identity.seed) ? skySlimeClamp(identity.seed, 0, 1) : Math.random();
-    var radius = 24 + seed * 5;
+    // Unhardening keeps the incoming visitor's size. Older resident saves
+    // have no radius; use the same 22..27 range as skySlimeFresh for those
+    // and the five playtest residents. The 0.94 core below sheds the shell.
+    var radius = typeof identity.r === 'number' && isFinite(identity.r) ?
+      skySlimeClamp(identity.r, 22, 27) : 22 + seed * 5;
     var b = jelloBuildDisc(x, y, radius, 'slime');
     if (!b) return null;
     b.surfaceSlime = {
@@ -68213,7 +68217,7 @@
   function surfaceSlimeSave() {
     return { seeded: surfaceSlimesSeeded, residents: jelloBodies.filter(function (b) { return !!b.surfaceSlime; }).map(function (b) {
       var m = b.surfaceSlime;
-      return { id: m.id, seed: m.seed, hue: m.hue, home: m.home, x: b.cx, y: b.cy };
+      return { id: m.id, seed: m.seed, r: m.radius, hue: m.hue, home: m.home, x: b.cx, y: b.cy };
     }) };
   }
 

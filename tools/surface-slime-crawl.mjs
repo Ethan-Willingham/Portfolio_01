@@ -106,7 +106,8 @@ try {
       for(var trial=0;trial<2;trial++){
         SURFACE_SLIME_WAVE=trial===0?wave:0;
         var b=window.__crawlSetup(1,0),x=b.cx;
-        window.__crawlStep(60,12);out.push(b.cx-x);
+        // The shell-sized bodies take shorter physical strides.
+        window.__crawlStep(60,15);out.push(b.cx-x);
       }
     }finally{SURFACE_SLIME_WAVE=wave;}
     var b=window.__crawlSetup(1,0);
@@ -119,7 +120,8 @@ try {
   check('terrain contact and travelling muscle waves produce the locomotion',propulsion.wave>60&&Math.abs(propulsion.still)<15&&Math.abs(propulsion.airDrift)<1);
   const wall=await game(`(function(){
     var b=window.__crawlSetup(1,7),start=b.cy;
-    window.__crawlStep(60,40);
+    // Wait for the same knock-off height across the visitor size range.
+    for(var second=0;second<70&&start-b.cy<60;second++)window.__crawlStep(60,1);
     var climbY=b.cy,climbing=b.surfaceSlime.climb,grips=b.surfaceSlime.contacts;
     // A real rig contact invokes jelloPlayerCouple, not a test-only detach.
     player.x=b.cx-PLAYER_W*.7;player.y=b.cy-PLAYER_H*.5;player.vx=145;player.vy=-20;

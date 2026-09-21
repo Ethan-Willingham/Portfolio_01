@@ -120,7 +120,7 @@ limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak 
 values, not guest recipes. Sky arrivals still use their existing surface-distance
 rules. This change does not implement the earlier day/night proposal.
 
-## Bath-born residents (v28.56)
+## Bath-born residents (v28.57)
 
 Five soft residents appear around the starting town for playtesting, including
 on existing saves. A completed warm bath changes a rocky guest into the same
@@ -128,8 +128,12 @@ kind of creature. Its shell fades during the last part of the soak, and its
 surface body spawns at the door after departure. It keeps its visitor identity,
 stays in the world, and saves separately from the rocky population. Reloading
 does not add another five. The payment still happens once per completed bath.
+Unhardening preserves the incoming visitor's individual radius through departure
+and saves. The exposed soft core uses 94% of that radius, as in the bath's shell
+fade. Starter residents and older saves use the sky visitors' 22 to 27 pixel
+radius range instead of the previous, larger 24 to 29 range.
 
-These are 37- or 61-point deformable meshes in the existing XPBD solver. Their
+These are 37-point deformable meshes in the existing XPBD solver. Their
 softly irregular radial rest shape, spring network and pressure constraints govern collisions
 with terrain, the rig, other gel bodies, and rocky guests. Softer edge and shear
 constraints let them slump, stretch, and wobble. While supported, viscous muscle
@@ -196,7 +200,7 @@ and arbitrary rolls, rolled ledge climbs, naturally changing gaits, and the
 pupil's inertial response and containment. `node tools/surface-slime-snail.mjs`
 checks pit approaches, sustained wall grip, idle wall pauses, player knock-off,
 and travelling deformation of the real skin. `node tools/surface-slime-smooth.mjs`
-checks both mesh sizes, physical continuity, legal muscle targets, deliberate
+checks small and large residents, physical continuity, legal muscle targets, deliberate
 walking bouts, rest/turn transitions and display interpolation at 30/60/144 Hz.
 Screenshots go to `/tmp`.
 

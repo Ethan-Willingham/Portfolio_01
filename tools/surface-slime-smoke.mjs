@@ -91,14 +91,21 @@ try {
     resetJello();surfaceSlimeRestore(saved);surfaceSlimeTick(1/60);
     var restored=surfaceSlimeSave(), unique=new Set(restored.residents.map(function(s){return s.id;}));
     var before=restored.residents.length;
-    var s=skySlimeFresh(0,0);s.bathed=true;
+    var s=skySlimeFresh(0,0);s.bathed=true;s.r=22.25;s.seed=.9;
     var g={s:s,paid:true};var released=bathReleaseGuest(g);
     var born=jelloBodies.filter(function(b){return b.surfaceSlime&&b.surfaceSlime.id===s.id;})[0];
     for(var n=0;n<1200;n++){surfaceSlimeTick(1/60);updateJello(1/60);}
-    return {before:before,restored:unique.size,ids:ids.join(',')===restored.residents.map(function(s){return s.id;}).join(','),released:released,born:!!born,stayed:jelloBodies.indexOf(born)>=0,after:surfaceSlimeSave().residents.length};
+    var stayed=jelloBodies.indexOf(born)>=0,bornRadius=born.surfaceSlime.radius;
+    var finalSave=JSON.parse(JSON.stringify(surfaceSlimeSave()));
+    resetJello();surfaceSlimeRestore(finalSave);
+    var reloaded=jelloBodies.filter(function(b){return b.surfaceSlime&&b.surfaceSlime.id===s.id;})[0];
+    return {before:before,restored:unique.size,ids:ids.join(',')===restored.residents.map(function(s){return s.id;}).join(','),released:released,born:!!born,stayed:stayed,after:surfaceSlimeSave().residents.length,
+      skyRadius:s.r,bornRadius:bornRadius,reloadedRadius:reloaded.surfaceSlime.radius,
+      startersSameRange:saved.residents.every(function(s){return s.r>=22&&s.r<=27;})};
   })()`);
   console.log('LIFECYCLE',life);
   check('save restores identities once and bathed guests stay',life.before===5&&life.restored===5&&life.ids&&life.released&&life.born&&life.stayed&&life.after===6);
+  check('unhardening and reloading keep the incoming sky visitor size',life.skyRadius===life.bornRadius&&life.bornRadius===life.reloadedRadius&&life.startersSameRange);
   const contact=await game(`(function(){
     resetJello();skySlimeReset();skySlimeNext=100000;surfaceSlimesSeeded=true;
     var x=(DECK_CENTER_COL-4)*TILE,floor=SKY_ROWS*TILE,b=surfaceSlimeBuild(x,floor-35,{seed:.3});
