@@ -54,6 +54,7 @@
     while (bed.bank + 1e-10 >= HEARTH_STEP) {
       hearthStepBed(bed); bed.bank = Math.max(0, bed.bank - HEARTH_STEP);
     }
+    hearthFireTick(dt);
     hearthToolTime += dt;
     hearthToolPulse = Math.max(0, hearthToolPulse - dt * 3.6);
   }

@@ -640,6 +640,7 @@
   }
 
   function render() {
+    if (hearthFireGPU) hearthFireGPU.hide();
     var _renderT0 = performance.now();
     // ---- Reset to native pixel space and clear ----
     ctx.setTransform(1, 0, 0, 1, 0, 0);

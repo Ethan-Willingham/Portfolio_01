@@ -4,7 +4,8 @@
   // oxidation. Only actual reactions contribute to boiler/forge output.
   function hearthFuelState(b) {
     if (b.volatile != null) return;
-    b.volatile = Math.min(0.28, Math.max(0, b.fuel - 0.72));
+    var volatileFraction = b.material === 'wood' ? 0.76 : 0.28;
+    b.volatile = Math.min(volatileFraction, Math.max(0, b.fuel - (1 - volatileFraction)));
     b.carbon = Math.max(0, b.fuel - b.volatile);
     b.moisture = b.lit || b.fuel < 0.99 ? 0 : 0.055 + b.seed * 0.045;
     b.core = b.lit ? b.heat * 0.65 : 0;
@@ -62,7 +63,7 @@
       b.oxygen += (target.oxygen - b.oxygen) * (1 - Math.exp(-h * 3));
       b.steam = 0; b.flame = 0; b.smoke = 0; b.reaction = 0;
       if (b.held) {
-        b.heat *= Math.exp(-h * 0.15); b.core += (b.heat - b.core) * h * 0.1; continue;
+        b.heat *= Math.exp(-h * 0.15); b.core += (b.heat - b.core) * h * 0.1; b.surfaceKelvin = 300 + b.heat * 1200; b.coreKelvin = 300 + b.core * 1200; continue;
       }
       var dry = Math.min(b.moisture, Math.max(0, b.heat - 0.12) * h * 0.10);
       b.moisture -= dry; b.steam = dry / h * 12;
@@ -84,6 +85,7 @@
       b.heat += (hot - b.heat) * (1 - Math.exp(-h * (hot > b.heat ? 0.72 : 0.22)));
       b.heat = Math.max(0, Math.min(1, b.heat - dry * 1.4));
       b.core += (b.heat - b.core) * (1 - Math.exp(-h * 0.24 * 32 / b.baseR));
+      b.surfaceKelvin = 300 + b.heat * 1200; b.coreKelvin = 300 + b.core * 1200;
       b.coating = Math.min(1, b.coating + char * 0.9);
       if (b.fuel < 0.00001) {
         b.fuel = 0; b.volatile = 0; b.carbon = 0; b.lit = false; b.ash = true; b.coating = 1;
@@ -105,7 +107,7 @@
     for (var i = 0; i < bed.chunks.length; i++) {
       var b = bed.chunks[i]; if (b.held) continue;
       if (!b.ash) { live++; fuel += b.fuel; oxygen += b.oxygen; }
-      counts[b.stage] = (counts[b.stage] || 0) + 1;
+      counts[b.stage] = (counts[b.stage] || 0) + (b.lit ? 20 : 1);
       if (counts[b.stage] > best) { best = counts[b.stage]; dominant = b.stage; }
     }
     if (!live) return 'Spent ash: rake the grate';

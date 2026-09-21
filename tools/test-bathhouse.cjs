@@ -33,7 +33,7 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','077-hearth-combustion','077-hearth-geometry','077-hearth-physics','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','077-hearth-combustion','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
     inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };

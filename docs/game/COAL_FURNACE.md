@@ -1,6 +1,10 @@
 # Coal furnace
 
-The boiler uses large polygonal coal bodies and a staged burn model. A new lump
+The boiler uses large polygonal coal bodies and a staged burn model. Since
+v28.63, WebGPU reacting flow owns combustion when available; see
+[FIRE_SIMULATION.md](FIRE_SIMULATION.md) for gas transport, oxygen, thermal
+exchange, persistence and measured performance. The combustion rates below
+describe the retained CPU fallback. A new lump
 has a 29 to 39 pixel bounding radius in the 320 by 210 firebox, compared with
 the former 13 to 20 pixel circles. Each unit still costs one coal from the
 locker. Previously saved lumps keep their paid fuel, lifetime and original size.
@@ -73,7 +77,8 @@ The controls remain coal placement, flint, bellows and the rake.
 
 ## Persistence and verification
 
-Hearth save version 2 stores the base/current radius, fuel reservoirs, moisture,
+Hearth save version 3 adds material identity and Kelvin temperatures to the
+version 2 state. It stores the base/current radius, fuel reservoirs, moisture,
 surface and core heat, oxygen, emissions, coating and burn phase. Old hearth
 saves migrate without increasing remaining fuel or extending purchased lifetime.
 Geometry and contact caches are regenerated. Held pieces reload released with
@@ -84,7 +89,8 @@ friction, support removal, crowded drops, polygon containment and picking,
 frame-rate independence, burn phases, material conservation, airflow, bellows,
 ash obstruction, malformed saves and migration.
 
-Run `node tools/coal-furnace-smoke.mjs` for a full game boot, real mouse and phone
+Run `node tools/fire-simulation-smoke.mjs` for the GPU fire and its numerical
+checks. Run `node tools/coal-furnace-smoke.mjs` for a CPU-fallback full game boot, real mouse and phone
 touch controls, staged fire screenshots, exact material save round trips,
 bounded frame cost and clean shader warm-up. It owns its Chrome for Testing
 process and saves screenshots outside the repository in `/tmp/sluice-coal-qa`.

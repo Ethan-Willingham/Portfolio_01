@@ -725,6 +725,7 @@
       !/[?&]cpuwater=1/i.test((window.location && window.location.search) || '');
     loadingTask('water', 'running', 'Creating the water backend and running its startup checks.');
     liquidWGPU = (_wantWGPULiquid && window.LiquidWGPU) ? window.LiquidWGPU.create(liquidWGPUOpts()) : null;
+    hearthFirePrepare();
     // v14.8 — WebGPU smoke port, Stage 1. Created dormant; it shares the
     // liquid module's GPUDevice (one WebGPU device for the whole game).
     // v14.28+ — smoke stays on WebGL (USE_WEBGPU_SMOKE off); only the water

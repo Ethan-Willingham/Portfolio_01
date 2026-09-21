@@ -35,7 +35,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.62">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.63">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -560,11 +560,11 @@
       var groups = ['Game files', 'Your mine', 'Fonts, moon & water', 'Scene & effects', 'Graphics queue'];
       var definitions = [
         ['script-liquid-wgpu', 'Water code', 0], ['script-smoke-wgpu', 'Smoke code', 0],
-        ['script-jello-wgpu', 'Slime code', 0], ['script-audio', 'Audio code', 0],
+        ['script-fire-wgpu', 'Fire code', 0], ['script-jello-wgpu', 'Slime code', 0], ['script-audio', 'Audio code', 0],
         ['script-smoke-presets', 'Smoke recipes', 0], ['script-sluice', 'Game code', 0],
         ['world', 'Prepare the mine', 1], ['font-regular', 'Regular HUD font', 2],
         ['font-bold', 'Bold HUD font', 2], ['moon', 'Moon image', 2], ['water', 'Water physics', 2],
-        ['scene', 'Draw the destination', 3], ['shaders', 'Warm drawing effects', 3], ['fence', 'Finish graphics work', 4]
+        ['fire', 'Fire physics', 3], ['scene', 'Draw the destination', 3], ['shaders', 'Warm drawing effects', 3], ['fence', 'Finish graphics work', 4]
       ];
       function active() { return root.getAttribute('data-state') !== 'ready'; }
       function settled(t) { return t.state === 'done' || t.state === 'fallback' || t.state === 'skipped'; }
@@ -743,7 +743,7 @@
       window.addEventListener('error', function (e) {
         var id = scriptId(e.target);
         if (id === 'script-sluice') fail('Could not download js/sluice.js', id);
-        else if (id) task(id, 'fallback', 'Could not download ' + new URL(e.target.src).pathname + '. ' + ({ 'script-audio': 'Sound unavailable.', 'script-liquid-wgpu': 'Using CPU water.', 'script-smoke-wgpu': 'Optional WebGPU smoke unavailable.', 'script-jello-wgpu': 'Using CPU slime physics.', 'script-smoke-presets': 'Using built-in smoke recipes.' })[id]);
+        else if (id) task(id, 'fallback', 'Could not download ' + new URL(e.target.src).pathname + '. ' + ({ 'script-audio': 'Sound unavailable.', 'script-liquid-wgpu': 'Using CPU water.', 'script-smoke-wgpu': 'Optional WebGPU smoke unavailable.', 'script-fire-wgpu': 'Using CPU fire.', 'script-jello-wgpu': 'Using CPU slime physics.', 'script-smoke-presets': 'Using built-in smoke recipes.' })[id]);
         else if (active() && /\/js\/sluice(?:\.js|\/)/.test(e.filename || '')) fail(e.error || e.message);
       }, true);
       window.addEventListener('unhandledrejection', function (e) {
@@ -913,11 +913,12 @@
       });
     })();
   </script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.62"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.62"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.62"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.62"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.62"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.62"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.63"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.63"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.63"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.63"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.63"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.63"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.63"></script>
 </body>
 </html>

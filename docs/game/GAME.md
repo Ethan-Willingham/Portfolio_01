@@ -35,7 +35,11 @@ an integrated boiler beneath the basin. Hover the boiler hatch to highlight it,
 then click or tap to open the coal view. Back to Bath (or Escape) returns to the
 room. Drag individual coal chunks from the bunker onto the grate, or tap the
 bunker to drop one. They collide, tumble, catch from neighboring fuel, glow,
-and burn down to ash. Bellows increase heat and fuel consumption.
+and burn down to ash. Bellows increase heat and fuel consumption. Since v28.63, a bounded WebGPU
+reacting-flow solver transports fuel, oxygen, soot, steam and heat around the
+actual coal polygons. Its reactions and heat exchanges drive combustion and
+boiler output. See [FIRE_SIMULATION.md](FIRE_SIMULATION.md) for the material model,
+quality tiers, fallback and verification.
 
 The forge has been retired. A reusable steel striker is supplied beside the
 boiler for new and existing saves. Stone still sometimes drops durable flint

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.62';
+  var GAME_VERSION = 'v28.63';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -4928,7 +4928,12 @@
     var water = liquidWGPU;
     loadingTask('moon', 'running', 'Loading and decoding assets/images/moon.jpg.');
     loadingTask('water', 'running', 'Waiting for the water backend and its startup checks.');
+    loadingTask('fire', 'running', 'Compiling and warming the combustion solver.');
     return Promise.all([
+      loadingAsset('fire', hearthFireReady, 8000, function () {
+        var ready = hearthFireGPU && hearthFireGPU.available;
+        return { ok: !!ready, detail: ready ? 'WebGPU combustion ready.' : 'Using the CPU fire fallback.' };
+      }, hearthFireCancel),
       fontReady('font-regular', '400 14px "Commit Mono"'),
       fontReady('font-bold', '700 24px "Commit Mono"'),
       loadingAsset('moon', moonImagePromise, 5000, function () {
@@ -16065,7 +16070,8 @@
   // oxidation. Only actual reactions contribute to boiler/forge output.
   function hearthFuelState(b) {
     if (b.volatile != null) return;
-    b.volatile = Math.min(0.28, Math.max(0, b.fuel - 0.72));
+    var volatileFraction = b.material === 'wood' ? 0.76 : 0.28;
+    b.volatile = Math.min(volatileFraction, Math.max(0, b.fuel - (1 - volatileFraction)));
     b.carbon = Math.max(0, b.fuel - b.volatile);
     b.moisture = b.lit || b.fuel < 0.99 ? 0 : 0.055 + b.seed * 0.045;
     b.core = b.lit ? b.heat * 0.65 : 0;
@@ -16123,7 +16129,7 @@
       b.oxygen += (target.oxygen - b.oxygen) * (1 - Math.exp(-h * 3));
       b.steam = 0; b.flame = 0; b.smoke = 0; b.reaction = 0;
       if (b.held) {
-        b.heat *= Math.exp(-h * 0.15); b.core += (b.heat - b.core) * h * 0.1; continue;
+        b.heat *= Math.exp(-h * 0.15); b.core += (b.heat - b.core) * h * 0.1; b.surfaceKelvin = 300 + b.heat * 1200; b.coreKelvin = 300 + b.core * 1200; continue;
       }
       var dry = Math.min(b.moisture, Math.max(0, b.heat - 0.12) * h * 0.10);
       b.moisture -= dry; b.steam = dry / h * 12;
@@ -16145,6 +16151,7 @@
       b.heat += (hot - b.heat) * (1 - Math.exp(-h * (hot > b.heat ? 0.72 : 0.22)));
       b.heat = Math.max(0, Math.min(1, b.heat - dry * 1.4));
       b.core += (b.heat - b.core) * (1 - Math.exp(-h * 0.24 * 32 / b.baseR));
+      b.surfaceKelvin = 300 + b.heat * 1200; b.coreKelvin = 300 + b.core * 1200;
       b.coating = Math.min(1, b.coating + char * 0.9);
       if (b.fuel < 0.00001) {
         b.fuel = 0; b.volatile = 0; b.carbon = 0; b.lit = false; b.ash = true; b.coating = 1;
@@ -16166,7 +16173,7 @@
     for (var i = 0; i < bed.chunks.length; i++) {
       var b = bed.chunks[i]; if (b.held) continue;
       if (!b.ash) { live++; fuel += b.fuel; oxygen += b.oxygen; }
-      counts[b.stage] = (counts[b.stage] || 0) + 1;
+      counts[b.stage] = (counts[b.stage] || 0) + (b.lit ? 20 : 1);
       if (counts[b.stage] > best) { best = counts[b.stage]; dominant = b.stage; }
     }
     if (!live) return 'Spent ash: rake the grate';
@@ -16415,7 +16422,7 @@
     var n = Math.sin(id * 127.1 + 311.7) * 43758.5453123;
     return n - Math.floor(n);
   }
-  function hearthAddChunk(kind, x, y) {
+  function hearthAddChunk(kind, x, y, material) {
     var bed = hearthBeds[kind];
     if (!bed || bed.chunks.length >= HEARTH_CAP) return null;
     var id = bed.nextId++, seed = hearthSeed(id + (bed.pilot ? 193 : 0));
@@ -16423,7 +16430,7 @@
     var b = { id: id, x: hearthNumber(x, 160, r, 320 - r),
       y: hearthNumber(y, 12, -80, 210 - r), vx: 0, vy: 0, r: r, baseR: r,
       angle: seed * Math.PI * 2, spin: 0, seed: seed,
-      life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false };
+      life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false, material: material === 'wood' ? 'wood' : 'coal' };
     hearthFuelState(b); hearthMass(b); hearthWorldHull(b);
     bed.chunks.push(b); hearthMeasure(bed);
     return b;
@@ -16450,6 +16457,7 @@
     if (b.ash || b.fuel <= 0 || b.held || b.lit) return false;
     hearthFuelState(b);
     b.lit = true; b.heat = Math.max(b.heat, 0.72); b.core = Math.max(b.core, 0.32);
+    if (typeof hearthFireIgnite === 'function') hearthFireIgnite(bed, b);
     hearthSparks(bed, b.x, b.y - b.r * 0.6, 9, 1);
     return true;
   }
@@ -16483,7 +16491,8 @@
     bed.fuelSeconds = fuel;
     // The forge concentrates one piece under the work. The wide boiler grate
     // needs three pieces for full output, or fewer with steady bellows work.
-    bed.power = Math.min(1, output * (bed.pilot ? 0.80 + bed.air * 0.35 : 0.39 + bed.air * 0.19));
+    bed.power = typeof hearthFireOwns === 'function' && hearthFireOwns(bed) ? Math.min(1, Math.max(0, hearthFireGPU.outputKW / 2.0)) :
+      Math.min(1, output * (bed.pilot ? 0.80 + bed.air * 0.35 : 0.39 + bed.air * 0.19));
   }
   function hearthStepBed(bed) {
     var h = HEARTH_STEP, bodies = bed.chunks, i, b;
@@ -16499,7 +16508,11 @@
     if (bodies.length) hearthSolve(bed);
     // Chemistry runs at 30 Hz, on the same fixed clock as the 120 Hz contacts.
     bed.burnClock++;
-    if (bed.burnClock >= 4) { hearthBurnStep(bed, h * 4); bed.burnClock = 0; }
+    if (bed.burnClock >= 4) {
+      if (typeof hearthFireOwns === 'function' && hearthFireOwns(bed)) hearthFireSyncBodies(bed, h * 4);
+      else hearthBurnStep(bed, h * 4);
+      bed.burnClock = 0;
+    }
     hearthMeasure(bed);
     bed.heat += (bed.power - bed.heat) * (1 - Math.exp(-h / (bed.power > bed.heat ? 2.6 : 9)));
     for (i = bed.sparks.length - 1; i >= 0; i--) {
@@ -16524,15 +16537,15 @@
     }
   }
   function hearthSave() {
-    var result = { version: 2 }, kinds = ['boiler', 'forge'];
+    var result = { version: 3 }, kinds = ['boiler', 'forge'];
     for (var k = 0; k < kinds.length; k++) {
       var bed = hearthBeds[kinds[k]], chunks = [];
       for (var i = 0; i < bed.chunks.length; i++) {
         var b = bed.chunks[i];
         chunks.push({ id: b.id, x: b.x, y: b.y, vx: b.held ? 0 : b.vx, vy: b.held ? 0 : b.vy,
           r: b.r, baseR: b.baseR, angle: b.angle, spin: b.held ? 0 : b.spin, seed: b.seed,
-          life: b.life, fuel: b.fuel, heat: b.heat, lit: b.lit, ash: b.ash,
-          volatile: b.volatile, carbon: b.carbon, moisture: b.moisture, core: b.core, oxygen: b.oxygen,
+          life: b.life, fuel: b.fuel, heat: b.heat, lit: b.lit, ash: b.ash, material: b.material || 'coal',
+          surfaceKelvin: b.surfaceKelvin || 300 + b.heat * 1200, coreKelvin: b.coreKelvin || 300 + b.core * 1200, volatile: b.volatile, carbon: b.carbon, moisture: b.moisture, core: b.core, oxygen: b.oxygen,
           flame: b.flame, smoke: b.smoke, steam: b.steam, reaction: b.reaction, coating: b.coating, stage: b.stage, devSupplied: b.devSupplied === true });
       }
       result[kinds[k]] = { chunks: chunks, nextId: bed.nextId, time: bed.time,
@@ -16556,7 +16569,7 @@
       for (var i = 0; i < Math.min(HEARTH_CAP, src.chunks.length); i++) {
         var raw = src.chunks[i];
         if (!raw || typeof raw !== 'object') continue;
-        var b = hearthAddChunk(kinds[k], raw.x, raw.y);
+        var b = hearthAddChunk(kinds[k], raw.x, raw.y, raw.material);
         var id = Math.floor(hearthNumber(raw.id, b.id, 1, 1e9));
         while (used[id]) id++;
         used[id] = true; b.id = id; bed.nextId = Math.max(bed.nextId, id + 1);
@@ -16577,11 +16590,16 @@
         b.held = false; b.devSupplied = raw.devSupplied === true;
         b.volatile = null; hearthFuelState(b);
         if (data.version >= 2) {
-          b.volatile = hearthNumber(raw.volatile, b.volatile, 0, Math.min(0.28, b.fuel));
+          b.volatile = hearthNumber(raw.volatile, b.volatile, 0, Math.min(b.material === 'wood' ? 0.76 : 0.28, b.fuel));
           b.carbon = hearthNumber(raw.carbon, b.fuel - b.volatile, 0, 1);
           if (Math.abs(b.carbon + b.volatile - b.fuel) > 1e-10) b.carbon = b.fuel - b.volatile;
           b.moisture = hearthNumber(raw.moisture, b.moisture, 0, 0.1);
           b.core = hearthNumber(raw.core, b.core, 0, 1);
+          if (data.version >= 3) {
+            b.surfaceKelvin = hearthNumber(raw.surfaceKelvin, 300 + b.heat * 1200, 300, 6000);
+            b.coreKelvin = hearthNumber(raw.coreKelvin, 300 + b.core * 1200, 300, 6000);
+            b.moisture = hearthNumber(raw.moisture, b.moisture, 0, 64);
+          }
           b.oxygen = hearthNumber(raw.oxygen, 1, 0, 1.25);
           b.flame = hearthNumber(raw.flame, 0, 0, 1); b.smoke = hearthNumber(raw.smoke, 0, 0, 1);
           b.steam = hearthNumber(raw.steam, 0, 0, 1); b.reaction = hearthNumber(raw.reaction, 0, 0, 1.5);
@@ -16597,7 +16615,66 @@
     return restored;
   }
   function hearthReset() {
+    if (typeof hearthFireGPU !== 'undefined' && hearthFireGPU && hearthFireGPU.available) hearthFireGPU.reset();
     hearthBeds.boiler = hearthMakeBed(false); hearthBeds.forge = hearthMakeBed(true);
+    if (typeof hearthFireBed !== 'undefined') hearthFireBed = hearthBeds.boiler;
+  }
+  /* ---- Reacting fire: shared-device lifecycle and authoritative thermal state ---- */
+  var hearthFireGPU = null, hearthFireReady = Promise.resolve(false), hearthFireBed = null;
+  var hearthFireDamper = 1, hearthFireIdle = 0, hearthFireGeneration = 0, hearthFireSleeping = false;
+  function hearthFireCancel() {
+    hearthFireGeneration++;
+    if (hearthFireGPU) hearthFireGPU.dispose();
+    hearthFireGPU = null; hearthFireBed = null;
+  }
+  function hearthFirePrepare() {
+    hearthFireCancel();
+    hearthFireReady = Promise.resolve(false);
+    var generation = hearthFireGeneration;
+    var water = liquidWGPU;
+    if (!water || !window.FireWGPU || /[?&]cpufire=1/.test(location.search)) return Promise.resolve(false);
+    hearthFireReady = Promise.resolve(water.readyPromise).then(function () {
+      if (generation !== hearthFireGeneration || water !== liquidWGPU || !water.available || !water.device) return false;
+      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: isMobile ? 128 : 192 });
+      window.__fire = hearthFireGPU;
+      return hearthFireGPU.readyPromise;
+    }).catch(function (e) { console.warn('Boiler fire uses CPU fallback:', e); return false; });
+    return hearthFireReady;
+  }
+  function hearthFireOwns(bed) {
+    return bed === hearthBeds.boiler && hearthFireGPU && hearthFireGPU.available && !hearthFireGPU.failed;
+  }
+  function hearthFireIgnite(bed, b) { if (hearthFireOwns(bed)) hearthFireGPU.ignite(b); }
+  function hearthFireSyncBodies(bed, h) {
+    for (var i = 0; i < bed.chunks.length; i++) {
+      var b = bed.chunks[i];
+      b.r += (b.baseR * Math.sqrt(0.20 + b.fuel * 0.80) - b.r) * (1 - Math.exp(-h * 1.5));
+      hearthMass(b);
+    }
+  }
+  function hearthFireTick(dt) {
+    var bed = hearthBeds.boiler;
+    if (!hearthFireOwns(bed)) return;
+    if (hearthFireBed !== bed) { hearthFireGPU.reset(); hearthFireBed = bed; hearthFireIdle = 0; hearthFireSleeping = false; }
+    // Empty and cold furnaces use no simulation submissions. A cooling plume
+    // gets time to vent after the last fuel body has been raked out.
+    var active = bed.chunks.some(function (b) { return b.lit || b.heat > 0.015; });
+    hearthFireIdle = active ? 0 : hearthFireIdle + dt;
+    if (hearthFireIdle > 5) {
+      if (!hearthFireSleeping) { hearthFireGPU.reset(); hearthFireSleeping = true; }
+      return;
+    }
+    hearthFireSleeping = false;
+    for (var i=0;i<bed.chunks.length;i++) hearthWorldHull(bed.chunks[i]);
+    hearthFireGPU.step(dt, bed.chunks, { air: bed.air, damper: hearthFireDamper });
+  }
+  function hearthFireDraw(c, bed, x, y, w, h) {
+    if (!hearthFireOwns(bed) || !bathMode || gamePaused || bathFading || !c.canvas || c.canvas !== canvas && c.canvas !== uiTopCanvas) return false;
+    var t=c.getTransform(), r=canvas.getBoundingClientRect(), parent=canvas.parentNode, pr=parent.getBoundingClientRect();
+    var sx=r.width/canvas.width, sy=r.height/canvas.height;
+    hearthFireGPU.draw({ x:r.left-pr.left+(t.a*x+t.c*y+t.e)*sx,
+      y:r.top-pr.top+(t.b*x+t.d*y+t.f)*sy, w:Math.abs(t.a*w)*sx, h:Math.abs(t.d*h)*sy },parent);
+    return true;
   }
   // ---- Coal and combustion art: independent of the saved hearth model. ----
   // A small advected temperature field starts at the live coal surfaces. Its
@@ -17065,8 +17142,9 @@
   // x/y/w/h map the simulation's 320 by 210 chamber without changing any body.
   function hearthDrawFirebox(c, bed, x, y, w, h, time, options) {
     if (!c || !bed || w <= 0 || h <= 0) return;
-    var field = hearthArtField(bed), chunks = bed.chunks || [];
-    hearthArtUpdate(field, bed, time);
+    var physical = typeof hearthFireDraw === 'function' && hearthFireDraw(c, bed, x, y, w, h);
+    var field = physical ? { active: bed.heat, sources: [] } : hearthArtField(bed), chunks = bed.chunks || [];
+    if (!physical) hearthArtUpdate(field, bed, time);
     var hot = field.active, air = Math.max(0, Math.min(1, bed.air == null ? 0.65 : Number(bed.air)));
     var i, row, col;
     c.save();
@@ -17098,9 +17176,11 @@
       c.fillStyle = hearthArtColor(BLD.stoneBase, 0.44);
       c.fillRect(Math.round(dustX), Math.round(dustY), 1 + (i % 3), 1);
     }
-    hearthArtVapors(c, chunks, Number(time) || 0);
-    c.imageSmoothingEnabled = false;
-    c.drawImage(field.canvas, 0, 0, 320, 210);
+    if (!physical) {
+      hearthArtVapors(c, chunks, Number(time) || 0);
+      c.imageSmoothingEnabled = false;
+      c.drawImage(field.canvas, 0, 0, 320, 210);
+    }
     // Contact shadows stay close to each actual hull.
     for (i = 0; i < chunks.length; i++) {
       var body = chunks[i];
@@ -17196,6 +17276,7 @@
     while (bed.bank + 1e-10 >= HEARTH_STEP) {
       hearthStepBed(bed); bed.bank = Math.max(0, bed.bank - HEARTH_STEP);
     }
+    hearthFireTick(dt);
     hearthToolTime += dt;
     hearthToolPulse = Math.max(0, hearthToolPulse - dt * 3.6);
   }
@@ -31101,6 +31182,7 @@
   }
 
   function render() {
+    if (hearthFireGPU) hearthFireGPU.hide();
     var _renderT0 = performance.now();
     // ---- Reset to native pixel space and clear ----
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -70403,6 +70485,7 @@
       !/[?&]cpuwater=1/i.test((window.location && window.location.search) || '');
     loadingTask('water', 'running', 'Creating the water backend and running its startup checks.');
     liquidWGPU = (_wantWGPULiquid && window.LiquidWGPU) ? window.LiquidWGPU.create(liquidWGPUOpts()) : null;
+    hearthFirePrepare();
     // v14.8 — WebGPU smoke port, Stage 1. Created dormant; it shares the
     // liquid module's GPUDevice (one WebGPU device for the whole game).
     // v14.28+ — smoke stays on WebGL (USE_WEBGPU_SMOKE off); only the water

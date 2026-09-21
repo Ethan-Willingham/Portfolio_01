@@ -464,8 +464,9 @@
   // x/y/w/h map the simulation's 320 by 210 chamber without changing any body.
   function hearthDrawFirebox(c, bed, x, y, w, h, time, options) {
     if (!c || !bed || w <= 0 || h <= 0) return;
-    var field = hearthArtField(bed), chunks = bed.chunks || [];
-    hearthArtUpdate(field, bed, time);
+    var physical = typeof hearthFireDraw === 'function' && hearthFireDraw(c, bed, x, y, w, h);
+    var field = physical ? { active: bed.heat, sources: [] } : hearthArtField(bed), chunks = bed.chunks || [];
+    if (!physical) hearthArtUpdate(field, bed, time);
     var hot = field.active, air = Math.max(0, Math.min(1, bed.air == null ? 0.65 : Number(bed.air)));
     var i, row, col;
     c.save();
@@ -497,9 +498,11 @@
       c.fillStyle = hearthArtColor(BLD.stoneBase, 0.44);
       c.fillRect(Math.round(dustX), Math.round(dustY), 1 + (i % 3), 1);
     }
-    hearthArtVapors(c, chunks, Number(time) || 0);
-    c.imageSmoothingEnabled = false;
-    c.drawImage(field.canvas, 0, 0, 320, 210);
+    if (!physical) {
+      hearthArtVapors(c, chunks, Number(time) || 0);
+      c.imageSmoothingEnabled = false;
+      c.drawImage(field.canvas, 0, 0, 320, 210);
+    }
     // Contact shadows stay close to each actual hull.
     for (i = 0; i < chunks.length; i++) {
       var body = chunks[i];

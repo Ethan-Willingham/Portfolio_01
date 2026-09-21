@@ -145,7 +145,12 @@
     var water = liquidWGPU;
     loadingTask('moon', 'running', 'Loading and decoding assets/images/moon.jpg.');
     loadingTask('water', 'running', 'Waiting for the water backend and its startup checks.');
+    loadingTask('fire', 'running', 'Compiling and warming the combustion solver.');
     return Promise.all([
+      loadingAsset('fire', hearthFireReady, 8000, function () {
+        var ready = hearthFireGPU && hearthFireGPU.available;
+        return { ok: !!ready, detail: ready ? 'WebGPU combustion ready.' : 'Using the CPU fire fallback.' };
+      }, hearthFireCancel),
       fontReady('font-regular', '400 14px "Commit Mono"'),
       fontReady('font-bold', '700 24px "Commit Mono"'),
       loadingAsset('moon', moonImagePromise, 5000, function () {
