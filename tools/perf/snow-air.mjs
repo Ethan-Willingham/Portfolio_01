@@ -26,6 +26,7 @@ for(let y=0;y<a.h;y++)for(let x=0;x<a.w;x++){
 }
 console.log({peak:a.peak,left,right,up,inside,surfaceLift,projection:[a.divergenceBefore,a.divergenceAfter],ms:a.ms});
 assert.ok(left < -25 && right>25,'impinging jet spreads along both sides of the floor');
+assert.ok(Math.abs(left+right)<(Math.abs(left)+Math.abs(right))*.1,'stationary vertical hover keeps a balanced two-sided wash');
 assert.ok(up < -8,'resolved returning airflow lifts powder outside the downward core');
 assert.ok(surfaceLift>100,'strong floor-parallel airflow entrains exposed powder');
 // Opposing local velocities can leave weak projected flow while surface
@@ -62,6 +63,55 @@ ctx.liquidWorldSolidAt=()=>false;ctx.liquidLineClear=()=>true;ctx.player.thrusti
 for(let i=0;i<90;i++)api.update(1/60);
 for(let i=3;i<a.field.length;i+=4)assert.equal(a.field[i],0,'a free jet cannot produce surface entrainment in midair');
 console.log('PASS projected nozzle flow, wall jets, recirculation, bounded floor entrainment, solid walls and idle shutdown');
+
+// Banked passes must put nearly all visible powder behind the travelling
+// rig. Move the nozzles through world space and mirror the whole fixture,
+// so a fixed leftward preference cannot satisfy the directional checks.
+for (const direction of [-1,1]) {
+  const rig = {x:0,y:60,vx:direction*220,vy:0,thrusting:true};
+  const angle = direction*.36;
+  const flightContext = vm.createContext({
+    performance, worldSnowEnabled:true, bathMode:false, gameOver:false, gameWon:false,
+    player:rig, PLAYER_W:22, PLAYER_H:25, rocketIntensity:1,
+    liquidWorldSolidAt:(x,y)=>y>=128&&y<160,
+    liquidPointInMiner:(x,y)=>x>rig.x&&x<rig.x+22&&y>rig.y&&y<rig.y+20,
+    rocketNozzles:()=>[7,15].map(x=>({
+      x:rig.x+11+(x-11)*Math.cos(angle)-10*Math.sin(angle),
+      y:rig.y+14+(x-11)*Math.sin(angle)+10*Math.cos(angle)
+    })),
+    rocketExhaustDir:()=>({x:-Math.sin(angle),y:Math.cos(angle)}),
+    liquidLineClear:(x0,y0,x1,y1)=>y1<128
+  });
+  const flight = vm.runInContext('(function(){'+source+';return {air:snowAir,update:updateSnowAir};})()',flightContext);
+  let forwardEnergy=0,rearEnergy=0,forwardMotion=0,trailingMotion=0;
+  for (let frame=0;frame<180;frame++) {
+    rig.x+=rig.vx/60;flight.update(1/60);
+    if (frame<30) continue; // Allow the input bank to ease into the wake.
+    const air=flight.air;
+    for (let y=0;y<air.h;y++) for (let x=0;x<air.w;x++) {
+      const wx=air.x+(x+.5)*air.cell,wy=air.y+(y+.5)*air.cell;
+      const ahead=(wx-rig.x-11)*direction;
+      if (wy<100||wy>=128||Math.abs(ahead)>192||Math.abs(ahead)<16) continue;
+      const i=(y*air.w+x)*4,u=air.field[i],v=air.field[i+1]-air.field[i+3];
+      assert.ok(Number.isFinite(u)&&Number.isFinite(v)&&Math.abs(u)<1500&&Math.abs(v)<1500,
+        'moving wake velocities stay finite and bounded');
+      const plumeEnergy=u*u+Math.max(0,-v)**2;
+      if (ahead>0) forwardEnergy+=plumeEnergy; else rearEnergy+=plumeEnergy;
+      if (u*direction>0) forwardMotion+=u*u; else trailingMotion+=u*u;
+    }
+  }
+  assert.ok(rearEnergy>1e6&&trailingMotion>1e6,'banked flight retains a substantial trailing plume');
+  assert.ok(forwardEnergy<rearEnergy*.02,'banked flight lofts powder behind the rig instead of ahead');
+  assert.ok(forwardMotion<trailingMotion*.02,'horizontal snow motion follows the banked exhaust direction');
+  console.log('DIRECTIONAL WAKE',{direction,forwardOverRear:forwardEnergy/rearEnergy,
+    opposingOverTrailing:forwardMotion/trailingMotion});
+  rig.thrusting=false;
+  for(let frame=0;frame<240;frame++)flight.update(1/60);
+  assert.equal(flight.air.active,false,'moving airflow also shuts down after thrust stops');
+  assert.equal(flight.air.trail,0,'idle clears directional steering for the next hover');
+  assert.ok(flight.air.field.every(v=>v===0),'idle clears every directional airflow channel');
+}
+console.log('PASS mirrored banked flights keep powder trailing while hover stays symmetric');
 
 // A short flyover must not apply the liquid's downward cone to powder as
 // well as its resolved air drag. Exercise the production CPU scatter and

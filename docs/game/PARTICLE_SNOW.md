@@ -99,6 +99,17 @@ The airflow decays after thrust stops and idles after three seconds.
 Its exported velocity blends into ambient air over the outer four cells,
 so the finite simulation rectangle has no abrupt influence boundary.
 
+During horizontal or banked flight, the snow coupling deliberately favors
+the visible exhaust direction. The nozzle no longer inherits forward rig
+velocity. A smooth directional weight reduces the wash ahead of the miner
+by up to 97% and opposing horizontal flow by up to 96%, including the surface
+lift it would generate. Powder reads as a trailing plume. The internal air
+projection remains intact, and CPU snow, GPU snow and loose flakes all read
+the same weighted field. Turns ease through neutral; a released wake retains
+its direction while fading. An upright stationary hover keeps its two-sided
+wash. This directional weighting is a game-feel choice, not a claim that
+real exhaust has no forward recirculation.
+
 Aerodynamic drag entrains existing snow, with reduced exposure inside dense
 powder. The WebGPU kernel updates resident particle velocity before P2G;
 CPU fallback samples the same field and applies the same drag. It wakes the
@@ -129,8 +140,9 @@ law. The projection approach follows standard incompressible fluid simulation;
 see [Bridson's course material](https://www.cs.ubc.ca/~rbridson/fluidsimulation/).
 
 The dedicated flyover test crosses fresh thin dusting and a deeper bed at
-220 world pixels per second, in opposite directions. It requires a visible
-plume during the pass, settling afterward, and exact accounting through
+220 world pixels per second, with actual left and right flight inputs so the
+rig and nozzles bank. It requires a visible trailing plume, less than 12%
+as much opposing horizontal snow motion, settling afterward, and exact accounting through
 snow, meltwater and absorption. The older long-hover check remains too.
 All buffers are bounded and reused. The air coupling shader is compiled
 during the existing GPU startup warmup.

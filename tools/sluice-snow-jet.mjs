@@ -17,7 +17,8 @@ const server = createServer((req, res) => {
   try {
     const file = path.resolve(root, '.' + new URL(req.url, 'http://localhost').pathname);
     if (!file.startsWith(root + '/')) { res.writeHead(403).end(); return; }
-    let data = fs.readFileSync(file);
+    let data = fs.readFileSync(file === path.join(root, 'js/sluice.js') && process.env.SLUICE_TEST_BUNDLE
+      ? process.env.SLUICE_TEST_BUNDLE : file);
     if (file === path.join(root, 'js/sluice.js')) {
       const src = data.toString(), i = src.lastIndexOf('})();');
       data = Buffer.from(src.slice(0, i) + 'window.__snowTest = function(source) { return eval(source); };\n' + src.slice(i));
@@ -74,12 +75,17 @@ try {
       window.pinPass=function(t){var dt=passLast?Math.min(.05,(t-passLast)/1000):0;passLast=t;
         var moving=passGo&&passDistance<560;var dx=moving?Math.min(220*dt,560-passDistance):0;passDistance+=dx;passX+=${direction}*dx;
         player.x=passX;player.y=sy-PLAYER_H-36;player.vx=moving?${direction}*220:0;player.vy=0;player.dir=${direction};
-        player.onGround=false;keys.ArrowUp=moving;window.passRaf=requestAnimationFrame(pinPass);};window.passRaf=requestAnimationFrame(pinPass);
-      window.passStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0;
-        function grain(x,y){minY=Math.min(minY,y);if(y<sy-25)lifted++;if(y<sy-55)high++;}
-        for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i]);else if(liquidType[i]===0)water++;}
-        for(var p of snow.grains)if(p.physical)grain(p.x,p.y);
-        return {lifted:lifted,high:high,height:sy-minY,distance:passDistance,initial:passInitial,
+        player.onGround=false;keys.ArrowUp=moving;keys.ArrowRight=moving&&${direction}>0;keys.ArrowLeft=moving&&${direction}<0;
+        window.passRaf=requestAnimationFrame(pinPass);};window.passRaf=requestAnimationFrame(pinPass);
+      window.passStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0,ahead=0,behind=0,forwardSpeed=0,backwardSpeed=0;
+        function grain(x,y,vx){minY=Math.min(minY,y);if(y<sy-25){lifted++;
+          if((x-player.x-PLAYER_W*.5)*${direction}>PLAYER_W*.5)ahead++;else behind++;
+          forwardSpeed+=Math.max(0,vx*${direction});backwardSpeed+=Math.max(0,-vx*${direction});}
+          if(y<sy-55)high++;}
+        for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i],liquidVX[i]);else if(liquidType[i]===0)water++;}
+        for(var p of snow.grains)if(p.physical)grain(p.x,p.y,p.vx);
+        return {lifted:lifted,high:high,height:sy-minY,distance:passDistance,initial:passInitial,ahead:ahead,behind:behind,
+          forwardSpeed:forwardSpeed,backwardSpeed:backwardSpeed,exhaustX:rocketExhaustDir().x,
           accounted:__particleSnow.stats().mass+water+rain.parked.length/2+rain.absorbed};};`);
     await sleep(1800);
     const resting=await game('passStats()');
@@ -94,9 +100,15 @@ try {
       if(t===12||t===20)await screenshot(`snow-fresh-pass-${depth}-${t}`);
       if(s.distance>=560)break;
     }
-    console.log('FRESH PASS',{depth,direction,initial:resting.initial,peak,high,height,liftedFraction:peak/resting.initial,samples:samples.map(s=>[Math.round(s.distance),s.lifted])});
-    check('a moving pass lifts a plume from fresh snow',peak>resting.initial*.08&&high>5&&height>60);
-    await game('cancelAnimationFrame(passRaf);keys.ArrowUp=false');
+    const ahead=samples.reduce((n,s)=>n+s.ahead,0),behind=samples.reduce((n,s)=>n+s.behind,0);
+    const forwardSpeed=samples.reduce((n,s)=>n+s.forwardSpeed,0),backwardSpeed=samples.reduce((n,s)=>n+s.backwardSpeed,0);
+    console.log('FRESH PASS',{depth,direction,initial:resting.initial,peak,high,height,liftedFraction:peak/resting.initial,ahead,behind,forwardSpeed,backwardSpeed,
+      samples:samples.map(s=>[Math.round(s.distance),s.lifted,s.ahead,Number(s.exhaustX.toFixed(2))])});
+    // A banked plume should stay low and trail the exhaust. Requiring the
+    // old upright pass's high front arc would reward the unwanted blowback.
+    check('a moving pass lifts a trailing plume from fresh snow',peak>resting.initial*.08&&height>30);
+    check('banked flight sends nearly all spray with the exhaust',forwardSpeed<backwardSpeed*.12&&ahead<behind*.05);
+    await game('cancelAnimationFrame(passRaf);keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false');
     await sleep(5000);
     check('pass airflow shuts down',await game('!snowAir.active'));
     const settled=await game('passStats()');

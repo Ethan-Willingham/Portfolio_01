@@ -2,7 +2,7 @@
      Velocity advection + pressure projection, driven by the actual nozzles.
      No snow is emitted here: this field moves the existing particle mass. */
   var snowAir = { w: 64, h: 48, cell: 8, x: 0, y: 0, active: false, life: 0,
-    revision: 0, time: 0, ms: 0, peak: 0, divergenceBefore: 0, divergenceAfter: 0 };
+    revision: 0, time: 0, ms: 0, peak: 0, trail: 0, divergenceBefore: 0, divergenceAfter: 0 };
   (function () {
     var n = snowAir.w * snowAir.h;
     ['u', 'v', 'tu', 'tv', 'pressure', 'divergence'].forEach(function (key) { snowAir[key] = new Float32Array(n); });
@@ -10,7 +10,7 @@
     snowAir.field = new Float32Array(n * 4);
   })();
   function snowAirReset() {
-    snowAir.active = false; snowAir.life = snowAir.time = snowAir.peak = 0;
+    snowAir.active = false; snowAir.life = snowAir.time = snowAir.peak = snowAir.trail = 0;
     snowAir.u.fill(0); snowAir.v.fill(0); snowAir.field.fill(0); snowAir.revision++;
   }
   function snowAirBilerp(a, x, y) {
@@ -91,6 +91,17 @@
       a.solid[y * w + x] = liquidWorldSolidAt(wx, wy) || liquidPointInMiner(wx, wy) ? 1 : 0;
     }
     var nozzles = firing ? rocketNozzles() : [], dir = rocketExhaustDir();
+    // Read the same bank as the visible jets. In horizontal flight, powder
+    // should stream into the exhaust's wake, not leap ahead of the miner.
+    // A vertical hover keeps its two-sided wash. Ease turns through neutral
+    // so an existing plume does not snap across the rig on a reversal.
+    var travel = Math.max(0, Math.min(1, (Math.abs(player.vx) - 20) / 100));
+    var bank = Math.max(0, Math.min(1, (Math.abs(dir.x) - 0.04) / 0.18));
+    var bias = Math.max(travel, bank);
+    bias = bias * bias * (3 - 2 * bias);
+    var tail = Math.abs(dir.x) > 0.04 ? Math.sign(dir.x) : -Math.sign(player.vx);
+    // After release, keep the fading wake's last direction until it idles.
+    if (firing) a.trail += (tail * bias - a.trail) * (1 - Math.exp(-10 * dt));
     var steps = Math.max(1, Math.ceil(Math.min(dt, 0.05) / (1 / 90))), step = Math.min(dt, 0.05) / steps;
     for (var sub = 0; sub < steps; sub++) {
       // Advect each velocity component from its own staggered face position.
@@ -117,7 +128,7 @@
           if (along < 0 || along > 40 || !liquidLineClear(nz.x, nz.y, nz.x + dx, nz.y + dy)) continue;
           var inlet = Math.exp(-across * across / 90) * Math.pow(1 - along / 40, 2);
           var force = (1 - Math.exp(-32 * step * inlet)) * rocketIntensity;
-          a.u[ni] += (dir.x * 1100 + player.vx * 0.25 - a.u[ni]) * force;
+          a.u[ni] += (dir.x * 1100 - a.u[ni]) * force;
           a.v[ni] += (dir.y * 1100 + player.vy * 0.15 - a.v[ni]) * force;
         }
       }
@@ -134,6 +145,16 @@
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
       edge = edge * edge * (3 - 2 * edge);
       ux *= edge; vy *= edge;
+      // Art-directed snow coupling, shared by CPU, GPU and loose flakes.
+      // Preserve the projected air internally, but reserve nearly all of
+      // its visible spray for the trailing side during banked flight.
+      var steer = Math.abs(a.trail), rear = a.trail < 0 ? -1 : 1;
+      var forward = Math.max(0, Math.min(1,
+        (-(ox + (bx + 0.5) * cell - player.x - PLAYER_W * 0.5) * rear + 8) / 40));
+      forward = forward * forward * (3 - 2 * forward);
+      var wake = 1 - 0.97 * steer * forward;
+      if (ux * rear < 0) ux *= 1 - 0.96 * steer;
+      ux *= wake; vy *= wake;
       // The 8px air grid cannot resolve grain-scale turbulent lift at the
       // ground. Strong tangential flow scours exposed powder into the wall
       // jet; the resolved eddies then carry it. Keep this entrainment speed
