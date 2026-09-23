@@ -130,6 +130,18 @@ try {
   }
   check('current bundle boots the fire room', await game("introPhase==='done' && ENABLE_BATH && typeof hearthRoomLayout==='function'"));
   check('shader warm-up is clean', await ev('window.__shaderWarm.errors.length===0'));
+  const reconstruction=await game(`(function(){
+    var bed=hearthMakeBed(false),field=hearthArtField(bed),out=document.createElement('canvas');
+    // A sharp source-cell boundary isolates upsampling from flame motion.
+    field.ctx.fillStyle='#000';field.ctx.fillRect(0,0,HEARTH_ART_W,HEARTH_ART_H);
+    field.ctx.fillStyle='#fff';field.ctx.fillRect(HEARTH_ART_W/2,0,HEARTH_ART_W/2,HEARTH_ART_H);
+    out.width=out.height=640;var c=out.getContext('2d',{willReadFrequently:true});c.imageSmoothingEnabled=false;
+    hearthDrawFirebox(c,bed,0,0,640,640,0);
+    var pixels=c.getImageData(310,400,20,1).data,intermediate=0;
+    for(var i=0;i<20;i++)if(pixels[i*4]>12 && pixels[i*4]<243)intermediate++;
+    return {intermediate:intermediate,restored:!c.imageSmoothingEnabled};
+  })()`);
+  check('CPU flame cells interpolate smoothly without changing other canvas art',reconstruction.intermediate>=3 && reconstruction.restored);
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
   await sleep(500);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;hearthRoomReset();forgeStock.coal=30;forgeStock.flint=1;forgeStock.steel=1;bathMode=true;bathFading=false;gamePaused=false;hearthSetView("boiler");render()');

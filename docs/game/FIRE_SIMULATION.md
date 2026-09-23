@@ -110,6 +110,13 @@ GPU draw complete behind the loading cover. Timeout and reset generations cancel
 late initialization. Device loss retires the fire instance; the legacy CPU model
 continues from the last acknowledged material state.
 
+Since v28.66, the fire compilation deadline starts after the bounded water-device
+gate settles. Previously the two eight-second timers ran together, so waiting
+for water could cancel a healthy fire startup. A failed water device still
+selects fallback immediately. The CPU flame field now uses smooth image
+interpolation, scoped to the flame draw, instead of enlarging its cells with
+nearest-neighbor sampling.
+
 A transparent DOM canvas renders directly from resident GPU fields. It follows
 both the full boiler and the small hatch beneath the bath, and hides on pause,
 transitions and leaving the room. Display resolution is capped at 1.5 device
@@ -135,6 +142,12 @@ simulation updates the selection on its next step. `snapshot()` is a diagnostic
 full-field readback, never used in the gameplay loop.
 
 ## Cost and verification
+
+`node tools/test-fire-startup.cjs` checks slow shared-device startup and bounded
+water/fire failures with a deterministic clock. `SLOW_FIRE_BOOT=1 QUICK=1 node
+tools/fire-simulation-smoke.mjs` also boots the real browser with a delayed water
+device and fire warm-up. The CPU browser test checks interpolation in actual
+rendered pixels as well as preserving the surrounding canvas settings.
 
 Desktop uses 192 by 192 cells; mobile uses 128 by 128. There are at most twenty-four
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch

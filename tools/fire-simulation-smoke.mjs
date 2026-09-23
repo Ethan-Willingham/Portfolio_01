@@ -24,7 +24,18 @@ const server = createServer((req, res) => {
     if (!file.startsWith(root + '/')) { res.writeHead(403).end(); return; }
     let data = fs.readFileSync(file);
     if (file === path.join(root, 'js/sluice.js')) {
-      const src = data.toString(), end = src.lastIndexOf('})();');
+      let src = data.toString();
+      if(process.env.SLOW_FIRE_BOOT) src=src.replace('    hearthFirePrepare();',`    (function(){
+        liquidWGPU.readyPromise=Promise.all([liquidWGPU.readyPromise,new Promise(r=>setTimeout(r,6500))]);
+        var create=window.FireWGPU.create;
+        window.FireWGPU.create=function(options){
+          window.FireWGPU.create=create;var sim=create(options);
+          sim.readyPromise=Promise.all([sim.readyPromise,new Promise(r=>setTimeout(r,3000))]).then(v=>v[0]);
+          return sim;
+        };
+      })();
+      hearthFirePrepare();`);
+      const end = src.lastIndexOf('})();');
       assert(end >= 0, 'bundle IIFE seam exists');
       data = Buffer.from(src.slice(0, end) + 'window.__hearthTest = function(source) { return eval(source); };\n' + src.slice(end));
     }
@@ -95,6 +106,7 @@ try {
 
   console.log('FIRE INIT', await game('({available:window.__fire?.available,errors:window.__fire?.errors,waterReady:liquidWGPU?.available,waterLive:liquidWGPU?.simActive})'));
   check('WebGPU reacting fire compiled', await ev('!!window.__fire && __fire.available && !__fire.failed'));
+  if(process.env.SLOW_FIRE_BOOT)check('delayed device startup keeps GPU fire instead of timing out to pixelated fallback',await ev('SluiceLoading.reports()[0].tasks.find(t=>t.id==="fire").state==="done"'));
   const kernelResults = await game('(' + checkFireKernels.toString() + ')(liquidWGPU.device)');
   for(const r of kernelResults) { console.log('KERNEL',r);check(r.label,r.pass); }
   const materialResults = await game('(' + checkFireMaterials.toString() + ')(liquidWGPU.device)');

@@ -502,8 +502,11 @@
     }
     if (!physical) {
       hearthArtVapors(c, chunks, Number(time) || 0);
-      c.imageSmoothingEnabled = false;
+      // This field is deliberately coarse for CPU fallback. Reconstruct its
+      // light smoothly instead of magnifying each cell into a visible block.
+      c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
       c.drawImage(field.canvas, 0, 0, 320, 210);
+      c.restore();
     }
     // Contact shadows stay close to each actual hull.
     for (i = 0; i < chunks.length; i++) {

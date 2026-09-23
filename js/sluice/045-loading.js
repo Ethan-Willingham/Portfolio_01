@@ -145,23 +145,35 @@
     var water = liquidWGPU;
     loadingTask('moon', 'running', 'Loading and decoding assets/images/moon.jpg.');
     loadingTask('water', 'running', 'Waiting for the water backend and its startup checks.');
-    loadingTask('fire', 'running', 'Compiling and warming the combustion solver.');
-    return Promise.all([
-      loadingAsset('fire', hearthFireReady, 8000, function () {
+    loadingTask('fire', 'running', 'Waiting for the shared water GPU device.');
+    var waterReady = loadingAsset('water', water && water.readyPromise, 8000, function () {
+      var gpu = water && liquidWGPU === water && water.simActive && !water.failed;
+      var cpuRequested = /[?&]cpuwater=1/i.test(location.search) || !USE_WEBGPU_LIQUID;
+      if (window.SluiceLoading) window.SluiceLoading.environment({ water: gpu ? 'WebGPU' : 'CPU' });
+      return { ok: gpu || cpuRequested, detail: gpu ? 'WebGPU water solver ready.' : cpuRequested ? 'CPU water solver selected.' : 'WebGPU unavailable. Using the CPU water solver.' };
+    }, function () { abandonLoadingGPU(water); });
+    // Fire compilation depends on water's device. Its own bounded deadline
+    // starts after that dependency settles, rather than expiring alongside it.
+    var fireReady = waterReady.then(function () {
+      if (!water || water !== liquidWGPU || !water.available || water.failed) {
+        hearthFireCancel();
+        loadingTask('fire', 'fallback', 'Using the CPU fire fallback. No shared GPU device is available.');
+        return;
+      }
+      loadingTask('fire', 'running', 'Compiling and warming the combustion solver.');
+      return loadingAsset('fire', hearthFireReady, 8000, function () {
         var ready = hearthFireGPU && hearthFireGPU.available;
         return { ok: !!ready, detail: ready ? 'WebGPU combustion ready.' : 'Using the CPU fire fallback.' };
-      }, hearthFireCancel),
+      }, hearthFireCancel);
+    });
+    return Promise.all([
+      fireReady,
       fontReady('font-regular', '400 14px "Commit Mono"'),
       fontReady('font-bold', '700 24px "Commit Mono"'),
       loadingAsset('moon', moonImagePromise, 5000, function () {
         return { ok: moonImageReady, detail: moonImageReady ? 'Moon image decoded: ' + moonTexW + 'x' + moonTexH + '.' : 'Using the procedural moon disc.' };
       }),
-      loadingAsset('water', water && water.readyPromise, 8000, function () {
-        var gpu = water && liquidWGPU === water && water.simActive && !water.failed;
-        var cpuRequested = /[?&]cpuwater=1/i.test(location.search) || !USE_WEBGPU_LIQUID;
-        if (window.SluiceLoading) window.SluiceLoading.environment({ water: gpu ? 'WebGPU' : 'CPU' });
-        return { ok: gpu || cpuRequested, detail: gpu ? 'WebGPU water solver ready.' : cpuRequested ? 'CPU water solver selected.' : 'WebGPU unavailable. Using the CPU water solver.' };
-      }, function () { abandonLoadingGPU(water); })
+      waterReady
     ]).then(function () {
       gameLoadingAssetsReady = true;
       introSettledFrames = 0;
