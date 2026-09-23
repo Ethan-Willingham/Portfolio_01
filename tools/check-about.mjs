@@ -23,7 +23,6 @@ const models = json('tools/about-models.json');
 const stats = json('tools/about-stats.json');
 const ledger = json('tools/about-attribution-ledger.json');
 const attr = data('js/git-attribution-data.js');
-const projectUsage = data('js/project-usage-data.js');
 const hist = data('js/git-history-data.js');
 const size = data('js/site-size-data.js');
 const about = readFileSync(join(REPO, 'about.html'), 'utf8');
@@ -136,25 +135,6 @@ for (const model of attr.models) {
   check(model.tokens === Math.round(base.tokens + sum(daily.map(d => d.totalTokens))), `${model.id} fuel tokens disagree with the usage ledger`);
   check(model.cost === Math.round(base.cost + sum(daily.map(d => d.cost))), `${model.id} fuel cost disagrees with the usage ledger`);
 }
-check(projectUsage.version === 1 && projectUsage.cutoff === stats.collection.cutoff, 'project usage cutoff differs from headline usage');
-check(projectUsage.total === displayTokens, 'project coverage does not reconcile to the headline');
-const projectTotal = sum(Object.values(projectUsage.posts).map(p => p.tokens));
-check(projectTotal + sum(Object.values(projectUsage.buckets)) === displayTokens, 'page totals and coverage buckets do not sum to the headline');
-check(projectUsage.recovered + projectUsage.buckets.missing === displayTokens, 'recovered usage and missing records do not reconcile');
-check(projectUsage.historicalRecovered <= stats.legacy.tokens, 'recovered historic usage exceeds its existing baseline');
-for (const [key, p] of Object.entries(projectUsage.posts)) {
-  check(postKeys.has(key), `full usage refers to unknown page ${key}`);
-  check(Number.isSafeInteger(p.tokens) && p.tokens > 0, `${key} has invalid full usage`);
-  check(p.tokens === sum([p.input, p.cacheWrite, p.cacheRead, p.output]), `${key} full token categories do not sum`);
-  check(p.tokens === sum(Object.values(p.models)), `${key} full usage model shares do not sum`);
-  check(p.first <= p.last && p.last <= projectUsage.cutoff && p.firstDay <= p.lastDay, `${key} has invalid usage dates`);
-  for (const id of Object.keys(p.models)) check(Boolean(projectUsage.models[id]), `${key} is missing display metadata for ${id}`);
-}
-for (const [key, n] of Object.entries(projectUsage.buckets)) check(Number.isSafeInteger(n) && n >= 0, `invalid project coverage bucket ${key}`);
-check(sum(projectUsage.shared.map(g => g.tokens)) <= projectUsage.buckets.shared, 'named shared groups exceed the shared usage bucket');
-for (const g of projectUsage.shared) check(g.projects.length > 1 && new Set(g.projects).size === g.projects.length && g.projects.every(k => postKeys.has(k)) && Number.isSafeInteger(g.tokens) && g.tokens > 0, 'invalid shared project group');
-check(!/\/Users\/|[A-Z]:\\\\Users\\\\|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(JSON.stringify(projectUsage)), 'public project usage contains a private path or raw session ID');
-check(about.includes('src="js/project-usage-data.js"'), 'About page does not load full project usage');
 check(generatedDaysOld(attr.generated) < 2, 'attribution data is more than two days old');
 
 check(size.totalBytes === sum(size.categories.map(c => c.bytes)), 'site-size categories do not equal totalBytes');

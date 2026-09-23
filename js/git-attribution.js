@@ -1,14 +1,13 @@
-/* "Which mind built which page" — the per-post model-attribution visualization.
+/* "Which mind built which page", the per-post model-attribution visualization.
    A grid of tinted metric cards (one per post: lead model, count, a split bar,
    washed with the lead model's colour), a detail tray that pops up anchored at the
-   clicked card (a bottom sheet on mobile), an Edits<->Tokens toggle. Cards appear
+   clicked card (a bottom sheet on mobile). Cards show recorded file changes and appear
    on scroll; numbers are static. Renders into #ma-root; no external deps. */
 (function () {
   'use strict';
   var DATA = window.GIT_ATTRIBUTION;
-  var USAGE = window.PROJECT_USAGE;
   var root = document.getElementById('ma-root');
-  if (!DATA || !USAGE || !root) return;
+  if (!DATA || !root) return;
 
   var REDUCE = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var MODELS = DATA.models;
@@ -20,8 +19,6 @@
   var POSTS = DATA.posts.filter(function (p) { return !HIDDEN_TILES[p.key]; });
   var MID = {};
   MODELS.forEach(function (m) { MID[m.id] = m; });
-  Object.keys(USAGE.models).forEach(function (id) { if (!MID[id]) MID[id] = USAGE.models[id]; });
-  function usage(post) { return USAGE.posts[post.key]; }
 
   // ---------- build-effort per post, derived from the commit log (window.GIT_HISTORY) ----------
   var EFFORT = {};
@@ -49,7 +46,6 @@
   // prefer the commit log's real first/last dates so header, day-count and sparkline agree
   function postDates(post) { var e = EFFORT[post.key]; return e ? dateRange(e.firstYMD, e.lastYMD) : dateRange(post.first, post.last); }
 
-  var metric = 'tokens'; // 'tokens' | 'edits' — tokens leads, and the grid sorts by it
   var activeModel = null; // model id the grid is filtered to, or null for "all"
 
   // ---------- formatting ----------
@@ -60,8 +56,8 @@
     if (n >= 1e3) return Math.round(n / 1e3) + 'K';
     return Math.round(n).toString();
   }
-  function fmtVal(n) { return metric === 'tokens' ? fmtTok(n) : fmtEdits(n); }
-  function fmtFull(n) { return metric === 'tokens' ? fmtTok(n) + ' tokens' : fmtEdits(n) + (n === 1 ? ' change' : ' changes'); }
+  function fmtVal(n) { return fmtEdits(n); }
+  function fmtFull(n) { return fmtEdits(n) + (n === 1 ? ' change' : ' changes'); }
   function fmtDate(s) { // "2026-06-10" -> "Jun 10"
     var mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var p = s.split('-'); return mo[(+p[1]) - 1] + ' ' + (+p[2]);
@@ -73,22 +69,21 @@
     return fmtDate(a) + ' – ' + fmtDate(b);
   }
 
-  // value of a model within a post for the current metric
-  function val(post, mid) { return metric === 'tokens' ? ((usage(post) || {}).models || {})[mid] || 0 : (post.models[mid] || {}).edits || 0; }
-  function total(post) { return metric === 'tokens' ? (usage(post) || {}).tokens || 0 : post.edits; }
-  // order the posts by the current metric (desc), tie-broken by the other metric then key
+  // Recorded file changes by model; full usage stays in the model badges above.
+  function val(post, mid) { return (post.models[mid] || {}).edits || 0; }
+  function total(post) { return post.edits; }
+  // Order posts by recorded changes, then key
   // so the sort is fully deterministic and the same post never "jitters" between equal neighbours
   function sortPosts() {
     POSTS.sort(function (a, b) {
       return (total(b) - total(a)) ||
-        (metric === 'tokens' ? b.edits - a.edits : ((usage(b) || {}).tokens || 0) - ((usage(a) || {}).tokens || 0)) ||
         (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
     });
   }
   // ordered [{m, v, pct}] desc, only models that contributed
   function split(post) {
     var t = total(post) || 1;
-    var arr = Object.keys(metric === 'tokens' ? (usage(post) || {}).models || {} : post.models).map(function (mid) {
+    var arr = Object.keys(post.models).map(function (mid) {
       return { m: MID[mid], v: val(post, mid), pct: val(post, mid) / t * 100 };
     }).filter(function (x) { return x.m && x.v > 0; });
     arr.sort(function (a, b) { return b.v - a.v; });
@@ -143,7 +138,7 @@
   var chipById = {};
   // list the models by how much they were used (most tokens first): 4.8, 4.7, ...
   MODELS.slice().sort(function (a, b) { return b.tokens - a.tokens; }).forEach(function (m) {
-    var builtCount = POSTS.filter(function (p) { return (p.models[m.id] || {}).edits > 0 || ((usage(p) || {}).models || {})[m.id]; }).length;
+    var builtCount = POSTS.filter(function (p) { return (p.models[m.id] || {}).edits > 0; }).length;
     var built = builtCount > 0;
     var interactive = built || !!m.note;  // fuel-only models (a note, no per-page tiles) are clickable too
     var chip = document.createElement(interactive ? 'button' : 'div');
@@ -181,11 +176,11 @@
   hint.appendChild(clearBtn);
 
   // ---------- filtering ----------
-  // a post matches when the active model contributed any change or token to it
+  // A post matches when the active model has recorded changes to it.
   function matchesFilter(post) {
     if (!activeModel) return true;
     var r = post.models[activeModel];
-    return !!((r && r.edits > 0) || ((usage(post) || {}).models || {})[activeModel]);
+    return !!(r && r.edits > 0);
   }
   // show/hide the tiles for the current filter; re-reveal the surviving tiles with a quick stagger
   function applyFilter(animate) {
@@ -237,29 +232,17 @@
     refreshCollapse(true); // the filter changed the row count; re-clamp (or open up) to match
   }
 
-  // ---------- build: metric toggle ----------
-  var controls = document.createElement('div');
-  controls.className = 'ma-controls';
-  controls.innerHTML =
-    '<div class="ma-toggle" role="tablist" aria-label="Choose how to measure each model\'s share">' +
-    '<button class="ma-seg is-on" role="tab" aria-selected="true" data-m="tokens">Total tokens</button>' +
-    '<button class="ma-seg" role="tab" aria-selected="false" data-m="edits">Changes</button>' +
-    '<span class="ma-seg-glider" aria-hidden="true"></span>' +
-    '</div>' +
-    '<p class="ma-controls-note" id="ma-note">Recovered input + cache + output. Earlier usage may be missing.</p>';
-
   // ---------- build: card grid ----------
   function cardInner(post, parts) {
-    var top = parts[0], u = usage(post), unknown = metric === 'tokens' && !u;
+    var top = parts[0];
     var arch = post.kind === 'archived' ? '<span class="cv-arch">(archived)</span>' : '';
-    var chip = top ? '<i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span>' : '<span class="cv-chipn">Usage unavailable</span>';
-    var when = metric === 'tokens' ? (u ? 'Recovered · ' + dateRange(u.firstDay, u.lastDay) : 'No individual total recovered') : postDates(post);
-    return '<div class="cv-top"><span class="cv-chip">' + chip + '</span><span class="cv-val' + (unknown ? ' is-unknown' : '') + '">' + (unknown ? 'Unknown' : fmtVal(total(post))) + '</span></div>' +
-      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + when + '</div>';
+    var chip = top ? '<i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span>' : '';
+    return '<div class="cv-top"><span class="cv-chip">' + chip + '</span><span class="cv-val">' + fmtVal(total(post)) + '<small>changes</small></span></div>' +
+      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + postDates(post) + '</div>';
   }
   var grid = document.createElement('div');
   grid.className = 'cv-grid';
-  sortPosts(); // lay the cards out biggest-first by the default metric (tokens)
+  sortPosts(); // Lay the cards out by recorded changes, biggest first.
   var ANIM = !REDUCE && ('IntersectionObserver' in window);
   POSTS.forEach(function (post) {
     var parts = split(post);
@@ -272,63 +255,6 @@
     if (ANIM) b.style.opacity = '0';   // revealed on scroll-in
     else growBars(b.querySelector('.cv-bar'));
   });
-
-  // repaint a card for the current metric
-  function paintTile(post) {
-    var parts = split(post), el = post._el;
-    el.innerHTML = cardInner(post, parts);
-    growBars(el.querySelector('.cv-bar'));
-  }
-
-  // re-sort + re-lay-out the grid for the current metric using a FLIP glide.
-  // FLIP = measure First rects, reorder the DOM, measure Last rects, Invert each card with a
-  // transform back to where it was, then Play to none. Only `transform` (and the split-bar
-  // `width`) animate, both compositor-cheap, so even the full ~50-card grid re-sorts smoothly
-  // without thrashing layout or pegging the CPU. Reads and writes are batched into separate
-  // passes so the whole move forces only a couple of reflows.
-  var flipTok = 0, flipTimer = 0;
-  function reorderGrid() {
-    var go = !REDUCE && !document.hidden;
-    // FIRST — where each visible card sits right now (one batched read)
-    if (go) POSTS.forEach(function (p) {
-      p._r0 = p._el.style.display === 'none' ? null : p._el.getBoundingClientRect();
-    });
-    // reorder the DOM into the new sort + repaint every tile for the new metric
-    sortPosts();
-    POSTS.forEach(function (p) { paintTile(p); grid.appendChild(p._el); });
-    if (!go) return;
-    // LAST — read all the new positions before touching any styles (no read/write interleave)
-    var r1 = POSTS.map(function (p) {
-      return (!p._r0 || p._el.style.display === 'none') ? null : p._el.getBoundingClientRect();
-    });
-    // INVERT — translate each card back to its old spot, instantly
-    var moved = [];
-    POSTS.forEach(function (p, i) {
-      if (!r1[i]) return;
-      var dx = p._r0.left - r1[i].left, dy = p._r0.top - r1[i].top;
-      if (!dx && !dy) return;
-      var el = p._el;
-      el.style.transition = 'none';
-      el.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
-      el.style.zIndex = '1';
-      moved.push({ el: el, i: i });
-    });
-    void grid.offsetWidth; // commit the inverted start positions in one reflow
-    // PLAY — release the transforms; a soft top-to-bottom wave (capped so it never drags)
-    var tok = ++flipTok;
-    requestAnimationFrame(function () {
-      moved.forEach(function (mv) {
-        mv.el.style.transition = 'transform 0.6s var(--ma-flip) ' + Math.min(mv.i * 6, 150) + 'ms';
-        mv.el.style.transform = 'none';
-      });
-    });
-    // strip the inline transform once it settles, or it would override the CSS hover/scroll transforms
-    if (flipTimer) clearTimeout(flipTimer);
-    flipTimer = setTimeout(function () {
-      if (tok !== flipTok) return;
-      moved.forEach(function (mv) { mv.el.style.transition = ''; mv.el.style.transform = ''; mv.el.style.zIndex = ''; });
-    }, 820);
-  }
 
   // staggered reveal: cards rise + fade in and the split bars grow, on scroll-in
   var revealed = false;
@@ -364,7 +290,7 @@
     '<span class="ma-donut ma-donut-lg"><span class="ma-donut-hole"><span class="ma-donut-val"></span></span></span>' +
     '<div class="ma-tray-id"><span class="ma-tray-kind"></span><h3 class="ma-tray-title"></h3><span class="ma-tray-when"></span></div>' +
     '</div>' +
-    '<p class="ma-usage-note"></p>' +
+    '<p class="ma-detail-note">Recorded file changes, split by model.</p>' +
     '<div class="ma-tray-bar" aria-hidden="true"></div>' +
     '<div class="ma-tray-rows"></div>' +
     '<div class="ma-extra"></div>' +
@@ -485,12 +411,7 @@
   function paintTray(post, parts, animDonut) {
     parts = parts || split(post);
     drawDonut(tray.querySelector('.ma-donut-lg'), parts, !!animDonut, 0);
-    animNum(tray.querySelector('.ma-donut-lg .ma-donut-val'), total(post), function (n) { return metric === 'tokens' && !usage(post) ? '?' : fmtVal(n); });
-    var u = usage(post), note = tray.querySelector('.ma-usage-note');
-    var sharedTokens = USAGE.shared.filter(function (g) { return g.projects.indexOf(post.key) !== -1; }).reduce(function (n, g) { return n + g.tokens; }, 0);
-    note.textContent = metric === 'tokens'
-      ? (u ? u.tokens.toLocaleString('en-US') + ' recovered tokens, ' + dateRange(u.firstDay, u.lastDay) + '. Includes input, cache writes, cache reads and output. Task attribution is an estimate; earlier records may be missing.' : 'No individual page total could be recovered. Its recorded file changes are still available in the Changes view.') + (sharedTokens ? ' Another ' + fmtTok(sharedTokens) + ' tokens were used in tasks spanning this and other pages, counted once under shared work.' : '')
-      : 'Recorded file changes, including older credit retained after the full usage logs disappeared.';
+    animNum(tray.querySelector('.ma-donut-lg .ma-donut-val'), total(post), fmtVal);
     // stacked bar
     var bar = tray.querySelector('.ma-tray-bar');
     bar.innerHTML = '';
@@ -518,7 +439,7 @@
       animNum(row.querySelector('.ma-row-val'), p.v, function (x) { return fmtFull(x); });
       animNum(row.querySelector('.ma-row-pct'), p.pct, function (x) { return Math.round(x) + '%'; });
     });
-    // build-effort facts + commits-per-day sparkline + tokens-per-finished-word
+    // Build-effort facts and commits-per-day sparkline.
     var ex = tray.querySelector('.ma-extra'), eff = EFFORT[post.key];
     if (ex && eff) {
       var wds = post.words || 0;
@@ -528,7 +449,6 @@
           fact(eff.commits, eff.commits === 1 ? 'commit' : 'commits') +
           fact(eff.spanDays, eff.spanDays === 1 ? 'day' : 'days') +
           fact(wds ? wds.toLocaleString('en-US') : 'n/a', wds === 1 ? 'word' : 'words') +
-          fact(u ? Math.round(u.cacheRead / u.tokens * 100) + '%' : 'n/a', 'cached reads in recovered usage') +
         '</div>' +
         sparkHTML(eff.spark, lead) +
         '<p class="ma-extra-note">+' + eff.add.toLocaleString('en-US') + ' / -' + eff.del.toLocaleString('en-US') + ' lines, biggest single change +' + eff.biggest.toLocaleString('en-US') + '</p>';
@@ -556,25 +476,6 @@
   scrim.addEventListener('click', closeTray);
   tray.querySelector('.ma-tray-x').addEventListener('click', closeTray);
 
-  // ---------- metric toggle ----------
-  controls.querySelector('.ma-toggle').addEventListener('click', function (e) {
-    var seg = e.target.closest('.ma-seg'); if (!seg) return;
-    var m = seg.getAttribute('data-m'); if (m === metric) return;
-    metric = m;
-    var segs = controls.querySelectorAll('.ma-seg');
-    segs.forEach(function (s) {
-      var on = s.getAttribute('data-m') === metric;
-      s.classList.toggle('is-on', on); s.setAttribute('aria-selected', on ? 'true' : 'false');
-    });
-    controls.querySelector('.ma-toggle').classList.toggle('is-edits', metric === 'edits');
-    document.getElementById('ma-note').textContent = metric === 'tokens'
-      ? 'Recovered input + cache + output. Earlier usage may be missing.'
-      : 'Share of file changes each model made to a post.';
-    reorderGrid(); // re-sort the grid by the new metric and FLIP-glide the cards (also repaints)
-    refreshCollapse(true); // row heights shift with the re-sort; re-fit the clamp
-    if (openPost) paintTray(openPost);
-  });
-
   // ---------- mount ----------
   var scope = document.createElement('p');
   scope.className = 'ma-scope';
@@ -582,22 +483,6 @@
   root.appendChild(scope);
   root.appendChild(legend);
   root.appendChild(hint);
-  var coverage = document.createElement('details');
-  coverage.className = 'ma-coverage';
-  var assigned = Object.values(USAGE.posts).reduce(function (n, p) { return n + p.tokens; }, 0);
-  coverage.innerHTML = '<summary>' + fmtTok(assigned) + ' recovered across ' + Object.keys(USAGE.posts).length + ' pages. How this fits the total</summary>';
-  var table = document.createElement('dl');
-  [[assigned, 'Assigned to individual pages'], [USAGE.buckets.shared, 'Shared website work and tasks spanning pages'], [USAGE.buckets.other, 'Other projects and personal tasks'], [USAGE.buckets.unassigned, 'Recovered usage without a clear project'], [USAGE.buckets.missing, 'Older totals without full request records'], [USAGE.total, 'Total, all projects']].forEach(function (r) {
-    var label = document.createElement('dt'), number = document.createElement('dd');
-    label.textContent = r[1]; number.textContent = r[0].toLocaleString('en-US'); table.appendChild(label); table.appendChild(number);
-  });
-  coverage.appendChild(table);
-  var coverageNote = document.createElement('p');
-  coverageNote.textContent = 'Every request is counted once. Shared work is kept together because dividing it between pages would be a guess. Recovered page totals include only the records still available, so they are not complete lifetime totals.';
-  coverage.appendChild(coverageNote);
-  root.appendChild(coverage);
-  root.appendChild(controls);
-
   // wrap the grid so it can clamp to a few rows behind a frosted veil (see collapse controller below)
   var CHEV = '<svg class="cv-chev" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.5 6 L8 10.5 L12.5 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   grid.id = 'cv-grid';

@@ -41,7 +41,7 @@ echo "==> Checking the generated data..."
 node tools/check-about.mjs || die "the data check failed, so nothing was published"
 
 echo "==> Publishing any changes..."
-git add about.html js/git-history-data.js js/git-attribution-data.js js/project-usage-data.js js/site-size-data.js search-index.json tools/about-stats.json tools/about-attribution-ledger.json
+git add about.html js/git-history-data.js js/git-attribution-data.js js/site-size-data.js search-index.json tools/about-stats.json tools/about-attribution-ledger.json
 if git diff --cached --quiet; then
   bold "Already up to date - nothing new to publish."
 else

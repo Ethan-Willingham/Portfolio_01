@@ -106,49 +106,27 @@ Review the official sources and add dated rows before advancing `verified`.
 
 ## Per-page attribution
 
-The default **Total tokens** view now uses the same definition as the headline and model
-badges: input, cache writes, cache reads and output. The counters are exact within the
-retained records; assignment to a project is an estimate from task evidence. These are
-recovered totals, not complete lifetime costs. Cards show their record dates. A page with
-no recovered full counter is marked **Unknown**, even when its older edit credit survives.
+The headline and model badges show total consumption across all projects: input,
+cache writes, cache reads and output. The page cards show **recorded file changes**,
+with each model's share. Their detail panels retain commit counts, build dates,
+word counts and the existing prompt archive.
 
-`tools/build-project-usage.mjs` joins task evidence to the private native counter ledger.
-It groups usage by task turn and routes explicit file targets to pages. Page edits take
-precedence over files merely read for comparison. When no page edit was recorded, tool
-file targets, a dedicated game workspace, or an explicit Sluice request can supply the
-project. The PC report's existing event classifications supply its project assignments.
-Injected repository instructions and copied parent history are not project evidence.
-Background tool notifications do not start new Claude task turns.
+Claude Edit/Write operations and successful Codex file-change records supply the edit
+counts. The durable hashed edit ledger preserves older credit after transcripts disappear.
+Shell rewrites without file-change records can be absent. These counts describe recorded
+activity, not a complete measure of effort or authorship.
 
-A turn targeting multiple pages goes into shared website work. It is not split by output
-length, file count or an invented percentage. Each request contributes once. Named shared
-groups also appear in the affected page's detail view, separately from its card total.
-Other projects, usage with no clear project, and older totals without request records
-remain separate coverage buckets. The expandable breakdown reconciles exactly to the
-headline, including the incomplete older estimate.
+Full token consumption cannot be reliably reconstructed for most individual pages, so
+page cards do not display token totals or token-based rankings. The existing output-token
+fields remain in the attribution ledger for compatibility and are not rendered as usage.
 
-At this snapshot, full counters survive for **3,353,245,625 tokens**, including
-**939,220,026** already inside the historical baseline. Recovering them does not increase
-the 27.0B headline. There are recovered individual totals for 20 pages. Sluice's card has
-**842,126,133 tokens**, including the PC report's 258,798,678. Another **1,025,406,545**
-tokens belong to turns targeting both Sluice and the water/smoke/slime demo; those stay in
-shared work. Missing records and gaps between the displayed first and last dates mean
-these figures cannot establish a complete project cost or a fair lifetime ranking.
-
-The separate **Changes** view preserves the older edit attribution. Claude Edit/Write
-operations and successful Codex file-change records supply those counts. The existing
-`git-attribution-data.js` and hashed edit ledger still retain output-token credit for
-compatibility, but that field is no longer presented as a page's total consumption.
-Shell rewrites without file-change records can be absent from edit counts.
-
-Private project assignments persist in `~/.local/share/about-usage/project-ledger.json`,
-alongside the native ledger. Back up both files. Surviving transcripts can refine their
-assignments; pruned transcripts do not erase saved assignments. `project-audit.json`
-holds local audit context and stays private. Only aggregate counters, model labels,
-page keys and coverage dates are published in `js/project-usage-data.js`.
+The optional `tools/build-project-usage.mjs` recovery tool is a private audit, separate
+from the normal update and publication flow. It preserves assignments in
+`~/.local/share/about-usage/project-ledger.json` and writes its summary to
+`project-summary.json` in the same private directory. No project usage dataset is served
+by the site. Back up these files alongside the native ledger to retain the recovered work.
 
 Run `node tools/test-about-usage.mjs` for duplicate, overlap, reset, inheritance, cache
-pricing, date-boundary and persistence checks, and `node tools/test-project-usage.mjs`
-for task attribution, shared usage and baseline reconciliation. `node tools/check-about.mjs` validates the
-published totals, models, links, freshness dates and generated datasets without needing
-private logs.
+pricing, date-boundary and persistence checks. `node tools/test-project-usage.mjs` covers
+the optional private audit. `node tools/check-about.mjs` validates the published totals,
+models, links, freshness dates and generated datasets without needing private logs.

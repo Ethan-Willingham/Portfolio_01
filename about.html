@@ -257,24 +257,7 @@
   .ma-filter-hint b { font-weight: 700; }
   .ma-filter-clear { font: inherit; font-size: 0.8rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
   .ma-filter-clear:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .ma-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 1rem; margin-bottom: 1.4rem; }
-  .ma-toggle { position: relative; display: inline-flex; padding: 3px; background: #232a24; border: 1px solid var(--ma-hair); border-radius: 999px; }
-  .ma-seg { position: relative; z-index: 2; border: 0; background: none; cursor: pointer; font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: var(--text-dim); padding: 0.4rem 0.95rem; border-radius: 999px; transition: color 0.25s ease; }
-  .ma-seg.is-on { color: #1a1f1a; }
-  .ma-seg:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(232,149,78,0.55); }
-  .ma-seg-glider { position: absolute; z-index: 1; top: 3px; left: 3px; bottom: 3px; width: calc(50% - 3px); border-radius: 999px; background: linear-gradient(180deg, #F4B36B, #E8954E); box-shadow: 0 2px 8px -1px rgba(232,149,78,0.5); transition: transform 0.34s cubic-bezier(0.4, 0, 0.2, 1); }
-  .ma-toggle.is-edits .ma-seg-glider { transform: translateX(100%); }
-  .ma-controls-note { margin: 0; font-family: var(--font-body); font-size: 0.84rem; color: var(--text-dim); font-style: italic; }
-  .ma-toggle { display: inline-grid; grid-template-columns: repeat(2, 1fr); }
-  .ma-scope, .ma-usage-note { font: 0.84rem/1.6 var(--font-body); color: var(--text-dim); }
-  .ma-coverage { margin: 0 0 1.5rem; padding: 1rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); color: var(--text-dim); font: 0.86rem/1.6 var(--font-body); }
-  .ma-coverage summary { cursor: pointer; color: var(--accent); }
-  .ma-coverage dl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem 1rem; margin: 1rem 0; }
-  .ma-coverage dt, .ma-coverage dd { margin: 0; }
-  .ma-coverage dd { font-family: var(--font-mono); text-align: right; font-size: 0.8em; align-self: center; }
-  .ma-coverage dt:last-of-type, .ma-coverage dd:last-of-type { color: var(--text-bright); padding-top: 0.6rem; border-top: 1px solid var(--rule); }
-  .ma-coverage p { font: inherit; margin-bottom: 0; }
-  .cv-val.is-unknown { font: 0.76rem var(--font-body); color: var(--text-dim); }
+  .ma-scope, .ma-detail-note { font: 0.84rem/1.6 var(--font-body); color: var(--text-dim); }
   .ma-donut { position: relative; width: 66px; height: 66px; border-radius: 50%; background: #3a443b; }
   .ma-donut-hole { position: absolute; inset: 9px; border-radius: 50%; background: var(--ma-card); display: grid; place-items: center; }
   .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; }
@@ -290,6 +273,7 @@
   .cv-chip i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 7px currentColor; flex: none; }
   .cv-chipn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cv-val { flex: none; font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.025em; line-height: 1; }
+  .cv-val small { display: block; margin-top: 0.25rem; font: 0.62rem var(--font-body); color: var(--text-dim); text-align: right; letter-spacing: 0; }
   .cv-title { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 700; color: var(--text-bright); line-height: 1.18; }
   .cv.is-arch .cv-title { color: var(--text); }
   .cv-arch { margin-left: 0.4em; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; color: #8d9387; white-space: nowrap; letter-spacing: 0.02em; vertical-align: 0.08em; }
@@ -374,7 +358,7 @@
   .ma-row-pct { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-bright); min-width: 2.6em; text-align: right; letter-spacing: -0.02em; }
   .ma-tray-link { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.2rem; font-family: var(--font-body); font-size: 0.9rem; color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
   .ma-tray-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  /* the per-post stats block: build-effort facts, a commits-per-day sparkline, tokens-per-word */
+  /* the per-post stats block: build-effort facts and a commits-per-day sparkline */
   .ma-extra { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--ma-hair); }
   .ma-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)); gap: 0.7rem 0.9rem; }
   .ma-fact { display: flex; flex-direction: column; gap: 0.18rem; }
@@ -471,7 +455,7 @@
 
           <h2 class="u-h2">Which AI built which page</h2>
 
-          <p>Claude did most of the early work. GPT-5.6 Sol joined in July, and GPT-6 Astra did much of the recent Sluice work. Each tile shows the total tokens I could recover for that page, including cached context, with each model’s share. Some older logs are gone. Those pages still have their recorded file changes under Changes, but I can’t reconstruct their full token use.</p>
+          <p>Claude did most of the early work. GPT-5.6 Sol joined in July, and GPT-6 Astra did much of the recent Sluice work. The model badges show total token use across all my projects. Each page card counts recorded file changes, and its bar shows which models made them. Click a card for the breakdown and build history.</p>
 
           <div id="ma-root"></div>
 
@@ -552,7 +536,6 @@
   <script src="js/site-size-data.js"></script>
   <script src="js/site-size.js"></script>
   <script src="js/git-attribution-data.js"></script>
-  <script src="js/project-usage-data.js"></script>
   <script src="js/post-prompts-data.js"></script>
   <script src="js/git-attribution.js"></script>
   <script src="js/backtotop.js"></script>

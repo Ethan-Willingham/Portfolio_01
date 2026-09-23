@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Full request consumption, assigned once per task turn. Raw evidence stays private.
+// Optional private audit of full request consumption, assigned once per task turn.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, basename } from 'node:path';
@@ -92,7 +92,8 @@ export function buildProjectUsage({ write = false, imports = [], directory = joi
   if (hash(native.id) !== stats.methodology.usageLedgerId) throw new Error('Private usage ledger identity mismatch');
   const cutoff = stats.collection.cutoff;
   const file = join(directory, 'project-ledger.json');
-  if (existsSync(join(repo, 'js/project-usage-data.js')) && !existsSync(file)) throw new Error('Restore the private project ledger before refreshing published project totals');
+  const summaryFile = join(directory, 'project-summary.json');
+  if (existsSync(summaryFile) && !existsSync(file)) throw new Error('Restore the private project ledger before refreshing the project audit');
   const saved = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { version: 1, ledgerId: hash(native.id), assignments: {} };
   if (saved.version !== 1 || saved.ledgerId !== hash(native.id)) throw new Error('Private project ledger identity mismatch');
   const assignments = saved.assignments;
@@ -181,7 +182,7 @@ export function buildProjectUsage({ write = false, imports = [], directory = joi
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     writeFileSync(file + '.tmp', JSON.stringify(saved) + '\n', { mode: 0o600 }); renameSync(file + '.tmp', file);
     writeFileSync(join(directory, 'project-audit.json'), JSON.stringify(audit, null, 2), { mode: 0o600 });
-    writeFileSync(join(repo, 'js/project-usage-data.js'), '// Recovered full consumption. See tools/ABOUT-DATA.md for coverage and task attribution.\nwindow.PROJECT_USAGE = ' + JSON.stringify(result) + ';\n');
+    writeFileSync(summaryFile, JSON.stringify(result, null, 2) + '\n', { mode: 0o600 });
   }
   return result;
 }
