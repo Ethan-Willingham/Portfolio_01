@@ -6,8 +6,9 @@
 (function () {
   'use strict';
   var DATA = window.GIT_ATTRIBUTION;
+  var USAGE = window.PROJECT_USAGE;
   var root = document.getElementById('ma-root');
-  if (!DATA || !root) return;
+  if (!DATA || !USAGE || !root) return;
 
   var REDUCE = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var MODELS = DATA.models;
@@ -19,6 +20,8 @@
   var POSTS = DATA.posts.filter(function (p) { return !HIDDEN_TILES[p.key]; });
   var MID = {};
   MODELS.forEach(function (m) { MID[m.id] = m; });
+  Object.keys(USAGE.models).forEach(function (id) { if (!MID[id]) MID[id] = USAGE.models[id]; });
+  function usage(post) { return USAGE.posts[post.key]; }
 
   // ---------- build-effort per post, derived from the commit log (window.GIT_HISTORY) ----------
   var EFFORT = {};
@@ -71,21 +74,21 @@
   }
 
   // value of a model within a post for the current metric
-  function val(post, mid) { var r = post.models[mid]; return r ? (metric === 'tokens' ? r.tokens : r.edits) : 0; }
-  function total(post) { return metric === 'tokens' ? post.tokens : post.edits; }
+  function val(post, mid) { return metric === 'tokens' ? ((usage(post) || {}).models || {})[mid] || 0 : (post.models[mid] || {}).edits || 0; }
+  function total(post) { return metric === 'tokens' ? (usage(post) || {}).tokens || 0 : post.edits; }
   // order the posts by the current metric (desc), tie-broken by the other metric then key
   // so the sort is fully deterministic and the same post never "jitters" between equal neighbours
   function sortPosts() {
     POSTS.sort(function (a, b) {
       return (total(b) - total(a)) ||
-        (metric === 'tokens' ? b.edits - a.edits : b.tokens - a.tokens) ||
+        (metric === 'tokens' ? b.edits - a.edits : ((usage(b) || {}).tokens || 0) - ((usage(a) || {}).tokens || 0)) ||
         (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
     });
   }
   // ordered [{m, v, pct}] desc, only models that contributed
   function split(post) {
     var t = total(post) || 1;
-    var arr = Object.keys(post.models).map(function (mid) {
+    var arr = Object.keys(metric === 'tokens' ? (usage(post) || {}).models || {} : post.models).map(function (mid) {
       return { m: MID[mid], v: val(post, mid), pct: val(post, mid) / t * 100 };
     }).filter(function (x) { return x.m && x.v > 0; });
     arr.sort(function (a, b) { return b.v - a.v; });
@@ -140,7 +143,8 @@
   var chipById = {};
   // list the models by how much they were used (most tokens first): 4.8, 4.7, ...
   MODELS.slice().sort(function (a, b) { return b.tokens - a.tokens; }).forEach(function (m) {
-    var built = m.posts > 0;
+    var builtCount = POSTS.filter(function (p) { return (p.models[m.id] || {}).edits > 0 || ((usage(p) || {}).models || {})[m.id]; }).length;
+    var built = builtCount > 0;
     var interactive = built || !!m.note;  // fuel-only models (a note, no per-page tiles) are clickable too
     var chip = document.createElement(interactive ? 'button' : 'div');
     chip.className = 'ma-mind' + (interactive ? '' : ' is-minor');
@@ -149,12 +153,12 @@
       '<span class="ma-mind-dot" style="background:' + m.color + '"></span>' +
       '<span class="ma-mind-name">' + m.label + '</span>' +
       '<span class="ma-mind-fuel">' + fmtTok(m.tokens) + ' · $' + m.cost.toLocaleString('en-US') + '</span>' +
-      '<span class="ma-mind-posts">' + (m.note ? m.note : built ? m.posts + (m.posts === 1 ? ' post' : ' posts') : 'tooling only') + '</span>';
+      '<span class="ma-mind-posts">' + (m.note ? m.note : built ? builtCount + (builtCount === 1 ? ' post' : ' posts') : 'other work') + '</span>';
     if (interactive) {
       chip.type = 'button';
       chip.setAttribute('aria-pressed', 'false');
       chip.setAttribute('aria-label', built
-        ? 'Show only the ' + m.posts + ' posts ' + m.label + ' helped build'
+        ? 'Show only the ' + builtCount + ' posts ' + m.label + ' helped build'
         : m.label + ' helped across the site; its work is not broken out page by page');
       chip.addEventListener('click', function () { setFilter(activeModel === m.id ? null : m.id); });
       chipById[m.id] = chip;
@@ -181,7 +185,7 @@
   function matchesFilter(post) {
     if (!activeModel) return true;
     var r = post.models[activeModel];
-    return !!(r && ((r.edits || 0) > 0 || (r.tokens || 0) > 0));
+    return !!((r && r.edits > 0) || ((usage(post) || {}).models || {})[activeModel]);
   }
   // show/hide the tiles for the current filter; re-reveal the surviving tiles with a quick stagger
   function applyFilter(animate) {
@@ -238,18 +242,20 @@
   controls.className = 'ma-controls';
   controls.innerHTML =
     '<div class="ma-toggle" role="tablist" aria-label="Choose how to measure each model\'s share">' +
-    '<button class="ma-seg is-on" role="tab" aria-selected="true" data-m="tokens">Tokens</button>' +
+    '<button class="ma-seg is-on" role="tab" aria-selected="true" data-m="tokens">Total tokens</button>' +
     '<button class="ma-seg" role="tab" aria-selected="false" data-m="edits">Changes</button>' +
     '<span class="ma-seg-glider" aria-hidden="true"></span>' +
     '</div>' +
-    '<p class="ma-controls-note" id="ma-note">Share of output tokens on responses that edited a page.</p>';
+    '<p class="ma-controls-note" id="ma-note">Recovered input + cache + output. Earlier usage may be missing.</p>';
 
   // ---------- build: card grid ----------
   function cardInner(post, parts) {
-    var top = parts[0];
+    var top = parts[0], u = usage(post), unknown = metric === 'tokens' && !u;
     var arch = post.kind === 'archived' ? '<span class="cv-arch">(archived)</span>' : '';
-    return '<div class="cv-top"><span class="cv-chip"><i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span></span><span class="cv-val">' + fmtVal(total(post)) + '</span></div>' +
-      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + postDates(post) + '</div>';
+    var chip = top ? '<i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span>' : '<span class="cv-chipn">Usage unavailable</span>';
+    var when = metric === 'tokens' ? (u ? 'Recovered · ' + dateRange(u.firstDay, u.lastDay) : 'No individual total recovered') : postDates(post);
+    return '<div class="cv-top"><span class="cv-chip">' + chip + '</span><span class="cv-val' + (unknown ? ' is-unknown' : '') + '">' + (unknown ? 'Unknown' : fmtVal(total(post))) + '</span></div>' +
+      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + when + '</div>';
   }
   var grid = document.createElement('div');
   grid.className = 'cv-grid';
@@ -349,6 +355,8 @@
   tray.setAttribute('role', 'dialog');
   tray.setAttribute('aria-modal', 'true');
   tray.setAttribute('aria-label', 'Post detail');
+  tray.setAttribute('aria-hidden', 'true');
+  tray.setAttribute('inert', '');
   tray.innerHTML =
     '<button class="ma-tray-x" aria-label="Close">' +
     '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' +
@@ -356,6 +364,7 @@
     '<span class="ma-donut ma-donut-lg"><span class="ma-donut-hole"><span class="ma-donut-val"></span></span></span>' +
     '<div class="ma-tray-id"><span class="ma-tray-kind"></span><h3 class="ma-tray-title"></h3><span class="ma-tray-when"></span></div>' +
     '</div>' +
+    '<p class="ma-usage-note"></p>' +
     '<div class="ma-tray-bar" aria-hidden="true"></div>' +
     '<div class="ma-tray-rows"></div>' +
     '<div class="ma-extra"></div>' +
@@ -365,6 +374,8 @@
   var openPost = null;
   function openTray(post, anchorEl) {
     openPost = post;
+    tray.removeAttribute('inert');
+    tray.setAttribute('aria-hidden', 'false');
     var parts = split(post);
     tray.querySelector('.ma-tray-kind').textContent = post.kind === 'archived' ? 'Archived post' : 'Post';
     tray.querySelector('.ma-tray-kind').className = 'ma-tray-kind' + (post.kind === 'archived' ? ' is-arch' : '');
@@ -474,7 +485,12 @@
   function paintTray(post, parts, animDonut) {
     parts = parts || split(post);
     drawDonut(tray.querySelector('.ma-donut-lg'), parts, !!animDonut, 0);
-    animNum(tray.querySelector('.ma-donut-lg .ma-donut-val'), total(post), fmtVal);
+    animNum(tray.querySelector('.ma-donut-lg .ma-donut-val'), total(post), function (n) { return metric === 'tokens' && !usage(post) ? '?' : fmtVal(n); });
+    var u = usage(post), note = tray.querySelector('.ma-usage-note');
+    var sharedTokens = USAGE.shared.filter(function (g) { return g.projects.indexOf(post.key) !== -1; }).reduce(function (n, g) { return n + g.tokens; }, 0);
+    note.textContent = metric === 'tokens'
+      ? (u ? u.tokens.toLocaleString('en-US') + ' recovered tokens, ' + dateRange(u.firstDay, u.lastDay) + '. Includes input, cache writes, cache reads and output. Task attribution is an estimate; earlier records may be missing.' : 'No individual page total could be recovered. Its recorded file changes are still available in the Changes view.') + (sharedTokens ? ' Another ' + fmtTok(sharedTokens) + ' tokens were used in tasks spanning this and other pages, counted once under shared work.' : '')
+      : 'Recorded file changes, including older credit retained after the full usage logs disappeared.';
     // stacked bar
     var bar = tray.querySelector('.ma-tray-bar');
     bar.innerHTML = '';
@@ -505,15 +521,14 @@
     // build-effort facts + commits-per-day sparkline + tokens-per-finished-word
     var ex = tray.querySelector('.ma-extra'), eff = EFFORT[post.key];
     if (ex && eff) {
-      var wds = post.words || 0, tpw = wds ? post.tokens / wds : 0;
-      var tpwStr = tpw >= 1000 ? '~' + Math.round(tpw / 1000) + 'k' : Math.round(tpw);
+      var wds = post.words || 0;
       var lead = (parts[0] && parts[0].m.color) || '#D4C4A0';
       ex.innerHTML =
         '<div class="ma-facts">' +
           fact(eff.commits, eff.commits === 1 ? 'commit' : 'commits') +
           fact(eff.spanDays, eff.spanDays === 1 ? 'day' : 'days') +
           fact(wds ? wds.toLocaleString('en-US') : 'n/a', wds === 1 ? 'word' : 'words') +
-          fact(wds ? tpwStr : 'n/a', 'tokens / word') +
+          fact(u ? Math.round(u.cacheRead / u.tokens * 100) + '%' : 'n/a', 'cached reads in recovered usage') +
         '</div>' +
         sparkHTML(eff.spark, lead) +
         '<p class="ma-extra-note">+' + eff.add.toLocaleString('en-US') + ' / -' + eff.del.toLocaleString('en-US') + ' lines, biggest single change +' + eff.biggest.toLocaleString('en-US') + '</p>';
@@ -521,10 +536,14 @@
     renderPrompts(post);
   }
   function closeTray() {
+    var anchor = openPost && openPost._el;
     openPost = null;
     scrim.classList.remove('is-on');
     tray.classList.remove('is-on');
     unlockScroll();
+    if (anchor) anchor.focus({ preventScroll: true });
+    tray.setAttribute('aria-hidden', 'true');
+    tray.setAttribute('inert', '');
     document.removeEventListener('keydown', onKey);
   }
   function onKey(e) { if (e.key === 'Escape') closeTray(); }
@@ -549,7 +568,7 @@
     });
     controls.querySelector('.ma-toggle').classList.toggle('is-edits', metric === 'edits');
     document.getElementById('ma-note').textContent = metric === 'tokens'
-      ? 'Share of output tokens on responses that edited a page.'
+      ? 'Recovered input + cache + output. Earlier usage may be missing.'
       : 'Share of file changes each model made to a post.';
     reorderGrid(); // re-sort the grid by the new metric and FLIP-glide the cards (also repaints)
     refreshCollapse(true); // row heights shift with the re-sort; re-fit the clamp
@@ -557,8 +576,26 @@
   });
 
   // ---------- mount ----------
+  var scope = document.createElement('p');
+  scope.className = 'ma-scope';
+  scope.textContent = 'By model, across all projects. Tokens include cached context; costs are API equivalents. The older model breakdown is incomplete.';
+  root.appendChild(scope);
   root.appendChild(legend);
   root.appendChild(hint);
+  var coverage = document.createElement('details');
+  coverage.className = 'ma-coverage';
+  var assigned = Object.values(USAGE.posts).reduce(function (n, p) { return n + p.tokens; }, 0);
+  coverage.innerHTML = '<summary>' + fmtTok(assigned) + ' recovered across ' + Object.keys(USAGE.posts).length + ' pages. How this fits the total</summary>';
+  var table = document.createElement('dl');
+  [[assigned, 'Assigned to individual pages'], [USAGE.buckets.shared, 'Shared website work and tasks spanning pages'], [USAGE.buckets.other, 'Other projects and personal tasks'], [USAGE.buckets.unassigned, 'Recovered usage without a clear project'], [USAGE.buckets.missing, 'Older totals without full request records'], [USAGE.total, 'Total, all projects']].forEach(function (r) {
+    var label = document.createElement('dt'), number = document.createElement('dd');
+    label.textContent = r[1]; number.textContent = r[0].toLocaleString('en-US'); table.appendChild(label); table.appendChild(number);
+  });
+  coverage.appendChild(table);
+  var coverageNote = document.createElement('p');
+  coverageNote.textContent = 'Every request is counted once. Shared work is kept together because dividing it between pages would be a guess. Recovered page totals include only the records still available, so they are not complete lifetime totals.';
+  coverage.appendChild(coverageNote);
+  root.appendChild(coverage);
   root.appendChild(controls);
 
   // wrap the grid so it can clamp to a few rows behind a frosted veil (see collapse controller below)

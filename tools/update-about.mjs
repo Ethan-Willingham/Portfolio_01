@@ -39,7 +39,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { collectUsage } from './about-usage.mjs';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 
 const REPO = process.cwd();
 const WRITE = process.argv.includes('--write');
@@ -399,6 +399,9 @@ writeFileSync(F_ABOUT, about);
 writeFileSync(F_STATS, JSON.stringify(stats, null, 2) + '\n');
 log(ok('  wrote about.html token stats') + dim(`  ${tokStr} / ${peakStr} / ${costStr}`));
 
+// Full consumption by project, using the same deduplicated native ledger.
+execFileSync(process.execPath, ['tools/build-project-usage.mjs', '--write', ...process.argv.filter(a => a.startsWith('--import-usage='))], { cwd: REPO, stdio: 'inherit' });
+
 // 4. search index
 execSync('node tools/build-search-index.mjs', { cwd: REPO, stdio: 'inherit' });
 log(ok('  rebuilt search-index.json'));
@@ -415,7 +418,7 @@ log(ok('  validated every About dataset'));
 // optional commit + push
 if (COMMIT) {
   log(H('COMMIT + PUSH'));
-  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-models.json', 'tools/about-attribution-ledger.json'];
+  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/project-usage-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-models.json', 'tools/about-attribution-ledger.json'];
   try {
     execSync('git add ' + files.map(f => JSON.stringify(f)).join(' '), { cwd: REPO, stdio: 'inherit' });
     const msg = `about: refresh build stats (+${fresh.length} commits, +${newTopics.length} posts, ${tokStr || 'tokens'})`;
