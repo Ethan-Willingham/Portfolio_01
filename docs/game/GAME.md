@@ -45,6 +45,9 @@ Since v28.65, lost carbon weakens each coal's structure. Contact loads split
 weakened pieces into physical fragments, and spent fuel leaves persistent ash
 grains to sweep from the grate. The taller chamber exposes the rising flame.
 Bath water now collides with the drawn curved liner in both liquid solvers.
+Since v28.67, the bed holds 32 varied charcoal-shaped lumps, plus fracture
+capacity to 48 pieces. Rear air supply, a finite starter pocket and radiance
+reconstruction make the burning bed more visible without increasing the grid.
 
 The forge has been retired. A reusable steel striker is supplied beside the
 boiler for new and existing saves. Stone still sometimes drops durable flint

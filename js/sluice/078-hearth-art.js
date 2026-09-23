@@ -117,14 +117,16 @@
     hearthArtPolygon(c, vertices, radius);
     c.fillStyle = BLD.metalDark;
     c.fill();
+    c.fillStyle = hearthArtColor(BLD.outline, 0.7);
+    c.fill();
     c.strokeStyle = BLD.outline;
     c.lineJoin = 'bevel';
     c.lineWidth = Math.max(0.6, radius * 0.025);
     c.stroke();
     c.save();
     c.clip();
-    // Broad cleavage planes, with the incident light fixed above and left even
-    // as a thrown lump tumbles. The dark seam is the coal, not an icon outline.
+    // Matte, broken charcoal faces. Light stays above and left as the real
+    // hull tumbles; long grain follows the piece instead of a metallic facet.
     for (i = 0; i < vertices.length; i++) {
       a = vertices[i]; b = vertices[(i + 1) % vertices.length];
       var normal = Math.atan2(a[1] + b[1], a[0] + b[0]) + angle;
@@ -134,8 +136,8 @@
       c.lineTo(a[0] * radius, a[1] * radius);
       c.lineTo(b[0] * radius, b[1] * radius);
       c.closePath();
-      c.fillStyle = light > 0.44 ? BLD.metalBase : light < -0.2 ? BLD.outline : BLD.metalDark;
-      c.globalAlpha = light > 0.44 ? 0.28 + light * 0.15 : 0.72;
+      c.fillStyle = light > 0.44 ? BLD.stoneDark : light < -0.2 ? BLD.outline : BLD.metalDark;
+      c.globalAlpha = light > 0.44 ? 0.25 + light * 0.18 : 0.42;
       c.fill();
       if (ash > 0.12 && hearthArtHash(shape.seed + i * 101) < ash) {
         c.globalAlpha = 0.32 + ash * 0.51;
@@ -148,10 +150,11 @@
     // polished ore. The little glossy cleavage lips turn with the actual lump.
     for (i = 0; i < shape.strata.length; i++) {
       var layer = shape.strata[i], lx = layer[0] * radius, ly = layer[1] * radius, lw = layer[2] * radius;
-      c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + lw * 0.42, ly - lw * 0.15); c.lineTo(lx + lw, ly - lw * 0.11);
-      c.strokeStyle = hearthArtColor(BLD.outline, 0.8); c.lineWidth = Math.max(0.8, radius * 0.033); c.stroke();
-      c.beginPath(); c.moveTo(lx + lw * 0.08, ly - 1); c.lineTo(lx + lw * 0.4, ly - lw * 0.15 - 1);
-      c.strokeStyle = hearthArtColor(ash > 0.5 ? BLD.stonePale : BLD.metalLight, 0.12 + layer[3] * 0.14);
+      lw *= 1.6;
+      c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + lw * 0.42, ly - lw * 0.045); c.lineTo(lx + lw, ly + lw * 0.025);
+      c.strokeStyle = hearthArtColor(BLD.outline, 0.85); c.lineWidth = Math.max(0.8, radius * 0.028); c.stroke();
+      c.beginPath(); c.moveTo(lx + lw * 0.08, ly - 0.7); c.lineTo(lx + lw * 0.4, ly - lw * 0.045 - 0.7);
+      c.strokeStyle = hearthArtColor(ash > 0.5 ? BLD.stonePale : BLD.stoneLight, 0.08 + layer[3] * 0.12);
       c.lineWidth = Math.max(0.5, radius * 0.016); c.stroke();
     }
     if (emission > 0.015) {
@@ -196,7 +199,7 @@
       c.lineTo(fx + fr, fy + fr * 0.3);
       c.lineTo(fx - fr * 0.35, fy + fr * 0.64);
       c.closePath();
-      c.fillStyle = flake[3] < ash ? (flake[3] < ash * 0.45 ? BLD.stonePale : BLD.stoneLight) : BLD.metalDark;
+      c.fillStyle = flake[3] < ash ? (flake[3] < ash * 0.45 ? BLD.stonePale : BLD.stoneLight) : BLD.outline;
       c.globalAlpha = flake[3] < ash ? 0.77 : 0.68;
       c.fill();
     }
@@ -204,10 +207,10 @@
     for (i = 0; i < shape.pores.length; i++) {
       var pore = shape.pores[i], pr = pore[2] * radius;
       c.fillStyle = hearthArtColor(BLD.outline, 0.65 - ash * 0.3);
-      c.fillRect(pore[0] * radius, pore[1] * radius, pr * 1.8, pr);
+      c.beginPath(); c.ellipse(pore[0] * radius, pore[1] * radius, pr * 1.5, pr * 0.65, 0, 0, Math.PI * 2); c.fill();
     }
     // One broken cleft catches daylight. No all-round specular rim.
-    c.strokeStyle = hearthArtColor(ash > 0.45 ? BLD.cream : BLD.metalLight, ash > 0.45 ? 0.37 : 0.28);
+    c.strokeStyle = hearthArtColor(ash > 0.45 ? BLD.cream : BLD.stoneLight, ash > 0.45 ? 0.37 : 0.18);
     c.lineWidth = Math.max(0.6, radius * 0.04);
     for (i = 0; i < vertices.length; i++) {
       a = vertices[i]; b = vertices[(i + 1) % vertices.length];
@@ -478,9 +481,9 @@
     for (row = -4; row < 7; row++) for (col = -1; col < 7; col++) {
       var bx = col * 58 + (row % 2 ? 29 : 0), by = row * 31;
       var variation = hearthArtHash(row * 53 + col * 97 + 811);
-      c.fillStyle = hearthArtColor(variation > 0.6 ? BLD.woodDark : BLD.stoneDark, 0.25 + variation * 0.08);
+      c.fillStyle = hearthArtColor(variation > 0.6 ? BLD.woodDark : BLD.stoneDark, 0.12 + variation * 0.05);
       c.fillRect(bx + 2, by + 2, 55, 28);
-      c.fillStyle = hearthArtColor(BLD.stoneBase, 0.08);
+      c.fillStyle = hearthArtColor(BLD.stoneBase, 0.04);
       c.fillRect(bx + 3, by + 2, 52, 1);
     }
     if (hot > 0.005) {
@@ -489,6 +492,13 @@
       glow.addColorStop(0.45, hearthArtColor(BLD.redBase, 0.12 * hot));
       glow.addColorStop(1, hearthArtColor(BLD.redDeep, 0));
       c.fillStyle = glow; c.fillRect(0, HEARTH_TOP, 320, HEARTH_HEIGHT);
+    }
+    // Rear air slots feed the third-direction exchange in the GPU slice.
+    // They stay visible above a low bed and disappear behind a full pile.
+    for (row = 0; row < 2; row++) for (col = 24; col < 310; col += 34) {
+      var ventY = row ? 185 : 85;
+      c.fillStyle = hearthArtColor(BLD.metalBase, 0.26); c.fillRect(col, ventY - 1, 10, 1);
+      c.fillStyle = BLD.outline; c.fillRect(col, ventY, 10, 3);
     }
     c.fillStyle = BLD.metalDark; c.fillRect(0, 208, 320, 2);
     c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 209, 320, 1);

@@ -128,7 +128,7 @@ try {
   await run(2); await screenshot('cold');
   const cold=await stats();console.log('COLD',cold);
   check('cold coal preserves all fuel with no flame or heat',cold.gasKg===0 && cold.flame===0 && cold.outputKW===0 && await game('hearthBeds.boiler.chunks.every(function(b){return b.fuel===1})'));
-  await game('hearthIgnite("boiler")');
+  await game('hearthLightChunk(hearthBeds.boiler,hearthBeds.boiler.chunks[1])');
   for(const seconds of (process.env.QUICK ? [12] : [2,5,10,20,30,30])) {
     await run(seconds); await screenshot('fire-'+seconds);
     const state=await stats();console.log('FIRE',seconds,state);check('finite nonnegative gas fields',state.invalid===0);
@@ -154,16 +154,34 @@ try {
   await game('hearthReset();for(var x of [95,160,225])hearthAddChunk("boiler",x,175)');await run(1);
   await game('for(var b of hearthBeds.boiler.chunks)hearthLightChunk(hearthBeds.boiler,b)');await run(8);await screenshot('full-fire');
   console.log('FULL FIRE',await stats());
+  async function flameVisibility(){return game(`(function(){
+    var L=hearthRoomLayout();render();var src=hearthFireGPU.canvas,c=document.createElement('canvas');c.width=src.width;c.height=src.height;
+    var ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(src,0,0);var d=ctx.getImageData(0,0,c.width,c.height).data;
+    var count=0,above=0,highest=HEARTH_FLOOR;
+    for(var y=0;y<c.height;y++)for(var x=0;x<c.width;x++){var o=(y*c.width+x)*4;
+      if(d[o]>140&&d[o+1]>45&&d[o+3]>100){count++;var worldY=HEARTH_TOP+y*HEARTH_HEIGHT/c.height;if(worldY<90)above++;highest=Math.min(highest,worldY);}}
+    return {pixels:count,aboveBed:above,highest:highest,area:count/(c.width*c.height),lit:hearthBeds.boiler.chunks.filter(b=>b.lit).length};})()`);}
+  // A naturally lit bed must show flames above the fuel, not only edge light.
+  await game('hearthReset();for(var row=0;row<2;row++)for(var x of [65,125,185,245])hearthAddChunk("boiler",x,175-row*55)');
+  await run(2);await game('hearthIgnite("boiler")');await run(12);await screenshot('charcoal-bed-12');
+  const ignitionVisibility=await flameVisibility();
+  await run(18);await screenshot('charcoal-bed-30');
+  const visibility={ignition:ignitionVisibility,sustained:await flameVisibility()};
+  console.log('FLAME VISIBILITY',visibility);
+  check('one ignition develops visible flames above an eight-piece bed',visibility.ignition.aboveBed>200&&visibility.ignition.area>.015&&visibility.sustained.area>.015&&visibility.sustained.lit>=3);
   for (const screen of [{width:1920,height:1080,deviceScaleFactor:2},{width:844,height:390,deviceScaleFactor:1}]) {
     await send('Emulation.setDeviceMetricsOverride',{...screen,mobile:false});
     await game('resize();render()');
     const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
-    check('bounded square chamber and accessible controls at '+screen.width,layout.box.w<=440.01 && Math.abs(layout.box.w-layout.box.h)<0.01 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
+    check('bounded square chamber and accessible controls at '+screen.width,layout.box.w<=500.01 && Math.abs(layout.box.w-layout.box.h)<0.01 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
     check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w)<1 && Math.abs(layout.overlay.h-layout.box.h)<1);
     await screenshot('fire-'+screen.width);
   }
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
   await game('resize();render()');
+  await game('hearthReset();for(var i=0;i<32;i++)hearthAddChunk("boiler",40+i%6*48,170-Math.floor(i/6)*42)');
+  await run(3);await game('hearthIgnite("boiler")');await run(8);await screenshot('full-charcoal-bed');
+  check('all 32 fuel pieces fit and reach the GPU',await game('hearthBeds.boiler.chunks.length===32 && hearthBeds.boiler.chunks.every(b=>Number.isFinite(b.surfaceKelvin)) && hearthFireGPU.available'));
   const cost=await game('(async function(){var cpu=[],wall=[],device=liquidWGPU.device;for(var i=0;i<120;i++){var t=performance.now();bathGuestTick(1/60);render();cpu.push(hearthFireGPU.cpuMs);await device.queue.onSubmittedWorkDone();wall.push(performance.now()-t);}function summary(a){a.sort(function(a,b){return a-b});return {avg:a.reduce(function(a,b){return a+b},0)/a.length,p95:a[Math.floor(a.length*.95)]};}return {fireSubmissionMs:summary(cpu),fireRoomAndQueueMs:summary(wall),buffers:hearthFireGPU.bufferBytes};})()');
   console.log('PERFORMANCE',cost);check('fire CPU submissions stay within the frame budget',cost.fireSubmissionMs.p95<3);
   await game('bathMode=false;bathEnter()');await sleep(600);
@@ -206,7 +224,7 @@ try {
   await game('hearthFireCancel();hearthAddChunk("boiler",160,170);hearthIgnite("boiler");for(var i=0;i<600;i++)bathGuestTick(1/60);render()');
   check('CPU fallback continues consuming fuel after fire device disposal',await game('hearthBeds.boiler.chunks.some(function(b){return b.fuel<1}) && hearthBeds.boiler.power>0'));
   check('no browser runtime errors', errors.length===0);
-  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,performance:cost,fullGame:fullGame,bowl:bowlContact},null,2));
+  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,visibility,performance:cost,fullGame:fullGame,bowl:bowlContact},null,2));
 } finally {
   if (errors.length) console.error(JSON.stringify(errors.slice(0,4)));
   cleanup();

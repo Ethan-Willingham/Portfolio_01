@@ -1,5 +1,5 @@
   /* ---- Fire room: bounded coal bodies and local heat, independent of the UI ---- */
-  var HEARTH_STEP = 1 / 120, HEARTH_CAP = 18;
+  var HEARTH_STEP = 1 / 120, HEARTH_CAP = 32;
   var hearthBeds = { boiler: hearthMakeBed(false), forge: hearthMakeBed(true) };
 
   function hearthMakeBed(pilot) {
@@ -21,9 +21,10 @@
     var b = { id: id, x: hearthNumber(x, 160, r, 320 - r),
       y: hearthNumber(y, 12, -80, 210 - r), vx: 0, vy: 0, r: r, baseR: r,
       angle: seed * Math.PI * 2, spin: 0, seed: seed,
-      life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false, material: material === 'wood' ? 'wood' : 'coal' };
+      life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false, lump: true, material: material === 'wood' ? 'wood' : 'coal' };
     hearthFuelState(b); hearthMass(b); hearthWorldHull(b);
-    b.dryKg = 0.018*Math.pow(b.baseR/34,2); b.fuelShare = 1; b.generation = 0; b.damage = 0;
+    b.shape = hearthHull(b).vertices.map(function(p){return p.slice();});
+    b.dryKg = 0.018*Math.pow(b.baseR/34,2)*hearthHull(b).area/1.8; b.fuelShare = 1; b.generation = 0; b.damage = 0;
     bed.chunks.push(b); hearthMeasure(bed);
     return b;
   }
@@ -59,9 +60,19 @@
     for (var i = 0; i < bed.chunks.length; i++) {
       var b = bed.chunks[i];
       if (b.held || b.ash || b.lit || b.fuel <= 0) continue;
-      if (!target || b.y > target.y) target = b;
+      // Light the exposed crown near the middle. Burying a finite ignition
+      // assist under a cold, wet pile quenches it before a flame can escape.
+      if (!target || b.y + Math.abs(b.x - 160) * 0.6 < target.y + Math.abs(target.x - 160) * 0.6) target = b;
     }
-    return target ? hearthLightChunk(bed, target) : false;
+    if (!target) return false;
+    hearthLightChunk(bed, target);
+    // The lighting interaction represents a small starter pocket, not the
+    // energy of one literal spark. It heats at most three nearby pieces once;
+    // all subsequent flame, spreading and burnout spend their real reservoirs.
+    var nearby = bed.chunks.filter(function(b){return b !== target && !b.held && !b.ash && !b.lit && b.fuel > 0 && Math.hypot(b.x-target.x,b.y-target.y)<90;});
+    nearby.sort(function(a,b){return Math.hypot(a.x-target.x,a.y-target.y)-Math.hypot(b.x-target.x,b.y-target.y);});
+    for (var j = 0; j < Math.min(2,nearby.length); j++) hearthLightChunk(bed,nearby[j]);
+    return true;
   }
   function hearthPump(kind) {
     var bed = hearthBeds[kind];
@@ -193,6 +204,8 @@
         b.fuelShare = hearthNumber(raw.fuelShare,1,0.00001,1);
         b.generation = Math.floor(hearthNumber(raw.generation,0,0,2)); b.damage = hearthNumber(raw.damage,0,0,1);
         b.fractureWait = hearthNumber(raw.fractureWait,0,0,2);
+        // Saves without an explicit polygon retain their original rock hull.
+        b.shape = null; b.lump = false;
         if(data.version>=4 && Array.isArray(raw.shape) && raw.shape.length>=3 && raw.shape.length<=16 &&
           raw.shape.every(function(p){return Array.isArray(p)&&p.length===2&&p.every(function(v){return typeof v==='number'&&isFinite(v)&&Math.abs(v)<=1.01;});})) {
           var poly=hearthPolygon(raw.shape),convex=poly.area>0.01;

@@ -18,8 +18,8 @@ export async function checkFireKernels(device) {
   check('cold mixed gas does not ignite itself',close(total(s.fields,0),total(fields,0),1e-7)&&total(s.fields,4)===0);
   fill([.04,.25,.89,0,1062,0,0,0]);
   s=await sim.testKernel('react',{fields,mask});
-  const burn=.04*(1-Math.exp(-100/60)), soot=burn*.015;
-  const t=(1200-780)/(1400-780), activation=t*t*(3-2*t), oxidized=soot*(1-Math.exp(-5/60*activation));
+  const burn=.04*(1-Math.exp(-18/60)), soot=burn*.015;
+  const t=(1200-780)/(1400-780), activation=t*t*(3-2*t), oxidized=soot*(1-Math.exp(-1.2/60*activation));
   const expectedEnergy=(1062+burn*26000-soot*32000+oxidized*32000)*Math.exp(-.55/60);
   check('reaction conserves reactant and product mass',close(mass(s.fields),mass(fields),1e-6),{before:mass(fields),after:mass(s.fields)});
   check('reaction follows the oxygen budget and CPU reference energy',close(s.fields[1],.25-burn*3.4-oxidized*2.667)&&close(s.fields[4],expectedEnergy),{expectedEnergy,actualEnergy:s.fields[4]});

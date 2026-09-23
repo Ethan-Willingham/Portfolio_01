@@ -9,6 +9,11 @@ has a 29 to 39 pixel bounding radius over the 320-pixel-wide grate, compared wit
 the former 13 to 20 pixel circles. Each unit still costs one coal from the
 locker. Previously saved lumps keep their paid fuel, lifetime and original size.
 
+Since v28.67, new fuel resembles lump charcoal: long blunt pieces mixed with
+squat chunks, matte faces, lengthwise grain and small pits. The elongated shapes
+are actual collision polygons, not stretched sprites. New pieces save their
+polygons explicitly; older saved pieces keep their original geometry and fuel.
+
 ## Geometry and motion
 
 `077-hearth-geometry.js` generates a seeded convex hull, recenters it on its
@@ -27,8 +32,9 @@ squared. The sides and grate are fixed planes, with an open top.
 
 Bodies are never pinned in place to make a stack look stable. Taking one into
 the hand detaches its saved position from contacts, so unsupported coal falls.
-Returning it restores gravity and contact. Loading stops at eighteen bodies. Six reserved slots allow fracture into at most
-24 burning bodies. Contact and ash work remain bounded.
+Returning it restores gravity and contact. Loading stops at thirty-two bodies. Sixteen reserved slots allow fracture into
+at most 48 burning bodies. Crowded beds use twenty impulse and nine position
+passes to keep their contacts seated. Contact and ash work remain bounded.
 
 ## Combustion
 

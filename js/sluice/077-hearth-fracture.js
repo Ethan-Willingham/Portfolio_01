@@ -1,5 +1,5 @@
   /* ---- Load-driven fuel failure and persistent granular mineral ash ---- */
-  var HEARTH_FRAGMENT_CAP = 24, HEARTH_ASH_CAP = 128;
+  var HEARTH_FRAGMENT_CAP = 48, HEARTH_ASH_CAP = 128;
   function hearthPolygon(vertices) {
     var area = 0, cx = 0, cy = 0, inertia = 0;
     for (var i = 0; i < vertices.length; i++) {

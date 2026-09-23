@@ -12,10 +12,15 @@
     if (body.shape) { cached = hearthPolygon(body.shape); hearthHullCache.set(body,cached); return cached; }
     var count = 8 + Math.floor(hearthSeed(seed + 13) * 3);
     var aspect = 0.66 + hearthSeed(seed + 93) * 0.28;
+    if (body.lump) aspect = 0.30 + Math.pow(hearthSeed(seed + 93), 1.4) * 0.53;
     for (i = 0; i < count; i++) {
       var angle = (i + (hearthSeed(seed + i * 19) - 0.5) * 0.3) * Math.PI * 2 / count;
       var r = 0.78 + hearthSeed(seed + i * 37) * 0.22;
-      points.push([Math.cos(angle) * r, Math.sin(angle) * r * aspect]);
+      var x = Math.cos(angle);
+      // Split wood leaves long grain and blunt broken ends in lump charcoal.
+      // Keep squat chunks in the mix; the convex hull still owns all contacts.
+      if (body.lump) x = Math.sign(x) * Math.pow(Math.abs(x), 0.55);
+      points.push([x * r, Math.sin(angle) * r * aspect]);
     }
     points.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
     var lower = [], upper = [];
@@ -193,7 +198,7 @@
         p = c.points[j]; hearthApplyImpulse(c, p, c.nx * p.normal - c.ny * p.tangent, c.ny * p.normal + c.nx * p.tangent);
       }
     }
-    for (var pass = 0; pass < 14; pass++) for (i = 0; i < contacts.length; i++) {
+    for (var pass = 0; pass < (bed.chunks.length > 18 ? 20 : 14); pass++) for (i = 0; i < contacts.length; i++) {
       c = contacts[i];
       for (j = 0; j < c.points.length; j++) {
         p = c.points[j];
@@ -220,7 +225,7 @@
     }
     // Split positional correction includes torque, but adds no kinetic energy.
     // Rebuild the manifolds after each pass as faces rotate into their seats.
-    for (pass = 0; pass < 5; pass++) {
+    for (pass = 0; pass < (bed.chunks.length > 18 ? 9 : 5); pass++) {
       contacts = hearthContacts(bed, 0);
       for (i = 0; i < contacts.length; i++) {
         c = contacts[i];

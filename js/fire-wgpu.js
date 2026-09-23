@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var CAP = 24, STEP = 1 / 60;
+  var CAP = 48, STEP = 1 / 60;
   var shader = `
 struct Gas { a: vec4f, b: vec4f }
 struct Body { a: vec4f, b: vec4f, c: vec4f, d: vec4f }
@@ -28,6 +28,8 @@ struct Params { grid: vec4f, flow: vec4f, view: vec4f, misc: vec4f, bodies: arra
 @group(0) @binding(14) var<storage,read> remapNext: array<i32>;
 @group(0) @binding(15) var<storage,read> hullEdges: array<vec4f>;
 @group(0) @binding(16) var<storage,read> splitParents: array<i32>;
+@group(0) @binding(17) var<storage,read> radiance: array<vec4f>;
+@group(0) @binding(18) var<storage,read_write> lightOutput: array<vec4f>;
 @compute @workgroup_size(1) fn splitBody(@builtin(global_invocation_id) id:vec3u){
  let b=id.x;if(b>=${CAP}u){return;}let parent=splitParents[b];
  bo[b]=bi[select(i32(b),parent,parent>=0)];
@@ -89,7 +91,7 @@ fn sampleV(q:vec2f)->vec2f {
  // positive at every quality tier (including their explicit diffusion flux).
  let cap=min(0.40,p.flow.x/(p.grid.z/8.)*0.20);
  v=clamp(v,vec2f(-cap),vec2f(cap));
- if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,(0.09+p.flow.z*0.09)*(1.-p.misc.x*0.8))*p.flow.w);}
+ if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,(0.18+p.flow.z*0.14)*(1.-p.misc.x*0.8))*p.flow.w);}
 
  if(q.x==dims().x-1){v.x=-(0.10+p.flow.z*0.04)*p.flow.w;}
  if(wall(q+vec2i(1,0))){v.x=0.;}if(wall(q+vec2i(0,1))){v.y=0.;}
@@ -111,7 +113,7 @@ fn pressure(q:vec2i,center:f32)->f32 { if(!inside(q)){return select(0.,center,q.
  if(any(id.xy>=vec2u(p.grid.xy))){return;}let q=vec2i(id.xy);let i=at(q);
  var v=vi[i].xy-vec2f(pressure(q+vec2i(1,0),pi[i])-pi[i],pressure(q+vec2i(0,1),pi[i])-pi[i])/p.flow.x;
  let cap=min(0.40,p.flow.x/(p.grid.z/8.)*0.20);v=clamp(v,vec2f(-cap),vec2f(cap));
- if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,(0.09+p.flow.z*0.09)*(1.-p.misc.x*0.8))*p.flow.w);}
+ if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,(0.18+p.flow.z*0.14)*(1.-p.misc.x*0.8))*p.flow.w);}
  if(q.x==dims().x-1){v.x=-(0.10+p.flow.z*0.04)*p.flow.w;}
  if(wall(q)||wall(q+vec2i(1,0))){v.x=0.;}if(wall(q)||wall(q+vec2i(0,1))){v.y=0.;}
  vo[i]=vec4f(v,vi[i].z,0.);
@@ -149,7 +151,7 @@ fn exchange(i:u32,b:u32)->Exchange {
  dry*=fraction;fuel*=fraction;
  let demand=min(s.a.y*kg/count,dt*kg/m.a.w*smoothstep(580.,1020.,core)*(1.-s.b.y*0.35)/count);
  let carbon=min(demand,max(0.,g.a.y)*p.flow.y/2.667*(1.-exp(-dt*18.)));
- let raw=(skin-T)*0.00045*p.grid.z/count;
+ let raw=(skin-T)*0.0018*p.grid.z/count;
  let heat=clamp(raw,-g.b.x*p.flow.y*0.3,max(0.,skin-300.)*capacity/count*0.15);
  return Exchange(fuel,carbon,dry,heat);
 }
@@ -169,11 +171,19 @@ fn exchange(i:u32,b:u32)->Exchange {
    g.b.x+=0.06/max(1.,p.bodies[b].a.y)*inv;
   }
  }
+ // A rear air manifold supplies the depth direction missing from this 2D
+ // slice. Incoming ambient air displaces an equal fraction of local gas out
+ // of the open front. Closing the damper seals this exchange as well.
+ let worldY=p.view.z+(f32(q.y)+0.5)*p.view.w/p.grid.y;
+ let lower=exp(-pow((worldY-185.)/17.,2.));
+ let upper=exp(-pow((worldY-85.)/55.,2.));
+ let vent=(1.-exp(-p.grid.z*(lower*2.5+upper*0.65+select(0.,2.,owner>=0))*(1.+p.flow.z)))*p.flow.w;
+ g=Gas(mix(g.a,ambient().a,vent),mix(g.b,vec4f(0.),vent));
  let T=temp(g);let ignition=smoothstep(540.,780.,T);
- let fuel=min(g.a.x,g.a.y/3.4)*(1.-exp(-p.grid.z*100.*ignition));
+ let fuel=min(g.a.x,g.a.y/3.4)*(1.-exp(-p.grid.z*18.*ignition));
  let rich=clamp(g.a.x*3.4/max(0.001,g.a.y)-1.,0.,1.);
  let soot=fuel*(0.015+0.07*rich);g.a.x-=fuel;g.a.y-=3.4*fuel;g.a.z+=4.4*fuel-soot;g.a.w+=soot;
- let sootBurn=min(g.a.w,g.a.y/2.667)*(1.-exp(-p.grid.z*5.*smoothstep(780.,1400.,T)));
+ let sootBurn=min(g.a.w,g.a.y/2.667)*(1.-exp(-p.grid.z*1.2*smoothstep(780.,1400.,T)));
  g.a.w-=sootBurn;g.a.y-=sootBurn*2.667;g.a.z+=sootBurn*3.667;
  // Soot keeps its chemical energy until it oxidizes.
  let released=fuel*26000.-soot*32000.+sootBurn*32000.;g.b.x+=released;
@@ -210,8 +220,12 @@ fn exchange(i:u32,b:u32)->Exchange {
    let t=dot(bm.c.xy-m.c.xy,line)/max(1.,dot(line,line));
    if(t>0.&&t<1.&&distance(m.c.xy+line*t,bm.c.xy)<bm.c.z*0.75){view=0.;}
   }
-  let touching=(u32(m.d.x)&(1u<<other))!=0u;
-  let q=(0.0000000000567*0.0014*view*(pow(os.a.w,4.)-pow(bi[b].a.w,4.))+select(0.,0.00012*(os.a.w-bi[b].a.w),touching))*dt;
+  let contactBits=u32(select(m.d.x,m.d.z,other>=24u));
+  // Normalize reciprocal view factors so a crowded pile cannot multiply
+  // one lump's radiating area by its number of neighbors.
+  view/=max(1.,max(m.d.w,om.d.w));
+  let touching=(contactBits&(1u<<(other%24u)))!=0u;
+  let q=(0.0000000000567*0.0035*view*(pow(os.a.w,4.)-pow(bi[b].a.w,4.))+select(0.,0.00012*(os.a.w-bi[b].a.w),touching))*dt;
   neighbors+=clamp(q,-max(0.,bi[b].a.w-300.)*kg*(0.16*0.8+bi[b].a.z*4.18)/72.,max(0.,os.a.w-300.)*om.a.z*(0.16*0.8+os.a.z*4.18)/72.);
  }}
  let radiation=min(max(0.,s.a.w-300.)*skinCapacity*0.10,0.0000000000567*0.0018*(pow(s.a.w,4.)-pow(300.,4.))*dt);
@@ -235,11 +249,12 @@ struct Vertex { @builtin(position) pos:vec4f, @location(0) uv:vec2f }
 @vertex fn vertex(@builtin(vertex_index) i:u32)->Vertex {
  let q=vec2f(f32((i<<1u)&2u),f32(i&2u));return Vertex(vec4f(q*2.-1.,0.,1.),vec2f(q.x,1.-q.y));
 }
-fn sampleG(uv:vec2f)->Gas {
+fn sampleLight(uv:vec2f)->vec4f {
  let q=uv*p.grid.xy-0.5;let c=vec2i(floor(q));let f=fract(q);
- let a=gi[at(c)];let b=gi[at(c+vec2i(1,0))];let d=gi[at(c+vec2i(0,1))];let e=gi[at(c+vec2i(1,1))];
- return Gas(mix(mix(a.a,b.a,f.x),mix(d.a,e.a,f.x),f.y),mix(mix(a.b,b.b,f.x),mix(d.b,e.b,f.x),f.y));
+ return mix(mix(radiance[at(c)],radiance[at(c+vec2i(1,0))],f.x),mix(radiance[at(c+vec2i(0,1))],radiance[at(c+vec2i(1,1))],f.x),f.y);
 }
+// Reconstruct emitted light, not averaged temperature. Thermal emission is
+// nonlinear: mixing hot and cold gas before evaluating it erases thin flames.
 // Positive cubic B-spline weights reconstruct a continuous display field.
 // Normalize over fluid samples so empty solid cells cannot darken hot surfaces.
 // This is presentation only: the conservative solver retains its own fields.
@@ -247,24 +262,24 @@ fn cubicWeights(t:f32)->vec4f {
  let t2=t*t;let t3=t2*t;let u=1.-t;
  return vec4f(u*u*u,3.*t3-6.*t2+4.,-3.*t3+3.*t2+3.*t+1.,t3)/6.;
 }
-fn smoothGas(uv:vec2f)->Gas {
+fn smoothLight(uv:vec2f)->vec4f {
  let q=uv*p.grid.xy-0.5;let c=vec2i(floor(q));let f=fract(q);
  let wx=cubicWeights(f.x);let wy=cubicWeights(f.y);
- var a=vec4f(0.);var b=vec4f(0.);var total=0.;
+ var value=vec4f(0.);var total=0.;
  for(var y=0;y<4;y++){for(var x=0;x<4;x++){
   let i=at(c+vec2i(x-1,y-1));let weight=wx[x]*wy[y]*select(0.,1.,mask[i].x == -1);
-  a+=gi[i].a*weight;b+=gi[i].b*weight;total+=weight;
+  value+=radiance[i]*weight;total+=weight;
  }}
- return Gas(a/max(total,0.00001),b/max(total,0.00001));
+ return value/max(total,0.00001);
 }
 // Four nearby grid cells nominate polygons; their actual edge planes, rather
 // than the stair-stepped simulation mask, clip the light at display resolution.
 fn fuelCoverage(uv:vec2f,aa:f32)->f32 {
  let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(320.,p.view.w)+vec2f(0.,p.view.z);
- var coverage=1.;var visited=0u;
+ var coverage=1.;var visited=vec2u(0u);
  for(var k=0;k<4;k++){
   let body=mask[at(c+vec2i(k%2,k/2))].x;
-  if(body<0){continue;}let bit=1u<<u32(body);if((visited&bit)!=0u){continue;}visited|=bit;
+  if(body<0){continue;}let lane=u32(body)/24u;let bit=1u<<(u32(body)%24u);if((visited[lane]&bit)!=0u){continue;}visited[lane]|=bit;
   let count=i32(p.bodies[body].d.y);var distance=-10000.;
   for(var edge=0;edge<count;edge++){
    let plane=hullEdges[body*16+edge];distance=max(distance,dot(plane.xy,point)-plane.z);
@@ -274,17 +289,26 @@ fn fuelCoverage(uv:vec2f,aa:f32)->f32 {
  return coverage;
 }
 fn light(g:Gas)->vec3f {
- let T=clamp(temp(g),300.,2600.);
+ // Display calibration lifts the dim red end for the illustrated chamber.
+ // It never changes the Kelvin fields, ignition, heat transfer or fuel use.
+ let T=clamp(300.+(temp(g)-300.)*1.25,300.,2600.);
  let black=vec3f(1.,1.91,4.24)/(exp(vec3f(22135.,26159.,31973.)/T)-1.)*24000000.;
  let incandescence=black*(1.-exp(-g.a.w*180.));
  let reaction=vec3f(0.025,0.065,0.16)*g.b.z*smoothstep(700.,1100.,T)*2.;
  return incandescence+reaction;
 }
+// Evaluate the spectrum once per solver cell rather than per display sample.
+@compute @workgroup_size(8,8) fn emission(@builtin(global_invocation_id) id:vec3u){
+ if(any(id.xy>=vec2u(p.grid.xy))){return;}let i=at(vec2i(id.xy));
+ if(mask[i].x != -1){lightOutput[i]=vec4f(0.);return;}
+ let g=gi[i];let vapor=g.b.y*(1.-smoothstep(330.,410.,temp(g)));
+ lightOutput[i]=vec4f(light(g),1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3));
+}
 @fragment fn fragment(v:Vertex)->@location(0) vec4f {
  let point=v.uv*vec2f(320.,p.view.w)+vec2f(0.,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
  let cell=at(vec2i(v.uv*p.grid.xy));let mode=i32(p.view.x);
  if(mode>0){
-  if(mask[cell].x != -1){return vec4f(0.);}let g=sampleG(v.uv);let T=temp(g);
+  if(mask[cell].x != -1){return vec4f(0.);}let g=gi[cell];let T=temp(g);
   var c=vec3f(0.);if(mode==1){c=vec3f(1.,0.3,0.04)*clamp((T-300.)/1600.,0.,1.);}
   if(mode==2){c=vec3f(0.15,0.55,1.)*clamp(g.a.y/0.275,0.,1.);}
   if(mode==3){c=vec3f(0.15,1.,0.35)*(1.-exp(-g.a.x*3.));}
@@ -293,13 +317,12 @@ fn light(g:Gas)->vec3f {
  }
  if(mask[cell].x == -2){return vec4f(0.);}
  let coverage=fuelCoverage(v.uv,aa);if(coverage<=0.){return vec4f(0.);}
- let g=smoothGas(v.uv);let T=temp(g);
- let center=light(g);var halo=vec3f(0.);
+ let l=smoothLight(v.uv);
+ let center=l.rgb;var halo=vec3f(0.);
  for(var k=0;k<4;k++){let offset=select(select(vec2f(0.,-1.),vec2f(0.,1.),k==2),select(vec2f(-1.,0.),vec2f(1.,0.),k==0),k<2);
-  halo+=light(sampleG(v.uv+offset*vec2f(5.)/p.grid.xy));}
+  halo+=sampleLight(v.uv+offset*vec2f(5.)/p.grid.xy).rgb;}
  let emitted=center+halo*0.08;
- let vapor=g.b.y*(1.-smoothstep(330.,410.,T));
- let smoke=1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3);
+ let smoke=l.a;
  let color=vec3f(1.)-exp(-emitted*3.8);
  let alpha=clamp(max(max(color.r,color.g),color.b)+smoke*0.7,0.,0.98);
  return vec4f(color+vec3f(0.15,0.145,0.12)*smoke*(1.-color.r),alpha)*coverage;
@@ -310,11 +333,12 @@ fn light(g:Gas)->vec3f {
     options = options || {};
     var device = options.device, w = options.width || 192, top = -(options.headroom || 0), height = 210-top;
     var h = Math.round(w * height / 320), n = w * h;
-    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*132+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
+    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
     var buffers = [], pipelines = {}, groups = {}, gasIndex = 0, velIndex = 0, bank = 0, time = 0;
     var slots = new Array(CAP).fill(null), masks = new Int32Array(n * 2), lists = new Uint32Array(n), uniform = new Float32Array(16+CAP*16);
-    var rbPending = false, revision = 0, resetGeneration = 0, signature = '', contacts = new Uint32Array(CAP), geometryFresh = true;
+    var rbPending = false, revision = 0, resetGeneration = 0, signature = '', contacts = new Uint32Array(CAP*2), geometryFresh = true;
+    var radiationViews = new Float32Array(CAP);
     var previousMasks = new Int32Array(n*2), owners = new Int32Array(n), frontier = new Int32Array(n);
     var remapData = new Int32Array(n*2), remapLinks = new Int32Array(n);
     var edgeData = new Float32Array(CAP*16*4);
@@ -324,6 +348,7 @@ fn light(g:Gas)->vec3f {
     var g = [buffer(n * 32), buffer(n * 32)], v = [buffer((n+w+h) * 16), buffer((n+w+h) * 16)];
     var m = buffer(n * 8), bodies = [buffer(CAP * 64), buffer(CAP * 64)], surfaceBuffer = buffer(n * 4);
     var remapBuffer = buffer(n*8), remapLinkBuffer = buffer(n*4);
+    var lightBuffer = buffer(n*16);
     var edgeBuffer = buffer(edgeData.byteLength), splitBuffer = buffer(CAP*4);
     var pressures = [buffer(n * 4), buffer(n * 4)], div = buffer(n * 4), statsBuffer = buffer(64 * 16);
     var ub = device.createBuffer({ size: uniform.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST }); buffers.push(ub);
@@ -338,9 +363,9 @@ fn light(g:Gas)->vec3f {
     var definitions = {
       splitBody: [6,7,16], init: [0,2,4,10], remap: [0,1,2,5,13,14], advectVelocity: [0,1,3,4,5], diverge: [0,1,3,5,11],
       pressureStep: [0,5,9,10,11], project: [0,3,4,5,9], transport: [0,1,2,3,5],
-      react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], fragment: [0,1,3,5,15]
+      react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], emission: [0,1,5,18], fragment: [0,1,3,5,15,17]
     };
-    function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer,splitBuffer]; }
+    function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer,splitBuffer,lightBuffer,lightBuffer]; }
     function bind(name, gi, vi, pr) {
       var key = name + gi + vi + pr;
       if (!groups[key]) { var res = resources(gi,vi,pr); groups[key] = device.createBindGroup({ layout: pipelines[name].getBindGroupLayout(0), entries: definitions[name].map(function (id) { return { binding: id, resource: { buffer: res[id] } }; }) }); }
@@ -360,7 +385,7 @@ fn light(g:Gas)->vec3f {
         uniform.set([surfaceStart[b],surfaceCount[b],body ? body.dryKg || 0.018*Math.pow(body.baseR/34,2) : 0,body ? body.life : 100,
           body ? commands.get(body) || 0 : 0,body ? ignition.get(body) || 0 : 0,body ? quenches.get(body) || 0 : 0,body && body.material === 'wood' ? 1 : 0,
           body ? body.x : 0,body ? body.y : 0,body ? body.r : 0,body && body.held ? 1 : 0,0,0,0,0],o);
-        uniform[o+12]=contacts[b];
+        uniform[o+12]=contacts[b*2];uniform[o+14]=contacts[b*2+1];uniform[o+15]=radiationViews[b];
         uniform[o+13]=body && !body.held && body.vertices ? Math.min(16,body.vertices.length) : 0;
       }
       device.queue.writeBuffer(ub,0,uniform);
@@ -392,10 +417,12 @@ fn light(g:Gas)->vec3f {
           if(nearest/len>2)return true;
         }return false;
       }
-      contacts.fill(0);
+      contacts.fill(0);radiationViews.fill(0);
       for(var b=0;b<CAP;b++)for(var other=b+1;other<CAP;other++) {
         var a=slots[b],c=slots[other];if(!a||!c||a.held||c.held||!a.vertices||!c.vertices)continue;
-        if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b]|=1<<other;contacts[other]|=1<<b;}
+        var gap=Math.max(0,Math.hypot(a.x-c.x,a.y-c.y)-a.r-c.r),view=1/(1+Math.pow(gap/16,2));
+        radiationViews[b]+=view;radiationViews[other]+=view;
+        if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b*2+Math.floor(other/24)]|=1<<(other%24);contacts[other*2+Math.floor(b/24)]|=1<<(b%24);}
       }
       for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*320/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
       edgeData.fill(0);
@@ -514,7 +541,7 @@ fn light(g:Gas)->vec3f {
       var scale=Math.min(1.5,window.devicePixelRatio||1),rw=Math.max(8,Math.ceil(rect.w*scale)),rh=Math.max(8,Math.ceil(rect.h*scale));
       if(gpuCanvas.width!==rw||gpuCanvas.height!==rh){gpuCanvas.width=rw;gpuCanvas.height=rh;}
       gpuCanvas.style.display='block';gpuCanvas.style.left=rect.x+'px';gpuCanvas.style.top=rect.y+'px';gpuCanvas.style.width=rect.w+'px';gpuCanvas.style.height=rect.h+'px';
-      var enc=device.createCommandEncoder();var pass=enc.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
+      var enc=device.createCommandEncoder();run(enc,'emission');var pass=enc.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
       pass.setPipeline(pipelines.fragment);pass.setBindGroup(0,bind('fragment',gasIndex,velIndex,0));pass.draw(3);pass.end();device.queue.submit([enc.finish()]);return true;
     };
     sim.reset=function(){resetGeneration++;revision++;signature='';geometryFresh=true;bank=0;slots.fill(null);inherited.clear();ignition.clear();quenches.clear();commands.clear();sim.outputKW=0;sim.gasKg=0;sim.sootKg=0;
@@ -552,7 +579,7 @@ fn light(g:Gas)->vec3f {
         var error=await device.popErrorScope();scoped=false;if(error)throw Error(error.message);
         if(lost)return false;sim.available=true;geometry([]);sim.reset();
         gpuCanvas.width=gpuCanvas.height=8;
-        var warm=device.createCommandEncoder();var pass=warm.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
+        var warm=device.createCommandEncoder();run(warm,'emission');var pass=warm.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
         pass.setPipeline(pipelines.fragment);pass.setBindGroup(0,bind('fragment',0,0,0));pass.draw(3);pass.end();device.queue.submit([warm.finish()]);
         await device.queue.onSubmittedWorkDone();return !lost;
       }catch(e){if(scoped)await device.popErrorScope();sim.errors.push(String(e));sim.failed=true;sim.available=false;console.warn('Sluice fire fallback: '+e);return false;}

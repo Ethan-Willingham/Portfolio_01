@@ -171,7 +171,7 @@ try {
   check('remaining ash survives a save',await game('JSON.stringify(hearthSave())')===ashSave);
   for(let stroke=0;stroke<24 && await game('hearthBeds.boiler.ash.length>0');stroke++)await press('ash');
   check('repeated strokes clear physical residue and restore inlet air',await game('hearthBeds.boiler.ash.length===0 && hearthBeds.boiler.ashLoad===0'));
-  const cost = await game('(function(){var result=[];for(var count of [3,18]){hearthReset();for(var i=0;i<count;i++)hearthAddChunk("boiler",160,12);for(var n=0;n<1800;n++)hearthStepBed(hearthBeds.boiler);var start=performance.now();for(var n=0;n<600;n++)hearthStepBed(hearthBeds.boiler);result.push({pieces:count,millisecondsPerStep:(performance.now()-start)/600});}return result;})()');
+  const cost = await game('(function(){var result=[];for(var count of [3,32]){hearthReset();for(var i=0;i<count;i++)hearthAddChunk("boiler",160,12);for(var n=0;n<1800;n++)hearthStepBed(hearthBeds.boiler);var start=performance.now();for(var n=0;n<600;n++)hearthStepBed(hearthBeds.boiler);result.push({pieces:count,millisecondsPerStep:(performance.now()-start)/600});}return result;})()');
   console.log('PHYSICS COST', JSON.stringify(cost));
   check('a full coal bed stays within a practical frame budget', cost.every(c => c.millisecondsPerStep < 4));
   await game('hearthReset();render()');

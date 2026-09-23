@@ -190,7 +190,7 @@
       // Display and pointer transforms include the added plume headroom.
       var stationW = Math.min(900, w - 48), stationX = (w - stationW) / 2;
       var benchW = Math.min(220, stationW * 0.26), leftW = stationW - benchW - 52;
-      var bh = Math.min(440, available - 172, (leftW - 30) * HEARTH_HEIGHT / 320), bw = bh * 320 / HEARTH_HEIGHT;
+      var bh = Math.min(500, available - 172, (leftW - 30) * HEARTH_HEIGHT / 320), bw = bh * 320 / HEARTH_HEIGHT;
       var stationY = top + Math.max(0, (available - bh - 172) / 2);
       box = { x: stationX + (leftW - bw) / 2, y: stationY + 52, w: bw, h: bh };
       bench = { x: stationX + stationW - benchW, y: box.y - 14, w: benchW, h: bh + 33 };

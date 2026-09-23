@@ -59,6 +59,7 @@ function checkBodies(bed) {
   const { s, advance } = fixture();
   const lower = s.hearthAddChunk('boiler', 160, 195);
   const upper = s.hearthAddChunk('boiler', 160, 210 - lower.r * 2 - 20);
+  for(const b of [lower,upper]){b.angle=0;b.shape=[[-1,-.6],[1,-.6],[1,.6],[-1,.6]];s.hearthHullCache.delete(b);s.hearthMass(b);}
   advance(1);
   assert(upper.y + upper.r < 205, 'lower coal supports the upper piece before pickup');
   lower.held = true;
@@ -73,8 +74,11 @@ function checkBodies(bed) {
 {
   const { s, advance } = fixture();
   const bed = s.hearthBeds.boiler;
-  for (let i = 0; i < 18; i++) assert(s.hearthAddChunk('boiler', 160, 12));
+  for (let i = 0; i < 32; i++) assert(s.hearthAddChunk('boiler', 160, 12));
   assert.equal(s.hearthAddChunk('boiler', 20, 20), null, 'coal cap does not silently discard a piece');
+  const aspects = bed.chunks.map(b=>{const v=s.hearthHull(b).vertices;return (Math.max(...v.map(p=>p[0]))-Math.min(...v.map(p=>p[0])))/(Math.max(...v.map(p=>p[1]))-Math.min(...v.map(p=>p[1])));});
+  assert(aspects.some(a=>a>2.5)&&aspects.some(a=>a<1.5),'new charcoal mixes elongated pieces with squat lumps');
+
   const fuel = bed.fuelSeconds;
   advance(15); checkBodies(bed);
   near(bed.fuelSeconds, fuel, 0, 'cold fuel conserved during a crowded drop');
@@ -92,7 +96,8 @@ function checkBodies(bed) {
   const piece = bed.chunks[4], removed = s.hearthRemoveChunk('boiler', piece.id);
   assert.equal(removed, piece); near(bed.fuelSeconds + removed.fuel * removed.life, fuel, 1e-7);
   assert.equal(s.hearthRemoveChunk('boiler', piece.id), null, 'cannot retrieve a chunk twice');
-  console.log('PASS 18-piece pile, bounded contact solve, no runaway, cold fuel conservation and removal');
+  s.hearthIgnite('boiler');assert(bed.chunks.filter(b=>b.lit).length<=3,'starter pocket never lights an entire pile');
+  console.log('PASS 32-piece pile, bounded contact solve, no runaway, cold fuel conservation and removal');
 }
 
 {
@@ -192,7 +197,7 @@ function checkBodies(bed) {
   }, { id: 1, x: 9999, y: -9999, vx: 999999, fuel: 2 }], heat: 999, air: -5, pilot: true },
   forge: { chunks: Array.from({ length: 60 }, () => ({})) } }));
   assert(!s.hearthBeds.boiler.pilot && s.hearthBeds.forge.pilot, 'save cannot change the boiler ignition rule');
-  assert.equal(s.hearthBeds.forge.chunks.length, 18, 'restore enforces capacity');
+  assert.equal(s.hearthBeds.forge.chunks.length, 32, 'restore enforces capacity');
   assert.equal(new Set(s.hearthBeds.boiler.chunks.map(b => b.id)).size, 2, 'duplicate IDs repaired');
   const ash = s.hearthBeds.boiler.chunks[0];
   assert(ash.ash && !ash.lit && ash.fuel === 0, 'zero fuel cannot be resurrected');
@@ -206,11 +211,11 @@ function checkBodies(bed) {
   assert.equal(s.hearthBeds.forge.chunks.length, 0);
   assert.equal(s.hearthAddChunk('invalid', 0, 0), null);
   assert.equal(s.hearthIgnite('invalid'), false);
-  s.hearthRestore({version:4,boiler:{chunks:Array.from({length:40},()=>({
+  s.hearthRestore({version:4,boiler:{chunks:Array.from({length:60},()=>({
     shape:[[-1,-1],[1,-1],[1,-1],[1,1],[-1,1]]
   }))}});
   const bed=s.hearthBeds.boiler;
-  assert.equal(bed.chunks.length,24,'fragment saves have a bounded separate capacity');
+  assert.equal(bed.chunks.length,48,'fragment saves have a bounded separate capacity');
   assert(bed.chunks.every(b=>!b.shape),'zero-length polygon edges are rejected');
   const minerals=bed.chunks.reduce((n,b)=>n+b.dryKg*.16,0);
   for(const b of bed.chunks){b.ash=true;b.fuel=b.volatile=b.carbon=0;}
@@ -268,7 +273,7 @@ function checkBodies(bed) {
 
 {
   const f = fixture(), s = f.s;
-  for (let i = 0; i < 18; i++) s.hearthAddChunk('boiler', 160, 12);
+  for (let i = 0; i < 32; i++) s.hearthAddChunk('boiler', 160, 12);
   f.advance(12);
   const bed = s.hearthBeds.boiler;
   const buried = bed.chunks.reduce((a,b) => a.oxygen < b.oxygen ? a : b);

@@ -35,6 +35,20 @@ temperature and reaction activity, using an approximate three-wavelength thermal
 spectrum, a blue reaction contribution and a small spatial glow. Exposure affects
 only rendering. There are no painted flame sources in the GPU path.
 
+Since v28.67, a rear air manifold supplements the grate. This approximates air
+entering from the depth direction that a strictly planar stack otherwise seals
+off. It exchanges a bounded fraction of local gas with ambient air along two
+rear bands and exposed fuel surfaces. The displaced gas vents through the open
+front, carrying its mass and enthalpy out of the slice. Damper closure disables
+this exchange. It is an explicit open boundary, not an oxygen source in sealed
+tests. Bellows increase this supply as well as primary inlet velocity.
+
+Finite reaction and soot-oxidation rates allow burning gas to travel farther
+from a fuel face. Stronger gas/skin exchange carries heat back to nearby fuel.
+Reciprocal radiation view factors are normalized, so adding cold neighbors cannot
+multiply a hot lump's effective radiating area. A dense wet bed can still smolder;
+fresh volatile flames eventually give way to coke and embers.
+
 ## Material and geometry feedback
 
 The very same convex coal polygons used for drawing, picking and rigid-body
@@ -57,14 +71,15 @@ skin exchange heat; nearby bodies exchange contact heat and approximate radiatio
 Contact conduction uses polygon separation. Radiation uses bounded view factors
 and approximate occlusion by intervening fuel.
 
-The physical scale is a 0.8 by 0.525 metre chamber with a 0.04 metre slice depth.
-A reference coal body starts with 0.018 kg of combustible material; other sizes
-scale by squared radius. Temperatures are Kelvin and exchange amounts are kg
+The physical scale is a 0.8 by 0.8 metre chamber with a 0.04 metre slice depth.
+A reference coal body starts with 0.018 kg of combustible material; new lumps
+scale by polygon area and squared radius. Existing saved fuel keeps its mass. Temperatures are Kelvin and exchange amounts are kg
 and kJ. Gas sensible heat uses a constant effective heat capacity. Water warming
 uses 4.18 kJ/(kg K), vapor sensible heat uses 1.8, and evaporation costs
 2260 kJ/kg. These are simplified material coefficients and game-time kinetics.
-The flint interaction is an explicit finite ignition assist; it does not model
-the energy of an individual real flint spark.
+The flint interaction is an explicit finite ignition assist for a pocket of up
+to three nearby pieces near the exposed crown. It does not model the energy of
+an individual real flint spark. Subsequent spreading uses thermal exchange.
 
 Coal reserves 28 percent of its combustible mass as volatiles. A tested wood
 adapter reserves 76 percent, starts pyrolysis at a lower temperature, and releases
@@ -87,8 +102,8 @@ no direct radiation to the boiler. Shrinking fuel changes mass and support.
 
 Contact impulses drive a carbon-dependent failure model. Convex fragments inherit
 the current GPU body state in a compute pass, with dry reference mass divided by
-area. A stale CPU readback cannot refill them. The six reserved body slots allow
-fracture beyond the eighteen-piece loading limit, with two split generations.
+area. A stale CPU readback cannot refill them. Sixteen reserved body slots allow
+fracture beyond the thirty-two-piece loading limit, with two split generations.
 At capacity a weakened piece continues burning until a slot opens. Exhausted
 material becomes bounded mineral ash grains; they retain residue mass, cool,
 settle and obstruct primary grate air until swept. Granular ash cooling is a
@@ -97,7 +112,7 @@ See [COAL_FURNACE.md](COAL_FURNACE.md) for the failure and ash model.
 
 ## Ownership, saves and display
 
-A single asynchronous readback of 2,560 bytes mirrors bodies and reductions.
+A single asynchronous readback of 4,096 bytes mirrors bodies and reductions.
 Only one can be pending. Slot revisions, reset generations and ignition/quench
 serials prevent removed bodies or earlier commands from overwriting current
 state. Reservoirs, Kelvin temperatures and material identity persist in hearth
@@ -126,13 +141,18 @@ sleeps after a five-second vent period, with no continuing compute submissions.
 Since v28.65 the chamber extends upward from y = -110 to the original grate at
 210, adding 52 percent more physical plume space without enlarging the coal.
 The tending view preserves the square chamber aspect ratio and caps its desktop
-size at 440 CSS pixels. The bath's integrated hatch is taller and shows the same
+size at 500 CSS pixels. The bath's integrated hatch is taller and shows the same
 complete chamber. Pointer coordinates share this transform.
 
-The normal image reconstructs gas with positive cubic B-spline weights, normalized
-over fluid cells. These display samples do not modify simulation mass or heat.
+The normal image reconstructs emitted radiance with positive cubic B-spline
+weights, normalized over fluid cells. An emission compute pass evaluates the
+thermal spectrum once per solver cell. Averaging gas temperature before this
+nonlinear calculation used to erase thin hot flames. A display-only temperature
+range stretch of 1.25 lifts dim red emission against the illustrated chamber;
+it does not change stored Kelvin temperatures or thermal exchange. These
+display samples do not modify simulation mass or heat.
 Flame occlusion uses the fuel's actual convex edge planes with a subpixel transition,
-instead of magnifying the simulation's square solid mask. A retained 6,144-byte edge
+instead of magnifying the simulation's square solid mask. A retained 12,288-byte edge
 buffer updates with changed geometry. Diagnostic views retain the raw cell mask.
 The fire canvas explicitly uses smooth browser scaling.
 
@@ -149,20 +169,20 @@ tools/fire-simulation-smoke.mjs` also boots the real browser with a delayed wate
 device and fire warm-up. The CPU browser test checks interpolation in actual
 rendered pixels as well as preserving the surrounding canvas settings.
 
-Desktop uses 192 by 192 cells; mobile uses 128 by 128. There are at most twenty-four
+Desktop uses 192 by 192 cells; mobile uses 128 by 128. There are at most forty-eight
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch
 up its missed burn time. Buffers, pipelines and bind groups are retained, and
 all steps in one game update share one queue submission. The desktop simulation
-buffers occupy 4,892,832 bytes, excluding presentation textures and CPU geometry
+buffers occupy 5,495,040 bytes, excluding presentation textures and CPU geometry
 arrays. The module requests no second GPU device.
 
-On the development Apple M1 Pro, Chrome for Testing with Metal, v28.65 at 1280 by 900:
+On the development Apple M1 Pro, Chrome for Testing with Metal, v28.67 at 1280 by 900 (32 loaded pieces):
 
 | Measurement | Result |
 | --- | --- |
-| Fire CPU geometry and submission, 120 frames with three burning pieces | 1.08 ms average, 1.20 ms p95 |
-| Fire-room update/render plus a GPU queue fence | 5.33 ms average, 7.90 ms p95 |
-| Full bath frame CPU time, about 51,000 liquid particles, steam and a guest | 3.04 ms average, 5.00 ms p99 |
+| Fire CPU geometry and submission, 120 frames with a burning full bed | 2.07 ms average, 2.30 ms p95 |
+| Fire-room update/render plus a GPU queue fence | 10.93 ms average, 16.60 ms p95 |
+| Full bath frame CPU time, about 55,000 liquid particles, steam and a guest | 13.12 ms average, 17.30 ms p99 |
 | Full bath frame interval | 16.67 ms average, 16.80 ms p99 |
 
 The queue-fenced measurement includes browser/driver scheduling and room drawing;
@@ -183,6 +203,9 @@ to `/tmp/sluice-fire-qa`. The supporting browser checks verify:
   bellows, coal/wood differences, exhausted carbon and residual ash heat.
 - Identical fixed steps under different frame batching and no stale readback
   updating removed fuel.
+- A lit eight-piece bed produces visible flame above the fuel; 32 bodies reach
+  the GPU. The final body slot occludes correctly and thin hot filaments survive
+  reconstruction while cold soot remains unlit.
 - Neighbor ignition through heat exchange, exact material save round trips,
   mobile layout and real touch ignition, sleep/wake and CPU fallback.
 - Full-game water/steam/guest operation and clean browser/shader execution.
