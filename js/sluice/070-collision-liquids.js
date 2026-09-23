@@ -1498,6 +1498,9 @@
       y = (TOTAL_ROWS + 1) * TILE;
       vy = -Math.abs(vy) * bounce;
     }
+    if(typeof bathProjectWater==='function' && bathRoomReady && y>(BATH_TOP_ROW-1)*TILE){
+      var bowl=bathProjectWater(x,y,vx,vy,r);x=bowl[0];y=bowl[1];vx=bowl[2];vy=bowl[3];
+    }
     liquidX[i] = x; liquidY[i] = y;
     liquidVX[i] = vx; liquidVY[i] = vy;
     return isFinite(x) && isFinite(y) && isFinite(vx) && isFinite(vy);

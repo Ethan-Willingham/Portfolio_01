@@ -555,7 +555,8 @@
     if (woke) liquidMutationSeq++;
   }
 
-  function liquidWorldSolidAt(x, y) {
+  function liquidWorldSolidAt(x, y, tileOnly) {
+    if(!tileOnly && typeof bathSolidAt==='function' && bathSolidAt(x,y))return true;
     var row = Math.floor(y / TILE);
     var col = Math.floor(x / TILE);
     var t = tileAt(row, col);

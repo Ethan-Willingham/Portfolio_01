@@ -1,6 +1,6 @@
   /* ---- Coal rigid bodies: the visible convex hull IS the contact geometry. ---- */
   var hearthHullCache = new WeakMap();
-  var HEARTH_FLOOR = 210, HEARTH_FRICTION = 0.72;
+  var HEARTH_FLOOR = 210, HEARTH_TOP = -110, HEARTH_HEIGHT = 320, HEARTH_FRICTION = 0.72;
 
   function hearthHull(body) {
     var cached = hearthHullCache.get(body);
@@ -9,6 +9,7 @@
     var points = [], i, cross = function (a, b, c) {
       return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     };
+    if (body.shape) { cached = hearthPolygon(body.shape); hearthHullCache.set(body,cached); return cached; }
     var count = 8 + Math.floor(hearthSeed(seed + 13) * 3);
     var aspect = 0.66 + hearthSeed(seed + 93) * 0.28;
     for (i = 0; i < count; i++) {
@@ -50,7 +51,8 @@
   }
   function hearthMass(b) {
     var hull = hearthHull(b);
-    var mass = hull.area * b.baseR * b.baseR / 1500 * (0.16 + b.fuel * 0.84);
+    if (!b.massRef) b.massRef = hull.area * b.baseR * b.baseR / 1500;
+    var mass = b.massRef * (0.16 + b.fuel * 0.84);
     b.invMass = 1 / mass;
     b.invInertia = 1 / (mass * hull.inertia * b.r * b.r);
   }
@@ -206,6 +208,16 @@
       }
     }
     bed.contacts = cache;
+    // Solved impulses measure supported weight, including loads transmitted
+    // through a stack. Accumulate before positional correction replaces them.
+    for (i = 0; i < bed.chunks.length; i++) bed.chunks[i].load = 0;
+    for (i = 0; i < contacts.length; i++) {
+      c = contacts[i];
+      for (j = 0; j < c.points.length; j++) {
+        var force = c.points[j].normal / HEARTH_STEP;
+        c.a.load += force; if (c.b) c.b.load += force;
+      }
+    }
     // Split positional correction includes torque, but adds no kinetic energy.
     // Rebuild the manifolds after each pass as faces rotate into their seats.
     for (pass = 0; pass < 5; pass++) {

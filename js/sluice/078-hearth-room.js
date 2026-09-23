@@ -93,7 +93,12 @@
     for (var i = bed.chunks.length - 1; i >= 0; i--) {
       if (bed.chunks[i].ash && !bed.chunks[i].held) { hearthRemoveChunk(kind, bed.chunks[i].id); count++; }
     }
-    bathSetNotice(count ? 'Spent ash falls into the pan.' : 'The rake removes only spent ash.');
+    // One stroke sweeps the leftmost quarter. Residue remains physical until
+    // the player clears it, and each stroke immediately reopens grate air.
+    bed.ash.sort(function(a,b){return a.x-b.x;});
+    var swept=bed.ash.splice(0,Math.ceil(bed.ash.length/4)); count+=swept.length;
+    bed.ashLoad=Math.min(0.92,hearthAshMass(bed)/0.025);bed.sweep=0.4;
+    bathSetNotice(count ? (bed.ash.length ? 'Ash swept into the pan. Sweep again to clear the grate.' : 'The grate is clear.') : 'The rake removes only spent ash.');
     if (count) { bed.contacts = {}; sfxPlay('debris', { gain: 0.35 }); saveNow('hearth-ash'); }
   }
   function hearthRoomAction(action) {
@@ -159,7 +164,7 @@
     return true;
   }
 
-  // All hit boxes use CSS pixels. Firebox bodies stay in their own 320 x 210 space.
+  // Hit boxes use CSS pixels; bodies keep chamber coordinates above the y=210 grate.
   function hearthNavHeight() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
     return hearthDevSupplies() && w < 740 && !(w >= 480 && h < 500) ? 114 : 62;
@@ -170,7 +175,7 @@
     var available = h - top - footer, split = w >= 620;
     var row, box, bench, controls = w >= 620 ? 76 : 130;
     if (w >= 520 && h < 500) {
-      var leftW = w * 0.39 - 44, bh = Math.min(available - 46, leftW * 210 / 320), bw = bh * 320 / 210;
+      var leftW = w * 0.39 - 44, bh = Math.min(available - 46, leftW * HEARTH_HEIGHT / 320), bw = bh * 320 / HEARTH_HEIGHT;
       var rx = w * 0.65, rw = w - rx - 18, cw = (rw - 10) / 2;
       return { w: w, h: h, top: top, footer: h - footer,
         box: { x: 24 + (leftW - bw) / 2, y: top + 28, w: bw, h: bh },
@@ -182,17 +187,17 @@
     }
     if (split) {
       // Keep the furnace at a readable working distance on large monitors.
-      // Its physical 320 by 210 chamber and pointer coordinates stay unchanged.
+      // Display and pointer transforms include the added plume headroom.
       var stationW = Math.min(900, w - 48), stationX = (w - stationW) / 2;
       var benchW = Math.min(220, stationW * 0.26), leftW = stationW - benchW - 52;
-      var bh = Math.min(378, available - 164, (leftW - 30) * 210 / 320), bw = bh * 320 / 210;
-      var stationY = top + Math.max(0, (available - bh - 164) / 2);
+      var bh = Math.min(440, available - 172, (leftW - 30) * HEARTH_HEIGHT / 320), bw = bh * 320 / HEARTH_HEIGHT;
+      var stationY = top + Math.max(0, (available - bh - 172) / 2);
       box = { x: stationX + (leftW - bw) / 2, y: stationY + 52, w: bw, h: bh };
       bench = { x: stationX + stationW - benchW, y: box.y - 14, w: benchW, h: bh + 33 };
       row = box.y + bh + 40;
     } else {
       var artH = available - controls - 52;
-      var bh = Math.min((w - 64) * 210 / 320, artH * 0.55), bw = bh * 320 / 210;
+      var bh = Math.min((w - 64) * HEARTH_HEIGHT / 320, artH * 0.55), bw = bh * 320 / HEARTH_HEIGHT;
       box = { x: (w - bw) / 2, y: top + 27, w: bw, h: bh };
       bench = { x: 28, y: box.y + bh + 27, w: w - 56, h: artH - bh - 30 };
       row = top + artH + 38;
@@ -262,8 +267,8 @@
     }
     var box = L.box, bed = hearthBeds[kind];
     for (var n = bed.chunks.length - 1; n >= 0; n--) {
-      var b = bed.chunks[n], sx = box.x + b.x * box.w / 320, sy = box.y + b.y * box.h / 210;
-      if (!hearthInside(b, (p.x - box.x) * 320 / box.w, (p.y - box.y) * 210 / box.h,
+      var b = bed.chunks[n];
+      if (!hearthInside(b, (p.x - box.x) * 320 / box.w, HEARTH_TOP + (p.y - box.y) * HEARTH_HEIGHT / box.h,
         (e.pointerType === 'touch' ? 8 : 2) * 320 / box.w)) continue;
       b.held = true;
       hearthDrag = { kind: kind, b: b, fresh: false, ox: b.x, oy: b.y, x: p.x, y: p.y,
@@ -323,9 +328,9 @@
       var releaseAge = Math.max(0, (performance.now() - d.time) / 1000 - 0.04);
       var releaseVelocity = Math.exp(-releaseAge * 18);
       d.b.x = tap ? 90 + Math.random() * 140 : Math.max(d.b.r, Math.min(320 - d.b.r, (q.x - box.x) * 320 / box.w));
-      d.b.y = tap ? 12 : Math.max(-30, Math.min(210 - d.b.r, (q.y - box.y) * 210 / box.h));
+      d.b.y = tap ? 12 : Math.max(HEARTH_TOP+10, Math.min(210 - d.b.r, HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h));
       d.b.vx = tap ? (Math.random() - 0.5) * 50 : d.vx * releaseVelocity * 320 / box.w * 0.45;
-      d.b.vy = tap ? 0 : d.vy * releaseVelocity * 210 / box.h * 0.45;
+      d.b.vy = tap ? 0 : d.vy * releaseVelocity * HEARTH_HEIGHT / box.h * 0.45;
       d.b.spin = d.b.vx * 0.025; d.b.held = false; hearthDrag = null;
       sfxPlay('debris', { gain: 0.35 });
     } else if (d.fresh || (d.b.fuel >= 0.999 && d.b.heat < 0.05 && !d.b.ash)) {
@@ -500,14 +505,15 @@
     hearthButtons.push(Object.assign({ action: 'pump' }, L.pump));
     hearthDrawTools(c, L.bench);
     hearthButton(c, L.action, 'STRIKE FLINT [F]', 'strike', hearthHasTool('flint') && hearthHasTool('steel'));
-    hearthButton(c, L.ash, 'RAKE ASH [A]', 'ash', bed.chunks.some(function (b) { return b.ash; }));
+    hearthButton(c, L.ash, 'SWEEP ASH [A]', 'ash', bed.ash.length>0 || bed.chunks.some(function (b) { return b.ash; }));
     var stats = (hearthHasTool('flint') ? 'FLINT READY' : 'MINE STONE FOR FLINT') +
       '   /   BATH ' + Math.round(20 + bathHeat * 28) + ' C';
     if (hearthDevSupplies()) stats = 'DEV: unlimited coal, water and flint';
     var bottomY = L.footer + 17;
     c.fillStyle = UIT_PANEL; c.fillRect(0, bottomY - 16, L.w, L.h - bottomY + 16);
     hearthText(c, stats, 18, bottomY, 11, BLD.cream);
-    var hint = bathNoticeT > 0 ? bathNotice : !bed.chunks.length ?
+    var hint = bathNoticeT > 0 ? bathNotice : !bed.chunks.length && bed.ash.length ?
+      'Spent ash remains on the grate. Sweep it away with A or SWEEP ASH.' : !bed.chunks.length ?
       'Drag coal onto the grate, or tap the bunker. The fire heats the bath above.' : !hearthHasTool('flint') ?
       'Break stone to find flint. The reusable steel striker is already here.' :
       hearthBurnSummary(bed) + '. Spread coal for air; bellows feed the fire.';

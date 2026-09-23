@@ -50,9 +50,12 @@ A simple tap on the bunker drops one piece.
 
 The room fits the tub and boiler between compact navigation and a single water
 control rail. The main basin spans 26 tiles and retains the original catenary
-formula. The drawn lining and carved liquid cavity use the same curve. The carve leaves
-only one pixel of clearance, and guest buoyancy includes the remaining tile
-clearance beneath the visible lining. Existing
+formula. Since v28.65, the drawn copper liner is also an analytic collision boundary in
+the WebGPU grid and particle passes and the CPU fallback. A normal projection
+keeps particle centers outside the six-pixel liner, including water loaded from
+older saves in the concealed tile clearance. The coarse tile mask remains a
+backstop, and is uploaded separately so it cannot flatten the curved boundary.
+Guest buoyancy integrates the same visible cavity. Existing
 saves recarve the larger room on entry without adding water or charging again.
 Old waiting guests move to the dry landing. Purchased upper floors remain
 available by scrolling.
@@ -79,8 +82,9 @@ Coal uses large, seeded convex hulls shared by drawing, picking and collisions.
 The 120 Hz solver uses face contacts, actual mass and rotational inertia, low
 restitution and static friction. Pieces balance on their faces, tip when their
 center of mass overhangs a support, and settle as burning fuel shrinks their
-geometry. Held chunks detach from the pile. Each bed holds at most eighteen
-pieces, including physical ash.
+geometry. Held chunks detach from the pile. Loading stops at eighteen pieces; six reserved slots allow burning coal to split
+under load. Spent material becomes up to 128 persistent ash grains. Sweep them
+with A or SWEEP ASH to restore underfire air.
 
 The 30 Hz burn model separates moisture, volatile fuel and fixed carbon. Coal
 warms and dries, releases smoky gases, flames, burns as glowing coke, then leaves

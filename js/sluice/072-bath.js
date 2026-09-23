@@ -166,6 +166,38 @@
       }
     };
   }
+  var bathCollisionCache = [];
+  function bathCollisionCurves() {
+    if(!bathRoomReady)return [];
+    return bathCollisionCache;
+  }
+  function bathSyncCollision() {
+    bathCollisionCache = bathRoomReady ? BATH_FLOORS.filter(function(F){return F.tubs.length;}).map(function(F){return bathTubCurve(F,F.tubs[0]);}) : [];
+    if(liquidWGPU && liquidWGPU.setBathBowls)liquidWGPU.setBathBowls(bathCollisionCurves().map(function(c){return [c.x0,c.x1,c.y0,c.D];}));
+  }
+  function bathCurveSlope(c,x) {
+    var t=Math.max(-1,Math.min(1,(x-c.x0)/(c.x1-c.x0)*2-1));
+    return -c.D*4*Math.sinh(2*t)/((c.x1-c.x0)*(Math.cosh(2)-1));
+  }
+  function bathSolidAt(x,y) {
+    if(!bathRoomReady || y<(BATH_TOP_ROW-1)*TILE)return false;
+    var curves=bathCollisionCurves();
+    for(var i=0;i<curves.length;i++){
+      var c=curves[i];if(x<c.x0 || x>c.x1 || y<c.y0-16 || y>c.y0+c.D+32)continue;
+      var slope=bathCurveSlope(c,x);if(y>=c.y0+c.depthAt(x)-3*Math.sqrt(1+slope*slope))return true;
+    }return false;
+  }
+  function bathProjectWater(x,y,vx,vy,r) {
+    var curves=bathCollisionCurves();
+    for(var i=0;i<curves.length;i++){
+      var c=curves[i];if(x<c.x0 || x>c.x1 || y<c.y0-16 || y>c.y0+c.D+32)continue;
+      for(var pass=0;pass<4;pass++){
+        var slope=bathCurveSlope(c,x),len=Math.sqrt(1+slope*slope),depth=(y-c.y0-c.depthAt(x))/len+r+3;
+        if(depth<=0)break;var nx=slope/len,ny=-1/len,speed=Math.min(0,vx*nx+vy*ny);
+        x+=nx*depth;y+=ny*depth;vx-=nx*speed;vy-=ny*speed;
+      }
+    }return [x,y,vx,vy];
+  }
   var bathFloorsOwned = [true, false, false, false, false];   // persisted with the bathhouse
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
@@ -249,7 +281,7 @@
 
   // ---- Tower construction (one-shot, on first enter) ----------------------
   function bathCarveRoom() {
-    if (bathRoomReady) return;
+    if (bathRoomReady) { bathSyncCollision(); return; }
     if (typeof world === 'undefined' || !world[BATH_BOT_ROW]) return;
     var r, c, f, i;
     // Solid block first (replacing tile objects wholesale is safe: the
@@ -296,6 +328,7 @@
       if (bathFloorsOwned[f]) bathFillFloor(f);
     }
     bathRoomReady = true;
+    bathSyncCollision();
     try {
       console.log('[bath] tower carved: 5 floors; F1 open, buy the rest in-scene. ' +
         '__bath.floor(1..5) scrolls, __bath.buy(2..5) purchases.');
@@ -768,7 +801,9 @@
     var width = canvas.width / dpr, height = canvas.height / dpr;
     var nav = hearthNavHeight(), hud = bathHUDHeight();
     // Reserve the fixed controls before fitting the entire ground-floor tub.
-    worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / (13 * TILE));
+    var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
+    var mainHeight = Math.max(13*TILE,bathInteriorBottom()-mainCurve.y0+24);
+    worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / mainHeight);
     var viewportKey = width + ':' + height + ':' + nav;
     if (bathViewportKey !== viewportKey) {
       bathViewportKey = viewportKey; bathScrollT = 1e9; bathCamY = -1;

@@ -461,7 +461,7 @@
   }
 
   // Interior only. The caller supplies the cast-iron door, grate, and controls.
-  // x/y/w/h map the simulation's 320 by 210 chamber without changing any body.
+  // x/y/w/h map the square chamber, including the headroom above the fuel bed.
   function hearthDrawFirebox(c, bed, x, y, w, h, time, options) {
     if (!c || !bed || w <= 0 || h <= 0) return;
     var physical = typeof hearthFireDraw === 'function' && hearthFireDraw(c, bed, x, y, w, h);
@@ -471,11 +471,11 @@
     var i, row, col;
     c.save();
     c.beginPath(); c.rect(x, y, w, h); c.clip();
-    c.translate(x, y); c.scale(w / 320, h / 210);
-    c.fillStyle = BLD.outline; c.fillRect(0, 0, 320, 210);
+    c.translate(x, y); c.scale(w / 320, h / HEARTH_HEIGHT); c.translate(0,-HEARTH_TOP);
+    c.fillStyle = BLD.outline; c.fillRect(0, HEARTH_TOP, 320, HEARTH_HEIGHT);
     // Soot-blackened firebrick. A few top faces survive through the carbon,
     // keeping the cavity legible before the first spark and under a low fire.
-    for (row = 0; row < 7; row++) for (col = -1; col < 7; col++) {
+    for (row = -4; row < 7; row++) for (col = -1; col < 7; col++) {
       var bx = col * 58 + (row % 2 ? 29 : 0), by = row * 31;
       var variation = hearthArtHash(row * 53 + col * 97 + 811);
       c.fillStyle = hearthArtColor(variation > 0.6 ? BLD.woodDark : BLD.stoneDark, 0.25 + variation * 0.08);
@@ -488,15 +488,17 @@
       glow.addColorStop(0, hearthArtColor(BLD.redBright, 0.24 * hot));
       glow.addColorStop(0.45, hearthArtColor(BLD.redBase, 0.12 * hot));
       glow.addColorStop(1, hearthArtColor(BLD.redDeep, 0));
-      c.fillStyle = glow; c.fillRect(0, 0, 320, 210);
+      c.fillStyle = glow; c.fillRect(0, HEARTH_TOP, 320, HEARTH_HEIGHT);
     }
     c.fillStyle = BLD.metalDark; c.fillRect(0, 208, 320, 2);
     c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 209, 320, 1);
-    // Ash powder lives on the grate rather than drifting like snow.
-    for (i = 0; i < 38; i++) {
-      var dustX = hearthArtHash(i * 17 + 1) * 320, dustY = 207 + hearthArtHash(i * 31 + 43) * 2;
-      c.fillStyle = hearthArtColor(BLD.stoneBase, 0.44);
-      c.fillRect(Math.round(dustX), Math.round(dustY), 1 + (i % 3), 1);
+    // Mineral residue is simulated and saved, never painted in an empty grate.
+    var ash = bed.ash || [];
+    for(i=0;i<ash.length;i++){
+      var grain=ash[i],radius=Math.max(1.3,Math.sqrt(grain.kg/0.00008));
+      c.fillStyle=grain.heat>0.45?BLD.redDark:grain.seed>0.4?BLD.stoneLight:BLD.stoneBase;
+      c.beginPath();c.moveTo(grain.x-radius,grain.y);c.lineTo(grain.x-radius*0.4,grain.y-radius);
+      c.lineTo(grain.x+radius,grain.y-radius*0.3);c.lineTo(grain.x+radius*0.6,grain.y+radius*0.6);c.closePath();c.fill();
     }
     if (!physical) {
       hearthArtVapors(c, chunks, Number(time) || 0);
@@ -516,6 +518,12 @@
     }
     hearthArtEmbers(c, field.sources, air, Number(time) || 0);
     hearthArtEventSparks(c, bed);
+    if(bed.sweep>0){
+      var rakeX=320*(1-bed.sweep/0.4);c.strokeStyle=BLD.metalLight;c.lineWidth=2;
+      c.beginPath();c.moveTo(rakeX-30,185);c.lineTo(rakeX,205);c.stroke();
+      c.fillStyle=BLD.metalBase;c.fillRect(rakeX-10,202,20,2);
+      for(var tooth=0;tooth<5;tooth++)c.fillRect(rakeX-10+tooth*5,202,1,6);
+    }
     // Reflected heat kisses the chamber edges, never a permanent orange frame.
     if (hot > 0.005) {
       c.fillStyle = hearthArtColor(BLD.redBright, 0.19 * hot);
@@ -528,7 +536,10 @@
 
   // Called under the game's loading cover; state is intentionally disposable.
   function hearthArtWarm(c) {
-    var bed = { air: 0.75, sparks: [
+    var bed = { air: 0.75, sweep: 0.2, ash: [
+      {x:125,y:206,kg:0.0004,heat:0.6,seed:0.3},
+      {x:129,y:207,kg:0.0004,heat:0.1,seed:0.7}
+    ], sparks: [
       { x: 153, y: 145, vx: -37, vy: -91, t: 0.12, life: 0.8, r: 1.4, heat: 0.85 },
       { x: 164, y: 132, vx: 25, vy: -65, t: 0.42, life: 0.7, r: 1, heat: 0.4 }
     ], chunks: [
@@ -536,8 +547,8 @@
       { id: 2, seed: 4.18, x: 175, y: 192, r: 29, angle: -0.3, heat: 0, fuel: 1 },
       { id: 3, seed: 2.71, x: 160, y: 165, r: 22, angle: 1.3, heat: 0.6, fuel: 0.1, lit: true, flame: 0, coating: 0.8 }
     ] };
-    hearthDrawFirebox(c, bed, 0, 0, 160, 105, 0);
-    hearthDrawFirebox(c, bed, 0, 0, 160, 105, 0.1);
+    hearthDrawFirebox(c, bed, 0, 0, 160, 160, 0);
+    hearthDrawFirebox(c, bed, 0, 0, 160, 160, 0.1);
     hearthDrawCoal(c, bed.chunks[0], 190, 50, 1, 0);
     hearthDrawCoal(c, bed.chunks[1], 225, 50, 1, 0);
     hearthDrawCoal(c, bed.chunks[2], 255, 50, 1, 0);

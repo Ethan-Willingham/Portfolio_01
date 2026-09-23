@@ -5,12 +5,12 @@
  */
 (function () {
   'use strict';
-  var CAP = 18, STEP = 1 / 60;
+  var CAP = 24, STEP = 1 / 60;
   var shader = `
 struct Gas { a: vec4f, b: vec4f }
 struct Body { a: vec4f, b: vec4f, c: vec4f, d: vec4f }
 struct Meta { a: vec4f, b: vec4f, c: vec4f, d: vec4f }
-struct Params { grid: vec4f, flow: vec4f, view: vec4f, misc: vec4f, bodies: array<Meta,18> }
+struct Params { grid: vec4f, flow: vec4f, view: vec4f, misc: vec4f, bodies: array<Meta,${CAP}> }
 @group(0) @binding(0) var<uniform> p: Params;
 @group(0) @binding(1) var<storage,read> gi: array<Gas>;
 @group(0) @binding(2) var<storage,read_write> go: array<Gas>;
@@ -27,6 +27,11 @@ struct Params { grid: vec4f, flow: vec4f, view: vec4f, misc: vec4f, bodies: arra
 @group(0) @binding(13) var<storage,read> remapInfo: array<vec2i>;
 @group(0) @binding(14) var<storage,read> remapNext: array<i32>;
 @group(0) @binding(15) var<storage,read> hullEdges: array<vec4f>;
+@group(0) @binding(16) var<storage,read> splitParents: array<i32>;
+@compute @workgroup_size(1) fn splitBody(@builtin(global_invocation_id) id:vec3u){
+ let b=id.x;if(b>=${CAP}u){return;}let parent=splitParents[b];
+ bo[b]=bi[select(i32(b),parent,parent>=0)];
+}
 fn dims() -> vec2i { return vec2i(p.grid.xy); }
 fn at(q:vec2i) -> u32 { let c=clamp(q,vec2i(0),dims()-1); return u32(c.y*dims().x+c.x); }
 fn inside(q:vec2i)->bool { return all(q>=vec2i(0)) && all(q<dims()); }
@@ -84,7 +89,7 @@ fn sampleV(q:vec2f)->vec2f {
  // positive at every quality tier (including their explicit diffusion flux).
  let cap=min(0.40,p.flow.x/(p.grid.z/8.)*0.20);
  v=clamp(v,vec2f(-cap),vec2f(cap));
- if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,0.09+p.flow.z*0.09)*p.flow.w);}
+ if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,(0.09+p.flow.z*0.09)*(1.-p.misc.x*0.8))*p.flow.w);}
 
  if(q.x==dims().x-1){v.x=-(0.10+p.flow.z*0.04)*p.flow.w;}
  if(wall(q+vec2i(1,0))){v.x=0.;}if(wall(q+vec2i(0,1))){v.y=0.;}
@@ -106,7 +111,7 @@ fn pressure(q:vec2i,center:f32)->f32 { if(!inside(q)){return select(0.,center,q.
  if(any(id.xy>=vec2u(p.grid.xy))){return;}let q=vec2i(id.xy);let i=at(q);
  var v=vi[i].xy-vec2f(pressure(q+vec2i(1,0),pi[i])-pi[i],pressure(q+vec2i(0,1),pi[i])-pi[i])/p.flow.x;
  let cap=min(0.40,p.flow.x/(p.grid.z/8.)*0.20);v=clamp(v,vec2f(-cap),vec2f(cap));
- if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,0.09+p.flow.z*0.09)*p.flow.w);}
+ if(q.y==dims().y-1){v=vec2f(0.,-min(cap*0.95,(0.09+p.flow.z*0.09)*(1.-p.misc.x*0.8))*p.flow.w);}
  if(q.x==dims().x-1){v.x=-(0.10+p.flow.z*0.04)*p.flow.w;}
  if(wall(q)||wall(q+vec2i(1,0))){v.x=0.;}if(wall(q)||wall(q+vec2i(0,1))){v.y=0.;}
  vo[i]=vec4f(v,vi[i].z,0.);
@@ -182,7 +187,7 @@ fn exchange(i:u32,b:u32)->Exchange {
  vo[i]=vec4f(vi[i].xyz,expansion);go[i]=Gas(max(g.a,vec4f(0.)),max(g.b,vec4f(0.)));
 }
 @compute @workgroup_size(1) fn solid(@builtin(global_invocation_id) id:vec3u){
- let b=id.x;if(b>=18u){return;}let m=p.bodies[b];var s=bi[b];if(m.a.z<=0.){bo[b]=s;return;}
+ let b=id.x;if(b>=${CAP}u){return;}let m=p.bodies[b];var s=bi[b];if(m.a.z<=0.){bo[b]=s;return;}
  let kg=m.a.z;let dt=p.grid.z;var gasMass=0.;var charMass=0.;var water=0.;var Q=0.;var oxygen=0.;
  let count=u32(m.a.y);let start=u32(m.a.x);
  for(var j=0u;j<count;j++){let i=surface[start+j];let e=exchange(i,b);gasMass+=e.gas;charMass+=e.carbon;water+=e.water;Q+=e.heat;oxygen+=clamp(gi[i].a.y/0.275,0.,1.);}
@@ -194,13 +199,13 @@ fn exchange(i:u32,b:u32)->Exchange {
  let skinCapacity=kg*(0.16*0.8+s.a.z*4.18);let coreCapacity=kg*0.84*0.8;
  let conduction=clamp((s.a.w-s.b.x)*kg*0.035*dt,-max(0.,s.b.x-300.)*coreCapacity*0.10,max(0.,s.a.w-300.)*skinCapacity*0.10);
  var neighbors=0.;
- if(m.c.w==0.){for(var other=0u;other<18u;other++){
+ if(m.c.w==0.){for(var other=0u;other<${CAP}u;other++){
   let om=p.bodies[other];if(other==b||om.a.z<=0.||om.c.w>0.){continue;}
   let os=bi[other];let gap=max(0.,distance(m.c.xy,om.c.xy)-m.c.z-om.c.z);
   var view=1./(1.+pow(gap/16.,2.));
   // Direct radiation is occluded by intervening fuel bodies.
   let line=om.c.xy-m.c.xy;
-  for(var blocker=0u;blocker<18u;blocker++){
+  for(var blocker=0u;blocker<${CAP}u;blocker++){
    let bm=p.bodies[blocker];if(blocker==b||blocker==other||bm.a.z<=0.||bm.c.w>0.){continue;}
    let t=dot(bm.c.xy-m.c.xy,line)/max(1.,dot(line,line));
    if(t>0.&&t<1.&&distance(m.c.xy+line*t,bm.c.xy)<bm.c.z*0.75){view=0.;}
@@ -255,7 +260,7 @@ fn smoothGas(uv:vec2f)->Gas {
 // Four nearby grid cells nominate polygons; their actual edge planes, rather
 // than the stair-stepped simulation mask, clip the light at display resolution.
 fn fuelCoverage(uv:vec2f,aa:f32)->f32 {
- let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(320.,210.);
+ let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(320.,p.view.w)+vec2f(0.,p.view.z);
  var coverage=1.;var visited=0u;
  for(var k=0;k<4;k++){
   let body=mask[at(c+vec2i(k%2,k/2))].x;
@@ -276,7 +281,7 @@ fn light(g:Gas)->vec3f {
  return incandescence+reaction;
 }
 @fragment fn fragment(v:Vertex)->@location(0) vec4f {
- let point=v.uv*vec2f(320.,210.);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
+ let point=v.uv*vec2f(320.,p.view.w)+vec2f(0.,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
  let cell=at(vec2i(v.uv*p.grid.xy));let mode=i32(p.view.x);
  if(mode>0){
   if(mask[cell].x != -1){return vec4f(0.);}let g=sampleG(v.uv);let T=temp(g);
@@ -303,21 +308,23 @@ fn light(g:Gas)->vec3f {
 
   function create(options) {
     options = options || {};
-    var device = options.device, w = options.width || 192, h = Math.round(w * 210 / 320), n = w * h;
-    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*132+(w+h)*32+11328, steps: 0, submissions: 0,
+    var device = options.device, w = options.width || 192, top = -(options.headroom || 0), height = 210-top;
+    var h = Math.round(w * height / 320), n = w * h;
+    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*132+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
     var buffers = [], pipelines = {}, groups = {}, gasIndex = 0, velIndex = 0, bank = 0, time = 0;
-    var slots = new Array(CAP).fill(null), masks = new Int32Array(n * 2), lists = new Uint32Array(n), uniform = new Float32Array(304);
+    var slots = new Array(CAP).fill(null), masks = new Int32Array(n * 2), lists = new Uint32Array(n), uniform = new Float32Array(16+CAP*16);
     var rbPending = false, revision = 0, resetGeneration = 0, signature = '', contacts = new Uint32Array(CAP), geometryFresh = true;
     var previousMasks = new Int32Array(n*2), owners = new Int32Array(n), frontier = new Int32Array(n);
     var remapData = new Int32Array(n*2), remapLinks = new Int32Array(n);
     var edgeData = new Float32Array(CAP*16*4);
+    var inherited = new Map(), splitData = new Int32Array(CAP).fill(-1);
     var ignition = new Map(), quenches = new Map(), commands = new Map(), commandSerial = 0, lost = false;
     function buffer(size, extra) { var b = device.createBuffer({ size: size, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | (extra || 0) }); buffers.push(b); return b; }
     var g = [buffer(n * 32), buffer(n * 32)], v = [buffer((n+w+h) * 16), buffer((n+w+h) * 16)];
     var m = buffer(n * 8), bodies = [buffer(CAP * 64), buffer(CAP * 64)], surfaceBuffer = buffer(n * 4);
     var remapBuffer = buffer(n*8), remapLinkBuffer = buffer(n*4);
-    var edgeBuffer = buffer(edgeData.byteLength);
+    var edgeBuffer = buffer(edgeData.byteLength), splitBuffer = buffer(CAP*4);
     var pressures = [buffer(n * 4), buffer(n * 4)], div = buffer(n * 4), statsBuffer = buffer(64 * 16);
     var ub = device.createBuffer({ size: uniform.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST }); buffers.push(ub);
     var rbSize = CAP * 64 + 64 * 16;
@@ -329,11 +336,11 @@ fn light(g:Gas)->vec3f {
     sim.canvas = gpuCanvas;
     context.configure({ device: device, format: navigator.gpu.getPreferredCanvasFormat(), alphaMode: 'premultiplied' });
     var definitions = {
-      init: [0,2,4,10], remap: [0,1,2,5,13,14], advectVelocity: [0,1,3,4,5], diverge: [0,1,3,5,11],
+      splitBody: [6,7,16], init: [0,2,4,10], remap: [0,1,2,5,13,14], advectVelocity: [0,1,3,4,5], diverge: [0,1,3,5,11],
       pressureStep: [0,5,9,10,11], project: [0,3,4,5,9], transport: [0,1,2,3,5],
       react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], fragment: [0,1,3,5,15]
     };
-    function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer]; }
+    function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer,splitBuffer]; }
     function bind(name, gi, vi, pr) {
       var key = name + gi + vi + pr;
       if (!groups[key]) { var res = resources(gi,vi,pr); groups[key] = device.createBindGroup({ layout: pipelines[name].getBindGroupLayout(0), entries: definitions[name].map(function (id) { return { binding: id, resource: { buffer: res[id] } }; }) }); }
@@ -341,16 +348,16 @@ fn light(g:Gas)->vec3f {
     }
     function run(enc, name, pr) {
       var pass = enc.beginComputePass(); pass.setPipeline(pipelines[name]); pass.setBindGroup(0,bind(name,gasIndex,velIndex,pr || 0));
-      if (name === 'solid') pass.dispatchWorkgroups(CAP);
+      if (name === 'solid' || name === 'splitBody') pass.dispatchWorkgroups(CAP);
       else if (name === 'reduce') pass.dispatchWorkgroups(64);
       else pass.dispatchWorkgroups(Math.ceil(w/8),Math.ceil(h/8));
       pass.end();
     }
     function uploadUniform(air, damper) {
-      uniform.set([w,h,STEP,time,0.8/w,(0.8/w)*(0.525/h)*0.04,air,damper,sim.debug,300,0,0,0,0,0,0]);
+      uniform.set([w,h,STEP,time,0.8/w,(0.8/w)*(height*0.8/320/h)*0.04,air,damper,sim.debug,300,top,height,sim.ashLoad||0,0,0,0]);
       for (var b=0;b<CAP;b++) {
         var body=slots[b], o=16+b*16;
-        uniform.set([surfaceStart[b],surfaceCount[b],body ? 0.018*Math.pow(body.baseR/34,2) : 0,body ? body.life : 100,
+        uniform.set([surfaceStart[b],surfaceCount[b],body ? body.dryKg || 0.018*Math.pow(body.baseR/34,2) : 0,body ? body.life : 100,
           body ? commands.get(body) || 0 : 0,body ? ignition.get(body) || 0 : 0,body ? quenches.get(body) || 0 : 0,body && body.material === 'wood' ? 1 : 0,
           body ? body.x : 0,body ? body.y : 0,body ? body.r : 0,body && body.held ? 1 : 0,0,0,0,0],o);
         uniform[o+12]=contacts[b];
@@ -359,15 +366,21 @@ fn light(g:Gas)->vec3f {
       device.queue.writeBuffer(ub,0,uniform);
     }
     function geometry(chunks) {
-      var old = slots.slice(), used = new Set(chunks);
+      var old = slots.slice(), used = new Set(chunks); splitData.fill(-1);
       for(var b=0;b<CAP;b++) if(slots[b] && !used.has(slots[b])) { commands.delete(slots[b]);ignition.delete(slots[b]);quenches.delete(slots[b]);slots[b]=null; }
+      // Keep one child in each parent slot until the GPU inheritance pass.
+      // New fuel must never overwrite a source, even when earlier slots are empty.
+      chunks.forEach(function(body){var source=old.indexOf(inherited.get(body));if(source>=0 && !slots[source])slots[source]=body;});
       chunks.forEach(function(body){if(slots.indexOf(body)<0){var b=slots.indexOf(null);if(b>=0)slots[b]=body;}});
       for(var b=0;b<CAP;b++) if(old[b]!==slots[b]) {
         revision++; var body=slots[b], data=new Float32Array(16);
         if(body) data.set([body.volatile||0,body.carbon||0,body.moisture||0,body.surfaceKelvin || 300+(body.heat||0)*1200,
           body.coreKelvin || 300+(body.core||0)*1200,body.coating||0,0,0,1,0,0,0,0,0,0,0]);
-        device.queue.writeBuffer(bodies[0],b*64,data);
+        var parent = inherited.get(body), parentSlot = parent ? old.indexOf(parent) : -1;
+        if(parentSlot>=0) splitData[b]=parentSlot;
+        else if(body || !Array.from(inherited.values()).includes(old[b])) device.queue.writeBuffer(bodies[0],b*64,data);
       }
+      device.queue.writeBuffer(splitBuffer,0,splitData);
       var next=slots.map(function(b){return b ? [b.id,b.held,b.x.toFixed(2),b.y.toFixed(2),b.r.toFixed(2),b.angle.toFixed(3)].join(',') : '-';}).join(';');
       if(next===signature)return false;signature=next;previousMasks.set(masks);
       // Convex hull separation, shared by contact conduction and the visible
@@ -384,7 +397,7 @@ fn light(g:Gas)->vec3f {
         var a=slots[b],c=slots[other];if(!a||!c||a.held||c.held||!a.vertices||!c.vertices)continue;
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b]|=1<<other;contacts[other]|=1<<b;}
       }
-      for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(y<h*0.50||y>h*0.64))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*320/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
+      for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*320/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
       edgeData.fill(0);
       for(var b=0;b<CAP;b++) {
         var body=slots[b];if(!body||body.held||!body.vertices)continue;var hull=body.vertices;
@@ -394,9 +407,9 @@ fn light(g:Gas)->vec3f {
           edgeData.set([nx,ny,nx*a[0]+ny*a[1],0],o);
         }
         var x0=w,x1=0,y0=h,y1=0;
-        hull.forEach(function(p){x0=Math.min(x0,Math.floor(p[0]*w/320));x1=Math.max(x1,Math.ceil(p[0]*w/320));y0=Math.min(y0,Math.floor(p[1]*h/210));y1=Math.max(y1,Math.ceil(p[1]*h/210));});
+        hull.forEach(function(p){x0=Math.min(x0,Math.floor(p[0]*w/320));x1=Math.max(x1,Math.ceil(p[0]*w/320));y0=Math.min(y0,Math.floor((p[1]-top)*h/height));y1=Math.max(y1,Math.ceil((p[1]-top)*h/height));});
         for(var y=Math.max(0,y0);y<=Math.min(h-1,y1);y++)for(var x=Math.max(0,x0);x<=Math.min(w-1,x1);x++){
-          var px=(x+.5)*320/w,py=(y+.5)*210/h,inside=true;
+          var px=(x+.5)*320/w,py=top+(y+.5)*height/h,inside=true;
           for(var j=0;j<hull.length;j++){var a=hull[j],c=hull[(j+1)%hull.length];if((c[0]-a[0])*(py-a[1])-(c[1]-a[1])*(px-a[0])<0){inside=false;break;}}
           if(inside)masks[(y*w+x)*2]=b;
         }
@@ -469,6 +482,7 @@ fn light(g:Gas)->vec3f {
       var remapped=geometry(chunks);
       uploadUniform(controls.air||0,controls.damper==null?1:controls.damper);
       var enc=device.createCommandEncoder({label:'Sluice fire'});
+      if(inherited.size){run(enc,'splitBody');enc.copyBufferToBuffer(bodies[1],0,bodies[0],0,CAP*64);inherited.clear();}
       if(remapped){run(enc,'remap');gasIndex=1-gasIndex;}
       for(var s=0;s<count;s++){
         run(enc,'advectVelocity');velIndex=1-velIndex;run(enc,'diverge');
@@ -483,6 +497,14 @@ fn light(g:Gas)->vec3f {
       run(enc,'reduce');var after=mirror(enc);device.queue.submit([enc.finish()]);sim.submissions++;if(after)after();
       ignition.clear();quenches.clear();sim.cpuMs=performance.now()-start;return true;
     };
+    sim.fracture=function(parent,children){
+      revision++;children.forEach(function(child){
+        inherited.set(child,parent);
+        if(ignition.has(parent))ignition.set(child,ignition.get(parent));
+        if(quenches.has(parent))quenches.set(child,quenches.get(parent)*child.dryKg/parent.dryKg);
+        if(commands.has(parent))commands.set(child,commands.get(parent));
+      });
+    };
     sim.ignite=function(body){ignition.set(body,1500);commands.set(body,++commandSerial);};
     sim.quench=function(body,kg){if(Number.isFinite(kg)&&kg>0){quenches.set(body,(quenches.get(body)||0)+Math.min(kg,0.02));commands.set(body,++commandSerial);}};
     sim.hide=function(){gpuCanvas.style.display='none';};
@@ -495,7 +517,7 @@ fn light(g:Gas)->vec3f {
       var enc=device.createCommandEncoder();var pass=enc.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
       pass.setPipeline(pipelines.fragment);pass.setBindGroup(0,bind('fragment',gasIndex,velIndex,0));pass.draw(3);pass.end();device.queue.submit([enc.finish()]);return true;
     };
-    sim.reset=function(){resetGeneration++;revision++;signature='';geometryFresh=true;bank=0;slots.fill(null);ignition.clear();quenches.clear();commands.clear();sim.outputKW=0;sim.gasKg=0;sim.sootKg=0;
+    sim.reset=function(){resetGeneration++;revision++;signature='';geometryFresh=true;bank=0;slots.fill(null);inherited.clear();ignition.clear();quenches.clear();commands.clear();sim.outputKW=0;sim.gasKg=0;sim.sootKg=0;
       uploadUniform(0,1);var enc=device.createCommandEncoder();for(var i=0;i<2;i++){gasIndex=i;velIndex=i;run(enc,'init',i);}enc.clearBuffer(bodies[0]);enc.clearBuffer(bodies[1]);device.queue.submit([enc.finish()]);gasIndex=velIndex=0;sim.hide();};
     sim.snapshot=async function(){
       await device.queue.onSubmittedWorkDone();var out=device.createBuffer({size:(n*48+(w+h)*16)+CAP*64,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});

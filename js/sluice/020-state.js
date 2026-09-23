@@ -676,7 +676,7 @@
             var wy = (originRow + r + 0.5) * TILE;
             for (var c = 0; c < w; c++) {
               var wx = (originCol + c + 0.5) * TILE;
-              out[k++] = liquidWorldSolidAt(wx, wy) ? 1 : 0;
+              out[k++] = liquidWorldSolidAt(wx, wy, true) ? 1 : 0;
             }
           }
         },

@@ -41,6 +41,11 @@ actual coal polygons. Its reactions and heat exchanges drive combustion and
 boiler output. See [FIRE_SIMULATION.md](FIRE_SIMULATION.md) for the material model,
 quality tiers, fallback and verification.
 
+Since v28.65, lost carbon weakens each coal's structure. Contact loads split
+weakened pieces into physical fragments, and spent fuel leaves persistent ash
+grains to sweep from the grate. The taller chamber exposes the rising flame.
+Bath water now collides with the drawn curved liner in both liquid solvers.
+
 The forge has been retired. A reusable steel striker is supplied beside the
 boiler for new and existing saves. Stone still sometimes drops durable flint
 (guaranteed within twelve stone breaks). Flint and steel light the boiler

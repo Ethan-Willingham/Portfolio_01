@@ -796,8 +796,8 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 15 vec4 = 240 bytes (v26.63 local
-    // lane; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
+    // constants every compute kernel reads. 20 vec4 = 320 bytes, including
+    // five curved bath liners. See WGSL_SIM_PARAMS for the lane layout. simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
     // GPU chain (and before each harness run* call). Bind groups bind the
@@ -805,10 +805,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 240,
+      size: 320,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(60);   // 15 vec4 lanes (v26.63 local calm)
+    instance.simParamsHost = new Float32Array(80);   // 15 physics + five bath vec4 lanes
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1395,6 +1395,7 @@
     // byte-exact; hosts push 1 after the boot self-tests).
     sh[56] = LIQUID_CALM_LOCAL;  sh[57] = LIQUID_REACH_FLOOR;
     sh[58] = 0; sh[59] = 0;
+    sh.fill(0,60); if(instance.bathBowls)sh.set(instance.bathBowls,60);
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4627,7 +4628,31 @@ struct SimParams {
   quiet  : vec4<f32>,   // v26.53: low-energy visc, speed gate, shear gate, tail drag
   turb   : vec4<f32>,   // v26.54/55: eddy rate, px/s saturation, floorReach, kneeW
   local  : vec4<f32>,   // v26.63: calmLocal flag, spare, spare, spare
+  bowls  : array<vec4<f32>,5>, // x0, x1, lip y, catenary depth; zero disables
 };
+fn bowlSurface(b:vec4f,x:f32)->vec2f {
+ let t=clamp((x-b.x)/(b.y-b.x)*2.-1.,-1.,1.);
+ let depth=b.w*(1.-(cosh(2.*t)-1.)/(cosh(2.)-1.));
+ let slope=-b.w*4.*sinh(2.*t)/((b.y-b.x)*(cosh(2.)-1.));
+ return vec2f(b.z+depth,slope);
+}
+fn bowlSolid(x:f32,y:f32)->bool {
+ for(var i=0;i<5;i++){
+  let b=sp.bowls[i];if(b.w<=0. || x<b.x || x>b.y || y<b.z-16. || y>b.z+b.w+32.){continue;}
+  let surface=bowlSurface(b,x);if(y>=surface.x-3.*sqrt(1.+surface.y*surface.y)){return true;}
+ }return false;
+}
+fn bowlProject(point:vec4f,r:f32)->vec4f {
+ var q=point;
+ for(var i=0;i<5;i++){
+  let b=sp.bowls[i];if(b.w<=0. || q.x<b.x || q.x>b.y || q.y<b.z-16. || q.y>b.z+b.w+32.){continue;}
+  for(var iteration=0;iteration<4;iteration++){
+   let surface=bowlSurface(b,q.x);let normal=normalize(vec2f(surface.y,-1.));
+   let depth=(q.y-surface.x)/sqrt(1.+surface.y*surface.y)+r+3.;
+   if(depth<=0.){break;}q=vec4f(q.xy+normal*depth,q.zw-normal*min(0.,dot(q.zw,normal)));
+  }
+ }return q;
+}
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
   // the binding index differs per bind-group layout, so the decl is
@@ -5490,6 +5515,7 @@ const CELL        : f32 = ${LIQUID_CELL_DEFAULT};
 // Sample the uploaded terrain bitmask at a world-px point — the same
 // probe the collide kernel uses. A point outside the rect reads non-solid.
 fn terrainSolidAt(px : f32, py : f32) -> bool {
+  if (bowlSolid(px,py)) { return true; }
   let oc   = bitcast<i32>(gp.tileOrigC);
   let orow = bitcast<i32>(gp.tileOrigR);
   let tc = i32(floor(px / gp.worldTile)) - oc;
@@ -6372,6 +6398,7 @@ fn outOfRegion(p : vec2<f32>) -> bool {
 // particle's +/-r probes always land inside; this just keeps a stray
 // index safe (== the CPU clamp behaviour for out-of-region probes).
 fn terrainSolidAt(px : f32, py : f32) -> bool {
+  if (bowlSolid(px,py)) { return true; }
   let oc = bitcast<i32>(gp.tileOrigC);
   let orow = bitcast<i32>(gp.tileOrigR);
   let tc = i32(floor(px / gp.worldTile)) - oc;
@@ -6507,7 +6534,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let sleeping = (fl >> 4u) & 1u;
   let frozen   = (fl >> 5u) & 1u;
   if (frozen != 0u) { return; }
-  if (sleeping != 0u && !minerContains(pos[i].xy, COLLIDE_RADIUS)) { return; }
+  if (sleeping != 0u && !minerContains(pos[i].xy, COLLIDE_RADIUS) && !bowlSolid(pos[i].x,pos[i].y+COLLIDE_RADIUS)) { return; }
   if (outOfRegion(pos[i].xy)) { return; }   // v14.31 - skip off-region
 
   let r = COLLIDE_RADIUS;
@@ -6853,7 +6880,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (vx != vx) { vx = 0.0; }
   if (vy != vy) { vy = 0.0; }
 
-  pos[i] = vec4<f32>(x, y, vx, vy);
+  pos[i] = bowlProject(vec4f(x,y,vx,vy),r);
 }
 `;
 
@@ -10712,6 +10739,13 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
       // very next sim step — NO shader recompile (the kernels read `sp`).
       // `name` is the var name WITHOUT the LIQUID_ prefix, e.g. 'GRAVITY'.
       // Unknown names are a no-op. Mirrors setRenderParam.
+      setBathBowls: function (bowls) {
+        var data = new Float32Array(20);
+        for(var i=0;i<Math.min(5,bowls.length);i++){
+          var b=bowls[i];if(b && b.every(Number.isFinite) && b[1]>b[0] && b[3]>0)data.set(b,i*4);
+        }
+        instance.bathBowls=data;
+      },
       setSimParam: function (name, value) {
         try {
           var v = +value;

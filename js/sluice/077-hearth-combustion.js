@@ -35,7 +35,7 @@
   }
   function hearthBurnStep(bed, h) {
     var bodies = bed.chunks, targets = [], i, j, b;
-    bed.ashLoad = 0;
+    bed.ashLoad = Math.min(0.92,hearthAshMass(bed)/0.025);
     for (i = 0; i < bodies.length; i++) {
       b = bodies[i]; hearthFuelState(b); hearthWorldHull(b);
       if (b.ash && !b.held) bed.ashLoad += b.baseR * 1.3 / 320;
@@ -102,16 +102,16 @@
     }
   }
   function hearthBurnSummary(bed) {
-    if (!bed.chunks.length) return 'Load coal, then strike flint';
-    var counts = {}, live = 0, fuel = 0, oxygen = 0, dominant = 'cold', best = 0;
+    if (!bed.chunks.length) return bed.ash.length ? 'Spent ash: sweep the grate' : 'Load coal, then strike flint';
+    var counts = {}, live = 0, fuel = 0, fuelWeight = 0, oxygen = 0, dominant = 'cold', best = 0;
     for (var i = 0; i < bed.chunks.length; i++) {
       var b = bed.chunks[i]; if (b.held) continue;
-      if (!b.ash) { live++; fuel += b.fuel; oxygen += b.oxygen; }
+      if (!b.ash) { live++; fuel += b.fuel*(b.fuelShare||1); fuelWeight += b.fuelShare||1; oxygen += b.oxygen; }
       counts[b.stage] = (counts[b.stage] || 0) + (b.lit ? 20 : 1);
       if (counts[b.stage] > best) { best = counts[b.stage]; dominant = b.stage; }
     }
-    if (!live) return 'Spent ash: rake the grate';
+    if (!live) return 'Spent ash: sweep the grate';
     var state = dominant === 'coke' ? 'Glowing coke' : dominant.charAt(0).toUpperCase() + dominant.slice(1);
-    return state + '  /  Fuel ' + Math.round(fuel / live * 100) + '%' +
-      (bed.ashLoad > 0.3 ? '  /  Rake ash for air' : oxygen / live < 0.45 ? '  /  Open the pile' : '  /  Air ' + Math.round(oxygen / live * 100) + '%');
+    return state + '  /  Fuel ' + Math.round(fuel / fuelWeight * 100) + '%' +
+      (bed.ashLoad > 0.3 ? '  /  Sweep ash for air' : oxygen / live < 0.45 ? '  /  Open the pile' : '  /  Air ' + Math.round(oxygen / live * 100) + '%');
   }

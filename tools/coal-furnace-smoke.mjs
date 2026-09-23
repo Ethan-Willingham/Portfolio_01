@@ -151,9 +151,14 @@ try {
   await advance(24); await screenshot('coke');
   check('volatile flames give way to glowing coke', await game('hearthBeds.boiler.chunks.every(function(b){return b.volatile===0 && b.stage==="coke" && b.flame===0 && b.fuel>0;})'));
   await advance(130); await screenshot('ash');
-  check('spent coal shrinks and cools into physical ash', await game('hearthBeds.boiler.chunks.every(function(b){return b.ash && b.r<b.baseR*0.46 && b.heat<0.05;}) && hearthBeds.boiler.power===0'));
+  check('spent coal crumbles into persistent granular ash', await game('hearthBeds.boiler.chunks.length===0 && hearthBeds.boiler.ash.length>3 && hearthBeds.boiler.ash.every(function(g){return g.heat<0.05;}) && hearthBeds.boiler.power===0'));
+  const ashBefore=await game('hearthAshMass(hearthBeds.boiler)');
   await press('ash');
-  check('raking removes spent bodies without returning coal', await game('hearthBeds.boiler.chunks.length===0 && forgeCount("coal")===27'));
+  check('one sweep removes part of the ash without returning coal', await game('hearthAshMass(hearthBeds.boiler)>0 && hearthAshMass(hearthBeds.boiler)<'+ashBefore+' && forgeCount("coal")===27'));
+  const ashSave=await game('JSON.stringify(hearthSave())');await game('hearthRestore('+ashSave+')');
+  check('remaining ash survives a save',await game('JSON.stringify(hearthSave())')===ashSave);
+  for(let stroke=0;stroke<24 && await game('hearthBeds.boiler.ash.length>0');stroke++)await press('ash');
+  check('repeated strokes clear physical residue and restore inlet air',await game('hearthBeds.boiler.ash.length===0 && hearthBeds.boiler.ashLoad===0'));
   const cost = await game('(function(){var result=[];for(var count of [3,18]){hearthReset();for(var i=0;i<count;i++)hearthAddChunk("boiler",160,12);for(var n=0;n<1800;n++)hearthStepBed(hearthBeds.boiler);var start=performance.now();for(var n=0;n<600;n++)hearthStepBed(hearthBeds.boiler);result.push({pieces:count,millisecondsPerStep:(performance.now()-start)/600});}return result;})()');
   console.log('PHYSICS COST', JSON.stringify(cost));
   check('a full coal bed stays within a practical frame budget', cost.every(c => c.millisecondsPerStep < 4));

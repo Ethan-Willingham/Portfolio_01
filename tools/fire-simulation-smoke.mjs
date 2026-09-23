@@ -78,6 +78,7 @@ try {
     if (m.id) { const p = pending.get(m.id); pending.delete(m.id); m.error ? p?.reject(m.error) : p?.resolve(m.result); }
     else if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails);
     else if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value || a.description));
+    else if (m.method === 'Runtime.consoleAPICalled' && m.params.args.some(a=>typeof a.value==='string'&&/fallback|failed|timeout/i.test(a.value))) console.log('BROWSER',m.params.args.map(a=>a.value||a.description));
   });
   await send('Runtime.enable'); await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -92,7 +93,7 @@ try {
   await sleep(500);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;hearthRoomReset();forgeStock.coal=30;forgeStock.flint=1;forgeStock.steel=1;bathMode=true;bathFading=false;gamePaused=false;hearthSetView("boiler");render()');
 
-  console.log('FIRE INIT', await ev('({available:window.__fire?.available,errors:window.__fire?.errors})'));
+  console.log('FIRE INIT', await game('({available:window.__fire?.available,errors:window.__fire?.errors,waterReady:liquidWGPU?.available,waterLive:liquidWGPU?.simActive})'));
   check('WebGPU reacting fire compiled', await ev('!!window.__fire && __fire.available && !__fire.failed'));
   const kernelResults = await game('(' + checkFireKernels.toString() + ')(liquidWGPU.device)');
   for(const r of kernelResults) { console.log('KERNEL',r);check(r.label,r.pass); }
@@ -127,6 +128,17 @@ try {
   await game('hearthRestore('+saved+')');
   assert.equal(await game('JSON.stringify(hearthSave())'),saved,'Kelvin temperatures and reservoirs survive save round trip');
   check('Kelvin temperatures and reservoirs survive save round trip',true);
+  await game('hearthReset();for(var y of [180,110]){var b=hearthAddChunk("boiler",160,y);b.angle=0;b.r=b.baseR=30;b.shape=[[-1,-.6],[1,-.6],[1,.6],[-1,.6]];hearthHullCache.delete(b);hearthMass(b);}var lower=hearthBeds.boiler.chunks[0];lower.fuel=lower.carbon=.08;lower.volatile=lower.moisture=0;');
+  await run(0.5);
+  const loaded=await game('({y:hearthBeds.boiler.chunks[1].y,kg:hearthBeds.boiler.chunks.reduce((n,b)=>n+b.dryKg,0)})');
+  await run(8);
+  const collapsed=await game('({fragments:hearthBeds.boiler.chunks.filter(b=>b.generation>0).length,y:hearthBeds.boiler.chunks.find(b=>b.id===2).y,kg:hearthBeds.boiler.chunks.reduce((n,b)=>n+b.dryKg,0)})');
+  console.log('COLLAPSE',{loaded,collapsed});
+  check('live GPU fuel fractures under weight and the supported coal drops',collapsed.fragments>=2 && collapsed.y>loaded.y+8 && Math.abs(collapsed.kg-loaded.kg)<1e-10);
+  await screenshot('collapsed-coal');
+  await game('hearthFireGPU.reset();for(var b of hearthBeds.boiler.chunks){b.fuel=b.volatile=b.carbon=0;b.ash=true;}');await run(2);
+  check('live burnout leaves conserved mineral grains',await game(`Math.abs(hearthAshMass(hearthBeds.boiler)-${loaded.kg*.16})<1e-10 && hearthBeds.boiler.ash.length>4`));
+  await screenshot('mineral-ash');
   await game('hearthReset();for(var x of [95,160,225])hearthAddChunk("boiler",x,175)');await run(1);
   await game('for(var b of hearthBeds.boiler.chunks)hearthLightChunk(hearthBeds.boiler,b)');await run(8);await screenshot('full-fire');
   console.log('FULL FIRE',await stats());
@@ -134,7 +146,7 @@ try {
     await send('Emulation.setDeviceMetricsOverride',{...screen,mobile:false});
     await game('resize();render()');
     const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
-    check('bounded chamber and accessible controls at '+screen.width,layout.box.w<=576.01 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
+    check('bounded square chamber and accessible controls at '+screen.width,layout.box.w<=440.01 && Math.abs(layout.box.w-layout.box.h)<0.01 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
     check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w)<1 && Math.abs(layout.overlay.h-layout.box.h)<1);
     await screenshot('fire-'+screen.width);
   }
@@ -148,6 +160,19 @@ try {
   const fullGame=await game('({cpu:perfFrameStats(),interval:perfIntervalStats(),fireSteps:hearthFireGPU.steps,water:liquidWGPU.uploadedCount,bathWater:bathWater,smoke:USE_WEBGPU_SMOKE?"WebGPU":"WebGL",slime:jelloWGPU&&jelloWGPU.available})');
   console.log('FULL GAME',fullGame);check('full game runs water, steam and a guest alongside fire',fullGame.water>5000 && fullGame.bathWater>4000 && fullGame.interval.avg<25);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;render()');await screenshot('bath-fire');
+  const bowlContact=await game(`(async function(){
+    var gpu=liquidWGPU,n=gpu.uploadedCount,device=gpu.device;
+    var rb=device.createBuffer({size:n*16,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+    var enc=device.createCommandEncoder();enc.copyBufferToBuffer(gpu.buf.pos,0,rb,0,n*16);device.queue.submit([enc.finish()]);
+    await rb.mapAsync(GPUMapMode.READ);var positions=new Float32Array(rb.getMappedRange());
+    var c=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]),inside=0,nearWall=0,penetrating=0,worst=Infinity;
+    for(var i=0;i<n;i++){var x=positions[i*4],y=positions[i*4+1];if(x<c.x0+4||x>c.x1-4||y<c.y0||y>c.y0+c.D+32)continue;
+      inside++;var slope=bathCurveSlope(c,x),gap=(c.y0+c.depthAt(x)-y)/Math.sqrt(1+slope*slope);
+      worst=Math.min(worst,gap);if(gap<2.5)penetrating++;if(gap<8)nearWall++;
+    }rb.unmap();rb.destroy();return {inside:inside,nearWall:nearWall,penetrating:penetrating,worst:worst};
+  })()`);
+  console.log('BOWL CONTACT',bowlContact);
+  check('live GPU water meets the curved liner without entering the hidden tile cavity',bowlContact.inside>4000&&bowlContact.nearWall>100&&bowlContact.penetrating===0);
   await game('gamePaused=true;render()');check('pause hides the fire layer',await ev('__fire.canvas.style.display==="none"'));
   await game('gamePaused=false;bathMode=false;render()');check('leaving the bath hides the fire layer',await ev('__fire.canvas.style.display==="none"'));
   await game('bathMode=true;hearthSetView("boiler");render()');
@@ -169,7 +194,7 @@ try {
   await game('hearthFireCancel();hearthAddChunk("boiler",160,170);hearthIgnite("boiler");for(var i=0;i<600;i++)bathGuestTick(1/60);render()');
   check('CPU fallback continues consuming fuel after fire device disposal',await game('hearthBeds.boiler.chunks.some(function(b){return b.fuel<1}) && hearthBeds.boiler.power>0'));
   check('no browser runtime errors', errors.length===0);
-  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,performance:cost,fullGame:fullGame},null,2));
+  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,performance:cost,fullGame:fullGame,bowl:bowlContact},null,2));
 } finally {
   if (errors.length) console.error(JSON.stringify(errors.slice(0,4)));
   cleanup();

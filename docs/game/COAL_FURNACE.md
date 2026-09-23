@@ -5,7 +5,7 @@ v28.63, WebGPU reacting flow owns combustion when available; see
 [FIRE_SIMULATION.md](FIRE_SIMULATION.md) for gas transport, oxygen, thermal
 exchange, persistence and measured performance. The combustion rates below
 describe the retained CPU fallback. A new lump
-has a 29 to 39 pixel bounding radius in the 320 by 210 firebox, compared with
+has a 29 to 39 pixel bounding radius over the 320-pixel-wide grate, compared with
 the former 13 to 20 pixel circles. Each unit still costs one coal from the
 locker. Previously saved lumps keep their paid fuel, lifetime and original size.
 
@@ -27,8 +27,8 @@ squared. The sides and grate are fixed planes, with an open top.
 
 Bodies are never pinned in place to make a stack look stable. Taking one into
 the hand detaches its saved position from contacts, so unsupported coal falls.
-Returning it restores gravity and contact. A bed contains at most eighteen
-bodies, including spent ash; contacts and effects have bounded work and storage.
+Returning it restores gravity and contact. Loading stops at eighteen bodies. Six reserved slots allow fracture into at most
+24 burning bodies. Contact and ash work remain bounded.
 
 ## Combustion
 
@@ -43,8 +43,8 @@ rates and normalized temperatures, not a calibrated furnace or chemical model.
 - Fixed carbon holds the other 72 percent. Its oxidation depends on core
   temperature, oxygen and the insulating ash coating. Once volatile fuel is
   exhausted, long flames give way to sustained coke glow and short fire wisps.
-- The last carbon burns as embers. Spent coal keeps a physical mineral skeleton,
-  retains residual heat and gradually cools. Raking removes only spent bodies.
+- The last carbon burns as embers. Spent coal breaks into persistent mineral grains,
+  retains residual heat and gradually cools. Sweeping removes only spent material.
 
 Each coal face samples its surroundings for exposed air. Adjacent hulls obstruct
 the inlet; a compact pile can smolder. The grate admits air underneath, while
@@ -58,8 +58,25 @@ existing bath service, the real bath water. Remaining fuel is an energy reserve,
 not a countdown: several pieces burn simultaneously and tending changes the rate.
 
 As fuel disappears, both mass and the visible contact hull shrink. Radius tends
-toward `baseR * sqrt(0.20 + 0.80 * fuel)`, leaving ash at about 45 percent of the
-original radius. Shrinking supports make the pile settle during the burn.
+toward `baseR * sqrt(0.20 + 0.80 * fuel)`, before the remaining mineral skeleton becomes loose ash. Shrinking supports make
+the pile settle during the burn.
+
+Since v28.65, solved contact impulses also measure compression from the pile.
+Remaining carbon controls strength, and sustained overload accumulates damage.
+A failed piece splits across a seeded plane through its centroid into two exact
+convex portions. Their area shares divide reference mass, paid fuel share and
+GPU thermal reservoirs. Their velocities inherit rigid motion at the new centers.
+Each piece can split twice; the smallest pieces continue burning without further
+splits. Fresh coal does not fragment just from dropping it.
+
+Spent pieces turn into 4 to 12 mineral grains, retaining 16 percent of their dry
+reference mass as game-scale residue. Up to 128 grains settle under gravity,
+slide against coal polygons and form a small contact pile on the grate. When the
+cap is reached, nearby grains merge without deleting mineral mass. Grains cool
+on the CPU; their residual heat is not transferred back to the gas. The pile
+reduces actual primary air in both combustion backends. Each sweep removes the
+leftmost quarter and plays a rake stroke. It never refunds coal or removes live
+fuel. Residue, custom fragment hulls, damage and generation persist in save v4.
 
 ## Art and feedback
 
@@ -77,8 +94,8 @@ The controls remain coal placement, flint, bellows and the rake.
 
 ## Persistence and verification
 
-Hearth save version 3 adds material identity and Kelvin temperatures to the
-version 2 state. It stores the base/current radius, fuel reservoirs, moisture,
+Hearth save version 4 adds fragments and granular residue to the
+version 3 thermal state. It stores the base/current radius, fuel reservoirs, moisture,
 surface and core heat, oxygen, emissions, coating and burn phase. Old hearth
 saves migrate without increasing remaining fuel or extending purchased lifetime.
 Geometry and contact caches are regenerated. Held pieces reload released with

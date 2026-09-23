@@ -33,7 +33,7 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','077-hearth-combustion','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
     inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };
@@ -42,6 +42,20 @@ function loadBoiler(s) {
   for (const x of [125, 160, 195]) assert(s.hearthLoadCoal('boiler', x, 180));
 }
 function boilerTools(s) { s.forgeGive('flint', 1); }
+{
+  const {s}=fixture();s.bathCarveRoom();
+  const c=s.bathTubCurve(s.BATH_FLOORS[0],s.BATH_FLOORS[0].tubs[0]);
+  for(let i=1;i<40;i++){
+    const x=c.x0+(c.x1-c.x0)*i/40,y=c.y0+c.depthAt(x),slope=s.bathCurveSlope(c,x),length=Math.hypot(1,slope);
+    assert(s.bathSolidAt(x,y),'visible copper liner is solid');
+    assert(!s.bathSolidAt(x,y-10*length),'water cavity is open above the liner');
+    const q=s.bathProjectWater(x,y+10,0,100,1.0625);
+    const gap=(c.y0+c.depthAt(q[0])-q[1])/Math.hypot(1,s.bathCurveSlope(c,q[0]));
+    assert(gap>=4.05 && gap<5,'particle projects onto the visible curved surface');
+    assert(q[2]*s.bathCurveSlope(c,q[0])-q[3]>=-0.1,'wall removes inward normal velocity');
+  }
+  console.log('PASS curved bowl solid boundary and normal projection across its full width');
+}
 {
   const {s}=fixture(), floor=s.BATH_FLOORS[0], current={...floor,tubs:floor.tubs};
   Object.assign(floor,{c0:27,c1:45,sink:3,tubs:[[32,41]]});
@@ -240,7 +254,7 @@ for (const fps of [30,60,144]) {
     const {s}=fixture();let now=1000;s.performance.now=()=>now;
     s.bathMode=true;s.hearthSetView('boiler');s.forgeGive('coal',1);
     const b=s.hearthLoadCoal('boiler',160,100),box=s.hearthRoomLayout().box;
-    const x=box.x+b.x*box.w/320,y=box.y+b.y*box.h/210;
+    const x=box.x+b.x*box.w/320,y=box.y+(b.y-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT;
     assert(s.hearthPointerDown({pointerId:11,button:0,clientX:x,clientY:y}));
     now+=16;s.hearthPointerMove({pointerId:11,clientX:x+18,clientY:y});
     now+=held;assert(s.hearthPointerUp({pointerId:11,clientX:x+18,clientY:y}));
@@ -268,7 +282,7 @@ for (const fps of [30,60,144]) {
     const b = s.hearthBeds.boiler.chunks[0], box = s.hearthRoomLayout().box;
     s.hearthButtons = [];
     assert(s.hearthPointerDown({ pointerId: 7, button: 0,
-      clientX: box.x + b.x * box.w / 320, clientY: box.y + b.y * box.h / 210 }));
+      clientX: box.x + b.x * box.w / 320, clientY: box.y + (b.y-s.HEARTH_TOP) * box.h / s.HEARTH_HEIGHT }));
     assert(s.hearthDrag && !s.hearthDrag.fresh);
     assert(s.hearthPointerUp({ pointerId: 7, clientX: 0, clientY: 740 }));
     assert.equal(s.hearthBeds.boiler.chunks.length, 0);

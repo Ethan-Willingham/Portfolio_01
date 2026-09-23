@@ -83,16 +83,25 @@ with a configured 65 percent capture factor. `078-fire-bridge.js` maps 2 kW
 of slice transfer to full existing boiler power. The bath's existing normalized
 heat/storage and gameplay heating rates remain in service; this is not a
 calibrated model of the entire bath's water heat capacity. Held coal contributes
-no direct radiation to the boiler. Shrinking fuel still changes mass, contact
-geometry, support and pile settling.
+no direct radiation to the boiler. Shrinking fuel changes mass and support.
+
+Contact impulses drive a carbon-dependent failure model. Convex fragments inherit
+the current GPU body state in a compute pass, with dry reference mass divided by
+area. A stale CPU readback cannot refill them. The six reserved body slots allow
+fracture beyond the eighteen-piece loading limit, with two split generations.
+At capacity a weakened piece continues burning until a slot opens. Exhausted
+material becomes bounded mineral ash grains; they retain residue mass, cool,
+settle and obstruct primary grate air until swept. Granular ash cooling is a
+CPU approximation and is not coupled back into the gas enthalpy field.
+See [COAL_FURNACE.md](COAL_FURNACE.md) for the failure and ash model.
 
 ## Ownership, saves and display
 
-A single asynchronous readback of 2,176 bytes mirrors bodies and reductions.
+A single asynchronous readback of 2,560 bytes mirrors bodies and reductions.
 Only one can be pending. Slot revisions, reset generations and ignition/quench
 serials prevent removed bodies or earlier commands from overwriting current
 state. Reservoirs, Kelvin temperatures and material identity persist in hearth
-save version 3. Older saves migrate from normalized temperatures without adding
+save version 4. Older saves migrate from normalized temperatures without adding
 fuel. Saves use the latest acknowledged material snapshot; transient chamber gas
 vents on reload rather than being serialized.
 
@@ -107,15 +116,16 @@ transitions and leaving the room. Display resolution is capped at 1.5 device
 pixels per CSS pixel. No GPU canvas is copied through Canvas2D. Fully cold fire
 sleeps after a five-second vent period, with no continuing compute submissions.
 
-Since v28.64, the desktop tending view caps the chamber at 576 by 378 CSS pixels
-and centers the furnace, instruments and controls together. This is a camera/layout
-change; fuel size, chamber dimensions and burn rates retain their physical scale.
-Phone and short landscape layouts keep their usable touch targets.
+Since v28.65 the chamber extends upward from y = -110 to the original grate at
+210, adding 52 percent more physical plume space without enlarging the coal.
+The tending view preserves the square chamber aspect ratio and caps its desktop
+size at 440 CSS pixels. The bath's integrated hatch is taller and shows the same
+complete chamber. Pointer coordinates share this transform.
 
 The normal image reconstructs gas with positive cubic B-spline weights, normalized
 over fluid cells. These display samples do not modify simulation mass or heat.
 Flame occlusion uses the fuel's actual convex edge planes with a subpixel transition,
-instead of magnifying the simulation's square solid mask. A retained 4,608-byte edge
+instead of magnifying the simulation's square solid mask. A retained 6,144-byte edge
 buffer updates with changed geometry. Diagnostic views retain the raw cell mask.
 The fire canvas explicitly uses smooth browser scaling.
 
@@ -126,20 +136,20 @@ full-field readback, never used in the gameplay loop.
 
 ## Cost and verification
 
-Desktop uses 192 by 126 cells; mobile uses 128 by 84. There are at most eighteen
+Desktop uses 192 by 192 cells; mobile uses 128 by 128. There are at most twenty-four
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch
 up its missed burn time. Buffers, pipelines and bind groups are retained, and
 all steps in one game update share one queue submission. The desktop simulation
-buffers occupy 3,214,848 bytes, excluding presentation textures and CPU geometry
+buffers occupy 4,892,832 bytes, excluding presentation textures and CPU geometry
 arrays. The module requests no second GPU device.
 
-On the development Apple M1 Pro, Chrome for Testing with Metal, v28.64 at 1280 by 900:
+On the development Apple M1 Pro, Chrome for Testing with Metal, v28.65 at 1280 by 900:
 
 | Measurement | Result |
 | --- | --- |
-| Fire CPU geometry and submission, 120 frames with three burning pieces | 0.75 ms average, 0.90 ms p95 |
-| Fire-room update/render plus a GPU queue fence | 5.20 ms average, 8.00 ms p95 |
-| Full bath frame CPU time, about 51,000 liquid particles, steam and a guest | 3.05 ms average, 5.40 ms p99 |
+| Fire CPU geometry and submission, 120 frames with three burning pieces | 1.08 ms average, 1.20 ms p95 |
+| Fire-room update/render plus a GPU queue fence | 5.33 ms average, 7.90 ms p95 |
+| Full bath frame CPU time, about 51,000 liquid particles, steam and a guest | 3.04 ms average, 5.00 ms p99 |
 | Full bath frame interval | 16.67 ms average, 16.80 ms p99 |
 
 The queue-fenced measurement includes browser/driver scheduling and room drawing;
@@ -155,7 +165,8 @@ to `/tmp/sluice-fire-qa`. The supporting browser checks verify:
 - Every transported species and enthalpy conserved in a sealed box, positivity,
   impermeable walls and reduced divergence after projection.
 - Gas mass and enthalpy conserved when inserting, moving and lifting a polygon.
-- Matched solid/gas mass transfer, one-shot quenching, wet-fuel drying, draft,
+- GPU fracture inheritance, conserved gas/material mass during splitting,
+  matched solid/gas mass transfer, one-shot quenching, wet-fuel drying, draft,
   bellows, coal/wood differences, exhausted carbon and residual ash heat.
 - Identical fixed steps under different frame batching and no stale readback
   updating removed fuel.
@@ -172,7 +183,8 @@ selects `?cpufire=1` to retain browser coverage of fallback coal tending.
 
 This is a two-dimensional game simulation, not validated engineering CFD.
 Pressure is approximate; there is no multigrid solver, compressible shock model,
-3D turbulence, spectral radiation transport or volumetric solid fracture.
+3D turbulence or spectral radiation transport. Coal failure uses bounded 2D
+polygon splits, not a volumetric material stress solver.
 Sub-cell air passages are unresolved. The body core/skin model and gray radiation
 are deliberately bounded approximations. Those extensions require separate
 quality and frame-cost evidence rather than treating a larger grid as sufficient.

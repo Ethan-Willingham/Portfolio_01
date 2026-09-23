@@ -4,7 +4,7 @@
   function bathBoilerWorldRect() {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     return { x: (curve.x0 + curve.x1) / 2 - 144,
-      y: curve.y0 + curve.D + 22, w: 288, h: 106 };
+      y: curve.y0 + curve.D + 22, w: 288, h: 214 };
   }
   function bathInteriorBottom() {
     var r = bathBoilerWorldRect();
@@ -69,7 +69,7 @@
     // actual boiler bed, also rendered in the close view, with the same coal.
     c.fillStyle = BLD.outline; c.fillRect(r.x - 34, r.y - 13, r.w + 68, r.h + 24);
     c.fillStyle = BLD.stoneDark; c.fillRect(r.x - 30, r.y - 10, r.w + 60, r.h + 17);
-    for (var row = 0; row < 4; row++) {
+    for (var row = 0; row < Math.ceil(r.h/29); row++) {
       for (var col = 0; col < 5; col++) {
         c.fillStyle = row % 2 ? BLD.stoneBase : BLD.stoneDark;
         c.fillRect(r.x - 26 + col * 68, r.y - 6 + row * 29, 65, 25);
@@ -79,8 +79,9 @@
     c.fillRect(r.x, r.y, r.w, r.h);
     c.strokeStyle = bathBoilerHover ? BLD.goldPale : BLD.metalLight;
     c.lineWidth = bathBoilerHover ? 3 : 1; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-    c.fillStyle = BLD.outline; c.fillRect(r.x + 43, r.y + 12, r.w - 86, r.h - 28);
-    hearthDrawFirebox(c, hearthBeds.boiler, r.x + 47, r.y + 15, r.w - 94, r.h - 35, hearthToolTime);
+    var opening = Math.min(r.w - 94, r.h - 35);
+    c.fillStyle = BLD.outline; c.fillRect(r.x + (r.w-opening)/2-4, r.y + 11, opening+8, opening+8);
+    hearthDrawFirebox(c, hearthBeds.boiler, r.x + (r.w-opening)/2, r.y + 15, opening, opening, hearthToolTime);
     // Iron guard bars keep the glowing coal visible through the hatch.
     c.fillStyle = BLD.metalDark;
     for (var bar = 0; bar < 6; bar++) c.fillRect(r.x + 55 + bar * 33, r.y + 18, 3, r.h - 34);

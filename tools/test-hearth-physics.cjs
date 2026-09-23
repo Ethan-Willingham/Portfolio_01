@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const source = ['combustion', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
+const source = ['combustion', 'fracture', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
 function fixture(fps = 60) {
   const s = { Math, console };
   vm.createContext(s);
@@ -28,6 +28,31 @@ function checkBodies(bed) {
   }
   assert(bed.heat >= 0 && bed.heat <= 1 && bed.power >= 0 && bed.power <= 1, 'bounded output');
   assert(bed.sparks.length <= 64, 'bounded spark allocation');
+}
+
+{
+  const {s,advance}=fixture(), bed=s.hearthBeds.boiler;
+  const lower=s.hearthAddChunk('boiler',160,180), upper=s.hearthAddChunk('boiler',160,110);
+  for(const b of [lower,upper]){b.angle=0;b.r=b.baseR=30;b.shape=[[-1,-.6],[1,-.6],[1,.6],[-1,.6]];s.hearthHullCache.delete(b);s.hearthMass(b);}
+  advance(3);
+  lower.fuel=lower.carbon=0.08;lower.volatile=0;lower.moisture=0;
+  const y=upper.y, kg=lower.dryKg, share=lower.fuelShare;
+  advance(8);
+  assert(!bed.chunks.includes(lower),'supported weight fractures a weakened lower coal');
+  assert(upper.y>y+8,'upper coal falls as its support loses integrity');
+  near(bed.chunks.filter(b=>b!==upper).reduce((n,b)=>n+b.dryKg,0),kg,1e-10,'fracture conserves dry reference mass');
+  near(bed.chunks.filter(b=>b!==upper).reduce((n,b)=>n+b.fuelShare,0),share,1e-10,'fracture conserves paid fuel share');
+  checkBodies(bed);
+  const saved=JSON.parse(JSON.stringify(s.hearthSave()));s.hearthRestore(saved);
+  assert.equal(JSON.stringify(s.hearthSave()),JSON.stringify(saved),'fragment shapes and damage survive saves');
+  for(const b of bed.chunks){b.fuel=b.carbon=b.volatile=0;b.ash=true;}
+  // Test bounded mineral accumulation without conflating combustion rates.
+  const restored=s.hearthBeds.boiler;
+  for(const b of restored.chunks){b.fuel=b.carbon=b.volatile=0;b.ash=true;}
+  const minerals=restored.chunks.reduce((n,b)=>n+b.dryKg*0.16,0);
+  advance(2);near(s.hearthAshMass(restored),minerals,1e-10,'burnout retains mineral mass');
+  assert(restored.chunks.length===0 && restored.ash.length>4 && restored.ash.every(g=>g.y<=210),'ash grains settle on the grate');
+  console.log('PASS loaded fuel fractures, stack collapses, mass persists, fragment saves and physical ash');
 }
 
 {
@@ -85,9 +110,9 @@ function checkBodies(bed) {
   assert(a.core < a.heat, 'the large core heats more slowly than the surface');
   const hot = bed.heat;
   advance(150);
-  assert(a.ash && b.ash && a.fuel === 0 && b.fuel === 0, 'burned pieces remain as ash');
-  assert(bed.heat < hot && a.heat < 0.02, 'spent fire cools');
-  assert.equal(bed.chunks.length, 3, 'fuel depletion does not remove physical ash');
+  assert(bed.ash.length>0, 'burned pieces leave mineral grains');
+  assert(bed.heat < hot && bed.ash.every(g=>g.heat<0.02), 'spent fire cools');
+  near(s.hearthAshMass(bed), (a.dryKg+b.dryKg)*0.16,1e-9,'mineral ash mass persists');
   console.log('PASS ignition requires a source, local spread, burn rate, persistent ash and cooling');
 }
 
@@ -181,6 +206,19 @@ function checkBodies(bed) {
   assert.equal(s.hearthBeds.forge.chunks.length, 0);
   assert.equal(s.hearthAddChunk('invalid', 0, 0), null);
   assert.equal(s.hearthIgnite('invalid'), false);
+  s.hearthRestore({version:4,boiler:{chunks:Array.from({length:40},()=>({
+    shape:[[-1,-1],[1,-1],[1,-1],[1,1],[-1,1]]
+  }))}});
+  const bed=s.hearthBeds.boiler;
+  assert.equal(bed.chunks.length,24,'fragment saves have a bounded separate capacity');
+  assert(bed.chunks.every(b=>!b.shape),'zero-length polygon edges are rejected');
+  const minerals=bed.chunks.reduce((n,b)=>n+b.dryKg*.16,0);
+  for(const b of bed.chunks){b.ash=true;b.fuel=b.volatile=b.carbon=0;}
+  advance(3);
+  assert.equal(bed.ash.length,128,'large burnouts merge into the bounded grain pool');
+  near(s.hearthAshMass(bed),minerals,1e-10,'grain merging preserves mineral mass');
+  const bounded=JSON.stringify(s.hearthSave());s.hearthRestore(JSON.parse(bounded));
+  assert.equal(JSON.stringify(s.hearthSave()),bounded,'a full ash pool survives reload');
   console.log('PASS malformed save repair, capacity, bounded events and invalid input');
 }
 {
@@ -212,7 +250,7 @@ function checkBodies(bed) {
 {
   const { s, advance } = fixture();
   const b = s.hearthAddChunk('boiler', 160, 10), phases = new Set();
-  advance(1); s.hearthLightChunk(s.hearthBeds.boiler, b);
+  b.generation=2; advance(1); s.hearthLightChunk(s.hearthBeds.boiler, b);
   let maxSmoke = 0, maxSteam = 0, lastFuel = b.fuel;
   for (let i = 0; i < 140 * 30; i++) {
     s.hearthTick(1/30); phases.add(b.stage);
@@ -221,10 +259,10 @@ function checkBodies(bed) {
     maxSmoke = Math.max(maxSmoke, b.smoke); maxSteam = Math.max(maxSteam, b.steam);
     if (b.stage === 'coke') assert.equal(b.flame, 0, 'coke glow is not a persistent volatile flame');
   }
-  for (const stage of ['drying','flaming','coke','embers','cooling ash','ash']) assert(phases.has(stage), 'observable phase: ' + stage);
+  for (const stage of ['drying','flaming','coke','embers']) assert(phases.has(stage), 'observable phase: ' + stage);
   assert(maxSmoke > 0.1 && maxSteam > 0.1, 'gas release and drying drive distinct visible emissions');
   assert(b.r < b.baseR * 0.46 && b.ash, 'fuel loss changes the collision hull and leaves an ash skeleton');
-  assert(b.heat < 0.01 && b.core > b.heat, 'the core retains heat during cooling');
+  assert(s.hearthBeds.boiler.ash.every(g=>g.heat<0.05), 'mineral grains cool after burnout');
   console.log('PASS drying, gas release, coke, embers, cooling ash and conserved burn reservoirs');
 }
 
@@ -254,7 +292,7 @@ function checkBodies(bed) {
   }
   f.advance(2);
   assert(s.hearthSurfaceAir(s.hearthBeds.boiler, cold) < openAir, 'spent ash restricts the grate air supply');
-  for (const b of [...s.hearthBeds.boiler.chunks]) if (b.ash) s.hearthRemoveChunk('boiler', b.id);
+  s.hearthBeds.boiler.ash.length=0;
   f.advance(2);
   assert(s.hearthBeds.boiler.ashLoad === 0, 'raked ash no longer obstructs underfire air');
   console.log('PASS packed-bed starvation, rearrangement, bellows fuel cost and ash obstruction');

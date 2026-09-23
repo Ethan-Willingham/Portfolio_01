@@ -21,7 +21,7 @@
     hearthRoomReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
     bathTransitionSerial++;
-    bathMode = false; bathRoomReady = false; bathFading = false;
+    bathMode = false; bathRoomReady = false; bathFading = false; bathSyncCollision();
     if (typeof document !== 'undefined') bathLayerVis(false);
     bathFloorsOwned = [true, false, false, false, false];
     bathFire = 0; bathHeat = 0; bathWater = 0; bathPour = 0;
@@ -57,17 +57,13 @@
   }
   function bathWaterline() {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
-    // Include the concealed tile clearance as well as the visible bowl.
-    // Otherwise guests float above the actual water in a wider vessel.
-    // Invert the carved cross-section at the liquid rest spacing.
+    // Invert the same curved cavity that now collides with the water.
     // This also gives parked/offscreen guests the same buoyancy level.
     var low = curve.y0, high = curve.y0 + curve.D;
     for (var n = 0; n < 10; n++) {
       var line = (low + high) * 0.5, volume = 0;
       for (var x = curve.x0 + 4; x < curve.x1; x += 8) {
-        var colX = Math.floor(x / TILE) * TILE;
-        var depth = Math.max(curve.depthAt(colX), curve.depthAt(colX + TILE / 2), curve.depthAt(colX + TILE));
-        var floorY = Math.min((F.fr + F.sink + 1) * TILE, Math.ceil((curve.y0 + depth + 1) / TILE) * TILE);
+        var floorY = curve.y0+curve.depthAt(x)-3;
         volume += Math.max(0, floorY - line) * 8 / 1.5625;
       }
       if (volume > bathWater) low = line; else high = line;
@@ -409,14 +405,16 @@
   }
   function bathServiceRestore(data) {
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
-    bathRoomReady = false; banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
+    bathRoomReady = false; bathSyncCollision(); banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
     bathFloorsOwned = [true, false, false, false, false];
     bathSupplies = [0, 0, 0, 0, 0];
     bathFire = 0; bathHeat = 0; bathPour = 0; bathWater = 0; bathLostWater = 0;
     hearthRoomRestore(data && data.workshop, data && Number(data.fire) || 0);
     bathServed = 0; bathIntroSeen = false; bathNotice = ''; bathNoticeT = 0;
     if (!data) return;
-    bathFire = data.workshop ? (hearthBeds.boiler.power > 0.01 ? hearthBeds.boiler.fuelSeconds : 0) :
+    // GPU output restarts at zero while the saved hot fuel re-enters the solver.
+    // Preserve its last fire indicator, bounded by the actual remaining fuel.
+    bathFire = data.workshop ? skySlimeClamp(Number(data.fire) || 0, 0, hearthBeds.boiler.fuelSeconds) :
       skySlimeClamp(Number(data.fire) || 0, 0, BATH_LEGACY_FIRE_SECONDS);
     bathHeat = skySlimeClamp(Number(data.heat) || 0, 0, 1);
     bathPour = skySlimeClamp(Number(data.pour) || 0, 0, BATH_MAX_WATER);
@@ -430,6 +428,7 @@
     // The carved grid and real water are already in the world/liquid save.
     // Re-arm the heater on next entry without filling the bath a second time.
     bathRoomReady = !!data.ready && data.version >= 4;
+    bathSyncCollision();
     var list = Array.isArray(data.guests) ? data.guests : [];
     for (var i = 0; i < Math.min(bathGuestCap, list.length); i++) {
       var src = list[i], s = skySlimeHydrate(src.s);

@@ -42,5 +42,23 @@ export async function checkFireMaterials(device) {
   sim.reset();body=make();sim.ignite(body);sim.step(1/60,[body],{damper:1});sim.step(1/60,[],{damper:1});
   await device.queue.onSubmittedWorkDone();await new Promise(r=>setTimeout(r,0));
   check('stale GPU readback cannot update removed fuel',body.surfaceKelvin===undefined);
+  sim.reset();body=make();body.volatile=.08;body.carbon=.12;body.moisture=.03;
+  s=await advance(body,4);const original=totals(s);
+  const children=[0,1].map(i=>({...body,id:i+2,x:146+i*28,r:32,baseR:34,dryKg:.009,
+    volatile:.28,carbon:.72,moisture:.09,vertices:i===0?[[132,137],[160,137],[160,193],[132,193]]:[[160,137],[188,137],[188,193],[160,193]]}));
+  sim.fracture(body,children);sim.step(1/60,children,{damper:0});s=await sim.snapshot();
+  let fuel=0,water=0;for(let i=0;i<2;i++){fuel+=.009*(s.bodies[i*16]+s.bodies[i*16+1]);water+=.009*s.bodies[i*16+2];}
+  check('fractures inherit current GPU reservoirs without refuelling',Math.abs(fuel-.018*.2)<1e-8 && Math.abs(water-.018*.03)<1e-8,{fuel,water});
+  let gasMass=0;for(let i=0;i<s.width*s.height;i++)if(s.mask[i*2]===-1)for(const k of [0,1,2,3,5])gasMass+=s.fields[i*8+k]*s.volume;
+  check('splitting geometry preserves sealed gas and solid mass',Math.abs(gasMass+fuel+water-original.mass)<1e-7,{before:original.mass,after:gasMass+fuel+water});
+  sim.reset();body=make();body.dryKg=.018;body.volatile=.08;body.carbon=.12;body.moisture=.03;
+  const fillers=[0,1,2].map(i=>({...make(),id:20+i,held:true}));
+  sim.step(1/60,[...fillers,body],{damper:0});await sim.snapshot();
+  sim.step(1/60,[body],{damper:0});await sim.snapshot();
+  const split=children.map((child,i)=>({...child,id:30+i}));
+  sim.quench(body,.001);sim.fracture(body,split);
+  sim.step(1/60,[fillers[0],fillers[1],...split],{damper:0});s=await sim.snapshot();
+  fuel=water=0;for(const i of [2,3]){fuel+=.009*(s.bodies[i*16]+s.bodies[i*16+1]);water+=.009*s.bodies[i*16+2];}
+  check('new fuel cannot overwrite a fracture source and pending quench is divided once',Math.abs(fuel-.0036)<1e-8 && Math.abs(water-.00154)<1e-8,{fuel,water});
   sim.dispose();return results;
 }

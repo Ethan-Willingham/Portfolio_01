@@ -279,13 +279,15 @@ try {
   check('guest pays once after the soak',await game(`money===${beforePay}+BATH_VISIT.pay && bathServed===1`));
   check('splashed water is permanently drained',await game('bathLostWater>0 && bathWater<12000'));
   await screenshot('paid');
-  const saved=await game('window.__bathFixtureSave=JSON.parse(JSON.stringify(saveBuild()));({money:money,water:bathBasinCount(),lost:bathLostWater,heat:bathHeat,fire:bathFire})');
+  const saved=await game('window.__bathFixtureSave=JSON.parse(JSON.stringify(saveBuild()));({money:money,water:bathBasinCount(),lost:bathLostWater,heat:bathHeat,fire:bathFire,fuel:hearthBeds.boiler.chunks.reduce(function(sum,b){return sum+b.fuel*b.life*(b.fuelShare||1);},0)})');
   await game('init();saveApply(window.__bathFixtureSave);delete window.__bathFixtureSave;introPhase="done";bathMode=true;hearthSetView("bath");bathWater=bathBasinCount();bathArmHeat();bathCamPin();render()');
-  check('reload preserves fire, heat, water and permanent loss',await game(`money===${saved.money} && bathWater===${saved.water} && bathLostWater===${saved.lost} && Math.abs(bathHeat-${saved.heat})<1e-9 && Math.abs(bathFire-${saved.fire})<1e-7`));
+  console.log('RELOAD', { before: saved, after: await game('({money:money,water:bathWater,lost:bathLostWater,heat:bathHeat,fire:bathFire,fuel:hearthBeds.boiler.fuelSeconds})') });
+  check('reload preserves fuel, fire, heat, water and permanent loss',await game(`money===${saved.money} && bathWater===${saved.water} && bathLostWater===${saved.lost} && Math.abs(bathHeat-${saved.heat})<1e-9 && Math.abs(hearthBeds.boiler.fuelSeconds-${saved.fuel})<1e-7 && Math.abs(bathFire-${Math.min(saved.fire,saved.fuel)})<1e-7`));
   await game('for(var n=0;n<70;n++)bathGuestTick(0.1)');
   check('reload does not repeat payment',await game(`money===${saved.money}`));
-  await game('introPhase="warmup";gameRafId=requestAnimationFrame(loop)');
-  for(let wait=0;wait<300;wait++){if(await game('introPhase==="done"'))break;await sleep(100);}
+  await game('beginSceneLoading("Restoring bath");gameRafId=requestAnimationFrame(loop)');
+  for(let wait=0;wait<300;wait++){if(await game('introPhase==="done" || document.getElementById("game-intro").dataset.state==="error"'))break;await sleep(100);}
+  if(!await game('introPhase==="done"')) console.log('RESTORE LOADING',JSON.stringify(await ev('SluiceLoading.report()'),null,2));
   check('restored scene completes its real loading gates',await game('introPhase==="done"'));
   await game('cancelAnimationFrame(gameRafId);gameRafId=0');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
