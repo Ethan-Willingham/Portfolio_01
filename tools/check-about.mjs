@@ -44,6 +44,16 @@ for (const [id, model] of Object.entries(models.models)) {
 check(stats.version === 2, 'tools/about-stats.json must use the durable v2 schema');
 check(stats.methodology?.pricingVerified === models.verified, 'usage ledger and model registry disagree on the pricing verification date');
 check(stats.legacy?.through && stats.days && stats.legacy?.models, 'usage ledger is missing its legacy baseline or daily records');
+if (stats.collection) {
+  check(stats.collection.timezone === 'America/Chicago', 'usage grouping must use America/Chicago');
+  check(stats.collection.ledgerId === stats.methodology.usageLedgerId, 'private ledger identity differs between collection and methodology');
+  check(/^[a-f0-9]{64}$/.test(stats.collection.ledgerId), 'private ledger identity must be hashed');
+  for (const [id, row] of Object.entries(stats.collection.imports || {})) {
+    check(/^[a-f0-9]{64}$/.test(id), 'import provenance must be a SHA-256 content hash');
+    check(row.tokens >= 0 && row.events > 0 && row.first <= row.last && row.last <= stats.collection.cutoff, 'invalid import coverage');
+  }
+  check(!/\/Users\/|[A-Z]:\\\\Users\\\\|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(JSON.stringify(stats)), 'public usage data contains a private path or raw session ID');
+}
 for (const [day, row] of Object.entries(stats.days || {})) {
   check(day > stats.legacy.through, `${day} overlaps the frozen legacy baseline`);
   const rows = Object.entries(row.models || {});
@@ -53,6 +63,19 @@ for (const [day, row] of Object.entries(stats.days || {})) {
     check(Boolean(models.models[id]), `${day} contains unknown model ${id}`);
     check(m.totalTokens === sum([m.input, m.cacheWrite, m.cacheRead, m.output]), `${day} ${id} token categories do not sum`);
     check(m.totalTokens >= 0 && m.cost >= 0, `${day} ${id} has a negative value`);
+    check((m.cacheWrite1h || 0) <= m.cacheWrite, `${day} ${id} one-hour writes exceed all writes`);
+    if (m.longContext) {
+      const rate = models.models[id]?.prices.find(p => p.from <= day && (!p.through || day <= p.through));
+      for (const [key, value] of Object.entries(m.longContext)) check(value >= 0 && value <= m[key], `${day} ${id} invalid long-context ${key}`);
+      if (rate) {
+        const oneHour = m.cacheWrite1h || 0;
+        const extra = m.longContext;
+        const inputExtra = rate.longContext ? rate.longContext.inputMultiplier - 1 : 0;
+        const outputExtra = rate.longContext ? rate.longContext.outputMultiplier - 1 : 0;
+        const expectedCost = (m.input * rate.input + (m.cacheWrite - oneHour) * rate.cacheWrite5m + oneHour * (rate.cacheWrite1h || rate.cacheWrite5m) + m.cacheRead * rate.cacheRead + m.output * rate.output + inputExtra * (extra.input * rate.input + extra.cacheWrite * rate.cacheWrite5m + extra.cacheRead * rate.cacheRead) + outputExtra * extra.output * rate.output) / 1e6;
+        check(Math.abs(m.cost - expectedCost) < 1e-7, `${day} ${id} cost does not match registered rates and context categories`);
+      }
+    }
   }
 }
 const dayRows = Object.values(stats.days || {});
@@ -121,6 +144,10 @@ check(generatedDaysOld(size.generated) < 2, 'site-size data is more than two day
 check(new Set(hist.topics.map(t => t.key)).size === hist.topics.length, 'git-history topic keys are not unique');
 check(Array.isArray(hist.daily) && hist.daily.length > 0, 'git-history fuel line is missing');
 check(hist.dailyMax >= Math.max(...hist.daily), 'git-history dailyMax is smaller than a daily token value');
+for (const [day, row] of Object.entries(stats.days)) {
+  const index = Math.round((Date.parse(day + 'T00:00:00Z') - Date.parse(stats.daily.t0 + 'T00:00:00Z')) / 86400000);
+  check(hist.daily[index] === row.totalTokens, `${day} timeline tokens disagree with the durable usage ledger`);
+}
 for (const commit of hist.commits) {
   check(Number.isInteger(commit[5]) && commit[5] >= 0 && commit[5] < hist.topics.length, `commit ${commit[0]} has an invalid topic index`);
 }

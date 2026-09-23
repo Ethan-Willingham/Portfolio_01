@@ -35,7 +35,7 @@ git worktree add --detach "$WT" origin/main >/dev/null 2>&1 || die "couldn't cre
 cd "$WT" || die "worktree missing"
 
 echo "==> Running the updater..."
-node tools/update-about.mjs --write || die "the updater hit an error (see above)"
+node tools/update-about.mjs --write "$@" || die "the updater hit an error (see above)"
 
 echo "==> Checking the generated data..."
 node tools/check-about.mjs || die "the data check failed, so nothing was published"

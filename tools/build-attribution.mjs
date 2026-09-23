@@ -43,7 +43,6 @@ import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 
 const REPO = process.cwd();
-const TX = join(homedir(), '.claude/projects/-Users-ethan-Portfolio-01');
 const CODEX_TX = join(homedir(), '.codex/sessions');
 const LEDGER_FILE = join(REPO, 'tools/about-attribution-ledger.json');
 const OLD_CODEX_LEDGER = join(REPO, 'tools/about-codex-attribution.json');
@@ -92,7 +91,8 @@ for (const [f, k] of Object.entries(ALIAS)) route.set(f, k);
 for (const [k, m] of Object.entries(NEW)) for (const f of (m.files || [])) route.set(f, k);
 const EXCLUDE = new Set();  // (was ['sluice']) the game is now a first-class tile, like every other build
 
-const excludeSession = (process.argv.find(a => a.startsWith('--exclude-session=')) || '').split('=')[1] || '';
+const excludeSession = (process.argv.find(a => a.startsWith('--exclude-session=')) || '').split('=')[1] || process.env.CODEX_THREAD_ID || '';
+const cutoff = process.env.ABOUT_USAGE_CUTOFF || new Date().toISOString();
 
 function relpath(p) {
   if (!p) return '';
@@ -136,15 +136,26 @@ function cleanSnapshot(models) {
 function claudeSession(file) {
   let sessionId = basename(file);
   const models = {};
+  const messages = new Map();
   for (const ln of readFileSync(file, 'utf8').split('\n')) {
     if (!ln) continue;
     let o; try { o = JSON.parse(ln); } catch { continue; }
+    if (o.timestamp > cutoff) continue;
     sessionId = o.sessionId || sessionId;
     if (excludeSession && o.sessionId === excludeSession) continue;
     const msg = o.message;
-    if (!msg || msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
+    if (!msg?.id || msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
+    const old = messages.get(msg.id);
+    const merged = old || { timestamp: o.timestamp, message: { ...msg, content: [] } };
+    const seen = new Set(merged.message.content.map(c => c.id));
+    for (const c of msg.content) if (c.type === 'tool_use' && !seen.has(c.id)) { merged.message.content.push(c); seen.add(c.id); }
+    if (!old || (msg.usage?.output_tokens || 0) > (merged.message.usage?.output_tokens || 0)) merged.message.usage = msg.usage;
+    messages.set(msg.id, merged);
+  }
+  for (const o of messages.values()) {
+    const msg = o.message;
     const model = msg.model;
-    if (!model || TRACKED_MODELS[model]?.provider !== 'anthropic') continue;
+    if (!model || (TRACKED_MODELS[model]?.provider !== 'anthropic' || !TRACKED_MODELS[model]?.showInAttribution)) continue;
     const tools = msg.content.filter(c => c.type === 'tool_use' && /^(Edit|Write|MultiEdit)$/.test(c.name));
     if (!tools.length) continue;
     turns++;
@@ -169,7 +180,9 @@ function claudeSession(file) {
     if (counted) editTurns++;
   }
   if (!Object.keys(models).length) return null;
-  const id = createHash('sha256').update(sessionId).digest('hex').slice(0, 16);
+  // Claude subagents share the parent sessionId but have independent transcript files.
+  const identity = sessionId + (basename(file).startsWith('agent-') ? '/' + basename(file) : '');
+  const id = createHash('sha256').update(identity).digest('hex').slice(0, 16);
   return ['claude:' + id, { provider: 'claude', models: cleanSnapshot(models) }];
 }
 
@@ -192,13 +205,15 @@ function jsonlFiles(dir) {
 function codexSession(file) {
   let sessionId = basename(file);
   let excluded = false;
+  let ownSession = false, inheritedUntil = 0, ordinal = 0;
+  const seenPatches = new Set();
   let activeTurn = '';
   const turnModels = new Map();
   const pending = new Map();
   const models = {};
 
   const flush = (model, outTok) => {
-    if (TRACKED_MODELS[model]?.provider !== 'openai' || !pending.size) { pending.clear(); return; }
+    if ((TRACKED_MODELS[model]?.provider !== 'openai' || !TRACKED_MODELS[model]?.showInAttribution) || !pending.size) { pending.clear(); return; }
     const paths = [...pending.values()].reduce((n, x) => n + x.paths.size, 0);
     const perPathTok = paths ? outTok / paths : 0;
     const posts = models[model] || (models[model] = {});
@@ -216,11 +231,17 @@ function codexSession(file) {
     if (!ln) continue;
     let o; try { o = JSON.parse(ln); } catch { continue; }
     const p = o.payload || {};
+    const index = o.ordinal ?? ordinal++;
     if (o.type === 'session_meta') {
-      sessionId = p.id || p.session_id || sessionId;
-      excluded = Boolean(excludeSession && sessionId === excludeSession);
+      if (!ownSession) {
+        ownSession = true;
+        sessionId = p.id || p.session_id || sessionId;
+        inheritedUntil = p.subagent_history_start_ordinal || 0;
+        excluded = Boolean(excludeSession && sessionId === excludeSession);
+      }
       continue;
     }
+    if (excluded || index < inheritedUntil || o.timestamp > cutoff) continue;
     if (o.type === 'turn_context') {
       turnModels.set(p.turn_id, p.model);
       continue;
@@ -231,11 +252,16 @@ function codexSession(file) {
       pending.clear();
       continue;
     }
-    if (p.type === 'patch_apply_end' && p.success) {
+    const completedPatch = p.type === 'item_completed' && p.item?.type === 'FileChange' && p.item.status === 'completed' ? p.item : null;
+    if ((p.type === 'patch_apply_end' && p.success) || completedPatch) {
+      const patch = completedPatch || p;
+      const patchId = patch.id || p.call_id;
+      if (patchId && seenPatches.has(patchId)) continue;
+      if (patchId) seenPatches.add(patchId);
       const model = turnModels.get(p.turn_id || activeTurn);
-      if (TRACKED_MODELS[model]?.provider !== 'openai') continue;
+      if ((TRACKED_MODELS[model]?.provider !== 'openai' || !TRACKED_MODELS[model]?.showInAttribution)) continue;
       const ts = o.timestamp || '';
-      for (const path of Object.keys(p.changes || {})) {
+      for (const path of Object.keys(patch.changes || {})) {
         const key = keyFor(path);
         if (!key || EXCLUDE.has(key)) continue;
         const item = pending.get(key) || { edits: 0, paths: new Set(), first: ts, last: ts };
@@ -322,15 +348,16 @@ function mergeSession(id, fresh) {
 }
 
 let claudeScanned = 0;
-if (existsSync(TX)) for (const f of readdirSync(TX)) {
-  if (!f.endsWith('.jsonl')) continue;
-  const found = claudeSession(join(TX, f));
+const claudeProjects = join(homedir(), '.claude/projects');
+const claudeDirs = existsSync(claudeProjects) ? readdirSync(claudeProjects).filter(n => n.includes('Portfolio-01') || n.endsWith('sluice-alpha')).map(n => join(claudeProjects, n)) : [];
+for (const file of claudeDirs.flatMap(jsonlFiles)) {
+  const found = claudeSession(file);
   if (!found) continue;
   mergeSession(found[0], found[1]);
   claudeScanned++;
 }
 let codexScanned = 0;
-for (const file of jsonlFiles(CODEX_TX)) {
+for (const file of [...jsonlFiles(CODEX_TX), ...jsonlFiles(join(homedir(), '.codex/archived_sessions'))]) {
   const found = codexSession(file);
   if (!found) continue;
   mergeSession(found[0], found[1]);

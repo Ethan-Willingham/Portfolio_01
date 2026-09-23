@@ -5,7 +5,7 @@
    tokens and the page has gone stale.
 
    What it refreshes, in one pass:
-     1. TOKENS    ccusage + the official model registry -> the 3 headline stats
+     1. TOKENS    native usage + the official model registry -> the 3 headline stats
                   in about.html and per-model fuel totals in the attribution viz.
      2. RIVER     git log -> appends every commit since the last refresh to the
                   commit river (js/git-history-data.js), and adds a new topic for
@@ -38,7 +38,7 @@
    ============================================================================ */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
+import { collectUsage } from './about-usage.mjs';
 import { execSync } from 'node:child_process';
 
 const REPO = process.cwd();
@@ -269,177 +269,28 @@ log(`  + ${fresh.length} new commits since ${new Date(lastTs * 1000).toISOString
   (fresh.length ? '  ' + dim(Object.entries(byTopic).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}:${n}`).join('  ')) : ''));
 
 // ============================================================================
-// PHASE 1 (TOKENS) -- read ccusage into the durable daily ledger and compute
+// PHASE 1 (TOKENS) -- merge native counters into the durable daily ledger and compute
 // display numbers. (Applied after the tile pass so it can set per-model fuel on
 // the freshly-appended attribution file.)
 // ============================================================================
-function readCcusage() {
-  const tries = ['ccusage --json', `bun ${JSON.stringify(join(homedir(), '.bun/bin/ccusage'))} --json`];
-  for (const cmd of tries) {
-    try {
-      const out = execSync(cmd, { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] });
-      const o = JSON.parse(out);
-      if (o && (o.daily || o.totals)) return o;
-    } catch {}
-  }
-  return null;
-}
-function ccusageVersion() {
-  const tries = ['ccusage --version', `bun ${JSON.stringify(join(homedir(), '.bun/bin/ccusage'))} --version`];
-  for (const cmd of tries) {
-    try { return execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch {}
-  }
-  return 'unknown';
-}
-function priceFor(model, day) {
-  const config = MODEL_REGISTRY.models[model];
-  if (!config) throw new Error(`unknown model in ccusage: ${model}. Add it to tools/about-models.json after checking its official price.`);
-  const prices = (config.prices || []).filter(p => p.from <= day && (!p.through || day <= p.through));
-  if (prices.length !== 1) throw new Error(`no unambiguous price for ${model} on ${day}`);
-  return prices[0];
-}
-function pricedBreakdown(model, day, b) {
-  const p = priceFor(model, day);
-  const million = 1e6;
-  return ((b.inputTokens || 0) * p.input +
-    (b.cacheCreationTokens || 0) * p.cacheWrite5m +
-    (b.cacheReadTokens || 0) * p.cacheRead +
-    (b.outputTokens || 0) * p.output) / million;
-}
-function jsonlFiles(dir) {
-  if (!existsSync(dir)) return [];
-  let out = [];
-  for (const ent of readdirSync(dir, { withFileTypes: true })) {
-    const file = join(dir, ent.name);
-    if (ent.isDirectory()) out = out.concat(jsonlFiles(file));
-    else if (ent.isFile() && ent.name.endsWith('.jsonl')) out.push(file);
-  }
-  return out;
-}
-// GPT-5.6 changes price when a single request crosses 272K input tokens. Daily
-// ccusage aggregates cannot preserve that threshold, so price Codex per response.
-function codexCostsByDay() {
-  const out = {};
-  for (const file of jsonlFiles(join(homedir(), '.codex/sessions'))) {
-    let activeTurn = '';
-    const turnModels = new Map();
-    for (const line of readFileSync(file, 'utf8').split('\n')) {
-      if (!line) continue;
-      let row; try { row = JSON.parse(line); } catch { continue; }
-      const p = row.payload || {};
-      if (row.type === 'turn_context') {
-        turnModels.set(p.turn_id, p.model);
-        continue;
-      }
-      if (row.type !== 'event_msg') continue;
-      if (p.type === 'task_started') {
-        activeTurn = p.turn_id || activeTurn;
-        continue;
-      }
-      if (p.type !== 'token_count') continue;
-      const model = turnModels.get(p.turn_id || activeTurn);
-      if (!model || MODEL_REGISTRY.models[model]?.provider !== 'openai') continue;
-      const u = p.info && p.info.last_token_usage;
-      if (!u) continue;
-      const day = ymdLocal(row.timestamp);
-      const rate = priceFor(model, day);
-      const input = u.input_tokens || 0;
-      const cached = u.cached_input_tokens || 0;
-      const uncached = Math.max(0, input - cached);
-      const long = rate.longContext && input > rate.longContext.aboveInputTokens;
-      const inputMult = long ? rate.longContext.inputMultiplier : 1;
-      const outputMult = long ? rate.longContext.outputMultiplier : 1;
-      const cost = (uncached * rate.input * inputMult +
-        cached * rate.cacheRead * inputMult +
-        (u.output_tokens || 0) * rate.output * outputMult) / 1e6;
-      const key = day + '\0' + model;
-      const a = out[key] || (out[key] = { cost: 0, requests: 0, longRequests: 0 });
-      a.cost += cost;
-      a.requests += 1;
-      if (long) a.longRequests += 1;
-    }
-  }
-  return out;
-}
-log(H('3/4  TOKENS  ') + dim('durable daily ledger + official list prices'));
-const cc = readCcusage();
+log(H('3/4  TOKENS  ') + dim('deduplicated native usage + dated API prices'));
 const attr = loadData(F_ATTR);
-
-if (!cc) throw new Error('ccusage is required. Install it or restore ~/.bun/bin/ccusage before publishing About data.');
 let stats = JSON.parse(readFileSync(F_STATS, 'utf8'));
-if (stats.version !== 2) {
-  stats = {
-    version: 2,
-    note: 'Durable About-page usage ledger. legacy is the published estimate through its cutoff and cannot be reconstructed after old logs were pruned. days keeps full token categories from the cutoff forward so totals survive pruning and future prices can be audited.',
-    methodology: {
-      collector: 'ccusage',
-      collectorVersion: ccusageVersion(),
-      pricingRegistry: 'tools/about-models.json',
-      pricingVerified: MODEL_REGISTRY.verified,
-      priceMeaning: 'API-equivalent list-price estimate, not an invoice',
-      cacheWriteAssumption: 'ccusage does not distinguish cache duration, so cacheCreationTokens use the 5-minute write rate',
-      gptLongContext: 'GPT-5.6 is priced per Codex response so requests above 272K input tokens receive the official multiplier'
-    },
-    legacy: {
-      through: stats.lastFoldedDate,
-      tokens: stats.tokens,
-      cost: stats.cost,
-      peakTokens: stats.peakTokens,
-      models: stats.models
-    },
-    days: {},
-    daily: stats.daily
-  };
-  log(dim(`  migrated the flat baseline to a durable daily ledger after ${stats.legacy.through}`));
-}
-stats.methodology.collectorVersion = ccusageVersion();
-stats.methodology.pricingVerified = MODEL_REGISTRY.verified;
-stats.methodology.priceMeaning = 'API-equivalent estimate using the published rate for each model and usage date, not an invoice';
+const usage = await collectUsage({ registry: MODEL_REGISTRY, stats, write: WRITE,
+  imports: process.argv.filter(a => a.startsWith('--import-usage=')).map(a => a.slice('--import-usage='.length)),
+  cutoff: process.env.ABOUT_USAGE_CUTOFF || new Date().toISOString() });
+stats.days = usage.days;
+stats.retainedDays = usage.retainedDays;
+stats.methodology = { ...stats.methodology,
+  collector: 'native Claude messages and Codex cumulative counters', collectorVersion: '1',
+  pricingVerified: MODEL_REGISTRY.verified,
+  priceMeaning: 'Standard API-equivalent estimate at dated list prices, not an invoice; excludes service-tier premiums and tool charges',
+  cacheWriteAssumption: 'Native Claude cache duration is used when recorded; otherwise five-minute writes',
+  gptLongContext: 'Deduplicated Codex response counters with the registered long-context threshold',
+  usageLedgerId: usage.evidence.ledgerId, timezone: usage.evidence.timezone };
+stats.collection = usage.evidence;
 stats.updated = today();
-
-const codexCosts = codexCostsByDay();
-if (!stats.methodology.legacyGptLongContextCorrected) {
-  for (const [id, base] of Object.entries(stats.legacy.models)) {
-    if (MODEL_REGISTRY.models[id]?.provider !== 'openai') continue;
-    const exact = Object.entries(codexCosts)
-      .filter(([key]) => key.endsWith('\0' + id) && key.slice(0, 10) <= stats.legacy.through)
-      .reduce((sum, [, row]) => sum + row.cost, 0);
-    if (!exact) continue;
-    stats.legacy.cost += exact - base.cost;
-    base.cost = exact;
-  }
-  stats.methodology.legacyGptLongContextCorrected = true;
-}
-for (const d of (cc.daily || []).filter(d => d.period > stats.legacy.through)) {
-  const day = { totalTokens: 0, cost: 0, models: {} };
-  for (const b of (d.modelBreakdowns || [])) {
-    const id = b.modelName;
-    const tokens = {
-      input: b.inputTokens || 0,
-      cacheWrite: b.cacheCreationTokens || 0,
-      cacheRead: b.cacheReadTokens || 0,
-      output: b.outputTokens || 0
-    };
-    const totalTokens = tokens.input + tokens.cacheWrite + tokens.cacheRead + tokens.output;
-    let cost = pricedBreakdown(id, d.period, b);
-    let pricing = 'daily categories';
-    const exact = codexCosts[d.period + '\0' + id];
-    if (MODEL_REGISTRY.models[id]?.provider === 'openai') {
-      if (!exact || !exact.requests) throw new Error(`cannot price ${id} on ${d.period}: the per-response Codex log is missing`);
-      cost = exact.cost;
-      pricing = `per response (${exact.requests} requests, ${exact.longRequests} long-context)`;
-    }
-    day.models[id] = { ...tokens, totalTokens, cost, pricing };
-    day.totalTokens += totalTokens;
-    day.cost += cost;
-  }
-  const prior = stats.days[d.period];
-  if (prior && day.totalTokens < prior.totalTokens) {
-    log(warn(`  ${d.period} dropped from ${prior.totalTokens} to ${day.totalTokens} tokens in ccusage; keeping the durable stored day`));
-    continue;
-  }
-  stats.days[d.period] = day;
-}
+const cc = { daily: Object.entries(stats.days).map(([period, d]) => ({ period, totalTokens: d.totalTokens })) };
 
 const dayRows = Object.entries(stats.days);
 const dispTok = stats.legacy.tokens + dayRows.reduce((sum, [, d]) => sum + d.totalTokens, 0);
@@ -459,8 +310,8 @@ log(`  ${ok(tokStr)} tokens   peak ${ok(peakStr)}   ${ok(costStr)}   ${dim(`${da
 
 // ---- FUEL LINE: the orange tokens-per-day band on the commit river ----------
 // A frozen hand-built baseline (the array in js/git-history.js, May 1 - Jun 16)
-// plus a tail rebuilt from ccusage each run, written as GIT_HISTORY.daily. A day
-// ccusage has since pruned keeps its last computed value, so the line never loses
+// plus a tail rebuilt from the durable usage ledger each run, written as GIT_HISTORY.daily. A day
+// the collector can no longer recover keeps its last computed value, so the line never loses
 // history. git-history.js reads GIT_HISTORY.daily (falling back to its baseline).
 let fuelLine = null, fuelMax = null;
 if (cc) {
@@ -536,9 +387,14 @@ about = replaceStat(about, 'tokens', tokStr);
 about = replaceStat(about, 'peak', peakStr);
 about = replaceStat(about, 'cost', costStr);
 const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from my local Claude Code and Codex logs. The dollar figure applies the published API rates for each model and date; it is not what I was billed. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">The method and its limits are public.</a></p>`;
+const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from retained Claude Code and Codex logs on my Mac and the September 9 to 23 report from my PC. These totals include my other projects. Usage through July 22 is an older estimate; the later totals come from deduplicated logs. The dollar figure uses standard API list prices, not my actual bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">The method and its limits are public.</a></p>`;
 if (!/<p data-about-freshness>[\s\S]*?<\/p>/.test(about)) throw new Error('about.html is missing the freshness marker');
 about = about.replace(/<p data-about-freshness>[\s\S]*?<\/p>/, freshnessParagraph);
+const categoryTotals = Object.values(stats.days).flatMap(d => Object.values(d.models));
+const recentTokens = categoryTotals.reduce((n, m) => n + m.totalTokens, 0);
+const cachePct = Math.round(categoryTotals.reduce((n, m) => n + m.cacheRead, 0) / recentTokens * 100);
+const outputPct = (categoryTotals.reduce((n, m) => n + m.output, 0) / recentTokens * 100).toFixed(1);
+about = about.replace(/<p data-about-token-mix>[\s\S]*?<\/p>/, `<p data-about-token-mix>I play a lot of ping-pong with the AI, and every round it re-reads what it already has, the same files and the whole conversation. In the logs collected since July 23, cache reads account for ${cachePct}% of the tokens and new output for ${outputPct}%. I know I could be more efficient about it. I'm not really trying to be.</p>`);
 writeFileSync(F_ABOUT, about);
 writeFileSync(F_STATS, JSON.stringify(stats, null, 2) + '\n');
 log(ok('  wrote about.html token stats') + dim(`  ${tokStr} / ${peakStr} / ${costStr}`));

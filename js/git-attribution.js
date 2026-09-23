@@ -242,7 +242,7 @@
     '<button class="ma-seg" role="tab" aria-selected="false" data-m="edits">Changes</button>' +
     '<span class="ma-seg-glider" aria-hidden="true"></span>' +
     '</div>' +
-    '<p class="ma-controls-note" id="ma-note">Share of output tokens each model actually wrote into a post.</p>';
+    '<p class="ma-controls-note" id="ma-note">Share of output tokens on responses that edited a page.</p>';
 
   // ---------- build: card grid ----------
   function cardInner(post, parts) {
@@ -549,7 +549,7 @@
     });
     controls.querySelector('.ma-toggle').classList.toggle('is-edits', metric === 'edits');
     document.getElementById('ma-note').textContent = metric === 'tokens'
-      ? 'Share of output tokens each model actually wrote into a post.'
+      ? 'Share of output tokens on responses that edited a page.'
       : 'Share of file changes each model made to a post.';
     reorderGrid(); // re-sort the grid by the new metric and FLIP-glide the cards (also repaints)
     refreshCollapse(true); // row heights shift with the re-sort; re-fit the clamp

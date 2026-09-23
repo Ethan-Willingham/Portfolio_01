@@ -64,14 +64,14 @@
       "models": {
         "gpt-5.6-sol": {
           "water-smoke-slime": {
-            "edits": 243,
-            "tokens": 188847,
+            "edits": 254,
+            "tokens": 191879,
             "first": "2026-07-18",
             "last": "2026-07-23"
           },
           "sluice": {
-            "edits": 177,
-            "tokens": 149945,
+            "edits": 190,
+            "tokens": 155575,
             "first": "2026-07-18",
             "last": "2026-07-23"
           }
@@ -897,6 +897,586 @@
             "tokens": 50557,
             "first": "2026-07-23",
             "last": "2026-07-23"
+          }
+        }
+      }
+    },
+    "claude:adf539069cdacb0f": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 49,
+            "tokens": 54472,
+            "first": "2026-08-02",
+            "last": "2026-08-02"
+          },
+          "water-smoke-slime": {
+            "edits": 9,
+            "tokens": 29498,
+            "first": "2026-08-02",
+            "last": "2026-08-02"
+          }
+        }
+      }
+    },
+    "claude:1b918f40f9df20dc": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-5": {
+          "sluice": {
+            "edits": 44,
+            "tokens": 206565,
+            "first": "2026-09-14",
+            "last": "2026-09-15"
+          },
+          "water-smoke-slime": {
+            "edits": 2,
+            "tokens": 1907,
+            "first": "2026-09-14",
+            "last": "2026-09-14"
+          }
+        }
+      }
+    },
+    "claude:bfd2e5eb0d5f0020": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "sluice": {
+            "edits": 15,
+            "tokens": 14153,
+            "first": "2026-07-23",
+            "last": "2026-07-24"
+          },
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 818,
+            "first": "2026-07-24",
+            "last": "2026-07-24"
+          }
+        }
+      }
+    },
+    "claude:741cb9aa52226877": {
+      "provider": "claude",
+      "models": {
+        "claude-fable-5": {
+          "sluice": {
+            "edits": 187,
+            "tokens": 242375,
+            "first": "2026-07-25",
+            "last": "2026-07-27"
+          },
+          "water-smoke-slime": {
+            "edits": 32,
+            "tokens": 25413,
+            "first": "2026-07-25",
+            "last": "2026-07-27"
+          }
+        }
+      }
+    },
+    "claude:60ca191fb41142f3": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-5": {
+          "big-enough": {
+            "edits": 25,
+            "tokens": 15343,
+            "first": "2026-07-31",
+            "last": "2026-07-31"
+          }
+        }
+      }
+    },
+    "codex:f18204d79f43d7da": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 2379,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:f200e7def3467461": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 7648,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          },
+          "sluice": {
+            "edits": 4,
+            "tokens": 4824,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:6b8ac9c206c4c477": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 793,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:1074cc6db1780758": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 9431,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:f91cd3d105f37985": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 21,
+            "tokens": 15913,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:e5d7687c2f36b60d": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 8,
+            "tokens": 9163,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:3f748f712cf009e8": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 17,
+            "tokens": 11358,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:41be782f7521c8a2": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 14,
+            "tokens": 8381,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          },
+          "water-smoke-slime": {
+            "edits": 3,
+            "tokens": 2070,
+            "first": "2026-09-12",
+            "last": "2026-09-12"
+          }
+        }
+      }
+    },
+    "codex:640b874b271e8d33": {
+      "provider": "codex",
+      "models": {
+        "gpt-5.6-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 882,
+            "first": "2026-09-15",
+            "last": "2026-09-15"
+          }
+        }
+      }
+    },
+    "codex:4c593557386c0f34": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 29,
+            "tokens": 18553,
+            "first": "2026-09-19",
+            "last": "2026-09-20"
+          },
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 177,
+            "first": "2026-09-19",
+            "last": "2026-09-19"
+          }
+        }
+      }
+    },
+    "codex:685d16b4d1bd408b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 7,
+            "tokens": 13408,
+            "first": "2026-09-19",
+            "last": "2026-09-19"
+          }
+        }
+      }
+    },
+    "codex:54fe95cc11dbc54d": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 9582,
+            "first": "2026-09-19",
+            "last": "2026-09-19"
+          }
+        }
+      }
+    },
+    "codex:37e935c768b6c034": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 22,
+            "tokens": 24974,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:997a3587cdf0f7db": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 24,
+            "tokens": 37704,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:3958cd5c3fac9d2e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 16,
+            "tokens": 23271,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:b346ded7b20a8c1e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 1775,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:5f16ec34948dafcc": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 8366,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:7862a12a84c5e4c1": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 8,
+            "tokens": 17557,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:0fcd923571ecb8f1": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 1978,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          },
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 344,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:e4a8d43b7d14d98b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 14,
+            "tokens": 14079,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          },
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 2505,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:b3ce978ad8ee96bf": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 2726,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:33a8439376f623ff": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 3035,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:10afbc0230e33b5a": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 26,
+            "tokens": 19945,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          },
+          "water-smoke-slime": {
+            "edits": 2,
+            "tokens": 787,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:6904bbd8dfe479c9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 7,
+            "tokens": 3650,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:85ce3e77904e4124": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 3783,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:9c7cdfd99af0b04e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 660,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:6c3a2ebb1da982d9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 1911,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:8b087b2879e21c48": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 36,
+            "tokens": 37182,
+            "first": "2026-09-20",
+            "last": "2026-09-21"
+          }
+        }
+      }
+    },
+    "codex:9579835d31310f46": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 14,
+            "tokens": 7208,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:eeb720b9fd270b05": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 5579,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:3f22d03340806472": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 1323,
+            "first": "2026-09-20",
+            "last": "2026-09-20"
+          }
+        }
+      }
+    },
+    "codex:a16530e2be72b143": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 14,
+            "tokens": 7986,
+            "first": "2026-09-21",
+            "last": "2026-09-21"
+          }
+        }
+      }
+    },
+    "codex:3af435e247d34cf4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 472,
+            "first": "2026-09-21",
+            "last": "2026-09-21"
+          }
+        }
+      }
+    },
+    "codex:3995d53e0db99e63": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 58,
+            "tokens": 46891,
+            "first": "2026-09-21",
+            "last": "2026-09-23"
+          }
+        }
+      }
+    },
+    "codex:f01e651f18e4175b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 3814,
+            "first": "2026-09-21",
+            "last": "2026-09-21"
           }
         }
       }
