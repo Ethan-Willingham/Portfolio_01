@@ -184,10 +184,8 @@
   }
 
   // Hit boxes use CSS pixels; bodies keep chamber coordinates above the y=210 grate.
-  function hearthNavHeight() {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
-    return hearthDevSupplies() && w < 620 && !(w >= 480 && h < 500) ? 104 : 54;
-  }
+  // Navigation is mounted on the wall and consumes no band of the viewport.
+  function hearthNavHeight() { return 0; }
   function hearthCSSPoint(e) {
     var r = canvas.getBoundingClientRect();
     return { x: (e.clientX - r.left) * canvas.width / dpr / r.width,
@@ -331,21 +329,15 @@
     hearthButtons.push({ x: r.x, y: r.y, w: r.w, h: r.h, action: action });
   }
   function hearthDrawNav(c, view) {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
-    var dev = hearthDevSupplies();
-    var shortDev = dev && w >= 480 && h < 500;
-    hearthButtons = [];
-    c.fillStyle = UIT_PANEL; c.fillRect(0, 0, w, hearthNavHeight());
-    c.fillStyle = UIMAT_PLATE_HIGHLIGHT; c.fillRect(0, hearthNavHeight() - 2, w, 2);
-    // Leave the first 56px clear for the shared native pause button.
-    if (!shortDev) hearthText(c, dev ? 'BANYA / DEV' : 'BANYA', 64, 27, 14);
-    hearthButton(c, { x: w - 96, y: 5, w: 82, h: 44 }, 'LEAVE', 'exit', false);
-    if (dev) {
-      var inline = w >= 620 || shortDev;
-      var dw = shortDev ? Math.min(128, (w - 310) / 2) : w >= 620 ? Math.min(136, (w - 300) / 2) : (w - 38) / 2;
-      var dx = inline ? w - (dw * 2 + 122) : 14, dy = inline ? 5 : 54;
-      hearthButton(c, { x: dx, y: dy, w: dw, h: 44 }, shortDev ? 'PREPARE [T]' : 'PREPARE BATH [T]', 'kit', true);
-      hearthButton(c, { x: dx + dw + 10, y: dy, w: dw, h: 44 }, shortDev ? 'GUEST [G]' : 'ADD GUEST [G]', 'guest', true);
+    var L = hearthRoomLayout(), w = L.landscape ? L.scene.w : L.w;
+    // The native pause button occupies x=8..52. These individual wall plates
+    // stay clear of it without laying an opaque strip over the bathhouse.
+    hearthButton(c, { x: w - 86, y: 8, w: 74, h: 44 }, 'LEAVE', 'exit', false);
+    if (hearthDevSupplies()) {
+      var dw = L.landscape ? (w - 24) / 2 : Math.min(132, (w - 170) / 2);
+      var dx = L.landscape ? 8 : w - 102 - dw * 2, dy = L.landscape ? 60 : 8;
+      hearthButton(c, { x: dx, y: dy, w: dw, h: 44 }, 'PREPARE [T]', 'kit', true);
+      hearthButton(c, { x: dx + dw + 8, y: dy, w: dw, h: 44 }, 'GUEST [G]', 'guest', true);
     }
   }
   function hearthWrap(c, text, x, y, width, color, maxLines) {

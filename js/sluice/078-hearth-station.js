@@ -1,41 +1,54 @@
   // One bathhouse, two working areas. This layout owns the fire's display and
   // pointer transform, and reserves an unobscured viewport for the real basin.
   function hearthRoomLayout() {
-    var w = canvas.width / dpr, h = canvas.height / dpr, nav = hearthNavHeight();
-    var footer = h - bathHUDHeight(), available = Math.max(120, footer - nav);
+    var w = canvas.width / dpr, h = canvas.height / dpr;
     var landscape = w >= 520 && h < 500, wide = w >= 700 && !landscape;
     var ratio = HEARTH_WIDTH / HEARTH_HEIGHT, gap = 8, bh, bw, sh;
-    var station, scene, box, bin, pump, action, ash;
+    var station, scene, box, bin, pump, action, ash, tools, water, meter;
     if (landscape) {
-      station = { x: w * 0.4, y: nav, w: w * 0.6, h: available };
-      scene = { x: 0, y: nav, w: station.x, h: available };
-      bh = Math.min(available - 80, (station.w - 32) / ratio);
+      station = { x: w * 0.4, y: 0, w: w * 0.6, h: h };
+      scene = { x: 0, y: 0, w: station.x, h: h };
+      bh = Math.min(h - 190, (station.w - 40) / ratio);
       bw = bh * ratio;
-      box = { x: station.x + (station.w - bw) / 2, y: nav + 22, w: bw, h: bh };
+      box = { x: station.x + (station.w - bw) / 2, y: 22, w: bw, h: bh };
     } else {
-      // The grate grows horizontally; the basin receives the recovered height.
-      bh = wide ? Math.min(224, available * 0.30, (w - 344) / ratio) : (w - 40) / ratio;
-      bw = bh * ratio; sh = bh + (wide ? 74 : 84);
-      station = { x: 0, y: footer - sh, w: w, h: sh };
-      scene = { x: 0, y: nav, w: w, h: available - sh };
-      box = { x: (w - bw) / 2, y: station.y + (wide ? 24 : 22), w: bw, h: bh };
+      // Nothing is reserved above or below the room. Instruments live beside
+      // the firebox on desktop, or in two compact rows with it on a phone.
+      bh = wide ? Math.min(208, h * 0.26, (w - 344) / ratio) : Math.max(44, Math.min((w - 40) / ratio, h * 0.55 - 186));
+      bw = bh * ratio; sh = wide ? Math.max(242, bh + 74) : bh + 186;
+      station = { x: 0, y: h - sh, w: w, h: sh };
+      scene = { x: 0, y: 0, w: w, h: station.y };
+      box = { x: (w - bw) / 2, y: station.y + (wide ? (sh - bh - 26) / 2 : 22), w: bw, h: bh };
     }
     if (wide) {
-      var cw = Math.min(132, (w - bw) / 2 - 30), cy = station.y + (station.h - 96) / 2;
-      var left = box.x - cw - 20, right = box.x + bw + 20;
+      var cw = Math.min(144, (w - bw) / 2 - 30), cy = station.y + (station.h - 194) / 2;
+      var left = box.x - cw - 20, right = box.x + bw + 20, half = (cw - gap) / 2;
       bin = { x: left, y: cy, w: cw, h: 44 };
-      pump = { x: left, y: cy + 52, w: cw, h: 44 };
+      pump = { x: left, y: cy + 50, w: cw, h: 44 };
       action = { x: right, y: cy, w: cw, h: 44 };
-      ash = { x: right, y: cy + 52, w: cw, h: 44 };
+      ash = { x: right, y: cy + 50, w: cw, h: 44 };
+      tools = [
+        { x: left, y: cy + 100, w: half, h: 44 },
+        { x: left + half + gap, y: cy + 100, w: half, h: 44 },
+        { x: left, y: cy + 150, w: half, h: 44 },
+        { x: left + half + gap, y: cy + 150, w: half, h: 44 }
+      ];
+      water = { x: right, y: cy + 100, w: cw, h: 44 };
+      meter = { x: right, y: cy + 150, w: cw, h: 44 };
     } else {
-      var cw = (station.w - 24 - gap * 3) / 4, cy = footer - 48;
+      var cw = (station.w - 24 - gap * 3) / 4, cy = box.y + box.h + 18;
       bin = { x: station.x + 12, y: cy, w: cw, h: 44 };
       pump = { x: bin.x + cw + gap, y: cy, w: cw, h: 44 };
       action = { x: pump.x + cw + gap, y: cy, w: cw, h: 44 };
       ash = { x: action.x + cw + gap, y: cy, w: cw, h: 44 };
+      tools = [];
+      for (var i = 0; i < 4; i++) tools.push({ x: bin.x + i * (cw + gap), y: cy + 50, w: cw, h: 44 });
+      water = { x: bin.x, y: cy + 100, w: cw * 2 + gap, h: 44 };
+      meter = { x: action.x, y: water.y, w: water.w, h: 44 };
     }
-    return { w: w, h: h, top: nav, footer: footer, station: station, scene: scene,
+    return { w: w, h: h, top: 0, footer: h, station: station, scene: scene,
       box: box, bin: bin, pump: pump, action: action, ash: ash,
+      tools: tools, water: water, meter: meter,
       wide: wide, side: false, landscape: landscape };
   }
   function hearthStationReadout(bed) {
@@ -97,8 +110,9 @@
     c.fillStyle = BLD.woodDark; c.fillRect(r.x + 8, r.y, r.w - 16, 2);
     // The copper heat saddle joins the firebox to the basin above it.
     var mid = box.x + box.w / 2, neck = Math.min(132, box.w * 0.55);
-    c.fillStyle = BLD.outline; c.fillRect(mid - neck / 2 - 2, r.y, neck + 4, 22);
-    c.fillStyle = BLD.woodDark; c.fillRect(mid - neck / 2, r.y, neck, 20);
+    var neckHeight = box.y - r.y;
+    c.fillStyle = BLD.outline; c.fillRect(mid - neck / 2 - 2, r.y, neck + 4, neckHeight);
+    c.fillStyle = BLD.woodDark; c.fillRect(mid - neck / 2, r.y, neck, neckHeight - 2);
     c.fillStyle = BLD.woodLight; c.fillRect(mid - neck / 2, r.y + 1, neck, 1);
     hearthDrawCasing(c, box, bed, bathBoilerHover);
     hearthDrawFuelControl(c, L.bin, false);

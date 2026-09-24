@@ -312,12 +312,14 @@
   }
 
   function bathOrderRect(g) {
-    var width = canvas.width / dpr, short = canvas.height / dpr < 500;
-    var scale = Math.min(1, (width - 40) / 340) / Math.max(0.1, worldScale);
-    var sx = g.slot ? width - 18 - 160 * scale * worldScale : 18;
-    var sy = Math.max(hearthNavHeight() + 8,
-      (BATH_FLOORS[0].fr * TILE - cam.y) * worldScale - (short ? 106 : 148));
-    return { x: cam.x + sx / worldScale, y: cam.y + sy / worldScale,
+    var L = hearthRoomLayout(), width = L.scene.w, short = L.landscape || L.scene.h < 250;
+    var scale = Math.min(1, (width - (L.landscape ? 24 : 40)) / (L.landscape ? 160 : 340)) / Math.max(0.1, worldScale);
+    if (!L.landscape) scale = Math.min(scale, Math.max(24, L.scene.h - 66) / (short ? 62 : 96) / worldScale);
+    var sx = L.landscape ? (width - 160 * scale * worldScale) / 2 : g.slot ? width - 18 - 160 * scale * worldScale : 18;
+    var sy = L.landscape ? (hearthDevSupplies() ? 156 : 62) + g.slot * 68 : Math.max(106,
+      (BATH_FLOORS[0].fr * TILE - cam.y) * worldScale - 148);
+    if (!L.landscape) sy = Math.max(58, Math.min(sy, L.scene.h - (short ? 62 : 96) * scale * worldScale - 8));
+    return { x: cam.x + (L.scene.x + sx) / worldScale, y: cam.y + sy / worldScale,
       w: 160 * scale, h: (short ? 62 : 96) * scale, scale: scale, compact: short };
   }
   function bathOrderPointer(x, y) {
@@ -375,32 +377,30 @@
       ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
     }
   }
-  function bathHUDHeight() {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
-    return w >= 900 ? 80 : h < 500 ? 104 : w >= 520 ? 112 : 124;
-  }
+  function bathHUDHeight() { return 0; }
   function bathDrawServiceHUD() {
-    var w = canvas.width / dpr, h = canvas.height / dpr, single = w >= 900;
+    var L = hearthRoomLayout(), meter = L.meter;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
-    var hud = bathHUDHeight(), top = h - hud, toolWidth = single ? Math.min(440, w * 0.42) : w;
-    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, top, w, hud);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(0, top, w, 1);
-    bathToolDrawControls(ctx, toolWidth, top + 6);
-    var row = single ? top + 6 : top + 56, bw = single ? 152 : w < 520 ? 132 : 154;
-    var sx = single ? toolWidth + 20 : 14;
-    bathServiceButtons = [{ x: w - bw - 14, y: row, w: bw, h: 44, action: 'water' }];
+    bathToolDrawControls(ctx, L.tools);
+    bathServiceButtons = [Object.assign({ action: 'water' }, L.water)];
     if (bathTool.mode === 'hose') {
-      var supply = bathServiceButtons[0];
       hearthText(ctx, Math.floor((bathWaterCount() + bathPour) / 100) + ' L SUPPLY',
-        supply.x + supply.w / 2, supply.y + 22, 12, BLD.cream, 'center');
+        L.water.x + L.water.w / 2, L.water.y + 22, 11, BLD.cream, 'center');
       bathServiceButtons = [];
-    } else hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
-    hearthText(ctx, Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', sx, row + 13, 16, BLD.cream);
-    hearthText(ctx, bathCanServe() ? 'READY FOR GUESTS' : bathWater < BATH_MIN_WATER ? 'FILL THE BATH' : 'WARM THE WATER', sx, row + 33, 10, UIT_DIM);
-    if (single && w > 1100) hearthText(ctx, '$' + bathFmtMoney(money), w - 200, row + 22, 14, BLD.goldPale, 'right');
-    var notice = bathNoticeT > 0 ? bathNotice : bathToolHint();
-    if (single || hud >= 124) hearthWrap(ctx, notice, 14, h - 12, w - 28, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, 1);
+    } else hearthButton(ctx, L.water, bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
+    hearthText(ctx, Math.floor(bathWater / 100) + ' L / ' + Math.round(20 + bathHeat * 28) + ' C',
+      meter.x + meter.w / 2, meter.y + 9, 12, BLD.cream, 'center');
+    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : 'WARMING WATER',
+      meter.x + meter.w / 2, meter.y + 25, 10, UIT_DIM, 'center');
+    hearthText(ctx, '$' + bathFmtMoney(money), meter.x + meter.w / 2, meter.y + 41, 10, BLD.goldPale, 'center');
+    // Transient notices sit on the open wall, only as wide as their text.
+    if (bathNoticeT > 0 && L.scene.h >= 160) {
+      var width = Math.min(L.scene.w - 24, 480), x = L.scene.x + (L.scene.w - width) / 2;
+      var y = L.landscape ? 112 : 62;
+      ctx.fillStyle = BLD.woodDeep; ctx.fillRect(x - 4, y, width + 8, 38);
+      hearthWrap(ctx, bathNotice, x + 4, y + 11, width - 8, BLD.goldPale, 2);
+    }
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {

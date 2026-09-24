@@ -8,7 +8,7 @@
     var F = BATH_FLOORS[0], c = bathTubCurve(F, F.tubs[0]);
     var top = c.y0 - 182;
     if (typeof cam !== 'undefined' && bathMode && worldScale > 0)
-      top = Math.min(top, cam.y + (hearthNavHeight() + 28) / worldScale);
+      top = cam.y + (hearthRoomLayout().scene.y + 28) / worldScale;
     return { left: 19.5 * TILE, right: c.x1 + 48, top: top,
       bottom: c.y0 + c.D - 24, curve: c, floor: F.fr * TILE };
   }
@@ -68,7 +68,9 @@
   }
   function bathToolPointerInRoom(e) {
     var p = hearthCSSPoint(e);
-    return hearthContains(hearthRoomLayout().scene, p.x, p.y);
+    return hearthContains(hearthRoomLayout().scene, p.x, p.y) &&
+      !hearthButtons.some(function (b) { return hearthContains(b, p.x, p.y); }) &&
+      !(p.x >= 8 && p.x <= 52 && p.y >= 3 && p.y <= 47);
   }
   function bathToolPointerDown(e) {
     var t = bathTool;
@@ -116,21 +118,16 @@
       'Move the mouse to aim. Hold click to pour; release to stop.';
     return 'Drag coal into the boiler below. Use CLAW or HOSE above the bath.';
   }
-  function bathToolDrawControls(c, w, top) {
-    var t = bathTool, gap = 6, bw = (w - 28 - gap * 3) / 4;
-    var labels = [t.mode === 'claw' ? 'CLAW ON' : 'CLAW', t.mode === 'hose' ? 'HOSE ON' : 'HOSE'];
-    hearthButton(c, { x: 14, y: top, w: bw, h: 44 }, labels[0], 'claw', t.mode === 'claw');
-    hearthButton(c, { x: 14 + bw + gap, y: top, w: bw, h: 44 }, labels[1], 'hose', t.mode === 'hose');
+  function bathToolDrawControls(c, slots) {
+    var t = bathTool;
+    hearthButton(c, slots[0], t.mode === 'claw' ? 'CLAW ON' : 'CLAW', 'claw', t.mode === 'claw');
+    hearthButton(c, slots[1], t.mode === 'hose' ? 'HOSE ON' : 'HOSE', 'hose', t.mode === 'hose');
     if (t.mode === 'claw') {
-      hearthButton(c, { x: 14 + 2 * (bw + gap), y: top, w: bw * 2 + gap, h: 44 },
-        t.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!t.held);
+      var grip = { x: slots[2].x, y: slots[2].y, w: slots[3].x + slots[3].w - slots[2].x, h: 44 };
+      hearthButton(c, grip, t.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!t.held);
     } else if (t.mode === 'hose') {
-      hearthButton(c, { x: 14 + 2 * (bw + gap), y: top, w: bw, h: 44 },
-        t.valve ? 'STOP' : 'POUR', 'tool-valve', t.valve);
-      hearthButton(c, { x: 14 + 3 * (bw + gap), y: top, w: bw, h: 44 },
-        t.shower ? 'SHOWER' : 'JET', 'tool-spray', false);
-    } else {
-      // The unused grip/valve area stays clear until a tool is selected.
+      hearthButton(c, slots[2], t.valve ? 'STOP' : 'POUR', 'tool-valve', t.valve);
+      hearthButton(c, slots[3], t.shower ? 'SHOWER' : 'JET', 'tool-spray', false);
     }
   }
   function bathToolRopeStep(h, b) {

@@ -1525,8 +1525,9 @@
       if (uiFg) ctx = uiFg;
       ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
       bathDrawGuests();
-      bathDrawServiceHUD();
+      hearthButtons = [];
       hearthDrawStation(ctx);
+      bathDrawServiceHUD();
     } finally { ctx = bathDrawContext; }
     return true;
   }

@@ -147,7 +147,7 @@ try {
     }return reports;})()`);
   console.log('PHYSICS',physics);
   check('claw carries, drops and restores physical visitors at 30/60/144 Hz',physics.every(p=>p.caught&&p.manual&&p.free&&p.finite&&p.carried>1000));
-  for(const [width,height] of [[1280,900],[390,844],[320,568],[844,390],[568,320]]){
+  for(const [width,height] of [[1280,900],[700,500],[699,500],[520,500],[390,844],[320,568],[320,320],[844,390],[568,320]]){
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
     await game('isMobile='+String(width<500)+';resize();updateCamera();render()');
     for(const mode of ['claw','hose']){

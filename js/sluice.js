@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.83';
+  var GAME_VERSION = 'v28.84';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -14901,8 +14901,9 @@
       if (uiFg) ctx = uiFg;
       ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
       bathDrawGuests();
-      bathDrawServiceHUD();
+      hearthButtons = [];
       hearthDrawStation(ctx);
+      bathDrawServiceHUD();
     } finally { ctx = bathDrawContext; }
     return true;
   }
@@ -15088,8 +15089,9 @@
       bathDrawGuests();
       bathToolDraw(ctx);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      bathDrawServiceHUD();
+      hearthButtons = [];
       hearthDrawStation(ctx);
+      bathDrawServiceHUD();
     } finally { ctx = previous; }
     return true;
   }
@@ -15580,12 +15582,14 @@
   }
 
   function bathOrderRect(g) {
-    var width = canvas.width / dpr, short = canvas.height / dpr < 500;
-    var scale = Math.min(1, (width - 40) / 340) / Math.max(0.1, worldScale);
-    var sx = g.slot ? width - 18 - 160 * scale * worldScale : 18;
-    var sy = Math.max(hearthNavHeight() + 8,
-      (BATH_FLOORS[0].fr * TILE - cam.y) * worldScale - (short ? 106 : 148));
-    return { x: cam.x + sx / worldScale, y: cam.y + sy / worldScale,
+    var L = hearthRoomLayout(), width = L.scene.w, short = L.landscape || L.scene.h < 250;
+    var scale = Math.min(1, (width - (L.landscape ? 24 : 40)) / (L.landscape ? 160 : 340)) / Math.max(0.1, worldScale);
+    if (!L.landscape) scale = Math.min(scale, Math.max(24, L.scene.h - 66) / (short ? 62 : 96) / worldScale);
+    var sx = L.landscape ? (width - 160 * scale * worldScale) / 2 : g.slot ? width - 18 - 160 * scale * worldScale : 18;
+    var sy = L.landscape ? (hearthDevSupplies() ? 156 : 62) + g.slot * 68 : Math.max(106,
+      (BATH_FLOORS[0].fr * TILE - cam.y) * worldScale - 148);
+    if (!L.landscape) sy = Math.max(58, Math.min(sy, L.scene.h - (short ? 62 : 96) * scale * worldScale - 8));
+    return { x: cam.x + (L.scene.x + sx) / worldScale, y: cam.y + sy / worldScale,
       w: 160 * scale, h: (short ? 62 : 96) * scale, scale: scale, compact: short };
   }
   function bathOrderPointer(x, y) {
@@ -15643,32 +15647,30 @@
       ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
     }
   }
-  function bathHUDHeight() {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
-    return w >= 900 ? 80 : h < 500 ? 104 : w >= 520 ? 112 : 124;
-  }
+  function bathHUDHeight() { return 0; }
   function bathDrawServiceHUD() {
-    var w = canvas.width / dpr, h = canvas.height / dpr, single = w >= 900;
+    var L = hearthRoomLayout(), meter = L.meter;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
-    var hud = bathHUDHeight(), top = h - hud, toolWidth = single ? Math.min(440, w * 0.42) : w;
-    ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, top, w, hud);
-    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(0, top, w, 1);
-    bathToolDrawControls(ctx, toolWidth, top + 6);
-    var row = single ? top + 6 : top + 56, bw = single ? 152 : w < 520 ? 132 : 154;
-    var sx = single ? toolWidth + 20 : 14;
-    bathServiceButtons = [{ x: w - bw - 14, y: row, w: bw, h: 44, action: 'water' }];
+    bathToolDrawControls(ctx, L.tools);
+    bathServiceButtons = [Object.assign({ action: 'water' }, L.water)];
     if (bathTool.mode === 'hose') {
-      var supply = bathServiceButtons[0];
       hearthText(ctx, Math.floor((bathWaterCount() + bathPour) / 100) + ' L SUPPLY',
-        supply.x + supply.w / 2, supply.y + 22, 12, BLD.cream, 'center');
+        L.water.x + L.water.w / 2, L.water.y + 22, 11, BLD.cream, 'center');
       bathServiceButtons = [];
-    } else hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
-    hearthText(ctx, Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', sx, row + 13, 16, BLD.cream);
-    hearthText(ctx, bathCanServe() ? 'READY FOR GUESTS' : bathWater < BATH_MIN_WATER ? 'FILL THE BATH' : 'WARM THE WATER', sx, row + 33, 10, UIT_DIM);
-    if (single && w > 1100) hearthText(ctx, '$' + bathFmtMoney(money), w - 200, row + 22, 14, BLD.goldPale, 'right');
-    var notice = bathNoticeT > 0 ? bathNotice : bathToolHint();
-    if (single || hud >= 124) hearthWrap(ctx, notice, 14, h - 12, w - 28, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, 1);
+    } else hearthButton(ctx, L.water, bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
+    hearthText(ctx, Math.floor(bathWater / 100) + ' L / ' + Math.round(20 + bathHeat * 28) + ' C',
+      meter.x + meter.w / 2, meter.y + 9, 12, BLD.cream, 'center');
+    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : 'WARMING WATER',
+      meter.x + meter.w / 2, meter.y + 25, 10, UIT_DIM, 'center');
+    hearthText(ctx, '$' + bathFmtMoney(money), meter.x + meter.w / 2, meter.y + 41, 10, BLD.goldPale, 'center');
+    // Transient notices sit on the open wall, only as wide as their text.
+    if (bathNoticeT > 0 && L.scene.h >= 160) {
+      var width = Math.min(L.scene.w - 24, 480), x = L.scene.x + (L.scene.w - width) / 2;
+      var y = L.landscape ? 112 : 62;
+      ctx.fillStyle = BLD.woodDeep; ctx.fillRect(x - 4, y, width + 8, 38);
+      hearthWrap(ctx, bathNotice, x + 4, y + 11, width - 8, BLD.goldPale, 2);
+    }
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {
@@ -15778,7 +15780,7 @@
     var F = BATH_FLOORS[0], c = bathTubCurve(F, F.tubs[0]);
     var top = c.y0 - 182;
     if (typeof cam !== 'undefined' && bathMode && worldScale > 0)
-      top = Math.min(top, cam.y + (hearthNavHeight() + 28) / worldScale);
+      top = cam.y + (hearthRoomLayout().scene.y + 28) / worldScale;
     return { left: 19.5 * TILE, right: c.x1 + 48, top: top,
       bottom: c.y0 + c.D - 24, curve: c, floor: F.fr * TILE };
   }
@@ -15838,7 +15840,9 @@
   }
   function bathToolPointerInRoom(e) {
     var p = hearthCSSPoint(e);
-    return hearthContains(hearthRoomLayout().scene, p.x, p.y);
+    return hearthContains(hearthRoomLayout().scene, p.x, p.y) &&
+      !hearthButtons.some(function (b) { return hearthContains(b, p.x, p.y); }) &&
+      !(p.x >= 8 && p.x <= 52 && p.y >= 3 && p.y <= 47);
   }
   function bathToolPointerDown(e) {
     var t = bathTool;
@@ -15886,21 +15890,16 @@
       'Move the mouse to aim. Hold click to pour; release to stop.';
     return 'Drag coal into the boiler below. Use CLAW or HOSE above the bath.';
   }
-  function bathToolDrawControls(c, w, top) {
-    var t = bathTool, gap = 6, bw = (w - 28 - gap * 3) / 4;
-    var labels = [t.mode === 'claw' ? 'CLAW ON' : 'CLAW', t.mode === 'hose' ? 'HOSE ON' : 'HOSE'];
-    hearthButton(c, { x: 14, y: top, w: bw, h: 44 }, labels[0], 'claw', t.mode === 'claw');
-    hearthButton(c, { x: 14 + bw + gap, y: top, w: bw, h: 44 }, labels[1], 'hose', t.mode === 'hose');
+  function bathToolDrawControls(c, slots) {
+    var t = bathTool;
+    hearthButton(c, slots[0], t.mode === 'claw' ? 'CLAW ON' : 'CLAW', 'claw', t.mode === 'claw');
+    hearthButton(c, slots[1], t.mode === 'hose' ? 'HOSE ON' : 'HOSE', 'hose', t.mode === 'hose');
     if (t.mode === 'claw') {
-      hearthButton(c, { x: 14 + 2 * (bw + gap), y: top, w: bw * 2 + gap, h: 44 },
-        t.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!t.held);
+      var grip = { x: slots[2].x, y: slots[2].y, w: slots[3].x + slots[3].w - slots[2].x, h: 44 };
+      hearthButton(c, grip, t.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!t.held);
     } else if (t.mode === 'hose') {
-      hearthButton(c, { x: 14 + 2 * (bw + gap), y: top, w: bw, h: 44 },
-        t.valve ? 'STOP' : 'POUR', 'tool-valve', t.valve);
-      hearthButton(c, { x: 14 + 3 * (bw + gap), y: top, w: bw, h: 44 },
-        t.shower ? 'SHOWER' : 'JET', 'tool-spray', false);
-    } else {
-      // The unused grip/valve area stays clear until a tool is selected.
+      hearthButton(c, slots[2], t.valve ? 'STOP' : 'POUR', 'tool-valve', t.valve);
+      hearthButton(c, slots[3], t.shower ? 'SHOWER' : 'JET', 'tool-spray', false);
     }
   }
   function bathToolRopeStep(h, b) {
@@ -18107,10 +18106,8 @@
   }
 
   // Hit boxes use CSS pixels; bodies keep chamber coordinates above the y=210 grate.
-  function hearthNavHeight() {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
-    return hearthDevSupplies() && w < 620 && !(w >= 480 && h < 500) ? 104 : 54;
-  }
+  // Navigation is mounted on the wall and consumes no band of the viewport.
+  function hearthNavHeight() { return 0; }
   function hearthCSSPoint(e) {
     var r = canvas.getBoundingClientRect();
     return { x: (e.clientX - r.left) * canvas.width / dpr / r.width,
@@ -18254,21 +18251,15 @@
     hearthButtons.push({ x: r.x, y: r.y, w: r.w, h: r.h, action: action });
   }
   function hearthDrawNav(c, view) {
-    var w = canvas.width / dpr, h = canvas.height / dpr;
-    var dev = hearthDevSupplies();
-    var shortDev = dev && w >= 480 && h < 500;
-    hearthButtons = [];
-    c.fillStyle = UIT_PANEL; c.fillRect(0, 0, w, hearthNavHeight());
-    c.fillStyle = UIMAT_PLATE_HIGHLIGHT; c.fillRect(0, hearthNavHeight() - 2, w, 2);
-    // Leave the first 56px clear for the shared native pause button.
-    if (!shortDev) hearthText(c, dev ? 'BANYA / DEV' : 'BANYA', 64, 27, 14);
-    hearthButton(c, { x: w - 96, y: 5, w: 82, h: 44 }, 'LEAVE', 'exit', false);
-    if (dev) {
-      var inline = w >= 620 || shortDev;
-      var dw = shortDev ? Math.min(128, (w - 310) / 2) : w >= 620 ? Math.min(136, (w - 300) / 2) : (w - 38) / 2;
-      var dx = inline ? w - (dw * 2 + 122) : 14, dy = inline ? 5 : 54;
-      hearthButton(c, { x: dx, y: dy, w: dw, h: 44 }, shortDev ? 'PREPARE [T]' : 'PREPARE BATH [T]', 'kit', true);
-      hearthButton(c, { x: dx + dw + 10, y: dy, w: dw, h: 44 }, shortDev ? 'GUEST [G]' : 'ADD GUEST [G]', 'guest', true);
+    var L = hearthRoomLayout(), w = L.landscape ? L.scene.w : L.w;
+    // The native pause button occupies x=8..52. These individual wall plates
+    // stay clear of it without laying an opaque strip over the bathhouse.
+    hearthButton(c, { x: w - 86, y: 8, w: 74, h: 44 }, 'LEAVE', 'exit', false);
+    if (hearthDevSupplies()) {
+      var dw = L.landscape ? (w - 24) / 2 : Math.min(132, (w - 170) / 2);
+      var dx = L.landscape ? 8 : w - 102 - dw * 2, dy = L.landscape ? 60 : 8;
+      hearthButton(c, { x: dx, y: dy, w: dw, h: 44 }, 'PREPARE [T]', 'kit', true);
+      hearthButton(c, { x: dx + dw + 8, y: dy, w: dw, h: 44 }, 'GUEST [G]', 'guest', true);
     }
   }
   function hearthWrap(c, text, x, y, width, color, maxLines) {
@@ -18286,41 +18277,54 @@
   // One bathhouse, two working areas. This layout owns the fire's display and
   // pointer transform, and reserves an unobscured viewport for the real basin.
   function hearthRoomLayout() {
-    var w = canvas.width / dpr, h = canvas.height / dpr, nav = hearthNavHeight();
-    var footer = h - bathHUDHeight(), available = Math.max(120, footer - nav);
+    var w = canvas.width / dpr, h = canvas.height / dpr;
     var landscape = w >= 520 && h < 500, wide = w >= 700 && !landscape;
     var ratio = HEARTH_WIDTH / HEARTH_HEIGHT, gap = 8, bh, bw, sh;
-    var station, scene, box, bin, pump, action, ash;
+    var station, scene, box, bin, pump, action, ash, tools, water, meter;
     if (landscape) {
-      station = { x: w * 0.4, y: nav, w: w * 0.6, h: available };
-      scene = { x: 0, y: nav, w: station.x, h: available };
-      bh = Math.min(available - 80, (station.w - 32) / ratio);
+      station = { x: w * 0.4, y: 0, w: w * 0.6, h: h };
+      scene = { x: 0, y: 0, w: station.x, h: h };
+      bh = Math.min(h - 190, (station.w - 40) / ratio);
       bw = bh * ratio;
-      box = { x: station.x + (station.w - bw) / 2, y: nav + 22, w: bw, h: bh };
+      box = { x: station.x + (station.w - bw) / 2, y: 22, w: bw, h: bh };
     } else {
-      // The grate grows horizontally; the basin receives the recovered height.
-      bh = wide ? Math.min(224, available * 0.30, (w - 344) / ratio) : (w - 40) / ratio;
-      bw = bh * ratio; sh = bh + (wide ? 74 : 84);
-      station = { x: 0, y: footer - sh, w: w, h: sh };
-      scene = { x: 0, y: nav, w: w, h: available - sh };
-      box = { x: (w - bw) / 2, y: station.y + (wide ? 24 : 22), w: bw, h: bh };
+      // Nothing is reserved above or below the room. Instruments live beside
+      // the firebox on desktop, or in two compact rows with it on a phone.
+      bh = wide ? Math.min(208, h * 0.26, (w - 344) / ratio) : Math.max(44, Math.min((w - 40) / ratio, h * 0.55 - 186));
+      bw = bh * ratio; sh = wide ? Math.max(242, bh + 74) : bh + 186;
+      station = { x: 0, y: h - sh, w: w, h: sh };
+      scene = { x: 0, y: 0, w: w, h: station.y };
+      box = { x: (w - bw) / 2, y: station.y + (wide ? (sh - bh - 26) / 2 : 22), w: bw, h: bh };
     }
     if (wide) {
-      var cw = Math.min(132, (w - bw) / 2 - 30), cy = station.y + (station.h - 96) / 2;
-      var left = box.x - cw - 20, right = box.x + bw + 20;
+      var cw = Math.min(144, (w - bw) / 2 - 30), cy = station.y + (station.h - 194) / 2;
+      var left = box.x - cw - 20, right = box.x + bw + 20, half = (cw - gap) / 2;
       bin = { x: left, y: cy, w: cw, h: 44 };
-      pump = { x: left, y: cy + 52, w: cw, h: 44 };
+      pump = { x: left, y: cy + 50, w: cw, h: 44 };
       action = { x: right, y: cy, w: cw, h: 44 };
-      ash = { x: right, y: cy + 52, w: cw, h: 44 };
+      ash = { x: right, y: cy + 50, w: cw, h: 44 };
+      tools = [
+        { x: left, y: cy + 100, w: half, h: 44 },
+        { x: left + half + gap, y: cy + 100, w: half, h: 44 },
+        { x: left, y: cy + 150, w: half, h: 44 },
+        { x: left + half + gap, y: cy + 150, w: half, h: 44 }
+      ];
+      water = { x: right, y: cy + 100, w: cw, h: 44 };
+      meter = { x: right, y: cy + 150, w: cw, h: 44 };
     } else {
-      var cw = (station.w - 24 - gap * 3) / 4, cy = footer - 48;
+      var cw = (station.w - 24 - gap * 3) / 4, cy = box.y + box.h + 18;
       bin = { x: station.x + 12, y: cy, w: cw, h: 44 };
       pump = { x: bin.x + cw + gap, y: cy, w: cw, h: 44 };
       action = { x: pump.x + cw + gap, y: cy, w: cw, h: 44 };
       ash = { x: action.x + cw + gap, y: cy, w: cw, h: 44 };
+      tools = [];
+      for (var i = 0; i < 4; i++) tools.push({ x: bin.x + i * (cw + gap), y: cy + 50, w: cw, h: 44 });
+      water = { x: bin.x, y: cy + 100, w: cw * 2 + gap, h: 44 };
+      meter = { x: action.x, y: water.y, w: water.w, h: 44 };
     }
-    return { w: w, h: h, top: nav, footer: footer, station: station, scene: scene,
+    return { w: w, h: h, top: 0, footer: h, station: station, scene: scene,
       box: box, bin: bin, pump: pump, action: action, ash: ash,
+      tools: tools, water: water, meter: meter,
       wide: wide, side: false, landscape: landscape };
   }
   function hearthStationReadout(bed) {
@@ -18382,8 +18386,9 @@
     c.fillStyle = BLD.woodDark; c.fillRect(r.x + 8, r.y, r.w - 16, 2);
     // The copper heat saddle joins the firebox to the basin above it.
     var mid = box.x + box.w / 2, neck = Math.min(132, box.w * 0.55);
-    c.fillStyle = BLD.outline; c.fillRect(mid - neck / 2 - 2, r.y, neck + 4, 22);
-    c.fillStyle = BLD.woodDark; c.fillRect(mid - neck / 2, r.y, neck, 20);
+    var neckHeight = box.y - r.y;
+    c.fillStyle = BLD.outline; c.fillRect(mid - neck / 2 - 2, r.y, neck + 4, neckHeight);
+    c.fillStyle = BLD.woodDark; c.fillRect(mid - neck / 2, r.y, neck, neckHeight - 2);
     c.fillStyle = BLD.woodLight; c.fillRect(mid - neck / 2, r.y + 1, neck, 1);
     hearthDrawCasing(c, box, bed, bathBoilerHover);
     hearthDrawFuelControl(c, L.bin, false);

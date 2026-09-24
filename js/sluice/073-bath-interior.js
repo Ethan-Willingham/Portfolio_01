@@ -151,8 +151,9 @@
       bathDrawGuests();
       bathToolDraw(ctx);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      bathDrawServiceHUD();
+      hearthButtons = [];
       hearthDrawStation(ctx);
+      bathDrawServiceHUD();
     } finally { ctx = previous; }
     return true;
   }

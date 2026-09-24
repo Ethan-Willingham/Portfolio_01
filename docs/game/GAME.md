@@ -54,7 +54,10 @@ reconstruction make the burning bed more visible without increasing the grid.
 Since v28.80, the physical chamber is 896 by 256 world pixels. A broad, low
 firebox and compact controls give the basin more room. Cast ironwork, hinges
 and an ash drawer frame the opening. The copper tub rim follows the collision
-curve with outward thickness.
+curve with outward thickness. Since v28.84, the top and bottom HUD bars are
+removed. Tools, water controls and readings sit beside the firebox on desktop,
+or beneath it in compact layouts; navigation mounts directly on the wall.
+The tub's original catenary and water collision geometry are unchanged.
 The single-room bath stays fixed under wheel and drag gestures; saved upper
 floors scroll immediately, with no camera easing.
 

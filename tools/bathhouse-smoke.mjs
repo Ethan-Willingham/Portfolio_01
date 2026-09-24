@@ -146,7 +146,7 @@ try {
     await sleep(900);
     check('guest button places a real waiting guest',await game('bathGuests.length===1 && bathGuests[0].st===\'wait\''));
     await game('cancelAnimationFrame(gameRafId);gameRafId=0');
-    for(const [width,height] of [[1440,714],[1280,900],[800,600],[390,844],[320,568],[844,390],[667,375],[568,320],[540,320],[520,320]]) {
+    for(const [width,height] of [[1440,714],[1280,900],[800,600],[700,500],[699,500],[520,500],[390,844],[320,568],[320,320],[844,390],[667,375],[568,320],[540,320],[520,320]]) {
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
       await game('isMobile='+String(width<500)+';resize()');
       for(const view of ['bath']) {
@@ -165,7 +165,11 @@ try {
           var left=(curve.x0-cam.x)*worldScale,right=(curve.x1-cam.x)*worldScale;
           var lip=(curve.y0-cam.y)*worldScale,bottom=(curve.y0+curve.D-cam.y)*worldScale;
           var overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-          return hearthView==='bath' && !bs.some(b=>['forge','boiler','bath'].includes(b.action)) &&
+          return hearthNavHeight()===0 && bathHUDHeight()===0 && L.scene.y===0 && L.footer===h &&
+            bs.every(b=>!overlap(b,{x:8,y:3,w:44,h:44})) &&
+            [0,1].every(slot=>{var r=bathOrderRect({slot:slot});var card={x:(r.x-cam.x)*worldScale,y:(r.y-cam.y)*worldScale,w:r.w*worldScale,h:r.h*worldScale};
+              return card.y+card.h<=L.scene.h+1 && bs.every(b=>!overlap(card,b));}) &&
+            hearthView==='bath' && !bs.some(b=>['forge','boiler','bath'].includes(b.action)) &&
             ['coal','pump','strike','ash','water'].every(a=>bs.some(b=>b.action===a)) &&
             left>=L.scene.x&&right<=L.scene.x+L.scene.w&&lip>=L.scene.y&&bottom<=L.scene.y+L.scene.h&&
             boiler.w>=44&&boiler.h>=44&&boiler.x>=0&&boiler.x+boiler.w<=w&&
@@ -178,7 +182,7 @@ try {
         if (width === 1440 && height === 714) {
           check('desktop room uses the reclaimed area for a broad firebox and larger bath',await game(`(function(){
             var L=hearthRoomLayout(),c=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]);
-            return L.box.w>L.w*0.40 && L.box.h<L.h*0.27 && (c.x1-c.x0)*worldScale>L.w*0.58 && bathHUDHeight()<=80;
+            return L.box.w>L.w*0.40 && L.box.h<L.h*0.27 && (c.x1-c.x0)*worldScale>L.w*0.58 && bathHUDHeight()===0 && hearthNavHeight()===0;
           })()`));
         }
       }
