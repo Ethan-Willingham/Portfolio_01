@@ -148,11 +148,17 @@
       var bi = by * w + bx, f = bi * 4;
       var ux = a.solid[bi] ? 0 : (a.u[bi] + a.u[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
       var vy = a.solid[bi] ? 0 : (a.v[bi] + a.v[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
-      // Blend the exported disturbance into ambient air over four cells.
-      // The finite solve's rectangle is not a physical boundary. Exporting
-      // zero at its outer samples gives CPU and GPU the same continuous edge.
+      // Fade the outer wake in world space before the finite grid ends.
+      // Keep nearby flurries strong, with a rounded, gradual transition to
+      // undisturbed snow instead of exposing the simulation's rectangle.
+      var dx = ox + (bx + 0.5) * cell - player.x - PLAYER_W * 0.5;
+      var dy = oy + (by + 0.5) * cell - player.y - PLAYER_H;
+      var rx = dx / 348, ry = dy / (dy < 0 ? 120 : 576);
+      var radius = Math.sqrt(Math.sqrt(rx * rx * rx * rx + ry * ry * ry * ry));
+      var fade = Math.max(0, Math.min(1, (1 - radius) / 0.3));
+      fade = fade * fade * (3 - 2 * fade);
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
-      edge = edge * edge * (3 - 2 * edge);
+      edge = edge * edge * (3 - 2 * edge) * fade;
       ux *= edge; vy *= edge;
       // Art-directed snow coupling, shared by CPU, GPU and loose flakes.
       // Preserve the projected air internally, but reserve nearly all of
@@ -206,9 +212,12 @@
       var air = snowAirAt(liquidX[i], liquidY[i]);
       var liftVY = air[1] - air[2];
       var speed = Math.sqrt(air[0] * air[0] + liftVY * liftVY);
-      if (speed < 2) continue;
+      if (speed <= 0) continue;
+      // A faint wake must not suddenly apply full drag at a speed cutoff.
+      var influence = Math.min(1, speed / 12);
+      influence = influence * influence * (3 - 2 * influence);
       var exposure = Math.max(0.06, Math.min(1, (4.2 - liquidDensity[i]) / 3));
-      var drag = 1 - Math.exp(-22 * exposure * dt);
+      var drag = 1 - Math.exp(-22 * exposure * influence * dt);
       liquidVX[i] += (air[0] - liquidVX[i]) * drag;
       liquidVY[i] += (liftVY - liquidVY[i]) * drag;
       liquidSleeping[i] = liquidRestFrames[i] = 0;

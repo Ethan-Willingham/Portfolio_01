@@ -100,8 +100,12 @@ projection resolve the impinging jet, lateral wall flows and returning eddies.
 Terrain and the rig block normal flow. The moving window preserves overlapping
 world-space face velocities instead of dragging its wake with the camera.
 The airflow decays after thrust stops and idles after three seconds.
-Its exported velocity blends into ambient air over the outer four cells,
-so the finite simulation rectangle has no abrupt influence boundary.
+The snow coupling fades through the outer 30% of a rounded influence area,
+with lateral reach of 348 pixels and downward reach of 576 pixels from the
+rig's feet. This trims the old reach modestly while leaving the inner wake
+unchanged. The grid's outer four cells also blend to ambient air. Weak-flow
+drag and the onset of surface release ease continuously, so crossing the
+fringe cannot suddenly apply full drag or switch on a strong flurry.
 
 During horizontal or banked flight, the snow coupling deliberately favors
 the visible exhaust direction. The nozzle no longer inherits forward rig
@@ -184,10 +188,13 @@ a body of water accelerate thaw; a few droplets do not dissolve an entire pile.
 The rig's warm scoop collects snow directly into its water chamber.
 Airborne powder more than 24 world pixels above the surface cannot thaw beside
 the jet. Exposed surface grains return directly to light flake motion when scoured.
-Other grains moving upward in the jet's airflow separate above 6 world
-pixels once their local density falls below 120% of packed snow, before a
-coherent crest forms. Other isolated grains retain the 32-pixel release height.
-Both keep their position and mass; turbulent lift adds to their existing
+Other grains moving upward in the jet's airflow separate once their local
+density falls below 120% of packed snow and they clear nearby terrain.
+Unsupported grains separate according to actual bed support, without a
+fixed height plane. Landing checks follow settled six-pixel snow columns
+down to terrain; moving clouds and disconnected sheets cannot catch falling
+flakes. These support results are cached for each particle snapshot.
+Released grains keep their position and mass; turbulent lift adds to their existing
 momentum. Quiet pile edges retain their
 support in the dense solver. Released grains no longer accelerate as liquid
 drops after a brief rig contact; dense piles still use the shared solver.
@@ -265,6 +272,13 @@ and frame measurements go to `/tmp/sluice-snow-ground-qa`. The v28.68 baseline
 released grains on about 13% of active frames, with 117-millisecond gaps;
 the revised GPU and CPU cases release on every active frame. GPU frame-time
 p95 in the focused test was 16.8 milliseconds.
+
+Add `--dense` for a 9,746-grain bed and a longer hover and flyover. It checks
+that a heavy burst does not leave a stalled sheet above the ground, while
+preserving mass and near-ground flakes. `node tools/test-snow-support.cjs`
+isolates unsupported clouds, moving curtains, thick supported piles and
+removed support. The air test also checks the rounded wake edge and weak-flow
+drag on either side of the old cutoff.
 
 `node tools/sluice-weather-coverage.mjs` checks both modes across distant map
 locations and high-altitude views, four-column coverage, underground gating,

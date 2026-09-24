@@ -10006,9 +10006,11 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
   let b=mix(textureLoad(air,c+vec2<i32>(0,1),0).xyw,textureLoad(air,c+vec2<i32>(1,1),0).xyw,f.x);
   let flow=mix(a,b,f.y);
   let velocity=vec2<f32>(flow.x,flow.y-flow.z);
-  if (length(velocity)<2.0) { return; }
+  let speed=length(velocity);
+  if (speed<=0.0) { return; }
+  let influence=smoothstep(0.0,12.0,speed);
   let exposure=clamp((4.2-aux[i].x)/3.0,0.06,1.0);
-  let drag=1.0-exp(-22.0*exposure*ap.rect.w);
+  let drag=1.0-exp(-22.0*exposure*influence*ap.rect.w);
   pos[i]=vec4<f32>(p.xy,mix(p.zw,velocity,drag));
   flag[i]=fl & ~0x00ffff10u;
 }

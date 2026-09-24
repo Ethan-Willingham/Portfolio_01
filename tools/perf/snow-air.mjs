@@ -55,6 +55,27 @@ for(const i of [1,2]) {
   assert.equal(ctx.liquidSleeping[i],1);assert.equal(ctx.liquidRestFrames[i],90);
 }
 a.field.set(savedField);
+// The exported wake tapers before the rectangular solve ends. Its outer
+// samples must not leave a visible step when a flake crosses the perimeter.
+const edgeFlow=[];
+for(let x=325;x<=385;x++) edgeFlow.push(Math.hypot(...api.sample(x,112)));
+assert.ok(edgeFlow[0]>edgeFlow.at(-1),'the outer wake fades toward still air');
+assert.equal(edgeFlow.at(-1),0,'the smaller lateral reach ends in still air');
+let edgeStep=0;
+for(let i=1;i<edgeFlow.length;i++)edgeStep=Math.max(edgeStep,Math.abs(edgeFlow[i]-edgeFlow[i-1]));
+assert.ok(edgeStep<a.peak*.01,'each pixel across the fringe changes flow by less than one percent of the core');
+// An old 2px/s speed gate abruptly switched on full drag, braking a moving
+// grain even at the fringe. Compare neighboring flow speeds around it.
+function fringeResponse(speed) {
+  for(let i=0;i<a.field.length;i+=4){a.field[i]=speed;a.field[i+1]=a.field[i+3]=0;}
+  ctx.liquidVX[0]=0;ctx.liquidVY[0]=53;api.couple(1/60);
+  return 53-ctx.liquidVY[0];
+}
+const belowGate=fringeResponse(1.99),aboveGate=fringeResponse(2.01);
+assert.ok(belowGate>0&&aboveGate<2,'faint wake drag stays below the gravity added in one frame');
+assert.ok(Math.abs(aboveGate-belowGate)<.04,'crossing the old speed cutoff is continuous');
+a.field.set(savedField);
+console.log('WAKE EDGE',{edgeStep,belowGate,aboveGate});
 assert.equal(inside,0,'no airflow through a solid roof into the open pocket below it');
 const preserved=a.u[20*a.w+31];api.shift(a.x+8,a.y);assert.equal(a.u[20*a.w+30],preserved,'moving the window preserves world-space face velocity');
 assert.ok(a.divergenceAfter<a.divergenceBefore*.5,'pressure projection reduces divergence');

@@ -1,5 +1,5 @@
 // Near-ground powder and release-cadence regression, using a real running game.
-// Run: node tools/sluice-snow-ground.mjs [--cpu] [--report-only].
+// Run: node tools/sluice-snow-ground.mjs [--cpu] [--dense] [--report-only].
 // Optional SLUICE_TEST_BUNDLE compares a prior bundle; artifacts stay in /tmp.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -57,7 +57,7 @@ try {
     throw new Error('loading did not complete');
   }
 
-  const cpu = process.argv.includes('--cpu'), reportOnly = process.argv.includes('--report-only');
+  const cpu = process.argv.includes('--cpu'), dense = process.argv.includes('--dense'), reportOnly = process.argv.includes('--report-only');
   await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?snow=1&nosave=1&nopause=1&tod=0.35${cpu?'&cpuwater=1':''}`});
   await ready();
   check('requested particle solver is active',await game(cpu
@@ -78,7 +78,7 @@ try {
       zoomMode='in';resize();
       window.groundX=cx-PLAYER_W/2-${moving?280:0};
       player.x=groundX;player.y=sy-PLAYER_H-36;player.vx=player.vy=0;cam.snap=true;updateCamera();
-      for(var x=cx-310;x<cx+310;x+=1.4)for(var h=1.3;h<12;h+=1.4){
+      for(var x=cx-310;x<cx+310;x+=1.4)for(var h=1.3;h<${dense?32:12};h+=1.4){
         addLiquidParticle(5,x+(wHash(Math.floor(x*10),Math.floor(h*10),915)-.5)*.4,sy-h,0,0,3);snow.active++;}
       snow.mass=snow.emitted=snow.active;window.groundInitial=snow.active;
       window.groundGo=false;window.groundElapsed=0;window.groundLast=0;window.groundSnowTime=snow.time;
@@ -102,11 +102,15 @@ try {
             groundPrevious.set(p,{x:p.x,y:p.y});
             if(liquidWorldSolidAt(p.x,p.y))solid++;
           }
-          for(var i=0;i<liquidCount;i++)if(liquidType[i]===0)water++;
+          var stalled=0;
+          for(var i=0;i<liquidCount;i++){
+            if(liquidType[i]===0)water++;
+            if(liquidType[i]===5&&liquidY[i]<sy-20&&Math.hypot(liquidVX[i],liquidVY[i])<6)stalled++;
+          }
           groundFrames.push({t:groundElapsed,dt:dt,simDt:simDt,frameDt:lastFrameDt,airMs:snowAir.ms,bins:bins,
-            released:released,powder:powder,solid:solid,tracked:tracked,stationary:stationary,maxStep:maxStep,maxResidual:maxResidual,
+            released:released,powder:powder,stalled:stalled,solid:solid,tracked:tracked,stationary:stationary,maxStep:maxStep,maxResidual:maxResidual,
             bed:__particleSnow.stats().active,accounted:__particleSnow.stats().mass+water+rain.parked.length/2+rain.absorbed});
-          if(groundElapsed>=3.4)groundGo=false;
+          if(groundElapsed>=${dense?8:3.4})groundGo=false;
         }
         player.x=groundX+(${moving?180:0})*groundElapsed;player.y=sy-PLAYER_H-36;
         player.vx=groundGo?${moving?180:0}:0;player.vy=0;player.dir=1;player.onGround=false;
@@ -121,7 +125,7 @@ try {
       await sleep(450);await screenshot(`${trial}-${i}`);
       if(await game('!groundGo'))break;
     }
-    for(let i=0;i<40&&await game('groundGo');i++)await sleep(100);
+    for(let i=0;i<100&&await game('groundGo');i++)await sleep(100);
     const frames=await game('groundFrames');
     check(`${trial} completes bounded live trial`,await game('!groundGo')&&frames.length>30);
     const active=frames.filter(f=>f.t>.3&&f.t<2.5&&f.bed>100);
@@ -151,6 +155,8 @@ try {
     if(!reportOnly){
       check(`${trial} keeps powder close to the ground`,summary.nearGroundPresence>.8&&summary.floorToShelfDensity>.1);
       check(`${trial} releases powder on most active frames`,summary.releaseFrameFraction>.55&&summary.maxReleaseGapMs<100);
+      if(dense)check(`${trial} leaves no sustained floating sheet after the dense burst`,
+        frames.filter(f=>f.t>5).every(f=>f.stalled<initial*.01));
     }
     await game('cancelAnimationFrame(groundRaf);keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false;Math.random=groundOriginalRandom');
   }
@@ -168,14 +174,19 @@ try {
     snowAir.active=true;snowAir.life=3;snowAir.x=cx-384;snowAir.y=sy-180;
     for(var x of [cx+800,cx+808]){var i=addLiquidParticle(5,x,sy-12,0,-13,3);liquidDensity[i]=1;snow.active++;}
     snow.mass=snow.emitted=2;
-    for(var i=0;i<8;i++)updateSnow(1/60);
+    var minVY=-13,maxHeight=12;
+    for(var i=0;i<8;i++){
+      updateSnow(1/60);
+      for(var p of snow.grains){minVY=Math.min(minVY,p.vy);maxHeight=Math.max(maxHeight,sy-p.y);}
+    }
     return {powder:snow.grains.filter(function(p){return p.physical;}).length,
-      remaining:__particleSnow.stats().mass,airSpeed:Math.hypot.apply(Math,snowAirAt(cx+800,sy-12))};
+      remaining:__particleSnow.stats().mass,airSpeed:Math.hypot.apply(Math,snowAirAt(cx+800,sy-12)),minVY:minVY,maxHeight:maxHeight};
     } finally {if(liquidWGPU)liquidWGPU.simActive=gpuActive;}
   })()`);
   console.log('DISTANT STILL AIR',JSON.stringify(distant));
   check('distant probe conserves both grains',distant.remaining===2);
-  if(!reportOnly)check('mild motion outside local airflow never earns a jet kick',distant.airSpeed===0&&distant.powder===0);
+  if(!reportOnly)check('mild motion outside local airflow never earns a jet kick',
+    distant.airSpeed===0&&distant.minVY>=-13&&distant.maxHeight<13);
   fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summaries,null,2));
   assert.equal(errors.length,0,'no runtime or GPU validation errors');
   console.log('PASS near-ground powder regression; frames and screenshots '+out);

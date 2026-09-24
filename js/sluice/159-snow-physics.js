@@ -3,7 +3,7 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { field: particleWeatherState(), time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    cells: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+    cells: {}, bed: {}, support: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
 
   function snowNewWorldEnabled() {
     var q = /[?&]snow=([01])(?:&|$)/.exec(window.location.search || '');
@@ -17,7 +17,7 @@
     snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset(); snow.field = particleWeatherState();
-    snow.cells = {}; snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
+    snow.cells = {}; snow.bed = {}; snow.support = {}; snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
   function snowVisible(x, y) {
@@ -87,6 +87,23 @@
     liquidMutationSeq++; snow.melted++; snow.active--; rain.waterCount++;
     return true;
   }
+  function snowSupported(x, y, cells, cache) {
+    // Occupancy alone is not a floor. Follow each settled six-pixel column
+    // down to terrain, memoizing its result for this snapshot. A lifted
+    // sheet has open air underneath and must not catch more falling snow.
+    var cx = (Math.floor(x / 6) + 0.5) * 6, row = Math.floor(y / 6);
+    var path = [], supported = false;
+    while (row * 6 < TOTAL_ROWS * TILE) {
+      var key = rainCell(cx, row * 6 + 3);
+      if (cache[key] !== undefined) { supported = cache[key]; break; }
+      path.push(key);
+      if (liquidWorldSolidAt(cx, row * 6 + 8)) { supported = true; break; }
+      if ((cells[rainCell(cx, row * 6 + 9)] || 0) < 3) break;
+      row++;
+    }
+    for (var i = 0; i < path.length; i++) cache[path[i]] = supported;
+    return supported;
+  }
   function snowScan(dt, maintenanceDt) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
@@ -97,9 +114,13 @@
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
     var fresh = !gpu || (generation !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240);
     if (gpu && fresh) snow.readbackGen = generation;
-    var cells = {}, active = 0, tops = {};
-    if (snowAir.active) for (var si = 0; si < liquidCount; si++) {
-      if (liquidType[si] !== 5 || liquidY[si] < SKY_ROWS * TILE - 36 || liquidY[si] > SKY_ROWS * TILE + 16) continue;
+    var cells = {}, active = 0, tops = {}, occupied = {}, support = {};
+    for (var si = 0; si < liquidCount; si++) {
+      if (liquidType[si] !== 5) continue;
+      var bucket = rainCell(liquidX[si], liquidY[si]);
+      if (liquidVX[si] * liquidVX[si] + liquidVY[si] * liquidVY[si] < 256)
+        occupied[bucket] = (occupied[bucket] || 0) + 1;
+      if (!snowAir.active || liquidY[si] < SKY_ROWS * TILE - 36 || liquidY[si] > SKY_ROWS * TILE + 16) continue;
       var column = Math.floor(liquidX[si] / 3);
       tops[column] = tops[column] === undefined ? liquidY[si] : Math.min(tops[column], liquidY[si]);
     }
@@ -115,11 +136,13 @@
       var air = snowAirAt(x, y);
       var disturbance = Math.abs(air[0]) + Math.abs(air[1]) + air[2];
       var scour = fresh && y <= tops[Math.floor(x / 3)] + 2.8 && air[2] > 18 &&
-        Math.random() < 1 - Math.exp(-Math.min(18, air[2] * 0.09) * dt);
+        Math.random() < 1 - Math.exp(-Math.min(18, (air[2] - 18) * 0.09) * dt);
       // A jet elsewhere in the world must not amplify incidental motion.
       var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
-      if (fresh && (scour || y < SKY_ROWS * TILE - (lofted ? 6 : 32)) &&
-          (scour || lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
+      // Use actual bed support instead of a fixed height above the town.
+      // A height gate makes dense powder collect along that same plane.
+      if (fresh && (scour || lofted || !snowSupported(x, y, occupied, support)) &&
+          (rain.cells[rainCell(x, y)] || 0) <= 1 &&
           !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8)) && snow.grains.length < SNOW_FLAKE_CAP) {
         // Sub-grid turbulence gives each released grain its own impulse,
         // rather than preserving the dense solver's smooth travelling crest.
@@ -157,7 +180,7 @@
     // Atmospheric snow keeps the storm's identity. Thawing a stored sky
     // flake here created water high overhead, then rain on the return trip.
     // Only deposited or rig-contact material can thaw, including stored snow.
-    snow.cells = cells; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
+    snow.cells = cells; snow.bed = occupied; snow.support = {}; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
     // Landed snow is already extracted by the ordinary liquid tool. This
@@ -225,7 +248,7 @@
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
         var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) ||
-          ((!p.physical || p.vy >= 0) && (snow.cells[key] || 0) >= 3) || (rain.cells[key] || 0) > 1;
+          ((!p.physical || p.vy >= 0) && (snow.bed[key] || 0) >= 3 && snowSupported(nx, ny + 2, snow.bed, snow.support)) || (rain.cells[key] || 0) > 1;
         if (contact) { remove = snowLand(p, false); break; }
         p.x = nx; p.y = ny;
       }
