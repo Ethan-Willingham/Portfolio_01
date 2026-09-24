@@ -2946,11 +2946,11 @@
       var newVY = fr(fr(fr(vy * CELL) * invStep) * dampG);
       // v24.112 rest brake (matches the kernel, two stages).
       var vBrk = fr(fr(newVX * newVX) + fr(newVY * newVY));
-      if (!(LIQUID_DBG_FLAGS & 2) && vBrk < LIQUID_REST_BRAKE_VSQ) {
+      if (materialR !== 5 && !(LIQUID_DBG_FLAGS & 2) && vBrk < LIQUID_REST_BRAKE_VSQ) {
         var bfR = (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) ? LIQUID_REST_BRAKE_HARD : LIQUID_REST_BRAKE;
         // v24.145 — calm-scaled brake (matches the kernel; LIQUID_CALM is
         // the fround-quantized mirror of the g2pB.w uniform lane).
-        var bfC = materialR === 5 ? fr(bfR) : fr(1 + fr(fr(bfR - 1) * LIQUID_CALM));
+        var bfC = fr(1 + fr(fr(bfR - 1) * LIQUID_CALM));
         newVX = fr(newVX * bfC);
         newVY = fr(newVY * bfC);
       }
@@ -6189,7 +6189,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // 25 px/s, hard under 10 px/s (the pressure-cycle pump otherwise
   // sustains a ~12 px/s shimmer forever).
   let vBrk = newVX * newVX + newVY * newVY;
-  if ((dbgF & 2u) == 0u && vBrk < LIQUID_REST_BRAKE_VSQ) {
+  // Granular yielding settles snow without braking its airborne apex.
+  if (material != 5u && (dbgF & 2u) == 0u && vBrk < LIQUID_REST_BRAKE_VSQ) {
     var bf = LIQUID_REST_BRAKE;
     if (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) { bf = LIQUID_REST_BRAKE_HARD; }
     // v24.145 — the brake is a REST device: scale toward 1 by the calm
@@ -6200,12 +6201,10 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // locality comes from THIS particle's cell in the calm field, so a
     // distant pool's agitation cannot release the brake here. Legacy
     // path (local 0) is expression-identical.
-    // Dry powder sheds small compression rebounds independently of the
-    // water's deliberately lively rest setting.
-    var calmEff = select(sp.g2pB.w, 1.0, material == 5u);
+    var calmEff = sp.g2pB.w;
     // max() guards the v26.64 open sentinel (-1): an open-marked cell
     // takes zero brake, and the sentinel must never flip the sign.
-    if (material != 5u && sp.local.x > 0.0) { calmEff = calmEff * max(calmCellG[nbr[4]], 0.0); }
+    if (sp.local.x > 0.0) { calmEff = calmEff * max(calmCellG[nbr[4]], 0.0); }
     let bfC = 1.0 + (bf - 1.0) * calmEff;
     newVX = newVX * bfC;
     newVY = newVY * bfC;
@@ -9350,19 +9349,26 @@ struct P2GParams {
 
   // Render-only weather positions use the identical material-5 shader and
   // canvas as simulated snow. They never enter the physics grid or readback.
-  // The two small buffers are allocated once; no per-flake GPU objects.
+  // Grow geometrically for conserved powder as well as sky weather. A
+  // weather-only draw cap would silently hide the tail of a large flurry.
   function uploadAirborneSnow(instance, flakes) {
-    var count = flakes ? Math.min(flakes.length, 8192) : 0;
+    var count = flakes ? Math.min(flakes.length, instance.maxParticles) : 0;
     if (!count) return 0;
     var dev = instance.device;
-    if (!instance.snowRenderPos) {
-      instance.snowRenderHost = new Float32Array(8192 * 4);
-      instance.snowRenderPos = dev.createBuffer({ label: 'liquid.snowFlightPos', size: 8192 * 16,
+    if (!instance.snowRenderPos || count > instance.snowRenderCapacity) {
+      var capacity = Math.min(instance.maxParticles, Math.max(8192, instance.snowRenderCapacity || 0));
+      while (capacity < count) capacity = Math.min(instance.maxParticles, capacity * 2);
+      if (instance.snowRenderPos) instance.snowRenderPos.destroy();
+      if (instance.snowRenderFlags) instance.snowRenderFlags.destroy();
+      instance.snowRenderCapacity = capacity;
+      instance.snowRenderField = null;
+      instance.snowRenderHost = new Float32Array(capacity * 4);
+      instance.snowRenderPos = dev.createBuffer({ label: 'liquid.snowFlightPos', size: capacity * 16,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-      instance.snowRenderFlags = dev.createBuffer({ label: 'liquid.snowFlightFlags', size: 8192 * 4,
+      instance.snowRenderFlags = dev.createBuffer({ label: 'liquid.snowFlightFlags', size: capacity * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       // type 5 in bits [0:1,6], weather origin 3 in bits [2:3].
-      instance.queue.writeBuffer(instance.snowRenderFlags, 0, new Uint32Array(8192).fill(77));
+      instance.queue.writeBuffer(instance.snowRenderFlags, 0, new Uint32Array(capacity).fill(77));
       instance.snowRenderBG = dev.createBindGroup({ layout: instance.renderBGL, entries: [
         { binding: 0, resource: { buffer: instance.renderParamsBuf } },
         { binding: 1, resource: { buffer: instance.snowRenderPos } },

@@ -141,9 +141,11 @@
       var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
       // Use actual bed support instead of a fixed height above the town.
       // A height gate makes dense powder collect along that same plane.
+      // Existing material keeps its flight even when the weather budget is
+      // full. This transfer adds no mass; SNOW_MASS_CAP bounds all snow.
       if (fresh && (scour || lofted || !snowSupported(x, y, occupied, support)) &&
           (rain.cells[rainCell(x, y)] || 0) <= 1 &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8)) && snow.grains.length < SNOW_FLAKE_CAP) {
+          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8))) {
         // Sub-grid turbulence gives each released grain its own impulse,
         // rather than preserving the dense solver's smooth travelling crest.
         var phase = Math.random() * Math.PI * 2, scatter = Math.random();
@@ -295,15 +297,20 @@
       seen[key] = true;
       for (var m = 0; m < bank[2]; m++) snowStore(bx + 0.7 + (m % 3) * 1.3, by - 1.3 - Math.floor(m / 3) * 1.3, 0, 0);
     }
-    var grains = Array.isArray(data.grains) ? data.grains : [];
-    for (var g = 0; g < Math.min(SNOW_FLAKE_CAP + 384, grains.length); g++) {
+    var grains = Array.isArray(data.grains) ? data.grains : [], weatherCount = 0;
+    for (var g = 0; g < Math.min(SNOW_MASS_CAP, grains.length) && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP; g++) {
       var p = grains[g];
       if (!Array.isArray(p) || p.length < 8 || !p.every(Number.isFinite) || !valid(p[0], p[1], p[2], p[3]) || !Number.isInteger(p[4]) || p[4] < 1 || p[4] > 12) continue;
-      if (p[5] || p[4] > 1) {
-        for (var n = 0; n < p[4]; n++) snowStore(p[0] + (n % 3) * 1.3, p[1] - Math.floor(n / 3) * 1.3, p[2], p[3]);
-      } else if (data.field && snow.grains.length < SNOW_FLAKE_CAP && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP) {
+      if (p[4] > 1) {
+        // Older saves bundled several grains into one record. Expand only
+        // within the shared material budget, including restored flight.
+        for (var n = 0; n < p[4] && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP; n++)
+          snowStore(p[0] + (n % 3) * 1.3, p[1] - Math.floor(n / 3) * 1.3, p[2], p[3]);
+      } else if (p[5] || (data.field && weatherCount < SNOW_FLAKE_CAP)) {
         var grain = { x: p[0], y: p[1], vx: p[2], vy: p[3], size: Math.max(0, Math.min(1, p[6])), phase: p[7] };
-        if (p.length === 12 && Number.isInteger(p[8]) && p[8] >= 0 && p[8] <= 2 && Number.isInteger(p[9]) && Number.isInteger(p[10]) && p[11] >= 0 && p[11] <= 1) {
+        if (p[5]) grain.physical = true;
+        else weatherCount++;
+        if (!p[5] && p.length === 12 && Number.isInteger(p[8]) && p[8] >= 0 && p[8] <= 2 && Number.isInteger(p[9]) && Number.isInteger(p[10]) && p[11] >= 0 && p[11] <= 1) {
           grain.weatherKey = p[8] + ':' + p[9] + ':' + p[10]; grain.weatherRank = p[11];
         }
         snow.grains.push(grain);

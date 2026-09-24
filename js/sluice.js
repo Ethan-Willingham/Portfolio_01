@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.82';
+  var GAME_VERSION = 'v28.83';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -10987,15 +10987,16 @@
       // otherwise sustains a ~12 px/s shimmer forever). edit2:
       // liquid-wgpu.js (module consts + WGSL G2P + reference).
       var vBrk = newVX * newVX + newVY * newVY;
-      if (!LIQUID_DBG_NO_BRAKE && vBrk < LIQUID_REST_BRAKE_VSQ) {
+      // Snow's granular yield already settles piles. An absolute speed
+      // brake also catches lofted grains at their apex and synchronizes
+      // them into a slow-falling sheet, so reserve this brake for liquids.
+      if (material !== 5 && !LIQUID_DBG_NO_BRAKE && vBrk < LIQUID_REST_BRAKE_VSQ) {
         var bfR = (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) ? LIQUID_REST_BRAKE_HARD : LIQUID_REST_BRAKE;
         // v24.145 — the brake is a REST device: scaled by the calm ramp so
         // stimulated water flows undamped (the slush fix) and only settling
         // water is ground to stillness. calm=1 reduces to the exact v24.112
         // factors. edit2 liquid-wgpu.js (WGSL G2P + stage-5 reference).
-        // Dry powder dissipates small compression rebounds even while the
-        // water preset deliberately keeps its own rest brake relaxed.
-        var bfC = material === 5 ? bfR : 1 + (bfR - 1) * LIQUID_CALM;
+        var bfC = 1 + (bfR - 1) * LIQUID_CALM;
         newVX *= bfC;
         newVY *= bfC;
       }
@@ -12290,6 +12291,11 @@
     var fG = LIQUID_WATER_FOAM_G - wG;
     var fB = LIQUID_WATER_FOAM_B - wB;
     var oR = LIQUID_OIL_R, oG = LIQUID_OIL_G, oB = LIQUID_OIL_B, oA = LIQUID_OIL_ALPHA;
+    // Conserved powder can exceed the sky-weather emission budget. Grow
+    // this shared draw stream rather than dropping the tail of a flurry.
+    var drawCapacity = liquidCount + (snowDrawEnabled() ? snow.grains.length : 0);
+    if (liquidGLData.length < drawCapacity * 7) liquidGLData = new Float32Array(
+      Math.min((LIQUID_MAX_PARTICLES + SNOW_MASS_CAP) * 7, Math.max(drawCapacity * 7, liquidGLData.length * 2)));
     var data = liquidGLData;
     var n = liquidCount;
     var count = 0;
@@ -36932,9 +36938,11 @@
       var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
       // Use actual bed support instead of a fixed height above the town.
       // A height gate makes dense powder collect along that same plane.
+      // Existing material keeps its flight even when the weather budget is
+      // full. This transfer adds no mass; SNOW_MASS_CAP bounds all snow.
       if (fresh && (scour || lofted || !snowSupported(x, y, occupied, support)) &&
           (rain.cells[rainCell(x, y)] || 0) <= 1 &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8)) && snow.grains.length < SNOW_FLAKE_CAP) {
+          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8))) {
         // Sub-grid turbulence gives each released grain its own impulse,
         // rather than preserving the dense solver's smooth travelling crest.
         var phase = Math.random() * Math.PI * 2, scatter = Math.random();
@@ -37086,15 +37094,20 @@
       seen[key] = true;
       for (var m = 0; m < bank[2]; m++) snowStore(bx + 0.7 + (m % 3) * 1.3, by - 1.3 - Math.floor(m / 3) * 1.3, 0, 0);
     }
-    var grains = Array.isArray(data.grains) ? data.grains : [];
-    for (var g = 0; g < Math.min(SNOW_FLAKE_CAP + 384, grains.length); g++) {
+    var grains = Array.isArray(data.grains) ? data.grains : [], weatherCount = 0;
+    for (var g = 0; g < Math.min(SNOW_MASS_CAP, grains.length) && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP; g++) {
       var p = grains[g];
       if (!Array.isArray(p) || p.length < 8 || !p.every(Number.isFinite) || !valid(p[0], p[1], p[2], p[3]) || !Number.isInteger(p[4]) || p[4] < 1 || p[4] > 12) continue;
-      if (p[5] || p[4] > 1) {
-        for (var n = 0; n < p[4]; n++) snowStore(p[0] + (n % 3) * 1.3, p[1] - Math.floor(n / 3) * 1.3, p[2], p[3]);
-      } else if (data.field && snow.grains.length < SNOW_FLAKE_CAP && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP) {
+      if (p[4] > 1) {
+        // Older saves bundled several grains into one record. Expand only
+        // within the shared material budget, including restored flight.
+        for (var n = 0; n < p[4] && snow.parked.length / 4 + snow.grains.length < SNOW_MASS_CAP; n++)
+          snowStore(p[0] + (n % 3) * 1.3, p[1] - Math.floor(n / 3) * 1.3, p[2], p[3]);
+      } else if (p[5] || (data.field && weatherCount < SNOW_FLAKE_CAP)) {
         var grain = { x: p[0], y: p[1], vx: p[2], vy: p[3], size: Math.max(0, Math.min(1, p[6])), phase: p[7] };
-        if (p.length === 12 && Number.isInteger(p[8]) && p[8] >= 0 && p[8] <= 2 && Number.isInteger(p[9]) && Number.isInteger(p[10]) && p[11] >= 0 && p[11] <= 1) {
+        if (p[5]) grain.physical = true;
+        else weatherCount++;
+        if (!p[5] && p.length === 12 && Number.isInteger(p[8]) && p[8] >= 0 && p[8] <= 2 && Number.isInteger(p[9]) && Number.isInteger(p[10]) && p[11] >= 0 && p[11] <= 1) {
           grain.weatherKey = p[8] + ':' + p[9] + ':' + p[10]; grain.weatherRank = p[11];
         }
         snow.grains.push(grain);

@@ -177,7 +177,8 @@ try {
   if(process.argv.includes('--soak')) {
     await game('init();SNOW_RATE=345;weatherForce=4;weatherSetMood(4,true);gameRafId=requestAnimationFrame(loop)');await sleep(60000);await screenshot('snow-deep');
     const stats=await ev('__particleSnow.stats()');console.log('LONG SNOW',stats);
-    check('sustained snowfall respects the real particle budgets',stats.active<=36000 && stats.mass<=120000 && stats.airborne<=5400);
+    check('sustained snowfall respects the real particle budgets',stats.active<=36000 && stats.mass<=120000 &&
+      await game('snow.grains.filter(function(p){return !p.physical;}).length<=SNOW_FLAKE_CAP'));
   }
   if(process.argv.includes('--cpu')) {
     await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?snow=1&cpuwater=1&nosave=1&nopause=1&tod=0.35`});await ready();await sleep(6000);

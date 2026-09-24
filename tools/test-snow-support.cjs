@@ -105,6 +105,55 @@ assert.equal(s.snow.grains.length, sheetMass, 'sheet becomes individual airborne
 assert.ok(s.snow.grains.every(p => p.physical), 'released sheet keeps its physical material identity');
 conserve(sheetMass, 'sheet release');
 
+// A full sky-weather budget cannot strand existing material in the dense
+// solver. Cross both the former 5400 flight cap and 8192 drawing allocation.
+reset();
+for (let i = 0; i < s.SNOW_FLAKE_CAP; i++) falling(396 + i % 24, -160 - i % 60, false);
+for (let i = 0; i < 3100; i++) {
+  s.addLiquidParticle(5, 2370 + i % 120, -100 - Math.floor(i / 120) * 1.4, (i % 9) - 4, 53);
+  s.snow.active++; s.snow.mass++; s.snow.emitted++;
+}
+const saturatedMass = s.snow.mass;
+s.snowScan(1 / 60, 0);
+assert.equal(s.liquidCount, 0, 'full weather budget cannot prevent physical flight');
+assert.equal(s.snow.grains.length, saturatedMass, 'every released grain remains visible flight material');
+assert.equal(s.snow.grains.filter(p => p.physical).length, 3100, 'all overflow grains retain physical identity');
+assert.equal(s.snowSpawn(2400, -250), null, 'new weather remains bounded while physical flight exceeds its budget');
+for (let frame = 0; frame < 5; frame++) s.updateSnow(1 / 60);
+const overflowFlight = s.snow.grains.filter(p => p.physical);
+for (const p of overflowFlight) {
+  const fall = 32 + p.size * 42 + Math.sin(s.snow.time * 1.7 + p.phase) * 9;
+  assert.ok(p.vy >= fall, 'overflow powder falls at least as fast as matching sky snow');
+}
+assert.ok(Math.max(...overflowFlight.map(p => p.vy)) - Math.min(...overflowFlight.map(p => p.vy)) > 10,
+  'overflow grains keep individual falling speeds');
+conserve(saturatedMass, 'saturated flight');
+
+// Save all physical flight, including rows beyond the former weather-only
+// restore prefix. Physical rows first also exercise independent sky slots.
+const saturatedSave = JSON.parse(JSON.stringify(s.snowSave()));
+saturatedSave.grains.sort((a, b) => b[5] - a[5]);
+reset();
+s.snowRestore(saturatedSave);
+assert.equal(s.snow.parked.length, 0, 'reloading flying powder never parks it back in the dense solver');
+assert.equal(s.snow.grains.filter(p => p.physical).length, 3100, 'reload preserves every physical grain');
+assert.equal(s.snow.grains.filter(p => !p.physical).length, s.SNOW_FLAKE_CAP, 'physical flight consumes no restored weather slots');
+assert.equal(JSON.stringify(s.snowSave()), JSON.stringify(saturatedSave), 'flight positions, momentum, sizes and phases survive reload');
+conserve(saturatedMass, 'saturated flight reload');
+
+// Restoring modern flight beside an old bundled record still obeys the
+// one material budget, even when the last bundle straddles its boundary.
+reset();
+const massCap = s.SNOW_MASS_CAP;
+s.SNOW_MASS_CAP = 12;
+s.snowRestore({ version: 2, particles: Array.from({ length: 8 }, () => [2400, 125, 0, 0]).flat(),
+  grains: [[2400, -100, 12, -42, 1, 1, .7, 1.2], [2400, -100, 0, 53, 12, 1, .5, 0]] });
+assert.equal(s.snow.grains.length, 1, 'physical flight restores without a weather field');
+assert.equal(s.snow.grains[0].vy, -42, 'legacy field absence does not reset physical momentum');
+assert.equal(s.snow.parked.length / 4, 11, 'legacy bundle expansion stops at the shared mass cap');
+conserve(12, 'bounded legacy restore');
+s.SNOW_MASS_CAP = massCap;
+
 // A falling or sideways-moving curtain can fill every bucket down to the
 // floor. Density continuity still must not turn that moving air into a bed.
 for (const velocity of [[0, 53], [53, 0]]) for (const physical of [false, true]) {
@@ -175,4 +224,4 @@ assert.equal(s.snow.melted, 1, 'thaw is recorded exactly once');
 assert.deepEqual([s.liquidX[0], s.liquidY[0]], [2403, 190], 'thaw leaves the particle in place');
 assert.equal(s.rain.waterCount, 1, 'thaw updates the water budget');
 conserve(1, 'submerged thaw');
-console.log('PASS unsupported clouds, moving curtains, dense sheet release, tall pile landing, support removal, submerged thaw and exact budgets');
+console.log('PASS unsupported clouds, saturated flight and reload, bounded legacy restore, moving curtains, dense sheet release, tall pile landing, support removal, submerged thaw and exact budgets');

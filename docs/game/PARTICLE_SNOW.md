@@ -35,12 +35,12 @@ snow platform. Tiny pressure disturbances settle; track and jet forces can
 exceed the friction threshold. The GPU kernels and their CPU/f32 references
 use the same material parameters.
 
-Dry snow uses the full low-speed rest brake independently of water's lively
-calm setting. Its friction also dissipates upward compression rebounds before
+Dry snow is excluded from the liquid solver's absolute low-speed rest brake.
+That brake caught airborne grains at their apex and made them descend together
+at about 5 pixels per second. Snow's friction dissipates upward compression rebounds before
 advection, preventing intermediate-depth layers from continually rippling.
-Downward velocity keeps its existing settling response. This does not put
-snow to sleep: digging away support still lets dense grains fall even when
-the free-flake buffer cannot accept them.
+Downward velocity keeps its existing settling response, without putting
+snow to sleep. Digging away support still lets dense grains fall.
 
 Slow atmospheric flakes retain the rain system's inexpensive ballistic
 approach until their first contact, then become actual solver particles.
@@ -208,13 +208,21 @@ momentum. Quiet pile edges retain their
 support in the dense solver. Released grains no longer accelerate as liquid
 drops after a brief rig contact; dense piles still use the shared solver.
 
+The 5,400-flake limit throttles new weather, never the release of existing
+material. Unsupported powder always transfers into individual flight, even
+when the sky buffer is full. The shared 120,000-grain material budget still
+bounds all snow. GPU flight buffers grow geometrically as needed, and the
+fallback draw stream grows with the actual combined particle count. No
+render-only cap hides the tail of a large flurry. Saving and loading preserves
+all physical flight positions, velocities, sizes and phases.
+
 Melting changes material 5 to water in place, retaining the GPU's current
 position and velocity. One snow particle is exactly one water particle.
 The ordered identity-change operation cannot duplicate or teleport it.
 A full weather-water reservoir defers melting with the snow intact. Meltwater
 uses normal water physics, including soil absorption and finite lake storage.
 
-Active snow is capped at 36,000 particles on WebGPU or 7,000 on CPU, with
+Dense solver snow is capped at 36,000 particles on WebGPU or 7,000 on CPU, with
 5,400 active airborne weather flakes and a 120,000-particle total snow allowance.
 New deposition leaves 5,400 of those slots for atmosphere, so a full pile budget
 does not stop the storm. At that limit, excess unlanded flakes return to the
@@ -256,6 +264,16 @@ under the intermediate layers with ballistic handoff disabled to verify
 the dense solver still falls. Add `--cpu` for the fallback. Both paths check
 exact mass and absence of spontaneous airborne grains. Artifacts go to
 `/tmp/sluice-snow-settle-qa`.
+
+`node tools/sluice-snow-saturation.mjs` fills the weather budget, then lofts
+3,600 additional grains. It checks that none remain trapped in the dense
+solver, that descending powder retains varied sky-snow speeds, and that the
+last grain beyond the old 8,192-particle draw limit remains visible. It also
+checks exact material conservation and complete flight save/load. Add `--cpu`
+for the fallback; artifacts go to `/tmp/sluice-snow-saturation-qa`.
+Set `POWDER_COUNT=30000` to stress a 35,400-flake cloud including the full
+weather buffer. The focused GPU trial kept all grains moving at their
+individual fall speeds and frame-time p95 at 16.8 milliseconds.
 
 `node tools/perf/liquid-materials.mjs --gpu` verifies the five existing liquids
 and snow together through GPU identity packing, physics and readback. Run

@@ -1208,15 +1208,16 @@
       // otherwise sustains a ~12 px/s shimmer forever). edit2:
       // liquid-wgpu.js (module consts + WGSL G2P + reference).
       var vBrk = newVX * newVX + newVY * newVY;
-      if (!LIQUID_DBG_NO_BRAKE && vBrk < LIQUID_REST_BRAKE_VSQ) {
+      // Snow's granular yield already settles piles. An absolute speed
+      // brake also catches lofted grains at their apex and synchronizes
+      // them into a slow-falling sheet, so reserve this brake for liquids.
+      if (material !== 5 && !LIQUID_DBG_NO_BRAKE && vBrk < LIQUID_REST_BRAKE_VSQ) {
         var bfR = (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) ? LIQUID_REST_BRAKE_HARD : LIQUID_REST_BRAKE;
         // v24.145 — the brake is a REST device: scaled by the calm ramp so
         // stimulated water flows undamped (the slush fix) and only settling
         // water is ground to stillness. calm=1 reduces to the exact v24.112
         // factors. edit2 liquid-wgpu.js (WGSL G2P + stage-5 reference).
-        // Dry powder dissipates small compression rebounds even while the
-        // water preset deliberately keeps its own rest brake relaxed.
-        var bfC = material === 5 ? bfR : 1 + (bfR - 1) * LIQUID_CALM;
+        var bfC = 1 + (bfR - 1) * LIQUID_CALM;
         newVX *= bfC;
         newVY *= bfC;
       }
@@ -2511,6 +2512,11 @@
     var fG = LIQUID_WATER_FOAM_G - wG;
     var fB = LIQUID_WATER_FOAM_B - wB;
     var oR = LIQUID_OIL_R, oG = LIQUID_OIL_G, oB = LIQUID_OIL_B, oA = LIQUID_OIL_ALPHA;
+    // Conserved powder can exceed the sky-weather emission budget. Grow
+    // this shared draw stream rather than dropping the tail of a flurry.
+    var drawCapacity = liquidCount + (snowDrawEnabled() ? snow.grains.length : 0);
+    if (liquidGLData.length < drawCapacity * 7) liquidGLData = new Float32Array(
+      Math.min((LIQUID_MAX_PARTICLES + SNOW_MASS_CAP) * 7, Math.max(drawCapacity * 7, liquidGLData.length * 2)));
     var data = liquidGLData;
     var n = liquidCount;
     var count = 0;
