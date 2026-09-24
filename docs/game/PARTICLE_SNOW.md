@@ -126,15 +126,28 @@ surface-scouring term. This approximates turbulent grain lift below the air
 grid's 12-pixel resolution: flow above 12 pixels per second can lift exposed
 snow, with a 460-pixel-per-second entrainment ceiling and a three-cell reach.
 It vanishes in still air, inside solids and away from a supporting surface.
-The same term reaches GPU snow, CPU snow and airborne flakes.
+This term releases GPU and CPU bed particles. Free flakes sample only the
+resolved air velocity; applying the scouring lift after release made an
+invisible shelf that kept snow from returning to the ground.
 Two world-space gust phases vary the lift instead of moving every grain in
 one smooth crest. Exposed grains in the top 2.8 pixels of a local powder
 column peel off at independent, airflow-dependent times. The transfer
-keeps every grain's position and mass and supplies a varied turbulent kick.
+keeps every grain's position and mass and supplies a varied turbulent kick,
+including small ground-skimming hops. Kicks require actual airflow at that
+particle; an active jet elsewhere cannot amplify a distant grain's motion.
 Loose upward-moving grains clear the powder bed while still colliding with
 terrain, the rig and water. Their vertical drag preserves the individual
 kicks long enough to produce a spread of heights. Once descending, physical
 powder falls at least as fast as the sky-snow speed for its size and phase.
+
+During an active wake, release is checked every frame. Only storage and thaw
+remain on the 120-millisecond maintenance interval. The GPU supplies an
+asynchronous mirror every solved frame during this period; ordinary liquids
+retain their existing mirror cadence. Moving grains transfer only from a new
+snapshot matching the latest GPU simulation time, so they do not jump back
+to older CPU coordinates. No synchronous GPU wait is introduced. The snow
+droplet shader blends density samples between texels to keep opacity smooth
+as the grain or camera moves across pixel boundaries.
 
 The direct liquid cone wake is weighted by the nonsnow mass in each physics
 cell. Pure water keeps its original splash force; dry powder follows the air
@@ -244,6 +257,14 @@ unchanged world positions in the overlapping view, current weather on revisits,
 exact atmospheric save/load, zoom, altitude, world edges and particle budgets.
 It also checks continuous rain coverage during flight, atmospheric recycling,
 storm buildup and clearing, and the absence of horizontal or vertical curtains.
+
+`node tools/sluice-snow-ground.mjs` checks near-floor powder density, per-frame
+release continuity, moving particle positions, terrain collision, exact mass,
+and the absence of distant jet kicks. Add `--cpu` for the fallback. Screenshots
+and frame measurements go to `/tmp/sluice-snow-ground-qa`. The v28.68 baseline
+released grains on about 13% of active frames, with 117-millisecond gaps;
+the revised GPU and CPU cases release on every active frame. GPU frame-time
+p95 in the focused test was 16.8 milliseconds.
 
 `node tools/sluice-weather-coverage.mjs` checks both modes across distant map
 locations and high-altitude views, four-column coverage, underground gating,

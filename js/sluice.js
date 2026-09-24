@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.71';
+  var GAME_VERSION = 'v28.72';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1972,7 +1972,7 @@
         // liquidGLCanvas. Stage 8 wires this into the per-frame draw; the
         // Stage-7 self-test reads it once so the seeded particles render
         // at the correct on-screen location (the surface ponds).
-        getSnowAir: function () { return worldSnowEnabled && snowAir.active ? snowAir : null; },
+        getSnowAir: function () { return worldSnowEnabled && !bathMode && snowAir.active ? snowAir : null; },
         getView: function () {
           // v14.31 — active-region box (world px) for the WebGPU sim. It is
           // the same camera + LIQUID_ACTIVE_MARGIN box liquidUpdateActiveRegion
@@ -36862,7 +36862,7 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { field: particleWeatherState(), time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    cells: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+    cells: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
 
   function snowNewWorldEnabled() {
     var q = /[?&]snow=([01])(?:&|$)/.exec(window.location.search || '');
@@ -36876,7 +36876,7 @@
     snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset(); snow.field = particleWeatherState();
-    snow.cells = {}; snow.airParked = {}; snow.airCount = snow.sideCredit = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
+    snow.cells = {}; snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
   function snowVisible(x, y) {
@@ -36946,8 +36946,16 @@
     liquidMutationSeq++; snow.melted++; snow.active--; rain.waterCount++;
     return true;
   }
-  function snowScan(dt) {
+  function snowScan(dt, maintenanceDt) {
+    if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
+    // The GPU draws its current positions directly. Only hand grains to
+    // CPU flight from that same solved frame, never an older mirror that
+    // would visibly rewind them. CPU fallback already owns live positions.
+    var gpu = liquidWGPU && liquidWGPU.simActive;
+    var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
+    var fresh = !gpu || (generation !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240);
+    if (gpu && fresh) snow.readbackGen = generation;
     var cells = {}, active = 0, tops = {};
     if (snowAir.active) for (var si = 0; si < liquidCount; si++) {
       if (liquidType[si] !== 5 || liquidY[si] < SKY_ROWS * TILE - 36 || liquidY[si] > SKY_ROWS * TILE + 16) continue;
@@ -36957,37 +36965,42 @@
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
-      if (!snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
+      if (maintenanceDt && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
       // A separated grain becomes light airborne powder again. Leaving it
       // in the dense liquid solver makes it accelerate like a water drop.
       // Keep its mass and position, carrying the jet's momentum into flight.
       // Let an upward-moving, loosened jet plume separate close to the
       // ground. Quiet pile edges keep their support in the dense solver.
       var air = snowAirAt(x, y);
-      var scour = y <= tops[Math.floor(x / 3)] + 2.8 && air[2] > 18 &&
+      var disturbance = Math.abs(air[0]) + Math.abs(air[1]) + air[2];
+      var scour = fresh && y <= tops[Math.floor(x / 3)] + 2.8 && air[2] > 18 &&
         Math.random() < 1 - Math.exp(-Math.min(18, air[2] * 0.09) * dt);
-      var lofted = snowAir.active && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
-      if ((scour || y < SKY_ROWS * TILE - (lofted ? 6 : 32)) &&
+      // A jet elsewhere in the world must not amplify incidental motion.
+      var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
+      if (fresh && (scour || y < SKY_ROWS * TILE - (lofted ? 6 : 32)) &&
           (scour || lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
           !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8)) && snow.grains.length < SNOW_FLAKE_CAP) {
         // Sub-grid turbulence gives each released grain its own impulse,
         // rather than preserving the dense solver's smooth travelling crest.
-        var phase = Math.random() * Math.PI * 2, kick = scour || lofted ? 120 + Math.random() * 220 : 0;
+        var phase = Math.random() * Math.PI * 2, scatter = Math.random();
+        // Include small ground-skimming hops as well as high throws. The
+        // scouring channel releases the grain; it is not a levitation layer.
+        var kick = scour || lofted ? (12 + scatter * scatter * 280) * Math.min(1, disturbance / 180) : 0;
         var gustVX = liquidVX[i] + Math.cos(phase) * kick * 0.65;
         if (gustVX * snowAir.trail < 0) gustVX *= 1 - Math.abs(snowAir.trail) * 0.85;
         snow.grains.push({ x: x, y: y, vx: gustVX,
-          vy: Math.min(scour ? -air[2] : liquidVY[i], liquidVY[i]) - kick, size: 0.3 + Math.random() * 0.7,
+          vy: (scour ? Math.min(0, liquidVY[i]) : liquidVY[i]) - kick, size: 0.3 + Math.random() * 0.7,
           phase: phase, physical: true });
         removeLiquidParticle(i); continue;
       }
-      if (Math.random() < 1 - Math.exp(-snowHeat(x, y) * dt) && snowMeltParticle(i)) continue;
+      if (maintenanceDt && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
       var key = rainCell(x, y); cells[key] = (cells[key] || 0) + 1; active++;
     }
     snow.active = active;
     var budget = Math.min(600, snowActiveCap() - active, LIQUID_MAX_PARTICLES - liquidCount - 4096);
-    for (var j = snow.parked.length - 4; j >= 0; j -= 4) {
+    for (var j = maintenanceDt ? snow.parked.length - 4 : -1; j >= 0; j -= 4) {
       var px = snow.parked[j], py = snow.parked[j + 1], remove = false;
-      if (Math.random() < 1 - Math.exp(-snowHeat(px, py) * dt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
+      if (Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
         rain.parked.push(px, py); snow.melted++; remove = true;
       } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
         if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
@@ -37029,7 +37042,15 @@
     updateSnowAir(dt);
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
-    if (snow.tick >= 0.12) { snowScan(snow.tick); snow.tick = 0; }
+    // Release continuously while the wake is active. Storage and thaw can
+    // stay on their slower budget without emitting powder in 120ms batches.
+    var maintenanceDt = snow.tick >= 0.12 ? snow.tick : 0;
+    // Outside the wake, the sparse GPU mirror and maintenance clocks can
+    // have different phases. Consume fresh snapshots when they arrive too.
+    var freshGPU = liquidWGPU && liquidWGPU.simActive &&
+      (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240;
+    if (snowAir.active || maintenanceDt || freshGPU) snowScan(dt, maintenanceDt);
+    if (maintenanceDt) snow.tick = 0;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
     var width = Math.max(0, right - left), height = Math.max(0, bottom - top);
@@ -37046,7 +37067,9 @@
       // cancels their fall even in a weak crosswind, exposing the MAC box as
       // a shelf of stalled snow. Add the jet disturbance to the ambient drift
       // and settling speed; only a real updraft can hold a flake aloft.
-      var liftVY = air[1] - air[2];
+      // Surface scouring only breaks contact with the bed. Applying it to
+      // already-free flakes makes an invisible shelf above the terrain.
+      var liftVY = air[1];
       var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + liftVY * liftVY) / 80);
       p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
       // A released grain carries its turbulent kick through the coarse air

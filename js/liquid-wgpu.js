@@ -7747,7 +7747,18 @@ fn vs(@builtin(vertex_index)   vid : u32,
     out.pos = vec4<f32>((scrX + off.x) / (rp.canvasW * 0.5) - 1.0,
                         1.0 - (scrY + off.y) / (rp.canvasH * 0.5), 0.0, 1.0);
     out.uv = c;
-    let mass = textureLoad(snowTex, vec2<i32>(vec2<f32>(scrX,scrY)),0).r;
+    // Blend texel centres continuously as the flake or camera moves. A
+    // nearest lookup made the entire grain's opacity jump at pixel edges.
+    let sq = vec2<f32>(scrX,scrY) - vec2<f32>(0.5);
+    let si = vec2<i32>(floor(sq));
+    let sf = fract(sq);
+    let slo = vec2<i32>(0);
+    let shi = vec2<i32>(textureDimensions(snowTex)) - vec2<i32>(1);
+    let s00 = textureLoad(snowTex,clamp(si,slo,shi),0).r;
+    let s10 = textureLoad(snowTex,clamp(si+vec2<i32>(1,0),slo,shi),0).r;
+    let s01 = textureLoad(snowTex,clamp(si+vec2<i32>(0,1),slo,shi),0).r;
+    let s11 = textureLoad(snowTex,clamp(si+vec2<i32>(1,1),slo,shi),0).r;
+    let mass = mix(mix(s00,s10,sf.x),mix(s01,s11,sf.x),sf.y);
     out.alpha = 1.0 - smoothstep(0.38,0.95,mass);
     out.world = p.xy + off / max(rp.dpws, 0.001);
     // No index-based size/tint: a swap or sky-to-ground transfer must not pop.
@@ -9628,6 +9639,7 @@ struct P2GParams {
     instance.readbackPending = true;
     instance.readbackResolved = false;
     instance.readbackCount = count;
+    instance.readbackCaptureTime = instance.simulationClock;
     // v24.109 — stamp the mutation seq at kick time; applyReadback discards
     // the map if ANY mutation landed in between (slot indices may have
     // shuffled even when the count happens to match).
@@ -9717,6 +9729,7 @@ struct P2GParams {
         // particles) can skip frames where no new readback landed
         // instead of rebuilding identical data every frame.
         instance.readbackApplyGen = (instance.readbackApplyGen | 0) + 1;
+        instance.readbackAppliedTime = instance.readbackCaptureTime;
       }
     } catch (_) {
       // Ignore — the unmap below still runs so the buffers are reusable.
@@ -10187,17 +10200,20 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
       // Clear the last substep's active blocks before its grid mapping moves.
       runSparseEndClear(instance);
       instance.queue.submit([frameEncoder.finish()]);
+      instance.simulationClock += instance.stepDt * subSteps;
     } finally {
       // A failed encode must not leave subsequent standalone calls holding
       // an unfinished encoder or suppress their physics-uniform refresh.
       instance.frameEncoder = null;
     }
-    // 7. Kick the async copy-back for the CPU mirror — but only every
-    // LIQUID_READBACK_EVERY runFrames (v14.5). Per-frame mapAsync serialises
-    // the CPU and GPU; kicking it rarely lets them pipeline. The mirror is
-    // game-side only (oil suction + the grid bbox); the renderer reads the
-    // GPU buffer straight, so the on-screen water never lags.
-    if ((instance.readbackTick % LIQUID_READBACK_EVERY) === 0) {
+    // 7. Snow hands actual grains from this solver to airborne motion.
+    // While its air field is active, offer a fresh async snapshot each
+    // frame so that handoff can use the last rendered positions. A pending
+    // map still skips the request; nothing waits for GPU completion here.
+    // Ordinary liquid play keeps the existing sparse mirror cadence.
+    var snowReadbackAir = L && L.getSnowAir ? L.getSnowAir() : null;
+    var readbackEvery = snowReadbackAir && snowReadbackAir.active ? 1 : LIQUID_READBACK_EVERY;
+    if ((instance.readbackTick % readbackEvery) === 0) {
       kickReadback(instance, count);
     }
     instance.readbackTick = (instance.readbackTick + 1) | 0;
@@ -10559,6 +10575,10 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
       readbackPending: false,  // a readback mapAsync is in flight (Stage 8)
       readbackResolved: false, // the in-flight readback map has resolved (Stage 8)
       readbackCount: 0,     // particle count of the pending readback (Stage 8)
+      simulationClock: 0,  // completed GPU simulation time, excluding idle frames
+      readbackCaptureTime: 0,
+      readbackAppliedTime: -Infinity,
+      readbackApplyGen: 0,
       staging: null,
       pipe: null,           // grid compute pipelines (Stage 2)
       bg: null,             // grid bind group (Stage 2)
@@ -10649,6 +10669,9 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
       // the game.
       syncReadback: function () {
         if (instance.simActive) applyReadback(instance);
+      },
+      getReadbackAge: function () {
+        return Math.max(0, instance.simulationClock - instance.readbackAppliedTime);
       },
       update: function (dt) {
         if (!instance.simActive) return;

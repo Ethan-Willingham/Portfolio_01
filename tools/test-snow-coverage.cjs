@@ -150,6 +150,22 @@ const calm=settleInAir([0,0,0]),crosswind=settleInAir([8,0,0]),downwash=settleIn
 assert.ok(crosswind>calm*.8&&downwash>calm&&updraft< -40,'airflow preserves settling and actual updrafts');
 s.snowAirAt=()=>[0,0,0];s.SNOW_RATE=345;
 
+// Sparse GPU snapshots can arrive between every maintenance scan. Each
+// fresh result must still offer separated grains a handoff to light motion.
+reset();s.SNOW_RATE=0;s.rain.intensity=0;
+const realScan=s.snowScan;
+let mirrorFrame=0,freshScans=0;
+s.liquidWGPU={simActive:true,readbackApplyGen:0,getReadbackAge:()=>mirrorFrame%20===2?0:.1};
+s.snowScan=()=>{
+  if(mirrorFrame%20===2){freshScans++;s.snow.readbackGen=s.liquidWGPU.readbackApplyGen;}
+};
+for(mirrorFrame=1;mirrorFrame<=120;mirrorFrame++){
+  if(mirrorFrame%20===2)s.liquidWGPU.readbackApplyGen++;
+  s.updateSnow(1/60);
+}
+assert.equal(freshScans,6,'quiet-air transfers consume every fresh GPU snapshot despite maintenance phase');
+s.snowScan=realScan;s.liquidWGPU=null;s.SNOW_RATE=345;
+
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/158-rain-lakes.js'),'utf8'),s);
 const catchLakes=s.rainCatchLakes;

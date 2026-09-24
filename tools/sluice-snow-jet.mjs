@@ -145,8 +145,9 @@ try {
           function grain(x,y){minY=Math.min(minY,y);if(y<sy-25){lifted++;heights[Math.min(3,Math.floor((sy-y-25)/25))]++;}if(y<sy-55)high++;}
           for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i]);else if(liquidType[i]===0)water++;}
           for(var p of snow.grains)if(p.physical){grain(p.x,p.y);if(p.y<sy-25)powder++;}
+          var activeLifted=lifted;
           for(var i=0;i<snow.parked.length;i+=4)grain(snow.parked[i],snow.parked[i+1]);
-          return {lifted:lifted,high:high,height:sy-minY,powder:powder,heights:heights,distance:altitudeDistance,initial:altitudeInitial,
+          return {lifted:lifted,activeLifted:activeLifted,high:high,height:sy-minY,powder:powder,heights:heights,distance:altitudeDistance,initial:altitudeInitial,
             accounted:__particleSnow.stats().mass+water+rain.parked.length/2+rain.absorbed};};`);
       await sleep(1800);
       const resting=await game('altitudeStats()');
@@ -169,7 +170,10 @@ try {
       await sleep(6500);
       check(`${clearance}px airflow shuts down`,await game('!snowAir.active'));
       const settled=await game('altitudeStats()');
-      check(`${clearance}px lofted powder settles after thrust stops`,settled.lifted<peak*.15+5);
+      // Offscreen parked material deliberately freezes until revisited.
+      // Judge settling within the running simulation, while counting all
+      // parked grains in the independent conservation assertion below.
+      check(`${clearance}px lofted powder settles after thrust stops`,settled.activeLifted<peak*.15+5);
       assert.equal(settled.accounted,settled.initial,'high-altitude settling preserves all material');
       await game('cancelAnimationFrame(altitudeRaf)');
     }

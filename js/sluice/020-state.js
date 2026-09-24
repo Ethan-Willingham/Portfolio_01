@@ -614,7 +614,7 @@
         // liquidGLCanvas. Stage 8 wires this into the per-frame draw; the
         // Stage-7 self-test reads it once so the seeded particles render
         // at the correct on-screen location (the surface ponds).
-        getSnowAir: function () { return worldSnowEnabled && snowAir.active ? snowAir : null; },
+        getSnowAir: function () { return worldSnowEnabled && !bathMode && snowAir.active ? snowAir : null; },
         getView: function () {
           // v14.31 — active-region box (world px) for the WebGPU sim. It is
           // the same camera + LIQUID_ACTIVE_MARGIN box liquidUpdateActiveRegion
