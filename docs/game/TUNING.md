@@ -84,10 +84,22 @@ console. **This is the main smoke tuning surface.**
 | Lever | Now | Range | Effect |
 |---|---|---|---|
 | `diesel_source_lift` | `1.4` | 0–15 | World-px lift of the source splat |
-| `diesel_source_radius` | `0.014` | 0.001–0.05 | Radius of the tight mouth splat |
+| `diesel_source_radius` | `0.014` | 0.001–0.05 | Relative area of the 1.6-world-px mouth and 3.8-world-px source |
 | `diesel_bloom_lift` | `3.6` | 0–15 | World-px lift of the secondary bloom splat |
-| `diesel_bloom_radius` | `0.078` | 0.002–0.1 | Bloom splat radius — **big factor in how soft the plume reads** |
+| `diesel_bloom_radius` | `0.078` | 0.002–0.1 | Relative area of the 7-world-px bloom, before pulse variation |
 | `diesel_bloom_amount` | `0.82` | 0–1.5 | Bloom colour multiplier |
+
+Rig sources follow the drawn pipe through flight stretch, landing compression,
+banking and facing changes. Their widths stay fixed in world space across zoom
+levels. The stock source breathes with travel speed; purchased recipes expand
+from the pipe before developing their full width. Their catalog exports remain
+unchanged.
+
+Powered climbs above 80 world px/s leave brief rolling air currents behind the
+rig. At most two rolls are active (one on mobile). Each replaces two distant
+jet samples, keeping the twelve-splat force budget. Walls and gel stop the
+rolls. Both smoke fields use the same wake, with the ambient field's slow clock
+compensated as in the direct jet force.
 
 ### Wind bias
 | Lever | Now | Range | Effect |

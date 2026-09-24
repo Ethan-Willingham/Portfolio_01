@@ -469,8 +469,53 @@ try {
     check(r.field+' solid chassis still occludes smoke ('+r.facing+', '+r.tilt+')',
       r.inside>100&&r.core/r.inside<0.1,r);
   }
+  const ascentWake = await game(`(function(){
+    var savedMobile=isMobile,result={};
+    player.x=player.renderX=COLS*TILE/2;player.y=player.renderY=-300;
+    player.vy=-260;player.thrustSpool=1;player.bodyTiltRender=0;
+    player.lastMoveU=player.thrusting=true;player.fuel=100;
+    cam.x=player.x-screenW/2;cam.y=player.y-screenH/2;
+    function capture(){
+      var calls=[];
+      rocketSmokeCouple({config:{SIM_RESOLUTION:160},splatVelocity:function(x,y,dx,dy,r){
+        calls.push({x:x,y:y,dx:dx,dy:dy,r:r});
+      }},1/60);
+      return calls;
+    }
+    try{
+      [false,true].forEach(function(mobile){
+        isMobile=mobile;clearRocketPlume();rocketIntensity=1;
+        var maxCalls=0,maxRolls=0;
+        for(var frame=0;frame<90;frame++){
+          updateRocketPlume(1/60);
+          maxRolls=Math.max(maxRolls,rocketSmokeWake.length);
+          maxCalls=Math.max(maxCalls,capture().length);
+        }
+        result[mobile?'mobile':'desktop']={rolls:maxRolls,splats:maxCalls};
+      });
+      player.lastMoveU=false;result.release=capture().length;player.lastMoveU=true;
+      var row=2,col=Math.floor(player.x/TILE),old=[];
+      for(var c=col-4;c<=col+4;c++){old.push(world[row][c]);world[row][c]={type:'stone',hp:1};}
+      try{
+        // An already-shed roll must stop when terrain closes over its center.
+        rocketSmokeWake=[{x:player.x,y:row*TILE+1,dx:0,dy:1,age:0,spin:1,power:1}];
+        player.vy=0;updateRocketPlume(1/60);result.blockedExisting=rocketSmokeWake.length;
+        // A wall between the mouth and wake prevents a new roll entirely.
+        player.y=player.renderY=30;player.vy=-260;
+        for(var frame=0;frame<60;frame++)updateRocketPlume(1/60);
+        result.blockedBirth=rocketSmokeWake.length;
+      }finally{for(var c=col-4;c<=col+4;c++)world[row][c]=old[c-col+4];}
+      return result;
+    }finally{isMobile=savedMobile;player.vy=0;clearRocketPlume();}
+  })()`);
+  check('fast climbs shed bounded desktop and mobile air rolls',
+    ascentWake.desktop.rolls===2&&ascentWake.mobile.rolls===1,ascentWake);
+  check('rolling air reuses the twelve-splat jet budget',
+    ascentWake.desktop.splats<=12&&ascentWake.mobile.splats<=12,ascentWake);
+  check('release stops fresh wake forces and walls block new or drifting rolls',
+    ascentWake.release===0&&ascentWake.blockedExisting===0&&ascentWake.blockedBirth===0,ascentWake);
   check('browser reports no runtime or shader errors', errors.length === 0, errors);
-  const report = { livePlumes, routing, clouds, boundary, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
+  const report = { livePlumes, ascentWake, routing, clouds, boundary, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
   if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {

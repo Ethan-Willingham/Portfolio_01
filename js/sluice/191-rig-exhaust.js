@@ -134,20 +134,29 @@
       var outwardX = Math.sin(tilt), outwardY = -Math.cos(tilt);
       var crossX = -outwardY, crossY = outwardX;
       var throttle = player.thrusting ? 1.5 : (drilling || Math.abs(player.vx) > 8 ? 1 : 0.65);
-      var basis = smokeFluidDomainWorldH * Math.sqrt(Math.max(1, smokeFluidDomainWorldW / smokeFluidDomainWorldH));
-      var radiusScale = Math.pow(Math.sqrt(1120 * 640) * RIG_EXHAUST_SCALE / Math.max(1, basis), 2);
       for (var n = 0; n < samples; n++) {
         var time = rigExhaustClock - rigExhaustAccumulator - (samples - n - 1) * RIG_EXHAUST_DT;
         var packets = window.SmokePresets.sample(def.recipe, time, 0, rigExhaustMaterial.tuning, def.scale.values, throttle);
+        var travel = Math.min(1, Math.hypot(player.vx, player.vy) / 260);
+        var beat = Math.sin(time * 12.7) * Math.sin(time * 7.9 + 1.4);
         for (var i = 0; i < packets.length; i++) {
           var p = packets[i];
-          var uv = smokeFluidWorldToUV(ex.x + (crossX * p.x + outwardX * p.y) * RIG_EXHAUST_SCALE,
-            ex.y + (crossY * p.x + outwardY * p.y) * RIG_EXHAUST_SCALE);
+          // Fit the sampled material to the stack before it expands. Wide
+          // demo packets otherwise start as a halo around the entire rig.
+          var lift = Math.max(0.8, p.y * RIG_EXHAUST_SCALE);
+          lift += Math.max(0, lift - 1) * 1.5;
+          var spread = p.x * RIG_EXHAUST_SCALE * Math.min(1, 0.22 + lift * 0.10);
+          var packetRadius = Math.sqrt(p.radius * 0.9 / 100) * Math.sqrt(1120 * 640) * RIG_EXHAUST_SCALE;
+          packetRadius = Math.min(packetRadius, 1.6 + lift * 0.95) * (1 + travel * beat * 0.18);
+          var uv = smokeFluidWorldToUV(ex.x + crossX * spread + outwardX * lift,
+            ex.y + crossY * spread + outwardY * lift);
           if (!uv.inView) continue;
+          var dyeGain = 1.1 * (1 + travel * beat * 0.7);
+          var color = { r: p.color.r * dyeGain, g: p.color.g * dyeGain, b: p.color.b * dyeGain };
           rigExhaustFluid.splat(uv.uvX, uv.uvY,
             (crossX * p.vx + outwardX * p.vy) * 2 * rigExhaustUnits,
             -(crossY * p.vx + outwardY * p.vy) * 2 * rigExhaustUnits,
-            p.color, p.radius * 0.9 * radiusScale);
+            color, smokeRigRadius(packetRadius));
           rigExhaustAwake = Math.max(8, def.recipe.source.idleHold || 24) * rigExhaustMaterial.appearance.lifetime;
         }
       }

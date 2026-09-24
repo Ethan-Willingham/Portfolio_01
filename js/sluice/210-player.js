@@ -615,6 +615,40 @@
     ctx.restore();
   }
 
+  // One body shape for drawing and the attached smoke source.
+  var playerBodyScaleValue = { x: 1, y: 1 };
+  function playerBodyScale() {
+    // Drill/wall recoil (positive) + airborne stretch (driven by vy).
+    // Stretch is computed every frame from current motion so the rig
+    // visibly elongates during a hard climb or free-fall — selling the speed
+    // without any extra state. Squash always wins over stretch when present
+    // so landing feedback never gets diluted.
+    var sq = player.squash || 0;
+    var landOffset = playerFxLandOffset();
+    var stretchK = 0;
+    if (sq < 0.05 && landOffset <= 0.01 && !drilling) {
+      var vyAbs = Math.abs(player.vy);
+      if (vyAbs > 90) {
+        stretchK = (vyAbs - 90) / 380;
+        if (stretchK > 1) stretchK = 1;
+        // Ascending under power feels punchier with stronger stretch
+        if (player.vy < 0 && player.thrustSpool > 0.4) stretchK *= 1.25;
+        else stretchK *= 0.7;
+        if (stretchK > 0.55) stretchK = 0.55;
+      }
+    }
+    var sy = 1, sx = 1;
+    if (sq > 0) {
+      sy = 1 - sq * 0.18;
+      sx = 1 + sq * 0.15;
+    } else if (stretchK > 0) {
+      sy = 1 + stretchK * 0.18;
+      sx = 1 - stretchK * 0.10;
+    }
+    playerBodyScaleValue.x = sx; playerBodyScaleValue.y = sy;
+    return playerBodyScaleValue;
+  }
+
   function drawPlayer() {
     playerFxTick();
 
@@ -650,33 +684,8 @@
     // drawPlayerShadow() BEFORE the jello (from render()), so the translucent
     // gel renders over the shadow instead of the shadow showing through it.
 
-    // Drill/wall recoil (positive) + airborne stretch (driven by vy).
-    // Stretch is computed every frame from current motion so the rig
-    // visibly elongates during a hard climb or free-fall — selling the speed
-    // without any extra state. Squash always wins over stretch when present
-    // so landing feedback never gets diluted.
-    var sq = player.squash || 0;
     var landOffset = playerFxLandOffset();
-    var stretchK = 0;
-    if (sq < 0.05 && landOffset <= 0.01 && !drilling) {
-      var vyAbs = Math.abs(player.vy);
-      if (vyAbs > 90) {
-        stretchK = (vyAbs - 90) / 380;
-        if (stretchK > 1) stretchK = 1;
-        // Ascending under power feels punchier with stronger stretch
-        if (player.vy < 0 && player.thrustSpool > 0.4) stretchK *= 1.25;
-        else stretchK *= 0.7;
-        if (stretchK > 0.55) stretchK = 0.55;
-      }
-    }
-    var sy = 1, sx = 1;
-    if (sq > 0) {
-      sy = 1 - sq * 0.18;
-      sx = 1 + sq * 0.15;
-    } else if (stretchK > 0) {
-      sy = 1 + stretchK * 0.18;
-      sx = 1 - stretchK * 0.10;
-    }
+    var bodyScale = playerBodyScale(), sx = bodyScale.x, sy = bodyScale.y;
     // Flip horizontally if facing left. The bank is a lean, never a
     // reorientation (v25.49: the one flight model never rotates the rig),
     // so the mirror always follows the travel direction.
