@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.67';
+  var GAME_VERSION = 'v28.68';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -36163,7 +36163,7 @@
   /* Local staggered-grid air solver for snow entrainment.
      Velocity advection + pressure projection, driven by the actual nozzles.
      No snow is emitted here: this field moves the existing particle mass. */
-  var snowAir = { w: 64, h: 48, cell: 8, x: 0, y: 0, active: false, life: 0,
+  var snowAir = { w: 64, h: 64, cell: 12, x: 0, y: 0, active: false, life: 0,
     revision: 0, time: 0, ms: 0, peak: 0, trail: 0, divergenceBefore: 0, divergenceAfter: 0 };
   (function () {
     var n = snowAir.w * snowAir.h;
@@ -36280,18 +36280,27 @@
       // into wall jets; advection carries their shear and returning eddies.
       for (var n = 0; n < nozzles.length; n++) {
         var nz = nozzles[n];
-        var c0 = Math.max(1, Math.floor((nz.x - ox - 50) / cell)), c1 = Math.min(w - 2, Math.ceil((nz.x - ox + 50) / cell));
-        var r0 = Math.max(1, Math.floor((nz.y - oy - 50) / cell)), r1 = Math.min(h - 2, Math.ceil((nz.y - oy + 50) / cell));
+        // A spreading, fading downwash reaches powder far below the visible
+        // flame. Each sample still needs an unobstructed path from its nozzle.
+        var reach = 600, endX = nz.x + dir.x * reach, endY = nz.y + dir.y * reach;
+        var spread = 14 + reach * 0.15;
+        var c0 = Math.max(1, Math.floor((Math.min(nz.x, endX) - ox - spread) / cell));
+        var c1 = Math.min(w - 2, Math.ceil((Math.max(nz.x, endX) - ox + spread) / cell));
+        var r0 = Math.max(1, Math.floor((nz.y - oy - spread) / cell));
+        var r1 = Math.min(h - 2, Math.ceil((endY - oy + spread) / cell));
         for (var nr = r0; nr <= r1; nr++) for (var nc = c0; nc <= c1; nc++) {
           var ni = nr * w + nc;
           if (a.solid[ni]) continue;
           var dx = ox + (nc + 0.5) * cell - nz.x, dy = oy + (nr + 0.5) * cell - nz.y;
           var along = dx * dir.x + dy * dir.y, across = dx * -dir.y + dy * dir.x;
-          if (along < 0 || along > 40 || !liquidLineClear(nz.x, nz.y, nz.x + dx, nz.y + dy)) continue;
-          var inlet = Math.exp(-across * across / 90) * Math.pow(1 - along / 40, 2);
+          var width = 12 + along * 0.15;
+          if (along < 0 || along > reach || Math.abs(across) > width * 2 || !liquidLineClear(nz.x, nz.y, nz.x + dx, nz.y + dy)) continue;
+          var fade = Math.max(0, Math.min(1, (reach - along) / 140));
+          var inlet = Math.exp(-across * across / (width * width)) * fade * fade;
           var force = (1 - Math.exp(-32 * step * inlet)) * rocketIntensity;
-          a.u[ni] += (dir.x * 1100 - a.u[ni]) * force;
-          a.v[ni] += (dir.y * 1100 + player.vy * 0.15 - a.v[ni]) * force;
+          var speed = 1100 / (1 + along * 0.006);
+          a.u[ni] += (dir.x * speed - a.u[ni]) * force;
+          a.v[ni] += (dir.y * speed + player.vy * 0.15 - a.v[ni]) * force;
         }
       }
       snowAirProject();
@@ -36317,7 +36326,7 @@
       var wake = 1 - 0.97 * steer * forward;
       if (ux * rear < 0) ux *= 1 - 0.96 * steer;
       ux *= wake; vy *= wake;
-      // The 8px air grid cannot resolve grain-scale turbulent lift at the
+      // The air grid cannot resolve grain-scale turbulent lift at the
       // ground. Strong tangential flow scours exposed powder into the wall
       // jet; the resolved eddies then carry it. Keep this entrainment speed
       // separate from the projected velocity, bounded and local to a floor.
@@ -36326,7 +36335,12 @@
       if (!a.solid[bi]) for (var below = 1; below <= 3 && by + below < h; below++) {
         if (a.solid[bi + below * w]) { surface = (4 - below) / 3; break; }
       }
-      var lift = Math.min(420, Math.max(0, Math.abs(ux) - 28) * 2.6) * surface;
+      // Uneven gusts break up the smooth wall jet into overlapping puffs.
+      // World-space phases keep them independent of the rig and camera.
+      var wx = ox + (bx + 0.5) * cell, wy = oy + (by + 0.5) * cell;
+      var gust = 0.72 + 0.28 * Math.sin(wx * 0.17 + wy * 0.11 + a.time * 9.7)
+        * Math.sin(wx * 0.071 - wy * 0.13 - a.time * 6.3);
+      var lift = Math.min(460, Math.max(0, Math.abs(ux) - 12) * 4.8) * surface * gust * edge;
       a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = lift;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }
@@ -36453,22 +36467,36 @@
   }
   function snowScan(dt) {
     liquidToolSync();
-    var cells = {}, active = 0;
+    var cells = {}, active = 0, tops = {};
+    if (snowAir.active) for (var si = 0; si < liquidCount; si++) {
+      if (liquidType[si] !== 5 || liquidY[si] < SKY_ROWS * TILE - 36 || liquidY[si] > SKY_ROWS * TILE + 16) continue;
+      var column = Math.floor(liquidX[si] / 3);
+      tops[column] = tops[column] === undefined ? liquidY[si] : Math.min(tops[column], liquidY[si]);
+    }
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
       if (!snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
       // A separated grain becomes light airborne powder again. Leaving it
       // in the dense liquid solver makes it accelerate like a water drop.
-      // Keep its mass, position and velocity, including the jet's momentum.
+      // Keep its mass and position, carrying the jet's momentum into flight.
       // Let an upward-moving, loosened jet plume separate close to the
       // ground. Quiet pile edges keep their support in the dense solver.
-      var lofted = snowAir.active && liquidVY[i] < -20 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 0.6;
-      if (y < SKY_ROWS * TILE - (lofted ? 10 : 32) &&
-          (lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + 8) && snow.grains.length < SNOW_FLAKE_CAP) {
-        snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i], size: 0.5,
-          phase: Math.random() * Math.PI * 2, physical: true });
+      var air = snowAirAt(x, y);
+      var scour = y <= tops[Math.floor(x / 3)] + 2.8 && air[2] > 18 &&
+        Math.random() < 1 - Math.exp(-Math.min(18, air[2] * 0.09) * dt);
+      var lofted = snowAir.active && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
+      if ((scour || y < SKY_ROWS * TILE - (lofted ? 6 : 32)) &&
+          (scour || lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
+          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8)) && snow.grains.length < SNOW_FLAKE_CAP) {
+        // Sub-grid turbulence gives each released grain its own impulse,
+        // rather than preserving the dense solver's smooth travelling crest.
+        var phase = Math.random() * Math.PI * 2, kick = scour || lofted ? 120 + Math.random() * 220 : 0;
+        var gustVX = liquidVX[i] + Math.cos(phase) * kick * 0.65;
+        if (gustVX * snowAir.trail < 0) gustVX *= 1 - Math.abs(snowAir.trail) * 0.85;
+        snow.grains.push({ x: x, y: y, vx: gustVX,
+          vy: Math.min(scour ? -air[2] : liquidVY[i], liquidVY[i]) - kick, size: 0.3 + Math.random() * 0.7,
+          phase: phase, physical: true });
         removeLiquidParticle(i); continue;
       }
       if (Math.random() < 1 - Math.exp(-snowHeat(x, y) * dt) && snowMeltParticle(i)) continue;
@@ -36540,13 +36568,19 @@
       var liftVY = air[1] - air[2];
       var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + liftVY * liftVY) / 80);
       p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
-      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
+      // A released grain carries its turbulent kick through the coarse air
+      // cells instead of snapping straight back onto the common flow line.
+      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + (p.physical ? 3 : 10) * entrain) * dt));
+      // Updrafts can throw powder upward, but descending grains never hang
+      // in a slow settling phase. Use the same size/phase fall as sky snow.
+      if (p.physical && p.vy >= 0) p.vy = fall + liftVY < 0 ? fall + liftVY : Math.max(fall, p.vy);
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
-        var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) || (snow.cells[key] || 0) >= 3 || (rain.cells[key] || 0) > 1;
+        var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) ||
+          ((!p.physical || p.vy >= 0) && (snow.cells[key] || 0) >= 3) || (rain.cells[key] || 0) > 1;
         if (contact) { remove = snowLand(p, false); break; }
         p.x = nx; p.y = ny;
       }
@@ -36624,7 +36658,7 @@
   /* ---- Snow optics: one grain from sky to ground ---- */
   function snowRenderRGB() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
-    return [0.48 + 0.43 * day, 0.61 + 0.33 * day, 0.73 + 0.23 * day];
+    return [0.86 + 0.12 * day, 0.86 + 0.115 * day, 0.845 + 0.11 * day];
   }
   function snowDrawEnabled() {
     return worldSnowEnabled && !bathMode && !PERF_DISABLE_WEATHER && weatherTune.enabled;

@@ -7086,7 +7086,7 @@ struct RenderParams {
 
 // Same palette as liquidCatalog in 071. Pigment follows actual particles.
 fn mineralRGB(material : u32) -> vec3<f32> {
-  if (material == 5u) { return mix(vec3<f32>(0.48, 0.61, 0.73), vec3<f32>(0.91, 0.94, 0.96), rp.waterFoam.a); }
+  if (material == 5u) { return mix(vec3<f32>(0.86, 0.86, 0.845), vec3<f32>(0.98, 0.975, 0.955), rp.waterFoam.a); }
   if (material == 2u) { return vec3<f32>(0.57, 0.79, 0.68); }
   if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
   if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
@@ -7226,7 +7226,7 @@ struct RenderParams {
 
 // Same palette as liquidCatalog in 071. Pigment follows actual particles.
 fn mineralRGB(material : u32) -> vec3<f32> {
-  if (material == 5u) { return mix(vec3<f32>(0.48, 0.61, 0.73), vec3<f32>(0.91, 0.94, 0.96), rp.waterFoam.a); }
+  if (material == 5u) { return mix(vec3<f32>(0.86, 0.86, 0.845), vec3<f32>(0.98, 0.975, 0.955), rp.waterFoam.a); }
   if (material == 2u) { return vec3<f32>(0.57, 0.79, 0.68); }
   if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
   if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
@@ -7654,7 +7654,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     let normal = normalize(vec3<f32>(l-r,u-d,2.4));
     let diffuse = clamp(dot(normal,normalize(vec3<f32>(-0.45,-0.65,0.8))),0.0,1.0);
     let base = mineralRGB(5u);
-    let shade = mix(base * vec3<f32>(0.77,0.84,0.92),base,0.55+diffuse*0.45);
+    let shade = mix(base * vec3<f32>(0.94,0.94,0.94),base,0.55+diffuse*0.45);
     outRGB = outRGB * (1.0-snowAlpha) + shade * snowAlpha;
     outA = outA * (1.0-snowAlpha) + snowAlpha;
   }
@@ -10004,7 +10004,7 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
     if (instance.snowAirPipeline) return;
     var dev = instance.device;
     // Matches the fixed local MAC domain in 159-snow-air.js.
-    var a = { w: 64, h: 48 };
+    var a = { w: 64, h: 64 };
     instance.snowAirTexture = dev.createTexture({ label: 'snow.air', size: [a.w, a.h], format: 'rgba32float',
       usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
     instance.snowAirParams = dev.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });

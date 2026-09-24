@@ -80,7 +80,10 @@ try {
       window.passStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0,ahead=0,behind=0,forwardSpeed=0,backwardSpeed=0;
         function grain(x,y,vx){minY=Math.min(minY,y);if(y<sy-25){lifted++;
           if((x-player.x-PLAYER_W*.5)*${direction}>PLAYER_W*.5)ahead++;else behind++;
-          forwardSpeed+=Math.max(0,vx*${direction});backwardSpeed+=Math.max(0,-vx*${direction});}
+          // Loose flakes eventually drift on ambient wind. Check forced
+          // exhaust direction only while the grain is inside its strong flow.
+          if(snowAirAt(x,y)[0]*${direction} < -80){
+            forwardSpeed+=Math.max(0,vx*${direction});backwardSpeed+=Math.max(0,-vx*${direction});}}
           if(y<sy-55)high++;}
         for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i],liquidVX[i]);else if(liquidType[i]===0)water++;}
         for(var p of snow.grains)if(p.physical)grain(p.x,p.y,p.vx);
@@ -104,8 +107,8 @@ try {
     const forwardSpeed=samples.reduce((n,s)=>n+s.forwardSpeed,0),backwardSpeed=samples.reduce((n,s)=>n+s.backwardSpeed,0);
     console.log('FRESH PASS',{depth,direction,initial:resting.initial,peak,high,height,liftedFraction:peak/resting.initial,ahead,behind,forwardSpeed,backwardSpeed,
       samples:samples.map(s=>[Math.round(s.distance),s.lifted,s.ahead,Number(s.exhaustX.toFixed(2))])});
-    // A banked plume should stay low and trail the exhaust. Requiring the
-    // old upright pass's high front arc would reward the unwanted blowback.
+    // A banked plume trails the rig even when individual flakes climb high.
+    // Its forced wake points backward; flakes beyond it can drift on wind.
     check('a moving pass lifts a trailing plume from fresh snow',peak>resting.initial*.08&&height>30);
     check('banked flight sends nearly all spray with the exhaust',forwardSpeed<backwardSpeed*.12&&ahead<behind*.05);
     await game('cancelAnimationFrame(passRaf);keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false');
@@ -114,6 +117,103 @@ try {
     const settled=await game('passStats()');
     check('lofted powder settles after the pass',settled.lifted<peak*.15+5);
     assert.equal(settled.accounted,settled.initial,'settling preserves all material');
+  }
+  // A high flight must still reach an untouched dusting. Compare identical
+  // motion with and without thrust so camera movement or snowfall cannot
+  // supply the plume. These clearances exceed the old air window's reach.
+  const altitudeTrials=[];
+  for (const [clearance, moving] of [[240,true],[400,false]]) {
+    const trials=[];
+    for (const jets of [false,true]) {
+      await game(`keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false;
+        while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);
+        SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
+        window.sy=SKY_ROWS*TILE;window.cx=82*TILE;
+        for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=62;c<103;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
+        player.x=cx-PLAYER_W/2-${moving?280:0};player.y=sy-PLAYER_H-${clearance};player.vx=player.vy=0;cam.snap=true;updateCamera();
+        for(var x=cx-220;x<cx+220;x+=1.4)for(var h=1.3;h<4.2;h+=1.4){
+          addLiquidParticle(5,x+(wHash(Math.floor(x*10),Math.floor(h*10),915)-.5)*.4,sy-h,0,0,3);snow.active++;}
+        snow.mass=snow.emitted=snow.active;window.altitudeInitial=snow.active;
+        window.altitudeX=player.x;window.altitudeDistance=0;window.altitudeGo=false;window.altitudeLast=0;
+        window.pinAltitude=function(t){var dt=altitudeLast?Math.min(.05,(t-altitudeLast)/1000):0;altitudeLast=t;
+          var moving=${moving}&&altitudeGo&&altitudeDistance<560;
+          var dx=moving?Math.min(220*dt,560-altitudeDistance):0;altitudeDistance+=dx;altitudeX+=dx;
+          player.x=altitudeX;player.y=sy-PLAYER_H-${clearance};player.vx=moving?220:0;player.vy=0;player.dir=1;player.onGround=false;
+          keys.ArrowUp=${jets}&&altitudeGo&&(${moving}?moving:true);keys.ArrowRight=moving;keys.ArrowLeft=false;
+          window.altitudeRaf=requestAnimationFrame(pinAltitude);};window.altitudeRaf=requestAnimationFrame(pinAltitude);
+        window.altitudeStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0,powder=0,heights=[0,0,0,0];
+          function grain(x,y){minY=Math.min(minY,y);if(y<sy-25){lifted++;heights[Math.min(3,Math.floor((sy-y-25)/25))]++;}if(y<sy-55)high++;}
+          for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i]);else if(liquidType[i]===0)water++;}
+          for(var p of snow.grains)if(p.physical){grain(p.x,p.y);if(p.y<sy-25)powder++;}
+          for(var i=0;i<snow.parked.length;i+=4)grain(snow.parked[i],snow.parked[i+1]);
+          return {lifted:lifted,high:high,height:sy-minY,powder:powder,heights:heights,distance:altitudeDistance,initial:altitudeInitial,
+            accounted:__particleSnow.stats().mass+water+rain.parked.length/2+rain.absorbed};};`);
+      await sleep(1800);
+      const resting=await game('altitudeStats()');
+      check(`${clearance}px fresh bed stays settled before ${jets?'jet':'control'} trial`,resting.lifted===0&&resting.accounted===resting.initial);
+      await game('altitudeGo=true');
+      let peak=0, high=0, height=0, powder=0, occupiedHeights=0, samples=[];
+      for(let t=0;t<40;t++) {
+        await sleep(100);
+        const s=await game('altitudeStats()');samples.push(s);
+        peak=Math.max(peak,s.lifted);high=Math.max(high,s.high);height=Math.max(height,s.height);powder=Math.max(powder,s.powder);
+        occupiedHeights=Math.max(occupiedHeights,s.heights.filter(n=>n>=5).length);
+        assert.equal(s.accounted,s.initial,`${clearance}px trial conserves every snow and meltwater particle`);
+        if(jets&&(t===12||t===24))await screenshot(`snow-high-${clearance}-${moving?'pass':'hover'}-${t}`);
+        if(moving&&s.distance>=560)break;
+      }
+      const trial={clearance,moving,jets,initial:resting.initial,peak,high,height,powder,occupiedHeights,
+        samples:samples.map(s=>[Math.round(s.distance),s.lifted,s.powder,s.heights.join('/')])};
+      console.log('HIGH ALTITUDE',trial);trials.push(trial);
+      await game('altitudeGo=false;keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false');
+      await sleep(6500);
+      check(`${clearance}px airflow shuts down`,await game('!snowAir.active'));
+      const settled=await game('altitudeStats()');
+      check(`${clearance}px lofted powder settles after thrust stops`,settled.lifted<peak*.15+5);
+      assert.equal(settled.accounted,settled.initial,'high-altitude settling preserves all material');
+      await game('cancelAnimationFrame(altitudeRaf)');
+    }
+    altitudeTrials.push(trials);
+  }
+  // At the top of a thrown arc, descending powder must immediately regain
+  // ordinary snow's settling speed. Matched sky flakes retain their natural
+  // acceleration so a long slow phase in physical powder is observable.
+  const descent=await game(`(function(){
+    keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false;player.thrusting=false;player.jetForce=0;
+    while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,true);SNOW_RATE=0;
+    player.x=cx-PLAYER_W/2;player.y=sy-700;player.vx=player.vy=0;cam.snap=true;updateCamera();
+    var pairs=[], slow=0, lag=0, checked=0;
+    for(var size of [0,.3,.5,1])for(var phase of [0,Math.PI*.5,Math.PI,Math.PI*1.5]){
+      var sky=snowSpawn(cx+160,sy-650,size,phase),powder=snowSpawn(cx+160,sy-650,size,phase);
+      sky.vy=powder.vy=.001;powder.physical=true;pairs.push([sky,powder]);
+    }
+    for(var frame=0;frame<90;frame++){
+      updateSnow(1/60);
+      for(var pair of pairs){var sky=pair[0],powder=pair[1];
+        if(powder.vy+1e-6<32+powder.size*42-9)slow++;
+        if(powder.vy+1e-6<sky.vy)lag++;checked++;
+      }
+    }
+    // Feed a sustained updraft velocity into the same integrator. A
+    // settling-speed floor must not trap a descending flake against uplift.
+    var sampleAir=snowAirAt, rising=0;
+    try {
+      snowAirAt=function(){return [0,-300,0];};
+      for(var frame=0;frame<12;frame++)updateSnow(1/60);
+      for(var pair of pairs)if(pair[1].vy<0)rising++;
+    } finally {snowAirAt=sampleAir;}
+    return {slow:slow,lag:lag,checked:checked,rising:rising,pairs:pairs.length,retained:snow.grains.length,initial:pairs.length*2};
+  })()`);
+  console.log('POWDER DESCENT',descent);
+  check('descending powder is never slower than matching sky snow',descent.checked===1440&&descent.slow===0&&descent.lag===0);
+  check('a sustained updraft can lift descending powder again',descent.rising===descent.pairs);
+  check('descent probe retains every sky and powder grain',descent.retained===descent.initial);
+  for (const [control,powered] of altitudeTrials) {
+    const {clearance}=powered;
+    check(`${clearance}px motion without jets leaves fresh snow settled`,control.peak===0);
+    check(`${clearance}px jets raise a substantial flurry from fresh snow`,powered.peak>powered.initial*.08&&powered.height>50);
+    check(`${clearance}px plume breaks into individual airborne grains`,powered.powder>powered.initial*.04);
+    check(`${clearance}px flurry occupies several heights`,powered.occupiedHeights>=3);
   }
   if (!process.argv.includes('--passes-only')) {
   await game(`keys.ArrowUp=false;while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;

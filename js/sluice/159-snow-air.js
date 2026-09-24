@@ -1,7 +1,7 @@
   /* Local staggered-grid air solver for snow entrainment.
      Velocity advection + pressure projection, driven by the actual nozzles.
      No snow is emitted here: this field moves the existing particle mass. */
-  var snowAir = { w: 64, h: 48, cell: 8, x: 0, y: 0, active: false, life: 0,
+  var snowAir = { w: 64, h: 64, cell: 12, x: 0, y: 0, active: false, life: 0,
     revision: 0, time: 0, ms: 0, peak: 0, trail: 0, divergenceBefore: 0, divergenceAfter: 0 };
   (function () {
     var n = snowAir.w * snowAir.h;
@@ -118,18 +118,27 @@
       // into wall jets; advection carries their shear and returning eddies.
       for (var n = 0; n < nozzles.length; n++) {
         var nz = nozzles[n];
-        var c0 = Math.max(1, Math.floor((nz.x - ox - 50) / cell)), c1 = Math.min(w - 2, Math.ceil((nz.x - ox + 50) / cell));
-        var r0 = Math.max(1, Math.floor((nz.y - oy - 50) / cell)), r1 = Math.min(h - 2, Math.ceil((nz.y - oy + 50) / cell));
+        // A spreading, fading downwash reaches powder far below the visible
+        // flame. Each sample still needs an unobstructed path from its nozzle.
+        var reach = 600, endX = nz.x + dir.x * reach, endY = nz.y + dir.y * reach;
+        var spread = 14 + reach * 0.15;
+        var c0 = Math.max(1, Math.floor((Math.min(nz.x, endX) - ox - spread) / cell));
+        var c1 = Math.min(w - 2, Math.ceil((Math.max(nz.x, endX) - ox + spread) / cell));
+        var r0 = Math.max(1, Math.floor((nz.y - oy - spread) / cell));
+        var r1 = Math.min(h - 2, Math.ceil((endY - oy + spread) / cell));
         for (var nr = r0; nr <= r1; nr++) for (var nc = c0; nc <= c1; nc++) {
           var ni = nr * w + nc;
           if (a.solid[ni]) continue;
           var dx = ox + (nc + 0.5) * cell - nz.x, dy = oy + (nr + 0.5) * cell - nz.y;
           var along = dx * dir.x + dy * dir.y, across = dx * -dir.y + dy * dir.x;
-          if (along < 0 || along > 40 || !liquidLineClear(nz.x, nz.y, nz.x + dx, nz.y + dy)) continue;
-          var inlet = Math.exp(-across * across / 90) * Math.pow(1 - along / 40, 2);
+          var width = 12 + along * 0.15;
+          if (along < 0 || along > reach || Math.abs(across) > width * 2 || !liquidLineClear(nz.x, nz.y, nz.x + dx, nz.y + dy)) continue;
+          var fade = Math.max(0, Math.min(1, (reach - along) / 140));
+          var inlet = Math.exp(-across * across / (width * width)) * fade * fade;
           var force = (1 - Math.exp(-32 * step * inlet)) * rocketIntensity;
-          a.u[ni] += (dir.x * 1100 - a.u[ni]) * force;
-          a.v[ni] += (dir.y * 1100 + player.vy * 0.15 - a.v[ni]) * force;
+          var speed = 1100 / (1 + along * 0.006);
+          a.u[ni] += (dir.x * speed - a.u[ni]) * force;
+          a.v[ni] += (dir.y * speed + player.vy * 0.15 - a.v[ni]) * force;
         }
       }
       snowAirProject();
@@ -155,7 +164,7 @@
       var wake = 1 - 0.97 * steer * forward;
       if (ux * rear < 0) ux *= 1 - 0.96 * steer;
       ux *= wake; vy *= wake;
-      // The 8px air grid cannot resolve grain-scale turbulent lift at the
+      // The air grid cannot resolve grain-scale turbulent lift at the
       // ground. Strong tangential flow scours exposed powder into the wall
       // jet; the resolved eddies then carry it. Keep this entrainment speed
       // separate from the projected velocity, bounded and local to a floor.
@@ -164,7 +173,12 @@
       if (!a.solid[bi]) for (var below = 1; below <= 3 && by + below < h; below++) {
         if (a.solid[bi + below * w]) { surface = (4 - below) / 3; break; }
       }
-      var lift = Math.min(420, Math.max(0, Math.abs(ux) - 28) * 2.6) * surface;
+      // Uneven gusts break up the smooth wall jet into overlapping puffs.
+      // World-space phases keep them independent of the rig and camera.
+      var wx = ox + (bx + 0.5) * cell, wy = oy + (by + 0.5) * cell;
+      var gust = 0.72 + 0.28 * Math.sin(wx * 0.17 + wy * 0.11 + a.time * 9.7)
+        * Math.sin(wx * 0.071 - wy * 0.13 - a.time * 6.3);
+      var lift = Math.min(460, Math.max(0, Math.abs(ux) - 12) * 4.8) * surface * gust * edge;
       a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = lift;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }

@@ -1,7 +1,7 @@
   /* ---- Snow optics: one grain from sky to ground ---- */
   function snowRenderRGB() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
-    return [0.48 + 0.43 * day, 0.61 + 0.33 * day, 0.73 + 0.23 * day];
+    return [0.86 + 0.12 * day, 0.86 + 0.115 * day, 0.845 + 0.11 * day];
   }
   function snowDrawEnabled() {
     return worldSnowEnabled && !bathMode && !PERF_DISABLE_WEATHER && weatherTune.enabled;

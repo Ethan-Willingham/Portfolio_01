@@ -32,6 +32,10 @@ assert.ok(surfaceLift>100,'strong floor-parallel airflow entrains exposed powder
 // Opposing local velocities can leave weak projected flow while surface
 // scouring remains strong. CPU coupling must gate on the same effective
 // velocity as the GPU, including lift, or these particles never wake.
+const savedField = a.field.slice();
+for (let i=0;i<a.field.length;i+=4) {
+  a.field[i]=0.5; a.field[i+1]=0.5; a.field[i+2]=1; a.field[i+3]=80;
+}
 const weakFlow = api.sample(55,102.75).slice();
 assert.ok(Math.hypot(weakFlow[0],weakFlow[1])<2,'regression sample has weak projected velocity');
 assert.ok(Math.hypot(weakFlow[0],weakFlow[1]-weakFlow[2])>20,'surface lift still supplies a meaningful disturbance');
@@ -50,6 +54,7 @@ for(const i of [1,2]) {
   assert.equal(ctx.liquidVX[i],0);assert.equal(ctx.liquidVY[i],0);
   assert.equal(ctx.liquidSleeping[i],1);assert.equal(ctx.liquidRestFrames[i],90);
 }
+a.field.set(savedField);
 assert.equal(inside,0,'no airflow through a solid roof into the open pocket below it');
 const preserved=a.u[20*a.w+31];api.shift(a.x+8,a.y);assert.equal(a.u[20*a.w+30],preserved,'moving the window preserves world-space face velocity');
 assert.ok(a.divergenceAfter<a.divergenceBefore*.5,'pressure projection reduces divergence');

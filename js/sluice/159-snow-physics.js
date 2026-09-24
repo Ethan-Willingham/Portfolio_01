@@ -89,22 +89,36 @@
   }
   function snowScan(dt) {
     liquidToolSync();
-    var cells = {}, active = 0;
+    var cells = {}, active = 0, tops = {};
+    if (snowAir.active) for (var si = 0; si < liquidCount; si++) {
+      if (liquidType[si] !== 5 || liquidY[si] < SKY_ROWS * TILE - 36 || liquidY[si] > SKY_ROWS * TILE + 16) continue;
+      var column = Math.floor(liquidX[si] / 3);
+      tops[column] = tops[column] === undefined ? liquidY[si] : Math.min(tops[column], liquidY[si]);
+    }
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
       if (!snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
       // A separated grain becomes light airborne powder again. Leaving it
       // in the dense liquid solver makes it accelerate like a water drop.
-      // Keep its mass, position and velocity, including the jet's momentum.
+      // Keep its mass and position, carrying the jet's momentum into flight.
       // Let an upward-moving, loosened jet plume separate close to the
       // ground. Quiet pile edges keep their support in the dense solver.
-      var lofted = snowAir.active && liquidVY[i] < -20 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 0.6;
-      if (y < SKY_ROWS * TILE - (lofted ? 10 : 32) &&
-          (lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + 8) && snow.grains.length < SNOW_FLAKE_CAP) {
-        snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i], size: 0.5,
-          phase: Math.random() * Math.PI * 2, physical: true });
+      var air = snowAirAt(x, y);
+      var scour = y <= tops[Math.floor(x / 3)] + 2.8 && air[2] > 18 &&
+        Math.random() < 1 - Math.exp(-Math.min(18, air[2] * 0.09) * dt);
+      var lofted = snowAir.active && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
+      if ((scour || y < SKY_ROWS * TILE - (lofted ? 6 : 32)) &&
+          (scour || lofted || (snow.cells[rainCell(x, y)] || 0) < 3) &&
+          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8)) && snow.grains.length < SNOW_FLAKE_CAP) {
+        // Sub-grid turbulence gives each released grain its own impulse,
+        // rather than preserving the dense solver's smooth travelling crest.
+        var phase = Math.random() * Math.PI * 2, kick = scour || lofted ? 120 + Math.random() * 220 : 0;
+        var gustVX = liquidVX[i] + Math.cos(phase) * kick * 0.65;
+        if (gustVX * snowAir.trail < 0) gustVX *= 1 - Math.abs(snowAir.trail) * 0.85;
+        snow.grains.push({ x: x, y: y, vx: gustVX,
+          vy: Math.min(scour ? -air[2] : liquidVY[i], liquidVY[i]) - kick, size: 0.3 + Math.random() * 0.7,
+          phase: phase, physical: true });
         removeLiquidParticle(i); continue;
       }
       if (Math.random() < 1 - Math.exp(-snowHeat(x, y) * dt) && snowMeltParticle(i)) continue;
@@ -176,13 +190,19 @@
       var liftVY = air[1] - air[2];
       var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + liftVY * liftVY) / 80);
       p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
-      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + 10 * entrain) * dt));
+      // A released grain carries its turbulent kick through the coarse air
+      // cells instead of snapping straight back onto the common flow line.
+      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + (p.physical ? 3 : 10) * entrain) * dt));
+      // Updrafts can throw powder upward, but descending grains never hang
+      // in a slow settling phase. Use the same size/phase fall as sky snow.
+      if (p.physical && p.vy >= 0) p.vy = fall + liftVY < 0 ? fall + liftVY : Math.max(fall, p.vy);
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
-        var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) || (snow.cells[key] || 0) >= 3 || (rain.cells[key] || 0) > 1;
+        var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) ||
+          ((!p.physical || p.vy >= 0) && (snow.cells[key] || 0) >= 3) || (rain.cells[key] || 0) > 1;
         if (contact) { remove = snowLand(p, false); break; }
         p.x = nx; p.y = ny;
       }

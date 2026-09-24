@@ -52,7 +52,8 @@ into a body, and thinning powder separates continuously into the original
 The density gradient supplies diffuse shading; snow gets no water foam,
 gloss or artificial gap bridging. Removing particles removes the surface.
 The WebGL/Canvas fallback retains fine grain rendering. Lighting follows
-daylight and moonlight.
+daylight and moonlight, with a bright ivory tint and shallow neutral shading
+so settled snow stays pale rather than turning blue-grey at night.
 
 Snowfall emits 345 grains per second at full intensity over the reference
 width, three times the former rate. The denser rest spacing keeps the smaller
@@ -89,8 +90,11 @@ climbing and reversal, and wait for the remaining flakes to fall out naturally.
 
 ## Jet airflow
 
-`159-snow-air.js` solves a local 64 by 48 staggered MAC grid at 8 world pixels
+`159-snow-air.js` solves a local 64 by 64 staggered MAC grid at 12 world pixels
 per cell. The inlet follows the actual banked nozzles and thrust intensity.
+Its spreading downwash extends 600 world pixels beyond the nozzle, fading
+out over the last 140 pixels. Terrain still blocks each inlet sample.
+High flyovers can disturb the ground well beyond the visible flame.
 Semi-Lagrangian velocity advection and a 28-iteration red/black pressure
 projection resolve the impinging jet, lateral wall flows and returning eddies.
 Terrain and the rig block normal flow. The moving window preserves overlapping
@@ -119,10 +123,18 @@ and drifting motion. A weak crosswind cannot cancel gravity or build a shelf
 of slow flakes above the rig; an actual updraft can still lift them.
 Strong sideways flow close to a floor also entrains powder through a bounded
 surface-scouring term. This approximates turbulent grain lift below the air
-grid's 8-pixel resolution: flow above 28 pixels per second can lift exposed
-snow, with a 420-pixel-per-second entrainment ceiling and a three-cell reach.
+grid's 12-pixel resolution: flow above 12 pixels per second can lift exposed
+snow, with a 460-pixel-per-second entrainment ceiling and a three-cell reach.
 It vanishes in still air, inside solids and away from a supporting surface.
 The same term reaches GPU snow, CPU snow and airborne flakes.
+Two world-space gust phases vary the lift instead of moving every grain in
+one smooth crest. Exposed grains in the top 2.8 pixels of a local powder
+column peel off at independent, airflow-dependent times. The transfer
+keeps every grain's position and mass and supplies a varied turbulent kick.
+Loose upward-moving grains clear the powder bed while still colliding with
+terrain, the rig and water. Their vertical drag preserves the individual
+kicks long enough to produce a spread of heights. Once descending, physical
+powder falls at least as fast as the sky-snow speed for its size and phase.
 
 The direct liquid cone wake is weighted by the nonsnow mass in each physics
 cell. Pure water keeps its original splash force; dry powder follows the air
@@ -142,7 +154,8 @@ see [Bridson's course material](https://www.cs.ubc.ca/~rbridson/fluidsimulation/
 The dedicated flyover test crosses fresh thin dusting and a deeper bed at
 220 world pixels per second, with actual left and right flight inputs so the
 rig and nozzles bank. It requires a visible trailing plume, less than 12%
-as much opposing horizontal snow motion, settling afterward, and exact accounting through
+as much opposing horizontal snow motion within the strong exhaust flow,
+settling afterward, and exact accounting through
 snow, meltwater and absorption. The older long-hover check remains too.
 All buffers are bounded and reused. The air coupling shader is compiled
 during the existing GPU startup warmup.
@@ -157,10 +170,12 @@ Foundations, jet exhaust and contact with
 a body of water accelerate thaw; a few droplets do not dissolve an entire pile.
 The rig's warm scoop collects snow directly into its water chamber.
 Airborne powder more than 24 world pixels above the surface cannot thaw beside
-the jet. Grains moving upward in the jet's airflow return to light flake
-motion above 10 world pixels once their local density falls below 60% of
-packed snow. Other isolated grains retain the 32-pixel release height.
-Both keep their position, velocity and mass. Quiet pile edges retain their
+the jet. Exposed surface grains return directly to light flake motion when scoured.
+Other grains moving upward in the jet's airflow separate above 6 world
+pixels once their local density falls below 120% of packed snow, before a
+coherent crest forms. Other isolated grains retain the 32-pixel release height.
+Both keep their position and mass; turbulent lift adds to their existing
+momentum. Quiet pile edges retain their
 support in the dense solver. Released grains no longer accelerate as liquid
 drops after a brief rig contact; dense piles still use the shared solver.
 
@@ -213,7 +228,10 @@ soil contact, stored-water drainage and a resting puddle on the live solver.
 projection, occlusion through a solid roof, window translation and shutdown.
 `node tools/sluice-snow-jet.mjs` first runs moving passes over fresh thin and
 deep beds, then a controlled live hover and low pass,
-checks entrainment outside the core and exact material accounting, then flies
+checks entrainment outside the core and exact material accounting. Fresh-bed
+trials compare jets on and off at 240-pixel moving clearance and 400-pixel
+hover clearance, requiring separated powder at several heights. A matched
+sky/powder descent probe checks the settling speed. The test then flies
 through several view widths in both directions and checks surrounding snowfall.
 An airborne hover also checks that flakes keep falling through the top of the
 jet airflow area without stalling. It writes
