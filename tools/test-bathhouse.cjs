@@ -33,7 +33,7 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-tools','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
     inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };
@@ -419,4 +419,24 @@ for (const fps of [30,60,144]) {
   assert.equal(s.hearthBeds.boiler.chunks.length, 0); assert.equal(s.hearthBeds.forge.chunks.length, 0);
   assert.equal(s.hearthJob.stage, 'empty'); assert.equal(s.hearthToolPulse, 0);
   console.log('PASS old fire migration, no duplicate fuel, transient reload state and new-game reset');
+}
+
+
+{
+  const f=fixture(),s=f.s;s.bathMode=true;s.bathCarveRoom();
+  const guest=s.skySlimeSpawn(1100,100);assert(s.bathGuestAccept(guest));s.skySlimes=[];
+  const g=s.bathGuests[0];g.manual=true;g.hop=null;g.st='play';
+  const curve=s.bathTubCurve(s.BATH_FLOORS[0],s.BATH_FLOORS[0].tubs[0]);
+  g.s.x=(curve.x0+curve.x1)/2;g.s.y=s.bathWaterline()-g.s.r-80;g.s.vx=80;g.s.vy=0;
+  for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
+  s.bathWater=8000;s.bathHeat=0.75;
+  for(let i=0;i<900;i++){s.bathToolGuestTick(g,1/60);assert(Number.isFinite(g.s.x+g.s.y));}
+  assert(g.served);assert(g.soak>0,'physical drop earns actual submerged soak time');
+  const earned=g.soak;s.bathTool.held=g;
+  for(let i=0;i<60;i++)s.bathToolGuestTick(g,1/60);
+  assert.equal(g.soak,earned,'holding a guest pauses service');s.bathToolReset();
+  s.bathGuestColliders=[{x:100,y:100,hw:20,hh:20,vx:80,vy:20}];
+  const p=s.bathToolProjectLiquid(118,100,-10,0,1);
+  assert.equal(p[0],121);assert.equal(p[2],80,'CPU water receives the moving claw boundary velocity');
+  console.log('PASS physical guest buoyancy, submerged service, held service pause and CPU liquid coupling');
 }

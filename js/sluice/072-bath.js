@@ -405,6 +405,7 @@
   }
   function bathSwap(toInside) {
     if (bathFading || (toInside && !ENABLE_BATH)) return;
+    bathToolReset();
     surfaceSlimeGrabEnd(undefined, true);
     bathFading = true;
     var ticket = ++bathTransitionSerial;
@@ -802,10 +803,11 @@
     var nav = hearthNavHeight(), hud = bathHUDHeight();
     // Reserve the fixed controls before fitting the entire ground-floor tub.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
-    var mainHeight = Math.max(13*TILE,bathInteriorBottom()-mainCurve.y0+24);
+    var mainHeight = Math.max(13*TILE,bathInteriorBottom()-mainCurve.y0+220);
     worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / mainHeight);
     var viewportKey = width + ':' + height + ':' + nav;
     if (bathViewportKey !== viewportKey) {
+      bathToolCancel(); bathTool.rope = [];
       bathViewportKey = viewportKey; bathScrollT = 1e9; bathCamY = -1;
     }
     var iws = 1 / (dpr * worldScale);
@@ -854,6 +856,7 @@
   function bathPointer(e) {
     if (!ENABLE_BATH || bathFading || gamePaused) return;
     if (hearthPointerDown(e)) return;
+    if (bathMode && bathTool.mode) return;
     if (bathMode) {
       bathPtrDown = true; bathPtrX = e.clientX; bathPtrY = e.clientY;
       bathPtrMoved = 0;
@@ -872,6 +875,7 @@
     return wx >= cx - 110 && wx <= cx + 110 && wy >= gy - 480 && wy <= gy;
   }
   function bathPointerMove(e) {
+    if (bathToolPointerMove(e)) return;
     if (bathMode && hearthPointerMove(e)) return;
     if (!bathMode || !bathPtrDown) return;
     var dy = e.clientY - bathPtrY;
@@ -883,6 +887,7 @@
     if (rct.height) bathScrollT -= dy * (canvas.height / rct.height) / (dpr * worldScale);
   }
   function bathPointerUp(e) {
+    if (bathToolPointerUp(e)) return;
     if (bathMode && hearthPointerUp(e)) return;
     var wasDown = bathPtrDown;
     bathPtrDown = false;
@@ -911,7 +916,7 @@
   function bathWheelScroll(e) {
     if (!bathMode) return;
     e.preventDefault();
-    if (hearthView !== 'bath') return;
+    if (hearthView !== 'bath' || bathTool.mode) return;
     bathScrollT += (e.deltaY || 0) / Math.max(worldScale, 0.001);
   }
 
@@ -1545,8 +1550,11 @@
       canvas.addEventListener('pointerdown', bathPointer);
       canvas.addEventListener('pointermove', bathPointerMove);
       canvas.addEventListener('pointerup', bathPointerUp);
-      canvas.addEventListener('pointercancel', function () { bathPtrDown = false; hearthCancelDrag(); hearthClearBoilerHover(); });
+      canvas.addEventListener('pointercancel', function (e) { if (bathTool.pointer === e.pointerId) bathToolCancel(); bathPtrDown = false; hearthCancelDrag(); hearthClearBoilerHover(); });
       canvas.addEventListener('pointerleave', hearthClearBoilerHover);
+      canvas.addEventListener('lostpointercapture', function (e) { if (bathTool.pointer === e.pointerId) bathToolCancel(); });
+      window.addEventListener('blur', bathToolCancel);
+      document.addEventListener('visibilitychange', function () { if (document.hidden) bathToolCancel(); });
       canvas.addEventListener('wheel', bathWheelScroll, { passive: false });
     } catch (e) {}
   }

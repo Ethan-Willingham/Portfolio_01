@@ -1498,6 +1498,10 @@
       y = (TOTAL_ROWS + 1) * TILE;
       vy = -Math.abs(vy) * bounce;
     }
+    if (bathMode && bathGuestColliders.length) {
+      var guest = bathToolProjectLiquid(x, y, vx, vy, r);
+      x = guest[0]; y = guest[1]; vx = guest[2]; vy = guest[3];
+    }
     if(typeof bathProjectWater==='function' && bathRoomReady && y>(BATH_TOP_ROW-1)*TILE){
       var bowl=bathProjectWater(x,y,vx,vy,r);x=bowl[0];y=bowl[1];vx=bowl[2];vy=bowl[3];
     }

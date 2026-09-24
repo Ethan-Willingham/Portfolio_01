@@ -120,7 +120,7 @@ try {
     check('backtick enables dev mode inside the banya',await game('devMode'));
     check('world debug buttons are hidden in the banya',await ev("['gmTuneBtn','gmSlimeBtn'].every(id=>!document.getElementById(id)||getComputedStyle(document.getElementById(id)).display==='none')"));
     const stock = await game('JSON.stringify({stock:forgeStock,tank:siphon.tank,supplies:bathSupplies,cargo:cargo})');
-    await game('skySlimes=[];bathGuests=[];render()');
+    await game('skySlimes=[];bathGuests=[];skySlimeNext=100000;render()');
     await press('(function(){var b=hearthButtons.find(b=>b.action===\'kit\');return {x:b.x+b.w/2,y:b.y+b.h/2};})()');
     check('prepare bath starts a real fire and a bounded water pour',await game('hearthView===\'bath\' && hearthBeds.boiler.chunks.some(b=>b.lit) && bathPour>0 && bathPour<=BATH_MAX_WATER'));
     for(var wait=0;wait<180;wait++){if(await game('bathWater>=BATH_MIN_WATER && bathCanServe() && bathPour===0'))break;await sleep(500);}

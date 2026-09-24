@@ -17,6 +17,7 @@
   var bathIntroSeen = false;
 
   function bathServiceReset() {
+    bathToolReset();
     bathScalePop(); bathSteamPop();
     hearthRoomReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
@@ -154,7 +155,7 @@
       bathWater = bathBasinCount();
       bathArmHeat();
     }
-    if (bathMode && bathRoomReady && bathPour > 0) {
+    if (bathMode && bathRoomReady && bathPour > 0 && bathTool.mode !== 'hose') {
       var F = BATH_FLOORS[0], tb = F.tubs[0];
       var before = bathWater;
       var count = liquidToolEmit(0, Math.min(bathPour, Math.ceil(2400 * dt)),
@@ -169,6 +170,7 @@
   }
 
   function bathBeginHop(g, x, y, duration, height, next) {
+    g.manual = false;
     g.hop = { x: g.s.x, y: g.s.y, tx: x, ty: y, duration: duration, height: height, t: 0, next: next };
     g.st = 'hop'; g.s.settled = false; g.s._ground = false;
     g.s.squashV = -1.8;
@@ -251,6 +253,7 @@
     if (!ENABLE_BATH || !(dt > 0) || gameOver || gameWon) return;
     dt = Math.min(dt, 0.1);
     bathOperationsTick(dt);
+    bathToolTick(dt);
     bathNoticeT = Math.max(0, bathNoticeT - dt);
     bathGuestColliders.length = 0;
     for (var f = bathFloats.length - 1; f >= 0; f--) {
@@ -261,7 +264,10 @@
       var g = bathGuests[i], s = g.s, oldX = s.x, oldY = s.y;
       g.t += dt; s.age += dt;
       s._bathMorph = skySlimeClamp((g.soak / BATH_VISIT.seconds - 0.7) / 0.3, 0, 1);
-      if (g.st === 'hop') {
+      var physical = !!g.manual;
+      if (physical) {
+        bathToolGuestTick(g, dt);
+      } else if (g.st === 'hop') {
         var h = g.hop;
         h.t = Math.min(h.duration, h.t + dt);
         var k = h.t / h.duration;
@@ -295,13 +301,14 @@
         if (bathReleaseGuest(g)) bathGuests.splice(i, 1);
         continue;
       }
-      s.vx = (s.x - oldX) / dt; s.vy = (s.y - oldY) / dt;
+      if (!physical) { s.vx = (s.x - oldX) / dt; s.vy = (s.y - oldY) / dt; }
       s.settled = g.st === 'wait' || g.st === 'soak';
       skySlimeExpression(s, Math.min(dt, 1 / 60));
       if (g.st === 'soak') s.eye = 0.2 + Math.sin(g.t * 0.8) * 0.035;
       if (bathMode) bathGuestColliders.push({ x: s.x, y: s.y, hw: s.r, hh: s.r,
         vx: s.vx, vy: s.vy, pts: null });
     }
+    bathToolCollider();
   }
 
   function bathOrderRect(g) {
@@ -360,7 +367,7 @@
         ctx.fillStyle = BLD.goldPale; ctx.fillRect(g.s.x - 21, g.s.y - g.s.r - 15, 42 * g.soak / BATH_VISIT.seconds, 3);
       }
     }
-    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait') bathDrawOrder(bathGuests[b]);
+    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait' && !bathTool.mode) bathDrawOrder(bathGuests[b]);
     for (var f = 0; f < bathFloats.length; f++) {
       var p = bathFloats[f];
       ctx.save(); ctx.globalAlpha = 1 - p.t / 2;
@@ -368,7 +375,7 @@
       ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
     }
   }
-  function bathHUDHeight() { return canvas.width / dpr < 520 ? 92 : 76; }
+  function bathHUDHeight() { return canvas.width / dpr < 520 ? 156 : 130; }
   function bathDrawServiceHUD() {
     var w = canvas.width / dpr, h = canvas.height / dpr, narrow = w < 520;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -376,13 +383,20 @@
     var hud = bathHUDHeight(), top = h - hud;
     ctx.fillStyle = UIT_PANEL; ctx.fillRect(0, top, w, hud);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(0, top, w, 1);
+    bathToolDrawControls(ctx, w, top + 7);
+    top += 54;
     var bw = narrow ? 132 : 174;
     bathServiceButtons = [{ x: w - bw - 14, y: top + 10, w: bw, h: 44, action: 'water' }];
-    hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
+    if (bathTool.mode === 'hose') {
+      var supply = bathServiceButtons[0];
+      hearthText(ctx, Math.floor((bathWaterCount() + bathPour) / 100) + ' L SUPPLY',
+        supply.x + supply.w / 2, supply.y + 22, 12, BLD.cream, 'center');
+      bathServiceButtons = [];
+    } else hearthButton(ctx, bathServiceButtons[0], bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
     hearthText(ctx, Math.floor(bathWater / 100) + ' L  /  ' + Math.round(20 + bathHeat * 28) + ' C', 18, top + 23, 14, BLD.cream);
     hearthText(ctx, bathCanServe() ? 'READY FOR GUESTS' : bathWater < BATH_MIN_WATER ? 'FILL THE BATH' : 'WARM THE WATER', 18, top + 44, 10, UIT_DIM);
     if (!narrow && w > 740) hearthText(ctx, '$' + bathFmtMoney(money), w * 0.5, top + 28, 15, BLD.goldPale, 'center');
-    var notice = bathNoticeT > 0 ? bathNotice : 'Click the boiler beneath the tub to tend the fire.';
+    var notice = bathNoticeT > 0 ? bathNotice : bathToolHint();
     hearthWrap(ctx, notice, 18, top + 66, w - 36, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, narrow ? 2 : 1);
   }
   function bathServicePointer(x, y) {
@@ -400,10 +414,11 @@
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
-          served: g.served, soak: g.soak, hop: g.hop ? Object.assign({}, g.hop) : null };
+          served: g.served, soak: g.soak, manual: !!g.manual, hop: g.hop ? Object.assign({}, g.hop) : null };
       }) };
   }
   function bathServiceRestore(data) {
+    bathToolReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
     bathRoomReady = false; bathSyncCollision(); banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
     bathFloorsOwned = [true, false, false, false, false];
@@ -433,15 +448,15 @@
     for (var i = 0; i < Math.min(bathGuestCap, list.length); i++) {
       var src = list[i], s = skySlimeHydrate(src.s);
       if (!s || bathGuests.some(function (g) { return g.s.id === s.id; })) continue;
-      var st = ['hop', 'wait', 'plunge', 'soak', 'leave', 'exit'].indexOf(src.st) >= 0 ? src.st : 'wait';
+      var st = ['hop', 'wait', 'plunge', 'soak', 'leave', 'exit', 'play'].indexOf(src.st) >= 0 ? src.st : 'wait';
       var hop = src.hop;
       if (st === 'hop' && (!hop || !isFinite(hop.x + hop.y + hop.tx + hop.ty + hop.duration + hop.height + hop.t) || hop.duration <= 0)) st = 'wait';
       var slot = src.slot === 1 ? 1 : 0;
       if (bathGuests.some(function (guest) { return guest.slot === slot; })) slot = 1 - slot;
       var g = { s: s, slot: slot, st: st, t: Number(src.t) || 0, paid: !!src.paid,
-        served: !!src.served, soak: skySlimeClamp(Number(src.soak) || 0, 0, BATH_VISIT.seconds),
+        served: !!src.served, manual: !!src.manual, soak: skySlimeClamp(Number(src.soak) || 0, 0, BATH_VISIT.seconds),
         hop: st === 'hop' ? Object.assign({}, hop) : null };
-      if (!g.served && st !== 'wait' && !(st === 'hop' && hop.next === 'wait')) g.st = 'wait';
+      if (!g.manual && !g.served && st !== 'wait' && !(st === 'hop' && hop.next === 'wait')) g.st = 'wait';
       if ((Number(data.version) || 0) < 4 && !g.served) {
         g.st = 'wait'; g.hop = null;
         s.x = (slot ? 22.5 : 20.75) * TILE; s.y = BATH_FLOORS[0].fr * TILE - s.r;

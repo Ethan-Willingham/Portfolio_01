@@ -60,6 +60,7 @@
   }
   function hearthSetView(view) {
     if (view !== 'bath' && view !== 'boiler') return;
+    bathToolReset();
     hearthCancelDrag(); hearthView = view; hearthButtons = [];
     bathPtrDown = false;
     if (view === 'bath') { bathScrollT = 1e9; bathCamY = -1; }
@@ -131,6 +132,7 @@
     else if (action === 'strike' && hearthView === 'boiler') hearthStrike();
     else if (action === 'ash' && hearthView === 'boiler') hearthClearAsh(hearthView);
     else if (action === 'water') bathAddWater();
+    else if (hearthView === 'bath') bathToolAction(action);
   }
   function hearthRoomKey(e) {
     if (!bathMode || gamePaused) return false;
@@ -161,6 +163,9 @@
     } else if (k === 'e' || k === 'enter') {
       for (var i = 0; i < bathGuests.length; i++) if (bathGuests[i].st === 'wait') { bathServe(bathGuests[i].s.id); break; }
     } else if (k === 'w') bathAddWater();
+    else if (k === '1') bathToolSelect('claw');
+    else if (k === '2') bathToolSelect('hose');
+    else if (k === ' ') bathToolAction(bathTool.mode === 'claw' ? 'tool-drop' : 'tool-valve');
     return true;
   }
 
@@ -232,7 +237,7 @@
     if (canvas && canvas.style) canvas.style.cursor = '';
   }
   function hearthBoilerHoverAt(p) {
-    var r = bathMode && hearthView === 'bath' && !bathFading && !gamePaused &&
+    var r = bathMode && hearthView === 'bath' && !bathTool.mode && !bathFading && !gamePaused &&
       typeof bathBoilerScreenRect === 'function' ? bathBoilerScreenRect() : null;
     bathBoilerHover = !!(r && hearthContains(r, p.x, p.y));
     canvas.style.cursor = bathBoilerHover ? 'pointer' : '';
@@ -240,7 +245,7 @@
   }
   function hearthPointerDown(e) {
     if (!bathMode || bathFading || gamePaused) return false;
-    if (hearthDrag || hearthPress) return true;
+    if (hearthDrag || hearthPress || bathTool.pointer !== null) return true;
     if (e.button > 0) return hearthView !== 'bath';
     var p = hearthCSSPoint(e), L = hearthRoomLayout(), kind = hearthView;
     for (var i = 0; i < hearthButtons.length; i++) {
@@ -257,6 +262,7 @@
       hearthCapture(e); return true;
     }
     if (kind === 'bath') {
+      if (bathToolPointerDown(e)) return true;
       var boiler = hearthBoilerHoverAt(p);
       if (!bathBoilerHover) return false;
       hearthPress = { action: 'boiler', pointer: e.pointerId, rect: boiler,

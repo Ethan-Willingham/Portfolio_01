@@ -64,7 +64,10 @@ spent ash to free space on the grate.
 The fuel locker automatically keeps up to 24 ordinary coal when entering the
 banya or selling at the station. Iron, surplus coal, and shiny ore sell normally.
 Fuel, tools, existing stored iron, and retired forge work persist. Water still
-comes from the rig's scoop, and spilled bath water is permanently lost.
+comes from the rig's scoop, and spilled bath water is permanently lost. The
+ceiling CLAW lifts and drops guests with mouse or touch dragging. HOSE switches
+to a flexible nozzle with Jet and Shower patterns, drawing the same stored
+water. Tap either active switch again to stow it.
 Guest-specific recipes and night-only opening hours are not implemented.
 See `BATHHOUSE_SERVICE.md` for controls, resource conservation, and verification.
 
@@ -170,6 +173,7 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `071-liquid-catalog.js` | fluid identities, conserved transfer, samples, and sky-slime liquid boundaries |
 | `073-liquid-deposits.js` | finite mineral pockets, offscreen liquid storage, and liquid persistence |
 | `073-bath-interior.js` | wide bath room, curved vessel, integrated boiler rendering and hit geometry |
+| `074-bath-tools.js` | ceiling claw and flexible hose, pointer ownership, physical guest handling, conserved water emission |
 | `074-bath-service.js` | visitor queue, coal-powered bath heat, water supply, floor drain, payments, and migration |
 | `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, boiler controls and bath navigation |
 | `079-forge-resources.js` | reserved coal, durable flint, supplied steel, and legacy supply persistence |

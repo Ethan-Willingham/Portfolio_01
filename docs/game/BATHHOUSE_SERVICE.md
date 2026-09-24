@@ -77,6 +77,45 @@ Dev supplies are virtual finite counts. Created water, physical fuel, and guests
 follow ordinary persistence. A dev coal cannot refund itself into real stock
 after reloading. Dev mode keeps its free purchases and 999,999 money clamp.
 
+## Ceiling claw and hose (v28.70)
+
+The bottom rail has CLAW and HOSE switches. Tap the selected switch again to
+stow it. Only the selected tool and its ceiling carriage are visible. While a
+tool is selected, dragging in the room controls it; the camera stays fixed.
+The same captured pointer path handles a mouse, pen, or finger.
+
+Drag the claw down to a guest to catch it automatically. It keeps holding when
+you lift your finger, so you can reposition your hand. DROP SLIME opens the
+jaws. Guests handled this way use gravity, buoyancy, curved-liner contacts,
+and moving water boundaries. Dropping one into a warm bath starts service;
+only submerged, unheld time counts toward its soak. Existing guest identity,
+payment, and departure rules still apply. Physical guest positions survive a
+save, but the claw releases on reload.
+
+Drag the hose to move its nozzle and pour. FLOW keeps the valve open between
+drags; tap it again to close. JET gives a fast narrow stream and SHOWER spreads
+it into five gentler streams. Sideways motion tilts the nozzle, the flexible
+hose trails behind, and the pressure ramps smoothly. Its real water particles
+hit guests, displace the bath, and spill onto the floor. The claw hub and
+fingers also displace water when dipped into the tub.
+
+The hose draws from stored and rig water, or an already-paid ADD WATER queue.
+It only debits particles the liquid solver accepts. Selecting the hose pauses
+the fixed filling spout, including when its valve is closed. Switching it off
+resumes any queued fill. Normal play retains finite water and permanent floor
+loss; dev mode supplies water as before. A full basin stops new emission.
+
+Keys 1 and 2 switch the claw and hose. Space drops a held slime or switches the
+hose valve. Pause, focus loss, pointer cancellation, resizing, changing rooms,
+and leaving stop flow and release a held guest. Controls remain at least 44px
+tall on phones and short landscape screens. Stow the tool to click the boiler.
+
+`074-bath-tools.js` owns the tools. `node tools/bath-tools-smoke.mjs` exercises
+actual mouse and touch controls, water accounting, three simulation rates,
+physical guest saves, cancellation and responsive layouts. Screenshots go to
+`/tmp/sluice-bath-tools-qa`. The bathhouse unit suite also checks physical soak
+progress and CPU moving-boundary water coupling.
+
 ## Coal and heat
 
 Coal uses large, seeded convex hulls shared by drawing, picking and collisions.

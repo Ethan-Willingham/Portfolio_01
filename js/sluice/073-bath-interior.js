@@ -188,6 +188,7 @@
       if (foreground) ctx = foreground;
       ctx.setTransform(ws, 0, 0, ws, -Math.round(cam.x * ws), -Math.round(cam.y * ws));
       bathDrawGuests();
+      bathToolDraw(ctx);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       var hit = bathBoilerScreenRect();
       var label = bathBoilerHover ? 'OPEN BOILER' : 'BOILER';
@@ -206,5 +207,10 @@
       var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
       c.translate(-curve.x0, -curve.y0);
       bathDrawVessel(c);
+      var b = bathToolBounds(), x = (curve.x0 + curve.x1) / 2, y = curve.y0 - 50;
+      ['claw', 'hose'].forEach(function (mode) {
+        bathToolDraw(c, { mode: mode, x: x, y: y, railX: x, tilt: 0.2, jaw: 0.5, flow: 1,
+          rope: [{ x: x, y: b.top }, { x: x + 12, y: y - 40 }, { x: x, y: y }] });
+      });
     } finally { c.restore(); ctx = previous; }
   }

@@ -75,7 +75,7 @@
       dpadTouchId = null;
       shopTapCandidate = null;
       shopDrag = null;
-      hearthCancelDrag(); bathPtrDown = false;
+      bathToolCancel(); hearthCancelDrag(); bathPtrDown = false;
       if (itemWheel.open) closeItemWheel(false);
     }
     // v17.82 — pause the game when the window loses focus (or the tab is
