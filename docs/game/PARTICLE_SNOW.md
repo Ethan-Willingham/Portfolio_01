@@ -26,7 +26,7 @@ Water, oil and the three mineral liquids keep their own existing behavior.
 | `LIQUID_SNOW_STIFF` | 1.25 | Softer pressure response under compression |
 | `LIQUID_SNOW_SHEAR` | 32 | Dissipates internal shearing instead of storing spring energy |
 | `LIQUID_SNOW_DRAG` | 8 | Settles lateral and vertical movement after disturbance |
-| `LIQUID_SNOW_FRICTION` | 180 | Frictional yielding holds small piles against sideways creep |
+| `LIQUID_SNOW_FRICTION` | 180 | Frictional yielding damps sideways creep and small upward pressure rebounds |
 | `LIQUID_SNOW_BOUNCE` | 0.025 | Soft terrain contact |
 
 This is a dry granular tuning of the existing solver, not a full snow-crystal
@@ -34,6 +34,13 @@ or temperature simulation. There is no separate snow heightfield or rigid
 snow platform. Tiny pressure disturbances settle; track and jet forces can
 exceed the friction threshold. The GPU kernels and their CPU/f32 references
 use the same material parameters.
+
+Dry snow uses the full low-speed rest brake independently of water's lively
+calm setting. Its friction also dissipates upward compression rebounds before
+advection, preventing intermediate-depth layers from continually rippling.
+Downward velocity keeps its existing settling response. This does not put
+snow to sleep: digging away support still lets dense grains fall even when
+the free-flake buffer cannot accept them.
 
 Slow atmospheric flakes retain the rain system's inexpensive ballistic
 approach until their first contact, then become actual solver particles.
@@ -46,9 +53,11 @@ after contact. Transfer preserves position and velocity, with no size change,
 colour change or intermediate visual phase. On WebGPU, an independent additive snow-density channel in the existing
 surface pass reconstructs a continuous matte boundary. Each real particle
 contributes a fixed compact kernel (3.2 world-pixel radius, peak 0.34);
-a solitary flake stays below the 0.66 surface threshold. Packed snow joins
-into a body, and thinning powder separates continuously into the original
-1.8-pixel grains. Falling and simulated snow contribute identical kernels.
+a solitary flake stays below the 0.58 surface threshold. Body opacity blends
+over densities 0.58 to 1.25, while the original 1.8-pixel grains remain visible
+through an overlapping 0.62 to 1.30 blend. This preserves grain detail while
+powder gathers or separates, avoiding the dim intermediate band and abrupt
+body transition. Falling and simulated snow contribute identical kernels.
 The density gradient supplies diffuse shading; snow gets no water foam,
 gloss or artificial gap bridging. Removing particles removes the surface.
 The WebGL/Canvas fallback retains fine grain rendering. Lighting follows
@@ -237,7 +246,16 @@ It also compares rendered pixels before and after sky-to-solver transfer in
 both GPU rendering modes and the CPU fallback, checks that the last grain
 clears cleanly, verifies that removing snow mass removes its reconstructed
 surface, and tests live GPU absorption for ordinary, poured, pond and
-rain water.
+rain water. Several intermediate spacings also check the pile-to-grain blend,
+with a contact sheet saved as `snow-breakup.png`.
+
+`node tools/sluice-snow-settle.mjs` checks resting layers from 3 to 32 pixels
+deep, including the formerly restless 7- and 12-pixel layers. It measures
+particle speed, upward rebounds and contour motion, then removes terrain
+under the intermediate layers with ballistic handoff disabled to verify
+the dense solver still falls. Add `--cpu` for the fallback. Both paths check
+exact mass and absence of spontaneous airborne grains. Artifacts go to
+`/tmp/sluice-snow-settle-qa`.
 
 `node tools/perf/liquid-materials.mjs --gpu` verifies the five existing liquids
 and snow together through GPU identity packing, physics and readback. Run

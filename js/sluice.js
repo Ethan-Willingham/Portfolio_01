@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.80';
+  var GAME_VERSION = 'v28.81';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -10929,11 +10929,13 @@
       }
 
       if (material === 5) {
-        // Coulomb-style yielding in supported powder. Small pressure noise
-        // cannot keep creeping sideways; a track or jet easily exceeds it.
+        // Dry grain friction dissipates small upward compression rebounds
+        // as well as sideways creep. Preserve downward settling, including
+        // unsupported clumps when the free-flake buffer is full.
         var support = Math.max(0, Math.min(1, (liquidDensity[i] - 0.3) / 0.55));
         var slip = LIQUID_SNOW_FRICTION * stepDt * stepDt / LIQUID_CELL * support;
         vx = Math.sign(vx) * Math.max(0, Math.abs(vx) - slip);
+        if (vy < 0) vy = Math.min(0, vy + slip);
       }
 
       // v26.13 — the velocity ceiling is a transport invariant, so apply
@@ -10991,7 +10993,9 @@
         // stimulated water flows undamped (the slush fix) and only settling
         // water is ground to stillness. calm=1 reduces to the exact v24.112
         // factors. edit2 liquid-wgpu.js (WGSL G2P + stage-5 reference).
-        var bfC = 1 + (bfR - 1) * LIQUID_CALM;
+        // Dry powder dissipates small compression rebounds even while the
+        // water preset deliberately keeps its own rest brake relaxed.
+        var bfC = material === 5 ? bfR : 1 + (bfR - 1) * LIQUID_CALM;
         newVX *= bfC;
         newVY *= bfC;
       }

@@ -2894,6 +2894,7 @@
         var supportR = fr(Math.max(0, Math.min(1, fr(fr(refDensity[i] - fr(0.3)) / fr(0.55)))));
         var slipR = fr(fr(fr(fr(LIQUID_SNOW_FRICTION * dt) * dt) * inv) * supportR);
         vx = fr(Math.sign(vx) * Math.max(0, fr(Math.abs(vx) - slipR)));
+        if (vy < 0) vy = fr(Math.min(0, fr(vy + slipR)));
       }
       // v26.13 — mirror the kernel's pre-advection CFL cap. MAX_VEL is
       // world px/s; vx/vy are cell displacement for this substep.
@@ -2949,7 +2950,7 @@
         var bfR = (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) ? LIQUID_REST_BRAKE_HARD : LIQUID_REST_BRAKE;
         // v24.145 — calm-scaled brake (matches the kernel; LIQUID_CALM is
         // the fround-quantized mirror of the g2pB.w uniform lane).
-        var bfC = fr(1 + fr(fr(bfR - 1) * LIQUID_CALM));
+        var bfC = materialR === 5 ? fr(bfR) : fr(1 + fr(fr(bfR - 1) * LIQUID_CALM));
         newVX = fr(newVX * bfC);
         newVY = fr(newVY * bfC);
       }
@@ -6116,6 +6117,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let support = clamp((aux[i].x - 0.3) / 0.55, 0.0, 1.0);
     let slip = f32(${LIQUID_SNOW_FRICTION}) * gp.stepDt * gp.stepDt * gp.invCell * support;
     vx = sign(vx) * max(0.0, abs(vx) - slip);
+    if (vy < 0.0) { vy = min(0.0, vy + slip); }
   }
 
   // v26.13 — CFL/transport invariant. vx/vy are grid-cell displacement
@@ -6198,10 +6200,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // locality comes from THIS particle's cell in the calm field, so a
     // distant pool's agitation cannot release the brake here. Legacy
     // path (local 0) is expression-identical.
-    var calmEff = sp.g2pB.w;
+    // Dry powder sheds small compression rebounds independently of the
+    // water's deliberately lively rest setting.
+    var calmEff = select(sp.g2pB.w, 1.0, material == 5u);
     // max() guards the v26.64 open sentinel (-1): an open-marked cell
     // takes zero brake, and the sentinel must never flip the sign.
-    if (sp.local.x > 0.0) { calmEff = calmEff * max(calmCellG[nbr[4]], 0.0); }
+    if (material != 5u && sp.local.x > 0.0) { calmEff = calmEff * max(calmCellG[nbr[4]], 0.0); }
     let bfC = 1.0 + (bf - 1.0) * calmEff;
     newVX = newVX * bfC;
     newVY = newVY * bfC;
@@ -7606,7 +7610,9 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     }
   }
   let snowMass = textureLoad(snowTex, vec2<i32>(in.pos.xy), 0).r;
-  let snowAlpha = smoothstep(0.66, 0.95, snowMass);
+  // Let the body separate over a broad density range. Grain detail stays
+  // visible through this blend rather than vanishing before a pile forms.
+  let snowAlpha = smoothstep(0.58, 1.25, snowMass);
   if (aWaterEdge <= 0.001 && aOilEdge <= 0.001 && snowAlpha <= 0.001) { discard; }
   // Hosts without a visual contour retain their square obstacle boundary.
   if (terrainRenderRect.z <= 0.0 && compositeTerrainSolid(wp)) { discard; }
@@ -7759,7 +7765,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
     let s01 = textureLoad(snowTex,clamp(si+vec2<i32>(0,1),slo,shi),0).r;
     let s11 = textureLoad(snowTex,clamp(si+vec2<i32>(1,1),slo,shi),0).r;
     let mass = mix(mix(s00,s10,sf.x),mix(s01,s11,sf.x),sf.y);
-    out.alpha = 1.0 - smoothstep(0.38,0.95,mass);
+    out.alpha = 1.0 - smoothstep(0.62,1.30,mass);
     out.world = p.xy + off / max(rp.dpws, 0.001);
     // No index-based size/tint: a swap or sky-to-ground transfer must not pop.
     return out;

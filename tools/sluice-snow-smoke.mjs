@@ -144,13 +144,32 @@ try {
     const landed=(await send('Page.captureScreenshot',{format:'png',clip})).data;
     check('airborne and solver snow have identical visible pixels (surface='+surface+')',airborne!==blank && airborne===landed);
     if(surface===1){
-      await game('while(liquidCount)removeLiquidParticle(liquidCount-1);snow.grains=[];for(var x=114;x<=126;x+=1.4)for(var y=94;y<=106;y+=1.4)snow.grains.push({x:cam.x+x,y:cam.y+y,vx:0,vy:0,size:.5,phase:0});liquidWGPU.uploadParticles();liquidWGPU.draw()');
-      const clusterAir=(await send('Page.captureScreenshot',{format:'png',clip})).data;
-      await game('for(var i=0;i<snow.grains.length;i++){var p=snow.grains[i];snowParticle(p.x,p.y,0,0);}snow.grains=[];liquidWGPU.uploadParticles();liquidWGPU.draw()');
-      const clusterGround=(await send('Page.captureScreenshot',{format:'png',clip})).data;
-      check('dense snow uses the same mass reconstruction through landing',clusterAir===clusterGround && clusterAir!==airborne);
-      await game('while(liquidCount)removeLiquidParticle(liquidCount-1);liquidWGPU.uploadParticles();liquidWGPU.draw()');
-      check('removing snow mass removes the reconstructed surface',(await send('Page.captureScreenshot',{format:'png',clip})).data===blank);
+      const breakup=[];
+      // Keep the same 25 grains while separating them through the body-to-grain
+      // blend. Both representations must agree throughout that transition,
+      // including sparse groups which do not form an opaque body any more.
+      for(const spacing of [1.4,2.0,2.6,3.2]){
+        await game(`while(liquidCount)removeLiquidParticle(liquidCount-1);snow.grains=[];for(var x=-2;x<=2;x++)for(var y=-2;y<=2;y++)snow.grains.push({x:cam.x+120+x*${spacing},y:cam.y+100+y*${spacing},vx:0,vy:0,size:.5,phase:0});liquidWGPU.uploadParticles();liquidWGPU.draw()`);
+        const clusterAir=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+        await game('for(var i=0;i<snow.grains.length;i++){var p=snow.grains[i];snowParticle(p.x,p.y,0,0);}snow.grains=[];liquidWGPU.uploadParticles();liquidWGPU.draw()');
+        const clusterGround=(await send('Page.captureScreenshot',{format:'png',clip})).data;
+        check(`snow retains identical visible pixels during landing and breakup (spacing=${spacing})`,clusterAir===clusterGround && clusterAir!==blank && clusterAir!==airborne);
+        breakup.push({spacing,png:clusterAir});
+        await game('while(liquidCount)removeLiquidParticle(liquidCount-1);liquidWGPU.uploadParticles();liquidWGPU.draw()');
+        check(`removing separated snow clears its reconstructed surface (spacing=${spacing})`,(await send('Page.captureScreenshot',{format:'png',clip})).data===blank);
+      }
+      const film=await ev(`(async function(){
+        const frames=${JSON.stringify(breakup)}, scale=5, gap=12, tile=24*scale, label=28;
+        const sheet=document.createElement('canvas');sheet.width=frames.length*(tile+gap)+gap;sheet.height=tile+label+gap*2;
+        const ctx=sheet.getContext('2d');ctx.fillStyle='#202820';ctx.fillRect(0,0,sheet.width,sheet.height);ctx.imageSmoothingEnabled=false;
+        ctx.font='12px monospace';ctx.fillStyle='#f3f1e6';
+        for(let i=0;i<frames.length;i++){
+          const img=new Image();img.src='data:image/png;base64,'+frames[i].png;await img.decode();
+          ctx.drawImage(img,gap+i*(tile+gap),gap,tile,tile);ctx.fillText(frames[i].spacing.toFixed(1)+' px spacing',gap+i*(tile+gap),gap+tile+20);
+        }
+        return sheet.toDataURL('image/png').split(',')[1];
+      })()`);
+      fs.writeFileSync(path.join(out,'snow-breakup.png'),Buffer.from(film,'base64'));
     }
   }
   await game("liquidWGPU.setRenderParam('SURFACE_RENDER',1)");
