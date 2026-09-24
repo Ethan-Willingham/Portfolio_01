@@ -617,7 +617,6 @@
       if (damageFlashT < 0) damageFlashT = 0;
     }
     updateZoomLerp(dt);
-    updateCamera();
     perfMark('update.aux', _t1);
 
     // Always integrate the visual systems even if update() bailed early
@@ -631,12 +630,6 @@
     _ts = performance.now(); try { treesUpdate(dt); } catch (e) { if (!window.__treesErr) { window.__treesErr = String(e) + '\n' + (e.stack||''); console.error('treesUpdate threw:', e); } } perfMark('update.trees', _ts);
     if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
-    _ts = performance.now();
-    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
-    perfMark('update.smoke', _ts);
-    // Plume intensity is now current, so the voice and drawn flame agree
-    // on the first firing frame as well as the first released frame.
-    if (typeof audioUpdate === 'function') audioUpdate(dt);
     var _t3 = performance.now();
     _ts = performance.now(); updateDrillAnim(dt);          perfMark('update.drillAnim', _ts);
     _ts = performance.now(); updateExplosions(dt);         perfMark('update.explosions', _ts);
@@ -657,6 +650,14 @@
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);
     slimeAudioUpdate(dt);
+    // Gel contact finishes the rig's movement. Sample that final pose once
+    // for both the camera and its world-space smoke domain, before drawing.
+    updateCamera();
+    _ts = performance.now();
+    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
+    perfMark('update.smoke', _ts);
+    if (typeof audioUpdate === 'function') audioUpdate(dt);
+    var smokeElapsed = performance.now() - _ts;
     var _t4 = performance.now();
     // v11.80 — render PERF_STRESS times so the true frame cost surfaces past
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
@@ -672,7 +673,7 @@
 
     // Perf metrics (smoothed via rolling window)
     perfUpdateMs = perfUpdateMs * 0.9 + (_t1 - _t0) * 0.1;
-    perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
+    perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2 + smokeElapsed) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
     if (_t5 >= perfDisplayCheckAt) {

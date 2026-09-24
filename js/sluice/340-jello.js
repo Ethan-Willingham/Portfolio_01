@@ -2117,7 +2117,9 @@
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
     var muscleBlend = b.surfaceSlime ? b.surfaceSlime.motorBlend || 0 : 0;
-    if (b.surfaceSlime) stiff *= 0.30 + 1.00 * muscleBlend;
+    if (b.surfaceSlime) stiff *= 0.20 + 1.10 * muscleBlend;
+    if (b.surfaceSlime) stiff = 1 - Math.pow(1 - stiff,
+      jelloStepH / (JELLO_H * jelloImpulseScale()));
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
     // shape is near-colinear) has an ILL-CONDITIONED best-fit rotation: the polar decomposition
     // R jitters frame to frame, and a full-strength pull toward that spinning goal injects
@@ -4288,7 +4290,8 @@
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
     }
-    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, b.surfaceSlime ?
+      1 - Math.pow(1 - JELLO_XSPH, h / (JELLO_H * jelloImpulseScale())) : JELLO_XSPH);
     if (b.surfaceSlime && !b._grabbed) {
       for (var skinPass = 0; skinPass < 3; skinPass++) {
         if (!jelloLimitOrientation(b)) break;
@@ -4342,7 +4345,7 @@
   function jelloStrainLimit(b) {
     if (JELLO_MAX_STRETCH <= 0) return;
     var sA = b.sA, sB = b.sB, sRest = b.sRest, springN = b.springN, px = b.px, py = b.py;
-    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.2 - 0.6 * (b.surfaceSlime.motorBlend || 0)) : JELLO_MAX_STRETCH;
+    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.4 - 0.8 * (b.surfaceSlime.motorBlend || 0)) : JELLO_MAX_STRETCH;
     for (var s = 0; s < springN; s++) {
       var i0 = sA[s], i1 = sB[s];
       var dx = px[i1] - px[i0], dy = py[i1] - py[i0];
@@ -4368,14 +4371,16 @@
     var TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
     var maxMove = (b.spacing || (TILE / JELLO_NPT)) * JELLO_ORIENT_MOVE;
     var fixed = 0;
-    for (var t = 0; t < b.triN; t++) {
-      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
+    for (var t = 0; t < b.triN + (b.cellN || 0); t++) {
+      var materialCell = t >= b.triN, ti = materialCell ? t - b.triN : t;
+      if (t === b.triN) { TA = b.cellA; TB = b.cellB; TC = b.cellC; Dm = b.cellInv; }
+      var i0 = TA[ti], i1 = TB[ti], i2 = TC[ti];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var detInv = Dm[ti * 4] * Dm[ti * 4 + 3] - Dm[ti * 4 + 1] * Dm[ti * 4 + 2];
       var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      var orientMin = b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
-      var orientTarget = b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
+      var orientMin = materialCell ? 0.02 : b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
+      var orientTarget = materialCell ? 0.06 : b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
       if (!(ratio < orientMin)) continue;
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
@@ -5871,10 +5876,17 @@
     var subs = 0;
     while (jelloAccum >= JELLO_H && subs < JELLO_MAX_SUBSTEPS) { subs++; jelloAccum -= JELLO_H; }
     if (jelloAccum > JELLO_H) jelloAccum = JELLO_H;
-    if (surfaceRigFrame) {
+    var residentContinuous = !!surfaceRigFrame;
+    for (var ri = 0; ri < jelloBodies.length; ri++) {
+      var resident = jelloBodies[ri];
+      if (!(resident._rigRenderT > 0)) continue;
+      resident._rigRenderT = Math.max(0, resident._rigRenderT - dt);
+      residentContinuous = true;
+    }
+    if (residentContinuous) {
       // Advance both participants for exactly this frame's real time, even
       // above 120 Hz. The bounded steps keep fast landings swept and smooth.
-      subs = Math.max(1, Math.ceil(dt * JELLO_TIMESCALE / JELLO_H));
+      subs = Math.max(1, Math.round(dt * JELLO_TIMESCALE / JELLO_H));
       jelloAccum = 0;
     }
     if (subs === 0) return;
@@ -5976,7 +5988,7 @@
     // once-per-frame pass) is what removes the press-together STICKING and the contact JITTER. -----
     var m = JELLO_SOLVER;
     var K = (m === 'pbd') ? 1 : (JELLO_XPBD_SUBSTEPS < 1 ? 1 : JELLO_XPBD_SUBSTEPS);
-    var h = surfaceRigFrame ? dt * JELLO_TIMESCALE / (subs * K) : JELLO_H / K;
+    var h = residentContinuous ? dt * JELLO_TIMESCALE / (subs * K) : JELLO_H / K;
     stepDt = h;
     jelloStepH = h;   // expose the substep h to the injection sites (real-px/s conversion)
     var totalSteps = subs * K;

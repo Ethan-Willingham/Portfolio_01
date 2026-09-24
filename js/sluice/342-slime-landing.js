@@ -42,7 +42,8 @@
   }
 
   // Bound each contact projection before it can mirror an incident cell.
-  // Load which a pinched cell cannot accept goes back into the rig instead.
+  // A pinched cell keeps its shape; finite contact compliance absorbs the
+  // remaining overlap instead of transferring it into a hard rig correction.
   function surfaceSlimeSafeDown(b, p, move) {
     var x = b.px, y = b.py, dm = b.triDmInv;
     for (var t = 0; t < b.triN; t++) {
@@ -79,9 +80,9 @@
         if (isFinite(y)) sy = Math.min(sy, y - 0.8);
       }
       // Swept feet catch a thin, already compressed resident before terrain.
-      // An upward departure is free as soon as it clears the skin.
-      if (feet > (wasLoaded ? b.bboxB : sy + 5) || Math.max(feet, nextFeet) < sy - 2 ||
-          (player.vy < -20 && feet < sy - 1)) continue;
+      // Keep the candidate through a nearby upward departure: a recovering
+      // skin can catch up within this frame and must use the same soft contact.
+      if (feet > (wasLoaded ? b.bboxB : sy + 5) || Math.max(feet, nextFeet) < sy - 12) continue;
       // A low ceiling limits the rig's rise, not its ownership of this skin.
       // The swept rig constraint leaves the remaining load in the gel.
       bodies.push(b); top = Math.min(top, sy);
@@ -92,6 +93,7 @@
       impact: !player._surfaceRigSupported, top: top };
     for (i = 0; i < bodies.length; i++) {
       bodies[i]._rigHits = 0;
+      bodies[i]._rigRenderT = 0.5;
       surfaceSlimeDetach(bodies[i], 0.35);
       bodies[i]._plyMs = performance.now();
     }
@@ -146,14 +148,19 @@
           var depth = f.y + PLAYER_H + 0.8 - top;
           if (ia < 0 || depth <= 0 || top < f.y) continue;
           var wa = 1 - u, wb = u;
-          var lambda = depth / (invRig + wa * wa + wb * wb);
+          // Finite skin compliance spreads deceleration over the compression.
+          // A pinched cell must not become an infinitely rigid stop for the rig.
+          var compliance = 0.00005 / (dt * dt);
+          var skinVY = ((b.py[ia] - b.oy[ia]) * wa + (b.py[ib] - b.oy[ib]) * wb) * JELLO_TIMESCALE / h;
+          var compression = Math.max(0, depth + (f.vy - skinVY) * 0.010 * depth / (depth + 2));
+          var lambda = compression / (invRig + wa * wa + wb * wb + compliance);
           var ma = surfaceSlimeSafeDown(b, ia, lambda * wa);
           if (jelloWorldSolidAt(b.px[ia], b.py[ia] + ma)) ma = 0;
           b.py[ia] += ma;
           var mb = surfaceSlimeSafeDown(b, ib, lambda * wb);
           if (jelloWorldSolidAt(b.px[ib], b.py[ib] + mb)) mb = 0;
           b.py[ib] += mb;
-          surfaceSlimeRigMove(f, f.y - Math.max(0, depth - wa * ma - wb * mb));
+          surfaceSlimeRigMove(f, f.y - invRig * lambda);
           // Coulomb friction grips the tracks without freezing lateral bulge.
           // The impulse is bounded by this contact's normal load and shared
           // with the rig, so a moving resident can carry it without a motor.

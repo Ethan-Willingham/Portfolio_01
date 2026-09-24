@@ -190,7 +190,7 @@
       m.poseAngle += skySlimeClamp(m.crestTurn - m.poseAngle, -dt, dt);
     }
     var bodyC = Math.cos(m.poseAngle), bodyS = Math.sin(m.poseAngle);
-    b.materialDamping = 3 - 2.35 * m.motorBlend;
+    b.materialDamping = 5 - 4.35 * m.motorBlend;
     var amplitude = surfaceSlimeRigOwns(b) ? 0 : m.radius * (0.045 * (1 - m.power) + SURFACE_SLIME_WAVE * m.gaitAmplitude * m.power);
     var desiredStretch = 1 + (m.climb ? 0.28 : m.power * (m.crest ? 0.30 : 0.24));
     m.stretch += (desiredStretch - m.stretch) * Math.min(1, dt * 2.4);

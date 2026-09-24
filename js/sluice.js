@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.77';
+  var GAME_VERSION = 'v28.78';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -19323,6 +19323,7 @@
     }
 
     // Move Y
+    var renderMoveStartY = player.y;
     var glideOwnsY = player.drillGlideT > 0 &&
                      (player.drillGlideDir === 'u' || player.drillGlideDir === 'd');
     if (glideOwnsY) {
@@ -19581,7 +19582,11 @@
     }
 
     // ----- Render-position smoothing -----
-    // Sprite trails the logical position with a quick exponential lerp.
+    // Follow continuous vertical travel directly. Only correction error is
+    // smoothed, so entering/leaving the late gel solve cannot change visual
+    // speed or make the rig hit the skin before its drawing reaches it.
+    player.renderY += player.y - renderMoveStartY;
+    // Horizontal travel and residual corrections use a quick exponential lerp.
     // Corner-correction snaps (3-8px) become visually smooth — the rig
     // catches up over ~5 frames instead of teleporting. Big deltas
     // (respawn, rover dismount, etc.) snap directly so the sprite doesn't
@@ -19843,7 +19848,6 @@
     if (cam.x < 0) cam.x = 0;
     if (cam.x > COLS * TILE - screenW) cam.x = COLS * TILE - screenW;
   }
-
   // ====== COMBAT ======
   // First combat slice (EXPANSION_PLAN P3 + a slice of P4): enemy ground
   // turrets that sit in the No Man's Zones, plus a DEFAULT auto-turret mounted
@@ -63353,7 +63357,9 @@
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
     var muscleBlend = b.surfaceSlime ? b.surfaceSlime.motorBlend || 0 : 0;
-    if (b.surfaceSlime) stiff *= 0.30 + 1.00 * muscleBlend;
+    if (b.surfaceSlime) stiff *= 0.20 + 1.10 * muscleBlend;
+    if (b.surfaceSlime) stiff = 1 - Math.pow(1 - stiff,
+      jelloStepH / (JELLO_H * jelloImpulseScale()));
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
     // shape is near-colinear) has an ILL-CONDITIONED best-fit rotation: the polar decomposition
     // R jitters frame to frame, and a full-strength pull toward that spinning goal injects
@@ -65524,7 +65530,8 @@
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
     }
-    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, b.surfaceSlime ?
+      1 - Math.pow(1 - JELLO_XSPH, h / (JELLO_H * jelloImpulseScale())) : JELLO_XSPH);
     if (b.surfaceSlime && !b._grabbed) {
       for (var skinPass = 0; skinPass < 3; skinPass++) {
         if (!jelloLimitOrientation(b)) break;
@@ -65578,7 +65585,7 @@
   function jelloStrainLimit(b) {
     if (JELLO_MAX_STRETCH <= 0) return;
     var sA = b.sA, sB = b.sB, sRest = b.sRest, springN = b.springN, px = b.px, py = b.py;
-    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.2 - 0.6 * (b.surfaceSlime.motorBlend || 0)) : JELLO_MAX_STRETCH;
+    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.4 - 0.8 * (b.surfaceSlime.motorBlend || 0)) : JELLO_MAX_STRETCH;
     for (var s = 0; s < springN; s++) {
       var i0 = sA[s], i1 = sB[s];
       var dx = px[i1] - px[i0], dy = py[i1] - py[i0];
@@ -65604,14 +65611,16 @@
     var TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
     var maxMove = (b.spacing || (TILE / JELLO_NPT)) * JELLO_ORIENT_MOVE;
     var fixed = 0;
-    for (var t = 0; t < b.triN; t++) {
-      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
+    for (var t = 0; t < b.triN + (b.cellN || 0); t++) {
+      var materialCell = t >= b.triN, ti = materialCell ? t - b.triN : t;
+      if (t === b.triN) { TA = b.cellA; TB = b.cellB; TC = b.cellC; Dm = b.cellInv; }
+      var i0 = TA[ti], i1 = TB[ti], i2 = TC[ti];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var detInv = Dm[ti * 4] * Dm[ti * 4 + 3] - Dm[ti * 4 + 1] * Dm[ti * 4 + 2];
       var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      var orientMin = b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
-      var orientTarget = b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
+      var orientMin = materialCell ? 0.02 : b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
+      var orientTarget = materialCell ? 0.06 : b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
       if (!(ratio < orientMin)) continue;
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
@@ -67107,10 +67116,17 @@
     var subs = 0;
     while (jelloAccum >= JELLO_H && subs < JELLO_MAX_SUBSTEPS) { subs++; jelloAccum -= JELLO_H; }
     if (jelloAccum > JELLO_H) jelloAccum = JELLO_H;
-    if (surfaceRigFrame) {
+    var residentContinuous = !!surfaceRigFrame;
+    for (var ri = 0; ri < jelloBodies.length; ri++) {
+      var resident = jelloBodies[ri];
+      if (!(resident._rigRenderT > 0)) continue;
+      resident._rigRenderT = Math.max(0, resident._rigRenderT - dt);
+      residentContinuous = true;
+    }
+    if (residentContinuous) {
       // Advance both participants for exactly this frame's real time, even
       // above 120 Hz. The bounded steps keep fast landings swept and smooth.
-      subs = Math.max(1, Math.ceil(dt * JELLO_TIMESCALE / JELLO_H));
+      subs = Math.max(1, Math.round(dt * JELLO_TIMESCALE / JELLO_H));
       jelloAccum = 0;
     }
     if (subs === 0) return;
@@ -67212,7 +67228,7 @@
     // once-per-frame pass) is what removes the press-together STICKING and the contact JITTER. -----
     var m = JELLO_SOLVER;
     var K = (m === 'pbd') ? 1 : (JELLO_XPBD_SUBSTEPS < 1 ? 1 : JELLO_XPBD_SUBSTEPS);
-    var h = surfaceRigFrame ? dt * JELLO_TIMESCALE / (subs * K) : JELLO_H / K;
+    var h = residentContinuous ? dt * JELLO_TIMESCALE / (subs * K) : JELLO_H / K;
     stepDt = h;
     jelloStepH = h;   // expose the substep h to the injection sites (real-px/s conversion)
     var totalSteps = subs * K;
@@ -68302,7 +68318,8 @@
   }
 
   // Bound each contact projection before it can mirror an incident cell.
-  // Load which a pinched cell cannot accept goes back into the rig instead.
+  // A pinched cell keeps its shape; finite contact compliance absorbs the
+  // remaining overlap instead of transferring it into a hard rig correction.
   function surfaceSlimeSafeDown(b, p, move) {
     var x = b.px, y = b.py, dm = b.triDmInv;
     for (var t = 0; t < b.triN; t++) {
@@ -68339,9 +68356,9 @@
         if (isFinite(y)) sy = Math.min(sy, y - 0.8);
       }
       // Swept feet catch a thin, already compressed resident before terrain.
-      // An upward departure is free as soon as it clears the skin.
-      if (feet > (wasLoaded ? b.bboxB : sy + 5) || Math.max(feet, nextFeet) < sy - 2 ||
-          (player.vy < -20 && feet < sy - 1)) continue;
+      // Keep the candidate through a nearby upward departure: a recovering
+      // skin can catch up within this frame and must use the same soft contact.
+      if (feet > (wasLoaded ? b.bboxB : sy + 5) || Math.max(feet, nextFeet) < sy - 12) continue;
       // A low ceiling limits the rig's rise, not its ownership of this skin.
       // The swept rig constraint leaves the remaining load in the gel.
       bodies.push(b); top = Math.min(top, sy);
@@ -68352,6 +68369,7 @@
       impact: !player._surfaceRigSupported, top: top };
     for (i = 0; i < bodies.length; i++) {
       bodies[i]._rigHits = 0;
+      bodies[i]._rigRenderT = 0.5;
       surfaceSlimeDetach(bodies[i], 0.35);
       bodies[i]._plyMs = performance.now();
     }
@@ -68406,14 +68424,19 @@
           var depth = f.y + PLAYER_H + 0.8 - top;
           if (ia < 0 || depth <= 0 || top < f.y) continue;
           var wa = 1 - u, wb = u;
-          var lambda = depth / (invRig + wa * wa + wb * wb);
+          // Finite skin compliance spreads deceleration over the compression.
+          // A pinched cell must not become an infinitely rigid stop for the rig.
+          var compliance = 0.00005 / (dt * dt);
+          var skinVY = ((b.py[ia] - b.oy[ia]) * wa + (b.py[ib] - b.oy[ib]) * wb) * JELLO_TIMESCALE / h;
+          var compression = Math.max(0, depth + (f.vy - skinVY) * 0.010 * depth / (depth + 2));
+          var lambda = compression / (invRig + wa * wa + wb * wb + compliance);
           var ma = surfaceSlimeSafeDown(b, ia, lambda * wa);
           if (jelloWorldSolidAt(b.px[ia], b.py[ia] + ma)) ma = 0;
           b.py[ia] += ma;
           var mb = surfaceSlimeSafeDown(b, ib, lambda * wb);
           if (jelloWorldSolidAt(b.px[ib], b.py[ib] + mb)) mb = 0;
           b.py[ib] += mb;
-          surfaceSlimeRigMove(f, f.y - Math.max(0, depth - wa * ma - wb * mb));
+          surfaceSlimeRigMove(f, f.y - invRig * lambda);
           // Coulomb friction grips the tracks without freezing lateral bulge.
           // The impulse is bounded by this contact's normal load and shared
           // with the rig, so a moving resident can carry it without a motor.
@@ -69273,7 +69296,7 @@
       m.poseAngle += skySlimeClamp(m.crestTurn - m.poseAngle, -dt, dt);
     }
     var bodyC = Math.cos(m.poseAngle), bodyS = Math.sin(m.poseAngle);
-    b.materialDamping = 3 - 2.35 * m.motorBlend;
+    b.materialDamping = 5 - 4.35 * m.motorBlend;
     var amplitude = surfaceSlimeRigOwns(b) ? 0 : m.radius * (0.045 * (1 - m.power) + SURFACE_SLIME_WAVE * m.gaitAmplitude * m.power);
     var desiredStretch = 1 + (m.climb ? 0.28 : m.power * (m.crest ? 0.30 : 0.24));
     m.stretch += (desiredStretch - m.stretch) * Math.min(1, dt * 2.4);
@@ -69651,7 +69674,7 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed || surfaceSlimeRigOwns(b)) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed || b._rigRenderT > 0 || surfaceSlimeRigOwns(b)) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);
@@ -71457,7 +71480,6 @@
       if (damageFlashT < 0) damageFlashT = 0;
     }
     updateZoomLerp(dt);
-    updateCamera();
     perfMark('update.aux', _t1);
 
     // Always integrate the visual systems even if update() bailed early
@@ -71471,12 +71493,6 @@
     _ts = performance.now(); try { treesUpdate(dt); } catch (e) { if (!window.__treesErr) { window.__treesErr = String(e) + '\n' + (e.stack||''); console.error('treesUpdate threw:', e); } } perfMark('update.trees', _ts);
     if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
-    _ts = performance.now();
-    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
-    perfMark('update.smoke', _ts);
-    // Plume intensity is now current, so the voice and drawn flame agree
-    // on the first firing frame as well as the first released frame.
-    if (typeof audioUpdate === 'function') audioUpdate(dt);
     var _t3 = performance.now();
     _ts = performance.now(); updateDrillAnim(dt);          perfMark('update.drillAnim', _ts);
     _ts = performance.now(); updateExplosions(dt);         perfMark('update.explosions', _ts);
@@ -71497,6 +71513,14 @@
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);
     slimeAudioUpdate(dt);
+    // Gel contact finishes the rig's movement. Sample that final pose once
+    // for both the camera and its world-space smoke domain, before drawing.
+    updateCamera();
+    _ts = performance.now();
+    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
+    perfMark('update.smoke', _ts);
+    if (typeof audioUpdate === 'function') audioUpdate(dt);
+    var smokeElapsed = performance.now() - _ts;
     var _t4 = performance.now();
     // v11.80 — render PERF_STRESS times so the true frame cost surfaces past
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
@@ -71512,7 +71536,7 @@
 
     // Perf metrics (smoothed via rolling window)
     perfUpdateMs = perfUpdateMs * 0.9 + (_t1 - _t0) * 0.1;
-    perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
+    perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2 + smokeElapsed) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
     if (_t5 >= perfDisplayCheckAt) {

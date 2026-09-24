@@ -860,6 +860,7 @@
     }
 
     // Move Y
+    var renderMoveStartY = player.y;
     var glideOwnsY = player.drillGlideT > 0 &&
                      (player.drillGlideDir === 'u' || player.drillGlideDir === 'd');
     if (glideOwnsY) {
@@ -1118,7 +1119,11 @@
     }
 
     // ----- Render-position smoothing -----
-    // Sprite trails the logical position with a quick exponential lerp.
+    // Follow continuous vertical travel directly. Only correction error is
+    // smoothed, so entering/leaving the late gel solve cannot change visual
+    // speed or make the rig hit the skin before its drawing reaches it.
+    player.renderY += player.y - renderMoveStartY;
+    // Horizontal travel and residual corrections use a quick exponential lerp.
     // Corner-correction snaps (3-8px) become visually smooth — the rig
     // catches up over ~5 frames instead of teleporting. Big deltas
     // (respawn, rover dismount, etc.) snap directly so the sprite doesn't
@@ -1380,4 +1385,3 @@
     if (cam.x < 0) cam.x = 0;
     if (cam.x > COLS * TILE - screenW) cam.x = COLS * TILE - screenW;
   }
-

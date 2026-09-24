@@ -219,7 +219,7 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed || surfaceSlimeRigOwns(b)) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed || b._rigRenderT > 0 || surfaceSlimeRigOwns(b)) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);

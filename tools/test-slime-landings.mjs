@@ -1,7 +1,8 @@
 // Deterministic rig landing diagnostics against the real surface-resident solver.
 // Run: node tools/test-slime-landings.mjs
 // Optional: BUNDLE=/tmp/baseline.js DUMP=/tmp/landing-baseline PORT=8198
-// EXTENDED=1 adds eight bounded contact/lifecycle cases; EXTENDED=only skips the matrix.
+// EXTENDED=1 adds contact, real fall, and frame timing cases; EXTENDED=only skips the matrix.
+// PLAYBACK=1 also checks the real RAF game/render loop against a living resident.
 // CASES=stack,ceiling selects extended cases when narrowing a failure.
 // Owns one Chrome for Testing process and closes that exact child in finally.
 import assert from 'node:assert/strict';
@@ -26,7 +27,15 @@ const server = createServer((req, res) => {
     if (file === path.join(root, 'js/sluice.js')) {
       const src = data.toString(), close = src.lastIndexOf('})();');
       assert.ok(close > 0, 'game IIFE has an injection point');
-      data = Buffer.from(src.slice(0, close) + 'window.__landingTest = function(source) { return eval(source); };\n' + src.slice(close));
+      data = Buffer.from(src.slice(0, close) + `
+        var landingResolve = jelloResolvePlayer;
+        jelloResolvePlayer = function(dt) {
+          var y = player.y, vy = player.vy;
+          landingResolve(dt);
+          player._landingLegacyY = player.y - y;
+          player._landingLegacyV = player.vy - vy;
+        };
+        window.__landingTest = function(source) { return eval(source); };\n` + src.slice(close));
     }
     const mime = { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png' };
     res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream' });
@@ -88,7 +97,7 @@ function scenarioSource(config) {
     player.hull = getMaxHull(); player.fuel = getMaxFuel();
     cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.65;
     var b = surfaceSlimeBuild(x, floor - 35, { id: 9000, seed: 0.4, hue: 133 });
-    surfaceSlimeDetach(b, 100000); b.surfaceSlime.timer = 100000;
+    if (config.kind !== 'living') { surfaceSlimeDetach(b, 100000); b.surfaceSlime.timer = 100000; }
     for (var settle = 0; settle < 180; settle++) {
       surfaceSlimeTick(1 / 60); updateJello(1 / 60);
     }
@@ -162,7 +171,8 @@ function scenarioSource(config) {
     }
     var initial = bodyMetrics(b), dt = 1 / config.fps;
     player.x = b.cx - PLAYER_W * 0.5 + config.offset;
-    player.y = initial.top - PLAYER_H - 4; player.vx = 0; player.vy = config.speed;
+    player.y = initial.top - PLAYER_H - (config.kind === 'drop' || config.kind === 'living' ? 180 : 4);
+    player.vx = 0; player.vy = config.speed;
     player.onGround = false; player.onJello = false;
     player.renderX = player.x; player.renderY = player.y;
     if (config.kind === 'ceiling') {
@@ -182,8 +192,9 @@ function scenarioSource(config) {
     var cellAvailable = true, minCellDet = Infinity, maxCellFolds = 0, earlyHullLost = 0, contactHullLost = 0;
     var actionStarted = null, actionReleased = null, repeatCount = 0, maxAway = 0, maxRise = 0, startY = player.y;
     var jitter = [1 / 144, 1 / 30, 1 / 90, 1 / 60, 0.043, 1 / 120];
+    if (config.kind === 'raf-jitter') jitter = [1 / 59.8, 1 / 60.2, 1 / 60.1, 1 / 59.9, 1 / 60];
     for (var n = 0; elapsed < config.seconds - 1e-9; n++) {
-      dt = Math.min(config.kind === 'irregular' ? jitter[n % jitter.length] : 1 / config.fps, config.seconds - elapsed);
+      dt = Math.min(config.kind === 'irregular' || config.kind === 'raf-jitter' ? jitter[n % jitter.length] : 1 / config.fps, config.seconds - elapsed);
       keys.ArrowRight = config.kind === 'walkoff' && elapsed >= 1 && elapsed < 2.3;
       keys.ArrowUp = config.kind === 'takeoff' && elapsed >= 1 && elapsed < 2;
       if ((keys.ArrowRight || keys.ArrowUp) && actionStarted === null) actionStarted = elapsed;
@@ -194,7 +205,8 @@ function scenarioSource(config) {
         player.vx = 0; player.vy = config.speed; player.onJello = player.onGround = false;
         player._surfaceRigSupported = false; repeatCount++;
       }
-      var oldY = player.y, oldHull = player.hull;
+      var oldY = player.y, oldRenderY = player.renderY, oldHull = player.hull;
+      player._landingLegacyY = player._landingLegacyV = 0;
       var stepStart = performance.now();
       update(dt); surfaceSlimeTick(dt); updateJello(dt);
       var stepMs = performance.now() - stepStart; simMs += stepMs; maxStepMs = Math.max(maxStepMs, stepMs);
@@ -243,6 +255,8 @@ function scenarioSource(config) {
       maxAway = Math.max(maxAway, Math.abs(player.x + PLAYER_W * 0.5 - b.cx));
       maxRise = Math.max(maxRise, startY - player.y);
       frames.push(Object.assign({ frame: n, t: elapsed, dt: dt, stepMs: stepMs, x: player.x, y: player.y,
+        renderY: player.renderY, renderDY: player.renderY - oldRenderY, legacyY: player._landingLegacyY,
+        legacyV: player._landingLegacyV, owned: !!surfaceRigFrame,
         vx: player.vx, vy: player.vy, onJello: contact, onGround: !!player.onGround, onCeiling: !!player.onCeiling,
         hull: player.hull, dy: dy, rigTerrain: rigTerrain.count, rigPenetration: rigTerrain.penetration,
         allFolds: allFolds, allCellFolds: allCellFolds, bodies: allBodies }, info));
@@ -297,18 +311,18 @@ try {
     if (await evaluate(`typeof __landingTest === 'function' && __landingTest("introPhase === 'done'")`)) break;
     await sleep(100);
   }
-  assert.equal(await game("introPhase === 'done' && ENABLE_JELLO"), true, 'game boots with slimes enabled');
+  assert.equal(await game("introPhase === 'done' && ENABLE_JELLO"), true, 'game boots with slimes enabled: ' + JSON.stringify(errors));
   await game('cancelAnimationFrame(gameRafId); gameRafId = 0;');
   const rates = (process.env.FPS || '30,60,144').split(',').map(Number);
   const speeds = (process.env.SPEEDS || '180,420,700').split(',').map(Number);
   const configs = process.env.EXTENDED === 'only' ? [] : rates.flatMap(fps => speeds.map(speed => ({ fps, speed, offset: 0, seconds: speed === 700 ? 8 : 5 })));
   if (process.env.EXTENDED !== 'only') configs.push({ fps: 60, speed: 420, offset: 19, seconds: 5 });
   if (process.env.EXTENDED) {
-    const kinds = ['stack', 'wall', 'ceiling', 'airborne', 'walkoff', 'takeoff', 'repeat', 'irregular'];
+    const kinds = ['stack', 'wall', 'ceiling', 'airborne', 'walkoff', 'takeoff', 'repeat', 'irregular', 'drop', 'living', 'raf-jitter'];
     const selected = process.env.CASES ? process.env.CASES.split(',') : kinds;
     assert.ok(selected.every(kind => kinds.includes(kind)), 'known extended landing case');
     for (const kind of selected) {
-      configs.push({ kind, fps: 60, speed: kind === 'airborne' ? 180 : kind === 'ceiling' ? 700 : 420, offset: 0, seconds: kind === 'repeat' ? 6 : 4 });
+      configs.push({ kind, fps: 60, speed: kind === 'drop' || kind === 'living' ? 0 : kind === 'airborne' ? 180 : kind === 'ceiling' ? 700 : 420, offset: 0, seconds: kind === 'repeat' ? 6 : 4 });
     }
   }
   const summaries = [], reports = [];
@@ -331,6 +345,43 @@ try {
   assert.ok(reports.filter(r => r.config.kind === 'ceiling').every(r => r.summary.ceilingFrames > 0), 'the rebound actually reaches the low ceiling');
   assert.ok(reports.every(r => r.summary.contacts > 0), 'every scenario exercises a rig landing');
   assert.ok(reports.filter(r => !r.config.kind && r.config.offset === 0).every(r => r.summary.earlyHullLost === 0), 'centered initial landings are damage-free');
+  for (const report of reports.filter(r => ['drop', 'living', 'raf-jitter'].includes(r.config.kind))) {
+    assert.ok(report.frames.every(f => Math.abs(f.renderY - f.y) < 0.1), 'fall and rebound share one visible motion timeline');
+    assert.ok(report.frames.every(f => Math.abs(f.legacyY) < 0.01 && Math.abs(f.legacyV) < 0.1), 'legacy hard containment never interrupts the landing');
+  }
+  const steady = reports.find(r => !r.config.kind && r.config.fps === 60 && r.config.speed === 420 && !r.config.offset);
+  const jittered = reports.find(r => r.config.kind === 'raf-jitter');
+  if (steady && jittered) {
+    assert.ok(Math.abs(steady.summary.maxUpward - jittered.summary.maxUpward) < 8, 'small RAF timing jitter does not change rebound strength');
+    assert.ok(Math.abs(steady.summary.minHeight - jittered.summary.minHeight) < 1, 'small RAF timing jitter does not change compression');
+  }
+  if (process.env.PLAYBACK) {
+    await game(scenarioSource({ kind: 'living', fps: 60, speed: 0, offset: 0, seconds: 0 }));
+    const playback = await game(`(function() {
+      return new Promise(function(resolve) {
+        var originalRender = render, records = [], started = performance.now();
+        render = function() {
+          originalRender();
+          var b = jelloBodies[0], skin = surfaceSlimeRenderBody(b);
+          records.push({ t: (performance.now() - started) / 1000, dt: lastFrameDt,
+            y: player.y, renderY: player.renderY, vy: player.vy, onJello: player.onJello,
+            cameraY: cam.y, top: skin.bboxT, width: skin.bboxR - skin.bboxL,
+            legacyY: player._landingLegacyY, legacyV: player._landingLegacyV });
+          if (performance.now() - started > 4500) {
+            render = originalRender; gamePaused = true;
+            resolve({ records: records, image: canvas.toDataURL('image/png') });
+          }
+        };
+        lastTime = performance.now(); gameRafId = requestAnimationFrame(loop);
+      });
+    })()`);
+    fs.writeFileSync(path.join(out, 'real-playback.png'), Buffer.from(playback.image.split(',')[1], 'base64'));
+    delete playback.image;
+    fs.writeFileSync(path.join(out, 'real-playback.json'), JSON.stringify(playback, null, 2));
+    assert.ok(playback.records.length > 60 && playback.records.some(f => f.onJello), 'real game loop completes a landing and rebound');
+    assert.ok(playback.records.every(f => Math.abs(f.renderY - f.y) < 0.1), 'real renderer stays aligned through contact');
+    console.log('PASS real RAF playback: ' + playback.records.length + ' rendered frames');
+  }
   assert.equal(errors.length, 0, 'no browser exceptions');
   console.log(`PASS landing diagnostics; full trajectories: ${out}`);
 } finally { cleanup(); }
