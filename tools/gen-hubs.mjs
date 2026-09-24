@@ -71,7 +71,7 @@ const HUBS = [
     ],
   },
   {
-    slug: 'inner-life', title: 'The Inner Life',
+    slug: 'inner-life', title: 'The Inner Life', inProgress: true,
     card: { thumb: 'meditation.jpg', alt: 'A Chola-period granite statue of the Buddha seated in meditation.',
       desc: 'Meaning, the mind, and how to bear a life: Frankl, the spirituality of imperfection, and the truth about every kind of meditation.' },
     lead: 'Meaning, the mind, and how to bear a life, laid out oldest first: the practices, the great consolations, the psychology of contentment, and the honest cases of a search gone wrong.',
@@ -86,7 +86,6 @@ const HUBS = [
       live('william-james.html', 'William James', 'william-james.jpg', '1902', 1902, "The 1902 book behind Alcoholics Anonymous. A scientist takes religious experience seriously as evidence, studying conversions and mystical states by what they actually do in a person's life, not by whether their creeds are true."),
       live('perennial-philosophy.html', 'The Perennial Philosophy', 'perennial-philosophy.jpg', '1945', 1945, "Aldous Huxley's claim that underneath every religion lies one shared truth, assembled from the mystics of every tradition. Almost the secret thesis of this whole shelf, pressure-tested for where it overreaches."),
       live('modern-teachers.html', 'The Modern Teachers: How the East Got Sold to the West', 'modern-teachers.jpg', '20th c.', 1965, "How the East got sold to the West in the twentieth century, by five charismatic teachers from Alan Watts to Eckhart Tolle, each keeping one big idea: you are it, be here now, wake up. Plus the honest problem of the guru who turns out to be a fraud, and how to keep the teaching without the teacher."),
-      live('the-other-side.html', 'The Other Side', 'the-other-side.jpg', 'a theory', 2026, "Not a book but my own theory, built on the Tao Te Ching's split between the named and the nameless. The two sides are exactly equal, each is drawn toward the other, and nothing, not a rock, not a self, ever crosses the middle, the way nothing with mass ever reaches the speed of light."),
     ],
   },
   {
@@ -105,7 +104,7 @@ const HUBS = [
     ],
   },
   {
-    slug: 'staying-alive', title: 'Staying Alive',
+    slug: 'staying-alive', title: 'Staying Alive', inProgress: true,
     card: { thumb: 'big-enough.jpg', alt: 'The bowed bearded head and massive shoulders of the Farnese Hercules, an ancient marble statue.',
       desc: 'How to take care of the one body you get: muscle, the heart, food, sleep, and the rest, plus how long a human can really live. The actionable science, with the hype stripped off.' },
     lead: 'Taking care of the one body you get, from muscle and the heart to food, sleep, and how long a human can really live. The actionable health science, sorted from what is settled to what is merely sold.',
@@ -140,16 +139,20 @@ const SHELF = {
   thumb: 'boring-stuff.jpg',
   credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
   alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
-  cardDesc: 'the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.',
-  /* only the finished collections. philosophy and power-story-love moved to the
-     In Progress index (archive.html); they carry inProgress above. */
-  hubOrder: ['career', 'staying-alive', 'inner-life', 'religion'],
+  cardDesc: 'the more substantial posts: the sacred books, the craft of work, and one theory of my own.',
+  /* only the finished collections. philosophy, power-story-love, staying-alive,
+     and inner-life moved to the In Progress index (archive.html); they carry
+     inProgress above. */
+  hubOrder: ['career', 'religion'],
+  /* The Book With No Blood Test moved to the In Progress index 2026-09-24
+     (archive/no-blood-test/). The Other Side came out of The Inner Life the
+     same day to stand on the shelf by itself. */
   singles: [
     {
-      href: 'no-blood-test.html', title: 'The Book With No Blood Test', thumb: 'no-blood-test.jpg',
-      date: '2026-06-20', dateDisplay: '20 Jun 2026',
-      alt: "A 19th-century painting of the neurologist Charcot presenting a fainting woman to a room of physicians at a Paris asylum.",
-      desc: "A field guide to the DSM, psychiatry's catalog of about three hundred disorders, not one of which can be proven by a test. A tour of the labels, the conditions medicine can prove cold instead, and how sure you should be that a diagnosis is you.",
+      href: 'the-other-side.html', title: 'The Other Side', thumb: 'the-other-side.jpg',
+      date: '2026-07-02', dateDisplay: '2 Jul 2026',
+      alt: "An artist's impression of a star torn into a glowing streak as it falls toward a black hole, a dark disc against red clouds of gas.",
+      desc: "Not a book but my own theory, built on the Tao Te Ching's split between the named and the nameless. The two sides are exactly equal, each is drawn toward the other, and nothing, not a rock, not a self, ever crosses the middle, the way nothing with mass ever reaches the speed of light.",
     },
   ],
 };

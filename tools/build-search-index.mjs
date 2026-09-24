@@ -125,7 +125,7 @@ for (const block of cardBlocks) {
 // archived posts. They are NOT `archived`: the files never moved, the URLs are
 // live, and the homepage search still finds them. Keep this list in sync.
 const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive', 'career'];
-const IN_PROGRESS_HUBS = new Set(['philosophy', 'power-story-love']);
+const IN_PROGRESS_HUBS = new Set(['philosophy', 'power-story-love', 'staying-alive', 'inner-life']);
 const BORING_HUBS = new Set(HUB_SLUGS.filter((s) => !IN_PROGRESS_HUBS.has(s)));
 for (const slug of HUB_SLUGS) {
   const hubFile = join(ROOT, slug + '.html');
