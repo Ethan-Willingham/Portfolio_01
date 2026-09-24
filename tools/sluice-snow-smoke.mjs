@@ -94,7 +94,9 @@ try {
   }
   await game('keys.ArrowRight=false');
   check('tracks drive through real snow particles without alternate foot support',await game('player.x>driveStart+300 && driveSamples.every(function(s){return s.ground && Math.abs(s.y-(sy-PLAYER_H))<2;}) && driveSamples.some(function(s){return s.moving>100;})'));
-  check('cold snow mostly survives a drive instead of turning into a puddle',await game('__particleSnow.stats().active>seedCount*0.9'));
+  // Tracks can now free unsupported powder close to the ground. Count that
+  // conserved airborne snow too, rather than treating solver handoff as thaw.
+  check('cold snow mostly survives a drive instead of turning into a puddle',await game('__particleSnow.stats().mass>seedCount*0.9'));
   await sleep(1800);await screenshot('snow-tracks');
   await game('keys.ArrowLeft=true');await sleep(2300);await game('keys.ArrowLeft=false');
   check('the same particle collision works driving left',await game('player.onGround && __particleSnow.stats().moving>20'));
