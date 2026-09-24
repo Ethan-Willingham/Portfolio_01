@@ -37,7 +37,8 @@ basin. Hover the grate for a grab cursor. Drag a chunk from the bunker into the
 firebox and release: it falls, rolls, collides, and settles. Existing pieces can be rearranged. Dropping fresh
 coal outside the firebox returns it; moving a burning piece outside restores
 its grate position. Pointer cancellation and leaving restore unfinished drags.
-A simple tap on the bunker drops one piece.
+A simple tap on the bunker drops one piece. The first three form a starter
+cluster; later taps seek a lower part of the grate to spread the bed.
 
 - C: place one coal on the boiler grate.
 - B: work the bellows.
@@ -48,7 +49,10 @@ A simple tap on the bunker drops one piece.
 - Escape: cancel a held coal, otherwise leave the bath.
 
 The room fits the tub and working boiler between compact navigation and the
-water/tool control rail. Short landscape screens place the basin and firebox
+water/tool control rail. Since v28.80, a 896 by 256 chamber replaces the narrow
+firebox. The desktop control rail is 80px high, with compact tool switches
+and the water control on one row. Less wall space above the rim gives the
+actual basin more of the viewport. Short landscape screens place the basin and firebox
 beside one another. All actions retain at least 44-pixel-high targets. Fuel,
 average exposed air and ash blockage are visible alongside the boiler. The
 main basin spans 26 tiles and retains the original catenary

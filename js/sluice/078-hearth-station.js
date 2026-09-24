@@ -3,42 +3,32 @@
   function hearthRoomLayout() {
     var w = canvas.width / dpr, h = canvas.height / dpr, nav = hearthNavHeight();
     var footer = h - bathHUDHeight(), available = Math.max(120, footer - nav);
-    var landscape = w >= 520 && h < 500;
-    var sh = landscape ? available : Math.min(340, Math.max(176, available * 0.5));
-    var station = { x: landscape ? w * 0.4 : 0, y: landscape ? nav : footer - sh,
-      w: landscape ? w * 0.6 : w, h: sh };
-    var scene = { x: 0, y: nav, w: landscape ? station.x : w,
-      h: landscape ? available : available - sh };
-    var wide = w >= 700 && !landscape, side = !landscape && w < 700 && h < 650;
-    var bh, bw, box, bin, pump, action, ash, gap = 8;
+    var landscape = w >= 520 && h < 500, wide = w >= 700 && !landscape;
+    var ratio = HEARTH_WIDTH / HEARTH_HEIGHT, gap = 8, bh, bw, sh;
+    var station, scene, box, bin, pump, action, ash;
     if (landscape) {
-      var cw = Math.min(76, (station.w - 160) / 2), ch = 44;
-      var right = station.x + station.w - cw * 2 - gap - 12;
-      var leftW = right - station.x - 18;
-      bh = Math.min(sh - 48, (leftW - 24) * HEARTH_HEIGHT / HEARTH_WIDTH);
-      bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
-      box = { x: station.x + (leftW - bw) / 2, y: station.y + (sh - bh) / 2 + 5, w: bw, h: bh };
-      var cy = station.y + (sh - ch * 2 - gap) / 2 + 6;
-      bin = { x: right, y: cy, w: cw, h: ch };
-      pump = { x: right + cw + gap, y: cy, w: cw, h: ch };
-      action = { x: right, y: cy + ch + gap, w: cw, h: ch };
-      ash = { x: right + cw + gap, y: cy + ch + gap, w: cw, h: ch };
-    } else if (wide || side) {
-      bh = Math.min(sh - 76, (side ? w - 176 : w * 0.42) * HEARTH_HEIGHT / HEARTH_WIDTH);
-      bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
-      box = { x: (w - bw) / 2, y: station.y + 27, w: bw, h: bh };
-      var cw = side ? 64 : Math.min(174, (w - bw) / 2 - 42), ch = side ? 44 : 68;
-      var left = side ? 12 : box.x - cw - 30, right = side ? w - cw - 12 : box.x + bw + 30;
-      var cy = station.y + (sh - ch * 2 - gap) / 2;
-      bin = { x: left, y: cy, w: cw, h: ch };
-      pump = { x: left, y: cy + ch + gap, w: cw, h: ch };
-      action = { x: right, y: cy, w: cw, h: ch };
-      ash = { x: right, y: cy + ch + gap, w: cw, h: ch };
+      station = { x: w * 0.4, y: nav, w: w * 0.6, h: available };
+      scene = { x: 0, y: nav, w: station.x, h: available };
+      bh = Math.min(available - 80, (station.w - 32) / ratio);
+      bw = bh * ratio;
+      box = { x: station.x + (station.w - bw) / 2, y: nav + 22, w: bw, h: bh };
     } else {
-      bh = Math.min(sh - 94, (station.w - 68) * HEARTH_HEIGHT / HEARTH_WIDTH);
-      bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
-      box = { x: station.x + (station.w - bw) / 2, y: station.y + 27, w: bw, h: bh };
-      var cw = (station.w - 24 - gap * 3) / 4, cy = footer - 50;
+      // The grate grows horizontally; the basin receives the recovered height.
+      bh = wide ? Math.min(224, available * 0.30, (w - 344) / ratio) : (w - 40) / ratio;
+      bw = bh * ratio; sh = bh + (wide ? 74 : 84);
+      station = { x: 0, y: footer - sh, w: w, h: sh };
+      scene = { x: 0, y: nav, w: w, h: available - sh };
+      box = { x: (w - bw) / 2, y: station.y + (wide ? 24 : 22), w: bw, h: bh };
+    }
+    if (wide) {
+      var cw = Math.min(132, (w - bw) / 2 - 30), cy = station.y + (station.h - 96) / 2;
+      var left = box.x - cw - 20, right = box.x + bw + 20;
+      bin = { x: left, y: cy, w: cw, h: 44 };
+      pump = { x: left, y: cy + 52, w: cw, h: 44 };
+      action = { x: right, y: cy, w: cw, h: 44 };
+      ash = { x: right, y: cy + 52, w: cw, h: 44 };
+    } else {
+      var cw = (station.w - 24 - gap * 3) / 4, cy = footer - 48;
       bin = { x: station.x + 12, y: cy, w: cw, h: 44 };
       pump = { x: bin.x + cw + gap, y: cy, w: cw, h: 44 };
       action = { x: pump.x + cw + gap, y: cy, w: cw, h: 44 };
@@ -46,7 +36,7 @@
     }
     return { w: w, h: h, top: nav, footer: footer, station: station, scene: scene,
       box: box, bin: bin, pump: pump, action: action, ash: ash,
-      wide: wide, side: side, landscape: landscape };
+      wide: wide, side: false, landscape: landscape };
   }
   function hearthStationReadout(bed) {
     var weight = 0, fuel = 0, air = 0, count = 0;
@@ -62,7 +52,23 @@
     var bed = hearthBeds.boiler;
     var label = pump ? (r.w < 90 ? 'AIR [B]' : 'BELLOWS [B]') :
       'COAL ' + (hearthDevSupplies() ? 'FREE' : forgeCount('coal'));
-    if (r.h < 64) { hearthButton(c, r, label, pump ? 'pump' : 'coal', pump || forgeCount('coal') > 0); return; }
+    if (r.h < 64) {
+      if (r.w < 118) { hearthButton(c, r, label, pump ? 'pump' : 'coal', pump || forgeCount('coal') > 0); return; }
+      hearthPlate(c, r, true);
+      var ix = r.x + 27, iy = r.y + 22;
+      if (pump) {
+        c.fillStyle = BLD.woodDark; c.fillRect(ix - 15, iy + 5, 30, 3);
+        c.fillStyle = BLD.woodMid; c.fillRect(ix - 16, iy - 9 + bed.air * 4, 32, 3);
+        c.fillStyle = BLD.woodBase; c.beginPath();
+        c.moveTo(ix - 13, iy - 6 + bed.air * 4); c.lineTo(ix + 12, iy - 6 + bed.air * 4);
+        c.lineTo(ix + 16, iy); c.lineTo(ix + 12, iy + 5); c.lineTo(ix - 13, iy + 5); c.closePath(); c.fill();
+      } else for (var i = 0; i < Math.min(2, forgeCount('coal')); i++) {
+        if (!hearthBinCoals[i]) hearthBinCoals[i] = { r: 13 + i, seed: (i + 1) * 0.137, angle: i * 1.7, heat: 0, fuel: 1 };
+        hearthDrawCoal(c, hearthBinCoals[i], ix - 6 + i * 12, iy, 0.7, hearthToolTime);
+      }
+      hearthText(c, label, r.x + 48 + (r.w - 48) / 2, iy, 11, BLD.cream, 'center');
+      hearthButtons.push(Object.assign({ action: pump ? 'pump' : 'coal' }, r)); return;
+    }
     hearthPlate(c, r, true);
     var cx = r.x + r.w / 2, cy = r.y + 22;
     if (pump) {
@@ -101,7 +107,7 @@
     hearthButton(c, L.ash, L.ash.w < 90 ? 'ASH [A]' : 'SWEEP ASH [A]', 'ash', bed.ash.length > 0 || bed.chunks.some(function (b) { return b.ash; }));
     if (L.wide || L.side) {
       hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, L.side ? 10 : 11, UIT_DIM, 'center');
-      if (L.wide) hearthText(c, hearthBurnSummary(bed).split('  /  ')[0], L.bin.x + L.bin.w / 2, L.bin.y - 13, 11, BLD.cream, 'center');
+      if (L.wide && !bed.chunks.length) hearthText(c, 'LOAD COAL', L.bin.x + L.bin.w / 2, L.bin.y - 13, 11, BLD.cream, 'center');
     } else {
       // Compact instruments share the saddle line; the chamber stays clear.
       c.fillStyle = BLD.woodDeep; c.fillRect(r.x + 8, r.y, r.w - 16, 15);

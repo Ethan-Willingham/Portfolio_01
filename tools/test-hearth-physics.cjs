@@ -21,7 +21,7 @@ function checkBodies(bed) {
     for (const key of ['x', 'y', 'vx', 'vy', 'r', 'angle', 'spin', 'seed', 'fuel', 'heat']) {
       assert(Number.isFinite(b[key]), `finite ${key}`);
     }
-    assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 416.4 && p[1] <= 210.4), 'polygon containment');
+    assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 896.4 && p[1] <= 210.4), 'polygon containment');
     near(b.fuel, b.volatile + b.carbon, 1e-10, 'combustible mass is conserved');
     assert(b.fuel >= 0 && b.fuel <= 1, 'bounded fuel');
     assert(b.heat >= 0 && b.heat <= 1, 'bounded coal heat');
@@ -32,21 +32,44 @@ function checkBodies(bed) {
 
 {
   const {s,advance}=fixture();
-  const b=s.hearthAddChunk('boiler',380,150); b.vx=180;
+  const b=s.hearthAddChunk('boiler',860,150); b.vx=180;
   advance(3); checkBodies(s.hearthBeds.boiler);
-  assert(b.x>340,'the new right-hand chamber is physical space, not stretched art');
+  assert(b.x>820,'the new right-hand chamber is physical space, not stretched art');
   const old=JSON.parse(JSON.stringify(s.hearthSave()));old.version=4;delete old.boiler.width;
   old.boiler.chunks[0].x=160;
   old.boiler.ash=[{x:123,y:208,vx:0,vy:0,kg:.001,heat:0,seed:.5}];
   const fuel=old.boiler.chunks[0].fuel, shape=JSON.stringify(old.boiler.chunks[0].shape);
   s.hearthRestore(old);
-  near(s.hearthBeds.boiler.chunks[0].x,208,0,'old coal bed recenters by 48 units');
-  near(s.hearthBeds.boiler.ash[0].x,171,0,'old ash recenters with the bed');
+  near(s.hearthBeds.boiler.chunks[0].x,448,0,'pre-width coal bed recenters by 288 units');
+  near(s.hearthBeds.boiler.ash[0].x,411,0,'pre-width ash recenters with the bed');
   near(s.hearthBeds.boiler.chunks[0].fuel,fuel,0,'migration preserves fuel');
   assert.equal(JSON.stringify(s.hearthSave().boiler.chunks[0].shape),shape,'migration preserves exact hull');
   const saved=JSON.stringify(s.hearthSave());s.hearthRestore(JSON.parse(saved));
   assert.equal(JSON.stringify(s.hearthSave()),saved,'new saves never shift twice');
   console.log('PASS wider physical wall and one-time coal/ash save migration');
+}
+
+{
+  const {s,advance}=fixture();
+  s.hearthAddChunk('boiler',180,170);s.hearthAddChunk('boiler',205,115);
+  s.hearthAddChunk('forge',160,160);
+  advance(3);
+  s.hearthBeds.boiler.ash.push({x:171,y:208,vx:0,vy:0,kg:.001,heat:.1,seed:.5});
+  const previous=JSON.parse(JSON.stringify(s.hearthSave()));previous.boiler.width=416;
+  const expected=JSON.parse(JSON.stringify(previous));expected.boiler.width=896;
+  for(const b of expected.boiler.chunks)b.x+=240;
+  for(const g of expected.boiler.ash)g.x+=240;
+  const relativeX=previous.boiler.chunks[1].x-previous.boiler.chunks[0].x;
+  const relativeY=previous.boiler.chunks[1].y-previous.boiler.chunks[0].y;
+  s.hearthRestore(previous);
+  const restored=JSON.parse(JSON.stringify(s.hearthSave()));
+  assert.deepEqual(restored,expected,'416-wide saves translate coal and ash without stretching hulls or changing reservoirs');
+  near(restored.boiler.chunks[1].x-restored.boiler.chunks[0].x,relativeX,1e-10,'contact spacing survives wider grate');
+  near(restored.boiler.chunks[1].y-restored.boiler.chunks[0].y,relativeY,0,'vertical contacts and grate height stay unchanged');
+  assert.deepEqual(restored.forge,previous.forge,'retired forge stays in its original coordinates');
+  s.hearthRestore(restored);
+  assert.deepEqual(JSON.parse(JSON.stringify(s.hearthSave())),restored,'896-wide saves do not recenter twice');
+  console.log('PASS current-width stack migration preserves contacts, all material state, ash and retired forge');
 }
 
 {

@@ -34,7 +34,7 @@
       // A paid-for old stove charge becomes fuel once, without charging again.
       var left = Math.min(240, legacyFire);
       while (left > 0) {
-        var b = hearthAddChunk('boiler', 62 + hearthBeds.boiler.chunks.length * 39, 150);
+        var b = hearthAddChunk('boiler', HEARTH_WIDTH / 2 - 98 + hearthBeds.boiler.chunks.length * 39, 150);
         if (!b) break;
         b.fuel = Math.min(1, left / b.life); b.lit = true; b.heat = 0.85;
         b.volatile = null; hearthFuelState(b); hearthMass(b);
@@ -65,6 +65,23 @@
     bathPtrDown = false;
     // Old callers naming the boiler still land in the single shared room.
     bathScrollT = 1e9; bathCamY = -1;
+  }
+  function hearthDropX() {
+    var chunks = hearthBeds.boiler.chunks, mid = HEARTH_WIDTH / 2, best = mid, score = -Infinity;
+    // Keep a starter cluster close enough to catch; later taps seek a low
+    // nearby part of the wider bed instead of building one central tower.
+    var count = chunks.filter(function (b) { return !b.held; }).length;
+    if (count < 3) return mid + (count - 1) * 44;
+    for (var x = 48; x < HEARTH_WIDTH - 48; x += 48) {
+      var crown = HEARTH_FLOOR;
+      for (var i = 0; i < chunks.length; i++) {
+        var b = chunks[i];
+        if (!b.held && Math.abs(b.x - x) < b.r + 30) crown = Math.min(crown, b.y - b.r);
+      }
+      var open = crown - Math.abs(x - mid) * 0.18;
+      if (open > score) { score = open; best = x; }
+    }
+    return best;
   }
   function hearthLoadCoal(kind, x, y) {
     if (hearthBeds[kind].chunks.length >= HEARTH_CAP) { bathSetNotice('The grate is full. Rake out the spent ash.'); return null; }
@@ -127,7 +144,7 @@
     } else if (action === 'exit') { hearthCancelDrag(); bathExit(); }
     else if (action === 'bath' || action === 'boiler') hearthSetView(action);
     else if (action === 'coal') {
-      var b = hearthLoadCoal('boiler', HEARTH_WIDTH / 2 - 50 + Math.random() * 100, 12);
+      var b = hearthLoadCoal('boiler', hearthDropX(), HEARTH_TOP + 24);
       if (b) sfxPlay('debris', { gain: 0.35 });
     } else if (action === 'pump') { hearthPump('boiler'); hearthToolPulse = 1; }
     else if (action === 'strike') hearthStrike();
@@ -169,7 +186,7 @@
   // Hit boxes use CSS pixels; bodies keep chamber coordinates above the y=210 grate.
   function hearthNavHeight() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
-    return hearthDevSupplies() && w < 740 && !(w >= 480 && h < 500) ? 114 : 62;
+    return hearthDevSupplies() && w < 620 && !(w >= 480 && h < 500) ? 104 : 54;
   }
   function hearthCSSPoint(e) {
     var r = canvas.getBoundingClientRect();
@@ -273,8 +290,8 @@
     if (tap || hearthContains({ x: box.x - 12, y: box.y - 35, w: box.w + 24, h: box.h + 48 }, q.x, q.y)) {
       var releaseAge = Math.max(0, (performance.now() - d.time) / 1000 - 0.04);
       var releaseVelocity = Math.exp(-releaseAge * 18);
-      d.b.x = tap ? HEARTH_WIDTH / 2 - 70 + Math.random() * 140 : Math.max(d.b.r, Math.min(HEARTH_WIDTH - d.b.r, (q.x - box.x) * HEARTH_WIDTH / box.w));
-      d.b.y = tap ? 12 : Math.max(HEARTH_TOP+10, Math.min(210 - d.b.r, HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h));
+      d.b.x = tap ? hearthDropX() : Math.max(d.b.r, Math.min(HEARTH_WIDTH - d.b.r, (q.x - box.x) * HEARTH_WIDTH / box.w));
+      d.b.y = tap ? HEARTH_TOP + 24 : Math.max(HEARTH_TOP+10, Math.min(210 - d.b.r, HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h));
       d.b.vx = tap ? (Math.random() - 0.5) * 50 : d.vx * releaseVelocity * HEARTH_WIDTH / box.w * 0.45;
       d.b.vy = tap ? 0 : d.vy * releaseVelocity * HEARTH_HEIGHT / box.h * 0.45;
       d.b.spin = d.b.vx * 0.025; d.b.held = false; hearthDrag = null;
@@ -321,12 +338,12 @@
     c.fillStyle = UIT_PANEL; c.fillRect(0, 0, w, hearthNavHeight());
     c.fillStyle = UIMAT_PLATE_HIGHLIGHT; c.fillRect(0, hearthNavHeight() - 2, w, 2);
     // Leave the first 56px clear for the shared native pause button.
-    if (!shortDev) hearthText(c, dev ? 'BANYA / DEV' : 'BANYA', 64, 31, 14);
-    hearthButton(c, { x: w - 96, y: 9, w: 82, h: 44 }, 'LEAVE', 'exit', false);
+    if (!shortDev) hearthText(c, dev ? 'BANYA / DEV' : 'BANYA', 64, 27, 14);
+    hearthButton(c, { x: w - 96, y: 5, w: 82, h: 44 }, 'LEAVE', 'exit', false);
     if (dev) {
-      var inline = w >= 740 || shortDev;
-      var dw = shortDev ? Math.min(128, (w - 310) / 2) : w >= 740 ? 156 : (w - 38) / 2;
-      var dx = inline ? w - (dw * 2 + 122) : 14, dy = inline ? 9 : 62;
+      var inline = w >= 620 || shortDev;
+      var dw = shortDev ? Math.min(128, (w - 310) / 2) : w >= 620 ? Math.min(136, (w - 300) / 2) : (w - 38) / 2;
+      var dx = inline ? w - (dw * 2 + 122) : 14, dy = inline ? 5 : 54;
       hearthButton(c, { x: dx, y: dy, w: dw, h: 44 }, shortDev ? 'PREPARE [T]' : 'PREPARE BATH [T]', 'kit', true);
       hearthButton(c, { x: dx + dw + 10, y: dy, w: dw, h: 44 }, shortDev ? 'GUEST [G]' : 'ADD GUEST [G]', 'guest', true);
     }

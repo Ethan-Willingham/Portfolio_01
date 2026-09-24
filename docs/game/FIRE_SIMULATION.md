@@ -138,16 +138,18 @@ transitions and leaving the room. Display resolution is capped at 1.5 device
 pixels per CSS pixel. No GPU canvas is copied through Canvas2D. Fully cold fire
 sleeps after a five-second vent period, with no continuing compute submissions.
 
-Since v28.65 the chamber extends upward from y = -110 to the original grate at
-210, adding 52 percent more physical plume space without enlarging the coal.
-Since v28.69 the chamber is 416 world pixels wide. The tending view preserves
-this 1.3 aspect ratio. Since v28.74, the complete firebox is always interactive
-in the bath view, with controls alongside it or underneath on phones. Short
-landscape screens place it beside the basin. There are no bars across its
-opening. Pointer coordinates, collision walls, GPU masks and flame occlusion
-share these dimensions. Older coal and ash beds move right by 48 units once on
-restore, preserving relative contacts, shapes and remaining fuel. New bed saves
-record their width; the retired forge retains its original coordinates.
+Since v28.80 the chamber is 896 world pixels wide and 256 high, from y = -46
+through the original grate at 210. Display and pointer mapping preserve this
+3.5 aspect ratio. The wider footprint is physical space, not stretched coal or
+flames. The complete firebox stays interactive below the basin, with compact
+controls alongside it or underneath on phones. Short landscape screens place
+it beside the basin. There are no bars across its opening. Collision walls,
+GPU masks and flame occlusion use the same dimensions.
+
+Saves record their chamber width. Restoring a 416-wide bed moves its coal and
+ash right by 240 units once; legacy 320-wide beds move by 288. Relative contacts,
+hulls, temperatures and fuel remain intact. Vertical coordinates keep the same
+grate, and the retired forge retains its original coordinates.
 
 The normal image reconstructs emitted radiance with positive cubic B-spline
 weights, normalized over fluid cells. An emission compute pass evaluates the
@@ -174,7 +176,9 @@ tools/fire-simulation-smoke.mjs` also boots the real browser with a delayed wate
 device and fire warm-up. The CPU browser test checks interpolation in actual
 rendered pixels as well as preserving the surrounding canvas settings.
 
-Desktop uses 224 by 172 cells; mobile uses 144 by 111. There are at most forty-eight
+Desktop uses 368 by 105 cells; mobile uses 240 by 69. The wider grid keeps
+approximately the previous cell budget. CPU fallback uses a smoothly sampled
+176 by 50 field across the full chamber. There are at most forty-eight
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch
 up its missed burn time. Buffers, pipelines and bind groups are retained, and
 all steps in one game update share one queue submission. The desktop simulation
@@ -194,6 +198,11 @@ A v28.74 combined-view run with about 51,000 liquid particles, steam, a guest
 and a 32-piece fire averaged 11.73 ms CPU time and a 16.67 ms frame interval.
 The 99th-percentile interval was 16.80 ms. The same run verified zero water
 penetration through the curved liner and aligned fire overlays on phones.
+
+A wide-grate run with about 55,000 liquid particles and 32 fuel pieces averaged
+8.45 ms full-frame CPU time and a 16.67 ms frame interval. Fire submissions
+averaged 1.72 ms, with 1.90 ms at the 95th percentile. The wider field uses
+5.76 MB of buffers. Water penetration through the curved liner remained zero.
 
 The queue-fenced measurement includes browser/driver scheduling and room drawing;
 it is not a GPU timestamp. These are local measurements, not guarantees for other

@@ -51,9 +51,10 @@ Bath water now collides with the drawn curved liner in both liquid solvers.
 Since v28.67, the bed holds 32 varied charcoal-shaped lumps, plus fracture
 capacity to 48 pieces. Rear air supply, a finite starter pocket and radiance
 reconstruction make the burning bed more visible without increasing the grid.
-Since v28.69, the physical chamber is 416 by 320 world pixels, with a wider,
-lower firebox with recessed cast ironwork, hinges and an ash drawer. The copper
-tub rim follows the collision curve with outward thickness.
+Since v28.80, the physical chamber is 896 by 256 world pixels. A broad, low
+firebox and compact controls give the basin more room. Cast ironwork, hinges
+and an ash drawer frame the opening. The copper tub rim follows the collision
+curve with outward thickness.
 The single-room bath stays fixed under wheel and drag gestures; saved upper
 floors scroll immediately, with no camera easing.
 

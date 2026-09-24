@@ -1,6 +1,6 @@
   /* ---- Coal rigid bodies: the visible convex hull IS the contact geometry. ---- */
   var hearthHullCache = new WeakMap();
-  var HEARTH_FLOOR = 210, HEARTH_TOP = -110, HEARTH_HEIGHT = 320, HEARTH_WIDTH = 416, HEARTH_FRICTION = 0.72;
+  var HEARTH_FLOOR = 210, HEARTH_TOP = -46, HEARTH_HEIGHT = 256, HEARTH_WIDTH = 896, HEARTH_FRICTION = 0.72;
 
   function hearthHull(body) {
     var cached = hearthHullCache.get(body);

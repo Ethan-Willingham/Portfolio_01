@@ -130,7 +130,7 @@
       hearthButton(c, { x: 14 + 3 * (bw + gap), y: top, w: bw, h: 44 },
         t.shower ? 'SHOWER' : 'JET', 'tool-spray', false);
     } else {
-      hearthText(c, 'CEILING TOOLS', 14 + 3 * bw + 2.5 * gap, top + 22, 11, UIT_DIM, 'center');
+      // The unused grip/valve area stays clear until a tool is selected.
     }
   }
   function bathToolRopeStep(h, b) {

@@ -19,7 +19,7 @@
     var id = bed.nextId++, seed = hearthSeed(id + (bed.pilot ? 193 : 0));
     var r = 29 + seed * 10;
     var b = { id: id, x: hearthNumber(x, HEARTH_WIDTH / 2, r, HEARTH_WIDTH - r),
-      y: hearthNumber(y, 12, -80, 210 - r), vx: 0, vy: 0, r: r, baseR: r,
+      y: hearthNumber(y, 12, -80, HEARTH_FLOOR - r), vx: 0, vy: 0, r: r, baseR: r,
       angle: seed * Math.PI * 2, spin: 0, seed: seed,
       life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false, lump: true, material: material === 'wood' ? 'wood' : 'coal' };
     hearthFuelState(b); hearthMass(b); hearthWorldHull(b);
@@ -239,7 +239,7 @@
       }
       if(data.version>=4 && Array.isArray(src.ash)) for(var a=0;a<Math.min(HEARTH_ASH_CAP,src.ash.length);a++){
         var g=src.ash[a];if(!g || typeof g!=='object')continue;
-        bed.ash.push({x:hearthNumber(g.x,160,0,HEARTH_WIDTH) + shift,y:hearthNumber(g.y,208,-320,210),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)});
+        bed.ash.push({x:hearthNumber(g.x,160,0,HEARTH_WIDTH) + shift,y:hearthNumber(g.y,HEARTH_FLOOR-2,-320,HEARTH_FLOOR),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)});
       }
       var nextId = bed.chunks.reduce(function(n,b){return Math.max(n,b.id+1);},1);
       bed.nextId = Math.max(nextId, Math.floor(hearthNumber(src.nextId, nextId, 1, 1e9)));

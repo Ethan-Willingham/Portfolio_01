@@ -98,8 +98,8 @@
     ctx.fillStyle = BLD.woodMid; ctx.fillRect(x, railY, width, 1);
     ctx.fillStyle = BLD.woodDark; ctx.fillRect(x + 10, wallTop, 18, floor - wallTop);
     ctx.fillRect(x + width - 28, wallTop, 18, floor - wallTop);
-    var detailScale = Math.max(1, 0.8 / worldScale);
-    var signY = Math.min(curve.y0 - 152, wallTop + 38 / worldScale);
+    var detailScale = Math.max(0.65, 0.6 / worldScale);
+    var signY = curve.y0 - 104;
     var mid = (curve.x0 + curve.x1) / 2;
     ctx.save(); ctx.translate(mid, signY); ctx.scale(detailScale, detailScale);
     ctx.fillStyle = BLD.outline; ctx.fillRect(-110, 0, 220, 58);
@@ -109,7 +109,7 @@
     ctx.fillStyle = BLD.goldBase; ctx.font = '9px ' + UI_FONT; ctx.fillText('THE BATHHOUSE', 0, 44); ctx.restore();
     for (var side = 0; side < 2; side++) {
       var lx = curve.x0 + (curve.x1 - curve.x0) * (side ? 0.82 : 0.18);
-      var ly = Math.max(wallTop + 22, Math.min(curve.y0 - 108, signY + 34));
+      var ly = Math.max(wallTop + 22, Math.min(curve.y0 - 68, signY + 26));
       ctx.fillStyle = BLD.metalDark; ctx.fillRect(lx - 2, wallTop, 4, ly - wallTop);
       ctx.fillStyle = hearthArtColor(BLD.warmGlow, 0.035); ctx.beginPath(); ctx.arc(lx, ly, 108, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = hearthArtColor(BLD.warmGlow, 0.045); ctx.beginPath(); ctx.arc(lx, ly, 66, 0, Math.PI * 2); ctx.fill();

@@ -803,7 +803,7 @@
     var nav = hearthNavHeight(), scene = hearthRoomLayout().scene;
     // Reserve the fixed controls before fitting the entire ground-floor tub.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
-    var mainHeight = Math.max(13*TILE,bathInteriorBottom()-mainCurve.y0+220);
+    var mainHeight = bathInteriorBottom() - mainCurve.y0 + 120;
     worldScale = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / mainHeight);
     var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
     if (bathViewportKey !== viewportKey) {

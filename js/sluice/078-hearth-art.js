@@ -6,8 +6,8 @@
   var hearthArtRGB = {};
   var hearthArtRamp = null;
   var hearthArtSparkGlow = null;
-  var HEARTH_ART_W = 112;
-  var HEARTH_ART_H = 76;
+  var HEARTH_ART_W = 176;
+  var HEARTH_ART_H = 50;
 
   function hearthArtHash(n) {
     n = Math.imul((n | 0) ^ 0x68bc21eb, 0x1b873593);
@@ -275,6 +275,7 @@
 
   function hearthArtStep(field, bed, dt) {
     var w = HEARTH_ART_W, h = HEARTH_ART_H, heat = field.heat, next = field.next;
+    var flowX = (w / HEARTH_WIDTH) / (112 / 416), flowY = (h / HEARTH_HEIGHT) / (76 / 210);
     var air = Math.max(0, Math.min(1, bed.air == null ? 0.65 : Number(bed.air)));
     var t = field.clock, phase = (t * 17) | 0, noise = field.noise;
     var x, y, at, ix, iy;
@@ -293,8 +294,9 @@
         var wave = field.sinX[x] * cosY + field.cosX[x] * sinY;
         var roll = field.sinX2[x] * cosY2 + field.cosX2[x] * sinY2;
         var turbulence = 0.38 + (1 - Math.min(1, value)) * 0.62;
-        var vx = (rowWind + wave * 14 + roll * 8 + curl * 4) * turbulence + (56 - x) * 0.022;
-        var vy = 16 + air * 15 + value * 18 + wave * 4 - roll * 3;
+        // Preserve transport speed in chamber units when the field aspect changes.
+        var vx = ((rowWind + wave * 14 + roll * 8 + curl * 4) * turbulence + (w * 0.5 - x) * 0.022) * flowX;
+        var vy = (16 + air * 15 + value * 18 + wave * 4 - roll * 3) * flowY;
         var advected = hearthArtSample(heat, x - vx * dt, y + vy * dt);
         var blur = hearthArtSample(heat, x - vx * dt + curl * 0.47, y + vy * dt + 0.35);
         next[at] = Math.max(0, advected * 0.95 + blur * 0.05 - rowCool * (0.75 + curl * 0.3));
@@ -302,7 +304,7 @@
     }
     var sources = field.sources;
     for (var i = 0; i < sources.length; i++) {
-      var body = sources[i], bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42) * h / 210;
+      var body = sources[i], bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42 - HEARTH_TOP) * h / HEARTH_HEIGHT;
       var radius = Math.max(2, body.r * w / HEARTH_WIDTH * 0.95);
       var intensity = hearthArtFlame(body) * (0.84 + air * 0.16);
       var flicker = 0.88 + noise[((body.id || i) * 53 + ((t * 13) | 0)) & 1023] * 0.12;
@@ -329,9 +331,9 @@
     for (var i = 0; i < field.sources.length; i++) {
       var body = field.sources[i], heat = hearthArtFlame(body);
       if (heat < 0.7) continue;
-      var bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42) * h / 210;
+      var bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42 - HEARTH_TOP) * h / HEARTH_HEIGHT;
       var radius = body.r * w / HEARTH_WIDTH * (0.83 + air * 0.25);
-      var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / 210;
+      var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / HEARTH_HEIGHT;
       var phase = (Number(body.seed) || 0) * 19 + field.clock * 1.6;
       var inlet = heat * (0.84 + air * 0.16) * 1.18;
       var minY = Math.max(1, Math.floor(by - height)), maxY = Math.min(h - 2, Math.ceil(by));
@@ -500,8 +502,8 @@
       c.fillStyle = hearthArtColor(BLD.metalBase, 0.26); c.fillRect(col, ventY - 1, 10, 1);
       c.fillStyle = BLD.outline; c.fillRect(col, ventY, 10, 3);
     }
-    c.fillStyle = BLD.metalDark; c.fillRect(0, 208, HEARTH_WIDTH, 2);
-    c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 209, HEARTH_WIDTH, 1);
+    c.fillStyle = BLD.metalDark; c.fillRect(0, HEARTH_FLOOR - 2, HEARTH_WIDTH, 2);
+    c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, HEARTH_FLOOR - 1, HEARTH_WIDTH, 1);
     // Mineral residue is simulated and saved, never painted in an empty grate.
     var ash = bed.ash || [];
     for(i=0;i<ash.length;i++){
@@ -515,7 +517,7 @@
       // This field is deliberately coarse for CPU fallback. Reconstruct its
       // light smoothly instead of magnifying each cell into a visible block.
       c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-      c.drawImage(field.canvas, 0, 0, HEARTH_WIDTH, 210);
+      c.drawImage(field.canvas, 0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
       c.restore();
     }
     // Contact shadows stay close to each actual hull.

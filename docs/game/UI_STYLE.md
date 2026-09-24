@@ -1,14 +1,14 @@
 # UI_STYLE.md — Frontier Soviet UI
 
-> **Bath room (2026-09-20).** The banya opens to a full-width timber room
-> around a wide catenary tub. Its copper lining and bolts follow the same curve
-> as the liquid cavity. The working coal boiler is part of the tub base. Hover
-> highlights its metal hatch; click or tap opens a close view for coal, bellows,
-> ignition and ash. Back to Bath and Escape return to the room. The forge and
-> location tabs are removed. A supplied steel striker replaces the forge gate.
-> Compact top navigation and a single water rail leave the room visible. The
-> real water, steam and fuel continue through both views. Mouse and touch use
-> the same targets, including a minimum 44px boiler hatch on small screens.
+> **Bath room (2026-09-23, v28.80).** One view contains the catenary tub and
+> the working boiler. The broad, low firebox stays directly beneath the basin;
+> compact coal, bellows, flint and ash controls sit alongside it. The physical
+> chamber and its pointer coordinates share the same aspect ratio, so coal
+> shapes and flame motion are not stretched. Desktop tools and water controls
+> share an 80px bottom rail. Phones put fuel controls in a row below the grate;
+> short landscape screens place the firebox beside the basin. All action targets
+> remain at least 44px high. There is no separate boiler page or scrolling
+> transition in the main room. Real water, steam, guests and fire stay live.
 
 > **Loading and arrival (2026-09-20, v28.49).** The initial HTML contains an
 > opaque gunmetal loading screen, a cream SLUICE wordmark and a drill/strata mark.

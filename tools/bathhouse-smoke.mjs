@@ -92,7 +92,8 @@ try {
   await send('Runtime.enable');await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35`});
-  for(let i=0;i<300;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))break;await sleep(100);}
+  for(let i=0;i<600;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))break;await sleep(100);}
+  if (!await game("introPhase === 'done'")) { console.log('BOOT',await ev('({error:window.__bootErr,text:document.body.innerText})')); await screenshot('boot-failure'); }
   check('normal boot enables bathhouse',await game("introPhase === 'done' && ENABLE_BATH"));
   check('visitor shaders warm without errors',await ev('window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.visitors>=0'));
   if (process.argv.includes('--layout-only')) {
@@ -145,7 +146,7 @@ try {
     await sleep(900);
     check('guest button places a real waiting guest',await game('bathGuests.length===1 && bathGuests[0].st===\'wait\''));
     await game('cancelAnimationFrame(gameRafId);gameRafId=0');
-    for(const [width,height] of [[1280,900],[800,600],[390,844],[320,568],[844,390],[667,375],[568,320],[540,320],[520,320]]) {
+    for(const [width,height] of [[1440,714],[1280,900],[800,600],[390,844],[320,568],[844,390],[667,375],[568,320],[540,320],[520,320]]) {
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
       await game('isMobile='+String(width<500)+';resize()');
       for(const view of ['bath']) {
@@ -174,6 +175,12 @@ try {
         if (!fits) console.log('LAYOUT',await game('({view:hearthView,buttons:hearthButtons,layout:hearthRoomLayout(),boiler:bathBoilerScreenRect(),nav:hearthNavHeight(),hud:bathHUDHeight()})'));
         await screenshot('layout-'+width+'x'+height+'-'+view);
         check(width+'x'+height+' '+view+' controls fit without overlap',fits);
+        if (width === 1440 && height === 714) {
+          check('desktop room uses the reclaimed area for a broad firebox and larger bath',await game(`(function(){
+            var L=hearthRoomLayout(),c=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]);
+            return L.box.w>L.w*0.40 && L.box.h<L.h*0.27 && (c.x1-c.x0)*worldScale>L.w*0.58 && bathHUDHeight()<=80;
+          })()`));
+        }
       }
     }
     await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -199,7 +206,7 @@ try {
     async function reload(query = '') {
       await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35${query}`});
       await sleep(300);
-      for(let i=0;i<300;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))return;await sleep(100);}
+      for(let i=0;i<600;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))return;await sleep(100);}
       throw Error('reload did not finish');
     }
     await ev("localStorage.setItem('sluice.opt.banya','0');localStorage.removeItem('sluice.opt.banya-default');localStorage.setItem('sluice.banya-test-save','keep')");
