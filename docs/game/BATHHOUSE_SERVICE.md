@@ -77,23 +77,27 @@ Dev supplies are virtual finite counts. Created water, physical fuel, and guests
 follow ordinary persistence. A dev coal cannot refund itself into real stock
 after reloading. Dev mode keeps its free purchases and 999,999 money clamp.
 
-## Ceiling claw and hose (v28.70)
+## Ceiling claw and hose (v28.73)
 
 The bottom rail has CLAW and HOSE switches. Tap the selected switch again to
 stow it. Only the selected tool and its ceiling carriage are visible. While a
-tool is selected, dragging in the room controls it; the camera stays fixed.
-The same captured pointer path handles a mouse, pen, or finger.
+tool is selected, the mouse moves it without holding a button. Click to grab a
+slime and click again to drop it. Hold the mouse button to pour water; release
+to stop. Moving over the control rails leaves the tool in place.
 
-Drag the claw down to a guest to catch it automatically. It keeps holding when
-you lift your finger, so you can reposition your hand. DROP SLIME opens the
-jaws. Guests handled this way use gravity, buoyancy, curved-liner contacts,
+On a phone or with a pen, drag to position the tool without activating it.
+Tap GRAB SLIME to catch, then DROP SLIME to release. Tap POUR to start the hose,
+move it with one finger, then tap STOP. No two-finger gesture is needed.
+
+The claw keeps holding between gestures, so you can reposition your hand.
+Guests handled this way use gravity, buoyancy, curved-liner contacts,
 and moving water boundaries. Dropping one into a warm bath starts service;
 only submerged, unheld time counts toward its soak. Existing guest identity,
 payment, and departure rules still apply. Physical guest positions survive a
 save, but the claw releases on reload.
 
-Drag the hose to move its nozzle and pour. FLOW keeps the valve open between
-drags; tap it again to close. JET gives a fast narrow stream and SHOWER spreads
+The POUR button can also keep the valve open between gestures on a computer;
+STOP closes it. JET gives a fast narrow stream and SHOWER spreads
 it into five gentler streams. Sideways motion tilts the nozzle, the flexible
 hose trails behind, and the pressure ramps smoothly. Its real water particles
 hit guests, displace the bath, and spill onto the floor. The claw hub and
@@ -105,8 +109,8 @@ the fixed filling spout, including when its valve is closed. Switching it off
 resumes any queued fill. Normal play retains finite water and permanent floor
 loss; dev mode supplies water as before. A full basin stops new emission.
 
-Keys 1 and 2 switch the claw and hose. Space drops a held slime or switches the
-hose valve. Pause, focus loss, pointer cancellation, resizing, changing rooms,
+Keys 1 and 2 switch the claw and hose. Space grabs or drops a slime, or switches
+the hose valve. Pause, focus loss, pointer cancellation, resizing, changing rooms,
 and leaving stop flow and release a held guest. Controls remain at least 44px
 tall on phones and short landscape screens. Stow the tool to click the boiler.
 

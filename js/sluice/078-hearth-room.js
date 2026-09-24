@@ -165,7 +165,7 @@
     } else if (k === 'w') bathAddWater();
     else if (k === '1') bathToolSelect('claw');
     else if (k === '2') bathToolSelect('hose');
-    else if (k === ' ') bathToolAction(bathTool.mode === 'claw' ? 'tool-drop' : 'tool-valve');
+    else if (k === ' ') bathToolAction(bathTool.mode === 'claw' ? 'tool-grip' : 'tool-valve');
     return true;
   }
 
@@ -246,6 +246,7 @@
   function hearthPointerDown(e) {
     if (!bathMode || bathFading || gamePaused) return false;
     if (hearthDrag || hearthPress || bathTool.pointer !== null) return true;
+    bathToolRememberInput(e);
     if (e.button > 0) return hearthView !== 'bath';
     var p = hearthCSSPoint(e), L = hearthRoomLayout(), kind = hearthView;
     for (var i = 0; i < hearthButtons.length; i++) {

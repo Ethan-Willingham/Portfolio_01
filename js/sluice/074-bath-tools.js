@@ -1,7 +1,8 @@
   /* ---- Ceiling tools: one captured pointer, a travelling hoist, real water ---- */
   var bathTool = { mode: '', x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0,
     railX: 0, tilt: 0, tiltV: 0, jaw: 1, pointer: null, held: null,
-    valve: false, flow: 0, output: 0, bank: 0, shower: false, rope: [], grab: false };
+    valve: false, spraying: false, touchInput: null, flow: 0, output: 0, bank: 0,
+    shower: false, rope: [], grab: false, grabT: 0 };
 
   function bathToolBounds() {
     var F = BATH_FLOORS[0], c = bathTubCurve(F, F.tubs[0]);
@@ -18,11 +19,11 @@
       t.held = null;
       if (!quiet) sfxPlay('ui-click');
     }
-    t.grab = false;
+    t.grab = false; t.grabT = 0;
   }
   function bathToolCancel() {
     var t = bathTool, id = t.pointer;
-    t.pointer = null; t.valve = false; t.flow = 0; t.output = 0; t.bank = 0;
+    t.pointer = null; t.valve = false; t.spraying = false; t.flow = 0; t.output = 0; t.bank = 0;
     t.tx = t.x; t.ty = t.y; t.vx = t.vy = 0;
     bathToolRelease(true);
     if (id !== null) try { canvas.releasePointerCapture(id); } catch (ignore) {}
@@ -45,7 +46,10 @@
   }
   function bathToolAction(action) {
     if (action === 'claw' || action === 'hose') bathToolSelect(action);
-    else if (action === 'tool-drop') { bathToolRelease(false); saveNow('bath-drop'); }
+    else if (action === 'tool-grip' && bathTool.mode === 'claw') {
+      if (bathTool.held) { bathToolRelease(false); saveNow('bath-drop'); }
+      else { bathTool.grab = true; bathTool.grabT = 0.65; sfxPlay('ui-click'); }
+    }
     else if (action === 'tool-valve' && bathTool.mode === 'hose') { bathTool.valve = !bathTool.valve; sfxPlay('ui-click'); }
     else if (action === 'tool-spray' && bathTool.mode === 'hose') { bathTool.shower = !bathTool.shower; sfxPlay('ui-click'); }
   }
@@ -56,38 +60,61 @@
     bathTool.tx = Math.max(b.left, Math.min(b.right, p.x));
     bathTool.ty = Math.max(b.top + 46, Math.min(b.bottom, p.y));
   }
+  function bathToolRememberInput(e) {
+    bathTool.touchInput = e.pointerType === 'touch' || e.pointerType === 'pen';
+  }
+  function bathToolTouchControls() {
+    return bathTool.touchInput === null ? typeof isMobile !== 'undefined' && isMobile : bathTool.touchInput;
+  }
+  function bathToolPointerInRoom(e) {
+    var p = hearthCSSPoint(e);
+    return p.x >= 0 && p.x <= canvas.width / dpr && p.y >= hearthNavHeight() &&
+      p.y < canvas.height / dpr - bathHUDHeight();
+  }
   function bathToolPointerDown(e) {
     var t = bathTool;
     if (!bathMode || hearthView !== 'bath' || !t.mode || gamePaused || bathFading) return false;
     if (t.pointer !== null || e.button > 0) return true;
-    var p = hearthCSSPoint(e);
-    if (p.y < hearthNavHeight() || p.y >= canvas.height / dpr - bathHUDHeight()) return false;
-    t.pointer = e.pointerId; t.grab = true;
+    if (!bathToolPointerInRoom(e)) return false;
+    bathToolRememberInput(e);
+    t.pointer = e.pointerId;
     bathPtrDown = false; hearthClearBoilerHover();
     bathToolAim(e); hearthCapture(e);
+    if (!bathToolTouchControls()) {
+      if (t.mode === 'claw') bathToolAction('tool-grip');
+      else t.spraying = true;
+    }
     return true;
   }
   function bathToolPointerMove(e) {
-    if (bathTool.pointer === null) return false;
-    if (bathTool.pointer === e.pointerId) bathToolAim(e);
+    var t = bathTool;
+    if (!bathMode || hearthView !== 'bath' || !t.mode || gamePaused || bathFading) return false;
+    if (t.pointer !== null) {
+      if (t.pointer === e.pointerId) bathToolAim(e);
+      return true;
+    }
+    if (e.pointerType === 'touch' || e.pointerType === 'pen' || hearthPress || !bathToolPointerInRoom(e)) return false;
+    bathToolRememberInput(e); bathToolAim(e); hearthClearBoilerHover();
     return true;
   }
   function bathToolPointerUp(e) {
     if (bathTool.pointer === null) return false;
     if (bathTool.pointer === e.pointerId) {
-      bathToolAim(e); bathTool.pointer = null; bathTool.grab = false;
+      bathToolAim(e); bathTool.pointer = null; bathTool.spraying = false;
       try { canvas.releasePointerCapture(e.pointerId); } catch (ignore) {}
       saveNow('bath-tool');
     }
     return true;
   }
   function bathToolHint() {
-    if (bathTool.mode === 'claw') return bathTool.held ?
-      'Drag to carry. DROP releases your slime. Tap CLAW again to put it away.' :
-      'Drag the claw to a slime to pick it up. Tap CLAW again to put it away.';
+    var touch = bathToolTouchControls();
+    if (bathTool.mode === 'claw') return touch ?
+      'Drag to move. Tap GRAB to pick up a slime, then DROP to let go.' :
+      'Move the mouse to aim. Click to grab a slime; click again to drop it.';
     if (bathTool.mode === 'hose') return bathWaterCount() + bathPour < 1 ?
-      'Hose empty. Bring scooped water in your tank.' :
-      'Drag to pour. FLOW keeps it running. Sweep sideways to aim the stream.';
+      'Hose empty. Bring scooped water in your tank.' : touch ?
+      'Drag to aim. Tap POUR to start the water; STOP turns it off.' :
+      'Move the mouse to aim. Hold click to pour; release to stop.';
     return 'Choose CLAW or HOSE. Click the boiler beneath the tub to tend the fire.';
   }
   function bathToolDrawControls(c, w, top) {
@@ -97,10 +124,10 @@
     hearthButton(c, { x: 14 + bw + gap, y: top, w: bw, h: 44 }, labels[1], 'hose', t.mode === 'hose');
     if (t.mode === 'claw') {
       hearthButton(c, { x: 14 + 2 * (bw + gap), y: top, w: bw * 2 + gap, h: 44 },
-        t.held ? 'DROP SLIME' : 'AUTO GRAB', 'tool-drop', !!t.held);
+        t.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!t.held);
     } else if (t.mode === 'hose') {
       hearthButton(c, { x: 14 + 2 * (bw + gap), y: top, w: bw, h: 44 },
-        t.valve ? 'FLOW ON' : 'FLOW', 'tool-valve', t.valve);
+        t.valve ? 'STOP' : 'POUR', 'tool-valve', t.valve);
       hearthButton(c, { x: 14 + 3 * (bw + gap), y: top, w: bw, h: 44 },
         t.shower ? 'SHOWER' : 'JET', 'tool-spray', false);
     } else {
@@ -160,8 +187,10 @@
         best.s.settled = false; sfxPlay('ui-confirm');
       }
     }
-    t.jaw += ((t.held ? 0 : 1) - t.jaw) * (1 - Math.exp(-dt * 14));
-    var running = t.mode === 'hose' && (t.valve || t.pointer !== null);
+    t.grabT = Math.max(0, t.grabT - dt);
+    if (!t.grabT || t.held) t.grab = false;
+    t.jaw += ((t.held || t.grab ? 0 : 1) - t.jaw) * (1 - Math.exp(-dt * 14));
+    var running = t.mode === 'hose' && (t.valve || t.spraying);
     t.flow += ((running ? 1 : 0) - t.flow) * (1 - Math.exp(-dt * (running ? 9 : 20)));
     if (t.mode !== 'hose' || t.flow < 0.02) return;
     t.bank = Math.min(400, t.bank + dt * (t.shower ? 2000 : 3200) * t.flow);

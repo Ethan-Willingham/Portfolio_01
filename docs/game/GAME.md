@@ -65,9 +65,10 @@ The fuel locker automatically keeps up to 24 ordinary coal when entering the
 banya or selling at the station. Iron, surplus coal, and shiny ore sell normally.
 Fuel, tools, existing stored iron, and retired forge work persist. Water still
 comes from the rig's scoop, and spilled bath water is permanently lost. The
-ceiling CLAW lifts and drops guests with mouse or touch dragging. HOSE switches
-to a flexible nozzle with Jet and Shower patterns, drawing the same stored
-water. Tap either active switch again to stow it.
+ceiling tools follow the mouse; click to grab or drop a guest and hold click
+to pour. On touch screens, drag to aim and use the Grab/Drop or Pour/Stop
+button. HOSE switches to a flexible nozzle with Jet and Shower patterns,
+drawing the same stored water. Tap either active switch again to stow it.
 Guest-specific recipes and night-only opening hours are not implemented.
 See `BATHHOUSE_SERVICE.md` for controls, resource conservation, and verification.
 
