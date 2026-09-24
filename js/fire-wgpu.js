@@ -275,7 +275,7 @@ fn smoothLight(uv:vec2f)->vec4f {
 // Four nearby grid cells nominate polygons; their actual edge planes, rather
 // than the stair-stepped simulation mask, clip the light at display resolution.
 fn fuelCoverage(uv:vec2f,aa:f32)->f32 {
- let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(320.,p.view.w)+vec2f(0.,p.view.z);
+ let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(p.misc.y,p.view.w)+vec2f(0.,p.view.z);
  var coverage=1.;var visited=vec2u(0u);
  for(var k=0;k<4;k++){
   let body=mask[at(c+vec2i(k%2,k/2))].x;
@@ -305,7 +305,7 @@ fn light(g:Gas)->vec3f {
  lightOutput[i]=vec4f(light(g),1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3));
 }
 @fragment fn fragment(v:Vertex)->@location(0) vec4f {
- let point=v.uv*vec2f(320.,p.view.w)+vec2f(0.,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
+ let point=v.uv*vec2f(p.misc.y,p.view.w)+vec2f(0.,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
  let cell=at(vec2i(v.uv*p.grid.xy));let mode=i32(p.view.x);
  if(mode>0){
   if(mask[cell].x != -1){return vec4f(0.);}let g=gi[cell];let T=temp(g);
@@ -332,7 +332,8 @@ fn light(g:Gas)->vec3f {
   function create(options) {
     options = options || {};
     var device = options.device, w = options.width || 192, top = -(options.headroom || 0), height = 210-top;
-    var h = Math.round(w * height / 320), n = w * h;
+    var worldWidth = options.worldWidth || 320, meters = worldWidth * 0.0025;
+    var h = Math.round(w * height / worldWidth), n = w * h;
     var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
     var buffers = [], pipelines = {}, groups = {}, gasIndex = 0, velIndex = 0, bank = 0, time = 0;
@@ -379,7 +380,7 @@ fn light(g:Gas)->vec3f {
       pass.end();
     }
     function uploadUniform(air, damper) {
-      uniform.set([w,h,STEP,time,0.8/w,(0.8/w)*(height*0.8/320/h)*0.04,air,damper,sim.debug,300,top,height,sim.ashLoad||0,0,0,0]);
+      uniform.set([w,h,STEP,time,meters/w,(meters/w)*(height*0.0025/h)*0.04,air,damper,sim.debug,300,top,height,sim.ashLoad||0,worldWidth,0,0]);
       for (var b=0;b<CAP;b++) {
         var body=slots[b], o=16+b*16;
         uniform.set([surfaceStart[b],surfaceCount[b],body ? body.dryKg || 0.018*Math.pow(body.baseR/34,2) : 0,body ? body.life : 100,
@@ -424,7 +425,7 @@ fn light(g:Gas)->vec3f {
         radiationViews[b]+=view;radiationViews[other]+=view;
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b*2+Math.floor(other/24)]|=1<<(other%24);contacts[other*2+Math.floor(b/24)]|=1<<(b%24);}
       }
-      for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*320/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
+      for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*worldWidth/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
       edgeData.fill(0);
       for(var b=0;b<CAP;b++) {
         var body=slots[b];if(!body||body.held||!body.vertices)continue;var hull=body.vertices;
@@ -434,9 +435,9 @@ fn light(g:Gas)->vec3f {
           edgeData.set([nx,ny,nx*a[0]+ny*a[1],0],o);
         }
         var x0=w,x1=0,y0=h,y1=0;
-        hull.forEach(function(p){x0=Math.min(x0,Math.floor(p[0]*w/320));x1=Math.max(x1,Math.ceil(p[0]*w/320));y0=Math.min(y0,Math.floor((p[1]-top)*h/height));y1=Math.max(y1,Math.ceil((p[1]-top)*h/height));});
+        hull.forEach(function(p){x0=Math.min(x0,Math.floor(p[0]*w/worldWidth));x1=Math.max(x1,Math.ceil(p[0]*w/worldWidth));y0=Math.min(y0,Math.floor((p[1]-top)*h/height));y1=Math.max(y1,Math.ceil((p[1]-top)*h/height));});
         for(var y=Math.max(0,y0);y<=Math.min(h-1,y1);y++)for(var x=Math.max(0,x0);x<=Math.min(w-1,x1);x++){
-          var px=(x+.5)*320/w,py=top+(y+.5)*height/h,inside=true;
+          var px=(x+.5)*worldWidth/w,py=top+(y+.5)*height/h,inside=true;
           for(var j=0;j<hull.length;j++){var a=hull[j],c=hull[(j+1)%hull.length];if((c[0]-a[0])*(py-a[1])-(c[1]-a[1])*(px-a[0])<0){inside=false;break;}}
           if(inside)masks[(y*w+x)*2]=b;
         }

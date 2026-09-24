@@ -48,6 +48,11 @@ Bath water now collides with the drawn curved liner in both liquid solvers.
 Since v28.67, the bed holds 32 varied charcoal-shaped lumps, plus fracture
 capacity to 48 pieces. Rear air supply, a finite starter pocket and radiance
 reconstruction make the burning bed more visible without increasing the grid.
+Since v28.69, the physical chamber is 416 by 320 world pixels, with a wider,
+lower tending view. Both views share recessed cast ironwork, hinges and an ash
+drawer. The copper tub rim follows the collision curve with outward thickness.
+The single-room bath stays fixed under wheel and drag gestures; saved upper
+floors scroll immediately, with no camera easing.
 
 The forge has been retired. A reusable steel striker is supplied beside the
 boiler for new and existing saves. Stone still sometimes drops durable flint

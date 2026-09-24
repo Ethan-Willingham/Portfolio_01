@@ -302,8 +302,8 @@
     }
     var sources = field.sources;
     for (var i = 0; i < sources.length; i++) {
-      var body = sources[i], bx = body.x * w / 320, by = (body.y - body.r * 0.42) * h / 210;
-      var radius = Math.max(2, body.r * w / 320 * 0.95);
+      var body = sources[i], bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42) * h / 210;
+      var radius = Math.max(2, body.r * w / HEARTH_WIDTH * 0.95);
       var intensity = hearthArtFlame(body) * (0.84 + air * 0.16);
       var flicker = 0.88 + noise[((body.id || i) * 53 + ((t * 13) | 0)) & 1023] * 0.12;
       var minX = Math.max(1, Math.floor(bx - radius)), maxX = Math.min(w - 2, Math.ceil(bx + radius));
@@ -329,8 +329,8 @@
     for (var i = 0; i < field.sources.length; i++) {
       var body = field.sources[i], heat = hearthArtFlame(body);
       if (heat < 0.7) continue;
-      var bx = body.x * w / 320, by = (body.y - body.r * 0.42) * h / 210;
-      var radius = body.r * w / 320 * (0.83 + air * 0.25);
+      var bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42) * h / 210;
+      var radius = body.r * w / HEARTH_WIDTH * (0.83 + air * 0.25);
       var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / 210;
       var phase = (Number(body.seed) || 0) * 19 + field.clock * 1.6;
       var inlet = heat * (0.84 + air * 0.16) * 1.18;
@@ -474,11 +474,11 @@
     var i, row, col;
     c.save();
     c.beginPath(); c.rect(x, y, w, h); c.clip();
-    c.translate(x, y); c.scale(w / 320, h / HEARTH_HEIGHT); c.translate(0,-HEARTH_TOP);
-    c.fillStyle = BLD.outline; c.fillRect(0, HEARTH_TOP, 320, HEARTH_HEIGHT);
+    c.translate(x, y); c.scale(w / HEARTH_WIDTH, h / HEARTH_HEIGHT); c.translate(0,-HEARTH_TOP);
+    c.fillStyle = BLD.outline; c.fillRect(0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
     // Soot-blackened firebrick. A few top faces survive through the carbon,
     // keeping the cavity legible before the first spark and under a low fire.
-    for (row = -4; row < 7; row++) for (col = -1; col < 7; col++) {
+    for (row = -4; row < 7; row++) for (col = -1; col < Math.ceil(HEARTH_WIDTH / 58); col++) {
       var bx = col * 58 + (row % 2 ? 29 : 0), by = row * 31;
       var variation = hearthArtHash(row * 53 + col * 97 + 811);
       c.fillStyle = hearthArtColor(variation > 0.6 ? BLD.woodDark : BLD.stoneDark, 0.12 + variation * 0.05);
@@ -487,21 +487,21 @@
       c.fillRect(bx + 3, by + 2, 52, 1);
     }
     if (hot > 0.005) {
-      var glow = c.createRadialGradient(160, 180, 5, 160, 160, 194);
+      var glow = c.createRadialGradient(HEARTH_WIDTH / 2, 180, 5, HEARTH_WIDTH / 2, 160, HEARTH_WIDTH * 0.61);
       glow.addColorStop(0, hearthArtColor(BLD.redBright, 0.24 * hot));
       glow.addColorStop(0.45, hearthArtColor(BLD.redBase, 0.12 * hot));
       glow.addColorStop(1, hearthArtColor(BLD.redDeep, 0));
-      c.fillStyle = glow; c.fillRect(0, HEARTH_TOP, 320, HEARTH_HEIGHT);
+      c.fillStyle = glow; c.fillRect(0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
     }
     // Rear air slots feed the third-direction exchange in the GPU slice.
     // They stay visible above a low bed and disappear behind a full pile.
-    for (row = 0; row < 2; row++) for (col = 24; col < 310; col += 34) {
+    for (row = 0; row < 2; row++) for (col = 24; col < HEARTH_WIDTH - 10; col += 34) {
       var ventY = row ? 185 : 85;
       c.fillStyle = hearthArtColor(BLD.metalBase, 0.26); c.fillRect(col, ventY - 1, 10, 1);
       c.fillStyle = BLD.outline; c.fillRect(col, ventY, 10, 3);
     }
-    c.fillStyle = BLD.metalDark; c.fillRect(0, 208, 320, 2);
-    c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 209, 320, 1);
+    c.fillStyle = BLD.metalDark; c.fillRect(0, 208, HEARTH_WIDTH, 2);
+    c.fillStyle = hearthArtColor(BLD.stoneLight, 0.2); c.fillRect(0, 209, HEARTH_WIDTH, 1);
     // Mineral residue is simulated and saved, never painted in an empty grate.
     var ash = bed.ash || [];
     for(i=0;i<ash.length;i++){
@@ -515,7 +515,7 @@
       // This field is deliberately coarse for CPU fallback. Reconstruct its
       // light smoothly instead of magnifying each cell into a visible block.
       c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-      c.drawImage(field.canvas, 0, 0, 320, 210);
+      c.drawImage(field.canvas, 0, 0, HEARTH_WIDTH, 210);
       c.restore();
     }
     // Contact shadows stay close to each actual hull.
@@ -532,7 +532,7 @@
     hearthArtEmbers(c, field.sources, air, Number(time) || 0);
     hearthArtEventSparks(c, bed);
     if(bed.sweep>0){
-      var rakeX=320*(1-bed.sweep/0.4);c.strokeStyle=BLD.metalLight;c.lineWidth=2;
+      var rakeX=HEARTH_WIDTH*(1-bed.sweep/0.4);c.strokeStyle=BLD.metalLight;c.lineWidth=2;
       c.beginPath();c.moveTo(rakeX-30,185);c.lineTo(rakeX,205);c.stroke();
       c.fillStyle=BLD.metalBase;c.fillRect(rakeX-10,202,20,2);
       for(var tooth=0;tooth<5;tooth++)c.fillRect(rakeX-10+tooth*5,202,1,6);
@@ -540,9 +540,9 @@
     // Reflected heat kisses the chamber edges, never a permanent orange frame.
     if (hot > 0.005) {
       c.fillStyle = hearthArtColor(BLD.redBright, 0.19 * hot);
-      c.fillRect(1, 90, 2, 117); c.fillRect(317, 103, 2, 104);
+      c.fillRect(1, 90, 2, 117); c.fillRect(HEARTH_WIDTH - 3, 103, 2, 104);
       c.fillStyle = hearthArtColor(BLD.warmGlow, 0.12 * hot);
-      c.fillRect(4, 207, 312, 1);
+      c.fillRect(4, 207, HEARTH_WIDTH - 8, 1);
     }
     c.restore();
   }

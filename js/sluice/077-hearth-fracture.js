@@ -66,7 +66,7 @@
     for (var i = 0; i < grains.length; i++) {
       var g = grains[i], r = Math.max(1.3,Math.sqrt(g.kg/0.00008));
       g.heat *= Math.exp(-h*0.12); g.vy = Math.min(220,g.vy+520*h); g.vx *= Math.exp(-h*2);
-      g.x = Math.max(r,Math.min(320-r,g.x+g.vx*h)); g.y += g.vy*h;
+      g.x = Math.max(r,Math.min(HEARTH_WIDTH-r,g.x+g.vx*h)); g.y += g.vy*h;
       if (g.y > HEARTH_FLOOR-r) { g.y = HEARTH_FLOOR-r; g.vy = 0; g.vx *= 0.75; }
       for (var j = 0; j < bed.chunks.length; j++) {
         var b = bed.chunks[j]; if(b.held || Math.hypot(g.x-b.x,g.y-b.y)>b.r+r)continue;

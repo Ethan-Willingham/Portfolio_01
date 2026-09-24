@@ -786,7 +786,7 @@
   // dpr * worldScale live. Restored on exit. -------------------------------
   var bathSaved = null;          // { ws, sw, sh } world view state, restored on exit
   var bathScrollT = 1e9;          // scroll target (world y); huge = clamp to bottom
-  var bathCamY = -1;              // smoothed camera y; -1 = snap on first pin
+  var bathCamY = -1;              // current camera y; view changes and scrolling are immediate
   var bathViewportKey = '';
   var bathViewH = 0;              // visible height in world px (set per frame)
   function bathCamPin() {
@@ -820,10 +820,12 @@
     var minY = BATH_TOP_ROW * TILE - 24;
     var maxY = bathInteriorBottom() - bathViewH + (hud + 12) / worldScale;
     if (maxY < minY) minY = maxY;
+    // A single-room bath has nothing to scroll to. Do not reveal the retired
+    // tower artwork on a stray wheel gesture. Purchased upper floors remain reachable.
+    if (!bathFloorsOwned.slice(1).some(function (owned) { return owned; })) bathScrollT = maxY;
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
-    if (bathCamY < 0) bathCamY = bathScrollT;
-    bathCamY += (bathScrollT - bathCamY) * 0.22;
+    bathCamY = bathScrollT;
     cam.x = 37 * TILE - canvas.width * iws / 2;
     cam.y = bathCamY;
     return true;

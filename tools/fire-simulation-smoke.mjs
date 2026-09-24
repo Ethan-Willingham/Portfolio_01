@@ -173,7 +173,7 @@ try {
     await send('Emulation.setDeviceMetricsOverride',{...screen,mobile:false});
     await game('resize();render()');
     const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
-    check('bounded square chamber and accessible controls at '+screen.width,layout.box.w<=500.01 && Math.abs(layout.box.w-layout.box.h)<0.01 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
+    check('bounded wide chamber and accessible controls at '+screen.width,layout.box.w<=580.01 && Math.abs(layout.box.w/layout.box.h-416/320)<0.001 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
     check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w)<1 && Math.abs(layout.overlay.h-layout.box.h)<1);
     await screenshot('fire-'+screen.width);
   }
@@ -209,7 +209,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await send('Emulation.setTouchEmulationEnabled',{enabled:true});
   await game('isMobile=true;resize();hearthFirePrepare()');
-  check('mobile uses the smaller bounded grid',await ev('__fire.available && __fire.width===128'));
+  check('mobile uses the smaller bounded grid',await ev('__fire.available && __fire.width===144'));
   await run(4);await screenshot('phone-fire');
   check('mobile overlay is aligned inside the viewport',await ev('(function(){var r=__fire.canvas.getBoundingClientRect();return r.width>0&&r.left>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight;})()'));
   await game('hearthReset();bathGuestTick(1/60)');await run(6);

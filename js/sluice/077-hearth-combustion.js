@@ -25,7 +25,7 @@
         if (other === b || other.held || Math.hypot(other.x - x, other.y - y) > other.r + 14) continue;
         if (hearthInside(other, x + nx * 8, y + ny * 8, 2)) exposed *= other.ash ? 0.08 : 0.18;
       }
-      if (x + nx * 8 < 0 || x + nx * 8 > 320) exposed *= 0.1;
+      if (x + nx * 8 < 0 || x + nx * 8 > HEARTH_WIDTH) exposed *= 0.1;
       // The grate admits primary air from underneath. Spent ash blocks the
       // inlet; removing ash restores it even while the upper bed still burns.
       if (y + ny * 8 >= HEARTH_FLOOR) exposed *= Math.max(0.12, 1 - bed.ashLoad * 0.8);
@@ -38,7 +38,7 @@
     bed.ashLoad = Math.min(0.92,hearthAshMass(bed)/0.025);
     for (i = 0; i < bodies.length; i++) {
       b = bodies[i]; hearthFuelState(b); hearthWorldHull(b);
-      if (b.ash && !b.held) bed.ashLoad += b.baseR * 1.3 / 320;
+      if (b.ash && !b.held) bed.ashLoad += b.baseR * 1.3 / HEARTH_WIDTH;
     }
     bed.ashLoad = Math.min(0.92, bed.ashLoad);
     // Gather before applying: heat cannot cascade through the array in one tick.

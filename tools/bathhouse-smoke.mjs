@@ -106,6 +106,16 @@ try {
     await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
     await game('bathEnter()'); await sleep(700);
     await boilerFlow('desktop');
+    check('single-room wheel and drag targets cannot reveal the old tower',await game(`(function(){
+      var y=cam.y;bathScrollT-=120;bathCamPin();var stable=cam.y===y;
+      bathScrollT+=240;bathCamPin();return stable&&cam.y===y&&bathMainRoomVisible();})()`));
+    check('saved upper-floor scrolling has no easing or later camera drift',await game(`(function(){
+      var owned=bathFloorsOwned[1];bathFloorsOwned[1]=true;var y=cam.y;
+      bathScrollT=y-80;bathCamPin();var immediate=cam.y===y-80;
+      for(var i=0;i<12;i++)bathCamPin();var stable=cam.y===y-80;
+      bathFloorsOwned[1]=owned;hearthSetView('boiler');hearthSetView('bath');bathCamPin();
+      return immediate&&stable&&cam.y===y;})()`));
+
     await key('`', 'Backquote');
     check('backtick enables dev mode inside the banya',await game('devMode'));
     check('world debug buttons are hidden in the banya',await ev("['gmTuneBtn','gmSlimeBtn'].every(id=>!document.getElementById(id)||getComputedStyle(document.getElementById(id)).display==='none')"));

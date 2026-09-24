@@ -18,7 +18,7 @@
     if (!bed || bed.chunks.length >= HEARTH_CAP) return null;
     var id = bed.nextId++, seed = hearthSeed(id + (bed.pilot ? 193 : 0));
     var r = 29 + seed * 10;
-    var b = { id: id, x: hearthNumber(x, 160, r, 320 - r),
+    var b = { id: id, x: hearthNumber(x, HEARTH_WIDTH / 2, r, HEARTH_WIDTH - r),
       y: hearthNumber(y, 12, -80, 210 - r), vx: 0, vy: 0, r: r, baseR: r,
       angle: seed * Math.PI * 2, spin: 0, seed: seed,
       life: 90 + seed * 30, fuel: 1, heat: 0, lit: false, ash: false, held: false, lump: true, material: material === 'wood' ? 'wood' : 'coal' };
@@ -62,7 +62,7 @@
       if (b.held || b.ash || b.lit || b.fuel <= 0) continue;
       // Light the exposed crown near the middle. Burying a finite ignition
       // assist under a cold, wet pile quenches it before a flame can escape.
-      if (!target || b.y + Math.abs(b.x - 160) * 0.6 < target.y + Math.abs(target.x - 160) * 0.6) target = b;
+      if (!target || b.y + Math.abs(b.x - HEARTH_WIDTH / 2) * 0.6 < target.y + Math.abs(target.x - HEARTH_WIDTH / 2) * 0.6) target = b;
     }
     if (!target) return false;
     hearthLightChunk(bed, target);
@@ -143,7 +143,7 @@
     }
   }
   function hearthSave() {
-    var result = { version: 4 }, kinds = ['boiler', 'forge'];
+    var result = { version: 5 }, kinds = ['boiler', 'forge'];
     for (var k = 0; k < kinds.length; k++) {
       var bed = hearthBeds[kinds[k]], chunks = [];
       for (var i = 0; i < bed.chunks.length; i++) {
@@ -156,7 +156,7 @@
           surfaceKelvin: b.surfaceKelvin || 300 + b.heat * 1200, coreKelvin: b.coreKelvin || 300 + b.core * 1200, volatile: b.volatile, carbon: b.carbon, moisture: b.moisture, core: b.core, oxygen: b.oxygen,
           flame: b.flame, smoke: b.smoke, steam: b.steam, reaction: b.reaction, coating: b.coating, stage: b.stage, devSupplied: b.devSupplied === true });
       }
-      result[kinds[k]] = { chunks: chunks, nextId: bed.nextId, time: bed.time,
+      result[kinds[k]] = { width: kinds[k] === 'boiler' ? HEARTH_WIDTH : 320, chunks: chunks, nextId: bed.nextId, time: bed.time,
         heat: bed.heat, air: bed.air, burnClock: bed.burnClock, ashLoad: bed.ashLoad,
         ash: bed.ash.map(function(g){return Object.assign({},g);}) };
     }
@@ -170,6 +170,9 @@
       var src = data[kinds[k]], bed = hearthBeds[kinds[k]];
       if (!src || typeof src !== 'object' || !Array.isArray(src.chunks)) continue;
       restored = true;
+      // Recenter the old grate as one unit, preserving all relative contacts.
+      // The retired forge stays byte-for-byte at its saved positions.
+      var shift = kinds[k] === 'boiler' ? (HEARTH_WIDTH - hearthNumber(src.width, 320, 160, HEARTH_WIDTH)) / 2 : 0;
       bed.time = hearthNumber(src.time, 0, 0, 1e9);
       bed.heat = hearthNumber(src.heat, 0, 0, 1); bed.air = hearthNumber(src.air, 0, 0, 1);
       bed.burnClock = Math.floor(hearthNumber(src.burnClock, 0, 0, 3));
@@ -190,7 +193,7 @@
         // retain their size; newly mined coal uses the larger hulls.
         b.baseR = hearthNumber(raw.baseR, hearthNumber(raw.r, b.r, 13, 39), data.version>=4?3:13, data.version>=4?80:39);
         b.r = hearthNumber(raw.r, b.baseR, b.baseR * 0.4, b.baseR);
-        b.x = hearthNumber(raw.x, 160, -40, 360);
+        b.x = hearthNumber(raw.x, 160, -40, HEARTH_WIDTH + 40) + shift;
         b.y = hearthNumber(raw.y, 12, -320, 250);
         b.vx = hearthNumber(raw.vx, 0, -600, 600); b.vy = hearthNumber(raw.vy, 0, -600, 600);
         b.angle = hearthNumber(raw.angle, 0, -1e6, 1e6); b.spin = hearthNumber(raw.spin, 0, -18, 18);
@@ -236,7 +239,7 @@
       }
       if(data.version>=4 && Array.isArray(src.ash)) for(var a=0;a<Math.min(HEARTH_ASH_CAP,src.ash.length);a++){
         var g=src.ash[a];if(!g || typeof g!=='object')continue;
-        bed.ash.push({x:hearthNumber(g.x,160,0,320),y:hearthNumber(g.y,208,-320,210),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)});
+        bed.ash.push({x:hearthNumber(g.x,160,0,HEARTH_WIDTH) + shift,y:hearthNumber(g.y,208,-320,210),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)});
       }
       var nextId = bed.chunks.reduce(function(n,b){return Math.max(n,b.id+1);},1);
       bed.nextId = Math.max(nextId, Math.floor(hearthNumber(src.nextId, nextId, 1, 1e9)));

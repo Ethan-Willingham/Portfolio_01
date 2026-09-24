@@ -108,7 +108,7 @@
       hearthCancelDrag();
       var bed = hearthBeds.boiler;
       bed.chunks = bed.chunks.filter(function (b) { return !b.ash; });
-      while (bed.chunks.length < 3) hearthLoadCoal('boiler', 110 + bed.chunks.length * 40, 160);
+      while (bed.chunks.length < 3) hearthLoadCoal('boiler', HEARTH_WIDTH / 2 - 40 + bed.chunks.length * 40, 160);
       for (var i = 0; i < bed.chunks.length; i++) hearthLightChunk(bed, bed.chunks[i]);
       bed.heat = 0.85; hearthMeasure(bed);
       bathHeat = 0.75; bathArmHeat(); bathAddWater();
@@ -125,7 +125,7 @@
     } else if (action === 'exit') { hearthCancelDrag(); bathExit(); }
     else if (action === 'bath' || action === 'boiler') hearthSetView(action);
     else if (action === 'coal' && hearthView === 'boiler') {
-      var b = hearthLoadCoal(hearthView, 110 + Math.random() * 100, 12);
+      var b = hearthLoadCoal(hearthView, HEARTH_WIDTH / 2 - 50 + Math.random() * 100, 12);
       if (b) sfxPlay('debris', { gain: 0.35 });
     } else if (action === 'pump' && hearthView === 'boiler') { hearthPump(hearthView); hearthToolPulse = 1; }
     else if (action === 'strike' && hearthView === 'boiler') hearthStrike();
@@ -175,7 +175,7 @@
     var available = h - top - footer, split = w >= 620;
     var row, box, bench, controls = w >= 620 ? 76 : 130;
     if (w >= 520 && h < 500) {
-      var leftW = w * 0.39 - 44, bh = Math.min(available - 46, leftW * HEARTH_HEIGHT / 320), bw = bh * 320 / HEARTH_HEIGHT;
+      var leftW = w * 0.39 - 44, bh = Math.min(available - 46, leftW * HEARTH_HEIGHT / HEARTH_WIDTH), bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
       var rx = w * 0.65, rw = w - rx - 18, cw = (rw - 10) / 2;
       return { w: w, h: h, top: top, footer: h - footer,
         box: { x: 24 + (leftW - bw) / 2, y: top + 28, w: bw, h: bh },
@@ -188,16 +188,16 @@
     if (split) {
       // Keep the furnace at a readable working distance on large monitors.
       // Display and pointer transforms include the added plume headroom.
-      var stationW = Math.min(900, w - 48), stationX = (w - stationW) / 2;
+      var stationW = Math.min(980, w - 48), stationX = (w - stationW) / 2;
       var benchW = Math.min(220, stationW * 0.26), leftW = stationW - benchW - 52;
-      var bh = Math.min(500, available - 172, (leftW - 30) * HEARTH_HEIGHT / 320), bw = bh * 320 / HEARTH_HEIGHT;
+      var bh = Math.min(580 * HEARTH_HEIGHT / HEARTH_WIDTH, available - 172, (leftW - 30) * HEARTH_HEIGHT / HEARTH_WIDTH), bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
       var stationY = top + Math.max(0, (available - bh - 172) / 2);
       box = { x: stationX + (leftW - bw) / 2, y: stationY + 52, w: bw, h: bh };
       bench = { x: stationX + stationW - benchW, y: box.y - 14, w: benchW, h: bh + 33 };
       row = box.y + bh + 40;
     } else {
       var artH = available - controls - 52;
-      var bh = Math.min((w - 64) * HEARTH_HEIGHT / 320, artH * 0.55), bw = bh * 320 / HEARTH_HEIGHT;
+      var bh = Math.min((w - 64) * HEARTH_HEIGHT / HEARTH_WIDTH, artH * 0.55), bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
       box = { x: (w - bw) / 2, y: top + 27, w: bw, h: bh };
       bench = { x: 28, y: box.y + bh + 27, w: w - 56, h: artH - bh - 30 };
       row = top + artH + 38;
@@ -247,10 +247,10 @@
       var button = hearthButtons[i];
       if (!hearthContains(button, p.x, p.y)) continue;
       if (button.action === 'coal') {
-        var fresh = hearthLoadCoal(kind, 160, 24);
+        var fresh = hearthLoadCoal(kind, HEARTH_WIDTH / 2, 24);
         if (fresh) {
           fresh.held = true;
-          hearthDrag = { kind: kind, b: fresh, fresh: true, ox: 160, oy: 24, x: p.x, y: p.y,
+          hearthDrag = { kind: kind, b: fresh, fresh: true, ox: HEARTH_WIDTH / 2, oy: 24, x: p.x, y: p.y,
             startX: p.x, startY: p.y, vx: 0, vy: 0, pointer: e.pointerId, time: performance.now() };
         }
       } else hearthPress = { action: button.action, pointer: e.pointerId, rect: button };
@@ -268,8 +268,8 @@
     var box = L.box, bed = hearthBeds[kind];
     for (var n = bed.chunks.length - 1; n >= 0; n--) {
       var b = bed.chunks[n];
-      if (!hearthInside(b, (p.x - box.x) * 320 / box.w, HEARTH_TOP + (p.y - box.y) * HEARTH_HEIGHT / box.h,
-        (e.pointerType === 'touch' ? 8 : 2) * 320 / box.w)) continue;
+      if (!hearthInside(b, (p.x - box.x) * HEARTH_WIDTH / box.w, HEARTH_TOP + (p.y - box.y) * HEARTH_HEIGHT / box.h,
+        (e.pointerType === 'touch' ? 8 : 2) * HEARTH_WIDTH / box.w)) continue;
       b.held = true;
       hearthDrag = { kind: kind, b: b, fresh: false, ox: b.x, oy: b.y, x: p.x, y: p.y,
         startX: p.x, startY: p.y, vx: 0, vy: 0, pointer: e.pointerId, time: performance.now() };
@@ -327,9 +327,9 @@
     if (tap || hearthContains({ x: box.x - 12, y: box.y - 35, w: box.w + 24, h: box.h + 48 }, q.x, q.y)) {
       var releaseAge = Math.max(0, (performance.now() - d.time) / 1000 - 0.04);
       var releaseVelocity = Math.exp(-releaseAge * 18);
-      d.b.x = tap ? 90 + Math.random() * 140 : Math.max(d.b.r, Math.min(320 - d.b.r, (q.x - box.x) * 320 / box.w));
+      d.b.x = tap ? HEARTH_WIDTH / 2 - 70 + Math.random() * 140 : Math.max(d.b.r, Math.min(HEARTH_WIDTH - d.b.r, (q.x - box.x) * HEARTH_WIDTH / box.w));
       d.b.y = tap ? 12 : Math.max(HEARTH_TOP+10, Math.min(210 - d.b.r, HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h));
-      d.b.vx = tap ? (Math.random() - 0.5) * 50 : d.vx * releaseVelocity * 320 / box.w * 0.45;
+      d.b.vx = tap ? (Math.random() - 0.5) * 50 : d.vx * releaseVelocity * HEARTH_WIDTH / box.w * 0.45;
       d.b.vy = tap ? 0 : d.vy * releaseVelocity * HEARTH_HEIGHT / box.h * 0.45;
       d.b.spin = d.b.vx * 0.025; d.b.held = false; hearthDrag = null;
       sfxPlay('debris', { gain: 0.35 });
@@ -412,9 +412,15 @@
       { x: px, y: py, w: pw, h: (ph - gap) * 0.58 };
     var hooks = horizontal ? { x: px + gauge.w + gap, y: py, w: pw - gauge.w - gap, h: ph } :
       { x: px, y: py + gauge.h + gap, w: pw, h: ph - gauge.h - gap };
-    hearthPlate(c, gauge, false);
     var radius = Math.max(12, Math.min(72, (gauge.w - 24) / 2, (gauge.h - 37) / 2));
     var cx = gauge.x + gauge.w / 2, cy = gauge.y + (gauge.h - 25) / 2;
+    // The dial mounts on its copper temperature well, with a screwed flange.
+    c.strokeStyle = BLD.outline; c.lineWidth = 10;
+    c.beginPath(); c.moveTo(cx, gauge.y + gauge.h - 20); c.lineTo(cx, cy); c.stroke();
+    c.strokeStyle = BLD.goldDark; c.lineWidth = 6; c.stroke();
+    c.strokeStyle = BLD.goldBase; c.lineWidth = 1; c.stroke();
+    c.fillStyle = BLD.metalDark; c.fillRect(cx - radius - 9, cy - 8, radius * 2 + 18, 16);
+    hearthIronBolt(c, cx - radius - 5, cy, 2); hearthIronBolt(c, cx + radius + 5, cy, 2);
     c.fillStyle = BLD.outline; c.beginPath(); c.arc(cx, cy, radius + 3, 0, Math.PI * 2); c.fill();
     c.fillStyle = BLD.goldDark; c.beginPath(); c.arc(cx, cy, radius + 1, 0, Math.PI * 2); c.fill();
     c.fillStyle = BLD.goldPale; c.beginPath(); c.arc(cx, cy, radius - 2, Math.PI * 1.1, Math.PI * 1.75); c.lineWidth = 1; c.strokeStyle = BLD.goldPale; c.stroke();
@@ -429,11 +435,17 @@
     c.strokeStyle = BLD.redBright; c.lineWidth = 2; c.beginPath(); c.moveTo(cx, cy);
     c.lineTo(cx + Math.cos(needle) * radius * 0.62, cy + Math.sin(needle) * radius * 0.62); c.stroke();
     c.fillStyle = BLD.goldPale; c.fillRect(cx - 2, cy - 2, 4, 4);
+    c.fillStyle = BLD.outline; c.fillRect(cx - 56, gauge.y + gauge.h - 22, 112, 18);
     hearthText(c, 'BATH ' + Math.round(20 + bathHeat * 28) + ' C', cx, gauge.y + gauge.h - 13, 11, BLD.cream, 'center');
-    hearthPlate(c, hooks, false);
     var toolScale = Math.max(0.3, Math.min(1.3, (hooks.w - 26) / 108, (hooks.h - 28) / 64));
     var toolY = hooks.y + (hooks.h - 18) / 2;
     var flintX = hooks.x + hooks.w * 0.28, steelX = hooks.x + hooks.w * 0.72;
+    // Tools hang from a pegged timber rail, rather than a second UI panel.
+    c.fillStyle = BLD.outline; c.fillRect(hooks.x + 4, toolY - 28 * toolScale, hooks.w - 8, 12 * toolScale);
+    c.fillStyle = BLD.woodDark; c.fillRect(hooks.x + 6, toolY - 27 * toolScale, hooks.w - 12, 9 * toolScale);
+    c.fillStyle = BLD.woodLight; c.fillRect(hooks.x + 6, toolY - 27 * toolScale, hooks.w - 12, 1);
+    hearthIronBolt(c, hooks.x + 11, toolY - 23 * toolScale, 1.7);
+    hearthIronBolt(c, hooks.x + hooks.w - 11, toolY - 23 * toolScale, 1.7);
     for (var hook = 0; hook < 2; hook++) {
       var hx = hook ? steelX : flintX;
       c.fillStyle = BLD.outline; c.fillRect(hx - 4, toolY - 26 * toolScale, 8, 13 * toolScale);
@@ -459,28 +471,34 @@
     var t = hearthToolTime;
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.fillStyle = BLD.woodDeep; c.fillRect(0, 0, L.w, L.h);
-    // Broad quiet boards, heavy beams, and a flue give the fire a room to light.
-    c.fillStyle = BLD.outline;
-    for (var by = L.top + 12; by < L.h; by += 38) c.fillRect(0, by, L.w, 3);
-    c.fillStyle = BLD.outline; c.fillRect(0, L.top, 18, L.h - L.top); c.fillRect(L.w - 18, L.top, 18, L.h - L.top);
-    c.fillStyle = BLD.woodDark; c.fillRect(18, L.top, 4, L.h - L.top); c.fillRect(L.w - 22, L.top, 4, L.h - L.top);
-    var floorY = Math.min(L.h - 75, L.bin.y + L.bin.h + 38);
-    c.fillStyle = BLD.stoneDark; c.fillRect(0, floorY, L.w, L.h - floorY);
-    c.fillStyle = BLD.outline; c.fillRect(0, floorY, L.w, 5);
-    for (var slab = 0; slab < L.w; slab += 154) { c.fillStyle = BLD.stoneBase; c.fillRect(slab, floorY + 5, 151, 2); }
-    var flueH = box.y - L.top;
-    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(box.x + box.w * 0.46, L.top, box.w * 0.18, flueH);
-    c.fillStyle = BLD.metalLight; c.fillRect(box.x + box.w * 0.46 + 4, L.top, 3, flueH);
-    hearthPlate(c, { x: box.x - 15, y: box.y - 14, w: box.w + 30, h: box.h + 33 }, true);
-    c.fillStyle = BLD.metalDark; c.fillRect(box.x - 13, box.y + box.h + 18, box.w + 26, 10);
-    hearthDrawFirebox(c, bed, box.x, box.y, box.w, box.h, t);
-    // The actual grate is beneath the bodies, never a lattice over their faces.
-    c.fillStyle = BLD.metalDark; c.fillRect(box.x - 1, box.y + box.h, box.w + 2, 7);
-    for (var gx = box.x + 8; gx < box.x + box.w; gx += 18) {
-      c.fillStyle = BLD.metalLight; c.fillRect(gx, box.y + box.h, 8, 2);
-      c.fillStyle = BLD.outline; c.fillRect(gx + 8, box.y + box.h + 2, 6, 5);
+    // A quiet timber wall surrounds the stove's stone recess. The masonry
+    // belongs to the appliance, and the flue has collars and a wall bracket.
+    for (var bx = 24; bx < L.w - 18; bx += 68) {
+      c.fillStyle = hearthArtColor(BLD.woodDark, 0.26); c.fillRect(bx, L.top, 65, L.h - L.top);
+      c.fillStyle = hearthArtColor(BLD.woodLight, 0.08); c.fillRect(bx, L.top, 1, L.h - L.top);
     }
-    hearthText(c, 'COAL-FIRED BOILER', box.x, box.y - 18, 11, BLD.cream);
+    var floorY = Math.min(L.h - 75, L.bin.y + L.bin.h + 28);
+    c.fillStyle = BLD.stoneDark; c.fillRect(0, floorY, L.w, L.h - floorY);
+    c.fillStyle = BLD.outline; c.fillRect(0, floorY, L.w, 4);
+    for (var slab = 0; slab < L.w; slab += 154) { c.fillStyle = BLD.stoneBase; c.fillRect(slab, floorY + 4, 151, 1); }
+    var pad = Math.min(30, box.w * 0.065), recessX = box.x - pad, recessW = box.w + pad * 2;
+    c.fillStyle = BLD.outline; c.fillRect(recessX - 3, L.top, recessW + 6, box.y + box.h + 31 - L.top);
+    c.fillStyle = BLD.stoneDark; c.fillRect(recessX, L.top, recessW, box.y + box.h + 28 - L.top);
+    for (var by = L.top + 9, row = 0; by < box.y + box.h + 26; by += 47, row++) {
+      c.fillStyle = hearthArtColor(BLD.stoneBase, 0.5); c.fillRect(recessX + 1, by, recessW - 2, 1);
+      c.fillStyle = BLD.outline; c.fillRect(recessX + 1, by + 43, recessW - 2, 2);
+      for (var joint = recessX + (row % 2 ? 83 : 18); joint < recessX + recessW; joint += 140) c.fillRect(joint, by, 2, 43);
+    }
+    var flueX = box.x + box.w * 0.57, flueW = Math.min(68, box.w * 0.16), flueH = box.y - L.top - 16;
+    var flue = c.createLinearGradient(flueX, 0, flueX + flueW, 0);
+    flue.addColorStop(0, BLD.outline); flue.addColorStop(0.2, BLD.metalBase);
+    flue.addColorStop(0.35, BLD.metalDark); flue.addColorStop(1, BLD.outline);
+    c.fillStyle = flue; c.fillRect(flueX, L.top, flueW, flueH);
+    for (var fy = L.top + 9; fy < L.top + flueH; fy += 72) {
+      c.fillStyle = BLD.outline; c.fillRect(flueX - 3, fy, flueW + 6, 7);
+      c.fillStyle = BLD.metalBase; c.fillRect(flueX - 2, fy + 1, flueW + 4, 2);
+    }
+    hearthDrawCasing(c, box, bed, false);
     // The coal bunker is the source of every movable chunk.
     hearthPlate(c, L.bin, true);
     var columns = Math.max(2, Math.min(4, Math.floor((L.bin.w - 24) / 24)));
@@ -520,7 +538,7 @@
     hearthWrap(c, hint, 18, bottomY + 22, L.w - 36, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, L.h < 500 ? 1 : 2);
     if (hearthDrag) {
       var d = hearthDrag;
-      hearthDrawCoal(c, d.b, d.x, d.y, box.w / 320, t);
+      hearthDrawCoal(c, d.b, d.x, d.y, box.w / HEARTH_WIDTH, t);
       c.strokeStyle = BLD.goldPale; c.lineWidth = 1; c.strokeRect(box.x - 3, box.y - 3, box.w + 6, box.h + 6);
     }
     hearthDrawNav(c, 'boiler');

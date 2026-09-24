@@ -14,7 +14,7 @@
     if (!water || !window.FireWGPU || /[?&]cpufire=1/.test(location.search)) return Promise.resolve(false);
     hearthFireReady = Promise.resolve(water.readyPromise).then(function () {
       if (generation !== hearthFireGeneration || water !== liquidWGPU || !water.available || !water.device) return false;
-      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: isMobile ? 128 : 192, headroom: -HEARTH_TOP });
+      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: isMobile ? 144 : 224, worldWidth: HEARTH_WIDTH, headroom: -HEARTH_TOP });
       window.__fire = hearthFireGPU;
       return hearthFireGPU.readyPromise;
     }).catch(function (e) { console.warn('Boiler fire uses CPU fallback:', e); return false; });

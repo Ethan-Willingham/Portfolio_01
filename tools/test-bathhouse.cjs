@@ -254,7 +254,7 @@ for (const fps of [30,60,144]) {
     const {s}=fixture();let now=1000;s.performance.now=()=>now;
     s.bathMode=true;s.hearthSetView('boiler');s.forgeGive('coal',1);
     const b=s.hearthLoadCoal('boiler',160,100),box=s.hearthRoomLayout().box;
-    const x=box.x+b.x*box.w/320,y=box.y+(b.y-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT;
+    const x=box.x+b.x*box.w/s.HEARTH_WIDTH,y=box.y+(b.y-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT;
     assert(s.hearthPointerDown({pointerId:11,button:0,clientX:x,clientY:y}));
     now+=16;s.hearthPointerMove({pointerId:11,clientX:x+18,clientY:y});
     now+=held;assert(s.hearthPointerUp({pointerId:11,clientX:x+18,clientY:y}));
@@ -282,7 +282,7 @@ for (const fps of [30,60,144]) {
     const b = s.hearthBeds.boiler.chunks[0], box = s.hearthRoomLayout().box;
     s.hearthButtons = [];
     assert(s.hearthPointerDown({ pointerId: 7, button: 0,
-      clientX: box.x + b.x * box.w / 320, clientY: box.y + (b.y-s.HEARTH_TOP) * box.h / s.HEARTH_HEIGHT }));
+      clientX: box.x + b.x * box.w / s.HEARTH_WIDTH, clientY: box.y + (b.y-s.HEARTH_TOP) * box.h / s.HEARTH_HEIGHT }));
     assert(s.hearthDrag && !s.hearthDrag.fresh);
     assert(s.hearthPointerUp({ pointerId: 7, clientX: 0, clientY: 740 }));
     assert.equal(s.hearthBeds.boiler.chunks.length, 0);

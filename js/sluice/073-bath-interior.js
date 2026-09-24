@@ -3,8 +3,8 @@
   // retain their original tower view when the player scrolls up.
   function bathBoilerWorldRect() {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
-    return { x: (curve.x0 + curve.x1) / 2 - 144,
-      y: curve.y0 + curve.D + 22, w: 288, h: 214 };
+    return { x: (curve.x0 + curve.x1) / 2 - 166,
+      y: curve.y0 + curve.D + 22, w: 332, h: 198 };
   }
   function bathInteriorBottom() {
     var r = bathBoilerWorldRect();
@@ -37,63 +37,86 @@
     bathVesselPath(c, curve, 0, 0); c.fill('evenodd');
     c.fillStyle = BLD.stoneDark; c.fillRect(left, bottom - 11, width, screenH);
     c.fillStyle = BLD.stoneBase; c.fillRect(left, bottom - 11, width, 3);
-    c.fillStyle = BLD.outline;
-    c.beginPath(); bathVesselPath(c, curve, 28, 28); bathVesselPath(c, curve, 0, 0); c.fill('evenodd');
-    c.fillStyle = BLD.stoneLight;
-    c.beginPath(); bathVesselPath(c, curve, 24, 24); bathVesselPath(c, curve, 0, 0); c.fill('evenodd');
-    c.strokeStyle = BLD.goldDark; c.lineWidth = 6; c.beginPath();
-    for (var n = 0; n <= 96; n++) {
-      var x = curve.x0 + (curve.x1 - curve.x0) * n / 96;
-      if (!n) c.moveTo(x, curve.y0); else c.lineTo(x, curve.y0 + curve.depthAt(x));
-    }
-    c.stroke(); c.strokeStyle = BLD.cream; c.lineWidth = 1; c.stroke();
-    // Bolts follow the same hanging-chain curve as the liner.
-    for (var n = 1; n < 24; n++) {
-      var x = curve.x0 + (curve.x1 - curve.x0) * n / 24;
-      var y = curve.y0 + curve.depthAt(x) + 13;
-      c.fillStyle = BLD.metalDark; c.beginPath(); c.arc(x, y, 3.5, 0, Math.PI * 2); c.fill();
-      c.fillStyle = BLD.metalPale; c.fillRect(x - 2, y - 2, 3, 1);
-      c.fillStyle = BLD.outline; c.fillRect(x - 2, y, 4, 1);
+    // Offset outward along the true bowl normal. The water-facing edge stays
+    // exactly on depthAt(), including the steep shoulders near each lip.
+    bathRimBand(c, curve, 0, 24, BLD.outline);
+    bathRimBand(c, curve, 1, 21, BLD.woodDeep);
+    bathRimBand(c, curve, 2, 17, BLD.woodDark);
+    bathRimBand(c, curve, 3, 11, BLD.woodMid);
+    bathRimBand(c, curve, 3, 5, BLD.woodPale);
+    bathRimBand(c, curve, 12, 14, BLD.woodBase);
+    bathRimBand(c, curve, 18, 19, BLD.goldDark);
+    // Broad hammered copper plates, with seam straps and paired iron rivets.
+    for (var n = 1; n < 12; n++) {
+      var x = curve.x0 + (curve.x1 - curve.x0) * n / 12;
+      var p = bathRimPoint(curve, x, 0);
+      c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(-p.nx, p.ny));
+      c.fillStyle = BLD.woodDeep; c.fillRect(-2, 6, 4, 15);
+      c.fillStyle = BLD.woodLight; c.fillRect(-1, 6, 1, 14);
+      hearthIronBolt(c, -6, 15, 1.8); hearthIronBolt(c, 6, 15, 1.8);
+      c.restore();
     }
     for (var side = 0; side < 2; side++) {
-      var x = side ? curve.x1 - 2 : curve.x0 - 28;
-      c.fillStyle = BLD.outline; c.fillRect(x - 2, curve.y0 - 20, 34, 10);
-      c.fillStyle = BLD.goldDark; c.fillRect(x, curve.y0 - 19, 30, 7);
-      c.fillStyle = BLD.goldPale; c.fillRect(x, curve.y0 - 19, 30, 2);
+      var x = side ? curve.x1 + 11 : curve.x0 - 11;
+      c.fillStyle = BLD.outline; hearthChamfer(c, x - 20, curve.y0 - 20, 40, 11, 3); c.fill();
+      c.fillStyle = BLD.woodDark; c.fillRect(x - 18, curve.y0 - 18, 36, 7);
+      c.fillStyle = BLD.woodPale; c.fillRect(x - 17, curve.y0 - 18, 34, 1);
+      hearthIronBolt(c, x - 12, curve.y0 - 14, 1.5); hearthIronBolt(c, x + 12, curve.y0 - 14, 1.5);
     }
     bathDrawIntegratedBoiler(c, curve);
   }
+  function bathRimPoint(curve, x, offset) {
+    var a = Math.max(curve.x0, x - 0.5), b = Math.min(curve.x1, x + 0.5);
+    var slope = (curve.depthAt(b) - curve.depthAt(a)) / Math.max(0.001, b - a);
+    var ny = 1 / Math.sqrt(1 + slope * slope), nx = -slope * ny;
+    return { x: x + nx * offset, y: curve.y0 + curve.depthAt(x) + ny * offset, nx: nx, ny: ny };
+  }
+  function bathRimBand(c, curve, inner, outer, color) {
+    c.fillStyle = color; c.beginPath();
+    c.moveTo(curve.x0 - inner, curve.y0 - 16);
+    for (var n = 0; n <= 96; n++) {
+      var p = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * n / 96, inner);
+      c.lineTo(p.x, p.y);
+    }
+    c.lineTo(curve.x1 + inner, curve.y0 - 16);
+    c.lineTo(curve.x1 + outer, curve.y0 - 16);
+    for (var n = 96; n >= 0; n--) {
+      var p = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * n / 96, outer);
+      c.lineTo(p.x, p.y);
+    }
+    c.lineTo(curve.x0 - outer, curve.y0 - 16);
+    c.closePath(); c.fill();
+  }
   function bathDrawIntegratedBoiler(c, curve) {
-    var r = bathBoilerWorldRect(), hot = Math.max(0, Math.min(1, hearthBeds.boiler.power));
-    // The masonry shoulders meet the underside of the tub. This is the
-    // actual boiler bed, also rendered in the close view, with the same coal.
-    c.fillStyle = BLD.outline; c.fillRect(r.x - 34, r.y - 13, r.w + 68, r.h + 24);
-    c.fillStyle = BLD.stoneDark; c.fillRect(r.x - 30, r.y - 10, r.w + 60, r.h + 17);
-    for (var row = 0; row < Math.ceil(r.h/29); row++) {
-      for (var col = 0; col < 5; col++) {
-        c.fillStyle = row % 2 ? BLD.stoneBase : BLD.stoneDark;
-        c.fillRect(r.x - 26 + col * 68, r.y - 6 + row * 29, 65, 25);
+    var r = bathBoilerWorldRect(), mid = r.x + r.w / 2;
+    // A fitted refractory cradle joins the tub to the stove. Quiet wide stones
+    // form two load-bearing shoulders, not a checkerboard behind the casting.
+    c.fillStyle = BLD.outline; hearthChamfer(c, r.x - 15, r.y - 13, r.w + 30, r.h + 22, 8); c.fill();
+    c.fillStyle = BLD.stoneDark; hearthChamfer(c, r.x - 11, r.y - 10, r.w + 22, r.h + 15, 7); c.fill();
+    for (var row = 0; row < 5; row++) {
+      var sy = r.y - 6 + row * 39;
+      c.fillStyle = BLD.stoneBase; c.fillRect(r.x - 8, sy, r.w + 16, 1);
+      c.fillStyle = BLD.outline; c.fillRect(r.x - 8, sy + 36, r.w + 16, 2);
+      for (var side = 0; side < 2; side++) {
+        var sx = side ? r.x + r.w - 34 : r.x + 8;
+        c.fillRect(sx + (row % 2 ? 14 : 0), sy, 2, 36);
       }
     }
-    c.fillStyle = bathBoilerHover ? BLD.goldBase : BLD.metalBase;
-    c.fillRect(r.x, r.y, r.w, r.h);
-    c.strokeStyle = bathBoilerHover ? BLD.goldPale : BLD.metalLight;
-    c.lineWidth = bathBoilerHover ? 3 : 1; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-    var opening = Math.min(r.w - 94, r.h - 35);
-    c.fillStyle = BLD.outline; c.fillRect(r.x + (r.w-opening)/2-4, r.y + 11, opening+8, opening+8);
-    hearthDrawFirebox(c, hearthBeds.boiler, r.x + (r.w-opening)/2, r.y + 15, opening, opening, hearthToolTime);
-    // Iron guard bars keep the glowing coal visible through the hatch.
-    c.fillStyle = BLD.metalDark;
-    for (var bar = 0; bar < 6; bar++) c.fillRect(r.x + 55 + bar * 33, r.y + 18, 3, r.h - 34);
-    c.fillStyle = BLD.metalLight; c.fillRect(r.x + 16, r.y + 28, 9, 47);
-    c.fillStyle = BLD.outline; c.fillRect(r.x + r.w - 30, r.y + 40, 18, 7);
-    c.fillStyle = BLD.goldPale; c.fillRect(r.x + r.w - 28, r.y + 40, 14, 3);
-    c.fillStyle = hot > 0.05 ? BLD.warmGlow : BLD.metalDark;
-    c.fillRect(r.x + r.w - 25, r.y + 20, 7, 7);
-    for (var corner = 0; corner < 4; corner++) {
-      c.fillStyle = BLD.metalPale;
-      c.fillRect(r.x + (corner % 2 ? r.w - 8 : 5), r.y + (corner > 1 ? r.h - 8 : 5), 3, 3);
+    // Copper saddle touches the actual underside of the vessel.
+    c.fillStyle = BLD.outline; c.fillRect(mid - 88, r.y - 20, 176, 11);
+    c.fillStyle = BLD.woodDark; c.fillRect(mid - 85, r.y - 19, 170, 7);
+    c.fillStyle = BLD.woodLight; c.fillRect(mid - 85, r.y - 19, 170, 1);
+    var bh = 166, bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
+    hearthDrawCasing(c, { x: mid - bw / 2, y: r.y + 13, w: bw, h: bh }, hearthBeds.boiler, bathBoilerHover);
+    // Small cleanout covers belong to the masonry shoulders.
+    for (var side = 0; side < 2; side++) {
+      var sx = side ? r.x + r.w - 30 : r.x + 8;
+      c.fillStyle = BLD.outline; c.fillRect(sx, r.y + r.h - 41, 22, 24);
+      c.fillStyle = BLD.metalDark; c.fillRect(sx + 2, r.y + r.h - 39, 18, 20);
+      hearthIronBolt(c, sx + 11, r.y + r.h - 29, 2.5);
     }
+    c.fillStyle = BLD.outline; c.fillRect(r.x - 19, r.y + r.h + 4, r.w + 38, 7);
+    c.fillStyle = BLD.stoneLight; c.fillRect(r.x - 16, r.y + r.h + 4, r.w + 32, 1);
   }
   function bathDrawInteriorWall() {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);

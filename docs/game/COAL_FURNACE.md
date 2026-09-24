@@ -5,7 +5,7 @@ v28.63, WebGPU reacting flow owns combustion when available; see
 [FIRE_SIMULATION.md](FIRE_SIMULATION.md) for gas transport, oxygen, thermal
 exchange, persistence and measured performance. The combustion rates below
 describe the retained CPU fallback. A new lump
-has a 29 to 39 pixel bounding radius over the 320-pixel-wide grate, compared with
+has a 29 to 39 pixel bounding radius over the 416-pixel-wide grate, compared with
 the former 13 to 20 pixel circles. Each unit still costs one coal from the
 locker. Previously saved lumps keep their paid fuel, lifetime and original size.
 

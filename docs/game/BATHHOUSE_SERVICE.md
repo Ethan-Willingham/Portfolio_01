@@ -58,7 +58,8 @@ backstop, and is uploaded separately so it cannot flatten the curved boundary.
 Guest buoyancy integrates the same visible cavity. Existing
 saves recarve the larger room on entry without adding water or charging again.
 Old waiting guests move to the dry landing. Purchased upper floors remain
-available by scrolling.
+available by immediate scrolling. Without purchased upper floors, wheel and drag
+gestures leave the bath fixed. Boiler view changes have no camera travel.
 
 Enable dev mode with backtick, including inside the banya, or load `?dev=1`.
 Coal, water, flint, and ignition steel are available without limit. Loading coal
@@ -82,7 +83,7 @@ Coal uses large, seeded convex hulls shared by drawing, picking and collisions.
 The 120 Hz solver uses face contacts, actual mass and rotational inertia, low
 restitution and static friction. Pieces balance on their faces, tip when their
 center of mass overhangs a support, and settle as burning fuel shrinks their
-geometry. Held chunks detach from the pile. Loading stops at eighteen pieces; six reserved slots allow burning coal to split
+geometry. Held chunks detach from the pile. Loading stops at 32 pieces; sixteen reserved slots allow burning coal to split
 under load. Spent material becomes up to 128 persistent ash grains. Sweep them
 with A or SWEEP ASH to restore underfire air.
 
@@ -346,6 +347,7 @@ and remove only the former pool footprints. No pearl production is restored.
 
 - `077-hearth-physics.js`: bounded pile contacts, ignition, combustion, air, saves.
 - `078-hearth-art.js`: faceted coal, hot cracks, ash, flame transport, event sparks.
+- `078-hearth-casing.js`: shared cast-iron surround, hinges, latch and ash drawer.
 - `078-hearth-room.js`: direct controls, boiler/forge fixtures, craft transactions.
 - `079-forge-resources.js`: mining flint, supply reservation, protected shiny ores.
 - `074-bath-service.js`: real bath heat/water, guests, permanent drains, migration.

@@ -21,13 +21,32 @@ function checkBodies(bed) {
     for (const key of ['x', 'y', 'vx', 'vy', 'r', 'angle', 'spin', 'seed', 'fuel', 'heat']) {
       assert(Number.isFinite(b[key]), `finite ${key}`);
     }
-    assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 320.4 && p[1] <= 210.4), 'polygon containment');
+    assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 416.4 && p[1] <= 210.4), 'polygon containment');
     near(b.fuel, b.volatile + b.carbon, 1e-10, 'combustible mass is conserved');
     assert(b.fuel >= 0 && b.fuel <= 1, 'bounded fuel');
     assert(b.heat >= 0 && b.heat <= 1, 'bounded coal heat');
   }
   assert(bed.heat >= 0 && bed.heat <= 1 && bed.power >= 0 && bed.power <= 1, 'bounded output');
   assert(bed.sparks.length <= 64, 'bounded spark allocation');
+}
+
+{
+  const {s,advance}=fixture();
+  const b=s.hearthAddChunk('boiler',380,150); b.vx=180;
+  advance(3); checkBodies(s.hearthBeds.boiler);
+  assert(b.x>340,'the new right-hand chamber is physical space, not stretched art');
+  const old=JSON.parse(JSON.stringify(s.hearthSave()));old.version=4;delete old.boiler.width;
+  old.boiler.chunks[0].x=160;
+  old.boiler.ash=[{x:123,y:208,vx:0,vy:0,kg:.001,heat:0,seed:.5}];
+  const fuel=old.boiler.chunks[0].fuel, shape=JSON.stringify(old.boiler.chunks[0].shape);
+  s.hearthRestore(old);
+  near(s.hearthBeds.boiler.chunks[0].x,208,0,'old coal bed recenters by 48 units');
+  near(s.hearthBeds.boiler.ash[0].x,171,0,'old ash recenters with the bed');
+  near(s.hearthBeds.boiler.chunks[0].fuel,fuel,0,'migration preserves fuel');
+  assert.equal(JSON.stringify(s.hearthSave().boiler.chunks[0].shape),shape,'migration preserves exact hull');
+  const saved=JSON.stringify(s.hearthSave());s.hearthRestore(JSON.parse(saved));
+  assert.equal(JSON.stringify(s.hearthSave()),saved,'new saves never shift twice');
+  console.log('PASS wider physical wall and one-time coal/ash save migration');
 }
 
 {

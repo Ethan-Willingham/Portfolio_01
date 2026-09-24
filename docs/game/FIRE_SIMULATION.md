@@ -71,7 +71,7 @@ skin exchange heat; nearby bodies exchange contact heat and approximate radiatio
 Contact conduction uses polygon separation. Radiation uses bounded view factors
 and approximate occlusion by intervening fuel.
 
-The physical scale is a 0.8 by 0.8 metre chamber with a 0.04 metre slice depth.
+The physical scale is a 1.04 by 0.8 metre chamber with a 0.04 metre slice depth.
 A reference coal body starts with 0.018 kg of combustible material; new lumps
 scale by polygon area and squared radius. Existing saved fuel keeps its mass. Temperatures are Kelvin and exchange amounts are kg
 and kJ. Gas sensible heat uses a constant effective heat capacity. Water warming
@@ -140,9 +140,13 @@ sleeps after a five-second vent period, with no continuing compute submissions.
 
 Since v28.65 the chamber extends upward from y = -110 to the original grate at
 210, adding 52 percent more physical plume space without enlarging the coal.
-The tending view preserves the square chamber aspect ratio and caps its desktop
-size at 500 CSS pixels. The bath's integrated hatch is taller and shows the same
-complete chamber. Pointer coordinates share this transform.
+Since v28.69 the chamber is 416 world pixels wide. The tending view preserves
+this 1.3 aspect ratio and caps desktop width at 580 CSS pixels (about 446 high).
+The integrated hatch shows the same complete chamber, with no bars across its
+opening. Pointer coordinates, collision walls, GPU masks and flame occlusion
+share these dimensions. Older coal and ash beds move right by 48 units once on
+restore, preserving relative contacts, shapes and remaining fuel. New bed saves
+record their width; the retired forge retains its original coordinates.
 
 The normal image reconstructs emitted radiance with positive cubic B-spline
 weights, normalized over fluid cells. An emission compute pass evaluates the
@@ -169,21 +173,21 @@ tools/fire-simulation-smoke.mjs` also boots the real browser with a delayed wate
 device and fire warm-up. The CPU browser test checks interpolation in actual
 rendered pixels as well as preserving the surrounding canvas settings.
 
-Desktop uses 192 by 192 cells; mobile uses 128 by 128. There are at most forty-eight
+Desktop uses 224 by 172 cells; mobile uses 144 by 111. There are at most forty-eight
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch
 up its missed burn time. Buffers, pipelines and bind groups are retained, and
 all steps in one game update share one queue submission. The desktop simulation
-buffers occupy 5,495,040 bytes, excluding presentation textures and CPU geometry
+buffers occupy 5,741,696 bytes, excluding presentation textures and CPU geometry
 arrays. The module requests no second GPU device.
 
-On the development Apple M1 Pro, Chrome for Testing with Metal, v28.67 at 1280 by 900 (32 loaded pieces):
+On the development Apple M1 Pro, Chrome for Testing with Metal, v28.69 at 1280 by 900 (32 loaded pieces):
 
 | Measurement | Result |
 | --- | --- |
-| Fire CPU geometry and submission, 120 frames with a burning full bed | 2.07 ms average, 2.30 ms p95 |
-| Fire-room update/render plus a GPU queue fence | 10.93 ms average, 16.60 ms p95 |
-| Full bath frame CPU time, about 55,000 liquid particles, steam and a guest | 13.12 ms average, 17.30 ms p99 |
-| Full bath frame interval | 16.67 ms average, 16.80 ms p99 |
+| Fire CPU geometry and submission, 120 frames with a burning full bed | 2.07 ms average, 2.20 ms p95 |
+| Fire-room update/render plus a GPU queue fence | 10.44 ms average, 14.00 ms p95 |
+| Full bath frame CPU time, about 55,000 liquid particles, steam and a guest | 12.69 ms average, 14.30 ms p99 |
+| Full bath frame interval | 16.74 ms average, 16.80 ms p99 |
 
 The queue-fenced measurement includes browser/driver scheduling and room drawing;
 it is not a GPU timestamp. These are local measurements, not guarantees for other
