@@ -74,7 +74,12 @@
   window.rocketTune = rocketTune;
 
   var rocketIntensity = 0;
-  var rocketSmokeWake = [], rocketSmokeWakeCarry = 0, rocketSmokeWakeSign = 1;
+  var rocketSmokeWake = [], rocketSmokeWakeCarry = 0, rocketSmokeWakeNext = 0.12;
+  var rocketSmokeWakeSeed = 0xc0ffee;
+  function rocketSmokeRandom() {
+    rocketSmokeWakeSeed = (Math.imul(rocketSmokeWakeSeed, 1664525) + 1013904223) >>> 0;
+    return rocketSmokeWakeSeed / 4294967296;
+  }
   var rocketSparks = [];
   var rocketSparkCarry = 0;
   var rocketWake = [];
@@ -164,6 +169,7 @@
     rocketWashCarry = 0;
     rocketIntensity = 0;
     rocketSmokeWake.length = 0; rocketSmokeWakeCarry = 0;
+    rocketSmokeWakeNext = 0.12; rocketSmokeWakeSeed = 0xc0ffee;
     flightRings.length = 0;
     flightIgniteT = 0;
     flightIgniteCooldown = 0;
@@ -379,9 +385,10 @@
     }
     var nozzles = rocketNozzles(), dir = rocketExhaustDir();
     var distances = [5, 18, 36, 60, 90, 124], reach = TILE * 4;
-    // Reuse the weakest downstream samples for the rolling wake. Each
-    // roll costs two splats and replaces one sample from each nozzle.
-    var jetSamples = distances.length - rocketSmokeWake.length;
+    // Reuse the weakest downstream samples for the rolling wake, while
+    // retaining the three nearest samples on both nozzles. Even with five
+    // overlapping eddies this takes at most sixteen splats, plus impact wash.
+    var jetSamples = Math.max(3, distances.length - rocketSmokeWake.length);
     for (var ni = 0; ni < nozzles.length; ni++) {
       var nz = nozzles[ni];
       var hit = rocketFindImpactAlong(nz.x, nz.y, dir.x, dir.y, reach);
@@ -410,18 +417,24 @@
         }
       }
     }
-    // A fast climb leaves short-lived rolls in the air behind it. These
-    // stay in world space, so the rig can fly on while its old smoke curls.
-    // Opposite impulses add circulation without dragging the whole plume
-    // sideways. Two rolls (one on mobile) keep the same splat budget.
+    // Overlapping eddies have different sizes, axes and lifetimes instead
+    // of forming a regular alternating vortex street. Opposed forces stir
+    // the smoke without drawing a wave or adding net sideways momentum.
     for (var wi = 0; wi < rocketSmokeWake.length; wi++) {
-      var wake = rocketSmokeWake[wi], growth = wake.age / 0.55;
-      var radius = 6 + growth * 7, offset = 7 + growth * 8;
-      var turn = wake.spin * wake.power * (1 - growth) * 1.4;
+      var wake = rocketSmokeWake[wi], growth = wake.age / wake.life;
+      var radius = wake.radius * (1 + growth * 0.3), offset = radius * 1.3;
+      // Fit the entire pair on this side of a wall, including in a one-tile
+      // shaft. Clipping only one lobe would turn circulation into a shove.
+      for (var side = -1; side <= 1; side += 2) {
+        var limit = rocketFindImpactAlong(wake.x, wake.y, wake.ax * side, wake.ay * side, offset + 4);
+        if (limit !== null) offset = Math.min(offset, limit - 4);
+      }
+      if (offset < 3) continue;
+      radius = Math.min(radius, offset * 0.85);
+      var turn = wake.spin * wake.power * (4 * growth * (1 - growth)) * 5;
       for (var ws = -1; ws <= 1; ws += 2) {
-        var wx = wake.x + wake.dx * offset * ws, wy = wake.y + wake.dy * offset * ws;
-        if (rocketFindImpactAlong(wake.x, wake.y, wake.dx * ws, wake.dy * ws, offset) !== null) continue;
-        impulse(wx, wy, -wake.dy * turn * ws, wake.dx * turn * ws, radius);
+        var wx = wake.x + wake.ax * offset * ws, wy = wake.y + wake.ay * offset * ws;
+        impulse(wx, wy, -wake.ay * turn * ws, wake.ax * turn * ws, radius);
       }
     }
   }
@@ -441,23 +454,29 @@
 
     for (var w = rocketSmokeWake.length - 1; w >= 0; w--) {
       var wake = rocketSmokeWake[w];
-      wake.age += dt; wake.x += wake.dx * 24 * dt; wake.y += wake.dy * 24 * dt;
-      if (wake.age >= 0.55 || rocketInSolid(wake.x, wake.y) ||
+      wake.age += dt; wake.x += wake.dx * wake.drift * dt; wake.y += wake.dy * wake.drift * dt;
+      if (wake.age >= wake.life || rocketInSolid(wake.x, wake.y) ||
           rocketInJello(wake.x, wake.y) || rocketInSkySlime(wake.x, wake.y)) rocketSmokeWake.splice(w, 1);
     }
     var climbWake = Math.max(0, Math.min(1, (-player.vy - 80) / 220));
     if (rocketJetVisible() && climbWake > 0) {
       rocketSmokeWakeCarry += dt;
-      if (rocketSmokeWakeCarry >= 0.18) {
-        rocketSmokeWakeCarry %= 0.18;
-        var mouth = getExhaustWorldPos(), ed = rocketExhaustDir();
-        var behind = PLAYER_H + 24;
-        var wx = mouth.x + ed.x * behind, wy = mouth.y + ed.y * behind;
-        if (rocketFindImpactAlong(mouth.x, mouth.y, ed.x, ed.y, behind) === null) {
-          if (rocketSmokeWake.length >= (isMobile ? 1 : 2)) rocketSmokeWake.shift();
+      if (rocketSmokeWakeCarry >= rocketSmokeWakeNext) {
+        rocketSmokeWakeCarry -= rocketSmokeWakeNext;
+        rocketSmokeWakeNext = 0.045 + rocketSmokeRandom() * 0.065;
+        var nozzle = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H - 1), ed = rocketExhaustDir();
+        var behind = 14 + rocketSmokeRandom() * 42;
+        var lateral = (rocketSmokeRandom() - 0.5) * 8;
+        var wx = nozzle.x + ed.x * behind - ed.y * lateral;
+        var wy = nozzle.y + ed.y * behind + ed.x * lateral;
+        if (rocketSmokeWake.length < (isMobile ? 3 : 5) &&
+            !rocketInSolid(wx, wy) && !rocketInJello(wx, wy) && !rocketInSkySlime(wx, wy) &&
+            rocketFindImpactAlong(nozzle.x, nozzle.y, ed.x, ed.y, behind) === null) {
+          var axis = Math.atan2(ed.y, ed.x) + (rocketSmokeRandom() - 0.5) * 2.4;
           rocketSmokeWake.push({ x: wx, y: wy, dx: ed.x, dy: ed.y, age: 0,
-            spin: rocketSmokeWakeSign, power: climbWake });
-          rocketSmokeWakeSign = -rocketSmokeWakeSign;
+            ax: Math.cos(axis), ay: Math.sin(axis), radius: 5 + rocketSmokeRandom() * 8,
+            life: 0.35 + rocketSmokeRandom() * 0.4, drift: 16 + rocketSmokeRandom() * 28,
+            spin: rocketSmokeRandom() < 0.5 ? -1 : 1, power: climbWake * (0.8 + rocketSmokeRandom() * 0.6) });
         }
       }
     } else rocketSmokeWakeCarry = 0;

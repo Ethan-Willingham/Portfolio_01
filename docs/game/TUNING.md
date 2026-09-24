@@ -95,11 +95,18 @@ levels. The stock source breathes with travel speed; purchased recipes expand
 from the pipe before developing their full width. Their catalog exports remain
 unchanged.
 
-Powered climbs above 80 world px/s leave brief rolling air currents behind the
-rig. At most two rolls are active (one on mobile). Each replaces two distant
-jet samples, keeping the twelve-splat force budget. Walls and gel stop the
-rolls. Both smoke fields use the same wake, with the ambient field's slow clock
-compensated as in the direct jet force.
+Powered climbs above 80 world px/s leave overlapping eddies behind the rig.
+Their spacing, position, size, axis, spin, strength and lifetime vary at birth,
+then evolve smoothly; they do not alternate in a repeating wave. Up to five
+eddies overlap (three on mobile), lasting 0.35 to 0.75 seconds. Each reuses two
+distant jet samples while keeping three core samples on each nozzle. The
+combined wake and direct jet use at most sixteen force splats (twelve on
+mobile), plus the existing impact wash. Walls and gel stop the eddies; both
+lobes shrink together beside walls so circulation stays balanced. Both smoke
+fields use the same wake, with the ambient field's slow clock compensated as
+in the direct jet force. Source variation uses interpolated noise, and fast
+travel widens the bloom beyond the fitted pipe mouth to give the wake enough
+smoke to fold.
 
 ### Wind bias
 | Lever | Now | Range | Effect |

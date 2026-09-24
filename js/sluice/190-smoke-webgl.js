@@ -2487,6 +2487,20 @@
       Math.max(1, smokeFluidWidth / smokeFluidHeight);
   }
 
+  // Smooth, irregular source variation. Sample fixed random values at
+  // neighbouring times so the emitter never jitters with the frame rate.
+  function smokeRigNoiseHash(n, seed) {
+    var h = Math.imul(n + seed * 1013, 0x45d9f3b);
+    h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+    return ((h ^ (h >>> 16)) >>> 0) / 2147483648 - 1;
+  }
+  function smokeRigNoise(t, seed) {
+    var n = Math.floor(t), f = t - n;
+    f = f * f * (3 - 2 * f);
+    var a = smokeRigNoiseHash(n, seed);
+    return a + (smokeRigNoiseHash(n + 1, seed) - a) * f;
+  }
+
   // Splat dye + velocity at the rig's exhaust mouth. Rates are per-frame;
   // emitDt scales them so a long frame doesn't dump a huge pulse all at once.
   function smokeFluidEmit(dt) {
@@ -2540,7 +2554,8 @@
                            : smokeTune.diesel_rate_idle);
       if (heavy) rate = Math.max(rate, SMOKE_HEAVY.idle_rate) * SMOKE_HEAVY.rate_mul;
       rate *= pulse;
-      var beat = Math.sin(smokeFluidShedPhase) * Math.sin(smokeFluidShedPhase * 0.61 + 1.4);
+      var beat = smokeRigNoise(smokeFluidShedPhase * 0.7, 3) * 0.65 +
+        smokeRigNoise(smokeFluidShedPhase * 1.9, 5) * 0.35;
       var breath = 1 + beat * 0.65;
       rate *= breath * 5;
       // v11.58 — pace dye output off real time so a low-fps device emits
@@ -2550,7 +2565,7 @@
       var sourceLift = Math.max(0, smokeTuneNum(smokeTune.diesel_source_lift, isActive ? 6.8 : (moving ? 5.2 : 3.8)));
       var bloomLift = Math.max(0, smokeTuneNum(smokeTune.diesel_bloom_lift, isActive ? 8.5 : 5.0));
       var angle = player.bodyTiltRender || 0, outX = Math.sin(angle), outY = -Math.cos(angle);
-      var sway = Math.sin(smokeFluidShedPhase * 0.73) * 1.4;
+      var sway = smokeRigNoise(smokeFluidShedPhase * 1.2, 11) * 1.4;
       var source = smokeFluidWorldToUV(ex.x + outX * sourceLift - outY * sway * 0.2,
         ex.y + outY * sourceLift + outX * sway * 0.2);
       var bloom = smokeFluidWorldToUV(ex.x + outX * (sourceLift + bloomLift) - outY * sway,
@@ -2562,7 +2577,7 @@
       smokeEmitCol.g = Math.max(0, rate * (smokeTune.diesel_color_g + jg));
       smokeEmitCol.b = Math.max(0, rate * (smokeTune.diesel_color_b + jb));
       var col = smokeEmitCol;
-      var sideJ = Math.sin(smokeFluidShedPhase) * 0.8;
+      var sideJ = smokeRigNoise(smokeFluidShedPhase * 0.9, 19) * 0.8;
       var velX = sideJ * smokeTune.diesel_shed_amp
                - player.dir * smokeTune.diesel_dir_force * (isActive ? 1 : 0.4)
                - player.vx * smokeTune.diesel_vx_coupling
@@ -2582,7 +2597,8 @@
       var bloomSize = Math.sqrt(Math.max(0.002, smokeTuneNum(smokeTune.diesel_bloom_radius, 0.078)) / 0.078);
       var mouthRad = smokeRigRadius(1.6 * sourceSize);
       var sourceRad = smokeRigRadius(3.8 * sourceSize * (1 + beat * 0.12));
-      var bloomRad = smokeRigRadius(7 * bloomSize * (1 + beat * 0.22));
+      var travel = Math.min(1, Math.hypot(player.vx, player.vy) / 260);
+      var bloomRad = smokeRigRadius(7 * bloomSize * (1 + beat * 0.22) * (1 + travel * 0.45));
       var bloomAmt = Math.max(0, smokeTuneNum(smokeTune.diesel_bloom_amount, 0.72));
       smokeDriver.splat(euv.uvX, euv.uvY, velX * 0.20, Math.max(0.035, velY), mouthCol, mouthRad);
       if (source.inView) {

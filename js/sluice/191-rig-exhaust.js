@@ -138,7 +138,7 @@
         var time = rigExhaustClock - rigExhaustAccumulator - (samples - n - 1) * RIG_EXHAUST_DT;
         var packets = window.SmokePresets.sample(def.recipe, time, 0, rigExhaustMaterial.tuning, def.scale.values, throttle);
         var travel = Math.min(1, Math.hypot(player.vx, player.vy) / 260);
-        var beat = Math.sin(time * 12.7) * Math.sin(time * 7.9 + 1.4);
+        var beat = smokeRigNoise(time * 9.1, 23) * 0.65 + smokeRigNoise(time * 23.7, 29) * 0.35;
         for (var i = 0; i < packets.length; i++) {
           var p = packets[i];
           // Fit the sampled material to the stack before it expands. Wide
@@ -148,6 +148,9 @@
           var spread = p.x * RIG_EXHAUST_SCALE * Math.min(1, 0.22 + lift * 0.10);
           var packetRadius = Math.sqrt(p.radius * 0.9 / 100) * Math.sqrt(1120 * 640) * RIG_EXHAUST_SCALE;
           packetRadius = Math.min(packetRadius, 1.6 + lift * 0.95) * (1 + travel * beat * 0.18);
+          // Leave the mouth fitted, but feed enough width into a fast wake
+          // for its eddies to fold the smoke instead of only bending a thread.
+          packetRadius *= 1 + travel * Math.min(1, Math.max(0, lift - 1) * 0.25) * 0.65;
           var uv = smokeFluidWorldToUV(ex.x + crossX * spread + outwardX * lift,
             ex.y + crossY * spread + outwardY * lift);
           if (!uv.inView) continue;

@@ -94,7 +94,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35` });
   for (let i = 0; i < 300; i++) {
-    if (await evaluate(`typeof __smokeCouplingTest==='function' && __smokeCouplingTest("introPhase==='done'")`)) break;
+    if (await evaluate(`typeof __smokeCouplingTest==='function' && __smokeCouplingTest("introPhase==='done' && SmokeFluid.isReady() && rigExhaustAvailable()")`)) break;
     await sleep(100);
   }
   check('game boots with both smoke solvers and the coupling helpers', await game(`
@@ -485,20 +485,24 @@ try {
     try{
       [false,true].forEach(function(mobile){
         isMobile=mobile;clearRocketPlume();rocketIntensity=1;
-        var maxCalls=0,maxRolls=0;
-        for(var frame=0;frame<90;frame++){
+        var maxCalls=0,maxRolls=0,births=[],seen=[];
+        for(var frame=0;frame<180;frame++){
           updateRocketPlume(1/60);
           maxRolls=Math.max(maxRolls,rocketSmokeWake.length);
           maxCalls=Math.max(maxCalls,capture().length);
+          rocketSmokeWake.forEach(function(w){if(seen.indexOf(w)<0){
+            seen.push(w);births.push({time:frame/60,radius:w.radius,life:w.life,axis:w.ax,spin:w.spin});
+          }});
         }
-        result[mobile?'mobile':'desktop']={rolls:maxRolls,splats:maxCalls};
+        result[mobile?'mobile':'desktop']={rolls:maxRolls,splats:maxCalls,births:births};
       });
       player.lastMoveU=false;result.release=capture().length;player.lastMoveU=true;
       var row=2,col=Math.floor(player.x/TILE),old=[];
       for(var c=col-4;c<=col+4;c++){old.push(world[row][c]);world[row][c]={type:'stone',hp:1};}
       try{
         // An already-shed roll must stop when terrain closes over its center.
-        rocketSmokeWake=[{x:player.x,y:row*TILE+1,dx:0,dy:1,age:0,spin:1,power:1}];
+        rocketSmokeWake=[{x:player.x,y:row*TILE+1,dx:0,dy:1,age:0,spin:1,power:1,
+          life:0.5,drift:24,ax:0,ay:1,radius:8}];
         player.vy=0;updateRocketPlume(1/60);result.blockedExisting=rocketSmokeWake.length;
         // A wall between the mouth and wake prevents a new roll entirely.
         player.y=player.renderY=30;player.vy=-260;
@@ -509,9 +513,16 @@ try {
     }finally{isMobile=savedMobile;player.vy=0;clearRocketPlume();}
   })()`);
   check('fast climbs shed bounded desktop and mobile air rolls',
-    ascentWake.desktop.rolls===2&&ascentWake.mobile.rolls===1,ascentWake);
-  check('rolling air reuses the twelve-splat jet budget',
-    ascentWake.desktop.splats<=12&&ascentWake.mobile.splats<=12,ascentWake);
+    ascentWake.desktop.rolls===5&&ascentWake.mobile.rolls===3,ascentWake);
+  for(const [device,result] of Object.entries(ascentWake).filter(([,r])=>r.births)){
+    const births=result.births,gaps=births.slice(1).map((b,i)=>Math.round((b.time-births[i].time)*60));
+    check(device+' wake overlaps varied eddies without a fixed alternating rhythm',
+      new Set(gaps).size>1&&new Set(births.map(b=>b.radius)).size>3&&
+      new Set(births.map(b=>b.life)).size>3&&new Set(births.map(b=>b.axis)).size>3&&
+      births.some((b,i)=>i&&b.spin===births[i-1].spin)&&new Set(births.map(b=>b.spin)).size===2,result);
+  }
+  check('overlapping air eddies stay within desktop and mobile force budgets',
+    ascentWake.desktop.splats<=16&&ascentWake.mobile.splats<=12,ascentWake);
   check('release stops fresh wake forces and walls block new or drifting rolls',
     ascentWake.release===0&&ascentWake.blockedExisting===0&&ascentWake.blockedBirth===0,ascentWake);
   check('browser reports no runtime or shader errors', errors.length === 0, errors);
