@@ -84,29 +84,27 @@ console. **This is the main smoke tuning surface.**
 | Lever | Now | Range | Effect |
 |---|---|---|---|
 | `diesel_source_lift` | `1.4` | 0–15 | World-px lift of the source splat |
-| `diesel_source_radius` | `0.014` | 0.001–0.05 | Relative area of the 1.6-world-px mouth and 3.8-world-px source |
+| `diesel_source_radius` | `0.014` | 0.001–0.05 | Classic Gaussian area, about 9.5-world-px mouth and 13.4-world-px source |
 | `diesel_bloom_lift` | `3.6` | 0–15 | World-px lift of the secondary bloom splat |
-| `diesel_bloom_radius` | `0.078` | 0.002–0.1 | Relative area of the 7-world-px bloom, before pulse variation |
+| `diesel_bloom_radius` | `0.078` | 0.002–0.1 | Classic Gaussian area, about 31.7-world-px bloom |
 | `diesel_bloom_amount` | `0.82` | 0–1.5 | Bloom colour multiplier |
 
-Rig sources follow the drawn pipe through flight stretch, landing compression,
-banking and facing changes. Their widths stay fixed in world space across zoom
-levels. The stock source breathes with travel speed; purchased recipes expand
-from the pipe before developing their full width. Their catalog exports remain
-unchanged.
+The broad stock source and nozzle airflow are restored from the pre-cosmetics
+behavior in `0d25a49` (v28.27). The pipe still anchors emission, but the cloud
+extends across the rig. Smoke passes across the chassis as it did originally;
+slimes retain their moving fluid boundaries. The source rates and slow source
+motion match that version, without the later narrowing, travel pulses or
+constructed wake eddies. Purchased sources use their original material scale.
 
-Powered climbs above 80 world px/s leave overlapping eddies behind the rig.
-Their spacing, position, size, axis, spin, strength and lifetime vary at birth,
-then evolve smoothly; they do not alternate in a repeating wave. Up to five
-eddies overlap (three on mobile), lasting 0.35 to 0.75 seconds. Each reuses two
-distant jet samples while keeping three core samples on each nozzle. The
-combined wake and direct jet use at most sixteen force splats (twelve on
-mobile), plus the existing impact wash. Walls and gel stop the eddies; both
-lobes shrink together beside walls so circulation stays balanced. Both smoke
-fields use the same wake, with the ambient field's slow clock compensated as
-in the direct jet force. Source variation uses interpolated noise, and fast
-travel widens the bloom beyond the fitted pipe mouth to give the wake enough
-smoke to fold.
+Each nozzle pushes a broad air column up to 24 tiles below the rig, using ten
+velocity samples beginning at the nozzle itself. Its roughly 18-world-px throat
+overlaps smoke above and around the rig, drawing ceiling smoke downward.
+Pressure, advection and vorticity in the fluid solver produce the rolling flow.
+The original widths are calibrated to a 1344 by 960 world-pixel domain so zoom
+does not change them. Forces use elapsed time and compensate for each field's
+simulation clock. Both ambient and purchased smoke receive them. Terrain and
+slimes stop the column, and releasing thrust stops new impulses. At most twenty
+velocity splats are needed per field; offscreen samples are skipped.
 
 ### Wind bias
 | Lever | Now | Range | Effect |

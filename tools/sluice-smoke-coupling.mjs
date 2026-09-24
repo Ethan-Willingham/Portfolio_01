@@ -235,12 +235,13 @@ try {
       check(name + ' equal-time momentum is independent of ' + hz.slice(2) + ' Hz cadence',
         close(reference.x, comparison.x) && close(reference.y, comparison.y), { reference, comparison });
     }
-    const zoom = total(result.zoom);
-    check(name + ' zoom preserves world momentum and plume width',
-      close(reference.x, zoom.x) && close(reference.y, zoom.y) &&
-      result.zoom.calls.length === result.hz60.calls.length && result.zoom.calls.every((p, i) =>
-        close(p.radius, result.hz60.calls[i].radius) && close(p.x, result.hz60.calls[i].x) && close(p.y, result.hz60.calls[i].y)),
-      { reference, zoom });
+    // The restored column extends beyond the close view. Compare impulses
+    // at shared world positions, excluding only samples outside that view.
+    check(name + ' zoom preserves momentum and width throughout the shared view',
+      result.zoom.calls.length > 0 && result.zoom.calls.every(p => {
+        const old = result.hz60.calls.find(q => close(p.x,q.x,1e-7) && close(p.y,q.y,1e-7));
+        return old && close(p.radius,old.radius) && close(p.dx,old.dx) && close(p.dy,old.dy);
+      }));
     const tilt = total(result.tilt);
     check(name + ' banked jet points with the chassis', tilt.x > 0 && tilt.y > 0 && close(tilt.x / tilt.y, Math.tan(0.55), 0.04), tilt);
     check(name + ' release, no input and empty fuel stop fresh impulses',
@@ -337,23 +338,14 @@ try {
     check(name + ' thrust moves visible smoke without erasing the cloud',
       result.down.retention > 0.55 && result.tilted.retention > 0.55 &&
       result.down.retention < 1.2 && result.tilted.retention < 1.2, result);
-    check(name + ' the moving rig displaces a finite cloud', result.moving.dx > result.stationary.dx + 2, result);
-    check(name + ' the rig pushes smoke without erasing or inflating it',
+    check(name + ' the unpowered rig leaves the original smoke flow open',
+      Math.abs(result.moving.dx-result.stationary.dx)<1&&Math.abs(result.moving.dy-result.stationary.dy)<1,result);
+    check(name + ' passing the rig through smoke preserves the cloud',
       result.moving.retention > 0.75 && result.moving.retention < 1.25, result);
     check(name + ' camera motion does not add momentum to a stationary rig',
       Math.abs(result.camera.dx-result.stationary.dx) < 2 && Math.abs(result.camera.dy-result.stationary.dy) < 2, result);
   }
-  const boundary = await game(`(function(){
-    var bodies=smokeFluidMovingBodies(),rig=bodies.find(function(b){return jelloBodies.indexOf(b)<0;});
-    if(!rig)return null;
-    var first=Array.from(rig.px),y=Array.from(rig.py),old=cam.x;
-    cam.x+=100;var again=smokeFluidMovingBodies();cam.x=old;
-    var cameraStable=JSON.stringify(first)===JSON.stringify(Array.from(rig.px))&&JSON.stringify(y)===JSON.stringify(Array.from(rig.py));
-    player.renderX+=12;var moved=smokeFluidMovingBodies(),dx=rig.px[rig.ring[0]]-first[rig.ring[0]];player.renderX-=12;
-    smokeFluidMovingBodies();return {count:rig.ringN,stable:again.indexOf(rig)>=0&&moved.indexOf(rig)>=0,cameraStable:cameraStable,dx:dx};
-  })()`);
-  check('the rig boundary retains identity and uses world motion without camera motion', boundary &&
-    boundary.count >= 4 && boundary.stable && boundary.cameraStable && close(boundary.dx, 12), boundary);
+  check('slimes remain the moving smoke boundaries',await game(`smokeFluidMovingBodies()===jelloBodies`));
 
   // Exercise the real update path with finite clouds and all emitters off.
   // Wind must keep acting when emission stops, changes sign, or the player
@@ -466,67 +458,57 @@ try {
   for(const r of silhouettes){
     check(r.field+' smoke remains in open air beside the roof ('+r.facing+', '+r.tilt+')',
       r.open>100&&r.gap/r.open>0.8,r);
-    check(r.field+' solid chassis still occludes smoke ('+r.facing+', '+r.tilt+')',
-      r.inside>100&&r.core/r.inside<0.1,r);
+    check(r.field+' smoke can cross the rig as in the original flow ('+r.facing+', '+r.tilt+')',
+      r.inside>100&&r.core/r.inside>0.95,r);
   }
-  const ascentWake = await game(`(function(){
-    var savedMobile=isMobile,result={};
-    player.x=player.renderX=COLS*TILE/2;player.y=player.renderY=-300;
-    player.vy=-260;player.thrustSpool=1;player.bodyTiltRender=0;
-    player.lastMoveU=player.thrusting=true;player.fuel=100;
-    cam.x=player.x-screenW/2;cam.y=player.y-screenH/2;
-    function capture(){
-      var calls=[];
-      rocketSmokeCouple({config:{SIM_RESOLUTION:160},splatVelocity:function(x,y,dx,dy,r){
-        calls.push({x:x,y:y,dx:dx,dy:dy,r:r});
-      }},1/60);
-      return calls;
+  // A ceiling holds the rig still, so this catches loss of near-body
+  // entrainment that a falling cloud below the nozzles cannot detect.
+  const ceiling = await game(`(function(){
+    var results={},col=Math.floor(COLS/2),roof=80,old=[];
+    for(var r=roof;r<roof+28;r++)for(var c=col-5;c<col+7;c++){
+      old.push([r,c,world[r][c]]);
+      world[r][c]=(r>roof&&c>=col&&c<col+2)?null:{type:'stone',hp:1};
+      invalidateTerrainAround(r,c);
+    }
+    function measure(driver){
+      driver.displayPass();var c=driver.getCanvas(),gl=c.getContext('webgl2')||c.getContext('webgl');
+      var pixels=new Uint8Array(c.width*c.height*4);gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+      var mass=0,depth=0,below=0;
+      for(var i=0;i<pixels.length;i+=4){
+        var w=pixels[i],y=cam.y-smokeFluidMarginWorldY+(1-(Math.floor(i/4/c.width)+0.5)/c.height)*smokeFluidDomainWorldH;
+        if(y<(roof+1)*TILE)continue;
+        mass+=w;depth+=w*(y-player.y);if(y>player.y+PLAYER_H+20)below+=w;
+      }
+      return {mass:mass,depth:depth/Math.max(1,mass),below:below/Math.max(1,mass)};
     }
     try{
-      [false,true].forEach(function(mobile){
-        isMobile=mobile;clearRocketPlume();rocketIntensity=1;
-        var maxCalls=0,maxRolls=0,births=[],seen=[];
-        for(var frame=0;frame<180;frame++){
-          updateRocketPlume(1/60);
-          maxRolls=Math.max(maxRolls,rocketSmokeWake.length);
-          maxCalls=Math.max(maxCalls,capture().length);
-          rocketSmokeWake.forEach(function(w){if(seen.indexOf(w)<0){
-            seen.push(w);births.push({time:frame/60,radius:w.radius,life:w.life,axis:w.ax,spin:w.spin});
-          }});
-        }
-        result[mobile?'mobile':'desktop']={rolls:maxRolls,splats:maxCalls,births:births};
+      ['stock','copperhead'].forEach(function(id){
+        results[id]={};
+        ['off','on'].forEach(function(mode){
+          player.x=player.renderX=(col+1)*TILE-PLAYER_W/2;
+          player.y=player.renderY=(roof+1)*TILE+1;player.vx=player.vy=0;
+          player.dir=1;player.bodyTiltRender=0;player.thrustSpool=1;
+          player.thrusting=true;player.lastMoveU=mode==='on';player.fuel=100;
+          rocketIntensity=mode==='on'?1:0;
+          smokeTune.enabled=smokeTune.diesel_enabled=true;smokeTune.sim_time_scale=0.22;
+          smokeTune.wind_x=0;surfaceWind.current=0;
+          rigExhaustState.equipped=id;rigExhaustApply(true);
+          cam.x=player.x-screenW/2;cam.y=player.y-screenH*.25;
+          SmokeFluid.clear();rigExhaustClear();smokeFluidPrevCamX=cam.x;smokeFluidPrevCamY=cam.y;
+          smokeObstPrevCamX=NaN;smokeFluidPaintObstacle();
+          for(var frame=0;frame<240;frame++)updateSmoke(1/60);
+          results[id][mode]=measure(id==='stock'?smokeDriver:rigExhaustFluid);
+        });
       });
-      player.lastMoveU=false;result.release=capture().length;player.lastMoveU=true;
-      var row=2,col=Math.floor(player.x/TILE),old=[];
-      for(var c=col-4;c<=col+4;c++){old.push(world[row][c]);world[row][c]={type:'stone',hp:1};}
-      try{
-        // An already-shed roll must stop when terrain closes over its center.
-        rocketSmokeWake=[{x:player.x,y:row*TILE+1,dx:0,dy:1,age:0,spin:1,power:1,
-          life:0.5,drift:24,ax:0,ay:1,radius:8}];
-        player.vy=0;updateRocketPlume(1/60);result.blockedExisting=rocketSmokeWake.length;
-        // A wall between the mouth and wake prevents a new roll entirely.
-        player.y=player.renderY=30;player.vy=-260;
-        for(var frame=0;frame<60;frame++)updateRocketPlume(1/60);
-        result.blockedBirth=rocketSmokeWake.length;
-      }finally{for(var c=col-4;c<=col+4;c++)world[row][c]=old[c-col+4];}
-      return result;
-    }finally{isMobile=savedMobile;player.vy=0;clearRocketPlume();}
+      return results;
+    }finally{old.forEach(function(cell){world[cell[0]][cell[1]]=cell[2];invalidateTerrainAround(cell[0],cell[1]);});}
   })()`);
-  check('fast climbs shed bounded desktop and mobile air rolls',
-    ascentWake.desktop.rolls===5&&ascentWake.mobile.rolls===3,ascentWake);
-  for(const [device,result] of Object.entries(ascentWake).filter(([,r])=>r.births)){
-    const births=result.births,gaps=births.slice(1).map((b,i)=>Math.round((b.time-births[i].time)*60));
-    check(device+' wake overlaps varied eddies without a fixed alternating rhythm',
-      new Set(gaps).size>1&&new Set(births.map(b=>b.radius)).size>3&&
-      new Set(births.map(b=>b.life)).size>3&&new Set(births.map(b=>b.axis)).size>3&&
-      births.some((b,i)=>i&&b.spin===births[i-1].spin)&&new Set(births.map(b=>b.spin)).size===2,result);
+  for(const [name,r] of Object.entries(ceiling)){
+    check(name+' ceiling smoke is drawn below the stationary rig by its jets',
+      r.on.mass>0&&r.on.depth>r.off.depth+20&&r.on.below>r.off.below+0.15,r);
   }
-  check('overlapping air eddies stay within desktop and mobile force budgets',
-    ascentWake.desktop.splats<=16&&ascentWake.mobile.splats<=12,ascentWake);
-  check('release stops fresh wake forces and walls block new or drifting rolls',
-    ascentWake.release===0&&ascentWake.blockedExisting===0&&ascentWake.blockedBirth===0,ascentWake);
   check('browser reports no runtime or shader errors', errors.length === 0, errors);
-  const report = { livePlumes, ascentWake, routing, clouds, boundary, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
+  const report = { livePlumes, ceiling, routing, clouds, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
   if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {

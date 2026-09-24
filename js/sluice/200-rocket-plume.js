@@ -74,12 +74,7 @@
   window.rocketTune = rocketTune;
 
   var rocketIntensity = 0;
-  var rocketSmokeWake = [], rocketSmokeWakeCarry = 0, rocketSmokeWakeNext = 0.12;
-  var rocketSmokeWakeSeed = 0xc0ffee;
-  function rocketSmokeRandom() {
-    rocketSmokeWakeSeed = (Math.imul(rocketSmokeWakeSeed, 1664525) + 1013904223) >>> 0;
-    return rocketSmokeWakeSeed / 4294967296;
-  }
+  var rocketSmokeNoise = new Float32Array(20);
   var rocketSparks = [];
   var rocketSparkCarry = 0;
   var rocketWake = [];
@@ -168,8 +163,7 @@
     rocketWakeCarry = 0;
     rocketWashCarry = 0;
     rocketIntensity = 0;
-    rocketSmokeWake.length = 0; rocketSmokeWakeCarry = 0;
-    rocketSmokeWakeNext = 0.12; rocketSmokeWakeSeed = 0xc0ffee;
+    rocketSmokeNoise.fill(0);
     flightRings.length = 0;
     flightIgniteT = 0;
     flightIgniteCooldown = 0;
@@ -350,91 +344,48 @@
     return rocketJetActive() && rocketIntensity > 0.02;
   }
 
-  // Push existing smoke with air, never dye. Both fluid instances receive
-  // the same world-space jet after their camera scroll and before projection.
-  // Acceleration and Gaussian widths are in world pixels, independent of
-  // frame rate, zoom and the solver's grid resolution. dt is real elapsed
-  // time; ambient smoke's slow animation must not slow the rig's downwash.
+  // Restore the broad, 24-tile air column used before exhaust cosmetics.
+  // Starting AT each nozzle lets the Gaussian reach the cloud around the
+  // chassis and entrain smoke away from a ceiling. Pressure and vorticity in
+  // the fluid solver create the rolls; there are no constructed wake eddies.
+  // Route the same world flow to both fields after their camera scroll.
   function rocketSmokeCouple(driver, dt, timeScale) {
     if (!rocketJetVisible() || dt <= 0) return;
-    var dims, aspect;
+    var dims;
     if (driver) {
       dims = driver.simW > 0 && driver.simH > 0 ? { w: driver.simW, h: driver.simH } :
         smokeWGPUResDims(driver.config.SIM_RESOLUTION, smokeFluidWidth, smokeFluidHeight);
-      aspect = smokeFluidWidth / smokeFluidHeight;
     } else if (!fluidU) return;
-    // Stored velocities are per simulation second. Compensate for the slow
-    // advection clock once, rather than reducing both acceleration and travel.
     var clockScale = Math.max(0.02, rocketTuneNum(timeScale, 1));
-    var strength = 1800 * rocketIntensity * rocketIntensity * Math.min(dt, 0.05) / clockScale;
-    function impulse(x, y, ax, ay, radius) {
-      if (rocketInSolid(x, y) || rocketInJello(x, y) || rocketInSkySlime(x, y)) return;
-      if (driver) {
-        var uv = smokeFluidWorldToUV(x, y);
-        if (!uv.inView) return;
-        var rad = 100 * Math.pow(radius / smokeFluidDomainWorldH, 2) / Math.max(1, aspect);
-        var vx = ax * strength * dims.w / smokeFluidDomainWorldW;
-        var vy = -ay * strength * dims.h / smokeFluidDomainWorldH;
-        if (driver.splatVelocity) driver.splatVelocity(uv.uvX, uv.uvY, vx, vy, rad);
-        else driver.splat(uv.uvX, uv.uvY, vx, vy, SMOKE_ZERO_COL, rad);
-      } else {
-        var gx = (x - fluidGridX) / FLUID_CELL, gy = (y - fluidGridY) / FLUID_CELL;
-        fluidSplatDisc(fluidU, gx, gy, radius / FLUID_CELL, ax * strength);
-        fluidSplatDisc(fluidV, gx, gy, radius / FLUID_CELL, ay * strength);
-      }
-    }
-    var nozzles = rocketNozzles(), dir = rocketExhaustDir();
-    var distances = [5, 18, 36, 60, 90, 124], reach = TILE * 4;
-    // Reuse the weakest downstream samples for the rolling wake, while
-    // retaining the three nearest samples on both nozzles. Even with five
-    // overlapping eddies this takes at most sixteen splats, plus impact wash.
-    var jetSamples = Math.max(3, distances.length - rocketSmokeWake.length);
+    // Historical 18 sim-cells/frame at 60 Hz, 160 cells and a 0.22 clock.
+    // Convert once to world momentum, retaining that flow at any zoom,
+    // frame rate, solver resolution or material clock.
+    var strength = 18 * 60 * (SMOKE_CLASSIC_DOMAIN_H / 160) * 0.22 *
+      rocketIntensity * rocketIntensity * Math.min(dt, 0.05) / clockScale;
+    var nozzles = rocketNozzles(), dir = rocketExhaustDir(), reach = TILE * 24;
     for (var ni = 0; ni < nozzles.length; ni++) {
-      var nz = nozzles[ni];
-      var hit = rocketFindImpactAlong(nz.x, nz.y, dir.x, dir.y, reach);
-      for (var i = 0; i < jetSamples; i++) {
-        var d = distances[i], radius = 4 + d * 0.12;
-        if (hit !== null) radius = Math.min(radius, (hit - d) * 0.45);
-        if (radius < 1) break;
-        var falloff = Math.pow(1 - d / (reach + 20), 2);
-        impulse(nz.x + dir.x * d, nz.y + dir.y * d, dir.x * falloff, dir.y * falloff, radius);
-      }
-      // At an impact, redirect some flow along the surface. Sample the local
-      // solid normal so a tilted jet meeting a floor still washes sideways.
-      if (hit !== null) {
-        var hx = nz.x + dir.x * hit, hy = nz.y + dir.y * hit;
-        var nx = Number(rocketInSolid(hx - 4, hy)) - Number(rocketInSolid(hx + 4, hy));
-        var ny = Number(rocketInSolid(hx, hy - 4)) - Number(rocketInSolid(hx, hy + 4));
-        var normalLength = Math.hypot(nx, ny);
-        if (normalLength) { nx /= normalLength; ny /= normalLength; }
-        else { nx = -dir.x; ny = -dir.y; }
-        var wash = 0.55 * Math.pow(1 - hit / (reach + 20), 2);
-        for (var side = -1; side <= 1; side += 2) {
-          var tx = -ny * side, ty = nx * side;
-          var bx = hx + nx * 7, by = hy + ny * 7;
-          if (rocketFindImpactAlong(bx, by, tx, ty, 12) !== null) continue;
-          impulse(bx + tx * 12, by + ty * 12, tx * wash, ty * wash, 5);
+      var nz = nozzles[ni], hit = rocketFindImpactAlong(nz.x, nz.y, dir.x, dir.y, reach);
+      for (var i = 0; i < 10; i++) {
+        var frac = i / 9, distance = frac * reach;
+        if (hit !== null && distance >= hit) break;
+        var x = nz.x + dir.x * distance, y = nz.y + dir.y * distance;
+        if (rocketInSolid(x, y) || rocketInJello(x, y) || rocketInSkySlime(x, y)) continue;
+        var falloff = (1 - frac * 0.6) * 0.62 * (i === 0 ? 1.55 : 1);
+        var radius = 0.026 + frac * frac * 0.15;
+        if (driver) {
+          var uv = smokeFluidWorldToUV(x, y);
+          if (!uv.inView) continue;
+          var perturb = rocketSmokeNoise[ni * 10 + i] / 18;
+          var vx = (dir.x - dir.y * perturb) * strength * falloff * dims.w / smokeFluidDomainWorldW;
+          var vy = -(dir.y + dir.x * perturb) * strength * falloff * dims.h / smokeFluidDomainWorldH;
+          if (driver.splatVelocity) driver.splatVelocity(uv.uvX, uv.uvY, vx, vy, smokeClassicRadius(radius));
+          else driver.splat(uv.uvX, uv.uvY, vx, vy, SMOKE_ZERO_COL, smokeClassicRadius(radius));
+        } else {
+          var gx = (x - fluidGridX) / FLUID_CELL, gy = (y - fluidGridY) / FLUID_CELL;
+          var worldRadius = Math.sqrt(radius * SMOKE_CLASSIC_DOMAIN_W * SMOKE_CLASSIC_DOMAIN_H / 100);
+          fluidSplatDisc(fluidU, gx, gy, worldRadius / FLUID_CELL, dir.x * strength * falloff);
+          fluidSplatDisc(fluidV, gx, gy, worldRadius / FLUID_CELL, dir.y * strength * falloff);
         }
-      }
-    }
-    // Overlapping eddies have different sizes, axes and lifetimes instead
-    // of forming a regular alternating vortex street. Opposed forces stir
-    // the smoke without drawing a wave or adding net sideways momentum.
-    for (var wi = 0; wi < rocketSmokeWake.length; wi++) {
-      var wake = rocketSmokeWake[wi], growth = wake.age / wake.life;
-      var radius = wake.radius * (1 + growth * 0.3), offset = radius * 1.3;
-      // Fit the entire pair on this side of a wall, including in a one-tile
-      // shaft. Clipping only one lobe would turn circulation into a shove.
-      for (var side = -1; side <= 1; side += 2) {
-        var limit = rocketFindImpactAlong(wake.x, wake.y, wake.ax * side, wake.ay * side, offset + 4);
-        if (limit !== null) offset = Math.min(offset, limit - 4);
-      }
-      if (offset < 3) continue;
-      radius = Math.min(radius, offset * 0.85);
-      var turn = wake.spin * wake.power * (4 * growth * (1 - growth)) * 5;
-      for (var ws = -1; ws <= 1; ws += 2) {
-        var wx = wake.x + wake.ax * offset * ws, wy = wake.y + wake.ay * offset * ws;
-        impulse(wx, wy, -wake.ay * turn * ws, wake.ax * turn * ws, radius);
       }
     }
   }
@@ -452,34 +403,12 @@
       rocketIntensity += (target - rocketIntensity) * Math.min(1, rate * dt);
     }
 
-    for (var w = rocketSmokeWake.length - 1; w >= 0; w--) {
-      var wake = rocketSmokeWake[w];
-      wake.age += dt; wake.x += wake.dx * wake.drift * dt; wake.y += wake.dy * wake.drift * dt;
-      if (wake.age >= wake.life || rocketInSolid(wake.x, wake.y) ||
-          rocketInJello(wake.x, wake.y) || rocketInSkySlime(wake.x, wake.y)) rocketSmokeWake.splice(w, 1);
+    // The original jet had a tiny velocity perturbation to break perfect
+    // symmetry. Share each frame's input between fields and let the fluid
+    // solver develop it, without prescribing an eddy's position or lifetime.
+    if (rocketJetVisible()) {
+      for (var sn = 0; sn < rocketSmokeNoise.length; sn++) rocketSmokeNoise[sn] = (Math.random() - 0.5) * 0.8;
     }
-    var climbWake = Math.max(0, Math.min(1, (-player.vy - 80) / 220));
-    if (rocketJetVisible() && climbWake > 0) {
-      rocketSmokeWakeCarry += dt;
-      if (rocketSmokeWakeCarry >= rocketSmokeWakeNext) {
-        rocketSmokeWakeCarry -= rocketSmokeWakeNext;
-        rocketSmokeWakeNext = 0.045 + rocketSmokeRandom() * 0.065;
-        var nozzle = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H - 1), ed = rocketExhaustDir();
-        var behind = 14 + rocketSmokeRandom() * 42;
-        var lateral = (rocketSmokeRandom() - 0.5) * 8;
-        var wx = nozzle.x + ed.x * behind - ed.y * lateral;
-        var wy = nozzle.y + ed.y * behind + ed.x * lateral;
-        if (rocketSmokeWake.length < (isMobile ? 3 : 5) &&
-            !rocketInSolid(wx, wy) && !rocketInJello(wx, wy) && !rocketInSkySlime(wx, wy) &&
-            rocketFindImpactAlong(nozzle.x, nozzle.y, ed.x, ed.y, behind) === null) {
-          var axis = Math.atan2(ed.y, ed.x) + (rocketSmokeRandom() - 0.5) * 2.4;
-          rocketSmokeWake.push({ x: wx, y: wy, dx: ed.x, dy: ed.y, age: 0,
-            ax: Math.cos(axis), ay: Math.sin(axis), radius: 5 + rocketSmokeRandom() * 8,
-            life: 0.35 + rocketSmokeRandom() * 0.4, drift: 16 + rocketSmokeRandom() * 28,
-            spin: rocketSmokeRandom() < 0.5 ? -1 : 1, power: climbWake * (0.8 + rocketSmokeRandom() * 0.6) });
-        }
-      }
-    } else rocketSmokeWakeCarry = 0;
 
     if (T && T.enabled && rocketIntensity > 0.02) {
       var nozzles = rocketNozzles();

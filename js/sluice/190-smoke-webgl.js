@@ -1826,40 +1826,10 @@
     if (typeof rigExhaustPositionDOM === 'function') rigExhaustPositionDOM();
   }
 
-  // Fit the moving air boundary inside the curved hull and running gear.
-  // The old collision-box quad hid open air above the cupola, leaving a
-  // rectangular cutout in both smoke layers. The thin pipe stays outside
-  // this coarse fluid boundary so its mouth cannot choke its own plume.
-  // Reuse one ring: each solver keeps its own world-space motion history.
-  var smokeRigOutline = new Float32Array([
-    3.5, 18.8, 4.1, 10.4, 7, 9, 9.2, 6.3,
-    13.7, 5.2, 15.8, 6.2, 17.2, 9.2, 20.5, 10.7,
-    20.5, 14, 18.6, 17.8, 20.2, 19.1, 20.2, 23.2,
-    18.8, 24.6, 3.2, 24.6, 1.8, 23.2, 1.8, 20.6
-  ]);
-  var smokeRigBody = { ringN: 16, ring: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-    px: new Float32Array(16), py: new Float32Array(16) };
-  var smokeMovingBodies = [];
-  function smokeFluidMovingBodies() {
-    smokeMovingBodies.length = 0;
-    for (var i = 0; i < jelloBodies.length; i++) smokeMovingBodies.push(jelloBodies[i]);
-    if (roverMode || !isFinite(player.renderX + player.renderY)) return smokeMovingBodies;
-    var suspension = playerFxLandOffset();
-    var scale = playerBodyScale();
-    var angle = player.bodyTiltRender || 0, ca = Math.cos(angle), sa = Math.sin(angle);
-    var cx = PLAYER_W * 0.5, cy = PLAYER_H * 0.56;
-    for (var corner = 0; corner < smokeRigBody.ringN; corner++) {
-      var x = smokeRigOutline[corner * 2], y = smokeRigOutline[corner * 2 + 1];
-      if (corner < 10) y += suspension;
-      // Same pose as playerLocalToWorld, without a temporary object per vertex.
-      var dx = ((player.dir < 0 ? PLAYER_W - x : x) - cx) * scale.x;
-      var dy = PLAYER_H - (PLAYER_H - y) * scale.y - cy;
-      smokeRigBody.px[corner] = player.renderX + cx + dx * ca - dy * sa;
-      smokeRigBody.py[corner] = player.renderY + cy + dx * sa + dy * ca;
-    }
-    smokeMovingBodies.push(smokeRigBody);
-    return smokeMovingBodies;
-  }
+  // The original smoke field passes across the rig. A chassis obstacle
+  // seals the broad source away from the nozzle airflow, especially when
+  // pressed against a ceiling. Slimes retain their moving fluid boundaries.
+  function smokeFluidMovingBodies() { return jelloBodies; }
 
   function smokeFluidUpdateDomain() {
     // v11.73 — one overscan for mobile + desktop so smoke framing is
@@ -2480,25 +2450,13 @@
     driver.config.wind_above_y = Math.max(0, Math.min(1, 1 - surfaceY));
   }
 
-  // Rig sources have a physical opening. Convert their world-pixel width
-  // to the solver's Gaussian area so zoom cannot inflate the pipe mouth.
-  function smokeRigRadius(radius) {
-    return 100 * Math.pow(radius / smokeFluidDomainWorldH, 2) /
+  // The long-standing plume was tuned in a 30-tile-wide view. Preserve
+  // its broad Gaussian footprint in world space when the camera zooms.
+  var SMOKE_CLASSIC_DOMAIN_W = 1344, SMOKE_CLASSIC_DOMAIN_H = 960;
+  function smokeClassicRadius(radius) {
+    return radius * SMOKE_CLASSIC_DOMAIN_W * SMOKE_CLASSIC_DOMAIN_H /
+      (smokeFluidDomainWorldH * smokeFluidDomainWorldH) /
       Math.max(1, smokeFluidWidth / smokeFluidHeight);
-  }
-
-  // Smooth, irregular source variation. Sample fixed random values at
-  // neighbouring times so the emitter never jitters with the frame rate.
-  function smokeRigNoiseHash(n, seed) {
-    var h = Math.imul(n + seed * 1013, 0x45d9f3b);
-    h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
-    return ((h ^ (h >>> 16)) >>> 0) / 2147483648 - 1;
-  }
-  function smokeRigNoise(t, seed) {
-    var n = Math.floor(t), f = t - n;
-    f = f * f * (3 - 2 * f);
-    var a = smokeRigNoiseHash(n, seed);
-    return a + (smokeRigNoiseHash(n + 1, seed) - a) * f;
   }
 
   // Splat dye + velocity at the rig's exhaust mouth. Rates are per-frame;
@@ -2509,7 +2467,7 @@
     if (!smokeTune.enabled) return;
     var emitDt = Math.min(dt, 0.05);
     var motionScale = Math.max(0.02, smokeTuneNum(smokeTune.diesel_motion_scale, 1));
-    smokeFluidShedPhase += emitDt * (smokeTune.diesel_shed_freq + Math.hypot(player.vx, player.vy) * 0.025);
+    smokeFluidShedPhase += emitDt * (smokeTune.diesel_shed_freq + Math.abs(player.vx) * 0.04) * motionScale;
 
     // Live-mirror sim params into the driver's config so step() picks them up.
     var SC = smokeDriver && smokeDriver.config;
@@ -2554,22 +2512,17 @@
                            : smokeTune.diesel_rate_idle);
       if (heavy) rate = Math.max(rate, SMOKE_HEAVY.idle_rate) * SMOKE_HEAVY.rate_mul;
       rate *= pulse;
-      var beat = smokeRigNoise(smokeFluidShedPhase * 0.7, 3) * 0.65 +
-        smokeRigNoise(smokeFluidShedPhase * 1.9, 5) * 0.35;
-      var breath = 1 + beat * 0.65;
-      rate *= breath * 5;
       // v11.58 — pace dye output off real time so a low-fps device emits
       // the same smoke-per-second as a fast one (emitDt is dt capped at
       // 0.05; ×60 → 1 at 60 fps, 2 at 30 fps).
       rate *= Math.min(3, Math.max(0.1, emitDt * 60));
+      var rad = isActive ? smokeTune.diesel_rad_active
+              : (moving   ? smokeTune.diesel_rad_moving
+                          : smokeTune.diesel_rad_idle);
       var sourceLift = Math.max(0, smokeTuneNum(smokeTune.diesel_source_lift, isActive ? 6.8 : (moving ? 5.2 : 3.8)));
       var bloomLift = Math.max(0, smokeTuneNum(smokeTune.diesel_bloom_lift, isActive ? 8.5 : 5.0));
-      var angle = player.bodyTiltRender || 0, outX = Math.sin(angle), outY = -Math.cos(angle);
-      var sway = smokeRigNoise(smokeFluidShedPhase * 1.2, 11) * 1.4;
-      var source = smokeFluidWorldToUV(ex.x + outX * sourceLift - outY * sway * 0.2,
-        ex.y + outY * sourceLift + outX * sway * 0.2);
-      var bloom = smokeFluidWorldToUV(ex.x + outX * (sourceLift + bloomLift) - outY * sway,
-        ex.y + outY * (sourceLift + bloomLift) + outX * sway);
+      var source = smokeFluidWorldToUV(ex.x - player.dir * 0.45, ex.y - sourceLift);
+      var bloom = smokeFluidWorldToUV(ex.x - player.dir * (1.2 + Math.abs(player.vx) * 0.002), ex.y - sourceLift - bloomLift);
       var jr = (Math.random() - 0.5) * 2 * smokeTune.diesel_color_jitter;
       var jg = (Math.random() - 0.5) * 2 * smokeTune.diesel_color_jitter;
       var jb = (Math.random() - 0.5) * 2 * smokeTune.diesel_color_jitter;
@@ -2577,7 +2530,7 @@
       smokeEmitCol.g = Math.max(0, rate * (smokeTune.diesel_color_g + jg));
       smokeEmitCol.b = Math.max(0, rate * (smokeTune.diesel_color_b + jb));
       var col = smokeEmitCol;
-      var sideJ = smokeRigNoise(smokeFluidShedPhase * 0.9, 19) * 0.8;
+      var sideJ = Math.sin(smokeFluidShedPhase) * 0.8;
       var velX = sideJ * smokeTune.diesel_shed_amp
                - player.dir * smokeTune.diesel_dir_force * (isActive ? 1 : 0.4)
                - player.vx * smokeTune.diesel_vx_coupling
@@ -2593,23 +2546,20 @@
       smokeEmitMouthCol.g = Math.max(0, mouthRate * (smokeTune.diesel_color_g + jg));
       smokeEmitMouthCol.b = Math.max(0, mouthRate * (smokeTune.diesel_color_b + jb));
       var mouthCol = smokeEmitMouthCol;
-      var sourceSize = Math.sqrt(Math.max(0.001, smokeTuneNum(smokeTune.diesel_source_radius, 0.014)) / 0.014);
-      var bloomSize = Math.sqrt(Math.max(0.002, smokeTuneNum(smokeTune.diesel_bloom_radius, 0.078)) / 0.078);
-      var mouthRad = smokeRigRadius(1.6 * sourceSize);
-      var sourceRad = smokeRigRadius(3.8 * sourceSize * (1 + beat * 0.12));
-      var travel = Math.min(1, Math.hypot(player.vx, player.vy) / 260);
-      var bloomRad = smokeRigRadius(7 * bloomSize * (1 + beat * 0.22) * (1 + travel * 0.45));
+      var mouthRad = Math.max(0.001, smokeTuneNum(smokeTune.diesel_source_radius, 0.014) * 0.50);
+      var sourceRad = Math.max(0.002, smokeTuneNum(smokeTune.diesel_source_radius, Math.min(0.010 + rad * 0.030, 0.022)));
+      var bloomRad = Math.max(0.002, smokeTuneNum(smokeTune.diesel_bloom_radius, Math.min(0.016 + rad * 0.060, 0.044)));
       var bloomAmt = Math.max(0, smokeTuneNum(smokeTune.diesel_bloom_amount, 0.72));
-      smokeDriver.splat(euv.uvX, euv.uvY, velX * 0.20, Math.max(0.035, velY), mouthCol, mouthRad);
+      smokeDriver.splat(euv.uvX, euv.uvY, velX * 0.20, Math.max(0.035, velY), mouthCol, smokeClassicRadius(mouthRad));
       if (source.inView) {
-        smokeDriver.splat(source.uvX, source.uvY, velX, velY, col, sourceRad);
+        smokeDriver.splat(source.uvX, source.uvY, velX, velY, col, smokeClassicRadius(sourceRad));
       }
       if (bloom.inView) {
         smokeEmitBloomCol.r = col.r * bloomAmt;
         smokeEmitBloomCol.g = col.g * bloomAmt;
         smokeEmitBloomCol.b = col.b * bloomAmt;
         var bloomCol = smokeEmitBloomCol;
-        smokeDriver.splat(bloom.uvX, bloom.uvY, velX * 0.55, velY * 0.50, bloomCol, bloomRad);
+        smokeDriver.splat(bloom.uvX, bloom.uvY, velX * 0.55, velY * 0.50, bloomCol, smokeClassicRadius(bloomRad));
       }
       // Buoyancy: optional wide-radius upward velocity splat (no dye, just air motion).
       if (smokeTune.buoyancy_strength > 0) {
@@ -2619,7 +2569,7 @@
           euv.uvX, euv.uvY,
           0, buoy,
           SMOKE_ZERO_COL,
-          smokeTune.buoyancy_radius
+          smokeClassicRadius(smokeTune.buoyancy_radius)
         );
       }
     }
