@@ -345,8 +345,9 @@
   // Push existing smoke with air, never dye. Both fluid instances receive
   // the same world-space jet after their camera scroll and before projection.
   // Acceleration and Gaussian widths are in world pixels, independent of
-  // frame rate, zoom and the solver's grid resolution.
-  function rocketSmokeCouple(driver, dt) {
+  // frame rate, zoom and the solver's grid resolution. dt is real elapsed
+  // time; ambient smoke's slow animation must not slow the rig's downwash.
+  function rocketSmokeCouple(driver, dt, timeScale) {
     if (!rocketJetVisible() || dt <= 0) return;
     var dims, aspect;
     if (driver) {
@@ -354,7 +355,10 @@
         smokeWGPUResDims(driver.config.SIM_RESOLUTION, smokeFluidWidth, smokeFluidHeight);
       aspect = smokeFluidWidth / smokeFluidHeight;
     } else if (!fluidU) return;
-    var strength = 1800 * rocketIntensity * rocketIntensity * Math.min(dt, 0.05);
+    // Stored velocities are per simulation second. Compensate for the slow
+    // advection clock once, rather than reducing both acceleration and travel.
+    var clockScale = Math.max(0.02, rocketTuneNum(timeScale, 1));
+    var strength = 1800 * rocketIntensity * rocketIntensity * Math.min(dt, 0.05) / clockScale;
     function impulse(x, y, ax, ay, radius) {
       if (rocketInSolid(x, y) || rocketInJello(x, y) || rocketInSkySlime(x, y)) return;
       if (driver) {

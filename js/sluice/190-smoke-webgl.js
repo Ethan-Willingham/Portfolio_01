@@ -2628,7 +2628,8 @@
     if (smokeFluidEnsure()) {
       rigExhaustEnsure();
       if (dt > 0.05) dt = 0.05;
-      var smokeStepDt = dt * Math.max(0.02, smokeTuneNum(smokeTune.sim_time_scale, 1));
+      var smokeTimeScale = Math.max(0.02, smokeTuneNum(smokeTune.sim_time_scale, 1));
+      var smokeStepDt = dt * smokeTimeScale;
       var _gpuT = devMode ? performance.now() : 0;
       // World-lock: shift the dye/velocity fields by the camera delta so
       // smoke stays put in world space while the camera pans with the rig.
@@ -2678,7 +2679,7 @@
           cam.x - smokeFluidMarginWorldX, cam.y - smokeFluidMarginWorldY,
           smokeFluidDomainWorldW, smokeFluidDomainWorldH, smokeStepDt,
           smokeFluidObstacleW, smokeFluidObstacleH, true);
-        rocketSmokeCouple(smokeDriver, smokeStepDt);
+        rocketSmokeCouple(smokeDriver, dt, smokeTimeScale);
         smokeDriver.step(smokeStepDt);
       }
       perfMark('update.smokeStep', _us5);

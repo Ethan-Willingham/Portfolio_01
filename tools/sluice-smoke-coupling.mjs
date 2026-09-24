@@ -109,6 +109,80 @@ try {
     jelloBodies=[];skySlimes=[];liquidCount=0;smokeTune.diesel_enabled=false;smokeTune.wind_x=0;
     smokeFluidEnsure();rigExhaustEnsure();rocketIntensity=0.8;`);
 
+  // Exercise real emitter dye through updateSmoke at the shipped time scale.
+  // The isolated solver tests below use full-speed steps and cannot catch a
+  // gameplay force accidentally slowed along with the ambient smoke animation.
+  const livePlumes = await game(`(function(){
+    var results={},random=Math.random,now=performance.now;
+    function measure(driver){
+      driver.displayPass();var c=driver.getCanvas(),gl=c.getContext('webgl2')||c.getContext('webgl');
+      var pixels=new Uint8Array(c.width*c.height*4);gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+      var mass=0,x=0,y=0;
+      for(var i=0;i<pixels.length;i+=4){var w=pixels[i];mass+=w;x+=w*(i/4%c.width+0.5);y+=w*(Math.floor(i/4/c.width)+0.5);}
+      if(gl.getError())throw Error('Live plume readback failed');
+      return {mass:mass,x:cam.x-smokeFluidMarginWorldX+x/mass/c.width*smokeFluidDomainWorldW,
+        y:cam.y-smokeFluidMarginWorldY+(1-y/mass/c.height)*smokeFluidDomainWorldH};
+    }
+    try{
+      Math.random=function(){return 0.5;};performance.now=function(){return 1000;};
+      ['stock','fireplace','copperhead'].forEach(function(source){
+        results[source]={};
+        ['off','on'].forEach(function(mode){
+          rigExhaustState.equipped=source==='copperhead'?source:'stock';rigExhaustApply(true);
+          var driver=source==='copperhead'?rigExhaustFluid:smokeDriver;
+          SmokeFluid.clear();rigExhaustClear();
+          [smokeDriver,rigExhaustFluid].forEach(function(d){
+            d.clearObstacle();d.setMovingBodies([],0,0,1,1,1/60,smokeFluidObstacleW,smokeFluidObstacleH,true);
+          });
+          player.x=player.renderX=stationCenterCol()*TILE+TILE/2+150-PLAYER_W/2;
+          player.y=player.renderY=DECK_ROW*TILE-140;
+          player.bodyTiltRender=0;player.vx=player.vy=0;player.lastMoveU=false;player.thrusting=true;
+          rocketIntensity=0;smokeTune.diesel_enabled=source!=='fireplace';
+          cam.x=player.x-screenW/2;cam.y=player.y-screenH/2;
+          smokeFluidPrevCamX=cam.x;smokeFluidPrevCamY=cam.y;rigExhaustPrevX=cam.x;rigExhaustPrevY=cam.y;
+          surfaceWind.current=0;smokeTune.wind_x=0;smokeFluidShedPhase=0;
+          smokeFluidPaintObstacle();
+          // Emit actual source packets, then intercept the finite plume from above.
+          for(var frame=0;frame<30;frame++){
+            if(source==='fireplace')emitFireplaceSmokeUnit();
+            else if(source==='stock')smokeFluidEmit(1/60);
+            else rigExhaustUpdate(1/60);
+          }
+          var plume=measure(driver);
+          if(!(plume.mass>0))throw Error(source+' did not emit smoke');
+          player.x=player.renderX=plume.x-PLAYER_W/2;
+          player.y=player.renderY=plume.y-PLAYER_H-40;
+          smokeTune.diesel_enabled=false;smokeAwakeT=rigExhaustAwake=8;
+          // Prime twice at rest so positioning cannot add a teleport impulse.
+          [smokeDriver,rigExhaustFluid].forEach(function(d,index){
+            for(var pass=0;pass<2;pass++)d.setMovingBodies(smokeFluidMovingBodies(),
+              cam.x-smokeFluidMarginWorldX,cam.y-smokeFluidMarginWorldY,
+              smokeFluidDomainWorldW,smokeFluidDomainWorldH,
+              (index?1:smokeTune.sim_time_scale)/60,smokeFluidObstacleW,smokeFluidObstacleH,true);
+          });
+          player.lastMoveU=player.thrusting=mode==='on';rocketIntensity=mode==='on'?1:0;
+          var start=measure(driver);
+          for(var frame=0;frame<45;frame++)updateSmoke(1/60);
+          var end=measure(driver);
+          results[source][mode]={dy:end.y-start.y,retention:end.mass/start.mass};
+        });
+      });
+      return results;
+    }finally{
+      Math.random=random;performance.now=now;
+      rigExhaustState.equipped='stock';rigExhaustApply(true);
+      player.lastMoveU=player.thrusting=true;rocketIntensity=0.8;
+      player.x=player.renderX=COLS*TILE/2;player.y=player.renderY=-200;
+      cam.x=player.x-screenW/2;cam.y=player.y-screenH/2;
+      SmokeFluid.clear();rigExhaustClear();
+    }
+  })()`);
+  for(const [source,result] of Object.entries(livePlumes)){
+    check(source+' plume responds visibly to jets at the live simulation speed',
+      result.on.dy>result.off.dy+20,result);
+    check(source+' jet moves surviving smoke',result.on.retention>0.35,result);
+  }
+
   const impulses = await game(`(function(){
     function capture(driver, dt, frames){
       var calls=[],original=driver.splatVelocity,originalSplat=driver.splat;
@@ -396,7 +470,7 @@ try {
       r.inside>100&&r.core/r.inside<0.1,r);
   }
   check('browser reports no runtime or shader errors', errors.length === 0, errors);
-  const report = { routing, clouds, boundary, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
+  const report = { livePlumes, routing, clouds, boundary, silhouettes, wind: { cases: wind.cases, afterStock: wind.afterStock } };
   if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {
