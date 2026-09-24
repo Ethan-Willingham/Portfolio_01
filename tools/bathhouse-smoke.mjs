@@ -64,32 +64,25 @@ async function key(key, code) {
 }
 async function screenshot(name) { const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(r.data,'base64')); }
 function check(label, condition) { assert.ok(condition,label);console.log('PASS '+label); }
-async function boilerFlow(label, touch = false) {
+async function boilerFlow(label,touch=false) {
   await game('updateCamera();render()');
-  check(label+' opens into the bath without a forge tab',await game("bathMode && hearthView==='bath' && !hearthButtons.some(b=>b.action==='forge')"));
+  check(label+' bath and all boiler controls share one view',await game("bathMode && hearthView==='bath' && ['coal','pump','strike','ash','water'].every(a=>hearthButtons.some(b=>b.action===a)) && !hearthButtons.some(b=>['bath','boiler','forge'].includes(b.action))"));
   const before = await game('JSON.stringify({water:bathWater,pour:bathPour,stock:forgeStock})');
   if (!touch) {
-    await move(boilerCenter); await game('render()');
-    check(label+' actual boiler highlights on hover',await game('bathBoilerHover && canvas.style.cursor===\'pointer\''));
+    await move(boilerCenter);await game('render()');
+    check(label+' integrated firebox indicates direct dragging',await game("bathBoilerHover && canvas.style.cursor==='grab'"));
     await screenshot(label+'-boiler-hover');
-    await move('({x:4,y:hearthNavHeight()+4})'); await game('render()');
-    check(label+' boiler hover clears away from the firebox',await game('!bathBoilerHover'));
-    const p = await clientPoint(boilerCenter);
-    await send('Input.dispatchMouseEvent',{type:'mousePressed',x:p.x,y:p.y,button:'left',clickCount:1});
-    await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:p.x+16,y:p.y,button:'left',buttons:1});
-    await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:p.x+16,y:p.y,button:'left',clickCount:1});
-    check(label+' dragging across the boiler does not open it',await game("hearthView==='bath'"));
+    await move('({x:4,y:hearthNavHeight()+4})');await game('render()');
+    check(label+' hover clears away from the firebox',await game('!bathBoilerHover'));
   }
-  await press(boilerCenter,touch); await game('render()');
-  check(label+' physical boiler '+(touch?'tap':'click')+' opens the coal closeup',await game("hearthView==='boiler' && hearthButtons.some(b=>b.action==='strike') && !hearthButtons.some(b=>b.action==='forge')"));
-  await press(buttonCenter('bath'),touch); await game('updateCamera();render()');
-  check(label+' back control returns to the same bath',await game("bathMode && hearthView==='bath'"));
-  if (!touch) {
-    await press(boilerCenter); await key('Escape','Escape'); await game('updateCamera();render()');
-    check(label+' Escape closes the boiler without leaving the bathhouse',await game("bathMode && hearthView==='bath' && !gamePaused && !bathFading"));
-  }
-  check(label+' view navigation preserves water and supplies',await game('JSON.stringify({water:bathWater,pour:bathPour,stock:forgeStock})')===before);
+  const camera=await game('JSON.stringify({x:cam.x,y:cam.y,scale:worldScale})');
+  await press(boilerCenter,touch);await game('updateCamera();render()');
+  check(label+' touching the grate never opens another screen or moves the camera',await game("hearthView==='bath'") && await game('JSON.stringify({x:cam.x,y:cam.y,scale:worldScale})')===camera);
+  await press(buttonCenter('pump'),touch);
+  check(label+' bellows operate from the bath',await game('hearthBeds.boiler.air>0.1'));
+  check(label+' tending controls preserve water and stored supplies',await game('JSON.stringify({water:bathWater,pour:bathPour,stock:forgeStock})')===before);
 }
+
 try {
   let endpoint;
   for(let i=0;i<100;i++) { try {const pages=await(await fetch(`http://127.0.0.1:${debug}/json/list`)).json();endpoint=pages.find(p=>p.type==='page')?.webSocketDebuggerUrl;if(endpoint)break;}catch{}await sleep(100); }
@@ -155,7 +148,7 @@ try {
     for(const [width,height] of [[1280,900],[800,600],[390,844],[320,568],[844,390],[667,375],[568,320],[540,320],[520,320]]) {
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
       await game('isMobile='+String(width<500)+';resize()');
-      for(const view of ['boiler','bath']) {
+      for(const view of ['bath']) {
         await game('hearthSetView('+JSON.stringify(view)+');updateCamera();render()');
         // The GPU liquid renderer refreshes its view mapping in a real frame.
         // Let the resized scene settle before freezing geometry for inspection.
@@ -167,20 +160,16 @@ try {
             var a=bs[i];if(a.x<0||a.y<0||a.x+a.w>w||a.y+a.h>h||a.h<40)return false;
             for(var j=i+1;j<bs.length;j++){var b=bs[j];if(a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y)return false;}
           }
-          if(hearthView==='bath'){
-            var tub=BATH_FLOORS[0], curve=bathTubCurve(tub,tub.tubs[0]), boiler=bathBoilerScreenRect();
-            var left=(curve.x0-cam.x)*worldScale,right=(curve.x1-cam.x)*worldScale;
-            var lip=(curve.y0-cam.y)*worldScale,bottom=(curve.y0+curve.D-cam.y)*worldScale;
-            return !bs.some(b=>b.action==='forge')&&curve.x1-curve.x0>=16*TILE&&
-              curve.depthAt(curve.x0)===0&&curve.depthAt((curve.x0+curve.x1)/2)===curve.D&&
-              left>=0&&right<=w&&lip>=hearthNavHeight()&&bottom<=h-bathHUDHeight()&&
-              boiler.w>=44&&boiler.h>=44&&boiler.x>=left&&boiler.x+boiler.w<=right&&
-              boiler.y>=lip&&boiler.y+boiler.h<=h-bathHUDHeight()&&
-              bathGuests.filter(g=>g.st==='wait').every(g=>{var r=bathOrderRect(g);return (r.y-cam.y)*worldScale>=hearthNavHeight()&&(r.y+r.h-cam.y)*worldScale<=h-bathHUDHeight();});
-          }
-          var L=hearthRoomLayout();
-          return [L.box,L.bench].every(r=>r.w>0&&r.h>0&&r.y>=L.top&&r.y+r.h<L.footer)&&
-            [L.bin,L.pump,L.action,L.ash].every(r=>r.y+r.h<L.footer);
+          var L=hearthRoomLayout(),tub=BATH_FLOORS[0],curve=bathTubCurve(tub,tub.tubs[0]),boiler=L.box;
+          var left=(curve.x0-cam.x)*worldScale,right=(curve.x1-cam.x)*worldScale;
+          var lip=(curve.y0-cam.y)*worldScale,bottom=(curve.y0+curve.D-cam.y)*worldScale;
+          var overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+          return hearthView==='bath' && !bs.some(b=>['forge','boiler','bath'].includes(b.action)) &&
+            ['coal','pump','strike','ash','water'].every(a=>bs.some(b=>b.action===a)) &&
+            left>=L.scene.x&&right<=L.scene.x+L.scene.w&&lip>=L.scene.y&&bottom<=L.scene.y+L.scene.h&&
+            boiler.w>=44&&boiler.h>=44&&boiler.x>=0&&boiler.x+boiler.w<=w&&
+            boiler.y>=L.top&&boiler.y+boiler.h<L.footer&&!overlap(boiler,L.scene)&&
+            bs.every(b=>!overlap(b,boiler));
         })()`);
         if (!fits) console.log('LAYOUT',await game('({view:hearthView,buttons:hearthButtons,layout:hearthRoomLayout(),boiler:bathBoilerScreenRect(),nav:hearthNavHeight(),hud:bathHUDHeight()})'));
         await screenshot('layout-'+width+'x'+height+'-'+view);

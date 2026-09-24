@@ -33,7 +33,7 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-tools','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-tools','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
     inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };
@@ -213,7 +213,7 @@ for (const fps of [30,60,144]) {
   assert.equal(s.hearthView, 'bath', 'retired forge cannot be opened by an old view request');
   s.hearthSetView('boiler');
   s.hearthRoomKey({ key: '3', repeat: false });
-  assert.equal(s.hearthView, 'boiler', 'old forge shortcut is inert');
+  assert.equal(s.hearthView, 'bath', 'old boiler and forge requests keep the shared bath view');
   f.inside(30);
   assert.equal(JSON.stringify({ bed: s.hearthSave().forge, job: s.hearthJob, stock: s.forgeResourcesSave() }), legacy,
     'legacy forge work and paid fuel remain frozen without spending stock');
@@ -226,7 +226,7 @@ for (const fps of [30,60,144]) {
 
 {
   const { s } = fixture();
-  s.bathMode = true; s.hearthView = 'boiler'; s.forgeGive('coal', 2);
+  s.bathMode = true; s.hearthView = 'bath'; s.forgeGive('coal', 2);
   const bin = s.hearthRoomLayout().bin;
   s.hearthButtons = [Object.assign({ action: 'coal' }, bin)];
   const down = { pointerId: 7, button: 0, clientX: bin.x + 30, clientY: bin.y + 30 };
@@ -268,7 +268,7 @@ for (const fps of [30,60,144]) {
 
 {
   const { s } = fixture();
-  s.bathMode = true; s.hearthView = 'boiler'; s.devMode = true;
+  s.bathMode = true; s.hearthView = 'bath'; s.devMode = true;
   s.forgeGive('coal', 2); s.cargo = [{ type: 'coal' }];
   const before = JSON.stringify({ stock: s.forgeStock, cargo: s.cargo });
   function takeFromBin() {
@@ -439,4 +439,22 @@ for (const fps of [30,60,144]) {
   const p=s.bathToolProjectLiquid(118,100,-10,0,1);
   assert.equal(p[0],121);assert.equal(p[2],80,'CPU water receives the moving claw boundary velocity');
   console.log('PASS physical guest buoyancy, submerged service, held service pause and CPU liquid coupling');
+}
+
+{
+  const {s}=fixture();s.bathMode=true;s.devMode=true;s.keys={};
+  const key=k=>s.hearthRoomKey({key:k,repeat:false});
+  key('c');key('b');key('f');
+  assert.equal(s.hearthView,'bath');
+  assert.equal(s.hearthBeds.boiler.chunks.length,1);
+  assert(s.hearthBeds.boiler.air>0 && s.hearthBeds.boiler.chunks[0].lit,'coal, bellows and flint shortcuts work from the bath');
+  s.hearthBeds.boiler.ash=Array.from({length:8},(_,i)=>({x:i*10,y:208,kg:.001}));
+  key('a');assert.equal(s.hearthBeds.boiler.ash.length,6,'ash shortcut sweeps in the bath');
+  assert.equal(key('Escape'),false,'idle Escape remains available to leave the bath');
+  const bin=s.hearthRoomLayout().bin;s.hearthButtons=[Object.assign({action:'coal'},bin)];
+  s.hearthPointerDown({pointerId:8,button:0,clientX:bin.x+20,clientY:bin.y+20});
+  assert(s.hearthDrag);assert.equal(key('Escape'),true);
+  assert.equal(s.hearthDrag,null);assert.equal(s.hearthBeds.boiler.chunks.length,1);
+  assert.equal(s.hearthView,'bath');
+  console.log('PASS inline boiler shortcuts and Escape cancellation without a screen change');
 }

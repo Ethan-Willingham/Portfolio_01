@@ -203,7 +203,7 @@ try {
   await press(buttonCenter('tool-grip'),true);
   check('same mobile button drops the guest',await game('!bathTool.held'));
   await game("hearthSetView('boiler')");
-  check('entering boiler stows tools',await game("bathTool.mode===''"));
+  check('legacy boiler request stows tools in the shared room',await game("bathTool.mode==='' && hearthView==='bath'"));
   check('no browser errors',errors.length===0);
   console.log('Screenshots: '+out);
 } finally {if(errors.length)console.error(JSON.stringify(errors));cleanup();}

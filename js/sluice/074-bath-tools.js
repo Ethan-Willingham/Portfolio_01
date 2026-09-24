@@ -68,8 +68,7 @@
   }
   function bathToolPointerInRoom(e) {
     var p = hearthCSSPoint(e);
-    return p.x >= 0 && p.x <= canvas.width / dpr && p.y >= hearthNavHeight() &&
-      p.y < canvas.height / dpr - bathHUDHeight();
+    return hearthContains(hearthRoomLayout().scene, p.x, p.y);
   }
   function bathToolPointerDown(e) {
     var t = bathTool;
@@ -93,7 +92,7 @@
       if (t.pointer === e.pointerId) bathToolAim(e);
       return true;
     }
-    if (e.pointerType === 'touch' || e.pointerType === 'pen' || hearthPress || !bathToolPointerInRoom(e)) return false;
+    if (e.pointerType === 'touch' || e.pointerType === 'pen' || hearthPress || hearthDrag || !bathToolPointerInRoom(e)) return false;
     bathToolRememberInput(e); bathToolAim(e); hearthClearBoilerHover();
     return true;
   }
@@ -115,7 +114,7 @@
       'Hose empty. Bring scooped water in your tank.' : touch ?
       'Drag to aim. Tap POUR to start the water; STOP turns it off.' :
       'Move the mouse to aim. Hold click to pour; release to stop.';
-    return 'Choose CLAW or HOSE. Click the boiler beneath the tub to tend the fire.';
+    return 'Drag coal into the boiler below. Use CLAW or HOSE above the bath.';
   }
   function bathToolDrawControls(c, w, top) {
     var t = bathTool, gap = 6, bw = (w - 28 - gap * 3) / 4;

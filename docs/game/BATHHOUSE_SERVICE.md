@@ -16,10 +16,10 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
 2. Scoop water into the rig tank. The bath needs at least 40 L and holds 450 L.
 3. Enter the banya. The main room fills the viewport around a wide catenary tub,
    with a copper lining, curved rows of bolts, and the boiler built beneath it.
-4. Hover the boiler hatch to highlight it, then click or tap to open the firebox.
+4. Tend the boiler directly below the bath. Its controls are always available.
    Load three coal chunks and strike flint and steel. Both tools are reusable.
    Work the bellows for more heat and rake spent ash when needed.
-5. Choose BACK TO BATH or press Escape. ADD WATER fills the tub. Tap a visitor's
+5. ADD WATER fills the tub while the boiler stays visible. Tap a visitor's
    order once the bath is warm. It soaks, pays, and returns outside.
 
 The forge and its crafting requirement are retired. New and returning games
@@ -32,24 +32,26 @@ directly from ordinary cargo. Stored supplies survive rig recovery.
 ## Direct controls
 
 Mouse and touch share the same pointer path. The room opens directly to the
-bath. Hovering the integrated boiler highlights its metal surround and changes
-the cursor. A click or tap opens it; dragging across the hatch does not. In the
-close view, drag a chunk from the bunker into the firebox and release: it falls,
-rolls, collides, and settles. Existing pieces can be rearranged. Dropping fresh
+bath. The firebox and its coal, bellows, flint and ash controls remain below the
+basin. Hover the grate for a grab cursor. Drag a chunk from the bunker into the
+firebox and release: it falls, rolls, collides, and settles. Existing pieces can be rearranged. Dropping fresh
 coal outside the firebox returns it; moving a burning piece outside restores
 its grate position. Pointer cancellation and leaving restore unfinished drags.
 A simple tap on the bunker drops one piece.
 
-- C: place one coal in the open boiler.
+- C: place one coal on the boiler grate.
 - B: work the bellows.
 - F: strike flint and steel.
 - A: rake spent ash.
 - E / Enter: admit a ready visitor while viewing the bath.
 - W: fill the bath from stored water while viewing the bath.
-- Escape: return from the boiler to the bath, or leave from the bath.
+- Escape: cancel a held coal, otherwise leave the bath.
 
-The room fits the tub and boiler between compact navigation and a single water
-control rail. The main basin spans 26 tiles and retains the original catenary
+The room fits the tub and working boiler between compact navigation and the
+water/tool control rail. Short landscape screens place the basin and firebox
+beside one another. All actions retain at least 44-pixel-high targets. Fuel,
+average exposed air and ash blockage are visible alongside the boiler. The
+main basin spans 26 tiles and retains the original catenary
 formula. Since v28.65, the drawn copper liner is also an analytic collision boundary in
 the WebGPU grid and particle passes and the CPU fallback. A normal projection
 keeps particle centers outside the six-pixel liner, including water loaded from
@@ -59,7 +61,7 @@ Guest buoyancy integrates the same visible cavity. Existing
 saves recarve the larger room on entry without adding water or charging again.
 Old waiting guests move to the dry landing. Purchased upper floors remain
 available by immediate scrolling. Without purchased upper floors, wheel and drag
-gestures leave the bath fixed. Boiler view changes have no camera travel.
+gestures leave the bath fixed. There is no separate boiler screen or camera transition.
 
 Enable dev mode with backtick, including inside the banya, or load `?dev=1`.
 Coal, water, flint, and ignition steel are available without limit. Loading coal
@@ -112,7 +114,8 @@ loss; dev mode supplies water as before. A full basin stops new emission.
 Keys 1 and 2 switch the claw and hose. Space grabs or drops a slime, or switches
 the hose valve. Pause, focus loss, pointer cancellation, resizing, changing rooms,
 and leaving stop flow and release a held guest. Controls remain at least 44px
-tall on phones and short landscape screens. Stow the tool to click the boiler.
+tall on phones and short landscape screens. Coal and ceiling tools own separate
+pointer regions: a selected claw or hose does not intercept firebox tending.
 
 `074-bath-tools.js` owns the tools. `node tools/bath-tools-smoke.mjs` exercises
 actual mouse and touch controls, water accounting, three simulation rates,
@@ -391,7 +394,8 @@ and remove only the former pool footprints. No pearl production is restored.
 - `077-hearth-physics.js`: bounded pile contacts, ignition, combustion, air, saves.
 - `078-hearth-art.js`: faceted coal, hot cracks, ash, flame transport, event sparks.
 - `078-hearth-casing.js`: shared cast-iron surround, hinges, latch and ash drawer.
-- `078-hearth-room.js`: direct controls, boiler/forge fixtures, craft transactions.
+- `078-hearth-room.js`: shared controls, direct coal manipulation and saved legacy work.
+- `078-hearth-station.js`: responsive basin/firebox layout, fuel controls and burn readings.
 - `079-forge-resources.js`: mining flint, supply reservation, protected shiny ores.
 - `074-bath-service.js`: real bath heat/water, guests, permanent drains, migration.
 

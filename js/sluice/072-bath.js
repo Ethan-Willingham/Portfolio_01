@@ -484,7 +484,7 @@
     }
     if (keys['Escape']) {
       keys['Escape'] = false;
-      if (hearthView === 'boiler') hearthSetView('bath'); else bathExit();
+      bathExit();
     }
     bathSteamTick(dt);
     if (keys['e'] || keys['E'] || keys['Enter']) {
@@ -800,14 +800,15 @@
     }
     if (!bathSaved) bathSaved = { ws: worldScale, sw: screenW, sh: screenH };
     var width = canvas.width / dpr, height = canvas.height / dpr;
-    var nav = hearthNavHeight(), hud = bathHUDHeight();
+    var nav = hearthNavHeight(), scene = hearthRoomLayout().scene;
     // Reserve the fixed controls before fitting the entire ground-floor tub.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
     var mainHeight = Math.max(13*TILE,bathInteriorBottom()-mainCurve.y0+220);
-    worldScale = Math.min(width / BATH_VIEW_W, Math.max(80, height - nav - hud - 12) / mainHeight);
-    var viewportKey = width + ':' + height + ':' + nav;
+    worldScale = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / mainHeight);
+    var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
     if (bathViewportKey !== viewportKey) {
       bathToolCancel(); bathTool.rope = [];
+      hearthCancelDrag();
       bathViewportKey = viewportKey; bathScrollT = 1e9; bathCamY = -1;
     }
     var iws = 1 / (dpr * worldScale);
@@ -820,7 +821,7 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = bathInteriorBottom() - bathViewH + (hud + 12) / worldScale;
+    var maxY = bathInteriorBottom() - (scene.y + scene.h) / worldScale;
     if (maxY < minY) minY = maxY;
     // A single-room bath has nothing to scroll to. Do not reveal the retired
     // tower artwork on a stray wheel gesture. Purchased upper floors remain reachable.
@@ -828,7 +829,7 @@
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
     bathCamY = bathScrollT;
-    cam.x = 37 * TILE - canvas.width * iws / 2;
+    cam.x = 37 * TILE - (scene.x + scene.w / 2) / worldScale;
     cam.y = bathCamY;
     return true;
   }
@@ -1302,7 +1303,6 @@
   // canvas above this one, so calling drawLiquids() keeps the water live. --
   function bathRenderScene() {
     if (!bathMode) return false;
-    if (hearthRoomRender()) return true;
     if (bathMainRoomVisible()) return bathDrawInterior();
     // Own the WHOLE canvas: the world viewport excludes the console strip,
     // so without this full-screen clear the strip keeps last frame's stale
@@ -1526,6 +1526,7 @@
       ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
       bathDrawGuests();
       bathDrawServiceHUD();
+      hearthDrawStation(ctx);
     } finally { ctx = bathDrawContext; }
     return true;
   }
