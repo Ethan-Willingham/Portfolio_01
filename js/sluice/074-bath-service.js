@@ -375,7 +375,7 @@
       ctx.fillText(p.s, p.x, p.y - p.t * 22); ctx.restore();
     }
   }
-  function bathHUDHeight() { return canvas.width / dpr < 520 ? 156 : 130; }
+  function bathHUDHeight() { return canvas.height / dpr < 500 ? 108 : canvas.width / dpr < 520 && canvas.height / dpr >= 650 ? 156 : 130; }
   function bathDrawServiceHUD() {
     var w = canvas.width / dpr, h = canvas.height / dpr, narrow = w < 520;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -397,13 +397,13 @@
     hearthText(ctx, bathCanServe() ? 'READY FOR GUESTS' : bathWater < BATH_MIN_WATER ? 'FILL THE BATH' : 'WARM THE WATER', 18, top + 44, 10, UIT_DIM);
     if (!narrow && w > 740) hearthText(ctx, '$' + bathFmtMoney(money), w * 0.5, top + 28, 15, BLD.goldPale, 'center');
     var notice = bathNoticeT > 0 ? bathNotice : bathToolHint();
-    hearthWrap(ctx, notice, 18, top + 66, w - 36, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, narrow ? 2 : 1);
+    if (h >= 500) hearthWrap(ctx, notice, 18, top + 66, w - 36, bathNoticeT > 0 ? BLD.goldPale : UIT_DIM, narrow && h >= 650 ? 2 : 1);
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {
       var b = bathServiceButtons[i];
       if (hearthContains(b, x, y)) {
-        if (b.action === 'boiler') hearthSetView('boiler'); else bathAddWater();
+        bathAddWater();
         return true;
       }
     }

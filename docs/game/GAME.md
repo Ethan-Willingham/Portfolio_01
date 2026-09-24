@@ -31,9 +31,9 @@ body, which finds a new underside after rolling and varies its pace and stride.
 Grabs and impacts break their grip. Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
-an integrated boiler beneath the basin. Hover the boiler hatch to highlight it,
-then click or tap to open the coal view. Back to Bath (or Escape) returns to the
-room. Drag individual coal chunks from the bunker onto the grate, or tap the
+an integrated boiler beneath the basin. Since v28.74, the firebox, fuel bunker,
+bellows, flint, ash sweep and live fuel/air/ash readings stay in this same view.
+Drag individual coal chunks from the bunker onto the grate, or tap the
 bunker to drop one. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption. Since v28.63, a bounded WebGPU
 reacting-flow solver transports fuel, oxygen, soot, steam and heat around the
@@ -49,8 +49,8 @@ Since v28.67, the bed holds 32 varied charcoal-shaped lumps, plus fracture
 capacity to 48 pieces. Rear air supply, a finite starter pocket and radiance
 reconstruction make the burning bed more visible without increasing the grid.
 Since v28.69, the physical chamber is 416 by 320 world pixels, with a wider,
-lower tending view. Both views share recessed cast ironwork, hinges and an ash
-drawer. The copper tub rim follows the collision curve with outward thickness.
+lower firebox with recessed cast ironwork, hinges and an ash drawer. The copper
+tub rim follows the collision curve with outward thickness.
 The single-room bath stays fixed under wheel and drag gestures; saved upper
 floors scroll immediately, with no camera easing.
 
@@ -176,7 +176,8 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `073-bath-interior.js` | wide bath room, curved vessel, integrated boiler rendering and hit geometry |
 | `074-bath-tools.js` | ceiling claw and flexible hose, pointer ownership, physical guest handling, conserved water emission |
 | `074-bath-service.js` | visitor queue, coal-powered bath heat, water supply, floor drain, payments, and migration |
-| `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, boiler controls and bath navigation |
+| `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, direct boiler controls and the shared bath layout |
+| `078-hearth-station.js` | shared bath/firebox viewport, responsive fuel controls and live burn readings |
 | `079-forge-resources.js` | reserved coal, durable flint, supplied steel, and legacy supply persistence |
 | `075-liquid-tool.js` / `076-siphon-audio.js` | aimed siphon, fluid chambers, one passenger, touch controls, and sound |
 | `053-pause-menu.js` | native pause/options/controls navigation and settings; `sluice-menu.css` holds the scoped menu layout |

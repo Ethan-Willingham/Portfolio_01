@@ -1,23 +1,16 @@
-  // The main bath is one room. Its water, rim and boiler share world geometry;
-  // only the wall dressing expands with the viewport. Upper purchased floors
+  // The main bath shares one view with the working boiler below. Water and
+  // the copper rim use the same world geometry. Upper purchased floors
   // retain their original tower view when the player scrolls up.
-  function bathBoilerWorldRect() {
-    var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
-    return { x: (curve.x0 + curve.x1) / 2 - 166,
-      y: curve.y0 + curve.D + 22, w: 332, h: 198 };
-  }
   function bathInteriorBottom() {
-    var r = bathBoilerWorldRect();
-    return r.y + r.h + 18;
+    var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
+    return curve.y0 + curve.D + 28;
   }
   function bathMainRoomVisible() {
-    return cam.y + (canvas.height / dpr - bathHUDHeight() - 12) / worldScale >= bathInteriorBottom() - 24;
+    var scene = hearthRoomLayout().scene;
+    return cam.y + (scene.y + scene.h) / worldScale >= bathInteriorBottom() - 24;
   }
   function bathBoilerScreenRect() {
-    var r = bathBoilerWorldRect(), w = Math.max(44, r.w * worldScale), h = Math.max(44, r.h * worldScale);
-    if (!bathMainRoomVisible()) return { x: -1000, y: -1000, w: 0, h: 0 };
-    return { x: (r.x + r.w / 2 - cam.x) * worldScale - w / 2,
-      y: (r.y + r.h / 2 - cam.y) * worldScale - h / 2, w: w, h: h };
+    return hearthRoomLayout().box;
   }
   function bathVesselPath(c, curve, outset, drop) {
     c.moveTo(curve.x0 - outset, curve.y0 - 16);
@@ -63,7 +56,6 @@
       c.fillStyle = BLD.woodPale; c.fillRect(x - 17, curve.y0 - 18, 34, 1);
       hearthIronBolt(c, x - 12, curve.y0 - 14, 1.5); hearthIronBolt(c, x + 12, curve.y0 - 14, 1.5);
     }
-    bathDrawIntegratedBoiler(c, curve);
   }
   function bathRimPoint(curve, x, offset) {
     var a = Math.max(curve.x0, x - 0.5), b = Math.min(curve.x1, x + 0.5);
@@ -86,37 +78,6 @@
     }
     c.lineTo(curve.x0 - outer, curve.y0 - 16);
     c.closePath(); c.fill();
-  }
-  function bathDrawIntegratedBoiler(c, curve) {
-    var r = bathBoilerWorldRect(), mid = r.x + r.w / 2;
-    // A fitted refractory cradle joins the tub to the stove. Quiet wide stones
-    // form two load-bearing shoulders, not a checkerboard behind the casting.
-    c.fillStyle = BLD.outline; hearthChamfer(c, r.x - 15, r.y - 13, r.w + 30, r.h + 22, 8); c.fill();
-    c.fillStyle = BLD.stoneDark; hearthChamfer(c, r.x - 11, r.y - 10, r.w + 22, r.h + 15, 7); c.fill();
-    for (var row = 0; row < 5; row++) {
-      var sy = r.y - 6 + row * 39;
-      c.fillStyle = BLD.stoneBase; c.fillRect(r.x - 8, sy, r.w + 16, 1);
-      c.fillStyle = BLD.outline; c.fillRect(r.x - 8, sy + 36, r.w + 16, 2);
-      for (var side = 0; side < 2; side++) {
-        var sx = side ? r.x + r.w - 34 : r.x + 8;
-        c.fillRect(sx + (row % 2 ? 14 : 0), sy, 2, 36);
-      }
-    }
-    // Copper saddle touches the actual underside of the vessel.
-    c.fillStyle = BLD.outline; c.fillRect(mid - 88, r.y - 20, 176, 11);
-    c.fillStyle = BLD.woodDark; c.fillRect(mid - 85, r.y - 19, 170, 7);
-    c.fillStyle = BLD.woodLight; c.fillRect(mid - 85, r.y - 19, 170, 1);
-    var bh = 166, bw = bh * HEARTH_WIDTH / HEARTH_HEIGHT;
-    hearthDrawCasing(c, { x: mid - bw / 2, y: r.y + 13, w: bw, h: bh }, hearthBeds.boiler, bathBoilerHover);
-    // Small cleanout covers belong to the masonry shoulders.
-    for (var side = 0; side < 2; side++) {
-      var sx = side ? r.x + r.w - 30 : r.x + 8;
-      c.fillStyle = BLD.outline; c.fillRect(sx, r.y + r.h - 41, 22, 24);
-      c.fillStyle = BLD.metalDark; c.fillRect(sx + 2, r.y + r.h - 39, 18, 20);
-      hearthIronBolt(c, sx + 11, r.y + r.h - 29, 2.5);
-    }
-    c.fillStyle = BLD.outline; c.fillRect(r.x - 19, r.y + r.h + 4, r.w + 38, 7);
-    c.fillStyle = BLD.stoneLight; c.fillRect(r.x - 16, r.y + r.h + 4, r.w + 32, 1);
   }
   function bathDrawInteriorWall() {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
@@ -190,12 +151,8 @@
       bathDrawGuests();
       bathToolDraw(ctx);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var hit = bathBoilerScreenRect();
-      var label = bathBoilerHover ? 'OPEN BOILER' : 'BOILER';
-      var labelWidth = bathBoilerHover ? 118 : 74;
-      ctx.fillStyle = UIT_PANEL; ctx.fillRect(hit.x + (hit.w - labelWidth) / 2, hit.y + hit.h - 1, labelWidth, 18);
-      hearthText(ctx, label, hit.x + hit.w / 2, hit.y + hit.h + 9, 10, bathBoilerHover ? BLD.goldPale : BLD.cream, 'center');
       bathDrawServiceHUD();
+      hearthDrawStation(ctx);
     } finally { ctx = previous; }
     return true;
   }
@@ -212,5 +169,7 @@
         bathToolDraw(c, { mode: mode, x: x, y: y, railX: x, tilt: 0.2, jaw: 0.5, flow: 1,
           rope: [{ x: x, y: b.top }, { x: x + 12, y: y - 40 }, { x: x, y: y }] });
       });
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      hearthDrawCasing(c, { x: 24, y: 30, w: 208, h: 160 }, hearthBeds.boiler, false);
     } finally { c.restore(); ctx = previous; }
   }

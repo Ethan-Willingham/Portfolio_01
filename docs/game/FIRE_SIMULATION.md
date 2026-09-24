@@ -133,7 +133,7 @@ interpolation, scoped to the flame draw, instead of enlarging its cells with
 nearest-neighbor sampling.
 
 A transparent DOM canvas renders directly from resident GPU fields. It follows
-both the full boiler and the small hatch beneath the bath, and hides on pause,
+the working firebox in the shared bath view, and hides on pause,
 transitions and leaving the room. Display resolution is capped at 1.5 device
 pixels per CSS pixel. No GPU canvas is copied through Canvas2D. Fully cold fire
 sleeps after a five-second vent period, with no continuing compute submissions.
@@ -141,8 +141,9 @@ sleeps after a five-second vent period, with no continuing compute submissions.
 Since v28.65 the chamber extends upward from y = -110 to the original grate at
 210, adding 52 percent more physical plume space without enlarging the coal.
 Since v28.69 the chamber is 416 world pixels wide. The tending view preserves
-this 1.3 aspect ratio and caps desktop width at 580 CSS pixels (about 446 high).
-The integrated hatch shows the same complete chamber, with no bars across its
+this 1.3 aspect ratio. Since v28.74, the complete firebox is always interactive
+in the bath view, with controls alongside it or underneath on phones. Short
+landscape screens place it beside the basin. There are no bars across its
 opening. Pointer coordinates, collision walls, GPU masks and flame occlusion
 share these dimensions. Older coal and ash beds move right by 48 units once on
 restore, preserving relative contacts, shapes and remaining fuel. New bed saves
@@ -188,6 +189,11 @@ On the development Apple M1 Pro, Chrome for Testing with Metal, v28.69 at 1280 b
 | Fire-room update/render plus a GPU queue fence | 10.44 ms average, 14.00 ms p95 |
 | Full bath frame CPU time, about 55,000 liquid particles, steam and a guest | 12.69 ms average, 14.30 ms p99 |
 | Full bath frame interval | 16.74 ms average, 16.80 ms p99 |
+
+A v28.74 combined-view run with about 51,000 liquid particles, steam, a guest
+and a 32-piece fire averaged 11.73 ms CPU time and a 16.67 ms frame interval.
+The 99th-percentile interval was 16.80 ms. The same run verified zero water
+penetration through the curved liner and aligned fire overlays on phones.
 
 The queue-fenced measurement includes browser/driver scheduling and room drawing;
 it is not a GPU timestamp. These are local measurements, not guarantees for other

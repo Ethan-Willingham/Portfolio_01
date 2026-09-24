@@ -102,7 +102,7 @@ try {
   check('shader warm-up is clean', await ev('window.__shaderWarm.errors.length===0'));
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
   await sleep(500);
-  await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;hearthRoomReset();forgeStock.coal=30;forgeStock.flint=1;forgeStock.steel=1;bathMode=true;bathFading=false;gamePaused=false;hearthSetView("boiler");render()');
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;hearthRoomReset();forgeStock.coal=30;forgeStock.flint=1;forgeStock.steel=1;bathMode=true;bathFading=false;gamePaused=false;hearthSetView("bath");updateCamera();render()');
 
   console.log('FIRE INIT', await game('({available:window.__fire?.available,errors:window.__fire?.errors,waterReady:liquidWGPU?.available,waterLive:liquidWGPU?.simActive})'));
   check('WebGPU reacting fire compiled', await ev('!!window.__fire && __fire.available && !__fire.failed'));
@@ -171,14 +171,14 @@ try {
   check('one ignition develops visible flames above an eight-piece bed',visibility.ignition.aboveBed>200&&visibility.ignition.area>.015&&visibility.sustained.area>.015&&visibility.sustained.lit>=3);
   for (const screen of [{width:1920,height:1080,deviceScaleFactor:2},{width:844,height:390,deviceScaleFactor:1}]) {
     await send('Emulation.setDeviceMetricsOverride',{...screen,mobile:false});
-    await game('resize();render()');
+    await game('resize();updateCamera();render()');
     const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
-    check('bounded wide chamber and accessible controls at '+screen.width,layout.box.w<=580.01 && Math.abs(layout.box.w/layout.box.h-416/320)<0.001 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
+    check('bounded wide chamber and accessible controls at '+screen.width,layout.box.w<=344.01 && Math.abs(layout.box.w/layout.box.h-416/320)<0.001 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
     check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w)<1 && Math.abs(layout.overlay.h-layout.box.h)<1);
     await screenshot('fire-'+screen.width);
   }
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
-  await game('resize();render()');
+  await game('resize();updateCamera();render()');
   await game('hearthReset();for(var i=0;i<32;i++)hearthAddChunk("boiler",40+i%6*48,170-Math.floor(i/6)*42)');
   await run(3);await game('hearthIgnite("boiler")');await run(8);await screenshot('full-charcoal-bed');
   check('all 32 fuel pieces fit and reach the GPU',await game('hearthBeds.boiler.chunks.length===32 && hearthBeds.boiler.chunks.every(b=>Number.isFinite(b.surfaceKelvin)) && hearthFireGPU.available'));
@@ -205,7 +205,7 @@ try {
   check('live GPU water meets the curved liner without entering the hidden tile cavity',bowlContact.inside>4000&&bowlContact.nearWall>100&&bowlContact.penetrating===0);
   await game('gamePaused=true;render()');check('pause hides the fire layer',await ev('__fire.canvas.style.display==="none"'));
   await game('gamePaused=false;bathMode=false;render()');check('leaving the bath hides the fire layer',await ev('__fire.canvas.style.display==="none"'));
-  await game('bathMode=true;hearthSetView("boiler");render()');
+  await game('bathMode=true;hearthSetView("bath");updateCamera();render()');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await send('Emulation.setTouchEmulationEnabled',{enabled:true});
   await game('isMobile=true;resize();hearthFirePrepare()');

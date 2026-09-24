@@ -98,7 +98,7 @@ async function screenshot(name) {
 function check(label, condition) { assert.ok(condition, label); console.log('PASS ' + label); }
 async function layoutCheck(label) {
   const result = await game(`(function(){var w=canvas.width/dpr,h=canvas.height/dpr,L=hearthRoomLayout();return {w:w,h:h,compact:!!L.compact,small:!!L.small,buttons:hearthButtons.map(function(b){return {action:b.action,x:b.x,y:b.y,w:b.w,h:b.h};})};})()`);
-  check(label + ' controls fit the viewport', result.buttons.length >= 8 && result.buttons.every(b => b.w >= 40 && b.h >= 40 && b.x >= 0 && b.y >= 0 && b.x + b.w <= result.w + 1 && b.y + b.h <= result.h + 1));
+  check(label + ' controls fit the viewport', result.buttons.length >= 6 && result.buttons.every(b => b.w >= 40 && b.h >= 40 && b.x >= 0 && b.y >= 0 && b.x + b.w <= result.w + 1 && b.y + b.h <= result.h + 1));
   if (result.compact || result.small) check(label + ' footer leaves the controls unobscured', result.buttons.every(b => b.y + b.h <= result.h - 55));
 }
 
@@ -144,11 +144,29 @@ try {
   check('CPU flame cells interpolate smoothly without changing other canvas art',reconstruction.intermediate>=3 && reconstruction.restored);
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
   await sleep(500);
-  await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;hearthRoomReset();forgeStock.coal=30;forgeStock.flint=1;forgeStock.steel=1;bathMode=true;bathFading=false;gamePaused=false;hearthSetView("boiler");render()');
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;hearthRoomReset();forgeStock.coal=30;forgeStock.flint=1;forgeStock.steel=1;bathMode=true;bathFading=false;gamePaused=false;hearthSetView("bath");updateCamera();render()');
+  check('the boiler shares the bath with water and ceiling controls',await game("hearthView==='bath' && ['water','claw','hose','coal','pump','strike','ash'].every(a=>hearthButtons.some(b=>b.action===a))"));
+  await press('claw');
   await screenshot('empty');
   for (const x of [0.5, 0.5, 0.5]) { await dragCoal({ x, y: 0.60 }); await advance(1); }
   await advance(3);
+  check('coal tending keeps the selected claw stowed above the firebox',await game("bathTool.mode==='claw' && bathTool.pointer===null && !hearthDrag && hearthView==='bath'"));
   check('three large coals settle without burning or losing stock', await game('hearthBeds.boiler.chunks.length===3 && forgeCount("coal")===27 && hearthBeds.boiler.chunks.every(function(b){return b.r>=29 && b.fuel===1 && !b.lit;})'));
+  const chunkPoint=await point('(function(){var b=hearthBeds.boiler.chunks[2],r=hearthRoomLayout().box;return {x:r.x+b.x*r.w/HEARTH_WIDTH,y:r.y+(b.y-HEARTH_TOP)*r.h/HEARTH_HEIGHT};})()');
+  await mouse('mousePressed',chunkPoint,true);
+  check('an existing coal can be picked up while the claw remains selected',await game("hearthDrag && !hearthDrag.fresh && bathTool.pointer===null"));
+  const toolTarget = await game('({x:bathTool.tx,y:bathTool.ty})');
+  const basinPoint = await point(center('hearthRoomLayout().scene'));
+  await mouse('mouseMoved',basinPoint,true);
+  check('dragging coal across the basin keeps ownership away from the hovering claw',await game(`(function(){
+    var r=hearthRoomLayout().scene;
+    return hearthDrag && Math.abs(hearthDrag.x-r.x-r.w/2)<1 && Math.abs(hearthDrag.y-r.y-r.h/2)<1 &&
+      bathTool.tx===${toolTarget.x} && bathTool.ty===${toolTarget.y};
+  })()`));
+  await mouse('mouseMoved',{x:chunkPoint.x+12,y:chunkPoint.y-8},true);
+  await sleep(160);await mouse('mouseReleased',{x:chunkPoint.x+12,y:chunkPoint.y-8});
+  check('rearranging coal stays in the bath and preserves stock',await game("!hearthDrag && hearthView==='bath' && forgeCount('coal')===27 && hearthBeds.boiler.chunks.length===3"));
+  await advance(2);
   await screenshot('cold');
   await press('strike'); await advance(2); await screenshot('drying');
   await advance(10); await screenshot('flaming');
@@ -178,7 +196,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true });
   await sleep(350);
-  await game('isMobile=true;resize();hearthSetView("boiler");render()');
+  await game('isMobile=true;resize();hearthSetView("bath");updateCamera();render()');
   await sleep(350);
   await screenshot('phone-before');
   await dragCoal({ mobile: true, cancel: true });
