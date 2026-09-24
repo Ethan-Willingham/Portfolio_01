@@ -4,6 +4,8 @@
 // EXTENDED=1 adds contact, real fall, and frame timing cases; EXTENDED=only skips the matrix.
 // PLAYBACK=1 also checks the real RAF game/render loop against a living resident.
 // CASES=stack,ceiling selects extended cases when narrowing a failure.
+// CONTACTS=1 adds driving and 15-second seated loads; CONTACTS=only runs just those.
+// DIAGNOSTIC=1 records older bundles without applying current regression assertions.
 // Owns one Chrome for Testing process and closes that exact child in finally.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -34,6 +36,14 @@ const server = createServer((req, res) => {
           landingResolve(dt);
           player._landingLegacyY = player.y - y;
           player._landingLegacyV = player.vy - vy;
+        };
+        var landingFling = jelloPlayerFling;
+        jelloPlayerFling = function(b, dt) {
+          var oldDev = devMode, oldFlings = jelloDbg.flings || 0;
+          devMode = true;
+          try { landingFling(b, dt); }
+          finally { devMode = oldDev; }
+          player._landingFlings = (player._landingFlings || 0) + (jelloDbg.flings - oldFlings);
         };
         window.__landingTest = function(source) { return eval(source); };\n` + src.slice(close));
     }
@@ -96,8 +106,8 @@ function scenarioSource(config) {
     player.thrusting = false; player.thrustSpool = 0; player.drillGlideT = 0;
     player.hull = getMaxHull(); player.fuel = getMaxFuel();
     cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.65;
-    var b = surfaceSlimeBuild(x, floor - 35, { id: 9000, seed: 0.4, hue: 133 });
-    if (config.kind !== 'living') { surfaceSlimeDetach(b, 100000); b.surfaceSlime.timer = 100000; }
+    var b = surfaceSlimeBuild(x, floor - 35, { id: 9000, seed: config.seed === undefined ? 0.4 : config.seed, r: config.radius, hue: 133 });
+    if (config.kind !== 'living' && !config.living) { surfaceSlimeDetach(b, 100000); b.surfaceSlime.timer = 100000; }
     for (var settle = 0; settle < 180; settle++) {
       surfaceSlimeTick(1 / 60); updateJello(1 / 60);
     }
@@ -150,7 +160,23 @@ function scenarioSource(config) {
           finite = finite && isFinite(cellDet);
         }
       }
-      return { width: right - left, height: bottom - top, top: top, bottom: bottom,
+      var maxTurn = 0, maxBend = 0, spikes = 0;
+      for (var ri = 0; ri < b.ringN; ri++) {
+        var prev = b.ring[(ri + b.ringN - 1) % b.ringN], mid = b.ring[ri], next = b.ring[(ri + 1) % b.ringN];
+        var ux = b.px[mid] - b.px[prev], uy = b.py[mid] - b.py[prev];
+        var vx = b.px[next] - b.px[mid], vy = b.py[next] - b.py[mid];
+        var turn = Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy);
+        var qx = b.qx[mid] - (b.qx[prev] + b.qx[next]) * 0.5;
+        var qy = b.qy[mid] - (b.qy[prev] + b.qy[next]) * 0.5;
+        var ex = (ux - vx) * 0.5 - (b.shL00 * qx + b.shL01 * qy);
+        var ey = (uy - vy) * 0.5 - (b.shL10 * qx + b.shL11 * qy);
+        var bend = Math.hypot(ex, ey) / b.surfaceSlime.radius;
+        // Ring winding is positive. A single >90-degree convex tip is visible
+        // even after the renderer's two smooth-curve passes.
+        maxTurn = Math.max(maxTurn, turn); maxBend = Math.max(maxBend, bend);
+        if (turn > Math.PI * 0.5 && bend > 0.12) spikes++;
+      }
+      return { maxTurn: maxTurn, maxBend: maxBend, spikes: spikes, width: right - left, height: bottom - top, top: top, bottom: bottom,
         areaRatio: Math.abs(area) * 0.5 / b.restArea, minDet: minDet, folds: folds,
         cellMinDet: cellMinDet, cellFolds: cellFolds,
         terrain: terrain, terrainPenetration: terrainPenetration, penetration: Math.max(0, bottom - floor), finite: finite,
@@ -170,10 +196,15 @@ function scenarioSource(config) {
       return { count: count, penetration: Math.max(0, penetration) };
     }
     var initial = bodyMetrics(b), dt = 1 / config.fps;
+    player._landingFlings = 0;
     player.x = b.cx - PLAYER_W * 0.5 + config.offset;
     player.y = initial.top - PLAYER_H - (config.kind === 'drop' || config.kind === 'living' ? 180 : 4);
     player.vx = 0; player.vy = config.speed;
     player.onGround = false; player.onJello = false;
+    if (config.kind === 'drive') {
+      player.x = b.cx - config.direction * 160 - PLAYER_W * 0.5;
+      player.y = floor - PLAYER_H; player.vy = 0; player.onGround = true;
+    }
     player.renderX = player.x; player.renderY = player.y;
     if (config.kind === 'ceiling') {
       var roofRow = Math.floor(player.y / TILE) - 1;
@@ -191,11 +222,13 @@ function scenarioSource(config) {
     var rigTerrainFrames = 0, ceilingFrames = 0, maxRigPenetration = 0, maxMeshPenetration = 0, minAreaRatio = Infinity, maxAreaRatio = 0;
     var cellAvailable = true, minCellDet = Infinity, maxCellFolds = 0, earlyHullLost = 0, contactHullLost = 0;
     var actionStarted = null, actionReleased = null, repeatCount = 0, maxAway = 0, maxRise = 0, startY = player.y;
+    var maxLoft = 0, maxBodyUpward = 0, maxBend = 0, maxTurn = 0, spikeFrames = 0, worstScore = -1;
     var jitter = [1 / 144, 1 / 30, 1 / 90, 1 / 60, 0.043, 1 / 120];
     if (config.kind === 'raf-jitter') jitter = [1 / 59.8, 1 / 60.2, 1 / 60.1, 1 / 59.9, 1 / 60];
     for (var n = 0; elapsed < config.seconds - 1e-9; n++) {
       dt = Math.min(config.kind === 'irregular' || config.kind === 'raf-jitter' ? jitter[n % jitter.length] : 1 / config.fps, config.seconds - elapsed);
-      keys.ArrowRight = config.kind === 'walkoff' && elapsed >= 1 && elapsed < 2.3;
+      keys.ArrowRight = (config.kind === 'walkoff' && elapsed >= 1 && elapsed < 2.3) || (config.kind === 'drive' && config.direction > 0);
+      keys.ArrowLeft = config.kind === 'drive' && config.direction < 0;
       keys.ArrowUp = config.kind === 'takeoff' && elapsed >= 1 && elapsed < 2;
       if ((keys.ArrowRight || keys.ArrowUp) && actionStarted === null) actionStarted = elapsed;
       if (actionStarted !== null && !player.onJello && actionReleased === null) actionReleased = elapsed;
@@ -205,6 +238,9 @@ function scenarioSource(config) {
         player.vx = 0; player.vy = config.speed; player.onJello = player.onGround = false;
         player._surfaceRigSupported = false; repeatCount++;
       }
+      // A centered load fixture exercises long compression independently of
+      // rolling off an edge. Living rest cases retain ordinary free movement.
+      if (config.kind === 'rest' && !config.living) player.x = b.cx - PLAYER_W * 0.5;
       var oldY = player.y, oldRenderY = player.renderY, oldHull = player.hull;
       player._landingLegacyY = player._landingLegacyV = 0;
       var stepStart = performance.now();
@@ -222,6 +258,20 @@ function scenarioSource(config) {
         ctx = oldCtx; shotIndex++;
       }
       var info = bodyMetrics(b), contact = !!player.onJello, dy = player.y - oldY;
+      maxLoft = Math.max(maxLoft, initial.bottom - info.bottom);
+      maxBodyUpward = Math.max(maxBodyUpward, -info.bodyVY);
+      if (elapsed > 1) {
+        maxBend = Math.max(maxBend, info.maxBend); maxTurn = Math.max(maxTurn, info.maxTurn);
+        if (info.spikes && player.onJello) spikeFrames++;
+      }
+      var score = config.kind === 'drive' ? initial.bottom - info.bottom : info.maxTurn + info.maxBend * 5;
+      if ((config.kind === 'drive' || (config.kind === 'rest' && player.onJello)) && elapsed > 1 && score > worstScore) {
+        worstScore = score;
+        var savedCtx = ctx; ctx = filmCtx; ctx.clearRect(0, 0, film.width, film.height);
+        ctx.save(); ctx.translate(500, 420); ctx.scale(4, 4); ctx.translate(-b.cx, -floor);
+        ctx.fillStyle = '#758270'; ctx.fillRect(b.cx - 125, floor, 250, 10);
+        surfaceSlimeDraw(b); drawPlayer(); ctx.restore(); ctx = savedCtx; shotIndex = 1;
+      }
       var allBodies = bodies.map(bodyMetrics), rigTerrain = rigTerrainMetrics(), allFolds = 0, allCellFolds = 0;
       for (var metric = 0; metric < allBodies.length; metric++) {
         var bm = allBodies[metric];
@@ -256,14 +306,15 @@ function scenarioSource(config) {
       maxRise = Math.max(maxRise, startY - player.y);
       frames.push(Object.assign({ frame: n, t: elapsed, dt: dt, stepMs: stepMs, x: player.x, y: player.y,
         renderY: player.renderY, renderDY: player.renderY - oldRenderY, legacyY: player._landingLegacyY,
-        legacyV: player._landingLegacyV, owned: !!surfaceRigFrame,
+        legacyV: player._landingLegacyV, owned: typeof surfaceRigFrame !== 'undefined' && !!surfaceRigFrame,
         vx: player.vx, vy: player.vy, onJello: contact, onGround: !!player.onGround, onCeiling: !!player.onCeiling,
         hull: player.hull, dy: dy, rigTerrain: rigTerrain.count, rigPenetration: rigTerrain.penetration,
         allFolds: allFolds, allCellFolds: allCellFolds, bodies: allBodies }, info));
     }
-    keys.ArrowRight = keys.ArrowUp = false;
+    keys.ArrowRight = keys.ArrowLeft = keys.ArrowUp = false;
     var tail = frames.filter(function(f) { return f.t > config.seconds - 0.5; });
     return { config: config, initial: initial, summary: { finite: finite, firstContact: firstContact,
+      flings: player._landingFlings, maxLoft: maxLoft, maxBodyUpward: maxBodyUpward, maxBend: maxBend, maxTurn: maxTurn, spikeFrames: spikeFrames,
       contacts: contacts, releases: releases, minHeight: minHeight, maxWidth: maxWidth,
       heightRatio: minHeight / initial.height, widthRatio: maxWidth / initial.width,
       minDet: minDet, maxFolds: maxFolds, terrainHits: terrainHits, maxPenetration: maxPenetration,
@@ -315,8 +366,8 @@ try {
   await game('cancelAnimationFrame(gameRafId); gameRafId = 0;');
   const rates = (process.env.FPS || '30,60,144').split(',').map(Number);
   const speeds = (process.env.SPEEDS || '180,420,700').split(',').map(Number);
-  const configs = process.env.EXTENDED === 'only' ? [] : rates.flatMap(fps => speeds.map(speed => ({ fps, speed, offset: 0, seconds: speed === 700 ? 8 : 5 })));
-  if (process.env.EXTENDED !== 'only') configs.push({ fps: 60, speed: 420, offset: 19, seconds: 5 });
+  const configs = process.env.EXTENDED === 'only' || process.env.CONTACTS === 'only' ? [] : rates.flatMap(fps => speeds.map(speed => ({ fps, speed, offset: 0, seconds: speed === 700 ? 8 : 5 })));
+  if (process.env.EXTENDED !== 'only' && process.env.CONTACTS !== 'only') configs.push({ fps: 60, speed: 420, offset: 19, seconds: 5 });
   if (process.env.EXTENDED) {
     const kinds = ['stack', 'wall', 'ceiling', 'airborne', 'walkoff', 'takeoff', 'repeat', 'irregular', 'drop', 'living', 'raf-jitter'];
     const selected = process.env.CASES ? process.env.CASES.split(',') : kinds;
@@ -325,10 +376,19 @@ try {
       configs.push({ kind, fps: 60, speed: kind === 'drop' || kind === 'living' ? 0 : kind === 'airborne' ? 180 : kind === 'ceiling' ? 700 : 420, offset: 0, seconds: kind === 'repeat' ? 6 : 4 });
     }
   }
+  if (process.env.CONTACTS) {
+    for (const fps of rates) {
+      for (const direction of [-1, 1]) configs.push({ kind: 'drive', living: true, direction, fps, speed: 0, offset: 0, seconds: 4 });
+      for (const [seed, radius, offset] of [[0.15, 22, -8], [0.4, 24, 0], [0.8, 27, 8]]) {
+        configs.push({ kind: 'rest', fps, speed: 180, seed, radius, offset, living: true, seconds: 15 });
+        configs.push({ kind: 'rest', fps, speed: 180, seed, radius, offset: 0, living: false, seconds: 15 });
+      }
+    }
+  }
   const summaries = [], reports = [];
   for (const config of configs) {
     const report = await game(scenarioSource(config));
-    const name = config.kind ? `landing-${config.kind}` : `landing-${config.fps}hz-${config.speed}-${config.offset ? 'edge' : 'center'}`;
+    const name = config.kind ? `landing-${config.kind}${['drive', 'rest'].includes(config.kind) ? '-' + config.fps + '-' + (config.direction || config.radius + (config.living ? '-living' : '-passive')) : ''}` : `landing-${config.fps}hz-${config.speed}-${config.offset ? 'edge' : 'center'}`;
     if (report.film) fs.writeFileSync(path.join(out, name + '.png'), Buffer.from(report.film.split(',')[1], 'base64'));
     delete report.film;
     fs.writeFileSync(path.join(out, name + '.json'), JSON.stringify(report, null, 2));
@@ -336,24 +396,35 @@ try {
     console.log(name, JSON.stringify(report.summary));
   }
   fs.writeFileSync(path.join(out, 'summary.json'), JSON.stringify({ bundle, summaries, errors }, null, 2));
-  assert.ok(reports.every(r => r.summary.finite), 'all rig and mesh states remain finite');
-  assert.ok(reports.every(r => r.summary.terrainHits === 0), 'no gel points end a frame inside terrain');
-  assert.ok(reports.every(r => r.summary.rigTerrainFrames === 0), 'the rig never ends a frame inside terrain');
-  assert.ok(reports.every(r => r.summary.maxFolds === 0), 'no health triangles fold during landing scenarios');
-  assert.ok(reports.every(r => r.summary.cellAvailable && r.summary.maxCellFolds === 0), 'material volume cells are present and never fold');
-  assert.ok(reports.every(r => r.summary.contactHullLost === 0), 'gel contact never inflicts hull damage');
-  assert.ok(reports.filter(r => r.config.kind === 'ceiling').every(r => r.summary.ceilingFrames > 0), 'the rebound actually reaches the low ceiling');
-  assert.ok(reports.every(r => r.summary.contacts > 0), 'every scenario exercises a rig landing');
-  assert.ok(reports.filter(r => !r.config.kind && r.config.offset === 0).every(r => r.summary.earlyHullLost === 0), 'centered initial landings are damage-free');
-  for (const report of reports.filter(r => ['drop', 'living', 'raf-jitter'].includes(r.config.kind))) {
-    assert.ok(report.frames.every(f => Math.abs(f.renderY - f.y) < 0.1), 'fall and rebound share one visible motion timeline');
-    assert.ok(report.frames.every(f => Math.abs(f.legacyY) < 0.01 && Math.abs(f.legacyV) < 0.1), 'legacy hard containment never interrupts the landing');
-  }
-  const steady = reports.find(r => !r.config.kind && r.config.fps === 60 && r.config.speed === 420 && !r.config.offset);
-  const jittered = reports.find(r => r.config.kind === 'raf-jitter');
-  if (steady && jittered) {
-    assert.ok(Math.abs(steady.summary.maxUpward - jittered.summary.maxUpward) < 8, 'small RAF timing jitter does not change rebound strength');
-    assert.ok(Math.abs(steady.summary.minHeight - jittered.summary.minHeight) < 1, 'small RAF timing jitter does not change compression');
+  if (!process.env.DIAGNOSTIC) {
+    assert.ok(reports.every(r => r.summary.finite), 'all rig and mesh states remain finite');
+    assert.ok(reports.every(r => r.summary.terrainHits === 0), 'no gel points end a frame inside terrain');
+    assert.ok(reports.every(r => r.summary.rigTerrainFrames === 0), 'the rig never ends a frame inside terrain');
+    assert.ok(reports.every(r => r.summary.maxFolds === 0), 'no health triangles fold during landing scenarios');
+    assert.ok(reports.every(r => r.summary.cellAvailable && r.summary.maxCellFolds === 0), 'material volume cells are present and never fold');
+    assert.ok(reports.every(r => r.summary.contactHullLost === 0), 'gel contact never inflicts hull damage');
+    assert.ok(reports.filter(r => r.config.kind === 'ceiling').every(r => r.summary.ceilingFrames > 0), 'the rebound actually reaches the low ceiling');
+    assert.ok(reports.filter(r => r.config.kind !== 'drive').every(r => r.summary.contacts > 0), 'every scenario exercises a rig landing');
+    assert.ok(reports.filter(r => !r.config.kind && r.config.offset === 0).every(r => r.summary.earlyHullLost === 0), 'centered initial landings are damage-free');
+    for (const report of reports.filter(r => ['drop', 'living', 'raf-jitter'].includes(r.config.kind))) {
+      assert.ok(report.frames.every(f => Math.abs(f.renderY - f.y) < 0.1), 'fall and rebound share one visible motion timeline');
+      assert.ok(report.frames.every(f => Math.abs(f.legacyY) < 0.01 && Math.abs(f.legacyV) < 0.1), 'legacy hard containment never interrupts the landing');
+    }
+    const steady = reports.find(r => !r.config.kind && r.config.fps === 60 && r.config.speed === 420 && !r.config.offset);
+    const jittered = reports.find(r => r.config.kind === 'raf-jitter');
+    if (steady && jittered) {
+      assert.ok(Math.abs(steady.summary.maxUpward - jittered.summary.maxUpward) < 8, 'small RAF timing jitter does not change rebound strength');
+      assert.ok(Math.abs(steady.summary.minHeight - jittered.summary.minHeight) < 1, 'small RAF timing jitter does not change compression');
+    }
+    for (const report of reports.filter(r => r.config.kind === 'drive')) {
+      assert.ok((report.frames.at(-1).cx - report.initial.cx) * report.config.direction > 100, 'the rig actually pushes the resident along the floor');
+      assert.equal(report.summary.flings, 0, 'ordinary ground driving never triggers a lofted fling');
+      assert.ok(report.summary.maxLoft < 14, 'driving cannot punt a resident into a high airborne arc');
+    }
+    for (const report of reports.filter(r => r.config.kind === 'rest')) {
+      if (!report.config.living || report.config.offset === 0) assert.ok(report.frames.filter(f => f.t > 14).every(f => f.onJello), 'centered seated tests retain the load for 15 seconds');
+      assert.equal(report.summary.spikeFrames, 0, 'loaded skin has no isolated sharp protrusions');
+    }
   }
   if (process.env.PLAYBACK) {
     await game(scenarioSource({ kind: 'living', fps: 60, speed: 0, offset: 0, seconds: 0 }));

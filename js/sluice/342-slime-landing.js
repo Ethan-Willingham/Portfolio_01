@@ -41,6 +41,43 @@
     }
   }
 
+  // Resist single-vertex creases while leaving the broad squash free. The
+  // reference curvature follows the current affine deformation, so spreading
+  // sideways is not pulled back toward a round rest shape. These small shape
+  // corrections move history too; they cannot inject a second rebound impulse.
+  function surfaceSlimeSkinMove(b, i, dx, dy) {
+    if (jelloWorldSolidAt(b.px[i] + dx, b.py[i])) dx = 0;
+    if (jelloWorldSolidAt(b.px[i] + dx, b.py[i] + dy)) dy = 0;
+    b.px[i] += dx; b.ox[i] += dx;
+    b.py[i] += dy; b.oy[i] += dy;
+  }
+
+  function surfaceSlimeSmoothSkin(b, h) {
+    if (!surfaceSlimeRigOwns(b) && !(b._rigRenderT > 0)) return;
+    if (!isFinite(b.shL00 + b.shL01 + b.shL10 + b.shL11)) return;
+    var strength = 1 - Math.exp(-12 * h / JELLO_TIMESCALE);
+    if (!b.skinDX) { b.skinDX = new Float64Array(b.n); b.skinDY = new Float64Array(b.n); }
+    b.skinDX.fill(0); b.skinDY.fill(0);
+    for (var k = 0; k < b.ringN; k++) {
+      var a = b.ring[(k + b.ringN - 1) % b.ringN], c = b.ring[k], d = b.ring[(k + 1) % b.ringN];
+      var qx = b.qx[c] - (b.qx[a] + b.qx[d]) * 0.5;
+      var qy = b.qy[c] - (b.qy[a] + b.qy[d]) * 0.5;
+      var ex = b.px[c] - (b.px[a] + b.px[d]) * 0.5 - b.shL00 * qx - b.shL01 * qy;
+      var ey = b.py[c] - (b.py[a] + b.py[d]) * 0.5 - b.shL10 * qx - b.shL11 * qy;
+      var length = Math.sqrt(ex * ex + ey * ey);
+      var scale = length > 0 ? Math.min(0.5, length * strength / 1.5) / length : 0;
+      var dx = ex * scale, dy = ey * scale;
+      b.skinDX[c] -= dx; b.skinDY[c] -= dy;
+      b.skinDX[a] += dx * 0.5; b.skinDY[a] += dy * 0.5;
+      b.skinDX[d] += dx * 0.5; b.skinDY[d] += dy * 0.5;
+    }
+    // Apply one simultaneous sweep so ring traversal cannot favor a side.
+    for (k = 0; k < b.ringN; k++) {
+      var p = b.ring[k];
+      surfaceSlimeSkinMove(b, p, b.skinDX[p], b.skinDY[p]);
+    }
+  }
+
   // Bound each contact projection before it can mirror an incident cell.
   // A pinched cell keeps its shape; finite contact compliance absorbs the
   // remaining overlap instead of transferring it into a hard rig correction.
@@ -174,6 +211,7 @@
           f.hits++; b._rigHits++;
         }
         surfaceSlimeSolveCells(b, h);
+        surfaceSlimeSmoothSkin(b, h);
         jelloLimitOrientation(b);
         for (var p2 = 0; p2 < b.n; p2++) {
           if (jelloWorldSolidAt(b.px[p2], b.py[p2])) jelloCollidePointWorld(b, p2, h);

@@ -94,7 +94,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.45'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v4.46'; // shown in the engine stats; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -5373,11 +5373,16 @@
   // JELLO_TIMESCALE + JELLO_H into the Verlet prev-position shift; the
   // integrator's JELLO_VMAX clamp is the hard ceiling.
   function jelloPlayerFling(b, frameDt) {
-    if (!player || gameWon || gameOver || drilling) return;
+    if (!player || gameWon || gameOver || drilling || (b.surfaceSlime && surfaceSlimeRigOwns(b))) return;
     var vx = player.vx || 0, vy = player.vy || 0;
+    // Normal ground speed reaches FLING_MIN. A resident's soft, pressurized
+    // skin turns that lofted impulse into a hop on every renewed side contact.
+    // Driving loads it horizontally and gradually, at every ground speed.
+    var drivePush = !!b.surfaceSlime && player.onGround && !player.thrusting && Math.abs(vy) < 60;
+    if (drivePush) vy = 0;
     var sp = Math.sqrt(vx * vx + vy * vy);
     if (sp < JELLO_PUSH_MIN) return;
-    var fling = sp >= JELLO_FLING_MIN;
+    var fling = !drivePush && sp >= JELLO_FLING_MIN;
     if (fling) {
       if (JELLO_FLING <= 0) return;
       // Don't fling while riding on top. onJello flickers true/false every frame on a
@@ -5408,6 +5413,7 @@
       }
     }
     if (!touching) return;
+    if (drivePush) surfaceSlimeDetach(b, 1.1, true);
     // Stamp freshness only while the rig is actually MOVING (v25.31 perf): a
     // rig PARKED against a pile re-stamped every touching body every frame,
     // the chain propagated it pile-wide, and the perpetual freshness disabled
@@ -5461,7 +5467,7 @@
     // velocity, so a rammed body TUMBLES off ("rolls") instead of skating off.
     // |dirx|-scaled: a straight-down dive keeps the v24.94 uniform punch. The push
     // tier takes a quarter of it — a readable forward LEAN while bulldozing.
-    var spinS = (fling ? JELLO_FLING_SPIN : JELLO_FLING_SPIN * 0.25) * (dirx < 0 ? -dirx : dirx);
+    var spinS = drivePush ? 0 : (fling ? JELLO_FLING_SPIN : JELLO_FLING_SPIN * 0.25) * (dirx < 0 ? -dirx : dirx);
     if (spinS > 0.01) {
       var fpy2 = b.py, fT = b.bboxT, fH = b.bboxB - fT;
       if (fH > 4) {
@@ -6079,7 +6085,11 @@
       if (!found) break;                              // no sample inside any ring -> fully contained
       var d = Math.sqrt(bestD2); if (d < 1e-3) d = 1;
       var nx = bnx / d, ny = bny / d;
-      if (_onTop || _onSolid) ny = 0;                  // grounded: eject HORIZONTALLY only (ground probe / floor own vertical)
+      // A departing resident can still graze the outside corner of a track
+      // after the inset landing samples lose it. Keep that last side graze
+      // horizontal; hard vertical ejection must not interrupt the soft exit.
+      var softExit = hitBody && hitBody.surfaceSlime && hitBody._rigRenderT > 0 && player.y < hitBody.cy;
+      if (_onTop || _onSolid || softExit) ny = 0;
       nxL = nx; nyL = ny;
       if (d > deepest) deepest = d;
       var corr = d + MARGIN;
@@ -6809,6 +6819,7 @@
       if (m === 'fem') jelloSolveFEM(b, h); else jelloSolveXPBD(b, h);
       if (b.surfaceSlime) surfaceSlimeSolveCells(b, h);
       if (JELLO_XPBD_SHAPE > 0) jelloShapeMatch(b, JELLO_XPBD_SHAPE);
+      if (b.surfaceSlime) surfaceSlimeSmoothSkin(b, h);
       jelloStrainLimit(b);
       jelloLimitOrientation(b);
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
@@ -8569,6 +8580,7 @@
         if (!b.surfaceSlime || !b._solve || b._grabbed || !b._cHits) continue;
         for (var loadPass = 0; loadPass < 3; loadPass++) {
           surfaceSlimeSolveCells(b, h);
+          surfaceSlimeSmoothSkin(b, h);
           jelloLimitOrientation(b);
           for (var lp = 0; lp < b.n; lp++) {
             if (jelloWorldSolidAt(b.px[lp], b.py[lp])) jelloCollidePointWorld(b, lp, h);
@@ -8790,6 +8802,13 @@
     // frame in solid" impossible; the snapshot is legal by construction.
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
+      // Side containment runs after the material substeps. Its per-point
+      // displacement must also respect cell orientation before rendering.
+      if (b.surfaceSlime && !b._grabbed) {
+        for (var finalSkin = 0; finalSkin < 4; finalSkin++) {
+          if (!jelloLimitOrientation(b)) break;
+        }
+      }
       for (var lz = 0; lz < b.n; lz++) {
         if (jelloWorldSolidAt(b.px[lz], b.py[lz])) {
           // VELOCITY-FREE unclip: reuse the collide's side choice (entry-lock +

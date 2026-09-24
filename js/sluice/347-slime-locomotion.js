@@ -49,14 +49,17 @@
     m.materialAngle += Math.atan2(Math.sin(delta), Math.cos(delta));
   }
 
-  function surfaceSlimeDetach(b, seconds) {
+  function surfaceSlimeDetach(b, seconds, gentle) {
     var m = b && b.surfaceSlime;
     if (!m) return;
+    // Side pushes release the feet without snapping the crawling material's
+    // pressure/stiffness to the passive state. Continue that release on
+    // repeated contact; the substep material blend already provides the decay.
+    if (!m.detach && !gentle) m.motorBlend = 0;
     m.detach = Math.max(m.detach || 0, seconds || 1.3);
     m.anchors.fill(null); m.contacts = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.drive = false;
     m.state = 'tumble'; m.timer = m.detach; m.reorient = true; m.power = 0;
     m.floorY = null; m.edgePause = 0;
-    m.motorBlend = 0;
     b.sleeping = false; b.sleepFrames = 0;
   }
 
@@ -94,7 +97,9 @@
     var touched = b._plyMs && b._plyMs !== m.lastPlayerMs;
     m.lastPlayerMs = b._plyMs;
     if (b._grabbed || b._carried || touched) {
-      surfaceSlimeDetach(b, 1.1);
+      var groundTouch = touched && !b._grabbed && !b._carried && player &&
+        player.onGround && !player.onJello && !player.thrusting && Math.abs(player.vy) < 60;
+      surfaceSlimeDetach(b, 1.1, groundTouch);
     }
     if (m.motorBlend < 0.02 || m.reorient) m.poseAngle = m.materialAngle;
     if (m.detach > 0) { m.drive = false; return; }
