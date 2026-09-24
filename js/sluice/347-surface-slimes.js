@@ -48,7 +48,8 @@
     }
     b.restArea = Math.abs(area) * 0.5;
     b.tileW *= 0.94; b.tileH *= 0.94;
-    jelloComputeRest(b); jelloInstallSpringHealthMesh(b); jelloShadeAnchors(b);
+    jelloComputeRest(b); jelloInstallSpringHealthMesh(b);
+    surfaceSlimeInstallMesh(b); jelloShadeAnchors(b);
     jelloUpdateBody(b, JELLO_H);
     surfaceSlimeMotorInit(b);
     return b;
@@ -218,7 +219,7 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed || surfaceSlimeRigOwns(b)) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);

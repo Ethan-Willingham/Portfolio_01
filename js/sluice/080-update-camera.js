@@ -39,6 +39,7 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
+    surfaceRigFrame = null;
     player.jetForce = 0; // no stale exhaust pressure when an early return freezes the rig
     if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
@@ -873,7 +874,9 @@
     // (No upward clamp — players can fly as high as they want. The world
     //  above the surface is open sky.)
     var capRestY = chimneyCapCatch(player.x, player.y, ny);
-    if (capRestY !== null) {
+    if (surfaceSlimeRigBegin(dt, ny, flyTune.gravity * gravScale)) {
+      // Vertical integration continues with the resident mesh in updateJello.
+    } else if (capRestY !== null) {
       // Perch on the surface fireplace chimney cap (one-way landing ledge).
       player.y = capRestY;
       recordLandingImpact(player.vy, capRestY + PLAYER_H, 'ledge', 0);

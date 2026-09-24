@@ -28,7 +28,10 @@ destinations, with gradual starts, turns and overlapping wall grips. A continuou
 body wave and interpolation between physics ticks keep the outline fluid.
 They sense unsupported edges and turn before pits. A single googly eye follows each
 body, which finds a new underside after rolling and varies its pace and stride.
-Grabs and impacts break their grip. Rocky visitors are capped at two outside
+Grabs and impacts break their grip. Rig landings compress the actual gel mesh
+through shared skin contacts, with local volume preservation and elastic
+recovery. See [SLIME_LANDINGS.md](SLIME_LANDINGS.md) for the contact model and tests.
+Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
 an integrated boiler beneath the basin. Hover the boiler hatch to highlight it,
