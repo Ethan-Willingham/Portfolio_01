@@ -391,7 +391,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(missing, []);
   console.log('Game: clean boot, mining hook, pause/resume, zone progression, shop/death/revive, saved mute and music preference');
-  await page.goto(origin + '/water-smoke-slime.html');
+  await page.goto(origin + '/archive/water-smoke-slime/water-smoke-slime.html');
   await page.waitForFunction(() => window.__toy && window.__toy.stats().fps > 0, null, {timeout:60000});
   await page.evaluate(() => __toy.slime(400, 220));
   await page.waitForTimeout(350);

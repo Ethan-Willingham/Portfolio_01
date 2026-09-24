@@ -39,7 +39,7 @@ use their original sampler because the owner wanted them preserved.
 
 ## Live auditioning
 
-Open `water-smoke-slime.html?smoke=cauldron`. The Smoke menu opens the library.
+Open `archive/water-smoke-slime/water-smoke-slime.html?smoke=cauldron`. The Smoke menu opens the library.
 Idle, Drive and Boost exercise the preview nozzle. The preview rig is a fixture,
 not the game's driving implementation.
 

@@ -58,7 +58,7 @@ try {
   });
   await send('Runtime.enable'); await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
-  await send('Page.navigate',{url:`http://127.0.0.1:${port}/water-smoke-slime.html?smoke=cauldron`});
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/archive/water-smoke-slime/water-smoke-slime.html?smoke=cauldron`});
   for(let i=0;i<200;i++){if(await ev(`!!window.__toy && !!document.getElementById('smoke-family')`))break;await sleep(100);}
   check('rig preview and smoke engine boot',await ev("__toy.stats().scene === 'rig' && __toy.stats().smoke"));
   await game('stopLoop();userPaused=false;');
@@ -130,7 +130,7 @@ try {
   await ev(`__toy.scene('rig');__toy.smokeRigMode('drive');__toy.set('smokePreset','velvet-rope');__toy.pause(false)`);
   await sleep(1800);await screenshot('moving-fluid');console.log('LIVE',await ev('JSON.stringify(__toy.stats())'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await send('Page.navigate',{url:`http://127.0.0.1:${port}/water-smoke-slime.html?smoke=cauldron`});
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/archive/water-smoke-slime/water-smoke-slime.html?smoke=cauldron`});
   for(let i=0;i<200;i++){if(await ev(`!!document.getElementById('smoke-family')`))break;await sleep(100);}
   await sleep(1500);await screenshot('phone-preview');
   check('phone has no horizontal overflow',await ev('document.documentElement.scrollWidth<=innerWidth'));

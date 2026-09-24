@@ -33,7 +33,7 @@ const mode = process.argv.includes('--write') ? 'write'
 
 const root = execSync('git rev-parse --show-toplevel').toString().trim();
 const TOY = `${root}/js/water-smoke-slime.js`;
-const TOY_HTML = `${root}/water-smoke-slime.html`;
+const TOY_HTML = `${root}/archive/water-smoke-slime/water-smoke-slime.html`;
 const SMOKE_SRC = `${root}/js/sluice/190-smoke-webgl.js`;
 const JELLO_SRC = `${root}/js/sluice/340-jello.js`;
 const HEAD_SRC = `${root}/js/sluice/000-head.js`;
