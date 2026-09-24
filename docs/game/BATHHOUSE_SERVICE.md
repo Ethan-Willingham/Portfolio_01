@@ -48,12 +48,13 @@ cluster; later taps seek a lower part of the grate to spread the bed.
 - W: fill the bath from stored water while viewing the bath.
 - Escape: cancel a held coal, otherwise leave the bath.
 
-The room fits the tub and working boiler between compact navigation and the
-water/tool control rail. Since v28.80, a 896 by 256 chamber replaces the narrow
-firebox. The desktop control rail is 80px high, with compact tool switches
-and the water control on one row. Less wall space above the rim gives the
-actual basin more of the viewport. Short landscape screens place the basin and firebox
-beside one another. All actions retain at least 44-pixel-high targets. Fuel,
+The room gives its full height to the bathhouse, with no top or bottom HUD
+bar since v28.84. Navigation buttons mount directly on the timber wall.
+The claw and hose switches sit beside the firebox on desktop, opposite the
+water control and water, temperature and money readings. Narrow screens keep
+these controls directly beneath the firebox. Since v28.80, a 896 by 256 chamber
+replaces the narrow firebox. Short landscape screens place the basin and
+firebox beside one another. Tool and boiler controls retain 44-pixel-high targets. Fuel,
 average exposed air and ash blockage are visible alongside the boiler. The
 main basin spans 26 tiles and retains the original catenary
 formula. Since v28.65, the drawn copper liner is also an analytic collision boundary in
