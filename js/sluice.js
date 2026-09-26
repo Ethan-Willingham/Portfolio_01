@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.101';
+  var GAME_VERSION = 'v28.102';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -14671,6 +14671,32 @@
     }
     c.lineTo(curve.x1 + outset, curve.y0 - 16); c.closePath();
   }
+  function bathDrawDryLiner(c, curve) {
+    // This is the dry copper behind the liquid layer. A flat blue field made
+    // a zero-litre tub look full before the hose had emitted any water.
+    c.save(); c.beginPath(); bathVesselPath(c, curve, 0, 0); c.clip();
+    var shade = c.createLinearGradient(0, curve.y0 - 16, 0, curve.y0 + curve.D);
+    shade.addColorStop(0, BLD.woodDeep); shade.addColorStop(0.5, BLD.woodDark);
+    shade.addColorStop(0.88, BLD.woodBase); shade.addColorStop(1, BLD.woodMid);
+    c.fillStyle = shade; c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    // Joined copper sheets and a few hammer marks read as a solid lining.
+    // They stay fixed when the real water moves across them.
+    for (var panel = 1; panel < 12; panel++) {
+      var x = curve.x0 + (curve.x1 - curve.x0) * panel / 12;
+      var bottom = curve.y0 + curve.depthAt(x);
+      c.strokeStyle = hearthArtColor(BLD.woodDeep, 0.48); c.lineWidth = 2;
+      c.beginPath(); c.moveTo(x, curve.y0 - 16); c.lineTo(x, bottom); c.stroke();
+      c.strokeStyle = hearthArtColor(BLD.woodPale, 0.16); c.lineWidth = 0.8;
+      c.beginPath(); c.moveTo(x + 2, curve.y0 - 16); c.lineTo(x + 2, bottom); c.stroke();
+      for (var mark = 0; mark < 4; mark++) {
+        var px = x - 18 - hearthArtHash(panel * 53 + mark * 11) * 38;
+        var py = curve.y0 + (bottom - curve.y0) * (0.18 + mark * 0.2);
+        c.fillStyle = hearthArtColor(BLD.woodDeep, 0.14); c.fillRect(px, py, 4, 1.5);
+        c.fillStyle = hearthArtColor(BLD.woodPale, 0.10); c.fillRect(px, py + 1.5, 3, 0.8);
+      }
+    }
+    c.restore();
+  }
   function bathDrawVessel(c) {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     var bottom = bathInteriorBottom(), left = cam.x - 2, width = screenW + 4;
@@ -14821,7 +14847,7 @@
     ctx.fillStyle = BLD.woodDark; ctx.fillRect(19 * TILE, floor, 5 * TILE - 24, 18);
     ctx.fillStyle = BLD.woodLight; ctx.fillRect(19 * TILE, floor, 5 * TILE - 24, 3);
     ctx.fillStyle = BLD.woodDeep; ctx.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 24);
-    ctx.fillStyle = BLD.metalDark; ctx.beginPath(); bathVesselPath(ctx, curve, 0, 0); ctx.fill();
+    bathDrawDryLiner(ctx, curve);
   }
   function bathDrawInterior() {
     var ws = dpr * worldScale;
@@ -14857,6 +14883,7 @@
       ctx = c;
       var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
       c.translate(-curve.x0, -curve.y0);
+      bathDrawDryLiner(c, curve);
       bathDrawVessel(c);
       if (typeof bathThermalWarm === 'function') bathThermalWarm(c);
       var b = bathToolBounds(), x = (curve.x0 + curve.x1) / 2, y = curve.y0 - 50;
@@ -15419,7 +15446,7 @@
     hearthButton(ctx, L.water, liquidCatalog[type].name.toUpperCase() + ' / ' + available, 'liquids', true);
     hearthText(ctx, Math.floor(bathWater / 100) + ' L / ' + bathThermalTemperature().toFixed(1) + ' C',
       meter.x + meter.w / 2, meter.y + 9, 12, BLD.cream, 'center');
-    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER',
+    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater <= 0 ? 'EMPTY TUB' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER',
       meter.x + meter.w / 2, meter.y + 25, 10, UIT_DIM, 'center');
     hearthText(ctx, '$' + bathFmtMoney(money), meter.x + meter.w / 2, meter.y + 41, 10, BLD.goldPale, 'center');
     // Transient notices sit on the open wall, only as wide as their text.

@@ -391,7 +391,7 @@
     hearthButton(ctx, L.water, liquidCatalog[type].name.toUpperCase() + ' / ' + available, 'liquids', true);
     hearthText(ctx, Math.floor(bathWater / 100) + ' L / ' + bathThermalTemperature().toFixed(1) + ' C',
       meter.x + meter.w / 2, meter.y + 9, 12, BLD.cream, 'center');
-    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER',
+    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater <= 0 ? 'EMPTY TUB' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER',
       meter.x + meter.w / 2, meter.y + 25, 10, UIT_DIM, 'center');
     hearthText(ctx, '$' + bathFmtMoney(money), meter.x + meter.w / 2, meter.y + 41, 10, BLD.goldPale, 'center');
     // Transient notices sit on the open wall, only as wide as their text.

@@ -16,6 +16,10 @@ outline. Cold charcoal has lighter broken faces against the soot-dark brick;
 the translucent preview carries a cream silhouette, red when it overlaps a
 wall or another piece. Ash keeps its separate pale mineral color.
 
+An empty tub shows dry copper sheets and an EMPTY TUB reading. The lining is
+drawn behind the liquid layer; blue water appears only from actual particles.
+Fresh baths start empty, and the hose supplies their liquid.
+
 > **Loading and arrival (2026-09-20, v28.49).** The initial HTML contains an
 > opaque gunmetal loading screen, a cream SLUICE wordmark and a drill/strata mark.
 > Its segmented rail counts actual settled startup gates, with an explicit

@@ -104,6 +104,10 @@ try {
   await game('bathEnter()'); await sleep(750);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];bathNoticeT=0;updateCamera();render();');
   check('old prepare and guest buttons removed', await game("!hearthButtons.some(b=>['kit','guest'].includes(b.action))"));
+  check('a fresh bath starts with no water or queued fill', await game('bathBasinCount()===0 && bathPour===0 && bathSilos.pending.every(n=>n===0)'));
+  await game('for(var i=0;i<120;i++){bathOperationsTick(1/60);bathToolTick(1/60);}render();');
+  check('idle entry does not populate the tub', await game('bathBasinCount()===0'));
+  await screenshot('dry-copper-basin');
   await game("devMode=false;forgeGive('coal',6);forgeGive('flint',1);cargo.push('amber','amber','methaneice','sulfur','copper','malachite');");
   const stock=await game("hearthMaterialCount('amber')");
   await press(button('fuels'));
