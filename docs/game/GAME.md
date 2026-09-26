@@ -31,7 +31,8 @@ body, which finds a new underside after rolling and varies its pace and stride.
 Grabs and impacts break their grip. This is the restored pre-v28.75 baseline;
 see [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for the rollback and findings.
 An opt-in rig-contact comparison is available at `?softplay=1`, with repeatable
-drops and pushes, an Original switch, and saves disabled. Rocky visitors are capped at two outside
+drops and pushes, an Original switch, and saves disabled. Add `&softhandling=1`
+for the separate grab, swing, and throw comparison. Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
 an integrated boiler beneath the basin. Since v28.74, the firebox, fuel bunker,

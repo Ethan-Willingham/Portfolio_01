@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.109';
+  var GAME_VERSION = 'v28.110';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -67121,9 +67121,11 @@
   // the start of every solver substep and sweep to the result. This closes the
   // endpoint-only hole where a constraint correction could leap across an
   // entire 8px tile and finish in open space on the far side. Clean-path cost is
-  // paid only during the short resilience window.
+  // paid during the short resilience window, or throughout the opt-in material
+  // handling trial, whose release does not use timed shape recovery.
   function jelloResilienceStepBegin(b) {
-    if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive) return false;
+    if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive &&
+        !(typeof softHandlingBody === 'function' && softHandlingBody(b))) return false;
     if (!b._guardPX || b._guardPX.length < b.n) {
       b._guardPX = new Float64Array(b.px.length);
       b._guardPY = new Float64Array(b.py.length);
@@ -67195,7 +67197,8 @@
   // and cannot pump energy; the following swept-point guard keeps the escape
   // path legal. Ordinary Sluice bodies never enter this path.
   function jelloRejectTerrainInside(b) {
-    if (!b._grabbed && !(b._recoverT > 0)) return 0;
+    if (!b._grabbed && !(b._recoverT > 0) &&
+        !(typeof softHandlingBody === 'function' && softHandlingBody(b))) return 0;
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy, n = b.n;
     var minX = 1e18, minY = 1e18, maxX = -1e18, maxY = -1e18, cx = 0, cy = 0;
     for (var i = 0; i < n; i++) {
@@ -68668,6 +68671,7 @@
     // run, so a rig pressed into a sleeping pile stays evicted.
     if (!anySolve) totalSteps = 0;
     if (totalSteps === 0 && typeof softContactClear === 'function') softContactClear();
+    if (typeof softHandlingPrepare === 'function') softHandlingPrepare(totalSteps, h);
     // Dev-only phase timing (v25.41): jello.internal / jello.contact / etc
     // buckets — where does the AWAKE-solver frame go? Emitted via the perfMark
     // now-minus-acc trick; zero cost outside dev mode. (Measured: the contact
@@ -69986,8 +69990,10 @@
      Disposable world: each replay starts with the same resident and rig pose.
      The ordinary game keeps the restored baseline until this trial is chosen. */
   var softPlayEnabled = new URLSearchParams(location.search).get('softplay') === '1';
+  var softPlayHandling = new URLSearchParams(location.search).has('softhandling');
+  if (softPlayEnabled && softPlayHandling) SOFT_CONTACT = true;
   var softPlayReady = false;
-  var softPlayCase = 'center';
+  var softPlayCase = softPlayHandling ? 'free' : 'center';
   var softPlayDrive = 0;
   var softPlayTime = 0;
   var softPlayButtons = [];
@@ -69998,7 +70004,7 @@
     if (!softPlayTerrain) {
       softPlayTerrain = [];
       for (row = Math.max(0, SKY_ROWS - 6); row <= SKY_ROWS + 3; row++) {
-        for (col = DECK_CENTER_COL - 14; col <= DECK_CENTER_COL + 6; col++) {
+        for (col = DECK_CENTER_COL - (softPlayHandling ? 24 : 14); col <= DECK_CENTER_COL + 6; col++) {
           softPlayTerrain.push({ row: row, col: col, tile: JSON.stringify(world[row][col] || null) });
         }
       }
@@ -70015,12 +70021,29 @@
     surfaceSlimeGrabEnd(undefined, true);
     resetJello(); skySlimeReset(); skySlimeNext = 1e9;
     softPlayRestoreTerrain();
+    var origin = DECK_CENTER_COL - (softPlayHandling ? 16 : 4);
+    if (softPlayHandling) {
+      // A level test apron west of town keeps the obstacles clear of buildings.
+      // Foundation tiles use the existing solid face renderer above ground too.
+      for (var col = origin - 7; col <= origin + 8; col++) {
+        world[SKY_ROWS][col] = { type: 'foundation', hp: ORES.foundation.hp };
+        invalidateTerrainAround(SKY_ROWS, col);
+      }
+    }
+    if (softPlayHandling && softPlayCase === 'ledge') {
+      for (var row = SKY_ROWS - 3; row < SKY_ROWS; row++) {
+        world[row][origin + 6] = { type: 'foundation', hp: ORES.foundation.hp };
+        invalidateTerrainAround(row, origin + 6);
+      }
+      world[SKY_ROWS - 1][origin + 3] = { type: 'foundation', hp: ORES.foundation.hp };
+      invalidateTerrainAround(SKY_ROWS - 1, origin + 3);
+    }
     surfaceSlimesSeeded = true;
     softContactClear();
     Object.keys(keys).forEach(function (key) { keys[key] = false; });
     dpad.left = dpad.right = dpad.up = dpad.down = false;
     softPlayDrive = 0; softPlayTime = 0;
-    var x = (DECK_CENTER_COL - 4) * TILE, floor = SKY_ROWS * TILE;
+    var x = origin * TILE, floor = SKY_ROWS * TILE;
     player.x = x - 220; player.y = floor - PLAYER_H;
     player.vx = player.vy = 0; player.onJello = false;
     player.onGround = true; player.thrusting = false; player.thrustSpool = 0;
@@ -70031,10 +70054,15 @@
     player.drillGlideT = 0; player.slideTargetX = null; player.slideAssistT = 0;
     resetFlightBank();
     var b = surfaceSlimeBuild(x, floor - 35, { id: 9001, seed: 0.42, hue: 133 });
+    if (softPlayHandling && softPlayCase === 'pair') {
+      surfaceSlimeBuild(x + 64, floor - 35, { id: 9002, seed: 0.61, hue: 284 });
+    }
     cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.62;
     // Settle only the material before releasing the normal resident brain.
     for (var i = 0; i < 240; i++) updateJello(1 / 120);
-    if (softPlayCase === 'push-left' || softPlayCase === 'push-right') {
+    if (softPlayHandling) {
+      player.x = x - 110; player.y = floor - PLAYER_H;
+    } else if (softPlayCase === 'push-left' || softPlayCase === 'push-right') {
       softPlayDrive = softPlayCase === 'push-left' ? 1 : -1;
       player.x = b.cx - PLAYER_W / 2 - softPlayDrive * 90;
       player.y = floor - PLAYER_H;
@@ -70050,7 +70078,7 @@
     cam.snap = true;
     for (i = 0; i < softPlayButtons.length; i++) {
       var entry = softPlayButtons[i];
-      var on = entry.mode === SOFT_CONTACT;
+      var on = entry.mode === (softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
       entry.button.setAttribute('aria-pressed', on ? 'true' : 'false');
       entry.button.style.background = on ? 'var(--accent)' : 'var(--bg-raised)';
       entry.button.style.color = on ? 'var(--bg-raised)' : 'var(--text)';
@@ -70064,27 +70092,35 @@
       softPlayReady = true;
       var panel = document.createElement('div');
       panel.id = 'soft-contact-playtest';
-      panel.setAttribute('role', 'group'); panel.setAttribute('aria-label', 'Soft slime contact comparison');
+      panel.setAttribute('role', 'group');
+      panel.setAttribute('aria-label', softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
       panel.style.cssText = 'position:absolute;top:10px;left:62px;right:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--bg-raised);border:1px solid var(--rule-strong);font:12px var(--font-mono);color:var(--text);';
-      var title = document.createElement('span'); title.textContent = 'SLIME PLAYTEST';
+      var title = document.createElement('span'); title.textContent = softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
       title.style.marginRight = '6px'; panel.appendChild(title);
       function button(label, action) {
         var el = document.createElement('button'); el.type = 'button'; el.textContent = label;
         el.style.cssText = 'min-height:44px;padding:6px 10px;border:1px solid var(--rule-strong);background:var(--bg-raised);color:var(--text);font:inherit;cursor:pointer;';
         el.addEventListener('click', action); panel.appendChild(el); return el;
       }
-      softPlayButtons.push({ mode: true, button: button('New contacts', function () { SOFT_CONTACT = true; softPlayReset(); }) });
-      softPlayButtons.push({ mode: false, button: button('Original', function () { SOFT_CONTACT = false; softPlayReset(); }) });
+      function choose(mode) {
+        if (softPlayHandling) SOFT_HANDLING = mode;
+        else SOFT_CONTACT = mode;
+        softPlayReset();
+      }
+      softPlayButtons.push({ mode: true, button: button(softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
+      softPlayButtons.push({ mode: false, button: button(softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
       var select = document.createElement('select'); select.setAttribute('aria-label', 'Interaction');
       select.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
-      var cases = [['center','Centered drop'],['left','Left edge drop'],['right','Right edge drop'],['push-left','Push from left'],['push-right','Push from right']];
+      var cases = softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
+        [['center','Centered drop'],['left','Left edge drop'],['right','Right edge drop'],['push-left','Push from left'],['push-right','Push from right']];
       for (var i = 0; i < cases.length; i++) {
         var option = document.createElement('option'); option.value = cases[i][0]; option.textContent = cases[i][1]; select.appendChild(option);
       }
       select.addEventListener('change', function () { softPlayCase = select.value; softPlayReset(); });
       panel.appendChild(select); button('Repeat', softPlayReset);
       var help = document.createElement('span');
-      help.textContent = 'Drive, fly, or drag the slime. Saves are off.';
+      help.textContent = softPlayHandling ? 'Grab different spots, pull, swing, and let go. Saves are off.' :
+        'Drive, fly, or drag the slime. Saves are off.';
       help.style.cssText = 'color:var(--text-dim);flex-basis:100%;line-height:1.5;'; panel.appendChild(help);
       canvas.parentElement.appendChild(panel);
       softPlayReset();
@@ -70095,6 +70131,71 @@
       keys.ArrowLeft = softPlayTime > 0 && softPlayDrive < 0;
       keys.ArrowRight = softPlayTime > 0 && softPlayDrive > 0;
     }
+  }
+  /* ---- Opt-in material handling (?softhandling=1) ----
+     The hand pulls one fixed material patch. Release only removes that force;
+     translation, rotation and deformation keep their simulated velocities. */
+  var SOFT_HANDLING = new URLSearchParams(location.search).get('softhandling') === '1';
+
+  function softHandlingBody(b) { return SOFT_HANDLING && !!b.surfaceSlime; }
+
+  function softHandlingStart(g) {
+    g.physical = SOFT_HANDLING;
+    if (!g.physical) return;
+    g.cursorX = g.x; g.cursorY = g.y;
+    g.stepX = g.stepY = g.handleVX = g.handleVY = 0;
+  }
+
+  // Consume the latest input over the actual simulated interval. Frames with
+  // no gel tick keep the target pending instead of manufacturing a release kick.
+  function softHandlingPrepare(steps, h) {
+    var g = surfaceSlimeGrip;
+    if (!g || !g.physical || !(steps > 0)) return;
+    var dt = h / JELLO_TIMESCALE;
+    g.stepX = (g.x - g.cursorX) / steps;
+    g.stepY = (g.y - g.cursorY) / steps;
+    g.handleVX = g.stepX / dt; g.handleVY = g.stepY / dt;
+  }
+
+  function softHandlingStep(b, h) {
+    var g = surfaceSlimeGrip, dt = h / JELLO_TIMESCALE;
+    g.cursorX += g.stepX; g.cursorY += g.stepY;
+    var x = 0, y = 0, vx = 0, vy = 0, inverse = 0;
+    var invPoint = 1 / SOFT_CONTACT_POINT_MASS;
+    for (var i = 0; i < b.n; i++) {
+      var w = g.weights[i];
+      x += b.px[i] * w; y += b.py[i] * w;
+      vx += (b.px[i] - b.ox[i]) / dt * w;
+      vy += (b.py[i] - b.oy[i]) / dt * w;
+      inverse += invPoint * w * w;
+    }
+    // Implicit spring/damper at the patch. These are the original grip's
+    // whole-body gains, expressed as force with the same mass as rig contact.
+    // Gravity remains active, and damping measures slip relative to the hand.
+    var mass = b.n * SOFT_CONTACT_POINT_MASS;
+    var stiffness = mass * 160, damping = mass * 22;
+    var denominator = 1 + inverse * (stiffness * dt * dt + damping * dt);
+    var fx = (-stiffness * (x - g.cursorX - g.dx) - damping * (vx - g.handleVX)) / denominator;
+    var fy = (-stiffness * (y - g.cursorY - g.dy) - damping * (vy - g.handleVY)) / denominator;
+    var force = Math.hypot(fx, fy), cap = mass * 7000;
+    if (force > cap) { fx *= cap / force; fy *= cap / force; }
+    for (i = 0; i < b.n; i++) {
+      var amount = invPoint * g.weights[i] * dt * dt;
+      b.px[i] += fx * amount; b.py[i] += fy * amount;
+    }
+    b._grabApplied = 1; b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now();
+  }
+
+  // The guard rejects the entire displacement of an invalid substep. Its
+  // accepted velocity is therefore zero, including for a peer rolled back by
+  // the same event. Keeping either candidate or pre-step velocity would bank
+  // invisible motion while the body is parked at an obstacle, then launch it
+  // on release. Ordinary valid deformation and contact retain their history.
+  function jelloGrabRejectStep(b) {
+    var g = surfaceSlimeGrip;
+    if (!g || !g.physical) return;
+    for (var i = 0; i < b.n; i++) { b.ox[i] = b.px[i]; b.oy[i] = b.py[i]; }
+    b._handRejects = (b._handRejects || 0) + 1;
   }
   /* =====================================================================
      SLIME NPCS (v26.69). The wild-slime brain: every activated world slime
@@ -72335,6 +72436,7 @@
       for (k = 0; k < b.n; k++) { weights[k] /= total; ax += b.px[k] * weights[k]; ay += b.py[k] * weights[k]; }
       surfaceSlimeGrip = { body: b, id: id, weights: weights, x: wx, y: wy,
         dx: ax - wx, dy: ay - wy, vx: 0, vy: 0, t: performance.now(), motion: 0 };
+      softHandlingStart(surfaceSlimeGrip);
       surfaceSlimeDetach(b);
       b._grabbed = true; b._recoverT = 0; b.sleeping = false; b.sleepFrames = 0;
       jelloClearActorIntent(b); b.surfaceSlime.state = 'tumble';
@@ -72359,8 +72461,9 @@
     var g = surfaceSlimeGrip;
     if (!g || (id !== undefined && id !== g.id)) return false;
     var b = g.body;
-    b._grabbed = false; b._grabApplied = 0; b._recoverT = 1.2;
-    if (!cancel && performance.now() - g.motion < 100 && Math.hypot(g.vx, g.vy) > 50) {
+    b._grabbed = false; b._grabApplied = 0; b._recoverT = g.physical ? 0 : 1.2;
+    if (g.physical) surfaceSlimeSnapshot(b);
+    if (!g.physical && !cancel && performance.now() - g.motion < 100 && Math.hypot(g.vx, g.vy) > 50) {
       jelloLaunchBody(b, g.vx * 0.7, g.vy * 0.7, { h: jelloStepH || JELLO_H, maxSpeed: 450 });
     }
     b._plyMs = performance.now(); surfaceSlimeGrip = null;
@@ -72370,6 +72473,7 @@
   function jelloGrabSubstep(b, h) {
     var g = surfaceSlimeGrip;
     if (!g || g.body !== b || !b._grabbed) return;
+    if (g.physical) { softHandlingStep(b, h); return; }
     var ts = JELLO_TIMESCALE, x = 0, y = 0, vx = 0, vy = 0;
     for (var i = 0; i < b.n; i++) {
       var w = g.weights[i];

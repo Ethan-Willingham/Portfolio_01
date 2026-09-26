@@ -21,6 +21,7 @@
       for (k = 0; k < b.n; k++) { weights[k] /= total; ax += b.px[k] * weights[k]; ay += b.py[k] * weights[k]; }
       surfaceSlimeGrip = { body: b, id: id, weights: weights, x: wx, y: wy,
         dx: ax - wx, dy: ay - wy, vx: 0, vy: 0, t: performance.now(), motion: 0 };
+      softHandlingStart(surfaceSlimeGrip);
       surfaceSlimeDetach(b);
       b._grabbed = true; b._recoverT = 0; b.sleeping = false; b.sleepFrames = 0;
       jelloClearActorIntent(b); b.surfaceSlime.state = 'tumble';
@@ -45,8 +46,9 @@
     var g = surfaceSlimeGrip;
     if (!g || (id !== undefined && id !== g.id)) return false;
     var b = g.body;
-    b._grabbed = false; b._grabApplied = 0; b._recoverT = 1.2;
-    if (!cancel && performance.now() - g.motion < 100 && Math.hypot(g.vx, g.vy) > 50) {
+    b._grabbed = false; b._grabApplied = 0; b._recoverT = g.physical ? 0 : 1.2;
+    if (g.physical) surfaceSlimeSnapshot(b);
+    if (!g.physical && !cancel && performance.now() - g.motion < 100 && Math.hypot(g.vx, g.vy) > 50) {
       jelloLaunchBody(b, g.vx * 0.7, g.vy * 0.7, { h: jelloStepH || JELLO_H, maxSpeed: 450 });
     }
     b._plyMs = performance.now(); surfaceSlimeGrip = null;
@@ -56,6 +58,7 @@
   function jelloGrabSubstep(b, h) {
     var g = surfaceSlimeGrip;
     if (!g || g.body !== b || !b._grabbed) return;
+    if (g.physical) { softHandlingStep(b, h); return; }
     var ts = JELLO_TIMESCALE, x = 0, y = 0, vx = 0, vy = 0;
     for (var i = 0; i < b.n; i++) {
       var w = g.weights[i];

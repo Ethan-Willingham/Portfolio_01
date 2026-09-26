@@ -4425,9 +4425,11 @@
   // the start of every solver substep and sweep to the result. This closes the
   // endpoint-only hole where a constraint correction could leap across an
   // entire 8px tile and finish in open space on the far side. Clean-path cost is
-  // paid only during the short resilience window.
+  // paid during the short resilience window, or throughout the opt-in material
+  // handling trial, whose release does not use timed shape recovery.
   function jelloResilienceStepBegin(b) {
-    if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive) return false;
+    if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive &&
+        !(typeof softHandlingBody === 'function' && softHandlingBody(b))) return false;
     if (!b._guardPX || b._guardPX.length < b.n) {
       b._guardPX = new Float64Array(b.px.length);
       b._guardPY = new Float64Array(b.py.length);
@@ -4499,7 +4501,8 @@
   // and cannot pump energy; the following swept-point guard keeps the escape
   // path legal. Ordinary Sluice bodies never enter this path.
   function jelloRejectTerrainInside(b) {
-    if (!b._grabbed && !(b._recoverT > 0)) return 0;
+    if (!b._grabbed && !(b._recoverT > 0) &&
+        !(typeof softHandlingBody === 'function' && softHandlingBody(b))) return 0;
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy, n = b.n;
     var minX = 1e18, minY = 1e18, maxX = -1e18, maxY = -1e18, cx = 0, cy = 0;
     for (var i = 0; i < n; i++) {
@@ -5972,6 +5975,7 @@
     // run, so a rig pressed into a sleeping pile stays evicted.
     if (!anySolve) totalSteps = 0;
     if (totalSteps === 0 && typeof softContactClear === 'function') softContactClear();
+    if (typeof softHandlingPrepare === 'function') softHandlingPrepare(totalSteps, h);
     // Dev-only phase timing (v25.41): jello.internal / jello.contact / etc
     // buckets — where does the AWAKE-solver frame go? Emitted via the perfMark
     // now-minus-acc trick; zero cost outside dev mode. (Measured: the contact

@@ -140,3 +140,52 @@ It writes reports and actual-render image strips under `/tmp`, including both
 rig-perimeter and reverse skin-inside-hull penetration. Numerical safeguards
 are admission criteria for playtesting, not evidence that the new feel is
 preferred. Keep the default baseline until that preference is established.
+
+## Material handling comparison (v28.110)
+
+Open `grand-motherload.html?softplay=1&softhandling=1` for the next comparison.
+**New handling** and **Original handling** hold the v28.98 contact experiment
+constant, changing only the grab/release path. The original contact comparison
+URL and ordinary default game remain unchanged. Both playgrounds disable saves.
+
+The three arrangements are **Lift and throw**, **Ledge and wall**, and
+**Two slimes**, on a level apron west of town with visible foundation obstacles.
+They provide loose residents to manipulate directly. Try lifting
+from the middle, pulling an edge, swinging, changing direction, stopping the
+hand before release, and pressing against the wall. Repeat restores the local
+terrain, residents, rig, and inputs.
+
+The new hand applies an implicit spring/damper to the same fixed, weighted
+material patch as the original grip. It uses the original whole-body spring
+and damping gains with the same point mass as rig contact. Damping measures
+motion relative to the moving hand. Input targets advance through the actual
+gel substeps, including queued input on display frames without a gel tick.
+Gravity continues to act while held. The rest of the body follows through its
+existing springs, which lets an off-center pull supply torque.
+
+Release and cancellation remove the attachment without changing any node
+position or velocity history. They do not call the cursor-velocity launch
+helper or start the original 1.2-second rest-shape recovery. Resetting only the
+render snapshot prevents the switch from held to interpolated drawing from
+jumping backward. Swept terrain and enclosure checks operate independently
+of shape recovery in the experiment. If a grip step is geometrically rejected,
+all its positions return to their previous legal pose and velocity history is
+set to that same pose. This conservative fallback discards the blocked step's
+motion. Preserving previous or candidate velocity while every node stands
+still would store an invisible throw. Valid steps retain their ordinary motion.
+
+The baseline motor detachment, genuine inversion recovery, material settings,
+world contacts, jets, water behavior, and hard circular visitors are retained.
+This is a handling experiment, not a replacement for the creature's locomotion.
+`tools/test-soft-handling.mjs` compares release continuity, swing and stretch,
+wall contacts, frame rates, and real mouse/touch interactions. Playtesting
+still decides whether the response feels better.
+
+The handling solver passed 42 matched cases at 30, 60, and 144 Hz, plus 12
+mouse/touch interactions across both modes and all three arrangements. Release
+changed no node position or velocity history. Wall tests confirmed actual
+contact and caught a rejected-step defect: a stationary held body retained
+roughly 300 px/s of invisible motion. After the history fix, the stationary
+wall hold releases at zero velocity at all three rates. Off-center swings
+retain their simulated spin. These checks establish continuity and safety;
+they do not establish a preferred feel or identical trajectories across rates.
