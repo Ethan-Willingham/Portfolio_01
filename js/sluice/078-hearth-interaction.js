@@ -166,7 +166,7 @@
   function hearthDrawFuelRack(c, L) {
     if (!hearthHand.rack) return;
     var r = hearthFuelRackRect(L); hearthPlate(c, r, true);
-    hearthText(c, 'FUEL & MINERALS', r.x + 12, r.y + 25, 11, BLD.cream);
+    hearthText(c, hearthDevSupplies() ? 'UNLIMITED MATERIALS' : 'FUEL & MINERALS', r.x + 12, r.y + 25, 11, BLD.cream);
     hearthButton(c, { x: r.x + r.w - 82, y: r.y + 4, w: 76, h: 44 }, 'TONGS', 'hand', hearthHand.mode === 'hand');
     var cw = (r.w - 24) / 3, first = hearthHand.rackPage * 6;
     for (var i = 0; i < 6 && first + i < HEARTH_MATERIAL_ORDER.length; i++) {

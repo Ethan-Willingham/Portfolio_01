@@ -88,9 +88,12 @@ available by immediate scrolling. Without purchased upper floors, wheel and drag
 gestures leave the bath fixed. There is no separate boiler screen or camera transition.
 
 Enable dev mode with backtick, including inside the banya, or load `?dev=1`.
-Fuel, liquid, flint and steel are available without limit. Dev placement and
-pouring leave real stock and cargo unchanged. Supplies return to their ordinary
-counts when dev mode is turned off. Created particles and physical fuel still
+Coal, methane ice, amber, sulfur, copper and malachite are all available without
+limit, alongside liquids, flint and steel. The desktop material control reads
+MATERIALS / UNLIMITED in dev mode; its rack lists every item as FREE under
+UNLIMITED MATERIALS. Dev placement and pouring leave real stock and cargo
+unchanged. Supplies return to their ordinary counts when dev mode is turned off.
+Created particles and physical fuel still
 follow the simulation and save rules. Dev material cannot refund itself into
 real stock after reloading. Prepare and Guest buttons and their T/G shortcuts
 have been removed. The older console fixture actions remain for test harnesses.

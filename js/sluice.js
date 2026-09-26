@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.107';
+  var GAME_VERSION = 'v28.108';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -19205,7 +19205,7 @@
   function hearthDrawFuelRack(c, L) {
     if (!hearthHand.rack) return;
     var r = hearthFuelRackRect(L); hearthPlate(c, r, true);
-    hearthText(c, 'FUEL & MINERALS', r.x + 12, r.y + 25, 11, BLD.cream);
+    hearthText(c, hearthDevSupplies() ? 'UNLIMITED MATERIALS' : 'FUEL & MINERALS', r.x + 12, r.y + 25, 11, BLD.cream);
     hearthButton(c, { x: r.x + r.w - 82, y: r.y + 4, w: 76, h: 44 }, 'TONGS', 'hand', hearthHand.mode === 'hand');
     var cw = (r.w - 24) / 3, first = hearthHand.rackPage * 6;
     for (var i = 0; i < 6 && first + i < HEARTH_MATERIAL_ORDER.length; i++) {
@@ -19439,7 +19439,7 @@
     if (k === '`' || k === '~') {
       if (!e.repeat && !bathFading) {
         hearthCancelDrag(); setDevMode(!devMode);
-        bathSetNotice(devMode ? 'Dev mode: unlimited coal, water and flint.' : 'Dev mode off. Using your stored supplies.');
+        bathSetNotice(devMode ? 'Dev mode: unlimited fuels, minerals, liquids and ignition tools.' : 'Dev mode off. Using your stored supplies.');
       }
       return true;
     }
@@ -19740,8 +19740,9 @@
       hearthButtons.push(Object.assign({ action: 'pump' }, r)); return;
     }
     hearthDrawCoal(c, hearthHandPreview(), ix, iy - 2, 0.48, hearthToolTime);
-    var def = hearthMaterial(hearthHand.material), count = hearthDevSupplies() ? 'FREE' : hearthMaterialCount(hearthHand.material);
-    var label = r.w >= 124 ? def.label.toUpperCase() : 'FUEL';
+    var def = hearthMaterial(hearthHand.material), unlimited = hearthDevSupplies();
+    var count = unlimited ? (r.w >= 124 ? 'UNLIMITED' : 'FREE') : hearthMaterialCount(hearthHand.material);
+    var label = r.w >= 124 ? (unlimited ? 'MATERIALS' : def.label.toUpperCase()) : 'FUEL';
     hearthText(c, label, r.x + r.w - 7, iy - 8, 11, BLD.cream, 'right');
     hearthText(c, count + '  >', r.x + r.w - 7, iy + 9, 11, BLD.goldPale, 'right');
     hearthButtons.push(Object.assign({ action: 'fuels' }, r));

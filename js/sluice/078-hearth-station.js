@@ -98,8 +98,9 @@
       hearthButtons.push(Object.assign({ action: 'pump' }, r)); return;
     }
     hearthDrawCoal(c, hearthHandPreview(), ix, iy - 2, 0.48, hearthToolTime);
-    var def = hearthMaterial(hearthHand.material), count = hearthDevSupplies() ? 'FREE' : hearthMaterialCount(hearthHand.material);
-    var label = r.w >= 124 ? def.label.toUpperCase() : 'FUEL';
+    var def = hearthMaterial(hearthHand.material), unlimited = hearthDevSupplies();
+    var count = unlimited ? (r.w >= 124 ? 'UNLIMITED' : 'FREE') : hearthMaterialCount(hearthHand.material);
+    var label = r.w >= 124 ? (unlimited ? 'MATERIALS' : def.label.toUpperCase()) : 'FUEL';
     hearthText(c, label, r.x + r.w - 7, iy - 8, 11, BLD.cream, 'right');
     hearthText(c, count + '  >', r.x + r.w - 7, iy + 9, 11, BLD.goldPale, 'right');
     hearthButtons.push(Object.assign({ action: 'fuels' }, r));

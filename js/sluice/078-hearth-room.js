@@ -150,7 +150,7 @@
     if (k === '`' || k === '~') {
       if (!e.repeat && !bathFading) {
         hearthCancelDrag(); setDevMode(!devMode);
-        bathSetNotice(devMode ? 'Dev mode: unlimited coal, water and flint.' : 'Dev mode off. Using your stored supplies.');
+        bathSetNotice(devMode ? 'Dev mode: unlimited fuels, minerals, liquids and ignition tools.' : 'Dev mode off. Using your stored supplies.');
       }
       return true;
     }

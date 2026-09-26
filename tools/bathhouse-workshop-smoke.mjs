@@ -124,6 +124,25 @@ try {
   check('selecting the dev hose keeps its valve closed', await game('bathBasinCount()===0&&!bathTool.valve&&!bathTool.spraying'));
   await game('bathToolReset();bathSiloReset();render();');
   await screenshot('dry-copper-basin');
+  await game('forgeResourcesReset();cargo=[];hearthReset();render();');
+  const devStock = await game('JSON.stringify({stock:forgeStock,cargo:cargo})');
+  check('dev materials begin with no earned inventory', await game('HEARTH_MATERIAL_ORDER.every(id=>forgeStock[id]===0)&&cargo.length===0'));
+  const devDrop = '(function(){var r=hearthRoomLayout().box;return {x:r.x+r.w/2-14,y:r.y+r.h*.3+16};})()';
+  for (const id of await game('HEARTH_MATERIAL_ORDER')) {
+    await press(button('fuels'));
+    if (id === 'coal') await screenshot('unlimited-material-rack');
+    await press(button('fuel:' + id));
+    for (let repeat=0; repeat<2; repeat++) {
+      await press(devDrop);
+      const placed = await game('hearthBeds.boiler.chunks[0]');
+      check('dev places ' + id + ' from zero stock, pass ' + (repeat+1), placed?.material===id&&placed.devSupplied);
+      await game('hearthReset();render();');
+    }
+  }
+  check('all dev materials preserve real stock and cargo', await game('JSON.stringify({stock:forgeStock,cargo:cargo})')===devStock);
+  await game('setDevMode(false);render();');
+  await press(devDrop);
+  check('turning dev off restores normal material availability', await game('!hearthBeds.boiler.chunks.length&&HEARTH_MATERIAL_ORDER.every(id=>hearthMaterialCount(id)===0)'));
   await game("devMode=false;forgeGive('coal',6);forgeGive('flint',1);cargo.push('amber','amber','methaneice','sulfur','copper','malachite');");
   const stock=await game("hearthMaterialCount('amber')");
   await press(button('fuels'));
