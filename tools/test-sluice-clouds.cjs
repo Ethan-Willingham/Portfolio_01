@@ -28,7 +28,8 @@ const root = path.resolve(__dirname, '..');
 const decor = fs.readFileSync(path.join(root, 'js/sluice/170-render-station-decor.js'), 'utf8');
 const weatherSource = fs.readFileSync(path.join(root, 'js/sluice/155-weather.js'), 'utf8');
 const exposed = ['weatherInitSprites', 'weatherBakeSprite', 'drawWeatherClouds', 'CLOUD_CLASSES',
-  'CLOUD_VARIANTS', 'cloudSprites', 'weather', 'weatherTune'];
+  'CLOUD_VARIANTS', 'cloudSprites', 'weather', 'weatherTune', 'weatherBakeWorkerFailed',
+  'weatherBuildSprite', 'weatherBuildVeil', 'veilTile'];
 const accessors = exposed.map(n => `Object.defineProperty(globalThis, '${n}', {
   get: function() { return ${n}; }, set: function(v) { ${n} = v; }
 });`).join('\n');
@@ -84,3 +85,41 @@ c.weatherTune.enabled = 0;
 draw();
 assert.equal(drawn.length, beforeDisable, 'Weather off does no cloud drawing');
 console.log('Cloud raster, deterministic geometry, cache reuse, live colour, morph fairness and disable checks passed.');
+
+// A completed worker job should dispatch its successor during loading without
+// needing another render. Keep a single outstanding request, as a real worker
+// does, and use the actual numeric builders for its reply.
+let worker, pending = null;
+c.performance = { now: () => 0 };
+c.URL = { createObjectURL: () => 'blob:cloud-test', revokeObjectURL() {} };
+c.Blob = function () {};
+c.Worker = function () {
+  worker = this;
+  this.postMessage = request => { assert.equal(pending, null, 'Only one cloud bake is in flight'); pending = request; };
+  this.terminate = () => { pending = null; };
+};
+function reply() {
+  const p = pending;
+  assert(p, 'A worker request is pending');
+  pending = null;
+  const data = p.veil ? c.weatherBuildVeil(p.w, p.h) : c.weatherBuildSprite(p.c, p.vi, p.softness, p.rim, p.morph);
+  worker.onmessage({ data });
+}
+c.weatherBakeWorkerFailed = false;
+c.weatherTune.enabled = 1;
+c.introPhase = 'warmup';
+c.weatherInitSprites();
+draw();
+let completed = 0;
+while (pending && completed < 30) { reply(); completed++; }
+assert.equal(completed, c.CLOUD_CLASSES.length * c.CLOUD_VARIANTS + 1, 'One draw starts the entire loading cast and veil');
+assert.equal(pending, null, 'Worker stops after the loading cast is complete');
+assert(c.cloudSprites.every(row => row.every(s => s.ready && !s.dirty)) && c.veilTile.ready && !c.veilTile.dirty);
+c.weatherInitSprites();
+draw();
+c.introPhase = 'done';
+reply();
+assert.equal(pending, null, 'Revealed gameplay does not chain background jobs');
+draw();
+assert(pending, 'Live weather still dispatches the next bake when rendered');
+console.log('Cloud loading drains the worker queue between frames and preserves live pacing.');

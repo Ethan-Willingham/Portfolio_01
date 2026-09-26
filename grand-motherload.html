@@ -21,6 +21,8 @@
   <!-- Preload the HUD mono (Commit Mono) so the canvas readouts are crisp from the first frame. -->
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/commit_mono_bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/images/moon.jpg" as="image">
+  <link rel="preload" href="kit.css" as="style">
   <meta property="og:title" content="Sluice">
   <meta property="og:description" content="My 2D mining game, free forever and playable right here in your browser. Drill deep, collect ore, upgrade your rig, push your luck.">
   <meta property="og:type" content="website">
@@ -35,7 +37,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.99">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.100">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -691,7 +693,7 @@
       }
       function collectResources() {
         run.resources = performance.getEntriesByType('resource').filter(function (r) {
-          return /\/(js\/(sluice|liquid-wgpu|smoke-wgpu|jello-wgpu|audio|smoke-presets)\.js|assets\/fonts\/commit_mono|assets\/images\/moon\.jpg)/.test(r.name);
+          return /\/(js\/(sluice|liquid-wgpu|smoke-wgpu|fire-wgpu|jello-wgpu|audio|smoke-presets)\.js|assets\/fonts\/commit_mono|assets\/images\/moon\.jpg)/.test(r.name);
         }).map(function (r) { return { file: new URL(r.name).pathname, durationMs: Math.round(r.duration), bytes: r.encodedBodySize }; });
       }
       function finish(callback) {
@@ -913,12 +915,12 @@
       });
     })();
   </script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.99"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.99"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.99"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.99"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.99"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.99"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.99"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.100"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.100"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.100"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.100"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.100"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.100"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.100"></script>
 </body>
 </html>

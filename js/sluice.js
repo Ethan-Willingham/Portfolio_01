@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.99';
+  var GAME_VERSION = 'v28.100';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -4928,6 +4928,14 @@
     }
     var water = liquidWGPU;
     loadingTask('moon', 'running', 'Loading and decoding assets/images/moon.jpg.');
+    // The procedural moon is already drawable. Fetch the texture in parallel,
+    // but never hold terrain and shader preparation behind decorative art.
+    function moonReady() {
+      loadingTask('moon', moonImageReady ? 'done' : 'fallback', moonImageReady ?
+        'Moon image decoded: ' + moonTexW + 'x' + moonTexH + '.' :
+        'Using the procedural moon disc. The texture will appear when available.');
+    }
+    Promise.resolve(moonImagePromise).then(moonReady, moonReady);
     loadingTask('water', 'running', 'Waiting for the water backend and its startup checks.');
     loadingTask('fire', 'running', 'Waiting for the shared water GPU device.');
     var waterReady = loadingAsset('water', water && water.readyPromise, 8000, function () {
@@ -4954,11 +4962,9 @@
       fireReady,
       fontReady('font-regular', '400 14px "Commit Mono"'),
       fontReady('font-bold', '700 24px "Commit Mono"'),
-      loadingAsset('moon', moonImagePromise, 5000, function () {
-        return { ok: moonImageReady, detail: moonImageReady ? 'Moon image decoded: ' + moonTexW + 'x' + moonTexH + '.' : 'Using the procedural moon disc.' };
-      }),
       waterReady
     ]).then(function () {
+      moonReady();
       gameLoadingAssetsReady = true;
       introSettledFrames = 0;
       loadingTask('scene', 'running', 'Preparing terrain, clouds, water, and scenery at the destination.');
@@ -5155,8 +5161,9 @@
     return canvas.width + ':' + canvas.height + ':' + dpr * worldScale + ':' + TERRAIN_CHUNK_RENDER_SCALE;
   }
 
-  // One representative draw per frame keeps the loading report responsive.
-  // Each pass restores borrowed world state before yielding back to the browser.
+  // Batch cheap draws within 4 ms, up to four per frame. Slow passes still
+  // yield individually; every pass restores borrowed world state before the
+  // next one. This keeps the report responsive without 29 mandatory frames.
   function prepareShaderWarmup() {
     var key = shaderWarmKey();
     if (shaderWarmState && shaderWarmState.key === key && shaderWarmState.done) {
@@ -5184,7 +5191,7 @@
       }
       var warm = document.createElement('canvas');
       warm.width = canvas.width + 2; warm.height = canvas.height + 2;
-      shaderWarmState = { key: key, ms: 0, passes: 0, attempted: 0, total: jobs.length, errors: [], times: {},
+      shaderWarmState = { key: key, ms: 0, passes: 0, attempted: 0, batches: 0, total: jobs.length, errors: [], times: {},
         jobs: jobs, canvas: warm, context: warm.getContext('2d'), done: false, generation: gameLoadingGeneration };
       window.__shaderWarm = shaderWarmState;
       loadingTask('shaders', 'running', 'Preparing rig, terrain, weather, slime, and menu drawing programs.', { done: 0, total: jobs.length, unit: 'draws' });
@@ -5195,20 +5202,25 @@
       state.errors.push('Warm-up canvas unavailable; drawing programs will compile during play.');
       state.done = true;
     } else {
-      var job = state.jobs[state.attempted];
-      ctx = state.context;
-      ctx.save();
-      try {
-        job.draw(dpr * worldScale, job.round ? 0.37 : 0, job.round ? 0.21 : 0);
-        state.passes++;
-      } catch (e) {
-        state.errors.push(job.name + ': ' + e);
-      } finally {
-        ctx.restore(); ctx = mainCtx;
-      }
-      state.attempted++;
-      state.times[job.name] = Math.round((state.times[job.name] || 0) + performance.now() - t0);
-      state.done = state.attempted === state.total;
+      var batch = 0, job;
+      do {
+        job = state.jobs[state.attempted];
+        var drawStart = performance.now();
+        ctx = state.context;
+        ctx.save();
+        try {
+          job.draw(dpr * worldScale, job.round ? 0.37 : 0, job.round ? 0.21 : 0);
+          state.passes++;
+        } catch (e) {
+          state.errors.push(job.name + ': ' + e);
+        } finally {
+          ctx.restore(); ctx = mainCtx;
+        }
+        state.attempted++; batch++;
+        state.times[job.name] = Math.round((state.times[job.name] || 0) + performance.now() - drawStart);
+        state.done = state.attempted === state.total;
+      } while (!state.done && batch < 4 && performance.now() - t0 < 4);
+      state.batches++;
       loadingTask('shaders', 'running', 'Drew ' + job.name + (job.round ? ' at a moving edge.' : '.') +
         (state.done ? ' Flushing the warm-up canvas.' : ' Next: ' + state.jobs[state.attempted].name + '.'),
         { done: state.attempted, total: state.total, unit: 'draws' });
@@ -35300,7 +35312,9 @@
         try {
           var tc = document.createElement('canvas');
           tc.width = img.width; tc.height = img.height;
-          var tg = tc.getContext('2d');
+          // This scratch canvas only supplies CPU pixels. Avoid uploading to
+          // the GPU and then waiting on its queue just to read them back.
+          var tg = tc.getContext('2d', { willReadFrequently: true });
           tg.drawImage(img, 0, 0);
           moonTexData = tg.getImageData(0, 0, img.width, img.height).data;
           moonTexW = img.width; moonTexH = img.height;
@@ -35744,7 +35758,6 @@
 
     if (clipNeeded) ctx.restore();
   }
-
   /* ====== WEATHER: clouds, precipitation, storms ====== */
   // Full dynamic above-ground weather. Three subsystems share one mood-driven
   // state machine:
@@ -36126,6 +36139,11 @@
           target.ready = true; target.recolorDirty = true;
           target.dirty = !job.veil && (job.key !== cloudBakeKey || job.morph !== cloudMorphBucket);
           weatherBakePending = null;
+          // The loading cover needs the whole cast. Keep the worker busy
+          // between frames instead of paying a frame of idle time per image.
+          // Live weather retains its usual one-dispatch-per-draw pacing.
+          if (typeof introPhase !== 'undefined' && introPhase === 'warmup' &&
+              weatherTune.enabled && !PERF_DISABLE_WEATHER && weather.cov >= 0.02) weatherQueueNextBake();
         };
         weatherBakeWorker.onerror = function (event) { event.preventDefault(); weatherStopBakeWorker(); };
         weatherBakeWorker.onmessageerror = weatherStopBakeWorker;
@@ -36146,6 +36164,19 @@
         rim: weatherTune.rimGlow, morph: weather.morph });
     } catch (e) { weatherStopBakeWorker(); return false; }
     return true;
+  }
+
+  function weatherQueueNextBake() {
+    var bakeCount = CLOUD_CLASSES.length * CLOUD_VARIANTS;
+    for (var bi = 0; bi < bakeCount; bi++) {
+      var slot = (cloudBakeCursor + bi) % bakeCount;
+      var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
+      if (cloudSprites[bc][bv].dirty) {
+        if (weatherQueueBake(bc, bv)) cloudBakeCursor = (slot + 1) % bakeCount;
+        return;
+      }
+    }
+    if (veilTile.dirty) weatherQueueBake(-1, 0);
   }
 
   function wMix(a, b, t) {
@@ -36455,18 +36486,7 @@
         for (var mv = 0; mv < CLOUD_VARIANTS; mv++) cloudSprites[mc][mv].dirty = true;
       }
     }
-    var baked = false;
-    var bakeCount = CLOUD_CLASSES.length * CLOUD_VARIANTS;
-    for (var bi = 0; bi < bakeCount; bi++) {
-      var slot = (cloudBakeCursor + bi) % bakeCount;
-      var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
-      if (cloudSprites[bc][bv].dirty) {
-        if (weatherQueueBake(bc, bv)) cloudBakeCursor = (slot + 1) % bakeCount;
-        baked = true;
-        break;
-      }
-    }
-    if (!baked && veilTile.dirty) weatherQueueBake(-1, 0);
+    weatherQueueNextBake();
 
     // STAGE 2 — recolour on lighting-bucket change (amortised, 4 tiles/frame)
     var elev = (typeof computeSunElevation === 'function') ? computeSunElevation(timeOfDay) : 0;

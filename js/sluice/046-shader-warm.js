@@ -21,8 +21,9 @@
     return canvas.width + ':' + canvas.height + ':' + dpr * worldScale + ':' + TERRAIN_CHUNK_RENDER_SCALE;
   }
 
-  // One representative draw per frame keeps the loading report responsive.
-  // Each pass restores borrowed world state before yielding back to the browser.
+  // Batch cheap draws within 4 ms, up to four per frame. Slow passes still
+  // yield individually; every pass restores borrowed world state before the
+  // next one. This keeps the report responsive without 29 mandatory frames.
   function prepareShaderWarmup() {
     var key = shaderWarmKey();
     if (shaderWarmState && shaderWarmState.key === key && shaderWarmState.done) {
@@ -50,7 +51,7 @@
       }
       var warm = document.createElement('canvas');
       warm.width = canvas.width + 2; warm.height = canvas.height + 2;
-      shaderWarmState = { key: key, ms: 0, passes: 0, attempted: 0, total: jobs.length, errors: [], times: {},
+      shaderWarmState = { key: key, ms: 0, passes: 0, attempted: 0, batches: 0, total: jobs.length, errors: [], times: {},
         jobs: jobs, canvas: warm, context: warm.getContext('2d'), done: false, generation: gameLoadingGeneration };
       window.__shaderWarm = shaderWarmState;
       loadingTask('shaders', 'running', 'Preparing rig, terrain, weather, slime, and menu drawing programs.', { done: 0, total: jobs.length, unit: 'draws' });
@@ -61,20 +62,25 @@
       state.errors.push('Warm-up canvas unavailable; drawing programs will compile during play.');
       state.done = true;
     } else {
-      var job = state.jobs[state.attempted];
-      ctx = state.context;
-      ctx.save();
-      try {
-        job.draw(dpr * worldScale, job.round ? 0.37 : 0, job.round ? 0.21 : 0);
-        state.passes++;
-      } catch (e) {
-        state.errors.push(job.name + ': ' + e);
-      } finally {
-        ctx.restore(); ctx = mainCtx;
-      }
-      state.attempted++;
-      state.times[job.name] = Math.round((state.times[job.name] || 0) + performance.now() - t0);
-      state.done = state.attempted === state.total;
+      var batch = 0, job;
+      do {
+        job = state.jobs[state.attempted];
+        var drawStart = performance.now();
+        ctx = state.context;
+        ctx.save();
+        try {
+          job.draw(dpr * worldScale, job.round ? 0.37 : 0, job.round ? 0.21 : 0);
+          state.passes++;
+        } catch (e) {
+          state.errors.push(job.name + ': ' + e);
+        } finally {
+          ctx.restore(); ctx = mainCtx;
+        }
+        state.attempted++; batch++;
+        state.times[job.name] = Math.round((state.times[job.name] || 0) + performance.now() - drawStart);
+        state.done = state.attempted === state.total;
+      } while (!state.done && batch < 4 && performance.now() - t0 < 4);
+      state.batches++;
       loadingTask('shaders', 'running', 'Drew ' + job.name + (job.round ? ' at a moving edge.' : '.') +
         (state.done ? ' Flushing the warm-up canvas.' : ' Next: ' + state.jobs[state.attempted].name + '.'),
         { done: state.attempted, total: state.total, unit: 'draws' });

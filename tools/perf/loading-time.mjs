@@ -8,7 +8,8 @@
 // loop then spins while the GPU fence drains, which lengthens that wait, so only
 // compare runs made the same way. WIDTH, HEIGHT and DPR set the viewport
 // (default 2048x1152 at 1.25); DUMP writes every boot as JSON. PORT, GANESH and
-// CHROME work as in shader-warmup-trace.mjs.
+// CHROME work as in shader-warmup-trace.mjs. MOON_DELAY_MS holds the moon
+// response to measure startup with a slow decorative image.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -20,13 +21,15 @@ const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(process.env.ROOT||path.join(here,'../..'));
 const bundleRef=process.env.BUNDLE_REF||'HEAD';
 const versions={
-  baseline:{label:bundleRef,source:execFileSync('git',['show',bundleRef+':js/sluice.js'],{cwd:root,maxBuffer:64*1024*1024}).toString()},
-  checkout:{label:'checkout',source:fs.readFileSync(path.join(root,'js/sluice.js'),'utf8')}
+  baseline:{label:bundleRef,source:execFileSync('git',['show',bundleRef+':js/sluice.js'],{cwd:root,maxBuffer:64*1024*1024}).toString(),
+    html:execFileSync('git',['show',bundleRef+':grand-motherload.html'],{cwd:root,maxBuffer:4*1024*1024})},
+  checkout:{label:'checkout',source:fs.readFileSync(path.join(root,'js/sluice.js'),'utf8'),html:fs.readFileSync(path.join(root,'grand-motherload.html'))}
 };
 const rounds=Number(process.env.ROUNDS||5),kinds=(process.env.KINDS||'cold,repeat').split(',');
 const vsync=process.env.NOVSYNC!=='1';
 const ganesh=process.env.GANESH?process.env.GANESH!=='0':process.platform==='darwin';
 const port=Number(process.env.PORT||8931);
+const moonDelayMs=Number(process.env.MOON_DELAY_MS||0);
 const viewport={width:Number(process.env.WIDTH||2048),height:Number(process.env.HEIGHT||1152),deviceScaleFactor:Number(process.env.DPR||1.25),mobile:false};
 const executable=process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -34,8 +37,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const probe=`
 window.__loadTime=(function(){
   var t={warmStart:0,warmMs:0,firstReady:0,fence:0,revealing:0,done:0},waiters=[];
-  function timed(fn,edge){return function(){var s=performance.now(),r=fn.apply(this,arguments);if(edge(r)){t.warmStart=s;t.warmMs=performance.now()-s;}return r;};}
-  if(typeof prepareShaderWarmup==='function')prepareShaderWarmup=timed(prepareShaderWarmup,function(){return true;});
+  function timed(fn,edge){return function(){var s=performance.now(),r=fn.apply(this,arguments);if(edge(r)){if(!t.warmStart)t.warmStart=s;t.warmMs+=performance.now()-s;}return r;};}
+  if(typeof prepareShaderWarmup==='function')prepareShaderWarmup=timed(prepareShaderWarmup,function(r){return r;});
   // v27.1 drew a rig preview and waited for an asynchronous snapshot instead.
   if(typeof prepareLoadingRigShaders==='function')prepareLoadingRigShaders=timed(prepareLoadingRigShaders,function(r){return r&&!t.warmStart;});
   var oldLoop=loop;
@@ -48,7 +51,9 @@ window.__loadTime=(function(){
     return r;
   };
   return {t:t,whenDone:function(){return t.done?Promise.resolve():new Promise(function(r){waiters.push(r);});},
-    info:function(){return {version:GAME_VERSION,canvas:[canvas.width,canvas.height],warm:window.__shaderWarm||null,boot:window.__bootErr||null};}};
+    info:function(){return {version:GAME_VERSION,canvas:[canvas.width,canvas.height],warm:window.__shaderWarm||null,boot:window.__bootErr||null,
+      loading:window.SluiceLoading?SluiceLoading.report():null,
+      resources:performance.getEntriesByType('resource').map(function(r){return {file:new URL(r.name).pathname,start:Math.round(r.startTime),ms:Math.round(r.duration),bytes:r.encodedBodySize};})};}};
 })();
 `;
 const prelude=`(()=>{let s=48271;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);
@@ -60,8 +65,10 @@ let current=null;
 const server=http.createServer((req,res)=>{try{
   const p=decodeURIComponent(new URL(req.url,'http://x').pathname),file=path.resolve(root,'.'+p);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
-  res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});
-  res.end(p==='/js/sluice.js'?served[current]:fs.readFileSync(file));
+  const data=p==='/js/sluice.js'?served[current]:p==='/grand-motherload.html'?versions[current].html:fs.readFileSync(file);
+  function deliver(){if(res.destroyed)return;
+    res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}
+  if(p==='/assets/images/moon.jpg'&&moonDelayMs>0)setTimeout(deliver,moonDelayMs);else deliver();
 }catch(e){res.writeHead(500);res.end(String(e));}});
 await new Promise(r=>server.listen(port,'127.0.0.1',r));
 
@@ -137,5 +144,5 @@ for(const kind of kinds){
   }
   console.log(`${kind.padEnd(6)} checkout minus ${bundleRef}: ${ms(rows.checkout-rows[bundleRef])} ms`);
 }
-if(process.env.DUMP){fs.mkdirSync(process.env.DUMP,{recursive:true});fs.writeFileSync(path.join(process.env.DUMP,'loading-time.json'),JSON.stringify({bundleRef,vsync,ganesh,viewport,rounds,results},null,1));}
+if(process.env.DUMP){fs.mkdirSync(process.env.DUMP,{recursive:true});fs.writeFileSync(path.join(process.env.DUMP,'loading-time.json'),JSON.stringify({bundleRef,vsync,ganesh,viewport,rounds,moonDelayMs,results},null,1));}
 process.exitCode=results.some(r=>r.errors.length||r.info.boot)?1:0;

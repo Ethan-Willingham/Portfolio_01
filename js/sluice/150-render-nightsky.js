@@ -1608,7 +1608,9 @@
         try {
           var tc = document.createElement('canvas');
           tc.width = img.width; tc.height = img.height;
-          var tg = tc.getContext('2d');
+          // This scratch canvas only supplies CPU pixels. Avoid uploading to
+          // the GPU and then waiting on its queue just to read them back.
+          var tg = tc.getContext('2d', { willReadFrequently: true });
           tg.drawImage(img, 0, 0);
           moonTexData = tg.getImageData(0, 0, img.width, img.height).data;
           moonTexW = img.width; moonTexH = img.height;
@@ -2052,4 +2054,3 @@
 
     if (clipNeeded) ctx.restore();
   }
-

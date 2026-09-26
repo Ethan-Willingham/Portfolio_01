@@ -379,6 +379,11 @@
           target.ready = true; target.recolorDirty = true;
           target.dirty = !job.veil && (job.key !== cloudBakeKey || job.morph !== cloudMorphBucket);
           weatherBakePending = null;
+          // The loading cover needs the whole cast. Keep the worker busy
+          // between frames instead of paying a frame of idle time per image.
+          // Live weather retains its usual one-dispatch-per-draw pacing.
+          if (typeof introPhase !== 'undefined' && introPhase === 'warmup' &&
+              weatherTune.enabled && !PERF_DISABLE_WEATHER && weather.cov >= 0.02) weatherQueueNextBake();
         };
         weatherBakeWorker.onerror = function (event) { event.preventDefault(); weatherStopBakeWorker(); };
         weatherBakeWorker.onmessageerror = weatherStopBakeWorker;
@@ -399,6 +404,19 @@
         rim: weatherTune.rimGlow, morph: weather.morph });
     } catch (e) { weatherStopBakeWorker(); return false; }
     return true;
+  }
+
+  function weatherQueueNextBake() {
+    var bakeCount = CLOUD_CLASSES.length * CLOUD_VARIANTS;
+    for (var bi = 0; bi < bakeCount; bi++) {
+      var slot = (cloudBakeCursor + bi) % bakeCount;
+      var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
+      if (cloudSprites[bc][bv].dirty) {
+        if (weatherQueueBake(bc, bv)) cloudBakeCursor = (slot + 1) % bakeCount;
+        return;
+      }
+    }
+    if (veilTile.dirty) weatherQueueBake(-1, 0);
   }
 
   function wMix(a, b, t) {
@@ -708,18 +726,7 @@
         for (var mv = 0; mv < CLOUD_VARIANTS; mv++) cloudSprites[mc][mv].dirty = true;
       }
     }
-    var baked = false;
-    var bakeCount = CLOUD_CLASSES.length * CLOUD_VARIANTS;
-    for (var bi = 0; bi < bakeCount; bi++) {
-      var slot = (cloudBakeCursor + bi) % bakeCount;
-      var bc = Math.floor(slot / CLOUD_VARIANTS), bv = slot % CLOUD_VARIANTS;
-      if (cloudSprites[bc][bv].dirty) {
-        if (weatherQueueBake(bc, bv)) cloudBakeCursor = (slot + 1) % bakeCount;
-        baked = true;
-        break;
-      }
-    }
-    if (!baked && veilTile.dirty) weatherQueueBake(-1, 0);
+    weatherQueueNextBake();
 
     // STAGE 2 — recolour on lighting-bucket change (amortised, 4 tiles/frame)
     var elev = (typeof computeSunElevation === 'function') ? computeSunElevation(timeOfDay) : 0;

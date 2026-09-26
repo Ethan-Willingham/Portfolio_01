@@ -144,6 +144,14 @@
     }
     var water = liquidWGPU;
     loadingTask('moon', 'running', 'Loading and decoding assets/images/moon.jpg.');
+    // The procedural moon is already drawable. Fetch the texture in parallel,
+    // but never hold terrain and shader preparation behind decorative art.
+    function moonReady() {
+      loadingTask('moon', moonImageReady ? 'done' : 'fallback', moonImageReady ?
+        'Moon image decoded: ' + moonTexW + 'x' + moonTexH + '.' :
+        'Using the procedural moon disc. The texture will appear when available.');
+    }
+    Promise.resolve(moonImagePromise).then(moonReady, moonReady);
     loadingTask('water', 'running', 'Waiting for the water backend and its startup checks.');
     loadingTask('fire', 'running', 'Waiting for the shared water GPU device.');
     var waterReady = loadingAsset('water', water && water.readyPromise, 8000, function () {
@@ -170,11 +178,9 @@
       fireReady,
       fontReady('font-regular', '400 14px "Commit Mono"'),
       fontReady('font-bold', '700 24px "Commit Mono"'),
-      loadingAsset('moon', moonImagePromise, 5000, function () {
-        return { ok: moonImageReady, detail: moonImageReady ? 'Moon image decoded: ' + moonTexW + 'x' + moonTexH + '.' : 'Using the procedural moon disc.' };
-      }),
       waterReady
     ]).then(function () {
+      moonReady();
       gameLoadingAssetsReady = true;
       introSettledFrames = 0;
       loadingTask('scene', 'running', 'Preparing terrain, clouds, water, and scenery at the destination.');

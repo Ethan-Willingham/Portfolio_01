@@ -223,7 +223,7 @@ try{
   const early=await visible('cold load has visible status before game bundle');
   check('loading status is announced accessibly',early.live);
   check('game bundle is still unavailable',!await ev('!!window.__loadingSmoke'));
-  await until('SluiceLoading.report().tasks.filter(t=>t.group===0&&t.state==="done").length===5','support scripts did not execute');
+  await until('SluiceLoading.report().tasks.filter(t=>t.group===0&&t.id!=="script-sluice").every(t=>t.state==="done")','support scripts did not execute');
   const stalled=await ev('SluiceLoading.report()');await sleep(350);const stalledLater=await ev('SluiceLoading.report()');
   check('elapsed time never manufactures download progress',stalled.completed===stalledLater.completed && stalledLater.elapsedMs>stalled.elapsedMs+200 && stalledLater.tasks.find(t=>t.id==='script-sluice').state==='running');
   await ev('document.querySelector("#gm-loading-details summary").focus()');await tap('Enter','Enter');
@@ -248,7 +248,7 @@ try{
   check('pause retains the detailed loading report',await ev('document.getElementById("gm-pause-card").dataset.page==="loading" && document.getElementById("gm-loading-saved-log").textContent.includes("29/29")'));
   await ev('window.__copiedLoadingReport="";Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{window.__copiedLoadingReport=text;}}})');
   await ev('document.querySelector("[data-pause-page=loading] [data-loading-copy]").click()');
-  check('copy includes actual timings and backend',await ev('__copiedLoadingReport.includes("WebGPU") && __copiedLoadingReport.includes("ms") && __copiedLoadingReport.includes("14/14")'));
+  check('copy includes actual timings and backend',await ev('__copiedLoadingReport.includes("WebGPU") && __copiedLoadingReport.includes("ms") && __copiedLoadingReport.includes(SluiceLoading.report().total+"/"+SluiceLoading.report().total)'));
   await shot('pause-loading-report');await tap('Escape','Escape');await tap('Escape','Escape');
   await ev('__loadingSmoke.saveMarker()');
 
@@ -296,6 +296,14 @@ try{
   const assetReport=await ev('SluiceLoading.report()');
   check('optional resource report records actual fallbacks', ['font-regular','font-bold','moon'].every(id=>assetReport.tasks.find(t=>t.id===id).state==='fallback') && assetReport.tasks.find(t=>t.id==='moon').detail.includes('procedural'));
   faults.delete('fonts');faults.delete('/assets/images/moon.jpg');
+
+  faults.set('/assets/images/moon.jpg','hold');await navigate('delayed-moon','?nosave=1&tod=.8');
+  await ready('delayed moon');
+  check('a pending moon download never blocks play',held.some(h=>h.pathname==='/assets/images/moon.jpg') &&
+    await ev('!__loadingSmoke.state().moonImageReady && SluiceLoading.report().tasks.find(t=>t.id==="moon").state==="fallback"'));
+  release('/assets/images/moon.jpg');
+  await until('__loadingSmoke.state().moonImageReady && __loadingSmoke.state().moonReady','late moon texture did not replace the procedural disc');
+  check('late moon texture preserves the recorded loading result',await ev('!SluiceLoading.active() && SluiceLoading.report().tasks.find(t=>t.id==="moon").state==="fallback"'));
 
   const regular='/assets/fonts/commit_mono_regular.woff2',bold='/assets/fonts/commit_mono_bold.woff2';
   faults.set(regular,'fail');faults.set(bold,'hold');await navigate('independent-font-readiness');
