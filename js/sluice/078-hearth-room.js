@@ -230,7 +230,8 @@
     }
     // The grate owns only its screen area. The basin remains available to
     // guests and ceiling tools while coal is tended below it.
-    if (!hearthContains(L.station, p.x, p.y)) return bathToolPointerDown(e);
+    if (!hearthContains(L.station, p.x, p.y) && !hearthChamberContains((p.x - L.box.x) * HEARTH_WIDTH / L.box.w,
+      HEARTH_TOP + (p.y - L.box.y) * HEARTH_HEIGHT / L.box.h, 0)) return bathToolPointerDown(e);
     var box = L.box, bed = hearthBeds[kind];
     for (var n = bed.chunks.length - 1; n >= 0; n--) {
       var b = bed.chunks[n];

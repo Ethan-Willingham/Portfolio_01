@@ -186,7 +186,8 @@ try {
           check('curved fire chamber joins the copper tub above a broad coal bed',await game(`(function(){
             var L=hearthRoomLayout(),p=hearthCasingProfile(L.box,true),s=p.sides;
             return s[0][0]<L.box.x && s[0][1]<L.box.y && s[s.length-1][0]>L.box.x+L.box.w &&
-              Math.abs((HEARTH_WIDTH-2*hearthChamberInset(HEARTH_FLOOR))/HEARTH_WIDTH-0.56)<0.001 &&
+              L.box.bowl && Math.abs(L.box.bowl.w/L.box.bowl.h-(3+Math.sqrt(5))/2)<0.001 &&
+              Math.abs((HEARTH_WIDTH-2*hearthChamberInset(HEARTH_FLOOR))*L.box.w/HEARTH_WIDTH/L.box.bowl.w-(Math.sqrt(5)-1)/2)<0.001 &&
               s.length>60 &&
               hearthChamberContains(HEARTH_WIDTH/2,HEARTH_FLOOR-1,0) &&
               !hearthChamberContains(HEARTH_WIDTH*0.1,HEARTH_FLOOR-1,0);

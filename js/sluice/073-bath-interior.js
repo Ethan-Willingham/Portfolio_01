@@ -40,6 +40,7 @@
     bathRimBand(c, curve, 18, 19, BLD.goldDark);
     // Broad hammered copper plates, with seam straps and paired iron rivets.
     for (var n = 1; n < 12; n++) {
+      if (n === 6) continue; // The small compass seal replaces the center strap.
       var x = curve.x0 + (curve.x1 - curve.x0) * n / 12;
       var p = bathRimPoint(curve, x, 0);
       c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(-p.nx, p.ny));
@@ -48,12 +49,52 @@
       hearthIronBolt(c, -6, 15, 1.8); hearthIronBolt(c, 6, 15, 1.8);
       c.restore();
     }
+    bathDrawCopperGeometry(c, curve);
     for (var side = 0; side < 2; side++) {
       var x = side ? curve.x1 + 11 : curve.x0 - 11;
       c.fillStyle = BLD.outline; hearthChamfer(c, x - 20, curve.y0 - 20, 40, 11, 3); c.fill();
       c.fillStyle = BLD.woodDark; c.fillRect(x - 18, curve.y0 - 18, 36, 7);
       c.fillStyle = BLD.woodPale; c.fillRect(x - 17, curve.y0 - 18, 34, 1);
       hearthIronBolt(c, x - 12, curve.y0 - 14, 1.5); hearthIronBolt(c, x + 12, curve.y0 - 14, 1.5);
+    }
+  }
+  // Quiet compass-work in the copper itself: a seven-circle center seal and
+  // two overlapping-circle marks at the golden sections of the opening.
+  function bathDrawCopperGeometry(c, curve) {
+    var phi = (1 + Math.sqrt(5)) / 2, section = 1 / (phi * phi);
+    var positions = [section, 0.5, 1 - section];
+    for (var i = 0; i < positions.length; i++) {
+      var p = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * positions[i], 13);
+      c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(-p.nx, p.ny));
+      if (i === 1) {
+        // Set flush into the existing rim, with a worn copper face and small
+        // attachment rivets. The ornament never changes the water boundary.
+        c.fillStyle = BLD.outline; c.beginPath(); c.arc(0, 0, 10.8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = BLD.woodDark; c.beginPath(); c.arc(0, 0, 9.8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = BLD.woodBase; c.beginPath(); c.arc(0, -0.35, 9.2, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = hearthArtColor(BLD.woodPale, 0.55); c.lineWidth = 0.6;
+        c.beginPath(); c.arc(0, -0.35, 8.6, 0, Math.PI * 2); c.stroke();
+        hearthIronBolt(c, -15, 1, 1.5); hearthIronBolt(c, 15, 1, 1.5);
+      }
+      // A shallow dark cut with one light edge reads as engraving, not glow.
+      for (var pass = 0; pass < 2; pass++) {
+        var r = i === 1 ? 3.7 : 3.5, offset = pass ? -0.35 : 0.35;
+        c.strokeStyle = hearthArtColor(pass ? BLD.woodPale : BLD.woodDeep, pass ? 0.5 : 0.65);
+        c.lineWidth = pass ? 0.55 : 0.8; c.beginPath();
+        if (i === 1) {
+          c.moveTo(r, offset); c.arc(0, offset, r, 0, Math.PI * 2);
+          for (var petal = 0; petal < 6; petal++) {
+            var angle = petal * Math.PI / 3 - Math.PI / 2;
+            var cx = Math.cos(angle) * r, cy = Math.sin(angle) * r + offset;
+            c.moveTo(cx + r, cy); c.arc(cx, cy, r, 0, Math.PI * 2);
+          }
+        } else {
+          c.moveTo(r / 2, offset); c.arc(-r / 2, offset, r, 0, Math.PI * 2);
+          c.moveTo(r * 1.5, offset); c.arc(r / 2, offset, r, 0, Math.PI * 2);
+        }
+        c.stroke();
+      }
+      c.restore();
     }
   }
   function bathRimPoint(curve, x, offset) {

@@ -364,15 +364,36 @@ clear through the center, with a warm threshold. A simple rod replaces a
 deep valance; omit tassels and fine seams. Preserve the four-tier silhouette
 and deliberate entry.
 
-## 19. Curved bath furnace (v28.90)
+## 19. Golden-section bath furnace (v28.94)
 
-The copper bath forms the curved ceiling of the fire chamber. Smooth
-firebrick cheeks sweep from its shoulders into a broad, level coal bed.
-The base spans 56% of the working chamber width. The continuous cast-iron
-edge follows that curve with outlined stone backing, restrained highlights,
-and rivets spaced along its length. Flush straps replace the angular knee
-plates. A wide ash drawer sits directly below the coal bed.
-`hearthCasingProfile` and `hearthCasingPath` in `078-hearth-casing.js` build
-this surround; `hearthDrawCasing` paints it. The same sampled curve owns
-coal contacts, ash containment, pointer targets and the GPU fire boundary.
-Short landscape screens use the same curved bed with a closed iron top.
+The copper bath forms the curved ceiling of the fire chamber. The complete
+lower bowl uses a width-to-depth ratio of phi squared (about 2.618), with a
+level grate spanning 1/phi (about 61.8%) of the opening between the copper
+shoulders. Two mirrored elliptical cheeks flow into the grate with horizontal
+tangents. This makes the geometric reference part of the whole silhouette.
+The working coal chamber is the lower half of that same curve; its upper
+half continues the brickwork to the copper without a second shoulder curve.
+Narrow phones keep a minimum 44-pixel working height, stretching the depth
+slightly when needed. Short screens retain their compact layout and use the
+same physical coal bed.
+
+The continuous cast-iron edge uses outlined stone backing, restrained
+highlights, flush straps and spaced rivets. A wide ash drawer sits below the
+coal bed. `hearthCasingProfile` in `078-hearth-casing.js` builds the surround;
+`hearthRoomLayout` fits it beneath the basin. The shared sampled ellipse in
+`077-hearth-geometry.js` owns coal contacts, ash containment, pointer targets
+and the GPU fire boundary.
+
+## 20. Bath copper engraving (v28.94)
+
+A flush center seal contains seven equal overlapping circles, a compass
+rosette. Two quieter overlapping-circle engravings sit at the golden sections
+of the basin opening. Use the existing copper ramp with a shallow dark cut
+and one soft highlight, without glow or extra signage.
+`bathDrawCopperGeometry` in `073-bath-interior.js` draws them through the
+vessel pass and shader warm-up.
+
+The water basin is catenary-inspired. Its code starts from a width-to-depth
+target of phi squared, then caps the depth to fit the room; its displayed
+outline is therefore not an exact golden-ratio shape. Water geometry stays
+unchanged; the new furnace uses golden proportions directly.

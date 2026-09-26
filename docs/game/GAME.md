@@ -56,11 +56,12 @@ curve with outward thickness. Since v28.84, the top and bottom HUD bars are
 removed. Tools, water controls and readings sit beside the firebox on desktop,
 or beneath it in compact layouts; navigation mounts directly on the wall.
 The tub's original catenary and water collision geometry are unchanged.
-Since v28.90, smooth firebrick cheeks curve down from the basin shoulders
-into a broad, level coal bed. The grate spans 56% of the chamber width,
-75% more than the earlier tapered version. Coal, ash, pointer targets and
-GPU fire follow the same curved walls. Saved fuel and heat are preserved.
-The continuous riveted iron surround joins the copper tub.
+Since v28.94, the entire furnace bowl uses golden-section proportions:
+opening width divided by depth is phi squared, and the level coal bed spans
+1/phi of that opening. Mirrored elliptical cheeks sweep from the copper
+shoulders into the broad grate. Coal, ash, pointer targets and GPU fire follow
+the same curve. Saved fuel and heat are preserved. The continuous riveted
+iron surround joins the copper tub.
 The single-room bath stays fixed under wheel and drag gestures; saved upper
 floors scroll immediately, with no camera easing.
 

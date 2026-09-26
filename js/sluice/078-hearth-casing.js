@@ -30,25 +30,38 @@
         roof.push([(p.x - cam.x) * worldScale, (p.y - cam.y) * worldScale]);
         ceiling = Math.min(ceiling, roof[i][1]);
       }
-      // Meet the sampled physical curve with the same tangent. The upper
-      // cheeks sweep into the tub shoulders without an angular elbow.
-      var lowerSlope = (physical[1][1] - physical[0][1]) * h / HEARTH_HEIGHT /
-        ((physical[1][0] - physical[0][0]) * w / HEARTH_WIDTH);
-      function shoulderCurve(shoulder, foot, direction) {
-        var dx = (foot[0] - shoulder[0]) * direction, dy = foot[1] - shoulder[1];
-        var rise = Math.max(0, Math.min(dy * 0.42, dx * lowerSlope * 0.7));
-        var c1 = [shoulder[0] + dx * direction * 0.35, shoulder[1] + dy * 0.32];
-        var c2 = [foot[0] - rise / lowerSlope * direction, foot[1] - rise], path = [];
+      if (box.bowl) {
+        // Continue the same ellipse all the way to the copper, without a
+        // second hand-shaped shoulder curve or a kink at the physical slice.
+        var bowl = box.bowl, left = [], right = [];
         for (var n = 0; n < 16; n++) {
-          var t = n / 16, u = 1 - t;
-          path.push([u*u*u*shoulder[0] + 3*u*u*t*c1[0] + 3*u*t*t*c2[0] + t*t*t*foot[0],
-            u*u*u*shoulder[1] + 3*u*u*t*c1[1] + 3*u*t*t*c2[1] + t*t*t*foot[1]]);
+          var angle = Math.PI / 6 * n / 16;
+          var inset = bowl.w * HEARTH_BOWL_INSET * (1 - Math.cos(angle));
+          var py = bowl.y + bowl.h * Math.sin(angle);
+          left.push([bowl.x + inset, py]); right.push([bowl.x + bowl.w - inset, py]);
         }
-        return path;
+        sides = left.concat(sides, right.reverse());
+      } else {
+        // Meet the sampled physical curve with the same tangent. The upper
+        // cheeks sweep into the tub shoulders without an angular elbow.
+        var lowerSlope = (physical[1][1] - physical[0][1]) * h / HEARTH_HEIGHT /
+          ((physical[1][0] - physical[0][0]) * w / HEARTH_WIDTH);
+        function shoulderCurve(shoulder, foot, direction) {
+          var dx = (foot[0] - shoulder[0]) * direction, dy = foot[1] - shoulder[1];
+          var rise = Math.max(0, Math.min(dy * 0.42, dx * lowerSlope * 0.7));
+          var c1 = [shoulder[0] + dx * direction * 0.35, shoulder[1] + dy * 0.32];
+          var c2 = [foot[0] - rise / lowerSlope * direction, foot[1] - rise], path = [];
+          for (var n = 0; n < 16; n++) {
+            var t = n / 16, u = 1 - t;
+            path.push([u*u*u*shoulder[0] + 3*u*u*t*c1[0] + 3*u*t*t*c2[0] + t*t*t*foot[0],
+              u*u*u*shoulder[1] + 3*u*u*t*c1[1] + 3*u*t*t*c2[1] + t*t*t*foot[1]]);
+          }
+          return path;
+        }
+        var left = shoulderCurve(roof[roof.length - 1], sides[0], 1);
+        var right = shoulderCurve(roof[0], sides[sides.length - 1], -1);
+        sides = left.concat(sides, right.reverse());
       }
-      var left = shoulderCurve(roof[roof.length - 1], sides[0], 1);
-      var right = shoulderCurve(roof[0], sides[sides.length - 1], -1);
-      sides = left.concat(sides, right.reverse());
     } else roof = [sides[sides.length - 1], sides[0]];
     return { sides: sides, roof: roof, ceiling: ceiling };
   }

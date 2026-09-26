@@ -7,6 +7,7 @@ function fixture(fps = 60) {
   const s = { Math: math, console: { log() {} }, window: {}, performance: { now: () => 1000 },
     canvas: { width: 1000, height: 750, style: {}, addEventListener() {}, setPointerCapture() {},
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 750 }) }, dpr: 1,
+    cam: {x:0,y:0}, worldScale: 1, screenW: 1000, screenH: 750,
     residents: [], JELLO_H: 1/120, jelloStepH: 1/240,
     surfaceSlimeBuild(x,y,guest) { const b={x,y,id:guest.id};s.residents.push(b);return b; },
     jelloLaunchBody() {}, surfaceSlimeGrabEnd() {},
@@ -35,6 +36,8 @@ function fixture(fps = 60) {
   vm.createContext(s);
   for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-tools','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
+  // The furnace now fits the actual copper shoulders in camera space.
+  s.bathMode = true; s.bathCamPin(); s.bathMode = false;
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
     inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };
 }

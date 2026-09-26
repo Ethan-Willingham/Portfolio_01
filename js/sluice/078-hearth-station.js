@@ -27,9 +27,24 @@
       bw = Math.max(44 * ratio, Math.min(bw, (curve.x1 - curve.x0) * fit * 0.64));
       box.x = (w - bw) / 2; box.w = bw; box.h = bw / ratio;
     }
+    if (!landscape && bathMode && h >= 500) {
+      // Build the entire silhouette from the actual copper shoulders. The
+      // lower physical slice and upper brickwork are parts of this one ellipse.
+      var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
+      var shoulder = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * 0.06, 24);
+      var outerX = (shoulder.x - cam.x) * worldScale;
+      var outerW = ((curve.x0 + curve.x1 - shoulder.x) - shoulder.x) * worldScale;
+      var outerY = (shoulder.y - cam.y) * worldScale;
+      // Keep the physical slice at least one touch target tall on narrow phones.
+      var outerH = Math.max(88, outerW / (HEARTH_PHI * HEARTH_PHI));
+      box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
+        w: outerW * HEARTH_BOWL_SPAN, h: outerH * (1 - HEARTH_BOWL_CUT),
+        bowl: { x: outerX, y: outerY, w: outerW, h: outerH } };
+      bw = box.w; bh = box.h;
+    }
     if (wide) {
-      var cw = Math.min(144, (w - bw) / 2 - 30), cy = station.y + (station.h - 194) / 2;
-      var left = box.x - cw - 20, right = box.x + bw + 20, half = (cw - gap) / 2;
+      var cw = Math.min(144, (w - bw) / 2 - 20), cy = Math.max(station.y, box.y + box.h - 194);
+      var left = box.x - cw - 12, right = box.x + bw + 12, half = (cw - gap) / 2;
       bin = { x: left, y: cy, w: cw, h: 44 };
       pump = { x: left, y: cy + 50, w: cw, h: 44 };
       action = { x: right, y: cy, w: cw, h: 44 };

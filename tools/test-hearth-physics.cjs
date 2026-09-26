@@ -3,11 +3,15 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const source = ['combustion', 'fracture', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
-const expectedProfile=Array.from({length:24},(_,i)=>{const t=i/23;return [896*.22*t,-46+256*(2*t-t*t)];});
-const expectedWalls=expectedProfile.slice(1).flatMap((b,i)=>{
-  const a=expectedProfile[i],dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy),nx=-dy/length,ny=dx/length,limit=nx*a[0]+ny*a[1];
-  return [{nx,ny,limit},{nx:-nx,ny,limit:limit-nx*896}];
-});
+// Independent ellipse oracle: evaluate contacts against the intended bowl,
+// rather than duplicating the collision polygon's tessellation.
+const phi=(1+Math.sqrt(5))/2, bowlInset=(1-1/phi)/2;
+const entry=bowlInset*(1-Math.sqrt(.75)), outerWidth=896/(1-2*entry);
+const grateInset=outerWidth*(bowlInset-entry);
+function ellipseInset(y) {
+  const u=.5+(y+46)/512;
+  return outerWidth*bowlInset*(1-Math.sqrt(Math.max(0,1-u*u)))-outerWidth*entry;
+}
 function fixture(fps = 60) {
   const s = { Math, console };
   vm.createContext(s);
@@ -27,8 +31,10 @@ function checkBodies(bed) {
       assert(Number.isFinite(b[key]), `finite ${key}`);
     }
     assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 896.4 && p[1] <= 210.4), 'polygon containment');
-    if (!bed.pilot) for (const p of b.vertices) for(const wall of expectedWalls)
-      assert(p[0]*wall.nx+p[1]*wall.ny<=wall.limit+.4, 'coal stays within curved walls');
+    if (!bed.pilot) for (const p of b.vertices) {
+      const inset=ellipseInset(Math.min(210,p[1]-.4));
+      assert(Math.min(p[0],896-p[0])>=inset-.4, 'coal stays within the intended ellipse');
+    }
     near(b.fuel, b.volatile + b.carbon, 1e-10, 'combustible mass is conserved');
     assert(b.fuel >= 0 && b.fuel <= 1, 'bounded fuel');
     assert(b.heat >= 0 && b.heat <= 1, 'bounded coal heat');
@@ -39,9 +45,15 @@ function checkBodies(bed) {
 
 {
   const {s,advance}=fixture(), bed=s.hearthBeds.boiler;
-  assert.deepEqual(JSON.parse(JSON.stringify(s.chamberProfile)),expectedProfile,'shared curve uses 24 quadratic samples');
-  near(s.hearthChamberInset(-46),0); near(s.hearthChamberInset(210),197.12);
-  for(const [x,y] of expectedProfile)near(s.hearthChamberInset(y),x);
+  near(s.hearthChamberInset(-46),0); near(s.hearthChamberInset(210),grateInset);
+  near((896-2*grateInset)/outerWidth,1/phi,1e-12,'grate spans the golden section of the complete opening');
+  let slope=Infinity;
+  s.chamberProfile.forEach(([x,y],i,profile)=>{
+    near(x,ellipseInset(y),1e-5,'every sampled contact lies on the ellipse');
+    if(!i)return;
+    const a=profile[i-1],next=(y-a[1])/(x-a[0]);
+    assert(x>a[0] && y>a[1] && next<slope,'convex cheek turns smoothly toward the level bed');slope=next;
+  });
   assert(s.hearthChamberContains(448,210) && !s.hearthChamberContains(100,190));
   assert(!s.hearthChamberContains(448,-50) && s.hearthChamberContains(448,-50,5));
   const left=s.hearthAddChunk('boiler',70,15), right=s.hearthAddChunk('boiler',826,15);

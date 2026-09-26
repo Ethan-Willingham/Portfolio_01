@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.93';
+  var GAME_VERSION = 'v28.94';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -14980,6 +14980,7 @@
     bathRimBand(c, curve, 18, 19, BLD.goldDark);
     // Broad hammered copper plates, with seam straps and paired iron rivets.
     for (var n = 1; n < 12; n++) {
+      if (n === 6) continue; // The small compass seal replaces the center strap.
       var x = curve.x0 + (curve.x1 - curve.x0) * n / 12;
       var p = bathRimPoint(curve, x, 0);
       c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(-p.nx, p.ny));
@@ -14988,12 +14989,52 @@
       hearthIronBolt(c, -6, 15, 1.8); hearthIronBolt(c, 6, 15, 1.8);
       c.restore();
     }
+    bathDrawCopperGeometry(c, curve);
     for (var side = 0; side < 2; side++) {
       var x = side ? curve.x1 + 11 : curve.x0 - 11;
       c.fillStyle = BLD.outline; hearthChamfer(c, x - 20, curve.y0 - 20, 40, 11, 3); c.fill();
       c.fillStyle = BLD.woodDark; c.fillRect(x - 18, curve.y0 - 18, 36, 7);
       c.fillStyle = BLD.woodPale; c.fillRect(x - 17, curve.y0 - 18, 34, 1);
       hearthIronBolt(c, x - 12, curve.y0 - 14, 1.5); hearthIronBolt(c, x + 12, curve.y0 - 14, 1.5);
+    }
+  }
+  // Quiet compass-work in the copper itself: a seven-circle center seal and
+  // two overlapping-circle marks at the golden sections of the opening.
+  function bathDrawCopperGeometry(c, curve) {
+    var phi = (1 + Math.sqrt(5)) / 2, section = 1 / (phi * phi);
+    var positions = [section, 0.5, 1 - section];
+    for (var i = 0; i < positions.length; i++) {
+      var p = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * positions[i], 13);
+      c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(-p.nx, p.ny));
+      if (i === 1) {
+        // Set flush into the existing rim, with a worn copper face and small
+        // attachment rivets. The ornament never changes the water boundary.
+        c.fillStyle = BLD.outline; c.beginPath(); c.arc(0, 0, 10.8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = BLD.woodDark; c.beginPath(); c.arc(0, 0, 9.8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = BLD.woodBase; c.beginPath(); c.arc(0, -0.35, 9.2, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = hearthArtColor(BLD.woodPale, 0.55); c.lineWidth = 0.6;
+        c.beginPath(); c.arc(0, -0.35, 8.6, 0, Math.PI * 2); c.stroke();
+        hearthIronBolt(c, -15, 1, 1.5); hearthIronBolt(c, 15, 1, 1.5);
+      }
+      // A shallow dark cut with one light edge reads as engraving, not glow.
+      for (var pass = 0; pass < 2; pass++) {
+        var r = i === 1 ? 3.7 : 3.5, offset = pass ? -0.35 : 0.35;
+        c.strokeStyle = hearthArtColor(pass ? BLD.woodPale : BLD.woodDeep, pass ? 0.5 : 0.65);
+        c.lineWidth = pass ? 0.55 : 0.8; c.beginPath();
+        if (i === 1) {
+          c.moveTo(r, offset); c.arc(0, offset, r, 0, Math.PI * 2);
+          for (var petal = 0; petal < 6; petal++) {
+            var angle = petal * Math.PI / 3 - Math.PI / 2;
+            var cx = Math.cos(angle) * r, cy = Math.sin(angle) * r + offset;
+            c.moveTo(cx + r, cy); c.arc(cx, cy, r, 0, Math.PI * 2);
+          }
+        } else {
+          c.moveTo(r / 2, offset); c.arc(-r / 2, offset, r, 0, Math.PI * 2);
+          c.moveTo(r * 1.5, offset); c.arc(r / 2, offset, r, 0, Math.PI * 2);
+        }
+        c.stroke();
+      }
+      c.restore();
     }
   }
   function bathRimPoint(curve, x, offset) {
@@ -16732,11 +16773,22 @@
   /* ---- Coal rigid bodies: the visible convex hull IS the contact geometry. ---- */
   var hearthHullCache = new WeakMap();
   var HEARTH_FLOOR = 210, HEARTH_TOP = -46, HEARTH_HEIGHT = 256, HEARTH_WIDTH = 896, HEARTH_FRICTION = 0.72;
+  // The complete bowl has width/depth = phi squared and a level grate
+  // spanning 1/phi of its opening. Elliptical cheeks meet the grate tangentially.
+  // Only the lower half holds fuel; the copper basin occupies the headroom.
+  var HEARTH_PHI = (1 + Math.sqrt(5)) / 2;
+  var HEARTH_BOWL_INSET = (1 - 1 / HEARTH_PHI) / 2;
+  var HEARTH_BOWL_CUT = 0.5, HEARTH_BOWL_COS = Math.sqrt(1 - HEARTH_BOWL_CUT * HEARTH_BOWL_CUT);
+  var HEARTH_BOWL_ENTRY = HEARTH_BOWL_INSET * (1 - HEARTH_BOWL_COS);
+  var HEARTH_BOWL_SPAN = 1 - 2 * HEARTH_BOWL_ENTRY;
   var HEARTH_CHAMBER_PROFILE = [];
-  for (var hearthSample = 0; hearthSample < 24; hearthSample++) {
-    var hearthT = hearthSample / 23;
-    HEARTH_CHAMBER_PROFILE.push([HEARTH_WIDTH * 0.22 * hearthT, HEARTH_TOP + HEARTH_HEIGHT * (2 * hearthT - hearthT * hearthT)]);
+  for (var hearthSample = 0; hearthSample < 32; hearthSample++) {
+    var hearthAngle = Math.PI / 6 + Math.PI / 3 * hearthSample / 31;
+    HEARTH_CHAMBER_PROFILE.push([
+      HEARTH_WIDTH * HEARTH_BOWL_INSET * (HEARTH_BOWL_COS - Math.cos(hearthAngle)) / HEARTH_BOWL_SPAN,
+      HEARTH_TOP + HEARTH_HEIGHT * (Math.sin(hearthAngle) - HEARTH_BOWL_CUT) / (1 - HEARTH_BOWL_CUT)]);
   }
+  HEARTH_CHAMBER_PROFILE[0] = [0, HEARTH_TOP];
   var hearthRectWalls = [{nx:-1,ny:0,limit:0},{nx:1,ny:0,limit:HEARTH_WIDTH},{nx:0,ny:1,limit:HEARTH_FLOOR}];
   var hearthTaperWalls = hearthRectWalls.slice();
   for (var hearthFacet = 1; hearthFacet < HEARTH_CHAMBER_PROFILE.length; hearthFacet++) {
@@ -17967,25 +18019,38 @@
         roof.push([(p.x - cam.x) * worldScale, (p.y - cam.y) * worldScale]);
         ceiling = Math.min(ceiling, roof[i][1]);
       }
-      // Meet the sampled physical curve with the same tangent. The upper
-      // cheeks sweep into the tub shoulders without an angular elbow.
-      var lowerSlope = (physical[1][1] - physical[0][1]) * h / HEARTH_HEIGHT /
-        ((physical[1][0] - physical[0][0]) * w / HEARTH_WIDTH);
-      function shoulderCurve(shoulder, foot, direction) {
-        var dx = (foot[0] - shoulder[0]) * direction, dy = foot[1] - shoulder[1];
-        var rise = Math.max(0, Math.min(dy * 0.42, dx * lowerSlope * 0.7));
-        var c1 = [shoulder[0] + dx * direction * 0.35, shoulder[1] + dy * 0.32];
-        var c2 = [foot[0] - rise / lowerSlope * direction, foot[1] - rise], path = [];
+      if (box.bowl) {
+        // Continue the same ellipse all the way to the copper, without a
+        // second hand-shaped shoulder curve or a kink at the physical slice.
+        var bowl = box.bowl, left = [], right = [];
         for (var n = 0; n < 16; n++) {
-          var t = n / 16, u = 1 - t;
-          path.push([u*u*u*shoulder[0] + 3*u*u*t*c1[0] + 3*u*t*t*c2[0] + t*t*t*foot[0],
-            u*u*u*shoulder[1] + 3*u*u*t*c1[1] + 3*u*t*t*c2[1] + t*t*t*foot[1]]);
+          var angle = Math.PI / 6 * n / 16;
+          var inset = bowl.w * HEARTH_BOWL_INSET * (1 - Math.cos(angle));
+          var py = bowl.y + bowl.h * Math.sin(angle);
+          left.push([bowl.x + inset, py]); right.push([bowl.x + bowl.w - inset, py]);
         }
-        return path;
+        sides = left.concat(sides, right.reverse());
+      } else {
+        // Meet the sampled physical curve with the same tangent. The upper
+        // cheeks sweep into the tub shoulders without an angular elbow.
+        var lowerSlope = (physical[1][1] - physical[0][1]) * h / HEARTH_HEIGHT /
+          ((physical[1][0] - physical[0][0]) * w / HEARTH_WIDTH);
+        function shoulderCurve(shoulder, foot, direction) {
+          var dx = (foot[0] - shoulder[0]) * direction, dy = foot[1] - shoulder[1];
+          var rise = Math.max(0, Math.min(dy * 0.42, dx * lowerSlope * 0.7));
+          var c1 = [shoulder[0] + dx * direction * 0.35, shoulder[1] + dy * 0.32];
+          var c2 = [foot[0] - rise / lowerSlope * direction, foot[1] - rise], path = [];
+          for (var n = 0; n < 16; n++) {
+            var t = n / 16, u = 1 - t;
+            path.push([u*u*u*shoulder[0] + 3*u*u*t*c1[0] + 3*u*t*t*c2[0] + t*t*t*foot[0],
+              u*u*u*shoulder[1] + 3*u*u*t*c1[1] + 3*u*t*t*c2[1] + t*t*t*foot[1]]);
+          }
+          return path;
+        }
+        var left = shoulderCurve(roof[roof.length - 1], sides[0], 1);
+        var right = shoulderCurve(roof[0], sides[sides.length - 1], -1);
+        sides = left.concat(sides, right.reverse());
       }
-      var left = shoulderCurve(roof[roof.length - 1], sides[0], 1);
-      var right = shoulderCurve(roof[0], sides[sides.length - 1], -1);
-      sides = left.concat(sides, right.reverse());
     } else roof = [sides[sides.length - 1], sides[0]];
     return { sides: sides, roof: roof, ceiling: ceiling };
   }
@@ -18283,7 +18348,8 @@
     }
     // The grate owns only its screen area. The basin remains available to
     // guests and ceiling tools while coal is tended below it.
-    if (!hearthContains(L.station, p.x, p.y)) return bathToolPointerDown(e);
+    if (!hearthContains(L.station, p.x, p.y) && !hearthChamberContains((p.x - L.box.x) * HEARTH_WIDTH / L.box.w,
+      HEARTH_TOP + (p.y - L.box.y) * HEARTH_HEIGHT / L.box.h, 0)) return bathToolPointerDown(e);
     var box = L.box, bed = hearthBeds[kind];
     for (var n = bed.chunks.length - 1; n >= 0; n--) {
       var b = bed.chunks[n];
@@ -18441,9 +18507,24 @@
       bw = Math.max(44 * ratio, Math.min(bw, (curve.x1 - curve.x0) * fit * 0.64));
       box.x = (w - bw) / 2; box.w = bw; box.h = bw / ratio;
     }
+    if (!landscape && bathMode && h >= 500) {
+      // Build the entire silhouette from the actual copper shoulders. The
+      // lower physical slice and upper brickwork are parts of this one ellipse.
+      var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
+      var shoulder = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * 0.06, 24);
+      var outerX = (shoulder.x - cam.x) * worldScale;
+      var outerW = ((curve.x0 + curve.x1 - shoulder.x) - shoulder.x) * worldScale;
+      var outerY = (shoulder.y - cam.y) * worldScale;
+      // Keep the physical slice at least one touch target tall on narrow phones.
+      var outerH = Math.max(88, outerW / (HEARTH_PHI * HEARTH_PHI));
+      box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
+        w: outerW * HEARTH_BOWL_SPAN, h: outerH * (1 - HEARTH_BOWL_CUT),
+        bowl: { x: outerX, y: outerY, w: outerW, h: outerH } };
+      bw = box.w; bh = box.h;
+    }
     if (wide) {
-      var cw = Math.min(144, (w - bw) / 2 - 30), cy = station.y + (station.h - 194) / 2;
-      var left = box.x - cw - 20, right = box.x + bw + 20, half = (cw - gap) / 2;
+      var cw = Math.min(144, (w - bw) / 2 - 20), cy = Math.max(station.y, box.y + box.h - 194);
+      var left = box.x - cw - 12, right = box.x + bw + 12, half = (cw - gap) / 2;
       bin = { x: left, y: cy, w: cw, h: 44 };
       pump = { x: left, y: cy + 50, w: cw, h: 44 };
       action = { x: right, y: cy, w: cw, h: 44 };

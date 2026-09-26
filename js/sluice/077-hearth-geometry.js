@@ -1,11 +1,22 @@
   /* ---- Coal rigid bodies: the visible convex hull IS the contact geometry. ---- */
   var hearthHullCache = new WeakMap();
   var HEARTH_FLOOR = 210, HEARTH_TOP = -46, HEARTH_HEIGHT = 256, HEARTH_WIDTH = 896, HEARTH_FRICTION = 0.72;
+  // The complete bowl has width/depth = phi squared and a level grate
+  // spanning 1/phi of its opening. Elliptical cheeks meet the grate tangentially.
+  // Only the lower half holds fuel; the copper basin occupies the headroom.
+  var HEARTH_PHI = (1 + Math.sqrt(5)) / 2;
+  var HEARTH_BOWL_INSET = (1 - 1 / HEARTH_PHI) / 2;
+  var HEARTH_BOWL_CUT = 0.5, HEARTH_BOWL_COS = Math.sqrt(1 - HEARTH_BOWL_CUT * HEARTH_BOWL_CUT);
+  var HEARTH_BOWL_ENTRY = HEARTH_BOWL_INSET * (1 - HEARTH_BOWL_COS);
+  var HEARTH_BOWL_SPAN = 1 - 2 * HEARTH_BOWL_ENTRY;
   var HEARTH_CHAMBER_PROFILE = [];
-  for (var hearthSample = 0; hearthSample < 24; hearthSample++) {
-    var hearthT = hearthSample / 23;
-    HEARTH_CHAMBER_PROFILE.push([HEARTH_WIDTH * 0.22 * hearthT, HEARTH_TOP + HEARTH_HEIGHT * (2 * hearthT - hearthT * hearthT)]);
+  for (var hearthSample = 0; hearthSample < 32; hearthSample++) {
+    var hearthAngle = Math.PI / 6 + Math.PI / 3 * hearthSample / 31;
+    HEARTH_CHAMBER_PROFILE.push([
+      HEARTH_WIDTH * HEARTH_BOWL_INSET * (HEARTH_BOWL_COS - Math.cos(hearthAngle)) / HEARTH_BOWL_SPAN,
+      HEARTH_TOP + HEARTH_HEIGHT * (Math.sin(hearthAngle) - HEARTH_BOWL_CUT) / (1 - HEARTH_BOWL_CUT)]);
   }
+  HEARTH_CHAMBER_PROFILE[0] = [0, HEARTH_TOP];
   var hearthRectWalls = [{nx:-1,ny:0,limit:0},{nx:1,ny:0,limit:HEARTH_WIDTH},{nx:0,ny:1,limit:HEARTH_FLOOR}];
   var hearthTaperWalls = hearthRectWalls.slice();
   for (var hearthFacet = 1; hearthFacet < HEARTH_CHAMBER_PROFILE.length; hearthFacet++) {
