@@ -958,7 +958,28 @@
       if (cy < minY) minY = cy;
       if (cy > maxY) maxY = cy;
     }
-    if (!isFinite(minX)) { minX = 0; maxX = 0; minY = 0; maxY = 0; }
+    var hasActiveParticles = isFinite(minX);
+    if (!hasActiveParticles) { minX = 0; maxX = 0; minY = 0; maxY = 0; }
+    // A first pour has only a tiny, delayed CPU snapshot near the nozzle.
+    // Its resident GPU jet can cross the fixed halo before the next readback,
+    // lose its grid stencil and flatten against an invisible moving shelf.
+    // Enclose the known vessel immediately when that snapshot is in a bath.
+    // Test against the original bounds so empty upper tubs cannot chain-expand
+    // the grid. Outdoor particles retain their usual tightly fitted domain.
+    var sourceMinX = minX / inv, sourceMaxX = maxX / inv;
+    var sourceMinY = minY / inv, sourceMaxY = maxY / inv;
+    var bowls = instance.bathBowls;
+    if (hasActiveParticles && bowls) for (var bowl = 0; bowl < bowls.length; bowl += 4) {
+      var left = bowls[bowl], right = bowls[bowl + 1];
+      var lip = bowls[bowl + 2], depth = bowls[bowl + 3];
+      var top = lip - 7 * instance.worldTile, bottom = lip + depth + 4;
+      if (!(depth > 0) || sourceMaxX < left || sourceMinX > right ||
+          sourceMaxY < top || sourceMinY > bottom ||
+          right < rMinX || left > rMaxX || bottom < rMinY || top > rMaxY) continue;
+      minX = Math.min(minX, Math.floor(Math.max(left, rMinX) * inv));
+      maxX = Math.max(maxX, Math.floor(Math.min(right, rMaxX) * inv));
+      maxY = Math.max(maxY, Math.floor(Math.min(bottom, rMaxY) * inv));
+    }
     // Pad the bbox by the stencil halo so edge particles' 3x3 splat
     // cells are all in-grid.
     minX -= GRID_MARGIN; minY -= GRID_MARGIN;

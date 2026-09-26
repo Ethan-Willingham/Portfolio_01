@@ -13,6 +13,7 @@ function fixture() {
     window: {}, TILE: 32, COLS: 320, TOTAL_ROWS: 1412,
     bathMode: false, bathFading: false, bathRoomReady: false, gamePaused: false,
     bathFloorsOwned: [true, false, false, false, false],
+    BLD: { waterFoam: '#cadde5' },
     liquidCatalog: ['Water', 'Oil', 'Brine', 'Nectar', 'Lumen'].map((name, id) => ({ name, id })),
     siphon: { tank: [0, 0, 0, 0, 0, 0], capacity: 16000 },
     liquidCount: 0, liquidX: [], liquidY: [], liquidVX: [], liquidVY: [], liquidType: [], liquidOrigin: [],
@@ -329,4 +330,24 @@ function liveSignature(s) {
   for (let i = 0; i < 50; i++) s.bathArrivalTick(1 / 60);
   assert.equal(s.bathArrival, null, 'completed reflections retire even after scrolling away');
   console.log('PASS offscreen reflections skip particle scans and expire without revisiting the room');
+}
+
+{
+  const s = fixture(); seedReveal(s, 8105);
+  begin(s); s.bathFading = false; run(s, 60);
+  const before = snapshot(s), r = s.bathArrival[0];
+  const beads = [];
+  const c = {
+    save() {}, restore() {}, beginPath() {}, closePath() {}, moveTo() {}, lineTo() {}, clip() {}, fill() {},
+    stroke() { assert.fail('restoration must not draw an artificial water-edge contour'); },
+    ellipse(...args) { assert(args.every(Number.isFinite)); beads.push(args); }
+  };
+  s.bathArrivalDraw(c);
+  assert(beads.length > 0 && beads.length <= 16, 'the arrival keeps a bounded set of small isolated glints');
+  assert(c.globalAlpha <= 0.35, 'the glints stay restrained beside the physical water');
+  assert.deepEqual(snapshot(s), before, 'cosmetic drawing cannot change saved or live water');
+  beads.length = 0; r.age = r.duration + 0.6;
+  s.bathArrivalDraw(c);
+  assert.equal(beads.length, 0, 'glints do not cycle or repeat while a delayed restore finishes');
+  console.log('PASS arrival draws no traced contour and its faint glints appear once without changing water');
 }

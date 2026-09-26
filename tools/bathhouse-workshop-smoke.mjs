@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { savedBathEntry } from './bathhouse-saved-entry.mjs';
+import { bathHoseFlow } from './bathhouse-hose-flow.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8197), debug = port + 1000;
@@ -104,7 +105,9 @@ try {
   check('workshop boots with GPU water', await game("introPhase==='done' && !!liquidWGPU && liquidWGPU.available"));
   check('shader warm-up clean', await ev('window.__shaderWarm.errors.length===0'));
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
-  if (savedFixture) {
+  if (process.env.BATH_HOSE) {
+    await bathHoseFlow({ game, ev, send, sleep, check, screenshot, press, button });
+  } else if (savedFixture) {
     await savedBathEntry({ fixture: savedFixture, game, ev, send, sleep, check, screenshot, press, button });
   } else {
   await game('bathEnter()'); await sleep(750);

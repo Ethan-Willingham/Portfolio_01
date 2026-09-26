@@ -102,11 +102,20 @@ saves do not identify automatic fills separately from manual hose pours.
 Amounts, liquid identities and stored heat are retained; full silos keep the
 excess in the existing reserved supply. New hose-filled baths persist normally,
 with saved liquid visibly returning after the entry fade. A roughly two-second
-ripple grows from the bottom and center of the tub, followed by a brief reflective
-crest and falling beads. Real particles return at their saved coordinates each
-frame and settle in the shared solver. Pending drops stay in the parked store,
+ripple grows from the bottom and center of the tub, with a few faint beads that
+appear once. No artificial contour strokes trace the water edge. Real particles
+return at their saved coordinates each frame and settle in the shared solver.
+Pending drops stay in the parked store,
 so saving, leaving, evaporation and full particle budgets cannot duplicate them.
 Empty tubs have no arrival effect. The normal outdoor streaming budget is unchanged.
+
+The GPU grid encloses the bath's known vessel from the first poured particle.
+An empty tub's small nozzle packet must not size the grid so tightly that the
+falling jet outruns a delayed position readback and stalls at the grid edge.
+This changes the bath's simulation bounds, not its gravity or collision shape;
+outdoor bounds remain fitted to their particles. Verify fresh and saved dry
+tubs with `BATH_HOSE=1 node tools/bathhouse-workshop-smoke.mjs` (optionally
+provide a local `BATH_SAVE` fixture).
 
 ## Ceiling claw and hose (v28.73)
 

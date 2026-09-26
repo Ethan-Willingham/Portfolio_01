@@ -20,9 +20,10 @@ An empty tub shows dry copper sheets and an EMPTY TUB reading. The lining is
 drawn behind the liquid layer; blue water appears only from actual particles.
 Fresh baths start empty, and the hose supplies their liquid.
 Previously saved tub liquid returns visibly as a smooth rising ripple once the
-room appears. A narrow reflection and a few small beads follow the returning
-surface, then fade away. The effect uses the liquid's existing material color;
-it adds no water or steam and does not mask the room with another loading cover.
+room appears. A few faint beads appear once and fade away; continuous outlines
+must not trace a delayed physics snapshot over the live water. The effect uses
+the liquid's existing material color; it adds no water or steam and does not mask
+the room with another loading cover.
 
 The bathhouse keeps the running game version and live FPS on a small wall plate
 beside Pause, in normal play and developer mode. It shares the navigation row,

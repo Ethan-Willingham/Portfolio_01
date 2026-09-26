@@ -76,8 +76,8 @@
     return r.bottom + 8 * Math.abs((x - center) / half) - r.phase * (r.bottom - r.top + 8);
   }
   function bathArrivalSurface(r) {
-    // Follow dense, visible water rather than drawing a line across the
-    // not-yet-restored surface. Sparse falling beads do not lift the crest.
+    // Locate dense, visible water for the few arrival beads. The CPU mirror
+    // updates less often than GPU water, so never trace its edge as a contour.
     var curve = r.curve, cols = 48, rows = 64, dx = (curve.x1 - curve.x0) / cols;
     var y0 = curve.y0 - 16, dy = (curve.D + 20) / rows;
     var counts = r.surfaceCounts || (r.surfaceCounts = new Uint16Array(cols * rows));
@@ -152,34 +152,20 @@
       var fade = Math.min(1, r.age * 3) * Math.max(0, 1 - r.tail / 0.65);
       var curve = r.curve, span = r.right - r.left;
       c.save();
-      // Reflections stay inside the real curved copper liner.
+      // Beads stay inside the real curved copper liner.
       c.beginPath(); c.moveTo(curve.x0, curve.y0 - 16); c.lineTo(curve.x1, curve.y0 - 16);
       for (var x = curve.x1; x >= curve.x0; x -= (curve.x1 - curve.x0) / 64) c.lineTo(x, curve.y0 + curve.depthAt(x) - 3);
       c.closePath(); c.clip();
-      c.lineJoin = 'round'; c.lineCap = 'round';
-      for (var band = 0; band < 3; band++) {
-        c.beginPath(); var connected = false;
-        for (var j = 0; j <= 64; j++) {
-          var px = r.left + span * j / 64;
-          var py = bathArrivalSurfaceY(r, px) + Math.sin(j * 0.44 - r.age * 5) * 0.8 + (band === 2 ? 5 : 0);
-          if (!isFinite(py)) { connected = false; continue; }
-          if (!connected) c.moveTo(px, py); else c.lineTo(px, py);
-          connected = true;
-        }
-        c.strokeStyle = band === 1 ? BLD.waterFoam : liquidCatalog[r.type].color;
-        c.globalAlpha = fade * (band === 0 ? 0.14 : band === 1 ? 0.58 : 0.22);
-        c.lineWidth = band === 0 ? 8 : band === 1 ? 1.35 : 1;
-        c.stroke();
-      }
-      // A bounded set of little beads catches the moving crest, without
-      // creating fake steam or spending additional physical water.
+      // Each small glint appears once during the physical return. No cycling
+      // outline or repeating spray sits on top of the real liquid surface.
       c.fillStyle = BLD.waterFoam;
-      for (var b = 0; b < 28; b++) {
-        var u = (b * 0.61803398875) % 1, flight = (r.age * 1.15 + u * 4) % 1;
+      for (var b = 0; b < 16; b++) {
+        var u = (b * 0.61803398875) % 1, flight = (r.age - u * r.duration) / 0.55;
+        if (flight <= 0 || flight >= 1) continue;
         var bx = r.left + span * u + Math.sin(r.age * 2 + b) * 3;
-        var by = bathArrivalSurfaceY(r, bx) - Math.sin(flight * Math.PI) * (5 + u * 8);
+        var by = bathArrivalSurfaceY(r, bx) - Math.sin(flight * Math.PI) * (4 + u * 5);
         if (!isFinite(by)) continue;
-        c.globalAlpha = fade * Math.sin(flight * Math.PI) * 0.55;
+        c.globalAlpha = fade * Math.sin(flight * Math.PI) * 0.35;
         c.beginPath(); c.ellipse(bx, by, 0.65 + u * 0.65, 1.2 + u * 0.8, 0.15, 0, Math.PI * 2); c.fill();
       }
       c.restore();
@@ -188,5 +174,5 @@
   function bathArrivalWarm(c, curve) {
     bathArrivalDraw(c, [{ curve: curve, left: curve.x0 + 50, right: curve.x1 - 50,
       top: curve.y0 + 25, bottom: curve.y0 + curve.D - 5, phase: 0.55,
-      age: 1, tail: 0.1, emitted: 100, type: 0 }]);
+      age: 1, duration: 2, tail: 0.1, emitted: 100, type: 0 }]);
   }
