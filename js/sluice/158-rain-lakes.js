@@ -1,8 +1,8 @@
   /* ---- Passing showers and finite, stone-lined rain lakes ---- */
   function rainFrontDuration(phase, kind) {
-    // Seconds of active outdoor play. Storms leave a long, dry cloud cover
-    // before sunlight returns, giving deposited snow time to be played with.
-    var ranges = [[120, 210], [35, 65], kind === 'snow' ? [90, 150] : [75, 120], [180, 300]];
+    // Seconds of active outdoor play. Snowstorms leave a long, dry cloud
+    // cover for play. Rain clears sooner.
+    var ranges = [[120, 210], [35, 65], kind === 'snow' ? [90, 150] : [75, 120], kind === 'snow' ? [180, 300] : [30, 60]];
     var range = ranges[phase];
     return range[0] + Math.random() * (range[1] - range[0]);
   }

@@ -2,8 +2,8 @@
 
 Pause > Options > World > Particle weather > Snow first starts a new world
 with snow. Rain first opens with sunshine before the first rain front. Both
-then cycle through sunshine, gathering clouds, rain or snow, and a long dry
-cloudy break. Existing rain and snow saves join this mixed cycle on reload,
+then cycle through sunshine, gathering clouds, rain or snow, and dry cloudy
+breaks between fronts. Existing rain and snow saves join this mixed cycle on reload,
 keeping their current front and all deposited material. Old column-based snow
 saves migrate to individual particles, keeping their water equivalent.
 `?snow=1&nosave=1` opens a disposable world starting in snow.
@@ -206,8 +206,9 @@ during the existing GPU startup warmup.
 
 A Snow first world starts with a light dusting and a gentle snowfall. Snow
 fronts last 90 to 150 seconds. Rain fronts last 75 to 120 seconds, with a 55%
-chance of thunder and lightning. Each front leaves 180 to 300 seconds of dry
-cloudy weather before sunshine returns for 120 to 210 seconds. Clouds then
+chance of thunder and lightning. Snow leaves 180 to 300 seconds of dry cloudy
+weather for play; rain leaves just 30 to 60 seconds. Sunshine then returns for
+120 to 210 seconds. Clouds then
 gather over 35 to 65 seconds. Rain and snow have equal selection chances,
 with no more than two consecutive fronts of the same kind.
 

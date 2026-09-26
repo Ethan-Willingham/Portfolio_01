@@ -64,7 +64,7 @@ function reset(snowMode = false) {
   s.snowSkyExposure.clear();
 }
 function setFront(kind, phase = 2) {
-  s.rain.climate = { kind, phase, elapsed: 20, duration: phase === 3 ? 240 : 120,
+  s.rain.climate = { kind, phase, elapsed: 20, duration: phase === 3 ? kind === 'snow' ? 240 : 50 : 120,
     strength: 0.95, storm: kind === 'rain', run: 1, first: false };
   s.rainWeather();
   s.weather.cov = s.weather.tcov; s.weather.dark = s.weather.tdark;
@@ -97,7 +97,7 @@ assert.equal(s.rain.climate.phase, 2, 'snow-first worlds begin in the snow front
 
 // Follow hundreds of complete fronts, including their real duration draws.
 reset();
-const counts = { rain: 0, snow: 0, storm: 0 }, durationBounds = [[120, 210], [35, 65], null, [180, 300]];
+const counts = { rain: 0, snow: 0, storm: 0 }, durationBounds = [[120, 210], [35, 65], null, null];
 let previous = '', run = 0;
 for (let transition = 0; transition < 2400; transition++) {
   const old = s.rain.climate.phase;
@@ -105,7 +105,7 @@ for (let transition = 0; transition < 2400; transition++) {
   const f = s.rain.climate;
   assert.equal(f.phase, (old + 1) % 4, 'the front visits each phase in order');
   assert.ok(f.elapsed >= 0 && f.elapsed < 0.002, 'phase transition preserves its fractional remainder');
-  const bounds = f.phase === 2 ? f.kind === 'snow' ? [90, 150] : [75, 120] : durationBounds[f.phase];
+  const bounds = f.phase === 2 ? f.kind === 'snow' ? [90, 150] : [75, 120] : f.phase === 3 ? f.kind === 'snow' ? [180, 300] : [30, 60] : durationBounds[f.phase];
   assert.ok(f.duration >= bounds[0] && f.duration <= bounds[1], 'duration fits the phase bounds');
   assert.ok(!f.storm || f.kind === 'rain', 'only rain can become a thunderstorm');
   if (f.phase === 1) {
@@ -137,7 +137,7 @@ for (const kind of ['rain', 'snow']) {
   s.snow.field.strength = s.rain.field.strength = 0;
   for (let n = 0; n < 24; n++) snowGrain(2380 + n * 1.5);
   const emitted = [s.snow.emitted, s.rain.emitted];
-  step(180);
+  step(kind === 'snow' ? 180 : 25);
   assert.deepEqual([s.snow.emitted, s.rain.emitted], emitted, 'settled cloudy weather emits no new snow or rain');
   assert.equal(s.snow.mass, 24, 'the cloudy interval protects the snow already on the ground');
   assert.equal(s.snow.melted, 0, 'cloudy dry weather never starts a thaw');
@@ -229,7 +229,7 @@ assert.equal(s.snow.mass + s.rain.waterCount, 200, 'clear-sky melt accounting co
 // Weather saves carry the material across front changes and restore the
 // actual eased sky, not a new snap to the current phase's target.
 reset(true); setFront('rain', 3);
-s.rain.climate.elapsed = 73.25; s.rain.climate.run = 2;
+s.rain.climate.elapsed = 23.25; s.rain.climate.run = 2;
 s.weather.cov = 0.63; s.weather.dark = 0.2; s.weather.pcp = 0.012; s.weather.wind = 0.25;
 snowGrain(2400, 127, 3, 4);
 s.snowStore(5000, 127, -2, 7); s.snow.mass++;
@@ -237,11 +237,30 @@ s.snow.grains.push({ x: 2420, y: 40, vx: 12, vy: -17, size: 0.5, phase: 1, physi
 s.snow.mass++;
 s.rain.parked.push(2400, 80, 2500, 150);
 const saved = plain(s.rainSave());
-assert.equal(saved.climate.version, 2, 'the new weather save identifies its full front schema');
+assert.equal(saved.climate.version, 3, 'the new weather save identifies its full front schema');
 assert.equal(saved.mode, 'rain', 'rain is the current front despite remaining snow');
 s.rainRestore(saved);
 assert.deepEqual(plain(s.rainSave()), saved, 'new saves round-trip all snow, water, front progress and eased sky');
 assert.equal(s.window.__particleSnow.stats().mass, 3, 'rain-front loading retains landed and airborne snow');
+
+// v28.95 gave rain the long snow interval. Shorten its remaining break once,
+// without delaying a front that was already close to clearing.
+for (const remaining of [210, 10]) {
+  const prior = plain(saved);
+  prior.climate.version = 2; prior.climate.elapsed = 20; prior.climate.duration = 20 + remaining;
+  s.rainRestore(prior);
+  const left = s.rain.climate.duration - s.rain.climate.elapsed;
+  if (remaining === 210) assert.ok(left >= 30 && left <= 60, 'old rain aftermath adopts the short break');
+  else assert.equal(left, 10, 'migration never prolongs a rain break about to end');
+  const migrated = plain(s.rainSave());
+  s.rainRestore(migrated);
+  assert.deepEqual(plain(s.rainSave()), migrated, 'subsequent loads keep the shortened duration exactly');
+}
+const priorSnow = plain(saved);
+priorSnow.mode = priorSnow.climate.kind = 'snow';
+priorSnow.climate.version = 2; priorSnow.climate.duration = 240;
+s.rainRestore(priorSnow);
+assert.equal(s.rain.climate.duration, 240, 'existing snow aftermath retains its long play interval');
 
 const legacySnow = { enabled: true, mode: 'snow', water: [2400, 150],
   snow: { version: 2, particles: [2400, 127, 0, 0], grains: [] },

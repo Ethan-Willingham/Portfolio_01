@@ -41,9 +41,9 @@ so the renderer does not paint a trail through the ground after a collision.
 Rain first worlds open with 120 to 210 seconds of sunshine, then 35 to 65
 seconds of gathering clouds. Rain fronts last 75 to 120 seconds, easing in
 and out over seven seconds with smaller travelling gusts. Snow fronts last
-90 to 150 seconds. Each front leaves 180 to 300 seconds of dry cloudy weather,
-then another sunny spell. That cloudy break keeps deposited snow frozen and
-gives the player time to move it before the clouds part.
+90 to 150 seconds. Rain leaves 30 to 60 seconds of dry cloudy weather; snow
+leaves 180 to 300 seconds before another sunny spell. The long break after snow
+keeps it frozen and gives the player time to move it before the clouds part.
 
 Later fronts choose rain or snow equally, with at most two consecutive fronts
 of one kind. Rain has a 55% chance of becoming a thunderstorm, using the existing
@@ -51,7 +51,9 @@ lightning flashes, wind, storm ambience and thunder sounds. Snow fronts stay
 quiet. Existing flash accessibility settings still apply. The cloud palette,
 wind and ambience follow the current front. Pause freezes outdoor weather;
 the banya pauses it too. Front kind, phase, duration, elapsed time and visible
-sky state persist. Older clearing-phase saves receive a full cloudy break.
+sky state persist. Older clearing-phase saves receive the break for their
+front kind. Saved v28.95 rain breaks shorten to at most 60 remaining seconds;
+saved snow breaks keep their full duration.
 The development override `?wmood=4` locks steady precipitation for testing.
 
 The same front covers the entire outdoor map. Rain and snow sample one moving

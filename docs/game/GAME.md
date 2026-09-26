@@ -102,7 +102,8 @@ for prices, exported tuning, runtime integration and verification.
 **Particle weather:** pause > Options > World > Particle weather > Rain first or
 Snow first selects the next world's opening weather. Both then cycle through
 sunshine, gathering clouds, rain or snow, and 3 to 5 minutes of dry cloudy
-weather after each front. Rain can bring thunder and lightning. Existing rain
+weather after snowstorms. Rain clouds clear after 30 to 60 seconds. Rain can
+bring thunder and lightning. Existing rain
 and snow saves join the mixed cycle while preserving their material and front.
 Passing showers feed three finite stone-lined lakes. Drops become collectable
 water, soak into dirt and town foundations, and fall down open shafts. See

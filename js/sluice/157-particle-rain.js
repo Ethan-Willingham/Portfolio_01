@@ -400,7 +400,7 @@
       if (liquidType[i] === 0 && liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
     }
     return { enabled: true, mode: rain.climate.kind, snow: snowSave(), water: water,
-      climate: { version: 2, phase: rain.climate.phase, elapsed: rain.climate.elapsed,
+      climate: { version: 3, phase: rain.climate.phase, elapsed: rain.climate.elapsed,
         duration: rain.climate.duration, strength: rain.climate.strength,
         kind: rain.climate.kind, storm: rain.climate.storm, run: rain.climate.run, first: rain.climate.first },
       sky: { cov: weather.cov, dark: weather.dark, pcp: weather.pcp, wind: weather.wind } };
@@ -435,7 +435,14 @@
       var duration = front.duration;
       // Old saves had only 20-24 seconds after a storm. Give their remaining
       // snow the same protected cloudy break as a newly reached aftermath.
-      if (front.version !== 2 && front.phase === 3) duration = front.elapsed + rainFrontDuration(3, kind);
+      if (front.phase === 3) {
+        if (!(front.version >= 2)) duration = front.elapsed + rainFrontDuration(3, kind);
+        else if (front.version === 2 && kind === 'rain') {
+          // The first mixed cycle gave rain the snow play interval too.
+          // Shorten only its remaining cloud cover, preserving an earlier end.
+          duration = Math.min(duration, front.elapsed + rainFrontDuration(3, kind));
+        }
+      }
       rain.climate = { phase: front.phase, elapsed: front.elapsed, duration: duration, strength: front.strength,
         kind: kind, storm: kind === 'rain' && front.storm === true, run: front.run === 2 ? 2 : 1, first: front.first === true };
       rainWeather();
