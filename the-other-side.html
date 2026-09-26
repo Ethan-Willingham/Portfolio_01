@@ -38,9 +38,8 @@
     --body-leading: 1.65;
   }
   .essay-masthead, .hero, .sec { max-width: var(--measure); margin: 0 auto; padding-inline: var(--gutter); }
-  .essay-masthead { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-top: clamp(1.5rem, 5vw, 3.5rem); padding-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .essay-masthead { display: flex; align-items: baseline; gap: 0.75rem; font-size: 0.875rem; line-height: 1.5rem; color: var(--text-dim); padding-top: clamp(1.5rem, 5vw, 3.5rem); padding-bottom: clamp(2.5rem, 5vw, 3.5rem); }
   .essay-masthead a { color: var(--text-dim); text-decoration: none; font-size: 0.875rem; }
-  .essay-masthead .essay-author { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; color: var(--text-bright); }
   .essay-masthead a:hover { color: var(--accent-hover); }
 
   .hero { margin-bottom: 2.75rem; }
@@ -89,8 +88,9 @@
 </head>
 <body>
 
-  <nav class="essay-masthead" aria-label="Site">
-    <a class="essay-author" href="/">Ethan Willingham</a>
+  <nav class="essay-masthead" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span aria-hidden="true">/</span>
     <a href="boring-stuff.html">Longform</a>
   </nav>
 
