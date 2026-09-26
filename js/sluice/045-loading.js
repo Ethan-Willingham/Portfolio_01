@@ -208,7 +208,12 @@
       cloudTotal++;
       if (!veilTile.dirty && !veilTile.recolorDirty) clouds++;
     }
-    return ready + '/' + total + ' terrain chunks; ' + clouds + '/' + cloudTotal + ' cloud images; ' + Math.min(6, introSettledFrames) + '/6 complete frames.';
+    return { detail: ready + '/' + total + ' terrain chunks; ' + clouds + '/' + cloudTotal + ' cloud images; ' + Math.min(6, introSettledFrames) + '/6 complete frames.',
+      counts: { done: ready + clouds + Math.min(6, introSettledFrames), total: total + cloudTotal + 6, unit: 'checks' } };
+  }
+  function loadingSceneTask(state, detail) {
+    var cache = loadingCacheCounts();
+    loadingTask('scene', state, cache.detail + (detail || ''), cache.counts);
   }
 
   function loadingCloudsReady() {
@@ -261,7 +266,8 @@
     var ready = fence.gpuDone && !fence.gl.length && fence.frames >= 2;
     loadingTask('fence', ready ? (fence.warnings.length ? 'fallback' : 'done') : 'running',
       fence.completed + '/' + fence.total + ' graphics queues settled; ' + Math.min(2, fence.frames) + '/2 presentation frames.' +
-      (fence.warnings.length ? ' ' + fence.warnings.join(' ') : ''), { done: fence.completed, total: fence.total, unit: 'queues' });
+      (fence.warnings.length ? ' ' + fence.warnings.join(' ') : ''),
+      { done: fence.completed + Math.min(2, fence.frames), total: fence.total + 2, unit: 'checks' });
     return ready;
   }
 
@@ -286,7 +292,7 @@
       // First-use GPU programs compile here, under the cover (046).
       if (prepareShaderWarmup()) {
         introSettledFrames = 0; gameLoadingStableFrames = 0;
-        loadingTask('scene', 'running', loadingCacheCounts());
+        loadingSceneTask('running');
         return;
       }
       // A surface-only warmup misses the art first exposed during takeoff.
@@ -298,13 +304,13 @@
       introSettledFrames = ready ? introSettledFrames + 1 : 0;
       if (ready && !gameLoadingFirstReadyAt) gameLoadingFirstReadyAt = performance.now();
       gameLoadingStableFrames = ready && performance.now() - warmStart <= 8 ? gameLoadingStableFrames + 1 : 0;
-      loadingTask('scene', 'running', loadingCacheCounts());
+      loadingSceneTask('running');
       // Require complete cache frames without expensive warmup work. A busy or
       // slower device gets a bounded fallback after readiness, never an endless
       // demand for a frame rate its selected preset cannot sustain.
       if (introSettledFrames < 6 || (gameLoadingStableFrames < 6 &&
           performance.now() - gameLoadingFirstReadyAt < 2000)) return;
-      loadingTask('scene', weatherBakeWorkerFailed ? 'fallback' : 'done', loadingCacheCounts() + ' Planet and moon prepared.' +
+      loadingSceneTask(weatherBakeWorkerFailed ? 'fallback' : 'done', ' Planet and moon prepared.' +
         (weatherBakeWorkerFailed ? ' Cloud worker unavailable; images built on the main thread.' : ''));
       if (window.SluiceLoading) window.SluiceLoading.environment({ cloudWorker: weatherBakeWorkerFailed ? 'main-thread fallback' : 'available',
         graphics: window.gm ? gm.activePreset : 'default', canvas: canvas.width + 'x' + canvas.height });

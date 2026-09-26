@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.102';
+  var GAME_VERSION = 'v28.103';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1927,7 +1927,7 @@
   var smokeWGPU = null;           // WebGPU smoke sim; shares the liquid device, created when USE_WEBGPU_SMOKE
   var USE_WEBGPU_JELLO = false;   // WebGPU jello inner loop — staged port (js/jello-wgpu.js), default OFF.
                                   // Stage 1 only boots the module + its self-test; nothing reads results yet.
-  var jelloWGPU = null;           // WebGPU jello solver; shares the liquid device, created dormant at boot
+  var jelloWGPU = null;           // Dormant GPU diagnostic; created for the GPU flag, dev mode, or ?jellogpucheck=1
   // Options handed to LiquidWGPU.create() — the persistent liquid typed
   // arrays (stable refs) + a live-count getter, so the GPU module can
   // mirror particle state without reaching into this IIFE.
@@ -4992,7 +4992,12 @@
       cloudTotal++;
       if (!veilTile.dirty && !veilTile.recolorDirty) clouds++;
     }
-    return ready + '/' + total + ' terrain chunks; ' + clouds + '/' + cloudTotal + ' cloud images; ' + Math.min(6, introSettledFrames) + '/6 complete frames.';
+    return { detail: ready + '/' + total + ' terrain chunks; ' + clouds + '/' + cloudTotal + ' cloud images; ' + Math.min(6, introSettledFrames) + '/6 complete frames.',
+      counts: { done: ready + clouds + Math.min(6, introSettledFrames), total: total + cloudTotal + 6, unit: 'checks' } };
+  }
+  function loadingSceneTask(state, detail) {
+    var cache = loadingCacheCounts();
+    loadingTask('scene', state, cache.detail + (detail || ''), cache.counts);
   }
 
   function loadingCloudsReady() {
@@ -5045,7 +5050,8 @@
     var ready = fence.gpuDone && !fence.gl.length && fence.frames >= 2;
     loadingTask('fence', ready ? (fence.warnings.length ? 'fallback' : 'done') : 'running',
       fence.completed + '/' + fence.total + ' graphics queues settled; ' + Math.min(2, fence.frames) + '/2 presentation frames.' +
-      (fence.warnings.length ? ' ' + fence.warnings.join(' ') : ''), { done: fence.completed, total: fence.total, unit: 'queues' });
+      (fence.warnings.length ? ' ' + fence.warnings.join(' ') : ''),
+      { done: fence.completed + Math.min(2, fence.frames), total: fence.total + 2, unit: 'checks' });
     return ready;
   }
 
@@ -5070,7 +5076,7 @@
       // First-use GPU programs compile here, under the cover (046).
       if (prepareShaderWarmup()) {
         introSettledFrames = 0; gameLoadingStableFrames = 0;
-        loadingTask('scene', 'running', loadingCacheCounts());
+        loadingSceneTask('running');
         return;
       }
       // A surface-only warmup misses the art first exposed during takeoff.
@@ -5082,13 +5088,13 @@
       introSettledFrames = ready ? introSettledFrames + 1 : 0;
       if (ready && !gameLoadingFirstReadyAt) gameLoadingFirstReadyAt = performance.now();
       gameLoadingStableFrames = ready && performance.now() - warmStart <= 8 ? gameLoadingStableFrames + 1 : 0;
-      loadingTask('scene', 'running', loadingCacheCounts());
+      loadingSceneTask('running');
       // Require complete cache frames without expensive warmup work. A busy or
       // slower device gets a bounded fallback after readiness, never an endless
       // demand for a frame rate its selected preset cannot sustain.
       if (introSettledFrames < 6 || (gameLoadingStableFrames < 6 &&
           performance.now() - gameLoadingFirstReadyAt < 2000)) return;
-      loadingTask('scene', weatherBakeWorkerFailed ? 'fallback' : 'done', loadingCacheCounts() + ' Planet and moon prepared.' +
+      loadingSceneTask(weatherBakeWorkerFailed ? 'fallback' : 'done', ' Planet and moon prepared.' +
         (weatherBakeWorkerFailed ? ' Cloud worker unavailable; images built on the main thread.' : ''));
       if (window.SluiceLoading) window.SluiceLoading.environment({ cloudWorker: weatherBakeWorkerFailed ? 'main-thread fallback' : 'available',
         graphics: window.gm ? gm.activePreset : 'default', canvas: canvas.width + 'x' + canvas.height });
@@ -72913,12 +72919,12 @@
     // v14.28+ — smoke stays on WebGL (USE_WEBGPU_SMOKE off); only the water
     // uses WebGPU, for the big-pond A/B test.
     smokeWGPU = (USE_WEBGPU_SMOKE && window.SmokeWGPU) ? window.SmokeWGPU.create({ liquid: liquidWGPU }) : null;
-    // WebGPU jello port, Stage 1 (js/jello-wgpu.js). Created DORMANT whenever the
-    // liquid device exists so the boot self-test reports on real hardware every
-    // session (the smoke flag-gated pattern never exercised its tests). The CPU
-    // drives all live bodies until Stage 3 wires the islanded offload behind
-    // USE_WEBGPU_JELLO.
-    jelloWGPU = (window.JelloWGPU && liquidWGPU) ? window.JelloWGPU.create({ liquid: liquidWGPU }) : null;
+    // The staged WebGPU jello port is dormant; CPU slimes remain live. Its
+    // hardware diagnostic belongs in developer sessions or an explicit
+    // ?jellogpucheck=1 boot, instead of compiling and testing on every visit.
+    var _wantWGPUJello = USE_WEBGPU_JELLO || devMode ||
+      /[?&]jellogpucheck=1(?:&|$)/i.test((window.location && window.location.search) || '');
+    jelloWGPU = (_wantWGPUJello && window.JelloWGPU && liquidWGPU) ? window.JelloWGPU.create({ liquid: liquidWGPU }) : null;
     // ====== GM TUNING FACADE (window.gm) ======
     // Phase 2 of the tuning system. Exposes a `window.gm` console facade so the
     // owner can live-tune the game from the browser console, e.g.

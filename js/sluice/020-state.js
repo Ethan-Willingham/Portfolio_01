@@ -569,7 +569,7 @@
   var smokeWGPU = null;           // WebGPU smoke sim; shares the liquid device, created when USE_WEBGPU_SMOKE
   var USE_WEBGPU_JELLO = false;   // WebGPU jello inner loop — staged port (js/jello-wgpu.js), default OFF.
                                   // Stage 1 only boots the module + its self-test; nothing reads results yet.
-  var jelloWGPU = null;           // WebGPU jello solver; shares the liquid device, created dormant at boot
+  var jelloWGPU = null;           // Dormant GPU diagnostic; created for the GPU flag, dev mode, or ?jellogpucheck=1
   // Options handed to LiquidWGPU.create() — the persistent liquid typed
   // arrays (stable refs) + a live-count getter, so the GPU module can
   // mirror particle state without reaching into this IIFE.

@@ -1,25 +1,42 @@
-# Loading diagnostics
+# Loading and progress
 
-The loading rail counts settled tasks, not seconds or bytes. A task settles when
-it completes, selects a working fallback, or reuses existing work. Failed tasks
-do not count as settled. There is no estimated percentage or time remaining.
+The default loading screen shows SLUICE, one short status, a continuous progress
+bar, a percentage and a collapsed Details control. Step lists, elapsed time,
+resource names and the full report stay inside Details. They do not repaint
+while Details is closed. Pause > Loading report keeps the report afterward.
 
-Startup tracks six deferred scripts; mine generation/save restoration; regular
-and bold HUD fonts; moon image decoding; water backend initialization; destination
-caches; representative drawing passes; and graphics queue completion. This is 14
-gates in five groups. Scene rebuilds have only their relevant gates. A new mine
-includes world preparation; a cold return or graphics change does not.
+The percentage measures preparation completed, not download bytes or remaining
+time. No timer advances it. A task settles when it completes, selects a working
+fallback or reuses existing work. Failed tasks do not count as complete.
 
-The outer rail uses those gates as equal units, despite their different durations.
-The active drawing gate also reports actual completed passes. Terrain and clouds
-show ready cache counts for the destination, followed by the existing requirement
-for six complete frames. These cache counts can change as caches are invalidated.
-The GPU gate counts settled queues and two presentation opportunities. A timeout
-is recorded as a fallback, never as confirmed GPU completion.
+Five stages have fixed preparation shares: game files 25, mine setup 10,
+fonts/physics 15, scene/effects 45, and graphics completion 5. Tasks within a stage
+share its allocation equally. Rebuilds normalize over their relevant stages.
+These shares give counted scene preparation space on the bar; they are not
+predicted durations or measured bandwidth.
+
+Startup tracks seven deferred scripts; mine generation/save restoration; both
+HUD font weights; the optional moon texture; water and fire backends; destination
+caches; representative drawing passes; and graphics queue completion. These are
+16 gates. Scene rebuilds keep only their relevant gates, with world preparation
+included for a new mine.
+
+Running gates with actual counters advance their share fractionally: completed
+draws, ready terrain/cloud caches plus complete frames, and graphics queues plus
+two presentation opportunities. An invalidated cache can reset its counter; the
+bar retains already observed work but reserves task completion for the real
+readiness result. The displayed percentage stays below 100 until every gate has
+settled and the scene is ready to reveal. Every new loading run starts fresh.
+
+The moon image never blocks scene preparation. If it is still unavailable when
+other assets settle, its procedural fallback counts as ready, and a late texture
+can replace it. Water and fire retain their bounded fallback deadlines. Ordinary
+boots skip the dormant GPU-jello diagnostic; developer boots and
+`?jellogpucheck=1` still run it. Live CPU slime physics is unchanged.
 
 ## Reading a report
 
-Open Loading details during startup, or Pause > Loading report afterward. Copy
+Open Details during startup, or Pause > Loading report afterward. Copy
 report uses the clipboard when available; the text is selectable if the browser
 denies clipboard access. Reports remain only in memory and include no save data.
 
@@ -44,7 +61,7 @@ SluiceLoading.report()  // detached snapshot of the current or last loading run
 SluiceLoading.reports() // bounded history, preserving the initial startup
 ```
 
-Late optional completions do not rewrite a recorded timeout. The water timeout
+Late optional completions do not rewrite a recorded fallback or timeout. The water timeout
 also disposes late-created GPU resources. Fatal startup errors retain the cover,
 record the actual error, and offer a reload without clearing saved progress.
 
@@ -66,4 +83,5 @@ Run `node --check js/sluice.js` and `node tools/sluice-loading-smoke.mjs` after 
 normal version bump and build. The smoke harness owns Chrome for Testing and
 checks delayed/failed scripts, font failures, CPU fallback, GPU timeouts, worker
 fallback, save restore, New Game, graphics changes, input lock, native report
-controls, mobile/reduced motion, and the art bench initialization contract.
+controls, truthful percentages, phone and landscape layouts, reduced motion,
+explicit GPU-jello diagnostics, and the art bench initialization contract.

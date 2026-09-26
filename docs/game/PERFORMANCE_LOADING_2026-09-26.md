@@ -71,3 +71,35 @@ BUNDLE_REF=e7fd288 GANESH=0 node tools/perf/shader-warmup-equivalence.mjs
 node tools/test-sluice-clouds.cjs
 node tools/test-fire-startup.cjs
 ```
+
+## v28.103: compact progress and remaining opportunities
+
+The default loading view now shows a short status and a percentage bar. Detailed
+counts and diagnostics stay in the collapsed Details control and the saved
+Pause report. Progress comes from settled tasks and actual drawing, cache and
+queue counters, using fixed preparation shares. It never advances on a timer,
+and 100% requires the existing readiness gates. See [LOADING.md](LOADING.md).
+
+Normal visits also skip the dormant GPU slime diagnostic. Live slimes use the
+existing CPU simulation. Developer sessions and `?jellogpucheck=1` still run the
+diagnostic, including its GPU readback test.
+
+Three alternating local rounds against `da1c912` measured cold medians of
+1693 ms before and 1680 ms after, with repeat medians of 1579 ms and 1564 ms.
+These differences are small enough to be normal run variation. Removing the
+diagnostic reduces unnecessary work but does not establish a substantial
+startup speedup. The expanded loading smoke suite passes 163 checks, including
+percentage behavior, stalled resources, desktop, portrait and short landscape
+layouts, and the explicit GPU diagnostic. The jello and fire startup unit
+checks also pass.
+
+Two larger opportunities remain unimplemented:
+
+- Saved-game boot currently generates a disposable fresh world before restoring
+  the saved grid and rebuilding lighting. Separating common initialization from
+  fresh-world generation could reduce repeat startup work. Legacy saves and
+  corrupt-save recovery need explicit coverage before changing this path.
+- Every release changes the cache key of all helper scripts and menu CSS, even
+  when their contents are unchanged. Content-based asset versions could preserve
+  roughly 220 KB of compressed helper assets across releases. This affects
+  deployed repeat visits; the local no-store timing harness does not measure it.

@@ -732,9 +732,9 @@
     // v14.28+ — smoke stays on WebGL (USE_WEBGPU_SMOKE off); only the water
     // uses WebGPU, for the big-pond A/B test.
     smokeWGPU = (USE_WEBGPU_SMOKE && window.SmokeWGPU) ? window.SmokeWGPU.create({ liquid: liquidWGPU }) : null;
-    // WebGPU jello port, Stage 1 (js/jello-wgpu.js). Created DORMANT whenever the
-    // liquid device exists so the boot self-test reports on real hardware every
-    // session (the smoke flag-gated pattern never exercised its tests). The CPU
-    // drives all live bodies until Stage 3 wires the islanded offload behind
-    // USE_WEBGPU_JELLO.
-    jelloWGPU = (window.JelloWGPU && liquidWGPU) ? window.JelloWGPU.create({ liquid: liquidWGPU }) : null;
+    // The staged WebGPU jello port is dormant; CPU slimes remain live. Its
+    // hardware diagnostic belongs in developer sessions or an explicit
+    // ?jellogpucheck=1 boot, instead of compiling and testing on every visit.
+    var _wantWGPUJello = USE_WEBGPU_JELLO || devMode ||
+      /[?&]jellogpucheck=1(?:&|$)/i.test((window.location && window.location.search) || '');
+    jelloWGPU = (_wantWGPUJello && window.JelloWGPU && liquidWGPU) ? window.JelloWGPU.create({ liquid: liquidWGPU }) : null;

@@ -56,6 +56,7 @@ window.__loadingSmoke=(function(){
       x:player.x,y:player.y,fuel:player.fuel,money:money,keys:Object.keys(keys).filter(function(k){return keys[k];}),
       touch:!!touch.active,initEvents:initEvents,revealEvents:revealEvents,loadingTicks:loadingTicks,hiddenMotion:hiddenMotion,bootError:window.__bootErr || null,
       loaderActive:SluiceLoading.active(),worldReady:!!world.length,gpuWater:!!liquidWGPU,gpuJello:!!jelloWGPU,gpuSmoke:!!smokeWGPU,
+      jelloCheck:!!(jelloWGPU && jelloWGPU.selfTestOk),cpuSlimes:jelloBodies.length,
       stable:gameLoadingStableFrames,settled:introSettledFrames,preset:gm.activePreset,workerFailed:weatherBakeWorkerFailed,
       planetReady:!!planetSurface && planetSurface.lightKey !== '',moonReady:!!moonPhaseDisc,moonImageReady:moonImageReady,
       resizeCalls:resizeCalls,canvas:[canvas.width,canvas.height],cssPixels:viewW*viewH,pixelBudget:RES_PIXEL_BUDGET,choice:SluiceOptions.graphicsChoice};},
@@ -119,7 +120,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.__loadingAtlasSt
     if(key!==previous){previous=key;window.__loadingHistory.push(entry);}
     if(window.SluiceLoading && SluiceLoading.report){
       var report=SluiceLoading.report(),warm=report.tasks.find(function(t){return t.id==='shaders';});
-      var reading={completed:report.completed,total:report.total,draws:warm&&warm.counts?warm.counts.done:0,kind:report.kind};
+      var reading={completed:report.completed,total:report.total,percent:report.percent,state:report.state,
+        draws:warm&&warm.counts?warm.counts.done:0,kind:report.kind};
       if(JSON.stringify(window.__loadingProgress[window.__loadingProgress.length-1])!==JSON.stringify(reading))window.__loadingProgress.push(reading);
     }
   }).observe(document,{subtree:true,attributes:true,childList:true,characterData:true});
@@ -188,6 +190,7 @@ async function ready(name,timeout=40000,paused=false){
   check(name+' restores the expected pause state',state.paused===paused && !loader.active);
   const report=await ev('SluiceLoading.report()');
   check(name+' report settles every real gate',report.completed===report.total && report.state==='ready' && report.tasks.every(t=>['done','fallback','skipped'].includes(t.state)));
+  check(name+' reaches 100% only after preparation',report.percent===100 && await ev('document.getElementById("gm-loading-percent").textContent==="100%" && document.getElementById("gm-loading-progress").getAttribute("aria-valuenow")==="100"'));
   reports.push({name,state,loader,report,history:await ev('__loadingHistory')});
   return state;
 }
@@ -225,10 +228,12 @@ try{
   check('game bundle is still unavailable',!await ev('!!window.__loadingSmoke'));
   await until('SluiceLoading.report().tasks.filter(t=>t.group===0&&t.id!=="script-sluice").every(t=>t.state==="done")','support scripts did not execute');
   const stalled=await ev('SluiceLoading.report()');await sleep(350);const stalledLater=await ev('SluiceLoading.report()');
-  check('elapsed time never manufactures download progress',stalled.completed===stalledLater.completed && stalledLater.elapsedMs>stalled.elapsedMs+200 && stalledLater.tasks.find(t=>t.id==='script-sluice').state==='running');
+  check('elapsed time never manufactures download progress',stalled.completed===stalledLater.completed && stalled.percent===stalledLater.percent && stalled.percent<100 && stalledLater.elapsedMs>stalled.elapsedMs+200 && stalledLater.tasks.find(t=>t.id==='script-sluice').state==='running');
+  check('default loading view hides technical details',await ev('!document.getElementById("gm-loading-details").open && !document.getElementById("gm-loading-steps").checkVisibility() && !document.getElementById("gm-loading-elapsed").checkVisibility()'));
+  check('percentage and accessible progress agree',await ev('document.getElementById("gm-loading-percent").textContent===document.getElementById("gm-loading-progress").getAttribute("aria-valuenow")+"%" && document.getElementById("gm-loading-progress").getAttribute("aria-valuemax")==="100"'));
   await ev('document.querySelector("#gm-loading-details summary").focus()');await tap('Enter','Enter');
   check('loading details opens with the keyboard',await ev('document.getElementById("gm-loading-details").open && document.getElementById("gm-loading-log").textContent.includes("js/sluice.js")'));
-  await ev('document.getElementById("gm-loading-details").open=false');
+  await ev('document.getElementById("gm-loading-details").open=false;document.activeElement.blur()');
   await shot('cold-loading');
   await ev('window.__loadingTestHold=true');release('/js/sluice.js');
   await until('!!window.__loadingSmoke && __loadingSmoke.state().worldReady','game initialization did not reach warmup');
@@ -238,10 +243,16 @@ try{
   check('arrival follows complete cache frames',first.settled>=6);
   check('orbital planet is prepared before first takeoff',first.planetReady);
   check('moon phase is prepared before first takeoff',first.moonImageReady && first.moonReady);
+  // Residents seed on the first live simulation tick, after the cover releases.
+  await until('__loadingSmoke.state().cpuSlimes>0','ordinary boot did not seed live slimes');
+  check('ordinary boot skips dormant GPU diagnostics and retains live slimes',!first.gpuJello && await ev('__loadingSmoke.state().cpuSlimes>0'));
   check('reveal fade blocks gameplay until it completes',first.revealEvents.some(e=>e.active) && first.revealEvents.every(e=>e.stationary && e.blocked));
   const warmReadings=await ev('__loadingProgress.filter(p=>p.kind==="boot")');
   check('drawing progress is observable between actual passes',warmReadings.some(p=>p.draws>0&&p.draws<29));
   check('settled step counts never move backwards during boot',warmReadings.every((p,i)=>i===0||p.completed>=warmReadings[i-1].completed));
+  check('percentage follows actual work without going backwards',warmReadings.every((p,i)=>Number.isInteger(p.percent) && p.percent>=0 && p.percent<=100 && (i===0||p.percent>=warmReadings[i-1].percent)));
+  check('100% is reserved for a ready scene',warmReadings.every(p=>p.percent<100 || p.state==='ready'));
+  check('partial drawing work moves the percentage',new Set(warmReadings.filter(p=>p.draws>0&&p.draws<29).map(p=>p.percent)).size>1);
   const finalTime=await ev('SluiceLoading.report().elapsedMs');await sleep(200);
   check('completed report freezes its measured duration',await ev('SluiceLoading.report().elapsedMs')===finalTime);
   await click('gm-pause-btn');await click('gm-loading-report-btn');
@@ -366,6 +377,16 @@ try{
   check('mobile loading fits its stage',await ev(`(()=>{const a=document.getElementById('game-intro').getBoundingClientRect(),s=document.getElementById('gm-loading-status').getBoundingClientRect();return s.left>=a.left && s.right<=a.right && s.top>=a.top && s.bottom<=a.bottom && a.width<=innerWidth;})()`));
   check('reduced motion removes loading animation',await ev(`(()=>{const e=document.getElementById('game-intro');return [e,...e.querySelectorAll('*')].every(n=>[null,'::before','::after'].every(p=>{const c=getComputedStyle(n,p);return c.animationName==='none'||parseFloat(c.animationDuration)<=0.01;}));})()`));
   await shot('mobile-reduced-loading');release('/js/sluice.js');await ready('mobile reduced motion');await shot('mobile-ready');
+
+  await size(844,390,true);faults.set('/js/sluice.js','hold');await navigate('compact-landscape');
+  await visible('short landscape keeps the loading screen visible');
+  check('short landscape fits the complete compact loading view',await ev(`(()=>{const a=document.getElementById('game-intro').getBoundingClientRect(),c=document.querySelector('.loading-content').getBoundingClientRect();return c.left>=a.left && c.right<=a.right && c.top>=a.top && c.bottom<=a.bottom && c.height<280;})()`));
+  await shot('landscape-loading');release('/js/sluice.js');await ready('compact landscape');
+
+  await size(1440,900);await navigate('explicit-jello-diagnostic','?nosave=1&jellogpucheck=1');await ready('explicit GPU-jello diagnostic');
+  await until('__loadingSmoke.state().jelloCheck','explicit GPU-jello diagnostic did not finish successfully');
+  await until('__loadingSmoke.state().cpuSlimes>0','diagnostic boot did not seed live slimes');
+  check('explicit hardware diagnostic remains available',await ev('__loadingSmoke.state().gpuJello && __loadingSmoke.state().cpuSlimes>0'));
 
   scenario='art-atlas';await size(1440,900);
   await send('Page.navigate',{url:`http://127.0.0.1:${port}/art-lab.html?loading-smoke=atlas`});
