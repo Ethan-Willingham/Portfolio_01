@@ -375,6 +375,8 @@
         bathScalePush();
         bathArmHeat();
         siphonStop();
+        bathCamPin();
+        mineralLiquidTick(0);
       } else {
         hearthCancelDrag(); hearthClearBoilerHover();
         bathMode = false;

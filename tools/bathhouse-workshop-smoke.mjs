@@ -9,11 +9,13 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { savedBathEntry } from './bathhouse-saved-entry.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8197), debug = port + 1000;
 const profile = fs.mkdtempSync('/tmp/sluice-hearth-');
 const out = process.env.DUMP || '/tmp/sluice-workshop-qa';
+const savedFixture = process.env.BATH_SAVE ? JSON.parse(fs.readFileSync(process.env.BATH_SAVE, 'utf8')) : null;
 fs.mkdirSync(out, { recursive: true });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const errors = [], pending = new Map();
@@ -92,8 +94,9 @@ try {
     else if (m.method === 'Runtime.consoleAPICalled' && m.params.args.some(a=>typeof a.value==='string'&&/fallback|failed|timeout/i.test(a.value))) console.log('BROWSER',m.params.args.map(a=>a.value||a.description));
   });
   await send('Runtime.enable'); await send('Page.enable');
+  if (savedFixture) await send('Page.addScriptToEvaluateOnNewDocument', { source: `if(!localStorage.getItem('bath.test.seeded')){localStorage.setItem('sluice.save.a',${JSON.stringify(JSON.stringify(savedFixture))});localStorage.setItem('bath.test.seeded','1');}` });
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?dev=1&nosave=1&nopause=1&tod=0.35` });
+  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?dev=1&${savedFixture ? '' : 'nosave=1&'}nopause=1&tod=0.35` });
   for (let i = 0; i < 300; i++) {
     if (await ev(`typeof __hearthTest==='function' && __hearthTest("introPhase==='done'")`)) break;
     await sleep(100);
@@ -101,6 +104,9 @@ try {
   check('workshop boots with GPU water', await game("introPhase==='done' && !!liquidWGPU && liquidWGPU.available"));
   check('shader warm-up clean', await ev('window.__shaderWarm.errors.length===0'));
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
+  if (savedFixture) {
+    await savedBathEntry({ fixture: savedFixture, game, ev, send, sleep, check, screenshot, press, button });
+  } else {
   await game('bathEnter()'); await sleep(750);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];bathNoticeT=0;updateCamera();render();');
   check('old prepare and guest buttons removed', await game("!hearthButtons.some(b=>['kit','guest'].includes(b.action))"));
@@ -199,6 +205,7 @@ try {
   check('workshop overlay clears on exit',await game('hearthOverlayCanvas.style.display==="none"'));
   check('three exterior silos stand to the right of bath',await game('bathSilos.tanks.length===3&&bathSilosExteriorRect().x>=banyaX+BANYA_W+32'));
   await screenshot('bathhouse-exterior-silos');
+  }
   check('no browser or GPU errors',errors.length===0);
   console.log('ERRORS',errors);
 } finally { cleanup(); }

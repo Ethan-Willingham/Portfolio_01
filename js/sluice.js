@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.104';
+  var GAME_VERSION = 'v28.105';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -6230,6 +6230,7 @@
     siphonRestore(env.siphon);
     if (siphon.passenger && skySlimes.length >= SKY_SLIME_MAX) skySlimes.length = SKY_SLIME_MAX - 1;
     bathServiceRestore(env.bathhouse);
+    bathRecoverLegacyWater(env.bathhouse);
     if (!env.bathhouse) bathRetireGarden(env.garden);
     // Re-derive world-dependent caches against the swapped grid.
     lightingInit();
@@ -13788,6 +13789,8 @@
         bathScalePush();
         bathArmHeat();
         siphonStop();
+        bathCamPin();
+        mineralLiquidTick(0);
       } else {
         hearthCancelDrag(); hearthClearBoilerHover();
         bathMode = false;
@@ -14984,8 +14987,9 @@
     return removed;
   }
   function mineralLiquidTick(dt) {
+    var enteringBath = bathMode && bathFading;
     mineralLiquidClock -= dt;
-    if (mineralLiquidClock > 0) return;
+    if (mineralLiquidClock > 0 && !enteringBath) return;
     mineralLiquidClock = 0.35;
     var margin = 240;
     var x0 = cam.x - margin, x1 = cam.x + viewW / worldScale + margin;
@@ -14998,7 +15002,9 @@
       mineralLiquidPark(liquidType[i], x, y);
       removeLiquidParticle(i);
     }
-    var budget = Math.min(3600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 512));
+    // Restore a saved bath under its entry cover. The outdoor streaming
+    // throttle otherwise makes an existing tub visibly fill itself in batches.
+    var budget = Math.min(enteringBath ? LIQUID_MAX_PARTICLES : 3600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 512));
     for (var bx = Math.floor(x0 / 256); bx <= Math.floor(x1 / 256) && budget > 0; bx++) {
       for (var by = Math.floor(y0 / 256); by <= Math.floor(y1 / 256) && budget > 0; by++) {
         var key = bx + ':' + by, data = mineralLiquidParked[key];
@@ -15437,10 +15443,20 @@
     }
   }
   function bathHUDHeight() { return 0; }
+  function bathDrawPerformance(c, L) {
+    // Share the wall's navigation row without covering the pause or leave target.
+    var navWidth = L.landscape ? L.scene.w : L.w;
+    var r = { x: 60, y: 8, w: Math.min(96, navWidth - 154), h: 44 };
+    var size = r.w < 60 ? 10 : 11;
+    hearthPlate(c, r, false);
+    hearthText(c, GAME_VERSION, r.x + r.w / 2, r.y + 13, size, BLD.cream, 'center');
+    hearthText(c, (perfFps || 0) + ' FPS', r.x + r.w / 2, r.y + 30, size, BLD.goldPale, 'center');
+  }
   function bathDrawServiceHUD() {
     var L = hearthRoomLayout(), meter = L.meter;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
+    bathDrawPerformance(ctx, L);
     bathToolDrawControls(ctx, L.tools);
     bathServiceButtons = [];
     var type = bathSilos.selected, available = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
@@ -15469,7 +15485,7 @@
     return false;
   }
   function bathServiceSave() {
-    return { version: 6, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+    return { version: 7, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
@@ -15635,6 +15651,33 @@
     siphon.tank[tank.type] = bathSiloAmount(siphon.tank[tank.type]) + moved;
     tank.count -= moved;
     return moved;
+  }
+  function bathRecoverLegacyWater(data) {
+    // Older saves cannot distinguish automatic fills from hose pours. Move
+    // their existing bath liquid into storage once, without destroying stock.
+    // New saves (v7) retain deliberately poured water in the basin.
+    if (!data || Number(data.version) >= 7) return 0;
+    var recovered = 0, warm = bathThermalTemperature();
+    for (var f = 0; f < BATH_FLOORS.length; f++) {
+      var F = BATH_FLOORS[f];
+      for (var b = 0; b < F.tubs.length; b++) {
+        var tub = F.tubs[b], temp = f === 0 ? warm : BATH_LIQUID_AMBIENT;
+        for (var type = 0; type < 5; type++) {
+          var count = mineralLiquidParkedExtractRect(tub[0] * TILE, (F.fr - F.lip - 1) * TILE,
+            (tub[1] + 1) * TILE, (F.fr + F.sink + 1) * TILE, type, 1000000000);
+          recovered += count;
+          for (var tank = 0; tank < BATH_SILO_COUNT && count > 0; tank++) count -= bathSiloPut(tank, type, count, temp);
+          // Full silos or more than three identities still keep every drop.
+          if (count > 0) bathSiloQueue(type, count, temp);
+        }
+      }
+    }
+    if (recovered > 0) {
+      bathThermal.migrationC = 0; bathThermalSample();
+      if (!bathThermal.totalCapacity) bathThermal.meanC = 20;
+      bathWater = bathBasinCount();
+    }
+    return recovered;
   }
   function bathSiloImportSupplies() {
     if (typeof bathSupplies === 'undefined') return;

@@ -376,10 +376,20 @@
     }
   }
   function bathHUDHeight() { return 0; }
+  function bathDrawPerformance(c, L) {
+    // Share the wall's navigation row without covering the pause or leave target.
+    var navWidth = L.landscape ? L.scene.w : L.w;
+    var r = { x: 60, y: 8, w: Math.min(96, navWidth - 154), h: 44 };
+    var size = r.w < 60 ? 10 : 11;
+    hearthPlate(c, r, false);
+    hearthText(c, GAME_VERSION, r.x + r.w / 2, r.y + 13, size, BLD.cream, 'center');
+    hearthText(c, (perfFps || 0) + ' FPS', r.x + r.w / 2, r.y + 30, size, BLD.goldPale, 'center');
+  }
   function bathDrawServiceHUD() {
     var L = hearthRoomLayout(), meter = L.meter;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
+    bathDrawPerformance(ctx, L);
     bathToolDrawControls(ctx, L.tools);
     bathServiceButtons = [];
     var type = bathSilos.selected, available = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
@@ -408,7 +418,7 @@
     return false;
   }
   function bathServiceSave() {
-    return { version: 6, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+    return { version: 7, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,

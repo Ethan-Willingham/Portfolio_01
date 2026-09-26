@@ -105,7 +105,7 @@ function setBathTemperature(s, temperature = 42) {
   assert.equal(s.bathRoomReady,true);
   assert.equal(JSON.stringify({x:s.liquidX,y:s.liquidY,type:s.liquidType}),water,'recarving does not refill or discard water');
   const migrated=JSON.parse(JSON.stringify(s.bathServiceSave()));
-  assert.equal(migrated.version,6);
+  assert.equal(migrated.version,7);
   s.bathServiceRestore(migrated);
   assert.equal(s.bathRoomReady,true,'new room saves retain their carved geometry');
   const sentinel={type:'foundation',hp:17};s.world[floor.fr][25]=sentinel;s.bathCarveRoom();

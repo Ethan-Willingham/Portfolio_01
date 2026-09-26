@@ -75,6 +75,33 @@
     tank.count -= moved;
     return moved;
   }
+  function bathRecoverLegacyWater(data) {
+    // Older saves cannot distinguish automatic fills from hose pours. Move
+    // their existing bath liquid into storage once, without destroying stock.
+    // New saves (v7) retain deliberately poured water in the basin.
+    if (!data || Number(data.version) >= 7) return 0;
+    var recovered = 0, warm = bathThermalTemperature();
+    for (var f = 0; f < BATH_FLOORS.length; f++) {
+      var F = BATH_FLOORS[f];
+      for (var b = 0; b < F.tubs.length; b++) {
+        var tub = F.tubs[b], temp = f === 0 ? warm : BATH_LIQUID_AMBIENT;
+        for (var type = 0; type < 5; type++) {
+          var count = mineralLiquidParkedExtractRect(tub[0] * TILE, (F.fr - F.lip - 1) * TILE,
+            (tub[1] + 1) * TILE, (F.fr + F.sink + 1) * TILE, type, 1000000000);
+          recovered += count;
+          for (var tank = 0; tank < BATH_SILO_COUNT && count > 0; tank++) count -= bathSiloPut(tank, type, count, temp);
+          // Full silos or more than three identities still keep every drop.
+          if (count > 0) bathSiloQueue(type, count, temp);
+        }
+      }
+    }
+    if (recovered > 0) {
+      bathThermal.migrationC = 0; bathThermalSample();
+      if (!bathThermal.totalCapacity) bathThermal.meanC = 20;
+      bathWater = bathBasinCount();
+    }
+    return recovered;
+  }
   function bathSiloImportSupplies() {
     if (typeof bathSupplies === 'undefined') return;
     for (var type = 0; type < 5; type++) {

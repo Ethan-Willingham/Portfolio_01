@@ -322,6 +322,7 @@
     siphonRestore(env.siphon);
     if (siphon.passenger && skySlimes.length >= SKY_SLIME_MAX) skySlimes.length = SKY_SLIME_MAX - 1;
     bathServiceRestore(env.bathhouse);
+    bathRecoverLegacyWater(env.bathhouse);
     if (!env.bathhouse) bathRetireGarden(env.garden);
     // Re-derive world-dependent caches against the swapped grid.
     lightingInit();

@@ -20,6 +20,11 @@ An empty tub shows dry copper sheets and an EMPTY TUB reading. The lining is
 drawn behind the liquid layer; blue water appears only from actual particles.
 Fresh baths start empty, and the hose supplies their liquid.
 
+The bathhouse keeps the running game version and live FPS on a small wall plate
+beside Pause, in normal play and developer mode. It shares the navigation row,
+stays clear of Leave on short landscape screens, and does not cover the basin
+or furnace controls.
+
 > **Loading and arrival (2026-09-26, v28.103).** The initial HTML contains an
 > opaque gunmetal cover, the cream SLUICE wordmark and the drill/strata mark.
 > The default view shows one short status, a continuous brass progress bar and

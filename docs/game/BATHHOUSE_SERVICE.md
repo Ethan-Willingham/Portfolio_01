@@ -97,7 +97,12 @@ have been removed. The older console fixture actions remain for test harnesses.
 The boiler fixture does not fill the tub. Dev mode still requires opening the
 hose to add liquid; selecting it or entering the room leaves the valve shut.
 Legacy automatic-fill reservations remain stored until the hose uses them.
-Actual water already in a saved bath is restored normally.
+Bath save v7 moves liquid from older tubs into the silos once because older
+saves do not identify automatic fills separately from manual hose pours.
+Amounts, liquid identities and stored heat are retained; full silos keep the
+excess in the existing reserved supply. New hose-filled baths persist normally,
+with parked water restored under the entry fade instead of visibly appearing
+in batches after entry. The normal outdoor streaming budget is unchanged.
 
 ## Ceiling claw and hose (v28.73)
 
