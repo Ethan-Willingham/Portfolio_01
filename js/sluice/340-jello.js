@@ -2656,6 +2656,7 @@
   // traction on the sides, track-shear on the top surface, jet cone push-down.
   function jelloPlayerCouple(b, dt) {
     if (!player || gameWon || gameOver) return;
+    var residentContact = typeof softContactBody === 'function' && softContactBody(b);
     var px0 = player.x, px1 = player.x + PLAYER_W;
     var py0 = player.y, py1 = player.y + PLAYER_H;
     var pcx = px0 + PLAYER_W * 0.5, pcy = py0 + PLAYER_H * 0.5;
@@ -2695,7 +2696,7 @@
       // ripping the rim sideways (the gel beside you got dragged like it was being
       // pulled into the tracks). Side hits skip this and go to the soft contact
       // push-out + the closed-ring barrier below instead.
-      if (player.onJello && x > px0 && x < px1 && y >= underTop && y <= underBot) {
+      if (!residentContact && player.onJello && x > px0 && x < px1 && y >= underTop && y <= underBot) {
         if (Math.abs(vx) > 4) {
           var sh = -Math.sign(vx) * Math.min(Math.abs(vx), JELLO_VMAX * 0.5) * JELLO_TRACK_SHEAR * dt * iscl;
           px[i] += sh;
@@ -2729,7 +2730,7 @@
       //     pumping energy until it "blows up". The gel's springs/pressure resist +
       //     recover; the HARD CONTAINMENT (jelloResolvePlayer) keeps the rig OUTSIDE
       //     the boundary so it can never pass through or get absorbed.
-      if (x > px0 && x < px1 && y > py0 && y < py1) {
+      if (!residentContact && x > px0 && x < px1 && y > py0 && y < py1) {
         var sp = Math.sqrt(vx * vx + vy * vy);
         // Only SNOWPLOW the cube while driving INTO it (not while riding on top). On top this
         // pushed the cube along in the travel direction, so the rig surfed the cube it was
@@ -2836,6 +2837,7 @@
   // JELLO_TIMESCALE + JELLO_H into the Verlet prev-position shift; the
   // integrator's JELLO_VMAX clamp is the hard ceiling.
   function jelloPlayerFling(b, frameDt) {
+    if (typeof softContactBody === 'function' && softContactBody(b)) return;
     if (!player || gameWon || gameOver || drilling) return;
     var vx = player.vx || 0, vy = player.vy || 0;
     var sp = Math.sqrt(vx * vx + vy * vy);
@@ -3011,6 +3013,7 @@
     var punch = (impactVy < 600 ? impactVy : 600) * 0.004 * JELLO_IMPACT * jelloImpulseScale();  // downward Verlet impulse (px; solver-dt aware)
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (cx < b.bboxL - 6 || cx > b.bboxR + 6) continue;
       if (b.bboxT > feetY + TILE || b.bboxB < feetY - TILE) continue;
       var px = b.px, py = b.py, oy = b.oy, n = b.n;
@@ -3206,6 +3209,7 @@
     var probeY = 1e9, bestVX = 0, bestVY = 0, found = false;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (b.bboxR < fpL || b.bboxL > fpR) continue;   // no part of this body under the rig
       if (b.bboxB < yLo || b.bboxT > yHi) continue;
       // PER-BODY ADAPTIVE probe line (v24.144): the rig centre clamped into this
@@ -3298,6 +3302,7 @@
     var reach = halfW + wall;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (b.bboxR < cx - reach || b.bboxL > cx + reach) continue;
       if (b.bboxT > feetY + TILE) continue;        // body top must be near the feet (rig on top)
       // ...and the body must reach DOWN to the feet — the rig can only rest ON
@@ -3365,6 +3370,7 @@
     var best = 1e9;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (x < b.bboxL || x > b.bboxR) continue;
       if (fL !== undefined && (b.bboxR < fL || b.bboxL > fR)) continue;   // not under the rig -> not a support
       if (b._pushMs !== undefined && performance.now() - b._pushMs < 120) continue;   // being bulldozed -> not a surface
@@ -3508,6 +3514,7 @@
       var bestD2 = 0, bnx = 0, bny = 0, found = false;
       for (var bi = 0; bi < jelloBodies.length; bi++) {
         var b = jelloBodies[bi];
+        if (typeof softContactBody === 'function' && softContactBody(b)) continue;
         if (b.ringN < 3) continue;
         if (b.bboxR <= px0 || b.bboxL >= px1 || b.bboxB <= py0 || b.bboxT >= py1) continue;
         for (var e = 0; e < 4; e++) {
@@ -3992,6 +3999,7 @@
     var seatY = y1 - (JELLO_RIDE_SINK + 6);      // seated bed-in band: never touched
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (b.frozen) continue;
       if (b.bboxR < x0 || b.bboxL > x1 || b.bboxB < y0 || b.bboxT > y1) continue;
       // ONE exit side per BODY, the side its centroid already favors (normalized by
@@ -4234,6 +4242,7 @@
   // once-per-frame pass that fights the solver. h is the substep dt (JELLO_H/K).
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
+    if (typeof softContactSnapshot === 'function') softContactSnapshot(b);
     var resilienceGuard = jelloResilienceStepBegin(b);
     jelloActuateBody(b, h);
     jelloIntegrate(b, h);
@@ -5834,6 +5843,7 @@
   }
 
   function updateJello(dt) {
+    if (jelloBodies.length === 0 && typeof softContactClear === 'function') softContactClear();
     if (jelloBodies.length === 0 && jelloSplats.length === 0) return;
     updateJelloSplats(dt);
     var simFrozen = gameOver || gameWon || (UI_NEW && shopState !== 'closed');
@@ -5851,7 +5861,7 @@
     var subs = 0;
     while (jelloAccum >= JELLO_H && subs < JELLO_MAX_SUBSTEPS) { subs++; jelloAccum -= JELLO_H; }
     if (jelloAccum > JELLO_H) jelloAccum = JELLO_H;
-    if (subs === 0) return;
+    if (subs === 0) { if (typeof softContactIdle === 'function') softContactIdle(); return; }
     jelloFrameNo++;   // stamp for the shade-matrix cache (skipped frames keep the cache fresh)
     // Cache the jet frame for this frame's substeps (rotation-flight aware).
     jelloJetOn = !!(player && player.thrusting && player.fuel > 0 && !gameOver && !gameWon &&
@@ -5961,6 +5971,7 @@
     // parked-pile common case). The rig displace + rescue + render below still
     // run, so a rig pressed into a sleeping pile stays evicted.
     if (!anySolve) totalSteps = 0;
+    if (totalSteps === 0 && typeof softContactClear === 'function') softContactClear();
     // Dev-only phase timing (v25.41): jello.internal / jello.contact / etc
     // buckets — where does the AWAKE-solver frame go? Emitted via the perfMark
     // now-minus-acc trick; zero cost outside dev mode. (Measured: the contact
@@ -5988,6 +5999,7 @@
       if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
       if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
+      if (typeof softContactStep === 'function') softContactStep(active, nActive, h, totalSteps);
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
       // Direct manipulation has a stricter contract than ordinary collision:
       // the frame may never expose a crossed ring or mirrored cell and rely on
@@ -6007,7 +6019,7 @@
       // World re-collide AFTER contact + containment: those passes move points without
       // seeing tiles, so a pressed pile could park points inside a wall until the NEXT
       // substep (far-side pop-outs / welds). One cheap pass closes the gap.
-      if (nActive > 1) {
+      if (nActive > 1 || (typeof SOFT_CONTACT !== 'undefined' && SOFT_CONTACT)) {
         for (ai = 0; ai < nActive; ai++) {
           b = active[ai]; if (!b._solve) continue;
           // A direct-grab rejection already restored this participant to its
@@ -6191,6 +6203,7 @@
       player.vy -= jelloJetDY * _jrAcc * dt;
     }
     jelloUnmergeBodies(dt, active, nActive);   // no slime can stay inside another (rigid rate-limited split)
+    if (typeof softContactFinish === 'function') softContactFinish();
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring
     jelloRigDisplaceGel();    // hard displacement: gel can never be deeper than the dent cap inside the hull
     jelloDeformBowl();        // resting on top: carve the conforming membrane bowl

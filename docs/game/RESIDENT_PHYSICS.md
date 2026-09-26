@@ -97,3 +97,46 @@ score on them is insufficient evidence to replace the accepted feel again.
 
 Browser checks use a separate owned Chrome for Testing process and disposable
 profiles. They do not read or modify the player's live save.
+
+
+## Contact playtest after the rollback
+
+Open `grand-motherload.html?softplay=1` for the opt-in comparison. The ordinary
+page still uses the restored interaction path. The playtest disables both save
+loading and writing, including when the URL has no `nosave` parameter.
+
+Choose **New contacts** or **Original**, select a centered drop, either edge
+drop, or a push from either side, then use **Repeat**. Each reset reconstructs
+the same resident, starting rig pose, and original nearby terrain. The push applies ordinary driving
+input briefly; afterward the player can drive, fly, or drag normally.
+`?softcontact=1` enables only the new contact path in the normal world.
+
+This first experiment replaces overlapping resident/rig responses with local
+skin contact at the existing gel substep rate. A contact projects the rig and
+the contacted skin patch apart according to their masses. Bounded friction
+opposes sliding. The local force can compress or turn the gel; its existing
+springs recover the deformation. The trial bypasses the resident's old landing
+punch, stored rebound, track shear, bowl deformation, fling tier, and separate
+rig containment passes. It does not inject a replacement bounce or spin.
+
+The existing lattice, material coefficients, muscle waves, grips, autonomous
+movement, pointer handling, jets, and world collision remain the reference.
+Contact iterates with the baseline orientation constraint so a newly pressed
+skin cell does not wait for the next material tick to resist folding. Actual
+skin edge crossings also receive local self-contact, using their previous
+sides and equal/opposite point/edge responses. This addresses tiny folds as a
+pushed body returns to the floor, without prescribing an outline. It applies
+consistently to all trial residents; autonomous motion can therefore diverge
+when the original skin would have crossed itself. This is still the original
+position-based material, including its existing recovery
+and motor state transitions. The experiment does not claim fully emergent
+creature behavior or a new water coupling. Hard-circle physics is untouched.
+
+`tools/test-soft-contact.mjs` runs matched drops at several speeds and display
+rates, pushes from both sides, exact trajectory identity before the first
+self-contact intervention, unchanged material parameters,
+high-refresh support continuity, frozen menus, and the real comparison UI.
+It writes reports and actual-render image strips under `/tmp`, including both
+rig-perimeter and reverse skin-inside-hull penetration. Numerical safeguards
+are admission criteria for playtesting, not evidence that the new feel is
+preferred. Keep the default baseline until that preference is established.

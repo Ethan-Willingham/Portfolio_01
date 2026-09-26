@@ -39,6 +39,8 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
+    softContactOrigin = null;
+    if (gameOver || gameWon || shopOpen || gamePaused || bathMode || ledgerOpen || cargoManifestOpen) softContactFrame = null;
     player.jetForce = 0; // no stale exhaust pressure when an early return freezes the rig
     if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
@@ -774,6 +776,8 @@
       player.vy = Math.max(player.vy, 85);
     }
 
+    softContactCapture();
+
     // Move X
     // During a horizontal glide, position on the X axis is owned by the
     // glide curve — skip the velocity-driven sweep so the two motions
@@ -1107,6 +1111,8 @@
       }
     }
     } // end of !glideOwnsY
+
+    softContactPrepare(dt);
 
     // Decay squash
     if (player.squash > 0) {

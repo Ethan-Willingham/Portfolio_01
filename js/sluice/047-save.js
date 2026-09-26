@@ -40,7 +40,7 @@
   // (no load at boot, no autosaves, no unload save). For testing worldgen
   // changes without wiping or racing the real save slots.
   var SAVE_DISABLED = false;
-  try { SAVE_DISABLED = /[?&]nosave=1/.test(window.location.search); } catch (e) {}
+  try { SAVE_DISABLED = /[?&](?:nosave|softplay)=1/.test(window.location.search); } catch (e) {}
   var saveLastMoney = -1;        // dirtiness signals
   var saveLastCargoN = -1;
   var saveLastDepth = -1;

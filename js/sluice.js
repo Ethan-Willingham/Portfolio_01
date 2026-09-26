@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.97';
+  var GAME_VERSION = 'v28.98';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5930,7 +5930,7 @@
   // (no load at boot, no autosaves, no unload save). For testing worldgen
   // changes without wiping or racing the real save slots.
   var SAVE_DISABLED = false;
-  try { SAVE_DISABLED = /[?&]nosave=1/.test(window.location.search); } catch (e) {}
+  try { SAVE_DISABLED = /[?&](?:nosave|softplay)=1/.test(window.location.search); } catch (e) {}
   var saveLastMoney = -1;        // dirtiness signals
   var saveLastCargoN = -1;
   var saveLastDepth = -1;
@@ -19515,6 +19515,8 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
+    softContactOrigin = null;
+    if (gameOver || gameWon || shopOpen || gamePaused || bathMode || ledgerOpen || cargoManifestOpen) softContactFrame = null;
     player.jetForce = 0; // no stale exhaust pressure when an early return freezes the rig
     if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
@@ -20250,6 +20252,8 @@
       player.vy = Math.max(player.vy, 85);
     }
 
+    softContactCapture();
+
     // Move X
     // During a horizontal glide, position on the X axis is owned by the
     // glide curve — skip the velocity-driven sweep so the two motions
@@ -20583,6 +20587,8 @@
       }
     }
     } // end of !glideOwnsY
+
+    softContactPrepare(dt);
 
     // Decay squash
     if (player.squash > 0) {
@@ -64925,6 +64931,7 @@
   // traction on the sides, track-shear on the top surface, jet cone push-down.
   function jelloPlayerCouple(b, dt) {
     if (!player || gameWon || gameOver) return;
+    var residentContact = typeof softContactBody === 'function' && softContactBody(b);
     var px0 = player.x, px1 = player.x + PLAYER_W;
     var py0 = player.y, py1 = player.y + PLAYER_H;
     var pcx = px0 + PLAYER_W * 0.5, pcy = py0 + PLAYER_H * 0.5;
@@ -64964,7 +64971,7 @@
       // ripping the rim sideways (the gel beside you got dragged like it was being
       // pulled into the tracks). Side hits skip this and go to the soft contact
       // push-out + the closed-ring barrier below instead.
-      if (player.onJello && x > px0 && x < px1 && y >= underTop && y <= underBot) {
+      if (!residentContact && player.onJello && x > px0 && x < px1 && y >= underTop && y <= underBot) {
         if (Math.abs(vx) > 4) {
           var sh = -Math.sign(vx) * Math.min(Math.abs(vx), JELLO_VMAX * 0.5) * JELLO_TRACK_SHEAR * dt * iscl;
           px[i] += sh;
@@ -64998,7 +65005,7 @@
       //     pumping energy until it "blows up". The gel's springs/pressure resist +
       //     recover; the HARD CONTAINMENT (jelloResolvePlayer) keeps the rig OUTSIDE
       //     the boundary so it can never pass through or get absorbed.
-      if (x > px0 && x < px1 && y > py0 && y < py1) {
+      if (!residentContact && x > px0 && x < px1 && y > py0 && y < py1) {
         var sp = Math.sqrt(vx * vx + vy * vy);
         // Only SNOWPLOW the cube while driving INTO it (not while riding on top). On top this
         // pushed the cube along in the travel direction, so the rig surfed the cube it was
@@ -65105,6 +65112,7 @@
   // JELLO_TIMESCALE + JELLO_H into the Verlet prev-position shift; the
   // integrator's JELLO_VMAX clamp is the hard ceiling.
   function jelloPlayerFling(b, frameDt) {
+    if (typeof softContactBody === 'function' && softContactBody(b)) return;
     if (!player || gameWon || gameOver || drilling) return;
     var vx = player.vx || 0, vy = player.vy || 0;
     var sp = Math.sqrt(vx * vx + vy * vy);
@@ -65280,6 +65288,7 @@
     var punch = (impactVy < 600 ? impactVy : 600) * 0.004 * JELLO_IMPACT * jelloImpulseScale();  // downward Verlet impulse (px; solver-dt aware)
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (cx < b.bboxL - 6 || cx > b.bboxR + 6) continue;
       if (b.bboxT > feetY + TILE || b.bboxB < feetY - TILE) continue;
       var px = b.px, py = b.py, oy = b.oy, n = b.n;
@@ -65475,6 +65484,7 @@
     var probeY = 1e9, bestVX = 0, bestVY = 0, found = false;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (b.bboxR < fpL || b.bboxL > fpR) continue;   // no part of this body under the rig
       if (b.bboxB < yLo || b.bboxT > yHi) continue;
       // PER-BODY ADAPTIVE probe line (v24.144): the rig centre clamped into this
@@ -65567,6 +65577,7 @@
     var reach = halfW + wall;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (b.bboxR < cx - reach || b.bboxL > cx + reach) continue;
       if (b.bboxT > feetY + TILE) continue;        // body top must be near the feet (rig on top)
       // ...and the body must reach DOWN to the feet — the rig can only rest ON
@@ -65634,6 +65645,7 @@
     var best = 1e9;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (x < b.bboxL || x > b.bboxR) continue;
       if (fL !== undefined && (b.bboxR < fL || b.bboxL > fR)) continue;   // not under the rig -> not a support
       if (b._pushMs !== undefined && performance.now() - b._pushMs < 120) continue;   // being bulldozed -> not a surface
@@ -65777,6 +65789,7 @@
       var bestD2 = 0, bnx = 0, bny = 0, found = false;
       for (var bi = 0; bi < jelloBodies.length; bi++) {
         var b = jelloBodies[bi];
+        if (typeof softContactBody === 'function' && softContactBody(b)) continue;
         if (b.ringN < 3) continue;
         if (b.bboxR <= px0 || b.bboxL >= px1 || b.bboxB <= py0 || b.bboxT >= py1) continue;
         for (var e = 0; e < 4; e++) {
@@ -66261,6 +66274,7 @@
     var seatY = y1 - (JELLO_RIDE_SINK + 6);      // seated bed-in band: never touched
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (typeof softContactBody === 'function' && softContactBody(b)) continue;
       if (b.frozen) continue;
       if (b.bboxR < x0 || b.bboxL > x1 || b.bboxB < y0 || b.bboxT > y1) continue;
       // ONE exit side per BODY, the side its centroid already favors (normalized by
@@ -66503,6 +66517,7 @@
   // once-per-frame pass that fights the solver. h is the substep dt (JELLO_H/K).
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
+    if (typeof softContactSnapshot === 'function') softContactSnapshot(b);
     var resilienceGuard = jelloResilienceStepBegin(b);
     jelloActuateBody(b, h);
     jelloIntegrate(b, h);
@@ -68103,6 +68118,7 @@
   }
 
   function updateJello(dt) {
+    if (jelloBodies.length === 0 && typeof softContactClear === 'function') softContactClear();
     if (jelloBodies.length === 0 && jelloSplats.length === 0) return;
     updateJelloSplats(dt);
     var simFrozen = gameOver || gameWon || (UI_NEW && shopState !== 'closed');
@@ -68120,7 +68136,7 @@
     var subs = 0;
     while (jelloAccum >= JELLO_H && subs < JELLO_MAX_SUBSTEPS) { subs++; jelloAccum -= JELLO_H; }
     if (jelloAccum > JELLO_H) jelloAccum = JELLO_H;
-    if (subs === 0) return;
+    if (subs === 0) { if (typeof softContactIdle === 'function') softContactIdle(); return; }
     jelloFrameNo++;   // stamp for the shade-matrix cache (skipped frames keep the cache fresh)
     // Cache the jet frame for this frame's substeps (rotation-flight aware).
     jelloJetOn = !!(player && player.thrusting && player.fuel > 0 && !gameOver && !gameWon &&
@@ -68230,6 +68246,7 @@
     // parked-pile common case). The rig displace + rescue + render below still
     // run, so a rig pressed into a sleeping pile stays evicted.
     if (!anySolve) totalSteps = 0;
+    if (totalSteps === 0 && typeof softContactClear === 'function') softContactClear();
     // Dev-only phase timing (v25.41): jello.internal / jello.contact / etc
     // buckets — where does the AWAKE-solver frame go? Emitted via the perfMark
     // now-minus-acc trick; zero cost outside dev mode. (Measured: the contact
@@ -68257,6 +68274,7 @@
       if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
       if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
+      if (typeof softContactStep === 'function') softContactStep(active, nActive, h, totalSteps);
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
       // Direct manipulation has a stricter contract than ordinary collision:
       // the frame may never expose a crossed ring or mirrored cell and rely on
@@ -68276,7 +68294,7 @@
       // World re-collide AFTER contact + containment: those passes move points without
       // seeing tiles, so a pressed pile could park points inside a wall until the NEXT
       // substep (far-side pop-outs / welds). One cheap pass closes the gap.
-      if (nActive > 1) {
+      if (nActive > 1 || (typeof SOFT_CONTACT !== 'undefined' && SOFT_CONTACT)) {
         for (ai = 0; ai < nActive; ai++) {
           b = active[ai]; if (!b._solve) continue;
           // A direct-grab rejection already restored this participant to its
@@ -68460,6 +68478,7 @@
       player.vy -= jelloJetDY * _jrAcc * dt;
     }
     jelloUnmergeBodies(dt, active, nActive);   // no slime can stay inside another (rigid rate-limited split)
+    if (typeof softContactFinish === 'function') softContactFinish();
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring
     jelloRigDisplaceGel();    // hard displacement: gel can never be deeper than the dent cap inside the hull
     jelloDeformBowl();        // resting on top: carve the conforming membrane bowl
@@ -69248,6 +69267,414 @@
       }
     };
   } catch (e) {}
+  /* ---- Opt-in resident contact experiment ----
+     One skin contact exchanges momentum between the rig and local gel nodes.
+     Rest shape, muscle targets, material parameters and world contacts belong
+     to the restored baseline. ?softcontact=1 selects this path for residents. */
+  var softContactParams = new URLSearchParams(location.search);
+  var SOFT_CONTACT = softContactParams.get('softcontact') === '1' ||
+    (softContactParams.get('softplay') === '1' && softContactParams.get('softcontact') !== '0');
+  var softContactFrame = null;
+  var softContactOrigin = null;
+  var softContactSupport = null;
+  var softContactDraw = null;
+  var SOFT_CONTACT_RIG_MASS = 3.0;
+  var SOFT_CONTACT_POINT_MASS = 0.09;
+  var SOFT_CONTACT_FRICTION = 0.45;
+  var softContactReport = { contacts: 0, selfContacts: 0, impulse: 0, friction: 0, penetration: 0 };
+
+  function softContactBody(b) { return SOFT_CONTACT && !!b.surfaceSlime; }
+
+  function softContactClear() {
+    softContactFrame = softContactOrigin = softContactSupport = softContactDraw = null;
+  }
+
+  function softContactSnapshot(b) {
+    if (!softContactBody(b)) return;
+    if (!b._softPX || b._softPX.length !== b.px.length) {
+      b._softPX = new Float64Array(b.px.length); b._softPY = new Float64Array(b.py.length);
+    }
+    b._softPX.set(b.px); b._softPY.set(b.py);
+  }
+
+  // A skin can touch itself after folding against the floor. Point/edge
+  // contact keeps the two surfaces on their previous sides without imposing
+  // a target outline.
+  function softContactSkin(b) {
+    if (!b._softPX) return;
+    var px = b.px, py = b.py, oldX = b._softPX, oldY = b._softPY;
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k];
+      for (var e = 0; e < b.ringN; e++) {
+        var a = b.ring[e], c = b.ring[(e + 1) % b.ringN];
+        if (p === a || p === c) continue;
+        var ex = px[c] - px[a], ey = py[c] - py[a], len = Math.hypot(ex, ey);
+        if (len < 1e-6) continue;
+        var t = ((px[p] - px[a]) * ex + (py[p] - py[a]) * ey) / (len * len);
+        if (t <= 0 || t >= 1) continue;
+        var before = (oldX[c] - oldX[a]) * (oldY[p] - oldY[a]) -
+          (oldY[c] - oldY[a]) * (oldX[p] - oldX[a]);
+        var side = before < 0 ? -1 : 1;
+        var nx = -ey / len * side, ny = ex / len * side;
+        var d = (px[p] - px[a]) * nx + (py[p] - py[a]) * ny;
+        if (d >= 0) continue;
+        // A changing line normal alone is not self-contact. One of this
+        // vertex's incident skin segments must actually cross the edge.
+        var prev = b.ring[(k + b.ringN - 1) % b.ringN], next = b.ring[(k + 1) % b.ringN];
+        if (!softContactEdgesCross(b, p, prev, a, c) && !softContactEdgesCross(b, p, next, a, c)) continue;
+        var wa = 1 - t, wc = t;
+        var mxP = jelloWorldSolidAt(px[p] + nx * 0.5, py[p]) ? 0 : 1;
+        var myP = jelloWorldSolidAt(px[p], py[p] + ny * 0.5) ? 0 : 1;
+        var mxA = jelloWorldSolidAt(px[a] - nx * 0.5, py[a]) ? 0 : 1;
+        var myA = jelloWorldSolidAt(px[a], py[a] - ny * 0.5) ? 0 : 1;
+        var mxC = jelloWorldSolidAt(px[c] - nx * 0.5, py[c]) ? 0 : 1;
+        var myC = jelloWorldSolidAt(px[c], py[c] - ny * 0.5) ? 0 : 1;
+        var den = nx * nx * (mxP + mxA * wa * wa + mxC * wc * wc) +
+          ny * ny * (myP + myA * wa * wa + myC * wc * wc);
+        if (den < 1e-8) continue;
+        var dl = (0.10 - d) / den;
+        var vx = px[p] - b.ox[p] - (px[a] - b.ox[a]) * wa - (px[c] - b.ox[c]) * wc;
+        var vy = py[p] - b.oy[p] - (py[a] - b.oy[a]) * wa - (py[c] - b.oy[c]) * wc;
+        var impulse = Math.max(0, -(vx * nx + vy * ny)) / den;
+        px[p] += nx * dl * mxP; py[p] += ny * dl * myP;
+        px[a] -= nx * dl * wa * mxA; py[a] -= ny * dl * wa * myA;
+        px[c] -= nx * dl * wc * mxC; py[c] -= ny * dl * wc * myC;
+        b.ox[p] += nx * (dl - impulse) * mxP; b.oy[p] += ny * (dl - impulse) * myP;
+        b.ox[a] -= nx * (dl - impulse) * wa * mxA; b.oy[a] -= ny * (dl - impulse) * wa * myA;
+        b.ox[c] -= nx * (dl - impulse) * wc * mxC; b.oy[c] -= ny * (dl - impulse) * wc * myC;
+        softContactReport.selfContacts++;
+      }
+    }
+  }
+
+  function softContactEdgesCross(b, p, q, a, c) {
+    if (p === a || p === c || q === a || q === c) return false;
+    var ex = b.px[c] - b.px[a], ey = b.py[c] - b.py[a];
+    var dp = ex * (b.py[p] - b.py[a]) - ey * (b.px[p] - b.px[a]);
+    var dq = ex * (b.py[q] - b.py[a]) - ey * (b.px[q] - b.px[a]);
+    var vx = b.px[q] - b.px[p], vy = b.py[q] - b.py[p];
+    var da = vx * (b.py[a] - b.py[p]) - vy * (b.px[a] - b.px[p]);
+    var dc = vx * (b.py[c] - b.py[p]) - vy * (b.px[c] - b.px[p]);
+    return dp * dq < 0 && da * dc < 0;
+  }
+
+  function softContactCapture() {
+    if (!SOFT_CONTACT) return;
+    softContactOrigin = { x: player.x, y: player.y };
+  }
+
+  function softContactPrepare(dt) {
+    if (!SOFT_CONTACT || !softContactOrigin) return;
+    var pending = softContactFrame;
+    var start = pending && !pending.started ? { x: pending.x, y: pending.y } : softContactOrigin;
+    softContactFrame = { x: start.x, y: start.y,
+      dx: player.x - start.x, dy: player.y - start.y,
+      vx: player.vx, vy: player.vy, dt: dt + (pending && !pending.started ? pending.dt : 0), started: false, support: false,
+      hit: false, endX: player.x, endY: player.y };
+    softContactOrigin = null;
+  }
+
+  // Axis sweeps retain terrain collision during any contact deflection.
+  function softContactMove(rig, dx, dy) {
+    var count = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 2));
+    dx /= count; dy /= count;
+    for (var i = 0; i < count; i++) {
+      if (!solidAt(rig.x + dx, rig.y, PLAYER_W, PLAYER_H)) rig.x += dx;
+      else { rig.vx = 0; dx = 0; }
+      if (!solidAt(rig.x, rig.y + dy, PLAYER_W, PLAYER_H)) rig.y += dy;
+      else { if (dy > 0) rig.onGround = true; rig.vy = 0; dy = 0; }
+    }
+  }
+
+  function softContactStep(active, count, h, steps) {
+    if (!SOFT_CONTACT || !player || bathMode || gameOver || gameWon) return;
+    var f = softContactFrame;
+    if (!f || !(steps > 0)) return;
+    if (!f.started) {
+      f.started = true;
+      // Preserve any hard-circle correction made after normal movement.
+      f.step = 0;
+      f.rig = { x: f.x + player.x - f.endX, y: f.y + player.y - f.endY,
+        vx: player.vx, vy: player.vy, onGround: player.onGround };
+      f.vx = player.vx; f.vy = player.vy;
+      f.endX = player.x; f.endY = player.y;
+      softContactReport.contacts = softContactReport.selfContacts = softContactReport.impulse = softContactReport.friction = softContactReport.penetration = 0;
+    }
+    var rig = f.rig;
+    if (f.step++ % Math.max(1, Math.round(JELLO_H / h)) === 0) { f.previousX = rig.x; f.previousY = rig.y; }
+    var realH = h / JELLO_TIMESCALE, frameH = f.dt / steps;
+    softContactMove(rig, f.dx / steps + (rig.vx - f.vx) * frameH,
+      f.dy / steps + (rig.vy - f.vy) * frameH);
+    f.support = false;
+    // Samples on all four rig edges catch both a flat track patch and corner
+    // contact. Forces distribute to the actual skin edge's two material nodes.
+    for (var pass = 0; pass < 4; pass++) {
+      for (var bi = 0; bi < count; bi++) {
+        var b = active[bi];
+        if (!softContactBody(b) || b.frozen) continue;
+        softContactSkin(b);
+        jelloRingBBox(b);
+        if (b._cbR < rig.x - 4 || b._cbL > rig.x + PLAYER_W + 4 ||
+            b._cbB < rig.y - 4 || b._cbT > rig.y + PLAYER_H + 4) continue;
+        // The reverse vertex/face test matters: a narrow fold can enter the
+        // hull without enclosing any of its perimeter samples.
+        for (var rk = 0; rk < b.ringN; rk++) {
+          var p = b.ring[rk], px = b.px[p], py = b.py[p];
+          if (px <= rig.x || px >= rig.x + PLAYER_W || py <= rig.y || py >= rig.y + PLAYER_H) continue;
+          var depth = px - rig.x, nx = 1, ny = 0;
+          if (rig.x + PLAYER_W - px < depth) { depth = rig.x + PLAYER_W - px; nx = -1; ny = 0; }
+          if (py - rig.y < depth) { depth = py - rig.y; nx = 0; ny = 1; }
+          if (rig.y + PLAYER_H - py < depth) { depth = rig.y + PLAYER_H - py; nx = 0; ny = -1; }
+          softContactProject(b, p, p, 0, nx, ny, depth, py, realH, f);
+        }
+        for (var side = 0; side < 4; side++) {
+          var samples = side % 2 ? 7 : 6;
+          for (var sample = 0; sample <= samples; sample++) {
+            var u = sample / samples;
+            var sx = rig.x + (side === 1 ? PLAYER_W : side === 3 ? 0 : u * PLAYER_W);
+            var sy = rig.y + (side === 0 ? 0 : side === 2 ? PLAYER_H : u * PLAYER_H);
+            if (!jelloPointInRing(b, sx, sy)) continue;
+            softContactSolve(b, sx, sy, realH, f);
+          }
+        }
+        // Contact and the baseline's orientation constraint must converge
+        // together. Leaving contact as the final mover can mirror a thin
+        // edge cell until the next material tick, even with a clear hull.
+        jelloLimitOrientation(b);
+        for (var wi = 0; wi < b.n; wi++) {
+          if (jelloWorldSolidAt(b.px[wi], b.py[wi])) jelloCollidePointWorld(b, wi, h);
+        }
+        softContactSkin(b);
+      }
+    }
+  }
+
+  function softContactSolve(b, sx, sy, dt, f) {
+    var best = Infinity, a = 0, c = 0, t = 0, qx = 0, qy = 0;
+    for (var k = 0; k < b.ringN; k++) {
+      var i = b.ring[k], j = b.ring[(k + 1) % b.ringN];
+      var ex = b.px[j] - b.px[i], ey = b.py[j] - b.py[i];
+      var den = ex * ex + ey * ey;
+      var u = den > 1e-10 ? skySlimeClamp(((sx - b.px[i]) * ex + (sy - b.py[i]) * ey) / den, 0, 1) : 0;
+      var x = b.px[i] + ex * u, y = b.py[i] + ey * u;
+      var d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+      if (d2 < best) { best = d2; a = i; c = j; t = u; qx = x; qy = y; }
+    }
+    var depth = Math.sqrt(best);
+    if (!(depth > 0.000001)) return;
+    var nx = (qx - sx) / depth, ny = (qy - sy) / depth;
+    softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f);
+  }
+
+  function softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f) {
+    var rig = f.rig;
+    var wa = 1 - t, wc = t, invPoint = 1 / SOFT_CONTACT_POINT_MASS;
+    var invRig = 1 / SOFT_CONTACT_RIG_MASS;
+    var rx = solidAt(rig.x + nx * 0.5, rig.y, PLAYER_W, PLAYER_H) ? 0 : invRig;
+    var ry = solidAt(rig.x, rig.y + ny * 0.5, PLAYER_W, PLAYER_H) ? 0 : invRig;
+    var effective = rx * nx * nx + ry * ny * ny + invPoint * (wa * wa + wc * wc);
+    var avx = (b.px[a] - b.ox[a]) / dt, avy = (b.py[a] - b.oy[a]) / dt;
+    var cvx = (b.px[c] - b.ox[c]) / dt, cvy = (b.py[c] - b.oy[c]) / dt;
+    var rvx = rig.vx - avx * wa - cvx * wc, rvy = rig.vy - avy * wa - cvy * wc;
+    // No restitution kick or banked landing speed. The baseline gel's own
+    // springs recover the deformation this unilateral contact produces.
+    var lambda = Math.min(depth + 0.03, 2) / effective;
+    var dx = nx * lambda, dy = ny * lambda;
+    rig.x += dx * rx; rig.y += dy * ry;
+    rig.vx += dx * rx / dt; rig.vy += dy * ry / dt;
+    b.px[a] -= dx * invPoint * wa; b.py[a] -= dy * invPoint * wa;
+    b.px[c] -= dx * invPoint * wc; b.py[c] -= dy * invPoint * wc;
+    var normalImpulse = lambda / dt;
+    // Friction is bounded by the normal impulse. A glancing impact can roll
+    // the body because its impulse acts on the contacted patch, not its center.
+    var tx = -ny, ty = nx, tangent = rvx * tx + rvy * ty;
+    var tangentMass = invRig + invPoint * (wa * wa + wc * wc);
+    var jt = skySlimeClamp(-tangent / tangentMass,
+      -normalImpulse * SOFT_CONTACT_FRICTION, normalImpulse * SOFT_CONTACT_FRICTION);
+    var ivx = tx * jt, ivy = ty * jt;
+    rig.vx += ivx * rx; rig.vy += ivy * ry;
+    b.ox[a] += ivx * invPoint * wa * dt; b.oy[a] += ivy * invPoint * wa * dt;
+    b.ox[c] += ivx * invPoint * wc * dt; b.oy[c] += ivy * invPoint * wc * dt;
+    if (ny < -0.5 && sy > rig.y + PLAYER_H * 0.65) { f.support = true; f.supportBody = b; }
+    if (!f.hit && ny < -0.5 && f.vy > 120) recordLandingImpact(f.vy, sy, 'jello', 1);
+    f.hit = true;
+    if (-(rvx * nx + rvy * ny) > 35 || Math.abs(f.vx) > 25) b._plyMs = performance.now();
+    b.sleeping = false; b.sleepFrames = 0;
+    softContactReport.contacts++;
+    softContactReport.impulse += normalImpulse;
+    softContactReport.friction += Math.abs(jt);
+    softContactReport.penetration = Math.max(softContactReport.penetration, depth);
+  }
+
+  function softContactFinish() {
+    var f = softContactFrame;
+    if (!SOFT_CONTACT || !f || !f.started) return;
+    if (f.hit) {
+      player.x = f.rig.x; player.y = f.rig.y;
+      player.vx += f.rig.vx - f.vx; player.vy += f.rig.vy - f.vy;
+    }
+    if (f.support && !player.thrusting) {
+      player.onGround = true; player.onJello = true;
+      player.coyoteT = Math.max(player.coyoteT, 0.08);
+      resetFlightBank();
+    }
+    softContactSupport = f.support ? f.supportBody : null;
+    if (f.hit) { player.jelloImpactVy = 0; player.jelloCarryVx = 0; }
+    // Match the existing 120 Hz skin interpolation at every trial frame.
+    // Drawing never changes collision positions or feeds motion into the solve.
+    softContactDraw = { x: f.previousX, y: f.previousY, endX: player.x, endY: player.y };
+    softContactInterpolate();
+    softContactFrame = null;
+  }
+
+  function softContactInterpolate() {
+    if (!softContactDraw) return;
+    var d = softContactDraw, alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1);
+    player.renderX = d.x + (d.endX - d.x) * alpha;
+    player.renderY = d.y + (d.endY - d.y) * alpha;
+  }
+
+  // Display frames can outnumber gel ticks. Retain a real supporting contact
+  // between ticks only while the feet remain on that skin, without a pose hold.
+  function softContactIdle() {
+    if (!SOFT_CONTACT || !softContactFrame) return;
+    softContactInterpolate();
+    var b = softContactSupport;
+    if (!b || player.thrusting || jelloBodies.indexOf(b) < 0) return;
+    for (var i = 1; i < 4; i++) {
+      var x = player.x + PLAYER_W * i / 4, y = Infinity, vy = 0;
+      for (var k = 0; k < b.ringN; k++) {
+        var a = b.ring[k], c = b.ring[(k + 1) % b.ringN], ex = b.px[c] - b.px[a];
+        if (Math.abs(ex) < 1e-8) continue;
+        var t = (x - b.px[a]) / ex;
+        if (t < 0 || t > 1) continue;
+        var edgeY = b.py[a] + (b.py[c] - b.py[a]) * t;
+        if (edgeY < y) {
+          y = edgeY;
+          vy = ((b.py[a] - b.oy[a]) * (1 - t) + (b.py[c] - b.oy[c]) * t) / jelloStepH * JELLO_TIMESCALE;
+        }
+      }
+      if (Math.abs(player.y + PLAYER_H - y) <= 1.5 && player.vy - vy >= -1) {
+        player.onGround = true; player.onJello = true;
+        player.coyoteT = Math.max(player.coyoteT, 0.08);
+        return;
+      }
+    }
+  }
+  /* ---- Reproducible soft-contact playground (?softplay=1) ----
+     Disposable world: each replay starts with the same resident and rig pose.
+     The ordinary game keeps the restored baseline until this trial is chosen. */
+  var softPlayEnabled = new URLSearchParams(location.search).get('softplay') === '1';
+  var softPlayReady = false;
+  var softPlayCase = 'center';
+  var softPlayDrive = 0;
+  var softPlayTime = 0;
+  var softPlayButtons = [];
+  var softPlayTerrain = null;
+
+  function softPlayRestoreTerrain() {
+    var row, col;
+    if (!softPlayTerrain) {
+      softPlayTerrain = [];
+      for (row = Math.max(0, SKY_ROWS - 6); row <= SKY_ROWS + 3; row++) {
+        for (col = DECK_CENTER_COL - 14; col <= DECK_CENTER_COL + 6; col++) {
+          softPlayTerrain.push({ row: row, col: col, tile: JSON.stringify(world[row][col] || null) });
+        }
+      }
+    }
+    for (var i = 0; i < softPlayTerrain.length; i++) {
+      var entry = softPlayTerrain[i];
+      world[entry.row][entry.col] = JSON.parse(entry.tile);
+      invalidateTerrainAround(entry.row, entry.col);
+    }
+  }
+
+  function softPlayReset() {
+    if (!softPlayEnabled || introPhase !== 'done') return;
+    surfaceSlimeGrabEnd(undefined, true);
+    resetJello(); skySlimeReset(); skySlimeNext = 1e9;
+    softPlayRestoreTerrain();
+    surfaceSlimesSeeded = true;
+    softContactClear();
+    Object.keys(keys).forEach(function (key) { keys[key] = false; });
+    dpad.left = dpad.right = dpad.up = dpad.down = false;
+    softPlayDrive = 0; softPlayTime = 0;
+    var x = (DECK_CENTER_COL - 4) * TILE, floor = SKY_ROWS * TILE;
+    player.x = x - 220; player.y = floor - PLAYER_H;
+    player.vx = player.vy = 0; player.onJello = false;
+    player.onGround = true; player.thrusting = false; player.thrustSpool = 0;
+    player.jelloImpactVy = player.jelloGroundT = player.jelloCarryVx = 0;
+    player._jDeepLast = player._jStuckT = 0;
+    player.fuel = maxFuel; player.hull = getMaxHull();
+    gameOver = false; gameWon = false; drilling = null; hitPauseT = 0;
+    player.drillGlideT = 0; player.slideTargetX = null; player.slideAssistT = 0;
+    resetFlightBank();
+    var b = surfaceSlimeBuild(x, floor - 35, { id: 9001, seed: 0.42, hue: 133 });
+    cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.62;
+    // Settle only the material before releasing the normal resident brain.
+    for (var i = 0; i < 240; i++) updateJello(1 / 120);
+    if (softPlayCase === 'push-left' || softPlayCase === 'push-right') {
+      softPlayDrive = softPlayCase === 'push-left' ? 1 : -1;
+      player.x = b.cx - PLAYER_W / 2 - softPlayDrive * 90;
+      player.y = floor - PLAYER_H;
+      player.vx = softPlayDrive * 160;
+      softPlayTime = 0.8;
+    } else {
+      var offset = softPlayCase === 'left' ? -14 : softPlayCase === 'right' ? 14 : 0;
+      player.x = b.cx - PLAYER_W / 2 + offset;
+      player.y = b.bboxT - PLAYER_H - 65;
+      player.vx = 0; player.vy = 220; player.onGround = false;
+    }
+    player.renderX = player.x; player.renderY = player.y;
+    cam.snap = true;
+    for (i = 0; i < softPlayButtons.length; i++) {
+      var entry = softPlayButtons[i];
+      var on = entry.mode === SOFT_CONTACT;
+      entry.button.setAttribute('aria-pressed', on ? 'true' : 'false');
+      entry.button.style.background = on ? 'var(--accent)' : 'var(--bg-raised)';
+      entry.button.style.color = on ? 'var(--bg-raised)' : 'var(--text)';
+    }
+    canvas.focus({ preventScroll: true });
+  }
+
+  function softPlayTick(dt) {
+    if (!softPlayEnabled || introPhase !== 'done') return;
+    if (!softPlayReady) {
+      softPlayReady = true;
+      var panel = document.createElement('div');
+      panel.id = 'soft-contact-playtest';
+      panel.setAttribute('role', 'group'); panel.setAttribute('aria-label', 'Soft slime contact comparison');
+      panel.style.cssText = 'position:absolute;top:10px;left:62px;right:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--bg-raised);border:1px solid var(--rule-strong);font:12px var(--font-mono);color:var(--text);';
+      var title = document.createElement('span'); title.textContent = 'SLIME PLAYTEST';
+      title.style.marginRight = '6px'; panel.appendChild(title);
+      function button(label, action) {
+        var el = document.createElement('button'); el.type = 'button'; el.textContent = label;
+        el.style.cssText = 'min-height:44px;padding:6px 10px;border:1px solid var(--rule-strong);background:var(--bg-raised);color:var(--text);font:inherit;cursor:pointer;';
+        el.addEventListener('click', action); panel.appendChild(el); return el;
+      }
+      softPlayButtons.push({ mode: true, button: button('New contacts', function () { SOFT_CONTACT = true; softPlayReset(); }) });
+      softPlayButtons.push({ mode: false, button: button('Original', function () { SOFT_CONTACT = false; softPlayReset(); }) });
+      var select = document.createElement('select'); select.setAttribute('aria-label', 'Interaction');
+      select.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
+      var cases = [['center','Centered drop'],['left','Left edge drop'],['right','Right edge drop'],['push-left','Push from left'],['push-right','Push from right']];
+      for (var i = 0; i < cases.length; i++) {
+        var option = document.createElement('option'); option.value = cases[i][0]; option.textContent = cases[i][1]; select.appendChild(option);
+      }
+      select.addEventListener('change', function () { softPlayCase = select.value; softPlayReset(); });
+      panel.appendChild(select); button('Repeat', softPlayReset);
+      var help = document.createElement('span');
+      help.textContent = 'Drive, fly, or drag the slime. Saves are off.';
+      help.style.cssText = 'color:var(--text-dim);flex-basis:100%;line-height:1.5;'; panel.appendChild(help);
+      canvas.parentElement.appendChild(panel);
+      softPlayReset();
+    }
+    if (softPlayTime > 0 && !gamePaused && !gameOver && !gameWon && !bathMode &&
+        shopState === 'closed' && !ledgerOpen && !cargoManifestOpen) {
+      softPlayTime -= dt;
+      keys.ArrowLeft = softPlayTime > 0 && softPlayDrive < 0;
+      keys.ArrowRight = softPlayTime > 0 && softPlayDrive > 0;
+    }
+  }
   /* =====================================================================
      SLIME NPCS (v26.69). The wild-slime brain: every activated world slime
      (buried finds, lake-shore perchers, the dev C-key cube) becomes a live
@@ -72171,6 +72598,7 @@
     // the older WebGL fallback.
     syncDomEffectLayerVisibility();
 
+    softPlayTick(dt);
     var _t0 = performance.now();
     update(dt);
     var _t1 = performance.now();

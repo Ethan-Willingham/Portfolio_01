@@ -589,6 +589,7 @@
     // the older WebGL fallback.
     syncDomEffectLayerVisibility();
 
+    softPlayTick(dt);
     var _t0 = performance.now();
     update(dt);
     var _t1 = performance.now();
