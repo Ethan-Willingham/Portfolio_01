@@ -2885,7 +2885,7 @@
         var shearKeepR = fr(1 / fr(1 + fr(fr(shearRateR) * dt)));
         var lateralKeepR = fr(1 / fr(1 + fr(fr(lateralRateR) * dt)));
         vx = fr(vx * lateralKeepR);
-        if (materialR === 5) vy = fr(vy * lateralKeepR);
+        if (materialR === 5 && vy < 0) vy = fr(vy * lateralKeepR);
         gv00 = fr(gv00 * shearKeepR); gv01 = fr(gv01 * shearKeepR);
         gv10 = fr(gv10 * shearKeepR); gv11 = fr(gv11 * shearKeepR);
       }
@@ -6108,7 +6108,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let shearKeep = 1.0 / (1.0 + shearRate * gp.stepDt);
     let lateralKeep = 1.0 / (1.0 + lateralRate * gp.stepDt);
     vx = vx * lateralKeep;
-    if (material == 5u) { vy = vy * lateralKeep; }
+    if (material == 5u && vy < 0.0) { vy = vy * lateralKeep; }
     gv00 = gv00 * shearKeep; gv01 = gv01 * shearKeep;
     gv10 = gv10 * shearKeep; gv11 = gv11 * shearKeep;
   }

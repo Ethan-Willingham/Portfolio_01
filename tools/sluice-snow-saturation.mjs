@@ -84,7 +84,7 @@ try {
       liquidToolSync();var powder=0,descending=0,slow=0,sum=0,sum2=0;
       for(var p of snow.grains)if(p.physical){
         powder++;if(p.vy>=0){descending++;sum+=p.vy;sum2+=p.vy*p.vy;
-          var fall=32+p.size*42+Math.sin(snow.time*1.7+p.phase)*9;if(p.vy<fall-.001)slow++;}
+          var fall=32+p.size*42;if(p.vy<fall-.2)slow++;}
       }
       var active=0,stalled=0;
       for(var i=0;i<liquidCount;i++)if(liquidType[i]===5){active++;if(Math.abs(liquidVY[i])<25)stalled++;}
@@ -105,7 +105,7 @@ try {
   if(!reportOnly){
     check('full weather buffer never traps unsupported solver snow',late.every(f=>f.active===0&&f.stalled===0));
     check('all conserved grains become loose powder',late.every(f=>f.powder===powderCount));
-    check('descending powder matches sky fall speeds with individual variation',late.every(f=>f.descending>powderCount*.8&&f.slow===0&&f.spread>6));
+    check('descending powder approaches individual terminal speeds',late.every(f=>f.descending>powderCount*.8&&f.slow===0&&f.spread>6));
   }
   // Render a sentinel at the END of the >8192-particle cloud. A fixed-size
   // GPU upload once silently discarded this entire tail after handoff.

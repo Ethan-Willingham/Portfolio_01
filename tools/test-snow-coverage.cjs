@@ -11,6 +11,7 @@ const noop = () => {};
 const s = { Math: math, window: { location: { search: '' } },
   cam: {x: 2000, y: -900}, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
+  GRAVITY: 600, LIQUID_SNOW_DIAMETER: 1.8, LIQUID_CELL: 2.5, LIQUID_PDELTA: .5,
   SNOW_RATE: 345, SNOW_FLAKE_CAP: 5400, SNOW_MASS_CAP: 120000,
   SNOW_ACTIVE_CAP: 36000, SNOW_CPU_CAP: 7000, LIQUID_MAX_PARTICLES: 65536,
   RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3, liquidCount: 0, liquidWGPU: null,

@@ -1144,7 +1144,9 @@
         var shearKeep = 1 / (1 + shearRate * stepDt);
         var lateralKeep = 1 / (1 + lateralRate * stepDt);
         vx *= lateralKeep;
-        if (material === 5) vy *= lateralKeep;
+        // Dissipate compression rebound without braking downward gravity.
+        // Damping both signs trapped detached sheets at one slow speed.
+        if (material === 5 && vy < 0) vy *= lateralKeep;
         gv00 *= shearKeep; gv01 *= shearKeep;
         gv10 *= shearKeep; gv11 *= shearKeep;
       }

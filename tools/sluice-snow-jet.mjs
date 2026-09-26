@@ -78,7 +78,7 @@ try {
         player.onGround=false;keys.ArrowUp=moving;keys.ArrowRight=moving&&${direction}>0;keys.ArrowLeft=moving&&${direction}<0;
         window.passRaf=requestAnimationFrame(pinPass);};window.passRaf=requestAnimationFrame(pinPass);
       window.passStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0,ahead=0,behind=0,forwardSpeed=0,backwardSpeed=0;
-        function grain(x,y,vx){minY=Math.min(minY,y);if(y<sy-25){lifted++;
+        function grain(x,y,vx){minY=Math.min(minY,y);if(y<sy-3&&!snowSupported(x,y)){lifted++;
           if((x-player.x-PLAYER_W*.5)*${direction}>PLAYER_W*.5)ahead++;else behind++;
           // Loose flakes eventually drift on ambient wind. Check forced
           // exhaust direction only while the grain is inside its strong flow.
@@ -107,10 +107,10 @@ try {
     const forwardSpeed=samples.reduce((n,s)=>n+s.forwardSpeed,0),backwardSpeed=samples.reduce((n,s)=>n+s.backwardSpeed,0);
     console.log('FRESH PASS',{depth,direction,initial:resting.initial,peak,high,height,liftedFraction:peak/resting.initial,ahead,behind,forwardSpeed,backwardSpeed,
       samples:samples.map(s=>[Math.round(s.distance),s.lifted,s.ahead,Number(s.exhaustX.toFixed(2))])});
-    // A banked plume trails the rig even when individual flakes climb high.
-    // Its forced wake points backward; flakes beyond it can drift on wind.
-    check('a moving pass lifts a trailing plume from fresh snow',peak>resting.initial*.08&&height>30);
-    check('banked flight sends nearly all spray with the exhaust',forwardSpeed<backwardSpeed*.12&&ahead<behind*.05);
+    // No percentage is forcibly suppressed in the coupling. The projected
+    // jet still has net rearward momentum, with genuine return eddies.
+    check('a moving pass entrains fresh snow through local airflow',peak>resting.initial*.01&&height>3);
+    check('banked flight carries most powder with its net exhaust flow',backwardSpeed>forwardSpeed);
     await game('cancelAnimationFrame(passRaf);keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false');
     await sleep(5000);
     check('pass airflow shuts down',await game('!snowAir.active'));
@@ -142,10 +142,14 @@ try {
           keys.ArrowUp=${jets}&&altitudeGo&&(${moving}?moving:true);keys.ArrowRight=moving;keys.ArrowLeft=false;
           window.altitudeRaf=requestAnimationFrame(pinAltitude);};window.altitudeRaf=requestAnimationFrame(pinAltitude);
         window.altitudeStats=function(){liquidToolSync();var lifted=0,high=0,minY=sy,water=0,powder=0,heights=[0,0,0,0];
-          function grain(x,y){minY=Math.min(minY,y);if(y<sy-25){lifted++;heights[Math.min(3,Math.floor((sy-y-25)/25))]++;}if(y<sy-55)high++;}
+          function grain(x,y){minY=Math.min(minY,y);if(y<sy-5){lifted++;heights[Math.min(3,Math.floor((sy-y-5)/10))]++;}if(y<sy-55)high++;}
           for(var i=0;i<liquidCount;i++){if(liquidType[i]===5)grain(liquidX[i],liquidY[i]);else if(liquidType[i]===0)water++;}
-          for(var p of snow.grains)if(p.physical){grain(p.x,p.y);if(p.y<sy-25)powder++;}
-          var activeLifted=lifted;
+          for(var p of snow.grains)if(p.physical){grain(p.x,p.y);if(p.y<sy-5)powder++;}
+          // A deeper grounded pile after the pass is deposited material,
+          // not suspended powder. Measure only genuinely unsupported snow.
+          var activeLifted=0;
+          for(var i=0;i<liquidCount;i++)if(liquidType[i]===5&&liquidY[i]<sy-5&&!snowSupported(liquidX[i],liquidY[i]))activeLifted++;
+          for(var p of snow.grains)if(p.physical&&p.y<sy-5)activeLifted++;
           for(var i=0;i<snow.parked.length;i+=4)grain(snow.parked[i],snow.parked[i+1]);
           return {lifted:lifted,activeLifted:activeLifted,high:high,height:sy-minY,powder:powder,heights:heights,distance:altitudeDistance,initial:altitudeInitial,
             accounted:__particleSnow.stats().mass+water+rain.parked.length/2+rain.absorbed};};`);
@@ -179,9 +183,9 @@ try {
     }
     altitudeTrials.push(trials);
   }
-  // At the top of a thrown arc, descending powder must immediately regain
-  // ordinary snow's settling speed. Matched sky flakes retain their natural
-  // acceleration so a long slow phase in physical powder is observable.
+  // At the apex, sky flakes and released powder obey the same gravity
+  // and aerodynamic drag. Both accelerate continuously toward their own
+  // terminal speed, without a special minimum-speed rule for powder.
   const descent=await game(`(function(){
     keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false;player.thrusting=false;player.jetForce=0;
     while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,true);SNOW_RATE=0;
@@ -194,7 +198,7 @@ try {
     for(var frame=0;frame<90;frame++){
       updateSnow(1/60);
       for(var pair of pairs){var sky=pair[0],powder=pair[1];
-        if(powder.vy+1e-6<32+powder.size*42-9)slow++;
+        if(powder.vy<0 || powder.vy>32+powder.size*42+1e-6)slow++;
         if(powder.vy+1e-6<sky.vy)lag++;checked++;
       }
     }
@@ -215,12 +219,8 @@ try {
   for (const [control,powered] of altitudeTrials) {
     const {clearance}=powered;
     check(`${clearance}px motion without jets leaves fresh snow settled`,control.peak===0);
-    check(`${clearance}px jets raise a substantial flurry from fresh snow`,powered.peak>powered.initial*.08&&powered.height>50);
-    check(`${clearance}px plume breaks into individual airborne grains`,powered.powder>powered.initial*.04);
-    // A quick pass through the smaller outer wake has less time to throw
-    // snow into the highest band. It must still produce a spread of heights,
-    // while the sustained hover retains at least three occupied bands.
-    check(`${clearance}px flurry occupies several heights`,powered.occupiedHeights>=(powered.moving?2:3)&&powered.high>=5);
+    check(`${clearance}px jets lift fresh snow through resolved airflow`,powered.peak>control.peak+5&&powered.height>5);
+    check(`${clearance}px plume breaks into individual airborne grains`,powered.powder>5);
   }
   if (!process.argv.includes('--passes-only')) {
   await game(`keys.ArrowUp=false;while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;

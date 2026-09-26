@@ -90,9 +90,9 @@ for(let i=0;i<90;i++)api.update(1/60);
 for(let i=3;i<a.field.length;i+=4)assert.equal(a.field[i],0,'a free jet cannot produce surface entrainment in midair');
 console.log('PASS projected nozzle flow, wall jets, recirculation, bounded floor entrainment, solid walls and idle shutdown');
 
-// Banked passes must put nearly all visible powder behind the travelling
-// rig. Move the nozzles through world space and mirror the whole fixture,
-// so a fixed leftward preference cannot satisfy the directional checks.
+// Banked passes retain the projected wall jet and its returning eddies.
+// Mirror the fixture and compare interior samples with the actual MAC
+// face velocities, so a directional mask cannot prescribe the plume.
 for (const direction of [-1,1]) {
   const rig = {x:0,y:60,vx:direction*220,vy:0,thrusting:true};
   const angle = direction*.36;
@@ -121,14 +121,19 @@ for (const direction of [-1,1]) {
       const i=(y*air.w+x)*4,u=air.field[i],v=air.field[i+1]-air.field[i+3];
       assert.ok(Number.isFinite(u)&&Number.isFinite(v)&&Math.abs(u)<1500&&Math.abs(v)<1500,
         'moving wake velocities stay finite and bounded');
+      const cell=y*air.w+x;
+      if(!air.solid[cell]) {
+        assert.ok(Math.abs(u-(air.u[cell]+air.u[cell+1])*.5)<.0001,
+          'snow retains the projected horizontal flow on both sides of the rig');
+        assert.ok(Math.abs(air.field[i+1]-(air.v[cell]+air.v[cell+air.w])*.5)<.0001,
+          'snow retains the projected return flow instead of suppressing eddies');
+      }
       const plumeEnergy=u*u+Math.max(0,-v)**2;
       if (ahead>0) forwardEnergy+=plumeEnergy; else rearEnergy+=plumeEnergy;
       if (u*direction>0) forwardMotion+=u*u; else trailingMotion+=u*u;
     }
   }
   assert.ok(rearEnergy>1e6&&trailingMotion>1e6,'banked flight retains a substantial trailing plume');
-  assert.ok(forwardEnergy<rearEnergy*.02,'banked flight lofts powder behind the rig instead of ahead');
-  assert.ok(forwardMotion<trailingMotion*.02,'horizontal snow motion follows the banked exhaust direction');
   console.log('DIRECTIONAL WAKE',{direction,forwardOverRear:forwardEnergy/rearEnergy,
     opposingOverTrailing:forwardMotion/trailingMotion});
   rig.thrusting=false;
@@ -137,7 +142,7 @@ for (const direction of [-1,1]) {
   assert.equal(flight.air.trail,0,'idle clears directional steering for the next hover');
   assert.ok(flight.air.field.every(v=>v===0),'idle clears every directional airflow channel');
 }
-console.log('PASS mirrored banked flights keep powder trailing while hover stays symmetric');
+console.log('PASS mirrored banked flights preserve resolved flow while hover stays symmetric');
 
 // A short flyover must not apply the liquid's downward cone to powder as
 // well as its resolved air drag. Exercise the production CPU scatter and

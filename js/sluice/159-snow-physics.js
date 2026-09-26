@@ -3,7 +3,7 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { field: particleWeatherState(), time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    cells: {}, bed: {}, support: {}, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+    cells: {}, bed: new Map(), airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
 
   function snowNewWorldEnabled() {
     var q = /[?&]snow=([01])(?:&|$)/.exec(window.location.search || '');
@@ -17,7 +17,7 @@
     snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset(); snow.field = particleWeatherState();
-    snow.cells = {}; snow.bed = {}; snow.support = {}; snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
+    snow.cells = {}; snow.bed = new Map(); snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
   function snowVisible(x, y) {
@@ -87,22 +87,75 @@
     liquidMutationSeq++; snow.melted++; snow.active--; rain.waterCount++;
     return true;
   }
-  function snowSupported(x, y, cells, cache) {
-    // Occupancy alone is not a floor. Follow each settled six-pixel column
-    // down to terrain, memoizing its result for this snapshot. A lifted
-    // sheet has open air underneath and must not catch more falling snow.
-    var cx = (Math.floor(x / 6) + 0.5) * 6, row = Math.floor(y / 6);
-    var path = [], supported = false;
-    while (row * 6 < TOTAL_ROWS * TILE) {
-      var key = rainCell(cx, row * 6 + 3);
-      if (cache[key] !== undefined) { supported = cache[key]; break; }
-      path.push(key);
-      if (liquidWorldSolidAt(cx, row * 6 + 8)) { supported = true; break; }
-      if ((cells[rainCell(cx, row * 6 + 9)] || 0) < 3) break;
-      row++;
+  function snowContactRadius() { return Math.max(LIQUID_SNOW_DIAMETER * 0.5, LIQUID_CELL * LIQUID_PDELTA * 0.85); }
+  var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
+  function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
+  function snowBuildSupport() {
+    // Only a chain of touching, quiet grains rooted in terrain carries
+    // support. Contact may cross a bucket boundary in any direction; a
+    // grounded corner cannot support disconnected grains in its bucket.
+    var reach = snowSupportDistance(), reach2 = reach * reach;
+    var cell = Math.max(LIQUID_CELL, reach), width = Math.ceil(COLS * TILE / cell) + 1;
+    var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY, vxs = liquidVX, vys = liquidVY;
+    var floor = Math.floor, solid = liquidWorldSolidAt, groundReach = snowContactRadius() + 0.3;
+    var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
+    points.length = next.length = queue.length = 0;
+    for (var i = 0; i < count; i++) {
+      if (types[i] !== 5 || vxs[i] * vxs[i] + vys[i] * vys[i] >= 256) continue;
+      var x = xs[i], y = ys[i], n = points.length / 2;
+      points.push(x, y);
+      if (solid(x, y + groundReach)) {
+        queue.push(n); next[n] = -1;
+      } else {
+        var key = floor(y / cell) * width + floor(x / cell);
+        var head = heads.get(key);
+        next[n] = head === undefined ? -1 : head; heads.set(key, n);
+      }
     }
-    for (var i = 0; i < path.length; i++) cache[path[i]] = supported;
-    return supported;
+    for (var q = 0; q < queue.length; q++) {
+      var n = queue[q], x = points[n * 2], y = points[n * 2 + 1];
+      var col = floor(x / cell), row = floor(y / cell), key = row * width + col;
+      var bucket = bed.get(key);
+      if (!bucket) { bucket = []; bed.set(key, bucket); }
+      bucket.push(x, y);
+      for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
+        var nearKey = (row + r) * width + col + c;
+        var current = heads.get(nearKey), previous = -1;
+        while (current !== undefined && current >= 0) {
+          var following = next[current];
+          var dx = x - points[current * 2], dy = y - points[current * 2 + 1];
+          if (dx * dx + dy * dy <= reach2) {
+            // Remove visited grains from candidate lists. Dense reached
+            // buckets therefore do not get rescanned for every neighbour.
+            if (previous < 0) heads.set(nearKey, following);
+            else next[previous] = following;
+            queue.push(current);
+          } else previous = current;
+          current = following;
+        }
+      }
+    }
+    return bed;
+  }
+  function snowTouchesBed(x, y, bed, reach) {
+    var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
+    var col = Math.floor(x / cell), row = Math.floor(y / cell), reach2 = reach * reach;
+    for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
+      var grains = bed.get((row + r) * width + col + c);
+      if (!grains) continue;
+      for (var i = 0; i < grains.length; i += 2) {
+        var dx = x - grains[i], dy = y - grains[i + 1];
+        if (dx * dx + dy * dy <= reach2) return true;
+      }
+    }
+    return false;
+  }
+  function snowSupported(x, y, bed) {
+    return liquidWorldSolidAt(x, y + snowContactRadius() + 0.3) ||
+      snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance());
+  }
+  function snowBedContact(x, y) {
+    return snowTouchesBed(x, y, snow.bed, LIQUID_SNOW_DIAMETER);
   }
   function snowScan(dt, maintenanceDt) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
@@ -114,16 +167,7 @@
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
     var fresh = !gpu || (generation !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240);
     if (gpu && fresh) snow.readbackGen = generation;
-    var cells = {}, active = 0, tops = {}, occupied = {}, support = {};
-    for (var si = 0; si < liquidCount; si++) {
-      if (liquidType[si] !== 5) continue;
-      var bucket = rainCell(liquidX[si], liquidY[si]);
-      if (liquidVX[si] * liquidVX[si] + liquidVY[si] * liquidVY[si] < 256)
-        occupied[bucket] = (occupied[bucket] || 0) + 1;
-      if (!snowAir.active || liquidY[si] < SKY_ROWS * TILE - 36 || liquidY[si] > SKY_ROWS * TILE + 16) continue;
-      var column = Math.floor(liquidX[si] / 3);
-      tops[column] = tops[column] === undefined ? liquidY[si] : Math.min(tops[column], liquidY[si]);
-    }
+    var cells = {}, active = 0, bed = snowBuildSupport();
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
@@ -135,28 +179,15 @@
       // ground. Quiet pile edges keep their support in the dense solver.
       var air = snowAirAt(x, y);
       var disturbance = Math.abs(air[0]) + Math.abs(air[1]) + air[2];
-      var scour = fresh && y <= tops[Math.floor(x / 3)] + 2.8 && air[2] > 18 &&
-        Math.random() < 1 - Math.exp(-Math.min(18, (air[2] - 18) * 0.09) * dt);
-      // A jet elsewhere in the world must not amplify incidental motion.
+      // Airflow has already accelerated the grain in the shared solver.
+      // Changing representation must not supply another impulse, cancel
+      // downward momentum, or reroll a launch whenever powder lands.
       var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
-      // Use actual bed support instead of a fixed height above the town.
-      // A height gate makes dense powder collect along that same plane.
-      // Existing material keeps its flight even when the weather budget is
-      // full. This transfer adds no mass; SNOW_MASS_CAP bounds all snow.
-      if (fresh && (scour || lofted || !snowSupported(x, y, occupied, support)) &&
+      if (fresh && (lofted || !snowSupported(x, y, bed)) &&
           (rain.cells[rainCell(x, y)] || 0) <= 1 &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + (scour ? 0 : lofted ? 4 : 8))) {
-        // Sub-grid turbulence gives each released grain its own impulse,
-        // rather than preserving the dense solver's smooth travelling crest.
-        var phase = Math.random() * Math.PI * 2, scatter = Math.random();
-        // Include small ground-skimming hops as well as high throws. The
-        // scouring channel releases the grain; it is not a levitation layer.
-        var kick = scour || lofted ? (12 + scatter * scatter * 280) * Math.min(1, disturbance / 180) : 0;
-        var gustVX = liquidVX[i] + Math.cos(phase) * kick * 0.65;
-        if (gustVX * snowAir.trail < 0) gustVX *= 1 - Math.abs(snowAir.trail) * 0.85;
-        snow.grains.push({ x: x, y: y, vx: gustVX,
-          vy: (scour ? Math.min(0, liquidVY[i]) : liquidVY[i]) - kick, size: 0.3 + Math.random() * 0.7,
-          phase: phase, physical: true });
+          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + snowContactRadius())) {
+        snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i],
+          size: 0.3 + Math.random() * 0.7, phase: Math.random() * Math.PI * 2, physical: true });
         removeLiquidParticle(i); continue;
       }
       if (maintenanceDt && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
@@ -182,7 +213,7 @@
     // Atmospheric snow keeps the storm's identity. Thawing a stored sky
     // flake here created water high overhead, then rain on the return trip.
     // Only deposited or rig-contact material can thaw, including stored snow.
-    snow.cells = cells; snow.bed = occupied; snow.support = {}; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
+    snow.cells = cells; snow.bed = bed; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
     // Landed snow is already extracted by the ordinary liquid tool. This
@@ -226,32 +257,42 @@
     for (var i = snow.grains.length - 1; i >= 0; i--) {
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
-      var flutter = Math.sin(snow.time * (1.4 + p.size) + p.phase) * (13 + p.size * 16);
-      var fall = 32 + p.size * 42 + Math.sin(snow.time * 1.7 + p.phase) * 9;
       var air = snowAirAt(p.x, p.y);
-      // Flakes settle RELATIVE to the air. Relaxing toward raw jet velocity
-      // cancels their fall even in a weak crosswind, exposing the MAC box as
-      // a shelf of stalled snow. Add the jet disturbance to the ambient drift
-      // and settling speed; only a real updraft can hold a flake aloft.
-      // Surface scouring only breaks contact with the bed. Applying it to
-      // already-free flakes makes an invisible shelf above the terrain.
-      var liftVY = air[1];
-      var entrain = Math.min(1, Math.sqrt(air[0] * air[0] + liftVY * liftVY) / 80);
-      p.vx += (wind + flutter + air[0] - p.vx) * (1 - Math.exp(-(1.5 + 10.5 * entrain) * dt));
-      // A released grain carries its turbulent kick through the coarse air
-      // cells instead of snapping straight back onto the common flow line.
-      p.vy += (fall + liftVY - p.vy) * (1 - Math.exp(-(2 + (p.physical ? 3 : 10) * entrain) * dt));
-      // Updrafts can throw powder upward, but descending grains never hang
-      // in a slow settling phase. Use the same size/phase fall as sky snow.
-      if (p.physical && p.vy >= 0) p.vy = fall + liftVY < 0 ? fall + liftVY : Math.max(fall, p.vy);
+      // Solve dv/dt = gravity + drag * (airVelocity - velocity). Different
+      // grain sizes have different mass/area ratios and terminal speeds.
+      // No prescribed arc, random launch impulse or minimum falling speed:
+      // momentum crosses the apex continuously, even in a fading updraft.
+      var fall = 32 + p.size * 42, drag = GRAVITY / fall;
+      var keep = Math.exp(-drag * dt);
+      p.vx = wind + air[0] + (p.vx - wind - air[0]) * keep;
+      p.vy = air[1] + fall + (p.vy - air[1] - fall) * keep;
       var steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 2));
       var remove = false;
       for (var step = 0; step < steps; step++) {
         var nx = p.x + p.vx * dt / steps, ny = p.y + p.vy * dt / steps;
         var key = rainCell(nx, ny + 2);
-        var contact = liquidWorldSolidAt(nx, ny + 2) || liquidPointInMiner(nx, ny) ||
-          ((!p.physical || p.vy >= 0) && (snow.bed[key] || 0) >= 3 && snowSupported(nx, ny + 2, snow.bed, snow.support)) || (rain.cells[key] || 0) > 1;
-        if (contact) { remove = snowLand(p, false); break; }
+        var radius = snowContactRadius();
+        var floor = liquidWorldSolidAt(nx, ny + radius);
+        var bed = p.vy >= 0 && snowBedContact(nx, ny);
+        var contact = floor || bed || liquidPointInMiner(nx, ny) || (rain.cells[key] || 0) > 1;
+        if (contact) {
+          if (floor || bed) {
+            // Resolve the first touch, rather than parking at the start of
+            // the last swept segment (which can still be two pixels away).
+            var lo = 0, hi = 1;
+            for (var bisect = 0; bisect < 8; bisect++) {
+              var mid = (lo + hi) * 0.5;
+              var tx = p.x + (nx - p.x) * mid, ty = p.y + (ny - p.y) * mid;
+              if (liquidWorldSolidAt(tx, ty + radius) || (bed && snowBedContact(tx, ty))) hi = mid;
+              else lo = mid;
+            }
+            p.x += (nx - p.x) * lo; p.y += (ny - p.y) * lo;
+          }
+          // Dry powder's landing is inelastic. Do not inject the incoming
+          // normal momentum into pile pressure and turn it into a rebound.
+          if ((floor || bed) && p.vy > 0) p.vy = 0;
+          remove = snowLand(p, false); break;
+        }
         p.x = nx; p.y = ny;
       }
       if (!remove && !snowVisible(p.x, p.y) && (p.physical || p.y > surf - 10)) {

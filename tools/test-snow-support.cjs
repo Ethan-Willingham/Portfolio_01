@@ -16,7 +16,9 @@ const s = {
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
   SNOW_RATE: 0, SNOW_FLAKE_CAP: 5400, SNOW_MASS_CAP: 120000,
   SNOW_ACTIVE_CAP: 36000, SNOW_CPU_CAP: 7000, LIQUID_MAX_PARTICLES: 65536,
-  LIQUID_SNOW_DENSITY: 3.2, RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3,
+  LIQUID_SNOW_DENSITY: 3.2, LIQUID_SNOW_DIAMETER: 1.8, GRAVITY: 600,
+  LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5,
+  RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3,
   liquidCount: 0, liquidWGPU: null, liquidOps: [], LIQUID_OPS_MAX: 10000, liquidMutationSeq: 0,
   rain: { intensity: 0, cells: {}, parked: [], waterCount: 0 },
   surfaceWind: { current: 0 }, player: { x: 2700, y: 90 },
@@ -51,13 +53,17 @@ function reset() {
   s.liquidOps.length = 0; s.liquidMutationSeq = 0;
   s.rain.cells = {}; s.rain.waterCount = 0; s.rain.parked.length = 0;
   s.liquidWorldSolidAt = (x, y) => y >= 128;
+  s.snowAir.active = false;
+  s.snowAirAt = () => [0, 0, 0];
   s.snowReset(true);
 }
 function fillColumn(column, firstRow, lastRow) {
-  for (let row = firstRow; row <= lastRow; row++) {
-    // Four actual particles per six-pixel cell, above the landing threshold.
-    for (const offset of [1, 2, 3, 4]) {
-      s.addLiquidParticle(5, column * 6 + offset, row * 6 + 3, 0, 0);
+  // A connected lattice with real grain contacts. Grounded fixtures extend
+  // to y=127, one grain radius above the floor at y=128.
+  const bottom = lastRow === 20 ? 127 : lastRow * 6 + 5.5;
+  for (let y = bottom; y >= firstRow * 6; y -= 1.5) {
+    for (const offset of [1.3, 2.8, 4.3]) {
+      s.addLiquidParticle(5, column * 6 + offset, y, 0, 0);
       s.snow.active++; s.snow.mass++; s.snow.emitted++;
     }
   }
@@ -105,6 +111,114 @@ assert.equal(s.snow.grains.length, sheetMass, 'sheet becomes individual airborne
 assert.ok(s.snow.grains.every(p => p.physical), 'released sheet keeps its physical material identity');
 conserve(sheetMass, 'sheet release');
 
+// Merely sharing the floor's six-pixel bucket cannot suspend a detached
+// layer. These were all caught by the former eight-pixel terrain probe.
+for (const gap of [3, 4, 5, 6, 7, 8]) {
+  reset();
+  for (let n = 0; n < 12; n++) {
+    s.addLiquidParticle(5, 2401 + n * 1.4, 128 - gap, 0, 0);
+    s.snow.active++; s.snow.mass++; s.snow.emitted++;
+  }
+  mirror();
+  assert.equal(s.snowSupported(2403, 128 - gap, s.snow.bed), false,
+    `a detached layer ${gap} pixels above terrain has no support`);
+  const mass = s.snow.mass;
+  s.liquidWGPU = null;
+  s.snowScan(1 / 60, 0);
+  assert.equal(s.liquidCount, 0, 'detached near-floor powder leaves the dense solver');
+  assert.equal(s.snow.grains.length, mass, 'near-floor release retains every grain');
+  assert.ok(s.snow.grains.every(p => p.vy === 0), 'release itself supplies no launch or falling impulse');
+  conserve(mass, 'detached near-floor layer');
+}
+
+// Sharing a coarse bucket with grounded snow is not itself support. The
+// ground height puts both grains inside the former six-pixel bucket.
+reset();
+s.liquidWorldSolidAt = (x, y) => y >= 160;
+for (const y of [159, 156]) {
+  s.addLiquidParticle(5, 2401, y, 0, 0);
+  s.snow.active++; s.snow.mass++; s.snow.emitted++;
+}
+assert.equal(Math.floor(159 / 6), Math.floor(156 / 6), 'mixed fixture shares the former bucket');
+s.snowScan(1 / 60, 0);
+assert.equal(s.liquidCount, 1, 'only the terrain-rooted grain remains supported');
+assert.equal(s.liquidY[0], 159, 'support preserves the grounded grain');
+assert.equal(s.snow.grains.length, 1, 'disconnected grain leaves the mixed bucket');
+assert.equal(s.snow.grains[0].y, 156, 'detached grain retains its actual position');
+assert.equal(s.snowSupported(2401, 156), false, 'grounded neighbour cannot bridge the open gap');
+assert.equal(s.snowBedContact(2401, 156), false, 'detached grain cannot become a landing surface');
+conserve(2, 'mixed grounded and detached bucket');
+
+// A sparse sloped edge can carry load through touching grains across a
+// column boundary. Every connection is shorter than two collision radii.
+reset();
+const edge = [[2399.6, 127], [2400.9, 125.6], [2402.2, 124.2], [2403.5, 122.8]];
+for (const [x, y] of edge) {
+  s.addLiquidParticle(5, x, y, 0, 0);
+  s.snow.active++; s.snow.mass++; s.snow.emitted++;
+}
+assert.notEqual(Math.floor(edge[0][0] / 6), Math.floor(edge[1][0] / 6),
+  'sloped fixture crosses the former column boundary');
+s.snowScan(1 / 60, 0);
+assert.equal(s.liquidCount, edge.length, 'actual contacts preserve the entire sloped edge');
+assert.equal(s.snow.grains.length, 0, 'supported edge grains never release artificially');
+assert.ok(s.snowBedContact(edge.at(-1)[0], edge.at(-1)[1] - 1.5),
+  'the supported sloped edge catches new snow at an actual grain contact');
+conserve(edge.length, 'cross-column edge');
+s.removeLiquidParticle(0); s.snow.mass--; s.snow.collected++;
+s.snowScan(1 / 60, 0);
+assert.equal(s.liquidCount, 0, 'removing the root releases the entire detached contact chain');
+assert.equal(s.snow.bed.size, 0, 'an unrooted component has no cached landing surface');
+conserve(edge.length - 1, 'removed contact root');
+
+// Strong air may have accelerated dense grains before handoff. Switching
+// representations must retain that momentum, including a downward grain.
+reset();
+s.snowAir.active = true;
+s.snowAirAt = () => [320, -90, 260];
+const handoffs = [[2401, 125, 17, -60], [2413, 124, -11, 53], [2425, 123, 9, 0]];
+for (const [x, y, vx, vy] of handoffs) {
+  s.addLiquidParticle(5, x, y, vx, vy);
+  s.snow.active++; s.snow.mass++; s.snow.emitted++;
+}
+s.snowScan(1 / 60, 0);
+assert.equal(s.liquidCount, 0, 'all unsupported grains release under strong airflow');
+for (const [x, y, vx, vy] of handoffs) {
+  const p = s.snow.grains.find(grain => grain.x === x);
+  assert.ok(p, 'handoff preserves the original grain');
+  assert.deepEqual([p.x, p.y, p.vx, p.vy], [x, y, vx, vy],
+    'handoff adds no random launch and does not cancel descending momentum');
+}
+conserve(handoffs.length, 'momentum-preserving handoff');
+
+// A grain crosses its apex through finite acceleration. It must not jump
+// directly from rising to its eventual terminal falling speed.
+reset();
+const apex = falling(400, -220, true);
+apex.vy = -0.1;
+const apexDt = 1 / 600, apexY = apex.y;
+s.updateSnow(apexDt);
+assert.ok(apex.vy > 0 && apex.vy < 1.1,
+  'apex crosses continuously under approximately one pixel per second of gravity');
+assert.ok(apex.y > apexY && apex.y - apexY < 0.003,
+  'apex position has no artificial downward step');
+conserve(1, 'continuous apex');
+
+// Equal starting momentum develops different terminal speeds through drag.
+// A modest updraft reduces descent continuously instead of hitting a floor.
+reset();
+s.snowAirAt = () => [0, -20, 0];
+const fine = falling(400, -240, true), coarse = falling(406, -240, true);
+fine.size = 0; coarse.size = 1; fine.vy = coarse.vy = 0;
+s.updateSnow(1 / 120);
+assert.ok(fine.vy > 0 && coarse.vy > fine.vy && coarse.vy < s.GRAVITY / 120,
+  'drag begins descent gradually without a prescribed minimum speed');
+for (let frame = 1; frame < 120; frame++) s.updateSnow(1 / 120);
+assert.ok(Math.abs(fine.vy - 12) < 0.1 && Math.abs(coarse.vy - 54) < 0.1,
+  'grain sizes converge to distinct terminal velocities relative to the moving air');
+assert.ok(coarse.y - fine.y > 25, 'independent grain trajectories spread during descent');
+conserve(2, 'size-dependent descent');
+
 // A full sky-weather budget cannot strand existing material in the dense
 // solver. Cross both the former 5400 flight cap and 8192 drawing allocation.
 reset();
@@ -119,11 +233,16 @@ assert.equal(s.liquidCount, 0, 'full weather budget cannot prevent physical flig
 assert.equal(s.snow.grains.length, saturatedMass, 'every released grain remains visible flight material');
 assert.equal(s.snow.grains.filter(p => p.physical).length, 3100, 'all overflow grains retain physical identity');
 assert.equal(s.snowSpawn(2400, -250), null, 'new weather remains bounded while physical flight exceeds its budget');
+assert.ok(s.snow.grains.filter(p => p.physical).every(p => p.vy === 53),
+  'saturated handoff preserves every incoming vertical velocity');
 for (let frame = 0; frame < 5; frame++) s.updateSnow(1 / 60);
 const overflowFlight = s.snow.grains.filter(p => p.physical);
 for (const p of overflowFlight) {
-  const fall = 32 + p.size * 42 + Math.sin(s.snow.time * 1.7 + p.phase) * 9;
-  assert.ok(p.vy >= fall, 'overflow powder falls at least as fast as matching sky snow');
+  const terminal = 32 + p.size * 42;
+  assert.ok(p.vy >= Math.min(53, terminal) && p.vy <= Math.max(53, terminal),
+    'overflow powder approaches its terminal speed without overshoot');
+  assert.ok(Math.abs(p.vy - terminal) <= Math.abs(53 - terminal),
+    'overflow drag reduces the difference from each grain terminal speed');
 }
 assert.ok(Math.max(...overflowFlight.map(p => p.vy)) - Math.min(...overflowFlight.map(p => p.vy)) > 10,
   'overflow grains keep individual falling speeds');
@@ -163,7 +282,7 @@ for (const velocity of [[0, 53], [53, 0]]) for (const physical of [false, true])
     [s.liquidVX[i], s.liquidVY[i]] = velocity;
   }
   mirror();
-  assert.equal(Object.keys(s.snow.bed).length, 0, 'moving curtain contributes no resting bed');
+  assert.equal(s.snow.bed.size, 0, 'moving curtain contributes no resting bed');
   const p = falling(400, 29, physical), initial = s.snow.mass;
   s.updateSnow(1 / 60);
   assert.ok(s.snow.grains.includes(p), 'moving curtain cannot catch another falling grain');
@@ -184,6 +303,7 @@ for (const firstRow of [20, 5]) for (const physical of [false, true]) {
   s.updateSnow(1 / 60);
   assert.ok(!s.snow.grains.includes(p), 'supported pile catches falling snow at its top');
   assert.equal(s.liquidCount, pileMass + 1, 'landing transfers one particle into the pile');
+  assert.equal(s.liquidVY[s.liquidCount - 1], 0, 'landing dissipates incoming normal momentum');
   conserve(initial, 'supported pile landing');
 }
 
@@ -192,14 +312,14 @@ for (const firstRow of [20, 5]) for (const physical of [false, true]) {
 reset();
 fillColumn(400, 5, 20);
 mirror();
-assert.ok(s.snowSupported(2403, 33, s.snow.bed, s.snow.support));
+assert.ok(s.snowSupported(2403, 33, s.snow.bed));
 for (let i = s.liquidCount - 1; i >= 0; i--) {
   if (Math.floor(s.liquidY[i] / 6) === 12) {
     s.removeLiquidParticle(i); s.snow.mass--; s.snow.collected++;
   }
 }
 mirror();
-assert.equal(s.snowSupported(2403, 33, s.snow.bed, s.snow.support), false,
+assert.equal(s.snowSupported(2403, 33, s.snow.bed), false,
   'removing support invalidates the previous supported result');
 const detached = falling(400, 29, true), gapMass = s.snow.mass;
 s.updateSnow(1 / 60);
@@ -224,4 +344,4 @@ assert.equal(s.snow.melted, 1, 'thaw is recorded exactly once');
 assert.deepEqual([s.liquidX[0], s.liquidY[0]], [2403, 190], 'thaw leaves the particle in place');
 assert.equal(s.rain.waterCount, 1, 'thaw updates the water budget');
 conserve(1, 'submerged thaw');
-console.log('PASS unsupported clouds, saturated flight and reload, bounded legacy restore, moving curtains, dense sheet release, tall pile landing, support removal, submerged thaw and exact budgets');
+console.log('PASS actual grain contacts, detached floor layers, momentum-preserving handoff, continuous apex, size-dependent descent, saturated flight and reload, support removal, submerged thaw and exact budgets');

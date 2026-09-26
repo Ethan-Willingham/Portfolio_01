@@ -160,16 +160,9 @@
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
       edge = edge * edge * (3 - 2 * edge) * fade;
       ux *= edge; vy *= edge;
-      // Art-directed snow coupling, shared by CPU, GPU and loose flakes.
-      // Preserve the projected air internally, but reserve nearly all of
-      // its visible spray for the trailing side during banked flight.
-      var steer = Math.abs(a.trail), rear = a.trail < 0 ? -1 : 1;
-      var forward = Math.max(0, Math.min(1,
-        (-(ox + (bx + 0.5) * cell - player.x - PLAYER_W * 0.5) * rear + 8) / 40));
-      forward = forward * forward * (3 - 2 * forward);
-      var wake = 1 - 0.97 * steer * forward;
-      if (ux * rear < 0) ux *= 1 - 0.96 * steer;
-      ux *= wake; vy *= wake;
+      // Sample the projected flow itself. Suppressing its forward or
+      // opposing components removed real return eddies and required an
+      // artificial particle kick to make a plume rise behind the miner.
       // The air grid cannot resolve grain-scale turbulent lift at the
       // ground. Strong tangential flow scours exposed powder into the wall
       // jet; the resolved eddies then carry it. Keep this entrainment speed
