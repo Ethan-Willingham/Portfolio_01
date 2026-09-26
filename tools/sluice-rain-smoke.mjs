@@ -109,7 +109,7 @@ try {
   check('save loader preserves finite lake identity and water',await game('surfacePonds.length===3 && surfacePonds.every(function(p){return p.rainFed;}) && rain.waterCount+rain.parked.length/2===savedRainCount'));
   const climate=await game(`(function(){
     rainReset(true);var first=rain.climate.duration,result=[];
-    for(var second=0;second<450;second++){
+    for(var second=0;second<900;second++){
       rainAdvanceWeather(1);rainWeather();
       result.push({phase:rain.climate.phase,pcp:weather.tpcp});
     }
@@ -117,9 +117,9 @@ try {
       cloud:result.some(function(s){return s.phase===1 && s.pcp===0;}),
       dry:result.filter(function(s){return s.phase===0 && s.pcp===0;}).length};
   })()`);
-  console.log('450 seconds of scheduled weather:',climate);
-  check('weather has a dry opening, cloud buildup, short showers and long dry spells',climate.first>=55 && climate.first<=80 && climate.wet>=35 && climate.wet<=110 && climate.dry>220 && climate.cloud);
-  await game(`rain.climate={phase:2,elapsed:17,duration:45,strength:0.75};window.weatherSave=rainSave();rainRestore(weatherSave)`);
+  console.log('900 seconds of scheduled weather:',climate);
+  check('weather has a sunny opening, cloud buildup, precipitation and extended dry breaks',climate.first>=120 && climate.first<=210 && climate.wet>=75 && climate.wet<=300 && climate.dry>=120 && climate.cloud);
+  await game(`rain.climate={phase:2,elapsed:17,duration:45,strength:0.75,kind:"rain",storm:false,run:1,first:false};rainWeather();weather.pcp=weather.tpcp;window.weatherSave=rainSave();rainRestore(weatherSave)`);
   check('saving mid-shower preserves its progress instead of restarting the rain',await game('rain.climate.phase===2 && rain.climate.elapsed===17 && rain.climate.duration===45 && weather.pcp>0.5'));
   await game(`liquidCount=0;rainReset(true);rainSeedLakes();cam.x=0;cam.y=2000;rainScan();
     window.lakeInitial=rain.parked.length/2;rain.intensity=0.7;

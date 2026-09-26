@@ -65,7 +65,7 @@ try {
     for(const [index,x,y] of [[0,400,55],[1,2600,-650],[2,7600,-1850],[3,9700,-3500],[4,400,-3500],[5,7600,55]]) {
       const sample=await game(`(function(){player.x=${x};player.y=${y};player.vx=player.vy=0;player.thrusting=false;
         cam.snap=true;updateCamera();updateWeather(1/60);updateParticleRain(1/60);render();
-        var parts=worldSnowEnabled?snow.grains:rain.drops, bins=[0,0,0,0];
+        var parts=weatherPrecipType()==='snow'?snow.grains:rain.drops, bins=[0,0,0,0];
         for(var p of parts)if(p.x>=cam.x&&p.x<cam.x+screenW&&p.y>=cam.y&&p.y<Math.min(SKY_ROWS*TILE,cam.y+screenH))
           bins[Math.min(3,Math.floor((p.x-cam.x)/screenW*4))]++;
         return {bins:bins,type:weatherPrecipType(),rain:rain.drops.length,snow:snow.grains.length,
@@ -78,7 +78,7 @@ try {
     const transition=await game(`(function(){
       while(liquidCount)removeLiquidParticle(liquidCount-1);rainReset(true,${mode==='snow'});
       player.x=2500;player.y=-650;player.thrusting=false;cam.x=2000;cam.y=-1000;
-      function bins(){var b=[0,0,0,0,0,0,0,0,0,0,0,0],p=worldSnowEnabled?snow.grains:rain.drops;
+      function bins(){var b=[0,0,0,0,0,0,0,0,0,0,0,0],p=weatherPrecipType()==='snow'?snow.grains:rain.drops;
         for(var f of p)if(f.x>=cam.x&&f.x<cam.x+screenW&&f.y>=cam.y&&f.y<cam.y+screenH)
           b[Math.floor((f.x-cam.x)/screenW*4)+4*Math.floor((f.y-cam.y)/screenH*3)]++;
         return b;}
@@ -104,7 +104,7 @@ try {
           weather.pcp=0;
           if(${stage}>0){cam.y-=4;cam.x+=${stage}===1?3:-3;}
           player.x=cam.x+screenW*.5;player.y=cam.y+screenH*.5;updateParticleRain(1/60);
-        }render();return {removed:thinningRemoved,popped:thinningPopped,strength:(worldSnowEnabled?snow.field:rain.field).strength};})()`);
+        }render();return {removed:thinningRemoved,popped:thinningPopped,strength:(weatherPrecipType()==='snow'?snow.field:rain.field).strength};})()`);
         console.log(mode,'offscreen thinning',stage,sample);
         check(`${mode} never thins visible particles during stage ${stage}`,sample.popped===0);
         if(mode==='snow')check(`snow supply eases gradually during stage ${stage}`,Math.abs(sample.strength-(.65-.08*(stage+1)))<.001);
@@ -120,13 +120,16 @@ try {
         cam.x=2000;cam.y=-1000;player.x=2400;player.y=-650;`);
       check('old snow saves cannot revive cached storm strips',await game('snow.airCount===0&&snow.grains.length===0'));
       check('legacy atmospheric water retires without creating another snow patch; surface water stays water',await game('snow.mass===0&&snow.parked.length===0&&rain.recycled===1&&rain.parked.length===2&&rain.parked[1]===SKY_ROWS*TILE+8'));
-      await game('snowStore(2400,-700,0,53);snow.mass=1;snowScan(.12);snowScan(.12)');
+      // Let the real solver publish a fresh GPU mirror before transferring
+      // stored material back to flight; repeated scans cannot fake that fence.
+      await game('SNOW_RATE=0;snowStore(2400,-700,0,53);snow.mass=1;gameRafId=requestAnimationFrame(loop)');
+      await sleep(500);await game('cancelAnimationFrame(gameRafId);gameRafId=0');
       check('isolated physical snow returns to slow flight without changing mass',await game('snow.grains.length===1&&snow.grains[0].physical&&snow.mass===1'));
-      check('jet heat cannot make rain out of airborne powder',await game('player.thrusting=true;player.jetForce=200;snow.temperature=4;snowHeat(player.x+PLAYER_W*.5,player.y+PLAYER_H+15)===0'));
+      check('jet heat cannot make rain out of airborne powder',await game('player.thrusting=true;player.jetForce=200;snow.temperature=snowTemperature();snowHeat(player.x+PLAYER_W*.5,player.y+PLAYER_H+15)===0'));
       check('clearing cannot thaw the world while snow is still falling',await game('weatherForce=-1;rain.climate.phase=3;weather.pcp=.4;snowTemperature()<0'));
-      check('rain rendering rejects a snow world',await game(`(function(){var strokes=0,old=ctx.stroke;try{ctx.stroke=function(){strokes++;};drawParticleRain();}finally{ctx.stroke=old;}return strokes===0;})()`));
+      check('a fresh snow front has no rain to draw',await game(`(function(){var segments=0,old=ctx.lineTo;try{ctx.lineTo=function(){segments++;};drawParticleRain();}finally{ctx.lineTo=old;}return segments===0&&rain.drops.length===0;})()`));
     }
   }
   assert.equal(errors.length,0,'no runtime or GPU validation errors');
-  console.log('PASS whole-map rain and snow, high flight, underground gating, mode exclusivity and no atmospheric thaw; screenshots '+out);
+  console.log('PASS whole-map rain and snow, high flight, underground gating, front identity and no player heat; screenshots '+out);
 } finally { if(errors.length)console.log('ERRORS',errors.slice(0,8));cleanup(); }

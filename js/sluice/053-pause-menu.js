@@ -202,9 +202,9 @@
         if (key === 'rain') {
           document.getElementById('gm-ponds-note').textContent = pondsNote(read('sluice.opt.ponds') || 'regular');
           document.getElementById('gm-rain-note').textContent =
-            (value === 'snow' ? 'Soft flakes settle into powder. Drive, scoop or blast through it; thaw feeds the lakes.' :
-             'Passing showers feed three small stone-lined lakes. New lakes start low.') +
-            ' Next new game. This world: ' + (worldSnowEnabled ? 'snow.' : worldRainEnabled ? 'rain.' : 'off.');
+            (value === '0' ? 'Physical precipitation is off for the next new game.' :
+             'Sunshine, clouds, rain and snow cycle through the world. Choose its opening weather.') +
+            ' This world: ' + (worldRainEnabled ? 'changing weather.' : 'off.');
         }
         if (key === 'ponds') document.getElementById('gm-ponds-note').textContent = pondsNote(value);
       }

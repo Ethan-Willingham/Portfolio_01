@@ -37,7 +37,7 @@
     layerAlpha: 1.0,   // global cloud opacity
     softness:   1.0,   // cloud-edge feather (puff hardness; re-bakes on change)
     morphSpeed: 0.0,   // 0 = clouds hold their shape (drift only); >0 = slow billow morph
-    precipMode: 0,     // 0 auto (snow in the cold spawn biome) / 1 force rain / 2 force snow
+    precipMode: 0,     // 0 weather front / 1 force rain / 2 force snow
     veil:       1.0,   // overcast/storm stratus-sheet strength
     deckDensity:  1.0, // cloud-instance density across the whole field
     deckAltScale: 1.0, // multiplies every cloud altitude — the field rides higher / lower
@@ -82,10 +82,9 @@
   // worldgen, key this to surface temperature instead.
   function weatherCold() { return true; }
   function weatherPrecipType() {
-    if (typeof worldSnowEnabled !== 'undefined' && worldSnowEnabled) return 'snow';
-    if (typeof worldRainEnabled !== 'undefined' && worldRainEnabled) return 'rain';
     if (weatherTune.precipMode === 1) return 'rain';
     if (weatherTune.precipMode === 2) return 'snow';
+    if (typeof worldRainEnabled !== 'undefined' && worldRainEnabled && rain.climate) return rain.climate.kind || 'rain';
     return weatherCold() ? 'snow' : 'rain';
   }
 
@@ -825,8 +824,7 @@
       ctx.fillRect(0, 0, cw, ch);
       ctx.restore();
     }
-    if (worldSnowEnabled) { drawSnowflakes(); return; }
-    if (worldRainEnabled) { drawParticleRain(); return; }
+    if (worldRainEnabled) { drawParticleRain(); if (worldSnowEnabled) drawSnowflakes(); return; }
     if (!precipParts || precipActive <= 0 || weather.pcp <= 0.01) return;
     var snow = (weatherPrecipType() === 'snow');
     var a = Math.max(0, Math.min(1, weather.pcp * 1.15));

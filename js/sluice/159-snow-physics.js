@@ -48,7 +48,7 @@
     return parked ? snowStore(p.x, p.y, p.vx, p.vy) : snowParticle(p.x, p.y, p.vx, p.vy);
   }
   function snowSeedWorld() {
-    if (!worldSnowEnabled) return;
+    if (!worldSnowEnabled || rain.climate.kind !== 'snow') return;
     // A thin dusting, laid at the new material's rest spacing. These are
     // ordinary solver particles, including the initially parked ones.
     var spacing = LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY), base = SKY_ROWS * TILE;
@@ -65,21 +65,29 @@
   }
   function snowTemperature() {
     var day = scatDayWeight(computeSunElevation(timeOfDay));
-    var cold = weatherForce >= 0 ? WEATHER_MOODS[weatherForce].pcp > 0.05 : rain.climate.phase === 2 || rain.climate.phase === 1;
-    return cold || weather.pcp > 0.015 || snow.field.strength > 0.015 ? -5 + day : 1.5 + day * 3;
+    var opening = Math.max(0, Math.min(1, (0.55 - weather.cov) / 0.35));
+    // Dry overcast after a storm stays cold. Thaw follows the actual cloud
+    // opening, not the end of precipitation or a timer attached to the rig.
+    if (weather.pcp > 0.015 || snow.field.strength > 0.015) return -4;
+    return -4 + opening * (6 + day * 3);
+  }
+  var snowSkyExposure = new Map();
+  function snowOpenSky(x, y) {
+    var col = Math.floor(x / TILE), row = Math.floor(y / TILE);
+    if (row < SKY_ROWS) return true;
+    var key = row * COLS + col;
+    if (snowSkyExposure.has(key)) return snowSkyExposure.get(key);
+    var open = true;
+    for (var r = row; r >= SKY_ROWS; r--) {
+      if (liquidWorldSolidAt(x, r * TILE + 0.5)) { open = false; break; }
+    }
+    snowSkyExposure.set(key, open); return open;
   }
   function snowHeat(x, y) {
-    // Cold airborne powder stays snow, even beside the exhaust. Melt only
-    // material at the surface or below, where water reads as local thaw.
-    if (y < SKY_ROWS * TILE - 24) return 0;
-    var heat = Math.max(0, snow.temperature) * 0.007;
-    var tile = tileAt(Math.floor((y + 4) / TILE), Math.floor(x / TILE));
-    if (tile && tile.type === 'foundation') heat += 0.24;
-    var dx = Math.abs(x - player.x - PLAYER_W * 0.5), dy = y - player.y - PLAYER_H;
-    if (dx < 32 && dy > -30 && dy < 20) heat += 0.015;
-    if (player.thrusting && player.jetForce > 1 && !gameOver && !gameWon && dy > -6 && dy < 80 && dx < 10 + dy * 0.09) heat += 0.85;
-    if ((rain.cells[rainCell(x, y)] || 0) >= 10) heat += 5;
-    return heat;
+    // Water contact is the only local source of thaw. Tracks, exhaust,
+    // foundations and proximity to the player supply no heat to snow.
+    var wet = (rain.waterCells[rainCell(x, y)] || 0) >= 10 ? 5 : 0;
+    return wet + (snow.temperature > 0 && snowOpenSky(x, y) ? snow.temperature * 0.007 : 0);
   }
   function snowMeltParticle(i) {
     // Change material IN PLACE, retaining the solver's current position and
@@ -250,10 +258,12 @@
     snow.grains.push(p); snow.mass++; snow.emitted++; return p;
   }
   function snowRetire(p) { snow.mass--; snow.recycled++; }
-  function updateSnow(dt) {
+  function updateSnow(dt, intensity) {
+    if (intensity === undefined) intensity = rain.intensity;
     updateSnowAir(dt);
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
+    snowSkyExposure.clear();
     // Release continuously while the wake is active. Storage and thaw can
     // stay on their slower budget without emitting powder in 120ms batches.
     var maintenanceDt = snow.tick >= 0.12 ? snow.tick : 0;
@@ -268,8 +278,8 @@
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
     var width = Math.max(0, right - left), height = Math.max(0, bottom - top);
     particleWeatherField(snow.field, rect, snow.grains, SNOW_RATE / (1100 * 53), SNOW_FLAKE_CAP,
-      rain.intensity, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
-    rainCatchLakes(dt, sky, left, right, snow.field.strength);
+      intensity, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
+    rainCatchLakes(dt, sky, left, right, snow.field.strength, SNOW_RATE);
     // Resolve the lowest falling grains first. Each landing immediately
     // becomes a contact for the grains above it; arbitrary storage order
     // could otherwise grow the bed through an unprocessed lower grain.

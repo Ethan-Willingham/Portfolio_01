@@ -1,10 +1,12 @@
 # Physical snow
 
-Pause > Options > World > Particle weather > Snow, then start a new game.
-Existing snow worlds pick up the particle model on reload. Old column-based
-snow saves migrate to individual particles, keeping their water equivalent.
-Rain and Snow remain separate world choices; existing rain saves stay rain.
-`?snow=1&nosave=1` opens a disposable snow world.
+Pause > Options > World > Particle weather > Snow first starts a new world
+with snow. Rain first opens with sunshine before the first rain front. Both
+then cycle through sunshine, gathering clouds, rain or snow, and a long dry
+cloudy break. Existing rain and snow saves join this mixed cycle on reload,
+keeping their current front and all deposited material. Old column-based snow
+saves migrate to individual particles, keeping their water equivalent.
+`?snow=1&nosave=1` opens a disposable world starting in snow.
 
 Snow uses the existing water solver. Dry snow is internal material 5 in the
 same WebGPU MLS-MPM grid, with the same CPU fallback, terrain collision,
@@ -202,15 +204,22 @@ during the existing GPU startup warmup.
 
 ## Thaw, storage and limits
 
-A new world starts with a light dusting and a gentle snowfall. The opening
-front lasts about a minute. Later fronts last 55 to 80 seconds, separated by
-120 to 190 seconds of milder fair weather, with cloud buildup and clearing.
-Air stays cold until precipitation finishes, then gradually thaws deposited snow.
-Foundations, jet exhaust and contact with
-a body of water accelerate thaw; a few droplets do not dissolve an entire pile.
-The rig's warm scoop collects snow directly into its water chamber.
-Airborne powder more than 24 world pixels above the surface cannot thaw beside
-the jet. Grains loosened by actual airflow return to individual flight after losing
+A Snow first world starts with a light dusting and a gentle snowfall. Snow
+fronts last 90 to 150 seconds. Rain fronts last 75 to 120 seconds, with a 55%
+chance of thunder and lightning. Each front leaves 180 to 300 seconds of dry
+cloudy weather before sunshine returns for 120 to 210 seconds. Clouds then
+gather over 35 to 65 seconds. Rain and snow have equal selection chances,
+with no more than two consecutive fronts of the same kind.
+
+Cloud cover keeps snow frozen throughout the cloudy break. As the actual
+clouds part, exposed deposited snow gradually turns into water. Terrain roofs
+shelter underground snow from this sky-driven thaw. Contact with water also
+melts snow; oil and mineral liquids do not. Foundations, player proximity,
+tracks, jets and tools supply no heat to snow. The scoop stores snow in its own
+chamber and releases physical snow, preserving each grain through save/load.
+Legacy five-chamber scoop saves restore with an empty snow chamber.
+
+Grains loosened by actual airflow return to individual flight after losing
 contact. Unsupported grains separate according to their contact with the bed,
 without a fixed height plane. Supported piles remain in the shared solver.
 Fresh GPU snapshots are still required for handoff, so a transfer cannot rewind
@@ -253,6 +262,14 @@ inside the banya. `window.__particleSnow.stats()` reports the shared-particle
 model, active and parked counts, moving powder, collected mass and thaw.
 
 ## Verification
+
+`node tools/test-weather-cycle.cjs` checks 600 fronts, all phase durations,
+protected cloudy snow, gradual exposed thaw, water-only contact melt, shelter,
+player heat exclusion and current/legacy saves. `node tools/test-snow-scoop.cjs`
+checks collection, discharge, capacity, blocked outlets and exact snow storage.
+`node tools/sluice-weather-cycle.mjs` exercises cloudy snow, jets, mixed rain
+and snow, lightning, thunder ambience and conserved thaw in a live GPU browser.
+Add `--cpu` for the fallback. Artifacts stay under `/tmp`.
 
 `node tools/sluice-snow-contact.mjs` drops an unsupported sheet six pixels
 above terrain, then returns a dispersed plume to the floor. Both must reach

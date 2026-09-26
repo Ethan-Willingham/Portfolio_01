@@ -1,9 +1,12 @@
 # Particle rain
 
-Pause > Options > World > Particle weather > Rain, then start a new game from
-the pause menu. The mode belongs to that world and survives save loading.
-Changing the option only changes the next new game. Existing saves without
-the rain field stay dry. `?rain=1&nosave=1` starts a disposable rain world.
+Pause > Options > World > Particle weather > Rain first, then start a new game
+from the pause menu. Rain first and Snow first select the opening weather;
+both worlds subsequently cycle through sunshine, clouds, rain and snow.
+Changing the option only changes the next new game. Existing rain and snow
+saves join the mixed cycle while preserving their current front. Existing
+saves without particle weather stay dry. `?rain=1&nosave=1` starts a disposable
+world with a sunny opening before its first rain front.
 
 Each airborne drop represents one water particle, follows wind and terminal
 velocity drag, and transfers exactly one particle into the existing water
@@ -35,14 +38,21 @@ impacts, pooling and flow. The little impact crowns and expanding rings are
 visual cues; they add no extra water. Droplet trails run behind their heads,
 so the renderer does not paint a trail through the ground after a collision.
 
-New rain worlds open with 55 to 80 seconds of fair weather, then 20 seconds
-of gathering clouds. Showers last 35 to 55 seconds, easing in and out over
-seven seconds with smaller travelling gusts. Clearing clouds last 20 seconds;
-later fair spells last 150 to 240 seconds. The existing cloud palette, wind
-and rain ambience follow the same front. It rains even in the cold starting
-biome. Ordinary worlds keep their existing weather. Pause freezes the weather,
-and the banya has its own weather. The current phase and elapsed time persist.
-The development override `?wmood=4` locks steady rain for testing.
+Rain first worlds open with 120 to 210 seconds of sunshine, then 35 to 65
+seconds of gathering clouds. Rain fronts last 75 to 120 seconds, easing in
+and out over seven seconds with smaller travelling gusts. Snow fronts last
+90 to 150 seconds. Each front leaves 180 to 300 seconds of dry cloudy weather,
+then another sunny spell. That cloudy break keeps deposited snow frozen and
+gives the player time to move it before the clouds part.
+
+Later fronts choose rain or snow equally, with at most two consecutive fronts
+of one kind. Rain has a 55% chance of becoming a thunderstorm, using the existing
+lightning flashes, wind, storm ambience and thunder sounds. Snow fronts stay
+quiet. Existing flash accessibility settings still apply. The cloud palette,
+wind and ambience follow the current front. Pause freezes outdoor weather;
+the banya pauses it too. Front kind, phase, duration, elapsed time and visible
+sky state persist. Older clearing-phase saves receive a full cloudy break.
+The development override `?wmood=4` locks steady precipitation for testing.
 
 The same front covers the entire outdoor map. Rain and snow sample one moving
 world-space field inside a window padded 160 world pixels beyond the view.
@@ -55,10 +65,12 @@ current storm. New weather does not arrive as a line from the viewport edge,
 and old offscreen weather is not cached. Existing particles keep their world
 positions, and consumed source identities preserve the rig's wake.
 
-A snow world clears the rain drop/impact pools and suppresses rain drawing.
-Airborne powder stays snow beside the jet. Legacy snow saves retire atmospheric
-water overhead and discard old cached sky patches; local surface meltwater and
-player-owned water remain physical liquids.
+Both particle systems keep updating through front changes. New precipitation
+follows the current front; existing drops finish falling and deposited snow
+retains its own physics during rain. Airborne powder stays snow beside the jet.
+Legacy snow saves retire atmospheric water overhead and discard old cached sky
+patches; local surface meltwater and player-owned water remain physical liquids.
+Legacy rain saves preserve their water, including water above ground.
 
 Rain worlds generate three small lakes, six to eight tiles wide and two deep.
 Stone walls and floors retain water while neighboring dirt absorbs it. Each
@@ -160,10 +172,16 @@ plow and deep-puddle drainage checks also passed.
 
 Snow uses the same weather and meltwater storage through a separate material
 simulation. See [PARTICLE_SNOW.md](PARTICLE_SNOW.md). Existing rain saves retain
-rain; choosing Snow only changes the next new world.
+their water and front progress; Rain first or Snow first only changes the opening
+of the next new world. The mixed cycle applies to both.
 
 `node tools/sluice-weather-coverage.mjs` checks both modes across distant map
 locations and high flight, evolving storm density, underground gating, legacy
 save repair and rain/snow exclusivity.
 Add `--cpu` for the fallback. `node tools/test-snow-coverage.cjs` also checks
 continuous sideways rain and snow coverage with reversals and budget pressure.
+
+`node tools/test-weather-cycle.cjs` checks the full front schedule and save
+migration. `node tools/sluice-weather-cycle.mjs` verifies mixed material updates,
+cloudy retention, live lightning and thunder ambience, and conserved sunny thaw.
+Add `--cpu` for the fallback.

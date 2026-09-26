@@ -16,7 +16,7 @@ const s = { Math: math, window: { location: { search: '' } },
   SNOW_ACTIVE_CAP: 36000, SNOW_CPU_CAP: 7000, LIQUID_MAX_PARTICLES: 65536,
   RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3, liquidCount: 0, liquidWGPU: null, liquidMutationSeq: 0,
   liquidX: [], liquidY: [], liquidVX: [], liquidVY: [], liquidType: [],
-  rain: { intensity: .65, cells: {}, parked: [], waterCount: 0 },
+  rain: { intensity: .65, cells: {}, waterCells: {}, parked: [], waterCount: 0 },
   surfaceWind: { current: .3 }, player: {x: 2465, y: -620},
   snowAir: {}, snowAirReset: noop, updateSnowAir: noop, snowAirAt: () => [0, 0, 0],
   liquidToolSync: noop, rainCatchLakes: noop,
@@ -170,6 +170,7 @@ s.snowScan=realScan;s.liquidWGPU=null;s.SNOW_RATE=345;
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/158-rain-lakes.js'),'utf8'),s);
 const catchLakes=s.rainCatchLakes;
+s.weatherPrecipType=()=>s.rain.climate.kind;
 s.weatherForce=4;s.weather={pcp:.65};s.weatherTune={enabled:true};s.weatherSetMood=noop;
 s.bathMode=s.PERF_DISABLE_WATER=s.PERF_DISABLE_WEATHER=false;
 s.rainScan=noop;s.rainCatchLakes=noop;s.rainAdvanceWeather=noop;

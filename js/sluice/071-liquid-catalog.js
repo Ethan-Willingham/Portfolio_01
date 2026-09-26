@@ -6,7 +6,8 @@
     { id: 1, key: 'oil', name: 'Oil', color: '#342717', rgb: [0.20, 0.15, 0.09], feel: 'Heavy and slick', depth: 'Legacy deposits' },
     { id: 2, key: 'brine', name: 'Brine', color: '#91c9ad', rgb: [0.57, 0.79, 0.68], feel: 'Dense mineral wash', depth: 'Shallow salt pockets' },
     { id: 3, key: 'nectar', name: 'Nectar', color: '#de9c4d', rgb: [0.87, 0.61, 0.30], feel: 'Thick golden ribbons', depth: 'Warm amber pockets' },
-    { id: 4, key: 'lumen', name: 'Lumen', color: '#ad87cc', rgb: [0.68, 0.53, 0.80], feel: 'Soft violet currents', depth: 'Deep mineral pockets' }
+    { id: 4, key: 'lumen', name: 'Lumen', color: '#ad87cc', rgb: [0.68, 0.53, 0.80], feel: 'Soft violet currents', depth: 'Deep mineral pockets' },
+    { id: 5, key: 'snow', name: 'Snow', color: 'rgb(250,249,244)', rgb: [0.98, 0.975, 0.955], feel: 'Loose powder', depth: 'Winter weather' }
   ];
   var liquidToolCandidates = [];
   var liquidToolRemovalIndices = [];
@@ -18,7 +19,7 @@
   }
 
   function liquidToolExtract(x, y, radius, maxCount, intake) {
-    var counts = [0, 0, 0, 0, 0];
+    var counts = [0, 0, 0, 0, 0, 0];
     if (!isFinite(x) || !isFinite(y) || !(radius > 0) || !(maxCount > 0)) return counts;
     liquidToolSync();
     var cap = Math.min(2048, Math.floor(maxCount));
@@ -39,18 +40,29 @@
     for (var c = 0; c < Math.min(cap, candidates.length); c++) {
       indices.push(candidates[c].index);
       var picked = candidates[c].index;
-      counts[liquidType[picked] === 5 ? 0 : liquidType[picked]]++;
-      if (liquidType[picked] === 5) snow.collected++;
+      counts[liquidType[picked]]++;
+      if (liquidType[picked] === 5) { snow.collected++; snow.active--; snow.mass--; }
       if (intake && intake.samples && intake.samples.length < 8 && c % 12 === 0) {
-        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] === 5 ? 0 : liquidType[picked] });
+        intake.samples.push({ x: liquidX[picked], y: liquidY[picked], type: liquidType[picked] });
       }
     }
     // Descending original indices remain valid under the solver's swap-remove.
     indices.sort(function (a, b) { return b - a; });
     for (var n = 0; n < indices.length; n++) removeLiquidParticle(indices[n]);
-    counts[0] += snowScoop(x, y, radius, ry, fromX, fromY, cap - indices.length);
+    counts[5] += snowScoop(x, y, radius, ry, fromX, fromY, cap - indices.length);
     if (indices.length) liquidToolWake(x, y, radius + TILE);
     return counts;
+  }
+
+  function liquidToolReleaseParticle(type, x, y, vx, vy) {
+    if (type === 5) {
+      // Snow re-enters its own physical pool, including its persistence and
+      // mass accounting. It never becomes tank water or a mineral deposit.
+      if (!snowParticle(x, y, vx, vy)) return false;
+      snow.mass++; snow.emitted++;
+      return true;
+    }
+    return addLiquidParticle(type, x, y, vx, vy, 0) >= 0;
   }
 
   function liquidToolEmit(type, count, x, y, vx, vy) {
@@ -63,7 +75,7 @@
     var speed = Math.sqrt(vx * vx + vy * vy);
     var alongX = speed > 0.1 ? vx / speed : 0;
     var alongY = speed > 0.1 ? vy / speed : 1;
-    var step = LIQUID_CELL * LIQUID_PDELTA;
+    var step = type === 5 ? LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY) : LIQUID_CELL * LIQUID_PDELTA;
     var cols = Math.min(14, Math.max(3, Math.ceil(Math.sqrt(cap * 0.65))));
     var added = 0;
     for (var i = 0; i < cap; i++) {
@@ -74,7 +86,7 @@
       // The packet is laid at rest spacing and clipped against real terrain.
       // A blocked nozzle keeps its liquid in the tank.
       if (liquidWorldSolidAt(px, py) || !liquidLineClear(x, y, px, py)) continue;
-      if (addLiquidParticle(type, px, py, vx, vy, 0) >= 0) added++;
+      if (liquidToolReleaseParticle(type, px, py, vx, vy)) added++;
     }
     if (added) liquidToolWake(x, y, TILE * 2);
     return added;
@@ -83,12 +95,12 @@
   // A wide, interleaved discharge, laid at rest spacing. Unlike separate
   // per-chamber pours, mixed loads never spawn different liquids atop each other.
   function liquidToolDump(tank, maxCount, x, y, width, rigVX) {
-    var counts = [0, 0, 0, 0, 0], total = 0;
-    for (var t = 0; t < 5; t++) total += tank[t];
+    var counts = [0, 0, 0, 0, 0, 0], total = 0;
+    for (var t = 0; t < liquidCatalog.length; t++) total += tank[t] || 0;
     var cap = Math.min(2048, Math.floor(maxCount), total, LIQUID_MAX_PARTICLES - liquidCount);
     if (!(cap > 0)) return counts;
     liquidToolSync();
-    var step = LIQUID_CELL * LIQUID_PDELTA;
+    var step = tank[5] > 0 ? LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY) : LIQUID_CELL * LIQUID_PDELTA;
     var cols = Math.max(12, Math.ceil(width / step));
     for (var i = 0; i < cap; i++) {
       var row = Math.floor(i / cols), side = (i % cols) - (cols - 1) * 0.5;
@@ -96,13 +108,13 @@
       var px = x + dx, py = y + row * step;
       if (liquidWorldSolidAt(px, py) || !liquidLineClear(x, y, px, py) || liquidPointInMiner(px, py)) continue;
       var type = -1, score = Infinity;
-      for (var k = 0; k < 5; k++) {
-        if (counts[k] >= tank[k]) continue;
+      for (var k = 0; k < liquidCatalog.length; k++) {
+        if (counts[k] >= (tank[k] || 0)) continue;
         var next = (counts[k] + 0.5) / tank[k];
         if (next < score) { score = next; type = k; }
       }
       if (type < 0) break;
-      if (addLiquidParticle(type, px, py, rigVX * 0.45 + dx * 3.4, 610 + Math.abs(dx) * 0.8, 0) >= 0) counts[type]++;
+      if (liquidToolReleaseParticle(type, px, py, rigVX * 0.45 + dx * 3.4, 610 + Math.abs(dx) * 0.8)) counts[type]++;
     }
     var sent = counts.reduce(function (n, v) { return n + v; }, 0);
     if (sent) liquidToolWake(x, y, TILE * 2);
@@ -125,7 +137,7 @@
   }
 
   function liquidExtractRect(x0, y0, x1, y1, type, maxCount) {
-    if (!liquidCatalog[type] || !(maxCount > 0)) return 0;
+    if (!liquidCatalog[type] || type === 5 || !(maxCount > 0)) return 0;
     liquidToolSync();
     var cap = Math.floor(maxCount), removed = 0;
     for (var i = liquidCount - 1; i >= 0 && removed < cap; i--) {

@@ -12,7 +12,7 @@
   var RAIN_DAMP_CAP = 256;
   var RAIN_PLOW_CAP = 96;
   var rain = { field: particleWeatherState(), time: 0, credit: 0, scan: 0, scanDt: 0, cursor: 0, parkedCursor: 0, waterCount: 0, lakeCount: 0, climate: null,
-    drops: [], impacts: [], parked: [], cells: {}, intensity: 0,
+    drops: [], impacts: [], parked: [], cells: {}, waterCells: {}, intensity: 0,
     plow: { x0: 0, x1: 0, y0: 0, y1: 0, freshUntil: 0, until: 0 },
     damp: [], dampCells: {}, emitted: 0, landed: 0, recycled: 0, absorbed: 0, primed: false, coverage: null, sideCredit: 0 };
 
@@ -22,31 +22,35 @@
     return q ? q[1] === '1' : !!(window.SluiceOptions && window.SluiceOptions.particleRain);
   }
   function rainReset(enabled, snowMode) {
-    snowReset(enabled === true && snowMode === true);
+    // Material lifetime is independent of the current front. Rain may fall
+    // onto snow left by the previous storm without hiding or resetting it.
+    snowReset(enabled === true);
     worldRainEnabled = enabled === true;
     rain.time = rain.credit = rain.scan = rain.scanDt = rain.cursor = rain.parkedCursor = rain.waterCount = rain.lakeCount = 0;
     rain.emitted = rain.landed = rain.recycled = rain.absorbed = 0;
     rain.drops.length = rain.impacts.length = rain.parked.length = rain.damp.length = 0;
     rain.dampCells = {};
     rain.plow.freshUntil = rain.plow.until = 0;
-    rain.field = particleWeatherState(); rain.cells = {}; rain.primed = false; rain.coverage = null; rain.sideCredit = 0; rain.intensity = 0;
-    rain.climate = { phase: 0, elapsed: 0, duration: 55 + Math.random() * 25, strength: 0.7 };
-    if (worldSnowEnabled) rain.climate = { phase: 2, elapsed: 10, duration: 70, strength: 0.65 };
+    rain.field = particleWeatherState(); rain.cells = {}; rain.waterCells = {}; rain.primed = false; rain.coverage = null; rain.sideCredit = 0; rain.intensity = 0;
+    var kind = snowMode ? 'snow' : 'rain';
+    rain.climate = { phase: snowMode ? 2 : 0, elapsed: 0,
+      duration: rainFrontDuration(snowMode ? 2 : 0, kind), strength: snowMode ? 0.65 : 0.75,
+      kind: kind, storm: false, run: 1, first: !snowMode };
     if (typeof precipParts !== 'undefined') { precipParts = null; precipActive = 0; }
     // Reset the wet mood too when making a normal world after a rain world.
-    weatherSetMood(weatherForce >= 0 ? weatherForce : worldSnowEnabled ? 4 : 1, true);
+    weatherSetMood(weatherForce >= 0 ? weatherForce : snowMode ? 4 : 0, true);
   }
   function rainWeather() {
     if (weatherForce >= 0) { weatherSetMood(weatherForce, false); return; }
     var front = rain.climate, phase = front.phase;
-    weatherSetMood([1, 3, 4, 2][phase], false);
+    weatherSetMood([0, 3, front.kind === 'rain' && front.storm ? 5 : 4, 2][phase], false);
     // Clouds arrive before the shower, and clear after its last drops.
     weather.tpcp = 0;
     if (phase === 2) {
       var edge = Math.min(1, front.elapsed / 7, (front.duration - front.elapsed) / 7);
       var gust = 0.9 + 0.07 * Math.sin(rain.time * 0.31) + 0.03 * Math.sin(rain.time * 0.071);
       weather.tpcp = front.strength * Math.max(0, edge) * gust;
-      weather.twind = 0.5;
+      weather.twind = front.storm ? 0.85 : 0.42;
     }
   }
   function rainCell(x, y) { return Math.floor(y / 6) * (Math.ceil(COLS * TILE / 6) + 1) + Math.floor(x / 6); }
@@ -106,7 +110,7 @@
   // solver's camera window. Saved rain uses this same bounded coordinate list.
   function rainScan(dt) {
     liquidToolSync();
-    var cells = {}, count = 0, held = 0, margin = 220;
+    var cells = {}, waterCells = {}, count = 0, held = 0, margin = 220;
     // Exponential removal gives the same drainage per second at any frame
     // rate. Individual subpixel particles disappear over several scans, so
     // a puddle subsides instead of an entire tile's water blinking away.
@@ -158,6 +162,7 @@
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
         var key = rainCell(x, y);
         cells[key] = (cells[key] || 0) + 1;
+        if (liquidType[i] === 0) waterCells[key] = (waterCells[key] || 0) + 1;
       }
     }
     var budget = Math.min(600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 4096));
@@ -179,7 +184,7 @@
       rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
       rain.parked.length -= 2; budget--; count++;
     }
-    rain.cells = cells; rain.waterCount = count;
+    rain.cells = cells; rain.waterCells = waterCells; rain.waterCount = count;
   }
 
   function rainRecycle(count) {
@@ -239,7 +244,10 @@
     rainUpdatePlow();
     rain.scan -= dt; rain.scanDt += dt;
     if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
-    if (worldSnowEnabled) { rain.drops.length = rain.impacts.length = 0; updateSnow(dt); return; }
+    var kind = weatherPrecipType(), rainIntensity = kind === 'rain' ? rain.intensity : 0;
+    if (worldSnowEnabled) updateSnow(dt, kind === 'snow' ? rain.intensity : 0);
+    // Both pools finish their trajectories when a front changes. Only the
+    // source intensity changes; existing rain, snow and piles keep their mass.
     var gpu = liquidWGPU && liquidWGPU.simActive;
     var limit = gpu ? RAIN_WATER_CAP : RAIN_CPU_CAP;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
@@ -247,12 +255,12 @@
     var width = Math.max(0, right - left), height = Math.max(0, rect.bottom - top);
     var wind = surfaceWind.current * 110 + 42 * Math.sin(rain.time * 0.43) + 22 * Math.sin(rain.time * 1.17);
     var density = (gpu ? 760 : 280) / (1100 * 645);
-    var target = sky ? Math.min(RAIN_DROP_CAP * 0.72, density * width * height) * Math.max(rain.intensity, rain.field.strength) : 0;
+    var target = sky ? Math.min(RAIN_DROP_CAP * 0.72, density * width * height) * Math.max(rainIntensity, rain.field.strength) : 0;
     var room = rainRoom(limit);
     if (room < target - rain.drops.length) rainRecycle(Math.ceil(target - rain.drops.length - room));
-    particleWeatherField(rain.field, rect, rain.drops, density, RAIN_DROP_CAP, rain.intensity,
+    particleWeatherField(rain.field, rect, rain.drops, density, RAIN_DROP_CAP, rainIntensity,
       wind, [480, 645, 810], dt, rainSpawn, function () { rain.recycled++; });
-    rainCatchLakes(dt, sky, left, right, rain.field.strength);
+    rainCatchLakes(dt, sky, left, right, rain.field.strength, 760);
     for (var i = rain.drops.length - 1; i >= 0; i--) {
       var p = rain.drops[i];
       p.age += dt;
@@ -267,7 +275,8 @@
         var solid = liquidWorldSolidAt(nx, ny + 1.5);
         var wet = (rain.cells[rainCell(nx, ny)] || 0) >= 4;
         var rig = player && liquidPointInMiner(nx, ny);
-        if (solid || wet || rig) {
+        var snowContact = worldSnowEnabled && snowBedContact(nx, ny);
+        if (solid || wet || rig || snowContact) {
           remove = rainLand(p, p.x, p.y, wet, true);
           // If the shared solver is full, retain this drop until it can enter.
           break;
@@ -336,7 +345,7 @@
   }
 
   function drawParticleRain() {
-    if (!worldRainEnabled || worldSnowEnabled || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
+    if (!worldRainEnabled || PERF_DISABLE_WATER || PERF_DISABLE_WEATHER || !weatherTune.enabled) return;
     var ws = dpr * worldScale, wp = weatherPalette();
     ctx.save();
     ctx.setTransform(ws, 0, 0, ws, -cam.x * ws, -cam.y * ws);
@@ -390,8 +399,11 @@
     for (var i = 0; i < liquidCount && water.length < RAIN_STORAGE_CAP * 2; i++) {
       if (liquidType[i] === 0 && liquidOrigin[i] === RAIN_ORIGIN) water.push(Math.round(liquidX[i] * 4) / 4, Math.round(liquidY[i] * 4) / 4);
     }
-    return { enabled: true, mode: worldSnowEnabled ? 'snow' : 'rain', snow: snowSave(), water: water, climate: { phase: rain.climate.phase,
-      elapsed: rain.climate.elapsed, duration: rain.climate.duration, strength: rain.climate.strength } };
+    return { enabled: true, mode: rain.climate.kind, snow: snowSave(), water: water,
+      climate: { version: 2, phase: rain.climate.phase, elapsed: rain.climate.elapsed,
+        duration: rain.climate.duration, strength: rain.climate.strength,
+        kind: rain.climate.kind, storm: rain.climate.storm, run: rain.climate.run, first: rain.climate.first },
+      sky: { cov: weather.cov, dark: weather.dark, pcp: weather.pcp, wind: weather.wind } };
   }
   function rainParkedInRect(x0, y0, x1, y1, take) {
     if (!worldRainEnabled) return 0;
@@ -416,13 +428,23 @@
     if (!worldRainEnabled) return;
     var front = data.climate;
     if (front && Number.isInteger(front.phase) && front.phase >= 0 && front.phase <= 3 &&
-        Number.isFinite(front.duration) && front.duration >= 1 && front.duration <= 300 &&
+        Number.isFinite(front.duration) && front.duration >= 1 && front.duration <= 900 &&
         Number.isFinite(front.elapsed) && front.elapsed >= 0 && front.elapsed <= front.duration &&
         Number.isFinite(front.strength) && front.strength >= 0.5 && front.strength <= 1) {
-      rain.climate = { phase: front.phase, elapsed: front.elapsed, duration: front.duration, strength: front.strength };
+      var kind = front.kind === 'snow' || front.kind === 'rain' ? front.kind : data.mode === 'snow' ? 'snow' : 'rain';
+      var duration = front.duration;
+      // Old saves had only 20-24 seconds after a storm. Give their remaining
+      // snow the same protected cloudy break as a newly reached aftermath.
+      if (front.version !== 2 && front.phase === 3) duration = front.elapsed + rainFrontDuration(3, kind);
+      rain.climate = { phase: front.phase, elapsed: front.elapsed, duration: duration, strength: front.strength,
+        kind: kind, storm: kind === 'rain' && front.storm === true, run: front.run === 2 ? 2 : 1, first: front.first === true };
       rainWeather();
       weather.cov = weather.tcov; weather.dark = weather.tdark;
       weather.pcp = weather.tpcp; weather.wind = weather.twind;
+      var sky = data.sky;
+      if (sky && ['cov', 'dark', 'pcp', 'wind'].every(function (key) {
+        return Number.isFinite(sky[key]) && sky[key] >= 0 && sky[key] <= 1;
+      })) { weather.cov = sky.cov; weather.dark = sky.dark; weather.pcp = sky.pcp; weather.wind = sky.wind; }
     }
     if (!Array.isArray(data.water)) return;
     for (var i = 0; i + 1 < data.water.length && rain.parked.length < RAIN_STORAGE_CAP * 2; i += 2) {
@@ -433,7 +455,7 @@
         // into stored water overhead. Retire that legacy weather cache;
         // turning it into physical snow would preserve the same dense wall.
         // Current saves and player-poured water are not migrated this way.
-        if (worldSnowEnabled && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24) {
+        if (data.mode === 'snow' && !(data.snow && data.snow.field) && y < SKY_ROWS * TILE - 24) {
           rain.recycled++;
         } else rain.parked.push(x, y);
       }
@@ -465,8 +487,8 @@
       water: rain.waterCount, parked: rain.parked.length / 2, emitted: rain.emitted,
       landed: rain.landed, recycled: rain.recycled, absorbed: rain.absorbed,
       dampEdges: rain.damp.length, intensity: rain.intensity, lakeWater: rain.lakeCount,
-      weather: ['fair', 'gathering', 'shower', 'clearing'][rain.climate.phase],
+      weather: ['sunny', 'gathering', rain.climate.kind === 'snow' ? 'snow' : rain.climate.storm ? 'thunderstorm' : 'rain', 'cloudy'][rain.climate.phase],
       weatherRemaining: Math.max(0, rain.climate.duration - rain.climate.elapsed),
-      mode: worldSnowEnabled ? 'snow' : 'rain',
+      mode: rain.climate.kind,
       backend: liquidWGPU && liquidWGPU.simActive ? 'webgpu' : 'cpu' }; }
   };

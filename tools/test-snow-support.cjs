@@ -20,7 +20,7 @@ const s = {
   LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5,
   RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3,
   liquidCount: 0, liquidWGPU: null, liquidOps: [], LIQUID_OPS_MAX: 10000, liquidMutationSeq: 0,
-  rain: { intensity: 0, cells: {}, parked: [], waterCount: 0 },
+  rain: { intensity: 0, cells: {}, waterCells: {}, parked: [], waterCount: 0 },
   surfaceWind: { current: 0 }, player: { x: 2700, y: 90 },
   snowAir: { active: false }, snowAirReset: noop, updateSnowAir: noop,
   snowAirAt: () => [0, 0, 0], liquidToolSync: noop, rainCatchLakes: noop,
@@ -51,7 +51,7 @@ function reset() {
   for (const key of arrays) s[key].length = 0;
   s.liquidWGPU = null;
   s.liquidOps.length = 0; s.liquidMutationSeq = 0;
-  s.rain.cells = {}; s.rain.waterCount = 0; s.rain.parked.length = 0;
+  s.rain.cells = {}; s.rain.waterCells = {}; s.rain.waterCount = 0; s.rain.parked.length = 0;
   s.liquidWorldSolidAt = (x, y) => y >= 128;
   s.snowAir.active = false;
   s.snowAirAt = () => [0, 0, 0];
@@ -381,6 +381,7 @@ s.liquidWorldSolidAt = (x, y) => y >= 300;
 s.addLiquidParticle(5, 2403, 190, 0, 0);
 s.snow.active = s.snow.mass = s.snow.emitted = 1;
 s.rain.cells[s.rainCell(2403, 190)] = 10;
+s.rain.waterCells[s.rainCell(2403, 190)] = 10;
 assert.equal(s.snowHeat(2403, 190), 5, 'submerged snow receives the existing water thaw rate');
 seed = 1; // First draw is below the ordinary 120ms water-thaw probability.
 s.snowScan(1 / 60, .12);

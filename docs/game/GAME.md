@@ -99,15 +99,19 @@ for prices, exported tuning, runtime integration and verification.
 
 ## Build & run
 
-**Particle weather:** pause > Options > World > Particle weather > Rain or Snow, then
-start a new game. Passing showers feed three small stone-lined lakes that start
-with a shallow layer of water. Wind-driven drops become collectable water, soak
-into dirt and town foundations, and fall down open shafts. The choice persists with the world. The bounded
-rain reservoir and verification harness are described in [PARTICLE_RAIN.md](PARTICLE_RAIN.md).
-Snow adds slow drifting flakes and dry, compressible material in the existing
-water particle solver. Tracks, jets and blasts move the actual particles; thaw
-changes them into water in place. The scoop collects it as water; Down
-still reaches the dirt to drill. See [PARTICLE_SNOW.md](PARTICLE_SNOW.md).
+**Particle weather:** pause > Options > World > Particle weather > Rain first or
+Snow first selects the next world's opening weather. Both then cycle through
+sunshine, gathering clouds, rain or snow, and 3 to 5 minutes of dry cloudy
+weather after each front. Rain can bring thunder and lightning. Existing rain
+and snow saves join the mixed cycle while preserving their material and front.
+Passing showers feed three finite stone-lined lakes. Drops become collectable
+water, soak into dirt and town foundations, and fall down open shafts. See
+[PARTICLE_RAIN.md](PARTICLE_RAIN.md) for storage and verification.
+Snow uses the existing particle solver. Tracks, jets and blasts move the actual
+grains. Snow melts only on contact with water or as the clouds part over exposed
+snow; player proximity, foundations, jets and tools add no heat. The scoop stores
+and releases snow as snow. Down still reaches the dirt to drill. See
+[PARTICLE_SNOW.md](PARTICLE_SNOW.md).
 
 The game is ONE IIFE split into ordered fragments in `js/sluice/NNN-*.js`, concatenated into
 `js/sluice.js` by `build-sluice.sh`. **Edit a fragment, never the bundle.**

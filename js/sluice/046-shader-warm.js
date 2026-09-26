@@ -414,7 +414,7 @@
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool
       siphon.equipped = true; siphon.power = 0.85; siphon.clock = 0.27;
-      siphon.tank = [3600, 0, 1400, 2400, 900]; siphon.selected = 0;
+      siphon.tank = [3600, 0, 1400, 2400, 900, 600]; siphon.selected = 0;
       siphon.mode = 'suck'; siphon.passenger = null;
       siphon.notice = 'Dumping the whole load.'; siphon.noticeT = 1;
       siphon.fx = [{ x: x + 20, y: y + 44, type: 2, t: 0.1, life: 0.3 },

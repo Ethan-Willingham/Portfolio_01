@@ -105,7 +105,7 @@ try {
   for(let i=0;i<7;i++) { await sleep(100);jetMoving=Math.max(jetMoving,await game('__particleSnow.stats().moving'));if(i===3)await screenshot('snow-jet'); }
   await game('keys.ArrowUp=false');
   console.log('JET',jetMoving,await game('({before:jetMelt,after:snow.melted})'));
-  check('existing jet forces lift powder and exhaust warms it',jetMoving>50 && await game('snow.melted>jetMelt'));
+  check('existing jet forces lift powder without melting it',jetMoving>50 && await game('snow.melted===jetMelt'));
   await game('player.x=(rc+10)*TILE+3;player.y=sy-PLAYER_H;player.vx=player.vy=0;player.onGround=true;keys.ArrowDown=true');await sleep(1600);await game('keys.ArrowDown=false');
   check('ordinary digging remains available through snow',await game('world[SKY_ROWS][rc+10]===null'));
 
@@ -113,7 +113,7 @@ try {
   check('save/load retains exactly the shared snow and airborne mass',await game('__particleSnow.stats().mass===beforeSave && snowEnvelope.rain.snow.version===2'));
   check('water save does not duplicate snow',await game('snowEnvelope.rain.snow.particles.length/4+snowEnvelope.rain.snow.grains.length+snowEnvelope.rain.snow.airParked.length===beforeSave'));
   await game('clearSnowFixture();liquidToolSync();for(var i=0;i<20;i++)addLiquidParticle(5,rc*TILE+10+(i%5)*2.4,sy-2-Math.floor(i/5)*2.4,0,0,3);window.taken=liquidToolExtract(rc*TILE+15,sy-6,30,7)');
-  check('native scoop transfers exactly one water unit per snow particle',await game('taken.length===5 && taken[0]===7 && liquidCount===13 && Array.from(liquidType.slice(0,liquidCount)).every(function(t){return t===5;})'));
+  check('native scoop preserves exactly one snow unit per snow particle',await game('taken.length===6 && taken[0]===0 && taken[5]===7 && liquidCount===13 && Array.from(liquidType.slice(0,liquidCount)).every(function(t){return t===5;})'));
   await game('window.beforeMelt=liquidCount;window.mx=liquidX[0];window.my=liquidY[0];snowMeltParticle(0)');
   check('melting changes the material in place, without adding, deleting or teleporting a particle',await game('liquidCount===beforeMelt && liquidType[0]===0 && liquidOrigin[0]===3 && liquidX[0]===mx && liquidY[0]===my'));
   await game('rain.waterCount=RAIN_STORAGE_CAP;window.blockedMelt=snowMeltParticle(1)');

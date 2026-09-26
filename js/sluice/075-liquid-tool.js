@@ -1,10 +1,10 @@
-  /* ---- The siphon: separate fluid chambers and one passenger cradle ---- */
-  var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0], selected: 0,
+  /* ---- The siphon: separate material chambers and one passenger cradle ---- */
+  var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0, 0], selected: 0,
     capacity: 16000, passenger: null, pointer: null, dump: null,
     power: 0, carry: 0, capture: 0, released: false, clock: 0, fx: [], notice: '', noticeT: 0 };
   var siphonButtons = [];
   function siphonReset() {
-    siphon.equipped = false; siphon.mode = 'suck'; siphon.tank = [0, 0, 0, 0, 0]; siphon.selected = 0;
+    siphon.equipped = false; siphon.mode = 'suck'; siphon.tank = [0, 0, 0, 0, 0, 0]; siphon.selected = 0;
     siphon.passenger = null; siphon.dump = null; siphon.power = 0; siphon.fx = []; siphon.clock = 0;
     siphonStop();
   }
@@ -21,7 +21,7 @@
     if (siphon.dump) return;
     var wasScooping = siphon.equipped && siphon.mode === 'suck';
     siphonStop(); siphon.mode = 'suck'; siphon.equipped = !wasScooping;
-    if (siphon.equipped) siphonNotice('Scoop on. Drive or fly over liquid and settled slimes.');
+    if (siphon.equipped) siphonNotice('Scoop on. Drive or fly over liquid, snow and settled slimes.');
   }
   function siphonDump() {
     if (!siphonAvailable() || siphon.dump) return;
@@ -65,7 +65,7 @@
       if (liquidWorldSolidAt(a.cx, y)) y = a.ny;
       var counts = liquidToolDump(siphon.tank, wanted, a.cx, y,
         28 + 36 * Math.sqrt(d.initial / siphon.capacity), player.vx);
-      for (var k = 0; k < 5; k++) { siphon.tank[k] -= counts[k]; sent += counts[k]; }
+      for (var k = 0; k < liquidCatalog.length; k++) { siphon.tank[k] = (siphon.tank[k] || 0) - counts[k]; sent += counts[k]; }
       d.sent += sent; siphon.flow = sent;
       if (sent) {
         // Recoil is earned only by real discharged volume. One empty click
@@ -92,8 +92,8 @@
     }
   }
   function siphonCycle() {
-    for (var i = 1; i <= 5; i++) {
-      var next = (siphon.selected + i) % 5;
+    for (var i = 1; i <= liquidCatalog.length; i++) {
+      var next = (siphon.selected + i) % liquidCatalog.length;
       if (siphon.tank[next] > 0) { siphon.selected = next; return; }
     }
     siphon.selected = 0;
@@ -159,7 +159,7 @@
         var taken = liquidToolExtract(a.x, a.y, 42, count, { ry: 38, fromX: a.nx, fromY: a.ny, samples: samples });
         var total = 0;
         for (var t = 0; t < taken.length; t++) {
-          siphon.tank[t] += taken[t]; total += taken[t];
+          siphon.tank[t] = (siphon.tank[t] || 0) + taken[t]; total += taken[t];
           if (taken[t] && siphon.tank[siphon.selected] === 0) siphon.selected = t;
         }
         for (var q = 0; q < samples.length && siphon.fx.length < 140; q++) {
@@ -266,16 +266,16 @@
     ctx.fillText(Math.round(total / 100) + '/160 L', x + w - 10, y + 57);
     ctx.fillStyle = UIT_INSET; ctx.fillRect(x + 10, y + 65, w - 20, 8);
     var barX = x + 10;
-    for (var type = 0; type < 5; type++) {
-      var length = siphon.tank[type] / siphon.capacity * (w - 20);
+    for (var type = 0; type < liquidCatalog.length; type++) {
+      var length = (siphon.tank[type] || 0) / siphon.capacity * (w - 20);
       ctx.fillStyle = liquidCatalog[type].color; ctx.fillRect(barX, y + 65, length, 8); barX += length;
     }
     ctx.textAlign = 'left'; ctx.fillStyle = siphon.passenger ? UIT_GOLD : UIT_DIM;
     ctx.fillText(siphon.passenger ? 'PASSENGER  1 / 1' : 'PASSENGER  empty', x + 10, y + 91);
     ctx.fillStyle = UIT_BODY; ctx.font = '10px ' + UI_FONT;
-    var hint = siphon.dump ? 'Dumping all liquids. Lift off.' : (siphon.equipped ? 'Scooping below as you move' : 'DUMP all liquids + launch');
+    var hint = siphon.dump ? 'Dumping the load. Lift off.' : (siphon.equipped ? 'Scooping below as you move' : 'DUMP the load + launch');
     if (isMobile && w < 200) {
-      ctx.fillText(siphon.dump ? 'Dumping the load' : (siphon.equipped ? 'Scooping below' : 'DUMP all liquids'), x + 10, y + 109);
+      ctx.fillText(siphon.dump ? 'Dumping the load' : (siphon.equipped ? 'Scooping below' : 'DUMP the load'), x + 10, y + 109);
       ctx.fillText(siphon.dump ? 'Lift off' : (siphon.equipped ? 'Tap SCOOP to stop' : '+ launch the rig'), x + 10, y + 123);
     } else ctx.fillText(hint, x + 10, y + 111);
     if (siphon.noticeT > 0) {
@@ -298,11 +298,11 @@
     siphonReset();
     if (!data) return;
     var left = siphon.capacity;
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < liquidCatalog.length; i++) {
       var value = data.tank && data.tank[i];
       siphon.tank[i] = Math.min(left, Math.max(0, isFinite(value) ? Math.floor(value) : 0)); left -= siphon.tank[i];
     }
-    siphon.selected = data.selected >= 0 && data.selected < 5 ? data.selected | 0 : 0;
+    siphon.selected = data.selected >= 0 && data.selected < liquidCatalog.length ? data.selected | 0 : 0;
     if (data.passenger && isFinite(data.passenger.r) && data.passenger.r >= 10 && data.passenger.r <= 50) siphon.passenger = data.passenger;
   }
   window.__siphon = { state: siphon, aim: siphonAim, equip: siphonToggle, dump: siphonDump, save: siphonSave,

@@ -1,15 +1,30 @@
   /* ---- Passing showers and finite, stone-lined rain lakes ---- */
+  function rainFrontDuration(phase, kind) {
+    // Seconds of active outdoor play. Storms leave a long, dry cloud cover
+    // before sunlight returns, giving deposited snow time to be played with.
+    var ranges = [[120, 210], [35, 65], kind === 'snow' ? [90, 150] : [75, 120], [180, 300]];
+    var range = ranges[phase];
+    return range[0] + Math.random() * (range[1] - range[0]);
+  }
   function rainAdvanceWeather(dt) {
     if (weatherForce >= 0) return; // Keep the existing weather test controls usable.
     var front = rain.climate;
     front.elapsed += dt;
-    if (front.elapsed < front.duration) return;
-    front.phase = (front.phase + 1) % 4;
-    front.elapsed = 0;
-    front.duration = [150 + Math.random() * 90, 20, 35 + Math.random() * 20, 20][front.phase];
-    if (worldSnowEnabled) front.duration = [120 + Math.random() * 70, 18, 55 + Math.random() * 25, 24][front.phase];
-    if (front.phase === 2) front.strength = 0.65 + Math.random() * 0.2;
-    if (front.phase === 0) rain.primed = false;
+    while (front.elapsed >= front.duration) {
+      front.elapsed -= front.duration;
+      front.phase = (front.phase + 1) % 4;
+      if (front.phase === 1) {
+        // No more than two consecutive fronts of the same kind. Within that
+        // bound, let the next system vary instead of replaying one sequence.
+        var next = front.first ? front.kind : front.run >= 2 ? (front.kind === 'snow' ? 'rain' : 'snow') : Math.random() < 0.5 ? 'rain' : 'snow';
+        front.run = front.first ? 1 : next === front.kind ? (front.run || 1) + 1 : 1;
+        front.kind = next; front.first = false;
+        front.storm = next === 'rain' && Math.random() < 0.55;
+        front.strength = front.storm ? 0.85 + Math.random() * 0.15 : 0.65 + Math.random() * 0.15;
+      }
+      front.duration = rainFrontDuration(front.phase, front.kind);
+      if (front.phase === 0) rain.primed = false;
+    }
   }
 
   function rainRoom(limit) {
@@ -87,8 +102,9 @@
     }
   }
 
-  function rainCatchLakes(dt, sky, left, right, intensity) {
+  function rainCatchLakes(dt, sky, left, right, intensity, rate) {
     if (intensity === undefined) intensity = rain.intensity;
+    if (rate === undefined) rate = 760;
     if (intensity <= 0) return;
     for (var i = 0; i < surfacePonds.length; i++) {
       var lake = surfacePonds[i];
@@ -99,7 +115,7 @@
       var covered = sky ? Math.max(0, Math.min(x1, right) - Math.max(x0, left)) : 0;
       var width = x1 - x0 - covered;
       if (width <= 0) continue;
-      lake.rainCredit = (lake.rainCredit || 0) + width * ((worldSnowEnabled ? SNOW_RATE : 760) / 1100) * intensity * dt;
+      lake.rainCredit = (lake.rainCredit || 0) + width * (rate / 1100) * intensity * dt;
       var count = Math.floor(lake.rainCredit);
       if (!count) continue;
       lake.rainCredit -= count;
