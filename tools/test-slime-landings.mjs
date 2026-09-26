@@ -107,14 +107,15 @@ function scenarioSource(config) {
     player.hull = getMaxHull(); player.fuel = getMaxFuel();
     cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.65;
     var b = surfaceSlimeBuild(x, floor - 35, { id: 9000, seed: config.seed === undefined ? 0.4 : config.seed, r: config.radius, hue: 133 });
-    if (config.kind !== 'living' && !config.living) { surfaceSlimeDetach(b, 100000); b.surfaceSlime.timer = 100000; }
+    // Older bundles need their crawl motor disabled for baseline comparisons.
+    if (typeof surfaceSlimeDetach === 'function' && config.kind !== 'living' && !config.living) { surfaceSlimeDetach(b, 100000); b.surfaceSlime.timer = 100000; }
     for (var settle = 0; settle < 180; settle++) {
       surfaceSlimeTick(1 / 60); updateJello(1 / 60);
     }
     var bodies = [b];
     if (config.kind === 'stack') {
       var upper = surfaceSlimeBuild(b.cx, b.bboxT - 26, { id: 9001, seed: 0.4, hue: 190 });
-      surfaceSlimeDetach(upper, 100000); upper.surfaceSlime.timer = 100000;
+      if (typeof surfaceSlimeDetach === 'function') { surfaceSlimeDetach(upper, 100000); upper.surfaceSlime.timer = 100000; }
       bodies.push(upper); b = upper;
       for (var stackSettle = 0; stackSettle < 30; stackSettle++) {
         surfaceSlimeTick(1 / 60); updateJello(1 / 60);

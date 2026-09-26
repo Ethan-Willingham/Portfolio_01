@@ -1,6 +1,6 @@
   /* ---- Bath-born surface slimes ----
      These residents use the shared XPBD lattice, terrain/rig contacts, jets,
-     pressure, and inter-body solve. Travelling muscles work against skin grips.
+     pressure, and inter-body solve. Material and momentum determine the outline.
      Underground NPCs keep their independent, normally disabled switch. */
   var SURFACE_SLIME_STARTERS = 5;
   var surfaceSlimesSeeded = false;
@@ -22,7 +22,7 @@
       id: isFinite(identity.id) ? identity.id : skySlimeSerial++, seed: seed,
       home: isFinite(identity.home) ? identity.home : x,
       hue: isFinite(identity.hue) ? identity.hue : surfaceSlimeHues[Math.floor(seed * 5) % 5],
-      age: 0, state: 'idle', timer: 0.6 + seed * 2, dir: seed < 0.5 ? -1 : 1,
+      age: 0, state: 'airborne',
       blink: 0, blinkIn: 1.5 + seed * 4, wet: 0, sense: 0,
       radius: radius
     };
@@ -51,7 +51,7 @@
     jelloComputeRest(b); jelloInstallSpringHealthMesh(b);
     surfaceSlimeInstallMesh(b); jelloShadeAnchors(b);
     jelloUpdateBody(b, JELLO_H);
-    surfaceSlimeMotorInit(b);
+    surfaceSlimeMaterialInit(b);
     return b;
   }
 
@@ -83,7 +83,7 @@
     for (var i = 0; i < jelloBodies.length; i++) {
       var b = jelloBodies[i], m = b.surfaceSlime;
       if (!m || !jelloBodyOnCamera(b)) continue;
-      m.age += dt; m.timer -= dt;
+      m.age += dt;
       m.blink = Math.max(0, m.blink - dt); m.blinkIn -= dt;
       if (m.blinkIn <= 0) { m.blink = 0.16; m.blinkIn = 2.5 + Math.random() * 4; }
       var rigDX = player.x + PLAYER_W / 2 - b.cx;
@@ -99,7 +99,7 @@
         m.wet = water && water.bottom > b.bboxT && water.surface < b.bboxB ? 1 : 0;
         b.bathBuoy = m.wet ? { line: water.surface, x0: b.bboxL - 12, x1: b.bboxR + 12, lift: 2.2, drag: 0.985 } : null;
       }
-      surfaceSlimeThink(b, dt);
+      surfaceSlimeObserve(b);
       // The same deforming boundary goes to the water solver. Speeds are
       // converted from solver time to real time, with resting noise removed.
       if (surfaceSlimeGuests.length < 6) {
@@ -259,7 +259,7 @@
     var r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
-    if (!m.climb && jelloSupportedBelowTile(b)) {
+    if (jelloSupportedBelowTile(b)) {
       ctx.fillStyle = 'rgba(30,36,32,0.18)'; ctx.beginPath();
       ctx.ellipse(b.cx, b.bboxB + 3, w * 0.43, 3, 0, 0, Math.PI * 2); ctx.fill();
     }
@@ -291,13 +291,13 @@
   // Bath departure animation uses the new material immediately upon the
   // completed soak. Its physical resident is created at the surface door.
   function surfaceSlimeDrawGuest(s) {
-    var r = s.r, pulse = Math.sin(s.age * 5.3 + s.seed * 7) * 0.035;
+    var r = s.r;
     var hue = surfaceSlimeHues[Math.floor(s.seed * 5) % 5];
     var m = s._softEye;
     if (!m) m = s._softEye = { seed: s.seed, hue: hue, blink: s.blink || 0, age: s.age };
     surfaceSlimeEyeTick(m, s.x, s.y, r, Math.max(0, Math.min(0.05, s.age - m.age)), null, null);
     m.age = s.age; m.blink = s.blink || 0;
-    ctx.save(); ctx.translate(s.x, s.y); ctx.scale(1 + pulse, 1 - pulse);
+    ctx.save(); ctx.translate(s.x, s.y);
     ctx.beginPath();
     for (var n = 0; n <= 40; n++) {
       var angle = n / 40 * Math.PI * 2;

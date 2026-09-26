@@ -3628,7 +3628,7 @@
   }
 
   function jelloActuateBody(b, h) {
-    if (b.surfaceSlime) { surfaceSlimeMuscleStep(b, h); return; }
+    if (b.surfaceSlime) return;
     var a = b.actor;
     if (!a || !a.enabled || b._carried || !(h > 0)) return;
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
@@ -3704,7 +3704,7 @@
     }
     b._launchVMax = maxPointSpeed / ts;
     b._launchHit = false;
-    if (b.surfaceSlime) surfaceSlimeDetach(b);
+    if (b.surfaceSlime) surfaceSlimeDisturb(b);
     b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     b._plyMs = performance.now();
     return { vx: vx, vy: vy, speed: speed, omega: omega };
@@ -4648,8 +4648,7 @@
 
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
-    var muscleBlend = b.surfaceSlime ? b.surfaceSlime.motorBlend || 0 : 0;
-    if (b.surfaceSlime) stiff *= 0.20 + 1.10 * muscleBlend;
+    if (b.surfaceSlime) stiff *= 0.20;
     if (b.surfaceSlime) stiff = 1 - Math.pow(1 - stiff,
       jelloStepH / (JELLO_H * jelloImpulseScale()));
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
@@ -4713,10 +4712,6 @@
       var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
       var gx = T00 * pqx + T01 * pqy + cx;
       var gy = T10 * pqx + T11 * pqy + cy;
-      if (muscleBlend > 0) {
-        gx += (cx + b.muscleX[i] - gx) * muscleBlend;
-        gy += (cy + b.muscleY[i] - gy) * muscleBlend;
-      }
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
     }
@@ -4862,7 +4857,7 @@
       for (k = 0; k < G; k++) { var r2 = botRow + 1; if (tileAt(r2, col) === null && tileAt(r2, col - 1) !== null && tileAt(r2, col + 1) !== null) botRow = r2; else break; }
       var topOpen = tileAt(topRow - 1, col) === null;   // open space just above the channel top?
       var botOpen = tileAt(botRow + 1, col) === null;
-      // Living gel uses real wall grips and gravity in an open shaft. The
+      // Resident gel uses contact and gravity in an open shaft. The
       // legacy cube eject below pulls each entering node toward the bottom,
       // which launches an exploring resident down the pit a tile per frame.
       // Keep ordinary terrain contacts, including falls after a player shove.
@@ -5087,6 +5082,7 @@
       doneMask |= (1 << best);
       if (best === 0) {                 // push up
         if (tileAt(row - 1, col) === null) {
+          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, x, top - 0.01, 0, -1, y - top + 0.01, vx, vy, h || JELLO_H); return; }
           y = top - 0.01; oy[i] = y + vy * ((vy > minB || vy < -minB) ? JELLO_BOUNCE : 0);
           // STATIC friction below the rest threshold: the tangential component is cut to
           // JELLO_STATIC_CREEP (geometric decay per substep — reads as a dead stop, but a
@@ -5101,6 +5097,7 @@
         }
       } else if (best === 1) {          // push down
         if (tileAt(row + 1, col) === null) {
+          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, x, bot + 0.01, 0, 1, bot + 0.01 - y, vx, vy, h || JELLO_H); return; }
           y = bot + 0.01; oy[i] = y + vy * ((vy > minB || vy < -minB) ? JELLO_BOUNCE : 0);
           ox[i] = x - vx * ((vx > minB || vx < -minB) ? JELLO_FLOOR_FRICTION : JELLO_STATIC_CREEP);
           jelloRippleHit(b, b.ringPos ? b.ringPos[i] : -1, (vy < 0 ? -vy : vy) / jelloStepH * JELLO_TIMESCALE, 0.8, 0.06);
@@ -5108,6 +5105,7 @@
         }
       } else if (best === 2) {          // push left
         if (tileAt(row, col - 1) === null) {
+          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, left - 0.01, y, -1, 0, x - left + 0.01, vx, vy, h || JELLO_H); return; }
           x = left - 0.01; ox[i] = x + vx * ((vx > minB || vx < -minB) ? JELLO_BOUNCE : 0);
           oy[i] = y - vy * ((vy > minB || vy < -minB) ? JELLO_WALL_FRICTION : JELLO_STATIC_CREEP);
           jelloRippleHit(b, b.ringPos ? b.ringPos[i] : -1, (vx < 0 ? -vx : vx) / jelloStepH * JELLO_TIMESCALE, 0.8, 0.06);
@@ -5115,6 +5113,7 @@
         }
       } else {                          // push right
         if (tileAt(row, col + 1) === null) {
+          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, right + 0.01, y, 1, 0, right + 0.01 - x, vx, vy, h || JELLO_H); return; }
           x = right + 0.01; ox[i] = x + vx * ((vx > minB || vx < -minB) ? JELLO_BOUNCE : 0);
           oy[i] = y - vy * ((vy > minB || vy < -minB) ? JELLO_WALL_FRICTION : JELLO_STATIC_CREEP);
           jelloRippleHit(b, b.ringPos ? b.ringPos[i] : -1, (vx < 0 ? -vx : vx) / jelloStepH * JELLO_TIMESCALE, 0.8, 0.06);
@@ -5353,7 +5352,7 @@
       if (typeof slimeAudioJet === 'function') slimeAudioJet(b, jetBX, jetBY, jetBestF);
     }
     if (disturbed) {
-      if (b.surfaceSlime && b.surfaceSlime.climb && (Math.hypot(vx, vy) > 35 || jetBestF > 0.03)) surfaceSlimeDetach(b);
+      if (b.surfaceSlime) surfaceSlimeDisturb(b);
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
       if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
     }
@@ -5413,7 +5412,7 @@
       }
     }
     if (!touching) return;
-    if (drivePush) surfaceSlimeDetach(b, 1.1, true);
+    if (drivePush) surfaceSlimeDisturb(b);
     // Stamp freshness only while the rig is actually MOVING (v25.31 perf): a
     // rig PARKED against a pile re-stamped every touching body every frame,
     // the chain propagated it pile-wide, and the perpetual freshness disabled
@@ -5652,6 +5651,7 @@
     // see the function banner; falls back to the old instantaneous gate if the
     // frame snapshot is missing).
     var stillSq = fpx ? maxFsq * 3600 : maxVsq;
+    if (b.surfaceSlime && fpx && b._frameDt > 0) stillSq = maxFsq / (b._frameDt * b._frameDt);
     // _forceSleep (v25.28): the CHRONIC-fold endpoint. A deep confined fold's
     // constraint fight re-injects motion DURING every solve, so neither the
     // becalm nor any velocity bleed can ever bring stillSq under the bar — the
@@ -5660,9 +5660,10 @@
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
     if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !b._carried &&
-          !(b.actor && b.actor.enabled) && !(b.surfaceSlime && b.surfaceSlime.drive) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
+          !(b.actor && b.actor.enabled) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
       b.sleepFrames++;
-      if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
+      if (b.surfaceSlime) b.surfaceSlime.restTime = (b.surfaceSlime.restTime || 0) + (b._frameDt || 0);
+      if ((b.surfaceSlime ? b.surfaceSlime.restTime > 0.8 : b.sleepFrames > JELLO_SLEEP_FRAMES) || b._forceSleep) {
         b._forceSleep = false;
         // Sleep = the "visually still" contract: present the TRUE resting ring. A body
         // that dozes off mid-ring would freeze a wavy outline indefinitely (and a frozen
@@ -5675,6 +5676,7 @@
       }
     } else {
       b.sleepFrames = 0;
+      if (b.surfaceSlime) b.surfaceSlime.restTime = 0;
       b.sleeping = false;
     }
   }
@@ -6802,15 +6804,16 @@
     // Surface residents install the same compliant grip for mouse and touch.
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
-    if (b.surfaceSlime) surfaceSlimeAdhesionStep(b, h);
     if (m === 'pbd') {
       if (b.surfaceSlime) jelloResetLambdas(b);
       for (var it = 0; it < JELLO_ITERS; it++) {
         jelloSolveSprings(b);
         jelloPressure(b);
+        if (b.surfaceSlime) surfaceSlimeSolveCells(b, h);
         jelloShapeMatch(b, JELLO_SHAPE_STIFF);
         jelloStrainLimit(b);
         jelloLimitOrientation(b);
+        if (b.surfaceSlime && it === JELLO_ITERS - 1) surfaceSlimeDampMotion(b, h);
         for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
         jelloCollideRingEdges(b);
       }
@@ -6822,9 +6825,12 @@
       if (b.surfaceSlime) surfaceSlimeSmoothSkin(b, h);
       jelloStrainLimit(b);
       jelloLimitOrientation(b);
+      // Material viscosity runs before external friction, so it cannot put
+      // tangential slip back into a skin point that has just come to rest.
+      if (b.surfaceSlime) surfaceSlimeDampMotion(b, h);
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
-      if (JELLO_INT_DAMP > 0) jelloDampInternal(b, h);   // wobble decay (internal modes only)
+      if (JELLO_INT_DAMP > 0 && !b.surfaceSlime) jelloDampInternal(b, h);   // wobble decay (internal modes only)
     }
     if (!b._grabbed && b._recoverT > 0) {
       jelloRecoverShape(b);
@@ -6833,8 +6839,7 @@
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
     }
-    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, b.surfaceSlime ?
-      1 - Math.pow(1 - JELLO_XSPH, h / (JELLO_H * jelloImpulseScale())) : JELLO_XSPH);
+    if (JELLO_XSPH > 0 && !b.surfaceSlime) jelloViscosityXSPH(b, JELLO_XSPH);
     if (b.surfaceSlime && !b._grabbed) {
       for (var skinPass = 0; skinPass < 3; skinPass++) {
         if (!jelloLimitOrientation(b)) break;
@@ -6842,7 +6847,6 @@
           if (jelloWorldSolidAt(b.px[ci], b.py[ci])) jelloCollidePointWorld(b, ci, h);
         }
       }
-      surfaceSlimeDampMotion(b, h);
     }
     if (resilienceGuard) jelloRejectTerrainInside(b);
     if (resilienceGuard) jelloResilienceStepEnd(b);
@@ -6888,7 +6892,7 @@
   function jelloStrainLimit(b) {
     if (JELLO_MAX_STRETCH <= 0) return;
     var sA = b.sA, sB = b.sB, sRest = b.sRest, springN = b.springN, px = b.px, py = b.py;
-    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.4 - 0.8 * (b.surfaceSlime.motorBlend || 0)) : JELLO_MAX_STRETCH;
+    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.4) : JELLO_MAX_STRETCH;
     for (var s = 0; s < springN; s++) {
       var i0 = sA[s], i1 = sB[s];
       var dx = px[i1] - px[i0], dy = py[i1] - py[i0];
@@ -6965,7 +6969,7 @@
   // release window uses beta=0, and the correction is velocity-free, so the
   // slime re-forms without becoming globally stiffer or springing across a room.
   function jelloRecoverShape(b) {
-    if (b._grabbed || !(b._recoverT > 0) || !(JELLO_RECOVER_SHAPE > 0)) return;
+    if (b.surfaceSlime || b._grabbed || !(b._recoverT > 0) || !(JELLO_RECOVER_SHAPE > 0)) return;
     jelloContactAlloc();
     var sx = jelloVAccX, sy = jelloVAccY, n = b.n;
     for (var i = 0; i < n; i++) { sx[i] = b.px[i]; sy[i] = b.py[i]; }
@@ -7517,6 +7521,7 @@
   }
   // Zero a body's XPBD Lagrange multipliers (start of each xpbd/fem substep).
   function jelloResetLambdas(b) {
+    if (b.skinLambda) b.skinLambda.fill(0);
     var L = b.sLambda;
     if (L) L.fill(0);
     b.volLambda = 0;
@@ -7582,7 +7587,7 @@
       km = k;
     }
     if (sg < 1e-9) return;
-    var at = JELLO_XPBD_VOL_COMPLIANCE * (b.surfaceSlime ? 0.06 + 0.94 * (b.surfaceSlime.motorBlend || 0) : 1) / (h * h);
+    var at = JELLO_XPBD_VOL_COMPLIANCE * (b.surfaceSlime ? 0.06 : 1) / (h * h);
     if (b.volLambda === undefined) b.volLambda = 0;
     var dLam = (-C - at * b.volLambda) / (sg + at);
     b.volLambda += dLam;
@@ -8465,6 +8470,7 @@
     var bi, b, maxCr = 0;
     for (bi = 0; bi < jelloBodies.length; bi++) {
       b = jelloBodies[bi];
+      if (b.surfaceSlime) b._frameDt = dt;
       b.frozen = !jelloBodyOnCamera(b);
       if (b.frozen) continue;
       // Live per-body contact radii (per-frame so the R_FRAC / SELF_MIN_REST

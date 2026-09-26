@@ -197,47 +197,26 @@ and saves. The exposed soft core uses 94% of that radius, as in the bath's shell
 fade. Starter residents and older saves use the sky visitors' 22 to 27 pixel
 radius range instead of the previous, larger 24 to 29 range.
 
-These are 37-point deformable meshes in the existing XPBD solver. Their
-softly irregular radial rest shape, spring network and pressure constraints govern collisions
-with terrain, the rig, other gel bodies, and rocky guests. Softer edge and shear
-constraints let them slump, stretch, and wobble. While supported, viscous muscle
-damping follows the travelling target without changing the body's bulk momentum.
-A travelling muscle wave changes local spring lengths and the target shape.
-A shared transverse bend carries each cross-section together, with longitudinal
-contraction driving the foot. The target reserves positive cell area, and local
-area corrections respect terrain, avoiding the repeated emergency mesh repairs
-that previously snapped the skin. The rounded outline follows these actual
-moving physics points, including their collisions. Drawing interpolates the last
-two 120 Hz physics poses so faster displays do not repeat a frozen skin frame;
-contacts, water and saves continue to use the current physical mesh.
-The material has no authored feet or permanently upright face. After a roll or
-throw, the next supporting surface becomes its underside; the muscle target
-retains that material orientation. At a ledge, leading skin grips the top and
-curls the rest over relative to its current pose. It does not reset to birth-up.
-Each resident picks a nearby destination, follows it for a longer walking bout,
-then briefly rests. Ground travel is about 3 to 9 pixels per second. Wave speed,
-amplitude and length vary gently over time, with gradual starts and reversals.
-Patches of skin grip fixed terrain contacts during their contraction and release
-during their forward stroke; this contact drives crawling. Wall grips overlap,
-so the slower, elongated snail-like crawl keeps at least two loaded patches
-until another can take over. Bonds gain and release strength gradually; a newly
-acquired weak patch cannot release an old supporting one. A resting resident
-keeps its wall grip while its walking wave pauses. The muscles have zero net
-translation in free space.
-At a wall the same wave turns upward, then rounds an exposed top corner onto
-the ledge. Terrain bonds have finite reach and
-strength, and disappear when their supporting tile is mined. Rig impacts, jets,
-grabbing and tossing suspend adhesion so a resident can peel off and fall.
-They probe the actual supporting terrain ahead, including every intervening
-column, then briefly grip and smoothly reverse before an unsupported edge.
-The old narrow-shaft downward ejection does not apply to these residents;
-gravity and ordinary terrain collisions govern a real fall. They stay near
-their own surface neighborhood.
-Player pushes can still send them underground. Underground slime brains remain
-disabled by default.
+The residents are now passive gel bodies. Their rest mesh, elastic
+springs, local volume constraints, and physical contacts determine their motion.
+The timed travelling wave, destination selection, wall grips, and ledge poses
+have been removed. The same material applies while resting, falling, being
+held, floating, and carrying the rig. Touching a resident does not switch its
+pressure, stiffness, rest lengths, or preferred orientation.
+
+Material viscosity damps deformation while preserving bulk translation and
+rotation. A thrown body can tumble; a compressed body spreads and recovers
+through elasticity. A small curvature constraint controls local skin creases
+without prescribing a silhouette. The outline follows the colliding material
+points. Drawing interpolates the last two 120 Hz poses; contacts, water, and
+saves use the live mesh. Removing a sleeping resident's support wakes it.
+Gravity can carry residents into a pit. Underground NPC brains remain disabled.
+See [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for the design contract and tests.
 
 Click or touch a soft resident and drag to lift it by a compliant patch of gel.
-Release while moving to toss it. The grip keeps terrain and body contacts
+Moving the grip accelerates that patch through a bounded spring force; release
+preserves every material point's actual velocity. There is no additional throw
+impulse or temporary shape-recovery animation. The grip keeps terrain and body contacts
 active; cancel, pause, focus loss, and entering the banya release it. The liquid
 tool and mobile driving controls retain their input. Drive into the residents,
 land on them, or brush them with jet exhaust to play without dragging.
@@ -246,27 +225,22 @@ Pastel gel and internal highlights follow the deforming mesh. Each resident has
 one cream googly eye with a loose dark pupil, no mouth or cheeks. The pupil lags
 local body acceleration and rebounds inside its cup, with small glances and
 brief blinks. The eye compresses with the central gel and stays readable through
-any roll. Pond water provides buoyancy and releases terrain grips so they can
-float; the real boundary displaces WebGPU water, with contour collision in the CPU fallback.
+any roll. Pond water provides buoyancy so they can float; the real boundary
+displaces WebGPU water, with contour collision in the CPU fallback.
 Residents do not dissolve. Off-camera bodies use the existing simulation culling.
 The five starting residents do not count toward either rocky-visitor limit.
 
 `347-surface-slimes.js` owns the mesh, appearance and persistence;
-`347-slime-locomotion.js` owns muscles, crawling and terrain adhesion;
+`347-slime-material.js` owns viscosity, support observation, and waking;
 `349-slime-touch.js` owns the pointer grip and rock/gel contact. Run
-`node tools/surface-slime-smoke.mjs` for real-browser checks of movement,
+`node tools/surface-slime-smoke.mjs` for browser checks of passive settling,
 30/60/144 Hz impacts and launches, mouse/touch input, water, guest conversion,
-and full-game save restoration. `node tools/surface-slime-crawl.mjs` verifies
-climbing in both directions at those frame rates, loss of propulsion with the
-wave disabled, wall knock-off, jets, and mined handholds.
-`node tools/surface-slime-orientation.mjs` checks recovery from quarter, half,
-and arbitrary rolls, rolled ledge climbs, naturally changing gaits, and the
-pupil's inertial response and containment. `node tools/surface-slime-snail.mjs`
-checks pit approaches, sustained wall grip, idle wall pauses, player knock-off,
-and travelling deformation of the real skin. `node tools/surface-slime-smooth.mjs`
-checks small and large residents, physical continuity, legal muscle targets, deliberate
-walking bouts, rest/turn transitions and display interpolation at 30/60/144 Hz.
-Screenshots go to `/tmp`.
+and full-game save restoration. `node tools/test-resident-material.mjs` checks
+momentum, spin, material invariance, settling, removed support, and release.
+`node tools/test-slime-landings.mjs` covers rig contact and local mesh health.
+The old crawl, snail, gait, and orientation harnesses were replaced by these
+material tests because scripted locomotion is no longer the behavior contract.
+Screenshots and diagnostic reports go to `/tmp`.
 
 ## Sky visitor physics and appearance (v28.34)
 

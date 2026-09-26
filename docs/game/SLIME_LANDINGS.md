@@ -11,7 +11,7 @@ the rebound; there is no stored launch impulse.
 
 `342-slime-landing.js` owns this contact and the local material-volume solve.
 `343-slime-mesh.js` builds a planar cell mesh over each resident's radial nodes.
-The tension braces used by crawling remain separate from these cells. This
+The elastic tension braces remain separate from these cells. This
 matters because enumerating triangles from the brace graph double-counts some
 sectors. The default 37-node resident has 54 material cells whose areas sum to
 the skin's enclosed area.
@@ -22,25 +22,23 @@ Incident-cell checks limit skin displacement before a contact can turn a
 cell inside out. Terrain contacts and local volume are reconciled through
 stacked residents as well as the body directly under the rig.
 
-A bending constraint smooths isolated skin creases under load. It compares
-neighbor curvature with the body's current affine deformation, leaving broad
-flattening and sideways spread free. A simultaneous ring sweep avoids a bias
-toward either side. Corrections move Verlet history too, so smoothing cannot
-supply another launch impulse. The constraint continues briefly after release.
+Compliant angular constraints resist isolated skin creases under load.
+The reference follows the body's affine deformation, leaving broad flattening
+and sideways spread free. Their gradients have zero total force and torque;
+the resulting elastic deformation participates in the velocity solve.
+The same bending law applies during free motion, handling, and contact.
 
-Loaded residents release their climbing grips and pause their muscle waves.
-The active gait's volume targets and compliance blend back in as crawling
-resumes. Internal damping removes lingering oscillation. Legacy cube seating,
-bowl carving, and side ejection do not also act on the resident being loaded.
-The rig remains subject to swept terrain and ceiling collision during the
-coupled step. Jets, walking off, grabbing, and unsupported falls release the
-contact normally.
+Residents retain the same material during loading and release. There are no
+crawling grips or muscle targets to switch off and restore. Viscosity damps
+deformation without removing rigid translation or rotation, and runs before
+terrain friction so it does not restore slip to a stopped contact point.
+Legacy cube seating, bowl carving, and side ejection do not also act on the
+resident being loaded. The rig remains subject to swept terrain and ceiling
+collision during the coupled step. Jets, walking off, grabbing, and unsupported
+falls release the contact normally.
 
 Ordinary ground driving uses a rate-limited horizontal push at every driving
-speed, without the old fling's added loft or spin. Side touches release the
-crawler's grips immediately but let its material blend decay gradually. An
-instant switch to full cell pressure expanded compressed crawling cells in a
-single step and launched the resident upward. Falling onto the skin retains
+speed, without the old fling's added loft or spin. Falling onto the skin retains
 the coupled landing response. Final side-containment corrections also pass
 through the cell-orientation guard before rendering.
 
@@ -53,7 +51,7 @@ delayed interpolation in mid-rebound. Other residents retain interpolation.
 Verlet history is rescaled when the step duration changes. Shape recovery and
 viscosity also scale with elapsed time; small RAF variations cannot add an
 extra block of spring strength or damping. The orientation guard covers both
-the original health triangles and the actual material cells during crawling.
+the original health triangles and the actual material cells.
 
 The saved resident format is unchanged. Restoring a resident rebuilds its
 material cells from its existing identity, size, and position.
@@ -66,13 +64,12 @@ node tools/test-slime-landings.mjs
 EXTENDED=only node tools/test-slime-landings.mjs
 EXTENDED=1 CONTACTS=1 PLAYBACK=1 node tools/test-slime-landings.mjs
 node tools/surface-slime-smoke.mjs
-node tools/surface-slime-crawl.mjs
-node tools/surface-slime-smooth.mjs
+node tools/test-resident-material.mjs
 ```
 
 The landing harness uses an owned Chrome for Testing process. It writes
 trajectories, cell health, terrain checks, timing, and a contact strip to
-`/tmp`. Extended cases include a full-height fall, a living crawling resident,
+`/tmp`. Extended cases include a full-height fall, a free-moving resident,
 and small frame-time variations around 60 Hz. They check visible alignment,
 legacy collision interference, and consistent compression/rebound strength.
 `CONTACTS=1` adds held ground driving in both directions and 15-second seated

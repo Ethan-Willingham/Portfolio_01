@@ -9,8 +9,7 @@
   // compression throughout the material, including cells below the tracks.
   function surfaceSlimeSolveCells(b, h) {
     var x = b.px, y = b.py, dm = b.cellInv;
-    var activation = Math.max(0.015, 1 - (b.surfaceSlime.motorBlend || 0));
-    var alpha = 1e-8 / (activation * activation * h * h);
+    var alpha = 1e-8 / (h * h);
     for (var t = 0; t < b.cellN; t++) {
       var a = b.cellA[t], c = b.cellB[t], d = b.cellC[t], j = t * 4;
       var inv = dm[j] * dm[j + 3] - dm[j + 1] * dm[j + 2];
@@ -18,13 +17,7 @@
       var ax = (y[c] - y[d]) * inv, ay = (x[d] - x[c]) * inv;
       var cx = (y[d] - y[a]) * inv, cy = (x[a] - x[d]) * inv;
       var dx = (y[a] - y[c]) * inv, dy = (x[c] - x[a]) * inv;
-      var target = 1, blend = b.surfaceSlime.motorBlend || 0;
-      if (blend > 0 && b.muscleX) {
-        var mx = b.muscleX, my = b.muscleY;
-        var muscleArea = ((mx[c] - mx[a]) * (my[d] - my[a]) -
-          (my[c] - my[a]) * (mx[d] - mx[a])) * inv;
-        target += (muscleArea - 1) * blend;
-      }
+      var target = 1;
       var dir = ratio < target ? 1 : -1;
       if (jelloWorldSolidAt(x[a] + Math.sign(ax) * dir * 0.8, y[a])) ax = 0;
       if (jelloWorldSolidAt(x[a], y[a] + Math.sign(ay) * dir * 0.8)) ay = 0;
@@ -41,40 +34,38 @@
     }
   }
 
-  // Resist single-vertex creases while leaving the broad squash free. The
-  // reference curvature follows the current affine deformation, so spreading
-  // sideways is not pulled back toward a round rest shape. These small shape
-  // corrections move history too; they cannot inject a second rebound impulse.
-  function surfaceSlimeSkinMove(b, i, dx, dy) {
-    if (jelloWorldSolidAt(b.px[i] + dx, b.py[i])) dx = 0;
-    if (jelloWorldSolidAt(b.px[i] + dx, b.py[i] + dy)) dy = 0;
-    b.px[i] += dx; b.ox[i] += dx;
-    b.py[i] += dy; b.oy[i] += dy;
-  }
-
+  // Compliant bending of the actual skin, solved as angular constraints.
+  // The affine reference leaves broad flattening and lateral spread free.
+  // Angle gradients have zero total force and torque. Unlike history-free
+  // contour smoothing, these elastic corrections cannot crawl a resting body
+  // across a floor by repeatedly repositioning its points.
   function surfaceSlimeSmoothSkin(b, h) {
-    if (!surfaceSlimeRigOwns(b) && !(b._rigRenderT > 0)) return;
-    if (!isFinite(b.shL00 + b.shL01 + b.shL10 + b.shL11)) return;
-    var strength = 1 - Math.exp(-12 * h / JELLO_TIMESCALE);
-    if (!b.skinDX) { b.skinDX = new Float64Array(b.n); b.skinDY = new Float64Array(b.n); }
-    b.skinDX.fill(0); b.skinDY.fill(0);
+    if (!b.skinLambda || !isFinite(b.shL00 + b.shL01 + b.shL10 + b.shL11)) return;
+    var alpha = 0.00000008 / (h * h);
     for (var k = 0; k < b.ringN; k++) {
       var a = b.ring[(k + b.ringN - 1) % b.ringN], c = b.ring[k], d = b.ring[(k + 1) % b.ringN];
-      var qx = b.qx[c] - (b.qx[a] + b.qx[d]) * 0.5;
-      var qy = b.qy[c] - (b.qy[a] + b.qy[d]) * 0.5;
-      var ex = b.px[c] - (b.px[a] + b.px[d]) * 0.5 - b.shL00 * qx - b.shL01 * qy;
-      var ey = b.py[c] - (b.py[a] + b.py[d]) * 0.5 - b.shL10 * qx - b.shL11 * qy;
-      var length = Math.sqrt(ex * ex + ey * ey);
-      var scale = length > 0 ? Math.min(0.5, length * strength / 1.5) / length : 0;
-      var dx = ex * scale, dy = ey * scale;
-      b.skinDX[c] -= dx; b.skinDY[c] -= dy;
-      b.skinDX[a] += dx * 0.5; b.skinDY[a] += dy * 0.5;
-      b.skinDX[d] += dx * 0.5; b.skinDY[d] += dy * 0.5;
-    }
-    // Apply one simultaneous sweep so ring traversal cannot favor a side.
-    for (k = 0; k < b.ringN; k++) {
-      var p = b.ring[k];
-      surfaceSlimeSkinMove(b, p, b.skinDX[p], b.skinDY[p]);
+      var ux = b.px[c] - b.px[a], uy = b.py[c] - b.py[a];
+      var vx = b.px[d] - b.px[c], vy = b.py[d] - b.py[c];
+      var u2 = ux * ux + uy * uy, v2 = vx * vx + vy * vy;
+      if (u2 < 0.01 || v2 < 0.01) continue;
+      var q1x = b.qx[c] - b.qx[a], q1y = b.qy[c] - b.qy[a];
+      var q2x = b.qx[d] - b.qx[c], q2y = b.qy[d] - b.qy[c];
+      var ru = b.shL00 * q1x + b.shL01 * q1y, su = b.shL10 * q1x + b.shL11 * q1y;
+      var rv = b.shL00 * q2x + b.shL01 * q2y, sv = b.shL10 * q2x + b.shL11 * q2y;
+      var target = Math.atan2(ru * sv - su * rv, ru * rv + su * sv);
+      // A flattened affine fit can itself ask for a needle at either end.
+      // The skin has finite bend radius; distribute that turn over neighbours.
+      target = Math.max(-1.2, Math.min(1.2, target));
+      var angle = Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy);
+      var error = Math.atan2(Math.sin(angle - target), Math.cos(angle - target));
+      var ax = -uy / u2, ay = ux / u2, dx = -vy / v2, dy = vx / v2;
+      var cx = -ax - dx, cy = -ay - dy;
+      var lambda = (-error - alpha * b.skinLambda[k]) /
+        (ax * ax + ay * ay + cx * cx + cy * cy + dx * dx + dy * dy + alpha);
+      b.skinLambda[k] += lambda;
+      b.px[a] += ax * lambda; b.py[a] += ay * lambda;
+      b.px[c] += cx * lambda; b.py[c] += cy * lambda;
+      b.px[d] += dx * lambda; b.py[d] += dy * lambda;
     }
   }
 
@@ -131,7 +122,7 @@
     for (i = 0; i < bodies.length; i++) {
       bodies[i]._rigHits = 0;
       bodies[i]._rigRenderT = 0.5;
-      surfaceSlimeDetach(bodies[i], 0.35);
+      surfaceSlimeDisturb(bodies[i]);
       bodies[i]._plyMs = performance.now();
     }
     player.onJello = true;

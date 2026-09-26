@@ -1,7 +1,7 @@
   /* ---- Surface resident material mesh ----
      The polar rings form a planar triangle mesh. Advancing the next angular
      vertex of either ring stitches each annulus exactly once. The existing
-     spring braces remain independent: they drive the calibrated muscle gait,
+     spring braces remain independent: they resist material stretch,
      but their overlapping graph cycles are not material volume cells. */
   function surfaceSlimeInstallMesh(b) {
     if (!b || !(b.n > 6)) return false;
