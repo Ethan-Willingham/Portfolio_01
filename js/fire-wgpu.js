@@ -343,6 +343,8 @@ fn light(g:Gas)->vec3f {
       return chamberProfile[chamberProfile.length-1][0];
     }
     var h = Math.round(w * height / worldWidth), n = w * h;
+    var chamberRows = new Float64Array(h);
+    for (var chamberRow=0;chamberRow<h;chamberRow++) chamberRows[chamberRow]=chamberInset(top+(chamberRow+.5)*height/h);
     var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
     var buffers = [], pipelines = {}, groups = {}, gasIndex = 0, velIndex = 0, bank = 0, time = 0;
@@ -440,7 +442,7 @@ fn light(g:Gas)->vec3f {
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b*2+Math.floor(other/24)]|=1<<(other%24);contacts[other*2+Math.floor(b/24)]|=1<<(b%24);}
       }
       for(var i=0;i<n;i++){
-        var x=i%w,y=(i/w)|0,px=(x+.5)*worldWidth/w,py=top+(y+.5)*height/h,inset=chamberInset(py);
+        var x=i%w,y=(i/w)|0,px=(x+.5)*worldWidth/w,inset=chamberRows[y];
         var outside=px<inset||px>worldWidth-inset;
         masks[i*2]=(outside||((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*worldWidth/w)%18<7)) ? -2 : -1;
         masks[i*2+1]=-1;

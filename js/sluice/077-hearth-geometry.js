@@ -1,7 +1,11 @@
   /* ---- Coal rigid bodies: the visible convex hull IS the contact geometry. ---- */
   var hearthHullCache = new WeakMap();
   var HEARTH_FLOOR = 210, HEARTH_TOP = -46, HEARTH_HEIGHT = 256, HEARTH_WIDTH = 896, HEARTH_FRICTION = 0.72;
-  var HEARTH_CHAMBER_PROFILE = [[0, HEARTH_TOP], [HEARTH_WIDTH * 0.13, HEARTH_TOP + HEARTH_HEIGHT * 0.52], [HEARTH_WIDTH * 0.34, HEARTH_FLOOR]];
+  var HEARTH_CHAMBER_PROFILE = [];
+  for (var hearthSample = 0; hearthSample < 24; hearthSample++) {
+    var hearthT = hearthSample / 23;
+    HEARTH_CHAMBER_PROFILE.push([HEARTH_WIDTH * 0.22 * hearthT, HEARTH_TOP + HEARTH_HEIGHT * (2 * hearthT - hearthT * hearthT)]);
+  }
   var hearthRectWalls = [{nx:-1,ny:0,limit:0},{nx:1,ny:0,limit:HEARTH_WIDTH},{nx:0,ny:1,limit:HEARTH_FLOOR}];
   var hearthTaperWalls = hearthRectWalls.slice();
   for (var hearthFacet = 1; hearthFacet < HEARTH_CHAMBER_PROFILE.length; hearthFacet++) {
@@ -189,9 +193,16 @@
     for (i = 0; i < chunks.length; i++) {
       var b = chunks[i];
       if (b.held) continue;
+      var minX = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (j = 0; j < b.vertices.length; j++) {
+        minX = Math.min(minX,b.vertices[j][0]); maxX = Math.max(maxX,b.vertices[j][0]); maxY = Math.max(maxY,b.vertices[j][1]);
+      }
       for (var wall = 0; wall < walls.length; wall++) {
         var nx = walls[wall].nx, ny = walls[wall].ny;
         var limit = walls[wall].limit, points = [];
+        // Reject only fully separated hull bounds. The sampled curve adds
+        // many planes, but a coal usually touches only one short arc of it.
+        if (nx*(nx < 0 ? minX : maxX)+ny*maxY < limit-margin) continue;
         for (j = 0; j < b.vertices.length; j++) {
           var p = b.vertices[j], depth = p[0] * nx + p[1] * ny - limit;
           if (depth >= -margin) points.push({ x: p[0], y: p[1], depth: depth });

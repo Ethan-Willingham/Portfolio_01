@@ -53,8 +53,9 @@ bar since v28.84. Navigation buttons mount directly on the timber wall.
 The claw and hose switches sit beside the firebox on desktop, opposite the
 water control and water, temperature and money readings. Narrow screens keep
 these controls directly beneath the firebox. Since v28.80, a 896 by 256 chamber
-replaces the narrow firebox. Since v28.87, sloping refractory cheeks join the
-basin shoulders to a narrow, level grate. Coal and ash collide with the angled
+replaces the narrow firebox. Since v28.90, smooth refractory cheeks sweep
+from the basin shoulders into a broad grate spanning 56% of the chamber,
+75% wider than the earlier tapered base. Coal and ash collide with the curved
 walls, the GPU fire mask follows them, and cut-away corners reject coal drops.
 Existing fuel is moved inside the new walls without losing its mass or heat.
 Short landscape screens place the basin and
@@ -376,7 +377,7 @@ and remove only the former pool footprints. No pearl production is restored.
 
 - `077-hearth-physics.js`: bounded pile contacts, ignition, combustion, air, saves.
 - `078-hearth-art.js`: faceted coal, hot cracks, ash, flame transport, event sparks.
-- `078-hearth-casing.js`: tapered cast-iron surround, bolted knees and narrow ash drawer.
+- `078-hearth-casing.js`: curved cast-iron surround, flush straps and wide ash drawer.
 - `078-hearth-room.js`: shared controls, direct coal manipulation and saved legacy work.
 - `078-hearth-station.js`: responsive basin/firebox layout, fuel controls and burn readings.
 - `079-forge-resources.js`: mining flint, supply reservation, protected shiny ores.

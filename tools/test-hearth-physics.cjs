@@ -3,12 +3,17 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const source = ['combustion', 'fracture', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
+const expectedProfile=Array.from({length:24},(_,i)=>{const t=i/23;return [896*.22*t,-46+256*(2*t-t*t)];});
+const expectedWalls=expectedProfile.slice(1).flatMap((b,i)=>{
+  const a=expectedProfile[i],dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy),nx=-dy/length,ny=dx/length,limit=nx*a[0]+ny*a[1];
+  return [{nx,ny,limit},{nx:-nx,ny,limit:limit-nx*896}];
+});
 function fixture(fps = 60) {
   const s = { Math, console };
   vm.createContext(s);
   const functions = [...source.matchAll(/^  function (\w+)\(/gm)].map(m => m[1]);
   vm.runInContext('(function(){' + source + '\nObject.assign(globalThis, {' + functions.join(',') + '});' +
-    'globalThis.hearthHullCache=hearthHullCache;Object.defineProperty(globalThis,"hearthBeds",{get:function(){return hearthBeds;}});})();', s);
+    'globalThis.hearthHullCache=hearthHullCache;globalThis.chamberProfile=HEARTH_CHAMBER_PROFILE;Object.defineProperty(globalThis,"hearthBeds",{get:function(){return hearthBeds;}});})();', s);
   return { s, advance(seconds) {
     for (let i = 0; i < Math.round(seconds * fps); i++) s.hearthTick(1 / fps);
   } };
@@ -22,10 +27,8 @@ function checkBodies(bed) {
       assert(Number.isFinite(b[key]), `finite ${key}`);
     }
     assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 896.4 && p[1] <= 210.4), 'polygon containment');
-    if (!bed.pilot) for (const p of b.vertices) {
-      const inset = p[1] <= -46 ? 0 : p[1] <= 87.12 ? (p[1]+46)*116.48/133.12 : 116.48+(p[1]-87.12)*188.16/122.88;
-      assert(p[0]>=inset-0.7 && p[0]<=896-inset+0.7, 'coal stays within tapered walls');
-    }
+    if (!bed.pilot) for (const p of b.vertices) for(const wall of expectedWalls)
+      assert(p[0]*wall.nx+p[1]*wall.ny<=wall.limit+.4, 'coal stays within curved walls');
     near(b.fuel, b.volatile + b.carbon, 1e-10, 'combustible mass is conserved');
     assert(b.fuel >= 0 && b.fuel <= 1, 'bounded fuel');
     assert(b.heat >= 0 && b.heat <= 1, 'bounded coal heat');
@@ -36,20 +39,36 @@ function checkBodies(bed) {
 
 {
   const {s,advance}=fixture(), bed=s.hearthBeds.boiler;
-  near(s.hearthChamberInset(-46),0); near(s.hearthChamberInset(87.12),116.48); near(s.hearthChamberInset(210),304.64);
-  assert(s.hearthChamberContains(448,210) && !s.hearthChamberContains(200,190));
+  assert.deepEqual(JSON.parse(JSON.stringify(s.chamberProfile)),expectedProfile,'shared curve uses 24 quadratic samples');
+  near(s.hearthChamberInset(-46),0); near(s.hearthChamberInset(210),197.12);
+  for(const [x,y] of expectedProfile)near(s.hearthChamberInset(y),x);
+  assert(s.hearthChamberContains(448,210) && !s.hearthChamberContains(100,190));
   assert(!s.hearthChamberContains(448,-50) && s.hearthChamberContains(448,-50,5));
   const left=s.hearthAddChunk('boiler',70,15), right=s.hearthAddChunk('boiler',826,15);
   const original=[left.x,right.x];
   left.vx=-180;right.vx=180;
   advance(3);checkBodies(bed);
-  assert(left.x>original[0]+80 && right.x<original[1]-80,'facet contacts guide falling coal toward the grate');
+  assert(left.x>original[0]+80 && right.x<original[1]-80,'curved wall contacts guide falling coal toward the grate');
   for (const [x,y] of [[30,150],[850,150],[100,208],[796,208]])
     bed.ash.push({x,y,vx:0,vy:0,kg:.0001,heat:0,seed:.5});
   const ashMass=s.hearthAshMass(bed);advance(3);
-  for(const g of bed.ash) assert(s.hearthChamberContains(g.x,g.y,-Math.max(1.3,Math.sqrt(g.kg/.00008))+1e-6),'ash circles stay inside facets');
+  for(const g of bed.ash) assert(s.hearthChamberContains(g.x,g.y,-Math.max(1.3,Math.sqrt(g.kg/.00008))+1e-6),'ash circles stay inside the curve');
   near(s.hearthAshMass(bed),ashMass,0,'slope collisions conserve ash');
-  console.log('PASS faceted chamber helpers, coal slope contacts and mineral ash containment');
+  console.log('PASS curved chamber helpers, coal slope contacts and mineral ash containment');
+}
+
+{
+  const {s,advance}=fixture(),bed=s.hearthBeds.boiler;
+  const positions=[240,322,404,486,568,650];
+  for(const x of positions){
+    const b=s.hearthAddChunk('boiler',x,140);b.angle=0;b.r=b.baseR=30;
+    b.shape=[[-1,-.5],[1,-.5],[1,.5],[-1,.5]];s.hearthHullCache.delete(b);s.hearthMass(b);
+  }
+  const fuel=bed.fuelSeconds;advance(4);checkBodies(bed);
+  near(bed.fuelSeconds,fuel,0,'wider grate preserves paid fuel');
+  bed.chunks.forEach((b,i)=>{near(b.x,positions[i],.2,'coal stays spread across the flat grate');near(Math.max(...s.hearthWorldHull(b).map(p=>p[1])),210,.1,'each spread piece rests directly on the grate');});
+  assert(bed.chunks.at(-1).x-bed.chunks[0].x>400,'flat support spans more than the former 32-percent grate');
+  console.log('PASS wider flat grate holds six spread pieces without funneling them into a stack');
 }
 
 {

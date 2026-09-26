@@ -135,12 +135,14 @@ try {
       else if(x>0&&x<s.width-1&&y>0&&y<s.height-1){open++;if(owner===-2)wrong++;}
     }
     var clip=(hearthFireGPU.canvas.style.clipPath.match(/[\\d.]+/g)||[]).map(Number);
-    return {outside:outside,open:open,wrong:wrong,clip:clip};
+    var profile=HEARTH_CHAMBER_PROFILE.map(function(p){return [p[0]/HEARTH_WIDTH*100,(p[1]-HEARTH_TOP)/HEARTH_HEIGHT*100];});
+    var expected=[profile[0]].concat(profile.map(function(p){return [100-p[0],p[1]];}),profile.slice(1).reverse());
+    return {outside:outside,open:open,wrong:wrong,clip:clip,expected:expected.flat()};
   })()`);
   console.log('CHAMBER GEOMETRY',chamberGeometry);
-  check('GPU vessel mask matches both facets of the physical chamber',chamberGeometry.outside>0&&chamberGeometry.open>0&&chamberGeometry.wrong===0);
-  const clipExpected=[0,0,100,0,87,52,66,100,34,100,13,52];
-  check('GPU canvas clips to the exact tapered outline',chamberGeometry.clip.length===clipExpected.length&&chamberGeometry.clip.every((v,i)=>Math.abs(v-clipExpected[i])<1e-6));
+  check('GPU vessel mask matches the sampled physical chamber curve',chamberGeometry.outside>0&&chamberGeometry.open>0&&chamberGeometry.wrong===0);
+  const clipExpected=chamberGeometry.expected;
+  check('GPU canvas clips to the exact sampled chamber curve',chamberGeometry.clip.length===clipExpected.length&&chamberGeometry.clip.every((v,i)=>Math.abs(v-clipExpected[i])<1e-3));
   const cold=await stats();console.log('COLD',cold);
   check('cold coal preserves all fuel with no flame or heat',cold.gasKg===0 && cold.flame===0 && cold.outputKW===0 && await game('hearthBeds.boiler.chunks.every(function(b){return b.fuel===1})'));
   await game('hearthLightChunk(hearthBeds.boiler,hearthBeds.boiler.chunks[1])');

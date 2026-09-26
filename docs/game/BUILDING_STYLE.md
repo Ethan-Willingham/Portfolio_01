@@ -364,12 +364,15 @@ clear through the center, with a warm threshold. A simple rod replaces a
 deep valance; omit tassels and fine seams. Preserve the four-tier silhouette
 and deliberate entry.
 
-## 19. Tapered bath furnace (v28.87)
+## 19. Curved bath furnace (v28.90)
 
-The copper bath forms the curved ceiling of the fire chamber. Two sloping
-firebrick cheeks run from its shoulders through angled knees to a short, flat
-grated base. The cast-iron edge follows that silhouette with outlined stone
-backing, restrained highlights and bolted joints. A narrow ash drawer sits
-directly below the coal bed. `hearthCasingProfile` and `hearthCasingPath` in
-`078-hearth-casing.js` build this surround; `hearthDrawCasing` paints it.
-Short landscape screens use the same tapered bed with a closed iron top.
+The copper bath forms the curved ceiling of the fire chamber. Smooth
+firebrick cheeks sweep from its shoulders into a broad, level coal bed.
+The base spans 56% of the working chamber width. The continuous cast-iron
+edge follows that curve with outlined stone backing, restrained highlights,
+and rivets spaced along its length. Flush straps replace the angular knee
+plates. A wide ash drawer sits directly below the coal bed.
+`hearthCasingProfile` and `hearthCasingPath` in `078-hearth-casing.js` build
+this surround; `hearthDrawCasing` paints it. The same sampled curve owns
+coal contacts, ash containment, pointer targets and the GPU fire boundary.
+Short landscape screens use the same curved bed with a closed iron top.

@@ -183,10 +183,11 @@ try {
         await screenshot('layout-'+width+'x'+height+'-'+view);
         check(width+'x'+height+' '+view+' controls fit without overlap',fits);
         if (width === 1440 && height === 714) {
-          check('fire chamber joins the copper tub and narrows to its actual grate',await game(`(function(){
+          check('curved fire chamber joins the copper tub above a broad coal bed',await game(`(function(){
             var L=hearthRoomLayout(),p=hearthCasingProfile(L.box,true),s=p.sides;
             return s[0][0]<L.box.x && s[0][1]<L.box.y && s[s.length-1][0]>L.box.x+L.box.w &&
-              Math.abs(s[4][0]-s[3][0]-L.box.w*0.32)<0.001 &&
+              Math.abs((HEARTH_WIDTH-2*hearthChamberInset(HEARTH_FLOOR))/HEARTH_WIDTH-0.56)<0.001 &&
+              s.length>60 &&
               hearthChamberContains(HEARTH_WIDTH/2,HEARTH_FLOOR-1,0) &&
               !hearthChamberContains(HEARTH_WIDTH*0.1,HEARTH_FLOOR-1,0);
           })()`));
