@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.92';
+  var GAME_VERSION = 'v28.93';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -36957,7 +36957,12 @@
     if (!snowVisible(x, y)) return snowStore(x, y, vx, vy);
     if (snow.active >= snowActiveCap() || liquidCount >= LIQUID_MAX_PARTICLES - 4096) return snowStore(x, y, vx, vy);
     if (addLiquidParticle(5, x, y, vx, vy, RAIN_ORIGIN) < 0) return false;
-    snow.active++; return true;
+    snow.active++;
+    // Later flakes in this frame must see this grain, before the next
+    // solver readback. Otherwise an entire returning plume can deposit
+    // at the same point and spend seconds expanding out of that overlap.
+    if (snowSupported(x, y)) snowInsertContact(snow.bed, x, y);
+    return true;
   }
   function snowLand(p, parked) {
     if (p.physical) return parked ? snowStore(p.x, p.y, p.vx, p.vy) : snowParticle(p.x, p.y, p.vx, p.vy);
@@ -37017,17 +37022,18 @@
   var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
-    // Only a chain of touching, quiet grains rooted in terrain carries
-    // support. Contact may cross a bucket boundary in any direction; a
-    // grounded corner cannot support disconnected grains in its bucket.
+    // A chain of touching grains rooted in terrain carries contact,
+    // including while it slides or compacts. Velocity cannot make a pile
+    // permeable to returning powder. Detached clouds have no terrain root.
+    // Contact crosses bucket boundaries; bucket occupancy is not support.
     var reach = snowSupportDistance(), reach2 = reach * reach;
     var cell = Math.max(LIQUID_CELL, reach), width = Math.ceil(COLS * TILE / cell) + 1;
-    var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY, vxs = liquidVX, vys = liquidVY;
+    var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY;
     var floor = Math.floor, solid = liquidWorldSolidAt, groundReach = snowContactRadius() + 0.3;
     var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
     points.length = next.length = queue.length = 0;
     for (var i = 0; i < count; i++) {
-      if (types[i] !== 5 || vxs[i] * vxs[i] + vys[i] * vys[i] >= 256) continue;
+      if (types[i] !== 5) continue;
       var x = xs[i], y = ys[i], n = points.length / 2;
       points.push(x, y);
       if (solid(x, y + groundReach)) {
@@ -37063,6 +37069,12 @@
     }
     return bed;
   }
+  function snowInsertContact(bed, x, y) {
+    var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
+    var key = Math.floor(y / cell) * width + Math.floor(x / cell), bucket = bed.get(key);
+    if (!bucket) { bucket = []; bed.set(key, bucket); }
+    bucket.push(x, y);
+  }
   function snowTouchesBed(x, y, bed, reach) {
     var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
     var col = Math.floor(x / cell), row = Math.floor(y / cell), reach2 = reach * reach;
@@ -37093,7 +37105,7 @@
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
     var fresh = !gpu || (generation !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240);
     if (gpu && fresh) snow.readbackGen = generation;
-    var cells = {}, active = 0, bed = snowBuildSupport();
+    var cells = {}, active = 0, bed = snowBuildSupport(), contactSeq = liquidMutationSeq;
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
@@ -37139,7 +37151,10 @@
     // Atmospheric snow keeps the storm's identity. Thawing a stored sky
     // flake here created water high overhead, then rain on the return trip.
     // Only deposited or rig-contact material can thaw, including stored snow.
-    snow.cells = cells; snow.bed = bed; snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
+    snow.cells = cells;
+    // Do not leave removed/lofted grains in this frame's landing surface.
+    snow.bed = liquidMutationSeq === contactSeq ? bed : snowBuildSupport();
+    snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
     // Landed snow is already extracted by the ordinary liquid tool. This
@@ -37172,7 +37187,8 @@
     // have different phases. Consume fresh snapshots when they arrive too.
     var freshGPU = liquidWGPU && liquidWGPU.simActive &&
       (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240;
-    if (snowAir.active || maintenanceDt || freshGPU) snowScan(dt, maintenanceDt);
+    var liveCPUContact = (!liquidWGPU || !liquidWGPU.simActive) && snow.active > 0 && snow.grains.length > 0;
+    if (snowAir.active || maintenanceDt || freshGPU || liveCPUContact) snowScan(dt, maintenanceDt);
     if (maintenanceDt) snow.tick = 0;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
@@ -37180,6 +37196,10 @@
     particleWeatherField(snow.field, rect, snow.grains, SNOW_RATE / (1100 * 53), SNOW_FLAKE_CAP,
       rain.intensity, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
     rainCatchLakes(dt, sky, left, right, snow.field.strength);
+    // Resolve the lowest falling grains first. Each landing immediately
+    // becomes a contact for the grains above it; arbitrary storage order
+    // could otherwise grow the bed through an unprocessed lower grain.
+    snow.grains.sort(function (a, b) { return a.y - b.y; });
     for (var i = snow.grains.length - 1; i >= 0; i--) {
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;

@@ -160,6 +160,15 @@ contact point; dry landings dissipate incoming normal velocity before passing
 material into the pile. This avoids injecting impact speed into compressive
 pile pressure and creating another upward burst.
 
+A connected pile keeps its contacts while moving. The former 16-pixel-per-second
+support cutoff made disturbed snow permeable, compressing returning powder
+against the floor before the solver slowly expanded it again. Deposition now
+updates the contact buckets immediately, and falling grains are processed from
+the bottom upward so each landing is visible to grains above it in that same
+frame. Removed or lofted particles are excluded from the rebuilt contact map.
+The CPU fallback refreshes moving contacts each frame while powder is present.
+Detached clouds still have no terrain support and remain individual free grains.
+
 During an active wake, release is checked every frame. Only storage and thaw
 remain on the 120-millisecond maintenance interval. The GPU supplies an
 asynchronous mirror every solved frame during this period; ordinary liquids
@@ -251,7 +260,15 @@ actual contact without a rebound, suspended sheet, lost mass or terrain
 penetration. Add `--cpu` for the fallback. Screenshots and frame measurements
 are written under `/tmp/sluice-snow-contact-qa`.
 
-`node tools/test-snow-support.cjs` also checks exact handoff momentum in strong
+`node tools/sluice-snow-pile.mjs` blows a 13,299-grain bed, then measures the
+returning pile for thirteen simulation seconds. It checks exact snow-plus-water
+mass, density after the jet stops, and settled height against height at landing.
+The pile must settle without a delayed increase in volume. Add `--cpu` for a
+smaller bed within the fallback's particle budget. Artifacts stay in `/tmp`.
+
+`node tools/test-snow-support.cjs` also checks same-frame batch deposition in
+both array orders, moving rooted contacts, detached moving clouds, and exact
+handoff momentum in strong
 airflow, gradual size-dependent descent, continuous apex acceleration, actual
 terrain support and inelastic landing. It includes detached layers three to
 eight pixels above terrain and tests without relying on GPU readback timing.

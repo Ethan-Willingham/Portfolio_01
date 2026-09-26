@@ -273,21 +273,68 @@ assert.equal(s.snow.parked.length / 4, 11, 'legacy bundle expansion stops at the
 conserve(12, 'bounded legacy restore');
 s.SNOW_MASS_CAP = massCap;
 
-// A falling or sideways-moving curtain can fill every bucket down to the
-// floor. Density continuity still must not turn that moving air into a bed.
+// Motion does not remove contact with a pile rooted in the ground. Powder
+// returning to a sliding or disturbed bed must land on its actual surface.
+for (const reverse of [false, true]) {
+  reset();
+  s.addLiquidParticle(5, 2403, 127, 0, 0);
+  s.snow.active = s.snow.mass = s.snow.emitted = 1;
+  s.snowScan(1 / 60, 0);
+  // A burst begins with separated grains, then reaches the same small
+  // landing area within one frame. Array order must not compress deposits.
+  for (let n = 0; n < 12; n++) {
+    const p = falling(400, 124 - 2.2 * n, true);
+    p.vy = 300;
+  }
+  if (reverse) s.snow.grains.reverse();
+  s.updateSnow(0.05);
+  assert.ok(s.liquidCount >= 4, 'burst fixture deposits several grains in the same frame');
+  let minSpacing = Infinity;
+  for (let i = 0; i < s.liquidCount; i++) for (let j = i + 1; j < s.liquidCount; j++) {
+    minSpacing = Math.min(minSpacing, Math.hypot(s.liquidX[i] - s.liquidX[j], s.liquidY[i] - s.liquidY[j]));
+  }
+  assert.ok(minSpacing >= s.LIQUID_SNOW_DIAMETER * 0.95,
+    `same-frame deposits retain contact spacing in ${reverse ? 'reversed' : 'original'} array order (minimum ${minSpacing})`);
+  conserve(13, 'same-frame batch deposition');
+}
+
+// A moving rooted pile remains a collision surface even while its grains
+// exceed the former low-speed support gate.
 for (const velocity of [[0, 53], [53, 0]]) for (const physical of [false, true]) {
   reset();
   fillColumn(400, 5, 20);
   for (let i = 0; i < s.liquidCount; i++) {
     [s.liquidVX[i], s.liquidVY[i]] = velocity;
   }
-  mirror();
-  assert.equal(s.snow.bed.size, 0, 'moving curtain contributes no resting bed');
+  const pileMass = s.snow.mass;
+  s.snowScan(1 / 60, 0);
+  assert.equal(s.liquidCount, pileMass, 'moving rooted grains retain their physical contacts');
+  assert.equal(s.snow.grains.length, 0, 'motion alone cannot release a supported pile');
+  assert.ok(s.snow.bed.size > 0, 'moving rooted pile remains a landing surface');
   const p = falling(400, 29, physical), initial = s.snow.mass;
   s.updateSnow(1 / 60);
-  assert.ok(s.snow.grains.includes(p), 'moving curtain cannot catch another falling grain');
-  assert.ok(p.y > 29.8, 'flake passes through the moving curtain');
-  conserve(initial, 'moving curtain');
+  assert.ok(!s.snow.grains.includes(p), 'returning snow cannot pass through a moving rooted pile');
+  assert.equal(s.liquidCount, pileMass + 1, 'moving-bed contact deposits exactly one grain');
+  assert.ok(s.liquidY[s.liquidCount - 1] < 30, 'deposit stays at the actual upper surface');
+  conserve(initial, 'moving rooted bed');
+}
+
+// A disconnected moving cloud still has no support, even when all its
+// grains touch one another. Connectivity to terrain is the deciding fact.
+for (const velocity of [[0, 53], [53, 0], [0, -53]]) for (const physical of [false, true]) {
+  reset();
+  fillColumn(400, 5, 19);
+  for (let i = 0; i < s.liquidCount; i++) {
+    [s.liquidVX[i], s.liquidVY[i]] = velocity;
+  }
+  mirror();
+  assert.equal(s.snow.bed.size, 0, 'disconnected moving cloud supplies no terrain support');
+  const p = falling(400, 29, physical), initial = s.snow.mass, before = s.liquidCount;
+  s.updateSnow(1 / 60);
+  assert.ok(s.snow.grains.includes(p), 'unsupported cloud does not turn a free grain into deposited snow');
+  assert.ok(p.y > 29.8, 'flake keeps descending through the unsupported cloud');
+  assert.equal(s.liquidCount, before, 'disconnected cloud receives no deposited material');
+  conserve(initial, 'disconnected moving cloud');
 }
 
 for (const firstRow of [20, 5]) for (const physical of [false, true]) {
@@ -344,4 +391,4 @@ assert.equal(s.snow.melted, 1, 'thaw is recorded exactly once');
 assert.deepEqual([s.liquidX[0], s.liquidY[0]], [2403, 190], 'thaw leaves the particle in place');
 assert.equal(s.rain.waterCount, 1, 'thaw updates the water budget');
 conserve(1, 'submerged thaw');
-console.log('PASS actual grain contacts, detached floor layers, momentum-preserving handoff, continuous apex, size-dependent descent, saturated flight and reload, support removal, submerged thaw and exact budgets');
+console.log('PASS batch deposition, moving rooted contact, detached moving clouds, actual grain support, momentum-preserving handoff, continuous apex, size-dependent descent, saturated reload and exact budgets');

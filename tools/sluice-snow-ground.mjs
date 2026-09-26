@@ -105,7 +105,7 @@ try {
           var stalled=0;
           for(var i=0;i<liquidCount;i++){
             if(liquidType[i]===0)water++;
-            if(liquidType[i]===5&&liquidY[i]<sy-20&&Math.hypot(liquidVX[i],liquidVY[i])<6)stalled++;
+            if(liquidType[i]===5&&liquidY[i]<sy-20&&Math.hypot(liquidVX[i],liquidVY[i])<6&&!snowSupported(liquidX[i],liquidY[i]))stalled++;
           }
           groundFrames.push({t:groundElapsed,dt:dt,simDt:simDt,frameDt:lastFrameDt,airMs:snowAir.ms,bins:bins,
             released:released,powder:powder,stalled:stalled,solid:solid,tracked:tracked,stationary:stationary,maxStep:maxStep,maxResidual:maxResidual,
