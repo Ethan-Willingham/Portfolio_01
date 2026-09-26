@@ -94,6 +94,10 @@ counts when dev mode is turned off. Created particles and physical fuel still
 follow the simulation and save rules. Dev material cannot refund itself into
 real stock after reloading. Prepare and Guest buttons and their T/G shortcuts
 have been removed. The older console fixture actions remain for test harnesses.
+The boiler fixture does not fill the tub. Dev mode still requires opening the
+hose to add liquid; selecting it or entering the room leaves the valve shut.
+Legacy automatic-fill reservations remain stored until the hose uses them.
+Actual water already in a saved bath is restored normally.
 
 ## Ceiling claw and hose (v28.73)
 

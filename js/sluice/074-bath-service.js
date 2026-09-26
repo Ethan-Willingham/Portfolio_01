@@ -147,6 +147,9 @@
     bathWater = Math.max(0, bathWater - used);
   }
   function bathOperationsTick(dt) {
+    // Old fill commands reserved stock for a fixed spout. Keep that water in
+    // storage now; only an explicitly opened hose may emit it into the room.
+    if (bathPour > 0) { bathSiloQueue(0, bathPour, 20); bathPour = 0; }
     hearthRoomTick(dt);
     var boiler = hearthBeds.boiler;
     bathFire = boiler.power > 0.01 ? boiler.fuelSeconds : 0;
@@ -157,14 +160,6 @@
       if (bathRoomReady || bathWater > 0) bathDrainFloor();
       bathWater = bathBasinCount();
       bathArmHeat();
-    }
-    if (bathMode && bathRoomReady && bathPour > 0 && bathTool.mode !== 'hose') {
-      var F = BATH_FLOORS[0], tb = F.tubs[0];
-      var before = bathWater;
-      var count = liquidToolEmit(0, Math.min(bathPour, Math.ceil(2400 * dt)),
-        (tb[0] + 2) * TILE, (F.fr - 4) * TILE, 0, 100);
-      bathPour -= count;
-      if (count > 0) bathWater += count;
     }
     for (var i = bathWetFloor.length - 1; i >= 0; i--) {
       bathWetFloor[i].t += dt;

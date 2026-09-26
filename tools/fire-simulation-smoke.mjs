@@ -210,7 +210,7 @@ try {
   const cost=await game('(async function(){var cpu=[],wall=[],device=liquidWGPU.device;for(var i=0;i<120;i++){var t=performance.now();bathGuestTick(1/60);render();cpu.push(hearthFireGPU.cpuMs);await device.queue.onSubmittedWorkDone();wall.push(performance.now()-t);}function summary(a){a.sort(function(a,b){return a-b});return {avg:a.reduce(function(a,b){return a+b},0)/a.length,p95:a[Math.floor(a.length*.95)]};}return {fireSubmissionMs:summary(cpu),fireRoomAndQueueMs:summary(wall),buffers:hearthFireGPU.bufferBytes};})()');
   console.log('PERFORMANCE',cost);check('fire CPU submissions stay within the frame budget',cost.fireSubmissionMs.p95<3);
   await game('bathMode=false;bathEnter()');await sleep(600);
-  await game('devMode=true;hearthRoomAction("kit");hearthRoomAction("guest");devMode=false;lastTime=performance.now();gameRafId=requestAnimationFrame(loop)');
+  await game('devMode=true;hearthRoomAction("kit");hearthRoomAction("guest");siphon.tank[0]=12000;bathToolSelect("hose");bathTool.valve=true;devMode=false;lastTime=performance.now();gameRafId=requestAnimationFrame(loop)');
   await sleep(21000);
   const fullGame=await game('({cpu:perfFrameStats(),interval:perfIntervalStats(),fireSteps:hearthFireGPU.steps,water:liquidWGPU.uploadedCount,bathWater:bathWater,smoke:USE_WEBGPU_SMOKE?"WebGPU":"WebGL",slime:jelloWGPU&&jelloWGPU.available})');
   console.log('FULL GAME',fullGame);check('full game runs water, steam and a guest alongside fire',fullGame.water>5000 && fullGame.bathWater>4000 && fullGame.interval.avg<25);

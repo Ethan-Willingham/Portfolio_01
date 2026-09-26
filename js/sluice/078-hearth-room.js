@@ -110,9 +110,9 @@
       while (bed.chunks.length < 3) hearthLoadCoal('boiler', HEARTH_WIDTH / 2 - 40 + bed.chunks.length * 40, 160);
       for (var i = 0; i < bed.chunks.length; i++) hearthLightChunk(bed, bed.chunks[i]);
       bed.heat = 0.85; hearthMeasure(bed);
-      bathHeat = 0.75; bathArmHeat(); bathAddWater();
+      bathHeat = 0.75; bathArmHeat();
       hearthSetView('bath');
-      bathSetNotice('Test bath warming and filling. Add a guest, then tap its order to serve.');
+      bathSetNotice('Test boiler warming. Use the hose to fill the tub.');
     } else if (action === 'guest') {
       if (!hearthDevSupplies()) return;
       if (bathGuests.length >= bathGuestCap) { bathSetNotice('Both guest places are occupied. Serve a visitor first.'); return; }

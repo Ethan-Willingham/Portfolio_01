@@ -93,7 +93,7 @@ try {
   });
   await send('Runtime.enable'); await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35` });
+  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?dev=1&nosave=1&nopause=1&tod=0.35` });
   for (let i = 0; i < 300; i++) {
     if (await ev(`typeof __hearthTest==='function' && __hearthTest("introPhase==='done'")`)) break;
     await sleep(100);
@@ -107,6 +107,13 @@ try {
   check('a fresh bath starts with no water or queued fill', await game('bathBasinCount()===0 && bathPour===0 && bathSilos.pending.every(n=>n===0)'));
   await game('for(var i=0;i<120;i++){bathOperationsTick(1/60);bathToolTick(1/60);}render();');
   check('idle entry does not populate the tub', await game('bathBasinCount()===0'));
+  check('dev mode is enabled for the empty-entry check', await game('devMode'));
+  await game('setDevMode(false);setDevMode(true);bathPour=123;for(var i=0;i<120;i++)bathGuestTick(1/60);');
+  check('dev toggles and legacy fill reservations cannot auto-pour', await game('bathBasinCount()===0&&bathPour===0&&bathSilos.pending[0]===123'));
+  await press(button('hose'));
+  await game('for(var i=0;i<120;i++)bathGuestTick(1/60);');
+  check('selecting the dev hose keeps its valve closed', await game('bathBasinCount()===0&&!bathTool.valve&&!bathTool.spraying'));
+  await game('bathToolReset();bathSiloReset();render();');
   await screenshot('dry-copper-basin');
   await game("devMode=false;forgeGive('coal',6);forgeGive('flint',1);cargo.push('amber','amber','methaneice','sulfur','copper','malachite');");
   const stock=await game("hearthMaterialCount('amber')");

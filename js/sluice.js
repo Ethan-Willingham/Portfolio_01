@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.103';
+  var GAME_VERSION = 'v28.104';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -15208,6 +15208,9 @@
     bathWater = Math.max(0, bathWater - used);
   }
   function bathOperationsTick(dt) {
+    // Old fill commands reserved stock for a fixed spout. Keep that water in
+    // storage now; only an explicitly opened hose may emit it into the room.
+    if (bathPour > 0) { bathSiloQueue(0, bathPour, 20); bathPour = 0; }
     hearthRoomTick(dt);
     var boiler = hearthBeds.boiler;
     bathFire = boiler.power > 0.01 ? boiler.fuelSeconds : 0;
@@ -15218,14 +15221,6 @@
       if (bathRoomReady || bathWater > 0) bathDrainFloor();
       bathWater = bathBasinCount();
       bathArmHeat();
-    }
-    if (bathMode && bathRoomReady && bathPour > 0 && bathTool.mode !== 'hose') {
-      var F = BATH_FLOORS[0], tb = F.tubs[0];
-      var before = bathWater;
-      var count = liquidToolEmit(0, Math.min(bathPour, Math.ceil(2400 * dt)),
-        (tb[0] + 2) * TILE, (F.fr - 4) * TILE, 0, 100);
-      bathPour -= count;
-      if (count > 0) bathWater += count;
     }
     for (var i = bathWetFloor.length - 1; i >= 0; i--) {
       bathWetFloor[i].t += dt;
@@ -19175,9 +19170,9 @@
       while (bed.chunks.length < 3) hearthLoadCoal('boiler', HEARTH_WIDTH / 2 - 40 + bed.chunks.length * 40, 160);
       for (var i = 0; i < bed.chunks.length; i++) hearthLightChunk(bed, bed.chunks[i]);
       bed.heat = 0.85; hearthMeasure(bed);
-      bathHeat = 0.75; bathArmHeat(); bathAddWater();
+      bathHeat = 0.75; bathArmHeat();
       hearthSetView('bath');
-      bathSetNotice('Test bath warming and filling. Add a guest, then tap its order to serve.');
+      bathSetNotice('Test boiler warming. Use the hose to fill the tub.');
     } else if (action === 'guest') {
       if (!hearthDevSupplies()) return;
       if (bathGuests.length >= bathGuestCap) { bathSetNotice('Both guest places are occupied. Serve a visitor first.'); return; }

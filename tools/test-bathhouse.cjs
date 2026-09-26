@@ -161,6 +161,7 @@ for (const fps of [30,60,144]) {
   assert.equal(s.bathServe(id),false,'heat alone cannot admit a guest to a dry tub');
   s.siphon.tank[0]=12000;
   assert(s.bathAddWater());assert.equal(s.siphon.tank[0],0);assert.equal(s.bathPour,12000);
+  s.bathToolSelect('hose');s.bathTool.valve=true;
   f.inside(12);
   assert(s.bathWater>=s.BATH_MIN_WATER);
   assert(s.bathThermal.inputKJ>0 && s.bathThermalTemperature()>20,'burning fuel heats the actual water budget');
@@ -194,6 +195,7 @@ for (const fps of [30,60,144]) {
  s.cargo=Array.from({length:3},()=>({type:'coal'}));
  loadBoiler(s);boilerTools(s);
  assert(s.bathAddWater()); assert(strikeAbove(s));
+ s.bathToolSelect('hose');s.bathTool.valve=true;
  for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
  f.inside(15);
  setBathTemperature(s);
@@ -370,12 +372,14 @@ for (const fps of [30,60,144]) {
   assert.equal(s.hearthBeds.boiler.chunks.length, 3);
   assert(s.hearthBeds.boiler.chunks.every(b => b.lit && b.devSupplied));
   assert.equal(s.bathHeat, 0.75);
-  assert.equal(s.bathPour, s.BATH_MAX_WATER, 'the test kit queues a real, bounded water transfer');
+  assert.equal(s.bathPour, 0, 'the retired test kit cannot queue an automatic fill');
   s.hearthRoomAction('kit');
-  assert.equal(s.bathPour, s.BATH_MAX_WATER, 'a repeated kit does not overfill the pending reservoir');
+  assert.equal(s.bathPour, 0, 'a repeated kit still leaves the tub dry');
   assert.equal(s.hearthBeds.boiler.chunks.length, 3, 'a repeated kit does not duplicate fuel');
-  for(let wait=0;wait<30&&s.bathPour>0;wait++)f.inside(1);
-  assert.equal(s.bathPour, 0, 'the queued test water is emitted through the ordinary liquid path');
+  f.inside(2);assert.equal(s.bathBasinCount(),0,'idle dev boiler cannot fill the tub');
+  s.bathToolSelect('hose');f.inside(2);
+  assert.equal(s.bathBasinCount(),0,'selecting the dev hose does not start pouring');
+  s.bathTool.valve=true;f.inside(2);s.bathToolCancel();
   assert(s.bathWater >= s.BATH_MIN_WATER && s.bathWater <= s.BATH_MAX_WATER);
   assert(s.bathThermal.inputKJ>0 && s.bathThermal.meanC>20, 'the actual lit boiler adds heat to newly poured water');
   assert.equal(JSON.stringify({ stock: s.forgeStock, tank: s.siphon.tank, supplies: s.bathSupplies }), resources);
@@ -388,7 +392,22 @@ for (const fps of [30,60,144]) {
   assert.deepEqual(JSON.parse(JSON.stringify(saved)).workshop.stock.stock,
     JSON.parse(resources).stock, 'virtual tools and supply counts never enter saved stock');
   assert.equal(saved.supplies[0], 7);
-  console.log('PASS test bath preparation, bounded actual pouring, physical boiler warmth and finite saves');
+  console.log('PASS dev boiler stays dry until the hose opens, physical warmth and finite saves');
+}
+
+for (const dev of [false, true]) {
+  const f=fixture(),s=f.s;s.bathMode=true;s.bathRoomReady=true;s.devMode=dev;
+  s.bathPour=900;
+  f.inside(2);
+  assert.equal(s.bathBasinCount(),0,'legacy queued water cannot pour itself');
+  assert.equal(s.bathPour,0);assert.equal(s.bathSilos.pending[0],900);
+  const saved=JSON.parse(JSON.stringify(s.bathServiceSave()));
+  s.bathServiceRestore(saved);f.inside(2);
+  assert.equal(s.bathBasinCount(),0,'restoring pending water cannot open a valve');
+  assert.equal(s.bathSilos.pending[0],900,'legacy reservation stays conserved across reload');
+  s.devMode=false;s.bathToolSelect('hose');s.bathTool.valve=true;f.inside(1);s.bathToolCancel();
+  assert.equal(s.bathSilos.pending[0],0);assert.equal(s.bathBasinCount(),900);
+  console.log('PASS legacy water waits for manual hose use with dev='+dev);
 }
 
 {
@@ -506,6 +525,7 @@ for (const fps of [30,60,144]) {
   s.bathWater=8000;setBathTemperature(s,42);
   const before=s.bathThermal.energy.reduce((a,b)=>a+b,0)+s.BATH_COPPER_CAPACITY*(s.bathThermal.copperC-20);
   s.siphon.tank[0]=2000;assert(s.bathAddWater());assert.equal(s.siphon.tank[0],0);
+  s.bathToolSelect('hose');s.bathTool.valve=true;
   f.inside(2);
   const t=s.bathThermal,after=t.energy.reduce((a,b)=>a+b,0)+s.BATH_COPPER_CAPACITY*(t.copperC-20);
   assert.equal(s.bathPour,0);assert.equal(s.bathWaterCount(),0,'cold inlet cannot credit stored water back');
