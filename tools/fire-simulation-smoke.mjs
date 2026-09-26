@@ -127,16 +127,15 @@ try {
   for(const x of [400,452,501]) await game(`hearthAddChunk('boiler',${x},175)`);
   await run(2); await screenshot('cold');
   const chamberGeometry=await game(`(async function(){
-    var s=await hearthFireGPU.snapshot(),outside=0,wrong=0,open=0;
+    var s=await hearthFireGPU.snapshot(),bounds=hearthFireGPU.bounds,outside=0,wrong=0,open=0;
     for(var y=0;y<s.height;y++)for(var x=0;x<s.width;x++){
-      var wx=(x+.5)*HEARTH_WIDTH/s.width,wy=HEARTH_TOP+(y+.5)*HEARTH_HEIGHT/s.height;
+      var wx=bounds.x+(x+.5)*bounds.w/s.width,wy=bounds.y+(y+.5)*bounds.h/s.height;
       var owner=s.mask[(y*s.width+x)*2];
       if(!hearthChamberContains(wx,wy)){outside++;if(owner!==-2)wrong++;}
       else if(x>0&&x<s.width-1&&y>0&&y<s.height-1){open++;if(owner===-2)wrong++;}
     }
-    var clip=(hearthFireGPU.canvas.style.clipPath.match(/[\\d.]+/g)||[]).map(Number);
-    var profile=HEARTH_CHAMBER_PROFILE.map(function(p){return [p[0]/HEARTH_WIDTH*100,(p[1]-HEARTH_TOP)/HEARTH_HEIGHT*100];});
-    var expected=[profile[0]].concat(profile.map(function(p){return [100-p[0],p[1]];}),profile.slice(1).reverse());
+    var clip=hearthFireGPU.canvas.style.clipPath.slice(8,-1).split(',').flatMap(p=>p.trim().split(' ').filter(Boolean).map(parseFloat));
+    var expected=hearthChamberOutline.map(function(p){return [(p[0]-bounds.x)/bounds.w*100,(p[1]-bounds.y)/bounds.h*100];});
     return {outside:outside,open:open,wrong:wrong,clip:clip,expected:expected.flat()};
   })()`);
   console.log('CHAMBER GEOMETRY',chamberGeometry);
@@ -176,8 +175,8 @@ try {
     var ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(src,0,0);var d=ctx.getImageData(0,0,c.width,c.height).data;
     var count=0,above=0,highest=HEARTH_FLOOR;
     for(var y=0;y<c.height;y++)for(var x=0;x<c.width;x++){var o=(y*c.width+x)*4;
-      if(d[o]>140&&d[o+1]>45&&d[o+3]>100){count++;var worldY=HEARTH_TOP+y*HEARTH_HEIGHT/c.height;if(worldY<90)above++;highest=Math.min(highest,worldY);}}
-    return {pixels:count,aboveBed:above,highest:highest,area:count/(c.width*c.height),lit:hearthBeds.boiler.chunks.filter(b=>b.lit).length};})()`);}
+      if(d[o]>140&&d[o+1]>45&&d[o+3]>100){count++;var worldY=hearthFireGPU.bounds.y+y*hearthFireGPU.bounds.h/c.height;if(worldY<90)above++;highest=Math.min(highest,worldY);}}
+    return {pixels:count,aboveBed:above,highest:highest,area:count/(c.width*c.height)*hearthFireGPU.bounds.w*hearthFireGPU.bounds.h/(HEARTH_WIDTH*HEARTH_HEIGHT),lit:hearthBeds.boiler.chunks.filter(b=>b.lit).length};})()`);}
   // A free-standing bed spreads across the wider grate. Check visible volatile
   // flames, then actual carbon combustion if the starter has become hot coke.
   const thermal = () => game('hearthBeds.boiler.chunks.map(b=>({id:b.id,lit:b.lit,core:b.coreKelvin,volatileKg:b.dryKg*b.volatile,carbonKg:b.dryKg*b.carbon}))');
@@ -197,9 +196,9 @@ try {
   for (const screen of [{width:1920,height:1080,deviceScaleFactor:2},{width:844,height:390,deviceScaleFactor:1}]) {
     await send('Emulation.setDeviceMetricsOverride',{...screen,mobile:false});
     await game('resize();updateCamera();render()');
-    const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
-    check('bounded wide chamber and accessible controls at '+screen.width,layout.box.w<=784.01 && Math.abs(layout.box.w/layout.box.h-896/256)<0.001 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
-    check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w)<1 && Math.abs(layout.overlay.h-layout.box.h)<1);
+    const layout = await game('(function(){var L=hearthRoomLayout(),r=hearthFireGPU.canvas.getBoundingClientRect();return {box:L.box,bounds:hearthFireGPU.bounds,width:L.w,height:L.h,overlay:{x:r.x,y:r.y,w:r.width,h:r.height},controls:[L.bin,L.pump,L.action,L.ash]};})()');
+    check('bounded wide chamber and accessible controls at '+screen.width,layout.box.w<=layout.width && Math.abs(layout.box.w/layout.box.h-896/256)<0.001 && layout.controls.every(r=>r.x>=0 && r.y>=0 && r.x+r.w<=layout.width && r.y+r.h<=layout.height && r.h>=44));
+    check('fire canvas tracks resized chamber at '+screen.width,Math.abs(layout.overlay.w-layout.box.w*layout.bounds.w/896)<1 && Math.abs(layout.overlay.h-layout.box.h*layout.bounds.h/256)<1);
     await screenshot('fire-'+screen.width);
   }
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});

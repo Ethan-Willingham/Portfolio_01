@@ -275,7 +275,7 @@ fn smoothLight(uv:vec2f)->vec4f {
 // Four nearby grid cells nominate polygons; their actual edge planes, rather
 // than the stair-stepped simulation mask, clip the light at display resolution.
 fn fuelCoverage(uv:vec2f,aa:f32)->f32 {
- let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(p.misc.y,p.view.w)+vec2f(0.,p.view.z);
+ let c=vec2i(floor(uv*p.grid.xy-0.5));let point=uv*vec2f(p.misc.y,p.view.w)+vec2f(p.misc.z,p.view.z);
  var coverage=1.;var visited=vec2u(0u);
  for(var k=0;k<4;k++){
   let body=mask[at(c+vec2i(k%2,k/2))].x;
@@ -303,7 +303,7 @@ fn light(g:Gas)->vec3f {
  if(mask[i].x != -1){lightOutput[i]=vec4f(0.);return;}
  let g=gi[i];let vapor=g.b.y*(1.-smoothstep(330.,410.,temp(g)));
  var emitted=light(g);var tint=vec3f(0.);var tintWeight=0.;
- let point=vec2f((f32(id.x)+0.5)*p.misc.y/p.grid.x,p.view.z+(f32(id.y)+0.5)*p.view.w/p.grid.y);
+ let point=vec2f(p.misc.z+(f32(id.x)+0.5)*p.misc.y/p.grid.x,p.view.z+(f32(id.y)+0.5)*p.view.w/p.grid.y);
  for(var b=0u;b<${CAP}u;b++){
   let m=p.bodies[b];if(m.a.z<=0.||m.c.w>0.||m.f.w<=0.){continue;}
   let rise=m.c.y-point.y;let reach=max(18.,m.c.z*1.8);
@@ -315,7 +315,7 @@ fn light(g:Gas)->vec3f {
  lightOutput[i]=vec4f(emitted,1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3));
 }
 @fragment fn fragment(v:Vertex)->@location(0) vec4f {
- let point=v.uv*vec2f(p.misc.y,p.view.w)+vec2f(0.,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
+ let point=v.uv*vec2f(p.misc.y,p.view.w)+vec2f(p.misc.z,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
  let cell=at(vec2i(v.uv*p.grid.xy));let mode=i32(p.view.x);
  if(mode>0){
   if(mask[cell].x != -1){return vec4f(0.);}let g=gi[cell];let T=temp(g);
@@ -325,7 +325,9 @@ fn light(g:Gas)->vec3f {
   if(mode==4){c=vec3f(0.5+vi[cell].x*2.,0.5-vi[cell].y*2.,abs(vi[cell].z)*12.);}
   if(mode==5){c=vec3f(1.,0.4,0.1)*(1.-exp(-g.b.z*2.));}return vec4f(c,0.96);
  }
- if(mask[cell].x == -2){return vec4f(0.);}
+ // The live chamber's precise CSS path clips the reconstructed light; a
+ // coarse vessel cell must not leave a stair-step inside that curved edge.
+ if(mask[cell].x == -2 && p.misc.w<0.5){return vec4f(0.);}
  let coverage=fuelCoverage(v.uv,aa);if(coverage<=0.){return vec4f(0.);}
  let l=smoothLight(v.uv);
  let center=l.rgb;var halo=vec3f(0.);
@@ -343,6 +345,8 @@ fn light(g:Gas)->vec3f {
     options = options || {};
     var device = options.device, w = options.width || 192, top = -(options.headroom || 0), height = 210-top;
     var worldWidth = options.worldWidth || 320, meters = worldWidth * 0.0025;
+    var left = options.bounds ? options.bounds.x : 0;
+    if(options.bounds){top=options.bounds.y;height=options.bounds.h;worldWidth=options.bounds.w;meters=worldWidth*0.0025;}
     var chamberProfile = options.chamberProfile || null;
     function chamberInset(y) {
       if (!chamberProfile || y <= chamberProfile[0][1]) return 0;
@@ -353,6 +357,7 @@ fn light(g:Gas)->vec3f {
       return chamberProfile[chamberProfile.length-1][0];
     }
     var h = Math.round(w * height / worldWidth), n = w * h;
+    var chamber = null, chamberCells = new Uint8Array(n);
     var chamberRows = new Float64Array(h);
     for (var chamberRow=0;chamberRow<h;chamberRow++) chamberRows[chamberRow]=chamberInset(top+(chamberRow+.5)*height/h);
     var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*564+2048, steps: 0, submissions: 0,
@@ -386,6 +391,28 @@ fn light(g:Gas)->vec3f {
       gpuCanvas.style.clipPath = 'polygon('+clip.map(function(p){return p[0]+'% '+p[1]+'%';}).join(',')+')';
     }
     sim.canvas = gpuCanvas;
+    sim.bounds = {x:left,y:top,w:worldWidth,h:height};
+    sim.setChamber = function(points) {
+      if(!points || points===chamber)return;
+      chamber=points;signature='';chamberCells.fill(1);
+      // Scan-line intervals support the concave copper ceiling: high rows
+      // have two open side pockets with solid copper between them.
+      for(var y=0;y<h;y++){
+        var py=top+(y+.5)*height/h,crossings=[];
+        for(var j=0;j<points.length;j++){
+          var a=points[j],b=points[(j+1)%points.length];
+          if((a[1]<=py&&b[1]>py)||(b[1]<=py&&a[1]>py))crossings.push(a[0]+(b[0]-a[0])*(py-a[1])/(b[1]-a[1]));
+        }
+        crossings.sort(function(a,b){return a-b;});
+        for(var j=0;j+1<crossings.length;j+=2){
+          var x0=Math.max(0,Math.min(w,Math.ceil((crossings[j]-left)*w/worldWidth-.5)));
+          var x1=Math.max(0,Math.min(w,Math.ceil((crossings[j+1]-left)*w/worldWidth-.5)));
+          chamberCells.fill(0,y*w+x0,y*w+x1);
+        }
+      }
+      gpuCanvas.style.clipPath='polygon('+points.map(function(p){return ((p[0]-left)/worldWidth*100)+'% '+((p[1]-top)/height*100)+'%';}).join(',')+')';
+    };
+    sim.setChamber(options.chamber);
     context.configure({ device: device, format: navigator.gpu.getPreferredCanvasFormat(), alphaMode: 'premultiplied' });
     var definitions = {
       splitBody: [6,7,16], init: [0,2,4,10], remap: [0,1,2,5,13,14], advectVelocity: [0,1,3,4,5], diverge: [0,1,3,5,11],
@@ -406,7 +433,7 @@ fn light(g:Gas)->vec3f {
       pass.end();
     }
     function uploadUniform(air, damper) {
-      uniform.set([w,h,STEP,time,meters/w,(meters/w)*(height*0.0025/h)*0.04,air,damper,sim.debug,300,top,height,sim.ashLoad||0,worldWidth,0,0]);
+      uniform.set([w,h,STEP,time,meters/w,(meters/w)*(height*0.0025/h)*0.04,air,damper,sim.debug,300,top,height,sim.ashLoad||0,worldWidth,left,chamber?1:0]);
       for (var b=0;b<CAP;b++) {
         var body=slots[b], o=16+b*28;
         var material = body && body.materialData || (body && body.material === 'wood' ? {pyro:[450,850],release:2.4,charHeat:1,volatile:0.76,role:'fuel',flame:[1,.5,.12],tint:0} : {pyro:[540,1050],release:1.75,charHeat:1,volatile:0.28,role:'fuel',flame:[1,.48,.1],tint:0});
@@ -454,9 +481,9 @@ fn light(g:Gas)->vec3f {
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b*2+Math.floor(other/24)]|=1<<(other%24);contacts[other*2+Math.floor(b/24)]|=1<<(b%24);}
       }
       for(var i=0;i<n;i++){
-        var x=i%w,y=(i/w)|0,px=(x+.5)*worldWidth/w,inset=chamberRows[y];
-        var outside=px<inset||px>worldWidth-inset;
-        masks[i*2]=(outside||((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*worldWidth/w)%18<7)) ? -2 : -1;
+        var x=i%w,y=(i/w)|0,px=left+(x+.5)*worldWidth/w,inset=chamberRows[y];
+        var outside=chamber ? chamberCells[i]!==0 : px<inset||px>worldWidth-inset;
+        masks[i*2]=(outside||((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(left+x*worldWidth/w)%18<7)) ? -2 : -1;
         masks[i*2+1]=-1;
       }
       edgeData.fill(0);
@@ -468,9 +495,9 @@ fn light(g:Gas)->vec3f {
           edgeData.set([nx,ny,nx*a[0]+ny*a[1],0],o);
         }
         var x0=w,x1=0,y0=h,y1=0;
-        hull.forEach(function(p){x0=Math.min(x0,Math.floor(p[0]*w/worldWidth));x1=Math.max(x1,Math.ceil(p[0]*w/worldWidth));y0=Math.min(y0,Math.floor((p[1]-top)*h/height));y1=Math.max(y1,Math.ceil((p[1]-top)*h/height));});
+        hull.forEach(function(p){x0=Math.min(x0,Math.floor((p[0]-left)*w/worldWidth));x1=Math.max(x1,Math.ceil((p[0]-left)*w/worldWidth));y0=Math.min(y0,Math.floor((p[1]-top)*h/height));y1=Math.max(y1,Math.ceil((p[1]-top)*h/height));});
         for(var y=Math.max(0,y0);y<=Math.min(h-1,y1);y++)for(var x=Math.max(0,x0);x<=Math.min(w-1,x1);x++){
-          var px=(x+.5)*worldWidth/w,py=top+(y+.5)*height/h,inside=true;
+          var px=left+(x+.5)*worldWidth/w,py=top+(y+.5)*height/h,inside=true;
           for(var j=0;j<hull.length;j++){var a=hull[j],c=hull[(j+1)%hull.length];if((c[0]-a[0])*(py-a[1])-(c[1]-a[1])*(px-a[0])<0){inside=false;break;}}
           if(inside&&masks[(y*w+x)*2]!==-2)masks[(y*w+x)*2]=b;
         }

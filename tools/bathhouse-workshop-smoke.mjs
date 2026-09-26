@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { savedBathEntry } from './bathhouse-saved-entry.mjs';
 import { bathHoseFlow } from './bathhouse-hose-flow.mjs';
+import { bathFireOutline } from './bathhouse-fire-outline.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8197), debug = port + 1000;
@@ -28,6 +29,7 @@ const server = createServer((req, res) => {
     let data = fs.readFileSync(file);
     if (file === path.join(root, 'js/sluice.js')) {
       let src = process.env.BUNDLE ? data.toString() : fs.readdirSync(path.join(root, 'js/sluice')).filter(n=>/^\d.*\.js$/.test(n)).sort().map(n=>fs.readFileSync(path.join(root,'js/sluice',n),'utf8')).join('\n');
+      if(process.env.BATH_FIRE)src='(function(){var create=FireWGPU.create;FireWGPU.create=function(options){options.testing=true;return create(options);};})();\n'+src;
       const end = src.lastIndexOf('})();');
       assert(end >= 0, 'bundle IIFE seam exists');
       data = Buffer.from(src.slice(0, end) + 'window.__hearthTest = function(source) { return eval(source); };\n' + src.slice(end));
@@ -105,7 +107,9 @@ try {
   check('workshop boots with GPU water', await game("introPhase==='done' && !!liquidWGPU && liquidWGPU.available"));
   check('shader warm-up clean', await ev('window.__shaderWarm.errors.length===0'));
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
-  if (process.env.BATH_HOSE) {
+  if (process.env.BATH_FIRE) {
+    await bathFireOutline({ game, ev, send, sleep, check, screenshot });
+  } else if (process.env.BATH_HOSE) {
     await bathHoseFlow({ game, ev, send, sleep, check, screenshot, press, button });
   } else if (savedFixture) {
     await savedBathEntry({ fixture: savedFixture, game, ev, send, sleep, check, screenshot, press, button });

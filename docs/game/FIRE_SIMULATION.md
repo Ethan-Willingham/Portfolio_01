@@ -185,6 +185,14 @@ controls alongside it or underneath on phones. Short landscape screens place
 it beside the basin. There are no bars across its opening. Collision walls,
 GPU masks and flame occlusion use the same dimensions.
 
+Since v28.109, the lower slice remains the coordinate reference for saved fuel,
+but fire extends across the complete curved chamber, including the upper side
+pockets. The gas mask and display clip use the same sampled copper ceiling and
+iron bowl as physical fuel. Hot gas meets that ceiling instead of disappearing
+at the old horizontal slice boundary. Layout changes update the mask through
+the existing conservative remap; they do not stretch or reset the gas domain.
+The CPU fallback uses the same expanded bounds and curved display clip.
+
 Saves record their chamber width. Restoring a 416-wide bed moves its coal and
 ash right by 240 units once; legacy 320-wide beds move by 288. Relative contacts,
 hulls, temperatures and fuel remain intact. Vertical coordinates keep the same
@@ -209,19 +217,25 @@ full-field readback, never used in the gameplay loop.
 
 ## Cost and verification
 
+`BATH_FIRE=1 node tools/bathhouse-workshop-smoke.mjs` checks the full chamber's
+GPU mask, exact display clip and canvas alignment at desktop, phone, landscape
+and Retina sizes. It verifies visible light and real fuel/gas exchange above
+the former cutoff, CPU fallback coverage, the bounded cell budget and live frame
+rate, alongside the existing GPU conservation, material and rendering checks.
+
 `node tools/test-fire-startup.cjs` checks slow shared-device startup and bounded
 water/fire failures with a deterministic clock. `SLOW_FIRE_BOOT=1 QUICK=1 node
 tools/fire-simulation-smoke.mjs` also boots the real browser with a delayed water
 device and fire warm-up. The CPU browser test checks interpolation in actual
 rendered pixels as well as preserving the surrounding canvas settings.
 
-Desktop uses 368 by 105 cells; mobile uses 240 by 69. The wider grid keeps
+Desktop uses 266 by 144 cells; mobile uses 174 by 94. The complete chamber keeps
 approximately the previous cell budget. CPU fallback uses a smoothly sampled
-176 by 50 field across the full chamber. There are at most forty-eight
+128 by 69 field across the full chamber. There are at most forty-eight
 fuel bodies and four 60 Hz steps per game frame. A suspended tab does not catch
 up its missed burn time. Buffers, pipelines and bind groups are retained, and
 all steps in one game update share one queue submission. The desktop simulation
-buffers occupy 5,741,696 bytes, excluding presentation textures and CPU geometry
+buffers occupy 5,711,296 bytes, excluding presentation textures and CPU geometry
 arrays. The module requests no second GPU device.
 
 On the development Apple M1 Pro, Chrome for Testing with Metal, v28.69 at 1280 by 900 (32 loaded pieces):

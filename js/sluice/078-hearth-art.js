@@ -7,8 +7,8 @@
   var hearthArtRGB = {};
   var hearthArtRamp = null;
   var hearthArtSparkGlow = null;
-  var HEARTH_ART_W = 176;
-  var HEARTH_ART_H = 50;
+  var HEARTH_ART_W = 128;
+  var HEARTH_ART_H = 69;
 
   function hearthArtHash(n) {
     n = Math.imul((n | 0) ^ 0x68bc21eb, 0x1b873593);
@@ -350,7 +350,8 @@
 
   function hearthArtStep(field, bed, dt) {
     var w = HEARTH_ART_W, h = HEARTH_ART_H, heat = field.heat, next = field.next;
-    var flowX = (w / HEARTH_WIDTH) / (112 / 416), flowY = (h / HEARTH_HEIGHT) / (76 / 210);
+    var bounds = HEARTH_FIRE_BOUNDS;
+    var flowX = (w / bounds.w) / (112 / 416), flowY = (h / bounds.h) / (76 / 210);
     var air = Math.max(0, Math.min(1, bed.air == null ? 0.65 : Number(bed.air)));
     var t = field.clock, phase = (t * 17) | 0, noise = field.noise;
     var x, y, at, ix, iy;
@@ -379,8 +380,8 @@
     }
     var sources = field.sources;
     for (var i = 0; i < sources.length; i++) {
-      var body = sources[i], bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42 - HEARTH_TOP) * h / HEARTH_HEIGHT;
-      var radius = Math.max(2, body.r * w / HEARTH_WIDTH * 0.95);
+      var body = sources[i], bx = (body.x - bounds.x) * w / bounds.w, by = (body.y - body.r * 0.42 - bounds.y) * h / bounds.h;
+      var radius = Math.max(2, body.r * w / bounds.w * 0.95);
       var intensity = hearthArtFlame(body) * (0.84 + air * 0.16);
       var flicker = 0.88 + noise[((body.id || i) * 53 + ((t * 13) | 0)) & 1023] * 0.12;
       var minX = Math.max(1, Math.floor(bx - radius)), maxX = Math.min(w - 2, Math.ceil(bx + radius));
@@ -397,7 +398,7 @@
   }
 
   function hearthArtPrime(field, bed) {
-    var w = HEARTH_ART_W, h = HEARTH_ART_H;
+    var w = HEARTH_ART_W, h = HEARTH_ART_H, bounds = HEARTH_FIRE_BOUNDS;
     var air = Math.max(0, Math.min(1, Number(bed.air) || 0));
     // Reopening a hot furnace must not look like lighting a cold one. Seed a
     // curved, tapering plume directly above each real burning lump, then let
@@ -406,9 +407,9 @@
     for (var i = 0; i < field.sources.length; i++) {
       var body = field.sources[i], heat = hearthArtFlame(body);
       if (heat < 0.7) continue;
-      var bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42 - HEARTH_TOP) * h / HEARTH_HEIGHT;
-      var radius = body.r * w / HEARTH_WIDTH * (0.83 + air * 0.25);
-      var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / HEARTH_HEIGHT;
+      var bx = (body.x - bounds.x) * w / bounds.w, by = (body.y - body.r * 0.42 - bounds.y) * h / bounds.h;
+      var radius = body.r * w / bounds.w * (0.83 + air * 0.25);
+      var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / bounds.h;
       var phase = (Number(body.seed) || 0) * 19 + field.clock * 1.6;
       var inlet = heat * (0.84 + air * 0.16) * 1.18;
       var minY = Math.max(1, Math.floor(by - height)), maxY = Math.min(h - 2, Math.ceil(by));
@@ -473,8 +474,8 @@
       var value = Math.min(255, Math.max(0, field.heat[i] * 242)) | 0, at = i * 4, ri = value * 4;
       data[at] = ramp[ri]; data[at + 1] = ramp[ri + 1]; data[at + 2] = ramp[ri + 2]; data[at + 3] = ramp[ri + 3];
       if (value > 24) {
-        var px = (i % HEARTH_ART_W + 0.5) * HEARTH_WIDTH / HEARTH_ART_W;
-        var py = HEARTH_TOP + (Math.floor(i / HEARTH_ART_W) + 0.5) * HEARTH_HEIGHT / HEARTH_ART_H;
+        var px = HEARTH_FIRE_BOUNDS.x + (i % HEARTH_ART_W + 0.5) * HEARTH_FIRE_BOUNDS.w / HEARTH_ART_W;
+        var py = HEARTH_FIRE_BOUNDS.y + (Math.floor(i / HEARTH_ART_W) + 0.5) * HEARTH_FIRE_BOUNDS.h / HEARTH_ART_H;
         var tint = [0,0,0], weight = 0;
         for (var source = 0; source < chunks.length; source++) {
           var item = chunks[source], spec = hearthMaterial(item.material), rise = item.y - py, reach = item.r * 1.8;
@@ -616,7 +617,7 @@
       // This field is deliberately coarse for CPU fallback. Reconstruct its
       // light smoothly instead of magnifying each cell into a visible block.
       c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-      c.drawImage(field.canvas, 0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
+      c.drawImage(field.canvas, HEARTH_FIRE_BOUNDS.x, HEARTH_FIRE_BOUNDS.y, HEARTH_FIRE_BOUNDS.w, HEARTH_FIRE_BOUNDS.h);
       c.restore();
     }
     // Contact shadows stay close to each actual hull.

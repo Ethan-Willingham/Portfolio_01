@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.108';
+  var GAME_VERSION = 'v28.109';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -17489,6 +17489,13 @@
       HEARTH_TOP+HEARTH_HEIGHT*(Math.sin(hearthUpperAngle)-HEARTH_BOWL_CUT)/(1-HEARTH_BOWL_CUT)]);
   }
   hearthDefaultProfile=hearthDefaultProfile.concat(HEARTH_CHAMBER_PROFILE);
+  // Retain one domain across layout changes. It encloses both upper wings,
+  // so hot gas is never stopped by the old lower-slice rectangle.
+  var HEARTH_FIRE_BOUNDS = { x: hearthDefaultProfile[0][0], y: hearthDefaultProfile[0][1],
+    w: HEARTH_WIDTH - 2 * hearthDefaultProfile[0][0], h: HEARTH_FLOOR - hearthDefaultProfile[0][1] };
+  var hearthChamberOutline = hearthDefaultProfile.concat(hearthDefaultProfile.slice().reverse().map(function(p) {
+    return [HEARTH_WIDTH-p[0],p[1]];
+  }));
   var hearthTaperWalls = [{nx:-1,ny:0,limit:-hearthDefaultProfile[0][0]},
     {nx:1,ny:0,limit:HEARTH_WIDTH-hearthDefaultProfile[0][0]},hearthRectWalls[2]];
   for (var hearthFacet = 1; hearthFacet < hearthDefaultProfile.length; hearthFacet++) {
@@ -17519,6 +17526,7 @@
     for(var i=1;i<sides.length;i++)edge(sides[i-1],sides[i],false);
     for(var i=1;i<roof.length;i++)edge(roof[i-1],roof[i],true);
     hearthTaperWalls=walls;hearthChamberSideProfile=sides.slice(0,sides.length/2);
+    hearthChamberOutline=sides.concat(roof);
     hearthChamberCeiling=HEARTH_TOP+(outline.ceiling-box.y)*sy;hearthChamberLayoutKey=key;
     if(typeof hearthBeds!=='undefined' && hearthBeds.boiler)hearthBeds.boiler.contacts={};
   }
@@ -18186,8 +18194,13 @@
     if (!water || !window.FireWGPU || /[?&]cpufire=1/.test(location.search)) return Promise.resolve(false);
     hearthFireReady = Promise.resolve(water.readyPromise).then(function () {
       if (generation !== hearthFireGeneration || water !== liquidWGPU || !water.available || !water.device) return false;
-      // Redistribute the existing cell budget across the broad, shallow grate.
-      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: isMobile ? 240 : 368, worldWidth: HEARTH_WIDTH, headroom: -HEARTH_TOP, chamberProfile: HEARTH_CHAMBER_PROFILE });
+      // Redistribute the existing cell budget across the complete chamber,
+      // including its upper wings. Fuel coordinates and physical scale stay put.
+      var oldWidth = isMobile ? 240 : 368;
+      var cells = oldWidth * Math.round(oldWidth * HEARTH_HEIGHT / HEARTH_WIDTH);
+      var width = Math.floor(Math.sqrt(cells * HEARTH_FIRE_BOUNDS.w / HEARTH_FIRE_BOUNDS.h));
+      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: width,
+        bounds: HEARTH_FIRE_BOUNDS, chamber: hearthChamberOutline });
       window.__fire = hearthFireGPU;
       return hearthFireGPU.readyPromise;
     }).catch(function (e) { console.warn('Boiler fire uses CPU fallback:', e); return false; });
@@ -18208,6 +18221,7 @@
   function hearthFireTick(dt) {
     var bed = hearthBeds.boiler;
     if (!hearthFireOwns(bed)) return;
+    hearthFireGPU.setChamber(hearthChamberOutline);
     if (hearthFireBed !== bed) { hearthFireGPU.reset(); hearthFireBed = bed; hearthFireIdle = 0; hearthFireSleeping = false; }
     // Empty and cold furnaces use no simulation submissions. A cooling plume
     // gets time to vent after the last fuel body has been raked out.
@@ -18230,6 +18244,9 @@
   }
   function hearthFireDraw(c, bed, x, y, w, h) {
     if (!hearthFireOwns(bed) || !bathMode || gamePaused || bathFading || !c.canvas || c.canvas !== canvas && c.canvas !== uiTopCanvas) return false;
+    hearthFireGPU.setChamber(hearthChamberOutline);
+    var bounds=hearthFireGPU.bounds, scaleX=w/HEARTH_WIDTH, scaleY=h/HEARTH_HEIGHT;
+    x+=bounds.x*scaleX;y+=(bounds.y-HEARTH_TOP)*scaleY;w=bounds.w*scaleX;h=bounds.h*scaleY;
     var t=c.getTransform(), r=canvas.getBoundingClientRect(), parent=canvas.parentNode, pr=parent.getBoundingClientRect();
     var sx=r.width/canvas.width, sy=r.height/canvas.height;
     hearthFireGPU.draw({ x:r.left-pr.left+(t.a*x+t.c*y+t.e)*sx,
@@ -18245,8 +18262,8 @@
   var hearthArtRGB = {};
   var hearthArtRamp = null;
   var hearthArtSparkGlow = null;
-  var HEARTH_ART_W = 176;
-  var HEARTH_ART_H = 50;
+  var HEARTH_ART_W = 128;
+  var HEARTH_ART_H = 69;
 
   function hearthArtHash(n) {
     n = Math.imul((n | 0) ^ 0x68bc21eb, 0x1b873593);
@@ -18588,7 +18605,8 @@
 
   function hearthArtStep(field, bed, dt) {
     var w = HEARTH_ART_W, h = HEARTH_ART_H, heat = field.heat, next = field.next;
-    var flowX = (w / HEARTH_WIDTH) / (112 / 416), flowY = (h / HEARTH_HEIGHT) / (76 / 210);
+    var bounds = HEARTH_FIRE_BOUNDS;
+    var flowX = (w / bounds.w) / (112 / 416), flowY = (h / bounds.h) / (76 / 210);
     var air = Math.max(0, Math.min(1, bed.air == null ? 0.65 : Number(bed.air)));
     var t = field.clock, phase = (t * 17) | 0, noise = field.noise;
     var x, y, at, ix, iy;
@@ -18617,8 +18635,8 @@
     }
     var sources = field.sources;
     for (var i = 0; i < sources.length; i++) {
-      var body = sources[i], bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42 - HEARTH_TOP) * h / HEARTH_HEIGHT;
-      var radius = Math.max(2, body.r * w / HEARTH_WIDTH * 0.95);
+      var body = sources[i], bx = (body.x - bounds.x) * w / bounds.w, by = (body.y - body.r * 0.42 - bounds.y) * h / bounds.h;
+      var radius = Math.max(2, body.r * w / bounds.w * 0.95);
       var intensity = hearthArtFlame(body) * (0.84 + air * 0.16);
       var flicker = 0.88 + noise[((body.id || i) * 53 + ((t * 13) | 0)) & 1023] * 0.12;
       var minX = Math.max(1, Math.floor(bx - radius)), maxX = Math.min(w - 2, Math.ceil(bx + radius));
@@ -18635,7 +18653,7 @@
   }
 
   function hearthArtPrime(field, bed) {
-    var w = HEARTH_ART_W, h = HEARTH_ART_H;
+    var w = HEARTH_ART_W, h = HEARTH_ART_H, bounds = HEARTH_FIRE_BOUNDS;
     var air = Math.max(0, Math.min(1, Number(bed.air) || 0));
     // Reopening a hot furnace must not look like lighting a cold one. Seed a
     // curved, tapering plume directly above each real burning lump, then let
@@ -18644,9 +18662,9 @@
     for (var i = 0; i < field.sources.length; i++) {
       var body = field.sources[i], heat = hearthArtFlame(body);
       if (heat < 0.7) continue;
-      var bx = body.x * w / HEARTH_WIDTH, by = (body.y - body.r * 0.42 - HEARTH_TOP) * h / HEARTH_HEIGHT;
-      var radius = body.r * w / HEARTH_WIDTH * (0.83 + air * 0.25);
-      var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / HEARTH_HEIGHT;
+      var bx = (body.x - bounds.x) * w / bounds.w, by = (body.y - body.r * 0.42 - bounds.y) * h / bounds.h;
+      var radius = body.r * w / bounds.w * (0.83 + air * 0.25);
+      var height = body.r * (3.6 + heat * 3.2) * (0.8 + air * 0.45) * h / bounds.h;
       var phase = (Number(body.seed) || 0) * 19 + field.clock * 1.6;
       var inlet = heat * (0.84 + air * 0.16) * 1.18;
       var minY = Math.max(1, Math.floor(by - height)), maxY = Math.min(h - 2, Math.ceil(by));
@@ -18711,8 +18729,8 @@
       var value = Math.min(255, Math.max(0, field.heat[i] * 242)) | 0, at = i * 4, ri = value * 4;
       data[at] = ramp[ri]; data[at + 1] = ramp[ri + 1]; data[at + 2] = ramp[ri + 2]; data[at + 3] = ramp[ri + 3];
       if (value > 24) {
-        var px = (i % HEARTH_ART_W + 0.5) * HEARTH_WIDTH / HEARTH_ART_W;
-        var py = HEARTH_TOP + (Math.floor(i / HEARTH_ART_W) + 0.5) * HEARTH_HEIGHT / HEARTH_ART_H;
+        var px = HEARTH_FIRE_BOUNDS.x + (i % HEARTH_ART_W + 0.5) * HEARTH_FIRE_BOUNDS.w / HEARTH_ART_W;
+        var py = HEARTH_FIRE_BOUNDS.y + (Math.floor(i / HEARTH_ART_W) + 0.5) * HEARTH_FIRE_BOUNDS.h / HEARTH_ART_H;
         var tint = [0,0,0], weight = 0;
         for (var source = 0; source < chunks.length; source++) {
           var item = chunks[source], spec = hearthMaterial(item.material), rise = item.y - py, reach = item.r * 1.8;
@@ -18854,7 +18872,7 @@
       // This field is deliberately coarse for CPU fallback. Reconstruct its
       // light smoothly instead of magnifying each cell into a visible block.
       c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-      c.drawImage(field.canvas, 0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
+      c.drawImage(field.canvas, HEARTH_FIRE_BOUNDS.x, HEARTH_FIRE_BOUNDS.y, HEARTH_FIRE_BOUNDS.w, HEARTH_FIRE_BOUNDS.h);
       c.restore();
     }
     // Contact shadows stay close to each actual hull.

@@ -27,6 +27,13 @@
       HEARTH_TOP+HEARTH_HEIGHT*(Math.sin(hearthUpperAngle)-HEARTH_BOWL_CUT)/(1-HEARTH_BOWL_CUT)]);
   }
   hearthDefaultProfile=hearthDefaultProfile.concat(HEARTH_CHAMBER_PROFILE);
+  // Retain one domain across layout changes. It encloses both upper wings,
+  // so hot gas is never stopped by the old lower-slice rectangle.
+  var HEARTH_FIRE_BOUNDS = { x: hearthDefaultProfile[0][0], y: hearthDefaultProfile[0][1],
+    w: HEARTH_WIDTH - 2 * hearthDefaultProfile[0][0], h: HEARTH_FLOOR - hearthDefaultProfile[0][1] };
+  var hearthChamberOutline = hearthDefaultProfile.concat(hearthDefaultProfile.slice().reverse().map(function(p) {
+    return [HEARTH_WIDTH-p[0],p[1]];
+  }));
   var hearthTaperWalls = [{nx:-1,ny:0,limit:-hearthDefaultProfile[0][0]},
     {nx:1,ny:0,limit:HEARTH_WIDTH-hearthDefaultProfile[0][0]},hearthRectWalls[2]];
   for (var hearthFacet = 1; hearthFacet < hearthDefaultProfile.length; hearthFacet++) {
@@ -57,6 +64,7 @@
     for(var i=1;i<sides.length;i++)edge(sides[i-1],sides[i],false);
     for(var i=1;i<roof.length;i++)edge(roof[i-1],roof[i],true);
     hearthTaperWalls=walls;hearthChamberSideProfile=sides.slice(0,sides.length/2);
+    hearthChamberOutline=sides.concat(roof);
     hearthChamberCeiling=HEARTH_TOP+(outline.ceiling-box.y)*sy;hearthChamberLayoutKey=key;
     if(typeof hearthBeds!=='undefined' && hearthBeds.boiler)hearthBeds.boiler.contacts={};
   }
