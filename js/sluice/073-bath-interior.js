@@ -214,6 +214,7 @@
     try {
       if (foreground) ctx = foreground;
       ctx.setTransform(ws, 0, 0, ws, -Math.round(cam.x * ws), -Math.round(cam.y * ws));
+      bathArrivalDraw(ctx);
       bathDrawGuests();
       if (typeof bathThermalDraw === 'function') bathThermalDraw(ctx);
       bathToolDraw(ctx);
@@ -234,6 +235,7 @@
       c.translate(-curve.x0, -curve.y0);
       bathDrawDryLiner(c, curve);
       bathDrawVessel(c);
+      bathArrivalWarm(c, curve);
       if (typeof bathThermalWarm === 'function') bathThermalWarm(c);
       var b = bathToolBounds(), x = (curve.x0 + curve.x1) / 2, y = curve.y0 - 50;
       ['claw', 'hose'].forEach(function (mode) {

@@ -1,4 +1,4 @@
-// Saved bath liquid migration and entry streaming, using the real fragment code.
+// Saved bath migration and visible restoration, using the real fragment code.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -11,13 +11,13 @@ const near = (actual, expected) => assert(Math.abs(actual - expected) < 1e-8, `$
 function fixture() {
   const s = {
     window: {}, TILE: 32, COLS: 320, TOTAL_ROWS: 1412,
-    bathMode: false, bathFading: false, bathRoomReady: false,
+    bathMode: false, bathFading: false, bathRoomReady: false, gamePaused: false,
     bathFloorsOwned: [true, false, false, false, false],
     liquidCatalog: ['Water', 'Oil', 'Brine', 'Nectar', 'Lumen'].map((name, id) => ({ name, id })),
     siphon: { tank: [0, 0, 0, 0, 0, 0], capacity: 16000 },
-    liquidCount: 0, liquidX: [], liquidY: [], liquidType: [], liquidOrigin: [],
+    liquidCount: 0, liquidX: [], liquidY: [], liquidVX: [], liquidVY: [], liquidType: [], liquidOrigin: [],
     LIQUID_MAX_PARTICLES: 20000, worldRainEnabled: false,
-    cam: { x: 700, y: 19300 }, viewW: 1000, viewH: 650, worldScale: 1,
+    cam: { x: 700, y: 19300 }, viewW: 1000, viewH: 650, screenW: 1000, screenH: 650, worldScale: 1,
     bathThermal: { meanC: 20, totalCapacity: 0, migrationC: 0 },
     bathToolReset() {}, bathSyncCollision() {}, hearthRoomRestore() {},
     hearthRoomSave: () => ({}), hearthBeds: { boiler: { fuelSeconds: 0 } },
@@ -32,11 +32,12 @@ function fixture() {
       if (s.liquidCount >= s.LIQUID_MAX_PARTICLES) return -1;
       const i = s.liquidCount++;
       s.liquidType[i] = type; s.liquidX[i] = x; s.liquidY[i] = y; s.liquidOrigin[i] = origin;
+      s.liquidVX[i] = vx; s.liquidVY[i] = vy;
       return i;
     },
     removeLiquidParticle(i) {
       const last = --s.liquidCount;
-      for (const key of ['liquidType', 'liquidX', 'liquidY', 'liquidOrigin']) {
+      for (const key of ['liquidType', 'liquidX', 'liquidY', 'liquidVX', 'liquidVY', 'liquidOrigin']) {
         s[key][i] = s[key][last]; s[key].length = last;
       }
     },
@@ -52,7 +53,10 @@ function fixture() {
   const floors = source('072-bath').match(/  var BATH_FLOORS = \[[\s\S]*?\n  \];/);
   assert(floors, 'real bath floor definitions are available');
   vm.runInContext(floors[0], s);
-  for (const name of ['073-liquid-deposits', '074-bath-service', '074-bath-silos']) vm.runInContext(source(name), s);
+  const curve = source('072-bath').match(/  function bathTubCurve\(F, tb\) \{[\s\S]*?\n  \}/);
+  assert(curve, 'real bath curve is available');
+  vm.runInContext('var BATH_CAT_C = 2;\n' + curve[0], s);
+  for (const name of ['073-liquid-deposits', '074-bath-arrival', '074-bath-service', '074-bath-silos']) vm.runInContext(source(name), s);
   s.bathSiloReset();
   return s;
 }
@@ -141,8 +145,32 @@ function restore(s, saved) {
   console.log('PASS version 7 and newer retain deliberately poured basin water without remigration');
 }
 
+function begin(s) {
+  s.bathMode = true; s.bathFading = true;
+  s.bathArrivalBegin();
+}
+function run(s, frames = 180, dt = 1 / 60) {
+  for (let i = 0; i < frames; i++) s.mineralLiquidTick(dt);
+}
+function seedReveal(s, count, floor = 0) {
+  const F = s.BATH_FLOORS[floor], curve = s.bathTubCurve(F, F.tubs[0]);
+  const center = (curve.x0 + curve.x1) / 2;
+  // Distinct quarter-pixel positions in the center of the real basin.
+  for (let i = 0; i < count; i++) {
+    const x = center - 50 + i % 80 * 1.25;
+    const y = curve.y0 + curve.D - 20 - Math.floor(i / 80) * 1.25;
+    assert(y >= curve.y0 - 16 && y < curve.y0 + curve.depthAt(x) - 1);
+    s.mineralLiquidPark(i % 5, x, y);
+  }
+}
+function liveSignature(s) {
+  const particles = [];
+  for (let i = 0; i < s.liquidCount; i++) particles.push([s.liquidType[i], s.liquidX[i], s.liquidY[i]].join(':'));
+  return particles.sort();
+}
+
 {
-  for (const [mode, fading] of [[false, false], [true, false], [false, true]]) {
+  for (const [mode, fading] of [[false, false], [true, false], [false, true], [true, true]]) {
     const s = fixture(); seedBath(s, 0, 0, 8105); s.bathMode = mode; s.bathFading = fading;
     s.mineralLiquidTick(1 / 60);
     assert.equal(s.liquidCount, 3600, 'ordinary streaming retains the 3600-particle budget');
@@ -152,36 +180,153 @@ function restore(s, saved) {
     s.mineralLiquidTick(0.35);
     assert.equal(s.liquidCount, 7200); assert.equal(parkedCount(s), 905);
   }
-  console.log('PASS outdoor and uncovered bath streaming keep the normal budget and cooldown');
+  console.log('PASS normal streaming keeps the same budget and cooldown outside a controlled bath arrival');
 }
 
 {
-  const original = fixture(); seedBath(original, 0, 0, 8105);
-  const positions = liquidSignature(original);
-  const saved = snapshot(original), s = fixture();
-  assert.equal(restore(s, saved), 0);
-  s.bathMode = true; s.bathFading = true; s.mineralLiquidClock = 0.35;
-  s.mineralLiquidTick(1 / 60);
-  assert.equal(s.liquidCount, 8105, 'existing bath water restores fully during the entry cover despite the cooldown');
-  assert.equal(parkedCount(s), 0);
-  for (let i = 0; i < 4; i++) s.mineralLiquidTick(1 / 60);
-  s.bathFading = false; s.mineralLiquidTick(0.35);
+  const s = fixture(); seedReveal(s, 8105);
+  const expected = liquidSignature(s), stock = stores(s);
+  begin(s); run(s, 50);
+  assert.equal(s.liquidCount, 0, 'saved liquid waits until the fade clears');
+  assert.equal(parkedCount(s), 8105);
+  assert.equal(s.bathArrival[0].age, 0);
+  assert.equal(s.bathArrivalVisibleWater(1621), 0, 'guest presentation uses visible water during arrival');
+  s.bathFading = false;
+  s.mineralLiquidClock = 0; s.mineralLiquidTick(0);
+  assert.equal(s.liquidCount, 0, 'normal streaming cannot bypass controlled restoration');
+  let previous = 0, growingFrames = 0;
+  for (let i = 0; i < 210; i++) {
+    s.mineralLiquidTick(1 / 60);
+    assert(s.liquidCount >= previous, 'live mass increases monotonically without a solver consuming it');
+    assert(s.liquidCount - previous <= Math.ceil(28000 / 60), 'one frame cannot dump the saved bath all at once');
+    if (s.liquidCount > previous) growingFrames++;
+    previous = s.liquidCount;
+    assert.equal(s.liquidCount + parkedCount(s), 8105, 'live and pending together conserve the entire bath');
+  }
+  assert(growingFrames > 20, 'restoration is spread across many visible frames');
   assert.equal(s.liquidCount, 8105); assert.equal(parkedCount(s), 0);
-  assert.deepEqual(liquidSignature(s), positions, 'entry preserves every saved position and liquid identity');
-  assert.equal(stores(s).reduce((a, b) => a + b, 0), 0, 'restoring deliberate water does not also create silo stock');
-  const after = snapshot(s), next = fixture();
-  restore(next, after); next.bathMode = true; next.bathFading = true; next.mineralLiquidTick(0);
-  assert.equal(next.liquidCount, 8105); assert.equal(parkedCount(next), 0);
-  assert.deepEqual(liquidSignature(next), positions);
-  console.log('PASS saved water restores under the entry cover in one pass with no replay or save duplication');
+  assert.deepEqual(liveSignature(s), expected, 'every original saved position and material reappears exactly once');
+  assert.deepEqual(stores(s), stock, 'arrival never draws from or creates silo stock');
+  assert.equal(s.bathArrival, null, 'finished cosmetic state expires');
+  assert.equal(s.bathArrivalVisibleWater(1621), 1621);
+  console.log('PASS saved liquid rebuilds visibly over many frames after fade, preserving positions, identity and quantity');
 }
 
 {
-  const s = fixture(); seedBath(s, 0, 0, 8105); s.LIQUID_MAX_PARTICLES = 6000;
-  s.bathMode = true; s.bathFading = true; s.mineralLiquidTick(0);
-  assert.equal(s.liquidCount, 5488, 'entry restoration still respects the solver reserve');
-  assert.equal(s.liquidCount + parkedCount(s), 8105, 'capacity-limited restoration leaves excess safely parked');
-  s.mineralLiquidTick(0);
-  assert.equal(s.liquidCount, 5488); assert.equal(s.liquidCount + parkedCount(s), 8105);
-  console.log('PASS entry restoration respects capacity and preserves excess parked water');
+  const s = fixture(); seedReveal(s, 8105); begin(s); s.bathFading = false;
+  run(s, 28); assert(s.liquidCount > 0 && parkedCount(s) > 0);
+  const removed = s.mineralLiquidParkedExtractRect(768, 19456, 1600, 19712, 2, 137);
+  assert.equal(removed, 137);
+  const expected = liquidSignature(s);
+  run(s, 210);
+  assert.equal(s.liquidCount, 8105 - removed); assert.equal(parkedCount(s), 0);
+  assert.deepEqual(liveSignature(s), expected, 'consumed parked particles cannot return from a stale reveal queue');
+  console.log('PASS evaporation or extraction during reveal cannot resurrect consumed parked liquid');
+}
+
+{
+  const s = fixture(); seedReveal(s, 8105); begin(s); s.bathFading = false; run(s, 35);
+  const before = snapshot(s), live = liveSignature(s), arrival = copy(s.bathArrival);
+  s.gamePaused = true; run(s, 90);
+  assert.deepEqual(snapshot(s), before); assert.deepEqual(liveSignature(s), live);
+  assert.deepEqual(copy(s.bathArrival), arrival, 'paused time cannot advance the wavefront');
+  s.gamePaused = false; run(s, 210);
+  assert.equal(s.liquidCount, 8105); assert.equal(parkedCount(s), 0);
+  console.log('PASS pause freezes restoration and resume continues without lost or duplicated liquid');
+}
+
+{
+  const s = fixture(); seedReveal(s, 8105); s.LIQUID_MAX_PARTICLES = 6000;
+  const expected = liquidSignature(s);
+  begin(s); s.bathFading = false; run(s, 240);
+  assert.equal(s.liquidCount, 5488, 'restoration retains the solver reserve');
+  assert.equal(parkedCount(s), 2617); assert(s.bathArrival[0].remaining > 0);
+  const held = copy(s.bathArrival); run(s, 90);
+  assert.deepEqual(copy(s.bathArrival), held, 'the reveal waits when there is no particle capacity');
+  s.LIQUID_MAX_PARTICLES = 20000; run(s, 240);
+  assert.equal(s.liquidCount, 8105); assert.equal(parkedCount(s), 0);
+  assert.deepEqual(liveSignature(s), expected);
+  console.log('PASS capacity pressure preserves pending liquid and retries when space becomes available');
+}
+
+{
+  const s = fixture(); seedReveal(s, 2000);
+  const expected = liquidSignature(s), add = s.addLiquidParticle;
+  begin(s); s.bathFading = false;
+  s.addLiquidParticle = () => -1; run(s, 180);
+  assert.equal(s.liquidCount, 0); assert.equal(parkedCount(s), 2000);
+  s.addLiquidParticle = add; run(s, 210);
+  assert.deepEqual(liveSignature(s), expected);
+  console.log('PASS a rejected solver insertion retains the exact pending parcel for a later retry');
+}
+
+{
+  const s = fixture(); seedReveal(s, 8105);
+  const expected = liquidSignature(s);
+  begin(s); s.bathFading = false; run(s, 35);
+  assert(s.liquidCount > 0 && parkedCount(s) > 0);
+  // Mirror the exit callback. A fast reentry can still have active bath water.
+  s.bathMode = false; s.bathArrivalReset();
+  assert.deepEqual(liquidSignature(s), expected);
+  begin(s);
+  assert.equal(s.liquidCount, 0, 'reentry reparks previously active bath water');
+  assert.equal(parkedCount(s), 8105); run(s, 20); assert.equal(s.liquidCount, 0);
+  s.bathFading = false; run(s, 210);
+  assert.deepEqual(liveSignature(s), expected);
+  console.log('PASS leaving and immediately reentering midway preserves all pending and live water');
+}
+
+{
+  const s = fixture(); seedReveal(s, 8105); s.bathThermal.meanC = 39;
+  s.bathSiloPut(0, 0, 300, 23);
+  const expected = liquidSignature(s);
+  begin(s); s.bathFading = false; run(s, 35);
+  assert(s.liquidCount > 0 && parkedCount(s) > 0);
+  const saved = snapshot(s), reloaded = fixture();
+  assert.equal(restore(reloaded, saved), 0);
+  assert.equal(reloaded.bathArrival, null, 'loading discards only transient visual state');
+  assert.equal(parkedCount(reloaded), 8105); assert.equal(reloaded.liquidCount, 0);
+  assert.equal(reloaded.bathThermal.meanC, 39); assert.deepEqual(stores(reloaded), stores(s));
+  begin(reloaded); reloaded.bathFading = false; run(reloaded, 210);
+  assert.deepEqual(liveSignature(reloaded), expected);
+  assert.deepEqual(stores(reloaded), stores(s));
+  console.log('PASS saving halfway through captures each parcel once and a reload reveals that same water');
+}
+
+{
+  const s = fixture(); s.bathSiloPut(0, 0, 900, 35);
+  const before = snapshot(s);
+  begin(s); assert.equal(s.bathArrival, null); s.bathFading = false; run(s, 210);
+  assert.equal(s.liquidCount, 0); assert.equal(parkedCount(s), 0);
+  assert.deepEqual(snapshot(s), before, 'a dry tub and its stored silo stock stay untouched');
+  console.log('PASS dry tubs remain dry without draining their silos');
+}
+
+{
+  const s = fixture(); seedReveal(s, 4000); seedReveal(s, 2000, 1);
+  s.bathFloorsOwned[1] = true;
+  const expected = liquidSignature(s);
+  begin(s); s.bathFading = false; run(s, 210);
+  assert.equal(s.liquidCount, 4000); assert.equal(parkedCount(s), 2000);
+  assert.equal(s.bathArrival.length, 1); assert.equal(s.bathArrival[0].floor, 1);
+  assert.equal(s.bathArrival[0].age, 0, 'hidden upper floor does not reveal off camera');
+  // Scroll so the upper floor is visible and the main basin is out of residency.
+  s.cam.y = 18900; s.screenH = s.viewH = 400;
+  run(s, 210);
+  assert.equal(s.liquidCount, 2000); assert.equal(parkedCount(s), 4000);
+  assert.deepEqual(liquidSignature(s), expected, 'scrolling preserves both rooms and restores only the visible one');
+  console.log('PASS invisible upper floors remain parked until their room becomes visible');
+}
+
+{
+  const s = fixture(); seedReveal(s, 1000, 1);
+  begin(s); s.bathFading = false;
+  const r = s.bathArrival[0]; r.emitted = 1;
+  // A hidden room must not scan every live particle to draw a clipped reflection.
+  s.bathArrivalSurface = () => { throw new Error('sampled an offscreen reflection'); };
+  s.bathArrivalDraw({});
+  r.remaining = 0;
+  for (let i = 0; i < 50; i++) s.bathArrivalTick(1 / 60);
+  assert.equal(s.bathArrival, null, 'completed reflections retire even after scrolling away');
+  console.log('PASS offscreen reflections skip particle scans and expire without revisiting the room');
 }

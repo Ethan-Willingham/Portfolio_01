@@ -5,6 +5,7 @@
   var mineralLiquidParked = {};
   var mineralLiquidClock = 0;
   function mineralLiquidReset() {
+    if (typeof bathArrivalReset === 'function') bathArrivalReset();
     mineralDeposits = [];
     mineralLiquidParked = {};
     mineralLiquidClock = 0;
@@ -79,9 +80,9 @@
     return removed;
   }
   function mineralLiquidTick(dt) {
-    var enteringBath = bathMode && bathFading;
+    if (typeof bathArrivalTick === 'function') bathArrivalTick(dt);
     mineralLiquidClock -= dt;
-    if (mineralLiquidClock > 0 && !enteringBath) return;
+    if (mineralLiquidClock > 0) return;
     mineralLiquidClock = 0.35;
     var margin = 240;
     var x0 = cam.x - margin, x1 = cam.x + viewW / worldScale + margin;
@@ -94,9 +95,7 @@
       mineralLiquidPark(liquidType[i], x, y);
       removeLiquidParticle(i);
     }
-    // Restore a saved bath under its entry cover. The outdoor streaming
-    // throttle otherwise makes an existing tub visibly fill itself in batches.
-    var budget = Math.min(enteringBath ? LIQUID_MAX_PARTICLES : 3600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 512));
+    var budget = Math.min(3600, Math.max(0, LIQUID_MAX_PARTICLES - liquidCount - 512));
     for (var bx = Math.floor(x0 / 256); bx <= Math.floor(x1 / 256) && budget > 0; bx++) {
       for (var by = Math.floor(y0 / 256); by <= Math.floor(y1 / 256) && budget > 0; by++) {
         var key = bx + ':' + by, data = mineralLiquidParked[key];
@@ -111,6 +110,7 @@
             data.length -= 3; continue;
           }
           if (px < x0 || px > x1 || py < y0 || py > y1) continue;
+          if (bathMode && typeof bathArrivalHolds === 'function' && bathArrivalHolds(px, py)) continue;
           if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
           var end = data.length - 3;
           data[j] = data[end]; data[j + 1] = data[end + 1]; data[j + 2] = data[end + 2];

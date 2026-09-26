@@ -376,10 +376,12 @@
         bathArmHeat();
         siphonStop();
         bathCamPin();
+        bathArrivalBegin();
         mineralLiquidTick(0);
       } else {
         hearthCancelDrag(); hearthClearBoilerHover();
         bathMode = false;
+        bathArrivalReset();
         bathScalePop();
         bathSteamPop();
         bathGuestColliders.length = 0;   // no stale fluid boundaries outside
@@ -1207,6 +1209,7 @@
     try {
       if (uiFg) ctx = uiFg;
       ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
+      bathArrivalDraw(ctx);
       bathDrawGuests();
       if (typeof bathThermalDraw === 'function') bathThermalDraw(ctx);
       hearthButtons = [];

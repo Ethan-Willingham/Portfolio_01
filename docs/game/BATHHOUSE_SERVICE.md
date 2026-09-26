@@ -101,8 +101,12 @@ Bath save v7 moves liquid from older tubs into the silos once because older
 saves do not identify automatic fills separately from manual hose pours.
 Amounts, liquid identities and stored heat are retained; full silos keep the
 excess in the existing reserved supply. New hose-filled baths persist normally,
-with parked water restored under the entry fade instead of visibly appearing
-in batches after entry. The normal outdoor streaming budget is unchanged.
+with saved liquid visibly returning after the entry fade. A roughly two-second
+ripple grows from the bottom and center of the tub, followed by a brief reflective
+crest and falling beads. Real particles return at their saved coordinates each
+frame and settle in the shared solver. Pending drops stay in the parked store,
+so saving, leaving, evaporation and full particle budgets cannot duplicate them.
+Empty tubs have no arrival effect. The normal outdoor streaming budget is unchanged.
 
 ## Ceiling claw and hose (v28.73)
 

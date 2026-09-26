@@ -52,13 +52,37 @@ export async function savedBathEntry({ fixture, game, ev, send, sleep, check, sc
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;setDevMode(false);bathEnter();');
   await sleep(300);
-  check('saved water restores before entry fade completes', await game('bathMode&&bathFading&&bathBasinCount()')===poured && await game('(function(){var F=BATH_FLOORS[0],t=F.tubs[0];return mineralLiquidParkedSampleRect(t[0]*TILE,(F.fr-F.lip-1)*TILE,(t[1]+1)*TILE,(F.fr+F.sink+1)*TILE)[0];})()')===0);
+  const pendingWater = () => game('(function(){var F=BATH_FLOORS[0],t=F.tubs[0];return mineralLiquidParkedSampleRect(t[0]*TILE,(F.fr-F.lip-1)*TILE,(t[1]+1)*TILE,(F.fr+F.sink+1)*TILE)[0];})()');
+  check('saved water waits until the room is visible', await game('bathMode&&bathFading&&bathBasinCount()')===poured && await pendingWater()===poured);
   await sleep(250);
-  await game('for(var i=0;i<120;i++){mineralLiquidTick(1/60);bathOperationsTick(1/60);bathToolTick(1/60);}updateLiquids(1/60);render();');
+  let previousPending=poured, intermediate=false;
+  for (let frame=1;frame<=180;frame++) {
+    await game('liquidToolSync();mineralLiquidTick(1/60);bathOperationsTick(1/60);bathToolTick(1/60);updateLiquids(1/60);render();');
+    await game('liquidWGPU.device.queue.onSubmittedWorkDone()');
+    const pending=await pendingWater();
+    checkQuiet(pending<=previousPending, 'pending saved water only decreases');
+    if (pending>0&&pending<poured) intermediate=true;
+    previousPending=pending;
+    if ([18,42,72,108,144,180].includes(frame)) await screenshot(`water-return-${frame}`);
+  }
+  check('saved water visibly reconstructs over many frames',intermediate && previousPending===0);
+  check('arrival reflections retire after the water returns', await game('bathArrival===null'));
   check('reentry adds no extra water and closes the hose', await game('!bathFading&&!bathTool.valve&&!bathTool.spraying&&bathBasinCount()')===poured && JSON.stringify(await storage())===JSON.stringify(afterPour));
+  await game('lastTime=performance.now();gameRafId=requestAnimationFrame(loop);');
+  await sleep(1500);
+  const settledFps=await game('perfFps');
+  await game('bathArrivalBegin();');
+  await sleep(1100);
+  check('normal game loop shows the arrival in progress',await game('!!bathArrival&&bathArrival.some(r=>r.emitted>0&&r.remaining>0)'));
+  console.log('ARRIVAL_FPS', {settled:settledFps,restoring:await game('perfFps')});
+  await screenshot('water-return-live');
+  await sleep(2200);
+  check('normal game loop finishes the reveal without extra water',await game('bathArrival===null&&bathBasinCount()')===poured);
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;');
   for (const [width,height] of [[1280,900],[667,375],[320,568]]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<1000});
     await sleep(150);await game('resize();bathCamY=-1;updateCamera();updateLiquids(1/60);render();');
     await screenshot(`saved-bath-hud-${width}x${height}`);
   }
 }
+function checkQuiet(condition, label) { if (!condition) throw new Error(label); }

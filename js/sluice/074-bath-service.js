@@ -17,6 +17,7 @@
   var bathIntroSeen = false;
 
   function bathServiceReset() {
+    if (typeof bathArrivalReset === 'function') bathArrivalReset();
     bathToolReset();
     bathThermalReset(); bathSiloReset();
     bathScalePop(); bathSteamPop();
@@ -65,6 +66,7 @@
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     // Invert the same curved cavity that now collides with the water.
     // This also gives parked/offscreen guests the same buoyancy level.
+    var visibleWater = typeof bathArrivalVisibleWater === 'function' ? bathArrivalVisibleWater(bathWater) : bathWater;
     var low = curve.y0, high = curve.y0 + curve.D;
     for (var n = 0; n < 10; n++) {
       var line = (low + high) * 0.5, volume = 0;
@@ -72,7 +74,7 @@
         var floorY = curve.y0+curve.depthAt(x)-3;
         volume += Math.max(0, floorY - line) * 8 / 1.5625;
       }
-      if (volume > bathWater) low = line; else high = line;
+      if (volume > visibleWater) low = line; else high = line;
     }
     return (low + high) * 0.5;
   }
@@ -426,6 +428,7 @@
       }) };
   }
   function bathServiceRestore(data) {
+    if (typeof bathArrivalReset === 'function') bathArrivalReset();
     bathToolReset();
     bathThermalReset(); bathSiloReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
