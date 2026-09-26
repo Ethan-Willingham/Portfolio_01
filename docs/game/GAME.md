@@ -22,17 +22,14 @@ normal playthrough (see `BALANCE.md`).
 **Bathhouse and fire room (v28.13):** sky slimes land, meander to the banya,
 wait, soak in warm water, pay, and become soft surface residents. Five friendly
 residents spawn around the starting town for playtesting; drag and toss them,
-push them with the rig, or use the jets. The soft residents use passive elastic
-material: pushing, falling, squeezing,
-spinning, and stretching determine their motion. Their former timed crawling
-poses and terrain grips have been removed. Viscosity preserves translation and
-rotation while damping deformation, and releasing a grip preserves the gel's
-actual velocities. The eye remains curious and responds to acceleration.
-See [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for the material contract.
-Rig landings compress the actual gel mesh through shared skin contacts, with
-local volume preservation and elastic recovery. See
-[SLIME_LANDINGS.md](SLIME_LANDINGS.md) for the contact model and tests.
-Rocky visitors are capped at two outside
+push them with the rig, or use the jets. Travelling skin waves propel their soft
+bodies across terrain and up walls and ledges. They crawl slowly toward nearby
+destinations, with gradual starts, turns and overlapping wall grips. A continuous
+body wave and interpolation between physics ticks keep the outline fluid.
+They sense unsupported edges and turn before pits. A single googly eye follows each
+body, which finds a new underside after rolling and varies its pace and stride.
+Grabs and impacts break their grip. This is the restored pre-v28.75 baseline;
+see [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for the rollback and findings. Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
 an integrated boiler beneath the basin. Since v28.74, the firebox, fuel bunker,
@@ -205,7 +202,7 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `165-render-trees.js` / `166-render-surface-boulders.js` | open woodland and scattered surface stones, derived from supporting terrain |
 | `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary white heron |
 | `340-jello.js` | slime soft bodies, continuous gel rendering, and the topology-independent actor-intent seam |
-| `347-slime-material.js` / `347-surface-slimes.js` / `349-slime-touch.js` | bath-born gel residents, momentum-preserving viscosity, physical support, googly eyes, mouse/touch grip, rock contacts, and saves |
+| `347-slime-locomotion.js` / `347-surface-slimes.js` / `349-slime-touch.js` | bath-born gel residents, muscle waves, breakable wall grips, roll-relative posture, googly eyes, mouse/touch grip, rock contacts, and saves |
 | `348-sky-slimes.js` | clay meteor arrivals, elastic rebounds, eye animation, capture, and persistence |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |

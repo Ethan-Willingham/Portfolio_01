@@ -20,10 +20,10 @@
       var ax = 0, ay = 0;
       for (k = 0; k < b.n; k++) { weights[k] /= total; ax += b.px[k] * weights[k]; ay += b.py[k] * weights[k]; }
       surfaceSlimeGrip = { body: b, id: id, weights: weights, x: wx, y: wy,
-        dx: ax - wx, dy: ay - wy };
-      surfaceSlimeDisturb(b);
+        dx: ax - wx, dy: ay - wy, vx: 0, vy: 0, t: performance.now(), motion: 0 };
+      surfaceSlimeDetach(b);
       b._grabbed = true; b._recoverT = 0; b.sleeping = false; b.sleepFrames = 0;
-      jelloClearActorIntent(b); b.surfaceSlime.state = 'held';
+      jelloClearActorIntent(b); b.surfaceSlime.state = 'tumble';
       return true;
     }
     return false;
@@ -32,7 +32,12 @@
   function surfaceSlimeGrabMove(wx, wy, id) {
     var g = surfaceSlimeGrip;
     if (!g || id !== g.id) return false;
-    g.x = wx; g.y = wy;
+    var now = performance.now(), dt = Math.max(0.008, (now - g.t) / 1000);
+    var gain = 1 - Math.exp(-dt / 0.035);
+    g.vx += ((wx - g.x) / dt - g.vx) * gain;
+    g.vy += ((wy - g.y) / dt - g.vy) * gain;
+    if (Math.hypot(wx - g.x, wy - g.y) > 0.5) g.motion = now;
+    g.x = wx; g.y = wy; g.t = now;
     return true;
   }
 
@@ -41,9 +46,9 @@
     if (!g || (id !== undefined && id !== g.id)) return false;
     var b = g.body;
     b._grabbed = false; b._grabApplied = 0; b._recoverT = 1.2;
-    // The hand has already accelerated the actual material. Keep those
-    // per-point velocities on release, including rotation and stretch.
-    // _recoverT retains swept terrain protection, not a rest-pose animation.
+    if (!cancel && performance.now() - g.motion < 100 && Math.hypot(g.vx, g.vy) > 50) {
+      jelloLaunchBody(b, g.vx * 0.7, g.vy * 0.7, { h: jelloStepH || JELLO_H, maxSpeed: 450 });
+    }
     b._plyMs = performance.now(); surfaceSlimeGrip = null;
     return true;
   }
@@ -101,7 +106,7 @@
         var dv = impulse / gelMass * b.n * weights[p] / sum;
         b.ox[p] += nx * dv * step; b.oy[p] += ny * dv * step;
       }
-      surfaceSlimeDisturb(b);
+      surfaceSlimeDetach(b, 0.9);
       b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now();
       skySlimePlayContact(s);
     }

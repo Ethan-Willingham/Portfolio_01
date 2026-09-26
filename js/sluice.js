@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.90';
+  var GAME_VERSION = 'v28.92';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -18684,7 +18684,6 @@
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
   function update(dt) {
-    surfaceRigFrame = null;
     player.jetForce = 0; // no stale exhaust pressure when an early return freezes the rig
     if (gameOver || gameWon || shopOpen || ledgerOpen || cargoManifestOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
@@ -19505,7 +19504,6 @@
     }
 
     // Move Y
-    var renderMoveStartY = player.y;
     var glideOwnsY = player.drillGlideT > 0 &&
                      (player.drillGlideDir === 'u' || player.drillGlideDir === 'd');
     if (glideOwnsY) {
@@ -19520,9 +19518,7 @@
     // (No upward clamp — players can fly as high as they want. The world
     //  above the surface is open sky.)
     var capRestY = chimneyCapCatch(player.x, player.y, ny);
-    if (surfaceSlimeRigBegin(dt, ny, flyTune.gravity * gravScale)) {
-      // Vertical integration continues with the resident mesh in updateJello.
-    } else if (capRestY !== null) {
+    if (capRestY !== null) {
       // Perch on the surface fireplace chimney cap (one-way landing ledge).
       player.y = capRestY;
       recordLandingImpact(player.vy, capRestY + PLAYER_H, 'ledge', 0);
@@ -19764,11 +19760,7 @@
     }
 
     // ----- Render-position smoothing -----
-    // Follow continuous vertical travel directly. Only correction error is
-    // smoothed, so entering/leaving the late gel solve cannot change visual
-    // speed or make the rig hit the skin before its drawing reaches it.
-    player.renderY += player.y - renderMoveStartY;
-    // Horizontal travel and residual corrections use a quick exponential lerp.
+    // Sprite trails the logical position with a quick exponential lerp.
     // Corner-correction snaps (3-8px) become visually smooth — the rig
     // catches up over ~5 frames instead of teleporting. Big deltas
     // (respawn, rover dismount, etc.) snap directly so the sprite doesn't
@@ -20030,6 +20022,7 @@
     if (cam.x < 0) cam.x = 0;
     if (cam.x > COLS * TILE - screenW) cam.x = COLS * TILE - screenW;
   }
+
   // ====== COMBAT ======
   // First combat slice (EXPANSION_PLAN P3 + a slice of P4): enemy ground
   // turrets that sit in the No Man's Zones, plus a DEFAULT auto-turret mounted
@@ -62326,7 +62319,6 @@
                                       // (see jelloRippleFrame). Real impacts die in <1.5 s; only a
                                       // pathological re-arm loop (rig parked on gel, settling pile)
                                       // ever reaches this. Jet churn resets the clock by design.
-  var surfaceRigFrame = null; // optional resident contact, absent in the standalone toy
   var jelloStepH            = JELLO_H; // current sim substep h (set each frame in updateJello) — converts
                                        // per-substep Verlet velocities to real px/s at injection sites.
 
@@ -62345,8 +62337,6 @@
 
   // ----- Reset -----
   function resetJello() {
-    surfaceRigFrame = null;
-    if (player) player._surfaceRigSupported = false;
     if (typeof surfaceSlimeGrabEnd === 'function') surfaceSlimeGrabEnd(undefined, true);
     jelloBodies.length = 0;
     jelloSplats.length = 0;
@@ -62466,7 +62456,7 @@
   }
 
   function jelloActuateBody(b, h) {
-    if (b.surfaceSlime) return;
+    if (b.surfaceSlime) { surfaceSlimeMuscleStep(b, h); return; }
     var a = b.actor;
     if (!a || !a.enabled || b._carried || !(h > 0)) return;
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
@@ -62542,7 +62532,7 @@
     }
     b._launchVMax = maxPointSpeed / ts;
     b._launchHit = false;
-    if (b.surfaceSlime) surfaceSlimeDisturb(b);
+    if (b.surfaceSlime) surfaceSlimeDetach(b);
     b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     b._plyMs = performance.now();
     return { vx: vx, vy: vy, speed: speed, omega: omega };
@@ -63486,9 +63476,8 @@
 
   // One shape-matching pass: pull points toward goal = T * q + currentCentroid.
   function jelloShapeMatch(b, stiff) {
-    if (b.surfaceSlime) stiff *= 0.20;
-    if (b.surfaceSlime) stiff = 1 - Math.pow(1 - stiff,
-      jelloStepH / (JELLO_H * jelloImpulseScale()));
+    var muscleBlend = b.surfaceSlime ? b.surfaceSlime.motorBlend || 0 : 0;
+    if (b.surfaceSlime) stiff *= 0.14 + 1.16 * muscleBlend;
     // A degenerate / thin / tiny cluster (b.rigidOnly, set by jelloComputeRest when the rest
     // shape is near-colinear) has an ILL-CONDITIONED best-fit rotation: the polar decomposition
     // R jitters frame to frame, and a full-strength pull toward that spinning goal injects
@@ -63550,6 +63539,10 @@
       var pqx = qx[i] * poseSX, pqy = qy[i] * poseSY;
       var gx = T00 * pqx + T01 * pqy + cx;
       var gy = T10 * pqx + T11 * pqy + cy;
+      if (muscleBlend > 0) {
+        gx += (cx + b.muscleX[i] - gx) * muscleBlend;
+        gy += (cy + b.muscleY[i] - gy) * muscleBlend;
+      }
       px[i] += (gx - px[i]) * stiff;
       py[i] += (gy - py[i]) * stiff;
     }
@@ -63695,7 +63688,7 @@
       for (k = 0; k < G; k++) { var r2 = botRow + 1; if (tileAt(r2, col) === null && tileAt(r2, col - 1) !== null && tileAt(r2, col + 1) !== null) botRow = r2; else break; }
       var topOpen = tileAt(topRow - 1, col) === null;   // open space just above the channel top?
       var botOpen = tileAt(botRow + 1, col) === null;
-      // Resident gel uses contact and gravity in an open shaft. The
+      // Living gel uses real wall grips and gravity in an open shaft. The
       // legacy cube eject below pulls each entering node toward the bottom,
       // which launches an exploring resident down the pit a tile per frame.
       // Keep ordinary terrain contacts, including falls after a player shove.
@@ -63920,7 +63913,6 @@
       doneMask |= (1 << best);
       if (best === 0) {                 // push up
         if (tileAt(row - 1, col) === null) {
-          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, x, top - 0.01, 0, -1, y - top + 0.01, vx, vy, h || JELLO_H); return; }
           y = top - 0.01; oy[i] = y + vy * ((vy > minB || vy < -minB) ? JELLO_BOUNCE : 0);
           // STATIC friction below the rest threshold: the tangential component is cut to
           // JELLO_STATIC_CREEP (geometric decay per substep — reads as a dead stop, but a
@@ -63935,7 +63927,6 @@
         }
       } else if (best === 1) {          // push down
         if (tileAt(row + 1, col) === null) {
-          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, x, bot + 0.01, 0, 1, bot + 0.01 - y, vx, vy, h || JELLO_H); return; }
           y = bot + 0.01; oy[i] = y + vy * ((vy > minB || vy < -minB) ? JELLO_BOUNCE : 0);
           ox[i] = x - vx * ((vx > minB || vx < -minB) ? JELLO_FLOOR_FRICTION : JELLO_STATIC_CREEP);
           jelloRippleHit(b, b.ringPos ? b.ringPos[i] : -1, (vy < 0 ? -vy : vy) / jelloStepH * JELLO_TIMESCALE, 0.8, 0.06);
@@ -63943,7 +63934,6 @@
         }
       } else if (best === 2) {          // push left
         if (tileAt(row, col - 1) === null) {
-          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, left - 0.01, y, -1, 0, x - left + 0.01, vx, vy, h || JELLO_H); return; }
           x = left - 0.01; ox[i] = x + vx * ((vx > minB || vx < -minB) ? JELLO_BOUNCE : 0);
           oy[i] = y - vy * ((vy > minB || vy < -minB) ? JELLO_WALL_FRICTION : JELLO_STATIC_CREEP);
           jelloRippleHit(b, b.ringPos ? b.ringPos[i] : -1, (vx < 0 ? -vx : vx) / jelloStepH * JELLO_TIMESCALE, 0.8, 0.06);
@@ -63951,7 +63941,6 @@
         }
       } else {                          // push right
         if (tileAt(row, col + 1) === null) {
-          if (b.surfaceSlime) { surfaceSlimeTerrainContact(b, i, right + 0.01, y, 1, 0, right + 0.01 - x, vx, vy, h || JELLO_H); return; }
           x = right + 0.01; ox[i] = x + vx * ((vx > minB || vx < -minB) ? JELLO_BOUNCE : 0);
           oy[i] = y - vy * ((vy > minB || vy < -minB) ? JELLO_WALL_FRICTION : JELLO_STATIC_CREEP);
           jelloRippleHit(b, b.ringPos ? b.ringPos[i] : -1, (vx < 0 ? -vx : vx) / jelloStepH * JELLO_TIMESCALE, 0.8, 0.06);
@@ -64029,7 +64018,7 @@
   // Player -> jello coupling (per substep): push points the rig overlaps,
   // traction on the sides, track-shear on the top surface, jet cone push-down.
   function jelloPlayerCouple(b, dt) {
-    if (!player || gameWon || gameOver || (b.surfaceSlime && surfaceSlimeRigOwns(b))) return;
+    if (!player || gameWon || gameOver) return;
     var px0 = player.x, px1 = player.x + PLAYER_W;
     var py0 = player.y, py1 = player.y + PLAYER_H;
     var pcx = px0 + PLAYER_W * 0.5, pcy = py0 + PLAYER_H * 0.5;
@@ -64190,7 +64179,7 @@
       if (typeof slimeAudioJet === 'function') slimeAudioJet(b, jetBX, jetBY, jetBestF);
     }
     if (disturbed) {
-      if (b.surfaceSlime) surfaceSlimeDisturb(b);
+      if (b.surfaceSlime && b.surfaceSlime.climb && (Math.hypot(vx, vy) > 35 || jetBestF > 0.03)) surfaceSlimeDetach(b);
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
       if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
     }
@@ -64210,16 +64199,11 @@
   // JELLO_TIMESCALE + JELLO_H into the Verlet prev-position shift; the
   // integrator's JELLO_VMAX clamp is the hard ceiling.
   function jelloPlayerFling(b, frameDt) {
-    if (!player || gameWon || gameOver || drilling || (b.surfaceSlime && surfaceSlimeRigOwns(b))) return;
+    if (!player || gameWon || gameOver || drilling) return;
     var vx = player.vx || 0, vy = player.vy || 0;
-    // Normal ground speed reaches FLING_MIN. A resident's soft, pressurized
-    // skin turns that lofted impulse into a hop on every renewed side contact.
-    // Driving loads it horizontally and gradually, at every ground speed.
-    var drivePush = !!b.surfaceSlime && player.onGround && !player.thrusting && Math.abs(vy) < 60;
-    if (drivePush) vy = 0;
     var sp = Math.sqrt(vx * vx + vy * vy);
     if (sp < JELLO_PUSH_MIN) return;
-    var fling = !drivePush && sp >= JELLO_FLING_MIN;
+    var fling = sp >= JELLO_FLING_MIN;
     if (fling) {
       if (JELLO_FLING <= 0) return;
       // Don't fling while riding on top. onJello flickers true/false every frame on a
@@ -64250,7 +64234,6 @@
       }
     }
     if (!touching) return;
-    if (drivePush) surfaceSlimeDisturb(b);
     // Stamp freshness only while the rig is actually MOVING (v25.31 perf): a
     // rig PARKED against a pile re-stamped every touching body every frame,
     // the chain propagated it pile-wide, and the perpetual freshness disabled
@@ -64304,7 +64287,7 @@
     // velocity, so a rammed body TUMBLES off ("rolls") instead of skating off.
     // |dirx|-scaled: a straight-down dive keeps the v24.94 uniform punch. The push
     // tier takes a quarter of it — a readable forward LEAN while bulldozing.
-    var spinS = drivePush ? 0 : (fling ? JELLO_FLING_SPIN : JELLO_FLING_SPIN * 0.25) * (dirx < 0 ? -dirx : dirx);
+    var spinS = (fling ? JELLO_FLING_SPIN : JELLO_FLING_SPIN * 0.25) * (dirx < 0 ? -dirx : dirx);
     if (spinS > 0.01) {
       var fpy2 = b.py, fT = b.bboxT, fH = b.bboxB - fT;
       if (fH > 4) {
@@ -64489,7 +64472,6 @@
     // see the function banner; falls back to the old instantaneous gate if the
     // frame snapshot is missing).
     var stillSq = fpx ? maxFsq * 3600 : maxVsq;
-    if (b.surfaceSlime && fpx && b._frameDt > 0) stillSq = maxFsq / (b._frameDt * b._frameDt);
     // _forceSleep (v25.28): the CHRONIC-fold endpoint. A deep confined fold's
     // constraint fight re-injects motion DURING every solve, so neither the
     // becalm nor any velocity bleed can ever bring stillSq under the bar — the
@@ -64498,10 +64480,9 @@
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
     if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !b._carried &&
-          !(b.actor && b.actor.enabled) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
+          !(b.actor && b.actor.enabled) && !(b.surfaceSlime && b.surfaceSlime.drive) && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle, carry, actuation, or recovery
       b.sleepFrames++;
-      if (b.surfaceSlime) b.surfaceSlime.restTime = (b.surfaceSlime.restTime || 0) + (b._frameDt || 0);
-      if ((b.surfaceSlime ? b.surfaceSlime.restTime > 0.8 : b.sleepFrames > JELLO_SLEEP_FRAMES) || b._forceSleep) {
+      if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
         b._forceSleep = false;
         // Sleep = the "visually still" contract: present the TRUE resting ring. A body
         // that dozes off mid-ring would freeze a wavy outline indefinitely (and a frozen
@@ -64514,7 +64495,6 @@
       }
     } else {
       b.sleepFrames = 0;
-      if (b.surfaceSlime) b.surfaceSlime.restTime = 0;
       b.sleeping = false;
     }
   }
@@ -64589,7 +64569,6 @@
     var probeY = 1e9, bestVX = 0, bestVY = 0, found = false;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
-      if (b.surfaceSlime) continue;
       if (b.bboxR < fpL || b.bboxL > fpR) continue;   // no part of this body under the rig
       if (b.bboxB < yLo || b.bboxT > yHi) continue;
       // PER-BODY ADAPTIVE probe line (v24.144): the rig centre clamped into this
@@ -64682,7 +64661,6 @@
     var reach = halfW + wall;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
-      if (b.surfaceSlime) continue;
       if (b.bboxR < cx - reach || b.bboxL > cx + reach) continue;
       if (b.bboxT > feetY + TILE) continue;        // body top must be near the feet (rig on top)
       // ...and the body must reach DOWN to the feet — the rig can only rest ON
@@ -64893,7 +64871,6 @@
       var bestD2 = 0, bnx = 0, bny = 0, found = false;
       for (var bi = 0; bi < jelloBodies.length; bi++) {
         var b = jelloBodies[bi];
-        if (b.surfaceSlime && surfaceSlimeRigOwns(b)) continue;
         if (b.ringN < 3) continue;
         if (b.bboxR <= px0 || b.bboxL >= px1 || b.bboxB <= py0 || b.bboxT >= py1) continue;
         for (var e = 0; e < 4; e++) {
@@ -64925,11 +64902,7 @@
       if (!found) break;                              // no sample inside any ring -> fully contained
       var d = Math.sqrt(bestD2); if (d < 1e-3) d = 1;
       var nx = bnx / d, ny = bny / d;
-      // A departing resident can still graze the outside corner of a track
-      // after the inset landing samples lose it. Keep that last side graze
-      // horizontal; hard vertical ejection must not interrupt the soft exit.
-      var softExit = hitBody && hitBody.surfaceSlime && hitBody._rigRenderT > 0 && player.y < hitBody.cy;
-      if (_onTop || _onSolid || softExit) ny = 0;
+      if (_onTop || _onSolid) ny = 0;                  // grounded: eject HORIZONTALLY only (ground probe / floor own vertical)
       nxL = nx; nyL = ny;
       if (d > deepest) deepest = d;
       var corr = d + MARGIN;
@@ -65382,7 +65355,6 @@
     var seatY = y1 - (JELLO_RIDE_SINK + 6);      // seated bed-in band: never touched
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
-      if (b.surfaceSlime && surfaceSlimeRigOwns(b)) continue;
       if (b.frozen) continue;
       if (b.bboxR < x0 || b.bboxL > x1 || b.bboxB < y0 || b.bboxT > y1) continue;
       // ONE exit side per BODY, the side its centroid already favors (normalized by
@@ -65625,16 +65597,6 @@
   // once-per-frame pass that fights the solver. h is the substep dt (JELLO_H/K).
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
-    // Variable contact steps preserve velocity when entering/leaving a landing.
-    var oldH = b._stepH || (JELLO_H * jelloImpulseScale());
-    if (Math.abs(oldH - h) > 1e-10) {
-      var hScale = h / oldH;
-      for (var vi = 0; vi < b.n; vi++) {
-        b.ox[vi] = b.px[vi] - (b.px[vi] - b.ox[vi]) * hScale;
-        b.oy[vi] = b.py[vi] - (b.py[vi] - b.oy[vi]) * hScale;
-      }
-    }
-    b._stepH = h;
     var resilienceGuard = jelloResilienceStepBegin(b);
     jelloActuateBody(b, h);
     jelloIntegrate(b, h);
@@ -65642,33 +65604,26 @@
     // Surface residents install the same compliant grip for mouse and touch.
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
+    if (b.surfaceSlime) surfaceSlimeAdhesionStep(b, h);
     if (m === 'pbd') {
-      if (b.surfaceSlime) jelloResetLambdas(b);
       for (var it = 0; it < JELLO_ITERS; it++) {
         jelloSolveSprings(b);
         jelloPressure(b);
-        if (b.surfaceSlime) surfaceSlimeSolveCells(b, h);
         jelloShapeMatch(b, JELLO_SHAPE_STIFF);
         jelloStrainLimit(b);
         jelloLimitOrientation(b);
-        if (b.surfaceSlime && it === JELLO_ITERS - 1) surfaceSlimeDampMotion(b, h);
         for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
         jelloCollideRingEdges(b);
       }
     } else {
       jelloResetLambdas(b);
       if (m === 'fem') jelloSolveFEM(b, h); else jelloSolveXPBD(b, h);
-      if (b.surfaceSlime) surfaceSlimeSolveCells(b, h);
       if (JELLO_XPBD_SHAPE > 0) jelloShapeMatch(b, JELLO_XPBD_SHAPE);
-      if (b.surfaceSlime) surfaceSlimeSmoothSkin(b, h);
       jelloStrainLimit(b);
       jelloLimitOrientation(b);
-      // Material viscosity runs before external friction, so it cannot put
-      // tangential slip back into a skin point that has just come to rest.
-      if (b.surfaceSlime) surfaceSlimeDampMotion(b, h);
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
-      if (JELLO_INT_DAMP > 0 && !b.surfaceSlime) jelloDampInternal(b, h);   // wobble decay (internal modes only)
+      if (JELLO_INT_DAMP > 0) jelloDampInternal(b, h);   // wobble decay (internal modes only)
     }
     if (!b._grabbed && b._recoverT > 0) {
       jelloRecoverShape(b);
@@ -65677,7 +65632,7 @@
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
     }
-    if (JELLO_XSPH > 0 && !b.surfaceSlime) jelloViscosityXSPH(b, JELLO_XSPH);
+    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
     if (b.surfaceSlime && !b._grabbed) {
       for (var skinPass = 0; skinPass < 3; skinPass++) {
         if (!jelloLimitOrientation(b)) break;
@@ -65685,6 +65640,7 @@
           if (jelloWorldSolidAt(b.px[ci], b.py[ci])) jelloCollidePointWorld(b, ci, h);
         }
       }
+      surfaceSlimeDampMotion(b, h);
     }
     if (resilienceGuard) jelloRejectTerrainInside(b);
     if (resilienceGuard) jelloResilienceStepEnd(b);
@@ -65730,7 +65686,7 @@
   function jelloStrainLimit(b) {
     if (JELLO_MAX_STRETCH <= 0) return;
     var sA = b.sA, sB = b.sB, sRest = b.sRest, springN = b.springN, px = b.px, py = b.py;
-    var m = b.surfaceSlime ? Math.max(JELLO_MAX_STRETCH, 2.4) : JELLO_MAX_STRETCH;
+    var m = JELLO_MAX_STRETCH;
     for (var s = 0; s < springN; s++) {
       var i0 = sA[s], i1 = sB[s];
       var dx = px[i1] - px[i0], dy = py[i1] - py[i0];
@@ -65756,16 +65712,14 @@
     var TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
     var maxMove = (b.spacing || (TILE / JELLO_NPT)) * JELLO_ORIENT_MOVE;
     var fixed = 0;
-    for (var t = 0; t < b.triN + (b.cellN || 0); t++) {
-      var materialCell = t >= b.triN, ti = materialCell ? t - b.triN : t;
-      if (t === b.triN) { TA = b.cellA; TB = b.cellB; TC = b.cellC; Dm = b.cellInv; }
-      var i0 = TA[ti], i1 = TB[ti], i2 = TC[ti];
+    for (var t = 0; t < b.triN; t++) {
+      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[ti * 4] * Dm[ti * 4 + 3] - Dm[ti * 4 + 1] * Dm[ti * 4 + 2];
+      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
       var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      var orientMin = materialCell ? 0.02 : b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
-      var orientTarget = materialCell ? 0.06 : b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
+      var orientMin = b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
+      var orientTarget = b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
       if (!(ratio < orientMin)) continue;
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
@@ -65807,7 +65761,7 @@
   // release window uses beta=0, and the correction is velocity-free, so the
   // slime re-forms without becoming globally stiffer or springing across a room.
   function jelloRecoverShape(b) {
-    if (b.surfaceSlime || b._grabbed || !(b._recoverT > 0) || !(JELLO_RECOVER_SHAPE > 0)) return;
+    if (b._grabbed || !(b._recoverT > 0) || !(JELLO_RECOVER_SHAPE > 0)) return;
     jelloContactAlloc();
     var sx = jelloVAccX, sy = jelloVAccY, n = b.n;
     for (var i = 0; i < n; i++) { sx[i] = b.px[i]; sy[i] = b.py[i]; }
@@ -66359,11 +66313,9 @@
   }
   // Zero a body's XPBD Lagrange multipliers (start of each xpbd/fem substep).
   function jelloResetLambdas(b) {
-    if (b.skinLambda) b.skinLambda.fill(0);
     var L = b.sLambda;
     if (L) L.fill(0);
     b.volLambda = 0;
-    if (b.cellLambda) b.cellLambda.fill(0);
     var TL = b.triLambda;   // FEM per-triangle multipliers (deviatoric + hydrostatic), Phase 3
     if (TL) TL.fill(0);
   }
@@ -66425,7 +66377,7 @@
       km = k;
     }
     if (sg < 1e-9) return;
-    var at = JELLO_XPBD_VOL_COMPLIANCE * (b.surfaceSlime ? 0.06 : 1) / (h * h);
+    var at = JELLO_XPBD_VOL_COMPLIANCE / (h * h);
     if (b.volLambda === undefined) b.volLambda = 0;
     var dLam = (-C - at * b.volLambda) / (sg + at);
     b.volLambda += dLam;
@@ -67262,19 +67214,6 @@
     var subs = 0;
     while (jelloAccum >= JELLO_H && subs < JELLO_MAX_SUBSTEPS) { subs++; jelloAccum -= JELLO_H; }
     if (jelloAccum > JELLO_H) jelloAccum = JELLO_H;
-    var residentContinuous = !!surfaceRigFrame;
-    for (var ri = 0; ri < jelloBodies.length; ri++) {
-      var resident = jelloBodies[ri];
-      if (!(resident._rigRenderT > 0)) continue;
-      resident._rigRenderT = Math.max(0, resident._rigRenderT - dt);
-      residentContinuous = true;
-    }
-    if (residentContinuous) {
-      // Advance both participants for exactly this frame's real time, even
-      // above 120 Hz. The bounded steps keep fast landings swept and smooth.
-      subs = Math.max(1, Math.round(dt * JELLO_TIMESCALE / JELLO_H));
-      jelloAccum = 0;
-    }
     if (subs === 0) return;
     jelloFrameNo++;   // stamp for the shade-matrix cache (skipped frames keep the cache fresh)
     // Cache the jet frame for this frame's substeps (rotation-flight aware).
@@ -67308,7 +67247,6 @@
     var bi, b, maxCr = 0;
     for (bi = 0; bi < jelloBodies.length; bi++) {
       b = jelloBodies[bi];
-      if (b.surfaceSlime) b._frameDt = dt;
       b.frozen = !jelloBodyOnCamera(b);
       if (b.frozen) continue;
       // Live per-body contact radii (per-frame so the R_FRAC / SELF_MIN_REST
@@ -67375,8 +67313,7 @@
     // once-per-frame pass) is what removes the press-together STICKING and the contact JITTER. -----
     var m = JELLO_SOLVER;
     var K = (m === 'pbd') ? 1 : (JELLO_XPBD_SUBSTEPS < 1 ? 1 : JELLO_XPBD_SUBSTEPS);
-    var h = residentContinuous ? dt * JELLO_TIMESCALE / (subs * K) : JELLO_H / K;
-    stepDt = h;
+    var h = JELLO_H / K;
     jelloStepH = h;   // expose the substep h to the injection sites (real-px/s conversion)
     var totalSteps = subs * K;
     var contactCell = maxCr * 2;   // hash cell size = the largest 2r (covers any rA+rB pair)
@@ -67412,25 +67349,9 @@
       }
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve && !b.sleeping) jelloBodyInternalSubstep(b, h); }
       if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
-      if (surfaceRigFrame) surfaceSlimeRigStep(h, totalSteps);
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
       if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
-      // A landing transmits load through the whole stack. Reconcile local
-      // volume and terrain in every contacted resident, including the lower
-      // bodies which never touch the rig directly.
-      for (ai = 0; ai < nActive; ai++) {
-        b = active[ai];
-        if (!b.surfaceSlime || !b._solve || b._grabbed || !b._cHits) continue;
-        for (var loadPass = 0; loadPass < 3; loadPass++) {
-          surfaceSlimeSolveCells(b, h);
-          surfaceSlimeSmoothSkin(b, h);
-          jelloLimitOrientation(b);
-          for (var lp = 0; lp < b.n; lp++) {
-            if (jelloWorldSolidAt(b.px[lp], b.py[lp])) jelloCollidePointWorld(b, lp, h);
-          }
-        }
-      }
       // Direct manipulation has a stricter contract than ordinary collision:
       // the frame may never expose a crossed ring or mirrored cell and rely on
       // the one-second emergency heal to clean it later. Contact is the final
@@ -67633,7 +67554,6 @@
       player.vy -= jelloJetDY * _jrAcc * dt;
     }
     jelloUnmergeBodies(dt, active, nActive);   // no slime can stay inside another (rigid rate-limited split)
-    if (typeof surfaceSlimeRigEnd === 'function') surfaceSlimeRigEnd();
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring
     jelloRigDisplaceGel();    // hard displacement: gel can never be deeper than the dent cap inside the hull
     jelloDeformBowl();        // resting on top: carve the conforming membrane bowl
@@ -67646,13 +67566,6 @@
     // frame in solid" impossible; the snapshot is legal by construction.
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
-      // Side containment runs after the material substeps. Its per-point
-      // displacement must also respect cell orientation before rendering.
-      if (b.surfaceSlime && !b._grabbed) {
-        for (var finalSkin = 0; finalSkin < 4; finalSkin++) {
-          if (!jelloLimitOrientation(b)) break;
-        }
-      }
       for (var lz = 0; lz < b.n; lz++) {
         if (jelloWorldSolidAt(b.px[lz], b.py[lz])) {
           // VELOCITY-FREE unclip: reuse the collide's side choice (entry-lock +
@@ -68429,288 +68342,6 @@
       }
     };
   } catch (e) {}
-  /* ---- Coupled rig / resident landing ----
-     The rig and the gel share the small-step contact solve. A landing loads
-     the actual lattice; its elastic recovery supplies the rebound. There is
-     no separate ride spring, stored launch, or post-solve bowl deformation. */
-
-  // Local volume matters as well as the outline's total area. Without it,
-  // internal cells collapse onto the floor while the outer ring stays full.
-  // These signed cell constraints allow shear and lateral bulging but resist
-  // compression throughout the material, including cells below the tracks.
-  function surfaceSlimeSolveCells(b, h) {
-    var x = b.px, y = b.py, dm = b.cellInv;
-    var alpha = 1e-8 / (h * h);
-    for (var t = 0; t < b.cellN; t++) {
-      var a = b.cellA[t], c = b.cellB[t], d = b.cellC[t], j = t * 4;
-      var inv = dm[j] * dm[j + 3] - dm[j + 1] * dm[j + 2];
-      var ratio = ((x[c] - x[a]) * (y[d] - y[a]) - (y[c] - y[a]) * (x[d] - x[a])) * inv;
-      var ax = (y[c] - y[d]) * inv, ay = (x[d] - x[c]) * inv;
-      var cx = (y[d] - y[a]) * inv, cy = (x[a] - x[d]) * inv;
-      var dx = (y[a] - y[c]) * inv, dy = (x[c] - x[a]) * inv;
-      var target = 1;
-      var dir = ratio < target ? 1 : -1;
-      if (jelloWorldSolidAt(x[a] + Math.sign(ax) * dir * 0.8, y[a])) ax = 0;
-      if (jelloWorldSolidAt(x[a], y[a] + Math.sign(ay) * dir * 0.8)) ay = 0;
-      if (jelloWorldSolidAt(x[c] + Math.sign(cx) * dir * 0.8, y[c])) cx = 0;
-      if (jelloWorldSolidAt(x[c], y[c] + Math.sign(cy) * dir * 0.8)) cy = 0;
-      if (jelloWorldSolidAt(x[d] + Math.sign(dx) * dir * 0.8, y[d])) dx = 0;
-      if (jelloWorldSolidAt(x[d], y[d] + Math.sign(dy) * dir * 0.8)) dy = 0;
-      var lambda = (target - ratio - alpha * b.cellLambda[t]) /
-        (ax * ax + ay * ay + cx * cx + cy * cy + dx * dx + dy * dy + alpha);
-      b.cellLambda[t] += lambda;
-      x[a] += ax * lambda; y[a] += ay * lambda;
-      x[c] += cx * lambda; y[c] += cy * lambda;
-      x[d] += dx * lambda; y[d] += dy * lambda;
-    }
-  }
-
-  // Compliant bending of the actual skin, solved as angular constraints.
-  // The affine reference leaves broad flattening and lateral spread free.
-  // Angle gradients have zero total force and torque. Unlike history-free
-  // contour smoothing, these elastic corrections cannot crawl a resting body
-  // across a floor by repeatedly repositioning its points.
-  function surfaceSlimeSmoothSkin(b, h) {
-    if (!b.skinLambda || !isFinite(b.shL00 + b.shL01 + b.shL10 + b.shL11)) return;
-    var alpha = 0.00000008 / (h * h);
-    for (var k = 0; k < b.ringN; k++) {
-      var a = b.ring[(k + b.ringN - 1) % b.ringN], c = b.ring[k], d = b.ring[(k + 1) % b.ringN];
-      var ux = b.px[c] - b.px[a], uy = b.py[c] - b.py[a];
-      var vx = b.px[d] - b.px[c], vy = b.py[d] - b.py[c];
-      var u2 = ux * ux + uy * uy, v2 = vx * vx + vy * vy;
-      if (u2 < 0.01 || v2 < 0.01) continue;
-      var q1x = b.qx[c] - b.qx[a], q1y = b.qy[c] - b.qy[a];
-      var q2x = b.qx[d] - b.qx[c], q2y = b.qy[d] - b.qy[c];
-      var ru = b.shL00 * q1x + b.shL01 * q1y, su = b.shL10 * q1x + b.shL11 * q1y;
-      var rv = b.shL00 * q2x + b.shL01 * q2y, sv = b.shL10 * q2x + b.shL11 * q2y;
-      var target = Math.atan2(ru * sv - su * rv, ru * rv + su * sv);
-      // A flattened affine fit can itself ask for a needle at either end.
-      // The skin has finite bend radius; distribute that turn over neighbours.
-      target = Math.max(-1.2, Math.min(1.2, target));
-      var angle = Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy);
-      var error = Math.atan2(Math.sin(angle - target), Math.cos(angle - target));
-      var ax = -uy / u2, ay = ux / u2, dx = -vy / v2, dy = vx / v2;
-      var cx = -ax - dx, cy = -ay - dy;
-      var lambda = (-error - alpha * b.skinLambda[k]) /
-        (ax * ax + ay * ay + cx * cx + cy * cy + dx * dx + dy * dy + alpha);
-      b.skinLambda[k] += lambda;
-      b.px[a] += ax * lambda; b.py[a] += ay * lambda;
-      b.px[c] += cx * lambda; b.py[c] += cy * lambda;
-      b.px[d] += dx * lambda; b.py[d] += dy * lambda;
-    }
-  }
-
-  // Bound each contact projection before it can mirror an incident cell.
-  // A pinched cell keeps its shape; finite contact compliance absorbs the
-  // remaining overlap instead of transferring it into a hard rig correction.
-  function surfaceSlimeSafeDown(b, p, move) {
-    var x = b.px, y = b.py, dm = b.triDmInv;
-    for (var t = 0; t < b.triN; t++) {
-      var a = b.triA[t], c = b.triB[t], d = b.triC[t];
-      if (p !== a && p !== c && p !== d) continue;
-      var j = t * 4, inv = dm[j] * dm[j + 3] - dm[j + 1] * dm[j + 2];
-      var ratio = ((x[c] - x[a]) * (y[d] - y[a]) - (y[c] - y[a]) * (x[d] - x[a])) * inv;
-      var gradient = (p === a ? x[d] - x[c] : p === c ? x[a] - x[d] : x[c] - x[a]) * inv;
-      if (gradient < 0) move = Math.min(move, Math.max(0, (ratio - 0.12) / -gradient));
-    }
-    return move;
-  }
-
-  function surfaceSlimeRigOwns(b) {
-    return !!(surfaceRigFrame && surfaceRigFrame.bodies.indexOf(b) >= 0);
-  }
-
-  function surfaceSlimeRigBegin(dt, ny, gravity) {
-    surfaceRigFrame = null;
-    if (!ENABLE_JELLO || drilling || gameOver || gameWon || player.thrusting) return false;
-    var feet = player.y + PLAYER_H, nextFeet = ny + PLAYER_H;
-    var bodies = [], top = Infinity;
-    for (var i = 0; i < jelloBodies.length; i++) {
-      var b = jelloBodies[i];
-      var wasLoaded = b._rigLoaded && player._surfaceRigSupported;
-      b._rigLoaded = false;
-      if (!b.surfaceSlime || b._grabbed || b._carried || b.frozen) continue;
-      var left = Math.max(player.x + 2, b.bboxL + 2);
-      var right = Math.min(player.x + PLAYER_W - 2, b.bboxR - 2);
-      if (right <= left) continue;
-      var sy = Infinity;
-      for (var k = 0; k <= 4; k++) {
-        var y = jelloRingCross(b, true, left + (right - left) * k / 4, false);
-        if (isFinite(y)) sy = Math.min(sy, y - 0.8);
-      }
-      // Swept feet catch a thin, already compressed resident before terrain.
-      // Keep the candidate through a nearby upward departure: a recovering
-      // skin can catch up within this frame and must use the same soft contact.
-      if (feet > (wasLoaded ? b.bboxB : sy + 5) || Math.max(feet, nextFeet) < sy - 12) continue;
-      // A low ceiling limits the rig's rise, not its ownership of this skin.
-      // The swept rig constraint leaves the remaining load in the gel.
-      bodies.push(b); top = Math.min(top, sy);
-    }
-    if (!bodies.length) return false;
-    surfaceRigFrame = { bodies: bodies, dt: dt, gravity: gravity,
-      y: player.y, startY: player.y, vy: player.vy - gravity * dt, hits: 0, peak: player.vy,
-      impact: !player._surfaceRigSupported, top: top };
-    for (i = 0; i < bodies.length; i++) {
-      bodies[i]._rigHits = 0;
-      bodies[i]._rigRenderT = 0.5;
-      surfaceSlimeDisturb(bodies[i]);
-      bodies[i]._plyMs = performance.now();
-    }
-    player.onJello = true;
-    player.onGround = true;
-    player.jelloImpactVy = 0;
-    player.jelloGroundT = JELLO_GROUND_COYOTE;
-    return true;
-  }
-
-  function surfaceSlimeRigMove(f, target) {
-    var start = f.y, delta = target - start;
-    var steps = Math.max(1, Math.ceil(Math.abs(delta) / (TILE * 0.25)));
-    for (var i = 1; i <= steps; i++) {
-      var next = start + delta * i / steps;
-      if (!solidAt(player.x, next, PLAYER_W, PLAYER_H)) { f.y = next; continue; }
-      var safe = f.y, blocked = next;
-      for (var k = 0; k < 10; k++) {
-        var middle = (safe + blocked) * 0.5;
-        if (solidAt(player.x, middle, PLAYER_W, PLAYER_H)) blocked = middle;
-        else safe = middle;
-      }
-      f.y = safe;
-      if (delta > 0) f.floor = true;
-      else { f.ceiling = true; player.onCeiling = true; }
-      return;
-    }
-  }
-
-  function surfaceSlimeRigStep(h, steps) {
-    var f = surfaceRigFrame;
-    if (!f) return;
-    var dt = f.dt / steps, oldY = f.y;
-    f.vy += f.gravity * dt;
-    surfaceSlimeRigMove(f, f.y + f.vy * dt);
-    for (var pass = 0; pass < 4; pass++) {
-      for (var bi = 0; bi < f.bodies.length; bi++) {
-        var b = f.bodies[bi];
-        var invRig = 0.42 * Math.pow(b.surfaceSlime.radius / 24, 2) / b.n;
-        for (var k = 0; k < 5; k++) {
-          var sample = pass & 1 ? 4 - k : k;
-          var x = player.x + 2 + (PLAYER_W - 4) * sample / 4;
-          var top = Infinity, ia = -1, ib = -1, u = 0;
-          for (var edge = 0; edge < b.ringN; edge++) {
-            var a = b.ring[edge], c = b.ring[(edge + 1) % b.ringN];
-            var xa = b.px[a], xc = b.px[c];
-            if (x < Math.min(xa, xc) || x > Math.max(xa, xc) || Math.abs(xc - xa) < 1e-6) continue;
-            var fraction = (x - xa) / (xc - xa);
-            var sy = b.py[a] + (b.py[c] - b.py[a]) * fraction;
-            if (sy < top) { top = sy; ia = a; ib = c; u = fraction; }
-          }
-          var depth = f.y + PLAYER_H + 0.8 - top;
-          if (ia < 0 || depth <= 0 || top < f.y) continue;
-          var wa = 1 - u, wb = u;
-          // Finite skin compliance spreads deceleration over the compression.
-          // A pinched cell must not become an infinitely rigid stop for the rig.
-          var compliance = 0.00005 / (dt * dt);
-          var skinVY = ((b.py[ia] - b.oy[ia]) * wa + (b.py[ib] - b.oy[ib]) * wb) * JELLO_TIMESCALE / h;
-          var compression = Math.max(0, depth + (f.vy - skinVY) * 0.010 * depth / (depth + 2));
-          var lambda = compression / (invRig + wa * wa + wb * wb + compliance);
-          var ma = surfaceSlimeSafeDown(b, ia, lambda * wa);
-          if (jelloWorldSolidAt(b.px[ia], b.py[ia] + ma)) ma = 0;
-          b.py[ia] += ma;
-          var mb = surfaceSlimeSafeDown(b, ib, lambda * wb);
-          if (jelloWorldSolidAt(b.px[ib], b.py[ib] + mb)) mb = 0;
-          b.py[ib] += mb;
-          surfaceSlimeRigMove(f, f.y - invRig * lambda);
-          // Coulomb friction grips the tracks without freezing lateral bulge.
-          // The impulse is bounded by this contact's normal load and shared
-          // with the rig, so a moving resident can carry it without a motor.
-          var skinVX = ((b.px[ia] - b.ox[ia]) * wa + (b.px[ib] - b.ox[ib]) * wb) * JELLO_TIMESCALE / h;
-          var friction = (skinVX - player.vx) / (invRig + wa * wa + wb * wb);
-          var limit = lambda / dt * 0.55;
-          friction = Math.max(-limit, Math.min(limit, friction));
-          b.ox[ia] += wa * friction * h / JELLO_TIMESCALE;
-          b.ox[ib] += wb * friction * h / JELLO_TIMESCALE;
-          player.vx += invRig * friction;
-          f.hits++; b._rigHits++;
-        }
-        surfaceSlimeSolveCells(b, h);
-        surfaceSlimeSmoothSkin(b, h);
-        jelloLimitOrientation(b);
-        for (var p2 = 0; p2 < b.n; p2++) {
-          if (jelloWorldSolidAt(b.px[p2], b.py[p2])) jelloCollidePointWorld(b, p2, h);
-        }
-      }
-    }
-    // Position constraints exchange momentum in the same step as deformation.
-    f.vy = (f.y - oldY) / dt;
-    player.y = f.y; player.vy = f.vy;
-  }
-
-  function surfaceSlimeRigEnd() {
-    var f = surfaceRigFrame;
-    if (!f) { player._surfaceRigSupported = false; return; }
-    for (var bi = 0; bi < f.bodies.length; bi++) f.bodies[bi]._rigLoaded = f.bodies[bi]._rigHits > 0;
-    player.renderY += f.y - f.startY;
-    player._surfaceRigSupported = f.hits > 0;
-    player.onJello = f.hits > 0;
-    player.onGround = player.onJello || !!f.floor;
-    if (f.hits) {
-      player.coyoteT = Math.max(player.coyoteT, 0.08);
-      resetFlightBank();
-      if (f.impact && f.peak > 120) {
-        recordLandingImpact(f.peak, f.top, 'jello', 1);
-        jelloSfxWobble(Math.min(1, f.peak / 600));
-      }
-    }
-  }
-  /* ---- Surface resident material mesh ----
-     The polar rings form a planar triangle mesh. Advancing the next angular
-     vertex of either ring stitches each annulus exactly once. The existing
-     spring braces remain independent: they resist material stretch,
-     but their overlapping graph cycles are not material volume cells. */
-  function surfaceSlimeInstallMesh(b) {
-    if (!b || !(b.n > 6)) return false;
-    var rings = Math.round((Math.sqrt(12 * b.n - 3) - 3) / 6);
-    if (1 + 3 * rings * (rings + 1) !== b.n) return false;
-    var ta = [], tb = [], tc = [], dm = [], areas = [];
-    var valid = true;
-    function triangle(a, c, d) {
-      var x1 = b.rx[c] - b.rx[a], y1 = b.ry[c] - b.ry[a];
-      var x2 = b.rx[d] - b.rx[a], y2 = b.ry[d] - b.ry[a];
-      var det = x1 * y2 - x2 * y1;
-      if (!(det > 1e-8)) { valid = false; return; }
-      ta.push(a); tb.push(c); tc.push(d);
-      dm.push(y2 / det, -x2 / det, -y1 / det, x1 / det);
-      areas.push(det * 0.5);
-    }
-    for (var k = 0; k < 6; k++) triangle(0, 1 + k, 1 + (k + 1) % 6);
-    for (var r = 2; r <= rings; r++) {
-      var innerCount = 6 * (r - 1), outerCount = 6 * r;
-      var innerStart = 1 + 3 * (r - 2) * (r - 1);
-      var outerStart = 1 + 3 * (r - 1) * r;
-      var innerPhase = ((r - 1) & 1) * Math.PI / innerCount;
-      var outerPhase = (r & 1) * Math.PI / outerCount;
-      var inner = 0, outer = 0;
-      while (inner < innerCount || outer < outerCount) {
-        var a = innerStart + inner % innerCount;
-        var c = outerStart + outer % outerCount;
-        var nextInner = innerPhase + (inner + 1) * Math.PI * 2 / innerCount;
-        var nextOuter = outerPhase + (outer + 1) * Math.PI * 2 / outerCount;
-        if (outer < outerCount && (inner >= innerCount || nextOuter <= nextInner)) {
-          triangle(a, c, outerStart + (outer + 1) % outerCount);
-          outer++;
-        } else {
-          triangle(a, c, innerStart + (inner + 1) % innerCount);
-          inner++;
-        }
-      }
-    }
-    // Keep installation atomic if a future builder supplies an invalid rest pose.
-    if (!valid) return false;
-    b.cellA = Int32Array.from(ta); b.cellB = Int32Array.from(tb); b.cellC = Int32Array.from(tc);
-    b.cellInv = Float32Array.from(dm); b.cellRestArea = Float32Array.from(areas);
-    b.cellN = ta.length; b.cellLambda = new Float32Array(ta.length);
-    return true;
-  }
   /* =====================================================================
      SLIME NPCS (v26.69). The wild-slime brain: every activated world slime
      (buried finds, lake-shore perchers, the dev C-key cube) becomes a live
@@ -69288,87 +68919,357 @@
     best.state.cool = best.hit ? 0.34 : 0.30 + Math.random() * 0.14;
     slimeAudioGap = best.hit ? 0.16 : 0.23 + Math.random() * 0.08;
   }
-  /* ---- Resident gel: one material under every kind of load ----
-     A resident has no pose clock, upright frame, terrain magnets or route.
-     Its rest mesh supplies elasticity, its cells preserve volume, and actual
-     contacts supply traction. The eye can be curious without steering the gel. */
-  var SURFACE_SLIME_VISCOSITY = 22; // deformation decay per real second
+  /* ---- Active gel: travelling muscle waves and breakable terrain adhesion ---- */
+  var SURFACE_SLIME_WAVE = 0.32;
+  var SURFACE_SLIME_WAVE_SPEED = 3.0;
+  var SURFACE_SLIME_GRIP_RANGE = 11;
 
-  function surfaceSlimeMaterialInit(b) {
+  function surfaceSlimeMotorInit(b) {
+    var m = b.surfaceSlime;
+    m.phase = m.seed * Math.PI * 2; m.angle = 0; m.drive = false;
+    m.detach = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.anchors = new Array(b.n);
+    m.waveCos = new Float32Array(b.n);
+    m.materialAngle = 0; m.poseAngle = 0; m.reorient = true; m.power = 0;
+    m.edgePause = 0; m.edgeTurn = 0; m.floorY = null; m.strideDir = m.dir;
+    m.motorBlend = 0; m.stretch = 1;
+    m.goalX = b.cx + m.dir * TILE * (3 + m.seed * 2);
+    m.goalDir = m.dir;
+    m.rng = ((m.seed * 1000000000) ^ Math.imul(m.id | 0, 2654435761)) >>> 0;
+    m.gaitSpeed = 1; m.gaitAmplitude = 1; m.gaitLength = 2.8;
+    surfaceSlimeChooseGait(m);
+    b.muscleX = Float64Array.from(b.qx); b.muscleY = Float64Array.from(b.qy);
+    b.muscleRest = Float32Array.from(b.sRest);
+    m.baseX = new Float64Array(b.n); m.baseY = new Float64Array(b.n); m.waveLimit = 1;
+    m.lastMuscleX = Float64Array.from(b.qx); m.lastMuscleY = Float64Array.from(b.qy);
     b.materialSoftness = 3.5;
-    b.skinLambda = new Float64Array(b.ringN);
-    b.surfaceSlime.contacts = 0;
-    b.surfaceSlime.supported = false;
+    b.materialDamping = 0.65;
   }
 
-  function surfaceSlimeDisturb(b) {
-    if (!b || !b.surfaceSlime) return;
-    // Waking changes no rest length, pressure, stiffness or velocity.
+  function surfaceSlimeRandom(m) {
+    m.rng = (Math.imul(m.rng, 1664525) + 1013904223) >>> 0;
+    return m.rng / 4294967296;
+  }
+
+  function surfaceSlimeChooseGait(m) {
+    m.gaitIn = 6 + surfaceSlimeRandom(m) * 5;
+    m.targetSpeed = 0.92 + surfaceSlimeRandom(m) * 0.16;
+    m.targetAmplitude = 0.90 + surfaceSlimeRandom(m) * 0.16;
+    m.targetLength = 2.6 + surfaceSlimeRandom(m) * 0.35;
+  }
+
+  function surfaceSlimeMaterialFrame(b) {
+    // Fit the current rotation of the material, never a world-up target.
+    // Any point can become a foot after a roll; material identity is retained.
+    var m = b.surfaceSlime, real = 0, imag = 0;
+    for (var i = 0; i < b.n; i++) {
+      var x = b.px[i] - b.cx, y = b.py[i] - b.cy;
+      real += b.qx[i] * x + b.qy[i] * y;
+      imag += b.qx[i] * y - b.qy[i] * x;
+    }
+    var angle = Math.atan2(imag, real), delta = angle - m.materialAngle;
+    m.materialAngle += Math.atan2(Math.sin(delta), Math.cos(delta));
+  }
+
+  function surfaceSlimeDetach(b, seconds) {
+    var m = b && b.surfaceSlime;
+    if (!m) return;
+    m.detach = Math.max(m.detach || 0, seconds || 1.3);
+    m.anchors.fill(null); m.contacts = 0; m.climb = false; m.crest = 0; m.topGrip = false; m.drive = false;
+    m.state = 'tumble'; m.timer = m.detach; m.reorient = true; m.power = 0;
+    m.floorY = null; m.edgePause = 0;
+    m.motorBlend = 0;
     b.sleeping = false; b.sleepFrames = 0;
-    b.surfaceSlime.restTime = 0;
   }
 
-  function surfaceSlimeObserve(b) {
-    var m = b.surfaceSlime, contacts = 0;
+  function surfaceSlimeTerrainNear(x, y, reach) {
+    var left = Math.floor((x - reach) / TILE), right = Math.floor((x + reach) / TILE);
+    var top = Math.floor((y - reach) / TILE), bottom = Math.floor((y + reach) / TILE);
+    var best = null, bestD = reach * reach;
+    for (var r = top; r <= bottom; r++) for (var c = left; c <= right; c++) {
+      if (!tileAt(r, c)) continue;
+      var x0 = c * TILE, x1 = x0 + TILE, y0 = r * TILE, y1 = y0 + TILE;
+      var qx = skySlimeClamp(x, x0, x1), qy = skySlimeClamp(y, y0, y1);
+      var dx = x - qx, dy = y - qy, d2 = dx * dx + dy * dy;
+      if (!(d2 < bestD) || d2 < 0.00001) continue;
+      var d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+      // Interior faces cannot become hidden handholds inside a solid wall.
+      if (jelloWorldSolidAt(qx + nx * 0.6, qy + ny * 0.6)) continue;
+      bestD = d2; best = { x: qx + nx * 0.6, y: qy + ny * 0.6, nx: nx, ny: ny, r: r, c: c };
+    }
+    return best;
+  }
+
+  function surfaceSlimeThink(b, dt) {
+    var m = b.surfaceSlime;
+    surfaceSlimeMaterialFrame(b);
+    m.gaitIn -= dt;
+    if (m.gaitIn <= 0) surfaceSlimeChooseGait(m);
+    var blend = 1 - Math.exp(-dt * 0.55);
+    m.gaitSpeed += (m.targetSpeed - m.gaitSpeed) * blend;
+    m.gaitAmplitude += (m.targetAmplitude - m.gaitAmplitude) * blend;
+    m.gaitLength += (m.targetLength - m.gaitLength) * blend;
+    m.detach = Math.max(0, m.detach - dt);
+    m.crest = Math.max(0, m.crest - dt);
+    m.edgePause = Math.max(0, m.edgePause - dt);
+    m.edgeTurn = Math.max(0, m.edgeTurn - dt);
+    var touched = b._plyMs && b._plyMs !== m.lastPlayerMs;
+    m.lastPlayerMs = b._plyMs;
+    if (b._grabbed || b._carried || touched) {
+      surfaceSlimeDetach(b, 1.1);
+    }
+    if (m.motorBlend < 0.02 || m.reorient) m.poseAngle = m.materialAngle;
+    if (m.detach > 0) { m.drive = false; return; }
+    var wall = null, supported = false, crestTop = null, floorY = null;
     for (var k = 0; k < b.ringN; k++) {
       var p = b.ring[k];
-      if (jelloWorldSolidAt(b.px[p], b.py[p] + 1.5)) contacts++;
+      var near = surfaceSlimeTerrainNear(b.px[p], b.py[p], 12);
+      if (!near) continue;
+      if (near.ny < -0.5 || near.nx * m.dir < -0.7) supported = true;
+      if (near.ny < -0.8 && Math.abs(b.px[p] - b.cx) < m.radius * 1.4) floorY = near.y;
+      if (m.climb && near.c === m.wallCol && near.ny < -0.55 && !tileAt(near.r - 1, near.c) &&
+          b.cy < near.y + m.radius * 1.05) crestTop = near.y;
+      // A rim brushing a top corner is not a new vertical wall to climb.
+      if ((b.px[p] - b.cx) * m.dir >= 0 && near.nx * m.dir < -0.7 &&
+          near.r * TILE < b.cy + m.radius * 0.2) wall = near;
     }
-    // Mining a sleeping resident's support must let it fall immediately.
-    // Changing water support also wakes it without supplying an impulse.
-    if ((m.supported && !contacts) || m.wasWet !== m.wet) surfaceSlimeDisturb(b);
-    m.supported = contacts > 0; m.contacts = contacts; m.wasWet = m.wet;
-    // Observational labels for diagnostics only. None drives the solver.
-    m.state = b._grabbed ? 'held' : m.wet ? 'floating' : !contacts ? 'airborne' :
-      b.sleeping ? 'resting' : 'settling';
+    if (floorY !== null) m.floorY = floorY;
+    if (m.reorient) {
+      // Keep tumbling in the air. The first new support becomes the base;
+      // there is no return to the points that were underneath at birth.
+      if (!supported && !m.wet) { m.drive = false; return; }
+      m.poseAngle = m.materialAngle; m.reorient = false; m.angle = wall ? -m.dir * Math.PI / 2 : 0;
+      m.anchors.fill(null);
+    }
+    if (m.goalDir !== m.dir) {
+      m.goalDir = m.dir;
+      m.goalX = b.cx + m.dir * TILE * (3 + m.seed * 2);
+    }
+    if (!m.climb && !m.crest && m.state === 'crawl' && (m.goalX - b.cx) * m.dir < m.radius * 0.4) m.timer = 0;
+    if (m.timer <= 0 || m.state === 'tumble') {
+      m.state = (m.state === 'crawl' || m.state === 'climb') ? 'idle' : 'crawl';
+      m.timer = m.state === 'crawl' ? 16 + surfaceSlimeRandom(m) * 10 : 1.2 + surfaceSlimeRandom(m) * 1.8;
+      if (!m.climb && m.state === 'crawl') {
+        if (Math.abs(b.cx - m.home) > TILE * 8) m.dir = b.cx < m.home ? 1 : -1;
+        else if (surfaceSlimeRandom(m) < 0.20) m.dir *= -1;
+        m.goalX = b.cx + m.dir * TILE * (3 + surfaceSlimeRandom(m) * 3);
+        m.goalDir = m.dir;
+      }
+    }
+    if (wall && !m.crest && m.state !== 'idle') {
+      m.climb = true; m.wallCol = wall.c;
+    }
+    if (m.climb) {
+      // Round an exposed top corner by turning the same contact wave back
+      // onto the horizontal surface. No centroid path or ledge teleport.
+      var row = Math.floor(b.cy / TILE);
+      var clearTop = !tileAt(row, m.wallCol) && !tileAt(row - 1, m.wallCol);
+      if (crestTop !== null || (clearTop && b.cy < Math.floor((b.bboxB + 8) / TILE) * TILE - m.radius * 0.32)) {
+        m.crestTop = crestTop === null ? Math.floor((b.bboxB + 8) / TILE) * TILE : crestTop;
+        m.climb = false; m.crest = 8; m.topGrip = false;
+        m.crestTurn = m.poseAngle; m.state = 'crawl'; m.timer = Math.max(m.timer, 10);
+      }
+      if (m.climb && m.state !== 'idle') m.state = 'climb';
+    }
+    if (!m.climb && !m.crest && !m.wet && !wall && !m.edgeTurn && m.floorY !== null &&
+        m.floorY > b.cy && m.floorY - b.cy < m.radius * 1.8) {
+      // Probe the actual support plane, not the bouncing lowest skin point.
+      // Check every intervening column so a narrow shaft is not skipped by
+      // a long look-ahead. Keep the center of mass on this bank while turning.
+      var look = m.radius * 1.6 + Math.max(0, b.vx * JELLO_TIMESCALE * m.dir) * 0.22;
+      for (var ahead = 4; ahead <= look; ahead += 4) {
+        if (jelloWorldSolidAt(b.cx + m.dir * ahead, m.floorY + 2)) continue;
+        m.dir *= -1; m.edgePause = 0.7; m.edgeTurn = 1.8;
+        m.goalX = b.cx + m.dir * TILE * (3 + surfaceSlimeRandom(m) * 2);
+        m.goalDir = m.dir;
+        m.state = 'crawl'; m.timer = Math.max(m.timer, 16);
+        break;
+      }
+    }
+    // A resting snail still holds the wall. Drive means a living supported
+    // shape; power below determines whether its foot is taking a stride.
+    m.drive = supported || m.state === 'crawl' || m.climb || m.edgePause > 0 || !!m.wet;
+    b.sleeping = false; b.sleepFrames = 0;
+  }
+
+  function surfaceSlimeMuscleStep(b, h) {
+    var m = b.surfaceSlime, dt = h / JELLO_TIMESCALE;
+    m.lastMuscleX.set(b.muscleX); m.lastMuscleY.set(b.muscleY);
+    var active = m.drive && m.state !== 'idle' && !m.edgePause && !m.detach && !b._grabbed && !m.reorient;
+    m.power += ((active ? 1 : 0) - m.power) * Math.min(1, dt * 2.4);
+    m.motorBlend += ((m.drive && !m.detach && !m.reorient ? 1 : 0) - m.motorBlend) * Math.min(1, dt * 2.4);
+    m.strideDir += (m.dir - m.strideDir) * Math.min(1, dt * 2.4);
+    var tempo = m.gaitSpeed * (1 + 0.035 * Math.sin(m.age * 0.4 + m.seed * 9));
+    var restingTempo = m.climb || m.edgePause ? 0 : 0.8;
+    m.phase += (restingTempo * (1 - m.power) + SURFACE_SLIME_WAVE_SPEED * tempo * (m.climb ? 0.82 : 1) * m.power) * dt;
+    var desiredAngle = m.climb ? -m.dir * Math.PI / 2 :
+      m.crest && b.cy > m.crestTop - m.radius * 0.35 ? -m.dir * Math.PI / 4 : 0;
+    m.angle += (desiredAngle - m.angle) * Math.min(1, dt * 2);
+    var ca = Math.cos(m.angle), sa = Math.sin(m.angle);
+    // Once the leading skin has a real handhold on top, curl around it.
+    // The turn is relative to the current material pose, never back to birth.
+    if (m.crest && m.topGrip) {
+      m.poseAngle += skySlimeClamp(m.crestTurn - m.poseAngle, -dt, dt);
+    }
+    var bodyC = Math.cos(m.poseAngle), bodyS = Math.sin(m.poseAngle);
+    var amplitude = m.radius * (0.045 * (1 - m.power) + SURFACE_SLIME_WAVE * m.gaitAmplitude * m.power);
+    var desiredStretch = 1 + (m.climb ? 0.28 : m.power * (m.crest ? 0.30 : 0.24));
+    m.stretch += (desiredStretch - m.stretch) * Math.min(1, dt * 2.4);
+    var sumX = 0, sumY = 0;
+    for (var i = 0; i < b.n; i++) {
+      var wx = bodyC * b.qx[i] - bodyS * b.qy[i];
+      var wy = bodyS * b.qx[i] + bodyC * b.qy[i];
+      // The contact frame chooses this stride's underside independently of
+      // the material rotation. These can be entirely different skin points.
+      var qx = ca * wx + sa * wy, qy = -sa * wx + ca * wy;
+      var u = qx * m.strideDir / m.radius;
+      var phase = m.phase + u * m.gaitLength;
+      var cs = Math.cos(phase);
+      var sn = Math.sin(phase) + 0.10 * Math.sin(phase * 2 + m.seed * 5);
+      // Longitudinal contraction stays monotone across the body. Varying it
+      // through the depth as well used to twist the contact cells inside out.
+      var dx = m.strideDir * amplitude * sn * 0.70;
+      // Bend each cross-section together. A shared transverse wave preserves
+      // material order through the depth instead of driving the foot and back
+      // past one another. The same wave remains visible along the whole rim.
+      var dy = -amplitude * cs * 0.85;
+      // Spread along the support and gather across it, whichever material
+      // side is touching. At a corner this makes a reaching lobe, not a jump.
+      var stretch = m.stretch;
+      m.baseX[i] = ca * qx * stretch - sa * qy / stretch;
+      m.baseY[i] = sa * qx * stretch + ca * qy / stretch;
+      var tx = qx * stretch + dx, ty = qy / stretch + dy;
+      b.muscleX[i] = ca * tx - sa * ty;
+      b.muscleY[i] = sa * tx + ca * ty;
+      m.waveCos[i] = cs;
+      sumX += b.muscleX[i]; sumY += b.muscleY[i];
+    }
+    // Internal muscles cannot manufacture translation in free space.
+    sumX /= b.n; sumY /= b.n;
+    for (i = 0; i < b.n; i++) { b.muscleX[i] -= sumX; b.muscleY[i] -= sumY; }
+    surfaceSlimeLimitWave(b, dt);
+    for (var s = 0; s < b.springN; s++) {
+      var a = b.sA[s], c = b.sB[s];
+      var length = Math.hypot(b.muscleX[a] - b.muscleX[c], b.muscleY[a] - b.muscleY[c]);
+      b.sRest[s] = skySlimeClamp(length, b.muscleRest[s] * 0.60, b.muscleRest[s] * 1.5);
+    }
   }
 
   function surfaceSlimeDampMotion(b, h) {
-    // Separate rigid translation and rotation from deformational velocity.
-    // Damping the residual dissipates wobble while preserving BOTH linear
-    // and angular momentum. Neighbour velocity averaging erased a throw's
-    // spin; damping toward an animated target imposed the crawler's motion.
-    var cx = 0, cy = 0, vx = 0, vy = 0;
-    for (var p = 0; p < b.n; p++) {
-      cx += b.px[p]; cy += b.py[p];
-      vx += b.px[p] - b.ox[p]; vy += b.py[p] - b.oy[p];
-    }
-    cx /= b.n; cy /= b.n; vx /= b.n; vy /= b.n;
-    var angular = 0, inertia = 0;
+    var m = b.surfaceSlime;
+    if (m.detach || m.reorient || b._grabbed || b._carried || !m.contacts || m.motorBlend < 0.05) return;
+    // Viscous muscle damping follows the slowly travelling target instead of
+    // letting elastic skin ring at hundreds of pixels per second between
+    // grips. Keep bulk momentum intact; external touches disable this motor.
+    var vx = 0, vy = 0;
+    for (var p = 0; p < b.n; p++) { vx += b.px[p] - b.ox[p]; vy += b.py[p] - b.oy[p]; }
+    vx /= b.n; vy /= b.n;
+    var damp = 1 - Math.exp(-80 * h / JELLO_TIMESCALE * m.motorBlend);
     for (p = 0; p < b.n; p++) {
-      var x = b.px[p] - cx, y = b.py[p] - cy;
-      angular += x * (b.py[p] - b.oy[p] - vy) - y * (b.px[p] - b.ox[p] - vx);
-      inertia += x * x + y * y;
-    }
-    var spin = inertia > 1e-9 ? angular / inertia : 0;
-    var decay = 1 - Math.exp(-SURFACE_SLIME_VISCOSITY * h / JELLO_TIMESCALE);
-    for (p = 0; p < b.n; p++) {
-      var rigidX = vx - spin * (b.py[p] - cy);
-      var rigidY = vy + spin * (b.px[p] - cx);
-      b.ox[p] += ((b.px[p] - b.ox[p]) - rigidX) * decay;
-      b.oy[p] += ((b.py[p] - b.oy[p]) - rigidY) * decay;
+      var targetX = vx + b.muscleX[p] - m.lastMuscleX[p];
+      var targetY = vy + b.muscleY[p] - m.lastMuscleY[p];
+      b.ox[p] += ((b.px[p] - b.ox[p]) - targetX) * damp;
+      b.oy[p] += ((b.py[p] - b.oy[p]) - targetY) * damp;
     }
   }
 
-  function surfaceSlimeTerrainContact(b, p, x, y, nx, ny, depth, vx, vy, h) {
-    // Coulomb friction must constrain displacement as well as velocity.
-    // Merely zeroing the velocity lets the elastic position projections
-    // move a stopped foot again on every step, causing unforced creep.
-    var tx = -ny, ty = nx, slip = vx * tx + vy * ty;
-    var limit = Math.max(0, depth) * 0.85;
-    var friction = Math.abs(slip) <= limit ? slip :
-      Math.sign(slip) * Math.min(Math.abs(slip), Math.max(0, depth) * 0.6);
-    var fx = x - tx * friction, fy = y - ty * friction;
-    if (!jelloWorldSolidAt(fx, fy)) { x = fx; y = fy; slip -= friction; }
-    var approach = vx * nx + vy * ny;
-    var normal = approach < -JELLO_REST_VEL * h ? -approach * JELLO_BOUNCE : Math.max(0, approach);
-    b.px[p] = x; b.py[p] = y;
-    b.ox[p] = x - tx * slip - nx * normal;
-    b.oy[p] = y - ty * slip - ny * normal;
+  function surfaceSlimeLimitWave(b, dt) {
+    // A travelling wave must never ask the material to turn inside out.
+    // Along the path from the stretched rest pose to the wave, each signed
+    // cell area is a quadratic. Its first root gives a continuous amplitude
+    // limit with 20% area reserve, before the emergency fold healer is needed.
+    var m = b.surfaceSlime, limit = 1, inverse = b.triDmInv;
+    for (var t = 0; t < b.triN; t++) {
+      var a = b.triA[t], c = b.triB[t], d = b.triC[t];
+      var x1 = m.baseX[c] - m.baseX[a], y1 = m.baseY[c] - m.baseY[a];
+      var x2 = m.baseX[d] - m.baseX[a], y2 = m.baseY[d] - m.baseY[a];
+      var dx1 = b.muscleX[c] - b.muscleX[a] - x1, dy1 = b.muscleY[c] - b.muscleY[a] - y1;
+      var dx2 = b.muscleX[d] - b.muscleX[a] - x2, dy2 = b.muscleY[d] - b.muscleY[a] - y2;
+      var inv = inverse[t * 4] * inverse[t * 4 + 3] - inverse[t * 4 + 1] * inverse[t * 4 + 2];
+      var A = (dx1 * dy2 - dy1 * dx2) * inv;
+      var B = (x1 * dy2 + dx1 * y2 - y1 * dx2 - dy1 * x2) * inv;
+      var C = (x1 * y2 - y1 * x2) * inv - 0.20;
+      if (Math.abs(A) < 0.0000001) {
+        if (B < 0) limit = Math.min(limit, -C / B);
+      } else {
+        var disc = B * B - 4 * A * C;
+        if (disc > 0) {
+          var root = Math.sqrt(disc), r1 = (-B - root) / (2 * A), r2 = (-B + root) / (2 * A);
+          if (r1 > 0) limit = Math.min(limit, r1);
+          if (r2 > 0) limit = Math.min(limit, r2);
+        }
+      }
+    }
+    limit = skySlimeClamp(limit * 0.98, 0, 1);
+    m.waveLimit = Math.min(limit, m.waveLimit + dt * 0.3);
+    for (var p = 0; p < b.n; p++) {
+      b.muscleX[p] = m.baseX[p] + (b.muscleX[p] - m.baseX[p]) * m.waveLimit;
+      b.muscleY[p] = m.baseY[p] + (b.muscleY[p] - m.baseY[p]) * m.waveLimit;
+    }
+  }
+
+  function surfaceSlimeAdhesionStep(b, h) {
+    var m = b.surfaceSlime;
+    // Buoyant residents release their foot instead of pinning themselves to
+    // the pond floor with the same bonds that hold them on a dry wall.
+    if (m.wet || (!m.drive && m.motorBlend < 0.02) || m.detach > 0 || b._grabbed || b._carried) { m.anchors.fill(null); m.contacts = 0; return; }
+    var dt = h / JELLO_TIMESCALE;
+    var contacts = 0, holding = m.state === 'idle' || m.edgePause > 0;
+    if (m.crest && !m.topGrip) {
+      var topPoints = 0, materialX = 0, materialY = 0;
+      for (var a = 0; a < m.anchors.length; a++) {
+        var grip = m.anchors[a];
+        if (grip && grip.ny < -0.6 && Math.abs(grip.y - m.crestTop) < 3) {
+          topPoints++; materialX += b.qx[a]; materialY += b.qy[a];
+        }
+      }
+      if (topPoints >= 2) {
+        m.topGrip = true;
+        // The skin already holding the ledge becomes the new underside.
+        // A previously rolled body may need a different amount of curl.
+        var c = Math.cos(m.poseAngle), s = Math.sin(m.poseAngle);
+        var gx = c * materialX - s * materialY, gy = s * materialX + c * materialY;
+        m.crestTurn = m.poseAngle + Math.atan2(gx, gy);
+      }
+    }
+    // Count only surviving bonds before releasing a foot patch. Overlapping
+    // patches keep the gel attached throughout each snail-like pedal wave.
+    var attached = 0;
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k], anchor = m.anchors[p];
+      if (anchor && ((m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6) ||
+          !tileAt(anchor.r, anchor.c) || Math.hypot(b.px[p] - anchor.x, b.py[p] - anchor.y) > 22)) m.anchors[p] = null;
+      else if (anchor && !anchor.releasing && anchor.strength > 0.65) attached++;
+    }
+    for (k = 0; k < b.ringN; k++) {
+      var p = b.ring[k], anchor = m.anchors[p];
+      // Briefly bridge both faces at a crest, then release the old wall.
+      if (anchor && !anchor.releasing && anchor.strength > 0.65 && !holding && m.waveCos[p] > 0.45 && attached > (m.climb ? 2 : 1)) {
+        anchor.releasing = true; attached--;
+      }
+      if (!anchor && (holding || m.waveCos[p] < 0.25)) {
+        anchor = surfaceSlimeTerrainNear(b.px[p], b.py[p], SURFACE_SLIME_GRIP_RANGE);
+        if (anchor && (m.climb ? anchor.nx * m.dir > -0.6 : (!m.crest || m.topGrip) && anchor.ny > -0.6)) anchor = null;
+        if (anchor) anchor.strength = 0;
+      }
+      m.anchors[p] = anchor;
+      if (!anchor) continue;
+      anchor.strength = skySlimeClamp(anchor.strength + dt * (anchor.releasing ? -5 : 6), 0, 1);
+      if (anchor.releasing && anchor.strength <= 0) { m.anchors[p] = null; continue; }
+      contacts++;
+      // Compliant, finite-strength bonds. The anchor is fixed on the terrain
+      // until its material patch lifts. Muscles do the work between anchors.
+      var strength = anchor.strength * anchor.strength * (3 - 2 * anchor.strength);
+      var gain = strength / (1 + 0.000003 / (h * h));
+      var dx = (anchor.x - b.px[p]) * gain, dy = (anchor.y - b.py[p]) * gain;
+      var cap = 100 * dt * strength, length = Math.hypot(dx, dy);
+      if (length > cap) { dx *= cap / length; dy *= cap / length; }
+      b.px[p] += dx; b.py[p] += dy;
+    }
+    m.contacts = contacts;
   }
   /* ---- Bath-born surface slimes ----
      These residents use the shared XPBD lattice, terrain/rig contacts, jets,
-     pressure, and inter-body solve. Material and momentum determine the outline.
+     pressure, and inter-body solve. Travelling muscles work against skin grips.
      Underground NPCs keep their independent, normally disabled switch. */
   var SURFACE_SLIME_STARTERS = 5;
   var surfaceSlimesSeeded = false;
@@ -69390,7 +69291,7 @@
       id: isFinite(identity.id) ? identity.id : skySlimeSerial++, seed: seed,
       home: isFinite(identity.home) ? identity.home : x,
       hue: isFinite(identity.hue) ? identity.hue : surfaceSlimeHues[Math.floor(seed * 5) % 5],
-      age: 0, state: 'airborne',
+      age: 0, state: 'idle', timer: 0.6 + seed * 2, dir: seed < 0.5 ? -1 : 1,
       blink: 0, blinkIn: 1.5 + seed * 4, wet: 0, sense: 0,
       radius: radius
     };
@@ -69416,10 +69317,9 @@
     }
     b.restArea = Math.abs(area) * 0.5;
     b.tileW *= 0.94; b.tileH *= 0.94;
-    jelloComputeRest(b); jelloInstallSpringHealthMesh(b);
-    surfaceSlimeInstallMesh(b); jelloShadeAnchors(b);
+    jelloComputeRest(b); jelloInstallSpringHealthMesh(b); jelloShadeAnchors(b);
     jelloUpdateBody(b, JELLO_H);
-    surfaceSlimeMaterialInit(b);
+    surfaceSlimeMotorInit(b);
     return b;
   }
 
@@ -69451,7 +69351,7 @@
     for (var i = 0; i < jelloBodies.length; i++) {
       var b = jelloBodies[i], m = b.surfaceSlime;
       if (!m || !jelloBodyOnCamera(b)) continue;
-      m.age += dt;
+      m.age += dt; m.timer -= dt;
       m.blink = Math.max(0, m.blink - dt); m.blinkIn -= dt;
       if (m.blinkIn <= 0) { m.blink = 0.16; m.blinkIn = 2.5 + Math.random() * 4; }
       var rigDX = player.x + PLAYER_W / 2 - b.cx;
@@ -69467,7 +69367,7 @@
         m.wet = water && water.bottom > b.bboxT && water.surface < b.bboxB ? 1 : 0;
         b.bathBuoy = m.wet ? { line: water.surface, x0: b.bboxL - 12, x1: b.bboxR + 12, lift: 2.2, drag: 0.985 } : null;
       }
-      surfaceSlimeObserve(b);
+      surfaceSlimeThink(b, dt);
       // The same deforming boundary goes to the water solver. Speeds are
       // converted from solver time to real time, with resting noise removed.
       if (surfaceSlimeGuests.length < 6) {
@@ -69587,7 +69487,7 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed || b._rigRenderT > 0 || surfaceSlimeRigOwns(b)) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);
@@ -69627,7 +69527,7 @@
     var r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
-    if (jelloSupportedBelowTile(b)) {
+    if (!m.climb && jelloSupportedBelowTile(b)) {
       ctx.fillStyle = 'rgba(30,36,32,0.18)'; ctx.beginPath();
       ctx.ellipse(b.cx, b.bboxB + 3, w * 0.43, 3, 0, 0, Math.PI * 2); ctx.fill();
     }
@@ -69659,13 +69559,13 @@
   // Bath departure animation uses the new material immediately upon the
   // completed soak. Its physical resident is created at the surface door.
   function surfaceSlimeDrawGuest(s) {
-    var r = s.r;
+    var r = s.r, pulse = Math.sin(s.age * 5.3 + s.seed * 7) * 0.035;
     var hue = surfaceSlimeHues[Math.floor(s.seed * 5) % 5];
     var m = s._softEye;
     if (!m) m = s._softEye = { seed: s.seed, hue: hue, blink: s.blink || 0, age: s.age };
     surfaceSlimeEyeTick(m, s.x, s.y, r, Math.max(0, Math.min(0.05, s.age - m.age)), null, null);
     m.age = s.age; m.blink = s.blink || 0;
-    ctx.save(); ctx.translate(s.x, s.y);
+    ctx.save(); ctx.translate(s.x, s.y); ctx.scale(1 + pulse, 1 - pulse);
     ctx.beginPath();
     for (var n = 0; n <= 40; n++) {
       var angle = n / 40 * Math.PI * 2;
@@ -70680,10 +70580,10 @@
       var ax = 0, ay = 0;
       for (k = 0; k < b.n; k++) { weights[k] /= total; ax += b.px[k] * weights[k]; ay += b.py[k] * weights[k]; }
       surfaceSlimeGrip = { body: b, id: id, weights: weights, x: wx, y: wy,
-        dx: ax - wx, dy: ay - wy };
-      surfaceSlimeDisturb(b);
+        dx: ax - wx, dy: ay - wy, vx: 0, vy: 0, t: performance.now(), motion: 0 };
+      surfaceSlimeDetach(b);
       b._grabbed = true; b._recoverT = 0; b.sleeping = false; b.sleepFrames = 0;
-      jelloClearActorIntent(b); b.surfaceSlime.state = 'held';
+      jelloClearActorIntent(b); b.surfaceSlime.state = 'tumble';
       return true;
     }
     return false;
@@ -70692,7 +70592,12 @@
   function surfaceSlimeGrabMove(wx, wy, id) {
     var g = surfaceSlimeGrip;
     if (!g || id !== g.id) return false;
-    g.x = wx; g.y = wy;
+    var now = performance.now(), dt = Math.max(0.008, (now - g.t) / 1000);
+    var gain = 1 - Math.exp(-dt / 0.035);
+    g.vx += ((wx - g.x) / dt - g.vx) * gain;
+    g.vy += ((wy - g.y) / dt - g.vy) * gain;
+    if (Math.hypot(wx - g.x, wy - g.y) > 0.5) g.motion = now;
+    g.x = wx; g.y = wy; g.t = now;
     return true;
   }
 
@@ -70701,9 +70606,9 @@
     if (!g || (id !== undefined && id !== g.id)) return false;
     var b = g.body;
     b._grabbed = false; b._grabApplied = 0; b._recoverT = 1.2;
-    // The hand has already accelerated the actual material. Keep those
-    // per-point velocities on release, including rotation and stretch.
-    // _recoverT retains swept terrain protection, not a rest-pose animation.
+    if (!cancel && performance.now() - g.motion < 100 && Math.hypot(g.vx, g.vy) > 50) {
+      jelloLaunchBody(b, g.vx * 0.7, g.vy * 0.7, { h: jelloStepH || JELLO_H, maxSpeed: 450 });
+    }
     b._plyMs = performance.now(); surfaceSlimeGrip = null;
     return true;
   }
@@ -70761,7 +70666,7 @@
         var dv = impulse / gelMass * b.n * weights[p] / sum;
         b.ox[p] += nx * dv * step; b.oy[p] += ny * dv * step;
       }
-      surfaceSlimeDisturb(b);
+      surfaceSlimeDetach(b, 0.9);
       b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now();
       skySlimePlayContact(s);
     }
@@ -71388,6 +71293,7 @@
       if (damageFlashT < 0) damageFlashT = 0;
     }
     updateZoomLerp(dt);
+    updateCamera();
     perfMark('update.aux', _t1);
 
     // Always integrate the visual systems even if update() bailed early
@@ -71401,6 +71307,12 @@
     _ts = performance.now(); try { treesUpdate(dt); } catch (e) { if (!window.__treesErr) { window.__treesErr = String(e) + '\n' + (e.stack||''); console.error('treesUpdate threw:', e); } } perfMark('update.trees', _ts);
     if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
+    _ts = performance.now();
+    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
+    perfMark('update.smoke', _ts);
+    // Plume intensity is now current, so the voice and drawn flame agree
+    // on the first firing frame as well as the first released frame.
+    if (typeof audioUpdate === 'function') audioUpdate(dt);
     var _t3 = performance.now();
     _ts = performance.now(); updateDrillAnim(dt);          perfMark('update.drillAnim', _ts);
     _ts = performance.now(); updateExplosions(dt);         perfMark('update.explosions', _ts);
@@ -71421,14 +71333,6 @@
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);
     slimeAudioUpdate(dt);
-    // Gel contact finishes the rig's movement. Sample that final pose once
-    // for both the camera and its world-space smoke domain, before drawing.
-    updateCamera();
-    _ts = performance.now();
-    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
-    perfMark('update.smoke', _ts);
-    if (typeof audioUpdate === 'function') audioUpdate(dt);
-    var smokeElapsed = performance.now() - _ts;
     var _t4 = performance.now();
     // v11.80 — render PERF_STRESS times so the true frame cost surfaces past
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
@@ -71444,7 +71348,7 @@
 
     // Perf metrics (smoothed via rolling window)
     perfUpdateMs = perfUpdateMs * 0.9 + (_t1 - _t0) * 0.1;
-    perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2 + smokeElapsed) * 0.1;
+    perfSmokeMs  = perfSmokeMs  * 0.9 + (_t3 - _t2) * 0.1;
     perfRenderMs = perfRenderMs * 0.9 + (_t5 - _t4) * 0.1;
     perfFrameMs  = perfFrameMs  * 0.9 + (_t5 - _t0) * 0.1;
     if (_t5 >= perfDisplayCheckAt) {

@@ -1,71 +1,99 @@
-# Soft resident physics
+# Soft resident rollback and findings
 
-The post-bathhouse gel residents should communicate through their material
-response. A push should compress the near side, transfer momentum through the
-body, and produce a different result when applied off center. A release should
-continue the motion already present in the material. The hard circular visitors
-keep their existing physics and appearance.
+The owner rejected the soft resident changes first deployed in v28.75 and
+every subsequent iteration. Restore the last deployed v28.74 behavior before
+attempting further improvements. The hard circular sky visitors are explicitly
+protected: keep their physics and appearance unchanged.
 
-## Material contract
+## Exact baseline
 
-- Rest geometry, elastic compliance, volume, and viscosity are independent of
-  behavior state. A contact cannot switch the body into another material.
-- There is no autonomous body pose, gait clock, destination, upright frame,
-  ledge maneuver, or magnetic terrain attachment. The eye may glance and blink;
-  those animations never write to the body solver.
-- The planar volume cells preserve local area. Elastic braces and a weak,
-  rotation-invariant rest preference let the body recover from deformation.
-- Viscosity removes only velocity relative to the best fitting rigid motion.
-  Its correction has zero total linear and angular impulse. Air drag and
-  external contacts may still dissipate translation and rotation.
-- Skin curvature is controlled under every load, with the same coefficients.
-  The affine reference permits broad flattening and lateral spread.
-- The hand applies bounded spring forces to a fixed material patch. Releasing
-  or cancelling the grip leaves positions and velocities unchanged. Swept
-  terrain protection remains active briefly after release.
-- Terrain friction constrains tangential displacement as well as velocity,
-  preventing constraint corrections from sliding a stopped contact patch.
-  Static and dynamic friction are bounded by the normal contact correction.
-- Sleep uses real elapsed time and speed at every display refresh rate.
-  Supporting terrain and water can wake a sleeper. Waking supplies no impulse.
-  A missing floor means a fall, including into a mine shaft.
-- The visible contour, collision skin, and water displacement share the mesh.
-  Interpolation changes only presentation, never contacts or saved positions.
+The baseline is commit `ba92610` (September 23, 2026), which reached
+`origin/main` at 20:47:56 CDT. The next push was merge `ce133cc` at 20:51:56,
+stamped v28.75. Its other parent, `ba2e674`, also used v28.74 but introduced
+the first new landing solver. It was not independently deployed. Choosing
+the merge's first parent would therefore retain the first rejected iteration.
 
-## Implementation
+The rollback restores these fragments byte for byte from `ba92610`:
 
-`347-slime-material.js` replaces `347-slime-locomotion.js`. It contains the
-viscosity decomposition and observational support state. `340-jello.js` keeps
-the shared solver, with resident-specific material choices. `342-slime-landing.js`
-owns local volume, curvature, and rig contact; `343-slime-mesh.js` owns the
-planar material cells. `349-slime-touch.js` applies the grip and handles release.
-Resident identities, radius, color, position, and existing saves are unchanged.
+- `080-update-camera.js`
+- `340-jello.js`
+- `347-slime-locomotion.js`
+- `347-surface-slimes.js`
+- `349-slime-touch.js`
+- `350-gameloop-boot.js`
 
-The first playable revision deliberately makes residents passive physical
-toys. If autonomous movement returns, it must act through bounded local forces
-and physical contact. Tests must demonstrate stalled motion under obstruction,
-no propulsion in free space, and no material changes when interrupted. A new
-body animation is not a substitute for those properties.
+It removes `342-slime-landing.js`, `343-slime-mesh.js`, and
+`347-slime-material.js`, together with the tests specific to those experiments.
+The original movement and interaction harnesses are restored. The shared toy
+engine is synchronized through the existing build guard. The release version
+continues increasing so browser caches receive the rollback.
 
-## Verification
+Resident identity, radius, color, location, and save format are unchanged.
+The hard-circle source `348-sky-slimes.js` is unchanged. Later bathhouse,
+fire, snow, and exhaust work is retained.
 
-```sh
-node --check js/sluice.js
-node tools/test-slime-mesh.mjs
-node tools/test-resident-material.mjs
-node tools/surface-slime-smoke.mjs
-EXTENDED=1 CONTACTS=1 PLAYBACK=1 node tools/test-slime-landings.mjs
-node tools/test-sky-slime-physics.cjs
-node tools/test-sky-slime-jets.cjs
-```
+## What changed, and why it could feel worse
 
-The material harness measures linear and angular momentum, free spin at
-30/60/144 Hz, cell health and volume across three radii, quiet settling, mined
-support, exact velocity continuity on release/cancel, and independence from
-animation age. It writes a contact strip and numerical report to `/tmp`.
-The smoke harness covers the real mouse/touch handlers, GPU water, bath
-conversion, and save round trips. The landing harness tests pressure, piles,
-ceilings, sustained load, ground driving, frame-time variation, and real playback.
+The mechanisms below are established by the source diffs. Their effects on
+feel are interpretations consistent with the owner's feedback, not something
+the numerical tests proved.
 
-The older crawl/snail/gait/orientation harnesses described the removed motor.
-Their passive interaction checks now belong to the material and smoke harnesses.
+| First deployed version | Change | Likely consequence |
+| --- | --- | --- |
+| v28.75, `ba2e674` inside `ce133cc` | Added a separate coupled rig landing solver and local volume cells. Landing repeatedly detached the motor, setting `motorBlend` to zero. That blend also controlled stiffness, damping, volume compliance, and stretch limits. | Touching a slime changed the material itself. Contact could feel like entering a special interaction mode. |
+| v28.78, `22107a9` | Increased passive damping, expanded departure contact, added orientation corrections, and kept a special simulation/render mode for half a second after contact. | More state-dependent transitions controlled how a fall, compression, and departure looked and behaved. |
+| v28.82, `e9e7187` | Ground driving suppressed the fling tier and injected spin. Skin smoothing moved positions and their velocity history together toward an affine reference, followed by additional orientation corrections. | Push outcomes became more prescribed. Some visible shape corrections had no corresponding velocity. |
+| v28.88, `4204ed3` | Removed crawling, climbing, and terrain grips; retained the new landing and pressure stack; added continuous angular skin constraints, new friction, and deformation damping. | Removed the creatures' initiative while continuing to constrain their reactions. Stability became passivity. |
+
+The first landing patch raised passive shape matching from a multiplier of
+0.14 to 0.30, raised passive damping from 0.65 to 3, and reduced global volume
+compliance to 0.06 of the normal value. v28.78 raised passive damping to 5.
+These coefficients belong to different stages of the solver; they cannot be
+combined into one stiffness or settling-time measurement. They do show that
+the work changed much more than the contact calculation.
+
+The v28.88 viscosity rate was 22 per second. In isolation, its residual
+deformation velocity halves in about 32 milliseconds. Elastic forces can
+replenish that motion, so this is not a measured whole-body settling time.
+Nevertheless, it is a strong damping choice for a creature whose appeal
+depends on visible deformation and recovery.
+
+The last pass also made a product decision without establishing that it
+matched the request: it interpreted "less scripted" as removing autonomous
+movement. The user asked for more convincing creatures. Turning them into
+passive objects did not meet that request.
+
+## What the tests missed
+
+Finite positions, intact meshes, conserved momentum, terrain exclusion, and
+working saves are useful safeguards. They do not establish whether a creature
+feels expressive, responsive, surprising, or enjoyable. The passive-material
+tests even made the absence of self-directed movement a passing condition.
+That checked the implementation's chosen direction rather than validating the
+user's desired experience.
+
+The restored baseline still has timed crawling, travelling muscle targets,
+changing spring rest lengths, and phase-controlled terrain grips. The rollback
+does not claim to deliver fully emergent motion. It restores the requested
+reference so subsequent changes can be judged against something concrete.
+
+Further work should preserve this reference, change one physical mechanism at
+a time, and compare the same pushes, off-center drops, throws, wall contacts,
+and interruptions side by side. Numerical checks remain safeguards. A better
+score on them is insufficient evidence to replace the accepted feel again.
+
+## Rollback verification
+
+- Exact source comparison against `ba92610` for all six restored fragments.
+- Hard-circle source comparison against the current release.
+- Syntax checks for the rebuilt game and synchronized toy.
+- `node tools/surface-slime-smoke.mjs`: browser boot, movement, impacts at
+  30/60/144 Hz, rock and rig contact, mouse/touch manipulation, bath conversion,
+  GPU water, and resident/full-game saves.
+- `node tools/surface-slime-smooth.mjs`: movement continuity, wall progress,
+  turns, material orientation, and display interpolation.
+- `node tools/test-sky-slimes.cjs`, `node tools/test-sky-slime-jets.cjs`, and
+  `node tools/test-sky-slime-physics.cjs`: protected hard-circle behavior.
+
+Browser checks use a separate owned Chrome for Testing process and disposable
+profiles. They do not read or modify the player's live save.

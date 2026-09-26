@@ -1,5 +1,5 @@
 // Bath-born soft-body residents, lifecycle, physics and rendering regression. Uses its own Chrome for Testing process and profile.
-// Run: node tools/surface-slime-smoke.mjs (screenshots go to /tmp, never the repo).
+// Run: node tools/sky-slime-smoke.mjs (screenshots go to /tmp, never the repo).
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -64,8 +64,8 @@ try {
     render();return {distance:Math.abs(b.cx-start),heightRange:Math.max.apply(null,heights)-Math.min.apply(null,heights),maxSpeed:maxSpeed,finite:jelloBodies.every(function(b){return Array.from(b.px).concat(Array.from(b.py)).every(isFinite);})};
   })()`);
   console.log('MOVEMENT',movement);
-  check('unforced gel stays near its resting place',movement.distance<12 && movement.finite);
-  await screenshot('resting');
+  check('muscles move a real deforming mesh',movement.distance>10 && movement.heightRange>3 && movement.finite);
+  await screenshot('walking');
   const physics=await game(`(function(){
     var reports=[];
     for(var rate=0;rate<3;rate++){
