@@ -49,16 +49,12 @@
       h.preview = hearthFuelPreview(h.material, 'boiler');
     return h.preview;
   }
+  function hearthPlacementPointInside(p) { return hearthChamberContains(p.x,p.y,0); }
   function hearthPlacementValid(p) {
-    if (!hearthChamberContains(p.x, p.y, 0)) return false;
-    var body = hearthHandPreview(), hull = hearthHull(body).vertices;
-    var co = Math.cos(body.angle), si = Math.sin(body.angle);
-    for (var i = 0; i < hull.length; i++) {
-      var q = hull[i], x = p.x + (q[0] * co - q[1] * si) * body.r;
-      var y = p.y + (q[0] * si + q[1] * co) * body.r;
-      if (!hearthChamberContains(x, y, 0.5)) return false;
-    }
+    if (!hearthPlacementPointInside(p)) return false;
+    var body = hearthHandPreview();
     body.x = p.x; body.y = p.y; hearthWorldHull(body);
+    if(!hearthChamberBodyContains(body,0.5))return false;
     var chunks = hearthBeds.boiler.chunks;
     for (var i = 0; i < chunks.length; i++) {
       if (chunks[i].held || Math.hypot(chunks[i].x - p.x, chunks[i].y - p.y) > chunks[i].r + body.r + 4) continue;
@@ -218,14 +214,14 @@
     if (hearthButtons.some(function (b) { return hearthContains(b, h.x, h.y); })) return;
     if (h.mode === 'fuel') {
       var at = hearthHandPoint({ x: h.x, y: h.y }, bathToolTouchControls());
-      if (!hearthContains(box, at.sx, at.sy)) return;
+      if (!hearthPlacementPointInside(at)) return;
       var valid = hearthPlacementValid(at) && (hearthDevSupplies() || hearthMaterialCount(h.material) > 0);
-      c.save(); c.globalAlpha = valid ? 0.48 : 0.22;
+      c.save();
       c.translate(box.x, box.y); c.scale(box.w / HEARTH_WIDTH, box.h / HEARTH_HEIGHT); c.translate(0, -HEARTH_TOP);
-      hearthDrawCoal(c, hearthHandPreview(), at.x, at.y, 1, hearthToolTime); c.restore();
+      hearthDrawFuelGhost(c, hearthHandPreview(), at.x, at.y, hearthToolTime, valid, HEARTH_WIDTH / box.w); c.restore();
       c.strokeStyle = valid ? BLD.cream : UIT_RED; c.lineWidth = 1;
       c.beginPath(); c.moveTo(at.sx - 4, at.sy); c.lineTo(at.sx + 4, at.sy); c.moveTo(at.sx, at.sy - 4); c.lineTo(at.sx, at.sy + 4); c.stroke();
-    } else if (h.mode === 'striker' && hearthContains(box, h.x, h.y)) {
+    } else if (h.mode === 'striker' && hearthPlacementPointInside(hearthHandPoint({ x: h.x, y: h.y }, true))) {
       c.save(); c.globalAlpha = h.pointer === null ? 0.7 : 1;
       hearthDrawStriker(c, h.x, h.y, 0.9, Math.sin(h.stroke * 0.2)); c.restore();
     }

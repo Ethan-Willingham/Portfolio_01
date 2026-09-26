@@ -55,7 +55,8 @@ function checkBodies(bed) {
     assert(x>a[0] && y>a[1] && next<slope,'convex cheek turns smoothly toward the level bed');slope=next;
   });
   assert(s.hearthChamberContains(448,210) && !s.hearthChamberContains(100,190));
-  assert(!s.hearthChamberContains(448,-50) && s.hearthChamberContains(448,-50,5));
+  assert(s.hearthChamberContains(448,-50),'default sides include the full upper opening before the live copper roof is installed');
+  assert(!s.hearthChamberContains(448,-306) && s.hearthChamberContains(448,-306,5));
   const left=s.hearthAddChunk('boiler',70,15), right=s.hearthAddChunk('boiler',826,15);
   const original=[left.x,right.x];
   left.vx=-180;right.vx=180;

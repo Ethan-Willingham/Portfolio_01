@@ -25,6 +25,10 @@
     if (!bed || typeof x !== 'number' || typeof y !== 'number' || !isFinite(x) || !isFinite(y) || HEARTH_MATERIAL_ORDER.indexOf(id) < 0 || bed.chunks.length >= HEARTH_CAP || hearthMaterialCount(id) < 1) return null;
     // Create and validate first. A failed drop never spends or refunds a unit.
     var b = hearthCreateChunk(bed, bed.nextId, x, y, id);
+    // The legacy factory bounds its initial spawn to the lower fire slice.
+    // A deliberate placement realizes the exact visible preview instead.
+    b.x=x;b.y=y;hearthWorldHull(b);
+    if(!bed.pilot && !hearthChamberBodyContains(b,0.5))return null;
     if (!forgeTake(id, 1)) return null;
     b.devSupplied = hearthDevSupplies();
     bed.nextId++; bed.chunks.push(b); hearthMeasure(bed);

@@ -272,7 +272,7 @@
       }
       if(data.version>=4 && Array.isArray(src.ash)) for(var a=0;a<Math.min(HEARTH_ASH_CAP,src.ash.length);a++){
         var g=src.ash[a];if(!g || typeof g!=='object')continue;
-        var grain = {x:hearthNumber(g.x,160,0,HEARTH_WIDTH) + shift,y:hearthNumber(g.y,HEARTH_FLOOR-2,-320,HEARTH_FLOOR),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)};
+        var grain = {x:hearthNumber(g.x,160,-40,HEARTH_WIDTH+40) + shift,y:hearthNumber(g.y,HEARTH_FLOOR-2,-320,HEARTH_FLOOR),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)};
         if (!bed.pilot) hearthContainAsh(bed,grain,Math.max(1.3,Math.sqrt(grain.kg/0.00008)));
         bed.ash.push(grain);
       }

@@ -10,6 +10,12 @@
 > landscape screens put the fire beside the bath. Targets stay at least 44px
 > wide and tall. Real water, heat-driven steam, guests and fire stay live.
 
+Fuel placement covers the full visible furnace cavity, including the upper
+pockets beside the copper tub. Preview, release and wall contacts share that
+outline. Cold charcoal has lighter broken faces against the soot-dark brick;
+the translucent preview carries a cream silhouette, red when it overlaps a
+wall or another piece. Ash keeps its separate pale mineral color.
+
 > **Loading and arrival (2026-09-20, v28.49).** The initial HTML contains an
 > opaque gunmetal loading screen, a cream SLUICE wordmark and a drill/strata mark.
 > Its segmented rail counts actual settled startup gates, with an explicit

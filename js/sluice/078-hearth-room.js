@@ -205,11 +205,12 @@
     }
     if (hearthHand.rack || hearthHand.silos) { hearthHand.rack = hearthHand.silos = false; return true; }
     var box = L.box;
-    if (hearthHand.mode === 'striker' && hearthContains(box, p.x, p.y)) {
+    var chamberPoint = {x:(p.x-box.x)*HEARTH_WIDTH/box.w,y:HEARTH_TOP+(p.y-box.y)*HEARTH_HEIGHT/box.h};
+    if (hearthHand.mode === 'striker' && hearthPlacementPointInside(chamberPoint)) {
       hearthHand.pointer = e.pointerId; hearthHand.downX = p.x; hearthHand.downY = p.y;
       hearthHand.stroke = 0; hearthCapture(e); return true;
     }
-    if (hearthHand.mode === 'fuel' && hearthContains(box, p.x, p.y)) {
+    if (hearthHand.mode === 'fuel' && hearthPlacementPointInside(hearthHandPoint(p,e.pointerType === 'touch' || e.pointerType === 'pen'))) {
       hearthPress = { action: 'place', pointer: e.pointerId, point: p, touch: e.pointerType === 'touch' || e.pointerType === 'pen' };
       hearthCapture(e); return true;
     }
@@ -290,8 +291,8 @@
       HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h, 12 * HEARTH_WIDTH / box.w)) {
       var releaseAge = Math.max(0, (performance.now() - d.time) / 1000 - 0.04);
       var releaseVelocity = Math.exp(-releaseAge * 18);
-      d.b.x = tap ? hearthDropX() : Math.max(d.b.r, Math.min(HEARTH_WIDTH - d.b.r, (q.x - box.x) * HEARTH_WIDTH / box.w));
-      d.b.y = tap ? HEARTH_TOP + 24 : Math.max(HEARTH_TOP+10, Math.min(210 - d.b.r, HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h));
+      d.b.x = tap ? hearthDropX() : (q.x - box.x) * HEARTH_WIDTH / box.w;
+      d.b.y = tap ? HEARTH_TOP + 24 : HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h;
       d.b.vx = tap ? (Math.random() - 0.5) * 50 : d.vx * releaseVelocity * HEARTH_WIDTH / box.w * 0.45;
       d.b.vy = tap ? 0 : d.vy * releaseVelocity * HEARTH_HEIGHT / box.h * 0.45;
       d.b.spin = d.b.vx * 0.025; d.b.held = false;

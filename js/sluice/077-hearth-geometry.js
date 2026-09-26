@@ -3,7 +3,7 @@
   var HEARTH_FLOOR = 210, HEARTH_TOP = -46, HEARTH_HEIGHT = 256, HEARTH_WIDTH = 896, HEARTH_FRICTION = 0.72;
   // The complete bowl has width/depth = phi squared and a level grate
   // spanning 1/phi of its opening. Elliptical cheeks meet the grate tangentially.
-  // Only the lower half holds fuel; the copper basin occupies the headroom.
+  // The lower half anchors the flow grid; fuel can occupy the full opening.
   var HEARTH_PHI = (1 + Math.sqrt(5)) / 2;
   var HEARTH_BOWL_INSET = (1 - 1 / HEARTH_PHI) / 2;
   var HEARTH_BOWL_CUT = 0.5, HEARTH_BOWL_COS = Math.sqrt(1 - HEARTH_BOWL_CUT * HEARTH_BOWL_CUT);
@@ -18,18 +18,76 @@
   }
   HEARTH_CHAMBER_PROFILE[0] = [0, HEARTH_TOP];
   var hearthRectWalls = [{nx:-1,ny:0,limit:0},{nx:1,ny:0,limit:HEARTH_WIDTH},{nx:0,ny:1,limit:HEARTH_FLOOR}];
-  var hearthTaperWalls = hearthRectWalls.slice();
-  for (var hearthFacet = 1; hearthFacet < HEARTH_CHAMBER_PROFILE.length; hearthFacet++) {
-    var hearthA = HEARTH_CHAMBER_PROFILE[hearthFacet - 1], hearthB = HEARTH_CHAMBER_PROFILE[hearthFacet];
+  // Saved fuel can fall through the complete side wings before the bath is
+  // first rendered. The live layout adds the precise copper ceiling later.
+  var hearthDefaultProfile=[];
+  for(var hearthUpper=0;hearthUpper<16;hearthUpper++) {
+    var hearthUpperAngle=Math.PI/6*hearthUpper/16;
+    hearthDefaultProfile.push([HEARTH_WIDTH*(HEARTH_BOWL_INSET*(1-Math.cos(hearthUpperAngle))-HEARTH_BOWL_ENTRY)/HEARTH_BOWL_SPAN,
+      HEARTH_TOP+HEARTH_HEIGHT*(Math.sin(hearthUpperAngle)-HEARTH_BOWL_CUT)/(1-HEARTH_BOWL_CUT)]);
+  }
+  hearthDefaultProfile=hearthDefaultProfile.concat(HEARTH_CHAMBER_PROFILE);
+  var hearthTaperWalls = [{nx:-1,ny:0,limit:-hearthDefaultProfile[0][0]},
+    {nx:1,ny:0,limit:HEARTH_WIDTH-hearthDefaultProfile[0][0]},hearthRectWalls[2]];
+  for (var hearthFacet = 1; hearthFacet < hearthDefaultProfile.length; hearthFacet++) {
+    var hearthA = hearthDefaultProfile[hearthFacet - 1], hearthB = hearthDefaultProfile[hearthFacet];
     var hearthDX = hearthB[0] - hearthA[0], hearthDY = hearthB[1] - hearthA[1], hearthLength = Math.hypot(hearthDX, hearthDY);
     var hearthNX = -hearthDY / hearthLength, hearthNY = hearthDX / hearthLength;
     var hearthLimit = hearthNX * hearthA[0] + hearthNY * hearthA[1];
     hearthTaperWalls.push({nx:hearthNX,ny:hearthNY,limit:hearthLimit});
     hearthTaperWalls.push({nx:-hearthNX,ny:hearthNY,limit:hearthLimit-hearthNX*HEARTH_WIDTH});
   }
+  var hearthChamberLayoutKey = '', hearthChamberSideProfile = hearthDefaultProfile, hearthChamberCeiling = hearthDefaultProfile[0][1];
+  function hearthChamberSetLayout(box, integrated) {
+    // Rendering and manipulation share the complete opening, including the
+    // space beside the copper basin above the lower simulation slice.
+    var bowl = box.bowl, key = [box.x,box.y,box.w,box.h,integrated,cam.x,cam.y,worldScale,
+      bowl && bowl.x,bowl && bowl.y,bowl && bowl.w,bowl && bowl.h].join(',');
+    if (key === hearthChamberLayoutKey) return;
+    var outline = hearthCasingProfile(box,integrated), sx = HEARTH_WIDTH/box.w, sy = HEARTH_HEIGHT/box.h;
+    function point(p) { return [(p[0]-box.x)*sx,HEARTH_TOP+(p[1]-box.y)*sy]; }
+    var sides = outline.sides.map(point), roof = outline.roof.map(point), walls = [];
+    function edge(a,b,ceiling) {
+      var dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+      if(length<1e-7)return;
+      var nx=-dy/length,ny=dx/length;
+      walls.push({nx:nx,ny:ny,limit:nx*a[0]+ny*a[1],
+        minX:ceiling?Math.min(a[0],b[0]):null,maxX:ceiling?Math.max(a[0],b[0]):null});
+    }
+    for(var i=1;i<sides.length;i++)edge(sides[i-1],sides[i],false);
+    for(var i=1;i<roof.length;i++)edge(roof[i-1],roof[i],true);
+    hearthTaperWalls=walls;hearthChamberSideProfile=sides.slice(0,sides.length/2);
+    hearthChamberCeiling=HEARTH_TOP+(outline.ceiling-box.y)*sy;hearthChamberLayoutKey=key;
+    if(typeof hearthBeds!=='undefined' && hearthBeds.boiler)hearthBeds.boiler.contacts={};
+  }
+  function hearthWallAt(wall,x,margin) {
+    return wall.minX == null || x >= wall.minX-(margin||0) && x <= wall.maxX+(margin||0);
+  }
+  function hearthWallHull(wall,vertices) {
+    if(wall.minX == null)return vertices;
+    var points=[];
+    for(var i=0;i<vertices.length;i++) {
+      var a=vertices[i],b=vertices[(i+1)%vertices.length];
+      if(hearthWallAt(wall,a[0]))points.push(a);
+      for(var side=0;side<2;side++) {
+        var x=side?wall.maxX:wall.minX;
+        if((a[0]<x&&b[0]>x)||(a[0]>x&&b[0]<x))points.push([x,a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0])]);
+      }
+    }
+    return points;
+  }
+  function hearthChamberBodyContains(body,margin) {
+    var vertices=hearthWorldHull(body);margin=margin||0;
+    for(var i=0;i<vertices.length;i++)if(vertices[i][1]<hearthChamberCeiling-margin)return false;
+    for(var i=0;i<hearthTaperWalls.length;i++) {
+      var wall=hearthTaperWalls[i],points=hearthWallHull(wall,vertices);
+      for(var j=0;j<points.length;j++)if(points[j][0]*wall.nx+points[j][1]*wall.ny>wall.limit+margin)return false;
+    }
+    return true;
+  }
   function hearthChamberInset(y) {
-    if (y <= HEARTH_TOP) return 0;
-    var profile = HEARTH_CHAMBER_PROFILE;
+    var profile = hearthChamberSideProfile || HEARTH_CHAMBER_PROFILE;
+    if (y <= profile[0][1]) return profile[0][0];
     for (var i = 1; i < profile.length; i++) if (y <= profile[i][1]) {
       var a = profile[i-1], b = profile[i];
       return a[0] + (b[0]-a[0]) * (y-a[1]) / (b[1]-a[1]);
@@ -38,10 +96,10 @@
   }
   function hearthChamberContains(x, y, margin) {
     margin = margin || 0;
-    if (y < HEARTH_TOP-margin) return false;
+    if (y < hearthChamberCeiling-margin) return false;
     for (var i = 0; i < hearthTaperWalls.length; i++) {
       var wall = hearthTaperWalls[i];
-      if (x*wall.nx+y*wall.ny > wall.limit+margin) return false;
+      if (hearthWallAt(wall,x,margin) && x*wall.nx+y*wall.ny > wall.limit+margin) return false;
     }
     return true;
   }
@@ -53,7 +111,7 @@
     for (var pass = 0; pass < 8; pass++) {
       var moved = false;
       for (var i = 0; i < walls.length; i++) {
-        var wall = walls[i], points = hearthWorldHull(b), depth = -Infinity;
+        var wall = walls[i], points = hearthWallHull(wall,hearthWorldHull(b)), depth = -Infinity;
         for (var j = 0; j < points.length; j++) depth = Math.max(depth,points[j][0]*wall.nx+points[j][1]*wall.ny-wall.limit);
         // Preserve the small contact slop in a settled bed across reloads.
         if (depth <= 0.4) continue;
@@ -69,7 +127,7 @@
     var walls = hearthChamberWalls(bed);
     for (var pass = 0; pass < 3; pass++) for (var i = 0; i < walls.length; i++) {
       var wall = walls[i], depth = g.x*wall.nx+g.y*wall.ny-wall.limit+r;
-      if (depth <= 1e-9) continue;
+      if (depth <= 1e-9 || !hearthWallAt(wall,g.x,r)) continue;
       g.x -= wall.nx*depth; g.y -= wall.ny*depth;
       var speed = Math.max(0,g.vx*wall.nx+g.vy*wall.ny);
       g.vx -= wall.nx*speed; g.vy -= wall.ny*speed;
@@ -205,18 +263,20 @@
     for (i = 0; i < chunks.length; i++) {
       var b = chunks[i];
       if (b.held) continue;
-      var minX = Infinity, maxX = -Infinity, maxY = -Infinity;
+      var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       for (j = 0; j < b.vertices.length; j++) {
-        minX = Math.min(minX,b.vertices[j][0]); maxX = Math.max(maxX,b.vertices[j][0]); maxY = Math.max(maxY,b.vertices[j][1]);
+        minX = Math.min(minX,b.vertices[j][0]); maxX = Math.max(maxX,b.vertices[j][0]); minY = Math.min(minY,b.vertices[j][1]); maxY = Math.max(maxY,b.vertices[j][1]);
       }
       for (var wall = 0; wall < walls.length; wall++) {
         var nx = walls[wall].nx, ny = walls[wall].ny;
         var limit = walls[wall].limit, points = [];
         // Reject only fully separated hull bounds. The sampled curve adds
         // many planes, but a coal usually touches only one short arc of it.
-        if (nx*(nx < 0 ? minX : maxX)+ny*maxY < limit-margin) continue;
-        for (j = 0; j < b.vertices.length; j++) {
-          var p = b.vertices[j], depth = p[0] * nx + p[1] * ny - limit;
+        if (nx*(nx < 0 ? minX : maxX)+ny*(ny < 0 ? minY : maxY) < limit-margin) continue;
+        if (walls[wall].minX != null && (maxX < walls[wall].minX-margin || minX > walls[wall].maxX+margin)) continue;
+        var wallVertices=hearthWallHull(walls[wall],b.vertices);
+        for (j = 0; j < wallVertices.length; j++) {
+          var p = wallVertices[j], depth = p[0] * nx + p[1] * ny - limit;
           if (depth >= -margin) points.push({ x: p[0], y: p[1], depth: depth });
         }
         points.sort(function (a, b) { return b.depth - a.depth; });

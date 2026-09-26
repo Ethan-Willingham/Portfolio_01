@@ -118,9 +118,9 @@
       c.fillRect(-radius * 2, -radius * 2, radius * 4, radius * 4);
     }
     hearthArtPolygon(c, vertices, radius);
-    c.fillStyle = BLD.metalDark;
+    c.fillStyle = BLD.metalBase;
     c.fill();
-    c.fillStyle = hearthArtColor(BLD.outline, 0.7);
+    c.fillStyle = hearthArtColor(BLD.metalDark, 0.4);
     c.fill();
     c.strokeStyle = BLD.outline;
     c.lineJoin = 'bevel';
@@ -139,8 +139,8 @@
       c.lineTo(a[0] * radius, a[1] * radius);
       c.lineTo(b[0] * radius, b[1] * radius);
       c.closePath();
-      c.fillStyle = light > 0.44 ? BLD.stoneDark : light < -0.2 ? BLD.outline : BLD.metalDark;
-      c.globalAlpha = light > 0.44 ? 0.25 + light * 0.18 : 0.42;
+      c.fillStyle = light > 0.44 ? BLD.metalLight : light < -0.2 ? BLD.outline : BLD.metalDark;
+      c.globalAlpha = light > 0.44 ? 0.32 + light * 0.18 : 0.5;
       c.fill();
       if (ash > 0.12 && hearthArtHash(shape.seed + i * 101) < ash) {
         c.globalAlpha = 0.32 + ash * 0.51;
@@ -157,7 +157,7 @@
       c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + lw * 0.42, ly - lw * 0.045); c.lineTo(lx + lw, ly + lw * 0.025);
       c.strokeStyle = hearthArtColor(BLD.outline, 0.85); c.lineWidth = Math.max(0.8, radius * 0.028); c.stroke();
       c.beginPath(); c.moveTo(lx + lw * 0.08, ly - 0.7); c.lineTo(lx + lw * 0.4, ly - lw * 0.045 - 0.7);
-      c.strokeStyle = hearthArtColor(ash > 0.5 ? BLD.stonePale : BLD.stoneLight, 0.08 + layer[3] * 0.12);
+      c.strokeStyle = hearthArtColor(ash > 0.5 ? BLD.stonePale : BLD.metalLight, 0.18 + layer[3] * 0.18);
       c.lineWidth = Math.max(0.5, radius * 0.016); c.stroke();
     }
     if (emission > 0.015) {
@@ -203,7 +203,7 @@
       c.lineTo(fx - fr * 0.35, fy + fr * 0.64);
       c.closePath();
       c.fillStyle = flake[3] < ash ? (flake[3] < ash * 0.45 ? BLD.stonePale : BLD.stoneLight) : BLD.outline;
-      c.globalAlpha = flake[3] < ash ? 0.77 : 0.68;
+      c.globalAlpha = flake[3] < ash ? 0.77 : 0.45;
       c.fill();
     }
     c.globalAlpha = 1;
@@ -213,7 +213,7 @@
       c.beginPath(); c.ellipse(pore[0] * radius, pore[1] * radius, pr * 1.5, pr * 0.65, 0, 0, Math.PI * 2); c.fill();
     }
     // One broken cleft catches daylight. No all-round specular rim.
-    c.strokeStyle = hearthArtColor(ash > 0.45 ? BLD.cream : BLD.stoneLight, ash > 0.45 ? 0.37 : 0.18);
+    c.strokeStyle = hearthArtColor(ash > 0.45 ? BLD.cream : BLD.metalLight, ash > 0.45 ? 0.37 : 0.55);
     c.lineWidth = Math.max(0.6, radius * 0.04);
     for (i = 0; i < vertices.length; i++) {
       a = vertices[i]; b = vertices[(i + 1) % vertices.length];
@@ -246,6 +246,19 @@
       sprite.key = key;
     }
     c.drawImage(sprite.canvas, x - size / 2, y - size / 2, size, size);
+  }
+
+  function hearthDrawFuelGhost(c, body, x, y, time, valid, lineScale) {
+    // The specimen stays translucent; its exact silhouette stays readable
+    // over both the dark brickwork and bright flames.
+    c.save(); c.globalAlpha = valid ? 0.64 : 0.42;
+    hearthDrawCoal(c, body, x, y, 1, time); c.restore();
+    c.save(); c.translate(x, y); c.rotate(body.angle || 0);
+    hearthArtPolygon(c, hearthHull(body).vertices, Math.max(2, Number(body.r) || 16));
+    c.lineJoin = 'bevel'; c.lineWidth = 3.4 * lineScale;
+    c.strokeStyle = hearthArtColor(BLD.outline, 0.85); c.stroke();
+    c.lineWidth = 1.4 * lineScale;
+    c.strokeStyle = valid ? BLD.cream : UIT_RED; c.stroke(); c.restore();
   }
 
   function hearthDrawMineralFuel(c, body, x, y, scale, time) {
@@ -639,7 +652,7 @@
   function hearthArtWarm(c) {
     HEARTH_MATERIAL_ORDER.forEach(function(id, i) { var preview = hearthFuelPreview(id); if(preview) hearthDrawCoal(c, preview, 30+i*32, 30, 0.4, 0); });
     var ghost = hearthFuelPreview('coal');
-    if (ghost) { c.save(); c.globalAlpha = 0.48; hearthDrawCoal(c, ghost, 30, 60, 0.4, 0); c.restore(); }
+    if (ghost) hearthDrawFuelGhost(c, ghost, 30, 60, 0, true, 1);
     var bed = { air: 0.75, sweep: 0.2, ash: [
       {x:125,y:206,kg:0.0004,heat:0.6,seed:0.3},
       {x:129,y:207,kg:0.0004,heat:0.1,seed:0.7}

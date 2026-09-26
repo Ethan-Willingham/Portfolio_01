@@ -68,6 +68,7 @@
       water = { x: bin.x, y: cy + 100, w: cw * 2 + gap, h: 44 };
       meter = { x: action.x, y: water.y, w: water.w, h: 44 };
     }
+    if (bathMode && typeof hearthCasingProfile === 'function') hearthChamberSetLayout(box,!landscape);
     return { w: w, h: h, top: 0, footer: h, station: station, scene: scene,
       box: box, bin: bin, pump: pump, action: action, ash: ash,
       tools: tools, water: water, meter: meter,
