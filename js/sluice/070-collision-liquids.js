@@ -1046,10 +1046,11 @@
     var minY = -400 * TILE / LIQUID_CELL;
     var maxY = (TOTAL_ROWS + 1) * TILE / LIQUID_CELL;
     var invStep = 1 / stepDt;
+    var useBathThermal = typeof bathMode !== 'undefined' && bathMode && typeof bathThermalForce === 'function';
     for (var i = 0; i < liquidCount; i++) {
       if (liquidFrozen[i]) continue;
       var base = i * 9;
-      var thermalForce = typeof bathThermalForce === 'function' ? bathThermalForce(liquidX[i], liquidY[i], liquidType[i]) : 0;
+      var thermalForce = useBathThermal ? bathThermalForce(liquidX[i], liquidY[i], liquidType[i]) : 0;
       if (liquidSleeping[i] && Math.abs(thermalForce) > 0.25) { liquidSleeping[i] = 0; liquidRestFrames[i] = 0; }
       if (liquidSleeping[i]) {
         if (LIQUID_DBG_NO_SLEEP) {

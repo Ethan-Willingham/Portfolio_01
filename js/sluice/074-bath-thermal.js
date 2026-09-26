@@ -7,7 +7,7 @@
   var BATH_FIRE_SLICE_GAIN = 160, BATH_COPPER_CAPACITY = 80;
   var BATH_THERM_CP = [4.18, 1.7, 3.9, 1.5, 0.8];
   var BATH_THERM_DENSITY = [1, 0.85, 1.05, 1.8, 2.7];
-  var bathThermal = null;
+  var bathThermal = null, bathThermalUploadTarget = null, bathThermalUploadActive = false;
   function bathThermalReset() {
     bathThermal = { energy: new Float64Array(72), capacity: new Float64Array(72),
       count: new Float32Array(72), water: new Float32Array(72),
@@ -15,7 +15,7 @@
       surface: new Float32Array(12), surfaceCell: new Int16Array(12), covered: new Uint8Array(12),
       evapCredit: new Float64Array(12), steamRate: new Float32Array(12),
       gpu: new Float32Array(296), vapor: [], bubbles: [],
-      sampleT: 0, simAcc: 0, vaporAcc: 0, bubbleAcc: 0, elapsed: 0,
+      sampleT: 0, sampleWater: -1, insideLast: false, simAcc: 0, vaporAcc: 0, bubbleAcc: 0, elapsed: 0,
       copperC: 20, meanC: 20, totalCapacity: 0, evaporatedKg: 0,
       inputKJ: 0, inletKJ: 0, outflowKJ: 0, airLossKJ: 0, latentKJ: 0, vaporSensibleKJ: 0, inputKW: 0, migrationC: 0,
       pendingKJ: 0, pendingInlets: [], typeCount: new Float64Array(5), x0: 0, y0: 0, dx: 1, dy: 1, enabled: false };
@@ -51,7 +51,10 @@
     t.surface.fill(0); t.surfaceCell.fill(-1); t.covered.fill(0);
     var cap = 0, counts = new Float64Array(5);
     function sample(type, x, y, vx, vy) {
-      if (type < 0 || type >= 5 || y > curve.y0 + curve.depthAt(x) - 1) return;
+      // Most particles belong to the outdoor world. Reject that world before
+      // evaluating the curved liner or touching the thermal cell arrays.
+      if (type < 0 || type >= 5 || x < t.x0 || x >= curve.x1 ||
+          y < t.y0 || y >= t.y0 + t.dy * 6 || y > curve.y0 + curve.depthAt(x) - 1) return;
       var k = bathThermalIndex(x, y); if (k < 0) return;
       var c = 0.01 * BATH_THERM_DENSITY[type] * BATH_THERM_CP[type];
       t.capacity[k] += c; cap += c; counts[type]++; t.count[k]++; t.vx[k] += vx || 0; t.vy[k] += vy || 0;
@@ -63,8 +66,7 @@
     liquidToolSync();
     for (var p = 0; p < liquidCount; p++) sample(liquidType[p], liquidX[p], liquidY[p], liquidVX[p], liquidVY[p]);
     // Parked water carries the same thermal budget while the player mines.
-    if (typeof mineralLiquidParked !== 'undefined') Object.keys(mineralLiquidParked).forEach(function (key) {
-      var data = mineralLiquidParked[key];
+    bathThermalParkedEach(function (data) {
       for (var k = 0; k < data.length; k += 3) sample(data[k], data[k + 1], data[k + 2], 0, 0);
     });
     // Credit warm inlet energy only when that material actually reaches
@@ -105,6 +107,18 @@
       t.surfaceCell[col] = idx;
       t.surface[col] = Math.max(t.y0 + row * t.dy, Math.min(t.y0 + (row + 1) * t.dy, t.surface[col] || bathWaterline()));
       break;
+    }
+  }
+  function bathThermalParkedEach(visit) {
+    if (typeof mineralLiquidParked === 'undefined') return;
+    var t = bathThermal;
+    // Same 256-pixel x:y keys as mineralLiquidBin. Looking up the basin's
+    // few bins avoids walking every stored spring, lake and snow region.
+    for (var bx = Math.floor(t.x0 / 256); bx <= Math.floor((t.x0 + t.dx * 12) / 256); bx++) {
+      for (var by = Math.floor(t.y0 / 256); by <= Math.floor((t.y0 + t.dy * 6) / 256); by++) {
+        var key = bx + ':' + by, data = mineralLiquidParked[key];
+        if (data && visit(data, key) === false) return;
+      }
     }
   }
   function bathThermalMixPair(a, b, dt, vertical) {
@@ -187,18 +201,28 @@
       var perParticle = 22.57 + 0.0418 * Math.max(0, tempC - 20);
       want = Math.min(want, Math.floor(t.energy[cell] / perParticle));
       if (!want) continue;
-      for (var i = liquidCount - 1; i >= 0 && count < want; i--) {
-        if (liquidType[i] !== 0 || bathThermalIndex(liquidX[i], liquidY[i]) !== cell) continue;
-        removeLiquidParticle(i); count++;
-      }
-      if (count < want && typeof mineralLiquidParked !== 'undefined') Object.keys(mineralLiquidParked).forEach(function (key) {
-        var data = mineralLiquidParked[key];
-        for (var k = data.length - 3; k >= 0 && count < want; k -= 3) {
-          if (data[k] !== 0 || bathThermalIndex(data[k + 1], data[k + 2]) !== cell) continue;
-          var last = data.length - 3; data[k] = data[last]; data[k + 1] = data[last + 1]; data[k + 2] = data[last + 2]; data.length -= 3; count++;
+      function takeLive() {
+        var cx = t.x0 + col * t.dx, cy = t.y0 + Math.floor(cell / 12) * t.dy;
+        for (var i = liquidCount - 1; i >= 0 && count < want; i--) {
+          if (liquidType[i] !== 0 || liquidX[i] < cx || liquidX[i] >= cx + t.dx ||
+              liquidY[i] < cy || liquidY[i] >= cy + t.dy) continue;
+          removeLiquidParticle(i); count++;
         }
-        if (!data.length) delete mineralLiquidParked[key];
-      });
+      }
+      function takeParked() {
+        bathThermalParkedEach(function (data, key) {
+          for (var k = data.length - 3; k >= 0 && count < want; k -= 3) {
+            if (data[k] !== 0 || bathThermalIndex(data[k + 1], data[k + 2]) !== cell) continue;
+            var last = data.length - 3; data[k] = data[last]; data[k + 1] = data[last + 1]; data[k + 2] = data[last + 2]; data.length -= 3; count++;
+          }
+          if (!data.length) delete mineralLiquidParked[key];
+          return count < want;
+        });
+      }
+      // Offscreen bath water is normally parked. Consume it directly, so
+      // each vapor event does not first scan the visible outdoor liquid.
+      if (bathMode) { takeLive(); if (count < want) takeParked(); }
+      else { takeParked(); if (count < want) takeLive(); }
       if (!count) continue;
       t.evapCredit[col] = Math.max(0, t.evapCredit[col] - count * 0.01);
       t.energy[cell] = Math.max(0, t.energy[cell] - count * perParticle);
@@ -213,11 +237,30 @@
     }
   }
   function bathThermalTick(dt) {
-    if (!bathRoomReady || !isFinite(dt) || dt <= 0) return;
-    var t = bathThermal; t.elapsed += dt; t.sampleT -= dt;
-    if (t.sampleT <= 0) { bathThermalSample(); t.sampleT = 0.15; }
+    if (!isFinite(dt) || dt <= 0) return;
+    if (!bathRoomReady) { bathThermalUpload(); return; }
+    var t = bathThermal, bed = hearthBeds.boiler;
+    t.elapsed += dt;
+    var entered = bathMode && !t.insideLast; t.insideLast = bathMode;
+    var pending = t.pendingInlets.length > 0 || (typeof bathPour === 'number' && bathPour > 0);
+    if (typeof bathSilos !== 'undefined' && bathSilos.pending) {
+      for (var p = 0; p < bathSilos.pending.length; p++) if (bathSilos.pending[p] > 0) { pending = true; break; }
+    }
+    // A never-filled or emptied cold bath needs no world census while mining.
+    // Pending pours and legacy warmth still arm sampling on the next tick.
+    if (!bathMode && !t.enabled && bathWater <= 0 && !pending &&
+        !(bed.thermalKW > 0) && t.copperC <= 20 && t.meanC <= 20 && t.migrationC <= 20) {
+      t.sampleT = 0; t.sampleWater = bathWater; bathThermalUpload(); return;
+    }
+    t.sampleT -= dt;
+    if (entered || t.sampleT <= 0 || bathWater !== t.sampleWater) {
+      bathThermalSample(); t.sampleT = bathMode ? 0.15 : 1;
+    }
+    // Mass snapshots can be less frequent outside; energy and evaporation
+    // retain their 20 Hz clock and draw from the same persistent reservoirs.
     t.simAcc = Math.min(0.5, t.simAcc + Math.max(0, dt));
     while (t.simAcc >= 0.05) { bathThermalStep(0.05); t.simAcc -= 0.05; }
+    t.sampleWater = bathWater;
     bathThermalUpload();
   }
   function bathThermalActive() {
@@ -236,12 +279,18 @@
     return Math.max(-18, Math.min(18, (t.temperature[i] - t.meanC) * 600 * 0.00035));
   }
   function bathThermalUpload() {
-    var t = bathThermal, data = t.gpu; data.fill(0);
-    if (bathMode && t.enabled) {
-      data.set([t.x0, t.y0, t.dx, t.dy, 1, t.meanC, 0, 0]);
-      for (var i = 0; i < 72; i++) data.set([t.temperature[i], t.count[i], t.surface[i % 12], 0], 8 + i * 4);
+    var t = bathThermal, target = liquidWGPU, active = bathMode && t.enabled;
+    if (!target || !target.setBathThermal) { bathThermalUploadTarget = null; bathThermalUploadActive = false; return; }
+    if (!active) {
+      // Clear once on exit/reset, then leave the outdoor solver untouched.
+      if (bathThermalUploadTarget === target && bathThermalUploadActive) target.setBathThermal(null);
+      bathThermalUploadTarget = target; bathThermalUploadActive = false;
+      return;
     }
-    if (liquidWGPU && liquidWGPU.setBathThermal) liquidWGPU.setBathThermal(data);
+    var data = t.gpu; data.fill(0);
+    data.set([t.x0, t.y0, t.dx, t.dy, 1, t.meanC, 0, 0]);
+    for (var i = 0; i < 72; i++) data.set([t.temperature[i], t.count[i], t.surface[i % 12], 0], 8 + i * 4);
+    target.setBathThermal(data); bathThermalUploadTarget = target; bathThermalUploadActive = true;
   }
   function bathThermalVaporEmit(col, count, temperature) {
     var t = bathThermal;

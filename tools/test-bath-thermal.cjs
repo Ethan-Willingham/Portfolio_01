@@ -87,3 +87,47 @@ function close(a,b,msg) {assert(Math.abs(a-b)<Math.max(1e-7,Math.abs(b)*1e-8),`$
  s.bathThermalSample();close(total(s)+s.bathThermal.outflowKJ,before,'spilled water carries sensible energy');
  assert(s.bathThermal.outflowKJ>0);console.log('PASS outflow energy is accounted rather than heating remaining water');
 }
+{
+ const s=fixture(0,0);s.bathMode=false;s.bathRoomReady=false;
+ let samples=0,uploads=0;const sample=s.bathThermalSample;
+ s.bathThermalSample=()=>{samples++;return sample();};s.liquidWGPU={setBathThermal(){uploads++;}};
+ for(let i=0;i<120;i++)s.bathThermalTick(1/60);
+ s.bathRoomReady=true;for(let i=0;i<120;i++)s.bathThermalTick(1/60);
+ assert.equal(samples,0);assert.equal(uploads,0,'unused outdoor bath does not touch GPU thermal state');
+ s.bathPour=100;for(let i=0;i<120;i++)s.bathThermalTick(1/60);
+ assert(samples>=2&&samples<=3,'pending cold pour still gets bounded outdoor mass samples');
+ s.bathPour=0;s.bathSilos={pending:[0,10,0,0,0]};s.bathThermal.sampleT=0;const before=samples;s.bathThermalTick(1/60);
+ assert.equal(samples,before+1,'typed silo queue cannot be mistaken for a dry idle bath');
+ s.bathSilos.pending.fill(0);s.bathMode=true;s.bathThermal.sampleT=99;s.bathThermalTick(1/60);
+ assert.equal(samples,before+2,'entry immediately refreshes bath mass');
+ console.log('PASS unused outdoor bath does no scan/upload, pending pours remain sampled, entry refreshes immediately');
+}
+{
+ const s=fixture();const uploads=[];s.liquidWGPU={setBathThermal(data){uploads.push(data===null?'clear':'field');}};
+ s.bathThermalUpload();assert.deepEqual(uploads,['field']);s.bathMode=false;
+ for(let i=0;i<120;i++){s.bathThermalTick(1/60);s.bathThermalUpload();}
+ assert.deepEqual(uploads,['field','clear'],'exit clears once, including repeated arm calls outside');
+ s.bathMode=true;s.bathThermalUpload();s.bathThermalReset();s.bathThermalUpload();
+ assert.deepEqual(uploads,['field','clear','field','clear'],'reset clears stale active GPU field');
+ console.log('PASS leaving or resetting clears GPU thermal state once, with no outdoor per-frame upload');
+}
+{
+ const s=fixture(0,0);s.liquidCount=20000;s.liquidType=new Uint8Array(20000);s.liquidX=new Float32Array(20000).fill(500);s.liquidY=new Float32Array(20000).fill(-100);
+ s.liquidVX=new Float32Array(20000);s.liquidVY=new Float32Array(20000);
+ s.bathTubCurve=()=>({x0:0,x1:120,y0:0,D:60,depthAt(){throw new Error('outdoor particle reached the expensive basin curve');}});
+ s.mineralLiquidParked['10:10']=new Proxy([],{get(){throw new Error('unrelated parked bin was inspected');}});
+ s.bathThermalSample();assert.equal(s.bathThermal.totalCapacity,0);
+ console.log('PASS world particles reject before curve evaluation and unrelated parked bins stay untouched');
+}
+{
+ const s=fixture();const initial=s.liquidCount;s.mineralLiquidParked={};
+ for(let i=0;i<s.liquidCount;i++){const x=s.liquidX[i],y=s.liquidY[i],key=Math.floor(x/256)+':'+Math.floor(y/256);(s.mineralLiquidParked[key]??=[]).push(0,x,y);}
+ s.liquidCount=0;for(const key of ['liquidX','liquidY','liquidVX','liquidVY','liquidType'])s[key]=[];
+ s.bathMode=false;s.hearthBeds.boiler.thermalKW=4;let samples=0;const sample=s.bathThermalSample;s.bathThermalSample=()=>{samples++;return sample();};
+ for(let i=0;i<2400;i++)s.bathThermalTick(.05);
+ const t=s.bathThermal,remaining=Object.values(s.mineralLiquidParked).reduce((n,p)=>n+p.length/3,0);
+ assert(samples>=115&&samples<=122,'outdoor mass census stays near 1 Hz while 120 seconds of heat advance');
+ assert(t.evaporatedKg>0);close(initial-remaining,t.evaporatedKg*100,'parked evaporation removes exact water');
+ close(total(s)+(t.copperC-20)*s.BATH_COPPER_CAPACITY+t.airLossKJ+t.latentKJ+t.vaporSensibleKJ+t.outflowKJ,t.inputKJ+t.inletKJ,'offscreen energy ledger stays closed');
+ console.log('PASS 1 Hz outdoor sampling preserves 20 Hz heating, parked evaporation and the full energy budget');
+}

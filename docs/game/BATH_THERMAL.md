@@ -21,6 +21,12 @@ that the art supplies a measured building volume. Heat first enters an 80 kJ/K
 copper exchanger. The copper exchanges heat with occupied bottom cells, loses
 heat to the room and radiates. Empty furnaces and cold coals cannot warm water.
 
+Outside the bath, mass snapshots run once per second while energy and evaporation
+continue at 20 Hz. Empty cold baths do not scan the outdoor liquid. Entry and
+changed water counts refresh immediately, and pending pours remain eligible for
+sampling. Parked storage lookups visit only the basin's 256-pixel bins. Leaving
+clears the GPU thermal field once; ordinary outdoor frames do not upload it.
+
 Neighboring cells exchange equal and opposite energy. Motion measured from the
 liquid solver increases mixing, as does an unstable warm-under-cold column.
 Every exchange is bounded by the two cells' equilibrium temperature. Remapping
