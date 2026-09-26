@@ -33,6 +33,9 @@
       child.vx = body.vx-body.spin*(child.y-body.y); child.vy = body.vy+body.spin*(child.x-body.x);
       child.r = p.radius; child.baseR = p.radius/(body.r/body.baseR); child.angle = 0;
       child.shape = p.polygon.vertices.map(function(v){return [(v[0]-child.x)/child.r,(v[1]-child.y)/child.r];});
+      child.thermalKW = (body.thermalKW || 0)*share;
+      child.thermalSolidKJ = body.thermalSolidKJ == null ? null : body.thermalSolidKJ*share;
+      child.thermalGasKJ = body.thermalGasKJ == null ? null : body.thermalGasKJ*share;
       child.massRef = body.massRef*share; child.dryKg = body.dryKg*share; child.fuelShare = body.fuelShare*share;
       child.generation = (body.generation || 0)+1; child.damage = 0; child.load = 0; child.fractureWait = 2;
       delete child.vertices; hearthMass(child); hearthWorldHull(child); children.push(child);
@@ -46,7 +49,7 @@
     var mass = 0; for (var i = 0; i < bed.ash.length; i++) mass += bed.ash[i].kg; return mass;
   }
   function hearthMakeAsh(bed, b) {
-    var count = Math.max(4,Math.min(12,Math.ceil(b.r))), kg = b.dryKg*0.16/count;
+    var count = Math.max(4,Math.min(12,Math.ceil(b.r))), kg = b.dryKg*hearthMaterial(b.material).residue/count;
     for (var i = 0; i < count; i++) {
       var seed = hearthSeed(b.id*197+i*17), angle = seed*Math.PI*2, radius = b.r*Math.sqrt(hearthSeed(b.id*23+i))*0.65;
       var grain = { x: b.x+Math.cos(angle)*radius, y: b.y+Math.sin(angle)*radius,
@@ -98,8 +101,9 @@
       var b=bed.chunks[i];if(b.held)continue;
       b.fractureWait=Math.max(0,(b.fractureWait||0)-h);
       if(b.ash){hearthMakeAsh(bed,b);continue;}
+      if(hearthMaterial(b.material).role !== 'fuel')continue;
       if(b.fuel>0.85)continue;
-      var retained=Math.min(1,b.carbon/(b.material==='wood'?0.24:0.72));
+      var retained=Math.min(1,(hearthMaterial(b.material).volatile > 0.8 ? b.fuel : b.carbon)/Math.max(0.03, 1-hearthMaterial(b.material).volatile));
       var strength=0.035+Math.pow(retained,2.8)*5.5;
       var stress=(b.load||0)/Math.max(50,b.massRef*520);
       b.damage=Math.min(1,(b.damage||0)+Math.max(0,stress-strength)*h*0.28);

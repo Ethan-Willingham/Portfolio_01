@@ -1049,6 +1049,8 @@
     for (var i = 0; i < liquidCount; i++) {
       if (liquidFrozen[i]) continue;
       var base = i * 9;
+      var thermalForce = typeof bathThermalForce === 'function' ? bathThermalForce(liquidX[i], liquidY[i], liquidType[i]) : 0;
+      if (liquidSleeping[i] && Math.abs(thermalForce) > 0.25) { liquidSleeping[i] = 0; liquidRestFrames[i] = 0; }
       if (liquidSleeping[i]) {
         if (LIQUID_DBG_NO_SLEEP) {
           // v24.120 debug kit — sleep disabled: force-wake instead of
@@ -1265,6 +1267,7 @@
           newVY *= adF;
         }
       }
+      newVY -= thermalForce * stepDt;
       liquidVX[i] = newVX;
       liquidVY[i] = newVY;
       liquidG00[i] = gv00;
@@ -1276,7 +1279,7 @@
       // (debug kit: NO_SLEEP routes everything to the reset branch.)
       // v24.150 — latch only while SETTLING (calm >= 0.5): lively water
       // never freezes mid-wave. edit2 liquid-wgpu.js (kernel + reference).
-      if (!LIQUID_DBG_NO_SLEEP && LIQUID_CALM >= 0.5 && newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
+      if (!LIQUID_DBG_NO_SLEEP && Math.abs(thermalForce) <= 0.25 && LIQUID_CALM >= 0.5 && newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
         var rf = liquidRestFrames[i] + 1;
         if (rf > LIQUID_SLEEP_FRAMES) {
           liquidSleeping[i] = 1;
@@ -1647,11 +1650,9 @@
     // timer: streamed fills/drains/sweeps (ADD/REMOVE ops), so a pond
     // arriving on screen stays serene instead of sloshing awake.
     var hard = liquidRigTouch, soft = false;
-    // v25.93 BANYA: inside the bathhouse scene the water NEVER settles:
-    // sleeping particles still carry mass, so a half-asleep tub froze into
-    // a tilted sculpture the convection could not level. In-scene = hard
-    // stimulus every frame; the world settles normally again on exit.
-    if (typeof bathMode !== 'undefined' && bathMode) hard = true;
+    // Heat is a stimulus only while an actual temperature gradient drives
+    // convection. A cold bath settles with the same rules as outdoor water.
+    if (typeof bathThermalActive === 'function' && bathThermalActive()) hard = true;
     if (liquidMutationSeq !== liquidStimSeq) {
       var seqDelta = liquidMutationSeq - liquidStimSeq;
       liquidStimSeq = liquidMutationSeq;

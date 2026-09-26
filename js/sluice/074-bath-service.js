@@ -18,6 +18,7 @@
 
   function bathServiceReset() {
     bathToolReset();
+    bathThermalReset(); bathSiloReset();
     bathScalePop(); bathSteamPop();
     hearthRoomReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
@@ -38,17 +39,21 @@
     return forgeCount('coal');
   }
   function bathWaterCount() {
-    return hearthDevSupplies() ? BATH_MAX_WATER : siphon.tank[0] + bathSupplies[0];
+    return hearthDevSupplies() ? BATH_MAX_WATER : bathLiquidCount(0);
   }
   function bathTakeWater(n) {
     if (!isFinite(n) || n < 0 || Math.floor(n) !== n) return false;
     if (hearthDevSupplies()) return true;
     if (bathWaterCount() < n) return false;
-    var stored = Math.min(bathSupplies[0], n);
-    bathSupplies[0] -= stored; siphon.tank[0] -= n - stored;
+    bathSiloReserve(0, Math.max(0, n - bathSilos.pending[0]));
+    var temp = bathSilos.pending[0] ? bathSilos.pendingHeat[0] / bathSilos.pending[0] : 20;
+    bathSilos.pending[0] -= n; bathSilos.pendingHeat[0] = bathSilos.pending[0] * temp;
     return true;
   }
-  function bathCanServe() { return bathWater >= BATH_MIN_WATER && bathHeat >= 0.35; }
+  function bathCanServe() {
+    var temperature = bathThermalTemperature();
+    return bathWater >= BATH_MIN_WATER && temperature >= 30 && temperature <= 48;
+  }
   function bathSetNotice(s) { bathNotice = s; bathNoticeT = 5; }
 
   function bathBasinCount() {
@@ -145,9 +150,7 @@
     hearthRoomTick(dt);
     var boiler = hearthBeds.boiler;
     bathFire = boiler.power > 0.01 ? boiler.fuelSeconds : 0;
-    var target = bathWater > 0 ? boiler.power : 0;
-    var heatRate = target ? 0.09 * Math.min(2, 8000 / Math.max(2000, bathWater)) : 0.012;
-    bathHeat += (target - bathHeat) * (1 - Math.exp(-dt * heatRate));
+    bathThermalTick(dt);
     bathDrainT -= dt;
     if (bathDrainT <= 0) {
       bathDrainT = 0.15;
@@ -161,7 +164,7 @@
       var count = liquidToolEmit(0, Math.min(bathPour, Math.ceil(2400 * dt)),
         (tb[0] + 2) * TILE, (F.fr - 4) * TILE, 0, 100);
       bathPour -= count;
-      if (count > 0) { bathHeat *= before / (before + count); bathWater += count; }
+      if (count > 0) bathWater += count;
     }
     for (var i = bathWetFloor.length - 1; i >= 0; i--) {
       bathWetFloor[i].t += dt;
@@ -203,7 +206,7 @@
     var g = bathGuests.find(function (guest) { return guest.s.id === id && guest.st === 'wait'; });
     if (!g) return false;
     if (!bathCanServe()) {
-      bathSetNotice(bathWater < BATH_MIN_WATER ? 'Fill the tub from your water tank.' : 'Load coal in the boiler, strike flint and steel, and let the water warm.');
+      bathSetNotice(bathWater < BATH_MIN_WATER ? 'Pour water into the tub with the hose.' : bathThermalTemperature() > 48 ? 'The water is too hot. Let it cool, or mix in cold water.' : 'Place fuel, cast sparks from the striker, and let the water warm.');
       return false;
     }
     // Admission uses the shared warm bath. No guest recipe is charged.
@@ -346,7 +349,7 @@
     ctx.fillText('WARM BATH', 10, 15);
     ctx.font = '12px ' + UI_FONT;
     if (!r.compact) ctx.fillText(bathWater >= BATH_MIN_WATER ? 'Water ready' : 'Needs water', 10, 36);
-    if (!r.compact) ctx.fillText(bathHeat >= 0.35 ? 'Warm enough' : 'Waiting for heat', 10, 54);
+    if (!r.compact) ctx.fillText(bathThermalTemperature() > 48 ? 'Water too hot' : bathThermalTemperature() >= 30 ? 'Warm enough' : 'Waiting for heat', 10, 54);
     ctx.fillStyle = ready ? BLD.goldDark : BLD.woodDark;
     ctx.fillRect(6, r.compact ? 32 : 68, 148, 22);
     ctx.fillStyle = BLD.cream; ctx.font = 'bold 11px ' + UI_FONT;
@@ -383,15 +386,12 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
     bathToolDrawControls(ctx, L.tools);
-    bathServiceButtons = [Object.assign({ action: 'water' }, L.water)];
-    if (bathTool.mode === 'hose') {
-      hearthText(ctx, Math.floor((bathWaterCount() + bathPour) / 100) + ' L SUPPLY',
-        L.water.x + L.water.w / 2, L.water.y + 22, 11, BLD.cream, 'center');
-      bathServiceButtons = [];
-    } else hearthButton(ctx, L.water, bathPour > 0 ? 'POURING...' : 'ADD WATER [W]', 'water', bathWaterCount() > 0);
-    hearthText(ctx, Math.floor(bathWater / 100) + ' L / ' + Math.round(20 + bathHeat * 28) + ' C',
+    bathServiceButtons = [];
+    var type = bathSilos.selected, available = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
+    hearthButton(ctx, L.water, liquidCatalog[type].name.toUpperCase() + ' / ' + available, 'liquids', true);
+    hearthText(ctx, Math.floor(bathWater / 100) + ' L / ' + bathThermalTemperature().toFixed(1) + ' C',
       meter.x + meter.w / 2, meter.y + 9, 12, BLD.cream, 'center');
-    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : 'WARMING WATER',
+    hearthText(ctx, bathCanServe() ? 'BATH READY' : bathWater < BATH_MIN_WATER ? 'NEEDS WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER',
       meter.x + meter.w / 2, meter.y + 25, 10, UIT_DIM, 'center');
     hearthText(ctx, '$' + bathFmtMoney(money), meter.x + meter.w / 2, meter.y + 41, 10, BLD.goldPale, 'center');
     // Transient notices sit on the open wall, only as wide as their text.
@@ -413,7 +413,7 @@
     return false;
   }
   function bathServiceSave() {
-    return { version: 4, workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+    return { version: 6, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
@@ -422,6 +422,7 @@
   }
   function bathServiceRestore(data) {
     bathToolReset();
+    bathThermalReset(); bathSiloReset();
     bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
     bathRoomReady = false; bathSyncCollision(); banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
     bathFloorsOwned = [true, false, false, false, false];
@@ -435,6 +436,7 @@
     bathFire = data.workshop ? skySlimeClamp(Number(data.fire) || 0, 0, hearthBeds.boiler.fuelSeconds) :
       skySlimeClamp(Number(data.fire) || 0, 0, BATH_LEGACY_FIRE_SECONDS);
     bathHeat = skySlimeClamp(Number(data.heat) || 0, 0, 1);
+    bathThermalRestore(data.thermal, bathHeat);
     bathPour = skySlimeClamp(Number(data.pour) || 0, 0, BATH_MAX_WATER);
     bathLostWater = Math.max(0, Number(data.lost) || 0);
     bathServed = Math.max(0, Number(data.served) || 0);
@@ -443,6 +445,7 @@
       bathFloorsOwned[f] = f === 0 || !!(data.floors && data.floors[f]);
       bathSupplies[f] = Math.max(0, Math.floor(Number(data.supplies && data.supplies[f]) || 0));
     }
+    bathSiloRestore(data.silos, bathPour); bathPour = 0;
     // The carved grid and real water are already in the world/liquid save.
     // Re-arm the heater on next entry without filling the bath a second time.
     bathRoomReady = !!data.ready && data.version >= 4;

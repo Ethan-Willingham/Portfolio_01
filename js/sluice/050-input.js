@@ -239,7 +239,7 @@
     siphonPointerMove(p.x, p.y, 'mouse');
     if (cargoManifestOpen) { cargoManifestPointerMove(p.x, p.y); return; }
     if (ledgerOpen) { canvas.style.cursor = ''; ledgerPointerMove(p.x, p.y); return; }
-    canvas.style.cursor = bathMode ? (hearthDrag ? 'grabbing' : bathBoilerHover ? 'grab' : '') :
+    canvas.style.cursor = bathMode ? (hearthDrag ? 'grabbing' : bathBoilerHover ? (hearthHand.mode === 'hand' ? 'grab' : 'crosshair') : '') :
       cargoManifestCanOpen() && cargoManifestContains(cargoManifestButtonRect(), p.x, p.y) ? 'pointer' : '';
     if (itemWheel.open && itemWheel.pointerId === 'mouse') {
       updateItemWheelHover(p.x, p.y);
@@ -349,6 +349,9 @@
       if (isPointOnShop(wx, wy)) { enterShopFloor(); return; }
       // v26.31 — the banya tower enters the same way (072-bath.js owns the
       // hit test + fade; inert unless ENABLE_BATH).
+      if (typeof isPointOnBathSilos === 'function' && isPointOnBathSilos(wx, wy)) {
+        bathEnter(); hearthHand.silos = true; return;
+      }
       if (typeof isPointOnBanya === 'function' && isPointOnBanya(wx, wy)) {
         bathEnter(); return;
       }

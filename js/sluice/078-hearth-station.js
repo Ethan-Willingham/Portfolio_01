@@ -85,45 +85,23 @@
   }
   function hearthDrawFuelControl(c, r, pump) {
     var bed = hearthBeds.boiler;
-    var label = pump ? (r.w < 90 ? 'AIR [B]' : 'BELLOWS [B]') :
-      'COAL ' + (hearthDevSupplies() ? 'FREE' : forgeCount('coal'));
-    if (r.h < 64) {
-      if (r.w < 118) { hearthButton(c, r, label, pump ? 'pump' : 'coal', pump || forgeCount('coal') > 0); return; }
-      hearthPlate(c, r, true);
-      var ix = r.x + 27, iy = r.y + 22;
-      if (pump) {
-        c.fillStyle = BLD.woodDark; c.fillRect(ix - 15, iy + 5, 30, 3);
-        c.fillStyle = BLD.woodMid; c.fillRect(ix - 16, iy - 9 + bed.air * 4, 32, 3);
-        c.fillStyle = BLD.woodBase; c.beginPath();
-        c.moveTo(ix - 13, iy - 6 + bed.air * 4); c.lineTo(ix + 12, iy - 6 + bed.air * 4);
-        c.lineTo(ix + 16, iy); c.lineTo(ix + 12, iy + 5); c.lineTo(ix - 13, iy + 5); c.closePath(); c.fill();
-      } else for (var i = 0; i < Math.min(2, forgeCount('coal')); i++) {
-        if (!hearthBinCoals[i]) hearthBinCoals[i] = { r: 13 + i, seed: (i + 1) * 0.137, angle: i * 1.7, heat: 0, fuel: 1 };
-        hearthDrawCoal(c, hearthBinCoals[i], ix - 6 + i * 12, iy, 0.7, hearthToolTime);
-      }
-      hearthText(c, label, r.x + 48 + (r.w - 48) / 2, iy, 11, BLD.cream, 'center');
-      hearthButtons.push(Object.assign({ action: pump ? 'pump' : 'coal' }, r)); return;
-    }
     hearthPlate(c, r, true);
-    var cx = r.x + r.w / 2, cy = r.y + 22;
+    var ix = r.x + Math.min(26, r.w * 0.25), iy = r.y + r.h / 2;
     if (pump) {
-      var squeeze = bed.air * 7;
-      c.fillStyle = BLD.woodMid; c.fillRect(cx - 30, cy - 10 + squeeze, 60, 4);
-      c.fillStyle = BLD.woodDark; c.fillRect(cx - 28, cy + 10, 56, 4);
-      c.fillStyle = BLD.woodBase; c.beginPath();
-      c.moveTo(cx - 26, cy - 6 + squeeze); c.lineTo(cx + 24, cy - 6 + squeeze);
-      c.lineTo(cx + 29, cy + 3); c.lineTo(cx + 24, cy + 10); c.lineTo(cx - 26, cy + 10); c.closePath(); c.fill();
-      c.strokeStyle = BLD.woodDeep; c.lineWidth = 1;
-      c.beginPath(); c.moveTo(cx - 23, cy + squeeze * 0.4); c.lineTo(cx + 23, cy + squeeze * 0.4); c.stroke();
-    } else {
-      var count = Math.min(5, forgeCount('coal'));
-      for (var i = 0; i < count; i++) {
-        if (!hearthBinCoals[i]) hearthBinCoals[i] = { r: 13 + i % 3, seed: (i + 1) * 0.137, angle: i * 1.7, heat: 0, fuel: 1 };
-        hearthDrawCoal(c, hearthBinCoals[i], cx + (i - (count - 1) / 2) * 19, cy, 0.8, hearthToolTime);
-      }
+      c.fillStyle = BLD.woodDark; c.fillRect(ix - 15, iy + 5, 30, 3);
+      c.fillStyle = BLD.woodMid; c.fillRect(ix - 16, iy - 9 + bed.air * 4, 32, 3);
+      c.fillStyle = BLD.woodBase; c.beginPath(); c.moveTo(ix - 13, iy - 6 + bed.air * 4);
+      c.lineTo(ix + 12, iy - 6 + bed.air * 4); c.lineTo(ix + 16, iy); c.lineTo(ix + 12, iy + 5); c.closePath(); c.fill();
+      if (r.w >= 110) hearthText(c, 'BELLOWS', r.x + r.w - 7, iy, 11, BLD.cream, 'right');
+      else hearthText(c, 'AIR', r.x + r.w - 5, iy, 11, BLD.cream, 'right');
+      hearthButtons.push(Object.assign({ action: 'pump' }, r)); return;
     }
-    hearthText(c, label, cx, r.y + r.h - 15, 11, BLD.cream, 'center');
-    hearthButtons.push(Object.assign({ action: pump ? 'pump' : 'coal' }, r));
+    hearthDrawCoal(c, hearthHandPreview(), ix, iy - 2, 0.48, hearthToolTime);
+    var def = hearthMaterial(hearthHand.material), count = hearthDevSupplies() ? 'FREE' : hearthMaterialCount(hearthHand.material);
+    var label = r.w >= 124 ? def.label.toUpperCase() : 'FUEL';
+    hearthText(c, label, r.x + r.w - 7, iy - 8, 11, BLD.cream, 'right');
+    hearthText(c, count + '  >', r.x + r.w - 7, iy + 9, 11, BLD.goldPale, 'right');
+    hearthButtons.push(Object.assign({ action: 'fuels' }, r));
   }
   function hearthDrawStation(c) {
     var L = hearthRoomLayout(), r = L.station, box = L.box, bed = hearthBeds.boiler;
@@ -132,11 +110,14 @@
     hearthDrawCasing(c, box, bed, bathBoilerHover, !L.landscape);
     hearthDrawFuelControl(c, L.bin, false);
     hearthDrawFuelControl(c, L.pump, true);
-    hearthButton(c, L.action, L.action.w < 90 ? 'FLINT [F]' : 'STRIKE FLINT [F]', 'strike', hearthHasTool('flint') && hearthHasTool('steel'));
-    hearthButton(c, L.ash, L.ash.w < 90 ? 'ASH [A]' : 'SWEEP ASH [A]', 'ash', bed.ash.length > 0 || bed.chunks.some(function (b) { return b.ash; }));
+    hearthPlate(c, L.action, hearthHand.mode === 'striker');
+    hearthDrawStriker(c, L.action.x + (L.action.w < 110 ? L.action.w / 2 : 26), L.action.y + 23, 0.7, hearthToolPulse);
+    if (L.action.w >= 110) hearthText(c, 'STRIKER', L.action.x + L.action.w - 8, L.action.y + 23, 11, BLD.cream, 'right');
+    hearthButtons.push(Object.assign({ action: 'strike' }, L.action));
+    hearthDrawGrateControl(c, L.ash);
     if (L.wide || L.side) {
       hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, L.side ? 10 : 11, UIT_DIM, 'center');
-      if (L.wide && !bed.chunks.length) hearthText(c, 'LOAD COAL', L.bin.x + L.bin.w / 2, L.bin.y - 13, 11, BLD.cream, 'center');
+      if (L.wide && !bed.chunks.length) { var hint = { x: L.bin.x, y: L.bin.y - 26, w: L.bin.w, h: 20 }; hearthPlate(c, hint, false); hearthText(c, 'CLICK TO DROP', hint.x + hint.w / 2, hint.y + 10, 11, BLD.cream, 'center'); }
     } else {
       // Keep the sloping ironwork continuous behind the compact readings.
       var readY = L.h >= 500 ? L.h - 12 : r.y + 8;

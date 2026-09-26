@@ -35,7 +35,8 @@
     if (!bathMode || hearthView !== 'bath' || bathFading || gamePaused) return;
     var t = bathTool, next = t.mode === mode ? '' : mode;
     bathToolReset(); bathPtrDown = false; hearthClearBoilerHover();
-    t.mode = next;
+    t.mode = next; hearthHand.mode = 'hand'; hearthHand.rack = false;
+    if (next === 'hose' && bathPour > 0) { bathSiloQueue(0, bathPour, 20); bathPour = 0; }
     bathScrollT = 1e9; bathCamY = -1;
     var b = bathToolBounds();
     t.x = t.tx = (b.curve.x0 + b.curve.x1) / 2;
@@ -112,11 +113,11 @@
     if (bathTool.mode === 'claw') return touch ?
       'Drag to move. Tap GRAB to pick up a slime, then DROP to let go.' :
       'Move the mouse to aim. Click to grab a slime; click again to drop it.';
-    if (bathTool.mode === 'hose') return bathWaterCount() + bathPour < 1 ?
-      'Hose empty. Bring scooped water in your tank.' : touch ?
+    if (bathTool.mode === 'hose') return !hearthDevSupplies() && bathLiquidCount(bathSilos.selected) < 1 ?
+      'No selected liquid. Fill a silo or bring a full rig tank.' : touch ?
       'Drag to aim. Tap POUR to start the water; STOP turns it off.' :
       'Move the mouse to aim. Hold click to pour; release to stop.';
-    return 'Drag coal into the boiler below. Use CLAW or HOSE above the bath.';
+    return 'Select fuel, then click to drop it. Drag the striker to cast sparks. Pull the grate to sift ash.';
   }
   function bathToolDrawControls(c, slots) {
     var t = bathTool;
@@ -190,7 +191,9 @@
     t.flow += ((running ? 1 : 0) - t.flow) * (1 - Math.exp(-dt * (running ? 9 : 20)));
     if (t.mode !== 'hose' || t.flow < 0.02) return;
     t.bank = Math.min(400, t.bank + dt * (t.shower ? 2000 : 3200) * t.flow);
-    var available = Math.floor(bathPour + bathWaterCount());
+    if (bathPour > 0) { bathSiloQueue(0, bathPour, 20); bathPour = 0; }
+    var type = bathSilos.selected;
+    var available = hearthDevSupplies() ? BATH_MAX_WATER : bathLiquidCount(type);
     var wanted = Math.min(Math.floor(t.bank), available, Math.max(0, BATH_MAX_WATER - bathWater));
     t.bank -= Math.floor(t.bank);
     var emitted = 0, lanes = t.shower ? 5 : 1;
@@ -198,15 +201,12 @@
       var angle = t.tilt + (lane - (lanes - 1) / 2) * 0.17;
       var dx = Math.sin(angle), dy = Math.cos(angle), speed = t.shower ? 175 : 430;
       var amount = Math.floor(wanted / lanes) + (lane < wanted % lanes ? 1 : 0);
-      emitted += liquidToolEmit(0, amount, t.x + dx * 25 + (lane - (lanes - 1) / 2) * 4,
+      emitted += bathSiloEmit(type, amount, t.x + dx * 25 + (lane - (lanes - 1) / 2) * 4,
         t.y + dy * 25, dx * speed + t.vx * 0.22, dy * speed + t.vy * 0.12);
     }
-    // Debit only accepted particles. Queued ADD WATER is already paid for.
-    var queued = Math.min(bathPour, emitted); bathPour -= queued;
-    if (emitted > queued) bathTakeWater(emitted - queued);
+    // The shared silo emitter debits only accepted particles and transfers heat.
     t.output = emitted;
     if (emitted) {
-      bathHeat *= bathWater / Math.max(1, bathWater + emitted);
       for (var i = 0; i < bathGuests.length; i++) {
         var g = bathGuests[i], dx = Math.sin(t.tilt), dy = Math.cos(t.tilt);
         var along = (g.s.x - t.x) * dx + (g.s.y - t.y) * dy;
@@ -332,7 +332,7 @@
       c.fillStyle = BLD.goldDark; c.fillRect(-8, 9, 16, 14);
       c.fillStyle = BLD.goldPale; c.fillRect(-8, 21, 16, 2);
       c.fillStyle = BLD.metalDark; c.fillRect(-7, 24, 14, 3);
-      c.fillStyle = t.flow > 0.05 ? BLD.waterLight : BLD.metalDark;
+      c.fillStyle = t.flow > 0.05 ? liquidCatalog[bathSilos.selected].color : BLD.metalDark;
       c.fillRect(-3, -1, 6, 5);
     }
     c.restore();

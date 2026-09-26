@@ -796,8 +796,8 @@
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 20 vec4 = 320 bytes, including
-    // five curved bath liners. See WGSL_SIM_PARAMS for the lane layout. simParamsHost
+    // constants every compute kernel reads. 94 vec4 = 1504 bytes, including
+    // five curved bath liners and the bounded bath thermal field. See WGSL_SIM_PARAMS for the lane layout. simParamsHost
     // is the f32 staging view; writeSimParams() fills it from the module
     // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
     // GPU chain (and before each harness run* call). Bind groups bind the
@@ -805,10 +805,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 320,
+      size: 1504,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(80);   // 15 physics + five bath vec4 lanes
+    instance.simParamsHost = new Float32Array(376);   // 20 base + 74 thermal vec4 lanes
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1396,6 +1396,7 @@
     sh[56] = LIQUID_CALM_LOCAL;  sh[57] = LIQUID_REACH_FLOOR;
     sh[58] = 0; sh[59] = 0;
     sh.fill(0,60); if(instance.bathBowls)sh.set(instance.bathBowls,60);
+    if (instance.bathThermal) sh.set(instance.bathThermal, 80);
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4630,7 +4631,18 @@ struct SimParams {
   turb   : vec4<f32>,   // v26.54/55: eddy rate, px/s saturation, floorReach, kneeW
   local  : vec4<f32>,   // v26.63: calmLocal flag, spare, spare, spare
   bowls  : array<vec4<f32>,5>, // x0, x1, lip y, catenary depth; zero disables
+  thermalRect : vec4<f32>, // x0,y0,cell width,cell height
+  thermalMeta : vec4<f32>, // enabled,mean Celsius,spare,spare
+  thermalCells : array<vec4<f32>,72>, // Celsius,particle count,surface y,spare
 };
+fn bathThermalSample(p:vec2f,kind:u32)->vec2f {
+ if(sp.thermalMeta.x<0.5 || kind>=5u){return vec2f(0.);}
+ let cell=vec2i(floor((p-sp.thermalRect.xy)/sp.thermalRect.zw));
+ if(cell.x<0 || cell.x>=12 || cell.y<0 || cell.y>=6){return vec2f(0.);}
+ let value=sp.thermalCells[u32(cell.y*12+cell.x)];
+ if(value.y<4. || p.y<value.z-4.){return vec2f(0.);}
+ return vec2f(clamp((value.x-sp.thermalMeta.y)*600.*0.00035,-18.,18.),max(0.,value.x-20.)/40.);
+}
 fn bowlSurface(b:vec4f,x:f32)->vec2f {
  let t=clamp((x-b.x)/(b.y-b.x)*2.-1.,-1.,1.);
  let depth=b.w*(1.-(cosh(2.*t)-1.)/(cosh(2.)-1.));
@@ -5982,7 +5994,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       // No-sleep — force-wake; skip the scan. The flag rebuild at the
       // bottom clears the sleep bit (this branch never re-sets it).
       restBase = 0u;
-    } else if (sp.bathA.w > 0.5 && ((fl >> 24u) & 0xffu) > 20u) {
+    } else if (abs(bathThermalSample(pp.xy, (fl & 3u) | ((fl >> 4u) & 4u)).x) > 0.25 || (sp.bathA.w > 0.5 && ((fl >> 24u) & 0xffu) > 20u)) {
       // v25.92 BANYA: HOT water never stays asleep. A sleeping parcel
       // skips the rest of G2P, where buoyancy lives, so heated water froze
       // into a painted blanket (hot but paralyzed). Bath-gated: with the
@@ -6076,6 +6088,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     tHeat = tHeat * max(0.0, 1.0 - sp.bathA.y * gp.stepDt);
     tHeat = clamp(tHeat, 0.0, 2.0);
   }
+
+  let thermal = bathThermalSample(pp.xy, (fl & 3u) | ((fl >> 4u) & 4u));
+  if (sp.thermalMeta.x > 0.5) { tHeat = thermal.y; }
 
   // Reconstruct the APIC affine matrix C (== the CPU's 4*(gv + v*dd)).
   gv00 = 4.0 * (gv00 + vx * ddx);
@@ -6284,6 +6299,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (!oil) {
     newVY = newVY - min(sp.bathA.z * tHeat, 450.0) * gp.stepDt;
   }
+  newVY = newVY - thermal.x * gp.stepDt;
   pos[i] = vec4<f32>(npx * CELL, npy * CELL, newVX, newVY);
   affine[i] = vec4<f32>(gv00, gv01, gv10, gv11);
   aux[i].y = newAer;
@@ -6298,7 +6314,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // is byte-identical (calm = 1).
   // v25.92 BANYA: a hot particle refuses the sleep latch too, or it dozes
   // off between convection pulses and the cell dies. Zero-effect when off.
-  let bathHot = sp.bathA.w > 0.5 && tHeat > 0.16;
+  let bathHot = abs(thermal.x) > 0.25 || (sp.bathA.w > 0.5 && tHeat > 0.16);
   if ((dbgF & 1u) == 0u && !bathHot && sp.g2pB.w >= 0.5 && newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
     rest = rest + 1u;
     if (rest > LIQUID_SLEEP_FRAMES) {
@@ -10782,6 +10798,11 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
           var b=bowls[i];if(b && b.every(Number.isFinite) && b[1]>b[0] && b[3]>0)data.set(b,i*4);
         }
         instance.bathBowls=data;
+      },
+      setBathThermal: function (data) {
+        if (!data || data.length !== 296) { instance.bathThermal = null; return; }
+        if (!instance.bathThermal) instance.bathThermal = new Float32Array(296);
+        instance.bathThermal.set(data);
       },
       setSimParam: function (name, value) {
         try {

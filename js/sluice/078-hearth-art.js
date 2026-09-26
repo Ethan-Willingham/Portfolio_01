@@ -3,6 +3,7 @@
   // buffers belong to the bed through a WeakMap, never to a saved object.
   var hearthArtFields = new WeakMap();
   var hearthArtShapes = new WeakMap();
+  var hearthArtTranslucent = new WeakMap();
   var hearthArtRGB = {};
   var hearthArtRamp = null;
   var hearthArtSparkGlow = null;
@@ -95,6 +96,8 @@
   // No global game context is used, so bins and warm-up canvases share this art.
   function hearthDrawCoal(c, body, x, y, scale, time) {
     if (!c || !body) return;
+    if (c.globalAlpha < 0.999) { hearthDrawCoalTranslucent(c, body, x, y, scale, time); return; }
+    if (body.material && body.material !== 'coal' && body.material !== 'wood') { hearthDrawMineralFuel(c, body, x, y, scale, time); return; }
     var shape = hearthArtShape(body), vertices = shape.vertices;
     var radius = Math.max(2, Number(body.r) || 16) * (scale == null ? 1 : scale);
     var heat = Math.max(0, Math.min(1, Number(body.heat) || 0));
@@ -222,6 +225,65 @@
     }
     c.restore();
     c.restore();
+  }
+
+  function hearthDrawCoalTranslucent(c, body, x, y, scale, time) {
+    // Composite the complete piece once. Per-facet alpha would accumulate
+    // toward opaque where its overlapping paint layers meet in the ghost.
+    var radius = Math.max(2, Number(body.r) || 16) * (scale == null ? 1 : scale);
+    var size = Math.ceil(radius * 4.4 + 4), sprite = hearthArtTranslucent.get(body);
+    var key = [size, radius, body.angle, body.heat, body.fuel, body.ash, body.coating,
+      body.material, body.heat > 0.01 ? Math.floor((time || 0) * 30) : 0].join('|');
+    if (!sprite) {
+      var canvas = document.createElement('canvas');
+      sprite = { canvas: canvas, c: canvas.getContext('2d'), key: '' };
+      hearthArtTranslucent.set(body, sprite);
+    }
+    if (sprite.key !== key) {
+      sprite.canvas.width = sprite.canvas.height = size * 2;
+      sprite.c.setTransform(2, 0, 0, 2, 0, 0);
+      hearthDrawCoal(sprite.c, body, size / 2, size / 2, scale, time);
+      sprite.key = key;
+    }
+    c.drawImage(sprite.canvas, x - size / 2, y - size / 2, size, size);
+  }
+
+  function hearthDrawMineralFuel(c, body, x, y, scale, time) {
+    var spec = hearthMaterial(body.material), shape = hearthArtShape(body), vertices = shape.vertices;
+    var radius = Math.max(2, body.r) * (scale == null ? 1 : scale), angle = body.angle || 0;
+    c.save(); c.translate(x, y); c.rotate(angle);
+    hearthArtPolygon(c, vertices, radius); c.fillStyle = body.ash ? BLD.stonePale : spec.color; c.fill();
+    c.lineWidth = Math.max(0.65, radius * 0.04); c.strokeStyle = BLD.outline; c.stroke();
+    c.save(); c.clip();
+    for (var i = 0; i < vertices.length; i++) {
+      var a = vertices[i], b = vertices[(i + 1) % vertices.length];
+      var light = Math.cos(Math.atan2(a[1] + b[1], a[0] + b[0]) + angle + Math.PI * 0.73);
+      c.beginPath(); c.moveTo(-radius * 0.1, -radius * 0.12);
+      c.lineTo(a[0] * radius, a[1] * radius); c.lineTo(b[0] * radius, b[1] * radius); c.closePath();
+      c.fillStyle = light > 0 ? spec.highlight : BLD.outline; c.globalAlpha = Math.abs(light) * 0.42; c.fill();
+    }
+    c.globalAlpha = 1;
+    if (body.material === 'malachite') {
+      c.strokeStyle = hearthArtColor(spec.highlight, 0.52); c.lineWidth = Math.max(1, radius * 0.08);
+      for (var band = 0; band < 4; band++) { c.beginPath(); c.ellipse(-radius * 0.45, radius * 0.2, radius * (0.24 + band * 0.26), radius * (0.18 + band * 0.22), 0, 0, Math.PI * 2); c.stroke(); }
+    } else {
+      c.strokeStyle = hearthArtColor(spec.highlight, 0.72); c.lineWidth = Math.max(0.6, radius * 0.025);
+      for (var cut = 0; cut < 3; cut++) {
+        var crack = shape.cracks[cut]; c.beginPath(); c.moveTo(crack[0] * radius, crack[1] * radius);
+        c.lineTo(crack[2] * radius, crack[3] * radius); c.lineTo(crack[4] * radius, crack[5] * radius); c.stroke();
+      }
+    }
+    if (body.heat > 0.35) {
+      c.fillStyle = hearthArtColor(BLD.redBright, (body.heat - 0.35) * 0.22); c.fillRect(-radius, -radius, radius * 2, radius * 2);
+    }
+    // A pale broken skin appears as real combustible mass is exhausted.
+    if (spec.role === 'fuel' && body.fuel < 0.4) {
+      c.fillStyle = BLD.stonePale; c.globalAlpha = (0.4 - body.fuel) * 1.9;
+      for (var f = 0; f < shape.crust.length; f++) {
+        var flake = shape.crust[f]; c.fillRect(flake[0] * radius, flake[1] * radius, flake[2] * radius, flake[2] * radius * 0.5);
+      }
+    }
+    c.restore(); c.restore();
   }
 
   function hearthArtFlame(body) {
@@ -397,6 +459,22 @@
     for (i = 0; i < field.heat.length; i++) {
       var value = Math.min(255, Math.max(0, field.heat[i] * 242)) | 0, at = i * 4, ri = value * 4;
       data[at] = ramp[ri]; data[at + 1] = ramp[ri + 1]; data[at + 2] = ramp[ri + 2]; data[at + 3] = ramp[ri + 3];
+      if (value > 24) {
+        var px = (i % HEARTH_ART_W + 0.5) * HEARTH_WIDTH / HEARTH_ART_W;
+        var py = HEARTH_TOP + (Math.floor(i / HEARTH_ART_W) + 0.5) * HEARTH_HEIGHT / HEARTH_ART_H;
+        var tint = [0,0,0], weight = 0;
+        for (var source = 0; source < chunks.length; source++) {
+          var item = chunks[source], spec = hearthMaterial(item.material), rise = item.y - py, reach = item.r * 1.8;
+          if (item.held || spec.tint <= 0 || item.heat < 0.2 || rise < -item.r || rise > item.r * 5 || Math.abs(item.x - px) > reach) continue;
+          var influence = spec.tint * Math.min(1,(item.heat-0.2)*2.5) * (1-Math.abs(item.x-px)/reach) * (1-Math.max(0,rise)/(item.r*5));
+          for (var rgb = 0; rgb < 3; rgb++) tint[rgb] += spec.flame[rgb] * influence;
+          weight += influence;
+        }
+        if (weight > 0) {
+          var blend = Math.min(0.96,weight), light = Math.max(data[at],data[at+1],data[at+2]);
+          for (var color = 0; color < 3; color++) data[at+color] = data[at+color]*(1-blend)+tint[color]/weight*light*blend;
+        }
+      }
     }
     field.ctx.putImageData(field.image, 0, 0);
   }
@@ -514,9 +592,11 @@
     var ash = bed.ash || [];
     for(i=0;i<ash.length;i++){
       var grain=ash[i],radius=Math.max(1.3,Math.sqrt(grain.kg/0.00008));
-      c.fillStyle=grain.heat>0.45?BLD.redDark:grain.seed>0.4?BLD.stoneLight:BLD.stoneBase;
+      c.fillStyle=grain.seed>0.4?BLD.cream:BLD.stonePale;
       c.beginPath();c.moveTo(grain.x-radius,grain.y);c.lineTo(grain.x-radius*0.4,grain.y-radius);
       c.lineTo(grain.x+radius,grain.y-radius*0.3);c.lineTo(grain.x+radius*0.6,grain.y+radius*0.6);c.closePath();c.fill();
+      c.fillStyle=hearthArtColor(BLD.outline,0.28);c.fillRect(grain.x-radius*.4,grain.y+radius*.35,radius,Math.max(.5,radius*.25));
+      if(grain.heat>0.45){c.fillStyle=hearthArtColor(BLD.redBright,(grain.heat-.45)*.9);c.fillRect(grain.x-.5,grain.y-.5,1,1);}
     }
     if (!physical) {
       hearthArtVapors(c, chunks, Number(time) || 0);
@@ -557,6 +637,9 @@
 
   // Called under the game's loading cover; state is intentionally disposable.
   function hearthArtWarm(c) {
+    HEARTH_MATERIAL_ORDER.forEach(function(id, i) { var preview = hearthFuelPreview(id); if(preview) hearthDrawCoal(c, preview, 30+i*32, 30, 0.4, 0); });
+    var ghost = hearthFuelPreview('coal');
+    if (ghost) { c.save(); c.globalAlpha = 0.48; hearthDrawCoal(c, ghost, 30, 60, 0.4, 0); c.restore(); }
     var bed = { air: 0.75, sweep: 0.2, ash: [
       {x:125,y:206,kg:0.0004,heat:0.6,seed:0.3},
       {x:129,y:207,kg:0.0004,heat:0.1,seed:0.7}

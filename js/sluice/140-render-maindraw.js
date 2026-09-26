@@ -640,6 +640,7 @@
   }
 
   function render() {
+    hearthOverlayHide();
     if (hearthFireGPU) hearthFireGPU.hide();
     var _renderT0 = performance.now();
     // ---- Reset to native pixel space and clear ----
@@ -1036,6 +1037,7 @@
     drawSurfaceFireplace();
     // ---- v25.77 BANYA exterior (072-bath.js): the bathhouse tower + door ----
     if (typeof drawBanyaExterior === 'function') drawBanyaExterior();
+    if (typeof drawBathSilosExterior === 'function') drawBathSilosExterior();
     // v11.46 — Fireplace smoke emission runs every frame regardless of
     // camera position. Combined with the wider smoke fluid domain
     // (overscan 1.6), the chimney keeps emitting into the sim even

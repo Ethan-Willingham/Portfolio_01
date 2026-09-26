@@ -4,18 +4,18 @@
   // Keep legacy iron stock, but new iron cargo sells normally.
   var FORGE_RESERVE = { coal: 24, iron: 0 };
   var FORGE_FLINT_MAX = 3, FORGE_FLINT_CHANCE = 0.12, FORGE_FLINT_GUARANTEE = 12;
-  var forgeStock = { coal: 0, iron: 0, flint: 0, steel: 1 };
+  var forgeStock = { coal: 0, methaneice: 0, amber: 0, sulfur: 0, copper: 0, malachite: 0, iron: 0, flint: 0, steel: 1 };
   var forgeStoneSinceFlint = 0;
 
   function forgeResourcesReset() {
-    forgeStock = { coal: 0, iron: 0, flint: 0, steel: 1 };
+    forgeStock = { coal: 0, methaneice: 0, amber: 0, sulfur: 0, copper: 0, malachite: 0, iron: 0, flint: 0, steel: 1 };
     forgeStoneSinceFlint = 0;
   }
   function forgeResourceKnown(type) {
-    return type === 'coal' || type === 'iron' || type === 'flint' || type === 'steel';
+    return HEARTH_MATERIAL_ORDER.indexOf(type) >= 0 || type === 'iron' || type === 'flint' || type === 'steel';
   }
   function forgeCargoMatches(unit, type) {
-    return (type === 'coal' || type === 'iron') && cargoType(unit) === type && !cargoShiny(unit);
+    return (HEARTH_MATERIAL_ORDER.indexOf(type) >= 0 || type === 'iron') && cargoType(unit) === type && !cargoShiny(unit);
   }
   function hearthDevSupplies() {
     return typeof devMode !== 'undefined' && devMode;
@@ -55,7 +55,7 @@
     var added = { coal: 0, iron: 0 };
     for (var i = cargo.length - 1; i >= 0; i--) {
       var type = cargoType(cargo[i]);
-      if (!forgeCargoMatches(cargo[i], type) || forgeStock[type] >= FORGE_RESERVE[type]) continue;
+      if (!FORGE_RESERVE[type] || !forgeCargoMatches(cargo[i], type) || forgeStock[type] >= FORGE_RESERVE[type]) continue;
       forgeStock[type]++; added[type]++; cargo.splice(i, 1);
     }
     if (!added.coal && !added.iron) return false;
@@ -78,7 +78,7 @@
     return true;
   }
   function forgeResourcesSave() {
-    return { stock: { coal: forgeStock.coal, iron: forgeStock.iron, flint: forgeStock.flint, steel: forgeStock.steel },
+    return { stock: Object.assign({}, forgeStock),
       stoneSinceFlint: forgeStoneSinceFlint };
   }
   function forgeResourcesRestore(data) {

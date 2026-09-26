@@ -9,7 +9,7 @@
   var shader = `
 struct Gas { a: vec4f, b: vec4f }
 struct Body { a: vec4f, b: vec4f, c: vec4f, d: vec4f }
-struct Meta { a: vec4f, b: vec4f, c: vec4f, d: vec4f }
+struct Meta { a: vec4f, b: vec4f, c: vec4f, d: vec4f, e: vec4f, f: vec4f, g: vec4f }
 struct Params { grid: vec4f, flow: vec4f, view: vec4f, misc: vec4f, bodies: array<Meta,${CAP}> }
 @group(0) @binding(0) var<uniform> p: Params;
 @group(0) @binding(1) var<storage,read> gi: array<Gas>;
@@ -142,9 +142,9 @@ struct Exchange { gas:f32, carbon:f32, water:f32, heat:f32 }
 fn exchange(i:u32,b:u32)->Exchange {
  let m=p.bodies[b];let s=bi[b];let count=max(1.,m.a.y);let kg=m.a.z;let dt=p.grid.z;
  let skin=max(300.,s.a.w);let core=max(300.,s.b.x);let g=gi[i];let T=temp(g);
- let wood=m.b.w;let pyro=smoothstep(mix(540.,450.,wood),mix(1050.,850.,wood),skin);
+ let pyro=smoothstep(m.e.x,m.e.y,skin);
  var dry=min(s.a.z*kg/count,dt*kg*0.12*max(0.,(skin-373.)/600.)/count);
- var fuel=min(s.a.x*kg/count,dt*kg/m.a.w*mix(1.75,2.4,wood)*pyro*(1.-min(0.85,s.a.z*8.))/count);
+ var fuel=min(s.a.x*kg/count,dt*kg/m.a.w*m.e.z*pyro*(1.-min(0.85,s.a.z*8.))/count);
  let capacity=kg*(0.16*0.8+s.a.z*4.18);
  let budget=max(0.,skin-300.)*capacity/count*0.3;
  let fraction=min(1.,budget/max(0.0000001,dry*(2260.+1.8*(skin-300.))+fuel*(280.+skin-300.)));
@@ -164,7 +164,7 @@ fn exchange(i:u32,b:u32)->Exchange {
  if(owner>=0){
   let b=u32(owner);let e=exchange(i,b);let inv=1./p.flow.y;
   g.a.x+=e.gas*0.96*inv;g.a.w+=e.gas*0.04*inv;g.a.y-=e.carbon*2.667*inv;g.a.z+=e.carbon*3.667*inv;g.b.y+=e.water*inv;
-  g.b.x+=(e.heat+e.carbon*32000.*0.35+(e.gas+e.water*1.8)*max(0.,bi[b].a.w-300.))*inv;
+  g.b.x+=(e.heat+e.carbon*32000.*p.bodies[b].e.w*0.35+(e.gas+e.water*1.8)*max(0.,bi[b].a.w-300.))*inv;
   // Flint is an explicit finite ignition event in the gas as well as the
   // solid. Merely heating a fuel reservoir is not an ignited flame front.
   if(p.bodies[b].b.x>bi[b].d.w && p.bodies[b].b.y>0.){
@@ -229,10 +229,10 @@ fn exchange(i:u32,b:u32)->Exchange {
   neighbors+=clamp(q,-max(0.,bi[b].a.w-300.)*kg*(0.16*0.8+bi[b].a.z*4.18)/72.,max(0.,os.a.w-300.)*om.a.z*(0.16*0.8+os.a.z*4.18)/72.);
  }}
  let radiation=min(max(0.,s.a.w-300.)*skinCapacity*0.10,0.0000000000567*0.0018*(pow(s.a.w,4.)-pow(300.,4.))*dt);
- let change=charMass*32000.*0.65-Q-water*(2260.+1.8*max(0.,bi[b].a.w-300.))-gasMass*(280.+max(0.,bi[b].a.w-300.))-conduction-radiation+neighbors;
+ let change=charMass*32000.*m.e.w*0.65-Q-water*(2260.+1.8*max(0.,bi[b].a.w-300.))-gasMass*(280.+max(0.,bi[b].a.w-300.))-conduction-radiation+neighbors;
  s.a.w=300.+max(0.,(s.a.w-300.)*skinCapacity+change)/max(kg*0.16*0.8,skinCapacity-water*4.18);s.b.x=max(300.,s.b.x+conduction/coreCapacity);
  s.a=vec4f(max(vec3f(0.),s.a.xyz-vec3f(gasMass,charMass,water)/kg),s.a.w);s.b.y=clamp(s.b.y+charMass/kg*0.9,0.,1.);
- s.b.z=select(radiation/dt*0.65,0.,m.c.w>0.);s.b.w=(gasMass*26000.+charMass*32000.)/dt;
+ s.b.z=select(radiation/dt*0.65,0.,m.c.w>0.);s.b.w=(gasMass*26000.+charMass*32000.*m.e.w)/dt;
  s.c=vec4f(oxygen/max(1.,f32(count)),gasMass/dt/kg*m.a.w,water/dt/kg*12.,charMass/dt/kg*m.a.w);
  s.d=vec4f(s.d.xyz+vec3f(gasMass,charMass,water),s.d.w);
  bo[b]=s;
@@ -302,7 +302,17 @@ fn light(g:Gas)->vec3f {
  if(any(id.xy>=vec2u(p.grid.xy))){return;}let i=at(vec2i(id.xy));
  if(mask[i].x != -1){lightOutput[i]=vec4f(0.);return;}
  let g=gi[i];let vapor=g.b.y*(1.-smoothstep(330.,410.,temp(g)));
- lightOutput[i]=vec4f(light(g),1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3));
+ var emitted=light(g);var tint=vec3f(0.);var tintWeight=0.;
+ let point=vec2f((f32(id.x)+0.5)*p.misc.y/p.grid.x,p.view.z+(f32(id.y)+0.5)*p.view.w/p.grid.y);
+ for(var b=0u;b<${CAP}u;b++){
+  let m=p.bodies[b];if(m.a.z<=0.||m.c.w>0.||m.f.w<=0.){continue;}
+  let rise=m.c.y-point.y;let reach=max(18.,m.c.z*1.8);
+  if(rise < -m.c.z || rise>m.c.z*5. || abs(point.x-m.c.x)>reach){continue;}
+  let weight=m.f.w*smoothstep(470.,1000.,bi[b].a.w)*max(0.,1.-abs(point.x-m.c.x)/reach)*max(0.,1.-max(0.,rise)/(m.c.z*5.));
+  tint+=m.f.xyz*weight;tintWeight+=weight;
+ }
+ if(tintWeight>0.){let luminance=max(emitted.x,max(emitted.y,emitted.z));emitted=mix(emitted,tint/tintWeight*luminance,min(0.96,tintWeight));}
+ lightOutput[i]=vec4f(emitted,1.-exp(-g.a.w*10.-g.a.x*0.15-vapor*0.3));
 }
 @fragment fn fragment(v:Vertex)->@location(0) vec4f {
  let point=v.uv*vec2f(p.misc.y,p.view.w)+vec2f(0.,p.view.z);let aa=max(length(dpdx(point)),length(dpdy(point)))*0.7;
@@ -345,10 +355,10 @@ fn light(g:Gas)->vec3f {
     var h = Math.round(w * height / worldWidth), n = w * h;
     var chamberRows = new Float64Array(h);
     for (var chamberRow=0;chamberRow<h;chamberRow++) chamberRows[chamberRow]=chamberInset(top+(chamberRow+.5)*height/h);
-    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
+    var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*564+2048, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
     var buffers = [], pipelines = {}, groups = {}, gasIndex = 0, velIndex = 0, bank = 0, time = 0;
-    var slots = new Array(CAP).fill(null), masks = new Int32Array(n * 2), lists = new Uint32Array(n), uniform = new Float32Array(16+CAP*16);
+    var slots = new Array(CAP).fill(null), masks = new Int32Array(n * 2), lists = new Uint32Array(n), uniform = new Float32Array(16+CAP*28);
     var rbPending = false, revision = 0, resetGeneration = 0, signature = '', contacts = new Uint32Array(CAP*2), geometryFresh = true;
     var radiationViews = new Float32Array(CAP);
     var previousMasks = new Int32Array(n*2), owners = new Int32Array(n), frontier = new Int32Array(n);
@@ -380,7 +390,7 @@ fn light(g:Gas)->vec3f {
     var definitions = {
       splitBody: [6,7,16], init: [0,2,4,10], remap: [0,1,2,5,13,14], advectVelocity: [0,1,3,4,5], diverge: [0,1,3,5,11],
       pressureStep: [0,5,9,10,11], project: [0,3,4,5,9], transport: [0,1,2,3,5],
-      react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], emission: [0,1,5,18], fragment: [0,1,3,5,15,17]
+      react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], emission: [0,1,5,6,18], fragment: [0,1,3,5,15,17]
     };
     function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer,splitBuffer,lightBuffer,lightBuffer]; }
     function bind(name, gi, vi, pr) {
@@ -398,10 +408,12 @@ fn light(g:Gas)->vec3f {
     function uploadUniform(air, damper) {
       uniform.set([w,h,STEP,time,meters/w,(meters/w)*(height*0.0025/h)*0.04,air,damper,sim.debug,300,top,height,sim.ashLoad||0,worldWidth,0,0]);
       for (var b=0;b<CAP;b++) {
-        var body=slots[b], o=16+b*16;
+        var body=slots[b], o=16+b*28;
+        var material = body && body.materialData || (body && body.material === 'wood' ? {pyro:[450,850],release:2.4,charHeat:1,volatile:0.76,role:'fuel',flame:[1,.5,.12],tint:0} : {pyro:[540,1050],release:1.75,charHeat:1,volatile:0.28,role:'fuel',flame:[1,.48,.1],tint:0});
         uniform.set([surfaceStart[b],surfaceCount[b],body ? body.dryKg || 0.018*Math.pow(body.baseR/34,2) : 0,body ? body.life : 100,
           body ? commands.get(body) || 0 : 0,body ? ignition.get(body) || 0 : 0,body ? quenches.get(body) || 0 : 0,body && body.material === 'wood' ? 1 : 0,
-          body ? body.x : 0,body ? body.y : 0,body ? body.r : 0,body && body.held ? 1 : 0,0,0,0,0],o);
+          body ? body.x : 0,body ? body.y : 0,body ? body.r : 0,body && body.held ? 1 : 0,0,0,0,0,material.pyro[0],material.pyro[1],material.release,material.charHeat,
+          material.flame[0],material.flame[1],material.flame[2],material.tint,material.volatile,material.role === 'fuel' ? 1 : 0,0,0],o);
         uniform[o+12]=contacts[b*2];uniform[o+14]=contacts[b*2+1];uniform[o+15]=radiationViews[b];
         uniform[o+13]=body && !body.held && body.vertices ? Math.min(16,body.vertices.length) : 0;
       }
@@ -510,16 +522,17 @@ fn light(g:Gas)->vec3f {
         for(var b=0;b<CAP;b++){
           var body=savedSlots[b];if(!body||slots[b]!==body)continue;var o=b*16;
           if(data[o+15] < (commands.get(body)||0))continue;
-          body.volatile=Math.min(body.material === 'wood' ? 0.76 : 0.28,Math.max(0,data[o]));body.carbon=Math.max(0,data[o+1]);body.fuel=body.volatile+body.carbon;
+          body.ignitionPending=false;
+          body.volatile=Math.min(body.materialData ? body.materialData.volatile : body.material === 'wood' ? 0.76 : 0.28,Math.max(0,data[o]));body.carbon=Math.max(0,data[o+1]);body.fuel=body.volatile+body.carbon;
           if(body.fuel>1){body.carbon=Math.max(0,1-body.volatile);body.fuel=body.volatile+body.carbon;}
           body.moisture=Math.max(0,data[o+2]);
           body.heat=Math.min(1,Math.max(0,(data[o+3]-300)/1200));body.core=Math.min(1,Math.max(0,(data[o+4]-300)/1200));
           body.surfaceKelvin=data[o+3];body.coreKelvin=data[o+4];body.coating=data[o+5];sim.outputKW+=data[o+6];
           body.reaction=Math.min(1.5,data[o+7]/5);body.oxygen=data[o+8];body.flame=Math.min(1,data[o+9]*0.7);
           body.steam=data[o+10];body.smoke=Math.min(1,body.flame*(1-body.oxygen*0.8));
-          body.ash=body.fuel<0.00001;if(body.ash){body.volatile=body.carbon=body.fuel=0;body.coating=1;}
-          body.lit=!body.ash&&(body.coreKelvin>600||body.surfaceKelvin>700);
-          body.stage=body.ash?(body.heat>0.18?'cooling ash':'ash'):body.moisture>0.008&&body.heat>0.15?'drying':!body.lit?(body.heat>0.15?'warming':'cold'):body.oxygen<0.35?'smoldering':body.volatile>0.0001?'flaming':body.fuel>0.12?'coke':'embers';
+          body.ash=!(body.materialData && body.materialData.role === 'additive') && body.fuel<0.00001;if(body.ash){body.volatile=body.carbon=body.fuel=0;body.coating=1;}
+          body.lit=!(body.materialData && body.materialData.role === 'additive')&&!body.ash&&(body.coreKelvin>600||body.surfaceKelvin>700);
+          body.stage=body.materialData && body.materialData.role === 'additive'?(body.heat>.25?'hot additive':'additive'):body.ash?(body.heat>0.18?'cooling ash':'ash'):body.moisture>0.008&&body.heat>0.15?'drying':!body.lit?(body.heat>0.15?'warming':'cold'):body.oxygen<0.35?'smoldering':body.volatile>0.0001?'flaming':body.fuel>0.12?'coke':'embers';
         }
         sim.mirrored++;
       }).catch(function(e){rbPending=false;if(!lost){sim.errors.push(String(e));sim.failed=true;sim.available=false;}});};
@@ -554,7 +567,7 @@ fn light(g:Gas)->vec3f {
         if(commands.has(parent))commands.set(child,commands.get(parent));
       });
     };
-    sim.ignite=function(body){ignition.set(body,1500);commands.set(body,++commandSerial);};
+    sim.ignite=function(body){body.ignitionPending=true;ignition.set(body,1500);commands.set(body,++commandSerial);};
     sim.quench=function(body,kg){if(Number.isFinite(kg)&&kg>0){quenches.set(body,(quenches.get(body)||0)+Math.min(kg,0.02));commands.set(body,++commandSerial);}};
     sim.hide=function(){gpuCanvas.style.display='none';};
     sim.draw=function(rect,parent){

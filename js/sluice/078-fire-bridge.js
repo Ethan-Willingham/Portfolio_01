@@ -28,7 +28,8 @@
   function hearthFireSyncBodies(bed, h) {
     for (var i = 0; i < bed.chunks.length; i++) {
       var b = bed.chunks[i];
-      b.r += (b.baseR * Math.sqrt(0.20 + b.fuel * 0.80) - b.r) * (1 - Math.exp(-h * 1.5));
+      b.thermalSolidKJ = b.thermalGasKJ = null;
+      b.r += ((hearthMaterial(b.material).role === 'additive' ? b.baseR : b.baseR * Math.sqrt(0.20 + b.fuel * 0.80)) - b.r) * (1 - Math.exp(-h * 1.5));
       hearthMass(b);
     }
   }
@@ -45,7 +46,13 @@
       return;
     }
     hearthFireSleeping = false;
-    for (var i=0;i<bed.chunks.length;i++) hearthWorldHull(bed.chunks[i]);
+    for (var i=0;i<bed.chunks.length;i++) {
+      var body=bed.chunks[i];
+      // A save can occur after a hand spark but before the GPU command is
+      // acknowledged. Replay that finite command once after restore.
+      if(body.restoreIgnition){hearthFireGPU.ignite(body);body.restoreIgnition=false;}
+      hearthWorldHull(body);
+    }
     hearthFireGPU.ashLoad = bed.ashLoad;
     hearthFireGPU.step(dt, bed.chunks, { air: bed.air, damper: hearthFireDamper });
   }

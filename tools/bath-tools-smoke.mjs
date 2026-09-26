@@ -117,14 +117,14 @@ try {
   await game('cancelAnimationFrame(gameRafId);gameRafId=0');
   const conservation=await game(`(function(){
     var emit=liquidToolEmit, mode=devMode;
-    var total=0;devMode=false;siphon.tank[0]=29;bathSupplies[0]=11;bathPour=17;bathWater=0;
+    var total=0;devMode=false;bathSiloReset();siphon.tank[0]=29;bathSupplies[0]=11;bathPour=17;bathWater=0;
     bathToolSelect('hose');bathTool.valve=true;
     liquidToolEmit=function(type,n){var used=Math.min(n,3);total+=used;return used;};
     for(var i=0;i<180;i++)bathToolTick(1/60);
-    var used=total,remaining=siphon.tank[0]+bathSupplies[0]+bathPour;
+    var used=total,remaining=bathLiquidCount(0)+bathPour;
     liquidToolEmit=function(){return 0;};siphon.tank[0]=20;
     for(var i=0;i<60;i++)bathToolTick(1/60);
-    var blocked=siphon.tank[0]===20;
+    var blocked=bathLiquidCount(0)===20;
     liquidToolEmit=emit;devMode=mode;bathToolReset();
     return {used:used,remaining:remaining,blocked:blocked};
   })()`);

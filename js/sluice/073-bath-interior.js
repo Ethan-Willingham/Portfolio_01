@@ -189,11 +189,13 @@
       if (foreground) ctx = foreground;
       ctx.setTransform(ws, 0, 0, ws, -Math.round(cam.x * ws), -Math.round(cam.y * ws));
       bathDrawGuests();
+      if (typeof bathThermalDraw === 'function') bathThermalDraw(ctx);
       bathToolDraw(ctx);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       hearthButtons = [];
       hearthDrawStation(ctx);
       bathDrawServiceHUD();
+      hearthDrawOverlays(ctx);
     } finally { ctx = previous; }
     return true;
   }
@@ -205,6 +207,7 @@
       var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
       c.translate(-curve.x0, -curve.y0);
       bathDrawVessel(c);
+      if (typeof bathThermalWarm === 'function') bathThermalWarm(c);
       var b = bathToolBounds(), x = (curve.x0 + curve.x1) / 2, y = curve.y0 - 50;
       ['claw', 'hose'].forEach(function (mode) {
         bathToolDraw(c, { mode: mode, x: x, y: y, railX: x, tilt: 0.2, jaw: 0.5, flow: 1,
@@ -212,5 +215,7 @@
       });
       c.setTransform(1, 0, 0, 1, 0, 0);
       hearthDrawCasing(c, { x: 24, y: 30, w: 208, h: 160 }, hearthBeds.boiler, false);
+      hearthDrawStriker(c, 240, 60, 1, 0.5);
+      drawBathSilos(c, 0, 0, 250, 110, { labels: true });
     } finally { c.restore(); ctx = previous; }
   }

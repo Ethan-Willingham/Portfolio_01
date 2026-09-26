@@ -122,7 +122,7 @@
     }
     var mid = gx + gw / 2;
     c.fillStyle = BLD.metalDark; c.fillRect(mid - 23 * s, gy + 5 * s, 46 * s, 12 * s);
-    c.strokeStyle = BLD.metalLight; c.lineWidth = 2 * s;
+    c.strokeStyle = hearthHand.rake ? BLD.goldPale : BLD.metalLight; c.lineWidth = 2 * s;
     c.beginPath(); c.moveTo(mid - 16 * s, gy + 6 * s); c.lineTo(mid - 16 * s, gy + 14 * s);
     c.lineTo(mid + 16 * s, gy + 14 * s); c.lineTo(mid + 16 * s, gy + 6 * s); c.stroke();
     c.restore();

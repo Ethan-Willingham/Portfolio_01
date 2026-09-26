@@ -1,8 +1,8 @@
 # Bathhouse and integrated boiler
 
-The banya uses physical coal fires as of v28.13. The old ten-coal ignition
-button and fixed four-minute fuel timer have been replaced. The visitor loop
-remains enabled, and individual guest recipes are still undecided.
+The banya uses physical fuel pieces, manually cast sparks, stored liquids and
+a conserved thermal field as of v28.97. The visitor loop remains enabled, and
+individual guest recipes are still undecided.
 
 Since v28.16, the banya opens by default for returning profiles as well as
 new ones. A one-time `sluice.opt.banya-default=open-v1` migration replaces
@@ -17,10 +17,12 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
 3. Enter the banya. The main room fills the viewport around a wide catenary tub,
    with a copper lining, curved rows of bolts, and the boiler built beneath it.
 4. Tend the boiler directly below the bath. Its controls are always available.
-   Load three coal chunks and strike flint and steel. Both tools are reusable.
-   Work the bellows for more heat and rake spent ash when needed.
-5. ADD WATER fills the tub while the boiler stays visible. Tap a visitor's
-   order once the bath is warm. It soaks, pays, and returns outside.
+   Select a material, position its translucent preview and click to release it.
+   Select the flint and steel, then drag above the pile to cast sparks onto fuel.
+   Work the bellows for more heat and turn the grate crank to sift pale ash.
+5. Open the liquid control, select water and aim the hose into the tub. Hold to
+   pour (use POUR on touch). Three silos beside the building store carried liquids.
+   Tap a visitor's order at 30 to 48 C. It soaks, pays, and returns outside.
 
 The forge and its crafting requirement are retired. New and returning games
 receive a supplied striker. Old stored iron, forge fuel, and unfinished work
@@ -32,21 +34,33 @@ directly from ordinary cargo. Stored supplies survive rig recovery.
 ## Direct controls
 
 Mouse and touch share the same pointer path. The room opens directly to the
-bath. The firebox and its coal, bellows, flint and ash controls remain below the
-basin. Hover the grate for a grab cursor. Drag a chunk from the bunker into the
-firebox and release: it falls, rolls, collides, and settles. Existing pieces can be rearranged. Dropping fresh
-coal outside the firebox returns it; moving a burning piece outside restores
-its grate position. Pointer cancellation and leaving restore unfinished drags.
-A simple tap on the bunker drops one piece. The first three form a starter
-cluster; later taps seek a lower part of the grate to spread the bed.
+bath, with the fire chamber and tools below it. Open the material rack to choose
+coal, methane ice, amber, sulfur, copper or malachite. The cursor previews the
+exact next piece at partial opacity. A click realizes that shape at the preview
+position and releases it under gravity. Invalid drops and previews spend nothing.
+The rack pages automatically if more materials are registered.
 
-- C: place one coal on the boiler grate.
+Coal burns steadily; methane ice gives a fast blue flare; amber burns hot and
+gold; sulfur has a cooler blue flame. Copper and malachite are noncombustible
+additives that tint nearby hot fire green or turquoise. They remain recoverable.
+These identities already exist in the mine. No new ore or disabled oil deposit
+was enabled. Valuable material is consumed only when deliberately placed.
+
+Select TONGS in the material rack, or right-click, to move existing pieces.
+Returning cold unused material outside the chamber refunds its own identity.
+A burning piece stays in the chamber. Cancellation restores unfinished drags.
+Select the striker and drag above the pile: sparks travel, fall and ignite only
+fuel they contact. Clicking the tool or clicking once in the chamber cannot
+light the whole bed. The grate crank sends teeth across the bottom, jostling
+actual fuel bodies while pale ash sifts through the slots.
+
+- C: select coal for placement.
 - B: work the bellows.
-- F: strike flint and steel.
-- A: rake spent ash.
-- E / Enter: admit a ready visitor while viewing the bath.
-- W: fill the bath from stored water while viewing the bath.
-- Escape: cancel a held coal, otherwise leave the bath.
+- F: select flint and steel, then drag to strike.
+- A: turn the travelling grate.
+- E / Enter: admit a ready visitor.
+- W: open the liquid stores and selection tray.
+- Escape: stow the selected tool or close a tray, then leave the bath.
 
 The room gives its full height to the bathhouse, with no top or bottom HUD
 bar since v28.84. Navigation buttons mount directly on the timber wall.
@@ -74,20 +88,12 @@ available by immediate scrolling. Without purchased upper floors, wheel and drag
 gestures leave the bath fixed. There is no separate boiler screen or camera transition.
 
 Enable dev mode with backtick, including inside the banya, or load `?dev=1`.
-Coal, water, flint, and ignition steel are available without limit. Loading coal
-and adding water leave real stock, cargo, and the rig tank unchanged. Supplies
-return to their ordinary counts when dev mode is turned off. The fire still
-burns and the tub still spills.
-
-- PREPARE BATH / T lights at least three real boiler coals, warms the bath, and
-  starts filling it through the normal water pour. It opens the bath room.
-- ADD GUEST / G brings a real visitor into a free waiting place. Tap its order
-  once the bath is ready. The normal visitor limits apply.
-
-These buttons remain visible on touch screens and disappear outside dev mode.
-Dev supplies are virtual finite counts. Created water, physical fuel, and guests
-follow ordinary persistence. A dev coal cannot refund itself into real stock
-after reloading. Dev mode keeps its free purchases and 999,999 money clamp.
+Fuel, liquid, flint and steel are available without limit. Dev placement and
+pouring leave real stock and cargo unchanged. Supplies return to their ordinary
+counts when dev mode is turned off. Created particles and physical fuel still
+follow the simulation and save rules. Dev material cannot refund itself into
+real stock after reloading. Prepare and Guest buttons and their T/G shortcuts
+have been removed. The older console fixture actions remain for test harnesses.
 
 ## Ceiling claw and hose (v28.73)
 
@@ -115,11 +121,13 @@ hose trails behind, and the pressure ramps smoothly. Its real water particles
 hit guests, displace the bath, and spill onto the floor. The claw hub and
 fingers also displace water when dipped into the tub.
 
-The hose draws from stored and rig water, or an already-paid ADD WATER queue.
-It only debits particles the liquid solver accepts. Selecting the hose pauses
-the fixed filling spout, including when its valve is closed. Switching it off
-resumes any queued fill. Normal play retains finite water and permanent floor
-loss; dev mode supplies water as before. A full basin stops new emission.
+The liquid tray selects water, legacy oil, brine, nectar or lumen. The hose
+draws that identity from silos, remaining legacy storage and the rig. It only
+debits particles the solver accepts; blocked output remains reserved in a saved
+queue. Selecting the hose migrates an older paid water queue without changing
+its identity. STORE TANK moves carried liquids into matching or empty silos;
+TAKE BACK returns the selected identity within rig capacity. Snow stays snow
+in the rig and is excluded from liquid silos. See [BATHHOUSE_STORAGE.md](BATHHOUSE_STORAGE.md).
 
 Keys 1 and 2 switch the claw and hose. Space grabs or drops a slime, or switches
 the hose valve. Pause, focus loss, pointer cancellation, resizing, changing rooms,
@@ -141,7 +149,7 @@ restitution and static friction. Pieces balance on their faces, tip when their
 center of mass overhangs a support, and settle as burning fuel shrinks their
 geometry. Held chunks detach from the pile. Loading stops at 32 pieces; sixteen reserved slots allow burning coal to split
 under load. Spent material becomes up to 128 persistent ash grains. Sweep them
-with A or SWEEP ASH to restore underfire air.
+with A or the mechanical grate crank to restore underfire air.
 
 The 30 Hz burn model separates moisture, volatile fuel and fixed carbon. Coal
 warms and dries, releases smoky gases, flames, burns as glowing coke, then leaves
@@ -157,12 +165,17 @@ pale drying vapor, smoky ignition, volatile flames, incandescent cracks, mineral
 crust and cooling ash. See [COAL_FURNACE.md](COAL_FURNACE.md) for model details,
 limits, persistence and verification.
 
-Boiler output warms the bath gradually. Three fully burning pieces can provide
-full heat; one provides a weaker fire. Adding cold water dilutes warmth, and the
-bath cools when the fire dies. This stored thermal state drives the existing GPU
-heat source, water tint, convection, steam, and the copper heat exchanger under
-the tub. The CPU fallback uses the same service warmth state. Temperatures on
-the dial are a game-scale estimate.
+The thermal field tracks energy in 72 cells and the copper heat exchanger.
+Actual fire output supplies finite heat; the bottom water warms first, then
+buoyancy drives rising currents through the shared GPU or CPU particle solver.
+The bath uses the ordinary outdoor simulation clock and gravity. Inflow mixes
+with the local water, and cold water dilutes stored heat. The dial reports the
+mass-weighted temperature. Evaporation spends latent heat and removes actual
+water particles. Condensed mist is emitted from exposed water and carried by
+warm air; boiling also makes rising bubbles. Cold water does not emit steam.
+Oil or mineral layers cover the water below and suppress its exposed evaporation.
+See [BATH_THERMAL.md](BATH_THERMAL.md) for units, limits and verification. This is
+a bounded game thermal model, not a full computational fluid dynamics solver.
 
 Boiler fuel, heat, and admitted visitors continue while the player mines.
 Retired forge work and its fuel remain frozen in the save.
@@ -171,10 +184,9 @@ Pause stops all of them. There is no offline catch-up or day/night service gate.
 ## Water and visitors
 
 Water uses the shared liquid particles, with 100 particles per displayed litre.
-ADD WATER transfers existing rig/stock water to a saved pouring reservoir before
-emitting into the tub. A blocked solver retains pending water. Admission never
-charges a per-guest dose of coal or water. A low or cold tub pauses earned soak
-time until restored.
+The hose reserves existing silo/rig stock before emitting into the tub. A
+blocked solver retains pending liquid of its original identity and temperature. Admission never
+charges a per-guest dose of coal or water. A low, cold or hotter-than-48-C tub pauses earned soak time until restored.
 
 Guests splash actual water out. Contact with the floor permanently deletes it
 through the solver mutation journal, including parked offscreen spills. No

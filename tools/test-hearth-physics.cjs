@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const source = ['combustion', 'fracture', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
+const source = ['materials', 'combustion', 'fracture', 'geometry', 'physics'].map(n => fs.readFileSync('js/sluice/077-hearth-' + n + '.js', 'utf8')).join('\n');
 // Independent ellipse oracle: evaluate contacts against the intended bowl,
 // rather than duplicating the collision polygon's tessellation.
 const phi=(1+Math.sqrt(5))/2, bowlInset=(1-1/phi)/2;

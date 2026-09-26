@@ -81,11 +81,47 @@ The flint interaction is an explicit finite ignition assist for a pocket of up
 to three nearby pieces near the exposed crown. It does not model the energy of
 an individual real flint spark. Subsequent spreading uses thermal exchange.
 
-Coal reserves 28 percent of its combustible mass as volatiles. A tested wood
-adapter reserves 76 percent, starts pyrolysis at a lower temperature, and releases
-gas faster. `hearthAddChunk(kind, x, y, 'wood')` is a developer material seam;
-wood inventory, wood art, paper and liquid-fuel gameplay are not added in this
-release. Their material adapters can feed the same gas solver.
+The material catalog in `077-hearth-materials.js` reuses six existing mine
+materials. Coal holds a long carbon-rich ember phase. Methane ice releases a
+short, strong blue flare; amber produces a quicker golden flame; sulfur supplies
+a cooler blue burn. Their volatile fractions, release thresholds, lifetimes,
+reference masses, carbon reaction heat and final residue fractions differ in both
+solvers. These are game-time material adapters, not laboratory combustion data.
+Copper and malachite are explicitly noncombustible additives. They contain no
+volatile or carbon reservoir, generate no reaction heat, and retain their physical
+hulls. Once heated by a real fire, they tint nearby existing emitted light green
+or turquoise. Tinting never introduces fuel, heat or light into a cold cell.
+GPU flame color follows actual warm body locations and local emitted radiance;
+the CPU fallback applies the same bounded spatial tint to its flame field.
+
+The fuel tray and cursor preview use the same deterministic next-body seed,
+radius, polygon and angle as the piece created on click. Previewing costs nothing;
+a valid drop spends exactly one ordinary inventory unit after the capacity check.
+Only coal is automatically reserved on station sales. Valuable ores stay in cargo
+until deliberately dropped, and shiny variants are excluded from boiler stock.
+Material identity, remaining reservoirs and stock persist across reloads.
+The translucent cursor piece is composited once from a cached complete sprite,
+so overlapping facets cannot make parts of the ghost opaque.
+Legacy coal, retired forge inventory and the developer-only wood adapter remain
+compatible. No new mine ores or timber inventory source are introduced.
+
+Spent fuel becomes pale, irregular mineral grains, with a small ember center
+while hot. The residue mass follows the material instead of a universal coal
+fraction. Additives remain larger mineral pieces and are never mislabeled ash.
+`hearthIgniteAt(kind, x, y, impulse)` only lights the single nearby polygon hit by
+a deliberate strike; the pointer passes the exact struck body, so a mineral
+contact cannot ignite fuel behind it. It never ignites a starter group.
+The earlier `hearthIgnite` helper remains for developer fixtures and legacy APIs.
+`bed.thermalKW` exposes captured kJ/s to the bath thermal model, from GPU gas and
+solid exchange or from bounded CPU skin/gas energy reservoirs, excluding held
+material. CPU reaction energy first enters those reservoirs. The same 0.55/s
+gas cooling, 65 percent capture, skin radiation coefficient, rear manifold
+ventilation and 0.40 m/s plume exit bound determine capture. Vented energy is
+removed before the bath receives heat. The fallback uses a residence-time
+approximation instead of the GPU spatial transport; it does not deliver 65
+percent of all consumed chemical energy directly to the bath. A conservation
+test accounts for generated, stored, captured and vented kJ. A real-device
+comparison catches large CPU/GPU differences in an identical coal fixture.
 
 The internal `quench(body, kg)` command adds real water mass once, mixes its
 sensible heat with the wet skin, and charges evaporation separately. It is
@@ -117,7 +153,10 @@ Only one can be pending. Slot revisions, reset generations and ignition/quench
 serials prevent removed bodies or earlier commands from overwriting current
 state. Reservoirs, Kelvin temperatures and material identity persist in hearth
 save version 4. Older saves migrate from normalized temperatures without adding
-fuel. Saves use the latest acknowledged material snapshot; transient chamber gas
+fuel. Saves use the latest acknowledged material snapshot. A saved, unacknowledged
+manual ignition command is replayed once after restore and cleared only after
+the GPU acknowledges it; saving immediately after a spark cannot lose ignition.
+Transient chamber gas
 vents on reload rather than being serialized.
 
 Initialization, shader compilation, bind-group validation and a representative
@@ -243,3 +282,12 @@ polygon splits, not a volumetric material stress solver.
 Sub-cell air passages are unresolved. The body core/skin model and gray radiation
 are deliberately bounded approximations. Those extensions require separate
 quality and frame-cost evidence rather than treating a larger grid as sufficient.
+
+`node tools/test-hearth-materials.cjs` verifies preview realization, atomic stock
+spending, shiny-item protection, targeted ignition, noncombustible additives,
+different fuel speeds and heat, residue mass, and material save migration.
+`node tools/hearth-materials-gpu-smoke.mjs` runs the existing conservation kernels
+and material suite plus all six catalog adapters on an actual WebGPU device in
+an owned Chrome for Testing process. It requires hotter and cooler fuels to
+produce measurably different captured energy, with finite fields and no shader
+errors. The test also verifies additives cannot create combustible reservoirs.

@@ -1,14 +1,14 @@
 # UI_STYLE.md — Frontier Soviet UI
 
-> **Bath room (2026-09-23, v28.80).** One view contains the catenary tub and
-> the working boiler. The broad, low firebox stays directly beneath the basin;
-> compact coal, bellows, flint and ash controls sit alongside it. The physical
-> chamber and its pointer coordinates share the same aspect ratio, so coal
-> shapes and flame motion are not stretched. Desktop tools and water controls
-> share an 80px bottom rail. Phones put fuel controls in a row below the grate;
-> short landscape screens place the firebox beside the basin. All action targets
-> remain at least 44px high. There is no separate boiler page or scrolling
-> transition in the main room. Real water, steam, guests and fire stay live.
+> **Bath workshop (2026-09-26, v28.97).** One view contains the catenary tub
+> and its curved boiler. Material selection opens a compact paged rack; the
+> translucent cursor previews the exact piece that a click will release. Flint
+> and steel are a held tool that casts sparks on drag. A mounted crank drives
+> the travelling grate. Liquid selection opens three tank gauges and identity
+> controls beside the hose. No Prepare, Guest or instant ignition buttons.
+> Desktop controls flank the furnace; phones place them below, and short
+> landscape screens put the fire beside the bath. Targets stay at least 44px
+> wide and tall. Real water, heat-driven steam, guests and fire stay live.
 
 > **Loading and arrival (2026-09-20, v28.49).** The initial HTML contains an
 > opaque gunmetal loading screen, a cream SLUICE wordmark and a drill/strata mark.

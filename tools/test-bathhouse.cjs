@@ -15,17 +15,18 @@ function fixture(fps = 60) {
     PLAYER_W: 22, PLAYER_H: 26, ENABLE_BATH: true, ENABLE_JELLO: true,
     world: Array.from({length:620},(_,r)=>Array.from({length:320},()=>r<4?null:{type:'dirt',hp:1})),
     surfacePonds: [], terrainClearedKinds: {}, cargo: [], money: 0,
-    gameOver: false, gameWon: false, gamePaused: false, devMode: false, player: {x:5200,y:90},
+    keys: {}, gameOver: false, gameWon: false, gamePaused: false, devMode: false, player: {x:5200,y:90},
     setDevMode(on) { s.devMode = !!on; },
-    siphon: {tank:[0,0,0,0,0],passenger:null},
+    siphon: {tank:[0,0,0,0,0,0],capacity:16000,passenger:null},
+    liquidCatalog:['Water','Oil','Brine','Nectar','Lumen','Snow'].map((name,id)=>({id,name,color:'#64b4cc'})),
     ORES: {dirt:{hp:1},copper:{value:15},iron:{value:25},amber:{value:80},amethyst:{value:200},gold:{value:150}},
     showMsg() {}, sfxPlay() {}, saveNow() {}, invalidateTerrainAround() {}, liquidWGPU:null,
     cargoType: unit => typeof unit === 'string' ? unit : unit.type,
     cargoShiny: unit => !!(unit && unit.shiny),
-    liquidCount:0, liquidX:[],liquidY:[],liquidType:[],mineralLiquidParked:{},
+    liquidCount:0, liquidX:[],liquidY:[],liquidVX:[],liquidVY:[],liquidType:[],mineralLiquidParked:{},
     liquidToolSync(){},
-    addLiquidParticle(type,x,y){s.liquidX.push(x);s.liquidY.push(y);s.liquidType.push(type);return s.liquidCount++;},
-    removeLiquidParticle(i){s.liquidX.splice(i,1);s.liquidY.splice(i,1);s.liquidType.splice(i,1);s.liquidCount--;},
+    addLiquidParticle(type,x,y,vx=0,vy=0){s.liquidX.push(x);s.liquidY.push(y);s.liquidVX.push(vx);s.liquidVY.push(vy);s.liquidType.push(type);return s.liquidCount++;},
+    removeLiquidParticle(i){s.liquidX.splice(i,1);s.liquidY.splice(i,1);s.liquidVX.splice(i,1);s.liquidVY.splice(i,1);s.liquidType.splice(i,1);s.liquidCount--;},
     liquidSampleRect(x,y,xx,yy){const counts=[0,0,0,0,0];for(let i=0;i<s.liquidCount;i++)if(s.liquidX[i]>=x&&s.liquidX[i]<xx&&s.liquidY[i]>=y&&s.liquidY[i]<yy)counts[s.liquidType[i]]++;return counts;},
     liquidExtractRect(x,y,xx,yy,t,count){let used=0;for(let i=s.liquidCount-1;i>=0&&used<count;i--)if(s.liquidType[i]===t&&s.liquidX[i]>=x&&s.liquidX[i]<xx&&s.liquidY[i]>=y&&s.liquidY[i]<yy){s.removeLiquidParticle(i);used++;}return used;},
     liquidToolEmit(type,count,x,y){for(let i=0;i<count;i++)s.addLiquidParticle(type,x,19530);return count;},
@@ -34,17 +35,38 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-tools','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-silos','074-bath-thermal','074-bath-tools','077-hearth-materials','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-interaction','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   // The furnace now fits the actual copper shoulders in camera space.
   s.bathMode = true; s.bathCamPin(); s.bathMode = false;
   return {s, advance(seconds) {for(let n=0;n<seconds*fps;n++){s.skySlimeTick(1/fps);s.bathGuestTick(1/fps);}},
-    inside(seconds) {for(let n=0;n<seconds*fps;n++)s.bathGuestTick(1/fps);} };
+    inside(seconds, temperature) {for(let n=0;n<seconds*fps;n++){
+      // Admission/payment cases use a controlled warm bath; heat evolution
+      // and cold inflow have separate energy-conservation cases below.
+      if(temperature!==undefined && n%fps===0)setBathTemperature(s,temperature);
+      s.bathGuestTick(1/fps);
+    }} };
 }
 function loadBoiler(s) {
   for (const x of [125, 160, 195]) assert(s.hearthLoadCoal('boiler', x, 180));
 }
 function boilerTools(s) { s.forgeGive('flint', 1); }
+function strikeAbove(s, body = s.hearthBeds.boiler.chunks[0]) {
+  s.bathLightStove();
+  if (!body) return false;
+  const box=s.hearthRoomLayout().box;
+  s.hearthCastSparks({x:box.x+body.x*box.w/s.HEARTH_WIDTH,
+    y:box.y+(body.y-body.r-5-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT},30,0);
+  for(let i=0;i<100&&!body.lit;i++)s.hearthHandTick(1/120);
+  return body.lit;
+}
+function setBathTemperature(s, temperature = 42) {
+  s.bathThermalSample();
+  const t=s.bathThermal;
+  for(let i=0;i<72;i++){t.energy[i]=t.capacity[i]*(temperature-20);t.temperature[i]=temperature;}
+  t.meanC=temperature;t.copperC=temperature;s.bathHeat=(temperature-20)/28;
+}
+
 {
   const {s}=fixture();s.bathCarveRoom();
   const c=s.bathTubCurve(s.BATH_FLOORS[0],s.BATH_FLOORS[0].tubs[0]);
@@ -74,7 +96,8 @@ function boilerTools(s) { s.forgeGive('flint', 1); }
   s.bathServiceRestore(saved);
   assert.equal(s.bathRoomReady,false,'old carved rooms rebuild once for the wider basin');
   assert.equal(JSON.stringify({x:s.liquidX,y:s.liquidY,type:s.liquidType}),water,'migration preserves existing real water');
-  assert.equal(s.bathSupplies[0],123);assert.equal(s.siphon.tank[0],456);assert.equal(s.bathPour,17);
+  assert.equal(s.bathSupplies[0],0);assert.equal(s.siphon.tank[0],456);assert.equal(s.bathPour,0);
+  assert.equal(s.bathSiloTank(0).count,123);assert.equal(s.bathSilos.pending[0],17);assert.equal(s.bathWaterCount(),596);
   assert(s.bathGuests[0].s.x<floor.tubs[0][0]*s.TILE,'a waiting guest migrates onto the dry landing');
   assert.equal(s.bathGuests[0].s.id,guest.id,'migration preserves guest identity');
   s.bathCarveRoom();
@@ -82,7 +105,7 @@ function boilerTools(s) { s.forgeGive('flint', 1); }
   assert.equal(s.bathRoomReady,true);
   assert.equal(JSON.stringify({x:s.liquidX,y:s.liquidY,type:s.liquidType}),water,'recarving does not refill or discard water');
   const migrated=JSON.parse(JSON.stringify(s.bathServiceSave()));
-  assert.equal(migrated.version,4);
+  assert.equal(migrated.version,6);
   s.bathServiceRestore(migrated);
   assert.equal(s.bathRoomReady,true,'new room saves retain their carved geometry');
   const sentinel={type:'foundation',hp:17};s.world[floor.fr][25]=sentinel;s.bathCarveRoom();
@@ -126,32 +149,37 @@ for (const fps of [30,60,144]) {
   s.bathMode=true;
   s.bathRoomReady=true;
   s.cargo=Array.from({length:9},()=>({type:'coal'}));
-  assert.equal(s.bathLightStove(),false,'coal in the hold cannot ignite an empty grate');
+  assert(s.bathLightStove());assert.equal(s.hearthHand.mode,'striker');
+  assert.equal(s.hearthBeds.boiler.chunks.length,0,'selecting the striker cannot consume coal from the hold');
   assert.equal(s.cargo.length,9);
   loadBoiler(s); assert.equal(s.cargo.length,6,'physical loading consumes exactly one coal per piece');
-  assert.equal(s.bathLightStove(),false,'boiler requires flint');
+  assert.equal(strikeAbove(s),false,'actual sparks require flint');
   s.forgeGive('flint',1);
   assert.equal(s.hearthHasTool('steel'),true,'the boiler includes a reusable steel striker');
-  assert(s.bathLightStove());assert.equal(s.cargo.length,6,'striking consumes no extra coal');
+  assert(strikeAbove(s));assert.equal(s.cargo.length,6,'striking consumes no extra coal');
   assert.equal(s.forgeCount('flint'),1);assert.equal(s.forgeCount('steel'),1,'ignition tools are reusable');
   assert.equal(s.bathServe(id),false,'heat alone cannot admit a guest to a dry tub');
   s.siphon.tank[0]=12000;
   assert(s.bathAddWater());assert.equal(s.siphon.tank[0],0);assert.equal(s.bathPour,12000);
   f.inside(12);
-  assert(s.bathWater>=s.BATH_MIN_WATER);assert(s.bathHeat>=.35);
+  assert(s.bathWater>=s.BATH_MIN_WATER);
+  assert(s.bathThermal.inputKJ>0 && s.bathThermalTemperature()>20,'burning fuel heats the actual water budget');
+  assert.equal(s.bathServe(id),false,'cold water waits for heat instead of an instant readiness flag');
+  setBathTemperature(s,60);assert.equal(s.bathServe(id),false,'water above48C cannot admit a guest');
+  setBathTemperature(s); // Service timing starts from a physically warm thermal fixture.
   assert(s.hearthBeds.boiler.chunks.every(b=>b.lit),'nearby coal catches from the first spark');
-  assert.equal(s.bathLightStove(),false,'burning fire is not charged twice');
+  assert(s.bathLightStove());assert.equal(s.cargo.length,6,'selecting the striker again never charges extra fuel');
   const water=s.bathWater;
   assert(s.bathServe(id)); assert.equal(s.bathWater,water,'no per-guest water dose');
   assert.equal(s.cargo.length,6,'no per-guest coal fee');
   assert.equal(s.bathServe(id),false,'double admission is refused');
-  f.inside(10); assert.equal(s.money,0,'no payout before complete soak');
+  f.inside(10,42); assert.equal(s.money,0,'no payout before complete soak');
   const pending=JSON.parse(JSON.stringify(s.bathServiceSave()));
   s.bathServiceRestore(pending);
-  f.inside(12);
+  f.inside(12,42);
   assert.equal(s.money,75); assert.equal(s.bathServed,1);
   const paid=JSON.parse(JSON.stringify(s.bathServiceSave()));
-  s.bathServiceRestore(paid); f.inside(8);
+  s.bathServiceRestore(paid); f.inside(8,42);
   assert.equal(s.money,75,'reload after payment cannot duplicate the payout');
   assert(s.residents.some(g=>g.id===id),'same visitor becomes a surface resident');
   f.advance(25); assert.equal(s.residents.filter(g=>g.id===id).length,1,'resident persists without duplicating');
@@ -165,12 +193,13 @@ for (const fps of [30,60,144]) {
  s.bathRoomReady=true;
  s.cargo=Array.from({length:3},()=>({type:'coal'}));
  loadBoiler(s);boilerTools(s);
- assert(s.bathAddWater()); assert(s.bathLightStove());
+ assert(s.bathAddWater()); assert(strikeAbove(s));
  for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
  f.inside(15);
+ setBathTemperature(s);
  const g=s.bathGuests[0]; assert(s.bathServe(g.s.id));
  assert.deepEqual(Array.from(s.siphon.tank),[0,0,1234,567,890]); assert.equal(s.bathSupplies[0],0);
- s.bathMode=false; f.inside(30); assert.equal(s.money,75,'served visitors finish while mining');
+ s.bathMode=false; f.inside(30,42); assert.equal(s.money,75,'served visitors finish while mining');
  s.ENABLE_BATH=false; const before=JSON.stringify(s.bathServiceSave());f.inside(2);
  assert.equal(JSON.stringify(s.bathServiceSave()),before,'disabled bath freezes visitor state');
 }
@@ -230,32 +259,37 @@ for (const fps of [30,60,144]) {
 {
   const { s } = fixture();
   s.bathMode = true; s.hearthView = 'bath'; s.forgeGive('coal', 2);
-  const bin = s.hearthRoomLayout().bin;
+  const bin = s.hearthRoomLayout().bin, box=s.hearthRoomLayout().box;
   s.hearthButtons = [Object.assign({ action: 'coal' }, bin)];
-  const down = { pointerId: 7, button: 0, clientX: bin.x + 30, clientY: bin.y + 30 };
-  assert(s.hearthPointerDown(down));
-  assert(s.hearthDrag && s.hearthDrag.fresh);
-  assert.equal(s.forgeCount('coal'), 1); assert.equal(s.hearthBeds.boiler.chunks.length, 1);
-  s.hearthCancelDrag();
-  assert.equal(s.hearthDrag, null); assert.equal(s.forgeCount('coal'), 2);
-  assert.equal(s.hearthBeds.boiler.chunks.length, 0, 'canceling a new drag returns exactly one coal');
-  s.hearthCancelDrag(); assert.equal(s.forgeCount('coal'), 2, 'second cancel cannot mint coal');
-  assert(s.hearthPointerDown(down));
-  assert(s.hearthPointerUp({ pointerId: 7, clientX: 0, clientY: 740 }));
-  assert.equal(s.forgeCount('coal'), 2, 'dropping a new piece outside refunds the bunker');
-  assert.equal(s.hearthBeds.boiler.chunks.length, 0);
-  assert(s.hearthPointerDown(down));
-  s.hearthSetView('bath');
-  assert.equal(s.forgeCount('coal'), 2, 'returning to the bath cancels a held fresh piece');
-  assert.equal(s.hearthBeds.boiler.chunks.length, 0);
-  console.log('PASS pointer pickup, canceled and misplaced coal, station switch and exact refund');
+  const select={pointerId:7,button:0,clientX:bin.x+30,clientY:bin.y+30};
+  assert(s.hearthPointerDown(select));assert.equal(s.forgeCount('coal'),2);
+  assert(s.hearthPointerUp(select));assert.equal(s.hearthHand.mode,'fuel');
+  assert.equal(s.hearthBeds.boiler.chunks.length,0,'selection only arms the cursor preview');
+  s.hearthButtons=[];
+  const drop={pointerId:7,button:0,pointerType:'touch',clientX:box.x+box.w/2,clientY:box.y+box.h*.30};
+  const preview=s.hearthHandPreview();assert.equal(s.forgeCount('coal'),2);
+  assert(s.hearthPointerDown(drop));assert.equal(s.hearthBeds.boiler.chunks.length,0,'press has not spent the preview');
+  s.hearthCancelDrag();assert.equal(s.forgeCount('coal'),2,'canceling a pending placement spends nothing');
+  assert(s.hearthPointerDown(drop));assert(s.hearthPointerUp(drop));
+  const body=s.hearthBeds.boiler.chunks[0];assert(body);
+  assert.equal(body.seed,preview.seed);assert.equal(body.r,preview.r,'realized piece retains preview geometry');
+  assert.equal(body.held,false);assert.equal(body.vy,0,'new piece starts at the cursor and falls on the next tick');
+  assert.equal(s.forgeCount('coal'),1);
+  s.hearthRoomAction('hand');
+  const pick={pointerId:8,button:0,clientX:box.x+body.x*box.w/s.HEARTH_WIDTH,
+    clientY:box.y+(body.y-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT};
+  assert(s.hearthPointerDown(pick));assert(s.hearthDrag && !s.hearthDrag.fresh);
+  assert(s.hearthPointerUp({pointerId:8,clientX:0,clientY:740}));
+  assert.equal(s.forgeCount('coal'),2);assert.equal(s.hearthBeds.boiler.chunks.length,0,'returning cold material refunds its one actual item');
+  s.hearthCancelDrag();assert.equal(s.forgeCount('coal'),2,'second cancellation cannot mint fuel');
+  console.log('PASS selection preview, click placement, cancellation and exact cold return');
 }
 
 {
   const speeds=[];
   for(const held of [0,1000]){
     const {s}=fixture();let now=1000;s.performance.now=()=>now;
-    s.bathMode=true;s.hearthSetView('boiler');s.forgeGive('coal',1);
+    s.bathMode=true;s.hearthSetView('boiler');s.hearthRoomAction('hand');s.forgeGive('coal',1);
     const b=s.hearthLoadCoal('boiler',160,100),box=s.hearthRoomLayout().box;
     const x=box.x+b.x*box.w/s.HEARTH_WIDTH,y=box.y+(b.y-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT;
     assert(s.hearthPointerDown({pointerId:11,button:0,clientX:x,clientY:y}));
@@ -274,14 +308,14 @@ for (const fps of [30,60,144]) {
   s.bathMode = true; s.hearthView = 'bath'; s.devMode = true;
   s.forgeGive('coal', 2); s.cargo = [{ type: 'coal' }];
   const before = JSON.stringify({ stock: s.forgeStock, cargo: s.cargo });
-  function takeFromBin() {
-    const bin = s.hearthRoomLayout().bin;
-    s.hearthButtons = [Object.assign({ action: 'coal' }, bin)];
-    assert(s.hearthPointerDown({ pointerId: 7, button: 0, clientX: bin.x + 30, clientY: bin.y + 30 }));
-    assert(s.hearthDrag && s.hearthDrag.fresh && s.hearthDrag.b.devSupplied);
+  function beginPlacement() {
+    s.hearthRoomAction('coal');s.hearthButtons=[];
+    const box=s.hearthRoomLayout().box, event={pointerId:7,button:0,pointerType:'touch',clientX:box.x+box.w/2,clientY:box.y+box.h*.30};
+    assert(s.hearthPointerDown(event));assert(s.hearthPress && s.hearthPress.action==='place');
+    return event;
   }
   function returnColdChunk() {
-    s.hearthSetView('boiler');
+    s.hearthSetView('boiler');s.hearthRoomAction('hand');
     const b = s.hearthBeds.boiler.chunks[0], box = s.hearthRoomLayout().box;
     s.hearthButtons = [];
     assert(s.hearthPointerDown({ pointerId: 7, button: 0,
@@ -291,30 +325,24 @@ for (const fps of [30,60,144]) {
     assert.equal(s.hearthBeds.boiler.chunks.length, 0);
   }
   for (let i = 0; i < 5; i++) {
-    takeFromBin(); s.hearthCancelDrag();
-    takeFromBin(); assert(s.hearthPointerUp({ pointerId: 7, clientX: 0, clientY: 740 }));
+    beginPlacement();s.hearthCancelDrag();
+    const drop=beginPlacement();assert(s.hearthPointerUp(drop));
+    assert(s.hearthBeds.boiler.chunks[0].devSupplied);returnColdChunk();
   }
-  takeFromBin();
-  s.devMode = false; s.hearthCancelDrag();
-  assert.equal(s.hearthBeds.boiler.chunks.length, 0, 'turning dev off during a fresh drag cannot produce a refund');
-  s.devMode = true;
-  assert(s.hearthLoadCoal('boiler', 160, 150));
+  beginPlacement();s.devMode=false;s.hearthCancelDrag();
+  assert.equal(s.hearthBeds.boiler.chunks.length,0,'turning dev off during a preview cannot produce a refund');
+  s.devMode=true;const drop=beginPlacement();assert(s.hearthPointerUp(drop));
+  const saved=JSON.parse(JSON.stringify(s.bathServiceSave()));
+  assert.equal(saved.workshop.beds.boiler.chunks[0].devSupplied,true);
+  s.devMode=false;s.bathServiceRestore(saved);
+  assert.equal(s.hearthBeds.boiler.chunks[0].devSupplied,true,'saved test fuel keeps its virtual supply origin');
   returnColdChunk();
-  assert(s.hearthLoadCoal('boiler', 160, 150));
-  const saved = JSON.parse(JSON.stringify(s.bathServiceSave()));
-  assert.equal(saved.workshop.beds.boiler.chunks[0].devSupplied, true);
-  s.devMode = false; s.bathServiceRestore(saved);
-  assert.equal(s.hearthBeds.boiler.chunks[0].devSupplied, true, 'saved test coal keeps its supply origin');
-  returnColdChunk();
-  assert.equal(JSON.stringify({ stock: s.forgeStock, cargo: s.cargo }), before,
-    'canceling, returning and reloading dev coal never mints or spends real resources');
-  assert(s.hearthRoomKey({ key: '`', repeat: false }));
-  assert.equal(s.devMode, true, 'backtick enables dev mode inside the bathhouse');
-  takeFromBin();
-  assert(s.hearthRoomKey({ key: '`', repeat: false }));
-  assert.equal(s.devMode, false); assert.equal(s.hearthDrag, null);
-  assert.equal(JSON.stringify({ stock: s.forgeStock, cargo: s.cargo }), before);
-  console.log('PASS unlimited coal drag cancellation, cold returns, dev toggles and saved supply origin');
+  assert.equal(JSON.stringify({stock:s.forgeStock,cargo:s.cargo}),before,'test placement and returns never mint or spend real stock');
+  assert(s.hearthRoomKey({key:'`',repeat:false}));assert.equal(s.devMode,true);
+  beginPlacement();assert(s.hearthRoomKey({key:'`',repeat:false}));
+  assert.equal(s.devMode,false);assert.equal(s.hearthPress,null);
+  assert.equal(JSON.stringify({stock:s.forgeStock,cargo:s.cargo}),before);
+  console.log('PASS virtual previews, physical test fuel, cold returns, dev toggles and saved supply origin');
 }
 
 {
@@ -322,7 +350,7 @@ for (const fps of [30,60,144]) {
   s.bathMode = true; s.bathRoomReady = true; s.devMode = true;
   assert(s.hearthLoadCoal('boiler', 160, 150));
   assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 1);
-  assert(s.bathLightStove(), 'virtual flint and the built-in striker ignite real boiler fuel');
+  assert(strikeAbove(s), 'virtual flint makes real falling sparks that ignite boiler fuel');
   assert(s.hearthBeds.boiler.chunks[0].lit);
   assert.equal(s.forgeStock.flint, 0); assert.equal(s.forgeStock.steel, 1);
   s.devMode = false;
@@ -346,10 +374,10 @@ for (const fps of [30,60,144]) {
   s.hearthRoomAction('kit');
   assert.equal(s.bathPour, s.BATH_MAX_WATER, 'a repeated kit does not overfill the pending reservoir');
   assert.equal(s.hearthBeds.boiler.chunks.length, 3, 'a repeated kit does not duplicate fuel');
-  for(let wait=0;wait<90&&(s.bathPour>0||s.bathHeat<0.35);wait++)f.inside(1);
+  for(let wait=0;wait<30&&s.bathPour>0;wait++)f.inside(1);
   assert.equal(s.bathPour, 0, 'the queued test water is emitted through the ordinary liquid path');
   assert(s.bathWater >= s.BATH_MIN_WATER && s.bathWater <= s.BATH_MAX_WATER);
-  assert(s.bathHeat >= 0.35, 'the actual lit boiler warms the newly poured bath');
+  assert(s.bathThermal.inputKJ>0 && s.bathThermal.meanC>20, 'the actual lit boiler adds heat to newly poured water');
   assert.equal(JSON.stringify({ stock: s.forgeStock, tank: s.siphon.tank, supplies: s.bathSupplies }), resources);
   const saved = s.bathServiceSave();
   function finiteNumbers(value) {
@@ -358,7 +386,7 @@ for (const fps of [30,60,144]) {
   }
   finiteNumbers(saved);
   assert.deepEqual(JSON.parse(JSON.stringify(saved)).workshop.stock.stock,
-    { coal: 2, iron: 1, flint: 0, steel: 1 }, 'virtual tools and supply counts never enter saved stock');
+    JSON.parse(resources).stock, 'virtual tools and supply counts never enter saved stock');
   assert.equal(saved.supplies[0], 7);
   console.log('PASS test bath preparation, bounded actual pouring, physical boiler warmth and finite saves');
 }
@@ -432,7 +460,7 @@ for (const fps of [30,60,144]) {
   const curve=s.bathTubCurve(s.BATH_FLOORS[0],s.BATH_FLOORS[0].tubs[0]);
   g.s.x=(curve.x0+curve.x1)/2;g.s.y=s.bathWaterline()-g.s.r-80;g.s.vx=80;g.s.vy=0;
   for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
-  s.bathWater=8000;s.bathHeat=0.75;
+  s.bathWater=8000;setBathTemperature(s);
   for(let i=0;i<900;i++){s.bathToolGuestTick(g,1/60);assert(Number.isFinite(g.s.x+g.s.y));}
   assert(g.served);assert(g.soak>0,'physical drop earns actual submerged soak time');
   const earned=g.soak;s.bathTool.held=g;
@@ -445,19 +473,44 @@ for (const fps of [30,60,144]) {
 }
 
 {
-  const {s}=fixture();s.bathMode=true;s.devMode=true;s.keys={};
+  const {s}=fixture();s.bathMode=true;s.devMode=true;
   const key=k=>s.hearthRoomKey({key:k,repeat:false});
-  key('c');key('b');key('f');
-  assert.equal(s.hearthView,'bath');
-  assert.equal(s.hearthBeds.boiler.chunks.length,1);
-  assert(s.hearthBeds.boiler.air>0 && s.hearthBeds.boiler.chunks[0].lit,'coal, bellows and flint shortcuts work from the bath');
-  s.hearthBeds.boiler.ash=Array.from({length:8},(_,i)=>({x:i*10,y:208,kg:.001}));
-  key('a');assert.equal(s.hearthBeds.boiler.ash.length,6,'ash shortcut sweeps in the bath');
-  assert.equal(key('Escape'),false,'idle Escape remains available to leave the bath');
-  const bin=s.hearthRoomLayout().bin;s.hearthButtons=[Object.assign({action:'coal'},bin)];
-  s.hearthPointerDown({pointerId:8,button:0,clientX:bin.x+20,clientY:bin.y+20});
-  assert(s.hearthDrag);assert.equal(key('Escape'),true);
-  assert.equal(s.hearthDrag,null);assert.equal(s.hearthBeds.boiler.chunks.length,1);
-  assert.equal(s.hearthView,'bath');
-  console.log('PASS inline boiler shortcuts and Escape cancellation without a screen change');
+  key('c');assert.equal(s.hearthBeds.boiler.chunks.length,0,'fuel shortcut selects the preview without placing it');
+  const body=s.hearthLoadCoal('boiler',160,150),box=s.hearthRoomLayout().box;
+  key('b');key('f');assert.equal(s.hearthView,'bath');
+  assert(s.hearthBeds.boiler.air>0);assert.equal(body.lit,false,'F selects a manual striker without instant ignition');
+  const down={pointerId:9,button:0,clientX:box.x+body.x*box.w/s.HEARTH_WIDTH,
+    clientY:box.y+(body.y-body.r-5-s.HEARTH_TOP)*box.h/s.HEARTH_HEIGHT};
+  assert(s.hearthPointerDown(down));assert(s.hearthPointerUp(down));assert.equal(body.lit,false,'a stationary click cannot ignite fuel');
+  assert(s.hearthPointerDown(down));assert(s.hearthPointerMove({...down,clientX:down.clientX+30}));
+  assert(s.hearthHand.sparks.length>0);assert(s.hearthPointerUp({...down,clientX:down.clientX+30}));
+  for(let i=0;i<100&&!body.lit;i++)s.hearthHandTick(1/120);
+  assert(body.lit,'manual steel stroke casts falling sparks onto fuel');
+  const inset=s.hearthChamberInset(s.HEARTH_FLOOR);
+  s.hearthBeds.boiler.ash=Array.from({length:8},(_,i)=>({x:inset+15+i*(s.HEARTH_WIDTH-inset*2-30)/7,y:s.HEARTH_FLOOR-2,kg:.001,seed:i}));
+  key('a');assert.equal(s.hearthBeds.boiler.ash.length,8,'rake begins a physical pass instead of deleting ash immediately');
+  assert(s.hearthHand.rake);for(let i=0;i<170;i++)s.hearthHandTick(1/120);
+  assert.equal(s.hearthBeds.boiler.ash.length,0);assert.equal(s.hearthHand.rake,null);
+  assert.equal(key('Escape'),true,'Escape stows an active striker');assert.equal(key('Escape'),false,'idle Escape remains available to leave');
+  key('c');const drop={pointerId:8,button:0,pointerType:'touch',clientX:box.x+box.w/2,clientY:box.y+box.h*.30};
+  s.hearthPointerDown(drop);assert(s.hearthPress);assert.equal(key('Escape'),true);
+  assert.equal(s.hearthPress,null);assert.equal(s.hearthBeds.boiler.chunks.length,1);
+  const before=JSON.stringify({guests:s.bathGuests.length,water:s.bathPour,fuel:s.hearthBeds.boiler.chunks.length});
+  key('t');key('g');assert.equal(JSON.stringify({guests:s.bathGuests.length,water:s.bathPour,fuel:s.hearthBeds.boiler.chunks.length}),before,'removed prepare/guest shortcuts perform no action');
+  console.log('PASS preview shortcut, manual ignition, travelling rake and Escape cancellation');
+}
+
+{
+  const f=fixture(),s=f.s;s.bathMode=true;s.bathRoomReady=true;
+  for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
+  s.bathWater=8000;setBathTemperature(s,42);
+  const before=s.bathThermal.energy.reduce((a,b)=>a+b,0)+s.BATH_COPPER_CAPACITY*(s.bathThermal.copperC-20);
+  s.siphon.tank[0]=2000;assert(s.bathAddWater());assert.equal(s.siphon.tank[0],0);
+  f.inside(2);
+  const t=s.bathThermal,after=t.energy.reduce((a,b)=>a+b,0)+s.BATH_COPPER_CAPACITY*(t.copperC-20);
+  assert.equal(s.bathPour,0);assert.equal(s.bathWaterCount(),0,'cold inlet cannot credit stored water back');
+  assert(t.meanC<42 && t.meanC>20,'cold incoming mass dilutes actual bath temperature');
+  assert(after<=before+1e-6,'no fire means cold inflow cannot add sensible energy');
+  assert(Math.abs(s.liquidCount+t.evaporatedKg*100-10000)<1e-6,'inlet volume remains liquid or explicitly evaporated water');
+  console.log('PASS conserved cold inlet, thermal dilution and no inventory credit');
 }

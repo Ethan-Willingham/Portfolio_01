@@ -397,3 +397,20 @@ The water basin is catenary-inspired. Its code starts from a width-to-depth
 target of phi squared, then caps the depth to fit the room; its displayed
 outline is therefore not an exact golden-ratio shape. Water geometry stays
 unchanged; the new furnace uses golden proportions directly.
+
+
+## 21. Liquid stores and working tools (v28.97)
+
+Three riveted metal silos stand on a shared dry plinth to the right of the banya.
+Their gauge strips show the actual stored quantity and liquid color. Separate
+labels preserve identity. Pipework and handwheels use the existing iron and brass
+palette. The liquid tray reuses these same tank drawings. Site selection leaves
+ponds and the station clear; the foundation is only laid on dry surface cells.
+
+The furnace keeps its golden-section silhouette. Material pieces share physical
+hulls with their translucent cursor previews. A flint and steel drawing follows
+the held striker; sparks fall toward the pile. The grate control is a mechanical
+crank whose rotation accompanies teeth travelling across the real bed. Pale ash
+sifts through the base slots while remaining fuel moves under contact impulses.
+Steam comes from actual evaporation above the water, with transparent wisps and
+small condensation parcels. Use no opaque smoke columns above a cold bath.

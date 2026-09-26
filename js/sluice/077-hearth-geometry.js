@@ -131,7 +131,8 @@
   function hearthMass(b) {
     var hull = hearthHull(b);
     if (!b.massRef) b.massRef = hull.area * b.baseR * b.baseR / 1500;
-    var mass = b.massRef * (0.16 + b.fuel * 0.84);
+    var retained = hearthMaterial(b.material).role === 'additive' ? 1 : 0.16 + b.fuel * 0.84;
+    var mass = b.massRef * retained;
     b.invMass = 1 / mass;
     b.invInertia = 1 / (mass * hull.inertia * b.r * b.r);
   }

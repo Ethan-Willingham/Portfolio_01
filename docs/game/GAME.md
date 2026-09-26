@@ -33,9 +33,9 @@ see [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for the rollback and findings. Ro
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
 an integrated boiler beneath the basin. Since v28.74, the firebox, fuel bunker,
-bellows, flint, ash sweep and live fuel/air/ash readings stay in this same view.
-Drag individual coal chunks from the bunker onto the grate, or tap the
-bunker to drop one. They collide, tumble, catch from neighboring fuel, glow,
+bellows, flint, ash grate and live fuel/air/ash readings stay in this same view.
+Since v28.97, select an existing fuel or mineral from the rack, then click to
+release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption. Since v28.63, a bounded WebGPU
 reacting-flow solver transports fuel, oxygen, soot, steam and heat around the
 actual coal polygons. Its reactions and heat exchanges drive combustion and
@@ -68,14 +68,21 @@ floors scroll immediately, with no camera easing.
 The forge has been retired. A reusable steel striker is supplied beside the
 boiler for new and existing saves. Stone still sometimes drops durable flint
 (guaranteed within twelve stone breaks). Flint and steel light the boiler
-without being consumed. Start with three chunks for strong heat; more fuel
+without being consumed. Drag the steel above the pile to cast sparks onto fuel.
+Start with three chunks for strong heat; more fuel
 extends tending capacity, and cold neighbors ignite from nearby coals. Rake
 spent ash to free space on the grate.
 
 The fuel locker automatically keeps up to 24 ordinary coal when entering the
 banya or selling at the station. Iron, surplus coal, and shiny ore sell normally.
-Fuel, tools, existing stored iron, and retired forge work persist. Water still
-comes from the rig's scoop, and spilled bath water is permanently lost. The
+Fuel, tools, existing stored iron, and retired forge work persist. Coal, amber,
+methane ice and sulfur have distinct burns; copper and malachite tint hot flames
+as recoverable additives. Three silos to the right of the building store liquids
+from the rig, and a tray selects the identity poured by the hose. Spilled bath
+water is permanently lost. A conserved thermal field couples the copper, real
+fire output and shared water solver. Warm currents, boiling and mass-removing
+evaporation replace the old bath smoke. See [BATH_THERMAL.md](BATH_THERMAL.md) and
+[BATHHOUSE_STORAGE.md](BATHHOUSE_STORAGE.md). The
 ceiling tools follow the mouse; click to grab or drop a guest and hold click
 to pour. On touch screens, drag to aim and use the Grab/Drop or Pour/Stop
 button. HOSE switches to a flexible nozzle with Jet and Shower patterns,
@@ -191,7 +198,9 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `073-liquid-deposits.js` | finite mineral pockets, offscreen liquid storage, and liquid persistence |
 | `073-bath-interior.js` | wide bath room, curved vessel, integrated boiler rendering and hit geometry |
 | `074-bath-tools.js` | ceiling claw and flexible hose, pointer ownership, physical guest handling, conserved water emission |
-| `074-bath-service.js` | visitor queue, coal-powered bath heat, water supply, floor drain, payments, and migration |
+| `074-bath-service.js` | visitor queue, temperature admission, floor drain, payments, and migration |
+| `074-bath-silos.js` / `074-bath-thermal.js` | conserved typed liquid storage, copper/water heat, convection, evaporation and steam |
+| `077-hearth-materials.js` / `078-hearth-interaction.js` | existing fuels and additives, exact cursor previews, hand-struck sparks and travelling grate |
 | `077-hearth-physics.js` / `078-hearth-art.js` / `078-hearth-room.js` | physical coal beds, combustion visuals, direct boiler controls and the shared bath layout |
 | `078-hearth-station.js` | shared bath/firebox viewport, responsive fuel controls and live burn readings |
 | `079-forge-resources.js` | reserved coal, durable flint, supplied steel, and legacy supply persistence |
@@ -218,9 +227,9 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 ## Live tuning + dev hotkeys
 
 Press backtick to toggle **dev mode** (money 999,999, free purchases, the perf overlay).
-Inside the banya, dev mode also supplies unlimited coal, water, and ignition
-tools. **PREPARE BATH / T** starts a warm, filling bath; **ADD GUEST / G** brings
-a test visitor into a free waiting place. Backtick also works inside the banya.
+Inside the banya, dev mode supplies unlimited selectable fuel, liquid and ignition
+tools. Prepare and Guest controls and their T/G shortcuts are removed. Backtick
+also works inside the banya.
 Then the useful keys: **L** opens the `window.gm` slider panel (every tunable, grouped);
 **X** cycles the water debug kit; **N** cycles weather moods; **G** the GPU probe; **H** the
 perf-ISO A/B; **Z** zoom; **R** restart. The on-screen **+ SLIME** button under TUNE drops

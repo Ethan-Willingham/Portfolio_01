@@ -18,14 +18,12 @@
      yield via the three bath* hooks, the rig freezes where it was, and the
      room draws with its own lantern light. The liquid + smoke sims tick from
      the LOOP (350), not update(), so the room's water keeps simulating and
-     the camera-derived active region wakes it automatically. Tub 1 is heated
-     by the ONE B1 source rect (repointed here from the old pond demo), so
-     the first thing you see is genuinely hot, convecting, warm-tinted water.
+     the camera-derived active region wakes it automatically. The bath starts
+     empty and cold. Real fuel heats its copper liner, then the actual water.
+     Conserved energy, evaporation and condensed vapor live in 074-bath-thermal.
 
      Dev helpers: window.__bath.warp() (rig to the door), .enter(), .exit();
-     window.bathTune for all BATH_* physics/look levers (see B1 notes).
-     v25.85: STEAM lives (scene-local steam mode + hot-tub emission) and
-     stage board hangs those on.
+     window.bathTune retains the legacy solver levers for dev harnesses.
      ======================================================================= */
 
   // ---- Exterior placement (world px; groundY = SKY_ROWS * TILE = 128) ----
@@ -221,63 +219,13 @@
     if (liquidWGPU && liquidWGPU.setRenderParam) liquidWGPU.setRenderParam(name, v);
   }
 
-  /* ==== TRUE SCALE (v26.06): the pool behaves k x bigger than it looks =
-     Dynamic similarity, not levers. The read of "size" in fluid motion is
-     the Froude number: big water plays the SAME shapes SLOWER (time goes
-     as sqrt of length; movie miniatures are filmed overcranked for
-     exactly this reason). One knob k = the implied size multiplier:
-       water:  LIQUID_TIMESCALE / sqrt(k). The engine's banked-substep
-               timescale replays identical per-substep physics at a
-               slower wall clock, so waves, splashes, convection and heat
-               transport all scale together, bit-faithfully.
-       guests: real fall accel JELLO_GRAVITY / k and every brain impulse
-               x 1/sqrt(k): the same trajectory SHAPES, stretched sqrt(k)
-               in time. A giant slime moves like a giant.
-       steam:  the smoke clock follows at 1/sqrt(k) (in bathSteamPush).
-     Scene-scoped: pushed on enter, restored exactly on exit. Live dial:
-     __bath.scale(k). ============================================= */
-  var bathScaleK = 6;
-  var bathScaleSaved = null;
-  function bathScalePush() {
-    if (bathScaleSaved || typeof JELLO_GRAVITY === 'undefined') return;
-    var wts = 1.55;
-    try {
-      if (typeof gm !== 'undefined' && gm && gm.get) {
-        var t = gm.get('water.TIMESCALE');
-        if (typeof t === 'number' && isFinite(t) && t > 0) wts = t;
-      }
-    } catch (e) {}
-    bathScaleSaved = { jg: JELLO_GRAVITY, wts: wts };
-    bathScaleSetWaterTs(wts / Math.sqrt(bathScaleK));
-    JELLO_GRAVITY = bathScaleSaved.jg / bathScaleK;
-  }
-  function bathScalePop() {
-    if (!bathScaleSaved) return;
-    bathScaleSetWaterTs(bathScaleSaved.wts);
-    JELLO_GRAVITY = bathScaleSaved.jg;
-    bathScaleSaved = null;
-  }
-  // Through the gm lever when it exists (so the owner's tuning panel and
-  // gm.get always show the live truth), setSimParam directly otherwise.
-  function bathScaleSetWaterTs(v) {
-    try {
-      if (typeof gm !== 'undefined' && gm && gm.set) { gm.set('water.TIMESCALE', v); return; }
-    } catch (e) {}
-    bathTune('TIMESCALE', v);
-  }
-  function bathScaleSet(k) {
-    k = (typeof k === 'number' && isFinite(k) && k >= 1) ? k : 1;
-    var inside = !!bathScaleSaved;
-    if (inside) { bathScalePop(); bathSteamPop(); }
-    bathScaleK = k;
-    if (inside) { bathSteamPush(); bathScalePush(); }
-    return bathScaleK;
-  }
-  // Every guest impulse runs through here, so the sqrt(k) stretch is one
-  // multiply: same hop arcs, giant timing.
-  function bathScaleV() {
-    return bathScaleSaved ? 1 / Math.sqrt(bathScaleK) : 1;
-  }
+  // The bath uses the same world units, gravity and liquid clock as outdoors.
+  // Compatibility levers remain harmless for old dev harnesses and saves.
+  var bathScaleK = 1, bathScaleSaved = null;
+  function bathScalePush() { bathScaleK = 1; }
+  function bathScalePop() { bathScaleSaved = null; }
+  function bathScaleSet(k) { return bathScaleK = 1; }
+  function bathScaleV() { return 1; }
 
   // ---- Tower construction (one-shot, on first enter) ----------------------
   function bathCarveRoom() {
@@ -343,14 +291,12 @@
   }
 
   function bathArmHeat() {
-    var F = BATH_FLOORS[0], tb = F.tubs[0];
-    var curve = bathTubCurve(F, tb);
-    var cx = (curve.x0 + curve.x1) / 2, by = curve.y0 + curve.depthAt(cx);
-    bathTune('BATH_SRC_X0', cx - 68); bathTune('BATH_SRC_X1', cx + 68);
-    bathTune('BATH_SRC_Y0', by - 30); bathTune('BATH_SRC_Y1', by + 12);
-    bathTune('BATH_SRC_T', Math.max(0, bathHeat) * 1.55); bathTune('BATH_SRC_RATE', bathFire > 0 ? 0.05 : 0);
-    bathTune('BATH_ON', bathHeat > 0.01 && bathWater > 0 ? 1 : 0); bathTune('BATH_BUOY', 240); bathTune('BATH_COOL', 0.28);
-    bathHotTub = { F: F, tb: tb, ventX: cx, ventHalf: 68 };
+    var F = BATH_FLOORS[0], tb = F.tubs[0], curve = bathTubCurve(F, tb);
+    bathHotTub = { F: F, tb: tb, ventX: (curve.x0 + curve.x1) / 2, ventHalf: (curve.x1 - curve.x0) / 3 };
+    // The conserved thermal field supplies both solvers. Disable the old
+    // independent rectangular heater, universal lift and artificial tint.
+    bathTune('BATH_ON', 0); bathTune('BATH_BUOY', 0); bathTune('BATH_TINT_STR', 0);
+    if (typeof bathThermalUpload === 'function') bathThermalUpload();
   }
 
   // Purchase-button rect for a locked floor (world px). One source of truth
@@ -400,8 +346,8 @@
     // IS the tub water. Restored on exit.
     // v25.88: uiTop stays VISIBLE inside too; the scene clears it per
     // frame and draws the tub-vessel foreground there (above the water).
-    // v25.85: the smoke canvas STAYS visible inside; it carries the STEAM.
-    // Stale world smoke is dropped by clearAllSmokeVisuals() on enter.
+    // Stale world smoke is dropped on entry. Condensed bath vapor draws
+    // on the foreground canvas, independent of the outdoor smoke engine.
   }
   function bathSwap(toInside) {
     if (bathFading || (toInside && !ENABLE_BATH)) return;
@@ -422,8 +368,8 @@
         hearthSetView('bath');
         forgeStockCargo();
         bathDoorT = 1;       // step back out through an open door
-        // Steam era (v25.85): drop the world's stale smoke, retune the
-        // fluid for steam. Existing sky visitors keep their service states.
+        // Drop stale outdoor smoke. Existing sky visitors keep their states;
+        // dedicated thermal vapor never retunes the world smoke solver.
         try { if (typeof clearAllSmokeVisuals === 'function') clearAllSmokeVisuals(); } catch (e2) {}
         bathSteamPush();
         bathScalePush();
@@ -496,287 +442,23 @@
     return true;
   }
 
-  /* ==== BANYA PHYSICS (v25.85): steam + the first guest ==================
-     STEAM: the smoke backend runs in STEAM MODE while inside (the world is
-     paused, so there is no conflict): shorter-lived dye, low curl so it
-     billows instead of swirling, emitted from the water surface of every
-     HOT tub (fill mode 2) and left to pool under the rafters. Values are
-     scaled from the live smokeTune fields and restored exactly on exit, so
-     the world's smoke look is untouched whatever its tuning.
-     GUESTS: the clay sky visitors are shared with the surface. Service,
-     hop paths, buoyancy, fluid colliders, and permanent splash loss live
-     in 074-bath-service.js. No independent indoor guest spawner remains.
-     ======================================================================= */
+  // Steam is condensed water vapor from actual evaporation, rendered by
+  // the thermal system. It never borrows the world smoke solver or its clock.
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
-  var bathSteamSaved = null;
-  var bathSteamAcc = 0;
-  // v26.00 FOG + THERMALS (the owner's picture, verbatim: "thin fog just
-  // above the water on a lake, but some of it accumulating to mushroom up
-  // since there is heat involved, and as it rises it sucks from the
-  // immediate surrounding layer of fog").
-  //   fog:      a calm blanket hugging the WHOLE surface: many tiny
-  //             near-still splats a second, edge to edge, barely lifting.
-  //   thermals: every few seconds a spot gathers and RISES for ~1.5s.
-  //             The column is mostly MOMENTUM: zero-dye velocity splats
-  //             pull the existing fog inward at the base (entrainment,
-  //             the "sucking") and drive it upward, so the mushroom is
-  //             built from the blanket itself, plus a little dye of its
-  //             own. Ramped in and out; nothing pops.
-  // All dials on __bath.steamTune.
-  var bathSteam = {
-    rate: 230, amt: 0.016, rise: 0.3,                      // the fog blanket
-    thermEvery: 1.1, thermDur: 1.0, thermAmt: 0.02,
-    thermRise: 1.15, thermR: 0.016, suck: 1.0
-  };
-  var bathSteamCol = { r: 0, g: 0, b: 0 };
-  var bathSteamTherms = [];    // live thermals {x, t, dur, wig, ph}
-  var bathSteamThermT = 1.2;
-  // v26.01: the LIVE water surface. The fog must hug the actual water,
-  // not the fill line: a plunge, a wave, a drained tub all move it. Every
-  // few frames, bucket the liquid engine's CPU mirror over the hot tub
-  // into 12 px columns, keep the highest particle per column, and median-
-  // filter with the neighbors so one stray droplet cannot yank the fog
-  // up. Empty buckets (and the pre-mirror boot) fall back to the fill
-  // line. The mirror refreshes every LIQUID_READBACK_EVERY (20) frames,
-  // so the fog trails a splash by ~a third of a second: watchable, calm.
-  var bathSurf = { tick: 0, x0: 0, n: 0, ys: null, raw: null };
-  function bathSurfRefresh(wl) {
-    bathSurf.tick--;
-    if (bathSurf.tick > 0 && bathSurf.ys) return;
-    bathSurf.tick = 8;
-    if (!bathHotTub || typeof liquidCount === 'undefined' ||
-        typeof liquidX === 'undefined' || !liquidCount) return;
-    var htb = bathHotTub.tb;
-    var x0 = htb[0] * TILE, x1 = (htb[1] + 1) * TILE;
-    var n = Math.ceil((x1 - x0) / 12);
-    if (!bathSurf.ys || bathSurf.n !== n) {
-      bathSurf.ys = new Float32Array(n);
-      bathSurf.raw = new Float32Array(n);
-      bathSurf.n = n;
-    }
-    bathSurf.x0 = x0;
-    var yLo = wl - 90, yHi = wl + 110, i, b;
-    for (b = 0; b < n; b++) bathSurf.raw[b] = 0;
-    var fro = (typeof liquidFrozen !== 'undefined') ? liquidFrozen : null;
-    for (i = 0; i < liquidCount; i++) {
-      if (fro && fro[i]) continue;
-      var px = liquidX[i];
-      if (px < x0 || px >= x1) continue;
-      var py = liquidY[i];
-      if (py < yLo || py > yHi) continue;
-      b = ((px - x0) / 12) | 0;
-      if (!bathSurf.raw[b] || py < bathSurf.raw[b]) bathSurf.raw[b] = py;
-    }
-    for (b = 0; b < n; b++) {
-      var a1 = bathSurf.raw[b > 0 ? b - 1 : b] || wl;
-      var a2 = bathSurf.raw[b] || wl;
-      var a3 = bathSurf.raw[b < n - 1 ? b + 1 : b] || wl;
-      var m = Math.max(Math.min(a1, a2), Math.min(Math.max(a1, a2), a3));
-      bathSurf.ys[b] = m < wl - 60 ? wl - 60 : (m > wl + 90 ? wl + 90 : m);
-    }
-  }
-  function bathSurfY(x, wl) {
-    if (!bathSurf.ys) return wl;
-    var b = ((x - bathSurf.x0) / 12) | 0;
-    if (b < 0 || b >= bathSurf.n) return wl;
-    return bathSurf.ys[b] || wl;
-  }
-  function bathSteamPush() {
-    if (typeof smokeTune === 'undefined' || bathSteamSaved) return;
-    bathSteamSaved = {
-      dd: smokeTune.sim_density_dissipation,
-      vd: smokeTune.sim_velocity_dissipation,
-      curl: smokeTune.sim_curl,
-      ts: smokeTune.sim_time_scale
-    };
-    // Scale, never set: polarity-proof against whatever the smoke tuning is.
-    // Longer-lived dye so plumes can climb the room, a touch more curl so
-    // risen steam wanders (past 1.2x it amplifies grid-frequency wiggles
-    // and the steam turns blocky), a livelier clock.
-    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.47;
-    smokeTune.sim_curl = bathSteamSaved.curl * 1.12;
-    // The steam clock follows the true-scale stretch (v26.06): a giant
-    // pool's steam climbs slowly relative to its size.
-    smokeTune.sim_time_scale = bathSteamSaved.ts * 1.35 / Math.sqrt(bathScaleK);
-    // v25.98: run the steam sim FINER while inside. The world is paused,
-    // so the whole physics budget is the room's: ~2x the velocity grid
-    // (curl detail lives there) and near-full-res dye. Desktop WebGPU
-    // only; pop recomputes the standard resolution from the canvas.
-    if (typeof smokeWGPUDriving !== 'undefined' && smokeWGPUDriving &&
-        typeof smokeWGPUResDims === 'function' && !isMobile &&
-        typeof smokeFluidWidth === 'number' && smokeFluidWidth > 0) {
-      var bsSim = smokeWGPUResDims(288, smokeFluidWidth, smokeFluidHeight);
-      var bsDye = smokeWGPUResDims(
-        Math.min(Math.min(smokeFluidWidth, smokeFluidHeight), 1080),
-        smokeFluidWidth, smokeFluidHeight);
-      try {
-        smokeWGPU.resize(bsSim.w, bsSim.h, bsDye.w, bsDye.h);
-        bathSteamSaved.res = true;
-      } catch (e) {}
-    }
-  }
-  function bathSteamPop() {
-    if (!bathSteamSaved || typeof smokeTune === 'undefined') return;
-    smokeTune.sim_density_dissipation = bathSteamSaved.dd;
-    smokeTune.sim_velocity_dissipation = bathSteamSaved.vd;
-    smokeTune.sim_curl = bathSteamSaved.curl;
-    smokeTune.sim_time_scale = bathSteamSaved.ts;
-    if (bathSteamSaved.res && typeof smokeWGPUApplyRes === 'function' &&
-        typeof smokeFluidWidth === 'number') {
-      try { smokeWGPUApplyRes(smokeFluidWidth, smokeFluidHeight); } catch (e) {}
-    }
-    bathSteamSaved = null;
-    bathSteamTherms.length = 0;
-  }
-  var bathHotTub = null;
-  function bathSteamSplat(wx, wy, vx, vy, amt, r) {
-    var uv = smokeFluidWorldToUV(wx, wy);
-    if (!uv.inView) return;
-    bathDbg.steamInView++;
-    smokeMarkActive();
-    bathSteamCol.r = amt * 0.92;
-    bathSteamCol.g = amt * 0.97;
-    bathSteamCol.b = amt * 1.05;
-    smokeDriver.splat(uv.uvX, uv.uvY, vx, vy, bathSteamCol, r);
-    bathDbg.steamSplats++;
-  }
-  // The veil's density along the surface: three drifting waves summed, a
-  // poor man's Perlin. Smooth in x, slow in t, so the curtain of steam is
-  // denser here and thinner there and the pattern WANDERS, never pops.
-  function bathSteamVeilW(x, t) {
-    var w = 0.52
-      + 0.30 * Math.sin(x * 0.026 + t * 0.9)
-      + 0.20 * Math.sin(x * 0.019 - t * 0.6 + 1.7)
-      + 0.14 * Math.sin(x * 0.060 + t * 1.7 + 4.2);
-    return w < 0.12 ? 0.12 : (w > 1 ? 1 : w);
-  }
-  function bathSteamTick(dt) {
-    if (bathHeat < 0.35 || bathWater < 500) return;
-    bathDbg.steamCalls++;
-    if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
-    if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
-    bathDbg.steamActive++;
-    var tnow = performance.now() / 1000;
-    // Room draft: a slow coherent side-to-side breath shared by all steam.
-    var draft = 0.13 * Math.sin(tnow * 0.23) + 0.06 * Math.sin(tnow * 0.71);
-    // The live surface first: every emission height below rides it.
-    if (bathHotTub) {
-      bathSurfRefresh((bathHotTub.F.fr - bathHotTub.F.lip) * TILE + 10);
-    }
-    // Layer 1: THE FOG BLANKET. Many tiny near-still splats a second,
-    // edge to edge, hugging the LIVE waterline, barely lifting: a calm
-    // thin fog on the water, its thickness wandering with the field,
-    // its shape following every wave and plunge.
-    bathSteamAcc += dt * bathSteam.rate;
-    var units = bathSteamAcc | 0; bathSteamAcc -= units;
-    if (units > 8) units = 8;
-    for (var u = 0; u < units; u++) {
-      for (var f = 0; f < BATH_FLOORS.length; f++) {
-        if (!bathFloorsOwned[f]) continue;
-        var F = BATH_FLOORS[f];
-        for (var i = 0; i < F.tubs.length; i++) {
-          if (F.fill[i] !== 2) continue;
-          var tb = F.tubs[i];
-          var wl = (F.fr - F.lip) * TILE + 10;
-          var x0 = tb[0] * TILE + 12, x1 = (tb[1] + 1) * TILE - 12;
-          var sx = x0 + Math.random() * (x1 - x0);
-          var w = 0.7 + 0.3 * bathSteamVeilW(sx, tnow);
-          bathSteamSplat(sx, bathSurfY(sx, wl) - 5,
-            draft + (Math.random() - 0.5) * 0.2,
-            bathSteam.rise * (0.5 + Math.random() * 0.8) * w,
-            bathSteam.amt * w * (0.8 + Math.random() * 0.4),
-            0.016 + Math.random() * 0.012);
-        }
-      }
-    }
-    if (!bathHotTub) return;
-    var HF = bathHotTub.F;
-    var hwl = (HF.fr - HF.lip) * TILE + 10;
-    var htb = bathHotTub.tb;
-    // Layer 2: THERMALS. Every few seconds a spot on the surface gathers
-    // and rises. The column is mostly MOMENTUM: zero-dye velocity splats
-    // at the fog layer flanking the base pull the blanket INWARD (the
-    // entrainment the owner asked for), an updraft splat lifts what
-    // gathered, and a modest dye trickle seeds the core. The mushroom is
-    // made of the fog it swallowed.
-    bathSteamThermT -= dt;
-    if (bathSteamThermT <= 0 && bathSteamTherms.length < 4) {
-      bathSteamThermT = bathSteam.thermEvery * (0.6 + Math.random() * 0.9);
-      var tx;
-      if (bathHotTub.ventX && Math.random() < 0.6) {
-        tx = bathHotTub.ventX + (Math.random() - 0.5) * bathHotTub.ventHalf * 1.8;
-      } else {
-        tx = htb[0] * TILE + 26 +
-             Math.random() * ((htb[1] - htb[0] + 1) * TILE - 52);
-      }
-      bathSteamTherms.push({
-        x: tx, t: 0,
-        dur: bathSteam.thermDur * (0.7 + Math.random() * 0.7),
-        wig: 1.5 + Math.random() * 2.5,
-        ph: Math.random() * 6.28
-      });
-    }
-    for (var q = bathSteamTherms.length - 1; q >= 0; q--) {
-      var T = bathSteamTherms[q];
-      T.t += dt;
-      if (T.t > T.dur) { bathSteamTherms.splice(q, 1); continue; }
-      var tfr = T.t / T.dur;
-      // Strength ramps in over ~0.35s, lets go over the back half.
-      var ts = Math.min(T.t / 0.35, 1) * (1 - 0.45 * tfr);
-      var cx = T.x + Math.sin(T.t * T.wig + T.ph) * 4;
-      var csy = bathSurfY(cx, hwl);
-      // Entrainment: momentum-only splats in the fog layer either side
-      // of the base, velocity pointing INTO the column, each riding the
-      // live surface height under it.
-      var gap = 22 + 8 * tfr;
-      bathSteamCol.r = 0; bathSteamCol.g = 0; bathSteamCol.b = 0;
-      var uvL = smokeFluidWorldToUV(cx - gap, bathSurfY(cx - gap, hwl) - 7);
-      if (uvL.inView) {
-        smokeMarkActive();
-        smokeDriver.splat(uvL.uvX, uvL.uvY,
-          bathSteam.suck * ts, bathSteam.suck * ts * 0.15,
-          bathSteamCol, 0.020);
-      }
-      var uvR = smokeFluidWorldToUV(cx + gap, bathSurfY(cx + gap, hwl) - 7);
-      if (uvR.inView) {
-        smokeMarkActive();
-        smokeDriver.splat(uvR.uvX, uvR.uvY,
-          -bathSteam.suck * ts, bathSteam.suck * ts * 0.15,
-          bathSteamCol, 0.020);
-      }
-      // The updraft at the base: lifts the fog the entrainment gathered.
-      var uvU = smokeFluidWorldToUV(cx, csy - 9);
-      if (uvU.inView) {
-        smokeMarkActive();
-        smokeDriver.splat(uvU.uvX, uvU.uvY,
-          0, bathSteam.thermRise * ts * 1.3,
-          bathSteamCol, 0.016);
-      }
-      // A modest dye trickle seeding the core, so the column reads even
-      // where the blanket was thin.
-      bathSteamSplat(cx, csy - 7 - tfr * 9,
-        (Math.random() - 0.5) * 0.3,
-        bathSteam.thermRise * ts * (0.7 + Math.random() * 0.3),
-        bathSteam.thermAmt * ts * (0.8 + Math.random() * 0.4),
-        bathSteam.thermR * (0.7 + 0.6 * tfr));
-    }
+  var bathSteam = {}, bathSteamSaved = null, bathHotTub = null;
+  function bathSteamPush() {}
+  function bathSteamPop() { if (typeof bathThermal !== 'undefined') bathThermal.vapor.length = 0; }
+  function bathSteamTick(dt) { if (typeof bathThermalVaporTick === 'function') bathThermalVaporTick(dt); }
+  function bathSurfY(x, fallback) {
+    return typeof bathThermalSurface === 'function' ? bathThermalSurface(x, fallback) : fallback;
   }
 
-  // The fog reacts to a plunge with a white poof and a momentum shove
-  // that parts the blanket (guests are not smoke obstacles, so the steam
-  // layer cannot see the body on its own).
+  // A guest parts existing vapor; cold splashes cannot manufacture steam.
   function bathSplashPoof(ix, iy, k) {
-    if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
-    if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
-    for (var s = -1; s <= 1; s += 2) {
-      var uv = smokeFluidWorldToUV(ix + s * 20, iy - 8);
-      if (uv.inView) {
-        smokeMarkActive();
-        bathSteamCol.r = 0; bathSteamCol.g = 0; bathSteamCol.b = 0;
-        smokeDriver.splat(uv.uvX, uv.uvY, s * 1.7 * k, -0.2, bathSteamCol, 0.028);
-      }
-      bathSteamSplat(ix + s * 12, iy - 10, s * 0.6 * k, 1.1 * k,
-        0.05 * k, 0.024);
+    if (typeof bathThermal === 'undefined') return;
+    for (var i = 0; i < bathThermal.vapor.length; i++) {
+      var p = bathThermal.vapor[i], dx = p.x - ix, dy = p.y - iy;
+      if (dx * dx + dy * dy < 10000) p.vx += (dx < 0 ? -1 : 1) * 22 * k;
     }
   }
   // ---- Hook 2: updateCamera() top (080). The scene OWNS the zoom: fit the
@@ -1516,15 +1198,15 @@
     ctx.fillText('ВЫХОД', (BATH_EXIT_X0 + BATH_EXIT_X1) / 2, BATH_EXIT_Y0 - 8);
     // The live water (separate DOM canvas above; camera already pinned).
     if (typeof drawLiquids === 'function') drawLiquids();
-    // The STEAM: the smoke display pass also lives in the world render
-    // path this scene skips, so the scene drives it too (found the hard
-    // way: dye was injected and stepped but never painted).
+    // Keep the existing smoke canvas presentation synchronized. The bath's
+    // actual condensed vapor draws independently on the foreground below.
     if (typeof drawSmoke === 'function') drawSmoke();
     var bathDrawContext = ctx;
     try {
       if (uiFg) ctx = uiFg;
       ctx.setTransform(_bws, 0, 0, _bws, -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
       bathDrawGuests();
+      if (typeof bathThermalDraw === 'function') bathThermalDraw(ctx);
       hearthButtons = [];
       hearthDrawStation(ctx);
       bathDrawServiceHUD();
