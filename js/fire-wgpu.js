@@ -333,6 +333,15 @@ fn light(g:Gas)->vec3f {
     options = options || {};
     var device = options.device, w = options.width || 192, top = -(options.headroom || 0), height = 210-top;
     var worldWidth = options.worldWidth || 320, meters = worldWidth * 0.0025;
+    var chamberProfile = options.chamberProfile || null;
+    function chamberInset(y) {
+      if (!chamberProfile || y <= chamberProfile[0][1]) return 0;
+      for (var i=1;i<chamberProfile.length;i++) if(y<=chamberProfile[i][1]) {
+        var a=chamberProfile[i-1],b=chamberProfile[i];
+        return a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]);
+      }
+      return chamberProfile[chamberProfile.length-1][0];
+    }
     var h = Math.round(w * height / worldWidth), n = w * h;
     var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*516+2048, steps: 0, submissions: 0,
       mirrored: 0, cpuMs: 0, debug: 0, errors: [], outputKW: 0, gasKg: 0, sootKg: 0, gasBurnKgPerSecond: 0 };
@@ -359,6 +368,11 @@ fn light(g:Gas)->vec3f {
     var gpuCanvas = document.createElement('canvas'), context = gpuCanvas.getContext('webgpu');
     gpuCanvas.className = 'sluice-fire-layer'; gpuCanvas.setAttribute('aria-hidden', 'true');
     gpuCanvas.style.cssText = 'position:absolute;pointer-events:none;z-index:9;display:none;image-rendering:auto;';
+    if (chamberProfile) {
+      var clip = chamberProfile.map(function(p){return [p[0]/worldWidth*100,(p[1]-top)/height*100];});
+      clip = [clip[0]].concat(clip.map(function(p){return [100-p[0],p[1]];}),clip.slice(1).reverse());
+      gpuCanvas.style.clipPath = 'polygon('+clip.map(function(p){return p[0]+'% '+p[1]+'%';}).join(',')+')';
+    }
     sim.canvas = gpuCanvas;
     context.configure({ device: device, format: navigator.gpu.getPreferredCanvasFormat(), alphaMode: 'premultiplied' });
     var definitions = {
@@ -425,7 +439,12 @@ fn light(g:Gas)->vec3f {
         radiationViews[b]+=view;radiationViews[other]+=view;
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b*2+Math.floor(other/24)]|=1<<(other%24);contacts[other*2+Math.floor(b/24)]|=1<<(b%24);}
       }
-      for(var i=0;i<n;i++){var x=i%w,y=(i/w)|0; masks[i*2]=(((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*worldWidth/w)%18<7)) ? -2 : -1; masks[i*2+1]=-1;}
+      for(var i=0;i<n;i++){
+        var x=i%w,y=(i/w)|0,px=(x+.5)*worldWidth/w,py=top+(y+.5)*height/h,inset=chamberInset(py);
+        var outside=px<inset||px>worldWidth-inset;
+        masks[i*2]=(outside||((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(x*worldWidth/w)%18<7)) ? -2 : -1;
+        masks[i*2+1]=-1;
+      }
       edgeData.fill(0);
       for(var b=0;b<CAP;b++) {
         var body=slots[b];if(!body||body.held||!body.vertices)continue;var hull=body.vertices;
@@ -439,7 +458,7 @@ fn light(g:Gas)->vec3f {
         for(var y=Math.max(0,y0);y<=Math.min(h-1,y1);y++)for(var x=Math.max(0,x0);x<=Math.min(w-1,x1);x++){
           var px=(x+.5)*worldWidth/w,py=top+(y+.5)*height/h,inside=true;
           for(var j=0;j<hull.length;j++){var a=hull[j],c=hull[(j+1)%hull.length];if((c[0]-a[0])*(py-a[1])-(c[1]-a[1])*(px-a[0])<0){inside=false;break;}}
-          if(inside)masks[(y*w+x)*2]=b;
+          if(inside&&masks[(y*w+x)*2]!==-2)masks[(y*w+x)*2]=b;
         }
       }
       device.queue.writeBuffer(edgeBuffer,0,edgeData);

@@ -466,7 +466,7 @@
   }
 
   // Interior only. The caller supplies the cast-iron door, grate, and controls.
-  // x/y/w/h map the square chamber, including the headroom above the fuel bed.
+  // x/y/w/h map the working coal bed; the casing can continue up to the tub.
   function hearthDrawFirebox(c, bed, x, y, w, h, time, options) {
     if (!c || !bed || w <= 0 || h <= 0) return;
     var physical = typeof hearthFireDraw === 'function' && hearthFireDraw(c, bed, x, y, w, h);
@@ -475,12 +475,18 @@
     var hot = field.active, air = Math.max(0, Math.min(1, bed.air == null ? 0.65 : Number(bed.air)));
     var i, row, col;
     c.save();
-    c.beginPath(); c.rect(x, y, w, h); c.clip();
+    var profile = options && options.profile;
+    if (profile) hearthCasingPath(c, profile, true);
+    else { c.beginPath(); c.rect(x, y, w, h); }
+    c.clip();
+    var ceiling = profile ? HEARTH_TOP + (profile.ceiling - y) * HEARTH_HEIGHT / h : HEARTH_TOP;
     c.translate(x, y); c.scale(w / HEARTH_WIDTH, h / HEARTH_HEIGHT); c.translate(0,-HEARTH_TOP);
-    c.fillStyle = BLD.outline; c.fillRect(0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
+    c.fillStyle = BLD.outline; c.fillRect(-HEARTH_WIDTH, ceiling, HEARTH_WIDTH * 3, HEARTH_FLOOR - ceiling);
     // Soot-blackened firebrick. A few top faces survive through the carbon,
     // keeping the cavity legible before the first spark and under a low fire.
-    for (row = -4; row < 7; row++) for (col = -1; col < Math.ceil(HEARTH_WIDTH / 58); col++) {
+    var brickLeft = profile ? (profile.sides[0][0] - x) * HEARTH_WIDTH / w : 0;
+    var brickRight = profile ? (profile.sides[profile.sides.length - 1][0] - x) * HEARTH_WIDTH / w : HEARTH_WIDTH;
+    for (row = Math.floor(ceiling / 31); row < 7; row++) for (col = Math.floor(brickLeft / 58) - 1; col <= Math.ceil(brickRight / 58); col++) {
       var bx = col * 58 + (row % 2 ? 29 : 0), by = row * 31;
       var variation = hearthArtHash(row * 53 + col * 97 + 811);
       c.fillStyle = hearthArtColor(variation > 0.6 ? BLD.woodDark : BLD.stoneDark, 0.12 + variation * 0.05);
@@ -493,7 +499,7 @@
       glow.addColorStop(0, hearthArtColor(BLD.redBright, 0.24 * hot));
       glow.addColorStop(0.45, hearthArtColor(BLD.redBase, 0.12 * hot));
       glow.addColorStop(1, hearthArtColor(BLD.redDeep, 0));
-      c.fillStyle = glow; c.fillRect(0, HEARTH_TOP, HEARTH_WIDTH, HEARTH_HEIGHT);
+      c.fillStyle = glow; c.fillRect(-HEARTH_WIDTH, ceiling, HEARTH_WIDTH * 3, HEARTH_FLOOR - ceiling);
     }
     // Rear air slots feed the third-direction exchange in the GPU slice.
     // They stay visible above a low bed and disappear behind a full pile.

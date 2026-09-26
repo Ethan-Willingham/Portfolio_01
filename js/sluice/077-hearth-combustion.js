@@ -25,7 +25,8 @@
         if (other === b || other.held || Math.hypot(other.x - x, other.y - y) > other.r + 14) continue;
         if (hearthInside(other, x + nx * 8, y + ny * 8, 2)) exposed *= other.ash ? 0.08 : 0.18;
       }
-      if (x + nx * 8 < 0 || x + nx * 8 > HEARTH_WIDTH) exposed *= 0.1;
+      var wallInset = bed.pilot ? 0 : hearthChamberInset(y + ny * 8);
+      if (x + nx * 8 < wallInset || x + nx * 8 > HEARTH_WIDTH - wallInset) exposed *= 0.1;
       // The grate admits primary air from underneath. Spent ash blocks the
       // inlet; removing ash restores it even while the upper bed still burns.
       if (y + ny * 8 >= HEARTH_FLOOR) exposed *= Math.max(0.12, 1 - bed.ashLoad * 0.8);

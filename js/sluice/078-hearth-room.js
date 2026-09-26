@@ -73,7 +73,11 @@
     var count = chunks.filter(function (b) { return !b.held; }).length;
     if (count < 3) return mid + (count - 1) * 44;
     for (var x = 48; x < HEARTH_WIDTH - 48; x += 48) {
-      var crown = HEARTH_FLOOR;
+      var inset = Math.min(x, HEARTH_WIDTH - x), crown = HEARTH_FLOOR;
+      for (var facet = 1; facet < HEARTH_CHAMBER_PROFILE.length; facet++) {
+        var a = HEARTH_CHAMBER_PROFILE[facet - 1], end = HEARTH_CHAMBER_PROFILE[facet];
+        if (inset < end[0]) { crown = a[1] + (end[1] - a[1]) * (inset - a[0]) / (end[0] - a[0]); break; }
+      }
       for (var i = 0; i < chunks.length; i++) {
         var b = chunks[i];
         if (!b.held && Math.abs(b.x - x) < b.r + 30) crown = Math.min(crown, b.y - b.r);
@@ -200,7 +204,8 @@
   function hearthBoilerHoverAt(p) {
     var r = bathMode && hearthView === 'bath' && !bathFading && !gamePaused &&
       typeof bathBoilerScreenRect === 'function' ? bathBoilerScreenRect() : null;
-    bathBoilerHover = !!(r && hearthContains(r, p.x, p.y));
+    bathBoilerHover = !!(r && hearthChamberContains((p.x - r.x) * HEARTH_WIDTH / r.w,
+      HEARTH_TOP + (p.y - r.y) * HEARTH_HEIGHT / r.h, 0));
     canvas.style.cursor = bathBoilerHover ? 'grab' : '';
     return r;
   }
@@ -285,14 +290,16 @@
     if (gamePaused || bathFading) { hearthCancelDrag(); return true; }
     var q = hearthCSSPoint(e), box = hearthRoomLayout().box;
     var tap = d.fresh && Math.hypot(q.x - d.startX, q.y - d.startY) < 10;
-    if (tap || hearthContains({ x: box.x - 12, y: box.y - 35, w: box.w + 24, h: box.h + 48 }, q.x, q.y)) {
+    if (tap || hearthChamberContains((q.x - box.x) * HEARTH_WIDTH / box.w,
+      HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h, 12 * HEARTH_WIDTH / box.w)) {
       var releaseAge = Math.max(0, (performance.now() - d.time) / 1000 - 0.04);
       var releaseVelocity = Math.exp(-releaseAge * 18);
       d.b.x = tap ? hearthDropX() : Math.max(d.b.r, Math.min(HEARTH_WIDTH - d.b.r, (q.x - box.x) * HEARTH_WIDTH / box.w));
       d.b.y = tap ? HEARTH_TOP + 24 : Math.max(HEARTH_TOP+10, Math.min(210 - d.b.r, HEARTH_TOP + (q.y - box.y) * HEARTH_HEIGHT / box.h));
       d.b.vx = tap ? (Math.random() - 0.5) * 50 : d.vx * releaseVelocity * HEARTH_WIDTH / box.w * 0.45;
       d.b.vy = tap ? 0 : d.vy * releaseVelocity * HEARTH_HEIGHT / box.h * 0.45;
-      d.b.spin = d.b.vx * 0.025; d.b.held = false; hearthDrag = null;
+      d.b.spin = d.b.vx * 0.025; d.b.held = false;
+      hearthContainBody(hearthBeds[d.kind], d.b); hearthDrag = null;
       sfxPlay('debris', { gain: 0.35 });
     } else if (d.fresh || (d.b.fuel >= 0.999 && d.b.heat < 0.05 && !d.b.ash)) {
       hearthRemoveChunk(d.kind, d.b.id); if (!d.b.devSupplied) forgeGive('coal', 1); hearthDrag = null;

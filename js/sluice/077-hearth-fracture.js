@@ -66,8 +66,9 @@
     for (var i = 0; i < grains.length; i++) {
       var g = grains[i], r = Math.max(1.3,Math.sqrt(g.kg/0.00008));
       g.heat *= Math.exp(-h*0.12); g.vy = Math.min(220,g.vy+520*h); g.vx *= Math.exp(-h*2);
-      g.x = Math.max(r,Math.min(HEARTH_WIDTH-r,g.x+g.vx*h)); g.y += g.vy*h;
-      if (g.y > HEARTH_FLOOR-r) { g.y = HEARTH_FLOOR-r; g.vy = 0; g.vx *= 0.75; }
+      g.x += g.vx*h; g.y += g.vy*h;
+      if (g.y > HEARTH_FLOOR-r) g.vx *= 0.75;
+      hearthContainAsh(bed,g,r);
       for (var j = 0; j < bed.chunks.length; j++) {
         var b = bed.chunks[j]; if(b.held || Math.hypot(g.x-b.x,g.y-b.y)>b.r+r)continue;
         var hull = hearthWorldHull(b), gap = -Infinity, nx = 0, ny = 0;
@@ -87,10 +88,9 @@
       var d=Math.hypot(dx,dy);if(d>=radius)continue;if(d<0.001){dx=1;dy=0;d=1;}
       var push=(radius-d)*0.5, nx=dx/d,ny=dy/d;
       a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push;
-      if(a.y>HEARTH_FLOOR-Math.max(1.3,Math.sqrt(a.kg/0.00008)))a.y=HEARTH_FLOOR-Math.max(1.3,Math.sqrt(a.kg/0.00008));
-      if(b.y>HEARTH_FLOOR-Math.max(1.3,Math.sqrt(b.kg/0.00008)))b.y=HEARTH_FLOOR-Math.max(1.3,Math.sqrt(b.kg/0.00008));
       a.vy*=0.7;b.vy*=0.7;
     }
+    for(i=0;i<grains.length;i++) hearthContainAsh(bed,grains[i],Math.max(1.3,Math.sqrt(grains[i].kg/0.00008)));
     bed.ashLoad = Math.min(0.92,hearthAshMass(bed)/0.025);
   }
   function hearthFractureStep(bed,h) {

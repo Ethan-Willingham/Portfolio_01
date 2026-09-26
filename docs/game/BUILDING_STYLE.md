@@ -363,3 +363,13 @@ Avoid shiny edges, looping curves, and idle rippling. Keep the dark doorway
 clear through the center, with a warm threshold. A simple rod replaces a
 deep valance; omit tassels and fine seams. Preserve the four-tier silhouette
 and deliberate entry.
+
+## 19. Tapered bath furnace (v28.87)
+
+The copper bath forms the curved ceiling of the fire chamber. Two sloping
+firebrick cheeks run from its shoulders through angled knees to a short, flat
+grated base. The cast-iron edge follows that silhouette with outlined stone
+backing, restrained highlights and bolted joints. A narrow ash drawer sits
+directly below the coal bed. `hearthCasingProfile` and `hearthCasingPath` in
+`078-hearth-casing.js` build this surround; `hearthDrawCasing` paints it.
+Short landscape screens use the same tapered bed with a closed iron top.

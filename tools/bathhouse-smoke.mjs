@@ -74,6 +74,9 @@ async function boilerFlow(label,touch=false) {
     await screenshot(label+'-boiler-hover');
     await move('({x:4,y:hearthNavHeight()+4})');await game('render()');
     check(label+' hover clears away from the firebox',await game('!bathBoilerHover'));
+    await move('(function(){var r=bathBoilerScreenRect();return {x:r.x+r.w*0.05,y:r.y+r.h*0.9};})()');
+    check(label+' cut-away chamber corners do not capture coal gestures',await game('!bathBoilerHover'));
+
   }
   const camera=await game('JSON.stringify({x:cam.x,y:cam.y,scale:worldScale})');
   await press(boilerCenter,touch);await game('updateCamera();render()');
@@ -180,6 +183,14 @@ try {
         await screenshot('layout-'+width+'x'+height+'-'+view);
         check(width+'x'+height+' '+view+' controls fit without overlap',fits);
         if (width === 1440 && height === 714) {
+          check('fire chamber joins the copper tub and narrows to its actual grate',await game(`(function(){
+            var L=hearthRoomLayout(),p=hearthCasingProfile(L.box,true),s=p.sides;
+            return s[0][0]<L.box.x && s[0][1]<L.box.y && s[s.length-1][0]>L.box.x+L.box.w &&
+              Math.abs(s[4][0]-s[3][0]-L.box.w*0.32)<0.001 &&
+              hearthChamberContains(HEARTH_WIDTH/2,HEARTH_FLOOR-1,0) &&
+              !hearthChamberContains(HEARTH_WIDTH*0.1,HEARTH_FLOOR-1,0);
+          })()`));
+
           check('desktop room uses the reclaimed area for a broad firebox and larger bath',await game(`(function(){
             var L=hearthRoomLayout(),c=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]);
             return L.box.w>L.w*0.40 && L.box.h<L.h*0.27 && (c.x1-c.x0)*worldScale>L.w*0.58 && bathHUDHeight()===0 && hearthNavHeight()===0;

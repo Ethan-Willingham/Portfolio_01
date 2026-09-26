@@ -25,6 +25,7 @@
     hearthFuelState(b); hearthMass(b); hearthWorldHull(b);
     b.shape = hearthHull(b).vertices.map(function(p){return p.slice();});
     b.dryKg = 0.018*Math.pow(b.baseR/34,2)*hearthHull(b).area/1.8; b.fuelShare = 1; b.generation = 0; b.damage = 0;
+    if (!bed.pilot) hearthContainBody(bed,b);
     bed.chunks.push(b); hearthMeasure(bed);
     return b;
   }
@@ -143,7 +144,7 @@
     }
   }
   function hearthSave() {
-    var result = { version: 5 }, kinds = ['boiler', 'forge'];
+    var result = { version: 6 }, kinds = ['boiler', 'forge'];
     for (var k = 0; k < kinds.length; k++) {
       var bed = hearthBeds[kinds[k]], chunks = [];
       for (var i = 0; i < bed.chunks.length; i++) {
@@ -236,10 +237,13 @@
           if (stages.indexOf(raw.stage) >= 0) b.stage = raw.stage;
         }
         hearthHullCache.delete(b); hearthMass(b); hearthWorldHull(b);
+        if (!bed.pilot) hearthContainBody(bed,b);
       }
       if(data.version>=4 && Array.isArray(src.ash)) for(var a=0;a<Math.min(HEARTH_ASH_CAP,src.ash.length);a++){
         var g=src.ash[a];if(!g || typeof g!=='object')continue;
-        bed.ash.push({x:hearthNumber(g.x,160,0,HEARTH_WIDTH) + shift,y:hearthNumber(g.y,HEARTH_FLOOR-2,-320,HEARTH_FLOOR),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)});
+        var grain = {x:hearthNumber(g.x,160,0,HEARTH_WIDTH) + shift,y:hearthNumber(g.y,HEARTH_FLOOR-2,-320,HEARTH_FLOOR),vx:hearthNumber(g.vx,0,-600,600),vy:hearthNumber(g.vy,0,-600,600),kg:hearthNumber(g.kg,0.0001,0.000001,0.5),heat:hearthNumber(g.heat,0,0,1),seed:hearthNumber(g.seed,0,0,1)};
+        if (!bed.pilot) hearthContainAsh(bed,grain,Math.max(1.3,Math.sqrt(grain.kg/0.00008)));
+        bed.ash.push(grain);
       }
       var nextId = bed.chunks.reduce(function(n,b){return Math.max(n,b.id+1);},1);
       bed.nextId = Math.max(nextId, Math.floor(hearthNumber(src.nextId, nextId, 1, 1e9)));

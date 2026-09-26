@@ -20,6 +20,13 @@
       scene = { x: 0, y: 0, w: w, h: station.y };
       box = { x: (w - bw) / 2, y: station.y + (wide ? (sh - bh - 26) / 2 : 22), w: bw, h: bh };
     }
+    if (!wide && !landscape) {
+      // Keep the taper inside the tub's shoulders on narrow, tall screens.
+      var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
+      var fit = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / (curve.D + 148));
+      bw = Math.max(44 * ratio, Math.min(bw, (curve.x1 - curve.x0) * fit * 0.64));
+      box.x = (w - bw) / 2; box.w = bw; box.h = bw / ratio;
+    }
     if (wide) {
       var cw = Math.min(144, (w - bw) / 2 - 30), cy = station.y + (station.h - 194) / 2;
       var left = box.x - cw - 20, right = box.x + bw + 20, half = (cw - gap) / 2;
@@ -107,14 +114,7 @@
     var L = hearthRoomLayout(), r = L.station, box = L.box, bed = hearthBeds.boiler;
     c.save(); c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.fillStyle = BLD.woodDeep; c.fillRect(r.x, r.y, r.w, r.h);
-    c.fillStyle = BLD.woodDark; c.fillRect(r.x + 8, r.y, r.w - 16, 2);
-    // The copper heat saddle joins the firebox to the basin above it.
-    var mid = box.x + box.w / 2, neck = Math.min(132, box.w * 0.55);
-    var neckHeight = box.y - r.y;
-    c.fillStyle = BLD.outline; c.fillRect(mid - neck / 2 - 2, r.y, neck + 4, neckHeight);
-    c.fillStyle = BLD.woodDark; c.fillRect(mid - neck / 2, r.y, neck, neckHeight - 2);
-    c.fillStyle = BLD.woodLight; c.fillRect(mid - neck / 2, r.y + 1, neck, 1);
-    hearthDrawCasing(c, box, bed, bathBoilerHover);
+    hearthDrawCasing(c, box, bed, bathBoilerHover, !L.landscape);
     hearthDrawFuelControl(c, L.bin, false);
     hearthDrawFuelControl(c, L.pump, true);
     hearthButton(c, L.action, L.action.w < 90 ? 'FLINT [F]' : 'STRIKE FLINT [F]', 'strike', hearthHasTool('flint') && hearthHasTool('steel'));
@@ -123,15 +123,15 @@
       hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, L.side ? 10 : 11, UIT_DIM, 'center');
       if (L.wide && !bed.chunks.length) hearthText(c, 'LOAD COAL', L.bin.x + L.bin.w / 2, L.bin.y - 13, 11, BLD.cream, 'center');
     } else {
-      // Compact instruments share the saddle line; the chamber stays clear.
-      c.fillStyle = BLD.woodDeep; c.fillRect(r.x + 8, r.y, r.w - 16, 15);
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + 8, 10, UIT_DIM, 'center');
+      // Keep the sloping ironwork continuous behind the compact readings.
+      var readY = L.h >= 500 ? L.h - 12 : r.y + 8;
+      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, readY, 10, UIT_DIM, 'center');
     }
     if (hearthDrag) {
       var d = hearthDrag;
       hearthDrawCoal(c, d.b, d.x, d.y, box.w / HEARTH_WIDTH, hearthToolTime);
       c.strokeStyle = BLD.goldPale; c.lineWidth = 1;
-      c.strokeRect(box.x - 3, box.y - 3, box.w + 6, box.h + 6);
+      hearthCasingPath(c, hearthCasingProfile(box, !L.landscape), false); c.stroke();
     }
     c.restore();
   }

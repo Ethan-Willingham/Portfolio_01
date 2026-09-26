@@ -126,6 +126,21 @@ try {
   }
   for(const x of [400,452,501]) await game(`hearthAddChunk('boiler',${x},175)`);
   await run(2); await screenshot('cold');
+  const chamberGeometry=await game(`(async function(){
+    var s=await hearthFireGPU.snapshot(),outside=0,wrong=0,open=0;
+    for(var y=0;y<s.height;y++)for(var x=0;x<s.width;x++){
+      var wx=(x+.5)*HEARTH_WIDTH/s.width,wy=HEARTH_TOP+(y+.5)*HEARTH_HEIGHT/s.height;
+      var owner=s.mask[(y*s.width+x)*2];
+      if(!hearthChamberContains(wx,wy)){outside++;if(owner!==-2)wrong++;}
+      else if(x>0&&x<s.width-1&&y>0&&y<s.height-1){open++;if(owner===-2)wrong++;}
+    }
+    var clip=(hearthFireGPU.canvas.style.clipPath.match(/[\\d.]+/g)||[]).map(Number);
+    return {outside:outside,open:open,wrong:wrong,clip:clip};
+  })()`);
+  console.log('CHAMBER GEOMETRY',chamberGeometry);
+  check('GPU vessel mask matches both facets of the physical chamber',chamberGeometry.outside>0&&chamberGeometry.open>0&&chamberGeometry.wrong===0);
+  const clipExpected=[0,0,100,0,87,52,66,100,34,100,13,52];
+  check('GPU canvas clips to the exact tapered outline',chamberGeometry.clip.length===clipExpected.length&&chamberGeometry.clip.every((v,i)=>Math.abs(v-clipExpected[i])<1e-6));
   const cold=await stats();console.log('COLD',cold);
   check('cold coal preserves all fuel with no flame or heat',cold.gasKg===0 && cold.flame===0 && cold.outputKW===0 && await game('hearthBeds.boiler.chunks.every(function(b){return b.fuel===1})'));
   await game('hearthLightChunk(hearthBeds.boiler,hearthBeds.boiler.chunks[1])');
@@ -232,7 +247,7 @@ try {
   await game('hearthFireCancel();hearthAddChunk("boiler",HEARTH_WIDTH/2,170);hearthIgnite("boiler");for(var i=0;i<600;i++)bathGuestTick(1/60);render()');
   check('CPU fallback continues consuming fuel after fire device disposal',await game('hearthBeds.boiler.chunks.some(function(b){return b.fuel<1}) && hearthBeds.boiler.power>0'));
   check('no browser runtime errors', errors.length===0);
-  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,visibility,performance:cost,fullGame:fullGame,bowl:bowlContact},null,2));
+  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({kernels:kernelResults,materials:materialResults,rendering:renderResults,chamber:chamberGeometry,visibility,performance:cost,fullGame:fullGame,bowl:bowlContact},null,2));
 } finally {
   if (errors.length) console.error(JSON.stringify(errors.slice(0,4)));
   cleanup();

@@ -15,7 +15,7 @@
     hearthFireReady = Promise.resolve(water.readyPromise).then(function () {
       if (generation !== hearthFireGeneration || water !== liquidWGPU || !water.available || !water.device) return false;
       // Redistribute the existing cell budget across the broad, shallow grate.
-      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: isMobile ? 240 : 368, worldWidth: HEARTH_WIDTH, headroom: -HEARTH_TOP });
+      hearthFireGPU = window.FireWGPU.create({ device: water.device, width: isMobile ? 240 : 368, worldWidth: HEARTH_WIDTH, headroom: -HEARTH_TOP, chamberProfile: HEARTH_CHAMBER_PROFILE });
       window.__fire = hearthFireGPU;
       return hearthFireGPU.readyPromise;
     }).catch(function (e) { console.warn('Boiler fire uses CPU fallback:', e); return false; });

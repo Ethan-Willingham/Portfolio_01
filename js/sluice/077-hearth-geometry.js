@@ -1,6 +1,65 @@
   /* ---- Coal rigid bodies: the visible convex hull IS the contact geometry. ---- */
   var hearthHullCache = new WeakMap();
   var HEARTH_FLOOR = 210, HEARTH_TOP = -46, HEARTH_HEIGHT = 256, HEARTH_WIDTH = 896, HEARTH_FRICTION = 0.72;
+  var HEARTH_CHAMBER_PROFILE = [[0, HEARTH_TOP], [HEARTH_WIDTH * 0.13, HEARTH_TOP + HEARTH_HEIGHT * 0.52], [HEARTH_WIDTH * 0.34, HEARTH_FLOOR]];
+  var hearthRectWalls = [{nx:-1,ny:0,limit:0},{nx:1,ny:0,limit:HEARTH_WIDTH},{nx:0,ny:1,limit:HEARTH_FLOOR}];
+  var hearthTaperWalls = hearthRectWalls.slice();
+  for (var hearthFacet = 1; hearthFacet < HEARTH_CHAMBER_PROFILE.length; hearthFacet++) {
+    var hearthA = HEARTH_CHAMBER_PROFILE[hearthFacet - 1], hearthB = HEARTH_CHAMBER_PROFILE[hearthFacet];
+    var hearthDX = hearthB[0] - hearthA[0], hearthDY = hearthB[1] - hearthA[1], hearthLength = Math.hypot(hearthDX, hearthDY);
+    var hearthNX = -hearthDY / hearthLength, hearthNY = hearthDX / hearthLength;
+    var hearthLimit = hearthNX * hearthA[0] + hearthNY * hearthA[1];
+    hearthTaperWalls.push({nx:hearthNX,ny:hearthNY,limit:hearthLimit});
+    hearthTaperWalls.push({nx:-hearthNX,ny:hearthNY,limit:hearthLimit-hearthNX*HEARTH_WIDTH});
+  }
+  function hearthChamberInset(y) {
+    if (y <= HEARTH_TOP) return 0;
+    var profile = HEARTH_CHAMBER_PROFILE;
+    for (var i = 1; i < profile.length; i++) if (y <= profile[i][1]) {
+      var a = profile[i-1], b = profile[i];
+      return a[0] + (b[0]-a[0]) * (y-a[1]) / (b[1]-a[1]);
+    }
+    return profile[profile.length-1][0];
+  }
+  function hearthChamberContains(x, y, margin) {
+    margin = margin || 0;
+    if (y < HEARTH_TOP-margin) return false;
+    for (var i = 0; i < hearthTaperWalls.length; i++) {
+      var wall = hearthTaperWalls[i];
+      if (x*wall.nx+y*wall.ny > wall.limit+margin) return false;
+    }
+    return true;
+  }
+  function hearthChamberWalls(bed) { return bed.pilot ? hearthRectWalls : hearthTaperWalls; }
+  function hearthContainBody(bed, b) {
+    var walls = hearthChamberWalls(bed);
+    // Refit old rectangular saves by translation only: hull, heat, paid fuel and
+    // dry mass all survive. The open top also leaves space for a crowded bed.
+    for (var pass = 0; pass < 8; pass++) {
+      var moved = false;
+      for (var i = 0; i < walls.length; i++) {
+        var wall = walls[i], points = hearthWorldHull(b), depth = -Infinity;
+        for (var j = 0; j < points.length; j++) depth = Math.max(depth,points[j][0]*wall.nx+points[j][1]*wall.ny-wall.limit);
+        // Preserve the small contact slop in a settled bed across reloads.
+        if (depth <= 0.4) continue;
+        b.x -= wall.nx*(depth+0.001); b.y -= wall.ny*(depth+0.001); moved = true;
+        var speed = Math.max(0,b.vx*wall.nx+b.vy*wall.ny);
+        b.vx -= wall.nx*speed; b.vy -= wall.ny*speed;
+      }
+      if (!moved) break;
+    }
+    hearthWorldHull(b);
+  }
+  function hearthContainAsh(bed, g, r) {
+    var walls = hearthChamberWalls(bed);
+    for (var pass = 0; pass < 3; pass++) for (var i = 0; i < walls.length; i++) {
+      var wall = walls[i], depth = g.x*wall.nx+g.y*wall.ny-wall.limit+r;
+      if (depth <= 1e-9) continue;
+      g.x -= wall.nx*depth; g.y -= wall.ny*depth;
+      var speed = Math.max(0,g.vx*wall.nx+g.vy*wall.ny);
+      g.vx -= wall.nx*speed; g.vy -= wall.ny*speed;
+    }
+  }
 
   function hearthHull(body) {
     var cached = hearthHullCache.get(body);
@@ -125,14 +184,14 @@
     return { a: a, b: b, nx: flip ? -nx : nx, ny: flip ? -ny : ny, points: contacts };
   }
   function hearthContacts(bed, margin) {
-    var chunks = bed.chunks, out = [], i, j;
+    var chunks = bed.chunks, out = [], walls = hearthChamberWalls(bed), i, j;
     for (i = 0; i < chunks.length; i++) if (!chunks[i].held) hearthWorldHull(chunks[i]);
     for (i = 0; i < chunks.length; i++) {
       var b = chunks[i];
       if (b.held) continue;
-      for (var wall = 0; wall < 3; wall++) {
-        var nx = wall === 0 ? -1 : wall === 1 ? 1 : 0, ny = wall === 2 ? 1 : 0;
-        var limit = wall === 1 ? HEARTH_WIDTH : wall === 2 ? HEARTH_FLOOR : 0, points = [];
+      for (var wall = 0; wall < walls.length; wall++) {
+        var nx = walls[wall].nx, ny = walls[wall].ny;
+        var limit = walls[wall].limit, points = [];
         for (j = 0; j < b.vertices.length; j++) {
           var p = b.vertices[j], depth = p[0] * nx + p[1] * ny - limit;
           if (depth >= -margin) points.push({ x: p[0], y: p[1], depth: depth });

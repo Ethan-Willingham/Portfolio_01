@@ -28,8 +28,7 @@
     c.fillStyle = BLD.woodDeep; c.beginPath();
     c.rect(left, curve.y0 - 16, width, bottom - curve.y0 + 20);
     bathVesselPath(c, curve, 0, 0); c.fill('evenodd');
-    c.fillStyle = BLD.stoneDark; c.fillRect(left, bottom - 11, width, screenH);
-    c.fillStyle = BLD.stoneBase; c.fillRect(left, bottom - 11, width, 3);
+    c.fillStyle = BLD.woodDeep; c.fillRect(left, bottom - 11, width, screenH);
     // Offset outward along the true bowl normal. The water-facing edge stays
     // exactly on depthAt(), including the steep shoulders near each lip.
     bathRimBand(c, curve, 0, 24, BLD.outline);

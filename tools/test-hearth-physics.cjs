@@ -22,6 +22,10 @@ function checkBodies(bed) {
       assert(Number.isFinite(b[key]), `finite ${key}`);
     }
     assert(b.vertices.every(p => p[0] >= -0.4 && p[0] <= 896.4 && p[1] <= 210.4), 'polygon containment');
+    if (!bed.pilot) for (const p of b.vertices) {
+      const inset = p[1] <= -46 ? 0 : p[1] <= 87.12 ? (p[1]+46)*116.48/133.12 : 116.48+(p[1]-87.12)*188.16/122.88;
+      assert(p[0]>=inset-0.7 && p[0]<=896-inset+0.7, 'coal stays within tapered walls');
+    }
     near(b.fuel, b.volatile + b.carbon, 1e-10, 'combustible mass is conserved');
     assert(b.fuel >= 0 && b.fuel <= 1, 'bounded fuel');
     assert(b.heat >= 0 && b.heat <= 1, 'bounded coal heat');
@@ -31,50 +35,48 @@ function checkBodies(bed) {
 }
 
 {
-  const {s,advance}=fixture();
-  const b=s.hearthAddChunk('boiler',860,150); b.vx=180;
-  advance(3); checkBodies(s.hearthBeds.boiler);
-  assert(b.x>820,'the new right-hand chamber is physical space, not stretched art');
-  const old=JSON.parse(JSON.stringify(s.hearthSave()));old.version=4;delete old.boiler.width;
-  old.boiler.chunks[0].x=160;
-  old.boiler.ash=[{x:123,y:208,vx:0,vy:0,kg:.001,heat:0,seed:.5}];
-  const fuel=old.boiler.chunks[0].fuel, shape=JSON.stringify(old.boiler.chunks[0].shape);
-  s.hearthRestore(old);
-  near(s.hearthBeds.boiler.chunks[0].x,448,0,'pre-width coal bed recenters by 288 units');
-  near(s.hearthBeds.boiler.ash[0].x,411,0,'pre-width ash recenters with the bed');
-  near(s.hearthBeds.boiler.chunks[0].fuel,fuel,0,'migration preserves fuel');
-  assert.equal(JSON.stringify(s.hearthSave().boiler.chunks[0].shape),shape,'migration preserves exact hull');
-  const saved=JSON.stringify(s.hearthSave());s.hearthRestore(JSON.parse(saved));
-  assert.equal(JSON.stringify(s.hearthSave()),saved,'new saves never shift twice');
-  console.log('PASS wider physical wall and one-time coal/ash save migration');
+  const {s,advance}=fixture(), bed=s.hearthBeds.boiler;
+  near(s.hearthChamberInset(-46),0); near(s.hearthChamberInset(87.12),116.48); near(s.hearthChamberInset(210),304.64);
+  assert(s.hearthChamberContains(448,210) && !s.hearthChamberContains(200,190));
+  assert(!s.hearthChamberContains(448,-50) && s.hearthChamberContains(448,-50,5));
+  const left=s.hearthAddChunk('boiler',70,15), right=s.hearthAddChunk('boiler',826,15);
+  const original=[left.x,right.x];
+  left.vx=-180;right.vx=180;
+  advance(3);checkBodies(bed);
+  assert(left.x>original[0]+80 && right.x<original[1]-80,'facet contacts guide falling coal toward the grate');
+  for (const [x,y] of [[30,150],[850,150],[100,208],[796,208]])
+    bed.ash.push({x,y,vx:0,vy:0,kg:.0001,heat:0,seed:.5});
+  const ashMass=s.hearthAshMass(bed);advance(3);
+  for(const g of bed.ash) assert(s.hearthChamberContains(g.x,g.y,-Math.max(1.3,Math.sqrt(g.kg/.00008))+1e-6),'ash circles stay inside facets');
+  near(s.hearthAshMass(bed),ashMass,0,'slope collisions conserve ash');
+  console.log('PASS faceted chamber helpers, coal slope contacts and mineral ash containment');
 }
 
 {
   const {s,advance}=fixture();
-  s.hearthAddChunk('boiler',180,170);s.hearthAddChunk('boiler',205,115);
-  s.hearthAddChunk('forge',160,160);
-  advance(3);
-  s.hearthBeds.boiler.ash.push({x:171,y:208,vx:0,vy:0,kg:.001,heat:.1,seed:.5});
-  const previous=JSON.parse(JSON.stringify(s.hearthSave()));previous.boiler.width=416;
-  const expected=JSON.parse(JSON.stringify(previous));expected.boiler.width=896;
-  for(const b of expected.boiler.chunks)b.x+=240;
-  for(const g of expected.boiler.ash)g.x+=240;
-  const relativeX=previous.boiler.chunks[1].x-previous.boiler.chunks[0].x;
-  const relativeY=previous.boiler.chunks[1].y-previous.boiler.chunks[0].y;
-  s.hearthRestore(previous);
-  const restored=JSON.parse(JSON.stringify(s.hearthSave()));
-  assert.deepEqual(restored,expected,'416-wide saves translate coal and ash without stretching hulls or changing reservoirs');
-  near(restored.boiler.chunks[1].x-restored.boiler.chunks[0].x,relativeX,1e-10,'contact spacing survives wider grate');
-  near(restored.boiler.chunks[1].y-restored.boiler.chunks[0].y,relativeY,0,'vertical contacts and grate height stay unchanged');
-  assert.deepEqual(restored.forge,previous.forge,'retired forge stays in its original coordinates');
-  s.hearthRestore(restored);
-  assert.deepEqual(JSON.parse(JSON.stringify(s.hearthSave())),restored,'896-wide saves do not recenter twice');
-  console.log('PASS current-width stack migration preserves contacts, all material state, ash and retired forge');
+  s.hearthAddChunk('boiler',448,170);s.hearthAddChunk('forge',160,160);advance(3);
+  const old=JSON.parse(JSON.stringify(s.hearthSave()));old.version=5;
+  old.boiler.chunks[0].x=830; old.boiler.chunks[0].vx=0;
+  old.boiler.ash=[{x:80,y:208,vx:0,vy:0,kg:.001,heat:.1,seed:.5}];
+  const material=JSON.parse(JSON.stringify(old.boiler.chunks[0]));
+  const checkMaterial=b=>{for(const key of Object.keys(material))if(!['x','y','vx','vy'].includes(key))assert.deepEqual(b[key],material[key],key+' survives taper migration');};
+  s.hearthRestore(old);
+  checkMaterial(s.hearthSave().boiler.chunks[0]);checkBodies(s.hearthBeds.boiler);
+  const grain=s.hearthBeds.boiler.ash[0];near(grain.kg,.001,0);near(grain.heat,.1,0);
+  assert(s.hearthChamberContains(grain.x,grain.y,-Math.sqrt(.001/.00008)+1e-6),'old edge ash migrates within the chamber');
+  assert.deepEqual(JSON.parse(JSON.stringify(s.hearthSave().forge)),old.forge,'retired forge keeps original geometry and state');
+  const saved=JSON.stringify(s.hearthSave());s.hearthRestore(JSON.parse(saved));
+  assert.equal(JSON.stringify(s.hearthSave()),saved,'tapered saves do not move twice');
+  old.version=4;delete old.boiler.width;old.boiler.chunks[0].x=160;old.boiler.ash[0].x=123;
+  s.hearthRestore(old);near(s.hearthBeds.boiler.chunks[0].x,448,0,'pre-width coal recenters by 288');
+  near(s.hearthBeds.boiler.ash[0].x,411,0,'pre-width ash recenters with coal');
+  checkMaterial(s.hearthSave().boiler.chunks[0]);
+  console.log('PASS old edge fuel and ash migration preserves mass, reservoirs, hulls and retired forge');
 }
 
 {
   const {s,advance}=fixture(), bed=s.hearthBeds.boiler;
-  const lower=s.hearthAddChunk('boiler',160,180), upper=s.hearthAddChunk('boiler',160,110);
+  const lower=s.hearthAddChunk('boiler',448,180), upper=s.hearthAddChunk('boiler',448,110);
   for(const b of [lower,upper]){b.angle=0;b.r=b.baseR=30;b.shape=[[-1,-.6],[1,-.6],[1,.6],[-1,.6]];s.hearthHullCache.delete(b);s.hearthMass(b);}
   advance(3);
   lower.fuel=lower.carbon=0.08;lower.volatile=0;lower.moisture=0;
@@ -99,8 +101,8 @@ function checkBodies(bed) {
 
 {
   const { s, advance } = fixture();
-  const lower = s.hearthAddChunk('boiler', 160, 195);
-  const upper = s.hearthAddChunk('boiler', 160, 210 - lower.r * 2 - 20);
+  const lower = s.hearthAddChunk('boiler', 448, 195);
+  const upper = s.hearthAddChunk('boiler', 448, 210 - lower.r * 2 - 20);
   for(const b of [lower,upper]){b.angle=0;b.shape=[[-1,-.6],[1,-.6],[1,.6],[-1,.6]];s.hearthHullCache.delete(b);s.hearthMass(b);}
   advance(1);
   assert(upper.y + upper.r < 205, 'lower coal supports the upper piece before pickup');
@@ -116,7 +118,7 @@ function checkBodies(bed) {
 {
   const { s, advance } = fixture();
   const bed = s.hearthBeds.boiler;
-  for (let i = 0; i < 32; i++) assert(s.hearthAddChunk('boiler', 160, 12));
+  for (let i = 0; i < 32; i++) assert(s.hearthAddChunk('boiler', 448, 12));
   assert.equal(s.hearthAddChunk('boiler', 20, 20), null, 'coal cap does not silently discard a piece');
   const aspects = bed.chunks.map(b=>{const v=s.hearthHull(b).vertices;return (Math.max(...v.map(p=>p[0]))-Math.min(...v.map(p=>p[0])))/(Math.max(...v.map(p=>p[1]))-Math.min(...v.map(p=>p[1])));});
   assert(aspects.some(a=>a>2.5)&&aspects.some(a=>a<1.5),'new charcoal mixes elongated pieces with squat lumps');
@@ -145,8 +147,8 @@ function checkBodies(bed) {
 {
   const { s, advance } = fixture();
   const bed = s.hearthBeds.boiler;
-  const a = s.hearthAddChunk('boiler', 80, 190), b = s.hearthAddChunk('boiler', 136, 190);
-  const far = s.hearthAddChunk('boiler', 285, 190);
+  const a = s.hearthAddChunk('boiler', 340, 190), b = s.hearthAddChunk('boiler', 396, 190);
+  const far = s.hearthAddChunk('boiler', 560, 190);
   advance(1);
   b.x += Math.max(...s.hearthWorldHull(a).map(p => p[0])) - Math.min(...s.hearthWorldHull(b).map(p => p[0])) - 0.1;
   advance(0.1); assert(s.hearthLightChunk(bed, a)); advance(10);
@@ -186,7 +188,7 @@ function checkBodies(bed) {
   const runs = [];
   for (const fps of [30, 60, 144]) {
     const { s, advance } = fixture(fps);
-    for (let i = 0; i < 8; i++) s.hearthAddChunk('boiler', 120 + i * 5, 20 - i * 6);
+    for (let i = 0; i < 8; i++) s.hearthAddChunk('boiler', 408 + i * 5, 20 - i * 6);
     s.hearthAddChunk('forge', 140, 40);
     advance(2); s.hearthIgnite('boiler');
     advance(3); s.hearthPump('boiler'); s.hearthPump('forge');
@@ -207,10 +209,10 @@ function checkBodies(bed) {
 
 {
   const { s, advance } = fixture();
-  const b = s.hearthAddChunk('boiler', 160, 0), held = s.hearthAddChunk('boiler', 50, 20);
+  const b = s.hearthAddChunk('boiler', 448, 0), held = s.hearthAddChunk('boiler', 180, 20);
   held.held = true; held.vx = 120; held.vy = 180;
   advance(2);
-  near(held.x, 50); near(held.y, 20); assert.equal(held.fuel, 1, 'held coal is not consumed');
+  near(held.x, 180); near(held.y, 20); assert.equal(held.fuel, 1, 'held coal is not consumed');
   s.hearthIgnite('boiler'); advance(12);
   const saved = JSON.parse(JSON.stringify(s.hearthSave()));
   const expectedFuel = s.hearthBeds.boiler.fuelSeconds;
@@ -276,27 +278,27 @@ function checkBodies(bed) {
     s.hearthMass(b); s.hearthWorldHull(b); return b;
   }
   const { s, advance } = fixture();
-  const lower = block(s, 160, 195), upper = block(s, 160, 150);
+  const lower = block(s, 448, 195), upper = block(s, 448, 150);
   advance(4);
-  near(upper.x, 160, 0.15, 'a centered face stack balances without sliding');
+  near(upper.x, 448, 0.15, 'a centered face stack balances without sliding');
   near(upper.angle, 0, 0.003, 'flat contacts preserve the resting face');
   near(upper.y + 15, lower.y - 15, 0.15, 'visible faces touch despite overlapping bounding circles');
   assert(s.hearthInside(upper, upper.x + 28, upper.y + 13), 'picking includes a visible polygon corner');
   assert(!s.hearthInside(upper, upper.x, upper.y + 22), 'picking excludes empty space inside the old circle');
-  upper.x = 204; upper.y = 150; s.hearthBeds.boiler.contacts = {};
+  upper.x = 492; upper.y = 150; s.hearthBeds.boiler.contacts = {};
   advance(2);
   assert(upper.y > 175, 'an unsupported center of mass tips off the lower piece');
   assert(Math.abs(upper.angle) > 0.2, 'off-center contacts impart real torque');
   lower.held = true;
-  const slider = block(s, 60, 194); slider.vx = 170;
+  const slider = block(s, 340, 194); slider.vx = 170;
   advance(2);
-  assert(slider.x < 150 && Math.abs(slider.vx) < 0.5, 'grate friction stops a sliding flat piece');
+  assert(slider.x < 430 && Math.abs(slider.vx) < 0.5, 'grate friction stops a sliding flat piece');
   console.log('PASS two-point face support, exact picking, overbalance torque and static friction');
 }
 
 {
   const { s, advance } = fixture();
-  const b = s.hearthAddChunk('boiler', 160, 10), phases = new Set();
+  const b = s.hearthAddChunk('boiler', 448, 10), phases = new Set();
   b.generation=2; advance(1); s.hearthLightChunk(s.hearthBeds.boiler, b);
   let maxSmoke = 0, maxSteam = 0, lastFuel = b.fuel;
   for (let i = 0; i < 140 * 30; i++) {
@@ -315,7 +317,7 @@ function checkBodies(bed) {
 
 {
   const f = fixture(), s = f.s;
-  for (let i = 0; i < 32; i++) s.hearthAddChunk('boiler', 160, 12);
+  for (let i = 0; i < 32; i++) s.hearthAddChunk('boiler', 448, 12);
   f.advance(12);
   const bed = s.hearthBeds.boiler;
   const buried = bed.chunks.reduce((a,b) => a.oxygen < b.oxygen ? a : b);
@@ -330,7 +332,7 @@ function checkBodies(bed) {
   s.hearthRestore(saved);
   for (let i = 0; i < 10; i++) { s.hearthPump('boiler'); f.advance(0.5); }
   assert(s.hearthBeds.boiler.chunks[0].fuel < normal, 'bellows consume more carbon from identical saved conditions');
-  const cold = s.hearthAddChunk('boiler', 270, 20);
+  const cold = s.hearthAddChunk('boiler', 555, 20);
   f.advance(1); s.hearthWorldHull(cold);
   const openAir = s.hearthSurfaceAir(s.hearthBeds.boiler, cold);
   for (let i = 0; i < 4; i++) {

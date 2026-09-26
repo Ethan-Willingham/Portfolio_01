@@ -58,6 +58,10 @@ curve with outward thickness. Since v28.84, the top and bottom HUD bars are
 removed. Tools, water controls and readings sit beside the firebox on desktop,
 or beneath it in compact layouts; navigation mounts directly on the wall.
 The tub's original catenary and water collision geometry are unchanged.
+Since v28.87, the furnace follows the basin shoulders down through sloping
+firebrick cheeks to a narrow level grate. Coal, ash, pointer targets and GPU
+fire share the tapered lower chamber; older fuel beds retain their fuel when
+moved inside the new walls. The riveted iron surround joins the copper tub.
 The single-room bath stays fixed under wheel and drag gestures; saved upper
 floors scroll immediately, with no camera easing.
 
