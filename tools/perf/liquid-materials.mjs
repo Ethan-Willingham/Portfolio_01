@@ -71,13 +71,13 @@ assert.equal(context.liquidCount, 0);
 // start at the chassis, not at the ellipse centre on the far side of a wall.
 context.addLiquidParticle(2, 115, 15, 0, 0, 0);
 assert.deepEqual(Array.from(context.liquidToolExtract(115, 15, 42, 20,
-  { ry: 38, fromX: 80, fromY: 15 })), [0, 0, 0, 0, 0]);
+  { ry: 38, fromX: 80, fromY: 15 })), [0, 0, 0, 0, 0, 0]);
 assert.equal(context.liquidCount, 1);
 context.liquidExtractRect(100, 0, 160, 40, 2, 20);
 context.addLiquidParticle(0, 30, 8, 0, 0, 0);
 context.addLiquidParticle(3, 30, 40, 0, 0, 0);
 assert.deepEqual(Array.from(context.liquidToolExtract(30, 40, 42, 20,
-  { ry: 20, fromX: 30, fromY: 20 })), [0, 0, 0, 1, 0]);
+  { ry: 20, fromX: 30, fromY: 20 })), [0, 0, 0, 1, 0, 0]);
 assert.equal(context.liquidY[0], 8, 'liquid above the scoop stays put');
 context.liquidExtractRect(0, 0, 80, 80, 0, 20);
 context.mineralLiquidParkedSampleRect = () => [10, 0, 20, 30, 40];

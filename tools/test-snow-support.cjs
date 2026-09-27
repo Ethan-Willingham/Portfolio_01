@@ -171,6 +171,52 @@ assert.equal(s.liquidCount, 0, 'removing the root releases the entire detached c
 assert.equal(s.snow.bed.size, 0, 'an unrooted component has no cached landing surface');
 conserve(edge.length - 1, 'removed contact root');
 
+// A supported stem cannot hold a horizontal or downward-hanging lip by
+// tension. Nearby contacts remain colliders, but carry weight from below.
+for (const slope of [0, 0.2]) {
+  reset();
+  for (let n = 0; n < 20; n++) {
+    s.addLiquidParticle(5, 2400, 127 - n * 1.4, 90, 20);
+    s.snow.active++; s.snow.mass++; s.snow.emitted++;
+  }
+  for (let n = 1; n <= 80; n++) {
+    s.addLiquidParticle(5, 2400 + n * 1.4, 100.4 + n * slope, 90, 20);
+    s.snow.active++; s.snow.mass++; s.snow.emitted++;
+  }
+  s.snowScan(1 / 60, 0);
+  assert.equal(s.liquidCount, 21, 'only the stem and its directly supported edge remain dense');
+  assert.equal(s.snow.grains.length, 79, 'the projecting lip cannot hang from a sideways contact chain');
+  assert.ok(s.snow.grains.every(p => p.vx === 90 && p.vy === 20), 'overhang release preserves actual momentum');
+  assert.equal(s.snowBedContact(2490, 100.4 + 90 / 1.4 * slope), false, 'the detached lip cannot catch returning snow');
+  conserve(100, 'unsupported overhang');
+}
+
+// Airflow has already done work on a compressed grain. A high density
+// cannot suppress its earned upward flight while the stationary bed remains.
+reset();
+fillColumn(400, 16, 20);
+s.snowAir.active = true; s.snowAirAt = () => [120, -80, 100];
+const topIndex = s.liquidCount - 1;
+s.liquidVX[topIndex] = 40; s.liquidVY[topIndex] = -60; s.liquidDensity[topIndex] = 12;
+const liftedPoint = [s.liquidX[topIndex], s.liquidY[topIndex]], denseMass = s.snow.mass;
+s.snowScan(1 / 60, 0);
+assert.equal(s.snow.grains.length, 1, 'a packed upward-moving grain releases without lifting the stationary bed');
+assert.deepEqual([s.snow.grains[0].x, s.snow.grains[0].y], liftedPoint);
+assert.deepEqual([s.snow.grains[0].vx, s.snow.grains[0].vy], [40, -60], 'density cannot cancel earned jet momentum');
+conserve(denseMass, 'packed grain release');
+
+// A grazing side contact cannot cancel the downward velocity of a grain
+// that has neither ground nor a weight-bearing contact underneath it.
+reset();
+s.addLiquidParticle(5, 2401.3, 127, 0, 0);
+s.snow.active = s.snow.mass = s.snow.emitted = 1;
+const grazing = falling(400, 126.5, true);
+s.updateSnow(1 / 120);
+assert.equal(s.liquidCount, 2, 'side contact enters the collision solver');
+assert.ok(s.liquidVY[1] > 50, 'grazing contact preserves downward momentum');
+assert.equal(s.snowSupported(s.liquidX[1], s.liquidY[1]), false, 'side contact is not load support');
+conserve(2, 'grazing side contact');
+
 // Strong air may have accelerated dense grains before handoff. Switching
 // representations must retain that momentum, including a downward grain.
 reset();

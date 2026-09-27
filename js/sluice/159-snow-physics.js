@@ -104,10 +104,10 @@
   var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
-    // A chain of touching grains rooted in terrain carries contact,
-    // including while it slides or compacts. Velocity cannot make a pile
-    // permeable to returning powder. Detached clouds have no terrain root.
-    // Contact crosses bucket boundaries; bucket occupancy is not support.
+    // Compression carries weight upward from a lower contact. A sideways
+    // chain or hanging arch cannot suspend powder from a distant terrain
+    // root. Moving and compacting piles still carry real contacts; speed
+    // alone cannot make them permeable to returning grains.
     var reach = snowSupportDistance(), reach2 = reach * reach;
     var cell = Math.max(LIQUID_CELL, reach), width = Math.ceil(COLS * TILE / cell) + 1;
     var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY;
@@ -138,7 +138,7 @@
         while (current !== undefined && current >= 0) {
           var following = next[current];
           var dx = x - points[current * 2], dy = y - points[current * 2 + 1];
-          if (dx * dx + dy * dy <= reach2) {
+          if (dy > 0 && dy >= Math.abs(dx) * 0.6 && dx * dx + dy * dy <= reach2) {
             // Remove visited grains from candidate lists. Dense reached
             // buckets therefore do not get rescanned for every neighbour.
             if (previous < 0) heads.set(nearKey, following);
@@ -157,7 +157,7 @@
     if (!bucket) { bucket = []; bed.set(key, bucket); }
     bucket.push(x, y);
   }
-  function snowTouchesBed(x, y, bed, reach) {
+  function snowTouchesBed(x, y, bed, reach, load) {
     var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
     var col = Math.floor(x / cell), row = Math.floor(y / cell), reach2 = reach * reach;
     for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
@@ -165,14 +165,16 @@
       if (!grains) continue;
       for (var i = 0; i < grains.length; i += 2) {
         var dx = x - grains[i], dy = y - grains[i + 1];
-        if (dx * dx + dy * dy <= reach2) return true;
+        var distance2 = dx * dx + dy * dy;
+        if (distance2 <= reach2 && (!load || distance2 < 0.0001 ||
+            (dy < 0 && -dy >= Math.abs(dx) * 0.6))) return true;
       }
     }
     return false;
   }
   function snowSupported(x, y, bed) {
     return liquidWorldSolidAt(x, y + snowContactRadius() + 0.3) ||
-      snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance());
+      snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance(), true);
   }
   function snowBedContact(x, y) {
     return snowTouchesBed(x, y, snow.bed, LIQUID_SNOW_DIAMETER);
@@ -202,7 +204,10 @@
       // Airflow has already accelerated the grain in the shared solver.
       // Changing representation must not supply another impulse, cancel
       // downward momentum, or reroll a launch whenever powder lands.
-      var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
+      // Actual upward motion in the wake earns release even in a packed
+      // plume. Density alone cannot glue its moving core to the bed while
+      // only the sparse surface gets airborne drag.
+      var lofted = disturbance > 40 && liquidVY[i] < -12;
       if (fresh && (lofted || !snowSupported(x, y, bed)) &&
           (rain.cells[rainCell(x, y)] || 0) <= 1 &&
           !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + snowContactRadius())) {
@@ -320,7 +325,7 @@
           }
           // Dry powder's landing is inelastic. Do not inject the incoming
           // normal momentum into pile pressure and turn it into a rebound.
-          if ((floor || bed) && p.vy > 0) p.vy = 0;
+          if ((floor || bed) && snowSupported(p.x, p.y) && p.vy > 0) p.vy = 0;
           remove = snowLand(p, false); break;
         }
         p.x = nx; p.y = ny;

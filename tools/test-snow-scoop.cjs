@@ -38,7 +38,7 @@ s.removeLiquidParticle = i => {
   s.liquidMutationSeq++;
 };
 vm.createContext(s);
-for (const file of ['071-liquid-catalog', '073-liquid-deposits', '074-bath-service',
+for (const file of ['071-liquid-catalog', '073-liquid-deposits', '074-bath-service', '074-bath-silos',
   '075-liquid-tool', '156-particle-weather', '159-snow-physics']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice', file + '.js'), 'utf8'), s);
 }
@@ -47,7 +47,7 @@ function reset() {
   for (const key of arrays) s[key].length = 0;
   s.liquidWorldSolidAt = () => false;
   s.SNOW_CPU_CAP = 7000;
-  s.snowReset(true); s.siphonReset(); s.mineralLiquidReset();
+  s.snowReset(true); s.siphonReset(); s.bathSiloReset(); s.mineralLiquidReset();
   s.bathSupplies = [0, 0, 0, 0, 0];
   s.player.x = 1000; s.player.y = 80; s.player.vx = s.player.vy = 0;
 }

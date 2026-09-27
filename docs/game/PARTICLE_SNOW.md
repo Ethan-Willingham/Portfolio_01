@@ -155,12 +155,13 @@ same gravity and size-dependent drag, so their individual velocities pass
 continuously through the apex. A sustained resolved updraft can still lift them.
 
 Contact uses the physical grain radius shared with the dense solver. Nearby
-buckets find candidate grains, while actual grain contacts connected to terrain
-determine support. Bucket occupancy cannot suspend a layer above the ground or
-make a disconnected cloud catch more snow. Swept flight resolves the first
-contact point; dry landings dissipate incoming normal velocity before passing
-material into the pile. This avoids injecting impact speed into compressive
-pile pressure and creating another upward burst.
+buckets find candidate grains, while compressive contacts carry weight upward
+from terrain. A horizontal chain or downward-hanging lip cannot suspend a whole
+plume from a distant ground contact. Bucket occupancy cannot suspend a layer
+above the ground or make a disconnected cloud catch more snow. Swept flight
+resolves the first contact point. Dry landings dissipate downward velocity
+against the floor or a supporting grain below; side contact keeps that momentum.
+This avoids both impact-driven rebounds and repeated braking beside a pile.
 
 A connected pile keeps its contacts while moving. The former 16-pixel-per-second
 support cutoff made disturbed snow permeable, compressing returning powder
@@ -170,6 +171,15 @@ the bottom upward so each landing is visible to grains above it in that same
 frame. Removed or lofted particles are excluded from the rebuilt contact map.
 The CPU fallback refreshes moving contacts each frame while powder is present.
 Detached clouds still have no terrain support and remain individual free grains.
+
+Since v28.111, upward motion earned from the jet also releases compressed grains.
+The former density cutoff retained a moving core after its outer grains had
+separated, delaying a large part of the plume's transition to powder. Release
+still requires actual upward velocity and local airflow; it adds no launch
+impulse. The GPU's additional shallow-water slope drive and extended floor grip
+now apply only to the liquid share of a grid cell. Snow retains its granular
+pressure, contact friction and terrain collisions, without liquid forces
+driving or braking a sheet above the floor. Pure-liquid behavior is unchanged.
 
 During an active wake, release is checked every frame. Only storage and thaw
 remain on the 120-millisecond maintenance interval. The GPU supplies an
@@ -326,6 +336,15 @@ individual fall speeds and frame-time p95 at 16.8 milliseconds.
 and snow together through GPU identity packing, physics and readback. Run
 `node tools/sluice-rain-smoke.mjs --drain` for rain, finite lakes, plow protection,
 soil contact, stored-water drainage and a resting puddle on the live solver.
+
+`node tools/sluice-snow-wave.mjs --jet --snow` checks a hanging overhang, a jet
+pass over a dry bed, and a deeper mound during continuous snowfall. It records
+clearance below the plume, slow suspended grains, individual velocity spread,
+GPU handoff batches and exact material accounting, including new snowfall.
+Add `--cpu` for the fallback. Baseline comparisons can use
+`SLUICE_TEST_BUNDLE` and `SLUICE_TEST_GPU`; artifacts stay in `/tmp`.
+`node tools/test-snow-support.cjs` includes horizontal and hanging contact
+chains, and packed grains already moving upward in real airflow.
 
 `node tools/perf/snow-air.mjs` checks wall flow, recirculation, pressure
 projection, occlusion through a solid roof, window translation and shutdown.
