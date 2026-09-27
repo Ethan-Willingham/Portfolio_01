@@ -11,7 +11,7 @@ const s = {
   Math, window: { location: { search: '' } },
   cam: { x: 700, y: -180 }, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
-  SNOW_MASS_CAP: 120000, SNOW_ACTIVE_CAP: 36000, SNOW_CPU_CAP: 7000,
+  SNOW_MASS_CAP: 120000, SNOW_ACTIVE_CAP: 36000,
   SNOW_FLAKE_CAP: 5400, LIQUID_MAX_PARTICLES: 65536, RAIN_ORIGIN: 3,
   LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5, LIQUID_SNOW_DENSITY: 3.2, LIQUID_SNOW_DIAMETER: 1.8,
   liquidCount: 0, liquidWGPU: null, liquidOps: [], LIQUID_OPS_MAX: 10000, liquidMutationSeq: 0,
@@ -46,7 +46,7 @@ function reset() {
   s.liquidCount = 0;
   for (const key of arrays) s[key].length = 0;
   s.liquidWorldSolidAt = () => false;
-  s.SNOW_CPU_CAP = 7000;
+  s.SNOW_ACTIVE_CAP = 36000;
   s.snowReset(true); s.siphonReset(); s.bathSiloReset(); s.mineralLiquidReset();
   s.bathSupplies = [0, 0, 0, 0, 0];
   s.player.x = 1000; s.player.y = 80; s.player.vx = s.player.vy = 0;
@@ -136,7 +136,7 @@ assert.equal(JSON.stringify(s.snow), before, 'failed release does not change sno
 assert.equal(s.siphon.tank[5], 7);
 
 reset();
-s.siphon.tank[5] = 4; s.SNOW_CPU_CAP = 0;
+s.siphon.tank[5] = 4; s.SNOW_ACTIVE_CAP = 0;
 const parkedRelease = s.liquidToolEmit(5, 4, 1050, 90, 0, 80);
 s.siphon.tank[5] -= parkedRelease;
 assert.equal(parkedRelease, 4, 'a full active pool can preserve released snow in storage');

@@ -5,9 +5,10 @@
     revision: 0, time: 0, ms: 0, peak: 0, trail: 0, divergenceBefore: 0, divergenceAfter: 0 };
   (function () {
     var n = snowAir.w * snowAir.h;
-    ['u', 'v', 'tu', 'tv', 'pressure', 'divergence'].forEach(function (key) { snowAir[key] = new Float32Array(n); });
+    ['u', 'v', 'tu', 'tv', 'pressure', 'divergence', 'inletU', 'inletV'].forEach(function (key) { snowAir[key] = new Float32Array(n); });
     snowAir.solid = new Uint8Array(n);
     snowAir.field = new Float32Array(n * 4);
+    snowAir.grainField = new Float32Array(n * 4);
   })();
   function snowAirReset() {
     snowAir.active = false; snowAir.life = snowAir.time = snowAir.peak = snowAir.trail = 0;
@@ -76,6 +77,8 @@
   }
   function updateSnowAir(dt) {
     var a = snowAir;
+    a.wind = surfaceWind.current * 35; a.clock = snow.time + dt;
+    a.rigX = player.x + PLAYER_W * 0.5; a.rigY = player.y + PLAYER_H;
     if (!worldSnowEnabled || bathMode) { if (a.active) snowAirReset(); return; }
     var firing = player.thrusting && rocketIntensity > 0.02 && !gameOver && !gameWon;
     if (firing) a.life = 3; else a.life = Math.max(0, a.life - dt);
@@ -141,6 +144,9 @@
           a.v[ni] += (dir.y * speed + player.vy * 0.15 - a.v[ni]) * force;
         }
       }
+      // Preserve inlet momentum before the terrain-only projection. The
+      // snow boundary projects it once against terrain and the actual bed.
+      if (sub === steps - 1) { a.inletU.set(a.u); a.inletV.set(a.v); }
       snowAirProject();
     }
     a.peak = 0;
@@ -159,6 +165,10 @@
       fade = fade * fade * (3 - 2 * fade);
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
       edge = edge * edge * (3 - 2 * edge) * fade;
+      var inletX = a.solid[bi] ? 0 : (a.inletU[bi] + a.inletU[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
+      var inletY = a.solid[bi] ? 0 : (a.inletV[bi] + a.inletV[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
+      a.grainField[f] = inletX * edge; a.grainField[f + 1] = inletY * edge;
+      a.grainField[f + 2] = a.solid[bi] ? 0 : 1; a.grainField[f + 3] = 0;
       ux *= edge; vy *= edge;
       // Sample the projected flow itself. Suppressing its forward or
       // opposing components removed real return eddies and required an
@@ -196,23 +206,4 @@
       out[2] += a.field[i + 3] * weight;
     }
     return out;
-  }
-  function snowAirCoupleCPU(dt) {
-    if (!snowAir.active || !Number.isFinite(dt) || dt <= 0.0005) return;
-    dt = Math.min(0.05, dt) * LIQUID_TIMESCALE;
-    for (var i = 0; i < liquidCount; i++) {
-      if (liquidType[i] !== 5 || liquidFrozen[i]) continue;
-      var air = snowAirAt(liquidX[i], liquidY[i]);
-      var liftVY = air[1] - air[2];
-      var speed = Math.sqrt(air[0] * air[0] + liftVY * liftVY);
-      if (speed <= 0) continue;
-      // A faint wake must not suddenly apply full drag at a speed cutoff.
-      var influence = Math.min(1, speed / 12);
-      influence = influence * influence * (3 - 2 * influence);
-      var exposure = Math.max(0.06, Math.min(1, (4.2 - liquidDensity[i]) / 3));
-      var drag = 1 - Math.exp(-22 * exposure * influence * dt);
-      liquidVX[i] += (air[0] - liquidVX[i]) * drag;
-      liquidVY[i] += (liftVY - liquidVY[i]) * drag;
-      liquidSleeping[i] = liquidRestFrames[i] = 0;
-    }
   }

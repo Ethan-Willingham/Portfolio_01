@@ -2,12 +2,13 @@
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
-const ctx = vm.createContext({ performance, worldSnowEnabled:true, bathMode:false, gameOver:false, gameWon:false,
+const ctx = vm.createContext({ performance, surfaceWind:{current:0}, snow:{time:0}, worldSnowEnabled:true, bathMode:false, gameOver:false, gameWon:false,
+  LIQUID_CELL:2.5, LIQUID_SNOW_DENSITY:3.2, liquidCount:0,
   player:{x:0,y:60,vx:0,vy:0,thrusting:true}, PLAYER_W:22, PLAYER_H:25, rocketIntensity:1,
   liquidWorldSolidAt:(x,y)=>y>=128&&y<160, liquidPointInMiner:()=>false,
   rocketNozzles:()=>[{x:7,y:84},{x:15,y:84}], rocketExhaustDir:()=>({x:0,y:1}), liquidLineClear:(x0,y0,x1,y1)=>y1<128 });
 const source=fs.readFileSync(new URL('../../js/sluice/159-snow-air.js',import.meta.url),'utf8');
-const api=vm.runInContext('(function(){var Math=globalThis.Math;'+source+';return {air:snowAir,update:updateSnowAir,shift:snowAirShift,sample:snowAirAt,couple:snowAirCoupleCPU};})()',ctx);
+const api=vm.runInContext('(function(){var Math=globalThis.Math;'+source+';return {air:snowAir,update:updateSnowAir,shift:snowAirShift,sample:snowAirAt};})()',ctx);
 for(let i=0;i<180;i++)api.update(1/60);
 const a=api.air;
 let left=0,right=0,up=0,inside=0,energy=0,surfaceLift=0;
@@ -29,32 +30,6 @@ assert.ok(left < -25 && right>25,'impinging jet spreads along both sides of the 
 assert.ok(Math.abs(left+right)<(Math.abs(left)+Math.abs(right))*.1,'stationary vertical hover keeps a balanced two-sided wash');
 assert.ok(up < -8,'resolved returning airflow lifts powder outside the downward core');
 assert.ok(surfaceLift>100,'strong floor-parallel airflow entrains exposed powder');
-// Opposing local velocities can leave weak projected flow while surface
-// scouring remains strong. CPU coupling must gate on the same effective
-// velocity as the GPU, including lift, or these particles never wake.
-const savedField = a.field.slice();
-for (let i=0;i<a.field.length;i+=4) {
-  a.field[i]=0.5; a.field[i+1]=0.5; a.field[i+2]=1; a.field[i+3]=80;
-}
-const weakFlow = api.sample(55,102.75).slice();
-assert.ok(Math.hypot(weakFlow[0],weakFlow[1])<2,'regression sample has weak projected velocity');
-assert.ok(Math.hypot(weakFlow[0],weakFlow[1]-weakFlow[2])>20,'surface lift still supplies a meaningful disturbance');
-Object.assign(ctx, {
-  LIQUID_TIMESCALE:1, liquidCount:3,
-  liquidType:new Uint8Array([5,0,5]), liquidFrozen:new Uint8Array([0,0,1]),
-  liquidX:new Float32Array([55,55,55]), liquidY:new Float32Array([102.75,102.75,102.75]),
-  liquidDensity:new Float32Array([1,1,1]), liquidVX:new Float32Array(3), liquidVY:new Float32Array(3),
-  liquidSleeping:new Uint8Array([1,1,1]), liquidRestFrames:new Uint16Array([90,90,90])
-});
-api.couple(1/60);
-assert.ok(ctx.liquidVY[0]<-1,'CPU snow responds to lift even when raw airflow is below its activity threshold');
-assert.equal(ctx.liquidSleeping[0],0,'surface entrainment wakes resting powder');
-assert.equal(ctx.liquidRestFrames[0],0,'surface entrainment clears the snow rest counter');
-for(const i of [1,2]) {
-  assert.equal(ctx.liquidVX[i],0);assert.equal(ctx.liquidVY[i],0);
-  assert.equal(ctx.liquidSleeping[i],1);assert.equal(ctx.liquidRestFrames[i],90);
-}
-a.field.set(savedField);
 // The exported wake tapers before the rectangular solve ends. Its outer
 // samples must not leave a visible step when a flake crosses the perimeter.
 const edgeFlow=[];
@@ -64,18 +39,7 @@ assert.equal(edgeFlow.at(-1),0,'the smaller lateral reach ends in still air');
 let edgeStep=0;
 for(let i=1;i<edgeFlow.length;i++)edgeStep=Math.max(edgeStep,Math.abs(edgeFlow[i]-edgeFlow[i-1]));
 assert.ok(edgeStep<a.peak*.01,'each pixel across the fringe changes flow by less than one percent of the core');
-// An old 2px/s speed gate abruptly switched on full drag, braking a moving
-// grain even at the fringe. Compare neighboring flow speeds around it.
-function fringeResponse(speed) {
-  for(let i=0;i<a.field.length;i+=4){a.field[i]=speed;a.field[i+1]=a.field[i+3]=0;}
-  ctx.liquidVX[0]=0;ctx.liquidVY[0]=53;api.couple(1/60);
-  return 53-ctx.liquidVY[0];
-}
-const belowGate=fringeResponse(1.99),aboveGate=fringeResponse(2.01);
-assert.ok(belowGate>0&&aboveGate<2,'faint wake drag stays below the gravity added in one frame');
-assert.ok(Math.abs(aboveGate-belowGate)<.04,'crossing the old speed cutoff is continuous');
-a.field.set(savedField);
-console.log('WAKE EDGE',{edgeStep,belowGate,aboveGate});
+console.log('WAKE EDGE',{edgeStep});
 assert.equal(inside,0,'no airflow through a solid roof into the open pocket below it');
 const preserved=a.u[20*a.w+31];api.shift(a.x+8,a.y);assert.equal(a.u[20*a.w+30],preserved,'moving the window preserves world-space face velocity');
 assert.ok(a.divergenceAfter<a.divergenceBefore*.5,'pressure projection reduces divergence');
@@ -97,7 +61,7 @@ for (const direction of [-1,1]) {
   const rig = {x:0,y:60,vx:direction*220,vy:0,thrusting:true};
   const angle = direction*.36;
   const flightContext = vm.createContext({
-    performance, worldSnowEnabled:true, bathMode:false, gameOver:false, gameWon:false,
+    performance, surfaceWind:{current:0}, snow:{time:0}, worldSnowEnabled:true, bathMode:false, gameOver:false, gameWon:false,
     player:rig, PLAYER_W:22, PLAYER_H:25, rocketIntensity:1,
     liquidWorldSolidAt:(x,y)=>y>=128&&y<160,
     liquidPointInMiner:(x,y)=>x>rig.x&&x<rig.x+22&&y>rig.y&&y<rig.y+20,
@@ -182,24 +146,35 @@ vm.runInContext(['liquidGetCell','liquidClearGrid','liquidP2G','liquidApplyRocke
   .map(liquidFunction).join('\n'), powder);
 const sumCells = key => powder['liquidCell'+key].subarray(0,powder.liquidGridCount).reduce((sum,v)=>sum+v,0);
 let waterGrid;
+const gridFields = ['Mass','OilMass','SnowMass','Aeration','VX','VY'];
+const scatterDt = 1/300;
 for (const material of ['water','snow','mixed','water again']) {
-  for (let i=0; i<120; i++) powder.liquidType[i] = material==='snow' ? 5 : material==='mixed' ? i%6 : 0;
-  powder.liquidP2G(1/300);
-  assert.ok(Math.abs(sumCells('Mass')-120)<.0001, 'all deposited particles retain their grid mass');
-  assert.ok(Math.abs(sumCells('SnowMass')-(material==='snow'?120:material==='mixed'?20:0))<.0001,
-    material + ' contributes exactly its own snow mass, including after grid reuse');
-  if (material==='water') {
-    waterGrid = ['Mass','Aeration','VX','VY'].map(key=>powder['liquidCell'+key].slice());
-  } else {
-    ['Mass','Aeration','VX','VY'].forEach((key,i)=>assert.deepEqual(powder['liquidCell'+key],waterGrid[i],
-      material + ' preserves the existing total mass, aeration and carried momentum'));
+  let expectedMass=0,expectedOil=0,expectedVX=0,expectedVY=0,expectedAeration=0;
+  for (let i=0; i<120; i++) {
+    const type=material==='snow' ? 5 : material==='mixed' ? i%6 : 0;
+    powder.liquidType[i]=type;
+    if(type===5)continue;
+    expectedMass++;if(type===1)expectedOil++;
+    expectedVX+=powder.liquidVX[i]*scatterDt/powder.LIQUID_CELL;
+    expectedVY+=powder.liquidVY[i]*scatterDt/powder.LIQUID_CELL;
+    expectedAeration+=powder.liquidAeration[i];
   }
-  if (material==='snow') {
-    for (let i=0; i<powder.liquidGridCount; i++) {
-      assert.equal(powder.liquidCellSnowMass[i],powder.liquidCellMass[i],
-        'pure powder remains exactly pure through the complete stencil');
-    }
-  }
+  powder.liquidP2G(scatterDt);
+  assert.ok(Math.abs(sumCells('Mass')-expectedMass)<.0001,
+    material + ' scatters only non-snow material into the liquid grid');
+  assert.ok(Math.abs(sumCells('OilMass')-expectedOil)<.0001,
+    material + ' preserves the independent oil mass');
+  assert.equal(sumCells('SnowMass'),0,material + ' contributes no snow mass, including after grid reuse');
+  assert.ok(Math.abs(sumCells('VX')-expectedVX)<.00001 && Math.abs(sumCells('VY')-expectedVY)<.00001,
+    material + ' conserves both components of the other materials carried momentum');
+  let weightedAeration=0;
+  for(let i=0;i<powder.liquidGridCount;i++)weightedAeration+=powder.liquidCellAeration[i]*powder.liquidCellMass[i];
+  assert.ok(Math.abs(weightedAeration-expectedAeration)<.0001,
+    material + ' conserves the other materials mass-weighted aeration');
+  if(material==='snow')assert.equal(powder.liquidGridCount,0,'pure snow allocates no liquid cells');
+  if(material==='water')waterGrid=gridFields.map(key=>powder['liquidCell'+key].slice());
+  if(material==='water again')gridFields.forEach((key,i)=>assert.deepEqual(powder['liquidCell'+key],waterGrid[i],
+    'restored water grid is exactly unchanged after snow and mixed-material reuse: ' + key));
 }
 // A nozzle at the sample centre has a fixed, documented baseline impulse.
 // Check fixed outputs and fractional material response independently of P2G.
@@ -213,4 +188,4 @@ for (const [snowMass,expectedY] of [[0,.7580000162124634],[2,.2540000081062317],
   assert.equal(powder.liquidCellVY[0],expectedY,
     'water keeps its cone impulse, a mixture scales it, and pure snow receives none');
 }
-console.log('PASS snow grid mass, unchanged liquid momentum, material-specific jet impulse and grid reuse');
+console.log('PASS snow excluded from liquid grid, conserved liquid momentum and aeration, unchanged jet impulse and exact water grid reuse');

@@ -10,13 +10,14 @@ const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4
 math.random = random;
 const noop = () => {};
 const arrays = ['liquidX', 'liquidY', 'liquidVX', 'liquidVY', 'liquidType', 'liquidDensity',
-  'liquidOrigin', 'liquidSleeping', 'liquidRestFrames'];
+  'liquidOrigin', 'liquidSleeping', 'liquidRestFrames',
+  'liquidG00', 'liquidG01', 'liquidG10', 'liquidG11'];
 const s = {
   Math: math, window: { location: { search: '' } }, location: { search: '' },
   cam: { x: 1900, y: -180 }, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
   SNOW_RATE: 345, SNOW_FLAKE_CAP: 5400, SNOW_MASS_CAP: 120000,
-  SNOW_ACTIVE_CAP: 36000, SNOW_CPU_CAP: 7000, LIQUID_MAX_PARTICLES: 65536,
+  SNOW_ACTIVE_CAP: 36000, LIQUID_MAX_PARTICLES: 65536,
   LIQUID_SNOW_DENSITY: 3.2, LIQUID_SNOW_DIAMETER: 1.8, GRAVITY: 600,
   LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5,
   liquidCount: 0, liquidWGPU: null, liquidOps: [], LIQUID_OPS_MAX: 10000, liquidMutationSeq: 0,
@@ -189,6 +190,7 @@ assert.equal(s.snowHeat(2605, 127), 0, 'oil contact does not thaw snow');
 assert.equal(s.snowHeat(2707, 127), 0, 'mineral liquid contact does not thaw snow');
 assert.ok(s.rain.cells[s.rainCell(2605, 127)] >= 10, 'nonwater contact remains available to the rain collision path');
 const wet = snowGrain(2503, 127, 17, 29);
+for (const key of ['liquidG00', 'liquidG01', 'liquidG10', 'liquidG11']) s[key][wet] = .7;
 const before = [s.liquidX[wet], s.liquidY[wet], s.liquidVX[wet], s.liquidVY[wet]];
 math.random = () => 0;
 s.snowScan(1 / 60, 0.12);
@@ -196,6 +198,8 @@ math.random = random;
 assert.equal(s.liquidType[wet], 0, 'the water-contact maintenance path converts snow to water');
 assert.deepEqual([s.liquidX[wet], s.liquidY[wet], s.liquidVX[wet], s.liquidVY[wet]], before,
   'water thaw retains the exact solver position and momentum');
+assert.deepEqual(['liquidG00', 'liquidG01', 'liquidG10', 'liquidG11'].map(key => s[key][wet]), [0, 0, 0, 0],
+  'thaw clears snow contact metadata before liquid interpolation');
 assert.deepEqual(s.liquidOps.slice(-4), [4, wet, 0, 3], 'thaw queues an in-place GPU material change');
 assert.equal(s.snow.melted, 1, 'each melted grain is accounted once');
 

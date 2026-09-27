@@ -208,9 +208,8 @@
   //   LIQUID_OIL_VALUE ....... dollars per gallon of oil sold
   //   LIQUID_OIL_PER_PARTICLE  gallons one oil particle is worth
   // ============================================================
-  // Snow shares pressure with liquids, but its jet force comes from the
-  // resolved airflow. Track its grid mass so the liquid cone cannot count
-  // the same exhaust twice and press dry powder into the ground.
+  // Kept as part of the liquid grid layout. Dry snow now uses unilateral
+  // particle contacts and never contributes mass or momentum to this grid.
   var liquidCellSnowMass = new Float32Array(LIQUID_MAX_CELLS);
   function liquidGetCell(gx, gy) {
     // Composite unique key for (gx, gy) — valid range ±4096.
@@ -290,8 +289,7 @@
       if (liquidFrozen[i] && !nowFrozen) {
         // v11.43 — zero velocity on wake so off-screen particles don't
         // shoot out at the player when they re-enter the active region.
-        liquidVX[i] = 0;
-        liquidVY[i] = 0;
+        if (liquidType[i] !== 5) { liquidVX[i] = 0; liquidVY[i] = 0; }
         liquidSleeping[i] = 0;
         liquidRestFrames[i] = 0;
       }
@@ -579,7 +577,7 @@
     liquidClearGrid();
     var invCell = 1 / LIQUID_CELL;
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidFrozen[i]) continue;
+      if (liquidFrozen[i] || liquidType[i] === 5) continue;
       var px = liquidX[i];
       var py = liquidY[i];
       liquidPrevX[i] = px;
@@ -684,7 +682,7 @@
 
   function liquidApplyGridPressure() {
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidFrozen[i] || liquidSleeping[i]) continue;
+      if (liquidFrozen[i] || liquidSleeping[i] || liquidType[i] === 5) continue;
       var base = i * 9;
       var density = 0;
       var aeration = 0;
@@ -1048,7 +1046,7 @@
     var invStep = 1 / stepDt;
     var useBathThermal = typeof bathMode !== 'undefined' && bathMode && typeof bathThermalForce === 'function';
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidFrozen[i]) continue;
+      if (liquidFrozen[i] || liquidType[i] === 5) continue;
       var base = i * 9;
       var thermalForce = useBathThermal ? bathThermalForce(liquidX[i], liquidY[i], liquidType[i]) : 0;
       if (liquidSleeping[i] && Math.abs(thermalForce) > 0.25) { liquidSleeping[i] = 0; liquidRestFrames[i] = 0; }
@@ -2254,7 +2252,6 @@
     // WebGPU solver delegate — dormant until the GPU port goes live
     // (simActive flips on at Stage 8); until then the CPU solver runs.
     if (liquidWGPU && liquidWGPU.simActive) { updateLiquidsGPU(dt); return; }
-    snowAirCoupleCPU(dt);
     // v24.109 — the GPU consumes liquidOps; on the CPU path nothing does
     // (the CPU arrays ARE the live state), so drop them here.
     liquidOps.length = 0;
@@ -2353,7 +2350,7 @@
       // probes (and up to 9× that when a particle is stuck)" to "only
       // the active swimmers", which is a small fraction of N.
       for (var mi = liquidCount - 1; mi >= 0; mi--) {
-        if (liquidFrozen[mi]) continue;
+        if (liquidFrozen[mi] || liquidType[mi] === 5) continue;
         if (liquidSleeping[mi] && !liquidMinerContains(liquidX[mi], liquidY[mi], LIQUID_CELL * LIQUID_PDELTA * 0.85)) continue;
         if (!liquidMoveParticle(mi, stepDt)) removeLiquidParticle(mi);
       }

@@ -1883,7 +1883,7 @@
     var awake = 0;
     var i;
     for (i = 0; i < count; i++) {
-      if (snap.frozen[i]) continue;
+      if (snap.frozen[i] || snap.type[i] === 5) continue;
       awake++;
       var lx = fr(fr(snap.x[i]) * inv);
       var ly = fr(fr(snap.y[i]) * inv);
@@ -2104,7 +2104,7 @@
     var refVXFx   = new Int32Array(cells);
     var refVYFx   = new Int32Array(cells);
     for (i = 0; i < count; i++) {
-      if (snap.frozen[i]) continue;        // P2G skips frozen only
+      if (snap.frozen[i] || snap.type[i] === 5) continue;        // P2G skips frozen only
       var lx = fr(fr(snap.x[i]) * inv);
       var ly = fr(fr(snap.y[i]) * inv);
       var pvx = fr(fr(fr(snap.vx[i]) * dt) * inv);
@@ -2168,7 +2168,7 @@
     var refAerationOut = new Float64Array(count);
     var awake = 0;
     for (i = 0; i < count; i++) {
-      if (snap.frozen[i] || snap.sleeping[i]) continue;
+      if (snap.frozen[i] || snap.sleeping[i] || snap.type[i] === 5) continue;
       awake++;
       var plx = fr(fr(snap.x[i]) * inv);
       var ply = fr(fr(snap.y[i]) * inv);
@@ -2407,7 +2407,7 @@
       // (b) per-particle density (aux.x) + advanced aeration (aux.y).
       var maxAuxDiff = 0, worstP = -1, worstField = '';
       for (var p = 0; p < count; p++) {
-        if (snap.frozen[p] || snap.sleeping[p]) continue;  // untouched
+        if (snap.frozen[p] || snap.sleeping[p] || snap.type[p] === 5) continue;  // untouched
         var dDen = Math.abs(gAux[p * 4]     - refDensity[p]);
         var dAer = Math.abs(gAux[p * 4 + 1] - refAerationOut[p]);
         if (dDen > maxAuxDiff) { maxAuxDiff = dDen; worstP = p; worstField = 'density'; }
@@ -2489,7 +2489,7 @@
     var refVXFx   = new Int32Array(cells);
     var refVYFx   = new Int32Array(cells);
     for (i = 0; i < count; i++) {
-      if (snap.frozen[i]) continue;        // P2G skips frozen only
+      if (snap.frozen[i] || snap.type[i] === 5) continue;        // P2G skips frozen only
       var lx0 = fr(fr(snap.x[i]) * inv);
       var ly0 = fr(fr(snap.y[i]) * inv);
       var pvx0 = fr(fr(fr(snap.vx[i]) * dt) * inv);
@@ -2548,7 +2548,7 @@
     var refDensity     = new Float64Array(count);
     var refAerationOut = new Float64Array(count);
     for (i = 0; i < count; i++) {
-      if (snap.frozen[i] || snap.sleeping[i]) continue;
+      if (snap.frozen[i] || snap.sleeping[i] || snap.type[i] === 5) continue;
       var plx = fr(fr(snap.x[i]) * inv);
       var ply = fr(fr(snap.y[i]) * inv);
       var pgx = Math.floor(plx);
@@ -2792,8 +2792,8 @@
       // output (the CPU pressure step wrote liquidAeration before G2P).
       refSleep[i] = snap.sleeping[i];
       refRest[i]  = snap.restFrames[i];
-      refAerP[i]  = (snap.frozen[i] || snap.sleeping[i]) ? snap.aeration[i] : refAerationOut[i];
-      if (snap.frozen[i]) continue;
+      refAerP[i]  = (snap.frozen[i] || snap.sleeping[i] || snap.type[i] === 5) ? snap.aeration[i] : refAerationOut[i];
+      if (snap.frozen[i] || snap.type[i] === 5) continue;
 
       // 3x3 stencil from the pre-step position (== P2G's lx/dx).
       var glx = fr(fr(snap.x[i]) * inv);
@@ -3448,7 +3448,7 @@
         var fl = g2pFlag[i];
         var flSleeping = (fl >>> 4) & 1;
         var flFrozen   = (fl >>> 5) & 1;
-        if (flFrozen || flSleeping) continue;
+        if (flFrozen || flSleeping || snap.type[i] === 5) continue;
         collideCount++;
         // Sanitize non-finite (the GPU clamps/zeros instead of removing).
         if (!(x === x))   { x = 0; }
@@ -3565,7 +3565,7 @@
         // Particle does not guarantee a ring-clear result — it gives up
         // after 8 nudges), so ring-touch is normal; a solid CENTRE tile
         // is the actual failure. Checked for every output position.
-        if (terrainSolidAt(gPos[q], gPos[q + 1])) inSolid++;
+        if (snap.type[p] !== 5 && terrainSolidAt(gPos[q], gPos[q + 1])) inSolid++;
       }
       // Tolerance — pure f32 round() tie noise from the port diff.
       var posTol = 0.02;
@@ -4166,6 +4166,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { return; } // independent grain contacts
   // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   let frozen = (fl >> 5u) & 1u;
   if (frozen != 0u) { return; }
@@ -5122,6 +5123,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { return; } // independent grain contacts
   // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   let sleeping = (fl >> 4u) & 1u;
   let frozen   = (fl >> 5u) & 1u;
@@ -5975,6 +5977,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { return; } // independent grain contacts
   // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   let frozen   = (fl >> 5u) & 1u;
   if (frozen != 0u) { return; }
@@ -6584,6 +6587,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
+  if (((fl&3u)|((fl>>4u)&4u)) == 5u) { return; }
   // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5] rest[8:23].
   // The CPU move loop skips frozen AND sleeping particles (they never
   // call liquidMoveParticle), so the kernel skips exactly that set.
@@ -6940,6 +6944,107 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 }
 `;
 
+  var WGSL_SNOW_COLLIDE = WGSL_COLLIDE.slice(0, WGSL_COLLIDE.indexOf('@compute')).replace('if (bowlSolid(px,py)) { return true; }','') + /* wgsl */ `
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i = gid.x;
+  if (i >= gp.count) { return; }
+  let fl = flag[i];
+  let material = (fl & 3u) | ((fl >> 4u) & 4u);
+  if (material != 5u || (fl & 32u) != 0u) { return; }
+  let state = pos[i];
+  if (outOfRegion(state.xy)) { return; }
+  let radius = 2.5 / sqrt(3.2) * 0.5;
+  let diagonal = radius * 0.70710678;
+  let offsets = array<vec2<f32>, 8>(
+    vec2<f32>(0.0, radius), vec2<f32>(0.0, -radius),
+    vec2<f32>(-radius, 0.0), vec2<f32>(radius, 0.0),
+    vec2<f32>(-diagonal, -diagonal), vec2<f32>(diagonal, -diagonal),
+    vec2<f32>(-diagonal, diagonal), vec2<f32>(diagonal, diagonal));
+  var p = aux[i].zw;
+  var velocity = state.zw;
+  var support = aux[i].y;
+  var axis = 0u;
+  loop {
+    if (axis >= 2u) { break; }
+    let start = p[axis];
+    let delta = state[axis] - start;
+    if (delta != 0.0) {
+      let steps = max(1u, u32(ceil(abs(delta) / max(0.25, radius * 0.5))));
+      var sample = 1u;
+      var clear = start;
+      var blocked = start;
+      var candidate = start + delta / f32(steps);
+      var refining = 0u;
+      var hit = false;
+      // March and bisection share one ring probe in the compiled call graph.
+      // The first blocked sample is followed by eight refinement samples.
+      loop {
+        var test = p;
+        test[axis] = candidate;
+        var solid = false;
+        var probe = 0u;
+        loop {
+          if (probe >= 8u) { break; }
+          let q = test + offsets[probe];
+          if (terrainSolidAt(q.x, q.y)) { solid = true; break; }
+          probe = probe + 1u;
+        }
+        if (solid) {
+          blocked = candidate;
+          hit = true;
+          if (refining == 0u) { refining = 1u; }
+        } else {
+          clear = candidate;
+        }
+        if (refining != 0u) {
+          if (refining >= 9u) { break; }
+          refining = refining + 1u;
+          candidate = (clear + blocked) * 0.5;
+        } else {
+          sample = sample + 1u;
+          if (sample > steps) { break; }
+          candidate = start + delta * f32(sample) / f32(steps);
+        }
+      }
+      p[axis] = clear;
+      if (hit) {
+        let normal = select(1.0, -1.0, delta > 0.0);
+        let inward = velocity[axis] * normal;
+        if (inward < 0.0) {
+          velocity[axis] = velocity[axis] - inward * normal;
+          let tangent = 1u - axis;
+          velocity[tangent] = sign(velocity[tangent]) *
+            max(0.0, abs(velocity[tangent]) + inward * 0.35);
+        }
+        if (axis == 1u && normal < 0.0) { support = 1.0; }
+      }
+    }
+    axis = axis + 1u;
+  }
+  // Reuse the normal-only moving-hull projection once, outside all sweeps.
+  let projected = projectMiner(p, velocity, radius);
+  if (projected.y < p.y) { support = 1.0; }
+  p = projected.xy;
+  velocity = projected.zw;
+  var x=p.x;var y=p.y;var vx=velocity.x;var vy=velocity.y;let r=radius;
+` + WGSL_COLLIDE.slice(WGSL_COLLIDE.indexOf('  // Preserve the terrain-resolved state.'),
+  WGSL_COLLIDE.indexOf('  // World-bounds clamp')) + /* wgsl */ `
+  p=vec2f(x,y);velocity=vec2f(vx,vy);
+  let right = gp.worldCols * gp.worldTile - radius;
+  let bottom = gp.worldRows * gp.worldTile - radius;
+  if (p.x < radius) { p.x = radius; velocity.x = max(0.0, velocity.x); }
+  if (p.x > right) { p.x = right; velocity.x = min(0.0, velocity.x); }
+  if (p.y > bottom) { p.y = bottom; velocity.y = min(0.0, velocity.y); support = 1.0; }
+  // Curved bath walls are projected once, outside the terrain sweep.
+  // Expanding their transcendental geometry into every sweep probe caused
+  // pathological Metal shader compilation on the testing Mac.
+  pos[i] = bowlProject(vec4<f32>(p, velocity),radius);
+  aux[i] = vec4<f32>(aux[i].x, support, p);
+  flag[i] = fl & ~0x00ffff10u;
+}
+`;
+
   /* ---- WGSL — min-separation (anti-clump) pass (v24.185) --------------
    * Runs once per substep right after buildGrid (fresh count-sort grid). For
    * each OVER-DENSE particle (a knot), walk its 3x3 grid cells and push it away
@@ -6997,6 +7102,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= gp.count) { return; }
   let fl = flag[i];
+  if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) { return; } // independent grain contacts
   if (((fl >> 5u) & 1u) != 0u) { return; }   // frozen
   let dense = aux[i].x >= ODEN;
   let p = pos[i].xy;
@@ -7035,7 +7141,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       for (var k = 0u; k < samples; k = k + 1u) {
         let slot = min(u32((f32(k) + phase) * stride), cn - 1u);
         let j = sortedIdx[st + slot];
-        if (j == i) { continue; }
+        if (j == i || ((flag[j]&3u)|((flag[j]>>4u)&4u)) == 5u) { continue; }
         let d = p - pos[j].xy;
         let dd = dot(d, d);
         if (dd < dmin2) {
@@ -8812,7 +8918,6 @@ struct P2GParams {
       ]
     });
     instance.g2pReady = true;
-    if (instance.liquid && instance.liquid.getSnowAir) buildSnowAirPipeline(instance);
   }
 
   /* ---- Stage 6 — collide pipeline + bind group -----------------------
@@ -8865,6 +8970,9 @@ struct P2GParams {
         }
       })
     };
+    instance.collidePipe.snow = dev.createComputePipeline({label:'snow.collide',layout:layout,compute:{
+      module:dev.createShaderModule({code:WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_SNOW_COLLIDE}),
+      entryPoint:'main'}});
     instance.collideBGs = [];
     for (var cbs = 0; cbs < GS_FRAME_SLOTS; cbs++) {
       instance.collideBGs.push(dev.createBindGroup({
@@ -8957,7 +9065,7 @@ struct P2GParams {
    * positions + stashed the pre-step position into aux.zw, and that
    * computeTerrainBounds() + uploadTerrainMask() have pushed the tile rect
    * + mask. Chained as the final kernel of the per-frame step. */
-  function runCollide(instance, substepSlot) {
+  function runCollide(instance, substepSlot, snowOnly) {
     if (!instance.collideReady) return;
     var count = instance.uploadedCount | 0;
     if (count <= 0) return;
@@ -8967,7 +9075,7 @@ struct P2GParams {
     writeSimParams(instance);
     var enc = liquidEncoder(instance, 'liquid.runCollide');
     var cp = enc.beginComputePass({ label: 'liquid.collide' });
-    cp.setPipeline(instance.collidePipe.collide);
+    cp.setPipeline(snowOnly ? instance.collidePipe.snow : instance.collidePipe.collide);
     var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
     cp.setBindGroup(0, collideBG || instance.collideBG);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
@@ -9890,6 +9998,7 @@ fn main() {
       k = k + 7u;
     } else if (tag == 4u) {     // WAKE: clear sleeping + restFrames
       let i = u32(ops[k + 1u]);
+      if (((flag[i]&3u)|((flag[i]>>4u)&4u)) == 5u && u32(ops[k+2u]) != 5u) { affine[i]=vec4f(0.);aux[i].y=0.; }
       flag[i] = (u32(ops[k + 2u]) & 3u) | ((u32(ops[k + 2u]) & 4u) << 4u) | ((u32(ops[k + 3u]) & 3u) << 2u);
       k = k + 4u;
     } else {                    // corrupt tag (CPU validates; never expected)
@@ -10048,79 +10157,288 @@ fn main() {
    * to 0.05 s, one substep. A thrown error anywhere flips simActive false
    * (the caller wrapper) so the CPU solver takes over from the next frame.
    * -------------------------------------------------------------------- */
-  // Aerodynamic drag acts on GPU-resident snow velocities before P2G.
-  // The MAC field is tiny and uploaded once per frame; no particle readback.
-  var WGSL_SNOW_AIR = /* wgsl */ `
-struct AirParams { rect:vec4<f32>, domain:vec4<f32> };
-@group(0) @binding(0) var<uniform> ap:AirParams;
-@group(0) @binding(1) var<storage, read_write> pos:array<vec4<f32>>;
-@group(0) @binding(2) var<storage, read> aux:array<vec4<f32>>;
-@group(0) @binding(3) var<storage, read_write> flag:array<u32>;
-@group(0) @binding(4) var air:texture_2d<f32>;
+  // Deposited snow keeps its own velocity in both flight and piles. Only
+  // compressive grain contacts exchange momentum; there is no grid-velocity
+  // averaging or GPU-to-CPU flight handoff.
+  var WGSL_SNOW_GRAINS = WGSL_GAME_PARAMS + /* wgsl */ `
+struct GrainParams { rect:vec4f, domain:vec4f, wind:vec4f, rig:vec4f };
+struct GrainGrid { count:u32, width:u32, height:u32, ox:u32, oy:u32, cells:u32, dt:f32, inv:f32,
+  cols:f32, tile:f32, rows:f32, spare:f32, tx:u32, ty:u32, tw:u32, th:u32, region:vec4f };
+@group(0) @binding(0) var<uniform> gp:GrainGrid;
+@group(0) @binding(1) var<uniform> airParams:GrainParams;
+@group(0) @binding(2) var<storage,read_write> pos:array<vec4f>;
+@group(0) @binding(3) var<storage,read> before:array<vec4f>;
+@group(0) @binding(4) var<storage,read_write> aux:array<vec4f>;
+@group(0) @binding(5) var<storage,read_write> flag:array<u32>;
+@group(0) @binding(6) var<storage,read_write> affine:array<vec4f>;
+@group(0) @binding(7) var<storage,read> cellCount:array<u32>;
+@group(0) @binding(8) var<storage,read> cellStart:array<u32>;
+@group(0) @binding(9) var<storage,read> sortedIdx:array<u32>;
+@group(0) @binding(10) var air:texture_2d<f32>;
+@group(0) @binding(11) var<uniform> gameP:GameParams;
+fn isSnow(fl:u32)->bool { return ((fl&3u)|((fl>>4u)&4u))==5u; }
+fn grainOutsideRegion(p:vec2f)->bool {
+  return p.x<gp.region.x||p.x>gp.region.z||p.y<gp.region.y||p.y>gp.region.w;
+}
+fn flowAt(p:vec2f)->vec3f {
+  let q=(p-airParams.rect.xy)/airParams.rect.z-vec2f(.5);
+  if (airParams.domain.w<.5 || any(q<vec2f(0.)) || any(q>=airParams.domain.xy-vec2f(1.))) { return vec3f(0.); }
+  let c=vec2i(floor(q));let f=fract(q);
+  return mix(mix(textureLoad(air,c,0).xyw,textureLoad(air,c+vec2i(1,0),0).xyw,f.x),
+    mix(textureLoad(air,c+vec2i(0,1),0).xyw,textureLoad(air,c+vec2i(1,1),0).xyw,f.x),f.y);
+}
 @compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) id:vec3<u32>) {
-  let i=id.x;
-  if (i>=u32(ap.domain.z)) { return; }
-  let fl=flag[i];
-  if (((fl&3u)|((fl>>4u)&4u))!=5u || (fl&32u)!=0u) { return; }
-  let p=pos[i];
-  let q=(p.xy-ap.rect.xy)/ap.rect.z-vec2<f32>(0.5);
-  if (any(q<vec2<f32>(0.0)) || any(q>=ap.domain.xy-vec2<f32>(1.0))) { return; }
-  let c=vec2<i32>(floor(q)); let f=fract(q);
-  let a=mix(textureLoad(air,c,0).xyw,textureLoad(air,c+vec2<i32>(1,0),0).xyw,f.x);
-  let b=mix(textureLoad(air,c+vec2<i32>(0,1),0).xyw,textureLoad(air,c+vec2<i32>(1,1),0).xyw,f.x);
-  let flow=mix(a,b,f.y);
-  let velocity=vec2<f32>(flow.x,flow.y-flow.z);
-  let speed=length(velocity);
-  if (speed<=0.0) { return; }
-  let influence=smoothstep(0.0,12.0,speed);
-  let exposure=clamp((4.2-aux[i].x)/3.0,0.06,1.0);
-  let drag=1.0-exp(-22.0*exposure*influence*ap.rect.w);
-  pos[i]=vec4<f32>(p.xy,mix(p.zw,velocity,drag));
-  flag[i]=fl & ~0x00ffff10u;
+fn predict(@builtin(global_invocation_id) id:vec3u) {
+  let i=id.x;if(i>=gp.count){return;}let fl=flag[i];if(!isSnow(fl)||(fl&32u)!=0u){return;}
+  let p=pos[i];if(grainOutsideRegion(p.xy)){return;}var size=affine[i].w;
+  if(size<.3||size>1.){
+    var h=(bitcast<u32>(i32(floor(p.x*16.)))*73856093u) ^ (bitcast<u32>(i32(floor(p.y*16.)))*19349663u);
+    h=(h^(h>>13u))*1274126177u;size=.3+.7*f32(h&65535u)/65535.;affine[i].x=1.;
+  }
+  let dt=airParams.rect.w;let flow=flowAt(p.xy);
+  let wind=airParams.wind.x+12.*sin(airParams.wind.y*.43+p.y*.006);
+  let fall=32.+size*42.;let drag=600./fall;
+  let exposure=clamp(affine[i].x,0.,1.);
+  let terminal=vec2f((wind+flow.x)*exposure,(flow.y-flow.z)*exposure+fall);
+  let keep=exp(-drag*dt);var velocity=terminal+(p.zw-terminal)*keep;
+  // Integrate the same continuous force through the entire step.
+  var next=p.xy+terminal*dt+(p.zw-terminal)*(1.-keep)/drag;
+  for(var e=0u;e<u32(gameP.counts.y);e++){
+    let ex=gameP.explos[e];let delta=p.xy-ex.xy;let d2=dot(delta,delta);let radius=ex.z*1.15;
+    if(d2<=.0001||d2>=radius*radius){continue;}
+    let distance=sqrt(d2);let scale=(1.-distance/radius)*dt;
+    let blast=delta/distance*ex.w*scale-vec2f(0.,90.*scale);
+    velocity+=blast;next+=blast*dt;
+  }
+  next=clamp(next,vec2f(1.,-400.*gp.tile),vec2f(gp.cols*gp.tile-1.,(gp.rows+1.)*gp.tile));
+  pos[i]=vec4f(next,velocity);aux[i]=vec4f(aux[i].x,0.,p.xy);
+  affine[i]=vec4f(exposure,0.,0.,size);flag[i]=fl&~0x00ffff10u;
+}
+fn contactParticle(i:u32, shield:bool) {
+  if(i>=gp.count){return;}let fl=flag[i];if(!isSnow(fl)||(fl&32u)!=0u){return;}
+  let p=before[i];if(grainOutsideRegion(p.xy)){return;}let diameter=airParams.wind.z;
+  let cell=vec2i(floor(p.xy*gp.inv))-vec2i(bitcast<i32>(gp.ox),bitcast<i32>(gp.oy));
+  var correction=vec2f(0.);var impulse=vec2f(0.);var count=0.;var support=0.;var density=0.;
+  var source=vec2f(0.,-1.);
+  if(shield){
+  let flow=flowAt(p.xy);let wind=airParams.wind.x+12.*sin(airParams.wind.y*.43+p.y*.006);
+  source=-vec2f(wind+flow.x,flow.y-flow.z);
+  if(gameP.player.x>.5&&gameP.rocket.x>.5&&gameP.rocket.y>.01){
+    source=gameP.player.yz+vec2f(PLAYER_W*.5,PLAYER_H)-p.xy;
+  }
+  if(length(source)<.0001){source=vec2f(0.,-1.);}else{source=normalize(source);}
+  }
+  let reach=diameter*2.5;var occlusion=0.;
+  for(var y=-2;y<=2;y++){for(var x=-2;x<=2;x++){
+    let c=cell+vec2i(x,y);if(any(c<vec2i(0))||c.x>=i32(gp.width)||c.y>=i32(gp.height)){continue;}
+    let index=u32(c.y)*gp.width+u32(c.x);let start=cellStart[index];let n=cellCount[index];
+    for(var k=0u;k<n;k++){
+      let j=sortedIdx[start+k];if(j==i||!isSnow(flag[j])){continue;}
+      let q=before[j];let delta=p.xy-q.xy;let d2=dot(delta,delta);
+      if(!shield&&d2>=diameter*diameter){continue;}
+      if(shield&&d2<6.25){density+=1.-sqrt(d2)/2.5;}
+      let along=dot(-delta,source);let across=abs(delta.x*source.y-delta.y*source.x);
+      if(shield&&along>0.&&across<diameter*.7&&d2<reach*reach){
+        occlusion+=(1.-across/(diameter*.7))*(1.-sqrt(d2)/reach);
+      }
+      if(d2>=diameter*diameter){continue;}
+      var normal=vec2f(0.);var distance=0.;
+      if(d2>1e-10){distance=sqrt(d2);normal=delta/distance;}
+      else{
+        var h=min(i,j)*747796405u+max(i,j)*2891336453u;h=(h^(h>>16u))*2246822519u;
+        let angle=f32(h&65535u)*.000095875262;normal=vec2f(cos(angle),sin(angle))*select(-1.,1.,i<j);
+      }
+      correction+=normal*(diameter-distance)*.5;count+=1.;
+      let relative=p.zw-q.zw;let closing=min(0.,dot(relative,normal));let normalImpulse=-closing*.5;
+      let tangent=relative-normal*dot(relative,normal);let tangentSpeed=length(tangent);
+      impulse+=normal*normalImpulse-tangent*min(.5,.35*normalImpulse/max(tangentSpeed,.00001));
+      if(normal.y<-.35){support=max(support,-normal.y);}
+    }
+  }}
+  let scale=1./max(1.,count*.5);
+  let shift=correction*scale;
+  var velocity=p.zw+impulse*scale;
+  let constraint=shift/airParams.rect.w;let constraint2=dot(constraint,constraint);
+  let inward=dot(velocity,constraint);
+  // Reconcile blocked motion with velocity, without creating outward energy.
+  // Leaving gravity in velocity while projecting only position crushed piles.
+  if(inward<0.&&constraint2>1e-12){velocity+=constraint*min(1.,-inward/constraint2);}
+  pos[i]=vec4f(p.xy+shift,velocity);
+  aux[i]=vec4f(select(aux[i].x,1.+density,shield),max(aux[i].y,support),p.xy);
+  if(shield){affine[i].x=exp(-occlusion);}
+}
+@compute @workgroup_size(256)
+fn contacts(@builtin(global_invocation_id) id:vec3u){contactParticle(id.x,false);}
+@compute @workgroup_size(256)
+fn shield(@builtin(global_invocation_id) id:vec3u){contactParticle(id.x,true);}
+`;
+  // Correct the nozzle field against the current resident snow surface.
+  // The CPU mirror never defines this boundary; falling grains sample the
+  // same projected air as grains in contact, including above a deep pile.
+  var WGSL_SNOW_BOUNDARY = /* wgsl */ `
+struct AirParams { rect:vec4f, domain:vec4f, wind:vec4f, rig:vec4f };
+@group(0) @binding(0) var<uniform> ap:AirParams;
+@group(0) @binding(1) var<storage,read> pos:array<vec4f>;
+@group(0) @binding(2) var<storage,read> flags:array<u32>;
+@group(0) @binding(3) var<storage,read_write> mass:array<atomic<u32>>;
+@group(0) @binding(4) var<storage,read_write> field:array<vec4f>;
+@group(0) @binding(5) var<storage,read> pressureIn:array<f32>;
+@group(0) @binding(6) var<storage,read_write> pressureOut:array<f32>;
+@group(0) @binding(7) var inlet:texture_2d<f32>;
+@group(0) @binding(8) var outlet:texture_storage_2d<rgba32float,write>;
+fn index(c:vec2i)->u32 { return u32(c.y*64+c.x); }
+fn occupied(c:vec2i)->f32 {
+  if(any(c<vec2i(0))||any(c>=vec2i(64))){return 0.;}
+  if(textureLoad(inlet,c,0).z<.5){return 1.;}
+  let packing=f32(atomicLoad(&mass[index(c)]))/4096.*ap.wind.z*ap.wind.z*.8660254/(ap.rect.z*ap.rect.z);
+  return smoothstep(.15,.6,packing);
+}
+fn openFace(c:vec2i,axis:vec2i)->f32 { return (1.-occupied(c))*(1.-occupied(c-axis)); }
+fn baseFace(c:vec2i)->vec2f {
+  let uv=textureLoad(inlet,clamp(c,vec2i(0),vec2i(63)),0).xy;
+  let left=textureLoad(inlet,clamp(c-vec2i(1,0),vec2i(0),vec2i(63)),0).x;
+  let above=textureLoad(inlet,clamp(c-vec2i(0,1),vec2i(0),vec2i(63)),0).y;
+  return vec2f((uv.x+left)*.5*openFace(c,vec2i(1,0)),(uv.y+above)*.5*openFace(c,vec2i(0,1)));
+}
+@compute @workgroup_size(256)
+fn clear(@builtin(global_invocation_id) id:vec3u){
+  if(id.x>=4096u){return;}atomicStore(&mass[id.x],0u);pressureOut[id.x]=0.;
+}
+@compute @workgroup_size(256)
+fn splat(@builtin(global_invocation_id) id:vec3u){
+  let i=id.x;if(i>=u32(ap.domain.z)){return;}
+  let fl=flags[i];if(((fl&3u)|((fl>>4u)&4u))!=5u||(fl&32u)!=0u){return;}
+  let p=(pos[i].xy-ap.rect.xy)/ap.rect.z-vec2f(.5);let cell=vec2i(floor(p));let f=fract(p);
+  for(var y=0;y<2;y++){for(var x=0;x<2;x++){
+    let c=cell+vec2i(x,y);if(any(c<vec2i(0))||any(c>=vec2i(64))){continue;}
+    let weight=select(1.-f.x,f.x,x==1)*select(1.-f.y,f.y,y==1);
+    atomicAdd(&mass[index(c)],u32(round(weight*4096.)));
+  }}
+}
+@compute @workgroup_size(256)
+fn prepare(@builtin(global_invocation_id) id:vec3u){
+  let i=id.x;if(i>=4096u){return;}let c=vec2i(i32(i%64u),i32(i/64u));
+  let uv=baseFace(c);let div=baseFace(c+vec2i(1,0)).x-uv.x+baseFace(c+vec2i(0,1)).y-uv.y;
+  field[i]=vec4f(uv,div,occupied(c));pressureOut[i]=0.;
+}
+@compute @workgroup_size(256)
+fn pressure(@builtin(global_invocation_id) id:vec3u){
+  let i=id.x;if(i>=4096u){return;}let c=vec2i(i32(i%64u),i32(i/64u));
+  if(any(c<=vec2i(0))||any(c>=vec2i(63))){pressureOut[i]=0.;return;}
+  let empty=1.-field[i].w;
+  let weights=empty*(vec4f(1.)-vec4f(field[i-1u].w,field[i+1u].w,field[i-64u].w,field[i+64u].w));
+  let sum=dot(weights,vec4f(1.));
+  let neighbors=vec4f(pressureIn[i-1u],pressureIn[i+1u],pressureIn[i-64u],pressureIn[i+64u]);
+  pressureOut[i]=select(0.,(dot(weights,neighbors)-field[i].z)/max(sum,.000001),sum>.000001);
+}
+fn face(c:vec2i)->vec2f {
+  let i=index(c);let p=pressureIn[i];let empty=1.-field[i].w;
+  return field[i].xy-empty*vec2f((1.-field[i-1u].w)*(p-pressureIn[i-1u]),
+    (1.-field[i-64u].w)*(p-pressureIn[i-64u]));
+}
+@compute @workgroup_size(256)
+fn finish(@builtin(global_invocation_id) id:vec3u){
+  let i=id.x;if(i>=4096u){return;}let c=vec2i(i32(i%64u),i32(i/64u));
+  if(any(c<=vec2i(0))||any(c>=vec2i(63))){textureStore(outlet,c,vec4f(0.));return;}
+  var edge=clamp(f32(min(min(c.x,c.y),min(63-c.x,63-c.y)))/4.,0.,1.);edge=edge*edge*(3.-2.*edge);
+  let world=ap.rect.xy+(vec2f(c)+vec2f(.5))*ap.rect.z;
+  let distance=world-ap.rig.xy;
+  let r=vec2f(distance.x/348.,distance.y/select(576.,120.,distance.y<0.));
+  let radius=sqrt(sqrt(dot(r*r,r*r)));
+  var fade=clamp((1.-radius)/.3,0.,1.);fade=fade*fade*(3.-2.*fade);edge*=fade;
+  let uv=face(c);let empty=1.-field[i].w;
+  // Face values are volume flux. Drag samples the velocity in the open
+  // fraction, otherwise a half-filled surface damps its air a second time.
+  let velocity=vec2f((uv.x+face(c+vec2i(1,0)).x)*.5,(uv.y+face(c+vec2i(0,1)).y)*.5)/max(.1,empty)*edge;
+  var surface=0.;for(var below=1;below<=3&&c.y+below<64;below++){
+    surface=max(surface,field[i+u32(below)*64u].w*f32(4-below)/3.);
+  }
+  let time=ap.wind.w;
+  let gust=.72+.28*sin(world.x*.17+world.y*.11+time*9.7)*sin(world.x*.071-world.y*.13-time*6.3);
+  let impact=max(0.,textureLoad(inlet,c,0).y-velocity.y);
+  let lift=min(460.,max(max(0.,abs(velocity.x)-12.)*4.8,impact*2.))*surface*gust*edge;
+  textureStore(outlet,c,vec4f(velocity,empty,lift));
 }
 `;
-  function buildSnowAirPipeline(instance) {
-    if (instance.snowAirPipeline) return;
-    var dev = instance.device;
-    // Matches the fixed local MAC domain in 159-snow-air.js.
-    var a = { w: 64, h: 64 };
-    instance.snowAirTexture = dev.createTexture({ label: 'snow.air', size: [a.w, a.h], format: 'rgba32float',
-      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
-    instance.snowAirParams = dev.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-    instance.snowAirHost = new Float32Array(8);
-    var mod = dev.createShaderModule({ code: WGSL_SNOW_AIR });
-    var bgl = dev.createBindGroupLayout({ entries: [
-      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-      { binding: 4, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'unfilterable-float' } }
-    ] });
-    instance.snowAirPipeline = dev.createComputePipeline({ label: 'snow.airDrag', layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }), compute: { module: mod, entryPoint: 'main' } });
-    instance.snowAirBG = dev.createBindGroup({ layout: instance.snowAirPipeline.getBindGroupLayout(0), entries: [
-      { binding: 0, resource: { buffer: instance.snowAirParams } },
-      { binding: 1, resource: { buffer: instance.buf.pos } },
-      { binding: 2, resource: { buffer: instance.buf.aux } },
-      { binding: 3, resource: { buffer: instance.buf.flag } },
-      { binding: 4, resource: instance.snowAirTexture.createView() }
-    ] });
-
+  function buildSnowBoundary(instance) {
+    var dev=instance.device;
+    instance.snowProjectedAir=dev.createTexture({label:'snow.surfaceAir',size:[64,64],format:'rgba32float',
+      usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING|GPUTextureUsage.COPY_SRC});
+    ['snowAirMass','snowAirPressure0','snowAirPressure1'].forEach(function(name){
+      instance.buf[name]=dev.createBuffer({label:name,size:4096*4,usage:GPUBufferUsage.STORAGE});
+    });
+    instance.buf.snowAirField=dev.createBuffer({label:'snow.airFaces',size:4096*16,usage:GPUBufferUsage.STORAGE});
+    var entries=[{binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}];
+    for(var b=1;b<=6;b++)entries.push({binding:b,visibility:GPUShaderStage.COMPUTE,
+      buffer:{type:[1,2,5].indexOf(b)>=0?'read-only-storage':'storage'}});
+    entries.push({binding:7,visibility:GPUShaderStage.COMPUTE,texture:{sampleType:'unfilterable-float'}},
+      {binding:8,visibility:GPUShaderStage.COMPUTE,storageTexture:{access:'write-only',format:'rgba32float'}});
+    var bgl=dev.createBindGroupLayout({entries:entries}),layout=dev.createPipelineLayout({bindGroupLayouts:[bgl]});
+    var module=dev.createShaderModule({code:WGSL_SNOW_BOUNDARY});instance.snowBoundaryPipes={};
+    ['clear','splat','prepare','pressure','finish'].forEach(function(name){
+      instance.snowBoundaryPipes[name]=dev.createComputePipeline({label:'snow.air.'+name,layout:layout,compute:{module:module,entryPoint:name}});
+    });
+    instance.snowBoundaryBG=[0,1].map(function(ping){
+      var buffers=[instance.snowGrainParams,instance.buf.pos,instance.buf.flag,instance.buf.snowAirMass,
+        instance.buf.snowAirField,instance.buf['snowAirPressure'+ping],instance.buf['snowAirPressure'+(1-ping)]];
+      var binds=buffers.map(function(buffer,binding){return {binding:binding,resource:{buffer:buffer}};});
+      binds.push({binding:7,resource:instance.snowAirTexture.createView()},{binding:8,resource:instance.snowProjectedAir.createView()});
+      return dev.createBindGroup({layout:bgl,entries:binds});
+    });
   }
-  function runSnowAir(instance, dt) {
-    var a = instance.liquid && instance.liquid.getSnowAir ? instance.liquid.getSnowAir() : null;
-    if (!a || !a.active || !instance.uploadedCount) return;
-    buildSnowAirPipeline(instance);
-    instance.queue.writeTexture({ texture: instance.snowAirTexture }, a.field, { bytesPerRow: a.w * 16 }, [a.w, a.h]);
-    var host = instance.snowAirHost;
-    host[0]=a.x; host[1]=a.y; host[2]=a.cell; host[3]=dt;
-    host[4]=a.w; host[5]=a.h; host[6]=instance.uploadedCount; host[7]=0;
-    instance.queue.writeBuffer(instance.snowAirParams, 0, host);
-    var enc = liquidEncoder(instance, 'snow.airDrag');
-    var pass = enc.beginComputePass({ label: 'snow.airDrag' });
-    pass.setPipeline(instance.snowAirPipeline); pass.setBindGroup(0, instance.snowAirBG);
-    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount / 256)); pass.end();
-    liquidSubmit(instance, enc);
+  function runSnowBoundary(instance) {
+    if(!instance.snowGrainHost[7])return;
+    var pass=instance.frameEncoder.beginComputePass({label:'snow.surfaceAir'});
+    function dispatch(name,ping,count){
+      pass.setPipeline(instance.snowBoundaryPipes[name]);pass.setBindGroup(0,instance.snowBoundaryBG[ping]);
+      pass.dispatchWorkgroups(Math.ceil(count/256));
+    }
+    dispatch('clear',0,4096);dispatch('splat',0,instance.uploadedCount);dispatch('prepare',1,4096);
+    for(var iteration=0;iteration<60;iteration++)dispatch('pressure',iteration%2,4096);
+    dispatch('finish',0,4096);pass.end();
+  }
+
+  function buildSnowGrainPipeline(instance) {
+    if (instance.snowGrainPipe) return;
+    var dev=instance.device;
+    instance.buf.snowBefore=dev.createBuffer({label:'snow.contactSnapshot',size:instance.maxParticles*16,
+      usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+    instance.snowGrainParams=dev.createBuffer({label:'snow.params',size:64,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    instance.snowGrainHost=new Float32Array(16);
+    instance.snowAirTexture=dev.createTexture({label:'snow.air',size:[64,64],format:'rgba32float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST});
+    buildSnowBoundary(instance);
+    var entries=[{binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
+      {binding:1,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}];
+    for(var b=2;b<=9;b++)entries.push({binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:[3,7,8,9].indexOf(b)>=0?'read-only-storage':'storage'}});
+    entries.push({binding:10,visibility:GPUShaderStage.COMPUTE,texture:{sampleType:'unfilterable-float'}},
+      {binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}});
+    var bgl=dev.createBindGroupLayout({entries:entries}),layout=dev.createPipelineLayout({bindGroupLayouts:[bgl]});
+    var module=dev.createShaderModule({code:WGSL_SNOW_GRAINS});
+    instance.snowGrainPipe={};
+    ['predict','contacts','shield'].forEach(function(name){instance.snowGrainPipe[name]=dev.createComputePipeline({label:'snow.'+name,layout:layout,compute:{module:module,entryPoint:name}});});
+    var buffers=[instance.paramsBuf,instance.snowGrainParams,instance.buf.pos,instance.buf.snowBefore,
+      instance.buf.aux,instance.buf.flag,instance.buf.affine,instance.buf.cellCount,instance.buf.cellStart,instance.buf.sortedIdx];
+    var binds=buffers.map(function(buffer,index){return {binding:index,resource:{buffer:buffer}};});
+    binds.push({binding:10,resource:instance.snowProjectedAir.createView()},
+      {binding:11,resource:{buffer:instance.gameParamsBufs[0]}});
+    instance.snowGrainBG=dev.createBindGroup({layout:bgl,entries:binds});
+  }
+  function prepareSnowGrains(instance,dt) {
+    buildSnowGrainPipeline(instance);
+    var a=instance.liquid&&instance.liquid.getSnowAir?instance.liquid.getSnowAir():null;
+    var h=instance.snowGrainHost;
+    h[0]=a?a.x:0;h[1]=a?a.y:0;h[2]=a?a.cell:12;h[3]=dt;
+    h[4]=64;h[5]=64;h[6]=instance.uploadedCount;h[7]=a&&a.active?1:0;
+    h[8]=a&&a.wind||0;h[9]=a&&a.clock||0;h[10]=instance.cellSize/Math.sqrt(LIQUID_SNOW_DENSITY);h[11]=a&&a.time||0;h[12]=a&&a.rigX||0;h[13]=a&&a.rigY||0;h[14]=h[15]=0;
+    if(a&&a.active)instance.queue.writeTexture({texture:instance.snowAirTexture},a.grainField||a.field,{bytesPerRow:a.w*16},[a.w,a.h]);
+    instance.queue.writeBuffer(instance.snowGrainParams,0,h);
+  }
+  function runSnowGrains(instance,kind) {
+    var enc=instance.frameEncoder;
+    if(kind!=='predict')enc.copyBufferToBuffer(instance.buf.pos,0,instance.buf.snowBefore,0,instance.uploadedCount*16);
+    var pass=enc.beginComputePass({label:'snow.'+kind});
+    pass.setPipeline(instance.snowGrainPipe[kind]);pass.setBindGroup(0,instance.snowGrainBG);
+    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.end();
   }
 
   function runFrame(instance, dt) {
@@ -10252,10 +10570,17 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
     // avoiding an encoder and command buffer per stage per substep. The
     // physics uniform is constant throughout this synchronous frame.
     writeSimParams(instance);
+    var hasSnow = false;
+    for (var snowIndex = 0; snowIndex < count; snowIndex++) {
+      if (L.arrays.type[snowIndex] === 5) { hasSnow = true; break; }
+    }
+    var grainSteps = Math.max(1, Math.ceil(instance.stepDt / LIQUID_TIMESCALE * 240));
+    if (hasSnow) prepareSnowGrains(instance, instance.stepDt / LIQUID_TIMESCALE / grainSteps);
     var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
     instance.frameEncoder = frameEncoder;
     try {
-      runSnowAir(instance, instance.stepDt * subSteps);
+      if (hasSnow) runSnowBoundary(instance);
+
       for (var ss = 0; ss < subSteps; ss++) {
         buildGrid(instance, ss > 0);
         runDeclump(instance);
@@ -10263,6 +10588,17 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
         runGrid2(instance, ss, true);
         runG2P(instance);
         runCollide(instance, ss);
+        if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
+          runSnowGrains(instance, 'predict');
+          runCollide(instance, ss, true);
+          // G2P has consumed the liquid fields. Rebuild only the neighbor
+          // index at the grains' predicted positions for contact queries.
+          buildGrid(instance, true);
+          for (var contact = 0; contact < 8; contact++) {
+            runSnowGrains(instance, contact === 7 ? 'shield' : 'contacts');
+            runCollide(instance, ss, true);
+          }
+        }
       }
       // Clear the last substep's active blocks before its grid mapping moves.
       runSparseEndClear(instance);
@@ -10273,11 +10609,8 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
       // an unfinished encoder or suppress their physics-uniform refresh.
       instance.frameEncoder = null;
     }
-    // 7. Snow hands actual grains from this solver to airborne motion.
-    // While its air field is active, offer a fresh async snapshot each
-    // frame so that handoff can use the last rendered positions. A pending
-    // map still skips the request; nothing waits for GPU completion here.
-    // Ordinary liquid play keeps the existing sparse mirror cadence.
+    // 7. The mirror supports tools, persistence and water-contact melting.
+    // Snow motion stays resident and never waits for these snapshots.
     var snowReadbackAir = L && L.getSnowAir ? L.getSnowAir() : null;
     var readbackEvery = snowReadbackAir && snowReadbackAir.active ? 1 : LIQUID_READBACK_EVERY;
     if ((instance.readbackTick % readbackEvery) === 0) {
@@ -11081,7 +11414,8 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
         if (instance.renderParamsBuf) { try { instance.renderParamsBuf.destroy(); } catch (_) {} }
         if (instance.surfSnowTex) { try { instance.surfSnowTex.destroy(); } catch (_) {} }
         if (instance.snowAirTexture) { try { instance.snowAirTexture.destroy(); } catch (_) {} }
-        if (instance.snowAirParams) { try { instance.snowAirParams.destroy(); } catch (_) {} }
+        if (instance.snowProjectedAir) { try { instance.snowProjectedAir.destroy(); } catch (_) {} }
+        if (instance.snowGrainParams) { try { instance.snowGrainParams.destroy(); } catch (_) {} }
         if (instance.snowRenderPos) { try { instance.snowRenderPos.destroy(); } catch (_) {} }
         if (instance.snowRenderFlags) { try { instance.snowRenderFlags.destroy(); } catch (_) {} }
         if (instance.terrainRenderBuf) { try { instance.terrainRenderBuf.destroy(); } catch (_) {} }

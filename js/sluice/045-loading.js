@@ -29,6 +29,21 @@
     player.thrusting = false;
   }
 
+  function requireSnowGPU() {
+    if (!gameLoadingAssetsReady || !worldSnowEnabled ||
+        (liquidWGPU && liquidWGPU.simActive && !liquidWGPU.failed)) return true;
+    // Snow has one supported physics backend. Stop before advancing the
+    // world or autosaving if startup failed or the GPU device was lost.
+    var message = 'Snow physics requires WebGPU. Enable hardware acceleration in a WebGPU-capable browser, then reload.';
+    if (window.SluiceLoading && !window.SluiceLoading.active()) beginSceneLoading('Snow physics unavailable', false);
+    introPhase = 'blocked';
+    clearLoadingInput();
+    if (window.SluiceAudio) window.SluiceAudio.setPaused(true);
+    window.__bootErr = message;
+    if (window.SluiceLoading) window.SluiceLoading.fail(message, 'water');
+    return false;
+  }
+
   function beginSceneLoading(label, hasWork) {
     gameLoadingGeneration++;
     introPhase = 'warmup';

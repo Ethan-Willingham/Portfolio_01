@@ -121,8 +121,10 @@ and snow saves join the mixed cycle while preserving their material and front.
 Passing showers feed three finite stone-lined lakes. Drops become collectable
 water, soak into dirt and town foundations, and fall down open shafts. See
 [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for storage and verification.
-Snow uses the existing particle solver. Tracks, jets and blasts move the actual
-grains. Snow melts only on contact with water or as the clouds part over exposed
+Snow uses independent grain contacts within the existing particle storage.
+The same grains and velocities persist through lifting, flight and landing.
+Snow physics requires WebGPU.
+Tracks, jets and blasts move the actual grains. Snow melts only on contact with water or as the clouds part over exposed
 snow; player proximity, foundations, jets and tools add no heat. The scoop stores
 and releases snow as snow. Down still reaches the dirt to drill. See
 [PARTICLE_SNOW.md](PARTICLE_SNOW.md).
@@ -218,7 +220,7 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `190-smoke-webgl.js` / `191-rig-exhaust.js` / `195-exhaust-catalog.js` | independent smoke solver instances, live rig exhaust adapter, cosmetic catalog, ownership and persistence |
 | `297-cargo-manifest.js` | current cargo inspection: grouped mineral quantities, exact prices, responsive pages, and modal input |
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
-| `157-particle-rain.js` / `158-rain-lakes.js` / `159-snow-*.js` | physical weather, finite lakes, shared-solver snow and melting |
+| `157-particle-rain.js` / `158-rain-lakes.js` / `159-snow-*.js` | physical weather, finite lakes, granular snow and melting |
 | `156-render-planet.js` | pixel-art continents and oceans below the sky horizon, lit by the existing day/night cycle |
 | `165-render-trees.js` / `166-render-surface-boulders.js` | open woodland and scattered surface stones, derived from supporting terrain |
 | `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary white heron |
