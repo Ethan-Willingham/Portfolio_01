@@ -2435,6 +2435,7 @@
   //  - UN-STICK: the fully-enclosed fallback walks toward the body centroid for
   //    an open cell when ox/oy is ALSO solid - never welds a point in a wall.
   function jelloCollidePointWorld(b, i, h) {
+    if (typeof softTerrainBody === 'function' && softTerrainBody(b) && softTerrainPoint(b, i, h || JELLO_H)) return;
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     var x = px[i], y = py[i];
     if (!isFinite(x) || !isFinite(y)) {
@@ -2617,6 +2618,7 @@
   // The pushout is split half/half to the edge's endpoints, velocity-free (ox follows px),
   // so it lifts the chord off the corner without injecting energy. -----
   function jelloCollideRingEdges(b) {
+    if (typeof softTerrainBody === 'function' && softTerrainBody(b)) { softTerrainEdges(b, jelloStepH || JELLO_H); return; }
     var ring = b.ring, rn = b.ringN; if (!ring || rn < 3) return;
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     var prev = ring[rn - 1];
@@ -4288,6 +4290,7 @@
       }
       surfaceSlimeDampMotion(b, h);
     }
+    if (typeof softTerrainSolve === 'function') softTerrainSolve(b, h);
     if (resilienceGuard) jelloRejectTerrainInside(b);
     if (resilienceGuard) jelloResilienceStepEnd(b);
   }
@@ -4370,6 +4373,7 @@
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
       var g2x = (py[i0] - py[i1]) * detInv, g2y = (px[i1] - px[i0]) * detInv;
+      var unconstrainedDen = g0x * g0x + g0y * g0y + g1x * g1x + g1y * g1y + g2x * g2x + g2y * g2y;
       if (b.surfaceSlime) {
         // A foot already on the floor cannot contribute motion INTO it.
         // Without this contact-aware gradient the area constraint moved feet
@@ -4393,9 +4397,18 @@
         var sc = maxMove / largest;
         c0x *= sc; c0y *= sc; c1x *= sc; c1y *= sc; c2x *= sc; c2y *= sc;
       }
-      px[i0] += c0x; py[i0] += c0y; ox[i0] += c0x; oy[i0] += c0y;
-      px[i1] += c1x; py[i1] += c1y; ox[i1] += c1x; oy[i1] += c1y;
-      px[i2] += c2x; py[i2] += c2y; ox[i2] += c2x; oy[i2] += c2y;
+      // A terrain-masked gradient carries an external contact reaction. The
+      // terrain trial includes that displacement in velocity; co-moving its
+      // history would leave momentum aimed into a wall while geometry stops.
+      var keepHistory = den < unconstrainedDen && typeof softTerrainBody === 'function' && softTerrainBody(b);
+      px[i0] += c0x; py[i0] += c0y;
+      px[i1] += c1x; py[i1] += c1y;
+      px[i2] += c2x; py[i2] += c2y;
+      if (!keepHistory) {
+        ox[i0] += c0x; oy[i0] += c0y;
+        ox[i1] += c1x; oy[i1] += c1y;
+        ox[i2] += c2x; oy[i2] += c2y;
+      }
       fixed++;
     }
     b._orientFixes = fixed;
@@ -4428,8 +4441,10 @@
   // paid during the short resilience window, or throughout the opt-in material
   // handling trial, whose release does not use timed shape recovery.
   function jelloResilienceStepBegin(b) {
+    if (typeof softTerrainBody === 'function' && softTerrainBody(b)) b._terrainStepHit = false;
     if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive &&
-        !(typeof softHandlingBody === 'function' && softHandlingBody(b))) return false;
+        !(typeof softHandlingBody === 'function' && softHandlingBody(b)) &&
+        !(typeof softTerrainBody === 'function' && softTerrainBody(b))) return false;
     if (!b._guardPX || b._guardPX.length < b.n) {
       b._guardPX = new Float64Array(b.px.length);
       b._guardPY = new Float64Array(b.py.length);
@@ -4770,7 +4785,8 @@
   // then the ordinary contact solve gets one clean pose to push against.
   function jelloRejectGrabAfterContact(b, active, nActive) {
     if (!b._grabbed || !b._guardPX) return false;
-    var heldFold = jelloHasOrientationFold(b);
+    var heldFold = jelloHasOrientationFold(b) ||
+      (typeof softTerrainBody === 'function' && softTerrainBody(b) && softTerrainSkinCrossed(b));
     var offender = null, reason = '';
     for (var i = 0; i < nActive; i++) {
       var other = active[i];
@@ -6012,6 +6028,7 @@
       // discard the attempted grip step when contact made the pose illegal.
       for (ai = 0; ai < nActive; ai++) {
         b = active[ai];
+        if (b._solve && typeof softTerrainSolve === 'function') softTerrainSolve(b, h);
         if (b._solve && b._grabbed && b._grabApplied) {
           // Contact can also press a legal ring around terrain after the body's
           // internal terrain pass. That is the same failed-input case.
@@ -6227,11 +6244,14 @@
           // a full response fired once per FRAME outside the substep cadence
           // fought the in-substep machinery and set a wedged body's outline
           // flip-flopping 14px (harness-caught). Translation only; the next
-          // frame's substeps own the dynamics.
+          // frame's substeps own the dynamics. The terrain trial retains its
+          // local normal response so a late correction cannot bank momentum.
           var _lx0 = b.px[lz], _ly0 = b.py[lz], _lox = b.ox[lz], _loy = b.oy[lz];
           jelloCollidePointWorld(b, lz, jelloStepH);
-          b.ox[lz] = _lox + (b.px[lz] - _lx0);
-          b.oy[lz] = _loy + (b.py[lz] - _ly0);
+          if (!(typeof softTerrainBody === 'function' && softTerrainBody(b))) {
+            b.ox[lz] = _lox + (b.px[lz] - _lx0);
+            b.oy[lz] = _loy + (b.py[lz] - _ly0);
+          }
         }
       }
     }

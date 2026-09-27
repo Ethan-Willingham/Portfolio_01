@@ -2,10 +2,11 @@
      Disposable world: each replay starts with the same resident and rig pose.
      The ordinary game keeps the restored baseline until this trial is chosen. */
   var softPlayEnabled = new URLSearchParams(location.search).get('softplay') === '1';
-  var softPlayHandling = new URLSearchParams(location.search).has('softhandling');
+  var softPlayTerrainTrial = new URLSearchParams(location.search).has('softterrain');
+  var softPlayHandling = new URLSearchParams(location.search).has('softhandling') || softPlayTerrainTrial;
   if (softPlayEnabled && softPlayHandling) SOFT_CONTACT = true;
   var softPlayReady = false;
-  var softPlayCase = softPlayHandling ? 'free' : 'center';
+  var softPlayCase = softPlayTerrainTrial ? 'ledge' : softPlayHandling ? 'free' : 'center';
   var softPlayDrive = 0;
   var softPlayTime = 0;
   var softPlayButtons = [];
@@ -90,7 +91,7 @@
     cam.snap = true;
     for (i = 0; i < softPlayButtons.length; i++) {
       var entry = softPlayButtons[i];
-      var on = entry.mode === (softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
+      var on = entry.mode === (softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
       entry.button.setAttribute('aria-pressed', on ? 'true' : 'false');
       entry.button.style.background = on ? 'var(--accent)' : 'var(--bg-raised)';
       entry.button.style.color = on ? 'var(--bg-raised)' : 'var(--text)';
@@ -105,9 +106,9 @@
       var panel = document.createElement('div');
       panel.id = 'soft-contact-playtest';
       panel.setAttribute('role', 'group');
-      panel.setAttribute('aria-label', softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
+      panel.setAttribute('aria-label', softPlayTerrainTrial ? 'Soft slime terrain comparison' : softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
       panel.style.cssText = 'position:absolute;top:10px;left:62px;right:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--bg-raised);border:1px solid var(--rule-strong);font:12px var(--font-mono);color:var(--text);';
-      var title = document.createElement('span'); title.textContent = softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
+      var title = document.createElement('span'); title.textContent = softPlayTerrainTrial ? 'SLIME TERRAIN' : softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
       title.style.marginRight = '6px'; panel.appendChild(title);
       function button(label, action) {
         var el = document.createElement('button'); el.type = 'button'; el.textContent = label;
@@ -115,12 +116,13 @@
         el.addEventListener('click', action); panel.appendChild(el); return el;
       }
       function choose(mode) {
-        if (softPlayHandling) SOFT_HANDLING = mode;
+        if (softPlayTerrainTrial) SOFT_TERRAIN = mode;
+        else if (softPlayHandling) SOFT_HANDLING = mode;
         else SOFT_CONTACT = mode;
         softPlayReset();
       }
-      softPlayButtons.push({ mode: true, button: button(softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
-      softPlayButtons.push({ mode: false, button: button(softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
+      softPlayButtons.push({ mode: true, button: button(softPlayTerrainTrial ? 'New terrain' : softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
+      softPlayButtons.push({ mode: false, button: button(softPlayTerrainTrial ? 'Prior terrain' : softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
       var select = document.createElement('select'); select.setAttribute('aria-label', 'Interaction');
       select.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
       var cases = softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
@@ -128,10 +130,12 @@
       for (var i = 0; i < cases.length; i++) {
         var option = document.createElement('option'); option.value = cases[i][0]; option.textContent = cases[i][1]; select.appendChild(option);
       }
+      select.value = softPlayCase;
       select.addEventListener('change', function () { softPlayCase = select.value; softPlayReset(); });
       panel.appendChild(select); button('Repeat', softPlayReset);
       var help = document.createElement('span');
-      help.textContent = softPlayHandling ? 'Grab different spots, pull, swing, and let go. Saves are off.' :
+      help.textContent = softPlayTerrainTrial ? 'Pull across the ledge or slide against the wall, then let go. Saves are off.' :
+        softPlayHandling ? 'Grab different spots, pull, swing, and let go. Saves are off.' :
         'Drive, fly, or drag the slime. Saves are off.';
       help.style.cssText = 'color:var(--text-dim);flex-basis:100%;line-height:1.5;'; panel.appendChild(help);
       canvas.parentElement.appendChild(panel);

@@ -189,3 +189,71 @@ roughly 300 px/s of invisible motion. After the history fix, the stationary
 wall hold releases at zero velocity at all three rates. Off-center swings
 retain their simulated spin. These checks establish continuity and safety;
 they do not establish a preferred feel or identical trajectories across rates.
+
+## Terrain contact comparison (v28.112)
+
+Open `grand-motherload.html?softplay=1&softterrain=1`. **New terrain** and
+**Prior terrain** hold physical handling and rig contact constant. Both use
+the same material, autonomous movement, and visible test arrangements. Saves
+are disabled, and the ordinary game retains its accepted baseline.
+
+The terrain trial replaces endpoint-only point collision and midpoint skin
+collision with swept point contacts, exact skin-segment/tile intersection,
+and moving-edge contacts with exposed convex tile corners. Each constraint
+acts on the contacting node or the two nodes that support that skin location.
+The correction uses their weights and effective mass. Tangential velocity is
+retained subject to friction bounded by the inward normal impulse. Internal
+tile seams do not create corner contacts.
+
+Terrain and the existing orientation constraint converge locally before
+validation, including after global contact and after release. A triangle whose
+orientation gradient is constrained by terrain now includes the resulting wall
+reaction in its velocity. Previously that correction could stop the visible
+body while preserving its momentum into the wall. Free-space orientation
+corrections retain the baseline behavior. Atomic rollback remains a fallback
+for unresolved invalid manipulation, not the intended response to pressure.
+Skin crossings are checked independently of the health triangles: a shallow
+fold at a floor/wall corner can leave every triangle facing correctly. Local
+self-contact and terrain constraints close together before accepting the step.
+
+The comparison harness is `tools/test-soft-terrain.mjs`. It checks the entire
+skin and enclosed terrain samples, rather than treating legal nodes alone as
+proof of a legal body. Floor pressure, wall sliding and reversal, ledge pulls,
+and removal of support are compared at multiple display rates. Separate
+free-flight and held-in-air comparisons protect unchanged motion away from
+terrain. Tests establish safety and continuity; preference still comes from
+playing the comparison.
+
+The terrain comparison passed 24 A/B cases at 30, 60, and 144 Hz, plus 12 real
+mouse/touch interactions. The new mode had no embedded nodes, skin/terrain
+intersections, enclosed terrain samples, self-crossings, or inverted health
+triangles in these fixtures. Free-flight and held-in-air node histories were
+identical with terrain toggled. Release preserved all node histories, and
+Repeat, cancellation, mobile controls, and ordinary-game defaults passed.
+Floor-pressure rollback counts fell from 979-1046 to zero; wall-slide counts
+fell from 1185-1200 to at most one. The new mode continued sliding and reversing
+under pressure, with no frozen or tangentially stuck frames in these fixtures.
+The final run used native CPU canvas rendering with the existing timer-RAF
+test hook and actual loading gates; GPU rendering was not validated in that run.
+
+## Remaining development sequence
+
+After terrain contact earns its place, compare one mechanism at a time:
+
+1. Material response: compression, stretch, surface tension, and internal
+   motion settling, with the existing mesh assessed before structural changes.
+2. Soft-body pairs and small piles: load transfer, local deformation, sliding,
+   separation, and removal of support.
+3. Movement driven by intention: destinations and muscle effort remain active,
+   while contact and the body's current motion determine the result of each
+   attempt and interruption.
+4. World forces: audit existing jets and water coupling at the actual contact
+   locations, then test those forces in combination.
+5. Presentation: make the simulated compression, stretch, eye inertia, and
+   contact strength legible through rendering and sound.
+6. Integration and performance: ordinary play, multiple residents, bathhouse
+   conversion, saves, desktop, touch, and frame-rate coverage. Promote only
+   comparisons the owner prefers; numerical stability alone is insufficient.
+
+Hard circular visitors remain protected throughout. No stage may discard the
+accepted reference or silently change several physical mechanisms together.
