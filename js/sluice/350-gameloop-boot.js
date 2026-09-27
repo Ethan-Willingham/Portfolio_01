@@ -161,6 +161,7 @@
   var cargoManifestPadHeld = {};
   function loop(time) {
     gameRafId = 0;
+    if (!requireSnowGPU()) return;
     if (introPhase !== 'done') {
       lastTime = time;
       lastFrameDt = 1 / 60;

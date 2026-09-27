@@ -487,24 +487,80 @@ cooldowns suppress repeats and pause discards queued events. Audio verification
 checks event requests, not a listening judgment. Rendered comparison captures
 were inspected. Final feel and sound preference remain owner playtesting.
 
-## Remaining development sequence
+## Combined playground (v28.122)
 
-Continue comparing one mechanism at a time:
+The complete trial is available at
+[the resident playground](https://ethanwillingham.com/grand-motherload.html?softplay=1&softnext=1).
+Saves are disabled there. Select Pair contact, Movement, Jets and water, or
+Eyes and sound. New adds the selected mechanism to Prior, keeping earlier
+checkpoints active. Accepted reference turns off all eight experiments while
+retaining the same scene. Repeat restores terrain, particles, resident poses,
+and input ownership. Nine scenes cover piles, two residents, removal of
+support, ledges and walls, head-on and glancing impact, crawling, rig jets,
+and a raised water basin. The controls also work on touch screens; native
+selector keys stay with the selector instead of moving the rig.
 
-1. Playtest the elastic material response: compression, stretch, and settling.
-   Assess the current comparison before promoting it or changing the mesh.
-2. Soft-body pairs and small piles: load transfer, local deformation, sliding,
-   separation, and removal of support.
-3. Movement driven by intention: destinations and muscle effort remain active,
-   while contact and the body's current motion determine the result of each
-   attempt and interruption.
-4. World forces: audit existing jets and water coupling at the actual contact
-   locations, then test those forces in combination.
-5. Presentation: make the simulated compression, stretch, eye inertia, and
-   contact strength legible through rendering and sound.
-6. Integration and performance: ordinary play, multiple residents, bathhouse
-   conversion, saves, desktop, touch, and frame-rate coverage. Promote only
-   comparisons the owner prefers; numerical stability alone is insufficient.
+The ordinary game retains the accepted pre-v28.75 behavior. The complete
+experiment can also be used in ordinary play with `?softnext=1`; that mode
+uses ordinary saves. `&softstage=1` through `&softstage=4` selects its highest
+checkpoint. Experimental force state is transient; resident identity, color,
+size, and saved placement keep the existing format. The hard circular sky
+slime source remains byte-identical.
 
-Hard circular visitors remain protected throughout. No stage may discard the
-accepted reference or silently change several physical mechanisms together.
+### Verification and limits
+
+The final v28.122 CPU browser matrix passes 144 prior/new physics cases at
+30/60/144 Hz, plus 36 real mouse/touch cases across the nine scenes. New-mode
+fixtures have no self-crossings, collinear overlap (movement and later),
+inter-body skin crossings, embedded nodes, terrain-segment hits, or enclosed
+terrain. Area stays between 0.941 and 1.001 of rest; supported bodies fall
+27.9 to 28.8 px when their support is removed. The separate extended movement
+matrix covers both crawl directions, walls, and ledges for 20 seconds each.
+
+Save identity and dimensions, bathhouse conversion, pause and shop freezing,
+sleep/wake through grabbing, menu cancellation, Repeat, release ownership,
+and mobile reachability pass. Eight ordinary/prior-material trajectories
+match v28.117 byte for byte. All three protected circular-slime suites pass,
+and their source SHA256 remains
+`419ab25667a688ca9a21ca5dbe93bb9031fbe69f187e3e704a778a8b6fbbdabe`.
+The shared water/smoke/slime toy boots with advancing simulation and canvas
+pixels, finite residents, active water and smoke, and no browser exceptions.
+Final WebGPU checks run all four checkpoints at 30/60 Hz. The actual playground
+basin retains 6,300 particles; a real Repeat click restores identical water
+and resident pose hashes, and a fresh ordinary boot leaves all eight trials
+off. These GPU checks validate behavior, not GPU frame timing.
+
+Serial CPU measurements on this machine use eight awake residents, with
+other test browsers closed. The dry pile and held-pressure fixtures each run
+180 measured frames twice after warm-up; repeated trajectories match exactly.
+Mean `updateJello` milliseconds per frame are:
+
+| Mode | Pile | Held pressure |
+| --- | ---: | ---: |
+| Prior material | 4.19 | 4.03 |
+| New pairs | 4.68 | 5.61 |
+| Complete trial | 4.53 | 5.66 |
+
+The complete trial's worst measured p95 is 6.1 ms in that comparison. With
+autonomous effort active for 20 seconds, physics averages 4.85 ms for the pile
+and 5.49 ms while held, with clear sampled skin and terrain. A separate active
+run including update, brains, physics, and CPU canvas work averages 8.90 and
+9.61 ms; p95 is 9.9 and 10.3 ms, with no measured frame over 16.7 ms (maximum
+13.6 ms). This is a dry CPU fixture, not GPU timing or a full-game FPS promise.
+No broad repeated all-edge search was reintroduced.
+
+The sustained held test records 2,461 cumulative per-body guard rejections
+under an imposed 80 px press into the confined pile. This counter is not a
+frozen-frame count; the guard also rejects thin, positively oriented held
+triangles. The five-second release test preserves all node histories at
+release, then moves the held material 89.5 px, maintains area from 0.966 to
+1.000, and records zero further guard rejections across all eight bodies.
+There is no continuing rollback after the forcing input is removed.
+
+The final integration includes the concurrent snow release `8d96d39`. Its
+snow fragments and WebGPU liquid engine are preserved byte for byte; the
+combined CPU/GPU and snow regression suites were rerun after that merge.
+
+Numerical health, law tests, and inspected captures establish a reviewable
+comparison. The owner still needs to judge the movement, handling, eyes, and
+sound by playing it. No comparison has been promoted into ordinary defaults.

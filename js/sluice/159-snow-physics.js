@@ -1,4 +1,4 @@
-  /* ---- Snow weather feeding the shared MLS-MPM particle solver ---- */
+  /* ---- Snow weather feeding persistent WebGPU grain physics ---- */
   // Type 5 is dry snow, origin 3 is weather. No column banks, synthetic
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
@@ -19,7 +19,7 @@
     snowAirReset(); snow.field = particleWeatherState();
     snow.cells = {}; snow.bed = new Map(); snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
-  function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
+  function snowActiveCap() { return SNOW_ACTIVE_CAP; }
   function snowVisible(x, y) {
     return x > cam.x - 180 && x < cam.x + screenW + 180 && y > cam.y - 180 && y < cam.y + screenH + 180;
   }
@@ -94,13 +94,14 @@
     // velocity. WAKE is an ordered GPU identity op, not a stale CPU respawn.
     if (liquidType[i] !== 5 || rain.waterCount + rain.parked.length / 2 >= RAIN_STORAGE_CAP) return false;
     liquidType[i] = 0; liquidOrigin[i] = RAIN_ORIGIN;
+    liquidG00[i] = liquidG01[i] = liquidG10[i] = liquidG11[i] = 0;
     liquidSleeping[i] = liquidRestFrames[i] = 0;
     if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, 0, RAIN_ORIGIN);
     else liquidOpsOverflow = true;
     liquidMutationSeq++; snow.melted++; snow.active--; rain.waterCount++;
     return true;
   }
-  function snowContactRadius() { return Math.max(LIQUID_SNOW_DIAMETER * 0.5, LIQUID_CELL * LIQUID_PDELTA * 0.85); }
+  function snowContactRadius() { return LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY) * 0.5; }
   var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
@@ -175,41 +176,24 @@
       snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance());
   }
   function snowBedContact(x, y) {
-    return snowTouchesBed(x, y, snow.bed, LIQUID_SNOW_DIAMETER);
+    return snowTouchesBed(x, y, snow.bed, snowContactRadius() * 2);
   }
   function snowScan(dt, maintenanceDt) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
-    // The GPU draws its current positions directly. Only hand grains to
-    // CPU flight from that same solved frame, never an older mirror that
-    // would visibly rewind them. CPU fallback already owns live positions.
+    // Snapshots refresh only weather landing, storage and thaw bookkeeping.
+    // Resident physical grains never transfer out of their contact solver.
     var gpu = liquidWGPU && liquidWGPU.simActive;
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
-    var fresh = !gpu || (generation !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240);
+    var fresh = !gpu || generation !== snow.readbackGen;
     if (gpu && fresh) snow.readbackGen = generation;
     var cells = {}, active = 0, bed = snowBuildSupport(), contactSeq = liquidMutationSeq;
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
       if (maintenanceDt && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
-      // A separated grain becomes light airborne powder again. Leaving it
-      // in the dense liquid solver makes it accelerate like a water drop.
-      // Keep its mass and position, carrying the jet's momentum into flight.
-      // Let an upward-moving, loosened jet plume separate close to the
-      // ground. Quiet pile edges keep their support in the dense solver.
-      var air = snowAirAt(x, y);
-      var disturbance = Math.abs(air[0]) + Math.abs(air[1]) + air[2];
-      // Airflow has already accelerated the grain in the shared solver.
-      // Changing representation must not supply another impulse, cancel
-      // downward momentum, or reroll a launch whenever powder lands.
-      var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
-      if (fresh && (lofted || !snowSupported(x, y, bed)) &&
-          (rain.cells[rainCell(x, y)] || 0) <= 1 &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + snowContactRadius())) {
-        snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i],
-          size: 0.3 + Math.random() * 0.7, phase: Math.random() * Math.PI * 2, physical: true });
-        removeLiquidParticle(i); continue;
-      }
+      // Physical snow stays in the contact solver in flight and on land.
+      // GPU readback is only for maintenance, never a motion-mode switch.
       if (maintenanceDt && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
       var key = rainCell(x, y); cells[key] = (cells[key] || 0) + 1; active++;
     }
@@ -260,19 +244,26 @@
   function snowRetire(p) { snow.mass--; snow.recycled++; }
   function updateSnow(dt, intensity) {
     if (intensity === undefined) intensity = rain.intensity;
+    // Migrate physical powder from older saves back to persistent grains.
+    for (var old = snow.grains.length - 1; old >= 0; old--) {
+      var grain = snow.grains[old];
+      if (grain.physical && snowLand(grain, false)) {
+        snow.grains[old] = snow.grains[snow.grains.length - 1]; snow.grains.pop();
+      }
+    }
     updateSnowAir(dt);
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
     snowSkyExposure.clear();
-    // Release continuously while the wake is active. Storage and thaw can
-    // stay on their slower budget without emitting powder in 120ms batches.
+    // Storage and thaw use a slower budget. Newly solved snapshots refresh
+    // the landing surface for atmospheric flakes without moving any grains.
     var maintenanceDt = snow.tick >= 0.12 ? snow.tick : 0;
     // Outside the wake, the sparse GPU mirror and maintenance clocks can
     // have different phases. Consume fresh snapshots when they arrive too.
     var freshGPU = liquidWGPU && liquidWGPU.simActive &&
-      (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240;
+      (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen;
     var liveCPUContact = (!liquidWGPU || !liquidWGPU.simActive) && snow.active > 0 && snow.grains.length > 0;
-    if (snowAir.active || maintenanceDt || freshGPU || liveCPUContact) snowScan(dt, maintenanceDt);
+    if (maintenanceDt || freshGPU || liveCPUContact) snowScan(dt, maintenanceDt);
     if (maintenanceDt) snow.tick = 0;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;

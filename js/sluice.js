@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.121';
+  var GAME_VERSION = 'v28.122';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -267,7 +267,7 @@
   var LIQUID_SNOW_DENSITY = 3.2;
   var LIQUID_SNOW_DIAMETER = 1.8;
   var SNOW_RATE = 345, SNOW_FLAKE_CAP = 5400, SNOW_MASS_CAP = 120000;
-  var SNOW_ACTIVE_CAP = 36000, SNOW_CPU_CAP = 7000;
+  var SNOW_ACTIVE_CAP = 36000;
   var LIQUID_SNOW_STIFF = 1.25;
   var LIQUID_SNOW_SHEAR = 32;
   var LIQUID_SNOW_DRAG = 8;
@@ -1972,7 +1972,7 @@
         // liquidGLCanvas. Stage 8 wires this into the per-frame draw; the
         // Stage-7 self-test reads it once so the seeded particles render
         // at the correct on-screen location (the surface ponds).
-        getSnowAir: function () { return worldSnowEnabled && !bathMode && snowAir.active ? snowAir : null; },
+        getSnowAir: function () { return worldSnowEnabled && !bathMode ? snowAir : null; },
         getView: function () {
           // v14.31 — active-region box (world px) for the WebGPU sim. It is
           // the same camera + LIQUID_ACTIVE_MARGIN box liquidUpdateActiveRegion
@@ -4811,6 +4811,21 @@
     dpad.left = dpad.right = dpad.up = dpad.down = false;
     touch.active = false;
     player.thrusting = false;
+  }
+
+  function requireSnowGPU() {
+    if (!gameLoadingAssetsReady || !worldSnowEnabled ||
+        (liquidWGPU && liquidWGPU.simActive && !liquidWGPU.failed)) return true;
+    // Snow has one supported physics backend. Stop before advancing the
+    // world or autosaving if startup failed or the GPU device was lost.
+    var message = 'Snow physics requires WebGPU. Enable hardware acceleration in a WebGPU-capable browser, then reload.';
+    if (window.SluiceLoading && !window.SluiceLoading.active()) beginSceneLoading('Snow physics unavailable', false);
+    introPhase = 'blocked';
+    clearLoadingInput();
+    if (window.SluiceAudio) window.SluiceAudio.setPaused(true);
+    window.__bootErr = message;
+    if (window.SluiceLoading) window.SluiceLoading.fail(message, 'water');
+    return false;
   }
 
   function beginSceneLoading(label, hasWork) {
@@ -10020,9 +10035,8 @@
   //   LIQUID_OIL_VALUE ....... dollars per gallon of oil sold
   //   LIQUID_OIL_PER_PARTICLE  gallons one oil particle is worth
   // ============================================================
-  // Snow shares pressure with liquids, but its jet force comes from the
-  // resolved airflow. Track its grid mass so the liquid cone cannot count
-  // the same exhaust twice and press dry powder into the ground.
+  // Kept as part of the liquid grid layout. Dry snow now uses unilateral
+  // particle contacts and never contributes mass or momentum to this grid.
   var liquidCellSnowMass = new Float32Array(LIQUID_MAX_CELLS);
   function liquidGetCell(gx, gy) {
     // Composite unique key for (gx, gy) — valid range ±4096.
@@ -10102,8 +10116,7 @@
       if (liquidFrozen[i] && !nowFrozen) {
         // v11.43 — zero velocity on wake so off-screen particles don't
         // shoot out at the player when they re-enter the active region.
-        liquidVX[i] = 0;
-        liquidVY[i] = 0;
+        if (liquidType[i] !== 5) { liquidVX[i] = 0; liquidVY[i] = 0; }
         liquidSleeping[i] = 0;
         liquidRestFrames[i] = 0;
       }
@@ -10391,7 +10404,7 @@
     liquidClearGrid();
     var invCell = 1 / LIQUID_CELL;
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidFrozen[i]) continue;
+      if (liquidFrozen[i] || liquidType[i] === 5) continue;
       var px = liquidX[i];
       var py = liquidY[i];
       liquidPrevX[i] = px;
@@ -10496,7 +10509,7 @@
 
   function liquidApplyGridPressure() {
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidFrozen[i] || liquidSleeping[i]) continue;
+      if (liquidFrozen[i] || liquidSleeping[i] || liquidType[i] === 5) continue;
       var base = i * 9;
       var density = 0;
       var aeration = 0;
@@ -10860,7 +10873,7 @@
     var invStep = 1 / stepDt;
     var useBathThermal = typeof bathMode !== 'undefined' && bathMode && typeof bathThermalForce === 'function';
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidFrozen[i]) continue;
+      if (liquidFrozen[i] || liquidType[i] === 5) continue;
       var base = i * 9;
       var thermalForce = useBathThermal ? bathThermalForce(liquidX[i], liquidY[i], liquidType[i]) : 0;
       if (liquidSleeping[i] && Math.abs(thermalForce) > 0.25) { liquidSleeping[i] = 0; liquidRestFrames[i] = 0; }
@@ -12066,7 +12079,6 @@
     // WebGPU solver delegate — dormant until the GPU port goes live
     // (simActive flips on at Stage 8); until then the CPU solver runs.
     if (liquidWGPU && liquidWGPU.simActive) { updateLiquidsGPU(dt); return; }
-    snowAirCoupleCPU(dt);
     // v24.109 — the GPU consumes liquidOps; on the CPU path nothing does
     // (the CPU arrays ARE the live state), so drop them here.
     liquidOps.length = 0;
@@ -12165,7 +12177,7 @@
       // probes (and up to 9× that when a particle is stuck)" to "only
       // the active swimmers", which is a small fraction of N.
       for (var mi = liquidCount - 1; mi >= 0; mi--) {
-        if (liquidFrozen[mi]) continue;
+        if (liquidFrozen[mi] || liquidType[mi] === 5) continue;
         if (liquidSleeping[mi] && !liquidMinerContains(liquidX[mi], liquidY[mi], LIQUID_CELL * LIQUID_PDELTA * 0.85)) continue;
         if (!liquidMoveParticle(mi, stepDt)) removeLiquidParticle(mi);
       }
@@ -38304,9 +38316,10 @@
     revision: 0, time: 0, ms: 0, peak: 0, trail: 0, divergenceBefore: 0, divergenceAfter: 0 };
   (function () {
     var n = snowAir.w * snowAir.h;
-    ['u', 'v', 'tu', 'tv', 'pressure', 'divergence'].forEach(function (key) { snowAir[key] = new Float32Array(n); });
+    ['u', 'v', 'tu', 'tv', 'pressure', 'divergence', 'inletU', 'inletV'].forEach(function (key) { snowAir[key] = new Float32Array(n); });
     snowAir.solid = new Uint8Array(n);
     snowAir.field = new Float32Array(n * 4);
+    snowAir.grainField = new Float32Array(n * 4);
   })();
   function snowAirReset() {
     snowAir.active = false; snowAir.life = snowAir.time = snowAir.peak = snowAir.trail = 0;
@@ -38375,6 +38388,8 @@
   }
   function updateSnowAir(dt) {
     var a = snowAir;
+    a.wind = surfaceWind.current * 35; a.clock = snow.time + dt;
+    a.rigX = player.x + PLAYER_W * 0.5; a.rigY = player.y + PLAYER_H;
     if (!worldSnowEnabled || bathMode) { if (a.active) snowAirReset(); return; }
     var firing = player.thrusting && rocketIntensity > 0.02 && !gameOver && !gameWon;
     if (firing) a.life = 3; else a.life = Math.max(0, a.life - dt);
@@ -38440,6 +38455,9 @@
           a.v[ni] += (dir.y * speed + player.vy * 0.15 - a.v[ni]) * force;
         }
       }
+      // Preserve inlet momentum before the terrain-only projection. The
+      // snow boundary projects it once against terrain and the actual bed.
+      if (sub === steps - 1) { a.inletU.set(a.u); a.inletV.set(a.v); }
       snowAirProject();
     }
     a.peak = 0;
@@ -38458,6 +38476,10 @@
       fade = fade * fade * (3 - 2 * fade);
       var edge = Math.max(0, Math.min(1, Math.min(bx, by, w - 1 - bx, h - 1 - by) / 4));
       edge = edge * edge * (3 - 2 * edge) * fade;
+      var inletX = a.solid[bi] ? 0 : (a.inletU[bi] + a.inletU[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
+      var inletY = a.solid[bi] ? 0 : (a.inletV[bi] + a.inletV[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
+      a.grainField[f] = inletX * edge; a.grainField[f + 1] = inletY * edge;
+      a.grainField[f + 2] = a.solid[bi] ? 0 : 1; a.grainField[f + 3] = 0;
       ux *= edge; vy *= edge;
       // Sample the projected flow itself. Suppressing its forward or
       // opposing components removed real return eddies and required an
@@ -38496,26 +38518,7 @@
     }
     return out;
   }
-  function snowAirCoupleCPU(dt) {
-    if (!snowAir.active || !Number.isFinite(dt) || dt <= 0.0005) return;
-    dt = Math.min(0.05, dt) * LIQUID_TIMESCALE;
-    for (var i = 0; i < liquidCount; i++) {
-      if (liquidType[i] !== 5 || liquidFrozen[i]) continue;
-      var air = snowAirAt(liquidX[i], liquidY[i]);
-      var liftVY = air[1] - air[2];
-      var speed = Math.sqrt(air[0] * air[0] + liftVY * liftVY);
-      if (speed <= 0) continue;
-      // A faint wake must not suddenly apply full drag at a speed cutoff.
-      var influence = Math.min(1, speed / 12);
-      influence = influence * influence * (3 - 2 * influence);
-      var exposure = Math.max(0.06, Math.min(1, (4.2 - liquidDensity[i]) / 3));
-      var drag = 1 - Math.exp(-22 * exposure * influence * dt);
-      liquidVX[i] += (air[0] - liquidVX[i]) * drag;
-      liquidVY[i] += (liftVY - liquidVY[i]) * drag;
-      liquidSleeping[i] = liquidRestFrames[i] = 0;
-    }
-  }
-  /* ---- Snow weather feeding the shared MLS-MPM particle solver ---- */
+  /* ---- Snow weather feeding persistent WebGPU grain physics ---- */
   // Type 5 is dry snow, origin 3 is weather. No column banks, synthetic
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
@@ -38536,7 +38539,7 @@
     snowAirReset(); snow.field = particleWeatherState();
     snow.cells = {}; snow.bed = new Map(); snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
-  function snowActiveCap() { return liquidWGPU && liquidWGPU.simActive ? SNOW_ACTIVE_CAP : SNOW_CPU_CAP; }
+  function snowActiveCap() { return SNOW_ACTIVE_CAP; }
   function snowVisible(x, y) {
     return x > cam.x - 180 && x < cam.x + screenW + 180 && y > cam.y - 180 && y < cam.y + screenH + 180;
   }
@@ -38611,13 +38614,14 @@
     // velocity. WAKE is an ordered GPU identity op, not a stale CPU respawn.
     if (liquidType[i] !== 5 || rain.waterCount + rain.parked.length / 2 >= RAIN_STORAGE_CAP) return false;
     liquidType[i] = 0; liquidOrigin[i] = RAIN_ORIGIN;
+    liquidG00[i] = liquidG01[i] = liquidG10[i] = liquidG11[i] = 0;
     liquidSleeping[i] = liquidRestFrames[i] = 0;
     if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, 0, RAIN_ORIGIN);
     else liquidOpsOverflow = true;
     liquidMutationSeq++; snow.melted++; snow.active--; rain.waterCount++;
     return true;
   }
-  function snowContactRadius() { return Math.max(LIQUID_SNOW_DIAMETER * 0.5, LIQUID_CELL * LIQUID_PDELTA * 0.85); }
+  function snowContactRadius() { return LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY) * 0.5; }
   var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
@@ -38692,41 +38696,24 @@
       snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance());
   }
   function snowBedContact(x, y) {
-    return snowTouchesBed(x, y, snow.bed, LIQUID_SNOW_DIAMETER);
+    return snowTouchesBed(x, y, snow.bed, snowContactRadius() * 2);
   }
   function snowScan(dt, maintenanceDt) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
-    // The GPU draws its current positions directly. Only hand grains to
-    // CPU flight from that same solved frame, never an older mirror that
-    // would visibly rewind them. CPU fallback already owns live positions.
+    // Snapshots refresh only weather landing, storage and thaw bookkeeping.
+    // Resident physical grains never transfer out of their contact solver.
     var gpu = liquidWGPU && liquidWGPU.simActive;
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
-    var fresh = !gpu || (generation !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240);
+    var fresh = !gpu || generation !== snow.readbackGen;
     if (gpu && fresh) snow.readbackGen = generation;
     var cells = {}, active = 0, bed = snowBuildSupport(), contactSeq = liquidMutationSeq;
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
       if (maintenanceDt && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
-      // A separated grain becomes light airborne powder again. Leaving it
-      // in the dense liquid solver makes it accelerate like a water drop.
-      // Keep its mass and position, carrying the jet's momentum into flight.
-      // Let an upward-moving, loosened jet plume separate close to the
-      // ground. Quiet pile edges keep their support in the dense solver.
-      var air = snowAirAt(x, y);
-      var disturbance = Math.abs(air[0]) + Math.abs(air[1]) + air[2];
-      // Airflow has already accelerated the grain in the shared solver.
-      // Changing representation must not supply another impulse, cancel
-      // downward momentum, or reroll a launch whenever powder lands.
-      var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
-      if (fresh && (lofted || !snowSupported(x, y, bed)) &&
-          (rain.cells[rainCell(x, y)] || 0) <= 1 &&
-          !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + snowContactRadius())) {
-        snow.grains.push({ x: x, y: y, vx: liquidVX[i], vy: liquidVY[i],
-          size: 0.3 + Math.random() * 0.7, phase: Math.random() * Math.PI * 2, physical: true });
-        removeLiquidParticle(i); continue;
-      }
+      // Physical snow stays in the contact solver in flight and on land.
+      // GPU readback is only for maintenance, never a motion-mode switch.
       if (maintenanceDt && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
       var key = rainCell(x, y); cells[key] = (cells[key] || 0) + 1; active++;
     }
@@ -38777,19 +38764,26 @@
   function snowRetire(p) { snow.mass--; snow.recycled++; }
   function updateSnow(dt, intensity) {
     if (intensity === undefined) intensity = rain.intensity;
+    // Migrate physical powder from older saves back to persistent grains.
+    for (var old = snow.grains.length - 1; old >= 0; old--) {
+      var grain = snow.grains[old];
+      if (grain.physical && snowLand(grain, false)) {
+        snow.grains[old] = snow.grains[snow.grains.length - 1]; snow.grains.pop();
+      }
+    }
     updateSnowAir(dt);
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
     snowSkyExposure.clear();
-    // Release continuously while the wake is active. Storage and thaw can
-    // stay on their slower budget without emitting powder in 120ms batches.
+    // Storage and thaw use a slower budget. Newly solved snapshots refresh
+    // the landing surface for atmospheric flakes without moving any grains.
     var maintenanceDt = snow.tick >= 0.12 ? snow.tick : 0;
     // Outside the wake, the sparse GPU mirror and maintenance clocks can
     // have different phases. Consume fresh snapshots when they arrive too.
     var freshGPU = liquidWGPU && liquidWGPU.simActive &&
-      (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen && liquidWGPU.getReadbackAge() < 1 / 240;
+      (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen;
     var liveCPUContact = (!liquidWGPU || !liquidWGPU.simActive) && snow.active > 0 && snow.grains.length > 0;
-    if (snowAir.active || maintenanceDt || freshGPU || liveCPUContact) snowScan(dt, maintenanceDt);
+    if (maintenanceDt || freshGPU || liveCPUContact) snowScan(dt, maintenanceDt);
     if (maintenanceDt) snow.tick = 0;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
@@ -70036,6 +70030,7 @@
   var softProjectStage = Math.max(1, Math.min(SOFT_PROJECT_MAX_STAGE,
     Number(softProjectParams.get('softstage')) || SOFT_PROJECT_MAX_STAGE));
   var softProjectNew = true;
+  var softProjectReference = false;
   var SOFT_PAIRS = softProjectEnabled;
   var SOFT_INTENT = softProjectEnabled && softProjectStage >= 2;
   var SOFT_WORLD = softProjectEnabled && softProjectStage >= 3;
@@ -70043,6 +70038,8 @@
 
   function softProjectSelect(fresh) {
     softProjectNew = fresh;
+    softProjectReference = false;
+    if (softProjectEnabled) SOFT_CONTACT = SOFT_HANDLING = SOFT_TERRAIN = SOFT_MATERIAL = true;
     var stage = softProjectEnabled ? softProjectStage - (fresh ? 0 : 1) : 0;
     SOFT_PAIRS = stage >= 1;
     SOFT_INTENT = stage >= 2;
@@ -70050,13 +70047,54 @@
     SOFT_PRESENTATION = stage >= 4;
   }
 
+  function softProjectUseReference() {
+    softProjectReference = true;
+    SOFT_CONTACT = SOFT_HANDLING = SOFT_TERRAIN = SOFT_MATERIAL = false;
+    SOFT_PAIRS = SOFT_INTENT = SOFT_WORLD = SOFT_PRESENTATION = false;
+  }
+
+  function softProjectPrepareWorld(origin, floor) {
+    // Use the ordinary mutation path so CPU arrays and queued GPU operations
+    // reset together, including when a prior readback is still in flight.
+    for (var i = liquidCount - 1; i >= 0; i--) removeLiquidParticle(i);
+    if (softPlayCase !== 'water') return;
+    for (var row = SKY_ROWS - 3; row <= SKY_ROWS; row++) {
+      for (var col = origin - 3; col <= origin + 3; col++) {
+        world[row][col] = row === SKY_ROWS || col === origin - 3 || col === origin + 3 ?
+          { type: 'foundation', hp: ORES.foundation.hp } : null;
+        invalidateTerrainAround(row, col);
+      }
+    }
+    var gap = LIQUID_CELL * LIQUID_PDELTA;
+    for (var y = floor - TILE * 2 + gap; y < floor - gap; y += gap) {
+      for (var x = (origin - 2) * TILE + gap; x < (origin + 3) * TILE - gap; x += gap) {
+        addLiquidParticle(0, x, y, 0, 0, 0);
+      }
+    }
+  }
+
   function softProjectScene(x, floor) {
     var first = null, count = softPlayCase === 'pile' ? 6 : 2;
+    var impact = softPlayCase === 'head-on' || softPlayCase === 'glancing';
     for (var i = 0; i < count; i++) {
       var dx = softPlayCase === 'pile' ? (i % 2) * 54 - 27 : softPlayCase === 'support' ? 0 : i * 65;
       var dy = softPlayCase === 'pile' ? Math.floor(i / 2) * 54 : softPlayCase === 'support' ? i * 54 : 0;
+      if (softPlayCase === 'water') dy = 100;
+      if (impact) { dx = i ? 65 : -65; dy = 115 - (softPlayCase === 'glancing' && i ? 20 : 0); }
       var b = surfaceSlimeBuild(x + dx, floor - 30 - dy,
         { id: 9001 + i, seed: 0.18 + i * 0.13, hue: surfaceSlimeHues[i % surfaceSlimeHues.length], r: 24.3 });
+      if (softPlayCase === 'intent') {
+        // Choose an ordinary destination toward the obstacles in both modes.
+        // Each controller supplies its own physical effort from this state.
+        b.surfaceSlime.dir = b.surfaceSlime.goalDir = 1;
+        b.surfaceSlime.goalX = x + TILE * 7;
+        b.surfaceSlime.state = 'crawl'; b.surfaceSlime.timer = 30;
+      }
+      if (impact) {
+        surfaceSlimeDetach(b, 3);
+        for (var p = 0; p < b.n; p++) b.ox[p] -= (i ? -180 : 180) *
+          (JELLO_H / Math.max(1, JELLO_XPBD_SUBSTEPS)) / JELLO_TIMESCALE;
+      }
       if (!first) first = b;
     }
     return first;
@@ -70453,7 +70491,7 @@
         invalidateTerrainAround(SKY_ROWS, col);
       }
     }
-    if (softPlayHandling && softPlayCase === 'ledge') {
+    if (softPlayHandling && (softPlayCase === 'ledge' || softPlayCase === 'intent')) {
       for (var row = SKY_ROWS - 3; row < SKY_ROWS; row++) {
         world[row][origin + 6] = { type: 'foundation', hp: ORES.foundation.hp };
         invalidateTerrainAround(row, origin + 6);
@@ -70476,6 +70514,7 @@
     gameOver = false; gameWon = false; drilling = null; hitPauseT = 0;
     player.drillGlideT = 0; player.slideTargetX = null; player.slideAssistT = 0;
     resetFlightBank();
+    if (softProjectEnabled) softProjectPrepareWorld(origin, floor);
     var materialDrop = softPlayMaterialTrial && softPlayCase === 'drop';
     var b = softProjectEnabled ? softProjectScene(x, floor) : surfaceSlimeBuild(x, floor - (materialDrop ? 145 : 35), { id: 9001, seed: 0.42, hue: 133 });
     if (!softProjectEnabled && softPlayHandling && softPlayCase === 'pair') {
@@ -70498,11 +70537,15 @@
       player.y = b.bboxT - PLAYER_H - 65;
       player.vx = 0; player.vy = 220; player.onGround = false;
     }
+    if (softProjectEnabled && softPlayCase === 'jet') {
+      player.x = x + 25 - PLAYER_W / 2;
+      player.y = floor - 105 - PLAYER_H; player.onGround = false;
+    }
     player.renderX = player.x; player.renderY = player.y;
     cam.snap = true;
     for (i = 0; i < softPlayButtons.length; i++) {
       var entry = softPlayButtons[i];
-      var on = entry.mode === (softProjectEnabled ? softProjectNew : softPlayMaterialTrial ? SOFT_MATERIAL : softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
+      var on = entry.mode === (softProjectEnabled ? (softProjectReference ? 'reference' : softProjectNew) : softPlayMaterialTrial ? SOFT_MATERIAL : softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
       entry.button.setAttribute('aria-pressed', on ? 'true' : 'false');
       entry.button.style.background = on ? 'var(--accent)' : 'var(--bg-raised)';
       entry.button.style.color = on ? 'var(--bg-raised)' : 'var(--text)';
@@ -70517,6 +70560,11 @@
       var panel = document.createElement('div');
       panel.id = 'soft-contact-playtest';
       panel.setAttribute('role', 'group');
+      // Native selectors own their arrow keys while focused. Keyup still
+      // reaches the game so a previously held movement key always releases.
+      panel.addEventListener('keydown', function (e) {
+        if (e.target && e.target.tagName === 'SELECT') e.stopPropagation();
+      });
       panel.setAttribute('aria-label', softProjectEnabled ? 'Soft slime physics comparison' : softPlayMaterialTrial ? 'Soft slime material comparison' : softPlayTerrainTrial ? 'Soft slime terrain comparison' : softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
       panel.style.cssText = 'position:absolute;top:10px;left:62px;right:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--bg-raised);border:1px solid var(--rule-strong);font:12px var(--font-mono);color:var(--text);';
       var title = document.createElement('span'); title.textContent = softProjectEnabled ? 'SLIME PHYSICS' : softPlayMaterialTrial ? 'SLIME MATERIAL' : softPlayTerrainTrial ? 'SLIME TERRAIN' : softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
@@ -70536,9 +70584,27 @@
       }
       softPlayButtons.push({ mode: true, button: button(softProjectEnabled ? 'New physics' : softPlayMaterialTrial ? 'New material' : softPlayTerrainTrial ? 'New terrain' : softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
       softPlayButtons.push({ mode: false, button: button(softProjectEnabled ? 'Prior physics' : softPlayMaterialTrial ? 'Prior material' : softPlayTerrainTrial ? 'Prior terrain' : softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
+      if (softProjectEnabled) {
+        softPlayButtons.push({ mode: 'reference', button: button('Accepted reference', function () {
+          softProjectUseReference(); softPlayReset();
+        }) });
+        var checkpoint = document.createElement('select');
+        checkpoint.setAttribute('aria-label', 'Physics checkpoint');
+        checkpoint.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
+        var stages = ['Pair contact', 'Movement', 'Jets and water', 'Eyes and sound'];
+        for (var stage = 1; stage <= SOFT_PROJECT_MAX_STAGE; stage++) {
+          var stageOption = document.createElement('option'); stageOption.value = stage;
+          stageOption.textContent = stage + '. ' + stages[stage - 1]; checkpoint.appendChild(stageOption);
+        }
+        checkpoint.value = softProjectStage;
+        checkpoint.addEventListener('change', function () {
+          softProjectStage = Number(checkpoint.value); softProjectSelect(softProjectNew); softPlayReset();
+        });
+        panel.appendChild(checkpoint);
+      }
       var select = document.createElement('select'); select.setAttribute('aria-label', 'Interaction');
       select.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
-      var cases = softProjectEnabled ? [['pile','Small pile'],['pair','Two slimes'],['support','Remove support'],['ledge','Ledge and wall']] : softPlayMaterialTrial ? [['drop','Drop and settle'],['free','Lift and throw'],['ledge','Ledge and wall']] : softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
+      var cases = softProjectEnabled ? [['pile','Small pile'],['pair','Two slimes'],['support','Remove support'],['ledge','Ledge and wall'],['head-on','Head-on impact'],['glancing','Glancing impact'],['intent','Crawl and wall'],['jet','Rig jets'],['water','Water basin']] : softPlayMaterialTrial ? [['drop','Drop and settle'],['free','Lift and throw'],['ledge','Ledge and wall']] : softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
         [['center','Centered drop'],['left','Left edge drop'],['right','Right edge drop'],['push-left','Push from left'],['push-right','Push from right']];
       for (var i = 0; i < cases.length; i++) {
         var option = document.createElement('option'); option.value = cases[i][0]; option.textContent = cases[i][1]; select.appendChild(option);
@@ -70547,7 +70613,7 @@
       select.addEventListener('change', function () { softPlayCase = select.value; softPlayReset(); });
       panel.appendChild(select); button('Repeat', softPlayReset);
       var help = document.createElement('span');
-      help.textContent = softProjectEnabled ? 'Push the pile, lift a corner, or pull the bottom slime out. Saves are off.' : softPlayMaterialTrial ? 'Drop, squeeze, stretch, and release. Compare how the body settles. Saves are off.' :
+      help.textContent = softProjectEnabled ? 'New adds the selected checkpoint to Prior. Accepted reference restores the original physics. Drive, fly, or drag. Saves are off.' : softPlayMaterialTrial ? 'Drop, squeeze, stretch, and release. Compare how the body settles. Saves are off.' :
         softPlayTerrainTrial ? 'Pull across the ledge or slide against the wall, then let go. Saves are off.' :
         softPlayHandling ? 'Grab different spots, pull, swing, and let go. Saves are off.' :
         'Drive, fly, or drag the slime. Saves are off.';
@@ -74488,6 +74554,7 @@
   var cargoManifestPadHeld = {};
   function loop(time) {
     gameRafId = 0;
+    if (!requireSnowGPU()) return;
     if (introPhase !== 'done') {
       lastTime = time;
       lastFrameDt = 1 / 60;

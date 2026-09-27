@@ -16,6 +16,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8292), debug = port + 1000;
 const dump = process.env.DUMP || '/tmp/slime-world-gpu';
 const cpu = process.env.CPU === '1';
+const checkpoint = Number(process.env.STAGE || 3);
+const playground = process.env.PLAYGROUND === '1';
+const playgroundOnly = process.env.PLAYGROUND_ONLY === '1';
+assert.ok(checkpoint === 3 || checkpoint === 4, 'STAGE is 3 or 4');
 const extraParams = cpu ? '&cpuwater=1&cpufire=1&_rafTimer=1' : '&cpufire=1&_rafTimer=1';
 let stage = 'setup';
 fs.mkdirSync(dump, { recursive: true });
@@ -40,7 +44,7 @@ const server = createServer((request, response) => {
 });
 let chrome, socket, watchdog, sequence = 0, cleaned = false;
 const pending = new Map(), browserErrors = [], failures = [], results = [];
-let gpuInfo, stale, wake, capture;
+let gpuInfo, stale, wake, capture, ui, error;
 const boots = [];
 function cleanup() {
   if (cleaned) return;
@@ -147,6 +151,7 @@ try {
   console.log('BOOT browser connected'); stage = 'initial page navigation';
   await send('Runtime.enable'); await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  if(!playgroundOnly) {
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35&softcontact=1&softhandling=1&softterrain=1&softmaterial=1${extraParams}` });
   assert.ok(await awaitBoot(), 'fixture page completes its real loading gates');
   console.log('BOOT state ' + JSON.stringify(await game("({ intro: introPhase, contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, savesDisabled: SAVE_DISABLED })"))); stage = 'fixture initialization';
@@ -157,11 +162,13 @@ try {
     window.__materialPlayerInitial = JSON.parse(JSON.stringify(player));
     skySlimes.length = 0; skySlimeNext = 100000; surfaceSlimesSeeded = true;`);
 
+  }
   gpuInfo=[];capture=[];
+  if(!playgroundOnly) {
   const rates=(process.env.FPS||'30,60').split(',').map(Number);
   for(const fps of rates) {
     stage = 'actual water fixture setup at '+fps;
-    const info=await game(`(${gpuSetup.toString()})()`);gpuInfo.push({fps,...info});
+    const info=await game(`(${gpuSetup.toString()})(${checkpoint})`);gpuInfo.push({fps,...info});
     console.log('GPU '+JSON.stringify({fps,...info}));
     check('actual GPU simulation is active at '+fps,!cpu&&info.simActive&&info.renderActive);
     assert.ok(!cpu&&info.simActive&&info.renderActive,'actual GPU water required; CPU is not a substitute');
@@ -203,13 +210,21 @@ try {
   stage='fresh flow wake';wake=await game(`(${gpuWake.toString()})()`);console.log('WAKE '+JSON.stringify(wake));
   check('fresh actual GPU flow wakes sleeping wet skin',wake.ageReal<=0.1&&wake.wet>0.05&&wake.flow>4&&wake.awake);
   check('GPU skin channel retains slow boundary velocity in liquid units',wake.boundaryError<1e-8&&wake.boundaryNonzero);
+  fs.writeFileSync(path.join(dump,'gpu-report.json'),JSON.stringify({bundleHash,cpu,checkpoint,boots,gpuInfo,results,stale,wake,capture,browserErrors,failures},null,2));
+  }
+  if(playground) await runPlayground();
   check('no browser exceptions',browserErrors.length===0);
-  fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({bundleHash,cpu,boots,gpuInfo,results,stale,wake,capture,browserErrors,failures},null,2));
+  fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({bundleHash,cpu,checkpoint,boots,gpuInfo,results,stale,wake,capture,ui,browserErrors,failures},null,2));
   assert.equal(failures.length,0,failures.join('\n'));
-} finally { cleanup(); }
+} catch(caught) {
+  error={message:String(caught),stage};throw caught;
+} finally {
+  fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({bundleHash,cpu,checkpoint,boots,gpuInfo,results,stale,wake,capture,ui,browserErrors,failures,error},null,2));
+  cleanup();
+}
 
-function gpuSetup() {
-  resetJello();SOFT_INTENT=SOFT_WORLD=SOFT_PAIRS=SOFT_CONTACT=SOFT_HANDLING=SOFT_TERRAIN=SOFT_MATERIAL=true;
+function gpuSetup(checkpoint) {
+  resetJello();SOFT_INTENT=SOFT_WORLD=SOFT_PAIRS=SOFT_CONTACT=SOFT_HANDLING=SOFT_TERRAIN=SOFT_MATERIAL=true;SOFT_PRESENTATION=checkpoint>=4;
   clearTimeout(gameRafId);cancelAnimationFrame(gameRafId);gameRafId=0;
   gamePaused=gameOver=gameWon=bathMode=false;shopState='closed';skySlimes.length=0;surfaceSlimesSeeded=true;
   var origin=DECK_CENTER_COL-18,x=origin*TILE,ground=SKY_ROWS*TILE,floor=ground-3*TILE;
@@ -227,7 +242,7 @@ function gpuSetup() {
   var b=surfaceSlimeBuild(x,floor+30,{id:99501,seed:.45,r:24.3});surfaceSlimeDetach(b,30);
   window.__worldWaterState={body:b,x:x,floor:floor,count:liquidCount};
   return {simActive:!!(liquidWGPU&&liquidWGPU.simActive),renderActive:!!(liquidWGPU&&liquidWGPU.renderActive),
-    flags:{pairs:SOFT_PAIRS,intent:SOFT_INTENT,world:SOFT_WORLD},count:liquidCount,generation:liquidWGPU.readbackApplyGen,age:liquidWGPU.getReadbackAge(),adapter:liquidWGPU.adapterInfo||null};
+    flags:{pairs:SOFT_PAIRS,intent:SOFT_INTENT,world:SOFT_WORLD,presentation:SOFT_PRESENTATION},count:liquidCount,generation:liquidWGPU.readbackApplyGen,age:liquidWGPU.getReadbackAge(),adapter:liquidWGPU.adapterInfo||null};
 }
 function gpuFrame(dt,frame) {
   surfaceSlimeTick(dt);updateLiquids(dt);updateJello(dt);if(frame%3===0)render();
@@ -271,4 +286,84 @@ function gpuWake() {
   var pts=surfaceSlimeGuests[0].pts,error=0,nonzero=false;
   for(i=0;i<pts.length;i+=4){error=Math.max(error,Math.abs(pts[i+2]*softWorldWaterScale()-10),Math.abs(pts[i+3]*softWorldWaterScale()+6));nonzero=nonzero||pts[i+2]!==0;}
   return {age:liquidWGPU.getReadbackAge(),ageReal:liquidWGPU.getReadbackAge()/softWorldWaterScale(),generation:liquidWGPU.readbackApplyGen,wet:wet,flow:flow,awake:awake,boundaryError:error,boundaryNonzero:nonzero};
+}
+
+
+async function runPlayground() {
+  stage='actual playground navigation';
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?softplay=1&softnext=1&softstage=${checkpoint}&nopause=1&tod=0.35${extraParams}`});
+  assert.ok(await awaitBoot(true),'actual playground completes loading');
+  await game('clearTimeout(gameRafId);cancelAnimationFrame(gameRafId);gameRafId=0;');
+  await evaluate("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
+  await sleep(200);
+  const controls=await evaluate(`(()=>{const panel=document.getElementById('soft-contact-playtest'),select=panel.querySelector('[aria-label="Interaction"]');
+    const r=select.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,options:Array.from(select.options).map(o=>[o.value,o.textContent])};})()`);
+  // Verify trusted browser key routing without claiming that CDP can commit
+  // this platform's native popup. Retain the event and inspect it after all
+  // DOM handlers have run, so defaultPrevented includes the game listener.
+  await evaluate(`(()=>{const select=document.querySelector('#soft-contact-playtest [aria-label=Interaction]');
+    select.addEventListener('keydown',event=>{window.__softSelectorKey=event;},{once:true});select.focus();})()`);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
+  const keyboardDown=await game("({scene:softPlayCase,key:!!keys.ArrowDown,trusted:!!(window.__softSelectorKey&&window.__softSelectorKey.isTrusted),defaultPrevented:window.__softSelectorKey?window.__softSelectorKey.defaultPrevented:null,target:window.__softSelectorKey?window.__softSelectorKey.target.tagName:null})");
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
+  const keyboardUp=await game('!!keys.ArrowDown');
+  await game('keys.ArrowDown=true;');
+  await evaluate("document.querySelector('#soft-contact-playtest [aria-label=Interaction]').focus()");
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
+  const heldKeyCleared=await game('!keys.ArrowDown');
+  check('trusted selector ArrowDown retains native default without driving the rig',keyboardDown.trusted&&keyboardDown.target==='SELECT'&&keyboardDown.defaultPrevented===false&&!keyboardDown.key&&!keyboardUp);
+  check('selector keyup clears a previously held game direction',heldKeyCleared);
+  // Select the water fixture through its actual production change handler.
+  // Repeat below uses a real browser mouse click.
+  await evaluate(`(()=>{const select=document.querySelector('#soft-contact-playtest [aria-label="Interaction"]');select.value='water';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  const first=await game(`(${playgroundPose.toString()})()`);
+  ui={keyboard:{down:keyboardDown,upLatched:keyboardUp,heldKeyCleared},selection:'production DOM select change handler',controls,first:{...first,pose:undefined},frames:[]};
+  check('actual select change handler selected Water basin',first.scene==='water'&&first.savesDisabled&&first.count>1000&&first.ids.length===2);
+  assert.equal(first.scene,'water','actual scene selection succeeded');
+  for(let frame=0;frame<90;frame++) {
+    stage='actual playground water frame '+frame;
+    const row=await game(`(${playgroundFrame.toString()})(1/60,${frame})`);ui.frames.push(row);
+    if(!ui.capture&&frame>15&&row.wet>0&&row.bins>0) {
+      const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},5000);
+      const name=path.join(dump,'actual-playground-water.png');fs.writeFileSync(name,Buffer.from(shot.data,'base64'));ui.capture={frame,path:name};
+    }
+    await sleep(17);
+  }
+  const repeat=await evaluate(`(()=>{const b=Array.from(document.querySelectorAll('#soft-contact-playtest button')).find(b=>b.textContent==='Repeat');const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  stage='actual playground Repeat';
+  await send('Input.dispatchMouseEvent',{type:'mousePressed',x:repeat.x,y:repeat.y,button:'left',clickCount:1});
+  await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:repeat.x,y:repeat.y,button:'left',clickCount:1});
+  const after=await game(`(${playgroundPose.toString()})()`);
+  ui.after={...after,pose:undefined};ui.beforeHash=createHash('sha256').update(first.pose).digest('hex');ui.afterHash=createHash('sha256').update(after.pose).digest('hex');
+  check('actual Repeat restores resident pose and finite water exactly',ui.beforeHash===ui.afterHash&&first.count===after.count);
+  check('actual playground runs all requested checkpoints',first.flags.pairs&&first.flags.intent&&first.flags.world&&first.flags.presentation===(checkpoint>=4));
+  check('actual playground wets residents and produces real flow',ui.frames.some(row=>row.wet>0&&row.flow>4&&row.bins>0));
+  check('actual playground GPU readbacks advance',ui.frames.at(-1).generation>ui.frames[0].generation+5);
+  check('actual playground retains legal bodies and fluid mass',ui.frames.every(row=>row.simActive&&row.crossed===0&&row.embedded===0&&row.finite&&row.count===first.count));
+  console.log('PLAYGROUND '+JSON.stringify({count:first.count,flags:first.flags,repeat:ui.beforeHash===ui.afterHash,capture:ui.capture}));
+  stage='ordinary default boot';
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1${extraParams}`});
+  assert.ok(await awaitBoot(),'ordinary page completes loading');
+  ui.defaults=await game('({contact:SOFT_CONTACT,handling:SOFT_HANDLING,terrain:SOFT_TERRAIN,material:SOFT_MATERIAL,pairs:SOFT_PAIRS,intent:SOFT_INTENT,world:SOFT_WORLD,presentation:SOFT_PRESENTATION})');
+  check('ordinary boot leaves all eight experiments off',Object.values(ui.defaults).every(value=>value===false));
+  console.log('DEFAULTS '+JSON.stringify(ui.defaults));
+}
+function playgroundPose() {
+  var bodies=jelloBodies.filter(function(b){return !!b.surfaceSlime;});
+  return {scene:softPlayCase,savesDisabled:SAVE_DISABLED,ids:bodies.map(function(b){return b.surfaceSlime.id;}),count:liquidCount,
+    flags:{pairs:SOFT_PAIRS,intent:SOFT_INTENT,world:SOFT_WORLD,presentation:SOFT_PRESENTATION},
+    pose:JSON.stringify({bodies:bodies.map(function(b){return[Array.from(b.px),Array.from(b.py),Array.from(b.ox),Array.from(b.oy)];}),
+      water:[Array.from(liquidX.subarray(0,liquidCount)),Array.from(liquidY.subarray(0,liquidCount)),Array.from(liquidVX.subarray(0,liquidCount)),Array.from(liquidVY.subarray(0,liquidCount))]})};
+}
+function playgroundFrame(dt,frame) {
+  softPlayTick(dt);surfaceSlimeTick(dt);updateLiquids(dt);updateJello(dt);if(frame%3===0)render();
+  var crossed=0,embedded=0,finite=true,wet=0,flow=0;
+  for(var bi=0;bi<jelloBodies.length;bi++){
+    var b=jelloBodies[bi];if(!b.surfaceSlime)continue;wet+=b.surfaceSlime.wet;
+    crossed+=softTerrainSkinCrossed(b)?1:0;
+    for(var k=0;k<b.n;k++){finite=finite&&isFinite(b.px[k]+b.py[k]+b.ox[k]+b.oy[k]);if(jelloWorldSolidAt(b.px[k],b.py[k]))embedded++;}
+  }
+  for(var i=0;i<liquidCount;i++)flow=Math.max(flow,Math.hypot(liquidVX[i],liquidVY[i])*softWorldWaterScale());
+  return {frame,simActive:liquidWGPU.simActive,count:liquidCount,generation:liquidWGPU.readbackApplyGen,
+    ageReal:liquidWGPU.getReadbackAge()/softWorldWaterScale(),bins:softWorldWaterBins.size,wet,flow,crossed,embedded,finite};
 }

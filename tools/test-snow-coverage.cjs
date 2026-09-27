@@ -1,5 +1,5 @@
 // Deterministic weather-only regression. The live GPU/CPU jet and smoke tests
-// cover solver transfer; this isolates camera coverage, streaming and saves.
+// cover persistent grain motion; this isolates atmospheric camera coverage, streaming and saves.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
@@ -11,9 +11,9 @@ const noop = () => {};
 const s = { Math: math, window: { location: { search: '' } },
   cam: {x: 2000, y: -900}, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
-  GRAVITY: 600, LIQUID_SNOW_DIAMETER: 1.8, LIQUID_CELL: 2.5, LIQUID_PDELTA: .5,
+  GRAVITY: 600, LIQUID_SNOW_DENSITY: 3.2, LIQUID_SNOW_DIAMETER: 1.8, LIQUID_CELL: 2.5, LIQUID_PDELTA: .5,
   SNOW_RATE: 345, SNOW_FLAKE_CAP: 5400, SNOW_MASS_CAP: 120000,
-  SNOW_ACTIVE_CAP: 36000, SNOW_CPU_CAP: 7000, LIQUID_MAX_PARTICLES: 65536,
+  SNOW_ACTIVE_CAP: 36000, LIQUID_MAX_PARTICLES: 65536,
   RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3, liquidCount: 0, liquidWGPU: null, liquidMutationSeq: 0,
   liquidX: [], liquidY: [], liquidVX: [], liquidVY: [], liquidType: [],
   rain: { intensity: .65, cells: {}, waterCells: {}, parked: [], waterCount: 0 },
@@ -138,13 +138,13 @@ s.snowRetire=retire;
 // Going underground must not locally weaken an ongoing world-wide front.
 reset();s.cam.y=600;step(0,0,180);
 assert.equal(s.snow.field.strength,.65);
-reset();s.snow.active=s.SNOW_CPU_CAP;
+reset();s.snow.active=s.SNOW_ACTIVE_CAP;
 assert.ok(s.snowSpawn(2400,-700));assert.ok(s.snowParticle(2400,-700,0,53));
 assert.equal(s.snow.parked.length,4,'full solver stores contact material without stopping weather');
 
 function settleInAir(air) {
   reset();s.SNOW_RATE=0;s.rain.intensity=0;
-  const flake={x:2400,y:-700,vx:0,vy:53,size:.5,phase:1,physical:true};
+  const flake={x:2400,y:-700,vx:0,vy:53,size:.5,phase:1};
   s.snow.grains=[flake];s.snow.mass=1;s.snowAirAt=()=>air;step(0,0,90);return flake.vy;
 }
 const calm=settleInAir([0,0,0]),crosswind=settleInAir([8,0,0]),downwash=settleInAir([0,15,0]),updraft=settleInAir([0,-120,0]);
@@ -152,7 +152,7 @@ assert.ok(crosswind>calm*.8&&downwash>calm&&updraft< -40,'airflow preserves sett
 s.snowAirAt=()=>[0,0,0];s.SNOW_RATE=345;
 
 // Sparse GPU snapshots can arrive between every maintenance scan. Each
-// fresh result must still offer separated grains a handoff to light motion.
+// fresh result must remain available to material maintenance and accounting.
 reset();s.SNOW_RATE=0;s.rain.intensity=0;
 const realScan=s.snowScan;
 let mirrorFrame=0,freshScans=0;
@@ -164,7 +164,7 @@ for(mirrorFrame=1;mirrorFrame<=120;mirrorFrame++){
   if(mirrorFrame%20===2)s.liquidWGPU.readbackApplyGen++;
   s.updateSnow(1/60);
 }
-assert.equal(freshScans,6,'quiet-air transfers consume every fresh GPU snapshot despite maintenance phase');
+assert.equal(freshScans,6,'quiet-air maintenance consumes every fresh GPU snapshot despite scan phase');
 s.snowScan=realScan;s.liquidWGPU=null;s.SNOW_RATE=345;
 
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);

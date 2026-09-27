@@ -35,6 +35,12 @@ drops and pushes, an Original switch, and saves disabled. Add `&softhandling=1`
 for the separate grab, swing, and throw comparison, `&softterrain=1` for
 terrain contact while holding handling constant, or `&softmaterial=1` for
 elastic response with the newer contact, handling, and terrain held constant.
+The v28.122 combined trial at `?softplay=1&softnext=1` adds selectable pair
+contact, bounded movement effort, local jets and water, and deformation-led
+eyes and contact sound. Nine repeatable scenes compare each checkpoint with
+its predecessor, plus an Accepted reference switch. Saves remain off in the
+playground. Ordinary play still uses the accepted baseline; no trial is on by
+default. See [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for verification and limits.
 Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
@@ -121,8 +127,10 @@ and snow saves join the mixed cycle while preserving their material and front.
 Passing showers feed three finite stone-lined lakes. Drops become collectable
 water, soak into dirt and town foundations, and fall down open shafts. See
 [PARTICLE_RAIN.md](PARTICLE_RAIN.md) for storage and verification.
-Snow uses the existing particle solver. Tracks, jets and blasts move the actual
-grains. Snow melts only on contact with water or as the clouds part over exposed
+Snow uses independent grain contacts within the existing particle storage.
+The same grains and velocities persist through lifting, flight and landing.
+Snow physics requires WebGPU.
+Tracks, jets and blasts move the actual grains. Snow melts only on contact with water or as the clouds part over exposed
 snow; player proximity, foundations, jets and tools add no heat. The scoop stores
 and releases snow as snow. Down still reaches the dirt to drill. See
 [PARTICLE_SNOW.md](PARTICLE_SNOW.md).
@@ -218,7 +226,7 @@ Bathhouse visitors and round surface residents remain enabled and keep their sav
 | `190-smoke-webgl.js` / `191-rig-exhaust.js` / `195-exhaust-catalog.js` | independent smoke solver instances, live rig exhaust adapter, cosmetic catalog, ownership and persistence |
 | `297-cargo-manifest.js` | current cargo inspection: grouped mineral quantities, exact prices, responsive pages, and modal input |
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
-| `157-particle-rain.js` / `158-rain-lakes.js` / `159-snow-*.js` | physical weather, finite lakes, shared-solver snow and melting |
+| `157-particle-rain.js` / `158-rain-lakes.js` / `159-snow-*.js` | physical weather, finite lakes, granular snow and melting |
 | `156-render-planet.js` | pixel-art continents and oceans below the sky horizon, lit by the existing day/night cycle |
 | `165-render-trees.js` / `166-render-surface-boulders.js` | open woodland and scattered surface stones, derived from supporting terrain |
 | `167-surface-turtle.js` / `206-rare-bird.js` | rare surface visitors: a tiny walking turtle and a larger solitary white heron |

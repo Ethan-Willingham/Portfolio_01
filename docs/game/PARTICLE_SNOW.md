@@ -1,11 +1,11 @@
 # Physical snow
 
-The owner-approved v28.93 snow motion is restored in v28.115. This removes
-v28.111's changes to support, release, landing and GPU boundary forces, and
-v28.114's density-dependent flight drag. The newer mixed weather cycle,
-protected cloudy interval, snow scoop and water/cloud-only thaw remain.
-Treat v28.93 as the motion reference for future snow changes. A passing
-settling test alone does not establish that the flyover spray still matches it.
+Since v28.118, deposited snow uses independent grain contacts through lifting,
+flight and landing. It stays in the same particle store throughout. The former
+liquid-grid velocity transfer and GPU-readback-triggered airborne handoff made
+flat beds lift as coherent sheets and then change falling speeds together.
+The mixed weather cycle, protected cloudy interval, snow scoop and
+water/cloud-only thaw remain.
 
 Pause > Options > World > Particle weather > Snow first starts a new world
 with snow. Rain first opens with sunshine before the first rain front. Both
@@ -15,69 +15,45 @@ keeping their current front and all deposited material. Old column-based snow
 saves migrate to individual particles, keeping their water equivalent.
 `?snow=1&nosave=1` opens a disposable world starting in snow.
 
-Snow uses the existing water solver. Dry snow is internal material 5 in the
-same WebGPU MLS-MPM grid, with the same CPU fallback, terrain collision,
-rig projection, jets, explosions, spatial culling and particle mutation journal.
-The previous column banks, artificial plow wedges and snow foot-support logic
-have been removed. The heavy rig stays on the ground and pushes the actual
-snow particles aside. Powder rolls, compresses and sprays over the hull.
-Removing its supporting terrain lets it fall into the mine.
+Snow remains internal material 5 in the existing particle storage, renderer,
+mutation journal, tools and saves. It does not contribute to liquid pressure,
+liquid grid velocity transfers or liquid declumping. WebGPU advances each grain's
+own velocity under gravity and resolved airflow, with unilateral contacts:
+touching grains resist compression, while separated grains exert no force on
+each other. Position corrections do not become launch velocity. Atmospheric
+weather flakes use inexpensive ballistics until their first contact; physical
+powder from older saves rejoins the persistent grain store without losing mass.
 
 ## Material tuning
 
-The snow constants are mirrored in `010-constants.js` and `liquid-wgpu.js`.
-Water, oil and the three mineral liquids keep their own existing behavior.
-
-| Constant | Value | Effect |
+| Parameter | Value | Effect |
 |---|---:|---|
-| `LIQUID_SNOW_DENSITY` | 3.2 | Fine grains pack at about 1.4 world pixels apart |
-| `LIQUID_SNOW_DIAMETER` | 1.8 | Same small grain in flight, piles and spray |
-| `LIQUID_SNOW_STIFF` | 1.25 | Softer pressure response under compression |
-| `LIQUID_SNOW_SHEAR` | 32 | Dissipates internal shearing instead of storing spring energy |
-| `LIQUID_SNOW_DRAG` | 8 | Dissipates lateral movement and upward compression rebound |
-| `LIQUID_SNOW_FRICTION` | 180 | Frictional yielding damps sideways creep and small upward pressure rebounds |
-| `LIQUID_SNOW_BOUNCE` | 0.025 | Soft terrain contact |
+| Physical grain diameter | `2.5 / sqrt(3.2)` | About 1.4 world pixels at rest |
+| Render diameter | 1.8 | Consistent grain size in flight and piles |
+| Gravity | 600 px/s squared | Same force through takeoff and landing |
+| Drag size | Stable 0.3 to 1 per grain | Distinct aerodynamic response |
+| Terminal speed | `32 + 42 * size` px/s | Continuous exponential drag |
+| GPU contact iterations | 8 per substep at at least 240 Hz | Resolve compression without cohesion |
+| Contact friction | 0.35 | Tangential impulse limited by normal impulse |
+| Terrain restitution | 0 | Contact does not bounce snow upward |
 
-This is a dry granular tuning of the existing solver, not a full snow-crystal
-or temperature simulation. There is no separate snow heightfield or rigid
-snow platform. Tiny pressure disturbances settle; track and jet forces can
-exceed the friction threshold. The GPU kernels and their CPU/f32 references
-use the same material parameters.
+The solver integrates gravity and drag analytically over each substep.
+Airflow acts at each grain's current position, including a continuous local
+approximation of grain-scale lift near the ground. Neighbor geometry shields
+buried grains from incident airflow. Contact support never switches this force
+on or off. Terrain contacts
+cancel inward normal velocity and preserve sliding subject to friction.
+Jets and blasts move the grains without adding heat. There is no prescribed
+flight arc, density-dependent fall mode, or transfer into CPU weather flakes.
+GPU readback is used for tools, persistence and melting, not motion decisions.
 
-Dry snow is excluded from the liquid solver's absolute low-speed rest brake.
-That brake caught airborne grains at their apex and made them descend together
-at about 5 pixels per second. Snow's friction dissipates upward compression rebounds before
-advection, preventing intermediate-depth layers from continually rippling.
-Dense snow damps upward compression rebound, with no drag on downward
-translation. Unsupported grains still accelerate
-under gravity while waiting for a GPU handoff, instead of sharing one slow
-terminal velocity. Digging away support still lets dense grains fall.
-
-Slow atmospheric flakes retain the rain system's inexpensive ballistic
-approach until their first contact, then become actual solver particles.
-Flight integrates gravity and aerodynamic drag relative to the existing wind
-and resolved jet velocity. The drag coefficient is gravity divided by each
-grain's 32 to 74 pixel-per-second terminal speed, set by its size. The velocity
-solution is exponential over each step, with no minimum-speed clamp at the
-apex and no prescribed flight arc. Falling, settled and thrown snow
-all use the same particle shader, diameter, tint and canvas. The GPU uploads
-flight positions into a small reusable render-only buffer; flight does not
-activate physics cells across the sky. WebGL likewise appends the flakes to
-its existing vertex stream. Canvas uses the same small square before and
-after contact. Transfer preserves position and velocity, with no size change,
-colour change or intermediate visual phase. On WebGPU, an independent additive snow-density channel in the existing
-surface pass reconstructs a continuous matte boundary. Each real particle
-contributes a fixed compact kernel (3.2 world-pixel radius, peak 0.34);
-a solitary flake stays below the 0.58 surface threshold. Body opacity blends
-over densities 0.58 to 1.25, while the original 1.8-pixel grains remain visible
-through an overlapping 0.62 to 1.30 blend. This preserves grain detail while
-powder gathers or separates, avoiding the dim intermediate band and abrupt
-body transition. Falling and simulated snow contribute identical kernels.
-The density gradient supplies diffuse shading; snow gets no water foam,
-gloss or artificial gap bridging. Removing particles removes the surface.
-The WebGL/Canvas fallback retains fine grain rendering. Lighting follows
-daylight and moonlight, with a bright ivory tint and shallow neutral shading
-so settled snow stays pale rather than turning blue-grey at night.
+The existing additive snow-density render channel remains. Each grain adds a
+fixed compact kernel (3.2 world-pixel radius, peak 0.34). Body opacity blends
+over densities 0.58 to 1.25; 1.8-pixel grains remain visible through the
+0.62 to 1.30 blend. A solitary flake stays below the surface threshold.
+The density gradient supplies diffuse shading, without water gloss or foam.
+WebGL and Canvas retain fine grain rendering. Lighting follows daylight and
+moonlight with the existing pale tint. Rendering never joins particle motion.
 
 Snowfall emits 345 grains per second at full intensity over the reference
 width, three times the former rate. The denser rest spacing keeps the smaller
@@ -121,7 +97,18 @@ out over the last 140 pixels. Terrain still blocks each inlet sample.
 High flyovers can disturb the ground well beyond the visible flame.
 Semi-Lagrangian velocity advection and a 28-iteration red/black pressure
 projection resolve the impinging jet, lateral wall flows and returning eddies.
-Terrain and the rig block normal flow. The moving window preserves overlapping
+Terrain and the rig block normal flow. A second projection uses the inlet
+momentum before the terrain-only projection and the actual snow boundary.
+The GPU splats current resident particle positions into this grid, so delayed
+CPU readback cannot hold up the surface.
+Bilinear occupancy gives a smooth transition from loose flakes to a packed bed.
+Face permeability follows the open fraction; a 60-iteration pressure correction
+turns downwash along the snow surface. Particle drag samples the velocity in
+that open fraction. Surface lift is bounded at 460 px/s and derives from both
+wall shear and the normal momentum stopped at impact. The same field extends
+above the pile and carries grains after they separate.
+
+The moving window preserves overlapping
 world-space face velocities instead of dragging its wake with the camera.
 The airflow decays after thrust stops and idles after three seconds.
 The snow coupling fades through the outer 30% of a rounded influence area,
@@ -131,82 +118,29 @@ unchanged. The grid's outer four cells also blend to ambient air. Weak-flow
 drag and the onset of surface release ease continuously, so crossing the
 fringe cannot suddenly apply full drag or switch on a strong flurry.
 
-Banked flight feeds the real nozzle direction into the air solve. Snow reads
-the resulting wall flow and return eddies on both sides of the rig. The former
-directional mask, which suppressed forward and opposing flow by up to 97%,
-is removed. A plume can spread or curl back according to the projected air,
-without forcing every grain to stay behind the rig.
+Banked flight feeds the real nozzle direction into the air solve. Grain drag
+samples the projected flow and a bounded approximation of turbulent surface
+lift below the air grid's 12-pixel resolution. That contribution fades with
+height and local flow, reaching zero away from terrain or packed snow and in still air.
+It is applied continuously, with no contact-state or flight-mode gate.
 
-Aerodynamic drag entrains existing snow, with reduced exposure inside dense
-powder. The WebGPU kernel updates resident particle velocity before P2G;
-CPU fallback samples the same field and applies the same drag. It wakes the
-entrained grains without changing their identity or mass. Atmospheric flakes
-settle relative to the moving air: the jet velocity adds to their normal falling
-and drifting motion. A weak crosswind cannot cancel gravity or build a shelf
-of slow flakes above the rig; an actual updraft can still lift them.
-Strong sideways flow close to a floor also entrains powder through a bounded
-surface-scouring term. This approximates turbulent grain lift below the air
-grid's 12-pixel resolution: flow above 12 pixels per second can lift exposed
-snow, with a 460-pixel-per-second entrainment ceiling and a three-cell reach.
-It vanishes in still air, inside solids and away from a supporting surface.
-This term releases GPU and CPU bed particles. Free flakes sample only the
-resolved air velocity; applying the scouring lift after release made an
-invisible shelf that kept snow from returning to the ground.
-Two world-space gust phases vary this unresolved surface lift. It acts as a
-continuous force through the existing CPU/GPU air drag, never as an impulse
-when a particle changes representation. Once actual airflow has lifted a
-grain out of contact, the handoff preserves its position and velocity exactly.
-Returning powder receives no random relaunch kick and never has downward
-momentum reversed by a transfer. Free powder and atmospheric snow use the
-same gravity and size-dependent drag, so their individual velocities pass
-continuously through the apex. A sustained resolved updraft can still lift them.
+Nearby grains shield each other from incident air. Each grain measures
+upstream overlap within 2.5 physical diameters and attenuates local airflow by
+`exp(-occlusion)`. The direction points toward the active nozzle region,
+or upstream into local wind when thrust stops. Exposed grains erode first;
+the same jet cannot accelerate a whole buried bed as an unbroken sheet.
+Shielding changes smoothly as particles separate. Gravity is never attenuated.
 
-Contact uses the physical grain radius shared with the dense solver. Nearby
-buckets find candidate grains, while actual grain contacts connected to terrain
-determine support. Bucket occupancy cannot suspend a layer above the ground or
-make a disconnected cloud catch more snow. Swept flight resolves the first
-contact point; dry landings dissipate incoming normal velocity before passing
-material into the pile. This avoids injecting impact speed into compressive
-pile pressure and creating another upward burst.
+The GPU contact iterations use immutable position and velocity snapshots.
+They remove inward velocity when correcting penetration, without converting
+correction into outward velocity.
+Terrain, moving rig and bath boundaries constrain particles independently.
+Snow shares storage with water but contributes no liquid-grid mass or velocity.
+No decorative particles or prescribed flight arcs are created.
 
-A connected pile keeps its contacts while moving. The former 16-pixel-per-second
-support cutoff made disturbed snow permeable, compressing returning powder
-against the floor before the solver slowly expanded it again. Deposition now
-updates the contact buckets immediately, and falling grains are processed from
-the bottom upward so each landing is visible to grains above it in that same
-frame. Removed or lofted particles are excluded from the rebuilt contact map.
-The CPU fallback refreshes moving contacts each frame while powder is present.
-Detached clouds still have no terrain support and remain individual free grains.
-
-During an active wake, release is checked every frame. Only storage and thaw
-remain on the 120-millisecond maintenance interval. The GPU supplies an
-asynchronous mirror every solved frame during this period; ordinary liquids
-retain their existing mirror cadence. Moving grains transfer only from a new
-snapshot matching the latest GPU simulation time, so they do not jump back
-to older CPU coordinates. No synchronous GPU wait is introduced. The snow
-droplet shader blends density samples between texels to keep opacity smooth
-as the grain or camera moves across pixel boundaries.
-
-The direct liquid cone wake is weighted by the nonsnow mass in each physics
-cell. Pure water keeps its original splash force; dry powder follows the air
-without receiving a second downward impulse every substep. Mixed cells blend
-by their actual material mass. The GPU stores snow mass beside oil mass in
-the existing buffer binding, with both dense and sparse clears covering it.
-No decorative snow or prescribed flight arcs are created. Jets move snow but
-never melt it; thaw requires water contact or clearing clouds.
-
-This is a bounded 2D, one-way air-to-snow coupling, not a compressible rocket
-exhaust model or a two-way multiphase solver. Snow retains the existing dry
-granular MPM material rather than a full elastic/plastic snow constitutive
-law. The projection approach follows standard incompressible fluid simulation;
-see [Bridson's course material](https://www.cs.ubc.ca/~rbridson/fluidsimulation/).
-
-The dedicated flyover test crosses fresh thin dusting and a deeper bed at
-220 world pixels per second, with actual left and right flight inputs so the
-rig and nozzles bank. It requires visible entrainment, response to the local
-airflow, settling afterward, and exact accounting through snow, meltwater and absorption. The older long-hover check remains too.
-All buffers are bounded and reused. The air coupling shader is compiled
-during the existing GPU startup warmup.
+This is a bounded 2D granular approximation with porous airflow obstacles
+and local shielding. It does not model ice-crystal bonds or a fully coupled
+three-dimensional snow/air fluid. The particle render kernels remain unchanged.
 
 ## Thaw, storage and limits
 
@@ -226,20 +160,12 @@ tracks, jets and tools supply no heat to snow. The scoop stores snow in its own
 chamber and releases physical snow, preserving each grain through save/load.
 Legacy five-chamber scoop saves restore with an empty snow chamber.
 
-Grains loosened by actual airflow return to individual flight after losing
-contact. Unsupported grains separate according to their contact with the bed,
-without a fixed height plane. Supported piles remain in the shared solver.
-Fresh GPU snapshots are still required for handoff, so a transfer cannot rewind
-the rendered position. Released grains keep their position, momentum and mass;
-no launch impulse is added by the transfer itself.
-
-The 5,400-flake limit throttles new weather, never the release of existing
-material. Unsupported powder always transfers into individual flight, even
-when the sky buffer is full. The shared 120,000-grain material budget still
-bounds all snow. GPU flight buffers grow geometrically as needed, and the
-fallback draw stream grows with the actual combined particle count. No
-render-only cap hides the tail of a large flurry. Saving and loading preserves
-all physical flight positions, velocities, sizes and phases.
+Deposited snow remains in its grain solver whether it touches the bed or is
+fully airborne. It never transfers into the atmospheric flake array. The
+5,400-flake weather limit therefore cannot trap or change physical snow.
+The 120,000-grain total material budget still bounds all snow. Saving and
+loading preserves physical positions, velocities and mass; parked grains
+restore into the same solver when the view returns.
 
 Melting changes material 5 to water in place, retaining the GPU's current
 position and velocity. One snow particle is exactly one water particle.
@@ -247,7 +173,9 @@ The ordered identity-change operation cannot duplicate or teleport it.
 A full weather-water reservoir defers melting with the snow intact. Meltwater
 uses normal water physics, including soil absorption and finite lake storage.
 
-Dense solver snow is capped at 36,000 particles on WebGPU or 7,000 on CPU, with
+Snow physics requires WebGPU. An unavailable or lost device stops the world
+before it advances or autosaves and displays a reload message.
+The solver is capped at 36,000 snow particles, with
 5,400 active airborne weather flakes and a 120,000-particle total snow allowance.
 New deposition leaves 5,400 of those slots for atmosphere, so a full pile budget
 does not stop the storm. At that limit, excess unlanded flakes return to the
@@ -270,121 +198,29 @@ model, active and parked counts, moving powder, collected mass and thaw.
 
 ## Verification
 
-`node tools/test-weather-cycle.cjs` checks 600 fronts, all phase durations,
-protected cloudy snow, gradual exposed thaw, water-only contact melt, shelter,
-player heat exclusion and current/legacy saves. `node tools/test-snow-scoop.cjs`
-checks collection, discharge, capacity, blocked outlets and exact snow storage.
-`node tools/sluice-weather-cycle.mjs` exercises cloudy snow, jets, mixed rain
-and snow, lightning, thunder ambience and conserved thaw in a live GPU browser.
-Add `--cpu` for the fallback. Artifacts stay under `/tmp`.
+`node tools/test-snow-support.cjs` checks persistent identity and momentum
+with fresh and delayed GPU snapshots, weather admission spacing, legacy
+powder migration, melting metadata and exact material budgets.
 
-`node tools/sluice-snow-contact.mjs` drops an unsupported sheet six pixels
-above terrain, then returns a dispersed plume to the floor. Both must reach
-actual contact without a rebound, suspended sheet, lost mass or terrain
-penetration. Grounded stacks are allowed; an independent contact trace rejects
-unsupported grains. Settling uses displacement between distinct, unchanged
-particle sets in fresh solver snapshots, retaining stored velocity as a
-diagnostic. This avoids treating an old GPU mirror as continuing motion.
-Browser commands fail after fifteen seconds instead of waiting indefinitely.
-Add `--cpu` for the fallback. Screenshots and frame measurements are written
-under `/tmp/sluice-snow-contact-qa`.
+`node tools/test-weather-cycle.cjs` checks 600 fronts, phase durations,
+protected cloudy snow, exposed thaw, water-only melting, shelter, player heat
+exclusion and save migration. `node tools/test-snow-scoop.cjs` checks snow
+collection, discharge, capacity, blocked outlets and storage accounting.
 
-`node tools/sluice-snow-pile.mjs` blows a 13,299-grain bed, then measures the
-returning pile for thirteen simulation seconds. It checks exact snow-plus-water
-mass, density after the jet stops, and settled height against height at landing.
-The pile must settle without a delayed increase in volume. Add `--cpu` for a
-smaller bed within the fallback's particle budget. Artifacts stay in `/tmp`.
+`node tools/sluice-snow-wave.mjs --only-jets` runs the flat-bed flyover in a
+private Chrome for Testing process. It reads GPU resident particles directly and checks physical lofting, velocity
+spread, absence of persistent slow arches, stable returning volume, zero
+transfers into CPU weather flakes, and exact mass. Add `--snow` for the
+mound with continuing snowfall. `--no-gpu` verifies that unsupported snow
+worlds stop with a clear explanation. Artifacts remain under `/tmp`.
 
-`node tools/test-snow-support.cjs` also checks same-frame batch deposition in
-both array orders, moving rooted contacts, detached moving clouds, and exact
-handoff momentum in strong
-airflow, gradual size-dependent descent, continuous apex acceleration, actual
-terrain support and inelastic landing. It includes detached layers three to
-eight pixels above terrain and tests without relying on GPU readback timing.
+`node tools/sluice-snow-region.mjs` checks that offscreen resident grains
+retain their exact positions and velocities, then resume contacts on re-entry.
 
-Run `node tools/sluice-snow-smoke.mjs --soak --cpu`. It owns a disposable Chrome
-for Testing process and writes screenshots under `/tmp/sluice-snow-qa`.
-It checks native settings, boot, actual GPU snow, pile stability, driving both
-ways without alternate foot support, jets, digging, scoop conservation,
-in-place melting, exact save/load, legacy migration, budgets and CPU fallback.
-It also compares rendered pixels before and after sky-to-solver transfer in
-both GPU rendering modes and the CPU fallback, checks that the last grain
-clears cleanly, verifies that removing snow mass removes its reconstructed
-surface, and tests live GPU absorption for ordinary, poured, pond and
-rain water. Several intermediate spacings also check the pile-to-grain blend,
-with a contact sheet saved as `snow-breakup.png`.
+`node tools/perf/liquid-materials.mjs --gpu` checks six-material GPU identity
+and coexistence. `node tools/perf/snow-air.mjs` checks pressure projection,
+recirculation, roof occlusion, moving-window continuity and shutdown.
+`node tools/test-snow-coverage.cjs` covers atmospheric travel and budgets.
 
-`node tools/sluice-snow-settle.mjs` checks resting layers from 3 to 32 pixels
-deep, including the formerly restless 7- and 12-pixel layers. It measures
-particle speed, upward rebounds and contour motion, then removes terrain
-under the intermediate layers with ballistic handoff disabled to verify
-the dense solver still falls. Add `--cpu` for the fallback. Both paths check
-exact mass, quiet resting piles and absence of spontaneous upward launches.
-Artifacts go to
-`/tmp/sluice-snow-settle-qa`.
-
-`node tools/sluice-snow-saturation.mjs` fills the weather budget, then lofts
-3,600 additional grains. It checks that none remain trapped in the dense
-solver, that descending powder approaches varied individual terminal speeds,
-and that the last grain beyond the old 8,192-particle draw limit remains visible. It also
-checks exact material conservation and complete flight save/load. Add `--cpu`
-for the fallback; artifacts go to `/tmp/sluice-snow-saturation-qa`.
-Set `POWDER_COUNT=30000` to stress a 35,400-flake cloud including the full
-weather buffer. The focused GPU trial kept all grains moving at their
-individual fall speeds and frame-time p95 at 16.8 milliseconds.
-
-`node tools/perf/liquid-materials.mjs --gpu` verifies the five existing liquids
-and snow together through GPU identity packing, physics and readback. Run
-`node tools/sluice-rain-smoke.mjs --drain` for rain, finite lakes, plow protection,
-soil contact, stored-water drainage and a resting puddle on the live solver.
-
-`node tools/sluice-snow-wave.mjs --jet --snow` checks a hanging overhang, a jet
-pass over a dry bed, and a deeper mound during continuous snowfall. It records
-clearance below the plume, slow suspended grains, individual velocity spread,
-GPU handoff batches and exact material accounting, including new snowfall.
-Add `--cpu` for the fallback. Baseline comparisons can use
-`SLUICE_TEST_BUNDLE` and `SLUICE_TEST_GPU`; artifacts stay in `/tmp`.
-The overhang scenario remains a diagnostic for the retained v28.93 support
-model; it is not a claim that every connected arch must immediately separate.
-
-`node tools/perf/snow-air.mjs` checks wall flow, recirculation, pressure
-projection, occlusion through a solid roof, window translation and shutdown.
-`node tools/sluice-snow-jet.mjs` first runs moving passes over fresh thin and
-deep beds, then a controlled live hover and low pass,
-checks entrainment outside the core and exact material accounting. Fresh-bed
-trials compare jets on and off at 240-pixel moving clearance and 400-pixel
-hover clearance, requiring separated powder above the bed. A matched
-sky/powder descent probe checks continuous acceleration and updraft response.
-The test then flies
-through several view widths in both directions and checks surrounding snowfall.
-An airborne hover also checks that flakes keep falling through the top of the
-jet airflow area without stalling. It writes
-its screenshots to `/tmp/sluice-snow-jet-qa`. Add `--cpu` to exercise the
-same interactions on the CPU solver.
-Add `--passes-only` to run just the fresh-bed flyover regressions.
-
-`node tools/test-snow-coverage.cjs` checks sustained sideways travel, reversals,
-unchanged world positions in the overlapping view, current weather on revisits,
-exact atmospheric save/load, zoom, altitude, world edges and particle budgets.
-It also checks continuous rain coverage during flight, atmospheric recycling,
-storm buildup and clearing, and the absence of horizontal or vertical curtains.
-
-`node tools/sluice-snow-ground.mjs` checks near-floor powder density, per-frame
-release continuity, moving particle positions, terrain collision, exact mass,
-and the absence of distant jet kicks. Add `--cpu` for the fallback. Screenshots
-and frame measurements go to `/tmp/sluice-snow-ground-qa`. The v28.68 baseline
-released grains on about 13% of active frames, with 117-millisecond gaps;
-the revised GPU and CPU cases release on every active frame. GPU frame-time
-p95 in the focused test was 16.8 milliseconds.
-
-Add `--dense` for a 9,746-grain bed and a longer hover and flyover. It checks
-that a heavy burst does not leave a stalled sheet above the ground, while
-preserving mass and near-ground flakes. `node tools/test-snow-support.cjs`
-isolates unsupported clouds, moving curtains, thick supported piles and
-removed support. The air test also checks the rounded wake edge and weak-flow
-drag on either side of the old cutoff.
-
-`node tools/sluice-weather-coverage.mjs` checks both modes across distant map
-locations and high-altitude views, four-column coverage, underground gating,
-and rain/snow exclusivity. Add `--cpu` for the fallback. Screenshots go to
-`/tmp/sluice-weather-qa`; use `DUMP` and `PORT` for concurrent runs.
+Older browser scripts that assert dense-to-powder handoff counts describe the
+retired model. Use the persistent-grain tests above for motion regressions.

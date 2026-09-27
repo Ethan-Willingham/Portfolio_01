@@ -2,6 +2,8 @@
 // BUNDLE=/tmp/baseline.js DUMP=/tmp/pile-baseline node tools/test-soft-pile-performance.mjs
 // COMPARE=/tmp/pile-baseline/report.json checks every trajectory against the saved run.
 // MODES=default,contact,terrain,material COUNTS=1,8 CASES=separated,pile,held FRAMES=180 REPEATS=2 PROFILE=1
+// RENDER=1 measures CPU canvas work; ACTIVE_INTENT=1 also enables ordinary crawl decisions.
+// RECOVERY=1 checks five seconds after releasing the held fixture.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -19,6 +21,9 @@ let stage = 'setup';
 const modes = (process.env.MODES || 'default,material').split(',');
 const counts = (process.env.COUNTS || '1,8').split(',').map(Number);
 const cases = (process.env.CASES || 'separated,pile,held').split(',');
+const renderFrames = process.env.RENDER === '1';
+const activeIntent = process.env.ACTIVE_INTENT === '1';
+const recoverAfterHold = process.env.RECOVERY === '1';
 const frames = Number(process.env.FRAMES || 180);
 const repeats = Number(process.env.REPEATS || 2);
 const comparison = process.env.COMPARE ? JSON.parse(fs.readFileSync(process.env.COMPARE, 'utf8')) : null;
@@ -169,14 +174,14 @@ try {
     if (count === 1 && name !== 'separated') continue;
     stage = `${mode}/${count}/${name}/${repeat}`;
     console.log('START ' + stage);
-    const result = await game(`(${runFixture.toString()})(${JSON.stringify({ mode, count, name, frames, repeat })})`);
+    const result = await game(`(${runFixture.toString()})(${JSON.stringify({ mode, count, name, frames, repeat, renderFrames, activeIntent, recoverAfterHold })})`);
     results.push(result); writeReport();
     console.log('CASE ' + JSON.stringify(result));
   }
   if (doProfile) {
     stage = 'CPU sampling profile';
     await send('Profiler.enable'); await send('Profiler.setSamplingInterval', { interval: 100 }); await send('Profiler.start');
-    const result = await game(`(${runFixture.toString()})(${JSON.stringify({ mode: modes.at(-1), count: Math.max(...counts), name: 'held', frames, repeat: 0 })})`);
+    const result = await game(`(${runFixture.toString()})(${JSON.stringify({ mode: modes.at(-1), count: Math.max(...counts), name: 'held', frames, repeat: 0, renderFrames, activeIntent, recoverAfterHold })})`);
     const profiled = await send('Profiler.stop'); cpuProfile = profiled.profile;
     fs.writeFileSync(path.join(dump, 'pile.cpuprofile'), JSON.stringify(cpuProfile));
     const byId = new Map(cpuProfile.nodes.map(n => [n.id, n]));
@@ -192,6 +197,12 @@ try {
   check('all bodies finite, present and active throughout', results.every(r => r.finite && r.minimumBodies === r.count && r.minimumActive === r.count));
   check('held fixtures remain held for every measured frame', results.filter(r => r.name === 'held').every(r => r.heldFrames === r.frames));
   check('pile fixtures produce body contacts', results.filter(r => r.count > 1 && r.name !== 'separated').every(r => r.contactsPerFrame > 0));
+  check('new pair and full fixtures keep clear bounded material', results.filter(r => r.mode === 'pairs' || r.mode === 'full').every(r =>
+    r.geometry.crossingFrames === 0 && r.geometry.embeddedFrames === 0 && r.geometry.deepestPair < 0.15 &&
+    r.geometry.minDet >= -1e-6 && r.geometry.minArea > 0.4 && r.geometry.maxArea < 1.8));
+  check('long held release preserves histories and recovers clear moving material', results.filter(r => r.recovery).every(r =>
+    r.recovery.unchangedRelease && r.recovery.released && r.recovery.finite && r.recovery.maxMotion > 1 &&
+    r.recovery.crossings === 0 && r.recovery.embedded === 0 && r.recovery.minArea > 0.4 && r.recovery.maxArea < 1.8));
   const matched = new Map();
   for (const result of results) {
     const key = `${result.mode}/${result.count}/${result.name}`;
@@ -212,7 +223,7 @@ try {
 
 function writeReport() {
   fs.writeFileSync(path.join(dump, 'report.json'), JSON.stringify({ bundlePath, bundleHash, cpu, boots, results, cpuProfile, browserErrors, failures, comparisonBundleHash: comparison?.bundleHash,
-    notes: ['Physics updateJello CPU time, excludes rendering and surface-brain time. Not a full-game FPS measurement.',
+    notes: ['Physics updateJello CPU time, excludes rendering and surface-brain time. RENDER=1 separately measures update, brain, physics and CPU canvas work. Not a GPU or full-game FPS measurement.',
       'Simulation uses a deterministic clock and seeded random; timing uses the captured native browser clock.',
       'Every body is explicitly kept awake to measure loaded simulation, rather than sleep behavior.',
       'Piles settle against a three-tile-wide enclosure; held fixture presses its uppermost slime down through the pile.',
@@ -224,7 +235,7 @@ async function runFixture(spec) {
   Math.random = function() { rng = (Math.imul(rng, 1664525) + 1013904223) >>> 0; return rng / 4294967296; };
   performance.now = function() { return clock; };
   var dt = 1 / 60, origin = DECK_CENTER_COL - 18, x = origin * TILE, floor = SKY_ROWS * TILE;
-  var bodies = [], timings = [], contacts = 0, activeMinimum = spec.count, bodyMinimum = spec.count, maxContacts = 0, finite = true;
+  var bodies = [], timings = [], renderTimings = [], frameTimings = [], contacts = 0, activeMinimum = spec.count, bodyMinimum = spec.count, maxContacts = 0, finite = true;
   var trajectory, trajectoryOffset = 0, minArea = 1, maxArea = 1, minDet = 1, crossingFrames = 0, embeddedFrames = 0, deepestPair = 0;
   var hash = 2166136261, bytes = new Uint8Array(8), value = new Float64Array(bytes.buffer), initialHash;
   try {
@@ -255,7 +266,12 @@ async function runFixture(spec) {
       var by = floor - 27 - Math.floor(i / (spec.name === 'separated' ? 8 : 2)) * (spec.name === 'separated' ? 75 : 38);
       var b = surfaceSlimeBuild(bx, by, { id: 96001+i, seed: 0.2 + (i % 5) * 0.15, hue: 133, home: bx, r: 24.3 });
       if (!b) throw new Error('failed to create slime ' + i);
-      surfaceSlimeDetach(b, 20); bodies.push(b);
+      if (spec.activeIntent) {
+        b.surfaceSlime.state = 'crawl'; b.surfaceSlime.timer = 30;
+        b.surfaceSlime.goalDir = b.surfaceSlime.dir;
+        b.surfaceSlime.goalX = bx + b.surfaceSlime.dir * TILE * 7;
+      } else surfaceSlimeDetach(b, 20);
+      bodies.push(b);
     }
     var held = bodies[bodies.length - 1], gx = held.cx, gy = held.cy;
     if (spec.name === 'held' && !surfaceSlimeGrabStart(gx, gy, 'fixture')) throw new Error('failed to grab pile');
@@ -266,9 +282,21 @@ async function runFixture(spec) {
       for (var n = 0; n < bodies.length; n++) { bodies[n].sleeping = false; bodies[n].sleepFrames = 0; }
       if (spec.name === 'held') surfaceSlimeGrabMove(gx + Math.sin(frame * dt * 2) * 16, gy + Math.min(1, frame / 90) * 80, 'fixture');
       clock += dt * 1000;
+      var frameStart = realNow();
       update(dt); surfaceSlimeTick(dt);
       var before = realNow(); updateJello(dt); var elapsed = realNow() - before;
+      var renderTime = 0;
+      if (spec.renderFrames) {
+        var renderStart = realNow(), simulationNow = performance.now;
+        // The renderer has time-budgeted work queues; a frozen simulation
+        // clock would prevent those queues from yielding.
+        performance.now = nativeNow;
+        try { render(); } finally { performance.now = simulationNow; }
+        renderTime = realNow() - renderStart;
+      }
+      var frameTime = realNow() - frameStart;
       if (frame >= warmup) {
+        if (spec.renderFrames) { renderTimings.push(renderTime); frameTimings.push(frameTime); }
         timings.push(elapsed); updateHash();
         if (frame % 6 === 0) for (var bi = 0; bi < bodies.length; bi++) {
           var body = bodies[bi], area = 0;
@@ -301,11 +329,45 @@ async function runFixture(spec) {
         for (n = 0; n < bodies.length; n++) maxGuardRejects = Math.max(maxGuardRejects, bodies[n]._guardRejects || 0);
       }
     }
+    var recovery = null;
+    if (spec.recoverAfterHold && spec.name === 'held') {
+      var released = surfaceSlimeGrip.body;
+      var releaseX = Float64Array.from(released.px), releaseY = Float64Array.from(released.py);
+      var historyBefore = JSON.stringify([released.px,released.py,released.ox,released.oy]);
+      var rejectBefore = bodies.map(function(b) { return b._guardRejects || 0; }), tailRejects;
+      surfaceSlimeGrabEnd('fixture', false);
+      recovery = { unchangedRelease: historyBefore === JSON.stringify([released.px,released.py,released.ox,released.oy]),
+        released: !surfaceSlimeGrip && !released._grabbed, maxMotion: 0, crossings: 0, embedded: 0, minArea: 1, maxArea: 1, finite: true };
+      for (var recoverFrame = 0; recoverFrame < 300; recoverFrame++) {
+        if (recoverFrame === 240) tailRejects = bodies.map(function(b) { return b._guardRejects || 0; });
+        clock += dt * 1000; update(dt); surfaceSlimeTick(dt); updateJello(dt);
+        for (var recoverBody = 0; recoverBody < bodies.length; recoverBody++) {
+          var rb = bodies[recoverBody], recoverArea = 0;
+          if (softTerrainSkinCrossed(rb)) recovery.crossings++;
+          for (var recoverNode = 0; recoverNode < rb.n; recoverNode++) {
+            recovery.finite = recovery.finite && isFinite(rb.px[recoverNode]+rb.py[recoverNode]+rb.ox[recoverNode]+rb.oy[recoverNode]);
+          }
+          for (var recoverRing = 0; recoverRing < rb.ringN; recoverRing++) {
+            var ra = rb.ring[recoverRing], rc = rb.ring[(recoverRing+1)%rb.ringN];
+            if (jelloWorldSolidAt(rb.px[ra],rb.py[ra])) recovery.embedded++;
+            recoverArea += (rb.px[ra]-rb.cx)*(rb.py[rc]-rb.cy)-(rb.py[ra]-rb.cy)*(rb.px[rc]-rb.cx);
+          }
+          recoverArea = Math.abs(recoverArea)*.5/rb.restArea;
+          recovery.minArea = Math.min(recovery.minArea,recoverArea); recovery.maxArea = Math.max(recovery.maxArea,recoverArea);
+        }
+        for (var releasedNode=0;releasedNode<released.n;releasedNode++) recovery.maxMotion=Math.max(recovery.maxMotion,
+          Math.hypot(released.px[releasedNode]-releaseX[releasedNode],released.py[releasedNode]-releaseY[releasedNode]));
+      }
+      recovery.rejectDelta = bodies.map(function(b,i) { return (b._guardRejects||0)-rejectBefore[i]; });
+      recovery.lastSecondRejects = bodies.map(function(b,i) { return (b._guardRejects||0)-tailRejects[i]; });
+      recovery.releasedIndex = bodies.indexOf(released);
+    }
     timings.sort(function(a,b) { return a-b; });
     var digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', trajectory.buffer))).map(function(v) { return v.toString(16).padStart(2, '0'); }).join('');
-    return { mode: spec.mode, count: spec.count, name: spec.name, repeat: spec.repeat, frames: spec.frames, initialHash: initialHash,
+    return { mode: spec.mode, count: spec.count, name: spec.name, repeat: spec.repeat, activeIntent: spec.activeIntent, frames: spec.frames, initialHash: initialHash,
       trajectoryHash: digest, trajectoryBytes: trajectory.byteLength, finite: finite, minimumBodies: bodyMinimum, minimumActive: activeMinimum,
-      geometry: {minArea:minArea,maxArea:maxArea,minDet:minDet,crossingFrames:crossingFrames,embeddedFrames:embeddedFrames,deepestPair:deepestPair},
+      recovery: recovery, geometry: {minArea:minArea,maxArea:maxArea,minDet:minDet,crossingFrames:crossingFrames,embeddedFrames:embeddedFrames,deepestPair:deepestPair},
+      render: spec.renderFrames ? { canvas: stats(renderTimings), updateAndCanvas: stats(frameTimings) } : null,
       meanMs: timings.reduce(function(a,b) { return a+b; },0)/timings.length,
       medianMs: timings[Math.floor(timings.length*.5)], p95Ms: timings[Math.floor(timings.length*.95)], maxMs: timings[timings.length-1],
       contactsPerFrame: contacts/spec.frames, maxContacts: maxContacts, heldFrames: heldFrames, maxGuardRejects: maxGuardRejects,
@@ -313,6 +375,12 @@ async function runFixture(spec) {
   } finally {
     if (surfaceSlimeGrip) surfaceSlimeGrabEnd(undefined, true);
     Math.random = nativeRandom; performance.now = nativeNow;
+  }
+  function stats(values) {
+    values.sort(function(a,b) { return a-b; });
+    return { meanMs: values.reduce(function(a,b) { return a+b; },0)/values.length,
+      p95Ms: values[Math.floor(values.length*.95)], maxMs: values[values.length-1],
+      over16ms: values.filter(function(v) { return v > 1000/60; }).length };
   }
   function updateHash() {
     for (var bi = 0; bi < bodies.length; bi++) {
