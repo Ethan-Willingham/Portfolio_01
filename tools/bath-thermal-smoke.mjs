@@ -24,7 +24,7 @@ const server = createServer((req, res) => {
     if (!file.startsWith(root + '/')) { res.writeHead(403).end(); return; }
     let data = fs.readFileSync(file);
     if (file === path.join(root, 'js/sluice.js')) {
-      let src = fs.readdirSync(path.join(root, 'js/sluice')).filter(n=>/^\d.*\.js$/.test(n)).sort().map(n=>fs.readFileSync(path.join(root,'js/sluice',n),'utf8')).join('\n');
+      let src = process.env.BUNDLE ? data.toString() : fs.readdirSync(path.join(root, 'js/sluice')).filter(n=>/^\d.*\.js$/.test(n)).sort().map(n=>fs.readFileSync(path.join(root,'js/sluice',n),'utf8')).join('\n');
       const end = src.lastIndexOf('})();');
       assert(end >= 0, 'bundle IIFE seam exists');
       data = Buffer.from(src.slice(0, end) + 'window.__hearthTest = function(source) { return eval(source); };\n' + src.slice(end));
@@ -64,6 +64,7 @@ function check(label, condition) { assert.ok(condition, label); console.log('PAS
 try {
   await new Promise(resolve => server.listen(port, '127.0.0.1', resolve));
   chrome = spawn(process.env.CHROME || `${process.env.HOME}/.local/bin/agent-chrome-for-testing`, [
+    ...(process.env.NOVSYNC ? ['--disable-gpu-vsync','--disable-frame-rate-limit'] : []),
     '--headless=new', '--enable-unsafe-webgpu', '--use-angle=metal', '--no-first-run', '--disable-gpu-sandbox',
     `--user-data-dir=${profile}`, `--remote-debugging-port=${debug}`, 'about:blank'
   ], { stdio: 'ignore' });
@@ -88,6 +89,7 @@ try {
     if (await ev(`typeof __hearthTest==='function' && __hearthTest("introPhase==='done'")`)) break;
     await sleep(100);
   }
+  if(process.env.TRACE)console.log('BOOT',await game('({phase:introPhase,warm:window.__shaderWarm,gpu:!!liquidWGPU,errors:liquidWGPU&&liquidWGPU.errors})'),errors);
   check('thermal shaders boot cleanly', await game("introPhase==='done' && !!liquidWGPU && liquidWGPU.available"));
   check('shader warm-up clean', await ev('window.__shaderWarm.errors.length===0'));
   const outdoorClock = await game('LIQUID_TIMESCALE');
@@ -103,17 +105,30 @@ try {
     bathThermal.energy.set(bathThermal.capacity.map((c,k)=>c*(k>=48?70:35)));
     bathThermalStep(.05);bathThermalUpload();`);
   console.log('THERMAL',await game('({count:liquidCount,C:bathThermal.meanC,capacity:bathThermal.totalCapacity})'));
-  for(let f=0;f<300;f++){
-    await game('bathThermalTick(1/60);updateLiquids(1/60);bathThermalVaporTick(1/60);');
+  const frames=Number(process.env.FRAMES||600);
+  for(let f=0;f<frames;f++){
+    if(process.env.TRACE)console.log('FRAME',f,'thermal');
+    await game('bathThermalTick(1/60)');
+    if(process.env.TRACE)console.log('FRAME',f,'liquid');
+    await game('updateLiquids(1/60)');
+    if(process.env.TRACE)console.log('FRAME',f,'vapor');
+    await game('bathThermalVaporTick(1/60)');
+    if(process.env.TRACE)console.log('FRAME',f,'gpuFence');
     await game('liquidWGPU.device.queue.onSubmittedWorkDone()');
     await sleep(5);
   }
   await game('updateCamera();render()');
+  console.log('STEAM FIELD',await game('bathVapor&&({steps:bathVapor.steps,cells:bathVapor.w*bathVapor.h,peak:bathVapor.peak,emittedKg:bathVapor.emittedKg})'));
+  check('outdoor smoke cannot draw over the bath',await game('(!smokeFluidCanvas||smokeFluidCanvas.style.visibility===\"hidden\")&&(!rigExhaustCanvas||rigExhaustCanvas.style.visibility===\"hidden\")'));
+  check('bubble sprites are removed',await game('!(\"bubbles\" in bathThermal)'));
+  check('evaporation feeds visible continuous airfield',await game('bathVapor&&bathVapor.emittedKg>0&&bathVapor.peak>.02'));
+  console.log('STEAM CPU MS', await game('(function(){var times=[];for(var i=0;i<60;i++){var start=performance.now();bathVaporStep(bathVapor,1/30);times.push(performance.now()-start);}times.sort((a,b)=>a-b);return{median:times[30],p95:times[57]};})()'));
+  if(process.env.LIVE){await game('lastTime=performance.now();gameRafId=requestAnimationFrame(loop)');await sleep(8000);await game('cancelAnimationFrame(gameRafId);gameRafId=0;render()');console.log('LIVE FPS',await game('({fps:perfFps,cpu:perfFrameMs,steam:!!bathVapor})'));}
   check((process.env.CPU?'CPU fallback':'GPU')+' thermal solver executes cleanly',errors.length===0);
   check('shared thermal field stays finite and retains hot water',await game('bathThermal.meanC>50&&Array.from(bathThermal.gpu).every(Number.isFinite)'));
   check('snow force remains zero',await game('bathThermalForce(bathThermal.x0+300,bathThermal.y0+130,5)===0'));
   check('actual evaporation produces visible vapor',await game('bathThermal.evaporatedKg>0&&bathThermal.vapor.length>0'));
   await screenshot(process.env.CPU?'thermal-cpu':'thermal-gpu');
-  console.log('THERMAL FINAL',await game('({count:liquidCount,C:bathThermal.meanC,vapor:bathThermal.vapor.length,errors:liquidWGPU.errors})'));
+  console.log('THERMAL FINAL',await game('({count:liquidCount,C:bathThermal.meanC,vapor:bathThermal.vapor.length,maxCurrent:Math.max(...Array.from(bathThermal.vx,Math.abs),...Array.from(bathThermal.vy,Math.abs)),maxHeatFlow:Math.max(...Array.from(bathThermal.flowX,Math.abs),...Array.from(bathThermal.flowY,Math.abs)),errors:liquidWGPU.errors})'));
   console.log('ERRORS',errors);
 } finally { cleanup(); }

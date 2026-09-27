@@ -54,18 +54,13 @@
     if (!hearthPlacementPointInside(p)) return false;
     var body = hearthHandPreview();
     body.x = p.x; body.y = p.y; hearthWorldHull(body);
-    if(!hearthChamberBodyContains(body,0.5))return false;
-    var chunks = hearthBeds.boiler.chunks;
-    for (var i = 0; i < chunks.length; i++) {
-      if (chunks[i].held || Math.hypot(chunks[i].x - p.x, chunks[i].y - p.y) > chunks[i].r + body.r + 4) continue;
-      hearthWorldHull(chunks[i]);
-      if (hearthManifold(body, chunks[i], 0)) return false;
-    }
-    return true;
+    // A drop creates this hull at the cursor even inside the existing pile.
+    // The contact solver separates overlapping pieces on its next steps.
+    return hearthChamberBodyContains(body,0.5);
   }
   function hearthPlaceSelected(p, touch) {
     var at = hearthHandPoint(p, touch);
-    if (!hearthPlacementValid(at)) { bathSetNotice('Place the preview in free space above the pile.'); return false; }
+    if (!hearthPlacementValid(at)) { bathSetNotice('Keep the whole preview inside the chamber.'); return false; }
     var body = hearthDropMaterial('boiler', at.x, at.y, hearthHand.material, hearthHandPreview());
     if (!body) { bathSetNotice('No ' + hearthMaterial(hearthHand.material).label.toLowerCase() + ' available, or the grate is full.'); return false; }
     body.vx = body.vy = body.spin = 0;

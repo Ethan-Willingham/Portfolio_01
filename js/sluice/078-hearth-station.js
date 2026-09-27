@@ -75,14 +75,21 @@
       wide: wide, side: false, landscape: landscape };
   }
   function hearthStationReadout(bed) {
-    var weight = 0, fuel = 0, air = 0, count = 0;
+    var weight = 0, fuel = 0, air = 0, burning = 0, ash = bed.ash ? bed.ash.length : 0;
     for (var i = 0; i < bed.chunks.length; i++) {
-      var b = bed.chunks[i]; if (b.ash) continue;
+      var b = bed.chunks[i]; if (b.held) continue;
+      if (b.ash) { ash++; continue; }
+      if (hearthMaterial(b.material).role !== 'fuel' || !(b.fuel > 0)) continue;
       var share = b.fuelShare || 1;
-      weight += share; fuel += b.fuel * share; air += b.oxygen; count++;
+      weight += share; fuel += b.fuel * share;
+      if (b.lit) { burning += share; air += b.oxygen * share; }
     }
-    return 'FUEL ' + Math.round(fuel / Math.max(0.001, weight) * 100) + '% / AIR ' +
-      Math.round(air / Math.max(1, count) * 100) + '% / ASH ' + Math.round(bed.ashLoad * 100) + '%';
+    if (!weight) return ash ? 'TURN GRATE TO CLEAR ASH' : 'DROP FUEL TO BEGIN';
+    if (bed.ashLoad > 0.3) return 'TURN GRATE TO CLEAR ASH';
+    if (!burning) return 'DRAG STRIKER OVER FUEL';
+    if (air / burning < 0.4) return 'WORK BELLOWS FOR AIR';
+    if (fuel / weight < 0.16) return 'EMBERS, ADD FUEL';
+    return bed.thermalKW > 0.05 ? 'FIRE HEATING COPPER' : 'FIRE CATCHING';
   }
   function hearthDrawFuelControl(c, r, pump) {
     var bed = hearthBeds.boiler;
@@ -118,12 +125,12 @@
     hearthButtons.push(Object.assign({ action: 'strike' }, L.action));
     hearthDrawGrateControl(c, L.ash);
     if (L.wide || L.side) {
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, L.side ? 10 : 11, UIT_DIM, 'center');
+      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, 11, BLD.cream, 'center');
       if (L.wide && !bed.chunks.length) { var hint = { x: L.bin.x, y: L.bin.y - 26, w: L.bin.w, h: 20 }; hearthPlate(c, hint, false); hearthText(c, 'CLICK TO DROP', hint.x + hint.w / 2, hint.y + 10, 11, BLD.cream, 'center'); }
     } else {
       // Keep the sloping ironwork continuous behind the compact readings.
       var readY = L.h >= 500 ? L.h - 12 : r.y + 8;
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, readY, 10, UIT_DIM, 'center');
+      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, readY, 11, BLD.cream, 'center');
     }
     if (hearthDrag) {
       var d = hearthDrag;

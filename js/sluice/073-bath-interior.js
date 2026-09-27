@@ -20,6 +20,23 @@
     }
     c.lineTo(curve.x1 + outset, curve.y0 - 16); c.closePath();
   }
+  function bathCopperWarmth(tempC) {
+    // Stored copper energy sets this color, including its slow cooling after
+    // the fuel burns out. Fire flicker and water temperature do not drive it.
+    if (tempC === undefined) tempC = bathThermal ? bathThermal.copperC : 20;
+    var warm = Math.max(0, Math.min(1, (tempC - 30) / 130));
+    var glow = Math.max(0, Math.min(1, (tempC - 90) / 380));
+    return { warm: warm * warm * (3 - 2 * warm), glow: glow * glow * (3 - 2 * glow) };
+  }
+  function bathCopperTint(c, curve, color, strength) {
+    // The heated metal remains a continuous bowl. Keep some warmth up the
+    // shoulders, with the strongest light across the underside over the fire.
+    var tint = c.createLinearGradient(0, curve.y0, 0, curve.y0 + curve.D);
+    tint.addColorStop(0, hearthArtColor(color, strength * 0.22));
+    tint.addColorStop(0.48, hearthArtColor(color, strength * 0.62));
+    tint.addColorStop(1, hearthArtColor(color, strength));
+    return tint;
+  }
   function bathDrawDryLiner(c, curve) {
     // This is the dry copper behind the liquid layer. A flat blue field made
     // a zero-litre tub look full before the hose had emitted any water.
@@ -28,6 +45,15 @@
     shade.addColorStop(0, BLD.woodDeep); shade.addColorStop(0.5, BLD.woodDark);
     shade.addColorStop(0.88, BLD.woodBase); shade.addColorStop(1, BLD.woodMid);
     c.fillStyle = shade; c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    var heat = bathCopperWarmth();
+    if (heat.warm > 0) {
+      c.fillStyle = bathCopperTint(c, curve, BLD.redBright, heat.warm * 0.16);
+      c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    }
+    if (heat.glow > 0) {
+      c.fillStyle = bathCopperTint(c, curve, BLD.warmGlow, heat.glow * 0.24);
+      c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    }
     // Joined copper sheets and a few hammer marks read as a solid lining.
     // They stay fixed when the real water moves across them.
     for (var panel = 1; panel < 12; panel++) {
@@ -49,11 +75,8 @@
   function bathDrawVessel(c) {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     var bottom = bathInteriorBottom(), left = cam.x - 2, width = screenW + 4;
-    // Hide tile-shaped water outside the catenary. The vessel itself is a
-    // curved shell, not a rectangular slab surrounding a curved opening.
-    c.fillStyle = BLD.woodDeep; c.beginPath();
-    c.rect(left, curve.y0 - 16, width, bottom - curve.y0 + 20);
-    bathVesselPath(c, curve, 0, 0); c.fill('evenodd');
+    // The physical liner contains the water. Keep the sides visible so an
+    // overflowing sheet can fall all the way to the floor before it is lost.
     c.fillStyle = BLD.woodDeep; c.fillRect(left, bottom - 11, width, screenH);
     // Offset outward along the true bowl normal. The water-facing edge stays
     // exactly on depthAt(), including the steep shoulders near each lip.
@@ -64,6 +87,9 @@
     bathRimBand(c, curve, 3, 5, BLD.woodPale);
     bathRimBand(c, curve, 12, 14, BLD.woodBase);
     bathRimBand(c, curve, 18, 19, BLD.goldDark);
+    var heat = bathCopperWarmth();
+    if (heat.warm > 0) bathRimBand(c, curve, 2, 18, bathCopperTint(c, curve, BLD.redBright, heat.warm * 0.42));
+    if (heat.glow > 0) bathRimBand(c, curve, 3, 17, bathCopperTint(c, curve, BLD.warmGlow, heat.glow * 0.70));
     // Broad hammered copper plates, with seam straps and paired iron rivets.
     for (var n = 1; n < 12; n++) {
       if (n === 6) continue; // The small compass seal replaces the center strap.
@@ -209,7 +235,7 @@
       foreground.setTransform(ws, 0, 0, ws, -Math.round(cam.x * ws), -Math.round(cam.y * ws));
       bathDrawVessel(foreground);
     }
-    drawLiquids(); drawSmoke();
+    drawLiquids(); bathWorldSmokeVisibility(true);
     var previous = ctx;
     try {
       if (foreground) ctx = foreground;
@@ -227,7 +253,7 @@
     return true;
   }
   function bathInteriorWarm(c) {
-    var previous = ctx;
+    var previous = ctx, copperC = bathThermal ? bathThermal.copperC : 20;
     c.save();
     try {
       ctx = c;
@@ -235,6 +261,10 @@
       c.translate(-curve.x0, -curve.y0);
       bathDrawDryLiner(c, curve);
       bathDrawVessel(c);
+      if (bathThermal) bathThermal.copperC = 400;
+      bathDrawDryLiner(c, curve);
+      bathDrawVessel(c);
+      if (bathThermal) bathThermal.copperC = copperC;
       bathArrivalWarm(c, curve);
       if (typeof bathThermalWarm === 'function') bathThermalWarm(c);
       var b = bathToolBounds(), x = (curve.x0 + curve.x1) / 2, y = curve.y0 - 50;
@@ -246,5 +276,5 @@
       hearthDrawCasing(c, { x: 24, y: 30, w: 208, h: 160 }, hearthBeds.boiler, false);
       hearthDrawStriker(c, 240, 60, 1, 0.5);
       drawBathSilos(c, 0, 0, 250, 110, { labels: true });
-    } finally { c.restore(); ctx = previous; }
+    } finally { if (bathThermal) bathThermal.copperC = copperC; c.restore(); ctx = previous; }
   }

@@ -4656,13 +4656,29 @@ struct SimParams {
   thermalMeta : vec4<f32>, // enabled,mean Celsius,spare,spare
   thermalCells : array<vec4<f32>,72>, // Celsius,particle count,surface y,spare
 };
+fn bathThermalTap(cell:vec2i,weight:f32)->vec2f {
+ let inside=all(cell>=vec2i(0)) && all(cell<vec2i(12,6));
+ let safe=clamp(cell,vec2i(0),vec2i(11,5));
+ let value=sp.thermalCells[u32(safe.y*12+safe.x)];
+ let w=select(0.,weight,inside && value.y>0.);
+ return vec2f(value.x*w,w);
+}
 fn bathThermalSample(p:vec2f,kind:u32)->vec2f {
  if(sp.thermalMeta.x<0.5 || kind>=5u){return vec2f(0.);}
  let cell=vec2i(floor((p-sp.thermalRect.xy)/sp.thermalRect.zw));
  if(cell.x<0 || cell.x>=12 || cell.y<0 || cell.y>=6){return vec2f(0.);}
  let value=sp.thermalCells[u32(cell.y*12+cell.x)];
  if(value.y<4. || p.y<value.z-4.){return vec2f(0.);}
- return vec2f(clamp((value.x-sp.thermalMeta.y)*600.*0.00035,-18.,18.),max(0.,value.x-20.)/40.);
+ let centre=(p-sp.thermalRect.xy)/sp.thermalRect.zw-vec2f(0.5);
+ let base=vec2i(floor(centre));let fraction=fract(centre);
+ // Four explicit taps keep this particle hot path free of dynamic loops.
+ let a=bathThermalTap(base,(1.-fraction.x)*(1.-fraction.y));
+ let b=bathThermalTap(base+vec2i(1,0),fraction.x*(1.-fraction.y));
+ let c=bathThermalTap(base+vec2i(0,1),(1.-fraction.x)*fraction.y);
+ let d=bathThermalTap(base+vec2i(1,1),fraction.x*fraction.y);
+ let sum=a+b+c+d;
+ let temperature=select(value.x,sum.x/max(sum.y,0.000001),sum.y>0.);
+ return vec2f(clamp((temperature-sp.thermalMeta.y)*600.*0.00035,-18.,18.),max(0.,temperature-20.)/40.);
 }
 fn bowlSurface(b:vec4f,x:f32)->vec2f {
  let t=clamp((x-b.x)/(b.y-b.x)*2.-1.,-1.,1.);
@@ -10832,6 +10848,9 @@ fn main(@builtin(global_invocation_id) id:vec3<u32>) {
       },
       setBathThermal: function (data) {
         if (!data || data.length !== 296) { instance.bathThermal = null; return; }
+        // The conserved field owns bath heat. Apply this on the receiving
+        // backend too, including one initialized after the room was opened.
+        LIQUID_BATH_ON = 0; LIQUID_BATH_BUOY = 0; LIQUID_BATH_TINT_STR = 0;
         if (!instance.bathThermal) instance.bathThermal = new Float32Array(296);
         instance.bathThermal.set(data);
       },

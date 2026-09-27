@@ -12,10 +12,14 @@
     bathThermal = { energy: new Float64Array(72), capacity: new Float64Array(72),
       count: new Float32Array(72), water: new Float32Array(72),
       vx: new Float32Array(72), vy: new Float32Array(72), temperature: new Float32Array(72),
+      flowX: new Float64Array(72), flowY: new Float64Array(72),
+      flowWeightX: new Float64Array(72), flowWeightY: new Float64Array(72),
+      flowPressure: new Float64Array(72), flowDivergence: new Float64Array(72),
+      flowOut: new Float64Array(72), flowEnergy: new Float64Array(72),
       surface: new Float32Array(12), surfaceCell: new Int16Array(12), covered: new Uint8Array(12),
       evapCredit: new Float64Array(12), steamRate: new Float32Array(12),
-      gpu: new Float32Array(296), vapor: [], bubbles: [],
-      sampleT: 0, sampleWater: -1, insideLast: false, simAcc: 0, vaporAcc: 0, bubbleAcc: 0, elapsed: 0,
+      gpu: new Float32Array(296), vapor: [],
+      sampleT: 0, sampleWater: -1, insideLast: false, simAcc: 0, elapsed: 0,
       copperC: 20, meanC: 20, totalCapacity: 0, evaporatedKg: 0,
       inputKJ: 0, inletKJ: 0, outflowKJ: 0, airLossKJ: 0, latentKJ: 0, vaporSensibleKJ: 0, inputKW: 0, migrationC: 0,
       pendingKJ: 0, pendingInlets: [], typeCount: new Float64Array(5), x0: 0, y0: 0, dx: 1, dy: 1, enabled: false };
@@ -28,8 +32,21 @@
     return !isFinite(col) || !isFinite(row) || col < 0 || col >= 12 || row < 0 || row >= 6 ? -1 : row * 12 + col;
   }
   function bathThermalTemperatureAt(x, y) {
-    var i = bathThermalIndex(x, y);
-    return i >= 0 && bathThermal.capacity[i] > 0 ? bathThermal.temperature[i] : 20;
+    var t = bathThermal, i = bathThermalIndex(x, y);
+    if (i < 0 || t.capacity[i] <= 0) return 20;
+    // Cell values describe their centres. Interpolate only occupied water,
+    // so the curved copper and empty air cannot introduce cold square edges.
+    var gx = (x - t.x0) / t.dx - 0.5, gy = (y - t.y0) / t.dy - 0.5;
+    var x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+    var sum = 0, weight = 0;
+    for (var oy = 0; oy < 2; oy++) for (var ox = 0; ox < 2; ox++) {
+      var cx = x0 + ox, cy = y0 + oy;
+      if (cx < 0 || cx >= 12 || cy < 0 || cy >= 6) continue;
+      var k = cy * 12 + cx; if (t.count[k] <= 0) continue;
+      var w = (ox ? fx : 1 - fx) * (oy ? fy : 1 - fy);
+      sum += t.temperature[k] * w; weight += w;
+    }
+    return weight > 0 ? sum / weight : t.temperature[i];
   }
   function bathThermalSurface(x, fallback) {
     var t = bathThermal, col = Math.floor((x - t.x0) / t.dx);
@@ -132,6 +149,84 @@
     var q = (tb - ta) * Math.min(ca, cb) * Math.min(0.22, dt * rate);
     t.energy[a] += q; t.energy[b] -= q;
   }
+  function bathThermalAdvect(dt) {
+    var t = bathThermal;
+    if (!bathMode || !(dt > 0)) return;
+    var fx = t.flowX, fy = t.flowY, wx = t.flowWeightX, wy = t.flowWeightY;
+    var pressure = t.flowPressure, divergence = t.flowDivergence;
+    fx.fill(0); fy.fill(0); wx.fill(0); wy.fill(0); divergence.fill(0);
+    var moving = false;
+    for (var y = 0; y < 6; y++) for (var x = 0; x < 12; x++) {
+      var i = y * 12 + x, ca = t.capacity[i];
+      if (ca <= 0) continue;
+      if (x < 11 && t.capacity[i + 1] > 0) {
+        var capX = Math.min(ca, t.capacity[i + 1]);
+        wx[i] = capX / (t.dx * t.dx);
+        fx[i] = (t.vx[i] + t.vx[i + 1]) * 0.5 * capX / t.dx;
+        divergence[i] += fx[i]; divergence[i + 1] -= fx[i];
+        if (Math.abs(fx[i]) > 1e-8) moving = true;
+      }
+      if (y < 5 && t.capacity[i + 12] > 0) {
+        var capY = Math.min(ca, t.capacity[i + 12]);
+        wy[i] = capY / (t.dy * t.dy);
+        fy[i] = (t.vy[i] + t.vy[i + 12]) * 0.5 * capY / t.dy;
+        divergence[i] += fy[i]; divergence[i + 12] -= fy[i];
+        if (Math.abs(fy[i]) > 1e-8) moving = true;
+      }
+    }
+    if (!moving) return;
+    // The sampled velocities are noisy and the thermal grid is much coarser
+    // than the liquid solver. Remove their compressible component first.
+    // Closed faces at air/copper then carry a circulation, not fictitious
+    // inflow that concentrates heat in the last row of the basin.
+    pressure.fill(0);
+    for (var iteration = 0; iteration < 120; iteration++) {
+      var error = 0;
+      for (var n = 0; n < 72; n++) {
+        if (t.capacity[n] <= 0) continue;
+        var col = n % 12, row = Math.floor(n / 12), diagonal = 0, neighbors = 0;
+        if (col > 0) { diagonal += wx[n - 1]; neighbors += wx[n - 1] * pressure[n - 1]; }
+        if (col < 11) { diagonal += wx[n]; neighbors += wx[n] * pressure[n + 1]; }
+        if (row > 0) { diagonal += wy[n - 12]; neighbors += wy[n - 12] * pressure[n - 12]; }
+        if (row < 5) { diagonal += wy[n]; neighbors += wy[n] * pressure[n + 12]; }
+        if (diagonal <= 0) continue;
+        var next = (neighbors - divergence[n]) / diagonal;
+        var change = next - pressure[n]; pressure[n] += change * 1.45;
+        error = Math.max(error, Math.abs(change) * diagonal);
+      }
+      if (error < 1e-8) break;
+    }
+    t.flowOut.fill(0); t.flowEnergy.fill(0);
+    for (var a = 0; a < 72; a++) {
+      if (wx[a] > 0) {
+        fx[a] += wx[a] * (pressure[a] - pressure[a + 1]);
+        t.flowOut[fx[a] >= 0 ? a : a + 1] += Math.abs(fx[a]);
+      }
+      if (wy[a] > 0) {
+        fy[a] += wy[a] * (pressure[a] - pressure[a + 12]);
+        t.flowOut[fy[a] >= 0 ? a : a + 12] += Math.abs(fy[a]);
+      }
+    }
+    // One shared CFL scale preserves the closed circulation while limiting
+    // every donor to less than half its heat capacity in this time step.
+    var step = dt;
+    for (var donor = 0; donor < 72; donor++) if (t.flowOut[donor] > 0) {
+      step = Math.min(step, t.capacity[donor] * 0.45 / t.flowOut[donor]);
+    }
+    for (var src = 0; src < 72; src++) {
+      if (wx[src] > 0) {
+        var fromX = fx[src] >= 0 ? src : src + 1;
+        var qx = fx[src] * step * t.energy[fromX] / t.capacity[fromX];
+        t.flowEnergy[src] -= qx; t.flowEnergy[src + 1] += qx;
+      }
+      if (wy[src] > 0) {
+        var fromY = fy[src] >= 0 ? src : src + 12;
+        var qy = fy[src] * step * t.energy[fromY] / t.capacity[fromY];
+        t.flowEnergy[src] -= qy; t.flowEnergy[src + 12] += qy;
+      }
+    }
+    for (var cell = 0; cell < 72; cell++) t.energy[cell] += t.flowEnergy[cell];
+  }
   function bathThermalStep(dt) {
     var t = bathThermal, bed = hearthBeds.boiler;
     var reportedKW = Number(bed.thermalKW);
@@ -156,6 +251,7 @@
       exchange = bound >= 0 ? Math.min(exchange, bound) : Math.max(exchange, bound);
       t.energy[cell] += exchange; t.copperC -= exchange / BATH_COPPER_CAPACITY;
     }
+    bathThermalAdvect(dt);
     for (var y = 0; y < 6; y++) for (var x = 0; x < 12; x++) {
       var k = y * 12 + x;
       if (x < 11) bathThermalMixPair(k, k + 1, dt, false);
@@ -178,8 +274,8 @@
     bathThermalEvaporate();
     var energy = 0;
     for (var n = 0; n < 72; n++) {
-      // A hot lower cell nucleates bubbles; its excess joins the surface
-      // energy budget so latent heat, not a temperature clamp, spends it.
+      // Excess lower-cell heat joins the surface energy budget so latent
+      // heat, not a temperature clamp, spends it.
       var excess = Math.max(0, t.energy[n] - t.capacity[n] * 80), surface = t.surfaceCell[n % 12];
       if (excess > 0 && surface >= 0 && surface !== n) { t.energy[n] -= excess; t.energy[surface] += excess; }
     }
@@ -276,7 +372,7 @@
     if (i < 0 || t.count[i] < 4 || y < bathThermalSurface(x, t.y0) - 4) return 0;
     // Boussinesq density difference: hot rises relative to the bulk, cool
     // sinks. Uniform warm water does not become an upward fountain.
-    return Math.max(-18, Math.min(18, (t.temperature[i] - t.meanC) * 600 * 0.00035));
+    return Math.max(-18, Math.min(18, (bathThermalTemperatureAt(x, y) - t.meanC) * 600 * 0.00035));
   }
   function bathThermalUpload() {
     var t = bathThermal, target = liquidWGPU, active = bathMode && t.enabled;
@@ -291,58 +387,6 @@
     data.set([t.x0, t.y0, t.dx, t.dy, 1, t.meanC, 0, 0]);
     for (var i = 0; i < 72; i++) data.set([t.temperature[i], t.count[i], t.surface[i % 12], 0], 8 + i * 4);
     target.setBathThermal(data); bathThermalUploadTarget = target; bathThermalUploadActive = true;
-  }
-  function bathThermalVaporEmit(col, count, temperature) {
-    var t = bathThermal;
-    var n = Math.min(9, count * 3);
-    for (var i = 0; i < n && t.vapor.length < 320; i++) {
-      var x = t.x0 + (col + Math.random()) * t.dx;
-      t.vapor.push({ x: x, y: t.surface[col] - 2, vx: (Math.random() - 0.5) * 5,
-        vy: -8 - (temperature - 20) * 0.22, age: 0, life: 3.5 + Math.random() * 2,
-        r: 5 + Math.random() * 5, phase: Math.random() * 6.283,
-        mass: Math.min(1.8, Math.sqrt(count / n)), temp: temperature });
-      if (temperature > 94 && t.bubbles.length < 50) t.bubbles.push({ x: x,
-        y: t.y0 + t.dy * 5.5, r: 1 + Math.random() * 1.8, age: 0 });
-    }
-  }
-  function bathThermalVaporTick(dt) {
-    var t = bathThermal;
-    for (var i = t.vapor.length - 1; i >= 0; i--) {
-      var p = t.vapor[i]; p.age += dt;
-      if (p.age >= p.life) { t.vapor.splice(i, 1); continue; }
-      var cooling = Math.exp(-dt * 0.7); p.temp = 20 + (p.temp - 20) * cooling;
-      p.vx += (Math.sin(p.phase + p.age * 1.4) * 5 + Math.sin(t.elapsed * 0.28) * 3 - p.vx) * dt * 0.8;
-      p.vy += (-8 - (p.temp - 20) * 0.16 - p.vy) * dt;
-      p.x += p.vx * dt; p.y += p.vy * dt; p.r += dt * 4;
-    }
-    for (var j = t.bubbles.length - 1; j >= 0; j--) {
-      var b = t.bubbles[j]; b.age += dt; b.y -= dt * 44; b.x += Math.sin(b.age * 7) * dt * 4;
-      if (b.age > 6 || b.y <= bathThermalSurface(b.x, t.y0)) t.bubbles.splice(j, 1);
-    }
-  }
-  function bathThermalDraw(c) {
-    var t = bathThermal; if (!bathMode) return;
-    c.save(); c.lineWidth = 0.7; c.strokeStyle = 'rgba(208,228,229,0.35)';
-    for (var b = 0; b < t.bubbles.length; b++) {
-      var bubble = t.bubbles[b]; c.beginPath(); c.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2); c.stroke();
-    }
-    for (var i = 0; i < t.vapor.length; i++) {
-      var p = t.vapor[i];
-      // Water vapor is invisible at release. Droplet fog appears as it
-      // cools in the room, then thins continuously as air entrains it.
-      var opacity = Math.min(1, p.age / 0.45) * Math.pow(1 - p.age / p.life, 1.5) * 0.16 * p.mass;
-      if (opacity <= 0) continue;
-      var g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-      g.addColorStop(0, 'rgba(225,235,234,' + opacity + ')');
-      g.addColorStop(0.55, 'rgba(220,233,232,' + opacity * 0.45 + ')'); g.addColorStop(1, 'rgba(220,233,232,0)');
-      c.fillStyle = g; c.beginPath(); c.ellipse(p.x, p.y, p.r, p.r * 1.6, Math.sin(p.phase + p.age) * 0.15, 0, Math.PI * 2); c.fill();
-    }
-    c.restore();
-  }
-  function bathThermalWarm(c) {
-    c.save(); var g = c.createRadialGradient(4, 4, 0, 4, 4, 4);
-    g.addColorStop(0, 'rgba(225,235,234,0.1)'); g.addColorStop(1, 'rgba(220,233,232,0)');
-    c.fillStyle = g; c.beginPath(); c.ellipse(4, 4, 4, 6, 0.1, 0, Math.PI * 2); c.fill(); c.restore();
   }
   function bathThermalSave() {
     var t = bathThermal;

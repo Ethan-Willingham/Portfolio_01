@@ -633,7 +633,7 @@
     if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
     _ts = performance.now();
-    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
+    try { if (!bathMode) updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
     perfMark('update.smoke', _ts);
     // Plume intensity is now current, so the voice and drawn flame agree
     // on the first firing frame as well as the first released frame.

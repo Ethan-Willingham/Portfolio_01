@@ -8,7 +8,8 @@ function fixture(type = 0, n = 100) {
     mineralLiquidParked: {}, liquidWGPU: null, liquidToolSync() {},
     bathTubCurve: () => ({x0:0,x1:120,y0:0,D:60,depthAt:()=>60}), bathWaterline:()=>0 };
   s.removeLiquidParticle = i => {for(const k of ['liquidX','liquidY','liquidVX','liquidVY','liquidType']) s[k].splice(i,1);s.liquidCount--;};
-  vm.createContext(s); vm.runInContext(fs.readFileSync('js/sluice/074-bath-thermal.js','utf8'),s);
+  vm.createContext(s);
+  for(const file of ['074-bath-thermal.js','074-bath-vapor.js'])vm.runInContext(fs.readFileSync('js/sluice/'+file,'utf8'),s);
   for(let y=0;y<6;y++)for(let x=0;x<12;x++)for(let k=0;k<n;k++) {
     s.liquidX.push(x*10+5);s.liquidY.push(-16+(y+.5)*80/6);s.liquidVX.push(0);s.liquidVY.push(0);s.liquidType.push(type);s.liquidCount++;
   }
@@ -28,6 +29,58 @@ function close(a,b,msg) {assert(Math.abs(a-b)<Math.max(1e-7,Math.abs(b)*1e-8),`$
  const before=total(s);for(let i=0;i<100;i++)s.bathThermalMixPair(24,25,.05,false);
  close(total(s),before,'pair mixing preserves energy');assert(t.energy[24]/t.capacity[24] > t.energy[25]/t.capacity[25]);
  console.log('PASS diffusion conserves heat and never reverses temperature differences');
+}
+{
+ const s=fixture(),t=s.bathThermal;
+ for(let i=0;i<72;i++)t.temperature[i]=20+Math.floor(i/12)*10;
+ t.meanC=45;
+ const x=t.x0+5.5*t.dx,y=t.y0+3*t.dy;
+ close(s.bathThermalTemperatureAt(x,y),45,'temperature interpolates across a thermal row boundary');
+ assert(Math.abs(s.bathThermalForce(x,y-.001,0)-s.bathThermalForce(x,y+.001,0))<.001,'buoyancy does not jump at the row boundary');
+ t.capacity[29]=0;t.count[29]=0;t.temperature[29]=20;
+ close(s.bathThermalTemperatureAt(x,y),50,'empty neighbors do not cool the interpolation');
+ assert.equal(s.bathThermalForce(x,y,5),0,'interpolation never adds a force to snow');
+ s.bathMode=false;assert.equal(s.bathThermalForce(x,y,0),0,'outdoor water has no bath force');
+ console.log('PASS heat and buoyancy vary smoothly through occupied water, never through air or snow');
+}
+{
+ const s=fixture(),t=s.bathThermal;
+ t.capacity.fill(0);t.count.fill(0);t.energy.fill(0);t.vx.fill(0);t.vy.fill(0);
+ const loop=[26,27,39,38];
+ for(const i of loop){t.capacity[i]=10;t.count[i]=100;}
+ // A closed clockwise roll, sampled at the four cells' centres.
+ t.vx[26]=t.vx[27]=t.dx;t.vx[38]=t.vx[39]=-t.dx;
+ t.vy[26]=t.vy[38]=-t.dy;t.vy[27]=t.vy[39]=t.dy;
+ t.energy[26]=600;
+ const before=total(s);s.bathThermalAdvect(.1);
+ close(total(s),before,'advection conserves energy');
+ assert(t.energy[27]>50,'the warm parcel moves downstream');
+ assert(t.energy[38]<1e-5,'the warm parcel does not diffuse upstream');
+ for(let k=0;k<100;k++)s.bathThermalAdvect(.05);
+ close(total(s),before,'sustained circulation conserves energy');
+ assert(loop.every(i=>t.energy[i]>100),'heat reaches the full circulation');
+ for(const i of loop)t.energy[i]=t.capacity[i]*30;
+ const uniform=Array.from(t.energy);s.bathThermalAdvect(.1);
+ for(const i of loop)close(t.energy[i],uniform[i],'uniform warmth remains uniform during circulation');
+ for(const i of loop){t.vx[i]*=1e6;t.vy[i]*=1e6;}
+ t.energy.fill(0);t.energy[26]=600;s.bathThermalAdvect(10);
+ close(total(s),before,'CFL limited fast flow conserves energy');
+ assert(Array.from(t.energy).every(e=>e>=0&&e<=600),'even extreme sampled speed cannot remove more heat than a donor contains');
+ s.bathMode=false;const outside=Array.from(t.energy);s.bathThermalAdvect(.1);
+ assert.deepEqual(Array.from(t.energy),outside,'offscreen parked water does not inherit a visible velocity field');
+ console.log('PASS real circulation transports heat downstream, conserves energy, preserves uniform warmth and bounds fast flow');
+}
+{
+ const s=fixture(),t=s.bathThermal;
+ for(let i=0;i<72;i++){
+  t.energy[i]=t.capacity[i]*30;
+  t.vx[i]=Math.sin(i*1.7)*25;t.vy[i]=Math.cos(i*.8)*25;
+ }
+ const before=total(s);s.bathThermalAdvect(.05);
+ close(total(s),before,'projected noisy flow conserves energy');
+ const error=Math.max(...Array.from(t.energy,(e,i)=>Math.abs(e/t.capacity[i]-30)));
+ assert(error<.0001,`noisy sampled motion does not create thermal hot spots: ${error}`);
+ console.log('PASS coarse flow projection prevents sampled compression from inventing hot or cold bands');
 }
 {
  const s=fixture();s.hearthBeds.boiler.thermalKW=2;s.step(50);const t=s.bathThermal;

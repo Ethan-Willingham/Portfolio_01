@@ -37,7 +37,7 @@ terrain contact while holding handling constant. Rocky visitors are capped at tw
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has
 an integrated boiler beneath the basin. Since v28.74, the firebox, fuel bunker,
-bellows, flint, ash grate and live fuel/air/ash readings stay in this same view.
+bellows, flint, ash grate and actionable fire guidance stay in this same view.
 Since v28.97, select an existing fuel or mineral from the rack, then click to
 release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption. Since v28.63, a bounded WebGPU

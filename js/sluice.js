@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.112';
+  var GAME_VERSION = 'v28.113';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -13642,8 +13642,21 @@
   function bathScaleV() { return 1; }
 
   // ---- Tower construction (one-shot, on first enter) ----------------------
+  function bathClearRimSteps() {
+    // Old rooms have square terrain blocks above the curved copper lips.
+    // Remove only those obsolete blocks so overflow clears the visible rim.
+    for (var f = 0; f < BATH_FLOORS.length; f++) {
+      var F = BATH_FLOORS[f], row = world[F.fr - 1];
+      if (!F.lip || !row) continue;
+      for (var t = 0; t < F.tubs.length; t++) for (var side = 0; side < 2; side++) {
+        var col = side ? F.tubs[t][1] + 1 : F.tubs[t][0] - 1;
+        if (!row[col] || row[col].type !== 'foundation') continue;
+        row[col] = null; invalidateTerrainAround(F.fr - 1, col);
+      }
+    }
+  }
   function bathCarveRoom() {
-    if (bathRoomReady) { bathSyncCollision(); return; }
+    if (bathRoomReady) { bathClearRimSteps(); bathSyncCollision(); return; }
     if (typeof world === 'undefined' || !world[BATH_BOT_ROW]) return;
     var r, c, f, i;
     // Solid block first (replacing tile objects wholesale is safe: the
@@ -13668,7 +13681,6 @@
         var crv = bathTubCurve(F, tb);
         for (var cc = tb[0] - 1; cc <= tb[1] + 1; cc++) {
           var isRim = (cc < tb[0] || cc > tb[1]);
-          if (isRim && F.lip > 0) world[F.fr - 1][cc] = { type: 'foundation', hp: 999999 };
           var needY = 0;
           if (!isRim) {
             var dL = crv.depthAt(cc * TILE), dR = crv.depthAt((cc + 1) * TILE);
@@ -13750,7 +13762,17 @@
     document.body.appendChild(bathFadeEl);
     return bathFadeEl;
   }
+  function bathWorldSmokeVisibility(inside) {
+    // Outdoor exhaust is a separate DOM layer. It must not masquerade as
+    // bath steam, including a backend initialized after entering the room.
+    var layers = [smokeFluidCanvas, rigExhaustCanvas];
+    for (var i = 0; i < layers.length; i++) if (layers[i]) {
+      var visibility = inside ? 'hidden' : '';
+      if (layers[i].style.visibility !== visibility) layers[i].style.visibility = visibility;
+    }
+  }
   function bathLayerVis(inside) {
+    bathWorldSmokeVisibility(inside);
     var pauseButton = document.getElementById('gm-pause-btn');
     if (pauseButton) pauseButton.style.top = inside ? '3px' : '';
     if (typeof window.gmTuningButtonSync === 'function') window.gmTuningButtonSync();
@@ -13865,7 +13887,7 @@
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteam = {}, bathSteamSaved = null, bathHotTub = null;
   function bathSteamPush() {}
-  function bathSteamPop() { if (typeof bathThermal !== 'undefined') bathThermal.vapor.length = 0; }
+  function bathSteamPop() { if (typeof bathVaporClear === 'function') bathVaporClear(); }
   function bathSteamTick(dt) { if (typeof bathThermalVaporTick === 'function') bathThermalVaporTick(dt); }
   function bathSurfY(x, fallback) {
     return typeof bathThermalSurface === 'function' ? bathThermalSurface(x, fallback) : fallback;
@@ -13873,11 +13895,7 @@
 
   // A guest parts existing vapor; cold splashes cannot manufacture steam.
   function bathSplashPoof(ix, iy, k) {
-    if (typeof bathThermal === 'undefined') return;
-    for (var i = 0; i < bathThermal.vapor.length; i++) {
-      var p = bathThermal.vapor[i], dx = p.x - ix, dy = p.y - iy;
-      if (dx * dx + dy * dy < 10000) p.vx += (dx < 0 ? -1 : 1) * 22 * k;
-    }
+    if (typeof bathVaporImpulse === 'function') bathVaporImpulse(ix, iy, k);
   }
   // ---- Hook 2: updateCamera() top (080). The scene OWNS the zoom: fit the
   // tower WIDTH to the canvas (any window, any dpr) and scroll VERTICALLY
@@ -14585,8 +14603,7 @@
           uiFg.fillStyle = '#b5723a';
           uiFg.fillRect(fx0 - 4, lipY - 8, TILE + 10, 6);
           uiFg.fillRect(fx1 - TILE - 6, lipY - 8, TILE + 10, 6);
-          // The fire room boiler feeds this copper heat exchanger. Its glow
-          // follows stored bath heat; no unrelated gas flames under the tub.
+          // The copper's stored heat survives the fire going out, then cools.
           if (FG.fill[fti] === 2) {
             var vcx = (crv2.x0 + crv2.x1) / 2;
             uiFg.strokeStyle = BLD.goldDark; uiFg.lineWidth = 6;
@@ -14596,7 +14613,8 @@
               uiFg.lineTo(hx, crv2.y0 + crv2.depthAt(hx) + 10);
             }
             uiFg.lineTo(fx1 - 8, botY - 16); uiFg.stroke();
-            uiFg.globalAlpha = Math.min(1, bathHeat); uiFg.strokeStyle = BLD.warmGlow; uiFg.lineWidth = 2;
+            var copper = bathCopperWarmth();
+            uiFg.globalAlpha = copper.warm * 0.25 + copper.glow * 0.75; uiFg.strokeStyle = BLD.warmGlow; uiFg.lineWidth = 2;
             uiFg.stroke(); uiFg.globalAlpha = 1;
           }
           uiFg.fillStyle = '#2b2b2b';
@@ -14616,9 +14634,7 @@
     ctx.fillText('ВЫХОД', (BATH_EXIT_X0 + BATH_EXIT_X1) / 2, BATH_EXIT_Y0 - 8);
     // The live water (separate DOM canvas above; camera already pinned).
     if (typeof drawLiquids === 'function') drawLiquids();
-    // Keep the existing smoke canvas presentation synchronized. The bath's
-    // actual condensed vapor draws independently on the foreground below.
-    if (typeof drawSmoke === 'function') drawSmoke();
+    bathWorldSmokeVisibility(true);
     var bathDrawContext = ctx;
     try {
       if (uiFg) ctx = uiFg;
@@ -14683,6 +14699,23 @@
     }
     c.lineTo(curve.x1 + outset, curve.y0 - 16); c.closePath();
   }
+  function bathCopperWarmth(tempC) {
+    // Stored copper energy sets this color, including its slow cooling after
+    // the fuel burns out. Fire flicker and water temperature do not drive it.
+    if (tempC === undefined) tempC = bathThermal ? bathThermal.copperC : 20;
+    var warm = Math.max(0, Math.min(1, (tempC - 30) / 130));
+    var glow = Math.max(0, Math.min(1, (tempC - 90) / 380));
+    return { warm: warm * warm * (3 - 2 * warm), glow: glow * glow * (3 - 2 * glow) };
+  }
+  function bathCopperTint(c, curve, color, strength) {
+    // The heated metal remains a continuous bowl. Keep some warmth up the
+    // shoulders, with the strongest light across the underside over the fire.
+    var tint = c.createLinearGradient(0, curve.y0, 0, curve.y0 + curve.D);
+    tint.addColorStop(0, hearthArtColor(color, strength * 0.22));
+    tint.addColorStop(0.48, hearthArtColor(color, strength * 0.62));
+    tint.addColorStop(1, hearthArtColor(color, strength));
+    return tint;
+  }
   function bathDrawDryLiner(c, curve) {
     // This is the dry copper behind the liquid layer. A flat blue field made
     // a zero-litre tub look full before the hose had emitted any water.
@@ -14691,6 +14724,15 @@
     shade.addColorStop(0, BLD.woodDeep); shade.addColorStop(0.5, BLD.woodDark);
     shade.addColorStop(0.88, BLD.woodBase); shade.addColorStop(1, BLD.woodMid);
     c.fillStyle = shade; c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    var heat = bathCopperWarmth();
+    if (heat.warm > 0) {
+      c.fillStyle = bathCopperTint(c, curve, BLD.redBright, heat.warm * 0.16);
+      c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    }
+    if (heat.glow > 0) {
+      c.fillStyle = bathCopperTint(c, curve, BLD.warmGlow, heat.glow * 0.24);
+      c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 16);
+    }
     // Joined copper sheets and a few hammer marks read as a solid lining.
     // They stay fixed when the real water moves across them.
     for (var panel = 1; panel < 12; panel++) {
@@ -14712,11 +14754,8 @@
   function bathDrawVessel(c) {
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     var bottom = bathInteriorBottom(), left = cam.x - 2, width = screenW + 4;
-    // Hide tile-shaped water outside the catenary. The vessel itself is a
-    // curved shell, not a rectangular slab surrounding a curved opening.
-    c.fillStyle = BLD.woodDeep; c.beginPath();
-    c.rect(left, curve.y0 - 16, width, bottom - curve.y0 + 20);
-    bathVesselPath(c, curve, 0, 0); c.fill('evenodd');
+    // The physical liner contains the water. Keep the sides visible so an
+    // overflowing sheet can fall all the way to the floor before it is lost.
     c.fillStyle = BLD.woodDeep; c.fillRect(left, bottom - 11, width, screenH);
     // Offset outward along the true bowl normal. The water-facing edge stays
     // exactly on depthAt(), including the steep shoulders near each lip.
@@ -14727,6 +14766,9 @@
     bathRimBand(c, curve, 3, 5, BLD.woodPale);
     bathRimBand(c, curve, 12, 14, BLD.woodBase);
     bathRimBand(c, curve, 18, 19, BLD.goldDark);
+    var heat = bathCopperWarmth();
+    if (heat.warm > 0) bathRimBand(c, curve, 2, 18, bathCopperTint(c, curve, BLD.redBright, heat.warm * 0.42));
+    if (heat.glow > 0) bathRimBand(c, curve, 3, 17, bathCopperTint(c, curve, BLD.warmGlow, heat.glow * 0.70));
     // Broad hammered copper plates, with seam straps and paired iron rivets.
     for (var n = 1; n < 12; n++) {
       if (n === 6) continue; // The small compass seal replaces the center strap.
@@ -14872,7 +14914,7 @@
       foreground.setTransform(ws, 0, 0, ws, -Math.round(cam.x * ws), -Math.round(cam.y * ws));
       bathDrawVessel(foreground);
     }
-    drawLiquids(); drawSmoke();
+    drawLiquids(); bathWorldSmokeVisibility(true);
     var previous = ctx;
     try {
       if (foreground) ctx = foreground;
@@ -14890,7 +14932,7 @@
     return true;
   }
   function bathInteriorWarm(c) {
-    var previous = ctx;
+    var previous = ctx, copperC = bathThermal ? bathThermal.copperC : 20;
     c.save();
     try {
       ctx = c;
@@ -14898,6 +14940,10 @@
       c.translate(-curve.x0, -curve.y0);
       bathDrawDryLiner(c, curve);
       bathDrawVessel(c);
+      if (bathThermal) bathThermal.copperC = 400;
+      bathDrawDryLiner(c, curve);
+      bathDrawVessel(c);
+      if (bathThermal) bathThermal.copperC = copperC;
       bathArrivalWarm(c, curve);
       if (typeof bathThermalWarm === 'function') bathThermalWarm(c);
       var b = bathToolBounds(), x = (curve.x0 + curve.x1) / 2, y = curve.y0 - 50;
@@ -14909,7 +14955,7 @@
       hearthDrawCasing(c, { x: 24, y: 30, w: 208, h: 160 }, hearthBeds.boiler, false);
       hearthDrawStriker(c, 240, 60, 1, 0.5);
       drawBathSilos(c, 0, 0, 250, 110, { labels: true });
-    } finally { c.restore(); ctx = previous; }
+    } finally { if (bathThermal) bathThermal.copperC = copperC; c.restore(); ctx = previous; }
   }
   /* ---- Mineral springs and persistent liquid storage ---- */
   // Pockets are finite. Off-camera poured liquid is parked at its real position,
@@ -15253,7 +15299,7 @@
   // operating resources, never a per-guest water or coal charge.
   var BATH_VISIT = { seconds: 18, pay: 75 };
   var BATH_LEGACY_FIRE_SECONDS = 240;
-  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 45000;
+  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 45000; // legacy queued-fill size, never a tub capacity
   var bathFire = 0, bathHeat = 0, bathWater = 0, bathPour = 0;
   var bathDrainT = 0, bathLostWater = 0, bathWetFloor = [];
   var bathServiceButtons = [];
@@ -15335,9 +15381,9 @@
   function bathAddWater() {
     if (!bathMode || bathFading || gamePaused || !bathRoomReady) return false;
     bathWater = bathBasinCount();
-    var count = Math.floor(Math.min(bathWaterCount(), BATH_MAX_WATER - bathWater - bathPour));
+    var count = Math.floor(bathWaterCount());
     if (count <= 0) {
-      bathSetNotice(bathWaterCount() ? 'The tub is full.' : 'Scoop water from a lake, then bring it back in your tank.');
+      bathSetNotice('Scoop water from a lake, then bring it back in your tank.');
       return false;
     }
     if (!bathTakeWater(count)) return false;
@@ -15346,14 +15392,15 @@
     return true;
   }
   function bathFloorAt(x, y) {
-    if (x < 19 * TILE || x > 55 * TILE || y < BATH_TOP_ROW * TILE || y > (BATH_BOT_ROW + 2) * TILE) return 0;
+    if (x < 19 * TILE || x > 55 * TILE || y < BATH_FLOORS[BATH_FLOORS.length - 1].fr * TILE - 5 ||
+        y > (BATH_FLOORS[0].fr + 5) * TILE) return 0;
     for (var f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f];
       if (x < F.c0 * TILE || x > (F.c1 + 1) * TILE || y < F.fr * TILE - 5 || y > (F.fr + 5) * TILE) continue;
       var inTub = false;
       for (var t = 0; t < F.tubs.length; t++) {
         var tb = F.tubs[t];
-        if (x >= tb[0] * TILE - 2 && x <= (tb[1] + 1) * TILE + 2) { inTub = true; break; }
+        if (x >= tb[0] * TILE && x <= (tb[1] + 1) * TILE) { inTub = true; break; }
       }
       if (!inTub) return F.fr * TILE;
     }
@@ -15363,13 +15410,17 @@
     bathLostWater++;
     if (bathMode && bathWetFloor.length < 28 && bathLostWater % 8 === 0) bathWetFloor.push({ x: x, y: bathFloorAt(x, y), t: 0 });
   }
-  function bathDrainFloor() {
+  function bathDrainFloor(forSave) {
     // Remove spilled particles through the shared CPU/GPU mutation journal.
     // Scan parked water too, so leaving or saving cannot recover a floor spill.
     liquidToolSync();
     for (var i = liquidCount - 1; i >= 0; i--) {
-      if (bathFloorAt(liquidX[i], liquidY[i])) {
-        bathFloorLoss(liquidX[i], liquidY[i]); removeLiquidParticle(i);
+      var x = liquidX[i], y = liquidY[i];
+      // Liquid saves round to quarter pixels. Include that destination so
+      // a drop just above the drain cannot round onto the floor in the save.
+      if (forSave && !bathFloorAt(x, y)) { x = Math.round(x * 4) / 4; y = Math.round(y * 4) / 4; }
+      if (bathFloorAt(x, y)) {
+        bathFloorLoss(x, y); removeLiquidParticle(i);
       }
     }
     Object.keys(mineralLiquidParked).forEach(function (key) {
@@ -15670,6 +15721,9 @@
     return false;
   }
   function bathServiceSave() {
+    // SaveBuild serializes this before mineralLiquids. Flush floor spills
+    // now so saving between drain ticks cannot restore already lost water.
+    if (bathRoomReady) bathDrainFloor(true);
     return { version: 7, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
@@ -15695,7 +15749,7 @@
       skySlimeClamp(Number(data.fire) || 0, 0, BATH_LEGACY_FIRE_SECONDS);
     bathHeat = skySlimeClamp(Number(data.heat) || 0, 0, 1);
     bathThermalRestore(data.thermal, bathHeat);
-    bathPour = skySlimeClamp(Number(data.pour) || 0, 0, BATH_MAX_WATER);
+    bathPour = bathSiloAmount(data.pour);
     bathLostWater = Math.max(0, Number(data.lost) || 0);
     bathServed = Math.max(0, Number(data.served) || 0);
     bathIntroSeen = !!data.introSeen;
@@ -16103,10 +16157,14 @@
     bathThermal = { energy: new Float64Array(72), capacity: new Float64Array(72),
       count: new Float32Array(72), water: new Float32Array(72),
       vx: new Float32Array(72), vy: new Float32Array(72), temperature: new Float32Array(72),
+      flowX: new Float64Array(72), flowY: new Float64Array(72),
+      flowWeightX: new Float64Array(72), flowWeightY: new Float64Array(72),
+      flowPressure: new Float64Array(72), flowDivergence: new Float64Array(72),
+      flowOut: new Float64Array(72), flowEnergy: new Float64Array(72),
       surface: new Float32Array(12), surfaceCell: new Int16Array(12), covered: new Uint8Array(12),
       evapCredit: new Float64Array(12), steamRate: new Float32Array(12),
-      gpu: new Float32Array(296), vapor: [], bubbles: [],
-      sampleT: 0, sampleWater: -1, insideLast: false, simAcc: 0, vaporAcc: 0, bubbleAcc: 0, elapsed: 0,
+      gpu: new Float32Array(296), vapor: [],
+      sampleT: 0, sampleWater: -1, insideLast: false, simAcc: 0, elapsed: 0,
       copperC: 20, meanC: 20, totalCapacity: 0, evaporatedKg: 0,
       inputKJ: 0, inletKJ: 0, outflowKJ: 0, airLossKJ: 0, latentKJ: 0, vaporSensibleKJ: 0, inputKW: 0, migrationC: 0,
       pendingKJ: 0, pendingInlets: [], typeCount: new Float64Array(5), x0: 0, y0: 0, dx: 1, dy: 1, enabled: false };
@@ -16119,8 +16177,21 @@
     return !isFinite(col) || !isFinite(row) || col < 0 || col >= 12 || row < 0 || row >= 6 ? -1 : row * 12 + col;
   }
   function bathThermalTemperatureAt(x, y) {
-    var i = bathThermalIndex(x, y);
-    return i >= 0 && bathThermal.capacity[i] > 0 ? bathThermal.temperature[i] : 20;
+    var t = bathThermal, i = bathThermalIndex(x, y);
+    if (i < 0 || t.capacity[i] <= 0) return 20;
+    // Cell values describe their centres. Interpolate only occupied water,
+    // so the curved copper and empty air cannot introduce cold square edges.
+    var gx = (x - t.x0) / t.dx - 0.5, gy = (y - t.y0) / t.dy - 0.5;
+    var x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+    var sum = 0, weight = 0;
+    for (var oy = 0; oy < 2; oy++) for (var ox = 0; ox < 2; ox++) {
+      var cx = x0 + ox, cy = y0 + oy;
+      if (cx < 0 || cx >= 12 || cy < 0 || cy >= 6) continue;
+      var k = cy * 12 + cx; if (t.count[k] <= 0) continue;
+      var w = (ox ? fx : 1 - fx) * (oy ? fy : 1 - fy);
+      sum += t.temperature[k] * w; weight += w;
+    }
+    return weight > 0 ? sum / weight : t.temperature[i];
   }
   function bathThermalSurface(x, fallback) {
     var t = bathThermal, col = Math.floor((x - t.x0) / t.dx);
@@ -16223,6 +16294,84 @@
     var q = (tb - ta) * Math.min(ca, cb) * Math.min(0.22, dt * rate);
     t.energy[a] += q; t.energy[b] -= q;
   }
+  function bathThermalAdvect(dt) {
+    var t = bathThermal;
+    if (!bathMode || !(dt > 0)) return;
+    var fx = t.flowX, fy = t.flowY, wx = t.flowWeightX, wy = t.flowWeightY;
+    var pressure = t.flowPressure, divergence = t.flowDivergence;
+    fx.fill(0); fy.fill(0); wx.fill(0); wy.fill(0); divergence.fill(0);
+    var moving = false;
+    for (var y = 0; y < 6; y++) for (var x = 0; x < 12; x++) {
+      var i = y * 12 + x, ca = t.capacity[i];
+      if (ca <= 0) continue;
+      if (x < 11 && t.capacity[i + 1] > 0) {
+        var capX = Math.min(ca, t.capacity[i + 1]);
+        wx[i] = capX / (t.dx * t.dx);
+        fx[i] = (t.vx[i] + t.vx[i + 1]) * 0.5 * capX / t.dx;
+        divergence[i] += fx[i]; divergence[i + 1] -= fx[i];
+        if (Math.abs(fx[i]) > 1e-8) moving = true;
+      }
+      if (y < 5 && t.capacity[i + 12] > 0) {
+        var capY = Math.min(ca, t.capacity[i + 12]);
+        wy[i] = capY / (t.dy * t.dy);
+        fy[i] = (t.vy[i] + t.vy[i + 12]) * 0.5 * capY / t.dy;
+        divergence[i] += fy[i]; divergence[i + 12] -= fy[i];
+        if (Math.abs(fy[i]) > 1e-8) moving = true;
+      }
+    }
+    if (!moving) return;
+    // The sampled velocities are noisy and the thermal grid is much coarser
+    // than the liquid solver. Remove their compressible component first.
+    // Closed faces at air/copper then carry a circulation, not fictitious
+    // inflow that concentrates heat in the last row of the basin.
+    pressure.fill(0);
+    for (var iteration = 0; iteration < 120; iteration++) {
+      var error = 0;
+      for (var n = 0; n < 72; n++) {
+        if (t.capacity[n] <= 0) continue;
+        var col = n % 12, row = Math.floor(n / 12), diagonal = 0, neighbors = 0;
+        if (col > 0) { diagonal += wx[n - 1]; neighbors += wx[n - 1] * pressure[n - 1]; }
+        if (col < 11) { diagonal += wx[n]; neighbors += wx[n] * pressure[n + 1]; }
+        if (row > 0) { diagonal += wy[n - 12]; neighbors += wy[n - 12] * pressure[n - 12]; }
+        if (row < 5) { diagonal += wy[n]; neighbors += wy[n] * pressure[n + 12]; }
+        if (diagonal <= 0) continue;
+        var next = (neighbors - divergence[n]) / diagonal;
+        var change = next - pressure[n]; pressure[n] += change * 1.45;
+        error = Math.max(error, Math.abs(change) * diagonal);
+      }
+      if (error < 1e-8) break;
+    }
+    t.flowOut.fill(0); t.flowEnergy.fill(0);
+    for (var a = 0; a < 72; a++) {
+      if (wx[a] > 0) {
+        fx[a] += wx[a] * (pressure[a] - pressure[a + 1]);
+        t.flowOut[fx[a] >= 0 ? a : a + 1] += Math.abs(fx[a]);
+      }
+      if (wy[a] > 0) {
+        fy[a] += wy[a] * (pressure[a] - pressure[a + 12]);
+        t.flowOut[fy[a] >= 0 ? a : a + 12] += Math.abs(fy[a]);
+      }
+    }
+    // One shared CFL scale preserves the closed circulation while limiting
+    // every donor to less than half its heat capacity in this time step.
+    var step = dt;
+    for (var donor = 0; donor < 72; donor++) if (t.flowOut[donor] > 0) {
+      step = Math.min(step, t.capacity[donor] * 0.45 / t.flowOut[donor]);
+    }
+    for (var src = 0; src < 72; src++) {
+      if (wx[src] > 0) {
+        var fromX = fx[src] >= 0 ? src : src + 1;
+        var qx = fx[src] * step * t.energy[fromX] / t.capacity[fromX];
+        t.flowEnergy[src] -= qx; t.flowEnergy[src + 1] += qx;
+      }
+      if (wy[src] > 0) {
+        var fromY = fy[src] >= 0 ? src : src + 12;
+        var qy = fy[src] * step * t.energy[fromY] / t.capacity[fromY];
+        t.flowEnergy[src] -= qy; t.flowEnergy[src + 12] += qy;
+      }
+    }
+    for (var cell = 0; cell < 72; cell++) t.energy[cell] += t.flowEnergy[cell];
+  }
   function bathThermalStep(dt) {
     var t = bathThermal, bed = hearthBeds.boiler;
     var reportedKW = Number(bed.thermalKW);
@@ -16247,6 +16396,7 @@
       exchange = bound >= 0 ? Math.min(exchange, bound) : Math.max(exchange, bound);
       t.energy[cell] += exchange; t.copperC -= exchange / BATH_COPPER_CAPACITY;
     }
+    bathThermalAdvect(dt);
     for (var y = 0; y < 6; y++) for (var x = 0; x < 12; x++) {
       var k = y * 12 + x;
       if (x < 11) bathThermalMixPair(k, k + 1, dt, false);
@@ -16269,8 +16419,8 @@
     bathThermalEvaporate();
     var energy = 0;
     for (var n = 0; n < 72; n++) {
-      // A hot lower cell nucleates bubbles; its excess joins the surface
-      // energy budget so latent heat, not a temperature clamp, spends it.
+      // Excess lower-cell heat joins the surface energy budget so latent
+      // heat, not a temperature clamp, spends it.
       var excess = Math.max(0, t.energy[n] - t.capacity[n] * 80), surface = t.surfaceCell[n % 12];
       if (excess > 0 && surface >= 0 && surface !== n) { t.energy[n] -= excess; t.energy[surface] += excess; }
     }
@@ -16367,7 +16517,7 @@
     if (i < 0 || t.count[i] < 4 || y < bathThermalSurface(x, t.y0) - 4) return 0;
     // Boussinesq density difference: hot rises relative to the bulk, cool
     // sinks. Uniform warm water does not become an upward fountain.
-    return Math.max(-18, Math.min(18, (t.temperature[i] - t.meanC) * 600 * 0.00035));
+    return Math.max(-18, Math.min(18, (bathThermalTemperatureAt(x, y) - t.meanC) * 600 * 0.00035));
   }
   function bathThermalUpload() {
     var t = bathThermal, target = liquidWGPU, active = bathMode && t.enabled;
@@ -16382,58 +16532,6 @@
     data.set([t.x0, t.y0, t.dx, t.dy, 1, t.meanC, 0, 0]);
     for (var i = 0; i < 72; i++) data.set([t.temperature[i], t.count[i], t.surface[i % 12], 0], 8 + i * 4);
     target.setBathThermal(data); bathThermalUploadTarget = target; bathThermalUploadActive = true;
-  }
-  function bathThermalVaporEmit(col, count, temperature) {
-    var t = bathThermal;
-    var n = Math.min(9, count * 3);
-    for (var i = 0; i < n && t.vapor.length < 320; i++) {
-      var x = t.x0 + (col + Math.random()) * t.dx;
-      t.vapor.push({ x: x, y: t.surface[col] - 2, vx: (Math.random() - 0.5) * 5,
-        vy: -8 - (temperature - 20) * 0.22, age: 0, life: 3.5 + Math.random() * 2,
-        r: 5 + Math.random() * 5, phase: Math.random() * 6.283,
-        mass: Math.min(1.8, Math.sqrt(count / n)), temp: temperature });
-      if (temperature > 94 && t.bubbles.length < 50) t.bubbles.push({ x: x,
-        y: t.y0 + t.dy * 5.5, r: 1 + Math.random() * 1.8, age: 0 });
-    }
-  }
-  function bathThermalVaporTick(dt) {
-    var t = bathThermal;
-    for (var i = t.vapor.length - 1; i >= 0; i--) {
-      var p = t.vapor[i]; p.age += dt;
-      if (p.age >= p.life) { t.vapor.splice(i, 1); continue; }
-      var cooling = Math.exp(-dt * 0.7); p.temp = 20 + (p.temp - 20) * cooling;
-      p.vx += (Math.sin(p.phase + p.age * 1.4) * 5 + Math.sin(t.elapsed * 0.28) * 3 - p.vx) * dt * 0.8;
-      p.vy += (-8 - (p.temp - 20) * 0.16 - p.vy) * dt;
-      p.x += p.vx * dt; p.y += p.vy * dt; p.r += dt * 4;
-    }
-    for (var j = t.bubbles.length - 1; j >= 0; j--) {
-      var b = t.bubbles[j]; b.age += dt; b.y -= dt * 44; b.x += Math.sin(b.age * 7) * dt * 4;
-      if (b.age > 6 || b.y <= bathThermalSurface(b.x, t.y0)) t.bubbles.splice(j, 1);
-    }
-  }
-  function bathThermalDraw(c) {
-    var t = bathThermal; if (!bathMode) return;
-    c.save(); c.lineWidth = 0.7; c.strokeStyle = 'rgba(208,228,229,0.35)';
-    for (var b = 0; b < t.bubbles.length; b++) {
-      var bubble = t.bubbles[b]; c.beginPath(); c.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2); c.stroke();
-    }
-    for (var i = 0; i < t.vapor.length; i++) {
-      var p = t.vapor[i];
-      // Water vapor is invisible at release. Droplet fog appears as it
-      // cools in the room, then thins continuously as air entrains it.
-      var opacity = Math.min(1, p.age / 0.45) * Math.pow(1 - p.age / p.life, 1.5) * 0.16 * p.mass;
-      if (opacity <= 0) continue;
-      var g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-      g.addColorStop(0, 'rgba(225,235,234,' + opacity + ')');
-      g.addColorStop(0.55, 'rgba(220,233,232,' + opacity * 0.45 + ')'); g.addColorStop(1, 'rgba(220,233,232,0)');
-      c.fillStyle = g; c.beginPath(); c.ellipse(p.x, p.y, p.r, p.r * 1.6, Math.sin(p.phase + p.age) * 0.15, 0, Math.PI * 2); c.fill();
-    }
-    c.restore();
-  }
-  function bathThermalWarm(c) {
-    c.save(); var g = c.createRadialGradient(4, 4, 0, 4, 4, 4);
-    g.addColorStop(0, 'rgba(225,235,234,0.1)'); g.addColorStop(1, 'rgba(220,233,232,0)');
-    c.fillStyle = g; c.beginPath(); c.ellipse(4, 4, 4, 6, 0.1, 0, Math.PI * 2); c.fill(); c.restore();
   }
   function bathThermalSave() {
     var t = bathThermal;
@@ -16656,8 +16754,11 @@
     t.bank = Math.min(400, t.bank + dt * (t.shower ? 2000 : 3200) * t.flow);
     if (bathPour > 0) { bathSiloQueue(0, bathPour, 20); bathPour = 0; }
     var type = bathSilos.selected;
-    var available = hearthDevSupplies() ? BATH_MAX_WATER : bathLiquidCount(type);
-    var wanted = Math.min(Math.floor(t.bank), available, Math.max(0, BATH_MAX_WATER - bathWater));
+    var available = hearthDevSupplies() ? Infinity : bathLiquidCount(type);
+    // The vessel, not an inventory threshold, determines when water spills.
+    // The shared emitter still enforces particle capacity and charges only
+    // the liquid that the solver actually accepts.
+    var wanted = Math.min(Math.floor(t.bank), available);
     t.bank -= Math.floor(t.bank);
     var emitted = 0, lanes = t.shower ? 5 : 1;
     for (var lane = 0; lane < lanes; lane++) {
@@ -16814,6 +16915,180 @@
       vx -= nx * inward; vy -= ny * inward;
     }
     return [x, y, vx, vy];
+  }
+  /* Bath steam is a small, independent incompressible air field. Evaporated
+     water feeds a reservoir, then enters the field continuously. Pressure,
+     advection and thermal buoyancy form the wisps; there are no bubble sprites
+     or scripted puff paths. The world smoke and liquid clocks stay untouched. */
+  var bathVapor = null;
+  function bathThermalVaporEmit(col, count, temperature) {
+    var t = bathThermal, p = null;
+    for (var i = 0; i < t.vapor.length; i++) if (t.vapor[i].col === col) { p = t.vapor[i]; break; }
+    if (!p) { p = { col: col, mass: 0, heat: 0 }; t.vapor.push(p); }
+    p.surfaceY = t.surface[col];
+    p.mass += count * 0.01;
+    p.heat += count * 0.01 * Math.max(0, temperature - 20);
+  }
+  function bathVaporClear() {
+    bathVapor = null;
+    if (typeof bathThermal !== 'undefined') bathThermal.vapor.length = 0;
+  }
+  function bathVaporEnsure() {
+    if (bathVapor && bathVapor.owner === bathThermal) return bathVapor;
+    var t = bathThermal, cell = typeof isMobile !== 'undefined' && isMobile ? 11 : 8;
+    var w = Math.ceil((t.dx * 12 + 96) / cell), h = Math.ceil((t.dy * 6 + 320) / cell);
+    var n = w * h;
+    bathVapor = { owner: t, w: w, h: h, cell: cell, x: t.x0 - 48, y: t.y0 - 300,
+      u: new Float32Array(n), v: new Float32Array(n), u0: new Float32Array(n), v0: new Float32Array(n),
+      mist: new Float32Array(n), mist0: new Float32Array(n), heat: new Float32Array(n), heat0: new Float32Array(n),
+      pressure: new Float32Array(n), pressure0: new Float32Array(n), div: new Float32Array(n),
+      curl: new Float32Array(n), solid: new Uint8Array(n), acc: 0, awake: 0,
+      emittedKg: 0, steps: 0, peak: 0, dirty: true, canvas: null, context: null, image: null,
+      curve: typeof bathTubCurve === 'function' ? bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]) : null };
+    return bathVapor;
+  }
+  function bathVaporSample(a, x, y, f) {
+    x = Math.max(0, Math.min(f.w - 1.001, x)); y = Math.max(0, Math.min(f.h - 1.001, y));
+    var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy, i = iy * f.w + ix;
+    return (a[i] * (1 - fx) + a[i + 1] * fx) * (1 - fy) +
+      (a[i + f.w] * (1 - fx) + a[i + f.w + 1] * fx) * fy;
+  }
+  function bathVaporAdvect(dst, src, f, dt, decay) {
+    var w = f.w, h = f.h;
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var i = y * w + x;
+      dst[i] = f.solid[i] ? 0 : bathVaporSample(src, x - f.u0[i] * dt, y - f.v0[i] * dt, f) * decay;
+    }
+  }
+  function bathVaporStep(f, dt) {
+    var t = bathThermal, w = f.w, h = f.h, n = w * h;
+    f.solid.fill(0);
+    // The measured water surface is the air field's moving lower boundary.
+    for (var x = 0; x < w; x++) {
+      var worldX = f.x + (x + 0.5) * f.cell, col = Math.floor((worldX - t.x0) / t.dx);
+      var boundary = Infinity;
+      if (f.curve && worldX >= f.curve.x0 && worldX <= f.curve.x1)
+        boundary = f.curve.y0 + f.curve.depthAt(worldX);
+      if (col >= 0 && col < 12 && t.surfaceCell[col] >= 0) boundary = Math.min(boundary, t.surface[col]);
+      var row = Math.max(0, Math.ceil((boundary - f.y) / f.cell));
+      for (var y = row; y < h; y++) f.solid[y * w + x] = 1;
+    }
+    for (var p = t.vapor.length - 1; p >= 0; p--) {
+      var source = t.vapor[p], c = source.col;
+      if (source.mass < 1e-7) { t.vapor.splice(p, 1); continue; }
+      var surfaceY = t.surfaceCell[c] >= 0 ? t.surface[c] : source.surfaceY;
+      var temp = source.heat / source.mass;
+      // At bathing temperatures each real liquid particle contains several
+      // seconds of vapor. Release its mass smoothly instead of flashing a puff.
+      var rate = 0.0004 * Math.pow(Math.max(0, temp - 8) / 12, 2);
+      var releaseTime = Math.max(0.65, Math.min(30, 0.01 / Math.max(0.00001, rate)));
+      var kg = source.mass * (1 - Math.exp(-dt / releaseTime));
+      source.mass -= kg; source.heat = source.mass * temp; f.emittedKg += kg;
+      var xa = Math.max(1, Math.floor((t.x0 + c * t.dx - f.x) / f.cell));
+      var xb = Math.min(w - 2, Math.ceil((t.x0 + (c + 1) * t.dx - f.x) / f.cell));
+      var sy = Math.max(1, Math.min(h - 2, Math.floor((surfaceY - f.y) / f.cell) - 1));
+      var amount = kg * 1000 / Math.max(1, xb - xa + 1);
+      for (var sx = xa; sx <= xb; sx++) {
+        var at = sy * w + sx;
+        f.mist[at] += amount;
+        f.heat[at] += amount * temp * 0.12;
+        f.u[at] += ((t.vx[t.surfaceCell[c]] || 0) / f.cell - f.u[at]) * Math.min(0.12, amount * 0.08);
+      }
+      f.awake = 14;
+    }
+    for (var i = 0; i < n; i++) {
+      if (f.solid[i]) { f.u[i] = f.v[i] = f.mist[i] = f.heat[i] = 0; continue; }
+      var airWarmth = f.heat[i] / Math.max(0.0001, f.mist[i]) / 0.12;
+      var vaporShare = Math.min(1, f.mist[i] * 12);
+      f.v[i] -= Math.min(120, airWarmth * 600 / 293.15) * vaporShare * dt / f.cell;
+    }
+    // Curl confinement restores rotational motion lost to this bounded grid.
+    // It derives entirely from the current airflow, with no timed oscillation.
+    for (var cy = 1; cy < h - 1; cy++) for (var cx = 1; cx < w - 1; cx++) {
+      var k = cy * w + cx;
+      f.curl[k] = (f.v[k + 1] - f.v[k - 1] - f.u[k + w] + f.u[k - w]) * 0.5;
+    }
+    for (var vy = 1; vy < h - 1; vy++) for (var vx = 1; vx < w - 1; vx++) {
+      var z = vy * w + vx;
+      if (f.solid[z]) continue;
+      var nx = Math.abs(f.curl[z + 1]) - Math.abs(f.curl[z - 1]);
+      var ny = Math.abs(f.curl[z + w]) - Math.abs(f.curl[z - w]);
+      var len = Math.sqrt(nx * nx + ny * ny) + 0.0001;
+      f.u[z] += ny / len * f.curl[z] * dt * 1.8;
+      f.v[z] -= nx / len * f.curl[z] * dt * 1.8;
+    }
+    f.pressure.fill(0); f.pressure0.fill(0); f.div.fill(0);
+    for (var dy = 1; dy < h - 1; dy++) for (var dx = 1; dx < w - 1; dx++) {
+      var d = dy * w + dx; if (f.solid[d]) continue;
+      f.div[d] = ((f.solid[d + 1] ? 0 : f.u[d + 1]) - (f.solid[d - 1] ? 0 : f.u[d - 1]) +
+        (f.solid[d + w] ? 0 : f.v[d + w]) - (f.solid[d - w] ? 0 : f.v[d - w])) * 0.5;
+    }
+    for (var iter = 0; iter < 14; iter++) {
+      var a = f.pressure, b = f.pressure0;
+      for (var py = 1; py < h - 1; py++) for (var px = 1; px < w - 1; px++) {
+        var q = py * w + px; if (f.solid[q]) { b[q] = 0; continue; }
+        b[q] = ((f.solid[q - 1] ? a[q] : a[q - 1]) + (f.solid[q + 1] ? a[q] : a[q + 1]) +
+          (f.solid[q - w] ? a[q] : a[q - w]) + (f.solid[q + w] ? a[q] : a[q + w]) - f.div[q]) * 0.25;
+      }
+      f.pressure = b; f.pressure0 = a;
+    }
+    for (var gy = 1; gy < h - 1; gy++) for (var gx = 1; gx < w - 1; gx++) {
+      var g = gy * w + gx; if (f.solid[g]) continue;
+      var pressure = f.pressure;
+      f.u[g] -= ((f.solid[g + 1] ? pressure[g] : pressure[g + 1]) - (f.solid[g - 1] ? pressure[g] : pressure[g - 1])) * 0.5;
+      f.v[g] -= ((f.solid[g + w] ? pressure[g] : pressure[g + w]) - (f.solid[g - w] ? pressure[g] : pressure[g - w])) * 0.5;
+      if (f.solid[g - 1] || f.solid[g + 1]) f.u[g] = 0;
+      if (f.solid[g + w]) f.v[g] = Math.min(0, f.v[g]);
+    }
+    f.u0.set(f.u); f.v0.set(f.v); f.mist0.set(f.mist); f.heat0.set(f.heat);
+    bathVaporAdvect(f.u, f.u0, f, dt, Math.exp(-dt * 0.16));
+    bathVaporAdvect(f.v, f.v0, f, dt, Math.exp(-dt * 0.16));
+    bathVaporAdvect(f.mist, f.mist0, f, dt, Math.exp(-dt * 0.32));
+    bathVaporAdvect(f.heat, f.heat0, f, dt, Math.exp(-dt * 0.8));
+    f.awake -= dt; f.steps++; f.dirty = true;
+  }
+  function bathThermalVaporTick(dt) {
+    if (!bathMode || !isFinite(dt) || dt <= 0) return;
+    if (!bathThermal.vapor.length && (!bathVapor || bathVapor.awake <= 0)) return;
+    var f = bathVaporEnsure(); f.acc = Math.min(0.1, f.acc + dt);
+    while (f.acc >= 1 / 30) { bathVaporStep(f, 1 / 30); f.acc -= 1 / 30; }
+  }
+  function bathVaporImpulse(x, y, strength) {
+    var f = bathVapor; if (!f || f.awake <= 0) return;
+    for (var cy = 1; cy < f.h - 1; cy++) for (var cx = 1; cx < f.w - 1; cx++) {
+      var dx = f.x + cx * f.cell - x, dy = f.y + cy * f.cell - y, r2 = dx * dx + dy * dy;
+      if (r2 > 10000) continue;
+      var i = cy * f.w + cx, weight = (1 - r2 / 10000) * strength / f.cell;
+      f.u[i] += (dx < 0 ? -1 : 1) * 22 * weight; f.v[i] -= 8 * weight;
+    }
+  }
+  function bathThermalDraw(c) {
+    var f = bathVapor; if (!bathMode || !f || f.awake <= 0 || f.owner !== bathThermal) return;
+    if (!f.canvas) {
+      f.canvas = document.createElement('canvas'); f.canvas.width = f.w; f.canvas.height = f.h;
+      f.context = f.canvas.getContext('2d'); f.image = f.context.createImageData(f.w, f.h);
+    }
+    if (f.dirty) {
+      var pixels = f.image.data; f.peak = 0;
+      for (var i = 0; i < f.mist.length; i++) {
+        // Newly released hot vapor is clear. Cooling condenses a translucent
+        // fog, and mixing with room air gradually evaporates that fog again.
+        var condensate = Math.max(0, 1 - f.heat[i] / Math.max(0.0001, f.mist[i]) / 9);
+        var edge = Math.min(1, (i % f.w) / 5, (f.w - 1 - i % f.w) / 5, Math.floor(i / f.w) / 6);
+        var opacity = Math.min(0.72, (1 - Math.exp(-f.mist[i] * condensate * 2.4)) * edge);
+        f.peak = Math.max(f.peak, opacity);
+        var at = i * 4; pixels[at] = 225; pixels[at + 1] = 235; pixels[at + 2] = 234; pixels[at + 3] = Math.round(opacity * 255);
+      }
+      f.context.putImageData(f.image, 0, 0); f.dirty = false;
+    }
+    c.save(); c.imageSmoothingEnabled = true;
+    c.drawImage(f.canvas, f.x, f.y, f.w * f.cell, f.h * f.cell); c.restore();
+  }
+  function bathThermalWarm(c) {
+    // Compile the smoothed canvas upload/draw path under the loading cover.
+    var tile = document.createElement('canvas'); tile.width = tile.height = 2;
+    var tc = tile.getContext('2d'); tc.fillStyle = 'rgba(225,235,234,0.12)'; tc.fillRect(0, 0, 2, 2);
+    c.save(); c.imageSmoothingEnabled = true; c.drawImage(tile, 0, 0, 8, 8); c.restore();
   }
   /* ---- The siphon: separate material chambers and one passenger cradle ---- */
   var siphon = { equipped: false, mode: 'suck', tank: [0, 0, 0, 0, 0, 0], selected: 0,
@@ -19111,18 +19386,13 @@
     if (!hearthPlacementPointInside(p)) return false;
     var body = hearthHandPreview();
     body.x = p.x; body.y = p.y; hearthWorldHull(body);
-    if(!hearthChamberBodyContains(body,0.5))return false;
-    var chunks = hearthBeds.boiler.chunks;
-    for (var i = 0; i < chunks.length; i++) {
-      if (chunks[i].held || Math.hypot(chunks[i].x - p.x, chunks[i].y - p.y) > chunks[i].r + body.r + 4) continue;
-      hearthWorldHull(chunks[i]);
-      if (hearthManifold(body, chunks[i], 0)) return false;
-    }
-    return true;
+    // A drop creates this hull at the cursor even inside the existing pile.
+    // The contact solver separates overlapping pieces on its next steps.
+    return hearthChamberBodyContains(body,0.5);
   }
   function hearthPlaceSelected(p, touch) {
     var at = hearthHandPoint(p, touch);
-    if (!hearthPlacementValid(at)) { bathSetNotice('Place the preview in free space above the pile.'); return false; }
+    if (!hearthPlacementValid(at)) { bathSetNotice('Keep the whole preview inside the chamber.'); return false; }
     var body = hearthDropMaterial('boiler', at.x, at.y, hearthHand.material, hearthHandPreview());
     if (!body) { bathSetNotice('No ' + hearthMaterial(hearthHand.material).label.toLowerCase() + ' available, or the grate is full.'); return false; }
     body.vx = body.vy = body.spin = 0;
@@ -19735,14 +20005,21 @@
       wide: wide, side: false, landscape: landscape };
   }
   function hearthStationReadout(bed) {
-    var weight = 0, fuel = 0, air = 0, count = 0;
+    var weight = 0, fuel = 0, air = 0, burning = 0, ash = bed.ash ? bed.ash.length : 0;
     for (var i = 0; i < bed.chunks.length; i++) {
-      var b = bed.chunks[i]; if (b.ash) continue;
+      var b = bed.chunks[i]; if (b.held) continue;
+      if (b.ash) { ash++; continue; }
+      if (hearthMaterial(b.material).role !== 'fuel' || !(b.fuel > 0)) continue;
       var share = b.fuelShare || 1;
-      weight += share; fuel += b.fuel * share; air += b.oxygen; count++;
+      weight += share; fuel += b.fuel * share;
+      if (b.lit) { burning += share; air += b.oxygen * share; }
     }
-    return 'FUEL ' + Math.round(fuel / Math.max(0.001, weight) * 100) + '% / AIR ' +
-      Math.round(air / Math.max(1, count) * 100) + '% / ASH ' + Math.round(bed.ashLoad * 100) + '%';
+    if (!weight) return ash ? 'TURN GRATE TO CLEAR ASH' : 'DROP FUEL TO BEGIN';
+    if (bed.ashLoad > 0.3) return 'TURN GRATE TO CLEAR ASH';
+    if (!burning) return 'DRAG STRIKER OVER FUEL';
+    if (air / burning < 0.4) return 'WORK BELLOWS FOR AIR';
+    if (fuel / weight < 0.16) return 'EMBERS, ADD FUEL';
+    return bed.thermalKW > 0.05 ? 'FIRE HEATING COPPER' : 'FIRE CATCHING';
   }
   function hearthDrawFuelControl(c, r, pump) {
     var bed = hearthBeds.boiler;
@@ -19778,12 +20055,12 @@
     hearthButtons.push(Object.assign({ action: 'strike' }, L.action));
     hearthDrawGrateControl(c, L.ash);
     if (L.wide || L.side) {
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, L.side ? 10 : 11, UIT_DIM, 'center');
+      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, 11, BLD.cream, 'center');
       if (L.wide && !bed.chunks.length) { var hint = { x: L.bin.x, y: L.bin.y - 26, w: L.bin.w, h: 20 }; hearthPlate(c, hint, false); hearthText(c, 'CLICK TO DROP', hint.x + hint.w / 2, hint.y + 10, 11, BLD.cream, 'center'); }
     } else {
       // Keep the sloping ironwork continuous behind the compact readings.
       var readY = L.h >= 500 ? L.h - 12 : r.y + 8;
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, readY, 10, UIT_DIM, 'center');
+      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, readY, 11, BLD.cream, 'center');
     }
     if (hearthDrag) {
       var d = hearthDrag;
@@ -73405,7 +73682,7 @@
     if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
     _ts = performance.now();
-    try { updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
+    try { if (!bathMode) updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
     perfMark('update.smoke', _ts);
     // Plume intensity is now current, so the voice and drawn flame agree
     // on the first firing frame as well as the first released frame.

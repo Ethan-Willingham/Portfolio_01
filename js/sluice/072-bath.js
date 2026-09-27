@@ -228,8 +228,21 @@
   function bathScaleV() { return 1; }
 
   // ---- Tower construction (one-shot, on first enter) ----------------------
+  function bathClearRimSteps() {
+    // Old rooms have square terrain blocks above the curved copper lips.
+    // Remove only those obsolete blocks so overflow clears the visible rim.
+    for (var f = 0; f < BATH_FLOORS.length; f++) {
+      var F = BATH_FLOORS[f], row = world[F.fr - 1];
+      if (!F.lip || !row) continue;
+      for (var t = 0; t < F.tubs.length; t++) for (var side = 0; side < 2; side++) {
+        var col = side ? F.tubs[t][1] + 1 : F.tubs[t][0] - 1;
+        if (!row[col] || row[col].type !== 'foundation') continue;
+        row[col] = null; invalidateTerrainAround(F.fr - 1, col);
+      }
+    }
+  }
   function bathCarveRoom() {
-    if (bathRoomReady) { bathSyncCollision(); return; }
+    if (bathRoomReady) { bathClearRimSteps(); bathSyncCollision(); return; }
     if (typeof world === 'undefined' || !world[BATH_BOT_ROW]) return;
     var r, c, f, i;
     // Solid block first (replacing tile objects wholesale is safe: the
@@ -254,7 +267,6 @@
         var crv = bathTubCurve(F, tb);
         for (var cc = tb[0] - 1; cc <= tb[1] + 1; cc++) {
           var isRim = (cc < tb[0] || cc > tb[1]);
-          if (isRim && F.lip > 0) world[F.fr - 1][cc] = { type: 'foundation', hp: 999999 };
           var needY = 0;
           if (!isRim) {
             var dL = crv.depthAt(cc * TILE), dR = crv.depthAt((cc + 1) * TILE);
@@ -336,7 +348,17 @@
     document.body.appendChild(bathFadeEl);
     return bathFadeEl;
   }
+  function bathWorldSmokeVisibility(inside) {
+    // Outdoor exhaust is a separate DOM layer. It must not masquerade as
+    // bath steam, including a backend initialized after entering the room.
+    var layers = [smokeFluidCanvas, rigExhaustCanvas];
+    for (var i = 0; i < layers.length; i++) if (layers[i]) {
+      var visibility = inside ? 'hidden' : '';
+      if (layers[i].style.visibility !== visibility) layers[i].style.visibility = visibility;
+    }
+  }
   function bathLayerVis(inside) {
+    bathWorldSmokeVisibility(inside);
     var pauseButton = document.getElementById('gm-pause-btn');
     if (pauseButton) pauseButton.style.top = inside ? '3px' : '';
     if (typeof window.gmTuningButtonSync === 'function') window.gmTuningButtonSync();
@@ -451,7 +473,7 @@
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteam = {}, bathSteamSaved = null, bathHotTub = null;
   function bathSteamPush() {}
-  function bathSteamPop() { if (typeof bathThermal !== 'undefined') bathThermal.vapor.length = 0; }
+  function bathSteamPop() { if (typeof bathVaporClear === 'function') bathVaporClear(); }
   function bathSteamTick(dt) { if (typeof bathThermalVaporTick === 'function') bathThermalVaporTick(dt); }
   function bathSurfY(x, fallback) {
     return typeof bathThermalSurface === 'function' ? bathThermalSurface(x, fallback) : fallback;
@@ -459,11 +481,7 @@
 
   // A guest parts existing vapor; cold splashes cannot manufacture steam.
   function bathSplashPoof(ix, iy, k) {
-    if (typeof bathThermal === 'undefined') return;
-    for (var i = 0; i < bathThermal.vapor.length; i++) {
-      var p = bathThermal.vapor[i], dx = p.x - ix, dy = p.y - iy;
-      if (dx * dx + dy * dy < 10000) p.vx += (dx < 0 ? -1 : 1) * 22 * k;
-    }
+    if (typeof bathVaporImpulse === 'function') bathVaporImpulse(ix, iy, k);
   }
   // ---- Hook 2: updateCamera() top (080). The scene OWNS the zoom: fit the
   // tower WIDTH to the canvas (any window, any dpr) and scroll VERTICALLY
@@ -1171,8 +1189,7 @@
           uiFg.fillStyle = '#b5723a';
           uiFg.fillRect(fx0 - 4, lipY - 8, TILE + 10, 6);
           uiFg.fillRect(fx1 - TILE - 6, lipY - 8, TILE + 10, 6);
-          // The fire room boiler feeds this copper heat exchanger. Its glow
-          // follows stored bath heat; no unrelated gas flames under the tub.
+          // The copper's stored heat survives the fire going out, then cools.
           if (FG.fill[fti] === 2) {
             var vcx = (crv2.x0 + crv2.x1) / 2;
             uiFg.strokeStyle = BLD.goldDark; uiFg.lineWidth = 6;
@@ -1182,7 +1199,8 @@
               uiFg.lineTo(hx, crv2.y0 + crv2.depthAt(hx) + 10);
             }
             uiFg.lineTo(fx1 - 8, botY - 16); uiFg.stroke();
-            uiFg.globalAlpha = Math.min(1, bathHeat); uiFg.strokeStyle = BLD.warmGlow; uiFg.lineWidth = 2;
+            var copper = bathCopperWarmth();
+            uiFg.globalAlpha = copper.warm * 0.25 + copper.glow * 0.75; uiFg.strokeStyle = BLD.warmGlow; uiFg.lineWidth = 2;
             uiFg.stroke(); uiFg.globalAlpha = 1;
           }
           uiFg.fillStyle = '#2b2b2b';
@@ -1202,9 +1220,7 @@
     ctx.fillText('ВЫХОД', (BATH_EXIT_X0 + BATH_EXIT_X1) / 2, BATH_EXIT_Y0 - 8);
     // The live water (separate DOM canvas above; camera already pinned).
     if (typeof drawLiquids === 'function') drawLiquids();
-    // Keep the existing smoke canvas presentation synchronized. The bath's
-    // actual condensed vapor draws independently on the foreground below.
-    if (typeof drawSmoke === 'function') drawSmoke();
+    bathWorldSmokeVisibility(true);
     var bathDrawContext = ctx;
     try {
       if (uiFg) ctx = uiFg;

@@ -14,7 +14,8 @@ Fuel placement covers the full visible furnace cavity, including the upper
 pockets beside the copper tub. Preview, release and wall contacts share that
 outline. Cold charcoal has lighter broken faces against the soot-dark brick;
 the translucent preview carries a cream silhouette, red when it overlaps a
-wall or another piece. Ash keeps its separate pale mineral color.
+wall. Repeated clicks may overlap existing fuel; contact physics separates
+the new pieces. Ash keeps its separate pale mineral color.
 
 An empty tub shows dry copper sheets and an EMPTY TUB reading. The lining is
 drawn behind the liquid layer; blue water appears only from actual particles.
@@ -29,6 +30,11 @@ The bathhouse keeps the running game version and live FPS on a small wall plate
 beside Pause, in normal play and developer mode. It shares the navigation row,
 stays clear of Leave on short landscape screens, and does not cover the basin
 or furnace controls.
+
+The copper bowl warms and glows with stored metal heat. Fire guidance uses
+actionable text such as DRAG STRIKER OVER FUEL, WORK BELLOWS FOR AIR and
+TURN GRATE TO CLEAR ASH, instead of fuel/air/ash percentages. Overflow remains
+visible beyond the copper rim until it reaches the floor and drains away.
 
 > **Loading and arrival (2026-09-26, v28.103).** The initial HTML contains an
 > opaque gunmetal cover, the cream SLUICE wordmark and the drill/strata mark.

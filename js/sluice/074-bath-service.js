@@ -3,7 +3,7 @@
   // operating resources, never a per-guest water or coal charge.
   var BATH_VISIT = { seconds: 18, pay: 75 };
   var BATH_LEGACY_FIRE_SECONDS = 240;
-  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 45000;
+  var BATH_MIN_WATER = 4000, BATH_MAX_WATER = 45000; // legacy queued-fill size, never a tub capacity
   var bathFire = 0, bathHeat = 0, bathWater = 0, bathPour = 0;
   var bathDrainT = 0, bathLostWater = 0, bathWetFloor = [];
   var bathServiceButtons = [];
@@ -85,9 +85,9 @@
   function bathAddWater() {
     if (!bathMode || bathFading || gamePaused || !bathRoomReady) return false;
     bathWater = bathBasinCount();
-    var count = Math.floor(Math.min(bathWaterCount(), BATH_MAX_WATER - bathWater - bathPour));
+    var count = Math.floor(bathWaterCount());
     if (count <= 0) {
-      bathSetNotice(bathWaterCount() ? 'The tub is full.' : 'Scoop water from a lake, then bring it back in your tank.');
+      bathSetNotice('Scoop water from a lake, then bring it back in your tank.');
       return false;
     }
     if (!bathTakeWater(count)) return false;
@@ -96,14 +96,15 @@
     return true;
   }
   function bathFloorAt(x, y) {
-    if (x < 19 * TILE || x > 55 * TILE || y < BATH_TOP_ROW * TILE || y > (BATH_BOT_ROW + 2) * TILE) return 0;
+    if (x < 19 * TILE || x > 55 * TILE || y < BATH_FLOORS[BATH_FLOORS.length - 1].fr * TILE - 5 ||
+        y > (BATH_FLOORS[0].fr + 5) * TILE) return 0;
     for (var f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f];
       if (x < F.c0 * TILE || x > (F.c1 + 1) * TILE || y < F.fr * TILE - 5 || y > (F.fr + 5) * TILE) continue;
       var inTub = false;
       for (var t = 0; t < F.tubs.length; t++) {
         var tb = F.tubs[t];
-        if (x >= tb[0] * TILE - 2 && x <= (tb[1] + 1) * TILE + 2) { inTub = true; break; }
+        if (x >= tb[0] * TILE && x <= (tb[1] + 1) * TILE) { inTub = true; break; }
       }
       if (!inTub) return F.fr * TILE;
     }
@@ -113,13 +114,17 @@
     bathLostWater++;
     if (bathMode && bathWetFloor.length < 28 && bathLostWater % 8 === 0) bathWetFloor.push({ x: x, y: bathFloorAt(x, y), t: 0 });
   }
-  function bathDrainFloor() {
+  function bathDrainFloor(forSave) {
     // Remove spilled particles through the shared CPU/GPU mutation journal.
     // Scan parked water too, so leaving or saving cannot recover a floor spill.
     liquidToolSync();
     for (var i = liquidCount - 1; i >= 0; i--) {
-      if (bathFloorAt(liquidX[i], liquidY[i])) {
-        bathFloorLoss(liquidX[i], liquidY[i]); removeLiquidParticle(i);
+      var x = liquidX[i], y = liquidY[i];
+      // Liquid saves round to quarter pixels. Include that destination so
+      // a drop just above the drain cannot round onto the floor in the save.
+      if (forSave && !bathFloorAt(x, y)) { x = Math.round(x * 4) / 4; y = Math.round(y * 4) / 4; }
+      if (bathFloorAt(x, y)) {
+        bathFloorLoss(x, y); removeLiquidParticle(i);
       }
     }
     Object.keys(mineralLiquidParked).forEach(function (key) {
@@ -420,6 +425,9 @@
     return false;
   }
   function bathServiceSave() {
+    // SaveBuild serializes this before mineralLiquids. Flush floor spills
+    // now so saving between drain ticks cannot restore already lost water.
+    if (bathRoomReady) bathDrainFloor(true);
     return { version: 7, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
@@ -445,7 +453,7 @@
       skySlimeClamp(Number(data.fire) || 0, 0, BATH_LEGACY_FIRE_SECONDS);
     bathHeat = skySlimeClamp(Number(data.heat) || 0, 0, 1);
     bathThermalRestore(data.thermal, bathHeat);
-    bathPour = skySlimeClamp(Number(data.pour) || 0, 0, BATH_MAX_WATER);
+    bathPour = bathSiloAmount(data.pour);
     bathLostWater = Math.max(0, Number(data.lost) || 0);
     bathServed = Math.max(0, Number(data.served) || 0);
     bathIntroSeen = !!data.introSeen;

@@ -466,3 +466,17 @@ real jet-driven rolling without chassis contact, and WebGPU water response.
 Responsive developer UI verification: `node tools/bathhouse-smoke.mjs --layout-only`
 checks desktop, phone, and landscape layouts, real pointer input, preparation,
 water emission, guest admission, and toggling dev mode inside the bathhouse.
+
+## Unrestricted overflow
+
+The hose has no tub-volume cutoff. It keeps pouring while stock is available
+(or indefinitely with developer supplies), including above the old 450 L
+threshold. Real liquid crosses the open curved lip, falls outside the copper
+bowl and is removed on reaching the floor. Saving flushes live and parked
+floor spills before serialization. Airborne splashes are not deleted early.
+Old square terrain steps at the lips are cleared when an existing room opens.
+The shared simulation's particle allocation remains bounded; only accepted
+particles debit finite liquid inventory.
+
+Run `node tools/test-bath-overflow.cjs` for inlet conservation, above-threshold
+pours, legacy lip migration and save-time spill removal.

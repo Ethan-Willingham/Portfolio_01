@@ -44,6 +44,28 @@ function eventAt(s,layout,p,id,touch=false){
   console.log('PASS upper side pockets: mouse/touch ownership, exact ghost realization, inventory, save and physical fall');
 }
 {
+  for(const touch of [false,true]){
+    const {s,layout}=fixture(),bed=s.hearthBeds.boiler,p={x:448,y:100};s.forgeGive('coal',22);
+    for(let i=0;i<20;i++){
+      const preview=s.hearthHandPreview(),shape=JSON.stringify(preview.shape),e=eventAt(s,layout,p,i+20,touch);
+      assert(s.hearthPlacementValid(p),'a coal under the cursor does not block the next drop');
+      assert(s.hearthPointerDown(e));assert(s.hearthPointerUp(e));
+      const body=bed.chunks[bed.chunks.length-1];near(body.x,p.x);near(body.y,p.y);
+      assert.equal(JSON.stringify(body.shape),shape,'rapid drops retain their exact preview hull');
+    }
+    assert.equal(bed.chunks.length,20,'every rapid click creates a physical piece');
+    assert.equal(s.forgeCount('coal'),2,'each successful overlapping drop spends one fuel');
+    for(let i=0;i<360;i++)s.hearthStepBed(bed);
+    for(const body of bed.chunks){
+      assert([body.x,body.y,body.vx,body.vy,body.spin].every(Number.isFinite));
+      assert(s.hearthChamberBodyContains(body,.5),'the separated pile stays within the bowl');
+    }
+    const contacts=s.hearthContacts(bed,0);
+    assert(contacts.every(c=>c.points.every(p=>p.depth<.15)),'solver separates a fully overlapping pile to contact tolerance');
+  }
+  console.log('PASS twenty immediate mouse/touch drops at the same point, exact previews, inventory and stable separation');
+}
+{
   const {s,layout}=fixture();s.forgeGive('coal',2);
   const p=findUpper(s,'left'),e=eventAt(s,layout,p,8,true);
   s.hearthPointerDown(e);s.hearthCancelDrag();assert.equal(s.forgeCount('coal'),2);

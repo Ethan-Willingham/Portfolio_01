@@ -35,7 +35,7 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-silos','074-bath-thermal','074-bath-tools','077-hearth-materials','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-interaction','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-silos','074-bath-thermal','074-bath-tools','074-bath-vapor','077-hearth-materials','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-interaction','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
   s.bathPickSite();
   // The furnace now fits the actual copper shoulders in camera space.
   s.bathMode = true; s.bathCamPin(); s.bathMode = false;

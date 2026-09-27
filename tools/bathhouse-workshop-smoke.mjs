@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { savedBathEntry } from './bathhouse-saved-entry.mjs';
 import { bathHoseFlow } from './bathhouse-hose-flow.mjs';
 import { bathFireOutline } from './bathhouse-fire-outline.mjs';
+import { bathOverflow } from './bathhouse-overflow.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8197), debug = port + 1000;
@@ -79,6 +80,7 @@ async function press(target,touch=false){
 try {
   await new Promise(resolve => server.listen(port, '127.0.0.1', resolve));
   chrome = spawn(process.env.CHROME || `${process.env.HOME}/.local/bin/agent-chrome-for-testing`, [
+    ...(process.env.NOVSYNC ? ['--disable-gpu-vsync','--disable-frame-rate-limit'] : []),
     '--headless=new', '--enable-unsafe-webgpu', '--use-angle=metal', '--no-first-run', '--disable-gpu-sandbox',
     `--user-data-dir=${profile}`, `--remote-debugging-port=${debug}`, 'about:blank'
   ], { stdio: 'ignore' });
@@ -109,6 +111,8 @@ try {
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
   if (process.env.BATH_FIRE) {
     await bathFireOutline({ game, ev, send, sleep, check, screenshot });
+  } else if (process.env.BATH_OVERFLOW) {
+    await bathOverflow({ game, ev, send, sleep, check, screenshot, press, button });
   } else if (process.env.BATH_HOSE) {
     await bathHoseFlow({ game, ev, send, sleep, check, screenshot, press, button });
   } else if (savedFixture) {
@@ -144,6 +148,13 @@ try {
     }
   }
   check('all dev materials preserve real stock and cargo', await game('JSON.stringify({stock:forgeStock,cargo:cargo})')===devStock);
+  await game("hearthSelectMaterial('coal');render();");
+  for(let i=0;i<20;i++)await press(devDrop);
+  check('twenty rapid real clicks at one point create twenty overlapping pieces',await game('hearthBeds.boiler.chunks.length===20&&hearthBeds.boiler.chunks.every(b=>Math.abs(b.x-hearthBeds.boiler.chunks[0].x)<.01&&Math.abs(b.y-hearthBeds.boiler.chunks[0].y)<.01)'));
+  await game('for(var i=0;i<360;i++)hearthStepBed(hearthBeds.boiler);render();');
+  check('contact physics separates rapid drops into a finite contained pile',await game('hearthBeds.boiler.chunks.every(b=>[b.x,b.y,b.vx,b.vy,b.spin].every(Number.isFinite)&&hearthChamberBodyContains(b,.5))&&hearthContacts(hearthBeds.boiler,0).every(c=>c.points.every(p=>p.depth<.15))'));
+  await screenshot('rapid-fuel-pile');
+  await game('hearthReset();render();');
   await game('setDevMode(false);render();');
   await press(devDrop);
   check('turning dev off restores normal material availability', await game('!hearthBeds.boiler.chunks.length&&HEARTH_MATERIAL_ORDER.every(id=>hearthMaterialCount(id)===0)'));
@@ -166,10 +177,12 @@ try {
   const remaining=await game('hearthMaterialCount("amber")');
   await press('(function(){var r=hearthRoomLayout().box;return {x:r.x+2,y:r.y+r.h-2};})()');
   check('invalid wall drop does not spend inventory',await game('hearthMaterialCount("amber")')===remaining);
+  await game('hearthBeds.boiler.chunks[0].y=100;hearthBeds.boiler.chunks[0].vx=hearthBeds.boiler.chunks[0].vy=0;render();');
   await press('(function(){var b=hearthBeds.boiler.chunks[0],r=hearthRoomLayout().box;return {x:r.x+b.x*r.w/HEARTH_WIDTH-14,y:r.y+(b.y-HEARTH_TOP)*r.h/HEARTH_HEIGHT+16};})()');
-  check('overlapping drop does not spend inventory',await game('hearthMaterialCount("amber")')===remaining);
+  check('an overlapping drop creates a piece and spends exactly one material',await game('hearthMaterialCount("amber")')===remaining-1&&await game('hearthBeds.boiler.chunks.length')===2);
+  await game('for(var i=0;i<240;i++)hearthStepBed(hearthBeds.boiler);render();');
   await press(button('strike'));
-  const above='(function(){var b=hearthBeds.boiler.chunks[0],r=hearthRoomLayout().box;return {x:r.x+b.x*r.w/HEARTH_WIDTH,y:r.y+(b.y-b.r-8-HEARTH_TOP)*r.h/HEARTH_HEIGHT};})()';
+  const above='(function(){var b=hearthBeds.boiler.chunks.reduce((a,b)=>b.y-b.r<a.y-a.r?b:a),r=hearthRoomLayout().box;return {x:r.x+b.x*r.w/HEARTH_WIDTH,y:r.y+(b.y-b.r-8-HEARTH_TOP)*r.h/HEARTH_HEIGHT};})()';
   await press(above);
   check('selecting or clicking striker does not auto-ignite',await game('!hearthBeds.boiler.chunks.some(b=>b.lit)&&!hearthHand.sparks.length'));
   const sp=await client(above);
@@ -178,7 +191,7 @@ try {
   await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:sp.x+48,y:sp.y,button:'left',clickCount:1});
   check('manual dragging casts physical sparks',await game('hearthHand.sparks.length>0'));
   await game('for(var i=0;i<120;i++)hearthHandTick(1/120);render()');
-  check('spark contact lights actual fuel',await game('hearthBeds.boiler.chunks[0].lit'));
+  check('spark contact lights actual fuel',await game('hearthBeds.boiler.chunks.some(b=>b.lit)'));
   await game('hearthBeds.boiler.ash.push({x:HEARTH_WIDTH/2,y:HEARTH_FLOOR-3,vx:0,vy:0,r:3,kg:.002,seed:7,heat:0});');
   const bodies=await game('hearthBeds.boiler.chunks.length');
   await press(button('ash'));

@@ -193,8 +193,11 @@
     t.bank = Math.min(400, t.bank + dt * (t.shower ? 2000 : 3200) * t.flow);
     if (bathPour > 0) { bathSiloQueue(0, bathPour, 20); bathPour = 0; }
     var type = bathSilos.selected;
-    var available = hearthDevSupplies() ? BATH_MAX_WATER : bathLiquidCount(type);
-    var wanted = Math.min(Math.floor(t.bank), available, Math.max(0, BATH_MAX_WATER - bathWater));
+    var available = hearthDevSupplies() ? Infinity : bathLiquidCount(type);
+    // The vessel, not an inventory threshold, determines when water spills.
+    // The shared emitter still enforces particle capacity and charges only
+    // the liquid that the solver actually accepts.
+    var wanted = Math.min(Math.floor(t.bank), available);
     t.bank -= Math.floor(t.bank);
     var emitted = 0, lanes = t.shower ? 5 : 1;
     for (var lane = 0; lane < lanes; lane++) {

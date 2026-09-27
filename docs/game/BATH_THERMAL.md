@@ -29,7 +29,11 @@ clears the GPU thermal field once; ordinary outdoor frames do not upload it.
 
 Neighboring cells exchange equal and opposite energy. Motion measured from the
 liquid solver increases mixing, as does an unstable warm-under-cold column.
-Every exchange is bounded by the two cells' equilibrium temperature. Remapping
+A projected finite-volume flow transports heat with the measured circulation.
+Upwind fluxes use a shared donor bound, conserving energy even at high speed.
+Uniform temperature remains uniform. CPU and GPU interpolate occupied cell
+centres, removing rectangular changes in buoyancy. Every diffusive exchange is
+bounded by the two cells' equilibrium temperature. Remapping
 the thermal field to changed liquid occupancy preserves its total energy;
 cold inflow increases capacity without adding energy, and spills remove their
 share of sensible heat. This is a reduced thermal model coupled to particle
@@ -54,18 +58,30 @@ energy. Near boiling, excess bottom heat reaches the surface and vaporizes
 water rather than increasing the local water temperature indefinitely.
 Remaining fractional mass credits are bounded and do not become saved water.
 
-The visible mist consists of condensed vapor parcels emitted by these actual
-mass-removal events. Vapor is invisible at release, becomes visible as it cools,
-rises with temperature-dependent buoyancy, drifts with a small room draft and
-thins as surrounding air mixes into it. Boiling vapor events also seed small
-rising bubbles. Cold water and oil cannot generate this mist. Guest splashes
-move existing mist; they do not create white smoke. The room no longer borrows
-or retunes the outdoor smoke simulation, and water has no artificial pink heat
-tint. The canvas vapor renderer works with either liquid backend.
+`074-bath-vapor.js` receives only actually evaporated mass. A small reservoir
+releases each removed particle over time, smoothing quantized evaporation into
+continuous emission. A separate bounded air grid advects heat and vapor, solves
+pressure and adds temperature-dependent buoyancy. Curl confinement recovers
+rotation lost to coarse sampling. Cooling makes vapor visible as translucent
+condensate, and room-air mixing thins it. There are no bubble sprites, puff
+sprites, scripted oscillations or synthetic smoke emissions. Guest splashes
+push the existing airflow. Cold water and oil cannot generate steam.
+
+The air field runs at 30 Hz only while the bath is visible and contains vapor;
+mobile uses larger cells. One smoothed canvas upload displays the field. It
+works with both liquid backends, has no GPU readback, and never retunes the
+outdoor smoke. Outdoor exhaust is paused and its DOM layers hidden in the
+bath, so it cannot appear as unheated steam or drift across the water. The receiving liquid backend explicitly disables the legacy
+heater, lift and pink tint even if it initializes after room entry.
+
+The copper lining and rim change color with `copperC`, including retained heat
+after the fire goes out. Warmth starts subtly above 30 C; a brighter stylized
+glow builds above 90 C. This is game temperature feedback rather than a literal
+blackbody emission spectrum. Water has no painted heat band.
 
 ## Persistence and checks
 
-Bath save version 6 includes thermal grid energy and capacity, copper
+Bath save version 7 includes thermal grid energy and capacity, copper
 temperature, cumulative vapor mass and energy accounting. Legacy normalized
 warmth migrates once onto the existing water volume. It never spawns water.
 
@@ -79,7 +95,8 @@ their disabled path leaves ordinary outdoor water unchanged.
 The browser smoke check is `node tools/bath-thermal-smoke.mjs`; repeat with
 `CPU=1` for the fallback. It serves a fresh fragment assembly, owns its Chrome
 for Testing process, checks shader warm-up and a finite heated field, and checks
-that evaporated particles produce visible mist. Screenshots stay under `/tmp`.
+that evaporated particles produce a visible air field. `LIVE=1` also measures
+the running bath; `BUNDLE=1` verifies the exact assembled release. Screenshots stay under `/tmp`.
 
 
 The September 26 verification passed all 11 thermal groups and heated-bath
@@ -89,3 +106,8 @@ that test profile, the GPU shore reached 99.47% asleep and the floating fixture
 98.64%. Its peak 10.38 px/s narrowly missed the historical below 10 threshold.
 The CPU floating fixture also failed on unchanged HEAD. This change leaves
 outdoor tuning intact; it does not resolve those baseline settling limits.
+
+`node tools/test-bath-vapor.cjs` checks the real-mass emission reservoir,
+buoyant rise, rotational airflow, nonnegative fields, water exclusion and
+outdoor inactivity. It runs the numerical functions in their normal lexical
+scope; a VM global proxy is not a representative performance measurement.
