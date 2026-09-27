@@ -33,7 +33,8 @@
     }
     var den = nx * nx * kx + ny * ny * ky;
     if (!(den > 1e-8 && maxGradient > 1e-8)) return;
-    var normal = Math.max(0, -(vx * nx + vy * ny)) / den;
+    var approach = -(vx * nx + vy * ny);
+    var normal = Math.max(0, approach) / den;
     var move = Math.min(depth / den, 2 / maxGradient);
     var tx = -ny, ty = nx, tangentDen = tx * tx * kx + ty * ty * ky;
     // Sequential orthogonal projections in the actual masked mass metric.
@@ -54,6 +55,18 @@
     }
     A.sleeping = B.sleeping = false; A._solve = B._solve = true;
     A.sleepFrames = B.sleepFrames = 0;
+    if (typeof softPresentationBody === 'function' && (softPresentationBody(A) || softPresentationBody(B))) {
+      // Observe actual closure after normal, tangent and final normal solves.
+      var afterNormal = 0;
+      for (var audioK = 0; audioK < 4; audioK++) {
+        var audioBody = bodies[audioK], audioNode = nodes[audioK];
+        afterNormal += weights[audioK] * ((audioBody.px[audioNode] - audioBody.ox[audioNode]) * nx +
+          (audioBody.py[audioNode] - audioBody.oy[audioNode]) * ny);
+      }
+      var realIH = JELLO_TIMESCALE / h, resolved = (afterNormal + approach) * realIH;
+      softPresentationContact(A, p, q, u, approach * realIH, resolved);
+      softPresentationContact(B, a, c, t, approach * realIH, resolved);
+    }
     A._cHits++; B._cHits++; A._pairTouched = B._pairTouched = true;
     softPairsReport.contacts++;
     softPairsReport.impulse += normal * SOFT_CONTACT_POINT_MASS * JELLO_TIMESCALE / h;

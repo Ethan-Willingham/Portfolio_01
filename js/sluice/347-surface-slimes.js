@@ -89,9 +89,12 @@
       var rigDX = player.x + PLAYER_W / 2 - b.cx;
       var rigDY = player.y + PLAYER_H / 2 - b.cy;
       var nearRig = Math.hypot(rigDX, rigDY) < 145;
-      surfaceSlimeEyeTick(m, b.px[0] * 0.75 + b.cx * 0.25,
-        b.py[0] * 0.75 + b.cy * 0.25, m.radius, dt,
-        nearRig ? rigDX : null, nearRig ? rigDY : null);
+      if (!(typeof softPresentationTick === 'function' &&
+          softPresentationTick(b, dt, nearRig ? rigDX : null, nearRig ? rigDY : null))) {
+        surfaceSlimeEyeTick(m, b.px[0] * 0.75 + b.cx * 0.25,
+          b.py[0] * 0.75 + b.cy * 0.25, m.radius, dt,
+          nearRig ? rigDX : null, nearRig ? rigDY : null);
+      }
       m.sense -= dt;
       if (m.sense <= 0) {
         m.sense = 0.12;
@@ -194,6 +197,7 @@
   }
 
   function surfaceSlimeDrawEye(b) {
+    if (typeof softPresentationDrawEye === 'function' && softPresentationDrawEye(b)) return;
     var m = b.surfaceSlime;
     // Left stretch (sqrt(M M^T)) keeps the cup round under pure rotation but
     // lets a squeeze in any direction deform it a little with the central gel.
@@ -272,19 +276,21 @@
     ctx.fillStyle = gel; ctx.fillRect(b.bboxL - 12, b.bboxT - 12, w + 24, h + 24);
     // Internal highlights stay attached to the gel as it rolls. The eye below
     // has a circular cup rather than a permanently upright face.
-    jelloShadeMatrix(b);
-    ctx.save(); ctx.translate(b.cx, b.cy);
-    ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
-    var sheen = ctx.createRadialGradient(-r * 0.35, -r * 0.48, 0, -r * 0.35, -r * 0.48, r * 0.55);
-    sheen.addColorStop(0, 'rgba(245,241,234,0.6)'); sheen.addColorStop(1, 'rgba(245,241,234,0)');
-    ctx.fillStyle = sheen; ctx.fillRect(-r, -r, r * 1.5, r * 1.3);
-    ctx.fillStyle = 'rgba(245,241,234,0.45)';
-    ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.53, r * 0.2, r * 0.065, -0.35, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(245,241,234,0.18)';
-    for (var n = 0; n < 3; n++) {
-      ctx.beginPath(); ctx.arc((n - 1) * r * 0.43, r * (0.34 + Math.sin(n * 3 + m.seed * 8) * 0.12), r * (0.05 + n * 0.013), 0, Math.PI * 2); ctx.fill();
+    if (!(typeof softPresentationDrawInterior === 'function' && softPresentationDrawInterior(b))) {
+      jelloShadeMatrix(b);
+      ctx.save(); ctx.translate(b.cx, b.cy);
+      ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
+      var sheen = ctx.createRadialGradient(-r * 0.35, -r * 0.48, 0, -r * 0.35, -r * 0.48, r * 0.55);
+      sheen.addColorStop(0, 'rgba(245,241,234,0.6)'); sheen.addColorStop(1, 'rgba(245,241,234,0)');
+      ctx.fillStyle = sheen; ctx.fillRect(-r, -r, r * 1.5, r * 1.3);
+      ctx.fillStyle = 'rgba(245,241,234,0.45)';
+      ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.53, r * 0.2, r * 0.065, -0.35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(245,241,234,0.18)';
+      for (var n = 0; n < 3; n++) {
+        ctx.beginPath(); ctx.arc((n - 1) * r * 0.43, r * (0.34 + Math.sin(n * 3 + m.seed * 8) * 0.12), r * (0.05 + n * 0.013), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
     }
-    ctx.restore();
     surfaceSlimeDrawEye(b);
     ctx.restore(); ctx.restore();
   }

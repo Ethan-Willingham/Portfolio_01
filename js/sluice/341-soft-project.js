@@ -1,7 +1,7 @@
   /* ---- Sequential resident physics comparisons (?softnext=1) ---- */
   var softProjectParams = new URLSearchParams(location.search);
   var softProjectEnabled = softProjectParams.get('softnext') === '1';
-  var SOFT_PROJECT_MAX_STAGE = 3;
+  var SOFT_PROJECT_MAX_STAGE = 4;
   var softProjectStage = Math.max(1, Math.min(SOFT_PROJECT_MAX_STAGE,
     Number(softProjectParams.get('softstage')) || SOFT_PROJECT_MAX_STAGE));
   var softProjectNew = true;

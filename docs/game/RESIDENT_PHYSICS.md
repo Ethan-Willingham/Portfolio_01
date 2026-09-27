@@ -461,6 +461,32 @@ solver. Existing hydrostatic sampling retains its own mirror behavior, and
 GPU boundary upload still includes at most six visible residents. Those
 limits are not changed by the new local drag calculation.
 
+## Material presentation (v28.121)
+
+At checkpoint 4, New adds eyes, highlights, and contact sound to the preceding
+physical mechanisms. Eye deformation uses a local six-spoke strain map.
+Highlights and three inclusions attach to real local rest-mesh triangles,
+so their motion follows the material around them. The pupil responds to
+actual node motion and retains the resident's idle gaze. Rendering reads the
+physics state without changing node positions, rest geometry, or histories.
+The palette and unstroked body outline are retained.
+
+Rig, terrain, and pair solvers report actual approach speed and resolved
+normal velocity change in real px/s. A pinned body can therefore sound when
+its local patch is struck, even if its center is stationary. The older
+center-speed heuristic is bypassed for these residents. Existing strongest-hit
+selection, per-body cooldowns, distance falloff, and the shared pile voice
+limit still select sound events. The new path reuses the existing sound bank.
+
+The isolated suite passes 3,843 assertions, including real hook calculations,
+read-only material drawing, pupil behavior at 30/60/144 Hz, pinned impacts,
+and pile voice limits. The browser harness exercises the real renderer and
+warm-up, including rest, compression, shear, and blinking. Real contact events
+reach the existing mixer for terrain, rig, and simultaneous eight-body hits;
+cooldowns suppress repeats and pause discards queued events. Audio verification
+checks event requests, not a listening judgment. Rendered comparison captures
+were inspected. Final feel and sound preference remain owner playtesting.
+
 ## Remaining development sequence
 
 Continue comparing one mechanism at a time:

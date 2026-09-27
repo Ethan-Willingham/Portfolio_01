@@ -275,6 +275,14 @@
     f.hit = true;
     if (-(rvx * nx + rvy * ny) > 35 || Math.abs(f.vx) > 25) b._plyMs = performance.now();
     b.sleeping = false; b.sleepFrames = 0;
+    if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
+      // dt is already real seconds here; include any masked friction coupling
+      // in the measured change of relative normal speed.
+      var afterRVX = rig.vx - ((b.px[a] - b.ox[a]) * wa + (b.px[c] - b.ox[c]) * wc) / dt;
+      var afterRVY = rig.vy - ((b.py[a] - b.oy[a]) * wa + (b.py[c] - b.oy[c]) * wc) / dt;
+      softPresentationContact(b, a, c, t, -(rvx * nx + rvy * ny),
+        (afterRVX - rvx) * nx + (afterRVY - rvy) * ny);
+    }
     softContactReport.contacts++;
     softContactReport.impulse += normalImpulse;
     softContactReport.friction += Math.abs(jt);

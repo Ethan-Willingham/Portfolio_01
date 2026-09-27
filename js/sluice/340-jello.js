@@ -5495,6 +5495,16 @@
             if (vn > 0 && ndamp > 0) {
               var dvn = vn * ndamp * 0.5;
               GOX[i] += dvn * nx; GOY[i] += dvn * ny; GOX[j] -= dvn * nx; GOY[j] -= dvn * ny;
+              if (typeof softPresentationContact === 'function' && vn * JELLO_TIMESCALE / jelloStepH > 95) {
+                var audioA = active[bi], audioB = active[GB[j]], audioI = GL[i], audioJ = GL[j];
+                var audioSpeed = vn * JELLO_TIMESCALE / jelloStepH;
+                if (audioA !== audioB) {
+                  if (audioA.ringPos && audioA.ringPos[audioI] >= 0)
+                    softPresentationContact(audioA, audioI, audioI, 0, audioSpeed, audioSpeed * ndamp);
+                  if (audioB.ringPos && audioB.ringPos[audioJ] >= 0)
+                    softPresentationContact(audioB, audioJ, audioJ, 0, audioSpeed, audioSpeed * ndamp);
+                }
+              }
               rvx = (GPX[i] - GOX[i]) - (GPX[j] - GOX[j]); rvy = (GPY[i] - GOY[i]) - (GPY[j] - GOY[j]);
             }
             // 3. positional Coulomb friction (via ox): remove min(tangential slip, fric*pen).

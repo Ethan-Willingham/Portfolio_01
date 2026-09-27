@@ -344,7 +344,18 @@
       var resident = surfaceSlimeBuild(cx + 80, cy, { id: -1, seed: 0.4, hue: 133 });
       if (resident) {
         temp.push(resident);
-        surfaceSlimeDraw(resident);
+        if (typeof softPresentationBody === 'function' && softPresentationBody(resident)) {
+          softPresentationInit(resident);
+          var residentX = Float64Array.from(resident.px), residentY = Float64Array.from(resident.py);
+          var residentPoses = [[1, 1, 0], [1.32, 0.7, 0], [0.82, 1.24, 0.28]];
+          for (var pose = 0; pose < residentPoses.length; pose++) {
+            var residentPose = residentPoses[pose];
+            shaderWarmDeform(resident, residentX, residentY, resident.cx, resident.cy,
+              residentPose[0], residentPose[1], residentPose[2]);
+            resident.surfaceSlime.blink = pose === 2 ? 0.08 : 0;
+            surfaceSlimeDraw(resident);
+          }
+        } else surfaceSlimeDraw(resident);
         surfaceSlimeDrawGuest({ x: cx - 80, y: cy, r: 25, seed: 0.4, age: 1, blink: 0 });
       }
       // The frame's own path: splats, then the bodies through the shared

@@ -11,6 +11,8 @@
     if (force > s.jet) { s.jet = force; s.jx = x; s.jy = y; }
   }
   function slimeAudioImpact(b, ringK, speed) {
+    // Trial residents report actual resolved contact motion at the solver.
+    if (typeof softPresentationBody === 'function' && softPresentationBody(b)) return;
     if (ringK < 0 || speed < 95 || b.sleeping || b.frozen) return;
     // Equilibrium pulses in a resting pile are not audible collisions.
     var vx = b.vx * JELLO_TIMESCALE, vy = b.vy * JELLO_TIMESCALE;

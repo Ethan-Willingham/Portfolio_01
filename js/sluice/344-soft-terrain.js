@@ -45,6 +45,11 @@
       b.px[i] += mx; b.py[i] += my;
       b.ox[i] += mx - dvx * w; b.oy[i] += my - dvy * w;
     }
+    if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
+      // normal/impulse are Verlet displacements per solver substep.
+      var realIH = JELLO_TIMESCALE / h;
+      softPresentationContact(b, a, c, t, normal * realIH, impulse * realIH);
+    }
   }
 
   function softTerrainFace(x, y, oldX, oldY, row, col) {
