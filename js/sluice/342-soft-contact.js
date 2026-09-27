@@ -32,6 +32,7 @@
   // contact keeps the two surfaces on their previous sides without imposing
   // a target outline.
   function softContactSkin(b) {
+    if (typeof softIntentBody === 'function' && softIntentBody(b)) return softIntentSkinContact(b);
     if (!b._softPX || !softContactSkinCrossed(b)) return;
     var px = b.px, py = b.py, oldX = b._softPX, oldY = b._softPY;
     for (var k = 0; k < b.ringN; k++) {
@@ -86,7 +87,8 @@
   function softContactSkinCrossed(b) {
     var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
     var clearX = b._softClearX, clearY = b._softClearY;
-    if (clearX && clearX.length === n) {
+    var intentMode = typeof softIntentBody === 'function' && softIntentBody(b);
+    if (clearX && clearX.length === n && !!b._softClearIntent === intentMode) {
       var same = true;
       for (var k = 0; k < n; k++) {
         var p = ring[k];
@@ -103,7 +105,10 @@
         var q0 = ring[c], q1 = ring[(c + 1) % n];
         // Disjoint or merely touching axis bounds cannot cross properly.
         if ((px[q0] <= left && px[q1] <= left) || (px[q0] >= right && px[q1] >= right) ||
-            (py[q0] <= top && py[q1] <= top) || (py[q0] >= bottom && py[q1] >= bottom)) continue;
+            (py[q0] <= top && py[q1] <= top) || (py[q0] >= bottom && py[q1] >= bottom)) {
+          if (intentMode && softIntentEdgesOverlap(b, p0, p1, q0, q1)) return true;
+          continue;
+        }
         if (softContactEdgesCross(b, p0, p1, q0, q1)) return true;
       }
     }
@@ -111,6 +116,7 @@
       clearX = b._softClearX = new Float64Array(n);
       clearY = b._softClearY = new Float64Array(n);
     }
+    b._softClearIntent = intentMode;
     for (var i = 0; i < n; i++) { clearX[i] = px[ring[i]]; clearY[i] = py[ring[i]]; }
     return false;
   }
@@ -123,7 +129,8 @@
     var vx = b.px[q] - b.px[p], vy = b.py[q] - b.py[p];
     var da = vx * (b.py[a] - b.py[p]) - vy * (b.px[a] - b.px[p]);
     var dc = vx * (b.py[c] - b.py[p]) - vy * (b.px[c] - b.px[p]);
-    return dp * dq < 0 && da * dc < 0;
+    return (dp * dq < 0 && da * dc < 0) ||
+      (typeof softIntentBody === 'function' && softIntentBody(b) && softIntentEdgesOverlap(b, p, q, a, c));
   }
 
   function softContactCapture() {

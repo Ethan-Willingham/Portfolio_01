@@ -79,6 +79,7 @@
   }
 
   function surfaceSlimeThink(b, dt) {
+    if (typeof softIntentBody === 'function' && softIntentBody(b)) return softIntentThink(b, dt);
     var m = b.surfaceSlime;
     surfaceSlimeMaterialFrame(b);
     m.gaitIn -= dt;
@@ -171,6 +172,7 @@
   }
 
   function surfaceSlimeMuscleStep(b, h) {
+    if (typeof softIntentBody === 'function' && softIntentBody(b)) return softIntentMuscleStep(b, h);
     var m = b.surfaceSlime, dt = h / JELLO_TIMESCALE;
     m.lastMuscleX.set(b.muscleX); m.lastMuscleY.set(b.muscleY);
     var active = m.drive && m.state !== 'idle' && !m.edgePause && !m.detach && !b._grabbed && !m.reorient;
@@ -287,6 +289,7 @@
   }
 
   function surfaceSlimeAdhesionStep(b, h) {
+    if (typeof softIntentBody === 'function' && softIntentBody(b)) return softIntentAdhesion(b, h);
     var m = b.surfaceSlime;
     // Buoyant residents release their foot instead of pinning themselves to
     // the pond floor with the same bonds that hold them on a dry wall.

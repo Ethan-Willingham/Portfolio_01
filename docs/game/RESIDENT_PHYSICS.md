@@ -379,6 +379,46 @@ Rendered pile and manipulation captures were inspected. These checks establish
 readiness for comparison, not owner acceptance of the feel. Browser evidence
 uses CPU canvas; final combined performance remains a separate checkpoint.
 
+## Movement through bounded effort (v28.119)
+
+At checkpoint 2, New keeps destinations, idle/crawl decisions, and edge turns,
+then spends effort through local spring rest strain and terrain traction.
+There is no center-velocity target, imposed pose, or air drive. Rest strain is
+bounded to 18 percent and its change to 65 percent per real second. Total
+traction is limited to 2.2 body weights, with each patch limited to 0.6 body
+weights. Mucus attachments begin at the current contact, follow measured
+surface slip, and release on overload, lost terrain, handling, or wetness.
+A wall attempt can partly lift the body and then slip.
+
+Long movement tests exposed two distinct skin defects. Integration could fold
+skin in a step without terrain penetration, while closure was gated on a
+terrain hit. Also, nonincident edges could overlap collinearly on the floor
+without satisfying a strict crossing test. That zero-width pose became a
+rollback snapshot, so a subsequent fold repeatedly restored it and froze the
+body. Merely extending the validator stopped visible folds but did not fix
+movement.
+
+The intent trial closes actual skin contact independently of terrain hits.
+Its contact uses the swept point/edge crossing when available, with local
+separation for degenerate intersections. Collinear overlap is included in the
+query; mere endpoint touching and ordinary flat separated edges remain clear.
+The clear-ring cache records which policy it used. Corrections distribute
+locally through terrain mobility masks, move histories with geometric repair,
+and remove inward relative velocity without prescribing the body outline.
+The accepted reference and earlier comparison arithmetic are retained.
+
+The contact law suite covers 2,016 cases, including all 63 nonempty terrain
+mobility masks, the 2 px correction cap, momentum, torque, energy, and normal
+closure. The extended browser matrix checks floor travel in both directions,
+walls, and ledges for 20 seconds each at 30/60/144 Hz. Geometry checks include
+skin crossings, collinear overlap, triangle orientation, terrain segments,
+and enclosed terrain, alongside rejected-step and frozen-motion counts.
+
+The completed matrix has zero exposed crossings, overlaps, embedded nodes,
+terrain-segment hits, enclosed terrain samples, and rejected steps. No active
+body freezes beyond a single unticked display frame at 144 Hz. This admits the
+controller to combined testing; it does not establish a preferred feel.
+
 ## Remaining development sequence
 
 Continue comparing one mechanism at a time:

@@ -169,7 +169,8 @@
         if (!softTerrainPoint(b, i, h)) jelloCollidePointWorld(b, i, h);
       }
       softTerrainEdges(b, h);
-      if (!b._terrainStepHit) break;
+      var intentSkin = typeof softIntentBody === 'function' && softIntentBody(b) && softContactSkinCrossed(b);
+      if (!b._terrainStepHit && !intentSkin) break;
       // A floor correction can bring two pieces of skin together after the
       // ordinary rig/self-contact pass. Solve that contact in the same loop.
       softContactSkin(b);
@@ -179,7 +180,7 @@
     }
     // Orientation is a positional constraint too. Close the last iteration
     // with terrain before the independent enclosure/topology validators run.
-    if (b._terrainStepHit) {
+    if (b._terrainStepHit || (typeof softIntentBody === 'function' && softIntentBody(b) && softContactSkinCrossed(b))) {
       for (var p = 0; p < b.n; p++) {
         if (!softTerrainPoint(b, p, h)) jelloCollidePointWorld(b, p, h);
       }

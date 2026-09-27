@@ -1,6 +1,6 @@
 // Sequential resident physics integration comparison. Uses a private Chrome for Testing child.
-// node tools/test-soft-material.mjs
-// BASELINE_ONLY=1 FPS=60 CASES=low-drop,high-drop DUMP=/tmp/my-run
+// CPU=1 STAGES=1,2,3,4 FPS=30,60,144 DUMP=/tmp/my-run
+// LIFECYCLE=1 adds save, bath conversion, sleep, and menu integration checks.
 // CPU=1 uses software graphics and CPU water/fire for the dry geometry and UI fixtures.
 // BUNDLE=/tmp/another-sluice.js selects a snapshot; otherwise the built bundle is read once.
 // Broad health assertions intentionally do not assert that numerical metrics establish feel.
@@ -50,7 +50,7 @@ const server = createServer((request, response) => {
 });
 let chrome, socket, watchdog, sequence = 0, cleaned = false;
 const pending = new Map(), browserErrors = [], failures = [], results = [];
-let ui, defaults;
+let ui, defaults, lifecycle;
 const boots = [];
 function cleanup() {
   if (cleaned) return;
@@ -70,7 +70,7 @@ function send(method, params = {}) {
     const id = ++sequence;
     const timer = setTimeout(() => { pending.delete(id); reject(new Error('CDP timeout: ' + method + ' during ' + stage)); }, 30000);
     pending.set(id, { resolve, reject, timer });
-    
+
     socket.send(JSON.stringify({ id, method, params }));
   });
 }
@@ -147,7 +147,7 @@ try {
     const message = JSON.parse(event.data);
     if (message.id) {
       const request = pending.get(message.id); pending.delete(message.id); clearTimeout(request?.timer);
-      
+
       message.error ? request?.reject(message.error) : request?.resolve(message.result);
     } else if (message.method === 'Runtime.exceptionThrown') browserErrors.push(message.params.exceptionDetails);
     else if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') {
@@ -179,9 +179,12 @@ try {
       check(stage+' finite and present',result.finite && result.alive);
       if (mode === 'new') {
         check(stage+' intact skin and health triangles',result.maxCrossings===0 && result.minDet>=-1e-6);
+        if(checkpoint >= 2)check(stage+' no overlapping collinear skin edges',result.maxSkinOverlaps===0);
         check(stage+' no inter-body skin crossings',result.maxInterCrossings===0 && result.maxInsideDepth<0.15);
         check(stage+' clear terrain',result.embedded===0 && result.segmentHits===0 && result.enclosed===0);
         check(stage+' bounded volume',result.minArea>0.4 && result.maxArea<1.8);
+        if(checkpoint >= 3 && name==='jet')check(stage+' actual jet momentum recoils the rig',result.rigRecoil < -1);
+        if(checkpoint >= 3 && name==='water')check(stage+' actual water flow and hydrostatic lift reach the skin',result.waterInitial > 0 && result.maxWet > 0 && result.maxWaterSpeed > 0 && result.hydrostatic);
         if(name==='support'){check(stage+' upper body is supported before extraction',result.supportClearance>8 && result.supportContacts>0);check(stage+' removing bottom support makes upper body fall',result.supportDrop>12);}
       }
       if(result.release)check(stage+' release preserves node state',result.release.unchanged && result.release.cleared && result.release.recovery===0);
@@ -192,8 +195,9 @@ try {
     const a=results[i],b=results.find(r=>r!==a&&r.checkpoint===a.checkpoint&&r.fps===a.fps&&r.name===a.name&&r.mode!==a.mode);
     if(b && a.mode==='prior')check(`stage${a.checkpoint}/${a.name}/${a.fps} identical starting material`,a.initial===b.initial);
   }
+  if (process.env.LIFECYCLE === '1') await runLifecycle();
   if(!skipUI)await runUI();
-  check('no browser exceptions',browserErrors.length===0);writeReport({ui,defaults});
+  check('no browser exceptions',browserErrors.length===0);writeReport({ui,defaults,lifecycle});
   assert.equal(failures.length,0,failures.join('\n'));
 } catch(error) {
   fs.writeFileSync(path.join(dump,'interrupted.json'),JSON.stringify({stage,error:String(error),bundleHash,boots,results,browserErrors},null,2));throw error;
@@ -236,8 +240,8 @@ function runProjectFixture(spec, health) {
     }
     cam.x=x-screenW*.5;cam.y=floor-screenH*.65;
     if(impact)for(j=0;j<2;j++)for(var p=0;p<bodies[j].n;p++)bodies[j].ox[p]-=(j?-180:180)*(JELLO_H/Math.max(1,JELLO_XPBD_SUBSTEPS))/JELLO_TIMESCALE;
-    var out={checkpoint:spec.checkpoint,mode:spec.mode,name:spec.name,fps:spec.fps,finite:true,alive:true,maxCrossings:0,maxInterCrossings:0,
-      maxInsideDepth:0,minDet:1,embedded:0,segmentHits:0,enclosed:0,minArea:Infinity,maxArea:0,maxPairContacts:0,maxPairImpulse:0,
+    var out={checkpoint:spec.checkpoint,mode:spec.mode,name:spec.name,fps:spec.fps,finite:true,alive:true,maxCrossings:0,maxSkinOverlaps:0,maxInterCrossings:0,
+      maxInsideDepth:0,maxWet:0,maxWaterSpeed:0,hydrostatic:false,minDet:1,embedded:0,segmentHits:0,enclosed:0,minArea:Infinity,maxArea:0,maxPairContacts:0,maxPairImpulse:0,
       firstViolation:null,release:null,supportDrop:0,samples:[],initial:JSON.stringify(bodies.map(pose))};
     // Stacks begin legally separated and settle under gravity before handling.
     if(!impact)for(var settle=0;settle<240;settle++){clock+=1000/120;updateJello(1/120);observe(-2+settle/120);}
@@ -266,7 +270,7 @@ function runProjectFixture(spec, health) {
       clock+=dt*1000;
       // Keep deterministic passive intentions for contact fixtures. World
       // collision, pointer compliance, gravity, and the material remain live.
-      if(spec.name==='water')updateLiquids(dt);
+      if(spec.name==='water'){surfaceSlimeTick(dt);updateLiquids(dt);}
       var start=realNow();updateJello(dt);times.push(realNow()-start);
       observe(t);
       if(frame%Math.max(1,Math.round(spec.fps/10))===0)out.samples.push({t:t,centres:bodies.map(function(b){return[b.cx,b.cy];}),pairContacts:typeof softPairsReport!=='undefined'?softPairsReport.contacts:0});
@@ -279,8 +283,17 @@ function runProjectFixture(spec, health) {
     function observe(t){
       var inter=0,depth=0;
       for(var a=0;a<bodies.length;a++){
-        var b=bodies[a],h=health(b);out.finite=out.finite&&h.finite;out.alive=out.alive&&jelloBodies.indexOf(b)>=0;
-        out.maxCrossings=Math.max(out.maxCrossings,h.crossings);out.minDet=Math.min(out.minDet,h.minDet);
+        var b=bodies[a],h=health(b);
+        if (typeof softWorldBody === 'function' && softWorldBody(b) && spec.name === 'water') {
+          out.hydrostatic = out.hydrostatic || !!b.bathBuoy;
+          for (var wetK = 0; wetK < b.ringN; wetK++) {
+            var wetNode = b.ring[wetK]; softWorldWaterSample(b.px[wetNode],b.py[wetNode]);
+            out.maxWet = Math.max(out.maxWet,softWorldSampleWet);
+            out.maxWaterSpeed = Math.max(out.maxWaterSpeed,Math.hypot(softWorldSampleX,softWorldSampleY));
+          }
+        }
+        out.finite=out.finite&&h.finite;out.alive=out.alive&&jelloBodies.indexOf(b)>=0;
+        out.maxCrossings=Math.max(out.maxCrossings,h.crossings);out.maxSkinOverlaps=Math.max(out.maxSkinOverlaps,h.overlaps);out.minDet=Math.min(out.minDet,h.minDet);
         out.minArea=Math.min(out.minArea,h.area);out.maxArea=Math.max(out.maxArea,h.area);
         out.embedded+=h.embedded;out.segmentHits+=h.segmentHits;out.enclosed+=h.enclosed;
         if(!out.firstViolation&&(!h.finite||h.crossings||h.minDet< -1e-6||h.embedded||h.segmentHits||h.enclosed))out.firstViolation={t:t,body:a,health:h};
@@ -306,7 +319,7 @@ function runProjectFixture(spec, health) {
 }
 function health(b) {
     function cross(a,c,d) { return (b.px[c]-b.px[a])*(b.py[d]-b.py[a])-(b.py[c]-b.py[a])*(b.px[d]-b.px[a]); }
-    var out = { finite: true, area: 0, embedded: 0, segmentHits: 0, enclosed: 0, crossings: 0, minDet: 1 }, eps = 0.05;
+    var out = { finite: true, area: 0, embedded: 0, segmentHits: 0, enclosed: 0, crossings: 0, overlaps: 0, minDet: 1 }, eps = 0.05;
     for (var p = 0; p < b.n; p++) {
       out.finite = out.finite && isFinite(b.px[p] + b.py[p] + b.ox[p] + b.oy[p]);
       if (jelloWorldSolidAt(b.px[p], b.py[p])) {
@@ -321,6 +334,12 @@ function health(b) {
         if (k === 0 && j === b.ringN - 1) continue;
         var c = b.ring[j], d = b.ring[(j + 1) % b.ringN];
         if (cross(a, z, c) * cross(a, z, d) < -1e-8 && cross(c, d, a) * cross(c, d, z) < -1e-8) out.crossings++;
+        var edgeX = b.px[z] - b.px[a], edgeY = b.py[z] - b.py[a], edgeL2 = edgeX*edgeX + edgeY*edgeY;
+        if (edgeL2 > 1e-10 && Math.abs(cross(a,z,c)) < 1e-7 && Math.abs(cross(a,z,d)) < 1e-7) {
+          var uc = ((b.px[c]-b.px[a])*edgeX + (b.py[c]-b.py[a])*edgeY)/edgeL2;
+          var ud = ((b.px[d]-b.px[a])*edgeX + (b.py[d]-b.py[a])*edgeY)/edgeL2;
+          if ((Math.min(1,Math.max(uc,ud))-Math.max(0,Math.min(uc,ud)))*Math.sqrt(edgeL2) > 1e-5) out.overlaps++;
+        }
       }
       for (var row = Math.max(0, Math.floor(Math.min(b.py[a], b.py[z]) / TILE)); row <= Math.floor(Math.max(b.py[a], b.py[z]) / TILE); row++)
         for (var col = Math.floor(Math.min(b.px[a], b.px[z]) / TILE); col <= Math.floor(Math.max(b.px[a], b.px[z]) / TILE); col++) {
@@ -360,12 +379,38 @@ async function runUI() {
     var panel = document.getElementById('soft-contact-playtest');
     return { found: !!panel, savesDisabled: SAVE_DISABLED, contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL,
       buttons: panel ? Array.from(panel.querySelectorAll('button')).map(function(b) { return b.textContent; }) : [],
-      options: panel ? Array.from(panel.querySelector('select').options).map(function(o) { return o.value; }) : [] };
+      options: panel ? Array.from(panel.querySelector('select[aria-label="Interaction"]').options).map(function(o) { return o.value; }) : [] };
   })()`);
   ui.interactions = [];
-  check('physics opt-in page has both modes and all four arenas with saves off', ui.found && ui.savesDisabled && ui.contact && ui.handling && ui.terrain && ui.material &&
+  check('physics opt-in page has both modes and all available arenas with saves off', ui.found && ui.savesDisabled && ui.contact && ui.handling && ui.terrain && ui.material &&
     ui.buttons.includes('New physics') && ui.buttons.includes('Prior physics') &&
     ['pile', 'pair', 'support', 'ledge'].every(value => ui.options.includes(value)));
+  if (bundle.includes('function softProjectUseReference(')) {
+    ui.checkpoints = await game(`(function() {
+      var panel = document.getElementById('soft-contact-playtest');
+      var selector = panel.querySelector('select[aria-label="Physics checkpoint"]');
+      var button = function(label) { return Array.from(panel.querySelectorAll('button')).find(function(b) { return b.textContent === label; }); };
+      var reports = [];
+      for (var stage = 1; stage <= SOFT_PROJECT_MAX_STAGE; stage++) {
+        selector.value = stage; selector.dispatchEvent(new Event('change', { bubbles: true }));
+        button('New physics').click();
+        var fresh = [SOFT_PAIRS,SOFT_INTENT,SOFT_WORLD,SOFT_PRESENTATION];
+        button('Prior physics').click();
+        var prior = [SOFT_PAIRS,SOFT_INTENT,SOFT_WORLD,SOFT_PRESENTATION];
+        button('Accepted reference').click();
+        reports.push({ stage: stage, fresh: fresh, prior: prior,
+          referenceOff: !SOFT_CONTACT && !SOFT_HANDLING && !SOFT_TERRAIN && !SOFT_MATERIAL &&
+            !SOFT_PAIRS && !SOFT_INTENT && !SOFT_WORLD && !SOFT_PRESENTATION && softProjectReference,
+          referencePressed: button('Accepted reference').getAttribute('aria-pressed') === 'true' });
+      }
+      selector.value = SOFT_PROJECT_MAX_STAGE; selector.dispatchEvent(new Event('change', { bubbles: true }));
+      button('New physics').click(); return reports;
+    })()`);
+    check('stage selector compares each mechanism with all previous stages held constant', ui.checkpoints.every(r =>
+      r.fresh.every((on,i) => on === (i < r.stage)) && r.prior.every((on,i) => on === (i < r.stage - 1))));
+    check('accepted reference disables every experiment and marks its selected button', ui.checkpoints.every(r => r.referenceOff && r.referencePressed));
+    check('world and movement arrangements are available', ['head-on','glancing','intent','jet','water'].every(v => ui.options.includes(v)));
+  }
   await game(`window.__materialUICheck = function(before) {
     var b = window.__materialUIBody, values = [Array.from(b.px), Array.from(b.py), Array.from(b.ox), Array.from(b.oy)];
     if (before) { window.__materialUIBefore = values; window.__materialUIRefs = [b.px, b.py, b.ox, b.oy]; return true; }
@@ -382,14 +427,14 @@ async function runUI() {
     await send('Emulation.setTouchEmulationEnabled', { enabled: mobile, maxTouchPoints: 1 });
     await evaluate("window.dispatchEvent(new Event('resize')); window.scrollTo(0, 0)");
     await sleep(100);
-    for (const experimental of [false, true]) for (const arena of ['pile', 'pair', 'support', 'ledge']) {
+    for (const experimental of [false, true]) for (const arena of ui.options) {
       stage = `UI/${input}/${arena}/${experimental ? 'new' : 'prior'}`;
       const prepared = await game(`(function() {
         var panel = document.getElementById('soft-contact-playtest');
         var label = ${JSON.stringify(experimental ? 'New physics' : 'Prior physics')};
         var button = Array.from(panel.querySelectorAll('button')).find(function(b) { return b.textContent === label; });
         button.click();
-        var select = panel.querySelector('select'); select.value = ${JSON.stringify(arena)};
+        var select = panel.querySelector('select[aria-label="Interaction"]'); select.value = ${JSON.stringify(arena)};
         select.dispatchEvent(new Event('change', { bubbles: true }));
         function scenePose() {
           return JSON.stringify({ rig: [player.x, player.y, player.vx, player.vy], bodies:
@@ -466,7 +511,7 @@ async function runUI() {
       })()`);
     }
   }
-  check('real mouse and touch select both modes and grab all four arenas', ui.interactions.length === 16 &&
+  check('real mouse and touch select both modes and grab all available arenas', ui.interactions.length === ui.options.length * 4 &&
     ui.interactions.every(r => r.modeMatches && r.pressed && r.grabbed && r.count >= 2));
   check('Repeat restores each arena pose, terrain and input state in both modes', ui.interactions.every(r =>
     r.repeatAvailable && r.repeatPoseMatches && r.repeatRestoresTile && r.repeatClearsInput));
@@ -480,4 +525,57 @@ async function runUI() {
   assert.ok(await awaitBoot(), 'ordinary game completes its real loading gates');
   defaults = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, playtest: softPlayEnabled })");
   check('ordinary game keeps all experiments off', !defaults.contact && !defaults.handling && !defaults.terrain && !defaults.material && !defaults.playtest);
+}
+
+async function runLifecycle() {
+  stage = 'lifecycle';
+  lifecycle = await game(`(function() {
+    var result = [], originalDisabled = SAVE_DISABLED;
+    for (var mode = 0; mode < 2; mode++) {
+      SOFT_CONTACT = SOFT_HANDLING = SOFT_TERRAIN = SOFT_MATERIAL = !!mode;
+      softProjectEnabled = !!mode; softProjectStage = SOFT_PROJECT_MAX_STAGE; softProjectSelect(true);
+      resetJello(); skySlimeReset(); skySlimeNext = 1e9;
+      gamePaused = gameOver = gameWon = bathMode = false; shopState = 'closed';
+      surfaceSlimesSeeded = false; surfaceSlimeSeed();
+      var saved = JSON.parse(JSON.stringify(surfaceSlimeSave()));
+      resetJello(); surfaceSlimeRestore(saved); surfaceSlimeTick(1/60);
+      var restored = surfaceSlimeSave();
+      var identities = saved.residents.map(function(s) { return [s.id,s.r,s.hue,s.seed]; });
+      var restoredIdentities = restored.residents.map(function(s) { return [s.id,s.r,s.hue,s.seed]; });
+      var sky = skySlimeFresh(0,0); sky.bathed = true; sky.r = 22.25; sky.seed = .9;
+      var released = bathReleaseGuest({ s: sky, paid: true });
+      var born = jelloBodies.find(function(b) { return b.surfaceSlime && b.surfaceSlime.id === sky.id; });
+      var bornData = born && [born.surfaceSlime.id,born.surfaceSlime.radius,born.surfaceSlime.hue];
+      var envelope = JSON.parse(JSON.stringify(saveBuild()));
+      saveApply(envelope); surfaceSlimeTick(1/60);
+      var after = surfaceSlimeSave(), reloaded = jelloBodies.find(function(b) { return b.surfaceSlime && b.surfaceSlime.id === sky.id; });
+      var reloadedData = reloaded && [reloaded.surfaceSlime.id,reloaded.surfaceSlime.radius,reloaded.surfaceSlime.hue];
+      // Shop freeze exercises the engine's own early return. Pause uses the
+      // outer animation loop, so call that loop rather than bypassing it.
+      var b = reloaded, pose = function() { return JSON.stringify([Array.from(b.px),Array.from(b.py),Array.from(b.ox),Array.from(b.oy)]); };
+      var before = pose(); shopState = 'opening'; updateJello(1/60); var shopFrozen = pose() === before; shopState = 'closed';
+      gamePaused = true; loop(performance.now()); var pauseFrozen = pose() === before; gamePaused = false;
+      // A real grab wakes a sleeping body, and opening the menu cancels the
+      // same pointer attachment without altering its material histories.
+      b.sleeping = true; b.sleepFrames = 120;
+      surfaceSlimeGrabStart(b.cx,b.cy,'lifecycle');
+      var grabbed = !!surfaceSlimeGrip && surfaceSlimeGrip.body === b;
+      var woke = !b.sleeping; before = pose();
+      gamePaused = true; surfaceSlimeTick(1/60);
+      var cancelled = !surfaceSlimeGrip && !b._grabbed;
+      var preserved = pose() === before; gamePaused = false;
+      result.push({ mode: mode ? 'full' : 'reference', ids: JSON.stringify(identities) === JSON.stringify(restoredIdentities),
+        count: restored.residents.length, released: released, born: !!born, size: bornData && bornData[1],
+        roundtrip: JSON.stringify(bornData) === JSON.stringify(reloadedData), total: after.residents.length,
+        seeded: after.seeded, saveDisabled: SAVE_DISABLED && originalDisabled, shopFrozen: shopFrozen,
+        pauseFrozen: pauseFrozen, grabbed: grabbed, woke: woke, cancelled: cancelled, preserved: preserved });
+    }
+    return result;
+  })()`);
+  console.log('LIFECYCLE ' + JSON.stringify(lifecycle));
+  check('reference and full mode preserve resident identities and full saves', lifecycle.every(r => r.ids && r.count === 5 && r.total === 6 && r.seeded && r.roundtrip));
+  check('bath conversion preserves the visitor size in both modes', lifecycle.every(r => r.released && r.born && r.size === 22.25));
+  check('shop and pause freeze nodes in both modes', lifecycle.every(r => r.shopFrozen && r.pauseFrozen));
+  check('sleeping residents wake on grab and menus cancel ownership', lifecycle.every(r => r.grabbed && r.woke && r.cancelled));
+  check('full physics menu cancellation preserves motion and playtests keep saves off', lifecycle.every(r => r.saveDisabled && (r.mode === 'reference' || r.preserved)));
 }
