@@ -265,6 +265,29 @@ assert.ok(Math.abs(fine.vy - 12) < 0.1 && Math.abs(coarse.vy - 54) < 0.1,
 assert.ok(coarse.y - fine.y > 25, 'independent grain trajectories spread during descent');
 conserve(2, 'size-dependent descent');
 
+// A packed cloud must not suddenly acquire isolated-flake drag when its
+// representation changes. Its exposed rim slows before its sheltered core;
+// gravity remains the same and each grain retains its own trajectory.
+reset();
+let core, rim;
+for (let row = 0; row < 30; row++) for (let col = 0; col < 30; col++) {
+  const p = { x: 2375 + col * 1.4, y: -250 + row * 1.4, vx: 180, vy: 0, size: .5, phase: 0, physical: true };
+  s.snow.grains.push(p); s.snow.mass++; s.snow.emitted++;
+  if (row === 15 && col === 15) core = p;
+  if (row === 15 && col === 0) rim = p;
+}
+const isolated = falling(483, core.y, true); isolated.vx = 180; isolated.vy = 0;
+s.snowBuildFlightDensity();
+assert.equal(s.snowFlightExposure(isolated.x, isolated.y), 1, 'isolated flakes keep their existing drag');
+assert.ok(s.snowFlightExposure(core.x, core.y) < s.snowFlightExposure(rim.x, rim.y), 'the rim shields the cloud interior');
+assert.ok(Math.abs(s.snowFlightExposure(2400 - .001, core.y) - s.snowFlightExposure(2400 + .001, core.y)) < .001,
+  'crossing a density-cell boundary does not switch drag abruptly');
+for (let frame = 0; frame < 12; frame++) s.updateSnow(1 / 120);
+assert.ok(core.vx > isolated.vx + 30, 'the packed core retains its jet momentum instead of braking like an isolated flake');
+assert.ok(core.vx > rim.vx + 10, 'different exposure stretches the plume instead of assigning one shared speed');
+assert.ok(core.vy > isolated.vy && core.vy <= s.GRAVITY * .1, 'shielding changes drag without adding gravity or a launch impulse');
+conserve(901, 'density-dependent powder motion');
+
 // A full sky-weather budget cannot strand existing material in the dense
 // solver. Cross both the former 5400 flight cap and 8192 drawing allocation.
 reset();
@@ -285,10 +308,8 @@ for (let frame = 0; frame < 5; frame++) s.updateSnow(1 / 60);
 const overflowFlight = s.snow.grains.filter(p => p.physical);
 for (const p of overflowFlight) {
   const terminal = 32 + p.size * 42;
-  assert.ok(p.vy >= Math.min(53, terminal) && p.vy <= Math.max(53, terminal),
-    'overflow powder approaches its terminal speed without overshoot');
-  assert.ok(Math.abs(p.vy - terminal) <= Math.abs(53 - terminal),
-    'overflow drag reduces the difference from each grain terminal speed');
+  assert.ok(Number.isFinite(p.vy) && p.vy >= Math.min(53, terminal) && p.vy <= 53 + s.GRAVITY * 5 / 60,
+    'packed overflow stays between isolated drag and unopposed gravity');
 }
 assert.ok(Math.max(...overflowFlight.map(p => p.vy)) - Math.min(...overflowFlight.map(p => p.vy)) > 10,
   'overflow grains keep individual falling speeds');

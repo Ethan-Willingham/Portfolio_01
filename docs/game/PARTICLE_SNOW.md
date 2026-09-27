@@ -49,8 +49,10 @@ terminal velocity. Digging away support still lets dense grains fall.
 Slow atmospheric flakes retain the rain system's inexpensive ballistic
 approach until their first contact, then become actual solver particles.
 Flight integrates gravity and aerodynamic drag relative to the existing wind
-and resolved jet velocity. The drag coefficient is gravity divided by each
-grain's 32 to 74 pixel-per-second terminal speed, set by its size. The velocity
+and resolved jet velocity. For isolated flakes, the drag coefficient is gravity
+divided by each grain's 32 to 74 pixel-per-second terminal speed, set by its size.
+Packed airborne powder reduces that drag according to local density, retaining
+the shielding already used in the dense solver. Gravity is unchanged. The velocity
 solution is exponential over each step, with no minimum-speed clamp at the
 apex and no prescribed flight arc. Falling, settled and thrown snow
 all use the same particle shader, diameter, tint and canvas. The GPU uploads
@@ -154,6 +156,15 @@ momentum reversed by a transfer. Free powder and atmospheric snow use the
 same gravity and size-dependent drag, so their individual velocities pass
 continuously through the apex. A sustained resolved updraft can still lift them.
 
+Since v28.114, airborne powder keeps density-dependent air resistance. Previously,
+transfer from the dense solver abruptly applied isolated-flake drag to a packed
+cloud, erasing its momentum and pulling many grains toward slow terminal speeds
+together. Current flight positions now supply a six-pixel density field with
+bilinear deposition and sampling. The shared exposure law reduces drag inside
+the plume; its exposed rim slows sooner, and spreading powder gradually regains
+full air resistance. Each grain keeps its own position and velocity. There is
+no release timer, group velocity, or added force to break the cloud apart.
+
 Contact uses the physical grain radius shared with the dense solver. Nearby
 buckets find candidate grains, while compressive contacts carry weight upward
 from terrain. A horizontal chain or downward-hanging lip cannot suspend a whole
@@ -195,9 +206,8 @@ cell. Pure water keeps its original splash force; dry powder follows the air
 without receiving a second downward impulse every substep. Mixed cells blend
 by their actual material mass. The GPU stores snow mass beside oil mass in
 the existing buffer binding, with both dense and sparse clears covering it.
-No decorative snow or prescribed flight arcs are created.
-Jet heat is confined to a shorter, narrower core, so
-the cold return flow can carry powder without instantly turning it into water.
+No decorative snow or prescribed flight arcs are created. Jets move snow but
+never melt it; thaw requires water contact or clearing clouds.
 
 This is a bounded 2D, one-way air-to-snow coupling, not a compressible rocket
 exhaust model or a two-way multiphase solver. Snow retains the existing dry
@@ -305,6 +315,9 @@ handoff momentum in strong
 airflow, gradual size-dependent descent, continuous apex acceleration, actual
 terrain support and inelastic landing. It includes detached layers three to
 eight pixels above terrain and tests without relying on GPU readback timing.
+The packed-cloud regression checks that its core retains momentum longer than
+its rim, isolated flakes retain their original drag, and density-cell boundaries
+do not introduce abrupt changes. Gravity stays unchanged and material is conserved.
 
 Run `node tools/sluice-snow-smoke.mjs --soak --cpu`. It owns a disposable Chrome
 for Testing process and writes screenshots under `/tmp/sluice-snow-qa`.

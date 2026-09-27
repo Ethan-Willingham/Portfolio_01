@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.113';
+  var GAME_VERSION = 'v28.114';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -38769,6 +38769,36 @@
     snow.grains.push(p); snow.mass++; snow.emitted++; return p;
   }
   function snowRetire(p) { snow.mass--; snow.recycled++; }
+  var snowFlightDensity = new Map(), snowFlightCell = 6;
+  function snowBuildFlightDensity() {
+    // Air reaches the outside of a packed plume before its interior. Splat
+    // its current grains to a continuous density field, using the same
+    // particles that move below, without a release timer or group velocity.
+    snowFlightDensity.clear();
+    var cell = snowFlightCell, width = Math.ceil(COLS * TILE / cell) + 3;
+    for (var i = 0; i < snow.grains.length; i++) {
+      var p = snow.grains[i], gx = p.x / cell - 0.5, gy = p.y / cell - 0.5;
+      var x = Math.floor(gx), y = Math.floor(gy), fx = gx - x, fy = gy - y;
+      for (var r = 0; r < 2; r++) for (var c = 0; c < 2; c++) {
+        var key = (y + r) * width + x + c;
+        var weight = (c ? fx : 1 - fx) * (r ? fy : 1 - fy);
+        snowFlightDensity.set(key, (snowFlightDensity.get(key) || 0) + weight);
+      }
+    }
+  }
+  function snowFlightExposure(x, y) {
+    var cell = snowFlightCell, width = Math.ceil(COLS * TILE / cell) + 3;
+    var gx = x / cell - 0.5, gy = y / cell - 0.5;
+    var col = Math.floor(gx), row = Math.floor(gy), fx = gx - col, fy = gy - row, density = 0;
+    for (var r = 0; r < 2; r++) for (var c = 0; c < 2; c++) {
+      density += (snowFlightDensity.get((row + r) * width + col + c) || 0) *
+        (c ? fx : 1 - fx) * (r ? fy : 1 - fy);
+    }
+    // Convert to the shared solver's mass per cell before applying its
+    // exposure law. Sparse flakes retain their original air resistance.
+    density *= LIQUID_CELL * LIQUID_CELL / (cell * cell);
+    return Math.max(0.06, Math.min(1, (4.2 - density) / 3));
+  }
   function updateSnow(dt, intensity) {
     if (intensity === undefined) intensity = rain.intensity;
     updateSnowAir(dt);
@@ -38791,6 +38821,7 @@
     particleWeatherField(snow.field, rect, snow.grains, SNOW_RATE / (1100 * 53), SNOW_FLAKE_CAP,
       intensity, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
     rainCatchLakes(dt, sky, left, right, snow.field.strength, SNOW_RATE);
+    snowBuildFlightDensity();
     // Resolve the lowest falling grains first. Each landing immediately
     // becomes a contact for the grains above it; arbitrary storage order
     // could otherwise grow the bed through an unprocessed lower grain.
@@ -38803,7 +38834,10 @@
       // grain sizes have different mass/area ratios and terminal speeds.
       // No prescribed arc, random launch impulse or minimum falling speed:
       // momentum crosses the apex continuously, even in a fading updraft.
-      var fall = 32 + p.size * 42, drag = GRAVITY / fall;
+      var exposure = snowFlightExposure(p.x, p.y);
+      // Shielding reduces drag, not gravity. As the plume spreads, each
+      // grain smoothly regains isolated-flake resistance at its own pace.
+      var fall = (32 + p.size * 42) / exposure, drag = GRAVITY / fall;
       var keep = Math.exp(-drag * dt);
       p.vx = wind + air[0] + (p.vx - wind - air[0]) * keep;
       p.vy = air[1] + fall + (p.vy - air[1] - fall) * keep;
