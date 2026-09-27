@@ -2,7 +2,7 @@
      The existing spring web stores strain energy. No fitted silhouette or
      pose-velocity target is part of this material law. Muscles still change
      their own rest lengths and work against the existing terrain grips. */
-  var SOFT_MATERIAL = new URLSearchParams(location.search).get('softmaterial') === '1';
+  var SOFT_MATERIAL = softProjectEnabled || new URLSearchParams(location.search).get('softmaterial') === '1';
   var SOFT_MATERIAL_COMPLIANCE = 0.002;
   var SOFT_MATERIAL_VOLUME = 0.002;
   var SOFT_MATERIAL_HARDEN = 4;

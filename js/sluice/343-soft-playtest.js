@@ -4,10 +4,10 @@
   var softPlayEnabled = new URLSearchParams(location.search).get('softplay') === '1';
   var softPlayMaterialTrial = new URLSearchParams(location.search).has('softmaterial');
   var softPlayTerrainTrial = new URLSearchParams(location.search).has('softterrain');
-  var softPlayHandling = new URLSearchParams(location.search).has('softhandling') || softPlayTerrainTrial || softPlayMaterialTrial;
+  var softPlayHandling = softProjectEnabled || new URLSearchParams(location.search).has('softhandling') || softPlayTerrainTrial || softPlayMaterialTrial;
   if (softPlayEnabled && softPlayHandling) SOFT_CONTACT = true;
   var softPlayReady = false;
-  var softPlayCase = softPlayMaterialTrial ? 'drop' : softPlayTerrainTrial ? 'ledge' : softPlayHandling ? 'free' : 'center';
+  var softPlayCase = softProjectEnabled ? 'pile' : softPlayMaterialTrial ? 'drop' : softPlayTerrainTrial ? 'ledge' : softPlayHandling ? 'free' : 'center';
   var softPlayDrive = 0;
   var softPlayTime = 0;
   var softPlayButtons = [];
@@ -68,13 +68,13 @@
     player.drillGlideT = 0; player.slideTargetX = null; player.slideAssistT = 0;
     resetFlightBank();
     var materialDrop = softPlayMaterialTrial && softPlayCase === 'drop';
-    var b = surfaceSlimeBuild(x, floor - (materialDrop ? 145 : 35), { id: 9001, seed: 0.42, hue: 133 });
-    if (softPlayHandling && softPlayCase === 'pair') {
+    var b = softProjectEnabled ? softProjectScene(x, floor) : surfaceSlimeBuild(x, floor - (materialDrop ? 145 : 35), { id: 9001, seed: 0.42, hue: 133 });
+    if (!softProjectEnabled && softPlayHandling && softPlayCase === 'pair') {
       surfaceSlimeBuild(x + 64, floor - 35, { id: 9002, seed: 0.61, hue: 284 });
     }
     cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.62;
     // Settle only the material before releasing the normal resident brain.
-    for (var i = 0; i < (materialDrop ? 0 : 240); i++) updateJello(1 / 120);
+    for (var i = 0; i < (materialDrop || softProjectEnabled ? 0 : 240); i++) updateJello(1 / 120);
     if (softPlayHandling) {
       player.x = x - 110; player.y = floor - PLAYER_H;
     } else if (softPlayCase === 'push-left' || softPlayCase === 'push-right') {
@@ -93,7 +93,7 @@
     cam.snap = true;
     for (i = 0; i < softPlayButtons.length; i++) {
       var entry = softPlayButtons[i];
-      var on = entry.mode === (softPlayMaterialTrial ? SOFT_MATERIAL : softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
+      var on = entry.mode === (softProjectEnabled ? softProjectNew : softPlayMaterialTrial ? SOFT_MATERIAL : softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
       entry.button.setAttribute('aria-pressed', on ? 'true' : 'false');
       entry.button.style.background = on ? 'var(--accent)' : 'var(--bg-raised)';
       entry.button.style.color = on ? 'var(--bg-raised)' : 'var(--text)';
@@ -108,9 +108,9 @@
       var panel = document.createElement('div');
       panel.id = 'soft-contact-playtest';
       panel.setAttribute('role', 'group');
-      panel.setAttribute('aria-label', softPlayMaterialTrial ? 'Soft slime material comparison' : softPlayTerrainTrial ? 'Soft slime terrain comparison' : softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
+      panel.setAttribute('aria-label', softProjectEnabled ? 'Soft slime physics comparison' : softPlayMaterialTrial ? 'Soft slime material comparison' : softPlayTerrainTrial ? 'Soft slime terrain comparison' : softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
       panel.style.cssText = 'position:absolute;top:10px;left:62px;right:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--bg-raised);border:1px solid var(--rule-strong);font:12px var(--font-mono);color:var(--text);';
-      var title = document.createElement('span'); title.textContent = softPlayMaterialTrial ? 'SLIME MATERIAL' : softPlayTerrainTrial ? 'SLIME TERRAIN' : softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
+      var title = document.createElement('span'); title.textContent = softProjectEnabled ? 'SLIME PHYSICS' : softPlayMaterialTrial ? 'SLIME MATERIAL' : softPlayTerrainTrial ? 'SLIME TERRAIN' : softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
       title.style.marginRight = '6px'; panel.appendChild(title);
       function button(label, action) {
         var el = document.createElement('button'); el.type = 'button'; el.textContent = label;
@@ -118,17 +118,18 @@
         el.addEventListener('click', action); panel.appendChild(el); return el;
       }
       function choose(mode) {
-        if (softPlayMaterialTrial) SOFT_MATERIAL = mode;
+        if (softProjectEnabled) softProjectSelect(mode);
+        else if (softPlayMaterialTrial) SOFT_MATERIAL = mode;
         else if (softPlayTerrainTrial) SOFT_TERRAIN = mode;
         else if (softPlayHandling) SOFT_HANDLING = mode;
         else SOFT_CONTACT = mode;
         softPlayReset();
       }
-      softPlayButtons.push({ mode: true, button: button(softPlayMaterialTrial ? 'New material' : softPlayTerrainTrial ? 'New terrain' : softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
-      softPlayButtons.push({ mode: false, button: button(softPlayMaterialTrial ? 'Prior material' : softPlayTerrainTrial ? 'Prior terrain' : softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
+      softPlayButtons.push({ mode: true, button: button(softProjectEnabled ? 'New physics' : softPlayMaterialTrial ? 'New material' : softPlayTerrainTrial ? 'New terrain' : softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
+      softPlayButtons.push({ mode: false, button: button(softProjectEnabled ? 'Prior physics' : softPlayMaterialTrial ? 'Prior material' : softPlayTerrainTrial ? 'Prior terrain' : softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
       var select = document.createElement('select'); select.setAttribute('aria-label', 'Interaction');
       select.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
-      var cases = softPlayMaterialTrial ? [['drop','Drop and settle'],['free','Lift and throw'],['ledge','Ledge and wall']] : softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
+      var cases = softProjectEnabled ? [['pile','Small pile'],['pair','Two slimes'],['support','Remove support'],['ledge','Ledge and wall']] : softPlayMaterialTrial ? [['drop','Drop and settle'],['free','Lift and throw'],['ledge','Ledge and wall']] : softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
         [['center','Centered drop'],['left','Left edge drop'],['right','Right edge drop'],['push-left','Push from left'],['push-right','Push from right']];
       for (var i = 0; i < cases.length; i++) {
         var option = document.createElement('option'); option.value = cases[i][0]; option.textContent = cases[i][1]; select.appendChild(option);
@@ -137,7 +138,7 @@
       select.addEventListener('change', function () { softPlayCase = select.value; softPlayReset(); });
       panel.appendChild(select); button('Repeat', softPlayReset);
       var help = document.createElement('span');
-      help.textContent = softPlayMaterialTrial ? 'Drop, squeeze, stretch, and release. Compare how the body settles. Saves are off.' :
+      help.textContent = softProjectEnabled ? 'Push the pile, lift a corner, or pull the bottom slime out. Saves are off.' : softPlayMaterialTrial ? 'Drop, squeeze, stretch, and release. Compare how the body settles. Saves are off.' :
         softPlayTerrainTrial ? 'Pull across the ledge or slide against the wall, then let go. Saves are off.' :
         softPlayHandling ? 'Grab different spots, pull, swing, and let go. Saves are off.' :
         'Drive, fly, or drag the slime. Saves are off.';

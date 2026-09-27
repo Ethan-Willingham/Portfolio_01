@@ -23,7 +23,7 @@ const frames = Number(process.env.FRAMES || 180);
 const repeats = Number(process.env.REPEATS || 2);
 const comparison = process.env.COMPARE ? JSON.parse(fs.readFileSync(process.env.COMPARE, 'utf8')) : null;
 const doProfile = process.env.PROFILE !== '0';
-assert.ok(modes.every(mode => ['default', 'contact', 'terrain', 'material'].includes(mode)), 'known MODES');
+assert.ok(modes.every(mode => ['default', 'contact', 'terrain', 'material', 'pairs', 'full'].includes(mode)), 'known MODES');
 assert.ok(cases.every(name => ['separated', 'pile', 'held'].includes(name)), 'known CASES');
 assert.ok(counts.every(count => Number.isInteger(count) && count > 0 && count <= 16), 'COUNTS between 1 and 16');
 assert.ok(Number.isInteger(frames) && frames > 0 && frames <= 1200, 'FRAMES between 1 and 1200');
@@ -225,13 +225,17 @@ async function runFixture(spec) {
   performance.now = function() { return clock; };
   var dt = 1 / 60, origin = DECK_CENTER_COL - 18, x = origin * TILE, floor = SKY_ROWS * TILE;
   var bodies = [], timings = [], contacts = 0, activeMinimum = spec.count, bodyMinimum = spec.count, maxContacts = 0, finite = true;
-  var trajectory, trajectoryOffset = 0;
+  var trajectory, trajectoryOffset = 0, minArea = 1, maxArea = 1, minDet = 1, crossingFrames = 0, embeddedFrames = 0, deepestPair = 0;
   var hash = 2166136261, bytes = new Uint8Array(8), value = new Float64Array(bytes.buffer), initialHash;
   try {
     if (surfaceSlimeGrip) surfaceSlimeGrabEnd(undefined, true);
     resetJello(); jelloFrameNo = 0; skySlimes.length = 0; skySlimeNext = 1e9; surfaceSlimesSeeded = true;
     SOFT_CONTACT = spec.mode !== 'default'; SOFT_HANDLING = spec.mode !== 'default';
-    SOFT_TERRAIN = spec.mode === 'terrain' || spec.mode === 'material'; SOFT_MATERIAL = spec.mode === 'material'; softContactClear();
+    SOFT_TERRAIN = ['terrain','material','pairs','full'].indexOf(spec.mode) >= 0; SOFT_MATERIAL = ['material','pairs','full'].indexOf(spec.mode) >= 0; softContactClear();
+    if (typeof SOFT_PAIRS !== 'undefined') SOFT_PAIRS = spec.mode === 'pairs' || spec.mode === 'full';
+    if (typeof SOFT_INTENT !== 'undefined') SOFT_INTENT = spec.mode === 'full';
+    if (typeof SOFT_WORLD !== 'undefined') SOFT_WORLD = spec.mode === 'full';
+    if (typeof SOFT_PRESENTATION !== 'undefined') SOFT_PRESENTATION = spec.mode === 'full';
     Object.keys(keys).forEach(function(key) { keys[key] = false; }); dpad.left = dpad.right = dpad.up = dpad.down = false;
     Object.assign(player, JSON.parse(JSON.stringify(window.__pilePlayerInitial)));
     gamePaused = gameOver = gameWon = shopOpen = ledgerOpen = cargoManifestOpen = bathMode = false;
@@ -266,6 +270,31 @@ async function runFixture(spec) {
       var before = realNow(); updateJello(dt); var elapsed = realNow() - before;
       if (frame >= warmup) {
         timings.push(elapsed); updateHash();
+        if (frame % 6 === 0) for (var bi = 0; bi < bodies.length; bi++) {
+          var body = bodies[bi], area = 0;
+          for (var ri = 0; ri < body.ringN; ri++) {
+            var p0 = body.ring[ri], p1 = body.ring[(ri+1)%body.ringN];
+            area += (body.px[p0]-body.cx)*(body.py[p1]-body.cy)-(body.py[p0]-body.cy)*(body.px[p1]-body.cx);
+            if (jelloWorldSolidAt(body.px[p0],body.py[p0])) embeddedFrames++;
+          }
+          area = Math.abs(area)*.5/body.restArea; minArea = Math.min(minArea,area); maxArea = Math.max(maxArea,area);
+          if (softTerrainSkinCrossed(body)) crossingFrames++;
+          for (var ti = 0; ti < body.triN; ti++) {
+            var a=body.triA[ti],c=body.triB[ti],d=body.triC[ti],dm=body.triDmInv;
+            var det=((body.px[c]-body.px[a])*(body.py[d]-body.py[a])-(body.py[c]-body.py[a])*(body.px[d]-body.px[a]))*(dm[ti*4]*dm[ti*4+3]-dm[ti*4+1]*dm[ti*4+2]);
+            minDet=Math.min(minDet,det);
+          }
+          for (var bj=bi+1;bj<bodies.length;bj++) {
+            var other=bodies[bj];
+            for(var rk=0;rk<body.ringN;rk++) {
+              var pi=body.ring[rk];
+              if(jelloPointInRing(other,body.px[pi],body.py[pi])) {
+                var near=jelloNearestOnRing(other,body.px[pi],body.py[pi]);
+                deepestPair=Math.max(deepestPair,Math.hypot(near.x-body.px[pi],near.y-body.py[pi]));
+              }
+            }
+          }
+        }
         contacts += jelloContactsThisFrame; maxContacts = Math.max(maxContacts, jelloContactsThisFrame);
         activeMinimum = Math.min(activeMinimum, jelloActive.length); bodyMinimum = Math.min(bodyMinimum, jelloBodies.length);
         if (surfaceSlimeGrip) heldFrames++;
@@ -276,6 +305,7 @@ async function runFixture(spec) {
     var digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', trajectory.buffer))).map(function(v) { return v.toString(16).padStart(2, '0'); }).join('');
     return { mode: spec.mode, count: spec.count, name: spec.name, repeat: spec.repeat, frames: spec.frames, initialHash: initialHash,
       trajectoryHash: digest, trajectoryBytes: trajectory.byteLength, finite: finite, minimumBodies: bodyMinimum, minimumActive: activeMinimum,
+      geometry: {minArea:minArea,maxArea:maxArea,minDet:minDet,crossingFrames:crossingFrames,embeddedFrames:embeddedFrames,deepestPair:deepestPair},
       meanMs: timings.reduce(function(a,b) { return a+b; },0)/timings.length,
       medianMs: timings[Math.floor(timings.length*.5)], p95Ms: timings[Math.floor(timings.length*.95)], maxMs: timings[timings.length-1],
       contactsPerFrame: contacts/spec.frames, maxContacts: maxContacts, heldFrames: heldFrames, maxGuardRejects: maxGuardRejects,

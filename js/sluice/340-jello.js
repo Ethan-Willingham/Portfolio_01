@@ -3781,6 +3781,7 @@
       for (c2 = a + 1; c2 < nActive; c2++) {
         B = active[c2];
         if (B.ringN < 3) continue;
+        if (typeof softPairsManaged === 'function' && softPairsManaged(A, B)) continue;
         if (A.bboxR < B.bboxL || A.bboxL > B.bboxR || A.bboxB < B.bboxT || A.bboxT > B.bboxB) continue;
         // Fire only on a centroid CLEARLY inside (4px past the ring), not a grazing
         // one: a centroid sitting exactly ON the other ring (two bodies built or
@@ -5501,7 +5502,9 @@
               var tx = rvx - rnd * nx, ty = rvy - rnd * ny;
               var tl = Math.sqrt(tx * tx + ty * ty);
               if (tl > 1e-9) {
-                var cap = fric * pen, rem = tl < cap ? tl : cap, sfr = (rem / tl) * 0.5;
+                var physicalPair = typeof softPairsManaged === 'function' && softPairsManaged(active[bi], active[GB[j]]);
+                var cap = physicalPair ? SOFT_PAIRS_FRICTION * Math.max(0, vn) * ndamp : fric * pen;
+                var rem = tl < cap ? tl : cap, sfr = (rem / tl) * 0.5;
                 GOX[i] += tx * sfr; GOY[i] += ty * sfr; GOX[j] -= tx * sfr; GOY[j] -= ty * sfr;
               }
             }
@@ -5605,6 +5608,7 @@
       A = active[a]; if (A.ringN < 3) continue;
       for (c = a + 1; c < nActive; c++) {
         B = active[c]; if (B.ringN < 3) continue;
+        if (typeof softPairsManaged === 'function' && softPairsManaged(A, B)) continue;
         if (A._cbR < B._cbL || A._cbL > B._cbR || A._cbB < B._cbT || A._cbT > B._cbB) continue;   // bbox broadphase
         if (A._phaseMate === B) continue;   // phasing pair: the backstop must not re-lock what unmerge is sliding apart
         jelloContainOneWay(A, B, margin, damp);
@@ -5891,6 +5895,7 @@
     while (jelloAccum >= JELLO_H && subs < JELLO_MAX_SUBSTEPS) { subs++; jelloAccum -= JELLO_H; }
     if (jelloAccum > JELLO_H) jelloAccum = JELLO_H;
     if (subs === 0) { if (typeof softContactIdle === 'function') softContactIdle(); return; }
+    if (typeof softPairsReport !== 'undefined') { softPairsReport.contacts = softPairsReport.impulse = softPairsReport.depth = 0; }
     jelloFrameNo++;   // stamp for the shade-matrix cache (skipped frames keep the cache fresh)
     // Cache the jet frame for this frame's substeps (rotation-flight aware).
     jelloJetOn = !!(player && player.thrusting && player.fuel > 0 && !gameOver && !gameWon &&
@@ -6030,6 +6035,7 @@
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
       if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
       if (typeof softContactStep === 'function') softContactStep(active, nActive, h, totalSteps);
+      if (typeof softPairsStep === 'function') jelloContactsThisFrame += softPairsStep(active, nActive, h);
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
       // Direct manipulation has a stricter contract than ordinary collision:
       // the frame may never expose a crossed ring or mirrored cell and rely on
@@ -6155,7 +6161,7 @@
       // sealed-pocket escape returned (harness-caught same hour).
       var _cvr = Math.sqrt(b.vx * b.vx + b.vy * b.vy) * JELLO_TIMESCALE;
       var _plyFresh = b._plyMs !== undefined && performance.now() - b._plyMs < 5000;
-      if (b._pressT > 0.75 && JELLO_CROWD_CALM > 0 &&
+      if (!(typeof softPairsBody === 'function' && softPairsBody(b)) && b._pressT > 0.75 && JELLO_CROWD_CALM > 0 &&
           (_cvr > 45 || !_plyFresh) &&
           b._nmD !== undefined && b._nmD < 12 &&
           !(b._plyMs !== undefined && performance.now() - b._plyMs < 500)) {
@@ -6189,7 +6195,7 @@
           }
         }
       } else b._inWallT = 0;
-      jelloPerchHold(b);   // hold a resting body undermined by digging (v24.168) — geometry-independent anti-drain
+      if (!(typeof softPairsBody === 'function' && softPairsBody(b))) jelloPerchHold(b);   // hold a resting body undermined by digging (v24.168) — geometry-independent anti-drain
       // Physics-anchored shading: refresh the per-point strain field once per frame for
       // awake bodies (a sleeper keeps its last field, e.g. a pile-crushed cube correctly
       // stays tinted compressed).

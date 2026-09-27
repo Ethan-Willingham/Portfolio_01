@@ -3,7 +3,7 @@
      Rest shape, muscle targets, material parameters and world contacts belong
      to the restored baseline. ?softcontact=1 selects this path for residents. */
   var softContactParams = new URLSearchParams(location.search);
-  var SOFT_CONTACT = softContactParams.get('softcontact') === '1' ||
+  var SOFT_CONTACT = softProjectEnabled || softContactParams.get('softcontact') === '1' ||
     (softContactParams.get('softplay') === '1' && softContactParams.get('softcontact') !== '0');
   var softContactFrame = null;
   var softContactOrigin = null;

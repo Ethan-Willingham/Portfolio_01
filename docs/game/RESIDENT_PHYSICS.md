@@ -348,6 +348,37 @@ are bit-identical, including 56,072 actual contact corrections. The full
 regressions at 60 Hz with free-air identity checks, and protected hard-circle
 tests also pass.
 
+## Pair contact and piles (v28.118)
+
+Open `grand-motherload.html?softplay=1&softnext=1&softstage=1`.
+**New physics** enables pair contact; **Prior physics** holds the preceding
+contact, handling, terrain, and material experiments constant. Saves are off.
+Small pile, two slimes, remove support, and ledge/wall arrangements can be reset
+with Repeat. The support arrangement uses two bodies so the upper one can rest
+on the lower one before extraction. Ordinary play retains the accepted baseline.
+
+The existing particle hash handles bulk contact. Local node/edge and edge/edge
+constraints address actual skin penetration missed between those particles.
+Contact distributes position repair and normal/friction impulses over the
+contacting material nodes. Position repair moves Verlet history equally, with
+a 2 px nodal correction cap. Terrain mobility masks provide the wall reaction;
+friction follows the normal projection and a final normal projection removes
+any closing velocity introduced by that masked friction. Managed pairs omit
+legacy centroid unmerge, containment ejection, crowd damping, and perch hold.
+Removing a supporting body can therefore make another body fall.
+
+The 2,120 isolated cases pass 11,616 checks of momentum, energy, friction,
+normal closure, correction bounds, terrain mobility, and opt-out behavior.
+The completed browser run passes 30 prior/new cases at 30/60/144 Hz and 16 real
+mouse/touch cases. New pairs show no self-crossings, inter-body crossings,
+embedded nodes, terrain-segment hits, or enclosed terrain samples in these
+fixtures. Area ranges from 0.943 to 1.001 of rest. Supported bodies fall 27.9
+to 28.8 px after extraction. Repeat, release/cancel history identity, mobile
+control reachability, ordinary defaults, and the protected circle suites pass.
+Rendered pile and manipulation captures were inspected. These checks establish
+readiness for comparison, not owner acceptance of the feel. Browser evidence
+uses CPU canvas; final combined performance remains a separate checkpoint.
+
 ## Remaining development sequence
 
 Continue comparing one mechanism at a time:

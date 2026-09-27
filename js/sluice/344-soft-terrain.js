@@ -1,5 +1,5 @@
   /* ---- Local skin/terrain contacts, opt-in (?softterrain=1) ---- */
-  var SOFT_TERRAIN = new URLSearchParams(location.search).get('softterrain') === '1' ||
+  var SOFT_TERRAIN = softProjectEnabled || new URLSearchParams(location.search).get('softterrain') === '1' ||
     (softPlayEnabled && softPlayMaterialTrial);
   var SOFT_TERRAIN_SKIN = 0.02;
   var softTerrainReport = { points: 0, edges: 0, sweeps: 0, corners: 0 };
