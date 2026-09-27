@@ -5654,8 +5654,6 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
   if (mass <= 0.0) { return; }
   let oilMass = f32(cellOilMass[c]) / FIXED_SCALE;
   let oilK    = oilMass / mass;
-  let snowMass = f32(cellOilMass[c + ${GRID_MAX_CELLS}u]) / FIXED_SCALE;
-  let liquidShare = 1.0 - clamp(snowMass / mass, 0.0, 1.0);
   // Oil<->water lerp of the four boundary constants (CPU OIL_*_DLT folds).
   // v14.26 — water set in sp.bound.xyzw, oil set in sp.oilBnd.xyzw.
   let bounceIn   = sp.bound.x + (sp.oilBnd.x - sp.bound.x) * oilK;
@@ -5740,7 +5738,7 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
     // (the climb marks a driven column within substeps; unmarked cell =
     // undriven column, so the 10-cell bed walk no longer runs for every
     // water cell just to decide "no").
-    if (liquidShare > 0.0 && sp.local.x > 0.0 && (isOpenCell || calmCellB[c] < -0.5)) {
+    if (sp.local.x > 0.0 && (isOpenCell || calmCellB[c] < -0.5)) {
       var dBed = 99.0;
       var kD = 0u;
       loop {
@@ -5770,11 +5768,7 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
         let hFull = hC + dBed;
         let sGate = 1.0 - smoothstep(6.0, 9.0, hFull);
         let fGate = smoothstep(0.55, 0.9, hFull);
-        var slope = clamp((hL - hR) * 0.5, -0.8, 0.8);
-        // This unresolved hydrostatic correction belongs to liquids.
-        // Snow keeps its own pressure and contact response; a mixed cell
-        // receives only the liquid share of this additional drive.
-        if (liquidShare < 1.0) { slope = slope * liquidShare; }
+        let slope = clamp((hL - hR) * 0.5, -0.8, 0.8);
         let gravB = sp.grav.x + (sp.grav.y - sp.grav.x) * oilK;
         // The 2x gain compensates the residual drags a real free
         // surface does not have (eddy exchange at the toe, turbulence
@@ -5797,7 +5791,7 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
     // motion by a height-decaying fraction of the floor friction.
     // Purely local, no depth classification, no speed gate; bulk water
     // four or more cells up is untouched.
-    if (liquidShare > 0.0 && !downSolid && sp.turb.z > 0.0) {
+    if (!downSolid && sp.turb.z > 0.0) {
       // Reach profile: measured on a 4-row film, a drip's surge crest
       // peaks 4-6 cells up and simply rode over a 3-cell reach, so the
       // grip extends 6 cells with a roughly exponential falloff. In a
@@ -5810,10 +5804,6 @@ fn rowOpen(c0 : u32, cgx : i32, cgy : i32) -> bool {
       else if (gridSolid(cgx, cgy + 5)) { reachW = 0.18; }
       else if (gridSolid(cgx, cgy + 6)) { reachW = 0.11; }
       else if (gridSolid(cgx, cgy + 7)) { reachW = 0.06; }
-      // A floor cannot brake dry grains several cells above contact.
-      // Weight both extended grip axes by liquid mass, leaving the
-      // touching-cell friction and all terrain collisions unchanged.
-      if (liquidShare < 1.0) { reachW = reachW * liquidShare; }
       if (reachW > 0.0) {
         // v26.63: a cell with DEEP WATER ABOVE it is a basin's bottom
         // skin, not a free-running sheet, and a basin's bottom boundary

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.114';
+  var GAME_VERSION = 'v28.115';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -38610,10 +38610,10 @@
   var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
-    // Compression carries weight upward from a lower contact. A sideways
-    // chain or hanging arch cannot suspend powder from a distant terrain
-    // root. Moving and compacting piles still carry real contacts; speed
-    // alone cannot make them permeable to returning grains.
+    // A chain of touching grains rooted in terrain carries contact,
+    // including while it slides or compacts. Velocity cannot make a pile
+    // permeable to returning powder. Detached clouds have no terrain root.
+    // Contact crosses bucket boundaries; bucket occupancy is not support.
     var reach = snowSupportDistance(), reach2 = reach * reach;
     var cell = Math.max(LIQUID_CELL, reach), width = Math.ceil(COLS * TILE / cell) + 1;
     var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY;
@@ -38644,7 +38644,7 @@
         while (current !== undefined && current >= 0) {
           var following = next[current];
           var dx = x - points[current * 2], dy = y - points[current * 2 + 1];
-          if (dy > 0 && dy >= Math.abs(dx) * 0.6 && dx * dx + dy * dy <= reach2) {
+          if (dx * dx + dy * dy <= reach2) {
             // Remove visited grains from candidate lists. Dense reached
             // buckets therefore do not get rescanned for every neighbour.
             if (previous < 0) heads.set(nearKey, following);
@@ -38663,7 +38663,7 @@
     if (!bucket) { bucket = []; bed.set(key, bucket); }
     bucket.push(x, y);
   }
-  function snowTouchesBed(x, y, bed, reach, load) {
+  function snowTouchesBed(x, y, bed, reach) {
     var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
     var col = Math.floor(x / cell), row = Math.floor(y / cell), reach2 = reach * reach;
     for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
@@ -38671,16 +38671,14 @@
       if (!grains) continue;
       for (var i = 0; i < grains.length; i += 2) {
         var dx = x - grains[i], dy = y - grains[i + 1];
-        var distance2 = dx * dx + dy * dy;
-        if (distance2 <= reach2 && (!load || distance2 < 0.0001 ||
-            (dy < 0 && -dy >= Math.abs(dx) * 0.6))) return true;
+        if (dx * dx + dy * dy <= reach2) return true;
       }
     }
     return false;
   }
   function snowSupported(x, y, bed) {
     return liquidWorldSolidAt(x, y + snowContactRadius() + 0.3) ||
-      snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance(), true);
+      snowTouchesBed(x, y, bed || snow.bed, snowSupportDistance());
   }
   function snowBedContact(x, y) {
     return snowTouchesBed(x, y, snow.bed, LIQUID_SNOW_DIAMETER);
@@ -38710,10 +38708,7 @@
       // Airflow has already accelerated the grain in the shared solver.
       // Changing representation must not supply another impulse, cancel
       // downward momentum, or reroll a launch whenever powder lands.
-      // Actual upward motion in the wake earns release even in a packed
-      // plume. Density alone cannot glue its moving core to the bed while
-      // only the sparse surface gets airborne drag.
-      var lofted = disturbance > 40 && liquidVY[i] < -12;
+      var lofted = disturbance > 40 && liquidVY[i] < -12 && liquidDensity[i] < LIQUID_SNOW_DENSITY * 1.2;
       if (fresh && (lofted || !snowSupported(x, y, bed)) &&
           (rain.cells[rainCell(x, y)] || 0) <= 1 &&
           !liquidPointInMiner(x, y) && !liquidWorldSolidAt(x, y + snowContactRadius())) {
@@ -38769,36 +38764,6 @@
     snow.grains.push(p); snow.mass++; snow.emitted++; return p;
   }
   function snowRetire(p) { snow.mass--; snow.recycled++; }
-  var snowFlightDensity = new Map(), snowFlightCell = 6;
-  function snowBuildFlightDensity() {
-    // Air reaches the outside of a packed plume before its interior. Splat
-    // its current grains to a continuous density field, using the same
-    // particles that move below, without a release timer or group velocity.
-    snowFlightDensity.clear();
-    var cell = snowFlightCell, width = Math.ceil(COLS * TILE / cell) + 3;
-    for (var i = 0; i < snow.grains.length; i++) {
-      var p = snow.grains[i], gx = p.x / cell - 0.5, gy = p.y / cell - 0.5;
-      var x = Math.floor(gx), y = Math.floor(gy), fx = gx - x, fy = gy - y;
-      for (var r = 0; r < 2; r++) for (var c = 0; c < 2; c++) {
-        var key = (y + r) * width + x + c;
-        var weight = (c ? fx : 1 - fx) * (r ? fy : 1 - fy);
-        snowFlightDensity.set(key, (snowFlightDensity.get(key) || 0) + weight);
-      }
-    }
-  }
-  function snowFlightExposure(x, y) {
-    var cell = snowFlightCell, width = Math.ceil(COLS * TILE / cell) + 3;
-    var gx = x / cell - 0.5, gy = y / cell - 0.5;
-    var col = Math.floor(gx), row = Math.floor(gy), fx = gx - col, fy = gy - row, density = 0;
-    for (var r = 0; r < 2; r++) for (var c = 0; c < 2; c++) {
-      density += (snowFlightDensity.get((row + r) * width + col + c) || 0) *
-        (c ? fx : 1 - fx) * (r ? fy : 1 - fy);
-    }
-    // Convert to the shared solver's mass per cell before applying its
-    // exposure law. Sparse flakes retain their original air resistance.
-    density *= LIQUID_CELL * LIQUID_CELL / (cell * cell);
-    return Math.max(0.06, Math.min(1, (4.2 - density) / 3));
-  }
   function updateSnow(dt, intensity) {
     if (intensity === undefined) intensity = rain.intensity;
     updateSnowAir(dt);
@@ -38821,7 +38786,6 @@
     particleWeatherField(snow.field, rect, snow.grains, SNOW_RATE / (1100 * 53), SNOW_FLAKE_CAP,
       intensity, surfaceWind.current * 35, [32, 53, 74], dt, snowSpawn, snowRetire);
     rainCatchLakes(dt, sky, left, right, snow.field.strength, SNOW_RATE);
-    snowBuildFlightDensity();
     // Resolve the lowest falling grains first. Each landing immediately
     // becomes a contact for the grains above it; arbitrary storage order
     // could otherwise grow the bed through an unprocessed lower grain.
@@ -38834,10 +38798,7 @@
       // grain sizes have different mass/area ratios and terminal speeds.
       // No prescribed arc, random launch impulse or minimum falling speed:
       // momentum crosses the apex continuously, even in a fading updraft.
-      var exposure = snowFlightExposure(p.x, p.y);
-      // Shielding reduces drag, not gravity. As the plume spreads, each
-      // grain smoothly regains isolated-flake resistance at its own pace.
-      var fall = (32 + p.size * 42) / exposure, drag = GRAVITY / fall;
+      var fall = 32 + p.size * 42, drag = GRAVITY / fall;
       var keep = Math.exp(-drag * dt);
       p.vx = wind + air[0] + (p.vx - wind - air[0]) * keep;
       p.vy = air[1] + fall + (p.vy - air[1] - fall) * keep;
@@ -38865,7 +38826,7 @@
           }
           // Dry powder's landing is inelastic. Do not inject the incoming
           // normal momentum into pile pressure and turn it into a rebound.
-          if ((floor || bed) && snowSupported(p.x, p.y) && p.vy > 0) p.vy = 0;
+          if ((floor || bed) && p.vy > 0) p.vy = 0;
           remove = snowLand(p, false); break;
         }
         p.x = nx; p.y = ny;

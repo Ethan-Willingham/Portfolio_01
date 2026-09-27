@@ -1,5 +1,12 @@
 # Physical snow
 
+The owner-approved v28.93 snow motion is restored in v28.115. This removes
+v28.111's changes to support, release, landing and GPU boundary forces, and
+v28.114's density-dependent flight drag. The newer mixed weather cycle,
+protected cloudy interval, snow scoop and water/cloud-only thaw remain.
+Treat v28.93 as the motion reference for future snow changes. A passing
+settling test alone does not establish that the flyover spray still matches it.
+
 Pause > Options > World > Particle weather > Snow first starts a new world
 with snow. Rain first opens with sunshine before the first rain front. Both
 then cycle through sunshine, gathering clouds, rain or snow, and dry cloudy
@@ -49,10 +56,8 @@ terminal velocity. Digging away support still lets dense grains fall.
 Slow atmospheric flakes retain the rain system's inexpensive ballistic
 approach until their first contact, then become actual solver particles.
 Flight integrates gravity and aerodynamic drag relative to the existing wind
-and resolved jet velocity. For isolated flakes, the drag coefficient is gravity
-divided by each grain's 32 to 74 pixel-per-second terminal speed, set by its size.
-Packed airborne powder reduces that drag according to local density, retaining
-the shielding already used in the dense solver. Gravity is unchanged. The velocity
+and resolved jet velocity. The drag coefficient is gravity divided by each
+grain's 32 to 74 pixel-per-second terminal speed, set by its size. The velocity
 solution is exponential over each step, with no minimum-speed clamp at the
 apex and no prescribed flight arc. Falling, settled and thrown snow
 all use the same particle shader, diameter, tint and canvas. The GPU uploads
@@ -156,23 +161,13 @@ momentum reversed by a transfer. Free powder and atmospheric snow use the
 same gravity and size-dependent drag, so their individual velocities pass
 continuously through the apex. A sustained resolved updraft can still lift them.
 
-Since v28.114, airborne powder keeps density-dependent air resistance. Previously,
-transfer from the dense solver abruptly applied isolated-flake drag to a packed
-cloud, erasing its momentum and pulling many grains toward slow terminal speeds
-together. Current flight positions now supply a six-pixel density field with
-bilinear deposition and sampling. The shared exposure law reduces drag inside
-the plume; its exposed rim slows sooner, and spreading powder gradually regains
-full air resistance. Each grain keeps its own position and velocity. There is
-no release timer, group velocity, or added force to break the cloud apart.
-
 Contact uses the physical grain radius shared with the dense solver. Nearby
-buckets find candidate grains, while compressive contacts carry weight upward
-from terrain. A horizontal chain or downward-hanging lip cannot suspend a whole
-plume from a distant ground contact. Bucket occupancy cannot suspend a layer
-above the ground or make a disconnected cloud catch more snow. Swept flight
-resolves the first contact point. Dry landings dissipate downward velocity
-against the floor or a supporting grain below; side contact keeps that momentum.
-This avoids both impact-driven rebounds and repeated braking beside a pile.
+buckets find candidate grains, while actual grain contacts connected to terrain
+determine support. Bucket occupancy cannot suspend a layer above the ground or
+make a disconnected cloud catch more snow. Swept flight resolves the first
+contact point; dry landings dissipate incoming normal velocity before passing
+material into the pile. This avoids injecting impact speed into compressive
+pile pressure and creating another upward burst.
 
 A connected pile keeps its contacts while moving. The former 16-pixel-per-second
 support cutoff made disturbed snow permeable, compressing returning powder
@@ -182,15 +177,6 @@ the bottom upward so each landing is visible to grains above it in that same
 frame. Removed or lofted particles are excluded from the rebuilt contact map.
 The CPU fallback refreshes moving contacts each frame while powder is present.
 Detached clouds still have no terrain support and remain individual free grains.
-
-Since v28.111, upward motion earned from the jet also releases compressed grains.
-The former density cutoff retained a moving core after its outer grains had
-separated, delaying a large part of the plume's transition to powder. Release
-still requires actual upward velocity and local airflow; it adds no launch
-impulse. The GPU's additional shallow-water slope drive and extended floor grip
-now apply only to the liquid share of a grid cell. Snow retains its granular
-pressure, contact friction and terrain collisions, without liquid forces
-driving or braking a sheet above the floor. Pure-liquid behavior is unchanged.
 
 During an active wake, release is checked every frame. Only storage and thaw
 remain on the 120-millisecond maintenance interval. The GPU supplies an
@@ -315,9 +301,6 @@ handoff momentum in strong
 airflow, gradual size-dependent descent, continuous apex acceleration, actual
 terrain support and inelastic landing. It includes detached layers three to
 eight pixels above terrain and tests without relying on GPU readback timing.
-The packed-cloud regression checks that its core retains momentum longer than
-its rim, isolated flakes retain their original drag, and density-cell boundaries
-do not introduce abrupt changes. Gravity stays unchanged and material is conserved.
 
 Run `node tools/sluice-snow-smoke.mjs --soak --cpu`. It owns a disposable Chrome
 for Testing process and writes screenshots under `/tmp/sluice-snow-qa`.
@@ -361,8 +344,8 @@ clearance below the plume, slow suspended grains, individual velocity spread,
 GPU handoff batches and exact material accounting, including new snowfall.
 Add `--cpu` for the fallback. Baseline comparisons can use
 `SLUICE_TEST_BUNDLE` and `SLUICE_TEST_GPU`; artifacts stay in `/tmp`.
-`node tools/test-snow-support.cjs` includes horizontal and hanging contact
-chains, and packed grains already moving upward in real airflow.
+The overhang scenario remains a diagnostic for the retained v28.93 support
+model; it is not a claim that every connected arch must immediately separate.
 
 `node tools/perf/snow-air.mjs` checks wall flow, recirculation, pressure
 projection, occlusion through a solid roof, window translation and shutdown.
