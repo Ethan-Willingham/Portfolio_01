@@ -2100,7 +2100,7 @@
       if (bb && y > bb.line && x >= bb.x0 && x <= bb.x1) {
         var sub = (y - bb.line) * 0.045; if (sub > 1) sub = 1;
         g = grav * (1 - bb.lift * sub);
-        vx *= bb.drag; vy *= bb.drag;
+        if (!(typeof softWorldBody === 'function' && softWorldBody(b))) { vx *= bb.drag; vy *= bb.drag; }
       }
       // clamp runaway
       if (vx > vcap) vx = vcap; else if (vx < -vcap) vx = -vcap;
@@ -2773,7 +2773,7 @@
       //     it, so it never dented no matter the lever). Far-field cross-fades to a
       //     velocity feed so momentum travels through the gel (springs soak it
       //     gracefully; the VMAX clamp is the ceiling). ---
-      if (thrust && jelloJetOn) {
+      if (thrust && jelloJetOn && !(typeof softWorldBody === 'function' && softWorldBody(b))) {
         var jqx = x - jelloJetOX, jqy = y - jelloJetOY;
         var js = jqx * jelloJetDX + jqy * jelloJetDY;            // axial distance down the jet
         // + half a tile past the occluding wall's first probe so gel resting ON the
@@ -4250,6 +4250,7 @@
     var resilienceGuard = jelloResilienceStepBegin(b);
     jelloActuateBody(b, h);
     jelloIntegrate(b, h);
+    if (typeof softWorldStep === 'function') softWorldStep(b, h);
     // The public physics toy installs this optional compliant pointer grip.
     // Surface residents install the same compliant grip for mouse and touch.
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
@@ -5973,6 +5974,7 @@
     // substeps, which is harmless (the object stays finite) and cheaper
     // than rebuilding the active list mid-frame.
     jelloWaterDissolveFrame(active, nActive, dt);
+    if (typeof softWorldFrame === 'function') softWorldFrame(active, nActive, dt);
 
     // ----- Frame-START position snapshot (for the frame-displacement sleep gate in
     // jelloUpdateBody): per-substep constraint pulses cancel over the frame, real
@@ -6239,6 +6241,7 @@
       player.vx -= jelloJetDX * _jrAcc * dt;
       player.vy -= jelloJetDY * _jrAcc * dt;
     }
+    if (typeof softWorldFinish === 'function') softWorldFinish();
     jelloUnmergeBodies(dt, active, nActive);   // no slime can stay inside another (rigid rate-limited split)
     if (typeof softContactFinish === 'function') softContactFinish();
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring

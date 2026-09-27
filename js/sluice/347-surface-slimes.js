@@ -73,6 +73,7 @@
   }
 
   function surfaceSlimeTick(dt) {
+    if (typeof softWorldReadbackPrepare === 'function') softWorldReadbackPrepare();
     surfaceSlimeGuests.length = 0;
     if (surfaceSlimeGrip && (bathMode || gamePaused || gameOver || gameWon ||
         shopState !== 'closed' || jelloBodies.indexOf(surfaceSlimeGrip.body) < 0)) surfaceSlimeGrabEnd(undefined, true);
@@ -107,7 +108,8 @@
           var p = b.ring[Math.floor(k * b.ringN / take)];
           var vx = skySlimeClamp((b.px[p] - b.ox[p]) * ih, -600, 600);
           var vy = skySlimeClamp((b.py[p] - b.oy[p]) * ih, -600, 600);
-          var fade = skySlimeClamp((Math.hypot(vx, vy) - 20) / 50, 0, 1);
+          var fade = typeof softWorldBody === 'function' && softWorldBody(b) ?
+            1 / softWorldWaterScale() : skySlimeClamp((Math.hypot(vx, vy) - 20) / 50, 0, 1);
           pts.push(b.px[p], b.py[p], vx * fade, vy * fade);
         }
         surfaceSlimeGuests.push({ x: b.cx, y: b.cy, hw: (b.bboxR - b.bboxL) / 2 + 3,
@@ -325,6 +327,7 @@
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
       if (!b.surfaceSlime || b.frozen) continue;
+      if (typeof softWorldBody === 'function' && softWorldBody(b)) { softWorldWaterCPU(b); continue; }
       for (var i = 0; i < liquidCount; i++) {
         var x = liquidX[i], y = liquidY[i];
         if (liquidFrozen[i] || x < b.bboxL || x > b.bboxR || y < b.bboxT || y > b.bboxB ||

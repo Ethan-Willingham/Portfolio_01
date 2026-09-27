@@ -419,6 +419,48 @@ terrain-segment hits, enclosed terrain samples, and rejected steps. No active
 body freezes beyond a single unticked display frame at 144 Hz. This admits the
 controller to combined testing; it does not establish a preferred feel.
 
+## Local jets and water (v28.120)
+
+At checkpoint 3, New adds local world forces to pair contact and physical
+movement. Prior keeps those earlier checkpoints. Exhaust pressure acts on
+upstream skin edges with terrain and nearer-body shielding. Its reaction on
+the rig uses the same point/rig mass ratio as rig contact, with one shared
+frame budget. Pressure falls as skin approaches exhaust speed. There is no
+near-field positional carving or prescribed body trajectory.
+
+An 8 px sparse grid averages the actual local water velocities. Wet skin
+receives drag relative to that flow, with stronger normal than tangential
+resistance. Each component exponentially approaches the current without
+overshooting it. The existing hydrostatic lift remains; the old whole-body
+water drag is bypassed for these residents. Liquid velocities and GPU mirror
+ages use the fluid solver clock, so the adapter converts them to real time.
+The CPU fluid boundary uses local skin velocity and retains tangential flow.
+The GPU boundary also receives the correct solver-time velocity, including
+slow material motion previously hidden by its speed fade.
+
+Water can wake a sleeping resident through a current or changing hydrostatic
+support, including immersion in still water and removal of water. Frozen
+bodies outside the camera keep the existing culling behavior. GPU flow older
+than 0.1 real seconds is discarded. A visible wet trial resident temporarily
+requests a two-frame readback interval; leaving the wet scene restores the
+current user setting. Ordinary dry frames do not change readback cadence.
+
+The isolated force suite passes 22 law groups, covering dissipation, timestep
+conversion, momentum/recoil budgets, shielding, cache invalidation, sleeping,
+opt-out behavior, and cadence restoration. Actual CPU basin and jet fixtures
+pass at 30/60/144 Hz. Actual WebGPU fixtures pass at 30/60 Hz with advancing
+readback generations, stable skins, and conserved particle counts. With pairs, intent, and world forces active, fresh flow was available for
+93.2% and 100% of wet frames at 30 and 60 Hz after initial acquisition;
+remaining gaps occurred on water reacquisition.
+A deliberately blocked asynchronous readback supplied no drag or wake, and a
+subsequent fresh current woke the resident. These are correctness checks,
+not GPU performance measurements.
+
+Coupling is approximate two-way interaction, not a conservative fluid-solid
+solver. Existing hydrostatic sampling retains its own mirror behavior, and
+GPU boundary upload still includes at most six visible residents. Those
+limits are not changed by the new local drag calculation.
+
 ## Remaining development sequence
 
 Continue comparing one mechanism at a time:
