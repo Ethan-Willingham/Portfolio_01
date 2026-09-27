@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.116';
+  var GAME_VERSION = 'v28.117';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -70033,7 +70033,7 @@
   // contact keeps the two surfaces on their previous sides without imposing
   // a target outline.
   function softContactSkin(b) {
-    if (!b._softPX) return;
+    if (!b._softPX || !softContactSkinCrossed(b)) return;
     var px = b.px, py = b.py, oldX = b._softPX, oldY = b._softPY;
     for (var k = 0; k < b.ringN; k++) {
       var p = b.ring[k];
@@ -70077,6 +70077,43 @@
         softContactReport.selfContacts++;
       }
     }
+  }
+
+  // A correction below requires a proper skin crossing. Most contact passes
+  // have none, and several visit exactly the same ring before anything moves
+  // it. Remember only a proven clear pose, comparing the actual coordinates
+  // so every solver, grab and terrain correction invalidates it automatically.
+  // Previous-position history cannot create a crossing in an unchanged ring.
+  function softContactSkinCrossed(b) {
+    var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
+    var clearX = b._softClearX, clearY = b._softClearY;
+    if (clearX && clearX.length === n) {
+      var same = true;
+      for (var k = 0; k < n; k++) {
+        var p = ring[k];
+        if (px[p] !== clearX[k] || py[p] !== clearY[k]) { same = false; break; }
+      }
+      if (same) return false;
+    }
+    for (var a = 0; a < n; a++) {
+      var p0 = ring[a], p1 = ring[(a + 1) % n];
+      var left = Math.min(px[p0], px[p1]), right = Math.max(px[p0], px[p1]);
+      var top = Math.min(py[p0], py[p1]), bottom = Math.max(py[p0], py[p1]);
+      for (var c = a + 2; c < n; c++) {
+        if (a === 0 && c === n - 1) continue;
+        var q0 = ring[c], q1 = ring[(c + 1) % n];
+        // Disjoint or merely touching axis bounds cannot cross properly.
+        if ((px[q0] <= left && px[q1] <= left) || (px[q0] >= right && px[q1] >= right) ||
+            (py[q0] <= top && py[q1] <= top) || (py[q0] >= bottom && py[q1] >= bottom)) continue;
+        if (softContactEdgesCross(b, p0, p1, q0, q1)) return true;
+      }
+    }
+    if (!clearX || clearX.length !== n) {
+      clearX = b._softClearX = new Float64Array(n);
+      clearY = b._softClearY = new Float64Array(n);
+    }
+    for (var i = 0; i < n; i++) { clearX[i] = px[ring[i]]; clearY[i] = py[ring[i]]; }
+    return false;
   }
 
   function softContactEdgesCross(b, p, q, a, c) {
@@ -70819,14 +70856,7 @@
   }
 
   function softTerrainSkinCrossed(b) {
-    for (var a = 0; a < b.ringN; a++) {
-      for (var c = a + 2; c < b.ringN; c++) {
-        if (a === 0 && c === b.ringN - 1) continue;
-        if (softContactEdgesCross(b, b.ring[a], b.ring[(a + 1) % b.ringN],
-            b.ring[c], b.ring[(c + 1) % b.ringN])) return true;
-      }
-    }
-    return false;
+    return softContactSkinCrossed(b);
   }
   /* =====================================================================
      SLIME NPCS (v26.69). The wild-slime brain: every activated world slime

@@ -304,6 +304,50 @@ Browser validation used native CPU canvas rendering with the existing
 timer-RAF test hook and actual loading gates. It does not establish GPU
 performance or identical trajectories across display rates.
 
+## Pile performance pass (v28.117)
+
+The contact comparison was testing every skin node against every nonincident
+skin edge, including length normalization, at least four times per gel
+substep. Terrain closure repeated that work. A browser CPU profile of eight
+pressed residents identified this self-contact scan as the largest cost.
+
+The solver now checks for a proper skin crossing first, rejecting edge pairs
+with disjoint bounds. A clear outline needs no self-contact correction. Its
+coordinates are cached in ring order so repeated visits can reuse that result;
+any changed position or changed outline invalidates it by direct comparison.
+Terrain validation shares this geometric query. Crossed outlines still run
+the original correction loop, in the same order with the same arithmetic.
+No physics step count, material parameter, collision force, or sleep threshold
+changed. This affects the opt-in comparisons; ordinary game defaults and hard
+circular visitors remain unchanged.
+
+`tools/test-soft-pile-performance.mjs` measures the actual browser physics
+update with awake, separated, piled and held residents. It uses a deterministic
+simulation clock but a native clock for timings, with rendering excluded.
+Two repeats of each eight-body fixture at 60 Hz measured these mean physics
+times on the same host:
+
+| Mode | Pile, before to after | Held pile, before to after |
+| --- | --- | --- |
+| Original game | 2.63 to 2.60 ms | 2.84 to 2.79 ms |
+| Contact/handling comparison | 5.64 to 2.76 ms | 5.89 to 3.05 ms |
+| Terrain comparison | 10.35 to 3.51 ms | 11.27 to 4.08 ms |
+| Material comparison | 10.89 to 3.92 ms | 9.70 to 3.80 ms |
+
+The material pile's mean cost fell 64%; its mean per-run 95th percentile fell
+from 11.4 to 4.2 ms. These are CPU physics timings, not whole-game FPS or GPU
+measurements. All 32 matched runs, including separated bodies and the original
+game, produced identical SHA256 digests of every measured node position and
+velocity-history byte. Each mode also reproduced its trajectory across repeats.
+
+`tools/test-soft-skin-equivalence.cjs` compares the optimized scan against
+v28.116 across deformed, crossed, touching and nearly collinear skins, changing
+geometry and history between calls. All 18,216 position/history comparisons
+are bit-identical, including 56,072 actual contact corrections. The full
+36-case material suite, 12 real mouse/touch interactions, eight terrain
+regressions at 60 Hz with free-air identity checks, and protected hard-circle
+tests also pass.
+
 ## Remaining development sequence
 
 Continue comparing one mechanism at a time:

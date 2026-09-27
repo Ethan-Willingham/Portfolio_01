@@ -198,12 +198,5 @@
   }
 
   function softTerrainSkinCrossed(b) {
-    for (var a = 0; a < b.ringN; a++) {
-      for (var c = a + 2; c < b.ringN; c++) {
-        if (a === 0 && c === b.ringN - 1) continue;
-        if (softContactEdgesCross(b, b.ring[a], b.ring[(a + 1) % b.ringN],
-            b.ring[c], b.ring[(c + 1) % b.ringN])) return true;
-      }
-    }
-    return false;
+    return softContactSkinCrossed(b);
   }
