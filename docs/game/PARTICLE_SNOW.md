@@ -285,8 +285,13 @@ Add `--cpu` for the fallback. Artifacts stay under `/tmp`.
 `node tools/sluice-snow-contact.mjs` drops an unsupported sheet six pixels
 above terrain, then returns a dispersed plume to the floor. Both must reach
 actual contact without a rebound, suspended sheet, lost mass or terrain
-penetration. Add `--cpu` for the fallback. Screenshots and frame measurements
-are written under `/tmp/sluice-snow-contact-qa`.
+penetration. Grounded stacks are allowed; an independent contact trace rejects
+unsupported grains. Settling uses displacement between distinct, unchanged
+particle sets in fresh solver snapshots, retaining stored velocity as a
+diagnostic. This avoids treating an old GPU mirror as continuing motion.
+Browser commands fail after fifteen seconds instead of waiting indefinitely.
+Add `--cpu` for the fallback. Screenshots and frame measurements are written
+under `/tmp/sluice-snow-contact-qa`.
 
 `node tools/sluice-snow-pile.mjs` blows a 13,299-grain bed, then measures the
 returning pile for thirteen simulation seconds. It checks exact snow-plus-water
