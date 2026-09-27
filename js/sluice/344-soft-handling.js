@@ -2,7 +2,7 @@
      The hand pulls one fixed material patch. Release only removes that force;
      translation, rotation and deformation keep their simulated velocities. */
   var SOFT_HANDLING = new URLSearchParams(location.search).get('softhandling') === '1' ||
-    (softPlayEnabled && softPlayTerrainTrial);
+    (softPlayEnabled && (softPlayTerrainTrial || softPlayMaterialTrial));
 
   function softHandlingBody(b) { return SOFT_HANDLING && !!b.surfaceSlime; }
 

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.115';
+  var GAME_VERSION = 'v28.116';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -67217,6 +67217,7 @@
   // once-per-frame pass that fights the solver. h is the substep dt (JELLO_H/K).
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
+    var materialTrial = typeof softMaterialBody === 'function' && softMaterialBody(b);
     if (typeof softContactSnapshot === 'function') softContactSnapshot(b);
     var resilienceGuard = jelloResilienceStepBegin(b);
     jelloActuateBody(b, h);
@@ -67226,7 +67227,14 @@
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
     if (b.surfaceSlime) surfaceSlimeAdhesionStep(b, h);
-    if (m === 'pbd') {
+    if (materialTrial) {
+      softMaterialSolve(b, h);
+      jelloStrainLimit(b);
+      jelloLimitOrientation(b);
+      for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
+      jelloCollideRingEdges(b);
+      softMaterialDamp(b, h);
+    } else if (m === 'pbd') {
       for (var it = 0; it < JELLO_ITERS; it++) {
         jelloSolveSprings(b);
         jelloPressure(b);
@@ -67246,14 +67254,14 @@
       jelloCollideRingEdges(b);
       if (JELLO_INT_DAMP > 0) jelloDampInternal(b, h);   // wobble decay (internal modes only)
     }
-    if (!b._grabbed && b._recoverT > 0) {
+    if (!materialTrial && !b._grabbed && b._recoverT > 0) {
       jelloRecoverShape(b);
       jelloStrainLimit(b);
       jelloLimitOrientation(b);
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
     }
-    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (!materialTrial && JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
     if (b.surfaceSlime && !b._grabbed) {
       for (var skinPass = 0; skinPass < 3; skinPass++) {
         if (!jelloLimitOrientation(b)) break;
@@ -67261,7 +67269,7 @@
           if (jelloWorldSolidAt(b.px[ci], b.py[ci])) jelloCollidePointWorld(b, ci, h);
         }
       }
-      surfaceSlimeDampMotion(b, h);
+      if (!materialTrial) surfaceSlimeDampMotion(b, h);
     }
     if (typeof softTerrainSolve === 'function') softTerrainSolve(b, h);
     if (resilienceGuard) jelloRejectTerrainInside(b);
@@ -67373,7 +67381,8 @@
       // A terrain-masked gradient carries an external contact reaction. The
       // terrain trial includes that displacement in velocity; co-moving its
       // history would leave momentum aimed into a wall while geometry stops.
-      var keepHistory = den < unconstrainedDen && typeof softTerrainBody === 'function' && softTerrainBody(b);
+      var materialContact = typeof softMaterialBody === 'function' && softMaterialBody(b);
+      var keepHistory = !materialContact && den < unconstrainedDen && typeof softTerrainBody === 'function' && softTerrainBody(b);
       px[i0] += c0x; py[i0] += c0y;
       px[i1] += c1x; py[i1] += c1y;
       px[i2] += c2x; py[i2] += c2y;
@@ -67382,6 +67391,7 @@
         ox[i1] += c1x; oy[i1] += c1y;
         ox[i2] += c2x; oy[i2] += c2y;
       }
+      if (materialContact) softMaterialAreaContact(b, i0, i1, i2, detInv);
       fixed++;
     }
     b._orientFixes = fixed;
@@ -70287,11 +70297,12 @@
      Disposable world: each replay starts with the same resident and rig pose.
      The ordinary game keeps the restored baseline until this trial is chosen. */
   var softPlayEnabled = new URLSearchParams(location.search).get('softplay') === '1';
+  var softPlayMaterialTrial = new URLSearchParams(location.search).has('softmaterial');
   var softPlayTerrainTrial = new URLSearchParams(location.search).has('softterrain');
-  var softPlayHandling = new URLSearchParams(location.search).has('softhandling') || softPlayTerrainTrial;
+  var softPlayHandling = new URLSearchParams(location.search).has('softhandling') || softPlayTerrainTrial || softPlayMaterialTrial;
   if (softPlayEnabled && softPlayHandling) SOFT_CONTACT = true;
   var softPlayReady = false;
-  var softPlayCase = softPlayTerrainTrial ? 'ledge' : softPlayHandling ? 'free' : 'center';
+  var softPlayCase = softPlayMaterialTrial ? 'drop' : softPlayTerrainTrial ? 'ledge' : softPlayHandling ? 'free' : 'center';
   var softPlayDrive = 0;
   var softPlayTime = 0;
   var softPlayButtons = [];
@@ -70351,13 +70362,14 @@
     gameOver = false; gameWon = false; drilling = null; hitPauseT = 0;
     player.drillGlideT = 0; player.slideTargetX = null; player.slideAssistT = 0;
     resetFlightBank();
-    var b = surfaceSlimeBuild(x, floor - 35, { id: 9001, seed: 0.42, hue: 133 });
+    var materialDrop = softPlayMaterialTrial && softPlayCase === 'drop';
+    var b = surfaceSlimeBuild(x, floor - (materialDrop ? 145 : 35), { id: 9001, seed: 0.42, hue: 133 });
     if (softPlayHandling && softPlayCase === 'pair') {
       surfaceSlimeBuild(x + 64, floor - 35, { id: 9002, seed: 0.61, hue: 284 });
     }
     cam.x = x - screenW * 0.5; cam.y = floor - screenH * 0.62;
     // Settle only the material before releasing the normal resident brain.
-    for (var i = 0; i < 240; i++) updateJello(1 / 120);
+    for (var i = 0; i < (materialDrop ? 0 : 240); i++) updateJello(1 / 120);
     if (softPlayHandling) {
       player.x = x - 110; player.y = floor - PLAYER_H;
     } else if (softPlayCase === 'push-left' || softPlayCase === 'push-right') {
@@ -70376,7 +70388,7 @@
     cam.snap = true;
     for (i = 0; i < softPlayButtons.length; i++) {
       var entry = softPlayButtons[i];
-      var on = entry.mode === (softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
+      var on = entry.mode === (softPlayMaterialTrial ? SOFT_MATERIAL : softPlayTerrainTrial ? SOFT_TERRAIN : softPlayHandling ? SOFT_HANDLING : SOFT_CONTACT);
       entry.button.setAttribute('aria-pressed', on ? 'true' : 'false');
       entry.button.style.background = on ? 'var(--accent)' : 'var(--bg-raised)';
       entry.button.style.color = on ? 'var(--bg-raised)' : 'var(--text)';
@@ -70391,9 +70403,9 @@
       var panel = document.createElement('div');
       panel.id = 'soft-contact-playtest';
       panel.setAttribute('role', 'group');
-      panel.setAttribute('aria-label', softPlayTerrainTrial ? 'Soft slime terrain comparison' : softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
+      panel.setAttribute('aria-label', softPlayMaterialTrial ? 'Soft slime material comparison' : softPlayTerrainTrial ? 'Soft slime terrain comparison' : softPlayHandling ? 'Soft slime handling comparison' : 'Soft slime contact comparison');
       panel.style.cssText = 'position:absolute;top:10px;left:62px;right:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--bg-raised);border:1px solid var(--rule-strong);font:12px var(--font-mono);color:var(--text);';
-      var title = document.createElement('span'); title.textContent = softPlayTerrainTrial ? 'SLIME TERRAIN' : softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
+      var title = document.createElement('span'); title.textContent = softPlayMaterialTrial ? 'SLIME MATERIAL' : softPlayTerrainTrial ? 'SLIME TERRAIN' : softPlayHandling ? 'SLIME HANDLING' : 'SLIME PLAYTEST';
       title.style.marginRight = '6px'; panel.appendChild(title);
       function button(label, action) {
         var el = document.createElement('button'); el.type = 'button'; el.textContent = label;
@@ -70401,16 +70413,17 @@
         el.addEventListener('click', action); panel.appendChild(el); return el;
       }
       function choose(mode) {
-        if (softPlayTerrainTrial) SOFT_TERRAIN = mode;
+        if (softPlayMaterialTrial) SOFT_MATERIAL = mode;
+        else if (softPlayTerrainTrial) SOFT_TERRAIN = mode;
         else if (softPlayHandling) SOFT_HANDLING = mode;
         else SOFT_CONTACT = mode;
         softPlayReset();
       }
-      softPlayButtons.push({ mode: true, button: button(softPlayTerrainTrial ? 'New terrain' : softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
-      softPlayButtons.push({ mode: false, button: button(softPlayTerrainTrial ? 'Prior terrain' : softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
+      softPlayButtons.push({ mode: true, button: button(softPlayMaterialTrial ? 'New material' : softPlayTerrainTrial ? 'New terrain' : softPlayHandling ? 'New handling' : 'New contacts', function () { choose(true); }) });
+      softPlayButtons.push({ mode: false, button: button(softPlayMaterialTrial ? 'Prior material' : softPlayTerrainTrial ? 'Prior terrain' : softPlayHandling ? 'Original handling' : 'Original', function () { choose(false); }) });
       var select = document.createElement('select'); select.setAttribute('aria-label', 'Interaction');
       select.style.cssText = 'min-height:44px;max-width:100%;padding:6px;background:var(--bg-raised);color:var(--text);border:1px solid var(--rule-strong);font:inherit;';
-      var cases = softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
+      var cases = softPlayMaterialTrial ? [['drop','Drop and settle'],['free','Lift and throw'],['ledge','Ledge and wall']] : softPlayHandling ? [['free','Lift and throw'],['ledge','Ledge and wall'],['pair','Two slimes']] :
         [['center','Centered drop'],['left','Left edge drop'],['right','Right edge drop'],['push-left','Push from left'],['push-right','Push from right']];
       for (var i = 0; i < cases.length; i++) {
         var option = document.createElement('option'); option.value = cases[i][0]; option.textContent = cases[i][1]; select.appendChild(option);
@@ -70419,7 +70432,8 @@
       select.addEventListener('change', function () { softPlayCase = select.value; softPlayReset(); });
       panel.appendChild(select); button('Repeat', softPlayReset);
       var help = document.createElement('span');
-      help.textContent = softPlayTerrainTrial ? 'Pull across the ledge or slide against the wall, then let go. Saves are off.' :
+      help.textContent = softPlayMaterialTrial ? 'Drop, squeeze, stretch, and release. Compare how the body settles. Saves are off.' :
+        softPlayTerrainTrial ? 'Pull across the ledge or slide against the wall, then let go. Saves are off.' :
         softPlayHandling ? 'Grab different spots, pull, swing, and let go. Saves are off.' :
         'Drive, fly, or drag the slime. Saves are off.';
       help.style.cssText = 'color:var(--text-dim);flex-basis:100%;line-height:1.5;'; panel.appendChild(help);
@@ -70437,7 +70451,7 @@
      The hand pulls one fixed material patch. Release only removes that force;
      translation, rotation and deformation keep their simulated velocities. */
   var SOFT_HANDLING = new URLSearchParams(location.search).get('softhandling') === '1' ||
-    (softPlayEnabled && softPlayTerrainTrial);
+    (softPlayEnabled && (softPlayTerrainTrial || softPlayMaterialTrial));
 
   function softHandlingBody(b) { return SOFT_HANDLING && !!b.surfaceSlime; }
 
@@ -70499,8 +70513,115 @@
     for (var i = 0; i < b.n; i++) { b.ox[i] = b.px[i]; b.oy[i] = b.py[i]; }
     b._handRejects = (b._handRejects || 0) + 1;
   }
+  /* ---- Local elastic material comparison (?softmaterial=1) ----
+     The existing spring web stores strain energy. No fitted silhouette or
+     pose-velocity target is part of this material law. Muscles still change
+     their own rest lengths and work against the existing terrain grips. */
+  var SOFT_MATERIAL = new URLSearchParams(location.search).get('softmaterial') === '1';
+  var SOFT_MATERIAL_COMPLIANCE = 0.002;
+  var SOFT_MATERIAL_VOLUME = 0.002;
+  var SOFT_MATERIAL_HARDEN = 4;
+  var SOFT_MATERIAL_DAMP = 8;
+
+  function softMaterialBody(b) { return SOFT_MATERIAL && !!b.surfaceSlime; }
+
+  function softMaterialSolve(b, h) {
+    jelloResetLambdas(b);
+    var alpha = SOFT_MATERIAL_COMPLIANCE / (h * h);
+    for (var s = 0; s < b.springN; s++) {
+      var a = b.sA[s], c = b.sB[s], rest = b.sRest[s];
+      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+      var length = Math.sqrt(dx * dx + dy * dy);
+      if (!(length > 1e-9 && rest > 1e-9)) continue;
+      var strain = (length - rest) / rest;
+      var hard = SOFT_MATERIAL_HARDEN * strain * strain;
+      var root = Math.sqrt(1 + hard);
+      var C = (length - rest) * root;
+      var gradient = (1 + 2 * hard) / root;
+      // C encodes quadratic plus quartic strain energy. Its derivative must
+      // appear in both the effective mass and the applied correction.
+      var dl = (-C - alpha * b.sLambda[s]) / (2 * gradient * gradient + alpha);
+      b.sLambda[s] += dl;
+      var move = dl * gradient / length, mx = dx * move, my = dy * move;
+      b.px[a] -= mx; b.py[a] -= my;
+      b.px[c] += mx; b.py[c] += my;
+    }
+    softMaterialVolume(b, h);
+  }
+
+  function softMaterialVolume(b, h) {
+    var n = b.ringN;
+    if (!(n >= 3 && b.restArea > 0)) return;
+    if (!b._materialGX || b._materialGX.length !== n) {
+      b._materialGX = new Float64Array(n); b._materialGY = new Float64Array(n);
+    }
+    var gx = b._materialGX, gy = b._materialGY;
+    var x0 = b.px[b.ring[0]], y0 = b.py[b.ring[0]], area = 0, den = 0;
+    var sign = b.ringSign;
+    for (var k = 0; k < n; k++) {
+      var a = b.ring[k], prev = b.ring[(k + n - 1) % n], next = b.ring[(k + 1) % n];
+      area += (b.px[a] - x0) * (b.py[next] - y0) - (b.py[a] - y0) * (b.px[next] - x0);
+      gx[k] = 0.5 * (b.py[next] - b.py[prev]) * sign;
+      gy[k] = 0.5 * (b.px[prev] - b.px[next]) * sign;
+      den += gx[k] * gx[k] + gy[k] * gy[k];
+    }
+    if (!(den > 1e-9)) return;
+    var alpha = SOFT_MATERIAL_VOLUME / (h * h);
+    var C = sign * area * 0.5 - b.restArea * JELLO_INFLATE;
+    var dl = (-C - alpha * b.volLambda) / (den + alpha);
+    b.volLambda += dl;
+    // Freeze every gradient before moving any node. Reading changed neighbors
+    // during this pass would turn internal pressure into a net force and torque.
+    for (k = 0; k < n; k++) {
+      var p = b.ring[k];
+      b.px[p] += dl * gx[k]; b.py[p] += dl * gy[k];
+    }
+  }
+
+  function softMaterialDamp(b, h) {
+    var fraction = 1 - Math.exp(-SOFT_MATERIAL_DAMP * h / JELLO_TIMESCALE);
+    for (var s = 0; s < b.springN; s++) {
+      var a = b.sA[s], c = b.sB[s];
+      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+      var length = Math.sqrt(dx * dx + dy * dy);
+      if (!(length > 1e-9)) continue;
+      var nx = dx / length, ny = dy / length;
+      var vx = (b.px[c] - b.ox[c]) - (b.px[a] - b.ox[a]);
+      var vy = (b.py[c] - b.oy[c]) - (b.py[a] - b.oy[a]);
+      var impulse = 0.5 * fraction * (vx * nx + vy * ny);
+      // Equal/opposite central impulses dissipate edge strain rate while
+      // preserving linear and angular momentum, including rigid spin.
+      b.ox[a] -= nx * impulse; b.oy[a] -= ny * impulse;
+      b.ox[c] += nx * impulse; b.oy[c] += ny * impulse;
+    }
+  }
+
+  function softMaterialAreaContact(b, a, c, d, inverse) {
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    // Use the corrected triangle, not the normal before its positional repair.
+    // An active area barrier stops compression velocity without a rebound kick.
+    var ax = (py[c] - py[d]) * inverse, ay = (px[d] - px[c]) * inverse;
+    var cx = (py[d] - py[a]) * inverse, cy = (px[a] - px[d]) * inverse;
+    var dx = (py[a] - py[c]) * inverse, dy = (px[c] - px[a]) * inverse;
+    if (jelloWorldSolidAt(px[a] + Math.sign(ax) * 0.7, py[a])) ax = 0;
+    if (jelloWorldSolidAt(px[a], py[a] + Math.sign(ay) * 0.7)) ay = 0;
+    if (jelloWorldSolidAt(px[c] + Math.sign(cx) * 0.7, py[c])) cx = 0;
+    if (jelloWorldSolidAt(px[c], py[c] + Math.sign(cy) * 0.7)) cy = 0;
+    if (jelloWorldSolidAt(px[d] + Math.sign(dx) * 0.7, py[d])) dx = 0;
+    if (jelloWorldSolidAt(px[d], py[d] + Math.sign(dy) * 0.7)) dy = 0;
+    var den = ax * ax + ay * ay + cx * cx + cy * cy + dx * dx + dy * dy;
+    var inward = ax * (px[a] - ox[a]) + ay * (py[a] - oy[a]) +
+      cx * (px[c] - ox[c]) + cy * (py[c] - oy[c]) +
+      dx * (px[d] - ox[d]) + dy * (py[d] - oy[d]);
+    if (!(den > 1e-12 && inward < 0)) return;
+    var impulse = -inward / den;
+    ox[a] -= ax * impulse; oy[a] -= ay * impulse;
+    ox[c] -= cx * impulse; oy[c] -= cy * impulse;
+    ox[d] -= dx * impulse; oy[d] -= dy * impulse;
+  }
   /* ---- Local skin/terrain contacts, opt-in (?softterrain=1) ---- */
-  var SOFT_TERRAIN = new URLSearchParams(location.search).get('softterrain') === '1';
+  var SOFT_TERRAIN = new URLSearchParams(location.search).get('softterrain') === '1' ||
+    (softPlayEnabled && softPlayMaterialTrial);
   var SOFT_TERRAIN_SKIN = 0.02;
   var softTerrainReport = { points: 0, edges: 0, sweeps: 0, corners: 0 };
 

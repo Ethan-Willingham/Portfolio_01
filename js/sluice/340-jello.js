@@ -4244,6 +4244,7 @@
   // once-per-frame pass that fights the solver. h is the substep dt (JELLO_H/K).
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
+    var materialTrial = typeof softMaterialBody === 'function' && softMaterialBody(b);
     if (typeof softContactSnapshot === 'function') softContactSnapshot(b);
     var resilienceGuard = jelloResilienceStepBegin(b);
     jelloActuateBody(b, h);
@@ -4253,7 +4254,14 @@
     if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
     if (b.surfaceSlime) surfaceSlimeAdhesionStep(b, h);
-    if (m === 'pbd') {
+    if (materialTrial) {
+      softMaterialSolve(b, h);
+      jelloStrainLimit(b);
+      jelloLimitOrientation(b);
+      for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
+      jelloCollideRingEdges(b);
+      softMaterialDamp(b, h);
+    } else if (m === 'pbd') {
       for (var it = 0; it < JELLO_ITERS; it++) {
         jelloSolveSprings(b);
         jelloPressure(b);
@@ -4273,14 +4281,14 @@
       jelloCollideRingEdges(b);
       if (JELLO_INT_DAMP > 0) jelloDampInternal(b, h);   // wobble decay (internal modes only)
     }
-    if (!b._grabbed && b._recoverT > 0) {
+    if (!materialTrial && !b._grabbed && b._recoverT > 0) {
       jelloRecoverShape(b);
       jelloStrainLimit(b);
       jelloLimitOrientation(b);
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
     }
-    if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (!materialTrial && JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
     if (b.surfaceSlime && !b._grabbed) {
       for (var skinPass = 0; skinPass < 3; skinPass++) {
         if (!jelloLimitOrientation(b)) break;
@@ -4288,7 +4296,7 @@
           if (jelloWorldSolidAt(b.px[ci], b.py[ci])) jelloCollidePointWorld(b, ci, h);
         }
       }
-      surfaceSlimeDampMotion(b, h);
+      if (!materialTrial) surfaceSlimeDampMotion(b, h);
     }
     if (typeof softTerrainSolve === 'function') softTerrainSolve(b, h);
     if (resilienceGuard) jelloRejectTerrainInside(b);
@@ -4400,7 +4408,8 @@
       // A terrain-masked gradient carries an external contact reaction. The
       // terrain trial includes that displacement in velocity; co-moving its
       // history would leave momentum aimed into a wall while geometry stops.
-      var keepHistory = den < unconstrainedDen && typeof softTerrainBody === 'function' && softTerrainBody(b);
+      var materialContact = typeof softMaterialBody === 'function' && softMaterialBody(b);
+      var keepHistory = !materialContact && den < unconstrainedDen && typeof softTerrainBody === 'function' && softTerrainBody(b);
       px[i0] += c0x; py[i0] += c0y;
       px[i1] += c1x; py[i1] += c1y;
       px[i2] += c2x; py[i2] += c2y;
@@ -4409,6 +4418,7 @@
         ox[i1] += c1x; oy[i1] += c1y;
         ox[i2] += c2x; oy[i2] += c2y;
       }
+      if (materialContact) softMaterialAreaContact(b, i0, i1, i2, detInv);
       fixed++;
     }
     b._orientFixes = fixed;

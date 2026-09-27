@@ -236,12 +236,80 @@ under pressure, with no frozen or tangentially stuck frames in these fixtures.
 The final run used native CPU canvas rendering with the existing timer-RAF
 test hook and actual loading gates; GPU rendering was not validated in that run.
 
+## Elastic material comparison (v28.116)
+
+Open `grand-motherload.html?softplay=1&softmaterial=1`. **New material** and
+**Prior material** use the same contact, handling, and terrain experiments.
+The arrangements are **Drop and settle**, **Lift and throw**, and **Ledge and
+wall**. Repeat restores the arrangement, and the drop starts from the same
+unstrained body. Saves are disabled. The ordinary game and earlier comparisons
+keep their existing materials. Hard circular visitors are unchanged.
+
+The trial keeps the resident's 37-node spring web. The 78 overlapping health
+triangles remain orientation probes; they are not a valid FEM integration mesh.
+Their summed rest area is about 1.46 times the enclosed body area. Converting
+them directly into elastic volume elements would count material more than once.
+
+Each spring stores quadratic plus quartic strain energy. It yields softly near
+rest and gains resistance continuously with stretch or compression. Its XPBD
+constraint uses the derivative of that energy in both the effective mass and
+the correction. No interaction state changes its compliance. The boundary area
+constraint keeps one fixed rest volume and computes all gradients before
+moving any node. This avoids the artificial net force and torque produced by
+rereading already-moved neighbors during the prior pressure pass.
+
+Internal damping applies equal and opposite impulses along each spring. It
+reduces deformation energy while preserving linear and angular momentum.
+It replaces the old neighbor-averaged XSPH damping and the velocity pull toward
+a moving muscle pose. The material also omits global shape matching and timed
+shape recovery. Its visible relaxation comes from elastic forces and damping.
+Existing contact, strain limits, orientation guards, and exceptional inversion
+recovery remain safeguards.
+The active orientation barrier also removes inward area velocity using the
+corrected triangle's gradient. Previously a positional repair could preserve
+invisible compression velocity and repeatedly strike the same barrier. The
+new impulse dissipates that motion locally; terrain can supply an external
+reaction when the gradient is blocked by a wall or floor.
+
+Initial trial coefficients are spring compliance 0.002, area compliance 0.002,
+quartic strain factor 4, and edge damping 8 per real second. These are game-unit
+coefficients for the existing equal-mass web, not calibrated physical units.
+
+The existing brain, muscle rest-length waves, and terrain adhesion remain
+active. Removing the additional global pose pull changes how those muscles
+move the body; this stage must therefore check self-directed movement as well
+as passive manipulation. The later intention/movement stage remains separate.
+World gravity, air drag, rig contact, pointer handling, and terrain friction
+are held constant in the comparison.
+
+`tools/test-soft-material.mjs` compares matched drops, off-center pulls,
+wall pressure, ledge release, and active movement. It measures area, deformation,
+motion, release continuity, topology, and terrain separation. Isolated checks
+verify internal damping and pressure do not manufacture momentum, and that
+identical material states receive identical elastic corrections regardless of
+behavioral flags. These checks admit an experiment to playtesting; they do not
+establish that the owner prefers its feel.
+
+Verification passed 36 matched physics cases at 30, 60, and 144 Hz and 12 real
+mouse/touch interactions. Every new-material case retained positive health
+triangle orientation, legal skin/terrain geometry, and zero rollback. Area
+stayed between 0.957 and 1.002 of its target in these fixtures. Release preserved
+node positions and histories exactly. Internal damping preserved translation
+and spin; isolated pressure and area-contact checks passed their momentum and
+energy checks. Self-directed movement remained active. Repeat, cancellation,
+mobile controls, and ordinary defaults passed. The earlier terrain comparison,
+hard-circle tests, and shared toy boot also passed regression checks.
+
+Browser validation used native CPU canvas rendering with the existing
+timer-RAF test hook and actual loading gates. It does not establish GPU
+performance or identical trajectories across display rates.
+
 ## Remaining development sequence
 
-After terrain contact earns its place, compare one mechanism at a time:
+Continue comparing one mechanism at a time:
 
-1. Material response: compression, stretch, surface tension, and internal
-   motion settling, with the existing mesh assessed before structural changes.
+1. Playtest the elastic material response: compression, stretch, and settling.
+   Assess the current comparison before promoting it or changing the mesh.
 2. Soft-body pairs and small piles: load transfer, local deformation, sliding,
    separation, and removal of support.
 3. Movement driven by intention: destinations and muscle effort remain active,
