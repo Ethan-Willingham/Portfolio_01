@@ -667,6 +667,12 @@
       affine: mk('liquid.affine', n * 16),
       aux:    mk('liquid.aux',    n * 16),
       flag:   mk('liquid.flag',   n * 4),
+      snowFallbackCount: mk('snow.fallbackCount', 16),
+      snowFallbackIndices: mk('snow.fallbackIndices', n * 4),
+      snowGuestCount: mk('snow.guestCount',16),
+      snowGuestIndices: mk('snow.guestIndices',n*4),
+      snowGuestDispatch: dev.createBuffer({label:'snow.guestDispatch',size:16,usage:GPUBufferUsage.INDIRECT|GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC}),
+      snowFallbackDispatch: dev.createBuffer({label:'snow.fallbackDispatch',size:16,usage:GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC}),
       /* ---- Stage 2 — spatial grid (count-sort) ----
        * cellCount  : atomic<u32>/cell — particles landing in each cell.
        * cellStart  : u32/cell — exclusive prefix-sum of cellCount; the
@@ -866,6 +872,7 @@
   }
 
   function uploadParticles(instance, stripFrozen) {
+    if(instance.readbackPending)instance.readbackOpsInvalid=true;
     var L = instance.liquid;
     if (!L || !instance.buffersReady) return 0;
     var count = L.getCount() | 0;
@@ -7029,7 +7036,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   velocity = projected.zw;
   var x=p.x;var y=p.y;var vx=velocity.x;var vy=velocity.y;let r=radius;
 ` + WGSL_COLLIDE.slice(WGSL_COLLIDE.indexOf('  // Preserve the terrain-resolved state.'),
-  WGSL_COLLIDE.indexOf('  // World-bounds clamp')) + /* wgsl */ `
+  WGSL_COLLIDE.indexOf('  // World-bounds clamp'))
+  .replace('if (gdep > 1.5) {', 'if (gdep > r * 0.1) {') + /* wgsl */ `
   p=vec2f(x,y);velocity=vec2f(vx,vy);
   let right = gp.worldCols * gp.worldTile - radius;
   let bottom = gp.worldRows * gp.worldTile - radius;
@@ -7042,6 +7050,272 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   pos[i] = bowlProject(vec4<f32>(p, velocity),radius);
   aux[i] = vec4<f32>(aux[i].x, support, p);
   flag[i] = fl & ~0x00ffff10u;
+}
+`;
+
+  // Keep the common scalar primary and final response text identical to the
+  // existing snow solver. Only failed primary exits enter cooperative work.
+  var snowUnionStart = WGSL_COLLIDE.indexOf('  // Preserve the terrain-resolved state.');
+  var snowSearchStart = WGSL_COLLIDE.indexOf('    if (!canProject) {', snowUnionStart);
+  var snowResponseStart = WGSL_COLLIDE.indexOf('    // Skin dead-band:', snowSearchStart);
+  var snowUnionEnd = WGSL_COLLIDE.indexOf('  // World-bounds clamp', snowResponseStart);
+  var WGSL_SNOW_PRIMARY = WGSL_COLLIDE.slice(snowUnionStart, snowSearchStart);
+  var WGSL_SNOW_SEARCH = WGSL_COLLIDE.slice(snowSearchStart, snowResponseStart);
+  var WGSL_SNOW_RESPONSE = WGSL_COLLIDE.slice(snowResponseStart, snowUnionEnd)
+    .replace('if (gdep > 1.5) {', 'if (gdep > r * 0.1) {');
+  var WGSL_SNOW_FINALIZE = WGSL_SNOW_COLLIDE.slice(WGSL_SNOW_COLLIDE.indexOf('  p=vec2f(x,y);velocity=vec2f(vx,vy);'), WGSL_SNOW_COLLIDE.lastIndexOf('}'));
+  var WGSL_SNOW_COOPERATIVE = /* wgsl */ `
+@group(0) @binding(7) var<storage, read_write> snowFallbackCount : array<atomic<u32>>;
+@group(0) @binding(8) var<storage, read_write> snowFallbackIndices : array<u32>;
+@group(0) @binding(9) var<storage, read_write> snowDispatchArgs : array<atomic<u32>>;
+@group(0) @binding(10) var<storage, read_write> snowGuestCount : array<atomic<u32>>;
+@group(0) @binding(11) var<storage, read_write> snowGuestIndices : array<u32>;
+@group(0) @binding(12) var<storage, read_write> snowGuestArgs : array<atomic<u32>>;
+
+@compute @workgroup_size(1)
+fn resetSnowFallback() {
+  atomicStore(&snowFallbackCount[0], 0u);
+  atomicStore(&snowFallbackCount[1], 0u);
+  atomicStore(&snowFallbackCount[2], 0u);
+  atomicStore(&snowFallbackCount[3], 1u);
+  atomicStore(&snowDispatchArgs[0], 0u);
+  atomicStore(&snowDispatchArgs[1], 0u);
+  atomicStore(&snowDispatchArgs[2], 1u);
+  atomicStore(&snowGuestCount[0], 0u);
+  atomicStore(&snowGuestArgs[0], 0u);
+  atomicStore(&snowGuestArgs[1], 1u);
+  atomicStore(&snowGuestArgs[2], 1u);
+}
+
+struct SnowExitCandidate {
+  face : vec4<f32>,
+  distance2 : f32,
+  valid : u32,
+};
+struct SnowFallbackWork {
+  origin : vec4<f32>,
+  face : vec4<f32>,
+  projection : vec4<f32>,
+  distance2 : f32,
+  depth : f32,
+  hasInside : u32,
+  canProject : u32,
+  pendingCount : u32,
+};
+var<workgroup> snowFallbackWork : SnowFallbackWork;
+var<workgroup> snowExitCandidates : array<SnowExitCandidate, 256>;
+
+// Each lane validates one candidate. The original order-sensitive selection
+// runs in lane zero after all expensive containment and clearance work finishes.
+fn snowExitCandidate(lane : u32, midpoint : bool) -> SnowExitCandidate {
+  let invalid = SnowExitCandidate(vec4<f32>(0.0), 0.0, 0u);
+  if (lane >= ${GS_MAX_GUESTS * GS_RING}u) { return invalid; }
+  let gi = i32(lane) / ${GS_RING};
+  let ge = i32(lane) % ${GS_RING};
+  let x = snowFallbackWork.origin.x;
+  let y = snowFallbackWork.origin.y;
+  if (!guestContainsPoint(gi, x, y)) { return invalid; }
+  let guestMeta = gameP.guests[gi * 2 + 1];
+  let gn = i32(guestMeta.y);
+  if (ge >= gn) { return invalid; }
+  let previous = select(ge - 1, gn - 1, ge == 0);
+  let pa = gameP.guestPts[gi * ${GS_RING} + ge];
+  let pb = gameP.guestPts[gi * ${GS_RING} + previous];
+  var qx : f32;
+  var qy : f32;
+  var fvx : f32;
+  var fvy : f32;
+  if (midpoint) {
+    qx = (pa.x + pb.x) * 0.5;
+    qy = (pa.y + pb.y) * 0.5;
+    fvx = (pa.z + pb.z) * 0.5;
+    fvy = (pa.w + pb.w) * 0.5;
+  } else {
+    let ex = pb.x - pa.x;
+    let ey = pb.y - pa.y;
+    let el2 = max(ex * ex + ey * ey, 1e-6);
+    let et = clamp(((x - pa.x) * ex + (y - pa.y) * ey) / el2, 0.0, 1.0);
+    qx = pa.x + ex * et;
+    qy = pa.y + ey * et;
+    fvx = pa.z + (pb.z - pa.z) * et;
+    fvy = pa.w + (pb.w - pa.w) * et;
+  }
+  let ddx = qx - x;
+  let ddy = qy - y;
+  let dd2 = ddx * ddx + ddy * ddy;
+  if (dd2 < 1e-6) { return invalid; }
+  let dl = sqrt(dd2);
+  let tx = qx + ddx / dl * 0.5;
+  let ty = qy + ddy / dl * 0.5;
+  let r = 2.5 / sqrt(3.2) * 0.5;
+  if (guestAnyContainsPoint(tx, ty) || !guestExitClear(x, y, tx, ty, r)) { return invalid; }
+  return SnowExitCandidate(vec4<f32>(qx,qy,fvx,fvy), dd2, 1u);
+}
+
+fn snowAcceptExit(distance2 : f32, face : vec4<f32>) {
+  snowFallbackWork.distance2 = distance2;
+  snowFallbackWork.face = face;
+  let depth = sqrt(distance2);
+  let nx = (face.x - snowFallbackWork.origin.x) / depth;
+  let ny = (face.y - snowFallbackWork.origin.y) / depth;
+  snowFallbackWork.depth = depth;
+  snowFallbackWork.projection = vec4<f32>(nx,ny,face.x + nx * 0.5,face.y + ny * 0.5);
+  snowFallbackWork.canProject = 1u;
+}
+`;
+  WGSL_SNOW_COLLIDE = WGSL_SNOW_COOPERATIVE + WGSL_SNOW_COLLIDE.replace(WGSL_SNOW_SEARCH, /* wgsl */ `
+    if (!canProject) {
+      // Defer final bounds, bowl and flag writes until the rare solver finishes.
+      pos[i] = vec4<f32>(x,y,vx,vy);
+      aux[i] = vec4<f32>(aux[i].x,support,x,y);
+      let pending = atomicAdd(&snowFallbackCount[0], 1u);
+      snowFallbackIndices[pending] = i;
+      if (pending < 256u) { atomicAdd(&snowDispatchArgs[0], 1u); }
+      if (pending % 256u == 0u) { atomicAdd(&snowDispatchArgs[1], 1u); }
+      return;
+    }
+
+`) + /* wgsl */ `
+@compute @workgroup_size(256)
+fn snowFallback(@builtin(workgroup_id) group : vec3<u32>, @builtin(local_invocation_id) local : vec3<u32>) {
+  let lane = local.x;
+  // Two-dimensional arguments cover the full particle capacity without
+  // exceeding the device's workgroup-count limit. The final row can be short.
+  if (lane == 0u) { snowFallbackWork.pendingCount = atomicLoad(&snowFallbackCount[0]); }
+  let pendingCount = workgroupUniformLoad(&snowFallbackWork.pendingCount);
+  let pendingIndex = group.y * 256u + group.x;
+  if (pendingIndex >= pendingCount) { return; }
+  let i = snowFallbackIndices[pendingIndex];
+  if (lane == 0u) {
+    let state = pos[i];
+    snowFallbackWork.origin = state;
+    snowFallbackWork.hasInside = 0u;
+    snowFallbackWork.canProject = 1u;
+    let fl = flag[i];
+    var x=state.x;var y=state.y;var vx=state.z;var vy=state.w;
+    let r = 2.5 / sqrt(3.2) * 0.5;
+` + WGSL_SNOW_PRIMARY + /* wgsl */ `
+      snowFallbackWork.face = vec4<f32>(gPX,gPY,gFVX,gFVY);
+      snowFallbackWork.projection = vec4<f32>(gnx,gny,gtx,gty);
+      snowFallbackWork.distance2 = gD2;
+      snowFallbackWork.depth = gdep;
+      snowFallbackWork.hasInside = 1u;
+      snowFallbackWork.canProject = select(0u,1u,canProject);
+    }
+  }
+  workgroupBarrier();
+  snowExitCandidates[lane] = SnowExitCandidate(vec4<f32>(0.0),0.0,0u);
+  if (snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
+    snowExitCandidates[lane] = snowExitCandidate(lane, false);
+  }
+  workgroupBarrier();
+  if (lane == 0u && snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
+    var uD2 : f32 = 1e9;
+    var uPX : f32 = snowFallbackWork.origin.x;
+    var uPY : f32 = snowFallbackWork.origin.y;
+    var uFVX : f32 = 0.0;
+    var uFVY : f32 = 0.0;
+    for (var candidate : u32 = 0u; candidate < ${GS_MAX_GUESTS * GS_RING}u; candidate = candidate + 1u) {
+      let exit = snowExitCandidates[candidate];
+      if (exit.valid != 0u && guestCandidateWins(exit.distance2,exit.face.x,exit.face.y,exit.face.z,exit.face.w,uD2,uPX,uPY,uFVX,uFVY)) {
+        uD2=exit.distance2;uPX=exit.face.x;uPY=exit.face.y;uFVX=exit.face.z;uFVY=exit.face.w;
+      }
+    }
+    if (uD2 < 1e9) { snowAcceptExit(uD2,vec4<f32>(uPX,uPY,uFVX,uFVY)); }
+  }
+  workgroupBarrier();
+  snowExitCandidates[lane] = SnowExitCandidate(vec4<f32>(0.0),0.0,0u);
+  if (snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
+    snowExitCandidates[lane] = snowExitCandidate(lane, true);
+  }
+  workgroupBarrier();
+  if (lane == 0u) {
+    if (snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
+      var oD2 : f32 = 1e9;
+      var gPX = snowFallbackWork.face.x;
+      var gPY = snowFallbackWork.face.y;
+      var gFVX = snowFallbackWork.face.z;
+      var gFVY = snowFallbackWork.face.w;
+      for (var candidate : u32 = 0u; candidate < ${GS_MAX_GUESTS * GS_RING}u; candidate = candidate + 1u) {
+        let exit = snowExitCandidates[candidate];
+        if (exit.valid != 0u && guestCandidateWins(exit.distance2,exit.face.x,exit.face.y,exit.face.z,exit.face.w,oD2,gPX,gPY,gFVX,gFVY)) {
+          oD2=exit.distance2;gPX=exit.face.x;gPY=exit.face.y;gFVX=exit.face.z;gFVY=exit.face.w;
+        }
+      }
+      if (oD2 < 1e9) { snowAcceptExit(oD2,vec4<f32>(gPX,gPY,gFVX,gFVY)); }
+    }
+    let fl = flag[i];
+    let radius = 2.5 / sqrt(3.2) * 0.5;
+    let r = radius;
+    var p = snowFallbackWork.origin.xy;
+    var velocity = snowFallbackWork.origin.zw;
+    var support = aux[i].y;
+    var x=p.x;var y=p.y;var vx=velocity.x;var vy=velocity.y;
+    let terrainX=x;let terrainY=y;let terrainVX=vx;let terrainVY=vy;
+    var guestProjected = false;
+    if (snowFallbackWork.hasInside != 0u) {
+      let gdep = snowFallbackWork.depth;
+      let gnx = snowFallbackWork.projection.x;
+      let gny = snowFallbackWork.projection.y;
+      let gtx = snowFallbackWork.projection.z;
+      let gty = snowFallbackWork.projection.w;
+      let gFVX = snowFallbackWork.face.z;
+      let gFVY = snowFallbackWork.face.w;
+      let canProject = snowFallbackWork.canProject != 0u;
+` + WGSL_SNOW_RESPONSE + WGSL_SNOW_FINALIZE + /* wgsl */ `
+  }
+}
+`;
+
+  // Snow may retain legal shallow overlap only on a union exterior face.
+  // A grain can belong to one ring while that ring's nearest face is hidden
+  // inside a neighboring ring, so count alone cannot certify the surface.
+  WGSL_SNOW_COLLIDE = WGSL_SNOW_COLLIDE
+    .replaceAll('  var gD2 : f32 = 1e9;', '  var gD2 : f32 = 1e9;\n  var gOwner : i32 = -1;')
+    .replaceAll('      gD2 = ringD2;', '      gD2 = ringD2;\n      gOwner = gi;')
+    .replaceAll('  if (guestInsideCount > 0) {', `
+  var guestLegalSlop = guestInsideCount == 1 && sqrt(gD2) <= r * 0.1;
+  if (guestLegalSlop) {
+    for (var other : i32 = 0; other < ${GS_MAX_GUESTS}; other = other + 1) {
+      if (other != gOwner && guestContainsPoint(other, gPX, gPY)) {
+        guestLegalSlop = false;
+        break;
+      }
+    }
+  }
+  if (guestInsideCount > 0 && !guestLegalSlop) {`);
+
+  // Keep the common terrain sweep separate from polygon work. Only grains
+  // inside a guest's existing padded bounds enter the compact primary queue.
+  var snowTerrainUnionStart = WGSL_SNOW_COLLIDE.indexOf('  // Preserve the terrain-resolved state.');
+  var snowTerrainFinalStart = WGSL_SNOW_COLLIDE.indexOf('  p=vec2f(x,y);velocity=vec2f(vx,vy);',snowTerrainUnionStart);
+  var snowCompactUnion = WGSL_SNOW_COLLIDE.slice(snowTerrainUnionStart,snowTerrainFinalStart);
+  var snowNoGuestTail = snowCompactUnion.slice(snowCompactUnion.indexOf('  // v26.12'));
+  var snowNoGuestState = '  let terrainX=x;let terrainY=y;let terrainVX=vx;let terrainVY=vy;var guestProjected=false;\n';
+  var snowTerrainQueue = /* wgsl */ `
+  var nearGuest = false;
+  for (var gi:i32=0;gi<${GS_MAX_GUESTS};gi=gi+1) {
+    let a=gameP.guests[gi*2];let b=gameP.guests[gi*2+1];
+    if (b.x>=0.5 && abs(x-a.x)<=a.z+4.0 && abs(y-a.y)<=a.w+4.0) { nearGuest=true;break; }
+  }
+  if (nearGuest) {
+    pos[i]=vec4<f32>(x,y,vx,vy);
+    aux[i]=vec4<f32>(aux[i].x,support,x,y);
+    let pending=atomicAdd(&snowGuestCount[0],1u);
+    snowGuestIndices[pending]=i;
+    atomicMax(&snowGuestArgs[0],pending/32u+1u);
+    return;
+  }
+`;
+  WGSL_SNOW_COLLIDE = WGSL_SNOW_COLLIDE.slice(0,snowTerrainUnionStart) + snowTerrainQueue + snowNoGuestState + snowNoGuestTail + WGSL_SNOW_COLLIDE.slice(snowTerrainFinalStart) + /* wgsl */ `
+@compute @workgroup_size(32)
+fn snowGuestPrimary(@builtin(global_invocation_id) gid:vec3<u32>) {
+  if (gid.x>=atomicLoad(&snowGuestCount[0])) { return; }
+  let i=snowGuestIndices[gid.x];let fl=flag[i];
+  let state=pos[i];var p=state.xy;var velocity=state.zw;var support=aux[i].y;
+  let radius=2.5/sqrt(3.2)*0.5;let r=radius;
+  var x=p.x;var y=p.y;var vx=velocity.x;var vy=velocity.y;
+` + snowCompactUnion + WGSL_SNOW_FINALIZE + /* wgsl */ `
 }
 `;
 
@@ -8936,9 +9210,7 @@ struct P2GParams {
       return;
     }
     var dev = instance.device;
-    var bgl = dev.createBindGroupLayout({
-      label: 'liquid.collideBGL',
-      entries: [
+    var bglEntries = [
         { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
@@ -8947,9 +9219,11 @@ struct P2GParams {
         // Stage 8 — the GameParams uniform (binding 5) for the miner test.
         { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
         // v14.26 — the SimParams uniform (binding 6) for live terrain bounce.
-        { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
-      ]
-    });
+        { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+        { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
+      ];
+    var bgl = dev.createBindGroupLayout({label:'liquid.collideBGL',entries:bglEntries});
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
     instance.collidePipe = {
       collide: dev.createComputePipeline({
@@ -8970,9 +9244,19 @@ struct P2GParams {
         }
       })
     };
-    instance.collidePipe.snow = dev.createComputePipeline({label:'snow.collide',layout:layout,compute:{
-      module:dev.createShaderModule({code:WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_SNOW_COLLIDE}),
-      entryPoint:'main'}});
+    var snowEntries = bglEntries.slice();
+    snowEntries.push({binding:9,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
+    snowEntries.push({binding:10,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}},{binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
+    var guestBGL = dev.createBindGroupLayout({label:'snow.guestBGL',entries:snowEntries});
+    var guestLayout = dev.createPipelineLayout({bindGroupLayouts:[guestBGL]});
+    var terrainEntries = snowEntries.concat([{binding:12,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}}]);
+    var snowBGL = dev.createBindGroupLayout({label:'snow.primaryBGL',entries:terrainEntries});
+    var snowLayout = dev.createPipelineLayout({bindGroupLayouts:[snowBGL]});
+    var snowModule = dev.createShaderModule({code:WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_SNOW_COLLIDE});
+    instance.collidePipe.snow = dev.createComputePipeline({label:'snow.collide',layout:snowLayout,compute:{module:snowModule,entryPoint:'main'}});
+    instance.collidePipe.snowResetFallback = dev.createComputePipeline({label:'snow.resetFallback',layout:snowLayout,compute:{module:snowModule,entryPoint:'resetSnowFallback'}});
+    instance.collidePipe.snowFallback = dev.createComputePipeline({label:'snow.fallback',layout:layout,compute:{module:snowModule,entryPoint:'snowFallback'}});
+    instance.collidePipe.snowGuestPrimary = dev.createComputePipeline({label:'snow.guestPrimary',layout:guestLayout,compute:{module:snowModule,entryPoint:'snowGuestPrimary'}});
     instance.collideBGs = [];
     for (var cbs = 0; cbs < GS_FRAME_SLOTS; cbs++) {
       instance.collideBGs.push(dev.createBindGroup({
@@ -8985,10 +9269,47 @@ struct P2GParams {
           { binding: 3, resource: { buffer: instance.buf.flag } },
           { binding: 4, resource: { buffer: instance.buf.terrainMask } },
           { binding: 5, resource: { buffer: instance.gameParamsBufs[cbs] } },
-          { binding: 6, resource: { buffer: instance.simParamsBuf } }
+          { binding: 6, resource: { buffer: instance.simParamsBuf } },
+          { binding: 7, resource: { buffer: instance.buf.snowFallbackCount } },
+          { binding: 8, resource: { buffer: instance.buf.snowFallbackIndices } }
         ]
       }));
     }
+    instance.snowPrimaryBGs = instance.collideBGs.map(function(bg,slot){
+      var entries = [
+        {binding:0,resource:{buffer:instance.paramsBuf}},
+        {binding:1,resource:{buffer:instance.buf.pos}},
+        {binding:2,resource:{buffer:instance.buf.aux}},
+        {binding:3,resource:{buffer:instance.buf.flag}},
+        {binding:4,resource:{buffer:instance.buf.terrainMask}},
+        {binding:5,resource:{buffer:instance.gameParamsBufs[slot]}},
+        {binding:6,resource:{buffer:instance.simParamsBuf}},
+        {binding:7,resource:{buffer:instance.buf.snowFallbackCount}},
+        {binding:8,resource:{buffer:instance.buf.snowFallbackIndices}},
+        {binding:9,resource:{buffer:instance.buf.snowFallbackDispatch}},
+        {binding:10,resource:{buffer:instance.buf.snowGuestCount}},
+        {binding:11,resource:{buffer:instance.buf.snowGuestIndices}},
+        {binding:12,resource:{buffer:instance.buf.snowGuestDispatch}}
+      ];
+      return dev.createBindGroup({label:'snow.primaryBG.'+slot,layout:snowBGL,entries:entries});
+    });
+    instance.snowGuestBGs = instance.collideBGs.map(function(bg,slot){
+      var entries = [
+        {binding:0,resource:{buffer:instance.paramsBuf}},
+        {binding:1,resource:{buffer:instance.buf.pos}},
+        {binding:2,resource:{buffer:instance.buf.aux}},
+        {binding:3,resource:{buffer:instance.buf.flag}},
+        {binding:4,resource:{buffer:instance.buf.terrainMask}},
+        {binding:5,resource:{buffer:instance.gameParamsBufs[slot]}},
+        {binding:6,resource:{buffer:instance.simParamsBuf}},
+        {binding:7,resource:{buffer:instance.buf.snowFallbackCount}},
+        {binding:8,resource:{buffer:instance.buf.snowFallbackIndices}},
+        {binding:9,resource:{buffer:instance.buf.snowFallbackDispatch}},
+        {binding:10,resource:{buffer:instance.buf.snowGuestCount}},
+        {binding:11,resource:{buffer:instance.buf.snowGuestIndices}}
+      ];
+      return dev.createBindGroup({label:'snow.guestBG.'+slot,layout:guestBGL,entries:entries});
+    });
     instance.collideBG = instance.collideBGs[0];
     instance.collideReady = true;
 
@@ -9065,21 +9386,43 @@ struct P2GParams {
    * positions + stashed the pre-step position into aux.zw, and that
    * computeTerrainBounds() + uploadTerrainMask() have pushed the tile rect
    * + mask. Chained as the final kernel of the per-frame step. */
-  function runCollide(instance, substepSlot, snowOnly) {
-    if (!instance.collideReady) return;
+  function runCollide(instance, substepSlot, snowOnly, grainPass) {
+    if (!instance.collideReady) { if (grainPass) grainPass.end(); return; }
     var count = instance.uploadedCount | 0;
-    if (count <= 0) return;
+    if (count <= 0) { if (grainPass) grainPass.end(); return; }
     var dev = instance.device;
     // v14.26 — refresh the live physics uniform before the collide kernel
     // reads the per-fluid terrain restitution (sp.coll).
     writeSimParams(instance);
     var enc = liquidEncoder(instance, 'liquid.runCollide');
-    var cp = enc.beginComputePass({ label: 'liquid.collide' });
-    cp.setPipeline(snowOnly ? instance.collidePipe.snow : instance.collidePipe.collide);
+    var cp = grainPass || enc.beginComputePass({ label: 'liquid.collide' });
     var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
-    cp.setBindGroup(0, collideBG || instance.collideBG);
+    cp.setBindGroup(0, snowOnly ? instance.snowPrimaryBGs[substepSlot | 0] : collideBG || instance.collideBG);
+    if (snowOnly) {
+      cp.setPipeline(instance.collidePipe.snowResetFallback);
+      cp.dispatchWorkgroups(1);
+    }
+    cp.setPipeline(snowOnly ? instance.collidePipe.snow : instance.collidePipe.collide);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     cp.end();
+    if (snowOnly) {
+      // Arguments are written by the primary dispatch. This pass binds them
+      // only as indirect input, with no writable argument buffer in its group.
+      cp = enc.beginComputePass({label:'snow.guestPrimary'});
+      cp.setPipeline(instance.collidePipe.snowGuestPrimary);
+      cp.setBindGroup(0,instance.snowGuestBGs[substepSlot | 0]);
+      cp.dispatchWorkgroupsIndirect(instance.buf.snowGuestDispatch,0);
+      cp.end();
+      cp = enc.beginComputePass({label:'snow.fallback'});
+      cp.setPipeline(instance.collidePipe.snowFallback);
+      cp.setBindGroup(0, collideBG || instance.collideBG);
+      cp.dispatchWorkgroupsIndirect(instance.buf.snowFallbackDispatch, 0);
+      if(grainPass&&instance.snowTrackContactMotion){
+        cp.setPipeline(instance.snowGrainPipe.trackMotion);cp.setBindGroup(0,instance.snowGrainBG);
+        cp.dispatchWorkgroups(Math.ceil(count/256));
+      }
+      cp.end();
+    }
     liquidSubmit(instance, enc);
   }
 
@@ -9812,12 +10155,13 @@ struct P2GParams {
     instance.readbackPending = true;
     instance.readbackResolved = false;
     instance.readbackCount = count;
+    instance.readbackOps=[];instance.readbackOpsInvalid=false;
     instance.readbackCaptureTime = instance.simulationClock;
-    // v24.109 — stamp the mutation seq at kick time; applyReadback discards
-    // the map if ANY mutation landed in between (slot indices may have
-    // shuffled even when the count happens to match).
+    // Capture identity and retain later ordered mutations so append-heavy
+    // snowfall cannot starve the CPU mirror. Full uploads invalidate the map.
     instance.readbackSeq = (instance.liquid && typeof instance.liquid.getMutationSeq === 'function')
       ? instance.liquid.getMutationSeq() : 0;
+    instance.readbackOpsSeq=instance.readbackSeq;
     var maps = [
       rb.pos.mapAsync(GPUMapMode.READ,    0, count * 16),
       rb.affine.mapAsync(GPUMapMode.READ, 0, count * 16),
@@ -9835,13 +10179,29 @@ struct P2GParams {
     });
   }
 
-  // Apply a resolved readback into the CPU liquid arrays. Only applies
-  // when the live liquidCount still equals the count that was mapped — if
-  // a particle was added/removed out-of-band since the upload, the slot
-  // indices no longer line up, so the stale map is discarded (the CPU
-  // arrays keep their own slightly-older-but-coherent state; the next
-  // upload re-syncs the GPU). Always unmaps so the buffers are free for
-  // the next kickReadback.
+  // Remap a captured row set through ordered game mutations. Newly added
+  // rows stay CPU-authored; edits retain their authored lanes. A bad stream
+  // rejects the entire map before any mirror array is changed. This keeps
+  // append-heavy snowfall from starving the CPU mirror without restoring
+  // a captured row into a different particle's slot.
+  function readbackSlotMap(count,liveCount,ops,flags) {
+    var rows=new Int32Array(Math.max(count,liveCount)+ops.length);
+    var edits=new Uint8Array(rows.length),types=new Uint8Array(rows.length);
+    for(var i=0;i<count;i++){rows[i]=i;types[i]=(flags[i]&3)|((flags[i]>>4)&4);}
+    var n=count,k=0;
+    while(k<ops.length){
+      var tag=ops[k],slot=ops[k+1];
+      if(tag===1&&k+7<=ops.length){rows[n]=-1;edits[n]=0;types[n]=ops[k+5];n++;k+=7;}
+      else if(tag===2&&k+2<=ops.length&&slot>=0&&slot<n&&Number.isInteger(slot)){
+        n--;rows[slot]=rows[n];edits[slot]=edits[n];types[slot]=types[n];k+=2;
+      }else if((tag===3||tag===4)&&slot>=0&&slot<n&&Number.isInteger(slot)&&k+(tag===3?7:4)<=ops.length){
+        if(tag===4&&types[slot]===5&&ops[k+2]!==5)edits[slot]|=4;
+        edits[slot]|=tag===3?1:2;types[slot]=ops[k+(tag===3?5:2)];k+=tag===3?7:4;
+      }else return null;
+    }
+    return n===liveCount?{rows:rows,edits:edits}:null;
+  }
+
   function applyReadback(instance) {
     if (!instance.readbackPending) return;
     if (!instance.readbackResolved) return;   // still in flight — try later
@@ -9852,46 +10212,39 @@ struct P2GParams {
       var liveCount = (L && L.getCount) ? (L.getCount() | 0) : count;
       var liveSeq = (L && typeof L.getMutationSeq === 'function')
         ? L.getMutationSeq() : instance.readbackSeq;
-      if (L && L.arrays && count > 0 && liveCount === count &&
-          liveSeq === instance.readbackSeq) {
+      var ops=(instance.readbackOps||[]).slice();
+      var safe=!instance.readbackOpsInvalid;
+      if(liveSeq!==(instance.readbackOpsSeq===undefined?instance.readbackSeq:instance.readbackOpsSeq)){
+        var pending=L&&typeof L.peekOps==='function'?L.peekOps():null;
+        if(!pending||!pending.length||ops.length+pending.length>OPS_CAPACITY)safe=false;
+        else for(var po=0;po<pending.length;po++)ops.push(pending[po]);
+      }
+      var capturedFlags=new Uint32Array(rb.flag.getMappedRange(0,count*4));
+      var mapping=safe?readbackSlotMap(count,liveCount,ops,capturedFlags):null;
+      if (L && L.arrays && count > 0 && mapping) {
         var a = L.arrays;
         var pos    = new Float32Array(rb.pos.getMappedRange(0, count * 16));
         var affine = new Float32Array(rb.affine.getMappedRange(0, count * 16));
         var aux    = new Float32Array(rb.aux.getMappedRange(0, count * 16));
-        var flag   = new Uint32Array(rb.flag.getMappedRange(0, count * 4));
+        var flag = capturedFlags;
         // v14.4 — tally awake (neither sleeping[4] nor frozen[5]) particles
         // as we copy, so the GPU-path idle-skip in updateLiquids has a fresh
         // "is anything still moving" signal with no extra scan.
         var awake = 0, sleeping = 0, frozen = 0, fast = 0;
-        for (var i = 0; i < count; i++) {
-          var p = i * 4;
-          a.x[i]  = pos[p];     a.y[i]  = pos[p + 1];
-          a.vx[i] = pos[p + 2]; a.vy[i] = pos[p + 3];
-          a.g00[i] = affine[p];     a.g01[i] = affine[p + 1];
-          a.g10[i] = affine[p + 2]; a.g11[i] = affine[p + 3];
-          a.density[i]  = aux[p];
-          a.aeration[i] = aux[p + 1];
-          var f = flag[i];
-          // flag bitpack: type[0:1,6] origin[2:3] sleeping[4] frozen[5]
-          // restFrames[8:23]. type/origin are GPU-immutable but harmless
-          // to restore; sleeping/frozen/restFrames are the live sim state.
-          a.type[i]       = (f & 3) | ((f >> 4) & 4);
-          a.origin[i]     = (f >> 2) & 3;
-          a.sleeping[i]   = (f >> 4) & 1;
-          a.frozen[i]     = (f >> 5) & 1;
-          a.restFrames[i] = (f >> 8) & 0xffff;
-          // v17.89 — split the non-awake remainder so the dev panel's
-          // "Liq state" line is accurate under WebGPU: bit5 (frozen/off-screen)
-          // takes precedence over bit4 (sleeping/settled-on-screen).
-          if ((f & 0x30) === 0) {
-            awake++;
-            // v24.145 — fast-mover tally for the game's water state machine
-            // (liquidStateTick): "is anything still really flowing".
-            var fvx = pos[p + 2], fvy = pos[p + 3];
-            if (fvx * fvx + fvy * fvy > LIQUID_FAST_VSQ) fast++;
+        for (var i = 0; i < liveCount; i++) {
+          var source=mapping.rows[i],edit=mapping.edits[i];
+          if(source>=0){
+            var p=source*4;
+            a.x[i]=pos[p];a.y[i]=pos[p+1];
+            if(!(edit&1)){a.vx[i]=pos[p+2];a.vy[i]=pos[p+3];}
+            if(!(edit&4)){a.g00[i]=affine[p];a.g01[i]=affine[p+1];a.g10[i]=affine[p+2];a.g11[i]=affine[p+3];}
+            a.density[i]=aux[p];if(!(edit&5))a.aeration[i]=aux[p+1];
+            if(!edit){var f=flag[source];a.type[i]=(f&3)|((f>>4)&4);a.origin[i]=(f>>2)&3;
+              a.sleeping[i]=(f>>4)&1;a.frozen[i]=(f>>5)&1;a.restFrames[i]=(f>>8)&0xffff;}
+            else {a.sleeping[i]=0;a.frozen[i]=0;a.restFrames[i]=0;}
           }
-          else if (f & 0x20) frozen++;
-          else sleeping++;
+          if(!a.sleeping[i]&&!a.frozen[i]){awake++;if(a.vx[i]*a.vx[i]+a.vy[i]*a.vy[i]>LIQUID_FAST_VSQ)fast++;}
+          else if(a.frozen[i])frozen++;else sleeping++;
         }
         instance.awakeCount = awake;
         instance.sleepingCount = sleeping;
@@ -10107,6 +10460,12 @@ fn main() {
       ops.length = 0;
       return uploadParticles(instance, true);
     }
+    if(instance.readbackPending&&!instance.readbackOpsInvalid){
+      if(instance.readbackOps.length+n>OPS_CAPACITY)instance.readbackOpsInvalid=true;
+      else for(var ro=0;ro<n;ro++)instance.readbackOps.push(ops[ro]);
+      if(!n&&L.getMutationSeq()!==instance.readbackOpsSeq)instance.readbackOpsInvalid=true;
+      instance.readbackOpsSeq=L.getMutationSeq();
+    }
     if (n > 0) {
       instance.opsHost.set(ops);
       instance.queue.writeBuffer(instance.opsBuf, 0, instance.opsHost, 0, n);
@@ -10176,6 +10535,9 @@ struct GrainGrid { count:u32, width:u32, height:u32, ox:u32, oy:u32, cells:u32, 
 @group(0) @binding(9) var<storage,read> sortedIdx:array<u32>;
 @group(0) @binding(10) var air:texture_2d<f32>;
 @group(0) @binding(11) var<uniform> gameP:GameParams;
+
+@group(0) @binding(13) var<storage,read_write> snowCellMotion:array<atomic<u32>>;
+@group(0) @binding(14) var<storage,read> snowCellOf:array<u32>;
 fn isSnow(fl:u32)->bool { return ((fl&3u)|((fl>>4u)&4u))==5u; }
 fn grainOutsideRegion(p:vec2f)->bool {
   return p.x<gp.region.x||p.x>gp.region.z||p.y<gp.region.y||p.y>gp.region.w;
@@ -10214,6 +10576,28 @@ fn predict(@builtin(global_invocation_id) id:vec3u) {
   pos[i]=vec4f(next,velocity);aux[i]=vec4f(aux[i].x,0.,p.xy);
   affine[i]=vec4f(exposure,0.,0.,size);flag[i]=fl&~0x00ffff10u;
 }
+// Bound displacement beyond each original grid cell. Contact passes keep
+// the original grid membership, so current-distance stencil trimming alone
+// would miss grains moved by an earlier terrain or guest projection.
+@compute @workgroup_size(256)
+fn initMotion(@builtin(global_invocation_id) id:vec3u) {
+  let j=id.x;if(j>=gp.count||!isSnow(flag[j])){return;}
+  affine[j].z=0.;if(grainOutsideRegion(pos[j].xy)){return;}
+  affine[j].z=f32(snowCellOf[j]+1u);
+
+}
+@compute @workgroup_size(256)
+fn trackMotion(@builtin(global_invocation_id) id:vec3u) {
+  let i=id.x;if(i>=gp.count||!isSnow(flag[i])){return;}
+  let tag=u32(affine[i].z);if(tag==0u||tag>gp.cells){return;}
+  let index=tag-1u;let c=vec2i(i32(index%gp.width),i32(index/gp.width));
+  let origin=vec2f(f32(bitcast<i32>(gp.ox)),f32(bitcast<i32>(gp.oy)));
+  var low=(vec2f(c)+origin)*${LIQUID_CELL_DEFAULT};var high=low+vec2f(${LIQUID_CELL_DEFAULT});
+  if(c.x==0){low.x=-1e20;}if(c.y==0){low.y=-1e20;}
+  if(c.x==i32(gp.width)-1){high.x=1e20;}if(c.y==i32(gp.height)-1){high.y=1e20;}
+  let delta=max(max(low-pos[i].xy,pos[i].xy-high),vec2f(0.));
+  atomicMax(&snowCellMotion[tag-1u],bitcast<u32>(length(delta)));
+}
 fn contactParticle(i:u32, shield:bool) {
   if(i>=gp.count){return;}let fl=flag[i];if(!isSnow(fl)||(fl&32u)!=0u){return;}
   let p=before[i];if(grainOutsideRegion(p.xy)){return;}let diameter=airParams.wind.z;
@@ -10232,6 +10616,14 @@ fn contactParticle(i:u32, shield:bool) {
   for(var y=-2;y<=2;y++){for(var x=-2;x<=2;x++){
     let c=cell+vec2i(x,y);if(any(c<vec2i(0))||c.x>=i32(gp.width)||c.y>=i32(gp.height)){continue;}
     let index=u32(c.y)*gp.width+u32(c.x);let start=cellStart[index];let n=cellCount[index];
+    if(n==0u){continue;}
+    let origin=vec2f(f32(bitcast<i32>(gp.ox)),f32(bitcast<i32>(gp.oy)));
+    var low=(vec2f(c)+origin)*${LIQUID_CELL_DEFAULT};var high=low+vec2f(${LIQUID_CELL_DEFAULT});
+    if(c.x==0){low.x=-1e20;}if(c.y==0){low.y=-1e20;}
+    if(c.x==i32(gp.width)-1){high.x=1e20;}if(c.y==i32(gp.height)-1){high.y=1e20;}
+    let separation=max(max(low-p.xy,p.xy-high),vec2f(0.));
+    let radius=select(diameter,max(2.5,reach),shield)+bitcast<f32>(atomicLoad(&snowCellMotion[index]))+.01;
+    if(dot(separation,separation)>radius*radius){continue;}
     for(var k=0u;k<n;k++){
       let j=sortedIdx[start+k];if(j==i||!isSnow(flag[j])){continue;}
       let q=before[j];let delta=p.xy-q.xy;let d2=dot(delta,delta);
@@ -10411,17 +10803,26 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
       {binding:1,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}];
     for(var b=2;b<=9;b++)entries.push({binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:[3,7,8,9].indexOf(b)>=0?'read-only-storage':'storage'}});
     entries.push({binding:10,visibility:GPUShaderStage.COMPUTE,texture:{sampleType:'unfilterable-float'}},
-      {binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}});
+      {binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
+      {binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
     var bgl=dev.createBindGroupLayout({entries:entries}),layout=dev.createPipelineLayout({bindGroupLayouts:[bgl]});
     var module=dev.createShaderModule({code:WGSL_SNOW_GRAINS});
     instance.snowGrainPipe={};
-    ['predict','contacts','shield'].forEach(function(name){instance.snowGrainPipe[name]=dev.createComputePipeline({label:'snow.'+name,layout:layout,compute:{module:module,entryPoint:name}});});
+    ['predict','trackMotion','contacts','shield'].forEach(function(name){instance.snowGrainPipe[name]=dev.createComputePipeline({label:'snow.'+name,layout:layout,compute:{module:module,entryPoint:name}});});
     var buffers=[instance.paramsBuf,instance.snowGrainParams,instance.buf.pos,instance.buf.snowBefore,
       instance.buf.aux,instance.buf.flag,instance.buf.affine,instance.buf.cellCount,instance.buf.cellStart,instance.buf.sortedIdx];
     var binds=buffers.map(function(buffer,index){return {binding:index,resource:{buffer:buffer}};});
     binds.push({binding:10,resource:instance.snowProjectedAir.createView()},
-      {binding:11,resource:{buffer:instance.gameParamsBufs[0]}});
+      {binding:11,resource:{buffer:instance.gameParamsBufs[0]}},
+      {binding:13,resource:{buffer:instance.buf.cellCursor}});
     instance.snowGrainBG=dev.createBindGroup({layout:bgl,entries:binds});
+    var initEntries=entries.filter(function(e){return [0,2,5,6].indexOf(e.binding)>=0;});
+    initEntries.push({binding:14,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}});
+    var initBGL=dev.createBindGroupLayout({entries:initEntries});
+    instance.snowGrainPipe.initMotion=dev.createComputePipeline({layout:dev.createPipelineLayout({bindGroupLayouts:[initBGL]}),compute:{module:module,entryPoint:'initMotion'}});
+    var initBinds=binds.filter(function(e){return [0,2,5,6].indexOf(e.binding)>=0;});
+    initBinds.push({binding:14,resource:{buffer:instance.buf.cellOf}});
+    instance.snowInitMotionBG=dev.createBindGroup({layout:initBGL,entries:initBinds});
   }
   function prepareSnowGrains(instance,dt) {
     buildSnowGrainPipeline(instance);
@@ -10433,12 +10834,18 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     if(a&&a.active)instance.queue.writeTexture({texture:instance.snowAirTexture},a.grainField||a.field,{bytesPerRow:a.w*16},[a.w,a.h]);
     instance.queue.writeBuffer(instance.snowGrainParams,0,h);
   }
-  function runSnowGrains(instance,kind) {
+  function runSnowGrains(instance,kind,substepSlot,initMotion) {
     var enc=instance.frameEncoder;
     if(kind!=='predict')enc.copyBufferToBuffer(instance.buf.pos,0,instance.buf.snowBefore,0,instance.uploadedCount*16);
+    instance.snowTrackContactMotion=kind!=='predict';
+    if(initMotion)enc.clearBuffer(instance.buf.cellCursor,0,instance.grid.cells*4);
     var pass=enc.beginComputePass({label:'snow.'+kind});
-    pass.setPipeline(instance.snowGrainPipe[kind]);pass.setBindGroup(0,instance.snowGrainBG);
-    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.end();
+    pass.setBindGroup(0,instance.snowGrainBG);
+    if(initMotion){pass.setPipeline(instance.snowGrainPipe.initMotion);pass.setBindGroup(0,instance.snowInitMotionBG);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.setBindGroup(0,instance.snowGrainBG);pass.setPipeline(instance.snowGrainPipe.trackMotion);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));}
+    pass.setPipeline(instance.snowGrainPipe[kind]);
+    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));
+    if (substepSlot === undefined) pass.end();
+    else runCollide(instance, substepSlot, true, pass);
   }
 
   function runFrame(instance, dt) {
@@ -10589,14 +10996,14 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
         runG2P(instance);
         runCollide(instance, ss);
         if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
-          runSnowGrains(instance, 'predict');
-          runCollide(instance, ss, true);
+          runSnowGrains(instance, 'predict', ss);
           // G2P has consumed the liquid fields. Rebuild only the neighbor
           // index at the grains' predicted positions for contact queries.
           buildGrid(instance, true);
-          for (var contact = 0; contact < 8; contact++) {
-            runSnowGrains(instance, contact === 7 ? 'shield' : 'contacts');
-            runCollide(instance, ss, true);
+          // Four relaxation passes plus the final contact/density/shield pass.
+          // Five preserves returning-powder settling; four failed that gate.
+          for (var contact = 0; contact < 5; contact++) {
+            runSnowGrains(instance, contact === 4 ? 'shield' : 'contacts', ss, contact === 0);
           }
         }
       }

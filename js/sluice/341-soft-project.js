@@ -1,6 +1,13 @@
-  /* ---- Sequential resident physics comparisons (?softnext=1) ---- */
+  /* ---- Resident physics defaults and sequential comparisons ---- */
   var softProjectParams = new URLSearchParams(location.search);
-  var softProjectEnabled = softProjectParams.get('softnext') === '1';
+  // Ordinary play uses the complete resident model, including restored saves
+  // and newly softened bath guests. Explicit older comparisons stay isolated;
+  // ?softnext=0 restores the reference, and ?softnext=1 selects this full path.
+  var softProjectIsolated = softProjectParams.get('softplay') === '1' ||
+    softProjectParams.has('softcontact') || softProjectParams.has('softhandling') ||
+    softProjectParams.has('softterrain') || softProjectParams.has('softmaterial');
+  var softProjectEnabled = softProjectParams.get('softnext') === '1' ||
+    (softProjectParams.get('softnext') !== '0' && !softProjectIsolated);
   var SOFT_PROJECT_MAX_STAGE = 4;
   var softProjectStage = Math.max(1, Math.min(SOFT_PROJECT_MAX_STAGE,
     Number(softProjectParams.get('softstage')) || SOFT_PROJECT_MAX_STAGE));

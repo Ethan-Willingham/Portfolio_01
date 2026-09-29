@@ -1,5 +1,10 @@
 # Soft resident rollback and findings
 
+The owner has since authorized the complete new resident model in ordinary
+play. The rollout described under Combined playground supersedes the earlier
+default-baseline instructions below; those sections record the comparisons
+and their verification as they were developed.
+
 The owner rejected the soft resident changes first deployed in v28.75 and
 every subsequent iteration. Restore the last deployed v28.74 behavior before
 attempting further improvements. The hard circular sky visitors are explicitly
@@ -500,12 +505,16 @@ support, ledges and walls, head-on and glancing impact, crawling, rig jets,
 and a raised water basin. The controls also work on touch screens; native
 selector keys stay with the selector instead of moving the rig.
 
-The ordinary game retains the accepted pre-v28.75 behavior. The complete
-experiment can also be used in ordinary play with `?softnext=1`; that mode
-uses ordinary saves. `&softstage=1` through `&softstage=4` selects its highest
-checkpoint. Experimental force state is transient; resident identity, color,
-size, and saved placement keep the existing format. The hard circular sky
-slime source remains byte-identical.
+At the owner's request, ordinary play now enables all eight resident paths:
+rig contact, handling, terrain contact, elastic material, pair contact,
+bounded movement, local jets and water, and deformation-led eyes and sound.
+Existing and resumed residents and newly softened bath guests use that same
+model with ordinary saves. `?softnext=0` restores the pre-v28.75 reference.
+The older isolated `?softplay=1` comparisons and explicit contact, handling,
+terrain, or material query flags retain their individual selections.
+`?softnext=1&softstage=1` through `&softstage=4` selects a combined checkpoint.
+Force state is transient; resident identity, color, size, and saved placement
+keep the existing format. The hard circular sky slime source remains unchanged.
 
 ### Verification and limits
 
@@ -519,7 +528,7 @@ matrix covers both crawl directions, walls, and ledges for 20 seconds each.
 
 Save identity and dimensions, bathhouse conversion, pause and shop freezing,
 sleep/wake through grabbing, menu cancellation, Repeat, release ownership,
-and mobile reachability pass. Eight ordinary/prior-material trajectories
+and mobile reachability pass. Eight reference/prior-material trajectories
 match v28.117 byte for byte. All three protected circular-slime suites pass,
 and their source SHA256 remains
 `419ab25667a688ca9a21ca5dbe93bb9031fbe69f187e3e704a778a8b6fbbdabe`.
@@ -527,8 +536,9 @@ The shared water/smoke/slime toy boots with advancing simulation and canvas
 pixels, finite residents, active water and smoke, and no browser exceptions.
 Final WebGPU checks run all four checkpoints at 30/60 Hz. The actual playground
 basin retains 6,300 particles; a real Repeat click restores identical water
-and resident pose hashes, and a fresh ordinary boot leaves all eight trials
-off. These GPU checks validate behavior, not GPU frame timing.
+and resident pose hashes. At v28.122, a fresh ordinary boot left all eight
+trials off; the subsequent owner-authorized rollout changes that default.
+These GPU checks validate behavior, not GPU frame timing.
 
 Serial CPU measurements on this machine use eight awake residents, with
 other test browsers closed. The dry pile and held-pressure fixtures each run
@@ -557,10 +567,51 @@ release, then moves the held material 89.5 px, maintains area from 0.966 to
 1.000, and records zero further guard rejections across all eight bodies.
 There is no continuing rollback after the forcing input is removed.
 
-The final integration includes the concurrent snow release `8d96d39`. Its
-snow fragments and WebGPU liquid engine are preserved byte for byte; the
+The v28.122 integration includes the concurrent snow release `8d96d39`. At
+that checkpoint its snow fragments and WebGPU liquid engine were preserved byte for byte; the
 combined CPU/GPU and snow regression suites were rerun after that merge.
 
 Numerical health, law tests, and inspected captures establish a reviewable
-comparison. The owner still needs to judge the movement, handling, eyes, and
-sound by playing it. No comparison has been promoted into ordinary defaults.
+model. The owner authorized its promotion into ordinary play without requiring
+a playground visit. Its movement, handling, eyes, and sound remain subject to
+the owner's judgment during normal play; the reference remains available.
+
+
+### v28.123 snow performance and ordinary rollout
+
+The complete resident model is enabled in normal play, including saved residents
+and bathhouse conversions. Snow previously retained a 1.5 px guest-contact
+response threshold despite a roughly 1.4 px grain diameter. The threshold is
+now one tenth of the grain radius. Shallow overlap is legal only at an exposed
+union face; a face hidden inside another resident still requires projection.
+Rare whole-union escapes evaluate candidates cooperatively on the GPU and retain
+the original ordered selection. Terrain work and nearby resident work use separate
+passes. A conservative displacement bound skips unreachable neighbor cells while
+preserving the original grid membership and contact order.
+
+Snow uses four contact relaxation passes and a final contact, density, and air
+shield pass per existing grain timestep. A four-pass total failed the returning
+powder settling check and was rejected. Five passes retain quiet settling, clear
+terrain, mass conservation, and jet lofting. Ordered mutation replay now remaps
+GPU readbacks through additions, swap removals, nudges, and material changes.
+New particles retain their authored rows; invalid logs and full uploads reject
+the snapshot. Continuous snowfall no longer prevents the mirror from updating.
+
+Verification on Apple M1 Pro with Chrome for Testing 148 used normal generated
+worlds at 1440 by 900, DPR 2, the extreme game preset, native animation callbacks,
+normal vsync, and no CPU profiler or GPU timestamp sampling. Each final scene
+ran for 60 measured seconds plus ten seconds of recovery, with the complete
+startup timeline retained. A matched original-engine capture averaged 14.3 callbacks per second.
+The five starting residents with the fix averaged 59.3 callbacks
+per second and ended with about 9,600 active snow grains. Eight residents with
+actual grab, walking, and jet inputs averaged 62.3 and finished near 60. The
+lowest complete one-second bins were 49.2 and 52.6 respectively. These are
+callback rates on this test host, not a claim of 120 Hz display presentation.
+
+The focused GPU suite passes 25 cases and 107 checks for union contacts, terrain,
+rigs, moving snapshots, protected tails, and ordinary water. Three grain-search
+fixtures match original outputs bit for bit over 32 iterations, excluding the
+private grid-membership metadata lane. Readback mutation tests pass 1,005 cases
+and 309,450 assertions. Contact and jet regressions conserve every emitted grain,
+retain zero physical CPU transfers, and pass settling and lofting gates.
+See `tools/perf/SLIME_SNOW.md` for the continuous capture commands.

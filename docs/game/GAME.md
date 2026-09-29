@@ -22,25 +22,28 @@ normal playthrough (see `BALANCE.md`).
 **Bathhouse and fire room (v28.13):** sky slimes land, meander to the banya,
 wait, soak in warm water, pay, and become soft surface residents. Five friendly
 residents spawn around the starting town for playtesting; drag and toss them,
-push them with the rig, or use the jets. Travelling skin waves propel their soft
-bodies across terrain and up walls and ledges. They crawl slowly toward nearby
-destinations, with gradual starts, turns and overlapping wall grips. A continuous
-body wave and interpolation between physics ticks keep the outline fluid.
+push them with the rig, or use the jets. Bounded muscle effort and local terrain
+grips move their soft bodies toward nearby destinations and up walls and ledges.
+Loads, lost footing, and interference can defeat that effort. Elastic material
+and interpolation between physics ticks keep the outline fluid.
 They sense unsupported edges and turn before pits. A single googly eye follows each
 body, which finds a new underside after rolling and varies its pace and stride.
-Grabs and impacts break their grip. This is the restored pre-v28.75 baseline;
-see [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for the rollback and findings.
+Grabs and impacts break their grip. Ordinary play now uses local rig, terrain,
+and resident contacts, physical handling, elastic material, bounded movement,
+local jets and water, and eyes and sound driven by deformation and contact.
+Existing saves and newly softened bath guests use the same model. `?softnext=0`
+keeps the restored pre-v28.75 reference available for comparison.
 An opt-in rig-contact comparison is available at `?softplay=1`, with repeatable
 drops and pushes, an Original switch, and saves disabled. Add `&softhandling=1`
 for the separate grab, swing, and throw comparison, `&softterrain=1` for
 terrain contact while holding handling constant, or `&softmaterial=1` for
 elastic response with the newer contact, handling, and terrain held constant.
-The v28.122 combined trial at `?softplay=1&softnext=1` adds selectable pair
+The combined playground at `?softplay=1&softnext=1` offers selectable pair
 contact, bounded movement effort, local jets and water, and deformation-led
 eyes and contact sound. Nine repeatable scenes compare each checkpoint with
 its predecessor, plus an Accepted reference switch. Saves remain off in the
-playground. Ordinary play still uses the accepted baseline; no trial is on by
-default. See [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for verification and limits.
+playground. Ordinary play uses the complete model with normal saving.
+See [RESIDENT_PHYSICS.md](RESIDENT_PHYSICS.md) for verification and limits.
 Rocky visitors are capped at two outside
 (including a carried guest) and two inside. See the bath-born resident section in
 `BATHHOUSE_SERVICE.md` for physics and persistence. Enter the tower to see the full-width bath room. Its wide catenary tub has

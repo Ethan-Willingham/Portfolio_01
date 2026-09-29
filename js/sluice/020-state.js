@@ -585,6 +585,7 @@
         getCount: function () { return liquidCount; },
         // v14.2 — GPU-residency signal; see liquidMutationSeq + runFrame.
         getMutationSeq: function () { return liquidMutationSeq; },
+        peekOps: function () { return liquidOpsOverflow ? null : liquidOps; },
         // v24.109 — hand the pending mutation-op stream to the GPU replay
         // (Stage 8b in liquid-wgpu.js). Returns null exactly once after an
         // overflow, which tells the consumer to do a full re-upload; the

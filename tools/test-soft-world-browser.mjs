@@ -345,7 +345,12 @@ async function runPlayground() {
   await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1${extraParams}`});
   assert.ok(await awaitBoot(),'ordinary page completes loading');
   ui.defaults=await game('({contact:SOFT_CONTACT,handling:SOFT_HANDLING,terrain:SOFT_TERRAIN,material:SOFT_MATERIAL,pairs:SOFT_PAIRS,intent:SOFT_INTENT,world:SOFT_WORLD,presentation:SOFT_PRESENTATION})');
-  check('ordinary boot leaves all eight experiments off',Object.values(ui.defaults).every(value=>value===false));
+  check('ordinary boot enables all eight resident physics paths',Object.values(ui.defaults).every(value=>value===true));
+  stage='explicit reference boot';
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?softnext=0&nosave=1&nopause=1${extraParams}`});
+  assert.ok(await awaitBoot(),'explicit reference page completes loading');
+  ui.reference=await game('({contact:SOFT_CONTACT,handling:SOFT_HANDLING,terrain:SOFT_TERRAIN,material:SOFT_MATERIAL,pairs:SOFT_PAIRS,intent:SOFT_INTENT,world:SOFT_WORLD,presentation:SOFT_PRESENTATION})');
+  check('softnext=0 preserves the ordinary reference with all eight paths off',Object.values(ui.reference).every(value=>value===false));
   console.log('DEFAULTS '+JSON.stringify(ui.defaults));
 }
 function playgroundPose() {

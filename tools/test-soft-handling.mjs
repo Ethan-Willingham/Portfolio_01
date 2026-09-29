@@ -514,8 +514,15 @@ try {
     if (await evaluate("typeof __handlingTest === 'function' && __handlingTest(\"introPhase === 'done'\")")) break;
     await sleep(100);
   }
-  defaults = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, playtest: softPlayEnabled })");
-  check('ordinary game keeps both experiments off', !defaults.contact && !defaults.handling && !defaults.playtest);
+  defaults = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, pairs: SOFT_PAIRS, intent: SOFT_INTENT, world: SOFT_WORLD, presentation: SOFT_PRESENTATION, playtest: softPlayEnabled })");
+  check('ordinary game enables all eight resident physics paths without the playtest', defaults.contact && defaults.handling && defaults.terrain && defaults.material && defaults.pairs && defaults.intent && defaults.world && defaults.presentation && !defaults.playtest);
+  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?softnext=0&nosave=1&nopause=1` });
+  for (let attempt = 0; attempt < 300; attempt++) {
+    if (await evaluate("typeof __handlingTest === 'function' && __handlingTest(\"introPhase === 'done'\")")) break;
+    await sleep(100);
+  }
+  defaults.reference = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, pairs: SOFT_PAIRS, intent: SOFT_INTENT, world: SOFT_WORLD, presentation: SOFT_PRESENTATION, playtest: softPlayEnabled })");
+  check('softnext=0 preserves the ordinary reference with all eight paths off', Object.values(defaults.reference).every(value => value === false));
   check('no browser exceptions', browserErrors.length === 0);
   const notes = [
     'These are safety and continuity checks. Numerical results do not establish satisfying feel.',

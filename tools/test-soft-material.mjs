@@ -541,8 +541,12 @@ async function runUI() {
 
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1${extraParams}` });
   assert.ok(await awaitBoot(), 'ordinary game completes its real loading gates');
-  defaults = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, playtest: softPlayEnabled })");
-  check('ordinary game keeps all experiments off', !defaults.contact && !defaults.handling && !defaults.terrain && !defaults.material && !defaults.playtest);
+  defaults = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, pairs: SOFT_PAIRS, intent: SOFT_INTENT, world: SOFT_WORLD, presentation: SOFT_PRESENTATION, playtest: softPlayEnabled })");
+  check('ordinary game enables all eight resident physics paths without the playtest', defaults.contact && defaults.handling && defaults.terrain && defaults.material && defaults.pairs && defaults.intent && defaults.world && defaults.presentation && !defaults.playtest);
+  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?softnext=0&nosave=1&nopause=1${extraParams}` });
+  assert.ok(await awaitBoot(), 'explicit reference game completes its real loading gates');
+  defaults.reference = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, pairs: SOFT_PAIRS, intent: SOFT_INTENT, world: SOFT_WORLD, presentation: SOFT_PRESENTATION, playtest: softPlayEnabled })");
+  check('softnext=0 preserves the ordinary reference with all eight paths off', Object.values(defaults.reference).every(value => value === false));
 }
 
 function materialLawFixture() {

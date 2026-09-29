@@ -197,6 +197,7 @@ try {
   }
   if (process.env.LIFECYCLE === '1') await runLifecycle();
   if(!skipUI)await runUI();
+  await runDefaults();
   check('no browser exceptions',browserErrors.length===0);writeReport({ui,defaults,lifecycle});
   assert.equal(failures.length,0,failures.join('\n'));
 } catch(error) {
@@ -520,11 +521,39 @@ async function runUI() {
     r.release.sameArrays && r.release.arrayChange === 0 && r.release.recoverTime === 0));
   check('390 by 844 physics controls fit and remain reachable', ui.mobile.fits &&
     ui.mobile.controls.every(control => control.reachable && control.width > 0 && control.height >= 44));
+}
 
+async function runDefaults() {
+  stage = 'ordinary default boot';
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1${extraParams}` });
   assert.ok(await awaitBoot(), 'ordinary game completes its real loading gates');
   defaults = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, pairs: SOFT_PAIRS, intent: SOFT_INTENT, world: SOFT_WORLD, presentation: SOFT_PRESENTATION, playtest: softPlayEnabled })");
-  check('ordinary game keeps all experiments off', !defaults.contact && !defaults.handling && !defaults.terrain && !defaults.material && !defaults.pairs && !defaults.intent && !defaults.world && !defaults.presentation && !defaults.playtest);
+  check('ordinary game enables all eight resident physics paths without the playtest', defaults.contact && defaults.handling && defaults.terrain && defaults.material && defaults.pairs && defaults.intent && defaults.world && defaults.presentation && !defaults.playtest);
+  defaults.restore = await game(`(function() {
+    clearTimeout(gameRafId); cancelAnimationFrame(gameRafId); gameRafId = 0;
+    // Loading can finish before the first gameplay frame. Seed residents
+    // through their normal tick before capturing a nonempty ordinary save.
+    surfaceSlimeTick(1/60);
+    var saved = JSON.parse(JSON.stringify(surfaceSlimeSave()));
+    var identities = saved.residents.map(function(s) { return [s.id,s.r,s.hue,s.seed]; });
+    resetJello(); surfaceSlimeRestore(saved);
+    var restored = surfaceSlimeSave();
+    var after = restored.residents.map(function(s) { return [s.id,s.r,s.hue,s.seed]; });
+    var paths = jelloBodies.filter(function(b) { return !!b.surfaceSlime; }).map(function(b) {
+      return [softContactBody(b),softHandlingBody(b),softTerrainBody(b),softMaterialBody(b),
+        softPairsBody(b),softIntentBody(b),softWorldBody(b),softPresentationBody(b)];
+    });
+    return { savedCount: saved.residents.length, count: restored.residents.length,
+      seeded: saved.seeded && restored.seeded,
+      identities: JSON.stringify(identities) === JSON.stringify(after), paths: paths };
+  })()`);
+  check('ordinary save restoration promotes existing residents without changing their identities', defaults.restore.savedCount > 0 && defaults.restore.count === defaults.restore.savedCount && defaults.restore.seeded && defaults.restore.identities && defaults.restore.paths.every(paths => paths.length === 8 && paths.every(value => value === true)));
+
+  stage = 'explicit reference boot';
+  await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?softnext=0&nosave=1&nopause=1${extraParams}` });
+  assert.ok(await awaitBoot(), 'explicit reference game completes its real loading gates');
+  defaults.reference = await game("({ contact: SOFT_CONTACT, handling: SOFT_HANDLING, terrain: SOFT_TERRAIN, material: SOFT_MATERIAL, pairs: SOFT_PAIRS, intent: SOFT_INTENT, world: SOFT_WORLD, presentation: SOFT_PRESENTATION, playtest: softPlayEnabled })");
+  check('softnext=0 preserves the ordinary reference with all eight paths off', Object.values(defaults.reference).every(value => value === false));
 }
 
 async function runLifecycle() {
