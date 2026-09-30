@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.69';
+  var VERSION = 'v1.70';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -7745,6 +7745,7 @@
               || 'Values are rings. Watch the scrambled sizes move into order.';
           }
         }
+        if (window.GXPicker) window.GXPicker.sync();
       }
       if (scene === 'grid') {
         // The grid is a morph target on the POINT cloud: from a point scene the buffer
@@ -7954,6 +7955,7 @@
           track('galaxy_scene', { scene: scene });
         });
       }
+      if (window.GXPicker) window.GXPicker.init(wrapperEl, categoryScenes);
     }
 
     var reseedBtn = document.getElementById('galaxy-reseed');
