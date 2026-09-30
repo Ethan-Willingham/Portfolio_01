@@ -1,7 +1,8 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, shopperTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, cartTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
+const Stock = require('../js/four-wheels-stock.js');
 const dt = 1 / 120;
 const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], exit: { side: 'right', center: 150, width: 80 } };
 const step = (w, seconds, input) => { for (let i = 0; i < Math.round(seconds / dt); i++) w.step(dt, input); };
@@ -122,12 +123,13 @@ test('a protruding tire collides with a shelf outside the basket footprint', () 
   assert.equal(boxContact(w.body, shelf), null);
   step(w, .08, {});
   assert.ok(w.body.y > empty.start.y + .5, 'the shelf displaces the chassis through the caster');
-  assert.ok(Math.min(...casterCorners(w.body, w.wheels[1], 1).map(p => p.y)) >= 129.9, 'the tire cannot rest inside the shelf');
+  const contact=Stock.polygonContact(casterCorners(w.body,w.wheels[1],1),Stock.shelfPolygon(w.shelves[0]));
+  assert.ok(!contact||contact.depth<.15,'the tire cannot rest inside the moving shelf');
 });
 
 test('a shelf impact stops penetration, turns the cart, and spills once', () => {
   const w = new World({ ...empty, start: { x: 180, y: 136, a: .2 }, shelves: [{ x: 241, y: 140, w: 45, h: 70, stock: 'dishes' }] });
-  w.body.vx = 115; step(w, .65, {});
+  w.body.vx = 115; step(w, 1.3, {});
   assert.equal(w.messes, 1); assert.equal(w.penalty, 5);
   assert.ok(w.body.x < 242 && w.body.a > .27, 'an off-center impact rotates the basket');
   step(w, .4, { push: 1 }); assert.equal(w.messes, 1);
@@ -175,34 +177,27 @@ test('the red contact identifies a protruding caster or the shopper', () => {
   assert.ok(shopper.boundaryContacts.some(c => c.part === 'shopper' && c.side === 'left'));
 });
 
-test('a checkpoint clears on first contact from the small shopper circle', () => {
-  const target = {x:230,y:150};
-  const fixture = {...empty, gates:[target], start:{x:200,y:150,a:0}};
-  const w = new World(fixture);
-  assert.equal(BODY.personRadius,4,'the shopper has a smaller contact circle');
-  w.step(dt); assert.equal(w.gate,0,'basket contact alone cannot clear a checkpoint');
-  w.body.x = target.x - BODY.personX + CHECKPOINT_RADIUS + BODY.personRadius + .05;
-  w.step(dt); assert.equal(w.gate,0,'a real gap must keep the checkpoint active');
-  w.body.x -= .05;
-  w.step(dt); assert.equal(w.gate,1,'the first touching point clears the checkpoint');
-  assert.ok(w.body.x > target.x + CHECKPOINT_RADIUS, 'the cart can remain outside the circle');
-  assert.equal(w.events.filter(e=>e.type==='gate').length,1);
-  for (const a of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]) {
-    const body = {x:target.x+CHECKPOINT_RADIUS+BODY.personRadius-.05-Math.cos(a)*BODY.personX,y:target.y-Math.sin(a)*BODY.personX,a};
-    assert.ok(shopperTouchesCheckpoint(body,target),'a tiny overlap counts at every heading');
-    body.x += .1; assert.ok(!shopperTouchesCheckpoint(body,target),'a gap cannot count at any heading');
+test('the checkpoint sensor sits two thirds along the basket and counts first touch', () => {
+  const target={x:230,y:150};
+  assert.equal(CHECKPOINT_SENSOR.x, BODY.cartX-BODY.halfLength+BODY.halfLength*4/3);
+  const w=new World({...empty,gates:[target],start:{x:target.x-BODY.personX,y:150,a:0}});
+  w.step(dt);assert.equal(w.gate,0,'shopper contact cannot clear a checkpoint');
+  for(const a of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]) {
+    const body={x:target.x+CHECKPOINT_RADIUS+CHECKPOINT_SENSOR.radius-.05-Math.cos(a)*CHECKPOINT_SENSOR.x,y:target.y-Math.sin(a)*CHECKPOINT_SENSOR.x,a};
+    assert.ok(cartTouchesCheckpoint(body,target),'a tiny basket-sensor overlap counts at every heading');
+    body.x+=.1;assert.ok(!cartTouchesCheckpoint(body,target),'a real gap cannot count');
   }
-  const partial = new World(fixture);
-  partial.body.x = target.x - BODY.personX + CHECKPOINT_RADIUS + BODY.personRadius - .1;
-  partial.step(dt); assert.equal(partial.gate,1,'a small sliver inside is enough, while the center remains outside');
+  Object.assign(w.body,{x:target.x+CHECKPOINT_RADIUS+CHECKPOINT_SENSOR.radius-CHECKPOINT_SENSOR.x,y:150,a:0});
+  w.step(dt);assert.equal(w.gate,1,'exact tangency counts once');
+  w.step(dt);assert.equal(w.events.filter(e=>e.type==='gate').length,1);
 });
 
-test('shopper checkpoints count in route order and open checkout after the last one', () => {
-  const w = new World({...empty,gates:[{x:230,y:150},{x:300,y:150}],start:{x:316,y:150,a:0}});
-  w.step(dt); assert.equal(w.gate,0,'entering a later circle cannot skip the route');
-  w.body.x = 246; w.step(dt); assert.equal(w.gate,1); assert.equal(w.exitOpen,false);
-  w.step(dt); assert.equal(w.gate,1,'a cleared circle cannot count twice');
-  w.body.x = 316; w.step(dt); assert.equal(w.gate,2); assert.equal(w.exitOpen,true);
+test('basket checkpoints count in route order and open checkout after the last one', () => {
+  const w=new World({...empty,gates:[{x:230,y:150},{x:300,y:150}],start:{x:300-CHECKPOINT_SENSOR.x,y:150,a:0}});
+  w.step(dt);assert.equal(w.gate,0);
+  w.body.x=230-CHECKPOINT_SENSOR.x;w.step(dt);assert.equal(w.gate,1);assert.equal(w.exitOpen,false);
+  w.step(dt);assert.equal(w.gate,1);
+  w.body.x=300-CHECKPOINT_SENSOR.x;w.step(dt);assert.equal(w.gate,2);assert.equal(w.exitOpen,true);
 });
 
 test('checkout stays solid until all route markers are cleared', () => {
@@ -264,21 +259,21 @@ test('all six courses can be driven through before their deadlines', () => {
   function drive(w, target) {
     const b = w.body;
     if (target === w.level.gates[w.gate]) {
-      // Near a checkpoint, account for the shopper moving around the handle.
+      // Near a checkpoint, account for the sensor moving with the basket.
       // This keeps the pilot stable when a small overlap clears a circle early.
-      const person = point(b, BODY.personX, 0), dx = target.x - person.x, dy = target.y - person.y;
+      const person = point(b, CHECKPOINT_SENSOR.x, 0), dx = target.x - person.x, dy = target.y - person.y;
       const distance = Math.hypot(dx, dy);
       if (distance < 55) {
         const c = Math.cos(b.a), s = Math.sin(b.a), speed = Math.min(60, distance * 2);
-        const vx = b.vx - b.omega * BODY.personX * s, vy = b.vy + b.omega * BODY.personX * c;
+        const vx = b.vx - b.omega * CHECKPOINT_SENSOR.x * s, vy = b.vy + b.omega * CHECKPOINT_SENSOR.x * c;
         const ax = ((distance ? dx / distance * speed : 0) - vx) * 3;
         const ay = ((distance ? dy / distance * speed : 0) - vy) * 3;
-        const along = ax * c + ay * s + b.omega * b.omega * BODY.personX, lateral = -ax * s + ay * c;
-        return {push:clamp(along / (along > 0 ? 78 : 50), -1, 1), turn:clamp((lateral / BODY.personX + 4.2 * b.omega) / 8.8, -1, 1)};
+        const along = ax * c + ay * s + b.omega * b.omega * CHECKPOINT_SENSOR.x, lateral = -ax * s + ay * c;
+        return {push:clamp(along / (along > 0 ? 78 : 50), -1, 1), turn:clamp((lateral / CHECKPOINT_SENSOR.x + 4.2 * b.omega) / 8.8, -1, 1)};
       }
       const previous = w.gate ? w.level.gates[w.gate - 1] : w.level.start;
       const approach = Math.atan2(target.y - previous.y, target.x - previous.x);
-      target = {x:target.x - BODY.personX * Math.cos(approach), y:target.y - BODY.personX * Math.sin(approach)};
+      target = {x:target.x - CHECKPOINT_SENSOR.x * Math.cos(approach), y:target.y - CHECKPOINT_SENSOR.x * Math.sin(approach)};
     }
     const dx = target.x - b.x, dy = target.y - b.y, d = Math.hypot(dx, dy);
     const speed = Math.min(62, d * 1.25), vx = d > 1 ? dx / d * speed : 0, vy = d > 1 ? dy / d * speed : 0;
@@ -308,7 +303,7 @@ test('all courses stay finite during hard pushes, spin, and contact', () => {
     for (let i = 0; i < 3600; i++) {
       w.step(dt, { push: Math.sin(i / 260) > -.7 ? 1 : -1, turn: Math.sin(i / 115), brake: i % 480 < 30 ? 1 : 0 });
       for (const value of Object.values(w.body)) assert.ok(Number.isFinite(value), level.name);
-      for (const q of w.wheels) for (const value of Object.values(q)) assert.ok(Number.isFinite(value), level.name + ' caster');
+      for (const q of w.wheels) for (const value of Object.values(q).filter(v=>typeof v==='number')) assert.ok(Number.isFinite(value), level.name + ' caster');
       if (!w.exitOpen) assert.ok(w.body.x >= 7 && w.body.x <= 473 && w.body.y >= 7 && w.body.y <= 293, level.name);
       assert.ok(w.body.x > -80 && w.body.x < 560 && w.body.y > -80 && w.body.y < 380, level.name);
     }

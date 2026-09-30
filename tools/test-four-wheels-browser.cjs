@@ -23,6 +23,16 @@ const server = http.createServer((req, res) => {
       window.__cartTest = {
         state: () => ({ phase, index:levelIndex, body:{...world.body}, gait:{...world.gait}, wheels:world.wheels, time:world.time, gate:world.gate, messes:world.messes, penalty:world.penalty, practice:world.practice, touch:touches.size, keys:keys.size, records, canSave, remaining:world.remaining, objects:world.objects, contacts:world.boundaryContacts, exitOpen:world.exitOpen, exiting:world.exiting }),
         stop: () => { cancelAnimationFrame(raf); raf=0; },
+        crashScene: () => {
+          cancelAnimationFrame(raf);raf=0;
+          const level={...levels[0],name:'Stock collision check',start:{x:150,y:150,a:0},shelves:[{x:220,y:107,w:40,h:86,stock:'groceries',label:'WINE & SAUCES'}],objects:[],signs:[],gates:[{x:420,y:250}]};
+          world=new World(level,true);floor=makeFloor(level);phase='running';particles=[];world.body.vx=135;draw();updateUI();
+        },
+        crashFrames: () => {
+          const frames=[],c=document.createElement('canvas');c.width=480;c.height=300;const g=c.getContext('2d');
+          for(let i=0;i<144;i++){for(let k=0;k<5;k++)world.step(1/120);draw(g,world,floor,true);frames.push(c.toDataURL('image/png').split(',')[1]);}
+          events();draw();updateUI();return frames;
+        },
         step: (seconds,input={}) => { cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.round(seconds*120)&&phase==='running';i++){world.step(1/120,input);events();tickEffects(1/120);}draw();updateUI(); },
         approachExit: () => { world.gate=world.level.gates.length;const q=world.exit;Object.assign(world.body,{...q.approach,a:q.a,vx:0,vy:0,omega:0});world.wheels.forEach(w=>{w.a=q.a;w.omega=0;}); },
         casterSheet: () => {
@@ -105,7 +115,7 @@ async function setup(context, url) {
     await listen(); const url = 'http://127.0.0.1:' + server.address().port + '/four-wheels.html';
     browser = await chromium.launch({ headless: true, executablePath: process.env.CART_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing' });
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
-    await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]'); });
+    await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]');localStorage.setItem('four-wheels-records-v2', '[{"time":34,"stars":2}]'); });
     const page = await setup(desktop, url);
     const fillsOpeningViewport = () => {
       const game=document.getElementById('cart-game').getBoundingClientRect();
@@ -151,18 +161,18 @@ async function setup(context, url) {
     check('retry resets penalties and position', (await page.evaluate(() => __cartTest.state())).messes === 0);
     await page.evaluate(() => {
       __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world(),p=w.level.gates[0];
-      Object.assign(w.body,{x:p.x,y:p.y+CartPhysics.BODY.cartX+CartPhysics.BODY.halfLength,a:-Math.PI/2,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=-Math.PI/2;q.omega=0;});__cartTest.step(1/120);
+      Object.assign(w.body,{x:p.x,y:p.y+CartPhysics.BODY.personX,a:-Math.PI/2,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=-Math.PI/2;q.omega=0;});__cartTest.step(1/120);
     });
-    check('basket contact alone does not clear the shopper checkpoint', (await page.evaluate(()=>__cartTest.state())).gate===0);
+    check('shopper contact alone does not clear the basket checkpoint', (await page.evaluate(()=>__cartTest.state())).gate===0);
     await page.evaluate(() => {
-      const w=__cartTest.world(),p=w.level.gates[0];w.body.y=p.y+CartPhysics.BODY.personX-(CartPhysics.CHECKPOINT_RADIUS+CartPhysics.BODY.personRadius+.5);__cartTest.step(1/120);
+      const w=__cartTest.world(),p=w.level.gates[0];w.body.y=p.y+CartPhysics.CHECKPOINT_SENSOR.x-(CartPhysics.CHECKPOINT_RADIUS+CartPhysics.CHECKPOINT_SENSOR.radius+.5);__cartTest.step(1/120);
     });
     check('a gap before the small contact circle keeps the checkpoint active', (await page.evaluate(()=>__cartTest.state())).gate===0);
     await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-before-contact.png')});
     await page.evaluate(() => {__cartTest.world().body.y+=.6;__cartTest.step(1/120);});
-    check('a tiny shopper overlap clears the checkpoint while most of the circle is outside', await page.evaluate(()=>{
-      const w=__cartTest.world(),p=w.level.gates[0],person=CartPhysics.point(w.body,CartPhysics.BODY.personX,0);
-      return w.gate===1&&CartPhysics.BODY.personRadius===4&&Math.hypot(person.x-p.x,person.y-p.y)>CartPhysics.CHECKPOINT_RADIUS;
+    check('a tiny basket-marker overlap clears the checkpoint', await page.evaluate(()=>{
+      const w=__cartTest.world(),p=w.level.gates[0],person=CartPhysics.point(w.body,CartPhysics.CHECKPOINT_SENSOR.x,0);
+      return w.gate===1&&CartPhysics.CHECKPOINT_SENSOR.radius===4&&Math.hypot(person.x-p.x,person.y-p.y)>CartPhysics.CHECKPOINT_RADIUS;
     }));
     await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-cleared.png')});
     await page.locator('#cart-courses').click();
@@ -195,6 +205,35 @@ async function setup(context, url) {
       return w.wheels.map((q,i)=>({angle:q.a,pivot:CartPhysics.casterPose(w.body,q,i).pivot,center:CartPhysics.casterPose(w.body,q,i),trail:CartPhysics.CASTER.trail}));
     });
     check('all four rendered casters have offset tire centers and independent angles', casterState.every(q => Math.hypot(q.center.x-q.pivot.x,q.center.y-q.pivot.y) >= q.trail) && Math.abs(casterState[0].angle-casterState[3].angle) > .1);
+    await page.evaluate(()=>__cartTest.crashScene());
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'stock-before-impact.png')});
+    const crashFrames=await page.evaluate(()=>__cartTest.crashFrames());
+    const crash=await page.evaluate(()=>{
+      const w=__cartTest.world();return {stats:w.stock.stats,down:w.shelves[0].down,penalty:w.penalty,items:w.stock.items.filter(p=>p.state!=='shelf').length,liquids:[...w.stock.liquids.keys()]};
+    });
+    check('a rendered full-speed impact collapses a rack and leaves broken products on the floor',crash.down&&crash.stats.fallen>0&&crash.stats.broken>0&&crash.items>5&&crash.penalty===5&&crash.liquids.includes('wine'));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'stock-after-collapse.png')});
+    if(process.env.ASSETS==='1') {
+      const sharp=require('sharp'),raw=await Promise.all(crashFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
+      await sharp(Buffer.concat(raw),{raw:{width:480,height:300*raw.length,channels:4,pageHeight:300}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shelf-collapse.gif'));
+    }
+    await page.evaluate(()=>{
+      __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();
+      Object.assign(w.body,{x:110,y:238,a:0,vx:50,vy:0,omega:0});w.wheels.forEach(q=>{q.a=0;q.omega=0;});
+      for(const i of [0,2]){const p=CartPhysics.casterPose(w.body,w.wheels[i],i);w.stock.addProduct(i===0?'wine':'ketchup',p.x,p.y);}
+      __cartTest.step(.8);
+    });
+    check('real caster contacts break wine, flatten ketchup and paint separate tire trails',await page.evaluate(()=>{
+      const s=__cartTest.world().stock;return s.stats.broken>0&&s.stats.crushed>0&&s.stats.wheelContacts>0&&s.smears.length>5;
+    }));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'wheels-through-stock.png')});
+    const stockPause=await page.evaluate(()=>{
+      const w=__cartTest.world();return JSON.stringify({items:w.stock.items.map(p=>[p.x,p.y,p.z]),shelves:w.shelves.map(s=>[s.cx,s.cy,s.tilt]),film:[...w.stock.liquids].map(([k,l])=>[k,[...l.cells]])});
+    });
+    await page.locator('#cart-pause').click();await page.waitForTimeout(250);
+    check('pause freezes shelves, airborne stock and liquid spreading',stockPause===await page.evaluate(()=>{
+      const w=__cartTest.world();return JSON.stringify({items:w.stock.items.map(p=>[p.x,p.y,p.z]),shelves:w.shelves.map(s=>[s.cx,s.cy,s.tilt]),film:[...w.stock.liquids].map(([k,l])=>[k,[...l.cells]])});
+    }));
     await page.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();w.gate=1;w.messes=2;w.penalty=7;w.time=50;__cartTest.step(1/120);});
     check('the HUD shows cleared markers, actual penalties and an urgent shrinking clock', await page.evaluate(() =>
       document.querySelector('#cart-route-steps i').classList.contains('is-done') && document.querySelectorAll('#cart-route-steps .is-current').length===1 &&
@@ -223,7 +262,7 @@ async function setup(context, url) {
         const w=__cartTest.world(), wrap=CartPhysics.wrap, clamp=CartPhysics.clamp;
         for(let i=0;i<9.5*120;i++) {
           let target=w.level.gates[w.gate]||w.exit.approach;
-          if(w.gate<w.level.gates.length){const previous=w.gate?w.level.gates[w.gate-1]:w.level.start,a=Math.atan2(target.y-previous.y,target.x-previous.x);target={x:target.x-CartPhysics.BODY.personX*Math.cos(a),y:target.y-CartPhysics.BODY.personX*Math.sin(a)};}
+          if(w.gate<w.level.gates.length){const previous=w.gate?w.level.gates[w.gate-1]:w.level.start,a=Math.atan2(target.y-previous.y,target.x-previous.x);target={x:target.x-CartPhysics.CHECKPOINT_SENSOR.x*Math.cos(a),y:target.y-CartPhysics.CHECKPOINT_SENSOR.x*Math.sin(a)};}
           const b=w.body,dx=target.x-b.x,dy=target.y-b.y,d=Math.hypot(dx,dy),speed=Math.min(62,d*1.25);
           const vx=d>1?dx/d*speed:0,vy=d>1?dy/d*speed:0,ax=(vx-b.vx)*2.1,ay=(vy-b.vy)*2.1;
           let error=wrap(Math.atan2(ay,ax)-b.a),sign=1;
@@ -246,6 +285,7 @@ async function setup(context, url) {
     check('the earlier parking records remain untouched', await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v1'))[0].time===12));
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'checkout.png') });
     await page.reload(); await page.waitForFunction(() => !!window.__cartTest);
+    check('earlier shopper-checkpoint records remain intact under their old key',await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v2'))[0].time===34));
     check('records survive reload', (await page.evaluate(() => __cartTest.state())).records[0].stars === 3);
     await page.locator('#cart-fullscreen').click();
     check('fullscreen is usable', await page.evaluate(() => document.fullscreenElement === document.getElementById('cart-game') || document.getElementById('cart-game').classList.contains('cart-pseudo-fullscreen')));

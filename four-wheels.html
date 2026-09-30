@@ -15,7 +15,7 @@
   <meta name="description" content="A pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. Six short courses, playable here.">
   <link rel="canonical" href="https://ethanwillingham.com/four-wheels.html">
   <meta property="og:title" content="All Four Wheels">
-  <meta property="og:description" content="Turn the cart. Keep sliding. Try to leave the dishes on the shelf. A little pixel-art game about four swivel wheels.">
+  <meta property="og:description" content="Turn the cart. Keep sliding. Try to leave the wine on the shelf. A little pixel-art game about four swivel wheels.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/four-wheels.html">
@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=10">
+  <link rel="stylesheet" href="four-wheels.css?v=11">
 </head>
 <body class="cart-page">
   <div class="site-wrapper">
@@ -61,14 +61,14 @@
           </header>
 
           <div class="cart-stage" id="cart-stage">
-            <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. Touch each numbered checkpoint with the small circle around you. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Touch each numbered checkpoint with the small circle around you, then drive out through checkout.</canvas>
+            <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. Touch each numbered checkpoint with the coral marker inside the basket. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Touch each numbered checkpoint with the coral marker inside the basket, then drive out through checkout.</canvas>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
                 <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span>FOUR WHEELS. ALL SWIVEL.</span></div>
                 <div class="cart-overlay-copy">
                 <p class="cart-kicker" id="cart-overlay-kicker">Course 01 / 06 &middot; First push</p>
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
-                <p id="cart-overlay-text">Touch each numbered checkpoint with the small circle around you. Then drive out through checkout.</p>
+                <p id="cart-overlay-text">Touch each numbered checkpoint with the coral marker inside the basket. Then drive out through checkout.</p>
                 <div class="cart-intro-controls" aria-hidden="true"><span><b><kbd>W</kbd> <kbd>S</kbd></b>Push / pull</span><span><b><kbd>A</kbd> <kbd>D</kbd></b>Rotate</span><span><b><kbd>Space</kbd></b>Brake</span></div>
                 <div id="cart-result" class="cart-result" hidden></div>
                 <label class="cart-practice" id="cart-practice-label"><input type="checkbox" id="cart-practice"><span>Untimed practice<small>Get a feel for the wheels.</small></span></label>
@@ -85,7 +85,7 @@
           </div>
 
           <div class="cart-route-bar">
-            <div class="cart-route-copy"><div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div><p id="cart-route">Touch circle 1 of 3 with your small ring</p></div>
+            <div class="cart-route-copy"><div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div><p id="cart-route">Touch circle 1 of 3 with the basket marker</p></div>
             <button type="button" id="cart-retry">Retry <span>R</span></button>
           </div>
 
@@ -114,17 +114,18 @@
         </section>
 
         <div class="post-body cart-prose">
-          <p><strong>All Four Wheels</strong> is my shopping cart game. Turn the basket while it keeps sliding in the old direction, then push to bend its path. Six short courses, shelves full of breakable things, and your best runs saved in this browser. Still in progress.</p>
+          <p><strong>All Four Wheels</strong> is my shopping cart game. Turn the basket while it keeps sliding in the old direction, then push to bend its path. Six short courses, shelves that topple, bottles that break, spills under the wheels, and your best runs saved in this browser. Still in progress.</p>
           <details class="cart-notes">
             <summary>How to play</summary>
             <p>Get through the store before time runs out. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five.</p>
             <p>In the first course, push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward.</p>
             <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch the wheels swing around; turn while moving and each one follows a different curve. You can see them through the basket.</p>
             <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. The map edge and your outline turn red when the basket, a wheel, or you touch the boundary.</p>
-            <p>Touch each numbered checkpoint with the small circle around you, in order, to open checkout. Any contact counts. The cart can stay outside the circle. Follow the painted arrow and drive through the opening in the outer wall. Keep rolling until you and all four wheels are outside.</p>
+            <p>Touch each numbered checkpoint with the coral marker inside the basket, in order, to open checkout. The marker sits two thirds of the way from the basket's rear to its front. Any contact counts. Follow the painted arrow and drive through the opening in the outer wall. Keep rolling until you and all four wheels are outside.</p>
+            <p>A hard hit can rock a shelf, throw its stock off, or tip the whole rack onto the floor. Wine bottles and dishes break; cans roll and bounce. Run a wheel over a ketchup bottle and it squeezes sauce onto the tiles. Wine spreads farther than ketchup, and oily spills make braking harder. The tires pick up the mess and leave colored tracks. A shelf costs five seconds once, however many things fall.</p>
             <p>Three marks for a clean run under the course's target time. Two for finishing with at most two mishaps. One for getting there. Practice mode has no deadline and doesn't change your records.</p>
           </details>
-          <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-physics.js">Physics source</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
+          <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-physics.js">Cart physics</a> &middot; <a href="js/four-wheels-stock.js">Store physics</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
           <nav class="cart-bottomnav" aria-label="Site navigation">
             <a href="/" class="post-back"><span class="pb-label">Home</span></a>
             <a href="archive.html" class="post-back cart-forward"><span class="pb-label">In Progress</span></a>
@@ -134,9 +135,10 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-physics.js?v=10"></script>
-  <script src="js/four-wheels-levels.js?v=10"></script>
-  <script src="js/four-wheels.js?v=10"></script>
+  <script src="js/four-wheels-stock.js?v=11"></script>
+  <script src="js/four-wheels-physics.js?v=11"></script>
+  <script src="js/four-wheels-levels.js?v=11"></script>
+  <script src="js/four-wheels.js?v=11"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

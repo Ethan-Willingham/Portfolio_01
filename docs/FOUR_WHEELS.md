@@ -8,7 +8,8 @@ feature flags, or build step.
 
 - `four-wheels.html`: post, accessible controls, briefing and results.
 - `four-wheels.css`: responsive game shell, touch controls, fullscreen fallback.
-- `js/four-wheels-physics.js`: pure physics and course state; browser and CommonJS.
+- `js/four-wheels-stock.js`: furniture, supported stock, loose products, breakage and floor films.
+- `js/four-wheels-physics.js`: cart physics and course state; browser and CommonJS.
 - `js/four-wheels-levels.js`: six courses, ordered markers, props and checkout exits.
 - `js/four-wheels.js`: coarse pixel rasterizer, input, audio, UI and local records.
 
@@ -91,16 +92,63 @@ both collide with shelves and walls; each tire also has a separate oriented
 collision rectangle. Tire impacts can swivel the fork, move the chassis and
 push props even when the basket clears them. Contacts apply torque. Cones and boxes
 move, collide with each other and the room, and charge a penalty once per prop.
-Shelves spill once. Cones cost 2 seconds, boxes 3, shelves 5.
+Cones cost 2 seconds, boxes 3, shelves 5. A shelf charges once when its stock
+first falls or the rack topples. Individual products do not add separate penalties.
+
+## Shelves and their contents
+
+The rack is a dynamic body with mass, yaw inertia, ground friction and a separate
+rocking angle about its supporting feet. A horizontal impulse at basket height
+transfers momentum to the rack, twists it around an off-center contact, and adds
+a tipping impulse. Gravity restores a small rock until the center of mass passes
+its supporting feet; beyond that point it accelerates the fall. Shelves settle at
+90 degrees and their expanded, rotated frame stays solid on the floor. Their
+collisions can knock over adjacent racks. Supported stock contributes to the
+rack's mass and center of mass, so dropping it changes the loaded body.
+
+Every displayed product is the actual simulated item. Each has mass, planar
+inertia, material friction, bounce, height, vertical speed and tumbling angle.
+Stock keeps its momentum during a rack impact and slides relative to the board.
+Gravity and static friction govern sliding as the board tilts. Crossing the edge
+or losing support releases the product with the board's translation, yaw and
+tipping velocity. It then falls under gravity, bounces, collides with walls,
+furniture, cones, boxes and other products, and remains on the floor.
+
+Wine bottles, jars, plates and plant pots break on sufficiently hard impacts or
+under a rolling tire. Glass, ceramic and terracotta fragments have small physical
+footprints. Cans bounce and roll. Cloth and cartons have higher drag. Ketchup
+bottles survive ordinary drops, but a hard landing or tire contact flattens the
+bottle and releases its contents. Floor items fit under the raised basket;
+airborne products can hit its rails. Shoes can kick low stock and all four tires
+have their own product contacts, loss of rolling energy and caster reaction.
+
+Wine, ketchup, oil and soil use separate conservative 4-pixel floor grids.
+Pairwise film flow runs at 20 Hz. Wine spreads readily, ketchup stays thicker,
+and soil barely spreads. Each caster samples its own contact's surface grip and
+rolling resistance. Unequal grip creates a braking yaw moment. Tires pick up a
+limited amount of the film and deposit it onto clean tiles, conserving volume
+between floor and tire. Colored tread and persistent thin tracks show the route.
+The original maintenance puddle remains a water surface.
+
+This is a game model in artwork units: planar contact impulses plus separate
+height and one rocking axis per rack. It is not a full 3D rigid-body or fluid
+solver. The contact solver uses equal and opposite impulses, contact-point
+angular velocity, Coulomb friction and low-speed inelastic contacts, following
+the principles described in [Box2D's simulation documentation](https://box2d.org/documentation/md_simulation.html).
+No Box2D dependency is loaded. Collision broad phases, cached rack geometry,
+sleeping floor items, a spatial grid for product pairs and a 220-fragment cap
+keep a messy aisle bounded. Films and landed stock persist until retry.
+
+## Checkpoints and checkout
 
 Checkpoints have a continuous circular outline with a shared 20-pixel radius.
-The inner edge of the painted ring matches the capture boundary. The shopper's
-smaller physical circle (radius 4, centered 16 pixels behind the body's origin)
-only needs to touch or overlap it. Even a tiny overlap counts; the shopper's
-center and most of the body may remain outside. Basket contact alone cannot
-clear a checkpoint. There is no dwell time, heading or speed requirement.
-Checkpoints count once, in route order. A pale outline shows the shopper's
-footprint when approaching the current circle.
+The inner edge of the painted ring matches the capture boundary. A small coral
+sensor in the basket has radius 4 and sits two thirds of the distance from the
+rear edge to the front edge, at local x = 19 2/3. Any touch or overlap of that
+sensor counts. Shopper contact or another part of the cart cannot clear a marker
+by itself. The sensor rotates with the basket and stays visible through its mesh.
+There is no dwell time, heading or speed requirement. Checkpoints count once,
+in route order, and the sensor disappears when checkout opens.
 
 The room uses a light plaster rim, thin baseboard and shallow inner shadow,
 with a plain ink margin around the canvas. Keep the seam on the actual walls.
@@ -118,10 +166,11 @@ cart, every tire and the shopper have cleared the outside edge of the canvas.
 No heading constraint, speed threshold or parking dwell remains. Deadline
 expiry still takes precedence over completion on the same physics step.
 Practice has no deadline and does not save records. Timed records use
-`four-wheels-records-v2` in localStorage, with validation and blocked-storage
+`four-wheels-records-v3` in localStorage, with validation and blocked-storage
 fallback. More marks rank above fewer; equal marks rank by total time.
-The earlier parking records remain untouched under `four-wheels-records-v1`;
-the exit courses use a separate record set because the finish condition changed.
+Earlier records remain untouched under `four-wheels-records-v1` and
+`four-wheels-records-v2`. The shelf physics and moved sensor use a separate record
+set so old runs are not compared with different collision and capture rules.
 
 ## Controls and lifecycle
 
@@ -134,18 +183,22 @@ disables shake and marker particles. Idle and paused screens do not run a loop.
 
 ## Verification and deployment
 
-Run `node --check` on each of the three game scripts, then:
+Run `node --check` on each of the four game scripts, then:
 
 ```sh
 node tools/test-four-wheels.cjs
+node tools/test-four-wheels-stock.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
 The physics checks cover caster trail, travel-dependent alignment, reverse
 flips, contact slip, protruding-tire collisions, gentle edge contact, doorway
 locking, jambs, all four exit directions and complete departure footprints.
-They check shopper overlap, external tangency, heading changes and checkpoint
-order, with a controller that aims the shopper at the circles.
+They check the forward basket sensor, external tangency, heading changes and
+checkpoint order, with a controller that aims the sensor at the circles.
+Stock checks cover momentum transfer, gentle rocking, physical toppling and
+falling stock, material-specific breakage, tire crushing, conservative fluid flow,
+tire pickup, smear deposition, unequal braking grip and dense debris stability.
 They cover walking cadence, smooth acceleration, reverse steps, posture and
 turns in place, and include a controller that drives all six full routes and
 drives out through the real contact model before their deadlines. Browser checks
@@ -155,12 +208,15 @@ Test hooks are injected by the verification server and are never shipped.
 Screenshots go to `/tmp/four-wheels-qa` unless `DUMP` is set. The harness owns
 Chrome for Testing and closes that process in `finally`. It never launches
 personal Chrome. `CART_BROWSER` may point to another dedicated testing build.
+The browser checks also render a rack collapse and wheels crossing wine and
+ketchup, and verify pause freezes furniture, stock and films.
 With `ASSETS=1`, the browser harness refreshes the JPG thumbnail and renders a
 two-second `walking.gif`, a posture sheet and a `shopper-motion.gif` showing
-pushes, both turn directions and braking in the screenshot directory.
+pushes, both turn directions and braking, plus a six-second `shelf-collapse.gif`
+in the screenshot directory.
 Run `tools/build-webp.mjs` after refreshing the thumbnail to update its WebP
 sibling.
 
-For edits, increment the four `?v=` values in the post. Keep the post in the
+For edits, increment the five `?v=` values in the post. Keep the post in the
 In Progress index, rebuild search when copy changes, and regenerate the sitemap
 after committing a new page. Commit explicit paths and push to main.

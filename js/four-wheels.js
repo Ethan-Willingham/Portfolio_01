@@ -3,7 +3,7 @@
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
   if (!ctx || !window.CartPhysics || !window.CartLevels) return;
-  const { World, BODY, CHECKPOINT_RADIUS, point, corners, WHEELS, CASTER, casterPose, casterCorners, clamp } = CartPhysics;
+  const { World, BODY, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, point, corners, WHEELS, CASTER, casterPose, casterCorners, clamp } = CartPhysics;
   const levels = CartLevels, game = $('game');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const rootStyle = getComputedStyle(document.documentElement);
@@ -17,7 +17,7 @@
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
-  const STORAGE = 'four-wheels-records-v2';
+  const STORAGE = 'four-wheels-records-v3';
   let records = [], canSave = true;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
@@ -25,7 +25,7 @@
   } catch { canSave = false; }
   let levelIndex = 0, world = new World(levels[0]), phase = 'ready', floor;
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
-  let particles = [], debris = [], screenShake = 0, pickerReturn = 'ready';
+  let particles = [], screenShake = 0, pickerReturn = 'ready';
   let keys = new Set(), touches = new Map(), pseudoFullscreen = false;
 
   function timeString(seconds, tenths = false) {
@@ -90,6 +90,12 @@
         this.note(e.kind === 'shelf' ? 460 : 130, .17, .055, 0, 'triangle', e.kind === 'shelf' ? 180 : 50);
         if (e.kind === 'shelf') for (let i = 0; i < 5; i++) this.note(800 + i * 207, .2, .025, i * .035);
       }
+      if (e.type === 'rack-hit') { this.note(90, .22, .035, 0, 'triangle', 40); this.note(370, .15, .012, .03, 'sine', 190); }
+      if (e.type === 'shelf-down') { this.note(65, .35, .07, 0, 'triangle', 25); for (let i = 0; i < 4; i++) this.note(130 + i * 51, .22, .022, i * .03, 'triangle', 60); }
+      if (e.type === 'break') for (let i = 0; i < 4; i++) this.note((e.material === 'ceramic' ? 630 : 1500) + i * 317, .1 + i * .025, .012, i * .012, 'triangle', 370 + i * 130);
+      if (e.type === 'squash') this.note(130, .12, .02, 0, 'sawtooth', 35);
+      if (e.type === 'wheel-rattle') this.note(e.kind === 'can' ? 340 : 180, .05, .008, 0, 'triangle', 90);
+      if (e.type === 'product-land' && e.material === 'metal') this.note(610, .13, .012, 0, 'sine', 410);
     }
   };
 
@@ -186,39 +192,88 @@
     return off;
   }
 
-  function drawStock(g, x, y, kind, i) {
-    const color = swatches[i % swatches.length];
-    if (kind === 'plants') {
-      rect(g, x + 1, y + 4, 6, 5, P.clay); rect(g, x, y + 4, 8, 2, P.gold);
-      rect(g, x + 3, y, 2, 6, P.pine); rect(g, x, y + 1, 4, 3, P.sage); rect(g, x + 4, y - 1, 4, 4, P.pine);
-    } else if (kind === 'dishes') {
-      oval(g, x + 4, y + 6, 5, 3, P.mid); oval(g, x + 4, y + 4, 5, 3, P.cream); oval(g, x + 4, y + 3, 3, 2, color); rect(g, x + 1, y + 7, 6, 1, P.light);
-    } else if (kind === 'boxes') {
-      rect(g, x - 1, y + 1, 11, 9, P.edge); rect(g, x, y, 10, 8, P.clay); rect(g, x + 4, y, 2, 8, P.gold); rect(g, x + 1, y + 1, 3, 1, P.cream);
-    } else if (kind === 'towels') {
-      rect(g, x - 1, y + 5, 11, 5, P.mid); rect(g, x, y + 1, 10, 7, color); rect(g, x, y + 2, 10, 1, P.cream); rect(g, x, y + 6, 10, 1, P.cream);
+  const spillColor = kind => kind === 'wine' ? P.purple : kind === 'ketchup' ? P.brick : kind === 'oil' ? P.gold : kind === 'soil' ? P.hairDark : P.blue;
+  function drawProduct(g, p) {
+    const mounted = p.state === 'shelf';
+    const b = {x:p.x, y:p.y - p.z * .35, a:mounted ? p.a + p.shelf.a : p.a};
+    const color = swatches[(p.color || 0) % swatches.length];
+    const foreshorten=mounted||p.z<1?1:.4+.6*Math.abs(Math.cos(p.tumble));
+    const detail=(x,y,width,height,color)=>localRect(g,b,x*foreshorten,y,width*foreshorten,height,color);
+    if (!mounted) { g.globalAlpha = .15; oval(g,p.x+1,p.y+2,Math.max(2,p.length),Math.max(1,p.width),P.dark); g.globalAlpha = 1; }
+    if (p.kind === 'wine') {
+      detail(-4,-2,7,4,P.dark); detail(-4,-1,7,2,P.pine);
+      detail(3,-1,3,2,P.green); detail(5,-1,1,2,P.gold);
+      detail(-2,-2,3,4,P.cream); detail(-1,-1,1,2,P.purple); detail(-4,-2,1,1,P.sage);
+    } else if (p.kind === 'ketchup') {
+      detail(-4,-2,p.flat?8:7,p.flat?5:4,P.brick); detail(3,-1,2,2,P.coral);
+      detail(4,-1,1,2,P.light); detail(-2,-2,3,4,P.cream); detail(-1,-1,2,2,P.brick);
+      detail(-4,-2,1,2,P.coral);
+    } else if (p.kind === 'jar') {
+      detail(-3,-3,6,6,P.pine); detail(2,-3,2,6,P.gold);
+      detail(-2,-2,3,4,P.cream); detail(-3,-2,1,3,P.sage);
+    } else if (p.kind === 'can') {
+      detail(-4,-2,8,4,P.steelShade); detail(-3,-2,6,4,color);
+      detail(-3,-2,6,1,P.steelLight); detail(-1,-1,2,2,P.cream); detail(3,-1,1,2,P.steel);
+    } else if (p.kind === 'plate') {
+      oval(g,b.x,b.y,4,Math.max(1,3*foreshorten),P.steelShade); oval(g,b.x,b.y-1,4,Math.max(1,3*foreshorten),P.cream); oval(g,b.x,b.y-1,2,1,color);
+    } else if (p.kind === 'pot') {
+      detail(-3,-3,6,6,P.clay); detail(-4,-4,8,2,P.gold);
+      if (mounted || p.z>2) { detail(-1,-5,2,6,P.pine); detail(-5,-5,5,3,P.sage); detail(0,-7,4,4,P.pine); }
+      else { detail(-2,-2,4,4,P.hairDark); detail(0,-1,4,2,P.pine); }
+    } else if (p.kind === 'towel') {
+      detail(-5,-3,10,6,color); detail(-4,-2,8,1,P.cream); detail(-4,1,8,1,P.cream);
+    } else if (p.kind === 'carton') {
+      detail(-5,-4,10,8,P.clay); detail(-1,-4,2,8,P.gold); detail(-4,-3,3,2,P.cream);
     } else {
-      rect(g, x + 1, y + 2, 6, 7, color); rect(g, x + 2, y, 4, 2, P.gold); rect(g, x + 2, y + 4, 4, 2, P.cream); rect(g, x + 1, y + 9, 6, 1, P.mid);
+      const tint = p.material === 'ceramic' ? P.cream : p.material === 'terracotta' ? P.clay : p.source === 'wine' ? P.sage : P.steelLight;
+      g.globalAlpha = p.material === 'glass' ? .85 : 1;
+      poly(g,[[-p.length,-p.width],[p.length,0],[-p.length*.4,p.width]].map(q=>point(b,...q)),tint);
+      rect(g,b.x,b.y,1,1,P.light); g.globalAlpha = 1;
     }
   }
-  function drawShelf(g, s, t) {
-    const shift = reducedMotion.matches ? 0 : Math.round(Math.sin(t * 54) * s.wobble * 1.5);
-    const x = s.x + shift, y = s.y;
-    g.globalAlpha = .25; rect(g, x + 4, y + 5, s.w, s.h, P.dark); g.globalAlpha = 1;
-    rect(g, x, y, s.w, s.h, P.dark); rect(g, x + 2, y + 2, s.w - 4, s.h - 4, P.edge);
-    rect(g, x + 2, y + s.h - 4, s.w - 4, 6, P.green);
-    for (let yy = y + 7, row = 0; yy < y + s.h - 10; yy += 18, row++) {
-      rect(g, x + 3, yy + 10, s.w - 6, 2, P.mid); rect(g, x + 3, yy + 12, s.w - 6, 1, P.gold);
-      for (let xx = x + 8, col = 0; xx < x + s.w - 9; xx += 15, col++) {
-        if (s.spilled && (row + col * 2) % 3 === 0) continue;
-        drawStock(g, xx, yy, s.stock, row * 5 + col + s.id);
-        rect(g, xx + 1, yy + 13, 5, 2, P.cream);
+  function drawShelf(g, s) {
+    const physical = CartStock.shelfPolygon(s);
+    g.globalAlpha = .19; poly(g,physical.map(p=>({x:p.x+3,y:p.y+3})),P.dark); g.globalAlpha=1;
+    const corners=[[-s.w/2,-s.h/2],[s.w/2,-s.h/2],[s.w/2,s.h/2],[-s.w/2,s.h/2]];
+    const project = (u,v,z) => { const p=CartStock.shelfPoint(s,u,v,z);return {x:p.x,y:p.y-p.z*.35}; };
+    const base=corners.map(p=>project(...p,0)),top=corners.map(p=>project(...p,s.height));
+    // A fallen rack exposes its steel frame, boards and diagonal back braces.
+    if(s.tilt<.55) {
+      poly(g,base,P.dark);poly(g,corners.map(([u,v])=>project(u*.95,v*.95,0)),P.edge);
+      for(let i=0;i<4;i++){const q=(i+1)%4;poly(g,[base[i],base[q],top[q],top[i]],i%2?P.mid:P.edge);}
+      poly(g,top,P.green);
+    } else {
+      g.globalAlpha=.13;poly(g,physical,P.dark);g.globalAlpha=1;
+      for(let i=0;i<4;i++){const q=(i+1)%4;line(g,base[i].x,base[i].y,base[q].x,base[q].y,P.steelShade,2);}
+      line(g,top[0].x,top[0].y,top[2].x,top[2].y,P.steelShade);
+      line(g,top[1].x,top[1].y,top[3].x,top[3].y,P.steelShade);
+    }
+    for(let i=0;i<4;i++) {const q=(i+1)%4;line(g,top[i].x,top[i].y,top[q].x,top[q].y,i===0?P.gold:P.steelShade,2);line(g,base[i].x,base[i].y,top[i].x,top[i].y,P.steel,2);}
+    const rows=Math.max(1,Math.floor((s.h-10)/18));
+    for(let row=0;row<rows;row++) {
+      const v=(row+.5)*(s.h-10)/rows-(s.h-10)/2,z=12+row%3*10;
+      const a=project(-s.w/2+3,v+5,z),b=project(s.w/2-3,v+5,z);
+      line(g,a.x,a.y,b.x,b.y,P.steelShade,3);line(g,a.x,a.y,b.x,b.y,s.tilt>.55?P.clay:P.gold,2);
+    }
+    s.stockItems.filter(p=>p.state==='shelf').sort((a,b)=>a.y-a.z*.35-(b.y-b.z*.35)).forEach(p=>drawProduct(g,p));
+    // A label follows the rack, including after it lands on the floor.
+    const label=project(0,s.h/2,s.down?0:8);
+    if(s.w>s.h) text(g,s.label,label.x,label.y+11,P.edge,6,'center');
+    else {const panel={x:s.cx+s.nx*s.height*Math.sin(s.tilt)*.5,y:s.cy+s.ny*s.height*Math.sin(s.tilt)*.5,a:s.a-Math.PI/2};
+      localRect(g,panel,-Math.min(36,s.h/2-5),-5,Math.min(72,s.h-10),10,s.down?P.gold:P.green);
+      g.save();g.translate(panel.x,panel.y);g.rotate(panel.a);text(g,s.label,0,2,s.down?P.dark:P.cream,5,'center');g.restore();}
+  }
+  function drawSpills(g, stock) {
+    for(const liquid of stock.liquids.values()) {
+      const color=spillColor(liquid.kind);
+      for(const [key,volume] of liquid.cells) {
+        const x=key%120*CartStock.CELL,y=Math.floor(key/120)*CartStock.CELL;
+        g.globalAlpha=clamp(volume*1.4,.025,.65);rect(g,x,y,4,4,color);
+        if(volume>.65&&hash(key,7)>.65) {g.globalAlpha=.25;rect(g,x+1,y+1,2,1,P.light);}
       }
     }
-    rect(g, x, y, s.w, 3, P.gold); rect(g, x, y, 2, s.h, P.mid);
-    // Labels are painted beside shelves, so stock stays big enough to read.
-    if (s.w > s.h) text(g, s.label, x + s.w / 2, y + s.h + 12, P.edge, 6, 'center');
-    else { g.save(); g.translate(x + s.w / 2, y + s.h / 2); g.rotate(-Math.PI / 2); rect(g, -Math.min(38, s.h / 2 - 5), -5, Math.min(76, s.h - 10), 10, P.green); text(g, s.label, 0, 2, P.cream, 5, 'center'); g.restore(); }
+    for(const smear of stock.smears) {g.globalAlpha=smear.alpha;localRect(g,smear,-2,-.7,4,1.5,spillColor(smear.kind));}
+    g.globalAlpha=1;
   }
 
   function drawObject(g, o) {
@@ -257,6 +312,10 @@
     const roll = ((wheel.roll / (Math.PI * 2 * l)) % 1 + 1) % 1;
     const tread = Math.floor(roll * 6) - 3;
     localRect(g, pose, tread, -h + 1, 1, h * 2 - 2, P.mid);
+    if (wheel.coating) {
+      const wet = Object.entries(wheel.coating).sort((a,b)=>b[1]-a[1])[0];
+      if(wet&&wet[1]>.015) {g.globalAlpha=clamp(wet[1]*3,.15,.85);localRect(g,pose,-l+1,-h+1,l*2-2,h*2-2,spillColor(wet[0]));g.globalAlpha=1;}
+    }
     localRect(g, pose, 0, -h - 1, 1, h * 2 + 2, P.steel);
     localRect(g, pose, 0, -h - 1, 1, 1, P.steelLight);
     localRect(g, pose, 0, h, 1, 1, P.steelLight);
@@ -430,13 +489,12 @@
   }
 
   function drawCheckpointBody(g, w) {
-    const target = w.level.gates[w.gate];
-    if (!target) return;
-    const person = point(w.body, BODY.personX, 0);
-    if (Math.hypot(person.x - target.x, person.y - target.y) > CHECKPOINT_RADIUS + BODY.personRadius + 12) return;
-    // Keep the contact outline inside its physical edge while approaching.
-    g.save(); g.globalAlpha = .8;
-    ring(g, person.x, person.y, BODY.personRadius - 1, P.cream);
+    if (w.exitOpen) return;
+    const sensor = point(w.body, CHECKPOINT_SENSOR.x, 0);
+    g.save();
+    ring(g, sensor.x, sensor.y, CHECKPOINT_SENSOR.radius - 1, P.dark, 2);
+    ring(g, sensor.x, sensor.y, CHECKPOINT_SENSOR.radius - 1, P.coral);
+    rect(g,sensor.x-1,sensor.y-1,2,2,P.cream);
     g.restore();
   }
 
@@ -472,11 +530,10 @@
   function draw(g = ctx, w = world, background = floor, preview = false) {
     g.clearRect(0, 0, 480, 300); g.save();
     if (!preview && screenShake > 0 && !reducedMotion.matches) g.translate(Math.round(Math.sin(w.time * 99) * screenShake), Math.round(Math.cos(w.time * 78) * screenShake));
-    g.drawImage(background, 0, 0); drawRoute(g, w);
+    g.drawImage(background, 0, 0); drawSpills(g,w.stock); drawRoute(g, w);
     for (const t of w.tracks) { g.globalAlpha = t.life / 3 * .14; localRect(g, { x: t.x, y: t.y, a: t.a }, -2, -1, 4, 1, P.edge); }
     g.globalAlpha = 1;
     if (!preview) {
-      for (const d of debris) { rect(g, d.x + 1, d.y + 1, d.w, d.h, P.mid); localRect(g, d, -d.w / 2, -d.h / 2, d.w, d.h, d.color); }
       const b = w.body, speed = Math.hypot(b.vx, b.vy);
       if (speed > 8) {
         const vx = b.vx / speed, vy = b.vy / speed, length = Math.min(57, speed * .45);
@@ -489,7 +546,9 @@
     }
     // Painter's order gives furniture and people a little depth without hiding
     // the driving footprint. Everything still sits on a 2D floor.
-    const entities = [...w.shelves.map(s => ({ y: s.y + s.h / 2, render: () => drawShelf(g, s, w.time) })), ...w.objects.map(o => ({ y: o.y, render: () => drawObject(g, o) })), { y: w.body.y, render: () => drawCart(g, w.body, w.wheels, w.gait) }];
+    const entities = [...w.shelves.map(s => ({ y: s.cy+s.ny*s.height*Math.sin(s.tilt)/2, render: () => drawShelf(g, s) })),
+      ...w.stock.items.filter(p=>p.state!=='shelf'&&!p.broken).map(p=>({y:p.y-p.z*.35,render:()=>drawProduct(g,p)})),
+      ...w.objects.map(o => ({ y: o.y, render: () => drawObject(g, o) })), { y: w.body.y, render: () => drawCart(g, w.body, w.wheels, w.gait) }];
     entities.sort((a, b) => a.y - b.y).forEach(e => e.render());
     if (!preview) for (const p of particles) {
       g.globalAlpha = .2; rect(g, p.x + 1, p.y + 2, p.w, p.h, P.dark); g.globalAlpha = clamp(p.life, 0, 1);
@@ -499,11 +558,11 @@
     g.restore();
   }
 
-  function burst(x, y, count, colors, kind = 'spill') {
-    if (kind === 'gate' && reducedMotion.matches) return;
+  function burst(x, y, count, colors) {
+    if (reducedMotion.matches) return;
     for (let i = 0; i < count; i++) {
-      const a = i * 2.399 + Math.random(), v = kind === 'gate' ? 16 : 20 + Math.random() * 45;
-      particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, z: kind === 'gate' ? 0 : 7, vz: kind === 'gate' ? 0 : 40 + Math.random() * 55, a, omega: Math.random() * 9 - 4, color: colors[i % colors.length], w: 2 + i % 3, h: 2 + i % 2, life: kind === 'gate' ? .6 : 6, kind });
+      const a = i * 2.399 + Math.random(), v = 16;
+      particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, z: 0, a, omega: Math.random() * 9 - 4, color: colors[i % colors.length], w: 2, h: 2, life: .6 });
     }
   }
   function tickEffects(dt) {
@@ -513,17 +572,8 @@
     for (const p of particles) {
       p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.omega * dt;
       p.vx *= Math.exp(-1.5 * dt); p.vy *= Math.exp(-1.5 * dt);
-      if (p.kind === 'spill') {
-        p.z += p.vz * dt; p.vz -= 200 * dt;
-        if (p.z < 0) {
-          p.z = 0;
-          if (Math.abs(p.vz) > 15) { p.vz = -p.vz * .3; }
-          else { debris.push({ x: p.x, y: p.y, a: p.a, w: p.w, h: p.h, color: p.color }); p.life = 0; }
-        }
-      }
     }
     particles = particles.filter(p => p.life > 0);
-    if (debris.length > 150) debris = debris.slice(-150);
   }
   function events() {
     for (const e of world.events.splice(0)) {
@@ -533,7 +583,8 @@
         screenShake = e.kind === 'shelf' ? 1.5 : .65;
         notify((e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : 'Shelf spilled') + (world.practice ? '' : ' / +' + e.seconds + ' seconds'));
       }
-      if (e.type === 'spill') burst(e.x, e.y, 17, e.shelf.stock === 'plants' ? [P.sage, P.pine, P.clay] : [P.cream, P.blue, P.coral]);
+      if (e.type === 'shelf-down') { screenShake=2; notify('Shelf down' + (world.practice?'':' / stock spilled')); }
+      if (e.type === 'rack-hit') screenShake=Math.max(screenShake,.4);
       if (e.type === 'bump') screenShake = .6;
       if (e.type === 'won' || e.type === 'lost') finish(e.type === 'won');
     }
@@ -556,7 +607,7 @@
     const target = world.level.gates[world.gate];
     if (phase === 'won') $('route').textContent = 'Checkout complete';
     else if (phase === 'lost') $('route').textContent = 'Time is up. Give it another go.';
-    else if (target) $('route').textContent = 'Touch circle ' + (world.gate + 1) + ' of ' + world.level.gates.length + ' with your small ring';
+    else if (target) $('route').textContent = 'Touch circle ' + (world.gate + 1) + ' of ' + world.level.gates.length + ' with the basket marker';
     else $('route').textContent = world.exiting ? 'Keep rolling until you and the cart are outside' : 'Drive out through the checkout exit';
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
@@ -576,7 +627,7 @@
   function reset(index = levelIndex) {
     if (raf) cancelAnimationFrame(raf); raf = 0;
     clearInput(); levelIndex = index; world = new World(levels[index], $('practice').checked);
-    phase = 'ready'; particles = []; debris = []; screenShake = 0; toastLife = 0;
+    phase = 'ready'; particles = []; screenShake = 0; toastLife = 0;
     $('toast').classList.remove('is-visible'); $('picker').hidden = true; $('result').hidden = true;
     floor = makeFloor(world.level);
     $('course-number').textContent = 'Course ' + String(index + 1).padStart(2, '0') + ' / 06';
@@ -588,7 +639,7 @@
     }
     $('course-title').textContent = world.level.name;
     $('courses').setAttribute('aria-label', 'Choose a course, currently ' + world.level.name);
-    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Touch each numbered checkpoint with the small circle around you. Then drive out through checkout.' : world.level.tip, 'Let\'s roll', null, true);
+    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Touch each numbered checkpoint with the coral marker inside the basket. Then drive out through checkout.' : world.level.tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
   function run() {

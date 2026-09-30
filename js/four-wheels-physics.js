@@ -15,15 +15,17 @@
   const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
   const ROOM = Object.freeze({ left: 8, right: 472, top: 8, bottom: 292, width: 480, height: 300 });
   const CHECKPOINT_RADIUS = 20;
+  const CHECKPOINT_SENSOR = Object.freeze({ x: BODY.cartX - BODY.halfLength + BODY.halfLength * 4 / 3, radius: 4 });
+  const Stock = typeof module !== 'undefined' && module.exports ? require('./four-wheels-stock.js') : root.CartStock;
 
   function point(body, x, y) {
     const c = Math.cos(body.a), s = Math.sin(body.a);
     return { x: body.x + x * c - y * s, y: body.y + x * s + y * c };
   }
 
-  function shopperTouchesCheckpoint(body, checkpoint) {
-    const person = point(body, BODY.personX, 0);
-    return Math.hypot(person.x - checkpoint.x, person.y - checkpoint.y) <= CHECKPOINT_RADIUS + BODY.personRadius + 1e-9;
+  function cartTouchesCheckpoint(body, checkpoint) {
+    const sensor = point(body, CHECKPOINT_SENSOR.x, 0);
+    return Math.hypot(sensor.x - checkpoint.x, sensor.y - checkpoint.y) <= CHECKPOINT_RADIUS + CHECKPOINT_SENSOR.radius + 1e-9;
   }
 
   function advanceGait(gait, body, dt, input = {}) {
@@ -182,13 +184,14 @@
       this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0, leanX: 0, leanY: 0 };
       this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
-      this.shelves = level.shelves.map((s, i) => ({ ...s, id: i, spilled: false, wobble: 0 }));
+      this.shelves = level.shelves.map((s, i) => Stock.createShelf(s, i));
       this.objects = level.objects.map((o, i) => ({ ...o, id: i, vx: 0, vy: 0, a: i * 1.7, omega: 0, down: false, radius: o.kind === 'cone' ? 5.5 : 8, mass: o.kind === 'cone' ? 0.12 : 0.32 }));
       this.exit = exitGeometry(level.exit);
       this.closedWalls = roomWalls(this.exit, false); this.openWalls = roomWalls(this.exit, true);
       this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
       this.boundaryContacts = []; this.exiting = false; this.exitEntered = false;
       this.wet = false;
+      this.stock = new Stock.System(this, { point, corners, casterPose, casterCorners, circleRect, cartCircle, casterCircle, BODY, CASTER });
     }
 
     emit(type, data = {}) { this.events.push({ type, ...data }); }
@@ -207,26 +210,36 @@
 
     impulse(hit, other) {
       const b = this.body, rx = hit.x - b.x, ry = hit.y - b.y;
-      const ox = other ? other.vx : 0, oy = other ? other.vy : 0;
+      const center = other && { x: other.cx ?? other.x, y: other.cy ?? other.y };
+      const qx = other ? hit.x - center.x : 0, qy = other ? hit.y - center.y : 0;
+      const velocity = other && other.velocityAt ? other.velocityAt(hit) : { x: other ? other.vx - (other.omega || 0) * qy : 0, y: other ? other.vy + (other.omega || 0) * qx : 0 };
+      const ox = velocity.x, oy = velocity.y;
       const vx = b.vx - b.omega * ry - ox, vy = b.vy + b.omega * rx - oy;
       const vn = vx * hit.nx + vy * hit.ny;
       const oi = other ? 1 / other.mass : 0;
-      const rn = cross(rx, ry, hit.nx, hit.ny);
-      const denom = 1 + oi + rn * rn / BODY.inertia;
+      const ii = other ? 1 / (other.inertia || other.mass * 50) : 0;
+      const rn = cross(rx, ry, hit.nx, hit.ny), on = cross(qx, qy, hit.nx, hit.ny);
+      const denom = 1 + oi + rn * rn / BODY.inertia + on * on * ii + (other?.tiltMass ? other.tiltMass(hit.nx,hit.ny,hit.height) : 0);
       let j = 0;
       if (vn < 0) {
-        j = -(1.12) * vn / denom;
+        j = -(1 + (Math.abs(vn) < 3 ? 0 : other?.bounce ?? .12)) * vn / denom;
         b.vx += hit.nx * j; b.vy += hit.ny * j; b.omega += rn * j / BODY.inertia;
-        if (other) { other.vx -= hit.nx * j * oi; other.vy -= hit.ny * j * oi; other.omega += cross(hit.x - other.x, hit.y - other.y, -hit.nx, -hit.ny) * j / (other.mass * 50); }
+        if (other) { other.vx -= hit.nx * j * oi; other.vy -= hit.ny * j * oi; other.omega -= on * j * ii; if(other.tiltImpulse)other.tiltImpulse(-hit.nx*j,-hit.ny*j,hit.height); }
         const tx = -hit.ny, ty = hit.nx, rt = cross(rx, ry, tx, ty);
-        const friction = clamp(-(vx * tx + vy * ty) / (1 + oi + rt * rt / BODY.inertia), -j * 0.24, j * 0.24);
+        const ot = cross(qx, qy, tx, ty), mu = other?.friction ?? .24;
+        const ov=other&&other.velocityAt?other.velocityAt(hit):{x:other?other.vx-other.omega*qy:0,y:other?other.vy+other.omega*qx:0};
+        const tangent=(b.vx-b.omega*ry-ov.x)*tx+(b.vy+b.omega*rx-ov.y)*ty;
+        const friction = clamp(-tangent / (1 + oi + rt * rt / BODY.inertia + ot * ot * ii+(other?.tiltMass?other.tiltMass(tx,ty,hit.height):0)), -j * mu, j * mu);
         b.vx += tx * friction; b.vy += ty * friction; b.omega += rt * friction / BODY.inertia;
-        if (other) { other.vx -= tx * friction * oi; other.vy -= ty * friction * oi; }
+        if (other) { other.vx -= tx * friction * oi; other.vy -= ty * friction * oi; other.omega -= ot * friction * ii; if(other.tiltImpulse)other.tiltImpulse(-tx*friction,-ty*friction,hit.height); }
       }
       // Shared positional correction keeps cones light without pushing cart far.
       const correction = Math.max(0, hit.depth - 0.01) / (1 + oi);
       b.x += hit.nx * correction; b.y += hit.ny * correction;
-      if (other) { other.x -= hit.nx * correction * oi; other.y -= hit.ny * correction * oi; }
+      if (other) {
+        if (other.cx !== undefined) { other.cx -= hit.nx * correction * oi; other.cy -= hit.ny * correction * oi; }
+        else { other.x -= hit.nx * correction * oi; other.y -= hit.ny * correction * oi; }
+      }
       return j;
     }
 
@@ -236,19 +249,26 @@
       const nx = hit.nx, ny = hit.ny;
       const rp = cross(px, py, nx, ny), rq = cross(qx, qy, nx, ny);
       const oi = other ? 1 / other.mass : 0;
-      const mass = 1 + oi + rp * rp / BODY.inertia + rq * rq / CASTER.inertia;
-      const vx = b.vx - b.omega * py - wheel.omega * qy - (other ? other.vx : 0);
-      const vy = b.vy + b.omega * px + wheel.omega * qx - (other ? other.vy : 0);
+      const ii = other ? 1 / (other.inertia || other.mass * 50) : 0;
+      const ox = other ? hit.x - (other.cx ?? other.x) : 0, oy = other ? hit.y - (other.cy ?? other.y) : 0;
+      const on = cross(ox, oy, nx, ny);
+      const velocity = other && other.velocityAt ? other.velocityAt(hit) : { x: other ? other.vx - (other.omega || 0) * oy : 0, y: other ? other.vy + (other.omega || 0) * ox : 0 };
+      const mass = 1 + oi + rp * rp / BODY.inertia + rq * rq / CASTER.inertia + on * on * ii+(other?.tiltMass?other.tiltMass(nx,ny,hit.height):0);
+      const vx = b.vx - b.omega * py - wheel.omega * qy - velocity.x;
+      const vy = b.vy + b.omega * px + wheel.omega * qx - velocity.y;
       const vn = vx * nx + vy * ny;
       const j = vn < 0 ? -1.08 * vn / mass : 0;
       b.vx += nx * j; b.vy += ny * j; b.omega += rp * j / BODY.inertia;
       wheel.omega += rq * j / CASTER.inertia;
-      if (other) { other.vx -= nx * j * oi; other.vy -= ny * j * oi; }
+      if (other) { other.vx -= nx * j * oi; other.vy -= ny * j * oi; other.omega -= on * j * ii; if(other.tiltImpulse)other.tiltImpulse(-nx*j,-ny*j,hit.height); }
       const correction = Math.max(0, hit.depth - .01) / mass;
       b.x += nx * correction; b.y += ny * correction;
       b.a = wrap(b.a + clamp(rp * correction / BODY.inertia, -.1, .1));
       wheel.a = wrap(wheel.a + clamp(rq * correction / CASTER.inertia, -.25, .25));
-      if (other) { other.x -= nx * correction * oi; other.y -= ny * correction * oi; }
+      if (other) {
+        if (other.cx !== undefined) { other.cx -= nx * correction * oi; other.cy -= ny * correction * oi; }
+        else { other.x -= nx * correction * oi; other.y -= ny * correction * oi; }
+      }
       return j;
     }
 
@@ -261,7 +281,7 @@
         const along = vx * Math.cos(w.a) + vy * Math.sin(w.a) - side * w.omega;
         // Rolling resistance at the offset axle acts on the fork. The tiny
         // lateral offset is mirrored across wheels, rather than random noise.
-        const torque = (i % 2 ? -1 : 1) * CASTER.axleOffset * rolling / 4 * clamp(along, -1, 1);
+        const torque = (i % 2 ? -1 : 1) * CASTER.axleOffset * rolling / 4 * (w.surface?.drag ?? 1) * clamp(along, -1, 1);
         w.omega += torque * dt / CASTER.inertia; b.omega -= torque * dt / BODY.inertia;
         // Bearing drag exchanges angular momentum with the chassis; an idle
         // caster retains its orientation instead of returning to cart heading.
@@ -279,7 +299,7 @@
         const { pivot } = casterPose(b, w, i), rx = pivot.x - b.x, ry = pivot.y - b.y;
         const nx = -Math.sin(w.a), ny = Math.cos(w.a), lever = cross(rx, ry, nx, ny);
         const lateral = (b.vx - b.omega * ry) * nx + (b.vy + b.omega * rx) * ny - CASTER.trail * w.omega;
-        const j = -lateral / (1 + lever * lever / BODY.inertia + CASTER.trail ** 2 / CASTER.inertia);
+        const j = -lateral * (w.surface?.grip ?? 1) / (1 + lever * lever / BODY.inertia + CASTER.trail ** 2 / CASTER.inertia);
         b.vx += nx * j; b.vy += ny * j; b.omega += lever * j / BODY.inertia;
         w.omega -= CASTER.trail * j / CASTER.inertia;
       });
@@ -294,8 +314,10 @@
       this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
       this.boundaryContacts.forEach(c => { c.life -= dt; });
       this.boundaryContacts = this.boundaryContacts.filter(c => c.life > 0);
-      const puddle = this.level.puddle;
-      this.wet = !!puddle && ((b.x - puddle.x) / puddle.rx) ** 2 + ((b.y - puddle.y) / puddle.ry) ** 2 < 1;
+      this.stock.wheels(dt);
+      const grip = this.wheels.reduce((n, w) => n + w.surface.grip, 0) / 4;
+      const resistance = this.wheels.reduce((n, w) => n + w.surface.drag, 0) / 4;
+      this.wet = grip < .95;
       const push = clamp(input.push || 0, -1, 1), turn = clamp(input.turn || 0, -1, 1);
       const force = push * (push >= 0 ? 78 : 50);
       b.vx += Math.cos(b.a) * force * dt; b.vy += Math.sin(b.a) * force * dt;
@@ -303,11 +325,22 @@
       b.omega *= Math.exp(-4.2 * dt);
       const speed = Math.hypot(b.vx, b.vy);
       const brake = clamp(input.brake || 0, 0, 1);
-      const drag = this.wet ? 0.12 : 0.34;
-      const rolling = this.wet ? 1.3 : 4.0;
-      const reduction = Math.exp(-drag * dt) * Math.max(0, 1 - (rolling + brake * (this.wet ? 65 : 175)) * dt / Math.max(speed, 0.001));
+      const drag = .34 * resistance;
+      const rolling = 4 * resistance;
+      const reduction = Math.exp(-drag * dt) * Math.max(0, 1 - (rolling + brake * 175 * grip) * dt / Math.max(speed, 0.001));
       b.vx *= reduction; b.vy *= reduction;
       if (brake) b.omega *= Math.exp(-6 * brake * dt);
+      // Unequal grip at the four ground contacts creates a braking yaw moment.
+      // The mean force is applied above; these deviations sum to zero on a dry
+      // floor and preserve the original handling when all tires see one surface.
+      this.wheels.forEach((w, i) => {
+        const p = casterPose(b,w,i), rx=p.x-b.x, ry=p.y-b.y;
+        const vx=b.vx-b.omega*ry,vy=b.vy+b.omega*rx,d=Math.hypot(vx,vy);
+        if(d<1) return;
+        const difference=(175*brake*(w.surface.grip-grip)+4*(w.surface.drag-resistance))*dt/4;
+        const ix=-vx/d*difference,iy=-vy/d*difference;
+        b.vx+=ix;b.vy+=iy;b.omega+=cross(rx,ry,ix,iy)/BODY.inertia;
+      });
       // Air/rolling resistance rises smoothly above a comfortable walking run.
       const limit = Math.hypot(b.vx, b.vy);
       if (limit > 135) { b.vx *= 135 / limit; b.vy *= 135 / limit; }
@@ -315,11 +348,12 @@
       this.solveCasters();
       b.x += b.vx * dt; b.y += b.vy * dt; b.a = wrap(b.a + b.omega * dt);
       this.wheels.forEach(w => { w.a = wrap(w.a + w.omega * dt); });
+      this.stock.integrate(dt);
       for (const o of this.objects) {
         const decay = Math.exp(-(o.kind === 'cone' ? 2.0 : 2.8) * dt);
         o.vx *= decay; o.vy *= decay; o.omega *= Math.exp(-3 * dt);
         o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.omega * dt;
-        for (const rect of [...this.walls, ...this.shelves]) {
+        for (const rect of this.walls) {
           const h = circleRect(o.x, o.y, o.radius, rect);
           if (!h) continue;
           o.x += h.nx * h.depth; o.y += h.ny * h.depth;
@@ -328,7 +362,7 @@
         }
       }
       for (let pass = 0; pass < 4; pass++) {
-        for (const rect of [...this.walls, ...this.shelves]) {
+        for (const rect of this.walls) {
           const hits = [boxContact(b, rect)];
           const person = point(b, BODY.personX, 0);
           hits.push(circleRect(person.x, person.y, BODY.personRadius, rect));
@@ -337,10 +371,7 @@
             if (!h) continue;
             this.boundaryContact(rect, h, k === 0 ? 'cart' : 'shopper');
             const impact = this.impulse(h);
-            if (impact > 9 && !rect.spilled && rect.id !== undefined) {
-              rect.spilled = true; rect.wobble = 1;
-              this.mess('shelf', h.x, h.y); this.emit('spill', { shelf: rect, x: h.x, y: h.y });
-            } else if (impact > 14 && pass === 0 && !rect.side) this.emit('bump', { x: h.x, y: h.y, impact });
+            if (impact > 14 && pass === 0 && !rect.side) this.emit('bump', { x: h.x, y: h.y, impact });
           }
           this.wheels.forEach((wheel, i) => {
             const pose = casterPose(b, wheel, i);
@@ -348,11 +379,9 @@
             if (!h) return;
             this.boundaryContact(rect, h, 'wheel:' + i);
             const impact = this.casterImpulse(h, wheel, i);
-            if (impact > 9 && !rect.spilled && rect.id !== undefined) {
-              rect.spilled = true; rect.wobble = 1; this.mess('shelf', h.x, h.y); this.emit('spill', { shelf: rect, x: h.x, y: h.y });
-            }
           });
         }
+        this.stock.shelfContacts(pass);
         for (const o of this.objects) {
           const h = cartCircle(b, o);
           if (h) {
@@ -403,7 +432,6 @@
         w.roll += w.speed * dt;
       });
       advanceGait(this.gait, b, dt, input);
-      for (const s of this.shelves) s.wobble *= Math.exp(-6 * dt);
       this.trackTime += dt;
       if (Math.hypot(b.vx, b.vy) > 35 && this.trackTime > 0.065) {
         this.trackTime = 0;
@@ -411,7 +439,7 @@
       }
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
-      if (target && shopperTouchesCheckpoint(b, target)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
+      if (target && cartTouchesCheckpoint(b, target)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
       const e = this.exit, shape = footprint(b, this.wheels), tangent = e.vertical ? b.y : b.x;
       const distance = p => (p.x - e.x) * e.nx + (p.y - e.y) * e.ny;
       this.exiting = this.exitOpen && tangent >= e.low && tangent <= e.high && shape.some(p => distance(p) > 0);
@@ -428,7 +456,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, shopperTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
+  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, cartTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

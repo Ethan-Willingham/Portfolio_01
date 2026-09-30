@@ -11,7 +11,7 @@
       start: { x: 76, y: 235, a: up },
       gates: [{ x: 82, y: 80 }, { x: 281, y: 76 }, { x: 392, y: 173 }],
       exit: { side: 'right', center: 249, width: 64 },
-      shelves: [shelf(171, 137, 120, 48, 'THE NICE THINGS', 'plants')],
+      shelves: [shelf(171, 137, 120, 48, 'WINE & SAUCES', 'groceries')],
       objects: [cone(131, 91), cone(334, 152), cone(345, 238)],
       signs: [{ x: 68, y: 270, text: 'START HERE' }, { x: 237, y: 211, text: 'PLEASE BE CAREFUL' }]
     },
@@ -21,7 +21,7 @@
       start: { x: 60, y: 235, a: up },
       gates: [{ x: 63, y: 67 }, { x: 234, y: 70 }, { x: 233, y: 239 }, { x: 411, y: 239 }],
       exit: { side: 'top', center: 417, width: 74 },
-      shelves: [shelf(111, 111, 70, 93, 'CANDLES'), shelf(289, 108, 68, 96, 'MORE CANDLES')],
+      shelves: [shelf(111, 111, 70, 93, 'THE PANTRY', 'groceries'), shelf(289, 108, 68, 96, 'KETCHUP', 'sauces')],
       objects: [cone(95, 66), cone(201, 165), cone(274, 216), cone(375, 169)],
       signs: [{ x: 57, y: 270, text: 'NO SHORTCUTS' }]
     },
@@ -62,7 +62,7 @@
       start: { x: 61, y: 243, a: up },
       gates: [{ x: 61, y: 68 }, { x: 239, y: 68 }, { x: 240, y: 242 }, { x: 417, y: 239 }],
       exit: { side: 'top', center: 418, width: 78 },
-      shelves: [shelf(113, 110, 65, 94, 'LAST CHANCE', 'dishes'), shelf(301, 103, 54, 98, 'DO NOT TOUCH', 'plants')],
+      shelves: [shelf(113, 110, 65, 94, 'LAST CHANCE', 'dishes'), shelf(301, 103, 54, 98, 'LAST BOTTLES', 'wine')],
       objects: [cone(204, 117), cone(274, 170), cone(385, 123), box(265, 215), box(90, 81), cone(371, 218)],
       puddle: { x: 241, y: 154, rx: 34, ry: 42 },
       signs: [{ x: 64, y: 274, text: 'CLOSING IN ONE MINUTE' }]
