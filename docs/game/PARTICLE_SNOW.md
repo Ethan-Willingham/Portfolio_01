@@ -486,3 +486,119 @@ recirculation, roof occlusion, moving-window continuity and shutdown.
 
 Older browser scripts that assert dense-to-powder handoff counts describe the
 retired model. Use the persistent-grain tests above for motion regressions.
+
+### v28.131 town diagnosis and exact reuse
+
+An adaptive ordinary-game capture reproduced the remaining v28.130 slowdown
+with natural snowfall, normal water and smoke, and the five original residents.
+Real keyboard and pointer events approached, jetted beside and dragged residents;
+no body was spawned, repositioned or forced to overlap. The full-second low was
+23.85 FPS. That interval averaged 23.65 ms of CPU work, including 16.10 ms in
+jello and 10.70 ms in its contact stage. These buckets overlap. The capture
+preserves valid packed frames, but its original assertion that every requested
+resident was dragged failed: verified drags covered IDs 1, 3 and 5.
+
+A subsequent aggregate CPU probe separates the contact stages. One frame with
+five awake residents took 5.80 ms in contact: 3.40 ms in body pairs, 2.10 ms in
+particle contacts and 0.30 ms in rig contact. Six jello microsteps processed 951
+contacts. A different slow interval had 20,522 snow grains and only two awake
+residents, with 5.51 ms in the CPU rain/snow update. The causes vary with the
+physical scene; neither slime count nor snow count alone predicts frame cost.
+Slow callbacks also request more fixed physics steps, up to ten snow ticks and
+fifteen jello microsteps, increasing work in the next callback.
+
+Ordinary water now uses the same exact failed-primary cache and bounded clear
+rectangle proof as snow. The cache belongs to one pending collision and finishes
+before the shared queue is reused. Possible terrain, rig or bath bowl obstruction
+retains the original sample march. Particle identity, material flags, response math and candidate order are
+unchanged. The GPU comparison
+passes 55 cases and 313 checks, including bowls and shared water/snow sequences.
+
+Controlled synthetic GPU timings reset the complete particle state before each
+six-step chain. Twenty-four warmups precede twenty-four measured samples per
+source and point. Whole collision medians for 4,096 particles change as follows:
+
+| Synthetic collision input | v28.130 | Exact reuse |
+| --- | ---: | ---: |
+| Floor pinch | 0.5063 ms | 0.1085 ms |
+| Overlapping moving 20-edge rings and floor | 3.0049 ms | 0.3508 ms |
+| Clear exits | 0.2391 ms | 0.0659 ms |
+
+These isolate water collision work, not complete game frames or FPS. CPU nozzle
+geometry and inlet coefficients are also computed once per snow-air update,
+retaining Number precision and application order. Support is built once after
+maintenance rather than building a surface that mutations immediately invalidate.
+The field regression passes 4,032 exact comparisons and maintenance passes 468,
+including final support order, particle records, mass, mutations and random calls.
+
+Soft pair edge scans retain one edge's coordinates and bounds until a contact
+patch changes them, then refresh immediately. Crossing order and all responses
+remain. The repository CPU differential passed 4,250 comparisons and exercised
+637,449 successful patches with identical state and audio observations. Isolated
+crossed-star scans improved 25.6%, clear 18-edge scans 33.5%, and four-edge bars
+3.8%. Those timings do not include the complete game solver or renderer.
+
+Rejected experiments remain private. Workgroup sizes 64 and 128 did not improve
+the snow contact sweep. Reuse of stationary snow collisions was about 3% slower
+on the frozen town. An independent 240 Hz snow clock with six contact passes
+failed the 12 px quiet-pile check. Skipping intermediate boundary passes failed
+the 32 px surface-motion check and lost the last legal terrain sweep origin.
+Production retains its previous snow cadence and all five contact passes.
+
+A finer CPU capture measured 3.16 ms per callback rebuilding support for 16,347
+snow grains. In the corresponding slow scene, one sampled liquid encoder with
+ten snow ticks took 29.87 ms: 11.89 ms in contacts, 5.07 ms in shielding, 4.79 ms
+in fallback/motion and 2.84 ms in primary guest collisions. These are sampled
+GPU encoder times, not complete frame GPU times. CPU and GPU work can overlap.
+Snow-air GPU projection was about 0.5 ms in this sample and was not the main cost.
+
+Reusable Float64 point and Int32 link/queue scratch preserves support BFS order
+and exact Number coordinates. Logical lengths exclude unused capacity after a
+smaller build. An additional 624-case isolated support gate covers growth and
+shrink from zero to 40,000 grains, duplicate points, signed zero and detached
+clouds. Isolated rooted-pile construction improves only about 2%; this removes
+allocation pressure but does not solve the remaining support-map cost.
+
+The pure point-in-ring query carries the previous endpoint between iterations,
+retaining the same ray predicate and endpoint values. It passes 366,718 query
+comparisons, including geometry from the five normal resident constructors and
+synthetic deformations. Isolated query medians improve about 9.7%.
+
+Spatial snow contacts no longer fetch and retest each neighbor's material flag.
+The index contains only snow, each indexed particle appears once, and the own
+sorted rank is excluded before selecting a neighbor. The scalar mixed-grid test
+path retains both material and self guards. All 34 spatial/scalar dense/sparse
+cases compare position, auxiliary, affine, flags and displacement words exactly,
+including the 15/16/17-neighbor threshold and stale-grid movement. Frozen town
+replay contact medians change from 0.729-0.731 ms to 0.676-0.682 ms per tick;
+shield medians change from 0.359-0.360 ms to 0.327-0.330 ms. Complete snow tick
+medians change only from 2.78/2.84 ms to 2.74/2.83 ms, so these are modest stage
+savings. Flattening the dense nested loop was also tested and rejected: alone it
+was slower, and its combination added little over the smaller guard change.
+
+`tools/test-snow-contact-loops-gpu.mjs` exercises both spatial sources with
+canonical within-cell order, plus the mixed-grid scalar path. The recorded
+reference source is selected with BEFORE; the default reference is v28.130.
+`tools/test-soft-pairs-equivalence.mjs` and `tools/test-jello-ring-query.mjs` accept
+BEFORE/AFTER paths or a Git reference, and BENCH=0 runs correctness alone. These
+are isolated differential fixtures, not natural gameplay evidence.
+
+`ROUTE=town-interaction node tools/perf/test-ordinary-game.mjs` records an adaptive
+420-second route with at least one verified ten-second drag, actual grabbed IDs
+and unchanged resident identities. Default capture remains 90 seconds without
+input. `CPU_PROFILE=1` adds aggregate diagnostics; nested buckets overlap and
+the wrappers add timing overhead. Captures record source hashes, stock smoke,
+water, native callbacks and actual interaction coverage. Export freezes only
+the test game's callback after recording and saves complete frame chunks before
+optional diagnostics. These background captures have a roughly 60 Hz ceiling;
+the owner's sustained 120 FPS target remains unverified.
+
+The final unprofiled v28.131 adaptive route completed 420 seconds and 25,716
+native callback frames with no browser errors or dropped CPU buckets. Mean FPS
+was 61.23 and the lowest full second was 34.08 during a jet burst with 14,242
+active snow grains and all five residents awake. Verified drags covered IDs 1,
+2 and 3 for 176.64 seconds; jet input covered 5.72 seconds. All initial IDs 1-5
+remain. This is one natural route, not a deterministic before/after FPS claim or
+an assurance of a universal floor. The owner's 120 FPS goal is still unmet.
+Raw traces, exact regression reports and source provenance are retained under
+`~/Downloads/sluice-town-performance-2026-09-30/`.

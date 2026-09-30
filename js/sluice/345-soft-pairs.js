@@ -78,13 +78,15 @@
   function softPairsEdges(A, B, h) {
     for (var i = 0; i < A.ringN; i++) {
       var p = A.ring[i], q = A.ring[(i + 1) % A.ringN];
+      var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
+      var right = Math.max(px,qx), left = Math.min(px,qx), bottom = Math.max(py,qy), top = Math.min(py,qy);
+      var ex = qx - px, ey = qy - py;
       for (var j = 0; j < B.ringN; j++) {
         var a = B.ring[j], c = B.ring[(j + 1) % B.ringN];
-        var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
         var ax = B.px[a], ay = B.py[a], cx = B.px[c], cy = B.py[c];
-        if (Math.max(px,qx) <= Math.min(ax,cx) || Math.min(px,qx) >= Math.max(ax,cx) ||
-            Math.max(py,qy) <= Math.min(ay,cy) || Math.min(py,qy) >= Math.max(ay,cy)) continue;
-        var ex = qx - px, ey = qy - py, fx = cx - ax, fy = cy - ay;
+        if (right <= Math.min(ax,cx) || left >= Math.max(ax,cx) ||
+            bottom <= Math.min(ay,cy) || top >= Math.max(ay,cy)) continue;
+        var fx = cx - ax, fy = cy - ay;
         var det = ex * fy - ey * fx;
         if (Math.abs(det) < 1e-10) continue;
         var u = ((ax-px)*fy-(ay-py)*fx)/det, t = ((ax-px)*ey-(ay-py)*ex)/det;
@@ -96,6 +98,11 @@
           (oldAY[p]*(1-u)+oldAY[q]*u-oldBY[a]*(1-t)-oldBY[c]*t)*ny;
         if (oldGap < 0) { nx = -nx; ny = -ny; }
         softPairsPatch(A,p,q,u,B,a,c,t,nx,ny,0.5,h);
+        // A patch can move this A edge and the current B edge. Refresh A
+        // immediately; the next candidate still reads B's current nodes.
+        px = A.px[p]; py = A.py[p]; qx = A.px[q]; qy = A.py[q];
+        right = Math.max(px,qx); left = Math.min(px,qx); bottom = Math.max(py,qy); top = Math.min(py,qy);
+        ex = qx - px; ey = qy - py;
       }
     }
   }

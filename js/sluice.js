@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.130';
+  var GAME_VERSION = 'v28.131';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -38749,6 +38749,7 @@
     a.divergenceBefore = Math.sqrt(before / Math.max(1, count));
     a.divergenceAfter = Math.sqrt(after / Math.max(1, count));
   }
+  var snowAirNozzleOps = new Float64Array(0);
   function updateSnowAir(dt) {
     var a = snowAir;
     a.wind = surfaceWind.current * 35; a.clock = snow.time + dt;
@@ -38780,20 +38781,12 @@
     // After release, keep the fading wake's last direction until it idles.
     if (firing) a.trail += (tail * bias - a.trail) * (1 - Math.exp(-10 * dt));
     var steps = Math.max(1, Math.ceil(Math.min(dt, 0.05) / (1 / 90))), step = Math.min(dt, 0.05) / steps;
-    for (var sub = 0; sub < steps; sub++) {
-      // Advect each velocity component from its own staggered face position.
-      var keep = Math.exp(-0.75 * step), travel = step / cell;
-      for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
-        var i = r * w + c;
-        var crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
-        var crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
-        a.tu[i] = snowAirBilerp(a.u, c - a.u[i] * travel, r - crossV * travel) * keep;
-        a.tv[i] = snowAirBilerp(a.v, c - crossU * travel, r - a.v[i] * travel) * keep;
-      }
-      a.u.set(a.tu); a.v.set(a.tv);
-      // Finite nozzle inlet. The pressure solve turns its downward momentum
-      // into wall jets; advection carries their shear and returning eddies.
-      for (var n = 0; n < nozzles.length; n++) {
+    // Geometry, terrain rays and inlet coefficients are constant during this
+    // update. Cache Number-precision operands, retaining nozzle/cell order.
+    var nozzleCapacity = nozzles.length * w * h * 4;
+    if (snowAirNozzleOps.length < nozzleCapacity) snowAirNozzleOps = new Float64Array(nozzleCapacity);
+    var nozzleOps = snowAirNozzleOps, nozzleOpCount = 0;
+    for (var n = 0; n < nozzles.length; n++) {
         var nz = nozzles[n];
         // A spreading, fading downwash reaches powder far below the visible
         // flame. Each sample still needs an unobstructed path from its nozzle.
@@ -38814,9 +38807,29 @@
           var inlet = Math.exp(-across * across / (width * width)) * fade * fade;
           var force = (1 - Math.exp(-32 * step * inlet)) * rocketIntensity;
           var speed = 1100 / (1 + along * 0.006);
-          a.u[ni] += (dir.x * speed - a.u[ni]) * force;
-          a.v[ni] += (dir.y * speed + player.vy * 0.15 - a.v[ni]) * force;
+          nozzleOps[nozzleOpCount++] = ni;
+          nozzleOps[nozzleOpCount++] = force;
+          nozzleOps[nozzleOpCount++] = dir.x * speed;
+          nozzleOps[nozzleOpCount++] = dir.y * speed + player.vy * 0.15;
         }
+      }
+    for (var sub = 0; sub < steps; sub++) {
+      // Advect each velocity component from its own staggered face position.
+      var keep = Math.exp(-0.75 * step), travel = step / cell;
+      for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
+        var i = r * w + c;
+        var crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
+        var crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
+        a.tu[i] = snowAirBilerp(a.u, c - a.u[i] * travel, r - crossV * travel) * keep;
+        a.tv[i] = snowAirBilerp(a.v, c - crossU * travel, r - a.v[i] * travel) * keep;
+      }
+      a.u.set(a.tu); a.v.set(a.tv);
+      // Finite nozzle inlet. The pressure solve turns its downward momentum
+      // into wall jets; advection carries their shear and returning eddies.
+      for (var op = 0; op < nozzleOpCount; op += 4) {
+        var ni = nozzleOps[op], force = nozzleOps[op + 1];
+        a.u[ni] += (nozzleOps[op + 2] - a.u[ni]) * force;
+        a.v[ni] += (nozzleOps[op + 3] - a.v[ni]) * force;
       }
       // Preserve inlet momentum before the terrain-only projection. The
       // snow boundary projects it once against terrain and the actual bed.
@@ -38985,7 +38998,8 @@
     return true;
   }
   function snowContactRadius() { return LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY) * 0.5; }
-  var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
+  var snowSupportPoints = new Float64Array(0);
+  var snowSupportNext = new Int32Array(0), snowSupportQueue = new Int32Array(0);
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
     // A chain of touching grains rooted in terrain carries contact,
@@ -38996,21 +39010,29 @@
     var cell = Math.max(LIQUID_CELL, reach), width = Math.ceil(COLS * TILE / cell) + 1;
     var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY;
     var floor = Math.floor, solid = liquidWorldSolidAt, groundReach = snowContactRadius() + 0.3;
+    // Every point/link/queue slot below is written before use. Retain only
+    // scratch capacity between builds; logical counts never include its tail.
+    if (snowSupportNext.length < count) {
+      var capacity = Math.max(256, count, snowSupportNext.length * 2);
+      snowSupportPoints = new Float64Array(capacity * 2);
+      snowSupportNext = new Int32Array(capacity);
+      snowSupportQueue = new Int32Array(capacity);
+    }
     var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
-    points.length = next.length = queue.length = 0;
+    var pointCount = 0, queueCount = 0;
     for (var i = 0; i < count; i++) {
       if (types[i] !== 5) continue;
-      var x = xs[i], y = ys[i], n = points.length / 2;
-      points.push(x, y);
+      var x = xs[i], y = ys[i], n = pointCount++;
+      points[n * 2] = x; points[n * 2 + 1] = y;
       if (solid(x, y + groundReach)) {
-        queue.push(n); next[n] = -1;
+        queue[queueCount++] = n; next[n] = -1;
       } else {
         var key = floor(y / cell) * width + floor(x / cell);
         var head = heads.get(key);
         next[n] = head === undefined ? -1 : head; heads.set(key, n);
       }
     }
-    for (var q = 0; q < queue.length; q++) {
+    for (var q = 0; q < queueCount; q++) {
       var n = queue[q], x = points[n * 2], y = points[n * 2 + 1];
       var col = floor(x / cell), row = floor(y / cell), key = row * width + col;
       var bucket = bed.get(key);
@@ -39027,7 +39049,7 @@
             // buckets therefore do not get rescanned for every neighbour.
             if (previous < 0) heads.set(nearKey, following);
             else next[previous] = following;
-            queue.push(current);
+            queue[queueCount++] = current;
           } else previous = current;
           current = following;
         }
@@ -39070,7 +39092,7 @@
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
     var fresh = !gpu || generation !== snow.readbackGen;
     if (gpu && fresh) snow.readbackGen = generation;
-    var cells = {}, active = 0, bed = snowBuildSupport(), contactSeq = liquidMutationSeq;
+    var cells = {}, active = 0;
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
@@ -39102,7 +39124,8 @@
     // Only deposited or rig-contact material can thaw, including stored snow.
     snow.cells = cells;
     // Do not leave removed/lofted grains in this frame's landing surface.
-    snow.bed = liquidMutationSeq === contactSeq ? bed : snowBuildSupport();
+    // Maintenance does not query support; build only the final landing surface.
+    snow.bed = snowBuildSupport();
     snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
@@ -66740,12 +66763,11 @@
   function jelloPointInRing(b, qx, qy) {
     var ring = b.ring, rn = b.ringN, X = b.px, Y = b.py;
     if (rn < 3) return false;
-    var inside = false, j = rn - 1;
+    var inside = false, xj = X[ring[rn - 1]], yj = Y[ring[rn - 1]];
     for (var i = 0; i < rn; i++) {
       var xi = X[ring[i]], yi = Y[ring[i]];
-      var xj = X[ring[j]], yj = Y[ring[j]];
       if (((yi > qy) !== (yj > qy)) && (qx < (xj - xi) * (qy - yi) / (yj - yi) + xi)) inside = !inside;
-      j = i;
+      xj = xi; yj = yi;
     }
     return inside;
   }
@@ -71980,13 +72002,15 @@
   function softPairsEdges(A, B, h) {
     for (var i = 0; i < A.ringN; i++) {
       var p = A.ring[i], q = A.ring[(i + 1) % A.ringN];
+      var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
+      var right = Math.max(px,qx), left = Math.min(px,qx), bottom = Math.max(py,qy), top = Math.min(py,qy);
+      var ex = qx - px, ey = qy - py;
       for (var j = 0; j < B.ringN; j++) {
         var a = B.ring[j], c = B.ring[(j + 1) % B.ringN];
-        var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
         var ax = B.px[a], ay = B.py[a], cx = B.px[c], cy = B.py[c];
-        if (Math.max(px,qx) <= Math.min(ax,cx) || Math.min(px,qx) >= Math.max(ax,cx) ||
-            Math.max(py,qy) <= Math.min(ay,cy) || Math.min(py,qy) >= Math.max(ay,cy)) continue;
-        var ex = qx - px, ey = qy - py, fx = cx - ax, fy = cy - ay;
+        if (right <= Math.min(ax,cx) || left >= Math.max(ax,cx) ||
+            bottom <= Math.min(ay,cy) || top >= Math.max(ay,cy)) continue;
+        var fx = cx - ax, fy = cy - ay;
         var det = ex * fy - ey * fx;
         if (Math.abs(det) < 1e-10) continue;
         var u = ((ax-px)*fy-(ay-py)*fx)/det, t = ((ax-px)*ey-(ay-py)*ex)/det;
@@ -71998,6 +72022,11 @@
           (oldAY[p]*(1-u)+oldAY[q]*u-oldBY[a]*(1-t)-oldBY[c]*t)*ny;
         if (oldGap < 0) { nx = -nx; ny = -ny; }
         softPairsPatch(A,p,q,u,B,a,c,t,nx,ny,0.5,h);
+        // A patch can move this A edge and the current B edge. Refresh A
+        // immediately; the next candidate still reads B's current nodes.
+        px = A.px[p]; py = A.py[p]; qx = A.px[q]; qy = A.py[q];
+        right = Math.max(px,qx); left = Math.min(px,qx); bottom = Math.max(py,qy); top = Math.min(py,qy);
+        ex = qx - px; ey = qy - py;
       }
     }
   }

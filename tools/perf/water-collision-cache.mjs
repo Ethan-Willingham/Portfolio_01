@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// Exact GPU differential for ordinary liquid collision and queued fallback.
+// Synthetic water collision cache microbenchmark, not game FPS.
 // Default BEFORE is git 3d9c4d6:js/liquid-wgpu.js; AFTER is current repository source.
-// BEFORE=/path/reference.js AFTER=/path/candidate.js DUMP=/tmp/water-collision node tools/test-water-collision-gpu.mjs
-// DRY_RUN=1 validates snapshots and fixtures without launching a browser.
-// BENCH=1 retains the older synthetic cloud benchmark; controlled timings use tools/perf/water-collision-cache.mjs.
-// Test-only counters apply only to legacy serial references; production files are never edited.
+// BEFORE=/path/reference.js AFTER=/path/candidate.js DUMP=/tmp/water-cache-bench node tools/perf/water-collision-cache.mjs
+// DRY_RUN=1 checks source assembly without launching a browser.
+// Each source runs serially: 24 warmups and 24 samples, six GPU-reset chains per batch.
+// GPU copies reset pos/aux/flag before each timestamp span. Diagnostics/readback occur afterward.
+// Reports primary/fallback/whole-span timing, exact output words and SHA256 source provenance.
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -15,11 +16,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const port = Number(process.env.PORT || 8296), debugPort = port + 1000;
-const out = process.env.DUMP || '/tmp/sluice-water-collision-gpu';
-const timeoutMs = Number(process.env.TIMEOUT_MS || 180000);
-const benchMode = process.env.BENCH === '1';
+const out = process.env.DUMP || '/tmp/sluice-water-collision-cache';
+const timeoutMs = Number(process.env.TIMEOUT_MS || 300000);
+const benchMode = true;
 const beforeRef = '3d9c4d6';
 const paths = { before: process.env.BEFORE || null, after: process.env.AFTER || path.join(root,'js/liquid-wgpu.js') };
 const sources = {}, metadata = {};
@@ -270,105 +271,79 @@ async function runGPU() {
 }
 
 async function runBenchmark() {
-  const count = 5000, capacity = 5120, warmup = 5, samples = 30;
-  if (!navigator.gpu) throw new Error('WebGPU unavailable');
-  const adapter = await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
-  if (!adapter || !adapter.features.has('timestamp-query')) throw new Error('Timestamp query unavailable');
-  const device = await adapter.requestDevice({requiredFeatures:['timestamp-query'],
-    requiredLimits:{maxStorageBuffersPerShaderStage:adapter.limits.maxStorageBuffersPerShaderStage}});
-  const errors = [];let destroying=false;
+  const capacity=4096,warmup=24,samples=24,batchSize=6;
+  if(!navigator.gpu)throw new Error('WebGPU unavailable');
+  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
+  if(!adapter?.features.has('timestamp-query'))throw new Error('Timestamp query unavailable');
+  const device=await adapter.requestDevice({requiredFeatures:['timestamp-query'],requiredLimits:{maxStorageBuffersPerShaderStage:adapter.limits.maxStorageBuffersPerShaderStage}});
+  const errors=[],failures=[],instances={},seeds={},results=[];let destroying=false;
   device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
   device.lost.then(info=>{if(!destroying)errors.push('device lost: '+info.message);});
   const query=device.createQuerySet({type:'timestamp',count:64});
   const resolve=device.createBuffer({size:1024,usage:GPUBufferUsage.QUERY_RESOLVE|GPUBufferUsage.COPY_SRC});
   const read=device.createBuffer({size:1024,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
-  const instances={},results=[];
-  const circle=(cx,cy)=>{
-    const pts=[];
-    for(let i=0;i<20;i++) {const a=i*Math.PI/10,x=cx+25*Math.cos(a),y=cy+24*Math.sin(a);pts.push(x,y,8+(y-cy)*.3,-12+(x-cx)*.2);}
-    return {x:cx,y:cy,hw:25,hh:24,mvx:8,mvy:-12,pts};
-  };
-  const guests=[circle(110,111),circle(138,113)];
-  const pos=new Float32Array(capacity*4),aux=new Float32Array(capacity*4),flag=new Uint32Array(capacity);
-  // Contiguous mixed cloud: waves see both interior and exterior particles.
-  for(let i=0;i<count;i++) {
-    const x=78+(i%100)*.92,y=105+Math.floor(i/100)*.46;
-    pos.set([x,y,(i%13)-6,17+(i%7)],i*4);aux.set([3.2,.2,x,y],i*4);
-    flag[i]=(i%17===0?1:i%19===0?2:0)|8|(29<<8)|(71<<24);
-  }
-  const fixtures=[{name:'overlapping-20gon-floor',bowls:null,near:5000},
-    {name:'overlapping-20gon-bowl',bowls:[64,192,96,32],near:5000},
-    {name:'scattered-100-guest-contacts',bowls:null,near:100},
-    {name:'scattered-500-guest-contacts',bowls:null,near:500},
-    {name:'no-guests-overhead',bowls:null,near:0,noGuests:true}];
-  try {
-    for(const label of ['before','after']) {
+  const polygon=(xy)=>{const xs=xy.map(p=>p[0]),ys=xy.map(p=>p[1]);return {x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2,hw:(Math.max(...xs)-Math.min(...xs))/2,hh:(Math.max(...ys)-Math.min(...ys))/2,pts:xy.flatMap(p=>[...p,8+(p[1]-110)*.3,-12+(p[0]-110)*.2])};};
+  const box=(l,t,r,b)=>polygon([[l,t],[r,t],[r,b],[l,b]]);
+  const circle=(cx,cy)=>polygon(Array.from({length:20},(_,i)=>[cx+25*Math.cos(i*Math.PI/10),cy+24*Math.sin(i*Math.PI/10)]));
+  const fixtures=[{name:'synthetic-floor-pinch',floor:true,guests:[box(80,100,120,127.4)],point:i=>[90+(i%80)*.31,127.1]},
+    {name:'synthetic-overlapping-20gon-floor',floor:true,guests:[circle(110,111),circle(138,113)],point:i=>[106+(i%100)*.4,110+(Math.floor(i/100)%50)*.34]},
+    {name:'synthetic-clear-exits',floor:false,guests:[box(80,80,152,152)],point:i=>[93+(i%80)*.58,92+(Math.floor(i/80)%70)*.66]}];
+  function summary(rows){const metric=key=>{const v=rows.map(r=>r[key]).sort((a,b)=>a-b);return {medianMs:(v[11]+v[12])/2,p95Ms:v[Math.ceil(v.length*.95)-1],minMs:v[0],maxMs:v.at(-1)};};return {...metric('wholeMs'),primary:metric('primaryMs'),fallback:metric('fallbackMs'),sumKernels:metric('sumMs'),samples:rows};}
+  function wordsEqual(a,b){if(a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;return true;}
+  try{
+    for(const key of ['pos','aux','flag'])seeds[key]=device.createBuffer({size:capacity*(key==='flag'?4:16),usage:GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});
+    for(const label of ['before','after']){
       const api=window.__waterCollisionAPIs[label];
       const instance={device,queue:device.queue,maxParticles:capacity,g2pReady:true,stepDt:1/120,frameEncoder:null,terrainMaskWords:0,
-        liquid:{getGameState:()=>({guests:instance.benchNoGuests?[]:guests}),fillTerrainSolid:(col,row,w,h,target)=>{
-          for(let y=0;y<h;y++)for(let x=0;x<w;x++)target[y*w+x]=+(row+y>=4);
-        }}};
-      instances[label]=instance;api.buildBuffers(instance);api.buildCollidePipelines(instance);
+        liquid:{getGameState:()=>({guests:instance.fixture.guests}),fillTerrainSolid:(col,row,w,h,target)=>{for(let y=0;y<h;y++)for(let x=0;x<w;x++)target[y*w+x]=+(instance.fixture.floor&&row+y>=4);}}};
+      instance.fixture=fixtures[0];instances[label]=instance;api.buildBuffers(instance);api.buildCollidePipelines(instance);
       if(!instance.collideReady)throw new Error(label+' collision unavailable');
-      instance.uploadedCount=count;instance.terrain={originCol:-2,originRow:-4,w:12,h:16,tiles:192};
-      instance.bathBowls=new Float32Array(20);
-      const u=instance.paramsHost,f=instance.paramsHostF;u.fill(0);u[0]=count;u[1]=64;u[2]=64;u[5]=4096;
-      f[6]=instance.stepDt;f[7]=.25;f[8]=8;f[9]=32;f[10]=8;u[12]=-2;u[13]=-4;u[14]=12;u[15]=16;f.set([0,-128,256,256],16);
-      instance.queue.writeBuffer(instance.paramsBuf,0,u);api.uploadTerrainMask(instance);api.writeGameParams(instance,1);api.writeSimParams(instance);
+      instance.terrain={originCol:-2,originRow:-4,w:12,h:16,tiles:192};instance.bathBowls=new Float32Array(20);
+      const u=instance.paramsHost,f=instance.paramsHostF;u.fill(0);u[1]=64;u[2]=64;u[5]=4096;f[6]=instance.stepDt;f[7]=.25;f[8]=8;f[9]=32;f[10]=8;u[12]=-2;u[13]=-4;u[14]=12;u[15]=16;f.set([0,-128,256,256],16);
     }
-    async function measure(label,fixture) {
-      const instance=instances[label],api=window.__waterCollisionAPIs[label];
-      instance.benchNoGuests=!!fixture.noGuests;
-      instance.bathBowls.fill(0);if(fixture.bowls)instance.bathBowls.set(fixture.bowls);
-      api.writeGameParams(instance,1);
-      instance.queue.writeBuffer(instance.buf.pos,0,pos);instance.queue.writeBuffer(instance.buf.aux,0,aux);instance.queue.writeBuffer(instance.buf.flag,0,flag);
-      const encoder=device.createCommandEncoder({label:'water-guest.benchmark'}),begin=encoder.beginComputePass.bind(encoder),names=[];
-      encoder.beginComputePass=descriptor=>{
-        const d=descriptor||{},index=names.length*2;if(index>=64)throw new Error('Too many benchmark passes');
-        names.push(d.label||'compute');return begin({...d,timestampWrites:{querySet:query,beginningOfPassWriteIndex:index,endOfPassWriteIndex:index+1}});
-      };
-      instance.frameEncoder=encoder;
-      try {api.runCollide(instance,0,false);}finally{instance.frameEncoder=null;}
-      encoder.resolveQuerySet(query,0,names.length*2,resolve,0);encoder.copyBufferToBuffer(resolve,0,read,0,names.length*16);
-      device.queue.submit([encoder.finish()]);await read.mapAsync(GPUMapMode.READ);
-      const times=new BigUint64Array(read.getMappedRange()),passes=names.map((name,i)=>({name,ms:Number(times[i*2+1]-times[i*2])/1e6}));
-      read.unmap();return {ms:passes.reduce((n,p)=>n+p.ms,0),passes};
-    }
-    for(const fixture of fixtures) {
-      for(let i=0;i<count;i++) {
-        // Deterministic scattering across waves; inactive contacts occupy clear air.
-        const rank=(i*73)%count,near=rank<fixture.near;
-        const sample=(rank*73)%count;
-        const x=near?(fixture.near===5000?78+(rank%100)*.92:118+(sample%100)*.13):20+(i%100)*2.1;
-        const y=near?(fixture.near===5000?105+Math.floor(rank/100)*.46:108+Math.floor(sample/100)*.35):20+Math.floor(i/100)*.65;
-        pos[i*4]=x;pos[i*4+1]=y;aux[i*4+2]=x;aux[i*4+3]=y;
-      }
-      const data={before:[],after:[]};
-      for(let round=-warmup;round<samples;round++) {
-        window.__waterProgress={stage:'benchmark',fixture:fixture.name,round};
-        for(const label of round%2===0?['before','after']:['after','before']) {
-          const result=await measure(label,fixture);if(round>=0)data[label].push(result);
+    for(const fixture of fixtures)for(const count of [256,1024,4096]){
+      const pos=new Float32Array(capacity*4),aux=new Float32Array(capacity*4),flag=new Uint32Array(capacity);
+      for(let i=0;i<capacity;i++){const [x,y]=fixture.point(i);pos.set([x,y,i%13-6,17+i%7],i*4);aux.set([3.2,.2,x,y],i*4);flag[i]=(i%17===0?1:i%19===0?2:0)|8|(29<<8)|(71<<24);}
+      for(const [key,array]of Object.entries({pos,aux,flag}))device.queue.writeBuffer(seeds[key],0,array);
+      const data={before:[],after:[]},outputs={},diagnostics={};
+      // Run each source serially, with its own 24 warmups and 24 samples.
+      for(const label of ['before','after']){
+        const api=window.__waterCollisionAPIs[label],instance=instances[label];instance.fixture=fixture;instance.uploadedCount=count;
+        instance.paramsHost[0]=count;device.queue.writeBuffer(instance.paramsBuf,0,instance.paramsHost);api.uploadTerrainMask(instance);api.writeGameParams(instance,1);api.writeSimParams(instance);
+        let previous=null;diagnostics[label]=[];
+        for(let first=-warmup;first<samples;first+=batchSize){
+          window.__waterProgress={stage:'controlled-timestamp',fixture:fixture.name,count,label,first};
+          const encoder=device.createCommandEncoder({label:'water-cache.controlled'}),begin=encoder.beginComputePass.bind(encoder),names=[],spans=[];
+          encoder.beginComputePass=descriptor=>{const d=descriptor||{},index=names.length*2;if(index>=64)throw new Error('Too many passes');names.push(d.label||'compute');return begin({...d,timestampWrites:{querySet:query,beginningOfPassWriteIndex:index,endOfPassWriteIndex:index+1}});};
+          instance.frameEncoder=encoder;
+          try{for(let n=0;n<batchSize;n++){
+            // These GPU copies precede the first timestamp of every measured chain.
+            for(const key of ['pos','aux','flag'])encoder.copyBufferToBuffer(seeds[key],0,instance.buf[key],0,capacity*(key==='flag'?4:16));
+            const from=names.length;api.runCollide(instance,0,false);spans.push([from,names.length]);
+          }}finally{instance.frameEncoder=null;}
+          encoder.resolveQuerySet(query,0,names.length*2,resolve,0);encoder.copyBufferToBuffer(resolve,0,read,0,names.length*16);device.queue.submit([encoder.finish()]);
+          await read.mapAsync(GPUMapMode.READ);const times=new BigUint64Array(read.getMappedRange());
+          for(let n=0;n<batchSize;n++)if(first+n>=0){const [from,to]=spans[n],passes=names.slice(from,to).map((name,j)=>({name,ms:Number(times[(from+j)*2+1]-times[(from+j)*2])/1e6}));
+            data[label].push({wholeMs:Number(times[(to-1)*2+1]-times[from*2])/1e6,primaryMs:passes.filter(p=>p.name==='liquid.collide').reduce((v,p)=>v+p.ms,0),fallbackMs:passes.filter(p=>p.name==='liquid.fallback').reduce((v,p)=>v+p.ms,0),sumMs:passes.reduce((v,p)=>v+p.ms,0)});}
+          read.unmap();
+          // Diagnostics and output comparison occur outside every timed span.
+          const buffers=await Promise.all(['pos','aux','flag','snowFallbackCount'].map(key=>api.readbackBuffer(instance,instance.buf[key],key==='snowFallbackCount'?16:capacity*(key==='flag'?4:16))));
+          const current={pos:new Uint32Array(buffers[0]),aux:new Uint32Array(buffers[1]),flag:new Uint32Array(buffers[2])};
+          if(previous)for(const key of ['pos','aux','flag'])if(!wordsEqual(previous[key],current[key]))failures.push({fixture:fixture.name,count,label,first,key,reason:'reseeded batch outputs differ'});
+          previous=current;diagnostics[label].push({first,queued:new Uint32Array(buffers[3])[0]});
         }
+        outputs[label]=previous;
+        if(data[label].length!==samples || data[label].some(r=>Object.values(r).some(v=>!Number.isFinite(v)||v<0)))failures.push({fixture:fixture.name,count,label,reason:'invalid timestamp sample count or values'});
+        if(diagnostics[label].some(r=>r.queued!==diagnostics[label][0].queued))failures.push({fixture:fixture.name,count,label,reason:'reseeded queue counts differ'});
       }
-      const summarize=rows=>{
-        const values=rows.map(r=>r.ms).sort((a,b)=>a-b),perPass={};
-        for(const row of rows)for(const p of row.passes)(perPass[p.name]||=([])).push(p.ms);
-        return {medianMs:(values[14]+values[15])/2,p95Ms:values[Math.ceil(samples*.95)-1],minMs:values[0],maxMs:values.at(-1),
-          perPass:Object.fromEntries(Object.entries(perPass).map(([name,v])=>[name,{meanMs:v.reduce((n,x)=>n+x,0)/v.length,count:v.length}])),samples:rows};
-      };
-      const before=summarize(data.before),after=summarize(data.after);
-      results.push({fixture:fixture.name,contactCloudSeeds:fixture.near,before,after,medianSpeedup:before.medianMs/after.medianMs});
+      let exact=true;for(const key of ['pos','aux','flag'])if(!wordsEqual(outputs.before[key],outputs.after[key])){exact=false;failures.push({fixture:fixture.name,count,key,reason:'before/after words differ'});}
+      if(diagnostics.before.at(-1).queued!==diagnostics.after.at(-1).queued)failures.push({fixture:fixture.name,count,reason:'queued counts differ'});
+      const before=summary(data.before),after=summary(data.after);results.push({fixture:fixture.name,count,exactFullBufferWords:exact,diagnostics,before,after,medianSpeedup:before.medianMs/after.medianMs});
     }
-    await device.queue.onSubmittedWorkDone();
-    return {pass:!errors.length,benchmark:true,count,capacity,warmup,samples,results,gpuErrors:errors,
-      adapterInfo:adapter.info?{vendor:adapter.info.vendor,architecture:adapter.info.architecture,description:adapter.info.description}:null,
-      limitation:'Fixed post-G2P cloud reseeded before each collision. No test instrumentation; GPU compute pass time only, not game FPS or queue waiting.'};
-  } finally {
-    for(const instance of Object.values(instances)) {
-      for(const buffer of Object.values(instance.buf||{}))buffer.destroy();instance.paramsBuf?.destroy();instance.simParamsBuf?.destroy();
-      for(const buffer of instance.gameParamsBufs||[])buffer.destroy();
-    }
-    query.destroy();resolve.destroy();read.destroy();destroying=true;device.destroy();
+    await device.queue.onSubmittedWorkDone();return {pass:!errors.length&&!failures.length,benchmark:true,capacity,warmup,samples,batchSize,results,failures,gpuErrors:errors,adapterInfo:adapter.info?{vendor:adapter.info.vendor,architecture:adapter.info.architecture,description:adapter.info.description}:null,limitation:'Synthetic fixed post-G2P microphysics. GPU resets precede each timestamp span; CPU readback and queue diagnostics follow it. Whole span includes primary-to-fallback scheduling gap. Not game FPS or owner-route performance.'};
+  }finally{
+    for(const instance of Object.values(instances)){for(const b of Object.values(instance.buf||{}))b.destroy();instance.paramsBuf?.destroy();instance.simParamsBuf?.destroy();for(const b of instance.gameParamsBufs||[])b.destroy();}
+    for(const b of Object.values(seeds))b.destroy();query.destroy();resolve.destroy();read.destroy();destroying=true;device.destroy();
   }
 }
 
@@ -516,7 +491,7 @@ try {
     const report=await evaluate('__waterRunGPU()');report.sources=metadata;report.snowShaderSHA256=snowShaderSHA256;
     report.elapsedMs=performance.now()-started;
     fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2)+'\n');
-    console.log(JSON.stringify({pass:report.pass,benchmark:true,results:report.results.map(r=>({fixture:r.fixture,beforeMedianMs:r.before.medianMs,afterMedianMs:r.after.medianMs,medianSpeedup:r.medianSpeedup})),report:path.join(out,'report.json')},null,2));
+    console.log(JSON.stringify({pass:report.pass,benchmark:true,results:report.results.map(r=>({fixture:r.fixture,count:r.count,beforeMedianMs:r.before.medianMs,afterMedianMs:r.after.medianMs,medianSpeedup:r.medianSpeedup})),report:path.join(out,'report.json')},null,2));
     assert(report.pass,'Benchmark GPU errors');
   } else {
   const result = await evaluate(`(async () => {

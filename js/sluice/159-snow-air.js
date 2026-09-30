@@ -75,6 +75,7 @@
     a.divergenceBefore = Math.sqrt(before / Math.max(1, count));
     a.divergenceAfter = Math.sqrt(after / Math.max(1, count));
   }
+  var snowAirNozzleOps = new Float64Array(0);
   function updateSnowAir(dt) {
     var a = snowAir;
     a.wind = surfaceWind.current * 35; a.clock = snow.time + dt;
@@ -106,20 +107,12 @@
     // After release, keep the fading wake's last direction until it idles.
     if (firing) a.trail += (tail * bias - a.trail) * (1 - Math.exp(-10 * dt));
     var steps = Math.max(1, Math.ceil(Math.min(dt, 0.05) / (1 / 90))), step = Math.min(dt, 0.05) / steps;
-    for (var sub = 0; sub < steps; sub++) {
-      // Advect each velocity component from its own staggered face position.
-      var keep = Math.exp(-0.75 * step), travel = step / cell;
-      for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
-        var i = r * w + c;
-        var crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
-        var crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
-        a.tu[i] = snowAirBilerp(a.u, c - a.u[i] * travel, r - crossV * travel) * keep;
-        a.tv[i] = snowAirBilerp(a.v, c - crossU * travel, r - a.v[i] * travel) * keep;
-      }
-      a.u.set(a.tu); a.v.set(a.tv);
-      // Finite nozzle inlet. The pressure solve turns its downward momentum
-      // into wall jets; advection carries their shear and returning eddies.
-      for (var n = 0; n < nozzles.length; n++) {
+    // Geometry, terrain rays and inlet coefficients are constant during this
+    // update. Cache Number-precision operands, retaining nozzle/cell order.
+    var nozzleCapacity = nozzles.length * w * h * 4;
+    if (snowAirNozzleOps.length < nozzleCapacity) snowAirNozzleOps = new Float64Array(nozzleCapacity);
+    var nozzleOps = snowAirNozzleOps, nozzleOpCount = 0;
+    for (var n = 0; n < nozzles.length; n++) {
         var nz = nozzles[n];
         // A spreading, fading downwash reaches powder far below the visible
         // flame. Each sample still needs an unobstructed path from its nozzle.
@@ -140,9 +133,29 @@
           var inlet = Math.exp(-across * across / (width * width)) * fade * fade;
           var force = (1 - Math.exp(-32 * step * inlet)) * rocketIntensity;
           var speed = 1100 / (1 + along * 0.006);
-          a.u[ni] += (dir.x * speed - a.u[ni]) * force;
-          a.v[ni] += (dir.y * speed + player.vy * 0.15 - a.v[ni]) * force;
+          nozzleOps[nozzleOpCount++] = ni;
+          nozzleOps[nozzleOpCount++] = force;
+          nozzleOps[nozzleOpCount++] = dir.x * speed;
+          nozzleOps[nozzleOpCount++] = dir.y * speed + player.vy * 0.15;
         }
+      }
+    for (var sub = 0; sub < steps; sub++) {
+      // Advect each velocity component from its own staggered face position.
+      var keep = Math.exp(-0.75 * step), travel = step / cell;
+      for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
+        var i = r * w + c;
+        var crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
+        var crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
+        a.tu[i] = snowAirBilerp(a.u, c - a.u[i] * travel, r - crossV * travel) * keep;
+        a.tv[i] = snowAirBilerp(a.v, c - crossU * travel, r - a.v[i] * travel) * keep;
+      }
+      a.u.set(a.tu); a.v.set(a.tv);
+      // Finite nozzle inlet. The pressure solve turns its downward momentum
+      // into wall jets; advection carries their shear and returning eddies.
+      for (var op = 0; op < nozzleOpCount; op += 4) {
+        var ni = nozzleOps[op], force = nozzleOps[op + 1];
+        a.u[ni] += (nozzleOps[op + 2] - a.u[ni]) * force;
+        a.v[ni] += (nozzleOps[op + 3] - a.v[ni]) * force;
       }
       // Preserve inlet momentum before the terrain-only projection. The
       // snow boundary projects it once against terrain and the actual bed.

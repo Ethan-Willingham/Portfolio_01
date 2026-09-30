@@ -3399,12 +3399,11 @@
   function jelloPointInRing(b, qx, qy) {
     var ring = b.ring, rn = b.ringN, X = b.px, Y = b.py;
     if (rn < 3) return false;
-    var inside = false, j = rn - 1;
+    var inside = false, xj = X[ring[rn - 1]], yj = Y[ring[rn - 1]];
     for (var i = 0; i < rn; i++) {
       var xi = X[ring[i]], yi = Y[ring[i]];
-      var xj = X[ring[j]], yj = Y[ring[j]];
       if (((yi > qy) !== (yj > qy)) && (qx < (xj - xi) * (qy - yi) / (yj - yi) + xi)) inside = !inside;
-      j = i;
+      xj = xi; yj = yi;
     }
     return inside;
   }

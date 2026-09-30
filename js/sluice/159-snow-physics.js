@@ -102,7 +102,8 @@
     return true;
   }
   function snowContactRadius() { return LIQUID_CELL / Math.sqrt(LIQUID_SNOW_DENSITY) * 0.5; }
-  var snowSupportPoints = [], snowSupportNext = [], snowSupportQueue = [];
+  var snowSupportPoints = new Float64Array(0);
+  var snowSupportNext = new Int32Array(0), snowSupportQueue = new Int32Array(0);
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
   function snowBuildSupport() {
     // A chain of touching grains rooted in terrain carries contact,
@@ -113,21 +114,29 @@
     var cell = Math.max(LIQUID_CELL, reach), width = Math.ceil(COLS * TILE / cell) + 1;
     var count = liquidCount, types = liquidType, xs = liquidX, ys = liquidY;
     var floor = Math.floor, solid = liquidWorldSolidAt, groundReach = snowContactRadius() + 0.3;
+    // Every point/link/queue slot below is written before use. Retain only
+    // scratch capacity between builds; logical counts never include its tail.
+    if (snowSupportNext.length < count) {
+      var capacity = Math.max(256, count, snowSupportNext.length * 2);
+      snowSupportPoints = new Float64Array(capacity * 2);
+      snowSupportNext = new Int32Array(capacity);
+      snowSupportQueue = new Int32Array(capacity);
+    }
     var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
-    points.length = next.length = queue.length = 0;
+    var pointCount = 0, queueCount = 0;
     for (var i = 0; i < count; i++) {
       if (types[i] !== 5) continue;
-      var x = xs[i], y = ys[i], n = points.length / 2;
-      points.push(x, y);
+      var x = xs[i], y = ys[i], n = pointCount++;
+      points[n * 2] = x; points[n * 2 + 1] = y;
       if (solid(x, y + groundReach)) {
-        queue.push(n); next[n] = -1;
+        queue[queueCount++] = n; next[n] = -1;
       } else {
         var key = floor(y / cell) * width + floor(x / cell);
         var head = heads.get(key);
         next[n] = head === undefined ? -1 : head; heads.set(key, n);
       }
     }
-    for (var q = 0; q < queue.length; q++) {
+    for (var q = 0; q < queueCount; q++) {
       var n = queue[q], x = points[n * 2], y = points[n * 2 + 1];
       var col = floor(x / cell), row = floor(y / cell), key = row * width + col;
       var bucket = bed.get(key);
@@ -144,7 +153,7 @@
             // buckets therefore do not get rescanned for every neighbour.
             if (previous < 0) heads.set(nearKey, following);
             else next[previous] = following;
-            queue.push(current);
+            queue[queueCount++] = current;
           } else previous = current;
           current = following;
         }
@@ -187,7 +196,7 @@
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
     var fresh = !gpu || generation !== snow.readbackGen;
     if (gpu && fresh) snow.readbackGen = generation;
-    var cells = {}, active = 0, bed = snowBuildSupport(), contactSeq = liquidMutationSeq;
+    var cells = {}, active = 0;
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
@@ -219,7 +228,8 @@
     // Only deposited or rig-contact material can thaw, including stored snow.
     snow.cells = cells;
     // Do not leave removed/lofted grains in this frame's landing surface.
-    snow.bed = liquidMutationSeq === contactSeq ? bed : snowBuildSupport();
+    // Maintenance does not query support; build only the final landing surface.
+    snow.bed = snowBuildSupport();
     snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {

@@ -3,6 +3,10 @@
 // INPUT=/absolute/path/recording.json optionally schedules its keyboard events.
 // NO_POINTER=0 also schedules recorded pointer events; this is not deterministic replay.
 // LIQUID_SOURCE=/absolute/path/reference.js substitutes only the GPU engine for comparison.
+// ROUTE=town-interaction uses adaptive real jets and grabs for 420 seconds by default.
+// CPU_PROFILE=1 adds inclusive aggregate diagnostics; BUNDLE_SOURCE substitutes the game bundle.
+// EXPORT_FREEZE=0 keeps game RAF running during export; default freezes this test only after recording.
+// DRY_RUN=1 validates sources/settings without starting a browser.
 // SNOW_SNAPSHOT=1 freezes the game after the trace and saves true GPU resident state.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,6 +16,9 @@ import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import vm from 'node:vm';
+import {naturalTownHook,naturalTownOptions,naturalTownRoute} from './natural-town-route.mjs';
+import {profileGameCPU} from './profile-game-cpu.mjs';
 import {profileSnowWorkload} from './profile-snow-workload.mjs';
 async function captureResidentSnapshot() {
  if(playPerfActive||!playPerfTrace.ended)throw Error('Resident snapshot requires an ended trace');
@@ -59,11 +66,14 @@ async function captureResidentSnapshot() {
  }
 }
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const input=process.env.INPUT?JSON.parse(fs.readFileSync(process.env.INPUT,'utf8')):{durationMs:90000,events:[]};
+const route=process.env.ROUTE||'';assert(!route||route==='town-interaction','Known input route');
+assert(!route||!process.env.INPUT,'Choose adaptive ROUTE or recorded INPUT');
+const input=process.env.INPUT?JSON.parse(fs.readFileSync(process.env.INPUT,'utf8')):{durationMs:route?420000:90000,events:[]};
 if(process.env.DURATION_MS) input.durationMs=Number(process.env.DURATION_MS);
 assert(input.durationMs>0&&input.durationMs<=600000,'Capture duration must fit the recorder limit');
-const out=process.env.DUMP||path.join(os.tmpdir(),'sluice-ordinary-game');
-assert(!path.resolve(out).startsWith(root+path.sep),'Artifacts stay outside the repo');
+const routeOptions=route?naturalTownOptions(input.durationMs):null;
+const out=path.resolve(process.env.DUMP||path.join(os.tmpdir(),'sluice-ordinary-game'));
+assert(out!==root&&!out.startsWith(root+path.sep),'Artifacts stay outside the repo');
 fs.mkdirSync(out,{recursive:true});
 const snowSnapshot=process.env.SNOW_SNAPSHOT==='1';
 const liquidOriginal=fs.readFileSync(process.env.LIQUID_SOURCE||root+'/js/liquid-wgpu.js');
@@ -78,16 +88,52 @@ if(snowSnapshot){
   veto:!!instance.sparseVeto,active:useSparse(instance)};}};`));
 }
 if(process.env.SNOW_PROFILE==='1')liquid=Buffer.from(profileSnowWorkload(liquid.toString()));
-const src=fs.readFileSync(root+'/js/sluice.js','utf8'),end=src.lastIndexOf('})();');
-const hook=`window.__ownerReplay={ready:function(){return introPhase==='done'&&playPerfActive&&!gamePhysicsBlocked&&playPerfTrace.frameCount>0;},start:function(){return playPerfTrace.started;},finish:function(){playPerfStop('Owner input route completed',false);return {schema:playPerfTrace.schema,version:GAME_VERSION,durationMs:playPerfTrace.ended-playPerfTrace.started,frameCount:playPerfTrace.frameCount,seconds:playPerfTrace.seconds,events:playPerfTrace.events,gpu:playPerfTrace.gpu,columns:playPerfFields.concat(Array.from({length:playPerfBucketLimit},function(_,i){return playPerfTrace.buckets[i]?'cpu.'+playPerfTrace.buckets[i]:null;})),stride:playPerfStride,chunkCount:playPerfTrace.chunks.length,initialState:playPerfTrace.initialState,initialSavedGame:playPerfTrace.initialSavedGame,gpuStatus:playPerfTrace.gpuStatus,droppedEvents:playPerfTrace.droppedEvents,droppedGPU:playPerfTrace.droppedGPU,droppedBuckets:playPerfTrace.droppedBuckets,metadata:playPerfTrace.metadata};},checkpoint:function(){return {seconds:playPerfTrace.seconds,gpu:playPerfTrace.gpu,frameCount:playPerfTrace.frameCount};}};\n`;
-const snapshotHook=snowSnapshot?`window.__ownerReplay.snapshot=${captureResidentSnapshot.toString()};window.__ownerReplay.finish=(function(finish){return function(){var result=finish();if(gameRafId)cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=true;return result;};})(window.__ownerReplay.finish);\n`:'';
-const bundle=src.slice(0,end)+hook+snapshotHook+src.slice(end);
+const bundleSourcePath=path.resolve(process.env.BUNDLE_SOURCE||root+'/js/sluice.js');
+const bundleOriginal=fs.readFileSync(bundleSourcePath,'utf8');
+const cpuProfile=process.env.CPU_PROFILE==='1'?profileGameCPU(bundleOriginal):null;
+const src=cpuProfile?cpuProfile.source:bundleOriginal,end=src.lastIndexOf('})();');
+assert(end>=0,'Game bundle closure anchor');
+const exportFreeze=process.env.EXPORT_FREEZE!=='0'||snowSnapshot;
+const hook=`window.__ownerReplay={
+ ready:function(){return introPhase==='done'&&playPerfActive&&!gamePhysicsBlocked&&playPerfTrace.frameCount>0;},
+ start:function(){return playPerfTrace.started;},
+ finish:function(freeze){
+  playPerfStop('Owner input route completed',false);
+  if(freeze&&gameRafId){cancelAnimationFrame(gameRafId);gameRafId=0;}
+  playPerfTrace.metadata.export={afterTrace:true,freezeRequested:!!freeze,gameRafStopped:gameRafId===0,
+   uiPauseUnchanged:true,pageMs:performance.now()};
+  return {schema:playPerfTrace.schema,version:GAME_VERSION,durationMs:playPerfTrace.ended-playPerfTrace.started,
+   frameCount:playPerfTrace.frameCount,columns:playPerfFields.concat(Array.from({length:playPerfBucketLimit},function(_,i){return playPerfTrace.buckets[i]?'cpu.'+playPerfTrace.buckets[i]:null;})),
+   stride:playPerfStride,chunkCount:playPerfTrace.chunks.length,initialState:playPerfTrace.initialState,
+   initialSavedGame:playPerfTrace.initialSavedGame,gpuStatus:playPerfTrace.gpuStatus,
+   droppedEvents:playPerfTrace.droppedEvents,droppedGPU:playPerfTrace.droppedGPU,droppedBuckets:playPerfTrace.droppedBuckets,
+   metadata:playPerfTrace.metadata,sectionCounts:{seconds:playPerfTrace.seconds.length,events:playPerfTrace.events.length,gpu:playPerfTrace.gpu.length}};
+ },
+ part:function(key,offset,count){return playPerfTrace[key].slice(offset,offset+count);},
+ checkpoint:function(secondsOffset,gpuOffset){return {seconds:playPerfTrace.seconds.slice(secondsOffset||0),gpu:playPerfTrace.gpu.slice(gpuOffset||0),frameCount:playPerfTrace.frameCount};}
+};\n`;
+const snapshotHook=snowSnapshot?`window.__ownerReplay.snapshot=${captureResidentSnapshot.toString()};\n`:'';
+const bundle=src.slice(0,end)+hook+snapshotHook+(route?naturalTownHook:'')+src.slice(end);
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.woff':'font/woff','.webp':'image/webp','.jpg':'image/jpeg','.png':'image/png','.m4a':'audio/mp4'};
+new vm.Script(bundle);
+if(cpuProfile)fs.writeFileSync(out+'/cpu-profile-manifest.json',JSON.stringify({...cpuProfile.manifest,bundleSourcePath},null,2));
+if(process.env.DRY_RUN==='1'){console.log(JSON.stringify({dryRun:true,browserLaunched:false,durationMs:input.durationMs,route:route||null,routeOptions,cpuProfile:!!cpuProfile,exportFreeze,bundleSourcePath,bundleSHA256:createHash('sha256').update(bundleOriginal).digest('hex'),servedBundleSHA256:createHash('sha256').update(bundle).digest('hex')}));process.exit(0);}
 const server=http.createServer((req,res)=>{try{const name=new URL(req.url,'http://localhost').pathname,file=path.resolve(root,'.'+name);if(!file.startsWith(root+'/')){res.writeHead(403).end();return;}const data=name==='/js/sluice.js'?bundle:name==='/js/liquid-wgpu.js'?liquid:fs.readFileSync(file);res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(data);}catch{res.writeHead(404).end();}});
-const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-owner-replay-'));let chrome,ws,id=0;const pending=new Map(),errors=[];
+const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-owner-replay-'));let chrome,ws,checkpointTimer,checkpointInFlight=null,checkpointActive=false,evaluationTail=Promise.resolve(),result=null,traceComplete=false,phase='boot',id=0;const pending=new Map(),errors=[],checkpointState={seconds:[],gpu:[],frameCount:0};
 const sleep=ms=>new Promise(r=>setTimeout(r,Math.max(0,ms)));
 function send(method,params={}){return new Promise((resolve,reject)=>{const n=++id,t=setTimeout(()=>{pending.delete(n);reject(Error('Timeout '+method));},45000);pending.set(n,{resolve:v=>{clearTimeout(t);resolve(v);},reject:e=>{clearTimeout(t);reject(e);}});ws.send(JSON.stringify({id:n,method,params}));});}
-async function ev(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
+// One evaluation at a time, including route reads, checkpoints and export.
+function ev(expression){const task=evaluationTail.then(async()=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;});evaluationTail=task.catch(()=>{});return task;}
+function scheduleCheckpoint(hostStart){
+ if(!checkpointActive)return;
+ checkpointTimer=setTimeout(()=>{
+  checkpointInFlight=(async()=>{const checkpoint=await ev('__ownerReplay.checkpoint('+checkpointState.seconds.length+','+checkpointState.gpu.length+')');checkpointState.seconds.push(...checkpoint.seconds);checkpointState.gpu.push(...checkpoint.gpu);checkpointState.frameCount=checkpoint.frameCount;fs.writeFileSync(out+'/checkpoint.json',JSON.stringify(checkpointState));const live=await ev('(()=>{const x=__sluicePerformance.status();return {fps:x.fps,cpuMs:x.cpuMs,snow:x.state.snowActive,liquids:x.state.liquids}})()');console.log(JSON.stringify({wallSec:Math.round((performance.now()-hostStart)/1000),live}));})()
+   .catch(error=>fs.writeFileSync(out+'/checkpoint-error.json',JSON.stringify({message:error.message,at:new Date().toISOString()})))
+   .finally(()=>{checkpointInFlight=null;if(checkpointActive)scheduleCheckpoint(hostStart);});
+ },10000);
+}
+async function stopCheckpoints(){checkpointActive=false;clearTimeout(checkpointTimer);if(checkpointInFlight)await checkpointInFlight;await evaluationTail;}
+
 try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port,debug=Number(process.env.DEBUG_PORT||9894);
  chrome=spawn(path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'),['--headless=new','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows','--window-size=1440,900','--enable-unsafe-webgpu','--use-angle=metal','--mute-audio','--no-first-run','--user-data-dir='+profile,'--remote-debugging-port='+debug,'about:blank'],{stdio:'ignore'});
@@ -101,11 +147,32 @@ try{
  const offset=await ev('performance.now()-__ownerReplay.start()'),hostStart=performance.now()-offset;
  const events=input.events.filter(e=>['keydown','keyup','pointerdown','pointerup','pointermove'].includes(e.kind)&&e.atMs<input.durationMs&&(process.env.NO_POINTER==='0'||!e.kind.startsWith('pointer')));
  console.log(JSON.stringify({started:true,out,liquidSource:process.env.LIQUID_SOURCE,offset,rect,events:events.length}));
- let liveTimer=setInterval(async()=>{try{let checkpoint=await ev('__ownerReplay.checkpoint()');fs.writeFileSync(out+'/checkpoint.json',JSON.stringify(checkpoint));console.log(JSON.stringify({wallSec:Math.round((performance.now()-hostStart)/1000),live:await ev('(()=>{const x=__sluicePerformance.status();return {fps:x.fps,cpuMs:x.cpuMs,snow:x.state.snowActive,liquids:x.state.liquids}})()')}));}catch{}},10000);
+ phase='capture';checkpointActive=true;scheduleCheckpoint(hostStart);
+ let actionReport=null;
+ if(route)actionReport=await naturalTownRoute(send,ev,input.durationMs,hostStart,out,routeOptions);
+ else{
  let last=0;for(const e of events){await sleep(hostStart+e.atMs-performance.now());if(e.kind.startsWith('key')){const code=e.detail.code;const key=code==='Space'?' ':code.startsWith('Key')?code.slice(3).toLowerCase():code.startsWith('Digit')?code.slice(5):code;await send('Input.dispatchKeyEvent',{type:e.kind==='keydown'?'keyDown':'keyUp',key,code});}else{const d=e.detail,x=rect.left+d.x/d.width*rect.width,y=rect.top+d.y/d.height*rect.height;await send('Input.dispatchMouseEvent',{type:e.kind==='pointerdown'?'mousePressed':e.kind==='pointerup'?'mouseReleased':'mouseMoved',x,y,button:e.kind==='pointermove'?'none':'left',buttons:d.buttons||0,clickCount:e.kind==='pointermove'?0:1});}if(e.atMs-last>5000){last=e.atMs;console.log(JSON.stringify({seconds:e.atMs/1000,live:await ev('__sluicePerformance.status().fps')}));}}
  await sleep(hostStart+input.durationMs-performance.now());
- clearInterval(liveTimer);
- const result=await ev('__ownerReplay.finish()');result.frameChunks=[];for(let n=0;n<result.chunkCount;n++)result.frameChunks.push((await ev('__sluicePerformance.frameChunk('+n+')')).frames);result.testHarness={headless:true,nativeCallbacks:true,seed:48271,inputPath:process.env.INPUT||null,pointers:process.env.NO_POINTER==='0',water:process.env.WATER!=='0',snowProfile:process.env.SNOW_PROFILE==='1',bundleSHA256:createHash('sha256').update(src).digest('hex'),liquidSHA256:createHash('sha256').update(liquidOriginal).digest('hex'),servedLiquidSHA256:createHash('sha256').update(liquid).digest('hex')};
+ }
+ await stopCheckpoints();phase='export';
+ result=await ev('__ownerReplay.finish('+JSON.stringify(exportFreeze)+')');
+ result.frameChunks=[];
+ result.testHarness={route:route||null,routeOptions,cpuProfile:!!cpuProfile,bundleSourcePath,servedBundleSHA256:createHash('sha256').update(bundle).digest('hex'),headless:true,nativeCallbacks:true,seed:48271,inputPath:process.env.INPUT||null,pointers:!!route||process.env.NO_POINTER==='0',water:process.env.WATER!=='0',snowProfile:process.env.SNOW_PROFILE==='1',bundleSHA256:createHash('sha256').update(bundleOriginal).digest('hex'),liquidSHA256:createHash('sha256').update(liquidOriginal).digest('hex'),servedLiquidSHA256:createHash('sha256').update(liquid).digest('hex')};
+ const chunkDir=out+'/frame-chunks';fs.mkdirSync(chunkDir,{recursive:true});
+ for(const [key,count] of Object.entries(result.sectionCounts)){
+  result[key]=[];
+  for(let offset=0;offset<count;offset+=32)result[key].push(...await ev('__ownerReplay.part('+JSON.stringify(key)+','+offset+',32)'));
+  fs.writeFileSync(out+'/'+key+'.json',JSON.stringify(result[key]));
+ }
+ for(let n=0;n<result.chunkCount;n++){
+  const chunk=(await ev('__sluicePerformance.frameChunk('+n+')')).frames;
+  fs.writeFileSync(chunkDir+'/'+String(n).padStart(4,'0')+'.json',JSON.stringify(chunk));result.frameChunks.push(chunk);
+  fs.writeFileSync(out+'/export-progress.json',JSON.stringify({afterTrace:true,expectedChunks:result.chunkCount,savedChunks:result.frameChunks.length,frameCount:result.frameCount}));
+ }
+ result.exportComplete=true;traceComplete=true;
+ if(actionReport){result.adaptiveRoute=actionReport;const jet=result.columns.indexOf('jet'),holding=result.columns.indexOf('holding');let jetFrames=0,heldFrames=0,jetMs=0,heldMs=0;for(const chunk of result.frameChunks)for(let i=0;i<chunk.length;i+=result.stride){if(chunk[i+jet]){jetFrames++;jetMs+=chunk[i+1];}if(chunk[i+holding]){heldFrames++;heldMs+=chunk[i+1];}}result.adaptiveCoverage={jetFrames,heldFrames,jetSeconds:jetMs/1000,heldSeconds:heldMs/1000,draggedIDs:actionReport.draggedIDs,initialIDs:actionReport.initialIDs};}
+ fs.writeFileSync(out+'/trace.json',JSON.stringify(result));if(actionReport){assert(result.adaptiveCoverage.jetFrames>10&&result.adaptiveCoverage.heldFrames>10,'Actual frames show jets and held bodies');assert(actionReport.draggedIDs.length>0,'At least one natural resident completes a verified ten-second drag');}
+ phase='optional-diagnostics';
  if(process.env.SNOW_PROFILE==='1')result.snowWorkload=await ev('window.__snowWorkloadRows||[]');
  const boot=await ev('({error:window.__bootErr||null,loading:window.__ownerReplay&&__sluicePerformance.status().state.loading,report:document.getElementById("gm-loading-log")?.textContent||null})');
  fs.writeFileSync(out+'/boot.json',JSON.stringify(boot));
@@ -126,5 +193,10 @@ try{
   fs.writeFileSync(out+'/resident-snapshot.json',JSON.stringify(snapshot));
   console.log(JSON.stringify({residentSnapshot:true,out,count:snapshot.count,guests:snapshot.gameState.guests?.length||0}));
  }
- fs.writeFileSync(out+'/trace.json',JSON.stringify(result));const shot=await send('Page.captureScreenshot');fs.writeFileSync(out+'/end.png',Buffer.from(shot.data,'base64'));assert.deepEqual(errors,[]);const active=result.seconds.filter(s=>s.durationMs>=900);console.log(JSON.stringify({complete:true,out,frames:result.frameCount,errors,meanFPS:active.reduce((a,s)=>a+s.fps,0)/active.length,minFPS:Math.min(...active.map(s=>s.fps))}));
-}finally{if(ws?.readyState===WebSocket.OPEN){try{await send('Browser.close');}catch{}ws.close();}if(chrome&&chrome.exitCode===null){chrome.kill('SIGTERM');await Promise.race([new Promise(r=>chrome.once('exit',r)),sleep(1500)]);if(chrome.exitCode===null)chrome.kill('SIGKILL');}server.close();try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:100});}catch{}}
+ fs.writeFileSync(out+'/trace.json',JSON.stringify(result));
+ const shot=await send('Page.captureScreenshot');fs.writeFileSync(out+'/end.png',Buffer.from(shot.data,'base64'));assert.deepEqual(errors,[]);const active=result.seconds.filter(s=>s.durationMs>=900);console.log(JSON.stringify({complete:true,out,frames:result.frameCount,errors,meanFPS:active.reduce((a,s)=>a+s.fps,0)/active.length,minFPS:Math.min(...active.map(s=>s.fps))}));
+}catch(error){
+ fs.writeFileSync(out+'/capture-error.json',JSON.stringify({phase,traceComplete,message:error.message,stack:error.stack,at:new Date().toISOString()},null,2));
+ if(result&&!traceComplete)fs.writeFileSync(out+'/trace-partial.json',JSON.stringify({...result,exportComplete:false}));
+ throw error;
+}finally{checkpointActive=false;clearTimeout(checkpointTimer);if(ws?.readyState===WebSocket.OPEN){try{await send('Browser.close');}catch{}ws.close();}if(chrome&&chrome.exitCode===null){chrome.kill('SIGTERM');await Promise.race([new Promise(r=>chrome.once('exit',r)),sleep(1500)]);if(chrome.exitCode===null)chrome.kill('SIGKILL');}server.close();try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:100});}catch{}}
