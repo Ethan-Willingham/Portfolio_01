@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.67';
+  var VERSION = 'v1.68';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -5267,6 +5267,7 @@
       case 'pancake':return sortRecord_pancake; case 'bogo':return sortRecord_bogo; default:return sortRecord_selection; }
   }
   function isSortField(f){ return SORT_ALGOS.indexOf(f) >= 0; }
+  function isOrbitField(f){ return isSearchField(f) || isSortField(f) || isLifeField(f); }
 
   var SORT_N = 128;            // elements (power of two so bitonic works)
   var SORT_BOGO_N = 7;         // bogosort uses a tiny array (it is a gag)
@@ -5396,14 +5397,32 @@
     var need = 1.05 / Math.max(0.3, aspect);   // clear the ~0.26-wide projection out of the horizontal FOV, ~20% margin
     return need > 1.15 ? need : 1.15;
   }
+  var sortAz = 0, sortEl = 0, sortR = 1;
+  function resetSortView(history){
+    var x = history ? 0.16 : 0.62, y = history ? 0.05 : 0.12, z = history ? -1.16 : -0.12;
+    sortR = Math.hypot(x, y, z);
+    sortAz = Math.atan2(z, x);
+    sortEl = Math.asin(y / sortR);
+    updateSortCamera();
+  }
+  function updateSortCamera(){
+    var z = sr && sr.view === 'helix' ? 0.5 : SORT_Z0 + SORT_SPAN * 0.5;
+    var r = sortR * sortFitZoom(), ce = Math.cos(sortEl);
+    camPos = [0.5 + r * ce * Math.cos(sortAz), 0.5 + r * Math.sin(sortEl), z + r * ce * Math.sin(sortAz)];
+    camFwd = vnorm([0.5 - camPos[0], 0.5 - camPos[1], z - camPos[2]]);
+    camUp = vnorm(vcross(vnorm(vcross(camFwd, [0, 1, 0])), camFwd));
+  }
+  function zoomOrbit(scale){
+    if (isSortField(currentField)) sortR = Math.max(0.26, Math.min(2.8, sortR * scale));
+    else srR = Math.max(0.7, Math.min(3.2, srR * scale));
+  }
   function sortShowHelix(){       // build the history tapestry for the current algorithm
     sortScramble(); sortBuildOps(); sortBuildHistory();
     ensurePointCapacity(SORT_SLICES * sr.n * 16);
     sr.playhead = 0; sr.view = 'helix'; sr.built = true;     // start empty; the monument builds in from the top
     helixLayout();
     if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer, 0, positions, 0, sr.helixTotal * 4);
-    var hz = sortFitZoom();
-    camPos = [0.5 + 0.16 * hz, 0.5 + 0.05 * hz, 0.5 - 1.16 * hz]; camFwd = vnorm([0.5 - camPos[0], 0.5 - camPos[1], 0.5 - camPos[2]]); camUp = [0, 1, 0];   // face the tapestry from far enough to see the whole chaos->order span (aspect-aware), slight 3/4 for the relief
+    resetSortView(true);
     yawVel = 0; pitchVel = 0; rollVel = 0;
   }
   function sortToggleView(){
@@ -5562,6 +5581,7 @@
     // on screen and we can fly them to the new scramble), or a fresh entry (snap)?
     // currentField is still the PREVIOUS field here (loadField sets it after).
     var wasSort = isSortField(currentField);
+    var wasHistory = sr && sr.view === 'helix';
     var prevN = sr ? sr.n : -1;
     sortAudioRestore();                          // re-arm the sort bus (silenced when you leave a sort scene)
     sortEnsure(algo);
@@ -5583,11 +5603,7 @@
     sr.built = true;
     sortLayout();
     if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer, 0, positions, 0, sr.total * 4);
-    var scz = SORT_Z0 + SORT_SPAN * 0.5;                            // cylinder centre along the bore
-    var fz = sortFitZoom();                                         // dolly back to fit the whole tube (portrait/mobile safe)
-    camPos = [0.5 + 0.62 * fz, 0.5 + 0.12 * fz, scz - 0.12 * fz];   // mostly broadside (+x side), gently above, slight 3/4 tilt
-    camFwd = vnorm([0.5 - camPos[0], 0.5 - camPos[1], scz - camPos[2]]);   // look at the cylinder centre
-    camUp = [0, 1, 0];
+    if (!wasSort || wasHistory) resetSortView(false);
     yawVel = 0; pitchVel = 0; rollVel = 0;
     clumps.length = 0;
   }
@@ -7111,7 +7127,11 @@
     if (isLifeField(currentField)) lifeTick(dt);       // live Life scene: advance the organism + repaint each frame
 
     if (mode === 'flight') {
-      if (isSearchField(currentField) || isLifeField(currentField)) {
+      if (isSortField(currentField)) {
+        // Inspect the finite cone around its centre, with no flight drift.
+        updateSortCamera();
+        lookAt(viewMat, [0, 0, 0], camFwd, camUp);
+      } else if (isSearchField(currentField) || isLifeField(currentField)) {
         // Idle motion continues around the view the user last chose.
         if (isSearchField(currentField)) {
           searchOrbitTick(dt);
@@ -7269,10 +7289,10 @@
   }
   function updateHint() {
     if (!hintEl) return;
-    var orbit = isSearchField(currentField) || isLifeField(currentField);
+    var orbit = isOrbitField(currentField);
     var touch = window.matchMedia('(pointer: coarse)').matches;
     hintEl.textContent = orbit
-      ? (touch ? 'Drag to rotate' : 'Drag to rotate · Scroll to zoom')
+      ? (touch ? 'Drag to rotate · Pinch to zoom' : 'Drag to rotate · Scroll to zoom')
       : (touch ? 'Drag to steer · Set fly speed below' : 'Drag or WASD to steer · Q/E to roll');
     if (speedWrap) speedWrap.hidden = orbit;
     var flyBtn = document.getElementById('galaxy-fly');
@@ -7418,6 +7438,11 @@
 
   function initInput() {
     var lastX = 0, lastY = 0, dragging = false, activePointer = null;
+    var touchPointers = new Map(), pinchDistance = 0;
+    function touchSpan() {
+      var points = Array.from(touchPointers.values());
+      return points.length < 2 ? 0 : Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+    }
 
     // --- Camera capture (dev tool) ----------------------------------------
     // Fly/orbit to the view you want for a scene, then press C (or call
@@ -7447,9 +7472,13 @@
     }
     window.GXCAM = { grab: captureCam, dump: function () { var t = camDump(); try { console.log(t); } catch (e) {} return t; }, clear: function () { camCaptures = {}; }, all: function () { return camCaptures; } };
 
-    // Drag to steer: rotate the look direction by the mouse delta (same axes as
-    // the arrow keys). The camera keeps cruising forward the whole time.
+    // Finite Watch scenes orbit their centre; Explore scenes steer through space.
     canvas.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'touch' && isOrbitField(currentField)) {
+        touchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+        if (touchPointers.size > 1) { pinchDistance = touchSpan(); return; }
+      } else if (!e.isPrimary) return;
       dragging = true; srDragging = true;
       activePointer = e.pointerId;
       if (isSearchField(currentField)) srSweep = 0;
@@ -7462,8 +7491,23 @@
     });
     canvas.addEventListener('pointermove', function (e) {
       if (!dragging) return;
+      if (touchPointers.has(e.pointerId)) {
+        touchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+        if (touchPointers.size > 1) {
+          var span = touchSpan();
+          if (pinchDistance > 0 && span > 0) zoomOrbit(pinchDistance / span);
+          pinchDistance = span;
+          return;
+        }
+      }
+      if (e.pointerId !== activePointer) return;
       var dx = e.clientX - lastX, dy = e.clientY - lastY;
       lastX = e.clientX; lastY = e.clientY;
+      if (isSortField(currentField)) {
+        sortAz -= dx * 0.006;
+        sortEl = Math.max(-1.4, Math.min(1.4, sortEl + dy * 0.006));
+        return;
+      }
       if (isSearchField(currentField) || isLifeField(currentField)) {   // search/life scene: drag orbits the form
         srAz -= dx * 0.006;
         srEl = Math.max(-1.4, Math.min(1.4, srEl + dy * 0.006));
@@ -7480,6 +7524,17 @@
     });
     function endDrag(e) {
       if (!dragging) return;
+      if (touchPointers.has(e.pointerId)) {
+        touchPointers.delete(e.pointerId);
+        try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+        pinchDistance = touchSpan();
+        if (touchPointers.size) {
+          // One finger can keep rotating after the other leaves a pinch.
+          var remaining = touchPointers.entries().next().value;
+          activePointer = remaining[0]; lastX = remaining[1].x; lastY = remaining[1].y;
+          return;
+        }
+      } else if (e.pointerId !== activePointer) return;
       dragging = false; srDragging = false;
       if (isSearchField(currentField)) {
         searchOrbitPhase = Math.atan2(Math.sin(srEl), Math.cos(srEl) * Math.cos(srAz));
@@ -7490,16 +7545,21 @@
       try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
       activePointer = null;
     }
-    pausePointerInput = function () { if (dragging) endDrag({ pointerId: activePointer }); };
+    pausePointerInput = function () {
+      touchPointers.forEach(function (point, id) { try { canvas.releasePointerCapture(id); } catch (err) {} });
+      touchPointers.clear(); pinchDistance = 0;
+      if (dragging) endDrag({ pointerId: activePointer });
+    };
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
-    // Scroll to change cruise speed (and keep the Speed slider in sync).
+    // Watch zooms around the object; Explore changes the cruise speed.
     canvas.addEventListener('wheel', function (e) {
-      if (!focused()) return;          // let the page scroll unless we're focused
+      if (!isOrbitField(currentField) && !focused()) return;
       e.preventDefault();
-      if (isSearchField(currentField) || isLifeField(currentField)) {   // search/life scene: scroll zooms the orbit in/out
-        srR = Math.max(0.7, Math.min(3.2, srR + e.deltaY * 0.0012));
+      if (isOrbitField(currentField)) {
+        var delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1);
+        zoomOrbit(Math.exp(Math.max(-300, Math.min(300, delta)) * 0.0015));
         return;
       }
       applySpeed(flightSpeed - e.deltaY * 0.00015);
@@ -7775,8 +7835,8 @@
             oddeven:['Odd-even sort','alternating rows of neighbour swaps ripple values one step at a time.'],
             pancake:['Pancake sort','flip whole stacks like pancakes to bring the biggest to the top, then the bottom.'],
             bogo:['Bogosort','shuffle everything and pray it is sorted. Repeat. A cosmic joke. (Tiny array, mercifully.)'] }[scene];
-          if (blurbEl) blurbEl.textContent = SB[0] + ': ' + SB[1] + ' Every value is a glowing ring: radius and colour are its size, depth is its slot. Fly down the bore and watch the scrambled tube smooth into a clean horn.';
-          showReveal(SB[0] + ': fly down the bore as it sorts.');
+          if (blurbEl) blurbEl.textContent = SB[0] + ': ' + SB[1] + ' Every value is a glowing ring: radius and colour are its size, depth is its slot. Drag to rotate the cone. Zoom in to inspect the rings.';
+          showReveal(SB[0] + ': rotate the cone as it sorts.');
         } else if (scene === 'thomas') {
           if (blurbEl) blurbEl.textContent = 'The Thomas attractor. Each axis chases the sine of the next with a whisper of friction: one rule, no randomness, yet the path never repeats and never escapes. It braids an endless glowing lattice that tiles in every direction. Fly through it without end.';
           showReveal('Thomas attractor: a chaotic lattice you fly through forever.');
