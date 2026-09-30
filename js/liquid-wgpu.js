@@ -7280,6 +7280,70 @@ fn snowGuestPrimary(@builtin(global_invocation_id) gid:vec3<u32>) {
 }
 `;
 
+  // A clear tile rectangle proves every existing ray sample is clear.
+  // Use the first and last sampled centers, because the origin itself is
+  // deliberately excluded from guest escape clearance. Near the rig, or
+  // whenever any tile could obstruct the path, retain all original samples.
+  var snowExitStart = WGSL_SNOW_COLLIDE.indexOf('fn guestExitClear(');
+  var snowExitEnd = WGSL_SNOW_COLLIDE.indexOf('\n@compute', snowExitStart);
+  var WGSL_SNOW_EXIT_CLEAR = /* wgsl */ `
+fn guestExitClear(x0 : f32, y0 : f32, x1 : f32, y1 : f32, r : f32) -> bool {
+  let dx = x1 - x0;
+  let dy = y1 - y0;
+  let dist = sqrt(dx * dx + dy * dy);
+  let steps = max(1.0, ceil(dist / max(1.0, r)));
+  // One-sample exits already cost just one probe; avoid broadphase work.
+  if (steps > 1.0) {
+  let first = vec2<f32>(x0 + dx * (1.0 / steps), y0 + dy * (1.0 / steps));
+  let last = vec2<f32>(x0 + dx, y0 + dy);
+  let low = min(first, last);
+  let high = max(first, last);
+  var nearMiner = false;
+  if (gameP.player.x >= 0.5) {
+    // Extra padding makes this a conservative rejection in world space;
+    // the original predicate maps the ring probes into mirrored rig space.
+    let hull = minerRect(0, r + 1.0);
+    let track = minerRect(1, r + 1.0);
+    nearMiner = (all(high >= hull.xy) && all(low <= hull.zw)) ||
+                (all(high >= track.xy) && all(low <= track.zw));
+  }
+  if (!nearMiner) {
+    let origin = vec2<i32>(bitcast<i32>(gp.tileOrigC), bitcast<i32>(gp.tileOrigR));
+    let bounds = vec2<i32>(i32(gp.tileW), i32(gp.tileH));
+    let firstTile = max(vec2<i32>(floor((low - vec2<f32>(r)) / gp.worldTile)) - origin, vec2<i32>(0));
+    let through = min(vec2<i32>(floor((high + vec2<f32>(r)) / gp.worldTile)) - origin, bounds - vec2<i32>(1));
+    let extent = max(through - firstTile + vec2<i32>(1), vec2<i32>(0));
+    if (extent.x * extent.y <= 64) {
+      var clear = true;
+      for (var row = firstTile.y; row <= through.y; row = row + 1) {
+        for (var col = firstTile.x; col <= through.x; col = col + 1) {
+          let index = u32(row) * gp.tileW + u32(col);
+          if (((terrainMask[index >> 5u] >> (index & 31u)) & 1u) != 0u) {
+            clear = false;
+            break;
+          }
+        }
+        if (!clear) { break; }
+      }
+      if (clear) { return true; }
+    }
+  }
+  }
+  // A blocked endpoint rejects the same path immediately. Every other
+  // sample is still visited, with the original arithmetic and spacing.
+  var s = steps;
+  loop {
+    let t = s / steps;
+    if (solidRing(x0 + dx * t, y0 + dy * t, r)) { return false; }
+    s = select(s + 1.0, 1.0, s == steps);
+    if (s >= steps) { break; }
+  }
+  return true;
+}
+`;
+  WGSL_SNOW_COLLIDE = WGSL_SNOW_COLLIDE.slice(0, snowExitStart) +
+    WGSL_SNOW_EXIT_CLEAR + WGSL_SNOW_COLLIDE.slice(snowExitEnd);
+
   // Ordinary liquid keeps its original terrain path and response. Only a
   // failed primary guest exit enters the compact search. Derive this
   // after snow assembly so the snow shader remains byte-identical.

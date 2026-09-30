@@ -25,6 +25,8 @@ const port = Number(process.env.PORT || 8295), debugPort = port + 1000;
 const out = process.env.DUMP || '/tmp/sluice-snow-collision-gpu';
 const timeoutMs = Number(process.env.TIMEOUT_MS || 180000);
 const compactMode = process.env.COMPACT === '1';
+const benchmark = process.env.BENCH === '1';
+const exitProbe = process.env.EXIT_PROBE === '1';
 const beforeRef = compactMode ? 'c92d501' : 'cf8865e';
 const grainMode=process.env.GRAINS==='1';
 const localSlopMode = compactMode || process.env.LOCAL_SLOP === '1';
@@ -59,7 +61,8 @@ for (const [name, filename] of Object.entries(paths)) {
     buildBuffers: buildBuffers, buildCollidePipelines: buildCollidePipelines,
     uploadTerrainMask: uploadTerrainMask, writeGameParams: writeGameParams,
     writeSimParams: writeSimParams, runCollide: runCollide,
-    grainShader: WGSL_SNOW_GRAINS, readbackBuffer: readbackBuffer
+    grainShader: WGSL_SNOW_GRAINS, readbackBuffer: readbackBuffer,
+    exitShader: WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_SNOW_COLLIDE
   };`);
   new vm.Script(sources[name], { filename: filename || beforeRef + ':js/liquid-wgpu.js' });
   metadata[name] = { path: filename ? path.resolve(filename) : null, ref: filename ? null : beforeRef,
@@ -154,6 +157,13 @@ function makeCooperativeFixtures(physical, legalSlop = false) {
     minimumFallback: 259, modes: ['standalone', 'shared-encoder']
   });
   add('empty-after-fallback', [grain(220, 40)], { requireNoFallback: true });
+  const circle = polygon(Array.from({length:20}, (_, i) => {
+    const a = i * Math.PI * 2 / 20;
+    return [100 + 32 * Math.cos(a), 107 + 21 * Math.sin(a)];
+  }));
+  for (const count of [1, 2, 24]) add('circle-floor-pinch-' + count,
+    Array.from({length:count}, (_, i) => grain(98 + i % 5, 127.1)),
+    {guests:[circle], terrain:'floor', requireFallback:true});
   for (const dir of [-1, 1]) {
     const right = dir < 0 ? 89 : 90;
     add('rig-pinch-' + (dir < 0 ? 'left' : 'right'), [grain(right - .3, 90)], {
@@ -219,7 +229,8 @@ async function runGPU() {
   if (!navigator.gpu) throw new Error('WebGPU unavailable');
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
   if (!adapter) throw new Error('No WebGPU adapter');
-  const device = await adapter.requestDevice({requiredLimits:{maxStorageBuffersPerShaderStage:adapter.limits.maxStorageBuffersPerShaderStage}});
+  if (window.__snowBenchmark && !adapter.features.has('timestamp-query')) throw new Error('Timestamp query unavailable');
+  const device = await adapter.requestDevice({requiredFeatures:window.__snowBenchmark?['timestamp-query']:[],requiredLimits:{maxStorageBuffersPerShaderStage:adapter.limits.maxStorageBuffersPerShaderStage}});
   const gpuErrors = [];
   device.addEventListener('uncapturederror', event => gpuErrors.push(event.error.message));
   let destroying = false;
@@ -271,6 +282,34 @@ async function runGPU() {
       const pipelineError = await device.popErrorScope();
       if (pipelineError) throw new Error(label + ' pipeline: ' + pipelineError.message);
       if (!instance.collideReady) throw new Error(label + ': collision pipeline unavailable');
+      let probePipe, probeInput, probeOutput;
+      const rays = [];
+      if (window.__snowExitProbe) {
+        // Fixed edge/corner rays plus seeded finite rays across terrain and rig.
+        for (const y of [127.29,127.3001,127.3012,127.9,128,128.7,63.3,64,64.7])
+          for (const x of [63.3,64,64.7,95.3,96,96.7,127.3,128,128.7])
+            for (const [dx,dy] of [[0,-70],[0,70],[70,0],[-70,0],[55,-55],[-55,55],[.01,-.01]])
+              rays.push(x,y,x+dx,y+dy);
+        let seed=619;
+        const random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
+        for(let i=0;i<2048;i++) {
+          const x=-100+random()*500,y=-150+random()*550;
+          rays.push(x,y,x+(random()-.5)*250,y+(random()-.5)*250);
+        }
+        const module=device.createShaderModule({code:api.exitShader+`
+@group(0) @binding(13) var<storage,read> testRays:array<vec4<f32>>;
+@group(0) @binding(14) var<storage,read_write> testClear:array<u32>;
+@compute @workgroup_size(32)
+fn probeEscape(@builtin(global_invocation_id) gid:vec3<u32>) {
+  if(gid.x>=arrayLength(&testRays)){return;}
+  let p=testRays[gid.x];
+  testClear[gid.x]=select(0u,1u,guestExitClear(p.x,p.y,p.z,p.w,2.5/sqrt(3.2)*0.5));
+}`});
+        probePipe=device.createComputePipeline({layout:'auto',compute:{module,entryPoint:'probeEscape'}});
+        probeInput=device.createBuffer({size:rays.length*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+        probeOutput=device.createBuffer({size:rays.length,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC});
+        device.queue.writeBuffer(probeInput,0,new Float32Array(rays));
+      }
       all[label] = [];
       // Reuse the real production buffers and pipelines across the focused cases.
       for (const fixture of fixtures) for (const mode of fixture.modes) {
@@ -341,10 +380,45 @@ async function runGPU() {
           const result = { name, fixture: fixture.name, mode, count: instance.uploadedCount,
             input, unchanged: fixture.particles.map((p, i) => p.unchanged ? i : -1).filter(i => i >= 0),
             ...first, second };
+          if (window.__snowExitProbe && mode==='standalone' && selectedSlot===0) {
+            const probeBG=device.createBindGroup({layout:probePipe.getBindGroupLayout(0),entries:[
+              {binding:0,resource:{buffer:instance.paramsBuf}},
+              {binding:4,resource:{buffer:instance.buf.terrainMask}},
+              {binding:5,resource:{buffer:instance.gameParamsBufs[selectedSlot]}},
+              {binding:13,resource:{buffer:probeInput}},
+              {binding:14,resource:{buffer:probeOutput}}
+            ]});
+            const enc=device.createCommandEncoder(),pass=enc.beginComputePass();
+            pass.setPipeline(probePipe);pass.setBindGroup(0,probeBG);pass.dispatchWorkgroups(Math.ceil(rays.length/4/32));pass.end();
+            device.queue.submit([enc.finish()]);
+            result.exitWords=bytesToWords(await api.readbackBuffer(instance,probeOutput,rays.length));
+          }
+          if(window.__snowBenchmark && mode==='standalone' &&
+             (/circle-floor|floor-pinch|midpoint-only|no-clear-exit|multiple-fallback/.test(fixture.name))) {
+            const query=device.createQuerySet({type:'timestamp',count:16});
+            const resolve=device.createBuffer({size:256,usage:GPUBufferUsage.QUERY_RESOLVE|GPUBufferUsage.COPY_SRC});
+            const read=device.createBuffer({size:256,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+            const samples=[];
+            try {
+              for(let n=0;n<35;n++) {
+                for(const [key,data] of Object.entries({pos,aux,flag}))device.queue.writeBuffer(instance.buf[key],0,data);
+                const enc=device.createCommandEncoder(),begin=enc.beginComputePass.bind(enc);let index=0;
+                enc.beginComputePass=d=>begin({...d,timestampWrites:{querySet:query,beginningOfPassWriteIndex:index++,endOfPassWriteIndex:index++}});
+                instance.frameEncoder=enc;
+                try{api.runCollide(instance,selectedSlot,fixture.snowOnly);}finally{instance.frameEncoder=null;}
+                enc.resolveQuerySet(query,0,index,resolve,0);enc.copyBufferToBuffer(resolve,0,read,0,index*8);device.queue.submit([enc.finish()]);
+                await read.mapAsync(GPUMapMode.READ);const t=new BigUint64Array(read.getMappedRange());let ms=0;
+                for(let k=0;k<index;k+=2)ms+=Number(t[k+1]-t[k])/1e6;
+                read.unmap();if(n>=5)samples.push(ms);
+              }
+              result.benchmark={samples,medianMs:samples.slice().sort((a,b)=>a-b)[samples.length>>1]};
+            }finally{query.destroy();resolve.destroy();read.destroy();}
+          }
           all[label].push(result);
         }
       }
       await device.queue.onSubmittedWorkDone();
+      probeInput?.destroy();probeOutput?.destroy();
       release();
     }
     window.__snowProgress = { stage: 'complete' };
@@ -357,7 +431,7 @@ async function runGPU() {
   }
 }
 
-const browserProgram = `window.__snowGrainMode=${grainMode};window.__snowGrainDifferential=(${runGrainDifferential.toString()});window.__snowCooperativeMode=${cooperativeMode};window.__snowLocalSlopMode=${localSlopMode};window.__snowMakePhysicalFixtures=(${makeFixtures.toString()});window.__snowMakeCooperativeFixtures=(${makeCooperativeFixtures.toString()});window.__snowMakeFixtures=()=>window.__snowCooperativeMode?__snowMakeCooperativeFixtures(__snowMakePhysicalFixtures(),window.__snowLocalSlopMode):__snowMakePhysicalFixtures();window.__snowRunGPU=(${runGPU.toString()});`;
+const browserProgram = `window.__snowBenchmark=${benchmark};window.__snowExitProbe=${exitProbe};window.__snowGrainMode=${grainMode};window.__snowGrainDifferential=(${runGrainDifferential.toString()});window.__snowCooperativeMode=${cooperativeMode};window.__snowLocalSlopMode=${localSlopMode};window.__snowMakePhysicalFixtures=(${makeFixtures.toString()});window.__snowMakeCooperativeFixtures=(${makeCooperativeFixtures.toString()});window.__snowMakeFixtures=()=>window.__snowCooperativeMode?__snowMakeCooperativeFixtures(__snowMakePhysicalFixtures(),window.__snowLocalSlopMode):__snowMakePhysicalFixtures();window.__snowRunGPU=(${runGPU.toString()});`;
 new vm.Script(browserProgram);
 const fixtureSummary = (cooperativeMode ? makeCooperativeFixtures(makeFixtures(), localSlopMode) : makeFixtures()).map(f => ({ name: f.name, count: f.particles.length, modes: f.modes, snowOnly: f.snowOnly, collisionCalls: 2 }));
 assert.ok(fixtureSummary.every(f => f.count <= (cooperativeMode ? 320 : 64)));
@@ -456,6 +530,8 @@ function compareCooperative(result) {
       for (const i of after.unchanged.concat(Array.from({ length: result.capacity - after.count }, (_, k) => after.count + k)))
         for (let axis = 0; axis < stride; axis++) protectedUnchanged &&= state[field][i * stride + axis] === after.input[field][i * stride + axis];
     }
+    if (exitProbe && after.exitWords) check('escape clearance matches original sample march', JSON.stringify(before.exitWords) === JSON.stringify(after.exitWords), {rays:after.exitWords.length});
+    if (after.benchmark) checks.push({name:'matched collision GPU timing',pass:true,observed:{beforeMs:before.benchmark.medianMs,afterMs:after.benchmark.medianMs}});
     check('scalar fallback result preserved', finite && flagsEqual && (compactMode ? bitDifferences === 0 : maxDifference <= .002), { maxDifference, flagsEqual, bitDifferences });
     check('frozen, off-region and unused tail unchanged', protectedUnchanged);
     if (!fixture.snowOnly) check('ordinary water remains bit-exact', bitDifferences === 0);

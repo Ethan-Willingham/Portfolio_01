@@ -725,3 +725,60 @@ total-velocity RMS threshold still fails at depths 20 and 32 in both versions:
 deep-pile motion limit remains unresolved; the report-only runs do not count
 as passes of those assertions. The residual sinusoidal grain drift is still
 active in this fixture.
+
+
+### v28.129 snow escape clearance
+
+Private background profiling now separates snow escape search from its following
+motion-bound pass and reads the guest and fallback queue counts once per second.
+The test instrumentation does not ship in the game. In the 184-second ordinary
+v28.128 capture, the largest sampled escape cost was 26.72 ms while motion tracking
+was 0.43 ms. That frame queued 180 grain escapes over its snow collision passes.
+Motion bookkeeping was not the explanation for this spike.
+
+Snow escape clearance now certifies empty paths using the inclusive terrain tile
+rectangle around the first and last original march samples. The origin remains
+excluded, as before. Certification requires no occupied uploaded tile and no
+possible rig intersection. Any potential obstruction or rectangle over 64 tiles
+retains the original sample checks. The endpoint is checked first so a blocked
+exit can fail immediately. One-sample paths skip certification. Candidate order,
+fuzzy ties, ring containment, response and all five snow contact iterations remain
+unchanged. The compiled ordinary-water and snow-contact modules are byte-identical
+to v28.128; protected circular slimes are also unchanged.
+
+The expanded collision test passes 28 cases and 149 checks against v28.128,
+including 60,145 direct clearance comparisons around terrain boundaries, rig
+crossings, clipped mask edges, and seeded finite paths. State comparisons retain
+exact position, velocity, auxiliary and flag words. With timestamp queries,
+matched whole-collision medians on Apple M1 Pro change as follows:
+
+| Fixed input | v28.128 | v28.129 |
+| --- | ---: | ---: |
+| One grain pinched beneath a 20-edge ring | 0.339 ms | 0.141 ms |
+| Twenty-four grains beneath that ring | 0.344 ms | 0.144 ms |
+| 259 queued grains under a rectangular ring | 0.238 ms | 0.090 ms |
+| Midpoint-only escape through a terrain pocket | 0.626 ms | 0.231 ms |
+
+The four-edge single-grain floor fixture is slower, 0.200 to 0.230 ms. These
+measurements cover fixed collision inputs, not whole-game FPS. Enable `BENCH=1`
+and `EXIT_PROBE=1` on `tools/test-snow-collision-gpu.mjs`, with `COMPACT=1` and a
+`BEFORE` file exported from commit `83581e0`, to repeat this comparison.
+
+A separate 184-second profiled candidate capture averaged 57.9 FPS, with three
+full-second bins below 30 FPS. The profiled v28.128 capture averaged 54.1 FPS, with
+seventeen bins below 30. Both retain native callbacks, stock smoke, water, snow,
+and five naturally spawned residents, with only the owner's recorded keyboard
+timings scheduled. They do not reproduce identical physical trajectories and
+have different active snow counts. The fixed inputs above isolate the gain.
+The candidate still has a 19.0 FPS full-second low: its largest sampled frame is
+now dominated by contacts (31.3 ms) and shielding (11.1 ms), with escape search
+at 6.0 ms. Dense-grain dips remain, and this 60 Hz headless test does not establish
+restored 120 FPS on the owner's display.
+
+The final v28.129 capture runs the uninstrumented production GPU source for the
+same 184-second keyboard schedule. It averages 59.4 FPS, with a full-second low
+of 33.8, one bin below 40, and none below 30. It retains stock smoke, normal
+water, snowfall, and the five natural residents, with no pauses or browser/shader
+errors. This is a separate trajectory and still does not prove 120 FPS. The
+harness now requires successful gameplay frames and rejects a failed loading
+screen instead of accepting an empty capture.
