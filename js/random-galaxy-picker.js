@@ -4,18 +4,18 @@
 
   var pickers = [], dialog, grid, title, subtitle, activePicker, remembered;
   var categoryHints = {
-    pathfinding: 'Find a route', sorting: 'Put rings in order', life: 'Living patterns',
+    pathfinding: 'Find a route', sorting: 'Put rings in order', emergence: 'Simple rules, group motion', space: 'Rings and orbits',
     randomness: 'Clumps and order', attractors: 'Chaotic trails', fractals: 'Repeating forms',
     numbers: 'Patterns in numbers', geometry: 'Linked shapes'
   };
   var sceneHints = {
-    bfs: 'Outward wave', bidir: 'Meet in the middle', dijkstra: 'Lowest cost',
-    wavefront: 'Many starting points', randomflood: 'Noisy wave', dfs: 'Follow one route', randomwalk: 'Random steps',
+    astar: 'Aim toward the goal', bfs: 'Outward wave', bidir: 'Meet in the middle', dijkstra: 'Lowest cost',
+    wavefront: 'Many starting points', randomflood: 'Noisy wave', dfs: 'Dive, then backtrack', randomwalk: 'Random steps',
     bubble: 'Neighbor swaps', insertion: 'Slide into place',
     quick: 'Split around a pivot', heap: 'Build a heap', bitonic: 'Parallel comparisons',
     pancake: 'Flip whole groups',
     boids: 'A flock in motion', ocean: 'Moving waves', lsystem: 'Branches grow and sway',
-    rxndiff: 'Spots grow and divide', saturn: 'Rings and orbiting moons',
+    rxndiff: 'Spots grow and divide', saturn: 'Five inner ring regions',
     mulberry: 'Clumps and gaps', grid: 'Even spacing', thomas: 'Woven lattice', lorenz: 'Butterfly loops',
     aizawa: 'Sphere and spike', dadras: 'Four lobes', clifford: 'Folded knot',
     sierpinski: 'Repeating pyramids', jerusalem: 'Hollow cubes', vicsek: 'Repeating crosses',
@@ -25,7 +25,7 @@
   };
 
   function preview(picker, value) {
-    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.72';
+    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.73';
   }
   function image(src, lazy) {
     var img = document.createElement('img');

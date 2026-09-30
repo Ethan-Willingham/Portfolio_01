@@ -24,6 +24,28 @@ function bars(values,y=153,x=35,w=28,gap=12,selected=[],scale=14) {
   return line(x-4,y+3,x+values.length*(w+gap)-gap+4,y+3,C.rule,1)+values.map((v,i)=>rect(x+i*(w+gap),y-v*scale,w,v*scale,selected.includes(i)?C.gold:colors[Math.min(v-1,5)])).join('');
 }
 function search(id) {
+  if(id==='dfs') {
+    // A branching maze with one deep active branch and a quiet abandoned fork.
+    const nodes=[[33,100],[83,100],[127,48],[171,27],[220,48],[266,27],[127,148],[175,173],[220,148],[266,173],[171,100],[220,100],[266,100]];
+    let art='';
+    for(const [a,b]of [[0,1],[1,2],[2,3],[3,4],[4,5],[1,6],[6,7],[7,8],[8,9],[2,10],[10,11],[11,12]])art+=line(...nodes[a],...nodes[b],C.rule,2.5);
+    art+=curve([nodes[1],nodes[2],nodes[3],nodes[4],nodes[5]],C.clay,2.5,'stroke-dasharray="4 5" opacity=".75"');
+    art+=arrow([nodes[4],nodes[3],nodes[2]],C.clay,1.5);
+    art+=arrow([nodes[0],nodes[1],nodes[6],nodes[7],nodes[8]],C.gold,4);
+    nodes.forEach((p,i)=>{art+=circle(...p,[0,1,6,7,8].includes(i)?5:3,[0,1,6,7,8].includes(i)?C.gold:C.rule);});
+    return art+ring(...nodes[8],12,C.gold,1.5)+ring(...nodes[12],9,C.coral,2.5);
+  }
+  if(id==='astar') {
+    // A direct goal bearing meets a wall; the explored corridor bends around it.
+    let art='';
+    for(let y=0;y<7;y++)for(let x=0;x<13;x++)art+=circle(28+x*22,33+y*22,2,C.rule,.65);
+    art+=curve([[48,100],[272,100]],C.blue,1.5,'stroke-dasharray="4 6" opacity=".7"');
+    for(let y=0;y<5;y++)for(let x=0;x<2;x++)art+=rect(137+x*21,23+y*23,17,19,C.coral,.6);
+    art+=curve([[48,100],[99,136],[133,163],[187,163],[224,139]],C.gold,23,'opacity=".12"');
+    art+=arrow([[48,100],[99,136],[133,163],[187,163],[224,139],[272,100]],C.gold,4);
+    art+=arrow([[224,139],[272,100]],C.blue,1.5);
+    return art+circle(48,100,6,C.text)+ring(272,100,11,C.coral,3)+ring(272,100,19,C.coral,1,'opacity=".4"');
+  }
   let art='', start=[1,3], goal=[11,3]; const cell=(x,y,c,o=1)=>rect(20+x*22,25+y*22,17,17,c,o);
   for(let y=0;y<7;y++)for(let x=0;x<13;x++){
     let c=C.rule,o=.42, d=Math.abs(x-start[0])+Math.abs(y-start[1]);
@@ -39,7 +61,6 @@ function search(id) {
   if(id==='bidir')art+=arrow([[70,100],[144,100]])+arrow([[250,100],[177,100]],C.blue)+ring(160,100,10,C.text);
   if(id==='dijkstra')art+=arrow([[1,3],[2,3],[3,3],[3,5],[10,5],[10,3],[11,3]].map(point),C.gold,4);
   if(id==='wavefront'){for(const [i,s]of [[2,1],[10,2],[6,5]].entries())art+=circle(...point(s),5,[C.gold,C.blue,C.sage][i])+ring(...point(s),25,[C.gold,C.blue,C.sage][i],1.5);return art;}
-  if(id==='dfs'){art+=curve([[1,3],[1,1],[4,1],[4,3],[7,3],[7,5],[10,5],[10,3],[11,3]].map(point),C.gold,4);art+=curve([[4,3],[4,5],[2,5]].map(point),C.clay,2,'stroke-dasharray="4 4"');}
   if(id==='randomwalk')art+=arrow([[1,3],[2,3],[2,4],[3,4],[3,3],[2,3],[2,2],[3,2],[4,2],[4,3],[5,3],[5,4],[6,4],[6,3],[5,3],[5,2],[7,2],[7,3],[8,3]].map(point),C.gold,3);
   art+=circle(...point(start),6,C.text)+ring(...point(goal),8,C.coral,3);
   return art;
@@ -89,9 +110,17 @@ function life(id){
     return art+arrow([[232,60],[254,75],[259,103]],C.sage,2);
   }
   if(id==='saturn'){
-    let art=ellipse(160,100,116,36,C.gold,5,-20)+ellipse(160,100,91,27,C.clay,3,-20)+circle(160,100,39,C.gold)+ellipse(158,100,39,11,C.clay,5,-20);
-    art+=`<path d="M55 137Q135 153 265 63" fill="none" stroke="${C.gold}" stroke-width="6"/>`;
-    return art+circle(55,49,5,C.blue)+circle(259,147,7,C.sage)+circle(247,39,3,C.purple)+ellipse(160,100,145,57,C.rule,1,-20,'stroke-dasharray="3 6"');
+    // A close-up, with NASA's radial proportions. No invented moon dots.
+    const scale=48/60268;
+    let rings='';
+    for(const [lo,hi,c,o]of [[66900,74491,C.text,.12],[74491,91975,C.clay,.45],[91975,117500,C.text,.8],[117500,122050,C.text,.08],[122050,136770,C.text,.6]]){
+      const radius=(lo+hi)/2*scale,width=(hi-lo)*scale;
+      rings+=ellipse(0,0,r(radius),r(radius),c,r(width),0,`opacity="${o}"`);
+    }
+    rings+=ellipse(0,0,r(140224*scale),r(140224*scale),C.text,.7);
+    const band=`<g transform="translate(160 103) rotate(-20) scale(1 .34)">${rings}</g>`;
+    const planet=`<ellipse cx="160" cy="103" rx="48" ry="43.3" fill="${C.gold}"/><path d="M116 92Q160 109 204 92M116 113Q160 130 204 113" stroke="${C.clay}" stroke-width="5" fill="none" opacity=".5"/>`;
+    return `<defs><clipPath id="ring-front"><path d="M32 145L278 55L302 170L44 195Z"/></clipPath></defs>`+band+planet+`<g clip-path="url(#ring-front)">${band}</g>`;
   }
 }
 function attractor(id){
@@ -137,7 +166,7 @@ function geometry(id){
   if(id==='harmonics'){for(let j=0;j<16;j++){let p=[];for(let i=0;i<=160;i++){let t=i/160*Math.PI*2,rad=48+Math.cos(t*5+j*.07)*25;p.push([160+Math.cos(t)*rad,100+Math.sin(t)*rad*.85]);}art+=curve(p,colors[Math.floor(j/6)],1.2,'opacity=".65"');}return art;}
 }
 const renderers = {};
-for(const id of ['bfs','bidir','dijkstra','wavefront','randomflood','dfs','randomwalk'])renderers[id]=()=>search(id);
+for(const id of ['bfs','bidir','astar','dijkstra','wavefront','randomflood','dfs','randomwalk'])renderers[id]=()=>search(id);
 for(const id of ['bubble','insertion','quick','heap','bitonic','pancake'])renderers[id]=()=>sorting(id);
 for(const id of ['boids','ocean','lsystem','rxndiff','saturn'])renderers[id]=()=>life(id);
 for(const id of ['thomas','lorenz','aizawa','dadras','clifford'])renderers[id]=()=>attractor(id);

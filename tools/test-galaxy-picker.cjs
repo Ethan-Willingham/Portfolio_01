@@ -118,7 +118,8 @@ async function category(page,mode,value){
   for(const group of groups){
    await category(page,group.mode,group.category);
    const trigger=page.locator('.gx-scene-field[data-category="'+group.category+'"] .gx-picker-trigger');
-   const choices=mobile&&group.category!=='life'?[group.options.at(-1)]:group.options;
+   const choices=mobile&&group.category==='pathfinding'?group.options.filter(o=>['astar','dfs'].includes(o.value))
+     :mobile&&!['emergence','space'].includes(group.category)?[group.options.at(-1)]:group.options;
    for(const option of choices){
     await trigger.click();const dialog=page.locator('#gx-picker-dialog');
     check((mobile?'phone ':'desktop ')+group.category+' shows every preview',(await dialog.locator('.gx-picker-card').count())===group.options.length);
@@ -128,11 +129,15 @@ async function category(page,mode,value){
     const field=option.value==='grid'||option.value==='mulberry'?'random':option.value;
     await page.waitForFunction(f=>(__gxTest.state().field===f||f==='random'&&__gxTest.state().field==='mulberry')&&__gxTest.state().pending===null,field,{timeout:15000});
     check('picture selects '+option.label,(await trigger.locator('.gx-picker-value').textContent())===option.label);
+    if(process.env.SNAPSHOTS&&['astar','dfs'].includes(option.value)){
+      await page.waitForFunction(()=>__gxTest.state().morph>.99);await page.waitForTimeout(1000);
+      await page.screenshot({path:path.join(out,option.value+'-'+(mobile?'phone':'desktop')+'.png')});
+    }
     if(group.category==='sorting'){
       const result=await page.evaluate(()=>__gxTest.finishSort());
       check(option.label+' sorts all 64 rings',result.n===64&&result.total===48000&&result.ordered);
     }
-    if(group.category==='life'&&['lsystem','rxndiff','saturn'].includes(option.value)){
+    if(['boids','saturn'].includes(option.value)){
       await page.waitForFunction(()=>__gxTest.state().morph>.99);
       const before=await page.evaluate(()=>__gxTest.life());await page.waitForTimeout(800);
       const after=await page.evaluate(()=>__gxTest.life());
@@ -145,12 +150,11 @@ async function category(page,mode,value){
       await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
       await page.waitForFunction(()=>__gxTest.state().loopRunning);
       if(process.env.SNAPSHOTS){
-        if(option.value==='lsystem')await page.waitForTimeout(3500);
         await page.screenshot({path:path.join(out,option.value+'-'+(mobile?'phone':'desktop')+'.png')});
       }
     }
    }
-   if(process.env.SNAPSHOTS&&['sorting','life'].includes(group.category)){
+   if(process.env.SNAPSHOTS&&['pathfinding','sorting','emergence','space'].includes(group.category)){
      await trigger.click();await page.waitForFunction(()=>[...document.querySelectorAll('#gx-picker-dialog img')].every(i=>i.complete&&i.naturalWidth===320));
      await page.screenshot({path:path.join(out,group.category+'-picker-'+(mobile?'phone':'desktop')+'.png')});await close(page);
    }
