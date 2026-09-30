@@ -71,10 +71,22 @@ async function setup(context, url) {
     };
     check('the page opens directly into a viewport-sized game with site links below', await page.evaluate(fillsOpeningViewport));
     check('the game title is inside the opening panel', await page.locator('#cart-overlay-title').textContent() === 'All Four Wheels');
+    check('the interface uses paper and ink rather than the site green', await page.evaluate(() => {
+      const paper=getComputedStyle(document.querySelector('.cart-toolbar')).backgroundColor;
+      const shell=getComputedStyle(document.getElementById('cart-game')).backgroundColor;
+      return shell==='rgb(245, 241, 234)' && getComputedStyle(document.body).backgroundColor==='rgb(41, 40, 32)' && paper!=='rgb(30, 36, 32)';
+    }));
     await page.screenshot({ path: path.join(dump, 'desktop-first-screen.png') });
     await page.locator('#cart-game').scrollIntoViewIfNeeded();
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'desktop-start.png') });
     check('the new post boots and begins with an unticked practice option', await page.locator('#cart-start').isVisible() && !(await page.locator('#cart-practice').isChecked()));
+    await page.setViewportSize({width:1280,height:720});
+    check('the complete start panel fits on a short laptop screen', await page.evaluate(() => {
+      const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect();
+      return card.top>=stage.top && card.bottom<=stage.bottom;
+    }));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'laptop-start.png')});
+    await page.setViewportSize({width:1440,height:1200});
     await page.locator('#cart-start').click(); await page.keyboard.down('w'); await page.waitForTimeout(650); await page.keyboard.up('w');
     let a = await page.evaluate(() => __cartTest.state());
     check('W applies forward force', a.body.y < 226 && a.body.vy < -30);
@@ -104,6 +116,12 @@ async function setup(context, url) {
       return w.wheels.map((q,i)=>({angle:q.a,pivot:CartPhysics.casterPose(w.body,q,i).pivot,center:CartPhysics.casterPose(w.body,q,i),trail:CartPhysics.CASTER.trail}));
     });
     check('all four rendered casters have offset tire centers and independent angles', casterState.every(q => Math.hypot(q.center.x-q.pivot.x,q.center.y-q.pivot.y) >= q.trail) && Math.abs(casterState[0].angle-casterState[3].angle) > .1);
+    await page.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();w.gate=1;w.messes=2;w.penalty=7;w.time=50;__cartTest.step(1/120);});
+    check('the HUD shows cleared markers, actual penalties and an urgent shrinking clock', await page.evaluate(() =>
+      document.querySelector('#cart-route-steps i').classList.contains('is-done') && document.querySelectorAll('#cart-route-steps .is-current').length===1 &&
+      document.getElementById('cart-penalty').textContent==='+7s' && document.querySelector('.cart-clock').classList.contains('is-urgent') &&
+      Number(document.getElementById('cart-clock-fill').style.getPropertyValue('--clock'))<.13));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'urgent-hud.png')});
     const redPixels = () => {
       const probe=document.createElement('canvas');probe.width=probe.height=1;const p=probe.getContext('2d');
       p.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--warn').trim()||'#d99090';p.fillRect(0,0,1,1);
@@ -160,6 +178,7 @@ async function setup(context, url) {
     const mobile = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const phone = await setup(mobile, url); await phone.locator('#cart-game').scrollIntoViewIfNeeded();
     check('the portrait game and touch controls fit the opening viewport', await phone.evaluate(fillsOpeningViewport));
+    check('touch utility buttons have 44-pixel targets', await phone.evaluate(() => [...document.querySelectorAll('.cart-icon-button')].every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})));
     check('mobile has no horizontal overflow', await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     check('the mobile briefing fits inside the playfield', await phone.evaluate(() => {
       const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(), stage=document.getElementById('cart-stage').getBoundingClientRect();
@@ -186,6 +205,11 @@ async function setup(context, url) {
     }));
     await phone.setViewportSize({ width: 320, height: 720 });
     check('320px layout has no horizontal overflow', await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await phone.evaluate(()=>__cartTest.reset(4));
+    check('long course titles fit the narrow toolbar and stay available to screen readers', await phone.evaluate(()=>{
+      const title=document.getElementById('cart-course-title').getBoundingClientRect(),utilities=document.querySelector('.cart-utilities').getBoundingClientRect();
+      return title.right<=utilities.left && document.getElementById('cart-courses').getAttribute('aria-label').includes('Some assembly required');
+    }));
     await phone.locator('#cart-courses').tap();
     await phone.locator('#cart-picker').screenshot({ path: path.join(dump, 'mobile-courses.png') });
     await phone.setViewportSize({width:852,height:393});

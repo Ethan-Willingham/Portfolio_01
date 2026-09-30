@@ -278,6 +278,19 @@
     g.restore();
   }
 
+  function drawIllustration() {
+    const c = $('illustration'), g = c.getContext('2d');
+    if (!g) return;
+    g.clearRect(0, 0, c.width, c.height);
+    // Use the same chunky cart and offset caster forks as the playable sprite.
+    for (let x = 8; x < 176; x += 12) rect(g, x, 106, 6, 1, P.gold);
+    arrow(g, 146, 106, 0, 21, P.clay);
+    g.save(); g.scale(2.3, 2.3);
+    const b = { x: 31, y: 30, a: -.32, vx: 0, vy: 0 };
+    drawCart(g, b, [0, -.6, .35, -.15].map(a => ({ a, roll: 0 })), 0);
+    g.restore();
+  }
+
   function drawRoute(g, w) {
     const e = w.exit, unlocked = w.exitOpen, half = e.width / 2;
     g.save();
@@ -418,10 +431,20 @@
     }
   }
   function updateUI() {
+    game.dataset.phase = phase;
     $('time-label').textContent = world.practice ? 'Practice' : 'Time left';
     $('time').textContent = world.practice ? timeString(world.time) : timeString(world.remaining);
     $('time').classList.toggle('is-urgent', !world.practice && world.remaining <= 15);
+    $('time').closest('.cart-clock').classList.toggle('is-urgent', !world.practice && world.remaining <= 15);
+    $('clock-fill').style.setProperty('--clock', world.practice ? 1 : clamp(world.remaining / world.level.limit, 0, 1));
     $('messes').textContent = world.messes;
+    $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.messes > 0);
+    $('penalty').textContent = '+' + world.penalty + 's';
+    [...$('route-steps').children].forEach((step, i) => {
+      step.classList.toggle('is-done', i < world.gate || phase === 'won');
+      step.classList.toggle('is-current', i === world.gate && phase !== 'won');
+    });
+    $('route-steps').setAttribute('aria-label', world.gate + ' of ' + world.level.gates.length + ' markers cleared' + (world.exitOpen ? ', checkout open' : ''));
     const target = world.level.gates[world.gate];
     if (phase === 'won') $('route').textContent = 'Checkout complete';
     else if (phase === 'lost') $('route').textContent = 'Time is up. Give it another go.';
@@ -429,6 +452,7 @@
     else $('route').textContent = world.exiting ? 'Keep rolling until you and the cart are outside' : 'Drive out through the checkout exit';
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
+    $('pause').setAttribute('aria-pressed', String(phase === 'paused'));
   }
   function bestText() {
     if (!canSave) return 'Records are unavailable in this browser';
@@ -448,8 +472,14 @@
     $('toast').classList.remove('is-visible'); $('picker').hidden = true; $('result').hidden = true;
     floor = makeFloor(world.level);
     $('course-number').textContent = 'Course ' + String(index + 1).padStart(2, '0') + ' / 06';
-    // Preserve the little caret while changing the title.
-    $('course-name').firstChild.nodeValue = world.level.name + ' ';
+    $('course-badge').textContent = String(index + 1).padStart(2, '0');
+    $('route-steps').replaceChildren();
+    for (let i = 0; i <= world.level.gates.length; i++) {
+      const step = document.createElement('i'); step.textContent = i === world.level.gates.length ? 'EXIT' : i + 1;
+      step.setAttribute('aria-hidden', 'true'); $('route-steps').append(step);
+    }
+    $('course-title').textContent = world.level.name;
+    $('courses').setAttribute('aria-label', 'Choose a course, currently ' + world.level.name);
     overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Follow the numbered floor markers to open checkout. Then drive out of the store.' : world.level.tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
@@ -515,10 +545,19 @@
       const c = document.createElement('canvas'); c.width = 480; c.height = 300; c.setAttribute('aria-hidden', 'true');
       draw(c.getContext('2d'), new World(level), makeFloor(level), true);
       const copy = document.createElement('span'); copy.className = 'cart-course-tile-copy';
-      const label = document.createElement('span'); label.className = 'cart-kicker'; label.textContent = String(i + 1).padStart(2, '0') + ' / ' + timeString(level.limit) + ' limit';
+      const label = document.createElement('span'); label.className = 'cart-kicker'; label.textContent = 'DEPARTMENT ' + String(i + 1).padStart(2, '0');
       const title = document.createElement('strong'); title.textContent = level.name;
-      const best = document.createElement('span'); best.className = 'cart-kicker'; best.style.marginTop = '.5rem'; best.textContent = records[i] ? 'Best ' + timeString(records[i].time, true) + ' / ' + records[i].stars + ' marks' : 'Target ' + timeString(level.par);
-      copy.append(label, title, best); button.append(c, copy); grid.append(button);
+      const meta = document.createElement('span'); meta.className = 'cart-course-tile-meta';
+      const limit = document.createElement('span'); limit.textContent = timeString(level.limit) + ' limit';
+      const best = document.createElement('span'); best.textContent = records[i] ? 'Best ' + timeString(records[i].time, true) : 'Target ' + timeString(level.par);
+      meta.append(limit, best); copy.append(label, title, meta); button.append(c, copy); grid.append(button);
+      if (records[i]) {
+        const marks = document.createElement('span'); marks.className = 'cart-marks'; marks.setAttribute('aria-hidden', 'true');
+        for (let j = 0; j < 3; j++) { const mark = document.createElement('i'); mark.className = j < records[i].stars ? 'is-earned' : ''; marks.append(mark); }
+        meta.append(marks);
+      }
+      button.setAttribute('aria-label', level.name + ', ' + timeString(level.limit) + ' time limit' + (records[i] ? ', ' + records[i].stars + ' of 3 marks, best ' + timeString(records[i].time, true) : ''));
+      button.setAttribute('aria-current', i === levelIndex ? 'true' : 'false');
       button.addEventListener('click', () => { reset(i); $('start').focus({ preventScroll: true }); });
     });
     $('picker').hidden = false; grid.children[levelIndex].focus({ preventScroll: true }); updateUI();
@@ -583,7 +622,7 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); } });
   window.addEventListener('pagehide', () => { clearInput(); sound.rolling(0); });
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
-  reset();
+  reset(); drawIllustration();
   // Canvas text caches are rebuilt when the site's own mono font arrives.
   document.fonts.ready.then(() => { floor = makeFloor(world.level); draw(); });
 })();

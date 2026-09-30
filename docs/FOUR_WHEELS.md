@@ -25,6 +25,16 @@ the short about note, optional instructions and site links sit below the game.
 Keep blog heroes and the archive banner off this page. Its In Progress card
 and search membership remain on `archive.html`.
 
+The game has its own warm paper, dark ink and muted coral interface, at the
+owner's request to replace the green shell. Colors are scoped to `.cart-page`;
+shared site tokens and the store's pixel-art palette stay separate. The bold
+title, menu buttons, receipt-like results and course cards use the site's Segoe
+UI and Commit Mono. The start illustration reuses the playable cart renderer.
+The HUD shows a shrinking clock bar, actual penalty seconds and each route
+marker's state. The pause button switches to a resume icon while paused.
+Keep the entire briefing and result card visible on short laptop and phone
+screens, and retain at least 44-pixel utility targets on touch devices.
+
 ## The handling to preserve
 
 The cart and shopper are a rigid body with its center of mass behind the basket.
