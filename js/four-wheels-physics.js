@@ -1,8 +1,8 @@
 /* All Four Wheels. Positions are in artwork pixels; time is in seconds.
  * A cart and its shopper form one rigid body. Forces change velocity, never
  * heading directly. Steering is a force couple at the handle, so rotating
- * preserves linear momentum. The four casters follow their contact velocities.
- * No directional tire grip: lateral and longitudinal rolling drag are equal.
+ * preserves linear momentum apart from small caster reactions. Each free caster
+ * has a fixed swivel pivot, a trailing tire contact and its own swivel inertia.
  */
 (function (root) {
   'use strict';
@@ -12,6 +12,7 @@
   const cross = (x, y, u, v) => x * v - y * u;
   const BODY = Object.freeze({ cartX: 14, halfLength: 17, halfWidth: 11, personX: -16, personRadius: 7, inertia: 470 });
   const WHEELS = [[1, -12], [27, -12], [1, 12], [27, 12]];
+  const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2.5, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
 
   function point(body, x, y) {
     const c = Math.cos(body.a), s = Math.sin(body.a);
@@ -22,11 +23,27 @@
     return [[-3, -11], [31, -11], [31, 11], [-3, 11]].map(p => point(body, ...p));
   }
 
+  function casterPose(body, wheel, i) {
+    const pivot = point(body, ...WHEELS[i]), c = Math.cos(wheel.a), s = Math.sin(wheel.a);
+    // The small alternating axle offset also gives rolling resistance a real
+    // lever arm, breaking the unstable, perfectly backward caster equilibrium.
+    const side = (i % 2 ? -1 : 1) * CASTER.axleOffset;
+    return { pivot, x: pivot.x - CASTER.trail * c - side * s, y: pivot.y - CASTER.trail * s + side * c, a: wheel.a };
+  }
+
+  function casterCorners(body, wheel, i) {
+    const pose = casterPose(body, wheel, i), l = CASTER.halfLength, h = CASTER.halfWidth;
+    return [[-l, -h], [l, -h], [l, h], [-l, h]].map(p => point(pose, ...p));
+  }
+
   // Separating-axis test, with a contact on the cart's face or leading corner.
   function boxContact(body, rect) {
-    const poly = corners(body);
-    const c = Math.cos(body.a), s = Math.sin(body.a);
     const center = point(body, BODY.cartX, 0);
+    return polygonRectContact(corners(body), center, body.a, rect);
+  }
+
+  function polygonRectContact(poly, center, angle, rect) {
+    const c = Math.cos(angle), s = Math.sin(angle);
     const rcx = rect.x + rect.w / 2, rcy = rect.y + rect.h / 2;
     let best = Infinity, nx = 0, ny = 0;
     for (const axis of [[1, 0], [0, 1], [c, s], [-s, c]]) {
@@ -79,11 +96,21 @@
     return { nx, ny, depth: radius - d, x: obj.x + nx * obj.radius, y: obj.y + ny * obj.radius };
   }
 
+  function casterCircle(body, wheel, i, obj) {
+    const pose = casterPose(body, wheel, i), c = Math.cos(pose.a), s = Math.sin(pose.a);
+    const dx = obj.x - pose.x, dy = obj.y - pose.y;
+    const hit = circleRect(dx * c + dy * s, -dx * s + dy * c, obj.radius,
+      { x: -CASTER.halfLength, y: -CASTER.halfWidth, w: CASTER.halfLength * 2, h: CASTER.halfWidth * 2 });
+    if (!hit) return null;
+    const p = point(pose, hit.x, hit.y);
+    return { nx: -hit.nx * c + hit.ny * s, ny: -hit.nx * s - hit.ny * c, depth: hit.depth, x: p.x, y: p.y };
+  }
+
   class World {
     constructor(level, practice = false) {
       this.level = level; this.practice = practice;
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
-      this.wheels = WHEELS.map(() => ({ a: level.start.a, roll: 0 }));
+      this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
       this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0; this.park = 0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
       this.shelves = level.shelves.map((s, i) => ({ ...s, id: i, spilled: false, wobble: 0 }));
@@ -124,6 +151,61 @@
       return j;
     }
 
+    casterImpulse(hit, wheel, i, other) {
+      const b = this.body, { pivot } = casterPose(b, wheel, i);
+      const px = pivot.x - b.x, py = pivot.y - b.y, qx = hit.x - pivot.x, qy = hit.y - pivot.y;
+      const nx = hit.nx, ny = hit.ny;
+      const rp = cross(px, py, nx, ny), rq = cross(qx, qy, nx, ny);
+      const oi = other ? 1 / other.mass : 0;
+      const mass = 1 + oi + rp * rp / BODY.inertia + rq * rq / CASTER.inertia;
+      const vx = b.vx - b.omega * py - wheel.omega * qy - (other ? other.vx : 0);
+      const vy = b.vy + b.omega * px + wheel.omega * qx - (other ? other.vy : 0);
+      const vn = vx * nx + vy * ny;
+      const j = vn < 0 ? -1.08 * vn / mass : 0;
+      b.vx += nx * j; b.vy += ny * j; b.omega += rp * j / BODY.inertia;
+      wheel.omega += rq * j / CASTER.inertia;
+      if (other) { other.vx -= nx * j * oi; other.vy -= ny * j * oi; }
+      const correction = Math.max(0, hit.depth - .01) / mass;
+      b.x += nx * correction; b.y += ny * correction;
+      b.a = wrap(b.a + clamp(rp * correction / BODY.inertia, -.1, .1));
+      wheel.a = wrap(wheel.a + clamp(rq * correction / CASTER.inertia, -.25, .25));
+      if (other) { other.x -= nx * correction * oi; other.y -= ny * correction * oi; }
+      return j;
+    }
+
+    casterForces(dt, rolling) {
+      const b = this.body;
+      this.wheels.forEach((w, i) => {
+        const pose = casterPose(b, w, i), rx = pose.pivot.x - b.x, ry = pose.pivot.y - b.y;
+        const vx = b.vx - b.omega * ry, vy = b.vy + b.omega * rx;
+        const side = (i % 2 ? -1 : 1) * CASTER.axleOffset;
+        const along = vx * Math.cos(w.a) + vy * Math.sin(w.a) - side * w.omega;
+        // Rolling resistance at the offset axle acts on the fork. The tiny
+        // lateral offset is mirrored across wheels, rather than random noise.
+        const torque = (i % 2 ? -1 : 1) * CASTER.axleOffset * rolling / 4 * clamp(along, -1, 1);
+        w.omega += torque * dt / CASTER.inertia; b.omega -= torque * dt / BODY.inertia;
+        // Bearing drag exchanges angular momentum with the chassis; an idle
+        // caster retains its orientation instead of returning to cart heading.
+        const j = -(w.omega - b.omega) * (1 - Math.exp(-CASTER.bearingDamping * dt)) / (1 / CASTER.inertia + 1 / BODY.inertia);
+        w.omega += j / CASTER.inertia; b.omega -= j / BODY.inertia;
+      });
+    }
+
+    solveCasters() {
+      const b = this.body;
+      // Contact C = pivot P - trail * heading. Its lateral velocity is
+      // V(P).normal - trail * swivelRate. Ground impulses remove that slip,
+      // exchanging momentum with both the chassis and the independent fork.
+      for (let pass = 0; pass < 4; pass++) this.wheels.forEach((w, i) => {
+        const { pivot } = casterPose(b, w, i), rx = pivot.x - b.x, ry = pivot.y - b.y;
+        const nx = -Math.sin(w.a), ny = Math.cos(w.a), lever = cross(rx, ry, nx, ny);
+        const lateral = (b.vx - b.omega * ry) * nx + (b.vy + b.omega * rx) * ny - CASTER.trail * w.omega;
+        const j = -lateral / (1 + lever * lever / BODY.inertia + CASTER.trail ** 2 / CASTER.inertia);
+        b.vx += nx * j; b.vy += ny * j; b.omega += lever * j / BODY.inertia;
+        w.omega -= CASTER.trail * j / CASTER.inertia;
+      });
+    }
+
     step(dt, input = {}) {
       if (this.status !== 'running') return;
       // Caller uses a 120 Hz fixed step. Clamp external steps to avoid tunneling.
@@ -147,7 +229,10 @@
       // Air/rolling resistance rises smoothly above a comfortable walking run.
       const limit = Math.hypot(b.vx, b.vy);
       if (limit > 135) { b.vx *= 135 / limit; b.vy *= 135 / limit; }
+      this.casterForces(dt, rolling);
+      this.solveCasters();
       b.x += b.vx * dt; b.y += b.vy * dt; b.a = wrap(b.a + b.omega * dt);
+      this.wheels.forEach(w => { w.a = wrap(w.a + w.omega * dt); });
       for (const o of this.objects) {
         const decay = Math.exp(-(o.kind === 'cone' ? 2.0 : 2.8) * dt);
         o.vx *= decay; o.vy *= decay; o.omega *= Math.exp(-3 * dt);
@@ -173,12 +258,28 @@
               this.mess('shelf', h.x, h.y); this.emit('spill', { shelf: rect, x: h.x, y: h.y });
             } else if (impact > 14 && pass === 0) this.emit('bump', { x: h.x, y: h.y, impact });
           }
+          this.wheels.forEach((wheel, i) => {
+            const pose = casterPose(b, wheel, i);
+            const h = polygonRectContact(casterCorners(b, wheel, i), pose, wheel.a, rect);
+            if (!h) return;
+            const impact = this.casterImpulse(h, wheel, i);
+            if (impact > 9 && !rect.spilled && rect.id !== undefined) {
+              rect.spilled = true; rect.wobble = 1; this.mess('shelf', h.x, h.y); this.emit('spill', { shelf: rect, x: h.x, y: h.y });
+            }
+          });
         }
         for (const o of this.objects) {
           const h = cartCircle(b, o);
-          if (!h) continue;
-          const impact = this.impulse(h, o);
-          if (!o.down && impact > 1.8) { o.down = true; this.mess(o.kind, o.x, o.y); }
+          if (h) {
+            const impact = this.impulse(h, o);
+            if (!o.down && impact > 1.8) { o.down = true; this.mess(o.kind, o.x, o.y); }
+          }
+          this.wheels.forEach((wheel, i) => {
+            const contact = casterCircle(b, wheel, i, o);
+            if (!contact) return;
+            const impact = this.casterImpulse(contact, wheel, i, o);
+            if (!o.down && impact > 1.8) { o.down = true; this.mess(o.kind, o.x, o.y); }
+          });
         }
         for (let i = 0; i < this.objects.length; i++) for (let k = i + 1; k < this.objects.length; k++) {
           const a = this.objects[i], z = this.objects[k], dx = a.x - z.x, dy = a.y - z.y, d = Math.hypot(dx, dy);
@@ -196,24 +297,25 @@
           }
         }
       }
+      this.solveCasters();
       this.wheels.forEach((w, i) => {
-        const p = point(b, ...WHEELS[i]), rx = p.x - b.x, ry = p.y - b.y;
-        const vx = b.vx - b.omega * ry, vy = b.vy + b.omega * rx, v = Math.hypot(vx, vy);
-        if (v > 0.8) w.a = wrap(w.a + wrap(Math.atan2(vy, vx) - w.a) * (1 - Math.exp(-14 * dt)));
-        w.roll += v * dt;
+        const p = casterPose(b, w, i).pivot, rx = p.x - b.x, ry = p.y - b.y;
+        const vx = b.vx - b.omega * ry, vy = b.vy + b.omega * rx;
+        w.speed = vx * Math.cos(w.a) + vy * Math.sin(w.a) - (i % 2 ? -1 : 1) * CASTER.axleOffset * w.omega;
+        w.roll += w.speed * dt;
       });
       for (const s of this.shelves) s.wobble *= Math.exp(-6 * dt);
       this.trackTime += dt;
       if (Math.hypot(b.vx, b.vy) > 35 && this.trackTime > 0.065) {
         this.trackTime = 0;
-        for (const i of [0, 2]) { const p = point(b, ...WHEELS[i]); this.tracks.push({ ...p, a: this.wheels[i].a, life: 3 }); }
+        for (const i of [0, 2]) { const p = casterPose(b, this.wheels[i], i); this.tracks.push({ x: p.x, y: p.y, a: p.a, life: 3 }); }
       }
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
       if (target && Math.hypot(b.x - target.x, b.y - target.y) < 22) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
       const goal = this.level.goal;
       const person = point(b, BODY.personX, 0);
-      const footprint = [...corners(b), { x: person.x - 7, y: person.y - 7 }, { x: person.x + 7, y: person.y + 7 }];
+      const footprint = [...corners(b), ...this.wheels.flatMap((w, i) => casterCorners(b, w, i)), { x: person.x - 7, y: person.y - 7 }, { x: person.x + 7, y: person.y + 7 }];
       const inside = footprint.every(p => p.x > goal.x - goal.w / 2 + 2 && p.x < goal.x + goal.w / 2 - 2 && p.y > goal.y - goal.h / 2 + 2 && p.y < goal.y + goal.h / 2 - 2);
       this.parkReady = this.gate === this.level.gates.length && inside && Math.abs(wrap(b.a - goal.a)) < 0.4 && Math.hypot(b.vx, b.vy) < 12 && Math.abs(b.omega) < 0.4;
       this.park = this.parkReady ? this.park + dt : 0;
@@ -227,7 +329,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, point, corners, boxContact, circleRect, cartCircle, wrap, clamp };
+  const api = { World, BODY, WHEELS, CASTER, point, corners, casterPose, casterCorners, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

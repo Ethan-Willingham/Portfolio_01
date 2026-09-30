@@ -1,6 +1,6 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, wrap, clamp, BODY } = require('../js/four-wheels-physics.js');
+const { World, point, wrap, clamp, BODY, CASTER, WHEELS, casterPose, casterCorners, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const dt = 1 / 120;
 const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], goal: { x: 430, y: 230, w: 80, h: 80, a: 0 } };
@@ -11,7 +11,7 @@ test('rotation preserves the direction of existing momentum', () => {
   const w = new World(empty); w.body.vx = 60;
   step(w, .7, { turn: 1 });
   assert.ok(Math.abs(w.body.a) > .8, 'basket rotates substantially');
-  assert.equal(w.body.vy, 0, 'rotation does not redirect linear velocity');
+  assert.ok(Math.abs(Math.atan2(w.body.vy, w.body.vx)) < .01, 'small caster reactions leave momentum facing the old way');
   assert.ok(w.body.vx > 40);
   assert.ok(Math.abs(w.wheels[0].a - w.wheels[3].a) > .1, 'casters see different contact velocities');
   step(w, .35, { push: 1 });
@@ -22,8 +22,63 @@ test('the combined center of mass sits behind the basket', () => {
   assert.ok(BODY.cartX > 0 && BODY.personX < 0);
   const w = new World(empty), initial = point(w.body, BODY.cartX, 0);
   step(w, .8, { turn: 1 });
-  assert.equal(w.body.x, empty.start.x); assert.equal(w.body.y, empty.start.y);
+  assert.ok(Math.hypot(w.body.x - empty.start.x, w.body.y - empty.start.y) < .05, 'swiveling wheels barely displace the combined center of mass');
   assert.ok(Math.hypot(point(w.body, BODY.cartX, 0).x - initial.x, point(w.body, BODY.cartX, 0).y - initial.y) > 10);
+});
+
+test('the tire follows a fixed pivot at a constant caster trail', () => {
+  const w = new World(empty);
+  for (const angle of [0, .4, Math.PI / 2, Math.PI, -2.1]) {
+    w.wheels[1].a = angle;
+    const pose = casterPose(w.body, w.wheels[1], 1), pivot = point(w.body, ...WHEELS[1]);
+    assert.deepEqual(pose.pivot, pivot);
+    const dx = pivot.x - pose.x, dy = pivot.y - pose.y;
+    assert.ok(Math.abs(dx * Math.cos(angle) + dy * Math.sin(angle) - CASTER.trail) < 1e-10);
+    assert.ok(Math.abs(Math.hypot(dx, dy) - Math.hypot(CASTER.trail, CASTER.axleOffset)) < 1e-10);
+  }
+});
+
+test('caster alignment depends on travel, and idle wheels hold their angles', () => {
+  const idle = new World(empty), slow = new World(empty), fast = new World(empty);
+  for (const w of [idle, slow, fast]) w.wheels.forEach(q => { q.a = Math.PI / 2; });
+  slow.body.vx = 5; fast.body.vx = 60;
+  for (const w of [idle, slow, fast]) step(w, .15, {});
+  assert.equal(idle.wheels[0].a, Math.PI / 2, 'stationary casters do not reset toward the basket');
+  assert.ok(fast.wheels[0].a < slow.wheels[0].a - .5, 'more travel brings the trailing tire into line sooner');
+  const w = fast, q = w.wheels[0], p = casterPose(w.body, q, 0).pivot;
+  const lateral = (w.body.vx - w.body.omega * (p.y - w.body.y)) * -Math.sin(q.a)
+    + (w.body.vy + w.body.omega * (p.x - w.body.x)) * Math.cos(q.a) - CASTER.trail * q.omega;
+  assert.ok(Math.abs(lateral) < .001, 'the trailing contact rolls without lateral slip');
+});
+
+test('reversing flips all four forks instead of instantly resetting them', () => {
+  const w = new World(empty);
+  step(w, .2, { push: -1 });
+  assert.ok(w.wheels.every(q => Math.abs(q.a) < .1 && q.roll < 0), 'tires initially roll backward in their old orientation');
+  step(w, 1.8, { push: -1 });
+  assert.ok(w.wheels.every(q => Math.abs(q.a) > 2.8 && q.speed > 0), 'the offset forks eventually swing around to trail in reverse');
+  assert.ok(w.body.vx < -60 && Math.abs(w.body.vy) < 1, 'the chassis still travels backward');
+});
+
+test('a tire can hit a cone that the basket never touches', () => {
+  const w = new World({ ...empty, start: { x: 130, y: 150, a: 0 }, objects: [{ kind: 'cone', x: 163, y: 132 }] });
+  w.body.vx = 75;
+  for (let i = 0; i < 36; i++) {
+    assert.equal(cartCircle(w.body, w.objects[0]), null, 'the cone stays outside the basket and shopper');
+    w.step(dt);
+  }
+  assert.ok(w.objects[0].y < 130 && w.objects[0].vy < -5, 'the actual tire contact pushes the cone aside');
+  assert.ok(Math.abs(w.wheels[1].a - w.wheels[3].a) > .01, 'the fork responds independently to contact');
+});
+
+test('a protruding tire collides with a shelf outside the basket footprint', () => {
+  const shelf = { x: 240, y: 120, w: 35, h: 10 };
+  const w = new World({ ...empty, shelves: [shelf] });
+  w.wheels.forEach(q => { q.a = Math.PI / 2; });
+  assert.equal(boxContact(w.body, shelf), null);
+  step(w, .08, {});
+  assert.ok(w.body.y > empty.start.y + .5, 'the shelf displaces the chassis through the caster');
+  assert.ok(Math.min(...casterCorners(w.body, w.wheels[1], 1).map(p => p.y)) >= 129.9, 'the tire cannot rest inside the shelf');
 });
 
 test('a shelf impact stops penetration, turns the cart, and spills once', () => {
@@ -60,6 +115,14 @@ test('checkout requires the route, complete footprint, heading, and a stop', () 
   w.gate = 1; w.body.a = Math.PI / 2; step(w, 1, {}); assert.equal(w.status, 'running');
   w.body.a = 0; w.body.x = 255; step(w, 1, {}); assert.equal(w.status, 'running');
   w.body.x = 230; step(w, .7, {}); assert.equal(w.status, 'won');
+});
+
+test('checkout includes tires swung outside the basket', () => {
+  const w = new World({ ...empty, gates: [], goal: { x: 230, y: 150, w: 82, h: 36, a: 0 } });
+  w.wheels[0].a = w.wheels[1].a = Math.PI / 2;
+  step(w, .7, {}); assert.equal(w.status, 'running', 'the upward trailing tires cross the bay edge');
+  w.wheels.forEach(q => { q.a = 0; q.omega = 0; });
+  step(w, .7, {}); assert.equal(w.status, 'won', 'the same cart fits when the casters face forward');
 });
 
 test('timeout includes penalties, and practice has no deadline', () => {
@@ -106,6 +169,7 @@ test('all courses stay finite during hard pushes, spin, and contact', () => {
     for (let i = 0; i < 3600; i++) {
       w.step(dt, { push: Math.sin(i / 260) > -.7 ? 1 : -1, turn: Math.sin(i / 115), brake: i % 480 < 30 ? 1 : 0 });
       for (const value of Object.values(w.body)) assert.ok(Number.isFinite(value), level.name);
+      for (const q of w.wheels) for (const value of Object.values(q)) assert.ok(Number.isFinite(value), level.name + ' caster');
       assert.ok(w.body.x >= 7 && w.body.x <= 473 && w.body.y >= 7 && w.body.y <= 293, level.name);
     }
   }

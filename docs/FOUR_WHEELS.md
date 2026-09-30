@@ -22,20 +22,38 @@ The post uses the site's analytics and self-hosted fonts.
 The cart and shopper are a rigid body with its center of mass behind the basket.
 The basket center is 14 pixels ahead of it and the shopper center is 16 behind.
 Do not rotate the velocity vector when steering. A and D apply a force couple,
-rotating the body without changing its linear momentum. W adds force along the
+rotating the body without directly redirecting its linear momentum. W adds force along the
 current heading; S pulls backward. Space brakes the body's actual velocity.
 
-All four wheels swivel. Each aligns with its own contact velocity, including
-the angular contribution at that wheel. Lateral and forward rolling resistance
-are equal. The wheels do not create the directional grip of fixed grocery-cart
-rear wheels. Wet floor reduces drag and braking force.
+All four wheels have separate swivel states, angular velocities and signed
+rolling distances. A fixed pivot attaches each fork to the chassis; the tire's
+ground contact trails 5.5 pixels behind it. The tire center is not the pivot.
+The tiny mirrored axle offset starts the swing when pulling exactly backward.
+Bearing drag exchanges angular momentum with the chassis and leaves idle
+casters at their last orientation.
+
+Ground impulses enforce zero lateral velocity at each tire contact, accounting
+for body translation, body rotation, caster swivel rate and caster inertia.
+Each wheel follows its own curve instead of easing toward the cart's heading.
+The small caster inertia keeps these reactions subtle and preserves the game's
+sliding feel. Wet floor reduces rolling resistance and braking force.
+The fixed pivot and trailing contact geometry follows the caster model in
+[Arrizabalaga et al., 2021](https://arxiv.org/abs/2110.05604). This is a simplified
+game model, not a calibrated simulation of a particular cart.
+
+The rasterizer uses that same caster geometry for the tire, fork and gold pivot.
+Tires and forks are opaque; basket mesh, rails and contents are translucent.
+Do not hide inward-swung casters behind an opaque basket fill. Pivot pins stay
+attached to the body while the tire and fork swing around them.
 
 The simulation uses fixed 1/120-second steps. A cart rectangle and shopper circle
-both collide with shelves and walls; contacts apply torque. Cones and boxes
+both collide with shelves and walls; each tire also has a separate oriented
+collision rectangle. Tire impacts can swivel the fork, move the chassis and
+push props even when the basket clears them. Contacts apply torque. Cones and boxes
 move, collide with each other and the room, and charge a penalty once per prop.
 Shelves spill once. Cones cost 2 seconds, boxes 3, shelves 5.
 
-Finish by visiting every marker in order, placing the entire cart and shopper
+Finish by visiting every marker in order, placing the entire cart, tires and shopper
 inside checkout, facing the bay arrow, and holding still for 0.55 seconds.
 Practice has no deadline and does not save records. Timed records use
 `four-wheels-records-v1` in localStorage, with validation and blocked-storage
@@ -59,7 +77,9 @@ node tools/test-four-wheels.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
-The physics checks include a controller that drives all six full routes and
+The physics checks cover caster trail, travel-dependent alignment, reverse
+flips, contact slip, protruding-tire collisions and checkout footprints. They
+also include a controller that drives all six full routes and
 parks through the real contact model before their deadlines. Browser checks
 cover keyboard, touch, pause, retry, results, saved records, practice, course
 selection, narrow layouts, fullscreen, reduced motion and blocked storage.

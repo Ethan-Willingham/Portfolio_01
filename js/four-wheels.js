@@ -3,7 +3,7 @@
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
   if (!ctx || !window.CartPhysics || !window.CartLevels) return;
-  const { World, point, WHEELS, clamp, wrap } = CartPhysics;
+  const { World, point, WHEELS, CASTER, casterPose, clamp, wrap } = CartPhysics;
   const levels = CartLevels, game = $('game');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const rootStyle = getComputedStyle(document.documentElement);
@@ -213,30 +213,60 @@
       }
     }
   }
+  function drawCaster(g, b, wheel, i) {
+    const pose = casterPose(b, wheel, i), fork = { ...pose.pivot, a: wheel.a };
+    // Two arms run from the gold swivel bearing to an axle behind it. The
+    // tire is centered on that axle, never on the fixed bearing itself.
+    localRect(g, fork, -CASTER.trail - 1, -4, CASTER.trail + 2, 2, P.dark);
+    localRect(g, fork, -CASTER.trail - 1, 2, CASTER.trail + 2, 2, P.dark);
+    localRect(g, fork, -CASTER.trail, -3, CASTER.trail + 1, 1, P.mid);
+    localRect(g, fork, -CASTER.trail, 2, CASTER.trail + 1, 1, P.mid);
+    localRect(g, pose, -4, -3, 8, 6, P.dark);
+    localRect(g, pose, -3, -2, 6, 4, P.edge);
+    localRect(g, pose, -2, -2, 1, 4, P.mid);
+    // Signed rolling distance makes the tread reverse before the fork flips.
+    const tread = ((Math.floor(wheel.roll / 2) % 3) + 3) % 3;
+    localRect(g, pose, tread - 1, -2, 1, 4, P.mid);
+    localRect(g, pose, -1, -1, 2, 2, P.gold);
+    localRect(g, pose, -1, -4, 2, 1, P.cream);
+    localRect(g, pose, -1, 3, 2, 1, P.cream);
+  }
   function drawCart(g, body, wheels, t, ghost = false) {
-    const b = { x: Math.round(body.x), y: Math.round(body.y), a: Math.round(body.a / (Math.PI / 16)) * Math.PI / 16 };
+    const b = { x: Math.round(body.x), y: Math.round(body.y), a: body.a };
     const speed = Math.hypot(body.vx || 0, body.vy || 0), walk = Math.sin(t * Math.min(14, speed * .18)) * Math.min(3, speed / 25);
+    g.save();
     if (!ghost) {
-      const p = point(b, 12, 3); oval(g, p.x, p.y, 22, 14, P.mid);
-      const shopper = point(b, -16, 3); oval(g, shopper.x, shopper.y, 9, 7, P.mid);
+      g.globalAlpha *= .16;
+      const p = point(b, 12, 3); oval(g, p.x, p.y, 22, 14, P.dark);
+      const shopper = point(b, -16, 3); oval(g, shopper.x, shopper.y, 9, 7, P.dark);
+      g.globalAlpha /= .16;
     }
-    WHEELS.forEach((p, i) => {
-      const pos = point(b, ...p), wb = { ...pos, a: Math.round((wheels ? wheels[i].a : b.a) / (Math.PI / 12)) * Math.PI / 12 };
-      localRect(g, wb, -2, -2, 7, 5, P.dark); localRect(g, wb, -1, -1, 4, 3, P.mid);
-      if (wheels && Math.floor(wheels[i].roll / 3) % 2) localRect(g, wb, 1, -1, 1, 3, P.edge);
-      rect(g, pos.x - 1, pos.y - 1, 2, 2, P.gold);
-    });
-    localRect(g, b, -2, -11, 34, 24, P.edge);
-    localRect(g, b, -1, -11, 32, 21, P.cream);
-    localRect(g, b, 2, -8, 26, 15, P.seam);
-    for (let x = 3; x < 28; x += 5) localRect(g, b, x, -8, 1, 16, P.mid);
-    for (let y = -7; y < 8; y += 4) localRect(g, b, 2, y, 26, 1, P.floor);
-    localRect(g, b, 28, -10, 3, 20, P.light);
-    localRect(g, b, 1, -10, 27, 2, P.light);
+    WHEELS.forEach((p, i) => drawCaster(g, b, wheels ? wheels[i] : { a: b.a, roll: 0 }, i));
+    // The basket is open wire, with a translucent wash instead of an opaque
+    // floor. Even a caster swung inward remains visible through the contents.
+    const alpha = g.globalAlpha;
+    g.globalAlpha = alpha * .14;
+    localRect(g, b, -2, -11, 33, 22, P.cream);
+    g.globalAlpha = alpha * .3;
+    for (let x = 3; x < 28; x += 6) localRect(g, b, x, -8, 1, 16, P.cream);
+    for (let y = -6; y < 8; y += 5) localRect(g, b, 1, y, 27, 1, P.mid);
+    g.globalAlpha = alpha * .62;
+    localRect(g, b, -2, -11, 33, 2, P.light);
+    localRect(g, b, -2, 9, 33, 2, P.cream);
+    localRect(g, b, -2, -9, 2, 18, P.cream);
+    localRect(g, b, 29, -9, 2, 18, P.light);
     // The cart already contains one paper bag and a suspiciously long loaf.
+    g.globalAlpha = alpha * .42;
     localRect(g, b, 12, -5, 9, 10, P.edge); localRect(g, b, 13, -6, 8, 9, P.clay);
     localRect(g, b, 14, -7, 6, 2, P.gold); localRect(g, b, 16, -6, 2, 3, P.edge);
     localRect(g, b, 4, 2, 14, 3, P.gold); localRect(g, b, 5, 2, 2, 1, P.cream); localRect(g, b, 10, 2, 2, 1, P.cream);
+    g.globalAlpha = alpha;
+    WHEELS.forEach(p => {
+      const pin = point(b, ...p);
+      rect(g, pin.x - 2, pin.y - 2, 5, 5, P.dark);
+      rect(g, pin.x - 1, pin.y - 1, 3, 3, P.gold);
+      rect(g, pin.x, pin.y, 1, 1, P.light);
+    });
     localRect(g, b, -6, -13, 3, 26, P.blue); localRect(g, b, -6, -11, 1, 22, P.light);
     localRect(g, b, -24 + walk, -7, 6, 4, P.dark); localRect(g, b, -24 - walk, 3, 6, 4, P.dark);
     localRect(g, b, -21, -6, 11, 12, P.brick); localRect(g, b, -20, -6, 9, 3, P.coral);
@@ -245,6 +275,7 @@
     const head = point(b, -15, 0); oval(g, head.x, head.y - 2, 5, 5, P.clay);
     localRect(g, b, -20, -5, 5, 9, P.dark); localRect(g, b, -19, -5, 6, 3, P.edge);
     localRect(g, b, -11, -1, 2, 2, P.gold);
+    g.restore();
   }
 
   function drawRoute(g, w) {

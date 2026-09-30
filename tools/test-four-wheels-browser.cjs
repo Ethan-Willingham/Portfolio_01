@@ -25,6 +25,18 @@ const server = http.createServer((req, res) => {
         stop: () => { cancelAnimationFrame(raf); raf=0; },
         step: (seconds,input={}) => { cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.round(seconds*120)&&phase==='running';i++){world.step(1/120,input);events();tickEffects(1/120);}draw();updateUI(); },
         park: () => { world.gate=world.level.gates.length;const q=world.level.goal;Object.assign(world.body,{x:q.x-Math.cos(q.a)*4,y:q.y-Math.sin(q.a)*4,a:q.a,vx:0,vy:0,omega:0}); },
+        casterSheet: () => {
+          const sheet=document.createElement('canvas');sheet.width=600;sheet.height=360;
+          const g=sheet.getContext('2d');rect(g,0,0,600,360,P.floor);
+          const cases=[
+            {label:'FORWARD',a:0,w:[0,0,0,0]},
+            {label:'SWUNG INWARD',a:0,w:[-Math.PI/2,-Math.PI/2,Math.PI/2,Math.PI/2]},
+            {label:'REVERSING',a:0,w:[Math.PI,Math.PI,Math.PI,Math.PI]},
+            {label:'COASTING THROUGH A TURN',a:.7,w:[.1,1.1,-.4,1.5]}
+          ];
+          cases.forEach((q,i)=>{g.save();g.translate(i%2*300,Math.floor(i/2)*180);text(g,q.label,150,17,P.dark,7,'center');g.scale(3,3);drawCart(g,{x:45,y:28,a:q.a,vx:0,vy:0},q.w.map(a=>({a,roll:0})),0);g.restore();});
+          return sheet.toDataURL('image/png').split(',')[1];
+        },
         reset, draw, run, world: () => world
       };
       ` + source.slice(end);
@@ -57,7 +69,7 @@ async function setup(context, url) {
     check('W applies forward force', a.body.y < 226 && a.body.vy < -30);
     await page.keyboard.down('d'); await page.waitForTimeout(550); await page.keyboard.up('d');
     a = await page.evaluate(() => __cartTest.state());
-    check('keyboard rotation leaves the old direction of motion intact', a.body.a > -1 && Math.abs(a.body.vx) < .01 && a.body.vy < -20);
+    check('keyboard rotation leaves the old direction of motion intact', a.body.a > -1 && Math.abs(a.body.vx) < 1 && a.body.vy < -20);
     await page.locator('#cart-sound').click();
     check('sound can be enabled after a gesture', await page.locator('#cart-sound').getAttribute('aria-pressed') === 'true');
     await page.locator('#cart-sound').click();
@@ -74,6 +86,13 @@ async function setup(context, url) {
     await page.locator('#cart-start').click();
     await page.evaluate(() => { __cartTest.stop(); __cartTest.step(1.2, {push:1}); __cartTest.step(.55,{turn:1}); });
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'wet-floor.png') });
+    const casterSheet = await page.evaluate(() => __cartTest.casterSheet());
+    fs.writeFileSync(path.join(dump, 'caster-details.png'), Buffer.from(casterSheet, 'base64'));
+    const casterState = await page.evaluate(() => {
+      const w=__cartTest.world();
+      return w.wheels.map((q,i)=>({angle:q.a,pivot:CartPhysics.casterPose(w.body,q,i).pivot,center:CartPhysics.casterPose(w.body,q,i),trail:CartPhysics.CASTER.trail}));
+    });
+    check('all four rendered casters have offset tire centers and independent angles', casterState.every(q => Math.hypot(q.center.x-q.pivot.x,q.center.y-q.pivot.y) >= q.trail) && Math.abs(casterState[0].angle-casterState[3].angle) > .1);
     if (process.env.ASSETS === '1') {
       const pixels = await page.evaluate(() => {
         __cartTest.reset(2); __cartTest.stop();
@@ -123,6 +142,7 @@ async function setup(context, url) {
     check('two-finger touch can push and turn at once', a.touch === 2 && a.body.a > -1 && Math.hypot(a.body.vx, a.body.vy) > 25);
     await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
     check('cancelled touches release all forces', (await phone.evaluate(() => __cartTest.state())).touch === 0);
+    await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-driving.png') });
     await phone.locator('#cart-pause').tap();
     await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-pause.png') });
     await phone.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.park();__cartTest.step(.7);});
