@@ -160,9 +160,12 @@
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
   function loop(time) {
+    var _playPerfCPU = playPerfActive ? performance.now() : 0;
     gameRafId = 0;
     if (!requireSnowGPU()) return;
     if (introPhase !== 'done') {
+      if (playPerfActive) perfBucketsRaw = {};
+      var _playLoadingInterval = time - lastTime;
       lastTime = time;
       lastFrameDt = 1 / 60;
       if (window.SluiceLoading && document.getElementById('game-intro').getAttribute('data-state') === 'error') return;
@@ -173,6 +176,7 @@
         return;
       }
       gameRafId = requestAnimationFrame(loop);
+      if (playPerfActive) playPerfFrame(time, _playLoadingInterval, performance.now() - _playPerfCPU, 3);
       return;
     }
     // v17.82 — if a pause landed between scheduling and firing this frame,
@@ -204,6 +208,7 @@
     if (startInPause && !PAUSE_DISABLED && !bootPauseFired && introPhase === 'done') {
       bootPauseFired = true;
       gamePaused = true;
+      playPerfPause(true, 'press resume to begin');
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
       drillSfxActive = false; drillSfxMat = null;
       showPauseOverlay('press resume to begin');
@@ -228,6 +233,7 @@
       }
       cargoManifestPadHeld = manifestNow;
       render();
+      if (playPerfActive || playPerfAuto) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
       gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
       return;
     }
@@ -245,6 +251,7 @@
       }
       ledgerPadHeld = ledgerNow;
       render();
+      if (playPerfActive || playPerfAuto) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 2);
       gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
       return;
     }
@@ -266,7 +273,7 @@
         // re-init (fresh world) for testing; the save survives until the
         // next autosave because dev runs don't dock-save.
         if (typeof radioMsgCut === 'function') radioMsgCut();   // prompt answered, drop the line
-        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); return; }
+        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
         else if (gameOver) respawnFromDeath();
         else bailoutToTown();
       } else {
@@ -296,11 +303,11 @@
       } else {
         touch.active = false;
         if (gameOver) respawnFromDeath();
-        else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); return; }
+        else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
       }
     }
 
-    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); return; }
+    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
 
     // Shop toggle via keyboard. [E] is the documented key (shown in the
     // proximity prompt); [P] is kept as a hidden alias for muscle memory
@@ -703,6 +710,7 @@
     // scheduling. CPU submission time does not describe visible frame pacing.
     // The benchmark also drives scripted flight while a run is active.
     if (typeof benchTick === 'function') benchTick(frameIntervalMs, frameIntervalMs / 1000);
+    if (playPerfActive || playPerfAuto) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0);
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).

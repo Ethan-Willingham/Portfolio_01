@@ -3501,6 +3501,7 @@
   var jelloAccum   = 0;     // substep time accumulator
   // Live metrics (read by the dev perf panel only; reset/updated each frame in updateJello).
   var jelloLastSubs     = 0;   // substeps run last frame (sim catch-up load)
+  var jelloRecordedOuterTicks = 0, jelloRecordedMicrosteps = 0;
   var jelloMaxVsq       = 0;   // max point speed^2 across all bodies, (px/s)^2 — the blow-up gauge
   var jelloSepThisFrame = 0;   // body<->body separations applied this frame (anti-merge activity)
 
@@ -8419,6 +8420,7 @@
   }
 
   function updateJello(dt) {
+    jelloRecordedOuterTicks = jelloRecordedMicrosteps = 0;
     if (jelloBodies.length === 0 && typeof softContactClear === 'function') softContactClear();
     if (jelloBodies.length === 0 && jelloSplats.length === 0) return;
     updateJelloSplats(dt);
@@ -8462,6 +8464,7 @@
     // velocity (and the fling gate + perf vmax) would be 1/K of reality.
     var stepDt = JELLO_H * jelloImpulseScale();
     jelloLastSubs = subs; jelloMaxVsq = 0; jelloSepThisFrame = 0; jelloContactsThisFrame = 0;
+    jelloRecordedOuterTicks = subs;
     if (devMode) { jelloDbg.plowPts = 0; jelloDbg.shearPts = 0; jelloDbg.flings = 0; }
 
     // ----- Build the ACTIVE set: every non-frozen body. Awake ones run the internal solve;
@@ -8549,16 +8552,16 @@
     // parked-pile common case). The rig displace + rescue + render below still
     // run, so a rig pressed into a sleeping pile stays evicted.
     if (!anySolve) totalSteps = 0;
+    jelloRecordedMicrosteps = totalSteps;
     if (totalSteps === 0 && typeof softContactClear === 'function') softContactClear();
     if (typeof softHandlingPrepare === 'function') softHandlingPrepare(totalSteps, h);
-    // Dev-only phase timing (v25.41): jello.internal / jello.contact / etc
-    // buckets — where does the AWAKE-solver frame go? Emitted via the perfMark
-    // now-minus-acc trick; zero cost outside dev mode. (Measured: the contact
-    // sweep is ~75-80% of update.jello with a crammed awake pile.)
-    var _phT = devMode ? performance.now() : 0;
+    // Phase timing is also available during an ordinary gameplay recording.
+    // Contact timing covers both the reference and current resident solvers.
+    var _phOn = devMode || (typeof playPerfActive !== 'undefined' && playPerfActive);
+    var _phT = _phOn ? performance.now() : 0;
     var _phInternal = 0, _phContact = 0, _phTail = 0, _phT0 = 0;
     for (step = 0; step < totalSteps; step++) {
-      if (devMode) _phT0 = performance.now();
+      if (_phOn) _phT0 = performance.now();
       if (step % K === 0 && typeof surfaceSlimeSnapshot === 'function') {
         for (ai = 0; ai < nActive; ai++) {
           b = active[ai];
@@ -8575,12 +8578,12 @@
         }
       }
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve && !b.sleeping) jelloBodyInternalSubstep(b, h); }
-      if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
+      if (_phOn) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
-      if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
       if (typeof softContactStep === 'function') softContactStep(active, nActive, h, totalSteps);
       if (typeof softPairsStep === 'function') jelloContactsThisFrame += softPairsStep(active, nActive, h);
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
+      if (_phOn) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
       // Direct manipulation has a stricter contract than ordinary collision:
       // the frame may never expose a crossed ring or mirrored cell and rely on
       // the one-second emergency heal to clean it later. Contact is the final
@@ -8631,9 +8634,9 @@
         jelloClampVelocity(b, h);
         if (typeof jelloDrivePostSubstep === 'function') jelloDrivePostSubstep(b, h);
       }
-      if (devMode) _phTail += performance.now() - _phT0;
+      if (_phOn) _phTail += performance.now() - _phT0;
     }
-    if (devMode && totalSteps > 0) {
+    if (_phOn && totalSteps > 0) {
       var _phNow = performance.now();
       perfMark('jello.internal', _phNow - _phInternal);
       perfMark('jello.contact', _phNow - _phContact);

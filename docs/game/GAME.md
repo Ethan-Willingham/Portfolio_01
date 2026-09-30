@@ -121,6 +121,12 @@ for prices, exported tuning, runtime integration and verification.
 
 ## Build & run
 
+**Gameplay performance recording (v28.124):** F9 starts a local capture in the
+ordinary game; F9 again stops and saves it. Play through the slowdown and its
+recovery. Frames, inputs, snow/slime state, CPU costs and supported sampled GPU
+pass timings stay in the trace. `?perfrec=1` enables the controls and starts
+automatically. Keep the tab open until saving. See [PLAY_RECORDING.md](PLAY_RECORDING.md).
+
 **Particle weather:** pause > Options > World > Particle weather > Rain first or
 Snow first selects the next world's opening weather. Both then cycle through
 sunshine, gathering clouds, rain or snow, and 3 to 5 minutes of dry cloudy

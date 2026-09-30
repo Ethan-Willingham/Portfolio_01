@@ -89,6 +89,7 @@
       if (introPhase !== 'done') { gameLoadingPauseReason = reason || 'Paused'; clearAllInput(); return; }
       if (gamePaused) return;
       gamePaused = true;
+      playPerfPause(true, reason);
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
       drillSfxActive = false; drillSfxMat = null;
       bootPauseFired = true;   // a manual/focus pause also satisfies the boot pause
@@ -101,6 +102,7 @@
     function resumeGame() {
       if (!gamePaused) return;
       gamePaused = false;
+      playPerfPause(false);
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(false);
       var ov = document.getElementById('game-pause');
       if (ov) { ov.classList.remove('is-visible'); ov.setAttribute('aria-hidden', 'true'); }

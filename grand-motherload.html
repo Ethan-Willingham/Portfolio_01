@@ -37,7 +37,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.123">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.124">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -418,6 +418,13 @@
             </div>
             <div class="game-canvas-area">
               <canvas id="game-canvas" tabindex="-1"></canvas>
+              <aside id="gm-perf-recorder" hidden aria-label="Play recording">
+                <span id="gm-perf-status">Record a slowdown while you play</span>
+                <button id="gm-perf-toggle" type="button">Record play</button>
+                <button id="gm-perf-download" type="button" hidden>Save recording</button>
+                <span class="gm-perf-note">Local recording · F9 starts or saves · keep this tab open</span>
+              </aside>
+              <pre id="gm-performance-live" hidden></pre>
               <!-- Manual pause button (v17.83) — tucked under the top-left
                    version + FPS readout. Reliable pause that doesn't depend
                    on focus/visibility events. -->
@@ -935,12 +942,13 @@
       });
     })();
   </script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.123"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.123"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.123"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.123"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.123"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.123"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.123"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.124"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.124"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.124"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.124"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.124"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.124"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.124"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.124"></script>
 </body>
 </html>

@@ -1,4 +1,38 @@
 /* Sluice menus share the material colors from 020-state via 053-pause-menu. */
+#gm-perf-recorder {
+  position: absolute;
+  top: 64px;
+  right: 10px;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 330px;
+  max-width: calc(100% - 20px);
+  padding: 10px;
+  border: 1px solid var(--menu-highlight);
+  background: var(--menu-panel);
+  color: var(--menu-text);
+  font: 11px/1.4 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+#gm-perf-recorder[hidden], #gm-perf-recorder [hidden] { display: none; }
+#gm-perf-recorder button {
+  border: 1px solid var(--menu-weld);
+  background: var(--menu-inset);
+  color: var(--menu-text);
+  padding: 8px;
+  min-height: 36px;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#gm-perf-recorder button:hover { background: var(--menu-selected); }
+#gm-perf-recorder button:focus-visible { outline: 2px solid var(--menu-gold-hi); outline-offset: 2px; }
+#gm-perf-recorder button:disabled { opacity: 0.5; cursor: default; }
+#gm-perf-status { flex: 1 1 auto; }
+#gm-perf-recorder .gm-perf-note { flex-basis: 100%; color: var(--menu-dim); font-size: 10px; }
 #game-pause {
   position: absolute;
   inset: 0;

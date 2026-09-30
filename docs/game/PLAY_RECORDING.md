@@ -1,0 +1,61 @@
+# Recording a gameplay slowdown
+
+Since v28.124, ordinary play has a local performance recorder. Press F9 to
+start, play through the drop and recovery, then press F9 again to stop and
+download JSON. `?perfrec=1` shows the controls and starts on the first gameplay
+frame. This preserves normal saving, weather, physics, and graphics settings.
+Keep the tab open until the recording is saved. Nothing is uploaded.
+
+Every gameplay callback retains its unclamped interval, CPU frame cost,
+individual CPU buckets, player and camera position, held inputs, snow and
+liquid counts, awake residents, actual slime microsteps, and contact counts.
+Manifest, ledger, and subsequent loading frames are also retained with a view
+code (0 ordinary, 1 manifest, 2 ledger, 3 loading). Pause/resume, focus,
+visibility, keyboard, pointer, wheel, control clicks, errors, and long tasks
+are recorded separately. Pointer moves are sampled at most ten times per
+second. One-second snapshots retain resident positions and bounds, particle
+types, settings, frame pacing, and the largest CPU buckets. The latest existing
+save is included as context without advancing or rewriting the save slots.
+It can precede the capture; this is not deterministic replay.
+
+On supported WebGPU devices, timestamp queries sample up to one command encoder
+per label per second. They time actual compute/render passes without waiting
+for the queue. Four pending samples and 512 passes per sample bound the work.
+A sample reports `partial` and `skippedPasses` if that limit or existing timestamp
+writes prevent complete coverage. Unsupported devices retain all CPU, input,
+state, and pacing data. GPU samples omit WebGL execution and browser composition.
+CPU buckets include command submission, overlap with parent buckets, and must
+not be added together. Sampled GPU pass sums are not whole-frame GPU times.
+
+Frame storage uses packed Float32 chunks, bounded at 72,000 frames or ten minutes.
+The capture stops at the first limit and remains available under Save recording.
+The earlier slowdown remains in the trace. A new recording replaces the retained
+one, so save before starting again. Export serialization runs after recording
+stops, in chunks. It can still affect the game while saving. Recording has a
+small measurement cost; per-frame recorder and snapshot costs are retained so
+they can be assessed alongside the game. GPU timestamp overhead is separate.
+
+The hidden `#gm-performance-live` node contains the current JSON summary,
+updated once per second. A read-only browser tool can inspect this while the
+owner plays without opening developer mode or taking keyboard control.
+`window.__sluicePerformance` also offers start, stop, download, status, and bounded
+frame-chunk reads for local diagnostics. No recorder state is sent to analytics.
+
+Analyze an exported trace with:
+
+```sh
+node tools/perf/read-play-recording.mjs /absolute/path/sluice-performance.json
+```
+
+The reader validates frame counts and prints interval/CPU distributions, the
+slowest seconds, hitches, subsystem averages, GPU pass distributions, and lost
+event/sample counters. Pauses and hidden periods remain visible in the trace.
+The recorder's worst-active-FPS label excludes interrupted one-second bins.
+Use individual frame timings and pause events when examining transitions.
+
+Verification: `node tools/test-play-recording.mjs` boots the real game with native
+callbacks in an owned Chrome for Testing process. It uses actual input to
+record movement, inventory pages and a short pause, induces a main-thread
+hitch, saves and parses a trace spanning multiple chunks, checks actual GPU
+timestamps, and exercises both storage and time limits. The browser is closed
+in `finally`. This tests capture correctness; it is not a display-refresh benchmark.

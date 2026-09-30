@@ -347,6 +347,7 @@
       lastTime = performance.now();
       if (gameLoadingPauseReason && !PAUSE_DISABLED) {
         gamePaused = true;
+        playPerfPause(true, gameLoadingPauseReason);
         showPauseOverlay(gameLoadingPauseReason);
         gameLoadingPauseReason = '';
       }
