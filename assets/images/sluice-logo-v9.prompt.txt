@@ -1,0 +1,35 @@
+Sluice logo v9
+Built-in image_gen used to rebuild the complete L and E letter bodies.
+References: sluice-logo-v7.png for approved typography and sluice-logo-v8-materials-reference.png for actual furnace, ironwork, copper rim and tank construction.
+The L's lower stroke forms the firebox and its upright forms the flue. The E contains a recessed water channel continuous with the lower fracture.
+Complete bodies replace the earlier plain L/E; no isolated hardware decals are overlaid.
+The v7 background, native terrain and ores, other four letters, smoke and pool are retained. The original falling water joins the rebuilt E at the same outlet position.
+Browser pixel verification: zero changed pixels outside the two L/E replacement regions.
+Pair image: 1672 x 941, real alpha transparency.
+L crop: x=261, y=113, width=598, height=726.
+E crop: x=893, y=112, width=582, height=727.
+L placed in wordmark coordinates at x=354, y=312, width=248, height=396.
+E placed in wordmark coordinates at x=1356, y=312, width=300.64184709990303, height=396.
+E outlet fraction: 0.6885269033462732; placement aligns the wet exit to x=1563 in the source wordmark.
+The final wordmark layout is x=110, y=48, scale=0.83.
+Final PNG: assets/images/sluice-logo-v9.png (1672 x 941).
+Transparent wordmark: assets/images/sluice-logo-v9-wordmark.png.
+Generated replacement bodies: assets/images/sluice-logo-v9-le.png.
+Blog thumbnail: assets/thumbs/sluice-logo-v9.webp (600 x 338).
+
+Image generation prompt:
+Use case: precise-object-edit.
+Asset type: two replacement letter bodies for the Sluice game wordmark.
+Image 1: approved logo, reference for the EXACT L and E silhouettes, size, simple materials, shallow depth, lighting and lettering style.
+Image 2: actual game furnace, ironwork, copper bath rim and liquid storage tank, reference for functional construction.
+
+Rebuild the entire bodies of the L and E so their fire and water details are intrinsic to the letters. Output ONLY the uppercase letter bodies "L E", side by side, on genuine transparent background, with a generous transparent gap. No other letters, no background. NO smoke above L and NO falling drops below E in this asset; those are already retained from the approved logo. Match Image 1's upright heavy squared shapes with modest rounded corners, thick strokes, common straight cap line and baseline. L outer width is about 0.60 of its cap height; E outer width about 0.70 of its cap height. Keep their normal recognizable letter silhouettes.
+
+L: the whole L is one cast iron furnace and flue, still the same dark charcoal L from the approved logo. Its lower horizontal stroke IS the firebox. Cut a broad low horizontal fire opening directly into this stroke, with two simple vertical iron ribs revealing a quiet red-orange coal bed. The letter's own outer rim forms the chamber surround; its face, bevel, cut walls and ribs are cast from the SAME continuous iron body. The upright is the flue, with one understated flush joint and a couple of small structural rivets aligned with its construction. Broad quiet iron faces, muted warm edge light. No little rectangular plate pasted on the face, no separate door housing, no extra panel frame, no raised accessory, no handle, no ornate machinery. The opening should feel formed in the L from the outset. Restrained glowing coals, not big flames or orange bloom. Highest and lowest outer edges remain level with the E.
+
+E: keep most of the broad warm ivory face of the approved E, with its restrained bronze edge. Make it one constructed water reservoir letter. A narrow recessed water channel is FORMED IN the left upright, integrated with the letter's own bronze bevel and plate construction. Its upper section reveals cool blue water and a small pale reflection inside the body. The channel continues down the upright and into the diagonal lower-right fracture, visibly feeding the existing leak. It is a coherent internal route through the E, not an attached gauge. The channel and crack meet the bottom edge at approximately 75 percent of the letter's width from the left, matching the current leak location. One or two quiet plate seams can follow the actual arms of the E, using the same surface depth and materials. Keep the E overwhelmingly ivory with slender blue accents. No isolated sight-gauge housing, no top/bottom gauge caps, no bolted-on brass tube, no numbers, tick marks, knobs, valves, wheels, or external pipes. No falling water below the baseline; finish the wet crack at the lower letter edge.
+
+Both must read as LETTERS FIRST with economical construction. Match the other approved letters' restrained hand-illustrated finish, warm upper-left lighting, shallow edge bevels, clean contour, minimal surface texture and broad calm planes. All functional detail must share the letter's surface, depth and structural edges. No pasted stickers, freestanding parts, conspicuous hardware frames or inset object with a different rendering style. No extra bolts everywhere, distressing, scratches, engraving, filigree, ornate steampunk, photorealism, glossy CGI, harsh bloom or decorative symbols.
+
+Place only the two complete letter bodies centrally with clean transparent margins. Common cap height and common baseline. Interior letter gaps stay transparent. Crisp high resolution. No watermark or extra text. Real alpha transparency around both letters.
+
