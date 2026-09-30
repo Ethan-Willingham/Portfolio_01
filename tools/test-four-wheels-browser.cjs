@@ -151,17 +151,18 @@ async function setup(context, url) {
     check('retry resets penalties and position', (await page.evaluate(() => __cartTest.state())).messes === 0);
     await page.evaluate(() => {
       __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world(),p=w.level.gates[0];
-      Object.assign(w.body,{x:p.x,y:p.y,a:-Math.PI/2,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=-Math.PI/2;q.omega=0;});__cartTest.step(1/120);
+      Object.assign(w.body,{x:p.x,y:p.y+CartPhysics.BODY.cartX+CartPhysics.BODY.halfLength,a:-Math.PI/2,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=-Math.PI/2;q.omega=0;});__cartTest.step(1/120);
     });
-    check('putting the cart center in a circle does not clear the shopper checkpoint', (await page.evaluate(()=>__cartTest.state())).gate===0);
+    check('basket contact alone does not clear the shopper checkpoint', (await page.evaluate(()=>__cartTest.state())).gate===0);
     await page.evaluate(() => {
-      const w=__cartTest.world(),p=w.level.gates[0];w.body.y=p.y+CartPhysics.BODY.personX-(CartPhysics.CHECKPOINT_RADIUS-CartPhysics.BODY.personRadius+1);__cartTest.step(1/120);
+      const w=__cartTest.world(),p=w.level.gates[0];w.body.y=p.y+CartPhysics.BODY.personX-(CartPhysics.CHECKPOINT_RADIUS+CartPhysics.BODY.personRadius+.5);__cartTest.step(1/120);
     });
-    check('the checkpoint stays active while part of the shopper is outside its circle', (await page.evaluate(()=>__cartTest.state())).gate===0);
-    await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-partial.png')});
-    await page.evaluate(() => {__cartTest.world().body.y+=1;__cartTest.step(1/120);});
-    check('the circle clears when the whole shopper fits, with the cart still outside', await page.evaluate(()=>{
-      const w=__cartTest.world(),p=w.level.gates[0];return w.gate===1&&Math.hypot(w.body.x-p.x,w.body.y-p.y)>CartPhysics.CHECKPOINT_RADIUS;
+    check('a gap before the small contact circle keeps the checkpoint active', (await page.evaluate(()=>__cartTest.state())).gate===0);
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-before-contact.png')});
+    await page.evaluate(() => {__cartTest.world().body.y+=.6;__cartTest.step(1/120);});
+    check('a tiny shopper overlap clears the checkpoint while most of the circle is outside', await page.evaluate(()=>{
+      const w=__cartTest.world(),p=w.level.gates[0],person=CartPhysics.point(w.body,CartPhysics.BODY.personX,0);
+      return w.gate===1&&CartPhysics.BODY.personRadius===4&&Math.hypot(person.x-p.x,person.y-p.y)>CartPhysics.CHECKPOINT_RADIUS;
     }));
     await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-cleared.png')});
     await page.locator('#cart-courses').click();

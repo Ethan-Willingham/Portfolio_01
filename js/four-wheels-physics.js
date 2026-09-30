@@ -10,7 +10,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const wrap = a => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
   const cross = (x, y, u, v) => x * v - y * u;
-  const BODY = Object.freeze({ cartX: 14, halfLength: 17, halfWidth: 11, personX: -16, personRadius: 7, inertia: 470 });
+  const BODY = Object.freeze({ cartX: 14, halfLength: 17, halfWidth: 11, personX: -16, personRadius: 4, inertia: 470 });
   const WHEELS = [[1, -12], [27, -12], [1, 12], [27, 12]];
   const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
   const ROOM = Object.freeze({ left: 8, right: 472, top: 8, bottom: 292, width: 480, height: 300 });
@@ -21,9 +21,9 @@
     return { x: body.x + x * c - y * s, y: body.y + x * s + y * c };
   }
 
-  function shopperInCheckpoint(body, checkpoint) {
+  function shopperTouchesCheckpoint(body, checkpoint) {
     const person = point(body, BODY.personX, 0);
-    return Math.hypot(person.x - checkpoint.x, person.y - checkpoint.y) + BODY.personRadius <= CHECKPOINT_RADIUS + 1e-9;
+    return Math.hypot(person.x - checkpoint.x, person.y - checkpoint.y) <= CHECKPOINT_RADIUS + BODY.personRadius + 1e-9;
   }
 
   function advanceGait(gait, body, dt, input = {}) {
@@ -411,7 +411,7 @@
       }
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
-      if (target && shopperInCheckpoint(b, target)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
+      if (target && shopperTouchesCheckpoint(b, target)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
       const e = this.exit, shape = footprint(b, this.wheels), tangent = e.vertical ? b.y : b.x;
       const distance = p => (p.x - e.x) * e.nx + (p.y - e.y) * e.ny;
       this.exiting = this.exitOpen && tangent >= e.low && tangent <= e.high && shape.some(p => distance(p) > 0);
@@ -428,7 +428,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, shopperInCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
+  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, shopperTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -121,7 +121,7 @@
     const cx = Math.round(x), cy = Math.round(y);
     g.fillStyle = color;
     // Scan the two sides of a circular band on the native pixel grid. Its
-    // inner edge is the exact radius used by the checkpoint containment test.
+    // Checkpoint outlines put their inner edge on the capture radius.
     for (let y = -size; y < size; y++) {
       const yy = (y + .5) ** 2;
       if (yy >= outer * outer) continue;
@@ -433,10 +433,10 @@
     const target = w.level.gates[w.gate];
     if (!target) return;
     const person = point(w.body, BODY.personX, 0);
-    if (Math.hypot(person.x - target.x, person.y - target.y) > CHECKPOINT_RADIUS + BODY.personRadius + 3) return;
-    // Show the shopper's ground footprint while entering the active circle.
+    if (Math.hypot(person.x - target.x, person.y - target.y) > CHECKPOINT_RADIUS + BODY.personRadius + 12) return;
+    // Keep the contact outline inside its physical edge while approaching.
     g.save(); g.globalAlpha = .8;
-    ring(g, person.x, person.y, BODY.personRadius, P.cream);
+    ring(g, person.x, person.y, BODY.personRadius - 1, P.cream);
     g.restore();
   }
 
@@ -556,7 +556,7 @@
     const target = world.level.gates[world.gate];
     if (phase === 'won') $('route').textContent = 'Checkout complete';
     else if (phase === 'lost') $('route').textContent = 'Time is up. Give it another go.';
-    else if (target) $('route').textContent = 'Get your whole body inside circle ' + (world.gate + 1) + ' of ' + world.level.gates.length;
+    else if (target) $('route').textContent = 'Touch circle ' + (world.gate + 1) + ' of ' + world.level.gates.length + ' with your small ring';
     else $('route').textContent = world.exiting ? 'Keep rolling until you and the cart are outside' : 'Drive out through the checkout exit';
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
@@ -588,7 +588,7 @@
     }
     $('course-title').textContent = world.level.name;
     $('courses').setAttribute('aria-label', 'Choose a course, currently ' + world.level.name);
-    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Get your whole body inside each numbered circle to open checkout. Then drive out of the store.' : world.level.tip, 'Let\'s roll', null, true);
+    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Touch each numbered checkpoint with the small circle around you. Then drive out through checkout.' : world.level.tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
   function run() {

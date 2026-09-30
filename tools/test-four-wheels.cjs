@@ -1,6 +1,6 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, CHECKPOINT_RADIUS, shopperInCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, shopperTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const dt = 1 / 120;
 const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], exit: { side: 'right', center: 150, width: 80 } };
@@ -171,25 +171,30 @@ test('the red contact identifies a protruding caster or the shopper', () => {
   tire.wheels.forEach(q => { q.a = Math.PI / 2; }); tire.step(dt);
   assert.ok(tire.boundaryContacts.some(c => c.part === 'wheel:0' && c.side === 'top'));
   assert.ok(tire.boundaryContacts.every(c => c.part.startsWith('wheel:')), 'the basket and shopper have not touched');
-  const shopper = new World({ ...empty, start: { x: 31, y: 150, a: 0 } }); shopper.step(dt);
+  const shopper = new World({ ...empty, start: { x: ROOM.left - BODY.personX + BODY.personRadius, y: 150, a: 0 } }); shopper.step(dt);
   assert.ok(shopper.boundaryContacts.some(c => c.part === 'shopper' && c.side === 'left'));
 });
 
-test('a checkpoint requires the whole shopper circle, rather than the cart center', () => {
+test('a checkpoint clears on first contact from the small shopper circle', () => {
   const target = {x:230,y:150};
-  const fixture = {...empty, gates:[target]};
+  const fixture = {...empty, gates:[target], start:{x:200,y:150,a:0}};
   const w = new World(fixture);
-  w.step(dt); assert.equal(w.gate,0,'the cart center alone cannot clear a checkpoint');
-  w.body.x = target.x - BODY.personX + CHECKPOINT_RADIUS - BODY.personRadius + .05;
-  w.step(dt); assert.equal(w.gate,0,'a shopper partly outside the ring cannot clear it');
+  assert.equal(BODY.personRadius,4,'the shopper has a smaller contact circle');
+  w.step(dt); assert.equal(w.gate,0,'basket contact alone cannot clear a checkpoint');
+  w.body.x = target.x - BODY.personX + CHECKPOINT_RADIUS + BODY.personRadius + .05;
+  w.step(dt); assert.equal(w.gate,0,'a real gap must keep the checkpoint active');
   w.body.x -= .05;
-  w.step(dt); assert.equal(w.gate,1,'the whole shopper may touch the inside edge of the circle');
+  w.step(dt); assert.equal(w.gate,1,'the first touching point clears the checkpoint');
   assert.ok(w.body.x > target.x + CHECKPOINT_RADIUS, 'the cart can remain outside the circle');
   assert.equal(w.events.filter(e=>e.type==='gate').length,1);
   for (const a of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]) {
-    const body = {x:target.x-Math.cos(a)*BODY.personX,y:target.y-Math.sin(a)*BODY.personX,a};
-    assert.ok(shopperInCheckpoint(body,target),'body containment follows the shopper at every heading');
+    const body = {x:target.x+CHECKPOINT_RADIUS+BODY.personRadius-.05-Math.cos(a)*BODY.personX,y:target.y-Math.sin(a)*BODY.personX,a};
+    assert.ok(shopperTouchesCheckpoint(body,target),'a tiny overlap counts at every heading');
+    body.x += .1; assert.ok(!shopperTouchesCheckpoint(body,target),'a gap cannot count at any heading');
   }
+  const partial = new World(fixture);
+  partial.body.x = target.x - BODY.personX + CHECKPOINT_RADIUS + BODY.personRadius - .1;
+  partial.step(dt); assert.equal(partial.gate,1,'a small sliver inside is enough, while the center remains outside');
 });
 
 test('shopper checkpoints count in route order and open checkout after the last one', () => {
@@ -259,6 +264,18 @@ test('all six courses can be driven through before their deadlines', () => {
   function drive(w, target) {
     const b = w.body;
     if (target === w.level.gates[w.gate]) {
+      // Near a checkpoint, account for the shopper moving around the handle.
+      // This keeps the pilot stable when a small overlap clears a circle early.
+      const person = point(b, BODY.personX, 0), dx = target.x - person.x, dy = target.y - person.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 55) {
+        const c = Math.cos(b.a), s = Math.sin(b.a), speed = Math.min(60, distance * 2);
+        const vx = b.vx - b.omega * BODY.personX * s, vy = b.vy + b.omega * BODY.personX * c;
+        const ax = ((distance ? dx / distance * speed : 0) - vx) * 3;
+        const ay = ((distance ? dy / distance * speed : 0) - vy) * 3;
+        const along = ax * c + ay * s + b.omega * b.omega * BODY.personX, lateral = -ax * s + ay * c;
+        return {push:clamp(along / (along > 0 ? 78 : 50), -1, 1), turn:clamp((lateral / BODY.personX + 4.2 * b.omega) / 8.8, -1, 1)};
+      }
       const previous = w.gate ? w.level.gates[w.gate - 1] : w.level.start;
       const approach = Math.atan2(target.y - previous.y, target.x - previous.x);
       target = {x:target.x - BODY.personX * Math.cos(approach), y:target.y - BODY.personX * Math.sin(approach)};
