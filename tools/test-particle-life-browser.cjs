@@ -1,10 +1,14 @@
-// NODE_PATH=/path/to/node_modules node tools/test-particle-life-browser.cjs
+// NODE_PATH=/path/to/node_modules HEADFUL=1 node tools/test-particle-life-browser.cjs
+// HEADFUL=1 also checks this in a real browser window.
+// NATIVE_FOCUS=1 PAUSE_ONLY=1 bypasses Playwright's focus emulation for tab tests.
 // Uses an owned Chrome for Testing process, closed in finally. Private hooks
 // and COPY_SRC usage are injected by this server only, never shipped to readers.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
+const os = require('node:os');
+const {spawn} = require('node:child_process');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const dump = process.env.DUMP || '/tmp/particle-life-qa';
@@ -21,6 +25,11 @@ const server = http.createServer((req, res) => {
         .replaceAll('requestAnimationFrame(frame);', 'window.__plRaf = requestAnimationFrame(frame);')
         .replace("    context = canvas.getContext('webgpu');", `
           device.addEventListener('uncapturederror', e => console.error('GPU '+e.error.message));
+          var submit=device.queue.submit.bind(device.queue);
+          device.queue.submit=function(commands) {
+            window.__plSubmits=(window.__plSubmits||0)+1;
+            return submit(commands);
+          };
           var createShader = device.createShaderModule.bind(device);
           device.createShaderModule = function(desc) {
             var mod=createShader(desc);
@@ -30,13 +39,19 @@ const server = http.createServer((req, res) => {
             return mod;
           };
           context = canvas.getContext('webgpu');`)
-        .replaceAll('GPUBufferUsage.VERTEX', '(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_SRC)');
+        .replaceAll('GPUBufferUsage.VERTEX', '(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_SRC)')
+        .replace('function frame(t) {', 'function frame(t) { (window.__plFrameTimes ||= []).push(t);')
+        .replace('if (prevTime === 0) dt = 1 / 60;', 'if (prevTime === 0) { dt = 1 / 60; window.__plFirstDt=dt; }');
       const end = s.lastIndexOf('})();');
       s = s.slice(0, end) + `
         window.__plTest = {
           state: () => ({ pointer: { ...simPointer }, world: { ...simWorld }, scale: pointerScaleX,
             palette: speciesColors.slice(0,K), patterns: FIELD_PATTERNS.slice() }),
           config: () => snapshotConfig(),
+          lifecycle: () => ({ pending: frameRequest!==null, ready: animationReady,
+            focused: pageFocused, inView: canvasInView, hidden: document.hidden,
+            time: prevTime, phase: fieldPhase, submitted: window.__plSubmits||0,
+            firstDt: window.__plFirstDt }),
           openingSamples: () => {
             var saved=speciesColors.map(c=>c.slice()), samples=[];
             for(var i=0;i<100;i++) { applyOpeningPalette(); samples.push(speciesColors.slice(0,2)); }
@@ -98,6 +113,7 @@ async function read(p) { const a=await p.evaluate(() => __plTest.read()); return
 async function open(context, url) {
   await context.route('https://www.googletagmanager.com/**', r => r.abort());
   const p = await context.newPage();
+  await p.bringToFront();
   p.on('pageerror', e => errors.push(e.message));
   p.on('console', e => { if (e.type()==='error' && /shader|validation|invalid|GPU|pipeline/i.test(e.text())) errors.push(e.text()); });
   await p.goto(url);
@@ -105,6 +121,109 @@ async function open(context, url) {
   await p.locator('.pl-canvas').scrollIntoViewIfNeeded();
   await p.evaluate(() => document.fonts.ready);
   return p;
+}
+async function pauseChecks(browser, url, nativeContext) {
+  const context=nativeContext||await browser.newContext({viewport:{width:1440,height:200}});
+  const mobile=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+  // The scroll/resize fallback should also work without IntersectionObserver.
+  await mobile.addInitScript(()=>{window.IntersectionObserver=undefined;});
+  async function idle(p,name) {
+    await p.waitForFunction(()=>!__plTest.lifecycle().pending,{polling:50});
+    await p.waitForTimeout(100);
+    const before=await p.evaluate(()=>__plTest.lifecycle());
+    await p.waitForTimeout(250);
+    const after=await p.evaluate(()=>__plTest.lifecycle());
+    check(name,after.submitted===before.submitted&&after.phase===before.phase&&after.time===0&&!after.pending);
+    return after;
+  }
+  async function active(p,name,phase) {
+    await p.waitForFunction(phase=>__plTest.lifecycle().pending&&__plTest.lifecycle().phase>phase,phase,{polling:50});
+    const life=await p.evaluate(()=>__plTest.lifecycle());
+    check(name,life.firstDt===1/60);
+  }
+  try {
+    await context.route('https://www.googletagmanager.com/**',r=>r.abort());
+    const p=await context.newPage();
+    await p.setViewportSize({width:1440,height:200});
+    await p.bringToFront();
+    const localErrors=[];p.on('pageerror',e=>localErrors.push(e.message));
+    await p.goto(url);
+    await p.waitForFunction(()=>__plTest?.lifecycle().ready,{polling:50});
+    const initial=await idle(p,'an offscreen initial load never starts the GPU frame loop');
+    await p.setViewportSize({width:1440,height:1100});
+    await p.locator('.pl-canvas').scrollIntoViewIfNeeded();
+    await active(p,'scrolling the swarm into view starts it with a fresh clock',initial.phase);
+    let box=await p.locator('.pl-canvas').boundingBox();
+    await p.mouse.move(box.x+box.width/2,box.y+box.height/2);
+    await p.mouse.down();
+    await p.mouse.move(box.x+box.width*.65,box.y+box.height/2);
+    await p.evaluate(()=>window.dispatchEvent(new Event('blur')));
+    const blurred=await idle(p,'losing window focus stops all recurring GPU submissions and field time');
+    check('pausing cancels the active drag and clears its wake',await p.evaluate(()=>{
+      const q=__plTest.state().pointer;return !q.down&&q.id===null&&q.envelope===0&&q.vx===0&&q.vy===0;
+    }));
+    await p.mouse.up();
+    await p.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await active(p,'window focus resumes smoothly from the frozen state',blurred.phase);
+    if(nativeContext) {
+      const away=await context.newPage();
+      await away.goto('about:blank');await away.bringToFront();
+      const background=await idle(p,'switching to another tab stops all recurring GPU submissions');
+      check('the native background tab is hidden',background.hidden);
+      await p.bringToFront();
+      await active(p,'returning to the tab resumes automatically',background.phase);
+      await away.close();
+    } else {
+      // Playwright forces all pages to remain visible and focused. Exercise
+      // the visibility boundary explicitly; native mode verifies real tabs.
+      await p.evaluate(()=>{
+        Object.defineProperty(document,'hidden',{configurable:true,value:true});
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      const hidden=await idle(p,'a hidden tab stops all recurring GPU submissions');
+      await p.evaluate(()=>{
+        delete document.hidden;
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      await active(p,'a visible tab resumes automatically',hidden.phase);
+    }
+    await p.setViewportSize({width:1440,height:200});
+    await p.evaluate(()=>scrollTo(0,0));
+    const outside=await idle(p,'scrolling away stops all recurring GPU submissions');
+    await p.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await idle(p,'focus alone cannot restart an offscreen swarm');
+    await p.setViewportSize({width:1440,height:1100});
+    await p.locator('.pl-canvas').scrollIntoViewIfNeeded();
+    await active(p,'returning to the visible swarm resumes automatically',outside.phase);
+    await p.evaluate(()=>{
+      window.__plFrameTimes=[];
+      for(let i=0;i<20;i++) {
+        window.dispatchEvent(new Event('blur'));
+        window.dispatchEvent(new Event('focus'));
+      }
+    });
+    await p.waitForTimeout(350);
+    const times=await p.evaluate(()=>window.__plFrameTimes);
+    check('repeated focus events keep exactly one animation loop',times.length>5&&new Set(times).size===times.length);
+    await p.locator('.pl-fullscreen').click();
+    await p.waitForTimeout(150);
+    await p.evaluate(()=>window.dispatchEvent(new Event('blur')));
+    const fullscreen=await idle(p,'fullscreen also stops GPU work when the window loses focus');
+    await p.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await active(p,'fullscreen resumes after focus returns',fullscreen.phase);
+    await p.keyboard.press('Escape');
+    const phone=await open(mobile,url);
+    await phone.locator('.pl-canvas').scrollIntoViewIfNeeded();
+    await phone.waitForFunction(()=>__plTest.lifecycle().pending,{polling:50});
+    await phone.locator('.pl-slot-section').scrollIntoViewIfNeeded();
+    const phoneIdle=await idle(phone,'phone scroll fallback stops GPU work when the canvas leaves view');
+    await phone.locator('.pl-canvas').scrollIntoViewIfNeeded();
+    await active(phone,'phone scroll fallback resumes when the canvas returns',phoneIdle.phase);
+    check('lifecycle transitions produce no JavaScript errors',localErrors.length===0&&errors.length===0);
+  } finally {
+    await context.close();
+    await mobile.close();
+  }
 }
 async function saveChecks(browser, url) {
   const context=await browser.newContext({viewport:{width:1440,height:1100}});
@@ -239,12 +358,37 @@ async function saveChecks(browser, url) {
     await mobile.close();
   }
 }
-let browser;
+let browser, browserChild, browserProfile;
 (async () => {
   try {
     await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
     const url='http://127.0.0.1:'+server.address().port+'/particle-life.html';
-    browser=await chromium.launch({headless:true,args:['--enable-unsafe-webgpu','--use-angle=metal'],executablePath:process.env.PL_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing'});
+    const executable=process.env.PL_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing';
+    let nativeContext;
+    if(process.env.NATIVE_FOCUS) {
+      browserProfile=fs.mkdtempSync(path.join(os.tmpdir(),'pl-browser-'));
+      const args=['--remote-debugging-port=0','--user-data-dir='+browserProfile,
+        '--no-first-run','--no-default-browser-check','--enable-unsafe-webgpu','--use-angle=metal'];
+      if(!process.env.HEADFUL) args.push('--headless=new');
+      browserChild=spawn(executable,args,{stdio:['ignore','ignore','pipe']});
+      const endpoint=await new Promise((resolve,reject)=>{
+        let output='';
+        const timer=setTimeout(()=>reject(new Error('Testing browser did not start')),30000);
+        browserChild.stderr.on('data',chunk=>{
+          output+=chunk;const match=output.match(/DevTools listening on (ws:\/\/[^\s]+)/);
+          if(match) {clearTimeout(timer);resolve(match[1]);}
+        });
+        browserChild.once('error',error=>{clearTimeout(timer);reject(error);});
+        browserChild.once('exit',code=>{clearTimeout(timer);reject(new Error('Testing browser exited: '+code));});
+      });
+      // noDefaults leaves the default context's native focus/visibility intact.
+      browser=await chromium.connectOverCDP(endpoint,{noDefaults:true});
+      nativeContext=browser.contexts()[0];
+    } else {
+      browser=await chromium.launch({headless:!process.env.HEADFUL,args:['--enable-unsafe-webgpu','--use-angle=metal'],executablePath:executable});
+    }
+    await pauseChecks(browser,url,nativeContext);
+    if(process.env.PAUSE_ONLY) { console.log('Screenshots: '+dump);return; }
     await saveChecks(browser,url);
     if(process.env.SAVES_ONLY) { console.log('Screenshots: '+dump);return; }
     const context=await browser.newContext({viewport:{width:1440,height:1100}});
@@ -314,6 +458,7 @@ let browser;
     await p.mouse.move(cx,cy); await p.mouse.down();
     await p.evaluate(()=>window.dispatchEvent(new Event('blur')));
     check('losing app focus ends the gesture',!(await state(p)).pointer.down);
+    await p.evaluate(()=>{window.dispatchEvent(new Event('focus'));__plTest.stop();});
     await p.mouse.up();
     const probe=[];
     for(let yy=.15;yy<.9;yy+=.14)for(let xx=.15;xx<.9;xx+=.14)probe.push([a.world.w*xx,a.world.h*yy]);
@@ -385,6 +530,13 @@ let browser;
     console.log('Screenshots: '+dump);
   } finally {
     await browser?.close();
+    if(browserChild&&browserChild.exitCode===null&&browserChild.signalCode===null) {
+      const exited=new Promise(resolve=>browserChild.once('exit',resolve));
+      browserChild.kill('SIGTERM');
+      const killTimer=setTimeout(()=>browserChild.kill('SIGKILL'),5000);
+      await exited;clearTimeout(killTimer);
+    }
+    if(browserProfile) fs.rmSync(browserProfile,{recursive:true,force:true});
     await new Promise(resolve=>server.close(resolve));
   }
 })().catch(e=>{console.error(e,[...new Set(errors)].slice(0,8));process.exitCode=1;});

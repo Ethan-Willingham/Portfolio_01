@@ -1641,7 +1641,7 @@
     if (tsSupported) setupPerf();
 
     track('simulation_loaded');
-    requestAnimationFrame(frame);
+    setupAnimationLifecycle();
   }
 
   /* ---------- Canvas sizing ----------
@@ -2177,10 +2177,94 @@
     });
   }
 
-  /* ---------- Frame ---------- */
+  /* ---------- Run only while the reader can see the swarm ---------- */
   var prevTime = 0, accumFps = 0, accumFrames = 0;
+  var frameRequest = null;
+  var animationReady = false;
+  var pageFocused = false;
+  var canvasInView = false;
+
+  function canAnimate() {
+    return animationReady && pageFocused && !document.hidden && canvasInView;
+  }
+
+  function syncAnimation() {
+    if (!canAnimate()) {
+      if (frameRequest !== null) cancelAnimationFrame(frameRequest);
+      frameRequest = null;
+      // Resume from the same state, without advancing through time spent away.
+      prevTime = 0;
+      accumFps = 0;
+      accumFrames = 0;
+      // An interrupted drag must not leave a brush or wake running on return.
+      var pointerId = simPointer.id;
+      simPointer.down = false;
+      simPointer.id = null;
+      simPointer.hasPos = false;
+      simPointer.envelope = 0;
+      simPointer.vx = simPointer.vy = 0;
+      if (pointerId !== null) {
+        try { canvas.releasePointerCapture(pointerId); } catch (e) {}
+      }
+      if (fpsEl) fpsEl.textContent = 'Paused';
+      return;
+    }
+    // Multiple focus, visibility and intersection events still start one loop.
+    if (frameRequest === null) {
+      if (fpsEl) fpsEl.textContent = '';
+      frameRequest = requestAnimationFrame(frame);
+    }
+  }
+
+  function updateAnimationViewport() {
+    var r = canvas.getBoundingClientRect();
+    var w = Math.max(0, Math.min(r.right, window.innerWidth) - Math.max(r.left, 0));
+    var h = Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+    canvasInView = r.width > 0 && r.height > 0 && w * h / (r.width * r.height) >= 0.01;
+    syncAnimation();
+  }
+
+  function setupAnimationLifecycle() {
+    animationReady = true;
+    pageFocused = document.hasFocus();
+    updateAnimationViewport();
+    window.addEventListener('blur', function () {
+      pageFocused = false;
+      syncAnimation();
+    });
+    window.addEventListener('focus', function () {
+      pageFocused = true;
+      updateAnimationViewport();
+    });
+    document.addEventListener('visibilitychange', function () {
+      pageFocused = document.hasFocus();
+      updateAnimationViewport();
+    });
+    window.addEventListener('pagehide', function () {
+      pageFocused = false;
+      syncAnimation();
+    });
+    window.addEventListener('pageshow', function () {
+      pageFocused = document.hasFocus();
+      updateAnimationViewport();
+    });
+    if (window.IntersectionObserver) {
+      var observer = new IntersectionObserver(function (entries) {
+        canvasInView = entries[0].isIntersecting && entries[0].intersectionRatio >= 0.01;
+        syncAnimation();
+      }, { threshold: 0.01 });
+      observer.observe(canvas);
+    } else {
+      window.addEventListener('scroll', updateAnimationViewport, { passive: true });
+      window.addEventListener('resize', updateAnimationViewport);
+    }
+  }
+
+  /* ---------- Frame ---------- */
 
   function frame(t) {
+    frameRequest = null;
+    if (!canAnimate()) { syncAnimation(); return; }
     var dt = Math.min(0.033, Math.max(0.001, (t - prevTime) / 1000));
     if (prevTime === 0) dt = 1 / 60;
     prevTime = t;
@@ -2315,7 +2399,7 @@
       if (tsFrameCount >= 20) { tsFrameCount = 0; readPerfTimings(); }
     }
 
-    requestAnimationFrame(frame);
+    frameRequest = requestAnimationFrame(frame);
   }
 
   /* ---------- GPU timing setup + readback (only when tsSupported) ---------- */
