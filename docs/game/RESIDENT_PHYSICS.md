@@ -615,3 +615,40 @@ private grid-membership metadata lane. Readback mutation tests pass 1,005 cases
 and 309,450 assertions. Contact and jet regressions conserve every emitted grain,
 retain zero physical CPU transfers, and pass settling and lofting gates.
 See `tools/perf/SLIME_SNOW.md` for the continuous capture commands.
+
+### v28.126 ordinary water collision cost
+
+An owner recording on AC power retained about 19 to 23 FPS in the worst town
+stretch and recovered to about 120 FPS after flying far left. Ordinary water
+collision averaged 20.85 ms per sampled encoder in the worst five-second town
+window, versus 0.066 ms far left. Water and snow remained present away from town;
+all five residents became frozen. Sampled snow contact cost per pass stayed
+similar. These encoder timings omit composition and queue waiting.
+
+Ordinary water now queues only particles whose nearest resident-union exit
+fails, then finishes those particles in a compact GPU pass. This keeps the
+expensive escape search out of the common terrain kernel. Candidates that
+cannot beat the current valid winner skip containment and clearance checks,
+using the complete original comparator and visitation order. The water
+deadband, response, pressure, terrain rollback, bounds, bowl collision, and
+velocity limits retain their original calculations. Snow shader bytes and
+protected circular slimes are unchanged. Both water and snow finish their
+queued work before reusing the same buffers.
+
+`node tools/test-water-collision-gpu.mjs` passes 45 GPU cases and 267 checks,
+including exact float words, flags, pressure, repeated calls, moving and
+concave boundaries, blocked exits, tail protection, and water to snow to water
+in one encoder. `BENCH=1` measures the production kernels without shader test
+instrumentation, reseeding identical particle inputs for each dispatch. On
+Apple M1 Pro, median collision time falls from 7.15 to 3.76 ms for the dense
+floor case and 7.14 to 3.75 ms for the bowl case. Scattered-contact cases improve
+by 1.6 to 2.2 times; the empty-guest case adds about 0.013 ms. These are fixed
+GPU workloads, not ordinary-game FPS measurements.
+
+A separate 60-second ordinary boot used the five natural starting residents,
+snow, stock smoke, native animation callbacks, and the owner's recorded
+keyboard and pointer controls. No residents were respawned or repositioned.
+It averaged 59.6 callbacks per second; the lowest full-second bin was 46.0,
+with no browser or shader errors. The controls do not reproduce identical
+physics trajectories, and this test browser does not establish the owner's
+120 Hz presentation rate. Owner play remains the final performance check.

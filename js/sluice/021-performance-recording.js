@@ -44,7 +44,7 @@
       residentPoints: points, softBodies: jelloBodies.length, slimes: bodies,
       outerTicks: jelloRecordedOuterTicks, microsteps: jelloRecordedMicrosteps,
       contacts: jelloRecordedMicrosteps ? jelloContactsThisFrame : 0, terrainRebuilds: terrainChunkRebuildsThisFrame,
-      readbackAgeMs: gpu && gpu.getReadbackAge ? gpu.getReadbackAge() : null,
+      readbackAgeMs: gpu && gpu.getReadbackAge ? gpu.getReadbackAge() * 1000 : null,
       liquidAwake: gpu ? gpu.awakeCount : null, liquidSleeping: gpu ? gpu.sleepingCount : null,
       gpuSimulation: !!(gpu && gpu.simActive),
       weather: { snow: worldSnowEnabled, rain: worldRainEnabled, precipitation: weather.pcp,
@@ -240,7 +240,7 @@
     row[offset + 20] = snow.parked.length / 4; row[offset + 21] = residents; row[offset + 22] = awake;
     row[offset + 23] = view ? 0 : jelloRecordedOuterTicks; row[offset + 24] = view ? 0 : jelloRecordedMicrosteps;
     row[offset + 25] = !view && jelloRecordedMicrosteps ? jelloContactsThisFrame : 0; row[offset + 26] = terrainChunkRebuildsThisFrame;
-    row[offset + 27] = liquidWGPU && liquidWGPU.getReadbackAge ? liquidWGPU.getReadbackAge() : -1;
+    row[offset + 27] = liquidWGPU && liquidWGPU.getReadbackAge ? liquidWGPU.getReadbackAge() * 1000 : -1;
     row[offset + 28] = inputMask;
     row[offset + 29] = view || 0;
     for (var name in perfBucketsRaw) {

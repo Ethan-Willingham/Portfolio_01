@@ -7319,6 +7319,48 @@ fn snowGuestPrimary(@builtin(global_invocation_id) gid:vec3<u32>) {
 }
 `;
 
+  // Ordinary liquid keeps its original terrain path and response. Only a
+  // failed primary guest exit enters the compact search. Derive this
+  // after snow assembly so the snow shader remains byte-identical.
+  var WGSL_LIQUID_PRIMARY = WGSL_COLLIDE.slice(snowUnionStart, snowSearchStart);
+  var WGSL_LIQUID_RESPONSE = WGSL_COLLIDE.slice(snowResponseStart, snowUnionEnd);
+  var WGSL_LIQUID_FINALIZE = WGSL_COLLIDE.slice(snowUnionEnd, WGSL_COLLIDE.lastIndexOf('}'));
+  var WGSL_LIQUID_FALLBACK_QUEUE = WGSL_SNOW_COOPERATIVE.slice(0, WGSL_SNOW_COOPERATIVE.indexOf('struct SnowExitCandidate'))
+    .replace(/^@group\(0\) @binding\((10|11|12)\)[^\n]*\n/gm, '')
+    .replace(/^  atomicStore\(&snowGuest[^\n]*\n/gm, '')
+    .replaceAll('snow', 'liquid')
+    .replaceAll('Snow', 'Liquid')
+    .replace('atomicStore(&liquidDispatchArgs[1], 0u);', 'atomicStore(&liquidDispatchArgs[1], 1u);');
+  var WGSL_LIQUID_SEARCH = WGSL_SNOW_SEARCH
+    .replace("          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n          let fvx = pa.z + (pb.z - pa.z) * et;\n          let fvy = pa.w + (pb.w - pa.w) * et;\n", "          let fvx = pa.z + (pb.z - pa.z) * et;\n          let fvy = pa.w + (pb.w - pa.w) * et;\n          if (!guestCandidateWins(dd2, qx, qy, fvx, fvy,\n                                  uD2, uPX, uPY, uFVX, uFVY)) { continue; }\n          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n")
+    .replace("          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n          let fvx = (pa.z + pb.z) * 0.5;\n          let fvy = (pa.w + pb.w) * 0.5;\n", "          let fvx = (pa.z + pb.z) * 0.5;\n          let fvy = (pa.w + pb.w) * 0.5;\n          if (!guestCandidateWins(dd2, mx, my, fvx, fvy,\n                                  oD2, gPX, gPY, gFVX, gFVY)) { continue; }\n          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n");
+  var WGSL_LIQUID_COLLIDE = WGSL_LIQUID_FALLBACK_QUEUE + WGSL_COLLIDE.replace(WGSL_SNOW_SEARCH, /* wgsl */ `
+    if (!canProject) {
+      // Terrain has already updated aux and flags. Preserve those writes,
+      // then defer guest response, bounds and bowl projection together.
+      pos[i] = vec4<f32>(x, y, vx, vy);
+      let pending = atomicAdd(&liquidFallbackCount[0], 1u);
+      liquidFallbackIndices[pending] = i;
+      atomicMax(&liquidDispatchArgs[0], pending / 32u + 1u);
+      return;
+    }
+
+`) + /* wgsl */ `
+// Compact fallback: one queued particle per lane, original candidate order.
+@compute @workgroup_size(32)
+fn liquidCompactFallback(@builtin(global_invocation_id) gid : vec3<u32>) {
+  if (gid.x >= atomicLoad(&liquidFallbackCount[0])) { return; }
+  let i = liquidFallbackIndices[gid.x];
+  let fl = flag[i];
+  let state = pos[i];
+  var x=state.x;var y=state.y;var vx=state.z;var vy=state.w;
+  let r = COLLIDE_RADIUS;
+  let material = ((fl & 3u) | ((fl >> 4u) & 4u));
+  let bounce = select(select(sp.coll.x, sp.coll.y, material == 1u), f32(${LIQUID_SNOW_BOUNCE}), material == 5u);
+` + WGSL_LIQUID_PRIMARY + WGSL_LIQUID_SEARCH + WGSL_LIQUID_RESPONSE + WGSL_LIQUID_FINALIZE + /* wgsl */ `
+}
+`;
+
   /* ---- WGSL — min-separation (anti-clump) pass (v24.185) --------------
    * Runs once per substep right after buildGrid (fresh count-sort grid). For
    * each OVER-DENSE particle (a knot), walk its 3x3 grid cells and push it away
@@ -9225,25 +9267,28 @@ struct P2GParams {
       ];
     var bgl = dev.createBindGroupLayout({label:'liquid.collideBGL',entries:bglEntries});
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
+    var liquidEntries = bglEntries.concat([{binding:9,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}}]);
+    var liquidBGL = dev.createBindGroupLayout({label:'liquid.primaryBGL',entries:liquidEntries});
+    var liquidLayout = dev.createPipelineLayout({bindGroupLayouts:[liquidBGL]});
+    var liquidModule = dev.createShaderModule({code:WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+
+      WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_LIQUID_COLLIDE});
     instance.collidePipe = {
       collide: dev.createComputePipeline({
         label: 'liquid.collideMove',
-        layout: layout,
+        layout: liquidLayout,
         compute: {
           // Stage 8 — WGSL_GAME_PARAMS prepended: the collide prelude's
           // binding-5 decl references the GameParams struct, and the
           // miner test in WGSL_COLLIDE reads its player lane + the miner
           // silhouette consts. v14.26 — the SimParams struct + its binding
           // (6) so WGSL_COLLIDE can read the live per-fluid restitution.
-          module: dev.createShaderModule({
-            code: WGSL_GAME_PARAMS + WGSL_COLLIDE_PRELUDE +
-                  WGSL_GUEST_GEOMETRY +
-                  WGSL_SIM_PARAMS + simBind(6) + WGSL_COLLIDE
-          }),
+          module: liquidModule,
           entryPoint: 'main'
         }
       })
     };
+    instance.collidePipe.liquidResetFallback = dev.createComputePipeline({label:'liquid.resetFallback',layout:liquidLayout,compute:{module:liquidModule,entryPoint:'resetLiquidFallback'}});
+    instance.collidePipe.liquidFallback = dev.createComputePipeline({label:'liquid.fallback',layout:layout,compute:{module:liquidModule,entryPoint:'liquidCompactFallback'}});
     var snowEntries = bglEntries.slice();
     snowEntries.push({binding:9,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
     snowEntries.push({binding:10,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}},{binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
@@ -9275,6 +9320,20 @@ struct P2GParams {
         ]
       }));
     }
+    instance.liquidPrimaryBGs = instance.collideBGs.map(function(bg,slot){
+      return dev.createBindGroup({label:'liquid.primaryBG.'+slot,layout:liquidBGL,entries:[
+        {binding:0,resource:{buffer:instance.paramsBuf}},
+        {binding:1,resource:{buffer:instance.buf.pos}},
+        {binding:2,resource:{buffer:instance.buf.aux}},
+        {binding:3,resource:{buffer:instance.buf.flag}},
+        {binding:4,resource:{buffer:instance.buf.terrainMask}},
+        {binding:5,resource:{buffer:instance.gameParamsBufs[slot]}},
+        {binding:6,resource:{buffer:instance.simParamsBuf}},
+        {binding:7,resource:{buffer:instance.buf.snowFallbackCount}},
+        {binding:8,resource:{buffer:instance.buf.snowFallbackIndices}},
+        {binding:9,resource:{buffer:instance.buf.snowFallbackDispatch}}
+      ]});
+    });
     instance.snowPrimaryBGs = instance.collideBGs.map(function(bg,slot){
       var entries = [
         {binding:0,resource:{buffer:instance.paramsBuf}},
@@ -9397,11 +9456,9 @@ struct P2GParams {
     var enc = liquidEncoder(instance, 'liquid.runCollide');
     var cp = grainPass || enc.beginComputePass({ label: 'liquid.collide' });
     var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
-    cp.setBindGroup(0, snowOnly ? instance.snowPrimaryBGs[substepSlot | 0] : collideBG || instance.collideBG);
-    if (snowOnly) {
-      cp.setPipeline(instance.collidePipe.snowResetFallback);
-      cp.dispatchWorkgroups(1);
-    }
+    cp.setBindGroup(0, snowOnly ? instance.snowPrimaryBGs[substepSlot | 0] : instance.liquidPrimaryBGs[substepSlot | 0] || instance.liquidPrimaryBGs[0]);
+    cp.setPipeline(snowOnly ? instance.collidePipe.snowResetFallback : instance.collidePipe.liquidResetFallback);
+    cp.dispatchWorkgroups(1);
     cp.setPipeline(snowOnly ? instance.collidePipe.snow : instance.collidePipe.collide);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     cp.end();
@@ -9421,6 +9478,15 @@ struct P2GParams {
         cp.setPipeline(instance.snowGrainPipe.trackMotion);cp.setBindGroup(0,instance.snowGrainBG);
         cp.dispatchWorkgroups(Math.ceil(count/256));
       }
+      cp.end();
+    }
+    if (!snowOnly) {
+      // Finish every queued liquid before snow or the next G2P stage can
+      // reuse the queue and terrain-resolved particle state.
+      cp = enc.beginComputePass({label:'liquid.fallback'});
+      cp.setPipeline(instance.collidePipe.liquidFallback);
+      cp.setBindGroup(0,collideBG || instance.collideBG);
+      cp.dispatchWorkgroupsIndirect(instance.buf.snowFallbackDispatch,0);
       cp.end();
     }
     liquidSubmit(instance, enc);

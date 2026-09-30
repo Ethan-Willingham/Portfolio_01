@@ -18,6 +18,11 @@ types, settings, frame pacing, and the largest CPU buckets. The latest existing
 save is included as context without advancing or rewriting the save slots.
 It can precede the capture; this is not deterministic replay.
 
+`readbackAgeMs` measures elapsed simulation time since the applied liquid
+mirror. Since v28.126 it is converted to milliseconds in both packed frames
+and snapshots. In v28.124 and v28.125 exports, that field contains seconds
+despite its name; multiply those older values by 1,000 when analyzing them.
+
 On supported WebGPU devices, timestamp queries sample up to one command encoder
 per label per second. They time actual compute/render passes without waiting
 for the queue. Four pending samples and 512 passes per sample bound the work.

@@ -13,7 +13,8 @@ assert(!path.resolve(out).startsWith(root + path.sep)); fs.mkdirSync(out, { recu
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'sluice-record-browser-'));
 const port = Number(process.env.PORT || 8894), debugPort = port + 1000;
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.woff2': 'font/woff2' };
-const fixture = `window.__recordTest={ready:function(){return introPhase==='done'&&(!startInPause||bootPauseFired)},
+const fixture = `var recordTestReadbackAge=null;window.__recordTest={ready:function(){return introPhase==='done'&&(!startInPause||bootPauseFired)},
+ ageProbe:function(on){if(on){recordTestReadbackAge=liquidWGPU.getReadbackAge;liquidWGPU.getReadbackAge=function(){return 0.25;};}else{liquidWGPU.getReadbackAge=recordTestReadbackAge;}},
  counter:function(){return saveCounter},seedSave:function(){saveNow('test');saveCounter+=17},state:function(){return {paused:gamePaused,manifest:cargoManifestOpen,ledger:ledgerOpen}},limit:function(n){playPerfLimit=n},
  expire:function(){playPerfTrace.started-=600001;playPerfHeartbeat()},
  summary:function(){return {seconds:playPerfTrace.seconds,events:playPerfTrace.events,
@@ -86,8 +87,12 @@ try {
   assert.equal(await ev('document.getElementById("gm-perf-recorder").hidden'), true, 'Ordinary game hides recorder');
   await ev('__recordTest.seedSave()');
   const counter = await ev('__recordTest.counter()');
+  await ev('__recordTest.ageProbe(true)');
   await tap('F9', 'F9');
   assert.equal(await ev('__sluicePerformance.status().recording'), true);
+  assert.equal(await ev('__sluicePerformance.status().state.readbackAgeMs'), 250, 'Snapshot converts simulation seconds to milliseconds');
+  await delay(100);
+  await ev('__recordTest.ageProbe(false)');
   assert.equal(await ev('__recordTest.counter()'), counter, 'Recording must neither advance nor rewind the save counter');
   await key('D', 'KeyD'); await key(' ', 'Space'); await delay(500);
   await key('D', 'KeyD', false); await key(' ', 'Space', false);
@@ -107,6 +112,7 @@ try {
   const frames = trace.frameChunks.flat(); assert.equal(frames.length, trace.frameCount * trace.stride);
   assert(trace.frameCount >= 1100 && trace.frameChunks.length >= 2, 'Retains every frame across chunk boundary');
   const col = name => trace.columns.indexOf(name), values = name => Array.from({ length: trace.frameCount }, (_, i) => frames[i * trace.stride + col(name)]);
+  assert(values('readbackAgeMs').includes(250), 'Packed native frames convert simulation seconds to milliseconds');
   assert(Math.max(...values('intervalMs')) >= 180, 'Keeps induced hitch');
   assert(values('view').includes(1) && values('view').includes(2), 'Records manifest and ledger frames');
   assert(values('inputMask').some(v => v & 8), 'Shifted D input captured');
