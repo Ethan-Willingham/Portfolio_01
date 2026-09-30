@@ -64,3 +64,25 @@ record movement, inventory pages and a short pause, induces a main-thread
 hitch, saves and parses a trace spanning multiple chunks, checks actual GPU
 timestamps, and exercises both storage and time limits. The browser is closed
 in `finally`. This tests capture correctness; it is not a display-refresh benchmark.
+
+For background performance checks, `node tools/perf/test-ordinary-game.mjs`
+uses an owned headless Chrome for Testing process, native animation callbacks,
+stock smoke, snowfall, and the five natural starting residents. It exports a
+complete trace and ten-second checkpoints without opening a visible window or
+taking the owner's keyboard focus. `INPUT=/absolute/path/recording.json` schedules
+the recording's keyboard events; `NO_POINTER=0` also schedules pointer events.
+The seeded world and timed inputs do not establish deterministic replay or the
+owner's 120 Hz presentation rate. `nopause=1` keeps this background test active;
+it does not change physics. GPU tests should run serially to avoid competing
+with each other for the device.
+
+Since v28.128, add `&perfwater=0&nosave=1` to a fresh game to remove all non-snow
+liquid particles. This includes water, oil, and loose mineral grains. Snow still
+uses its ordinary emission, contacts, resident boundaries, and shared GPU
+infrastructure. The diagnostic requires `nosave=1`; it cannot rewrite a stored
+world and is off in ordinary play. In the background harness, `WATER=0` selects
+this diagnostic and verifies that every retained particle type is snow:
+
+```sh
+DUMP=/tmp/sluice-dry WATER=0 DURATION_MS=90000 node tools/perf/test-ordinary-game.mjs
+```

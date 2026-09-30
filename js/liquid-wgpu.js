@@ -1445,7 +1445,7 @@
     if (enc !== instance.frameEncoder) instance.queue.submit([enc.finish()]);
   }
 
-  function buildGrid(instance, clearPrev) {
+  function buildGrid(instance, clearPrev, snowOnly) {
     if (!instance.gridReady) return;
     var g = instance.grid;
     if (!g || g.cells <= 0) return;
@@ -1493,11 +1493,19 @@
         }
       }
       cpA.setBindGroup(0, instance.bg.grid);
+      if (snowOnly) {
+        cpA.setPipeline(P.resetSnowDispatch);
+        cpA.setBindGroup(0, instance.bg.snowCount);
+        cpA.dispatchWorkgroups(1);
+        cpA.setBindGroup(0, instance.bg.grid);
+      }
       cpA.setPipeline(P.bitmapReset);
       cpA.dispatchWorkgroups(1);
       if (count > 0) {
-        cpA.setPipeline(P.countCellsMark);
+        cpA.setPipeline(snowOnly ? P.countSnowMark : P.countCellsMark);
+        cpA.setBindGroup(0, snowOnly ? instance.bg.snowCount : instance.bg.grid);
         cpA.dispatchWorkgroups(partGroupsS);
+        cpA.setBindGroup(0, instance.bg.grid);
       }
       cpA.setPipeline(P.blockCompact);
       cpA.dispatchWorkgroups(1);
@@ -1517,11 +1525,12 @@
       cpS.setPipeline(P.scanAddSparse);
       cpS.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
       if (count > 0) {
-        cpS.setPipeline(P.scatter);
+        cpS.setPipeline(snowOnly ? P.scatterSnow : P.scatter);
         cpS.dispatchWorkgroups(partGroupsS);
       }
       cpS.end();
       liquidSubmit(instance, encS);
+      instance.snowGridOnly = !!snowOnly;
       return;
     }
 
@@ -1533,6 +1542,12 @@
 
     var cp = enc.beginComputePass({ label: 'liquid.grid' });
 
+    if (snowOnly) {
+      cp.setPipeline(P.resetSnowDispatch);
+      cp.setBindGroup(0, instance.bg.snowCount);
+      cp.dispatchWorkgroups(1);
+    }
+
     // 1. clearCells — zero cellCount[0 .. cells).
     cp.setPipeline(P.clearCells);
     cp.setBindGroup(0, instance.bg.grid);
@@ -1540,8 +1555,8 @@
 
     if (count > 0) {
       // 2. countCells — per particle: cellOf + atomicAdd(cellCount).
-      cp.setPipeline(P.countCells);
-      cp.setBindGroup(0, instance.bg.grid);
+      cp.setPipeline(snowOnly ? P.countSnow : P.countCells);
+      cp.setBindGroup(0, snowOnly ? instance.bg.snowCount : instance.bg.grid);
       cp.dispatchWorkgroups(partGroups);
     }
 
@@ -1574,13 +1589,14 @@
       // 4b. scatter — per particle: slot = atomicAdd(cellCursor[cell]);
       //     sortedIdx[slot] = i.
       var cp2 = enc.beginComputePass({ label: 'liquid.scatter' });
-      cp2.setPipeline(P.scatter);
+      cp2.setPipeline(snowOnly ? P.scatterSnow : P.scatter);
       cp2.setBindGroup(0, instance.bg.grid);
       cp2.dispatchWorkgroups(partGroups);
       cp2.end();
     }
 
     liquidSubmit(instance, enc);
+    instance.snowGridOnly = !!snowOnly;
   }
 
   // Debug only: copy a storage buffer back to the CPU via a transient
@@ -3741,6 +3757,22 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   var WGSL_COUNT = countKernel(false);
   var WGSL_COUNT_MARK = countKernel(true);
 
+  // Snow contacts never consume ordinary liquid neighbors. Reuse the same
+  // grid and scans between water steps, with identical snow membership and
+  // cell bounds. A sentinel keeps the shared scatter from including water.
+  function snowCountKernel(mark) {
+    return '@group(0) @binding(11) var<storage, read> snowFlags : array<u32>;\n' +
+      '@group(0) @binding(12) var<storage, read_write> snowDispatch : array<atomic<u32>>;\n' +
+      '@compute @workgroup_size(1) fn resetDispatch() { atomicStore(&snowDispatch[0],0u); atomicStore(&snowDispatch[1],1u); atomicStore(&snowDispatch[2],1u); atomicStore(&snowDispatch[3],0u); }\n' +
+      countKernel(mark).replace('  if (outOfRegion(pos[i].xy)) { return; }',
+        '  if (outOfRegion(pos[i].xy)) { cellOf[i] = 0xffffffffu; return; }').replace('  let cell = flatCell(pos[i].xy);',
+        '  let fl = snowFlags[i];\n' +
+        '  if (((fl & 3u) | ((fl >> 4u) & 4u)) != 5u) { cellOf[i] = 0xffffffffu; return; }\n' +
+        '  let pending = atomicAdd(&snowDispatch[3], 1u);\n' +
+        '  atomicMax(&snowDispatch[0], pending / 256u + 1u);\n' +
+        '  let cell = flatCell(pos[i].xy);');
+  }
+
   /* ---- v15.0 — sparse block bookkeeping kernels ----------------------
    * bitmapReset : ONE workgroup — zero the 256 bitmap words and reset the
    *               blockMeta indirect args to (0, 1, 1, 0).
@@ -4062,6 +4094,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   sortedIdx[slot] = i;
 }
 `;
+
+  var WGSL_SNOW_SCATTER = WGSL_SCATTER.replace('  let cell = cellOf[i];',
+    '  let cell = cellOf[i];\n  if (cell == 0xffffffffu) { return; }');
 
   /* ---- WGSL — P2G particle->grid scatter (Stage 3) -------------------
    * Shared header for the 3 P2G kernels. The Params uniform here adds
@@ -7163,107 +7198,33 @@ fn snowAcceptExit(distance2 : f32, face : vec4<f32>) {
   snowFallbackWork.canProject = 1u;
 }
 `;
-  WGSL_SNOW_COLLIDE = WGSL_SNOW_COOPERATIVE + WGSL_SNOW_COLLIDE.replace(WGSL_SNOW_SEARCH, /* wgsl */ `
+  var WGSL_SNOW_COMPACT_SEARCH = WGSL_SNOW_SEARCH
+    .replace("          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n          let fvx = pa.z + (pb.z - pa.z) * et;\n          let fvy = pa.w + (pb.w - pa.w) * et;\n", "          let fvx = pa.z + (pb.z - pa.z) * et;\n          let fvy = pa.w + (pb.w - pa.w) * et;\n          if (!guestCandidateWins(dd2, qx, qy, fvx, fvy,\n                                  uD2, uPX, uPY, uFVX, uFVY)) { continue; }\n          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n")
+    .replace("          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n          let fvx = (pa.z + pb.z) * 0.5;\n          let fvy = (pa.w + pb.w) * 0.5;\n", "          let fvx = (pa.z + pb.z) * 0.5;\n          let fvy = (pa.w + pb.w) * 0.5;\n          if (!guestCandidateWins(dd2, mx, my, fvx, fvy,\n                                  oD2, gPX, gPY, gFVX, gFVY)) { continue; }\n          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n");
+  // Compact fallback: one queued grain per lane, unchanged candidate order.
+  var WGSL_SNOW_FALLBACK_QUEUE = WGSL_SNOW_COOPERATIVE.slice(0, WGSL_SNOW_COOPERATIVE.indexOf('struct SnowExitCandidate'))
+    .replace('atomicStore(&snowDispatchArgs[1], 0u);', 'atomicStore(&snowDispatchArgs[1], 1u);');
+  WGSL_SNOW_COLLIDE = WGSL_SNOW_FALLBACK_QUEUE + WGSL_SNOW_COLLIDE.replace(WGSL_SNOW_SEARCH, /* wgsl */ `
     if (!canProject) {
-      // Defer final bounds, bowl and flag writes until the rare solver finishes.
       pos[i] = vec4<f32>(x,y,vx,vy);
       aux[i] = vec4<f32>(aux[i].x,support,x,y);
       let pending = atomicAdd(&snowFallbackCount[0], 1u);
       snowFallbackIndices[pending] = i;
-      if (pending < 256u) { atomicAdd(&snowDispatchArgs[0], 1u); }
-      if (pending % 256u == 0u) { atomicAdd(&snowDispatchArgs[1], 1u); }
+      atomicMax(&snowDispatchArgs[0], pending / 32u + 1u);
       return;
     }
 
 `) + /* wgsl */ `
-@compute @workgroup_size(256)
-fn snowFallback(@builtin(workgroup_id) group : vec3<u32>, @builtin(local_invocation_id) local : vec3<u32>) {
-  let lane = local.x;
-  // Two-dimensional arguments cover the full particle capacity without
-  // exceeding the device's workgroup-count limit. The final row can be short.
-  if (lane == 0u) { snowFallbackWork.pendingCount = atomicLoad(&snowFallbackCount[0]); }
-  let pendingCount = workgroupUniformLoad(&snowFallbackWork.pendingCount);
-  let pendingIndex = group.y * 256u + group.x;
-  if (pendingIndex >= pendingCount) { return; }
-  let i = snowFallbackIndices[pendingIndex];
-  if (lane == 0u) {
-    let state = pos[i];
-    snowFallbackWork.origin = state;
-    snowFallbackWork.hasInside = 0u;
-    snowFallbackWork.canProject = 1u;
-    let fl = flag[i];
-    var x=state.x;var y=state.y;var vx=state.z;var vy=state.w;
-    let r = 2.5 / sqrt(3.2) * 0.5;
-` + WGSL_SNOW_PRIMARY + /* wgsl */ `
-      snowFallbackWork.face = vec4<f32>(gPX,gPY,gFVX,gFVY);
-      snowFallbackWork.projection = vec4<f32>(gnx,gny,gtx,gty);
-      snowFallbackWork.distance2 = gD2;
-      snowFallbackWork.depth = gdep;
-      snowFallbackWork.hasInside = 1u;
-      snowFallbackWork.canProject = select(0u,1u,canProject);
-    }
-  }
-  workgroupBarrier();
-  snowExitCandidates[lane] = SnowExitCandidate(vec4<f32>(0.0),0.0,0u);
-  if (snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
-    snowExitCandidates[lane] = snowExitCandidate(lane, false);
-  }
-  workgroupBarrier();
-  if (lane == 0u && snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
-    var uD2 : f32 = 1e9;
-    var uPX : f32 = snowFallbackWork.origin.x;
-    var uPY : f32 = snowFallbackWork.origin.y;
-    var uFVX : f32 = 0.0;
-    var uFVY : f32 = 0.0;
-    for (var candidate : u32 = 0u; candidate < ${GS_MAX_GUESTS * GS_RING}u; candidate = candidate + 1u) {
-      let exit = snowExitCandidates[candidate];
-      if (exit.valid != 0u && guestCandidateWins(exit.distance2,exit.face.x,exit.face.y,exit.face.z,exit.face.w,uD2,uPX,uPY,uFVX,uFVY)) {
-        uD2=exit.distance2;uPX=exit.face.x;uPY=exit.face.y;uFVX=exit.face.z;uFVY=exit.face.w;
-      }
-    }
-    if (uD2 < 1e9) { snowAcceptExit(uD2,vec4<f32>(uPX,uPY,uFVX,uFVY)); }
-  }
-  workgroupBarrier();
-  snowExitCandidates[lane] = SnowExitCandidate(vec4<f32>(0.0),0.0,0u);
-  if (snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
-    snowExitCandidates[lane] = snowExitCandidate(lane, true);
-  }
-  workgroupBarrier();
-  if (lane == 0u) {
-    if (snowFallbackWork.hasInside != 0u && snowFallbackWork.canProject == 0u) {
-      var oD2 : f32 = 1e9;
-      var gPX = snowFallbackWork.face.x;
-      var gPY = snowFallbackWork.face.y;
-      var gFVX = snowFallbackWork.face.z;
-      var gFVY = snowFallbackWork.face.w;
-      for (var candidate : u32 = 0u; candidate < ${GS_MAX_GUESTS * GS_RING}u; candidate = candidate + 1u) {
-        let exit = snowExitCandidates[candidate];
-        if (exit.valid != 0u && guestCandidateWins(exit.distance2,exit.face.x,exit.face.y,exit.face.z,exit.face.w,oD2,gPX,gPY,gFVX,gFVY)) {
-          oD2=exit.distance2;gPX=exit.face.x;gPY=exit.face.y;gFVX=exit.face.z;gFVY=exit.face.w;
-        }
-      }
-      if (oD2 < 1e9) { snowAcceptExit(oD2,vec4<f32>(gPX,gPY,gFVX,gFVY)); }
-    }
-    let fl = flag[i];
-    let radius = 2.5 / sqrt(3.2) * 0.5;
-    let r = radius;
-    var p = snowFallbackWork.origin.xy;
-    var velocity = snowFallbackWork.origin.zw;
-    var support = aux[i].y;
-    var x=p.x;var y=p.y;var vx=velocity.x;var vy=velocity.y;
-    let terrainX=x;let terrainY=y;let terrainVX=vx;let terrainVY=vy;
-    var guestProjected = false;
-    if (snowFallbackWork.hasInside != 0u) {
-      let gdep = snowFallbackWork.depth;
-      let gnx = snowFallbackWork.projection.x;
-      let gny = snowFallbackWork.projection.y;
-      let gtx = snowFallbackWork.projection.z;
-      let gty = snowFallbackWork.projection.w;
-      let gFVX = snowFallbackWork.face.z;
-      let gFVY = snowFallbackWork.face.w;
-      let canProject = snowFallbackWork.canProject != 0u;
-` + WGSL_SNOW_RESPONSE + WGSL_SNOW_FINALIZE + /* wgsl */ `
-  }
+@compute @workgroup_size(32)
+fn snowFallback(@builtin(global_invocation_id) gid : vec3<u32>) {
+  if (gid.x >= atomicLoad(&snowFallbackCount[0])) { return; }
+  let i = snowFallbackIndices[gid.x];
+  let fl = flag[i];
+  let state = pos[i];
+  var p = state.xy;var velocity = state.zw;var support = aux[i].y;
+  var x=state.x;var y=state.y;var vx=state.z;var vy=state.w;
+  let radius = 2.5 / sqrt(3.2) * 0.5;let r=radius;
+` + WGSL_SNOW_PRIMARY + WGSL_SNOW_COMPACT_SEARCH + WGSL_SNOW_RESPONSE + WGSL_SNOW_FINALIZE + /* wgsl */ `
 }
 `;
 
@@ -8443,7 +8404,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       scanLocal:  pipe('liquid.scanLocal',  WGSL_SCAN_LOCAL),
       scanBlocks: pipe('liquid.scanBlocks', WGSL_SCAN_BLOCKS),
       scanAdd:    pipe('liquid.scanAdd',    WGSL_SCAN_ADD),
-      scatter:    pipe('liquid.scatter',    WGSL_SCATTER)
+      scatter:    pipe('liquid.scatter',    WGSL_SCATTER),
+      scatterSnow: pipe('snow.scatter', WGSL_SNOW_SCATTER)
     };
     // v15.0 — the sparse block pipelines (grid-layout share). Wrapped so a
     // WGSL compile failure only disables the sparse path, never the grid.
@@ -8486,6 +8448,27 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         entries: bgEntries
       })
     };
+    // This count layout binds only the resources countKernel uses. Adding
+    // flags to the full sparse layout would exceed a 10-storage device limit.
+    instance.buf.snowGrainDispatch = dev.createBuffer({label:'snow.spatialDispatch',size:16,
+      usage:GPUBufferUsage.STORAGE|GPUBufferUsage.UNIFORM|GPUBufferUsage.INDIRECT|GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});
+    var snowEntries = entries.filter(function(e) { return [0,1,2,6,8].indexOf(e.binding) >= 0; });
+    snowEntries.push({binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}},
+      {binding:12,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
+    var snowBGL = dev.createBindGroupLayout({label:'snow.countBGL',entries:snowEntries});
+    var snowLayout = dev.createPipelineLayout({bindGroupLayouts:[snowBGL]});
+    function snowCountPipe(label, mark) {
+      return dev.createComputePipeline({label:label,layout:snowLayout,
+        compute:{module:dev.createShaderModule({code:WGSL_GRID_COMMON+snowCountKernel(mark)}),entryPoint:'main'}});
+    }
+    instance.pipe.resetSnowDispatch = dev.createComputePipeline({label:'snow.resetSpatialDispatch',layout:snowLayout,
+      compute:{module:dev.createShaderModule({code:WGSL_GRID_COMMON+snowCountKernel(false)}),entryPoint:'resetDispatch'}});
+    instance.pipe.countSnow = snowCountPipe('snow.countCells',false);
+    if (instance.sparseCapable) instance.pipe.countSnowMark = snowCountPipe('snow.countCellsMark',true);
+    var snowBinds = bgEntries.filter(function(e) { return [0,1,2,6,8].indexOf(e.binding) >= 0; });
+    snowBinds.push({binding:11,resource:{buffer:instance.buf.flag}},
+      {binding:12,resource:{buffer:instance.buf.snowGrainDispatch}});
+    instance.bg.snowCount = dev.createBindGroup({label:'snow.countBG',layout:snowBGL,entries:snowBinds});
     instance.gridReady = true;
   }
 
@@ -10602,6 +10585,8 @@ struct GrainGrid { count:u32, width:u32, height:u32, ox:u32, oy:u32, cells:u32, 
 @group(0) @binding(10) var air:texture_2d<f32>;
 @group(0) @binding(11) var<uniform> gameP:GameParams;
 
+// Spatial work dispatch preserves particle IDs and neighbor traversal order.
+@group(0) @binding(12) var<uniform> snowSpatial:vec4u;
 @group(0) @binding(13) var<storage,read_write> snowCellMotion:array<atomic<u32>>;
 @group(0) @binding(14) var<storage,read> snowCellOf:array<u32>;
 fn isSnow(fl:u32)->bool { return ((fl&3u)|((fl>>4u)&4u))==5u; }
@@ -10662,6 +10647,9 @@ fn trackMotion(@builtin(global_invocation_id) id:vec3u) {
   if(c.x==0){low.x=-1e20;}if(c.y==0){low.y=-1e20;}
   if(c.x==i32(gp.width)-1){high.x=1e20;}if(c.y==i32(gp.height)-1){high.y=1e20;}
   let delta=max(max(low-pos[i].xy,pos[i].xy-high),vec2f(0.));
+  // Zero cannot raise this nonnegative bound. Quiet pile cells otherwise
+  // make thousands of grains contend on the same unchanged atomic value.
+  if(all(delta==vec2f(0.))){return;}
   atomicMax(&snowCellMotion[tag-1u],bitcast<u32>(length(delta)));
 }
 fn contactParticle(i:u32, shield:bool) {
@@ -10729,6 +10717,14 @@ fn contactParticle(i:u32, shield:bool) {
 fn contacts(@builtin(global_invocation_id) id:vec3u){contactParticle(id.x,false);}
 @compute @workgroup_size(256)
 fn shield(@builtin(global_invocation_id) id:vec3u){contactParticle(id.x,true);}
+@compute @workgroup_size(256)
+fn contactsSpatial(@builtin(global_invocation_id) id:vec3u){
+  if(id.x>=snowSpatial.w){return;}contactParticle(sortedIdx[id.x],false);
+}
+@compute @workgroup_size(256)
+fn shieldSpatial(@builtin(global_invocation_id) id:vec3u){
+  if(id.x>=snowSpatial.w){return;}contactParticle(sortedIdx[id.x],true);
+}
 `;
   // Correct the nozzle field against the current resident snow surface.
   // The CPU mirror never defines this boundary; falling grains sample the
@@ -10870,16 +10866,18 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     for(var b=2;b<=9;b++)entries.push({binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:[3,7,8,9].indexOf(b)>=0?'read-only-storage':'storage'}});
     entries.push({binding:10,visibility:GPUShaderStage.COMPUTE,texture:{sampleType:'unfilterable-float'}},
       {binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
+      {binding:12,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
       {binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}});
     var bgl=dev.createBindGroupLayout({entries:entries}),layout=dev.createPipelineLayout({bindGroupLayouts:[bgl]});
     var module=dev.createShaderModule({code:WGSL_SNOW_GRAINS});
     instance.snowGrainPipe={};
-    ['predict','trackMotion','contacts','shield'].forEach(function(name){instance.snowGrainPipe[name]=dev.createComputePipeline({label:'snow.'+name,layout:layout,compute:{module:module,entryPoint:name}});});
+    ['predict','trackMotion','contacts','shield','contactsSpatial','shieldSpatial'].forEach(function(name){instance.snowGrainPipe[name]=dev.createComputePipeline({label:'snow.'+name,layout:layout,compute:{module:module,entryPoint:name}});});
     var buffers=[instance.paramsBuf,instance.snowGrainParams,instance.buf.pos,instance.buf.snowBefore,
       instance.buf.aux,instance.buf.flag,instance.buf.affine,instance.buf.cellCount,instance.buf.cellStart,instance.buf.sortedIdx];
     var binds=buffers.map(function(buffer,index){return {binding:index,resource:{buffer:buffer}};});
     binds.push({binding:10,resource:instance.snowProjectedAir.createView()},
       {binding:11,resource:{buffer:instance.gameParamsBufs[0]}},
+      {binding:12,resource:{buffer:instance.buf.snowGrainDispatch}},
       {binding:13,resource:{buffer:instance.buf.cellCursor}});
     instance.snowGrainBG=dev.createBindGroup({layout:bgl,entries:binds});
     var initEntries=entries.filter(function(e){return [0,2,5,6].indexOf(e.binding)>=0;});
@@ -10908,8 +10906,10 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     var pass=enc.beginComputePass({label:'snow.'+kind});
     pass.setBindGroup(0,instance.snowGrainBG);
     if(initMotion){pass.setPipeline(instance.snowGrainPipe.initMotion);pass.setBindGroup(0,instance.snowInitMotionBG);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.setBindGroup(0,instance.snowGrainBG);pass.setPipeline(instance.snowGrainPipe.trackMotion);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));}
-    pass.setPipeline(instance.snowGrainPipe[kind]);
-    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));
+    var spatial = instance.snowGridOnly && (kind === 'contacts' || kind === 'shield');
+    pass.setPipeline(instance.snowGrainPipe[spatial ? kind+'Spatial' : kind]);
+    if (spatial) pass.dispatchWorkgroupsIndirect(instance.buf.snowGrainDispatch,0);
+    else pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));
     if (substepSlot === undefined) pass.end();
     else runCollide(instance, substepSlot, true, pass);
   }
@@ -11065,7 +11065,7 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
           runSnowGrains(instance, 'predict', ss);
           // G2P has consumed the liquid fields. Rebuild only the neighbor
           // index at the grains' predicted positions for contact queries.
-          buildGrid(instance, true);
+          buildGrid(instance, true, true);
           // Four relaxation passes plus the final contact/density/shield pass.
           // Five preserves returning-powder settling; four failed that gate.
           for (var contact = 0; contact < 5; contact++) {

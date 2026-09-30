@@ -74,7 +74,12 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.127';
+  var GAME_VERSION = 'v28.128';
+  // Water-removal comparison for performance recording. Require a fresh
+  // no-save run so the diagnostic cannot alter a stored world. Snow keeps
+  // its ordinary emission, contacts, slime boundaries and rendering.
+  var PERF_SNOW_ONLY = /[?&]perfwater=0(?:&|$)/.test(window.location.search) &&
+    /[?&]nosave=1(?:&|$)/.test(window.location.search);
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3747,6 +3752,7 @@
   }
 
   function addLiquidParticle(type, x, y, vx, vy, origin) {
+    if (PERF_SNOW_ONLY && type !== 5) return -1;
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;   // v14.2 — flag the WebGPU solver to re-seed

@@ -69,6 +69,9 @@ try {
     await game(`keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false;
       while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);
       SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
+      // Clear weather does not stop the independently randomized wind.
+      // This fixture checks quiet settling, including horizontal velocity.
+      windSetTarget('still',1,0,1e9,0,0);
       window.sy=SKY_ROWS*TILE;window.cx=82*TILE;
       for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=58;c<108;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
       zoomMode='in';resize();player.x=cx+250;player.y=sy-PLAYER_H;player.vx=player.vy=0;cam.snap=true;updateCamera();
@@ -85,7 +88,7 @@ try {
             var c=Math.floor((liquidX[i]-cx+180)/5);if(c>=0&&c<72)cols[c]=Math.max(cols[c],sy-liquidY[i]);
           }
           settleSamples.push({t:snow.time-settleTime,moving:moving,rms:Math.sqrt(energy/Math.max(1,count)),still:still,up:up,sleeping:sleeping,
-            cols:cols,count:count,flakes:snow.grains.length,calm:LIQUID_CALM,mass:__particleSnow.stats().mass,melted:snow.melted});
+            cols:cols,count:count,flakes:snow.grains.length,calm:LIQUID_CALM,wind:surfaceWind.current,mass:__particleSnow.stats().mass,melted:snow.melted});
         }
         window.settleRaf=requestAnimationFrame(settleRafFn);
       };settleTime=snow.time;window.settleRaf=requestAnimationFrame(settleRafFn);`);
@@ -101,6 +104,7 @@ try {
     fs.writeFileSync(path.join(out,'layer-'+depth+'.json'),JSON.stringify({summary,samples},null,2));
     console.log('LAYER',JSON.stringify(summary));
     if(!reportOnly){
+      check('quiet fixture keeps the ambient wind still at depth '+depth,samples.every(f=>f.wind===0));
       check('quiet snow conserves mass at depth '+depth,samples.every(f=>f.mass===summary.initial && f.melted===0));
       check('resting snow does not launch flakes at depth '+depth,summary.maxFlakes===0);
       check('resting layer stops rebounding at depth '+depth,summary.meanRMS<1 && summary.meanUp<2);
@@ -112,7 +116,9 @@ try {
       // particle or newly introduced sleep latch after digging out the floor.
       await game(`window.settleScan=snowScan;snowScan=function(){};liquidToolSync();
         window.dropY=Array.from(liquidY.subarray(0,liquidCount));
-        for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=Math.floor((cx-185)/TILE);c<=Math.floor((cx+185)/TILE);c++){
+        // Relaxation can spread the pile past its original emission width.
+        // Remove the entire fixture floor so edge grains are unsupported too.
+        for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=58;c<108;c++){
           world[r][c]=null;invalidateTerrainAround(r,c);
         }`);
       await sleep(1200);
@@ -127,5 +133,5 @@ try {
   }
   assert.equal(errors.length,0,'no runtime or shader errors');
   fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(trials,null,2));
-  console.log('PASS snow settling');
+  console.log(reportOnly ? 'REPORT snow settling completed, settling assertions disabled' : 'PASS snow settling');
 } finally { if(errors.length)console.log('ERRORS',errors.slice(0,8));cleanup(); }

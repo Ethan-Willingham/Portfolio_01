@@ -395,6 +395,7 @@
   }
 
   function addLiquidParticle(type, x, y, vx, vy, origin) {
+    if (PERF_SNOW_ONLY && type !== 5) return -1;
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;   // v14.2 — flag the WebGPU solver to re-seed

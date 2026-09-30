@@ -652,3 +652,76 @@ It averaged 59.6 callbacks per second; the lowest full-second bin was 46.0,
 with no browser or shader errors. The controls do not reproduce identical
 physics trajectories, and this test browser does not establish the owner's
 120 Hz presentation rate. Owner play remains the final performance check.
+
+### v28.128 dense snow and resident contact cost
+
+The next owner recording disproved water as the whole explanation. Its worst
+nine-second town stretch averaged 11.4 FPS and 76.4 ms of sampled liquid GPU
+passes. Snow contacts accounted for 37.8 ms, shielding 14.3 ms, and snow escape
+plus displacement tracking 12.1 ms. Ordinary water collision and escape were
+only 0.55 ms. Each worst frame ran ten snow steps with all five contact
+iterations, retaining 241 sampled passes. These sums omit composition and
+queue waiting.
+
+An ordinary 90-second boot with every non-snow liquid removed still averaged
+15.4 FPS, with a full-second low of 10.0. The trace's particle types contained
+only snow. Five residents spawned naturally; none were repositioned or forced
+into a fixture. Dense snow and resident contact are sufficient to reproduce
+the slowdown.
+
+Snow now builds a snow-only neighbor index after prediction. Water rebuilds
+the complete shared index before its next step. Frozen snow remains available
+as a neighbor. Contacts and shielding dispatch through the spatially ordered
+index while retaining original particle IDs, traversal order, contact math,
+motion bounds, and all five iterations. Quiet grains skip atomic maximum writes
+of zero to an already nonnegative motion bound. Snow union escapes use compact
+32-lane workgroups, retaining candidate order, the complete comparator, legal
+overlap checks, clearance tests, response, and final state writes. Candidates
+that cannot beat the current valid winner skip expensive geometry checks.
+The ordinary water shader and protected circular slimes are unchanged.
+
+`BENCH=1 node tools/test-snow-neighbors-gpu.mjs` passes 22 dense/sparse cases
+with exact position, velocity, auxiliary state, flags, and cell motion words,
+plus eight shared-grid reuse stages. Both versions use canonical within-cell
+ordering to isolate filtering from the existing unordered atomic scatter.
+On Apple M1 Pro, sparse median contacts, shielding, and motion tracking change
+as follows for fixed particle inputs:
+
+| Input | v28.126 | v28.128 |
+| --- | ---: | ---: |
+| 13,600 snow and 11,400 water | 5.139 ms | 0.378 ms |
+| The same snow with water removed | 0.721 ms | 0.378 ms |
+| The same water-free snow compressed to 40 percent of its width and height | 2.460 ms | 1.649 ms |
+
+These are isolated kernels, not whole-frame or FPS gains.
+`COMPACT=1 node tools/test-snow-collision-gpu.mjs` passes 25 GPU cases and 107
+checks against pinned v28.126, including exact state words and original legal
+overlap behavior. The contact and returning-powder regression also passes.
+
+A separate 184-second ordinary background capture retained stock smoke,
+water, snowfall, the five natural residents, native callbacks, and the owner's
+recorded keyboard timings. It averaged 57.2 FPS with a full-second low of 20.0;
+the final twenty seconds averaged 59.6 FPS. It retained 14,893 active snow grains
+at peak, no pauses, and no browser or shader errors. This run predates integration
+of the concurrent v28.127 startup changes and uses the same final snow kernels.
+The inputs do not reproduce the owner's physical trajectory, and a headless
+60 Hz run does not prove restored 120 FPS. Short dips remain an observed limit.
+
+After integrating v28.127 startup, a 90-second water-free background boot with
+the final kernels averaged 49.2 FPS, with a full-second low of 17.0. Its retained
+particle types were exclusively snow and it had no pauses or browser/shader
+errors. This and the earlier baseline are ordinary boots with different
+trajectories; the fixed-kernel comparisons above isolate the implementation
+gain.
+
+The settling harness now pins ambient wind for its quiet-pile fixture and
+removes the whole fixture floor for unsupported-pile checks. Its numeric
+assertions are unchanged. Reports for both pinned v28.126 and the candidate
+retain all mass, launch no flakes, have no upward-moving grains, and keep the
+surface within the existing motion limits at depths 3, 7, 12, 20, and 32.
+Unsupported piles at depths 7 and 12 fall without a sleep latch. The strict
+total-velocity RMS threshold still fails at depths 20 and 32 in both versions:
+1.48 and 1.83 in the baseline, 1.31 and 1.82 in the candidate. This inherited
+deep-pile motion limit remains unresolved; the report-only runs do not count
+as passes of those assertions. The residual sinusoidal grain drift is still
+active in this fixture.

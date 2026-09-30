@@ -5,6 +5,7 @@
 // BEFORE defaults to pinned git cf8865e; AFTER defaults to js/liquid-wgpu.js.
 // COOPERATIVE=1 compares a parallel fallback against pinned cf8865e plus snow slop.
 // LOCAL_SLOP=1 also permits legal sole-guest overlap and enables cooperative checks.
+// COMPACT=1 compares compact fallback with pinned v28.126 (c92d501), exact output words.
 // DRY_RUN=1 validates sources/fixtures only.
 // Uses production buffer, terrain, uniform, pipeline and dispatch functions.
 // It does not run the rest of the game or claim full-frame performance results.
@@ -23,9 +24,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8295), debugPort = port + 1000;
 const out = process.env.DUMP || '/tmp/sluice-snow-collision-gpu';
 const timeoutMs = Number(process.env.TIMEOUT_MS || 180000);
-const beforeRef = 'cf8865e';
+const compactMode = process.env.COMPACT === '1';
+const beforeRef = compactMode ? 'c92d501' : 'cf8865e';
 const grainMode=process.env.GRAINS==='1';
-const localSlopMode = process.env.LOCAL_SLOP === '1';
+const localSlopMode = compactMode || process.env.LOCAL_SLOP === '1';
 const cooperativeMode = process.env.COOPERATIVE === '1' || localSlopMode;
 const paths = {
   before: process.env.BEFORE || null,
@@ -36,7 +38,7 @@ for (const [name, filename] of Object.entries(paths)) {
   let source = filename ? fs.readFileSync(filename, 'utf8') :
     execFileSync('git', ['show', beforeRef + ':js/liquid-wgpu.js'], { cwd: root, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
   const baseSHA256 = createHash('sha256').update(source).digest('hex');
-  const transformation = !filename && cooperativeMode ? (localSlopMode ?
+  const transformation = !filename && cooperativeMode && !compactMode ? (localSlopMode ?
     'snow response and sole-guest legal overlap thresholds use radius * .1' : 'snow-only guest deadband1.5 to radius*.1') : null;
   if (transformation) {
     const needle = "WGSL_COLLIDE.indexOf('  // World-bounds clamp')) + /* wgsl */ `\n  p=vec2f";
@@ -360,7 +362,7 @@ new vm.Script(browserProgram);
 const fixtureSummary = (cooperativeMode ? makeCooperativeFixtures(makeFixtures(), localSlopMode) : makeFixtures()).map(f => ({ name: f.name, count: f.particles.length, modes: f.modes, snowOnly: f.snowOnly, collisionCalls: 2 }));
 assert.ok(fixtureSummary.every(f => f.count <= (cooperativeMode ? 320 : 64)));
 if (process.env.DRY_RUN === '1') {
-  console.log(JSON.stringify({ dryRun: true, mode: localSlopMode ? "local-slop" : cooperativeMode ? "cooperative" : "physical", port, sources: metadata, fixtures: fixtureSummary, browserLaunched: false }, null, 2));
+  console.log(JSON.stringify({ dryRun: true, mode: compactMode ? "compact" : localSlopMode ? "local-slop" : cooperativeMode ? "cooperative" : "physical", port, sources: metadata, fixtures: fixtureSummary, browserLaunched: false }, null, 2));
   process.exit(0);
 }
 
@@ -454,18 +456,18 @@ function compareCooperative(result) {
       for (const i of after.unchanged.concat(Array.from({ length: result.capacity - after.count }, (_, k) => after.count + k)))
         for (let axis = 0; axis < stride; axis++) protectedUnchanged &&= state[field][i * stride + axis] === after.input[field][i * stride + axis];
     }
-    check('scalar fallback result preserved', finite && flagsEqual && maxDifference <= .002, { maxDifference, flagsEqual, bitDifferences });
+    check('scalar fallback result preserved', finite && flagsEqual && (compactMode ? bitDifferences === 0 : maxDifference <= .002), { maxDifference, flagsEqual, bitDifferences });
     check('frozen, off-region and unused tail unchanged', protectedUnchanged);
     if (!fixture.snowOnly) check('ordinary water remains bit-exact', bitDifferences === 0);
     const count = after.fallbackCount;
     if (typeof count === 'number') {
       totalFallbacks += count; observedFallbackCases++;
       if (fixture.snowOnly && after.count > 0) {
-        const expectedArgs = [Math.min(count, 256), Math.ceil(count / 256), 1];
+        const expectedArgs = compactMode ? [Math.ceil(count / 32), 1, 1] : [Math.min(count, 256), Math.ceil(count / 256), 1];
         check('indirect dispatch covers queued grains', JSON.stringify(after.fallbackDispatchArgs) === JSON.stringify(expectedArgs), after.fallbackDispatchArgs);
       }
     }
-    if (fixture.requireFallback) check('cooperative fallback actually dispatched', typeof count === 'number' && count >= (fixture.minimumFallback || 1), count ?? null);
+    if (fixture.requireFallback) check(compactMode ? 'compact fallback actually dispatched' : 'cooperative fallback actually dispatched', typeof count === 'number' && count >= (fixture.minimumFallback || 1), count ?? null);
     if (fixture.requireNoFallback) check('unnecessary full fallback avoided', count === 0, count ?? null);
     if (fixture.expectLegalSlop) {
       const x = asFloat(after.pos[0]), y = asFloat(after.pos[1]);
@@ -488,9 +490,9 @@ function compareCooperative(result) {
       after.pos.slice(0, 2).map(asFloat));
     cases.push({ name: after.name, count: after.count, fallbackCount: count ?? null, maxDifference, bitDifferences, checks, pass: checks.every(c => c.pass) });
   }
-  if (!totalFallbacks) failures.push({ name: 'No cooperative fallback work observed' });
+  if (!totalFallbacks) failures.push({ name: compactMode ? 'No compact fallback work observed' : 'No cooperative fallback work observed' });
   return { pass: !failures.length && !result.gpuErrors.length && !browserErrors.length,
-    comparison: localSlopMode ? 'Cooperative fallback against cf8865e with scaled response and sole-guest legal slop; .002f32 tolerance, exact flags/protected tails/water.' : 'Cooperative fallback against original cf8865e with only scaled snow slop; .002f32 tolerance, exact flags/protected tails/water.',
+    comparison: compactMode ? 'Compact fallback against pinned v28.126 c92d501; exact position, aux and flag words including protected tails and ordinary water.' : localSlopMode ? 'Cooperative fallback against cf8865e with scaled response and sole-guest legal slop; .002f32 tolerance, exact flags/protected tails/water.' : 'Cooperative fallback against original cf8865e with only scaled snow slop; .002f32 tolerance, exact flags/protected tails/water.',
     cases, totalFallbacks, observedFallbackCases, failures, gpuErrors: result.gpuErrors, browserErrors,
     adapterInfo: result.adapterInfo, sources: metadata,
     limitation: 'Direct post-G2P collision-stage regression, not a full-game performance measurement.' };
