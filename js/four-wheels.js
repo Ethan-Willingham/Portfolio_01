@@ -17,7 +17,7 @@
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
-  const STORAGE = 'four-wheels-records-v3';
+  const STORAGE = 'four-wheels-records-v4';
   let records = [], canSave = true;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
@@ -200,7 +200,17 @@
     const foreshorten=mounted||p.z<1?1:.4+.6*Math.abs(Math.cos(p.tumble));
     const detail=(x,y,width,height,color)=>localRect(g,b,x*foreshorten,y,width*foreshorten,height,color);
     if (!mounted) { g.globalAlpha = .15; oval(g,p.x+1,p.y+2,Math.max(2,p.length),Math.max(1,p.width),P.dark); g.globalAlpha = 1; }
-    if (p.kind === 'wine') {
+    if (p.kind === 'vase') {
+      // Glass belly, a narrow neck and a dark open mouth. The tile or tabletop
+      // remains visible through the water-filled body.
+      g.globalAlpha = .28; oval(g,b.x,b.y+1,4,Math.max(2,5*foreshorten),P.blue);
+      g.globalAlpha = .65;
+      for(let i=0;i<16;i++) {const a=i*Math.PI/8,next=(i+1)*Math.PI/8,ry=Math.max(2,5*foreshorten);line(g,b.x+4*Math.cos(a),b.y+1+ry*Math.sin(a),b.x+4*Math.cos(next),b.y+1+ry*Math.sin(next),P.steelShade);}
+      g.globalAlpha = .9; line(g,b.x-3,b.y,b.x-3,b.y+3,P.light); line(g,b.x+2,b.y+4,b.x,b.y+4,P.steelLight);
+      g.globalAlpha = 1;
+      if(mounted) {oval(g,b.x,b.y-3,2,2,P.steelLight);oval(g,b.x,b.y-3,1,1,P.steelShade);rect(g,b.x-2,b.y-4,3,1,P.light);}
+      else detail(3,-2,2,4,P.steelLight);
+    } else if (p.kind === 'wine') {
       detail(-4,-2,7,4,P.dark); detail(-4,-1,7,2,P.pine);
       detail(3,-1,3,2,P.green); detail(5,-1,1,2,P.gold);
       detail(-2,-2,3,4,P.cream); detail(-1,-1,1,2,P.purple); detail(-4,-2,1,1,P.sage);
@@ -237,6 +247,17 @@
     const corners=[[-s.w/2,-s.h/2],[s.w/2,-s.h/2],[s.w/2,s.h/2],[-s.w/2,s.h/2]];
     const project = (u,v,z) => { const p=CartStock.shelfPoint(s,u,v,z);return {x:p.x,y:p.y-p.z*.35}; };
     const base=corners.map(p=>project(...p,0)),top=corners.map(p=>project(...p,s.height));
+    if(s.kind==='table') {
+      for(let i=0;i<4;i++) {
+        const foot=project(corners[i][0]*.8,corners[i][1]*.8,0),join=project(corners[i][0]*.8,corners[i][1]*.8,s.height);
+        line(g,foot.x+1,foot.y,join.x+1,join.y,P.hairDark,3);line(g,foot.x,foot.y,join.x,join.y,P.clay,2);
+      }
+      poly(g,top.map(p=>({x:p.x,y:p.y+3})),P.hairDark);poly(g,top,P.clay);
+      for(let i=0;i<4;i++) {const q=(i+1)%4;line(g,top[i].x,top[i].y,top[q].x,top[q].y,i<2?P.gold:P.hair,1);}
+      for(const v of [-8,0,8]) {const a=project(-s.w/2+3,v,s.height),b=project(s.w/2-3,v,s.height);g.globalAlpha=.3;line(g,a.x,a.y,b.x,b.y,P.gold);g.globalAlpha=1;}
+      s.stockItems.filter(p=>p.state==='shelf').forEach(p=>drawProduct(g,p));
+      return;
+    }
     // A fallen rack exposes its steel frame, boards and diagonal back braces.
     if(s.tilt<.55) {
       poly(g,base,P.dark);poly(g,corners.map(([u,v])=>project(u*.95,v*.95,0)),P.edge);
@@ -268,11 +289,27 @@
       const color=spillColor(liquid.kind);
       for(const [key,volume] of liquid.cells) {
         const x=key%120*CartStock.CELL,y=Math.floor(key/120)*CartStock.CELL;
+        if(liquid.kind==='water') {
+          // Clear water keeps the grout visible. A darker meniscus and reflected
+          // light mark the perimeter of the connected physical floor film.
+          g.globalAlpha=clamp(volume*.2,.018,.13);rect(g,x,y,4,4,P.blue);
+          if(volume>.055) {
+            const dry=k=>(liquid.cells.get(k)||0)<=.055;
+            g.globalAlpha=.32;
+            if(dry(key+1)) rect(g,x+3,y,1,4,P.steelShade);
+            if(dry(key+120)) rect(g,x,y+3,4,1,P.steelShade);
+            g.globalAlpha=.7;
+            if(dry(key-120)) rect(g,x,y,4,1,P.light);
+            if(dry(key-1)) rect(g,x,y,1,4,P.light);
+            if(volume>.13&&hash(key,7)>.83) {g.globalAlpha=.65;rect(g,x,y+1,3,1,P.light);rect(g,x+2,y+2,2,1,P.steelLight);}
+          }
+          continue;
+        }
         g.globalAlpha=clamp(volume*1.4,.025,.65);rect(g,x,y,4,4,color);
         if(volume>.65&&hash(key,7)>.65) {g.globalAlpha=.25;rect(g,x+1,y+1,2,1,P.light);}
       }
     }
-    for(const smear of stock.smears) {g.globalAlpha=smear.alpha;localRect(g,smear,-2,-.7,4,1.5,spillColor(smear.kind));}
+    for(const smear of stock.smears) {g.globalAlpha=smear.alpha*(smear.kind==='water'?.4:1);localRect(g,smear,-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind));}
     g.globalAlpha=1;
   }
 
@@ -581,9 +618,9 @@
       if (e.type === 'gate') { burst(e.x, e.y, 8, [P.cream, P.gold, P.sage], 'gate'); notify(world.gate < world.level.gates.length ? 'Marker ' + world.gate + ' cleared' : 'Checkout is open. Drive out.'); }
       if (e.type === 'mess') {
         screenShake = e.kind === 'shelf' ? 1.5 : .65;
-        notify((e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : 'Shelf spilled') + (world.practice ? '' : ' / +' + e.seconds + ' seconds'));
+        notify((e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : e.kind === 'table' ? 'Vase knocked off' : 'Shelf spilled') + (world.practice ? '' : ' / +' + e.seconds + ' seconds'));
       }
-      if (e.type === 'shelf-down') { screenShake=2; notify('Shelf down' + (world.practice?'':' / stock spilled')); }
+      if (e.type === 'shelf-down') { screenShake=2; notify((e.kind==='table'?'Table down':'Shelf down') + (world.practice?'':' / stock spilled')); }
       if (e.type === 'rack-hit') screenShake=Math.max(screenShake,.4);
       if (e.type === 'bump') screenShake = .6;
       if (e.type === 'won' || e.type === 'lost') finish(e.type === 'won');

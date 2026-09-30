@@ -97,6 +97,13 @@ first falls or the rack topples. Individual products do not add separate penalti
 
 ## Shelves and their contents
 
+The first course has one 32-pixel square wooden table and one water-filled glass
+vase, with no cones or other stock. A short normal push knocks the vase off while
+the table rocks and settles. Its low board friction, height and break threshold
+make the fall reachable at ordinary driving speed. The table has a wider support
+base than the tall racks. Later racks have lighter frames and a narrower support
+base so normal impacts can topple them; gentle touches can still settle safely.
+
 The rack is a dynamic body with mass, yaw inertia, ground friction and a separate
 rocking angle about its supporting feet. A horizontal impulse at basket height
 transfers momentum to the rack, twists it around an off-center contact, and adds
@@ -109,20 +116,25 @@ rack's mass and center of mass, so dropping it changes the loaded body.
 Every displayed product is the actual simulated item. Each has mass, planar
 inertia, material friction, bounce, height, vertical speed and tumbling angle.
 Stock keeps its momentum during a rack impact and slides relative to the board.
-Gravity and static friction govern sliding as the board tilts. Crossing the edge
-or losing support releases the product with the board's translation, yaw and
+The smooth boards have less friction than the floor, so a bump can displace stock
+before the rack falls. Gravity and static friction govern sliding as the board
+tilts. Crossing the edge or losing support releases the product with the board's translation, yaw and
 tipping velocity. It then falls under gravity, bounces, collides with walls,
 furniture, cones, boxes and other products, and remains on the floor.
 
-Wine bottles, jars, plates and plant pots break on sufficiently hard impacts or
-under a rolling tire. Glass, ceramic and terracotta fragments have small physical
+Vases, wine bottles, jars, plates and plant pots break on sufficiently hard impacts
+or under a rolling tire. Glass, ceramic and terracotta fragments have small physical
 footprints. Cans bounce and roll. Cloth and cartons have higher drag. Ketchup
 bottles survive ordinary drops, but a hard landing or tire contact flattens the
 bottle and releases its contents. Floor items fit under the raised basket;
 airborne products can hit its rails. Shoes can kick low stock and all four tires
 have their own product contacts, loss of rolling energy and caster reaction.
 
-Wine, ketchup, oil and soil use separate conservative 4-pixel floor grids.
+Water, wine, ketchup, oil and soil use separate conservative 4-pixel floor grids.
+A broken vase pours a connected pool of clear water. The renderer preserves the
+tile seams through it, with a dark meniscus, pale rim and small reflected glints.
+Water tracks are translucent; the pool and its effect on tire grip persist until
+retry, just like the other films.
 Pairwise film flow runs at 20 Hz. Wine spreads readily, ketchup stays thicker,
 and soil barely spreads. Each caster samples its own contact's surface grip and
 rolling resistance. Unequal grip creates a braking yaw moment. Tires pick up a
@@ -166,11 +178,12 @@ cart, every tire and the shopper have cleared the outside edge of the canvas.
 No heading constraint, speed threshold or parking dwell remains. Deadline
 expiry still takes precedence over completion on the same physics step.
 Practice has no deadline and does not save records. Timed records use
-`four-wheels-records-v3` in localStorage, with validation and blocked-storage
+`four-wheels-records-v4` in localStorage, with validation and blocked-storage
 fallback. More marks rank above fewer; equal marks rank by total time.
-Earlier records remain untouched under `four-wheels-records-v1` and
-`four-wheels-records-v2`. The shelf physics and moved sensor use a separate record
-set so old runs are not compared with different collision and capture rules.
+Earlier records remain untouched under `four-wheels-records-v1`,
+`four-wheels-records-v2` and `four-wheels-records-v3`. The introductory table and
+more responsive furniture use a new record set so earlier runs are not compared
+with the revised course and collision rules.
 
 ## Controls and lifecycle
 
@@ -197,7 +210,8 @@ locking, jambs, all four exit directions and complete departure footprints.
 They check the forward basket sensor, external tangency, heading changes and
 checkpoint order, with a controller that aims the sensor at the circles.
 Stock checks cover momentum transfer, gentle rocking, physical toppling and
-falling stock, material-specific breakage, tire crushing, conservative fluid flow,
+falling stock, the introductory vase and persistent water, material-specific
+breakage, tire crushing, conservative fluid flow,
 tire pickup, smear deposition, unequal braking grip and dense debris stability.
 They cover walking cadence, smooth acceleration, reverse steps, posture and
 turns in place, and include a controller that drives all six full routes and
@@ -212,8 +226,8 @@ The browser checks also render a rack collapse and wheels crossing wine and
 ketchup, and verify pause freezes furniture, stock and films.
 With `ASSETS=1`, the browser harness refreshes the JPG thumbnail and renders a
 two-second `walking.gif`, a posture sheet and a `shopper-motion.gif` showing
-pushes, both turn directions and braking, plus a six-second `shelf-collapse.gif`
-in the screenshot directory.
+pushes, both turn directions and braking, plus six-second `vase-drop.gif` and
+`shelf-collapse.gif` clips in the screenshot directory.
 Run `tools/build-webp.mjs` after refreshing the thumbnail to update its WebP
 sibling.
 

@@ -26,11 +26,17 @@ const server = http.createServer((req, res) => {
         crashScene: () => {
           cancelAnimationFrame(raf);raf=0;
           const level={...levels[0],name:'Stock collision check',start:{x:150,y:150,a:0},shelves:[{x:220,y:107,w:40,h:86,stock:'groceries',label:'WINE & SAUCES'}],objects:[],signs:[],gates:[{x:420,y:250}]};
-          world=new World(level,true);floor=makeFloor(level);phase='running';particles=[];world.body.vx=135;draw();updateUI();
+          world=new World(level,true);floor=makeFloor(level);phase='running';particles=[];world.body.vx=60;draw();updateUI();
         },
-        crashFrames: () => {
+        vaseScene: () => {
+          reset(0);run();
+          cancelAnimationFrame(raf);raf=0;
+          const level={...levels[0],start:{x:72,y:157,a:0}};
+          world=new World(level,true);floor=makeFloor(level);phase='running';particles=[];draw();updateUI();
+        },
+        crashFrames: (vase=false) => {
           const frames=[],c=document.createElement('canvas');c.width=480;c.height=300;const g=c.getContext('2d');
-          for(let i=0;i<144;i++){for(let k=0;k<5;k++)world.step(1/120);draw(g,world,floor,true);frames.push(c.toDataURL('image/png').split(',')[1]);}
+          for(let i=0;i<144;i++){for(let k=0;k<5;k++)world.step(1/120,vase&&world.time<.8?{push:1}:{});draw(g,world,floor,true);frames.push(c.toDataURL('image/png').split(',')[1]);}
           events();draw();updateUI();return frames;
         },
         step: (seconds,input={}) => { cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.round(seconds*120)&&phase==='running';i++){world.step(1/120,input);events();tickEffects(1/120);}draw();updateUI(); },
@@ -115,7 +121,7 @@ async function setup(context, url) {
     await listen(); const url = 'http://127.0.0.1:' + server.address().port + '/four-wheels.html';
     browser = await chromium.launch({ headless: true, executablePath: process.env.CART_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing' });
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
-    await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]');localStorage.setItem('four-wheels-records-v2', '[{"time":34,"stars":2}]'); });
+    await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]');localStorage.setItem('four-wheels-records-v2', '[{"time":34,"stars":2}]');localStorage.setItem('four-wheels-records-v3', '[{"time":40,"stars":2}]'); });
     const page = await setup(desktop, url);
     const fillsOpeningViewport = () => {
       const game=document.getElementById('cart-game').getBoundingClientRect();
@@ -211,11 +217,25 @@ async function setup(context, url) {
     const crash=await page.evaluate(()=>{
       const w=__cartTest.world();return {stats:w.stock.stats,down:w.shelves[0].down,penalty:w.penalty,items:w.stock.items.filter(p=>p.state!=='shelf').length,liquids:[...w.stock.liquids.keys()]};
     });
-    check('a rendered full-speed impact collapses a rack and leaves broken products on the floor',crash.down&&crash.stats.fallen>0&&crash.stats.broken>0&&crash.items>5&&crash.penalty===5&&crash.liquids.includes('wine'));
+    check('a normal-speed impact collapses a rack and leaves broken products on the floor',crash.down&&crash.stats.fallen>0&&crash.stats.broken>0&&crash.items>5&&crash.penalty===5&&crash.liquids.includes('wine'));
     await page.locator('#cart-game').screenshot({path:path.join(dump,'stock-after-collapse.png')});
     if(process.env.ASSETS==='1') {
       const sharp=require('sharp'),raw=await Promise.all(crashFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
       await sharp(Buffer.concat(raw),{raw:{width:480,height:300*raw.length,channels:4,pageHeight:300}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shelf-collapse.gif'));
+    }
+    await page.evaluate(()=>__cartTest.vaseScene());
+    check('the introductory scene contains one square table and a single vase',await page.evaluate(()=>{
+      const w=__cartTest.world();return w.shelves.length===1&&w.objects.length===0&&w.shelves[0].kind==='table'&&w.shelves[0].w===w.shelves[0].h&&w.stock.items.length===1&&w.stock.items[0].kind==='vase';
+    }));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'vase-before-impact.png')});
+    const vaseFrames=await page.evaluate(()=>__cartTest.crashFrames(true));
+    check('a normal push spills the vase and leaves a physical clear-water pool',await page.evaluate(()=>{
+      const w=__cartTest.world();return !w.shelves[0].down&&w.stock.stats.broken===1&&w.stock.liquids.get('water').cells.size>40&&w.stock.items.some(p=>p.source==='vase');
+    }));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'vase-puddle.png')});
+    if(process.env.ASSETS==='1') {
+      const sharp=require('sharp'),raw=await Promise.all(vaseFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
+      await sharp(Buffer.concat(raw),{raw:{width:480,height:300*raw.length,channels:4,pageHeight:300}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'vase-drop.gif'));
     }
     await page.evaluate(()=>{
       __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();
@@ -286,6 +306,7 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'checkout.png') });
     await page.reload(); await page.waitForFunction(() => !!window.__cartTest);
     check('earlier shopper-checkpoint records remain intact under their old key',await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v2'))[0].time===34));
+    check('earlier shelf course records remain intact under their old key',await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v3'))[0].time===40));
     check('records survive reload', (await page.evaluate(() => __cartTest.state())).records[0].stars === 3);
     await page.locator('#cart-fullscreen').click();
     check('fullscreen is usable', await page.evaluate(() => document.fullscreenElement === document.getElementById('cart-game') || document.getElementById('cart-game').classList.contains('cart-pseudo-fullscreen')));

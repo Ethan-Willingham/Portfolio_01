@@ -1,6 +1,6 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, cartTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, corners, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, cartTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const Stock = require('../js/four-wheels-stock.js');
 const dt = 1 / 120;
@@ -122,7 +122,7 @@ test('a protruding tire collides with a shelf outside the basket footprint', () 
   w.wheels.forEach(q => { q.a = Math.PI / 2; });
   assert.equal(boxContact(w.body, shelf), null);
   step(w, .08, {});
-  assert.ok(w.body.y > empty.start.y + .5, 'the shelf displaces the chassis through the caster');
+  assert.ok(w.body.y > empty.start.y + .1 && w.shelves[0].cy < shelf.y+shelf.h/2, 'the caster contact separates both physical bodies');
   const contact=Stock.polygonContact(casterCorners(w.body,w.wheels[1],1),Stock.shelfPolygon(w.shelves[0]));
   assert.ok(!contact||contact.depth<.15,'the tire cannot rest inside the moving shelf');
 });
@@ -131,7 +131,8 @@ test('a shelf impact stops penetration, turns the cart, and spills once', () => 
   const w = new World({ ...empty, start: { x: 180, y: 136, a: .2 }, shelves: [{ x: 241, y: 140, w: 45, h: 70, stock: 'dishes' }] });
   w.body.vx = 115; step(w, 1.3, {});
   assert.equal(w.messes, 1); assert.equal(w.penalty, 5);
-  assert.ok(w.body.x < 242 && w.body.a > .27, 'an off-center impact rotates the basket');
+  const hit=Stock.polygonContact(corners(w.body),Stock.shelfPolygon(w.shelves[0]));
+  assert.ok((!hit||hit.depth<.1) && w.body.a > .27, 'an off-center impact rotates the basket without penetrating the moving rack');
   step(w, .4, { push: 1 }); assert.equal(w.messes, 1);
 });
 

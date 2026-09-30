@@ -10,6 +10,7 @@
   const cross = (x, y, u, v) => x * v - y * u;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
   const CATALOG = Object.freeze({
+    vase: { mass: .065, length: 5, width: 3.5, bounce: .08, friction: .075, drag: 1.5, fragile: 45, liquid: 'water', volume: 32, material: 'glass' },
     wine: { mass: .075, length: 5, width: 1.7, bounce: .16, friction: .22, drag: .75, fragile: 66, liquid: 'wine', volume: 12, material: 'glass' },
     ketchup: { mass: .06, length: 4, width: 2.1, bounce: .18, friction: .4, drag: 1.5, crush: 100, liquid: 'ketchup', volume: 10, material: 'plastic' },
     jar: { mass: .09, length: 3, width: 2.4, bounce: .1, friction: .3, drag: 1.5, fragile: 76, liquid: 'oil', volume: 8, material: 'glass' },
@@ -100,9 +101,9 @@
   }
   function createShelf(spec, id) {
     const s = { ...spec, id, cx: spec.x + spec.w / 2, cy: spec.y + spec.h / 2, a: 0, vx: 0, vy: 0, omega: 0,
-      height: spec.height || 38, frameMass: spec.mass || 1.5 + spec.w * spec.h / 6500,
+      height: spec.height ?? (spec.kind === 'table' ? 22 : 38), frameMass: spec.mass ?? (spec.kind === 'table' ? .5 : .65 + spec.w * spec.h / 10000),
       mass: 2, inertia: 1, comHeight: 18, tilt: 0, tiltOmega: 0, nx: 0, ny: 1,
-      support: Math.min(spec.w, spec.h) * .18, spilled: false, down: false, wobble: 0, stockItems: [], bounce: .06, friction: .45, impactTime: -1 };
+      support: Math.min(spec.w, spec.h) * (spec.kind === 'table' ? .38 : .06), spilled: false, down: false, wobble: 0, stockItems: [], bounce: .06, friction: .45, impactTime: -1 };
     s.velocityAt = p => {
       const tip = (p.height || 0) * Math.cos(s.tilt) * s.tiltOmega;
       return { x: s.vx - s.omega * (p.y - s.cy) + s.nx * tip, y: s.vy + s.omega * (p.x - s.cx) + s.ny * tip };
@@ -112,7 +113,7 @@
     return s;
   }
   function product(kind, id, x, y, a = 0) {
-    const p = { ...CATALOG[kind], kind, id, x, y, a, vx: 0, vy: 0, omega: 0, z: 0, vz: 0, tumble: 0, tumbleOmega: 0, state: 'floor', age: 0, broken: false, flat: false, sleep: 0, wheelHits: 0 };
+    const p = { ...CATALOG[kind], boardFriction: CATALOG[kind].friction * (kind === 'vase' ? 1 : .35), kind, id, x, y, a, vx: 0, vy: 0, omega: 0, z: 0, vz: 0, tumble: 0, tumbleOmega: 0, state: 'floor', age: 0, broken: false, flat: false, sleep: 0, wheelHits: 0 };
     p.inertia = p.mass * (p.length ** 2 + p.width ** 2) / 3;
     return p;
   }
@@ -151,6 +152,12 @@
       this.world = world; this.geometry = geometry; this.items = []; this.liquids = new Map(); this.smears = []; this.serial = 0;
       this.fluidTime = 0; this.fragments=0; this.stats = { fallen: 0, broken: 0, crushed: 0, toppled: 0, wheelContacts: 0 };
       for (const s of world.shelves) {
+        if (s.kind === 'table') {
+          const p = product('vase', this.serial++, 0, 0, -Math.PI / 2);
+          Object.assign(p, {shelf:s, u:0, v:0, du:0, dv:0, tier:s.height, state:'shelf', color:0});
+          s.stockItems.push(p); this.items.push(p); this.positionStock(p); this.weigh(s);
+          continue;
+        }
         const kinds = assortments[s.stock] || assortments.groceries;
         const cols = Math.max(1, Math.floor((s.w - 10) / 15)), rows = Math.max(1, Math.floor((s.h - 10) / 18));
         for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
@@ -185,7 +192,7 @@
     }
     charge(s, x, y) {
       if (s.spilled) return;
-      s.spilled = true; this.world.mess('shelf', x, y);
+      s.spilled = true; this.world.mess(s.kind === 'table' ? 'table' : 'shelf', x, y);
     }
     prepareHit(s,h,height) {
       const nx = -h.nx, ny = -h.ny;
@@ -193,7 +200,7 @@
         s.nx = nx; s.ny = ny;
         const c = Math.cos(s.a), sin = Math.sin(s.a);
         const lx = nx * c + ny * sin, ly = -nx * sin + ny * c;
-        s.support = (Math.abs(lx) * s.w + Math.abs(ly) * s.h) * .18;
+        s.support = (Math.abs(lx) * s.w + Math.abs(ly) * s.h) * (s.kind === 'table' ? .38 : .06);
         this.weigh(s);
       }
       h.height=height;return h;
@@ -259,11 +266,22 @@
       const col = Math.floor(x / CELL), row = Math.floor(y / CELL);
       if (col < 2 || col >= 118 || row < 2 || row >= 73) return;
       const key = row * 120 + col, value = liquid.cells.get(key) || 0;
-      if (value + amount > .000001) liquid.cells.set(key, Math.max(0, value + amount)); else liquid.cells.delete(key);
+      if (value + amount > 1e-10) liquid.cells.set(key, Math.max(0, value + amount)); else liquid.cells.delete(key);
     }
     spill(kind, x, y, volume, vx = 0, vy = 0) {
       if (!kind || !volume) return;
       const liquid = this.liquid(kind);
+      if (kind === 'water') {
+        // A pour starts as one contiguous pool rather than separate droplets.
+        const radius = Math.max(2, Math.ceil(Math.sqrt(volume) / 2.5)), cells = [];
+        for (let row = -radius; row <= radius; row++) for (let col = -radius; col <= radius; col++) {
+          const weight = Math.max(0, radius + .5 - Math.hypot(col, row));
+          if (weight) cells.push({x:x + col * CELL + vx * .025, y:y + row * CELL + vy * .025, weight});
+        }
+        const total = cells.reduce((n, c) => n + c.weight, 0);
+        for (const c of cells) this.cell(liquid, clamp(c.x, 8, 471.999), clamp(c.y, 8, 291.999), volume * c.weight / total);
+        return;
+      }
       const spots = 12;
       for (let i = 0; i < spots; i++) {
         const a = i * 2.399, r = i === 0 ? 0 : 1.5 + Math.sqrt(i) * 1.5;
@@ -286,7 +304,7 @@
             if (flow) { add(key, -flow); add(next, flow); }
           }
         }
-        for (const [key, value] of delta) { const v = Math.max(0, (cells.get(key) || 0) + value); if (v > .000001) cells.set(key, v); else cells.delete(key); }
+        for (const [key, value] of delta) { const v = Math.max(0, (cells.get(key) || 0) + value); if (v > 1e-10) cells.set(key, v); else cells.delete(key); }
       }
     }
     sample(x, y) {
@@ -319,8 +337,8 @@
         }
         if (speed > 2) for (const [kind, volume] of Object.entries(wheel.coating)) {
           const deposit = Math.min(volume, speed * dt * .0035);
-          wheel.coating[kind] = Math.max(0, volume - deposit);
           if (deposit < .0001) continue;
+          wheel.coating[kind] = Math.max(0, volume - deposit);
           this.cell(this.liquid(kind), p.x, p.y, deposit);
           if (!wheel.lastSmear || Math.hypot(wheel.lastSmear.x - p.x, wheel.lastSmear.y - p.y) > 1.5) {
             this.smears.push({x:p.x,y:p.y,a:p.a,kind,alpha:clamp(volume * 2, .12, .7)}); wheel.lastSmear = {x:p.x,y:p.y};
@@ -340,7 +358,7 @@
           if (s.tilt <= 0) { s.tilt = 0; s.tiltOmega = s.tiltOmega < -.1 ? -s.tiltOmega * .12 : 0; }
           if (s.tilt >= Math.PI / 2) {
             s.tilt = Math.PI / 2; s.down = true; this.stats.toppled++;
-            this.charge(s, s.cx, s.cy); this.world.emit('shelf-down', {x:s.cx,y:s.cy,impact:s.tiltOmega * s.height});
+            this.charge(s, s.cx, s.cy); this.world.emit('shelf-down', {kind:s.kind || 'shelf',x:s.cx,y:s.cy,impact:s.tiltOmega * s.height});
             for (const p of s.stockItems) this.release(p);
             s.tiltOmega = 0;
           }
@@ -349,7 +367,7 @@
           p.omega*=Math.exp(-2*dt);p.a=wrap(p.a+p.omega*dt);
           const c = Math.cos(s.a), sin = Math.sin(s.a), gravity = G * Math.sin(s.tilt);
           const ax = gravity * (s.nx * c + s.ny * sin), ay = gravity * (-s.nx * sin + s.ny * c);
-          const staticFriction = p.friction * G * Math.cos(s.tilt);
+          const staticFriction = p.boardFriction * G * Math.cos(s.tilt);
           if (Math.hypot(p.du, p.dv) > .1 || gravity > staticFriction) {
             p.du += ax * dt; p.dv += ay * dt;
             const speed = Math.hypot(p.du, p.dv), loss = Math.min(speed, staticFriction * dt);

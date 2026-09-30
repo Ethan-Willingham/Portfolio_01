@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const {World,point,BODY,casterPose,corners}=require('../js/four-wheels-physics.js');
 const Stock=require('../js/four-wheels-stock.js');
+const levels=require('../js/four-wheels-levels.js');
 const dt=1/120;
 const empty={start:{x:140,y:150,a:0},limit:300,par:100,shelves:[],objects:[],gates:[{x:420,y:250}],exit:{side:'right',center:150,width:80}};
 const aisle={...empty,shelves:[{x:200,y:110,w:40,h:80,stock:'groceries'}]};
@@ -27,7 +28,7 @@ test('free-body contacts conserve momentum and transfer spin at the contact poin
 });
 
 test('a light shelf hit rocks and settles without spilling or charging a penalty',()=>{
-  const w=new World(aisle,true);w.body.vx=40;let max=0;
+  const w=new World(aisle,true);w.body.vx=30;let max=0;
   for(let i=0;i<600;i++){w.step(dt);max=Math.max(max,w.shelves[0].tilt);}
   assert.ok(max>.01&&max<.1);assert.ok(w.shelves[0].tilt<.01);
   assert.equal(w.stock.stats.fallen,0);assert.equal(w.penalty,0);
@@ -48,8 +49,8 @@ test('supported bottles collide and transfer motion while still on the board',()
   assert.equal(a.state,'shelf');assert.equal(b.state,'shelf');assert.ok(b.du>1&&a.du<20);
 });
 
-test('a hard cart impact topples the physical rack, releases stock and charges once',()=>{
-  const w=new World(aisle,true);w.body.vx=135;const s=w.shelves[0],originalMass=s.mass;
+test('an ordinary driving-speed impact topples the rack, releases stock and charges once',()=>{
+  const w=new World(aisle,true);w.body.vx=60;const s=w.shelves[0],originalMass=s.mass;
   step(w,6);
   assert.ok(s.down&&Math.abs(s.tilt-Math.PI/2)<1e-9);assert.equal(w.stock.stats.toppled,1);
   assert.equal(s.stockItems.filter(p=>p.state==='shelf').length,0);
@@ -59,6 +60,50 @@ test('a hard cart impact topples the physical rack, releases stock and charges o
   assert.ok(w.stock.stats.broken>0&&w.stock.liquids.has('wine'));
   const h=Stock.polygonContact(corners(w.body),Stock.shelfPolygon(s));assert.ok(!h||h.depth<.1);
   step(w,2,{push:1});assert.equal(w.penalty,5,'a second contact cannot charge the rack again');
+});
+
+test('the first course has only one square table with a single water-filled vase',()=>{
+  const w=new World(levels[0],true),s=w.shelves[0];
+  assert.equal(w.shelves.length,1);assert.equal(w.objects.length,0);
+  assert.equal(s.kind,'table');assert.equal(s.w,s.h);assert.ok(s.w<=36);
+  assert.equal(w.stock.items.length,1);assert.equal(s.stockItems[0].kind,'vase');
+  assert.equal(s.stockItems[0].z,s.height);assert.equal(s.stockItems[0].liquid,'water');
+});
+
+test('every later rack can be knocked over at normal driving speed',()=>{
+  for (const level of levels.slice(1)) for (const shelf of level.shelves) {
+    const w=new World({...level,start:{x:shelf.x-34,y:shelf.y+shelf.h/2,a:0},shelves:[shelf],objects:[],gates:[{x:420,y:250}]},true);
+    w.body.vx=65;step(w,6);
+    assert.ok(w.shelves[0].down&&w.stock.stats.fallen>0,level.name+' / '+shelf.label);
+    assert.equal(w.penalty,5);
+  }
+});
+
+test('a short normal push knocks the vase off, leaves the table upright and pours persistent water',()=>{
+  const w=new World({...levels[0],start:{x:72,y:157,a:0}},true),vase=w.stock.items[0];
+  step(w,.8,{push:1});step(w,3.2);
+  assert.ok(vase.broken&&w.stock.stats.fallen===1&&w.stock.stats.broken===1);
+  assert.equal(w.shelves[0].down,false);assert.equal(w.penalty,5);assert.equal(w.messes,1);
+  const water=w.stock.liquids.get('water');assert.ok(water&&water.cells.size>40);
+  assert.ok(Math.abs(volume(w)-vase.volume)<1e-6,'water is conserved between the pool and tires');
+  assert.ok(w.stock.items.some(p=>p.source==='vase'&&p.kind==='shard'));
+  const wetKey=[...water.cells].sort((a,b)=>b[1]-a[1])[0][0];
+  const x=wetKey%120*Stock.CELL+2,y=Math.floor(wetKey/120)*Stock.CELL+2;
+  Object.assign(w.body,{x:x-28+5.5,y:y+11,a:0,vx:35,vy:0,omega:0});
+  w.wheels.forEach(q=>{q.a=0;q.omega=0;});step(w,.8);
+  assert.ok(w.stock.smears.some(p=>p.kind==='water'),'rolling tires leave wet tracks');
+  const amount=volume(w);step(w,6);
+  assert.ok(w.stock.liquids.get('water').cells.size>40);
+  assert.ok(Math.abs(volume(w)-amount)<1e-6,'the puddle persists rather than fading away');
+});
+
+test('water poured beside a wall collects inside the room without losing volume',()=>{
+  for (const [x,y] of [[9,9],[470,9],[9,290],[470,290]]) {
+    const w=new World(empty,true);w.stock.spill('water',x,y,32);
+    for(let i=0;i<120;i++)w.stock.flow(.05);
+    assert.ok(Math.abs(volume(w)-32)<1e-6);
+    assert.ok([...w.stock.liquids.get('water').cells.keys()].every(k=>k%120>=2&&k%120<118&&Math.floor(k/120)>=2&&Math.floor(k/120)<73));
+  }
 });
 
 test('shelf yaw and the fallen frame use their real rotated collision footprint',()=>{

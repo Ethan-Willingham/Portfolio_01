@@ -7,13 +7,13 @@
   const levels = [
     {
       name: 'First push', department: '01 / Welcome to the store', limit: 65, par: 30,
-      tip: 'Turn before the corner. Your cart will keep sliding until your next push changes its path.',
+      tip: 'One table, one vase. Give it a bump in practice, then try steering past it without spilling the water.',
       start: { x: 76, y: 235, a: up },
       gates: [{ x: 82, y: 80 }, { x: 281, y: 76 }, { x: 392, y: 173 }],
       exit: { side: 'right', center: 249, width: 64 },
-      shelves: [shelf(171, 137, 120, 48, 'WINE & SAUCES', 'groceries')],
-      objects: [cone(131, 91), cone(334, 152), cone(345, 238)],
-      signs: [{ x: 68, y: 270, text: 'START HERE' }, { x: 237, y: 211, text: 'PLEASE BE CAREFUL' }]
+      shelves: [{ x: 117, y: 141, w: 32, h: 32, kind: 'table', label: 'ONE VASE' }],
+      objects: [],
+      signs: [{ x: 68, y: 270, text: 'START HERE' }, { x: 133, y: 195, text: 'ONE VASE' }]
     },
     {
       name: 'Endcap trouble', department: '02 / Household essentials', limit: 75, par: 43,
