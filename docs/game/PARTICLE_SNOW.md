@@ -234,7 +234,8 @@ Its quiet 120-second capture still sampled a 15.92 ms liquid/snow chain.
 The capture used a different input schedule from the v28.129 capture above;
 the numbers are not a matched performance comparison.
 
-The next structural prototype should bound work in fully disturbed snow:
+The scaling measurements below are the baseline for a structural prototype.
+A candidate should bound work in fully disturbed snow:
 
 - Retain each grain's identity, position, velocity, aerodynamic size and mass.
 - Use a separate fixed-stencil GPU compression and friction field for packed
@@ -258,6 +259,106 @@ Require timestamped full-chain measurements at the active material limit,
 moving-boundary stress cases and a real 120 Hz ordinary-game capture before
 claiming the performance goal. Correctness fixtures may position materials
 and boundaries; ordinary FPS evidence must keep the natural residents.
+
+### Count and crowding sweep, September 30, 2026
+
+The owner requested a measured scaling curve before changing the model.
+The unchanged v28.129 GPU engine (SHA-256 beginning `cd9a7de2628a4061`)
+was tested on the M1 Pro in an owned background Chrome for Testing process.
+No resident was spawned, stacked or repositioned for the ordinary capture.
+
+`tools/perf/snow-scaling.mjs` runs prediction, the fresh snow-only index,
+four contact passes, final contact/shield and displacement tracking. It
+excludes terrain, guests, water physics, air projection, rendering and CPU
+gameplay. Nine counts from 500 through the 36,000 active-grain limit were
+tested in three layouts: constant triangular spacing with growing area,
+and fixed 80 by 80 and 40 by 40 world-pixel footprints. The fixed footprints
+are artificial compression fixtures, not ordinary snow piles.
+
+Each point has 32 warm-up ticks and 24 timed ticks submitted in one batch,
+repeated in reversed order. Every tick starts from the same GPU records;
+each count/layout includes every intended grain in the GPU index. Times
+span the earliest positive-work pass begin to the latest end, including
+inter-pass gaps. Compilation, seed resets and readback are excluded.
+These are warm GPU measurements, not frame times or certified capacities.
+
+| Grains | Constant spacing | 80 by 80 footprint | 40 by 40 footprint |
+| --- | --- | --- | --- |
+| 4,000 | 0.59 ms | 0.54 ms | 0.91 ms |
+| 8,000 | 0.66 ms | 0.79 ms | 2.14 ms |
+| 16,000 | 1.03 ms | 1.74 ms | 5.48 ms |
+| 24,000 | 1.52 ms | 4.59 ms | 10.87 ms |
+| 36,000 | 1.57 ms | 6.50 ms | 19.52 ms |
+
+The table gives pooled medians across 48 samples, in milliseconds per grain
+tick. At the same 36,000 grains, severe compression costs about 12.4 times
+the constant-spacing layout. Constant-spacing cell membership remains at
+six grains or fewer; the two fixed footprints reach 36 and 144 per cell.
+
+The unbounded neighbor scan explains the direction of the curve: work is
+proportional to the sum of each cell's membership times nearby membership.
+At constant density this grows approximately with N. In a fixed area A,
+it can approach N squared divided by A. GPU parallelism and fixed costs
+change measured elapsed time, so this is not a strict timing law. The
+40 by 40 fixture has a positive quadratic timing component and a quadratic
+fit R squared of 0.998 versus 0.979 for a line above 4,000 grains. This
+supports superlinear dense work; it does not establish an exponential law.
+From 4,000 through 36,000 grains (nine times N), the measured 5 by 5 cell
+candidate-work envelope grows 9.5 times at constant spacing and about
+79 times in either fixed footprint. This proxy is not an exact pair-test
+counter, but distinguishes the near-linear and near-quadratic work curves.
+
+A separate 120-second ordinary capture used normal snow, water, smoke and
+the five natural residents. It fell to 18.0 FPS around 12,416 active snow,
+then recovered to 60.0 FPS with 13,893. The final captured state, after
+recovery, supplied 13,932 GPU snow records and 7,208 water records for
+`tools/perf/snow-town-scaling.mjs`. This replay holds the actual terrain,
+resident poses and uploaded uniforms fixed, and thins only snow using
+nested position/index-hash subsets. It does not manufacture more grains.
+
+The complete captured-town snow tick includes production terrain, guest
+union exits, fallback and motion tracking. Median spans were 2.09 ms at
+4,000 snow, 2.74 ms at 8,000, and 3.48 ms at 13,932. Prediction and each
+contact receive their original boundary passes. Water records are retained
+unchanged, but water physics, rendering, CPU gameplay and active air are
+excluded. Diagnostic pass splits and dispatch-count copies add overhead.
+This replay is a controlled end-state measurement, not the worst FPS state.
+
+At 120 FPS, current scheduling requests two or four snow ticks per frame.
+Four repetitions of the captured 13,932-grain cost give about 13.9 ms,
+exceeding the entire 8.33 ms frame budget. This is a budget illustration,
+not a production lower bound or four evolving ticks. Slow callbacks can
+request ten ticks, compounding the slowdown. The natural capture's worst
+second also spent 13.2 ms on CPU work, including 5.3 ms in jello and 4.3 ms
+in rain/snow updates; nested profiler buckets must not be added together.
+Bounding neighbor work alone does not remove all of these costs.
+
+There is no single verified safe snow count. Count, local compression,
+boundary contacts, tick scheduling and the rest of the game all matter.
+The active 36,000 limit is a storage/admission limit, not a 120 FPS promise.
+The ordinary capture has a roughly 60 Hz headless callback ceiling and
+private instrumentation, so it cannot verify sustained native 120 FPS.
+The next optimization must bound contact/shield work and reduce repeated
+boundary and catch-up costs, then repeat these curves and ordinary play.
+
+Run the tests sequentially so separate processes do not compete for the GPU:
+
+```sh
+SNOW_SNAPSHOT=1 SNOW_PROFILE=1 DURATION_MS=120000 \
+  DUMP=/tmp/snow-capture node tools/perf/test-ordinary-game.mjs
+node tools/perf/snow-scaling.mjs
+SNAPSHOT=/tmp/snow-capture/resident-snapshot.json \
+  node tools/perf/snow-town-scaling.mjs
+python3 tools/perf/plot-snow-scaling.py \
+  --grains /tmp/sluice-snow-scaling/report.json \
+  --town /tmp/sluice-snow-town-scaling/report.json \
+  --trace /tmp/snow-capture/trace.json --out /tmp/snow-analysis
+```
+
+The sweep scripts accept `DUMP` for their output directories. The plotting
+script combines their raw reports and the native trace into a PNG, SVG,
+CSV and analysis JSON; it requires NumPy and Matplotlib. Keep raw captures
+outside the public repo.
 
 `node tools/test-snow-support.cjs` checks persistent identity and momentum
 with fresh and delayed GPU snapshots, weather admission spacing, legacy
