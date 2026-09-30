@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.64';
+  var VERSION = 'v1.65';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -5081,13 +5081,24 @@
     host.appendChild(svg); searchSvgEl = svg;
 
     var hud = document.createElement('div'); hud.setAttribute('id', 'gx-search-hud');
-    var algo = document.createElement('div'); algo.className = 'gx-sh-algo'; hud.appendChild(algo); shVal.algo = algo;
-    var status = document.createElement('div'); status.className = 'gx-sh-status'; hud.appendChild(status); shVal.status = status;
+    // Detailed numbers are kept for the explanation dialog. The live view gets
+    // one small progress meter, leaving the picker for choices and controls.
+    var details = document.createElement('div'); details.hidden = true; hud.appendChild(details);
+    var algo = document.createElement('div'); algo.className = 'gx-sh-algo'; details.appendChild(algo); shVal.algo = algo;
+    var meter = document.getElementById('gx-search-progress');
+    var meterHead = document.createElement('div'); meterHead.className = 'gx-progress-head'; meter.appendChild(meterHead);
+    var status = document.createElement('span'); status.className = 'gx-progress-status'; meterHead.appendChild(status); shVal.status = status;
+    var percent = document.createElement('span'); percent.className = 'gx-progress-percent'; meterHead.appendChild(percent); shVal.percent = percent;
+    var progress = document.createElement('progress'); progress.max = 100; progress.value = 0;
+    progress.setAttribute('aria-label', 'Explored search space'); meter.appendChild(progress); shVal.progress = progress;
+    var meterFoot = document.createElement('div'); meterFoot.className = 'gx-progress-foot'; meter.appendChild(meterFoot);
+    var elapsed = document.createElement('span'); meterFoot.appendChild(elapsed); shVal.elapsed = elapsed;
+    var path = document.createElement('span'); meterFoot.appendChild(path); shVal.meterPath = path;
     function row(label) {
       var d = document.createElement('div'); d.className = 'gx-sh-row';
       var a = document.createElement('span'); a.textContent = label;
-      var b = document.createElement('span'); b.textContent = '—';
-      d.appendChild(a); d.appendChild(b); hud.appendChild(d); return b;
+      var b = document.createElement('span'); b.textContent = '';
+      d.appendChild(a); d.appendChild(b); details.appendChild(d); return b;
     }
     shVal.time = row('Time'); shVal.expl = row('Explored'); shVal.path = row('Path');
 
@@ -5121,6 +5132,7 @@
   function updateSearchHUD() {
     var on = isSearchField(currentField) && pf && pf.built;
     if (!searchHudBuilt) { if (!on) return; ensureSearchHUD(); if (!searchHudBuilt) return; }
+    document.getElementById('gx-search-progress').hidden = !on;
     if (!on) { searchSvgEl.style.display = 'none'; searchHudEl.style.display = 'none'; hudLastField = null; return; }
     searchSvgEl.style.display = ''; searchHudEl.style.display = '';
     var W = canvas.clientWidth || 1, H = canvas.clientHeight || 1;
@@ -5135,6 +5147,12 @@
     shVal.time.textContent = (pf.elapsed || 0).toFixed(1) + ' s';
     shVal.expl.textContent = fmtInt((pf.cClosed | 0) + (pf.cPath | 0)) + ' / ' + fmtInt(pf.cFree || 0);
     shVal.path.textContent = pf.reached ? fmtInt((pf.cPath | 0) + 2) + ' cells' : 'Pending';
+    var explored = Math.min(100, Math.round(((pf.cClosed | 0) + (pf.cPath | 0)) / Math.max(1, pf.cFree || 0) * 100));
+    shVal.percent.textContent = explored + '% explored';
+    shVal.progress.value = explored;
+    shVal.elapsed.textContent = shVal.time.textContent;
+    shVal.meterPath.hidden = !pf.reached;
+    shVal.meterPath.textContent = pf.reached ? fmtInt((pf.cPath | 0) + 2) + '-cell path' : '';
     if (shVal.spd) shVal.spd.textContent = SEARCH_STEPS < 1 ? SEARCH_STEPS.toFixed(2) : Math.round(SEARCH_STEPS);
 
     // Depth-cued route line. During a transition the cells animate, so we freeze
@@ -7512,12 +7530,6 @@
       else if (isLifeField(currentField)) { srAz = 0.9; srEl = 0.5; srR = 1.1; srSweep = 0; }
       bumpBlurb();
     }
-    var resetBtn = document.getElementById('galaxy-reset');
-    if (resetBtn) resetBtn.addEventListener('click', function () {
-      resetView();
-      applyStartView(lastSelectedScene);
-      try { canvas.focus({ preventScroll: true }); } catch (e) {}
-    });
 
     // Two scene families, with the last choice remembered separately for each.
     var modeScenes = { watch: 'bfs', explore: 'mulberry' };
@@ -7638,7 +7650,8 @@
             if (picker) picker.value = category;
             showMode(mode);
             wrapperEl.setAttribute('data-scene', scene);
-            document.getElementById('gx-current-name').textContent = s.options[j].textContent;
+            document.getElementById('gx-current-name').textContent = scene === 'bfs' ? 'Breadth-first search'
+              : scene === 'dfs' ? 'Depth-first search' : SORT_NAMES[scene] || s.options[j].textContent;
             document.getElementById('gx-current-summary').textContent = sceneGuide[scene]
               || 'Values are rings. Watch the scrambled sizes move into order.';
           }

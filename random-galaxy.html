@@ -33,7 +33,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="random-galaxy.css?v=1.64">
+  <link rel="stylesheet" href="random-galaxy.css?v=1.65">
 </head>
 <body class="gx-page">
   <div class="site-wrapper">
@@ -46,9 +46,6 @@
             <button class="gx-fs-btn" type="button" id="galaxy-hide" data-tip="Hide UI (H)" aria-label="Hide UI for screenshots">
                   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M1.5 8 C3.5 4.5 5.5 3.5 8 3.5 C10.5 3.5 12.5 4.5 14.5 8 C12.5 11.5 10.5 12.5 8 12.5 C5.5 12.5 3.5 11.5 1.5 8 Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M2.5 13.5 L13.5 2.5" stroke="currentColor" stroke-width="1.3"/></svg>
                 <span class="gx-tool-label">Hide UI</span></button>
-            <button class="gx-fs-btn" type="button" id="galaxy-reset" data-tip="Reset view" aria-label="Reset view">
-                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>
-                <span class="gx-tool-label">Reset view</span></button>
             <button class="gx-fs-btn" type="button" id="galaxy-fly" data-tip="Fullscreen" aria-label="Toggle fullscreen">
                   <svg class="gx-ic gx-ic-expand" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 6 V2.5 H6 M10 2.5 H13.5 V6 M13.5 10 V13.5 H10 M6 13.5 H2.5 V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg class="gx-ic gx-ic-compress" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6 2.5 V6 H2.5 M13.5 6 H10 V2.5 M10 13.5 V10 H13.5 M2.5 10 H6 V13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -58,12 +55,11 @@
         <div class="gx-workspace">
           <aside class="pillbar gx-panel" aria-label="Scene picker">
             <div class="gx-modes" role="tablist" aria-label="What would you like to do?">
-              <button type="button" class="gx-mode" id="gx-watch-tab" role="tab" aria-selected="true" aria-controls="gx-watch-scenes" data-mode="watch">Watch algorithms</button>
-              <button type="button" class="gx-mode" id="gx-explore-tab" role="tab" aria-selected="false" aria-controls="gx-explore-scenes" data-mode="explore" tabindex="-1">Explore math</button>
+              <button type="button" class="gx-mode" id="gx-watch-tab" role="tab" aria-selected="true" aria-controls="gx-watch-scenes" data-mode="watch"><span class="gx-mode-action">Watch</span><span class="gx-mode-topic">algorithms</span></button>
+              <button type="button" class="gx-mode" id="gx-explore-tab" role="tab" aria-selected="false" aria-controls="gx-explore-scenes" data-mode="explore" tabindex="-1"><span class="gx-mode-action">Explore</span><span class="gx-mode-topic">math</span></button>
             </div>
             <div class="gx-controls">
               <div class="gx-group" id="gx-watch-scenes" role="tabpanel" aria-labelledby="gx-watch-tab">
-                <p class="gx-panel-hint">Pick an algorithm. Watch it work.</p>
                 <div class="gx-group-row">
                   <label class="gx-category-field"><span>Category</span>
                     <select class="gx-category-select" id="gx-watch-category" aria-label="Watch category">
@@ -72,7 +68,7 @@
                       <option value="life">Life</option>
                     </select>
                   </label>
-                <label class="gx-scene-field" data-category="pathfinding" data-active="true"><span>Pathfinding</span>
+                <label class="gx-scene-field" data-category="pathfinding" data-active="true"><span>Algorithm</span>
                   <select class="gx-cat-select gx-cat-select--active" aria-label="Pathfinding scene">
                   <option value="" disabled>Choose pathfinding</option>
                   <option value="bfs" selected>Breadth-first</option>
@@ -84,7 +80,7 @@
                   <option value="randomwalk">Random walk</option>
                   </select>
                 </label>
-                <label class="gx-scene-field" data-category="sorting"><span>Sorting</span>
+                <label class="gx-scene-field" data-category="sorting"><span>Algorithm</span>
                   <select class="gx-cat-select" aria-label="Sorting scene">
                   <option value="" disabled selected>Choose sorting</option>
                   <option value="selection">Selection</option>
@@ -102,7 +98,7 @@
                   <option value="bogo">Bogo</option>
                   </select>
                 </label>
-                <label class="gx-scene-field" data-category="life"><span>Life</span>
+                <label class="gx-scene-field" data-category="life"><span>Scene</span>
                   <select class="gx-cat-select" aria-label="Life scene">
                   <option value="" disabled selected>Choose life</option>
                   <option value="boids">Flocking birds</option>
@@ -114,7 +110,6 @@
                 </div>
               </div>
               <div class="gx-group" id="gx-explore-scenes" role="tabpanel" aria-labelledby="gx-explore-tab" hidden>
-                <p class="gx-panel-hint">Pick a structure. Fly through it.</p>
                 <div class="gx-group-row">
                   <label class="gx-category-field"><span>Category</span>
                     <select class="gx-category-select" id="gx-explore-category" aria-label="Explore category">
@@ -125,14 +120,14 @@
                       <option value="geometry">Geometry</option>
                     </select>
                   </label>
-                <label class="gx-scene-field" data-category="randomness"><span>Randomness</span>
+                <label class="gx-scene-field" data-category="randomness"><span>Structure</span>
                   <select class="gx-cat-select" aria-label="Randomness scene">
                   <option value="" disabled selected>Choose randomness</option>
                   <option value="mulberry">Random stars</option>
                   <option value="grid">Perfect grid</option>
                   </select>
                 </label>
-                <label class="gx-scene-field" data-category="attractors"><span>Attractors</span>
+                <label class="gx-scene-field" data-category="attractors"><span>Structure</span>
                   <select class="gx-cat-select" aria-label="Attractor scene">
                   <option value="" disabled selected>Choose attractors</option>
                   <option value="thomas">Thomas</option>
@@ -142,7 +137,7 @@
                   <option value="clifford">Clifford</option>
                   </select>
                 </label>
-                <label class="gx-scene-field" data-category="fractals"><span>Fractals</span>
+                <label class="gx-scene-field" data-category="fractals"><span>Structure</span>
                   <select class="gx-cat-select" aria-label="Fractal scene">
                   <option value="" disabled selected>Choose fractals</option>
                   <option value="sierpinski">Sierpinski</option>
@@ -150,7 +145,7 @@
                   <option value="vicsek">Vicsek</option>
                   </select>
                 </label>
-                <label class="gx-scene-field" data-category="numbers"><span>Numbers</span>
+                <label class="gx-scene-field" data-category="numbers"><span>Structure</span>
                   <select class="gx-cat-select" aria-label="Number scene">
                   <option value="" disabled selected>Choose numbers</option>
                   <option value="primes3d">Primes</option>
@@ -160,7 +155,7 @@
                   <option value="recaman">Recaman</option>
                   </select>
                 </label>
-                <label class="gx-scene-field" data-category="geometry"><span>Geometry</span>
+                <label class="gx-scene-field" data-category="geometry"><span>Structure</span>
                   <select class="gx-cat-select" aria-label="Sacred geometry scene">
                   <option value="" disabled selected>Choose geometry</option>
                   <option value="metatron">Metatron</option>
@@ -172,17 +167,17 @@
                 </div>
               </div>
             </div>
-            <div class="gx-current" aria-live="polite" aria-atomic="true">
-              <span class="gx-current-label">Now showing</span>
-              <h2 id="gx-current-name">Breadth-first search</h2>
-              <p id="gx-current-summary">A wave spreads outward until it finds the goal.</p>
-            </div>
             <div id="gx-scene-runtime" class="gx-scene-runtime" aria-label="Algorithm controls"></div>
-            <button class="gx-info-btn" id="gx-info-open" type="button" aria-label="How it works" aria-haspopup="dialog" aria-controls="gx-info-dialog"><svg class="gx-info-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v5M8 4v1" stroke="currentColor" stroke-width="1.4"/></svg><span class="gx-info-label">How it works</span></button>
           </aside>
           <div class="gx-view">
             <div class="demo-canvas-wrapper">
               <canvas id="galaxy-canvas" tabindex="0" aria-label="Interactive math scene. Drag to move the view."></canvas>
+              <div class="gx-current" aria-live="polite" aria-atomic="true">
+                <h2 id="gx-current-name">Breadth-first search</h2>
+                <p id="gx-current-summary">A wave spreads outward until it finds the goal.</p>
+              </div>
+              <button class="gx-info-btn" id="gx-info-open" type="button" aria-label="How it works" title="How it works" aria-haspopup="dialog" aria-controls="gx-info-dialog"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v5M8 4v1" stroke="currentColor" stroke-width="1.4"/></svg></button>
+              <div class="gx-search-progress" id="gx-search-progress" hidden></div>
               <div class="gx-topstat" aria-hidden="true"><span id="galaxy-fps"></span><span id="galaxy-ver"></span></div>
               <div class="gx-reveal" id="galaxy-reveal"></div>
               <div class="gx-status" id="galaxy-status" role="status">Starting the scene...</div>
@@ -211,6 +206,6 @@
     </main>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/random-galaxy.js?v=1.64"></script>
+  <script src="js/random-galaxy.js?v=1.65"></script>
 </body>
 </html>
