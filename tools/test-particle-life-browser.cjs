@@ -180,7 +180,7 @@ async function controlChecks(browser,url) {
     await p.locator('[data-param="species"]').dispatchEvent('input');
     const max=await config(),patterns=await select.locator('option:not([disabled])').count();
     const cells=max.k*(max.k+1)/2,possibilities=BigInt(patterns)*BigInt(new Set(levels).size)**BigInt(cells);
-    const displayedCount=await p.locator('.pl-possibilities .u-bignum-fig').textContent();
+    const displayedCount=await p.locator('.pl-possibilities .pl-count-number').textContent();
     check('the published count matches 120 independent choices and six patterns',
       max.k===15&&cells===120&&patterns===6&&Number(possibilities)>4.50e84&&Number(possibilities)<4.52e84&&
       BigInt(displayedCount.replaceAll(',',''))===451n*10n**82n&&
