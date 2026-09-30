@@ -13,10 +13,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Ghost in the Swarm</title>
-  <meta name="description" content="The Ghost in the Swarm: 100,000 Particle Life particles on the GPU, plus a hidden field I added that pushes the whole swarm into shapes.">
+  <meta name="description" content="Colored particles attract or repel one another on the GPU. An added flow field steers them through spirals and rings.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="The Ghost in the Swarm">
-  <meta property="og:description" content="The Ghost in the Swarm: 100,000 Particle Life particles on the GPU, plus a hidden field I added that pushes the whole swarm into shapes.">
+  <meta property="og:description" content="Colored particles attract or repel one another on the GPU. An added flow field steers them through spirals and rings.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/particle-life.html">
@@ -1069,7 +1069,7 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">The Ghost in the Swarm</h1>
-      <p class="post-subtitle">A hundred thousand particles on your GPU, each following one simple rule, plus a hidden field I added that pushes the whole swarm into shapes.</p>
+      <p class="post-subtitle">Colored particles push and pull on their neighbors. I added a flow field that steers the swarm through spirals and rings.</p>
     </header>
 
     <main>
@@ -1092,13 +1092,13 @@
               </div>
             </div>
             <div class="pl-canvas-wrap">
-              <canvas class="pl-canvas" role="img" aria-label="Live Particle Life simulation: tens of thousands of colored dots forming, holding, and melting between shapes"></canvas>
-              <div class="pl-status">initializing&hellip;</div>
+              <canvas class="pl-canvas" role="img" aria-label="Particle Life simulation with colored dots moving under attraction, repulsion, and a flow field"></canvas>
+              <div class="pl-status">Starting simulation&hellip;</div>
               <div class="pl-canvas-hint">drag to stir &middot; shift+drag to push</div>
             </div>
             <div class="pl-action-bar">
               <button class="pl-btn pl-btn-prominent pl-randomize">Randomize all</button>
-              <button class="pl-btn pl-recolor" type="button" title="Roll a fresh harmonious palette (keeps the matrix and physics)">New colors</button>
+              <button class="pl-btn pl-recolor" type="button" title="Choose a new palette. Keep the forces and settings.">New colors</button>
               <button class="pl-iconbtn pl-fs-drawer-toggle pl-fs-only" type="button" title="Controls" aria-label="Open controls" aria-expanded="false">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></svg>
               </button>
@@ -1122,12 +1122,13 @@
               </div>
               <div class="pl-control-group pl-group-matrix pillbar">
                 <div class="pillbar-head">
-                  <span class="pillbar-title">Force Matrix</span>
+                  <span class="pillbar-title">Force matrix</span>
                 </div>
                 <div class="pl-matrix-grid"></div>
                 <p class="pl-matrix-explainer">
-                  Row attracts column. Green = attract, red = repel. Click a
-                  cell to cycle. Shift-click to randomize one cell.
+                  Each cell sets how the row color responds to the column
+                  color. Green attracts; red repels. Select a cell to cycle
+                  its value. Shift-click to randomize it.
                 </p>
                 <div class="pl-toggles">
                   <label class="pl-toggle">
@@ -1141,11 +1142,11 @@
                 </div>
                 <div class="pl-field-section">
                   <div class="pillbar-head" style="margin-top:0.6rem;margin-bottom:0.5rem;">
-                    <span class="pillbar-title">Rogue field</span>
+                    <span class="pillbar-title">Flow field</span>
                   </div>
                   <p class="pl-field-explainer">
-                    A hidden flow that slowly cycles through patterns and
-                    steers the whole swarm.
+                    An extra force that steers the particles through
+                    changing patterns.
                   </p>
                   <div class="pl-toggles">
                     <label class="pl-toggle">
@@ -1172,9 +1173,9 @@
                     <span class="pillbar-sliderval" data-value="fieldmorph">1.0&times;</span>
                   </div>
                   <div class="pl-field-stepper">
-                    <button class="pl-field-arrow pl-field-prev" type="button" title="Morph back to the previous pattern" aria-label="Previous pattern">&lsaquo;</button>
+                    <button class="pl-field-arrow pl-field-prev" type="button" title="Previous pattern" aria-label="Previous pattern">&lsaquo;</button>
                     <span class="pl-field-name" aria-live="polite"></span>
-                    <button class="pl-field-arrow pl-field-next" type="button" title="Morph on to the next pattern" aria-label="Next pattern">&rsaquo;</button>
+                    <button class="pl-field-arrow pl-field-next" type="button" title="Next pattern" aria-label="Next pattern">&rsaquo;</button>
                   </div>
                 </div>
                 <div class="pl-buttons pillbar-foot" style="margin-top:1rem;">
@@ -1237,9 +1238,9 @@
                     <button class="pl-slot-save pillbar-btn pillbar-btn--primary">Save current</button>
                   </div>
                   <p class="pl-slot-hint">
-                    Save the current setup to a slot; click a filled slot to
-                    load it. <strong>Hold</strong> a slot (or right-click) to
-                    delete. Slots persist in your browser.
+                    Save this setup to a slot. Select a filled slot to load
+                    it. Hold or right-click a slot to delete it. Saves stay
+                    in this browser.
                   </p>
                   <div class="pl-share-row">
                     <input type="text" class="pl-slot-share" placeholder="Paste a share string"/>
@@ -1253,47 +1254,46 @@
           </div>
 
           <p class="d-lead">
-            There are two things going on here. The dots are <em>Particle
-            Life</em>: a hundred thousand of them on your GPU, each following one
-            rule about which colors to chase and which to run from. That rule by
-            itself is enough to grow cells, chains, and blobs that move like
-            they're alive. The second thing is the part I added, the ghost.
+            In <em>Particle Life</em>, each particle reacts to nearby colors.
+            The force matrix sets which colors attract or repel; a short-range
+            repulsion also pushes them apart. Different settings produce
+            clusters, chains, or scattered particles.
           </p>
 
           <figure class="pl-figure">
             <picture><source type="image/webp" srcset="assets/images/starling-murmuration.webp"><img src="assets/images/starling-murmuration.jpg" width="1024" height="683" loading="eager" decoding="async"
-                 alt="A starling murmuration at dusk: thousands of birds massed into a single dense, flowing shape over a field."></picture>
+                 alt="Starlings flying in a broad flock above a field near Gretna."></picture>
             <figcaption>
-              A starling murmuration. Thousands of birds, no leader, each minding
-              only its nearest neighbors, and out of that comes one shape that
-              folds and pours across the sky. The same trick as the swarm above.
+              A starling murmuration near Gretna.
               Photo by <a href="https://commons.wikimedia.org/wiki/File:A_starling_murmuration_near_Gretna_-_geograph.org.uk_-_5980881.jpg">Walter Baxter</a>,
               <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.
             </figcaption>
           </figure>
 
           <div class="pl-feature">
-            <span class="d-eyebrow">The part that's mine</span>
-            <h2 class="d-name">An invisible hand</h2>
+            <span class="d-eyebrow">Flow field</span>
+            <h2 class="d-name">Steering the particles</h2>
             <p class="d-lead">
-              Watch for a bit and you'll see the whole swarm settle into a
-              shape, hold it, then melt and form the next one. That's a hidden
-              flow field I laid over the simulation. It keeps cycling through
-              patterns, spirals, mandalas, that sort of thing, like an old
-              Winamp visualizer drifting from one scene to the next.
+              The "ghost" is an extra force I added to the simulation. Its
+              direction depends on position in the frame. It nudges passing
+              particles along paths that form spirals and rings.
             </p>
             <p>
-              The trick is that each pattern pushes the particles <em>along</em>
-              its lines instead of straight <em>at</em> them (a curl field). So
-              the swarm flows around the shape and keeps doing its own thing
-              while it traces it, instead of all clumping into a few dots.
+              Turn the field off to see the color-based interactions alone.
+              Auto-morph blends between patterns; switch it off and use the
+              arrows to choose one. Density layers applies a second pattern
+              to tightly packed particles.
+            </p>
+            <p>
+              Unlock raises the desktop limit from 40,000 to 100,000.
+              On phones, it raises the limit from 8,000 to 40,000.
             </p>
             <p class="d-caveat">
-              Builds on
+              This builds on
               <a href="https://www.ventrella.com/Clusters/">Ventrella's Clusters</a>,
               <a href="https://github.com/tom-mohr/particle-life-app">Tom Mohr's Particle Life</a>, and
-              <a href="https://lisyarus.github.io/blog/posts/particle-life-simulation-in-browser-using-webgpu.html">lisyarus's WebGPU port</a>;
-              the ghost is the piece I added. Source:
+              <a href="https://lisyarus.github.io/blog/posts/particle-life-simulation-in-browser-using-webgpu.html">lisyarus's WebGPU implementation</a>.
+              The simulation and added flow field are in
               <a href="js/particle-life.js">particle-life.js</a>.
             </p>
           </div>
@@ -1310,7 +1310,7 @@
     </footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/particle-life.js"></script>
+  <script src="js/particle-life.js?v=20260929-copy"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

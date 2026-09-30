@@ -49,7 +49,7 @@
   /* ---------- WebGPU support check ---------- */
   if (!navigator.gpu) {
     canvas.style.display = 'none';
-    statusEl.textContent = 'WebGPU not available in this browser. Try a recent Chrome, Edge, or a Chromium-based browser on macOS, Windows, or Linux. Safari and Firefox are still rolling out support.';
+    statusEl.textContent = 'This browser cannot run the WebGPU simulation. Try a browser with WebGPU support.';
     statusEl.classList.add('pl-status-error');
     return;
   }
@@ -1110,7 +1110,7 @@
       slotSaveBtn.addEventListener('click', function () {
         var idx = nextEmptySlot();
         if (idx === -1) {
-          flashMsg('All 5 slots full — long-press one to clear', true);
+          flashMsg('All five slots are full. Hold a slot to clear it.', true);
           return;
         }
         saveToSlot(idx);
@@ -1132,10 +1132,10 @@
             flashMsg('Copied share string to clipboard');
           } else {
             document.execCommand && document.execCommand('copy');
-            flashMsg('Share string ready — copy from box');
+            flashMsg('Share string ready. Copy it from the box.');
           }
         } catch (e) {
-          flashMsg('Share string ready — copy from box');
+          flashMsg('Share string ready. Copy it from the box.');
         }
       });
     }
@@ -1197,7 +1197,7 @@
           cell.className = 'pl-matrix-cell';
           var v = matrix[rr * K + c2];
           paintCell(cell, v);
-          cell.title = 'row ' + rr + ' acts on col ' + c2 + ': ' + v.toFixed(2);
+          cell.title = 'Row ' + rr + ' response to column ' + c2 + ': ' + v.toFixed(2);
           cell.addEventListener('click', function (e) {
             // Shift-click to randomize this single cell, otherwise cycle.
             if (e.shiftKey) {
@@ -1220,7 +1220,7 @@
               rebuildMatrixGrid();
             } else {
               paintCell(cell, matrix[rr * K + c2]);
-              cell.title = 'row ' + rr + ' acts on col ' + c2 + ': ' + matrix[rr * K + c2].toFixed(2);
+              cell.title = 'Row ' + rr + ' response to column ' + c2 + ': ' + matrix[rr * K + c2].toFixed(2);
             }
             uploadMatrix();
           });
@@ -1595,7 +1595,7 @@
 
   init().catch(function (err) {
     console.error(err);
-    statusEl.textContent = 'WebGPU init failed: ' + err.message;
+    statusEl.textContent = 'The WebGPU simulation could not start: ' + err.message;
     statusEl.classList.add('pl-status-error');
     canvas.style.display = 'none';
   });
