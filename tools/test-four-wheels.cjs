@@ -1,11 +1,38 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, wrap, clamp, BODY, CASTER, WHEELS, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const dt = 1 / 120;
 const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], exit: { side: 'right', center: 150, width: 80 } };
 const step = (w, seconds, input) => { for (let i = 0; i < Math.round(seconds / dt); i++) w.step(dt, input); };
 function test(name, fn) { fn(); console.log('PASS ' + name); }
+
+test('walking has a steady human cadence without jumping when speed changes', () => {
+  const gait = new World(empty).gait, body = { a: 0, vx: 60, vy: 0, omega: 0 };
+  advanceGait(gait, body, .25);
+  assert.ok(gait.phase / (.25 * Math.PI) > 1.8 && gait.phase / (.25 * Math.PI) < 2.5, 'normal cart travel should take about two steps per second');
+  const phase = gait.phase; body.vx = 135; advanceGait(gait, body, dt);
+  assert.ok(gait.phase > phase && gait.phase - phase < .1, 'acceleration must advance smoothly, not re-evaluate elapsed time');
+  body.vx = 0; const stopped = gait.phase;
+  for (let i = 0; i < 120; i++) advanceGait(gait, body, dt);
+  assert.equal(gait.phase, stopped); assert.ok(gait.stride < .001, 'the feet settle when movement stops');
+});
+
+test('the shopper steps around a stationary cart and walks backward with it', () => {
+  const gait = new World(empty).gait, body = { a: 0, vx: 0, vy: 0, omega: 2 };
+  advanceGait(gait, body, .25);
+  assert.ok(gait.phase > 0 && gait.stride > 1); assert.equal(gait.speed, 32);
+  assert.ok(gait.sideways < -.99 && Math.abs(gait.forward) < .01);
+  body.omega = 0; body.vx = -40; const phase = gait.phase; advanceGait(gait, body, dt);
+  assert.ok(gait.forward < -.99 && gait.phase > phase, 'reverse steps retain the continuous alternating cycle');
+});
+
+test('walking phase and stride are independent of render frequency', () => {
+  const slow = new World(empty).gait, fast = new World(empty).gait, body = { a: .8, vx: 30, vy: 40, omega: .5 };
+  for (let i = 0; i < 30; i++) advanceGait(slow, body, 1 / 30);
+  for (let i = 0; i < 120; i++) advanceGait(fast, body, 1 / 120);
+  assert.ok(Math.abs(slow.phase - fast.phase) < 1e-9 && Math.abs(slow.stride - fast.stride) < 1e-9);
+});
 
 test('rotation preserves the direction of existing momentum', () => {
   const w = new World(empty); w.body.vx = 60;

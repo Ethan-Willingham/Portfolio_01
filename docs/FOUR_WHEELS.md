@@ -63,6 +63,18 @@ The rasterizer uses that same caster geometry for the tire, fork and gold pivot.
 Tires and forks are opaque; basket mesh, rails and contents are translucent.
 Do not hide inward-swung casters behind an opaque basket fill. Pivot pins stay
 attached to the body while the tire and fork swing around them.
+All four tires have an 8-by-4-pixel physical envelope, chamfered rubber ends,
+thin steel forks, axle caps and individual travel-driven tread animation.
+The smaller gold bearing stays distinct from the silver axle. Keep the art
+and `CASTER.halfWidth` consistent so red contact outlines match the slim tires.
+
+The shopper's gait advances on physics steps using velocity at the shopper,
+including the arc around the handle during rotation. Phase is integrated, so
+speed changes do not jump the legs to a new pose. Normal travel is about two
+alternating footfalls per second, capped at three at a jog. Stride settles at
+rest; pulling backward and sliding sideways move the feet in those directions.
+The knees bend and the shoes alternate their lift. Rendering and pauses do not
+advance the gait, and the title illustration and course previews stand still.
 
 The simulation uses fixed 1/120-second steps. A cart rectangle and shopper circle
 both collide with shelves and walls; each tire also has a separate oriented
@@ -110,8 +122,9 @@ NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.c
 
 The physics checks cover caster trail, travel-dependent alignment, reverse
 flips, contact slip, protruding-tire collisions, gentle edge contact, doorway
-locking, jambs, all four exit directions and complete departure footprints. They
-also include a controller that drives all six full routes and
+locking, jambs, all four exit directions and complete departure footprints.
+They cover walking cadence, smooth acceleration, reverse steps and turns in
+place, and include a controller that drives all six full routes and
 drives out through the real contact model before their deadlines. Browser checks
 cover keyboard, touch, pause, retry, results, saved records, practice, course
 selection, narrow layouts, fullscreen, reduced motion and blocked storage.
@@ -119,6 +132,9 @@ Test hooks are injected by the verification server and are never shipped.
 Screenshots go to `/tmp/four-wheels-qa` unless `DUMP` is set. The harness owns
 Chrome for Testing and closes that process in `finally`. It never launches
 personal Chrome. `CART_BROWSER` may point to another dedicated testing build.
+With `ASSETS=1`, the browser harness refreshes the JPG thumbnail and renders a
+two-second `walking.gif` in the screenshot directory. Run `tools/build-webp.mjs`
+after refreshing the thumbnail to update its WebP sibling.
 
 For edits, increment the four `?v=` values in the post. Keep the post in the
 In Progress index, rebuild search when copy changes, and regenerate the sitemap

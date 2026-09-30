@@ -12,12 +12,32 @@
   const cross = (x, y, u, v) => x * v - y * u;
   const BODY = Object.freeze({ cartX: 14, halfLength: 17, halfWidth: 11, personX: -16, personRadius: 7, inertia: 470 });
   const WHEELS = [[1, -12], [27, -12], [1, 12], [27, 12]];
-  const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2.5, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
+  const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
   const ROOM = Object.freeze({ left: 8, right: 472, top: 8, bottom: 292, width: 480, height: 300 });
 
   function point(body, x, y) {
     const c = Math.cos(body.a), s = Math.sin(body.a);
     return { x: body.x + x * c - y * s, y: body.y + x * s + y * c };
+  }
+
+  function advanceGait(gait, body, dt) {
+    // The shopper travels around the handle during a turn even if the cart's
+    // center is stationary. Measure that velocity, not just the basket speed.
+    const c = Math.cos(body.a), s = Math.sin(body.a);
+    const vx = body.vx - body.omega * BODY.personX * s;
+    const vy = body.vy + body.omega * BODY.personX * c;
+    const speed = Math.hypot(vx, vy), moving = speed > .8;
+    // Two alternating footfalls per cycle: a walk at normal cart speed and
+    // at most three steps a second at a fast jog. Integrating preserves phase.
+    const cadence = moving ? Math.min(3, speed / (22 + speed * .1)) : 0;
+    gait.phase = (gait.phase + cadence * Math.PI * dt) % TAU;
+    const ease = 1 - Math.exp(-12 * dt);
+    gait.stride += ((moving ? Math.min(2.8, speed / 18) : 0) - gait.stride) * ease;
+    if (moving) {
+      gait.forward = (vx * c + vy * s) / speed;
+      gait.sideways = (-vx * s + vy * c) / speed;
+    }
+    gait.speed = speed;
   }
 
   function corners(body) {
@@ -143,6 +163,7 @@
       this.level = level; this.practice = practice;
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
       this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
+      this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0 };
       this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
       this.shelves = level.shelves.map((s, i) => ({ ...s, id: i, spilled: false, wobble: 0 }));
@@ -365,6 +386,7 @@
         w.speed = vx * Math.cos(w.a) + vy * Math.sin(w.a) - (i % 2 ? -1 : 1) * CASTER.axleOffset * w.omega;
         w.roll += w.speed * dt;
       });
+      advanceGait(this.gait, b, dt);
       for (const s of this.shelves) s.wobble *= Math.exp(-6 * dt);
       this.trackTime += dt;
       if (Math.hypot(b.vx, b.vy) > 35 && this.trackTime > 0.065) {
@@ -390,7 +412,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, CASTER, ROOM, point, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
+  const api = { World, BODY, WHEELS, CASTER, ROOM, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

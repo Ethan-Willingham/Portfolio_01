@@ -215,25 +215,27 @@
   }
   function drawCaster(g, b, wheel, i) {
     const pose = casterPose(b, wheel, i), fork = { ...pose.pivot, a: wheel.a };
-    // Two arms run from the gold swivel bearing to an axle behind it. The
-    // tire is centered on that axle, never on the fixed bearing itself.
-    localRect(g, fork, -CASTER.trail - 1, -4, CASTER.trail + 2, 2, P.dark);
-    localRect(g, fork, -CASTER.trail - 1, 2, CASTER.trail + 2, 2, P.dark);
-    localRect(g, fork, -CASTER.trail, -3, CASTER.trail + 1, 1, P.mid);
-    localRect(g, fork, -CASTER.trail, 2, CASTER.trail + 1, 1, P.mid);
-    localRect(g, pose, -4, -3, 8, 6, P.dark);
-    localRect(g, pose, -3, -2, 6, 4, P.edge);
-    localRect(g, pose, -2, -2, 1, 4, P.mid);
-    // Signed rolling distance makes the tread reverse before the fork flips.
-    const tread = ((Math.floor(wheel.roll / 2) % 3) + 3) % 3;
-    localRect(g, pose, tread - 1, -2, 1, 4, P.mid);
-    localRect(g, pose, -1, -1, 2, 2, P.gold);
-    localRect(g, pose, -1, -4, 2, 1, P.cream);
-    localRect(g, pose, -1, 3, 2, 1, P.cream);
+    // Narrow steel arms flare from the bearing to the trailing axle. Leave
+    // daylight between the arms and tire instead of a heavy rectangular fork.
+    for (const side of [-1, 1]) {
+      poly(g, [[-CASTER.trail, side * 3], [-1, side * 2], [1, side], [0, 0], [-1, side], [-CASTER.trail, side * 2]].map(p => point(fork, ...p)), P.dark);
+      const from = point(fork, -CASTER.trail, side * 2), to = point(fork, -1, side);
+      line(g, from.x, from.y, to.x, to.y, P.mid);
+    }
+    const l = CASTER.halfLength, h = CASTER.halfWidth;
+    poly(g, [[-l, -h + 1], [-l + 1, -h], [l - 1, -h], [l, -h + 1], [l, h - 1], [l - 1, h], [-l + 1, h], [-l, h - 1]].map(p => point(pose, ...p)), P.dark);
+    localRect(g, pose, -l + 1, -h + 1, l * 2 - 2, h * 2 - 2, P.edge);
+    // Each tire's signed travel drives its own tread, with no motion at rest.
+    const roll = ((wheel.roll / (Math.PI * 2 * l)) % 1 + 1) % 1;
+    const tread = Math.floor(roll * 6) - 3;
+    localRect(g, pose, tread, -h + 1, 1, h * 2 - 2, P.mid);
+    localRect(g, pose, 0, -h - 1, 1, h * 2 + 2, P.mid);
+    localRect(g, pose, 0, -h - 1, 1, 1, P.light);
+    localRect(g, pose, 0, h, 1, 1, P.cream);
   }
-  function drawCart(g, body, wheels, t, ghost = false) {
+  function drawCart(g, body, wheels, gait, ghost = false) {
     const b = { x: Math.round(body.x), y: Math.round(body.y), a: body.a };
-    const speed = Math.hypot(body.vx || 0, body.vy || 0), walk = Math.sin(t * Math.min(14, speed * .18)) * Math.min(3, speed / 25);
+    const step = gait || { phase: 0, stride: 0, forward: 1, sideways: 0 };
     g.save();
     if (!ghost) {
       g.globalAlpha *= .16;
@@ -263,13 +265,29 @@
     g.globalAlpha = alpha;
     WHEELS.forEach(p => {
       const pin = point(b, ...p);
-      rect(g, pin.x - 2, pin.y - 2, 5, 5, P.dark);
-      rect(g, pin.x - 1, pin.y - 1, 3, 3, P.gold);
-      rect(g, pin.x, pin.y, 1, 1, P.light);
+      rect(g, pin.x - 1, pin.y - 1, 3, 3, P.dark);
+      rect(g, pin.x, pin.y, 1, 1, P.gold);
+      rect(g, pin.x - 1, pin.y - 1, 1, 1, P.cream);
     });
-    localRect(g, b, -6, -13, 3, 26, P.blue); localRect(g, b, -6, -11, 1, 22, P.light);
-    localRect(g, b, -24 + walk, -7, 6, 4, P.dark); localRect(g, b, -24 - walk, 3, 6, 4, P.dark);
-    localRect(g, b, -21, -6, 11, 12, P.brick); localRect(g, b, -20, -6, 9, 3, P.coral);
+    // The raised handle also crosses the rear casters in this overhead view.
+    // Keep it slender and translucent so both rear tires remain readable.
+    g.globalAlpha = alpha * .7; localRect(g, b, -6, -13, 2, 26, P.blue);
+    g.globalAlpha = alpha * .5; localRect(g, b, -6, -11, 1, 22, P.light);
+    g.globalAlpha = alpha;
+    localRect(g, b, -21, -5, 4, 10, P.edge);
+    for (const side of [-1, 1]) {
+      const offset = Math.sin(step.phase + (side === 1 ? Math.PI : 0)) * step.stride;
+      const lift = Math.max(0, Math.cos(step.phase + (side === 1 ? Math.PI : 0))) * Math.min(1, step.stride / 2.8);
+      const x = -22 + offset * step.forward, y = side * 5 + offset * step.sideways * .65;
+      const hip = point(b, -19, side * 3), knee = point(b, -21 + offset * step.forward * .35, side * 4);
+      const ankle = point(b, x, y - lift);
+      line(g, hip.x, hip.y, knee.x, knee.y, P.edge, 2);
+      line(g, knee.x, knee.y, ankle.x, ankle.y, P.dark, 2);
+      localRect(g, b, x - 2, y - 1.5 - lift, 4, 3, P.dark);
+      localRect(g, b, x, y - 1 - lift, 2, 1, P.mid);
+      localRect(g, b, x - 2, y + 1 - lift, 3, 1, P.cream);
+    }
+    localRect(g, b, -18, -6, 8, 12, P.brick); localRect(g, b, -18, -6, 7, 3, P.coral);
     localRect(g, b, -15, -9, 5, 3, P.clay); localRect(g, b, -15, 6, 5, 3, P.clay);
     localRect(g, b, -11, -10, 6, 3, P.clay); localRect(g, b, -11, 7, 6, 3, P.clay);
     const head = point(b, -15, 0); oval(g, head.x, head.y - 2, 5, 5, P.clay);
@@ -287,7 +305,7 @@
     arrow(g, 146, 106, 0, 21, P.clay);
     g.save(); g.scale(2.3, 2.3);
     const b = { x: 31, y: 30, a: -.32, vx: 0, vy: 0 };
-    drawCart(g, b, [0, -.6, .35, -.15].map(a => ({ a, roll: 0 })), 0);
+    drawCart(g, b, [0, -.6, .35, -.15].map(a => ({ a, roll: 0 })));
     g.restore();
   }
 
@@ -381,7 +399,7 @@
     }
     // Painter's order gives furniture and people a little depth without hiding
     // the driving footprint. Everything still sits on a 2D floor.
-    const entities = [...w.shelves.map(s => ({ y: s.y + s.h / 2, render: () => drawShelf(g, s, w.time) })), ...w.objects.map(o => ({ y: o.y, render: () => drawObject(g, o) })), { y: w.body.y, render: () => drawCart(g, w.body, w.wheels, w.time) }];
+    const entities = [...w.shelves.map(s => ({ y: s.y + s.h / 2, render: () => drawShelf(g, s, w.time) })), ...w.objects.map(o => ({ y: o.y, render: () => drawObject(g, o) })), { y: w.body.y, render: () => drawCart(g, w.body, w.wheels, w.gait) }];
     entities.sort((a, b) => a.y - b.y).forEach(e => e.render());
     if (!preview) for (const p of particles) {
       g.globalAlpha = .2; rect(g, p.x + 1, p.y + 2, p.w, p.h, P.dark); g.globalAlpha = clamp(p.life, 0, 1);
