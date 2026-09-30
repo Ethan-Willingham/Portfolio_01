@@ -33,7 +33,7 @@ powder from older saves rejoins the persistent grain store without losing mass.
 | Gravity | 600 px/s squared | Same force through takeoff and landing |
 | Drag size | Stable 0.3 to 1 per grain | Distinct aerodynamic response |
 | Terminal speed | `32 + 42 * size` px/s | Continuous exponential drag |
-| GPU contact iterations | 8 per substep at at least 240 Hz | Resolve compression without cohesion |
+| GPU contact iterations | 5 per grain tick, currently about 332 ticks per second | Resolve compression without cohesion |
 | Contact friction | 0.35 | Tangential impulse limited by normal impulse |
 | Terrain restitution | 0 | Contact does not bounce snow upward |
 
@@ -138,7 +138,7 @@ Terrain, moving rig and bath boundaries constrain particles independently.
 Snow shares storage with water but contributes no liquid-grid mass or velocity.
 No decorative particles or prescribed flight arcs are created.
 
-This is a bounded 2D granular approximation with porous airflow obstacles
+This is a 2D granular approximation with porous airflow obstacles
 and local shielding. It does not model ice-crystal bonds or a fully coupled
 three-dimensional snow/air fluid. The particle render kernels remain unchanged.
 
@@ -197,6 +197,67 @@ inside the banya. `window.__particleSnow.stats()` reports the shared-particle
 model, active and parked counts, moving powder, collected mass and thaw.
 
 ## Verification
+
+### Performance budget, September 30, 2026
+
+The owner's target is 120 FPS during snow and resident handling on an M1 Pro.
+That allows 8.33 ms for a whole frame. v28.129 is not verified to meet it;
+the owner can still reach 12 FPS in a snowy town with residents.
+
+The v28.126 owner capture and a no-water comparison identified snow contacts,
+shielding and resident/terrain clearance as the dominant GPU costs. v28.128
+and v28.129 made neighbor traversal and clearance cheaper without changing
+particle contact answers, but retained the same unbounded dense work.
+
+An ordinary v28.129 capture with the natural five residents sampled 29.77 ms
+in the liquid/snow chain: 13.21 ms in grain contacts, 4.51 ms in shielding,
+4.68 ms in clearance fallback and 2.77 ms in primary resident collision.
+The contact grid held 2,844 occupied cells, with a maximum of 67 grains in
+one cell; 2,707 cells held eight or fewer. The slowdown does not require an
+extreme coincident particle knot. Each retained cell is scanned repeatedly,
+and slow callbacks request more physics steps, adding catch-up work.
+
+`SNOW_PROFILE=1 node tools/perf/test-ordinary-game.mjs` privately records cell
+occupancy, maximum membership, membership histogram and sum of squared cell
+counts alongside collision queues and GPU pass timings. These reads never
+change production shader math. This sum is a density-work indicator, not the
+exact number of tested neighbor pairs. Native headless callbacks are about
+60 Hz on this host; their mean FPS cannot establish the owner's 120 FPS goal.
+
+Snow currently rounds 1.445 grain ticks per water quantum up to two. With the
+water playback multiplier this runs about 332 grain ticks per real second.
+A private independent 240 Hz snow accumulator removes 27.7% of those ticks.
+It passed the GPU gap, returning-powder and jet tests with five contact
+iterations and unchanged material count. Constraint cadence changes, so this
+prototype is not an exact-state optimization and has not been promoted.
+Its quiet 120-second capture still sampled a 15.92 ms liquid/snow chain.
+The capture used a different input schedule from the v28.129 capture above;
+the numbers are not a matched performance comparison.
+
+The next structural prototype should bound work in fully disturbed snow:
+
+- Retain each grain's identity, position, velocity, aerodynamic size and mass.
+- Use a separate fixed-stencil GPU compression and friction field for packed
+  regions. Do not substitute an averaged grid velocity for particle velocity.
+- Keep exact pair contacts where the complete nearby candidate set fits a
+  small fixed bound. Overflow must select the packed approximation, never
+  discard neighbors or material or return to an unbounded dense pair scan.
+- Replace the shielding neighbor scan with bounded occupancy samples too.
+- Keep the existing terrain, rig and resident collision geometry. Preserve
+  independent release, flight, landing, scoop, melt and save behavior.
+
+Scalar density projection alone can lose static pile friction and look fluid.
+The prototype needs unilateral compression, pressure-limited shear resistance,
+boundary capacity, a coincident-grain tie-break without launch energy, and
+smooth transitions between packed and sparse regions. Test these before
+rollout, including deep quiet piles, support removal, rotation/translation,
+jet erosion and returning powder. Sleeping is a later optimization for quiet
+interiors; it cannot bound a pile that jets or slimes have fully awakened.
+
+Require timestamped full-chain measurements at the active material limit,
+moving-boundary stress cases and a real 120 Hz ordinary-game capture before
+claiming the performance goal. Correctness fixtures may position materials
+and boundaries; ordinary FPS evidence must keep the natural residents.
 
 `node tools/test-snow-support.cjs` checks persistent identity and momentum
 with fresh and delayed GPU snapshots, weather admission spacing, legacy
