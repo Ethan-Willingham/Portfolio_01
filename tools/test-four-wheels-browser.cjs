@@ -61,6 +61,16 @@ async function setup(context, url) {
     browser = await chromium.launch({ headless: true, executablePath: process.env.CART_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing' });
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
     const page = await setup(desktop, url);
+    const fillsOpeningViewport = () => {
+      const game=document.getElementById('cart-game').getBoundingClientRect();
+      const nav=document.querySelector('.cart-bottomnav').getBoundingClientRect();
+      return game.top >= 0 && game.top < 16 && game.bottom <= innerHeight + 1
+        && game.height > innerHeight * .9 && game.width >= Math.min(innerWidth * .95,1800)
+        && nav.top >= game.bottom && !document.querySelector('.arc-banner,.u-hero,.post-header');
+    };
+    check('the page opens directly into a viewport-sized game with site links below', await page.evaluate(fillsOpeningViewport));
+    check('the game title is inside the opening panel', await page.locator('#cart-overlay-title').textContent() === 'All Four Wheels');
+    await page.screenshot({ path: path.join(dump, 'desktop-first-screen.png') });
     await page.locator('#cart-game').scrollIntoViewIfNeeded();
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'desktop-start.png') });
     check('the new post boots and begins with an unticked practice option', await page.locator('#cart-start').isVisible() && !(await page.locator('#cart-practice').isChecked()));
@@ -127,6 +137,7 @@ async function setup(context, url) {
     check('practice leaves the previous timed record intact', (await page.evaluate(() => __cartTest.state())).records[0].time === a.records[0].time);
     const mobile = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const phone = await setup(mobile, url); await phone.locator('#cart-game').scrollIntoViewIfNeeded();
+    check('the portrait game and touch controls fit the opening viewport', await phone.evaluate(fillsOpeningViewport));
     check('mobile has no horizontal overflow', await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     check('the mobile briefing fits inside the playfield', await phone.evaluate(() => {
       const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(), stage=document.getElementById('cart-stage').getBoundingClientRect();
@@ -155,6 +166,24 @@ async function setup(context, url) {
     check('320px layout has no horizontal overflow', await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     await phone.locator('#cart-courses').tap();
     await phone.locator('#cart-picker').screenshot({ path: path.join(dump, 'mobile-courses.png') });
+    await phone.setViewportSize({width:852,height:393});
+    await phone.evaluate(() => __cartTest.reset());
+    check('the landscape phone also opens into a complete game', await phone.evaluate(fillsOpeningViewport));
+    check('the landscape briefing and start button fit the playfield', await phone.evaluate(() => {
+      const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect();
+      return card.top>=stage.top&&card.bottom<=stage.bottom;
+    }));
+    await phone.locator('#cart-game').screenshot({path:path.join(dump,'landscape-start.png')});
+    await phone.evaluate(() => {__cartTest.run();__cartTest.park();__cartTest.step(.7);});
+    check('landscape checkout results fit without scrolling',await phone.evaluate(() => {
+      const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect();
+      return card.top>=stage.top&&card.bottom<=stage.bottom;
+    }));
+    await phone.locator('#cart-game').screenshot({path:path.join(dump,'landscape-checkout.png')});
+    await page.setViewportSize({width:2560,height:1440});
+    check('wide monitors keep the game centered and capped at 1800 pixels',await page.evaluate(()=>{
+      const r=document.getElementById('cart-game').getBoundingClientRect();return Math.abs(r.width-1800)<1&&Math.abs(r.left-(innerWidth-r.width)/2)<1;
+    }));
     const blocked = await browser.newContext({ viewport: {width:1280,height:900}, reducedMotion: 'reduce' });
     await blocked.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } }); });
     const fallback = await setup(blocked, url); await fallback.locator('#cart-start').click();

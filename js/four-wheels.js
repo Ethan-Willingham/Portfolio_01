@@ -406,7 +406,7 @@
     $('course-number').textContent = 'Course ' + String(index + 1).padStart(2, '0') + ' / 06';
     // Preserve the little caret while changing the title.
     $('course-name').firstChild.nodeValue = world.level.name + ' ';
-    overlay('Four wheels. All of them swivel.', world.level.name, index === 0 ? 'Follow the numbered floor markers. Park at checkout, facing the arrow.' : world.level.tip, 'Let\'s roll', null, true);
+    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Follow the numbered floor markers. Park at checkout, facing the arrow.' : world.level.tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
   function run() {

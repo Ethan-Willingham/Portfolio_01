@@ -9,14 +9,14 @@
     gtag('js', new Date());
     gtag('config', 'G-1NS9QT1HEM');
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#303931">
   <title>All Four Wheels</title>
   <meta name="description" content="A pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. Six short courses, playable here.">
   <link rel="canonical" href="https://ethanwillingham.com/four-wheels.html">
   <meta property="og:title" content="All Four Wheels">
   <meta property="og:description" content="Turn the cart. Keep sliding. Try to leave the dishes on the shelf. A little pixel-art game about four swivel wheels.">
-  <meta property="og:type" content="article">
+  <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/four-wheels.html">
   <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/four-wheels.jpg">
@@ -30,22 +30,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=2">
+  <link rel="stylesheet" href="four-wheels.css?v=3">
 </head>
-<body>
-  <script src="/js/archive-banner.js"></script>
+<body class="cart-page">
   <div class="site-wrapper">
-    <header class="post-header">
-      <a class="post-back" href="archive.html">&larr; In Progress</a>
-    </header>
     <main>
-      <article>
-        <header class="u-hero cart-hero">
-          <p class="u-eyebrow">A game in progress</p>
-          <h1 class="u-title">All Four Wheels</h1>
-          <p class="u-dek">A shopping cart with four swivel wheels, too much momentum, and a store full of breakable things.</p>
-        </header>
-
+        <h1 class="sr-only">All Four Wheels</h1>
         <section class="cart-game" id="cart-game" aria-label="All Four Wheels game">
           <header class="cart-toolbar">
             <button class="cart-course-button" id="cart-courses" type="button" aria-label="Choose a course">
@@ -73,8 +63,8 @@
             <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Follow the numbered floor markers, then stop inside checkout.</canvas>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
-                <p class="cart-kicker" id="cart-overlay-kicker">Four wheels. All of them swivel.</p>
-                <h2 id="cart-overlay-title">First push</h2>
+                <p class="cart-kicker" id="cart-overlay-kicker">Course 01 / 06 &middot; First push</p>
+                <h2 id="cart-overlay-title">All Four Wheels</h2>
                 <p id="cart-overlay-text">Follow the numbered floor markers. Park at checkout, facing the arrow.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
                 <label class="cart-practice" id="cart-practice-label"><input type="checkbox" id="cart-practice"> Practice without a timer</label>
@@ -119,25 +109,28 @@
         </section>
 
         <div class="post-body cart-prose">
-          <p>Turn the cart and it keeps going the old way. Push in the new direction and its path starts to bend. The person holding the handle has weight, too, so the two of you rotate around a point closer to the handle than the middle of the basket.</p>
-          <p>That's the part I wanted to make into a game. Get through the store before time runs out, and try to leave the dishes on the shelf. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five. Your best runs stay in this browser.</p>
+          <p><strong>All Four Wheels</strong> is my shopping cart game. Turn the basket while it keeps sliding in the old direction, then push to bend its path. Six short courses, shelves full of breakable things, and your best runs saved in this browser. Still in progress.</p>
           <details class="cart-notes">
-            <summary>A few things to try</summary>
+            <summary>How to play</summary>
+            <p>Get through the store before time runs out. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five.</p>
             <p>In the first course, push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward.</p>
             <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch the wheels swing around; turn while moving and each one follows a different curve. You can see them through the basket.</p>
             <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. At checkout, follow the painted arrow, fit the whole cart and shopper inside the bay, and hold still for a moment.</p>
             <p>Three marks for a clean run under the course's target time. Two for finishing with at most two mishaps. One for getting there. Practice mode has no deadline and doesn't change your records.</p>
           </details>
           <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-physics.js">Physics source</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
+          <nav class="cart-bottomnav" aria-label="Site navigation">
+            <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+            <a href="archive.html" class="post-back cart-forward"><span class="pb-label">In Progress</span></a>
+          </nav>
         </div>
-      </article>
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-physics.js?v=2"></script>
-  <script src="js/four-wheels-levels.js?v=2"></script>
-  <script src="js/four-wheels.js?v=2"></script>
+  <script src="js/four-wheels-physics.js?v=3"></script>
+  <script src="js/four-wheels-levels.js?v=3"></script>
+  <script src="js/four-wheels.js?v=3"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

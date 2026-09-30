@@ -17,6 +17,14 @@ Art is drawn locally from the site's warm palette. No asset fetches, runtime
 dependencies, generated bundle, font CDN, or game network requests.
 The post uses the site's analytics and self-hosted fonts.
 
+The page opens directly into the game, following Sluice's layout. The shell is
+96vw wide (capped at 1800px) and fills the opening viewport, including toolbar,
+route status and keyboard or touch controls. The fixed-resolution course is
+contained without stretching or cropping. The title is inside the briefing;
+the short about note, optional instructions and site links sit below the game.
+Keep blog heroes and the archive banner off this page. Its In Progress card
+and search membership remain on `archive.html`.
+
 ## The handling to preserve
 
 The cart and shopper are a rigid body with its center of mass behind the basket.
