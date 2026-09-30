@@ -62,7 +62,46 @@ async function modalFit(page,label){
  check(label+' gallery scroll is contained',a.pageW<=a.width&&a.pageH<=a.height&&a.scrollW<=a.clientW+1&&a.grid.b<=a.dialog.b&&a.grid.y>=a.header.b);
  if(a.coarse)check(label+' Close is a touch target',a.close.w>=44&&a.close.h>=44);
 }
-async function close(page){await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open);}
+async function workspaceFit(page,label){
+ await page.waitForFunction(()=>{
+  const selected=document.querySelector('.gx-scene-field[data-active="true"] .gx-cat-select').value,s=__gxTest.state();
+  return s.pending===null&&(s.field===selected||['grid','mulberry'].includes(selected)&&['random','mulberry'].includes(s.field));
+ });
+ await page.waitForTimeout(180);
+ const a=await page.evaluate(()=>{
+  const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height};};
+  const visible=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
+  const app=document.getElementById('galaxy-wrapper'),panel=app.querySelector('.gx-panel'),view=app.querySelector('.gx-view');
+  const controls=[...app.querySelectorAll('button,select,a')].filter(visible).map(e=>({name:e.getAttribute('aria-label')||e.textContent.trim(),...box(e)}));
+  return {app:box(app),panel:box(panel),view:box(view),canvas:box(document.getElementById('galaxy-canvas')),controls,
+   scrollW:panel.scrollWidth,clientW:panel.clientWidth,scrollH:panel.scrollHeight,clientH:panel.clientHeight,
+   width:innerWidth,height:innerHeight,pageW:document.documentElement.scrollWidth,pageH:document.documentElement.scrollHeight,coarse:matchMedia('(pointer:coarse)').matches};
+ });
+ const issues=[];
+ if(a.width>900){if(a.panel.r>a.view.x+1||Math.abs(a.panel.y-a.view.y)>1)issues.push('desktop controls left their sidebar');}
+ else if(a.panel.b>a.view.y+1)issues.push('narrow-screen controls are below the scene');
+ if(a.pageW>a.width+1||a.pageH>a.height+1||a.app.x!==0||a.app.y!==0||Math.abs(a.app.r-a.width)>1||Math.abs(a.app.b-a.height)>1)issues.push('workspace does not fit viewport');
+ if(a.scrollW>a.clientW+1||a.scrollH>a.clientH+1)issues.push('controls overflow their panel');
+ if(a.canvas.w<150||a.canvas.h<120)issues.push('scene canvas too small');
+ for(const b of a.controls){
+  if(b.x<-.5||b.y<-.5||b.r>a.width+.5||b.b>a.height+.5)issues.push('clipped '+b.name);
+  if(a.coarse&&(b.w<43.5||b.h<43.5))issues.push('small touch target '+b.name);
+ }
+ for(let i=0;i<a.controls.length;i++)for(let j=i+1;j<a.controls.length;j++){
+  const x=a.controls[i],y=a.controls[j];
+  if(Math.min(x.r,y.r)-Math.max(x.x,y.x)>2&&Math.min(x.b,y.b)-Math.max(x.y,y.y)>2)issues.push('overlapping '+x.name+' / '+y.name);
+ }
+ if(issues.length)process.stdout.write(JSON.stringify({label,...a,issues})+'\n');
+ check(label+' controls stay beside or above the scene and fit',issues.length===0);
+ if(process.env.SNAPSHOTS&&/1512x692|390x844|568x320/.test(label)){
+  await page.waitForFunction(()=>__gxTest.state().morph>.97||document.querySelector('.gx-scene-field[data-active="true"] .gx-cat-select').value==='grid'&&__gxTest.state().morph<.03);
+  await page.screenshot({path:path.join(out,'layout-'+label.replace(/[^a-z0-9-]/gi,'-')+'.png')});
+ }
+}
+async function close(page){
+ await page.keyboard.press('Escape');
+ await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open&&[...document.querySelectorAll('.gx-picker-trigger')].every(e=>e.getAttribute('aria-expanded')==='false'));
+}
 async function category(page,mode,value){
  await page.locator('#gx-'+mode+'-tab').click();
  await page.locator('#gx-'+mode+'-scenes .gx-category-field .gx-picker-trigger').click();
@@ -74,6 +113,7 @@ async function category(page,mode,value){
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH || path.join(require('node:os').homedir(),'.local/bin/agent-chrome-for-testing'),args:['--enable-unsafe-webgpu']});
  for(const mobile of (process.env.PHONE_ONLY?[true]:[false,true])){
   const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1366,height:768},isMobile:mobile,hasTouch:mobile});const page=await setup(context);
+  if(!process.env.LAYOUT_ONLY){
   const groups=await page.locator('.gx-scene-field').evaluateAll(es=>es.map(e=>({category:e.dataset.category,mode:e.closest('.gx-group').id==='gx-watch-scenes'?'watch':'explore',options:[...e.querySelector('select').options].filter(o=>o.value).map(o=>({value:o.value,label:o.textContent}))})));
   for(const group of groups){
    await category(page,group.mode,group.category);
@@ -123,11 +163,15 @@ async function category(page,mode,value){
   await page.keyboard.press('Enter');await page.waitForFunction(()=>__gxTest.state().field==='dfs');check('Enter picks the focused scene',(await trigger.locator('.gx-picker-value').textContent())==='Depth-first');
   await trigger.click();await close(page);check('Escape restores focus to the picker',await trigger.evaluate(e=>e===document.activeElement&&e.getAttribute('aria-expanded')==='false'));
   await trigger.click();await page.mouse.click(2,2);await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open);check('clicking the backdrop closes the picker',true);
-  // Fit the two longest galleries in every supported viewport.
-  const sizes=mobile?[[320,568],[360,640],[375,667],[390,844],[412,915],[568,320],[667,375],[740,360],[844,390]]:[[1920,1080],[1440,900],[1366,768],[1280,600],[1024,768],[900,700],[800,600]];
+  }
+  // Keep controls beside or above the scene at resize, zoom, and orientation boundaries.
+  const sizes=mobile?[[320,568],[360,640],[375,667],[390,844],[412,915],[568,320],[667,375],[740,360],[844,390]]:[[1920,1080],[1440,900],[1512,692],[1366,768],[1366,701],[1366,700],[1366,650],[1280,600],[1210,550],[1024,768],[901,600],[900,700],[800,600]];
   for(const [width,height]of sizes){
    await page.setViewportSize({width,height});await category(page,'watch','sorting');
+   await workspaceFit(page,width+'x'+height+' Sorting');
    await page.locator('.gx-scene-field[data-category="sorting"] .gx-picker-trigger').click();await modalFit(page,width+'x'+height+' Sorting');await close(page);
+   await category(page,'watch','pathfinding');await workspaceFit(page,width+'x'+height+' Pathfinding');
+   await category(page,'explore','randomness');await workspaceFit(page,width+'x'+height+' Explore');
    await page.locator('#gx-explore-tab').click();await page.locator('#gx-explore-scenes .gx-category-field .gx-picker-trigger').click();await modalFit(page,width+'x'+height+' categories');await close(page);
   }
   // The picture picker also belongs to the fullscreen surface.

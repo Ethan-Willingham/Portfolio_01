@@ -25,7 +25,7 @@
   };
 
   function preview(picker, value) {
-    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.71';
+    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.72';
   }
   function image(src, lazy) {
     var img = document.createElement('img');

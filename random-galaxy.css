@@ -243,16 +243,18 @@ html.gx-fs-lock { overflow: hidden; }
   #galaxy-wrapper .gx-scene-runtime .gx-sh-btn, #galaxy-wrapper .gx-scene-runtime .gx-so-btn, #galaxy-wrapper .gx-scene-runtime .gx-so-toggle { min-height: 44px; }
   .gx-fs-btn { min-width: 44px; }
 }
-@media (max-width: 900px), (max-height: 700px) {
+/* Controls stay left on wide screens and above the scene on narrow screens.
+   A shorter window must never move the picker underneath the scene. */
+@media (max-width: 900px) {
   .gx-appbar { padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); gap: 8px; }
   .gx-appbar h1 { font-size: 1rem; }
   .gx-purpose { font-size: 0.65rem; }
   .gx-tool-label { display: none; }
   .gx-fs-btn { min-width: 38px; padding: 8px; }
   .gx-topright { gap: 4px; }
-  .gx-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "view" "panel"; }
+  .gx-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "panel" "view"; }
   .gx-view { grid-area: view; }
-  #galaxy-wrapper .pillbar { grid-area: panel; padding: 10px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); border-right: 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "modes" "choices" "playback"; gap: 10px; align-items: center; }
+  #galaxy-wrapper .pillbar { grid-area: panel; padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left)); border-right: 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "modes" "choices" "playback"; gap: 10px; align-items: center; }
   .gx-modes { grid-area: modes; margin: 0; }
   .gx-mode { min-height: 64px; padding: 8px 12px; }
   .gx-controls { grid-area: choices; min-width: 0; }
@@ -282,7 +284,7 @@ html.gx-fs-lock { overflow: hidden; }
   #galaxy-wrapper .gx-scene-runtime .gx-sh-clab, #galaxy-wrapper .gx-scene-runtime .gx-so-clab { font-size: 0.7rem; }
   #galaxy-wrapper .gx-scene-runtime .gx-sh-spd, #galaxy-wrapper .gx-scene-runtime .gx-so-spd { min-width: 26px; font-size: 0.7rem; }
 }
-@media (max-height: 500px) and (min-width: 500px) {
+@media (max-height: 500px) and (min-width: 500px) and (max-width: 900px) {
   #galaxy-wrapper .pillbar { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); grid-template-areas: "modes choices" "playback playback"; padding-block: 5px; gap: 6px 12px; }
   .gx-current { top: 10px; left: 12px; width: min(200px, calc(100% - 76px)); }
   .gx-current h2 { font-size: 1rem; }
