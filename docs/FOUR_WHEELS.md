@@ -93,6 +93,16 @@ push props even when the basket clears them. Contacts apply torque. Cones and bo
 move, collide with each other and the room, and charge a penalty once per prop.
 Shelves spill once. Cones cost 2 seconds, boxes 3, shelves 5.
 
+Checkpoints have a continuous circular outline with a shared 20-pixel radius.
+The inner edge of the painted ring matches the capture boundary. The shopper's
+entire physical circle (radius 7, centered 16 pixels behind the body's origin)
+must fit inside it. Cart position alone cannot clear a checkpoint. Exact
+internal tangency counts; there is no dwell time, heading or speed requirement.
+Checkpoints count once, in route order. A pale outline shows the shopper's
+footprint when approaching the current circle.
+
+The room uses a light plaster rim, thin baseboard and shallow inner shadow,
+with a plain ink margin around the canvas. Keep the seam on the actual walls.
 Every outer-wall contact turns the contacted edge and the physical cart,
 shopper and tire outlines red immediately. Contact feedback is independent
 of impact speed or penalties, includes exact resting contact with a 0.04-pixel
@@ -133,6 +143,8 @@ NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.c
 The physics checks cover caster trail, travel-dependent alignment, reverse
 flips, contact slip, protruding-tire collisions, gentle edge contact, doorway
 locking, jambs, all four exit directions and complete departure footprints.
+They check full shopper containment, tangency, heading changes and checkpoint
+order, with a controller that aims the shopper at the circles.
 They cover walking cadence, smooth acceleration, reverse steps, posture and
 turns in place, and include a controller that drives all six full routes and
 drives out through the real contact model before their deadlines. Browser checks

@@ -149,6 +149,21 @@ async function setup(context, url) {
     check('pausing also freezes the shopper mid-step', JSON.stringify((await page.evaluate(() => __cartTest.state())).gait) === JSON.stringify(pausedGait));
     await page.locator('#cart-start').click(); await page.keyboard.press('r');
     check('retry resets penalties and position', (await page.evaluate(() => __cartTest.state())).messes === 0);
+    await page.evaluate(() => {
+      __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world(),p=w.level.gates[0];
+      Object.assign(w.body,{x:p.x,y:p.y,a:-Math.PI/2,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=-Math.PI/2;q.omega=0;});__cartTest.step(1/120);
+    });
+    check('putting the cart center in a circle does not clear the shopper checkpoint', (await page.evaluate(()=>__cartTest.state())).gate===0);
+    await page.evaluate(() => {
+      const w=__cartTest.world(),p=w.level.gates[0];w.body.y=p.y+CartPhysics.BODY.personX-(CartPhysics.CHECKPOINT_RADIUS-CartPhysics.BODY.personRadius+1);__cartTest.step(1/120);
+    });
+    check('the checkpoint stays active while part of the shopper is outside its circle', (await page.evaluate(()=>__cartTest.state())).gate===0);
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-partial.png')});
+    await page.evaluate(() => {__cartTest.world().body.y+=1;__cartTest.step(1/120);});
+    check('the circle clears when the whole shopper fits, with the cart still outside', await page.evaluate(()=>{
+      const w=__cartTest.world(),p=w.level.gates[0];return w.gate===1&&Math.hypot(w.body.x-p.x,w.body.y-p.y)>CartPhysics.CHECKPOINT_RADIUS;
+    }));
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-cleared.png')});
     await page.locator('#cart-courses').click();
     check('all six courses are selectable', await page.locator('.cart-course-tile').count() === 6);
     await page.locator('#cart-picker').screenshot({ path: path.join(dump, 'courses.png') });
@@ -206,7 +221,9 @@ async function setup(context, url) {
         __cartTest.reset(2); __cartTest.stop();
         const w=__cartTest.world(), wrap=CartPhysics.wrap, clamp=CartPhysics.clamp;
         for(let i=0;i<9.5*120;i++) {
-          const target=w.level.gates[w.gate]||w.exit.approach,b=w.body,dx=target.x-b.x,dy=target.y-b.y,d=Math.hypot(dx,dy),speed=Math.min(62,d*1.25);
+          let target=w.level.gates[w.gate]||w.exit.approach;
+          if(w.gate<w.level.gates.length){const previous=w.gate?w.level.gates[w.gate-1]:w.level.start,a=Math.atan2(target.y-previous.y,target.x-previous.x);target={x:target.x-CartPhysics.BODY.personX*Math.cos(a),y:target.y-CartPhysics.BODY.personX*Math.sin(a)};}
+          const b=w.body,dx=target.x-b.x,dy=target.y-b.y,d=Math.hypot(dx,dy),speed=Math.min(62,d*1.25);
           const vx=d>1?dx/d*speed:0,vy=d>1?dy/d*speed:0,ax=(vx-b.vx)*2.1,ay=(vy-b.vy)*2.1;
           let error=wrap(Math.atan2(ay,ax)-b.a),sign=1;
           if(Math.abs(error)>Math.PI/2){error=wrap(error+Math.PI);sign=-1;}

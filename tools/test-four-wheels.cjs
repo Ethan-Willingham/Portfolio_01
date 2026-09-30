@@ -1,6 +1,6 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, CHECKPOINT_RADIUS, shopperInCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const dt = 1 / 120;
 const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], exit: { side: 'right', center: 150, width: 80 } };
@@ -175,6 +175,31 @@ test('the red contact identifies a protruding caster or the shopper', () => {
   assert.ok(shopper.boundaryContacts.some(c => c.part === 'shopper' && c.side === 'left'));
 });
 
+test('a checkpoint requires the whole shopper circle, rather than the cart center', () => {
+  const target = {x:230,y:150};
+  const fixture = {...empty, gates:[target]};
+  const w = new World(fixture);
+  w.step(dt); assert.equal(w.gate,0,'the cart center alone cannot clear a checkpoint');
+  w.body.x = target.x - BODY.personX + CHECKPOINT_RADIUS - BODY.personRadius + .05;
+  w.step(dt); assert.equal(w.gate,0,'a shopper partly outside the ring cannot clear it');
+  w.body.x -= .05;
+  w.step(dt); assert.equal(w.gate,1,'the whole shopper may touch the inside edge of the circle');
+  assert.ok(w.body.x > target.x + CHECKPOINT_RADIUS, 'the cart can remain outside the circle');
+  assert.equal(w.events.filter(e=>e.type==='gate').length,1);
+  for (const a of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]) {
+    const body = {x:target.x-Math.cos(a)*BODY.personX,y:target.y-Math.sin(a)*BODY.personX,a};
+    assert.ok(shopperInCheckpoint(body,target),'body containment follows the shopper at every heading');
+  }
+});
+
+test('shopper checkpoints count in route order and open checkout after the last one', () => {
+  const w = new World({...empty,gates:[{x:230,y:150},{x:300,y:150}],start:{x:316,y:150,a:0}});
+  w.step(dt); assert.equal(w.gate,0,'entering a later circle cannot skip the route');
+  w.body.x = 246; w.step(dt); assert.equal(w.gate,1); assert.equal(w.exitOpen,false);
+  w.step(dt); assert.equal(w.gate,1,'a cleared circle cannot count twice');
+  w.body.x = 316; w.step(dt); assert.equal(w.gate,2); assert.equal(w.exitOpen,true);
+});
+
 test('checkout stays solid until all route markers are cleared', () => {
   const w = new World({ ...empty, start: { x: 415, y: 150, a: 0 } });
   step(w, 3, { push: 1 });
@@ -232,7 +257,13 @@ test('all six courses can be driven through before their deadlines', () => {
   // and drives out with the same collisions as a player, without moving the
   // body directly. This catches impossible layouts and blocked exits.
   function drive(w, target) {
-    const b = w.body, dx = target.x - b.x, dy = target.y - b.y, d = Math.hypot(dx, dy);
+    const b = w.body;
+    if (target === w.level.gates[w.gate]) {
+      const previous = w.gate ? w.level.gates[w.gate - 1] : w.level.start;
+      const approach = Math.atan2(target.y - previous.y, target.x - previous.x);
+      target = {x:target.x - BODY.personX * Math.cos(approach), y:target.y - BODY.personX * Math.sin(approach)};
+    }
+    const dx = target.x - b.x, dy = target.y - b.y, d = Math.hypot(dx, dy);
     const speed = Math.min(62, d * 1.25), vx = d > 1 ? dx / d * speed : 0, vy = d > 1 ? dy / d * speed : 0;
     const ax = (vx - b.vx) * 2.1, ay = (vy - b.vy) * 2.1;
     let error = wrap(Math.atan2(ay, ax) - b.a), sign = 1;

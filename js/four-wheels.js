@@ -3,7 +3,7 @@
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
   if (!ctx || !window.CartPhysics || !window.CartLevels) return;
-  const { World, BODY, point, corners, WHEELS, CASTER, casterPose, casterCorners, clamp } = CartPhysics;
+  const { World, BODY, CHECKPOINT_RADIUS, point, corners, WHEELS, CASTER, casterPose, casterCorners, clamp } = CartPhysics;
   const levels = CartLevels, game = $('game');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const rootStyle = getComputedStyle(document.documentElement);
@@ -116,6 +116,26 @@
       if (width > 0) g.fillRect(Math.round(x) - width, Math.round(y) + yy, width * 2, 1);
     }
   }
+  function ring(g, x, y, radius, color, thickness = 1) {
+    const outer = radius + thickness, size = Math.ceil(outer);
+    const cx = Math.round(x), cy = Math.round(y);
+    g.fillStyle = color;
+    // Scan the two sides of a circular band on the native pixel grid. Its
+    // inner edge is the exact radius used by the checkpoint containment test.
+    for (let y = -size; y < size; y++) {
+      const yy = (y + .5) ** 2;
+      if (yy >= outer * outer) continue;
+      const span = Math.sqrt(outer * outer - yy);
+      const left = Math.ceil(-span - .5), right = Math.ceil(span - .5);
+      if (yy >= radius * radius) g.fillRect(cx + left, cy + y, right - left, 1);
+      else {
+        const gap = Math.sqrt(radius * radius - yy);
+        const innerLeft = Math.ceil(-gap - .5), innerRight = Math.ceil(gap - .5);
+        g.fillRect(cx + left, cy + y, innerLeft - left, 1);
+        g.fillRect(cx + innerRight, cy + y, right - innerRight, 1);
+      }
+    }
+  }
   function localRect(g, body, x, y, w, h, color) { poly(g, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(p => point(body, ...p)), color); }
   function line(g, x, y, xx, yy, color, thickness = 1) {
     const n = Math.max(1, Math.ceil(Math.hypot(xx - x, yy - y)));
@@ -133,7 +153,7 @@
   function makeFloor(level) {
     const off = document.createElement('canvas'); off.width = 480; off.height = 300;
     const g = off.getContext('2d');
-    rect(g, 0, 0, 480, 300, P.green); rect(g, 8, 8, 464, 284, P.floor);
+    rect(g, 0, 0, 480, 300, P.cream); rect(g, 8, 8, 464, 284, P.floor);
     for (let y = 8; y < 291; y += 24) for (let x = 8; x < 471; x += 24) {
       const v = hash(x, y);
       g.globalAlpha = .11 + v * .11; rect(g, x, y, Math.min(23, 471 - x), Math.min(23, 291 - y), (x + y) % 48 < 24 ? P.cream : P.gold);
@@ -141,9 +161,15 @@
       if (v > .6) { g.globalAlpha = .12; rect(g, x + 9, y + 14, 4, 1, P.edge); }
     }
     g.globalAlpha = 1;
-    rect(g, 8, 8, 464, 3, P.mid); rect(g, 8, 8, 3, 284, P.mid);
-    rect(g, 8, 289, 464, 3, P.dark); rect(g, 469, 8, 3, 284, P.dark);
-    for (let x = 24; x < 459; x += 43) { rect(g, x, 3, 24, 2, P.gold); rect(g, x, 295, 24, 2, P.edge); }
+    // A quiet plaster wall and thin baseboard replace the striped frame.
+    // The inside seam stays aligned with the actual room colliders.
+    rect(g, 7, 7, 466, 1, P.light); rect(g, 7, 7, 1, 286, P.light);
+    rect(g, 8, 292, 465, 1, P.seam); rect(g, 472, 8, 1, 285, P.seam);
+    g.globalAlpha = .6;
+    rect(g, 8, 8, 464, 1, P.mid); rect(g, 8, 8, 1, 284, P.mid);
+    g.globalAlpha = .12;
+    rect(g, 9, 9, 462, 2, P.dark); rect(g, 9, 9, 2, 282, P.dark);
+    g.globalAlpha = 1;
     if (level.puddle) {
       const p = level.puddle;
       g.globalAlpha = .31; oval(g, p.x, p.y + 2, p.rx + 2, p.ry + 2, P.edge);
@@ -395,15 +421,23 @@
       const current = i === w.gate, done = i < w.gate;
       g.globalAlpha = done ? .35 : current ? 1 : .55;
       const color = current ? P.green : P.edge;
-      if (current) { g.globalAlpha = .55; oval(g, p.x, p.y, 19, 19, P.cream); g.globalAlpha = 1; }
-      for (const [xx, yy, sx, sy] of [[-14, -14, 1, 1], [14, -14, -1, 1], [-14, 14, 1, -1], [14, 14, -1, -1]]) {
-        rect(g, p.x + xx - (sx < 0 ? 6 : 0), p.y + yy, 7, 2, color);
-        rect(g, p.x + xx, p.y + yy - (sy < 0 ? 6 : 0), 2, 7, color);
-      }
+      if (current) { g.globalAlpha = .22; oval(g, p.x, p.y, CHECKPOINT_RADIUS, CHECKPOINT_RADIUS, P.cream); g.globalAlpha = 1; }
+      ring(g, p.x, p.y, CHECKPOINT_RADIUS, done ? P.pine : color, current ? 2 : 1);
       if (done) { line(g, p.x - 4, p.y, p.x - 1, p.y + 3, P.pine, 2); line(g, p.x - 1, p.y + 3, p.x + 5, p.y - 4, P.pine, 2); }
       else text(g, String(i + 1), p.x + 1, p.y + 4, color, 11, 'center');
       g.globalAlpha = 1;
     });
+  }
+
+  function drawCheckpointBody(g, w) {
+    const target = w.level.gates[w.gate];
+    if (!target) return;
+    const person = point(w.body, BODY.personX, 0);
+    if (Math.hypot(person.x - target.x, person.y - target.y) > CHECKPOINT_RADIUS + BODY.personRadius + 3) return;
+    // Show the shopper's ground footprint while entering the active circle.
+    g.save(); g.globalAlpha = .8;
+    ring(g, person.x, person.y, BODY.personRadius, P.cream);
+    g.restore();
   }
 
   function drawBoundary(g, w) {
@@ -461,7 +495,7 @@
       g.globalAlpha = .2; rect(g, p.x + 1, p.y + 2, p.w, p.h, P.dark); g.globalAlpha = clamp(p.life, 0, 1);
       localRect(g, { x: p.x, y: p.y - p.z, a: p.a }, -p.w / 2, -p.h / 2, p.w, p.h, p.color); g.globalAlpha = 1;
     }
-    if (!preview) drawBoundary(g, w);
+    if (!preview) { drawCheckpointBody(g, w); drawBoundary(g, w); }
     g.restore();
   }
 
@@ -522,7 +556,7 @@
     const target = world.level.gates[world.gate];
     if (phase === 'won') $('route').textContent = 'Checkout complete';
     else if (phase === 'lost') $('route').textContent = 'Time is up. Give it another go.';
-    else if (target) $('route').textContent = 'Follow floor marker ' + (world.gate + 1) + ' of ' + world.level.gates.length;
+    else if (target) $('route').textContent = 'Get your whole body inside circle ' + (world.gate + 1) + ' of ' + world.level.gates.length;
     else $('route').textContent = world.exiting ? 'Keep rolling until you and the cart are outside' : 'Drive out through the checkout exit';
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
@@ -554,7 +588,7 @@
     }
     $('course-title').textContent = world.level.name;
     $('courses').setAttribute('aria-label', 'Choose a course, currently ' + world.level.name);
-    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Follow the numbered floor markers to open checkout. Then drive out of the store.' : world.level.tip, 'Let\'s roll', null, true);
+    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Get your whole body inside each numbered circle to open checkout. Then drive out of the store.' : world.level.tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
   function run() {
