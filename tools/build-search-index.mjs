@@ -85,7 +85,17 @@ function buildSections(post, file) {
   };
 
   if (heads.length === 0) {
-    pushSection('', '', html);
+    // Continuous essays still need all their paragraphs in the search index.
+    // Keep the same chunk limit without requiring visible section headings.
+    let chunk = '';
+    for (const paragraph of html.split(/(?<=<\/p>)/i)) {
+      if (chunk && stripToText(chunk + paragraph).length > CARD_CAP) {
+        pushSection('', '', chunk);
+        chunk = '';
+      }
+      chunk += paragraph;
+    }
+    pushSection('', '', chunk);
   } else {
     pushSection('', '', html.slice(0, heads[0].at)); // intro chunk (hero / lede)
     for (let i = 0; i < heads.length; i++) {
