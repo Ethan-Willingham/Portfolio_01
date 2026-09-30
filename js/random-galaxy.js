@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.62';
+  var VERSION = 'v1.63';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -5109,7 +5109,7 @@
     btnLoop.setAttribute('aria-pressed', String(searchLoop));
     ctrlA.appendChild(btnLoop); hud.appendChild(ctrlA);
     var ctrlB = document.createElement('div'); ctrlB.className = 'gx-sh-ctrl';
-    var clab = document.createElement('span'); clab.className = 'gx-sh-clab'; clab.textContent = 'Run speed'; ctrlB.appendChild(clab);
+    var clab = document.createElement('span'); clab.className = 'gx-sh-clab'; clab.innerHTML = '<span class="gx-run-word">Run </span>speed'; ctrlB.appendChild(clab);
     ctrlB.appendChild(mkBtn('−', function () { SEARCH_STEPS = Math.max(0.01, SEARCH_STEPS <= 1 ? Math.round(SEARCH_STEPS * 0.6 * 100) / 100 : Math.max(1, Math.round(SEARCH_STEPS * 0.6))); }));   // below 1 -> slow-mo crawl, down to 0.01
     var spd = document.createElement('span'); spd.className = 'gx-sh-spd'; spd.textContent = SEARCH_STEPS < 1 ? SEARCH_STEPS.toFixed(2) : SEARCH_STEPS; ctrlB.appendChild(spd); shVal.spd = spd;
     ctrlB.appendChild(mkBtn('+', function () { SEARCH_STEPS = Math.min(240, SEARCH_STEPS < 1 ? Math.round(SEARCH_STEPS * 1.7 * 100) / 100 : Math.round(SEARCH_STEPS * 1.7)); }));
@@ -5626,7 +5626,7 @@
     soVal.cmp = row('Comparisons'); soVal.swaps = row('Swaps'); soVal.prog = row('Progress');
     function mkBtn(label, fn){ var b=document.createElement('button'); b.type='button'; b.className='gx-so-btn'; b.textContent=label; if(label==='−'||label==='+') b.setAttribute('aria-label',label==='+'?'Increase run speed':'Decrease run speed'); b.addEventListener('click', function(ev){ ev.preventDefault(); fn(); refocus(); }); return b; }
     var ctrl = document.createElement('div'); ctrl.className = 'gx-so-ctrl';
-    var clab = document.createElement('span'); clab.className = 'gx-so-clab'; clab.textContent = 'Run speed'; ctrl.appendChild(clab);
+    var clab = document.createElement('span'); clab.className = 'gx-so-clab'; clab.innerHTML = '<span class="gx-run-word">Run </span>speed'; ctrl.appendChild(clab);
     ctrl.appendChild(mkBtn('−', function(){ SORT_STEPS = Math.max(0.01, Math.round(SORT_STEPS * 0.6 * 100) / 100); }));   // down to 0.01 for deep slow-mo
     var spd = document.createElement('span'); spd.className = 'gx-so-spd'; spd.textContent = SORT_STEPS; ctrl.appendChild(spd); soVal.spd = spd;
     ctrl.appendChild(mkBtn('+', function(){ SORT_STEPS = Math.min(120, SORT_STEPS < 1 ? Math.round(SORT_STEPS * 1.6 * 100) / 100 : Math.round(SORT_STEPS * 1.6)); }));
@@ -7498,9 +7498,26 @@
 
     // Two scene families, with the last choice remembered separately for each.
     var modeScenes = { watch: 'bfs', explore: 'mulberry' };
-    var categoryScenes = { randomness: 'mulberry', attractors: 'lorenz', fractals: 'sierpinski', numbers: 'collatz', geometry: 'hopf' };
+    var categoryScenes = { pathfinding: 'bfs', sorting: 'quick', life: 'boids', randomness: 'mulberry', attractors: 'lorenz', fractals: 'sierpinski', numbers: 'collatz', geometry: 'hopf' };
     var categoryEl = document.getElementById('gx-explore-category');
+    var watchCategoryEl = document.getElementById('gx-watch-category');
     if (categoryEl) categoryEl.addEventListener('change', function () { selectScene(categoryScenes[this.value]); });
+    if (watchCategoryEl) watchCategoryEl.addEventListener('change', function () { selectScene(categoryScenes[this.value]); });
+    var infoDialog = document.getElementById('gx-info-dialog');
+    document.getElementById('gx-info-open').addEventListener('click', function () {
+      document.getElementById('gx-info-title').textContent = document.getElementById('gx-current-name').textContent;
+      var stats = document.getElementById('gx-info-stats');
+      stats.replaceChildren();
+      var hud = isSearchField(currentField) ? searchHudEl : isSortField(currentField) ? sortHudEl : null;
+      if (hud) {
+        var rows = hud.querySelectorAll('.gx-sh-row, .gx-so-row');
+        for (var r = 0; r < rows.length; r++) {
+          var row = rows[r].cloneNode(true); row.className = 'gx-info-stat-row'; stats.appendChild(row);
+        }
+      }
+      infoDialog.showModal();
+    });
+    document.getElementById('gx-info-close').addEventListener('click', function () { infoDialog.close(); });
     var sceneGuide = {
       bfs: 'A wave spreads outward until it finds the goal.',
       bidir: 'Two searches grow from opposite ends and meet in the middle.',
@@ -7592,11 +7609,10 @@
           if (has) {
             var mode = s.closest('.gx-group').id === 'gx-watch-scenes' ? 'watch' : 'explore';
             modeScenes[mode] = scene;
-            if (mode === 'explore') {
-              var category = s.closest('.gx-scene-field').getAttribute('data-category');
-              categoryScenes[category] = scene;
-              if (categoryEl) categoryEl.value = category;
-            }
+            var category = s.closest('.gx-scene-field').getAttribute('data-category');
+            categoryScenes[category] = scene;
+            var picker = mode === 'watch' ? watchCategoryEl : categoryEl;
+            if (picker) picker.value = category;
             showMode(mode);
             wrapperEl.setAttribute('data-scene', scene);
             document.getElementById('gx-current-name').textContent = s.options[j].textContent;
