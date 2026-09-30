@@ -12,11 +12,11 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>How Old Are You in Space?</title>
-  <meta name="description" content="Enter your birthday and see your age on every planet. A year on Mercury is 88 days; on Neptune it is 165 of ours, so you are a different age on each. Runs in your browser.">
+  <title>How old are you in space?</title>
+  <meta name="description" content="Your age in each planet's years. Enter your birthday to see your ages and upcoming birthdays.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <meta property="og:title" content="How Old Are You in Space?">
-  <meta property="og:description" content="Enter your birthday and see your age on every planet. A year is 88 days on Mercury and 248 of ours on Pluto, so you are a different age on each one.">
+  <meta property="og:title" content="How old are you in space?">
+  <meta property="og:description" content="Your age in each planet's years. Enter your birthday to see your ages and upcoming birthdays.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/space-age.html">
@@ -168,25 +168,25 @@
       4%   { opacity: 0; transform: rotate(-38deg) translateX(-380px); }
       100% { opacity: 0; transform: rotate(-38deg) translateX(-380px); }
     }
-    .sa-page .site-wrapper { position: relative; z-index: 1; }
+    .sa-page .site-wrapper {
+      position: relative;
+      z-index: 1;
+      padding-top: clamp(1.25rem, 3vw, 2.25rem);
+    }
 
     /* keep the back link legible on the dark canvas */
-    .sa-page .post-back { color: var(--faint); }
+    .sa-page .post-back { color: var(--faint); margin-bottom: 0.25rem; }
     .sa-page .post-back:hover { color: var(--ink); }
 
     /* ---------------- HERO ---------------- */
-    /* The hero reads as three acts: the title block (kicker hugging the
-       headline, dek close beneath), the input, and the answer. Tight
-       spacing inside each group, a full breath between them. */
+    /* Keep the input and its answer together. */
     .sa-hero {
       position: relative;
-      min-height: 82svh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 1rem 0 2rem;
+      padding: 2rem 0 0;
     }
     /* a soft warm glow sitting behind the headline */
     .sa-hero::after {
@@ -201,24 +201,15 @@
       background: radial-gradient(closest-side, rgba(224, 205, 156, 0.12), rgba(224, 205, 156, 0) 78%);
       pointer-events: none;
     }
-    .sa-eyebrow {
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.26em;
-      text-transform: uppercase;
-      color: var(--gold);
-      opacity: 0.85;
-    }
     .sa-h1 {
       font-family: var(--font-heading);
       font-weight: 700;
-      font-size: clamp(2.7rem, 12vw, 4.6rem);
+      font-size: clamp(2.7rem, 12vw, 4.2rem);
       line-height: 1.02;
       letter-spacing: -0.02em;
       color: var(--ink);
       text-wrap: balance;
-      margin: 0.85rem 0 0;
+      margin: 0;
     }
     .sa-hook {
       font-family: var(--font-heading);
@@ -226,12 +217,19 @@
       font-size: clamp(1.05rem, 4.4vw, 1.3rem);
       line-height: 1.4;
       color: var(--dim);
-      max-width: 22ch;
-      margin: 1.1rem 0 0;
+      max-width: 30ch;
+      margin: 0.8rem 0 0;
     }
 
     /* ---- The birthday input: three typed fields, fast on mobile ---- */
-    .sa-bday { margin-top: 2.4rem; }
+    .sa-bday { margin-top: 2rem; }
+    .sa-bday fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .sa-bday legend {
+      padding: 0;
+      margin: 0 auto 0.65rem;
+      font: 0.85rem/1.4 var(--font-body);
+      color: var(--dim);
+    }
     .sa-fields {
       display: inline-flex;
       align-items: flex-end;
@@ -288,17 +286,15 @@
       margin: 1.1rem 0 0;
       transition: color 0.2s;
     }
-    .sa-hint.err { color: #e0a08f; }
+    .sa-hint.err { color: var(--warn); }
 
     /* your next space birthday: the payoff line, big enough to be the
        second thing you read after the headline */
     .sa-soon {
-      margin: 2.1rem 0 0;
-      max-width: 20ch;
+      margin: 2rem 0 1.5rem;
       text-align: center;
       text-wrap: balance;
       font-family: var(--font-heading);
-      font-style: italic;
       font-size: clamp(1.35rem, 6vw, 1.7rem);
       line-height: 1.4;
       color: var(--ink);
@@ -307,11 +303,23 @@
     }
     .sa-soon.on { opacity: 1; }
     .sa-soon b { font-style: normal; font-weight: 700; color: var(--gold-2); }
+    .sa-soon-label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font: 0.75rem/1.4 var(--font-body);
+      color: var(--dim);
+    }
 
-    /* ---------------- RESULTS ----------------
-       scroll-margin keeps the Share button off the screen edge when the
-       page auto-advances here after a birthday is typed. */
-    .sa-results { padding-top: 0.5rem; scroll-margin-top: 1.25rem; }
+    /* ---------------- RESULTS ---------------- */
+    .sa-results { width: min(100%, 620px); margin: 0 auto; }
+    .sa-list-head {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 0.25rem 0.65rem;
+      font: 0.75rem/1.4 var(--font-body);
+      color: var(--faint);
+    }
+    .sa-list-head h2 { margin: 0; font: inherit; color: inherit; }
     .sa-list { list-style: none; margin: 0; padding: 0; }
     .pl {
       display: grid;
@@ -381,17 +389,7 @@
       line-height: 1.1;
       color: var(--ink);
     }
-    .pl-name .pl-tag {
-      font-family: var(--font-body);
-      font-style: italic;
-      font-size: 0.7rem;
-      color: var(--faint);
-      margin-left: 0.4em;
-      vertical-align: 0.15em;
-    }
     .pl-sub {
-      display: grid;
-      gap: 0.08rem;
       font-family: var(--font-body);
       font-size: 0.82rem;
       color: var(--dim);
@@ -399,17 +397,6 @@
       margin-top: 0.3rem;
     }
     .pl.is-birthday .pl-sub { color: var(--gold-2); font-weight: 600; }
-    .pl-meta { display: block; }
-    .pl-label {
-      display: inline-block;
-      min-width: 3.1rem;
-      font-family: var(--font-mono);
-      font-size: 0.62rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--faint);
-    }
     .pl-age { text-align: right; white-space: nowrap; }
     .pl-num {
       font-family: var(--font-mono);
@@ -418,14 +405,14 @@
       line-height: 1;
       color: var(--gold-2);
     }
-    .pl-unit {
-      display: block;
-      font-family: var(--font-body);
-      font-size: 0.66rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--faint);
-      margin-top: 0.25rem;
+    .sa-sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
 
     /* reveal animation (respecting reduced motion, set in JS-friendly class) */
@@ -449,7 +436,7 @@
       border: 1px solid var(--line);
       border-radius: 999px;
       padding: 0.55em 1em;
-      min-height: 40px;
+      min-height: 44px;
       cursor: pointer;
       transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.08s;
       box-shadow: none;
@@ -458,6 +445,34 @@
     .sa-btn:hover { color: var(--ink); background: rgba(224, 205, 156, 0.08); border-color: var(--gold); }
     .sa-btn:active { transform: translateY(1px); }
     .sa-btn.done { color: var(--gold-2); border-color: var(--gold); }
+    .sa-btn:focus-visible, .sa-notes summary:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 4px;
+    }
+
+    .sa-notes {
+      margin: 1.5rem 0 0;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      font: 0.85rem/1.6 var(--font-body);
+      color: var(--dim);
+    }
+    .sa-notes summary {
+      justify-content: center;
+      min-height: 44px;
+      padding: 0.5rem 0;
+      font: inherit;
+      font-weight: 400;
+      color: var(--faint);
+    }
+    .sa-notes p { margin: 0.8rem 0; }
+    .sa-year-lengths { margin: 1rem 0; }
+    .sa-year-lengths div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; }
+    .sa-year-lengths dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+    .sa-notes a { color: var(--gold); }
 
     @media (prefers-reduced-motion: reduce) {
       .pl-confetti { display: none; }
@@ -469,13 +484,9 @@
 
     /* ---------------- larger screens ---------------- */
     @media (min-width: 680px) {
-      .sa-hero { min-height: 76vh; }
-      .sa-h1 { margin-top: 1rem; }
-      .sa-hook { margin-top: 1.25rem; }
-      .sa-bday { margin-top: 2.9rem; }
-      .sa-hint { margin-top: 1.25rem; }
-      .sa-soon { margin-top: 2.5rem; }
-      .pl { grid-template-columns: 3.5rem 1fr auto; padding: 1.15rem 0.5rem; }
+      .sa-hero { padding-top: 1.5rem; }
+      .sa-bday { margin-top: 2.2rem; }
+      .pl { grid-template-columns: 3.5rem 1fr auto; padding: 1rem 0.25rem; }
       .pl-orb { width: 3.2rem; height: 3.2rem; }
       .pl-name { font-size: 1.55rem; }
       .pl-sub { font-size: 0.9rem; }
@@ -492,41 +503,52 @@
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
     <main>
-      <!-- HERO: the whole 5-second pitch, nothing else competing. -->
-      <section class="sa-hero">
-        <p class="sa-eyebrow fade-in">A birthday calculator</p>
-        <h1 class="sa-h1 fade-in" style="animation-delay:.05s">How old are you in space?</h1>
-        <p class="sa-hook fade-in" style="animation-delay:.1s">A year isn't a year out there. Drop in your birthday.</p>
+      <section class="sa-hero" aria-labelledby="sa-title">
+        <h1 class="sa-h1 fade-in" id="sa-title" style="animation-delay:.05s">How old are you in space?</h1>
+        <p class="sa-hook fade-in" style="animation-delay:.1s">Your age in each planet's years.</p>
 
         <form class="sa-bday fade-in" id="sa-form" style="animation-delay:.15s" autocomplete="off" novalidate>
-          <div class="sa-fields" role="group" aria-label="Your birthday">
-            <span class="sa-field mo">
-              <input id="sa-mo" type="text" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Birth month (1 to 12)">
-              <span class="sa-field-label">Month</span>
-            </span>
-            <span class="sa-sep" aria-hidden="true">/</span>
-            <span class="sa-field da">
-              <input id="sa-da" type="text" inputmode="numeric" maxlength="2" placeholder="DD" aria-label="Birth day">
-              <span class="sa-field-label">Day</span>
-            </span>
-            <span class="sa-sep" aria-hidden="true">/</span>
-            <span class="sa-field yr">
-              <input id="sa-yr" type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" aria-label="Birth year">
-              <span class="sa-field-label">Year</span>
-            </span>
-          </div>
+          <fieldset aria-describedby="sa-hint">
+            <legend>Your birthday</legend>
+            <div class="sa-fields">
+              <span class="sa-field mo">
+                <input id="sa-mo" type="text" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Birth month (1 to 12)">
+                <label class="sa-field-label" for="sa-mo">Month</label>
+              </span>
+              <span class="sa-sep" aria-hidden="true">/</span>
+              <span class="sa-field da">
+                <input id="sa-da" type="text" inputmode="numeric" maxlength="2" placeholder="DD" aria-label="Birth day">
+                <label class="sa-field-label" for="sa-da">Day</label>
+              </span>
+              <span class="sa-sep" aria-hidden="true">/</span>
+              <span class="sa-field yr">
+                <input id="sa-yr" type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" aria-label="Birth year">
+                <label class="sa-field-label" for="sa-yr">Year</label>
+              </span>
+            </div>
+          </fieldset>
         </form>
-        <p class="sa-hint" id="sa-hint" aria-live="polite">Type the day you were born.</p>
-        <p class="sa-soon" id="sa-soon" hidden></p>
+        <p class="sa-hint" id="sa-hint" aria-live="polite" hidden></p>
+        <p class="sa-soon" id="sa-soon" aria-live="polite" aria-atomic="true" hidden></p>
       </section>
 
       <!-- RESULTS: revealed only once a birthday is in. -->
-      <section class="sa-results" id="sa-results" hidden aria-live="polite">
+      <section class="sa-results" id="sa-results" hidden aria-labelledby="sa-results-title">
+        <div class="sa-list-head">
+          <h2 id="sa-results-title">Next birthdays</h2>
+          <span aria-hidden="true">Years old</span>
+        </div>
         <ol class="sa-list" id="sa-list"></ol>
         <div class="sa-share sa-rise">
           <button class="sa-btn" id="sa-share" type="button">Share</button>
-          <button class="sa-btn sa-btn--calendar" id="sa-calendar" type="button">Add all to calendar</button>
+          <button class="sa-btn sa-btn--calendar" id="sa-calendar" type="button">Add birthdays to calendar</button>
         </div>
+        <details class="u-collapse sa-notes">
+          <summary class="u-collapse-s">How it works</summary>
+          <p>Days lived &divide; days per year. Earth birthdays use the calendar; other dates are estimates.</p>
+          <dl class="sa-year-lengths" id="sa-year-lengths" aria-label="Length of one year on each planet"></dl>
+          <p>Year lengths: <a href="https://nssdc.gsfc.nasa.gov/planetary/planetfact.html">NASA planetary fact sheets</a>. Pluto is a dwarf planet.</p>
+        </details>
       </section>
 
     </main>
@@ -557,7 +579,7 @@
       { key:'saturn',  name:'Saturn',  days:10759.22 },
       { key:'uranus',  name:'Uranus',  days:30685.4 },
       { key:'neptune', name:'Neptune', days:60189.0 },
-      { key:'pluto',   name:'Pluto',   days:90560, tag:'dwarf planet' }
+      { key:'pluto',   name:'Pluto',   days:90560 }
     ];
     var moEl = document.getElementById('sa-mo');
     var daEl = document.getElementById('sa-da');
@@ -566,10 +588,12 @@
     var resultsEl = document.getElementById('sa-results');
     var listEl = document.getElementById('sa-list');
 
-    var reduceMotion = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
     var shareMsg = '';
     var upcomingBirthdays = [];
     var soonEl = document.getElementById('sa-soon');
+    document.getElementById('sa-year-lengths').innerHTML = BODIES.map(function (b) {
+      return '<div><dt>' + b.name + '</dt><dd>' + fmtEarthYears(b.days) + '</dd></div>';
+    }).join('');
 
     // Big ages read as whole "years old"; small ones keep the decimal that is
     // the whole point (you are 0.15 of a year old on Pluto).
@@ -588,17 +612,17 @@
       if (yrs < 10) return 'in ' + yrs.toFixed(1) + ' years';
       return 'in ' + Math.round(yrs).toLocaleString() + ' years';
     }
-    function fmtWhen(ms) {
-      var when = fmtUntil(ms);
+    function fmtWhen(date, now) {
+      // Count calendar days so tomorrow is never labelled today merely
+      // because its birthday is less than 24 hours away.
+      var days = Math.round((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) -
+                             Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / DAY_MS);
+      if (days === 0) return 'today';
+      if (days === 1) return 'tomorrow';
+      if (days < 45) return 'in ' + days + ' days';
+      var when = fmtUntil(date.getTime() - now.getTime());
       if (when === 'in 1 month') return 'next month';
-      if (when === 'in 1 day') return 'tomorrow';
       return when;
-    }
-    function fmtCountdown(ms) {
-      var when = fmtWhen(ms);
-      if (when === 'tomorrow') return '1 day';
-      if (when === 'next month') return '1 month';
-      return when.slice(0, 3) === 'in ' ? when.slice(3) : when;
     }
     function fmtEarthYears(days) {
       var years = days / YEAR_DAYS;
@@ -685,23 +709,17 @@
       var rows = '';
       birthdays.forEach(function (item, i) {
         var b = item.body;
-        var countdown = fmtCountdown(item.nextDate.getTime() - nowT);
-        var nextLabel = item.isToday ? 'Today' : 'Next';
-        var nextValue = item.isToday
-          ? 'Birthday &middot; <time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time>'
-          : '<time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time> &middot; ' + countdown;
-        var status = '<span class="pl-meta"><span class="pl-label">' + nextLabel + '</span>' + nextValue + '</span>' +
-                     '<span class="pl-meta"><span class="pl-label">Year</span>' + fmtEarthYears(b.days) + '</span>';
+        var status = '<span class="sa-sr-only">Next birthday: </span>' +
+                     (item.isToday ? 'Today' : '<time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time>');
         var confetti = item.isToday ? '<span class="pl-confetti" aria-hidden="true">' + '<i></i>'.repeat(9) + '</span>' : '';
         rows += '<li class="pl sa-rise' + (item.isToday ? ' is-birthday' : '') + '" style="animation-delay:' + (0.06 * i).toFixed(2) + 's">' +
                   '<div class="pl-orb"><img class="pl-img" src="assets/planets/' + b.key + '.jpg" width="160" height="160" loading="eager" decoding="async" alt="">' + confetti + '</div>' +
                   '<div class="pl-main">' +
-                    '<div class="pl-name">' + b.name +
-                      (b.tag ? '<span class="pl-tag">' + b.tag + '</span>' : '') + '</div>' +
+                    '<div class="pl-name">' + b.name + '</div>' +
                     '<div class="pl-sub">' + status + '</div>' +
                   '</div>' +
                   '<div class="pl-age"><span class="pl-num">' + fmtAge(item.age) + '</span>' +
-                    '<span class="pl-unit">years old</span></div>' +
+                    '<span class="sa-sr-only"> ' + b.name + ' years old</span></div>' +
                 '</li>';
       });
       listEl.innerHTML = rows;
@@ -711,13 +729,13 @@
       var first = birthdays[0];
       var soonest = first ? { date: first.nextDate.getTime(), name: first.body.name, n: first.nextN, isToday: first.isToday } : null;
       if (soonest) {
-        var soonWhen = fmtWhen(soonest.date - nowT);
+        var soonWhen = fmtWhen(first.nextDate, nowDate);
         if (soonest.isToday) {
           shareMsg = "It's my birthday on " + soonest.name + ' today.';
-          soonEl.innerHTML = 'Today is your birthday on <b>' + soonest.name + '</b>.';
+          soonEl.innerHTML = '<span class="sa-soon-label">Birthday today</span><b>' + soonest.name + '</b>';
         } else {
           shareMsg = "I'm turning " + soonest.n.toLocaleString() + ' on ' + soonest.name + ' ' + soonWhen + '.';
-          soonEl.innerHTML = 'Your next space birthday is <b>' + soonWhen + '</b>, on <b>' + soonest.name + '</b>.';
+          soonEl.innerHTML = '<span class="sa-soon-label">Next birthday</span><b>' + soonest.name + '</b> ' + soonWhen;
         }
         soonEl.hidden = false;
         requestAnimationFrame(function () { soonEl.classList.add('on'); });
@@ -734,13 +752,9 @@
         resultsEl.hidden = false;
         requestAnimationFrame(function () { resultsEl.classList.add('in'); });
       }
-      // On the first valid birthday a person types, take them straight to the
-      // payoff (dismiss the keyboard first so the scroll lands cleanly).
+      // Dismiss the keyboard while keeping the input and answer in view.
       if (firstTime && user) {
         if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-        setTimeout(function () {
-          resultsEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-        }, reduceMotion ? 0 : 140);
       }
     }
 
@@ -765,7 +779,7 @@
       upcomingBirthdays = [];
       shareMsg = '';
       if (calendarBtn) {
-        calendarBtn.textContent = 'Add all to calendar';
+        calendarBtn.textContent = 'Add birthdays to calendar';
         calendarBtn.classList.remove('done');
       }
     }
@@ -773,9 +787,9 @@
     function tryCompute(silent, user) {
       var mo = moEl.value, da = daEl.value, yr = yrEl.value;
       if (!mo || !da || yr.length < 4) {
-        hintEl.textContent = 'Type the day you were born.';
+        hintEl.textContent = '';
         hintEl.classList.remove('err');
-        hintEl.hidden = false;
+        hintEl.hidden = true;
         hideSoon();
         hideResults();
         return;
@@ -786,7 +800,7 @@
       var valid = m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 &&
                   dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
       if (!valid) {
-        hintEl.textContent = 'Hmm, that is not a real date.';
+        hintEl.textContent = y < 1900 ? 'Enter a year from 1900 onward.' : 'Enter a valid date.';
         hintEl.classList.add('err');
         hintEl.hidden = false;
         hideSoon();
@@ -794,7 +808,7 @@
         return;
       }
       if (dt > now) {
-        hintEl.textContent = 'That is in the future. Time travel is not supported (yet).';
+        hintEl.textContent = 'Enter a birthday in the past.';
         hintEl.classList.add('err');
         hintEl.hidden = false;
         hideSoon();
@@ -825,6 +839,10 @@
     wire(moEl, 2, daEl);
     wire(daEl, 2, yrEl);
     wire(yrEl, 4, null);
+    document.getElementById('sa-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      tryCompute(false, true);
+    });
 
     // Restore a previous birthday (device only, never shared).
     try {
@@ -848,7 +866,7 @@
     shareBtn.addEventListener('click', function () {
       if (navigator.share) {
         navigator.share({
-          title: 'How Old Are You in Space?',
+          title: 'How old are you in space?',
           text: shareMsg || undefined,
           url: SHARE_URL
         }).catch(function () {});
@@ -923,7 +941,7 @@
           'DTSTART;VALUE=DATE:' + start,
           'DTEND;VALUE=DATE:' + icsDate(dayAfter),
           'SUMMARY:' + icsEscape('My ' + birthdayName + ' on ' + item.body.name),
-          'DESCRIPTION:' + icsEscape('Calculated by How Old Are You in Space? ' + SHARE_URL),
+          'DESCRIPTION:' + icsEscape('Calculated by How old are you in space? ' + SHARE_URL),
           'URL:' + SHARE_URL,
           'STATUS:CONFIRMED',
           'TRANSP:TRANSPARENT',
@@ -949,7 +967,7 @@
       calendarBtn.textContent = 'Calendar ready';
       calendarBtn.classList.add('done');
       setTimeout(function () {
-        calendarBtn.textContent = 'Add all to calendar';
+        calendarBtn.textContent = 'Add birthdays to calendar';
         calendarBtn.classList.remove('done');
       }, 1600);
     });
