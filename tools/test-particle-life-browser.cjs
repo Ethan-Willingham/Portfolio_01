@@ -36,6 +36,7 @@ const server = http.createServer((req, res) => {
         window.__plTest = {
           state: () => ({ pointer: { ...simPointer }, world: { ...simWorld }, scale: pointerScaleX,
             palette: speciesColors.slice(0,K), patterns: FIELD_PATTERNS.slice() }),
+          config: () => snapshotConfig(),
           openingSamples: () => {
             var saved=speciesColors.map(c=>c.slice()), samples=[];
             for(var i=0;i<100;i++) { applyOpeningPalette(); samples.push(speciesColors.slice(0,2)); }
@@ -105,12 +106,147 @@ async function open(context, url) {
   await p.evaluate(() => document.fonts.ready);
   return p;
 }
+async function saveChecks(browser, url) {
+  const context=await browser.newContext({viewport:{width:1440,height:1100}});
+  const mobile=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+  try {
+    const p=await open(context,url);
+    const cfg=()=>p.evaluate(()=>__plTest.config());
+    const stored=()=>p.evaluate(()=>JSON.parse(localStorage.getItem('pl-slots-v1')));
+    check('empty saves show one action with sharing collapsed',
+      await p.locator('.pl-saved-load').count()===0&&
+      await p.locator('.pl-slot-save').isEnabled()&&
+      !await p.locator('.pl-share-tools').evaluate(el=>el.open));
+    check('matrix help fits in one short sentence pair',
+      (await p.locator('.pl-matrix-explainer').textContent()).trim()==='Tap a cell to change it. Green attracts; red repels.');
+    await p.locator('.pl-group-physics').screenshot({path:path.join(dump,'saves-empty-desktop.png')});
+    await p.locator('.pl-toggle-auto').uncheck();
+    await p.locator('.pl-field-next').click();
+    await p.locator('[data-param="force"]').fill('0.75');
+    await p.locator('[data-param="force"]').dispatchEvent('input');
+    const saved=await cfg();
+    await p.locator('.pl-slot-save').click();
+    assert.deepEqual((await stored())[0],saved);
+    check('Save setup preserves colors, matrix, physics and selected pattern',true);
+    check('saved setups expose Load and Delete with color previews',
+      await p.getByRole('button',{name:'Load setup 1',exact:true}).count()===1&&
+      await p.getByRole('button',{name:'Delete setup 1',exact:true}).count()===1&&
+      await p.locator('.pl-saved-swatch').count()===saved.k);
+    await p.locator('.pl-recolor').click();
+    await p.locator('.pl-field-next').click();
+    await p.locator('[data-param="force"]').fill('1.25');
+    await p.locator('[data-param="force"]').dispatchEvent('input');
+    await p.getByRole('button',{name:'Load setup 1',exact:true}).click();
+    assert.deepEqual(await cfg(),saved);
+    check('Load restores the saved setup and selected pattern',true);
+    await p.reload();
+    await p.waitForFunction(()=>document.querySelector('.pl-status').style.display==='none');
+    await p.getByRole('button',{name:'Load setup 1',exact:true}).click();
+    assert.deepEqual(await cfg(),saved);
+    check('saved setups survive a page reload',true);
+    for(let i=1;i<5;i++) await p.locator('.pl-slot-save').click();
+    check('five saved setups disable Save and explain how to make room',
+      await p.locator('.pl-saved-load').count()===5&&
+      await p.locator('.pl-slot-save').isDisabled()&&
+      (await p.locator('.pl-save-note').textContent()).includes('Delete one to make room'));
+    await p.getByRole('button',{name:'Delete setup 2',exact:true}).click();
+    check('Delete frees a save and keeps keyboard focus in the list',
+      (await stored())[1]===null&&await p.locator('.pl-slot-save').isEnabled()&&
+      await p.locator('.pl-saved-load').first().evaluate(el=>el===document.activeElement));
+    assert.deepEqual(await cfg(),saved);
+    await p.locator('.pl-share-tools > summary').click();
+    await p.evaluate(()=>Object.defineProperty(navigator,'clipboard',{
+      configurable:true,value:{writeText:async code=>{window.__copied=code;}}
+    }));
+    await p.locator('.pl-slot-export').click();
+    await p.waitForFunction(()=>window.__copied?.startsWith('PL1:'));
+    const code=await p.evaluate(()=>window.__copied);
+    check('Copy setup code shares the current setup without filling the input',
+      code.startsWith('PL1:')&&await p.locator('.pl-slot-share').inputValue()==='');
+    await p.locator('.pl-recolor').click();
+    await p.locator('.pl-slot-share').fill(code);
+    await p.locator('.pl-slot-import').click();
+    assert.deepEqual(await cfg(),saved);
+    check('a shared code restores the complete setup',true);
+    await p.locator('.pl-slot-share').fill('');
+    await p.locator('.pl-slot-import').click();
+    check('empty code focuses the field and explains what is needed',
+      await p.locator('.pl-slot-share').evaluate(el=>el===document.activeElement)&&
+      (await p.locator('.pl-slot-msg').textContent())==='Paste a setup code first.');
+    await p.locator('.pl-slot-share').fill('invalid');
+    await p.locator('.pl-slot-import').click();
+    assert.deepEqual(await cfg(),saved);
+    check('invalid codes report an error and preserve the setup',
+      await p.locator('.pl-slot-msg').evaluate(el=>el.classList.contains('is-error')));
+    await p.evaluate(()=>Object.defineProperty(navigator,'clipboard',{
+      configurable:true,value:{writeText:async()=>{throw new Error('Denied for test');}}
+    }));
+    await p.locator('.pl-slot-export').click();
+    await p.waitForFunction(()=>document.querySelector('.pl-slot-share').value.startsWith('PL1:'));
+    check('denied clipboard access selects the code for manual copying',
+      await p.locator('.pl-slot-share').evaluate(el=>
+        el===document.activeElement&&el.selectionStart===0&&el.selectionEnd===el.value.length));
+    await p.locator('.pl-slot-share').fill('');
+    await p.locator('.pl-slot-msg').evaluate(el=>el.textContent='');
+    await p.locator('.pl-group-physics').screenshot({path:path.join(dump,'saves-filled-desktop.png')});
+    await p.locator('.pl-share-tools > summary').click();
+    await p.locator('.pl-wrapper').screenshot({path:path.join(dump,'saves-layout-desktop.png')});
+    await p.locator('.pl-fullscreen').click();
+    await p.locator('.pl-fs-drawer-toggle').click();
+    await p.locator('.pl-slot-section').scrollIntoViewIfNeeded();
+    const bounds=await p.locator('.pl-slot-section').evaluate(el=>{
+      const panel=document.querySelector('.pl-controls').getBoundingClientRect();
+      return [...el.querySelectorAll('button')].filter(b=>b.getBoundingClientRect().width).every(b=>{
+        const r=b.getBoundingClientRect();return r.left>=panel.left&&r.right<=panel.right;
+      });
+    });
+    check('saved setup actions fit the fullscreen drawer',bounds);
+    await p.screenshot({path:path.join(dump,'saves-drawer-desktop.png')});
+    await p.keyboard.press('Escape');
+    const legacy={...saved,palette:[0,1],field:{...saved.field}};
+    delete legacy.field.pattern;
+    await p.evaluate(legacy=>localStorage.setItem('pl-slots-v1',JSON.stringify([null,legacy,null,null,null])),legacy);
+    await p.reload();
+    await p.waitForFunction(()=>document.querySelector('.pl-status').style.display==='none');
+    await p.getByRole('button',{name:'Load setup 2',exact:true}).click();
+    const loaded=await cfg();
+    check('older saves retain their original positions and indexed colors load',
+      await p.locator('.pl-saved-load').count()===1&&loaded.k===legacy.k&&
+      loaded.palette.every(c=>Array.isArray(c)&&c.length===3)&&
+      loaded.physics.force===legacy.physics.force);
+    const phone=await open(mobile,url);
+    await phone.locator('.pl-group-physics').screenshot({path:path.join(dump,'saves-empty-phone.png')});
+    await phone.locator('.pl-slot-save').tap();
+    check('a phone tap saves a setup',await phone.locator('.pl-saved-load').count()===1);
+    const phoneSaved=await phone.evaluate(()=>__plTest.config());
+    await phone.locator('.pl-recolor').tap();
+    await phone.getByRole('button',{name:'Load setup 1',exact:true}).tap();
+    assert.deepEqual(await phone.evaluate(()=>__plTest.config()),phoneSaved);
+    check('a phone tap loads the saved setup',true);
+    await phone.locator('.pl-share-tools > summary').tap();
+    check('phone save actions have comfortable touch targets and no horizontal overflow',
+      await phone.locator('.pl-slot-section').evaluate(el=>
+        document.documentElement.scrollWidth<=innerWidth&&
+        [...el.querySelectorAll('button')].every(b=>{
+          const r=b.getBoundingClientRect();return r.height>=40&&r.right<=innerWidth&&r.left>=0;
+        })));
+    await phone.locator('.pl-group-physics').screenshot({path:path.join(dump,'saves-filled-phone.png')});
+    await phone.getByRole('button',{name:'Delete setup 1',exact:true}).tap();
+    check('a phone tap deletes the setup',await phone.locator('.pl-saved-load').count()===0);
+    check('save actions produce no JavaScript or WebGPU errors',errors.length===0);
+  } finally {
+    await context.close();
+    await mobile.close();
+  }
+}
 let browser;
 (async () => {
   try {
     await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
     const url='http://127.0.0.1:'+server.address().port+'/particle-life.html';
     browser=await chromium.launch({headless:true,args:['--enable-unsafe-webgpu','--use-angle=metal'],executablePath:process.env.PL_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing'});
+    await saveChecks(browser,url);
+    if(process.env.SAVES_ONLY) { console.log('Screenshots: '+dump);return; }
     const context=await browser.newContext({viewport:{width:1440,height:1100}});
     const p=await open(context,url);
     check('all GPU pipelines compile',errors.length===0);

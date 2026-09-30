@@ -856,9 +856,9 @@
       },
       looping:   simLooping,
       symmetric: simSymmetric,
-      // Rogue field: store the user-facing settings (not the transient morph
-      // state -- which pattern is mid-crossfade -- which is re-rolled on load).
+      // Store the dominant pattern by name, so saves survive playlist changes.
       field: {
+        pattern: FIELD_PATTERNS[fieldAlphaEased < 0.5 ? fieldA : fieldB],
         enabled:  fieldEnabled,
         layers:   fieldLayersOn,
         auto:     fieldAutoMorph,
@@ -1016,7 +1016,7 @@
   function flashMsg(text, isError) {
     if (!slotMsgEl) return;
     slotMsgEl.textContent = text;
-    slotMsgEl.style.color = isError ? '#d76b6b' : '';
+    slotMsgEl.classList.toggle('is-error', !!isError);
     clearTimeout(flashMsg._t);
     flashMsg._t = setTimeout(function () {
       if (slotMsgEl.textContent === text) slotMsgEl.textContent = '';
@@ -1025,16 +1025,49 @@
 
   function refreshSlotUI() {
     if (!slotsContainer) return;
-    var btns = slotsContainer.querySelectorAll('.pl-slot');
-    for (var i = 0; i < btns.length; i++) {
-      var b = btns[i];
-      var filled = !!slots[i];
-      b.classList.toggle('pl-slot-filled', filled);
-      b.classList.toggle('pl-slot-empty', !filled);
-      b.title = filled
-        ? 'Load slot ' + (i+1) + '  (long-press or right-click to clear)'
-        : 'Empty — click "Save current" to fill';
+    slotsContainer.textContent = '';
+    var count = 0;
+    for (var i = 0; i < SLOT_COUNT; i++) {
+      if (!slots[i]) continue;
+      count++;
+      var row = document.createElement('div');
+      row.className = 'pl-saved-row';
+      var load = document.createElement('button');
+      load.type = 'button';
+      load.className = 'pl-saved-load';
+      load.dataset.slot = String(i);
+      var swatches = document.createElement('span');
+      swatches.className = 'pl-saved-swatches';
+      swatches.setAttribute('aria-hidden', 'true');
+      var palette = slots[i].palette || [];
+      var colors = Math.min(4, slots[i].k || palette.length, palette.length);
+      for (var j = 0; j < colors; j++) {
+        var color = palette[j];
+        if (!Array.isArray(color)) color = PALETTE[color | 0] || PALETTE[0];
+        var swatch = document.createElement('span');
+        swatch.className = 'pl-saved-swatch';
+        swatch.style.background = 'rgb(' + color.slice(0, 3).map(function (v) {
+          return Math.round(Math.max(0, Math.min(1, +v || 0)) * 255);
+        }).join(',') + ')';
+        swatches.appendChild(swatch);
+      }
+      load.appendChild(swatches);
+      load.appendChild(document.createTextNode('Load setup ' + (i + 1)));
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'pl-saved-delete';
+      remove.dataset.slot = String(i);
+      remove.textContent = 'Delete';
+      remove.setAttribute('aria-label', 'Delete setup ' + (i + 1));
+      row.appendChild(load);
+      row.appendChild(remove);
+      slotsContainer.appendChild(row);
     }
+    if (slotSaveBtn) slotSaveBtn.disabled = count === SLOT_COUNT;
+    var note = container.querySelector('.pl-save-note');
+    if (note) note.textContent = count === SLOT_COUNT
+      ? 'Five setups saved. Delete one to make room.'
+      : 'Save colors and settings for later, in this browser.';
   }
 
   function nextEmptySlot() {
@@ -1044,121 +1077,59 @@
 
   function bindSlotUI() {
     if (slotsContainer) {
-      var btns = slotsContainer.querySelectorAll('.pl-slot');
-      // Long-press window. ~550ms is comfortable on mobile (longer than
-      // browser scroll-detection thresholds, shorter than impatience).
-      var LONG_PRESS_MS = 550;
-      // Movement tolerance before we consider the gesture a swipe and
-      // cancel the long-press timer. ~10 device px is forgiving for
-      // jittery fingers without letting actual scroll attempts trigger.
-      var LONG_PRESS_MOVE_TOL = 10;
-      for (var i = 0; i < btns.length; i++) {
-        (function (b, idx) {
-          // Click = the simple case: tap empty -> save, tap filled -> load.
-          // The long-press handler can suppress this when it fires.
-          b.addEventListener('click', function () {
-            if (b._suppressClick) {
-              b._suppressClick = false;
-              return;
-            }
-            if (slots[idx]) {
-              loadFromSlot(idx);
-              flashMsg('Loaded slot ' + (idx+1));
-            } else {
-              saveToSlot(idx);
-              flashMsg('Saved to slot ' + (idx+1));
-            }
-          });
-          // Right-click: desktop muscle memory. Still works.
-          b.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-            if (slots[idx]) {
-              clearSlot(idx);
-              flashMsg('Cleared slot ' + (idx+1));
-            }
-          });
-          // Long-press: the touch-friendly equivalent. Hold a filled
-          // slot ~half a second to clear it. Works on desktop too
-          // (mousedown). We use pointer events so one path covers both
-          // mouse and touch.
-          var pressTimer = null;
-          var startX = 0, startY = 0;
-          function cancelPress() {
-            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-            b.classList.remove('pl-slot-pressing');
-          }
-          b.addEventListener('pointerdown', function (e) {
-            // Empty slots have nothing to clear — don't show the "pressing"
-            // animation, but allow the click to still save.
-            if (!slots[idx]) return;
-            startX = e.clientX;
-            startY = e.clientY;
-            b.classList.add('pl-slot-pressing');
-            pressTimer = setTimeout(function () {
-              pressTimer = null;
-              b.classList.remove('pl-slot-pressing');
-              // Suppress the click that follows the touch release so we
-              // don't immediately re-save a freshly cleared slot.
-              b._suppressClick = true;
-              if (slots[idx]) {
-                clearSlot(idx);
-                flashMsg('Cleared slot ' + (idx+1));
-              }
-            }, LONG_PRESS_MS);
-          });
-          b.addEventListener('pointermove', function (e) {
-            if (!pressTimer) return;
-            var dx = e.clientX - startX;
-            var dy = e.clientY - startY;
-            if (dx*dx + dy*dy > LONG_PRESS_MOVE_TOL * LONG_PRESS_MOVE_TOL) {
-              cancelPress();
-            }
-          });
-          b.addEventListener('pointerup',     cancelPress);
-          b.addEventListener('pointerleave',  cancelPress);
-          b.addEventListener('pointercancel', cancelPress);
-        })(btns[i], i);
-      }
+      // Explicit load and delete actions, with no hidden hold/right-click mode.
+      slotsContainer.addEventListener('click', function (e) {
+        var button = e.target.closest('button[data-slot]');
+        if (!button || !slotsContainer.contains(button)) return;
+        var idx = parseInt(button.dataset.slot, 10);
+        if (button.classList.contains('pl-saved-delete')) {
+          clearSlot(idx);
+          flashMsg('Deleted setup ' + (idx + 1));
+          // Keep keyboard focus in the save section after removing its button.
+          var next = slotsContainer.querySelector('.pl-saved-load') || slotSaveBtn;
+          if (next) next.focus({ preventScroll: true });
+        } else {
+          loadFromSlot(idx);
+          flashMsg('Loaded setup ' + (idx + 1));
+        }
+      });
     }
     if (slotSaveBtn) {
       slotSaveBtn.addEventListener('click', function () {
         var idx = nextEmptySlot();
-        if (idx === -1) {
-          flashMsg('All five slots are full. Hold a slot to clear it.', true);
-          return;
-        }
+        if (idx === -1) return;
         saveToSlot(idx);
-        flashMsg('Saved to slot ' + (idx+1));
+        flashMsg('Saved setup ' + (idx + 1));
       });
     }
     if (slotExportBtn) {
-      slotExportBtn.addEventListener('click', function () {
-        var s = exportConfig();
-        if (slotShareEl) {
-          slotShareEl.value = s;
-          slotShareEl.focus();
-          slotShareEl.select();
-        }
-        // Best-effort copy to clipboard.
+      slotExportBtn.addEventListener('click', async function () {
+        var code = exportConfig();
         try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(s);
-            flashMsg('Copied share string to clipboard');
-          } else {
-            document.execCommand && document.execCommand('copy');
-            flashMsg('Share string ready. Copy it from the box.');
-          }
+          if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard unavailable');
+          await navigator.clipboard.writeText(code);
+          flashMsg('Setup code copied.');
         } catch (e) {
-          flashMsg('Share string ready. Copy it from the box.');
+          // If copying is denied, expose and select the code for manual copying.
+          if (slotShareEl) {
+            slotShareEl.value = code;
+            slotShareEl.focus();
+            slotShareEl.select();
+          }
+          flashMsg('Copy the selected setup code.');
         }
       });
     }
     if (slotImportBtn) {
       slotImportBtn.addEventListener('click', function () {
-        var s = slotShareEl ? slotShareEl.value : '';
-        if (!s) { flashMsg('Paste a share string into the box first', true); return; }
-        var ok = importConfig(s);
-        flashMsg(ok ? 'Imported' : 'Could not parse that string', !ok);
+        var code = slotShareEl ? slotShareEl.value.trim() : '';
+        if (!code) {
+          flashMsg('Paste a setup code first.', true);
+          if (slotShareEl) slotShareEl.focus();
+          return;
+        }
+        var ok = importConfig(code);
+        flashMsg(ok ? 'Setup loaded. Save it here to keep it.' : 'That setup code could not be loaded. Try copying it again.', !ok);
       });
     }
     refreshSlotUI();
@@ -1211,7 +1182,7 @@
           cell.className = 'pl-matrix-cell';
           var v = matrix[rr * K + c2];
           paintCell(cell, v);
-          cell.title = 'Row ' + rr + ' response to column ' + c2 + ': ' + v.toFixed(2);
+          cell.title = 'Row ' + (rr + 1) + ' response to column ' + (c2 + 1) + ': ' + v.toFixed(2) + '. Click to change; Shift-click to randomize.';
           cell.addEventListener('click', function (e) {
             // Shift-click to randomize this single cell, otherwise cycle.
             if (e.shiftKey) {
@@ -1234,7 +1205,7 @@
               rebuildMatrixGrid();
             } else {
               paintCell(cell, matrix[rr * K + c2]);
-              cell.title = 'Row ' + rr + ' response to column ' + c2 + ': ' + matrix[rr * K + c2].toFixed(2);
+              cell.title = 'Row ' + (rr + 1) + ' response to column ' + (c2 + 1) + ': ' + matrix[rr * K + c2].toFixed(2) + '. Click to change; Shift-click to randomize.';
             }
             uploadMatrix();
           });
@@ -1571,6 +1542,12 @@
     setFieldSlider('fieldstr', f.strength);
     setFieldSlider('fieldmorph', f.morph);
     fieldInitPlaylist();
+    var savedPattern = FIELD_PATTERNS.indexOf(f.pattern);
+    if (savedPattern !== -1) {
+      fieldIdx = fieldOrder.indexOf(savedPattern);
+      fieldComputeIds();
+      fieldUpdateReadout();
+    }
   }
 
   // Set a field slider's value (clamped to its own min/max) and refresh the
