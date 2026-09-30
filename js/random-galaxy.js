@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.68';
+  var VERSION = 'v1.69';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -6262,7 +6262,6 @@
   var searchOrbitPhase = 0.6;
   var LIFE_ORBIT_SPIN = 0.12;
   var srAz = 0.9, srEl = 0.62, srR = 1.5;    // orbit azimuth, elevation, distance
-  var srSweep = 0;                           // eased gain when idle motion resumes
   var srDragging = false;
 
   function searchOrbitAngles() {
@@ -6274,17 +6273,16 @@
     searchOrbitPhase = 0.6;
     searchOrbitTilt = SEARCH_ORBIT_TILT;
     var angles = searchOrbitAngles();
-    srAz = angles[0]; srEl = angles[1]; srR = 1.5; srSweep = 0;
+    srAz = angles[0]; srEl = angles[1]; srR = 1.5;
   }
   function searchOrbitTick(dt) {
-    if (srDragging) { srSweep = 0; return; }
+    if (srDragging) return;
     searchOrbitPhase = (searchOrbitPhase + SEARCH_ORBIT_SPIN * dt) % (Math.PI * 2);
-    var ease = 1 - Math.exp(-2.2 * dt);
-    srSweep += (1 - srSweep) * ease;
-    var angles = searchOrbitAngles(), blend = ease * srSweep;
-    // Shortest angular path also handles a manual drag across the wrap point.
-    srAz += Math.atan2(Math.sin(angles[0] - srAz), Math.cos(angles[0] - srAz)) * blend;
-    srEl += (angles[1] - srEl) * blend;
+    var angles = searchOrbitAngles();
+    // The release sets the phase, so the next frame can move at full speed.
+    // Keep the azimuth continuous when the orbit crosses its wrap point.
+    srAz += Math.atan2(Math.sin(angles[0] - srAz), Math.cos(angles[0] - srAz));
+    srEl = angles[1];
   }
 
   // Per-scene start views, captured live with the C key (GXCAM) and applied on
@@ -7481,7 +7479,6 @@
       } else if (!e.isPrimary) return;
       dragging = true; srDragging = true;
       activePointer = e.pointerId;
-      if (isSearchField(currentField)) srSweep = 0;
       lastX = e.clientX;
       lastY = e.clientY;
       try { canvas.focus({ preventScroll: true }); } catch (err) {}
@@ -7619,7 +7616,7 @@
       camFwd = [0, 0, 1]; camUp = [0, 1, 0]; yawVel = 0; pitchVel = 0; rollVel = 0; lastTime = 0;
       camPos = (viewMode === 'raymarch') ? [0, 0, -2.4] : [0.5, 0.5, 0.5];
       if (isSearchField(currentField)) resetSearchView();
-      else if (isLifeField(currentField)) { srAz = 0.9; srEl = 0.5; srR = 1.1; srSweep = 0; }
+      else if (isLifeField(currentField)) { srAz = 0.9; srEl = 0.5; srR = 1.1; }
       bumpBlurb();
     }
 
