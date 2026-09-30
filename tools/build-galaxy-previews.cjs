@@ -1,83 +1,160 @@
-// NODE_PATH=/path/to/node_modules node tools/build-galaxy-previews.cjs
-// Needs Playwright and Sharp. SCENE=grid rebuilds one preview; DUMP changes the QA directory.
-// Captures real scene geometry with a static camera and compact WebP output.
-// Explore forms are framed as finite objects so a thumbnail shows the whole shape.
-// Capture-only hooks are injected by the local server and never sent to readers.
-// The owned Chrome for Testing process is always closed in finally.
+// Rebuild the scene chooser's static SVG illustrations. No browser or image runtime needed.
+// Each drawing shows a scene's shape or an algorithm's mechanism, rather than a shared camera shot.
 const fs = require('node:fs');
 const path = require('node:path');
-const http = require('node:http');
-const assert = require('node:assert/strict');
-const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
-const out = process.env.DUMP || '/tmp/galaxy-preview-qa';
-fs.mkdirSync(out, { recursive: true });
-const errors = [];
-const mime = {'.html':'text/html','.css':'text/css','.js':'text/javascript','.woff2':'font/woff2','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml'};
-const server = http.createServer((req,res) => {
-  const file = path.resolve(root, '.' + req.url.split('?')[0]);
-  if (!file.startsWith(root + '/')) return res.writeHead(403).end();
-  try {
-    let data = fs.readFileSync(file);
-    if (file.endsWith('/js/random-galaxy.js')) {
-      let src=data.toString().replace('window.GXCAM =', 'window.__chooseScene = selectScene; window.GXCAM =')
-        .replace('var absCam = isSearchField(currentField) || isSortField(currentField) || isLifeField(currentField);', 'var absCam = window.__thumbFinite || isSearchField(currentField) || isSortField(currentField) || isLifeField(currentField);')
-        .replace('lifeOn = isLifeField(currentField);', 'lifeOn = window.__thumbFinite || isLifeField(currentField);'); const at=src.lastIndexOf('})();');
-      src=src.slice(0,at) + `window.__gxPreview = { state: () => ({field:currentField,running}), thumbnail: scene => { window.__thumbFinite=false; window.__chooseScene(scene); pendingField=null; gridPending=false; loadField(scene==='grid'||scene==='mulberry'?'random':scene); applyStartView(scene); morph=morphTarget=scene==='grid'?0:1; introLum=1;introStarted=true;INTRO_DONE=true;applySpeed(0); if(isSearchField(currentField)){for(var i=0;i<22000&&!pf.reached&&!pf.done;i++)searchStep(); searchWriteDev(); searchBuildActiveLine(); device.queue.writeBuffer(instanceBuffer,0,positions,0,(pf.total+pf.lineCount)*4);resetSearchView();} if(isSortField(currentField)){sortBuildOps();for(var i=0,n=Math.floor(sr.ops.length*.38);i<n;i++)sortStep();for(var i=0;i<sr.n;i++){sr.x[i]=sr.slotOf[i];sr.flag[i]=0;}sr.phase='sort';sortLayout();device.queue.writeBuffer(instanceBuffer,0,positions,0,sr.total*4);resetSortView(false);}
- if(scene==='attractor'){for(var j=0;j<90;j++)lifeTick(.033);}
- if(!isOrbitField(currentField)){
-  window.__thumbFinite=true;
-  var n=Math.min(160000,POINT_COUNT), stride=POINT_COUNT/n;
-  for(var j=0;j<n;j++){var k=Math.floor(j*stride)*4;for(var q=0;q<4;q++)positions[j*4+q]=positions[k+q];}
-  if(scene==='grid') {morph=morphTarget=1;var g=Math.ceil(Math.cbrt(n));function hash(x){var h=x;h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);return (h&0xffffff)/16777216;}for(var j=0;j<n;j++){positions[j*4]=(j%g+hash(j*3))/g;positions[j*4+1]=(Math.floor(j/g)%g+hash(j*3+1))/g;positions[j*4+2]=(Math.floor(j/g/g)+hash(j*3+2))/g;positions[j*4+3]=1;}}
-  var lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
-  for(var j=0;j<n;j+=8){for(var q=0;q<3;q++){lo[q]=Math.min(lo[q],positions[j*4+q]);hi[q]=Math.max(hi[q],positions[j*4+q]);}}
-  var c=lo.map((x,i)=>(x+hi[i])/2), r=Math.max(...hi.map((x,i)=>x-lo[i]))*1.6;
-  camPos=[c[0]+r*.75,c[1]+r*.4,c[2]+r*.65];camFwd=vnorm(c.map((x,i)=>x-camPos[i]));camUp=vnorm(vcross(vnorm(vcross(camFwd,[0,1,0])),camFwd));
-  lifeDrawCount=n;device.queue.writeBuffer(instanceBuffer,0,positions,0,n*4);
- }
- } };\n` +src.slice(at);
-      data=Buffer.from(src);
-    }
-    res.writeHead(200,{'Content-Type':mime[path.extname(file)] || 'application/octet-stream'}).end(data);
-  } catch {res.writeHead(404).end();}
-});
-let browser;
-function check(label,condition) { assert.ok(condition,label); process.stdout.write('PASS '+label+'\n'); }
-async function state(page) {return page.evaluate(() => __gxPreview.state());}
-
-async function setup(context) {
-  await context.route('https://www.googletagmanager.com/**', r=>r.abort());
-  const page=await context.newPage();
-  page.on('pageerror', e=>errors.push(e.message));
-  page.on('console', m=>{if(m.type()==='error'&&!m.text().includes('ERR_FAILED'))errors.push(m.text());});
-  await page.goto('http://127.0.0.1:'+server.address().port+'/random-galaxy.html');
-  await page.waitForFunction(()=>window.__gxPreview && __gxPreview.state().running);
-  await page.evaluate(()=>document.fonts.ready);
-  return page;
+const dir = path.join(root, 'assets/galaxy-previews');
+const css = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
+function token(name) { return css.match(new RegExp(name + ':\\s*(#[0-9a-f]+)', 'i'))[1]; }
+// Categorical colors from STYLE.md; the neutral ramp comes directly from style.css.
+const C = { bg:token('--bg-raised'), panel:token('--bg'), rule:token('--rule'), text:token('--text'),
+  gold:'#dfc288', blue:'#8fb3c7', sage:'#9ec79a', coral:'#d9978c', purple:'#b79bc4', clay:'#cf9f78' };
+const colors = [C.blue,C.sage,C.gold,C.clay,C.coral,C.purple];
+const r = n => Math.round(n * 100) / 100;
+const circle = (x,y,rad,c,opacity=1) => `<circle cx="${r(x)}" cy="${r(y)}" r="${rad}" fill="${c}" opacity="${opacity}"/>`;
+const line = (x,y,x2,y2,c=C.rule,w=2,extra='') => `<path d="M${r(x)} ${r(y)}L${r(x2)} ${r(y2)}" fill="none" stroke="${c}" stroke-width="${w}" ${extra}/>`;
+const rect = (x,y,w,h,c,opacity=1,rad=3) => `<rect x="${r(x)}" y="${r(y)}" width="${r(w)}" height="${r(h)}" rx="${rad}" fill="${c}" opacity="${opacity}"/>`;
+const curve = (points,c,w=2,extra='') => `<path d="M${points.map(p=>p.map(r).join(' ')).join('L')}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+function arrow(points,c=C.gold,w=2.5) { return curve(points,c,w,`marker-end="url(#arrow-${Object.keys(C).find(k=>C[k]===c)})"`); }
+function ring(x,y,rad,c,w=2,extra='') { return `<circle cx="${x}" cy="${y}" r="${rad}" fill="none" stroke="${c}" stroke-width="${w}" ${extra}/>`; }
+function ellipse(x,y,rx,ry,c,w=2,rotation=0,extra='') {return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="none" stroke="${c}" stroke-width="${w}" transform="rotate(${rotation} ${x} ${y})" ${extra}/>`;}
+function rng(seed=7) {let s=seed;return ()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}
+function bars(values,y=153,x=35,w=28,gap=12,selected=[],scale=14) {
+  return line(x-4,y+3,x+values.length*(w+gap)-gap+4,y+3,C.rule,1)+values.map((v,i)=>rect(x+i*(w+gap),y-v*scale,w,v*scale,selected.includes(i)?C.gold:colors[Math.min(v-1,5)])).join('');
 }
-const sharp=require('sharp');
-const previewDir=path.join(root,'assets/galaxy-previews');fs.mkdirSync(previewDir,{recursive:true});
-(async()=>{try{
- await new Promise(r=>server.listen(0,'127.0.0.1',r));
- browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH || path.join(require('node:os').homedir(),'.local/bin/agent-chrome-for-testing'),args:['--enable-unsafe-webgpu']});
- const context=await browser.newContext({viewport:{width:800,height:520},deviceScaleFactor:1});const page=await setup(context);
- await page.evaluate(()=>{document.getElementById('galaxy-wrapper').classList.add('gx-clean');const style=document.createElement('style');style.textContent='#galaxy-wrapper button,#galaxy-wrapper svg{visibility:hidden!important}';document.head.appendChild(style);});
- await page.waitForTimeout(1000);
- const scenes=await page.locator('.gx-cat-select option').evaluateAll(es=>es.filter(e=>e.value).map(e=>({value:e.value,name:e.textContent.trim()})));
- for(const scene of scenes.filter(s=>!process.env.SCENE||s.value===process.env.SCENE)){
-  await page.evaluate(s=>__gxPreview.thumbnail(s),scene.value);await page.waitForTimeout(320);
-  const png=await page.locator('#galaxy-canvas').screenshot();
-  await sharp(png).resize(320,200,{fit:'cover'}).webp({quality:76}).toFile(path.join(previewDir,scene.value+'.webp'));
-  process.stdout.write('Captured '+scene.value+'\n');
- }
- const tiles=[];for(let i=0;i<scenes.length;i++){
-  const tile=await sharp(path.join(previewDir,scenes[i].value+'.webp')).resize(160,100).png().toBuffer();
-  const label=Buffer.from('<svg width="160" height="26"><rect width="160" height="26" fill="#1e2420"/><text x="8" y="18" fill="#e8e2d6" font-family="sans-serif" font-size="12">'+scenes[i].value+'</text></svg>');
-  tiles.push({input:tile,left:(i%5)*160,top:Math.floor(i/5)*126},{input:label,left:(i%5)*160,top:Math.floor(i/5)*126+100});
- }
- await sharp({create:{width:800,height:Math.ceil(scenes.length/5)*126,channels:3,background:'#1e2420'}}).composite(tiles).png().toFile(out+'/preview-contact-sheet.png');
- const total=fs.readdirSync(previewDir).reduce((n,f)=>n+fs.statSync(path.join(previewDir,f)).size,0);
- process.stdout.write(scenes.length+' previews, '+Math.round(total/1024)+' KB total\n');
- check('no browser or GPU errors',errors.length===0);
-}catch(e){process.stderr.write(e.stack+'\n'+JSON.stringify(errors)+'\n');process.exitCode=1;}finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}})();
+function search(id) {
+  let art='', start=[1,3], goal=[11,3]; const cell=(x,y,c,o=1)=>rect(20+x*22,25+y*22,17,17,c,o);
+  for(let y=0;y<7;y++)for(let x=0;x<13;x++){
+    let c=C.rule,o=.42, d=Math.abs(x-start[0])+Math.abs(y-start[1]);
+    if(id==='bfs'&&d<7){c=C.gold;o=.18+(7-d)*.07;}
+    if(id==='bidir'){let e=Math.abs(x-goal[0])+Math.abs(y-goal[1]);if(d<6){c=C.gold;o=.28+(6-d)*.08;}else if(e<6){c=C.blue;o=.28+(6-e)*.08;}}
+    if(id==='wavefront') {const seeds=[[2,1],[10,2],[6,5]];let ds=seeds.map(s=>Math.abs(x-s[0])+Math.abs(y-s[1])), m=Math.min(...ds);if(m<4){c=[C.gold,C.blue,C.sage][ds.indexOf(m)];o=.28+(4-m)*.15;}}
+    if(id==='randomflood'&&x<6+2*Math.sin(y*2.2)+Math.cos(x*y)){c=[C.sage,C.gold][(x+y)%2];o=.45+.2*Math.sin(x*2+y);}
+    if(id==='dijkstra'&&((x>=4&&x<=8&&y>=2&&y<=4)||(x===9&&y<2))){c=C.coral;o=.6;}
+    art+=cell(x,y,c,o);
+  }
+  const point=([x,y])=>[28.5+x*22,33.5+y*22];
+  if(id==='bfs')art+=arrow([[62,100],[133,100]])+ring(...point(start),34,C.gold,1.5,'opacity=".7"');
+  if(id==='bidir')art+=arrow([[70,100],[144,100]])+arrow([[250,100],[177,100]],C.blue)+ring(160,100,10,C.text);
+  if(id==='dijkstra')art+=arrow([[1,3],[2,3],[3,3],[3,5],[10,5],[10,3],[11,3]].map(point),C.gold,4);
+  if(id==='wavefront'){for(const [i,s]of [[2,1],[10,2],[6,5]].entries())art+=circle(...point(s),5,[C.gold,C.blue,C.sage][i])+ring(...point(s),25,[C.gold,C.blue,C.sage][i],1.5);return art;}
+  if(id==='dfs'){art+=curve([[1,3],[1,1],[4,1],[4,3],[7,3],[7,5],[10,5],[10,3],[11,3]].map(point),C.gold,4);art+=curve([[4,3],[4,5],[2,5]].map(point),C.clay,2,'stroke-dasharray="4 4"');}
+  if(id==='randomwalk')art+=arrow([[1,3],[2,3],[2,4],[3,4],[3,3],[2,3],[2,2],[3,2],[4,2],[4,3],[5,3],[5,4],[6,4],[6,3],[5,3],[5,2],[7,2],[7,3],[8,3]].map(point),C.gold,3);
+  art+=circle(...point(start),6,C.text)+ring(...point(goal),8,C.coral,3);
+  return art;
+}
+function sorting(id) {
+  if(id==='bubble')return bars([2,5,3,1,4,6],155,42,26,16,[1,2])+arrow([[97,65],[107,45],[136,45],[148,75]])+arrow([[148,98],[135,116],[106,116],[99,98]],C.blue);
+  if(id==='insertion')return bars([1,2,4,5,3,6],156,42,26,16,[4])+rect(36,166,158,5,C.sage)+arrow([[223,91],[223,39],[149,39],[149,86]])+line(146,94,146,158,C.gold,2,'stroke-dasharray="4 4"');
+  if(id==='quick'){
+    let art=bars([4,1,6,3,5,2],92,55,25,12,[0],11);
+    art+=arrow([[142,110],[106,131]],C.blue)+arrow([[180,110],[218,131]],C.coral);
+    art+=bars([1,2,3],176,36,23,8,[],7)+bars([5,6],176,222,23,8,[],7)+rect(156,141,24,35,C.gold);
+    return art;
+  }
+  if(id==='heap'){
+    const nodes=[[160,35,6],[90,85,4],[230,85,5],[52,141,1],[125,141,3],[205,141,2]];
+    let art='';for(const [a,b]of [[0,1],[0,2],[1,3],[1,4],[2,5]])art+=line(...nodes[a].slice(0,2),...nodes[b].slice(0,2),C.rule,3);
+    nodes.forEach(([x,y,v],i)=>{art+=circle(x,y,14+i%2,colors[v-1]);});
+    return art+arrow([[180,35],[280,35],[280,163],[227,163]],C.gold)+bars([4,5,6],187,228,17,9,[],5);
+  }
+  if(id==='bitonic'){
+    let art='';for(let i=0;i<6;i++)art+=line(32,38+i*25,288,38+i*25,C.rule,2)+circle(32,38+i*25,5,colors[i])+circle(288,38+i*25,5,colors[i]);
+    for(const [x,pairs]of [[75,[[0,1],[2,3],[4,5]]],[143,[[0,3],[1,2],[4,5]]],[210,[[0,5],[1,4],[2,3]]]])for(const [a,b]of pairs)art+=line(x,38+a*25,x,38+b*25,colors[a],3)+circle(x,38+a*25,4,C.gold)+circle(x,38+b*25,4,C.gold);
+    return art;
+  }
+  if(id==='pancake'){
+    let art='';for(const [i,v]of [2,5,3,6,4,1].entries())art+=rect(160-v*14,47+i*20,v*28,13,i<3?C.gold:colors[v-1],1,6);
+    return art+arrow([[76,103],[48,84],[49,46],[78,27],[119,27],[136,35]])+line(62,106,253,106,C.text,1.5,'stroke-dasharray="5 5"');
+  }
+}
+function life(id){
+  const rand=rng(321);
+  if(id==='boids'){
+    let art='';for(let i=0;i<30;i++){let x=42+rand()*238,y=33+rand()*125,angle=-.7+rand()*.5,size=4+rand()*4;art+=`<path d="M${-size} ${size*.5}L0 0L${-size} ${-size*.5}" fill="none" stroke="${colors[i%3]}" stroke-width="2" stroke-linecap="round" transform="translate(${r(x)} ${r(y)}) rotate(${r(angle*180/Math.PI)})"/>`;}
+    return art+arrow([[40,156],[91,158],[139,151],[186,131]],C.blue,1.5);
+  }
+  if(id==='ocean'){
+    let art='';for(let j=0;j<9;j++){const p=[];for(let i=0;i<=72;i++){let x=24+i*3.8,y=61+j*10+Math.sin(i*.15+j*.44)*12+Math.sin(i*.09-j*.2)*7;p.push([x,y]);}art+=curve(p,[C.blue,C.sage,C.text][j%3],j%3===0?2.6:1.2,`opacity="${.4+j*.055}"`);}
+    return art;
+  }
+  if(id==='lsystem'){
+    let art='', leaves='';function branch(x,y,len,angle,depth){let xx=x+Math.sin(angle)*len,yy=y-Math.cos(angle)*len;art+=line(x,y,xx,yy,depth<2?C.sage:C.clay,Math.max(1,depth));if(depth===0){leaves+=ellipse(xx,yy,3,6,C.sage,2,angle*180/Math.PI);return;}branch(xx,yy,len*.73,angle-.48,depth-1);branch(xx,yy,len*.72,angle+.46,depth-1);}
+    branch(160,179,47,0,4);return ellipse(160,181,35,5,C.rule,1)+art+leaves;
+  }
+  if(id==='rxndiff'){
+    let art=circle(160,100,75,C.panel)+ring(160,100,75,C.rule,2)+ellipse(160,100,35,74,C.rule,1)+ellipse(160,100,73,24,C.rule,1);
+    for(let i=0;i<23;i++){let x=(rand()*2-1)*61,y=(rand()*2-1)*61;if(x*x+y*y>3700){i--;continue;}let rad=4+rand()*5;art+=circle(160+x,100+y,rad+3,C.sage,.16)+ellipse(r(160+x),r(100+y),r(rad),r(rad*.72),colors[i%3],3,i*31);}
+    return art+arrow([[232,60],[254,75],[259,103]],C.sage,2);
+  }
+  if(id==='saturn'){
+    let art=ellipse(160,100,116,36,C.gold,5,-20)+ellipse(160,100,91,27,C.clay,3,-20)+circle(160,100,39,C.gold)+ellipse(158,100,39,11,C.clay,5,-20);
+    art+=`<path d="M55 137Q135 153 265 63" fill="none" stroke="${C.gold}" stroke-width="6"/>`;
+    return art+circle(55,49,5,C.blue)+circle(259,147,7,C.sage)+circle(247,39,3,C.purple)+ellipse(160,100,145,57,C.rule,1,-20,'stroke-dasharray="3 6"');
+  }
+}
+function attractor(id){
+  // Normalized schematic silhouettes: distinct loop families, with direction dots.
+  let art='';
+  if(id==='lorenz'){
+    for(let side of [-1,1])for(let j=0;j<12;j++){let p=[];for(let i=0;i<=90;i++){let t=i/90*Math.PI*2;p.push([160+side*(53+Math.cos(t)*(14+j*3)),100+Math.sin(t)*(18+j*4)]);}art+=curve(p,side<0?C.blue:C.gold,1,`opacity="${.3+j*.045}"`);}
+    return art+curve([[139,139],[163,99],[182,55]],C.text,2)+circle(98,82,4,C.text);
+  }
+  if(id==='aizawa'){for(let j=0;j<17;j++)art+=ellipse(160,117,24+Math.sin(j/17*Math.PI)*58,15+Math.sin(j/17*Math.PI)*32,colors[j%3],1.5,j*13)+curve([[149,145],[156,94],[158,37],[163,23],[170,48],[164,99]],C.gold,2);return art;}
+  if(id==='dadras'){for(const [j,[x,y]]of [[112,64],[205,65],[112,135],[205,136]].entries())for(let i=0;i<8;i++)art+=ellipse(x,y,12+i*4,5+i*3,colors[j],1.3,j*45+i*8);return art+curve([[91,84],[165,48],[218,117],[150,153],[111,67]],C.text,1.4);}
+  if(id==='thomas'){for(let j=0;j<21;j++){let p=[];for(let i=0;i<=140;i++){let t=i/140*Math.PI*2;p.push([160+Math.sin(t*3+j*.016)*(64+j*.8),100+Math.sin(t*2+j*.03)*64]);}art+=curve(p,colors[Math.floor(j/7)],.85,'opacity=".75"');}return art;}
+  if(id==='clifford'){for(let j=0;j<16;j++){let p=[];for(let i=0;i<=120;i++){let t=i/120*Math.PI*2;p.push([160+(Math.sin(t*2)+Math.cos(t*3+j*.06))*47,100+(Math.sin(t*3)-Math.cos(t*2+j*.06))*34]);}art+=curve(p,colors[j%3],1,'opacity=".7"');}return art;}
+}
+function fractal(id){
+  let art='';
+  if(id==='sierpinski'){
+    function triangle(a,b,c,d){if(!d){art+=`<path d="M${a.join(' ')}L${b.join(' ')}L${c.join(' ')}Z" fill="${C.blue}" fill-opacity=".2" stroke="${C.gold}" stroke-width="1.5"/>`;return;}const mid=(x,y)=>x.map((v,i)=>(v+y[i])/2),ab=mid(a,b),bc=mid(b,c),ac=mid(a,c);triangle(a,ab,ac,d-1);triangle(ab,b,bc,d-1);triangle(ac,bc,c,d-1);}
+    triangle([160,23],[65,172],[255,172],3);return art;
+  }
+  function square(x,y,size,d){if(!d){art+=rect(x,y,size-2,size-2,C.blue,.75,1);return;}let s=size/3;for(let yy=0;yy<3;yy++)for(let xx=0;xx<3;xx++){if(id==='vicsek'?(xx===1||yy===1):!(xx===1&&yy===1))square(x+xx*s,y+yy*s,s,d-1);}}
+  square(79,19,162,id==='vicsek'?3:2);return art+rect(77,17,166,166,C.blue,.05);
+}
+function numbers(id){
+  let art='';
+  if(id==='collatz'){
+    function branch(x,y,len,a,d){if(!d)return;let xx=x+Math.sin(a)*len,yy=y-Math.cos(a)*len;art+=line(x,y,xx,yy,colors[d%3],Math.max(1,d*.8))+circle(xx,yy,1.8,C.gold);branch(xx,yy,len*.72,a-.46,d-1);branch(xx,yy,len*.8,a+.34,d-1);}
+    branch(126,183,48,.12,6);return art;
+  }
+  if(id==='pi'){let rand=rng(31415),p=[[0,0]],x=0,y=0;for(let i=0;i<125;i++){let angle=Math.floor(rand()*10)*Math.PI*.2;x+=Math.cos(angle)*10;y+=Math.sin(angle)*10;p.push([x,y]);}let lo=[Math.min(...p.map(p=>p[0])),Math.min(...p.map(p=>p[1]))],hi=[Math.max(...p.map(p=>p[0])),Math.max(...p.map(p=>p[1]))];p=p.map(([x,y])=>[35+(x-lo[0])/(hi[0]-lo[0])*250,25+(y-lo[1])/(hi[1]-lo[1])*150]);return curve(p,C.blue,2.5)+circle(...p[0],5,C.sage)+circle(...p.at(-1),5,C.gold);}
+  if(id==='recaman'){
+    let used=new Set([0]),n=0,vals=[0];for(let i=1;i<27;i++){let next=n-i;if(next<0||used.has(next))next=n+i;used.add(next);vals.push(next);n=next;}let scale=263/Math.max(...vals);art+=line(29,100,291,100,C.rule,1);for(let i=1;i<vals.length;i++){let a=29+vals[i-1]*scale,b=29+vals[i]*scale,rad=Math.abs(b-a)/2;art+=`<path d="M${r(a)} 100A${r(rad)} ${r(rad*.72)} 0 0 ${i%2} ${r(b)} 100" fill="none" stroke="${colors[i%3]}" stroke-width="1.8"/>`;}return art;
+  }
+  function prime(n){if(n<2)return false;for(let k=2;k*k<=n;k++)if(n%k===0)return false;return true;}
+  if(id==='gprimes'){for(let x=-7;x<=7;x++)for(let y=-5;y<=5;y++)if((x===0||y===0)?prime(Math.abs(x||y))&&Math.abs(x||y)%4===3:prime(x*x+y*y))art+=circle(160+x*17,100+y*15,3.8,colors[(Math.abs(x)+Math.abs(y))%3]);return art+line(26,100,294,100,C.rule,1)+line(160,18,160,182,C.rule,1);}
+  if(id==='primes3d'){for(let j=0;j<11;j++){let rad=15+j*6;art+=ring(160,100,rad,colors[j%3],j%3===0?3:1,`opacity="${j%3===0?.85:.25}"`);}for(let i=0;i<130;i++){let a=i*2.4,rad=20+(i%8)*7;art+=circle(160+Math.cos(a)*rad,100+Math.sin(a)*rad,1.5,C.gold,.7);}return art;}
+}
+function geometry(id){
+  let art='';
+  if(id==='hopf'){for(let j=0;j<12;j++)art+=ellipse(160+Math.cos(j/6*Math.PI)*30,100+Math.sin(j/6*Math.PI)*17,74,39,colors[Math.floor(j/4)],2,j*15);return art;}
+  if(id==='metatron'){let nodes=[[160,100]];for(let radius of [39,76])for(let i=0;i<6;i++){let a=i*Math.PI/3;nodes.push([160+Math.cos(a)*radius,100+Math.sin(a)*radius]);}for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++)art+=line(...nodes[i],...nodes[j],C.blue,.75,'opacity=".55"');for(const p of nodes)art+=ring(...p,12,C.gold,1.5);return art;}
+  if(id==='lotus'){for(let j=0;j<12;j++)art+=`<path d="M160 125Q${75+j*6} ${-4+j*4} ${127+j*6} ${43+Math.abs(j-6)*8}Q${228-j*4} ${65+j*3} 160 125" fill="${colors[Math.floor(j/4)]}" fill-opacity=".1" stroke="${colors[Math.floor(j/4)]}" stroke-width="1.5"/>`;return art+ellipse(160,144,68,14,C.sage,1.5)+circle(160,119,5,C.gold);}
+  if(id==='harmonics'){for(let j=0;j<16;j++){let p=[];for(let i=0;i<=160;i++){let t=i/160*Math.PI*2,rad=48+Math.cos(t*5+j*.07)*25;p.push([160+Math.cos(t)*rad,100+Math.sin(t)*rad*.85]);}art+=curve(p,colors[Math.floor(j/6)],1.2,'opacity=".65"');}return art;}
+}
+const renderers = {};
+for(const id of ['bfs','bidir','dijkstra','wavefront','randomflood','dfs','randomwalk'])renderers[id]=()=>search(id);
+for(const id of ['bubble','insertion','quick','heap','bitonic','pancake'])renderers[id]=()=>sorting(id);
+for(const id of ['boids','ocean','lsystem','rxndiff','saturn'])renderers[id]=()=>life(id);
+for(const id of ['thomas','lorenz','aizawa','dadras','clifford'])renderers[id]=()=>attractor(id);
+for(const id of ['sierpinski','jerusalem','vicsek'])renderers[id]=()=>fractal(id);
+for(const id of ['collatz','pi','recaman','gprimes','primes3d'])renderers[id]=()=>numbers(id);
+for(const id of ['hopf','metatron','lotus','harmonics'])renderers[id]=()=>geometry(id);
+renderers.mulberry=()=>{let random=rng(871),art='';for(let i=0;i<170;i++){const x=26+random()*268,y=23+random()*154;art+=circle(x,y,1.5+random()*2,colors[i%3],.45+random()*.55);}return art;};
+renderers.grid=()=>{let art='';for(let y=0;y<8;y++)for(let x=0;x<13;x++)art+=circle(40+x*20,30+y*20,2.4,C.blue);return art;};
+const html=fs.readFileSync(path.join(root,'random-galaxy.html'),'utf8');
+const selects=[...html.matchAll(/<select class="gx-cat-select[\s\S]*?<\/select>/g)];
+const scenes=selects.flatMap(m=>[...m[0].matchAll(/<option value="([^"]+)"[^>]*>([^<]+)<\/option>/g)].map(m=>({id:m[1],name:m[2]})));
+fs.mkdirSync(dir,{recursive:true});
+let bytes=0;
+for(const {id,name}of scenes){
+  if(!renderers[id])throw new Error('No illustration for '+id);
+  const art=renderers[id]();if(!art)throw new Error('Empty illustration for '+id);
+  const defs=Object.entries(C).filter(([key])=>art.includes('url(#arrow-'+key+')')).map(([key,c])=>`<marker id="arrow-${key}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="${c}"/></marker>`).join('');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200"><title>${name}</title><defs>${defs}</defs><rect width="320" height="200" fill="${C.bg}"/><g>${art}</g></svg>\n`;
+  fs.writeFileSync(path.join(dir,id+'.svg'),svg);bytes+=Buffer.byteLength(svg);
+}
+process.stdout.write(`Built ${scenes.length} distinct illustrations, ${Math.round(bytes/1024)} KB total\n`);

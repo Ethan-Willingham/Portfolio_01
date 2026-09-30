@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.70';
+  var VERSION = 'v1.71';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -2577,18 +2577,20 @@
   var rd = null;                 // reaction-diffusion state
   var lifeDrawCount = 0;         // instances the active Life scene draws (set by its generator)
 
-  function isLifeField(f) { return f === 'boids' || f === 'ocean' || f === 'sacred' || f === 'attractor'; }
+  function isLifeField(f) { return f === 'boids' || f === 'ocean' || f === 'lsystem' || f === 'rxndiff' || f === 'saturn'; }
   function generateLife(f) {
     if (f === 'boids') generateBoids();
     else if (f === 'ocean') generateOcean();
-    else if (f === 'sacred') generateSacred();
-    else if (f === 'attractor') generateAttractor();
+    else if (f === 'lsystem') generateLsystem();
+    else if (f === 'rxndiff') generateRxnDiff();
+    else if (f === 'saturn') generateSaturn();
   }
   function lifeTick(dt) {
     if (currentField === 'boids') boidsTick(dt);
     else if (currentField === 'ocean') oceanTick(dt);
-    else if (currentField === 'sacred') sacredTick(dt);
-    else if (currentField === 'attractor') attractorTick(dt);
+    else if (currentField === 'lsystem') lsystemTick(dt);
+    else if (currentField === 'rxndiff') rxnDiffTick(dt);
+    else if (currentField === 'saturn') saturnTick(dt);
   }
 
   // Reaction-diffusion (Gray-Scott) on a doubly-periodic field painted onto a
@@ -3381,16 +3383,16 @@
   // ============================================================
   // SATURN — ringed planet scene for random-galaxy.js
   // Field id: "saturn"
-  // N = 220000 points (70k planet + 140k rings + 4x2500 moons)
+  // N = 106000 points (30k planet + 70k rings + 4x1500 moons)
   // All code is ES5 / var-only to match the host IIFE.
   // Planet + moon base offsets are baked once at generate; the tick only
   // rotates/orbits them (the same cache trick the rings use) — no per-frame
   // RNG / Box-Muller replay, so it stays cheap at 60fps.
   // ============================================================
 
-  var SAT_N_PLANET   = 70000;
-  var SAT_N_RINGS    = 140000;
-  var SAT_N_MOON     = 2500;   // per moon
+  var SAT_N_PLANET   = 30000;
+  var SAT_N_RINGS    = 70000;
+  var SAT_N_MOON     = 1500;   // per moon
   var SAT_N_MOONS    = 4;
   var SAT_N_TOTAL    = SAT_N_PLANET + SAT_N_RINGS + SAT_N_MOONS * SAT_N_MOON;
 
@@ -3562,7 +3564,7 @@
       lifeDrawCount = SAT_N_TOTAL;
 
       saturnTick(0);
-      if (!isLifeField(currentField)) { srAz = 0.9; srEl = 0.5; srR = 1.7; }
+      srAz = 0.2; srEl = 0.22; srR = 1.5;   // start across the rings so the planet and thin disc both read
       srDragging = false;
       camUp = [0,1,0]; yawVel = 0; pitchVel = 0; rollVel = 0;
       clumps.length = 0;
@@ -4435,16 +4437,16 @@
   // ============================================================
   //  L-SYSTEM PLANT  —  random-galaxy.js Life scene
   //  field-id: 'lsystem'
-  //  ~90000 points distributed along 3-D turtle-drawn branches
+  //  16000 points distributed along 3-D turtle-drawn branches
   //  Animation: growth wave (looping ~10s) + wind sway
   // ============================================================
 
   // ---- constants ----
-  var LS_N          = 90000;   // total point budget
+  var LS_N          = 16000;   // keep the branches distinct instead of overexposing dense lines
   var LS_ITER       = 5;       // L-system expansion iterations
   var LS_STEP_BASE  = 0.072;   // base forward step at iter 0 (shrinks per level)
   var LS_STEP_SHRINK= 0.62;    // step scale per level
-  var LS_ANGLE_BASE = 26.0;    // branch angle in degrees (base)
+  var LS_ANGLE_BASE = 34.0;    // branch angle in degrees (base)
   var LS_SWAY_AMP   = 0.020;   // max horizontal sway at tips
   var LS_SWAY_SPEED = 0.52;    // wind frequency (rad/s)
   var LS_GROW_CYCLE = 10.0;    // seconds for one full growth+hold cycle
@@ -4524,7 +4526,7 @@
   //  Turtle interpretation + point distribution
   // ================================================================
   function LS_buildTree(rand) {
-    var rules = { 'X': 'F+[[X]-X]-F[-FX]+X', 'F': 'FF' };
+    var rules = { 'X': 'F[+X][-X][/+X][\\-X]', 'F': 'F' };   // branch in several planes instead of a flat fern
     var str = LS_expand('X', rules, LS_ITER);
 
     var DEG = Math.PI / 180.0;
@@ -4653,7 +4655,7 @@
     for (var si = 0; si < rawSegCount; si++) {
       var dep = rawSegs[si*11+6];
       var len = rawSegs[si*11+7];
-      var trunkBonus = 1.0 + 2.5 * (1.0 - dep / maxDepth);  // trunk gets ~3.5x density
+      var trunkBonus = 1.0 + 0.5 * (1.0 - dep / maxDepth);  // a modest density boost keeps the trunk legible
       weights[si] = len * trunkBonus;
       totalWeight += weights[si];
     }
@@ -4740,7 +4742,7 @@
   function generateLsystem() {
     var rand = LS_rng(0xDEADBEEF);
     LS_buildTree(rand);
-    LS_time   = 0.0;
+    LS_time   = 3.4;    // enter with the trunk growing, rather than an empty seed
     LS_inited = true;
 
     var N = LS_N_ACTUAL;
@@ -4755,8 +4757,9 @@
     }
     lifeDrawCount = N;
 
-    lsystemTick(0);
-    if (!isLifeField(currentField)) { srAz = 0.9; srEl = 0.35; srR = 1.7; }
+    lsystemTick(0, true);
+    srR = 1.35;
+    if (!isLifeField(currentField)) { srAz = 0.9; srEl = 0.35; }
     srDragging = false;
     camUp = [0,1,0]; yawVel = 0; pitchVel = 0; rollVel = 0;
     clumps.length = 0;
@@ -4765,9 +4768,9 @@
   // ================================================================
   //  Tick — called every frame
   // ================================================================
-  function lsystemTick(dt) {
+  function lsystemTick(dt, paintEntry) {
     var transitioning = (pendingField !== null) || morph < 0.9;
-    if (!transitioning) {
+    if (!transitioning || paintEntry) {
       if (!LS_inited) return;
       LS_time += dt;
 
@@ -4801,25 +4804,10 @@
         var ry = LS_restY[i];
         var rz = LS_restZ[i];
 
-        // ---- Growth: scale from root ----
-        // All not-yet-grown points collapse to the tree base (local y=-0.36, x=z=0).
-        // As the growth front sweeps from 0->1 (normalised arc-depth), each point
-        // transitions from base-position to rest-position with a smooth blend zone.
-        var BLEND = 0.07;
-        var growAlpha;
-        if (dist >= growFront) {
-          growAlpha = 0.0;  // above front: at base
-        } else if (dist >= growFront - BLEND) {
-          var u2 = (growFront - dist) / BLEND;  // 0 at front, 1 at blend edge
-          growAlpha = 1.0 - u2 * u2;            // quadratic ease: 0->1 from front backward
-        } else {
-          growAlpha = 1.0;  // fully revealed
-        }
-        // Collapsed ("seed") position: tree base
-        var SEED_Y = -0.36;
-        var worldX = rx * growAlpha;          // lerp from 0
-        var worldY = SEED_Y + (ry - SEED_Y) * growAlpha;
-        var worldZ = rz * growAlpha;
+        // Reveal each point when growth reaches it along its branch. Unborn
+        // points stay hidden, so they never fly across the tree from the root.
+        var grown = dist <= growFront;
+        var worldX = rx, worldY = ry, worldZ = rz;
 
         // ---- Wind sway ----
         // Amplitude scales with height above base and dist from root (tips sway more)
@@ -4846,7 +4834,7 @@
         }
         if (dev < 0.3) dev = 0.3;
         if (dev > 6.0) dev = 6.0;
-        positions[pi+3] = dev;
+        positions[pi+3] = grown ? dev : -1;   // hide branches that have not grown yet
       }
     }
     if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer, 0, positions, 0, lifeDrawCount * 4);
@@ -5259,7 +5247,7 @@
   function sortRecord_pancake(vals){ var arr=vals.slice(),ops=[],n=arr.length; function flip(k){var lo=0,hi=k,t;for(;lo<hi;lo++,hi--){ops.push([1,lo,hi]);t=arr[lo];arr[lo]=arr[hi];arr[hi]=t;}} for(var cs=n;cs>=2;cs--){var mi=0;for(var i=1;i<cs;i++){ops.push([0,mi,i]);if(arr[i]>arr[mi])mi=i;}if(mi!==cs-1){if(mi!==0)flip(mi);flip(cs-1);}}return ops; }
   function sortRecord_bogo(vals){ var arr=vals.slice(),ops=[],n=arr.length,CAP=6000; function isSorted(){for(var i=0;i+1<n;i++){ops.push([0,i,i+1]);if(arr[i]>arr[i+1])return false;}return true;} if(n<=1)return ops; while(!isSorted()){if(ops.length>=CAP)break;for(var i=n-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));if(j!==i){ops.push([1,i,j]);var t=arr[i];arr[i]=arr[j];arr[j]=t;}}} for(var s=0;s<n-1;s++){var mi=s;for(var k=s+1;k<n;k++){ops.push([0,mi,k]);if(arr[k]<arr[mi])mi=k;}if(mi!==s){ops.push([1,s,mi]);var tt=arr[s];arr[s]=arr[mi];arr[mi]=tt;}}return ops; }
 
-  var SORT_ALGOS = ['selection','bubble','cocktail','insertion','gnome','shell','comb','quick','heap','bitonic','oddeven','pancake','bogo'];
+  var SORT_ALGOS = ['bubble','insertion','quick','heap','bitonic','pancake'];
   function sortRecorderFor(a){
     switch(a){ case 'bubble':return sortRecord_bubble; case 'cocktail':return sortRecord_cocktail; case 'insertion':return sortRecord_insertion;
       case 'gnome':return sortRecord_gnome; case 'shell':return sortRecord_shell; case 'comb':return sortRecord_comb; case 'quick':return sortRecord_quick;
@@ -5269,9 +5257,9 @@
   function isSortField(f){ return SORT_ALGOS.indexOf(f) >= 0; }
   function isOrbitField(f){ return isSearchField(f) || isSortField(f) || isLifeField(f); }
 
-  var SORT_N = 128;            // elements (power of two so bitonic works)
+  var SORT_N = 64;             // fewer rings to follow (power of two so bitonic works)
   var SORT_BOGO_N = 7;         // bogosort uses a tiny array (it is a gag)
-  var SORT_TOTAL = 96000;      // total points across all rings (dense tubes so the donuts read solid, not dotty)
+  var SORT_TOTAL = 48000;      // preserve the density of each ring with half the total points
   var SORT_STEPS = 0.5;        // ops replayed per frame (fractional: < 1 crawls one op every few frames; dev Speed -/+ from 0.1 .. 120)
   var SORT_SPAN = 0.48;        // cylinder length along the bore (z)
   var SORT_Z0 = 0.18;          // near end of the cylinder
@@ -6534,7 +6522,7 @@
     '  let world = worldPos(centerM) + off;',                          // nearest copy plus the tile offset, so the lattice extends far
     '  let fade = flightFade(world);',
     '  var out : VSOut;',
-    '  if (fade < 0.004) { out.pos = vec4<f32>(2.0, 2.0, 2.0, 1.0); out.uv = corner; out.color = vec3<f32>(0.0, 0.0, 0.0); return out; }',  // cull faded copies (no fragments)
+    '  if (fade < 0.004 || (U.params5.z > 1.5 && dev < 0.0)) { out.pos = vec4<f32>(2.0, 2.0, 2.0, 1.0); out.uv = corner; out.color = vec3<f32>(0.0, 0.0, 0.0); return out; }',  // cull faded copies and unborn Life branches (no fragments)
     '  var clip = U.proj * (U.view * vec4<f32>(world, 1.0));',
     '  var lvl = clamp((dev * m - 1.0) * (1.0 + U.params4.z), 0.0, 5.0);',  // params4.z = cluster-pop gain (random field only): clumps reach the hot tiers + bigger auras
     '  var szMul = 1.0 + lvl * U.params2.x * 0.30 * (1.0 + U.params4.z * 2.0);',
@@ -6546,6 +6534,7 @@
     '      let dfL = clamp(1.06 - (clip.w - U.params5.w) * 0.9, 0.78, 1.12);',   // gentle depth cue, floored high (far side stays clearly lit)
     '      col = levelColor(h) * (1.55 + dev * 0.55) * dfL;',                    // floor (~1.7x) keeps cool points visible; steeper slope makes hot / activated points pop
     '      szMul = 2.2;',                                                        // CONSTANT point/line width -- never changes with colour, so morphs + heat do not pulse the thickness
+    '      if (U.params5.z > 2.5) { col *= 0.7; szMul = 1.8; }',                    // tree: readable branches rather than a solid glow
     '    } else if (U.params5.z > 0.5) {',                              // SORTING: vivid full-strength rainbow by value + bright compare/swap flashes
     '      if (dev < 6.5) { let h = clamp(dev - 1.0, 0.0, 5.0); col = levelColor(h) * 2.3; szMul = 1.9; }',   // value: vivid full-strength tier colour, fuller points
     '      else if (dev < 7.0) { col = vec3<f32>(1.0, 1.0, 1.0) * 4.6; szMul = 3.3; }',                       // comparing: white flash
@@ -7136,9 +7125,10 @@
         } else if (!srDragging) srAz += LIFE_ORBIT_SPIN * dt;
         if (srEl > 1.4) srEl = 1.4; else if (srEl < -1.4) srEl = -1.4;
         var srce = Math.cos(srEl);
-        camPos[0] = 0.5 + srR * srce * Math.cos(srAz);
-        camPos[1] = 0.5 + srR * Math.sin(srEl);
-        camPos[2] = 0.5 + srR * srce * Math.sin(srAz);
+        var orbitRadius = srR * (isLifeField(currentField) ? Math.max(1, 0.85 / Math.max(0.3, aspect)) : 1);
+        camPos[0] = 0.5 + orbitRadius * srce * Math.cos(srAz);
+        camPos[1] = 0.5 + orbitRadius * Math.sin(srEl);
+        camPos[2] = 0.5 + orbitRadius * srce * Math.sin(srAz);
         camFwd = vnorm([0.5 - camPos[0], 0.5 - camPos[1], 0.5 - camPos[2]]);
         camUp = vnorm(vcross(vnorm(vcross(camFwd, [0, 1, 0])), camFwd));
         lookAt(viewMat, [0, 0, 0], camFwd, camUp);
@@ -7214,8 +7204,8 @@
       var searchOn = isSearchField(currentField), sortOn = isSortField(currentField), lifeOn = isLifeField(currentField);
       uniformData[48] = (searchOn || sortOn || lifeOn) ? 1 : 0;           // params5.x: hold geometry + reinterpret dev as search/sort/life state
       uniformData[49] = 0.5 + 0.5 * Math.sin(gxTime * 1.2);              // params5.y: beacon pulse (start/end throb in counter-phase)
-      uniformData[50] = sortOn ? 1 : (lifeOn ? 2 : 0);                    // params5.z: render mode -> 0 search baseline, 1 sort vivid-rainbow, 2 life full-bright
-      uniformData[51] = (searchOn || lifeOn) ? srR : 0;                   // params5.w: orbit radius, for the zoom-robust depth fade in the shader
+      uniformData[50] = sortOn ? 1 : (lifeOn ? (currentField === 'lsystem' ? 3 : 2) : 0);   // params5.z: 0 search, 1 sort, 2 life, 3 thin tree branches
+      uniformData[51] = lifeOn ? srR * Math.max(1, 0.85 / Math.max(0.3, aspect)) : searchOn ? srR : 0;   // params5.w: actual orbit radius for depth fade
       device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
       if (skyboxPipeline) {                                               // feed the skybox the live camera basis so it rotates with the look direction
@@ -7650,10 +7640,17 @@
       randomflood: 'A noisy frontier spreads across the surface.',
       dfs: 'One route runs deep, then backs out of dead ends.',
       randomwalk: 'Random steps wander until they stumble onto the goal.',
+      bubble: 'Neighboring rings swap when they are out of order.',
+      insertion: 'Each ring slides into place among the sorted ones.',
+      quick: 'A pivot splits the rings into smaller and larger groups.',
+      heap: 'The largest ring moves out of a heap, one at a time.',
+      bitonic: 'Pairs compare across a repeating sorting network.',
+      pancake: 'Whole groups flip to move the largest ring into place.',
       boids: 'Birds follow simple rules and form a moving flock.',
       ocean: 'Waves move across a surface.',
-      sacred: 'Geometric patterns grow and move.',
-      attractor: 'A moving trail traces a chaotic flow.',
+      lsystem: 'Branches split, grow, and sway in the wind.',
+      rxndiff: 'Two spreading chemicals make spots that grow and divide.',
+      saturn: 'Inner rings orbit faster than outer rings. Watch the moons circle.',
       mulberry: 'Random stars form clumps and gaps. Fly between them.',
       grid: 'Evenly spaced stars. Compare them with the random field.',
       thomas: 'A chaotic path weaves a repeating lattice.',
@@ -7916,9 +7913,15 @@
         } else if (scene === 'randomwalk') {
           if (blurbEl) blurbEl.textContent = 'A random walk, no strategy at all. Every step stumbles to a random neighbour, no memory, no aim, drifting and looping like a drunk mote of light. Yet on a finite grid, pure chance still carries it home in the end. The slowest searcher here, and a quiet echo of the opening scene: even aimless randomness arrives.';
           showReveal('Random walk: a drunk drift that chance still carries home.');
+        } else if (scene === 'lsystem') {
+          if (blurbEl) blurbEl.textContent = 'A tree grown by repeating a branching rule. Each branch makes smaller branches, then those branch again. The growth travels from the trunk to the tips, and the finished tree sways before the next cycle starts.';
+          showReveal('A branching rule grows a tree from trunk to tips.');
+        } else if (scene === 'saturn') {
+          if (blurbEl) blurbEl.textContent = 'A ringed planet made of moving points. Inner ring particles orbit faster than outer ones, while four small moons circle at their own speeds. Drag to see the thin rings from the side.';
+          showReveal('Inner rings move faster. Four moons circle the planet.');
         } else if (scene === 'rxndiff') {
-          if (blurbEl) blurbEl.textContent = 'Reaction-diffusion, the equation that paints animals. Two chemicals bleed across a skin: one feeds, one consumes, and because the feeder crawls while the eater races, a flat field cannot stay flat. Spots erupt, swell, split like dividing cells and heal into stripes and labyrinths, the very pattern a leopard, a pufferfish and a seashell each solve in the womb. Nothing is drawn here; the coat computes itself.';
-          showReveal('Reaction-diffusion: a living coat that computes its own spots.');
+          if (blurbEl) blurbEl.textContent = 'Two chemicals spread across a sphere and react with each other. Their different spreading rates turn small patches into spots that grow, divide, and fade. This reaction-diffusion model creates the pattern as it runs.';
+          showReveal('Two spreading chemicals grow and split into spots.');
         } else if (scene === 'boids') {
           if (blurbEl) blurbEl.textContent = 'A starling murmuration, computed live. No flock is choreographed: each of ten thousand birds obeys three plain instincts, do not crowd your neighbours, steer the way they steer, drift toward their centre, with a wandering hawk to fold the sky. From those three urges the whole cloud breathes, splits, and pours like one living thing. Speed paints it: calm glides run cool, hard banking turns flare gold and red. A mind no single bird possesses.';
           showReveal('Boids: three instincts, one murmuration.');

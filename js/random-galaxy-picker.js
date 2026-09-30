@@ -1,4 +1,4 @@
-/* Static scene previews, with native selects retained as the fallback. */
+/* Illustrated scene previews, with native selects retained as the fallback. */
 (function () {
   'use strict';
 
@@ -11,11 +11,11 @@
   var sceneHints = {
     bfs: 'Outward wave', bidir: 'Meet in the middle', dijkstra: 'Lowest cost',
     wavefront: 'Many starting points', randomflood: 'Noisy wave', dfs: 'Follow one route', randomwalk: 'Random steps',
-    selection: 'Pick the smallest', bubble: 'Neighbor swaps', cocktail: 'Two-way passes',
-    insertion: 'Build a sorted row', gnome: 'Step and swap', shell: 'Shrinking jumps', comb: 'Shrinking gaps',
+    bubble: 'Neighbor swaps', insertion: 'Slide into place',
     quick: 'Split around a pivot', heap: 'Build a heap', bitonic: 'Parallel comparisons',
-    oddeven: 'Alternate neighbors', pancake: 'Flip whole groups', bogo: 'Shuffle and retry',
-    boids: 'Flocking birds', ocean: 'Moving waves', sacred: 'Growing geometry', attractor: 'Moving trail',
+    pancake: 'Flip whole groups',
+    boids: 'A flock in motion', ocean: 'Moving waves', lsystem: 'Branches grow and sway',
+    rxndiff: 'Spots grow and divide', saturn: 'Rings and orbiting moons',
     mulberry: 'Clumps and gaps', grid: 'Even spacing', thomas: 'Woven lattice', lorenz: 'Butterfly loops',
     aizawa: 'Sphere and spike', dadras: 'Four lobes', clifford: 'Folded knot',
     sierpinski: 'Repeating pyramids', jerusalem: 'Hollow cubes', vicsek: 'Repeating crosses',
@@ -25,7 +25,7 @@
   };
 
   function preview(picker, value) {
-    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.webp?v=1.70';
+    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.71';
   }
   function image(src, lazy) {
     var img = document.createElement('img');
