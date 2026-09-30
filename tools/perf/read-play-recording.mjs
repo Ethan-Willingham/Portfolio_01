@@ -30,7 +30,11 @@ function distribution(values) {
     p95: values[Math.floor((values.length - 1) * .95)] ?? null,
     p99: values[Math.floor((values.length - 1) * .99)] ?? null, max: values.at(-1) ?? null };
 }
-const active = trace.seconds.filter(s => s.frames && s.durationMs >= 900 && s.state.visible && !s.state.paused);
+// A short pause may start and finish between two snapshots. Use its events,
+// rather than just the state at the end of the bin, to exclude that interval.
+const transitions = trace.events.filter(e => ['pause', 'resume', 'visibility', 'blur'].includes(e.kind));
+const active = trace.seconds.filter(s => s.frames && s.durationMs >= 900 && s.state.visible && !s.state.paused &&
+  !transitions.some(e => e.atMs > s.atMs - s.durationMs && e.atMs <= s.atMs));
 const worst = [...active].sort((a, b) => a.fps - b.fps).slice(0, 12).map(s => ({ seconds: s.atMs / 1000,
   fps: s.fps, cpuMs: s.cpuMs, maxIntervalMs: s.maxIntervalMs, snow: s.state.snowActive,
   awakeSlimes: s.state.awakeResidents, jet: s.state.jet, holding: s.state.holding, bath: s.state.bath,
