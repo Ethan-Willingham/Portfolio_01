@@ -1,0 +1,38 @@
+Sluice logo v10
+
+Reuses the approved v9 letter bodies and the native v7 terrain background.
+The old painted smoke, E water, falling drops and pool are replaced.
+
+Smoke: actual SmokeFluid WebGL solver and display shader from js/sluice/190-smoke-webgl.js. Five emitters cover the L cap from x414 to x484 at y306. A 700 x 350 simulation domain is placed at x170, y-10. It advances 160 frames at 1/60 second. SIM_RESOLUTION 160, DYE_RESOLUTION 640, pressure iterations 20, shading false, density dissipation 1.3, velocity dissipation 0.28, curl 16. Optical density 1, brightness 0.74, absorption 1.6. Wind x0.12, wind-above-y0.3. Dye RGB 0.028, 0.027, 0.024. Heat 1, cooling 1, buoyancy 20, weight 0, viscosity 0.1, edge spin 0. The plume is transparent, gently covers the whole cap and dissipates before the domain boundary.
+
+Water: actual js/liquid-wgpu.js surface renderer, captured from WebGPU into a transparent layer. Posed water particles use the native base RGB 0.165, 0.420, 0.780, alpha 0.82 and light blue turbulence RGB 0.620, 0.840, 0.980. Scale 3; particle spacing 0.5 world units, rest density 4. The E channel, falling stream and cave pool share this renderer. Particle positions, velocities and aeration are composed for a static logo; they are not a gameplay capture or a full liquid simulation. The pool is clipped using the game's own buildVoidContourPath terrain contour. No painted white reflection ribbons or ripple rings are added.
+
+Main PNG: 1672 x 941, opaque RGB.
+Transparent wordmark: 1672 x 941, logo in the final composition position; contains E drops without the cave pool.
+Smoke and water layers: matching 1672 x 941 transparent canvases, retained for future edits.
+Blog thumbnail: 600 x 338 WebP.
+Browser validation: native WebGL and WebGPU effects rendered in the owned Chrome for Testing process; no GPU validation errors. Full image and thumbnail visually reviewed. Production game code was not modified.
+
+Capture metadata:
+{
+  "method": "Native Sluice SmokeFluid WebGL simulation and LiquidWGPU WebGPU particle field rendering",
+  "particles": 34232,
+  "removedPaintedWaterPixels": 9453,
+  "gpuFormat": "bgra8unorm",
+  "gpuErrors": [],
+  "smokeFrames": 160,
+  "smokeMouth": {
+    "left": 414,
+    "right": 484,
+    "y": 306
+  },
+  "renderScale": 3,
+  "waterNote": "Particle positions, velocities and aeration are posed for the static logo. Water pixels are rendered by the unmodified native LiquidWGPU surface shader; this is not a captured gameplay frame or a full liquid simulation.",
+  "sourceHashes": {
+    "js/liquid-wgpu.js": "c6ab600ca5c388fbd858c2afffb2ffe57a70d9618a95da44cd4292f0f6918be6",
+    "js/sluice/190-smoke-webgl.js": "a9e76887042be5eb9af7299d73ff0e6f6c133ad2f4107985844aaa126e3947f2",
+    "js/sluice/100-render-terrain.js": "856d3877192a42cdb691d18f3f328dbf0185845b4f16dd6eac0352eab3c1ea09",
+    "assets/images/sluice-logo-v7-background.png": "16174f55c2dec70324f6706ffba292a38c580430ccf7f3427a8f9cb2183059fb",
+    "assets/images/sluice-logo-v9-wordmark.png": "bc37083f5456b94607c8578f11d5e1a61bcf6e9faa93c7a6be913f43596664cc"
+  }
+}
