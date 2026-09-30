@@ -41,6 +41,26 @@ const server = http.createServer((req, res) => {
         },
         step: (seconds,input={}) => { cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.round(seconds*120)&&phase==='running';i++){world.step(1/120,input);events();tickEffects(1/120);}draw();updateUI(); },
         approachExit: () => { world.gate=world.level.gates.length;const q=world.exit;Object.assign(world.body,{...q.approach,a:q.a,vx:0,vy:0,omega:0});world.wheels.forEach(w=>{w.a=q.a;w.omega=0;}); },
+        shelfSheet: () => {
+          const c=document.createElement('canvas');c.width=900;c.height=680;const g=c.getContext('2d');
+          rect(g,0,0,c.width,c.height,P.floor);
+          for(let row=0;row<2;row++)for(let col=0;col<3;col++) {
+            const level={...levels[0],start:{x:20,y:240,a:0},shelves:[{x:30,y:row===0?47:17,w:40,h:86,stock:'groceries',label:'WINE & SAUCES'}],objects:[],signs:[]};
+            const w=new World(level,true),s=w.shelves[0];s.tilt=[0,.8,Math.PI/2][col];s.nx=row===0?1:0;s.ny=row===0?0:1;s.down=col===2;
+            w.stock.items.forEach(p=>w.stock.positionStock(p));
+            g.save();g.beginPath();g.rect(col*300,row*340,300,340);g.clip();g.translate(col*300,row*340);text(g,['UPRIGHT','TIPPING','ON ITS SIDE'][col],150,18,P.dark,8,'center');g.translate(0,28);g.scale(2,2);
+            g.drawImage(makeFloor(level),0,0);drawFurnitureShadow(g,s);drawShelf(g,s);g.restore();
+          }
+          return c.toDataURL('image/png').split(',')[1];
+        },
+        renderProfile: () => {
+          const c=document.createElement('canvas');c.width=480;c.height=300;const g=c.getContext('2d');
+          const w=new World(levels[4],true),background=makeFloor(levels[4]);
+          for(let i=0;i<200;i++)w.stock.addProduct('shard',10+i%40*11,30+Math.floor(i/40)*45,{color:i%6});
+          for(let i=0;i<10;i++)draw(g,w,background,true);
+          const start=performance.now();for(let i=0;i<60;i++)draw(g,w,background,true);
+          return (performance.now()-start)/60;
+        },
         casterSheet: () => {
           const sheet=document.createElement('canvas');sheet.width=600;sheet.height=360;
           const g=sheet.getContext('2d');rect(g,0,0,600,360,P.floor);
@@ -212,6 +232,8 @@ async function setup(context, url) {
     });
     check('all four rendered casters have offset tire centers and independent angles', casterState.every(q => Math.hypot(q.center.x-q.pivot.x,q.center.y-q.pivot.y) >= q.trail) && Math.abs(casterState[0].angle-casterState[3].angle) > .1);
     await page.evaluate(()=>__cartTest.crashScene());
+    fs.writeFileSync(path.join(dump,'shelf-volume.png'),Buffer.from(await page.evaluate(()=>__cartTest.shelfSheet()),'base64'));
+    console.log('Render profile: '+(await page.evaluate(()=>__cartTest.renderProfile())).toFixed(2)+' ms per frame with three racks and 200 fragments.');
     await page.locator('#cart-game').screenshot({path:path.join(dump,'stock-before-impact.png')});
     const crashFrames=await page.evaluate(()=>__cartTest.crashFrames());
     const crash=await page.evaluate(()=>{

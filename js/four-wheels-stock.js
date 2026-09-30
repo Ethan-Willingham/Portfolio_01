@@ -26,11 +26,28 @@
     oil: { flow: 3.3, grip: .2, drag: .45 }, soil: { flow: .16, grip: .75, drag: 1.7 }, water: { flow: 7, grip: .4, drag: .6 }
   });
   const assortments = { groceries: ['wine', 'ketchup', 'can', 'jar', 'wine', 'ketchup'], wine: ['wine', 'wine', 'jar'], sauces: ['ketchup', 'jar', 'can'], dishes: ['plate', 'jar', 'plate'], plants: ['pot'], towels: ['towel'], boxes: ['carton'], jars: ['jar', 'can', 'wine', 'ketchup'] };
-  const local = (s, x, y) => ({ x: s.cx + Math.cos(s.a) * x - Math.sin(s.a) * y, y: s.cy + Math.sin(s.a) * x + Math.cos(s.a) * y });
-  function shelfPoint(s, x, y, z = 0) {
-    const p = local(s, x, y), distance = z * Math.sin(s.tilt);
-    return { x: p.x + s.nx * distance, y: p.y + s.ny * distance, z: z * Math.cos(s.tilt) };
+  function shelfBasis(s) {
+    const old=s.basis;
+    if(old&&old.a===s.a&&old.tilt===s.tilt&&old.nx===s.nx&&old.ny===s.ny) return old;
+    const c=Math.cos(s.a),sin=Math.sin(s.a),nx=s.nx*c+s.ny*sin,ny=-s.nx*sin+s.ny*c;
+    return s.basis={a:s.a,tilt:s.tilt,nx:s.nx,ny:s.ny,c,s:sin,C:Math.cos(s.tilt),T:Math.sin(s.tilt),
+      edge:(Math.abs(nx)*s.w+Math.abs(ny)*s.h)/2,edgeTurn:(Math.sign(nx)*ny*s.w-Math.sign(ny)*nx*s.h)/2};
   }
+  function shelfPoint(s, x, y, z = 0) {
+    const b=shelfBasis(s),px=b.c*x-b.s*y,py=b.s*x+b.c*y,along=px*s.nx+py*s.ny;
+    // Rotate the complete prism about its leading floor edge. Its width turns
+    // into vertical depth as it falls; the frame never shears or becomes flat.
+    const shift=(b.edge-along)*(1-b.C)+z*b.T;
+    return {x:s.cx+px+s.nx*shift,y:s.cy+py+s.ny*shift,z:z*b.C+(b.edge-along)*b.T};
+  }
+  function shelfVelocity(s, x, y, z, du=0, dv=0) {
+    const b=shelfBasis(s),px=b.c*x-b.s*y,py=b.s*x+b.c*y,along=px*s.nx+py*s.ny;
+    const vx=-s.omega*py+du*b.c-dv*b.s,vy=s.omega*px+du*b.s+dv*b.c;
+    const advance=vx*s.nx+vy*s.ny,edgeV=b.edgeTurn*s.omega;
+    const shift=(edgeV-advance)*(1-b.C)+((b.edge-along)*b.T+z*b.C)*s.tiltOmega;
+    return {x:s.vx+vx+s.nx*shift,y:s.vy+vy+s.ny*shift,z:(edgeV-advance)*b.T+((b.edge-along)*b.C-z*b.T)*s.tiltOmega};
+  }
+  function shelfHeight(s) {const b=shelfBasis(s);return s.height*b.C+2*b.edge*b.T;}
   function hull(points) {
     const p = points.slice().sort((a, b) => a.x - b.x || a.y - b.y);
     const turn = (a, b, c) => cross(b.x - a.x, b.y - a.y, c.x - b.x, c.y - b.y);
@@ -42,10 +59,10 @@
     return [...side(p), ...side(p.slice().reverse())];
   }
   function shelfPolygon(s) {
-    if(s.shape&&s.shape.cx===s.cx&&s.shape.cy===s.cy&&s.shape.a===s.a&&s.shape.tilt===s.tilt) return s.shape.poly;
+    if(s.shape&&s.shape.cx===s.cx&&s.shape.cy===s.cy&&s.shape.a===s.a&&s.shape.tilt===s.tilt&&s.shape.nx===s.nx&&s.shape.ny===s.ny) return s.shape.poly;
     const corners = [[-s.w / 2, -s.h / 2], [s.w / 2, -s.h / 2], [s.w / 2, s.h / 2], [-s.w / 2, s.h / 2]];
     const poly=hull(corners.flatMap(p => [shelfPoint(s, ...p), shelfPoint(s, ...p, s.height)]));
-    poly.bounds=bounds(poly);s.shape={cx:s.cx,cy:s.cy,a:s.a,tilt:s.tilt,poly};return poly;
+    poly.bounds=bounds(poly);s.shape={cx:s.cx,cy:s.cy,a:s.a,tilt:s.tilt,nx:s.nx,ny:s.ny,poly};return poly;
   }
   function boxPolygon(b, length, width) {
     const c = Math.cos(b.a), s = Math.sin(b.a);
@@ -105,11 +122,11 @@
       mass: 2, inertia: 1, comHeight: 18, tilt: 0, tiltOmega: 0, nx: 0, ny: 1,
       support: Math.min(spec.w, spec.h) * (spec.kind === 'table' ? .38 : .06), spilled: false, down: false, wobble: 0, stockItems: [], bounce: .06, friction: .45, impactTime: -1 };
     s.velocityAt = p => {
-      const tip = (p.height || 0) * Math.cos(s.tilt) * s.tiltOmega;
+      const tip = (p.height || 0) * s.tiltOmega;
       return { x: s.vx - s.omega * (p.y - s.cy) + s.nx * tip, y: s.vy + s.omega * (p.x - s.cx) + s.ny * tip };
     };
-    s.tiltMass = (nx,ny,height=0) => s.down ? 0 : (height*Math.cos(s.tilt)*(nx*s.nx+ny*s.ny))**2/s.tipInertia;
-    s.tiltImpulse = (ix,iy,height=0) => { if(!s.down) s.tiltOmega+=height*Math.cos(s.tilt)*(ix*s.nx+iy*s.ny)/s.tipInertia; };
+    s.tiltMass = (nx,ny,height=0) => s.down ? 0 : (height*(nx*s.nx+ny*s.ny))**2/s.tipInertia;
+    s.tiltImpulse = (ix,iy,height=0) => { if(!s.down) s.tiltOmega+=height*(ix*s.nx+iy*s.ny)/s.tipInertia; };
     return s;
   }
   function product(kind, id, x, y, a = 0) {
@@ -220,12 +237,10 @@
     }
     release(p) {
       if (p.state !== 'shelf') return;
-      const s = p.shelf, c = Math.cos(s.a), sin = Math.sin(s.a), q = shelfPoint(s, p.u, p.v, p.tier);
+      const s = p.shelf, q = shelfPoint(s, p.u, p.v, p.tier);
       p.x = q.x; p.y = q.y; p.z = Math.max(0, q.z);
-      const tip = p.tier * Math.cos(s.tilt) * s.tiltOmega;
-      p.vx = s.vx - s.omega * (p.y - s.cy) + p.du * c - p.dv * sin + s.nx * tip;
-      p.vy = s.vy + s.omega * (p.x - s.cx) + p.du * sin + p.dv * c + s.ny * tip;
-      p.vz = -p.tier * Math.sin(s.tilt) * s.tiltOmega;
+      const velocity=shelfVelocity(s,p.u,p.v,p.tier,p.du,p.dv);
+      p.vx=velocity.x;p.vy=velocity.y;p.vz=velocity.z;
       p.a += s.a; p.tumbleOmega = clamp((p.du + p.dv) / 7 + s.tiltOmega * 2, -12, 12);
       p.omega = s.omega + (p.id % 2 ? 1 : -1) * Math.hypot(p.du, p.dv) / 15;
       p.state = p.z > 0 ? 'air' : 'floor'; p.sleep = 0; this.stats.fallen++;
@@ -472,7 +487,7 @@
         for (const s of w.shelves) {
           // A falling product outside the rack can hit its side. Products above
           // a standing rack are not trapped by its floor-level footprint.
-          if (p.z > s.height * Math.cos(s.tilt) + 2 || p.shelf === s && p.age < .18) continue;
+          if (p.z > shelfHeight(s) + 2 || p.shelf === s && p.age < .18) continue;
           const h = polygonContact(boxPolygon(p,p.length,p.width), shelfPolygon(s));
           if (h) { const speed = Math.hypot(p.vx-s.vx,p.vy-s.vy); resolve(p,s,h,p.bounce,p.friction); this.breakProduct(p,speed); }
         }
@@ -501,6 +516,6 @@
       }
     }
   }
-  const api = { System, createShelf, shelfPoint, shelfPolygon, boxPolygon, polygonContact, circlePolygon, resolve, CATALOG, MATERIALS, G, CELL, MAX_FRAGMENTS };
+  const api = { System, createShelf, shelfPoint, shelfVelocity, shelfHeight, shelfPolygon, hull, boxPolygon, polygonContact, circlePolygon, resolve, CATALOG, MATERIALS, G, CELL, MAX_FRAGMENTS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.CartStock = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

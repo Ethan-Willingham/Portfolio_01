@@ -16,6 +16,7 @@
     steel: '#a6aeab', steelShade: '#687674', steelLight: '#e2e6df',
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
+  const HEIGHT_SCALE = .55, HEIGHT_X = .28;
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
   const STORAGE = 'four-wheels-records-v4';
   let records = [], canSave = true;
@@ -145,7 +146,15 @@
   function localRect(g, body, x, y, w, h, color) { poly(g, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(p => point(body, ...p)), color); }
   function line(g, x, y, xx, yy, color, thickness = 1) {
     const n = Math.max(1, Math.ceil(Math.hypot(xx - x, yy - y)));
-    for (let i = 0; i <= n; i++) rect(g, x + (xx - x) * i / n, y + (yy - y) * i / n, thickness, thickness, color);
+    // Batch each native pixel row. Extruded furniture has many long edges;
+    // drawing a row once also avoids uneven alpha from overlapping pixels.
+    let row=Math.round(y),left=Math.round(x),right=left;
+    for(let i=1;i<=n;i++) {
+      const px=Math.round(x+(xx-x)*i/n),py=Math.round(y+(yy-y)*i/n);
+      if(py!==row) {rect(g,left,row,right-left+thickness,thickness,color);row=py;left=right=px;}
+      else {left=Math.min(left,px);right=Math.max(right,px);}
+    }
+    rect(g,left,row,right-left+thickness,thickness,color);
   }
   function text(g, value, x, y, color = P.edge, size = 7, align = 'left') {
     g.fillStyle = color; g.font = 'bold ' + size + 'px "Commit Mono"'; g.textAlign = align; g.fillText(value, Math.round(x), Math.round(y));
@@ -155,16 +164,51 @@
     localRect(g, body, -length / 2, -1, length - 3, 3, color);
     poly(g, [[length / 2, 0], [length / 2 - 7, -5], [length / 2 - 7, 5]].map(p => point(body, ...p)), color);
   }
-  function hash(x, y) { return ((x * 73856093 ^ y * 19349663) >>> 0) / 4294967296; }
+  function hash(x, y) {
+    let v=Math.imul(x,73856093)^Math.imul(y,19349663);
+    v=Math.imul(v^(v>>>16),0x7feb352d);v=Math.imul(v^(v>>>15),0x846ca68b);
+    return ((v^(v>>>16))>>>0)/4294967296;
+  }
+  const colors=new Map();
+  function blend(a,b,t) {
+    const rgb=color=>{
+      if(!colors.has(color)) {
+        const probe=document.createElement('canvas');probe.width=probe.height=1;
+        const g=probe.getContext('2d');g.fillStyle=color;g.fillRect(0,0,1,1);
+        colors.set(color,[...g.getImageData(0,0,1,1).data].slice(0,3));
+      }
+      return colors.get(color);
+    };
+    const x=rgb(a),y=rgb(b);
+    return 'rgb('+x.map((v,i)=>Math.round(v+(y[i]-v)*t)).join(',')+')';
+  }
+  const project3 = p => ({x:p.x-p.z*HEIGHT_X,y:p.y-p.z*HEIGHT_SCALE});
+  const cameraDepth = p => p.x*HEIGHT_X+p.y*HEIGHT_SCALE+(p.z||0);
   function makeFloor(level) {
     const off = document.createElement('canvas'); off.width = 480; off.height = 300;
     const g = off.getContext('2d');
     rect(g, 0, 0, 480, 300, P.cream); rect(g, 8, 8, 464, 284, P.floor);
-    for (let y = 8; y < 291; y += 24) for (let x = 8; x < 471; x += 24) {
-      const v = hash(x, y);
-      g.globalAlpha = .11 + v * .11; rect(g, x, y, Math.min(23, 471 - x), Math.min(23, 291 - y), (x + y) % 48 < 24 ? P.cream : P.gold);
-      g.globalAlpha = .28; rect(g, x + 23, y, 1, Math.min(24, 292 - y), P.mid); rect(g, x, y + 23, Math.min(24, 472 - x), 1, P.mid);
-      if (v > .6) { g.globalAlpha = .12; rect(g, x + 9, y + 14, 4, 1, P.edge); }
+    // Terrazzo has coarse mineral chips, glazed tile lips and worn grout.
+    // Bake it once so the floor does not shimmer or cost work during play.
+    const grout=blend(P.floor,P.edge,.23);
+    rect(g,8,8,464,284,grout);
+    for (let row=0,y=8;y<292;row++,y+=24) for (let col=0,x=8;x<472;col++,x+=24) {
+      const seed=col*137+row*911,v=hash(seed,41),width=Math.min(23,472-x),height=Math.min(23,292-y);
+      const tile=blend(blend(P.floor,P.cream,.1+v*.16),v>.58?P.gold:P.clay,.025+hash(seed,17)*.045);
+      rect(g,x,y,width,height,tile);
+      g.globalAlpha=.36;rect(g,x+1,y+1,width-2,1,P.cream);rect(g,x+1,y+1,1,height-2,P.cream);
+      g.globalAlpha=.16;rect(g,x+1,y+height-1,width-1,1,P.edge);rect(g,x+width-1,y+1,1,height-1,P.edge);
+      for(let chip=0;chip<10;chip++) {
+        const cx=x+2+Math.floor(hash(seed+chip*47,83)*Math.max(1,width-4));
+        const cy=y+2+Math.floor(hash(seed+chip*59,137)*Math.max(1,height-4));
+        const q=hash(seed+chip*71,193);
+        g.globalAlpha=q>.8?.3:.19;
+        rect(g,cx,cy,q>.72?2:1,q>.94?2:1,chip%3===0?P.edge:chip%3===1?P.cream:P.gold);
+      }
+      if(v>.8&&width>12&&height>12) {
+        const sx=x+5+Math.floor(hash(seed,29)*9),sy=y+7+Math.floor(hash(seed,53)*9);
+        g.globalAlpha=.15;line(g,sx,sy,sx+4,sy-2,P.edge);line(g,sx+1,sy+2,sx+5,sy,P.mid);
+      }
     }
     g.globalAlpha = 1;
     // A quiet plaster wall and thin baseboard replace the striped frame.
@@ -195,10 +239,15 @@
   const spillColor = kind => kind === 'wine' ? P.purple : kind === 'ketchup' ? P.brick : kind === 'oil' ? P.gold : kind === 'soil' ? P.hairDark : P.blue;
   function drawProduct(g, p) {
     const mounted = p.state === 'shelf';
-    const b = {x:p.x, y:p.y - p.z * .35, a:mounted ? p.a + p.shelf.a : p.a};
+    const b = {x:p.x-p.z*HEIGHT_X, y:p.y - p.z * HEIGHT_SCALE, a:mounted ? p.a + p.shelf.a : p.a};
     const color = swatches[(p.color || 0) % swatches.length];
     const foreshorten=mounted||p.z<1?1:.4+.6*Math.abs(Math.cos(p.tumble));
-    const detail=(x,y,width,height,color)=>localRect(g,b,x*foreshorten,y,width*foreshorten,height,color);
+    const c=Math.cos(p.a),sin=Math.sin(p.a);
+    const onBoard=(u,v)=>project3(CartStock.shelfPoint(p.shelf,p.u+u*c-v*sin,p.v+u*sin+v*c,p.tier));
+    const detail=(x,y,width,height,color)=>{
+      if(!mounted){localRect(g,b,x*foreshorten,y,width*foreshorten,height,color);return;}
+      poly(g,[[x,y],[x+width,y],[x+width,y+height],[x,y+height]].map(([u,v])=>onBoard(u,v)),color);
+    };
     if (!mounted) { g.globalAlpha = .15; oval(g,p.x+1,p.y+2,Math.max(2,p.length),Math.max(1,p.width),P.dark); g.globalAlpha = 1; }
     if (p.kind === 'vase') {
       // Glass belly, a narrow neck and a dark open mouth. The tile or tabletop
@@ -225,7 +274,10 @@
       detail(-4,-2,8,4,P.steelShade); detail(-3,-2,6,4,color);
       detail(-3,-2,6,1,P.steelLight); detail(-1,-1,2,2,P.cream); detail(3,-1,1,2,P.steel);
     } else if (p.kind === 'plate') {
-      oval(g,b.x,b.y,4,Math.max(1,3*foreshorten),P.steelShade); oval(g,b.x,b.y-1,4,Math.max(1,3*foreshorten),P.cream); oval(g,b.x,b.y-1,2,1,color);
+      if(mounted) {
+        const disk=(rx,ry,tint)=>poly(g,Array.from({length:16},(_,i)=>onBoard(rx*Math.cos(i*Math.PI/8),ry*Math.sin(i*Math.PI/8))),tint);
+        disk(4,3,P.steelShade);disk(3.5,2.5,P.cream);disk(2,1,color);
+      } else {oval(g,b.x,b.y,4,Math.max(1,3*foreshorten),P.steelShade); oval(g,b.x,b.y-1,4,Math.max(1,3*foreshorten),P.cream); oval(g,b.x,b.y-1,2,1,color);}
     } else if (p.kind === 'pot') {
       detail(-3,-3,6,6,P.clay); detail(-4,-4,8,2,P.gold);
       if (mounted || p.z>2) { detail(-1,-5,2,6,P.pine); detail(-5,-5,5,3,P.sage); detail(0,-7,4,4,P.pine); }
@@ -241,48 +293,85 @@
       rect(g,b.x,b.y,1,1,P.light); g.globalAlpha = 1;
     }
   }
-  function drawShelf(g, s) {
-    const physical = CartStock.shelfPolygon(s);
-    g.globalAlpha = .19; poly(g,physical.map(p=>({x:p.x+3,y:p.y+3})),P.dark); g.globalAlpha=1;
-    const corners=[[-s.w/2,-s.h/2],[s.w/2,-s.h/2],[s.w/2,s.h/2],[-s.w/2,s.h/2]];
-    const project = (u,v,z) => { const p=CartStock.shelfPoint(s,u,v,z);return {x:p.x,y:p.y-p.z*.35}; };
-    const base=corners.map(p=>project(...p,0)),top=corners.map(p=>project(...p,s.height));
+  function furnitureVertices(s) {
+    return [[-s.w/2,-s.h/2],[s.w/2,-s.h/2],[s.w/2,s.h/2],[-s.w/2,s.h/2]]
+      .flatMap(([u,v])=>[CartStock.shelfPoint(s,u,v,0),CartStock.shelfPoint(s,u,v,s.height)]);
+  }
+  function drawFurnitureShadow(g,s) {
+    g.save();g.beginPath();g.rect(8,8,464,284);g.clip();
+    const vertices=furnitureVertices(s);
+    const shadow=CartStock.hull(vertices.map(p=>({x:p.x+p.z*.28,y:p.y+p.z*.36})));
+    g.globalAlpha=.09;poly(g,shadow.map(p=>({x:p.x+2,y:p.y+2})),P.dark);
+    g.globalAlpha=.22;poly(g,shadow,P.dark);
+    for(const p of vertices) if(p.z<.5) {g.globalAlpha=.25;oval(g,p.x,p.y+1,3,2,P.dark);}
+    g.restore();
+  }
+  function drawShelf(g,s) {
+    const surfaces=[],origin=CartStock.shelfPoint(s,0,0,0);
+    const normal=(x,y,z)=>{const p=CartStock.shelfPoint(s,x,y,z);return {x:p.x-origin.x,y:p.y-origin.y,z:p.z-origin.z};};
+    const addFace=(corners,n,color,detail)=>{
+      n=normal(...n);
+      if(n.x*HEIGHT_X+n.y*HEIGHT_SCALE+n.z<.015) return;
+      const vertices=corners.map(p=>CartStock.shelfPoint(s,...p));
+      const light=Math.max(0,-n.x*.42-n.y*.5+n.z*.76);
+      const tint=blend(color,P.dark,.48-light*.38);
+      surfaces.push({depth:vertices.reduce((sum,p)=>sum+cameraDepth(p),0)/vertices.length,draw:()=>{
+        const points=vertices.map(project3);poly(g,points,tint);
+        for(let i=0;i<4;i++){const a=points[i],b=points[(i+1)%4];g.globalAlpha=.32;line(g,a.x,a.y,b.x,b.y,light>.45?P.cream:P.dark);}
+        g.globalAlpha=1;if(detail)detail();
+      }});
+    };
+    const box=(x,y,z,w,h,d,color,top=color)=>{
+      const p=[[x,y,z],[x+w,y,z],[x+w,y+h,z],[x,y+h,z],[x,y,z+d],[x+w,y,z+d],[x+w,y+h,z+d],[x,y+h,z+d]];
+      for(const [indices,n,c]of [[[0,3,2,1],[0,0,-1],P.hair],[[4,5,6,7],[0,0,1],top],[[0,4,7,3],[-1,0,0],color],[[1,2,6,5],[1,0,0],color],[[0,1,5,4],[0,-1,0],color],[[3,7,6,2],[0,1,0],color]]) addFace(indices.map(i=>p[i]),n,c);
+    };
+    const woodTop=(x,y,z,w,h)=>{
+      const grain=()=>{
+        for(let v=y+6;v<y+h-2;v+=8) {
+          const a=project3(CartStock.shelfPoint(s,x+2,v,z)),b=project3(CartStock.shelfPoint(s,x+w-2,v,z));
+          g.globalAlpha=.17;line(g,a.x,a.y,b.x,b.y,P.hair);g.globalAlpha=1;
+        }
+      };
+      addFace([[x,y,z],[x+w,y,z],[x+w,y+h,z],[x,y+h,z]],[0,0,1],P.gold,grain);
+    };
     if(s.kind==='table') {
-      for(let i=0;i<4;i++) {
-        const foot=project(corners[i][0]*.8,corners[i][1]*.8,0),join=project(corners[i][0]*.8,corners[i][1]*.8,s.height);
-        line(g,foot.x+1,foot.y,join.x+1,join.y,P.hairDark,3);line(g,foot.x,foot.y,join.x,join.y,P.clay,2);
-      }
-      poly(g,top.map(p=>({x:p.x,y:p.y+3})),P.hairDark);poly(g,top,P.clay);
-      for(let i=0;i<4;i++) {const q=(i+1)%4;line(g,top[i].x,top[i].y,top[q].x,top[q].y,i<2?P.gold:P.hair,1);}
-      for(const v of [-8,0,8]) {const a=project(-s.w/2+3,v,s.height),b=project(s.w/2-3,v,s.height);g.globalAlpha=.3;line(g,a.x,a.y,b.x,b.y,P.gold);g.globalAlpha=1;}
-      s.stockItems.filter(p=>p.state==='shelf').forEach(p=>drawProduct(g,p));
-      return;
-    }
-    // A fallen rack exposes its steel frame, boards and diagonal back braces.
-    if(s.tilt<.55) {
-      poly(g,base,P.dark);poly(g,corners.map(([u,v])=>project(u*.95,v*.95,0)),P.edge);
-      for(let i=0;i<4;i++){const q=(i+1)%4;poly(g,[base[i],base[q],top[q],top[i]],i%2?P.mid:P.edge);}
-      poly(g,top,P.green);
+      for(const u of [-s.w*.4,s.w*.4])for(const v of [-s.h*.4,s.h*.4])box(u-1.5,v-1.5,0,3,3,s.height-3,P.clay);
+      box(-s.w/2,-s.h/2,s.height-3,s.w,s.h,3,P.clay,P.gold);
+      woodTop(-s.w/2,-s.h/2,s.height+.05,s.w,s.h);
     } else {
-      g.globalAlpha=.13;poly(g,physical,P.dark);g.globalAlpha=1;
-      for(let i=0;i<4;i++){const q=(i+1)%4;line(g,base[i].x,base[i].y,base[q].x,base[q].y,P.steelShade,2);}
-      line(g,top[0].x,top[0].y,top[2].x,top[2].y,P.steelShade);
-      line(g,top[1].x,top[1].y,top[3].x,top[3].y,P.steelShade);
+      // Framed end panels, three thick decks and square steel uprights stay
+      // solid through the fall. Open ends expose the depth between each deck.
+      for(const u of [-s.w/2+1,s.w/2-3]) {
+        for(const z of [4,s.height-7])box(u,-s.h/2+1,z,2,s.h-2,4,P.steel,P.cream);
+        for(const v of [-s.h/2+1,s.h/2-5])box(u,v,4,2,4,s.height-7,P.steel,P.cream);
+      }
+      box(-s.w/2+3,-s.h/2+1,5,s.w-6,2,s.height-8,P.hair,P.gold);
+      for(const z of [10,20,30]) {
+        box(-s.w/2+2,-s.h/2+2,z-2,s.w-4,s.h-4,2,P.clay,P.gold);
+        woodTop(-s.w/2+2,-s.h/2+2,z+.05,s.w-4,s.h-4);
+      }
+      for(const u of [-s.w/2+1,s.w/2-1])for(const v of [-s.h/2+1,s.h/2-1]) {
+        box(u-1,v-1,0,2,2,s.height,P.steel,P.steelLight);
+        box(u-2,v-2,0,4,4,2,P.steelShade,P.steel);
+      }
+      // A stencil lies on the upper deck rather than floating over the rack.
+      const along=s.h>s.w,length=Math.min(72,(along?s.h:s.w)-10),width=7;
+      const u=along?s.w/2-7:-length/2,v=along?-length/2:s.h/2-8;
+      const localCorners=along?[[u,v,30.5],[u+width,v,30.5],[u+width,v+length,30.5],[u,v+length,30.5]]:[[u,v,30.5],[u+length,v,30.5],[u+length,v+width,30.5],[u,v+width,30.5]];
+      const stencil=()=>{
+        if(!s.labelTexture) {
+          const c=document.createElement('canvas');c.width=Math.ceil(length);c.height=width;
+          const ink=c.getContext('2d');rect(ink,0,0,c.width,c.height,P.cream);text(ink,s.label,c.width/2,5,P.dark,Math.min(5,c.width/Math.max(1,s.label.length)*1.5),'center');
+          s.labelTexture=c;
+        }
+        const c=s.labelTexture;
+        const a=project3(CartStock.shelfPoint(s,...localCorners[along?3:0])),b=project3(CartStock.shelfPoint(s,...localCorners[along?0:1])),d=project3(CartStock.shelfPoint(s,...localCorners[along?2:3]));
+        g.save();g.imageSmoothingEnabled=false;g.transform((b.x-a.x)/c.width,(b.y-a.y)/c.width,(d.x-a.x)/c.height,(d.y-a.y)/c.height,a.x,a.y);g.drawImage(c,0,0);g.restore();
+      };
+      addFace(localCorners,[0,0,1],P.cream,stencil);
     }
-    for(let i=0;i<4;i++) {const q=(i+1)%4;line(g,top[i].x,top[i].y,top[q].x,top[q].y,i===0?P.gold:P.steelShade,2);line(g,base[i].x,base[i].y,top[i].x,top[i].y,P.steel,2);}
-    const rows=Math.max(1,Math.floor((s.h-10)/18));
-    for(let row=0;row<rows;row++) {
-      const v=(row+.5)*(s.h-10)/rows-(s.h-10)/2,z=12+row%3*10;
-      const a=project(-s.w/2+3,v+5,z),b=project(s.w/2-3,v+5,z);
-      line(g,a.x,a.y,b.x,b.y,P.steelShade,3);line(g,a.x,a.y,b.x,b.y,s.tilt>.55?P.clay:P.gold,2);
-    }
-    s.stockItems.filter(p=>p.state==='shelf').sort((a,b)=>a.y-a.z*.35-(b.y-b.z*.35)).forEach(p=>drawProduct(g,p));
-    // A label follows the rack, including after it lands on the floor.
-    const label=project(0,s.h/2,s.down?0:8);
-    if(s.w>s.h) text(g,s.label,label.x,label.y+11,P.edge,6,'center');
-    else {const panel={x:s.cx+s.nx*s.height*Math.sin(s.tilt)*.5,y:s.cy+s.ny*s.height*Math.sin(s.tilt)*.5,a:s.a-Math.PI/2};
-      localRect(g,panel,-Math.min(36,s.h/2-5),-5,Math.min(72,s.h-10),10,s.down?P.gold:P.green);
-      g.save();g.translate(panel.x,panel.y);g.rotate(panel.a);text(g,s.label,0,2,s.down?P.dark:P.cream,5,'center');g.restore();}
+    for(const p of s.stockItems)if(p.state==='shelf')surfaces.push({depth:cameraDepth(p)+.1,draw:()=>drawProduct(g,p)});
+    surfaces.sort((a,b)=>a.depth-b.depth).forEach(p=>p.draw());
   }
   function drawSpills(g, stock) {
     for(const liquid of stock.liquids.values()) {
@@ -567,7 +656,9 @@
   function draw(g = ctx, w = world, background = floor, preview = false) {
     g.clearRect(0, 0, 480, 300); g.save();
     if (!preview && screenShake > 0 && !reducedMotion.matches) g.translate(Math.round(Math.sin(w.time * 99) * screenShake), Math.round(Math.cos(w.time * 78) * screenShake));
-    g.drawImage(background, 0, 0); drawSpills(g,w.stock); drawRoute(g, w);
+    g.drawImage(background, 0, 0); drawSpills(g,w.stock);
+    for(const shelf of w.shelves)drawFurnitureShadow(g,shelf);
+    drawRoute(g, w);
     for (const t of w.tracks) { g.globalAlpha = t.life / 3 * .14; localRect(g, { x: t.x, y: t.y, a: t.a }, -2, -1, 4, 1, P.edge); }
     g.globalAlpha = 1;
     if (!preview) {
@@ -583,10 +674,10 @@
     }
     // Painter's order gives furniture and people a little depth without hiding
     // the driving footprint. Everything still sits on a 2D floor.
-    const entities = [...w.shelves.map(s => ({ y: s.cy+s.ny*s.height*Math.sin(s.tilt)/2, render: () => drawShelf(g, s) })),
-      ...w.stock.items.filter(p=>p.state!=='shelf'&&!p.broken).map(p=>({y:p.y-p.z*.35,render:()=>drawProduct(g,p)})),
-      ...w.objects.map(o => ({ y: o.y, render: () => drawObject(g, o) })), { y: w.body.y, render: () => drawCart(g, w.body, w.wheels, w.gait) }];
-    entities.sort((a, b) => a.y - b.y).forEach(e => e.render());
+    const entities = [...w.shelves.map(s => ({ depth: cameraDepth(CartStock.shelfPoint(s,0,0,s.height/2)), render: () => drawShelf(g, s) })),
+      ...w.stock.items.filter(p=>p.state!=='shelf'&&!p.broken).map(p=>({depth:cameraDepth(p),render:()=>drawProduct(g,p)})),
+      ...w.objects.map(o => ({ depth: cameraDepth(o)+3, render: () => drawObject(g, o) })), { depth: cameraDepth(w.body)+8, render: () => drawCart(g, w.body, w.wheels, w.gait) }];
+    entities.sort((a, b) => a.depth - b.depth).forEach(e => e.render());
     if (!preview) for (const p of particles) {
       g.globalAlpha = .2; rect(g, p.x + 1, p.y + 2, p.w, p.h, P.dark); g.globalAlpha = clamp(p.life, 0, 1);
       localRect(g, { x: p.x, y: p.y - p.z, a: p.a }, -p.w / 2, -p.h / 2, p.w, p.h, p.color); g.globalAlpha = 1;

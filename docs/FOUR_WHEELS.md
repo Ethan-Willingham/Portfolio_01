@@ -15,8 +15,11 @@ feature flags, or build step.
 
 The canvas is 480 by 300 pixels and scales with image smoothing disabled.
 Art is drawn locally from the site's warm palette, with silver metal for the
-cart. No asset fetches, runtime dependencies, generated bundle, font CDN, or
-game network requests.
+cart. The floor uses varied warm terrazzo tiles, coarse mineral chips, inset
+grout, glazed lips and occasional wheel scuffs. Its texture is deterministic
+and baked into the cached floor canvas, so it does not shimmer during play.
+No asset fetches, runtime dependencies, generated bundle, font CDN, or game
+network requests.
 The post uses the site's analytics and self-hosted fonts.
 
 The page opens directly into the game, following Sluice's layout. The shell is
@@ -105,22 +108,39 @@ base than the tall racks. Later racks have lighter frames and a narrower support
 base so normal impacts can topple them; gentle touches can still settle safely.
 
 The rack is a dynamic body with mass, yaw inertia, ground friction and a separate
-rocking angle about its supporting feet. A horizontal impulse at basket height
-transfers momentum to the rack, twists it around an off-center contact, and adds
-a tipping impulse. Gravity restores a small rock until the center of mass passes
-its supporting feet; beyond that point it accelerates the fall. Shelves settle at
-90 degrees and their expanded, rotated frame stays solid on the floor. Their
+rocking angle. Its full three-dimensional prism rotates about the leading floor
+edge, keeping every structural dimension and staying above the tiles. The
+collision hull comes from the ground projection of those same eight vertices.
+The gravity support span remains tuned for responsive impacts at cart speed.
+A horizontal impulse at basket height transfers momentum to the rack, twists it
+around an off-center contact, and adds a tipping impulse. Gravity restores a small
+rock and accelerates the fall after the support threshold. Shelves settle at
+90 degrees. Their former width becomes vertical depth, and the rotated frame
+stays solid on the floor instead of flattening into its old footprint. Their
 collisions can knock over adjacent racks. Supported stock contributes to the
 rack's mass and center of mass, so dropping it changes the loaded body.
+
+The renderer uses an oblique height projection (0.28 pixels left and 0.55 up
+per unit of height), shared by furniture and loose stock. Thick wood decks,
+framed end panels, a back panel and square steel uprights are shaded and culled
+by their rotated face normals. Depth sorting reveals the boards, back and
+underside as the rack falls. Supported bottles and dishes follow their board
+plane; the upper decks can occlude stock beneath them. The label is attached to
+a deck and its tiny texture is cached. A cast shadow follows the actual 3D
+vertices and is drawn on the floor before people and loose stock. Table legs
+and its three-pixel tabletop use the same solid-face renderer. Long pixel edges
+are batched by row to keep the added detail inexpensive.
 
 Every displayed product is the actual simulated item. Each has mass, planar
 inertia, material friction, bounce, height, vertical speed and tumbling angle.
 Stock keeps its momentum during a rack impact and slides relative to the board.
 The smooth boards have less friction than the floor, so a bump can displace stock
 before the rack falls. Gravity and static friction govern sliding as the board
-tilts. Crossing the edge or losing support releases the product with the board's translation, yaw and
-tipping velocity. It then falls under gravity, bounces, collides with walls,
-furniture, cones, boxes and other products, and remains on the floor.
+tilts. Crossing the edge or losing support releases the product with the board's
+translation, yaw and tipping velocity. Release velocity is the derivative of the
+same rigid pose, including board sliding, yaw and the raised edge of the frame.
+It then falls under gravity, bounces, collides with walls, furniture, cones, boxes
+and other products, and remains on the floor.
 
 Vases, wine bottles, jars, plates and plant pots break on sufficiently hard impacts
 or under a rolling tire. Glass, ceramic and terracotta fragments have small physical
@@ -209,8 +229,9 @@ flips, contact slip, protruding-tire collisions, gentle edge contact, doorway
 locking, jambs, all four exit directions and complete departure footprints.
 They check the forward basket sensor, external tangency, heading changes and
 checkpoint order, with a controller that aims the sensor at the circles.
-Stock checks cover momentum transfer, gentle rocking, physical toppling and
-falling stock, the introductory vase and persistent water, material-specific
+Stock checks cover a rigid orthogonal 3D frame, floor contact in every fall
+direction, release velocity, momentum transfer, gentle rocking, physical toppling
+and falling stock, the introductory vase and persistent water, material-specific
 breakage, tire crushing, conservative fluid flow,
 tire pickup, smear deposition, unequal braking grip and dense debris stability.
 They cover walking cadence, smooth acceleration, reverse steps, posture and
@@ -222,7 +243,8 @@ Test hooks are injected by the verification server and are never shipped.
 Screenshots go to `/tmp/four-wheels-qa` unless `DUMP` is set. The harness owns
 Chrome for Testing and closes that process in `finally`. It never launches
 personal Chrome. `CART_BROWSER` may point to another dedicated testing build.
-The browser checks also render a rack collapse and wheels crossing wine and
+The browser checks also produce a sheet showing upright, tipping and fallen
+racks from two directions, render a rack collapse and wheels crossing wine and
 ketchup, and verify pause freezes furniture, stock and films.
 With `ASSETS=1`, the browser harness refreshes the JPG thumbnail and renders a
 two-second `walking.gif`, a posture sheet and a `shopper-motion.gif` showing

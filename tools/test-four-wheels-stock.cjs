@@ -110,9 +110,32 @@ test('shelf yaw and the fallen frame use their real rotated collision footprint'
   const s=Stock.createShelf({x:200,y:100,w:30,h:80,stock:'wine'},0);
   s.a=.6;s.tilt=Math.PI/2;s.nx=1;s.ny=0;
   const poly=Stock.shelfPolygon(s),q=Stock.shelfPoint(s,0,0,s.height);
-  assert.ok(q.x>s.cx+35&&Math.abs(q.z)<1e-9);
+  assert.ok(q.x>s.cx+35&&q.z>10,'a fallen frame retains the vertical depth of its side');
   assert.ok(Stock.circlePolygon(q.x,q.y,3,poly));
   assert.equal(Stock.circlePolygon(100,100,3,poly),null);
+});
+
+test('the furniture remains a rigid 3D volume through every fall direction',()=>{
+  for(const a of [0,.4])for(const direction of [0,.7,Math.PI/2,Math.PI,Math.PI*1.5])for(const tilt of [0,.3,1.1,Math.PI/2]) {
+    const s=Stock.createShelf({x:200,y:100,w:40,h:80},0);Object.assign(s,{a,tilt,nx:Math.cos(direction),ny:Math.sin(direction)});
+    const origin=Stock.shelfPoint(s,0,0,0);
+    const axes=[[1,0,0],[0,1,0],[0,0,1]].map(p=>{const q=Stock.shelfPoint(s,...p);return [q.x-origin.x,q.y-origin.y,q.z-origin.z];});
+    axes.forEach(v=>assert.ok(Math.abs(Math.hypot(...v)-1)<1e-9,'the frame cannot shear or flatten'));
+    for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)assert.ok(Math.abs(axes[i].reduce((sum,v,k)=>sum+v*axes[j][k],0))<1e-9);
+    const points=[[-20,-40],[20,-40],[20,40],[-20,40]].flatMap(([x,y])=>[Stock.shelfPoint(s,x,y,0),Stock.shelfPoint(s,x,y,s.height)]);
+    assert.ok(Math.abs(Math.min(...points.map(p=>p.z)))<1e-9,'the leading edge stays on the floor');
+    assert.ok(Math.abs(Math.max(...points.map(p=>p.z))-Stock.shelfHeight(s))<1e-9);
+  }
+});
+
+test('falling stock inherits the derivative of the rigid 3D frame pose',()=>{
+  const s=Stock.createShelf({x:200,y:100,w:40,h:80},0);
+  Object.assign(s,{a:.37,tilt:.5,nx:.6,ny:.8,omega:.4,tiltOmega:.8,vx:12,vy:-7});
+  const u=-4,v=12,z=22,du=-5,dv=9,epsilon=1e-6;
+  const before=Stock.shelfPoint(s,u,v,z),velocity=Stock.shelfVelocity(s,u,v,z,du,dv);
+  s.cx+=s.vx*epsilon;s.cy+=s.vy*epsilon;s.a+=s.omega*epsilon;s.tilt+=s.tiltOmega*epsilon;
+  const after=Stock.shelfPoint(s,u+du*epsilon,v+dv*epsilon,z);
+  for(const key of ['x','y','z'])assert.ok(Math.abs((after[key]-before[key])/epsilon-velocity[key])<1e-4,key);
 });
 
 test('a falling rack can transfer its impact into the next rack and topple it',()=>{
