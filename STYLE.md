@@ -70,6 +70,8 @@ Posts pick an accent (or per-section accents) from one shared, muted, chroma-equ
 > (`#e6c074`→`#dfc288`, `#e98e7f`→`#d9978c` or `#b8796d`).
 
 ### What is deliberately NOT on this system (do not "fix")
+- The Living Ocean (`ocean.html`) has an owner-approved, page-local blue charcoal
+  background (`#142328`), including its enlarged-photo viewer. The shared `--bg` stays locked.
 - Photographs and their `--img-bg` mattes (sampled from the photos).
 - `@media print` blocks (white bg, near-black ink).
 - `archive/best-photographs/` (a photographer's neutral zone-system scale).

@@ -5,7 +5,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1NS9QT1HEM');</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#303931">
+  <meta name="theme-color" content="#142328">
   <title>The Living Ocean</title>
   <meta name="description" content="Thirty-three photographs of ocean life, with short captions, research links, and photo credits. From sunlit reefs to the deep sea.">
   <meta property="og:title" content="The Living Ocean">
@@ -24,6 +24,9 @@
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <style>
+    /* Owner-approved Ocean background, scoped to this page. */
+    :root { --bg: #142328; scrollbar-color: var(--rule) var(--bg); }
+
     /* The reading shell stays at 780px; photographs get a wider column. */
     .ocean { width: min(1120px, calc(100vw - 2 * var(--gutter))); align-self: center; }
     .shot { margin: 0 0 clamp(3rem, 6vw, 4.5rem); scroll-margin-top: 2rem; }
@@ -49,9 +52,9 @@
     .ocean-credits a { color: var(--text); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 0.2em; }
     .ocean-credits a:hover { color: var(--accent-hover); }
 
-    .ocean-viewer { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border: 0; background: var(--bg-raised); color: var(--text); }
+    .ocean-viewer { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border: 0; background: var(--bg); color: var(--text); }
     .ocean-viewer[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 1rem; }
-    .ocean-viewer::backdrop { background: var(--bg-raised); }
+    .ocean-viewer::backdrop { background: var(--bg); }
     .ocean-viewer-head, .ocean-viewer-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-family: var(--font-body); font-size: 0.85rem; }
     .ocean-viewer-title { font-family: var(--font-heading); font-size: 1.2rem; line-height: 1.3; }
     .ocean-viewer img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
