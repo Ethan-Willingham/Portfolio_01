@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.63';
+  var VERSION = 'v1.64';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -4976,12 +4976,9 @@
     searchWriteDev();
     searchBuildActiveLine();
     if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer, 0, positions, 0, (pf.total + pf.lineCount) * 4);
-    // Search scenes orbit the torus (the camera section computes camPos each
-    // frame from these). Frame it from a 3/4 angle so the donut's hole + depth
-    // read at once, then let it auto-spin. Only re-frame on a FRESH entry from
-    // another scene; switching algorithm keeps the orbit going (currentField is
-    // still the previous field here, so this tests "did we come from a search scene").
-    if (!isSearchField(currentField)) { srAz = 0.9; srEl = 0.62; srR = 1.5; srSweep = 0; }   // srSweep 0 -> the roam eases in on a fresh entry instead of starting mid-sweep
+    // Keep the hole and tube depth visible throughout the idle orbit. Switching
+    // algorithms preserves the view; entering from another scene reframes it.
+    if (!isSearchField(currentField)) resetSearchView();
     srDragging = false;
     camUp = [0, 1, 0]; yawVel = 0; pitchVel = 0; rollVel = 0;
     clumps.length = 0;
@@ -6209,13 +6206,36 @@
   var TURN_RATE = 1.0;                       // radians/sec yaw/pitch steering (tunable)
   var ROLL_RATE = 1.4;                       // radians/sec roll on Q/E (tunable)
 
-  // Search scenes don't fly: the camera orbits/pans the torus (centred at
-  // 0.5,0.5,0.5) so the donut's 3D shape reads. Drag spins it, scroll zooms,
-  // and it idles with a slow auto-spin.
-  var SEARCH_ORBIT_SPIN = 0.12;              // rad/sec idle auto-rotation
+  // The torus faces +Z. Its idle camera circles that axis at a modest tilt,
+  // keeping the hole open instead of passing through an edge-on view.
+  var SEARCH_ORBIT_SPIN = 0.08;              // rad/sec around the torus face
+  var SEARCH_ORBIT_TILT = 0.55;              // about 32 degrees from face-on
+  var searchOrbitPhase = 0.6;
+  var LIFE_ORBIT_SPIN = 0.12;
   var srAz = 0.9, srEl = 0.62, srR = 1.5;    // orbit azimuth, elevation, distance
-  var srSweep = 0;                           // 0..1 gain on the idle elevation roam (eased in/out so it never snaps)
+  var srSweep = 0;                           // eased gain when idle motion resumes
   var srDragging = false;
+
+  function searchOrbitAngles() {
+    var side = Math.sin(SEARCH_ORBIT_TILT);
+    return [Math.atan2(Math.cos(SEARCH_ORBIT_TILT), side * Math.cos(searchOrbitPhase)),
+            Math.asin(side * Math.sin(searchOrbitPhase))];
+  }
+  function resetSearchView() {
+    searchOrbitPhase = 0.6;
+    var angles = searchOrbitAngles();
+    srAz = angles[0]; srEl = angles[1]; srR = 1.5; srSweep = 0;
+  }
+  function searchOrbitTick(dt) {
+    if (srDragging) { srSweep = 0; return; }
+    searchOrbitPhase = (searchOrbitPhase + SEARCH_ORBIT_SPIN * dt) % (Math.PI * 2);
+    var ease = 1 - Math.exp(-2.2 * dt);
+    srSweep += (1 - srSweep) * ease;
+    var angles = searchOrbitAngles(), blend = ease * srSweep;
+    // Shortest angular path also handles a manual drag across the wrap point.
+    srAz += Math.atan2(Math.sin(angles[0] - srAz), Math.cos(angles[0] - srAz)) * blend;
+    srEl += (angles[1] - srEl) * blend;
+  }
 
   // Per-scene start views, captured live with the C key (GXCAM) and applied on
   // select so each scene opens framed the way it looks best. Flight scenes only
@@ -7039,18 +7059,18 @@
 
     if (mode === 'flight') {
       if (isSearchField(currentField) || isLifeField(currentField)) {
-        // Orbit the torus instead of flying through it, so its donut shape reads
-        // in 3D. Drag spins it; left alone it sweeps the whole thing.
-        if (!srDragging) srAz += SEARCH_ORBIT_SPIN * dt;
+        // Search cameras stay around the face; Life retains its wider roam.
+        var elEff;
+        if (isSearchField(currentField)) {
+          searchOrbitTick(dt);
+          elEff = srEl;
+        } else {
+          if (!srDragging) srAz += LIFE_ORBIT_SPIN * dt;
+          var autoEl = 0.45 + 0.70 * Math.sin(gxTime * 0.083) + 0.16 * Math.sin(gxTime * 0.27 + 1.3);
+          srSweep += ((srDragging ? 0 : 1) - srSweep) * (1 - Math.exp(-2.2 * dt));
+          elEff = srEl + (autoEl - srEl) * srSweep;
+        }
         if (srEl > 1.45) srEl = 1.45; else if (srEl < -1.45) srEl = -1.45;
-        // Idle orbit roams over the top and under the bottom on two slow,
-        // mutually-detuned beats (and az keeps spinning), so the donut is seen
-        // from every angle. The roam is BLENDED in/out via srSweep, eased toward
-        // 0 while you drag and back to 1 when you let go (or on entry), so the
-        // motion transitions smoothly between manual and auto - never a snap.
-        var autoEl = 0.45 + 0.70 * Math.sin(gxTime * 0.083) + 0.16 * Math.sin(gxTime * 0.27 + 1.3);   // bounded ~[-0.41, 1.31]: stays clear of the pole, no hard clamp
-        srSweep += ((srDragging ? 0 : 1) - srSweep) * (1 - Math.exp(-2.2 * dt));
-        var elEff = srEl + (autoEl - srEl) * srSweep;          // ease between the manual elevation and the auto roam
         if (elEff > 1.4) elEff = 1.4; else if (elEff < -1.4) elEff = -1.4;
         var srce = Math.cos(elEff);
         camPos[0] = 0.5 + srR * srce * Math.cos(srAz);
@@ -7386,6 +7406,7 @@
     // the arrow keys). The camera keeps cruising forward the whole time.
     canvas.addEventListener('pointerdown', function (e) {
       dragging = true; srDragging = true;
+      if (isSearchField(currentField)) srSweep = 0;
       lastX = e.clientX;
       lastY = e.clientY;
       try { canvas.focus({ preventScroll: true }); } catch (err) {}
@@ -7414,6 +7435,9 @@
     function endDrag(e) {
       if (!dragging) return;
       dragging = false; srDragging = false;
+      if (isSearchField(currentField)) {
+        searchOrbitPhase = Math.atan2(Math.sin(srEl), Math.cos(srEl) * Math.cos(srAz));
+      }
       try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
     }
     canvas.addEventListener('pointerup', endDrag);
@@ -7484,9 +7508,8 @@
     function resetView() {
       camFwd = [0, 0, 1]; camUp = [0, 1, 0]; yawVel = 0; pitchVel = 0; rollVel = 0; lastTime = 0;
       camPos = (viewMode === 'raymarch') ? [0, 0, -2.4] : [0.5, 0.5, 0.5];
-      if (isSearchField(currentField) || isLifeField(currentField)) {
-        srAz = 0.9; srEl = 0.5; srR = isSearchField(currentField) ? 1.5 : 1.1; srSweep = 0;
-      }
+      if (isSearchField(currentField)) resetSearchView();
+      else if (isLifeField(currentField)) { srAz = 0.9; srEl = 0.5; srR = 1.1; srSweep = 0; }
       bumpBlurb();
     }
     var resetBtn = document.getElementById('galaxy-reset');
