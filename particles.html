@@ -13,10 +13,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Rendering Particles Without a Canvas</title>
-  <meta name="description" content="A particle physics demo with no canvas, no WebGL, and no SVG. The renderer is a single CSS property.">
+  <meta name="description" content="Three interactive particle demos drawn with CSS box-shadow on a single div, with code for gravity, collisions, and spring motion.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="Rendering Particles Without a Canvas">
-  <meta property="og:description" content="A particle physics demo with no canvas, no WebGL, and no SVG. The renderer is a single CSS property.">
+  <meta property="og:description" content="Three interactive particle demos drawn with CSS box-shadow on a single div, with code for gravity, collisions, and spring motion.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/particles.html">
@@ -76,7 +76,7 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">Rendering Particles Without a Canvas</h1>
-      <p class="post-subtitle">No canvas, no WebGL, no SVG. Three physics demos where the entire renderer is one CSS property on a single 1px div.</p>
+      <p class="post-subtitle">Every ball is a CSS box-shadow on one 1px div. JavaScript moves the balls and updates the shadows each frame.</p>
     </header>
 
     <main>
@@ -84,10 +84,9 @@
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
 
           <p>
-            My first blog post. The idea is entirely David Gerrells',
-            from his
-            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">brilliant, unhinged box-shadow experiments</a>;
-            I just rebuilt it for my own attention span.
+            This was my first post. I rebuilt three demos from
+            David Gerrells' <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">How not to use box shadows</a>,
+            with live controls.
           </p>
 
           <!-- ============================================
@@ -97,9 +96,9 @@
           <h2>1. Gravity and walls</h2>
 
           <p>
-            The simplest version. Balls fall under gravity, bounce off
-            the edges, and lose a bit of energy on each bounce. Click
-            or touch to pull them toward your cursor.
+            Raise Gravity to pull the balls down. They bounce off
+            the edges, and Damping slows them between bounces.
+            Press and drag inside the frame to attract nearby balls.
           </p>
 
           <div class="demo-wrapper" data-mode="bounce">
@@ -108,7 +107,7 @@
             </div>
             <div class="demo-canvas-wrapper p-canvas">
               <div class="render-dot"></div>
-              <div class="p-hint">click &amp; drag to attract</div>
+              <div class="p-hint">press and drag to attract</div>
             </div>
             <div class="pillbar">
               <div class="pillbar-head">
@@ -144,35 +143,40 @@
           </div>
 
           <p>
-            The whole update is a for loop. Add gravity to vertical
-            velocity. If the cursor is pressed, add an attraction
-            force. Apply damping to bleed off energy. Move. If a ball
-            hits a wall, flip the velocity:
+            Each frame updates velocity and position. A wall collision
+            reverses the velocity on that axis and reduces it.
+            <code>dt</code> is the simulation step in seconds:
           </p>
 
 <pre><code><span class="cm">// Each frame, for each ball:</span>
 <span class="var">b</span>.<span class="prop">vy</span> += <span class="var">gravity</span> * <span class="var">dt</span>;
 
 <span class="cm">// Pointer attraction</span>
-<span class="kw">if</span> (<span class="var">pointerDown</span> &amp;&amp; <span class="var">dist</span> &lt; <span class="num">300</span>) {
+<span class="kw">if</span> (<span class="var">pointerDown</span> &amp;&amp; <span class="var">dist</span> &gt; <span class="num">1</span> &amp;&amp; <span class="var">dist</span> &lt; <span class="num">300</span>) {
   <span class="tag">var</span> <span class="var">f</span> = (<span class="num">1</span> - <span class="var">dist</span> / <span class="num">300</span>) * <span class="var">pull</span>;
   <span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">dx</span> / <span class="var">dist</span>) * <span class="var">f</span> * <span class="var">dt</span>;
+  <span class="var">b</span>.<span class="prop">vy</span> += (<span class="var">dy</span> / <span class="var">dist</span>) * <span class="var">f</span> * <span class="var">dt</span>;
 }
 
-<span class="cm">// Damping bleeds energy</span>
+<span class="cm">// Reduce speed</span>
 <span class="var">b</span>.<span class="prop">vx</span> *= <span class="var">damping</span>;
 <span class="var">b</span>.<span class="prop">vy</span> *= <span class="var">damping</span>;
 
 <span class="cm">// Move</span>
 <span class="var">b</span>.<span class="prop">x</span> += <span class="var">b</span>.<span class="prop">vx</span> * <span class="var">dt</span>;
+<span class="var">b</span>.<span class="prop">y</span> += <span class="var">b</span>.<span class="prop">vy</span> * <span class="var">dt</span>;
 
-<span class="cm">// Bounce off walls</span>
-<span class="kw">if</span> (<span class="var">b</span>.<span class="prop">y</span> &gt; <span class="var">H</span>) { <span class="var">b</span>.<span class="prop">y</span> = <span class="var">H</span>; <span class="var">b</span>.<span class="prop">vy</span> *= -<span class="num">0.7</span>; }</code></pre>
+<span class="cm">// Bounce off the bottom edge</span>
+<span class="tag">var</span> <span class="var">r</span> = (<span class="var">b</span>.<span class="prop">size</span> * (<span class="num">1</span> + <span class="var">b</span>.<span class="prop">z</span>/<span class="num">40</span>)) / <span class="num">2</span>;
+<span class="kw">if</span> (<span class="var">b</span>.<span class="prop">y</span> &gt; <span class="var">H</span> - <span class="var">r</span>) {
+  <span class="var">b</span>.<span class="prop">y</span> = <span class="var">H</span> - <span class="var">r</span>;
+  <span class="var">b</span>.<span class="prop">vy</span> = -<span class="fn">Math.abs</span>(<span class="var">b</span>.<span class="prop">vy</span>) * <span class="num">0.7</span>;
+}</code></pre>
 
           <p>
-            Crank gravity negative and they fall upward. Set damping
-            to 100 and they drift forever. Pull at 10,000 turns your
-            cursor into a black hole.
+            Negative gravity pulls upward. Damping at 100 stops the
+            slowdown between bounces; wall collisions still reduce
+            speed. Raise Pull to increase the attraction.
           </p>
 
           <hr class="u-divider">
@@ -184,11 +188,10 @@
           <h2>2. Collisions</h2>
 
           <p>
-            Same setup, but now the balls notice each other. When two
-            overlap, they push apart and exchange velocity along the
-            line between them. The check is brute force (every ball
-            against every other ball), which is fine at this scale and
-            terrible above a few thousand.
+            This version checks every pair of balls. When their
+            centers are too close, it separates them and changes
+            their velocities along the line joining them.
+            Doubling the count roughly quadruples the number of checks.
           </p>
 
           <div class="demo-wrapper" data-mode="collide">
@@ -197,7 +200,7 @@
             </div>
             <div class="demo-canvas-wrapper p-canvas">
               <div class="render-dot"></div>
-              <div class="p-hint">click &amp; drag to attract</div>
+              <div class="p-hint">press and drag to attract</div>
             </div>
             <div class="pillbar">
               <div class="pillbar-head">
@@ -238,31 +241,39 @@
           </div>
 
           <p>
-            For each pair, measure the distance. If it is less than the
-            sum of the two radii, push them apart and reflect their
-            velocities along the collision normal:
+            The test uses each ball's <code>size</code> as its collision
+            radius. Move overlapping balls half the overlap distance
+            each. Then adjust their velocities if they're moving
+            toward each other:
           </p>
 
 <pre><code><span class="tag">var</span> <span class="var">dx</span> = <span class="var">b</span>.<span class="prop">x</span> - <span class="var">a</span>.<span class="prop">x</span>, <span class="var">dy</span> = <span class="var">b</span>.<span class="prop">y</span> - <span class="var">a</span>.<span class="prop">y</span>;
 <span class="tag">var</span> <span class="var">dist</span> = <span class="fn">Math.sqrt</span>(<span class="var">dx</span>*<span class="var">dx</span> + <span class="var">dy</span>*<span class="var">dy</span>);
 <span class="tag">var</span> <span class="var">minD</span> = <span class="var">a</span>.<span class="prop">size</span> + <span class="var">b</span>.<span class="prop">size</span>;
 
-<span class="kw">if</span> (<span class="var">dist</span> &lt; <span class="var">minD</span>) {
+<span class="kw">if</span> (<span class="var">dist</span> &lt; <span class="var">minD</span> &amp;&amp; <span class="var">dist</span> &gt; <span class="num">0.1</span>) {
   <span class="cm">// Push apart</span>
-  <span class="tag">var</span> <span class="var">nx</span> = <span class="var">dx</span>/<span class="var">dist</span>, <span class="var">overlap</span> = <span class="var">minD</span> - <span class="var">dist</span>;
+  <span class="tag">var</span> <span class="var">nx</span> = <span class="var">dx</span>/<span class="var">dist</span>, <span class="var">ny</span> = <span class="var">dy</span>/<span class="var">dist</span>;
+  <span class="tag">var</span> <span class="var">overlap</span> = <span class="var">minD</span> - <span class="var">dist</span>;
   <span class="var">a</span>.<span class="prop">x</span> -= <span class="var">nx</span> * <span class="var">overlap</span> * <span class="num">0.5</span>;
+  <span class="var">a</span>.<span class="prop">y</span> -= <span class="var">ny</span> * <span class="var">overlap</span> * <span class="num">0.5</span>;
   <span class="var">b</span>.<span class="prop">x</span> += <span class="var">nx</span> * <span class="var">overlap</span> * <span class="num">0.5</span>;
+  <span class="var">b</span>.<span class="prop">y</span> += <span class="var">ny</span> * <span class="var">overlap</span> * <span class="num">0.5</span>;
 
-  <span class="cm">// Swap velocity along normal</span>
+  <span class="cm">// Adjust velocity along the collision axis</span>
   <span class="tag">var</span> <span class="var">dvn</span> = (<span class="var">a</span>.<span class="prop">vx</span>-<span class="var">b</span>.<span class="prop">vx</span>)*<span class="var">nx</span> + (<span class="var">a</span>.<span class="prop">vy</span>-<span class="var">b</span>.<span class="prop">vy</span>)*<span class="var">ny</span>;
-  <span class="var">a</span>.<span class="prop">vx</span> -= <span class="var">dvn</span> * <span class="var">nx</span> * <span class="var">bounce</span>;
-  <span class="var">b</span>.<span class="prop">vx</span> += <span class="var">dvn</span> * <span class="var">nx</span> * <span class="var">bounce</span>;
+  <span class="kw">if</span> (<span class="var">dvn</span> &gt; <span class="num">0</span>) {
+    <span class="var">a</span>.<span class="prop">vx</span> -= <span class="var">dvn</span> * <span class="var">nx</span> * <span class="var">bounce</span>;
+    <span class="var">a</span>.<span class="prop">vy</span> -= <span class="var">dvn</span> * <span class="var">ny</span> * <span class="var">bounce</span>;
+    <span class="var">b</span>.<span class="prop">vx</span> += <span class="var">dvn</span> * <span class="var">nx</span> * <span class="var">bounce</span>;
+    <span class="var">b</span>.<span class="prop">vy</span> += <span class="var">dvn</span> * <span class="var">ny</span> * <span class="var">bounce</span>;
+  }
 }</code></pre>
 
           <p>
-            Bounce at 100 gives elastic collisions (no energy lost).
-            Bounce at 10 makes them behave like wet clay. Crank the
-            count and size up together to watch them pile.
+            At Bounce 100, ball-to-ball collisions preserve the pair's
+            energy of motion. A separate slowdown still applies each
+            frame. Raise Gravity, Count, and Size to build a pile.
           </p>
 
           <hr class="u-divider">
@@ -274,11 +285,10 @@
           <h2>3. The sponge</h2>
 
           <p>
-            My favorite. Each ball remembers where it was born and
-            wants to go back. A spring force pulls it home, and the
-            farther it gets the stronger the pull. Your cursor
-            overpowers the spring locally. Let go and everything snaps
-            back.
+            Each ball has a fixed starting position. A spring force
+            pulls it back, with a stronger pull the farther it moves
+            away. Drag to displace nearby balls, then release to let
+            them return.
           </p>
 
           <div class="demo-wrapper" data-mode="sponge">
@@ -287,7 +297,7 @@
             </div>
             <div class="demo-canvas-wrapper p-canvas">
               <div class="render-dot"></div>
-              <div class="p-hint">click &amp; drag to tear</div>
+              <div class="p-hint">press and drag to pull</div>
             </div>
             <div class="pillbar">
               <div class="pillbar-head">
@@ -328,47 +338,52 @@
           </div>
 
           <p>
-            The spring is one line per axis. Displacement from home
-            times a constant:
+            On each axis, the spring changes velocity in proportion
+            to the distance from the starting position:
           </p>
 
 <pre><code><span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">b</span>.<span class="prop">homeX</span> - <span class="var">b</span>.<span class="prop">x</span>) * <span class="var">springK</span> * <span class="var">dt</span>;
 <span class="var">b</span>.<span class="prop">vy</span> += (<span class="var">b</span>.<span class="prop">homeY</span> - <span class="var">b</span>.<span class="prop">y</span>) * <span class="var">springK</span> * <span class="var">dt</span>;</code></pre>
 
           <p>
-            Set the spring to 12 and the balls snap home instantly.
-            Set it to 0.5 and they drift back like they are underwater.
-            Lower the radius and you have to get very close before they
-            react to you.
+            Raise Spring for a quicker return. Lower it for a slower
+            one. Radius sets how far your pointer's pull reaches.
           </p>
 
           <hr class="u-divider">
 
-          <h2>The renderer is one CSS property</h2>
+          <h2>Drawing with box-shadow</h2>
 
           <p>
-            Here is the whole trick: every ball is a single
-            <em>shadow</em>. Not a metaphor. One element can hold
-            hundreds of comma-separated <code>box-shadow</code> offsets,
-            so each frame you sort them back-to-front, build the string,
-            and assign it once:
+            Each ball is an entry in a comma-separated
+            <code>box-shadow</code> list. Its entry sets the position,
+            size, and color, with zero blur. Every frame builds a new
+            list and assigns it to the div:
           </p>
 
 <pre><code><span class="var">balls</span>.<span class="fn">sort</span>(<span class="kw">function</span>(<span class="var">a</span>,<span class="var">b</span>) { <span class="kw">return</span> <span class="var">b</span>.<span class="prop">z</span> - <span class="var">a</span>.<span class="prop">z</span>; });
 <span class="tag">var</span> <span class="var">s</span> = [];
 <span class="kw">for</span> (<span class="tag">var</span> <span class="var">i</span>=<span class="num">0</span>; <span class="var">i</span>&lt;<span class="var">balls</span>.<span class="prop">length</span>; <span class="var">i</span>++) {
-  <span class="tag">var</span> <span class="var">spread</span> = (<span class="var">b</span>.<span class="prop">size</span> * (<span class="num">1</span> + <span class="var">b</span>.<span class="prop">z</span>/<span class="num">40</span>) - <span class="num">1</span>) / <span class="num">2</span>;
+  <span class="tag">var</span> <span class="var">b</span> = <span class="var">balls</span>[<span class="var">i</span>];
+  <span class="tag">var</span> <span class="var">zScale</span> = (<span class="var">mode</span> === <span class="str">'collide'</span>) ? <span class="num">1</span> : <span class="num">1</span> + <span class="var">b</span>.<span class="prop">z</span>/<span class="num">40</span>;
+  <span class="tag">var</span> <span class="var">spread</span> = (<span class="var">b</span>.<span class="prop">size</span> * <span class="var">zScale</span> - <span class="num">1</span>) / <span class="num">2</span>;
   <span class="var">s</span>.<span class="fn">push</span>(<span class="var">b</span>.<span class="prop">x</span>+<span class="str">'px '</span>+<span class="var">b</span>.<span class="prop">y</span>+<span class="str">'px 0 '</span>+<span class="var">spread</span>+<span class="str">'px '</span>+<span class="var">b</span>.<span class="prop">color</span>);
 }
 <span class="var">dot</span>.<span class="prop">style</span>.<span class="prop">boxShadow</span> = <span class="var">s</span>.<span class="fn">join</span>(<span class="str">','</span>);</code></pre>
 
           <p>
-            The browser paints all of them on the same path that draws
-            the shadow under a button, no drawing API, no buffers.
-            Changing <code>box-shadow</code> repaints but never lays the
-            page out again, so a few hundred shadows fly and a few
-            thousand crawl, with no GPU instancing to save them. The
-            wrong way to render anything serious, and glorious for this.
+            The <code>z</code> value sets the drawing order. In the
+            gravity and spring demos, it also scales the size to suggest
+            depth. CSS paints the
+            <a href="https://www.w3.org/TR/css-backgrounds-3/#shadow-layers">first shadow in front</a>,
+            so higher <code>z</code> values come first in the list.
+          </p>
+
+          <p>
+            Shadows don't change the element's layout, but the browser
+            still has to process and paint the updated list. The collision
+            demo also has to check every pair. The <a href="js/particles.js">full script</a>
+            contains all three simulations and the shared renderer.
           </p>
 
         </div>
