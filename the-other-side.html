@@ -40,14 +40,11 @@
   }
   @media (max-width: 719px) { :root { --gutter: clamp(0.875rem, 3.5vw, 1rem); } }
   @media (min-width: 720px) { :root { --body-size: 1.375rem; } }
-  .essay-masthead, .hero, .sec { max-width: var(--measure); margin: 0 auto; padding-inline: var(--gutter); }
-  .essay-masthead { display: flex; align-items: baseline; gap: 0.75rem; font-size: 1rem; line-height: 1.5rem; color: var(--text-dim); padding-top: clamp(1.5rem, 5vw, 3.5rem); padding-bottom: clamp(2.5rem, 5vw, 3.5rem); }
-  .essay-masthead a { color: var(--text-dim); text-decoration: none; font-size: inherit; }
-  .essay-masthead a:hover { color: var(--accent-hover); }
+  .hero, .sec { max-width: var(--measure); margin: 0 auto; padding-inline: var(--gutter); }
+  .post-back.essay-back { display: block; max-width: var(--measure); margin-inline: auto; padding-inline: var(--gutter); padding-top: clamp(1.5rem, 5vw, 3.5rem); }
 
   .hero { margin-bottom: 2.75rem; }
   .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.375rem, 5vw, 3.125rem); line-height: 1.18; letter-spacing: -0.02em; color: var(--text-bright); margin: 0; }
-  .hero-dek { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text-dim); margin: 1rem 0 0; text-wrap: pretty; }
 
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1em; text-wrap: pretty; }
   .sec > :last-child { margin-bottom: 0; }
@@ -59,7 +56,7 @@
   .sec .u-pq { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 1.5rem 0; padding-left: 1rem; border-left: 1px solid var(--line-mid); text-wrap: pretty; }
   .sec .u-pq-cite { font-family: var(--font-body); font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin-top: 0.6rem; }
   @media (max-width: 719px) {
-    .hero-dek, .sec p, .sec .u-pq { text-wrap: wrap; }
+    .sec p, .sec .u-pq { text-wrap: wrap; }
     .sec .u-pq { padding-left: 0.625rem; }
   }
 
@@ -93,16 +90,11 @@
 </head>
 <body>
 
-  <nav class="essay-masthead" aria-label="Breadcrumb">
-    <a href="/">Home</a>
-    <span aria-hidden="true">/</span>
-    <a href="boring-stuff.html">Longform</a>
-  </nav>
+  <a href="/" class="post-back essay-back"><span class="pb-label">Home</span></a>
 
   <!-- ============================ HERO ============================ -->
   <header class="hero">
     <h1 class="hero-title">The Other Side</h1>
-    <p class="hero-dek">My theory about the named and the nameless in the Tao Te Ching.</p>
   </header>
 
   <main>
