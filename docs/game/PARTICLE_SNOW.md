@@ -230,30 +230,21 @@ A private independent 240 Hz snow accumulator removes 27.7% of those ticks.
 It passed the GPU gap, returning-powder and jet tests with five contact
 iterations and unchanged material count. Constraint cadence changes, so this
 prototype is not an exact-state optimization and has not been promoted.
+Later deep-pile comparisons also found increased residual motion at 240 Hz:
+20 world pixels of pile depth measured 1.80 px/s RMS and 32 measured
+2.30 px/s RMS. These fixture depths are not counts of grain layers.
 Its quiet 120-second capture still sampled a 15.92 ms liquid/snow chain.
 The capture used a different input schedule from the v28.129 capture above;
 the numbers are not a matched performance comparison.
 
-The scaling measurements below are the baseline for a structural prototype.
-A candidate should bound work in fully disturbed snow:
-
-- Retain each grain's identity, position, velocity, aerodynamic size and mass.
-- Use a separate fixed-stencil GPU compression and friction field for packed
-  regions. Do not substitute an averaged grid velocity for particle velocity.
-- Keep exact pair contacts where the complete nearby candidate set fits a
-  small fixed bound. Overflow must select the packed approximation, never
-  discard neighbors or material or return to an unbounded dense pair scan.
-- Replace the shielding neighbor scan with bounded occupancy samples too.
-- Keep the existing terrain, rig and resident collision geometry. Preserve
-  independent release, flight, landing, scoop, melt and save behavior.
-
-Scalar density projection alone can lose static pile friction and look fluid.
-The prototype needs unilateral compression, pressure-limited shear resistance,
-boundary capacity, a coincident-grain tie-break without launch energy, and
-smooth transitions between packed and sparse regions. Test these before
-rollout, including deep quiet piles, support removal, rotation/translation,
-jet erosion and returning powder. Sleeping is a later optimization for quiet
-interiors; it cannot bound a pile that jets or slimes have fully awakened.
+The scaling measurements below supplied the baseline for bounded dense work.
+The v28.130 candidate described below retains the existing compressive pair
+response and friction, using weighted representatives in dense cells instead
+of introducing a separate compression field. Each grain keeps its identity,
+position, velocity, aerodynamic size and mass. Terrain, rig and resident
+collision geometry remain. No averaged grid velocity replaces grain velocity.
+Sleeping remains a possible later optimization for quiet interiors; it cannot
+bound a pile that jets or slimes have fully awakened.
 
 Require timestamped full-chain measurements at the active material limit,
 moving-boundary stress cases and a real 120 Hz ordinary-game capture before
@@ -338,8 +329,117 @@ boundary contacts, tick scheduling and the rest of the game all matter.
 The active 36,000 limit is a storage/admission limit, not a 120 FPS promise.
 The ordinary capture has a roughly 60 Hz headless callback ceiling and
 private instrumentation, so it cannot verify sustained native 120 FPS.
-The next optimization must bound contact/shield work and reduce repeated
-boundary and catch-up costs, then repeat these curves and ordinary play.
+These v28.129 results established the need to bound contact/shield work and
+reduce repeated boundary and catch-up costs. The v28.130 measurements below
+are preliminary comparisons, not a completed whole-frame performance result.
+
+### v28.130 bounded GPU contacts
+
+v28.130 bounds dense contact and shielding queries without
+deleting, merging or handing off physical snow. Each grain retains its own
+position, velocity, mass and aerodynamic size, including during release,
+flight, landing, collection, melting, parking and saving.
+
+A queried cell containing at most 16 other grains keeps exact pair traversal.
+Larger cells divide the complete other-grain rank range into eight integer
+strata. Each stratum supplies two representatives at complementary offsets;
+each representative carries half that stratum's population weight. The
+querying grain's sorted rank is excluded before choosing representatives.
+Weights sum to the full other-grain population, and the same weights enter
+compression, normal and tangential impulses, contact normalization, density
+and shielding. This is a dense force approximation, not an exact contribution
+from every individual neighbor. Every physical grain remains in the solver.
+
+Production uses the spatial shader entries and examines at most 16
+representatives per accepted cell across a fixed 25-cell stencil. That bounds
+each contact or shielding pass to 400 representative evaluations per grain,
+or 2,000 across one five-pass grain tick. Expanding cell displacement bounds
+can relax trimming but cannot expand the stencil or sample count. The scalar
+shader entries retain exact traversal for diagnostics. Sparse queries remain
+exact; dense query work no longer grows quadratically with cell population.
+Index construction and prediction still visit every grain, and catch-up can
+request multiple grain ticks. These bounds do not promise 120 FPS.
+
+The existing compression-only pair law, friction coefficient and world-frame
+velocity reconciliation remain. Positional correction removes inward motion
+without converting overlap recovery into an outward launch velocity. A
+neighbor-frame reconciliation was rejected after increasing deep-pile motion.
+The independent 240 Hz clock was also rejected; production keeps the existing
+grain cadence and five contact iterations.
+
+Resident clearance now reuses a failed primary evaluation, and terrain
+clearance has a bounded 2 by 2 tile all-clear shortcut. These are exact-answer
+shortcuts rather than snow force approximations. The combined collision
+comparison passed 37 GPU cases and 146 checks against the original answers.
+
+Final warm-GPU measurements of the release engine (SHA-256 beginning
+`abdfe2a1826ba3a8`) gave these pooled medians over 48 samples per point:
+
+| Fixture | v28.129 | Bounded contacts |
+| --- | --- | --- |
+| 36,000 grains, 40 by 40 footprint | 19.5233 ms | 3.4547 ms |
+| 36,000 grains, constant spacing | 1.5709 ms | 1.7238 ms |
+| Frozen natural town, 13,932 grains | 3.4759 ms | 2.6905 ms |
+
+The compressed fixture cost fell 82.3%, and the frozen town cost fell 22.6%.
+Constant-spacing snow at the active limit incurred 9.7% overhead. The first
+two fixtures exclude boundary work; the town replay includes it. All three
+reset frozen particle states between ticks and omit complete game frame costs.
+The 40-pixel compression curve now fits a linear model with R squared 0.981;
+adding a quadratic term gives essentially the same fit. The bounded query
+count is an algorithmic guarantee; exact wall time still depends on memory
+access, cell coverage and GPU scheduling. There is no universal safe count.
+
+Two serial 120-second ordinary-game captures used the same v28.130 bundle,
+seed 48271, 680 by 764 viewport at DPR 2, five natural residents, normal water,
+snow and stock smoke. Only the GPU engine changed. No resident was spawned,
+repositioned or forced to overlap, and no input was injected. The deeper
+`SNOW_PROFILE` instrumentation was disabled in both runs. The v28.129 engine
+averaged 52.62 FPS and reached a minimum full-second rate of 11.00 FPS with
+12,066 active grains. The release engine averaged 59.98 FPS, with a minimum
+of 59.08 FPS. It ended with 11,471 active grains versus 13,403 in the reference;
+total snow mass was 33,920 versus 33,818. Evolving positions, parking and
+random consumption vary with cadence, so these are matched settings rather
+than identical trajectories. The fixed-state town comparison separately holds
+positions, guest geometry and material records constant.
+
+The sampled liquid/snow pass totals and native traces are retained with the
+raw measurements in `Downloads/sluice-snow-bounded-2026-09-30`. The capture's
+callbacks topped out near 60 Hz, and it does not exercise the owner's hardest
+jet and drag route. It verifies improvement in this run, not the owner's
+120 FPS target. Keep that target open for native high-refresh gameplay.
+
+Contact fixtures retained material identity, finite state and zero invented
+kinetic energy during coincident recovery. The common-velocity fixture keeps
+the baseline limitation unchanged: both versions measured a maximum velocity
+error of 21.424 px/s. Sampled approaching clusters measured 0.6299% momentum
+error, within that fixture's 1% tolerance. These results do not establish
+general momentum conservation or every physical-law invariance.
+
+Deep-pile comparisons used fixture depths in world pixels, not counts of
+grain layers. The bounded solver retained the same emitted populations:
+
+| Depth | Grains | Baseline RMS speed | Final-combination RMS speed |
+| --- | --- | --- | --- |
+| 3 px | 516 | 0.083 px/s | 0.104 px/s |
+| 7 px | 1,290 | 0.554 px/s | 0.553 px/s |
+| 12 px | 2,064 | 0.854 px/s | 0.855 px/s |
+| 20 px | 3,612 | 1.434 px/s | 1.402 px/s |
+| 32 px | 5,676 | 2.182 px/s | 1.996 px/s |
+
+The old absolute 1 px/s quiet-pile gate also fails the baseline at 20 and
+32 pixels, so the measured-reference run uses a limit of the greater of 1 px/s or
+`reference RMS * 1.2 + 0.1`. This is a non-regression gate, not a claim that
+all absolute rest gates pass. Contour, material mass,
+unsupported release and jet gates passed for the final combination.
+
+Hash phases are stable for identical particle IDs and sorted cell membership;
+production atomic scatter can change rank order. Complementary sampling
+reduces some quadrature noise but does not guarantee every individual
+neighbor is selected over time. Estimated contact normalization and the
+nonlinear shielding exponential can still change dense motion and erosion.
+Keep these approximation limits distinct from the exact collision shortcuts
+and verify ordinary play before claiming the owner's frame-rate target.
 
 Run the tests sequentially so separate processes do not compete for the GPU:
 

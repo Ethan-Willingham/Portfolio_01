@@ -125,6 +125,28 @@ function makeFixtures() {
     bowls: [60, 140, 100, 32], guests: [box(85, 112, 115, 124)],
     expectExit: [0, 1], safeBowl: true
   });
+  // Exact terrain broadphase cases use real post-contact pos/aux seeds.
+  // The rounding pair's original endpoint differs by one f32 ULP from pos.x.
+  add('terrain-clear-air-tile', [grain(49.3, 49.2, { px: 48.1, py: 48.7, vx: 7, vy: 13 })], { exactWords: true });
+  add('terrain-clear-single-sample', [grain(48.2, 49.2, { px: 48.1, py: 49.1, vx: 7, vy: 13 })], { exactWords: true });
+  add('terrain-clear-air-boundary', [grain(65.2, 65.1, { px: 62.7, py: 62.8, vx: 7, vy: 13 })], { exactWords: true });
+  // First-sample division also differs from delta * rounded reciprocal.
+  add('terrain-clear-rounded-first', [grain(60.751808166503906, 40, { px: 30.14286994934082, vx: 7 })], { exactWords: true });
+  add('terrain-clear-rounded-last', [
+    grain(63.30122756958008, 40, { px: 44.42342758178711, vx: 7 }),
+    grain(63.30122756958008, 44, { px: 82.21781921386719, vx: -7 }),
+    grain(40, 63.30122756958008, { py: 44.42342758178711, vy: 13 })
+  ], { exactWords: true });
+  add('terrain-clear-rounded-solid-endpoint', [grain(63.30122756958008, 40, { px: 44.42342758178711, vx: 7 })], {
+    terrain: 'column-two', exactWords: true
+  });
+  add('terrain-clear-nearby-solid', [grain(63.4, 63.4, { px: 63.1, vx: 7 })], {
+    terrain: 'corner-two', exactWords: true
+  });
+  add('terrain-clear-blocked-sweep', [grain(68, 40, { px: 60, vx: 7 })], {
+    terrain: 'column-two', exactWords: true
+  });
+  add('terrain-clear-long-path', [grain(150, 40, { px: 20, vx: 7 })], { exactWords: true });
   // Dispatch the real ordinary-liquid pipeline, not just its snow skip.
   // Both shallow water and deeper projected water must remain bit-identical.
   add('water-unchanged', [grain(119.7, 94, { flag: 0 }), grain(117, 106, { flag: 0, vx: -12, vy: 17 })], {
@@ -135,7 +157,7 @@ function makeFixtures() {
 
 function makeCooperativeFixtures(physical, legalSlop = false) {
   const keep = new Set(['shallow-snow', 'floor-pinch', 'wall-pinch', 'bowl-and-guest', 'water-unchanged']);
-  const scenes = physical.filter(f => keep.has(f.name));
+  const scenes = physical.filter(f => keep.has(f.name) || f.name.startsWith('terrain-clear-'));
   for (const fixture of scenes) if (['floor-pinch', 'wall-pinch'].includes(fixture.name)) fixture.requireFallback = true;
   const flag = 65 | 16 | (29 << 8) | (71 << 24);
   const grain = (x, y, vx = 0, vy = 0) => ({ pos: [x, y, vx, vy], aux: [3.2, 0, x, y], flag });
@@ -268,6 +290,8 @@ async function runGPU() {
               const c = x + col, r = y + row;
               target[y * w + x] = current.terrain === 'floor' ? +(r >= 4) :
                 current.terrain === 'wall' ? +(c >= 4) :
+                current.terrain === 'column-two' ? +(c === 2) :
+                current.terrain === 'corner-two' ? +(c === 2 && r === 2) :
                 current.terrain === 'floor-step' ? +(c === 3 && r >= 4) :
                 current.terrain === 'cavity' ? +(c !== 3 || r !== 3) :
                 current.terrain === 'midpoint-pocket' ? +(r >= 4 || c === 1 || c === 9 || c === 3 && r === 2) :
@@ -532,7 +556,7 @@ function compareCooperative(result) {
     }
     if (exitProbe && after.exitWords) check('escape clearance matches original sample march', JSON.stringify(before.exitWords) === JSON.stringify(after.exitWords), {rays:after.exitWords.length});
     if (after.benchmark) checks.push({name:'matched collision GPU timing',pass:true,observed:{beforeMs:before.benchmark.medianMs,afterMs:after.benchmark.medianMs}});
-    check('scalar fallback result preserved', finite && flagsEqual && (compactMode ? bitDifferences === 0 : maxDifference <= .002), { maxDifference, flagsEqual, bitDifferences });
+    check('scalar fallback result preserved', finite && flagsEqual && ((compactMode || fixture.exactWords) ? bitDifferences === 0 : maxDifference <= .002), { maxDifference, flagsEqual, bitDifferences });
     check('frozen, off-region and unused tail unchanged', protectedUnchanged);
     if (!fixture.snowOnly) check('ordinary water remains bit-exact', bitDifferences === 0);
     const count = after.fallbackCount;

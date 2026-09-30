@@ -1,6 +1,9 @@
 // Resting snow at several depths, plus unsupported solver-grain descent.
 // Run: node tools/sluice-snow-settle.mjs [--cpu] [--report-only].
-// Optional SLUICE_TEST_BUNDLE compares a prior bundle; artifacts stay in /tmp.
+// Optional SLUICE_TEST_BUNDLE and SLUICE_TEST_GPU compare prior builds.
+// REFERENCE_REPORT=/path/summary.json optionally checks resting RMS against a measured reference.
+// Mass, contour, wind, release and unsupported-descent gates remain absolute.
+// Artifacts stay in /tmp.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -11,6 +14,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8197), debug = port + 1000;
 const profile = fs.mkdtempSync('/tmp/sluice-snow-');
 const out = process.env.DUMP || '/tmp/sluice-snow-settle-qa';
+const reference = process.env.REFERENCE_REPORT ? JSON.parse(fs.readFileSync(process.env.REFERENCE_REPORT,'utf8')) : null;
 assert.ok(!path.resolve(out).startsWith(root + path.sep), 'Screenshots stay outside the repo');
 fs.mkdirSync(out, { recursive: true });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -19,7 +23,8 @@ const server = createServer((req, res) => {
     const file = path.resolve(root, '.' + new URL(req.url, 'http://localhost').pathname);
     if (!file.startsWith(root + '/')) { res.writeHead(403).end(); return; }
     let data = fs.readFileSync(file === path.join(root, 'js/sluice.js') && process.env.SLUICE_TEST_BUNDLE
-      ? process.env.SLUICE_TEST_BUNDLE : file);
+      ? process.env.SLUICE_TEST_BUNDLE : file === path.join(root, 'js/liquid-wgpu.js') && process.env.SLUICE_TEST_GPU
+      ? process.env.SLUICE_TEST_GPU : file);
     if (file === path.join(root, 'js/sluice.js')) {
       const src = data.toString(), i = src.lastIndexOf('})();');
       data = Buffer.from(src.slice(0, i) + 'window.__snowTest = function(source) { return eval(source); };\n' + src.slice(i));
@@ -107,7 +112,11 @@ try {
       check('quiet fixture keeps the ambient wind still at depth '+depth,samples.every(f=>f.wind===0));
       check('quiet snow conserves mass at depth '+depth,samples.every(f=>f.mass===summary.initial && f.melted===0));
       check('resting snow does not launch flakes at depth '+depth,summary.maxFlakes===0);
-      check('resting layer stops rebounding at depth '+depth,summary.meanRMS<1 && summary.meanUp<2);
+      const baseline = reference?.find(r=>r.depth===depth);
+      if(reference)assert(baseline && Number.isFinite(baseline.meanRMS),'Measured reference depth '+depth);
+      const rmsLimit = baseline ? Math.max(1,baseline.meanRMS*1.2+.1) : 1;
+      summary.referenceRMS=baseline?.meanRMS;summary.rmsLimit=rmsLimit;
+      check('resting layer stops rebounding at depth '+depth,summary.meanRMS<rmsLimit && summary.meanUp<2);
       check('resting contour stays still at depth '+depth,summary.meanSurfaceMotion<(depth<=12?.03:.08));
     }
     if(depth===7 || depth===12){

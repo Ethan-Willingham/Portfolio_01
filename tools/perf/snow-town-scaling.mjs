@@ -1,5 +1,7 @@
 // Warm-GPU replay of one complete production snow tick from natural town state.
 // SNAPSHOT=/tmp/capture/resident-snapshot.json DUMP=/tmp/town-scaling node tools/perf/snow-town-scaling.mjs
+// LIQUID_SOURCE selects the tested engine. SNAPSHOT_SOURCE explicitly selects the captured
+// engine for origin hash validation; without it, the snapshot must match the tested engine.
 // DRY_RUN=1 validates source anchors, hashes and thinning without opening a browser.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,10 +22,16 @@ const options={warmup:Number(process.env.WARMUP||32),samples:Number(process.env.
 const rounds=Number(process.env.ROUNDS||2);
 assert(Number.isInteger(options.warmup)&&options.warmup>=2&&Number.isInteger(options.samples)&&options.samples>=5&&options.warmup+options.samples<=64,'Batch must fit 4096 timestamp queries');
 assert(Number.isInteger(rounds)&&rounds>=1&&rounds<=5,'Rounds must be between one and five');
-const original=fs.readFileSync(process.env.LIQUID_SOURCE||root+'/js/liquid-wgpu.js','utf8');
+const testedSourcePath=path.resolve(process.env.LIQUID_SOURCE||root+'/js/liquid-wgpu.js');
+const snapshotSourcePath=path.resolve(process.env.SNAPSHOT_SOURCE||testedSourcePath);
+const original=fs.readFileSync(testedSourcePath,'utf8');
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const wordBytes=values=>{const bytes=Buffer.alloc(values.length*4);values.forEach((value,i)=>bytes.writeUInt32LE(value,i*4));return bytes;};
 const sourceSHA256=sha(original);
+const snapshotSourceSHA256=snapshotSourcePath===testedSourcePath?sourceSHA256:sha(fs.readFileSync(snapshotSourcePath));
+const sourceProvenance={testedSourcePath,testedSourceSHA256:sourceSHA256,snapshotSourcePath,
+ snapshotSourceSHA256,explicitSnapshotSource:!!process.env.SNAPSHOT_SOURCE,
+ crossSourceReplay:snapshotSourceSHA256!==sourceSHA256};
 const marker='  window.LiquidWGPU = { create: create, stage: STAGE, last: null };';
 const terrainAnchor="    var cp = grainPass || enc.beginComputePass({ label: 'liquid.collide' });";
 assert.equal(original.split(marker).length,2,'Unique private export anchor');
@@ -43,7 +51,8 @@ let selection=null,counts=null,sparseState=null;
 function hashIndex(i,posWords){let h=(i^posWords[i*4]^Math.imul(posWords[i*4+1],73856093))>>>0;h=Math.imul(h^(h>>>16),2246822519);h=Math.imul(h^(h>>>13),3266489917);return (h^(h>>>16))>>>0;}
 if(snapshot){
  assert.equal(snapshot.schema,'sluice-resident-snapshot-v1','Supported resident snapshot schema');
- assert.equal(snapshot.metadata.source.liquidSHA256,sourceSHA256,'Snapshot source must match the actual GPU engine');
+ assert.equal(snapshot.metadata.source.liquidSHA256,snapshotSourceSHA256,
+  'Snapshot source must match SNAPSHOT_SOURCE exactly, or the tested engine when SNAPSHOT_SOURCE is omitted');
  for(const group of ['buffers','uniforms'])for(const [key,values] of Object.entries(snapshot[group])){
   const expected=snapshot.hashes[group][key];assert.equal(values.length,expected.words,key+' word count');
   assert.equal(sha(wordBytes(values)),expected.sha256,key+' byte hash');
@@ -242,7 +251,7 @@ async function initializeTownScale(){
 const program='window.__initializeTownScale='+initializeTownScale.toString()+';';
 new vm.Script(program);
 if(dryRun){
- console.log(JSON.stringify({dryRun:true,browserLaunched:false,sourceSHA256,instrumentedSHA256:sha(source),
+ console.log(JSON.stringify({dryRun:true,browserLaunched:false,sourceSHA256,...sourceProvenance,instrumentedSHA256:sha(source),
   snapshotAvailable:!!snapshot,snapshotPath,counts:counts||['500','1000','2000','4000','8000','maxEligible'],
   eligible:selection?.eligible.length,water:selection?.water.length,passiveSnow:selection?.passive.length,sparseState,options,rounds}));
  process.exit(0);
@@ -256,7 +265,7 @@ const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-town-scaling-'));
 let chrome,socket,seq=0;const pending=new Map(),sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function send(method,params={}){return new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},60000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params}));});}
 async function ev(expression){const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;}
-const report={schema:'sluice-snow-town-scaling-v1',sourceSHA256,instrumentedSHA256:sha(source),snapshotPath,
+const report={schema:'sluice-snow-town-scaling-v1',sourceSHA256,...sourceProvenance,instrumentedSHA256:sha(source),snapshotPath,
  snapshotSHA256:sha(fs.readFileSync(snapshotPath)),snapshotVersion:snapshot.version,nativeGuests:snapshot.gameState.guests?.length||0,
  naturalStateHashes:snapshot.hashes.native,sourceGameMetadata:snapshot.metadata,selectionMethod:'Position and original-index hash ranking; nested subsets retain original row order. Water and passive snow retained unchanged.',
  counts,options,rounds,sparseState,rows:[],started:new Date().toISOString(),

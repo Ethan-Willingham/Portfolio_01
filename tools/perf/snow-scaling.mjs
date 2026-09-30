@@ -19,7 +19,7 @@ const options={samples:Number(process.env.SAMPLES||24),warmup:Number(process.env
 const rounds=Number(process.env.ROUNDS||2);
 assert(Number.isInteger(options.samples)&&Number.isInteger(options.warmup)&&Number.isInteger(rounds)&&
  options.samples>=5&&options.samples<=100&&options.warmup>=2&&options.samples+options.warmup<=128&&rounds>=1&&rounds<=5);
-const original=fs.readFileSync(root+'/js/liquid-wgpu.js','utf8');
+const original=fs.readFileSync(process.env.LIQUID_SOURCE||root+'/js/liquid-wgpu.js','utf8');
 const marker='  window.LiquidWGPU = { create: create, stage: STAGE, last: null };';
 assert.equal(original.split(marker).length,2,'Unique private export anchor');
 const source=original.replace(marker,marker+`
