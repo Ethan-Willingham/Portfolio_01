@@ -12,7 +12,9 @@
     dark: token('--bg-raised', '#1e2420'), green: token('--bg', '#303931'), edge: token('--rule', '#4a544b'),
     mid: token('--line-mid', '#767d71'), floor: token('--text-dim', '#b8b2a2'), seam: token('--text-faint', '#a4a293'),
     cream: token('--text', '#e8e2d6'), light: token('--text-bright', '#f5f1ea'), gold: token('--accent', '#d4c4a0'), red: token('--warn', '#d99090'),
-    sage: '#9ec79a', pine: '#6f9a6c', clay: '#cf9f78', coral: '#d9978c', blue: '#8fb3c7', purple: '#b79bc4', brick: '#b8796d'
+    sage: '#9ec79a', pine: '#6f9a6c', clay: '#cf9f78', coral: '#d9978c', blue: '#8fb3c7', purple: '#b79bc4', brick: '#b8796d',
+    steel: '#a6aeab', steelShade: '#687674', steelLight: '#e2e6df',
+    hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
   const STORAGE = 'four-wheels-records-v2';
@@ -220,7 +222,7 @@
     for (const side of [-1, 1]) {
       poly(g, [[-CASTER.trail, side * 3], [-1, side * 2], [1, side], [0, 0], [-1, side], [-CASTER.trail, side * 2]].map(p => point(fork, ...p)), P.dark);
       const from = point(fork, -CASTER.trail, side * 2), to = point(fork, -1, side);
-      line(g, from.x, from.y, to.x, to.y, P.mid);
+      line(g, from.x, from.y, to.x, to.y, P.steel);
     }
     const l = CASTER.halfLength, h = CASTER.halfWidth;
     poly(g, [[-l, -h + 1], [-l + 1, -h], [l - 1, -h], [l, -h + 1], [l, h - 1], [l - 1, h], [-l + 1, h], [-l, h - 1]].map(p => point(pose, ...p)), P.dark);
@@ -229,9 +231,24 @@
     const roll = ((wheel.roll / (Math.PI * 2 * l)) % 1 + 1) % 1;
     const tread = Math.floor(roll * 6) - 3;
     localRect(g, pose, tread, -h + 1, 1, h * 2 - 2, P.mid);
-    localRect(g, pose, 0, -h - 1, 1, h * 2 + 2, P.mid);
-    localRect(g, pose, 0, -h - 1, 1, 1, P.light);
-    localRect(g, pose, 0, h, 1, 1, P.cream);
+    localRect(g, pose, 0, -h - 1, 1, h * 2 + 2, P.steel);
+    localRect(g, pose, 0, -h - 1, 1, 1, P.steelLight);
+    localRect(g, pose, 0, h, 1, 1, P.steelLight);
+  }
+  function drawShopperHead(g, b) {
+    // Everything is in the shopper's local frame, including the crown and nose.
+    // A stepped, round silhouette and a small hair whorl read from overhead.
+    localRect(g, b, -17, -6, 3, 2, P.clay);
+    localRect(g, b, -17, 4, 3, 2, P.clay);
+    poly(g, [[-20, -3], [-18, -5], [-14, -5], [-11, -3], [-10, -1], [-10, 2], [-12, 4], [-15, 5], [-18, 4], [-20, 2]].map(p => point(b, ...p)), P.clay);
+    localRect(g, b, -10, -1, 2, 2, P.gold);
+    poly(g, [[-20, -3], [-18, -5], [-15, -5], [-12, -4], [-12, -2], [-13, -1], [-12, 1], [-13, 3], [-15, 4], [-18, 4], [-20, 2]].map(p => point(b, ...p)), P.hairDark);
+    poly(g, [[-19, -3], [-17, -4], [-15, -4], [-13, -3], [-14, -1], [-13, 1], [-15, 3], [-18, 2], [-19, 0]].map(p => point(b, ...p)), P.hair);
+    localRect(g, b, -18, -3, 3, 1, P.hairLight);
+    localRect(g, b, -19, -2, 1, 2, P.hairLight);
+    localRect(g, b, -16, -1, 2, 1, P.hairDark);
+    localRect(g, b, -16, 0, 1, 2, P.hairDark);
+    localRect(g, b, -15, 1, 2, 1, P.hairLight);
   }
   function drawCart(g, body, wheels, gait, ghost = false) {
     const b = { x: Math.round(body.x), y: Math.round(body.y), a: body.a };
@@ -244,35 +261,36 @@
       g.globalAlpha /= .16;
     }
     WHEELS.forEach((p, i) => drawCaster(g, b, wheels ? wheels[i] : { a: b.a, roll: 0 }, i));
-    // The basket is open wire, with a translucent wash instead of an opaque
-    // floor. Even a caster swung inward remains visible through the contents.
+    // Empty galvanized wire basket. The close mesh stays translucent so an
+    // inward-swung caster is still visible beneath the basket and its rails.
     const alpha = g.globalAlpha;
-    g.globalAlpha = alpha * .14;
-    localRect(g, b, -2, -11, 33, 22, P.cream);
-    g.globalAlpha = alpha * .3;
-    for (let x = 3; x < 28; x += 6) localRect(g, b, x, -8, 1, 16, P.cream);
-    for (let y = -6; y < 8; y += 5) localRect(g, b, 1, y, 27, 1, P.mid);
-    g.globalAlpha = alpha * .62;
-    localRect(g, b, -2, -11, 33, 2, P.light);
-    localRect(g, b, -2, 9, 33, 2, P.cream);
-    localRect(g, b, -2, -9, 2, 18, P.cream);
-    localRect(g, b, 29, -9, 2, 18, P.light);
-    // The cart already contains one paper bag and a suspiciously long loaf.
-    g.globalAlpha = alpha * .42;
-    localRect(g, b, 12, -5, 9, 10, P.edge); localRect(g, b, 13, -6, 8, 9, P.clay);
-    localRect(g, b, 14, -7, 6, 2, P.gold); localRect(g, b, 16, -6, 2, 3, P.edge);
-    localRect(g, b, 4, 2, 14, 3, P.gold); localRect(g, b, 5, 2, 2, 1, P.cream); localRect(g, b, 10, 2, 2, 1, P.cream);
+    g.globalAlpha = alpha * .04;
+    localRect(g, b, -2, -11, 33, 22, P.steel);
+    g.globalAlpha = alpha * .55;
+    for (let x = 1; x < 29; x += 3) localRect(g, b, x, -9, 1, 18, P.steelLight);
+    g.globalAlpha = alpha * .38;
+    for (let y = -7; y < 9; y += 3) localRect(g, b, 0, y, 29, 1, P.steelShade);
+    g.globalAlpha = alpha * .72;
+    localRect(g, b, -2, -11, 33, 2, P.steel);
+    localRect(g, b, -2, 9, 33, 2, P.steelShade);
+    localRect(g, b, -2, -9, 2, 18, P.steelShade);
+    localRect(g, b, 29, -9, 2, 18, P.steel);
+    g.globalAlpha = alpha * .85;
+    localRect(g, b, -2, -11, 33, 1, P.steelLight);
+    localRect(g, b, -2, 9, 33, 1, P.steelLight);
+    localRect(g, b, -2, -9, 1, 18, P.steel);
+    localRect(g, b, 29, -9, 1, 18, P.steelLight);
     g.globalAlpha = alpha;
     WHEELS.forEach(p => {
       const pin = point(b, ...p);
       rect(g, pin.x - 1, pin.y - 1, 3, 3, P.dark);
       rect(g, pin.x, pin.y, 1, 1, P.gold);
-      rect(g, pin.x - 1, pin.y - 1, 1, 1, P.cream);
+      rect(g, pin.x - 1, pin.y - 1, 1, 1, P.steelLight);
     });
     // The raised handle also crosses the rear casters in this overhead view.
     // Keep it slender and translucent so both rear tires remain readable.
-    g.globalAlpha = alpha * .7; localRect(g, b, -6, -13, 2, 26, P.blue);
-    g.globalAlpha = alpha * .5; localRect(g, b, -6, -11, 1, 22, P.light);
+    g.globalAlpha = alpha * .7; localRect(g, b, -6, -13, 2, 26, P.steelShade);
+    g.globalAlpha = alpha * .7; localRect(g, b, -6, -11, 1, 22, P.steelLight);
     g.globalAlpha = alpha;
     localRect(g, b, -21, -5, 4, 10, P.edge);
     for (const side of [-1, 1]) {
@@ -290,9 +308,7 @@
     localRect(g, b, -18, -6, 8, 12, P.brick); localRect(g, b, -18, -6, 7, 3, P.coral);
     localRect(g, b, -15, -9, 5, 3, P.clay); localRect(g, b, -15, 6, 5, 3, P.clay);
     localRect(g, b, -11, -10, 6, 3, P.clay); localRect(g, b, -11, 7, 6, 3, P.clay);
-    const head = point(b, -15, 0); oval(g, head.x, head.y - 2, 5, 5, P.clay);
-    localRect(g, b, -20, -5, 5, 9, P.dark); localRect(g, b, -19, -5, 6, 3, P.edge);
-    localRect(g, b, -11, -1, 2, 2, P.gold);
+    drawShopperHead(g, b);
     g.restore();
   }
 

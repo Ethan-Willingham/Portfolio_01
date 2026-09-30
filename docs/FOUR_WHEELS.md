@@ -13,8 +13,9 @@ feature flags, or build step.
 - `js/four-wheels.js`: coarse pixel rasterizer, input, audio, UI and local records.
 
 The canvas is 480 by 300 pixels and scales with image smoothing disabled.
-Art is drawn locally from the site's warm palette. No asset fetches, runtime
-dependencies, generated bundle, font CDN, or game network requests.
+Art is drawn locally from the site's warm palette, with silver metal for the
+cart. No asset fetches, runtime dependencies, generated bundle, font CDN, or
+game network requests.
 The post uses the site's analytics and self-hosted fonts.
 
 The page opens directly into the game, following Sluice's layout. The shell is
@@ -60,7 +61,8 @@ The fixed pivot and trailing contact geometry follows the caster model in
 game model, not a calibrated simulation of a particular cart.
 
 The rasterizer uses that same caster geometry for the tire, fork and gold pivot.
-Tires and forks are opaque; basket mesh, rails and contents are translucent.
+Tires and forks are opaque; basket mesh and rails are translucent. The basket
+stays empty, with silver rails and a three-pixel wire spacing in both directions.
 Do not hide inward-swung casters behind an opaque basket fill. Pivot pins stay
 attached to the body while the tire and fork swing around them.
 All four tires have an 8-by-4-pixel physical envelope, chamfered rubber ends,
@@ -75,6 +77,8 @@ alternating footfalls per second, capped at three at a jog. Stride settles at
 rest; pulling backward and sliding sideways move the feet in those directions.
 The knees bend and the shoes alternate their lift. Rendering and pauses do not
 advance the gait, and the title illustration and course previews stand still.
+The rounded head, ears, nose and shaded brown crown rotate with the shopper.
+Keep the overhead hair detail local to the body rather than offset on the screen.
 
 The simulation uses fixed 1/120-second steps. A cart rectangle and shopper circle
 both collide with shelves and walls; each tire also has a separate oriented
