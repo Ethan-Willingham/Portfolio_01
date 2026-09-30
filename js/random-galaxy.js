@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.66';
+  var VERSION = 'v1.67';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -6242,6 +6242,7 @@
   // keeping the hole open instead of passing through an edge-on view.
   var SEARCH_ORBIT_SPIN = 0.08;              // rad/sec around the torus face
   var SEARCH_ORBIT_TILT = 0.55;              // about 32 degrees from face-on
+  var searchOrbitTilt = SEARCH_ORBIT_TILT;  // a drag replaces the default tilt
   var searchOrbitPhase = 0.6;
   var LIFE_ORBIT_SPIN = 0.12;
   var srAz = 0.9, srEl = 0.62, srR = 1.5;    // orbit azimuth, elevation, distance
@@ -6249,12 +6250,13 @@
   var srDragging = false;
 
   function searchOrbitAngles() {
-    var side = Math.sin(SEARCH_ORBIT_TILT);
-    return [Math.atan2(Math.cos(SEARCH_ORBIT_TILT), side * Math.cos(searchOrbitPhase)),
+    var side = Math.sin(searchOrbitTilt);
+    return [Math.atan2(Math.cos(searchOrbitTilt), side * Math.cos(searchOrbitPhase)),
             Math.asin(side * Math.sin(searchOrbitPhase))];
   }
   function resetSearchView() {
     searchOrbitPhase = 0.6;
+    searchOrbitTilt = SEARCH_ORBIT_TILT;
     var angles = searchOrbitAngles();
     srAz = angles[0]; srEl = angles[1]; srR = 1.5; srSweep = 0;
   }
@@ -7110,22 +7112,14 @@
 
     if (mode === 'flight') {
       if (isSearchField(currentField) || isLifeField(currentField)) {
-        // Search cameras stay around the face; Life retains its wider roam.
-        var elEff;
+        // Idle motion continues around the view the user last chose.
         if (isSearchField(currentField)) {
           searchOrbitTick(dt);
-          elEff = srEl;
-        } else {
-          if (!srDragging) srAz += LIFE_ORBIT_SPIN * dt;
-          var autoEl = 0.45 + 0.70 * Math.sin(gxTime * 0.083) + 0.16 * Math.sin(gxTime * 0.27 + 1.3);
-          srSweep += ((srDragging ? 0 : 1) - srSweep) * (1 - Math.exp(-2.2 * dt));
-          elEff = srEl + (autoEl - srEl) * srSweep;
-        }
-        if (srEl > 1.45) srEl = 1.45; else if (srEl < -1.45) srEl = -1.45;
-        if (elEff > 1.4) elEff = 1.4; else if (elEff < -1.4) elEff = -1.4;
-        var srce = Math.cos(elEff);
+        } else if (!srDragging) srAz += LIFE_ORBIT_SPIN * dt;
+        if (srEl > 1.4) srEl = 1.4; else if (srEl < -1.4) srEl = -1.4;
+        var srce = Math.cos(srEl);
         camPos[0] = 0.5 + srR * srce * Math.cos(srAz);
-        camPos[1] = 0.5 + srR * Math.sin(elEff);
+        camPos[1] = 0.5 + srR * Math.sin(srEl);
         camPos[2] = 0.5 + srR * srce * Math.sin(srAz);
         camFwd = vnorm([0.5 - camPos[0], 0.5 - camPos[1], 0.5 - camPos[2]]);
         camUp = vnorm(vcross(vnorm(vcross(camFwd, [0, 1, 0])), camFwd));
@@ -7472,7 +7466,7 @@
       lastX = e.clientX; lastY = e.clientY;
       if (isSearchField(currentField) || isLifeField(currentField)) {   // search/life scene: drag orbits the form
         srAz -= dx * 0.006;
-        srEl += dy * 0.006;
+        srEl = Math.max(-1.4, Math.min(1.4, srEl + dy * 0.006));
         return;
       }
       var s = 0.005;
@@ -7489,6 +7483,9 @@
       dragging = false; srDragging = false;
       if (isSearchField(currentField)) {
         searchOrbitPhase = Math.atan2(Math.sin(srEl), Math.cos(srEl) * Math.cos(srAz));
+        // Capture the whole released direction, including a side or rear view.
+        // Keeping only the phase would pull the camera back to the default tilt.
+        searchOrbitTilt = Math.acos(Math.max(-1, Math.min(1, Math.cos(srEl) * Math.sin(srAz))));
       }
       try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
       activePointer = null;
@@ -7758,10 +7755,12 @@
           pendingField = field;            // a field is visible: dip to the grid, swap there (frame loop), then rise
           morphTarget = 0;
         }
-        // Recenter / frame the flight camera on select (the shared set + captured
-        // views live by RESET_VIEW_SCENES / SCENE_CAM, re-applied at swap time too).
-        if (RESET_VIEW_SCENES[field]) resetView();   // resetView also bumps the blurb + resets dt
-        applyStartView(scene);                        // captured per-scene start view overrides the generic recenter
+        // A new scene family gets its start view. Algorithm changes keep the
+        // user's orbit, just as generateSearch preserves the maze above.
+        if (!sameFamily) {
+          if (RESET_VIEW_SCENES[field]) resetView();   // also bumps the blurb + resets dt
+          applyStartView(scene);                     // captured view overrides the generic recenter
+        }
         if (isSortField(scene)) {
           var SB = { selection:['Selection sort','hunt down the smallest, slam it to the front, repeat. All eyes, few hands.'],
             bubble:['Bubble sort','swap neighbours pass after pass; the biggest floats to the top. The slow, lovable classic.'],
