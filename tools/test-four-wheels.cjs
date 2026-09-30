@@ -32,6 +32,23 @@ test('walking phase and stride are independent of render frequency', () => {
   for (let i = 0; i < 30; i++) advanceGait(slow, body, 1 / 30);
   for (let i = 0; i < 120; i++) advanceGait(fast, body, 1 / 120);
   assert.ok(Math.abs(slow.phase - fast.phase) < 1e-9 && Math.abs(slow.stride - fast.stride) < 1e-9);
+  assert.ok(Math.abs(slow.leanX - fast.leanX) < 1e-9 && Math.abs(slow.leanY - fast.leanY) < 1e-9);
+});
+
+test('the shopper leans into effort, braces when braking, and settles at rest', () => {
+  const gait = new World(empty).gait, body = { a: 0, vx: 60, vy: 0, omega: 0 };
+  const pose = input => { for (let i = 0; i < 90; i++) advanceGait(gait, body, dt, input); };
+  pose({push:1}); assert.ok(gait.leanX > 1.8 && Math.abs(gait.leanY) < .01);
+  pose({brake:1}); assert.ok(gait.leanX < -1.5, 'forward braking braces backward');
+  body.vx = 0; body.vy = 60; pose({brake:1}); assert.ok(gait.leanY < -.8, 'sideways braking braces against the slide');
+  body.vy = 0;
+  body.vx = -40; pose({push:-1}); assert.ok(gait.leanX < -1.8, 'pulling shifts weight backward');
+  body.vx = 0; body.omega = 1.5; pose({turn:1});
+  assert.ok(gait.leanY < -2, 'clockwise steering follows the handle moving around the cart');
+  body.omega = -1.5; pose({turn:-1}); assert.ok(gait.leanY > 2);
+  body.omega = 0; pose({});
+  assert.ok(Math.abs(gait.leanX) < .01 && Math.abs(gait.leanY) < .01, 'the upper body returns to rest');
+  assert.deepEqual(body, {a:0,vx:0,vy:0,omega:0}, 'posture must not change the rigid-body motion');
 });
 
 test('rotation preserves the direction of existing momentum', () => {

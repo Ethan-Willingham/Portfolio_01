@@ -75,8 +75,14 @@ including the arc around the handle during rotation. Phase is integrated, so
 speed changes do not jump the legs to a new pose. Normal travel is about two
 alternating footfalls per second, capped at three at a jog. Stride settles at
 rest; pulling backward and sliding sideways move the feet in those directions.
-The knees bend and the shoes alternate their lift. Rendering and pauses do not
-advance the gait, and the title illustration and course previews stand still.
+Tapered trouser legs bend at the knees. Rounded shoes have cuffs, toe caps,
+laces and pale soles. Each foot stays planted for most of its step, then lifts
+and swings forward; the feet point slightly outward and follow sideways travel.
+The upper body eases into pushes, pulls and turns, braces opposite travel when
+braking, and settles at rest. Hips and hands stay anchored to the ground pose
+and handle; the lean is visual and does not change the collision footprint.
+Rendering and pauses do not advance the gait. The title illustration and course
+previews stand still.
 The rounded head, ears, nose and shaded brown crown rotate with the shopper.
 Keep the overhead hair detail local to the body rather than offset on the screen.
 
@@ -127,8 +133,8 @@ NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.c
 The physics checks cover caster trail, travel-dependent alignment, reverse
 flips, contact slip, protruding-tire collisions, gentle edge contact, doorway
 locking, jambs, all four exit directions and complete departure footprints.
-They cover walking cadence, smooth acceleration, reverse steps and turns in
-place, and include a controller that drives all six full routes and
+They cover walking cadence, smooth acceleration, reverse steps, posture and
+turns in place, and include a controller that drives all six full routes and
 drives out through the real contact model before their deadlines. Browser checks
 cover keyboard, touch, pause, retry, results, saved records, practice, course
 selection, narrow layouts, fullscreen, reduced motion and blocked storage.
@@ -137,8 +143,10 @@ Screenshots go to `/tmp/four-wheels-qa` unless `DUMP` is set. The harness owns
 Chrome for Testing and closes that process in `finally`. It never launches
 personal Chrome. `CART_BROWSER` may point to another dedicated testing build.
 With `ASSETS=1`, the browser harness refreshes the JPG thumbnail and renders a
-two-second `walking.gif` in the screenshot directory. Run `tools/build-webp.mjs`
-after refreshing the thumbnail to update its WebP sibling.
+two-second `walking.gif`, a posture sheet and a `shopper-motion.gif` showing
+pushes, both turn directions and braking in the screenshot directory.
+Run `tools/build-webp.mjs` after refreshing the thumbnail to update its WebP
+sibling.
 
 For edits, increment the four `?v=` values in the post. Keep the post in the
 In Progress index, rebuild search when copy changes, and regenerate the sitemap

@@ -250,6 +250,62 @@
     localRect(g, b, -16, 0, 1, 2, P.hairDark);
     localRect(g, b, -15, 1, 2, 1, P.hairLight);
   }
+  function drawLimb(g, from, to, startWidth, endWidth, color) {
+    const length = Math.max(.01, Math.hypot(to.x - from.x, to.y - from.y));
+    const nx = -(to.y - from.y) / length, ny = (to.x - from.x) / length;
+    poly(g, [
+      { x: from.x + nx * startWidth / 2, y: from.y + ny * startWidth / 2 },
+      { x: to.x + nx * endWidth / 2, y: to.y + ny * endWidth / 2 },
+      { x: to.x - nx * endWidth / 2, y: to.y - ny * endWidth / 2 },
+      { x: from.x - nx * startWidth / 2, y: from.y - ny * startWidth / 2 }
+    ], color);
+  }
+  function drawShopperLeg(g, b, step, side) {
+    const phase = ((step.phase / (Math.PI * 2) + (side === 1 ? .5 : 0)) % 1 + 1) % 1;
+    // A planted foot travels back beneath the hips. It then swings forward,
+    // with a bent knee and a lifted heel, instead of sliding both ways equally.
+    const swing = Math.max(0, (phase - .6) / .4);
+    const reach = phase < .6 ? 1 - phase / .3 : -1 + 2 * swing * swing * (3 - 2 * swing);
+    const lift = Math.sin(swing * Math.PI) * Math.min(1, step.stride / 2.8);
+    const travel = reach * step.stride;
+    const x = -22 + travel * step.forward, y = side * 4.5 + travel * step.sideways * .75;
+    const hip = point(b, -19, side * 2.7);
+    const knee = point(b, -21 + travel * step.forward * .35 + lift, side * 3.5 + travel * step.sideways * .3);
+    const ankle = point(b, x + lift * .6, y);
+    const shoe = { ...ankle, a: b.a + side * .12 + clamp(step.sideways * .18, -.18, .18) };
+    g.save(); g.globalAlpha *= .12 * lift;
+    const ground = { ...point(b, x, y), a: shoe.a };
+    localRect(g, ground, -2, -1, 5, 3, P.dark); g.restore();
+    drawLimb(g, hip, knee, 3.5, 2.7, P.steelShade);
+    drawLimb(g, knee, ankle, 2.7, 2, P.edge);
+    drawLimb(g, hip, knee, 1.4, 1, P.blue);
+    poly(g, [[-2, -1], [-1, -2], [2, -2], [3, -1], [3, 1], [2, 2], [-1, 2], [-2, 1]].map(p => point(shoe, ...p)), P.dark);
+    localRect(g, shoe, -1, -1, 3, 2, P.steelShade);
+    localRect(g, shoe, -2, -1, 1, 2, P.mid);
+    localRect(g, shoe, 0, -1, 1, 2, P.steel);
+    localRect(g, shoe, 2, -1, 1, 1, P.mid);
+    localRect(g, shoe, -1, 1, 3, 1, P.cream);
+  }
+  function drawShopper(g, b, step) {
+    const leanX = step.leanX || 0, leanY = step.leanY || 0;
+    const sway = Math.cos(step.phase) * Math.min(1, step.stride / 2.8) * .3;
+    const torso = { ...point(b, leanX * .6, leanY * .6 + sway), a: b.a + leanY * .035 };
+    poly(g, [[-22, -3], [-20, -5], [-17, -4], [-17, 4], [-20, 5], [-22, 3]].map(p => point(b, ...p)), P.steelShade);
+    for (const side of [-1, 1]) drawShopperLeg(g, b, step, side);
+    poly(g, [[-19, -3], [-17, -6], [-12, -6], [-10, -4], [-10, 4], [-12, 6], [-17, 6], [-19, 3]].map(p => point(torso, ...p)), P.brick);
+    localRect(g, torso, -17, -5, 5, 2, P.coral);
+    for (const side of [-1, 1]) {
+      const shoulder = point(torso, -13, side * 5);
+      const elbow = point(b, -11 + leanX * .35, side * 8 + leanY * .35);
+      const wrist = point(b, -6, side * 8);
+      drawLimb(g, shoulder, elbow, 3.5, 2.5, P.brick);
+      drawLimb(g, elbow, wrist, 2.5, 2, P.clay);
+      localRect(g, b, -7, side * 8 - 1, 3, 2, P.clay);
+      localRect(g, b, -6, side * 8 - 1, 1, 1, P.gold);
+    }
+    const head = { ...point(b, leanX, leanY + sway), a: b.a + leanY * .035 };
+    drawShopperHead(g, head);
+  }
   function drawCart(g, body, wheels, gait, ghost = false) {
     const b = { x: Math.round(body.x), y: Math.round(body.y), a: body.a };
     const step = gait || { phase: 0, stride: 0, forward: 1, sideways: 0 };
@@ -292,23 +348,7 @@
     g.globalAlpha = alpha * .7; localRect(g, b, -6, -13, 2, 26, P.steelShade);
     g.globalAlpha = alpha * .7; localRect(g, b, -6, -11, 1, 22, P.steelLight);
     g.globalAlpha = alpha;
-    localRect(g, b, -21, -5, 4, 10, P.edge);
-    for (const side of [-1, 1]) {
-      const offset = Math.sin(step.phase + (side === 1 ? Math.PI : 0)) * step.stride;
-      const lift = Math.max(0, Math.cos(step.phase + (side === 1 ? Math.PI : 0))) * Math.min(1, step.stride / 2.8);
-      const x = -22 + offset * step.forward, y = side * 5 + offset * step.sideways * .65;
-      const hip = point(b, -19, side * 3), knee = point(b, -21 + offset * step.forward * .35, side * 4);
-      const ankle = point(b, x, y - lift);
-      line(g, hip.x, hip.y, knee.x, knee.y, P.edge, 2);
-      line(g, knee.x, knee.y, ankle.x, ankle.y, P.dark, 2);
-      localRect(g, b, x - 2, y - 1.5 - lift, 4, 3, P.dark);
-      localRect(g, b, x, y - 1 - lift, 2, 1, P.mid);
-      localRect(g, b, x - 2, y + 1 - lift, 3, 1, P.cream);
-    }
-    localRect(g, b, -18, -6, 8, 12, P.brick); localRect(g, b, -18, -6, 7, 3, P.coral);
-    localRect(g, b, -15, -9, 5, 3, P.clay); localRect(g, b, -15, 6, 5, 3, P.clay);
-    localRect(g, b, -11, -10, 6, 3, P.clay); localRect(g, b, -11, 7, 6, 3, P.clay);
-    drawShopperHead(g, b);
+    drawShopper(g, b, step);
     g.restore();
   }
 

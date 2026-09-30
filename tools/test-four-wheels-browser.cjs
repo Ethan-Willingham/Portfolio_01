@@ -41,13 +41,46 @@ const server = http.createServer((req, res) => {
           const frames=[],c=document.createElement('canvas');c.width=360;c.height=216;const g=c.getContext('2d');
           const body={x:45,y:26,a:0,vx:60,vy:0,omega:0},gait={phase:0,stride:0,forward:1,sideways:0,speed:0};
           const wheels=CartPhysics.WHEELS.map(()=>({a:0,roll:0}));
-          for(let i=0;i<60;i++)CartPhysics.advanceGait(gait,body,1/120);
+          for(let i=0;i<60;i++)CartPhysics.advanceGait(gait,body,1/120,{push:1});
           for(let i=0;i<48;i++) {
-            for(let j=0;j<5;j++) {CartPhysics.advanceGait(gait,body,1/120);wheels.forEach(w=>{w.roll+=60/120;});}
+            for(let j=0;j<5;j++) {CartPhysics.advanceGait(gait,body,1/120,{push:1});wheels.forEach(w=>{w.roll+=60/120;});}
             rect(g,0,0,360,216,P.floor);g.save();g.scale(4,4);drawCart(g,body,wheels,gait);g.restore();
             text(g,'WALKING / 60 PIXELS PER SECOND',180,198,P.dark,8,'center');frames.push(c.toDataURL('image/png').split(',')[1]);
           }
           return frames;
+        },
+        postureSheet: () => {
+          const c=document.createElement('canvas');c.width=600;c.height=540;const g=c.getContext('2d');rect(g,0,0,600,540,P.floor);
+          const poses=[
+            {label:'STANDING',vx:0,omega:0,input:{}},
+            {label:'PUSHING',vx:60,omega:0,input:{push:1}},
+            {label:'PULLING BACK',vx:-40,omega:0,input:{push:-1}},
+            {label:'BRAKING',vx:60,omega:0,input:{brake:1}},
+            {label:'TURNING LEFT',vx:35,omega:-1.5,input:{turn:-1}},
+            {label:'TURNING RIGHT',vx:35,omega:1.5,input:{turn:1}}
+          ];
+          poses.forEach((q,i)=>{
+            const body={x:45,y:28,a:0,vx:q.vx,vy:0,omega:q.omega},gait={...new World(levels[0]).gait};
+            for(let j=0;j<90;j++)CartPhysics.advanceGait(gait,body,1/120,q.input);
+            g.save();g.translate(i%2*300,Math.floor(i/2)*180);text(g,q.label,150,17,P.dark,7,'center');g.scale(3,3);
+            drawCart(g,body,WHEELS.map(()=>({a:0,roll:0})),gait);g.restore();
+          });return c.toDataURL('image/png').split(',')[1];
+        },
+        motionFrames: () => {
+          const frames=[],c=document.createElement('canvas');c.width=720;c.height=432;const g=c.getContext('2d');
+          const poses=['PUSH / COAST','TURN LEFT','TURN RIGHT','BRAKE / PULL BACK'].map(label=>({label,body:{x:45,y:26,a:0,vx:0,vy:0,omega:0},gait:{...new World(levels[0]).gait},wheels:WHEELS.map(()=>({a:0,roll:0}))}));
+          for(let i=0;i<96;i++) {
+            rect(g,0,0,720,432,P.floor);
+            poses.forEach((q,n)=>{
+              const t=i/24,active=t<2.3,ease=Math.min(1,t*3),rest=Math.max(0,1-(t-2.3)*2);
+              const input=n===0?(active?{push:t<1.3?1:0}:{}):n<3?(active?{turn:n===1?-1:1}:{}):(t<.8?{}:t<1.5?{brake:1}:active?{push:-1}:{});
+              q.body.vx=n===0?60*ease*(active?1:rest):n<3?25*(active?1:rest):t<.8?60:t<1.5?60*(1-(t-.8)/.7):active?-40*Math.min(1,(t-1.5)*3):-40*rest;
+              q.body.omega=n===1||n===2?(n===1?-1:1)*1.5*ease*(active?1:rest):0;
+              for(let j=0;j<5;j++){CartPhysics.advanceGait(q.gait,q.body,1/120,input);q.wheels.forEach(w=>{w.roll+=q.body.vx/120;});}
+              g.save();g.translate(n%2*360,Math.floor(n/2)*216);g.scale(4,4);drawCart(g,q.body,q.wheels,q.gait);g.restore();
+              text(g,q.label,n%2*360+180,Math.floor(n/2)*216+198,P.dark,8,'center');
+            });frames.push(c.toDataURL('image/png').split(',')[1]);
+          }return frames;
         },
         reset, draw, run, world: () => world
       };
@@ -105,6 +138,7 @@ async function setup(context, url) {
     await page.keyboard.down('d'); await page.waitForTimeout(550); await page.keyboard.up('d');
     a = await page.evaluate(() => __cartTest.state());
     check('keyboard rotation leaves the old direction of motion intact', a.body.a > -1 && Math.abs(a.body.vx) < 1 && a.body.vy < -20);
+    check('the shopper visibly leans while steering through keyboard input', Math.abs(a.gait.leanY) > 1);
     await page.locator('#cart-sound').click();
     check('sound can be enabled after a gesture', await page.locator('#cart-sound').getAttribute('aria-pressed') === 'true');
     await page.locator('#cart-sound').click();
@@ -125,6 +159,8 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'wet-floor.png') });
     const casterSheet = await page.evaluate(() => __cartTest.casterSheet());
     fs.writeFileSync(path.join(dump, 'caster-details.png'), Buffer.from(casterSheet, 'base64'));
+    const postureSheet = await page.evaluate(() => __cartTest.postureSheet());
+    fs.writeFileSync(path.join(dump, 'shopper-postures.png'), Buffer.from(postureSheet, 'base64'));
     const walkingFrames = await page.evaluate(() => __cartTest.walkingFrames());
     const walkingDir=path.join(dump,'walking-frames');fs.mkdirSync(walkingDir,{recursive:true});
     walkingFrames.forEach((pixels,i)=>fs.writeFileSync(path.join(walkingDir,String(i).padStart(3,'0')+'.png'),Buffer.from(pixels,'base64')));
@@ -133,6 +169,10 @@ async function setup(context, url) {
       // GIF timing is in 10ms units. This pattern preserves the 24fps demo.
       await sharp(Buffer.concat(raw),{raw:{width:360,height:216*raw.length,channels:4,pageHeight:216}})
         .gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'walking.gif'));
+      const motionFrames=await page.evaluate(()=>__cartTest.motionFrames());
+      const motion=await Promise.all(motionFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
+      await sharp(Buffer.concat(motion),{raw:{width:720,height:432*motion.length,channels:4,pageHeight:432}})
+        .gif({delay:motion.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shopper-motion.gif'));
     }
     const casterState = await page.evaluate(() => {
       const w=__cartTest.world();

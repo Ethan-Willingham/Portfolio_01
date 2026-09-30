@@ -20,7 +20,7 @@
     return { x: body.x + x * c - y * s, y: body.y + x * s + y * c };
   }
 
-  function advanceGait(gait, body, dt) {
+  function advanceGait(gait, body, dt, input = {}) {
     // The shopper travels around the handle during a turn even if the cart's
     // center is stationary. Measure that velocity, not just the basket speed.
     const c = Math.cos(body.a), s = Math.sin(body.a);
@@ -38,6 +38,16 @@
       gait.sideways = (-vx * s + vy * c) / speed;
     }
     gait.speed = speed;
+    // Visual posture follows effort and travel at the shopper. The hands stay
+    // on the handle; this moves the upper body above the unchanged footprint.
+    const forward = vx * c + vy * s, sideways = -vx * s + vy * c;
+    const push = clamp(input.push || 0, -1, 1), turn = clamp(input.turn || 0, -1, 1);
+    const brake = clamp(input.brake || 0, 0, 1);
+    const leanX = clamp(push * 1.9 + forward * .006 - brake * clamp(forward / 40, -1, 1) * 2.5, -2.5, 2.5);
+    const leanY = clamp(-turn * 1.4 - body.omega * .55 + sideways * .025 - brake * clamp(sideways / 40, -1, 1) * 2.5, -2.8, 2.8);
+    const settle = 1 - Math.exp(-8 * dt);
+    gait.leanX = (gait.leanX || 0) + (leanX - (gait.leanX || 0)) * settle;
+    gait.leanY = (gait.leanY || 0) + (leanY - (gait.leanY || 0)) * settle;
   }
 
   function corners(body) {
@@ -163,7 +173,7 @@
       this.level = level; this.practice = practice;
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
       this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
-      this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0 };
+      this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0, leanX: 0, leanY: 0 };
       this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
       this.shelves = level.shelves.map((s, i) => ({ ...s, id: i, spilled: false, wobble: 0 }));
@@ -386,7 +396,7 @@
         w.speed = vx * Math.cos(w.a) + vy * Math.sin(w.a) - (i % 2 ? -1 : 1) * CASTER.axleOffset * w.omega;
         w.roll += w.speed * dt;
       });
-      advanceGait(this.gait, b, dt);
+      advanceGait(this.gait, b, dt, input);
       for (const s of this.shelves) s.wobble *= Math.exp(-6 * dt);
       this.trackTime += dt;
       if (Math.hypot(b.vx, b.vy) > 35 && this.trackTime > 0.065) {
