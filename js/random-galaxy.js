@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.61';
+  var VERSION = 'v1.62';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -61,6 +61,7 @@
   if (!canvas) return;
 
   function fail(msg) {
+    if (wrapperEl) wrapperEl.setAttribute('aria-busy', 'false');
     if (statusEl) {
       statusEl.textContent = msg;
       statusEl.classList.add('gx-status-error');
@@ -301,6 +302,7 @@
     // Search + sort scenes spawn stationary so you can take them in before
     // moving; every other scene resumes the cruise speed you last chose.
     if (isSearchField(f) || isSortField(f) || isLifeField(f)) applySpeed(0); else applySpeed(lastCruiseSpeed);
+    updateHint();
   }
 
   function regenerate() {
@@ -5093,26 +5095,28 @@
     shVal.time = row('Time'); shVal.expl = row('Explored'); shVal.path = row('Path');
 
     // Controls: Retry (re-run the same maze), Loop (auto-restart toggle), Speed -/+.
-    function refocus() { try { canvas.focus(); } catch (e) {} }   // keep WASD steering after a click
+    function refocus() { try { canvas.focus({ preventScroll: true }); } catch (e) {} }   // keep WASD steering after a click
     function mkBtn(label, fn) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'gx-sh-btn'; b.textContent = label;
+      if (label === '−' || label === '+') b.setAttribute('aria-label', label === '+' ? 'Increase run speed' : 'Decrease run speed');
       b.addEventListener('click', function (ev) { ev.preventDefault(); fn(); refocus(); });
       return b;
     }
     var ctrlA = document.createElement('div'); ctrlA.className = 'gx-sh-ctrl gx-sh-ctrl-top';
-    ctrlA.appendChild(mkBtn('Retry', function () { if (pf && pf.built) searchInit(pf.algo); }));
-    var btnLoop = mkBtn('Loop', function () { searchLoop = !searchLoop; btnLoop.className = 'gx-sh-btn' + (searchLoop ? ' on' : ''); });
+    ctrlA.appendChild(mkBtn('Restart', function () { if (pf && pf.built) searchInit(pf.algo); }));
+    var btnLoop = mkBtn('Repeat', function () { searchLoop = !searchLoop; btnLoop.className = 'gx-sh-btn' + (searchLoop ? ' on' : ''); btnLoop.setAttribute('aria-pressed', String(searchLoop)); });
     btnLoop.className = 'gx-sh-btn' + (searchLoop ? ' on' : '');
+    btnLoop.setAttribute('aria-pressed', String(searchLoop));
     ctrlA.appendChild(btnLoop); hud.appendChild(ctrlA);
     var ctrlB = document.createElement('div'); ctrlB.className = 'gx-sh-ctrl';
-    var clab = document.createElement('span'); clab.className = 'gx-sh-clab'; clab.textContent = 'Speed'; ctrlB.appendChild(clab);
+    var clab = document.createElement('span'); clab.className = 'gx-sh-clab'; clab.textContent = 'Run speed'; ctrlB.appendChild(clab);
     ctrlB.appendChild(mkBtn('−', function () { SEARCH_STEPS = Math.max(0.01, SEARCH_STEPS <= 1 ? Math.round(SEARCH_STEPS * 0.6 * 100) / 100 : Math.max(1, Math.round(SEARCH_STEPS * 0.6))); }));   // below 1 -> slow-mo crawl, down to 0.01
     var spd = document.createElement('span'); spd.className = 'gx-sh-spd'; spd.textContent = SEARCH_STEPS < 1 ? SEARCH_STEPS.toFixed(2) : SEARCH_STEPS; ctrlB.appendChild(spd); shVal.spd = spd;
     ctrlB.appendChild(mkBtn('+', function () { SEARCH_STEPS = Math.min(240, SEARCH_STEPS < 1 ? Math.round(SEARCH_STEPS * 1.7 * 100) / 100 : Math.round(SEARCH_STEPS * 1.7)); }));
     hud.appendChild(ctrlB);
     // (The loop transition is fixed to Supernova; the style-cycle button was removed.)
 
-    host.appendChild(hud); searchHudEl = hud;
+    (document.getElementById('gx-scene-runtime') || host).appendChild(hud); searchHudEl = hud;
 
     searchHudBuilt = true;
   }
@@ -5129,11 +5133,11 @@
       hudLastField = currentField;
       shVal.algo.textContent = ALGO_NAME[pf.algo] || pf.algo;
     }
-    shVal.status.textContent = pf.reached ? 'reached ✓' : (pf.done ? 'no path found' : 'searching…');
-    shVal.status.style.color = pf.reached ? '#8effc0' : (pf.done ? '#ff9a8a' : '#7fd4ff');
+    shVal.status.textContent = pf.reached ? 'Goal reached' : (pf.done ? 'No path found' : 'Searching');
+    shVal.status.style.color = pf.reached ? 'var(--accent-hover)' : (pf.done ? 'var(--warn)' : 'var(--gx-accent)');
     shVal.time.textContent = (pf.elapsed || 0).toFixed(1) + ' s';
     shVal.expl.textContent = fmtInt((pf.cClosed | 0) + (pf.cPath | 0)) + ' / ' + fmtInt(pf.cFree || 0);
-    shVal.path.textContent = pf.reached ? fmtInt((pf.cPath | 0) + 2) + ' cells' : '—';
+    shVal.path.textContent = pf.reached ? fmtInt((pf.cPath | 0) + 2) + ' cells' : 'Pending';
     if (shVal.spd) shVal.spd.textContent = SEARCH_STEPS < 1 ? SEARCH_STEPS.toFixed(2) : Math.round(SEARCH_STEPS);
 
     // Depth-cued route line. During a transition the cells animate, so we freeze
@@ -5591,24 +5595,24 @@
         'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.16);border-radius:5px;padding:3px 7px;transition:background .15s,border-color .15s,color .15s;}' +
       '#gx-sort-hud .gx-so-toggle:hover{background:rgba(127,212,255,0.18);border-color:rgba(127,212,255,0.5);color:#fff;}' +
       '#gx-sort-hud.gx-so-collapsed{min-width:0;}' +
-      '#gx-sort-hud.gx-so-collapsed .gx-so-body{display:none;}' +
+      '#gx-sort-hud.gx-so-collapsed .gx-so-stats{display:none;}' +
       '#galaxy-wrapper.gx-clean #gx-sort-hud{display:none!important;}';
     document.head.appendChild(st);
     var hud = document.createElement('div'); hud.setAttribute('id', 'gx-sort-hud');
     if (sortHudCollapsed) hud.classList.add('gx-so-collapsed');
-    function refocus(){ try { canvas.focus(); } catch(e){} }
+    function refocus(){ try { canvas.focus({ preventScroll: true }); } catch(e){} }
     // Header: algorithm name + a caret that collapses the panel down to just this row.
     var head = document.createElement('div'); head.className = 'gx-so-head';
     var algo = document.createElement('div'); algo.className = 'gx-so-algo'; head.appendChild(algo); soVal.algo = algo;
     var toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'gx-so-toggle';
-    toggle.textContent = sortHudCollapsed ? '▸' : '▾';
+    toggle.textContent = sortHudCollapsed ? 'Show stats' : 'Hide stats';
     toggle.title = sortHudCollapsed ? 'Show stats' : 'Collapse stats';
     toggle.setAttribute('aria-expanded', sortHudCollapsed ? 'false' : 'true');
     toggle.addEventListener('click', function(ev){
       ev.preventDefault();
       sortHudCollapsed = !sortHudCollapsed;
       hud.classList.toggle('gx-so-collapsed', sortHudCollapsed);
-      toggle.textContent = sortHudCollapsed ? '▸' : '▾';
+      toggle.textContent = sortHudCollapsed ? 'Show stats' : 'Hide stats';
       toggle.title = sortHudCollapsed ? 'Show stats' : 'Collapse stats';
       toggle.setAttribute('aria-expanded', sortHudCollapsed ? 'false' : 'true');
       refocus();
@@ -5616,22 +5620,23 @@
     head.appendChild(toggle); hud.appendChild(head);
     // Body: everything that collapses away.
     var body = document.createElement('div'); body.className = 'gx-so-body';
-    var status = document.createElement('div'); status.className = 'gx-so-status'; body.appendChild(status); soVal.status = status;
-    function row(label){ var d=document.createElement('div'); d.className='gx-so-row'; var a=document.createElement('span'); a.textContent=label; var b=document.createElement('span'); b.textContent='—'; d.appendChild(a); d.appendChild(b); body.appendChild(d); return b; }
+    var stats = document.createElement('div'); stats.className = 'gx-so-stats'; body.appendChild(stats);
+    var status = document.createElement('div'); status.className = 'gx-so-status'; stats.appendChild(status); soVal.status = status;
+    function row(label){ var d=document.createElement('div'); d.className='gx-so-row'; var a=document.createElement('span'); a.textContent=label; var b=document.createElement('span'); b.textContent=''; d.appendChild(a); d.appendChild(b); stats.appendChild(d); return b; }
     soVal.cmp = row('Comparisons'); soVal.swaps = row('Swaps'); soVal.prog = row('Progress');
-    function mkBtn(label, fn){ var b=document.createElement('button'); b.type='button'; b.className='gx-so-btn'; b.textContent=label; b.addEventListener('click', function(ev){ ev.preventDefault(); fn(); refocus(); }); return b; }
+    function mkBtn(label, fn){ var b=document.createElement('button'); b.type='button'; b.className='gx-so-btn'; b.textContent=label; if(label==='−'||label==='+') b.setAttribute('aria-label',label==='+'?'Increase run speed':'Decrease run speed'); b.addEventListener('click', function(ev){ ev.preventDefault(); fn(); refocus(); }); return b; }
     var ctrl = document.createElement('div'); ctrl.className = 'gx-so-ctrl';
-    var clab = document.createElement('span'); clab.className = 'gx-so-clab'; clab.textContent = 'Speed'; ctrl.appendChild(clab);
+    var clab = document.createElement('span'); clab.className = 'gx-so-clab'; clab.textContent = 'Run speed'; ctrl.appendChild(clab);
     ctrl.appendChild(mkBtn('−', function(){ SORT_STEPS = Math.max(0.01, Math.round(SORT_STEPS * 0.6 * 100) / 100); }));   // down to 0.01 for deep slow-mo
     var spd = document.createElement('span'); spd.className = 'gx-so-spd'; spd.textContent = SORT_STEPS; ctrl.appendChild(spd); soVal.spd = spd;
     ctrl.appendChild(mkBtn('+', function(){ SORT_STEPS = Math.min(120, SORT_STEPS < 1 ? Math.round(SORT_STEPS * 1.6 * 100) / 100 : Math.round(SORT_STEPS * 1.6)); }));
     body.appendChild(ctrl);
     var ctrlS = document.createElement('div'); ctrlS.className = 'gx-so-ctrl';
     var slab = document.createElement('span'); slab.className = 'gx-so-clab'; slab.textContent = 'Sound'; ctrlS.appendChild(slab);
-    var btnSound = mkBtn(sortAudio.on ? 'On ♪' : 'Off', function(){ sortAudioToggle(); btnSound.textContent = sortAudio.on ? 'On ♪' : 'Off'; });
+    var btnSound = mkBtn(sortAudio.on ? 'On' : 'Off', function(){ sortAudioToggle(); btnSound.textContent = sortAudio.on ? 'On' : 'Off'; });
     btnSound.style.flex = '1'; ctrlS.appendChild(btnSound); body.appendChild(ctrlS); soVal.soundBtn = btnSound;
     hud.appendChild(body);
-    host.appendChild(hud); sortHudEl = hud; sortHudBuilt = true;
+    (document.getElementById('gx-scene-runtime') || host).appendChild(hud); sortHudEl = hud; sortHudBuilt = true;
   }
   function updateSortHUD(){
     var on = isSortField(currentField) && sr && sr.built;
@@ -5639,14 +5644,15 @@
     if (!on) { sortHudEl.style.display = 'none'; return; }
     sortHudEl.style.display = '';
     soVal.algo.textContent = SORT_NAMES[sr.algo] || sr.algo;
-    if (sortHudCollapsed) return;                          // body hidden: skip the per-frame stat writes
-    soVal.status.textContent = sr.phase === 'ready' ? 'ready…' : (sr.phase === 'sort' ? 'sorting…' : (sr.phase === 'show' ? 'sorted ✓' : 'shuffling…'));
-    soVal.status.style.color = sr.phase === 'show' ? '#8effc0' : '#7fd4ff';
-    soVal.cmp.textContent = fmtInt(sr.cmp);
-    soVal.swaps.textContent = fmtInt(sr.swaps);
-    soVal.prog.textContent = (sr.ops.length > 0 ? Math.round(sr.opPtr / sr.ops.length * 100) : 0) + '%';
+    if (!sortHudCollapsed) {
+      soVal.status.textContent = sr.phase === 'ready' ? 'Ready' : (sr.phase === 'sort' ? 'Sorting' : (sr.phase === 'show' ? 'Sorted' : 'Shuffling'));
+      soVal.status.style.color = sr.phase === 'show' ? 'var(--accent-hover)' : 'var(--gx-accent)';
+      soVal.cmp.textContent = fmtInt(sr.cmp);
+      soVal.swaps.textContent = fmtInt(sr.swaps);
+      soVal.prog.textContent = (sr.ops.length > 0 ? Math.round(sr.opPtr / sr.ops.length * 100) : 0) + '%';
+    }
     if (soVal.spd) soVal.spd.textContent = SORT_STEPS < 1 ? SORT_STEPS.toFixed(2) : Math.round(SORT_STEPS);
-    if (soVal.soundBtn) soVal.soundBtn.textContent = sortAudio.on ? 'On ♪' : 'Off';
+    if (soVal.soundBtn) soVal.soundBtn.textContent = sortAudio.on ? 'On' : 'Off';
   }
 
   if (typeof window !== 'undefined') {
@@ -7198,13 +7204,19 @@
   }
   function updateHint() {
     if (!hintEl) return;
-    hintEl.textContent = isFullscreen()
-      ? ((isSearchField(currentField) || isLifeField(currentField))
-          ? 'drag to spin · scroll to zoom · H to hide UI · ~ for toggles · Esc to exit'
-          : 'drag or WASD to steer · Q/E roll · scroll for speed · H to hide UI · ~ for toggles · Esc to exit')
-      : ((isSearchField(currentField) || isLifeField(currentField))
-          ? 'drag to spin · scroll to zoom · H to hide UI · ~ for toggles'
-          : 'drag or WASD to steer · Q/E roll · scroll for speed · H to hide UI · ~ for toggles');
+    var orbit = isSearchField(currentField) || isLifeField(currentField);
+    var touch = window.matchMedia('(pointer: coarse)').matches;
+    hintEl.textContent = orbit
+      ? (touch ? 'Drag to rotate' : 'Drag to rotate · Scroll to zoom')
+      : (touch ? 'Drag to steer · Set fly speed below' : 'Drag or WASD to steer · Q/E to roll');
+    if (speedWrap) speedWrap.hidden = orbit;
+    var flyBtn = document.getElementById('galaxy-fly');
+    if (flyBtn) {
+      var label = isFullscreen() ? 'Exit fullscreen' : 'Fullscreen';
+      flyBtn.setAttribute('aria-label', label);
+      flyBtn.setAttribute('data-tip', label);
+      flyBtn.querySelector('.gx-tool-label').textContent = label;
+    }
   }
 
   // ---- Dev performance panel (toggled by the backtick key) ----
@@ -7317,7 +7329,7 @@
     el.classList.toggle('gx-pseudo-fs', on);
     document.documentElement.classList.toggle('gx-fs-lock', on);
     updateHint();
-    try { canvas.focus(); } catch (e) {}
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
     try { window.dispatchEvent(new Event('resize')); } catch (e) {}
   }
   function toggleFullscreen() {
@@ -7376,7 +7388,7 @@
       dragging = true; srDragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
-      try { canvas.focus(); } catch (err) {}
+      try { canvas.focus({ preventScroll: true }); } catch (err) {}
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       if (wrapperEl) wrapperEl.classList.remove('gx-clean');   // clicking the scene brings a hidden UI back (the Hide button is what hides it)
       bumpBlurb();
@@ -7424,8 +7436,9 @@
 
     window.addEventListener('keydown', function (e) {
       if (e.key === '`' || e.key === '~') { toggleDevPanel(); e.preventDefault(); return; }   // dev performance panel
-      // Embedded: only act when the canvas is focused, so the page can still
-      // scroll with the arrows. Fullscreen: always act.
+      // Native pickers and sliders keep their keyboard controls in fullscreen.
+      if (e.target.closest && e.target.closest('input, select, textarea, button, summary, a')) return;
+      // Only act on the scene when focused, or while in fullscreen.
       if (!isFullscreen() && !focused()) return;
       var k = (e.key.length === 1) ? e.key.toLowerCase() : e.key;   // letters case-insensitive
       if (held.hasOwnProperty(k)) { held[k] = true; e.preventDefault(); return; }   // arrows + WASD steer, Q/E roll
@@ -7463,24 +7476,91 @@
     // hide button; the button vanishes with the rest, so press H to bring it back.
     function toggleClean() { if (wrapperEl) wrapperEl.classList.toggle('gx-clean'); }
     var hideBtn = document.getElementById('galaxy-hide');
-    if (hideBtn) hideBtn.addEventListener('click', function () { toggleClean(); try { canvas.focus(); } catch (e) {} });
+    if (hideBtn) hideBtn.addEventListener('click', function () { toggleClean(); try { canvas.focus({ preventScroll: true }); } catch (e) {} });
+    var showBtn = document.getElementById('galaxy-show');
+    if (showBtn) showBtn.addEventListener('click', function () { toggleClean(); try { canvas.focus({ preventScroll: true }); } catch (e) {} });
 
     // Reset view: recenter the flight camera at the current scene's start.
     function resetView() {
       camFwd = [0, 0, 1]; camUp = [0, 1, 0]; yawVel = 0; pitchVel = 0; rollVel = 0; lastTime = 0;
       camPos = (viewMode === 'raymarch') ? [0, 0, -2.4] : [0.5, 0.5, 0.5];
+      if (isSearchField(currentField) || isLifeField(currentField)) {
+        srAz = 0.9; srEl = 0.5; srR = isSearchField(currentField) ? 1.5 : 1.1; srSweep = 0;
+      }
       bumpBlurb();
     }
     var resetBtn = document.getElementById('galaxy-reset');
     if (resetBtn) resetBtn.addEventListener('click', function () {
       resetView();
-      try { canvas.focus(); } catch (e) {}
+      applyStartView(lastSelectedScene);
+      try { canvas.focus({ preventScroll: true }); } catch (e) {}
     });
 
-    // The view buttons: "Mulberry" (real clumpy field) and "Perfect grid" (the
-    // even grid people picture). One selection at a time; the description text
-    // and a cinematic caption follow it. The grid is the philosophical foil:
-    // perfectly even, and so almost impossible by chance.
+    // Two scene families, with the last choice remembered separately for each.
+    var modeScenes = { watch: 'bfs', explore: 'mulberry' };
+    var categoryScenes = { randomness: 'mulberry', attractors: 'lorenz', fractals: 'sierpinski', numbers: 'collatz', geometry: 'hopf' };
+    var categoryEl = document.getElementById('gx-explore-category');
+    if (categoryEl) categoryEl.addEventListener('change', function () { selectScene(categoryScenes[this.value]); });
+    var sceneGuide = {
+      bfs: 'A wave spreads outward until it finds the goal.',
+      bidir: 'Two searches grow from opposite ends and meet in the middle.',
+      dijkstra: 'The search follows the cheapest route through uneven costs.',
+      wavefront: 'Several starting points send out waves that meet and merge.',
+      randomflood: 'A noisy frontier spreads across the surface.',
+      dfs: 'One route runs deep, then backs out of dead ends.',
+      randomwalk: 'Random steps wander until they stumble onto the goal.',
+      boids: 'Birds follow simple rules and form a moving flock.',
+      ocean: 'Waves move across a surface.',
+      sacred: 'Geometric patterns grow and move.',
+      attractor: 'A moving trail traces a chaotic flow.',
+      mulberry: 'Random stars form clumps and gaps. Fly between them.',
+      grid: 'Evenly spaced stars. Compare them with the random field.',
+      thomas: 'A chaotic path weaves a repeating lattice.',
+      lorenz: 'A chaotic path loops between two butterfly wings.',
+      aizawa: 'A chaotic path wraps around a sphere and its central spike.',
+      dadras: 'A chaotic path jumps between four lobes.',
+      clifford: 'One repeated equation draws a folded, intricate shape.',
+      sierpinski: 'A pyramid repeats inside itself at smaller scales.',
+      jerusalem: 'Cubes repeat inside a structure full of smaller gaps.',
+      vicsek: 'A cross-shaped pattern repeats at smaller scales.',
+      primes3d: 'Points with prime squared distances leave spherical gaps.',
+      gprimes: 'Prime numbers on a two-dimensional number grid.',
+      collatz: 'Repeated arithmetic steps build a branching number tree.',
+      pi: 'Digits of pi determine where the points go.',
+      recaman: 'A number sequence draws loops as it jumps back and forth.',
+      metatron: 'Connected geometric forms make a three-dimensional pattern.',
+      hopf: 'Linked circles fill a three-dimensional structure.',
+      lotus: 'Repeated curves form a geometric flower.',
+      harmonics: 'Overlapping waves build a geometric pattern.'
+    };
+    function showMode(mode) {
+      if (!wrapperEl) return;
+      wrapperEl.setAttribute('data-mode', mode);
+      var tabs = wrapperEl.querySelectorAll('.gx-mode');
+      for (var t = 0; t < tabs.length; t++) {
+        var active = tabs[t].getAttribute('data-mode') === mode;
+        tabs[t].setAttribute('aria-selected', active ? 'true' : 'false');
+        tabs[t].tabIndex = active ? 0 : -1;
+      }
+      document.getElementById('gx-watch-scenes').hidden = mode !== 'watch';
+      document.getElementById('gx-explore-scenes').hidden = mode !== 'explore';
+    }
+    if (wrapperEl) {
+      var tabs = wrapperEl.querySelectorAll('.gx-mode');
+      for (var t = 0; t < tabs.length; t++) {
+        tabs[t].addEventListener('click', function () {
+          selectScene(modeScenes[this.getAttribute('data-mode')]);
+        });
+        tabs[t].addEventListener('keydown', function (e) {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return;
+          e.preventDefault();
+          var mode = e.key === 'Home' ? 'watch' : e.key === 'End' ? 'explore'
+            : this.getAttribute('data-mode') === 'watch' ? 'explore' : 'watch';
+          selectScene(modeScenes[mode]);
+          document.getElementById('gx-' + mode + '-tab').focus();
+        });
+      }
+    }
     var revealEl = document.getElementById('galaxy-reveal');
     var revealTimer = null;
     function showReveal(text) {
@@ -7508,6 +7588,21 @@
           for (j = 0; j < s.options.length; j++) { if (s.options[j].value === scene) { has = true; break; } }
           s.value = has ? scene : '';
           s.classList.toggle('gx-cat-select--active', has);
+          s.closest('.gx-scene-field').setAttribute('data-active', String(has));
+          if (has) {
+            var mode = s.closest('.gx-group').id === 'gx-watch-scenes' ? 'watch' : 'explore';
+            modeScenes[mode] = scene;
+            if (mode === 'explore') {
+              var category = s.closest('.gx-scene-field').getAttribute('data-category');
+              categoryScenes[category] = scene;
+              if (categoryEl) categoryEl.value = category;
+            }
+            showMode(mode);
+            wrapperEl.setAttribute('data-scene', scene);
+            document.getElementById('gx-current-name').textContent = s.options[j].textContent;
+            document.getElementById('gx-current-summary').textContent = sceneGuide[scene]
+              || 'Values are rings. Watch the scrambled sizes move into order.';
+          }
         }
       }
       if (scene === 'grid') {
@@ -7712,7 +7807,7 @@
           var scene = this.value;
           if (!scene) return;                 // the category-name placeholder
           selectScene(scene);
-          try { canvas.focus(); } catch (e) {}
+          try { canvas.focus({ preventScroll: true }); } catch (e) {}
           track('galaxy_scene', { scene: scene });
         });
       }
@@ -7760,13 +7855,15 @@
     }
 
     document.addEventListener('fullscreenchange', function () {
-      if (isFullscreen()) { try { canvas.focus(); } catch (e) {} }
+      if (isFullscreen() && (!wrapperEl.contains(document.activeElement) || document.activeElement.id === 'galaxy-fly')) { try { canvas.focus({ preventScroll: true }); } catch (e) {} }
       else if (wrapperEl) wrapperEl.classList.remove('gx-dim');   // leaving fullscreen clears the immersive dim
       updateHint();
       sizeCanvas();
     });
 
     window.addEventListener('resize', sizeCanvas);
+    if (window.ResizeObserver) new ResizeObserver(sizeCanvas).observe(canvas);
+    selectScene('bfs');
   }
 
   async function init() {
@@ -7900,12 +7997,12 @@
     postReady = true;
     createTargets();
 
-    regenerate();
+    loadField('bfs');
     updateLabel();
 
     if (verEl) verEl.textContent = VERSION;
-    // No status to hide here: the pre-roll is pure black (empty #galaxy-status), and the
-    // intro block clears the element anyway as first light begins. fail() owns the error case.
+    if (statusEl) statusEl.textContent = '';
+    if (wrapperEl) wrapperEl.setAttribute('aria-busy', 'false');
     running = true;
     initInput();
     updateHint();
