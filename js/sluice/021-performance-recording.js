@@ -123,9 +123,17 @@
   function playPerfStart() {
     if (playPerfActive || playPerfSaving || introPhase !== 'done') return false;
     var saved = null;
-    // Read the latest existing save without invoking saveBuild (which advances
-    // the save counter). It is context, not a deterministic input replay.
-    try { saved = saveLoadEnvelope(); } catch (e) {}
+    // Both saveBuild and saveLoadEnvelope change the slot counter. Copy only
+    // the existing bytes here. This is context, not deterministic input replay.
+    var saveKeys = [SAVE_KEY_A, SAVE_KEY_B];
+    for (var si = 0; si < saveKeys.length; si++) {
+      try {
+        var rawSave = localStorage.getItem(saveKeys[si]);
+        var envelope = rawSave ? JSON.parse(rawSave) : null;
+        if (envelope && envelope.v === SAVE_VERSION && envelope.world &&
+            (!saved || (envelope.n || 0) > (saved.n || 0))) saved = envelope;
+      } catch (e) {}
+    }
     var now = performance.now();
     playPerfTrace = { schema: 'sluice-performance-1', version: GAME_VERSION,
       started: now, startedUTC: new Date().toISOString(), ended: null,

@@ -14,7 +14,7 @@ const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'sluice-record-browser-'))
 const port = Number(process.env.PORT || 8894), debugPort = port + 1000;
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.woff2': 'font/woff2' };
 const fixture = `window.__recordTest={ready:function(){return introPhase==='done'&&(!startInPause||bootPauseFired)},
- counter:function(){return saveCounter},state:function(){return {paused:gamePaused,manifest:cargoManifestOpen,ledger:ledgerOpen}},limit:function(n){playPerfLimit=n},
+ counter:function(){return saveCounter},seedSave:function(){saveNow('test');saveCounter+=17},state:function(){return {paused:gamePaused,manifest:cargoManifestOpen,ledger:ledgerOpen}},limit:function(n){playPerfLimit=n},
  expire:function(){playPerfTrace.started-=600001;playPerfHeartbeat()},
  summary:function(){return {seconds:playPerfTrace.seconds,events:playPerfTrace.events,
  gpu:playPerfTrace.gpu,frames:playPerfTrace.frameCount,reason:playPerfTrace.reason}}};`;
@@ -78,16 +78,17 @@ try {
   await call('Network.setBlockedURLs', { urls: ['*googletagmanager.com*', '*google-analytics.com*'] });
   await call('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: out });
   await call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 2, mobile: false });
-  await call('Page.navigate', { url: 'http://127.0.0.1:' + port + '/grand-motherload.html?nosave=1&snow=1' });
+  await call('Page.navigate', { url: 'http://127.0.0.1:' + port + '/grand-motherload.html?snow=1' });
   await until('window.__recordTest && __recordTest.ready()');
   if (await ev('document.getElementById("game-pause").classList.contains("is-visible")')) await tap('Escape', 'Escape');
   await until('!__recordTest.state().paused');
   await delay(3000);
   assert.equal(await ev('document.getElementById("gm-perf-recorder").hidden'), true, 'Ordinary game hides recorder');
+  await ev('__recordTest.seedSave()');
   const counter = await ev('__recordTest.counter()');
   await tap('F9', 'F9');
   assert.equal(await ev('__sluicePerformance.status().recording'), true);
-  assert.equal(await ev('__recordTest.counter()'), counter, 'Recording must not invoke saveBuild');
+  assert.equal(await ev('__recordTest.counter()'), counter, 'Recording must neither advance nor rewind the save counter');
   await key('D', 'KeyD'); await key(' ', 'Space'); await delay(500);
   await key('D', 'KeyD', false); await key(' ', 'Space', false);
   await tap('i', 'KeyI'); await until('__recordTest.state().manifest'); await delay(650); await tap('Escape', 'Escape');
@@ -102,6 +103,7 @@ try {
   while (Date.now() < deadline) { filename = fs.readdirSync(out).find(p => p.endsWith('.json') && p.startsWith('sluice-performance-')); if (filename) break; await delay(100); }
   assert(filename, 'F9 saves local trace');
   const trace = JSON.parse(fs.readFileSync(path.join(out, filename), 'utf8'));
+  assert(trace.initialSavedGame && trace.initialSavedGame.world, 'Existing saved context included');
   const frames = trace.frameChunks.flat(); assert.equal(frames.length, trace.frameCount * trace.stride);
   assert(trace.frameCount >= 1100 && trace.frameChunks.length >= 2, 'Retains every frame across chunk boundary');
   const col = name => trace.columns.indexOf(name), values = name => Array.from({ length: trace.frameCount }, (_, i) => frames[i * trace.stride + col(name)]);
