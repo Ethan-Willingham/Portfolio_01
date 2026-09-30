@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.65';
+  var VERSION = 'v1.66';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -299,6 +299,7 @@
     else if (isLifeField(f)) generateLife(f);
     else regenerate();
     currentField = f;
+    syncSortAudioActivity();
     // Search + sort scenes spawn stationary so you can take them in before
     // moving; every other scene resumes the cruise speed you last chose.
     if (isSearchField(f) || isSortField(f) || isLifeField(f)) applySpeed(0); else applySpeed(lastCruiseSpeed);
@@ -5416,7 +5417,7 @@
   // notes stay consonant. The golden ratio is NOT used for pitch (it is maximally
   // dissonant as an interval); instead phi^2 sets a quiet inharmonic shimmer partial
   // and the golden angle (137.5 deg) spaces successive notes across the stereo field.
-  var sortAudio = { ctx:null, ready:false, on:false, bus:null, master:null, voices:0, nextT:0, panN:0 };   // sound defaults OFF; the sort panel's sound button toggles it on (sortAudioToggle resumes the context). First-gesture unlock still inits the context, just leaves it suspended.
+  var sortAudio = { ctx:null, ready:false, on:false, bus:null, master:null, voices:0, nextT:0, panN:0, syncing:false };   // sound defaults OFF; only active sorting scenes run the audio context
   var SORT_NOTE_RATE = 500;        // max scheduled notes/sec (firehose ceiling; only reached at high Speed)
   var SORT_VOICE_CAP = 160;        // max simultaneously ringing voices
   var sortFNVal = new Float32Array(512), sortFNSwap = new Uint8Array(512), sortFNCount = 0;   // this frame's op events to sonify
@@ -5435,22 +5436,35 @@
     var dry = ctx.createGain(); dry.gain.value = 0.6;
     bus.connect(comp); comp.connect(dry); dry.connect(master); comp.connect(conv); conv.connect(wet); wet.connect(master); master.connect(ctx.destination);
     sortAudio.ctx = ctx; sortAudio.bus = bus; sortAudio.master = master; sortAudio.ready = true;
+    syncSortAudioActivity();
+  }
+  function wantSortAudio() { return wantLoop() && sortAudio.on && sortAudioUnlocked && isSortField(currentField); }
+  function syncSortAudioActivity() {
+    var A = sortAudio; if (!A.ready || A.syncing || A.ctx.state === 'closed') return;
+    var play = wantSortAudio();
+    if (play ? A.ctx.state !== 'suspended' : A.ctx.state !== 'running') return;
+    A.syncing = true;
+    (play ? A.ctx.resume() : A.ctx.suspend()).then(function () {
+      A.syncing = false;
+      // A quick blur/focus or sound toggle can arrive while the operation is
+      // pending. Reconcile the latest intent after it finishes.
+      if (play !== wantSortAudio()) syncSortAudioActivity();
+    }, function () { A.syncing = false; });
   }
   function sortAudioToggle(){
     if (!sortAudio.ctx) sortAudioInit();
     if (!sortAudio.ready) return;
     sortAudio.on = !sortAudio.on;
-    if (sortAudio.on && sortAudio.ctx.state === 'suspended') sortAudio.ctx.resume();
+    syncSortAudioActivity();
   }
-  // Sound defaults on, but browsers keep Web Audio suspended until a user gesture.
-  // Unlock the context on the first interaction anywhere on the page (once), so
-  // notes play the moment you reach a sorting scene without touching the button.
+  // Initialize on the first gesture, then keep the context suspended until the
+  // user enables sound in an active sorting scene.
   var sortAudioUnlocked = false;
   function sortAudioUnlock(){
     if (sortAudioUnlocked) return;
     sortAudioUnlocked = true;
     sortAudioInit();
-    if (sortAudio.ready && sortAudio.on && sortAudio.ctx.state === 'suspended') sortAudio.ctx.resume();
+    syncSortAudioActivity();
   }
   // Kill / restore the sort bus so note tails do not ring past a scene change. Leaving a
   // sort scene ramps the master to 0 (silencing in-flight + scheduled voices); a fresh sort
@@ -5491,8 +5505,8 @@
   // overflow. At low Speed this is one note per op; at high Speed it fills toward
   // the 500/sec ceiling and fuses into a shimmering roar.
   function sortAudioSchedule(){
-    var A = sortAudio; if (!A.on || !A.ready) { sortFNCount = 0; return; }
-    if (A.ctx.state === 'suspended') { if (sortAudioUnlocked) A.ctx.resume(); sortFNCount = 0; return; }   // self-heal if the browser re-suspended the context (e.g. iOS after idle)
+    var A = sortAudio; if (!A.ready || !wantSortAudio()) { sortFNCount = 0; return; }
+    if (A.ctx.state === 'suspended') { syncSortAudioActivity(); sortFNCount = 0; return; }
     var ctx = A.ctx, now = ctx.currentTime, gap = 1 / SORT_NOTE_RATE, i;
     var rate = Math.min(SORT_STEPS * 60, SORT_NOTE_RATE);        // approx notes/sec at this Speed
     var dur = Math.max(0.05, Math.min(1.0, 9 / (rate + 3)));     // long, ringing notes when slow; short, crisp ones when fast
@@ -6873,8 +6887,11 @@
   var aspect = 1;
   var running = false;
   var loopRunning = false;     // is a requestAnimationFrame loop currently scheduled
+  var frameRequest = null;
   var pageVisible = true;      // tab visible (Page Visibility API)
+  var windowFocused = document.hasFocus();
   var onScreen = true;         // demo is within the viewport (IntersectionObserver)
+  var pausePointerInput = function () {};
   var fpsAccum = 0, fpsFrames = 0;
 
   // Bloom / post-process state
@@ -6997,10 +7014,23 @@
     device.queue.writeBuffer(dirVBuf, 0, new Float32Array([0, 1 / hh, 0, 0]));
   }
 
-  // Only render when the work is actually being seen: the tab is visible AND
-  // the demo is on screen. Otherwise the loop stops, so the million-point GPU
-  // pass is not cooking the laptop in a background tab or while scrolled past.
-  function wantLoop() { return running && pageVisible && onScreen; }
+  // Work stops when the user leaves the tab/window or the scene leaves view.
+  function wantLoop() { return running && pageVisible && windowFocused && onScreen; }
+  function stopLoop() {
+    if (frameRequest !== null) cancelAnimationFrame(frameRequest);
+    frameRequest = null;
+    loopRunning = false;
+    lastTime = 0;
+    for (var key in held) if (held.hasOwnProperty(key)) held[key] = false;
+    yawVel = 0; pitchVel = 0; rollVel = 0;
+    pausePointerInput();
+    sortFNCount = 0;
+    sortAudio.nextT = 0;
+  }
+  function syncActivity() {
+    if (wantLoop()) startLoop(); else stopLoop();
+    syncSortAudioActivity();
+  }
 
   // ----- Intro: "first light" bloom-up (once, on initial load) -----
   // The old load showed two uncoordinated pops: a million points snapped onto black at
@@ -7022,14 +7052,17 @@
     if (loopRunning || !wantLoop()) return;
     loopRunning = true;
     lastTime = 0;              // reset dt so the view does not lurch after a pause
-    requestAnimationFrame(frame);
+    lastDraw = 0;
+    fpsAccum = 0; fpsFrames = 0;
+    frameRequest = requestAnimationFrame(frame);
   }
 
   function frame() {
-    if (!wantLoop()) { loopRunning = false; return; }
+    frameRequest = null;
+    if (!wantLoop()) { syncActivity(); return; }
 
     var now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-    if (FPS_CAP > 0 && now - lastDraw < (1000 / FPS_CAP) - 1) { requestAnimationFrame(frame); return; }   // dev fps cap: skip this tick, stay scheduled
+    if (FPS_CAP > 0 && now - lastDraw < (1000 / FPS_CAP) - 1) { frameRequest = requestAnimationFrame(frame); return; }   // dev fps cap: skip this tick, stay scheduled
     lastDraw = now;
     var dt = lastTime ? Math.min((now - lastTime) / 1000, 0.05) : 0.016;
     lastTime = now;
@@ -7227,7 +7260,7 @@
 
     device.queue.submit([encoder.finish()]);
 
-    requestAnimationFrame(frame);
+    frameRequest = requestAnimationFrame(frame);
   }
 
   // Keys + wheel only act when the demo is focused, so the embedded piece
@@ -7390,7 +7423,7 @@
   }
 
   function initInput() {
-    var lastX = 0, lastY = 0, dragging = false;
+    var lastX = 0, lastY = 0, dragging = false, activePointer = null;
 
     // --- Camera capture (dev tool) ----------------------------------------
     // Fly/orbit to the view you want for a scene, then press C (or call
@@ -7424,6 +7457,7 @@
     // the arrow keys). The camera keeps cruising forward the whole time.
     canvas.addEventListener('pointerdown', function (e) {
       dragging = true; srDragging = true;
+      activePointer = e.pointerId;
       if (isSearchField(currentField)) srSweep = 0;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -7457,7 +7491,9 @@
         searchOrbitPhase = Math.atan2(Math.sin(srEl), Math.cos(srEl) * Math.cos(srAz));
       }
       try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+      activePointer = null;
     }
+    pausePointerInput = function () { if (dragging) endDrag({ pointerId: activePointer }); };
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
@@ -7504,8 +7540,7 @@
       if (held.hasOwnProperty(k)) held[k] = false;
     });
 
-    // Sound is on by default; unlock the Web Audio context on the first user
-    // gesture (capture phase, so a control's stopPropagation can't swallow it).
+    // Initialize Web Audio on the first gesture; the sound toggle controls it.
     window.addEventListener('pointerdown', sortAudioUnlock, { once: true, capture: true });
     window.addEventListener('touchstart', sortAudioUnlock, { once: true, capture: true, passive: true });
     window.addEventListener('keydown', sortAudioUnlock, { once: true, capture: true });
@@ -7924,6 +7959,7 @@
     device = await adapter.requestDevice();
     device.lost.then(function (info) {
       running = false;
+      syncActivity();
       fail('GPU device lost: ' + (info && info.message ? info.message : 'unknown'));
     });
 
@@ -8059,23 +8095,35 @@
     initInput();
     updateHint();
 
-    // Render only when it is being seen: pause on a hidden tab or when the
-    // demo is scrolled out of view, so the GPU is not running flat out for
-    // nobody (this is what was heating the laptop).
+    // Pause rendering, simulations and sound while the user is elsewhere.
     pageVisible = (document.visibilityState === 'visible');
+    windowFocused = document.hasFocus();
     document.addEventListener('visibilitychange', function () {
       pageVisible = (document.visibilityState === 'visible');
-      startLoop();
+      windowFocused = document.hasFocus();
+      syncActivity();
+    });
+    window.addEventListener('blur', function () { windowFocused = false; syncActivity(); });
+    window.addEventListener('focus', function () {
+      windowFocused = true;
+      pageVisible = (document.visibilityState === 'visible');
+      syncActivity();
+    });
+    window.addEventListener('pagehide', function () { pageVisible = false; syncActivity(); });
+    window.addEventListener('pageshow', function () {
+      pageVisible = (document.visibilityState === 'visible');
+      windowFocused = document.hasFocus();
+      syncActivity();
     });
     if (window.IntersectionObserver && wrapperEl) {
       var io = new IntersectionObserver(function (entries) {
         onScreen = entries[entries.length - 1].isIntersecting;
-        startLoop();
+        syncActivity();
       }, { threshold: 0 });
       io.observe(wrapperEl);
     }
 
-    startLoop();
+    syncActivity();
   }
 
   init().catch(function (err) {
