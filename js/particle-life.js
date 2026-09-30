@@ -1316,35 +1316,20 @@
   var simLooping = true;     // toroidal world; false = bouncing walls
   var simSymmetric = true;   // enforce matrix[i][j] == matrix[j][i]
   /* ---------- Pointer state ----------
-     Beyond a single pull-to-cursor force, this models the cursor as a
-     low-frequency disturbance in a fluid: smoothed position, smoothed
-     velocity, a press envelope (ramp in / ramp out so the field never
-     snaps on or off), and a "mode" that switches the force field
-     between a swirling drag (default) and an outward shockwave (shift).
-       x,y       — raw pixel position from the latest pointer event
-       sx,sy     — exponentially smoothed position (low-pass filtered);
-                   the WGSL force field uses THESE, never the raw values,
-                   so any pointer jitter at the OS level can't kick the
-                   simulation. The smoothing also lets the particle
-                   field "lag" behind the cursor a touch, which reads as
-                   the medium having mass.
-       vx,vy    — smoothed velocity, derived from sx,sy frame deltas.
-                   Drives the advection (drag) component: particles
-                   move in the direction the cursor is moving, not
-                   merely toward it.
-       envelope — 0..1 press amplitude. Ramps up on press, decays on
-                  release with a long tail. Multiplies the entire force,
-                  so quick taps ripple gently and held drags ramp in.
-       mode     — 0 = swirl/drag, 1 = shockwave repel.
-       radius   — pixel radius of the pointer field. */
+     Default gestures plow a swept path and carry particles with the swipe.
+     Shift-drag keeps the original swirl. Positions and radius are in
+     backing-store pixels; px/py remember the previous frame so a fast
+     swipe cannot skip the particles between two frames. */
   var simPointer = {
     x: 0,  y: 0,
     sx: 0, sy: 0,
+    px: 0, py: 0,
     vx: 0, vy: 0,
     envelope: 0,
     mode: 0,
-    radius: 380,
+    radius: 90,
     down: false,
+    id: null,
     hasPos: false   // becomes true on first pointer event so we don't
                     // initialize sx/sy at (0,0) and lurch on first frame
   };
@@ -1695,6 +1680,8 @@
     simWorld.h = canvas.height;
     pointerScaleX = canvas.width  / Math.max(1, rect.width);
     pointerScaleY = canvas.height / Math.max(1, rect.height);
+    // Keep the brush under the finger at every DPR and fullscreen size.
+    simPointer.radius = Math.max(58, Math.min(120, Math.min(rect.width, rect.height) * 0.18)) * pointerScaleX;
     recomputeGridDims();
   }
 
@@ -1764,12 +1751,12 @@
 
   /* ---------- Buffer creation ---------- */
   function createBuffers() {
-    // Params: see WGSL Params struct. The compute struct grew to 36 fields
-    // (144 bytes) when the rogue field was added; the render/glow shaders
+    // Params: see WGSL Params struct. The compute struct has 40 fields
+    // (160 bytes), including the swept pointer path; the render/glow shaders
     // keep their shorter struct and just read the first fields off the same
-    // (larger) buffer, which WebGPU allows. 144 is 16-byte aligned.
+    // (larger) buffer, which WebGPU allows. 160 is 16-byte aligned.
     paramsBuffer = device.createBuffer({
-      size: 144,
+      size: 160,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
@@ -1910,13 +1897,13 @@
   // Reusable scratch for uploadParams: filled and re-uploaded every frame.
   // Hoisted out of the function so the hot path does not allocate a fresh
   // ArrayBuffer (+ two typed-array views) 60x a second and feed the GC.
-  var paramsScratch = new ArrayBuffer(144);
+  var paramsScratch = new ArrayBuffer(160);
   var paramsScratchU32 = new Uint32Array(paramsScratch);
   var paramsScratchF32 = new Float32Array(paramsScratch);
 
   function uploadParams(dt) {
-    // Params struct grew with the pointer overhaul + rogue field: 36 scalar
-    // slots = 144 bytes, which is 16-byte aligned. The render/glow shaders
+    // Params includes the swept pointer path: 40 scalar slots = 160 bytes,
+    // which is 16-byte aligned. The render/glow shaders
     // read only the first fields off the same (larger) buffer.
     var u32 = paramsScratchU32;
     var f32 = paramsScratchF32;
@@ -1952,7 +1939,7 @@
     // not yanked toward where it currently is.
     f32[21] = simPointer.vx;
     f32[22] = simPointer.vy;
-    // Mode: 0 swirl/drag, 1 outward shockwave (shift+drag).
+    // Mode: 0 push/fling, 1 swirl (shift+drag).
     u32[23] = simPointer.mode | 0;
     // ---- Rogue field (slots 24..35) ----
     // An invisible flow added to totalForce in WGSL_UPDATE. fieldStrength 0
@@ -1978,6 +1965,9 @@
     u32[33] = (fieldEnabled && fieldLayersOn) ? 1 : 0;
     u32[34] = fieldD | 0;          // dense-channel TO pattern
     f32[35] = FIELD_DENSE_BOOST;   // dense-layer force multiplier (intensity)
+    f32[36] = simPointer.px;
+    f32[37] = simPointer.py;
+    u32[38] = simPointer.down ? 1 : 0;
     device.queue.writeBuffer(paramsBuffer, 0, paramsScratch);
   }
 
@@ -2395,133 +2385,93 @@
   }
 
   /* ---------- Pointer handling ----------
-     Events feed raw position into simPointer. A separate per-frame
-     smoothing pass (smoothPointer, called from frame()) is what the
-     GPU actually consumes. Press/release flip envelope direction;
-     the envelope itself ramps in smoothPointer over many frames so
-     the force field never snaps on or off.
-
-     Mode is captured at press time and held for the duration of the
-     gesture — toggling shift mid-drag would be a strange feel, this
-     locks one continuous gesture to one behavior. */
+     One captured pointer owns each gesture. Ignore other fingers and
+     release cleanly on cancellation, capture loss, or leaving the app. */
   function setupPointer() {
-    // The "drag to stir" hint fades out on the first real interaction and
-    // stays gone, same as the other particle demo. Before this it floated
-    // over the simulation forever.
     var hintEl = container.querySelector('.pl-canvas-hint');
     function getXY(e) {
       var r = canvas.getBoundingClientRect();
-      var src = e.touches ? e.touches[0] : e;
-      // Map CSS coords to backing-store (world) coords with the exact
-      // ratio resizeCanvas computed, so the pointer field lands under the
-      // cursor even when MAX_CANVAS_PIXELS scaled the backing store down.
-      simPointer.x = (src.clientX - r.left) * pointerScaleX;
-      simPointer.y = (src.clientY - r.top)  * pointerScaleY;
-      // First-touch seed: align smoothed position with raw so we don't
-      // sweep a phantom force field across the canvas from (0,0).
-      if (!simPointer.hasPos) {
-        simPointer.sx = simPointer.x;
-        simPointer.sy = simPointer.y;
-        simPointer.hasPos = true;
-      }
+      simPointer.x = (e.clientX - r.left) * pointerScaleX;
+      simPointer.y = (e.clientY - r.top)  * pointerScaleY;
+    }
+    function finish(e) {
+      if (simPointer.id === null || (e && e.pointerId !== simPointer.id)) return;
+      if (e && e.type === 'pointerup') getXY(e);
+      var id = simPointer.id;
+      simPointer.down = false;
+      simPointer.id = null;
+      try { canvas.releasePointerCapture(id); } catch (err) {}
     }
     canvas.addEventListener('pointerdown', function (e) {
+      if (simPointer.id !== null || e.button !== 0) return;
+      e.preventDefault();
+      simPointer.id = e.pointerId;
       simPointer.down = true;
-      simPointer.mode = e.shiftKey ? 1 : 0; // 0 = swirl, 1 = repel
+      simPointer.mode = e.shiftKey ? 1 : 0;
       getXY(e);
-      // Re-seed the smoothed position to the press point and zero the
-      // velocity. Without this, the EMA would briefly sweep from
-      // wherever the last release left sx/sy to the new press,
-      // dragging a phantom field across the canvas; and any inherited
-      // velocity from a previous flick would dump unrelated motion
-      // into the field as soon as the new press's envelope ramped up.
-      simPointer.sx = simPointer.x;
-      simPointer.sy = simPointer.y;
-      simPointer.vx = 0;
-      simPointer.vy = 0;
+      // Every press starts here, without a line from the previous gesture.
+      simPointer.sx = simPointer.px = simPointer.x;
+      simPointer.sy = simPointer.py = simPointer.y;
+      simPointer.vx = simPointer.vy = 0;
+      simPointer.hasPos = true;
+      // A tap has an immediate push, even if released before the next frame.
+      simPointer.envelope = 1;
       if (hintEl) { hintEl.style.opacity = '0'; hintEl = null; }
       if (!hasInteractedSim) { hasInteractedSim = true; track('simulation_interaction'); }
-      // Capture can throw (NotFoundError) if the pointer was already
-      // released by the time the handler runs, e.g. a synthesized or very
-      // fast tap. The stir works fine without capture, so never let this
-      // abort the handler.
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     });
     canvas.addEventListener('pointermove', function (e) {
-      // Only track the cursor while the gesture is active. After
-      // release, the envelope is still decaying and we want the
-      // trailing wake to stay where the user let go, not chase the
-      // cursor around the canvas as it idles.
-      if (simPointer.down) getXY(e);
+      if (simPointer.down && e.pointerId === simPointer.id) getXY(e);
     });
-    canvas.addEventListener('pointerup', function () {
-      simPointer.down = false;
-      // envelope decays in smoothPointer; mode stays as-is so the
-      // tail of the gesture finishes in the same flavor it started in
-    });
-    canvas.addEventListener('pointercancel', function () {
-      simPointer.down = false;
+    // Window listeners also cover release outside the canvas if capture fails.
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+    canvas.addEventListener('lostpointercapture', finish);
+    window.addEventListener('blur', function () { finish(); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) finish();
     });
   }
 
-  /* Per-frame pointer smoothing. Runs once at the top of frame() and
-     produces the values uploaded to the GPU. Three jobs:
-
-       1. Low-pass the raw position into (sx, sy). Tau ~50ms feels
-          like the cursor "drags" the medium with a hint of weight,
-          without lagging visibly.
-       2. Derive a smoothed velocity from the position-step. We
-          deliberately compute vx/vy from the SMOOTHED position
-          rather than raw — that keeps the velocity vector free of
-          the high-frequency jaggies that come out of pointer events
-          on some hardware. Velocity is what powers the advection
-          ("drag" the field), so it has to feel like flow, not noise.
-       3. Drive the press envelope. Up while down, down while not.
-          Asymmetric time constants: faster ramp-up (snappy on press)
-          than ramp-down (so the swirl persists for ~half a second
-          after release, leaving a beautiful trailing wake instead of
-          cutting off mid-motion). */
+  /* Follow a held finger closely; let a released swipe coast briefly.
+     The swept segment connects consecutive positions, including that tail. */
   function smoothPointer(dt) {
     if (!simPointer.hasPos) return;
+    simPointer.px = simPointer.sx;
+    simPointer.py = simPointer.sy;
 
-    // Low-pass position. alpha = 1 - exp(-dt/tau). Tau in seconds.
-    var tauPos = 0.045;
-    var aPos = 1 - Math.exp(-dt / tauPos);
-    var prevSx = simPointer.sx;
-    var prevSy = simPointer.sy;
-    simPointer.sx += (simPointer.x - simPointer.sx) * aPos;
-    simPointer.sy += (simPointer.y - simPointer.sy) * aPos;
+    var dx = simPointer.x - simPointer.sx;
+    var dy = simPointer.y - simPointer.sy;
+    if (simPointer.down || dx * dx + dy * dy > 0.25) {
+      var aPos = 1 - Math.exp(-dt / 0.012);
+      simPointer.sx += dx * aPos;
+      simPointer.sy += dy * aPos;
+      var instVx = (simPointer.sx - simPointer.px) / dt;
+      var instVy = (simPointer.sy - simPointer.py) / dt;
+      var aVel = 1 - Math.exp(-dt / 0.028);
+      simPointer.vx += (instVx - simPointer.vx) * aVel;
+      simPointer.vy += (instVy - simPointer.vy) * aVel;
+      var speed = Math.hypot(simPointer.vx, simPointer.vy);
+      var cap = simPointer.radius * 45;
+      if (speed > cap) {
+        simPointer.vx *= cap / speed;
+        simPointer.vy *= cap / speed;
+      }
+    } else {
+      // Leave a moving wake when the finger lifts, rather than a parked fan.
+      var decay = Math.exp(-dt / 0.10);
+      simPointer.vx *= decay;
+      simPointer.vy *= decay;
+      simPointer.sx += simPointer.vx * dt;
+      simPointer.sy += simPointer.vy * dt;
+      simPointer.x = simPointer.sx;
+      simPointer.y = simPointer.sy;
+    }
 
-    // Smoothed velocity = (smoothed position step) / dt, then EMA.
-    // The first division gives an instantaneous velocity in px/s, the
-    // EMA flattens the bumps. Tau ~80ms — long enough that quick
-    // micro-jitter doesn't reverse the velocity vector.
-    var instVx = (simPointer.sx - prevSx) / Math.max(dt, 1e-4);
-    var instVy = (simPointer.sy - prevSy) / Math.max(dt, 1e-4);
-    var tauVel = 0.08;
-    var aVel = 1 - Math.exp(-dt / tauVel);
-    simPointer.vx += (instVx - simPointer.vx) * aVel;
-    simPointer.vy += (instVy - simPointer.vy) * aVel;
-
-    // Envelope. Up while down, fade while up. Asymmetric tau makes
-    // the release feel like a swirl that gradually loses energy
-    // rather than a hard cut. Press ramp is fast (~50ms) so the
-    // user feels the touch land instantly; release tail is long
-    // (~450ms) so the wake dissipates beautifully.
-    var tauEnv = simPointer.down ? 0.05 : 0.45;
-    var aEnv = 1 - Math.exp(-dt / tauEnv);
-    var target = simPointer.down ? 1.0 : 0.0;
-    simPointer.envelope += (target - simPointer.envelope) * aEnv;
-
-    // Snap tiny envelope to zero so we can occasionally skip the
-    // pointer block entirely on the GPU side via pointerForce==0.
+    if (!simPointer.down) simPointer.envelope *= Math.exp(-dt / 0.22);
     if (!simPointer.down && simPointer.envelope < 0.002) {
       simPointer.envelope = 0;
-      // Also bleed velocity to zero once the field has fully faded,
-      // so the next press doesn't carry a stale velocity from the
-      // previous gesture.
-      simPointer.vx *= 0.0;
-      simPointer.vy *= 0.0;
+      simPointer.vx = simPointer.vy = 0;
     }
   }
 
@@ -2908,7 +2858,7 @@ struct Params {
   looping: u32,
   pointerVx: f32,       // smoothed cursor velocity in px/s, drives advection
   pointerVy: f32,
-  pointerMode: u32,     // 0 = swirl/drag, 1 = outward shockwave
+  pointerMode: u32,     // 0 = push/fling, 1 = swirl
   // ---- Rogue field (an invisible, slowly morphing geometric flow that
   //       conducts the whole swarm; see the ROGUE FIELD banner below) ----
   fieldStrength: f32,   // 0 = field off; otherwise the conductor force size
@@ -2925,6 +2875,10 @@ struct Params {
   fieldDenseBoost: f32, // dense-layer force multiplier (how hard clusters obey
                         // their pattern vs the loose dust -- the "intensity"
                         // of the density-layer split). 1.0 = no boost.
+  pointerPrevX: f32,
+  pointerPrevY: f32,
+  pointerDown: u32,
+  _pointerPad: f32,
 }
 
 @group(0) @binding(0) var<uniform> params: Params;
@@ -3326,108 +3280,51 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
   }
 
-  // ---------- Pointer interaction (vortex + advection field) ----------
-  // The cursor is modeled as a low-frequency disturbance in a fluid, not
-  // a hard attractor. Inside its radius, a particle feels the SUM of
-  // four small forces, all enveloped by params.pointerForce in [0, 1]:
-  //
-  //   1. ADVECTION  -- particles drift in the direction the cursor is
-  //                    moving (params.pointerVx, params.pointerVy).
-  //                    This is the "drag the medium with you" feel and
-  //                    it is the largest term whenever the cursor is in
-  //                    motion. When the cursor is still, it goes to 0.
-  //   2. SWIRL      -- a tangential force perpendicular to (pos -> ptr).
-  //                    Particles orbit the cursor instead of collapsing
-  //                    into it. The sign creates a coherent vortex.
-  //   3. SOFT PULL  -- a very mild radial attractor that fades to zero
-  //                    AT the center (not peaks there, like the old code
-  //                    did). Just enough to keep particles in the field
-  //                    long enough to swirl, never enough to clump them.
-  //   4. REPEL MODE -- when params.pointerMode == 1, the swirl/pull/
-  //                    advection terms are suppressed and replaced with
-  //                    a smooth outward shockwave. Used by shift-drag.
-  //
-  // The radial weight w is a smooth bell, peaked midway through the
-  // radius and tapering to zero at BOTH endpoints. That is what kills
-  // the old "yank to a point" feel -- there is literally no force at
-  // d=0 to pull anything to a single spot.
+  // ---------- Pointer interaction ----------
+  // The brush sweeps the entire segment since the last frame. A flick
+  // clears a continuous path, even when it crosses the canvas in one frame.
+  // Pointer coordinates stay in screen space, so a captured offscreen finger
+  // cannot reappear on the opposite edge of the looping particle world.
+  var pointerKick = vec2<f32>(0.0);
+  var pointerKeep = 1.0;
   let pCenter = vec2<f32>(params.pointerX, params.pointerY);
-  var toPtr = pCenter - pos;
-  if (looping) { toPtr = minImage(toPtr, world); }
-  let pd = length(toPtr);
   let pR = params.pointerRadius;
-  if (pd < pR && pd > 0.5 && params.pointerForce > 0.001) {
-    // Bell-shaped radial weight: rises from 0 at the very center,
-    // peaks at ~40% of radius, falls to 0 at the rim.
-    //   - inner ramp:  smoothstep(0, 0.40*R, d)  -- kills center pile-up
-    //   - outer ramp:  1 - smoothstep(0.40*R, R, d) -- gentle outer fade
-    // Multiplied together, plus a tiny envelope curve so quick taps
-    // are felt instead of nothing.
-    let dn      = pd / pR;                                  // 0..1
-    let inRamp  = smoothstep(0.0, 0.40, dn);
-    let outRamp = 1.0 - smoothstep(0.40, 1.0, dn);
-    let w       = inRamp * outRamp;                         // bell, peak ~0.4
-    let env     = params.pointerForce;                      // 0..1
-
-    // Unit vector from particle TO pointer; perpendicular gives a
-    // counter-clockwise tangent. We use (-toPtr.y, toPtr.x) / pd.
-    let toUnit  = toPtr / pd;
-    let tanUnit = vec2<f32>(-toUnit.y, toUnit.x);
-
-    if (params.pointerMode == 0u) {
-      // ---- Swirl + advection mode (default drag) ----
-      //
-      // Tunables -- kept inline so the WGSL is a single source of truth
-      // for the cursor feel. The relative ratios matter more than the
-      // absolutes; pull is the smallest, swirl is the dominant rotational
-      // term, advection scales with cursor speed. Sized so that at peak
-      // bell weight (w ~= 1) and full envelope, the pointer dominates
-      // the local species forces -- you should clearly feel the cursor
-      // as a force of nature on the medium, not just a soft brush.
-      let kSwirl   = 9.0;        // tangential rotation strength
-      let kPull    = 3.0;        // mild radial pull (vanishes at center)
-      let kAdvect  = 0.012;      // scales pointer-velocity (px/s -> force units)
-
-      // Pointer velocity vector. Its magnitude lives in px/s; we cap
-      // it so a frantic flick doesn't dump unbounded energy into the
-      // field (which would make particles fly clear off-screen).
+  if (params.pointerForce > 0.001) {
+    let pStart = vec2<f32>(params.pointerPrevX, params.pointerPrevY);
+    let stroke = pCenter - pStart;
+    let along = clamp(dot(pos - pStart, stroke) / max(dot(stroke, stroke), 0.0001), 0.0, 1.0);
+    let nearest = pStart + stroke * along;
+    let away = pos - nearest;
+    let pd = length(away);
+    if (pd < pR) {
+      // At the exact center, choose a stable direction instead of dividing
+      // by zero or leaving an untouched particle under the finger.
+      let angle = f32(i) * 2.399963;
+      var outward = vec2<f32>(cos(angle), sin(angle));
+      if (pd > 0.001) { outward = away / pd; }
+      let dn = pd / pR;
+      let w = 1.0 - smoothstep(0.15, 1.0, dn);
+      let env = params.pointerForce;
       let pVel = vec2<f32>(params.pointerVx, params.pointerVy);
-      let pSpeed = length(pVel);
-      let speedCap = 6000.0;      // px/s, ~very fast drag
-      let pVelClamped = select(
-        pVel * (speedCap / max(pSpeed, 1.0)),
-        pVel,
-        pSpeed < speedCap
-      );
-
-      // Speed-modulated swirl: when the cursor is moving, the vortex
-      // gets stronger, which makes whipping motions feel kinetic. A
-      // floor of 0.7 keeps the swirl alive when the cursor is parked,
-      // and the ceiling of ~3.5 means a fast drag triples the rotation.
-      let speedBoost = 0.7 + min(pSpeed / 1200.0, 2.8);
-
-      // Compose the three force components and add them in. All are
-      // gated by w (the bell) and env (press envelope) so they fade
-      // gracefully on press / release and never kick the simulation
-      // discontinuously.
-      var pf = vec2<f32>(0.0, 0.0);
-      pf = pf + tanUnit * (kSwirl * speedBoost * w * env);
-      pf = pf + toUnit  * (kPull             * w * env);
-      pf = pf + pVelClamped * (kAdvect       * w * env);
-
-      totalForce = totalForce + pf;
-    } else {
-      // ---- Repel / shockwave mode (shift-drag) ----
-      //
-      // Pure outward push, sharper bell so the wave has a defined
-      // edge. No advection here — the goal is "push everything away
-      // from this spot" and adding velocity drag would muddy the
-      // shockwave silhouette. The profile is full-strength at the
-      // center (so a stationary repel digs out a clean cavity) and
-      // smoothly tapers to zero at the rim.
-      let kPush = 18.0;
-      let pushW = 1.0 - smoothstep(0.0, 1.0, dn);  // 1 at center, 0 at rim
-      totalForce = totalForce - toUnit * (kPush * pushW * env);
+      let speed = length(pVel);
+      let scale = pR / 90.0;
+      if (params.pointerMode == 0u) {
+        // A held finger makes a cavity. Moving adds outward spray and
+        // transfers swipe momentum. Apply this after species friction so
+        // the Force slider and high-friction presets cannot mute a gesture.
+        let pushSpeed = 260.0 * scale + min(speed * 0.38, 1500.0 * scale);
+        let brushVelocity = outward * pushSpeed + pVel * 0.72;
+        let response = 1.0 - exp(-22.0 * w * env * params.dt);
+        pointerKick = brushVelocity * response;
+        pointerKeep = 1.0 - response;
+      } else {
+        // Shift-drag retains the swirl and its gentle inward pull.
+        let toward = -outward;
+        let tangent = vec2<f32>(-toward.y, toward.x);
+        let bell = smoothstep(0.0, 0.40, dn) * (1.0 - smoothstep(0.40, 1.0, dn));
+        let boost = 0.7 + min(speed / (1200.0 * scale), 2.8);
+        totalForce = totalForce + (tangent * (9.0 * boost) + toward * 3.0 + pVel * 0.012) * bell * env;
+      }
     }
   }
 
@@ -3494,8 +3391,23 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   // Symplectic-ish Euler: forces -> velocity -> friction -> position.
   vel = vel + totalForce * params.forceScale * params.dt;
-  vel = vel * params.frictionMul;
+  vel = vel * params.frictionMul * pointerKeep + pointerKick;
   pos = pos + vel * params.dt;
+
+  // A small solid core keeps particles out from directly under a held finger,
+  // including dense clusters whose attraction would otherwise fill the hole.
+  if (params.pointerDown == 1u && params.pointerMode == 0u) {
+    let away = pos - pCenter;
+    let d = length(away);
+    let core = pR * 0.28;
+    if (d < core) {
+      let angle = f32(i) * 2.399963;
+      var normal = vec2<f32>(cos(angle), sin(angle));
+      if (d > 0.001) { normal = away / d; }
+      pos = pCenter + normal * core;
+      vel = vel - normal * min(dot(vel, normal), 0.0);
+    }
+  }
 
   if (looping) {
     // Wrap position into [0, world). Two passes via floor handle big jumps.
