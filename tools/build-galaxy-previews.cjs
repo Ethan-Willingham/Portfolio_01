@@ -1,5 +1,6 @@
 // Rebuild the scene chooser's static SVG illustrations. No browser or image runtime needed.
 // Each drawing shows a scene's shape or an algorithm's mechanism, rather than a shared camera shot.
+// Keep legacy WebP files available for visitors with the v1.70 chooser still cached.
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
