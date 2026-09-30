@@ -75,7 +75,9 @@ try {
     await game(`keys.ArrowUp=keys.ArrowLeft=keys.ArrowRight=false;
       while(liquidCount)removeLiquidParticle(liquidCount-1);mineralLiquidReset();surfacePonds=[];rainReset(true,true);
       SNOW_RATE=0;weatherForce=4;weatherSetMood(4,true);tutorialDone=true;
-      surfaceWind.current=0;
+      // Hold the complete wind controller still, rather than only its current
+      // value. A randomized target can otherwise resume during landing.
+      windSetTarget('still',1,0,1e9,0,0);
       window.sy=SKY_ROWS*TILE;window.cx=82*TILE;
       for(var r=SKY_ROWS;r<SKY_ROWS+8;r++)for(var c=58;c<108;c++){world[r][c]={type:'dirt',hp:ORES.dirt.hp};invalidateTerrainAround(r,c);}
       zoomMode='in';resize();player.x=cx+300;player.y=sy-PLAYER_H;player.vx=player.vy=0;cam.snap=true;updateCamera();
@@ -134,7 +136,7 @@ try {
         contactFrames.push({t:snow.time-contactStart,up,embedded,slow,powder:snow.grains.length,
           min:Math.min.apply(null,heights),max:Math.max.apply(null,heights),
           mean:heights.reduce(function(a,b){return a+b;},0)/heights.length,
-          mass:__particleSnow.stats().mass,rms:Math.sqrt(energy/heights.length),fresh:fresh,readbackGen:gen,readbackAge:age,
+          wind:surfaceWind.current,mass:__particleSnow.stats().mass,rms:Math.sqrt(energy/heights.length),fresh:fresh,readbackGen:gen,readbackAge:age,
           capturedAt:snow.time-contactStart-age/(gpu?LIQUID_TIMESCALE:1),unsupported:unsupported,twoLayerHeight:rootReach+reach,
           motionRMS:motionRMS,motionDt:motionDt});
         window.contactRaf=requestAnimationFrame(contactSample);
@@ -159,6 +161,7 @@ try {
     summaries.push(summary);console.log('CONTACT',JSON.stringify(summary));
     fs.writeFileSync(path.join(out,trial+'.json'),JSON.stringify({summary,frames},null,2));
     check(trial+' keeps all material',frames.every(f=>f.mass===160));
+    check(trial+' fixture wind remains still',frames.every(f=>f.wind===0));
     check(trial+' stays outside terrain',frames.every(f=>f.embedded===0));
     if(!reportOnly){
       check(trial+' never launches resting or returning powder',summary.maxUp===0);

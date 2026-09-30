@@ -3,12 +3,13 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,Math.max(0,ms)));
 
-export function naturalTownOptions(durationMs){
- const options={warmupMs:Number(process.env.WARMUP_MS??120000),warmupMax:Number(process.env.WARMUP_MAX_MS??180000),
-  snowTarget:Number(process.env.SNOW_TARGET??18000),dragMs:Number(process.env.DRAG_MS??10500)};
+export function naturalTownOptions(durationMs,gather=false){
+ const options={warmupMs:Number(process.env.WARMUP_MS??(gather?60000:120000)),warmupMax:Number(process.env.WARMUP_MAX_MS??(gather?90000:180000)),
+  snowTarget:Number(process.env.SNOW_TARGET??(gather?9000:18000)),dragMs:Number(process.env.DRAG_MS??10500)};
  assert(Object.values(options).every(Number.isFinite),'Finite route settings');
  assert(options.warmupMs>=0&&options.warmupMax>=options.warmupMs&&options.warmupMax<=durationMs-60000,'Warmup leaves at least 60 seconds for input coverage');
  assert(options.snowTarget>=0&&options.dragMs>=10000&&options.dragMs<=30000,'Natural target and ten-second drag duration');
+ if(gather)assert(options.warmupMs>=60000&&options.warmupMax<=90000&&durationMs>=240000,'Gathering uses 60 to 90 seconds of natural warmup and at least 240 seconds total');
  return options;
 }
 

@@ -33,7 +33,7 @@ powder from older saves rejoins the persistent grain store without losing mass.
 | Gravity | 600 px/s squared | Same force through takeoff and landing |
 | Drag size | Stable 0.3 to 1 per grain | Distinct aerodynamic response |
 | Terminal speed | `32 + 42 * size` px/s | Continuous exponential drag |
-| GPU contact iterations | 5 per grain tick, currently about 332 ticks per second | Resolve compression without cohesion |
+| GPU contact iterations | 2 per grain tick, currently about 498 ticks per second | Resolve compression without cohesion |
 | Contact friction | 0.35 | Tangential impulse limited by normal impulse |
 | Terrain restitution | 0 | Contact does not bounce snow upward |
 
@@ -602,3 +602,86 @@ remain. This is one natural route, not a deterministic before/after FPS claim or
 an assurance of a universal floor. The owner's 120 FPS goal is still unmet.
 Raw traces, exact regression reports and source provenance are retained under
 `~/Downloads/sluice-town-performance-2026-09-30/`.
+
+## Smaller snow steps, v28.132
+
+Snow now predicts with a 480 Hz minimum target and runs two contact passes per
+grain tick. At the ordinary water settings, ceiling division produces three
+2.008 ms grain ticks per 6.023 ms physical water quantum, about 498 ticks per
+second. The previous schedule had two 3.011 ms ticks with five contacts each.
+Shielding and density refresh on the last contact of each water quantum.
+
+| Work per ordinary water quantum | v28.131 | v28.132 |
+| --- | ---: | ---: |
+| Predictions and fresh snow indices | 2 | 3 |
+| Contact solves, including shielding | 10 | 6 |
+| Complete terrain, rig and guest boundary chains | 12 | 9 |
+| Shield refreshes | 2 | 1 |
+
+Every prediction and contact retains its complete boundary solve, legal sweep
+origin and motion tracking. Grain records, mass, force laws, friction, flight
+and the contact kernels remain. Shorter predictions limit accumulated overlap
+before the next contact solve. This scheduling experiment draws on the
+[Small Steps](https://matthias-research.github.io/pages/publications/smallsteps.pdf)
+idea, but it remains the game's Jacobi grain solver, not the paper's XPBD solver.
+Its acceptance comes from the game's regression measurements.
+
+The five pile depths, 3, 7, 12, 20 and 32 px, pass the existing comparison
+against measured v28.131 behavior, together with mass, stable contours, still
+wind and removal of the supporting floor. The reference already exceeds the
+absolute 1 px/s mean velocity limit in deep piles. Its complete baseline was
+recorded with settling assertions disabled, then the candidate used the
+unchanged reference-relative gate. At 32 px, mean residual velocity changes
+from 1.934 to 1.570 px/s. This is an improvement over the reference, not a claim
+that the absolute deep-pile limit is met.
+
+Jet lifting and independent flight pass both existing wave fixtures, with no
+CPU airborne handoff or sustained sheet arch. The initial returning-powder run
+failed its motion limit. The fixture only set current wind to zero and left a
+random wind target active. Holding the full wind controller still makes both
+reference and candidate pass all unchanged landing limits. The fixture now
+records and asserts zero wind; production weather is unchanged.
+
+`tools/perf/snow-solver-quantum.mjs` compares equal physical intervals from one
+frozen natural town snapshot. Its paired mode uses one device and compiled
+engine, verifies that reference kernels and helpers outside `runFrame` are
+identical, and alternates reference/candidate/candidate/reference batches.
+Each batch has 16 warmup and 16 measured samples. Two rounds yield 64 measured
+samples per schedule and snow count. Complete-span conventional medians are:
+
+| Active snow grains | Previous schedule | Smaller steps | Time saved |
+| --- | ---: | ---: | ---: |
+| 4,000 | 3.669 ms | 2.694 ms | 26.58% |
+| 8,000 | 4.653 ms | 3.285 ms | 29.39% |
+| 13,932 | 5.665 ms | 3.999 ms | 29.42% |
+
+All 24 batches pass finite-state, material/row identity, mass, index uniqueness
+and unchanged passive-water gates. Every snow index rebuild includes the real
+previous-field clear. An untimed mixed index supplies a proxy for the preceding
+water index; real field buffers start at zero. Water physics, active airflow,
+CPU work and rendering are excluded. Timed spans include diagnostic copies,
+pass boundaries and gaps, so these measurements are not complete frames or
+FPS. Earlier separate-source timings omitted the first shared-field clear;
+one reverse run also suffered unexplained scheduling stalls. They are retained
+as exploratory evidence and superseded by the paired result.
+
+The production v28.132 unprofiled ordinary route records 420 seconds and 25,389
+native callbacks with no browser errors or dropped CPU buckets, events or GPU
+samples. Mean FPS is 60.45 and the lowest full second is 55.20 in the roughly
+60 Hz background harness. All five original residents complete verified
+ten-second drags, with ordinary water, stock smoke, natural weather and real
+keyboard/pointer inputs. The resulting scenes differ from v28.131; the two
+minimum FPS values do not isolate this change or establish a universal floor.
+The owner's 120 FPS target remains unverified.
+
+The additional `ROUTE=town-gather` capture uses only real pointer grabs and
+keyboard walking to carry the five original residents back toward the rig's
+initial town position. It records 300 seconds and 18,128 native callbacks, with
+mean 60.58 FPS and lowest full second 58.95 FPS, no browser errors and no
+dropped buckets, events or GPU samples. All five complete sustained grips and
+reach within 18 px of the requested anchor before release. Natural motion then
+spreads them apart. Recorded bounds show a four-resident overlap component;
+this is a geometric proxy, not proof of every polygon contact or a sustained
+five-resident stack. Source hashes, actions, per-frame data, physical fixtures
+and the corrected paired benchmark are saved in
+`~/Downloads/sluice-solver-performance-2026-09-30/`.

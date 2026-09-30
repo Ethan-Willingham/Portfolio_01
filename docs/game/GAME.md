@@ -139,6 +139,9 @@ water, soak into dirt and town foundations, and fall down open shafts. See
 Snow uses independent grain contacts within the existing particle storage.
 The same grains and velocities persist through lifting, flight and landing.
 Snow physics requires WebGPU.
+Since v28.132, shorter snow predictions use two contacts per grain tick and
+refresh shielding once per water quantum. At ordinary settings this reduces
+ten contact solves to six per quantum while retaining every boundary solve.
 Since v28.127, ordinary water and fire also require their GPU solvers. First-use
 GPU startup gets up to sixty seconds per gate, with pending fire programs and
 compilation times in the Loading report. Failure or device loss stops play and

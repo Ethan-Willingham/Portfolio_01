@@ -11248,7 +11248,8 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     for (var snowIndex = 0; snowIndex < count; snowIndex++) {
       if (L.arrays.type[snowIndex] === 5) { hasSnow = true; break; }
     }
-    var grainSteps = Math.max(1, Math.ceil(instance.stepDt / LIQUID_TIMESCALE * 240));
+    // Shorter prediction steps limit the overlap each contact solve must remove.
+    var grainSteps = Math.max(1, Math.ceil(instance.stepDt / LIQUID_TIMESCALE * 480));
     if (hasSnow) prepareSnowGrains(instance, instance.stepDt / LIQUID_TIMESCALE / grainSteps);
     var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
     instance.frameEncoder = frameEncoder;
@@ -11267,10 +11268,12 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
           // G2P has consumed the liquid fields. Rebuild only the neighbor
           // index at the grains' predicted positions for contact queries.
           buildGrid(instance, true, true);
-          // Four relaxation passes plus the final contact/density/shield pass.
-          // Five preserves returning-powder settling; four failed that gate.
-          for (var contact = 0; contact < 5; contact++) {
-            runSnowGrains(instance, contact === 4 ? 'shield' : 'contacts', ss, contact === 0);
+          // Two contacts per shorter grain tick, with shielding refreshed at
+          // the end of each liquid quantum. Every prediction and contact keeps
+          // its terrain, rig and guest boundary solve and legal sweep origin.
+          for (var contact = 0; contact < 2; contact++) {
+            var finalShield = contact === 1 && grainStep === grainSteps - 1;
+            runSnowGrains(instance, finalShield ? 'shield' : 'contacts', ss, contact === 0);
           }
         }
       }

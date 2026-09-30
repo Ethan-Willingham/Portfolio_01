@@ -4,6 +4,7 @@
 // NO_POINTER=0 also schedules recorded pointer events; this is not deterministic replay.
 // LIQUID_SOURCE=/absolute/path/reference.js substitutes only the GPU engine for comparison.
 // ROUTE=town-interaction uses adaptive real jets and grabs for 420 seconds by default.
+// ROUTE=town-gather attempts to carry all five natural residents together in 300 seconds.
 // CPU_PROFILE=1 adds inclusive aggregate diagnostics; BUNDLE_SOURCE substitutes the game bundle.
 // EXPORT_FREEZE=0 keeps game RAF running during export; default freezes this test only after recording.
 // DRY_RUN=1 validates sources/settings without starting a browser.
@@ -18,6 +19,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import {naturalTownHook,naturalTownOptions,naturalTownRoute} from './natural-town-route.mjs';
+import {gatherNaturalResidents} from './natural-town-gather.mjs';
 import {profileGameCPU} from './profile-game-cpu.mjs';
 import {profileSnowWorkload} from './profile-snow-workload.mjs';
 async function captureResidentSnapshot() {
@@ -66,12 +68,12 @@ async function captureResidentSnapshot() {
  }
 }
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const route=process.env.ROUTE||'';assert(!route||route==='town-interaction','Known input route');
+const route=process.env.ROUTE||'';assert(!route||['town-interaction','town-gather'].includes(route),'Known input route');
 assert(!route||!process.env.INPUT,'Choose adaptive ROUTE or recorded INPUT');
-const input=process.env.INPUT?JSON.parse(fs.readFileSync(process.env.INPUT,'utf8')):{durationMs:route?420000:90000,events:[]};
+const input=process.env.INPUT?JSON.parse(fs.readFileSync(process.env.INPUT,'utf8')):{durationMs:route==='town-gather'?300000:route?420000:90000,events:[]};
 if(process.env.DURATION_MS) input.durationMs=Number(process.env.DURATION_MS);
 assert(input.durationMs>0&&input.durationMs<=600000,'Capture duration must fit the recorder limit');
-const routeOptions=route?naturalTownOptions(input.durationMs):null;
+const routeOptions=route?naturalTownOptions(input.durationMs,route==='town-gather'):null;
 const out=path.resolve(process.env.DUMP||path.join(os.tmpdir(),'sluice-ordinary-game'));
 assert(out!==root&&!out.startsWith(root+path.sep),'Artifacts stay outside the repo');
 fs.mkdirSync(out,{recursive:true});
@@ -149,7 +151,9 @@ try{
  console.log(JSON.stringify({started:true,out,liquidSource:process.env.LIQUID_SOURCE,offset,rect,events:events.length}));
  phase='capture';checkpointActive=true;scheduleCheckpoint(hostStart);
  let actionReport=null;
- if(route)actionReport=await naturalTownRoute(send,ev,input.durationMs,hostStart,out,routeOptions);
+ if(route)actionReport=route==='town-gather'
+  ?await gatherNaturalResidents(send,ev,{...routeOptions,out,durationMs:input.durationMs,hostStart})
+  :await naturalTownRoute(send,ev,input.durationMs,hostStart,out,routeOptions);
  else{
  let last=0;for(const e of events){await sleep(hostStart+e.atMs-performance.now());if(e.kind.startsWith('key')){const code=e.detail.code;const key=code==='Space'?' ':code.startsWith('Key')?code.slice(3).toLowerCase():code.startsWith('Digit')?code.slice(5):code;await send('Input.dispatchKeyEvent',{type:e.kind==='keydown'?'keyDown':'keyUp',key,code});}else{const d=e.detail,x=rect.left+d.x/d.width*rect.width,y=rect.top+d.y/d.height*rect.height;await send('Input.dispatchMouseEvent',{type:e.kind==='pointerdown'?'mousePressed':e.kind==='pointerup'?'mouseReleased':'mouseMoved',x,y,button:e.kind==='pointermove'?'none':'left',buttons:d.buttons||0,clickCount:e.kind==='pointermove'?0:1});}if(e.atMs-last>5000){last=e.atMs;console.log(JSON.stringify({seconds:e.atMs/1000,live:await ev('__sluicePerformance.status().fps')}));}}
  await sleep(hostStart+input.durationMs-performance.now());
