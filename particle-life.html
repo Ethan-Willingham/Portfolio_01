@@ -714,49 +714,27 @@
       letter-spacing: 0.02em;
       margin: 0 0 0.7rem;
     }
-    /* Pattern stepper: ‹ arrow | centered pattern name | arrow › */
-    .pl-field-stepper {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.7rem;
-    }
-    .pl-field-arrow {
-      flex: 0 0 auto;
-      width: 34px;
-      height: 30px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      font-family: var(--d-mono);
-      font-size: 1.15rem;
-      line-height: 1;
+    .pl-pattern-choice { margin: 0.6rem 0 0.75rem; }
+    .pl-pattern-choice label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
       color: var(--d-text-dim);
-      background: transparent;
+    }
+    .pl-pattern-select {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
       border: 1px solid var(--d-rule-strong);
-      border-radius: 3px;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      border-radius: 4px;
+      background: var(--d-bg-raised);
+      color: var(--d-text);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color-scheme: dark;
     }
-    .pl-field-arrow:hover {
-      color: var(--d-text-bright);
-      border-color: var(--d-accent);
-      background: rgba(212, 196, 160, 0.08);
-    }
-    .pl-field-arrow:active { transform: translateY(1px); }
-    .pl-field-name {
-      flex: 1 1 auto;
-      min-width: 0;
-      text-align: center;
-      font-family: var(--d-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.04em;
-      color: var(--d-accent-strong);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    .pl-pattern-select:focus-visible { outline: 2px solid var(--d-accent); outline-offset: 3px; }
     /* Tighten the field section in the compact (non-fullscreen) side panel. */
     .pl-wrapper:not(.is-fs) .pl-field-section { margin-top: 0.7rem; padding-top: 0.75rem; }
 
@@ -1138,10 +1116,6 @@
                     <input type="checkbox" class="pl-toggle-loop" checked>
                     <span>Looping borders</span>
                   </label>
-                  <label class="pl-toggle">
-                    <input type="checkbox" class="pl-toggle-sym" checked>
-                    <span>Symmetric forces</span>
-                  </label>
                 </div>
                 <div class="pl-field-section">
                   <div class="pillbar-head" style="margin-top:0.6rem;margin-bottom:0.5rem;">
@@ -1151,7 +1125,15 @@
                     An extra force that steers the particles through
                     changing patterns.
                   </p>
+                  <div class="pl-pattern-choice">
+                    <label for="pl-pattern">Pattern</label>
+                    <select id="pl-pattern" class="pl-pattern-select"></select>
+                  </div>
                   <div class="pl-toggles">
+                    <label class="pl-toggle">
+                      <input type="checkbox" class="pl-toggle-auto" checked>
+                      <span>Cycle automatically</span>
+                    </label>
                     <label class="pl-toggle">
                       <input type="checkbox" class="pl-toggle-field" checked>
                       <span>Enable field</span>
@@ -1160,25 +1142,11 @@
                       <input type="checkbox" class="pl-toggle-layers">
                       <span>Density layers</span>
                     </label>
-                    <label class="pl-toggle">
-                      <input type="checkbox" class="pl-toggle-auto" checked>
-                      <span>Auto-morph</span>
-                    </label>
                   </div>
                   <div class="pillbar-sliderrow">
-                    <label>Field</label>
+                    <label>Strength</label>
                     <input type="range" data-param="fieldstr" min="0" max="6" value="3.5" step="0.1">
                     <span class="pillbar-sliderval" data-value="fieldstr">3.5</span>
-                  </div>
-                  <div class="pillbar-sliderrow">
-                    <label>Morph</label>
-                    <input type="range" data-param="fieldmorph" min="0.2" max="3" value="1.0" step="0.1">
-                    <span class="pillbar-sliderval" data-value="fieldmorph">1.0&times;</span>
-                  </div>
-                  <div class="pl-field-stepper">
-                    <button class="pl-field-arrow pl-field-prev" type="button" title="Previous pattern" aria-label="Previous pattern">&lsaquo;</button>
-                    <span class="pl-field-name" aria-live="polite"></span>
-                    <button class="pl-field-arrow pl-field-next" type="button" title="Next pattern" aria-label="Next pattern">&rsaquo;</button>
                   </div>
                 </div>
                 <div class="pl-buttons pillbar-foot" style="margin-top:1rem;">
@@ -1222,7 +1190,7 @@
                   <span class="pillbar-sliderval" data-value="repel">4.0</span>
                 </div>
                 <div class="pillbar-sliderrow">
-                  <label>Species</label>
+                    <label>Colors</label>
                   <input type="range" data-param="species" min="1" max="15" value="8" step="1">
                   <span class="pillbar-sliderval" data-value="species">8</span>
                 </div>
@@ -1257,6 +1225,17 @@
             clusters, chains, or scattered particles.
           </p>
 
+          <p class="pl-possibilities">
+            At 15 colors, there are about <strong>4.51&nbsp;&times;&nbsp;10<sup>84</sup>
+            combinations</strong> of forces and patterns using just the
+            five values reached by tapping a cell. Mirrored cells
+            change together, leaving 15&nbsp;&times;&nbsp;16&nbsp;&divide;&nbsp;2&nbsp;=&nbsp;120 independent
+            values. With six patterns, the count is
+            <a href="js/particle-life.js">6&nbsp;&times;&nbsp;5<sup>120</sup></a>.
+            This holds the palette and physics fixed; randomized force values
+            and starting positions add more.
+          </p>
+
           <figure class="pl-figure">
             <picture><source type="image/webp" srcset="assets/images/starling-murmuration.webp"><img src="assets/images/starling-murmuration.jpg" width="1024" height="683" loading="eager" decoding="async"
                  alt="Starlings flying in a broad flock above a field near Gretna."></picture>
@@ -1277,8 +1256,9 @@
             </p>
             <p>
               Turn the field off to see the color-based interactions alone.
-              Auto-morph blends between patterns; switch it off and use the
-              arrows to choose one. Density layers applies a second pattern
+              Choose a pattern from the menu to hold it, or check Cycle
+              automatically to let the shapes blend into one another.
+              Density layers applies a second pattern
               to tightly packed particles.
             </p>
             <p>
@@ -1312,7 +1292,7 @@
     </footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/particle-life.js?v=20260930-pause"></script>
+  <script src="js/particle-life.js?v=20260930-patterns"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

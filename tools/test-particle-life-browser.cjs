@@ -48,6 +48,8 @@ const server = http.createServer((req, res) => {
           state: () => ({ pointer: { ...simPointer }, world: { ...simWorld }, scale: pointerScaleX,
             palette: speciesColors.slice(0,K), patterns: FIELD_PATTERNS.slice() }),
           config: () => snapshotConfig(),
+          advance: dt => advanceField(dt),
+          field: () => ({state:fieldState,alpha:fieldAlphaEased,phase:fieldPhase}),
           lifecycle: () => ({ pending: frameRequest!==null, ready: animationReady,
             focused: pageFocused, inView: canvasInView, hidden: document.hidden,
             time: prevTime, phase: fieldPhase, submitted: window.__plSubmits||0,
@@ -120,7 +122,107 @@ async function open(context, url) {
   await p.waitForFunction(() => document.querySelector('.pl-status').style.display==='none', {timeout:30000});
   await p.locator('.pl-canvas').scrollIntoViewIfNeeded();
   await p.evaluate(() => document.fonts.ready);
+  await p.waitForFunction(()=>getComputedStyle(document.querySelector('.post-body')).opacity==='1',{polling:50});
   return p;
+}
+async function controlChecks(browser,url) {
+  const context=await browser.newContext({viewport:{width:1440,height:1100}});
+  const mobile=await browser.newContext({viewport:{width:375,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+  const symmetric=cfg=>cfg.symmetric===true&&cfg.matrix.every((v,i)=>v===cfg.matrix[(i%cfg.k)*cfg.k+Math.floor(i/cfg.k)]);
+  try {
+    const p=await open(context,url);
+    const config=()=>p.evaluate(()=>__plTest.config());
+    const select=p.getByLabel('Pattern',{exact:true});
+    check('the symmetry toggle, morph speed and arrow controls are removed',
+      await p.locator('.pl-toggle-sym,[data-param="fieldmorph"],.pl-field-stepper').count()===0);
+    check('the opening force matrix is symmetric',symmetric(await config()));
+    const playing=(await config()).field.pattern;
+    await select.selectOption({label:playing});
+    check('choosing even the playing pattern disables automatic cycling',
+      !await p.locator('.pl-toggle-auto').isChecked()&&(await config()).field.pattern===playing);
+    const held=await p.evaluate(()=>__plTest.field());
+    await p.evaluate(()=>{for(let i=0;i<120;i++) __plTest.advance(1);});
+    assert.deepEqual(await p.evaluate(()=>__plTest.field()),held);
+    check('a manual selection holds its shape and cancels further morphing',true);
+    await p.locator('.pl-toggle-auto').check();
+    const visited=[];
+    for(let i=0;i<6;i++) {
+      visited.push((await config()).field.pattern);
+      await p.evaluate(()=>{__plTest.advance(19);__plTest.advance(6.1);});
+    }
+    check('automatic cycling visits all six patterns and updates the dropdown',
+      new Set(visited).size===6&&await select.inputValue()==='auto'&&
+      (await select.evaluate(el=>el.selectedOptions[0].textContent)).includes((await config()).field.pattern));
+    await p.evaluate(()=>{__plTest.advance(19);__plTest.advance(2);});
+    await select.selectOption({label:'Figure eight'});
+    check('choosing during a crossfade immediately holds the requested pattern',
+      (await config()).field.pattern==='Figure eight'&&
+      await p.evaluate(()=>__plTest.field().state==='hold'&&__plTest.field().alpha===0));
+    await p.locator('.pl-toggle-field').uncheck();
+    await select.selectOption({label:'River bends'});
+    check('choosing a pattern enables its field and leaves cycling off',
+      await p.locator('.pl-toggle-field').isChecked()&&!await p.locator('.pl-toggle-auto').isChecked());
+    const levels=[];
+    for(let i=0;i<5;i++) {
+      await p.locator('.pl-matrix-cell').nth(1).click();
+      const cfg=await config();levels.push(cfg.matrix[1]);
+      assert.ok(symmetric(cfg));
+    }
+    check('cell clicks cycle five values and update both mirrored cells',new Set(levels).size===5);
+    await p.locator('.pl-matrix-cell').nth(1).click({modifiers:['Shift']});
+    check('Shift-click also updates both mirrored cells',symmetric(await config()));
+    for(let i=0;i<5;i++) {
+      await p.locator('.pl-randomize').click();
+      assert.ok(symmetric(await config()));
+    }
+    check('Randomize all always produces a symmetric matrix',true);
+    await p.locator('[data-param="species"]').fill('15');
+    await p.locator('[data-param="species"]').dispatchEvent('input');
+    const max=await config(),patterns=await select.locator('option:not([disabled])').count();
+    const cells=max.k*(max.k+1)/2,possibilities=BigInt(patterns)*BigInt(new Set(levels).size)**BigInt(cells);
+    check('the published count matches 120 independent choices and six patterns',
+      max.k===15&&cells===120&&patterns===6&&Number(possibilities)>4.50e84&&Number(possibilities)<4.52e84&&
+      (await p.locator('.pl-possibilities sup').allTextContents()).join(',')==='84,120');
+    check('changing to 15 colors keeps all matrix pairs symmetric',symmetric(max));
+    const legacy={...max,k:2,matrix:[.2,.8,-.4,.6],symmetric:false,
+      field:{...max.field,pattern:'Golden spiral',auto:false,morph:3}};
+    await p.locator('.pl-share-tools > summary').click();
+    await p.locator('.pl-slot-share').fill('PL1:'+Buffer.from(JSON.stringify(legacy)).toString('base64'));
+    await p.locator('.pl-slot-import').click();
+    const loaded=await config();
+    check('old asymmetric setup codes are normalized to mutual forces',
+      symmetric(loaded)&&Math.abs(loaded.matrix[1]-.2)<1e-7);
+    check('old setup codes restore a named pattern with the fixed cycle speed',
+      loaded.field.pattern==='Golden spiral'&&loaded.field.morph===1&&await select.inputValue()==='1');
+    await p.locator('.pl-share-tools > summary').click();
+    await p.locator('.pl-group-matrix').screenshot({path:path.join(dump,'patterns-desktop.png')});
+    await p.locator('.pl-possibilities').screenshot({path:path.join(dump,'possibilities-desktop.png')});
+    await p.locator('.pl-fullscreen').click();await p.locator('.pl-fs-drawer-toggle').click();
+    await select.scrollIntoViewIfNeeded();
+    check('the pattern dropdown fits the fullscreen drawer',await select.evaluate(el=>{
+      const r=el.getBoundingClientRect(),panel=document.querySelector('.pl-controls').getBoundingClientRect();
+      return r.height>=44&&r.left>=panel.left&&r.right<=panel.right;
+    }));
+    await p.screenshot({path:path.join(dump,'patterns-fullscreen.png')});
+    await p.keyboard.press('Escape');
+    const phone=await open(mobile,url);
+    await phone.getByLabel('Pattern',{exact:true}).selectOption({label:'Twin galaxies'});
+    check('phone selection holds the chosen pattern and unchecks cycling',
+      !await phone.locator('.pl-toggle-auto').isChecked()&&
+      await phone.evaluate(()=>__plTest.config().field.pattern==='Twin galaxies'));
+    check('phone controls fit the page and use the 20px site gutter',await phone.evaluate(()=>
+      document.documentElement.scrollWidth<=innerWidth&&
+      getComputedStyle(document.body).paddingLeft==='20px'));
+    await phone.locator('.pl-toggle-auto').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)));
+    await phone.locator('.pl-group-matrix').screenshot({path:path.join(dump,'patterns-phone.png')});
+    await phone.locator('.pl-possibilities').screenshot({path:path.join(dump,'possibilities-phone.png')});
+    await p.locator('.pl-reset').click();
+    check('Reset restores automatic cycling and keeps symmetric forces',
+      await p.locator('.pl-toggle-auto').isChecked()&&symmetric(await config()));
+    check('control changes produce no JavaScript or WebGPU errors',errors.length===0);
+  } finally {
+    await context.close();await mobile.close();
+  }
 }
 async function pauseChecks(browser, url, nativeContext) {
   const context=nativeContext||await browser.newContext({viewport:{width:1440,height:200}});
@@ -239,8 +341,7 @@ async function saveChecks(browser, url) {
     check('matrix help fits in one short sentence pair',
       (await p.locator('.pl-matrix-explainer').textContent()).trim()==='Tap a cell to change it. Green attracts; red repels.');
     await p.locator('.pl-group-physics').screenshot({path:path.join(dump,'saves-empty-desktop.png')});
-    await p.locator('.pl-toggle-auto').uncheck();
-    await p.locator('.pl-field-next').click();
+    await p.locator('.pl-pattern-select').selectOption({label:'Twin galaxies'});
     await p.locator('[data-param="force"]').fill('0.75');
     await p.locator('[data-param="force"]').dispatchEvent('input');
     const saved=await cfg();
@@ -252,7 +353,7 @@ async function saveChecks(browser, url) {
       await p.getByRole('button',{name:'Delete setup 1',exact:true}).count()===1&&
       await p.locator('.pl-saved-swatch').count()===saved.k);
     await p.locator('.pl-recolor').click();
-    await p.locator('.pl-field-next').click();
+    await p.locator('.pl-pattern-select').selectOption({label:'River bends'});
     await p.locator('[data-param="force"]').fill('1.25');
     await p.locator('[data-param="force"]').dispatchEvent('input');
     await p.getByRole('button',{name:'Load setup 1',exact:true}).click();
@@ -387,6 +488,10 @@ let browser, browserChild, browserProfile;
     } else {
       browser=await chromium.launch({headless:!process.env.HEADFUL,args:['--enable-unsafe-webgpu','--use-angle=metal'],executablePath:executable});
     }
+    if(!process.env.NATIVE_FOCUS) {
+      await controlChecks(browser,url);
+      if(process.env.CONTROLS_ONLY) {console.log('Screenshots: '+dump);return;}
+    }
     await pauseChecks(browser,url,nativeContext);
     if(process.env.PAUSE_ONLY) { console.log('Screenshots: '+dump);return; }
     await saveChecks(browser,url);
@@ -400,16 +505,13 @@ let browser, browserChild, browserProfile;
     check('100 opening rolls stay within the curated set',paletteRolls.samples.every(q=>allowed.includes(JSON.stringify(q))));
     const wanted=['Vortex','Golden spiral','Flower of life','Twin galaxies','Figure eight','River bends'];
     check('the playlist contains the retained and new patterns only',JSON.stringify(opening.patterns)===JSON.stringify(wanted));
-    await p.locator('.pl-toggle-auto').uncheck();
     const visited=[];
-    for(let i=0;i<wanted.length;i++) {
-      visited.push(await p.locator('.pl-field-name').textContent());
-      await p.locator('.pl-field-next').click();
+    for(const name of wanted) {
+      await p.locator('.pl-pattern-select').selectOption({label:name});
+      visited.push(await p.locator('.pl-pattern-select').evaluate(el=>el.selectedOptions[0].textContent));
     }
-    check('Next visits every pattern once',wanted.every(name=>visited.includes(name))&&new Set(visited).size===wanted.length);
-    const current=await p.locator('.pl-field-name').textContent();
-    await p.locator('.pl-field-prev').click();await p.locator('.pl-field-next').click();
-    check('Previous and Next return to the same pattern',await p.locator('.pl-field-name').textContent()===current);
+    check('the dropdown can choose every pattern directly',wanted.every(name=>visited.includes(name))&&new Set(visited).size===wanted.length);
+    check('manual pattern selection turns cycling off',!await p.locator('.pl-toggle-auto').isChecked());
     let box=await p.locator('.pl-canvas').boundingBox();
     let cx=box.x+box.width/2, cy=box.y+box.height/2;
     await p.mouse.move(cx,cy); await p.mouse.down(); await p.waitForTimeout(500);

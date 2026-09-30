@@ -39,12 +39,10 @@
   var recolorBtns   = container.querySelectorAll('.pl-recolor');
   var presetBtns    = container.querySelectorAll('[data-preset]');
   var loopToggleEl  = container.querySelector('.pl-toggle-loop');
-  var symToggleEl   = container.querySelector('.pl-toggle-sym');
   var fieldToggleEl  = container.querySelector('.pl-toggle-field');
   var layerToggleEl  = container.querySelector('.pl-toggle-layers');
   var autoToggleEl   = container.querySelector('.pl-toggle-auto');
-  var fieldPrevBtn   = container.querySelector('.pl-field-prev');
-  var fieldNextBtn   = container.querySelector('.pl-field-next');
+  var patternSelectEl = container.querySelector('.pl-pattern-select');
 
   /* ---------- WebGPU support check ---------- */
   if (!navigator.gpu) {
@@ -83,7 +81,6 @@
     if (name === 'beta')     return parseFloat(v).toFixed(2);
     if (name === 'repel')    return parseFloat(v).toFixed(1);
     if (name === 'fieldstr')  return parseFloat(v).toFixed(1);
-    if (name === 'fieldmorph') return parseFloat(v).toFixed(1) + '×';
     return v;
   }
   function param(name, fallback) {
@@ -581,7 +578,7 @@
     for (var i = 0; i < K * K; i++) {
       matrix[i] = Math.random() * 2 - 1;
     }
-    if (simSymmetric) symmetrizeMatrix();
+    symmetrizeMatrix();
     // Roll fresh colors alongside the matrix — same intent (a fresh
     // visual roll), and cheap. Guarded on paletteBuffer because this
     // can fire before WebGPU init in some paths.
@@ -591,9 +588,8 @@
     uploadMatrix();
   }
 
-  /* Force matrix symmetry by averaging each (i,j) and (j,i) pair so the
-     interaction between two species is mutual. Called whenever the
-     "Symmetric" toggle is on after any matrix write. */
+  /* Every interaction is mutual. Average imported or randomized pairs;
+     direct cell edits write the same value to both mirrored cells. */
   function symmetrizeMatrix() {
     for (var i = 0; i < K; i++) {
       for (var j = i + 1; j < K; j++) {
@@ -627,7 +623,7 @@
     for (var i = 0; i < K * K; i++) {
       matrix[i] = Math.random() * 2 - 1;
     }
-    if (simSymmetric) symmetrizeMatrix();
+    symmetrizeMatrix();
     reassignColors();
     // Fresh colors on every species-count change — the visible swatch
     // count is changing anyway, no reason to keep the old prefix.
@@ -691,7 +687,7 @@
       for (var i = 0; i < K * K; i++) {
         matrix[i] = Math.random() * 2 - 1;
       }
-      if (simSymmetric) symmetrizeMatrix();
+      symmetrizeMatrix();
       // setK was a no-op, so it didn't reshuffle the palette either —
       // do it here so "Randomize all" always lands on a fresh color set
       // even when the species count happens to repeat.
@@ -724,10 +720,8 @@
       // full density; applyPreset() clamps down to the tier cap at apply
       // time. 58k looks gloriously dense on a discrete GPU.
       physics: { count: 58000, rmax: 36, force: 2.2, friction: 1.45, beta: 0.55, repel: 10.4 },
-      // Symmetric=true to match the new default. The asymmetric off-diagonal
-      // pair (0.29 / -0.48) averages to a mild mutual repulsion; lava still
-      // reads as molten clusters separating along their boundary.
-      looping: true, symmetric: true,
+      // The off-diagonal pair averages to a mild mutual repulsion.
+      looping: true,
       // chromium yellow + blood orange -- classic warm-spectrum lava
       palette: [0, 5]
     },
@@ -739,7 +733,7 @@
         -0.2763305902481079, 0.5049974918365479
       ],
       physics: { count: 30000, rmax: 69, force: 0.2, friction: 1.45, beta: 0.74, repel: 1.9 },
-      looping: true, symmetric: false,
+      looping: true,
       // malachite + iodine violet -- biological membrane vs nucleus contrast
       palette: [1, 7]
     },
@@ -755,7 +749,7 @@
       // the tier cap (8k mobile / 40k desktop / 40k mobile-unlocked) at
       // apply time.
       physics: { count: 182000, rmax: 33, force: 0.35, friction: 1.75, beta: 0.47, repel: 5.2 },
-      looping: true, symmetric: true,
+      looping: true,
       // plasma pink + phosphor cyan -- retro fizzy soda
       palette: [2, 8]
     }
@@ -803,7 +797,6 @@
       matrix: preset.matrix,
       physics: preset.physics ? Object.assign({}, preset.physics) : null,
       looping: preset.looping,
-      symmetric: preset.symmetric,
       palette: preset.palette ? preset.palette.slice() : null
     };
     // Apply the active tier cap to preset particle counts. The preset
@@ -817,7 +810,7 @@
       cfg.physics.count = cap;
     }
     // The new presets use the same snapshot shape as the slot system
-    // (k, matrix, physics, looping, symmetric). Route through applyConfig
+    // (k, matrix, physics, looping). Route through applyConfig
     // so K, the matrix, the physics sliders, and both flags update together.
     applyConfig(cfg);
   }
@@ -855,7 +848,7 @@
         repel:    sliders.repel ? parseFloat(sliders.repel.value) : 4.0
       },
       looping:   simLooping,
-      symmetric: simSymmetric,
+      symmetric: true, // retained for compatibility with older setup codes
       // Store the dominant pattern by name, so saves survive playlist changes.
       field: {
         pattern: FIELD_PATTERNS[fieldAlphaEased < 0.5 ? fieldA : fieldB],
@@ -863,7 +856,7 @@
         layers:   fieldLayersOn,
         auto:     fieldAutoMorph,
         strength: sliders.fieldstr ? parseFloat(sliders.fieldstr.value) : FIELD_STRENGTH_DEFAULT,
-        morph:    sliders.fieldmorph ? parseFloat(sliders.fieldmorph.value) : 1.0
+        morph:    1.0 // fixed cycle speed, also understood by older clients
       }
     };
   }
@@ -912,20 +905,14 @@
       simLooping = cfg.looping;
       if (loopToggleEl) loopToggleEl.checked = simLooping;
     }
-    if (typeof cfg.symmetric === 'boolean') {
-      simSymmetric = cfg.symmetric;
-      if (symToggleEl) symToggleEl.checked = simSymmetric;
-    }
     for (var i = 0; i < K * K && i < cfg.matrix.length; i++) {
       var v = cfg.matrix[i];
       if (typeof v !== 'number' || !isFinite(v)) v = 0;
       matrix[i] = Math.max(-1, Math.min(1, v));
     }
-    // If the loaded config (or the current default) wants symmetry, enforce
-    // it on the just-written matrix. Without this, presets/slots that store
-    // an asymmetric matrix alongside symmetric=true would render with the
-    // toggle on but visibly asymmetric cells in the matrix grid.
-    if (simSymmetric) symmetrizeMatrix();
+    // Older saves can carry asymmetric values or symmetric:false. Normalize
+    // their pairs too; imported setups cannot turn mutual forces off.
+    symmetrizeMatrix();
     rebuildMatrixGrid();
     uploadMatrix();
     // Restore the rogue field ONLY if this config carries it. Presets, boot,
@@ -1198,9 +1185,8 @@
               }
               matrix[rr * K + c2] = levels[(idx + 1) % levels.length];
             }
-            // Mirror the change if symmetric mode is on, then rebuild the
-            // grid so the transposed cell visibly updates too.
-            if (simSymmetric && rr !== c2) {
+            // Mirror every pair and refresh both cells together.
+            if (rr !== c2) {
               matrix[c2 * K + rr] = matrix[rr * K + c2];
               rebuildMatrixGrid();
             } else {
@@ -1299,7 +1285,6 @@
   var simFriction = 0.55;
   var simRepel = 4.0;
   var simLooping = true;     // toroidal world; false = bouncing walls
-  var simSymmetric = true;   // enforce matrix[i][j] == matrix[j][i]
   /* ---------- Pointer state ----------
      Default gestures plow a swept path and carry particles with the swipe.
      Shift-drag keeps the original swirl. Positions and radius are in
@@ -1322,18 +1307,15 @@
   /* ====== ROGUE FIELD — morphing geometric flow conductor ======
      An invisible vector field is added to every particle's force in
      WGSL_UPDATE. Here we run the "playlist": a shuffle-bag tour through the
-     pattern set, crossfading one pattern into the next like an old-school
-     music visualizer. The tour is a fixed shuffled ORDER plus a CURSOR, so
-     the user can step forward AND backward through it (Prev / Next) and can
-     freeze it entirely (Auto-morph off). Four live pattern ids drive the two
+     pattern set, crossfading one pattern into the next. The dropdown can park
+     directly on any pattern; automatic cycling follows a shuffled order.
+     Four live pattern ids drive the two
      density layers; the GPU does the per-particle density blend:
         loose particles:  fieldA (from) -> fieldB (to)
         dense clusters:   fieldC (from) -> fieldD (to)   [when layers on]
      At rest the loose layer shows order[idx] and the dense layer order[idx+1]
      (one step ahead, so two different shapes always coexist). A transition to
-     idx+dir lerps both layers by fieldAlpha; on completion idx += dir. Going
-     backward just sets dir = -1, which is why we keep a persistent order
-     instead of a consumable bag.
+     next index lerps both layers by fieldAlpha; on completion the index advances.
 
      Defaults come from flow-field visualizer research (Milkdrop/AVS preset
      blending; Reynolds flow-following): the external field is a CONDUCTOR,
@@ -1359,14 +1341,14 @@
                                      // "intensity" of the layer split)
   var FIELD_HOLD = 14.0;             // seconds a pattern holds before morphing
   var FIELD_TRANS = 6.0;             // seconds to crossfade in the ambient auto-tour
-                                     // (Prev/Next are instant hard cuts -- see fieldStep)
+                                     // (manual selections take effect immediately)
   var FIELD_JITTER = 4.0;            // +/- seconds of randomness on each hold
   var FIELD_PHASE_RATE = 0.5;        // how fast each pattern animates (rad/s)
   var FIELD_TWO_PI_K = 6.283185307 * 1024.0;  // phase wrap to keep f32 precise
 
   var fieldEnabled = true;           // master on/off (default on: it's the feature)
   var fieldLayersOn = false;         // split loose vs dense onto two patterns (off by default)
-  var fieldAutoMorph = true;         // auto-cycle; false = hold until Prev/Next
+  var fieldAutoMorph = true;         // false = hold the selected pattern
   var fieldPhase = 0.0;              // animation clock, uploaded each frame
   var fieldAlphaEased = 0.0;         // smootherstep(crossfade), uploaded to GPU
   var fieldA = 0, fieldB = 1, fieldC = 1, fieldD = 2; // loose from/to, dense from/to
@@ -1377,7 +1359,6 @@
   var fieldTimer = 0.0;              // seconds elapsed in the current state
   var fieldHoldLen = FIELD_HOLD;     // this hold's length (re-rolled w/ jitter)
   var fieldRawAlpha = 0.0;           // un-eased crossfade progress 0..1
-  var fieldNameEl = null;            // readout span (looked up at wire time)
 
   // Index into the shuffled order, wrapping both ways.
   function fieldOrderAt(i) {
@@ -1397,7 +1378,7 @@
   }
 
   // Fisher-Yates shuffle of [0 .. N-1]. Fixed for the session (re-rolled only
-  // on Reset / load) so Prev and Next are exact inverses.
+  // on Reset / load) so the auto-tour visits every pattern once per cycle.
   function fieldShuffleOrder() {
     fieldOrder = FIELD_PATTERNS.map(function (_, i) { return i; });
     for (var i = fieldOrder.length - 1; i > 0; i--) {
@@ -1416,7 +1397,7 @@
     fieldAlphaEased = 0.0;
     fieldHoldLen = FIELD_HOLD + (Math.random() * 2 - 1) * FIELD_JITTER;
     fieldComputeIds();
-    fieldUpdateReadout();
+    syncFieldSelection();
   }
 
   // Land on the cursor's destination: advance idx by the active direction,
@@ -1431,41 +1412,34 @@
     fieldAlphaEased = 0.0;
     fieldHoldLen = FIELD_HOLD + (Math.random() * 2 - 1) * FIELD_JITTER;
     fieldComputeIds();
-    fieldUpdateReadout();
+    syncFieldSelection();
   }
 
-  // Begin a crossfade in the given direction (+1 next, -1 prev). If one is
-  // already running, snap it home first so repeated presses feel responsive.
-  // Smooth crossfade -- used ONLY by the ambient auto-tour.
-  function fieldStartTransition(dir) {
+  // Automatic cycling crossfades toward the next pattern in the playlist.
+  function fieldStartTransition() {
     if (fieldState === 'trans') fieldCommit();
-    fieldDir = dir;
+    fieldDir = 1;
     fieldState = 'trans';
     fieldTimer = 0.0;
     fieldRawAlpha = 0.0;
     fieldAlphaEased = 0.0;
     fieldComputeIds();
-    fieldUpdateReadout();
+    syncFieldSelection();
   }
 
-  // Prev / Next: INSTANT hard cut. Jump the cursor and show the new pattern
-  // immediately (no crossfade), so a click registers at once. The field force
-  // switches in one frame; the particles still ease into the new flow on their
-  // own thanks to their inertia, so it reads as snappy, not jarring.
-  function fieldStep(dir) {
-    if (fieldState === 'trans') fieldCommit();   // settle any in-flight auto crossfade
-    var n = fieldOrder.length;
-    fieldIdx = (((fieldIdx + dir) % n) + n) % n;
+  // A manual selection also cancels any crossfade already in progress.
+  function chooseFieldPattern(id) {
+    var idx = fieldOrder.indexOf(id);
+    if (idx === -1) return;
+    fieldIdx = idx;
     fieldDir = 0;
     fieldState = 'hold';
-    fieldTimer = 0.0;                              // restart the auto-hold countdown
+    fieldTimer = 0.0;
     fieldRawAlpha = 0.0;
     fieldAlphaEased = 0.0;
     fieldComputeIds();
-    fieldUpdateReadout();
+    syncFieldSelection();
   }
-  function fieldNext() { fieldStep(1); }
-  function fieldPrev() { fieldStep(-1); }
 
   // smootherstep (quintic): zero velocity AND acceleration at both ends, so
   // the morph eases in and out imperceptibly. Stronger than cubic smoothstep.
@@ -1474,30 +1448,24 @@
     return t * t * t * (t * (t * 6 - 15) + 10);
   }
 
-  // The "Morph" slider is a speed multiplier; higher = shorter hold + trans.
-  function fieldMorphRate() { return param('fieldmorph', 1.0); }
-
   function advanceField(dt) {
     // Advance the pattern's internal animation clock ONLY while the field is
-    // actively touring or mid-crossfade. With Auto-morph off and parked, freeze
-    // it so the pattern truly holds still instead of slowly rotating/drifting
-    // (that drift was the "it still changes when auto-morph is off" report).
+    // actively touring or mid-crossfade. With cycling off and parked, freeze
+    // it so the selected shape holds still instead of rotating or drifting.
     if (fieldEnabled && (fieldAutoMorph || fieldState === 'trans')) {
       fieldPhase += dt * FIELD_PHASE_RATE;
       if (fieldPhase > FIELD_TWO_PI_K) { fieldPhase -= FIELD_TWO_PI_K; }
     }
     if (!fieldEnabled) return;
-    var rate = fieldMorphRate();
     if (fieldState === 'hold') {
       fieldAlphaEased = 0.0;
-      // Only auto-advance when Auto-morph is on. Off = park on this pattern
-      // until the user steps with Prev / Next.
+      // Cycling off holds the selected pattern.
       if (fieldAutoMorph) {
-        fieldTimer += dt * rate;
-        if (fieldTimer >= fieldHoldLen) fieldStartTransition(1);
+        fieldTimer += dt;
+        if (fieldTimer >= fieldHoldLen) fieldStartTransition();
       }
     } else { // 'trans' -- the ambient auto-tour crossfade; runs to completion.
-      fieldTimer += dt * rate;
+      fieldTimer += dt;
       fieldRawAlpha = FIELD_TRANS > 0 ? (fieldTimer / FIELD_TRANS) : 1.0;
       if (fieldRawAlpha >= 1.0) {
         fieldAlphaEased = 1.0;
@@ -1506,26 +1474,25 @@
         fieldAlphaEased = smootherstep(fieldRawAlpha);
       }
     }
-    fieldUpdateReadout();
+    syncFieldSelection();
   }
 
-  // Human-readable "what am I looking at" string: the loose channel's
-  // dominant pattern, plus (when layers are on) the dense channel's.
-  function fieldUpdateReadout() {
-    if (!fieldNameEl) return;
-    if (!fieldEnabled) { fieldNameEl.textContent = 'off'; return; }
+  // A separate, disabled auto entry lets choosing even the currently playing
+  // pattern fire a change event and switch to manual mode.
+  function syncFieldSelection() {
+    if (!patternSelectEl || !patternSelectEl.options.length) return;
     var looseId = (fieldAlphaEased < 0.5) ? fieldA : fieldB;
-    var txt = FIELD_PATTERNS[looseId] || '?';
-    if (fieldLayersOn) {
-      var denseId = (fieldAlphaEased < 0.5) ? fieldC : fieldD;
-      if (denseId !== looseId) txt += '  /  ' + (FIELD_PATTERNS[denseId] || '?');
+    var value = String(looseId);
+    if (fieldAutoMorph) {
+      var label = FIELD_PATTERNS[looseId] + ' (auto)';
+      if (patternSelectEl.options[0].textContent !== label) patternSelectEl.options[0].textContent = label;
+      value = 'auto';
     }
-    fieldNameEl.textContent = txt;
+    if (patternSelectEl.value !== value) patternSelectEl.value = value;
   }
 
   // Restore the field from a saved/imported config block (see snapshotConfig).
-  // Updates the live state, the toggle checkboxes, and the two sliders, then
-  // re-rolls a fresh playlist so the tour starts clean with the loaded knobs.
+  // Update the controls and start a fresh playlist at the saved pattern.
   function applyFieldConfig(f) {
     if (typeof f.enabled === 'boolean') {
       fieldEnabled = f.enabled;
@@ -1540,13 +1507,10 @@
       if (autoToggleEl) autoToggleEl.checked = fieldAutoMorph;
     }
     setFieldSlider('fieldstr', f.strength);
-    setFieldSlider('fieldmorph', f.morph);
     fieldInitPlaylist();
     var savedPattern = FIELD_PATTERNS.indexOf(f.pattern);
     if (savedPattern !== -1) {
-      fieldIdx = fieldOrder.indexOf(savedPattern);
-      fieldComputeIds();
-      fieldUpdateReadout();
+      chooseFieldPattern(savedPattern);
     }
   }
 
@@ -2590,13 +2554,11 @@
       simFriction = parseFloat(sliders.friction.value);
       simBeta     = parseFloat(sliders.beta.value);
       if (sliders.repel) simRepel = parseFloat(sliders.repel.value);
-      // Reset toggles to defaults: looping on, symmetric on.
+      // Reset looping to its default.
       simLooping = true;
-      simSymmetric = true;
       if (loopToggleEl) loopToggleEl.checked = true;
-      if (symToggleEl)  symToggleEl.checked  = true;
-      // Reset the rogue field: enabled, layered, fresh playlist. The Field
-      // and Morph sliders are already restored to defaults by the loop above.
+      // Reset the field and cycle through a fresh playlist. The strength
+      // slider is already restored to its default by the loop above.
       fieldEnabled = true;
       fieldLayersOn = false;
       fieldAutoMorph = true;
@@ -2645,58 +2607,54 @@
       // Picked up next frame via uploadParams.
     });
   }
-  if (symToggleEl) {
-    symToggleEl.checked = simSymmetric;
-    symToggleEl.addEventListener('change', function () {
-      simSymmetric = !!symToggleEl.checked;
-      // If just turned on, immediately symmetrize the current matrix so
-      // the toggle takes visible effect right away.
-      if (simSymmetric) {
-        symmetrizeMatrix();
-        rebuildMatrixGrid();
-        uploadMatrix();
-      }
+  // ---- Rogue field controls ----
+  if (patternSelectEl) {
+    var autoOption = document.createElement('option');
+    autoOption.value = 'auto';
+    autoOption.disabled = true;
+    patternSelectEl.appendChild(autoOption);
+    FIELD_PATTERNS.forEach(function (name, id) {
+      var option = document.createElement('option');
+      option.value = String(id);
+      option.textContent = name;
+      patternSelectEl.appendChild(option);
+    });
+    patternSelectEl.addEventListener('change', function () {
+      var id = parseInt(patternSelectEl.value, 10);
+      if (!isFinite(id) || id < 0 || id >= FIELD_PATTERNS.length) return;
+      fieldAutoMorph = false;
+      if (autoToggleEl) autoToggleEl.checked = false;
+      fieldEnabled = true;
+      if (fieldToggleEl) fieldToggleEl.checked = true;
+      chooseFieldPattern(id);
+      track('field_pattern_selected', { pattern: FIELD_PATTERNS[id] });
     });
   }
-  // ---- Rogue field controls ----
-  // The two sliders (fieldstr, fieldmorph) are read live by uploadParams /
-  // fieldMorphRate, so they need no onSliderChange case; only the toggles,
-  // the Prev/Next buttons, and the readout span need wiring here.
-  fieldNameEl = container.querySelector('.pl-field-name');
-  fieldUpdateReadout();
+  syncFieldSelection();
   if (fieldToggleEl) {
     fieldToggleEl.checked = fieldEnabled;
     fieldToggleEl.addEventListener('change', function () {
       fieldEnabled = !!fieldToggleEl.checked;
-      fieldUpdateReadout();
+      syncFieldSelection();
     });
   }
   if (layerToggleEl) {
     layerToggleEl.checked = fieldLayersOn;
     layerToggleEl.addEventListener('change', function () {
       fieldLayersOn = !!layerToggleEl.checked;
-      fieldUpdateReadout();
+      syncFieldSelection();
     });
   }
   if (autoToggleEl) {
     autoToggleEl.checked = fieldAutoMorph;
     autoToggleEl.addEventListener('change', function () {
       fieldAutoMorph = !!autoToggleEl.checked;
-      // Turning auto back on re-arms the hold timer from now, so it doesn't
-      // immediately fire off a stale countdown.
-      if (fieldAutoMorph && fieldState === 'hold') fieldTimer = 0.0;
-    });
-  }
-  if (fieldPrevBtn) {
-    fieldPrevBtn.addEventListener('click', function () {
-      track('field_prev_clicked');
-      fieldPrev();
-    });
-  }
-  if (fieldNextBtn) {
-    fieldNextBtn.addEventListener('click', function () {
-      track('field_next_clicked');
-      fieldNext();
+      if (fieldAutoMorph) {
+        fieldTimer = 0.0;
+        syncFieldSelection();
+      } else {
+        chooseFieldPattern(fieldAlphaEased < 0.5 ? fieldA : fieldB);
+      }
     });
   }
   bindSlotUI();
@@ -3366,7 +3324,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (params.fieldLayers == 1u) {
       // Dense clusters ride a step ahead: their own crossfade denseFrom (C) ->
       // denseTo (D). Four independent ids so the morph works in EITHER
-      // direction (Prev as well as Next); at rest C/D are the loose layer's
+      // transition direction; at rest C/D are the loose layer's
       // next shape, so two different patterns always coexist.
       let dDF = fieldUnit(fieldAt(u, hs, params.fieldC, scl, ph));
       let dDT = fieldUnit(fieldAt(u, hs, params.fieldD, scl, ph));
