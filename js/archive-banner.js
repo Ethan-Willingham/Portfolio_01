@@ -26,9 +26,10 @@
   // every post on the site. Recount both numbers together; a bump to one alone
   // makes the sentence below false. `node tools/build-search-index.mjs` prints
   // the active / in progress / archived split, which is the easiest recount.
-  var ARCHIVED = 60;
-  var TOTAL = 84;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 71
+  // All Four Wheels adds one in-progress post and one indexed post.
+  var ARCHIVED = 61;
+  var TOTAL = 85;
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 72
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +

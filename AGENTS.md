@@ -59,6 +59,13 @@ panel tokens) and the three fonts; otherwise they do not overlap.
 
 ## What lives here
 
+**All Four Wheels**, a separate shopping-cart game in progress, lives in
+`four-wheels.html`, `four-wheels.css`, and `js/four-wheels*.js`. Its editable sources
+are ordinary scripts, with no bundle step and no Sluice dependencies. Read
+`docs/FOUR_WHEELS.md` for the handling model and checks. Keep this post on
+`archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
+when changing them so deployed edits bypass stale caches.
+
 The portfolio pages and their assets (~50 live posts now; this lists the structure,
 not every page):
 

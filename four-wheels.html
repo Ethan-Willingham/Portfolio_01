@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
+  <title>All Four Wheels</title>
+  <meta name="description" content="A pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. Six short courses, playable here.">
+  <link rel="canonical" href="https://ethanwillingham.com/four-wheels.html">
+  <meta property="og:title" content="All Four Wheels">
+  <meta property="og:description" content="Turn the cart. Keep sliding. Try to leave the dishes on the shelf. A little pixel-art game about four swivel wheels.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/four-wheels.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/four-wheels.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="750">
+  <meta property="og:image:alt" content="A chunky pixel-art cart and its shopper sliding through a store with shelves, caution cones, and a checkout bay.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/four-wheels.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="four-wheels.css?v=1">
+</head>
+<body>
+  <script src="/js/archive-banner.js"></script>
+  <div class="site-wrapper">
+    <header class="post-header">
+      <a class="post-back" href="archive.html">&larr; In Progress</a>
+    </header>
+    <main>
+      <article>
+        <header class="u-hero cart-hero">
+          <p class="u-eyebrow">A game in progress</p>
+          <h1 class="u-title">All Four Wheels</h1>
+          <p class="u-dek">A shopping cart with four swivel wheels, too much momentum, and a store full of breakable things.</p>
+        </header>
+
+        <section class="cart-game" id="cart-game" aria-label="All Four Wheels game">
+          <header class="cart-toolbar">
+            <button class="cart-course-button" id="cart-courses" type="button" aria-label="Choose a course">
+              <span class="cart-kicker" id="cart-course-number">Course 01 / 06</span>
+              <span class="cart-course-name" id="cart-course-name">First push <svg width="10" height="7" viewBox="0 0 10 7" aria-hidden="true"><path d="m1 1 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
+            </button>
+            <div class="cart-readouts">
+              <div><span class="cart-kicker" id="cart-time-label">Time left</span><output class="cart-time" id="cart-time">1:05</output></div>
+              <div><span class="cart-kicker">Mishaps</span><output id="cart-messes">0</output></div>
+            </div>
+            <div class="cart-utilities">
+              <button class="cart-icon-button" id="cart-sound" type="button" aria-label="Turn sound on" aria-pressed="false" title="Sound">
+                <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-on" d="M17 8a7 7 0 0 1 0 8m3-11a11 11 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-off" d="m17 9 5 6m0-6-5 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+              </button>
+              <button class="cart-icon-button" id="cart-fullscreen" type="button" aria-label="Enter fullscreen" title="Fullscreen">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+              </button>
+              <button class="cart-icon-button" id="cart-pause" type="button" aria-label="Pause game" title="Pause (P)">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5v14m8-14v14" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="cart-stage" id="cart-stage">
+            <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Follow the numbered floor markers, then stop inside checkout.</canvas>
+            <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
+              <div class="cart-overlay-card">
+                <p class="cart-kicker" id="cart-overlay-kicker">Four wheels. All of them swivel.</p>
+                <h2 id="cart-overlay-title">First push</h2>
+                <p id="cart-overlay-text">Follow the numbered floor markers. Park at checkout, facing the arrow.</p>
+                <div id="cart-result" class="cart-result" hidden></div>
+                <label class="cart-practice" id="cart-practice-label"><input type="checkbox" id="cart-practice"> Practice without a timer</label>
+                <div class="cart-overlay-actions">
+                  <button class="cart-button cart-button-primary" id="cart-start" type="button">Let's roll</button>
+                  <button class="cart-button" id="cart-secondary" type="button" hidden>Try again</button>
+                </div>
+                <p class="cart-best" id="cart-best"></p>
+              </div>
+            </div>
+            <div class="cart-toast" id="cart-toast" aria-hidden="true"></div>
+            <p class="cart-live sr-only" id="cart-live" role="status" aria-live="polite" aria-atomic="true"></p>
+          </div>
+
+          <div class="cart-route-bar">
+            <p id="cart-route">Follow floor marker 1 of 3</p>
+            <button type="button" id="cart-retry">Retry <span>R</span></button>
+          </div>
+
+          <div class="cart-touch" id="cart-touch" aria-label="Touch game controls">
+            <div class="cart-touch-steer">
+              <button type="button" data-control="left" aria-label="Turn counterclockwise"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 11a8 8 0 1 1 2 8M5 4v7h7" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Turn</span></button>
+              <button type="button" data-control="right" aria-label="Turn clockwise"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M19 11a8 8 0 1 0-2 8m2-15v7h-7" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Turn</span></button>
+            </div>
+            <div class="cart-touch-force">
+              <button type="button" data-control="reverse" aria-label="Pull cart backward">Pull</button>
+              <button type="button" data-control="brake" aria-label="Brake cart">Brake</button>
+              <button type="button" data-control="push" class="cart-touch-push" aria-label="Push cart forward">Push</button>
+            </div>
+          </div>
+
+          <footer class="cart-controls" id="cart-instructions">
+            <span><kbd>W</kbd> <kbd>S</kbd> push / pull</span>
+            <span><kbd>A</kbd> <kbd>D</kbd> rotate</span>
+            <span><kbd>Space</kbd> brake</span>
+            <span class="cart-arrow-note">Arrow keys work too</span>
+          </footer>
+          <div class="cart-course-picker" id="cart-picker" hidden role="dialog" aria-modal="false" aria-labelledby="cart-picker-title">
+            <div class="cart-picker-head"><h2 id="cart-picker-title">Choose a course</h2><button class="cart-button" id="cart-picker-close" type="button">Back</button></div>
+            <div class="cart-course-grid" id="cart-course-grid"></div>
+          </div>
+        </section>
+
+        <div class="post-body cart-prose">
+          <p>Turn the cart and it keeps going the old way. Push in the new direction and its path starts to bend. The person holding the handle has weight, too, so the two of you rotate around a point closer to the handle than the middle of the basket.</p>
+          <p>That's the part I wanted to make into a game. Get through the store before time runs out, and try to leave the dishes on the shelf. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five. Your best runs stay in this browser.</p>
+          <details class="cart-notes">
+            <summary>A few things to try</summary>
+            <p>In the first course, push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward.</p>
+            <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. At checkout, follow the painted arrow, fit the whole cart and shopper inside the bay, and hold still for a moment.</p>
+            <p>Three marks for a clean run under the course's target time. Two for finishing with at most two mishaps. One for getting there. Practice mode has no deadline and doesn't change your records.</p>
+          </details>
+          <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-physics.js">Physics source</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
+  </div>
+  <script src="js/main.js"></script>
+  <script src="js/four-wheels-physics.js?v=1"></script>
+  <script src="js/four-wheels-levels.js?v=1"></script>
+  <script src="js/four-wheels.js?v=1"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

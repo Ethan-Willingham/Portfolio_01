@@ -120,12 +120,13 @@ for (const block of cardBlocks) {
 // the hub slug (so a hub page's own search scopes to its posts, and the homepage
 // search still finds them as non-archived), and index their real text.
 // A hub listed on the In Progress index instead of the Longform shelf gets its
-// members flagged `inprogress` (mirror of tools/gen-hubs.mjs `inProgress`), so
+// members flagged `inprogress` (from the actual In Progress collection cards), so
 // the In Progress search finds them and the UI ranks and marks them like the
 // archived posts. They are NOT `archived`: the files never moved, the URLs are
-// live, and the homepage search still finds them. Keep this list in sync.
+// live, and the homepage search still finds them.
 const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive', 'career'];
-const IN_PROGRESS_HUBS = new Set(['philosophy', 'power-story-love', 'staying-alive', 'inner-life']);
+const progressIndexHtml = existsSync(join(ROOT, 'archive.html')) ? readFileSync(join(ROOT, 'archive.html'), 'utf8') : '';
+const IN_PROGRESS_HUBS = new Set([...progressIndexHtml.matchAll(/<a class="article-item is-collection" href="([^"]+)\.html"/g)].map(m => m[1]));
 const BORING_HUBS = new Set(HUB_SLUGS.filter((s) => !IN_PROGRESS_HUBS.has(s)));
 for (const slug of HUB_SLUGS) {
   const hubFile = join(ROOT, slug + '.html');
@@ -169,6 +170,31 @@ if (existsSync(shelfFile)) {
       desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
       thumb: attr(block, /<img[^>]*src="([^"]+)"/),
       keywords: '', hub: 'boring-stuff', hubs: ['boring-stuff'], sections: [],
+    };
+    buildSections(post, join(ROOT, href));
+    posts.push(post);
+    seen.add(href);
+  }
+}
+
+// Direct in-progress posts can keep their root URLs, like the collection hubs.
+// Index their cards as inprogress, without pretending the files were archived.
+const progressFile = join(ROOT, 'archive.html');
+if (existsSync(progressFile)) {
+  const progressHtml = readFileSync(progressFile, 'utf8');
+  const inner = (progressHtml.match(/<ul class="article-list">([\s\S]*?)<\/ul>/) || [, ''])[1];
+  for (const block of inner.split(/<li class="article-list-item/).slice(1)) {
+    const href = attr(block, /<a class="article-item" href="([^"]+)"/);
+    if (!href || !/\.html$/.test(href) || href.startsWith('archive/') || seen.has(href) || !existsSync(join(ROOT, href))) continue;
+    const post = {
+      url: href,
+      title: stripToText(attr(block, /<h2 class="article-item-title">([\s\S]*?)<\/h2>/)),
+      date: attr(block, /datetime="([^"]+)"/),
+      dateDisplay: stripToText(attr(block, /<time[^>]*>([\s\S]*?)<\/time>/)),
+      desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
+      thumb: attr(block, /<img[^>]*src="([^"]+)"/),
+      keywords: attr(block, /data-keywords="([^"]+)"/),
+      inprogress: true, sections: [],
     };
     buildSections(post, join(ROOT, href));
     posts.push(post);
