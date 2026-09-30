@@ -13,6 +13,7 @@
   const BODY = Object.freeze({ cartX: 14, halfLength: 17, halfWidth: 11, personX: -16, personRadius: 7, inertia: 470 });
   const WHEELS = [[1, -12], [27, -12], [1, 12], [27, 12]];
   const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2.5, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
+  const ROOM = Object.freeze({ left: 8, right: 472, top: 8, bottom: 292, width: 480, height: 300 });
 
   function point(body, x, y) {
     const c = Math.cos(body.a), s = Math.sin(body.a);
@@ -34,6 +35,37 @@
   function casterCorners(body, wheel, i) {
     const pose = casterPose(body, wheel, i), l = CASTER.halfLength, h = CASTER.halfWidth;
     return [[-l, -h], [l, -h], [l, h], [-l, h]].map(p => point(pose, ...p));
+  }
+
+  function footprint(body, wheels) {
+    const p = point(body, BODY.personX, 0), r = BODY.personRadius;
+    return [...corners(body), ...wheels.flatMap((w, i) => casterCorners(body, w, i)),
+      { x: p.x - r, y: p.y }, { x: p.x + r, y: p.y }, { x: p.x, y: p.y - r }, { x: p.x, y: p.y + r }];
+  }
+
+  function exitGeometry(exit) {
+    const vertical = exit.side === 'left' || exit.side === 'right';
+    const nx = exit.side === 'left' ? -1 : exit.side === 'right' ? 1 : 0;
+    const ny = exit.side === 'top' ? -1 : exit.side === 'bottom' ? 1 : 0;
+    const x = vertical ? ROOM[exit.side] : exit.center, y = vertical ? exit.center : ROOM[exit.side];
+    return { ...exit, x, y, nx, ny, a: Math.atan2(ny, nx), vertical,
+      low: exit.center - exit.width / 2, high: exit.center + exit.width / 2,
+      approach: { x: x - nx * 58, y: y - ny * 58 }, outside: { x: x + nx * 70, y: y + ny * 70 } };
+  }
+
+  function roomWalls(exit, open) {
+    const walls = [
+      { side: 'left', x: -60, y: -60, w: 68, h: 420 },
+      { side: 'right', x: 472, y: -60, w: 60, h: 420 },
+      { side: 'top', x: 8, y: -60, w: 464, h: 68 },
+      { side: 'bottom', x: 8, y: 292, w: 464, h: 60 }
+    ];
+    if (!open) return walls;
+    return walls.flatMap(wall => {
+      if (wall.side !== exit.side) return [wall];
+      if (exit.vertical) return [{ ...wall, h: exit.low - wall.y }, { ...wall, y: exit.high, h: wall.y + wall.h - exit.high }];
+      return [{ ...wall, w: exit.low - wall.x }, { ...wall, x: exit.high, w: wall.x + wall.w - exit.high }];
+    });
   }
 
   // Separating-axis test, with a contact on the cart's face or leading corner.
@@ -111,15 +143,25 @@
       this.level = level; this.practice = practice;
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
       this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
-      this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0; this.park = 0;
+      this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
       this.shelves = level.shelves.map((s, i) => ({ ...s, id: i, spilled: false, wobble: 0 }));
       this.objects = level.objects.map((o, i) => ({ ...o, id: i, vx: 0, vy: 0, a: i * 1.7, omega: 0, down: false, radius: o.kind === 'cone' ? 5.5 : 8, mass: o.kind === 'cone' ? 0.12 : 0.32 }));
-      this.walls = [{ x: -60, y: -60, w: 60 + 8, h: 420 }, { x: 472, y: -60, w: 60, h: 420 }, { x: 8, y: -60, w: 464, h: 68 }, { x: 8, y: 292, w: 464, h: 60 }];
+      this.exit = exitGeometry(level.exit);
+      this.closedWalls = roomWalls(this.exit, false); this.openWalls = roomWalls(this.exit, true);
+      this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
+      this.boundaryContacts = []; this.exiting = false; this.exitEntered = false;
       this.wet = false;
     }
 
     emit(type, data = {}) { this.events.push({ type, ...data }); }
+    get exitOpen() { return this.gate === this.level.gates.length; }
+    boundaryContact(rect, hit, part) {
+      if (!rect.side) return;
+      const old = this.boundaryContacts.find(c => c.side === rect.side && c.part === part);
+      const contact = { side: rect.side, part, x: hit.x, y: hit.y, nx: hit.nx, ny: hit.ny, life: .32 };
+      if (old) Object.assign(old, contact); else this.boundaryContacts.push(contact);
+    }
     mess(kind, x, y) {
       const seconds = kind === 'cone' ? 2 : kind === 'box' ? 3 : 5;
       this.messes++; this.penalty += seconds;
@@ -212,6 +254,9 @@
       dt = clamp(dt, 0, 1 / 120);
       const b = this.body;
       this.time += dt;
+      this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
+      this.boundaryContacts.forEach(c => { c.life -= dt; });
+      this.boundaryContacts = this.boundaryContacts.filter(c => c.life > 0);
       const puddle = this.level.puddle;
       this.wet = !!puddle && ((b.x - puddle.x) / puddle.rx) ** 2 + ((b.y - puddle.y) / puddle.ry) ** 2 < 1;
       const push = clamp(input.push || 0, -1, 1), turn = clamp(input.turn || 0, -1, 1);
@@ -250,18 +295,21 @@
           const hits = [boxContact(b, rect)];
           const person = point(b, BODY.personX, 0);
           hits.push(circleRect(person.x, person.y, BODY.personRadius, rect));
-          for (const h of hits) {
+          for (let k = 0; k < hits.length; k++) {
+            const h = hits[k];
             if (!h) continue;
+            this.boundaryContact(rect, h, k === 0 ? 'cart' : 'shopper');
             const impact = this.impulse(h);
             if (impact > 9 && !rect.spilled && rect.id !== undefined) {
               rect.spilled = true; rect.wobble = 1;
               this.mess('shelf', h.x, h.y); this.emit('spill', { shelf: rect, x: h.x, y: h.y });
-            } else if (impact > 14 && pass === 0) this.emit('bump', { x: h.x, y: h.y, impact });
+            } else if (impact > 14 && pass === 0 && !rect.side) this.emit('bump', { x: h.x, y: h.y, impact });
           }
           this.wheels.forEach((wheel, i) => {
             const pose = casterPose(b, wheel, i);
             const h = polygonRectContact(casterCorners(b, wheel, i), pose, wheel.a, rect);
             if (!h) return;
+            this.boundaryContact(rect, h, 'wheel:' + i);
             const impact = this.casterImpulse(h, wheel, i);
             if (impact > 9 && !rect.spilled && rect.id !== undefined) {
               rect.spilled = true; rect.wobble = 1; this.mess('shelf', h.x, h.y); this.emit('spill', { shelf: rect, x: h.x, y: h.y });
@@ -297,6 +345,19 @@
           }
         }
       }
+      // A settled contact can have zero penetration and zero speed. The tiny
+      // tolerance catches actual touching without requiring an impact impulse.
+      for (const wall of this.walls) {
+        const touch = { ...wall, x: wall.x - .04, y: wall.y - .04, w: wall.w + .08, h: wall.h + .08 };
+        const cart = boxContact(b, touch), person = point(b, BODY.personX, 0);
+        if (cart) this.boundaryContact(wall, cart, 'cart');
+        const shopper = circleRect(person.x, person.y, BODY.personRadius, touch);
+        if (shopper) this.boundaryContact(wall, shopper, 'shopper');
+        this.wheels.forEach((wheel, i) => {
+          const pose = casterPose(b, wheel, i), hit = polygonRectContact(casterCorners(b, wheel, i), pose, wheel.a, touch);
+          if (hit) this.boundaryContact(wall, hit, 'wheel:' + i);
+        });
+      }
       this.solveCasters();
       this.wheels.forEach((w, i) => {
         const p = casterPose(b, w, i).pivot, rx = p.x - b.x, ry = p.y - b.y;
@@ -313,15 +374,15 @@
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
       if (target && Math.hypot(b.x - target.x, b.y - target.y) < 22) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
-      const goal = this.level.goal;
-      const person = point(b, BODY.personX, 0);
-      const footprint = [...corners(b), ...this.wheels.flatMap((w, i) => casterCorners(b, w, i)), { x: person.x - 7, y: person.y - 7 }, { x: person.x + 7, y: person.y + 7 }];
-      const inside = footprint.every(p => p.x > goal.x - goal.w / 2 + 2 && p.x < goal.x + goal.w / 2 - 2 && p.y > goal.y - goal.h / 2 + 2 && p.y < goal.y + goal.h / 2 - 2);
-      this.parkReady = this.gate === this.level.gates.length && inside && Math.abs(wrap(b.a - goal.a)) < 0.4 && Math.hypot(b.vx, b.vy) < 12 && Math.abs(b.omega) < 0.4;
-      this.park = this.parkReady ? this.park + dt : 0;
+      const e = this.exit, shape = footprint(b, this.wheels), tangent = e.vertical ? b.y : b.x;
+      const distance = p => (p.x - e.x) * e.nx + (p.y - e.y) * e.ny;
+      this.exiting = this.exitOpen && tangent >= e.low && tangent <= e.high && shape.some(p => distance(p) > 0);
+      if (this.exiting) this.exitEntered = true;
+      const cleared = this.exitOpen && this.exitEntered && shape.every(p => distance(p) > 8);
+      this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
       // An expired clock cannot be rescued by finishing on the same step.
       if (!this.practice && this.remaining <= 0) { this.status = 'lost'; this.emit('lost'); }
-      else if (this.park > 0.55) { this.status = 'won'; this.emit('won'); }
+      else if (cleared) { this.status = 'won'; this.emit('won'); }
     }
     get remaining() { return Math.max(0, this.level.limit - this.time - this.penalty); }
     get result() {
@@ -329,7 +390,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, CASTER, point, corners, casterPose, casterCorners, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
+  const api = { World, BODY, WHEELS, CASTER, ROOM, point, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

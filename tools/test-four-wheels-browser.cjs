@@ -21,10 +21,10 @@ const server = http.createServer((req, res) => {
       let source = data.toString(); const end = source.lastIndexOf('})();');
       source = source.slice(0, end) + `
       window.__cartTest = {
-        state: () => ({ phase, index:levelIndex, body:{...world.body}, time:world.time, gate:world.gate, messes:world.messes, penalty:world.penalty, practice:world.practice, touch:touches.size, keys:keys.size, records, canSave, remaining:world.remaining, objects:world.objects }),
+        state: () => ({ phase, index:levelIndex, body:{...world.body}, time:world.time, gate:world.gate, messes:world.messes, penalty:world.penalty, practice:world.practice, touch:touches.size, keys:keys.size, records, canSave, remaining:world.remaining, objects:world.objects, contacts:world.boundaryContacts, exitOpen:world.exitOpen, exiting:world.exiting }),
         stop: () => { cancelAnimationFrame(raf); raf=0; },
         step: (seconds,input={}) => { cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.round(seconds*120)&&phase==='running';i++){world.step(1/120,input);events();tickEffects(1/120);}draw();updateUI(); },
-        park: () => { world.gate=world.level.gates.length;const q=world.level.goal;Object.assign(world.body,{x:q.x-Math.cos(q.a)*4,y:q.y-Math.sin(q.a)*4,a:q.a,vx:0,vy:0,omega:0}); },
+        approachExit: () => { world.gate=world.level.gates.length;const q=world.exit;Object.assign(world.body,{...q.approach,a:q.a,vx:0,vy:0,omega:0});world.wheels.forEach(w=>{w.a=q.a;w.omega=0;}); },
         casterSheet: () => {
           const sheet=document.createElement('canvas');sheet.width=600;sheet.height=360;
           const g=sheet.getContext('2d');rect(g,0,0,600,360,P.floor);
@@ -60,6 +60,7 @@ async function setup(context, url) {
     await listen(); const url = 'http://127.0.0.1:' + server.address().port + '/four-wheels.html';
     browser = await chromium.launch({ headless: true, executablePath: process.env.CART_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing' });
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
+    await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]'); });
     const page = await setup(desktop, url);
     const fillsOpeningViewport = () => {
       const game=document.getElementById('cart-game').getBoundingClientRect();
@@ -103,12 +104,28 @@ async function setup(context, url) {
       return w.wheels.map((q,i)=>({angle:q.a,pivot:CartPhysics.casterPose(w.body,q,i).pivot,center:CartPhysics.casterPose(w.body,q,i),trail:CartPhysics.CASTER.trail}));
     });
     check('all four rendered casters have offset tire centers and independent angles', casterState.every(q => Math.hypot(q.center.x-q.pivot.x,q.center.y-q.pivot.y) >= q.trail) && Math.abs(casterState[0].angle-casterState[3].angle) > .1);
+    const redPixels = () => {
+      const probe=document.createElement('canvas');probe.width=probe.height=1;const p=probe.getContext('2d');
+      p.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--warn').trim()||'#d99090';p.fillRect(0,0,1,1);
+      const expected=p.getImageData(0,0,1,1).data;
+      const g=document.getElementById('cart-canvas').getContext('2d'),pixels=g.getImageData(0,0,480,300).data;let count=0;
+      for(let i=0;i<pixels.length;i+=4)if(pixels[i]===expected[0]&&pixels[i+1]===expected[1]&&pixels[i+2]===expected[2])count++;
+      return count;
+    };
+    await page.evaluate(() => { __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();Object.assign(w.body,{x:441,y:150,a:0,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=0;q.omega=0;});__cartTest.step(1/120); });
+    check('an exact resting edge touch turns the real collision outline red immediately', (await page.evaluate(() => __cartTest.state())).contacts.some(c=>c.side==='right'&&c.part==='cart') && await page.evaluate(redPixels)>100);
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'edge-contact.png')});
+    await page.evaluate(() => {__cartTest.world().body.x=410;__cartTest.step(.4);});
+    check('the red cue clears after moving away from the edge', (await page.evaluate(()=>__cartTest.state())).contacts.length===0 && await page.evaluate(redPixels)===0);
+    await page.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();Object.assign(w.body,{x:230,y:29.5,a:0,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=Math.PI/2;q.omega=0;});__cartTest.step(1/120);});
+    check('a tire brushing the edge produces the same immediate red cue', (await page.evaluate(()=>__cartTest.state())).contacts.some(c=>c.part==='wheel:0')&&await page.evaluate(redPixels)>100);
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'wheel-edge-contact.png')});
     if (process.env.ASSETS === '1') {
       const pixels = await page.evaluate(() => {
         __cartTest.reset(2); __cartTest.stop();
         const w=__cartTest.world(), wrap=CartPhysics.wrap, clamp=CartPhysics.clamp;
         for(let i=0;i<9.5*120;i++) {
-          const target=w.level.gates[w.gate]||w.level.goal,b=w.body,dx=target.x-b.x,dy=target.y-b.y,d=Math.hypot(dx,dy),speed=Math.min(62,d*1.25);
+          const target=w.level.gates[w.gate]||w.exit.approach,b=w.body,dx=target.x-b.x,dy=target.y-b.y,d=Math.hypot(dx,dy),speed=Math.min(62,d*1.25);
           const vx=d>1?dx/d*speed:0,vy=d>1?dy/d*speed:0,ax=(vx-b.vx)*2.1,ay=(vy-b.vy)*2.1;
           let error=wrap(Math.atan2(ay,ax)-b.a),sign=1;
           if(Math.abs(error)>Math.PI/2){error=wrap(error+Math.PI);sign=-1;}
@@ -120,9 +137,14 @@ async function setup(context, url) {
       await sharp(Buffer.from(pixels,'base64')).resize(1200,750,{kernel:'nearest'}).jpeg({quality:96,chromaSubsampling:'4:4:4'}).toFile(path.join(root,'assets/thumbs/four-wheels.jpg'));
       console.log('Wrote game thumbnail.');
     }
-    await page.evaluate(() => { __cartTest.reset(0); __cartTest.run(); __cartTest.park(); __cartTest.step(.7); });
+    await page.evaluate(() => { __cartTest.reset(0); __cartTest.run(); __cartTest.approachExit(); __cartTest.step(1.15,{push:1}); });
+    check('checkout has a physical opening and the cart can be halfway outside', (await page.evaluate(()=>__cartTest.state())).exiting && (await page.evaluate(()=>__cartTest.state())).phase==='running');
+    check('a clean checkout crossing does not trigger the solid-boundary warning', (await page.evaluate(()=>__cartTest.state())).contacts.length===0 && await page.evaluate(redPixels)===0);
+    await page.locator('#cart-game').screenshot({path:path.join(dump,'exit-crossing.png')});
+    await page.evaluate(() => __cartTest.step(1,{push:1}));
     a = await page.evaluate(() => __cartTest.state());
-    check('parking completes a course and saves a record', a.phase === 'won' && a.records[0].stars === 3);
+    check('driving out completes a course and saves a record', a.phase === 'won' && a.records[0].stars === 3);
+    check('the earlier parking records remain untouched', await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v1'))[0].time===12));
     await page.locator('#cart-game').screenshot({ path: path.join(dump, 'checkout.png') });
     await page.reload(); await page.waitForFunction(() => !!window.__cartTest);
     check('records survive reload', (await page.evaluate(() => __cartTest.state())).records[0].stars === 3);
@@ -133,7 +155,7 @@ async function setup(context, url) {
     check('timeout presents retry and practice actions', (await page.evaluate(() => __cartTest.state())).phase === 'lost' && await page.locator('#cart-secondary').isVisible());
     await page.locator('#cart-secondary').click();
     check('the practice action starts an untimed attempt', (await page.evaluate(() => __cartTest.state())).practice);
-    await page.evaluate(() => { __cartTest.park(); __cartTest.step(.7); });
+    await page.evaluate(() => { __cartTest.approachExit(); __cartTest.step(2,{push:1}); });
     check('practice leaves the previous timed record intact', (await page.evaluate(() => __cartTest.state())).records[0].time === a.records[0].time);
     const mobile = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const phone = await setup(mobile, url); await phone.locator('#cart-game').scrollIntoViewIfNeeded();
@@ -156,7 +178,7 @@ async function setup(context, url) {
     await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-driving.png') });
     await phone.locator('#cart-pause').tap();
     await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-pause.png') });
-    await phone.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.park();__cartTest.step(.7);});
+    await phone.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.approachExit();__cartTest.step(2,{push:1});});
     await phone.locator('#cart-game').screenshot({path:path.join(dump,'mobile-checkout.png')});
     check('mobile checkout results fit inside the playfield', await phone.evaluate(() => {
       const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(), stage=document.getElementById('cart-stage').getBoundingClientRect();
@@ -174,7 +196,7 @@ async function setup(context, url) {
       return card.top>=stage.top&&card.bottom<=stage.bottom;
     }));
     await phone.locator('#cart-game').screenshot({path:path.join(dump,'landscape-start.png')});
-    await phone.evaluate(() => {__cartTest.run();__cartTest.park();__cartTest.step(.7);});
+    await phone.evaluate(() => {__cartTest.run();__cartTest.approachExit();__cartTest.step(2,{push:1});});
     check('landscape checkout results fit without scrolling',await phone.evaluate(() => {
       const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect();
       return card.top>=stage.top&&card.bottom<=stage.bottom;

@@ -1,9 +1,9 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, wrap, clamp, BODY, CASTER, WHEELS, casterPose, casterCorners, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, wrap, clamp, BODY, CASTER, WHEELS, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const dt = 1 / 120;
-const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], goal: { x: 430, y: 230, w: 80, h: 80, a: 0 } };
+const empty = { name: 'fixture', start: { x: 230, y: 150, a: 0 }, limit: 300, par: 100, shelves: [], objects: [], gates: [{ x: 400, y: 260 }], exit: { side: 'right', center: 150, width: 80 } };
 const step = (w, seconds, input) => { for (let i = 0; i < Math.round(seconds / dt); i++) w.step(dt, input); };
 function test(name, fn) { fn(); console.log('PASS ' + name); }
 
@@ -109,20 +109,59 @@ test('the puddle keeps momentum longer and weakens braking', () => {
   assert.ok(wet.body.vx > dry.body.vx + 20);
 });
 
-test('checkout requires the route, complete footprint, heading, and a stop', () => {
-  const level = { ...empty, start: { x: 230, y: 150, a: 0 }, goal: { x: 230, y: 150, w: 82, h: 72, a: 0 } };
-  const w = new World(level); step(w, 1, {}); assert.equal(w.status, 'running');
-  w.gate = 1; w.body.a = Math.PI / 2; step(w, 1, {}); assert.equal(w.status, 'running');
-  w.body.a = 0; w.body.x = 255; step(w, 1, {}); assert.equal(w.status, 'running');
-  w.body.x = 230; step(w, .7, {}); assert.equal(w.status, 'won');
+test('every map edge reports exact resting contact without an impact threshold', () => {
+  const starts = [{ x: 441, y: 150, a: 0, side: 'right' }, { x: 39, y: 150, a: Math.PI, side: 'left' },
+    { x: 230, y: 39, a: -Math.PI / 2, side: 'top' }, { x: 230, y: 261, a: Math.PI / 2, side: 'bottom' }];
+  for (const start of starts) {
+    const w = new World({ ...empty, start }); w.step(dt);
+    assert.ok(w.boundaryContacts.some(c => c.side === start.side && c.part === 'cart'), start.side + ' must pop red on the first step');
+    step(w, .2, {}); assert.ok(w.boundaryContacts.some(c => c.life > .3), 'held contact stays lit');
+    Object.assign(w.body, { x: 230, y: 150, vx: 0, vy: 0, omega: 0 });
+    step(w, .4, {}); assert.equal(w.boundaryContacts.length, 0, 'feedback clears after separating');
+    assert.equal(w.messes, 0); assert.equal(w.penalty, 0);
+  }
 });
 
-test('checkout includes tires swung outside the basket', () => {
-  const w = new World({ ...empty, gates: [], goal: { x: 230, y: 150, w: 82, h: 36, a: 0 } });
-  w.wheels[0].a = w.wheels[1].a = Math.PI / 2;
-  step(w, .7, {}); assert.equal(w.status, 'running', 'the upward trailing tires cross the bay edge');
-  w.wheels.forEach(q => { q.a = 0; q.omega = 0; });
-  step(w, .7, {}); assert.equal(w.status, 'won', 'the same cart fits when the casters face forward');
+test('the red contact identifies a protruding caster or the shopper', () => {
+  const tire = new World({ ...empty, start: { x: 230, y: 29.5, a: 0 } });
+  tire.wheels.forEach(q => { q.a = Math.PI / 2; }); tire.step(dt);
+  assert.ok(tire.boundaryContacts.some(c => c.part === 'wheel:0' && c.side === 'top'));
+  assert.ok(tire.boundaryContacts.every(c => c.part.startsWith('wheel:')), 'the basket and shopper have not touched');
+  const shopper = new World({ ...empty, start: { x: 31, y: 150, a: 0 } }); shopper.step(dt);
+  assert.ok(shopper.boundaryContacts.some(c => c.part === 'shopper' && c.side === 'left'));
+});
+
+test('checkout stays solid until all route markers are cleared', () => {
+  const w = new World({ ...empty, start: { x: 415, y: 150, a: 0 } });
+  step(w, 3, { push: 1 });
+  assert.equal(w.status, 'running'); assert.equal(w.exitOpen, false);
+  assert.ok(w.body.x < 442 && w.boundaryContacts.some(c => c.side === 'right'));
+});
+
+test('the cart must actually leave checkout, with the shopper fully outside', () => {
+  const w = new World({ ...empty, start: { x: 415, y: 150, a: 0 } }); w.gate = 1;
+  step(w, 1, {}); assert.equal(w.status, 'running', 'waiting in the approach does not finish');
+  w.body.x = 475; step(w, 1, {});
+  assert.equal(w.status, 'running', 'the basket can be out while the shopper is still inside');
+  assert.ok(w.exiting);
+  step(w, 1.5, { push: 1 });
+  assert.equal(w.status, 'won'); assert.ok(w.body.vx > 0, 'no stopping or parking is required');
+  assert.ok(footprint(w.body, w.wheels).every(p => p.x > 480));
+});
+
+test('completion waits for trailing tires as well as the basket and shopper', () => {
+  const w = new World({ ...empty, start: { x: 514, y: 150, a: Math.PI }, gates: [] });
+  w.wheels.forEach(q => { q.a = 0; });
+  step(w, .1, {}); assert.equal(w.status, 'running', 'an outward-facing caster still has its trailing tire inside');
+  w.body.x += 4; w.step(dt); assert.equal(w.status, 'won');
+});
+
+test('the open doorway leaves its jambs and other map edges solid', () => {
+  const w = new World({ ...empty, start: { x: 415, y: 225, a: 0 }, gates: [] });
+  step(w, 3, { push: 1 }); assert.equal(w.status, 'running'); assert.ok(w.body.x < 442);
+  const left = new World({ ...empty, start: { x: 60, y: 150, a: 0 }, gates: [] });
+  step(left, 3, { push: -1 }); assert.equal(left.status, 'running');
+  assert.ok(point(left.body, BODY.personX, 0).x - BODY.personRadius >= 7.9);
 });
 
 test('timeout includes penalties, and practice has no deadline', () => {
@@ -130,18 +169,24 @@ test('timeout includes penalties, and practice has no deadline', () => {
   const practice = new World({ ...empty, limit: 1 }, true); step(practice, 4, {}); assert.equal(practice.status, 'running');
 });
 
-test('every course has a reachable, properly sized checkout', () => {
-  for (const level of levels) {
-    const w = new World(level); w.gate = level.gates.length;
-    Object.assign(w.body, { x: level.goal.x - Math.cos(level.goal.a) * 4, y: level.goal.y - Math.sin(level.goal.a) * 4, a: level.goal.a });
-    step(w, .7, {}); assert.equal(w.status, 'won', level.name);
+test('checkout openings work on all four sides of the map', () => {
+  for (const side of ['left', 'right', 'top', 'bottom']) {
+    const w = new World({ ...empty, gates: [], exit: { side, center: side === 'left' || side === 'right' ? 150 : 230, width: 80 } });
+    Object.assign(w.body, { ...w.exit.approach, a: w.exit.a }); w.wheels.forEach(q => { q.a = w.exit.a; });
+    step(w, 3, { push: 1 }); assert.equal(w.status, 'won', side);
   }
+});
+
+test('an expired clock cannot be rescued by crossing the exit on that step', () => {
+  const w = new World({ ...empty, gates: [], limit: .005, start: { x: 503, y: 150, a: 0 } }); w.body.vx = 2;
+  w.step(dt); assert.equal(w.status, 'lost');
+  assert.ok(footprint(w.body, w.wheels).every(p => p.x > 480), 'the whole footprint cleared on the expired step');
 });
 
 test('all six courses can be driven through before their deadlines', () => {
   // The controller uses only push, pull, twist and brake. It follows markers
-  // and parks with the same collisions as a player, without moving the body
-  // directly. This catches impossible layouts and parking approaches.
+  // and drives out with the same collisions as a player, without moving the
+  // body directly. This catches impossible layouts and blocked exits.
   function drive(w, target) {
     const b = w.body, dx = target.x - b.x, dy = target.y - b.y, d = Math.hypot(dx, dy);
     const speed = Math.min(62, d * 1.25), vx = d > 1 ? dx / d * speed : 0, vy = d > 1 ? dy / d * speed : 0;
@@ -151,12 +196,14 @@ test('all six courses can be driven through before their deadlines', () => {
     return { turn: clamp(error * 4 - b.omega * 1.15, -1, 1), push: Math.abs(error) < .65 ? clamp(Math.hypot(ax, ay) / (sign === 1 ? 78 : 50), 0, 1) * sign : 0, brake: Math.abs(error) > .6 && Math.hypot(b.vx, b.vy) > 40 ? 1 : 0 };
   }
   for (const level of levels) {
-    const w = new World(level), goal = { x: level.goal.x - Math.cos(level.goal.a) * 4, y: level.goal.y - Math.sin(level.goal.a) * 4 };
+    const w = new World(level); let departing = false;
     for (let i = 0; i < level.limit * 120 && w.status === 'running'; i++) {
       let input;
       if (w.gate < level.gates.length) input = drive(w, level.gates[w.gate]);
-      else if (Math.hypot(w.body.x - goal.x, w.body.y - goal.y) > 4) input = drive(w, goal);
-      else input = { brake: 1, turn: clamp(wrap(level.goal.a - w.body.a) * 4 - w.body.omega * 1.15, -1, 1) };
+      else {
+        if (Math.hypot(w.body.x - w.exit.approach.x, w.body.y - w.exit.approach.y) < 7) departing = true;
+        input = drive(w, departing ? w.exit.outside : w.exit.approach);
+      }
       w.step(dt, input);
     }
     assert.equal(w.status, 'won', level.name + ': route must be completable with time penalties');
@@ -170,7 +217,8 @@ test('all courses stay finite during hard pushes, spin, and contact', () => {
       w.step(dt, { push: Math.sin(i / 260) > -.7 ? 1 : -1, turn: Math.sin(i / 115), brake: i % 480 < 30 ? 1 : 0 });
       for (const value of Object.values(w.body)) assert.ok(Number.isFinite(value), level.name);
       for (const q of w.wheels) for (const value of Object.values(q)) assert.ok(Number.isFinite(value), level.name + ' caster');
-      assert.ok(w.body.x >= 7 && w.body.x <= 473 && w.body.y >= 7 && w.body.y <= 293, level.name);
+      if (!w.exitOpen) assert.ok(w.body.x >= 7 && w.body.x <= 473 && w.body.y >= 7 && w.body.y <= 293, level.name);
+      assert.ok(w.body.x > -80 && w.body.x < 560 && w.body.y > -80 && w.body.y < 380, level.name);
     }
   }
 });

@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=3">
+  <link rel="stylesheet" href="four-wheels.css?v=4">
 </head>
 <body class="cart-page">
   <div class="site-wrapper">
@@ -60,12 +60,12 @@
           </header>
 
           <div class="cart-stage" id="cart-stage">
-            <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Follow the numbered floor markers, then stop inside checkout.</canvas>
+            <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Follow the numbered floor markers, then drive out through checkout.</canvas>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
                 <p class="cart-kicker" id="cart-overlay-kicker">Course 01 / 06 &middot; First push</p>
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
-                <p id="cart-overlay-text">Follow the numbered floor markers. Park at checkout, facing the arrow.</p>
+                <p id="cart-overlay-text">Follow the numbered floor markers to open checkout. Then drive out of the store.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
                 <label class="cart-practice" id="cart-practice-label"><input type="checkbox" id="cart-practice"> Practice without a timer</label>
                 <div class="cart-overlay-actions">
@@ -115,7 +115,8 @@
             <p>Get through the store before time runs out. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five.</p>
             <p>In the first course, push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward.</p>
             <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch the wheels swing around; turn while moving and each one follows a different curve. You can see them through the basket.</p>
-            <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. At checkout, follow the painted arrow, fit the whole cart and shopper inside the bay, and hold still for a moment.</p>
+            <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. The map edge and your outline turn red when the basket, a wheel, or you touch the boundary.</p>
+            <p>Clear every marker to open checkout. Follow the painted arrow and drive through the opening in the outer wall. Keep rolling until you and all four wheels are outside.</p>
             <p>Three marks for a clean run under the course's target time. Two for finishing with at most two mishaps. One for getting there. Practice mode has no deadline and doesn't change your records.</p>
           </details>
           <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-physics.js">Physics source</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
@@ -128,9 +129,9 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-physics.js?v=3"></script>
-  <script src="js/four-wheels-levels.js?v=3"></script>
-  <script src="js/four-wheels.js?v=3"></script>
+  <script src="js/four-wheels-physics.js?v=4"></script>
+  <script src="js/four-wheels-levels.js?v=4"></script>
+  <script src="js/four-wheels.js?v=4"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

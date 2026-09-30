@@ -3,7 +3,7 @@
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
   if (!ctx || !window.CartPhysics || !window.CartLevels) return;
-  const { World, point, WHEELS, CASTER, casterPose, clamp, wrap } = CartPhysics;
+  const { World, BODY, point, corners, WHEELS, CASTER, casterPose, casterCorners, clamp } = CartPhysics;
   const levels = CartLevels, game = $('game');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const rootStyle = getComputedStyle(document.documentElement);
@@ -11,11 +11,11 @@
   const P = {
     dark: token('--bg-raised', '#1e2420'), green: token('--bg', '#303931'), edge: token('--rule', '#4a544b'),
     mid: token('--line-mid', '#767d71'), floor: token('--text-dim', '#b8b2a2'), seam: token('--text-faint', '#a4a293'),
-    cream: token('--text', '#e8e2d6'), light: token('--text-bright', '#f5f1ea'), gold: token('--accent', '#d4c4a0'),
+    cream: token('--text', '#e8e2d6'), light: token('--text-bright', '#f5f1ea'), gold: token('--accent', '#d4c4a0'), red: token('--warn', '#d99090'),
     sage: '#9ec79a', pine: '#6f9a6c', clay: '#cf9f78', coral: '#d9978c', blue: '#8fb3c7', purple: '#b79bc4', brick: '#b8796d'
   };
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
-  const STORAGE = 'four-wheels-records-v1';
+  const STORAGE = 'four-wheels-records-v2';
   let records = [], canSave = true;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
@@ -279,14 +279,31 @@
   }
 
   function drawRoute(g, w) {
-    const goal = w.level.goal, unlocked = w.gate === w.level.gates.length;
-    const x = goal.x - goal.w / 2, y = goal.y - goal.h / 2;
-    g.globalAlpha = unlocked ? .32 : .18; rect(g, x, y, goal.w, goal.h, P.pine); g.globalAlpha = 1;
-    for (let xx = x; xx < x + goal.w; xx += 8) { rect(g, xx, y, 5, 2, P.green); rect(g, xx, y + goal.h - 2, 5, 2, P.green); }
-    for (let yy = y; yy < y + goal.h; yy += 8) { rect(g, x, yy, 2, 5, P.green); rect(g, x + goal.w - 2, yy, 2, 5, P.green); }
-    text(g, 'CHECKOUT', goal.x, y + 11, P.green, 7, 'center');
-    g.globalAlpha = unlocked ? .65 : .3; arrow(g, goal.x + Math.cos(goal.a) * 4, goal.y + Math.sin(goal.a) * 4, goal.a, 29, P.green); g.globalAlpha = 1;
-    if (w.park > 0) rect(g, x + 4, y + goal.h - 6, (goal.w - 8) * Math.min(1, w.park / .55), 3, P.pine);
+    const e = w.exit, unlocked = w.exitOpen, half = e.width / 2;
+    g.save();
+    g.globalAlpha = unlocked ? .24 : .12;
+    localRect(g, e, -78, -half, 78, e.width, P.pine);
+    g.globalAlpha = 1;
+    // This opening cuts through the painted room border as well as the wall
+    // collider. The cart can physically pass through and leave the canvas.
+    localRect(g, e, -3, -half, 12, e.width, P.floor);
+    for (let x = -75; x < -5; x += 10) {
+      localRect(g, e, x, -half, 6, 1, P.green); localRect(g, e, x, half - 1, 6, 1, P.green);
+    }
+    const label = point(e, -61, 0);
+    text(g, 'CHECKOUT', label.x, label.y - 2, P.green, 6, 'center');
+    text(g, unlocked ? 'EXIT' : 'LOCKED', label.x, label.y + 6, P.edge, 5, 'center');
+    const lead = point(e, -27, 0); arrow(g, lead.x, lead.y, e.a, 30, unlocked ? P.green : P.mid);
+    for (let y = -half; y < half; y += 8) localRect(g, e, -11, y, 3, 4, P.cream);
+    if (!unlocked) {
+      localRect(g, e, -1, -half, 9, e.width, P.dark);
+      for (let y = -half + 2; y < half - 1; y += 5) localRect(g, e, 0, y, 6, 2, P.mid);
+    }
+    for (const y of [-half - 3, half]) {
+      localRect(g, e, -4, y, 12, 3, P.dark);
+      localRect(g, e, -2, y, 4, 3, unlocked ? P.sage : P.gold);
+    }
+    g.restore();
     w.level.gates.forEach((p, i) => {
       const current = i === w.gate, done = i < w.gate;
       g.globalAlpha = done ? .35 : current ? 1 : .55;
@@ -300,6 +317,35 @@
       else text(g, String(i + 1), p.x + 1, p.y + 4, color, 11, 'center');
       g.globalAlpha = 1;
     });
+  }
+
+  function drawBoundary(g, w) {
+    if (!w.boundaryContacts.length) return;
+    g.save();
+    const life = Math.max(...w.boundaryContacts.map(c => c.life));
+    g.globalAlpha = clamp(life / .18, 0, 1);
+    const person = point(w.body, BODY.personX, 0);
+    const circle = Array.from({ length: 32 }, (_, i) => ({ x: person.x + Math.cos(i * Math.PI / 16) * BODY.personRadius, y: person.y + Math.sin(i * Math.PI / 16) * BODY.personRadius }));
+    const shapes = [{ part: 'cart', points: corners(w.body) }, { part: 'shopper', points: circle },
+      ...w.wheels.map((q, i) => ({ part: 'wheel:' + i, points: casterCorners(w.body, q, i) }))];
+    for (const shape of shapes) {
+      if (w.boundaryContacts.some(c => c.part === shape.part)) {
+        const alpha = g.globalAlpha; g.globalAlpha *= .3; poly(g, shape.points, P.red); g.globalAlpha = alpha;
+      }
+      shape.points.forEach((p, i) => {
+        const q = shape.points[(i + 1) % shape.points.length];
+        line(g, p.x - 1, p.y - 1, q.x - 1, q.y - 1, P.dark, 3);
+        line(g, p.x, p.y, q.x, q.y, P.red);
+      });
+    }
+    for (const c of w.boundaryContacts) {
+      g.globalAlpha = clamp(c.life / .18, 0, 1);
+      const x = clamp(c.x, 2, 477), y = clamp(c.y, 2, 297);
+      line(g, x - c.ny * 12 - 1, y + c.nx * 12 - 1, x + c.ny * 12 - 1, y - c.nx * 12 - 1, P.dark, 4);
+      line(g, x - c.ny * 12, y + c.nx * 12, x + c.ny * 12, y - c.nx * 12, P.red, 2);
+      rect(g, x - 2, y - 2, 5, 5, P.red); rect(g, x - 1, y - 1, 3, 3, P.light);
+    }
+    g.restore();
   }
 
   function draw(g = ctx, w = world, background = floor, preview = false) {
@@ -328,6 +374,7 @@
       g.globalAlpha = .2; rect(g, p.x + 1, p.y + 2, p.w, p.h, P.dark); g.globalAlpha = clamp(p.life, 0, 1);
       localRect(g, { x: p.x, y: p.y - p.z, a: p.a }, -p.w / 2, -p.h / 2, p.w, p.h, p.color); g.globalAlpha = 1;
     }
+    if (!preview) drawBoundary(g, w);
     g.restore();
   }
 
@@ -360,7 +407,7 @@
   function events() {
     for (const e of world.events.splice(0)) {
       sound.event(e);
-      if (e.type === 'gate') { burst(e.x, e.y, 8, [P.cream, P.gold, P.sage], 'gate'); notify(world.gate < world.level.gates.length ? 'Marker ' + world.gate + ' cleared' : 'All markers cleared. Park at checkout.'); }
+      if (e.type === 'gate') { burst(e.x, e.y, 8, [P.cream, P.gold, P.sage], 'gate'); notify(world.gate < world.level.gates.length ? 'Marker ' + world.gate + ' cleared' : 'Checkout is open. Drive out.'); }
       if (e.type === 'mess') {
         screenShake = e.kind === 'shelf' ? 1.5 : .65;
         notify((e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : 'Shelf spilled') + (world.practice ? '' : ' / +' + e.seconds + ' seconds'));
@@ -379,10 +426,7 @@
     if (phase === 'won') $('route').textContent = 'Checkout complete';
     else if (phase === 'lost') $('route').textContent = 'Time is up. Give it another go.';
     else if (target) $('route').textContent = 'Follow floor marker ' + (world.gate + 1) + ' of ' + world.level.gates.length;
-    else {
-      const b = world.body, goal = world.level.goal;
-      $('route').textContent = world.parkReady ? 'Hold still...' : Math.hypot(b.x - goal.x, b.y - goal.y) < 55 ? Math.abs(wrap(b.a - goal.a)) > .4 ? 'Face the painted arrow' : Math.hypot(b.vx, b.vy) > 12 ? 'Brake and stop inside the bay' : 'Fit the cart and yourself inside the bay' : 'Park at checkout, facing the arrow';
-    }
+    else $('route').textContent = world.exiting ? 'Keep rolling until you and the cart are outside' : 'Drive out through the checkout exit';
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
   }
@@ -406,7 +450,7 @@
     $('course-number').textContent = 'Course ' + String(index + 1).padStart(2, '0') + ' / 06';
     // Preserve the little caret while changing the title.
     $('course-name').firstChild.nodeValue = world.level.name + ' ';
-    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Follow the numbered floor markers. Park at checkout, facing the arrow.' : world.level.tip, 'Let\'s roll', null, true);
+    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Follow the numbered floor markers to open checkout. Then drive out of the store.' : world.level.tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
   function run() {
