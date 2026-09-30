@@ -139,6 +139,11 @@ water, soak into dirt and town foundations, and fall down open shafts. See
 Snow uses independent grain contacts within the existing particle storage.
 The same grains and velocities persist through lifting, flight and landing.
 Snow physics requires WebGPU.
+Since v28.127, ordinary water and fire also require their GPU solvers. First-use
+GPU startup gets up to sixty seconds per gate, with pending fire programs and
+compilation times in the Loading report. Failure or device loss stops play and
+save writes instead of selecting CPU fallback. Explicit `?cpuwater=1` and
+`?cpufire=1` comparisons remain available for diagnostics.
 Tracks, jets and blasts move the actual grains. Snow melts only on contact with water or as the clouds part over exposed
 snow; player proximity, foundations, jets and tools add no heat. The scoop stores
 and releases snow as snow. Down still reaches the dirt to drill. See

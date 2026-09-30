@@ -419,6 +419,20 @@ fn light(g:Gas)->vec3f {
       pressureStep: [0,5,9,10,11], project: [0,3,4,5,9], transport: [0,1,2,3,5],
       react: [0,1,2,3,4,5,6], solid: [0,1,6,7,8], reduce: [0,1,5,12], emission: [0,1,5,6,18], fragment: [0,1,3,5,15,17]
     };
+    var startupAt = performance.now();
+    sim.startup = { stage: 'Checking fire shaders', done: 0, total: Object.keys(definitions).length,
+      pending: Object.keys(definitions), timings: {}, elapsedMs: 0 };
+    function startup(stage, name, elapsed) {
+      if (sim.failed && stage !== 'GPU fire failed') return;
+      var status = sim.startup;
+      status.stage = stage; status.elapsedMs = Math.round(performance.now() - startupAt);
+      if (name) {
+        status.timings[name] = Math.round(elapsed);
+        status.pending.splice(status.pending.indexOf(name), 1);
+        status.done++;
+      }
+      if (!lost && options.onStartup) options.onStartup(status);
+    }
     function resources(gi, vi, pr) { return [ub,g[gi],g[1-gi],v[vi],v[1-vi],m,bodies[0],bodies[1],surfaceBuffer,pressures[pr],pressures[1-pr],div,statsBuffer,remapBuffer,remapLinkBuffer,edgeBuffer,splitBuffer,lightBuffer,lightBuffer]; }
     function bind(name, gi, vi, pr) {
       var key = name + gi + vi + pr;
@@ -632,19 +646,26 @@ fn light(g:Gas)->vec3f {
     sim.readyPromise=(async function(){
       var scoped=false;
       try{
+        startup('Checking fire shaders');
         device.pushErrorScope('validation');scoped=true;var module=device.createShaderModule({label:'Sluice thermochemical fire',code:shader});
         var info=await module.getCompilationInfo();var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('\n'));
+        if(lost){await device.popErrorScope();scoped=false;return false;}
+        startup('Compiling fire programs');
         await Promise.all(Object.keys(definitions).map(async function(name){
+          var at=performance.now();
           pipelines[name]=name==='fragment'?await device.createRenderPipelineAsync({layout:'auto',vertex:{module:module,entryPoint:'vertex'},fragment:{module:module,entryPoint:'fragment',targets:[{format:navigator.gpu.getPreferredCanvasFormat()}]},primitive:{topology:'triangle-list'}}):await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});
+          startup('Compiling fire programs',name,performance.now()-at);
         }));
+        if(lost){await device.popErrorScope();scoped=false;return false;}
         Object.keys(definitions).forEach(function(name){bind(name,0,0,0);});
         var error=await device.popErrorScope();scoped=false;if(error)throw Error(error.message);
-        if(lost)return false;sim.available=true;geometry([]);sim.reset();
+        if(lost)return false;startup('Warming GPU fire');geometry([]);sim.reset();
         gpuCanvas.width=gpuCanvas.height=8;
         var warm=device.createCommandEncoder();run(warm,'emission');var pass=warm.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
         pass.setPipeline(pipelines.fragment);pass.setBindGroup(0,bind('fragment',0,0,0));pass.draw(3);pass.end();device.queue.submit([warm.finish()]);
-        await device.queue.onSubmittedWorkDone();return !lost;
-      }catch(e){if(scoped)await device.popErrorScope();sim.errors.push(String(e));sim.failed=true;sim.available=false;console.warn('Sluice fire fallback: '+e);return false;}
+        await device.queue.onSubmittedWorkDone();if(lost)return false;
+        sim.available=true;startup('GPU fire ready');return true;
+      }catch(e){if(scoped)await device.popErrorScope();sim.errors.push(String(e));sim.failed=true;sim.available=false;startup('GPU fire failed');sim.dispose();console.warn('Sluice GPU fire unavailable: '+e);return false;}
     })();
     device.lost.then(function(){sim.dispose();sim.failed=true;});
     return sim;

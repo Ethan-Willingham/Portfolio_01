@@ -20,7 +20,13 @@
       var cells = oldWidth * Math.round(oldWidth * HEARTH_HEIGHT / HEARTH_WIDTH);
       var width = Math.floor(Math.sqrt(cells * HEARTH_FIRE_BOUNDS.w / HEARTH_FIRE_BOUNDS.h));
       hearthFireGPU = window.FireWGPU.create({ device: water.device, width: width,
-        bounds: HEARTH_FIRE_BOUNDS, chamber: hearthChamberOutline });
+        bounds: HEARTH_FIRE_BOUNDS, chamber: hearthChamberOutline,
+        onStartup: function (status) {
+          if (generation !== hearthFireGeneration) return;
+          loadingTask('fire', 'running', status.stage + '. ' + status.done + '/' + status.total + ' fire programs ready.' +
+            (status.pending.length ? ' Pending: ' + status.pending.join(', ') + '.' : ''),
+            { done: status.done, total: status.total + 1, unit: 'checks' });
+        } });
       window.__fire = hearthFireGPU;
       return hearthFireGPU.readyPromise;
     }).catch(function (e) { console.warn('Boiler fire uses CPU fallback:', e); return false; });

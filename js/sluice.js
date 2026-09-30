@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.126';
+  var GAME_VERSION = 'v28.127';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5106,6 +5106,28 @@
   var gameLoadingFirstReadyAt = 0;
   var gameLoadingFence = null;
   var gameLoadingStableFrames = 0;
+  var gamePhysicsBlocked = false;
+  // First-use driver compilation can exceed the former eight-second gate.
+  var PHYSICS_GPU_STARTUP_MS = 60000;
+
+  function loadingWaterGPURequired() {
+    return USE_WEBGPU_LIQUID && !/[?&]cpuwater=1(?:&|$)/i.test(location.search);
+  }
+  function loadingFireGPURequired() {
+    return ENABLE_BATH && loadingWaterGPURequired() && !/[?&]cpufire=1(?:&|$)/i.test(location.search);
+  }
+  function loadingPhysicsFailure(id, detail) {
+    var message = (id === 'fire' ? 'Fire' : 'Water') + ' physics could not continue on WebGPU. ' + detail +
+      ' Check that browser hardware acceleration is enabled, then reload.';
+    if (window.SluiceLoading && !window.SluiceLoading.active()) beginSceneLoading('GPU physics unavailable', false);
+    gamePhysicsBlocked = true;
+    introPhase = 'blocked';
+    clearLoadingInput();
+    if (window.SluiceAudio) window.SluiceAudio.setPaused(true);
+    window.__bootErr = message;
+    if (window.SluiceLoading) window.SluiceLoading.fail(message, id);
+    return false;
+  }
 
   function loadingTask(id, state, detail, counts) {
     if (window.SluiceLoading) window.SluiceLoading.task(id, state, detail, counts);
@@ -5128,19 +5150,15 @@
     player.thrusting = false;
   }
 
-  function requireSnowGPU() {
-    if (!gameLoadingAssetsReady || !worldSnowEnabled ||
+  function requireWaterGPU() {
+    if (!gameLoadingAssetsReady || (!worldSnowEnabled && !loadingWaterGPURequired()) ||
         (liquidWGPU && liquidWGPU.simActive && !liquidWGPU.failed)) return true;
-    // Snow has one supported physics backend. Stop before advancing the
-    // world or autosaving if startup failed or the GPU device was lost.
-    var message = 'Snow physics requires WebGPU. Enable hardware acceleration in a WebGPU-capable browser, then reload.';
-    if (window.SluiceLoading && !window.SluiceLoading.active()) beginSceneLoading('Snow physics unavailable', false);
-    introPhase = 'blocked';
-    clearLoadingInput();
-    if (window.SluiceAudio) window.SluiceAudio.setPaused(true);
-    window.__bootErr = message;
-    if (window.SluiceLoading) window.SluiceLoading.fail(message, 'water');
-    return false;
+    return loadingPhysicsFailure('water', 'The GPU water solver is unavailable.');
+  }
+  function requireFireGPU() {
+    if (!gameLoadingAssetsReady || !loadingFireGPURequired() ||
+        (hearthFireGPU && hearthFireGPU.available && !hearthFireGPU.failed)) return true;
+    return loadingPhysicsFailure('fire', 'The GPU fire solver is unavailable.');
   }
 
   function beginSceneLoading(label, hasWork) {
@@ -5236,6 +5254,11 @@
         ended = true; clearTimeout(timer);
         if (timeout && onTimeout) onTimeout();
         var outcome = verify();
+        if (outcome.required && (error || !outcome.ok)) {
+          loadingPhysicsFailure(id, (timeout ? 'Startup exceeded ' + ms / 1000 + ' s. ' : error ? String(error) + '. ' : '') + outcome.detail);
+          resolve();
+          return;
+        }
         loadingTask(id, error || !outcome.ok ? 'fallback' : 'done',
           (timeout ? 'Timed out after ' + ms / 1000 + ' s. ' : error ? String(error) + '. ' : '') + outcome.detail);
         resolve();
@@ -5268,24 +5291,33 @@
     Promise.resolve(moonImagePromise).then(moonReady, moonReady);
     loadingTask('water', 'running', 'Waiting for the water backend and its startup checks.');
     loadingTask('fire', 'running', 'Waiting for the shared water GPU device.');
-    var waterReady = loadingAsset('water', water && water.readyPromise, 8000, function () {
+    var waterReady = loadingAsset('water', water && water.readyPromise, PHYSICS_GPU_STARTUP_MS, function () {
       var gpu = water && liquidWGPU === water && water.simActive && !water.failed;
       var cpuRequested = /[?&]cpuwater=1/i.test(location.search) || !USE_WEBGPU_LIQUID;
       if (window.SluiceLoading) window.SluiceLoading.environment({ water: gpu ? 'WebGPU' : 'CPU' });
-      return { ok: gpu || cpuRequested, detail: gpu ? 'WebGPU water solver ready.' : cpuRequested ? 'CPU water solver selected.' : 'WebGPU unavailable. Using the CPU water solver.' };
+      return { ok: gpu || cpuRequested, required: loadingWaterGPURequired(), detail: gpu ? 'WebGPU water solver ready.' : cpuRequested ? 'CPU water solver selected.' : 'The GPU water solver did not become ready.' };
     }, function () { abandonLoadingGPU(water); });
     // Fire compilation depends on water's device. Its own bounded deadline
     // starts after that dependency settles, rather than expiring alongside it.
     var fireReady = waterReady.then(function () {
       if (!water || water !== liquidWGPU || !water.available || water.failed) {
         hearthFireCancel();
+        if (loadingFireGPURequired()) {
+          loadingPhysicsFailure('fire', 'No shared GPU device is available.');
+          return;
+        }
         loadingTask('fire', 'fallback', 'Using the CPU fire fallback. No shared GPU device is available.');
         return;
       }
       loadingTask('fire', 'running', 'Compiling and warming the combustion solver.');
-      return loadingAsset('fire', hearthFireReady, 8000, function () {
-        var ready = hearthFireGPU && hearthFireGPU.available;
-        return { ok: !!ready, detail: ready ? 'WebGPU combustion ready.' : 'Using the CPU fire fallback.' };
+      return loadingAsset('fire', hearthFireReady, PHYSICS_GPU_STARTUP_MS, function () {
+        var ready = hearthFireGPU && hearthFireGPU.available && !hearthFireGPU.failed;
+        if (window.SluiceLoading) window.SluiceLoading.environment({ fire: ready ? 'WebGPU' : loadingFireGPURequired() ? 'unavailable' : 'CPU selected' });
+        var startup = hearthFireGPU && hearthFireGPU.startup;
+        return { ok: !!ready, required: loadingFireGPURequired(), detail: ready ? 'WebGPU combustion ready.' +
+          (startup ? ' Startup: ' + startup.elapsedMs + ' ms; program times (ms): ' + JSON.stringify(startup.timings) + '.' : '') :
+          /[?&]cpufire=1(?:&|$)/i.test(location.search) ? 'CPU fire solver explicitly selected.' :
+          hearthFireGPU && hearthFireGPU.errors.length ? hearthFireGPU.errors.join('; ') : 'The GPU fire solver did not become ready.' };
       }, hearthFireCancel);
     });
     return Promise.all([
@@ -6461,6 +6493,7 @@
 
   function saveNow(reason) {
     if (SAVE_DISABLED) return false;
+    if (typeof gamePhysicsBlocked !== 'undefined' && gamePhysicsBlocked) return false;
     if (typeof localStorage === 'undefined') return false;
     try {
       var t0 = (typeof performance !== 'undefined') ? performance.now() : 0;
@@ -18816,7 +18849,13 @@
       var cells = oldWidth * Math.round(oldWidth * HEARTH_HEIGHT / HEARTH_WIDTH);
       var width = Math.floor(Math.sqrt(cells * HEARTH_FIRE_BOUNDS.w / HEARTH_FIRE_BOUNDS.h));
       hearthFireGPU = window.FireWGPU.create({ device: water.device, width: width,
-        bounds: HEARTH_FIRE_BOUNDS, chamber: hearthChamberOutline });
+        bounds: HEARTH_FIRE_BOUNDS, chamber: hearthChamberOutline,
+        onStartup: function (status) {
+          if (generation !== hearthFireGeneration) return;
+          loadingTask('fire', 'running', status.stage + '. ' + status.done + '/' + status.total + ' fire programs ready.' +
+            (status.pending.length ? ' Pending: ' + status.pending.join(', ') + '.' : ''),
+            { done: status.done, total: status.total + 1, unit: 'checks' });
+        } });
       window.__fire = hearthFireGPU;
       return hearthFireGPU.readyPromise;
     }).catch(function (e) { console.warn('Boiler fire uses CPU fallback:', e); return false; });
@@ -74883,7 +74922,7 @@
   function loop(time) {
     var _playPerfCPU = playPerfActive ? performance.now() : 0;
     gameRafId = 0;
-    if (!requireSnowGPU()) return;
+    if (!requireWaterGPU() || !requireFireGPU()) return;
     if (introPhase !== 'done') {
       if (playPerfActive) perfBucketsRaw = {};
       var _playLoadingInterval = time - lastTime;

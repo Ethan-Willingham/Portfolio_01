@@ -3,8 +3,10 @@
 Version v28.63 replaces the boiler's decorative flame field with a bounded,
 GPU-resident reacting-flow simulation. It shares the water solver's WebGPU
 device. Coal motion still uses the polygon rigid-body solver from v28.61.
-The CPU combustion and flame renderer remain the fallback when WebGPU is
-unavailable or `?cpufire=1` is selected.
+Ordinary play requires GPU water and fire since v28.127. Unavailable hardware,
+failed compilation or device loss stops play with a loading report. The CPU
+combustion and flame renderer remain available through the explicit diagnostic
+switch `?cpufire=1` (or `?cpuwater=1` for the shared CPU comparison).
 
 The implementation is original JavaScript and WGSL, with no added runtime
 package or imported simulator source. The surveyed projects, papers, source
@@ -161,8 +163,19 @@ vents on reload rather than being serialized.
 
 Initialization, shader compilation, bind-group validation and a representative
 GPU draw complete behind the loading cover. Timeout and reset generations cancel
-late initialization. Device loss retires the fire instance; the legacy CPU model
-continues from the last acknowledged material state.
+late initialization. Device loss retires the fire instance and stops ordinary
+play. Blocked physics also prevents unload, visibility and manual save writes,
+so a failed boot cannot replace an existing save.
+
+Since v28.127, each GPU startup gate allows sixty seconds after its dependency
+settles. The former eight-second fire deadline canceled healthy first-use
+GPU startup: the owner's Chrome report showed 13.2 seconds before CPU fallback,
+and a separate ordinary browser boot took 19.7 seconds at that gate. Later
+visits were much faster. The report now retains per-program compilation times
+and lists pending programs while preparing fire. Fire becomes available only
+after the representative GPU draw finishes. Cancellation during compilation
+exits before binding disposed buffers. This does not eliminate driver
+compilation time; it keeps valid GPU initialization from being discarded.
 
 Since v28.66, the fire compilation deadline starts after the bounded water-device
 gate settles. Previously the two eight-second timers ran together, so waiting
@@ -223,8 +236,14 @@ and Retina sizes. It verifies visible light and real fuel/gas exchange above
 the former cutoff, CPU fallback coverage, the bounded cell budget and live frame
 rate, alongside the existing GPU conservation, material and rendering checks.
 
-`node tools/test-fire-startup.cjs` checks slow shared-device startup and bounded
-water/fire failures with a deterministic clock. `SLOW_FIRE_BOOT=1 QUICK=1 node
+`node tools/test-fire-startup.cjs` checks slow shared-device startup, twenty-second
+compilation, bounded failures, device loss and blocked save writes with a
+deterministic clock. `node tools/test-fire-startup-browser.mjs` uses an owned,
+visible Chrome for Testing process with ordinary graphics and native callbacks.
+It delays one real fire pipeline for thirteen seconds, verifies GPU completion,
+restores a saved mine, and checks compilation failure, missing hardware, runtime
+loss, save preservation and the explicit CPU diagnostic switch.
+`SLOW_FIRE_BOOT=1 QUICK=1 node
 tools/fire-simulation-smoke.mjs` also boots the real browser with a delayed water
 device and fire warm-up. The CPU browser test checks interpolation in actual
 rendered pixels as well as preserving the surrounding canvas settings.

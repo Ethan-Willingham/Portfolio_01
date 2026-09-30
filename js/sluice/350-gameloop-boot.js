@@ -162,7 +162,7 @@
   function loop(time) {
     var _playPerfCPU = playPerfActive ? performance.now() : 0;
     gameRafId = 0;
-    if (!requireSnowGPU()) return;
+    if (!requireWaterGPU() || !requireFireGPU()) return;
     if (introPhase !== 'done') {
       if (playPerfActive) perfBucketsRaw = {};
       var _playLoadingInterval = time - lastTime;

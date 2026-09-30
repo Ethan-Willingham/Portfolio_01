@@ -211,6 +211,7 @@
 
   function saveNow(reason) {
     if (SAVE_DISABLED) return false;
+    if (typeof gamePhysicsBlocked !== 'undefined' && gamePhysicsBlocked) return false;
     if (typeof localStorage === 'undefined') return false;
     try {
       var t0 = (typeof performance !== 'undefined') ? performance.now() : 0;
