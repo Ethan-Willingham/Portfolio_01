@@ -62,6 +62,9 @@ function stamp(file, endcap, backHref, backLabel, inProgress) {
   const path = join(ROOT, file);
   if (!existsSync(path)) return `MISSING ${file}`;
   let html = readFileSync(path, 'utf8');
+
+  // Respect posts that use only their own Home link and footer.
+  if (/<body\b[^>]*\bdata-post-nav="none"/i.test(html)) return `ok ${file} (navigation disabled)`;
   const before = html;
 
   // 1) replace or insert the endcap block, just above the site footer. Strip any
