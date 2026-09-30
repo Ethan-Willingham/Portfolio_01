@@ -31,10 +31,10 @@
 
   /* ---- Tilt options ---- */
   var TILTS = [
-    { val: 22.1, label: '22.1\u00B0', desc: 'Minimum obliquity. Mildest seasons. Last occurred ~10,000 years ago.', hasMoon: true },
-    { val: 23.44, label: '23.44\u00B0', desc: 'Today. Currently decreasing at 0.013\u00B0/century. The cycle takes ~41,000 years.', hasMoon: true },
-    { val: 24.5, label: '24.5\u00B0', desc: 'Maximum obliquity. Most extreme seasons. Due again in ~10,000 years.', hasMoon: true },
-    { val: 45, label: '45\u00B0', desc: 'Without the Moon, Earth\'s tilt could wander here. No Moon in this scenario.', hasMoon: false }
+    { val: 22.1, label: '22.1\u00B0', desc: 'Less tilt. Summer and winter daylight hours are closer together.', hasMoon: true },
+    { val: 23.44, label: '23.44\u00B0', desc: 'Earth\'s current tilt. Move the date slider to compare seasons.', hasMoon: true },
+    { val: 24.5, label: '24.5\u00B0', desc: 'More tilt. Summer and winter daylight hours are farther apart.', hasMoon: true },
+    { val: 45, label: '45\u00B0', desc: 'A 45\u00B0 tilt to try out. The Moon is hidden in this view.', hasMoon: false }
   ];
   var currentTiltIdx = 1;
 

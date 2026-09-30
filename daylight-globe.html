@@ -13,10 +13,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Daylight Globe</title>
-  <meta name="description" content="A small WebGL globe showing the day/night line, daylight hours, and sunrise/set by time and date.">
+  <meta name="description" content="Day and night on a globe you can spin. Pick a spot to see its daylight hours, then change the date or try a different tilt.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="Daylight Globe">
-  <meta property="og:description" content="A small WebGL globe showing the day/night line, daylight hours, and sunrise/set by time and date.">
+  <meta property="og:description" content="Day and night on a globe you can spin. Pick a spot to see its daylight hours, then change the date or try a different tilt.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/daylight-globe.html">
@@ -393,7 +393,7 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">Daylight Globe</h1>
-      <p class="post-subtitle">A small WebGL globe for the day/night line, daylight hours, and sunrise/set.</p>
+      <p class="post-subtitle">Day and night on Earth, at a date and time you choose.</p>
     </header>
 
     <main>
@@ -437,10 +437,10 @@
                   <button class="tilt-btn" data-idx="0">22.1&deg;</button>
                   <button class="tilt-btn active" data-idx="1">23.4&deg;</button>
                   <button class="tilt-btn" data-idx="2">24.5&deg;</button>
-                  <button class="tilt-btn" data-idx="3">45&deg;<span class="tilt-note">no moon</span></button>
+                  <button class="tilt-btn" data-idx="3">45&deg;<span class="tilt-note">what if</span></button>
                 </div>
               </div>
-              <div class="tilt-desc-text" id="tilt-desc">Today. Currently decreasing at 0.013&deg;/century. The cycle takes ~41,000 years.</div>
+              <div class="tilt-desc-text" id="tilt-desc">Earth's current tilt. Move the date slider to compare seasons.</div>
             </div>
             <div class="daylight-panel">
               <div class="daylight-label" id="daylight-hours-label">Equator: 12.0h daylight</div>
@@ -456,12 +456,24 @@
           </div>
 
           <p>
-            Drag the Earth, scrub the hour or date. The day/night line,
-            daylight bar, and sunrise/set times are all computed live
-            from where the Sun really is, lit with NASA's day and night
-            maps. The tilt buttons are the fun part: Earth's real lean
-            wanders 22.1 to 24.5 degrees over 41,000 years, and without
-            a big Moon to steady it, it wouldn't hold near 23 at all.
+            Click or tap a spot to pin it. The panel shows daylight hours
+            and approximate sunrise and sunset for that location. Move the
+            date slider through the year to compare summer and winter.
+            Near the poles, you'll see days with no sunrise or sunset.
+          </p>
+
+          <p>
+            The rendering uses Three.js with a shader that blends day and
+            night textures based on the Sun's direction. Try the tilt
+            buttons to see how they change daylight hours. The 45&deg;
+            option is a what-if with the Moon hidden.
+          </p>
+
+          <p>
+            The Sun's position comes from a simple seasonal approximation,
+            and the clock times use fixed daylight-saving offsets.
+            You can read the calculation in the
+            <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/globe.js">source</a>.
           </p>
 
         </div>
@@ -476,7 +488,7 @@
   </div>
   <script src="js/main.js"></script>
   <script src="js/vendor/three-r128.min.js"></script>
-  <script src="js/globe.js"></script>
+  <script src="js/globe.js?v=20260929-copy"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
