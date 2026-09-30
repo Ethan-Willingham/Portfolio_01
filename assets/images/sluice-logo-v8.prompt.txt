@@ -1,0 +1,31 @@
+Sluice logo v8
+Created the isolated L/E detail sheet with the built-in image_gen tool.
+References: sluice-logo-v7.png and sluice-logo-v8-materials-reference.png.
+The materials reference shows the game's actual furnace art and a tank drawn with the current drawBathSilo renderer in js/sluice/074-bath-silos.js.
+Design: one small ember-lit cast iron vent near the base of the L, and a slim copper-framed water level gauge on the E above its existing leak.
+The approved v7 composite supplies the entire background, lettering, smoke, leak and pool; only these two isolated details are overlaid.
+Browser pixel verification: zero changed pixels outside the two detail rectangles.
+Vent alpha crop: x=326, y=330, width=299, height=333. Final placement: x=432, y=541, width=64, height=72.
+Gauge alpha crop: x=1200, y=173, width=175, height=574. Final placement: x=1280, y=347, width=37, height=139.
+Transparent wordmark uses the v6 wordmark plus the same two details, mapped to its original source coordinates from the final layout x=110, y=48, scale=0.83.
+Master PNG: assets/images/sluice-logo-v8.png (1672 x 941).
+Transparent wordmark: assets/images/sluice-logo-v8-wordmark.png.
+Generated details: assets/images/sluice-logo-v8-details.png.
+Materials reference: assets/images/sluice-logo-v8-materials-reference.png.
+Blog thumbnail: assets/thumbs/sluice-logo-v8.webp (600 x 338).
+
+Image generation prompt:
+Use case: precise-object-edit / isolated typography detail decals.
+
+Image 1 is the approved Sluice wordmark and background. Image 2 is actual art from the game: its cast iron furnace, hot coal bed, and liquid storage tank with an inset water level strip. We are adding only a small functional detail to the plain L and E.
+
+Generate a sheet containing ONLY TWO ISOLATED SMALL HARDWARE DETAILS on actual transparent background. NO letters, logo, terrain, walls, whole tank, whole furnace, scenery or text. These parts will be laid onto the approved L and E without changing their silhouettes or any other pixels. Keep the parts separated by a large transparent gap: part 1 on the LEFT, part 2 on the RIGHT. Do not join them.
+
+LEFT PART, for L: a modest rectangular inset furnace vent, almost square, slightly taller than wide (width/height about 0.85 to 0.95). A shallow dark cast iron frame with small restrained warm edge catches, only two tiny mounting screw heads, and THREE straight vertical iron bars/slits. Through the openings show a dim red-orange ember bed with one or two warm amber catches. There are no large flames, no fire pouring out, no chimney, no handles or hinge hardware, no extra knobs, no separate orange outer glow. It should feel like the real game's riveted ironwork and live coals, reduced to one small simple vent. The dark muted iron must blend into the charcoal L from Image 1. A subtle lip and quiet inset shadow, nothing bulky.
+
+RIGHT PART, for E: a SLENDER upright water level sight gauge, overall width/height approximately 0.20. A thin understated copper-bronze frame surrounds a vertical transparent glass strip with clear cool blue water in the lower two thirds. A tiny smooth water meniscus, pale cyan glint at the left edge, darker blue near the bottom. The upper third is dark transparent glass. A simple small cap at top and bottom, two small fasteners total, and just three short quiet level tick marks along the right. No numbers, symbols, labels, dial, wheel, valve, external pipe, rivet rows, large flange, tubes outside the silhouette, or ornate fittings. It should directly recall the game's practical tank gauge from Image 2, with the warm copper fitting language of the bath rim. This part will sit on the cream E above its existing leak.
+
+STYLE FOR BOTH: match Image 1's restrained hand-illustrated game title treatment and warm light from above-left, with broad smooth material planes, sharp clean contours and shallow depth. This is a tiny tasteful finishing detail, NOT elaborate steampunk. Do not add scratches, grime, engraving, filigree, nuts and bolts everywhere, procedural texture, photorealism, shiny CGI, strong bloom or neon. Keep detail economical and readable after being reduced to thumbnail size. The dim orange vent and cool blue gauge should echo smoke/fire and water gently, without competing with the green jelly U or amber lantern letters.
+
+Both parts are directly front-facing, upright, each isolated with real alpha transparency around its entire shape, with generous clear margins. Highest available resolution. Output only this TWO-PART HARDWARE SPRITE SHEET.
+
