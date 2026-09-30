@@ -554,6 +554,20 @@
     return out;
   }
 
+  // Opening pairs are curated for distinct warm/cool hues and similar weight.
+  // The procedural engine remains available through New colors and Randomize.
+  var OPENING_PALETTES = [
+    [[0.96, 0.31, 0.12], [0.06, 0.72, 0.69]], // copper / turquoise
+    [[0.99, 0.65, 0.10], [0.12, 0.36, 0.90]], // amber / cobalt
+    [[0.95, 0.24, 0.32], [0.08, 0.62, 0.95]], // coral / azure
+    [[0.54, 0.27, 0.92], [0.96, 0.68, 0.14]], // violet / gold
+    [[0.14, 0.82, 0.58], [0.88, 0.16, 0.47]]  // mint / raspberry
+  ];
+  function applyOpeningPalette() {
+    var pair = OPENING_PALETTES[Math.floor(Math.random() * OPENING_PALETTES.length)];
+    for (var i = 0; i < K_MAX; i++) speciesColors[i] = pair[i % pair.length].slice();
+  }
+
   /* Roll a fresh designed palette into speciesColors (used by the matrix
      swatches + the GPU). Replaces the old fixed-PALETTE shuffle: every
      species now gets a generated OKLCH color from a harmony scheme. The
@@ -1355,9 +1369,8 @@
      well under the swarm's own forces, with long soft crossfades and no hard
      cuts -- a ~14s hold and ~6s smootherstep transition. */
   var FIELD_PATTERNS = [
-    'Vortex', 'Vortex grid', 'Quasicrystal 5', 'Quasicrystal 7',
-    'Rose mandala', 'Golden spiral', 'Lissajous', 'Wave moire',
-    'Flower of life', 'Ring pulse'
+    'Vortex', 'Golden spiral', 'Flower of life',
+    'Twin galaxies', 'Figure eight', 'River bends'
   ];
   var FIELD_STRENGTH_DEFAULT = 3.5;  // mirrors the slider default in the HTML.
                                      // Raised from 2.0: at the 40k boot
@@ -1626,10 +1639,9 @@
     spawnParticles(simN);
     rebuildMatrixGrid();
     // Open on the Lava setup (dense molten clusters) so the first frame is
-    // striking, then roll a fresh generated palette over it with the color
-    // engine instead of Lava's fixed warm pair.
+    // striking, with a contrasting curated pair on every visit.
     applyPreset('lava');
-    randomizeSpeciesPalette();
+    applyOpeningPalette();
     if (paletteBuffer) uploadPalette();
     rebuildMatrixGrid();
 
@@ -3041,68 +3053,13 @@ fn minImage(delta: vec2<f32>, world: vec2<f32>) -> vec2<f32> {
 }
 
 // ====== ROGUE FIELD =========================================================
-// An invisible, slowly morphing flow added to every particle's force. Each
-// pattern is the CURL of a scalar potential P:  (fx, fy) = (dP/dy, -dP/dx).
-// The curl is divergence-free, so particles CIRCULATE along the pattern's
-// contours instead of collapsing into its bright spots -- a plain gradient
-// field would suck everything into point attractors and look dead. The JS
-// morph engine crossfades pattern A -> B (loose channel) and B -> C (dense
-// channel); the per-particle blend by local density happens in main().
-//
-// Patterns are evaluated in one of two normalized frames, both centred on
-// the canvas:
-//   q  -- isotropic: |q| = 1 at the NEAREST edge. Used by the centreless
-//         all-over interference patterns (quasicrystals, wave moire), whose
-//         n-fold angular symmetry must not be stretched.
-//   u  -- per-axis: u = +/-1 exactly at every edge. A motif drawn in u-space
-//         inscribes the full canvas whatever its aspect, so mandalas, rings
-//         and vortex cells FIT the frame instead of being sized off the
-//         short axis with leftovers on the long one.
-// A u-space flow comes back to pixel space through fieldFit (component-wise
-// scale by the canvas half-extents). That is the exact streamline transform
-// x(t) = S*u(t): if du/dt = F(u) traces some orbit, dx/dt = S*F(inv(S)*x)
-// traces the stretched image of that orbit, and because S is a constant
-// diagonal map, div_x of the fitted field equals div_u F = 0, so the fit
-// keeps every pattern divergence-free. Flows are roughly unit scale; main()
-// renormalises after blending. Base math verified with a JXA divergence
-// harness; the fit transform preserves it analytically.
+// Smooth flows guide the particles around broad contours. New patterns use
+// the curl of a potential, (dP/dy, -dP/dx), so they circulate instead of
+// draining into point attractors. Crossfades and species forces add texture.
+// u = +/-1 at each canvas edge. fieldFit maps this frame back to pixels,
+// letting the large motifs fill both square and widescreen canvases.
 const PI_F  : f32 = 3.14159265;
 const TAU_F : f32 = 6.28318531;
-
-// 5/7-fold quasicrystal: curl of a sum of n equal-angle plane waves. The
-// shared phase ph makes the whole interference lattice breathe. Penrose-like
-// at n=5, the classic "quasicrystal" look at n=7.
-fn fieldQuasi(q: vec2<f32>, n: u32, scl: f32, ph: f32) -> vec2<f32> {
-  var fx = 0.0;
-  var fy = 0.0;
-  let k = 2.2 * scl;
-  let nn = f32(n);
-  for (var i: u32 = 0u; i < n; i = i + 1u) {
-    let th = PI_F * f32(i) / nn;
-    let c = cos(th);
-    let s = sin(th);
-    let sn = sin(k * (q.x * c + q.y * s) + ph);
-    fx = fx - k * s * sn;   //  dP/dy
-    fy = fy + k * c * sn;   // -dP/dx
-  }
-  return vec2<f32>(fx, fy);
-}
-
-// n-fold rose / mandala: kp angular petals crossed with concentric rings,
-// swirled so the petals rotate instead of collapsing inward. Evaluated in
-// u-space (r = 1 at the frame edge); the radial frequency is one full TAU,
-// so the ring structure completes exactly at the edge of the canvas.
-fn fieldRose(q: vec2<f32>, kp: f32, ph: f32) -> vec2<f32> {
-  let r  = max(length(q), 0.06);
-  let th = atan2(q.y, q.x);
-  let m  = TAU_F;
-  let ang = kp * th + ph;
-  let vr = -(kp / r) * sin(ang) * cos(m * r);   // (1/r) dP/dth
-  let vt =  m * cos(ang) * sin(m * r);          // -dP/dr
-  let ct = cos(th);
-  let st = sin(th);
-  return vec2<f32>(vr * ct - vt * st, vr * st + vt * ct);
-}
 
 // Golden / logarithmic spiral: constant-pitch orbit-and-drift with a
 // golden-angle azimuthal ripple, so Fibonacci-count arms emerge.
@@ -3115,19 +3072,6 @@ fn fieldSpiral(q: vec2<f32>, ph: f32) -> vec2<f32> {
   let ct = cos(th);
   let st = sin(th);
   return vec2<f32>(swirl * (-st) + b * ct, swirl * ct + b * st);
-}
-
-// Three-wave interference (soft moire): curl of a cos-sum with arbitrary,
-// non-symmetric wavevectors drifting at different speeds.
-fn fieldWaves(q: vec2<f32>, scl: f32, ph: f32) -> vec2<f32> {
-  let k = 2.6 * scl;
-  let a1 = k * ( 0.95 * q.x + 0.31 * q.y) + ph;
-  let a2 = k * (-0.41 * q.x + 0.91 * q.y) - ph * 0.8;
-  let a3 = k * ( 0.59 * q.x - 0.81 * q.y) + ph * 0.6;
-  // fx = -sum(ky*sin) ; fy = sum(kx*sin)   (ky = k*dir.y, kx = k*dir.x)
-  let fx = -k * (0.31 * sin(a1) + 0.91 * sin(a2) - 0.81 * sin(a3));
-  let fy =  k * (0.95 * sin(a1) - 0.41 * sin(a2) + 0.59 * sin(a3));
-  return vec2<f32>(fx, fy);
 }
 
 // Flower of Life: 7 overlapping circle-ripple sources (a hex of radius R plus
@@ -3158,14 +3102,43 @@ fn fieldFlower(q: vec2<f32>, ph: f32) -> vec2<f32> {
   return vec2<f32>(gy, -gx);                    // curl
 }
 
-// Concentric ring pulse: curl of a radial standing wave -> counter-rotating
-// rings that pulse outward as ph advances. Evaluated in u-space: two full
-// ring wavelengths from centre to frame edge, whatever the aspect.
-fn fieldRings(q: vec2<f32>, ph: f32) -> vec2<f32> {
-  let r = max(length(q), 0.04);
-  let m = 4.0 * PI_F;
-  let g = -m * sin(m * r - ph) / r;
-  return vec2<f32>(g * q.y, -g * q.x);          // curl of P(r)
+// Two softened logarithmic vortex potentials, slowly orbiting each other.
+// Near each core the swarm turns around that galaxy; outside both cores
+// their currents join into a larger orbit with a curved bridge between them.
+fn fieldGalaxies(u: vec2<f32>, ph: f32) -> vec2<f32> {
+  let angle = ph * 0.24;
+  let axis = vec2<f32>(cos(angle), sin(angle));
+  let offset = axis * 0.46;
+  let a = u - offset;
+  let b = u + offset;
+  let ga = a / (dot(a, a) + 0.055);
+  let gb = b / (dot(b, b) + 0.055);
+  let gradient = ga + gb;
+  return vec2<f32>(-gradient.y, gradient.x);
+}
+
+// Curl of a Cassini-oval potential. Its contours are two rounded loops
+// joined by a figure-eight neck, with larger shared orbits around them.
+fn fieldEight(u: vec2<f32>, ph: f32) -> vec2<f32> {
+  let angle = 0.14 * sin(ph * 0.30);
+  let c = cos(angle);
+  let s = sin(angle);
+  let v = vec2<f32>(c * u.x + s * u.y, -s * u.x + c * u.y);
+  let r2 = dot(v, v);
+  let a2 = 0.40;
+  let flow = vec2<f32>(4.0 * v.y * (r2 + a2), -4.0 * v.x * (r2 - a2));
+  return vec2<f32>(c * flow.x - s * flow.y, s * flow.x + c * flow.y);
+}
+
+// A sinusoidal streamfunction makes broad parallel rivers with gently
+// shifting bends. The two directions alternate between neighboring lanes.
+fn fieldRiver(u: vec2<f32>, scl: f32, ph: f32) -> vec2<f32> {
+  let k = PI_F * max(1.0, round(scl));
+  let bendPhase = PI_F * u.x + 0.26 * sin(ph * 0.35);
+  let bend = 0.25 * sin(bendPhase);
+  let slope = 0.25 * PI_F * cos(bendPhase);
+  let lane = cos(k * (u.y - bend));
+  return vec2<f32>(lane, lane * slope);
 }
 
 // Map a u-space flow back to pixel space: component-wise scale by the
@@ -3176,44 +3149,19 @@ fn fieldFit(v: vec2<f32>, hs: vec2<f32>) -> vec2<f32> {
   return vec2<f32>(v.x * hs.x, v.y * hs.y);
 }
 
-// Dispatch: pattern id -> flow vector (roughly unit scale, divergence-free).
-// Motif and lattice patterns evaluate in u-space and return through
-// fieldFit, so their shapes inscribe the canvas at any aspect; the
-// centreless interference patterns keep the isotropic q frame.
-fn fieldAt(q: vec2<f32>, u: vec2<f32>, hs: vec2<f32>, id: u32, scl: f32, ph: f32) -> vec2<f32> {
+// IDs match FIELD_PATTERNS. Every motif evaluates in the fitted u frame.
+fn fieldAt(u: vec2<f32>, hs: vec2<f32>, id: u32, scl: f32, ph: f32) -> vec2<f32> {
+  var flow = vec2<f32>(0.0);
   switch (id) {
-    case 0u: { return fieldFit(vec2<f32>(-u.y, u.x), hs); }    // single vortex, orbits fit the frame
-    case 1u: {                                                 // Taylor-Green vortex grid
-      // Integer cell counts per axis (aspect-corrected so cells stay
-      // near-square), so the lattice tiles the canvas EXACTLY: no partial
-      // cells at the edges, and the flow is seamless across the wrap seam
-      // when borders loop. Curl of P = sin(kx*ux) * sin(ky*uy).
-      let ny = max(1.0, round(scl));
-      let nx = max(1.0, round(scl * hs.x / hs.y));
-      let kx = PI_F * nx;
-      let ky = PI_F * ny;
-      return fieldFit(vec2<f32>( ky * sin(kx * u.x) * cos(ky * u.y),
-                                -kx * cos(kx * u.x) * sin(ky * u.y)), hs);
-    }
-    case 2u: { return fieldQuasi(q, 5u, scl, ph); }            // 5-fold quasicrystal
-    case 3u: { return fieldQuasi(q, 7u, scl, ph); }            // 7-fold quasicrystal
-    case 4u: { return fieldFit(fieldRose(u, 5.0, ph), hs); }   // rose mandala
-    case 5u: { return fieldFit(fieldSpiral(u, ph), hs); }      // golden spiral
-    case 6u: {                                                 // Lissajous curl
-      // Same exact-tiling treatment as the vortex grid, with the 3:2
-      // frequency flavor of the original kept on a square canvas.
-      let ny = max(1.0, round(scl));
-      let nx = max(2.0, round(1.5 * scl * hs.x / hs.y));
-      let a = PI_F * nx;
-      let b = PI_F * ny;
-      return fieldFit(vec2<f32>( b * sin(a * u.x + ph) * cos(b * u.y),
-                                -a * cos(a * u.x + ph) * sin(b * u.y)), hs);
-    }
-    case 7u: { return fieldWaves(q, scl, ph); }                // wave interference
-    case 8u: { return fieldFit(fieldFlower(u, ph), hs); }      // flower of life
-    case 9u: { return fieldFit(fieldRings(u, ph), hs); }       // concentric rings
-    default: { return vec2<f32>(0.0, 0.0); }
+    case 0u: { flow = vec2<f32>(-u.y, u.x); }
+    case 1u: { flow = fieldSpiral(u, ph); }
+    case 2u: { flow = fieldFlower(u, ph); }
+    case 3u: { flow = fieldGalaxies(u, ph); }
+    case 4u: { flow = fieldEight(u, ph); }
+    case 5u: { flow = fieldRiver(u, scl, ph); }
+    default: {}
   }
+  return fieldFit(flow, hs);
 }
 
 // Normalize, or return zero in the rare dead spot where a crossfade of two
@@ -3336,25 +3284,21 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   // B -> C, blended per-particle by how packed this particle's grid cell is.
   if (params.fieldStrength > 0.001) {
     let center = world * 0.5;
-    // Two frames (see the ROGUE FIELD banner): isotropic q for the all-over
-    // interference patterns, per-axis u + half-extent scale hs for the motif
-    // and lattice patterns, so those fit the canvas at any aspect. On a
-    // square canvas u == q and hs == (1,1): the fit is a no-op there.
+    // The normalized u frame and half-extent scale hs fit every motif
+    // to the canvas. On a square canvas hs == (1,1), so the fit is a no-op.
     let halfW = max(vec2<f32>(1.0, 1.0), center);
-    let q = (pos - center) / min(halfW.x, halfW.y);
     let u = (pos - center) / halfW;
     let hs = halfW / sqrt(halfW.x * halfW.y);
     let scl = params.fieldScale;
     let ph  = params.fieldPhase;
     // Normalize EACH pattern to a unit direction BEFORE crossfading. The
-    // patterns differ wildly in raw magnitude (a flat vortex ~1, a rose
-    // mandala ~76 near its centre); blending raw vectors would let the loud
+    // patterns differ in raw magnitude (a flat vortex versus a tight galaxy
+    // orbit); blending raw vectors would let the loud
     // pattern dominate the morph. Unit-first makes every pattern conduct with
-    // equal authority, so alpha is an honest 50/50 directional blend. A JXA
-    // harness confirmed the resulting dead-spot fraction is < 0.1%.
+    // equal authority, so alpha is a 50/50 directional blend at its midpoint.
     // Loose layer crossfades looseFrom (A) -> looseTo (B) by alpha.
-    let dLF = fieldUnit(fieldAt(q, u, hs, params.fieldA, scl, ph));
-    let dLT = fieldUnit(fieldAt(q, u, hs, params.fieldB, scl, ph));
+    let dLF = fieldUnit(fieldAt(u, hs, params.fieldA, scl, ph));
+    let dLT = fieldUnit(fieldAt(u, hs, params.fieldB, scl, ph));
     let looseDir = fieldUnit(mix(dLF, dLT, params.fieldAlpha));
     var flow = looseDir;
     var strengthMul = 1.0;
@@ -3363,8 +3307,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       // denseTo (D). Four independent ids so the morph works in EITHER
       // direction (Prev as well as Next); at rest C/D are the loose layer's
       // next shape, so two different patterns always coexist.
-      let dDF = fieldUnit(fieldAt(q, u, hs, params.fieldC, scl, ph));
-      let dDT = fieldUnit(fieldAt(q, u, hs, params.fieldD, scl, ph));
+      let dDF = fieldUnit(fieldAt(u, hs, params.fieldC, scl, ph));
+      let dDT = fieldUnit(fieldAt(u, hs, params.fieldD, scl, ph));
       let denseDir = fieldUnit(mix(dDF, dDT, params.fieldAlpha));
       let myCellI = cellIdx(cellMe);
       let myCount = f32(cellStart[myCellI + 1u] - cellStart[myCellI]);
@@ -3637,9 +3581,13 @@ fn fs(in: VOut) -> @location(0) vec4<f32> {
   // Subtle background tint matches the old clear color so empty
   // regions don't read as pure black against the page background.
   let bg  = vec3<f32>(0.020, 0.020, 0.028);
-  let lit = aces(sharp + glow + bg);
-  let d   = vec3<f32>(dither(in.pos.xy));
-  return vec4<f32>(lit + d, 1.0);
+  // Compress intensity with one shared multiplier. Mapping RGB channels
+  // separately turned dense colored clusters white and erased their contrast.
+  let signal = sharp + glow;
+  let peak = max(signal.r, max(signal.g, signal.b));
+  let lit = (signal / max(peak, 0.0001)) * aces(vec3<f32>(peak));
+  let d = vec3<f32>(dither(in.pos.xy));
+  return vec4<f32>(clamp(lit + aces(bg) + d, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
 `;
 

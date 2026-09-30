@@ -34,7 +34,29 @@ const server = http.createServer((req, res) => {
       const end = s.lastIndexOf('})();');
       s = s.slice(0, end) + `
         window.__plTest = {
-          state: () => ({ pointer: { ...simPointer }, world: { ...simWorld }, scale: pointerScaleX }),
+          state: () => ({ pointer: { ...simPointer }, world: { ...simWorld }, scale: pointerScaleX,
+            palette: speciesColors.slice(0,K), patterns: FIELD_PATTERNS.slice() }),
+          openingSamples: () => {
+            var saved=speciesColors.map(c=>c.slice()), samples=[];
+            for(var i=0;i<100;i++) { applyOpeningPalette(); samples.push(speciesColors.slice(0,2)); }
+            speciesColors=saved;
+            return {samples,pairs:OPENING_PALETTES};
+          },
+          pattern: id => {
+            fieldEnabled=true; fieldAutoMorph=false; fieldLayersOn=false;
+            fieldPhase=0; fieldA=fieldB=id; fieldAlphaEased=0;
+          },
+          opening: i => {
+            for(var j=0;j<K_MAX;j++) speciesColors[j]=OPENING_PALETTES[i][j%2].slice();
+            uploadPalette();
+          },
+          colors: values => device.queue.writeBuffer(colorsBuffer,0,new Uint32Array(values)),
+          freshPattern: id => {
+            applyPreset('lava'); applyOpeningPalette(); uploadPalette(); spawnParticles(simN);
+            simPointer.down=false;simPointer.id=null;simPointer.envelope=0;
+            fieldEnabled=true;fieldAutoMorph=false;fieldLayersOn=false;
+            fieldPhase=0;fieldA=fieldB=id;fieldAlphaEased=0;
+          },
           stop: () => cancelAnimationFrame(window.__plRaf),
           step: (n=1) => {
             cancelAnimationFrame(window.__plRaf);
@@ -92,6 +114,22 @@ let browser;
     const context=await browser.newContext({viewport:{width:1440,height:1100}});
     const p=await open(context,url);
     check('all GPU pipelines compile',errors.length===0);
+    const opening=await state(p), paletteRolls=await p.evaluate(()=>__plTest.openingSamples());
+    const allowed=paletteRolls.pairs.map(q=>JSON.stringify(q));
+    check('each visit opens on a curated contrasting pair',allowed.includes(JSON.stringify(opening.palette)));
+    check('100 opening rolls stay within the curated set',paletteRolls.samples.every(q=>allowed.includes(JSON.stringify(q))));
+    const wanted=['Vortex','Golden spiral','Flower of life','Twin galaxies','Figure eight','River bends'];
+    check('the playlist contains the retained and new patterns only',JSON.stringify(opening.patterns)===JSON.stringify(wanted));
+    await p.locator('.pl-toggle-auto').uncheck();
+    const visited=[];
+    for(let i=0;i<wanted.length;i++) {
+      visited.push(await p.locator('.pl-field-name').textContent());
+      await p.locator('.pl-field-next').click();
+    }
+    check('Next visits every pattern once',wanted.every(name=>visited.includes(name))&&new Set(visited).size===wanted.length);
+    const current=await p.locator('.pl-field-name').textContent();
+    await p.locator('.pl-field-prev').click();await p.locator('.pl-field-next').click();
+    check('Previous and Next return to the same pattern',await p.locator('.pl-field-name').textContent()===current);
     let box=await p.locator('.pl-canvas').boundingBox();
     let cx=box.x+box.width/2, cy=box.y+box.height/2;
     await p.mouse.move(cx,cy); await p.mouse.down(); await p.waitForTimeout(500);
@@ -141,6 +179,36 @@ let browser;
     await p.evaluate(()=>window.dispatchEvent(new Event('blur')));
     check('losing app focus ends the gesture',!(await state(p)).pointer.down);
     await p.mouse.up();
+    const probe=[];
+    for(let yy=.15;yy<.9;yy+=.14)for(let xx=.15;xx<.9;xx+=.14)probe.push([a.world.w*xx,a.world.h*yy]);
+    const outputs=[];
+    for(let id=3;id<6;id++) {
+      await fixture(p,probe,{force:1});
+      await p.evaluate(id=>__plTest.pattern(id),id);await step(p,8);
+      const result=await read(p);outputs.push(result);
+      check(wanted[id]+' produces a finite moving flow',result.flat().every(Number.isFinite)&&result.filter(q=>Math.hypot(q[2],q[3])>1).length>probe.length*.9);
+    }
+    check('the three new patterns produce distinct flows',outputs.every((out,i)=>outputs.slice(i+1).every(other=>out.filter((q,j)=>Math.hypot(q[2]-other[j][2],q[3]-other[j][3])>15).length>probe.length*.5)));
+    // Overlapping particles exercise the actual HDR composite at high density.
+    const patches=Array.from({length:128},()=>[x-80,y]).concat(Array.from({length:128},()=>[x+80,y]));
+    for(let pair=0;pair<paletteRolls.pairs.length;pair++) {
+      await fixture(p,patches);await p.evaluate(pair=>{
+        __plTest.opening(pair);__plTest.colors(Array.from({length:256},(_,i)=>i<128?0:1));
+      },pair);await step(p);
+      const png=await p.locator('.pl-canvas').screenshot({path:path.join(dump,'contrast-'+pair+'.png')});
+      const pixels=await p.evaluate(async({png,x,y})=>{
+        const img=new Image();img.src='data:image/png;base64,'+png;await img.decode();
+        const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+        const g=c.getContext('2d');g.drawImage(img,0,0);
+        return [-80,80].map(dx=>Array.from(g.getImageData(Math.round(x+dx),Math.round(y),1,1).data).slice(0,3));
+      },{png:png.toString('base64'),x,y});
+      check('opening pair '+(pair+1)+' stays colored and distinct in dense clusters',pixels.every(q=>Math.max(...q)-Math.min(...q)>95)&&Math.hypot(...pixels[0].map((v,i)=>v-pixels[1][i]))>180);
+    }
+    for(let id=3;id<6;id++) {
+      await p.evaluate(id=>__plTest.freshPattern(id),id);
+      await step(p,720);
+      await p.locator('.pl-canvas').screenshot({path:path.join(dump,'pattern-'+id+'.png')});
+    }
     await p.locator('.pl-fullscreen').click();
     await p.waitForTimeout(250);
     check('fullscreen keeps the brush radius in CSS pixels',Math.abs((await state(p)).pointer.radius/(await state(p)).scale-120)<1);
