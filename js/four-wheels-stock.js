@@ -9,6 +9,9 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const cross = (x, y, u, v) => x * v - y * u;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+  const course=()=>typeof module!=='undefined'&&module.exports?require('./four-wheels-course.js'):root.CartCourse;
+  const globalCourse=(w,p)=>course().sample(w.level,p);
+  const wallsFor=(w,p,r)=>w.level.campaign?course().wallsNear(w.level,p,r):w.walls;
   const CATALOG = Object.freeze({
     vase: { mass: .065, length: 5, width: 3.5, bounce: .08, friction: .075, drag: 1.5, fragile: 45, liquid: 'water', volume: 32, material: 'glass' },
     wine: { mass: .075, length: 5, width: 1.7, bounce: .16, friction: .22, drag: .75, fragile: 66, liquid: 'wine', volume: 12, material: 'glass' },
@@ -70,7 +73,7 @@
     const ex=Math.abs(c)*length+Math.abs(s)*width,ey=Math.abs(s)*length+Math.abs(c)*width;
     poly.bounds={left:b.x-ex,right:b.x+ex,top:b.y-ey,bottom:b.y+ey};return poly;
   }
-  const rectPolygon = r => [{x:r.x,y:r.y},{x:r.x+r.w,y:r.y},{x:r.x+r.w,y:r.y+r.h},{x:r.x,y:r.y+r.h}];
+  const rectPolygon = r => r.poly||[{x:r.x,y:r.y},{x:r.x+r.w,y:r.y},{x:r.x+r.w,y:r.y+r.h},{x:r.x,y:r.y+r.h}];
   function bounds(p) {
     if(p.bounds) return p.bounds;
     let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
@@ -177,12 +180,13 @@
           continue;
         }
         const kinds = assortments[s.stock] || assortments.groceries;
-        const cols = Math.max(1, Math.floor((s.w - 10) / 15)), rows = Math.max(1, Math.floor((s.h - 10) / 18));
-        for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
+        const cols = Math.max(1, Math.floor((s.w - 10) / 15)), rows = Math.min(world.level.campaign?2:Infinity, Math.max(1, Math.floor((s.h - 10) / 18)));
+        const layers=world.level.campaign?3:1;
+        for(let layer=0;layer<layers;layer++) for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
           const p = product(kinds[(row * cols + col + s.id) % kinds.length], this.serial++, 0, 0, -Math.PI / 2 + (col % 2 ? .1 : -.1));
           p.shelf = s; p.u = (col + .5) * (s.w - 10) / cols - (s.w - 10) / 2;
           p.v = (row + .5) * (s.h - 10) / rows - (s.h - 10) / 2;
-          p.du = 0; p.dv = 0; p.tier = 12 + row % 3 * 10; p.state = 'shelf'; p.color = (row * cols + col + s.id) % 6;
+          p.du = 0; p.dv = 0; p.tier = 12 + (world.level.campaign?layer:row%3) * 10; p.state = 'shelf'; p.color = (row * cols + col + s.id) % 6;
           s.stockItems.push(p); this.items.push(p); this.positionStock(p);
         }
         this.weigh(s);
@@ -329,7 +333,8 @@
     }
     sample(x, y) {
       const key = Math.floor(y / CELL) * this.cols + Math.floor(x / CELL);
-      let grip = 1, drag = 1, kind = null, amount = 0;
+      const ground=this.world.level.campaign?globalCourse(this.world,{x,y}):null;
+      let grip = ground?.grip??1, drag = ground?.drag??1, kind = ground?.kind??null, amount = 0;
       for (const l of this.liquids.values()) {
         const v = l.cells.get(key) || 0, coverage = clamp(v * 3, 0, 1);
         if (coverage > amount) { amount = coverage; kind = l.kind; }
@@ -441,7 +446,7 @@
           if (h) {this.prepareHit(s,h,3);this.hitShelf(s,h,w.casterImpulse(h,wheel,i,s));}
         });
         poly = shelfPolygon(s);
-        for (const wall of w.walls) { const h = polygonContact(poly, rectPolygon(wall)); if (h) resolve(s, null, h, .04, .55); }
+        for (const wall of wallsFor(w,{x:s.cx,y:s.cy},Math.hypot(s.w,s.h)+40)) { const h = polygonContact(poly, rectPolygon(wall)); if (h) resolve(s, null, h, .04, .55); }
         for (const o of w.objects) {
           if(o.gone||o.falling)continue;
           const h = circlePolygon(o.x, o.y, o.radius, poly);
@@ -491,7 +496,7 @@
         if (p.broken) continue;
         if(p.sleep>.6) continue;
         poly = boxPolygon(p, p.length, p.width);
-        for (const wall of w.walls) { const h = polygonContact(poly, rectPolygon(wall)); if (h) { const speed = Math.hypot(p.vx, p.vy); resolve(p, null, h, p.bounce, p.friction); this.breakProduct(p, speed); } }
+        for (const wall of wallsFor(w,p,20)) { const h = polygonContact(poly, rectPolygon(wall)); if (h) { const speed = Math.hypot(p.vx, p.vy); resolve(p, null, h, p.bounce, p.friction); this.breakProduct(p, speed); } }
         for (const s of w.shelves) {
           // A falling product outside the rack can hit its side. Products above
           // a standing rack are not trapped by its floor-level footprint.

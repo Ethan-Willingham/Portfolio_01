@@ -2,9 +2,9 @@
   'use strict';
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
-  if (!ctx || !window.CartPhysics || !window.CartLevels || !window.CartView) return;
+  if (!ctx || !window.CartPhysics || !window.CartCourse || !window.CartView) return;
   const { World, clamp } = CartPhysics;
-  const levels = CartLevels, game = $('game');
+  const Course = CartCourse, levels = Course.chapters, game = $('game');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const rootStyle = getComputedStyle(document.documentElement);
   const token = (name, fallback) => rootStyle.getPropertyValue(name).trim() || fallback;
@@ -12,18 +12,34 @@
     dark: token('--bg-raised', '#1e2420'), green: token('--bg', '#303931'), edge: token('--rule', '#4a544b'),
     mid: token('--line-mid', '#767d71'), floor: token('--text-dim', '#b8b2a2'), seam: token('--text-faint', '#a4a293'),
     cream: token('--text', '#e8e2d6'), light: token('--text-bright', '#f5f1ea'), gold: token('--accent', '#d4c4a0'), red: token('--warn', '#d99090'),
-    sage: '#9ec79a', pine: '#6f9a6c', clay: '#cf9f78', coral: '#d9978c', blue: '#8fb3c7', purple: '#b79bc4', brick: '#b8796d',
+    raceRed: '#ce5649', sage: '#9ec79a', pine: '#6f9a6c', clay: '#cf9f78', coral: '#d9978c', blue: '#8fb3c7', purple: '#b79bc4', brick: '#b8796d',
     steel: '#a6aeab', steelShade: '#687674', steelLight: '#e2e6df',
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
-  const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
-  const STORAGE = 'four-wheels-records-v6';
-  let records = [], canSave = true;
+  const STORAGE = 'four-wheels-course-v1';
+  let canSave = true, savedRun = null, parkedRun = null;
+  const best = { peak: 0, completed: false, time: null, falls: null };
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
-    if (Array.isArray(saved)) records = saved.slice(0, levels.length).map(r => r && Number.isFinite(r.time) && r.time > 0 && r.time < 10000 && Number.isInteger(r.stars) && r.stars >= 1 && r.stars <= 3 ? r : null);
+    const saved = JSON.parse(localStorage.getItem(STORAGE) || 'null');
+    if (saved?.version === Course.VERSION) {
+      if (Number.isFinite(saved.best?.peak) && saved.best.peak >= 0 && saved.best.peak <= 20000) best.peak = saved.best.peak;
+      if (saved.best?.completed === true && Number.isFinite(saved.best.time) && saved.best.time > 0 && Number.isInteger(saved.best.falls) && saved.best.falls >= 0) Object.assign(best, { completed: true, time: saved.best.time, falls: saved.best.falls });
+      savedRun = saved.run;
+    }
   } catch { canSave = false; }
-  let levelIndex = 0, world = new World(levels.journey(0)), phase = 'ready', floor;
+  let levelIndex = 0, world = new World(Course.build()), phase = 'ready', floor;
+  let resumed = !!savedRun && Course.restore(world, savedRun), saveTime = 0, confirmReturn = 'ready';
+  best.peak = Math.min(best.peak, world.level.totalDistance);
+  if (resumed) best.peak = Math.max(best.peak, world.peak);
+  savedRun = null;
+  const feet = value => Math.floor(value / Course.UNITS_PER_FOOT).toLocaleString('en-US') + ' ft';
+  function save() {
+    if (!world.practice) best.peak = Math.max(best.peak, world.peak);
+    const run = world.practice ? parkedRun : world.status === 'won' ? null : Course.snapshot(world);
+    try { localStorage.setItem(STORAGE, JSON.stringify({ version: Course.VERSION, best, run })); canSave=true; }
+    catch { canSave = false; }
+    saveTime = 0;
+  }
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
   let particles = [], screenShake = 0, pickerReturn = 'ready';
   let trickLife=0, trickDuration=0;
@@ -93,7 +109,7 @@
           const noise = ac.createBufferSource(); noise.buffer = buffer; noise.loop = true;
           const filter = ac.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 900; filter.Q.value = 0.7;
           this.roll = ac.createGain(); this.roll.gain.value = 0;
-          noise.connect(filter).connect(this.roll).connect(ac.destination); noise.start();
+          this.filter=filter;noise.connect(filter).connect(this.roll).connect(ac.destination); noise.start();
         }
         await this.context.resume();
       } catch { this.enabled = false; this.refresh(); notify('Sound is unavailable in this browser.'); }
@@ -101,6 +117,7 @@
     refresh() { $('sound').setAttribute('aria-pressed', String(this.enabled)); $('sound').setAttribute('aria-label', this.enabled ? 'Turn sound off' : 'Turn sound on'); },
     rolling(speed) {
       if (!this.roll) return;
+      const kind=Course.sample(world.level,world.body)?.kind;this.filter.frequency.setTargetAtTime(kind==='dirt'?1200:kind==='grass'?450:900,this.context.currentTime,.1);
       this.roll.gain.setTargetAtTime(this.enabled && phase === 'running' ? Math.min(0.03, speed / 4500) : 0, this.context.currentTime, .06);
     },
     note(frequency, duration = .15, volume = .06, delay = 0, type = 'sine', end) {
@@ -113,9 +130,9 @@
     },
     event(e) {
       if (e.type === 'gate') { this.note(660, .12, .04); this.note(880, .16, .03, .07); }
-      if(e.type==='room'){notify('Room '+(e.index+1)+' / '+levels[e.index].name);sound.note(520,.12,.025);}
-      if(e.type==='fall'){notify((e.kind==='lake'?'In the lake':'Over the edge')+(world.practice?'':' / +8 seconds'));sound.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);}
-      if(e.type==='respawn')notify('Back at the room entrance. Keep rolling.');
+      if(e.type==='room') this.note(520,.12,.025);
+      if(e.type==='fall') this.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);
+
       if (e.type === 'won') [523, 659, 784, 1047].forEach((f, i) => this.note(f, .3, .045, i * .1));
       if (e.type === 'lost') { this.note(220, .4, .045, 0, 'triangle', 90); }
       if (e.type === 'bump' || e.type === 'mess') {
@@ -143,9 +160,9 @@
   }
   function cameraLabel() {
     $('camera').hidden = false;
-    $('camera').textContent = followCart ? 'Store map' : 'Follow cart';
+    $('camera').textContent = followCart ? 'Course map' : 'Follow cart';
     $('camera').setAttribute('aria-pressed', String(!followCart));
-    $('camera').setAttribute('aria-label', followCart ? 'Show the connected store' : 'Follow the cart');
+    $('camera').setAttribute('aria-label', followCart ? 'Show the whole route' : 'Follow the cart');
   }
   function resizeView() {
     const stage = $('stage').getBoundingClientRect();
@@ -177,6 +194,9 @@
       if(p.vz!==undefined){p.z=Math.max(0,p.z+p.vz*dt);p.vz-=80*dt;}
     }
     particles = particles.filter(p => p.life > 0);
+    if(!reducedMotion.matches&&!world.fall&&particles.length<80&&Math.floor(world.time*12)!==Math.floor((world.time-dt)*12)&&Math.hypot(world.body.vx,world.body.vy)>22){
+      world.wheels.forEach((q,i)=>{const p=CartPhysics.casterPose(world.body,q,i),ground=Course.sample(world.level,p);if(ground?.kind!=='dirt'&&ground?.kind!=='grass')return;particles.push({x:p.x,y:p.y,z:1,a:0,omega:0,vx:-world.body.vx*.12,vy:-world.body.vy*.12,color:ground.kind==='grass'?P.sage:P.gold,w:2,h:2,life:.25});});
+    }
   }
   function trickCard(e) {
     const broken=e.type==='combo-break',card=$('trick');
@@ -203,160 +223,148 @@
   function events() {
     for (const e of world.events.splice(0)) {
       sound.event(e);
-      if (e.type === 'gate') { burst(e.x, e.y, 8, [P.cream, P.gold, P.sage], 'gate'); const next=world.level.gates[world.gate];notify(!next?'Checkout is open. Drive out.':next.room!==world.level.gates[world.gate-1]?.room?'Door open. Keep rolling into the next room.':'Marker cleared'); }
+      if (e.type === 'gate' && world.level.gates[world.gate-1]?.visible) burst(e.x, e.y, 8, [P.cream, P.gold, P.sage]);
       if (e.type === 'mess') {
         screenShake = e.kind === 'shelf' ? 1.5 : .65;
-        notify((e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : e.kind === 'table' ? 'Vase knocked off' : 'Shelf spilled') + (world.practice ? '' : ' / +' + e.seconds + ' seconds'));
+        notify(e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : e.kind === 'table' ? 'Vase knocked off' : 'Stock on the floor');
       }
-      if (e.type === 'shelf-down') { screenShake=2; notify((e.kind==='table'?'Table down':'Shelf down') + (world.practice?'':' / stock spilled')); }
+      if (e.type === 'shelf-down') { screenShake=2; notify(e.kind==='table'?'Table down':'Shelf down'); }
       if (e.type === 'rack-hit') screenShake=Math.max(screenShake,.4);
       if (e.type === 'bump') screenShake = .6;
-      if(e.type==='room'){notify('Room '+(e.index+1)+' / '+levels[e.index].name);sound.note(520,.12,.025);}
-      if(e.type==='fall'){notify((e.kind==='lake'?'In the lake':'Over the edge')+(world.practice?'':' / +8 seconds'));sound.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);}
-      if(e.type==='respawn')notify('Back at the room entrance. Keep rolling.');
-      if(e.type==='trick'||e.type==='combo-break')trickCard(e);
-      if (e.type === 'won' || e.type === 'lost') finish(e.type === 'won');
+      if (e.type === 'room') notify('Section '+String(e.index+1).padStart(2,'0')+' / '+levels[e.index].name);
+      if (e.type === 'fall') { notify((e.kind==='lake'?'Into the water':'Over the edge')+' / back '+feet(e.lost||0)); save(); }
+      if (e.type === 'respawn') { notify('Caught at '+levels[world.roomIndex].name+'. Keep rolling.'); save(); }
+      if (e.type === 'trick' || e.type === 'combo-break') trickCard(e);
+      if (e.type === 'won') finish();
     }
   }
   function updateUI() {
     game.dataset.phase = phase;
-    $('time-label').textContent = world.practice ? 'Practice' : 'Time left';
-    $('time').textContent = world.practice ? timeString(world.time) : timeString(world.remaining);
-    $('time').classList.toggle('is-urgent', !world.practice && world.remaining <= 15);
-    $('time').closest('.cart-clock').classList.toggle('is-urgent', !world.practice && world.remaining <= 15);
-    $('clock-fill').style.setProperty('--clock', world.practice ? 1 : clamp(world.remaining / world.level.limit, 0, 1));
-    $('messes').textContent = world.messes;
-    $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.messes > 0);
-    $('penalty').textContent = '+' + world.penalty + 's'+(world.bonus?' / -'+world.bonus+'s':'');
+    if (!world.practice) best.peak = Math.max(best.peak, world.peak);
+    $('time-label').textContent = world.practice ? 'Practice' : 'Distance';
+    $('time').textContent = feet(world.distance);
+    $('clock-fill').style.setProperty('--clock', clamp(world.distance / world.level.totalDistance, 0, 1));
+    $('messes').textContent = world.falls;
+    $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.falls > 0);
+    $('penalty').textContent = 'BEST '+feet(best.peak);
     $('style-score').textContent=world.tricks.score>=10000?(world.tricks.score/1000).toFixed(1)+'k':world.tricks.score.toLocaleString('en-US');
-    $('style-chain').textContent='x'+world.tricks.combo;$('style-chain').hidden=world.tricks.combo<2;
+    $('style-chain').textContent='x'+world.tricks.combo; $('style-chain').hidden=world.tricks.combo<2;
     $('style').style.setProperty('--chain-life',world.tricks.chainLife/CartTricks.COMBO_WINDOW);
-    $('style').setAttribute('aria-label',world.tricks.score+' style points, best combo times '+world.tricks.bestCombo+(world.bonus?', '+world.bonus+' seconds earned':''));
-    const room=world.level.rooms?.[world.roomIndex]||world.level;
-    const roomGates=world.level.gates.map((p,i)=>({p,i})).filter(q=>q.p.room===undefined||q.p.room===world.roomIndex);
-    if($('route-steps').children.length!==roomGates.length+1||$('route-steps').dataset.room!==String(world.roomIndex)) {
-      $('route-steps').replaceChildren();$('route-steps').dataset.room=world.roomIndex;
-      for(let i=0;i<=roomGates.length;i++){const step=document.createElement('i');step.textContent=i===roomGates.length?(world.roomIndex===5?'OUT':'DOOR'):i+1;step.setAttribute('aria-hidden','true');$('route-steps').append(step);}
+    $('style').setAttribute('aria-label',world.tricks.score+' style points, best combo times '+world.tricks.bestCombo);
+    const section = world.level.sections[world.roomIndex];
+    if (!$('route-steps').children.length) {
+      for(let i=0;i<levels.length;i++){const step=document.createElement('i');step.textContent=i+1;step.setAttribute('aria-hidden','true');$('route-steps').append(step);}
     }
-    [...$('route-steps').children].forEach((step,i)=>{const index=roomGates[i]?.i??(roomGates.at(-1)?.i+1||0);step.classList.toggle('is-done',phase==='won'||i<roomGates.length&&index<world.gate);step.classList.toggle('is-current',phase!=='won'&&index===world.gate);});
-    $('route-steps').setAttribute('aria-label',world.gate+' of '+world.level.gates.length+' markers cleared');
-    $('course-number').textContent='Room '+String(world.roomIndex+1).padStart(2,'0')+' / 06';
+    [...$('route-steps').children].forEach((step,i)=>{step.classList.toggle('is-done',phase==='won'||i<world.roomIndex);step.classList.toggle('is-current',phase!=='won'&&i===world.roomIndex);});
+    $('route-steps').setAttribute('aria-label','Section '+(world.roomIndex+1)+' of '+levels.length+', '+feet(world.distance)+' traveled');
+    $('course-number').textContent=(world.practice?'Practice ':'Section ')+String(world.roomIndex+1).padStart(2,'0')+' / 12';
     $('course-badge').textContent=String(world.roomIndex+1).padStart(2,'0');
-    $('course-title').textContent=room.name;
-    game.style.setProperty('--room-color',P[room.theme]||P.coral);
-    $('courses').setAttribute('aria-label','Choose a starting room, currently '+room.name);
-    const target=world.level.gates[world.gate];
-    if(phase==='won')$('route').textContent='The whole trip, checked out';
-    else if(phase==='lost')$('route').textContent='Time is up. Give it another go.';
-    else if(world.fall)$('route').textContent=world.fall.kind==='lake'?'Deep water. Returning to the entrance.':'That edge was a drop. Returning to the entrance.';
-    else if(target&&target.room!==undefined&&target.room!==world.roomIndex)$('route').textContent='Door open. Drive into room '+(target.room+1)+'.';
-    else if(target)$('route').textContent='Touch circle '+(target.number||world.gate+1)+' of '+roomGates.length+' with any wheel';
-    else $('route').textContent=world.exiting?'Keep rolling until you and the cart are outside':'All rooms cleared. Drive out through checkout.';
-    $('pause').disabled = !['running', 'paused'].includes(phase);
-    $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
-    $('pause').setAttribute('aria-pressed', String(phase === 'paused'));
-    $('camera').disabled = phase !== 'running';
+    $('course-title').textContent=section.name;
+    game.style.setProperty('--room-color',P[section.theme]||P.clay);
+    $('courses').setAttribute('aria-label','View the route and practice sections, currently '+section.name);
+    if (phase==='won') $('route').textContent='All four wheels at the finish.';
+    else if (world.fall) $('route').textContent='Catching at '+levels[world.fall.catch.chapter].name+'. Record kept.';
+    else $('route').textContent=section.tip;
+    $('retry').firstChild.textContent=world.practice?'Exit practice ':'Start over ';
+    $('pause').disabled = !['running','paused'].includes(phase)||!$('picker').hidden;
+    $('retry').disabled=!$('picker').hidden||phase==='confirm';$('courses').disabled=phase==='confirm';
+    $('pause').setAttribute('aria-label',phase==='paused'?'Resume game':'Pause game');
+    $('pause').setAttribute('aria-pressed',String(phase==='paused'));
+    $('camera').disabled = phase!=='running';
   }
   function bestText() {
-    if (!canSave) return 'Records are unavailable in this browser';
-    const r = records[levelIndex];
-    return 'Target ' + timeString(world.level.par) + (r ? ' / Best ' + timeString(r.time, true) : ' / No best run yet');
+    if (!canSave) return 'Saving is unavailable in this browser. You can still play.';
+    return 'Furthest '+feet(best.peak)+(best.completed?' / Finished in '+timeString(best.time):' / Runs save automatically');
   }
-  function overlay(kicker, title, message, primary, secondary, practice = false) {
-    $('overlay').dataset.state = phase;
-    $('overlay-kicker').textContent = kicker; $('overlay-title').textContent = title; $('overlay-text').textContent = message;
-    $('start').textContent = primary; $('secondary').textContent = secondary || ''; $('secondary').hidden = !secondary;
-    $('practice-label').hidden = !practice; $('best').textContent = bestText(); $('overlay').hidden = false;
+  function overlay(kicker,title,message,primary,secondary) {
+    $('overlay').dataset.state=phase;
+    $('overlay-kicker').textContent=kicker; $('overlay-title').textContent=title; $('overlay-text').textContent=message;
+    $('start').textContent=primary; $('secondary').textContent=secondary||''; $('secondary').hidden=!secondary;
+    $('practice-label').hidden=true; $('best').textContent=bestText(); $('overlay').hidden=false;
   }
-  function reset(index = levelIndex) {
-    if (raf) cancelAnimationFrame(raf); raf = 0;
-    clearInput(); levelIndex = index; world = new World(levels.journey(index), $('practice').checked);
-    trickLife=0;$('trick').hidden=true;
-    phase = 'ready'; particles = []; screenShake = 0; toastLife = 0;
-    $('toast').classList.remove('is-visible'); $('picker').hidden = true; $('result').hidden = true;
-    floor = makeFloor(world.level);
-    overlay('Six connected rooms / Start in room '+String(index+1).padStart(2,'0'), 'All Four Wheels', index===0?'Touch the numbered circles with any wheel. Keep driving through each open doorway, then out through checkout. Watch for lakes and unguarded edges.':levels[index].tip, 'Let\'s roll', null, true);
-    updateUI(); draw(); sound.rolling(0);
+  function prepare(w,continuing=false) {
+    if(raf)cancelAnimationFrame(raf);raf=0;
+    clearInput();world=w;levelIndex=w.level.startRoom;resumed=continuing;
+    phase='ready';particles=[];screenShake=0;toastLife=0;trickLife=0;
+    $('trick').hidden=true;$('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
+    floor=makeFloor(world.level);
+    overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Dirt, blacktop, tight corners, and a shortcut through the groceries. See how far you can get. Falls send you back. Your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
+    updateUI();draw();sound.rolling(0);
+  }
+  function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice)); if(!practice)save(); }
+  function returnToRun() {
+    const w=new World(Course.build());
+    const loaded=parkedRun&&Course.restore(w,parkedRun);parkedRun=null;
+    prepare(w,!!loaded);save();
+  }
+  function startPractice(index) {
+    if(!world.practice) { save(); parkedRun=world.status==='won'?null:Course.snapshot(world); }
+    reset(index,true);$('start').focus({preventScroll:true});
   }
   function run() {
-    phase = 'running'; clearInput(); $('overlay').hidden = true;
-    $('canvas').focus({ preventScroll: true }); sound.prepare();
-    last = performance.now(); accumulator = 0; uiTime = 0;
-    updateUI(); if (!raf) raf = requestAnimationFrame(frame);
+    phase='running';clearInput();$('overlay').hidden=true;
+    canvas.focus({preventScroll:true});sound.prepare();last=performance.now();accumulator=0;uiTime=0;
+    updateUI();if(!raf)raf=requestAnimationFrame(frame);
   }
   function pause() {
-    if (phase !== 'running') return;
-    phase = 'paused'; clearInput(); sound.rolling(0);
-    $('result').hidden = true;
-    overlay('Take your time', 'Cart parked for now', 'The clock is stopped. Your cart will carry on from exactly here.', 'Keep rolling', 'Start over');
-    updateUI(); $('start').focus({ preventScroll: true });
+    if(phase!=='running')return;
+    phase='paused';clearInput();sound.rolling(0);save();$('result').hidden=true;
+    overlay('Take your time','Cart parked for now','The cart and everything around it are paused. Carry on from exactly here.','Keep rolling',world.practice?'Return to run':'Start over');
+    updateUI();$('start').focus({preventScroll:true});
   }
-  function finish(won) {
-    phase = won ? 'won' : 'lost'; clearInput(); sound.rolling(0);
-    if (won) {
-      const r = world.result, old = records[levelIndex];
-      const improved = !world.practice && (!old || r.stars > old.stars || r.stars === old.stars && r.time < old.time);
-      if (improved) {
-        records[levelIndex] = r;
-        try { localStorage.setItem(STORAGE, JSON.stringify(records)); } catch { canSave = false; }
-      }
-      const title = world.practice ? 'Practice complete' : r.messes === 0 ? 'Clean checkout' : r.messes <= 2 ? 'A little rearranging' : 'You made it, mostly';
-      overlay(world.practice ? 'No clock. No record.' : improved && canSave ? 'A new personal best' : 'Checkout complete', title, 'Every room behind you. You and all four wheels made it out.', 'Roll again', 'Try again');
-      const result = $('result'); result.replaceChildren();
-      const marks = document.createElement('div'); marks.className = 'cart-marks'; marks.setAttribute('aria-label', r.stars + ' of 3 marks');
-      for (let i = 0; i < 3; i++) { const mark = document.createElement('i'); mark.className = i < r.stars ? 'is-earned' : ''; marks.append(mark); }
-      const time = document.createElement('strong'); time.textContent = timeString(world.practice ? world.time : r.time, true);
-      const detail = document.createElement('span'); detail.textContent = r.messes + (r.messes === 1 ? ' mishap' : ' mishaps') + (world.practice ? '' : ' / ' + timeString(r.driving, true) + ' driving + ' + r.penalty + 's penalties - '+r.bonus+'s tricks');
-      const style=document.createElement('span');style.textContent=r.style.toLocaleString('en-US')+' style / best combo x'+r.bestCombo+' / '+r.tricks.near+' close calls, '+r.tricks.half+' half turns, '+r.tricks.full+' full turns, '+r.tricks.slide+' slides';
-      if (!world.practice) result.append(marks); result.append(time, detail,style); result.hidden = false;
-    } else {
-      $('result').hidden = true;
-      overlay('The store is closed', 'Out of time', 'Try an earlier turn and a shorter push. You can also switch to untimed practice.', 'Try again', 'Untimed practice');
-    }
-    updateUI(); announce(won ? 'Trip complete. ' + world.messes + ' mishaps.' : 'Time is up.');
-    $('start').focus({ preventScroll: true });
+  function retry() {
+    if(world.practice){returnToRun();return;}
+    if(phase==='confirm')return;
+    confirmReturn=phase;phase='confirm';clearInput();sound.rolling(0);save();$('result').hidden=true;
+    overlay('Furthest distance kept','Back to the first push?','This starts a fresh run and resets the cart and the mess. Your furthest distance and unlocked practice sections stay.','Start fresh','Keep this run');
+    updateUI();$('secondary').focus({preventScroll:true});
+  }
+  function cancelRetry() { const was=confirmReturn;phase=was;prepare(world,true);if(was==='running')run();else if(was==='paused'){run();pause();}else if(was==='won')finish(); }
+  function finish() {
+    phase='won';clearInput();sound.rolling(0);
+    if(!world.practice){best.peak=world.level.totalDistance;if(!best.completed||world.time<best.time){best.time=world.time;best.falls=world.falls;}best.completed=true;save();}
+    overlay(world.practice?'Practice complete':'Every bend, every grocery aisle.','All four made it.',world.practice?'A clean way to learn the last stretch. Your saved run is waiting.':'You got the cart to the end. There is probably some wine on the floor behind you.','Go again',world.practice?'Return to run':null);
+    const result=$('result');result.replaceChildren();
+    const distance=document.createElement('strong');distance.textContent=feet(world.level.totalDistance);
+    const detail=document.createElement('span');detail.textContent=timeString(world.time)+' rolling / '+world.falls+(world.falls===1?' fall':' falls')+' / '+(world.messes-world.falls)+' things knocked';
+    const style=document.createElement('span');style.textContent=world.tricks.score.toLocaleString('en-US')+' style / best combo x'+world.tricks.bestCombo;
+    result.append(distance,detail,style);result.hidden=false;
+    updateUI();announce('Course complete. All four wheels made it.');$('start').focus({preventScroll:true});
   }
   function frame(now) {
-    raf = 0;
-    if (phase !== 'running') return;
-    const dt = Math.min((now - last) / 1000, .1); last = now; accumulator += dt;
-    while (accumulator >= 1 / 120 && phase === 'running') { world.step(1 / 120, controls()); events(); tickEffects(1 / 120); accumulator -= 1 / 120; }
-    draw(); sound.rolling(Math.hypot(world.body.vx, world.body.vy));
-    uiTime += dt; if (uiTime > .1 || phase !== 'running') { uiTime = 0; updateUI(); }
-    if (phase === 'running') raf = requestAnimationFrame(frame);
+    raf=0;if(phase!=='running')return;
+    const dt=Math.min((now-last)/1000,.1);last=now;accumulator+=dt;
+    while(accumulator>=1/120&&phase==='running'){world.step(1/120,controls());events();tickEffects(1/120);accumulator-=1/120;}
+    draw();sound.rolling(Math.hypot(world.body.vx,world.body.vy));
+    uiTime+=dt;saveTime+=dt;if(uiTime>.1||phase!=='running'){uiTime=0;updateUI();}if(saveTime>2)save();
+    if(phase==='running')raf=requestAnimationFrame(frame);
   }
-
   function closePicker() {
-    $('picker').hidden = true;
-    if (pickerReturn === 'running') run();
-    else { phase = pickerReturn; $('courses').focus({ preventScroll: true }); updateUI(); }
+    $('picker').hidden=true;
+    if(pickerReturn==='running')run();else{phase=pickerReturn;$('courses').focus({preventScroll:true});updateUI();}
   }
   function openPicker() {
-    if (!$('picker').hidden) return;
-    pickerReturn = phase; clearInput(); sound.rolling(0);
-    if (phase === 'running') phase = 'paused';
-    const grid = $('course-grid'); grid.replaceChildren();
-    levels.forEach((level, i) => {
-      const button = document.createElement('button'); button.type = 'button'; button.className = 'cart-course-tile' + (i === levelIndex ? ' is-current' : '');
-      const c = document.createElement('canvas'); c.width = CartView.CAMERA.width; c.height = CartView.CAMERA.height; c.setAttribute('aria-hidden', 'true');
-      draw(c.getContext('2d'), new World(level), makeFloor(level), true);
-      const copy = document.createElement('span'); copy.className = 'cart-course-tile-copy';
-      const label = document.createElement('span'); label.className = 'cart-kicker'; label.textContent = 'START IN ROOM ' + String(i + 1).padStart(2, '0');
-      const title = document.createElement('strong'); title.textContent = level.name;
-      const meta = document.createElement('span'); meta.className = 'cart-course-tile-meta';
-      const limit = document.createElement('span'); limit.textContent = timeString(levels.journey(i).limit) + ' to checkout';
-      const best = document.createElement('span'); best.textContent = records[i] ? 'Best ' + timeString(records[i].time, true) : 'Target ' + timeString(levels.journey(i).par);
-      meta.append(limit, best); copy.append(label, title, meta); button.append(c, copy); grid.append(button);
-      if (records[i]) {
-        const marks = document.createElement('span'); marks.className = 'cart-marks'; marks.setAttribute('aria-hidden', 'true');
-        for (let j = 0; j < 3; j++) { const mark = document.createElement('i'); mark.className = j < records[i].stars ? 'is-earned' : ''; marks.append(mark); }
-        meta.append(marks);
-      }
-      button.setAttribute('aria-label', level.name + ', ' + timeString(level.limit) + ' time limit' + (records[i] ? ', ' + records[i].stars + ' of 3 marks, best ' + timeString(records[i].time, true) : ''));
-      button.setAttribute('aria-current', i === levelIndex ? 'true' : 'false');
-      button.addEventListener('click', () => { reset(i); $('start').focus({ preventScroll: true }); });
+    if(!$('picker').hidden||phase==='confirm')return;
+    pickerReturn=phase;clearInput();sound.rolling(0);save();if(phase==='running')phase='paused';
+    const grid=$('course-grid');grid.replaceChildren();
+    world.level.sections.forEach((section,i)=>{
+      const unlocked=i===0||best.peak>=section.startDistance-1;
+      const button=document.createElement('button');button.type='button';button.disabled=!unlocked;
+      button.className='cart-course-tile'+(i===world.roomIndex?' is-current':'');
+      const c=document.createElement('canvas');c.width=300;c.height=160;c.setAttribute('aria-hidden','true');
+      const g=c.getContext('2d'),pts=section.path.map(q=>CartView.project(q)),b=Course.bounds(pts),scale=Math.min(250/(b.right-b.left+section.width),120/(b.bottom-b.top+section.width));
+      g.fillStyle=P.dark;g.fillRect(0,0,300,160);g.translate(150-(b.left+b.right)*scale/2,80-(b.top+b.bottom)*scale/2);g.scale(scale,scale);
+      g.lineCap='round';g.lineJoin='round';g.beginPath();pts.forEach((q,j)=>j?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y));
+      g.lineWidth=section.width;g.strokeStyle=section.surface==='dirt'?P.clay:P.steelShade;g.stroke();g.lineWidth=2/scale;g.setLineDash([8/scale,6/scale]);g.strokeStyle=P.light;g.stroke();
+      const copy=document.createElement('span');copy.className='cart-course-tile-copy';
+      const label=document.createElement('span');label.className='cart-kicker';label.textContent='SECTION '+String(i+1).padStart(2,'0');
+      const title=document.createElement('strong');title.textContent=section.name;
+      const meta=document.createElement('span');meta.className='cart-course-tile-meta';meta.textContent=feet(section.startDistance)+' / '+(unlocked?'Practice this stretch':'Reach here to unlock');
+      copy.append(label,title,meta);button.append(c,copy);grid.append(button);
+      button.setAttribute('aria-label',section.name+', '+(unlocked?'practice at ':'locked until ')+feet(section.startDistance));
+      button.addEventListener('click',()=>startPractice(i));
     });
-    $('picker').hidden = false; grid.children[levelIndex].focus({ preventScroll: true }); updateUI();
+    $('picker').hidden=false;grid.children[Math.min(world.roomIndex,[...grid.children].filter(q=>!q.disabled).length-1)].focus({preventScroll:true});updateUI();
   }
   function fullscreenLabel() {
     $('fullscreen').setAttribute('aria-label', document.fullscreenElement === game || pseudoFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
@@ -370,24 +378,20 @@
     } catch { pseudoFullscreen = true; game.classList.add('cart-pseudo-fullscreen'); document.body.classList.add('cart-fs-open'); fullscreenLabel(); }
     if (phase === 'running') $('canvas').focus({ preventScroll: true });
   }
-  $('start').addEventListener('click', () => {
-    if (phase === 'ready' || phase === 'paused') run();
-    else if (phase === 'won') { reset(); run(); }
-    else if (phase === 'lost') { reset(); run(); }
+  $('start').addEventListener('click',()=>{
+    if(phase==='confirm'){parkedRun=null;reset();run();}
+    else if(phase==='ready'||phase==='paused')run();
+    else if(phase==='won'){reset(world.practice?levelIndex:0,world.practice);run();}
   });
-  $('secondary').addEventListener('click', () => {
-    if (phase === 'lost') { $('practice').checked = true; reset(); run(); }
-    else { reset(); run(); }
-  });
-  $('practice').addEventListener('change', () => { world.practice = $('practice').checked; updateUI(); });
-  $('retry').addEventListener('click', () => { reset(); run(); });
+  $('secondary').addEventListener('click',()=>phase==='confirm'?cancelRetry():world.practice?returnToRun():retry());
+  $('retry').addEventListener('click',retry);
   $('pause').addEventListener('click', () => phase === 'paused' ? run() : pause());
   $('courses').addEventListener('click', openPicker); $('picker-close').addEventListener('click', closePicker);
   $('fullscreen').addEventListener('click', fullscreen); document.addEventListener('fullscreenchange', fullscreenLabel);
   $('sound').addEventListener('click', () => { sound.enabled = !sound.enabled; sound.refresh(); if (sound.enabled) { sound.prepare().then(() => sound.note(660, .1, .025)); } else sound.rolling(0); });
   $('camera').addEventListener('click', () => {
     followCart = !followCart; cameraLabel(); draw();
-    announce(followCart ? 'Camera follows the cart.' : 'All six connected rooms are visible.');
+    announce(followCart ? 'Camera follows the cart.' : 'The whole route is visible.');
     canvas.focus({ preventScroll:true });
   });
   function releaseTouch(element, id) {
@@ -449,22 +453,23 @@
       else if (pseudoFullscreen) fullscreen();
       else if (phase === 'running') pause();
       else if (phase === 'paused') run();
+      else if (phase === 'confirm') cancelRetry();
       return;
     }
     if (!$('picker').hidden) return;
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); phase === 'running' ? pause() : phase === 'paused' && run(); }
-    if (e.code === 'KeyR' && !e.repeat) { e.preventDefault(); reset(); run(); }
+    if (e.code === 'KeyR' && !e.repeat) { e.preventDefault(); retry(); }
     if (e.code === 'KeyF' && !e.repeat) { e.preventDefault(); fullscreen(); }
     if (movement.has(e.code) && phase === 'running') { e.preventDefault(); keys.add(e.code); }
   });
   document.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { clearInput(); pause(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); } });
-  window.addEventListener('pagehide', () => { clearInput(); sound.rolling(0); });
+  window.addEventListener('pagehide', () => { save(); clearInput(); sound.rolling(0); });
   window.addEventListener('resize', () => { if (touches.size) clearInput(); });
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
-  reset(); drawIllustration();
+  prepare(world,resumed); drawIllustration();
   new ResizeObserver(resizeView).observe($('stage'));
   // Canvas text caches are rebuilt when the site's own mono font arrives.
   document.fonts.ready.then(() => { view.refreshFonts(); floor = makeFloor(world.level); draw(); });

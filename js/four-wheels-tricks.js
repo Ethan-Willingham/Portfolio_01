@@ -51,7 +51,7 @@
       this.blockedUntil=this.world.time+.45;
     }
     block(obstacle) {
-      const key=obstacle.cx!==undefined?'shelf:'+obstacle.id:['cone','box'].includes(obstacle.kind)?'prop:'+obstacle.id:null;
+      const key=obstacle.cx!==undefined&&obstacle.kind!=='door'?'shelf:'+obstacle.id:['cone','box'].includes(obstacle.kind)?'prop:'+obstacle.id:null;
       if(key){this.dirty.add(key);this.pending.delete(key);}
     }
     award(kind, x, y, upgrade=false, detail={}) {
@@ -60,7 +60,7 @@
       this.combo=upgrade?Math.max(1,this.combo):this.chainLife>0?Math.min(4,this.combo+1):1;
       this.bestCombo=Math.max(this.bestCombo,this.combo);this.chainLife=COMBO_WINDOW;
       const spec={near:{name:'Close call',points:75,seconds:1},half:{name:'180° swivel',points:100,seconds:1},full:{name:'360° swivel',points:250,seconds:2},slide:{name:'Power slide',points:75,seconds:1}}[kind];
-      const points=spec.points*this.combo, seconds=w.practice?0:Math.min(spec.seconds,BONUS_CAP-w.bonus);
+      const points=spec.points*this.combo, seconds=w.practice||w.level.campaign?0:Math.min(spec.seconds,BONUS_CAP-w.bonus);
       this.score+=points;w.bonus+=seconds;this.counts[kind]++;
       if(upgrade)this.counts.half--;
       const effect={kind,x,y,life:1,maxLife:1,...detail};this.effects.push(effect);

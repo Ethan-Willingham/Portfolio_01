@@ -1,342 +1,228 @@
 # All Four Wheels
 
-A standalone JavaScript cart game, listed on In Progress at `archive.html`.
-The post stays at `four-wheels.html`. It does not use Sluice's engine, assets,
-feature flags, or build step.
+A standalone JavaScript game in progress at `four-wheels.html`, listed in the
+In Progress section of `archive.html`. It has no Sluice dependencies or bundle step.
 
-## Sources
+## The current game
 
-- `four-wheels.html`: post, accessible controls, briefing and results.
-- `four-wheels.css`: responsive game shell, touch controls, fullscreen fallback.
-- `js/four-wheels-stock.js`: furniture, supported stock, loose products, breakage and floor films.
-- `js/four-wheels-physics.js`: cart physics and course state; browser and CommonJS.
-- `js/four-wheels-tricks.js`: physical clearance, moving spins, sideways glides, combos and bounded clock bonuses.
-- `js/four-wheels-levels.js`: six rooms, ordered wheel markers, hazards and the connected-world layout.
-- `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D scene.
-- `js/four-wheels.js`: input, audio, UI, fixed-step loop and local records.
+One continuous, hand-built route, approximately 2,335 feet long in the game's
+scale. The goal is to get the cart to the end. There is no countdown. The HUD
+shows current distance, furthest distance, falls and style. Sections change the
+HUD and scenery without stopping the simulation, replacing the cart, resetting
+momentum or requesting another scene.
 
-The camera looks down at roughly 52 degrees above the floor. Its shared
-projection is x = 290 + 0.84(x - y), y = 24 + 0.66(x + y) - 0.74z.
-Input and physics remain in world coordinates. Projection and its inverse are
-exported for verification. Keyboard and touch controls remain relative to the
-cart's heading.
+The route combines dirt, asphalt, grass shoulders, red and white racing curbs,
+physical guardrails, bare cliff edges, two water crossings, and three grocery
+stores. Turns are rounded centerline curves. Every road ribbon and rounded join
+supplies the renderer and floor support. Tiles inside stores take priority over
+road materials. Each tire samples the material under its own actual contact.
+Dirt has grip 0.85 and drag 1.38; grass has grip 0.7 and drag 3.8; asphalt has grip
+1 and drag 0.68; tile has grip and drag 1. Spills modify those same tire samples.
 
-The six 480-by-300 rooms form a snake through a three-column, two-row store.
-Their origins are (0,0), (520,0), (1040,0), (1040,340), (520,340), and (0,340).
-`CartLevels.journey(startRoom)` builds one level with all floors, corridors,
-wall gaps, portal barriers, shelves, stock, hazards and 29 ordered checkpoints.
-Every room is present from the start. The cart is never replaced, teleported or
-reset when crossing a doorway. Velocity, caster angles and rolling distance,
-walking phase, time, penalties, loose stock and floor spills all continue.
-The clock covers the remaining trip through the final checkout. Selecting a
-later starting room skips earlier route marks and starts at that room's entrance.
-There are no intermediate results, briefings or loading screens.
+The twelve sections and their fall destinations are:
 
-Coral, mint, lavender, blue, gold and clay define the rooms' floors, wall trims
-and shelf decks. Silver metal and empty translucent cart mesh remain unchanged.
-The deterministic terrazzo texture is baked into six transparent local canvases,
-then translated into the same world view as every moving model. Color changes
-also follow the room badge, clock bar and toolbar accent. The script draws its
-art locally, with no asset requests during a room crossing, runtime dependencies,
-generated bundle or font CDN. The page uses the site's analytics and fonts.
+| Section | Surface | Rail sides | Fall returns to |
+| --- | --- | --- | --- |
+| The first push | Dirt | Both | The first push |
+| Blacktop bend | Asphalt | One | The first push |
+| A grocery detour | Dirt and tile | One | The first push |
+| The water crossing | Asphalt | One | Blacktop bend |
+| Quarry switchbacks | Dirt | One | A grocery detour |
+| The picnic straight | Asphalt | Both | The water crossing |
+| No rail, no bargain | Dirt | None | The first push |
+| The big weekly shop | Dirt and tile | One | Quarry switchbacks |
+| Grass on the outside | Dirt | One | The picnic straight |
+| The thin end | Asphalt | One | The picnic straight |
+| Last bottles | Asphalt and tile | One | The big weekly shop |
+| The last long turn | Dirt | None | Grass on the outside |
 
-The page opens directly into the viewport-sized game. A following camera works
-on desktop and phones. Wide layouts use a 960-pixel canvas; portrait uses 480
-pixels. Canvas height matches the stage's aspect ratio, with smoothing disabled.
-The camera scale is 1.45 on desktop and 1.8 in portrait. It follows global cart
-coordinates without clamping to a room, so neighboring rooms and connecting
-corridors scroll past continuously. A small projected map shows all rooms,
-lakes, the next marker, the cart and the visible area. The Store map button fits
-the whole connected store into the viewport. Neither drawing nor a camera change
-advances physics. Room previews use a 720-by-580 local scene.
-The title is inside the briefing; notes and site links sit below the game.
-Keep blog heroes and the archive banner off this page. The game remains on
-`archive.html` under In Progress.
+The course is planar, with solid cliff slabs drawn down to -30 artwork units
+and water below at -35. It does not simulate driving over a raised ramp. Falling
+uses gravity, continuing planar momentum, and visual pitch and roll. The shopper
+and cart have heights for drawing and stock impacts, but this is not a general
+six-degree rigid-body solver.
 
-The game has its own warm paper, dark ink and muted coral interface, at the
-owner's request to replace the green shell. Colors are scoped to `.cart-page`;
-shared site tokens and the store's pixel-art palette stay separate. The bold
-title, menu buttons, receipt-like results and course cards use the site's Segoe
-UI and Commit Mono. The start illustration reuses the playable cart renderer.
-The HUD shows a shrinking clock bar, actual penalty seconds and each route
-marker's state. The pause button switches to a resume icon while paused.
-Keep the entire briefing and result card visible on short laptop and phone
-screens, and retain at least 44-pixel utility targets on touch devices.
+## Editable sources
 
-## The handling to preserve
+- `four-wheels.html`: game shell, briefing, results and play notes.
+- `four-wheels.css`: scoped paper and ink UI, phone controls and fullscreen.
+- `js/four-wheels-course.js`: route geometry, spatial hashes, surfaces, stores,
+  guardrails, swinging-door poses, route distance, catches and saved-world schema.
+- `js/four-wheels-stock.js`: furniture, supported stock, products, breakage and films.
+- `js/four-wheels-tricks.js`: clearances, spins, slides, combos and style.
+- `js/four-wheels-physics.js`: cart, four caster constraints, contacts and fixed steps.
+- `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D models.
+- `js/four-wheels.js`: input, audio, lifecycle, saved run, records and UI.
 
-The cart and shopper are a rigid body with its center of mass behind the basket.
-The basket center is 14 pixels ahead of it and the shopper center is 16 behind.
-Do not rotate the velocity vector when steering. A and D apply a force couple,
-rotating the body without directly redirecting its linear momentum. W adds force along the
-current heading; S pulls backward. Space brakes the body's actual velocity.
+`js/four-wheels-levels.js` and `tools/four-wheels-driver.cjs` remain as legacy
+regression fixtures for the old timed store. The live page loads the course
+module instead. Keep browser order: stock, tricks, course, physics, view, main.
 
-All four wheels have separate swivel states, angular velocities and signed
-rolling distances. A fixed pivot attaches each fork to the chassis; the tire's
-ground contact trails 5.5 pixels behind it. The tire center is not the pivot.
-The tiny mirrored axle offset starts the swing when pulling exactly backward.
-Bearing drag exchanges angular momentum with the chassis and leaves idle
-casters at their last orientation.
+## Handling to preserve
 
-Ground impulses enforce zero lateral velocity at each tire contact, accounting
-for body translation, body rotation, caster swivel rate and caster inertia.
-Each wheel follows its own curve instead of easing toward the cart's heading.
-The small caster inertia keeps these reactions subtle and preserves the game's
-sliding feel. Wet floor reduces rolling resistance and braking force.
-The fixed pivot and trailing contact geometry follows the caster model in
-[Arrizabalaga et al., 2021](https://arxiv.org/abs/2110.05604). This is a simplified
-game model, not a calibrated simulation of a particular cart.
+The cart and shopper are a rigid body with the center of mass behind the basket.
+The basket center is 14 units ahead and the shopper is 16 behind. Steering applies
+a force couple. It rotates the body without rotating the existing velocity vector.
+Push and pull apply force along the heading. Brake acts on the actual velocity.
 
-The rasterizer uses that same caster geometry for the tire, fork and gold pivot.
-Tires and forks are opaque; basket mesh and rails are translucent. The basket
-stays empty, with silver rails and a three-pixel wire spacing in both directions.
-Do not hide inward-swung casters behind an opaque basket fill. Pivot pins stay
-attached to the body while the tire and fork swing around them.
-All four tires have an 8-by-4-unit physical envelope, faceted rubber cylinders,
-thin steel forks, axle caps and individual travel-driven tread animation.
-The smaller gold bearing stays distinct from the silver axle. Keep the art
-and `CASTER.halfWidth` consistent so red contact outlines match the slim tires.
+All four wheels have independent swivel angles, angular velocities and signed
+rolling distances. Each fixed pivot carries a fork whose tire trails 5.5 units
+behind it. The tire center is not the pivot. A tiny mirrored axle offset starts
+the swing when pulling directly backward. Bearing drag exchanges angular momentum
+with the chassis; idle casters keep their last angles. Ground impulses constrain
+lateral tire velocity using body translation, yaw and caster swivel inertia.
+Unsupported tires receive no ground grip. Unequal surfaces can produce braking yaw.
 
-The shopper's gait advances on physics steps using velocity at the shopper,
-including the arc around the handle during rotation. Phase is integrated, so
-speed changes do not jump the legs to a new pose. Normal travel is about two
-alternating footfalls per second, capped at three at a jog. Stride settles at
-rest; pulling backward and sliding sideways move the feet in those directions.
-Tapered trouser legs bend at the knees. Rounded shoes have cuffs, toe caps,
-laces and pale soles. Each foot stays planted for most of its step, then lifts
-and swings forward; the feet point slightly outward and follow sideways travel.
-The upper body eases into pushes, pulls and turns, braces opposite travel when
-braking, and settles at rest. Hips and hands stay anchored to the ground pose
-and handle; the lean is visual and does not change the collision footprint.
-Rendering and pauses do not advance the gait. The title illustration and course
-previews stand still.
-The rounded head, ears, nose and shaded brown crown rotate with the shopper.
-Keep the hair detail local to the raised head rather than offset on the screen.
-The torso, head, arms, bending knees and lifted shoes use real world heights.
-The planted feet follow the original cadence; the hands stay on the raised handle.
+The tire envelope is 8 by 4 units. Physical fork pivots, trailing tire contacts,
+collision rectangles, colored tread and visible wheel models share the same pose.
+The silver cart stays empty and translucent, with three-unit wire spacing so all
+four wheels remain visible. The shopper has articulated trouser legs, planted and
+swinging feet, travel-driven walking phase, a shaded head and eased effort/braking
+lean. Gait advances during physics, including travel around the handle while
+rotating. Rendering and pause do not advance it.
 
-The simulation uses fixed 1/120-second steps. A cart rectangle and shopper circle
-both collide with shelves and walls; each tire also has a separate oriented
-collision rectangle. Tire impacts can swivel the fork, move the chassis and
-push props even when the basket clears them. Contacts apply torque. Cones and boxes
-move, collide with each other and the room, and charge a penalty once per prop.
-Cones cost 2 seconds, boxes 3, shelves 5. A shelf charges once when its stock
-first falls or the rack topples. Individual products do not add separate penalties.
+The caster model follows the principles described by
+[Arrizabalaga et al., 2021](https://arxiv.org/abs/2110.05604), simplified for a game.
+The contact solver uses point velocity, equal and opposite impulses and Coulomb
+friction, as described in [Box2D's simulation documentation](https://box2d.org/documentation/md_simulation.html).
+No Box2D dependency is loaded.
 
-## Shelves and their contents
+## Route, collisions and falls
 
-The first room has one 32-pixel square wooden table and one water-filled glass
-vase, with no cones or other stock. A short normal push knocks the vase off while
-the table rocks and settles. Its low board friction, height and break threshold
-make the fall reachable at ordinary driving speed. The table has a wider support
-base than the tall racks. Later racks have lighter frames and a narrower support
-base so normal impacts can topple them; gentle touches can still settle safely.
+55 ordered wheel checkpoints keep progress tied to driving the route. A tire's
+actual oriented envelope touching the 20-unit circle clears it, including exact
+tangency. The basket or shopper alone cannot clear a checkpoint. The current
+circle is visible, with a section number at an entrance and GO on intermediate
+marks. Offscreen guidance points to that same circle. Direction arrows, numbered
+roadside signs and a minimap show the route. Distance projects between consecutive
+cleared and upcoming marks, preventing a shortcut to the final platform from
+raising the record. Four artwork units equal one displayed foot.
 
-The rack is a dynamic body with mass, yaw inertia, ground friction and a separate
-rocking angle. Its full three-dimensional prism rotates about the leading floor
-edge, keeping every structural dimension and staying above the tiles. The
-collision hull comes from the ground projection of those same eight vertices.
-The gravity support span remains tuned for responsive impacts at cart speed.
-A horizontal impulse at basket height transfers momentum to the rack, twists it
-around an off-center contact, and adds a tipping impulse. Gravity restores a small
-rock and accelerates the fall after the support threshold. Shelves settle at
-90 degrees. Their former width becomes vertical depth, and the rotated frame
-stays solid on the floor instead of flattening into its old footprint. Their
-collisions can knock over adjacent racks. Supported stock contributes to the
-rack's mass and center of mass, so dropping it changes the loaded body.
+Guardrails and store walls use convex polygon collisions from their displayed
+geometry. Basket, shopper and each tire receive separate contact impulses.
+Contacts immediately turn the exact outlines and contact point red, including
+resting contact with a 0.04-unit tolerance. The highlight fades over 0.32 seconds.
+Grass remains supporting floor. Curbs are paint, not an invisible wall.
 
-The view uses a shared isometric scene for shelves, their stock, props, the
-cart and the shopper. Thick wood decks, framed end panels, a back panel and
-square steel uprights are shaded and culled by their rotated face normals.
-All visible faces, limbs and basket wires are sorted together by camera depth,
-so a shopper or loose bottle can move behind a rack instead of popping in
-front of it. This is a painter's renderer, not a per-pixel depth buffer.
-The raised basket has tapered side walls, an empty translucent bottom, three-unit
-wire spacing and a handle at hand height. Tires are vertical cylinders with
-visible axle caps and slender offset forks; their centers use the same caster
-pose as collision and liquid pickup. Do not rotate or flatten a completed 2D sprite.
+Each wheel samples support at its trailing contact. Two unsupported wheels, or
+the body center leaving floor, starts an irreversible fall. It continues linear
+and yaw momentum while gravity lowers the body and turns it toward the unsupported
+side. Water adds a splash/ripple. After 1.15 seconds the same body and wheels return
+to an earlier catch with settled motion. Ordered progress rewinds to that catch.
+Furthest distance, style, shelves, products, doors and spills remain. There is no
+time penalty. Pause freezes gravity too. Practice catches at the practiced
+section instead. Props and loose products can fall off the track.
 
-Upright bottles, vases, cans, dishes, pots, folded towels and cartons are solid
-models. Supported products use the actual rocking board transform. Loose
-products use their simulated position, height, yaw and tumble; floor bottles
-lie around their physical center, and crushed ketchup bottles flatten visibly.
-Shelf decks sit at the supported tiers (12, 22 and 32 units). Labels are mounted
-on the frame and their textures are cached. Cast shadows follow the actual
-furniture vertices and are clipped to the diamond-shaped floor. Table legs
-and its three-unit tabletop use the same solid-face renderer. Long pixel edges
-are batched by row to keep the detail inexpensive.
+At the end, all route marks must be cleared and the complete basket, four tire
+envelopes and shopper circle must fit inside the finish pad. Completion records
+elapsed rolling time and falls without adding a deadline.
 
-The room is a cutaway diorama with a solid floor slab, plaster back walls and
-low front curbs that leave the shopper and casters visible. Checkout cuts through
-the appropriate wall and continues onto an outside apron. Room edges, puddles,
-tracks, shadows, checkpoints, contact outlines and the velocity guide share the
-same projection. Opening art and every course preview use this renderer too.
+## The stores and persistent mess
 
-Every displayed product is the actual simulated item. Each has mass, planar
-inertia, material friction, bounce, height, vertical speed and tumbling angle.
-Stock keeps its momentum during a rack impact and slides relative to the board.
-The smooth boards have less friction than the floor, so a bump can displace stock
-before the rack falls. Gravity and static friction govern sliding as the board
-tilts. Crossing the edge or losing support releases the product with the board's
-translation, yaw and tipping velocity. Release velocity is the derivative of the
-same rigid pose, including board sliding, yaw and the raised edge of the frame.
-It then falls under gravity, bounces, collides with walls, furniture, cones, boxes
-and other products, and remains on the floor.
+Quick Mart, The Weekly Shop and Last Bottles have tiled floors, physical walls
+with matching entrance/exit gaps, storefront signs and two hinged glass leaves
+per entrance. The leaves rotate about fixed jambs, respond to cart and tire
+impulses, spring closed with damping, and stop at their angular limits. Gentle
+force opens them. A high impact breaks the actual leaf and spawns falling glass
+pieces. Those share the 220-fragment cap with broken stock.
 
-Vases, wine bottles, jars, plates and plant pots break on sufficiently hard impacts
-or under a rolling tire. Glass, ceramic and terracotta fragments have small physical
-footprints. Cans bounce and roll. Cloth and cartons have higher drag. Ketchup
-bottles survive ordinary drops, but a hard landing or tire contact flattens the
-bottle and releases its contents. Floor items fit under the raised basket;
-airborne products can hit its rails. Shoes can kick low stock and all four tires
-have their own product contacts, loss of rolling energy and caster reaction.
+Ten tables and racks contain real supported products. Tables hold one water vase.
+Racks populate tiers at 12, 22 and 32 units, with at most two rows per tier to keep
+large racks bounded. Supported stock adds to mass, inertia and center of mass.
+A bump transfers yaw, translation and tipping torque. Stock retains momentum
+relative to a moved board. Gravity slides it as the board tilts. Crossing the
+edge or losing support releases it with the board's actual 3D velocity.
 
-Water, wine, ketchup, oil and soil use separate conservative 4-pixel floor grids.
-A broken vase pours a connected pool of clear water. The renderer preserves the
-tile seams through it, with a dark meniscus, pale rim and small reflected glints.
-Water tracks are translucent; the pool and its effect on tire grip persist until
-retry, just like the other films.
-Pairwise film flow runs at 20 Hz. Wine spreads readily, ketchup stays thicker,
-and soil barely spreads. Each caster samples its own contact's surface grip and
-rolling resistance. Unequal grip creates a braking yaw moment. Tires pick up a
-limited amount of the film and deposit it onto clean tiles, conserving volume
-between floor and tire. Colored tread and persistent thin tracks show the route.
-The second room retains a shallow maintenance spill. The blue lakes are separate
-holes in the supporting floor, not thin films.
+Furniture is a full prism, rotating about its leading floor edge as it topples.
+Its projected hull supplies the collision shape. Falling frames can hit each
+other. A down rack remains a solid three-dimensional object on the floor.
 
-This is a game model in artwork units: planar contact impulses plus separate
-height and one rocking axis per rack. It is not a full 3D rigid-body or fluid
-solver. The contact solver uses equal and opposite impulses, contact-point
-angular velocity, Coulomb friction and low-speed inelastic contacts, following
-the principles described in [Box2D's simulation documentation](https://box2d.org/documentation/md_simulation.html).
-No Box2D dependency is loaded. Collision broad phases, cached rack geometry,
-sleeping floor items, a spatial grid for product pairs and a 220-fragment cap
-keep a messy aisle bounded. Films and landed stock persist until retry.
+Wine bottles, jars, vases, dishes, pots, cans, ketchup and cartons have mass,
+friction, bounce, height, vertical velocity and tumbling. Fragile objects break
+into physical fragments and pour their contents. A tire can crush a bottle that
+the basket clears. Ketchup flattens and pours sauce. A water vase makes a clear
+puddle. Cans roll and rattle; ceramic breaks differently from glass.
 
-## Wheel checkpoints, doors and hazards
+Floor films have material-specific flow, grip and drag. Flow runs at 20 Hz and
+conserves volume. Tires pick up a limited coating and deposit it into clean cells,
+leaving wet or colored tracks. Global cells cover the entire course. Supported
+floor checks keep liquid out of the void. Collision broad phases, sleeping landed
+items and a spatial product grid bound the simulation. Obstacles do not impose
+clock penalties. Contact still breaks an unbanked stunt combo.
 
-Checkpoints are circles with a shared 20-unit radius, projected to ellipses on
-the floor. Any one of the four actual tire rectangles can touch a circle to clear
-it. Contact uses the trailing tire center and its independent swivel angle,
-transforms the circle center into tire coordinates, and measures the nearest
-point on the 8-by-4 tire envelope. Exact tangency counts. The basket and shopper
-alone cannot clear a circle. There is no dwell time, heading or speed requirement.
-Markers count once and in route order. Their numbers restart in each room.
-The former basket sensor, badge and connecting line are removed.
+## Style
 
-Each room's final marker opens its outgoing portal. Both neighboring walls have
-matching openings, with a supported 56-unit corridor between them. The shutter
-is a real collider until the preceding room's markers are cleared. Jambs and
-corridor sides stay solid. Room membership changes when the body's world position
-enters a room, updating the HUD without stopping the simulation or input.
-After all 29 marks, the final checkout on the garden room's left wall opens.
-The whole cart, every tire and shopper must clear the outside edge. No parking,
-heading constraint or speed threshold remains.
+Close calls use the real basket, shopper, four tire envelopes, props and current
+rack hull. At 20 Hz, a pass arms inside six units at speed 22, then must clear
+twelve units with fourteen units of travel and speed at least sixteen. Contacts
+within 0.15 units do not count. An impacted obstacle stays blocked for that pass;
+an intact rack or prop pays once per run. Walls, glass doors, fallen stock and
+hazard edges are not near-miss targets.
 
-Walls report resting and moving contact, including actual tire protrusions.
-The contacted wall and the cart, tire and shopper footprints turn red immediately,
-with a 0.04-unit tolerance and a 0.32-second fade after separation. Bare cliff
-segments omit those wall colliders and rails. Their striped lips and deep layered
-floor faces show that they are open drops. Lakes use the same ellipse for visible
-water and missing support. Painted shallow spills still have a floor.
+Moving spins track signed rotation across the angle wrap. A 180 needs twenty
+units of travel; a 360 needs forty-five. Slow/stationary turns, reversals, contact,
+missing support, falls and pose jumps interrupt them. The 360 upgrades its 180.
+One uninterrupted spin pays those milestones once. Slides require sustained
+sideways coasting without braking or an active spin. A new paid spin or slide
+requires further travel. Clean moves within five simulation seconds chain to x4.
+Points: 75 close call, 100 half turn, 250 additional full turn, 75 slide.
 
-Every wheel samples floor support at its real tire contact. An unsupported wheel
-has no ground grip or rolling resistance and receives a red warning ring. Two
-unsupported wheels, or the combined body's center leaving supported floor, start
-an irreversible fall. The body's planar velocity and yaw momentum continue while
-gravity accelerates its height downward. Input and ground contact forces stop.
-Pitch and roll turn the cart, casters and shopper toward the unsupported side.
-Water falls draw a splash and expanding ripple; cliff falls expose the drop.
-This is a planar cart with a separate falling height and visual tilt, not a full
-six-degree rigid-body solver. Pause freezes the fall too.
+The course awards style without time bonuses. Preserve that distinction from
+the legacy timed fixtures. Raised confetti, swept floor arcs, short wheel streaks,
+callouts and synthesized tones acknowledge moves. Reduced motion keeps rewards
+and text, while disabling particles, shake and animated trails. Pause freezes
+combo and effect lifetimes. Feedback never captures input or covers thumb pads.
 
-A fall costs eight seconds and one mishap, charged once. After 1.15 seconds the
-same body returns to the current room's safe entrance, with motion settled.
-Earlier route marks, stock and spilled liquids remain. No room is reloaded.
-Loose products and props crossing unsupported floor drop out of the playfield.
-The clock still runs during a fall and timeout takes precedence over recovery
-or checkout. Practice has no deadline and does not save records.
+## Camera, art and controls
 
-The film grid spans the whole world rather than aliasing cells back into the
-first room. Each grid cell is checked against supported floors and lake holes.
-Wine, water and other films in later rooms remain local to those coordinates,
-and wheel pickup and deposition continue across corridors. Full shelves retain
-their existing ground and tipping contact model.
+The camera looks down about 52 degrees. Projection is x = 290 + 0.84(x-y),
+y = 24 + 0.66(x+y) - 0.74z. Input and physics use world coordinates. Depth-sorted
+solid faces draw the shopper, cart, furniture and products at their real heights.
+It is a painter's renderer, not a per-pixel depth buffer.
 
-Timed trip records use `four-wheels-records-v6`, with a separate slot for each
-starting room, validation and blocked-storage fallback. More marks rank above
-fewer; equal marks rank by time including earned clock bonuses. Older v1 through
-v5 records remain untouched, since the new bonuses change the timed rules.
+The following camera uses a 960-pixel canvas on wide views and 480 in portrait,
+at scales 1.45 and 1.8 respectively. Canvas height matches the stage aspect ratio.
+Course map fits the entire route without advancing physics. Lazy 256-unit floor
+tiles cache deterministic gravel, asphalt flecks, grass tufts, flowers, curbs and
+store tiles, capped at 32 canvases. Floor polygons, support, rails, spills, shadows,
+markers and overlays share the projection. The art is drawn locally and the game
+has no runtime art requests or third-party engine.
 
-## Close calls, rotations and style
+Keyboard: W/S or up/down push/pull; A/D or left/right rotate; Space brakes;
+P/Escape pauses; R requests a fresh run; F toggles fullscreen. Inputs are scoped
+to focus inside the game. Restart asks in-game before discarding the run and
+retains records and unlocked practice. Escape cancels that confirmation.
 
-Style observes the simulation at its fixed step and never changes cart forces,
-velocities, caster angles, gait or contact impulses. Clearances use the actual
-oriented basket and all four tire rectangles, the shopper circle, the current
-3D shelf's projected collision hull and each cone or box's physical radius.
-At 20 Hz, a pass arms within six units at a speed of at least 22. It earns a
-Close call only after clearing twelve units, traveling fourteen units during
-the pass and still moving at sixteen. Touches within 0.15 units do not count.
-An impacted obstacle stays blocked for that entire pass. An intact shelf or
-prop can pay once per trip. Down, spilled or falling stock does not count.
-Walls, loose products and hazard edges are not close-call targets.
+Phones have two independent captured analog thumb pads and a central brake.
+The left rotates horizontally; the right pushes upward and pulls downward.
+A 12-percent neutral zone prevents accidental force. Full displacement is 28
+percent of pad width. Releasing coasts. Brake overrides push/pull while preserving
+rotation. Pads, captions and accessible slider values reflect the actual force.
+Each pad owns one pointer; another finger cannot steal it. Inputs clear on pause,
+picker, blur, hidden tab, cancellation, lost capture and viewport changes.
 
-A spin starts under active steering while moving at fourteen units per second.
-It tracks signed pose changes across the angle wrap. Reversals, a settled turn,
-slow travel, contacts, missing wheel support, falls and pose jumps interrupt it.
-A half rotation needs twenty units of travel; a full rotation needs forty-five.
-A 180 earns 100 style and one second. Finishing its 360 adds 250 style and two
-seconds, upgrades the same maneuver and does not increase its own combo.
-One uninterrupted spin pays only those two milestones. A new paid maneuver
-needs settled rotation and another forty-five units of travel.
-A sustained sideways coast, over 86 percent sideways and at least 28 units per
-second for 0.6 seconds and twenty units of travel, earns a Power slide. Braking
-or an active spin prevents it, and another slide requires 100 units of travel.
-Close calls and slides each earn 75 style and one second.
+## Saves and practice
 
-Clean awards within five simulation seconds chain up to x4. The multiplier
-affects style points, not time. Contact breaks the chain and unbanked progress;
-banked points and seconds remain. Practice earns style with no clock credit.
-Timed runs can earn at most twelve seconds in total. Deadline precedence remains:
-an already expired clock cannot be revived by a trick or checkout on that step.
-Results show style, best combo, maneuver counts and earned time separately from
-driving time and penalties.
+`four-wheels-course-v1` holds best distance, completion/time/falls, and one parked
+challenge run. Older v1 through v6 timed record keys remain untouched. Every two
+seconds of play, on pause, fall, recovery and pagehide, the game saves the cart,
+casters, gait, route state, time, falls, furniture, props, supported and loose
+stock, films, hinged doors and banked style. Restoring rebuilds shelf references
+and film maps; it does not turn supported stock into falling products. Active
+unbanked combo detection and short-lived particles restart after reload.
 
-The floor draws the spin's actual swept angle, a fading completion arc, close-pass
-glints at the measured clearance point and short sideways wheel streaks.
-Earned moves receive a paper-and-ink callout, colored pixel confetti and distinct
-ascending tones when sound is enabled. Callouts announce through the existing
-live region. Pause freezes detection, combo time, effects and callout life.
-Reduced motion keeps the text and rewards while disabling trails, confetti,
-shake and entrance animation. Feedback never captures input or covers the thumb
-pads. The compact Style counter lives beside route progress on all screen sizes.
+Loading parks a valid saved run behind Continue. Invalid versions or malformed
+physics values start a fresh run safely. Blocked storage shows a short message
+and permits play. Record distance stays after a fall or fresh start.
 
-## Controls and lifecycle
+Reached sections unlock practice cards. Practice creates its own world while
+parking the challenge snapshot. It cannot alter the challenge record or overwrite
+its save. Exit practice/Return to run restores that parked challenge, including
+its exact body momentum and mess. Reload during practice loads the parked challenge.
 
-W/S or up/down push and pull; A/D or left/right rotate; Space brakes.
-P or Escape pauses, R retries, F toggles fullscreen. Keyboard input is scoped
-to focus inside the game. Touch devices use two independent analog thumb pads
-over the lower corners of the view, with a 64-pixel-wide brake between them.
-The left pad rotates with horizontal movement; the right pushes upward and
-pulls downward. Force follows displacement from the pad's fixed center, with
-a 12-percent neutral zone and full force at 28 percent of its width. The knob,
-caption and accessible slider value follow the actual input. Pads are 96 to
-120 pixels across in portrait and 100 in short landscape views. Controls use
-safe-area insets, leave the center of the view clear and do not shorten the canvas.
-The Store map button moves above the left pad on touch devices.
+## Verification and release
 
-Releasing a pad applies no force, preserving the cart's coast. Holding Brake
-overrides a held push or pull; rotation remains independent. Each pad owns one
-captured pointer, so a second finger cannot take it over. Push, turn and brake
-can be held together. Cancelled or lost captures, pause, retry, picker, blur,
-hidden tabs and viewport resizing clear input and return the knobs to center.
-An attached keyboard can also adjust the focused sliders or hold the brake.
-Sound starts muted and is synthesized after a user gesture. Reduced motion
-disables shake and marker particles. Idle and paused screens do not run a loop.
-
-## Verification and deployment
-
-Run `node --check` on each of the six game scripts, then:
+Run `node --check` on all six live scripts and the legacy fixture, then:
 
 ```sh
 node tools/test-four-wheels.cjs
@@ -344,40 +230,26 @@ node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
 node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
+node tools/test-four-wheels-course.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
-Handling tests cover momentum, caster trail and reverse flips, real tire impacts,
-walking and posture, exact wall contact, wheel-circle tangency, route order,
-checkout gaps and deadline precedence. Stock tests cover supported and loose
-items, 3D shelf toppling, momentum transfer, vase water, bottle breakage, tire
-crushing, conservative film flow, unequal grip and dense debris stability.
-Journey tests cover supported corridor continuity, locked doors, persistent body,
-wheels, gait, clock, stock and spills across a seam, global liquid cells, lakes,
-cliffs, recovery and timeout while falling. The verification pilot drives the
-whole connected trip with the same push, pull, turn and brake controls as players.
-It must clear every room before closing, with no forced fall.
+The old room and journey tests preserve handling and stock regression fixtures.
+The new course tests verify floor continuity, material forces, real rail contacts,
+water/cliff setbacks, retained world identity and mess, swinging/broken doors,
+stock tiers, saved debris and films, corruption rejection, ordered tire progress,
+complete finish footprint and unchanged stunts. The verification pilot drives all
+twelve sections using player forces, without teleporting or forced falls.
 
-View tests cover projection, inversion, physical caster points, circles, height,
-following cameras and whole-store framing. Browser tests check keyboard and
-concurrent analog touch controls, dead zones, gentle and full force, reversal,
-brake priority, off-pad capture, cancellation, orientation changes and thumb
-target geometry; actual wheel capture, continuous room entry with no
-new requests or overlay, color, six room previews, map controls, both fall types,
-pause and recovery, vase water, final checkout, new and older records, fullscreen,
-small phones, landscape, blocked storage and reduced motion. Hooks and the pilot
-are injected by a local verification server; none are shipped in game scripts.
-Browser checks use an owned Chrome for Testing process closed in `finally`.
-Trick tests cover real tire and shopper clearance, clean passes, impact rejection,
-both spin directions across the angle wrap, stationary and repeated spin rejection,
-slides, combo expiry, interruption and upgrades, clock caps, falls, pose jumps,
-deadline precedence and unchanged physical trajectories. Browser checks also
-verify actual 180, 360 and close-pass callouts, chain feedback, pause, results,
-small-screen placement, old records and reduced-motion feedback.
+The browser suite covers the same whole journey, desktop/mobile input, parked
+reloads, practice isolation, restart confirmation, both falls, paused gravity,
+stunts, overview, fullscreen, 320-pixel phones, short landscape, blocked storage,
+reduced motion, no scene requests and JavaScript errors. Private hooks and the
+pilot are injected by the local test server, never shipped. Use the owned
+`/Users/ethan/.local/bin/agent-chrome-for-testing` process and close it in finally.
 
-`ASSETS=1` writes fall animation GIFs into the QA directory and refreshes the
-1200-by-750 game thumbnail. Rebuild its WebP sibling and preserve the picture
-wrapper. Bump all seven CSS/game-script query versions in `four-wheels.html` for
-any deployed edit. Commit only this game's changes and push to main; GitHub Pages
-publishes it automatically. Verify the deployed asset bytes and desktop/mobile
-boot before calling a release live.
+`ASSETS=1` refreshes the 1200 by 750 thumbnail and WebP sibling from the renderer.
+Keep the archive picture wrapper. Bump all seven CSS/script query versions for
+any deployment. Commit only the game's changes and push main, which deploys via
+GitHub Pages. Check deployed bytes and real desktop/mobile input before reporting
+that a release is live.

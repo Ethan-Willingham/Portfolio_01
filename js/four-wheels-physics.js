@@ -17,6 +17,7 @@
   const CHECKPOINT_RADIUS = 20;
   const Stock = typeof module !== 'undefined' && module.exports ? require('./four-wheels-stock.js') : root.CartStock;
   const Tricks = typeof module !== 'undefined' && module.exports ? require('./four-wheels-tricks.js') : root.CartTricks;
+  const Course = typeof module !== 'undefined' && module.exports ? require('./four-wheels-course.js') : root.CartCourse;
 
   function point(body, x, y) {
     const c = Math.cos(body.a), s = Math.sin(body.a);
@@ -119,6 +120,7 @@
   }
 
   function polygonRectContact(poly, center, angle, rect) {
+    if(rect.poly)return Stock.polygonContact(poly,rect.poly);
     const c = Math.cos(angle), s = Math.sin(angle);
     const rcx = rect.x + rect.w / 2, rcy = rect.y + rect.h / 2;
     let best = Infinity, nx = 0, ny = 0;
@@ -146,6 +148,7 @@
   }
 
   function circleRect(x, y, radius, rect) {
+    if(rect.poly)return Stock.circlePolygon(x,y,radius,rect.poly);
     const qx = clamp(x, rect.x, rect.x + rect.w), qy = clamp(y, rect.y, rect.y + rect.h);
     const dx = x - qx, dy = y - qy, d = Math.hypot(dx, dy);
     if (d >= radius) return null;
@@ -202,13 +205,16 @@
       this.hazardEnabled=!!(level.connected||level.hazards?.length);
       this.stock = new Stock.System(this, { point, corners, casterPose, casterCorners, circleRect, cartCircle, casterCircle, BODY, CASTER });
       this.tricks = new Tricks.System(this, {point,corners,casterCorners,BODY,Stock});
+      if(level.campaign)Course.init(this);
     }
 
     activeWalls() {
+      if(this.level.campaign)return Course.wallsNear(this.level,this.body,95);
       const base=this.exitOpen?this.openWalls:this.closedWalls;
       return this.level.connected?[...base,...this.level.portals.filter(p=>this.gate<p.opensAt).map(p=>p.barrier)]:base;
     }
     isFloor(p) {
+      if(this.level.campaign)return !!Course.sample(this.level,p);
       const areas=this.level.floorAreas||[{x:8,y:8,w:464,h:284}];
       if(!areas.some(a=>p.x>=a.x&&p.x<=a.x+a.w&&p.y>=a.y&&p.y<=a.y+a.h))return false;
       return !(this.level.hazards||[]).some(h=>((p.x-h.x)/h.rx)**2+((p.y-h.y)/h.ry)**2<1);
@@ -225,8 +231,9 @@
       const p=missing[0]||this.body,hazard=this.hazardAt(p),b=this.body;
       const dx=p.x-b.x,dy=p.y-b.y,c=Math.cos(b.a),s=Math.sin(b.a);
       this.fall={kind:hazard.kind,time:0,vz:0,pitch:clamp((dx*c+dy*s)/20,-1,1),roll:clamp((-dx*s+dy*c)/12,-1,1)};
-      this.falls++;this.messes++;this.penalty+=8;
-      this.emit('fall',{kind:hazard.kind,x:p.x,y:p.y,seconds:8});
+      this.falls++;this.messes++;if(!this.level.campaign)this.penalty+=8;
+      if(this.level.campaign){this.fall.catch=Course.catchPose(this);this.lostDistance=Math.max(0,this.distance-this.fall.catch.distance);}
+      this.emit('fall',{kind:hazard.kind,x:p.x,y:p.y,seconds:this.level.campaign?0:8,lost:this.lostDistance,catch:this.fall.catch?.chapter});
     }
     fallStep(dt) {
       const f=this.fall,b=this.body;f.time+=dt;f.vz-=200*dt;
@@ -234,10 +241,13 @@
       b.pitch=f.pitch*Math.min(.9,f.time*1.5);b.rollTilt=f.roll*Math.min(.65,f.time);
       this.wheels.forEach(w=>{w.a=wrap(w.a+w.omega*dt);w.roll+=w.speed*dt;});
       this.stock.integrate(dt);
+      if(this.level.campaign){this.integrateProps(dt);this.courseDoors(dt);this.tricks.step(dt,{},true);}
       if(!this.practice&&this.remaining<=0){this.status='lost';this.emit('lost');return;}
       if(f.time>=1.15) {
-        Object.assign(b,{x:this.safePose.x,y:this.safePose.y,a:this.safePose.a,vx:0,vy:0,omega:0,z:0,pitch:0,rollTilt:0});
-        this.wheels.forEach(w=>Object.assign(w,{a:b.a,omega:0,roll:0,speed:0}));
+        const pose=f.catch?.pose||this.safePose;
+        Object.assign(b,{x:pose.x,y:pose.y,a:pose.a,vx:0,vy:0,omega:0,z:0,pitch:0,rollTilt:0});
+        this.wheels.forEach(w=>Object.assign(w,{a:b.a,omega:0,roll:this.level.campaign?w.roll:0,speed:0}));
+        if(f.catch){this.gate=f.catch.gate;this.roomIndex=f.catch.chapter;this.distance=f.catch.distance;}
         Object.assign(this.gait,{stride:0,leanX:0,leanY:0,speed:0});
         this.fall=null;this.unsupported=[];this.boundaryContacts=[];this.emit('respawn',{room:this.roomIndex});
       }
@@ -259,8 +269,8 @@
     }
     mess(kind, x, y) {
       const seconds = kind === 'cone' ? 2 : kind === 'box' ? 3 : 5;
-      this.messes++; this.penalty += seconds;
-      this.emit('mess', { kind, x, y, seconds });
+      this.messes++; if(!this.level.campaign)this.penalty += seconds;
+      this.emit('mess', { kind, x, y, seconds:this.level.campaign?0:seconds });
     }
 
     impulse(hit, other) {
@@ -410,21 +420,8 @@
       b.x += b.vx * dt; b.y += b.vy * dt; b.a = wrap(b.a + b.omega * dt);
       this.wheels.forEach(w => { w.a = wrap(w.a + w.omega * dt); });
       this.stock.integrate(dt);
-      for (const o of this.objects) {
-        if(o.gone)continue;
-        if(o.falling){o.vz-=200*dt;o.z+=o.vz*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.z< -55)o.gone=true;continue;}
-        if(this.hazardEnabled&&!this.isFloor(o)){o.falling=true;o.z=0;o.vz=0;continue;}
-        const decay = Math.exp(-(o.kind === 'cone' ? 2.0 : 2.8) * dt);
-        o.vx *= decay; o.vy *= decay; o.omega *= Math.exp(-3 * dt);
-        o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.omega * dt;
-        for (const rect of this.walls) {
-          const h = circleRect(o.x, o.y, o.radius, rect);
-          if (!h) continue;
-          o.x += h.nx * h.depth; o.y += h.ny * h.depth;
-          const vn = o.vx * h.nx + o.vy * h.ny;
-          if (vn < 0) { o.vx -= 1.18 * vn * h.nx; o.vy -= 1.18 * vn * h.ny; }
-        }
-      }
+      if(this.level.campaign)this.courseDoors(dt);
+      this.integrateProps(dt);
       for (let pass = 0; pass < 4; pass++) {
         for (const rect of this.walls) {
           const hits = [boxContact(b, rect)];
@@ -481,6 +478,7 @@
       // tolerance catches actual touching without requiring an impact impulse.
       for (const wall of this.walls) {
         const touch = { ...wall, x: wall.x - .04, y: wall.y - .04, w: wall.w + .08, h: wall.h + .08 };
+        if(wall.poly){const x=wall.x+wall.w/2,y=wall.y+wall.h/2;touch.poly=wall.poly.map(p=>({x:p.x+Math.sign(p.x-x)*.04,y:p.y+Math.sign(p.y-y)*.04}));}
         const cart = boxContact(b, touch), person = point(b, BODY.personX, 0);
         if (cart) this.boundaryContact(wall, cart, 'cart');
         const shopper = circleRect(person.x, person.y, BODY.personRadius, touch);
@@ -506,12 +504,18 @@
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
       if (target && cartTouchesCheckpoint(b, target, this.wheels)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
-      const room=this.roomAt(b);
+      const room=this.level.campaign?null:this.roomAt(b);
       if(room&&room.index!==this.roomIndex){this.roomIndex=room.index;this.safePose={...room.spawn};this.emit('room',{index:room.index});}
+      if(this.level.campaign)Course.update(this);
       this.checkSupport();
       const expired=!this.practice&&this.remaining<=0;
       this.tricks.step(dt,input,this.trickHit||expired);
       if(this.fall){if(!this.practice&&this.remaining<=0){this.status='lost';this.emit('lost');}return;}
+      if(this.level.campaign){
+        const f=this.level.finish;
+        if(this.gate===this.level.gates.length&&Math.hypot(point(b,BODY.personX,0).x-f.x,point(b,BODY.personX,0).y-f.y)+BODY.personRadius<=f.radius&&footprint(b,this.wheels).every(p=>Math.hypot(p.x-f.x,p.y-f.y)<=f.radius)){this.distance=this.peak=this.level.totalDistance;this.status='won';this.emit('won');}
+        return;
+      }
       const e = this.exit, shape = footprint(b, this.wheels), tangent = e.vertical ? b.y : b.x;
       const distance = p => (p.x - e.x) * e.nx + (p.y - e.y) * e.ny;
       this.exiting = this.exitOpen && tangent >= e.low && tangent <= e.high && shape.some(p => distance(p) > 0);
@@ -522,7 +526,38 @@
       if (expired) { this.status = 'lost'; this.emit('lost'); }
       else if (cleared) { this.status = 'won'; this.emit('won'); }
     }
-    get remaining() { return Math.max(0, this.level.limit - this.time - this.penalty + this.bonus); }
+    integrateProps(dt) {
+      for (const o of this.objects) {
+        if(o.gone)continue;
+        if(o.falling){o.vz-=200*dt;o.z+=o.vz*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.z< -55)o.gone=true;continue;}
+        if(this.hazardEnabled&&!this.isFloor(o)){o.falling=true;o.z=0;o.vz=0;continue;}
+        const decay = Math.exp(-(o.kind === 'cone' ? 2.0 : 2.8) * dt);
+        o.vx *= decay; o.vy *= decay; o.omega *= Math.exp(-3 * dt);
+        o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.omega * dt;
+        for (const rect of this.level.campaign?Course.wallsNear(this.level,o,25):this.walls) {
+          const h = circleRect(o.x, o.y, o.radius, rect);
+          if (!h) continue;
+          o.x += h.nx * h.depth; o.y += h.ny * h.depth;
+          const vn = o.vx * h.nx + o.vy * h.ny;
+          if (vn < 0) { o.vx -= 1.18 * vn * h.nx; o.vy -= 1.18 * vn * h.ny; }
+        }
+      }
+    }
+    courseDoors(dt) {
+      for(const d of this.trackDoors){
+        if(d.broken)continue;
+        d.omega+=-2.5*wrap(d.a-d.rest)*dt;d.omega*=Math.exp(-1.8*dt);d.a=wrap(d.a+d.omega*dt);
+        if(Math.abs(wrap(d.a-d.rest))>1.65){d.a=wrap(d.rest+Math.sign(wrap(d.a-d.rest))*1.65);d.omega*= -.08;}
+        if(this.fall||Math.hypot(this.body.x-d.cx,this.body.y-d.cy)>d.length+65)continue;
+        const poly=Course.doorPolygon(d),hits=[Stock.polygonContact(corners(this.body),poly)],person=point(this.body,BODY.personX,0);
+        hits.push(Stock.circlePolygon(person.x,person.y,BODY.personRadius,poly));
+        let impact=0;
+        for(const h of hits)if(h)impact=Math.max(impact,this.impulse(h,d));
+        this.wheels.forEach((q,i)=>{const h=Stock.polygonContact(casterCorners(this.body,q,i),poly);if(h)impact=Math.max(impact,this.casterImpulse(h,q,i,d));});
+        if(impact>12){d.broken=true;this.emit('break',{kind:'door',material:'glass',x:d.cx,y:d.cy,impact});const count=Math.min(10,Stock.MAX_FRAGMENTS-this.stock.fragments);this.stock.fragments+=count;for(let i=0;i<count;i++){const a=i*2.399;this.stock.addProduct('shard',d.cx+Math.cos(d.a)*d.length*.5,d.cy+Math.sin(d.a)*d.length*.5,{z:8+i%4*5,vz:12+i,vx:Math.cos(a)*25,vy:Math.sin(a)*25,a,material:'glass',color:1});}}
+      }
+    }
+    get remaining() { return this.level.campaign?Infinity:Math.max(0, this.level.limit - this.time - this.penalty + this.bonus); }
     get result() {
       const elapsed = Math.max(.1,this.time + this.penalty - this.bonus);
       return { time: elapsed, driving: this.time, penalty: this.penalty, bonus: this.bonus, style: this.tricks.score, bestCombo: this.tricks.bestCombo, tricks: {...this.tricks.counts}, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };

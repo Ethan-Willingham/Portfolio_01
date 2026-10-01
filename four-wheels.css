@@ -309,3 +309,21 @@
 .cart-course-badge { background: var(--room-color, var(--cart-accent)); border-color: var(--cart-muted); }
 .cart-clock-track i { background: var(--room-color, var(--cart-accent)); }
 .cart-route-steps i.is-current { background: var(--room-color, var(--cart-accent)); color: var(--cart-ink); border-color: var(--cart-muted); }
+
+/* Distance replaces the old clock. The route stays readable on small phones. */
+.cart-clock { width: 112px; }
+.cart-mishaps > div { align-items: flex-start; flex-direction: column; gap: .15rem; }
+.cart-penalty { white-space: nowrap; font-size: .58rem; }
+.cart-mishaps.has-messes .cart-penalty { color: var(--cart-muted); }
+.cart-route-steps { flex-wrap: wrap; max-width: 164px; gap: 3px; }
+.cart-route-steps i { min-width: 23px; height: 20px; font-size: .52rem; }
+.cart-course-tile:disabled { opacity: .65; }
+.cart-course-tile:disabled canvas { opacity: .4; }
+@media (max-width: 600px) {
+  .cart-clock { width: 92px; }
+  .cart-readouts output { font-size: 1.25rem; }
+  .cart-route-steps { max-width: 136px; }
+  .cart-route-steps i { min-width: 19px; padding-inline: 2px; height: 18px; }
+  .cart-route-copy { gap: .45rem; }
+  .cart-route-bar p { font-size: .65rem; line-height: 1.3; }
+}
