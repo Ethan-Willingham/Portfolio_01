@@ -1,0 +1,47 @@
+Sluice logo v11
+
+Requested changes: a beautiful smoke canopy over the full word; replace the E's rectangular water slot with an E-shaped hollow void, churning water and a bottom outlet.
+
+Built-in image_gen was used to rebuild only the hollow E body.
+Reference 1: assets/images/sluice-logo-v10.png, approved outer letter shapes, palette and lighting.
+Reference 2: assets/images/sluice-logo-v7-background.png, the actual game's irregular cave voids.
+Generated source: exec-25b9c79b-38bd-4f99-9f18-748aea97dff1.png, 1145 x 1374, real alpha.
+Alpha crop: x172, y193, right984, bottom1182.
+E placed at x1236, y310, width250, height326 on the final 1672 x 941 canvas.
+The thin ivory and bronze shell encloses one continuous dark cavity through all three arms. Its broken lower outlet aligns with the stream at x1414.
+The other letters reuse the approved v9 wordmark. The actual game terrain remains the v7 native background.
+
+Smoke: two instances of the actual SmokeFluid WebGL simulation and display shader from js/sluice/190-smoke-webgl.js. Both emit only along the L cap, x414 to x484, y306.
+Right canopy domain: x50, y-55, 1560 x 380. 750 steps at 1/60 second. Simulation resolution160, dye1024, pressure20, curl16. Density dissipation0.18, velocity dissipation0.16, optical density0.8, brightness0.74, absorption1.6. Heat1, cooling0.6, buoyancy3, weight0, viscosity0.1, edge spin0. Dye RGB0.009, 0.0087, 0.0078; radius0.05. Horizontal wind 0.06 + 0.022*sin(frame*0.023), applied throughout the domain. Gentle velocity-only impulses form rolling eddies over the word.
+Left curl domain: x20, y-55, 640 x 380. 450 steps. Simulation160, dye640, pressure20, curl14, density dissipation0.3, velocity dissipation0.18. Same optical palette; buoyancy16, dye RGB0.009, 0.0087, 0.0078 and radius0.048. Horizontal wind -0.065 + 0.018*sin(frame*0.025).
+Right and left plumes are composited at alpha0.5 and alpha0.46. Soft top, side and lower fades keep the canopy quiet and the letter contours readable. Smoke at the L mouth overlaps its upper lip.
+
+Water: the actual native LiquidWGPU surface shader from js/liquid-wgpu.js, unchanged. Posed particle positions, velocities and aeration compose a static breaking wave inside the new E cavity, a draining jet and the cave pool. This is native-rendered water, not a full liquid physics simulation or gameplay screenshot. Base RGB0.165, 0.420, 0.780, alpha0.82, turbulence RGB0.620, 0.840, 0.980. Scale3, rest density4, particle spacing0.5 world units. The cavity's dark original interior backs the transparent water. The shell occludes its edges. The pool uses the game's buildVoidContourPath geometry.
+Particle count: 38555. A second native render uses 7249 E and falling-stream particles without the cave pool for the transparent wordmark.
+Waterline inside E: y478 + 8*sin((x-1270)*0.046) + 3*cos(x*0.023) - 56*exp(-((x-1280)/16)^2). A thin native particle tongue bends forward from the filled crest; a few small drops remain within the cavity.
+The lower outlet rushes toward the same pool with a narrow jet and a detached drop. No white decorative reflection ribbons or ripple rings are added.
+
+Assets:
+assets/images/sluice-logo-v11.png, 1672 x 941 opaque RGB master.
+assets/images/sluice-logo-v11-wordmark.png, matching transparent wordmark.
+assets/images/sluice-logo-v11-e.png, cropped generated hollow E body.
+assets/images/sluice-logo-v11-e-mask.png, cavity mask used for water.
+assets/images/sluice-logo-v11-smoke.png and sluice-logo-v11-water.png, matching transparent effect layers.
+assets/thumbs/sluice-logo-v11.webp, 600 x 338 blog thumbnail.
+
+Validation: owned Chrome for Testing capture; both WebGL smoke instances and WebGPU water rendered successfully, zero uncaptured GPU errors. Full composition, 600-pixel thumbnail and transparent logo on the site's green were visually reviewed. Production game source and live thumbnail references were not changed.
+
+Final built-in image generation prompt:
+
+Use case: precise-object-edit.
+Asset type: replacement letter body for the Sluice game logo.
+Image 1 is the approved logo and precise reference for the E's OUTER SILHOUETTE, proportions, shallow bevel, warm ivory color and lighting. Image 2 is the actual game terrain and its irregular cave voids.
+
+Output ONLY a single uppercase E on genuine transparent background, centered with generous margins. The letter is about 0.72 as wide as it is tall. Match the large, heavy, simple recognizable outer E shape in Image 1: rounded square corners, common cap and baseline, three broad arms, shallow illustrated depth. No other letters or background.
+
+Rebuild the E as one large E-shaped hollow mining cavity. Almost the whole face of the E is a broad dark empty void, continuous through the upright and all three arms. A THIN but substantial warm ivory stone shell and restrained bronze bevel follow the outer E shape. The inner lip is gently irregular and worn like a mined cave, a few broad deviations, not perfect rectangular geometry. The shell is open-faced so the whole cavern can later be filled with simulated water. Keep the silhouette strongly readable as E. Interior is dark umber, matching the cave void color in Image 2, with a quiet shadow at the inner lip; broadly flat, no detailed textures inside. This is one open volume, no divider bars, no inset panel, gauge, tank window, sight glass, rectangular slot, tile pattern, rock chunks or accessories.
+An irregular narrow broken outlet interrupts the bottom shell at approximately 70 percent of E width from its left edge, continuous with the main interior void. It must be clearly open at the bottom, ready to drain into the existing pool below. Preserve common flat cap height and baseline aside from this small broken outlet.
+
+No water, no blue pixels, no droplets, no smoke in this asset, because actual game-rendered water and smoke will be composited afterward. Only the complete hollow E body and its empty interior. Keep outer transparent background and transparent gaps between the arms. Interior cavity remains dark, not transparent.
+Match the other logo letters' restrained hand-illustrated finish, warm upper-left lighting, modest clean bevel and broad economical shapes. Crisp high-resolution edges. No added machinery, ornament, excessive cracks or texture, photorealism, CGI shine, glow, extra text or watermark.
+
