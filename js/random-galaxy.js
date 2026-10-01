@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.76';
+  var VERSION = 'v1.77';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -7377,6 +7377,7 @@
     // The scene buttons (Mulberry / Perfect grid / Mandelbulb) are wired below (selectScene).
 
     window.addEventListener('keydown', function (e) {
+      if (window.GXEmergence && window.GXEmergence.active && !['f', 'F', 'h', 'H', 'Escape'].includes(e.key)) return;
       if (e.key === '`' || e.key === '~') { toggleDevPanel(); e.preventDefault(); return; }   // dev performance panel
       // Native pickers and sliders keep their keyboard controls in fullscreen.
       if (e.target.closest && e.target.closest('input, select, textarea, button, summary, a')) return;
