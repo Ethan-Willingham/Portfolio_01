@@ -1,0 +1,31 @@
+{
+  "schema": "sluice-smoke-painter-frozen-original-v1",
+  "gameVersion": "v28.134",
+  "originalSource": "js/sluice/190-smoke-webgl.js",
+  "originalFragmentSHA256": "a9e76887042be5eb9af7299d73ff0e6f6c133ad2f4107985844aaa126e3947f2",
+  "originalPainterSHA256": "90d171ae4b1370238b4b8d601109a6fffb1a616fdcfbbe3ef68a9a0fd42abe6d",
+  "originalStateSHA256": "745fcf8402f54664a70f62e2065acdc7e0ca1e75e99c76b76e4474a6be8acedc",
+  "fixture": "fixtures/smoke-painter-v28.134-original.js",
+  "fixtureSHA256": "7d832a92496fe505a76785c39aee5c96cb0280dcd7482ce656d34499f4c6a62a",
+  "fixtureBytes": 12217,
+  "extraction": "Original state and painter operations retained. Existing comment punctuation normalized to the repository rule; added boundary/provenance comments. Historical original painter/state hashes describe the original comments.",
+  "historicalGate": {
+    "checks": 696,
+    "paints": 348,
+    "prefixSuccesses": 21,
+    "candidateSHA256": "edfaafd3257836a142e683bcd4c91bbbb31d7634ef3730157303438ef0b34159",
+    "reportSHA256": "487e7fedc3eb866163404cdfad7bee26841340c7693f0b75f79aa74ec643f345",
+    "status": "Historical private harness result only, not execution of this portable package."
+  },
+  "portableRunnerSHA256": "9b6fde1fb9574bbf8baef4ce19c84bf64105fb08b6973e78f47236158d70e3a2",
+  "portableGate": {
+    "checks": 696,
+    "paints": 348,
+    "prefixSuccesses": 21,
+    "candidateSHA256": "edfaafd3257836a142e683bcd4c91bbbb31d7634ef3730157303438ef0b34159",
+    "harnessSHA256": "9b6fde1fb9574bbf8baef4ce19c84bf64105fb08b6973e78f47236158d70e3a2",
+    "passed": true,
+    "timed": false,
+    "browserLaunched": false
+  }
+}

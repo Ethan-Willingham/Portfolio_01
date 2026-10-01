@@ -296,6 +296,34 @@ natural weather, water and stock smoke. Full raw data and the report are in
 
 ## Reproduction and remaining validation
 
+v28.135 adds exact append-prefix reuse and an empty-bin alpha shortcut to the
+desktop smoke obstacle painter. Its browser pixel gates and ordinary handling
+observations are recorded in [SMOKE_OBSTACLE_CACHE.md](SMOKE_OBSTACLE_CACHE.md).
+The candidate's natural route still exceeded the CPU frame budget frequently;
+it does not establish the whole-game 120 FPS target.
+
+A private snow guest crossing-edge index passed 3,348 exact GPU cases but saved
+only about 0.7 to 3.3 percent in the frozen grain-solver replay. It remains outside
+production. That replay excludes water solving; live liquid-frame spans include
+water work between grain quanta. A separate four-write endpoint probe still
+measured a 9.235693 ms median for three two-quantum samples of the actual controlled
+14,000-grain game workload. Its timing trace exported completely, but the subsequent
+extended state snapshot failed and supplies no replay state. These small diagnostic
+samples establish a budget failure in that workload, not a native FPS limit or a
+causal measurement of timestamp overhead.
+
+A subsequent bounded export completed the actual trace-end state using sequential
+64 KiB readbacks and persisted chunks. Its ten endpoint samples had no GPU errors;
+seven two-quantum spans had a 9.774809 ms median, while two one-quantum spans had a
+4.466578 ms median. The snapshot retained 14,000 active snow grains and 4,091 other
+material records. Its position-derived histogram had 3,022 occupied global cells,
+4.63 grains per occupied cell on average, and 60 at the maximum. The older wide
+bed had 3,390 occupied cells, 4.11 on average, and 41 at the maximum. These are
+different physical states, not a controlled attribution of the span difference.
+The snapshot is complete for current resident, air and active-grid ranges, but
+omits persistent mixed-grid tails and CPU histories and is not guaranteed to match
+a timestamped frame. It cannot certify a complete mixed-water replay.
+
 Run an explicit serial matrix outside the repository:
 
 ```sh

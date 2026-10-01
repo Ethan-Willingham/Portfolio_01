@@ -1399,6 +1399,33 @@
   var smokeObstWaterVY = null;       // density-weighted falling-water velocity
   var smokeObstWaterCanvas = null, smokeObstWaterCtx = null, smokeObstWaterImage = null;
   var smokeObstWaterCache = null;
+  var smokeObstWaterPrefix = null;
+  function smokeObstWaterRememberPrefix(prior, start, xWords, yWords, vyWords, count) {
+    // This metadata is optional. An allocation failure must not turn a
+    // completed ordinary paint/cache assignment into a new paint failure.
+    try {
+      if (!smokeObstWaterCache || !xWords || !yWords || !vyWords) return;
+      var capacity = prior && prior.xWords.length >= count ? prior.xWords.length :
+        Math.max(256, count, prior ? prior.xWords.length * 2 : 0);
+      var px = prior && prior.xWords.length === capacity ? prior.xWords : new Uint32Array(capacity);
+      var py = prior && prior.yWords.length === capacity ? prior.yWords : new Uint32Array(capacity);
+      var pv = prior && prior.vyWords.length === capacity ? prior.vyWords : new Uint32Array(capacity);
+      // On capacity growth copy already certified snapshot words, then read
+      // only the appended input suffix. Ordinary rebuilds start at zero.
+      if (prior && start > 0) {
+        if (px !== prior.xWords) px.set(prior.xWords.subarray(0, start));
+        if (py !== prior.yWords) py.set(prior.yWords.subarray(0, start));
+        if (pv !== prior.vyWords) pv.set(prior.vyWords.subarray(0, start));
+      }
+      for (var i = start; i < count; i++) {
+        px[i] = xWords[i]; py[i] = yWords[i]; pv[i] = vyWords[i];
+      }
+      smokeObstWaterPrefix = { cache: smokeObstWaterCache, count: count,
+        xWords: px, yWords: py, vyWords: pv, frozenArray: liquidFrozen,
+        bins: smokeObstWaterBins, vy: smokeObstWaterVY };
+    } catch (error) { smokeObstWaterPrefix = null; }
+  }
+
   // Fast water entrains the surrounding air. The CPU mirror is binned every
   // few frames and the strongest falling cells inject velocity, not dye, into
   // the smoke field. Slow pool water remains a collision boundary.
@@ -2262,16 +2289,53 @@
         }
       }
       if (!reuse) {
+        var priorPrefix = smokeObstWaterPrefix, prefixStart = 0;
+        var prefixXWords = null, prefixYWords = null, prefixVYWords = null;
+        // Clear the certificate before modifying either accumulator. A failed
+        // putImageData retry must never append the same suffix twice.
+        smokeObstWaterPrefix = null;
+        try {
+        if (canCache && liquidCount === Math.floor(liquidCount) &&
+            liquidX instanceof Float32Array && liquidY instanceof Float32Array &&
+            liquidVY instanceof Float32Array && liquidFrozen instanceof Uint8Array &&
+            liquidX.buffer instanceof ArrayBuffer && liquidY.buffer instanceof ArrayBuffer &&
+            liquidVY.buffer instanceof ArrayBuffer && liquidFrozen.buffer instanceof ArrayBuffer &&
+            liquidCount <= liquidX.length && liquidCount <= liquidY.length &&
+            liquidCount <= liquidVY.length && liquidCount <= liquidFrozen.length) {
+          prefixXWords = new Uint32Array(liquidX.buffer, liquidX.byteOffset, liquidCount);
+          prefixYWords = new Uint32Array(liquidY.buffer, liquidY.byteOffset, liquidCount);
+          prefixVYWords = new Uint32Array(liquidVY.buffer, liquidVY.byteOffset, liquidCount);
+          if (priorPrefix && cached && priorPrefix.cache === cached &&
+              priorPrefix.count === cached.count && liquidCount > cached.count &&
+              cached.gpu === gpu && cached.x === liquidX && cached.y === liquidY && cached.vy === liquidVY &&
+              cached.ox === originX && cached.oy === originY && cached.w === binsW && cached.h === binsH &&
+              cached.flow === SMOKE_WATER_FLOW_MIN_VY && priorPrefix.frozenArray === liquidFrozen &&
+              priorPrefix.bins === smokeObstWaterBins && priorPrefix.vy === smokeObstWaterVY &&
+              smokeObstWaterBins && smokeObstWaterBins.length >= nBins &&
+              smokeObstWaterVY && smokeObstWaterVY.length >= nBins &&
+              cached.frozen instanceof Uint8Array && cached.frozen.length === cached.count) {
+            prefixStart = cached.count;
+            for (var pi = 0; pi < prefixStart; pi++) {
+              if (priorPrefix.xWords[pi] !== prefixXWords[pi] ||
+                  priorPrefix.yWords[pi] !== prefixYWords[pi] ||
+                  priorPrefix.vyWords[pi] !== prefixVYWords[pi] ||
+                  cached.frozen[pi] !== liquidFrozen[pi]) { prefixStart = 0; break; }
+            }
+          }
+        }
+        } catch (error) { prefixStart = 0; prefixXWords = prefixYWords = prefixVYWords = null; }
         if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
           smokeObstWaterBins = new Float32Array(Math.max(nBins, 16384));
           smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
         }
         var bins = smokeObstWaterBins;
-        bins.fill(0, 0, nBins);
-        smokeObstWaterVY.fill(0, 0, nBins);
+        if (!prefixStart) {
+          bins.fill(0, 0, nBins);
+          smokeObstWaterVY.fill(0, 0, nBins);
+        }
         var domR = originX + (binsW - 1.5) * BIN;
         var domB = originY + (binsH - 1.5) * BIN;
-        for (var wi = 0; wi < liquidCount; wi++) {
+        for (var wi = prefixStart; wi < liquidCount; wi++) {
           if (liquidFrozen[wi]) continue;
           var wx = liquidX[wi], wy = liquidY[wi];
           if (wx < originX + BIN || wx >= domR || wy < originY + BIN || wy >= domB) continue;
@@ -2308,6 +2372,7 @@
         // counts also avoid the old 255-count saturation under compression.
         for (var bi = 0; bi < nBins; bi++) {
           var bn = bins[bi];
+          if (bn === 0) { rgba[bi * 4 + 3] = 0; continue; }
           var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
           coverage *= coverage * (3 - 2 * coverage);
           var falling = bn > 0 ? Math.max(0, Math.min(1,
@@ -2323,6 +2388,8 @@
             count: liquidCount, x: liquidX, y: liquidY, vy: liquidVY, frozen: frozenCopy,
             ox: originX, oy: originY, w: binsW, h: binsH, flow: SMOKE_WATER_FLOW_MIN_VY };
         } else smokeObstWaterCache = null;
+        smokeObstWaterRememberPrefix(priorPrefix, prefixStart,
+          prefixXWords, prefixYWords, prefixVYWords, liquidCount);
       }
       oc.save();
       oc.imageSmoothingEnabled = true;
