@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#292820">
   <title>All Four Wheels</title>
-  <meta name="description" content="A pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. Six short courses, playable here.">
+  <meta name="description" content="An isometric pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. Six short courses, playable here.">
   <link rel="canonical" href="https://ethanwillingham.com/four-wheels.html">
   <meta property="og:title" content="All Four Wheels">
   <meta property="og:description" content="Turn the cart. Keep sliding. Try to leave the wine on the shelf. A little pixel-art game about four swivel wheels.">
@@ -22,7 +22,7 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/four-wheels.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="750">
-  <meta property="og:image:alt" content="A chunky pixel-art cart and its shopper sliding through a store with shelves, caution cones, and a checkout exit.">
+  <meta property="og:image:alt" content="An isometric pixel-art store with a silver shopping cart, shelves, caution cones, and a checkout exit.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/four-wheels.jpg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=13">
+  <link rel="stylesheet" href="four-wheels.css?v=14">
 </head>
 <body class="cart-page">
   <div class="site-wrapper">
@@ -61,7 +61,8 @@
           </header>
 
           <div class="cart-stage" id="cart-stage">
-            <canvas id="cart-canvas" width="480" height="300" tabindex="0" aria-label="Shopping cart obstacle course. Touch each numbered checkpoint with the coral marker inside the basket. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Touch each numbered checkpoint with the coral marker inside the basket, then drive out through checkout.</canvas>
+            <canvas id="cart-canvas" width="720" height="480" tabindex="0" aria-label="Isometric shopping cart obstacle course. Touch each numbered checkpoint with the coral marker inside the basket. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Touch each numbered checkpoint with the coral marker inside the basket, then drive out through checkout.</canvas>
+            <button class="cart-camera" id="cart-camera" type="button" aria-label="Show the whole course" aria-pressed="false" hidden>Overview</button>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
                 <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span>FOUR WHEELS. ALL SWIVEL.</span></div>
@@ -114,7 +115,7 @@
         </section>
 
         <div class="post-body cart-prose">
-          <p><strong>All Four Wheels</strong> is my shopping cart game. Turn the basket while it keeps sliding in the old direction, then push to bend its path. Six short courses, shelves that topple, bottles that break, spills under the wheels, and your best runs saved in this browser. Still in progress.</p>
+          <p><strong>All Four Wheels</strong> is my isometric shopping cart game. Turn the basket while it keeps sliding in the old direction, then push to bend its path. Six short courses, shelves that topple, bottles that break, spills under the wheels, and your best runs saved in this browser. Still in progress.</p>
           <details class="cart-notes">
             <summary>How to play</summary>
             <p>Get through the store before time runs out. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five.</p>
@@ -135,10 +136,11 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=13"></script>
-  <script src="js/four-wheels-physics.js?v=13"></script>
-  <script src="js/four-wheels-levels.js?v=13"></script>
-  <script src="js/four-wheels.js?v=13"></script>
+  <script src="js/four-wheels-stock.js?v=14"></script>
+  <script src="js/four-wheels-physics.js?v=14"></script>
+  <script src="js/four-wheels-levels.js?v=14"></script>
+  <script src="js/four-wheels-view.js?v=14"></script>
+  <script src="js/four-wheels.js?v=14"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

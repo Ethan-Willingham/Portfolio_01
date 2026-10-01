@@ -58,6 +58,8 @@
 #cart-pause[aria-pressed="true"] .cart-resume-glyph { display: block; }
 .cart-stage { position: relative; flex: 1; width: 100%; min-width: 0; min-height: 0; overflow: hidden; background: var(--cart-well); }
 #cart-canvas { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+.cart-camera { position: absolute; bottom: .8rem; left: .8rem; z-index: 1; min-height: 44px; padding: .55rem .85rem; border: 1px solid var(--cart-ink); border-radius: 6px; background: var(--cart-paper); color: var(--cart-ink); font-size: .75rem; box-shadow: 0 2px 0 var(--cart-ink); }
+.cart-game:not([data-phase="running"]) .cart-camera { display: none; }
 .cart-overlay { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding: 1.5rem; background: rgba(41,40,32,.36); overflow: auto; }
 .cart-overlay[hidden], .cart-game [hidden] { display: none !important; }
 .cart-overlay-card { position: relative; width: 610px; max-width: 100%; flex-shrink: 0; margin: auto; padding: 2rem; border: 1px solid var(--cart-ink); border-radius: 12px; background: var(--cart-paper); box-shadow: 0 8px 0 rgba(41,40,32,.18), 0 24px 60px rgba(41,40,32,.22); text-align: left; }
@@ -118,7 +120,7 @@
 .cart-course-tile { position: relative; text-align: left; border: 1px solid var(--cart-line); border-radius: 8px; background: var(--cart-paper); color: var(--cart-ink); overflow: hidden; padding: 0; }
 .cart-course-tile:hover, .cart-course-tile.is-current { border-color: var(--cart-ink); box-shadow: 0 3px 0 var(--cart-ink); }
 .cart-course-tile.is-current::after { content: 'SELECTED'; position: absolute; top: .65rem; right: .65rem; padding: .3rem .5rem; border-radius: 3px; background: var(--cart-ink); color: var(--cart-paper); font-family: var(--font-mono); font-size: .55rem; letter-spacing: .06em; }
-.cart-course-tile canvas { display: block; width: 100%; aspect-ratio: 8 / 5; image-rendering: pixelated; border-bottom: 1px solid var(--cart-line); }
+.cart-course-tile canvas { display: block; width: 100%; aspect-ratio: 3 / 2; image-rendering: pixelated; border-bottom: 1px solid var(--cart-line); }
 .cart-course-tile-copy { display: block; padding: 1rem; }
 .cart-course-tile strong { display: block; margin-top: .35rem; font-family: var(--font-body); font-size: 1.2rem; font-weight: 700; letter-spacing: -.025em; }
 .cart-course-tile-meta { display: flex; justify-content: space-between; gap: .4rem; margin-top: .7rem; padding-top: .65rem; border-top: 1px dashed var(--cart-line); font-family: var(--font-mono); font-size: .58rem; color: var(--cart-muted); }

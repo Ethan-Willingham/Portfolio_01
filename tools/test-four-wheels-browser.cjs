@@ -20,8 +20,11 @@ const server = http.createServer((req, res) => {
     if (file.endsWith('/js/four-wheels.js')) {
       let source = data.toString(); const end = source.lastIndexOf('})();');
       source = source.slice(0, end) + `
+      function isoPose(g,body,wheels,gait,x=150,y=125,scale=2.2) {
+        g.save();g.scale(scale,scale);view.drawCart(g,{...body,x:0,y:0},wheels,gait,{x:x/scale,y:y/scale});g.restore();
+      }
       window.__cartTest = {
-        state: () => ({ phase, index:levelIndex, body:{...world.body}, gait:{...world.gait}, wheels:world.wheels, time:world.time, gate:world.gate, messes:world.messes, penalty:world.penalty, practice:world.practice, touch:touches.size, keys:keys.size, records, canSave, remaining:world.remaining, objects:world.objects, contacts:world.boundaryContacts, exitOpen:world.exitOpen, exiting:world.exiting }),
+        state: () => ({ phase, narrowCamera, followCart, index:levelIndex, body:{...world.body}, gait:{...world.gait}, wheels:world.wheels, time:world.time, gate:world.gate, messes:world.messes, penalty:world.penalty, practice:world.practice, touch:touches.size, keys:keys.size, records, canSave, remaining:world.remaining, objects:world.objects, contacts:world.boundaryContacts, exitOpen:world.exitOpen, exiting:world.exiting }),
         stop: () => { cancelAnimationFrame(raf); raf=0; },
         crashScene: () => {
           cancelAnimationFrame(raf);raf=0;
@@ -35,7 +38,7 @@ const server = http.createServer((req, res) => {
           world=new World(level,true);floor=makeFloor(level);phase='running';particles=[];draw();updateUI();
         },
         crashFrames: (vase=false) => {
-          const frames=[],c=document.createElement('canvas');c.width=480;c.height=300;const g=c.getContext('2d');
+          const frames=[],c=document.createElement('canvas');c.width=CartView.CAMERA.width;c.height=CartView.CAMERA.height;const g=c.getContext('2d');
           for(let i=0;i<144;i++){for(let k=0;k<5;k++)world.step(1/120,vase&&world.time<.8?{push:1}:{});draw(g,world,floor,true);frames.push(c.toDataURL('image/png').split(',')[1]);}
           events();draw();updateUI();return frames;
         },
@@ -43,18 +46,18 @@ const server = http.createServer((req, res) => {
         approachExit: () => { world.gate=world.level.gates.length;const q=world.exit;Object.assign(world.body,{...q.approach,a:q.a,vx:0,vy:0,omega:0});world.wheels.forEach(w=>{w.a=q.a;w.omega=0;}); },
         shelfSheet: () => {
           const c=document.createElement('canvas');c.width=900;c.height=680;const g=c.getContext('2d');
-          rect(g,0,0,c.width,c.height,P.floor);
+          view.rect(g,0,0,c.width,c.height,P.floor);
           for(let row=0;row<2;row++)for(let col=0;col<3;col++) {
             const level={...levels[0],start:{x:20,y:240,a:0},shelves:[{x:30,y:row===0?47:17,w:40,h:86,stock:'groceries',label:'WINE & SAUCES'}],objects:[],signs:[]};
             const w=new World(level,true),s=w.shelves[0];s.tilt=[0,.8,Math.PI/2][col];s.nx=row===0?1:0;s.ny=row===0?0:1;s.down=col===2;
             w.stock.items.forEach(p=>w.stock.positionStock(p));
-            g.save();g.beginPath();g.rect(col*300,row*340,300,340);g.clip();g.translate(col*300,row*340);text(g,['UPRIGHT','TIPPING','ON ITS SIDE'][col],150,18,P.dark,8,'center');g.translate(0,28);g.scale(2,2);
-            g.drawImage(makeFloor(level),0,0);drawFurnitureShadow(g,s);drawShelf(g,s);g.restore();
+            g.save();g.beginPath();g.rect(col*300,row*340,300,340);g.clip();g.translate(col*300,row*340);view.text(g,['UPRIGHT','TIPPING','ON ITS SIDE'][col],150,18,P.dark,8,'center');g.translate(0,28);g.scale(2,2);const focus=CartView.project({x:s.cx,y:s.cy});g.translate(75-focus.x,100-focus.y);
+            g.drawImage(makeFloor(level),0,0);view.drawFurnitureShadow(g,s);view.drawShelf(g,s);g.restore();view.text(g,['UPRIGHT','TIPPING','ON ITS SIDE'][col],col*300+150,row*340+18,P.light,8,'center');
           }
           return c.toDataURL('image/png').split(',')[1];
         },
         renderProfile: () => {
-          const c=document.createElement('canvas');c.width=480;c.height=300;const g=c.getContext('2d');
+          const c=document.createElement('canvas');c.width=CartView.CAMERA.width;c.height=CartView.CAMERA.height;const g=c.getContext('2d');
           const w=new World(levels[4],true),background=makeFloor(levels[4]);
           for(let i=0;i<200;i++)w.stock.addProduct('shard',10+i%40*11,30+Math.floor(i/40)*45,{color:i%6});
           for(let i=0;i<10;i++)draw(g,w,background,true);
@@ -63,14 +66,14 @@ const server = http.createServer((req, res) => {
         },
         casterSheet: () => {
           const sheet=document.createElement('canvas');sheet.width=600;sheet.height=360;
-          const g=sheet.getContext('2d');rect(g,0,0,600,360,P.floor);
+          const g=sheet.getContext('2d');view.rect(g,0,0,600,360,P.floor);
           const cases=[
             {label:'FORWARD',a:0,w:[0,0,0,0]},
             {label:'SWUNG INWARD',a:0,w:[-Math.PI/2,-Math.PI/2,Math.PI/2,Math.PI/2]},
             {label:'REVERSING',a:0,w:[Math.PI,Math.PI,Math.PI,Math.PI]},
             {label:'COASTING THROUGH A TURN',a:.7,w:[.1,1.1,-.4,1.5]}
           ];
-          cases.forEach((q,i)=>{g.save();g.translate(i%2*300,Math.floor(i/2)*180);text(g,q.label,150,17,P.dark,7,'center');g.scale(3,3);drawCart(g,{x:45,y:28,a:q.a,vx:0,vy:0},q.w.map(a=>({a,roll:0})));g.restore();});
+          cases.forEach((q,i)=>{g.save();g.translate(i%2*300,Math.floor(i/2)*180);view.text(g,q.label,150,17,P.dark,7,'center');isoPose(g,{x:0,y:0,a:q.a,vx:0,vy:0},q.w.map(a=>({a,roll:0})));g.restore();});
           return sheet.toDataURL('image/png').split(',')[1];
         },
         walkingFrames: () => {
@@ -80,13 +83,13 @@ const server = http.createServer((req, res) => {
           for(let i=0;i<60;i++)CartPhysics.advanceGait(gait,body,1/120,{push:1});
           for(let i=0;i<48;i++) {
             for(let j=0;j<5;j++) {CartPhysics.advanceGait(gait,body,1/120,{push:1});wheels.forEach(w=>{w.roll+=60/120;});}
-            rect(g,0,0,360,216,P.floor);g.save();g.scale(4,4);drawCart(g,body,wheels,gait);g.restore();
-            text(g,'WALKING / 60 PIXELS PER SECOND',180,198,P.dark,8,'center');frames.push(c.toDataURL('image/png').split(',')[1]);
+            view.rect(g,0,0,360,216,P.floor);isoPose(g,body,wheels,gait,180,140,3);
+            view.text(g,'WALKING / 60 PIXELS PER SECOND',180,198,P.dark,8,'center');frames.push(c.toDataURL('image/png').split(',')[1]);
           }
           return frames;
         },
         postureSheet: () => {
-          const c=document.createElement('canvas');c.width=600;c.height=540;const g=c.getContext('2d');rect(g,0,0,600,540,P.floor);
+          const c=document.createElement('canvas');c.width=600;c.height=540;const g=c.getContext('2d');view.rect(g,0,0,600,540,P.floor);
           const poses=[
             {label:'STANDING',vx:0,omega:0,input:{}},
             {label:'PUSHING',vx:60,omega:0,input:{push:1}},
@@ -98,23 +101,22 @@ const server = http.createServer((req, res) => {
           poses.forEach((q,i)=>{
             const body={x:45,y:28,a:0,vx:q.vx,vy:0,omega:q.omega},gait={...new World(levels[0]).gait};
             for(let j=0;j<90;j++)CartPhysics.advanceGait(gait,body,1/120,q.input);
-            g.save();g.translate(i%2*300,Math.floor(i/2)*180);text(g,q.label,150,17,P.dark,7,'center');g.scale(3,3);
-            drawCart(g,body,WHEELS.map(()=>({a:0,roll:0})),gait);g.restore();
+            g.save();g.translate(i%2*300,Math.floor(i/2)*180);view.text(g,q.label,150,17,P.dark,7,'center');isoPose(g,body,CartPhysics.WHEELS.map(()=>({a:0,roll:0})),gait);g.restore();
           });return c.toDataURL('image/png').split(',')[1];
         },
         motionFrames: () => {
           const frames=[],c=document.createElement('canvas');c.width=720;c.height=432;const g=c.getContext('2d');
-          const poses=['PUSH / COAST','TURN LEFT','TURN RIGHT','BRAKE / PULL BACK'].map(label=>({label,body:{x:45,y:26,a:0,vx:0,vy:0,omega:0},gait:{...new World(levels[0]).gait},wheels:WHEELS.map(()=>({a:0,roll:0}))}));
+          const poses=['PUSH / COAST','TURN LEFT','TURN RIGHT','BRAKE / PULL BACK'].map(label=>({label,body:{x:45,y:26,a:0,vx:0,vy:0,omega:0},gait:{...new World(levels[0]).gait},wheels:CartPhysics.WHEELS.map(()=>({a:0,roll:0}))}));
           for(let i=0;i<96;i++) {
-            rect(g,0,0,720,432,P.floor);
+            view.rect(g,0,0,720,432,P.floor);
             poses.forEach((q,n)=>{
               const t=i/24,active=t<2.3,ease=Math.min(1,t*3),rest=Math.max(0,1-(t-2.3)*2);
               const input=n===0?(active?{push:t<1.3?1:0}:{}):n<3?(active?{turn:n===1?-1:1}:{}):(t<.8?{}:t<1.5?{brake:1}:active?{push:-1}:{});
               q.body.vx=n===0?60*ease*(active?1:rest):n<3?25*(active?1:rest):t<.8?60:t<1.5?60*(1-(t-.8)/.7):active?-40*Math.min(1,(t-1.5)*3):-40*rest;
               q.body.omega=n===1||n===2?(n===1?-1:1)*1.5*ease*(active?1:rest):0;
               for(let j=0;j<5;j++){CartPhysics.advanceGait(q.gait,q.body,1/120,input);q.wheels.forEach(w=>{w.roll+=q.body.vx/120;});}
-              g.save();g.translate(n%2*360,Math.floor(n/2)*216);g.scale(4,4);drawCart(g,q.body,q.wheels,q.gait);g.restore();
-              text(g,q.label,n%2*360+180,Math.floor(n/2)*216+198,P.dark,8,'center');
+              g.save();g.translate(n%2*360,Math.floor(n/2)*216);isoPose(g,q.body,q.wheels,q.gait,180,140,3);g.restore();
+              view.text(g,q.label,n%2*360+180,Math.floor(n/2)*216+198,P.dark,8,'center');
             });frames.push(c.toDataURL('image/png').split(',')[1]);
           }return frames;
         },
@@ -143,6 +145,13 @@ async function setup(context, url) {
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
     await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]');localStorage.setItem('four-wheels-records-v2', '[{"time":34,"stars":2}]');localStorage.setItem('four-wheels-records-v3', '[{"time":40,"stars":2}]'); });
     const page = await setup(desktop, url);
+    check('the game boots the shared isometric view at 720 by 480 pixels',await page.evaluate(()=>CartView.CAMERA.horizontal===2*CartView.CAMERA.vertical&&document.getElementById('cart-canvas').width===720&&document.getElementById('cart-canvas').height===480));
+    check('drawing the isometric scene does not advance physics or gait',await page.evaluate(()=>{
+      const w=__cartTest.world(),before=JSON.stringify({body:w.body,gait:w.gait,time:w.time,stock:w.stock.items.map(p=>[p.x,p.y,p.z,p.tumble])});
+      for(let i=0;i<8;i++)__cartTest.draw();
+      return before===JSON.stringify({body:w.body,gait:w.gait,time:w.time,stock:w.stock.items.map(p=>[p.x,p.y,p.z,p.tumble])});
+    }));
+
     const fillsOpeningViewport = () => {
       const game=document.getElementById('cart-game').getBoundingClientRect();
       const nav=document.querySelector('.cart-bottomnav').getBoundingClientRect();
@@ -203,6 +212,8 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({path:path.join(dump,'checkpoint-cleared.png')});
     await page.locator('#cart-courses').click();
     check('all six courses are selectable', await page.locator('.cart-course-tile').count() === 6);
+    check('every course preview uses the full isometric camera',await page.evaluate(()=>[...document.querySelectorAll('.cart-course-tile canvas')].every(c=>c.width===CartView.CAMERA.width&&c.height===CartView.CAMERA.height)));
+
     await page.locator('#cart-picker').screenshot({ path: path.join(dump, 'courses.png') });
     await page.locator('.cart-course-tile').nth(3).click();
     check('course selection opens the chosen briefing', (await page.evaluate(() => __cartTest.state())).index === 3 && await page.locator('#cart-start').isVisible());
@@ -243,7 +254,7 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({path:path.join(dump,'stock-after-collapse.png')});
     if(process.env.ASSETS==='1') {
       const sharp=require('sharp'),raw=await Promise.all(crashFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
-      await sharp(Buffer.concat(raw),{raw:{width:480,height:300*raw.length,channels:4,pageHeight:300}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shelf-collapse.gif'));
+      await sharp(Buffer.concat(raw),{raw:{width:720,height:480*raw.length,channels:4,pageHeight:480}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shelf-collapse.gif'));
     }
     await page.evaluate(()=>__cartTest.vaseScene());
     check('the introductory scene contains one square table and a single vase',await page.evaluate(()=>{
@@ -257,7 +268,7 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({path:path.join(dump,'vase-puddle.png')});
     if(process.env.ASSETS==='1') {
       const sharp=require('sharp'),raw=await Promise.all(vaseFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
-      await sharp(Buffer.concat(raw),{raw:{width:480,height:300*raw.length,channels:4,pageHeight:300}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'vase-drop.gif'));
+      await sharp(Buffer.concat(raw),{raw:{width:720,height:480*raw.length,channels:4,pageHeight:480}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'vase-drop.gif'));
     }
     await page.evaluate(()=>{
       __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();
@@ -286,7 +297,7 @@ async function setup(context, url) {
       const probe=document.createElement('canvas');probe.width=probe.height=1;const p=probe.getContext('2d');
       p.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--warn').trim()||'#d99090';p.fillRect(0,0,1,1);
       const expected=p.getImageData(0,0,1,1).data;
-      const g=document.getElementById('cart-canvas').getContext('2d'),pixels=g.getImageData(0,0,480,300).data;let count=0;
+      const g=document.getElementById('cart-canvas').getContext('2d'),pixels=g.getImageData(0,0,g.canvas.width,g.canvas.height).data;let count=0;
       for(let i=0;i<pixels.length;i+=4)if(pixels[i]===expected[0]&&pixels[i+1]===expected[1]&&pixels[i+2]===expected[2])count++;
       return count;
     };
@@ -314,7 +325,7 @@ async function setup(context, url) {
         __cartTest.draw();return document.getElementById('cart-canvas').toDataURL('image/png').split(',')[1];
       });
       const sharp=require('sharp');
-      await sharp(Buffer.from(pixels,'base64')).resize(1200,750,{kernel:'nearest'}).jpeg({quality:96,chromaSubsampling:'4:4:4'}).toFile(path.join(root,'assets/thumbs/four-wheels.jpg'));
+      await sharp(Buffer.from(pixels,'base64')).resize(1200,750,{kernel:'nearest',fit:'cover',position:'centre'}).jpeg({quality:96,chromaSubsampling:'4:4:4'}).toFile(path.join(root,'assets/thumbs/four-wheels.jpg'));
       console.log('Wrote game thumbnail.');
     }
     await page.evaluate(() => { __cartTest.reset(0); __cartTest.run(); __cartTest.approachExit(); __cartTest.step(1.15,{push:1}); });
@@ -350,6 +361,13 @@ async function setup(context, url) {
     }));
     await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-start.png') });
     await phone.locator('#cart-start').tap();
+    await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===480);
+    check('portrait uses a closer cart camera and a viewport-shaped pixel canvas',await phone.evaluate(()=>{
+      const c=document.getElementById('cart-canvas'),s=document.getElementById('cart-stage').getBoundingClientRect(),state=__cartTest.state();
+      return state.narrowCamera&&state.followCart&&c.width===480&&Math.abs(c.height/c.width-s.height/s.width)<.003;
+    }));
+    check('portrait exposes a touch-sized overview control',await phone.locator('#cart-camera').isVisible()&&await phone.locator('#cart-camera').evaluate(b=>b.getBoundingClientRect().height>=44));
+
     const push = await phone.locator('[data-control="push"]').boundingBox(), turn = await phone.locator('[data-control="right"]').boundingBox();
     const session = await mobile.newCDPSession(phone);
     const p = { x: push.x + push.width / 2, y: push.y + push.height / 2, id: 1 }, q = { x: turn.x + turn.width / 2, y: turn.y + turn.height / 2, id: 2 };
@@ -358,7 +376,18 @@ async function setup(context, url) {
     check('two-finger touch can push and turn at once', a.touch === 2 && a.body.a > -1 && Math.hypot(a.body.vx, a.body.vy) > 25);
     await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
     check('cancelled touches release all forces', (await phone.evaluate(() => __cartTest.state())).touch === 0);
+    await phone.evaluate(()=>__cartTest.stop());
     await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-driving.png') });
+    const cameraBefore=await phone.evaluate(()=>{const s=__cartTest.state();return JSON.stringify({body:s.body,time:s.time,gait:s.gait});});
+    await phone.locator('#cart-camera').tap();
+    check('overview shows the entire store without changing the cart or clock',!(await phone.evaluate(()=>__cartTest.state())).followCart&&cameraBefore===await phone.evaluate(()=>{const s=__cartTest.state();return JSON.stringify({body:s.body,time:s.time,gait:s.gait});}));
+    await phone.locator('#cart-game').screenshot({path:path.join(dump,'mobile-overview.png')});
+    await phone.locator('#cart-camera').focus();await phone.keyboard.press('Space');
+    check('Space activates the camera button and returns to the following view',(await phone.evaluate(()=>__cartTest.state())).followCart);
+    await phone.evaluate(()=>{const w=__cartTest.world();Object.assign(w.body,{x:441,y:150,a:0,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=0;q.omega=0;});__cartTest.step(1/120);});
+    check('the following camera keeps immediate physical boundary feedback visible',await phone.evaluate(redPixels)>100);
+    await phone.locator('#cart-game').screenshot({path:path.join(dump,'mobile-edge-contact.png')});
+
     await phone.locator('#cart-pause').tap();
     await phone.locator('#cart-game').screenshot({ path: path.join(dump, 'mobile-pause.png') });
     await phone.evaluate(() => {__cartTest.reset(0);__cartTest.run();__cartTest.approachExit();__cartTest.step(2,{push:1});});
@@ -379,6 +408,8 @@ async function setup(context, url) {
     await phone.setViewportSize({width:852,height:393});
     await phone.evaluate(() => __cartTest.reset());
     check('the landscape phone also opens into a complete game', await phone.evaluate(fillsOpeningViewport));
+    check('landscape restores the whole-store camera',await phone.evaluate(()=>!__cartTest.state().narrowCamera&&document.getElementById('cart-canvas').width===720)&&!(await phone.locator('#cart-camera').isVisible()));
+
     check('the landscape briefing and start button fit the playfield', await phone.evaluate(() => {
       const card=document.querySelector('.cart-overlay-card').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect();
       return card.top>=stage.top&&card.bottom<=stage.bottom;

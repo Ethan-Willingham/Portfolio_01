@@ -11,9 +11,15 @@ feature flags, or build step.
 - `js/four-wheels-stock.js`: furniture, supported stock, loose products, breakage and floor films.
 - `js/four-wheels-physics.js`: cart physics and course state; browser and CommonJS.
 - `js/four-wheels-levels.js`: six courses, ordered markers, props and checkout exits.
-- `js/four-wheels.js`: coarse pixel rasterizer, input, audio, UI and local records.
+- `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D scene.
+- `js/four-wheels.js`: input, audio, UI, fixed-step loop and local records.
 
-The canvas is 480 by 300 pixels and scales with image smoothing disabled.
+The canvas is 720 by 480 pixels and scales with image smoothing disabled.
+The physical store remains 480 by 300 world units. The shared 2:1 isometric
+camera projects every point as x = 264 + 0.84(x - y),
+y = 70 + 0.42(x + y) - 0.95z. Changing the camera does not change course
+geometry, forces, deadlines or saved records. Its inverse is exported for
+verification. Keyboard and touch controls remain relative to the cart's heading.
 Art is drawn locally from the site's warm palette, with silver metal for the
 cart. The floor uses varied warm terrazzo tiles, coarse mineral chips, inset
 grout, glazed lips and occasional wheel scuffs. Its texture is deterministic
@@ -24,8 +30,15 @@ The post uses the site's analytics and self-hosted fonts.
 
 The page opens directly into the game, following Sluice's layout. The shell is
 96vw wide (capped at 1800px) and fills the opening viewport, including toolbar,
-route status and keyboard or touch controls. The fixed-resolution course is
-contained without stretching or cropping. The title is inside the briefing;
+route status and keyboard or touch controls. Desktop and landscape contain the
+whole course without stretching or cropping.
+Portrait uses a 480-pixel-wide canvas matching the stage's aspect ratio. The
+renderer first draws the same 720-by-480 scene, then presents a closer 1.8x
+following view with nearest-pixel scaling. A live overview shows the full frame,
+cart and viewport, and offscreen markers have a numbered direction cue. The
+Overview button switches to a contained whole-store view without changing the
+simulation. ResizeObserver restores the full camera in landscape. Pausing and
+camera changes do not advance physics or walking. The title is inside the briefing;
 the short about note, optional instructions and site links sit below the game.
 Keep blog heroes and the archive banner off this page. Its In Progress card
 and search membership remain on `archive.html`.
@@ -69,7 +82,7 @@ Tires and forks are opaque; basket mesh and rails are translucent. The basket
 stays empty, with silver rails and a three-pixel wire spacing in both directions.
 Do not hide inward-swung casters behind an opaque basket fill. Pivot pins stay
 attached to the body while the tire and fork swing around them.
-All four tires have an 8-by-4-pixel physical envelope, chamfered rubber ends,
+All four tires have an 8-by-4-unit physical envelope, faceted rubber cylinders,
 thin steel forks, axle caps and individual travel-driven tread animation.
 The smaller gold bearing stays distinct from the silver axle. Keep the art
 and `CASTER.halfWidth` consistent so red contact outlines match the slim tires.
@@ -88,7 +101,9 @@ and handle; the lean is visual and does not change the collision footprint.
 Rendering and pauses do not advance the gait. The title illustration and course
 previews stand still.
 The rounded head, ears, nose and shaded brown crown rotate with the shopper.
-Keep the overhead hair detail local to the body rather than offset on the screen.
+Keep the hair detail local to the raised head rather than offset on the screen.
+The torso, head, arms, bending knees and lifted shoes use real world heights.
+The planted feet follow the original cadence; the hands stay on the raised handle.
 
 The simulation uses fixed 1/120-second steps. A cart rectangle and shopper circle
 both collide with shelves and walls; each tire also has a separate oriented
@@ -120,16 +135,32 @@ stays solid on the floor instead of flattening into its old footprint. Their
 collisions can knock over adjacent racks. Supported stock contributes to the
 rack's mass and center of mass, so dropping it changes the loaded body.
 
-The renderer uses an oblique height projection (0.28 pixels left and 0.55 up
-per unit of height), shared by furniture and loose stock. Thick wood decks,
-framed end panels, a back panel and square steel uprights are shaded and culled
-by their rotated face normals. Depth sorting reveals the boards, back and
-underside as the rack falls. Supported bottles and dishes follow their board
-plane; the upper decks can occlude stock beneath them. The label is attached to
-a deck and its tiny texture is cached. A cast shadow follows the actual 3D
-vertices and is drawn on the floor before people and loose stock. Table legs
-and its three-pixel tabletop use the same solid-face renderer. Long pixel edges
-are batched by row to keep the added detail inexpensive.
+The view uses a shared isometric scene for shelves, their stock, props, the
+cart and the shopper. Thick wood decks, framed end panels, a back panel and
+square steel uprights are shaded and culled by their rotated face normals.
+All visible faces, limbs and basket wires are sorted together by camera depth,
+so a shopper or loose bottle can move behind a rack instead of popping in
+front of it. This is a painter's renderer, not a per-pixel depth buffer.
+The raised basket has tapered side walls, an empty translucent bottom, three-unit
+wire spacing and a handle at hand height. Tires are vertical cylinders with
+visible axle caps and slender offset forks; their centers use the same caster
+pose as collision and liquid pickup. Do not rotate or flatten a completed 2D sprite.
+
+Upright bottles, vases, cans, dishes, pots, folded towels and cartons are solid
+models. Supported products use the actual rocking board transform. Loose
+products use their simulated position, height, yaw and tumble; floor bottles
+lie around their physical center, and crushed ketchup bottles flatten visibly.
+Shelf decks sit at the supported tiers (12, 22 and 32 units). Labels are mounted
+on the frame and their textures are cached. Cast shadows follow the actual
+furniture vertices and are clipped to the diamond-shaped floor. Table legs
+and its three-unit tabletop use the same solid-face renderer. Long pixel edges
+are batched by row to keep the detail inexpensive.
+
+The room is a cutaway diorama with a solid floor slab, plaster back walls and
+low front curbs that leave the shopper and casters visible. Checkout cuts through
+the appropriate wall and continues onto an outside apron. Room edges, puddles,
+tracks, shadows, checkpoints, contact outlines and the velocity guide share the
+same projection. Opening art and every course preview use this renderer too.
 
 Every displayed product is the actual simulated item. Each has mass, planar
 inertia, material friction, bounce, height, vertical speed and tumbling angle.
@@ -174,16 +205,18 @@ keep a messy aisle bounded. Films and landed stock persist until retry.
 ## Checkpoints and checkout
 
 Checkpoints have a continuous circular outline with a shared 20-pixel radius.
-The inner edge of the painted ring matches the capture boundary. A small coral
+The floor circle projects to an ellipse in the isometric view. Its painted
+boundary uses the capture radius. A small coral
 sensor in the basket has radius 4 and sits two thirds of the distance from the
 rear edge to the front edge, at local x = 19 2/3. Any touch or overlap of that
 sensor counts. Shopper contact or another part of the cart cannot clear a marker
-by itself. The sensor rotates with the basket and stays visible through its mesh.
+by itself. The sensor rotates with the basket. A floor ring marks its actual capture
+footprint, with a matching badge on the basket bottom and a thin connecting line.
 There is no dwell time, heading or speed requirement. Checkpoints count once,
 in route order, and the sensor disappears when checkout opens.
 
 The room uses a light plaster rim, thin baseboard and shallow inner shadow,
-with a plain ink margin around the canvas. Keep the seam on the actual walls.
+with a warm neutral margin around the cutaway store. Keep the seam on the actual walls.
 Every outer-wall contact turns the contacted edge and the physical cart,
 shopper and tire outlines red immediately. Contact feedback is independent
 of impact speed or penalties, includes exact resting contact with a 0.04-pixel
@@ -194,7 +227,7 @@ Each course has a checkout doorway on an outer wall. Its side, center and
 width define both the painted opening and the real gap between wall colliders.
 The shutter opens after every route marker is cleared. Its jambs and all other
 edges remain solid. Finish by driving through the opening until the entire
-cart, every tire and the shopper have cleared the outside edge of the canvas.
+cart, every tire and the shopper have cleared the outside edge of the physical store.
 No heading constraint, speed threshold or parking dwell remains. Deadline
 expiry still takes precedence over completion on the same physics step.
 Practice has no deadline and does not save records. Timed records use
@@ -216,11 +249,12 @@ disables shake and marker particles. Idle and paused screens do not run a loop.
 
 ## Verification and deployment
 
-Run `node --check` on each of the four game scripts, then:
+Run `node --check` on each of the five game scripts, then:
 
 ```sh
 node tools/test-four-wheels.cjs
 node tools/test-four-wheels-stock.cjs
+node tools/test-four-wheels-view.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
@@ -238,7 +272,12 @@ They cover walking cadence, smooth acceleration, reverse steps, posture and
 turns in place, and include a controller that drives all six full routes and
 drives out through the real contact model before their deadlines. Browser checks
 cover keyboard, touch, pause, retry, results, saved records, practice, course
-selection, narrow layouts, fullscreen, reduced motion and blocked storage.
+selection, narrow layouts, the portrait following view and overview toggle, fullscreen,
+reduced motion and blocked storage.
+View checks cover projection and inversion, height separation, the camera
+ray and depth, every course in the viewport, projected circles and physical
+caster contact geometry. Browser checks also verify the shared camera in all
+previews, no simulation changes during drawing, and projected red contact cues.
 Test hooks are injected by the verification server and are never shipped.
 Screenshots go to `/tmp/four-wheels-qa` unless `DUMP` is set. The harness owns
 Chrome for Testing and closes that process in `finally`. It never launches
@@ -253,6 +292,6 @@ pushes, both turn directions and braking, plus six-second `vase-drop.gif` and
 Run `tools/build-webp.mjs` after refreshing the thumbnail to update its WebP
 sibling.
 
-For edits, increment the five `?v=` values in the post. Keep the post in the
+For edits, increment the six `?v=` values in the post. Keep the post in the
 In Progress index, rebuild search when copy changes, and regenerate the sitemap
 after committing a new page. Commit explicit paths and push to main.

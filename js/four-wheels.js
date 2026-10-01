@@ -2,8 +2,8 @@
   'use strict';
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
-  if (!ctx || !window.CartPhysics || !window.CartLevels) return;
-  const { World, BODY, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, point, corners, WHEELS, CASTER, casterPose, casterCorners, clamp } = CartPhysics;
+  if (!ctx || !window.CartPhysics || !window.CartLevels || !window.CartView) return;
+  const { World, clamp } = CartPhysics;
   const levels = CartLevels, game = $('game');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const rootStyle = getComputedStyle(document.documentElement);
@@ -16,7 +16,6 @@
     steel: '#a6aeab', steelShade: '#687674', steelLight: '#e2e6df',
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
-  const HEIGHT_SCALE = .55, HEIGHT_X = .28;
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
   const STORAGE = 'four-wheels-records-v4';
   let records = [], canSave = true;
@@ -100,590 +99,36 @@
     }
   };
 
-  function rect(g, x, y, w, h, color) { g.fillStyle = color; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
-  // Rasterized polygons and ellipses keep the art on one coarse pixel grid,
-  // including rotated basket rails, wheels, arms, and flying dishes.
-  function poly(g, points, color) {
-    const low = Math.floor(Math.min(...points.map(p => p.y))), high = Math.ceil(Math.max(...points.map(p => p.y)));
-    g.fillStyle = color;
-    for (let y = low; y < high; y++) {
-      const intersections = [];
-      for (let i = 0; i < points.length; i++) {
-        const a = points[i], b = points[(i + 1) % points.length];
-        if ((a.y <= y + .5 && b.y > y + .5) || (b.y <= y + .5 && a.y > y + .5)) intersections.push(a.x + (y + .5 - a.y) * (b.x - a.x) / (b.y - a.y));
-      }
-      intersections.sort((a, b) => a - b);
-      for (let i = 0; i < intersections.length - 1; i += 2) g.fillRect(Math.round(intersections[i]), y, Math.max(1, Math.round(intersections[i + 1]) - Math.round(intersections[i])), 1);
-    }
-  }
-  function oval(g, x, y, rx, ry, color) {
-    g.fillStyle = color;
-    for (let yy = -Math.ceil(ry); yy <= ry; yy++) {
-      const width = Math.round(rx * Math.sqrt(Math.max(0, 1 - yy * yy / (ry * ry))));
-      if (width > 0) g.fillRect(Math.round(x) - width, Math.round(y) + yy, width * 2, 1);
-    }
-  }
-  function ring(g, x, y, radius, color, thickness = 1) {
-    const outer = radius + thickness, size = Math.ceil(outer);
-    const cx = Math.round(x), cy = Math.round(y);
-    g.fillStyle = color;
-    // Scan the two sides of a circular band on the native pixel grid. Its
-    // Checkpoint outlines put their inner edge on the capture radius.
-    for (let y = -size; y < size; y++) {
-      const yy = (y + .5) ** 2;
-      if (yy >= outer * outer) continue;
-      const span = Math.sqrt(outer * outer - yy);
-      const left = Math.ceil(-span - .5), right = Math.ceil(span - .5);
-      if (yy >= radius * radius) g.fillRect(cx + left, cy + y, right - left, 1);
-      else {
-        const gap = Math.sqrt(radius * radius - yy);
-        const innerLeft = Math.ceil(-gap - .5), innerRight = Math.ceil(gap - .5);
-        g.fillRect(cx + left, cy + y, innerLeft - left, 1);
-        g.fillRect(cx + innerRight, cy + y, right - innerRight, 1);
-      }
-    }
-  }
-  function localRect(g, body, x, y, w, h, color) { poly(g, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(p => point(body, ...p)), color); }
-  function line(g, x, y, xx, yy, color, thickness = 1) {
-    const n = Math.max(1, Math.ceil(Math.hypot(xx - x, yy - y)));
-    // Batch each native pixel row. Extruded furniture has many long edges;
-    // drawing a row once also avoids uneven alpha from overlapping pixels.
-    let row=Math.round(y),left=Math.round(x),right=left;
-    for(let i=1;i<=n;i++) {
-      const px=Math.round(x+(xx-x)*i/n),py=Math.round(y+(yy-y)*i/n);
-      if(py!==row) {rect(g,left,row,right-left+thickness,thickness,color);row=py;left=right=px;}
-      else {left=Math.min(left,px);right=Math.max(right,px);}
-    }
-    rect(g,left,row,right-left+thickness,thickness,color);
-  }
-  function text(g, value, x, y, color = P.edge, size = 7, align = 'left') {
-    g.fillStyle = color; g.font = 'bold ' + size + 'px "Commit Mono"'; g.textAlign = align; g.fillText(value, Math.round(x), Math.round(y));
-  }
-  function arrow(g, x, y, angle, length, color) {
-    const body = { x, y, a: angle };
-    localRect(g, body, -length / 2, -1, length - 3, 3, color);
-    poly(g, [[length / 2, 0], [length / 2 - 7, -5], [length / 2 - 7, 5]].map(p => point(body, ...p)), color);
-  }
-  function hash(x, y) {
-    let v=Math.imul(x,73856093)^Math.imul(y,19349663);
-    v=Math.imul(v^(v>>>16),0x7feb352d);v=Math.imul(v^(v>>>15),0x846ca68b);
-    return ((v^(v>>>16))>>>0)/4294967296;
-  }
-  const colors=new Map();
-  function blend(a,b,t) {
-    const rgb=color=>{
-      if(!colors.has(color)) {
-        const probe=document.createElement('canvas');probe.width=probe.height=1;
-        const g=probe.getContext('2d');g.fillStyle=color;g.fillRect(0,0,1,1);
-        colors.set(color,[...g.getImageData(0,0,1,1).data].slice(0,3));
-      }
-      return colors.get(color);
-    };
-    const x=rgb(a),y=rgb(b);
-    return 'rgb('+x.map((v,i)=>Math.round(v+(y[i]-v)*t)).join(',')+')';
-  }
-  const project3 = p => ({x:p.x-p.z*HEIGHT_X,y:p.y-p.z*HEIGHT_SCALE});
-  const cameraDepth = p => p.x*HEIGHT_X+p.y*HEIGHT_SCALE+(p.z||0);
-  function makeFloor(level) {
-    const off = document.createElement('canvas'); off.width = 480; off.height = 300;
-    const g = off.getContext('2d');
-    rect(g, 0, 0, 480, 300, P.cream); rect(g, 8, 8, 464, 284, P.floor);
-    // Terrazzo has coarse mineral chips, glazed tile lips and worn grout.
-    // Bake it once so the floor does not shimmer or cost work during play.
-    const grout=blend(P.floor,P.edge,.23);
-    rect(g,8,8,464,284,grout);
-    for (let row=0,y=8;y<292;row++,y+=24) for (let col=0,x=8;x<472;col++,x+=24) {
-      const seed=col*137+row*911,v=hash(seed,41),width=Math.min(23,472-x),height=Math.min(23,292-y);
-      const tile=blend(blend(P.floor,P.cream,.1+v*.16),v>.58?P.gold:P.clay,.025+hash(seed,17)*.045);
-      rect(g,x,y,width,height,tile);
-      g.globalAlpha=.36;rect(g,x+1,y+1,width-2,1,P.cream);rect(g,x+1,y+1,1,height-2,P.cream);
-      g.globalAlpha=.16;rect(g,x+1,y+height-1,width-1,1,P.edge);rect(g,x+width-1,y+1,1,height-1,P.edge);
-      for(let chip=0;chip<10;chip++) {
-        const cx=x+2+Math.floor(hash(seed+chip*47,83)*Math.max(1,width-4));
-        const cy=y+2+Math.floor(hash(seed+chip*59,137)*Math.max(1,height-4));
-        const q=hash(seed+chip*71,193);
-        g.globalAlpha=q>.8?.3:.19;
-        rect(g,cx,cy,q>.72?2:1,q>.94?2:1,chip%3===0?P.edge:chip%3===1?P.cream:P.gold);
-      }
-      if(v>.8&&width>12&&height>12) {
-        const sx=x+5+Math.floor(hash(seed,29)*9),sy=y+7+Math.floor(hash(seed,53)*9);
-        g.globalAlpha=.15;line(g,sx,sy,sx+4,sy-2,P.edge);line(g,sx+1,sy+2,sx+5,sy,P.mid);
-      }
-    }
-    g.globalAlpha = 1;
-    // A quiet plaster wall and thin baseboard replace the striped frame.
-    // The inside seam stays aligned with the actual room colliders.
-    rect(g, 7, 7, 466, 1, P.light); rect(g, 7, 7, 1, 286, P.light);
-    rect(g, 8, 292, 465, 1, P.seam); rect(g, 472, 8, 1, 285, P.seam);
-    g.globalAlpha = .6;
-    rect(g, 8, 8, 464, 1, P.mid); rect(g, 8, 8, 1, 284, P.mid);
-    g.globalAlpha = .12;
-    rect(g, 9, 9, 462, 2, P.dark); rect(g, 9, 9, 2, 282, P.dark);
-    g.globalAlpha = 1;
-    if (level.puddle) {
-      const p = level.puddle;
-      g.globalAlpha = .31; oval(g, p.x, p.y + 2, p.rx + 2, p.ry + 2, P.edge);
-      g.globalAlpha = .6; oval(g, p.x, p.y, p.rx, p.ry, P.blue);
-      g.globalAlpha = .32;
-      for (let i = 0; i < 9; i++) {
-        const x = p.x + (hash(i, 1) - .5) * p.rx * 1.4, y = p.y + (hash(i, 3) - .5) * p.ry * 1.2;
-        rect(g, x, y, 6 + i % 4, 1, P.light); rect(g, x + 4, y + 2, 5, 1, P.light);
-      }
-      g.globalAlpha = 1;
-    }
-    for (const s of level.signs) { g.globalAlpha = .6; text(g, s.text, s.x, s.y, P.edge, 6, 'center'); }
-    g.globalAlpha = .45; arrow(g, level.start.x, level.start.y, level.start.a, 34, P.cream); g.globalAlpha = 1;
-    return off;
-  }
-
-  const spillColor = kind => kind === 'wine' ? P.purple : kind === 'ketchup' ? P.brick : kind === 'oil' ? P.gold : kind === 'soil' ? P.hairDark : P.blue;
-  function drawProduct(g, p) {
-    const mounted = p.state === 'shelf';
-    const b = {x:p.x-p.z*HEIGHT_X, y:p.y - p.z * HEIGHT_SCALE, a:mounted ? p.a + p.shelf.a : p.a};
-    const color = swatches[(p.color || 0) % swatches.length];
-    const foreshorten=mounted||p.z<1?1:.4+.6*Math.abs(Math.cos(p.tumble));
-    const c=Math.cos(p.a),sin=Math.sin(p.a);
-    const onBoard=(u,v)=>project3(CartStock.shelfPoint(p.shelf,p.u+u*c-v*sin,p.v+u*sin+v*c,p.tier));
-    const detail=(x,y,width,height,color)=>{
-      if(!mounted){localRect(g,b,x*foreshorten,y,width*foreshorten,height,color);return;}
-      poly(g,[[x,y],[x+width,y],[x+width,y+height],[x,y+height]].map(([u,v])=>onBoard(u,v)),color);
-    };
-    if (!mounted) { g.globalAlpha = .15; oval(g,p.x+1,p.y+2,Math.max(2,p.length),Math.max(1,p.width),P.dark); g.globalAlpha = 1; }
-    if (p.kind === 'vase') {
-      // Glass belly, a narrow neck and a dark open mouth. The tile or tabletop
-      // remains visible through the water-filled body.
-      g.globalAlpha = .28; oval(g,b.x,b.y+1,4,Math.max(2,5*foreshorten),P.blue);
-      g.globalAlpha = .65;
-      for(let i=0;i<16;i++) {const a=i*Math.PI/8,next=(i+1)*Math.PI/8,ry=Math.max(2,5*foreshorten);line(g,b.x+4*Math.cos(a),b.y+1+ry*Math.sin(a),b.x+4*Math.cos(next),b.y+1+ry*Math.sin(next),P.steelShade);}
-      g.globalAlpha = .9; line(g,b.x-3,b.y,b.x-3,b.y+3,P.light); line(g,b.x+2,b.y+4,b.x,b.y+4,P.steelLight);
-      g.globalAlpha = 1;
-      if(mounted) {oval(g,b.x,b.y-3,2,2,P.steelLight);oval(g,b.x,b.y-3,1,1,P.steelShade);rect(g,b.x-2,b.y-4,3,1,P.light);}
-      else detail(3,-2,2,4,P.steelLight);
-    } else if (p.kind === 'wine') {
-      detail(-4,-2,7,4,P.dark); detail(-4,-1,7,2,P.pine);
-      detail(3,-1,3,2,P.green); detail(5,-1,1,2,P.gold);
-      detail(-2,-2,3,4,P.cream); detail(-1,-1,1,2,P.purple); detail(-4,-2,1,1,P.sage);
-    } else if (p.kind === 'ketchup') {
-      detail(-4,-2,p.flat?8:7,p.flat?5:4,P.brick); detail(3,-1,2,2,P.coral);
-      detail(4,-1,1,2,P.light); detail(-2,-2,3,4,P.cream); detail(-1,-1,2,2,P.brick);
-      detail(-4,-2,1,2,P.coral);
-    } else if (p.kind === 'jar') {
-      detail(-3,-3,6,6,P.pine); detail(2,-3,2,6,P.gold);
-      detail(-2,-2,3,4,P.cream); detail(-3,-2,1,3,P.sage);
-    } else if (p.kind === 'can') {
-      detail(-4,-2,8,4,P.steelShade); detail(-3,-2,6,4,color);
-      detail(-3,-2,6,1,P.steelLight); detail(-1,-1,2,2,P.cream); detail(3,-1,1,2,P.steel);
-    } else if (p.kind === 'plate') {
-      if(mounted) {
-        const disk=(rx,ry,tint)=>poly(g,Array.from({length:16},(_,i)=>onBoard(rx*Math.cos(i*Math.PI/8),ry*Math.sin(i*Math.PI/8))),tint);
-        disk(4,3,P.steelShade);disk(3.5,2.5,P.cream);disk(2,1,color);
-      } else {oval(g,b.x,b.y,4,Math.max(1,3*foreshorten),P.steelShade); oval(g,b.x,b.y-1,4,Math.max(1,3*foreshorten),P.cream); oval(g,b.x,b.y-1,2,1,color);}
-    } else if (p.kind === 'pot') {
-      detail(-3,-3,6,6,P.clay); detail(-4,-4,8,2,P.gold);
-      if (mounted || p.z>2) { detail(-1,-5,2,6,P.pine); detail(-5,-5,5,3,P.sage); detail(0,-7,4,4,P.pine); }
-      else { detail(-2,-2,4,4,P.hairDark); detail(0,-1,4,2,P.pine); }
-    } else if (p.kind === 'towel') {
-      detail(-5,-3,10,6,color); detail(-4,-2,8,1,P.cream); detail(-4,1,8,1,P.cream);
-    } else if (p.kind === 'carton') {
-      detail(-5,-4,10,8,P.clay); detail(-1,-4,2,8,P.gold); detail(-4,-3,3,2,P.cream);
-    } else {
-      const tint = p.material === 'ceramic' ? P.cream : p.material === 'terracotta' ? P.clay : p.source === 'wine' ? P.sage : P.steelLight;
-      g.globalAlpha = p.material === 'glass' ? .85 : 1;
-      poly(g,[[-p.length,-p.width],[p.length,0],[-p.length*.4,p.width]].map(q=>point(b,...q)),tint);
-      rect(g,b.x,b.y,1,1,P.light); g.globalAlpha = 1;
-    }
-  }
-  function furnitureVertices(s) {
-    return [[-s.w/2,-s.h/2],[s.w/2,-s.h/2],[s.w/2,s.h/2],[-s.w/2,s.h/2]]
-      .flatMap(([u,v])=>[CartStock.shelfPoint(s,u,v,0),CartStock.shelfPoint(s,u,v,s.height)]);
-  }
-  function drawFurnitureShadow(g,s) {
-    g.save();g.beginPath();g.rect(8,8,464,284);g.clip();
-    const vertices=furnitureVertices(s);
-    const shadow=CartStock.hull(vertices.map(p=>({x:p.x+p.z*.28,y:p.y+p.z*.36})));
-    g.globalAlpha=.09;poly(g,shadow.map(p=>({x:p.x+2,y:p.y+2})),P.dark);
-    g.globalAlpha=.22;poly(g,shadow,P.dark);
-    for(const p of vertices) if(p.z<.5) {g.globalAlpha=.25;oval(g,p.x,p.y+1,3,2,P.dark);}
-    g.restore();
-  }
-  function drawShelf(g,s) {
-    const surfaces=[],origin=CartStock.shelfPoint(s,0,0,0);
-    const normal=(x,y,z)=>{const p=CartStock.shelfPoint(s,x,y,z);return {x:p.x-origin.x,y:p.y-origin.y,z:p.z-origin.z};};
-    const addFace=(corners,n,color,detail)=>{
-      n=normal(...n);
-      if(n.x*HEIGHT_X+n.y*HEIGHT_SCALE+n.z<.015) return;
-      const vertices=corners.map(p=>CartStock.shelfPoint(s,...p));
-      const light=Math.max(0,-n.x*.42-n.y*.5+n.z*.76);
-      const tint=blend(color,P.dark,.48-light*.38);
-      surfaces.push({depth:vertices.reduce((sum,p)=>sum+cameraDepth(p),0)/vertices.length,draw:()=>{
-        const points=vertices.map(project3);poly(g,points,tint);
-        for(let i=0;i<4;i++){const a=points[i],b=points[(i+1)%4];g.globalAlpha=.32;line(g,a.x,a.y,b.x,b.y,light>.45?P.cream:P.dark);}
-        g.globalAlpha=1;if(detail)detail();
-      }});
-    };
-    const box=(x,y,z,w,h,d,color,top=color)=>{
-      const p=[[x,y,z],[x+w,y,z],[x+w,y+h,z],[x,y+h,z],[x,y,z+d],[x+w,y,z+d],[x+w,y+h,z+d],[x,y+h,z+d]];
-      for(const [indices,n,c]of [[[0,3,2,1],[0,0,-1],P.hair],[[4,5,6,7],[0,0,1],top],[[0,4,7,3],[-1,0,0],color],[[1,2,6,5],[1,0,0],color],[[0,1,5,4],[0,-1,0],color],[[3,7,6,2],[0,1,0],color]]) addFace(indices.map(i=>p[i]),n,c);
-    };
-    const woodTop=(x,y,z,w,h)=>{
-      const grain=()=>{
-        for(let v=y+6;v<y+h-2;v+=8) {
-          const a=project3(CartStock.shelfPoint(s,x+2,v,z)),b=project3(CartStock.shelfPoint(s,x+w-2,v,z));
-          g.globalAlpha=.17;line(g,a.x,a.y,b.x,b.y,P.hair);g.globalAlpha=1;
-        }
-      };
-      addFace([[x,y,z],[x+w,y,z],[x+w,y+h,z],[x,y+h,z]],[0,0,1],P.gold,grain);
-    };
-    if(s.kind==='table') {
-      for(const u of [-s.w*.4,s.w*.4])for(const v of [-s.h*.4,s.h*.4])box(u-1.5,v-1.5,0,3,3,s.height-3,P.clay);
-      box(-s.w/2,-s.h/2,s.height-3,s.w,s.h,3,P.clay,P.gold);
-      woodTop(-s.w/2,-s.h/2,s.height+.05,s.w,s.h);
-    } else {
-      // Framed end panels, three thick decks and square steel uprights stay
-      // solid through the fall. Open ends expose the depth between each deck.
-      for(const u of [-s.w/2+1,s.w/2-3]) {
-        for(const z of [4,s.height-7])box(u,-s.h/2+1,z,2,s.h-2,4,P.steel,P.cream);
-        for(const v of [-s.h/2+1,s.h/2-5])box(u,v,4,2,4,s.height-7,P.steel,P.cream);
-      }
-      box(-s.w/2+3,-s.h/2+1,5,s.w-6,2,s.height-8,P.hair,P.gold);
-      for(const z of [10,20,30]) {
-        box(-s.w/2+2,-s.h/2+2,z-2,s.w-4,s.h-4,2,P.clay,P.gold);
-        woodTop(-s.w/2+2,-s.h/2+2,z+.05,s.w-4,s.h-4);
-      }
-      for(const u of [-s.w/2+1,s.w/2-1])for(const v of [-s.h/2+1,s.h/2-1]) {
-        box(u-1,v-1,0,2,2,s.height,P.steel,P.steelLight);
-        box(u-2,v-2,0,4,4,2,P.steelShade,P.steel);
-      }
-      // A stencil lies on the upper deck rather than floating over the rack.
-      const along=s.h>s.w,length=Math.min(72,(along?s.h:s.w)-10),width=7;
-      const u=along?s.w/2-7:-length/2,v=along?-length/2:s.h/2-8;
-      const localCorners=along?[[u,v,30.5],[u+width,v,30.5],[u+width,v+length,30.5],[u,v+length,30.5]]:[[u,v,30.5],[u+length,v,30.5],[u+length,v+width,30.5],[u,v+width,30.5]];
-      const stencil=()=>{
-        if(!s.labelTexture) {
-          const c=document.createElement('canvas');c.width=Math.ceil(length);c.height=width;
-          const ink=c.getContext('2d');rect(ink,0,0,c.width,c.height,P.cream);text(ink,s.label,c.width/2,5,P.dark,Math.min(5,c.width/Math.max(1,s.label.length)*1.5),'center');
-          s.labelTexture=c;
-        }
-        const c=s.labelTexture;
-        const a=project3(CartStock.shelfPoint(s,...localCorners[along?3:0])),b=project3(CartStock.shelfPoint(s,...localCorners[along?0:1])),d=project3(CartStock.shelfPoint(s,...localCorners[along?2:3]));
-        g.save();g.imageSmoothingEnabled=false;g.transform((b.x-a.x)/c.width,(b.y-a.y)/c.width,(d.x-a.x)/c.height,(d.y-a.y)/c.height,a.x,a.y);g.drawImage(c,0,0);g.restore();
-      };
-      addFace(localCorners,[0,0,1],P.cream,stencil);
-    }
-    for(const p of s.stockItems)if(p.state==='shelf')surfaces.push({depth:cameraDepth(p)+.1,draw:()=>drawProduct(g,p)});
-    surfaces.sort((a,b)=>a.depth-b.depth).forEach(p=>p.draw());
-  }
-  function drawSpills(g, stock) {
-    for(const liquid of stock.liquids.values()) {
-      const color=spillColor(liquid.kind);
-      for(const [key,volume] of liquid.cells) {
-        const x=key%120*CartStock.CELL,y=Math.floor(key/120)*CartStock.CELL;
-        if(liquid.kind==='water') {
-          // Clear water keeps the grout visible. A darker meniscus and reflected
-          // light mark the perimeter of the connected physical floor film.
-          g.globalAlpha=clamp(volume*.2,.018,.13);rect(g,x,y,4,4,P.blue);
-          if(volume>.055) {
-            const dry=k=>(liquid.cells.get(k)||0)<=.055;
-            g.globalAlpha=.32;
-            if(dry(key+1)) rect(g,x+3,y,1,4,P.steelShade);
-            if(dry(key+120)) rect(g,x,y+3,4,1,P.steelShade);
-            g.globalAlpha=.7;
-            if(dry(key-120)) rect(g,x,y,4,1,P.light);
-            if(dry(key-1)) rect(g,x,y,1,4,P.light);
-            if(volume>.13&&hash(key,7)>.83) {g.globalAlpha=.65;rect(g,x,y+1,3,1,P.light);rect(g,x+2,y+2,2,1,P.steelLight);}
-          }
-          continue;
-        }
-        g.globalAlpha=clamp(volume*1.4,.025,.65);rect(g,x,y,4,4,color);
-        if(volume>.65&&hash(key,7)>.65) {g.globalAlpha=.25;rect(g,x+1,y+1,2,1,P.light);}
-      }
-    }
-    for(const smear of stock.smears) {g.globalAlpha=smear.alpha*(smear.kind==='water'?.4:1);localRect(g,smear,-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind));}
-    g.globalAlpha=1;
-  }
-
-  function drawObject(g, o) {
-    const b = { x: Math.round(o.x), y: Math.round(o.y), a: Math.round(o.a / (Math.PI / 8)) * Math.PI / 8 };
-    if (o.kind === 'box') {
-      oval(g, b.x + 2, b.y + 3, 10, 8, P.mid);
-      localRect(g, b, -8, -7, 16, 14, P.edge); localRect(g, b, -7, -8, 14, 13, P.clay);
-      localRect(g, b, -1, -8, 3, 13, P.gold); localRect(g, b, -5, -6, 4, 3, P.cream);
-      if (o.down) localRect(g, b, -5, 1, 4, 1, P.brick);
-    } else {
-      if (o.down) {
-        oval(g, b.x + 1, b.y + 3, 8, 4, P.mid);
-        localRect(g, b, -6, -4, 3, 9, P.edge);
-        poly(g, [[-3, -4], [-3, 5], [7, 1]].map(p => point(b, ...p)), P.clay);
-        localRect(g, b, -1, -2, 2, 5, P.cream);
-      } else {
-        oval(g, b.x + 2, b.y + 3, 7, 4, P.mid); rect(g, b.x - 6, b.y - 1, 12, 7, P.edge);
-        poly(g, [{ x: b.x - 5, y: b.y + 2 }, { x: b.x, y: b.y - 10 }, { x: b.x + 5, y: b.y + 2 }], P.clay);
-        rect(g, b.x - 2, b.y - 5, 4, 3, P.light); rect(g, b.x - 3, b.y + 2, 6, 1, P.coral);
-      }
-    }
-  }
-  function drawCaster(g, b, wheel, i) {
-    const pose = casterPose(b, wheel, i), fork = { ...pose.pivot, a: wheel.a };
-    // Narrow steel arms flare from the bearing to the trailing axle. Leave
-    // daylight between the arms and tire instead of a heavy rectangular fork.
-    for (const side of [-1, 1]) {
-      poly(g, [[-CASTER.trail, side * 3], [-1, side * 2], [1, side], [0, 0], [-1, side], [-CASTER.trail, side * 2]].map(p => point(fork, ...p)), P.dark);
-      const from = point(fork, -CASTER.trail, side * 2), to = point(fork, -1, side);
-      line(g, from.x, from.y, to.x, to.y, P.steel);
-    }
-    const l = CASTER.halfLength, h = CASTER.halfWidth;
-    poly(g, [[-l, -h + 1], [-l + 1, -h], [l - 1, -h], [l, -h + 1], [l, h - 1], [l - 1, h], [-l + 1, h], [-l, h - 1]].map(p => point(pose, ...p)), P.dark);
-    localRect(g, pose, -l + 1, -h + 1, l * 2 - 2, h * 2 - 2, P.edge);
-    // Each tire's signed travel drives its own tread, with no motion at rest.
-    const roll = ((wheel.roll / (Math.PI * 2 * l)) % 1 + 1) % 1;
-    const tread = Math.floor(roll * 6) - 3;
-    localRect(g, pose, tread, -h + 1, 1, h * 2 - 2, P.mid);
-    if (wheel.coating) {
-      const wet = Object.entries(wheel.coating).sort((a,b)=>b[1]-a[1])[0];
-      if(wet&&wet[1]>.015) {g.globalAlpha=clamp(wet[1]*3,.15,.85);localRect(g,pose,-l+1,-h+1,l*2-2,h*2-2,spillColor(wet[0]));g.globalAlpha=1;}
-    }
-    localRect(g, pose, 0, -h - 1, 1, h * 2 + 2, P.steel);
-    localRect(g, pose, 0, -h - 1, 1, 1, P.steelLight);
-    localRect(g, pose, 0, h, 1, 1, P.steelLight);
-  }
-  function drawShopperHead(g, b) {
-    // Everything is in the shopper's local frame, including the crown and nose.
-    // A stepped, round silhouette and a small hair whorl read from overhead.
-    localRect(g, b, -17, -6, 3, 2, P.clay);
-    localRect(g, b, -17, 4, 3, 2, P.clay);
-    poly(g, [[-20, -3], [-18, -5], [-14, -5], [-11, -3], [-10, -1], [-10, 2], [-12, 4], [-15, 5], [-18, 4], [-20, 2]].map(p => point(b, ...p)), P.clay);
-    localRect(g, b, -10, -1, 2, 2, P.gold);
-    poly(g, [[-20, -3], [-18, -5], [-15, -5], [-12, -4], [-12, -2], [-13, -1], [-12, 1], [-13, 3], [-15, 4], [-18, 4], [-20, 2]].map(p => point(b, ...p)), P.hairDark);
-    poly(g, [[-19, -3], [-17, -4], [-15, -4], [-13, -3], [-14, -1], [-13, 1], [-15, 3], [-18, 2], [-19, 0]].map(p => point(b, ...p)), P.hair);
-    localRect(g, b, -18, -3, 3, 1, P.hairLight);
-    localRect(g, b, -19, -2, 1, 2, P.hairLight);
-    localRect(g, b, -16, -1, 2, 1, P.hairDark);
-    localRect(g, b, -16, 0, 1, 2, P.hairDark);
-    localRect(g, b, -15, 1, 2, 1, P.hairLight);
-  }
-  function drawLimb(g, from, to, startWidth, endWidth, color) {
-    const length = Math.max(.01, Math.hypot(to.x - from.x, to.y - from.y));
-    const nx = -(to.y - from.y) / length, ny = (to.x - from.x) / length;
-    poly(g, [
-      { x: from.x + nx * startWidth / 2, y: from.y + ny * startWidth / 2 },
-      { x: to.x + nx * endWidth / 2, y: to.y + ny * endWidth / 2 },
-      { x: to.x - nx * endWidth / 2, y: to.y - ny * endWidth / 2 },
-      { x: from.x - nx * startWidth / 2, y: from.y - ny * startWidth / 2 }
-    ], color);
-  }
-  function drawShopperLeg(g, b, step, side) {
-    const phase = ((step.phase / (Math.PI * 2) + (side === 1 ? .5 : 0)) % 1 + 1) % 1;
-    // A planted foot travels back beneath the hips. It then swings forward,
-    // with a bent knee and a lifted heel, instead of sliding both ways equally.
-    const swing = Math.max(0, (phase - .6) / .4);
-    const reach = phase < .6 ? 1 - phase / .3 : -1 + 2 * swing * swing * (3 - 2 * swing);
-    const lift = Math.sin(swing * Math.PI) * Math.min(1, step.stride / 2.8);
-    const travel = reach * step.stride;
-    const x = -22 + travel * step.forward, y = side * 4.5 + travel * step.sideways * .75;
-    const hip = point(b, -19, side * 2.7);
-    const knee = point(b, -21 + travel * step.forward * .35 + lift, side * 3.5 + travel * step.sideways * .3);
-    const ankle = point(b, x + lift * .6, y);
-    const shoe = { ...ankle, a: b.a + side * .12 + clamp(step.sideways * .18, -.18, .18) };
-    g.save(); g.globalAlpha *= .12 * lift;
-    const ground = { ...point(b, x, y), a: shoe.a };
-    localRect(g, ground, -2, -1, 5, 3, P.dark); g.restore();
-    drawLimb(g, hip, knee, 3.5, 2.7, P.steelShade);
-    drawLimb(g, knee, ankle, 2.7, 2, P.edge);
-    drawLimb(g, hip, knee, 1.4, 1, P.blue);
-    poly(g, [[-2, -1], [-1, -2], [2, -2], [3, -1], [3, 1], [2, 2], [-1, 2], [-2, 1]].map(p => point(shoe, ...p)), P.dark);
-    localRect(g, shoe, -1, -1, 3, 2, P.steelShade);
-    localRect(g, shoe, -2, -1, 1, 2, P.mid);
-    localRect(g, shoe, 0, -1, 1, 2, P.steel);
-    localRect(g, shoe, 2, -1, 1, 1, P.mid);
-    localRect(g, shoe, -1, 1, 3, 1, P.cream);
-  }
-  function drawShopper(g, b, step) {
-    const leanX = step.leanX || 0, leanY = step.leanY || 0;
-    const sway = Math.cos(step.phase) * Math.min(1, step.stride / 2.8) * .3;
-    const torso = { ...point(b, leanX * .6, leanY * .6 + sway), a: b.a + leanY * .035 };
-    poly(g, [[-22, -3], [-20, -5], [-17, -4], [-17, 4], [-20, 5], [-22, 3]].map(p => point(b, ...p)), P.steelShade);
-    for (const side of [-1, 1]) drawShopperLeg(g, b, step, side);
-    poly(g, [[-19, -3], [-17, -6], [-12, -6], [-10, -4], [-10, 4], [-12, 6], [-17, 6], [-19, 3]].map(p => point(torso, ...p)), P.brick);
-    localRect(g, torso, -17, -5, 5, 2, P.coral);
-    for (const side of [-1, 1]) {
-      const shoulder = point(torso, -13, side * 5);
-      const elbow = point(b, -11 + leanX * .35, side * 8 + leanY * .35);
-      const wrist = point(b, -6, side * 8);
-      drawLimb(g, shoulder, elbow, 3.5, 2.5, P.brick);
-      drawLimb(g, elbow, wrist, 2.5, 2, P.clay);
-      localRect(g, b, -7, side * 8 - 1, 3, 2, P.clay);
-      localRect(g, b, -6, side * 8 - 1, 1, 1, P.gold);
-    }
-    const head = { ...point(b, leanX, leanY + sway), a: b.a + leanY * .035 };
-    drawShopperHead(g, head);
-  }
-  function drawCart(g, body, wheels, gait, ghost = false) {
-    const b = { x: Math.round(body.x), y: Math.round(body.y), a: body.a };
-    const step = gait || { phase: 0, stride: 0, forward: 1, sideways: 0 };
-    g.save();
-    if (!ghost) {
-      g.globalAlpha *= .16;
-      const p = point(b, 12, 3); oval(g, p.x, p.y, 22, 14, P.dark);
-      const shopper = point(b, -16, 3); oval(g, shopper.x, shopper.y, 9, 7, P.dark);
-      g.globalAlpha /= .16;
-    }
-    WHEELS.forEach((p, i) => drawCaster(g, b, wheels ? wheels[i] : { a: b.a, roll: 0 }, i));
-    // Empty galvanized wire basket. The close mesh stays translucent so an
-    // inward-swung caster is still visible beneath the basket and its rails.
-    const alpha = g.globalAlpha;
-    g.globalAlpha = alpha * .04;
-    localRect(g, b, -2, -11, 33, 22, P.steel);
-    g.globalAlpha = alpha * .55;
-    for (let x = 1; x < 29; x += 3) localRect(g, b, x, -9, 1, 18, P.steelLight);
-    g.globalAlpha = alpha * .38;
-    for (let y = -7; y < 9; y += 3) localRect(g, b, 0, y, 29, 1, P.steelShade);
-    g.globalAlpha = alpha * .72;
-    localRect(g, b, -2, -11, 33, 2, P.steel);
-    localRect(g, b, -2, 9, 33, 2, P.steelShade);
-    localRect(g, b, -2, -9, 2, 18, P.steelShade);
-    localRect(g, b, 29, -9, 2, 18, P.steel);
-    g.globalAlpha = alpha * .85;
-    localRect(g, b, -2, -11, 33, 1, P.steelLight);
-    localRect(g, b, -2, 9, 33, 1, P.steelLight);
-    localRect(g, b, -2, -9, 1, 18, P.steel);
-    localRect(g, b, 29, -9, 1, 18, P.steelLight);
-    g.globalAlpha = alpha;
-    WHEELS.forEach(p => {
-      const pin = point(b, ...p);
-      rect(g, pin.x - 1, pin.y - 1, 3, 3, P.dark);
-      rect(g, pin.x, pin.y, 1, 1, P.gold);
-      rect(g, pin.x - 1, pin.y - 1, 1, 1, P.steelLight);
-    });
-    // The raised handle also crosses the rear casters in this overhead view.
-    // Keep it slender and translucent so both rear tires remain readable.
-    g.globalAlpha = alpha * .7; localRect(g, b, -6, -13, 2, 26, P.steelShade);
-    g.globalAlpha = alpha * .7; localRect(g, b, -6, -11, 1, 22, P.steelLight);
-    g.globalAlpha = alpha;
-    drawShopper(g, b, step);
-    g.restore();
-  }
-
-  function drawIllustration() {
-    const c = $('illustration'), g = c.getContext('2d');
-    if (!g) return;
-    g.clearRect(0, 0, c.width, c.height);
-    // Use the same chunky cart and offset caster forks as the playable sprite.
-    for (let x = 8; x < 176; x += 12) rect(g, x, 106, 6, 1, P.gold);
-    arrow(g, 146, 106, 0, 21, P.clay);
-    g.save(); g.scale(2.3, 2.3);
-    const b = { x: 31, y: 30, a: -.32, vx: 0, vy: 0 };
-    drawCart(g, b, [0, -.6, .35, -.15].map(a => ({ a, roll: 0 })));
-    g.restore();
-  }
-
-  function drawRoute(g, w) {
-    const e = w.exit, unlocked = w.exitOpen, half = e.width / 2;
-    g.save();
-    g.globalAlpha = unlocked ? .24 : .12;
-    localRect(g, e, -78, -half, 78, e.width, P.pine);
-    g.globalAlpha = 1;
-    // This opening cuts through the painted room border as well as the wall
-    // collider. The cart can physically pass through and leave the canvas.
-    localRect(g, e, -3, -half, 12, e.width, P.floor);
-    for (let x = -75; x < -5; x += 10) {
-      localRect(g, e, x, -half, 6, 1, P.green); localRect(g, e, x, half - 1, 6, 1, P.green);
-    }
-    const label = point(e, -61, 0);
-    text(g, 'CHECKOUT', label.x, label.y - 2, P.green, 6, 'center');
-    text(g, unlocked ? 'EXIT' : 'LOCKED', label.x, label.y + 6, P.edge, 5, 'center');
-    const lead = point(e, -27, 0); arrow(g, lead.x, lead.y, e.a, 30, unlocked ? P.green : P.mid);
-    for (let y = -half; y < half; y += 8) localRect(g, e, -11, y, 3, 4, P.cream);
-    if (!unlocked) {
-      localRect(g, e, -1, -half, 9, e.width, P.dark);
-      for (let y = -half + 2; y < half - 1; y += 5) localRect(g, e, 0, y, 6, 2, P.mid);
-    }
-    for (const y of [-half - 3, half]) {
-      localRect(g, e, -4, y, 12, 3, P.dark);
-      localRect(g, e, -2, y, 4, 3, unlocked ? P.sage : P.gold);
-    }
-    g.restore();
-    w.level.gates.forEach((p, i) => {
-      const current = i === w.gate, done = i < w.gate;
-      g.globalAlpha = done ? .35 : current ? 1 : .55;
-      const color = current ? P.green : P.edge;
-      if (current) { g.globalAlpha = .22; oval(g, p.x, p.y, CHECKPOINT_RADIUS, CHECKPOINT_RADIUS, P.cream); g.globalAlpha = 1; }
-      ring(g, p.x, p.y, CHECKPOINT_RADIUS, done ? P.pine : color, current ? 2 : 1);
-      if (done) { line(g, p.x - 4, p.y, p.x - 1, p.y + 3, P.pine, 2); line(g, p.x - 1, p.y + 3, p.x + 5, p.y - 4, P.pine, 2); }
-      else text(g, String(i + 1), p.x + 1, p.y + 4, color, 11, 'center');
-      g.globalAlpha = 1;
-    });
-  }
-
-  function drawCheckpointBody(g, w) {
-    if (w.exitOpen) return;
-    const sensor = point(w.body, CHECKPOINT_SENSOR.x, 0);
-    g.save();
-    ring(g, sensor.x, sensor.y, CHECKPOINT_SENSOR.radius - 1, P.dark, 2);
-    ring(g, sensor.x, sensor.y, CHECKPOINT_SENSOR.radius - 1, P.coral);
-    rect(g,sensor.x-1,sensor.y-1,2,2,P.cream);
-    g.restore();
-  }
-
-  function drawBoundary(g, w) {
-    if (!w.boundaryContacts.length) return;
-    g.save();
-    const life = Math.max(...w.boundaryContacts.map(c => c.life));
-    g.globalAlpha = clamp(life / .18, 0, 1);
-    const person = point(w.body, BODY.personX, 0);
-    const circle = Array.from({ length: 32 }, (_, i) => ({ x: person.x + Math.cos(i * Math.PI / 16) * BODY.personRadius, y: person.y + Math.sin(i * Math.PI / 16) * BODY.personRadius }));
-    const shapes = [{ part: 'cart', points: corners(w.body) }, { part: 'shopper', points: circle },
-      ...w.wheels.map((q, i) => ({ part: 'wheel:' + i, points: casterCorners(w.body, q, i) }))];
-    for (const shape of shapes) {
-      if (w.boundaryContacts.some(c => c.part === shape.part)) {
-        const alpha = g.globalAlpha; g.globalAlpha *= .3; poly(g, shape.points, P.red); g.globalAlpha = alpha;
-      }
-      shape.points.forEach((p, i) => {
-        const q = shape.points[(i + 1) % shape.points.length];
-        line(g, p.x - 1, p.y - 1, q.x - 1, q.y - 1, P.dark, 3);
-        line(g, p.x, p.y, q.x, q.y, P.red);
-      });
-    }
-    for (const c of w.boundaryContacts) {
-      g.globalAlpha = clamp(c.life / .18, 0, 1);
-      const x = clamp(c.x, 2, 477), y = clamp(c.y, 2, 297);
-      line(g, x - c.ny * 12 - 1, y + c.nx * 12 - 1, x + c.ny * 12 - 1, y - c.nx * 12 - 1, P.dark, 4);
-      line(g, x - c.ny * 12, y + c.nx * 12, x + c.ny * 12, y - c.nx * 12, P.red, 2);
-      rect(g, x - 2, y - 2, 5, 5, P.red); rect(g, x - 1, y - 1, 3, 3, P.light);
-    }
-    g.restore();
-  }
-
+  // Rendering owns the isometric camera; input and fixed-step physics never
+  // use screen coordinates. The same renderer draws play, previews and art.
+  const view = CartView.create(P);
+  $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
+  const { makeFloor } = view;
+  const sceneCanvas = document.createElement('canvas');
+  sceneCanvas.width = CartView.CAMERA.width; sceneCanvas.height = CartView.CAMERA.height;
+  const sceneContext = sceneCanvas.getContext('2d');
+  let narrowCamera = false, followCart = true;
+  function drawIllustration() { view.illustration($('illustration').getContext('2d')); }
   function draw(g = ctx, w = world, background = floor, preview = false) {
-    g.clearRect(0, 0, 480, 300); g.save();
-    if (!preview && screenShake > 0 && !reducedMotion.matches) g.translate(Math.round(Math.sin(w.time * 99) * screenShake), Math.round(Math.cos(w.time * 78) * screenShake));
-    g.drawImage(background, 0, 0); drawSpills(g,w.stock);
-    for(const shelf of w.shelves)drawFurnitureShadow(g,shelf);
-    drawRoute(g, w);
-    for (const t of w.tracks) { g.globalAlpha = t.life / 3 * .14; localRect(g, { x: t.x, y: t.y, a: t.a }, -2, -1, 4, 1, P.edge); }
-    g.globalAlpha = 1;
-    if (!preview) {
-      const b = w.body, speed = Math.hypot(b.vx, b.vy);
-      if (speed > 8) {
-        const vx = b.vx / speed, vy = b.vy / speed, length = Math.min(57, speed * .45);
-        g.globalAlpha = .58;
-        for (let i = 9; i < length; i += 5) rect(g, b.x + vx * i, b.y + vy * i, 2, 2, P.green);
-        const x = b.x + vx * length, y = b.y + vy * length;
-        line(g, x, y, x - vx * 5 - vy * 3, y - vy * 5 + vx * 3, P.green);
-        line(g, x, y, x - vx * 5 + vy * 3, y - vy * 5 - vx * 3, P.green); g.globalAlpha = 1;
-      }
-    }
-    // Painter's order gives furniture and people a little depth without hiding
-    // the driving footprint. Everything still sits on a 2D floor.
-    const entities = [...w.shelves.map(s => ({ depth: cameraDepth(CartStock.shelfPoint(s,0,0,s.height/2)), render: () => drawShelf(g, s) })),
-      ...w.stock.items.filter(p=>p.state!=='shelf'&&!p.broken).map(p=>({depth:cameraDepth(p),render:()=>drawProduct(g,p)})),
-      ...w.objects.map(o => ({ depth: cameraDepth(o)+3, render: () => drawObject(g, o) })), { depth: cameraDepth(w.body)+8, render: () => drawCart(g, w.body, w.wheels, w.gait) }];
-    entities.sort((a, b) => a.depth - b.depth).forEach(e => e.render());
-    if (!preview) for (const p of particles) {
-      g.globalAlpha = .2; rect(g, p.x + 1, p.y + 2, p.w, p.h, P.dark); g.globalAlpha = clamp(p.life, 0, 1);
-      localRect(g, { x: p.x, y: p.y - p.z, a: p.a }, -p.w / 2, -p.h / 2, p.w, p.h, p.color); g.globalAlpha = 1;
-    }
-    if (!preview) { drawCheckpointBody(g, w); drawBoundary(g, w); }
-    g.restore();
+    const options = { preview, particles, shake:screenShake, reducedMotion:reducedMotion.matches };
+    if (g === ctx && narrowCamera) {
+      view.draw(sceneContext, w, background, options); view.present(g,sceneCanvas,w,followCart);
+    } else view.draw(g, w, background, options);
+  }
+  function cameraLabel() {
+    $('camera').hidden = !narrowCamera;
+    $('camera').textContent = followCart ? 'Overview' : 'Follow cart';
+    $('camera').setAttribute('aria-pressed', String(!followCart));
+    $('camera').setAttribute('aria-label', followCart ? 'Show the whole course' : 'Follow the cart');
+  }
+  function resizeView() {
+    const stage = $('stage').getBoundingClientRect();
+    if (stage.width <= 0 || stage.height <= 0) return;
+    narrowCamera = stage.width < 600 && stage.height > stage.width * 1.2;
+    const width = narrowCamera ? 480 : CartView.CAMERA.width;
+    const height = narrowCamera ? Math.round(width * stage.height / stage.width) : CartView.CAMERA.height;
+    if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+    cameraLabel(); draw();
   }
 
   function burst(x, y, count, colors) {
@@ -740,6 +185,7 @@
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
     $('pause').setAttribute('aria-pressed', String(phase === 'paused'));
+    $('camera').disabled = phase !== 'running';
   }
   function bestText() {
     if (!canSave) return 'Records are unavailable in this browser';
@@ -829,7 +275,7 @@
     const grid = $('course-grid'); grid.replaceChildren();
     levels.forEach((level, i) => {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'cart-course-tile' + (i === levelIndex ? ' is-current' : '');
-      const c = document.createElement('canvas'); c.width = 480; c.height = 300; c.setAttribute('aria-hidden', 'true');
+      const c = document.createElement('canvas'); c.width = CartView.CAMERA.width; c.height = CartView.CAMERA.height; c.setAttribute('aria-hidden', 'true');
       draw(c.getContext('2d'), new World(level), makeFloor(level), true);
       const copy = document.createElement('span'); copy.className = 'cart-course-tile-copy';
       const label = document.createElement('span'); label.className = 'cart-kicker'; label.textContent = 'DEPARTMENT ' + String(i + 1).padStart(2, '0');
@@ -876,6 +322,11 @@
   $('courses').addEventListener('click', openPicker); $('picker-close').addEventListener('click', closePicker);
   $('fullscreen').addEventListener('click', fullscreen); document.addEventListener('fullscreenchange', fullscreenLabel);
   $('sound').addEventListener('click', () => { sound.enabled = !sound.enabled; sound.refresh(); if (sound.enabled) { sound.prepare().then(() => sound.note(660, .1, .025)); } else sound.rolling(0); });
+  $('camera').addEventListener('click', () => {
+    followCart = !followCart; cameraLabel(); draw();
+    announce(followCart ? 'Camera follows the cart.' : 'The whole course is visible.');
+    canvas.focus({ preventScroll:true });
+  });
   game.querySelectorAll('[data-control]').forEach(button => {
     button.setAttribute('aria-pressed', 'false');
     button.addEventListener('pointerdown', e => {
@@ -890,6 +341,7 @@
   const movement = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']);
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey || !game.contains(document.activeElement) || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.code === 'Space' && e.target.closest('button')) return;
     if (e.code === 'Escape') {
       e.preventDefault();
       if (!$('picker').hidden) closePicker();
@@ -910,6 +362,7 @@
   window.addEventListener('pagehide', () => { clearInput(); sound.rolling(0); });
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
   reset(); drawIllustration();
+  new ResizeObserver(resizeView).observe($('stage'));
   // Canvas text caches are rebuilt when the site's own mono font arrives.
-  document.fonts.ready.then(() => { floor = makeFloor(world.level); draw(); });
+  document.fonts.ready.then(() => { view.refreshFonts(); floor = makeFloor(world.level); draw(); });
 })();
