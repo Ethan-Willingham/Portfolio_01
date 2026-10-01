@@ -1,0 +1,35 @@
+Sluice logo v19
+
+Request: make the water look like the actual Sluice game. Preserve the approved v18 logo, the wider E cavity, and the dirt support beneath the left two blocks of its lower arm. Water leaves only the far-right tip.
+
+Final method: Canvas composition using real water pixels captured from the live game, not newly generated water. No ImageGen call was used for this revision.
+
+Water source: assets/images/sluice-logo-v13-water-reference.png, a transparent capture of the live Sluice LiquidWGPU water canvas.
+Source SHA256: c757b4265ac5f58a770d8c6a0b86152650594e3288465562f972feebe27eb29c
+
+The live capture supplies the blue body, pale blue current shading, continuous falling stream, and pool turbulence. Preserve its RGB and alpha without recoloring or painting extra effects.
+
+Composition recipe in screen pixels:
+Canvas: 1672 by 941.
+Base: sluice-logo-v18.png.
+Excavation and shelf: sluice-logo-v18-background.png.
+Restore the native background inside the rectangle (1232,302,440,639) before inserting water.
+Clip inserted water to the approved native void, identified by RGB(52,43,33) with a tolerance of 3 per channel.
+
+E reservoir: source rectangle (280,610,370,244) mapped to (1240,309,248,329). Use the approved v18 water silhouette above y638 as its mask, normalizing the native 0.82 body alpha to mask coverage. The captured source retains its own alpha.
+
+Spill and pool: horizontal scale 428/520, with source x580 mapped to destination x1244. This maps the captured impact x850 to destination x1466.31, at the E's far-right tip.
+Spill: source rectangle (800,240,85,310) mapped to x1425.08, y638, width69.96, height110.
+Pool: source rectangle (580,550,520,300) mapped to (1244,748,428,193). The shared source row y550 connects the spill to the pool. The native source includes the descending stream above the disturbed free surface and the current shading below it.
+
+This is logo artwork composed from a live water capture. It is not presented as one physically simulated E-shaped world state. The crops and scales adapt the captured water to the approved composition.
+
+Everything left of x1232 remains pixel-identical to v18, including all other letters, smoke, terrain and ores. The extended dirt shelf is retained and clips water out of the supported block. No game source or live thumbnail references are changed.
+
+Exports:
+assets/images/sluice-logo-v19.png: opaque 1672 by 941 master.
+assets/images/sluice-logo-v19-water.png: transparent water layer.
+assets/images/sluice-logo-v19-wordmark.png: transparent letters and smoke, without the background-dependent spill and pool.
+assets/thumbs/sluice-logo-v19.webp: 600 by 338 blog thumbnail.
+
+The full image and thumbnail were visually inspected. Native capture alpha was retained, the master is opaque, and the isolated exports retain transparency. The dirt shelf remains dry, with one outlet at the tip. The owned Chrome for Testing process was closed with exact child-process cleanup.
