@@ -110,19 +110,7 @@ function life(id){
     for(let i=0;i<23;i++){let x=(rand()*2-1)*61,y=(rand()*2-1)*61;if(x*x+y*y>3700){i--;continue;}let rad=4+rand()*5;art+=circle(160+x,100+y,rad+3,C.sage,.16)+ellipse(r(160+x),r(100+y),r(rad),r(rad*.72),colors[i%3],3,i*31);}
     return art+arrow([[232,60],[254,75],[259,103]],C.sage,2);
   }
-  if(id==='saturn'){
-    // A close-up, with NASA's radial proportions. No invented moon dots.
-    const scale=48/60268;
-    let rings='';
-    for(const [lo,hi,c,o]of [[66900,74491,C.text,.12],[74491,91975,C.clay,.45],[91975,117500,C.text,.8],[117500,122050,C.text,.08],[122050,136770,C.text,.6]]){
-      const radius=(lo+hi)/2*scale,width=(hi-lo)*scale;
-      rings+=ellipse(0,0,r(radius),r(radius),c,r(width),0,`opacity="${o}"`);
-    }
-    rings+=ellipse(0,0,r(140224*scale),r(140224*scale),C.text,.7);
-    const band=`<g transform="translate(160 103) rotate(-20) scale(1 .34)">${rings}</g>`;
-    const planet=`<ellipse cx="160" cy="103" rx="48" ry="43.3" fill="${C.gold}"/><path d="M116 92Q160 109 204 92M116 113Q160 130 204 113" stroke="${C.clay}" stroke-width="5" fill="none" opacity=".5"/>`;
-    return `<defs><clipPath id="ring-front"><path d="M32 145L278 55L302 170L44 195Z"/></clipPath></defs>`+band+planet+`<g clip-path="url(#ring-front)">${band}</g>`;
-  }
+
 }
 function attractor(id){
   // Normalized schematic silhouettes: distinct loop families, with direction dots.
@@ -170,51 +158,28 @@ const renderers = {};
 function emergence(id,preset='') {
   const rand=rng([...id+preset].reduce((n,c)=>n+c.charCodeAt(0)*17,5));let art='';
   if(id==='boids'){
-    for(let i=0;i<65;i++){const a=i*.25,x=160+Math.cos(a)*(.8*i+15),y=100+Math.sin(a)*(.45*i+10),turn=preset==='chaos'?rand()*360:preset==='school'?-28:a*180/Math.PI+90;art+=`<path d="M-5 3L4 0L-5-3L-2 0Z" fill="${colors[i%3]}" transform="translate(${r(x)} ${r(y)}) rotate(${r(turn)})"/>`;}
+    for(let i=0;i<75;i++){
+      const a=i*.23,group=i%2,chaos=preset==='chaos',split=preset==='school';
+      const x=chaos?26+rand()*268:split?(group?224:96)+(rand()-.5)*77:160+Math.cos(a)*(.7*i+18),y=chaos?25+rand()*150:split?100+(rand()-.5)*90:100+Math.sin(a)*(.47*i+13);
+      const turn=chaos?rand()*360:split?(group?180:0):a*180/Math.PI+90;
+      art+=`<path d="M-4 5L1 0L-4-5M-5 0L4 0" fill="none" stroke="${i%7===0?C.gold:C.sage}" stroke-width="1.7" stroke-linecap="round" transform="translate(${r(x)} ${r(y)}) rotate(${r(turn)})"/>`;
+    }
     return art;
   }
   if(id==='ants'){
-    const nest=[52,103],foods=preset==='scarce'?[[269,35]]:[[251,41],[265,123],[213,168]];
-    if(preset==='detour')art+=rect(149,35,8,105,C.rule);
+    const nest=[52,103],foods=preset==='scarce'?[[269,103]]:[[251,41],[265,123],[213,168]];
+    if(preset==='detour'||preset==='scarce')art+=rect(149,35,8,105,C.rule);
     for(const [j,end]of foods.entries()){
-      const mid=preset==='detour'?[160,160]:[137,80+j*24],path=[nest,mid,end];art+=curve(path,C.blue,17,'opacity=".09"')+curve(path,C.blue,3,'opacity=".5"');
+      const mid=preset==='detour'||preset==='scarce'?[160,160]:[137,80+j*24],path=[nest,mid,end];art+=curve(path,C.blue,17,'opacity=".09"')+curve(path,C.blue,3,'opacity=".5"');
       for(let i=0;i<22;i++){const t=rand(),p=t<.5?[nest,mid,t*2]:[mid,end,t*2-1],x=p[0][0]+(p[1][0]-p[0][0])*p[2]+(rand()-.5)*12,y=p[0][1]+(p[1][1]-p[0][1])*p[2]+(rand()-.5)*12;art+=ellipse(r(x),r(y),2.8,1,C.gold,1.5,Math.atan2(p[1][1]-p[0][1],p[1][0]-p[0][0])*180/Math.PI);}
       art+=circle(...end,11,C.sage)+ring(...end,17,C.sage,1,'opacity=".4"');
-    }return art+circle(...nest,17,C.panel)+ring(...nest,17,C.gold,3)+circle(...nest,5,C.gold);
+    }if(preset==='scarce')art+=curve([nest,[158,22],foods[0]],C.gold,3,'opacity=".7"');return art+circle(...nest,17,C.panel)+ring(...nest,17,C.gold,3)+circle(...nest,5,C.gold);
   }
-  if(id==='physarum'){
-    const nodes=preset==='orbit'?[[160,100],[83,50],[255,63],[246,164],[53,159]]:[[57,44],[250,32],[268,148],[106,165],[161,95]];
-    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i],b=nodes[j],x=(a[0]+b[0])/2+(rand()-.5)*35,y=(a[1]+b[1])/2+(rand()-.5)*40;const d=`M${a[0]} ${a[1]}Q${r(x)} ${r(y)} ${b[0]} ${b[1]}`;
-      art+=`<path d="${d}" fill="none" stroke="${C.sage}" stroke-width="8" opacity=".10"/><path d="${d}" fill="none" stroke="${C.gold}" stroke-width="${i===0?3:1.5}" opacity=".85"/>`;
-      for(let k=0;k<3;k++){const t=.25+k*.2,xx=a[0]+(b[0]-a[0])*t,yy=a[1]+(b[1]-a[1])*t;art+=curve([[xx,yy],[xx+(rand()-.5)*27,yy+(rand()-.5)*29]],C.sage,1.2,'opacity=".65"');}
-    }
-    for(const p of nodes)art+=circle(...p,5,C.text)+ring(...p,11,C.sage,1.5);
-    if(preset==='maze')art+=rect(123,22,8,97,C.rule)+rect(206,97,8,80,C.rule);return art;
-  }
-  if(id==='fireflies'){
-    for(let i=0;i<105;i++){const x=27+rand()*266,y=25+rand()*150,flash=preset==='islands'?(x<130?y<120:false):preset==='wave'?Math.abs(y-x*.45)<26:rand()<.45,rad=flash?4:1.8;art+=circle(x,y,rad,flash?C.gold:C.rule);if(flash)art+=circle(x,y,rad*3,C.gold,.06)+ring(r(x),r(y),rad*2,C.gold,1,'opacity=".23"');}
-    return art;
-  }
-  if(id==='particlelife'){
-    for(let group=0;group<8;group++){const cx=45+group%4*76,cy=53+(group/4|0)*88,sp=group%4;
-      for(let i=0;i<28;i++){const a=rand()*Math.PI*2,rr=preset==='chase'?18+rand()*9:preset==='mix'?rand()*35:Math.sqrt(rand())*22;art+=circle(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr,2.6,preset==='mix'?colors[i%4]:i<17?colors[sp]:colors[(sp+1)%4],.9);}
-      if(preset==='chase')art+=arrow([[cx-22,cy+7],[cx-21,cy-17],[cx+1,cy-26]],colors[sp],1.4);
-    }return art;
-  }
-  if(id==='lenia'){
-    const placements=preset==='solo'?[[160,100,1]]:preset==='collision'?[[103,98,1],[218,98,-1]]:[[65,59,1],[160,61,-1],[257,60,1],[101,151,-1],[213,147,1]];
-    for(const [x,y,flip]of placements){art+=`<g transform="translate(${x} ${y}) scale(${flip} 1)"><path d="M-25-6C-31-29 4-40 25-24C44-9 27 32 5 30C-16 29-34 16-25-6Z" fill="${C.sage}" opacity=".2"/><path d="M-23-5C-28-25 3-32 23-20C36-7 24 25 5 25C-15 24-28 12-23-5Z" fill="none" stroke="${C.sage}" stroke-width="7" opacity=".7"/><path d="M-25 1C-32 12-20 31-10 34" fill="none" stroke="${C.gold}" stroke-width="4" opacity=".7"/></g>`;}return art;
-  }
-  if(id==='crowds'){
-    if(preset==='door')art+=rect(156,20,8,66,C.rule)+rect(156,117,8,65,C.rule);
-    for(let i=0;i<(preset==='rush'?125:77);i++){const lane=i%6,c=lane%2?C.blue:C.gold,x=29+rand()*264,y=36+lane*25+(rand()-.5)*11;art+=circle(x,y,2.8,c,.9)+line(x+(lane%2?4:-4),y,x+(lane%2?10:-10),y,c,1.8);}
-    return art+arrow([[27,24],[97,24]],C.gold,1.8)+arrow([[292,177],[223,177]],C.blue,1.8);
-  }
+
 }
 for(const id of ['bfs','bidir','astar','dijkstra','wavefront','randomflood','dfs','randomwalk'])renderers[id]=()=>search(id);
 for(const id of ['bubble','insertion','quick','heap','bitonic','pancake'])renderers[id]=()=>sorting(id);
-for(const id of ['boids','ocean','lsystem','rxndiff','saturn'])renderers[id]=()=>life(id);
+for(const id of ['boids','ocean','lsystem','rxndiff'])renderers[id]=()=>life(id);
 const emergenceDefinitions=require('../js/random-galaxy-emergence-models.js').definitions;
 for(const [id,def]of Object.entries(emergenceDefinitions)){
   renderers[id]=()=>emergence(id);

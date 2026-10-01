@@ -1,297 +1,306 @@
-/* Local interactions, deterministic seeds, fixed simulation steps.
- * Models are deliberately simplified. Primary references are linked in the lab.
- * Rendering and browser lifecycle live in random-galaxy-emergence.js. */
+/* Seeded, local models for the two Emergence worlds. The app owns their clock. */
 (function (root) {
   'use strict';
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const wrap = v => v - Math.floor(v);
   const delta = v => v - Math.round(v);
-  const angleDelta = v => Math.atan2(Math.sin(v), Math.cos(v));
+  const turn = v => Math.atan2(Math.sin(v), Math.cos(v));
   const F = n => new Float32Array(n);
   function rng(seed) {
     let s = seed >>> 0;
-    const next = () => { s += 0x6D2B79F5; let t = s; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-    next.state = () => s >>> 0; next.set = v => { s = v >>> 0; }; return next;
+    const next = () => {
+      s += 0x6D2B79F5;
+      let t = s;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+    next.state = () => s >>> 0;
+    next.set = v => { s = v >>> 0; };
+    return next;
   }
   const definitions = {
     boids: {
-      name: 'Flocking birds', summary: 'Keep apart. Match your neighbors. Stay together.',
+      name: 'Flocking birds', summary: 'One bird turns. The flock follows.',
       source: ['Craig Reynolds: Boids', 'https://www.red3d.com/cwr/boids/'],
-      about: 'Each bird steers using only nearby birds. Separation avoids collisions, alignment matches direction, and cohesion holds the flock together. A soft boundary keeps this three-dimensional flock in view. The predator and obstacles add local avoidance.',
-      tools: [['orbit','Rotate'],['scatter','Scatter'],['predator','Predator'],['wall','Obstacle'],['erase','Erase'],['inspect','Follow a bird']],
-      presets: [['murmuration','Murmuration'],['school','Tight school'],['chaos','No agreement']],
-      rules: [['separation','Keep apart',0,3,.1],['alignment','Match direction',0,3,.1],['cohesion','Stay together',0,3,.1],['fear','Avoid predator',0,4,.1]],
-      defaults: {separation:1.7,alignment:1.1,cohesion:1,fear:2.5}, compare: ['alignment',0,'No alignment'], count: [2200,650]
+      about: 'Birds steer from separation, alignment and cohesion. Each sees the nearest seven birds within its range, with a blind area behind it. Close collision avoidance overrides that blind area. Predictive steering avoids obstacles and a soft boundary keeps the flock in view. The hawk chases a nearby bird without killing it. Wings and color illustrate the motion; this is a flocking model, not a flight simulator.',
+      tools: [['orbit','Rotate'],['scatter','Scatter birds'],['predator','Move hawk'],['wall','Place obstacle'],['erase','Erase obstacle'],['inspect','Follow a bird']],
+      presets: [['murmuration','Murmuration'],['school','Two flocks'],['chaos','Independent birds']],
+      rules: [['separation','Keep apart',0,3,.1],['alignment','Match direction',0,3,.1],['cohesion','Stay together',0,3,.1],['range','Seeing distance',.07,.22,.01],['speed','Flight speed',.07,.22,.01],['fear','Avoid the hawk',0,4,.1]],
+      defaults: {separation:1.5,alignment:1.6,cohesion:.8,range:.14,speed:.13,fear:2.5},
+      compare: ['alignment',0,'No alignment'], count: [1800,600]
     },
     ants: {
-      name: 'Ant colony', summary: 'A discovery becomes a trail. A trail becomes a road.',
+      name: 'Ant colony', summary: 'Find food. Leave a trail. Bring the colony with you.',
       source: ['NetLogo: Ants', 'https://ccl.northwestern.edu/netlogo/models/Ants'],
-      about: 'Scouts wander until they find food. Returning ants head toward the nest and leave a food trail. Other scouts sample that trail ahead and turn toward stronger scent. Scent diffuses and fades. Nest direction is supplied to returning ants, a simplified navigation rule.',
-      tools: [['food','Place food'],['wall','Draw a wall'],['erase','Erase'],['inspect','Follow an ant']],
-      presets: [['forage','Three discoveries'],['detour','Around the wall'],['scarce','Far from home']],
-      rules: [['following','Follow scent',0,3,.1],['evaporation','Scent fades',.1,2,.1],['deposit','Leave scent',0,2,.1]],
-      defaults: {following:1.5,evaporation:.6,deposit:1}, compare: ['following',0,'No scent following'], count: [2600,900]
-    },
-    physarum: {
-      name: 'Slime networks', summary: 'Follow a trace. Reinforce it. Find another way.',
-      source: ['Jeff Jones: Physarum transport networks', 'https://uwe-repository.worktribe.com/output/980579/characteristics-of-pattern-formation-and-evolution-in-approximations-of-physarum-transport-networks'],
-      about: 'These agents are a model inspired by slime mold, rather than individual biological cells. Three forward sensors sample a shared chemical field. Agents turn toward stronger signals and leave their own traces. Diffusion, decay and food sources let paths merge into networks. Networks can reconnect after a cut; shortest routes are not guaranteed.',
-      tools: [['food','Place food'],['move','Move food'],['cut','Cut a trail'],['wall','Draw a wall'],['erase','Erase'],['inspect','Follow an agent']],
-      presets: [['network','Food network'],['maze','Living maze'],['orbit','One attractor']],
-      rules: [['sensing','Follow signals',0,2,.1],['decay','Trail fades',.05,1,.05],['sensor','Look ahead',2,16,1]],
-      defaults: {sensing:1,decay:.18,sensor:9}, compare: ['sensing',0,'No signal sensing'], count: [8500,3200]
-    },
-    fireflies: {
-      name: 'Firefly rhythms', summary: 'One flash nudges another. Watch the timing spread.',
-      source: ['Mirollo and Strogatz: coupled oscillators', 'https://www.clear.rice.edu/comp551/papers/MirolloStrogatz-TemporalSynchronization-SIAM1990.pdf'],
-      about: 'Each light has a repeating internal phase. Nearby phases pull one another toward agreement, with a small spread in natural frequencies. This local phase-oscillator model is inspired by synchronization research. It is not a biological firefly model or the exact all-to-all pulse model in the paper. Local coupling can leave several synchronized neighborhoods.',
-      tools: [['pulse','Disturb timing'],['inspect','Follow a light']],
-      presets: [['unison','Find a rhythm'],['islands','Separate neighborhoods'],['wave','Rolling wave']],
-      rules: [['coupling','Match timing',0,5,.1],['radius','Neighbor range',.03,.3,.01],['diversity','Different rhythms',0,.5,.01]],
-      defaults: {coupling:2.5,radius:.16,diversity:.04}, compare: ['coupling',0,'No timing coupling'], count: [1200,450]
-    },
-    particlelife: {
-      name: 'Particle Life', summary: 'Attraction and repulsion build their own little worlds.',
-      source: ['Particle Life: interaction model', 'https://github.com/HackerPoet/Particle-Life'],
-      about: 'Four colored species interact through a directed relationship table. A row says how that species feels about each column. All particles repel at very short range; farther away the table determines attraction or repulsion. Drag to pull a cluster apart. There is no scripted path or external flow field.',
-      tools: [['pull','Pull particles'],['repel','Push particles'],['inspect','Follow a particle']],
-      presets: [['cells','Little cells'],['chase','Chase and orbit'],['mix','Everyone attracts']],
-      rules: [['strength','Interaction strength',0,2,.1],['radius','Neighbor range',.04,.2,.01],['friction','Drag',1,10,.5]],
-      defaults: {strength:1,radius:.11,friction:4}, compare: ['strength',0,'No species forces'], count: [2400,800]
-    },
-    lenia: {
-      name: 'Lenia organisms', summary: 'Soft cells grow, shrink and move without a leader.',
-      source: ['Bert Chan: Lenia', 'https://chakazul.github.io/lenia.html'],
-      about: 'Lenia is a continuous cellular automaton. Each cell samples a circular neighborhood through a ring-shaped kernel. A smooth growth function changes the cell density. These presets use Bert Chan\'s published Orbium unicaudatus seed and parameters (radius 13, growth center 0.15, width 0.015, time scale 10). FFT convolution computes the real neighborhood rule. Edges wrap. Changing growth can kill or overgrow the organisms.',
-      tools: [['organism','Place an Orbium'],['erase','Erase cells'],['inspect','Inspect a cell']],
-      presets: [['garden','Six swimmers'],['solo','One swimmer'],['collision','Collision course']],
-      rules: [['growth','Growth center',.12,.18,.001],['width','Growth tolerance',.01,.025,.001]],
-      defaults: {growth:.15,width:.015}, compare: ['growth',.16,'Changed growth center'], count: [0,0]
-    },
-    crowds: {
-      name: 'Crowd flow', summary: 'Give everyone a destination. Let the lanes form.',
-      source: ['Helbing and Molnar: social force model', 'https://arxiv.org/abs/cond-mat/9805244'],
-      about: 'Walkers accelerate toward a desired direction while avoiding nearby people and walls. Two opposing streams can sort themselves into lanes. Bottlenecks slow the flow. This is a simplified social-force model, not a crowd safety predictor. People exiting one side re-enter on the other.',
-      tools: [['wall','Draw a wall'],['erase','Erase a wall'],['inspect','Follow a walker']],
-      presets: [['lanes','Opposing streams'],['door','Through a doorway'],['rush','Rush hour']],
-      rules: [['avoidance','Give people space',0,3,.1],['pace','Walking pace',.04,.16,.01],['density','Crowd size',.3,1,.1]],
-      defaults: {avoidance:1.6,pace:.09,density:.7}, compare: ['avoidance',0,'No mutual avoidance'], count: [900,350]
+      about: 'Scouts explore with persistent, noisy headings. Food carriers leave food scent; scouts leave home scent. Three forward sensors steer toward food scent, which spreads and evaporates. Carriers remember breadcrumbs from their own outward trip and retrace them, skipping a bend only when the shortcut is clear. They use home scent and a nest bearing if those memories are blocked or run out. Walls block movement and scent. This educational model adds route memory and a separate home signal to the NetLogo-inspired foraging rule. It does not compute a global shortest path.',
+      tools: [['view','Pan / zoom'],['food','Place or refill food'],['move','Move food or nest'],['wall','Draw a wall'],['cut','Erase scent'],['erase','Erase wall or food'],['inspect','Follow an ant']],
+      presets: [['forage','Open foraging'],['detour','Around the wall'],['scarce','Two routes']],
+      rules: [['following','Follow food scent',0,3,.1],['evaporation','Scent fades',.1,2,.1],['deposit','Leave scent',0,2,.1],['exploration','Explore new ground',0,2,.1]],
+      defaults: {following:1.8,evaporation:.55,deposit:1,exploration:.65},
+      compare: ['following',0,'No scent following'], count: [1500,600]
     }
   };
-
-  // Counting-free linked cell lists. Queries visit only local bins.
   class Grid {
-    constructor(n, bins=20, dim=2) { this.bins=bins; this.dim=dim; this.head=new Int32Array(bins ** dim); this.next=new Int32Array(n); }
+    constructor(n, bins=12) {
+      this.bins=bins; this.head=new Int32Array(bins**3); this.next=new Int32Array(n);
+    }
     build(w) {
       this.head.fill(-1); const b=this.bins;
-      for(let i=0;i<w.n;i++) { const x=clamp(w.x[i]*b|0,0,b-1), y=clamp(w.y[i]*b|0,0,b-1), z=this.dim===3?clamp(w.z[i]*b|0,0,b-1):0;
-        const k=x+y*b+z*b*b; this.next[i]=this.head[k]; this.head[k]=i; }
-    }
-    neighbors(w,i,radius,visit,periodic=true) {
-      const b=this.bins, reach=Math.ceil(radius*b), cx=w.x[i]*b|0,cy=w.y[i]*b|0,cz=this.dim===3?w.z[i]*b|0:0;
-      for(let dz=this.dim===3?-reach:0;dz<=(this.dim===3?reach:0);dz++)for(let dy=-reach;dy<=reach;dy++)for(let dx=-reach;dx<=reach;dx++) {
-        let x=cx+dx,y=cy+dy,z=cz+dz;
-        if(periodic){x=(x+b)%b;y=(y+b)%b;z=(z+b)%b;}else if(x<0||x>=b||y<0||y>=b||z<0||z>=b)continue;
-        for(let j=this.head[x+y*b+z*b*b];j>=0;j=this.next[j])if(j!==i)visit(j);
+      for(let i=0;i<w.n;i++) {
+        const x=clamp(w.x[i]*b|0,0,b-1),y=clamp(w.y[i]*b|0,0,b-1),z=clamp(w.z[i]*b|0,0,b-1),k=x+y*b+z*b*b;
+        this.next[i]=this.head[k]; this.head[k]=i;
       }
     }
-  }
-  // In-place radix-2 FFT, including both spatial dimensions. Own implementation.
-  function fft1(re,im,n,offset,stride,inverse) {
-    for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let a=offset+i*stride,b=offset+j*stride,t=re[a];re[a]=re[b];re[b]=t;t=im[a];im[a]=im[b];im[b]=t;}}
-    for(let len=2;len<=n;len*=2){let a=(inverse?TAU:-TAU)/len,cr=Math.cos(a),ci=Math.sin(a);
-      for(let start=0;start<n;start+=len){let wr=1,wi=0;for(let j=0;j<len/2;j++){const p=offset+(start+j)*stride,q=p+len/2*stride,vr=re[q]*wr-im[q]*wi,vi=re[q]*wi+im[q]*wr;
-        re[q]=re[p]-vr;im[q]=im[p]-vi;re[p]+=vr;im[p]+=vi;const next=wr*cr-wi*ci;wi=wr*ci+wi*cr;wr=next;}}
+    neighbors(w,i,radius,visit,bound) {
+      const b=this.bins,reach=Math.ceil(radius*b),cx=w.x[i]*b|0,cy=w.y[i]*b|0,cz=w.z[i]*b|0;
+      const center=cx+cy*b+cz*b*b;
+      for(let j=this.head[center];j>=0;j=this.next[j])if(j!==i)visit(j);
+      for(let z=Math.max(0,cz-reach);z<=Math.min(b-1,cz+reach);z++)
+        for(let y=Math.max(0,cy-reach);y<=Math.min(b-1,cy+reach);y++)
+          for(let x=Math.max(0,cx-reach);x<=Math.min(b-1,cx+reach);x++){
+            const cell=x+y*b+z*b*b;if(cell===center)continue;
+            const dx=Math.max(x/b-w.x[i],0,w.x[i]-(x+1)/b),dy=Math.max(y/b-w.y[i],0,w.y[i]-(y+1)/b),dz=Math.max(z/b-w.z[i],0,w.z[i]-(z+1)/b);
+            if(dx*dx+dy*dy+dz*dz>(bound?bound():radius*radius))continue;
+            for(let j=this.head[cell];j>=0;j=this.next[j])if(j!==i)visit(j);
+          }
+
     }
-    if(inverse)for(let i=0;i<n;i++){re[offset+i*stride]/=n;im[offset+i*stride]/=n;}
   }
-  function fft2(re,im,n,inverse=false){for(let y=0;y<n;y++)fft1(re,im,n,y*n,1,inverse);for(let x=0;x<n;x++)fft1(re,im,n,x,n,inverse);}
-  let orbium = null;
-  function decodeOrbium(rle) {
-    const rows=[[]]; let count='',prefix='';
-    for(const c of rle) {
-      if(/[0-9]/.test(c)){count+=c;continue;} if('pqrstuvwxy'.includes(c)){prefix=c;continue;}
-      const n=Number(count)||1; count='';
-      if(c==='$'){for(let k=0;k<n;k++)rows.push([]);}else if(c!=='!'){
-        const value=c==='.'||c==='b'?0:c==='o'?1:(prefix?(prefix.charCodeAt(0)-112)*24+c.charCodeAt(0)-65+25:c.charCodeAt(0)-65+1)/255;
-        for(let k=0;k<n;k++)rows[rows.length-1].push(value);
-      }prefix='';
-    }
-    return rows;
-  }
+  const arrays = ['x','y','z','vx','vy','vz','a','phase','rate','light','carry','species','ax','ay','az','neighbors','field','home','temp','wallMask','routeX','routeY','routeCount','trip','wander'];
   class World {
     constructor(id,seed=731,small=false,preset,settings={}) {
+      if(!Object.hasOwn(definitions,id))throw Error('Unknown emergence world');
       this.id=id;this.def=definitions[id];this.seed=seed>>>0;this.random=rng(this.seed);this.small=small;
-      this.preset=preset||this.def.presets[0][0];this.p={...this.def.defaults};this.time=0;this.steps=0;this.food=[];this.walls=[];this.selected=-1;this.delivered=0;
-      this.size=id==='lenia'?(this.preset==='solo'?128:256):id==='physarum'?(small?192:256):(small?128:192);this.field=F(this.size*this.size);this.temp=F(this.field.length);this.potential=F(this.field.length);
-      this.occupancy=new Uint16Array(this.field.length);
-      this.wallMask=new Uint8Array(this.field.length);
-      this.n=this.def.count[small?1:0];this.x=F(this.n);this.y=F(this.n);this.z=F(this.n);this.vx=F(this.n);this.vy=F(this.n);this.vz=F(this.n);this.a=F(this.n);this.phase=F(this.n);this.rate=F(this.n);this.light=F(this.n);this.carry=new Uint8Array(this.n);this.species=new Uint8Array(this.n);
-      this.grid=new Grid(this.n,id==='boids'?12:20,id==='boids'?3:2);this.matrix=F(16);this.pointer=null;this.predator=null;
+      this.preset=this.def.presets.some(p=>p[0]===preset)?preset:this.def.presets[0][0];
+      this.p={...this.def.defaults};this.time=0;this.steps=0;this.food=[];this.walls=[];this.selected=-1;this.delivered=0;this.predator=null;this.pointer=null;
+      this.n=this.def.count[small?1:0];
+      for(const key of ['x','y','z','vx','vy','vz','a','phase','rate','light','ax','ay','az','trip','wander'])this[key]=F(this.n);
+      this.carry=new Uint8Array(this.n);this.species=new Uint8Array(this.n);this.neighbors=new Uint8Array(this.n);
+      this.size=id==='ants'?(small?112:160):1;this.field=F(this.size**2);this.home=F(this.field.length);this.temp=F(this.field.length);this.wallMask=new Uint8Array(this.field.length);
+      this.grid=new Grid(this.n);this.nearest=new Int32Array(7);this.distances=F(7);
+      this.routeLimit=id==='ants'?160:0;this.routeX=F(this.n*this.routeLimit);this.routeY=F(this.routeX.length);this.routeCount=new Uint16Array(this.n);
       this.init();
-      for(const [k,v] of Object.entries(settings.p||{})){const rule=this.def.rules.find(r=>r[0]===k);if(rule&&Number.isFinite(v))this.p[k]=clamp(v,rule[2],rule[3]);}
-      if(settings.matrix&&settings.matrix.length===16)this.matrix.set(settings.matrix.map(v=>clamp(Number(v)||0,-1,1)));
-      if(Array.isArray(settings.food))this.food=settings.food.slice(0,24).map(f=>({x:clamp(+f.x||0,0,1),y:clamp(+f.y||0,0,1),amount:clamp(Number.isFinite(+f.amount)?+f.amount:100,0,1000)}));
-      if(Array.isArray(settings.walls))this.walls=settings.walls.slice(0,180).map(w=>({x:clamp(+w.x||0,0,1),y:clamp(+w.y||0,0,1),r:clamp(+w.r||.015,.008,.09)}));
-      if(this.id!=='boids')for(let i=0;i<this.n;i++){let attempts=0;while(this.blocked(this.x[i],this.y[i])&&attempts++<60){this.x[i]=this.random();this.y[i]=.04+this.random()*.92;}}
+      for(const [k,v]of Object.entries(settings.p||{})){
+        const rule=this.def.rules.find(r=>r[0]===k);if(rule&&Number.isFinite(v))this.p[k]=clamp(v,rule[2],rule[3]);
+      }
+      if(id==='ants'&&settings.nest)this.nest={x:clamp(+settings.nest.x||.2,.04,.96),y:clamp(+settings.nest.y||.5,.04,.96)};
+      if(Array.isArray(settings.food))this.food=settings.food.slice(0,24).map(f=>({x:clamp(+f.x||0,.04,.96),y:clamp(+f.y||0,.04,.96),capacity:clamp(+f.capacity||+f.amount||600,1,2000),amount:clamp(+f.capacity||+f.amount||600,1,2000)}));
+      if(Array.isArray(settings.walls))this.walls=settings.walls.slice(0,180).map(w=>({x:clamp(+w.x||0,0,1),y:clamp(+w.y||0,0,1),z:clamp(Number.isFinite(w.z)?w.z:.5,0,1),r:clamp(+w.r||.018,.008,.12)}));
+      if(id==='boids'&&settings.predator)this.setPredator(settings.predator.x,settings.predator.y,settings.predator.z);
       this.rebuildWalls();
+      if(id==='ants')for(let i=0;i<this.n;i++){this.x[i]=this.nest.x+(this.random()-.5)*.024;this.y[i]=this.nest.y+(this.random()-.5)*.024;this.routeX[i*this.routeLimit]=this.x[i];this.routeY[i*this.routeLimit]=this.y[i];this.routeCount[i]=1;}
     }
-    init(){
-      const random=this.random,id=this.id;
-      if(id==='boids'){if(this.preset==='school')Object.assign(this.p,{alignment:2,cohesion:1.8,separation:1});if(this.preset==='chaos')this.p.alignment=0;}
-      if(id==='ants'){
-        this.nest={x:.23,y:.5};this.food=[{x:.73,y:.23,amount:450},{x:.82,y:.55,amount:450},{x:.66,y:.81,amount:450}];
-        if(this.preset==='detour'){for(let y=.25;y<.73;y+=.025)this.walls.push({x:.5,y,r:.018});}
-        if(this.preset==='scarce')this.food=[{x:.86,y:.18,amount:800}];
+    init() {
+      const random=this.random;
+      if(this.id==='ants'){
+        this.nest={x:.18,y:.5};this.food=[{x:.76,y:.22,amount:900,capacity:900},{x:.83,y:.57,amount:900,capacity:900},{x:.68,y:.84,amount:900,capacity:900}];
+        if(this.preset==='detour')for(let y=.18;y<.79;y+=.02)this.walls.push({x:.5,y,r:.016});
+        if(this.preset==='scarce'){
+          this.food=[{x:.84,y:.5,amount:1800,capacity:1800}];
+          for(let y=.29;y<.73;y+=.02)this.walls.push({x:.5,y,r:.016});
+        }
+      }else if(this.preset==='chaos')Object.assign(this.p,{alignment:0,cohesion:.15});
+      for(let i=0;i<this.n;i++){
+        this.a[i]=random()*TAU;this.phase[i]=random()*TAU;this.rate[i]=.85+random()*.3;this.z[i]=.5;this.species[i]=i%2;
+        if(this.id==='boids'){
+          const a=random()*TAU,rad=Math.cbrt(random()),v=(random()-.5)*2;
+          const spread=this.preset==='school'?.16:.35,cx=this.preset==='school'?(i%2?.69:.31):.5;
+          this.x[i]=cx+Math.cos(a)*rad*spread*Math.sqrt(1-v*v);
+          this.y[i]=.5+v*rad*.19;this.z[i]=.5+Math.sin(a)*rad*spread*.7;
+          const heading=this.preset==='chaos'?this.a[i]:this.preset==='school'?(i%2?Math.PI:0):.25;
+          this.vx[i]=Math.cos(heading)*.12+(random()-.5)*.03;this.vy[i]=(random()-.5)*.025;this.vz[i]=Math.sin(heading)*.12+(random()-.5)*.03;
+        }
       }
-      if(id==='physarum'){
-        this.food=[{x:.25,y:.3,amount:999},{x:.7,y:.22,amount:999},{x:.79,y:.71,amount:999},{x:.35,y:.8,amount:999},{x:.5,y:.5,amount:999}];
-        if(this.preset==='orbit')this.food=[{x:.5,y:.5,amount:999}];
-        if(this.preset==='maze'){for(let y=.05;y<.7;y+=.025)this.walls.push({x:.4,y,r:.016});for(let y=.3;y<.96;y+=.025)this.walls.push({x:.67,y,r:.016});}
+    }
+    clone() {
+      const w=new World(this.id,this.seed,this.small,this.preset,this.configuration());
+      for(const key of arrays)w[key].set(this[key]);
+      for(const key of ['time','steps','delivered','selected'])w[key]=this[key];
+      w.food=this.food.map(f=>({...f}));w.walls=this.walls.map(p=>({...p}));w.nest=this.nest?{...this.nest}:null;w.predator=this.predator?{...this.predator}:null;w.random.set(this.random.state());
+      return w;
+    }
+    configuration() {
+      return {id:this.id,seed:this.seed,preset:this.preset,p:{...this.p},food:this.food.map(f=>({...f,amount:f.capacity})),walls:this.walls.map(w=>({...w})),nest:this.nest?{...this.nest}:undefined,predator:this.predator?{x:this.predator.x,y:this.predator.y,z:this.predator.z}:null};
+    }
+    cell(x,y) { const n=this.size;return clamp(y*n|0,0,n-1)*n+clamp(x*n|0,0,n-1); }
+    blocked(x,y) {return x<.008||x>.992||y<.008||y>.992||!!this.wallMask[this.cell(x,y)];}
+    rebuildWalls() {
+      if(this.id!=='ants')return;
+      const n=this.size;this.wallMask.fill(0);
+      for(const wall of this.walls)for(let y=Math.max(0,(wall.y-wall.r)*n|0);y<=Math.min(n-1,(wall.y+wall.r)*n|0);y++)
+        for(let x=Math.max(0,(wall.x-wall.r)*n|0);x<=Math.min(n-1,(wall.x+wall.r)*n|0);x++)
+          if(Math.hypot((x+.5)/n-wall.x,(y+.5)/n-wall.y)<wall.r+.004)this.wallMask[y*n+x]=1;
+      for(let k=0;k<this.field.length;k++)if(this.wallMask[k])this.field[k]=this.home[k]=0;
+      for(let i=0;i<this.n;i++)if(this.blocked(this.x[i],this.y[i])){
+        let found=false;
+        for(let r=1;r<24&&!found;r++)for(let a=0;a<16;a++){
+          const x=this.x[i]+Math.cos(a*TAU/16)*r/n,y=this.y[i]+Math.sin(a*TAU/16)*r/n;
+          if(!this.blocked(x,y)){this.x[i]=x;this.y[i]=y;found=true;break;}
+        }
       }
-      if(id==='fireflies'){if(this.preset==='islands')Object.assign(this.p,{radius:.075,coupling:3.5});if(this.preset==='wave')Object.assign(this.p,{radius:.1,coupling:1.4,diversity:0});}
-      if(id==='particlelife'){
-        for(let i=0;i<4;i++)for(let j=0;j<4;j++)this.matrix[i*4+j]=i===j?.6:-.35;
-        if(this.preset==='chase')for(let i=0;i<4;i++)for(let j=0;j<4;j++)this.matrix[i*4+j]=i===j?.2:j===(i+1)%4?.9:j===(i+3)%4?-.9:-.2;
-        if(this.preset==='mix')this.matrix.fill(.6);
+    }
+    sample(x,y,field=this.field) {return this.blocked(x,y)?0:field[this.cell(x,y)];}
+    diffuse(decay,field=this.field) {
+      const n=this.size,mask=this.wallMask,temp=this.temp;
+      for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+        const k=y*n+x;if(mask[k]){temp[k]=0;continue;}const v=field[k];let sum=0,count=0;
+        if(x>0&&!mask[k-1]){sum+=field[k-1];count++;}if(x<n-1&&!mask[k+1]){sum+=field[k+1];count++;}
+        if(y>0&&!mask[k-n]){sum+=field[k-n];count++;}if(y<n-1&&!mask[k+n]){sum+=field[k+n];count++;}
+        temp[k]=Math.max(0,(v+(sum-count*v)*.06)*(1-decay));
       }
-      if(id==='crowds'){
-        if(this.preset==='door')for(let y=.04;y<.98;y+=.025)if(y<.4||y>.6)this.walls.push({x:.5,y,r:.015});
-        if(this.preset==='rush')Object.assign(this.p,{density:1,pace:.13});
+      field.set(temp);
+    }
+    clearLine(x,y,xx,yy) {
+      const steps=Math.ceil(Math.hypot(xx-x,yy-y)*this.size*1.5);
+      for(let i=1;i<=steps;i++)if(this.blocked(x+(xx-x)*i/steps,y+(yy-y)*i/steps))return false;
+      return true;
+    }
+    setPredator(x=.5,y=.5,z=.5) {
+      this.predator={x:clamp(x,.04,.96),y:clamp(y,.04,.96),z:clamp(Number.isFinite(z)?z:.5,.04,.96),vx:0,vy:0,vz:0,target:0};
+    }
+    boidsStep(dt) {
+      this.grid.build(this);const radius=this.p.range,r2=radius*radius;
+      const hawk=this.predator;
+      if(hawk){
+        if(this.steps%15===0){let best=Infinity;for(let i=0;i<this.n;i+=3){const d=(this.x[i]-hawk.x)**2+(this.y[i]-hawk.y)**2+(this.z[i]-hawk.z)**2;if(d<best){best=d;hawk.target=i;}}}
+        const i=hawk.target,dx=this.x[i]-hawk.x,dy=this.y[i]-hawk.y,dz=this.z[i]-hawk.z,d=Math.hypot(dx,dy,dz)||1,k=1-Math.exp(-dt*2);
+        hawk.vx+=(dx/d*.18-hawk.vx)*k;hawk.vy+=(dy/d*.18-hawk.vy)*k;hawk.vz+=(dz/d*.18-hawk.vz)*k;
+        hawk.x=clamp(hawk.x+hawk.vx*dt,.04,.96);hawk.y=clamp(hawk.y+hawk.vy*dt,.04,.96);hawk.z=clamp(hawk.z+hawk.vz*dt,.04,.96);
       }
       for(let i=0;i<this.n;i++){
-        this.x[i]=.03+random()*.94;this.y[i]=.06+random()*.88;this.z[i]=.5;this.a[i]=random()*TAU;this.species[i]=i%4;
-        if(id==='boids'){this.x[i]=.5+(random()-.5)*.65;this.y[i]=.5+(random()-.5)*.65;this.z[i]=.5+(random()-.5)*.65;this.vx[i]=Math.cos(this.a[i])*.1;this.vy[i]=Math.sin(this.a[i])*.1;this.vz[i]=(random()-.5)*.12;}
-        if(id==='ants'){if(i<this.n*.7){this.x[i]=this.nest.x+(random()-.5)*.06;this.y[i]=this.nest.y+(random()-.5)*.06;}}
-        if(id==='fireflies'){this.phase[i]=this.preset==='wave'?this.x[i]*TAU:random()*TAU;this.rate[i]=(random()-.5)*2;this.light[i]=0;}
-        if(id==='crowds'){this.species[i]=i%2;this.vx[i]=(i%2?-1:1)*this.p.pace;}
+        let sx=0,sy=0,sz=0,close=0;this.distances.fill(Infinity);this.nearest.fill(-1);
+        const speed=Math.hypot(this.vx[i],this.vy[i],this.vz[i])||.1;
+        this.grid.neighbors(this,i,radius,j=>{
+          const dx=this.x[j]-this.x[i],dy=this.y[j]-this.y[i],dz=this.z[j]-this.z[i],d2=dx*dx+dy*dy+dz*dz;
+          if(d2>r2||d2<1e-10)return;
+          if(d2<.0012){const f=1/(d2+.00004);sx-=dx*f;sy-=dy*f;sz-=dz*f;close++;}
+          if((dx*this.vx[i]+dy*this.vy[i]+dz*this.vz[i])/Math.sqrt(d2)/speed<-.55)return;
+          if(d2>=this.distances[6])return;let k=6;while(k>0&&d2<this.distances[k-1]){this.distances[k]=this.distances[k-1];this.nearest[k]=this.nearest[k-1];k--;}
+          this.distances[k]=d2;this.nearest[k]=j;
+        },()=>Math.max(.0012,this.distances[6]));
+        let ax=0,ay=0,az=0,cx=0,cy=0,cz=0,vx=0,vy=0,vz=0,count=0;
+        const steering=(x,y,z,weight)=>{
+          const d=Math.hypot(x,y,z);if(d<1e-7||weight===0)return;
+          ax+=(x/d*this.p.speed-this.vx[i])*weight;ay+=(y/d*this.p.speed-this.vy[i])*weight;az+=(z/d*this.p.speed-this.vz[i])*weight;
+        };
+        for(const j of this.nearest)if(j>=0){cx+=this.x[j]-this.x[i];cy+=this.y[j]-this.y[i];cz+=this.z[j]-this.z[i];vx+=this.vx[j];vy+=this.vy[j];vz+=this.vz[j];count++;}
+        this.neighbors[i]=count;
+        if(count){steering(vx,vy,vz,this.p.alignment*1.9);steering(cx,cy,cz,this.p.cohesion);}
+        if(close)steering(sx,sy,sz,this.p.separation*2.3);
+        // Predict the boundary and obstacles before the bird reaches them.
+        for(const [pos,vel,axis]of [[this.x[i],this.vx[i],0],[this.y[i],this.vy[i],1],[this.z[i],this.vz[i],2]]){
+          const p=pos+vel*.9-.5,force=-Math.sign(p)*Math.max(0,Math.abs(p)-.34)*4;
+          if(axis===0)ax+=force;else if(axis===1)ay+=force;else az+=force;
+        }
+        for(const wall of this.walls){const dx=this.x[i]+this.vx[i]*.65-wall.x,dy=this.y[i]+this.vy[i]*.65-wall.y,dz=this.z[i]+this.vz[i]*.65-(wall.z??.5),d=Math.hypot(dx,dy,dz);if(d<wall.r+.075)steering(dx,dy,dz,4*(1-d/(wall.r+.075)));}
+        if(hawk){const dx=this.x[i]-hawk.x,dy=this.y[i]-hawk.y,dz=this.z[i]-hawk.z,d=Math.hypot(dx,dy,dz);if(d<.23)steering(dx,dy,dz,this.p.fear*4*(1-d/.23));}
+        ax+=Math.sin(this.time*.9+this.phase[i])*.009;ay+=Math.cos(this.time*.7+this.phase[i])*.006;az+=Math.sin(this.time*.8+this.phase[i]*2)*.009;
+        const force=Math.hypot(ax,ay,az),limit=.36,scale=force>limit?limit/force:1;this.ax[i]=ax*scale;this.ay[i]=ay*scale;this.az[i]=az*scale;
       }
-      if(id==='lenia'){
-        const n=this.size;this.kr=F(n*n);this.ki=F(n*n);this.fr=F(n*n);this.fi=F(n*n);let sum=0;
-        for(let y=-13;y<=13;y++)for(let x=-13;x<=13;x++){const r=Math.hypot(x,y)/13,v=r<1?Math.pow(4*r*(1-r),4):0;this.kr[((y+n)%n)*n+(x+n)%n]=v;sum+=v;}
-        for(let i=0;i<this.kr.length;i++)this.kr[i]/=sum;fft2(this.kr,this.ki,n);
-        if(this.preset==='garden')for(const [x,y]of [[.2,.28],[.5,.28],[.8,.28],[.2,.72],[.5,.72],[.8,.72]])this.placeOrbium(x,y,0);
-        else if(this.preset==='collision'){this.placeOrbium(.36,.5,0);this.placeOrbium(.64,.5,2);}else this.placeOrbium(.5,.5,0);
-      }
-    }
-    placeOrbium(x,y,turn=0){
-      if(!orbium)return;const n=this.size,h=orbium.length,w=Math.max(...orbium.map(r=>r.length));
-      for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){let dx=xx-w/2,dy=yy-h/2;for(let t=0;t<turn;t++){const z=dx;dx=-dy;dy=z;}const k=((Math.round(y*n+dy)+n)%n)*n+(Math.round(x*n+dx)+n)%n;this.field[k]=Math.max(this.field[k],orbium[yy][xx]||0);}
-    }
-    clone(){
-      const other=new World(this.id,this.seed,this.small,this.preset);other.p={...this.p};other.time=this.time;other.steps=this.steps;other.food=this.food.map(f=>({...f}));other.walls=this.walls.map(w=>({...w}));other.delivered=this.delivered;other.predator=this.predator?{...this.predator}:null;
-      for(const key of ['field','temp','potential','x','y','z','vx','vy','vz','a','phase','rate','light','carry','species','matrix'])other[key].set(this[key]);
-      other.random.set(this.random.state());other.selected=this.selected;other.rebuildWalls();return other;
-    }
-    configuration(){return {id:this.id,seed:this.seed,preset:this.preset,p:{...this.p},matrix:Array.from(this.matrix),food:this.food.map(f=>({...f})),walls:this.walls.map(w=>({...w}))};}
-    cell(x,y){const n=this.size;return (wrap(y)*n|0)*n+(wrap(x)*n|0);}
-    blocked(x,y){return this.walls.some(w=>(x-w.x)**2+(y-w.y)**2<w.r*w.r);}
-    rebuildWalls(){const n=this.size;this.wallMask.fill(0);for(const wall of this.walls)for(let y=Math.max(0,Math.floor((wall.y-wall.r)*n));y<Math.min(n,(wall.y+wall.r)*n);y++)for(let x=Math.max(0,Math.floor((wall.x-wall.r)*n));x<Math.min(n,(wall.x+wall.r)*n);x++)if((x/n-wall.x)**2+(y/n-wall.y)**2<wall.r*wall.r)this.wallMask[y*n+x]=1;}
-    expel(i){for(let pass=0;pass<3;pass++)for(const wall of this.walls){let dx=this.x[i]-wall.x,dy=this.y[i]-wall.y,d=Math.hypot(dx,dy);if(d<wall.r){if(d<1e-6){dx=i%2?1:-1;dy=0;d=1;}this.x[i]=clamp(wall.x+dx/d*(wall.r+.003),.015,.985);this.y[i]=clamp(wall.y+dy/d*(wall.r+.003),.015,.985);}}}
-    sample(x,y){return this.field[this.cell(x,y)];}
-    diffuse(decay,amount=.18){const n=this.size,a=this.field,b=this.temp;
-      for(let y=0;y<n;y++)for(let x=0;x<n;x++){const i=y*n+x,up=((y+n-1)%n)*n+x,dn=((y+1)%n)*n+x,l=y*n+(x+n-1)%n,r=y*n+(x+1)%n,mask=this.wallMask;b[i]=mask[i]?0:Math.max(0,(a[i]*(1-4*amount)+amount*((mask[up]?a[i]:a[up])+(mask[dn]?a[i]:a[dn])+(mask[l]?a[i]:a[l])+(mask[r]?a[i]:a[r])))*(1-decay));}
-      this.field=b;this.temp=a;
-    }
-    step(dt=1/30){
-      if(this.id==='boids')this.stepBoids(dt);
-      else if(this.id==='ants'||this.id==='physarum')this.stepTrails(dt);
-      else if(this.id==='fireflies')this.stepFireflies(dt);
-      else if(this.id==='particlelife')this.stepParticles(dt);
-      else if(this.id==='lenia')this.stepLenia();
-      else if(this.id==='crowds')this.stepCrowds(dt);
-      this.time+=dt;this.steps++;
-    }
-    stepBoids(dt){
-      this.grid.build(this);const n=this.n,p=this.p,ax=F(n),ay=F(n),az=F(n),r=.105;
-      for(let i=0;i<n;i++){
-        let count=0,cx=0,cy=0,cz=0,vx=0,vy=0,vz=0,sx=0,sy=0,sz=0;
-        this.grid.neighbors(this,i,r,j=>{const dx=this.x[j]-this.x[i],dy=this.y[j]-this.y[i],dz=this.z[j]-this.z[i],d2=dx*dx+dy*dy+dz*dz;
-          if(d2>r*r||d2<1e-8||count>=28)return;count++;cx+=dx;cy+=dy;cz+=dz;vx+=this.vx[j];vy+=this.vy[j];vz+=this.vz[j];if(d2<.002){sx-=dx/(d2+.0001);sy-=dy/(d2+.0001);sz-=dz/(d2+.0001);}},false);
-        if(count){ax[i]=p.cohesion*cx/count*2+p.alignment*(vx/count-this.vx[i])*2+p.separation*sx*.008;ay[i]=p.cohesion*cy/count*2+p.alignment*(vy/count-this.vy[i])*2+p.separation*sy*.008;az[i]=p.cohesion*cz/count*2+p.alignment*(vz/count-this.vz[i])*2+p.separation*sz*.008;}
-        for(const key of ['x','y','z']){const off=this[key][i]-.5;const force=-off*Math.max(0,Math.abs(off)-.24)*5;if(key==='x')ax[i]+=force;else if(key==='y')ay[i]+=force;else az[i]+=force;}
-        if(this.predator){const dx=this.x[i]-this.predator.x,dy=this.y[i]-this.predator.y,dz=this.z[i]-.5,d2=dx*dx+dy*dy+dz*dz;if(d2<.1){const f=p.fear*.02/(d2+.002);ax[i]+=dx*f;ay[i]+=dy*f;az[i]+=dz*f;}}
-        for(const wall of this.walls){const dx=this.x[i]-wall.x,dy=this.y[i]-wall.y,dz=this.z[i]-.5,d=Math.hypot(dx,dy,dz);if(d<wall.r+.065){const f=(wall.r+.065-d)*18/Math.max(.005,d);ax[i]+=dx*f;ay[i]+=dy*f;az[i]+=dz*f;}}
-      }
-      for(let i=0;i<n;i++){this.vx[i]+=clamp(ax[i],-1,1)*dt;this.vy[i]+=clamp(ay[i],-1,1)*dt;this.vz[i]+=clamp(az[i],-1,1)*dt;const speed=Math.hypot(this.vx[i],this.vy[i],this.vz[i])||1;const scale=clamp(speed,.07,.17)/speed;this.vx[i]*=scale;this.vy[i]*=scale;this.vz[i]*=scale;this.x[i]=clamp(this.x[i]+this.vx[i]*dt,.03,.97);this.y[i]=clamp(this.y[i]+this.vy[i]*dt,.03,.97);this.z[i]=clamp(this.z[i]+this.vz[i]*dt,.03,.97);}
-    }
-    stepTrails(dt){
-      const ant=this.id==='ants',p=this.p,n=this.size,speed=ant?.11:.075,turn=ant?1.1:.65,look=ant?.025:p.sensor/n;
-      if(!ant){this.occupancy.fill(0);for(let i=0;i<this.n;i++)this.occupancy[this.cell(this.x[i],this.y[i])]++;}
-      this.diffuse((ant?p.evaporation*.022:p.decay*.12)*dt*30,.17);
-      if(!ant)for(const food of this.food){const cx=food.x*n|0,cy=food.y*n|0;for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const k=((cy+dy+n)%n)*n+(cx+dx+n)%n;this.field[k]+=Math.exp(-(dx*dx+dy*dy)/9)*.8;}}
       for(let i=0;i<this.n;i++){
-        let a=this.a[i],x=this.x[i],y=this.y[i];
-        if(ant&&this.carry[i]){
-          a+=angleDelta(Math.atan2(this.nest.y-y,this.nest.x-x)-a)*.18+(this.random()-.5)*.22;
-          if(Math.hypot(x-this.nest.x,y-this.nest.y)<.025){this.carry[i]=0;this.delivered++;a+=Math.PI;}
-          this.field[this.cell(x,y)]+=p.deposit*1.3;
+        this.vx[i]+=this.ax[i]*dt;this.vy[i]+=this.ay[i]*dt;this.vz[i]+=this.az[i]*dt;
+        const speed=Math.hypot(this.vx[i],this.vy[i],this.vz[i])||1,target=clamp(speed,this.p.speed*.8,this.p.speed*1.2),scale=target/speed;
+        this.vx[i]*=scale;this.vy[i]*=scale;this.vz[i]*=scale;
+        this.x[i]=clamp(this.x[i]+this.vx[i]*dt,.015,.985);this.y[i]=clamp(this.y[i]+this.vy[i]*dt,.015,.985);this.z[i]=clamp(this.z[i]+this.vz[i]*dt,.015,.985);
+        for(const wall of this.walls){
+          const dx=this.x[i]-wall.x,dy=this.y[i]-wall.y,dz=this.z[i]-(wall.z??.5),d=Math.hypot(dx,dy,dz),rad=wall.r+.004;
+          if(d<rad){const k=rad/(d||.001);this.x[i]=wall.x+(d?dx:.001)*k;this.y[i]=wall.y+dy*k;this.z[i]=(wall.z??.5)+dz*k;const inward=(this.vx[i]*dx+this.vy[i]*dy+this.vz[i]*dz)/(d*d||1);if(inward<0){this.vx[i]-=inward*dx*1.5;this.vy[i]-=inward*dy*1.5;this.vz[i]-=inward*dz*1.5;}}
+        }
+        this.light[i]=clamp(Math.hypot(this.ax[i],this.ay[i],this.az[i])/.36,0,1);
+      }
+    }
+    antsStep(dt) {
+      const random=this.random,nest=this.nest;
+      for(let i=0;i<this.n;i++){
+        let x=this.x[i],y=this.y[i],a=this.a[i],base=i*this.routeLimit,count=this.routeCount[i];
+        const returning=this.carry[i]!==0;
+        if(returning){
+          if(Math.hypot(x-nest.x,y-nest.y)<.027){
+            if(this.carry[i]===1)this.delivered++;this.carry[i]=0;this.trip[i]=0;this.routeCount[i]=1;this.routeX[base]=x;this.routeY[base]=y;this.a[i]=a+Math.PI+(random()-.5);continue;
+          }
+          while(count>1&&Math.hypot(x-this.routeX[base+count-1],y-this.routeY[base+count-1])<.017)count--;
+          // Only skip remembered waypoints if the physical shortcut is clear.
+          if(this.steps%6===0&&count>3)for(let skip=Math.min(6,count-1);skip>1;skip--){const j=base+count-skip;if(this.clearLine(x,y,this.routeX[j],this.routeY[j])){count-=skip-1;break;}}
+          this.routeCount[i]=count;
+          let tx=count>1?this.routeX[base+count-1]:nest.x,ty=count>1?this.routeY[base+count-1]:nest.y;
+          if(this.blocked(tx,ty)){this.routeCount[i]=Math.max(1,count-1);tx=nest.x;ty=nest.y;}
+          a+=clamp(turn(Math.atan2(ty-y,tx-x)-a),-.22,.22);
+          if(count<=1||this.blocked(tx,ty)){const look=.025,l=this.sample(x+Math.cos(a-.6)*look,y+Math.sin(a-.6)*look,this.home),r=this.sample(x+Math.cos(a+.6)*look,y+Math.sin(a+.6)*look,this.home);a+=clamp((r-l)/(Math.max(r,l)+.1)*.18,-.18,.18);}
+          if(this.carry[i]===1)this.field[this.cell(x,y)]=Math.min(120,this.field[this.cell(x,y)]+this.p.deposit*5*Math.exp(-this.trip[i]*.08));
         }else{
-          const sample=aa=>this.sample(x+Math.cos(aa)*look,y+Math.sin(aa)*look),front=sample(a),left=sample(a-turn),right=sample(a+turn);
-          const weight=ant?p.following:p.sensing;
-          if(weight>0){if(front<Math.max(left,right))a+=(left>right?-1:left<right?1:(this.random()<.5?-1:1))*turn*.45*weight;else if(front<.01)a+=(this.random()-.5)*.6;}
-          else a+=(this.random()-.5)*.5;
-          if(ant){for(const food of this.food){if(food.amount>0&&Math.hypot(x-food.x,y-food.y)<.03){food.amount--;this.carry[i]=1;a+=Math.PI;break;}}}
-          else this.field[this.cell(x,y)]+=.45;
+          let picked=false;
+          for(const f of this.food)if(f.amount>0&&Math.hypot(x-f.x,y-f.y)<.043){f.amount--;this.carry[i]=1;this.trip[i]=0;a+=Math.PI;picked=true;break;}
+          if(picked){this.a[i]=a;continue;}
+          const look=.023,sensor=.58,left=this.sample(x+Math.cos(a-sensor)*look,y+Math.sin(a-sensor)*look),front=this.sample(x+Math.cos(a)*look,y+Math.sin(a)*look),right=this.sample(x+Math.cos(a+sensor)*look,y+Math.sin(a+sensor)*look);
+          const strongest=Math.max(left,front,right),bias=strongest>.07?(right-left)/(strongest+.1)*.16*this.p.following:0;
+          this.wander[i]=this.wander[i]*.92+(random()-.5)*.07*this.p.exploration;
+          a+=bias+this.wander[i]*(strongest>.07&&this.p.following>0?.23:1);
+          this.home[this.cell(x,y)]=Math.min(80,this.home[this.cell(x,y)]+1.7*Math.exp(-this.trip[i]*.065));
+          const last=base+count-1;
+          if(Math.hypot(x-this.routeX[last],y-this.routeY[last])>.018){
+            if(count<this.routeLimit){this.routeX[base+count]=x;this.routeY[base+count]=y;this.routeCount[i]=count+1;}
+            else{this.carry[i]=2;a+=Math.PI;}
+          }
+        }
+        const speed=(this.carry[i]===1?.082:.096)*this.rate[i];
+        // Look ahead for walls. Turn into the clearer local direction, then test the move.
+        const ahead=.015,blocked=this.blocked(x+Math.cos(a)*ahead,y+Math.sin(a)*ahead);
+        if(blocked){
+          const left=this.blocked(x+Math.cos(a-.85)*ahead,y+Math.sin(a-.85)*ahead),right=this.blocked(x+Math.cos(a+.85)*ahead,y+Math.sin(a+.85)*ahead);
+          a+=left&&!right?.6:right&&!left?-.6:(i%2?.65:-.65);
         }
         let xx=x+Math.cos(a)*speed*dt,yy=y+Math.sin(a)*speed*dt;
-        if(this.blocked(xx,yy)){a+=Math.PI*.55;xx=x;yy=y;}if(xx<.01||xx>.99){a=Math.PI-a;xx=clamp(xx,.012,.988);}if(yy<.01||yy>.99){a=-a;yy=clamp(yy,.012,.988);}
-        if(!ant){const from=this.cell(x,y),to=this.cell(xx,yy);if(to!==from){if(this.occupancy[to]){xx=x;yy=y;a=this.random()*TAU;}else{this.occupancy[from]--;this.occupancy[to]++;}}}
-        this.x[i]=xx;this.y[i]=yy;this.a[i]=a;this.vx[i]=Math.cos(a)*speed;this.vy[i]=Math.sin(a)*speed;
+        if(this.blocked(xx,yy)){
+          let moved=false;
+          for(const t of [.7,-.7,1.4,-1.4,2.2,-2.2,Math.PI]){const angle=a+t,nx=x+Math.cos(angle)*speed*dt,ny=y+Math.sin(angle)*speed*dt;if(!this.blocked(nx,ny)){a=angle;xx=nx;yy=ny;moved=true;break;}}
+          if(!moved){xx=x;yy=y;}
+        }
+        this.vx[i]=(xx-x)/dt;this.vy[i]=(yy-y)/dt;this.x[i]=xx;this.y[i]=yy;this.a[i]=a%TAU;this.trip[i]+=dt;
       }
+      const k=this.cell(nest.x,nest.y);if(!this.wallMask[k])this.home[k]=80;
+      this.diffuse(this.p.evaporation*.01);this.diffuse(this.p.evaporation*.004,this.home);
     }
-    stepFireflies(dt){
-      this.grid.build(this);const p=this.p,next=F(this.n);
-      for(let i=0;i<this.n;i++){let sum=0,count=0;this.grid.neighbors(this,i,p.radius,j=>{const dx=delta(this.x[j]-this.x[i]),dy=delta(this.y[j]-this.y[i]);if(dx*dx+dy*dy<p.radius*p.radius){sum+=Math.sin(this.phase[j]-this.phase[i]);count++;}});
-        next[i]=wrap((this.phase[i]+dt*(TAU*.6+this.rate[i]*p.diversity+p.coupling*sum/Math.max(1,count)))/TAU)*TAU;}
-      for(let i=0;i<this.n;i++){this.phase[i]=next[i];this.light[i]=Math.exp(-Math.pow(angleDelta(next[i])/.3,2));}
-    }
-    stepParticles(dt){
-      const p=this.p,n=this.n,r=p.radius;this.grid.build(this);const ax=F(n),ay=F(n);
-      for(let i=0;i<n;i++){let fx=0,fy=0;this.grid.neighbors(this,i,r,j=>{const dx=delta(this.x[j]-this.x[i]),dy=delta(this.y[j]-this.y[i]),d=Math.hypot(dx,dy);if(d<1e-5||d>=r)return;const q=d/r,beta=.23;const force=q<beta?(q/beta-1)*2:this.matrix[this.species[i]*4+this.species[j]]*p.strength*(1-Math.abs(2*q-1-beta)/(1-beta));fx+=dx/d*force;fy+=dy/d*force;});ax[i]=fx*.08;ay[i]=fy*.08;
-        if(this.pointer){const dx=delta(this.pointer.x-this.x[i]),dy=delta(this.pointer.y-this.y[i]),d2=dx*dx+dy*dy;if(d2<.05){const f=this.pointer.sign*.03/(d2+.004);ax[i]+=dx*f;ay[i]+=dy*f;}}
+    step(dt) {this.time+=dt;this.steps++;if(this.id==='boids')this.boidsStep(dt);else this.antsStep(dt);}
+    intervene(tool,x,y,r,z=.5) {
+      x=clamp(x,.02,.98);y=clamp(y,.02,.98);z=clamp(z,.02,.98);
+      if(tool==='food'&&this.id==='ants'&&!this.blocked(x,y)){
+        const food=this.food.find(f=>Math.hypot(x-f.x,y-f.y)<.055);
+        if(food)food.amount=food.capacity;else if(this.food.length<24)this.food.push({x,y,amount:900,capacity:900});
       }
-      const drag=Math.exp(-p.friction*dt);for(let i=0;i<n;i++){this.vx[i]=(this.vx[i]+ax[i]*dt)*drag;this.vy[i]=(this.vy[i]+ay[i]*dt)*drag;this.x[i]=wrap(this.x[i]+clamp(this.vx[i],-.35,.35)*dt);this.y[i]=wrap(this.y[i]+clamp(this.vy[i],-.35,.35)*dt);}
-    }
-    stepLenia(){
-      const n=this.size,p=this.p;this.fr.set(this.field);this.fi.fill(0);fft2(this.fr,this.fi,n);
-      for(let i=0;i<this.fr.length;i++){const r=this.fr[i],im=this.fi[i];this.fr[i]=r*this.kr[i]-im*this.ki[i];this.fi[i]=r*this.ki[i]+im*this.kr[i];}
-      fft2(this.fr,this.fi,n,true);this.potential.set(this.fr);
-      for(let i=0;i<this.field.length;i++){const q=(this.fr[i]-p.growth)/p.width,g=2*Math.exp(-q*q/2)-1;this.field[i]=clamp(this.field[i]+g*.1,0,1);}
-    }
-    stepCrowds(dt){
-      const n=Math.round(this.n*this.p.density),p=this.p;this.grid.build(this);const ax=F(n),ay=F(n);
-      for(let i=0;i<n;i++){
-        let fx=((this.species[i]?-1:1)*p.pace-this.vx[i])*3,fy=-this.vy[i]*3;
-        this.grid.neighbors(this,i,.045,j=>{if(j>=n)return;const dx=delta(this.x[i]-this.x[j]),dy=this.y[i]-this.y[j],d=Math.hypot(dx,dy);if(d<.045&&d>.0001){const f=Math.exp((.018-d)/.012)*p.avoidance*.045/d;fx+=dx*f;fy+=dy*f;}});
-        for(const w of this.walls){const dx=this.x[i]-w.x,dy=this.y[i]-w.y,d=Math.hypot(dx,dy);if(d<w.r+.04){const f=Math.exp((w.r+.008-d)/.01)*.1/Math.max(.003,d);fx+=dx*f;fy+=dy*f;}}
-        fy+=.00015/(Math.max(.02,this.y[i])**2)-.00015/(Math.max(.02,1-this.y[i])**2);ax[i]=clamp(fx,-1,1);ay[i]=clamp(fy,-1,1);
+      if(tool==='wall'&&this.walls.length<180){
+        r=r||(this.id==='ants'?.018:.07);
+        if(this.nest&&Math.hypot(x-this.nest.x,y-this.nest.y)<r+.035)return;
+        if(!this.walls.some(w=>Math.hypot(w.x-x,w.y-y,(w.z??.5)-z)<r*.65)){this.walls.push(this.id==='boids'?{x:clamp(x,r+.02,1-r-.02),y:clamp(y,r+.02,1-r-.02),z:clamp(z,r+.02,1-r-.02),r}:{x,y,z,r});this.rebuildWalls();}
       }
-      for(let i=0;i<n;i++){this.vx[i]+=ax[i]*dt;this.vy[i]+=ay[i]*dt;const xx=this.x[i]+clamp(this.vx[i],-.2,.2)*dt,yy=clamp(this.y[i]+clamp(this.vy[i],-.2,.2)*dt,.025,.975);if(this.blocked(wrap(xx),yy)){this.vx[i]*=-.15;this.vy[i]*=-.15;}else{this.x[i]=wrap(xx);this.y[i]=yy;}}
+      if(tool==='erase'){
+        this.walls=this.walls.filter(w=>Math.hypot(w.x-x,w.y-y,this.id==='boids'?(w.z??.5)-z:0)>w.r+.035);
+        this.food=this.food.filter(f=>Math.hypot(f.x-x,f.y-y)>.05);
+        if(this.predator&&Math.hypot(this.predator.x-x,this.predator.y-y,this.predator.z-z)<.1)this.predator=null;
+        this.rebuildWalls();
+      }
+      if(tool==='cut')for(let yy=0;yy<this.size;yy++)for(let xx=0;xx<this.size;xx++)if(Math.hypot((xx+.5)/this.size-x,(yy+.5)/this.size-y)<.045){this.field[yy*this.size+xx]=0;this.home[yy*this.size+xx]=0;}
+      if(tool==='predator'&&this.id==='boids')this.setPredator(x,y,z);
+      if(tool==='scatter')for(let i=0;i<this.n;i++){
+        const dx=this.x[i]-x,dy=this.y[i]-y,dz=this.z[i]-z,d=Math.hypot(dx,dy,dz);
+        if(d<.23){const k=(.23-d)*2/(d+.01);this.vx[i]+=dx*k;this.vy[i]+=dy*k;this.vz[i]+=dz*k;}
+      }
+      if(tool==='inspect'){let best=Infinity;for(let i=0;i<this.n;i++){const d=(this.x[i]-x)**2+(this.y[i]-y)**2;if(d<best){best=d;this.selected=i;}}}
     }
-    intervene(tool,x,y,r=.04){
-      x=clamp(x,.015,.985);y=clamp(y,.015,.985);
-      if(tool==='food'){const f=this.food.find(f=>Math.hypot(f.x-x,f.y-y)<.05);if(f)f.amount=Math.min(1000,f.amount+300);else if(this.food.length<24)this.food.push({x,y,amount:400});}
-      if(tool==='wall'&&!this.walls.some(w=>Math.hypot(w.x-x,w.y-y)<.014)&&this.walls.length<180){this.walls.push({x,y,r:this.id==='boids'?.065:.017});if(this.id!=='boids')for(let i=0;i<this.n;i++)this.expel(i);this.rebuildWalls();}
-      if(tool==='erase'){this.walls=this.walls.filter(w=>Math.hypot(w.x-x,w.y-y)>r+w.r);this.food=this.food.filter(f=>Math.hypot(f.x-x,f.y-y)>r);this.rebuildWalls();}
-      if(tool==='cut'||(tool==='erase'&&this.id==='lenia')){const n=this.size;for(let yy=Math.max(0,(y-r)*n|0);yy<Math.min(n,(y+r)*n);yy++)for(let xx=Math.max(0,(x-r)*n|0);xx<Math.min(n,(x+r)*n);xx++)if(Math.hypot(xx/n-x,yy/n-y)<r)this.field[yy*n+xx]=0;}
-      if(tool==='organism')this.placeOrbium(x,y,this.random()*4|0);
-      if(tool==='predator')this.predator={x,y};
-      if(tool==='pulse')for(let i=0;i<this.n;i++)if(Math.hypot(this.x[i]-x,this.y[i]-y)<.16)this.phase[i]=this.random()*TAU;
-      if(tool==='scatter')for(let i=0;i<this.n;i++){const dx=this.x[i]-x,dy=this.y[i]-y,dz=this.z[i]-.5,d=Math.hypot(dx,dy,dz);if(d<.3){this.vx[i]+=dx*.9;this.vy[i]+=dy*.9;this.vz[i]+=dz*.9;}}
-      if(tool==='inspect'){let best=Infinity;for(let i=0;i<this.n;i++){const d=Math.hypot(this.x[i]-x,this.y[i]-y);if(d<best){best=d;this.selected=i;}}if(this.id==='lenia')this.selected=this.cell(x,y);}
+    movePlace(index,x,y) {
+      if(this.id!=='ants'||this.blocked(x,y))return;
+      const p=index===-2?this.nest:this.food[index];if(!p)return;
+      p.x=clamp(x,.04,.96);p.y=clamp(y,.04,.96);if(index===-2)this.home.fill(0);
     }
-    metric(){
-      if(this.id==='ants')return [this.delivered+' food home',this.n.toLocaleString()+' ants'];
-      if(this.id==='physarum')return [this.food.length+' food sources',this.n.toLocaleString()+' agents'];
-      if(this.id==='fireflies'){let x=0,y=0;for(let i=0;i<this.n;i++){x+=Math.cos(this.phase[i]);y+=Math.sin(this.phase[i]);}return [Math.round(Math.hypot(x,y)/this.n*100)+'% in rhythm',this.n.toLocaleString()+' lights'];}
-      if(this.id==='lenia'){let mass=0;for(const v of this.field)mass+=v;return [mass<1?'Extinct. Restart or place a swimmer.':Math.round(mass)+' living mass',this.size+' × '+this.size+' cells'];}
-      if(this.id==='crowds'){let speed=0;const n=Math.round(this.n*this.p.density);for(let i=0;i<n;i++)speed+=(this.species[i]?-1:1)*this.vx[i];return [Math.round(clamp(speed/n/this.p.pace,0,1)*100)+'% free flow',n+' walkers'];}
-      if(this.id==='boids'){let x=0,y=0,z=0;for(let i=0;i<this.n;i++){const d=Math.hypot(this.vx[i],this.vy[i],this.vz[i])||1;x+=this.vx[i]/d;y+=this.vy[i]/d;z+=this.vz[i]/d;}return [Math.round(Math.hypot(x,y,z)/this.n*100)+'% aligned',this.n.toLocaleString()+' birds'];}
-      return ['4 interacting species',this.n.toLocaleString()+' particles'];
+    metric() {
+      if(this.id==='ants'){
+        const carriers=this.carry.reduce((n,v)=>n+(v===1),0),remaining=this.food.reduce((n,f)=>n+f.amount,0);
+        return [this.delivered.toLocaleString()+' food home',carriers+' carrying · '+remaining.toLocaleString()+' left'];
+      }
+      let x=0,y=0,z=0;for(let i=0;i<this.n;i++){const d=Math.hypot(this.vx[i],this.vy[i],this.vz[i])||1;x+=this.vx[i]/d;y+=this.vy[i]/d;z+=this.vz[i]/d;}
+      return [Math.round(Math.hypot(x,y,z)/this.n*100)+'% aligned',this.n.toLocaleString()+' birds'+(this.predator?' · hawk hunting':'')];
     }
   }
-  const api={definitions,World,fft2,decodeOrbium,setOrbium:rle=>{orbium=decodeOrbium(rle);},clamp,delta};
+  const api={definitions,World,clamp,delta};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.GXEmergenceModels=api;
 })(typeof window!=='undefined'?window:globalThis);

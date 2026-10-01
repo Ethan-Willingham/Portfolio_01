@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.74';
+  var VERSION = 'v1.75';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -2623,19 +2623,17 @@
   // family: geometry is held (no fly-through morph to the cube grid), the
   // camera orbits the form, and a per-scene tick repaints the shared positions
   // buffer every frame. loadField -> generateLife routes by id; the frame loop
-  // calls lifeTick for Saturn. Emergence uses its own renderer and returns
+  // Emergence uses its own renderer and returns
   // before submitting work to this WebGPU path.
   var rd = null;                 // reaction-diffusion state
   var lifeDrawCount = 0;         // instances the active Life scene draws (set by its generator)
 
-  function isLifeField(f) { return f === 'saturn' || (window.GXEmergence && window.GXEmergence.is(f)); }
+  function isLifeField(f) { return window.GXEmergence && window.GXEmergence.is(f); }
   function generateLife(f) {
-    if (f === 'saturn') generateSaturn();
-    else if (window.GXEmergence) window.GXEmergence.activate(f);
+    if (window.GXEmergence) window.GXEmergence.activate(f);
   }
   function lifeTick(dt) {
     if (currentField === 'boids') boidsTick(dt);
-    else if (currentField === 'saturn') saturnTick(dt);
   }
 
   // Reaction-diffusion (Gray-Scott) on a doubly-periodic field painted onto a
@@ -3424,103 +3422,6 @@
       }
     }
     if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer, 0, positions, 0, lifeDrawCount * 4);
-  }
-
-  // ============================================================
-  // SATURN: a close-up of the D, C, B, A and F rings.
-  // Radii, flattening and axial tilt follow NASA's fact sheets:
-  // https://nssdc.gsfc.nasa.gov/planetary/factsheet/satringfact.html
-  // https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturnfact.html
-  // https://pds-rings.seti.org/saturn/saturn_tables.html
-  // Cloud bands and ring brightness are illustrative. Time is accelerated.
-  // The distant, diffuse G/E rings and the moons are outside this close-up.
-  // ============================================================
-  var SAT_N_PLANET = 30000, SAT_N_RINGS = 70000;
-  var SAT_N_TOTAL = SAT_N_PLANET + SAT_N_RINGS;
-  var SAT_PLANET_R = 0.16, SAT_KM = SAT_PLANET_R / 60268;
-  var SAT_OBLATE = 54364 / 60268;
-  var SAT_TILT = 26.73 * Math.PI / 180;
-  var SAT_COS_TILT = Math.cos(SAT_TILT), SAT_SIN_TILT = Math.sin(SAT_TILT);
-  var SAT_RING_INNER = 66900 * SAT_KM;
-  // Counts convey relative ring prominence, not a measured particle census.
-  var SAT_BANDS = [
-    {name:'D', lo:66900, hi:74491, count:2000, light:0.10},
-    {name:'C', lo:74491, hi:91975, count:13500, light:0.38},
-    {name:'B', lo:91975, hi:117500, count:33500, light:0.88},
-    {name:'Cassini Division', lo:117500, hi:122050, count:1200, light:0.12},
-    {name:'A', lo:122050, hi:136770, count:18800, light:0.66},
-    {name:'F', lo:139826, hi:140612, count:1000, light:0.45}
-  ];
-  // Main rings are metres thick, not the former thousands-of-km torus.
-  var SAT_RING_THICK = 10 * 0.001 * SAT_KM;
-  var SAT_RING_K = SAT_RING_INNER * Math.sqrt(SAT_RING_INNER) * 0.65;
-  // One shared acceleration factor for the planet's spin and particle orbits.
-  var SAT_TIME_SCALE = 0.65 / Math.sqrt(37931000 / Math.pow(66900, 3));
-  var SAT_PLANET_ROT_SPD = 2*Math.PI / (10.656*3600) * SAT_TIME_SCALE;
-  var SAT_t = 0, SAT_planet_ang = 0;
-  var SAT_ring_ang0 = null, SAT_ring_r = null, SAT_ring_y0 = null, SAT_planet_base = null;
-
-  function satRNG(seed) {
-    var s = (seed | 0) + 1;
-    return function () {
-      s = (Math.imul(s, 1664525) + 1013904223) | 0;
-      return (s >>> 0) / 4294967296;
-    };
-  }
-  function satToWorld(lx, ly, lz, out) {
-    out[0] = lx + 0.5;
-    out[1] = ly*SAT_COS_TILT - lz*SAT_SIN_TILT + 0.5;
-    out[2] = ly*SAT_SIN_TILT + lz*SAT_COS_TILT + 0.5;
-  }
-  function generateSaturn() {
-    ensurePointCapacity(SAT_N_TOTAL);
-    var rng = satRNG(0xBA5EBA11), tmp = [0,0,0], pi, ri = 0, bi;
-    SAT_planet_base = new Float32Array(SAT_N_PLANET * 3);
-    // A cloud surface, rather than an internally glowing ball of stars.
-    for (pi = 0; pi < SAT_N_PLANET; pi++) {
-      var ny = rng()*2-1, ang = rng()*2*Math.PI, rad = Math.sqrt(1-ny*ny)*SAT_PLANET_R;
-      var x = Math.cos(ang)*rad, y = ny*SAT_PLANET_R*SAT_OBLATE, z = Math.sin(ang)*rad;
-      SAT_planet_base[pi*3] = x; SAT_planet_base[pi*3+1] = y; SAT_planet_base[pi*3+2] = z;
-      satToWorld(x,y,z,tmp);
-      positions.set(tmp, pi*4);
-      positions[pi*4+3] = 0.5 + 0.16*Math.sin(Math.asin(ny)*25) + 0.16*Math.abs(ny);
-    }
-    SAT_ring_ang0 = new Float32Array(SAT_N_RINGS);
-    SAT_ring_r = new Float32Array(SAT_N_RINGS);
-    SAT_ring_y0 = new Float32Array(SAT_N_RINGS);
-    for (bi = 0; bi < SAT_BANDS.length; bi++) {
-      var band = SAT_BANDS[bi];
-      for (var j = 0; j < band.count; j++, ri++) {
-        // Equal-area sampling within each measured radial region.
-        var km = Math.sqrt(band.lo*band.lo + rng()*(band.hi*band.hi-band.lo*band.lo));
-        if (band.name === 'A' && ((km>133423 && km<133745) || (km>136487 && km<136522))) { j--; ri--; continue; }
-        if (band.name === 'F' && rng()<0.7) km = 140224 + (rng()*2-1)*20;   // narrow core within the diffuse F ring
-        SAT_ring_r[ri] = km*SAT_KM; SAT_ring_ang0[ri] = rng()*2*Math.PI;
-        SAT_ring_y0[ri] = (rng()*2-1)*SAT_RING_THICK;
-        positions[(SAT_N_PLANET+ri)*4+3] = band.light * (0.83+0.17*Math.sin(km*0.003));
-      }
-    }
-    SAT_t = 0; SAT_planet_ang = 0; lifeDrawCount = SAT_N_TOTAL;
-    saturnTick(0);
-    srAz = 0.2; srEl = 0.22; srR = 1.4;
-    srDragging = false; camUp = [0,1,0]; yawVel = 0; pitchVel = 0; rollVel = 0;
-    clumps.length = 0;
-  }
-  function saturnTick(dt) {
-    if (pendingField === null && morph >= 0.9) {
-      SAT_t += dt; SAT_planet_ang += SAT_PLANET_ROT_SPD * dt;
-    }
-    var c = Math.cos(SAT_planet_ang), s = Math.sin(SAT_planet_ang), tmp = [0,0,0], i;
-    for (i = 0; i < SAT_N_PLANET; i++) {
-      var x = SAT_planet_base[i*3], y = SAT_planet_base[i*3+1], z = SAT_planet_base[i*3+2];
-      satToWorld(x*c-z*s,y,x*s+z*c,tmp); positions.set(tmp,i*4);
-    }
-    for (i = 0; i < SAT_N_RINGS; i++) {
-      var r = SAT_ring_r[i], a = SAT_ring_ang0[i] + SAT_RING_K/(r*Math.sqrt(r))*SAT_t;
-      satToWorld(r*Math.cos(a),SAT_ring_y0[i],r*Math.sin(a),tmp);
-      positions.set(tmp,(SAT_N_PLANET+i)*4);
-    }
-    if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer,0,positions,0,lifeDrawCount*4);
   }
 
   // ======================================================
@@ -6358,9 +6259,6 @@
     '  return mix(cols[i], cols[j], x - floor(x));',   // smooth gradient between tiers (no hard colour banding)
     '}',
     '',
-    'fn satLocal(p : vec3<f32>) -> vec3<f32> {',
-    '  return vec3<f32>(p.x, p.y * ' + SAT_COS_TILT.toFixed(8) + ' + p.z * ' + SAT_SIN_TILT.toFixed(8) + ', -p.y * ' + SAT_SIN_TILT.toFixed(8) + ' + p.z * ' + SAT_COS_TILT.toFixed(8) + ');',
-    '}',
     'fn corner6(vi : u32) -> vec2<f32> {',
     '  var corners = array<vec2<f32>, 6>(',
     '    vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, -1.0), vec2<f32>(-1.0, 1.0),',
@@ -6441,24 +6339,7 @@
     '  var col = levelColor(lvl) * (0.7 + lvl * 0.55);',
     '  if (U.params5.x > 0.5) {',                                       // PATHFINDING / SORTING: dev encodes per-element state (written by the engine each frame)
     '    let pm = U.params5.y;',                                        // beacon pulse 0..1
-    '    if (U.params5.z > 3.5) {',                                     // SATURN: a shaded cloud surface and thin icy rings
-    '      let local = satLocal(center - vec3<f32>(0.5));',
-    '      let eye = satLocal(U.params3.xyz - vec3<f32>(0.5));',
-    '      let scale = vec3<f32>(1.0, ' + (1/SAT_OBLATE).toFixed(8) + ', 1.0);',
-    '      var hidden = false;',
-    '      if (ii < ' + SAT_N_PLANET + 'u) {',
-    '        let normal = normalize(local * scale * scale);',
-    '        hidden = dot(normal, eye - local) < 0.0;',
-    '        let light = 0.45 + 0.55 * max(0.0, dot(normal, normalize(vec3<f32>(-0.6, 0.7, -0.5))));',
-    '        col = mix(vec3<f32>(0.87, 0.76, 0.53), vec3<f32>(0.81, 0.62, 0.47), dev) * light * 3.0; szMul = 2.2;',
-    '      } else {',
-    '        let e = eye * scale; let ray = (local - eye) * scale;',
-    '        let t = clamp(-dot(e, ray) / dot(ray, ray), 0.0, 1.0);',
-    '        hidden = t < 1.0 && length(e + ray * t) < ' + SAT_PLANET_R.toFixed(8) + ';',
-    '        col = vec3<f32>(0.91, 0.89, 0.84) * dev * 2.6; szMul = 1.3;',
-    '      }',
-    '      if (hidden) { out.pos = vec4<f32>(2.0, 2.0, 2.0, 1.0); out.uv = corner; out.color = vec3<f32>(0.0); return out; }',
-    '    } else if (U.params5.z > 1.5) {',                               // LIFE: full-strength dev colour + a brightness floor
+    '    if (U.params5.z > 1.5) {',                               // LIFE: full-strength dev colour + a brightness floor
     '      let h = clamp(dev - 1.0, 0.0, 5.0);',
     '      let dfL = clamp(1.06 - (clip.w - U.params5.w) * 0.9, 0.78, 1.12);',   // gentle depth cue, floored high (far side stays clearly lit)
     '      col = levelColor(h) * (1.55 + dev * 0.55) * dfL;',                    // floor (~1.7x) keeps cool points visible; steeper slope makes hot / activated points pop
@@ -7142,7 +7023,7 @@
       var searchOn = isSearchField(currentField), sortOn = isSortField(currentField), lifeOn = isLifeField(currentField);
       uniformData[48] = (searchOn || sortOn || lifeOn) ? 1 : 0;           // params5.x: hold geometry + reinterpret dev as search/sort/life state
       uniformData[49] = 0.5 + 0.5 * Math.sin(gxTime * 1.2);              // params5.y: beacon pulse (start/end throb in counter-phase)
-      uniformData[50] = sortOn ? 1 : lifeOn ? (currentField === 'saturn' ? 4 : 2) : (currentField === 'dfs' || currentField === 'astar') ? -1 : 0;
+      uniformData[50] = sortOn ? 1 : lifeOn ? 2 : (currentField === 'dfs' || currentField === 'astar') ? -1 : 0;
       uniformData[51] = lifeOn ? srR * Math.max(1, 0.85 / Math.max(0.3, aspect)) : searchOn ? srR : 0;   // params5.w: actual orbit radius for depth fade
       device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
@@ -7551,7 +7432,7 @@
 
     // Two scene families, with the last choice remembered separately for each.
     var modeScenes = { watch: 'bfs', explore: 'mulberry' };
-    var categoryScenes = { pathfinding: 'bfs', sorting: 'quick', emergence: 'boids', space: 'saturn', randomness: 'mulberry', attractors: 'lorenz', fractals: 'sierpinski', numbers: 'collatz', geometry: 'hopf' };
+    var categoryScenes = { pathfinding: 'bfs', sorting: 'quick', emergence: 'boids', randomness: 'mulberry', attractors: 'lorenz', fractals: 'sierpinski', numbers: 'collatz', geometry: 'hopf' };
     var categoryEl = document.getElementById('gx-explore-category');
     var watchCategoryEl = document.getElementById('gx-watch-category');
     if (categoryEl) categoryEl.addEventListener('change', function () { selectScene(categoryScenes[this.value]); });
@@ -7587,17 +7468,11 @@
       heap: 'The largest ring moves out of a heap, one at a time.',
       bitonic: 'Pairs compare across a repeating sorting network.',
       pancake: 'Whole groups flip to move the largest ring into place.',
-      boids: 'Keep apart. Match your neighbors. Stay together.',
-      ants: 'A discovery becomes a trail. A trail becomes a road.',
-      physarum: 'Follow a trace. Reinforce it. Find another way.',
-      fireflies: 'One flash nudges another. Watch the timing spread.',
-      particlelife: 'Attraction and repulsion build their own little worlds.',
-      lenia: 'Soft cells grow, shrink and move without a leader.',
-      crowds: 'Give everyone a destination. Let the lanes form.',
+      boids: 'One bird turns. The flock follows.',
+      ants: 'Find food. Leave a trail. Bring the colony with you.',
       ocean: 'Waves move across a surface.',
       lsystem: 'Branches split, grow, and sway in the wind.',
       rxndiff: 'Two spreading chemicals make spots that grow and divide.',
-      saturn: 'A close-up of the D, C, B, A and F rings. Inner particles orbit faster.',
       mulberry: 'Random stars form clumps and gaps. Fly between them.',
       grid: 'Evenly spaced stars. Compare them with the random field.',
       thomas: 'A chaotic path weaves a repeating lattice.',
@@ -7872,9 +7747,6 @@
         } else if (scene === 'lsystem') {
           if (blurbEl) blurbEl.textContent = 'A tree grown by repeating a branching rule. Each branch makes smaller branches, then those branch again. The growth travels from the trunk to the tips, and the finished tree sways before the next cycle starts.';
           showReveal('A branching rule grows a tree from trunk to tips.');
-        } else if (scene === 'saturn') {
-          if (blurbEl) blurbEl.textContent = 'This close-up shows Saturn\'s D, C, B, A and F rings, including the dusty Cassini Division between B and A. Their radii, the planet\'s flattening and its 26.73-degree tilt follow NASA\'s fact sheets. Inner particles orbit faster than outer ones. Cloud bands and ring brightness are illustrative. Particle orbits are circular approximations and time is accelerated. The much fainter G and E rings and Saturn\'s many moons are outside this view.';
-          showReveal('Saturn\'s inner rings: measured proportions, accelerated orbits.');
         } else if (scene === 'rxndiff') {
           if (blurbEl) blurbEl.textContent = 'Two chemicals spread across a sphere and react with each other. Their different spreading rates turn small patches into spots that grow, divide, and fade. This reaction-diffusion model creates the pattern as it runs.';
           showReveal('Two spreading chemicals grow and split into spots.');

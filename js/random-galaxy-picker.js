@@ -4,7 +4,7 @@
 
   var pickers = [], dialog, grid, title, subtitle, activePicker, remembered;
   var categoryHints = {
-    pathfinding: 'Find a route', sorting: 'Put rings in order', emergence: 'Small rules, living worlds', space: 'Rings and orbits',
+    pathfinding: 'Find a route', sorting: 'Put rings in order', emergence: 'Small rules, living worlds',
     randomness: 'Clumps and order', attractors: 'Chaotic trails', fractals: 'Repeating forms',
     numbers: 'Patterns in numbers', geometry: 'Linked shapes'
   };
@@ -15,9 +15,7 @@
     quick: 'Split around a pivot', heap: 'Build a heap', bitonic: 'Parallel comparisons',
     pancake: 'Flip whole groups',
     boids: 'A flock in motion', ocean: 'Moving waves', lsystem: 'Branches grow and sway',
-    ants: 'Discover and reinforce trails', physarum: 'Grow a transport network', fireflies: 'Find a shared rhythm',
-    particlelife: 'Attract, repel, organize', lenia: 'Continuous cellular life', crowds: 'Lanes and bottlenecks',
-    rxndiff: 'Spots grow and divide', saturn: 'Five inner ring regions',
+    ants: 'Discover food and build trails',
     mulberry: 'Clumps and gaps', grid: 'Even spacing', thomas: 'Woven lattice', lorenz: 'Butterfly loops',
     aizawa: 'Sphere and spike', dadras: 'Four lobes', clifford: 'Folded knot',
     sierpinski: 'Repeating pyramids', jerusalem: 'Hollow cubes', vicsek: 'Repeating crosses',
@@ -27,7 +25,7 @@
   };
 
   function preview(picker, value) {
-    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.74';
+    return 'assets/galaxy-previews/' + (picker.category ? remembered[value] : value) + '.svg?v=1.75';
   }
   function image(src, lazy) {
     var img = document.createElement('img');

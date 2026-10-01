@@ -1,40 +1,28 @@
 # Emergence in Obi Juan
 
-Emergence is a category inside `random-galaxy.html`. It has seven models, three presets per model, local intervention tools, rule controls, inspection, a comparison view, device-local saved setups and setup links.
+Emergence contains Flocking birds and Ant colony, with three presets each. The Space category and Saturn have been removed. Removed emergence models are absent from the model whitelist, scene chooser, saved setup list and share-link parser. Old static illustrations remain available for visitors with older pages cached.
 
-## Files and lifecycle
+## Models
 
-- `js/random-galaxy-emergence-models.js`: deterministic models, typed state arrays, neighbor bins, trail fields and FFT convolution. Also exports a Node module for behavioral checks.
-- `js/random-galaxy-emergence.js`: lab UI, interaction, projection, field rendering and batched WebGL sprites. Canvas drawing provides a sprite fallback.
-- `js/random-galaxy.js`: owns the app clock and switches between the older WebGPU scenes and Emergence. Its frame loop returns before submitting WebGPU work when an Emergence world is active.
-- `assets/emergence/lenia-orbium.json`: the published Orbium seed and its original parameters, with creator and source attribution.
-- `tools/build-galaxy-previews.cjs`: vector illustrations for the scene chooser and all 21 presets.
+Birds use separation, alignment and cohesion from [Craig Reynolds](https://www.red3d.com/cwr/boids/). They respond to the nearest seven birds within a configurable range and forward field of view. Close separation also considers birds behind them. A spatial bin search prunes cells once closer neighbors are found. Force buffers are reused. Predictive obstacle steering and solid collision correction keep birds outside spheres. A steerable hawk pursues a nearby bird. Flight speed, seeing distance and the three steering weights can be changed. Murmuration, Two flocks and Independent birds start differently.
 
-Models advance at 30 fixed steps per second. Lenia advances at 15 updates per second, each applying its published time increment of 0.1. At most two simulation steps run in one frame. A return from a hidden or unfocused window resets elapsed time rather than catching up. The shared activity gate stops animation on window blur, document hiding, page hiding and an offscreen app. No model owns a worker or background timer.
+The bird view has animated wing silhouettes, depth shading and color derived from steering effort. Follow a bird highlights it, tracks its position and reveals its actual local neighbors, heading and steering. Screen interactions use a visible bird's depth, so obstacles and the hawk land under the pointer after rotation. The orbit resumes immediately from the released orientation. The default camera follows the flock's center smoothly; user rotation and zoom remain independent.
 
-When WebGPU is absent or cannot initialize, the same Emergence engine runs through a fallback app clock with the same activity gates. Other categories need the main WebGPU renderer. Mobile and machines with four or fewer logical processors use smaller agent populations and a capped pixel ratio. Fields and particle buffers are reused. Paused worlds redraw only when something changes.
+Ant foraging is inspired by [NetLogo Ants](https://ccl.northwestern.edu/netlogo/models/Ants), with additional home scent and individual route memory. Scouts explore with persistent noisy headings and sample food scent at three sensors. Carriers retrace breadcrumbs from their outward trip. They skip a remembered bend only when the shortcut is physically clear. Home scent and a nest bearing help when a route is blocked or exhausted. There is no global route planner. Walls block both movement and chemical diffusion.
 
-Controls remain in the left sidebar above 900px and above the view on smaller screens. Small desktop heights use compact controls. Advanced controls live in the Lab dialog, which scrolls internally. No controls are mounted below the scene.
+Blue ants search; gold ants carry a visible food crumb. Food scent is gold; home scent appears blue when signals are enabled. Food piles shrink as pieces are collected. Delivery, carried food and remaining stock are counted separately. Food and the nest can be dragged, walls drawn or erased, scent cleared, and depleted piles refilled. Restart and saved setups replenish each pile to its configured capacity. The three maps cover open foraging, one long detour and two routes around an obstacle. Follow an ant reveals its state, sensors and remembered route. A square physical domain keeps distances and walls consistent at every screen aspect ratio. Pan and zoom support closer inspection.
 
-## Model references and limits
+## UI and lifecycle
 
-- **Flocking birds:** three-dimensional separation, alignment and cohesion from [Craig Reynolds](https://www.red3d.com/cwr/boids/). A soft boundary, a placeable predator and spherical obstacles add local steering. The camera orbits the flock, preserves its released direction and resumes immediately. Inspection can follow one bird.
-- **Ant colony:** food discovery, trail following, diffusion and evaporation, inspired by [NetLogo Ants](https://ccl.northwestern.edu/netlogo/models/Ants). Returning ants know the nest direction. Food is conserved between sources, carrying ants and deliveries. Walls block agents and chemical diffusion.
-- **Slime networks:** three chemical sensors, trail deposition, diffusion, decay and occupied-cell avoidance, inspired by [Jeff Jones's transport network model](https://uwe-repository.worktribe.com/output/980579/characteristics-of-pattern-formation-and-evolution-in-approximations-of-physarum-transport-networks). Food reinforces the field. Agents can reconnect a cut network. This does not guarantee a shortest route.
-- **Firefly rhythms:** local phase coupling with adjustable frequency diversity. The lab cites [Mirollo and Strogatz](https://www.clear.rice.edu/comp551/papers/MirolloStrogatz-TemporalSynchronization-SIAM1990.pdf) as synchronization research. This implementation uses sinusoidal local phase coupling, rather than reproducing their globally coupled pulse model. The metric is the magnitude of the mean phase vector.
-- **Particle Life:** four directed species relationships, mandatory short-range repulsion, finite-range forces, damping and periodic boundaries. Inspired by [Particle Life](https://github.com/HackerPoet/Particle-Life). No scripted trajectory or external flow field.
-- **Lenia organisms:** periodic FFT convolution with a normalized polynomial ring kernel, Gaussian growth and a clipped continuous cell density. [Bert Chan's published Orbium unicaudatus data](https://github.com/Chakazul/Lenia/blob/master/Python/animals.json) supplies the seed, radius 13, growth center 0.15, width 0.015 and time scale 10. The single swimmer uses a 128-square grid; multiple swimmers use 256-square grids. Rule changes and collisions can destroy an organism. This is separate from the parked Gray-Scott spots scene.
-- **Crowd flow:** desired velocity, local pedestrian repulsion and wall avoidance, inspired by [Helbing and Molnar](https://arxiv.org/abs/cond-mat/9805244). Opposing streams wrap through the horizontal edges. The flow metric compares motion toward destinations with free walking pace. This is an illustrative model, not a crowd safety tool.
+`js/random-galaxy-emergence-models.js` exports deterministic pure models for browser and Node. `js/random-galaxy-emergence.js` supplies interaction, the Lab dialog, Canvas fields and batched WebGL bird/ant sprites, with shaped Canvas sprites as a fallback. `js/random-galaxy.js` owns the app's frame clock and skips its WebGPU submissions while Emergence is active.
 
-Inspection reveals local neighborhoods, sensors or cell density. Revealing signals exposes chemical fields, phase colors or a sample neighborhood. Comparison clones the entire current model state, including random generator state, then changes one rule on the right. Rule edits affect the right world while comparison is active. The camera is shared between both views.
+Both worlds advance at 30 fixed steps per second, with at most two updates per frame. Blur, hiding, page exit and an offscreen app stop the complete frame clock. Resuming resets elapsed time instead of catching up. There are no model workers or background timers. Phone populations are reduced and pixel ratio is capped. Paused scenes redraw only after a change. The Emergence engine also runs without WebGPU, using the same activity gates.
 
-## Saved setups
+Controls remain to the left above 900px and above the canvas on smaller screens. The interaction selector stays accessible alongside playback on phones. Picking a Lab tool returns directly to the world. Pinch gestures do not place food or barriers. Advanced rules, signals, presets and comparison stay in the internally scrolling Lab dialog. No controls are mounted below the canvas.
 
-`gx-emergence-setups` stores up to six configurations in local storage. Setup links use a versioned `#em=` JSON fragment. They contain the model, preset, seed, rules, relationships, food, walls and view. They recreate a starting setup rather than storing a simulation frame. Device populations can differ. Input is constrained to known models, presets and rule bounds, with limits on food and walls. Saved names are rendered as text.
+Comparison clones the entire current state and random sequence, then changes one rule on the right. Further rule edits affect only the right world. Both views share a camera. `gx-emergence-setups` stores up to six configurations locally. Versioned `#em=` links include model, preset, seed, rules, food capacities, nest, walls, hawk and camera. They reproduce a starting configuration, not a simulation frame. Populations vary by device. Inputs are constrained to known models and presets, finite rule ranges and bounded resource counts.
 
 ## Checks
-
-Use the bundled Node dependency path for the two Playwright harnesses. Both own and close a Chrome for Testing process through `~/.local/bin/agent-chrome-for-testing`.
 
 ```sh
 node --check js/random-galaxy.js
@@ -46,6 +34,6 @@ node tools/test-galaxy-picker.cjs
 node tools/test-galaxy-emergence-browser.cjs
 ```
 
-Behavioral checks cover FFT correctness, stable Orbium motion, food conservation, trail repair, synchronization, relationship changes, flocking, walls and deterministic comparisons. Browser checks cover rendered sprite pixels, all seven models, lab controls, setup round trips, immediate rotation, activity gates, responsive layout and browsers without WebGPU. The chooser harness also checks the existing search, sorting, Space and Explore scenes.
+Playwright harnesses use the bundled Node dependency path and own their Chrome for Testing process through `~/.local/bin/agent-chrome-for-testing`, closing it in `finally`. Behavioral checks cover all six presets, food conservation, wall detours, impermeable barriers, both scent fields, editing, flock alignment, moving threats, solid obstacles and deterministic cloning. Browser checks cover actual sprite pixels, comparisons, saved and shared setups, dragging, panning, pinch, rotated 3D placement, responsive fit, lifecycle sleep and WebGPU fallback. Existing search and sorting checks remain in the chooser harness.
 
-On changes, bump the HTML stylesheet and script query versions, the core version, the picker previews, and the Emergence asset versions together. Rebuild the SVG illustrations when scenes or presets change.
+Bump all page, script and preview queries together when changing the app. Rebuild vector illustrations with `node tools/build-galaxy-previews.cjs` when scenes or presets change.

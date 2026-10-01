@@ -21,16 +21,6 @@ const server = http.createServer((req,res) => {
       let src=data.toString(); const at=src.lastIndexOf('})();');
       src=src.slice(0,at) + `window.__gxTest = {
         state: () => ({ field:currentField, pending:pendingField, running, loopRunning, morph, speed:flightSpeed, searchSteps:SEARCH_STEPS, sortSteps:SORT_STEPS, camera:[...camPos], orbit:[srAz,srEl,srR] }),
-        life: () => {
-          var sample=[], finite=true, inFrame=true, active=0, rt=vnorm(vcross(camFwd,camUp)), f=Math.tan(25*Math.PI/180);
-          for(var i=0;i<lifeDrawCount;i+=Math.max(1,Math.floor(lifeDrawCount/180))){
-            var p=Array.from(positions.slice(i*4,i*4+4)); sample.push(...p); finite=finite&&p.every(Number.isFinite);
-            if(p[3]<0)continue;active++;
-            var d=p.slice(0,3).map((x,j)=>x-camPos[j]),dot=v=>d.reduce((s,x,j)=>s+x*v[j],0),depth=dot(camFwd);
-            inFrame=inFrame&&depth>0&&Math.abs(dot(rt)/depth/f/aspect)<1&&Math.abs(dot(camUp)/depth/f)<1;
-          }
-          return {sample,finite,inFrame,active,count:lifeDrawCount};
-        },
         finishSort: () => { sortBuildOps();while(sr.opPtr<sr.ops.length)sortStep();return {n:sr.n,total:sr.total,ordered:Array.from(sr.cur).every((v,i)=>v===i)}; }
       };\n` +src.slice(at);
       data=Buffer.from(src);
@@ -119,7 +109,7 @@ async function category(page,mode,value){
    await category(page,group.mode,group.category);
    const trigger=page.locator('.gx-scene-field[data-category="'+group.category+'"] .gx-picker-trigger');
    const choices=mobile&&group.category==='pathfinding'?group.options.filter(o=>['astar','dfs'].includes(o.value))
-     :mobile&&!['emergence','space'].includes(group.category)?[group.options.at(-1)]:group.options;
+     :mobile&&group.category!=='emergence'?[group.options.at(-1)]:group.options;
    for(const option of choices){
     await trigger.click();const dialog=page.locator('#gx-picker-dialog');
     check((mobile?'phone ':'desktop ')+group.category+' shows every preview',(await dialog.locator('.gx-picker-card').count())===group.options.length);
@@ -143,24 +133,8 @@ async function category(page,mode,value){
       const after=await page.evaluate(()=>GXEmergence.snapshot());
       check(option.label+' animates a finite world',after.worlds[0].finite&&after.worlds[0].steps>before.worlds[0].steps);
     }
-    if(option.value==='saturn'){
-      await page.waitForFunction(()=>__gxTest.state().morph>.99);
-      const before=await page.evaluate(()=>__gxTest.life());await page.waitForTimeout(800);
-      const after=await page.evaluate(()=>__gxTest.life());
-      check(option.label+' animates valid points',after.count>1000&&after.finite&&JSON.stringify(before.sample)!==JSON.stringify(after.sample));
-      check(option.label+' fits the canvas',after.inFrame&&after.active>0);
-      await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
-      await page.waitForFunction(()=>!__gxTest.state().loopRunning);
-      const paused=await page.evaluate(()=>__gxTest.life());await page.waitForTimeout(250);
-      check(option.label+' sleeps when unfocused',JSON.stringify(paused.sample)===JSON.stringify((await page.evaluate(()=>__gxTest.life())).sample));
-      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
-      await page.waitForFunction(()=>__gxTest.state().loopRunning);
-      if(process.env.SNAPSHOTS){
-        await page.screenshot({path:path.join(out,option.value+'-'+(mobile?'phone':'desktop')+'.png')});
-      }
-    }
    }
-   if(process.env.SNAPSHOTS&&['pathfinding','sorting','emergence','space'].includes(group.category)){
+   if(process.env.SNAPSHOTS&&['pathfinding','sorting','emergence'].includes(group.category)){
      await trigger.click();await page.waitForFunction(()=>[...document.querySelectorAll('#gx-picker-dialog img')].every(i=>i.complete&&i.naturalWidth===320));
      await page.screenshot({path:path.join(out,group.category+'-picker-'+(mobile?'phone':'desktop')+'.png')});await close(page);
    }
