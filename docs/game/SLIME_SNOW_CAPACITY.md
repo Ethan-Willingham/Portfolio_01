@@ -1,10 +1,11 @@
-# Slime and snow capacity, September 30, 2026
+# Slime and snow capacity, October 1, 2026
 
 The target is ordinary Sluice at maximum graphics on Ethan's M1 Pro, with
 120 FPS during resident handling and snow. A 120 Hz frame has 8.33 ms available.
 Capacity measurements must distinguish CPU physics, snow compute, rendering,
-and native browser frame cadence. The isolated service measurements below are complete. Native foreground FPS
-and normal handling validation remain pending; this is an ongoing project.
+and native browser frame cadence. The component measurements below retain their recorded scope. Earlier fixed-snow
+captures bypassed weather bookkeeping and cannot establish full CPU capacity.
+Native foreground FPS and normal handling validation remain pending; this is an ongoing project.
 
 ## Measurement conditions
 
@@ -39,8 +40,14 @@ writes. Initial resident bodies have clear space between their rings and
 vertical clearance from the rig and snow. Subsequent movement, contact,
 deformation, sleeping and culling are ordinary game behavior.
 
-Fixed snow tests suppress new atmospheric flakes to isolate a known physical
-population. They retain the GPU grain solver, maintenance and support logic.
+Fixed snow tests suppress new atmospheric flakes to isolate an initial physical
+population. The v28.133 controlled fixture retained the GPU grain solver but
+booted with particle weather disabled. WATER=0 also disabled its weather parent,
+so those captures omitted CPU maintenance and support construction. v28.134
+corrects the weather startup through the ordinary `rainReset(true, true)` snow
+front, defaults sweeps to WATER=1, and records climate and support execution.
+Ordinary thaw and storage still change active populations; initial
+counts alone cannot establish the maintained workload.
 Separate normal-weather input routes are needed to validate the full game.
 The physical admission limit of 36,000 grains is not a performance promise.
 
@@ -124,7 +131,8 @@ ran on AC. CPU and GPU run concurrently; do not add their durations.
 | 64 | 6.32 | 153.3 / 156.1 | 190 / 190 | 960 |
 
 Six is an observed CPU-budget passing population in this stationary fixture,
-not a 120 FPS whole-game limit. At 28 and 64 the solver performs fifteen
+not a 120 FPS whole-game limit. This historical fixture also excluded ordinary
+particle-weather bookkeeping. At 28 and 64 the solver performs fifteen
 microsteps per body per frame, compared with three near 120 callbacks/s. All
 requested bodies were solved, but median onscreen counts were 24 and 49. The
 large-population rows therefore measure more physics bodies than visible
@@ -174,6 +182,68 @@ model. Low velocity alone is insufficient. Such scheduling cannot reduce the
 all-active solver's required work; it remains a design option rather than an
 implemented or measured optimization.
 
+## Accepted snow search change, v28.134
+
+Snow support rebuilding is a live CPU bottleneck. A second ten-second natural
+capture sampled the actual call tree and timed 157 builds at 5.228 ms/build.
+All 157 build frames exceeded 8.33 ms, including 67 with nominal three slime
+microsteps and eleven without a slime solve. Another 187 no-build frames also
+exceeded the budget. Support is a specific cost, not the sole cause.
+
+v28.134 queries only neighbor cells intersecting a conservatively padded
+contact rectangle. The original Number distance predicate and surviving
+traversal order remain unchanged. Unsupported coordinates/constants and world
+edge columns retain the original traversal. Particle identities, positions,
+velocities, mass, GPU steps and rendering are unchanged. The portable frozen
+v28.133 differential test checks ordered beds, heads, complete scratch arrays,
+queues, ground arguments, signed zero, NaN payloads, f32/Number thresholds and
+fallbacks. Both real captured states also pass. The mixed natural state reduces
+distance checks from 233,529 to 118,852 while preserving every accepted link.
+
+Six serial ABBA cycles in owned Chrome for Testing measured the complete CPU
+support closure with an O(1) recorded ground-root oracle. These are isolated
+function costs, excluding production terrain-query service and all GPU work.
+
+| Captured or synthetic state | Original median, ms | v28.134 median, ms |
+| --- | ---: | ---: |
+| Captured 14,000 snow grains | 4.7 | 3.6 |
+| Natural mixed state, 15,902 snow among 36,289 liquids | 5.5 | 4.1 |
+| Layered 14,000 grains | 3.2 | 2.4 |
+| Layered 36,000 grains | 8.9 | 6.5 |
+| Compressed rooted 14,000 grains | 2.9 | 2.4 |
+| Disconnected adversarial 4,096 grains | 11.0 | 10.9 |
+
+The natural candidate route subsequently averaged 3.790 ms/build on 141
+builds, with median 14,058 active snow grains. Different trajectories and
+additional diagnostic counters prevent a controlled FPS or function-speedup
+claim from that route alone. All 141 build frames still exceeded the CPU
+budget. No 120 FPS capacity is established by this release.
+
+Two exploratory full-game comparisons had zero support calls and are excluded
+from candidate acceptance. A corrected bookkeeping run observed completed
+support calls, but its seeded snow changed during ordinary maintenance. It is
+boot and instrumentation validation, not a sustained 14,000-grain comparison.
+The final cold-front boot check maintained all 14,000 active grains and all five
+solving, onscreen residents for its ten-second capture. It completed 125 support
+builds without errors. CPU median/p95 were 4.4/9.5 ms, with 128 of 953 frames
+above 8.33 ms. Five sampled two-quantum GPU spans had median 11.223 ms and all
+exceeded 8.33 ms. This short timer-paced service check validates the corrected
+workload, not a native FPS limit or a controlled baseline/candidate speedup.
+Historical WATER=0 tables above remain component diagnostics.
+
+A separate untimed live debugger run paused the unmodified production support
+loop in an ordinary snowy game with all five original residents. It stepped
+through one failed distance comparison and the linked-list continuation.
+Pausing stopped recording first; its six snapshots contain no FPS inference.
+
+The natural smoke probes identify two other costs: deposits took 390.7 ms and
+alpha calculation 204.8 ms over the ten-second window. These are 60.2% and
+31.5% of the six measured smoke subpasses. The painter rebuilt on 610 of 761
+calls, usually after mutation-sequence changes; 96.0% of alpha bins were empty.
+Counters add overhead, and stage spans nest inside smoke drawing. Exact empty
+alpha arithmetic and certified deposit-prefix reuse remain measured-target
+proposals. GPU contacts, fallback and guest collisions remain substantial.
+
 ## Natural input-route follow-up
 
 A separate v28.133 five-minute background route retained the original five
@@ -193,9 +263,36 @@ three microsteps. Catch-up alone does not explain them. In one slow second,
 the particle/weather update took about 4.05 ms, slime work 3.20 ms and drawing
 1.84 ms; these selected sibling buckets still omit other frame work. GPU
 contacts, guest collision and fallback remained major sampled costs. The
-weather bucket needs finer attribution before choosing its optimization.
+weather bucket prompted the finer attribution below.
 The actual viewport counter also avoids treating the recorder's expanded
 culling margin as literal onscreen coverage.
+
+
+A subsequent input-only repeat enabled eleven aggregate particle CPU probes
+for ten seconds after the observed carry histories completed. Its 719
+instrumented frames contained 130 support builds. Support construction took
+650.5 ms in total, 5.00 ms per build on average and 6.6 ms at maximum. All 130
+build frames exceeded the synchronous CPU budget, including 57 frames still
+at the nominal three slime microsteps. Another 205 frames exceeded the budget
+without a support build. This identifies a specific CPU spike to optimize;
+it does not establish that support construction is the sole remaining cause.
+
+Support construction was 45.1% of the inclusive snow CPU time in that window.
+Air projection took 87.5 ms and the probed synchronous readback method took
+111.7 ms in total. These are nested costs, not additional frame totals. The
+readback probe omitted direct engine applications outside that method. Snow
+scan includes support construction, and the particle parent includes both.
+Sampled one-, two- and five-quantum liquid encoder spans had medians of
+5.66, 11.39 and 30.26 ms respectively. Workload quanta must remain separate.
+
+All five original residents completed verified carry histories, but their
+later positions differed from the prior route. Only two were onscreen at
+probe enable; all five were onscreen on 54 of the 719 instrumented frames.
+The probe is therefore an attribution experiment, not a maintained five-body
+pile or an instrumentation FPS comparison. It remained on AC power, with
+natural weather, water and stock smoke. Full raw data and the report are in
+`v133-natural-particle-cpu.tar.gz` and
+`reports/sluice-v133-natural-particle-cpu-results.md` in the Downloads packet.
 
 ## Reproduction and remaining validation
 

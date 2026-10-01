@@ -1,30 +1,7 @@
+// Frozen pre-weather-maintenance v28.133 controlled fixture for exact regression.
 // Controlled population fixtures inside the ordinary game closure.
 // Initial conditions only. Every subsequent solve, sleep, contact and render is live.
 export const capacityWorkloadHook = `
-var capacitySupportEnabled=${JSON.stringify(process.env.CAPACITY_COUNT_SUPPORT!=='0')};
-var capacitySupportWork={trace:null,calls:0,completedCalls:0,failedCalls:0,framesWithCalls:0,lastFrame:-1};
-function capacitySupportReset(){capacitySupportWork={trace:playPerfTrace,calls:0,completedCalls:0,failedCalls:0,framesWithCalls:0,lastFrame:-1};}
-var capacityOriginalSupport=snowBuildSupport,capacityOriginalSupportStart=playPerfStart;
-snowBuildSupport=function(){
- if(!capacitySupportEnabled||!playPerfActive||!window.__capacityFixture)return capacityOriginalSupport.apply(this,arguments);
- if(capacitySupportWork.trace!==playPerfTrace)capacitySupportReset();
- capacitySupportWork.calls++;
- if(capacitySupportWork.lastFrame!==playPerfTrace.frameCount){capacitySupportWork.lastFrame=playPerfTrace.frameCount;capacitySupportWork.framesWithCalls++;}
- try{var result=capacityOriginalSupport.apply(this,arguments);capacitySupportWork.completedCalls++;return result;}
- catch(error){capacitySupportWork.failedCalls++;throw error;}
-};
-playPerfStart=function(){if(playPerfActive)return capacityOriginalSupportStart.apply(this,arguments);var result=capacityOriginalSupportStart.apply(this,arguments);capacitySupportReset();return result;};
-if(window.__sluicePerformance)window.__sluicePerformance.start=playPerfStart;
-function capacityWeatherState(){return {
- worldRainEnabled:!!worldRainEnabled,worldSnowEnabled:!!worldSnowEnabled,precipitationKind:rain.climate.kind,
- climate:{phase:rain.climate.phase,strength:rain.climate.strength,first:rain.climate.first,kind:rain.climate.kind,elapsed:rain.climate.elapsed,duration:rain.climate.duration},
- bathMode:!!bathMode,waterDisabled:!!PERF_DISABLE_WATER,weatherDisabled:!!PERF_DISABLE_WEATHER,weatherTuneEnabled:!!weatherTune.enabled,
- updateEnabled:!!(worldRainEnabled&&!bathMode&&!PERF_DISABLE_WATER&&!PERF_DISABLE_WEATHER&&weatherTune.enabled),
- supportCounts:{enabled:capacitySupportEnabled,controlled:!!window.__capacityFixture,traceMatched:capacitySupportWork.trace===playPerfTrace,
- calls:capacitySupportWork.trace===playPerfTrace?capacitySupportWork.calls:0,completedCalls:capacitySupportWork.trace===playPerfTrace?capacitySupportWork.completedCalls:0,
- failedCalls:capacitySupportWork.trace===playPerfTrace?capacitySupportWork.failedCalls:0,framesWithCalls:capacitySupportWork.trace===playPerfTrace?capacitySupportWork.framesWithCalls:0,
- recordedFrames:playPerfTrace?playPerfTrace.frameCount:0}
- };}
 var capacityBodyWork={trace:null,frames:[],calls:0,points:0,springs:0};
 var capacityOriginalInternal=jelloBodyInternalSubstep,capacityOriginalUpdate=updateJello;
 jelloBodyInternalSubstep=function(b,h){
@@ -73,7 +50,7 @@ window.__capacityWorkload={
    initial.push({id:b.surfaceSlime.id,x:b.cx,y:b.cy,n:b.n,ringN:b.ringN,springN:b.springN});
   }
   if(options.snow){
-   rainReset(true,true);snow.primed=true;
+   snowReset(true);snow.primed=true;
    var pitch=grainPitch,width=grainWidth;
    var across=Math.floor(width/pitch),left=center-width/2;
    for(var grain=0;grain<options.snow;grain++){
@@ -86,18 +63,17 @@ window.__capacityWorkload={
    // No solver grains are removed, merged, frozen or replaced by this fixture.
    snowSpawn=function(){return null;};
   }
-  window.__capacityFixture={schema:'sluice-controlled-capacity-v4',options:options,center:center,floor:floor,
+  window.__capacityFixture={schema:'sluice-controlled-capacity-v3',options:options,center:center,floor:floor,
    spacing:spacing,initialRig:{x:player.x,y:player.y},initialClearance:{rigVertical:34,snowVertical:34},initialResidents:initial,terrain:'Existing generated town apron, no tile writes',
    fixedPhysicalSnow:!!options.snow,atmosphericEmissionSuppressed:!!options.snow,
    notes:['Synthetic initial populations using ordinary constructors. Not a natural resident FPS claim.',
     'Subsequent ordinary updates own all positions, velocities, sleeping, culling and contacts.']};
-  capacitySupportReset();
   return window.__capacityWorkload.state();
  },
  state:function(){
   var bodies=jelloBodies.filter(function(b){return !!b.surfaceSlime;});
   var visible=bodies.filter(function(b){return !(b.bboxR<cam.x||b.bboxL>cam.x+screenW||b.bboxB<cam.y||b.bboxT>cam.y+screenH);});
-  return {fixture:window.__capacityFixture,state:playPerfState(),weather:capacityWeatherState(),onscreenResidents:visible.length,
+  return {fixture:window.__capacityFixture,state:playPerfState(),onscreenResidents:visible.length,
    activeContactBodies:jelloRecordedMicrosteps?jelloActive.filter(function(b){return jelloBodies.indexOf(b)>=0;}).length:0,solvingBodies:jelloRecordedMicrosteps?jelloActive.filter(function(b){return b._solve&&jelloBodies.indexOf(b)>=0;}).length:0,
    guests:surfaceSlimeGuests.length,worldScale:worldScale,screenW:screenW,screenH:screenH,
    caps:{bodies:JELLO_MAX_BODIES,points:JELLO_MAX_POINTS,snow:SNOW_ACTIVE_CAP},

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.133';
+  var GAME_VERSION = 'v28.134';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -39020,14 +39020,21 @@
     }
     var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
     var pointCount = 0, queueCount = 0;
+    // Only bounded, canonical bucket coordinates admit a cell-range proof.
+    // Any unsupported snow point retains the complete original traversal.
+    var pruneCells = cell >= 1 && cell <= 1048576 && reach >= 1 / 1024 &&
+      reach <= cell && width >= 3 && width <= 67108864 && width === floor(width);
     for (var i = 0; i < count; i++) {
       if (types[i] !== 5) continue;
       var x = xs[i], y = ys[i], n = pointCount++;
       points[n * 2] = x; points[n * 2 + 1] = y;
+      var pointCol = floor(x / cell), pointRow = floor(y / cell);
+      if (pruneCells && !(x >= 0 && x <= 1048576 && y >= -1048576 && y <= 1048576 &&
+          pointCol >= 0 && pointCol < width)) pruneCells = false;
       if (solid(x, y + groundReach)) {
         queue[queueCount++] = n; next[n] = -1;
       } else {
-        var key = floor(y / cell) * width + floor(x / cell);
+        var key = pointRow * width + pointCol;
         var head = heads.get(key);
         next[n] = head === undefined ? -1 : head; heads.set(key, n);
       }
@@ -39038,7 +39045,19 @@
       var bucket = bed.get(key);
       if (!bucket) { bucket = []; bed.set(key, bucket); }
       bucket.push(x, y);
-      for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
+      var rMin = -1, rMax = 1, cMin = -1, cMax = 1;
+      if (pruneCells && col > 0 && col < width - 1) {
+        // 64 Number epsilons cover contact and endpoint rounding. Divide
+        // these outward endpoints with the same positive bucket cell.
+        var pad = 1.4210854715202004e-14 * (x + Math.abs(y) + cell + reach + 1);
+        rMin = floor((y - reach - pad) / cell) - row;
+        rMax = floor((y + reach + pad) / cell) - row;
+        cMin = floor((x - reach - pad) / cell) - col;
+        cMax = floor((x + reach + pad) / cell) - col;
+        if (rMin < -1) rMin = -1; if (rMax > 1) rMax = 1;
+        if (cMin < -1) cMin = -1; if (cMax > 1) cMax = 1;
+      }
+      for (var r = rMin; r <= rMax; r++) for (var c = cMin; c <= cMax; c++) {
         var nearKey = (row + r) * width + col + c;
         var current = heads.get(nearKey), previous = -1;
         while (current !== undefined && current >= 0) {

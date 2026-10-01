@@ -59,6 +59,14 @@ function summarize(directory){
  const nativeGameFPSMeasured=measurement.headless===false&&measurement.frameMode==='native'&&focusedThroughCapture;
  const cadenceLabel=nativeGameFPSMeasured?'Native foreground game animation callbacks':measurement.frameMode==='timer120'?'Timer-paced workload callbacks':'Browser animation callbacks; native foreground coverage not established';
  const finalState=trace.capacity?.end;
+ const weather=finalState?.weather,expectedSnowBookkeeping=!!trace.capacity?.initial?.fixture?.options?.snow;
+ const supportCounts=weather?.supportCounts;
+ const weatherBookkeeping={expectedSnowBookkeeping,observed:weather||null,
+ status:!expectedSnowBookkeeping?'snow-not-requested':!weather?'unobserved-historical-capture':!weather.updateEnabled?'weather-bookkeeping-off':!supportCounts?.enabled?'support-counts-disabled':!supportCounts.traceMatched||!supportCounts.calls?'support-builds-missing':supportCounts.failedCalls?'support-build-errors':'ordinary-snow-bookkeeping-observed',
+ fullCPUCapacityAssertionEligible:!expectedSnowBookkeeping||!!(weather?.updateEnabled&&supportCounts?.enabled&&supportCounts.traceMatched&&supportCounts.calls>0&&!supportCounts.failedCalls),
+ label:measurement.water===false?'Isolated GPU/component diagnostic; weather bookkeeping disabled by WATER=0':'Controlled ordinary-solver workload, weather/support coverage required when snow is requested'};
+ if(measurement.water===false){weatherBookkeeping.fullCPUCapacityAssertionEligible=false;weatherBookkeeping.status='weather-bookkeeping-off';}
+ if(process.env.REQUIRE_WEATHER_BOOKKEEPING==='1'&&(expectedSnowBookkeeping||measurement.water===false))assert(weatherBookkeeping.fullCPUCapacityAssertionEligible,'Full CPU capacity assertion requires enabled ordinary weather and observed support builds');
  const bodyWork=trace.capacity?.bodyWork,actualGroups={},workColumns=bodyWork?Object.fromEntries(bodyWork.columns.map((name,i)=>[name,i])):null;
  const activeCounts=[],solvingCounts=[],onscreenCounts=[],bodyCalls=[],pointSteps=[],springSteps=[];
  const activeOnStepping=[],solvingOnStepping=[],onscreenOnStepping=[],jelloPerBodyCall=[];
@@ -82,7 +90,7 @@ function summarize(directory){
   bodyWorkCoverageValid=workFrames===frames.length;
  }
  return {schema:'sluice-capacity-service-report-v3',directory,version:trace.version,
-  traceSHA256:createHash('sha256').update(bytes).digest('hex'),measurement,
+  traceSHA256:createHash('sha256').update(bytes).digest('hex'),measurement,weatherBookkeeping,
   presentation:{nativeGameFPSMeasured,focusedThroughCapture,hardwareScanoutVerified:false,reason:nativeGameFPSMeasured?'Native foreground game FPS measured. Hardware scanout was not measured and is not required for this game FPS comparison.':measurement.headless?'Owned headless browser uses virtual presentation. Callback rates are workload throughput.':'Native foreground focus coverage was not established.'},
   target:{hz:120,budgetMs,policy:'Strict pacing default. Report every observed deadline violation; no quality reduction.'},
   callbackThroughput:{kind:cadenceLabel,durationMs:trace.durationMs,frames:trace.frameCount,meanHz:trace.frameCount*1000/trace.durationMs,

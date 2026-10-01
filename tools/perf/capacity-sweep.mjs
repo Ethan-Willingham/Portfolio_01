@@ -24,7 +24,7 @@ for(const row of matrix){
  assert(!fs.existsSync(dump),'Never overwrite capacity evidence');
  const scene=row.slimes&&row.snow?'both':row.slimes?'slimes':row.snow?'snow':'neither';
  const env={...process.env,FRAME_MODE:process.env.FRAME_MODE||'timer120',CAPACITY_SCENE:scene,SNOW:'0',
-  WATER:process.env.WATER||'0',SLIME_COUNT:String(row.slimes),SNOW_COUNT:String(row.snow),
+  WATER:process.env.WATER||'1',SLIME_COUNT:String(row.slimes),SNOW_COUNT:String(row.snow),
   LAYOUT:row.layout||'clustered',VIEW_WIDTH:process.env.VIEW_WIDTH||'1512',
   VIEW_HEIGHT:process.env.VIEW_HEIGHT||'982',FULLSCREEN:'1',
   COMPLETION:process.env.COMPLETION||'1',COUNT_QUANTA:process.env.COUNT_QUANTA||'1',
