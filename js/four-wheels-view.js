@@ -1,10 +1,11 @@
-/* All Four Wheels: a shared 2:1 isometric pixel renderer.
+/* All Four Wheels: a shared high-angle isometric pixel renderer.
  * The simulation stays in store coordinates. Every visible floor point,
  * caster, body, piece of furniture and airborne product uses this camera.
  */
 (function (root) {
   'use strict';
-  const CAMERA = Object.freeze({ width:720, height:480, x:264, y:70, horizontal:.84, vertical:.42, elevation:.95 });
+  // A roughly 52-degree pitch opens the basket and floor while retaining height.
+  const CAMERA = Object.freeze({ width:720, height:580, x:264, y:24, horizontal:.84, vertical:.66, elevation:.74 });
   const VIEW_Z = CAMERA.vertical * 2 / CAMERA.elevation;
   const project = (p, origin = CAMERA) => ({ x:origin.x + (p.x-p.y)*CAMERA.horizontal, y:origin.y + (p.x+p.y)*CAMERA.vertical - (p.z||0)*CAMERA.elevation });
   function unproject(p, z=0, origin=CAMERA) {
@@ -604,13 +605,13 @@
         }
         // The live overview uses the exact frame, with the current camera
         // rectangle and cart position, rather than a second map implementation.
-        const mw=144,mh=96,mx=width-mw-14,my=14;
+        const mapScale=.2,mw=CAMERA.width*mapScale,mh=CAMERA.height*mapScale,mx=width-mw-14,my=14;
         rect(g,mx-3,my-3,mw+6,mh+6,P.hairDark);g.drawImage(frame,mx,my,mw,mh);
         g.save();g.beginPath();g.rect(mx,my,mw,mh);g.clip();
-        const a={x:mx+(-camera.x/camera.scale)/5,y:my+(-camera.y/camera.scale)/5};
-        const b={x:a.x+width/camera.scale/5,y:a.y+height/camera.scale/5};
+        const a={x:mx+(-camera.x/camera.scale)*mapScale,y:my+(-camera.y/camera.scale)*mapScale};
+        const b={x:a.x+width/camera.scale*mapScale,y:a.y+height/camera.scale*mapScale};
         line(g,a,{x:b.x,y:a.y},P.light);line(g,{x:b.x,y:a.y},b,P.light);line(g,b,{x:a.x,y:b.y},P.light);line(g,{x:a.x,y:b.y},a,P.light);
-        const q=project(w.body);rect(g,mx+q.x/5-1,my+q.y/5-1,3,3,P.coral);g.restore();
+        const q=project(w.body);rect(g,mx+q.x*mapScale-1,my+q.y*mapScale-1,3,3,P.coral);g.restore();
       }
       g.restore();
     }

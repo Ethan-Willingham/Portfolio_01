@@ -8,10 +8,12 @@ const {CAMERA,project,unproject,depth,local}=View;
 const near=(a,b,epsilon=1e-8)=>assert.ok(Math.abs(a-b)<epsilon,`${a} != ${b}`);
 function check(name,fn){fn();console.log('PASS '+name);}
 
-check('ground axes have equal lengths and opposite 2:1 slopes',()=>{
+check('ground axes stay symmetric and show substantially more floor than a 2:1 view',()=>{
   const origin=project({x:0,y:0}),x=project({x:100,y:0}),y=project({x:0,y:100});
   near(x.x-origin.x,-(y.x-origin.x));near(x.y-origin.y,y.y-origin.y);
-  near((x.x-origin.x)/(x.y-origin.y),2);near((y.x-origin.x)/(y.y-origin.y),-2);
+  const slope=(x.y-origin.y)/(x.x-origin.x);
+  assert.ok(slope>.75&&slope<.85,`floor slope ${slope}`);
+  near((y.y-origin.y)/(y.x-origin.x),-slope);
   near(Math.hypot(x.x-origin.x,x.y-origin.y),Math.hypot(y.x-origin.x,y.y-origin.y));
 });
 check('projection inversion recovers contacts at every height and heading',()=>{
@@ -22,7 +24,7 @@ check('projection inversion recovers contacts at every height and heading',()=>{
 });
 check('height separates a raised basket from its physical ground footprint',()=>{
   const floor=project({x:160,y:120}),basket=project({x:160,y:120,z:31});
-  near(floor.x,basket.x);assert.ok(floor.y-basket.y>29&&floor.y-basket.y<30);
+  near(floor.x,basket.x);assert.ok(floor.y-basket.y>22&&floor.y-basket.y<25);
   const inferred=unproject(basket,31);near(inferred.x,160);near(inferred.y,120);
 });
 check('depth follows the camera ray when projected points coincide',()=>{

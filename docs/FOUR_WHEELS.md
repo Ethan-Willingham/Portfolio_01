@@ -14,10 +14,11 @@ feature flags, or build step.
 - `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D scene.
 - `js/four-wheels.js`: input, audio, UI, fixed-step loop and local records.
 
-The canvas is 720 by 480 pixels and scales with image smoothing disabled.
-The physical store remains 480 by 300 world units. The shared 2:1 isometric
-camera projects every point as x = 264 + 0.84(x - y),
-y = 70 + 0.42(x + y) - 0.95z. Changing the camera does not change course
+The canvas is 720 by 580 pixels and scales with image smoothing disabled.
+The physical store remains 480 by 300 world units. The shared isometric camera
+looks down at roughly 52 degrees above the floor, opening up shelf tops and the
+empty basket. It projects every point as x = 264 + 0.84(x - y),
+y = 24 + 0.66(x + y) - 0.74z. Changing the camera does not change course
 geometry, forces, deadlines or saved records. Its inverse is exported for
 verification. Keyboard and touch controls remain relative to the cart's heading.
 Art is drawn locally from the site's warm palette, with silver metal for the
@@ -33,7 +34,7 @@ The page opens directly into the game, following Sluice's layout. The shell is
 route status and keyboard or touch controls. Desktop and landscape contain the
 whole course without stretching or cropping.
 Portrait uses a 480-pixel-wide canvas matching the stage's aspect ratio. The
-renderer first draws the same 720-by-480 scene, then presents a closer 1.8x
+renderer first draws the same 720-by-580 scene, then presents a closer 1.8x
 following view with nearest-pixel scaling. A live overview shows the full frame,
 cart and viewport, and offscreen markers have a numbered direction cue. The
 Overview button switches to a contained whole-store view without changing the

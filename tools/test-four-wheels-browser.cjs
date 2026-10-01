@@ -145,7 +145,8 @@ async function setup(context, url) {
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
     await desktop.addInitScript(() => { localStorage.setItem('four-wheels-records-v1', '[{"time":12,"stars":3}]');localStorage.setItem('four-wheels-records-v2', '[{"time":34,"stars":2}]');localStorage.setItem('four-wheels-records-v3', '[{"time":40,"stars":2}]'); });
     const page = await setup(desktop, url);
-    check('the game boots the shared isometric view at 720 by 480 pixels',await page.evaluate(()=>CartView.CAMERA.horizontal===2*CartView.CAMERA.vertical&&document.getElementById('cart-canvas').width===720&&document.getElementById('cart-canvas').height===480));
+    const sceneSize=await page.evaluate(()=>({width:CartView.CAMERA.width,height:CartView.CAMERA.height}));
+    check('the game boots the higher isometric camera at 720 by 580 pixels',await page.evaluate(()=>CartView.CAMERA.vertical/CartView.CAMERA.horizontal>.75&&CartView.CAMERA.vertical/CartView.CAMERA.horizontal<.85&&document.getElementById('cart-canvas').width===720&&document.getElementById('cart-canvas').height===580));
     check('drawing the isometric scene does not advance physics or gait',await page.evaluate(()=>{
       const w=__cartTest.world(),before=JSON.stringify({body:w.body,gait:w.gait,time:w.time,stock:w.stock.items.map(p=>[p.x,p.y,p.z,p.tumble])});
       for(let i=0;i<8;i++)__cartTest.draw();
@@ -254,7 +255,7 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({path:path.join(dump,'stock-after-collapse.png')});
     if(process.env.ASSETS==='1') {
       const sharp=require('sharp'),raw=await Promise.all(crashFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
-      await sharp(Buffer.concat(raw),{raw:{width:720,height:480*raw.length,channels:4,pageHeight:480}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shelf-collapse.gif'));
+      await sharp(Buffer.concat(raw),{raw:{width:sceneSize.width,height:sceneSize.height*raw.length,channels:4,pageHeight:sceneSize.height}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'shelf-collapse.gif'));
     }
     await page.evaluate(()=>__cartTest.vaseScene());
     check('the introductory scene contains one square table and a single vase',await page.evaluate(()=>{
@@ -268,7 +269,7 @@ async function setup(context, url) {
     await page.locator('#cart-game').screenshot({path:path.join(dump,'vase-puddle.png')});
     if(process.env.ASSETS==='1') {
       const sharp=require('sharp'),raw=await Promise.all(vaseFrames.map(pixels=>sharp(Buffer.from(pixels,'base64')).ensureAlpha().raw().toBuffer()));
-      await sharp(Buffer.concat(raw),{raw:{width:720,height:480*raw.length,channels:4,pageHeight:480}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'vase-drop.gif'));
+      await sharp(Buffer.concat(raw),{raw:{width:sceneSize.width,height:sceneSize.height*raw.length,channels:4,pageHeight:sceneSize.height}}).gif({delay:raw.map((_,i)=>i%6===5?50:40),loop:0}).toFile(path.join(dump,'vase-drop.gif'));
     }
     await page.evaluate(()=>{
       __cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();

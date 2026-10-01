@@ -120,7 +120,7 @@
 .cart-course-tile { position: relative; text-align: left; border: 1px solid var(--cart-line); border-radius: 8px; background: var(--cart-paper); color: var(--cart-ink); overflow: hidden; padding: 0; }
 .cart-course-tile:hover, .cart-course-tile.is-current { border-color: var(--cart-ink); box-shadow: 0 3px 0 var(--cart-ink); }
 .cart-course-tile.is-current::after { content: 'SELECTED'; position: absolute; top: .65rem; right: .65rem; padding: .3rem .5rem; border-radius: 3px; background: var(--cart-ink); color: var(--cart-paper); font-family: var(--font-mono); font-size: .55rem; letter-spacing: .06em; }
-.cart-course-tile canvas { display: block; width: 100%; aspect-ratio: 3 / 2; image-rendering: pixelated; border-bottom: 1px solid var(--cart-line); }
+.cart-course-tile canvas { display: block; width: 100%; aspect-ratio: 36 / 29; image-rendering: pixelated; border-bottom: 1px solid var(--cart-line); }
 .cart-course-tile-copy { display: block; padding: 1rem; }
 .cart-course-tile strong { display: block; margin-top: .35rem; font-family: var(--font-body); font-size: 1.2rem; font-weight: 700; letter-spacing: -.025em; }
 .cart-course-tile-meta { display: flex; justify-content: space-between; gap: .4rem; margin-top: .7rem; padding-top: .65rem; border-top: 1px dashed var(--cart-line); font-family: var(--font-mono); font-size: .58rem; color: var(--cart-muted); }
