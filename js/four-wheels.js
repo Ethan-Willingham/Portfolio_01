@@ -27,6 +27,8 @@
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
   let particles = [], screenShake = 0, pickerReturn = 'ready';
   let keys = new Set(), touches = new Map(), pseudoFullscreen = false;
+  const thumbPads = [...game.querySelectorAll('[data-axis]')];
+  const touchMode = window.matchMedia('(any-pointer: coarse)');
 
   function timeString(seconds, tenths = false) {
     const value = tenths ? Math.floor(seconds * 10) / 10 : Math.ceil(seconds);
@@ -36,15 +38,41 @@
   function announce(text) { $('live').textContent = text; }
   function notify(text) { $('toast').textContent = text; $('toast').classList.add('is-visible'); toastLife = 2.4; announce(text); }
   function clearInput() {
+    const captured = [...touches];
     keys.clear(); touches.clear();
-    game.querySelectorAll('[data-control]').forEach(b => { b.classList.remove('is-held'); b.setAttribute('aria-pressed', 'false'); });
+    for (const [id, input] of captured) {
+      if (typeof id === 'number' && input.element.hasPointerCapture(id)) input.element.releasePointerCapture(id);
+    }
+    paintTouch();
+  }
+  function touchValue(control) {
+    let value = 0;
+    for (const input of touches.values()) if (input.control === control) value += input.value;
+    return clamp(value, -1, 1);
+  }
+  function paintTouch() {
+    for (const pad of thumbPads) {
+      const input = [...touches.values()].find(q => q.element === pad), value = input?.value || 0;
+      const steering = pad.dataset.axis === 'turn', amount = Math.round(Math.abs(value) * 100);
+      const action = amount ? (steering ? value < 0 ? 'Left' : 'Right' : value < 0 ? 'Pull' : 'Push') + ' ' + amount + '%' : steering ? 'Slide left / right' : 'Slide up / down';
+      pad.classList.toggle('is-held', !!input);
+      pad.style.setProperty('--thumb-x', (steering ? input?.offset || 0 : 0) + 'px');
+      pad.style.setProperty('--thumb-y', (!steering ? -(input?.offset || 0) : 0) + 'px');
+      pad.setAttribute('aria-valuenow', String(Math.round(value * 100)));
+      pad.setAttribute('aria-valuetext', amount ? (steering ? value < 0 ? 'Turning left' : 'Turning right' : value < 0 ? 'Pulling' : 'Pushing') + ', ' + amount + ' percent' : steering ? 'Not turning' : 'Coasting');
+      $(steering ? 'steer-status' : 'drive-status').textContent = action;
+    }
+    const braking = touchValue('brake') > 0;
+    $('touch-brake').classList.toggle('is-held', braking);
+    $('touch-brake').setAttribute('aria-pressed', String(braking));
+    if (braking) $('drive-status').textContent = 'Braking';
   }
   function controls() {
-    const held = name => [...touches.values()].includes(name);
+    const braking = touchValue('brake');
     return {
-      push: Number(keys.has('KeyW') || keys.has('ArrowUp') || held('push')) - Number(keys.has('KeyS') || keys.has('ArrowDown') || held('reverse')),
-      turn: Number(keys.has('KeyD') || keys.has('ArrowRight') || held('right')) - Number(keys.has('KeyA') || keys.has('ArrowLeft') || held('left')),
-      brake: Number(keys.has('Space') || held('brake'))
+      push: braking ? 0 : clamp(Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown')) + touchValue('push'), -1, 1),
+      turn: clamp(Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft')) + touchValue('turn'), -1, 1),
+      brake: Number(keys.has('Space') || braking)
     };
   }
 
@@ -328,17 +356,55 @@
     announce(followCart ? 'Camera follows the cart.' : 'All six connected rooms are visible.');
     canvas.focus({ preventScroll:true });
   });
-  game.querySelectorAll('[data-control]').forEach(button => {
-    button.setAttribute('aria-pressed', 'false');
-    button.addEventListener('pointerdown', e => {
-      if (phase !== 'running') return;
-      e.preventDefault(); button.setPointerCapture(e.pointerId); touches.set(e.pointerId, button.dataset.control);
-      button.classList.add('is-held'); button.setAttribute('aria-pressed', 'true');
+  function releaseTouch(element, id) {
+    if (touches.get(id)?.element !== element) return;
+    touches.delete(id); paintTouch();
+    if (typeof id === 'number' && element.hasPointerCapture(id)) element.releasePointerCapture(id);
+  }
+  function bindTouch(element, begin, move) {
+    element.addEventListener('pointerdown', e => {
+      if (phase !== 'running' || e.button !== 0 || [...touches.values()].some(q => q.element === element)) return;
+      e.preventDefault();
+      touches.set(e.pointerId, { element, control: element.dataset.axis || 'brake', value: 0, offset: 0 });
+      element.setPointerCapture(e.pointerId); begin(e); paintTouch();
     });
-    const release = e => { touches.delete(e.pointerId); const held = [...touches.values()].includes(button.dataset.control); button.classList.toggle('is-held', held); button.setAttribute('aria-pressed', String(held)); };
-    button.addEventListener('pointerup', release); button.addEventListener('pointercancel', release); button.addEventListener('lostpointercapture', release);
-    button.addEventListener('contextmenu', e => e.preventDefault());
+    element.addEventListener('pointermove', e => {
+      if (touches.get(e.pointerId)?.element !== element) return;
+      e.preventDefault(); move?.(e); paintTouch();
+    });
+    for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) element.addEventListener(event, e => releaseTouch(element, e.pointerId));
+    element.addEventListener('contextmenu', e => e.preventDefault());
+  }
+  for (const pad of thumbPads) {
+    const move = e => {
+      const r = pad.getBoundingClientRect(), steering = pad.dataset.axis === 'turn', travel = r.width * .28;
+      const distance = steering ? e.clientX - r.left - r.width / 2 : r.top + r.height / 2 - e.clientY;
+      const input = touches.get(e.pointerId), offset = clamp(distance, -travel, travel);
+      input.offset = offset;
+      const fraction = Math.abs(offset) / travel;
+      input.value = Math.sign(offset) * Math.max(0, (fraction - .12) / .88);
+    };
+    bindTouch(pad, move, move);
+    // The same momentary sliders can be adjusted with an attached keyboard.
+    pad.addEventListener('keydown', e => {
+      const direction = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.code];
+      if (!direction || phase !== 'running') return;
+      e.preventDefault(); e.stopPropagation();
+      if ([...touches.values()].some(q => q.element === pad && !q.keyboard)) return;
+      const id = 'keyboard-' + pad.dataset.axis, previous = touches.get(id)?.value || 0, value = clamp(previous + direction * .1, -1, 1);
+      touches.set(id, { element: pad, control: pad.dataset.axis, value, offset: value * pad.getBoundingClientRect().width * .28, keyboard: true }); paintTouch();
+    });
+    pad.addEventListener('keyup', e => { if (e.code.startsWith('Arrow')) releaseTouch(pad, 'keyboard-' + pad.dataset.axis); });
+    pad.addEventListener('blur', () => releaseTouch(pad, 'keyboard-' + pad.dataset.axis));
+  }
+  const brake = $('touch-brake');
+  bindTouch(brake, e => { touches.get(e.pointerId).value = 1; });
+  brake.addEventListener('keydown', e => {
+    if (!['Space', 'Enter'].includes(e.code) || phase !== 'running') return;
+    e.preventDefault(); e.stopPropagation(); touches.set('keyboard-brake', { element: brake, control: 'brake', value: 1 }); paintTouch();
   });
+  brake.addEventListener('keyup', e => { if (['Space', 'Enter'].includes(e.code)) releaseTouch(brake, 'keyboard-brake'); });
+  brake.addEventListener('blur', () => releaseTouch(brake, 'keyboard-brake'));
   const movement = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']);
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey || !game.contains(document.activeElement) || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -361,6 +427,8 @@
   window.addEventListener('blur', () => { clearInput(); pause(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); } });
   window.addEventListener('pagehide', () => { clearInput(); sound.rolling(0); });
+  window.addEventListener('resize', () => { if (touches.size) clearInput(); });
+  touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
   reset(); drawIllustration();
   new ResizeObserver(resizeView).observe($('stage'));

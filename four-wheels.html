@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=16">
+  <link rel="stylesheet" href="four-wheels.css?v=17">
 </head>
 <body class="cart-page">
   <div class="site-wrapper">
@@ -63,6 +63,28 @@
           <div class="cart-stage" id="cart-stage">
             <canvas id="cart-canvas" width="720" height="580" tabindex="0" aria-label="Isometric shopping cart obstacle course. Touch each numbered checkpoint with any wheel. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to retry." aria-describedby="cart-instructions">This game needs a browser with canvas support. Touch each numbered checkpoint with any wheel, then drive through the connected rooms and out through checkout.</canvas>
             <button class="cart-camera" id="cart-camera" type="button" aria-label="Show the whole course" aria-pressed="false" hidden>Overview</button>
+            <div class="cart-touch" id="cart-touch" role="group" aria-label="Thumb controls">
+              <div class="cart-thumb cart-thumb-steering">
+                <div class="cart-thumb-caption"><strong>Rotate</strong><span id="cart-steer-status">Slide left / right</span></div>
+                <div class="cart-thumb-pad cart-thumb-pad-steer" id="cart-steer" data-axis="turn" role="slider" tabindex="0" aria-label="Rotate cart" aria-orientation="horizontal" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Not turning" aria-describedby="cart-touch-help">
+                  <span class="cart-thumb-track" aria-hidden="true"></span>
+                  <svg class="cart-thumb-direction cart-thumb-left" viewBox="0 0 20 20" aria-hidden="true"><path d="m12 6-4 4 4 4"/></svg>
+                  <svg class="cart-thumb-direction cart-thumb-right" viewBox="0 0 20 20" aria-hidden="true"><path d="m8 6 4 4-4 4"/></svg>
+                  <span class="cart-thumb-knob" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M7 10a8 8 0 0 1 14 0M7 5v5h5m9 8a8 8 0 0 1-14 0m14 5v-5h-5"/></svg></span>
+                </div>
+              </div>
+              <button type="button" class="cart-touch-brake" id="cart-touch-brake" data-control="brake" aria-label="Hold to brake cart" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14m10-14v14"/></svg><strong>Brake</strong><span>Hold</span></button>
+              <div class="cart-thumb cart-thumb-drive">
+                <div class="cart-thumb-caption"><strong>Push / pull</strong><span id="cart-drive-status">Slide up / down</span></div>
+                <div class="cart-thumb-pad cart-thumb-pad-drive" id="cart-drive" data-axis="push" role="slider" tabindex="0" aria-label="Push or pull cart" aria-orientation="vertical" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Coasting" aria-describedby="cart-touch-help">
+                  <span class="cart-thumb-track" aria-hidden="true"></span>
+                  <svg class="cart-thumb-direction cart-thumb-up" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 12 4-4 4 4"/></svg>
+                  <svg class="cart-thumb-direction cart-thumb-down" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
+                  <span class="cart-thumb-knob" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M10 9h8m-8 5h8m-8 5h8"/></svg></span>
+                </div>
+              </div>
+              <p class="sr-only" id="cart-touch-help">Left thumb slides left or right to rotate. Right thumb slides up to push or down to pull. Slide farther for more force. Release to coast. Hold the middle button to brake.</p>
+            </div>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
                 <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span>FOUR WHEELS. ALL SWIVEL.</span></div>
@@ -71,6 +93,7 @@
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
                 <p id="cart-overlay-text">Touch each numbered checkpoint with any wheel. Drive through the connected rooms, then out through checkout.</p>
                 <div class="cart-intro-controls" aria-hidden="true"><span><b><kbd>W</kbd> <kbd>S</kbd></b>Push / pull</span><span><b><kbd>A</kbd> <kbd>D</kbd></b>Rotate</span><span><b><kbd>Space</kbd></b>Brake</span></div>
+                <p class="cart-intro-touch">Left thumb rotates. Right thumb pushes or pulls. Release to coast; hold Brake to slow down.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
                 <label class="cart-practice" id="cart-practice-label"><input type="checkbox" id="cart-practice"><span>Untimed practice<small>Get a feel for the wheels.</small></span></label>
                 <div class="cart-overlay-actions">
@@ -88,18 +111,6 @@
           <div class="cart-route-bar">
             <div class="cart-route-copy"><div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div><p id="cart-route">Touch circle 1 of 3 with any wheel</p></div>
             <button type="button" id="cart-retry">Retry <span>R</span></button>
-          </div>
-
-          <div class="cart-touch" id="cart-touch" aria-label="Touch game controls">
-            <div class="cart-touch-steer">
-              <button type="button" data-control="left" aria-label="Turn counterclockwise"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 11a8 8 0 1 1 2 8M5 4v7h7" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Turn</span></button>
-              <button type="button" data-control="right" aria-label="Turn clockwise"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M19 11a8 8 0 1 0-2 8m2-15v7h-7" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Turn</span></button>
-            </div>
-            <div class="cart-touch-force">
-              <button type="button" data-control="reverse" aria-label="Pull cart backward">Pull</button>
-              <button type="button" data-control="brake" aria-label="Brake cart">Brake</button>
-              <button type="button" data-control="push" class="cart-touch-push" aria-label="Push cart forward">Push</button>
-            </div>
           </div>
 
           <footer class="cart-controls" id="cart-instructions">
@@ -120,6 +131,7 @@
             <summary>How to play</summary>
             <p>Get through the store before time runs out. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five.</p>
             <p>In the first room, push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward.</p>
+            <p>On a phone, use the two thumb pads. Slide the left pad sideways to rotate. Slide the right pad up to push or down to pull. Small movements give you a gentle nudge; slide farther for more force. Let go to coast, or hold the middle Brake button to slow down. You can push and turn together.</p>
             <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch the wheels swing around; turn while moving and each one follows a different curve. You can see them through the basket.</p>
             <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. The map edge and your outline turn red when the basket, a wheel, or you touch the boundary.</p>
             <p>Touch the numbered circles in order with any of the four tires. The tire itself counts, including its edges, as it swivels around the gold pin. Clear a room's markers to open the next door. Keep driving. The same cart, momentum, and mess carry through the corridors until the final checkout.</p>
@@ -137,11 +149,11 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=16"></script>
-  <script src="js/four-wheels-physics.js?v=16"></script>
-  <script src="js/four-wheels-levels.js?v=16"></script>
-  <script src="js/four-wheels-view.js?v=16"></script>
-  <script src="js/four-wheels.js?v=16"></script>
+  <script src="js/four-wheels-stock.js?v=17"></script>
+  <script src="js/four-wheels-physics.js?v=17"></script>
+  <script src="js/four-wheels-levels.js?v=17"></script>
+  <script src="js/four-wheels-view.js?v=17"></script>
+  <script src="js/four-wheels.js?v=17"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

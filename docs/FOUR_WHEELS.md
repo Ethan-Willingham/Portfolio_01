@@ -270,8 +270,22 @@ fewer; equal marks rank by time. All older v1 through v4 records remain untouche
 
 W/S or up/down push and pull; A/D or left/right rotate; Space brakes.
 P or Escape pauses, R retries, F toggles fullscreen. Keyboard input is scoped
-to focus inside the game. Touch buttons support concurrent captured pointers
-and clear cancelled/lost pointers. Blur and hidden tabs pause and clear input.
+to focus inside the game. Touch devices use two independent analog thumb pads
+over the lower corners of the view, with a 64-pixel-wide brake between them.
+The left pad rotates with horizontal movement; the right pushes upward and
+pulls downward. Force follows displacement from the pad's fixed center, with
+a 12-percent neutral zone and full force at 28 percent of its width. The knob,
+caption and accessible slider value follow the actual input. Pads are 96 to
+120 pixels across in portrait and 100 in short landscape views. Controls use
+safe-area insets, leave the center of the view clear and do not shorten the canvas.
+The Store map button moves above the left pad on touch devices.
+
+Releasing a pad applies no force, preserving the cart's coast. Holding Brake
+overrides a held push or pull; rotation remains independent. Each pad owns one
+captured pointer, so a second finger cannot take it over. Push, turn and brake
+can be held together. Cancelled or lost captures, pause, retry, picker, blur,
+hidden tabs and viewport resizing clear input and return the knobs to center.
+An attached keyboard can also adjust the focused sliders or hold the brake.
 Sound starts muted and is synthesized after a user gesture. Reduced motion
 disables shake and marker particles. Idle and paused screens do not run a loop.
 
@@ -300,7 +314,9 @@ It must clear every room before closing, with no forced fall.
 
 View tests cover projection, inversion, physical caster points, circles, height,
 following cameras and whole-store framing. Browser tests check keyboard and
-concurrent touch controls, actual wheel capture, continuous room entry with no
+concurrent analog touch controls, dead zones, gentle and full force, reversal,
+brake priority, off-pad capture, cancellation, orientation changes and thumb
+target geometry; actual wheel capture, continuous room entry with no
 new requests or overlay, color, six room previews, map controls, both fall types,
 pause and recovery, vase water, final checkout, new and older records, fullscreen,
 small phones, landscape, blocked storage and reduced motion. Hooks and the pilot

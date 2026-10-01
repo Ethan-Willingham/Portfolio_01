@@ -20,7 +20,7 @@
   background: var(--cart-paper); color: var(--cart-ink); line-height: 1.4;
   color-scheme: light; scrollbar-color: var(--cart-line) var(--cart-paper);
 }
-.cart-toolbar, .cart-route-bar, .cart-controls, .cart-touch { flex-shrink: 0; }
+.cart-toolbar, .cart-route-bar, .cart-controls { flex-shrink: 0; }
 .cart-game button { font-family: var(--font-body); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .cart-game button:disabled { cursor: default; opacity: .35; }
 .cart-game button:focus-visible, #cart-canvas:focus-visible, .cart-practice input:focus-visible {
@@ -72,6 +72,7 @@
 .cart-intro-controls { display: flex; gap: 1.4rem; margin-top: 1.4rem; padding-block: 1rem; border-block: 1px solid var(--cart-line); }
 .cart-intro-controls span { display: flex; flex-direction: column; gap: .4rem; font-size: .7rem; color: var(--cart-muted); }
 .cart-intro-controls b { display: flex; gap: .3rem; min-height: 24px; }
+.cart-intro-touch { display: none; }
 .cart-game kbd { display: inline-block; font-family: var(--font-mono); font-size: .64rem; font-weight: 400; color: var(--cart-ink); background: var(--cart-paper); padding: .2rem .35rem; border: 1px solid var(--cart-line); border-bottom-width: 2px; border-radius: 4px; }
 .cart-practice { display: flex; align-items: center; gap: .65rem; margin-top: 1.1rem; font-size: .8rem; color: var(--cart-ink); cursor: pointer; }
 .cart-practice input { accent-color: var(--cart-ink); width: 18px; height: 18px; flex-shrink: 0; }
@@ -107,12 +108,32 @@
 .cart-route-bar button span { font-family: var(--font-mono); font-size: .6rem; border: 1px solid var(--cart-line); padding: .1rem .3rem; border-radius: 3px; }
 .cart-controls { display: flex; align-items: center; gap: 1.5rem; padding: .6rem 1.35rem; background: var(--cart-sheet); border-top: 1px solid var(--cart-line); color: var(--cart-muted); font-size: .68rem; }
 .cart-arrow-note { margin-left: auto; font-size: .64rem; }
-.cart-touch { display: none; justify-content: space-between; gap: .8rem; padding: .7rem .9rem; background: var(--cart-sheet); border-top: 1px solid var(--cart-line); }
-.cart-touch-steer, .cart-touch-force { display: flex; gap: .45rem; }
-.cart-touch button { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: .15rem; min-width: 52px; min-height: 58px; padding: .35rem .6rem; background: var(--cart-paper); border: 1px solid var(--cart-line); border-bottom: 3px solid var(--cart-muted); border-radius: 8px; color: var(--cart-ink); font-size: .72rem; font-weight: 600; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.cart-touch button.is-held { background: var(--cart-ink); border-color: var(--cart-ink); color: var(--cart-paper); }
-.cart-touch .cart-touch-push { background: var(--cart-accent); border-color: var(--cart-ink); min-width: 68px; }
-.cart-touch .cart-touch-push.is-held { background: var(--cart-ink); }
+/* Independent analog pads keep rotation separate from the cart's momentum. */
+.cart-touch { display: none; position: absolute; inset: auto 0 0; z-index: 2; grid-template-columns: 1fr 64px 1fr; align-items: end; gap: 8px; padding: 28px max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); background: linear-gradient(transparent, rgba(41,40,32,.2)); pointer-events: none; }
+.cart-game:not([data-phase="running"]) .cart-touch { display: none; }
+.cart-thumb { width: clamp(96px, 29vw, 120px); min-width: 0; }
+.cart-thumb-drive { justify-self: end; }
+.cart-thumb-caption { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 37px; margin-bottom: 6px; padding: 4px 5px; border: 1px solid var(--cart-line); border-radius: 7px; background: var(--cart-paper); color: var(--cart-ink); text-align: center; line-height: 1.25; }
+.cart-thumb-caption strong { font-size: .75rem; font-weight: 600; }
+.cart-thumb-caption > span { font-size: .58rem; color: var(--cart-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cart-thumb-pad { position: relative; width: 100%; aspect-ratio: 1; border: 1px solid var(--cart-muted); border-radius: 50%; background: color-mix(in srgb, var(--cart-paper) 94%, transparent); box-shadow: inset 0 0 0 5px var(--cart-sheet), inset 0 0 0 6px var(--cart-line), 0 3px 0 rgba(41,40,32,.25); color: var(--cart-muted); pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.cart-thumb-pad:focus-visible { outline: 3px solid var(--cart-alert); outline-offset: 3px; }
+.cart-thumb-pad.is-held { border-color: var(--cart-ink); box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--room-color, var(--cart-accent)) 45%, var(--cart-paper)), inset 0 0 0 6px var(--cart-muted), 0 3px 0 rgba(41,40,32,.25); }
+.cart-thumb-track { position: absolute; top: calc(50% - 8px); left: 12%; width: 76%; height: 16px; border-radius: 10px; background: var(--cart-sheet); border: 1px solid var(--cart-line); }
+.cart-thumb-pad-drive .cart-thumb-track { top: 12%; left: calc(50% - 8px); width: 16px; height: 76%; }
+.cart-thumb-direction { position: absolute; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.cart-thumb-left { left: 8%; top: calc(50% - 10px); }
+.cart-thumb-right { right: 8%; top: calc(50% - 10px); }
+.cart-thumb-up { top: 8%; left: calc(50% - 10px); }
+.cart-thumb-down { bottom: 8%; left: calc(50% - 10px); }
+.cart-thumb-knob { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--cart-ink); border-radius: 50%; background: var(--cart-paper); box-shadow: 0 3px 0 var(--cart-line), inset 0 2px 0 var(--cart-paper); color: var(--cart-ink); transform: translate(calc(-50% + var(--thumb-x, 0px)), calc(-50% + var(--thumb-y, 0px))); transition: transform .12s ease-out; pointer-events: none; }
+.cart-thumb-pad.is-held .cart-thumb-knob { background: var(--room-color, var(--cart-accent)); box-shadow: 0 2px 0 var(--cart-muted); transition: none; }
+.cart-thumb-knob svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.cart-touch-brake { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; width: 64px; min-height: 80px; margin-bottom: 16px; padding: 8px 4px; border: 1px solid var(--cart-ink); border-bottom-width: 3px; border-radius: 14px; background: var(--cart-accent); color: var(--cart-ink); box-shadow: 0 3px 0 rgba(41,40,32,.25); pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.cart-touch-brake svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+.cart-touch-brake strong { font-size: .75rem; font-weight: 600; }
+.cart-touch-brake > span { font-size: .57rem; }
+.cart-touch-brake.is-held { background: var(--cart-ink); color: var(--cart-paper); border-color: var(--cart-ink); transform: translateY(2px); box-shadow: 0 1px 0 rgba(41,40,32,.25); }
 .cart-course-picker { position: absolute; inset: 0; z-index: 4; overflow: auto; padding: clamp(1.2rem, 3vw, 3rem); background: var(--cart-paper); }
 .cart-picker-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: .75rem; }
 .cart-picker-head h2 { margin-top: .5rem; font-family: var(--font-body); font-weight: 700; font-size: 2.7rem; letter-spacing: -.055em; line-height: 1.1; }
@@ -139,10 +160,13 @@
 .cart-game.cart-pseudo-fullscreen { position: fixed; inset: 0; z-index: 2000; }
 .cart-fs-open { overflow: hidden; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-@media (pointer: coarse) {
-  .cart-touch { display: flex; }
+@media (any-pointer: coarse) {
+  .cart-touch { display: grid; }
   .cart-controls, .cart-intro-controls { display: none; }
+  .cart-intro-touch { display: block; margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--cart-line); font-size: .77rem; line-height: 1.5; color: var(--cart-muted); max-width: 320px; }
+  .cart-overlay:not([data-state="ready"]) .cart-intro-touch { display: none; }
   .cart-game .cart-icon-button { width: 44px; height: 44px; }
+  .cart-camera { top: .8rem; bottom: auto; }
 }
 @media (max-width: 800px) {
   .cart-wordmark { display: none; }
@@ -188,10 +212,6 @@
   .cart-route-bar p { font-size: .64rem; }
   .cart-route-steps i { min-width: 19px; height: 18px; font-size: .48rem; }
   .cart-route-bar button { font-size: .68rem; }
-  .cart-touch { padding: .6rem; gap: .4rem; }
-  .cart-touch-steer, .cart-touch-force { gap: .35rem; }
-  .cart-touch button { min-width: 43px; min-height: 56px; padding-inline: .45rem; font-size: .66rem; }
-  .cart-touch .cart-touch-push { min-width: 56px; }
   .cart-controls { gap: .75rem; padding: .65rem .8rem; flex-wrap: wrap; }
   .cart-arrow-note { display: none; }
   .cart-course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
@@ -230,8 +250,12 @@
   .cart-icon-button { width: 32px; height: 32px; }
   .cart-controls { display: none; }
   .cart-route-bar { padding-block: .35rem; }
-  .cart-touch { padding-block: .35rem; }
-  .cart-touch button { min-height: 44px; }
+  .cart-thumb { width: 100px; }
+  .cart-thumb-caption { min-height: 29px; margin-bottom: 4px; }
+  .cart-thumb-caption > span { display: none; }
+  .cart-touch { padding-top: 14px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .cart-touch-brake { min-height: 64px; margin-bottom: 10px; }
+  .cart-intro-touch { margin-top: .5rem; padding-top: .4rem; font-size: .68rem; }
   .cart-overlay { padding: .5rem; }
   .cart-overlay-card, .cart-overlay:not([data-state="ready"]) .cart-overlay-card { width: 460px; padding: .8rem 1.1rem; }
   .cart-overlay-card h2, .cart-overlay:not([data-state="ready"]) h2 { max-width: none; font-size: 1.7rem; margin: .35rem 0; }
@@ -247,7 +271,7 @@
   .cart-result > span { grid-column: 1 / -1; font-size: .56rem; }
   .cart-overlay[data-state="won"] .cart-best { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .cart-button-primary:active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cart-button-primary:active, .cart-touch-brake.is-held { transform: none; } .cart-thumb-knob { transition: none; } }
 @media print { .cart-game { display: none; } }
 
 /* Room color belongs to the trip, and follows the cart through each doorway. */
