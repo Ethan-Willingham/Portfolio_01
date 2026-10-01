@@ -65,8 +65,8 @@ async function modalFit(page,label){
 async function workspaceFit(page,label){
  await page.waitForFunction(()=>{
   const selected=document.querySelector('.gx-scene-field[data-active="true"] .gx-cat-select').value,s=__gxTest.state();
-  return s.pending===null&&(s.field===selected||['grid','mulberry'].includes(selected)&&['random','mulberry'].includes(s.field));
- });
+  return s.pending===null&&(s.field===selected||selected==='grid'&&s.morph<.03||selected==='mulberry'&&['random','mulberry'].includes(s.field));
+ },null,{timeout:12000}).catch(async e=>{process.stdout.write(JSON.stringify({label,state:await state(page),selected:await page.locator('.gx-scene-field[data-active="true"] select').inputValue()})+'\n');throw e;});
  await page.waitForTimeout(180);
  const a=await page.evaluate(()=>{
   const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height};};
@@ -137,7 +137,13 @@ async function category(page,mode,value){
       const result=await page.evaluate(()=>__gxTest.finishSort());
       check(option.label+' sorts all 64 rings',result.n===64&&result.total===48000&&result.ordered);
     }
-    if(['boids','saturn'].includes(option.value)){
+    if(group.category==='emergence'){
+      await page.waitForFunction(()=>GXEmergence.snapshot().worlds[0].steps>0);
+      const before=await page.evaluate(()=>GXEmergence.snapshot());await page.waitForTimeout(150);
+      const after=await page.evaluate(()=>GXEmergence.snapshot());
+      check(option.label+' animates a finite world',after.worlds[0].finite&&after.worlds[0].steps>before.worlds[0].steps);
+    }
+    if(option.value==='saturn'){
       await page.waitForFunction(()=>__gxTest.state().morph>.99);
       const before=await page.evaluate(()=>__gxTest.life());await page.waitForTimeout(800);
       const after=await page.evaluate(()=>__gxTest.life());
@@ -175,6 +181,7 @@ async function category(page,mode,value){
    await workspaceFit(page,width+'x'+height+' Sorting');
    await page.locator('.gx-scene-field[data-category="sorting"] .gx-picker-trigger').click();await modalFit(page,width+'x'+height+' Sorting');await close(page);
    await category(page,'watch','pathfinding');await workspaceFit(page,width+'x'+height+' Pathfinding');
+   await category(page,'watch','emergence');await workspaceFit(page,width+'x'+height+' Emergence');
    await category(page,'explore','randomness');await workspaceFit(page,width+'x'+height+' Explore');
    await page.locator('#gx-explore-tab').click();await page.locator('#gx-explore-scenes .gx-category-field .gx-picker-trigger').click();await modalFit(page,width+'x'+height+' categories');await close(page);
   }

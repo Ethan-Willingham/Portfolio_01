@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.73';
+  var VERSION = 'v1.74';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -70,8 +70,8 @@
   }
 
   if (!navigator.gpu) {
-    canvas.style.background = '#06070d';
-    fail('This piece renders with WebGPU, which this browser does not support yet. It runs today in Chrome and Edge; Safari and Firefox are still rolling support out.');
+    if (window.GXEmergence) window.GXEmergence.fallback();
+    else fail('This browser needs WebGPU to open these scenes.');
     return;
   }
 
@@ -274,6 +274,7 @@
   var pendingField = null;       // a field to swap in once the morph dips to the (invisible) grid
 
   function loadField(f) {
+    if (window.GXEmergence && !window.GXEmergence.is(f)) window.GXEmergence.deactivate();
     if (f === 'thomas') generateThomas();
     else if (f === 'lorenz') generateLorenz();
     else if (f === 'aizawa') generateAizawa();
@@ -2622,14 +2623,15 @@
   // family: geometry is held (no fly-through morph to the cube grid), the
   // camera orbits the form, and a per-scene tick repaints the shared positions
   // buffer every frame. loadField -> generateLife routes by id; the frame loop
-  // calls lifeTick. Only Boids and the Saturn close-up are in the chooser.
+  // calls lifeTick for Saturn. Emergence uses its own renderer and returns
+  // before submitting work to this WebGPU path.
   var rd = null;                 // reaction-diffusion state
   var lifeDrawCount = 0;         // instances the active Life scene draws (set by its generator)
 
-  function isLifeField(f) { return f === 'boids' || f === 'saturn'; }
+  function isLifeField(f) { return f === 'saturn' || (window.GXEmergence && window.GXEmergence.is(f)); }
   function generateLife(f) {
-    if (f === 'boids') generateBoids();
-    else if (f === 'saturn') generateSaturn();
+    if (f === 'saturn') generateSaturn();
+    else if (window.GXEmergence) window.GXEmergence.activate(f);
   }
   function lifeTick(dt) {
     if (currentField === 'boids') boidsTick(dt);
@@ -6957,6 +6959,7 @@
     for (var key in held) if (held.hasOwnProperty(key)) held[key] = false;
     yawVel = 0; pitchVel = 0; rollVel = 0;
     pausePointerInput();
+    if (window.GXEmergence) window.GXEmergence.pauseInput();
     sortFNCount = 0;
     sortAudio.nextT = 0;
   }
@@ -7035,6 +7038,13 @@
       pendingField = null;
       morphTarget = gridPending ? 0 : 1;            // grid-from-held: settle on the grid (morph 0), not the just-swapped point field
       gridPending = false;
+    }
+
+    if (window.GXEmergence && window.GXEmergence.active) {
+      updateSearchHUD(); updateSortHUD();
+      window.GXEmergence.tick(dt);
+      frameRequest = requestAnimationFrame(frame);
+      return;
     }
 
     if (isSearchField(currentField)) searchTick(dt);   // live pathfinding scene: step the search + repaint the lattice each frame
@@ -7211,6 +7221,7 @@
       ? (touch ? 'Drag to rotate · Pinch to zoom' : 'Drag to rotate · Scroll to zoom')
       : (touch ? 'Drag to steer · Set fly speed below' : 'Drag or WASD to steer · Q/E to roll');
     if (speedWrap) speedWrap.hidden = orbit;
+    if (window.GXEmergence && window.GXEmergence.active) window.GXEmergence.hint();
     var flyBtn = document.getElementById('galaxy-fly');
     if (flyBtn) {
       var label = isFullscreen() ? 'Exit fullscreen' : 'Fullscreen';
@@ -7550,6 +7561,7 @@
       document.getElementById('gx-info-title').textContent = document.getElementById('gx-current-name').textContent;
       var stats = document.getElementById('gx-info-stats');
       stats.replaceChildren();
+      if (window.GXEmergence && window.GXEmergence.active) blurbEl.textContent = window.GXEmergence.about();
       var hud = isSearchField(currentField) ? searchHudEl : isSortField(currentField) ? sortHudEl : null;
       if (hud) {
         var rows = hud.querySelectorAll('.gx-sh-row, .gx-so-row');
@@ -7575,7 +7587,13 @@
       heap: 'The largest ring moves out of a heap, one at a time.',
       bitonic: 'Pairs compare across a repeating sorting network.',
       pancake: 'Whole groups flip to move the largest ring into place.',
-      boids: 'Birds follow simple rules and form a moving flock.',
+      boids: 'Keep apart. Match your neighbors. Stay together.',
+      ants: 'A discovery becomes a trail. A trail becomes a road.',
+      physarum: 'Follow a trace. Reinforce it. Find another way.',
+      fireflies: 'One flash nudges another. Watch the timing spread.',
+      particlelife: 'Attraction and repulsion build their own little worlds.',
+      lenia: 'Soft cells grow, shrink and move without a leader.',
+      crowds: 'Give everyone a destination. Let the lanes form.',
       ocean: 'Waves move across a surface.',
       lsystem: 'Branches split, grow, and sway in the wind.',
       rxndiff: 'Two spreading chemicals make spots that grow and divide.',
@@ -7720,11 +7738,13 @@
                     (scene === 'dfs') ? 'dfs' :
                     (scene === 'randomwalk') ? 'randomwalk' : 'random';
         var sameFamily = (isSearchField(currentField) && isSearchField(field)) ||
-                         (isSortField(currentField)   && isSortField(field));
+                         (isSortField(currentField)   && isSortField(field)) ||
+                         (window.GXEmergence && window.GXEmergence.is(currentField) && window.GXEmergence.is(field));
+        var immediateSwitch = window.GXEmergence && (window.GXEmergence.is(currentField) || window.GXEmergence.is(field));
         if (currentField === field) {
           pendingField = null;
           morphTarget = 1;                 // right field already loaded: just rise from wherever we are
-        } else if (sameFamily) {
+        } else if (sameFamily || immediateSwitch) {
           // Switching algorithm WITHIN the live search/sort scene: do NOT dip to
           // the grid (that reset the spin / teleported the sort). Swap the algo
           // live and stay fully visible - the orbit keeps spinning (search) and
@@ -7746,7 +7766,10 @@
           if (RESET_VIEW_SCENES[field]) resetView();   // also bumps the blurb + resets dt
           applyStartView(scene);                     // captured view overrides the generic recenter
         }
-        if (isSortField(scene)) {
+        if (window.GXEmergence && window.GXEmergence.is(scene)) {
+          if (blurbEl) blurbEl.textContent = window.GXEmergence.about();
+          if (revealEl) revealEl.classList.remove('show');
+        } else if (isSortField(scene)) {
           var SB = { selection:['Selection sort','hunt down the smallest, slam it to the front, repeat. All eyes, few hands.'],
             bubble:['Bubble sort','swap neighbours pass after pass; the biggest floats to the top. The slow, lovable classic.'],
             cocktail:['Cocktail shaker','bubble sort swinging both ways, so order closes in from both ends at once.'],
@@ -7944,12 +7967,12 @@
 
     window.addEventListener('resize', sizeCanvas);
     if (window.ResizeObserver) new ResizeObserver(sizeCanvas).observe(canvas);
-    selectScene('bfs');
+    selectScene(window.GXEmergence && window.GXEmergence.linkedScene || 'bfs');
   }
 
   async function init() {
     var adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) { fail('No suitable GPU adapter found.'); return; }
+    if (!adapter) { if (window.GXEmergence) window.GXEmergence.fallback(); else fail('No suitable GPU adapter found.'); return; }
     device = await adapter.requestDevice();
     device.lost.then(function (info) {
       running = false;
@@ -8121,6 +8144,7 @@
   }
 
   init().catch(function (err) {
+    if (!running && window.GXEmergence) { window.GXEmergence.fallback(); return; }
     fail('Failed to start WebGPU: ' + (err && err.message ? err.message : err));
     if (window.console) console.error(err);
   });

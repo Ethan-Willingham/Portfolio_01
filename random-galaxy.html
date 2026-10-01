@@ -13,14 +13,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#303931">
   <title>Obi Juan Algorithm: Watch Algorithms and Explore Math</title>
-  <meta name="description" content="A million points of light you can fly through, all computed live from real math. Pick something from the panel and wander, the sorting and pathfinding scenes are the best.">
+  <meta name="description" content="Watch pathfinding and sorting algorithms, explore math, and experiment with seven emergence worlds, from flocks and ant trails to Lenia organisms.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <!-- Kick off the 6k nebula skybox fetch at parse time (not when init() runs), so the
        background is ready for the "first light" bloom-up instead of popping in late. The
        href + ?v must match the request in js/random-galaxy.js (loadSkyTexture) for one cache hit. -->
   <link rel="preload" href="assets/images/nebula-bg.webp?v=7w" as="image">
   <meta property="og:title" content="Obi Juan Algorithm: Watch Algorithms and Explore Math">
-  <meta property="og:description" content="A million points of light you can fly through, all computed live from real math. Pick something from the panel and wander, the sorting and pathfinding scenes are the best.">
+  <meta property="og:description" content="Watch pathfinding and sorting algorithms, explore math, and experiment with seven emergence worlds, from flocks and ant trails to Lenia organisms.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/random-galaxy.html">
@@ -33,7 +33,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="random-galaxy.css?v=1.73">
+  <link rel="stylesheet" href="random-galaxy.css?v=1.74">
 </head>
 <body class="gx-page">
   <div class="site-wrapper">
@@ -97,6 +97,12 @@
                   <select class="gx-cat-select" aria-label="Emergence scene">
                   <option value="" disabled selected>Choose emergence</option>
                   <option value="boids">Flocking birds</option>
+                  <option value="ants">Ant colony</option>
+                  <option value="physarum">Slime networks</option>
+                  <option value="fireflies">Firefly rhythms</option>
+                  <option value="particlelife">Particle Life</option>
+                  <option value="lenia">Lenia organisms</option>
+                  <option value="crowds">Crowd flow</option>
                   </select>
                 </label>
                 <label class="gx-scene-field" data-category="space"><span>Scene</span>
@@ -196,7 +202,7 @@
           <div class="gx-info-body">
             <p class="gx-desc" id="galaxy-blurb"></p>
             <div id="gx-info-stats" class="gx-info-stats"></div>
-            <p class="gx-about">A million points of light you can fly through, all computed live from real math, nothing faked. Pick something from the panel and wander. The sorting and pathfinding scenes are the best ones.</p>
+            <p class="gx-about">Watch a search, sort a cone of rings, or change the rules in an emergence world. Each scene runs live. Open the Lab in Emergence to place obstacles, inspect a neighbor, or compare one changed rule.</p>
             <a href="/" class="gx-info-home">Home</a>
           </div>
         </dialog>
@@ -204,7 +210,9 @@
     </main>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/random-galaxy-picker.js?v=1.73"></script>
-  <script src="js/random-galaxy.js?v=1.73"></script>
+  <script src="js/random-galaxy-picker.js?v=1.74"></script>
+  <script src="js/random-galaxy-emergence-models.js?v=1.74"></script>
+  <script src="js/random-galaxy-emergence.js?v=1.74"></script>
+  <script src="js/random-galaxy.js?v=1.74"></script>
 </body>
 </html>
