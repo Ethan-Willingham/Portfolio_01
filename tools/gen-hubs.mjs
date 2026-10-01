@@ -152,7 +152,7 @@ const SHELF = {
       href: 'the-other-side.html', title: 'The Other Side', thumb: 'the-other-side.jpg',
       date: '2026-07-02', dateDisplay: '2 Jul 2026',
       alt: "An artist's impression of a star torn into a glowing streak as it falls toward a black hole, a dark disc against red clouds of gas.",
-      desc: "Not a book but my own theory, built on the Tao Te Ching's split between the named and the nameless. The two sides are exactly equal, each is drawn toward the other, and nothing, not a rock, not a self, ever crosses the middle, the way nothing with mass ever reaches the speed of light.",
+      desc: "My take on the Tao Te Ching's named and nameless. The two need each other to exist, and losing your sense of self brings you closer to the other side.",
     },
   ],
 };
