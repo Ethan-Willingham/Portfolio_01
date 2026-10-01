@@ -365,3 +365,46 @@ synthetic timer result as a 120 FPS success.
 Raw project captures, rejected candidates, source snapshots and reports are
 kept in `~/Downloads/sluice-capacity-project-2026-09-30/`. Final population
 limits and native validation remain pending.
+
+
+## Direct snow support heads, v28.136
+
+Complete CPU support reconstruction becomes more frequent when fresh liquid snapshots arrive. Visible wet residents request snapshots every two frames rather than the usual twenty for water coupling. The direct-heads candidate makes this work cheaper while retaining the original snapshots, grain population, contact law and reconstruction frequency.
+
+Eligible builds cache the original Number Math.floor bucket coordinates as Float64 and use a bounded direct-address heads array with generation stamps. Admission checks every snow point, including roots, before terrain queries. Canonical interior columns and a one-cell halo preserve original numeric-key behavior without edge aliases. Negative rows remain supported. Unsupported coordinates, border or aliased columns, shared or unsupported storage, excessive rectangles or optional allocation failure use the complete original Map path. The two head/stamp tables retain at most 2 MiB; coordinate scratch grows with particle capacity. Table growth and epoch wrap cannot expose stale entries.
+
+The original ordered breadth-first traversal, links, queue, accepted cell-range pruning, Number distance predicate, bed Map and grain words are unchanged. Each original snow index receives one terrain query in its original order. The production terrain predicate is synchronous and particle-input-stable, although its basin cache may update. Mutating or reentrant replacement callbacks are outside the acceleration proof. No support result survives a build, so world edits and new snapshots still invoke complete reconstruction.
+
+The portable frozen gate derives its immutable baseline by reversing seven declared source edits. It checks ordered beds/heads, complete original scratch/queue words, unchanged inputs, terrain arguments and exceptions, direct reads against an original-key Map projection, Number/Float32 boundaries, aliases, allocation recovery, capacity/origin changes, halo limits and epoch wrap. The 1,989 synthetic gate and both 1,990-case captured-state gates passed. Run:
+
+```sh
+node tools/perf/snow-support-direct/gate.mjs
+```
+
+The installed gate defaults to the repository candidate, accepts an `AFTER` override before integration, and needs no full frozen baseline file. `FIXTURE` optionally adds a captured state with its root ledger and checks its independently recorded ordered support bed when present; `DUMP` saves the exact report.
+
+Six serial lexical ABBA cycles measured the complete support closure with a recorded original-slot root oracle and warmed scratch, including preflight and table work. The controlled 14,000-grain capture fell from 3.6 to 2.4 ms median; the natural mixed capture with 15,902 snow grains among 36,289 particles fell from 4.2 to 2.8 ms. Both improved 33.3%. These isolated costs exclude actual terrain-query service and GPU work.
+
+A separate four-run whole-game ABBA used five ordinary solving residents and 14,000 maintained snow grains for 30 seconds per run. Water, weather maintenance and baseline liquid GPU code stayed enabled. New atmospheric flakes were suppressed to retain the controlled population. Requested readback cadence two was a water-coupling demand proxy, not forced wetness. Physics progressed normally and trajectories differed.
+
+| Pooled whole-game measure | Baseline | Direct support |
+| --- | ---: | ---: |
+| Recorded callbacks | 4,708 | 5,005 |
+| Synchronous CPU median / p95, ms | 8.6 / 11.4 | 7.4 / 9.9 |
+| CPU frames above 8.33 ms | 50.96% | 21.54% |
+| Particle/weather median on support frames, ms | 4.4 | 3.1 |
+| Mean callback service rate, per second | 78.52 | 83.43 |
+| Completed support builds | 2,405 | 2,623 |
+| Internal body calls | 108,015 | 107,925 |
+
+All 2,623 candidate support calls used direct addressing. The result therefore includes more support service and nearly identical body work. The particle/weather bucket includes support and other weather work; do not add it to total CPU. Two-quantum GPU medians were about 8.73 and 8.80 ms with unchanged GPU source. Sparse encoder samples omit other GPU/render work, and CPU/GPU times overlap. Timer120 callback throughput is not native display FPS. These results support a CPU improvement, not a 120 FPS capacity claim; significant CPU overruns and GPU costs remain.
+
+Two serial 240-second ordinary-input routes retained natural snow emission, water, stock smoke and production readback ownership. Original resident IDs 1 through 5 survived; IDs 1, 2 and 3 completed verified ten-second drags in both runs. Held-body time was 35.90 and 35.82 seconds, with about 2.30 seconds of actual jets. Baseline completed 3,253 support builds; the candidate completed 3,385, all through direct addressing, with no failures. Internal body calls were 430,872 and 431,454. Peak snow populations were 17,421 and 16,902, so this adaptive pair is an ordinary-use validation with different trajectories, not a perfectly fixed workload.
+
+Full synchronous CPU median / p95 changed from 5.3 / 11.4 to 5.2 / 10.0 ms; frames above 8.33 ms changed from 13.64% to 11.95%. During handling, median CPU stayed 5.7 ms while p95 fell from 13.2 to 11.7 ms. Support-build particle/weather medians were 5.1 and 3.7 ms. In the 12,000 to 16,000 snow range they were 5.5 and 4.3 ms, and in the 16,000 to 20,000 range 6.2 and 4.6 ms. Full-route mean callback service was 90.80 and 92.63/s. Maximum CPU frames were 21.9 and 26.7 ms, so the p95 improvement does not mean every individual frame improved.
+
+Sampled two-quantum GPU spans had medians of 8.81 and 8.53 ms with unchanged GPU code and different populations. This does not attribute a GPU speedup to the CPU lookup. CPU and GPU budget failures remain; foreground native 120 FPS validation and final population limits are still pending.
+
+The private guest/fallback GPU fusion passed its exact boundary/contact gates but is not included: representative natural playback did not establish an overall benefit and support workloads differed. Lazy prefix AABB pruning is also excluded despite its large disconnected-cloud synthetic gain. Its captured cold/natural medians regressed about 2.8% and 2.4%, and ordinary 36,000-grain snow regressed 3.1%. Fewer operation counts or a special-case win do not override ordinary-state regressions.
+
+Candidate SHA is `be6f46f75dc9a1c7faf279f3db7b8655681444ea623f15a3ecbc0296e811a945`; recovered accepted baseline is `533e00ff0817f1532dbd3e7c448a4bdc502d214ebc0a0bf632a6df4952e88d9d`. See [SNOW_SUPPORT_DIRECT.md](SNOW_SUPPORT_DIRECT.md) for the proof and complete comparison scope. The project packet retains the controlled and natural summaries with the raw captures.

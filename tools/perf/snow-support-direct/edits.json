@@ -1,0 +1,35 @@
+{
+  "schema": "support-direct-rectangle-edits-v1",
+  "referenceSHA256": "533e00ff0817f1532dbd3e7c448a4bdc502d214ebc0a0bf632a6df4952e88d9d",
+  "candidateSHA256": "be6f46f75dc9a1c7faf279f3db7b8655681444ea623f15a3ecbc0296e811a945",
+  "edits": [
+    {
+      "before": "  function snowBuildSupport() {",
+      "after": "  var snowSupportCoordinates = new Float64Array(0);\n  var snowSupportDirectHeads = new Int32Array(0), snowSupportDirectStamps = new Uint32Array(0);\n  var snowSupportDirectEpoch = 0;\n  function snowBuildSupport() {"
+    },
+    {
+      "before": "    for (var i = 0; i < count; i++) {",
+      "after": "    // Whole-build admission precedes every terrain callback. Cached floor\n    // results remain Number/Float64, including signed zero. Original Map\n    // traversal is retained for borders, malformed or excessive rectangles.\n    var direct = pruneCells && count >= 0 && count <= 2147483647 && count === floor(count) &&\n      types instanceof Uint8Array && (xs instanceof Float32Array || xs instanceof Float64Array) &&\n      (ys instanceof Float32Array || ys instanceof Float64Array) &&\n      types.buffer instanceof ArrayBuffer && xs.buffer instanceof ArrayBuffer && ys.buffer instanceof ArrayBuffer &&\n      types.length >= count && xs.length >= count && ys.length >= count;\n    var coordinateCount = 0, minCol = Infinity, maxCol = -Infinity, minRow = Infinity, maxRow = -Infinity;\n    if (direct) {\n      try {\n        if (snowSupportCoordinates.length < count * 2) {\n          var coordinateCapacity = Math.max(256, count, snowSupportCoordinates.length / 2 * 2);\n          snowSupportCoordinates = new Float64Array(coordinateCapacity * 2);\n        }\n      } catch (coordinateAllocationError) { direct = false; }\n    }\n    if (direct) for (var preflight = 0; preflight < count; preflight++) {\n      if (types[preflight] !== 5) continue;\n      var px = xs[preflight], py = ys[preflight], pc = floor(px / cell), pr = floor(py / cell);\n      if (!(px >= 0 && px <= 1048576 && py >= -1048576 && py <= 1048576 &&\n          pc >= 1 && pc <= width - 2 && pr >= -1048576 && pr <= 1048576 &&\n          Number.isSafeInteger(pr * width + pc))) { direct = false; break; }\n      snowSupportCoordinates[coordinateCount * 2] = pc;\n      snowSupportCoordinates[coordinateCount * 2 + 1] = pr; coordinateCount++;\n      if (pc < minCol) minCol = pc; if (pc > maxCol) maxCol = pc;\n      if (pr < minRow) minRow = pr; if (pr > maxRow) maxRow = pr;\n    }\n    var directBaseCol = minCol - 1, directBaseRow = minRow - 1;\n    var directWidth = maxCol - minCol + 3, directHeight = maxRow - minRow + 3;\n    var directArea = directWidth * directHeight;\n    if (direct && !(coordinateCount > 0 && Number.isSafeInteger(directArea) && directArea <= 262144 &&\n        Number.isSafeInteger((minRow - 1) * width + minCol - 1) &&\n        Number.isSafeInteger((maxRow + 1) * width + maxCol + 1))) direct = false;\n    if (direct && snowSupportDirectHeads.length < directArea) {\n      try {\n        var directCapacity = Math.min(262144, Math.max(256, directArea, snowSupportDirectHeads.length * 2));\n        var newDirectHeads = new Int32Array(directCapacity);\n        var newDirectStamps = new Uint32Array(directCapacity);\n        snowSupportDirectHeads = newDirectHeads; snowSupportDirectStamps = newDirectStamps;\n        snowSupportDirectEpoch = 0;\n      } catch (directAllocationError) { direct = false; }\n    }\n    var directHeads = snowSupportDirectHeads, directStamps = snowSupportDirectStamps, epoch = 0;\n    if (direct) {\n      snowSupportDirectEpoch = (snowSupportDirectEpoch + 1) >>> 0;\n      if (snowSupportDirectEpoch === 0) { directStamps.fill(0); snowSupportDirectEpoch = 1; }\n      epoch = snowSupportDirectEpoch;\n    }\n    for (var i = 0; i < count; i++) {"
+    },
+    {
+      "before": "      var pointCol = floor(x / cell), pointRow = floor(y / cell);",
+      "after": "      var pointCol = direct ? snowSupportCoordinates[n * 2] : floor(x / cell);\n      var pointRow = direct ? snowSupportCoordinates[n * 2 + 1] : floor(y / cell);"
+    },
+    {
+      "before": "        var head = heads.get(key);\n        next[n] = head === undefined ? -1 : head; heads.set(key, n);",
+      "after": "        var directSlot = direct ? (pointRow - directBaseRow) * directWidth + pointCol - directBaseCol : 0;\n        var head = direct ? (directStamps[directSlot] === epoch ? directHeads[directSlot] : undefined) : heads.get(key);\n        next[n] = head === undefined ? -1 : head;\n        if (direct) { directStamps[directSlot] = epoch; directHeads[directSlot] = n; }\n        else heads.set(key, n);"
+    },
+    {
+      "before": "      var col = floor(x / cell), row = floor(y / cell), key = row * width + col;",
+      "after": "      var col = direct ? snowSupportCoordinates[n * 2] : floor(x / cell);\n      var row = direct ? snowSupportCoordinates[n * 2 + 1] : floor(y / cell), key = row * width + col;"
+    },
+    {
+      "before": "        var current = heads.get(nearKey), previous = -1;",
+      "after": "        var directSlot = direct ? (row + r - directBaseRow) * directWidth + col + c - directBaseCol : 0;\n        var current = direct ? (directStamps[directSlot] === epoch ? directHeads[directSlot] : undefined) : heads.get(nearKey), previous = -1;"
+    },
+    {
+      "before": "            if (previous < 0) heads.set(nearKey, following);",
+      "after": "            if (previous < 0) {\n              if (direct) { directStamps[directSlot] = epoch; directHeads[directSlot] = following; }\n              else heads.set(nearKey, following);\n            }"
+    }
+  ]
+}

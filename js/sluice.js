@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.135';
+  var GAME_VERSION = 'v28.136';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -39001,6 +39001,9 @@
   var snowSupportPoints = new Float64Array(0);
   var snowSupportNext = new Int32Array(0), snowSupportQueue = new Int32Array(0);
   function snowSupportDistance() { return snowContactRadius() * 2 + 0.25; }
+  var snowSupportCoordinates = new Float64Array(0);
+  var snowSupportDirectHeads = new Int32Array(0), snowSupportDirectStamps = new Uint32Array(0);
+  var snowSupportDirectEpoch = 0;
   function snowBuildSupport() {
     // A chain of touching grains rooted in terrain carries contact,
     // including while it slides or compacts. Velocity cannot make a pile
@@ -39024,24 +39027,78 @@
     // Any unsupported snow point retains the complete original traversal.
     var pruneCells = cell >= 1 && cell <= 1048576 && reach >= 1 / 1024 &&
       reach <= cell && width >= 3 && width <= 67108864 && width === floor(width);
+    // Whole-build admission precedes every terrain callback. Cached floor
+    // results remain Number/Float64, including signed zero. Original Map
+    // traversal is retained for borders, malformed or excessive rectangles.
+    var direct = pruneCells && count >= 0 && count <= 2147483647 && count === floor(count) &&
+      types instanceof Uint8Array && (xs instanceof Float32Array || xs instanceof Float64Array) &&
+      (ys instanceof Float32Array || ys instanceof Float64Array) &&
+      types.buffer instanceof ArrayBuffer && xs.buffer instanceof ArrayBuffer && ys.buffer instanceof ArrayBuffer &&
+      types.length >= count && xs.length >= count && ys.length >= count;
+    var coordinateCount = 0, minCol = Infinity, maxCol = -Infinity, minRow = Infinity, maxRow = -Infinity;
+    if (direct) {
+      try {
+        if (snowSupportCoordinates.length < count * 2) {
+          var coordinateCapacity = Math.max(256, count, snowSupportCoordinates.length / 2 * 2);
+          snowSupportCoordinates = new Float64Array(coordinateCapacity * 2);
+        }
+      } catch (coordinateAllocationError) { direct = false; }
+    }
+    if (direct) for (var preflight = 0; preflight < count; preflight++) {
+      if (types[preflight] !== 5) continue;
+      var px = xs[preflight], py = ys[preflight], pc = floor(px / cell), pr = floor(py / cell);
+      if (!(px >= 0 && px <= 1048576 && py >= -1048576 && py <= 1048576 &&
+          pc >= 1 && pc <= width - 2 && pr >= -1048576 && pr <= 1048576 &&
+          Number.isSafeInteger(pr * width + pc))) { direct = false; break; }
+      snowSupportCoordinates[coordinateCount * 2] = pc;
+      snowSupportCoordinates[coordinateCount * 2 + 1] = pr; coordinateCount++;
+      if (pc < minCol) minCol = pc; if (pc > maxCol) maxCol = pc;
+      if (pr < minRow) minRow = pr; if (pr > maxRow) maxRow = pr;
+    }
+    var directBaseCol = minCol - 1, directBaseRow = minRow - 1;
+    var directWidth = maxCol - minCol + 3, directHeight = maxRow - minRow + 3;
+    var directArea = directWidth * directHeight;
+    if (direct && !(coordinateCount > 0 && Number.isSafeInteger(directArea) && directArea <= 262144 &&
+        Number.isSafeInteger((minRow - 1) * width + minCol - 1) &&
+        Number.isSafeInteger((maxRow + 1) * width + maxCol + 1))) direct = false;
+    if (direct && snowSupportDirectHeads.length < directArea) {
+      try {
+        var directCapacity = Math.min(262144, Math.max(256, directArea, snowSupportDirectHeads.length * 2));
+        var newDirectHeads = new Int32Array(directCapacity);
+        var newDirectStamps = new Uint32Array(directCapacity);
+        snowSupportDirectHeads = newDirectHeads; snowSupportDirectStamps = newDirectStamps;
+        snowSupportDirectEpoch = 0;
+      } catch (directAllocationError) { direct = false; }
+    }
+    var directHeads = snowSupportDirectHeads, directStamps = snowSupportDirectStamps, epoch = 0;
+    if (direct) {
+      snowSupportDirectEpoch = (snowSupportDirectEpoch + 1) >>> 0;
+      if (snowSupportDirectEpoch === 0) { directStamps.fill(0); snowSupportDirectEpoch = 1; }
+      epoch = snowSupportDirectEpoch;
+    }
     for (var i = 0; i < count; i++) {
       if (types[i] !== 5) continue;
       var x = xs[i], y = ys[i], n = pointCount++;
       points[n * 2] = x; points[n * 2 + 1] = y;
-      var pointCol = floor(x / cell), pointRow = floor(y / cell);
+      var pointCol = direct ? snowSupportCoordinates[n * 2] : floor(x / cell);
+      var pointRow = direct ? snowSupportCoordinates[n * 2 + 1] : floor(y / cell);
       if (pruneCells && !(x >= 0 && x <= 1048576 && y >= -1048576 && y <= 1048576 &&
           pointCol >= 0 && pointCol < width)) pruneCells = false;
       if (solid(x, y + groundReach)) {
         queue[queueCount++] = n; next[n] = -1;
       } else {
         var key = pointRow * width + pointCol;
-        var head = heads.get(key);
-        next[n] = head === undefined ? -1 : head; heads.set(key, n);
+        var directSlot = direct ? (pointRow - directBaseRow) * directWidth + pointCol - directBaseCol : 0;
+        var head = direct ? (directStamps[directSlot] === epoch ? directHeads[directSlot] : undefined) : heads.get(key);
+        next[n] = head === undefined ? -1 : head;
+        if (direct) { directStamps[directSlot] = epoch; directHeads[directSlot] = n; }
+        else heads.set(key, n);
       }
     }
     for (var q = 0; q < queueCount; q++) {
       var n = queue[q], x = points[n * 2], y = points[n * 2 + 1];
-      var col = floor(x / cell), row = floor(y / cell), key = row * width + col;
+      var col = direct ? snowSupportCoordinates[n * 2] : floor(x / cell);
+      var row = direct ? snowSupportCoordinates[n * 2 + 1] : floor(y / cell), key = row * width + col;
       var bucket = bed.get(key);
       if (!bucket) { bucket = []; bed.set(key, bucket); }
       bucket.push(x, y);
@@ -39059,14 +39116,18 @@
       }
       for (var r = rMin; r <= rMax; r++) for (var c = cMin; c <= cMax; c++) {
         var nearKey = (row + r) * width + col + c;
-        var current = heads.get(nearKey), previous = -1;
+        var directSlot = direct ? (row + r - directBaseRow) * directWidth + col + c - directBaseCol : 0;
+        var current = direct ? (directStamps[directSlot] === epoch ? directHeads[directSlot] : undefined) : heads.get(nearKey), previous = -1;
         while (current !== undefined && current >= 0) {
           var following = next[current];
           var dx = x - points[current * 2], dy = y - points[current * 2 + 1];
           if (dx * dx + dy * dy <= reach2) {
             // Remove visited grains from candidate lists. Dense reached
             // buckets therefore do not get rescanned for every neighbour.
-            if (previous < 0) heads.set(nearKey, following);
+            if (previous < 0) {
+              if (direct) { directStamps[directSlot] = epoch; directHeads[directSlot] = following; }
+              else heads.set(nearKey, following);
+            }
             else next[previous] = following;
             queue[queueCount++] = current;
           } else previous = current;
