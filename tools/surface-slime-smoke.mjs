@@ -52,9 +52,11 @@ try {
   check('visitor shaders warm without errors',await ev('window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.visitors>=0'));
   await ev("document.body.classList.add('gm-fs'); document.body.appendChild(document.querySelector('.game-wrapper')); window.dispatchEvent(new Event('resize')); window.scrollTo(0,0)");
   await sleep(500);
-  check('five residents on first boot',await game('jelloBodies.filter(function(b){return !!b.surfaceSlime;}).length===5'));
+  check('no starter residents on first boot',await game('jelloBodies.filter(function(b){return !!b.surfaceSlime;}).length===0'));
   await screenshot('first-boot');
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false;skySlimeNext=100000');
+  // Explicit residents keep the physics fixtures independent of the new-game population.
+  await game('SURFACE_SLIME_STARTERS=5;surfaceSlimesSeeded=false;surfaceSlimeSeed();SURFACE_SLIME_STARTERS=0');
   console.log('RESIDENTS',await game('jelloBodies.filter(function(b){return !!b.surfaceSlime;}).map(function(b){return {x:b.cx,y:b.cy,n:b.n,state:b.surfaceSlime.state};})'));
   const movement=await game(`(function(){
     var b=jelloBodies.filter(function(b){return !!b.surfaceSlime;})[0], start=b.cx, heights=[], maxSpeed=0;
@@ -86,7 +88,7 @@ try {
   check('fall, squash and launch remain stable at 30/60/144 Hz',physics.every(p=>p.finite&&p.compression>4&&p.travel>25&&p.penetration<8));
   await screenshot('after-impact');
   const life=await game(`(function(){
-    resetJello();surfaceSlimesSeeded=false;surfaceSlimeSeed();
+    resetJello();SURFACE_SLIME_STARTERS=5;surfaceSlimesSeeded=false;surfaceSlimeSeed();SURFACE_SLIME_STARTERS=0;
     var saved=JSON.parse(JSON.stringify(surfaceSlimeSave())), ids=saved.residents.map(function(s){return s.id;});
     resetJello();surfaceSlimeRestore(saved);surfaceSlimeTick(1/60);
     var restored=surfaceSlimeSave(), unique=new Set(restored.residents.map(function(s){return s.id;}));

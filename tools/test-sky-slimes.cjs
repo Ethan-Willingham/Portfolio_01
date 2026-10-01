@@ -12,6 +12,25 @@ function world() {
  return ctx;
 }
 let reports=[];
+const opening=world();opening.skySlimeReset();
+assert.equal(opening.skySlimes.length,0,'fresh runs have no hard slimes');
+assert.equal(opening.skySlimeNext,90);
+assert.equal(opening.skySlimeFirstArrival,true);
+// The opening appointment advances underground, including across a save.
+for(let n=0;n<450;n++)opening.skySlimeTick(.1);
+assert.equal(opening.skySlimes.length,0,'no early fall');
+const waiting=JSON.parse(JSON.stringify(opening.skySlimeSave()));
+opening.skySlimeReset();opening.skySlimeRestore(waiting);
+assert.equal(opening.skySlimeNext,waiting.next);assert.equal(opening.skySlimeFirstArrival,true);
+for(let n=0;n<451;n++)opening.skySlimeTick(.1);
+assert.equal(opening.skySlimes.length,1,'first fall arrives underground before sunset');
+assert.equal(opening.skySlimeFirstArrival,false);
+const repeat=opening.skySlimeNext;assert(repeat>=28&&repeat<=46);
+for(let n=0;n<400;n++)opening.skySlimeTick(.1);
+assert.equal(opening.skySlimeNext,repeat,'later arrivals wait for the rig to return');
+opening.skySlimeReset();opening.skySlimeRestore({next:7,serial:1,slimes:[]});
+assert.equal(opening.skySlimeFirstArrival,false,'legacy saves keep their original schedule');
+opening.skySlimeTick(.1);assert.equal(opening.skySlimeNext,7);
 for (const fps of [30,60,144]) {
  const w=world(); const s=w.skySlimeSpawn(4000,-320);s.vx=0;s.bounce=.81;
  let impacts=[], prev=s.vy, minY=s.y, maxBelow=0;

@@ -4,7 +4,9 @@
      without ever feeding render deformation back into collision energy.
      These are guests, independent of the parked underground NPC brains. */
   var skySlimes = [];
-  var skySlimeNext = 7;
+  var SKY_SLIME_FIRST_DELAY = 90; // First fall is 30s before the opening sunset.
+  var skySlimeNext = SKY_SLIME_FIRST_DELAY;
+  var skySlimeFirstArrival = true;
   var skySlimeSerial = 1;
   var skySlimeDust = [];
   var SKY_SLIME_MAX = 2; // outdoor rocks, including a carried visitor; two more fit inside
@@ -83,7 +85,8 @@
   function skySlimeReset() {
     skySlimes.length = 0;
     skySlimeDust.length = 0;
-    skySlimeNext = 7;
+    skySlimeNext = SKY_SLIME_FIRST_DELAY;
+    skySlimeFirstArrival = true;
     skySlimeSerial = 1;
     skySlimeRigLast = null;
   }
@@ -98,7 +101,8 @@
   }
 
   function skySlimeSave() {
-    return { next: skySlimeNext, serial: skySlimeSerial, slimes: skySlimes.map(skySlimeRecord) };
+    return { next: skySlimeNext, firstArrival: skySlimeFirstArrival,
+      serial: skySlimeSerial, slimes: skySlimes.map(skySlimeRecord) };
   }
 
   function skySlimeHydrate(data) {
@@ -125,6 +129,8 @@
     skySlimeDust.length = 0;
     skySlimeSerial = data && isFinite(data.serial) ? Math.max(1, data.serial) : 1;
     skySlimeNext = data && isFinite(data.next) ? skySlimeClamp(data.next, 3, 100) : 7;
+    // Existing saves retain their normal surface-only arrival schedule.
+    skySlimeFirstArrival = !!(data && data.firstArrival === true);
     var list = Array.isArray(data) ? data : data && data.slimes;
     if (!Array.isArray(list)) return;
     for (var i = 0; i < Math.min(SKY_SLIME_MAX, list.length); i++) {
@@ -651,11 +657,16 @@
   function skySlimeTick(dt) {
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
-    // A deep mining trip never fills the surface with unseen arrivals.
+    // The opening fall keeps its appointment while the rig is mining.
+    // Later arrivals retain the surface-only schedule and population cap.
     var carried = typeof siphon !== 'undefined' && siphon && siphon.passenger ? 1 : 0;
-    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried < SKY_SLIME_MAX) {
+    if (player && (skySlimeFirstArrival || player.y < (SKY_ROWS + 6) * TILE) &&
+        skySlimes.length + carried < SKY_SLIME_MAX) {
       skySlimeNext -= dt;
-      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 28 + Math.random() * 18; }
+      if (skySlimeNext <= 0 && skySlimeSpawn()) {
+        skySlimeFirstArrival = false;
+        skySlimeNext = 28 + Math.random() * 18;
+      }
     }
     skySlimeVisitTick(dt);
     for (var di = skySlimeDust.length - 1; di >= 0; di--) {

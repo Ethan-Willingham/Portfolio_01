@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.137';
+  var GAME_VERSION = 'v28.138';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -2949,7 +2949,7 @@
   var CAMERA_DEEP_FRAC    = 0.43;
   // Day/night cycle boot values. Shared by the initializers below and init() so
   // a restart resets the cycle to the same time of day as a fresh boot.
-  var TIME_OF_DAY_START = 0.75 - 60 / DAY_CYCLE_SECONDS;  // v10.74: start ~60s before the first dusk (sunset at t=0.75)
+  var TIME_OF_DAY_START = 0.5;  // Fresh runs start at noon, 120s before sunset.
   var MOON_PHASE_START  = 0.5;  // 0 = new, 0.5 = full; steps 1/8 each in-game day
   var timeOfDay = TIME_OF_DAY_START;
   var moonPhase = MOON_PHASE_START;
@@ -73654,7 +73654,7 @@
      These residents use the shared XPBD lattice, terrain/rig contacts, jets,
      pressure, and inter-body solve. Travelling muscles work against skin grips.
      Underground NPCs keep their independent, normally disabled switch. */
-  var SURFACE_SLIME_STARTERS = 5;
+  var SURFACE_SLIME_STARTERS = 0;
   var surfaceSlimesSeeded = false;
   var surfaceSlimeGuests = [];
   var surfaceSlimeHues = [133, 284, 190, 32, 333];
@@ -73665,7 +73665,7 @@
     var seed = isFinite(identity.seed) ? skySlimeClamp(identity.seed, 0, 1) : Math.random();
     // Unhardening keeps the incoming visitor's size. Older resident saves
     // have no radius; use the same 22..27 range as skySlimeFresh for those
-    // and the five playtest residents. The 0.94 core below sheds the shell.
+    // and manually placed residents. The 0.94 core below sheds the shell.
     var radius = typeof identity.r === 'number' && isFinite(identity.r) ?
       skySlimeClamp(identity.r, 22, 27) : 22 + seed * 5;
     var b = jelloBuildDisc(x, y, radius, 'slime');
@@ -74019,7 +74019,9 @@
      without ever feeding render deformation back into collision energy.
      These are guests, independent of the parked underground NPC brains. */
   var skySlimes = [];
-  var skySlimeNext = 7;
+  var SKY_SLIME_FIRST_DELAY = 90; // First fall is 30s before the opening sunset.
+  var skySlimeNext = SKY_SLIME_FIRST_DELAY;
+  var skySlimeFirstArrival = true;
   var skySlimeSerial = 1;
   var skySlimeDust = [];
   var SKY_SLIME_MAX = 2; // outdoor rocks, including a carried visitor; two more fit inside
@@ -74098,7 +74100,8 @@
   function skySlimeReset() {
     skySlimes.length = 0;
     skySlimeDust.length = 0;
-    skySlimeNext = 7;
+    skySlimeNext = SKY_SLIME_FIRST_DELAY;
+    skySlimeFirstArrival = true;
     skySlimeSerial = 1;
     skySlimeRigLast = null;
   }
@@ -74113,7 +74116,8 @@
   }
 
   function skySlimeSave() {
-    return { next: skySlimeNext, serial: skySlimeSerial, slimes: skySlimes.map(skySlimeRecord) };
+    return { next: skySlimeNext, firstArrival: skySlimeFirstArrival,
+      serial: skySlimeSerial, slimes: skySlimes.map(skySlimeRecord) };
   }
 
   function skySlimeHydrate(data) {
@@ -74140,6 +74144,8 @@
     skySlimeDust.length = 0;
     skySlimeSerial = data && isFinite(data.serial) ? Math.max(1, data.serial) : 1;
     skySlimeNext = data && isFinite(data.next) ? skySlimeClamp(data.next, 3, 100) : 7;
+    // Existing saves retain their normal surface-only arrival schedule.
+    skySlimeFirstArrival = !!(data && data.firstArrival === true);
     var list = Array.isArray(data) ? data : data && data.slimes;
     if (!Array.isArray(list)) return;
     for (var i = 0; i < Math.min(SKY_SLIME_MAX, list.length); i++) {
@@ -74666,11 +74672,16 @@
   function skySlimeTick(dt) {
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
-    // A deep mining trip never fills the surface with unseen arrivals.
+    // The opening fall keeps its appointment while the rig is mining.
+    // Later arrivals retain the surface-only schedule and population cap.
     var carried = typeof siphon !== 'undefined' && siphon && siphon.passenger ? 1 : 0;
-    if (player && player.y < (SKY_ROWS + 6) * TILE && skySlimes.length + carried < SKY_SLIME_MAX) {
+    if (player && (skySlimeFirstArrival || player.y < (SKY_ROWS + 6) * TILE) &&
+        skySlimes.length + carried < SKY_SLIME_MAX) {
       skySlimeNext -= dt;
-      if (skySlimeNext <= 0) { skySlimeSpawn(); skySlimeNext = 28 + Math.random() * 18; }
+      if (skySlimeNext <= 0 && skySlimeSpawn()) {
+        skySlimeFirstArrival = false;
+        skySlimeNext = 28 + Math.random() * 18;
+      }
     }
     skySlimeVisitTick(dt);
     for (var di = skySlimeDust.length - 1; di >= 0; di--) {

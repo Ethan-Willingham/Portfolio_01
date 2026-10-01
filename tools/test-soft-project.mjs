@@ -531,8 +531,8 @@ async function runDefaults() {
   check('ordinary game enables all eight resident physics paths without the playtest', defaults.contact && defaults.handling && defaults.terrain && defaults.material && defaults.pairs && defaults.intent && defaults.world && defaults.presentation && !defaults.playtest);
   defaults.restore = await game(`(function() {
     clearTimeout(gameRafId); cancelAnimationFrame(gameRafId); gameRafId = 0;
-    // Loading can finish before the first gameplay frame. Seed residents
-    // through their normal tick before capturing a nonempty ordinary save.
+    // New games are empty. Place a resident to exercise an existing save.
+    surfaceSlimeBuild((DECK_CENTER_COL - 4) * TILE, SKY_ROWS * TILE - 38, {id:999,seed:.4});
     surfaceSlimeTick(1/60);
     var saved = JSON.parse(JSON.stringify(surfaceSlimeSave()));
     var identities = saved.residents.map(function(s) { return [s.id,s.r,s.hue,s.seed]; });
@@ -565,7 +565,7 @@ async function runLifecycle() {
       softProjectEnabled = !!mode; softProjectStage = SOFT_PROJECT_MAX_STAGE; softProjectSelect(true);
       resetJello(); skySlimeReset(); skySlimeNext = 1e9;
       gamePaused = gameOver = gameWon = bathMode = false; shopState = 'closed';
-      surfaceSlimesSeeded = false; surfaceSlimeSeed();
+      SURFACE_SLIME_STARTERS = 5; surfaceSlimesSeeded = false; surfaceSlimeSeed(); SURFACE_SLIME_STARTERS = 0;
       var saved = JSON.parse(JSON.stringify(surfaceSlimeSave()));
       resetJello(); surfaceSlimeRestore(saved); surfaceSlimeTick(1/60);
       var restored = surfaceSlimeSave();

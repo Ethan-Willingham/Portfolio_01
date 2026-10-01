@@ -1586,7 +1586,7 @@
   var CAMERA_DEEP_FRAC    = 0.43;
   // Day/night cycle boot values. Shared by the initializers below and init() so
   // a restart resets the cycle to the same time of day as a fresh boot.
-  var TIME_OF_DAY_START = 0.75 - 60 / DAY_CYCLE_SECONDS;  // v10.74: start ~60s before the first dusk (sunset at t=0.75)
+  var TIME_OF_DAY_START = 0.5;  // Fresh runs start at noon, 120s before sunset.
   var MOON_PHASE_START  = 0.5;  // 0 = new, 0.5 = full; steps 1/8 each in-game day
   var timeOfDay = TIME_OF_DAY_START;
   var moonPhase = MOON_PHASE_START;

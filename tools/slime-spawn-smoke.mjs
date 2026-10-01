@@ -1,4 +1,4 @@
-// Verify retired wild slimes stay absent in fresh worlds and legacy saves.
+// Verify the empty noon opening, first fall, and existing-save preservation.
 // Run: node tools/slime-spawn-smoke.mjs. Uses a private Chrome for Testing process.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -43,11 +43,13 @@ try {
   ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p?.reject(m.error):p?.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(a=>a.value||a.description));});
   await send('Runtime.enable');await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
-  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35`});
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1`});
   for(let i=0;i<300;i++){if(await ev(`typeof __slimeSpawnTest==='function' && __slimeSpawnTest("introPhase === 'done'")`))break;await sleep(100);}
   check('normal game boot completes with soft bodies and bathhouse enabled', await game("introPhase === 'done' && ENABLE_JELLO && ENABLE_BATH"));
   check('shader warmup has no errors', await ev('window.__shaderWarm.errors.length === 0'));
   await game('cancelAnimationFrame(gameRafId); gameRafId = 0;');
+  check('ordinary boot starts at noon without soft or hard slimes', await game(
+    'timeOfDay >= 0.5 && timeOfDay < 0.51 && jelloBodies.length === 0 && skySlimes.length === 0'));
   const worlds = await game(`(function () {
     var results = [], modes = ['regular', 'wide', 'deep', 'rain', 'snow'];
     for (var i = 0; i < modes.length; i++) {
@@ -63,17 +65,45 @@ try {
       results.push({mode: modes[i], tiles: tiles, ponds: surfacePonds.length,
         residents: jelloBodies.filter(function (b) { return !!b.surfaceSlime; }).length,
         glass: jelloBodies.filter(function (b) { return !b.surfaceSlime && !b.guest; }).length,
-        rain: worldRainEnabled, snow: worldSnowEnabled});
+        rain: worldRainEnabled, snow: worldSnowEnabled, front: rain.climate.kind,
+        tod: timeOfDay, rocks: skySlimes.length});
     }
     return results;
   })()`);
   console.log('FRESH WORLDS', worlds);
-  check('all pond styles and weather worlds keep their ponds and five residents without wild slimes',
-    worlds.every(w => w.tiles === 0 && w.glass === 0 && w.residents === 5 && w.ponds > 0));
-  check('rain and snow generation were exercised', worlds[3].rain && !worlds[3].snow && worlds[4].snow);
+  check('all pond styles and weather worlds start empty at noon and keep their ponds',
+    worlds.every(w => w.tiles === 0 && w.glass === 0 && w.residents === 0 &&
+      w.rocks === 0 && w.tod === 0.5 && w.ponds > 0));
+  check('rain-first and snow-first weather worlds were exercised',
+    worlds[3].rain && worlds[3].snow && worlds[3].front === 'rain' &&
+    worlds[4].rain && worlds[4].snow && worlds[4].front === 'snow');
+  const opening = await game(`(function () {
+    init(); surfaceSlimeTick(1/60);
+    player.y = (SKY_ROWS + 20) * TILE;
+    var elapsed = 0, first = null;
+    for (var n = 0; n < 1000; n++) {
+      timeOfDay += 0.1 / DAY_CYCLE_SECONDS; elapsed += 0.1; skySlimeTick(0.1);
+      if (skySlimes.length) { first = {elapsed:elapsed,tod:timeOfDay,
+        airborne:skySlimes[0].y < SKY_ROWS * TILE}; break; }
+    }
+    var next = skySlimeNext;
+    for (n = 0; n < 400; n++) skySlimeTick(0.1);
+    var result = {first:first,repeat:next,surfaceOnly:skySlimeNext===next,
+      residents:surfaceSlimeSave().residents.length};
+    TOD_BOOT = 0.35; init(); result.override = timeOfDay; TOD_BOOT = -1; init();
+    return result;
+  })()`);
+  console.log('OPENING', opening);
+  check('first hard slime falls before sunset even while mining, with later timing unchanged',
+    opening.first && opening.first.elapsed >= 90 && opening.first.elapsed < 90.2 &&
+    opening.first.tod < 0.75 && opening.first.airborne &&
+    opening.repeat >= 28 && opening.repeat <= 46 && opening.surfaceOnly && opening.residents === 0);
+  check('time-of-day override still wins on reset', opening.override === 0.35);
   const migrated = await game(`(function () {
     SluiceOptions.particleRain = SluiceOptions.particleSnow = false;
     init(); surfaceSlimeSeed();
+    // Model an existing save with the former five residents.
+    SURFACE_SLIME_STARTERS = 5; surfaceSlimesSeeded = false; surfaceSlimeSeed(); SURFACE_SLIME_STARTERS = 0;
     var shoreR = SKY_ROWS - 1, buriedR = SKY_ROWS + 12, col = 20;
     world[shoreR][col] = {type:'jello',hp:999999};
     world[buriedR][col] = {type:'jello',jellyType:'frost',hp:123,shiny:true};
@@ -83,6 +113,7 @@ try {
     skySlimes.push(rock);
     money = 4321; cargo = ['iron'];
     var env = JSON.parse(JSON.stringify(saveBuild()));
+    env.profile.timeOfDay = 0.82; delete env.skySlimes.firstArrival;
     env.jello = [{c:[shoreR,col + 2],t:'slime',h:120,x:(col + 2.5)*TILE,y:(shoreR + 0.5)*TILE},
       {c:[buriedR,col + 2],t:'frost',h:200,x:(col + 2.5)*TILE,y:(buriedR + 0.5)*TILE}];
     // Start with live glass bodies too, verifying load clears stale runtime state.
@@ -101,14 +132,16 @@ try {
       money:money,cargo:JSON.stringify(cargo) === JSON.stringify(env.cargo),
       dug:world[buriedR][col+1] === null && terrainClearedKinds[buriedR+':'+(col+1)] === 'stone',
       ponds:JSON.stringify(second.ponds) === JSON.stringify(env.ponds),
-      legacyField:Object.prototype.hasOwnProperty.call(second,'jello')};
+      legacyField:Object.prototype.hasOwnProperty.call(second,'jello'),
+      tod:timeOfDay,firstArrival:skySlimeFirstArrival};
   })()`);
   console.log('LEGACY SAVE', migrated);
   check('legacy plain/typed tiles and activated glass bodies are removed',
     migrated.oldBodies === 2 && migrated.shore === null && migrated.buried === null && migrated.glass === 0);
   check('reload keeps resident identities, sky visitor, money, cargo, dug terrain and ponds',
     migrated.residents === 5 && migrated.ids && migrated.sky && migrated.money === 4321 &&
-    migrated.cargo && migrated.dug && migrated.ponds && !migrated.legacyField);
+    migrated.cargo && migrated.dug && migrated.ponds && !migrated.legacyField &&
+    migrated.tod === 0.82 && !migrated.firstArrival);
   await game('render()');
   check('browser reports no runtime errors', errors.length === 0);
   console.log('PASS slime-spawn removal and save migration');

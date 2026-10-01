@@ -219,20 +219,22 @@ spill returns to the tank or survives a save. The supplied striker removes the f
 
 Two rocky visitors can roam outdoors, counting a carried visitor toward that
 limit. Two more visitors can wait or bathe inside. An eighteen-second warm soak pays $75. These are initial service
-values, not guest recipes. Sky arrivals still use their existing surface-distance
-rules. This change does not implement the earlier day/night proposal.
+values, not guest recipes. New games begin at noon without visitors. The first
+rocky visitor falls after 90 seconds of play, 30 seconds before sunset, even
+while the rig is mining. Later arrivals retain their surface-distance rules.
+Service remains available throughout the day and night.
 
 ## Bath-born residents (v28.57)
 
-Five soft residents appear around the starting town for playtesting, including
-on existing saves. A completed warm bath changes a rocky guest into the same
+New games have no starter residents. Existing saved residents remain in place.
+A completed warm bath changes a rocky guest into the same
 kind of creature. Its shell fades during the last part of the soak, and its
 surface body spawns at the door after departure. It keeps its visitor identity,
 stays in the world, and saves separately from the rocky population. Reloading
-does not add another five. The payment still happens once per completed bath.
+does not add starter residents. The payment still happens once per completed bath.
 Unhardening preserves the incoming visitor's individual radius through departure
 and saves. The exposed soft core uses 94% of that radius, as in the bath's shell
-fade. Starter residents and older saves use the sky visitors' 22 to 27 pixel
+fade. Manually placed residents and older saves use the sky visitors' 22 to 27 pixel
 radius range instead of the previous, larger 24 to 29 range.
 
 These are 37-point deformable meshes in the existing XPBD solver. Their
@@ -287,7 +289,7 @@ brief blinks. The eye compresses with the central gel and stays readable through
 any roll. Pond water provides buoyancy and releases terrain grips so they can
 float; the real boundary displaces WebGPU water, with contour collision in the CPU fallback.
 Residents do not dissolve. Off-camera bodies use the existing simulation culling.
-The five starting residents do not count toward either rocky-visitor limit.
+Soft residents do not count toward either rocky-visitor limit.
 
 `347-surface-slimes.js` owns the mesh, appearance and persistence;
 `347-slime-locomotion.js` owns muscles, crawling and terrain adhesion;

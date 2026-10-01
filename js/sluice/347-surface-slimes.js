@@ -2,7 +2,7 @@
      These residents use the shared XPBD lattice, terrain/rig contacts, jets,
      pressure, and inter-body solve. Travelling muscles work against skin grips.
      Underground NPCs keep their independent, normally disabled switch. */
-  var SURFACE_SLIME_STARTERS = 5;
+  var SURFACE_SLIME_STARTERS = 0;
   var surfaceSlimesSeeded = false;
   var surfaceSlimeGuests = [];
   var surfaceSlimeHues = [133, 284, 190, 32, 333];
@@ -13,7 +13,7 @@
     var seed = isFinite(identity.seed) ? skySlimeClamp(identity.seed, 0, 1) : Math.random();
     // Unhardening keeps the incoming visitor's size. Older resident saves
     // have no radius; use the same 22..27 range as skySlimeFresh for those
-    // and the five playtest residents. The 0.94 core below sheds the shell.
+    // and manually placed residents. The 0.94 core below sheds the shell.
     var radius = typeof identity.r === 'number' && isFinite(identity.r) ?
       skySlimeClamp(identity.r, 22, 27) : 22 + seed * 5;
     var b = jelloBuildDisc(x, y, radius, 'slime');

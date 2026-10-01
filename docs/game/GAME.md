@@ -20,9 +20,12 @@ the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and
 normal playthrough (see `BALANCE.md`).
 
 **Bathhouse and fire room (v28.13):** sky slimes land, meander to the banya,
-wait, soak in warm water, pay, and become soft surface residents. Five friendly
-residents spawn around the starting town for playtesting; drag and toss them,
-push them with the rig, or use the jets. Bounded muscle effort and local terrain
+wait, soak in warm water, pay, and become soft surface residents.
+New games start at noon with no soft residents or rocky visitors. The first
+rocky visitor falls after 90 seconds of play, 30 seconds before sunset, even
+during a mining trip. Later arrivals keep their surface-only schedule.
+Drag and toss softened residents, push them with the rig, or use the jets.
+Bounded muscle effort and local terrain
 grips move their soft bodies toward nearby destinations and up walls and ledges.
 Loads, lost footing, and interference can defeat that effort. Elastic material
 and interpolation between physics ticks keep the outline fluid.
