@@ -5,7 +5,7 @@
 (function (root) {
   'use strict';
   // A roughly 52-degree pitch opens the basket and floor while retaining height.
-  const CAMERA = Object.freeze({ width:720, height:580, x:264, y:24, horizontal:.84, vertical:.66, elevation:.74 });
+  const CAMERA = Object.freeze({ width:720, height:580, x:290, y:24, horizontal:.84, vertical:.66, elevation:.74 });
   const VIEW_Z = CAMERA.vertical * 2 / CAMERA.elevation;
   const project = (p, origin = CAMERA) => ({ x:origin.x + (p.x-p.y)*CAMERA.horizontal, y:origin.y + (p.x+p.y)*CAMERA.vertical - (p.z||0)*CAMERA.elevation });
   function unproject(p, z=0, origin=CAMERA) {
@@ -20,6 +20,7 @@
   const normalize = p => {const n=Math.hypot(p.x,p.y,p.z)||1;return {x:p.x/n,y:p.y/n,z:p.z/n};};
   function local(b,x,y,z=0) {
     const c=Math.cos(b.a||0),s=Math.sin(b.a||0);
+    if(b.pitch||b.rollTilt){const cp=Math.cos(b.pitch||0),sp=Math.sin(b.pitch||0),cr=Math.cos(b.rollTilt||0),sr=Math.sin(b.rollTilt||0),xx=x*cp+z*sp,zz=z*cp-x*sp;z=zz*cr+y*sr;y=y*cr-zz*sr;x=xx;}
     return {x:b.x+x*c-y*s,y:b.y+x*s+y*c,z:(b.z||0)+z};
   }
   function hash(x,y) {
@@ -30,7 +31,8 @@
   function rect(g,x,y,w,h,color) {g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
   function poly(g,points,color) {
     if(points.length<3)return;
-    const low=Math.max(0,Math.floor(Math.min(...points.map(p=>p.y)))),high=Math.min(g.canvas.height,Math.ceil(Math.max(...points.map(p=>p.y))));
+    const t=g.getTransform(),left=-t.e/t.a,right=(g.canvas.width-t.e)/t.a,top=-t.f/t.d,bottom=(g.canvas.height-t.f)/t.d;
+    const low=Math.max(Math.floor(top),Math.floor(Math.min(...points.map(p=>p.y)))),high=Math.min(Math.ceil(bottom),Math.ceil(Math.max(...points.map(p=>p.y))));
     g.fillStyle=color;
     for(let y=low;y<high;y++) {
       const cuts=[];
@@ -40,7 +42,7 @@
       }
       cuts.sort((a,b)=>a-b);
       for(let i=0;i<cuts.length-1;i+=2) {
-        const x=Math.max(0,Math.round(cuts[i])),end=Math.min(g.canvas.width,Math.round(cuts[i+1]));
+        const x=Math.max(Math.floor(left),Math.round(cuts[i])),end=Math.min(Math.ceil(right),Math.round(cuts[i+1]));
         if(end>x)g.fillRect(x,y,end-x,1);
       }
     }
@@ -75,7 +77,7 @@
   function create(P) {
     const Physics=root.CartPhysics,Stock=root.CartStock;
     if(!Physics||!Stock)throw new Error('The cart view needs the cart simulation.');
-    const {BODY,WHEELS,CASTER,CHECKPOINT_RADIUS,CHECKPOINT_SENSOR,casterPose,casterCorners,corners,ROOM}=Physics;
+    const {BODY,WHEELS,CASTER,CHECKPOINT_RADIUS,casterPose,casterCorners,corners,ROOM}=Physics;
     const swatches=[P.coral,P.blue,P.gold,P.sage,P.clay,P.purple];
     const colors=new Map(),tints=new Map(),textures=new Map();
     function rgb(color) {
@@ -105,11 +107,12 @@
       return textures.get(key);
     }
     class Scene {
-      constructor(){this.commands=[];this.sequence=0;}
+      constructor(opacity=1){this.commands=[];this.sequence=0;this.opacity=opacity;}
       push(points,draw,bias=0) {
         this.commands.push({depth:points.reduce((n,p)=>n+depth(p),0)/points.length+bias,order:this.sequence++,draw});
       }
       face(points,color,alpha=1,detail=null,edges=false) {
+        alpha*=this.opacity;
         const n=normalize(cross(subtract(points[1],points[0]),subtract(points[2],points[0])));
         if(n.x+n.y+n.z*VIEW_Z<=.005)return;
         const tint=shade(color,n);
@@ -120,9 +123,11 @@
         });
       }
       flat(points,color,alpha=1,bias=0) {
+        alpha*=this.opacity;
         this.push(points,(g,origin)=>{g.globalAlpha=alpha;poly(g,points.map(p=>project(p,origin)),color);g.globalAlpha=1;},bias);
       }
       wire(a,b,color=P.steel,width=1,alpha=1) {
+        alpha*=this.opacity;
         this.push([a,b],(g,origin)=>{g.globalAlpha=alpha;line(g,project(a,origin),project(b,origin),color,width);g.globalAlpha=1;},.04);
       }
       box(transform,x,y,z,w,h,d,color,top=color,edges=false) {
@@ -138,10 +143,11 @@
       }
       limb(a,b,width,endWidth,color,highlight=null) {
         this.push([a,b],(g,origin)=>{
+          g.globalAlpha=this.opacity;
           const p=project(a,origin),q=project(b,origin),length=Math.hypot(q.x-p.x,q.y-p.y)||1,nx=-(q.y-p.y)/length,ny=(q.x-p.x)/length;
           const silhouette=(w,h)=>[{x:p.x+nx*w/2,y:p.y+ny*w/2},{x:q.x+nx*h/2,y:q.y+ny*h/2},{x:q.x-nx*h/2,y:q.y-ny*h/2},{x:p.x-nx*w/2,y:p.y-ny*w/2}];
           poly(g,silhouette(width+1,endWidth+1),P.dark);poly(g,silhouette(width,endWidth),color);
-          if(highlight)line(g,add(p,-.5),add(q,-.5),highlight);
+          if(highlight)line(g,add(p,-.5),add(q,-.5),highlight);g.globalAlpha=1;
         });
       }
       flush(g,origin=CAMERA) {
@@ -166,12 +172,12 @@
       groundPoly(g,[[length/2,0],[length/2-8,-5],[length/2-8,5]].map(p=>local(b,...p)),color,alpha);
     }
     function floorTexture(g,level) {
-      const grout=blend(P.floor,P.hairDark,.19);
+      const accent=P[level.theme]||P.gold,base=blend(accent,P.cream,.36),grout=blend(accent,P.hairDark,.28);
       groundPoly(g,quad(8,8,464,284),grout);
       // Deterministic terrazzo, laid in the same plane as the physical floor.
       for(let row=0,y=8;y<292;row++,y+=24)for(let col=0,x=8;x<472;col++,x+=24) {
         const seed=col*137+row*911,v=hash(seed,41),w=Math.min(23,472-x),h=Math.min(23,292-y);
-        const tint=blend(blend(P.floor,P.cream,.14+v*.15),v>.58?P.gold:P.clay,.05);
+        const tint=blend(base,v>.58?P.light:accent,.08+v*.12);
         groundPoly(g,quad(x+.7,y+.7,w-1,h-1),tint);
         groundLine(g,{x:x+1,y:y+1},{x:x+w-1,y:y+1},P.light,1,.35);
         groundLine(g,{x:x+1,y:y+1},{x:x+1,y:y+h-1},P.light,1,.25);
@@ -205,39 +211,79 @@
       groundLocal(g,e,3,-e.width/2,2,e.width,P.steelShade);
       groundLocal(g,e,5,-e.width/2,1,e.width,P.light);
     }
+    function wallRuns(level,side) {
+      const end=side==='left'||side==='right'?292:472,exit=Physics.exitGeometry(level.exit);
+      const gaps=level.openings?.[side]||[...(exit.side===side?[[exit.low,exit.high]]:[]),...(level.cliffs||[]).filter(c=>c.side===side).map(c=>[c.low,c.high])];
+      const runs=[];let cursor=8;
+      for(const [a,b]of [...gaps].sort((a,b)=>a[0]-b[0])){if(a>cursor)runs.push([cursor,a]);cursor=Math.max(cursor,b);}
+      if(cursor<end)runs.push([cursor,end]);return runs;
+    }
+    function hazards(g,level) {
+      for(const h of level.hazards||[]) {
+        const bank=blend(P.pine,P.hairDark,.22),deep=blend(P.blue,P.dark,.36);
+        groundPoly(g,circle(h,h.rx+4,h.ry+4),bank);
+        groundPoly(g,circle(h,h.rx+1,h.ry+1),P.steelShade);
+        groundPoly(g,circle(h,h.rx,h.ry,-7),deep);
+        groundPoly(g,circle(h,h.rx-3,h.ry-3,-6),P.blue);
+        groundPoly(g,circle(add(h,7,4),h.rx*.68,h.ry*.62,-6),blend(P.blue,P.pine,.24));
+        groundRing(g,h,1,P.blue);
+        for(let i=0;i<25;i++) {
+          const x=h.x+(hash(i,831)-.5)*h.rx*1.7,y=h.y+(hash(i,191)-.5)*h.ry*1.5;
+          if(((x-h.x)/h.rx)**2+((y-h.y)/h.ry)**2>.75)continue;
+          groundLine(g,{x,y,z:-6},{x:x+5+i%5,y:y-2,z:-6},i%3?P.light:deep,1,.55);
+        }
+        for(let i=0;i<12;i++) {
+          const a=i*Math.PI*2/12,q={x:h.x+Math.cos(a)*(h.rx+5),y:h.y+Math.sin(a)*(h.ry+5)};
+          groundPoly(g,circle(q,2.4,1.9),i%3?P.sage:P.clay);
+          if(i%3===0)for(const v of [-1,1])groundLine(g,{...q},{x:q.x+v*2,y:q.y,z:7},P.pine,1);
+        }
+        const q=project({...h,z:-6});text(g,'DEEP WATER',q.x,q.y+4,deep,6,'center');
+      }
+      for(const c of level.cliffs||[]) {
+        const vertical=c.side==='left'||c.side==='right',axis=vertical?(c.side==='left'?8:472):(c.side==='top'?8:292);
+        const a=vertical?{x:axis,y:c.low}:{x:c.low,y:axis},b=vertical?{x:axis,y:c.high}:{x:c.high,y:axis};
+        for(let z=-32;z<0;z+=7)groundLine(g,{...a,z},{...b,z},z%2?P.hair:blend(P.clay,P.hairDark,.4),3);
+        for(let u=c.low;u<c.high;u+=10) {
+          const x=vertical?axis+(c.side==='left'?1:-7):u,y=vertical?u:axis+(c.side==='top'?1:-7);
+          groundPoly(g,quad(x,y,vertical?6:9,vertical?9:6),Math.floor(u/10)%2?P.gold:P.hairDark);
+        }
+        const q=project(vertical?{x:axis-15,y:(c.low+c.high)/2}:{x:(c.low+c.high)/2,y:axis-15});text(g,'DROP',q.x,q.y,P.hairDark,6,'center');
+      }
+    }
     function room(scene,level) {
       const tr=(x,y,z)=>({x,y,z});
       const exit=Physics.exitGeometry(level.exit),front=blend(P.floor,P.hairDark,.37);
-      scene.box(tr,8,8,-8,464,284,8,front,P.floor,true);
+      scene.box(tr,8,8,-32,464,284,32,front,P[level.theme]||P.floor,true);
       for(const side of ['top','left','right','bottom']) {
         const vertical=side==='left'||side==='right',far=side==='top'||side==='left',height=far?23:2;
         const start=vertical?8:8,end=vertical?292:472;
-        const runs=exit.side===side?[[start,exit.low],[exit.high,end]]:[[start,end]];
+        const runs=wallRuns(level,side);
         for(const [a,b]of runs) {
           if(b<=a)continue;
           const x=vertical?(side==='left'?5:472):a,y=vertical?a:(side==='top'?5:292),w=vertical?3:b-a,h=vertical?b-a:3;
-          scene.box(tr,x,y,0,w,h,height,P.floor,P.cream,true);
+          scene.box(tr,x,y,0,w,h,height,blend(P[level.theme]||P.floor,P.hairDark,.18),P[level.theme]||P.cream,true);
           scene.box(tr,x,y,0,w,h,2,P.steelShade,P.steel);
           if(far)scene.box(tr,x,y,17,w,h,2,blend(P.floor,P.cream,.38),P.cream);
         }
       }
     }
-    function makeFloor(level) {
+    function makeFloor(level,transparent=false) {
+      if(level.connected)return {rooms:level.rooms.map(r=>({room:r,canvas:makeFloor(r,true)}))};
       const c=document.createElement('canvas');c.width=CAMERA.width;c.height=CAMERA.height;const g=c.getContext('2d');
-      const matte=blend(P.hairDark,P.edge,.48);rect(g,0,0,c.width,c.height,matte);
+      const matte=blend(P.hairDark,P.edge,.48);if(!transparent)rect(g,0,0,c.width,c.height,matte);
       // A broad contact shadow makes the cutaway store feel like a solid diorama.
       groundPoly(g,quad(8,8,464,284,-11),P.dark,.3);
       const shell=new Scene();room(shell,level);shell.flush(g);
-      floorTexture(g,level);exitApron(g,Physics.exitGeometry(level.exit));
+      floorTexture(g,level);hazards(g,level);if(!level.openings)exitApron(g,Physics.exitGeometry(level.exit));
       // Render far walls after the tiles, so their feet meet the grout cleanly.
       const walls=new Scene();
       const exit=Physics.exitGeometry(level.exit),tr=(x,y,z)=>({x,y,z});
       for(const side of ['top','left']) {
-        const vertical=side==='left',end=vertical?292:472,runs=exit.side===side?[[8,exit.low],[exit.high,end]]:[[8,end]];
+        const vertical=side==='left',end=vertical?292:472,runs=wallRuns(level,side);
         for(const [a,b]of runs) {
           const x=vertical?5:a,y=vertical?a:5,w=vertical?3:b-a,h=vertical?b-a:3;
           if(w<=0||h<=0)continue;
-          walls.box(tr,x,y,0,w,h,23,P.floor,P.cream,true);walls.box(tr,x,y,0,w,h,3,P.steelShade,P.steel);
+          walls.box(tr,x,y,0,w,h,23,blend(P[level.theme]||P.floor,P.hairDark,.2),P[level.theme]||P.cream,true);walls.box(tr,x,y,0,w,h,3,P.steelShade,P.steel);
           walls.box(tr,x,y,17,w,h,2,blend(P.floor,P.cream,.35),P.cream);
         }
       }
@@ -245,21 +291,24 @@
       for(const sign of level.signs) {
         const p=project(sign);text(g,sign.text,p.x,p.y,P.edge,5,'center');
       }
+      const badge=project({x:235,y:30});text(g,level.name.toUpperCase(),badge.x,badge.y,P.hairDark,7,'center');
       return c;
     }
     function furnitureVertices(s) {
       return [[-s.w/2,-s.h/2],[s.w/2,-s.h/2],[s.w/2,s.h/2],[-s.w/2,s.h/2]].flatMap(([u,v])=>[Stock.shelfPoint(s,u,v,0),Stock.shelfPoint(s,u,v,s.height)]);
     }
-    function clipFloor(g) {
-      const p=quad(8,8,464,284).map(v=>project(v));g.beginPath();g.moveTo(p[0].x,p[0].y);for(const q of p.slice(1))g.lineTo(q.x,q.y);g.closePath();g.clip();
+    function clipFloor(g,w) {
+      g.beginPath();
+      for(const area of w?.level.floorAreas||[{x:8,y:8,w:464,h:284}]){const p=quad(area.x,area.y,area.w,area.h).map(v=>project(v));g.moveTo(p[0].x,p[0].y);for(const q of p.slice(1))g.lineTo(q.x,q.y);g.closePath();}
+      g.clip();
     }
-    function drawFurnitureShadow(g,s) {
-      g.save();clipFloor(g);
+    function drawFurnitureShadow(g,s,w) {
+      g.save();clipFloor(g,w);
       const points=Stock.hull(furnitureVertices(s).map(p=>({x:p.x+p.z*.42,y:p.y+p.z*.3,z:0})));
       groundPoly(g,points.map(p=>add(p,2,2)),P.dark,.07);groundPoly(g,points,P.dark,.2);g.restore();
     }
     function shelf(scene,s) {
-      const tr=(x,y,z)=>Stock.shelfPoint(s,x,y,z),box=(...args)=>scene.box(tr,...args);
+      const tr=(x,y,z)=>Stock.shelfPoint(s,x,y,z),box=(...args)=>scene.box(tr,...args),accent=P[s.theme]||P.gold;
       if(s.kind==='table') {
         for(const u of [-s.w*.4,s.w*.4])for(const v of [-s.h*.4,s.h*.4])box(u-1.5,v-1.5,0,3,3,s.height-3,P.clay,P.gold,true);
         box(-s.w/2+1,-s.h/2+2,s.height-7,s.w-2,2,4,P.clay);
@@ -269,9 +318,9 @@
       }else{
         // Open end frames leave each solid deck and the stocked tiers visible.
         for(const u of [-s.w/2+1,s.w/2-3])for(const z of [3,s.height-5])box(u,-s.h/2+1,z,2,s.h-2,3,P.steel,P.steelLight);
-        box(-s.w/2+3,-s.h/2+1,5,s.w-6,2,s.height-8,P.hair,P.gold,true);
+        box(-s.w/2+3,-s.h/2+1,5,s.w-6,2,s.height-8,blend(accent,P.hairDark,.28),accent,true);
         for(const z of [12,22,32]) {
-          box(-s.w/2+2,-s.h/2+2,z-2,s.w-4,s.h-4,2,P.clay,P.gold,true);
+          box(-s.w/2+2,-s.h/2+2,z-2,s.w-4,s.h-4,2,blend(accent,P.hairDark,.22),blend(accent,P.cream,.18),true);
           for(let v=-s.h/2+9;v<s.h/2-3;v+=12)scene.wire(tr(-s.w/2+3,v,z+.03),tr(s.w/2-3,v,z+.03),P.hair,1,.14);
         }
         for(const u of [-s.w/2+1,s.w/2-1])for(const v of [-s.h/2+1,s.h/2-1]) {
@@ -363,7 +412,10 @@
       cylinder(scene,coneTr,[[6,3.05],[8,2.35]],P.light,false);
     }
     function caster(scene,b,wheel,i) {
-      const pose=casterPose(b,wheel,i),tr=(x,y,z)=>local(pose,x,y,z),count=12,l=CASTER.halfLength,h=CASTER.halfWidth;
+      const pose=casterPose(b,wheel,i),tr=(x,y,z)=>{
+        const p=local(pose,x,y,z);if(!b.z&&!b.pitch&&!b.rollTilt)return p;
+        const c=Math.cos(b.a),s=Math.sin(b.a),dx=p.x-b.x,dy=p.y-b.y;return local(b,dx*c+dy*s,-dx*s+dy*c,z);
+      },count=12,l=CASTER.halfLength,h=CASTER.halfWidth;
       const rings=[-h,h].map(y=>Array.from({length:count},(_,j)=>tr(l*Math.cos(j*Math.PI*2/count),y,l+l*Math.sin(j*Math.PI*2/count))));
       for(let j=0;j<count;j++)scene.face([rings[0][j],rings[1][j],rings[1][(j+1)%count],rings[0][(j+1)%count]],P.dark);
       scene.face(rings[0],P.edge);scene.face(rings[1].slice().reverse(),P.edge);
@@ -465,14 +517,14 @@
     function drawShelf(g,s) {const scene=new Scene();shelf(scene,s);for(const p of s.stockItems)if(p.state==='shelf')product(scene,p);scene.flush(g);}
     function spills(g,stock) {
       for(const liquid of stock.liquids.values())for(const [key,volume]of liquid.cells) {
-        const x=key%120*Stock.CELL,y=Math.floor(key/120)*Stock.CELL;
+        const x=key%stock.cols*Stock.CELL,y=Math.floor(key/stock.cols)*Stock.CELL;
         if(liquid.kind==='water') {
           groundPoly(g,quad(x,y,4,4),P.blue,clamp(volume*.2,.018,.13));
           if(volume>.055) {
             const dry=k=>(liquid.cells.get(k)||0)<=.055;
             if(dry(key+1))groundLine(g,{x:x+4,y},{x:x+4,y:y+4},P.steelShade,1,.4);
-            if(dry(key+120))groundLine(g,{x,y:y+4},{x:x+4,y:y+4},P.steelShade,1,.4);
-            if(dry(key-120))groundLine(g,{x,y},{x:x+4,y},P.light,1,.75);
+            if(dry(key+stock.cols))groundLine(g,{x,y:y+4},{x:x+4,y:y+4},P.steelShade,1,.4);
+            if(dry(key-stock.cols))groundLine(g,{x,y},{x:x+4,y},P.light,1,.75);
             if(dry(key-1))groundLine(g,{x,y},{x,y:y+4},P.light,1,.75);
             if(volume>.13&&hash(key,7)>.83)groundLine(g,{x,y:y+1},{x:x+4,y},P.light,1,.7);
           }
@@ -481,6 +533,12 @@
       for(const smear of stock.smears)groundLocal(g,smear,-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind),smear.alpha*(smear.kind==='water'?.45:1));
     }
     function routes(g,w) {
+      for(const p of w.level.portals||[]) {
+        const open=w.gate>=p.opensAt,accent=P[w.level.rooms[p.to].theme]||P.gold;
+        groundLocal(g,p,-52,-p.width/2+3,47,p.width-6,accent,open?.25:.1);
+        groundArrow(g,local(p,-25,0),24,open?P.pine:P.mid,.85);
+        const q=project(local(p,-49,0));text(g,'ROOM '+String(p.to+1).padStart(2,'0'),q.x,q.y-5,open?P.pine:P.edge,6,'center');
+      }
       const e=w.exit,half=e.width/2;
       groundLocal(g,e,-68,-half+2,63,e.width-4,P.gold,w.exitOpen?.17:.07);
       for(let x=-63;x<-5;x+=11)for(const y of [-half+2,half-3])groundLocal(g,e,x,y,6,1,P.cream,.65);
@@ -493,7 +551,7 @@
         groundRing(g,p,CHECKPOINT_RADIUS,color,current?2:1,done?.45:current?1:.65);
         const q=project(p);
         if(done){line(g,add(q,-4),add(q,-1,3),P.pine,2);line(g,add(q,-1,3),add(q,5,-4),P.pine,2);}
-        else text(g,String(i+1),q.x,q.y+3,color,current?10:8,'center');
+        else text(g,String(p.number||i+1),q.x,q.y+3,color,current?10:8,'center');
       }
     }
     function doorway(scene,w) {
@@ -508,25 +566,15 @@
       }else for(const y of [-half,half])scene.wire(tr(1,y,15),tr(14,y,15),P.steelLight,1);
     }
     function shadows(g,w) {
-      g.save();clipFloor(g);
-      for(const s of w.shelves)drawFurnitureShadow(g,s);
+      g.save();clipFloor(g,w);
+      for(const s of w.shelves)if(!w._visible||w._visible({x:s.cx,y:s.cy},150))drawFurnitureShadow(g,s,w);
       const b=w.body;
       groundPoly(g,circle(local(b,14,0),23,12),P.dark,.12);
       groundPoly(g,circle(local(b,-16,1),6,5),P.dark,.22);
       groundPoly(g,Stock.hull([local(b,-20,-5),local(b,-12,5),local(b,4,13),local(b,-4,2)]),P.dark,.09);
-      for(const o of w.objects)groundPoly(g,circle(add(o,3,3),o.kind==='box'?10:7,o.kind==='box'?8:5),P.dark,.18);
-      for(const p of w.stock.items)if(p.state!=='shelf'&&!p.broken&&p.kind!=='shard')groundPoly(g,circle(add(p,1,1,-p.z),Math.max(2,p.length),p.width),P.dark,.13);
+      for(const o of w.objects)if(!o.gone&&!o.falling)groundPoly(g,circle(add(o,3,3),o.kind==='box'?10:7,o.kind==='box'?8:5),P.dark,.18);
+      for(const p of w.stock.items)if((!w._visible||w._visible(p))&&p.state!=='shelf'&&!p.broken&&p.kind!=='shard')groundPoly(g,circle(add(p,1,1,-p.z),Math.max(2,p.length),p.width),P.dark,.13);
       g.restore();
-    }
-    function sensor(g,w) {
-      if(w.exitOpen)return;
-      const q=local(w.body,CHECKPOINT_SENSOR.x,0),r=CHECKPOINT_SENSOR.radius;
-      // A ground ring measures contact. Its matching badge is on the raised
-      // basket bottom, connected by a faint plumb line for a readable target.
-      groundRing(g,q,r,P.hairDark,3,.8);groundRing(g,q,r,P.coral,1,1);
-      const high=project(add(q,0,0,16.1)),low=project(q);
-      g.globalAlpha=.55;line(g,low,high,P.coral);g.globalAlpha=1;
-      oval(g,high.x,high.y,2.5,2,P.coral);rect(g,high.x,high.y,1,1,P.light);
     }
     function boundaries(g,w) {
       if(!w.boundaryContacts.length)return;
@@ -546,6 +594,7 @@
       }
     }
     function draw(g,w,background,options={}) {
+      if(w.level.connected)return drawConnected(g,w,background,options);
       const preview=options.preview;
       g.save();g.imageSmoothingEnabled=false;g.clearRect(0,0,g.canvas.width,g.canvas.height);
       if(!preview&&options.shake&&!options.reducedMotion)g.translate(Math.round(Math.sin(w.time*99)*options.shake),Math.round(Math.cos(w.time*78)*options.shake));
@@ -571,8 +620,77 @@
         scene.flat([tr(-p.w/2,-p.h/2,p.z),tr(p.w/2,-p.h/2,p.z),tr(p.w/2,p.h/2,p.z),tr(-p.w/2,p.h/2,p.z)],p.color,clamp(p.life,0,1));
       }
       scene.flush(g);
-      if(!preview){sensor(g,w);boundaries(g,w);}
+      if(!preview){boundaries(g,w);}
       g.restore();
+    }
+    function worldFrame(w) {
+      const points=w.level.floorAreas.flatMap(a=>quad(a.x,a.y,a.w,a.h).map(p=>project(p)));
+      const left=Math.min(...points.map(p=>p.x))-35,top=Math.min(...points.map(p=>p.y))-45,right=Math.max(...points.map(p=>p.x))+35,bottom=Math.max(...points.map(p=>p.y))+40;
+      return {left,top,width:right-left,height:bottom-top};
+    }
+    function connectedCamera(width,height,w,follow=true) {
+      if(follow){const focus=project({...w.body,z:0});const scale=width<=480?1.8:1.45;return {scale,x:width*.5-focus.x*scale,y:height*.54-focus.y*scale};}
+      const box=worldFrame(w),scale=Math.min((width-28)/box.width,(height-28)/box.height);
+      return {scale,x:(width-box.width*scale)/2-box.left*scale,y:(height-box.height*scale)/2-box.top*scale};
+    }
+    function overview(g,w,camera) {
+      const box=worldFrame(w),width=154,height=114,x=g.canvas.width-width-12,y=12,scale=Math.min((width-8)/box.width,(height-8)/box.height);
+      const ox=x+4+(width-8-box.width*scale)/2-box.left*scale,oy=y+4+(height-8-box.height*scale)/2-box.top*scale;
+      rect(g,x-2,y-2,width+4,height+4,P.hairDark);rect(g,x,y,width,height,blend(P.dark,P.blue,.17));
+      g.save();g.beginPath();g.rect(x,y,width,height);g.clip();g.translate(ox,oy);g.scale(scale,scale);
+      for(const a of w.level.floorAreas)groundPoly(g,quad(a.x,a.y,a.w,a.h),a.room===undefined?P.cream:P[w.level.rooms[a.room].theme]);
+      for(const h of w.level.hazards)groundPoly(g,circle(h,h.rx,h.ry),P.blue);
+      const target=w.level.gates[w.gate];if(target)groundRing(g,target,CHECKPOINT_RADIUS,P.light,5);
+      const q=project(w.body);oval(g,q.x,q.y,10,10,P.dark);oval(g,q.x,q.y,6,6,P.light);
+      const l=(-camera.x/camera.scale),t=(-camera.y/camera.scale),r=l+g.canvas.width/camera.scale,b=t+g.canvas.height/camera.scale;
+      for(const [a,z]of [[{x:l,y:t},{x:r,y:t}],[{x:r,y:t},{x:r,y:b}],[{x:r,y:b},{x:l,y:b}],[{x:l,y:b},{x:l,y:t}]])line(g,a,z,P.light,2);
+      g.restore();
+    }
+    function drawConnected(g,w,background,options) {
+      const camera=connectedCamera(g.canvas.width,g.canvas.height,w,options.follow!==false),width=g.canvas.width,height=g.canvas.height;
+      const visible=(p,margin=90)=>{const q=project(p);return camera.x+q.x*camera.scale>-margin&&camera.x+q.x*camera.scale<width+margin&&camera.y+q.y*camera.scale>-margin&&camera.y+q.y*camera.scale<height+margin;};
+      w._visible=visible;
+      g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.dark,P.blue,.16));
+      g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
+      for(const a of w.level.floorAreas)if(a.room===undefined) {
+        groundPoly(g,quad(a.x,a.y,a.w,a.h,-5),P.hairDark);groundPoly(g,quad(a.x,a.y,a.w,a.h),P.gold);
+        for(let u=0;u<a.w;u+=12)groundLine(g,{x:a.x+u,y:a.y},{x:a.x+u,y:a.y+a.h},P.cream,1,.45);
+      }
+      for(const tile of background.rooms) {
+        const r=tile.room,dx=(r.x-r.y)*CAMERA.horizontal,dy=(r.x+r.y)*CAMERA.vertical;
+        if(!visible({x:r.x+240,y:r.y+150},800))continue;
+        g.drawImage(tile.canvas,dx,dy);
+      }
+      spills(g,w.stock);shadows(g,w);routes(g,w);
+      for(const t of w.tracks)if(visible(t))groundLocal(g,t,-2,-1,4,1,P.hairDark,t.life/3*.16);
+      const scene=new Scene();doorway(scene,w);
+      for(const p of w.level.portals)if(visible(p,150))doorway(scene,{exit:p,exitOpen:w.gate>=p.opensAt});
+      for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},180))shelf(scene,s);
+      for(const p of w.stock.items)if(!p.broken&&visible(p))product(scene,p);
+      for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
+      if(!w.fall)cart(scene,w.body,w.wheels,w.gait);
+      for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));
+      scene.flush(g);
+      if(w.fall) {
+        const fallScene=new Scene(clamp(1-w.fall.time*.85,0,1));cart(fallScene,w.body,w.wheels,w.gait);
+        g.globalAlpha=clamp(1-w.fall.time*.85,0,1);fallScene.flush(g);g.globalAlpha=1;
+        if(w.fall.kind==='lake') {
+          const p={x:w.body.x,y:w.body.y,z:-6},r=8+w.fall.time*30;
+          groundRing(g,p,r,P.light,2,clamp(1-w.fall.time,0,1));
+          for(let i=0;i<8;i++){const a=i*Math.PI/4,q={x:p.x+Math.cos(a)*r*.5,y:p.y+Math.sin(a)*r*.5,z:Math.sin(w.fall.time*3)*14};groundLine(g,q,{...q,z:q.z+4},P.light,2,.8);}
+        }
+      }else {
+        const speed=Math.hypot(w.body.vx,w.body.vy);
+        if(speed>8){const a=Math.atan2(w.body.vy,w.body.vx),b={...w.body,a,z:0};groundArrow(g,local(b,Math.min(55,speed*.45),0),10,P.pine,.7);}
+        if(w.unsupported?.some(Boolean))w.wheels.forEach((q,i)=>{if(w.unsupported[i])groundRing(g,casterPose(w.body,q,i),5,P.red,2);});
+      }
+      boundaries(g,w);g.restore();delete w._visible;
+      if(options.follow!==false&&!options.preview)overview(g,w,camera);
+      const next=w.level.gates[w.gate],target=next&&next.room!==w.roomIndex?(w.level.portals[w.roomIndex]||next):(next||w.exit),p=project(target),tx=camera.x+p.x*camera.scale,ty=camera.y+p.y*camera.scale;
+      if(options.follow!==false&&!options.preview&&(tx<18||tx>width-18||ty<18||ty>height-18)) {
+        const dx=tx-width/2,dy=ty-height*.54,t=Math.min((width/2-28)/Math.max(1,Math.abs(dx)),(height*.45-30)/Math.max(1,Math.abs(dy))),x=clamp(width/2+dx*t,25,width-25),y=clamp(height*.54+dy*t,25,height-25);
+        const label=target.to!==undefined?'DOOR':target.number||'OUT',rx=label.length>2?19:13;oval(g,x,y,rx,13,P.hairDark);oval(g,x,y,rx-2,11,P.gold);text(g,label,x,y+4,P.hairDark,10,'center');
+      }
     }
     function illustration(g) {
       g.clearRect(0,0,g.canvas.width,g.canvas.height);
@@ -615,7 +733,7 @@
       }
       g.restore();
     }
-    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,refreshFonts:()=>textures.clear()};
+    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,refreshFonts:()=>textures.clear()};
   }
   const api={CAMERA,project,unproject,depth,local,create};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartView=api;

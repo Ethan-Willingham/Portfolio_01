@@ -17,13 +17,13 @@
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
-  const STORAGE = 'four-wheels-records-v4';
+  const STORAGE = 'four-wheels-records-v5';
   let records = [], canSave = true;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
     if (Array.isArray(saved)) records = saved.slice(0, levels.length).map(r => r && Number.isFinite(r.time) && r.time > 0 && r.time < 10000 && Number.isInteger(r.stars) && r.stars >= 1 && r.stars <= 3 ? r : null);
   } catch { canSave = false; }
-  let levelIndex = 0, world = new World(levels[0]), phase = 'ready', floor;
+  let levelIndex = 0, world = new World(levels.journey(0)), phase = 'ready', floor;
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
   let particles = [], screenShake = 0, pickerReturn = 'ready';
   let keys = new Set(), touches = new Map(), pseudoFullscreen = false;
@@ -84,6 +84,9 @@
     },
     event(e) {
       if (e.type === 'gate') { this.note(660, .12, .04); this.note(880, .16, .03, .07); }
+      if(e.type==='room'){notify('Room '+(e.index+1)+' / '+levels[e.index].name);sound.note(520,.12,.025);}
+      if(e.type==='fall'){notify((e.kind==='lake'?'In the lake':'Over the edge')+(world.practice?'':' / +8 seconds'));sound.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);}
+      if(e.type==='respawn')notify('Back at the room entrance. Keep rolling.');
       if (e.type === 'won') [523, 659, 784, 1047].forEach((f, i) => this.note(f, .3, .045, i * .1));
       if (e.type === 'lost') { this.note(220, .4, .045, 0, 'triangle', 90); }
       if (e.type === 'bump' || e.type === 'mess') {
@@ -104,29 +107,23 @@
   const view = CartView.create(P);
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
   const { makeFloor } = view;
-  const sceneCanvas = document.createElement('canvas');
-  sceneCanvas.width = CartView.CAMERA.width; sceneCanvas.height = CartView.CAMERA.height;
-  const sceneContext = sceneCanvas.getContext('2d');
   let narrowCamera = false, followCart = true;
   function drawIllustration() { view.illustration($('illustration').getContext('2d')); }
   function draw(g = ctx, w = world, background = floor, preview = false) {
-    const options = { preview, particles, shake:screenShake, reducedMotion:reducedMotion.matches };
-    if (g === ctx && narrowCamera) {
-      view.draw(sceneContext, w, background, options); view.present(g,sceneCanvas,w,followCart);
-    } else view.draw(g, w, background, options);
+    view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart});
   }
   function cameraLabel() {
-    $('camera').hidden = !narrowCamera;
-    $('camera').textContent = followCart ? 'Overview' : 'Follow cart';
+    $('camera').hidden = false;
+    $('camera').textContent = followCart ? 'Store map' : 'Follow cart';
     $('camera').setAttribute('aria-pressed', String(!followCart));
-    $('camera').setAttribute('aria-label', followCart ? 'Show the whole course' : 'Follow the cart');
+    $('camera').setAttribute('aria-label', followCart ? 'Show the connected store' : 'Follow the cart');
   }
   function resizeView() {
     const stage = $('stage').getBoundingClientRect();
     if (stage.width <= 0 || stage.height <= 0) return;
     narrowCamera = stage.width < 600 && stage.height > stage.width * 1.2;
-    const width = narrowCamera ? 480 : CartView.CAMERA.width;
-    const height = narrowCamera ? Math.round(width * stage.height / stage.width) : CartView.CAMERA.height;
+    const width = narrowCamera ? 480 : 960;
+    const height = Math.round(width*stage.height/stage.width);
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
     cameraLabel(); draw();
   }
@@ -151,7 +148,7 @@
   function events() {
     for (const e of world.events.splice(0)) {
       sound.event(e);
-      if (e.type === 'gate') { burst(e.x, e.y, 8, [P.cream, P.gold, P.sage], 'gate'); notify(world.gate < world.level.gates.length ? 'Marker ' + world.gate + ' cleared' : 'Checkout is open. Drive out.'); }
+      if (e.type === 'gate') { burst(e.x, e.y, 8, [P.cream, P.gold, P.sage], 'gate'); const next=world.level.gates[world.gate];notify(!next?'Checkout is open. Drive out.':next.room!==world.level.gates[world.gate-1]?.room?'Door open. Keep rolling into the next room.':'Marker cleared'); }
       if (e.type === 'mess') {
         screenShake = e.kind === 'shelf' ? 1.5 : .65;
         notify((e.kind === 'cone' ? 'Cone down' : e.kind === 'box' ? 'Box bumped' : e.kind === 'table' ? 'Vase knocked off' : 'Shelf spilled') + (world.practice ? '' : ' / +' + e.seconds + ' seconds'));
@@ -159,6 +156,9 @@
       if (e.type === 'shelf-down') { screenShake=2; notify((e.kind==='table'?'Table down':'Shelf down') + (world.practice?'':' / stock spilled')); }
       if (e.type === 'rack-hit') screenShake=Math.max(screenShake,.4);
       if (e.type === 'bump') screenShake = .6;
+      if(e.type==='room'){notify('Room '+(e.index+1)+' / '+levels[e.index].name);sound.note(520,.12,.025);}
+      if(e.type==='fall'){notify((e.kind==='lake'?'In the lake':'Over the edge')+(world.practice?'':' / +8 seconds'));sound.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);}
+      if(e.type==='respawn')notify('Back at the room entrance. Keep rolling.');
       if (e.type === 'won' || e.type === 'lost') finish(e.type === 'won');
     }
   }
@@ -172,16 +172,26 @@
     $('messes').textContent = world.messes;
     $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.messes > 0);
     $('penalty').textContent = '+' + world.penalty + 's';
-    [...$('route-steps').children].forEach((step, i) => {
-      step.classList.toggle('is-done', i < world.gate || phase === 'won');
-      step.classList.toggle('is-current', i === world.gate && phase !== 'won');
-    });
-    $('route-steps').setAttribute('aria-label', world.gate + ' of ' + world.level.gates.length + ' markers cleared' + (world.exitOpen ? ', checkout open' : ''));
-    const target = world.level.gates[world.gate];
-    if (phase === 'won') $('route').textContent = 'Checkout complete';
-    else if (phase === 'lost') $('route').textContent = 'Time is up. Give it another go.';
-    else if (target) $('route').textContent = 'Touch circle ' + (world.gate + 1) + ' of ' + world.level.gates.length + ' with the basket marker';
-    else $('route').textContent = world.exiting ? 'Keep rolling until you and the cart are outside' : 'Drive out through the checkout exit';
+    const room=world.level.rooms?.[world.roomIndex]||world.level;
+    const roomGates=world.level.gates.map((p,i)=>({p,i})).filter(q=>q.p.room===undefined||q.p.room===world.roomIndex);
+    if($('route-steps').children.length!==roomGates.length+1||$('route-steps').dataset.room!==String(world.roomIndex)) {
+      $('route-steps').replaceChildren();$('route-steps').dataset.room=world.roomIndex;
+      for(let i=0;i<=roomGates.length;i++){const step=document.createElement('i');step.textContent=i===roomGates.length?(world.roomIndex===5?'OUT':'DOOR'):i+1;step.setAttribute('aria-hidden','true');$('route-steps').append(step);}
+    }
+    [...$('route-steps').children].forEach((step,i)=>{const index=roomGates[i]?.i??(roomGates.at(-1)?.i+1||0);step.classList.toggle('is-done',phase==='won'||i<roomGates.length&&index<world.gate);step.classList.toggle('is-current',phase!=='won'&&index===world.gate);});
+    $('route-steps').setAttribute('aria-label',world.gate+' of '+world.level.gates.length+' markers cleared');
+    $('course-number').textContent='Room '+String(world.roomIndex+1).padStart(2,'0')+' / 06';
+    $('course-badge').textContent=String(world.roomIndex+1).padStart(2,'0');
+    $('course-title').textContent=room.name;
+    game.style.setProperty('--room-color',P[room.theme]||P.coral);
+    $('courses').setAttribute('aria-label','Choose a starting room, currently '+room.name);
+    const target=world.level.gates[world.gate];
+    if(phase==='won')$('route').textContent='The whole trip, checked out';
+    else if(phase==='lost')$('route').textContent='Time is up. Give it another go.';
+    else if(world.fall)$('route').textContent=world.fall.kind==='lake'?'Deep water. Returning to the entrance.':'That edge was a drop. Returning to the entrance.';
+    else if(target&&target.room!==undefined&&target.room!==world.roomIndex)$('route').textContent='Door open. Drive into room '+(target.room+1)+'.';
+    else if(target)$('route').textContent='Touch circle '+(target.number||world.gate+1)+' of '+roomGates.length+' with any wheel';
+    else $('route').textContent=world.exiting?'Keep rolling until you and the cart are outside':'All rooms cleared. Drive out through checkout.';
     $('pause').disabled = !['running', 'paused'].includes(phase);
     $('pause').setAttribute('aria-label', phase === 'paused' ? 'Resume game' : 'Pause game');
     $('pause').setAttribute('aria-pressed', String(phase === 'paused'));
@@ -200,20 +210,11 @@
   }
   function reset(index = levelIndex) {
     if (raf) cancelAnimationFrame(raf); raf = 0;
-    clearInput(); levelIndex = index; world = new World(levels[index], $('practice').checked);
+    clearInput(); levelIndex = index; world = new World(levels.journey(index), $('practice').checked);
     phase = 'ready'; particles = []; screenShake = 0; toastLife = 0;
     $('toast').classList.remove('is-visible'); $('picker').hidden = true; $('result').hidden = true;
     floor = makeFloor(world.level);
-    $('course-number').textContent = 'Course ' + String(index + 1).padStart(2, '0') + ' / 06';
-    $('course-badge').textContent = String(index + 1).padStart(2, '0');
-    $('route-steps').replaceChildren();
-    for (let i = 0; i <= world.level.gates.length; i++) {
-      const step = document.createElement('i'); step.textContent = i === world.level.gates.length ? 'EXIT' : i + 1;
-      step.setAttribute('aria-hidden', 'true'); $('route-steps').append(step);
-    }
-    $('course-title').textContent = world.level.name;
-    $('courses').setAttribute('aria-label', 'Choose a course, currently ' + world.level.name);
-    overlay('Course ' + String(index + 1).padStart(2, '0') + ' / 06 · ' + world.level.name, 'All Four Wheels', index === 0 ? 'Touch each numbered checkpoint with the coral marker inside the basket. Then drive out through checkout.' : world.level.tip, 'Let\'s roll', null, true);
+    overlay('Six connected rooms / Start in room '+String(index+1).padStart(2,'0'), 'All Four Wheels', index===0?'Touch the numbered circles with any wheel. Keep driving through each open doorway, then out through checkout. Watch for lakes and unguarded edges.':levels[index].tip, 'Let\'s roll', null, true);
     updateUI(); draw(); sound.rolling(0);
   }
   function run() {
@@ -239,7 +240,7 @@
         try { localStorage.setItem(STORAGE, JSON.stringify(records)); } catch { canSave = false; }
       }
       const title = world.practice ? 'Practice complete' : r.messes === 0 ? 'Clean checkout' : r.messes <= 2 ? 'A little rearranging' : 'You made it, mostly';
-      overlay(world.practice ? 'No clock. No record.' : improved && canSave ? 'A new personal best' : 'Checkout complete', title, levelIndex === levels.length - 1 ? 'The last cart is out. The store can close now.' : 'One more department to get through.', levelIndex === levels.length - 1 ? 'Choose a course' : 'Next course', 'Try again');
+      overlay(world.practice ? 'No clock. No record.' : improved && canSave ? 'A new personal best' : 'Checkout complete', title, 'Every room behind you. You and all four wheels made it out.', 'Roll again', 'Try again');
       const result = $('result'); result.replaceChildren();
       const marks = document.createElement('div'); marks.className = 'cart-marks'; marks.setAttribute('aria-label', r.stars + ' of 3 marks');
       for (let i = 0; i < 3; i++) { const mark = document.createElement('i'); mark.className = i < r.stars ? 'is-earned' : ''; marks.append(mark); }
@@ -248,9 +249,9 @@
       if (!world.practice) result.append(marks); result.append(time, detail); result.hidden = false;
     } else {
       $('result').hidden = true;
-      overlay('The store is closed', 'Out of time', 'Try an earlier turn and a shorter push. You can also switch to untimed practice.', 'Try again', 'Practice this course');
+      overlay('The store is closed', 'Out of time', 'Try an earlier turn and a shorter push. You can also switch to untimed practice.', 'Try again', 'Untimed practice');
     }
-    updateUI(); announce(won ? 'Course complete. ' + world.messes + ' mishaps.' : 'Time is up.');
+    updateUI(); announce(won ? 'Trip complete. ' + world.messes + ' mishaps.' : 'Time is up.');
     $('start').focus({ preventScroll: true });
   }
   function frame(now) {
@@ -278,11 +279,11 @@
       const c = document.createElement('canvas'); c.width = CartView.CAMERA.width; c.height = CartView.CAMERA.height; c.setAttribute('aria-hidden', 'true');
       draw(c.getContext('2d'), new World(level), makeFloor(level), true);
       const copy = document.createElement('span'); copy.className = 'cart-course-tile-copy';
-      const label = document.createElement('span'); label.className = 'cart-kicker'; label.textContent = 'DEPARTMENT ' + String(i + 1).padStart(2, '0');
+      const label = document.createElement('span'); label.className = 'cart-kicker'; label.textContent = 'START IN ROOM ' + String(i + 1).padStart(2, '0');
       const title = document.createElement('strong'); title.textContent = level.name;
       const meta = document.createElement('span'); meta.className = 'cart-course-tile-meta';
-      const limit = document.createElement('span'); limit.textContent = timeString(level.limit) + ' limit';
-      const best = document.createElement('span'); best.textContent = records[i] ? 'Best ' + timeString(records[i].time, true) : 'Target ' + timeString(level.par);
+      const limit = document.createElement('span'); limit.textContent = timeString(levels.journey(i).limit) + ' to checkout';
+      const best = document.createElement('span'); best.textContent = records[i] ? 'Best ' + timeString(records[i].time, true) : 'Target ' + timeString(levels.journey(i).par);
       meta.append(limit, best); copy.append(label, title, meta); button.append(c, copy); grid.append(button);
       if (records[i]) {
         const marks = document.createElement('span'); marks.className = 'cart-marks'; marks.setAttribute('aria-hidden', 'true');
@@ -309,7 +310,7 @@
   }
   $('start').addEventListener('click', () => {
     if (phase === 'ready' || phase === 'paused') run();
-    else if (phase === 'won') { if (levelIndex === levels.length - 1) openPicker(); else { reset(levelIndex + 1); run(); } }
+    else if (phase === 'won') { reset(); run(); }
     else if (phase === 'lost') { reset(); run(); }
   });
   $('secondary').addEventListener('click', () => {
@@ -324,7 +325,7 @@
   $('sound').addEventListener('click', () => { sound.enabled = !sound.enabled; sound.refresh(); if (sound.enabled) { sound.prepare().then(() => sound.note(660, .1, .025)); } else sound.rolling(0); });
   $('camera').addEventListener('click', () => {
     followCart = !followCart; cameraLabel(); draw();
-    announce(followCart ? 'Camera follows the cart.' : 'The whole course is visible.');
+    announce(followCart ? 'Camera follows the cart.' : 'All six connected rooms are visible.');
     canvas.focus({ preventScroll:true });
   });
   game.querySelectorAll('[data-control]').forEach(button => {

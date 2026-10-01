@@ -1,5 +1,5 @@
 /* The game's paper-and-ink interface is scoped to this page. The store remains
-   a fixed-resolution pixel canvas; the shell contains it without cropping. */
+   a following pixel camera; the shell contains it without cropping. */
 .cart-page {
   --cart-paper: var(--text-bright);
   --cart-sheet: var(--text);
@@ -249,3 +249,9 @@
 }
 @media (prefers-reduced-motion: reduce) { .cart-button-primary:active { transform: none; } }
 @media print { .cart-game { display: none; } }
+
+/* Room color belongs to the trip, and follows the cart through each doorway. */
+.cart-toolbar { border-top: 5px solid var(--room-color, var(--cart-accent)); }
+.cart-course-badge { background: var(--room-color, var(--cart-accent)); border-color: var(--cart-muted); }
+.cart-clock-track i { background: var(--room-color, var(--cart-accent)); }
+.cart-route-steps i.is-current { background: var(--room-color, var(--cart-accent)); color: var(--cart-ink); border-color: var(--cart-muted); }

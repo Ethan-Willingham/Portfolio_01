@@ -72,7 +72,7 @@ test('the first course has only one square table with a single water-filled vase
 
 test('every later rack can be knocked over at normal driving speed',()=>{
   for (const level of levels.slice(1)) for (const shelf of level.shelves) {
-    const w=new World({...level,start:{x:shelf.x-34,y:shelf.y+shelf.h/2,a:0},shelves:[shelf],objects:[],gates:[{x:420,y:250}]},true);
+    const w=new World({...level,hazards:[],start:{x:shelf.x-34,y:shelf.y+shelf.h/2,a:0},shelves:[shelf],objects:[],gates:[{x:420,y:250}]},true);
     w.body.vx=65;step(w,6);
     assert.ok(w.shelves[0].down&&w.stock.stats.fallen>0,level.name+' / '+shelf.label);
     assert.equal(w.penalty,5);

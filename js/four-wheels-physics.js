@@ -15,7 +15,6 @@
   const CASTER = Object.freeze({ trail: 5.5, halfLength: 4, halfWidth: 2, inertia: 0.16, bearingDamping: 1.2, axleOffset: 0.06 });
   const ROOM = Object.freeze({ left: 8, right: 472, top: 8, bottom: 292, width: 480, height: 300 });
   const CHECKPOINT_RADIUS = 20;
-  const CHECKPOINT_SENSOR = Object.freeze({ x: BODY.cartX - BODY.halfLength + BODY.halfLength * 4 / 3, radius: 4 });
   const Stock = typeof module !== 'undefined' && module.exports ? require('./four-wheels-stock.js') : root.CartStock;
 
   function point(body, x, y) {
@@ -23,9 +22,14 @@
     return { x: body.x + x * c - y * s, y: body.y + x * s + y * c };
   }
 
-  function cartTouchesCheckpoint(body, checkpoint) {
-    const sensor = point(body, CHECKPOINT_SENSOR.x, 0);
-    return Math.hypot(sensor.x - checkpoint.x, sensor.y - checkpoint.y) <= CHECKPOINT_RADIUS + CHECKPOINT_SENSOR.radius + 1e-9;
+  function cartTouchesCheckpoint(body, checkpoint, wheels) {
+    const states=wheels||WHEELS.map(()=>({a:body.a}));
+    return states.some((wheel,i)=>{
+      const pose=casterPose(body,wheel,i),c=Math.cos(pose.a),s=Math.sin(pose.a);
+      const dx=checkpoint.x-pose.x,dy=checkpoint.y-pose.y;
+      const u=dx*c+dy*s,v=-dx*s+dy*c;
+      return Math.hypot(u-clamp(u,-CASTER.halfLength,CASTER.halfLength),v-clamp(v,-CASTER.halfWidth,CASTER.halfWidth))<=CHECKPOINT_RADIUS+1e-9;
+    });
   }
 
   function advanceGait(gait, body, dt, input = {}) {
@@ -82,10 +86,11 @@
   }
 
   function exitGeometry(exit) {
+    const bounds=exit.bounds||ROOM;
     const vertical = exit.side === 'left' || exit.side === 'right';
     const nx = exit.side === 'left' ? -1 : exit.side === 'right' ? 1 : 0;
     const ny = exit.side === 'top' ? -1 : exit.side === 'bottom' ? 1 : 0;
-    const x = vertical ? ROOM[exit.side] : exit.center, y = vertical ? exit.center : ROOM[exit.side];
+    const x = vertical ? bounds[exit.side] : exit.center, y = vertical ? exit.center : bounds[exit.side];
     return { ...exit, x, y, nx, ny, a: Math.atan2(ny, nx), vertical,
       low: exit.center - exit.width / 2, high: exit.center + exit.width / 2,
       approach: { x: x - nx * 58, y: y - ny * 58 }, outside: { x: x + nx * 70, y: y + ny * 70 } };
@@ -182,18 +187,62 @@
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
       this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
       this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0, leanX: 0, leanY: 0 };
-      this.time = 0; this.penalty = 0; this.messes = 0; this.gate = 0;
+      this.time = 0; this.penalty = 0; this.messes = 0; this.gate = level.startGate||0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
       this.shelves = level.shelves.map((s, i) => Stock.createShelf(s, i));
       this.objects = level.objects.map((o, i) => ({ ...o, id: i, vx: 0, vy: 0, a: i * 1.7, omega: 0, down: false, radius: o.kind === 'cone' ? 5.5 : 8, mass: o.kind === 'cone' ? 0.12 : 0.32 }));
       this.exit = exitGeometry(level.exit);
-      this.closedWalls = roomWalls(this.exit, false); this.openWalls = roomWalls(this.exit, true);
-      this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
+      this.closedWalls = level.connected?[...level.walls, {...(this.exit.vertical?{x:this.exit.x-2,y:this.exit.low,w:4,h:this.exit.width}:{x:this.exit.low,y:this.exit.y-2,w:this.exit.width,h:4}),side:"checkout"}]:roomWalls(this.exit,false);
+      this.openWalls = level.connected?level.walls:roomWalls(this.exit,true);
+      this.walls = this.activeWalls();
       this.boundaryContacts = []; this.exiting = false; this.exitEntered = false;
       this.wet = false;
+      this.roomIndex=level.startRoom||0;this.safePose={...level.start};this.fall=null;this.falls=0;
+      this.hazardEnabled=!!(level.connected||level.hazards?.length);
       this.stock = new Stock.System(this, { point, corners, casterPose, casterCorners, circleRect, cartCircle, casterCircle, BODY, CASTER });
     }
 
+    activeWalls() {
+      const base=this.exitOpen?this.openWalls:this.closedWalls;
+      return this.level.connected?[...base,...this.level.portals.filter(p=>this.gate<p.opensAt).map(p=>p.barrier)]:base;
+    }
+    isFloor(p) {
+      const areas=this.level.floorAreas||[{x:8,y:8,w:464,h:284}];
+      if(!areas.some(a=>p.x>=a.x&&p.x<=a.x+a.w&&p.y>=a.y&&p.y<=a.y+a.h))return false;
+      return !(this.level.hazards||[]).some(h=>((p.x-h.x)/h.rx)**2+((p.y-h.y)/h.ry)**2<1);
+    }
+    hazardAt(p) {
+      return (this.level.hazards||[]).find(h=>((p.x-h.x)/h.rx)**2+((p.y-h.y)/h.ry)**2<1)||{kind:'cliff'};
+    }
+    checkSupport() {
+      if(!this.hazardEnabled)return;
+      const contacts=this.wheels.map((w,i)=>casterPose(this.body,w,i));
+      const missing=contacts.filter(p=>!this.isFloor(p));
+      this.unsupported=this.wheels.map((w,i)=>!this.isFloor(contacts[i]));
+      if(missing.length<2&&this.isFloor(this.body))return;
+      const p=missing[0]||this.body,hazard=this.hazardAt(p),b=this.body;
+      const dx=p.x-b.x,dy=p.y-b.y,c=Math.cos(b.a),s=Math.sin(b.a);
+      this.fall={kind:hazard.kind,time:0,vz:0,pitch:clamp((dx*c+dy*s)/20,-1,1),roll:clamp((-dx*s+dy*c)/12,-1,1)};
+      this.falls++;this.messes++;this.penalty+=8;
+      this.emit('fall',{kind:hazard.kind,x:p.x,y:p.y,seconds:8});
+    }
+    fallStep(dt) {
+      const f=this.fall,b=this.body;f.time+=dt;f.vz-=200*dt;
+      b.z=(b.z||0)+f.vz*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.a=wrap(b.a+b.omega*dt);
+      b.pitch=f.pitch*Math.min(.9,f.time*1.5);b.rollTilt=f.roll*Math.min(.65,f.time);
+      this.wheels.forEach(w=>{w.a=wrap(w.a+w.omega*dt);w.roll+=w.speed*dt;});
+      this.stock.integrate(dt);
+      if(!this.practice&&this.remaining<=0){this.status='lost';this.emit('lost');return;}
+      if(f.time>=1.15) {
+        Object.assign(b,{x:this.safePose.x,y:this.safePose.y,a:this.safePose.a,vx:0,vy:0,omega:0,z:0,pitch:0,rollTilt:0});
+        this.wheels.forEach(w=>Object.assign(w,{a:b.a,omega:0,roll:0,speed:0}));
+        Object.assign(this.gait,{stride:0,leanX:0,leanY:0,speed:0});
+        this.fall=null;this.unsupported=[];this.boundaryContacts=[];this.emit('respawn',{room:this.roomIndex});
+      }
+    }
+    roomAt(p) {
+      return this.level.rooms?.find(r=>p.x>=r.x+8&&p.x<=r.x+472&&p.y>=r.y+8&&p.y<=r.y+292);
+    }
     emit(type, data = {}) { this.events.push({ type, ...data }); }
     get exitOpen() { return this.gate === this.level.gates.length; }
     boundaryContact(rect, hit, part) {
@@ -311,7 +360,8 @@
       dt = clamp(dt, 0, 1 / 120);
       const b = this.body;
       this.time += dt;
-      this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
+      if(this.fall){this.fallStep(dt);return;}
+      this.walls = this.activeWalls();
       this.boundaryContacts.forEach(c => { c.life -= dt; });
       this.boundaryContacts = this.boundaryContacts.filter(c => c.life > 0);
       this.stock.wheels(dt);
@@ -350,6 +400,9 @@
       this.wheels.forEach(w => { w.a = wrap(w.a + w.omega * dt); });
       this.stock.integrate(dt);
       for (const o of this.objects) {
+        if(o.gone)continue;
+        if(o.falling){o.vz-=200*dt;o.z+=o.vz*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.z< -55)o.gone=true;continue;}
+        if(this.hazardEnabled&&!this.isFloor(o)){o.falling=true;o.z=0;o.vz=0;continue;}
         const decay = Math.exp(-(o.kind === 'cone' ? 2.0 : 2.8) * dt);
         o.vx *= decay; o.vy *= decay; o.omega *= Math.exp(-3 * dt);
         o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.omega * dt;
@@ -383,6 +436,7 @@
         }
         this.stock.shelfContacts(pass);
         for (const o of this.objects) {
+          if(o.gone||o.falling)continue;
           const h = cartCircle(b, o);
           if (h) {
             const impact = this.impulse(h, o);
@@ -396,7 +450,8 @@
           });
         }
         for (let i = 0; i < this.objects.length; i++) for (let k = i + 1; k < this.objects.length; k++) {
-          const a = this.objects[i], z = this.objects[k], dx = a.x - z.x, dy = a.y - z.y, d = Math.hypot(dx, dy);
+          const a = this.objects[i], z = this.objects[k];if(a.gone||z.gone||a.falling||z.falling)continue;
+          const dx = a.x - z.x, dy = a.y - z.y, d = Math.hypot(dx, dy);
           const overlap = a.radius + z.radius - d;
           if (overlap <= 0 || d < 0.001) continue;
           const nx = dx / d, ny = dy / d, total = 1 / a.mass + 1 / z.mass;
@@ -439,13 +494,17 @@
       }
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
-      if (target && cartTouchesCheckpoint(b, target)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
+      if (target && cartTouchesCheckpoint(b, target, this.wheels)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
+      const room=this.roomAt(b);
+      if(room&&room.index!==this.roomIndex){this.roomIndex=room.index;this.safePose={...room.spawn};this.emit('room',{index:room.index});}
+      this.checkSupport();
+      if(this.fall){if(!this.practice&&this.remaining<=0){this.status='lost';this.emit('lost');}return;}
       const e = this.exit, shape = footprint(b, this.wheels), tangent = e.vertical ? b.y : b.x;
       const distance = p => (p.x - e.x) * e.nx + (p.y - e.y) * e.ny;
       this.exiting = this.exitOpen && tangent >= e.low && tangent <= e.high && shape.some(p => distance(p) > 0);
       if (this.exiting) this.exitEntered = true;
       const cleared = this.exitOpen && this.exitEntered && shape.every(p => distance(p) > 8);
-      this.walls = this.exitOpen ? this.openWalls : this.closedWalls;
+      this.walls = this.activeWalls();
       // An expired clock cannot be rescued by finishing on the same step.
       if (!this.practice && this.remaining <= 0) { this.status = 'lost'; this.emit('lost'); }
       else if (cleared) { this.status = 'won'; this.emit('won'); }
@@ -456,7 +515,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, cartTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
+  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, cartTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

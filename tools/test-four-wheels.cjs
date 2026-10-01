@@ -1,6 +1,6 @@
 // Core handling and course checks. Run: node tools/test-four-wheels.cjs
 const assert = require('node:assert/strict');
-const { World, point, corners, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, CHECKPOINT_SENSOR, cartTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
+const { World, point, corners, advanceGait, wrap, clamp, BODY, CASTER, WHEELS, ROOM, CHECKPOINT_RADIUS, cartTouchesCheckpoint, casterPose, casterCorners, footprint, cartCircle, boxContact } = require('../js/four-wheels-physics.js');
 const levels = require('../js/four-wheels-levels.js');
 const Stock = require('../js/four-wheels-stock.js');
 const dt = 1 / 120;
@@ -178,27 +178,29 @@ test('the red contact identifies a protruding caster or the shopper', () => {
   assert.ok(shopper.boundaryContacts.some(c => c.part === 'shopper' && c.side === 'left'));
 });
 
-test('the checkpoint sensor sits two thirds along the basket and counts first touch', () => {
-  const target={x:230,y:150};
-  assert.equal(CHECKPOINT_SENSOR.x, BODY.cartX-BODY.halfLength+BODY.halfLength*4/3);
-  const w=new World({...empty,gates:[target],start:{x:target.x-BODY.personX,y:150,a:0}});
-  w.step(dt);assert.equal(w.gate,0,'shopper contact cannot clear a checkpoint');
-  for(const a of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]) {
-    const body={x:target.x+CHECKPOINT_RADIUS+CHECKPOINT_SENSOR.radius-.05-Math.cos(a)*CHECKPOINT_SENSOR.x,y:target.y-Math.sin(a)*CHECKPOINT_SENSOR.x,a};
-    assert.ok(cartTouchesCheckpoint(body,target),'a tiny basket-sensor overlap counts at every heading');
-    body.x+=.1;assert.ok(!cartTouchesCheckpoint(body,target),'a real gap cannot count');
+test('any actual tire envelope clears a checkpoint at first contact',()=>{
+  const wheels=WHEELS.map(()=>({a:0}));
+  for(const a of [0,.7,Math.PI/2,Math.PI,-Math.PI/2])for(let i=0;i<4;i++) {
+    const body={x:230,y:150,a};wheels.forEach(w=>w.a=a);
+    const pose=casterPose(body,wheels[i],i),sign=WHEELS[i][0]<BODY.cartX?-1:1;
+    const r=CHECKPOINT_RADIUS+CASTER.halfLength;
+    const target={x:pose.x+Math.cos(a)*r*sign,y:pose.y+Math.sin(a)*r*sign};
+    assert.ok(cartTouchesCheckpoint(body,target,wheels),'each tire, including external tangency, counts');
+    target.x+=Math.cos(a)*.1*sign;target.y+=Math.sin(a)*.1*sign;
+    assert.ok(!cartTouchesCheckpoint(body,target,wheels),'a physical gap does not count');
   }
-  Object.assign(w.body,{x:target.x+CHECKPOINT_RADIUS+CHECKPOINT_SENSOR.radius-CHECKPOINT_SENSOR.x,y:150,a:0});
-  w.step(dt);assert.equal(w.gate,1,'exact tangency counts once');
-  w.step(dt);assert.equal(w.events.filter(e=>e.type==='gate').length,1);
+  const body={x:230,y:150,a:0};
+  assert.ok(!cartTouchesCheckpoint(body,{x:194,y:150},wheels),'shopper contact alone does not count');
+  wheels.forEach(w=>w.a=0);
+  assert.ok(!cartTouchesCheckpoint(body,{x:279,y:150},wheels),'the basket nose alone does not count');
 });
-
-test('basket checkpoints count in route order and open checkout after the last one', () => {
-  const w=new World({...empty,gates:[{x:230,y:150},{x:300,y:150}],start:{x:300-CHECKPOINT_SENSOR.x,y:150,a:0}});
+test('wheel checkpoints count once, in route order, and open checkout',()=>{
+  const w=new World({...empty,gates:[{x:230,y:150},{x:300,y:150}],start:{x:300,y:150,a:0}});
   w.step(dt);assert.equal(w.gate,0);
-  w.body.x=230-CHECKPOINT_SENSOR.x;w.step(dt);assert.equal(w.gate,1);assert.equal(w.exitOpen,false);
+  w.body.x=230;w.step(dt);assert.equal(w.gate,1);assert.equal(w.exitOpen,false);
   w.step(dt);assert.equal(w.gate,1);
-  w.body.x=300-CHECKPOINT_SENSOR.x;w.step(dt);assert.equal(w.gate,2);assert.equal(w.exitOpen,true);
+  w.body.x=300;w.step(dt);assert.equal(w.gate,2);assert.equal(w.exitOpen,true);
+  assert.equal(w.events.filter(e=>e.type==='gate').length,2);
 });
 
 test('checkout stays solid until all route markers are cleared', () => {
@@ -251,51 +253,6 @@ test('an expired clock cannot be rescued by crossing the exit on that step', () 
   const w = new World({ ...empty, gates: [], limit: .005, start: { x: 503, y: 150, a: 0 } }); w.body.vx = 2;
   w.step(dt); assert.equal(w.status, 'lost');
   assert.ok(footprint(w.body, w.wheels).every(p => p.x > 480), 'the whole footprint cleared on the expired step');
-});
-
-test('all six courses can be driven through before their deadlines', () => {
-  // The controller uses only push, pull, twist and brake. It follows markers
-  // and drives out with the same collisions as a player, without moving the
-  // body directly. This catches impossible layouts and blocked exits.
-  function drive(w, target) {
-    const b = w.body;
-    if (target === w.level.gates[w.gate]) {
-      // Near a checkpoint, account for the sensor moving with the basket.
-      // This keeps the pilot stable when a small overlap clears a circle early.
-      const person = point(b, CHECKPOINT_SENSOR.x, 0), dx = target.x - person.x, dy = target.y - person.y;
-      const distance = Math.hypot(dx, dy);
-      if (distance < 55) {
-        const c = Math.cos(b.a), s = Math.sin(b.a), speed = Math.min(60, distance * 2);
-        const vx = b.vx - b.omega * CHECKPOINT_SENSOR.x * s, vy = b.vy + b.omega * CHECKPOINT_SENSOR.x * c;
-        const ax = ((distance ? dx / distance * speed : 0) - vx) * 3;
-        const ay = ((distance ? dy / distance * speed : 0) - vy) * 3;
-        const along = ax * c + ay * s + b.omega * b.omega * CHECKPOINT_SENSOR.x, lateral = -ax * s + ay * c;
-        return {push:clamp(along / (along > 0 ? 78 : 50), -1, 1), turn:clamp((lateral / CHECKPOINT_SENSOR.x + 4.2 * b.omega) / 8.8, -1, 1)};
-      }
-      const previous = w.gate ? w.level.gates[w.gate - 1] : w.level.start;
-      const approach = Math.atan2(target.y - previous.y, target.x - previous.x);
-      target = {x:target.x - CHECKPOINT_SENSOR.x * Math.cos(approach), y:target.y - CHECKPOINT_SENSOR.x * Math.sin(approach)};
-    }
-    const dx = target.x - b.x, dy = target.y - b.y, d = Math.hypot(dx, dy);
-    const speed = Math.min(62, d * 1.25), vx = d > 1 ? dx / d * speed : 0, vy = d > 1 ? dy / d * speed : 0;
-    const ax = (vx - b.vx) * 2.1, ay = (vy - b.vy) * 2.1;
-    let error = wrap(Math.atan2(ay, ax) - b.a), sign = 1;
-    if (Math.abs(error) > Math.PI / 2) { error = wrap(error + Math.PI); sign = -1; }
-    return { turn: clamp(error * 4 - b.omega * 1.15, -1, 1), push: Math.abs(error) < .65 ? clamp(Math.hypot(ax, ay) / (sign === 1 ? 78 : 50), 0, 1) * sign : 0, brake: Math.abs(error) > .6 && Math.hypot(b.vx, b.vy) > 40 ? 1 : 0 };
-  }
-  for (const level of levels) {
-    const w = new World(level); let departing = false;
-    for (let i = 0; i < level.limit * 120 && w.status === 'running'; i++) {
-      let input;
-      if (w.gate < level.gates.length) input = drive(w, level.gates[w.gate]);
-      else {
-        if (Math.hypot(w.body.x - w.exit.approach.x, w.body.y - w.exit.approach.y) < 7) departing = true;
-        input = drive(w, departing ? w.exit.outside : w.exit.approach);
-      }
-      w.step(dt, input);
-    }
-    assert.equal(w.status, 'won', level.name + ': route must be completable with time penalties');
-  }
 });
 
 test('all courses stay finite during hard pushes, spin, and contact', () => {

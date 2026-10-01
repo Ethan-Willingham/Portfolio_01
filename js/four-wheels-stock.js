@@ -166,7 +166,8 @@
   }
   class System {
     constructor(world, geometry) {
-      this.world = world; this.geometry = geometry; this.items = []; this.liquids = new Map(); this.smears = []; this.serial = 0;
+      this.world = world; this.geometry = geometry;
+      this.cols=Math.ceil((world.level.bounds?.right||480)/CELL);this.rows=Math.ceil((world.level.bounds?.bottom||300)/CELL); this.items = []; this.liquids = new Map(); this.smears = []; this.serial = 0;
       this.fluidTime = 0; this.fragments=0; this.stats = { fallen: 0, broken: 0, crushed: 0, toppled: 0, wheelContacts: 0 };
       for (const s of world.shelves) {
         if (s.kind === 'table') {
@@ -277,10 +278,14 @@
       if (!this.liquids.has(kind)) this.liquids.set(kind, { kind, ...MATERIALS[kind], cells: new Map() });
       return this.liquids.get(kind);
     }
+    validCell(col,row) {
+      if(col<0||col>=this.cols||row<0||row>=this.rows)return false;
+      return this.world.isFloor({x:(col+.5)*CELL,y:(row+.5)*CELL});
+    }
     cell(liquid, x, y, amount) {
       const col = Math.floor(x / CELL), row = Math.floor(y / CELL);
-      if (col < 2 || col >= 118 || row < 2 || row >= 73) return;
-      const key = row * 120 + col, value = liquid.cells.get(key) || 0;
+      if (!this.validCell(col,row)) return;
+      const key = row * this.cols + col, value = liquid.cells.get(key) || 0;
       if (value + amount > 1e-10) liquid.cells.set(key, Math.max(0, value + amount)); else liquid.cells.delete(key);
     }
     spill(kind, x, y, volume, vx = 0, vy = 0) {
@@ -294,7 +299,7 @@
           if (weight) cells.push({x:x + col * CELL + vx * .025, y:y + row * CELL + vy * .025, weight});
         }
         const total = cells.reduce((n, c) => n + c.weight, 0);
-        for (const c of cells) this.cell(liquid, clamp(c.x, 8, 471.999), clamp(c.y, 8, 291.999), volume * c.weight / total);
+        for (const c of cells) this.cell(liquid, clamp(c.x, 8, (this.world.level.bounds?.right||480)-8.001), clamp(c.y, 8, (this.world.level.bounds?.bottom||300)-8.001), volume * c.weight / total);
         return;
       }
       const spots = 12;
@@ -311,10 +316,10 @@
         const add = (k, v) => delta.set(k, (delta.get(k) || 0) + v);
         for (const [key, volume] of cells) {
           if (volume < .025) continue;
-          const col = key % 120, row = Math.floor(key / 120);
+          const col = key % this.cols, row = Math.floor(key / this.cols);
           for (const [dc, dr] of [[-1,0],[1,0],[0,-1],[0,1]]) {
-            if (col + dc < 2 || col + dc >= 118 || row + dr < 2 || row + dr >= 73) continue;
-            const next = key + dc + dr * 120, neighbor = cells.get(next) || 0;
+            if (!this.validCell(col+dc,row+dr)) continue;
+            const next = key + dc + dr * this.cols, neighbor = cells.get(next) || 0;
             const flow = Math.min(volume * .16, Math.max(0, volume - neighbor - .02) * liquid.flow * dt * .16);
             if (flow) { add(key, -flow); add(next, flow); }
           }
@@ -323,15 +328,15 @@
       }
     }
     sample(x, y) {
-      const key = Math.floor(y / CELL) * 120 + Math.floor(x / CELL);
+      const key = Math.floor(y / CELL) * this.cols + Math.floor(x / CELL);
       let grip = 1, drag = 1, kind = null, amount = 0;
       for (const l of this.liquids.values()) {
         const v = l.cells.get(key) || 0, coverage = clamp(v * 3, 0, 1);
         if (coverage > amount) { amount = coverage; kind = l.kind; }
         grip = Math.min(grip, 1 + (l.grip - 1) * coverage); drag += (l.drag - 1) * coverage;
       }
-      const p = this.world.level.puddle;
-      if (p && ((x - p.x) / p.rx) ** 2 + ((y - p.y) / p.ry) ** 2 < 1) { grip = Math.min(grip, .4); drag = Math.min(drag, .6); kind ||= 'water'; }
+      const wet = (this.world.level.puddles||[this.world.level.puddle]).some(p=>p&&((x-p.x)/p.rx)**2+((y-p.y)/p.ry)**2<1);
+      if (wet) { grip = Math.min(grip, .4); drag = Math.min(drag, .6); kind ||= 'water'; }
       return { grip, drag:Math.max(.3, drag), kind };
     }
     wheels(dt) {
@@ -339,12 +344,13 @@
       w.wheels.forEach((wheel, i) => {
         const p = this.geometry.casterPose(b, wheel, i), speed = Math.hypot(b.vx - b.omega * (p.y - b.y), b.vy + b.omega * (p.x - b.x));
         wheel.surface = this.sample(p.x, p.y); wheel.coating ||= {};
+        if(w.hazardEnabled&&!w.isFloor(p)){wheel.surface={grip:0,drag:0,kind:null};return;}
         for(const [kind,volume]of Object.entries(wheel.coating)) {
           const coat=clamp(volume*1.5,0,.65),material=MATERIALS[kind];
           wheel.surface.grip=Math.min(wheel.surface.grip,1+(material.grip-1)*coat);
           wheel.surface.drag+=(material.drag-1)*coat;
         }
-        const key = Math.floor(p.y / CELL) * 120 + Math.floor(p.x / CELL);
+        const key = Math.floor(p.y / CELL) * this.cols + Math.floor(p.x / CELL);
         for (const l of this.liquids.values()) {
           const available = l.cells.get(key) || 0;
           const take = Math.min(available, Math.max(0, .45 - (wheel.coating[l.kind] || 0)), speed * dt * .006);
@@ -399,6 +405,7 @@
       const active = this.items.slice();
       for (const p of active) {
         if (p.state === 'shelf' || p.broken || p.sleep > .6) continue;
+        if(this.world.hazardEnabled&&!this.world.isFloor(p)&&p.z<=0){p.broken=true;p.state='gone';continue;}
         p.age += dt;
         if (p.z > 0 || p.vz > .5) {
           p.vz -= G * dt; p.z += p.vz * dt; p.state = 'air';
@@ -436,6 +443,7 @@
         poly = shelfPolygon(s);
         for (const wall of w.walls) { const h = polygonContact(poly, rectPolygon(wall)); if (h) resolve(s, null, h, .04, .55); }
         for (const o of w.objects) {
+          if(o.gone||o.falling)continue;
           const h = circlePolygon(o.x, o.y, o.radius, poly);
           if (!h) continue;
           o.inertia ||= o.mass * 50;
@@ -492,6 +500,7 @@
           if (h) { const speed = Math.hypot(p.vx-s.vx,p.vy-s.vy); resolve(p,s,h,p.bounce,p.friction); this.breakProduct(p,speed); }
         }
         for (const o of w.objects) {
+          if(o.gone||o.falling)continue;
           if (p.z > 10) continue;
           const h = circlePolygon(o.x,o.y,o.radius,boxPolygon(p,p.length,p.width));
           if (h) { o.inertia ||= o.mass * 50; resolve(o,p,h,p.bounce,p.friction); }

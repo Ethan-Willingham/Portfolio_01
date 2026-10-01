@@ -71,3 +71,23 @@ check('rotating a coasting cart preserves its projected momentum direction',()=>
   const before=velocity();for(let i=0;i<50;i++)w.step(1/120,{turn:1});
   assert.ok(w.body.a>.2);assert.ok(Math.abs(velocity()-before)<.05);
 });
+
+global.CartPhysics=Physics;global.CartStock=Stock;
+const renderer=View.create({});
+check('the following camera keeps the cart centered in every connected room',()=>{
+  const w=new Physics.World(levels.journey());
+  for(const r of w.level.rooms)for(const [width,height]of [[960,520],[480,780],[960,250]]) {
+    Object.assign(w.body,r.spawn);const camera=renderer.connectedCamera(width,height,w,true),p=project(w.body);
+    near(camera.x+p.x*camera.scale,width*.5);near(camera.y+p.y*camera.scale,height*.54);
+  }
+});
+check('the overview contains all six floors and the final checkout apron',()=>{
+  const w=new Physics.World(levels.journey());
+  for(const [width,height]of [[960,520],[480,780],[960,250]]) {
+    const camera=renderer.connectedCamera(width,height,w,false);
+    for(const a of w.level.floorAreas)for(const x of [a.x,a.x+a.w])for(const y of [a.y,a.y+a.h]) {
+      const p=project({x,y}),sx=camera.x+p.x*camera.scale,sy=camera.y+p.y*camera.scale;
+      assert.ok(sx>=14&&sx<=width-14&&sy>=14&&sy<=height-14,'no clipped room or exit in the map');
+    }
+  }
+});
