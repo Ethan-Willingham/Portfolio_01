@@ -1,0 +1,76 @@
+Sluice logo v12
+
+User changes: recognizable smoke, a new E color with better water inside it, and ore placement that feels less neatly divided into balanced chunks.
+
+Built-in image_gen was used for the slate E and smoke canopy. The selected E received a second targeted water pass to simplify its reflections. Smoke is illustrated as clear rounded billows. Its real alpha is retained. These replace the v11 native smoke capture and posed E water.
+The other five letter bodies are retained from the approved v9 wordmark. Background dirt and cave geometry are native game renders. The lower cave pool retains the native v11 water rendering.
+
+E source: exec-6245962c-8f40-4e3e-8190-1e60c441a598.png, 1136 x 1385.
+Body source rectangle: x62, y78, width1023, height1162.
+Placed body rectangle: x1236, y310, width250, height326.
+Falling water source: x62, y1240, width1023, height125.
+Falling water placed: x1236, y636, width250, height111.
+Initial E generation source: exec-213d9381-b9f5-4727-98e8-f548be62fdbb.png; retained only as an intermediate generation reference.
+
+Smoke source: exec-26bf380d-e449-4d13-9fc1-c7c8a89128de.png, 1998 x 787.
+Source bounds above alpha32: x86, y60, width1852, height673.
+Aligned source stem center x531 with the L cap center x449.
+Final smoke left x131.82937365010798, width1320, top15, height294, alpha0.78.
+Canopy source x86, y60, width1852, height480 maps to final y15, height240.
+Stem source x86, y540, width1852, height193 maps to final y255, height54.
+This preserves broad billows while shortening the source stem. The root ends at y309, immediately above the L cap.
+
+Native terrain: renderTerrainChunk at scale3, TILE32, from js/sluice/100-render-terrain.js and the ore renderers in 110 and 120. Cave cells are unchanged from v7. Ore artwork is unmodified native drawEarlyOreAtlas output, with irregular positions, changing scale, seed variation and edge clipping. Native stone hosts follow smaller uneven cell chains.
+Ore points are (column, row, display scale), relative to world tile (40,40):
+coal: (-0.45,0.42,0.95), (0.38,1.15,1.04), (1.16,1.73,0.70), (2.02,1.45,1.16), (2.87,2.16,0.52), (3.31,-0.30,0.65), (12.08,0.47,0.54).
+bauxite: (-0.19,7.16,0.75), (0.12,8.56,1.14), (1.13,8.19,0.73), (2.53,9.23,0.92), (5.43,9.75,0.46).
+copper: (7.59,8.45,0.77), (9.15,8.83,1.12), (10.15,9.70,0.63).
+iron: (14.18,-0.14,1.08), (15.43,0.84,0.77), (16.53,2.14,1.05), (17.26,3.12,0.59).
+Each cluster draws the native atlas at its center with the recorded scale. Variant seed coordinates are row73+index*37 and column127+index*19.
+Stone host cells: (7,8), (8,8), (9,8), (7,9), (8,9), (9,9), (10,9), (10,10), (11,10), (14,0), (15,0), (15,1), (16,1), (16,2), (17,2), (17,3), (18,3).
+
+Artifacts:
+assets/images/sluice-logo-v12.png, opaque 1672 x 941 master.
+assets/images/sluice-logo-v12-wordmark.png, matching transparent logo.
+assets/images/sluice-logo-v12-background.png, native terrain and rearranged native ores.
+assets/images/sluice-logo-v12-e.png, selected generated E source.
+assets/images/sluice-logo-v12-e-layer.png, aligned E and falling water.
+assets/images/sluice-logo-v12-plume.png, generated smoke source.
+assets/images/sluice-logo-v12-smoke.png, aligned transparent canopy.
+assets/thumbs/sluice-logo-v12.webp, 600 x 338 blog thumbnail.
+
+Validation: rendered with an owned Chrome for Testing process and exact child-process cleanup. Full master, 600-pixel thumbnail and transparent wordmark on the site's dark green were visually reviewed. Production game source and live page references are unchanged.
+
+Built-in image generation prompts:
+
+1. Slate E with water:
+Use case: precise-object-edit.
+Asset type: replacement hollow E letter with water for the Sluice wordmark.
+Image 1 is the exact edit target, the hollow E structure. Image 2 is the approved full logo, reference for simple shapes, small bevels, common lighting and finish.
+
+Keep the exact outer silhouette and hollow E-shaped mining cavity from Image 1, including the three arms and the broken outlet at about 70 percent of the bottom width. Change the shell's color and material to restrained COOL SLATE BLUE-GREY cast metal, with modest silvery steel edge highlights, dark blue-grey sidewalls, and gentle warm reflected light. No ivory face and no gold or bronze rim. Keep broad quiet surfaces and the irregular inner lip. Make the rim substantial and clearly readable at thumbnail size, with the same simple illustrated construction as the other letters.
+
+Inside the cavity, make convincing moving WATER rather than a flat blue shape. Mostly dark empty cave in the upper half. Blue water churns in the lower half and lower arm, with a small irregular lifting splash against the left cavity wall and several delicate droplets. The water is fluid and translucent at its thin edges, deeper clear blue in its thicker body, with a few restrained LIGHT BLUE turbulence accents. Use a quietly sculpted fluid surface, subtle depth and small soft reflections so it belongs to the same illustrated logo. The splash must have changing thickness, breaking tips and gravity; no solid tentacle, blue noodle, perfect arch, solid U-shaped loop, blob sticker or flat vector fill. It must feel pooled and churning within the hollow letter, flowing down toward the broken outlet. Avoid white-painted foam, cyan glow, numerous decorative lines, a giant breaking ocean wave or ornamental ripple rings.
+Let water flow through the broken bottom opening into a slim uneven falling stream with one small separated droplet below it. The stone-metal lip naturally occludes the water. No water outside the letter's sides, no pool below, no smoke.
+
+Output ONLY this complete E plus falling water on genuine transparent background, centered with clear margins. Preserve its exact recognizable E shape, material economy, warm upper-left illumination, modest shallow depth and clean silhouette. No other letters, no background, no ore, no text, no watermark. High resolution.
+
+2. Final water simplification:
+Use case: precise-object-edit.
+Asset type: final simplified water rendering inside the slate E for the Sluice logo.
+Image 1 is the precise edit target. Keep its E shell, slate metal color, silhouette, hollow interior, placement, bottom outlet and falling water. Image 2 is a style reference for the logo's quiet broad shading, especially the green U.
+
+Change ONLY the rendering of the water. Keep the water's fluid depth and lively breaking shape in the lower half, but substantially SIMPLIFY its surface. Make it hand-illustrated water matching the other letters: a few broad, softly shaded deep-blue and medium-blue planes, gentle transparency along thin edges, two or three restrained light-blue reflection shapes and a delicate pale-blue crest. Keep natural changing thickness, gravity, the small splash near the left wall, a few varied tiny droplets and flow down through the bottom outlet. The water must still feel liquid, churning and draining rather than a flat blue fill. Clear water shape first, subtle depth second.
+Remove the dense net of bright white glints, many sparkling bubbles, detailed refraction streaks, photographic caustics, fragmented highlights and texture noise. No white foam, no cyan glow, no perfect U-shaped water loop or solid blue tentacle. The water should be beautifully simple and read clearly at thumbnail size, with the same polish and economy as the U's broad translucent surfaces.
+Keep the empty upper interior dark and quiet, with only very faint texture. Do not change the shell structure or add hardware. Output only the same complete E and slim falling water on genuine transparent background, with generous margins. No other letters, smoke, background, pool, ore, extra text or watermark.
+
+3. Recognizable smoke canopy:
+Use case: precise-object-edit.
+Asset type: isolated smoke canopy for the Sluice game wordmark.
+The reference image is the logo's composition and restrained illustrated finish. Replace its existing tangled, stringy smoke with clearly recognizable rising SMOKE. Output ONLY smoke on genuine transparent background. No letters, no objects, no ground.
+
+Composition: a wide, low plume shaped like a gentle canopy, about FIVE TIMES AS WIDE AS IT IS TALL. A short narrow stem rises from the bottom at roughly 23 percent of the canopy width, where the L's chimney is. It swells into soft grey billows, then sweeps right in a graceful shallow arch that can hover over the full six-letter word. A smaller curl extends to the left to balance the long rightward sweep. The stem and canopy are one continuous smoke plume. Leave generous transparent margin, including BELOW the canopy around the short source stem.
+Make it immediately recognizable smoke at a small blog-thumbnail size: a few broad rounded billowing forms with softly shaded interiors, gentle pale-grey highlights, darker warm-grey overlaps, translucent soft edges and two or three restrained curling tips. Use clear volumes rather than strands. The plume has an airy sculpted shape, modest density near the source, opening into lighter billows across the canopy and dissipating beautifully at the right end. Calm and balanced; smoke remains a supporting accent above the word.
+Style: simple hand-illustrated game logo, soft warm neutral greys, economical shading, coherent quiet shapes, no busy surface texture. It should look like smoke from a small iron furnace, not a weather cloud or explosion.
+Avoid stringy streaks, ribbons, cobwebs, scratches, a mesh of thin wisps, fingerprints, smeared paint, fog haze, white noodle loops, a dense white cloud bank, repeated identical puffs, photorealism, dramatic lighting, orange glow, flames, sparkles, text or watermark. Real alpha transparency.
+
