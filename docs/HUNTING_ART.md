@@ -1,4 +1,4 @@
-# Hunting art, version 2
+# Hunting art
 
 The owner requested replacing the first port's artwork on 2026-09-30.
 The replacement uses the built-in imagegen tool, with one generation each
@@ -52,3 +52,28 @@ They verify both orientations, actual sprite opacity, vital recovery, wind,
 reload, scope coordinates, and touch shots. Inspect the desktop and mobile
 screenshots too. The first port's sprites and editable Aseprite sources stay
 in `assets/hunting/` and `assets/hunting/source/` as source history.
+
+## Version 3, camp and tracking
+
+The original game prompt guided the new camp loop on 2026-09-30. Four additional
+assets use the same built-in imagegen workflow and restrained pixel palette:
+
+- `assets/hunting/marsh-v3.png`: 640 by 360 cypress and reed clearing.
+- `assets/hunting/boar-v3.png`: 64 by 42 right-facing wild boar, binary alpha.
+- `assets/hunting/dog-v3.png`: 40 by 22 right-facing tracking dog, binary alpha.
+- `assets/hunting/trail-v3.png`: 640 by 360 illustrated search interstitial.
+- `assets/hunting/source-v3/{marsh,boar,dog,trail}.png`: full generated masters.
+- `assets/hunting/source-v3/prompts.json`: the complete final prompt set and tool.
+
+The existing birch background, deer and rear-view hunter are reused. The new
+boar has a lower silhouette, with the shoulder checked at u = 0.67, v = 0.45.
+The species' real alpha masks drive hit detection, and vital guides use those
+same sizes. Blood marks, time-of-day shade and the stand are drawn in canvas.
+Bracken follows the hunter after purchase and can be left at camp.
+
+`tools/build-hunting-art.cjs` now rebuilds both versions. It preserves aspect
+ratio when only one sprite dimension is supplied, while using the authored
+logical sizes for the two animal targets. All generated source alpha stays
+intact. These are generated assets, not hand-authored or directional animated
+sprite sheets. They can be replaced with the owner's future drawn assets,
+provided the renderer, native hit mask and vital coordinates are updated together.

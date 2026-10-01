@@ -103,3 +103,96 @@ body.hunt-lock { overflow: hidden; }
   .hunt-briefing #hunt-start { margin-top: .6rem; }
   .hunt-briefing-controls { display: none; }
 }
+
+/* Camp and the outing loop share the site's panel palette. */
+.hunt-game.is-camp .hunt-field-readout { display: none; }
+.hunt-camp { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 clamp(.8rem, 3vw, 2.6rem) 2rem; }
+.hunt-camp-tabs { display: flex; gap: 1.1rem; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
+.hunt-camp-tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: .9rem .25rem; background: transparent; }
+.hunt-camp-tabs button[aria-pressed="true"] { color: var(--accent); border-bottom-color: var(--accent); background: transparent; }
+.hunt-camp-tabs span, #hunt-track-count { font: .65rem var(--font-mono); margin-left: .3rem; color: var(--accent); }
+.hunt-camp-notice { min-height: 1.5em; font-size: .8rem; color: var(--text-dim); margin: .5rem 0 1.4rem; }
+.hunt-camp-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(270px, 1fr); gap: clamp(1.2rem, 3vw, 2.6rem); }
+.hunt-location { position: relative; aspect-ratio: 16 / 9; max-height: 440px; display: flex; align-items: flex-end; border: 1px solid var(--rule-strong); border-radius: 6px; overflow: hidden; background: url('assets/hunting/clearing-v2.png') center / cover; image-rendering: pixelated; }
+.hunt-location[data-region="cypress"] { background-image: url('assets/hunting/marsh-v3.png'); }
+.hunt-location::before { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 25%, color-mix(in srgb, var(--bg-raised) 94%, transparent)); }
+.hunt-location > div { position: relative; padding: clamp(1.2rem, 2.5vw, 2rem); }
+.hunt-location h2 { font: clamp(1.7rem, 3vw, 2.8rem)/1.05 var(--font-heading); color: var(--text-bright); margin: .55rem 0; }
+.hunt-location .hunt-kicker { color: var(--accent-hover); }
+.hunt-location p:last-child { margin: 0; font-size: .8rem; color: var(--text); }
+.hunt-regions { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .8rem; }
+.hunt-regions button { text-align: left; padding: 1rem; display: flex; flex-direction: column; gap: .55rem; }
+.hunt-regions strong { font: 1.25rem var(--font-heading); color: var(--text-bright); }
+.hunt-regions button > span:last-child { font: .75rem/1.55 var(--font-body); }
+.hunt-regions button:disabled { opacity: .7; }
+.hunt-planner { border-left: 1px solid var(--rule); padding-left: clamp(1.2rem, 3vw, 2.6rem); }
+.hunt-planner h2, .hunt-camp-heading h2 { font: 2.2rem/1.1 var(--font-heading); margin: .5rem 0 1rem; color: var(--text-bright); }
+.hunt-planner-copy, .hunt-camp-heading > p:last-child { font-size: .85rem; line-height: 1.65; color: var(--text-dim); max-width: 55em; }
+.hunt-planner > label { display: block; font-size: .8rem; color: var(--text); margin: 1rem 0 .45rem; }
+.hunt-planner input[type="time"], .hunt-planner select { min-height: 44px; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--rule-strong); border-radius: 4px; padding: .5rem .65rem; font: .85rem var(--font-mono); color-scheme: dark; }
+.hunt-planner input:focus-visible, .hunt-planner select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hunt-time-input { display: flex; gap: .5rem; }
+.hunt-time-input input { flex: 1; width: 110px; }
+.hunt-time-input button { flex: 1; padding-inline: .65rem; }
+.hunt-clock-controls { margin: 1rem 0; padding: 0; border: 0; }
+.hunt-clock-controls legend { font-size: .75rem; color: var(--text-dim); margin-bottom: .5rem; }
+.hunt-clock-controls > div { display: flex; gap: .35rem; }
+.hunt-clock-controls button { flex: 1; padding-inline: .5rem; font: .7rem var(--font-mono); }
+.hunt-planner select { width: 100%; font-family: var(--font-body); }
+.hunt-planner .hunt-dog-choice { display: grid; grid-template-columns: 20px 1fr; column-gap: .45rem; align-items: center; }
+.hunt-dog-choice input { width: 18px; height: 18px; accent-color: var(--accent); }
+.hunt-dog-choice span { grid-column: 2; font-size: .7rem; color: var(--text-faint); margin-top: .3rem; }
+#hunt-embark { width: 100%; margin-top: 1.1rem; min-height: 50px; }
+.hunt-save-note { color: var(--text-faint); font-size: .65rem; line-height: 1.6; margin-top: .65rem; }
+.hunt-shop-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.hunt-shop-item { border: 1px solid var(--rule); border-radius: 6px; padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; }
+.hunt-shop-item h3 { font: 1.5rem var(--font-heading); color: var(--text-bright); margin: .5rem 0; }
+.hunt-shop-item > p:not(.hunt-kicker) { color: var(--text-dim); font-size: .85rem; line-height: 1.6; }
+.hunt-shop-item button { margin-top: auto; }
+.hunt-permit-progress { font-family: var(--font-mono); }
+.hunt-pack-heading { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin: 1.5rem 0 .8rem; }
+.hunt-pack-heading h3, .hunt-record-title { font: 1.5rem var(--font-heading); color: var(--text-bright); margin: 0; }
+.hunt-record-title { margin: 1.8rem 0 .8rem; }
+.hunt-record-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: .8rem; }
+.hunt-record { display: grid; grid-template-columns: 75px 1fr; gap: .9rem; border: 1px solid var(--rule); padding: 1.2rem; border-radius: 5px; }
+.hunt-record > div { min-width: 0; }
+.hunt-record-art { width: 75px; height: 65px; align-self: center; background: url('assets/hunting/deer-v2.png') center / contain no-repeat; image-rendering: pixelated; }
+.hunt-record-art[data-species="boar"] { background-image: url('assets/hunting/boar-v3.png'); }
+.hunt-record h4 { font: 1.2rem var(--font-heading); color: var(--text-bright); margin: .45rem 0; }
+.hunt-record p:not(.hunt-kicker) { font-size: .72rem; color: var(--text-dim); margin: .3rem 0; }
+.hunt-record .hunt-record-status { color: var(--accent); }
+.hunt-record-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; }
+.hunt-record-actions button { font-size: .7rem; padding-inline: .6rem; }
+.hunt-empty, .hunt-trail-summary { font: .8rem/1.6 var(--font-body); color: var(--text-dim); padding: 1rem 0; }
+.hunt-tracking { position: absolute; inset: 0; z-index: 5; background: color-mix(in srgb, var(--bg-raised) 90%, transparent); padding: 1.2rem; display: flex; overflow-y: auto; }
+.hunt-tracking-card { width: 700px; max-width: 100%; flex-shrink: 0; margin: auto; border: 1px solid var(--rule-strong); border-radius: 7px; background: var(--bg-raised); overflow: hidden; }
+.hunt-tracking-card img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.hunt-tracking-copy { padding: clamp(1.1rem, 3vw, 2rem); }
+.hunt-tracking-copy h2 { font: 2rem var(--font-heading); color: var(--text-bright); margin: .5rem 0; }
+.hunt-tracking-copy > p:not(.hunt-kicker) { font-size: .85rem; line-height: 1.6; color: var(--text-dim); }
+#hunt-track-choice { display: flex; flex-direction: column; gap: .5rem; margin: 1rem 0; }
+#hunt-track-choice button { text-align: left; color: var(--text); }
+#hunt-track-choice button > span:last-child { display: block; color: var(--accent); font-size: .7rem; margin-top: .3rem; }
+#hunt-search-progress { width: 100%; height: 8px; margin: 1rem 0; accent-color: var(--accent); }
+#hunt-track-close { margin-top: .5rem; }
+.hunt-shuffle > div { display: flex; gap: .35rem; }
+@media (max-width: 1050px) { .hunt-readouts { gap: 1rem; } .hunt-readouts output { font-size: 1rem; } .hunt-minor-readout { display: none; } }
+@media (max-width: 760px) {
+  .hunt-camp-grid { grid-template-columns: 1fr; }
+  .hunt-planner { border-left: 0; border-top: 1px solid var(--rule); padding: 1.4rem 0 0; }
+  .hunt-regions button { padding: .8rem; }
+  .hunt-camp-tabs { gap: .8rem; }
+  .hunt-camp-tabs button { font-size: .72rem; }
+  .hunt-shop-items { grid-template-columns: 1fr; }
+  .hunt-shop-item { padding: 1.1rem; }
+  .hunt-camp-heading h2 { font-size: 1.8rem; }
+  .hunt-record-grid { grid-template-columns: 1fr; }
+  .hunt-record { padding: .9rem; grid-template-columns: 60px 1fr; }
+  .hunt-record-art { width: 60px; }
+  .hunt-pack-heading { align-items: flex-start; }
+  .hunt-pack-heading button { max-width: 55%; }
+  .hunt-tracking { padding: .6rem; }
+}
+@media (max-width: 600px) and (orientation: portrait) { .hunt-stage { height: 270px; } .hunt-camp { overflow-y: visible; } .hunt-toolbar { gap: .5rem; } .hunt-readouts { gap: .6rem; } }
+@media (max-width: 400px) { .hunt-camp-tabs { gap: .45rem; } .hunt-camp-tabs button { flex: 1; padding-inline: .1rem; font-size: .68rem; } }
+@media (max-height: 570px) and (orientation: landscape) { .hunt-tracking-card { display: grid; grid-template-columns: 1fr 1fr; width: 900px; } .hunt-tracking-card img { height: 100%; object-fit: cover; } .hunt-tracking-copy { padding: 1rem; } }

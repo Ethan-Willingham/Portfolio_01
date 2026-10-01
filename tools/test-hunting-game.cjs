@@ -96,3 +96,34 @@ check('seeded outings and fast-forward use the same fixed-step simulation', () =
   advance(a, 8); for (let i = 0; i < 8; i++) advance(b, 1);
   assert.deepEqual(a.deer, b.deer); assert.equal(a.wind, b.wind);
 });
+check('free walking is bounded, diagonal speed is normalized, and the stand needs proximity', () => {
+  const world = new World(art, 11, { freeWalk: true }); world.deer = [];
+  assert.equal(world.hunter.x, -7.6); assert.equal(world.hunter.mounted, false); assert.equal(world.toggleStand(), false);
+  const x = world.hunter.x, y = world.hunter.y; advance(world, 1, { move: 1, moveY: 1 });
+  assert.ok(Math.abs(Math.hypot(world.hunter.x - x, world.hunter.y - y) - T.walkSpeed) < 1e-8);
+  Object.assign(world.hunter, { x: 0, y: -4.2 }); assert.equal(world.toggleStand(), true); assert.equal(world.hunter.height, T.standHeight);
+  advance(world, 1, { move: 1, moveY: 1 }); assert.equal(world.hunter.x, .7); assert.equal(world.hunter.y, T.muzzleY);
+  assert.equal(world.toggleStand(), true); assert.equal(world.hunter.height, 1.1);
+  advance(world, 10, { moveY: 1 }); assert.equal(world.hunter.y, 2.5);
+});
+check('the boar uses its own opaque chest and reverse-direction shots still recover', () => {
+  const boar = PNG.sync.read(fs.readFileSync(path.join(__dirname, '../assets/hunting/boar-v3.png')));
+  const mask = { width: boar.width, height: boar.height, alpha: Uint8Array.from({ length: boar.width * boar.height }, (_, i) => boar.data[i * 4 + 3]), vitalsX: .67, vitalsY: .45, radius: .1 };
+  assert.equal(hitPixel(mask, true, .67, .45), 'vitals');
+  assert.equal(hitPixel(mask, false, .33, .45), 'vitals');
+  const world = new World(mask, 71, { freeWalk: true, species: 'boar' });
+  Object.assign(world.hunter, { x: 0, y: 3, height: 1.1 });
+  world.deer = [world.deer[0]]; Object.assign(world.deer[0], { x: 0, y: .8, previousX: 0, previousY: .8, pause: 999, facingRight: true });
+  world.wind = 0;
+  const targetX = (.67 - .5) * mask.width / T.pixelsPerUnit, dy = .8 - world.hunter.y;
+  const time = Math.hypot(targetX, dy) / T.muzzleSpeed, h = .45 * mask.height / T.pixelsPerUnit;
+  const vz = (h - 1.1 + .5 * T.gravity * time * time) / time;
+  const duration = (vz + Math.sqrt(vz * vz + 2 * T.gravity * 1.1)) / T.gravity;
+  world.fire({ x: targetX * duration / time, y: world.hunter.y + dy * duration / time });
+  advance(world, 3); assert.equal(world.recovered, 1);
+});
+check('wounded escapes carry a profile and leave a blood trail', () => {
+  const world = scene(); world.fire(aimFor(world, .4, .55)); advance(world, 3);
+  assert.ok(world.blood.length > 2); const escape = world.events.find(e => e.type === 'escape');
+  assert.equal(escape.animal.species, 'deer'); assert.ok(Number.isInteger(escape.animal.seed));
+});

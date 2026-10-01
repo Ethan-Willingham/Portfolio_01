@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const sharp = require('sharp');
 const root = path.resolve(__dirname, '../assets/hunting');
-async function sprite(name, width, height) {
-  const source = path.join(root, 'source-v2', name + '.png');
+async function sprite(name, width, height, version = 2) {
+  const source = path.join(root, 'source-v' + version, name + '.png');
   const { data, info } = await sharp(source).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let left = info.width, top = info.height, right = 0, bottom = 0;
   for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
@@ -16,10 +16,10 @@ async function sprite(name, width, height) {
   }
   if (left > right || top > bottom) throw new Error(name + ' has no opaque pixels.');
   const crop = { left, top, width: right - left + 1, height: bottom - top + 1 };
-  const scaled = await sharp(source).extract(crop).resize(width, height, { kernel: 'nearest', fit: width ? 'fill' : 'inside' }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const scaled = await sharp(source).extract(crop).resize(width, height, { kernel: 'nearest', fit: width && height ? 'fill' : 'inside' }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   // A visible pixel and a hittable pixel use the same binary opacity edge.
   for (let i = 3; i < scaled.data.length; i += 4) scaled.data[i] = scaled.data[i] >= 128 ? 255 : 0;
-  const output = path.join(root, name + '-v2.png');
+  const output = path.join(root, name + '-v' + version + '.png');
   await sharp(scaled.data, { raw: scaled.info }).png({ palette: true, colours: 48, dither: 0 }).toFile(output);
   console.log(name + ': ' + scaled.info.width + ' by ' + scaled.info.height);
 }
@@ -28,4 +28,10 @@ async function sprite(name, width, height) {
   console.log('clearing: 640 by 360');
   await sprite('deer', 64, 48);
   await sprite('hunter', null, 64);
+  for (const name of ['marsh', 'trail']) {
+    await sharp(path.join(root, 'source-v3', name + '.png')).resize(640, 360, { kernel: 'nearest', fit: 'fill' }).png({ palette: true, colours: 128, dither: 0 }).toFile(path.join(root, name + '-v3.png'));
+    console.log(name + ': 640 by 360');
+  }
+  await sprite('boar', 64, 42, 3);
+  await sprite('dog', 40, null, 3);
 })().catch(error => { console.error(error); process.exitCode = 1; });

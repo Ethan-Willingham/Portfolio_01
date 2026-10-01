@@ -1,128 +1,167 @@
 # Hunting Game
 
-The first browser version of `/Users/ethan/hunting-game`, the owner's 2D Unity
-prototype. The source project was reviewed at commit `0ef16c9` (2026-09-01).
-The Unity project stays intact. This version is ordinary JavaScript served from
-`hunting-game.html`, listed beside All Four Wheels on In Progress.
+The browser version of `/Users/ethan/hunting-game`, the owner's 2D Unity
+prototype. The Unity source was reviewed at commit `0ef16c9` (2026-09-01) and
+stays intact. This game is ordinary JavaScript served from `hunting-game.html`,
+listed beside All Four Wheels on In Progress.
+
+The owner supplied the original design prompt on 2026-09-30. Version 3 adds a
+complete camp-to-field loop around the original visible bullet mechanic.
+Keep developing the JavaScript version in this repo. The current art is
+generated pixel art and can accept owner-drawn replacements later.
 
 ## Sources
 
-- `hunting-game.html`: game shell, briefing, controls, and short post.
-- `hunting-game.css`: site-colored shell, mobile layouts, and fullscreen.
-- `js/hunting-physics.js`: tuning, analytic ballistics, deer behavior, ammo, and recovery.
-- `js/hunting-view.js`: pixel renderer, asset loading, alpha mask, and scope camera.
-- `js/hunting-game.js`: fixed-step loop, input, UI, synthesized sound, and pause state.
-- `assets/hunting/*-v2.png`: the current field, deer, and hunter art.
-- `assets/hunting/source-v2/`: generated masters and the exact prompts.
-- `tools/build-hunting-art.cjs`: crops and normalizes the current art.
-- `assets/hunting/source/*.aseprite`: the original Unity art, retained as source history.
-- `tools/export-hunting-art.mjs`: legacy export using the installed Aseprite CLI.
+- `hunting-game.html`: camp, field, tracking dialog, controls, and short post.
+- `hunting-game.css`: site-colored shell, camp panels, phone layouts, fullscreen.
+- `js/hunting-campaign.js`: clock, inventory, progression, tracking and save data.
+- `js/hunting-physics.js`: ballistics, movement, animal behavior and pixel hits.
+- `js/hunting-view.js`: renderer, asset loading, species masks and scope camera.
+- `js/hunting-game.js`: fixed-step loop, input, UI, saving, sound and phase changes.
+- `assets/hunting/*-v2.png`: birch meadow, deer and hunter.
+- `assets/hunting/*-v3.png`: cypress field, boar, dog and tracking illustration.
+- `assets/hunting/source-v2/`, `source-v3/`: generated masters and full prompts.
+- `tools/build-hunting-art.cjs`: repeatable asset normalization, requires Sharp.
+- `assets/hunting/source/*.aseprite`: original Unity art, retained as history.
+- `tools/export-hunting-art.mjs`: legacy Aseprite export.
 
-No Unity player, game engine dependency, Sluice code, or bundle step. The only
-external request on the page is the site's existing analytics. Fonts are the
-site's three self-hosted faces. Asset load errors keep a usable reload prompt.
-CSS, scripts, and sprite requests have version query strings. Bump those when
-changing a deployed file.
+No Unity runtime, game engine package, Sluice dependencies or bundle step.
+The public page uses the site's three self-hosted fonts and its existing
+analytics. Artwork load failures keep a usable reload prompt. Bump the page's
+CSS and script version queries when changing deployed files.
 
-## What was carried over
+## The loop
 
-Read the Unity `README.md`, `Tuning.cs`, `Game.cs`, `Hunter.cs`, `Bullet.cs`,
-`Deer.cs`, `Art.cs`, and `AsepriteSetup.cs` before porting. The main mechanic
-is ground position plus height, with a visible slow bullet. Its landing time
-is solved from the aim point, so aiming beyond an animal raises the bullet's
-height at the animal's depth plane. Wind adds sideways acceleration during the
-flight. A is left, D is right, R reloads, right mouse holds the scope, and F
-fast-forwards eight times. The magazine holds five rounds and reload takes
-1.1 seconds. The stand, movement bounds, deer speeds, three living deer limit,
-and six-second spawn interval use the original tuning.
+Camp begins at 05:30 on day 1, with 160 credits and a field rifle. Camp has
+Plan an outing, Outfitter, and Pack & trophies tabs. The clock supports pause,
+real time, 60x and 300x. Wait until jumps to the next occurrence of a selected
+hour, including tomorrow if that hour has passed. Dawn and dusk increase
+animal activity. The game clock advances only while the visible tab is active.
 
-The first port used the original trimmed 24 by 19 deer, with vital center
-u = 0.60, v = 0.45. That corrected the Unity README's outdated 0.25-from-nose
-comment. The original sprites and Aseprite sources remain in the repository.
+Embarking and returning each use ten minutes. Departure is blocked if the
+field would be dark on arrival. An outing returns automatically at 20:00.
+Field Wait uses 8x animal simulation and 300x clock speed, with the hunter
+standing still. This keeps fast wait smooth without integrating 300 physics
+steps per rendered frame. Normal field time is real time.
 
-The owner requested a complete art replacement on 2026-09-30. The current
-art is a layered morning woodland clearing, a 64 by 48 right-facing buck,
-and a 24 by 64 rear-facing hunter. It was created with the built-in imagegen
-tool. See `docs/HUNTING_ART.md` and `assets/hunting/source-v2/prompts.json`.
-The runtime sprites are cropped to the opaque artwork, resized with nearest
-sampling, and use binary alpha so visible edges and hit edges match. The
-updated shoulder center is u = 0.67, v = 0.45, with the original normalized
-radius 0.10. The ellipse is mirrored with the deer. Source images retain the
-generated transparency. The cedar platform is drawn in the renderer.
+The hunter enters the bottom left on foot. WASD, arrow keys, or four touch
+buttons move across the open ground. Walking too close to an animal startles
+it. E or Climb stand works within 1.4 world units of the stand at bottom center.
+Mounted movement stays on the deck; Leave stand returns to the path. Ground
+shots launch from a lower height than stand shots. Scope, aim guide, reload,
+visible bullets, sideways wind and five-round magazines work in either state.
 
-## Shooting and simulation
+Clean hits finish a short recovery run and add an animal to the pack. A wound
+can be followed up, or leave a blood trail into the trees. Escaped wounds add
+an unfinished trail. A wounded animal still in the clearing when leaving also
+adds a trail. Returning finishes rounds already in flight and clean-hit timers,
+so pressing Return does not lose a recovery that is about to complete.
 
-World units match Unity: x right, y farther into the clearing, height above the
-ground. One unit is 32 pixels. The full field is a 640 by 360 canvas. This
-doubles art resolution while keeping the 20 by 11.25-unit world and the
-original stand, roam bounds, velocities, wind, and timing. The
-crosshair is a ground-plane landing point in still air. The renderer adds
-height to the bullet's screen position so its flight is visible from above.
+Searching uses the illustrated trail screen for a short presentation. A
+search consumes 20 game minutes, or 12 with Bracken. Each trail gets one attempt.
+The outcome is reserved and saved before the presentation starts, preventing
+a reload from rolling the same trail again. Old trails have lower odds and
+recover lower-value animals. The result allows returning to camp or continuing
+the same outing. Searching also works from camp after the hunt.
 
-At launch, duration = range / muzzleSpeed. Vertical launch velocity is
-`(0.5 * gravity * duration^2 - standHeight) / duration`. Position is evaluated
-analytically from age, including `0.5 * wind * windStrength * age^2` sideways
-drift. The simulation advances in 1/120-second steps. Resolve a shot at the
-crossing of the deer's moving depth plane, interpolate its lateral position,
-then read the alpha of that actual mirrored sprite pixel. Transparent pixels
-let the round continue. Candidates in one step are resolved in crossing order.
+Selling a packed animal pays its current value and retains the field record.
+Keeping a trophy removes it from the sellable pack without paying credits.
+Sold and kept animals remain in the collection. Record weight and bronze,
+silver or gold tier derive from a seeded game score, not a wildlife scoring
+standard. Time lowers packed sale value too, to a floor of 40 percent freshness.
+Records and unfinished trails are retained across outings.
 
-A vital hit flees for 0.7 to 1.8 seconds, then counts as recovered. An outside
-hit wounds the animal; it runs toward the trees and can receive a follow-up.
-An unrecovered wounded escape is reported. Living deer alone count toward the
-spawn limit, and downed deer disappear after 12 seconds. This repairs the Unity
-prototype's three-recovery spawn lock. Vital-hit recovery timers finish even
-when the deer has run beyond the visible frame.
+## Progression
 
-The MVP keeps the original open-ended practice loop. It has no invented levels,
-shop, timer, or hunting campaign. A fresh outing resets all state. Records
-are not persisted. This is a deliberately simplified game model.
+- Birch Clearing: whitetail bucks, open birch and spruce meadow, initial area.
+- Cypress Edge: wild boar, cypress and reed clearing, stronger wind. Unlock needs
+  two recoveries and 350 credits. It is a separate playable one-screen map.
+- Weighted-round rifle, 400 credits: reduces wind acceleration by 40 percent.
+  Both owned rifles can be selected before departure.
+- Bracken, 300 credits: higher tracking odds, shorter searches, follows the
+  hunter in the field. Bringing him is optional after purchase.
+- Field-dressing kit, 100 credits: halves the time penalty on recovery value
+  and doubles the packed freshness window.
 
-## Browser controls
+These are game tuning values. They do not model real hunting, animal welfare,
+market prices, or species biology. Duck hunting, exotic regions, a larger
+connected world and authored directional animation remain future work.
 
-The optional guide starts on: vital ellipses, predicted visible arc, and
-wind-adjusted landing square. It does not move the aim or modify ballistics.
-G toggles it. Q toggles the 2x scope; right mouse raises it while held. The
-scope camera centers on the aim at activation, with field-edge clamping, then
-holds still until lowered. Pointer coordinates use its inverse projection.
+## Ballistics and art
 
-Touch dragging only aims. A separate Fire button shoots, avoiding accidental
-shots during dragging. Scope and reload have buttons. A/D buttons and Wait
-use pointer capture and release on pointer-up, cancel, or lost capture. Keyboard
-shortcuts apply only while focus is inside the game, so page navigation retains
-its normal keys. P or Escape pauses. Losing focus, hiding the tab, or scrolling
-the game out of view pauses it. No simulation time passes in a briefing or
-pause, and all held inputs clear on phase changes.
+The Unity mechanic uses ground x/y plus bullet height. One world unit is 32
+pixels on the 640 by 360 canvas, preserving the original 20 by 11.25-unit field.
+The crosshair marks the still-air landing point. Aim beyond an animal so the
+round remains high enough when crossing its depth plane. The renderer adds
+height to its screen position so the flight is visible.
 
-Sound starts off and is synthesized only after enabling it. Fullscreen uses
-the browser API where available and a fixed-position page fallback otherwise.
-The pixel canvas keeps its aspect ratio at every viewport size. Mobile
-controls keep 44-pixel touch targets, and the briefing can scroll on short
-screens.
+At launch, duration = range / muzzleSpeed. Vertical velocity is
+`(0.5 * gravity * duration^2 - muzzleHeight) / duration`. Position is analytic,
+including `0.5 * wind * windStrength * age^2` sideways drift. Weapon wind
+modifiers affect the actual shot and the guide identically. The simulation
+advances in 1/120-second steps. Candidates are resolved in crossing order,
+including shots travelling toward or away from the top of the screen. Animal
+position is interpolated at the crossing, then its mirrored PNG alpha is read.
+A transparent pixel lets the round continue.
+
+The right-facing deer is 64 by 48; boar is 64 by 42. Their current vital center
+is u = 0.67, v = 0.45 with normalized radius 0.10. The actual opaque shoulder
+was checked for both orientations. The ellipse uses the species mask's own
+width and height. Source alpha remains intact; runtime sprites have binary
+alpha so visible boundaries and collision boundaries match. The first port's
+24 by 19 deer and original sources remain as history. See `HUNTING_ART.md`.
+
+Downed animals fade after 12 seconds and do not occupy the three-living-animal
+spawn limit. Blood marks are bounded to 120 visible drops per outing. The field
+shades with time of day. Current animals are single-frame sprites; the hunter
+has a small walking bob. Avoid presenting this as handmade or fully animated art.
+
+## Controls and saves
+
+G toggles the optional guide. Q or held right mouse raises a 2x scope. Its
+camera centers on the aim at activation and then holds still; pointer input
+uses the inverse projection. Touch must hold and drag to aim; Fire is separate
+and touching the field never fires. Movement and Wait use pointer capture,
+with release, cancel and lost-capture cleanup. Keyboard input is scoped to the
+game and ignores text and select inputs. The tracking dialog traps Tab and
+supports Escape when a search is not in progress.
+
+P or Escape pauses the field. Losing focus, hiding the tab or scrolling the
+game out of view pauses it too. Held inputs clear on phase changes. Sound
+starts off and is synthesized after enabling it. Fullscreen uses the native
+API where available and a page fallback otherwise.
+
+Local storage key: `hunting-camp-v1`, schema version 1. Saved data includes
+clock, credits, equipment, area unlocks, loadout, records and trail outcomes.
+A reload starts at camp. It does not resume a live bullet or preserve a field's
+animal positions. Storage errors leave the game playable and show the save
+limitation inline. No account, server save, offline time jump or cloud sync.
 
 ## Checks
 
-Use the bundled Node package directory for the test dependencies (`pngjs` and
-`playwright`); the deployed game does not require them.
+Use bundled Node packages (`pngjs`, `playwright`, `sharp` for rebuilding art).
+The deployed game needs none of those dependencies.
 
 ```sh
+node --check js/hunting-campaign.js
 node --check js/hunting-physics.js
 node --check js/hunting-view.js
 node --check js/hunting-game.js
+node tools/test-hunting-campaign.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 ```
 
-The simulation checks use the actual PNG alpha mask: precise landing, wind
-drift and compensation, both deer orientations, vital recovery, transparent
-leg gaps, wounded escapes, reload, stand bounds, ongoing spawning, and fixed
-steps. Browser checks cover real clicks and touch shots, scope, guide, keyboard
-input, pause, reset, fast-forward, fullscreen, focus loss, asset loading, and
-desktop/mobile layouts. Browser helpers are injected only by the QA server;
-the public scripts expose no test-state hooks.
+Campaign checks cover overnight time, gate conditions, single-payment sales,
+trophies, upgrades, tracking success and failure, delay and preservation,
+and save reload. Physics checks use actual species PNG alpha, including
+mirrored vital hits, gaps, reverse shots, ground height, wind, bounds, stand
+proximity and wound trails. Browser checks follow the full earned loop with
+real pointer and touch shots, plus scope, waiting, pause, fullscreen, focus
+loss, persisted state and portrait/landscape layouts.
 
-The browser harness owns a Chrome for Testing child through
-`/Users/ethan/.local/bin/agent-chrome-for-testing` and closes it in `finally`.
-Never launch the owner's personal Chrome with headless or debugging flags.
-Screenshots default to `/tmp/hunting-game-qa`. The card thumbnail comes from the
-game's real rendered canvas, with nearest-neighbor enlargement.
+The QA server injects inspection helpers at `TEST_HOOKS`; public scripts expose
+no test-state API. The harness owns a Chrome for Testing process through
+`/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
+writes screenshots to `/tmp/hunting-game-v3-qa`. Never launch the owner's
+personal Chrome with headless or debugging flags.
