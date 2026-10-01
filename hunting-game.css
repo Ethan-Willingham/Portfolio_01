@@ -1,0 +1,105 @@
+.hunt-page .site-wrapper { padding-top: .5rem; }
+.hunt-page .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.hunt-game {
+  position: relative; display: flex; flex-direction: column;
+  width: 96vw; max-width: 1440px; height: calc(100vh - 1rem); height: calc(100dvh - 1rem);
+  margin: 0 calc(50% - min(48vw, 720px)); overflow: hidden;
+  border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--bg-raised);
+  color: var(--text); line-height: 1.4;
+}
+.hunt-game [hidden] { display: none !important; }
+.hunt-game button {
+  min-height: 44px; padding: .55rem .85rem; border: 1px solid var(--rule-strong); border-radius: 5px;
+  background: transparent; color: var(--text-dim); font: 600 .8rem var(--font-body);
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.hunt-game button:hover, .hunt-game button[aria-pressed="true"] { background: var(--rule); color: var(--text-bright); border-color: var(--accent); }
+.hunt-game button:disabled { opacity: .45; cursor: default; }
+.hunt-game button:focus-visible, #hunt-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.hunt-game .hunt-primary { background: var(--accent); color: var(--bg-raised); border-color: var(--accent); }
+.hunt-game .hunt-primary:hover { background: var(--accent-hover); color: var(--bg-raised); }
+.hunt-toolbar { display: flex; align-items: center; gap: 1.5rem; padding: .65rem 1.2rem; flex-shrink: 0; border-bottom: 1px solid var(--rule); }
+.hunt-brand { margin-right: auto; }
+.hunt-kicker { display: block; color: var(--text-faint); font: .6rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.hunt-name { display: block; font: 1.4rem var(--font-heading); color: var(--text-bright); }
+.hunt-readouts { display: flex; align-items: center; gap: 1.75rem; }
+.hunt-readouts output { display: block; margin-top: .1rem; font: 1.2rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.hunt-utilities { display: flex; gap: .4rem; }
+.hunt-stage { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; background: var(--bg-raised); overflow: hidden; }
+#hunt-canvas { display: block; flex-shrink: 0; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; cursor: none; }
+.hunt-overlay { position: absolute; inset: 0; display: flex; padding: 1rem; overflow-y: auto; background: color-mix(in srgb, var(--bg-raised) 48%, transparent); }
+.hunt-briefing { width: 430px; max-width: 100%; padding: 1.7rem 2rem; margin: auto; flex-shrink: 0; border: 1px solid var(--rule-strong); border-radius: 9px; background: var(--bg-raised); box-shadow: 0 12px 40px color-mix(in srgb, var(--bg-raised) 70%, transparent); }
+.hunt-briefing h2 { margin: .6rem 0 .85rem; font: 2.7rem/1.05 var(--font-heading); letter-spacing: -.025em; color: var(--text-bright); }
+.hunt-briefing > p:not(.hunt-kicker) { font-size: .9rem; line-height: 1.55; color: var(--text-dim); }
+.hunt-briefing .hunt-briefing-note { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--rule); }
+.hunt-briefing #hunt-start { margin-top: 1.2rem; width: 100%; }
+.hunt-briefing .hunt-briefing-controls { margin-top: .75rem; font-size: .7rem !important; color: var(--text-faint) !important; text-align: center; }
+.hunt-scope-label { position: absolute; top: .5rem; right: .7rem; font: .7rem var(--font-mono); color: var(--accent); background: var(--bg-raised); padding: .4rem .6rem; border-radius: 3px; pointer-events: none; }
+.hunt-field-bar { display: flex; align-items: center; gap: 1rem; padding: .5rem 1.2rem; border-top: 1px solid var(--rule); flex-shrink: 0; min-height: 60px; }
+.hunt-wind { display: flex; align-items: center; gap: .4rem; min-width: 165px; }
+.hunt-wind svg { flex-shrink: 0; }
+.hunt-wind svg path { stroke: var(--accent); fill: none; stroke-width: 1.5; }
+.hunt-wind .hunt-wind-center { stroke: var(--rule-strong); }
+.hunt-wind output { font: .65rem var(--font-mono); color: var(--text-dim); }
+#hunt-message { margin: 0; flex: 1; font-size: .75rem; color: var(--text-dim); }
+#hunt-message[data-result="vitals"], #hunt-message[data-result="recovered"] { color: var(--accent-hover); }
+#hunt-message[data-result="wound"], #hunt-message[data-result="escape"] { color: var(--warn); }
+#hunt-reset { white-space: nowrap; }
+.hunt-actions { display: flex; justify-content: center; align-items: center; gap: .5rem; padding: .65rem 1.2rem; border-top: 1px solid var(--rule); flex-shrink: 0; }
+.hunt-game kbd { font: .58rem var(--font-mono); padding: .12rem .23rem; border: 1px solid var(--rule-strong); border-radius: 2px; color: var(--text-faint); margin-left: .35rem; }
+.hunt-primary kbd { color: var(--bg-raised); border-color: var(--bg-raised); }
+.hunt-shuffle { display: flex; gap: .35rem; margin-left: auto; }
+.hunt-shuffle button { min-width: 44px; font-family: var(--font-mono); }
+.hunt-instructions { padding: .55rem 1.2rem; border-top: 1px solid var(--rule); font-size: .68rem; color: var(--text-faint); text-align: center; flex-shrink: 0; }
+.hunt-prose { margin-top: 2rem; }
+.hunt-notes { padding-block: 1rem; border-block: 1px solid var(--rule); margin-block: 1.5rem; }
+.hunt-notes summary { cursor: pointer; color: var(--accent); font-size: 1rem; }
+.hunt-source { font-size: .85rem !important; color: var(--text-faint); }
+.hunt-bottomnav { display: flex; justify-content: space-between; margin-top: 2rem; }
+.hunt-no-js { position: absolute; inset: 0; display: grid; place-items: center; background: var(--bg-raised); padding: 1rem; }
+.hunt-game:fullscreen, .hunt-game.hunt-fullscreen { width: 100vw; max-width: none; height: 100vh; height: 100dvh; margin: 0; border: 0; border-radius: 0; }
+.hunt-game.hunt-fullscreen { position: fixed; inset: 0; z-index: 1000; }
+body.hunt-lock { overflow: hidden; }
+@media (max-width: 850px) {
+  .hunt-toolbar { gap: .8rem; padding-inline: .8rem; flex-wrap: wrap; }
+  .hunt-readouts { gap: 1rem; }
+  .hunt-utilities { width: 100%; justify-content: flex-end; border-top: 1px solid var(--rule); padding-top: .5rem; }
+  .hunt-utilities button { flex: 1; font-size: .72rem; }
+  .hunt-field-bar { flex-wrap: wrap; gap: .4rem .7rem; padding: .5rem .8rem; }
+  #hunt-message { order: 3; flex-basis: 100%; min-height: 2.1em; }
+  #hunt-reset { margin-left: auto; }
+  .hunt-actions { gap: .35rem; flex-wrap: wrap; padding: .5rem .6rem; }
+  .hunt-actions button { padding-inline: .65rem; font-size: .75rem; }
+  .hunt-actions kbd { display: none; }
+  .hunt-shuffle { margin-left: 0; }
+  .hunt-instructions { padding: .5rem .8rem; font-size: .65rem; }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .hunt-game { width: 100%; height: auto; min-height: 0; margin: 0; }
+  .hunt-stage { flex: none; height: 360px; }
+  .hunt-overlay { padding: .6rem; }
+  .hunt-briefing { padding: 1.1rem 1.2rem; }
+  .hunt-briefing h2 { font-size: 2rem; }
+  .hunt-briefing > p:not(.hunt-kicker) { font-size: .8rem; }
+  .hunt-name { font-size: 1.2rem; }
+  .hunt-readouts { gap: .7rem; }
+  .hunt-readouts output { font-size: .95rem; }
+  .hunt-kicker { font-size: .5rem; }
+  .hunt-game:fullscreen .hunt-stage, .hunt-game.hunt-fullscreen .hunt-stage { flex: 1; height: auto; }
+}
+@media (max-height: 570px) and (orientation: landscape) {
+  .hunt-toolbar { flex-wrap: nowrap; padding-block: .35rem; }
+  .hunt-utilities { width: auto; border: 0; padding: 0; }
+  .hunt-name { font-size: 1rem; }
+  .hunt-readouts output { font-size: .9rem; }
+  .hunt-field-bar { flex-wrap: nowrap; min-height: 44px; padding-block: .1rem; }
+  #hunt-message { order: 0; flex-basis: auto; min-height: 0; font-size: .65rem; }
+  .hunt-actions { padding-block: .2rem; }
+  .hunt-instructions { display: none; }
+  .hunt-briefing { width: 600px; padding: .8rem 1.2rem; }
+  .hunt-briefing h2 { font-size: 1.6rem; margin-block: .3rem; }
+  .hunt-briefing > p:not(.hunt-kicker) { font-size: .73rem; }
+  .hunt-briefing .hunt-briefing-note { margin-top: .4rem; padding-top: .4rem; }
+  .hunt-briefing #hunt-start { margin-top: .6rem; }
+  .hunt-briefing-controls { display: none; }
+}

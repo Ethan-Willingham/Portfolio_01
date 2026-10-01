@@ -66,6 +66,14 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
+**Hunting Game**, the JavaScript port of the owner's Unity hunting prototype,
+lives in `hunting-game.html`, `hunting-game.css`, and `js/hunting-*.js`.
+Read `docs/HUNTING_GAME.md` for the ballistics, art, and checks. Its original
+pixel art and editable Aseprite sources live in `assets/hunting/`. Keep this
+post beside All Four Wheels on `archive.html` (In Progress). It has no Unity
+runtime, Sluice dependencies, or bundle step. Bump its CSS and script `?v=`
+values when changing them.
+
 The portfolio pages and their assets (~50 live posts now; this lists the structure,
 not every page):
 

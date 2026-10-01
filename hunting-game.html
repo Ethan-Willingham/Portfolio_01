@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#303931">
+  <title>Hunting Game</title>
+  <meta name="description" content="My 2D hunting game, rebuilt from Unity in JavaScript. A little pixel-art field, drifting rounds, and deer with per-pixel hit zones. Play here.">
+  <link rel="canonical" href="https://ethanwillingham.com/hunting-game.html">
+  <meta property="og:title" content="Hunting Game">
+  <meta property="og:description" content="Take the stand. Watch the wind. Aim beyond the deer so the falling round crosses its chest. A playable JavaScript hunting prototype.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/hunting-game.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="675">
+  <meta property="og:image:alt" content="Pixel-art deer grazing in a grassy clearing, with pine trees behind them and a hunting stand in the foreground.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="hunting-game.css?v=1">
+</head>
+<body class="hunt-page">
+  <div class="site-wrapper">
+    <main>
+      <h1 class="sr-only">Hunting Game</h1>
+      <section class="hunt-game" id="hunt-game" aria-label="Hunting Game">
+        <header class="hunt-toolbar">
+          <div class="hunt-brand"><span class="hunt-kicker">First playable</span><span class="hunt-name">Hunting Game</span></div>
+          <div class="hunt-readouts">
+            <div><span class="hunt-kicker">Rounds</span><output id="hunt-ammo">5 / 5</output></div>
+            <div><span class="hunt-kicker">Recovered</span><output id="hunt-recovered">0</output></div>
+            <div><span class="hunt-kicker">Shots</span><output id="hunt-shots">0</output></div>
+          </div>
+          <div class="hunt-utilities">
+            <button id="hunt-sound" type="button" aria-pressed="false">Sound off</button>
+            <button id="hunt-fullscreen" type="button">Fullscreen</button>
+            <button id="hunt-pause" type="button" disabled>Pause</button>
+          </div>
+        </header>
+        <div class="hunt-stage" id="hunt-stage">
+          <canvas id="hunt-canvas" width="320" height="180" tabindex="0" aria-label="A hunting stand overlooking deer in a field. Aim with the mouse, click to fire. On touchscreens, drag to aim and use the Fire button. R reloads, right mouse or Q raises the scope, A and D move along the stand." aria-describedby="hunt-instructions">This game needs a browser with canvas support.</canvas>
+          <div class="hunt-overlay" id="hunt-overlay" role="dialog" aria-modal="false" aria-labelledby="hunt-overlay-title">
+            <div class="hunt-briefing">
+              <p class="hunt-kicker" id="hunt-overlay-kicker">A 2D hunting prototype</p>
+              <h2 id="hunt-overlay-title">Hunting Game</h2>
+              <p id="hunt-overlay-text">You're in the stand. Deer graze in the clearing. Aim beyond a deer, along the line from your stand, so the falling round crosses its chest.</p>
+              <p class="hunt-briefing-note" id="hunt-briefing-note">The gold rings show the vitals. The dotted arc shows your round's path, including wind. Line the arc up with a ring. You can turn the guide off.</p>
+              <button class="hunt-primary" id="hunt-start" type="button" disabled>Loading the field...</button>
+              <p class="hunt-briefing-controls">Mouse to aim. Click to fire.<br>On a phone, drag to aim and tap Fire.</p>
+            </div>
+          </div>
+          <span class="hunt-scope-label" id="hunt-scope-label" hidden>Scope raised</span>
+          <noscript><p class="hunt-no-js">Enable JavaScript to play this game.</p></noscript>
+        </div>
+        <div class="hunt-field-bar">
+          <div class="hunt-wind"><span class="hunt-kicker">Wind</span><svg width="70" height="15" viewBox="0 0 70 15" aria-hidden="true"><path d="M35 1v13" class="hunt-wind-center"/><path id="hunt-wind-arrow" d="M35 7h0"/></svg><output id="hunt-wind">Calm</output></div>
+          <p id="hunt-message" role="status" aria-live="polite" aria-atomic="true">Loading the original artwork.</p>
+          <button id="hunt-reset" type="button" disabled>New outing</button>
+        </div>
+        <div class="hunt-actions" aria-label="Game controls">
+          <button class="hunt-primary" id="hunt-fire" type="button" disabled>Fire <kbd>Click</kbd></button>
+          <button id="hunt-reload" type="button" disabled>Reload <kbd>R</kbd></button>
+          <button id="hunt-scope" type="button" aria-pressed="false" disabled>Scope <kbd>Q</kbd></button>
+          <button id="hunt-guide" type="button" aria-pressed="true">Guide on <kbd>G</kbd></button>
+          <button id="hunt-wait" type="button" aria-pressed="false" disabled>Wait <kbd>Hold F</kbd></button>
+          <div class="hunt-shuffle"><button data-move="-1" type="button" aria-label="Move left along the stand" disabled>A</button><button data-move="1" type="button" aria-label="Move right along the stand" disabled>D</button></div>
+        </div>
+        <footer class="hunt-instructions" id="hunt-instructions">Aim beyond the deer along your sightline. Hold right mouse for the scope. <kbd>P</kbd> pauses. No timer, keep practicing.</footer>
+      </section>
+      <div class="post-body hunt-prose">
+        <p><strong>Hunting Game</strong> started as a Unity project I made with AI. I don't want to keep developing it in Unity, so this is the first JavaScript version: the same stand, the same pixel art, and a round you can watch fall through the field. Still in progress.</p>
+        <details class="hunt-notes">
+          <summary>How shooting works</summary>
+          <p>Your crosshair marks where the round would land without wind. Aim at a deer's hooves and the round arrives too low. Aim beyond the deer, along the line from your stand, and the round is still above the ground when it reaches the animal. Aim too far beyond it and you shoot over its back.</p>
+          <p>With the guide on, the gold ring marks the vitals near the front shoulder. The dotted line is the visible bullet's predicted path with the current wind. Bring that line through the ring, then wait for the deer to stop walking or lead its movement. The little square marks the predicted landing point. The guide won't move your aim or correct the shot.</p>
+          <p>Transparent pixels between the legs or around the antlers let a round pass through. A hit outside the vitals wounds the deer and it runs. A vital hit brings it down after a short run and counts as recovered. A wounded deer that escapes into the trees doesn't count.</p>
+          <p>You have five rounds. R reloads; clicking with an empty magazine starts a reload too. Q toggles the scope, or hold the right mouse button. A and D shuffle along the stand. Hold F or the Wait button to move time forward. P pauses. On a phone, drag your aim across the field, then use Fire. New outing resets the field and counters.</p>
+        </details>
+        <p class="hunt-source">Built with JavaScript and a 320 by 180 canvas. The deer, trees, grass, bushes, and hunter are from the Unity prototype. <a href="js/hunting-physics.js">Shooting and deer behavior</a> &middot; <a href="js/hunting-view.js">Renderer</a> &middot; <a href="js/hunting-game.js">Game source</a>.</p>
+        <nav class="hunt-bottomnav" aria-label="Site navigation"><a href="/" class="post-back"><span class="pb-label">Home</span></a><a href="archive.html" class="post-back"><span class="pb-label">In Progress</span></a></nav>
+      </div>
+    </main>
+    <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
+  </div>
+  <script src="js/main.js"></script>
+  <script src="js/hunting-physics.js?v=1"></script>
+  <script src="js/hunting-view.js?v=1"></script>
+  <script src="js/hunting-game.js?v=1"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
