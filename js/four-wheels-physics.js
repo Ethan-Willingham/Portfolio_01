@@ -17,9 +17,11 @@
   const CHECKPOINT_RADIUS = 20;
   const Stock = typeof module !== 'undefined' && module.exports ? require('./four-wheels-stock.js') : root.CartStock;
   const Tricks = typeof module !== 'undefined' && module.exports ? require('./four-wheels-tricks.js') : root.CartTricks;
+  const Terrain = typeof module !== 'undefined' && module.exports ? require('./four-wheels-terrain.js') : root.CartTerrain;
   const Course = typeof module !== 'undefined' && module.exports ? require('./four-wheels-course.js') : root.CartCourse;
 
   function point(body, x, y) {
+    if(body.comHeight)return Terrain.kinematics(body,x,y).p;
     const c = Math.cos(body.a), s = Math.sin(body.a);
     return { x: body.x + x * c - y * s, y: body.y + x * s + y * c };
   }
@@ -73,11 +75,19 @@
     // The small alternating axle offset also gives rolling resistance a real
     // lever arm, breaking the unstable, perfectly backward caster equilibrium.
     const side = (i % 2 ? -1 : 1) * CASTER.axleOffset;
+    if(body.comHeight){const a=wheel.a-body.a,p=casterPoint(body,wheel,i,0,0,0);return {...p,pivot,a:wheel.a};}
     return { pivot, x: pivot.x - CASTER.trail * c - side * s, y: pivot.y - CASTER.trail * s + side * c, a: wheel.a };
   }
 
+  function casterPoint(body,wheel,i,x=0,y=0,z=0){
+    const a=wheel.a-body.a,c=Math.cos(a),s=Math.sin(a),side=(i%2?-1:1)*CASTER.axleOffset;
+    const X=WHEELS[i][0]+(x-CASTER.trail)*c-(y+side)*s,Y=WHEELS[i][1]+(x-CASTER.trail)*s+(y+side)*c;
+    return Terrain.kinematics(body,X,Y,z).p;
+  }
   function casterCorners(body, wheel, i) {
-    const pose = casterPose(body, wheel, i), l = CASTER.halfLength, h = CASTER.halfWidth;
+    const l = CASTER.halfLength, h = CASTER.halfWidth;
+    if(body.comHeight)return [[-l,-h],[l,-h],[l,h],[-l,h]].map(p=>casterPoint(body,wheel,i,...p));
+    const pose=casterPose(body,wheel,i);
     return [[-l, -h], [l, -h], [l, h], [-l, h]].map(p => point(pose, ...p));
   }
 
@@ -204,8 +214,8 @@
       this.roomIndex=level.startRoom||0;this.safePose={...level.start};this.fall=null;this.falls=0;
       this.hazardEnabled=!!(level.connected||level.hazards?.length);
       this.stock = new Stock.System(this, { point, corners, casterPose, casterCorners, circleRect, cartCircle, casterCircle, BODY, CASTER });
-      this.tricks = new Tricks.System(this, {point,corners,casterCorners,BODY,Stock});
-      if(level.campaign)Course.init(this);
+      this.tricks = level.campaign?{score:0,bestCombo:0,counts:{near:0,half:0,full:0,slide:0},claimed:new Set(),block(){},step(){}}:new Tricks.System(this, {point,corners,casterCorners,BODY,Stock});
+      if(level.campaign){Course.init(this);Terrain.init(this,{BODY,WHEELS,CASTER});}
     }
 
     activeWalls() {
@@ -213,8 +223,11 @@
       const base=this.exitOpen?this.openWalls:this.closedWalls;
       return this.level.connected?[...base,...this.level.portals.filter(p=>this.gate<p.opensAt).map(p=>p.barrier)]:base;
     }
+    floorAt(p){return this.level.campaign?Course.sample(this.level,p):this.isFloor(p)?{height:0,gx:0,gy:0}:null;}
+    catchPose(){return Course.catchPose(this);}
+    wallOverlaps(rect,z,height){if(!this.level.campaign)return true;const floor=this.floorAt({x:rect.x+rect.w/2,y:rect.y+rect.h/2}),base=floor?.height||0;return z+height>(rect.bottom??base)-.5&&z<(rect.top??base+(rect.side==='store'?40:22))+.5;}
     isFloor(p) {
-      if(this.level.campaign)return !!Course.sample(this.level,p);
+      if(this.level.campaign)return Course.supports(this.level,p);
       const areas=this.level.floorAreas||[{x:8,y:8,w:464,h:284}];
       if(!areas.some(a=>p.x>=a.x&&p.x<=a.x+a.w&&p.y>=a.y&&p.y<=a.y+a.h))return false;
       return !(this.level.hazards||[]).some(h=>((p.x-h.x)/h.rx)**2+((p.y-h.y)/h.ry)**2<1);
@@ -223,7 +236,7 @@
       return (this.level.hazards||[]).find(h=>((p.x-h.x)/h.rx)**2+((p.y-h.y)/h.ry)**2<1)||{kind:'cliff'};
     }
     checkSupport() {
-      if(!this.hazardEnabled)return;
+      if(!this.hazardEnabled||this.level.campaign)return;
       const contacts=this.wheels.map((w,i)=>casterPose(this.body,w,i));
       const missing=contacts.filter(p=>!this.isFloor(p));
       this.unsupported=this.wheels.map((w,i)=>!this.isFloor(contacts[i]));
@@ -236,6 +249,7 @@
       this.emit('fall',{kind:hazard.kind,x:p.x,y:p.y,seconds:this.level.campaign?0:8,lost:this.lostDistance,catch:this.fall.catch?.chapter});
     }
     fallStep(dt) {
+      if(this.level.campaign){const b=this.body;b.x+=b.vx*dt;b.y+=b.vy*dt;b.a=wrap(b.a+b.omega*dt);Terrain.advance(this,dt);this.stock.integrate(dt);this.integrateProps(dt);this.courseDoors(dt);Terrain.circuitStep(this,dt);return;}
       const f=this.fall,b=this.body;f.time+=dt;f.vz-=200*dt;
       b.z=(b.z||0)+f.vz*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.a=wrap(b.a+b.omega*dt);
       b.pitch=f.pitch*Math.min(.9,f.time*1.5);b.rollTilt=f.roll*Math.min(.65,f.time);
@@ -390,17 +404,18 @@
       const resistance = this.wheels.reduce((n, w) => n + w.surface.drag, 0) / 4;
       this.wet = grip < .95;
       const push = clamp(input.push || 0, -1, 1), turn = clamp(input.turn || 0, -1, 1);
-      const force = push * (push >= 0 ? 78 : 50);
+      const traction=this.level.campaign?this.ground.feet:1;
+      const force = push * (push >= 0 ? 78 : 50)*traction;
       b.vx += Math.cos(b.a) * force * dt; b.vy += Math.sin(b.a) * force * dt;
-      b.omega += turn * 8.8 * dt;
-      b.omega *= Math.exp(-4.2 * dt);
+      b.omega += turn * 8.8 * traction * dt;
+      b.omega *= Math.exp(-(this.level.campaign?4.2*traction:4.2) * dt);
       const speed = Math.hypot(b.vx, b.vy);
       const brake = clamp(input.brake || 0, 0, 1);
       const drag = .34 * resistance;
       const rolling = 4 * resistance;
       const reduction = Math.exp(-drag * dt) * Math.max(0, 1 - (rolling + brake * 175 * grip) * dt / Math.max(speed, 0.001));
       b.vx *= reduction; b.vy *= reduction;
-      if (brake) b.omega *= Math.exp(-6 * brake * dt);
+      if (brake) b.omega *= Math.exp(-6 * brake * (this.level.campaign?grip:1) * dt);
       // Unequal grip at the four ground contacts creates a braking yaw moment.
       // The mean force is applied above; these deviations sum to zero on a dry
       // floor and preserve the original handling when all tires see one surface.
@@ -414,19 +429,21 @@
       });
       // Air/rolling resistance rises smoothly above a comfortable walking run.
       const limit = Math.hypot(b.vx, b.vy);
-      if (limit > 135) { b.vx *= 135 / limit; b.vy *= 135 / limit; }
+      const maxSpeed=this.level.campaign?210:135;
+      if (limit > maxSpeed) { b.vx *= maxSpeed / limit; b.vy *= maxSpeed / limit; }
       this.casterForces(dt, rolling);
       this.solveCasters();
       b.x += b.vx * dt; b.y += b.vy * dt; b.a = wrap(b.a + b.omega * dt);
       this.wheels.forEach(w => { w.a = wrap(w.a + w.omega * dt); });
+      if(this.level.campaign){Terrain.advance(this,dt,input);Terrain.circuitStep(this,dt);}
       this.stock.integrate(dt);
       if(this.level.campaign)this.courseDoors(dt);
       this.integrateProps(dt);
       for (let pass = 0; pass < 4; pass++) {
         for (const rect of this.walls) {
-          const hits = [boxContact(b, rect)];
+          const hits = [this.wallOverlaps(rect,b.z||0,23)?boxContact(b, rect):null];
           const person = point(b, BODY.personX, 0);
-          hits.push(circleRect(person.x, person.y, BODY.personRadius, rect));
+          hits.push(this.wallOverlaps(rect,person.z||0,29)?circleRect(person.x, person.y, BODY.personRadius, rect):null);
           for (let k = 0; k < hits.length; k++) {
             const h = hits[k];
             if (!h) continue;
@@ -436,6 +453,7 @@
           }
           this.wheels.forEach((wheel, i) => {
             const pose = casterPose(b, wheel, i);
+            if(!this.wallOverlaps(rect,pose.z||0,7))return;
             const h = polygonRectContact(casterCorners(b, wheel, i), pose, wheel.a, rect);
             if (!h) return;
             this.boundaryContact(rect, h, 'wheel:' + i);
@@ -444,7 +462,7 @@
         }
         this.stock.shelfContacts(pass);
         for (const o of this.objects) {
-          if(o.gone||o.falling)continue;
+          if(o.gone||o.falling||(this.level.campaign&&Math.abs((b.z||0)-(o.z||0))>19))continue;
           const h = cartCircle(b, o);
           if (h) {
             const impact = this.impulse(h, o);
@@ -477,6 +495,7 @@
       // A settled contact can have zero penetration and zero speed. The tiny
       // tolerance catches actual touching without requiring an impact impulse.
       for (const wall of this.walls) {
+        if(!this.wallOverlaps(wall,b.z||0,23))continue;
         const touch = { ...wall, x: wall.x - .04, y: wall.y - .04, w: wall.w + .08, h: wall.h + .08 };
         if(wall.poly){const x=wall.x+wall.w/2,y=wall.y+wall.h/2;touch.poly=wall.poly.map(p=>({x:p.x+Math.sign(p.x-x)*.04,y:p.y+Math.sign(p.y-y)*.04}));}
         const cart = boxContact(b, touch), person = point(b, BODY.personX, 0);
@@ -497,13 +516,13 @@
       });
       advanceGait(this.gait, b, dt, input);
       this.trackTime += dt;
-      if (Math.hypot(b.vx, b.vy) > 35 && this.trackTime > 0.065) {
+      if ((!this.level.campaign||!this.ground.airborne)&&Math.hypot(b.vx, b.vy) > 35 && this.trackTime > 0.065) {
         this.trackTime = 0;
         for (const i of [0, 2]) { const p = casterPose(b, this.wheels[i], i); this.tracks.push({ x: p.x, y: p.y, a: p.a, life: 3 }); }
       }
       this.tracks.forEach(t => { t.life -= dt; }); this.tracks = this.tracks.filter(t => t.life > 0);
       const target = this.level.gates[this.gate];
-      if (target && cartTouchesCheckpoint(b, target, this.wheels)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
+      if (target && (!this.level.campaign||this.wheels.some(w=>w.load>.01)) && cartTouchesCheckpoint(b, target, this.wheels)) { this.emit('gate', { index: this.gate, x: target.x, y: target.y }); this.gate++; }
       const room=this.level.campaign?null:this.roomAt(b);
       if(room&&room.index!==this.roomIndex){this.roomIndex=room.index;this.safePose={...room.spawn};this.emit('room',{index:room.index});}
       if(this.level.campaign)Course.update(this);
@@ -530,7 +549,8 @@
       for (const o of this.objects) {
         if(o.gone)continue;
         if(o.falling){o.vz-=200*dt;o.z+=o.vz*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.z< -55)o.gone=true;continue;}
-        if(this.hazardEnabled&&!this.isFloor(o)){o.falling=true;o.z=0;o.vz=0;continue;}
+        if(this.hazardEnabled&&!this.isFloor(o)){o.falling=true;o.z=o.z||0;o.vz=0;continue;}
+        if(this.level.campaign)o.z=this.floorAt(o)?.height??o.z??0;
         const decay = Math.exp(-(o.kind === 'cone' ? 2.0 : 2.8) * dt);
         o.vx *= decay; o.vy *= decay; o.omega *= Math.exp(-3 * dt);
         o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.omega * dt;
@@ -563,7 +583,7 @@
       return { time: elapsed, driving: this.time, penalty: this.penalty, bonus: this.bonus, style: this.tricks.score, bestCombo: this.tricks.bestCombo, tricks: {...this.tricks.counts}, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
-  const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, cartTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
+  const api = { World, casterPoint, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, cartTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CartPhysics = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

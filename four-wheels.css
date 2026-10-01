@@ -50,16 +50,6 @@
 .cart-icon-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
 .cart-icon-button:focus-visible { outline-color: var(--cart-paper); }
 .cart-game:not([data-phase="running"]) .cart-utilities { display: none; }
-.cart-style {
-  position: relative; display: flex; align-items: center; gap: 7px; width: max-content;
-  margin-top: 6px; padding: 5px 9px; overflow: hidden; border-radius: 6px;
-  background: color-mix(in srgb, var(--cart-ink) 92%, transparent); color: var(--cart-paper);
-}
-.cart-style .cart-kicker { color: var(--cart-line); font-size: .5rem; }
-.cart-style > div { display: flex; align-items: baseline; gap: 5px; font-family: var(--font-mono); font-size: .75rem; }
-#cart-style-chain { color: var(--room-color, var(--cart-accent)); font-size: .64rem; }
-.cart-style > i { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--room-color, var(--cart-accent)); transform: scaleX(var(--chain-life, 0)); transform-origin: left; }
-.cart-game:not([data-phase="running"]) .cart-style { display: none; }
 .cart-overlay { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding: 1.5rem; background: rgba(41,40,32,.36); overflow: auto; }
 .cart-overlay[hidden], .cart-game [hidden] { display: none !important; }
 .cart-overlay-card { position: relative; width: 610px; max-width: 100%; flex-shrink: 0; margin: auto; padding: 2rem; border: 1px solid var(--cart-ink); border-radius: 12px; background: var(--cart-paper); box-shadow: 0 8px 0 rgba(41,40,32,.18), 0 24px 60px rgba(41,40,32,.22); text-align: left; }
@@ -139,16 +129,6 @@
 .cart-overlay[data-state="confirm"] .cart-menu-tools, .cart-overlay[data-state="confirm"] .cart-help, .cart-overlay[data-state="confirm"] .cart-bottomnav { display: none; }
 .cart-toast { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 3; width: max-content; max-width: min(380px, calc(100% - 24px)); padding: .55rem .8rem; background: var(--cart-ink); border: 1px solid var(--cart-line); border-radius: 7px; font-family: var(--font-mono); font-size: .65rem; color: var(--cart-paper); opacity: 0; pointer-events: none; text-align: center; }
 .cart-toast.is-visible { opacity: 1; }
-.cart-trick { position: absolute; top: 18px; left: 50%; z-index: 3; display: flex; align-items: center; gap: .65rem; width: max-content; max-width: calc(100% - 24px); min-height: 60px; padding: .55rem .8rem .65rem; overflow: hidden; border: 1px solid var(--cart-line); border-radius: 9px; background: var(--cart-paper); color: var(--cart-ink); box-shadow: 0 4px 0 rgba(41,40,32,.2); transform: translateX(-50%); pointer-events: none; }
-.cart-trick-symbol { display: grid; place-items: center; min-width: 36px; height: 36px; border: 1px solid var(--cart-line); border-radius: 50%; background: var(--trick-color, var(--cart-accent)); font-family: var(--font-mono); font-size: .65rem; font-weight: 700; letter-spacing: -.05em; }
-.cart-trick-copy > strong { display: block; font-size: 1rem; font-weight: 700; letter-spacing: -.025em; white-space: nowrap; }
-.cart-trick-copy > p { display: flex; gap: .7rem; margin-top: .15rem; font-family: var(--font-mono); font-size: .6rem; color: var(--cart-muted); }
-.cart-trick-combo { padding-left: .65rem; border-left: 1px solid var(--cart-line); font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; }
-.cart-trick-life { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--trick-color, var(--cart-accent)); transform: scaleX(var(--trick-life, 1)); transform-origin: left; }
-.cart-trick.is-new { animation: cart-trick-in .22s ease-out; }
-.cart-trick:not([hidden]) ~ .cart-toast { opacity: 0; }
-.cart-game:not([data-phase="running"]) .cart-trick { display: none; }
-@keyframes cart-trick-in { from { opacity: 0; transform: translate(-50%, 7px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 /* Independent analog pads keep rotation separate from the cart's momentum. */
 .cart-touch { display: none; position: absolute; inset: auto 0 0; z-index: 2; grid-template-columns: 1fr 64px 1fr; align-items: end; gap: 8px; padding: 28px max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); background: linear-gradient(transparent, rgba(41,40,32,.2)); pointer-events: none; }
 .cart-game:not([data-phase="running"]) .cart-touch { display: none; }
@@ -202,7 +182,7 @@
   .cart-overlay:not([data-state="ready"]) .cart-intro-touch { display: none; }
 }
 @media (max-width: 720px) {
-  .cart-trick, .cart-toast { top: max(140px, calc(env(safe-area-inset-top) + 128px)); }
+  .cart-toast { top: max(112px, calc(env(safe-area-inset-top) + 100px)); }
   .cart-intro-art { display: none; }
   .cart-overlay-card { width: 420px; }
 }
@@ -243,11 +223,6 @@
   .cart-readouts { padding: 6px 10px 8px; }
   .cart-clock output { font-size: 1.15rem; }
   .cart-location { margin-top: 4px; font-size: .6rem; }
-  .cart-trick { top: max(12px, env(safe-area-inset-top)); min-height: 52px; padding: .35rem .65rem .5rem; gap: .6rem; }
-  .cart-trick .cart-kicker { display: none; }
-  .cart-trick-symbol { min-width: 32px; height: 32px; font-size: .58rem; }
-  .cart-trick-copy > strong { font-size: .9rem; }
-  .cart-trick-copy > p { margin-top: .05rem; font-size: .55rem; }
   .cart-toast { top: 84px; }
   .cart-thumb { width: 100px; }
   .cart-thumb-caption { min-height: 29px; margin-bottom: 4px; }
@@ -272,5 +247,5 @@
   .cart-result > span { grid-column: 1 / -1; font-size: .56rem; }
   .cart-overlay[data-state="won"] .cart-best { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .cart-button-primary:active, .cart-touch-brake.is-held { transform: none; } .cart-thumb-knob { transition: none; } .cart-trick.is-new { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .cart-button-primary:active, .cart-touch-brake.is-held { transform: none; } .cart-thumb-knob { transition: none; } }
 @media print { .cart-hud, #cart-canvas, .cart-touch, .cart-overlay-actions, .cart-menu-tools { display: none; } .cart-page { overflow: visible; } .cart-game, .cart-stage, .cart-overlay { position: static; height: auto; } .cart-overlay { display: block !important; } }

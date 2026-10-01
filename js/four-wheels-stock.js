@@ -10,7 +10,7 @@
   const cross = (x, y, u, v) => x * v - y * u;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
   const course=()=>typeof module!=='undefined'&&module.exports?require('./four-wheels-course.js'):root.CartCourse;
-  const globalCourse=(w,p)=>course().sample(w.level,p);
+  const globalCourse=(w,p)=>course().sample(w.level,p,false);
   const wallsFor=(w,p,r)=>w.level.campaign?course().wallsNear(w.level,p,r):w.walls;
   const CATALOG = Object.freeze({
     vase: { mass: .065, length: 5, width: 3.5, bounce: .08, friction: .075, drag: 1.5, fragile: 45, liquid: 'water', volume: 32, material: 'glass' },
@@ -324,7 +324,8 @@
           for (const [dc, dr] of [[-1,0],[1,0],[0,-1],[0,1]]) {
             if (!this.validCell(col+dc,row+dr)) continue;
             const next = key + dc + dr * this.cols, neighbor = cells.get(next) || 0;
-            const flow = Math.min(volume * .16, Math.max(0, volume - neighbor - .02) * liquid.flow * dt * .16);
+            const elevation=this.world.level.campaign?(globalCourse(this.world,{x:(col+.5)*CELL,y:(row+.5)*CELL})?.height||0)-(globalCourse(this.world,{x:(col+dc+.5)*CELL,y:(row+dr+.5)*CELL})?.height||0):0;
+            const flow = Math.min(volume * .16, Math.max(0, volume - neighbor + elevation*.15 - .02) * liquid.flow * dt * .16);
             if (flow) { add(key, -flow); add(next, flow); }
           }
         }
@@ -342,19 +343,20 @@
       }
       const wet = (this.world.level.puddles||[this.world.level.puddle]).some(p=>p&&((x-p.x)/p.rx)**2+((y-p.y)/p.ry)**2<1);
       if (wet) { grip = Math.min(grip, .4); drag = Math.min(drag, .6); kind ||= 'water'; }
-      return { grip, drag:Math.max(.3, drag), kind };
+      return { grip, drag:Math.max(this.world.level.campaign?.04:.3, drag), kind };
     }
     wheels(dt) {
       const w = this.world, b = w.body;
       w.wheels.forEach((wheel, i) => {
         const p = this.geometry.casterPose(b, wheel, i), speed = Math.hypot(b.vx - b.omega * (p.y - b.y), b.vy + b.omega * (p.x - b.x));
         wheel.surface = this.sample(p.x, p.y); wheel.coating ||= {};
-        if(w.hazardEnabled&&!w.isFloor(p)){wheel.surface={grip:0,drag:0,kind:null};return;}
+        if(w.hazardEnabled&&(!w.isFloor(p)||(w.level.campaign&&(wheel.load<.02||Math.abs(p.z-(w.floorAt(p)?.height||0))>3)))){wheel.surface={grip:0,drag:0,kind:null};return;}
         for(const [kind,volume]of Object.entries(wheel.coating)) {
           const coat=clamp(volume*1.5,0,.65),material=MATERIALS[kind];
           wheel.surface.grip=Math.min(wheel.surface.grip,1+(material.grip-1)*coat);
           wheel.surface.drag+=(material.drag-1)*coat;
         }
+        if(w.level.campaign){wheel.surface.grip*=Math.min(1,wheel.load);wheel.surface.drag*=Math.min(1,wheel.load);}
         const key = Math.floor(p.y / CELL) * this.cols + Math.floor(p.x / CELL);
         for (const l of this.liquids.values()) {
           const available = l.cells.get(key) || 0;
@@ -410,20 +412,23 @@
       const active = this.items.slice();
       for (const p of active) {
         if (p.state === 'shelf' || p.broken || p.sleep > .6) continue;
-        if(this.world.hazardEnabled&&!this.world.isFloor(p)&&p.z<=0){p.broken=true;p.state='gone';continue;}
+        const ground=this.world.level.campaign?this.world.floorAt(p):{height:0,gx:0,gy:0},base=ground?.height??-105;
+        if(this.world.hazardEnabled&&!this.world.isFloor(p)&&p.z<= (this.world.level.campaign?-105:0)){p.broken=true;p.state='gone';continue;}
         p.age += dt;
-        if (p.z > 0 || p.vz > .5) {
+        if (p.z > base+.001 || p.vz > .5 || !ground) {
           p.vz -= G * dt; p.z += p.vz * dt; p.state = 'air';
           p.tumble += p.tumbleOmega * dt;
-          if (p.z <= 0) {
-            const landing = -p.vz; p.z = 0; this.breakProduct(p, landing);
+          if (ground&&p.z <= base) {
+            const landing = Math.max(0,-p.vz+p.vx*ground.gx+p.vy*ground.gy); p.z = base; this.breakProduct(p, landing);
             if (p.broken) continue;
             p.vz = landing > 12 ? landing * p.bounce : 0; p.state = p.vz ? 'air' : 'floor';
             p.tumbleOmega *= .45; p.omega += Math.sin(p.tumble) * landing * .03;
             if (landing > 16) this.world.emit('product-land', {x:p.x,y:p.y,kind:p.kind,material:p.material,impact:landing});
           }
         } else {
-          p.state = 'floor'; p.vz = 0; p.tumbleOmega *= Math.exp(-7 * dt); p.tumble += p.tumbleOmega * dt;
+          p.state = 'floor'; p.z=base;p.vz = 0;
+          if(this.world.level.campaign){p.vx-=G*ground.gx*dt;p.vy-=G*ground.gy*dt;}
+          p.tumbleOmega *= Math.exp(-7 * dt); p.tumble += p.tumbleOmega * dt;
           const surface = this.sample(p.x, p.y), decay = Math.exp(-p.drag * surface.drag * dt);
           p.vx *= decay; p.vy *= decay; p.omega *= Math.exp(-p.drag * .8 * dt);
           if (Math.hypot(p.vx, p.vy) < .4 && Math.abs(p.omega) < .1) p.sleep += dt; else p.sleep = 0;
@@ -437,6 +442,7 @@
     shelfContacts(pass) {
       const w = this.world, geo = this.geometry, b = w.body;
       for (const s of w.shelves) {
+        if(w.level.campaign&&((b.z||0)>s.height+5||(b.z||0)<-20))continue;
         let poly = shelfPolygon(s);
         const hits = [polygonContact(geo.corners(b), poly)];
         const p = geo.point(b, geo.BODY.personX, 0); hits.push(circlePolygon(p.x, p.y, geo.BODY.personRadius, poly));
@@ -473,8 +479,8 @@
       for (const p of active) {
         let poly = boxPolygon(p, p.length, p.width);
         // Loose bottles fit under the basket. Airborne stock can strike its rails.
-        if (p.z > 6 && p.z < 26) { const h = polygonContact(geo.corners(b), poly); if (h) { const speed = Math.hypot(p.vx - b.vx, p.vy - b.vy); w.impulse(h, p); this.breakProduct(p, speed); } }
-        if (p.z < 6) {
+        if (p.z-(b.z||0) > 6 && p.z-(b.z||0) < 26) { const h = polygonContact(geo.corners(b), poly); if (h) { const speed = Math.hypot(p.vx - b.vx, p.vy - b.vy); w.impulse(h, p); this.breakProduct(p, speed); } }
+        if (Math.abs(p.z-(b.z||0)) < 6) {
           const person = geo.point(b, geo.BODY.personX, 0), shoe = circlePolygon(person.x, person.y, geo.BODY.personRadius, poly);
           if (shoe) w.impulse(shoe, p);
           w.wheels.forEach((wheel, i) => {

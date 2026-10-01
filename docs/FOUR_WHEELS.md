@@ -7,7 +7,7 @@ In Progress section of `archive.html`. It has no Sluice dependencies or bundle s
 
 One continuous, hand-built route, approximately 2,335 feet long in the game's
 scale. The goal is to get the cart to the end. There is no countdown. The HUD
-shows current distance, furthest distance, falls and style. Sections change the
+shows current distance, furthest distance and section. Falls are in the pause menu. Sections change the
 HUD and scenery without stopping the simulation, replacing the cart, resetting
 momentum or requesting another scene.
 
@@ -24,23 +24,55 @@ The twelve sections and their fall destinations are:
 | Section | Surface | Rail sides | Fall returns to |
 | --- | --- | --- | --- |
 | The first push | Dirt | Both | The first push |
-| Blacktop bend | Asphalt | One | The first push |
+| The speed bumps | Asphalt | One | The first push |
 | A grocery detour | Dirt and tile | One | The first push |
-| The water crossing | Asphalt | One | Blacktop bend |
+| The water crossing | Asphalt | One | The speed bumps |
 | Quarry switchbacks | Dirt | One | A grocery detour |
-| The picnic straight | Asphalt | Both | The water crossing |
+| The boost gap | Asphalt | Both | The water crossing |
 | No rail, no bargain | Dirt | None | The first push |
-| The big weekly shop | Dirt and tile | One | Quarry switchbacks |
-| Grass on the outside | Dirt | One | The picnic straight |
-| The thin end | Asphalt | One | The picnic straight |
-| Last bottles | Asphalt and tile | One | The big weekly shop |
+| The water relay | Dirt and tile | One | Quarry switchbacks |
+| Grass on the outside | Dirt | One | The boost gap |
+| Ice on the thin end | Asphalt | One | The boost gap |
+| Last bottles | Asphalt and tile | One | The water relay |
 | The last long turn | Dirt | None | Grass on the outside |
 
-The course is planar, with solid cliff slabs drawn down to -30 artwork units
-and water below at -35. It does not simulate driving over a raised ramp. Falling
-uses gravity, continuing planar momentum, and visual pitch and roll. The shopper
-and cart have heights for drawing and stock impacts, but this is not a general
-six-degree rigid-body solver.
+The road has real elevation: a gentle first hill, four speed bumps, a raised
+causeway, a quarry climb and descent, a boost ramp across an empty gap, an icy
+ledge, and a final climb. The cart has vertical velocity, pitch, roll and angular
+rates. Four trailing tire contacts and two feet produce unilateral ground
+impulses. Unsupported contacts cannot pull the body back onto the floor.
+The shopper can extend the knees six units while crossing a small bump.
+
+## Terrain, jumps and the water relay
+
+`four-wheels-terrain.js` is the shared height field and contact solver. It works
+in the same artwork units as the existing cart, at 120 fixed steps per second.
+Gravity is 200 units per second squared. Contact normals follow the local slope;
+analytic point Jacobians account for body yaw, pitch, roll and independent caster
+swivel. Sequential accumulated impulses remain nonnegative. Mild restitution and
+ground damping settle landings without flattening the cart's orientation.
+The body rotates around a center of mass 22 units above its floor pose. This is
+a small game solver, not an imported general-purpose physics engine.
+
+Hills use smooth centerline height profiles. The four painted speed bumps have
+cosine sections, 4.5 units high and 30 units long. Their shape lifts each wheel
+separately. The boost applies a directional force only at supported wheels;
+the 55-unit ramp rises 18 units before a 70-unit gap. The gap removes the dirt,
+asphalt, shoulders and rails. Leaving the ramp preserves upward and horizontal
+velocity. Gravity determines airtime and where the tires land. A slow approach
+can fall short. Airborne controls cannot create ground traction or braking.
+Blue ice has tire grip 0.07 and rolling drag 0.085. Footing also reduces push,
+pull and steering force. Braking before it is substantially more effective than
+trying to stop while on it.
+
+In the weekly shop, table 6 carries a water-filled vase beside two brass contacts
+and a closed physical shutter. Only water film cells at sufficient depth count.
+A four-neighbor flood fill must find a continuous wet path between the contacts;
+two isolated puddles or ketchup do not count. A connection held for 0.3 seconds
+latches the relay. The shutter then rises over 1.25 seconds, with its moving
+bottom and top used by collisions. Its lamp and visible water path reflect the
+actual relay state. The open relay, water, debris and toppled table survive falls
+and reloads. Wet tires can paint a connecting trail if the vase lands to one side.
 
 ## Editable sources
 
@@ -49,14 +81,16 @@ six-degree rigid-body solver.
 - `js/four-wheels-course.js`: route geometry, spatial hashes, surfaces, stores,
   guardrails, swinging-door poses, route distance, catches and saved-world schema.
 - `js/four-wheels-stock.js`: furniture, supported stock, products, breakage and films.
-- `js/four-wheels-tricks.js`: clearances, spins, slides, combos and style.
+- `js/four-wheels-terrain.js`: height fields, loaded ground contacts, recovery,
+  boosts, gravity, landing and water connectivity.
+- `js/four-wheels-tricks.js`: legacy timed-game regression fixture, not loaded by the live game.
 - `js/four-wheels-physics.js`: cart, four caster constraints, contacts and fixed steps.
 - `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D models.
 - `js/four-wheels.js`: input, audio, lifecycle, saved run, records and UI.
 
 `js/four-wheels-levels.js` and `tools/four-wheels-driver.cjs` remain as legacy
 regression fixtures for the old timed store. The live page loads the course
-module instead. Keep browser order: stock, tricks, course, physics, view, main.
+module instead. Keep browser order: stock, terrain, course, physics, view, main.
 
 ## Handling to preserve
 
@@ -89,7 +123,7 @@ No Box2D dependency is loaded.
 
 ## Route, collisions and falls
 
-55 ordered wheel checkpoints keep progress tied to driving the route. A tire's
+54 ordered wheel checkpoints keep progress tied to driving the route. A tire's
 actual oriented envelope touching the 20-unit circle clears it, including exact
 tangency. The basket or shopper alone cannot clear a checkpoint. The current
 circle is visible, with a section number at an entrance and GO on intermediate
@@ -104,14 +138,23 @@ Contacts immediately turn the exact outlines and contact point red, including
 resting contact with a 0.04-unit tolerance. The highlight fades over 0.32 seconds.
 Grass remains supporting floor. Curbs are paint, not an invisible wall.
 
-Each wheel samples support at its trailing contact. Two unsupported wheels, or
-the body center leaving floor, starts an irreversible fall. It continues linear
-and yaw momentum while gravity lowers the body and turns it toward the unsupported
-side. Water adds a splash/ripple. After 1.15 seconds the same body and wheels return
-to an earlier catch with settled motion. Ordered progress rewinds to that catch.
-Furthest distance, style, shelves, products, doors and spills remain. There is no
-time penalty. Pause freezes gravity too. Practice catches at the practiced
-section instead. Props and loose products can fall off the track.
+Each wheel samples support at its actual tilted, trailing contact. The feet
+sample their own ground. Missing wheels lose grip and load; the remaining
+contacts continue supporting and steering the cart. Losing two wheels does not
+start a scripted fall. A two-wheel overhang can be pulled back. The actual
+support torques determine pitch and roll as the center of mass moves beyond the
+supported footprint. Tires can recover across a lip while within four units of
+its top; they cannot teleport up through the underside of a platform.
+
+A fall becomes committed when an unsupported body drops 26 units below its last
+supporting surface or overturns beyond approximately 89 degrees with fewer than
+two contacts. Gravity and angular momentum continue. The cart hits water at -50
+or rock at -100; splash, rebound and a short settling period happen at impact.
+It then returns to the earlier catch using the same body, wheels and stock world.
+Ordered progress rewinds. Furthest distance, furniture, products, doors, relay
+and spills remain. There is no time penalty. Pause freezes gravity, relay motion
+and water too. Practice catches at the practiced section instead. Props and
+loose products can also fall off the track.
 
 At the end, all route marks must be cleared and the complete basket, four tire
 envelopes and shopper circle must fit inside the finish pad. Completion records
@@ -148,30 +191,12 @@ conserves volume. Tires pick up a limited coating and deposit it into clean cell
 leaving wet or colored tracks. Global cells cover the entire course. Supported
 floor checks keep liquid out of the void. Collision broad phases, sleeping landed
 items and a spatial product grid bound the simulation. Obstacles do not impose
-clock penalties. Contact still breaks an unbanked stunt combo.
+clock penalties. Films spread conservatively, with a height difference contributing to flow on slopes.
 
-## Style
-
-Close calls use the real basket, shopper, four tire envelopes, props and current
-rack hull. At 20 Hz, a pass arms inside six units at speed 22, then must clear
-twelve units with fourteen units of travel and speed at least sixteen. Contacts
-within 0.15 units do not count. An impacted obstacle stays blocked for that pass;
-an intact rack or prop pays once per run. Walls, glass doors, fallen stock and
-hazard edges are not near-miss targets.
-
-Moving spins track signed rotation across the angle wrap. A 180 needs twenty
-units of travel; a 360 needs forty-five. Slow/stationary turns, reversals, contact,
-missing support, falls and pose jumps interrupt them. The 360 upgrades its 180.
-One uninterrupted spin pays those milestones once. Slides require sustained
-sideways coasting without braking or an active spin. A new paid spin or slide
-requires further travel. Clean moves within five simulation seconds chain to x4.
-Points: 75 close call, 100 half turn, 250 additional full turn, 75 slide.
-
-The course awards style without time bonuses. Preserve that distinction from
-the legacy timed fixtures. Raised confetti, swept floor arcs, short wheel streaks,
-callouts and synthesized tones acknowledge moves. Reduced motion keeps rewards
-and text, while disabling particles, shake and animated trails. Pause freezes
-combo and effect lifetimes. Feedback never captures input or covers thumb pads.
+Spin, slide, near-miss scoring, combos and their UI were removed in v22 by
+owner request. Turning remains the cart's fundamental control. Short sounds,
+contact flashes, dust, landing shake, edge recovery text and relay feedback
+acknowledge physical events without adding another score.
 
 ## Camera, art and controls
 
@@ -184,13 +209,17 @@ The following camera uses a 960-pixel canvas on wide views and 480 in portrait,
 at scales 1.45 and 1.8 respectively. Canvas height matches the stage aspect ratio.
 Course map fits the entire route without advancing physics. Lazy 256-unit floor
 tiles cache deterministic gravel, asphalt flecks, grass tufts, flowers, curbs and
-store tiles, capped at 32 canvases. Floor polygons, support, rails, spills, shadows,
+store tiles, capped at 32 canvases. Floor polygons are clipped into eight-unit
+height-field facets. Exposed rock faces use the exact supporting edge, with
+visible-side culling and vertical subdivisions for falling-cart occlusion.
+Guardrail posts and beams follow the road height. The camera follows ground
+elevation and part of a jump arc, retaining the lip in view during a drop. Floor polygons, support, rails, spills, shadows,
 markers and overlays share the projection. The art is drawn locally and the game
 has no runtime art requests or third-party engine.
 
 The canvas fills the entire browser viewport from page load, with no reserved
 header, footer, border or page scrolling. Distance, best and the current section
-occupy one small dark panel at the upper left. Earned style adds a small chip.
+occupy one small dark panel at the upper left.
 The upper right has two 44-pixel buttons: course map and pause/menu. There is no
 always-visible minimap. The pause menu contains route progress, falls, the current
 section's advice, unlocked practice, restart, sound, fullscreen, expandable help
@@ -219,11 +248,13 @@ picker, blur, hidden tab, cancellation, lost capture and viewport changes.
 challenge run. Older v1 through v6 timed record keys remain untouched. Every two
 seconds of play, on pause, fall, recovery and pagehide, the game saves the cart,
 casters, gait, route state, time, falls, furniture, props, supported and loose
-stock, films, hinged doors and banked style. Restoring rebuilds shelf references
-and film maps; it does not turn supported stock into falling products. Active
-unbanked combo detection and short-lived particles restart after reload.
+stock, films, hinged doors, loaded contacts, vertical motion and the water relay. Restoring rebuilds shelf references
+and film maps; it does not turn supported stock into falling products. Short-lived particles restart after reload. Mid-jump and mid-fall saves retain
+vertical velocity, orientation, angular rates and delayed impact.
 
-Loading parks a valid saved run behind Continue. Invalid versions or malformed
+Loading parks a valid saved run behind Continue. Schema 2 migrates the former planar schema 1: records and store mess stay, new
+vertical motion initializes on the terrain, and the new relay table gets a vase.
+An old pose inside the new gap moves to its catch. Invalid versions or malformed
 physics values start a fresh run safely. Blocked storage shows a short message
 and permits play. Record distance stays after a fall or fresh start.
 
@@ -242,6 +273,7 @@ node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
 node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
+node tools/test-four-wheels-terrain.cjs
 node tools/test-four-wheels-course.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
@@ -250,12 +282,15 @@ The old room and journey tests preserve handling and stock regression fixtures.
 The new course tests verify floor continuity, material forces, real rail contacts,
 water/cliff setbacks, retained world identity and mess, swinging/broken doors,
 stock tiers, saved debris and films, corruption rejection, ordered tire progress,
-complete finish footprint and unchanged stunts. The verification pilot drives all
+complete finish footprint and removal of live spin rewards. Terrain checks
+cover slope settling, individual bumps, savable overhangs, real launches, failed
+jumps, airborne traction, ice, disconnected film rejection, table-powered relay
+and saved airborne motion. The verification pilot drives all
 twelve sections using player forces, without teleporting or forced falls.
 
 The browser suite covers the same whole journey, desktop/mobile input, parked
 reloads, practice isolation, restart confirmation, both falls, paused gravity,
-stunts, overview, fullscreen, 320-pixel phones, short landscape, blocked storage,
+edge rescue, jump reload, lifting water relay, ice, overview, fullscreen, 320-pixel phones, short landscape, blocked storage,
 reduced motion, no scene requests and JavaScript errors. Layout assertions check the canvas itself against all four viewport edges,
 compact separated HUD buttons, help scrolling, dialog keyboard focus and retained
 phone controls. Private hooks and the

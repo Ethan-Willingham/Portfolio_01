@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#292820">
   <title>All Four Wheels</title>
-  <meta name="description" content="An isometric pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. One continuous racecourse, grocery stores, wheel checkpoints and open cliff edges. Play here.">
+  <meta name="description" content="An isometric pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. One continuous course with hills, speed bumps, ice, a boost jump, grocery stores and a spilled-water gate. Play here.">
   <link rel="canonical" href="https://ethanwillingham.com/four-wheels.html">
   <meta property="og:title" content="All Four Wheels">
   <meta property="og:description" content="Dirt tracks, blacktop bends, and a shortcut through the groceries. How far can four swivel wheels take you?">
@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=21">
+  <link rel="stylesheet" href="four-wheels.css?v=22">
 </head>
 <body class="cart-page">
   <main>
@@ -42,7 +42,6 @@
                 <div class="cart-clock"><span class="sr-only" id="cart-time-label">Distance</span><output class="cart-time" id="cart-time">0 ft</output><span class="cart-penalty" id="cart-penalty">BEST 0 ft</span><div class="cart-clock-track" aria-hidden="true"><i id="cart-clock-fill"></i></div></div>
                 <p class="cart-location"><span id="cart-course-badge" aria-hidden="true">01</span><span id="cart-course-title">The first push</span></p>
               </div>
-            <div class="cart-style" id="cart-style" aria-label="Style score" hidden><span class="cart-kicker">Style</span><div><output id="cart-style-score">0</output><span id="cart-style-chain" hidden></span></div><i aria-hidden="true"></i></div>
             </div>
             <div class="cart-utilities">
               <button class="cart-icon-button cart-camera" id="cart-camera" type="button" aria-label="Show the whole course" aria-pressed="false" title="Course map (M)" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zm6-2v16m6-14v16"/></svg></button>
@@ -79,7 +78,7 @@
                 <div class="cart-overlay-copy">
                 <p class="cart-kicker" id="cart-overlay-kicker">Section 01 / 12 &middot; The first push</p>
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
-                <p id="cart-overlay-text">Dirt, blacktop, tight corners, and a shortcut through the groceries. See how far you can get.</p>
+                <p id="cart-overlay-text">Hills, speed bumps, ice, a boost into a jump, and a water-powered grocery shutter. Get the cart to the end.</p>
                 <div class="cart-intro-controls" aria-hidden="true"><span><b><kbd>W</kbd> <kbd>S</kbd></b>Push / pull</span><span><b><kbd>A</kbd> <kbd>D</kbd></b>Rotate</span><span><b><kbd>Space</kbd></b>Brake</span></div>
                 <p class="cart-intro-touch">Left thumb rotates. Right thumb pushes or pulls. Release to coast; hold Brake to slow down.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
@@ -118,11 +117,11 @@
                       <p>On a phone, slide the left thumb pad sideways to rotate. Slide the right pad up to push or down to pull. Small movements give you a gentle nudge. Let go to coast, or hold the middle Brake button to slow down. You can push and turn together.</p>
                       <p>The route runs through three grocery stores. Push the swinging doors open, or hit them hard enough to break the glass. Tables rock, shelves topple, bottles break, and cans roll. A vase leaves clear water; a wheel over a ketchup bottle squeezes sauce onto the tiles. The tires pick up spills and leave tracks. That mess stays after a fall.</p>
                       <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
-                      <p>Two wheels losing the floor, or the center of the cart and shopper going over an edge, starts a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
+                      <p>Lost wheel support lets the cart tip. Pull back or turn while the remaining wheels and your feet still have ground. A real drop below the lip becomes a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
                       <p>There is no countdown. The run saves automatically in your browser, including the cart, broken stock and puddles. Reach a section to unlock it in the route menu for practice. Practice parks your real run and leaves its record alone. Start over keeps your distance record but begins with a fresh cart and course.</p>
-                      <p>Close passes, moving 180s and 360s, and sustained sideways coasts earn style. Link clean moves within five seconds for a multiplier up to four times. Bumps and falls break the combo. Spinning in place doesn't count. At the end, get the cart, all four tires and the shopper onto the checked finish pad.</p>
+                      <p>The road climbs and dips. Yellow and black speed bumps lift each wheel as it passes. Line up with the gold boost pad, keep pushing up the ramp, and carry your speed across the gap. Brake before the blue ice. In the weekly shop, knock the vase off the small table and get its clear water to connect the two brass contacts on the floor. The powered shutter lifts out of your way. At the end, get the cart, all four tires and the shopper onto the checked finish pad.</p>
                     </div>
-                    <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-course.js">The course</a> &middot; <a href="js/four-wheels-physics.js">Cart physics</a> &middot; <a href="js/four-wheels-stock.js">Store physics</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
+                    <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-course.js">The course</a> &middot; <a href="js/four-wheels-terrain.js">Terrain physics</a> &middot; <a href="js/four-wheels-physics.js">Cart physics</a> &middot; <a href="js/four-wheels-stock.js">Store physics</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
                   </div>
                 </details>
                 <nav class="cart-bottomnav" aria-label="Site navigation">
@@ -132,12 +131,6 @@
 
                 </div>
               </div>
-            </div>
-            <div class="cart-trick" id="cart-trick" aria-hidden="true" hidden>
-              <span class="cart-trick-symbol" id="cart-trick-symbol"></span>
-              <div class="cart-trick-copy"><span class="cart-kicker" id="cart-trick-kicker">Clean move</span><strong id="cart-trick-title"></strong><p><span id="cart-trick-points"></span><b id="cart-trick-credit"></b></p></div>
-              <span class="cart-trick-combo" id="cart-trick-combo" hidden></span>
-              <i class="cart-trick-life"></i>
             </div>
             <div class="cart-toast" id="cart-toast" aria-hidden="true"></div>
             <p class="cart-live sr-only" id="cart-live" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -149,11 +142,11 @@
     </section>
   </main>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=21"></script>
-  <script src="js/four-wheels-tricks.js?v=21"></script>
-  <script src="js/four-wheels-course.js?v=21"></script>
-  <script src="js/four-wheels-physics.js?v=21"></script>
-  <script src="js/four-wheels-view.js?v=21"></script>
-  <script src="js/four-wheels.js?v=21"></script>
+  <script src="js/four-wheels-stock.js?v=22"></script>
+  <script src="js/four-wheels-terrain.js?v=22"></script>
+  <script src="js/four-wheels-course.js?v=22"></script>
+  <script src="js/four-wheels-physics.js?v=22"></script>
+  <script src="js/four-wheels-view.js?v=22"></script>
+  <script src="js/four-wheels.js?v=22"></script>
 </body>
 </html>

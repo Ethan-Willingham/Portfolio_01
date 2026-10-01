@@ -21,9 +21,9 @@
   const best = { peak: 0, completed: false, time: null, falls: null };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || 'null');
-    if (saved?.version === Course.VERSION) {
+    if ([1,Course.VERSION].includes(saved?.version)) {
       if (Number.isFinite(saved.best?.peak) && saved.best.peak >= 0 && saved.best.peak <= 20000) best.peak = saved.best.peak;
-      if (saved.best?.completed === true && Number.isFinite(saved.best.time) && saved.best.time > 0 && Number.isInteger(saved.best.falls) && saved.best.falls >= 0) Object.assign(best, { completed: true, time: saved.best.time, falls: saved.best.falls });
+      if (saved.version===Course.VERSION&&saved.best?.completed === true && Number.isFinite(saved.best.time) && saved.best.time > 0 && Number.isInteger(saved.best.falls) && saved.best.falls >= 0) Object.assign(best, { completed: true, time: saved.best.time, falls: saved.best.falls });
       savedRun = saved.run;
     }
   } catch { canSave = false; }
@@ -42,7 +42,6 @@
   }
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
   let particles = [], screenShake = 0, pickerReturn = 'ready';
-  let trickLife=0, trickDuration=0;
   let keys = new Set(), touches = new Map(), pseudoFullscreen = false;
   const thumbPads = [...game.querySelectorAll('[data-axis]')];
   const touchMode = window.matchMedia('(any-pointer: coarse)');
@@ -118,7 +117,7 @@
     rolling(speed) {
       if (!this.roll) return;
       const kind=Course.sample(world.level,world.body)?.kind;this.filter.frequency.setTargetAtTime(kind==='dirt'?1200:kind==='grass'?450:900,this.context.currentTime,.1);
-      this.roll.gain.setTargetAtTime(this.enabled && phase === 'running' ? Math.min(0.03, speed / 4500) : 0, this.context.currentTime, .06);
+      this.roll.gain.setTargetAtTime(this.enabled && phase === 'running'&&!world.ground.airborne ? Math.min(0.03, speed / 4500) : 0, this.context.currentTime, .06);
     },
     note(frequency, duration = .15, volume = .06, delay = 0, type = 'sine', end) {
       if (!this.enabled || !this.context || this.context.state !== 'running') return;
@@ -131,6 +130,11 @@
     event(e) {
       if (e.type === 'gate') { this.note(660, .12, .04); this.note(880, .16, .03, .07); }
       if(e.type==='room') this.note(520,.12,.025);
+      if(e.type==='boost')this.note(180,.3,.025,0,'triangle',700);
+      if(e.type==='land'&&e.impact>20)this.note(85,.12,.025,0,'triangle',45);
+      if(e.type==='circuit'){this.note(220,.2,.02);this.note(440,.2,.02,.15);}
+      if(e.type==='save-edge')this.note(320,.12,.015);
+      if(e.type==='fall-impact')this.note(e.kind==='lake'?270:60,.25,.05,0,'triangle',30);
       if(e.type==='fall') this.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);
 
       if (e.type === 'won') [523, 659, 784, 1047].forEach((f, i) => this.note(f, .3, .045, i * .1));
@@ -185,9 +189,6 @@
     screenShake = Math.max(0, screenShake - dt * 7);
     toastLife -= dt;
     if (toastLife <= 0) $('toast').classList.remove('is-visible');
-    trickLife=Math.max(0,trickLife-dt);
-    $('trick').style.setProperty('--trick-life',trickDuration?trickLife/trickDuration:0);
-    if(!trickLife)$('trick').hidden=true;
     for (const p of particles) {
       p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.omega * dt;
       p.vx *= Math.exp(-1.5 * dt); p.vy *= Math.exp(-1.5 * dt);
@@ -195,30 +196,8 @@
     }
     particles = particles.filter(p => p.life > 0);
     if(!reducedMotion.matches&&!world.fall&&particles.length<80&&Math.floor(world.time*12)!==Math.floor((world.time-dt)*12)&&Math.hypot(world.body.vx,world.body.vy)>22){
-      world.wheels.forEach((q,i)=>{const p=CartPhysics.casterPose(world.body,q,i),ground=Course.sample(world.level,p);if(ground?.kind!=='dirt'&&ground?.kind!=='grass')return;particles.push({x:p.x,y:p.y,z:1,a:0,omega:0,vx:-world.body.vx*.12,vy:-world.body.vy*.12,color:ground.kind==='grass'?P.sage:P.gold,w:2,h:2,life:.25});});
+      world.wheels.forEach((q,i)=>{const p=CartPhysics.casterPose(world.body,q,i),ground=Course.sample(world.level,p);if(q.load<.02||ground?.kind!=='dirt'&&ground?.kind!=='grass')return;particles.push({x:p.x,y:p.y,z:ground.height+1,a:0,omega:0,vx:-world.body.vx*.12,vy:-world.body.vy*.12,color:ground.kind==='grass'?P.sage:P.gold,w:2,h:2,life:.25});});
     }
-  }
-  function trickCard(e) {
-    const broken=e.type==='combo-break',card=$('trick');
-    const color=broken?P.coral:e.kind==='full'?P.purple:e.kind==='half'?P.blue:e.kind==='slide'?P.sage:P.gold;
-    card.style.setProperty('--trick-color',color);card.style.setProperty('--trick-life',1);
-    $('trick-symbol').textContent=broken?'X':e.kind==='half'?'180':e.kind==='full'?'360':e.kind==='slide'?'SLIDE':'CLOSE';
-    $('trick-kicker').textContent=broken?'Keep rolling':e.upgrade?'Full rotation':e.combo>1?'Clean combo':'Clean move';
-    $('trick-title').textContent=broken?'Combo broken':e.name;
-    $('trick-points').textContent=broken?'Banked style kept':'+'+e.points+' style';
-    $('trick-credit').textContent=broken||!e.seconds?'':'+'+e.seconds+'s';
-    $('trick-combo').textContent='x'+e.combo;$('trick-combo').hidden=broken||e.combo<2;
-    trickLife=trickDuration=broken?1.1:e.kind==='full'?2.3:1.8;
-    card.hidden=false;card.classList.remove('is-new');void card.offsetWidth;card.classList.add('is-new');
-    announce(broken?'Combo broken. Banked style kept.':e.name+', '+e.points+' style'+(e.seconds?', '+e.seconds+' seconds back':'')+(e.combo>1?', combo times '+e.combo:''));
-    if(!broken&&!reducedMotion.matches) {
-      const first=particles.length;burst(e.x,e.y,e.kind==='full'?22:10,[color,P.gold,P.cream]);
-      particles.slice(first).forEach((p,i)=>{p.vz=35+i%5*6;p.life=.95;p.z=24;p.vx*=4;p.vy*=4;p.w=i%3===0?3:2;});
-      if(e.kind==='full')screenShake=Math.max(screenShake,.5);
-    }
-    if(broken){sound.note(180,.12,.025,0,'triangle',110);return;}
-    const tones=e.kind==='full'?[523,659,784,1047]:e.kind==='half'?[440,660,880]:e.kind==='slide'?[392,523]:[660,880];
-    tones.forEach((f,i)=>sound.note(f,.12,.025,i*.055));
   }
   function events() {
     for (const e of world.events.splice(0)) {
@@ -234,7 +213,11 @@
       if (e.type === 'room') notify('Section '+String(e.index+1).padStart(2,'0')+' / '+levels[e.index].name);
       if (e.type === 'fall') { notify((e.kind==='lake'?'Into the water':'Over the edge')+' / back '+feet(e.lost||0)); save(); }
       if (e.type === 'respawn') { notify('Caught at '+levels[world.roomIndex].name+'. Keep rolling.'); save(); }
-      if (e.type === 'trick' || e.type === 'combo-break') trickCard(e);
+      if(e.type==='save-edge')notify('Back on the track');
+      if(e.type==='break'&&e.kind==='vase'&&world.roomIndex===7&&!world.circuit.powered)notify('Water on the floor. Roll wet wheels between the brass contacts.');
+      if(e.type==='circuit'){notify('Water connected. Shutter opening.');save();}
+      if(e.type==='land'&&e.impact>22)screenShake=Math.max(screenShake,Math.min(1.2,e.impact/90));
+      if(e.type==='fall-impact'){screenShake=1.2;if(e.kind==='lake')burst(e.x,e.y,18,[P.blue,P.light]);}
       if (e.type === 'won') finish();
     }
   }
@@ -251,11 +234,6 @@
     $('messes').textContent = world.falls;
     $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.falls > 0);
     $('penalty').textContent = 'BEST '+feet(best.peak);
-    $('style-score').textContent=world.tricks.score>=10000?(world.tricks.score/1000).toFixed(1)+'k':world.tricks.score.toLocaleString('en-US');
-    $('style-chain').textContent='x'+world.tricks.combo; $('style-chain').hidden=world.tricks.combo<2;
-    $('style').style.setProperty('--chain-life',world.tricks.chainLife/CartTricks.COMBO_WINDOW);
-    $('style').setAttribute('aria-label',world.tricks.score+' style points, best combo times '+world.tricks.bestCombo);
-    $('style').hidden=world.tricks.score===0;
     const section = world.level.sections[world.roomIndex];
     if (!$('route-steps').children.length) {
       for(let i=0;i<levels.length;i++){const step=document.createElement('i');step.textContent=i+1;step.setAttribute('aria-hidden','true');$('route-steps').append(step);}
@@ -269,7 +247,7 @@
     $('courses').setAttribute('aria-label','View the route and practice sections, currently '+section.name);
     if (phase==='won') $('route').textContent='All four wheels at the finish.';
     else if (world.fall) $('route').textContent='Catching at '+levels[world.fall.catch.chapter].name+'. Record kept.';
-    else $('route').textContent=section.tip;
+    else $('route').textContent=world.roomIndex===7&&!world.circuit.powered&&world.shelves[6].spilled?'Roll the wet wheels between the two brass floor contacts. A continuous water trail powers the shutter.':section.tip;
     $('retry').firstChild.textContent=world.practice?'Exit practice ':'Start over ';
     $('pause').disabled = !['running','paused'].includes(phase)||!$('picker').hidden;
     $('retry').disabled=!$('picker').hidden||phase==='confirm';$('courses').disabled=phase==='confirm';
@@ -291,10 +269,10 @@
   function prepare(w,continuing=false) {
     if(raf)cancelAnimationFrame(raf);raf=0;
     clearInput();world=w;levelIndex=w.level.startRoom;resumed=continuing;
-    phase='ready';particles=[];screenShake=0;toastLife=0;trickLife=0;
-    $('trick').hidden=true;$('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
+    phase='ready';particles=[];screenShake=0;toastLife=0;
+    $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
     floor=makeFloor(world.level);
-    overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Dirt, blacktop, tight corners, and a shortcut through the groceries. See how far you can get. Falls send you back. Your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
+    overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Climb the quarry, ride the bumps, jump the gap, and spill your way through the groceries. Get the cart to the end. Falls send you back; your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
     updateUI();draw();sound.rolling(0);
     $('start').focus({preventScroll:true});
   }
@@ -334,8 +312,7 @@
     const result=$('result');result.replaceChildren();
     const distance=document.createElement('strong');distance.textContent=feet(world.level.totalDistance);
     const detail=document.createElement('span');detail.textContent=timeString(world.time)+' rolling / '+world.falls+(world.falls===1?' fall':' falls')+' / '+(world.messes-world.falls)+' things knocked';
-    const style=document.createElement('span');style.textContent=world.tricks.score.toLocaleString('en-US')+' style / best combo x'+world.tricks.bestCombo;
-    result.append(distance,detail,style);result.hidden=false;
+    result.append(distance,detail);result.hidden=false;
     updateUI();announce('Course complete. All four wheels made it.');$('start').focus({preventScroll:true});
   }
   function frame(now) {
