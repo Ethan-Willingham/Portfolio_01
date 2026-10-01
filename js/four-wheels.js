@@ -114,7 +114,7 @@
         await this.context.resume();
       } catch { this.enabled = false; this.refresh(); notify('Sound is unavailable in this browser.'); }
     },
-    refresh() { $('sound').setAttribute('aria-pressed', String(this.enabled)); $('sound').setAttribute('aria-label', this.enabled ? 'Turn sound off' : 'Turn sound on'); },
+    refresh() { $('sound').setAttribute('aria-pressed', String(this.enabled)); $('sound').setAttribute('aria-label', this.enabled ? 'Turn sound off' : 'Turn sound on'); $('sound-text').textContent=this.enabled?'Sound on':'Sound off'; },
     rolling(speed) {
       if (!this.roll) return;
       const kind=Course.sample(world.level,world.body)?.kind;this.filter.frequency.setTargetAtTime(kind==='dirt'?1200:kind==='grass'?450:900,this.context.currentTime,.1);
@@ -160,9 +160,9 @@
   }
   function cameraLabel() {
     $('camera').hidden = false;
-    $('camera').textContent = followCart ? 'Course map' : 'Follow cart';
     $('camera').setAttribute('aria-pressed', String(!followCart));
     $('camera').setAttribute('aria-label', followCart ? 'Show the whole route' : 'Follow the cart');
+    $('camera').title = followCart ? 'Course map (M)' : 'Follow cart (M)';
   }
   function resizeView() {
     const stage = $('stage').getBoundingClientRect();
@@ -240,6 +240,10 @@
   }
   function updateUI() {
     game.dataset.phase = phase;
+    $('hud').inert=phase!=='running';
+    $('overlay').inert=!$('picker').hidden;
+    canvas.tabIndex=phase==='running'&&$('picker').hidden?0:-1;
+    $('touch').inert=phase!=='running';
     if (!world.practice) best.peak = Math.max(best.peak, world.peak);
     $('time-label').textContent = world.practice ? 'Practice' : 'Distance';
     $('time').textContent = feet(world.distance);
@@ -251,6 +255,7 @@
     $('style-chain').textContent='x'+world.tricks.combo; $('style-chain').hidden=world.tricks.combo<2;
     $('style').style.setProperty('--chain-life',world.tricks.chainLife/CartTricks.COMBO_WINDOW);
     $('style').setAttribute('aria-label',world.tricks.score+' style points, best combo times '+world.tricks.bestCombo);
+    $('style').hidden=world.tricks.score===0;
     const section = world.level.sections[world.roomIndex];
     if (!$('route-steps').children.length) {
       for(let i=0;i<levels.length;i++){const step=document.createElement('i');step.textContent=i+1;step.setAttribute('aria-hidden','true');$('route-steps').append(step);}
@@ -268,7 +273,7 @@
     $('retry').firstChild.textContent=world.practice?'Exit practice ':'Start over ';
     $('pause').disabled = !['running','paused'].includes(phase)||!$('picker').hidden;
     $('retry').disabled=!$('picker').hidden||phase==='confirm';$('courses').disabled=phase==='confirm';
-    $('pause').setAttribute('aria-label',phase==='paused'?'Resume game':'Pause game');
+    $('pause').setAttribute('aria-label',phase==='paused'?'Resume game':'Pause and open menu');
     $('pause').setAttribute('aria-pressed',String(phase==='paused'));
     $('camera').disabled = phase!=='running';
   }
@@ -281,6 +286,7 @@
     $('overlay-kicker').textContent=kicker; $('overlay-title').textContent=title; $('overlay-text').textContent=message;
     $('start').textContent=primary; $('secondary').textContent=secondary||''; $('secondary').hidden=!secondary;
     $('practice-label').hidden=true; $('best').textContent=bestText(); $('overlay').hidden=false;
+    $('help').open=false; $('overlay').scrollTop=0;
   }
   function prepare(w,continuing=false) {
     if(raf)cancelAnimationFrame(raf);raf=0;
@@ -290,6 +296,7 @@
     floor=makeFloor(world.level);
     overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Dirt, blacktop, tight corners, and a shortcut through the groceries. See how far you can get. Falls send you back. Your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
     updateUI();draw();sound.rolling(0);
+    $('start').focus({preventScroll:true});
   }
   function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice)); if(!practice)save(); }
   function returnToRun() {
@@ -309,7 +316,7 @@
   function pause() {
     if(phase!=='running')return;
     phase='paused';clearInput();sound.rolling(0);save();$('result').hidden=true;
-    overlay('Take your time','Cart parked for now','The cart and everything around it are paused. Carry on from exactly here.','Keep rolling',world.practice?'Return to run':'Start over');
+    overlay('All Four Wheels','Cart parked',world.practice?'Your practice stretch is paused. Your saved run is waiting.':canSave?'Your run is saved. Pick up exactly where you left it.':'Everything is paused. Pick up exactly where you left it.','Keep rolling',null);
     updateUI();$('start').focus({preventScroll:true});
   }
   function retry() {
@@ -341,7 +348,7 @@
   }
   function closePicker() {
     $('picker').hidden=true;
-    if(pickerReturn==='running')run();else{phase=pickerReturn;$('courses').focus({preventScroll:true});updateUI();}
+    if(pickerReturn==='running')run();else{phase=pickerReturn;updateUI();$('courses').focus({preventScroll:true});}
   }
   function openPicker() {
     if(!$('picker').hidden||phase==='confirm')return;
@@ -367,7 +374,10 @@
     $('picker').hidden=false;grid.children[Math.min(world.roomIndex,[...grid.children].filter(q=>!q.disabled).length-1)].focus({preventScroll:true});updateUI();
   }
   function fullscreenLabel() {
-    $('fullscreen').setAttribute('aria-label', document.fullscreenElement === game || pseudoFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+    const active=document.fullscreenElement === game || pseudoFullscreen;
+    $('fullscreen').setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+    $('fullscreen').setAttribute('aria-pressed',String(active));
+    $('fullscreen-text').textContent=active?'Exit fullscreen':'Fullscreen';
   }
   async function fullscreen() {
     if (pseudoFullscreen) { pseudoFullscreen = false; game.classList.remove('cart-pseudo-fullscreen'); document.body.classList.remove('cart-fs-open'); fullscreenLabel(); return; }
@@ -389,11 +399,13 @@
   $('courses').addEventListener('click', openPicker); $('picker-close').addEventListener('click', closePicker);
   $('fullscreen').addEventListener('click', fullscreen); document.addEventListener('fullscreenchange', fullscreenLabel);
   $('sound').addEventListener('click', () => { sound.enabled = !sound.enabled; sound.refresh(); if (sound.enabled) { sound.prepare().then(() => sound.note(660, .1, .025)); } else sound.rolling(0); });
-  $('camera').addEventListener('click', () => {
+  function toggleCamera() {
+    if(phase!=='running')return;
     followCart = !followCart; cameraLabel(); draw();
     announce(followCart ? 'Camera follows the cart.' : 'The whole route is visible.');
     canvas.focus({ preventScroll:true });
-  });
+  }
+  $('camera').addEventListener('click',toggleCamera);
   function releaseTouch(element, id) {
     if (touches.get(id)?.element !== element) return;
     touches.delete(id); paintTouch();
@@ -456,10 +468,26 @@
       else if (phase === 'confirm') cancelRetry();
       return;
     }
-    if (!$('picker').hidden) return;
+    if (!$('picker').hidden) {
+      if(e.code==='Tab'){
+        const items=[...$('picker').querySelectorAll('button:not(:disabled)')],first=items[0],end=items[items.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}
+        else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}
+      }
+      return;
+    }
+    // Keep keyboard navigation inside the active dialog, including expanded help.
+    if(e.code==='Tab'&&!$('overlay').hidden){
+      const items=[...$('overlay').querySelectorAll('button, a[href], summary')].filter(q=>!q.disabled&&q.getClientRects().length);
+      const first=items[0],end=items[items.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}
+      else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}
+      return;
+    }
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); phase === 'running' ? pause() : phase === 'paused' && run(); }
     if (e.code === 'KeyR' && !e.repeat) { e.preventDefault(); retry(); }
     if (e.code === 'KeyF' && !e.repeat) { e.preventDefault(); fullscreen(); }
+    if (e.code === 'KeyM' && !e.repeat) { e.preventDefault(); toggleCamera(); }
     if (movement.has(e.code) && phase === 'running') { e.preventDefault(); keys.add(e.code); }
   });
   document.addEventListener('keyup', e => keys.delete(e.code));

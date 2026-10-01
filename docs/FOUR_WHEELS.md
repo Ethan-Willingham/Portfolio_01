@@ -45,7 +45,7 @@ six-degree rigid-body solver.
 ## Editable sources
 
 - `four-wheels.html`: game shell, briefing, results and play notes.
-- `four-wheels.css`: scoped paper and ink UI, phone controls and fullscreen.
+- `four-wheels.css`: viewport canvas, floating HUD, paper menus and phone controls.
 - `js/four-wheels-course.js`: route geometry, spatial hashes, surfaces, stores,
   guardrails, swinging-door poses, route distance, catches and saved-world schema.
 - `js/four-wheels-stock.js`: furniture, supported stock, products, breakage and films.
@@ -94,7 +94,7 @@ actual oriented envelope touching the 20-unit circle clears it, including exact
 tangency. The basket or shopper alone cannot clear a checkpoint. The current
 circle is visible, with a section number at an entrance and GO on intermediate
 marks. Offscreen guidance points to that same circle. Direction arrows, numbered
-roadside signs and a minimap show the route. Distance projects between consecutive
+roadside signs and the course map show the route. Distance projects between consecutive
 cleared and upcoming marks, preventing a shortcut to the final platform from
 raising the record. Four artwork units equal one displayed foot.
 
@@ -188,8 +188,20 @@ store tiles, capped at 32 canvases. Floor polygons, support, rails, spills, shad
 markers and overlays share the projection. The art is drawn locally and the game
 has no runtime art requests or third-party engine.
 
+The canvas fills the entire browser viewport from page load, with no reserved
+header, footer, border or page scrolling. Distance, best and the current section
+occupy one small dark panel at the upper left. Earned style adds a small chip.
+The upper right has two 44-pixel buttons: course map and pause/menu. There is no
+always-visible minimap. The pause menu contains route progress, falls, the current
+section's advice, unlocked practice, restart, sound, fullscreen, expandable help
+and links back to the site. Help and the route picker scroll inside their dialogs.
+Opening either clears driving input; closed dialogs cannot receive keyboard focus.
+Tab and reverse Tab stay within the active dialog. Phone captions use small dark
+labels above the original analog pads, with no bottom background band.
+
 Keyboard: W/S or up/down push/pull; A/D or left/right rotate; Space brakes;
-P/Escape pauses; R requests a fresh run; F toggles fullscreen. Inputs are scoped
+P/Escape pauses; R requests a fresh run; F toggles fullscreen; M toggles the course
+map. Inputs are scoped
 to focus inside the game. Restart asks in-game before discarding the run and
 retains records and unlocked practice. Escape cancels that confirmation.
 
@@ -244,7 +256,9 @@ twelve sections using player forces, without teleporting or forced falls.
 The browser suite covers the same whole journey, desktop/mobile input, parked
 reloads, practice isolation, restart confirmation, both falls, paused gravity,
 stunts, overview, fullscreen, 320-pixel phones, short landscape, blocked storage,
-reduced motion, no scene requests and JavaScript errors. Private hooks and the
+reduced motion, no scene requests and JavaScript errors. Layout assertions check the canvas itself against all four viewport edges,
+compact separated HUD buttons, help scrolling, dialog keyboard focus and retained
+phone controls. Private hooks and the
 pilot are injected by the local test server, never shipped. Use the owned
 `/Users/ethan/.local/bin/agent-chrome-for-testing` process and close it in finally.
 

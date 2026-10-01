@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#292820">
   <title>All Four Wheels</title>
-  <meta name="description" content="An isometric pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. Six connected rooms, wheel checkpoints, deep lakes and open cliff edges. Play here.">
+  <meta name="description" content="An isometric pixel-art shopping cart game. All four wheels swivel, turning leaves your momentum intact, and the shelves are full of breakable things. One continuous racecourse, grocery stores, wheel checkpoints and open cliff edges. Play here.">
   <link rel="canonical" href="https://ethanwillingham.com/four-wheels.html">
   <meta property="og:title" content="All Four Wheels">
   <meta property="og:description" content="Dirt tracks, blacktop bends, and a shortcut through the groceries. How far can four swivel wheels take you?">
@@ -30,39 +30,27 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=20">
+  <link rel="stylesheet" href="four-wheels.css?v=21">
 </head>
 <body class="cart-page">
-  <div class="site-wrapper">
-    <main>
-        <h1 class="sr-only">All Four Wheels</h1>
-        <section class="cart-game" id="cart-game" aria-label="All Four Wheels game">
-          <header class="cart-toolbar">
-            <div class="cart-wordmark" aria-hidden="true"><svg viewBox="0 0 36 36" width="36" height="36"><path d="M4 8h5l4 17h16l3-13H10M13 18h17M18 12v13m7-13v13" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="15" cy="30" r="2" fill="currentColor"/><circle cx="27" cy="30" r="2" fill="currentColor"/></svg><span>ALL FOUR<br>WHEELS</span></div>
-            <button class="cart-course-button" id="cart-courses" type="button" aria-label="View the route and practice sections">
-              <span class="cart-course-badge" id="cart-course-badge" aria-hidden="true">01</span>
-              <span class="cart-course-copy"><span class="cart-kicker" id="cart-course-number">Section 01 / 12</span><span class="cart-course-name"><span id="cart-course-title">The first push</span><svg width="10" height="7" viewBox="0 0 10 7" aria-hidden="true"><path d="m1 1 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span></span>
-            </button>
-            <div class="cart-readouts">
-              <div class="cart-clock"><span class="cart-kicker" id="cart-time-label">Distance</span><output class="cart-time" id="cart-time">0 ft</output><div class="cart-clock-track" aria-hidden="true"><i id="cart-clock-fill"></i></div></div>
-              <div class="cart-mishaps"><span class="cart-kicker">Falls</span><div><output id="cart-messes">0</output><span class="cart-penalty" id="cart-penalty">BEST 0 ft</span></div></div>
+  <main>
+    <h1 class="sr-only">All Four Wheels</h1>
+    <section class="cart-game" id="cart-game" aria-label="All Four Wheels game">
+          <header class="cart-hud" id="cart-hud" aria-label="Run progress and game menu">
+            <div class="cart-hud-left">
+              <div class="cart-readouts">
+                <div class="cart-clock"><span class="sr-only" id="cart-time-label">Distance</span><output class="cart-time" id="cart-time">0 ft</output><span class="cart-penalty" id="cart-penalty">BEST 0 ft</span><div class="cart-clock-track" aria-hidden="true"><i id="cart-clock-fill"></i></div></div>
+                <p class="cart-location"><span id="cart-course-badge" aria-hidden="true">01</span><span id="cart-course-title">The first push</span></p>
+              </div>
+            <div class="cart-style" id="cart-style" aria-label="Style score" hidden><span class="cart-kicker">Style</span><div><output id="cart-style-score">0</output><span id="cart-style-chain" hidden></span></div><i aria-hidden="true"></i></div>
             </div>
             <div class="cart-utilities">
-              <button class="cart-icon-button" id="cart-sound" type="button" aria-label="Turn sound on" aria-pressed="false" title="Sound">
-                <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-on" d="M17 8a7 7 0 0 1 0 8m3-11a11 11 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-off" d="m17 9 5 6m0-6-5 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-              </button>
-              <button class="cart-icon-button" id="cart-fullscreen" type="button" aria-label="Enter fullscreen" title="Fullscreen">
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-              </button>
-              <button class="cart-icon-button" id="cart-pause" type="button" aria-label="Pause game" title="Pause (P)">
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path class="cart-pause-glyph" d="M8 5v14m8-14v14" fill="none" stroke="currentColor" stroke-width="3"/><path class="cart-resume-glyph" d="m8 4 12 8-12 8z" fill="currentColor"/></svg>
-              </button>
+              <button class="cart-icon-button cart-camera" id="cart-camera" type="button" aria-label="Show the whole course" aria-pressed="false" title="Course map (M)" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zm6-2v16m6-14v16"/></svg></button>
+              <button class="cart-icon-button" id="cart-pause" type="button" aria-label="Pause and open menu" aria-haspopup="dialog" aria-controls="cart-overlay" title="Pause &amp; menu (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14m8-14v14" stroke-width="3"/></svg></button>
             </div>
           </header>
-
           <div class="cart-stage" id="cart-stage">
             <canvas id="cart-canvas" width="720" height="580" tabindex="0" aria-label="Isometric shopping cart distance challenge. Follow the track through the grocery stores. Touch route checkpoints with any wheel. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to start over." aria-describedby="cart-instructions">This game needs a browser with canvas support. Drive the track, pass through the grocery stores, and see how far you can get.</canvas>
-            <button class="cart-camera" id="cart-camera" type="button" aria-label="Show the whole course" aria-pressed="false" hidden>Overview</button>
             <div class="cart-touch" id="cart-touch" role="group" aria-label="Thumb controls">
               <div class="cart-thumb cart-thumb-steering">
                 <div class="cart-thumb-caption"><strong>Rotate</strong><span id="cart-steer-status">Slide left / right</span></div>
@@ -85,7 +73,7 @@
               </div>
               <p class="sr-only" id="cart-touch-help">Left thumb slides left or right to rotate. Right thumb slides up to push or down to pull. Slide farther for more force. Release to coast. Hold the middle button to brake.</p>
             </div>
-            <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="false" aria-labelledby="cart-overlay-title">
+            <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
                 <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span>FOUR WHEELS. ALL SWIVEL.</span></div>
                 <div class="cart-overlay-copy">
@@ -101,66 +89,71 @@
                   <button class="cart-button" id="cart-secondary" type="button" hidden>Try again</button>
                 </div>
                 <p class="cart-best" id="cart-best"></p>
+                <div class="cart-menu-route">
+                  <div class="cart-menu-section"><span class="cart-kicker" id="cart-course-number">Section 01 / 12</span><div class="cart-mishaps"><output id="cart-messes">0</output><span>falls</span></div></div>
+                  <div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div>
+                  <p id="cart-route">Turn the basket, then push to change your path</p>
+                </div>
+                <div class="cart-menu-tools" aria-label="Game settings">
+                  <button class="cart-menu-button" id="cart-courses" type="button" aria-label="View the route and practice sections"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zm6-2v16m6-14v16"/></svg><span class="cart-route-full">Route &amp; practice</span><span class="cart-route-short">Route</span></button>
+                  <button class="cart-menu-button" type="button" id="cart-retry">Start over <span class="cart-key-hint">R</span></button>
+                  <button class="cart-menu-button" id="cart-sound" type="button" aria-label="Turn sound on" aria-pressed="false" title="Sound">
+                    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-on" d="M17 8a7 7 0 0 1 0 8m3-11a11 11 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-off" d="m17 9 5 6m0-6-5 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="cart-sound-text">Sound off</span>
+                  </button>
+                  <button class="cart-menu-button" id="cart-fullscreen" type="button" aria-label="Enter fullscreen" title="Fullscreen (F)" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="cart-fullscreen-text">Fullscreen</span>
+                  </button>
+                </div>
+                <details class="cart-help" id="cart-help">
+                  <summary>Controls &amp; how to play</summary>
+                  <div class="cart-controls" id="cart-instructions">
+                    <span><kbd>W</kbd> <kbd>S</kbd> push / pull</span><span><kbd>A</kbd> <kbd>D</kbd> rotate</span><span><kbd>Space</kbd> brake</span>
+                    <span>Arrow keys work too. <kbd>P</kbd> pause, <kbd>M</kbd> map, <kbd>F</kbd> fullscreen.</span>
+                  </div>
+                  <div class="post-body cart-prose">
+                    <p><strong>All Four Wheels</strong> is my shopping cart game. An empty cart, four swivel wheels, and a dirt track that keeps taking you through grocery stores. Turn the basket while it slides in the old direction, then push to bend its path. See how far you can get. Still in progress.</p>
+                    <div class="cart-notes">
+                      <p>Follow the red and white curbs. Dirt slows the wheels, asphalt carries a slide farther, and the grass shoulders drag on the cart. Some bends have guardrails. Some have a long drop.</p>
+                      <p>Push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward. Brake before a tight bend and leave room for the shopper behind the handle.</p>
+                      <p>On a phone, slide the left thumb pad sideways to rotate. Slide the right pad up to push or down to pull. Small movements give you a gentle nudge. Let go to coast, or hold the middle Brake button to slow down. You can push and turn together.</p>
+                      <p>The route runs through three grocery stores. Push the swinging doors open, or hit them hard enough to break the glass. Tables rock, shelves topple, bottles break, and cans roll. A vase leaves clear water; a wheel over a ketchup bottle squeezes sauce onto the tiles. The tires pick up spills and leave tracks. That mess stays after a fall.</p>
+                      <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
+                      <p>Two wheels losing the floor, or the center of the cart and shopper going over an edge, starts a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
+                      <p>There is no countdown. The run saves automatically in your browser, including the cart, broken stock and puddles. Reach a section to unlock it in the route menu for practice. Practice parks your real run and leaves its record alone. Start over keeps your distance record but begins with a fresh cart and course.</p>
+                      <p>Close passes, moving 180s and 360s, and sustained sideways coasts earn style. Link clean moves within five seconds for a multiplier up to four times. Bumps and falls break the combo. Spinning in place doesn't count. At the end, get the cart, all four tires and the shopper onto the checked finish pad.</p>
+                    </div>
+                    <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-course.js">The course</a> &middot; <a href="js/four-wheels-physics.js">Cart physics</a> &middot; <a href="js/four-wheels-stock.js">Store physics</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
+                  </div>
+                </details>
+                <nav class="cart-bottomnav" aria-label="Site navigation">
+                  <a href="/">Home</a>
+                  <a href="archive.html">In Progress</a>
+                </nav>
+
                 </div>
               </div>
             </div>
-            <div class="cart-toast" id="cart-toast" aria-hidden="true"></div>
             <div class="cart-trick" id="cart-trick" aria-hidden="true" hidden>
               <span class="cart-trick-symbol" id="cart-trick-symbol"></span>
               <div class="cart-trick-copy"><span class="cart-kicker" id="cart-trick-kicker">Clean move</span><strong id="cart-trick-title"></strong><p><span id="cart-trick-points"></span><b id="cart-trick-credit"></b></p></div>
               <span class="cart-trick-combo" id="cart-trick-combo" hidden></span>
               <i class="cart-trick-life"></i>
             </div>
+            <div class="cart-toast" id="cart-toast" aria-hidden="true"></div>
             <p class="cart-live sr-only" id="cart-live" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
-
-          <div class="cart-route-bar">
-            <div class="cart-route-copy"><div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div><p id="cart-route">Turn the basket, then push to change your path</p></div>
-            <div class="cart-style" id="cart-style" aria-label="Style score"><span class="cart-kicker">Style</span><div><output id="cart-style-score">0</output><span id="cart-style-chain" hidden></span></div><i aria-hidden="true"></i></div>
-            <button type="button" id="cart-retry">Start over <span>R</span></button>
-          </div>
-
-          <footer class="cart-controls" id="cart-instructions">
-            <span><kbd>W</kbd> <kbd>S</kbd> push / pull</span>
-            <span><kbd>A</kbd> <kbd>D</kbd> rotate</span>
-            <span><kbd>Space</kbd> brake</span>
-            <span class="cart-arrow-note">Arrow keys work too</span>
-          </footer>
-          <div class="cart-course-picker" id="cart-picker" hidden role="dialog" aria-modal="false" aria-labelledby="cart-picker-title">
+          <div class="cart-course-picker" id="cart-picker" hidden role="dialog" aria-modal="true" aria-labelledby="cart-picker-title">
             <div class="cart-picker-head"><div><p class="cart-kicker">Twelve stretches. One continuous route.</p><h2 id="cart-picker-title">The long way round</h2></div><button class="cart-button" id="cart-picker-close" type="button">Back to game</button></div>
             <div class="cart-course-grid" id="cart-course-grid"></div>
           </div>
-        </section>
-
-        <div class="post-body cart-prose">
-          <p><strong>All Four Wheels</strong> is my shopping cart game. An empty cart, four swivel wheels, and a dirt track that keeps taking you through grocery stores. Turn the basket while it slides in the old direction, then push to bend its path. See how far you can get. Still in progress.</p>
-          <details class="cart-notes">
-            <summary>How to play</summary>
-            <p>Follow the red and white curbs. Dirt slows the wheels, asphalt carries a slide farther, and the grass shoulders drag on the cart. Some bends have guardrails. Some have a long drop.</p>
-            <p>Push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward. Brake before a tight bend and leave room for the shopper behind the handle.</p>
-            <p>On a phone, slide the left thumb pad sideways to rotate. Slide the right pad up to push or down to pull. Small movements give you a gentle nudge. Let go to coast, or hold the middle Brake button to slow down. You can push and turn together.</p>
-            <p>The route runs through three grocery stores. Push the swinging doors open, or hit them hard enough to break the glass. Tables rock, shelves topple, bottles break, and cans roll. A vase leaves clear water; a wheel over a ketchup bottle squeezes sauce onto the tiles. The tires pick up spills and leave tracks. That mess stays after a fall.</p>
-            <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
-            <p>Two wheels losing the floor, or the center of the cart and shopper going over an edge, starts a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
-            <p>There is no countdown. The run saves automatically in your browser, including the cart, broken stock and puddles. Reach a section to unlock it in the route menu for practice. Practice parks your real run and leaves its record alone. Start over keeps your distance record but begins with a fresh cart and course.</p>
-            <p>Close passes, moving 180s and 360s, and sustained sideways coasts earn style. Link clean moves within five seconds for a multiplier up to four times. Bumps and falls break the combo. Spinning in place doesn't count. At the end, get the cart, all four tires and the shopper onto the checked finish pad.</p>
-          </details>
-          <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-course.js">The course</a> &middot; <a href="js/four-wheels-physics.js">Cart physics</a> &middot; <a href="js/four-wheels-stock.js">Store physics</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
-          <nav class="cart-bottomnav" aria-label="Site navigation">
-            <a href="/" class="post-back"><span class="pb-label">Home</span></a>
-            <a href="archive.html" class="post-back cart-forward"><span class="pb-label">In Progress</span></a>
-          </nav>
-        </div>
-    </main>
-    <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
-  </div>
+    </section>
+  </main>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=20"></script>
-  <script src="js/four-wheels-tricks.js?v=20"></script>
-  <script src="js/four-wheels-course.js?v=20"></script>
-  <script src="js/four-wheels-physics.js?v=20"></script>
-  <script src="js/four-wheels-view.js?v=20"></script>
-  <script src="js/four-wheels.js?v=20"></script>
-  <script src="js/backtotop.js"></script>
+  <script src="js/four-wheels-stock.js?v=21"></script>
+  <script src="js/four-wheels-tricks.js?v=21"></script>
+  <script src="js/four-wheels-course.js?v=21"></script>
+  <script src="js/four-wheels-physics.js?v=21"></script>
+  <script src="js/four-wheels-view.js?v=21"></script>
+  <script src="js/four-wheels.js?v=21"></script>
 </body>
 </html>

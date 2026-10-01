@@ -799,13 +799,6 @@
         for(let z=-13;z<8;z+=6){const r=16-(z+13)*.3;scene.face([{x:p.x-r,y:p.y-r,z},{x:p.x+r,y:p.y-r,z},{x:p.x,y:p.y,z:z+15}],P.pine);scene.face([{x:p.x+r,y:p.y-r,z},{x:p.x+r,y:p.y+r,z},{x:p.x,y:p.y,z:z+15}],P.sage);scene.face([{x:p.x+r,y:p.y+r,z},{x:p.x-r,y:p.y+r,z},{x:p.x,y:p.y,z:z+15}],P.pine);}
       }
     }
-    function courseOverview(g,w,camera) {
-      const box=worldFrame(w),width=150,height=100,x=g.canvas.width-width-12,y=12,scale=Math.min((width-8)/box.width,(height-8)/box.height),ox=x+4+(width-8-box.width*scale)/2-box.left*scale,oy=y+4+(height-8-box.height*scale)/2-box.top*scale;
-      rect(g,x-2,y-2,width+4,height+4,P.hairDark);rect(g,x,y,width,height,blend(P.dark,P.pine,.25));g.save();g.translate(ox,oy);g.scale(scale,scale);
-      for(const s of w.level.sections)for(let i=0;i<s.path.length-1;i++)groundLine(g,s.path[i],s.path[i+1],s.surface==='dirt'?P.clay:P.steelLight,Math.max(2,2/scale));
-      for(const s of w.level.stores)groundPoly(g,quad(s.x,s.y,s.w,s.h),P.coral,.7);
-      const p=project({...w.body,z:0});oval(g,p.x,p.y,4/scale,4/scale,P.dark);oval(g,p.x,p.y,2/scale,2/scale,P.light);g.restore();
-    }
     function drawCourse(g,w,background,options) {
       const Course=root.CartCourse,width=g.canvas.width,height=g.canvas.height,camera=connectedCamera(width,height,w,options.follow!==false),visible=(p,r=100)=>{const q=project(p);return camera.x+q.x*camera.scale>-r&&camera.x+q.x*camera.scale<width+r&&camera.y+q.y*camera.scale>-r&&camera.y+q.y*camera.scale<height+r;};w._visible=visible;
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
@@ -833,7 +826,6 @@
       if(w.fall){const falling=new Scene(clamp(1-w.fall.time*.5,0,1));cart(falling,w.body,w.wheels,w.gait);falling.flush(g);if(w.fall.kind==='lake'){groundRing(g,{...w.body,z:-30},12+w.fall.time*25,P.light,2,1-w.fall.time*.7);}}
       else{const speed=Math.hypot(w.body.vx,w.body.vy);if(speed>8)groundArrow(g,{...w.body,x:w.body.x+w.body.vx*.5,y:w.body.y+w.body.vy*.5,a:Math.atan2(w.body.vy,w.body.vx)},10,P.light,.65);w.wheels.forEach((q,i)=>{if(w.unsupported?.[i])groundRing(g,casterPose(w.body,q,i),5,P.red,2);});}
       boundaries(g,w);g.restore();delete w._visible;
-      if(options.follow!==false&&!options.preview)courseOverview(g,w,camera);
       if(target&&!options.preview&&options.follow!==false){const p=project(target),tx=camera.x+p.x*camera.scale,ty=camera.y+p.y*camera.scale;if(tx<25||tx>width-25||ty<25||ty>height-25){const dx=tx-width/2,dy=ty-height*.54,t=Math.min((width/2-30)/Math.max(1,Math.abs(dx)),(height*.45-30)/Math.max(1,Math.abs(dy))),x=clamp(width/2+dx*t,25,width-25),y=clamp(height*.54+dy*t,25,height-25);oval(g,x,y,13,13,P.hairDark);oval(g,x,y,11,11,P.gold);text(g,'GO',x,y+3,P.hairDark,8,'center');}}
     }
     function illustration(g) {
