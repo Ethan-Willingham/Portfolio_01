@@ -1,0 +1,21 @@
+Sluice logo v14
+
+User selection: v10 is perfect, combined with the background voids and ore placement from v13.
+
+Deterministic composition of the saved original layers. No new image generation or redraw.
+
+Background: sluice-logo-v12-background.png, which is the exact terrain, void and ore background used by v13. Copied unchanged to sluice-logo-v14-background.png.
+Foreground: sluice-logo-v10-wordmark.png, with all six v10 letter bodies, v10 smoke and v10 E water/outflow. Placed at its original full-canvas coordinates, with no scaling, recolouring or alteration. Copied unchanged to sluice-logo-v14-wordmark.png.
+Pool and final falling drops: sluice-logo-v10-water.png below y720. The v10 wordmark ends its water crop at y720, so the saved water layer resumes there without overlap. This retains v10 water and its original cave pool surface.
+
+Foreground coverage: v10 water below y720, then v10 wordmark. Apply the background colour difference between v13's saved terrain layer and v10's original v7 terrain layer to the original v10 master, weighted by one minus foreground alpha. This retains original v10 RGB exactly wherever the foreground is opaque, replaces empty background exactly, and changes the background visible through translucent effects without a second flattening step.
+Canvas: 1672 x 941, opaque PNG.
+Thumbnail: 600 x 338 WebP, browser high-quality downsampling, quality0.94.
+
+Artifacts:
+assets/images/sluice-logo-v14.png
+assets/images/sluice-logo-v14-wordmark.png
+assets/images/sluice-logo-v14-background.png
+assets/thumbs/sluice-logo-v14.webp
+
+Validation: full master and thumbnail visually reviewed. Original foreground and background layer copies are byte-identical. Every fully opaque foreground pixel matches the original v10 master. All output images decode; master is opaque; thumbnail dimensions verified. Composition ran in an owned Chrome for Testing process, closed after export. Production game source and live site thumbnail references remain unchanged.
