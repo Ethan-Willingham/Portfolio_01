@@ -8,7 +8,7 @@ let seed = 2039;
 const math = Object.create(Math);
 math.random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 const noop = () => {};
-const s = { Math: math, window: { location: { search: '' } },
+const s = { Math: math, performance: require('node:perf_hooks').performance, window: { location: { search: '' } },
   cam: {x: 2000, y: -900}, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
   GRAVITY: 600, LIQUID_SNOW_DENSITY: 3.2, LIQUID_SNOW_DIAMETER: 1.8, LIQUID_CELL: 2.5, LIQUID_PDELTA: .5,
@@ -151,20 +151,25 @@ const calm=settleInAir([0,0,0]),crosswind=settleInAir([8,0,0]),downwash=settleIn
 assert.ok(crosswind>calm*.8&&downwash>calm&&updraft< -40,'airflow preserves settling and actual updrafts');
 s.snowAirAt=()=>[0,0,0];s.SNOW_RATE=345;
 
-// Sparse GPU snapshots can arrive between every maintenance scan. Each
-// fresh result must remain available to material maintenance and accounting.
+// Sparse GPU snapshots can arrive between maintenance scans. Each fresh
+// result must reach material maintenance and accounting, in order and none
+// skipped, by the next scan on the 0.12 s maintenance clock.
 reset();s.SNOW_RATE=0;s.rain.intensity=0;
 const realScan=s.snowScan;
-let mirrorFrame=0,freshScans=0;
+let mirrorFrame=0;const arrived=[],consumed=[];
 s.liquidWGPU={simActive:true,readbackApplyGen:0,getReadbackAge:()=>mirrorFrame%20===2?0:.1};
 s.snowScan=()=>{
-  if(mirrorFrame%20===2){freshScans++;s.snow.readbackGen=s.liquidWGPU.readbackApplyGen;}
+  const gen=s.liquidWGPU.readbackApplyGen;
+  if(gen!==s.snow.readbackGen){consumed.push([gen,mirrorFrame]);s.snow.readbackGen=gen;}
 };
 for(mirrorFrame=1;mirrorFrame<=120;mirrorFrame++){
-  if(mirrorFrame%20===2)s.liquidWGPU.readbackApplyGen++;
+  if(mirrorFrame%20===2){s.liquidWGPU.readbackApplyGen++;arrived.push([s.liquidWGPU.readbackApplyGen,mirrorFrame]);}
   s.updateSnow(1/60);
 }
-assert.equal(freshScans,6,'quiet-air maintenance consumes every fresh GPU snapshot despite scan phase');
+assert.equal(arrived.length,6);
+assert.deepEqual(consumed.map(c=>c[0]),arrived.map(a=>a[0]),'quiet-air maintenance consumes every fresh GPU snapshot, in order');
+for(let k=0;k<arrived.length;k++)assert.ok((consumed[k][1]-arrived[k][1])/60<=.12+1/60+1e-9,
+  'a fresh GPU snapshot reaches maintenance within one maintenance interval');
 s.snowScan=realScan;s.liquidWGPU=null;s.SNOW_RATE=345;
 
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/sluice/157-particle-rain.js'),'utf8'),s);

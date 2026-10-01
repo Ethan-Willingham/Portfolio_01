@@ -8339,13 +8339,6 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let scrY = (p.y - rp.camY) * rp.dpws;
   if (scrX < 0.0 || scrY < 0.0 || scrX >= rp.canvasW || scrY >= rp.canvasH) { return out; }
   if (((fl & 3u) | ((fl >> 4u) & 4u)) == 5u) {
-    out.drySnow = 1u;
-    let c = corner(vid);
-    let radius = f32(${LIQUID_SNOW_DIAMETER * 0.5}) * rp.dpws;
-    let off = c * radius;
-    out.pos = vec4<f32>((scrX + off.x) / (rp.canvasW * 0.5) - 1.0,
-                        1.0 - (scrY + off.y) / (rp.canvasH * 0.5), 0.0, 1.0);
-    out.uv = c;
     // Blend texel centres continuously as the flake or camera moves. A
     // nearest lookup made the entire grain's opacity jump at pixel edges.
     let sq = vec2<f32>(scrX,scrY) - vec2<f32>(0.5);
@@ -8358,7 +8351,18 @@ fn vs(@builtin(vertex_index)   vid : u32,
     let s01 = textureLoad(snowTex,clamp(si+vec2<i32>(0,1),slo,shi),0).r;
     let s11 = textureLoad(snowTex,clamp(si+vec2<i32>(1,1),slo,shi),0).r;
     let mass = mix(mix(s00,s10,sf.x),mix(s01,s11,sf.x),sf.y);
-    out.alpha = 1.0 - smoothstep(0.62,1.30,mass);
+    let snowAlpha = 1.0 - smoothstep(0.62,1.30,mass);
+    // A grain inside the pile surface has zero alpha; under premultiplied
+    // over its fragments would leave every pixel unchanged, so emit none.
+    if (snowAlpha <= 0.0) { return out; }
+    out.drySnow = 1u;
+    let c = corner(vid);
+    let radius = f32(${LIQUID_SNOW_DIAMETER * 0.5}) * rp.dpws;
+    let off = c * radius;
+    out.pos = vec4<f32>((scrX + off.x) / (rp.canvasW * 0.5) - 1.0,
+                        1.0 - (scrY + off.y) / (rp.canvasH * 0.5), 0.0, 1.0);
+    out.uv = c;
+    out.alpha = snowAlpha;
     out.world = p.xy + off / max(rp.dpws, 0.001);
     // No index-based size/tint: a swap or sky-to-ground transfer must not pop.
     return out;
@@ -9449,6 +9453,12 @@ struct P2GParams {
     instance.collidePipe.snowResetFallback = dev.createComputePipeline({label:'snow.resetFallback',layout:snowLayout,compute:{module:snowModule,entryPoint:'resetSnowFallback'}});
     instance.collidePipe.snowFallback = dev.createComputePipeline({label:'snow.fallback',layout:fallbackLayout,compute:{module:snowModule,entryPoint:'snowFallback'}});
     instance.collidePipe.snowGuestPrimary = dev.createComputePipeline({label:'snow.guestPrimary',layout:guestLayout,compute:{module:snowModule,entryPoint:'snowGuestPrimary'}});
+    // Intermediate grain passes resolve terrain, rig, world bounds and the
+    // bath bowl with this kernel; resident skins are resolved once per grain
+    // tick, after its final contact (see runFrame).
+    var snowTerrainSource = WGSL_SNOW_COLLIDE.replace(snowTerrainQueue, '');
+    if (snowTerrainSource === WGSL_SNOW_COLLIDE) throw new Error('snow terrain-only kernel unavailable');
+    instance.collidePipe.snowTerrain = dev.createComputePipeline({label:'snow.collideTerrain',layout:snowLayout,compute:{module:dev.createShaderModule({code:WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+snowTerrainSource}),entryPoint:'main'}});
     instance.collideBGs = [];
     for (var cbs = 0; cbs < GS_FRAME_SLOTS; cbs++) {
       instance.collideBGs.push(dev.createBindGroup({
@@ -9606,7 +9616,7 @@ struct P2GParams {
    * positions + stashed the pre-step position into aux.zw, and that
    * computeTerrainBounds() + uploadTerrainMask() have pushed the tile rect
    * + mask. Chained as the final kernel of the per-frame step. */
-  function runCollide(instance, substepSlot, snowOnly, grainPass) {
+  function runCollide(instance, substepSlot, snowOnly, grainPass, terrainOnly) {
     if (!instance.collideReady) { if (grainPass) grainPass.end(); return; }
     var count = instance.uploadedCount | 0;
     if (count <= 0) { if (grainPass) grainPass.end(); return; }
@@ -9620,8 +9630,18 @@ struct P2GParams {
     cp.setBindGroup(0, snowOnly ? instance.snowPrimaryBGs[substepSlot | 0] : instance.liquidPrimaryBGs[substepSlot | 0] || instance.liquidPrimaryBGs[0]);
     cp.setPipeline(snowOnly ? instance.collidePipe.snowResetFallback : instance.collidePipe.liquidResetFallback);
     cp.dispatchWorkgroups(1);
-    cp.setPipeline(snowOnly ? instance.collidePipe.snow : instance.collidePipe.collide);
+    cp.setPipeline(snowOnly ? (terrainOnly ? instance.collidePipe.snowTerrain : instance.collidePipe.snow) : instance.collidePipe.collide);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
+    if (snowOnly && terrainOnly) {
+      // No resident queue or fallback pass; keep contact motion tracking.
+      if (grainPass && instance.snowTrackContactMotion) {
+        cp.setPipeline(instance.snowGrainPipe.trackMotion); cp.setBindGroup(0, instance.snowGrainBG);
+        cp.dispatchWorkgroups(Math.ceil(count / 256));
+      }
+      cp.end();
+      liquidSubmit(instance, enc);
+      return;
+    }
     cp.end();
     if (snowOnly) {
       // Arguments are written by the primary dispatch. This pass binds them
@@ -10242,6 +10262,19 @@ struct P2GParams {
       compPass.setBindGroup(0, instance.surfCompositeBG);
       compPass.setBindGroup(1, instance.terrainRenderBG);
       compPass.draw(3);
+      // Droplets blend over the composite in this same pass, in the same
+      // order, so the full canvas is not reloaded and stored a second time.
+      if (LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline &&
+          instance.surfDropletBG && (count > 0 || snowCount > 0)) {
+        compPass.setPipeline(instance.surfDropletPipeline);
+        compPass.setBindGroup(0, instance.surfDropletBG);
+        compPass.setBindGroup(1, instance.terrainRenderBG);
+        if (count > 0) compPass.draw(6, count);
+        if (snowCount > 0 && instance.snowDropletBG) {
+          compPass.setBindGroup(0, instance.snowDropletBG);
+          compPass.draw(6, snowCount);
+        }
+      }
       compPass.end();
     } else {
       var pass = enc.beginRenderPass({
@@ -10269,27 +10302,8 @@ struct P2GParams {
       pass.end();
     }
     // v26.16: particles not covered by the actual field composite draw as
-    // small visible droplets. Interior particles remain surface-only.
-    if (useSurface && LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline &&
-        instance.surfDropletBG && (count > 0 || snowCount > 0)) {
-      var dropPass = enc.beginRenderPass({
-        label: 'liquid.dropletPass',
-        colorAttachments: [{
-          view: ctx.getCurrentTexture().createView(),
-          loadOp: 'load',
-          storeOp: 'store'
-        }]
-      });
-      dropPass.setPipeline(instance.surfDropletPipeline);
-      dropPass.setBindGroup(0, instance.surfDropletBG);
-      dropPass.setBindGroup(1, instance.terrainRenderBG);
-      if (count > 0) dropPass.draw(6, count);
-      if (snowCount > 0 && instance.snowDropletBG) {
-        dropPass.setBindGroup(0, instance.snowDropletBG);
-        dropPass.draw(6, snowCount);
-      }
-      dropPass.end();
-    }
+    // small visible droplets (inside the composite pass above). Interior
+    // particles remain surface-only.
     // v24.160 — PARTICLE PROOF overlay: draw each particle as one hard dot
     // ON TOP of the water (loadOp 'load' preserves the composite). Proof of
     // whether a "giant particle" is one particle or a merged cluster.
@@ -10832,7 +10846,10 @@ fn trackMotion(@builtin(global_invocation_id) id:vec3u) {
 }
 fn contactParticle(i:u32, shield:bool, sortedRank:u32) {
   if(i>=gp.count){return;}let fl=flag[i];if(!isSnow(fl)||(fl&32u)!=0u){return;}
-  let p=before[i];if(grainOutsideRegion(p.xy)){return;}let diameter=airParams.wind.z;
+  // Spatial passes read a snapshot gathered in sorted rank order, so each
+  // cell's neighbors are contiguous. Scalar diagnostics keep particle order.
+  let spatialRank=sortedRank!=0xffffffffu;
+  let p=before[select(i,sortedRank,spatialRank)];if(grainOutsideRegion(p.xy)){return;}let diameter=airParams.wind.z;
   let cell=vec2i(floor(p.xy*gp.inv))-vec2i(bitcast<i32>(gp.ox),bitcast<i32>(gp.oy));
   var correction=vec2f(0.);var impulse=vec2f(0.);var count=0.;var support=0.;var density=0.;
   var source=vec2f(0.,-1.);
@@ -10879,8 +10896,9 @@ fn contactParticle(i:u32, shield:bool, sortedRank:u32) {
       if(own&&slot>=sortedRank-start){slot+=1u;}
       // Spatial ranks come from the snow-only index, with own rank omitted.
       // The scalar diagnostic path still accepts mixed indices and filters them.
-      let j=sortedIdx[start+slot];if(sortedRank==0xffffffffu&&(j==i||!isSnow(flag[j]))){continue;}
-      let q=before[j];let delta=p.xy-q.xy;let d2=dot(delta,delta);
+      var j=0u;
+      if(!spatialRank){j=sortedIdx[start+slot];if(j==i||!isSnow(flag[j])){continue;}}
+      let q=before[select(j,start+slot,spatialRank)];let delta=p.xy-q.xy;let d2=dot(delta,delta);
       if(!shield&&d2>=diameter*diameter){continue;}
       if(shield&&d2<6.25){density+=(1.-sqrt(d2)/2.5)*weight;}
       let along=dot(-delta,source);let across=abs(delta.x*source.y-delta.y*source.x);
@@ -10891,6 +10909,7 @@ fn contactParticle(i:u32, shield:bool, sortedRank:u32) {
       var normal=vec2f(0.);var distance=0.;
       if(d2>1e-10){distance=sqrt(d2);normal=delta/distance;}
       else{
+        if(spatialRank){j=sortedIdx[start+slot];}
         var h=min(i,j)*747796405u+max(i,j)*2891336453u;h=(h^(h>>16u))*2246822519u;
         let angle=f32(h&65535u)*.000095875262;normal=vec2f(cos(angle),sin(angle))*select(-1.,1.,i<j);
       }
@@ -11053,6 +11072,17 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     dispatch('finish',0,4096);pass.end();
   }
 
+  // Contact snapshot in snow-index rank order (one gathered copy per pass).
+  var WGSL_SNOW_GATHER = /* wgsl */ `
+@group(0) @binding(0) var<uniform> snowSpatial:vec4u;
+@group(0) @binding(1) var<storage,read> pos:array<vec4f>;
+@group(0) @binding(2) var<storage,read> sortedIdx:array<u32>;
+@group(0) @binding(3) var<storage,read_write> sortedBefore:array<vec4f>;
+@compute @workgroup_size(256)
+fn gather(@builtin(global_invocation_id) id:vec3u){
+  if(id.x>=snowSpatial.w){return;}sortedBefore[id.x]=pos[sortedIdx[id.x]];
+}
+`;
   function buildSnowGrainPipeline(instance) {
     if (instance.snowGrainPipe) return;
     var dev=instance.device;
@@ -11081,6 +11111,16 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
       {binding:12,resource:{buffer:instance.buf.snowGrainDispatch}},
       {binding:13,resource:{buffer:instance.buf.cellCursor}});
     instance.snowGrainBG=dev.createBindGroup({layout:bgl,entries:binds});
+    var gatherBGL=dev.createBindGroupLayout({entries:[
+      {binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
+      {binding:1,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}},
+      {binding:2,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}},
+      {binding:3,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}}]});
+    instance.snowGatherPipe=dev.createComputePipeline({label:'snow.gatherSnapshot',layout:dev.createPipelineLayout({bindGroupLayouts:[gatherBGL]}),
+      compute:{module:dev.createShaderModule({code:WGSL_SNOW_GATHER}),entryPoint:'gather'}});
+    instance.snowGatherBG=dev.createBindGroup({layout:gatherBGL,entries:[
+      {binding:0,resource:{buffer:instance.buf.snowGrainDispatch}},{binding:1,resource:{buffer:instance.buf.pos}},
+      {binding:2,resource:{buffer:instance.buf.sortedIdx}},{binding:3,resource:{buffer:instance.buf.snowBefore}}]});
     var initEntries=entries.filter(function(e){return [0,2,5,6].indexOf(e.binding)>=0;});
     initEntries.push({binding:14,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}});
     var initBGL=dev.createBindGroupLayout({entries:initEntries});
@@ -11099,12 +11139,15 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     if(a&&a.active)instance.queue.writeTexture({texture:instance.snowAirTexture},a.grainField||a.field,{bytesPerRow:a.w*16},[a.w,a.h]);
     instance.queue.writeBuffer(instance.snowGrainParams,0,h);
   }
-  function runSnowGrains(instance,kind,substepSlot,initMotion) {
+  function runSnowGrains(instance,kind,substepSlot,initMotion,terrainOnly) {
     var enc=instance.frameEncoder;
-    if(kind!=='predict')enc.copyBufferToBuffer(instance.buf.pos,0,instance.buf.snowBefore,0,instance.uploadedCount*16);
+    var spatialSnapshot=instance.snowGridOnly&&(kind==='contacts'||kind==='shield');
+    if(kind!=='predict'&&!spatialSnapshot)enc.copyBufferToBuffer(instance.buf.pos,0,instance.buf.snowBefore,0,instance.uploadedCount*16);
     instance.snowTrackContactMotion=kind!=='predict';
     if(initMotion)enc.clearBuffer(instance.buf.cellCursor,0,instance.grid.cells*4);
     var pass=enc.beginComputePass({label:'snow.'+kind});
+    if(spatialSnapshot){pass.setPipeline(instance.snowGatherPipe);pass.setBindGroup(0,instance.snowGatherBG);
+      pass.dispatchWorkgroupsIndirect(instance.buf.snowGrainDispatch,0);}
     pass.setBindGroup(0,instance.snowGrainBG);
     if(initMotion){pass.setPipeline(instance.snowGrainPipe.initMotion);pass.setBindGroup(0,instance.snowInitMotionBG);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.setBindGroup(0,instance.snowGrainBG);pass.setPipeline(instance.snowGrainPipe.trackMotion);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));}
     var spatial = instance.snowGridOnly && (kind === 'contacts' || kind === 'shield');
@@ -11112,7 +11155,7 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
     if (spatial) pass.dispatchWorkgroupsIndirect(instance.buf.snowGrainDispatch,0);
     else pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));
     if (substepSlot === undefined) pass.end();
-    else runCollide(instance, substepSlot, true, pass);
+    else runCollide(instance, substepSlot, true, pass, terrainOnly);
   }
 
   function runFrame(instance, dt) {
@@ -11264,16 +11307,18 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
         runG2P(instance);
         runCollide(instance, ss);
         if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
-          runSnowGrains(instance, 'predict', ss);
+          // Terrain, rig and bowl stay on every pass; resident skins are
+          // projected once, after the tick's final contact.
+          runSnowGrains(instance, 'predict', ss, false, true);
           // G2P has consumed the liquid fields. Rebuild only the neighbor
           // index at the grains' predicted positions for contact queries.
           buildGrid(instance, true, true);
           // Two contacts per shorter grain tick, with shielding refreshed at
           // the end of each liquid quantum. Every prediction and contact keeps
-          // its terrain, rig and guest boundary solve and legal sweep origin.
+          // its terrain and rig boundary solve and legal sweep origin.
           for (var contact = 0; contact < 2; contact++) {
             var finalShield = contact === 1 && grainStep === grainSteps - 1;
-            runSnowGrains(instance, finalShield ? 'shield' : 'contacts', ss, contact === 0);
+            runSnowGrains(instance, finalShield ? 'shield' : 'contacts', ss, contact === 0, contact === 0);
           }
         }
       }
@@ -11287,10 +11332,10 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
       instance.frameEncoder = null;
     }
     // 7. The mirror supports tools, persistence and water-contact melting.
-    // Snow motion stays resident and never waits for these snapshots.
-    var snowReadbackAir = L && L.getSnowAir ? L.getSnowAir() : null;
-    var readbackEvery = snowReadbackAir && snowReadbackAir.active ? 1 : LIQUID_READBACK_EVERY;
-    if ((instance.readbackTick % readbackEvery) === 0) {
+    // Snow motion stays resident and never waits for these snapshots, so
+    // jet airflow no longer requests one every frame (that request fed the
+    // retired GPU-to-flight handoff; the air solve splats grains on the GPU).
+    if ((instance.readbackTick % LIQUID_READBACK_EVERY) === 0) {
       kickReadback(instance, count);
     }
     instance.readbackTick = (instance.readbackTick + 1) | 0;

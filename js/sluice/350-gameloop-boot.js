@@ -156,6 +156,32 @@
     if (pb) pb.style.display = up ? 'none' : '';
   }
 
+  /* ---- Bounded catch-up ----
+     A late frame used to hand the next frame its whole missed interval:
+     more water quanta, slime microsteps and flake sweeps, which made that
+     frame late too, until play settled near 30 FPS. Each frame now
+     simulates one nominal frame (the median recent interval, so a steady
+     60 Hz display or a sustained lower rate still runs in real time). Owed
+     time is repaid as one extra nominal frame, only after an on-time frame
+     that left CPU to spare; whole frames keep the slime ticks whole. Owed
+     time beyond four frames (a stall) is dropped, as the old 0.05 s solver
+     clamps dropped it. */
+  var simDebt = 0, simIntervals = new Float64Array(32), simSorted = new Float64Array(32), simIntervalN = 0;
+  var simNominal = 1 / 60, simLastInterval = 0, simLastCpuMs = 0;
+  function simFrameStep(interval) {
+    simIntervals[simIntervalN & 31] = interval; simIntervalN++;
+    if (simIntervalN >= 32 && (simIntervalN & 7) === 0) {
+      simSorted.set(simIntervals); simSorted.sort();
+      simNominal = Math.min(1 / 30, Math.max(1 / 240, simSorted[16]));
+    }
+    var spare = simLastInterval <= simNominal * 1.25 && simLastCpuMs <= simNominal * 600;
+    simDebt = Math.min(simDebt + interval, simNominal * 4);
+    var step = Math.min(simDebt, simNominal * (spare ? 2 : 1));
+    simDebt -= step;
+    simLastInterval = interval;
+    return step;
+  }
+
   /* ---- Game Loop ---- */
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
@@ -187,6 +213,7 @@
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
+    if (dt > 0) dt = simFrameStep(dt);
     lastFrameDt = dt;
     // v14.21 — fresh raw-bucket slate each frame; perfMark fills it, the
     // hitch capture below snapshots it. The EMA perfBuckets persists.
@@ -701,6 +728,7 @@
     // overlay can attribute it. Replace the stored hitch when a worse one
     // arrives, or when the current record is older than 10s.
     var ft = _t5 - _t0;
+    simLastCpuMs = ft;
     var _hT = Math.max(perfFrameMs * 1.6, perfFrameMs + 4);   // hitch threshold
     if (ft > _hT && (ft > perfHitch.ms || (_t5 - perfHitch.at) > 10000)) {
       perfHitch.ms = ft; perfHitch.at = _t5;

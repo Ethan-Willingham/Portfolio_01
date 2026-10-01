@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.136';
+  var GAME_VERSION = 'v28.137';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -38899,7 +38899,8 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { field: particleWeatherState(), time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    cells: {}, bed: new Map(), airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+    bed: new Map(), bedKey: null, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+  var snowSupportJob = null;
 
   function snowNewWorldEnabled() {
     var q = /[?&]snow=([01])(?:&|$)/.exec(window.location.search || '');
@@ -38913,7 +38914,8 @@
     snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset(); snow.field = particleWeatherState();
-    snow.cells = {}; snow.bed = new Map(); snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
+    snow.bed = new Map(); snow.bedKey = null; snowSupportJob = null;
+    snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return SNOW_ACTIVE_CAP; }
   function snowVisible(x, y) {
@@ -38931,7 +38933,11 @@
     // Later flakes in this frame must see this grain, before the next
     // solver readback. Otherwise an entire returning plume can deposit
     // at the same point and spend seconds expanding out of that overlap.
-    if (snowSupported(x, y)) snowInsertContact(snow.bed, x, y);
+    // A reconstruction in progress carries the grain into its new bed.
+    if (snowSupported(x, y)) {
+      snowInsertContact(snow.bed, x, y);
+      if (snowSupportJob) snowSupportJob.inserted.push(x, y);
+    }
     return true;
   }
   function snowLand(p, parked) {
@@ -39137,6 +39143,115 @@
     }
     return bed;
   }
+  // Ordinary GPU play rebuilds the same rooted bed over several frames.
+  // The job copies one snapshot of the snow points, then runs the search
+  // above (same point order, terrain roots, buckets, pruned neighbour range
+  // and breadth-first order) within a small time slice per frame. Flakes
+  // keep landing on the previous complete bed until the new one is ready,
+  // so a 36,000-grain bed never stalls a single frame.
+  var SNOW_SUPPORT_SLICE_MS = 0.6;
+  var snowJobPoints = new Float64Array(0), snowJobCoords = new Float64Array(0);
+  var snowJobNext = new Int32Array(0), snowJobQueue = new Int32Array(0);
+  var snowJobHeads = new Int32Array(0), snowJobStamps = new Uint32Array(0), snowJobEpoch = 0;
+  function snowSupportJobStart(key) {
+    var reach = snowSupportDistance(), cell = Math.max(LIQUID_CELL, reach);
+    var width = Math.ceil(COLS * TILE / cell) + 1, floor = Math.floor, count = liquidCount;
+    if (snowJobNext.length < count) {
+      var capacity = Math.max(256, count, snowJobNext.length * 2);
+      snowJobPoints = new Float64Array(capacity * 2); snowJobCoords = new Float64Array(capacity * 2);
+      snowJobNext = new Int32Array(capacity); snowJobQueue = new Int32Array(capacity);
+    }
+    var pruneCells = cell >= 1 && cell <= 1048576 && reach >= 1 / 1024 &&
+      reach <= cell && width >= 3 && width <= 67108864 && width === floor(width);
+    var direct = pruneCells, n = 0, minCol = Infinity, maxCol = -Infinity, minRow = Infinity, maxRow = -Infinity;
+    for (var i = 0; i < count; i++) {
+      if (liquidType[i] !== 5) continue;
+      var x = liquidX[i], y = liquidY[i], col = floor(x / cell), row = floor(y / cell);
+      snowJobPoints[n * 2] = x; snowJobPoints[n * 2 + 1] = y;
+      snowJobCoords[n * 2] = col; snowJobCoords[n * 2 + 1] = row; n++;
+      if (pruneCells && !(x >= 0 && x <= 1048576 && y >= -1048576 && y <= 1048576 &&
+          col >= 0 && col < width)) pruneCells = false;
+      if (direct && !(x >= 0 && x <= 1048576 && y >= -1048576 && y <= 1048576 &&
+          col >= 1 && col <= width - 2 && row >= -1048576 && row <= 1048576 &&
+          Number.isSafeInteger(row * width + col))) direct = false;
+      if (col < minCol) minCol = col; if (col > maxCol) maxCol = col;
+      if (row < minRow) minRow = row; if (row > maxRow) maxRow = row;
+    }
+    var baseCol = minCol - 1, baseRow = minRow - 1, span = maxCol - minCol + 3, area = span * (maxRow - minRow + 3);
+    if (direct && !(n > 0 && Number.isSafeInteger(area) && area <= 262144)) direct = false;
+    if (direct && snowJobHeads.length < area) {
+      snowJobHeads = new Int32Array(Math.min(262144, Math.max(256, area, snowJobHeads.length * 2)));
+      snowJobStamps = new Uint32Array(snowJobHeads.length); snowJobEpoch = 0;
+    }
+    if (direct) {
+      snowJobEpoch = (snowJobEpoch + 1) >>> 0;
+      if (snowJobEpoch === 0) { snowJobStamps.fill(0); snowJobEpoch = 1; }
+    }
+    snowSupportJob = { key: key, count: n, cell: cell, width: width, reach: reach, reach2: reach * reach,
+      groundReach: snowContactRadius() + 0.3, pruneCells: pruneCells, direct: direct, epoch: snowJobEpoch,
+      baseCol: baseCol, baseRow: baseRow, span: span, heads: direct ? null : new Map(), bed: new Map(),
+      phase: 0, cursor: 0, q: 0, queued: 0, inserted: [] };
+  }
+  function snowSupportJobStep(budgetMs) {
+    var job = snowSupportJob;
+    if (!job) return;
+    var deadline = performance.now() + budgetMs, floor = Math.floor, solid = liquidWorldSolidAt;
+    var points = snowJobPoints, coords = snowJobCoords, next = snowJobNext, queue = snowJobQueue;
+    var heads = snowJobHeads, stamps = snowJobStamps, epoch = job.epoch, direct = job.direct, map = job.heads;
+    var cell = job.cell, width = job.width, reach = job.reach, reach2 = job.reach2, work = 0;
+    while (job.phase === 0 && job.cursor < job.count) {
+      var n = job.cursor++, x = points[n * 2], y = points[n * 2 + 1];
+      if (solid(x, y + job.groundReach)) { queue[job.queued++] = n; next[n] = -1; }
+      else {
+        var key = coords[n * 2 + 1] * width + coords[n * 2];
+        var slot = direct ? (coords[n * 2 + 1] - job.baseRow) * job.span + coords[n * 2] - job.baseCol : 0;
+        var head = direct ? (stamps[slot] === epoch ? heads[slot] : undefined) : map.get(key);
+        next[n] = head === undefined ? -1 : head;
+        if (direct) { stamps[slot] = epoch; heads[slot] = n; } else map.set(key, n);
+      }
+      if ((++work & 255) === 0 && performance.now() >= deadline) return;
+    }
+    job.phase = 1;
+    while (job.q < job.queued) {
+      var p = queue[job.q++], px = points[p * 2], py = points[p * 2 + 1];
+      var col = coords[p * 2], row = coords[p * 2 + 1], cellKey = row * width + col;
+      var bucket = job.bed.get(cellKey);
+      if (!bucket) { bucket = []; job.bed.set(cellKey, bucket); }
+      bucket.push(px, py);
+      var rMin = -1, rMax = 1, cMin = -1, cMax = 1;
+      if (job.pruneCells && col > 0 && col < width - 1) {
+        var pad = 1.4210854715202004e-14 * (px + Math.abs(py) + cell + reach + 1);
+        rMin = floor((py - reach - pad) / cell) - row;
+        rMax = floor((py + reach + pad) / cell) - row;
+        cMin = floor((px - reach - pad) / cell) - col;
+        cMax = floor((px + reach + pad) / cell) - col;
+        if (rMin < -1) rMin = -1; if (rMax > 1) rMax = 1;
+        if (cMin < -1) cMin = -1; if (cMax > 1) cMax = 1;
+      }
+      for (var r = rMin; r <= rMax; r++) for (var c = cMin; c <= cMax; c++) {
+        var nearKey = (row + r) * width + col + c;
+        var nearSlot = direct ? (row + r - job.baseRow) * job.span + col + c - job.baseCol : 0;
+        var current = direct ? (stamps[nearSlot] === epoch ? heads[nearSlot] : undefined) : map.get(nearKey), previous = -1;
+        while (current !== undefined && current >= 0) {
+          var following = next[current];
+          var dx = px - points[current * 2], dy = py - points[current * 2 + 1];
+          if (dx * dx + dy * dy <= reach2) {
+            if (previous < 0) {
+              if (direct) { stamps[nearSlot] = epoch; heads[nearSlot] = following; }
+              else map.set(nearKey, following);
+            }
+            else next[previous] = following;
+            queue[job.queued++] = current;
+          } else previous = current;
+          current = following;
+        }
+      }
+      if ((++work & 63) === 0 && performance.now() >= deadline) return;
+    }
+    // Complete: publish, keeping grains admitted while the search ran.
+    for (var k = 0; k < job.inserted.length; k += 2) snowInsertContact(job.bed, job.inserted[k], job.inserted[k + 1]);
+    snow.bed = job.bed; snow.bedKey = job.key; snowSupportJob = null;
+  }
   function snowInsertContact(bed, x, y) {
     var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
     var key = Math.floor(y / cell) * width + Math.floor(x / cell), bucket = bed.get(key);
@@ -39163,7 +39278,14 @@
   function snowBedContact(x, y) {
     return snowTouchesBed(x, y, snow.bed, snowContactRadius() * 2);
   }
-  function snowScan(dt, maintenanceDt) {
+  // Heat comes only from wet cells or a thaw under open sky. With neither,
+  // every thaw probability below is exactly zero.
+  function snowThawPossible() {
+    if (snow.temperature > 0) return true;
+    for (var key in rain.waterCells) if (rain.waterCells[key] >= 10) return true;
+    return false;
+  }
+  function snowScan(dt, maintenanceDt, deferBed) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
     // Snapshots refresh only weather landing, storage and thaw bookkeeping.
@@ -39172,21 +39294,21 @@
     var generation = gpu ? liquidWGPU.readbackApplyGen | 0 : 0;
     var fresh = !gpu || generation !== snow.readbackGen;
     if (gpu && fresh) snow.readbackGen = generation;
-    var cells = {}, active = 0;
+    var thaw = !!maintenanceDt && snowThawPossible(), active = 0;
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
       if (maintenanceDt && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
       // Physical snow stays in the contact solver in flight and on land.
       // GPU readback is only for maintenance, never a motion-mode switch.
-      if (maintenanceDt && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
-      var key = rainCell(x, y); cells[key] = (cells[key] || 0) + 1; active++;
+      if (thaw && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
+      active++;
     }
     snow.active = active;
     var budget = Math.min(600, snowActiveCap() - active, LIQUID_MAX_PARTICLES - liquidCount - 4096);
     for (var j = maintenanceDt ? snow.parked.length - 4 : -1; j >= 0; j -= 4) {
       var px = snow.parked[j], py = snow.parked[j + 1], remove = false;
-      if (Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
+      if (thaw && Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
         rain.parked.push(px, py); snow.melted++; remove = true;
       } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
         if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
@@ -39202,10 +39324,12 @@
     // Atmospheric snow keeps the storm's identity. Thawing a stored sky
     // flake here created water high overhead, then rain on the return trip.
     // Only deposited or rig-contact material can thaw, including stored snow.
-    snow.cells = cells;
     // Do not leave removed/lofted grains in this frame's landing surface.
     // Maintenance does not query support; build only the final landing surface.
-    snow.bed = snowBuildSupport();
+    // The same snapshot and particle set always produce the same bed.
+    var bedKey = generation + ':' + liquidMutationSeq;
+    if (!deferBed) { snow.bed = snowBuildSupport(); snow.bedKey = bedKey; snowSupportJob = null; }
+    else if (bedKey !== snow.bedKey && !snowSupportJob) snowSupportJobStart(bedKey);
     snow.mass = snow.active + snow.parked.length / 4 + snow.grains.length + snow.airCount;
   }
   function snowScoop(x, y, radius, ry, fromX, fromY, count) {
@@ -39244,12 +39368,15 @@
     // Storage and thaw use a slower budget. Newly solved snapshots refresh
     // the landing surface for atmospheric flakes without moving any grains.
     var maintenanceDt = snow.tick >= 0.12 ? snow.tick : 0;
-    // Outside the wake, the sparse GPU mirror and maintenance clocks can
-    // have different phases. Consume fresh snapshots when they arrive too.
-    var freshGPU = liquidWGPU && liquidWGPU.simActive &&
-      (liquidWGPU.readbackApplyGen | 0) !== snow.readbackGen;
-    var liveCPUContact = (!liquidWGPU || !liquidWGPU.simActive) && snow.active > 0 && snow.grains.length > 0;
-    if (maintenanceDt || freshGPU || liveCPUContact) snowScan(dt, maintenanceDt);
+    // GPU snapshots are consumed on this maintenance clock, not on every
+    // readback: wet residents request a readback every second frame, and
+    // rebuilding the landing bed for each one cost 3 ms of CPU 30 to 60
+    // times a second. The bed is rebuilt only when the snapshot or particle
+    // set changed, as a search spread over frames.
+    var gpuMirror = !!(liquidWGPU && liquidWGPU.simActive);
+    var liveCPUContact = !gpuMirror && snow.active > 0 && snow.grains.length > 0;
+    if (maintenanceDt || liveCPUContact) snowScan(dt, maintenanceDt, gpuMirror);
+    if (gpuMirror) snowSupportJobStep(SNOW_SUPPORT_SLICE_MS);
     if (maintenanceDt) snow.tick = 0;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
@@ -72896,7 +73023,7 @@
   var softWorldReactionX = 0, softWorldReactionY = 0, softWorldJetBudget = 0;
   var softWorldWaterBins = new Map(), softWorldWaterCache = null;
   var softWorldBuoyancy = new WeakMap();
-  var softWorldReadbackGPU = null, softWorldReadbackUser = 0;
+  var softWorldReadbackGPU = null, softWorldReadbackUser = 0, softWorldReadbackFrames = 0;
   var softWorldWaterN = new Float64Array(4096);
   var softWorldWaterVX = new Float64Array(4096), softWorldWaterVY = new Float64Array(4096);
   var softWorldSampleX = 0, softWorldSampleY = 0, softWorldSampleWet = 0;
@@ -72926,9 +73053,13 @@
       softWorldReadbackGPU.setSimParam('DBG_READBACK_EVERY', user);
       softWorldReadbackGPU = null;
     }
-    if (wet && (softWorldReadbackGPU !== gpu || softWorldReadbackUser !== user)) {
-      gpu.setSimParam('DBG_READBACK_EVERY', 2);
-      softWorldReadbackGPU = gpu; softWorldReadbackUser = user;
+    // Wet residents sample local flow about 30 times per second: every
+    // second frame at 60 Hz, every fourth at 120 Hz. A per-frame count
+    // doubled the mirror copies on high-refresh displays.
+    var frames = Math.max(2, Math.min(user, Math.round(1 / (30 * simNominal))));
+    if (wet && (softWorldReadbackGPU !== gpu || softWorldReadbackUser !== user || softWorldReadbackFrames !== frames)) {
+      gpu.setSimParam('DBG_READBACK_EVERY', frames);
+      softWorldReadbackGPU = gpu; softWorldReadbackUser = user; softWorldReadbackFrames = frames;
     }
   }
 
@@ -75096,6 +75227,32 @@
     if (pb) pb.style.display = up ? 'none' : '';
   }
 
+  /* ---- Bounded catch-up ----
+     A late frame used to hand the next frame its whole missed interval:
+     more water quanta, slime microsteps and flake sweeps, which made that
+     frame late too, until play settled near 30 FPS. Each frame now
+     simulates one nominal frame (the median recent interval, so a steady
+     60 Hz display or a sustained lower rate still runs in real time). Owed
+     time is repaid as one extra nominal frame, only after an on-time frame
+     that left CPU to spare; whole frames keep the slime ticks whole. Owed
+     time beyond four frames (a stall) is dropped, as the old 0.05 s solver
+     clamps dropped it. */
+  var simDebt = 0, simIntervals = new Float64Array(32), simSorted = new Float64Array(32), simIntervalN = 0;
+  var simNominal = 1 / 60, simLastInterval = 0, simLastCpuMs = 0;
+  function simFrameStep(interval) {
+    simIntervals[simIntervalN & 31] = interval; simIntervalN++;
+    if (simIntervalN >= 32 && (simIntervalN & 7) === 0) {
+      simSorted.set(simIntervals); simSorted.sort();
+      simNominal = Math.min(1 / 30, Math.max(1 / 240, simSorted[16]));
+    }
+    var spare = simLastInterval <= simNominal * 1.25 && simLastCpuMs <= simNominal * 600;
+    simDebt = Math.min(simDebt + interval, simNominal * 4);
+    var step = Math.min(simDebt, simNominal * (spare ? 2 : 1));
+    simDebt -= step;
+    simLastInterval = interval;
+    return step;
+  }
+
   /* ---- Game Loop ---- */
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
@@ -75127,6 +75284,7 @@
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
+    if (dt > 0) dt = simFrameStep(dt);
     lastFrameDt = dt;
     // v14.21 — fresh raw-bucket slate each frame; perfMark fills it, the
     // hitch capture below snapshots it. The EMA perfBuckets persists.
@@ -75641,6 +75799,7 @@
     // overlay can attribute it. Replace the stored hitch when a worse one
     // arrives, or when the current record is older than 10s.
     var ft = _t5 - _t0;
+    simLastCpuMs = ft;
     var _hT = Math.max(perfFrameMs * 1.6, perfFrameMs + 4);   // hitch threshold
     if (ft > _hT && (ft > perfHitch.ms || (_t5 - perfHitch.at) > 10000)) {
       perfHitch.ms = ft; perfHitch.at = _t5;

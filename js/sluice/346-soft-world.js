@@ -9,7 +9,7 @@
   var softWorldReactionX = 0, softWorldReactionY = 0, softWorldJetBudget = 0;
   var softWorldWaterBins = new Map(), softWorldWaterCache = null;
   var softWorldBuoyancy = new WeakMap();
-  var softWorldReadbackGPU = null, softWorldReadbackUser = 0;
+  var softWorldReadbackGPU = null, softWorldReadbackUser = 0, softWorldReadbackFrames = 0;
   var softWorldWaterN = new Float64Array(4096);
   var softWorldWaterVX = new Float64Array(4096), softWorldWaterVY = new Float64Array(4096);
   var softWorldSampleX = 0, softWorldSampleY = 0, softWorldSampleWet = 0;
@@ -39,9 +39,13 @@
       softWorldReadbackGPU.setSimParam('DBG_READBACK_EVERY', user);
       softWorldReadbackGPU = null;
     }
-    if (wet && (softWorldReadbackGPU !== gpu || softWorldReadbackUser !== user)) {
-      gpu.setSimParam('DBG_READBACK_EVERY', 2);
-      softWorldReadbackGPU = gpu; softWorldReadbackUser = user;
+    // Wet residents sample local flow about 30 times per second: every
+    // second frame at 60 Hz, every fourth at 120 Hz. A per-frame count
+    // doubled the mirror copies on high-refresh displays.
+    var frames = Math.max(2, Math.min(user, Math.round(1 / (30 * simNominal))));
+    if (wet && (softWorldReadbackGPU !== gpu || softWorldReadbackUser !== user || softWorldReadbackFrames !== frames)) {
+      gpu.setSimParam('DBG_READBACK_EVERY', frames);
+      softWorldReadbackGPU = gpu; softWorldReadbackUser = user; softWorldReadbackFrames = frames;
     }
   }
 

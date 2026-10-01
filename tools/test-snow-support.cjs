@@ -103,7 +103,14 @@ reset();
 for (let column = 396; column <= 404; column++) fillColumn(column, 0, 2);
 mirror();
 const sheetMass = s.snow.mass;
-assert.ok(Object.values(s.snow.cells).every(n => n > 3), 'persistent-identity fixture is a dense sheet');
+{
+  // Count the fixture's own grains per 6 px rain cell.
+  const cells = {};
+  for (let i = 0; i < s.liquidCount; i++) if (s.liquidType[i] === 5) {
+    const key = s.rainCell(s.liquidX[i], s.liquidY[i]); cells[key] = (cells[key] || 0) + 1;
+  }
+  assert.ok(Object.values(cells).length && Object.values(cells).every(n => n > 3), 'persistent-identity fixture is a dense sheet');
+}
 s.liquidWGPU = null;
 s.snowScan(1 / 60, 0);
 assert.equal(s.liquidCount, sheetMass, 'unsupported snow stays in the persistent particle pool');
