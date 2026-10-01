@@ -1,0 +1,64 @@
+Sluice logo v13
+
+User change: smoke and water should closely resemble the finished game, which uses continuous fluid rendering rather than simple particle graphics.
+
+Built-in image_gen edit mode was used for the smoke canopy and water inside the E. Actual running-game captures were the authoritative visual references. The lower pool uses colour and turbulence taken directly from the running game's WebGPU water renderer, fitted inside the existing native pool mask. This is a composite: the generated E and smoke are adaptations of the gameplay references, not direct native effect screenshots.
+
+Running game capture:
+Game version v28.132. An owned Chrome for Testing process booted the local grand-motherload.html with dev=1, nosave=1, nopause=1 and tod=0.35. WebGPU simulation and rendering were active for water, the native WebGL fluid driver was active for stock exhaust. No runtime or GPU validation errors. Source was served with a temporary eval probe for scene positioning only; no repository source files were modified.
+The real game updateLiquids(1/60), updateSmoke(1/60) and render() functions ran. Water settled in a 12-by-8-tile chamber with a live falling inflow for 210 steps, creating genuine solver aeration. Native stock exhaust ran for 650 steps at its existing defaults, with the camera close and the rig marked moving at vx20. Source and emission settings were unchanged.
+Native water reference: sluice-logo-v13-water-reference.png, 1672 x 1000, native RGBA water surface render.
+Native exhaust reference: sluice-logo-v13-exhaust-reference.png, 2341 x 1400, native RGBA stock fluid display.
+
+Preserved inputs:
+v12-background.png, exact native dirt, voids and irregular ore positions.
+v9-wordmark.png, existing S, L, U, I and C, mapped at (110,48) and scale0.83. Old smoke is cleared only above y309 in x380..650; the old E is cleared in x1232..1496 below y298.
+
+New component sources:
+E: exec-adaef796-fbb7-4126-9e28-11e71f08fd52.png, 1136 x 1385, saved as sluice-logo-v13-e.png.
+First water pass: exec-04258967-35c6-4b87-b7e6-c7cb44e6d6cb.png, retained only as intermediate.
+E body source (62,78,1023,1162), target (1236,310,250,326).
+E stream source (62,1240,1023,125), target (1236,636,250,111).
+Smoke: exec-997a21a9-f877-4a86-a2ec-b2a3ede7279b.png, 1997 x 787, saved as sluice-logo-v13-plume.png.
+Smoke target x123.77272727272725, width1320, opacity0.80.
+Canopy source (42,38,1936,500), target y15, height240.
+Stem source (42,538,1936,228), target y255, height54. Stem meets the L's cap at y309.
+Pool silhouette and alpha are from v11-water.png below y744. Replace its covered RGB with the live native water capture's crop (236,775,1163,89), mapped to (1082.3946689595873,744,630,197). This aligns the native impact current with the E outlet, while retaining the earlier cave geometry and smooth water boundary.
+
+Artifacts:
+assets/images/sluice-logo-v13.png, opaque 1672 x 941 master.
+assets/images/sluice-logo-v13-wordmark.png, matching transparent wordmark.
+assets/images/sluice-logo-v13-e.png, generated E source.
+assets/images/sluice-logo-v13-e-layer.png, aligned E and outflow.
+assets/images/sluice-logo-v13-plume.png, generated smoke source.
+assets/images/sluice-logo-v13-smoke.png, aligned smoke canopy.
+assets/images/sluice-logo-v13-pool.png, aligned pool with native turbulence.
+assets/images/sluice-logo-v13-water-reference.png, native game water capture.
+assets/images/sluice-logo-v13-exhaust-reference.png, native game stock exhaust capture.
+assets/thumbs/sluice-logo-v13.webp, 600 x 338 thumbnail.
+
+Validation: full master and thumbnail visually reviewed, transparency preserved, master opaque, PNG/WebP files decode. Preserved letter bodies and terrain outside the effect regions compare exactly to v12. No changes to game source or live blog thumbnail references. Both owned browser processes were closed.
+
+Built-in image generation prompts:
+
+1. Water appearance:
+Use case: precise-object-edit.
+Asset: isolated capital E for the Sluice game logo, actual transparent background.
+Image 1 is the edit target. Image 2 is a capture of water from the running Sluice game, using its finished WebGPU fluid solver and surface renderer, the authoritative water style reference.
+Preserve image 1's EXACT cool slate steel E silhouette, bevel, dark hollow E-shaped cavity, irregular inner lip, chipped bottom outlet, framing and proportions. Change ONLY the water.
+Replace the current glossy cartoon water with water that looks like image 2: a continuous medium/deep blue fluid body, smoothly blended lighter blue aeration inside its volume, soft fine turbulence and curling internal currents, clean fluid surface. There is no white foam or shiny white painted stripe in this game. Keep the water beautiful and physically coherent with subtle fine detail from the gameplay reference. It is a finished fluid volume, not an array of visible particles, not flat clipart, not glass or gel. Keep the upper half of the E dark and empty, the lower half partially flooded with a sloshing uneven surface and a small splash on the left inner wall. Water gathers and accelerates naturally toward the chipped bottom outlet, flows through that opening as a continuous narrow stream, and breaks into only a few small drops below. Rich blue consistent with the reference, not neon cyan. No broad hard highlight shapes, no giant decorative droplets, no white specular streaks, no extra objects or text.
+High-definition clean production logo component. The steel and cavity are unchanged. Background remains genuinely transparent.
+
+2. Smoke appearance:
+Use case: precise-object-edit.
+Asset: smoke layer for a high-definition Sluice wordmark, genuine transparent background, wide landscape canvas.
+Image 1 is the edit target, the established smoke canopy silhouette and composition. Image 2 is actual exhaust captured from the running Sluice game and is the authoritative smoke appearance reference.
+Replace image 1's painted puffy cloud style with the refined simulated-fluid smoke appearance of image 2. Preserve the overall low wide sweeping canopy, its flowing asymmetry, wide empty transparent perimeter, and the one downward source stem around one-quarter of the way from the left, so it attaches to the top of the L below. The canopy drifts across the entire word. Its height and width should remain approximately like image 1.
+Appearance: softly luminous warm grey/taupe smoke, translucent fine advection curls, smooth concentration gradients, a few nested rolling eddies with feathered edges, airy transparent spaces between folds. Image 2 has a warm illuminated central core and darker grey transparent wisps outside; translate that actual fluid style into a horizontal beautiful canopy with a short rising stem. Give the stem a subtle warm core, no flame or bright yellow glow. The plume stays readable on dark brown dirt, balanced opacity, clear flow from its single source. Smooth wispy fluid folds and medium-scale curling structure with fine detail inside them; it must read immediately as smoke. No rows of round cloud pillows, no hard spiral outlines, no huge fat lobes, no hand-painted cartoon shading, no photographed explosion, no scattered particles, no grey opaque ribbon or rope. High quality continuous fluid smoke, restrained silhouette, tasteful airy wisps.
+Output only this smoke on real transparency. No letters, terrain, rig, trees, sky, text, watermark, or any other element.
+
+3. Water palette refinement:
+Use case: precise-object-edit.
+Image 1 is the edit target, the finished hollow steel E. Image 2 is the running Sluice game's native fluid rendering and is the exact colour reference.
+Keep the letter, silhouette, shell, cavity, outlet, water silhouette, internal turbulence detail, drops and framing unchanged. Change ONLY the water palette to match image 2 more closely. The body should be the game's restrained medium cobalt/steel blue, base RGB about (42,107,199), hex #2a6bc7, with naturally blended light-blue turbulent areas. Current image 1 is too bright and electric royal blue. Use the softer native blue of image 2, with variation in concentration and the same restrained internal currents as image 1. The turbulent highlights are pale blue, never white. Keep the existing fine flowing detail, but reduce the vivid blue saturation slightly. Keep the water continuous and translucent at the thin edges. No cartoon white reflections, no extra effects, no extra objects. All surrounding transparency stays real transparent.
+
