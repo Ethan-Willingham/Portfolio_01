@@ -21,9 +21,9 @@
   const best = { peak: 0, completed: false, time: null, falls: null };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || 'null');
-    if ([1,Course.VERSION].includes(saved?.version)) {
+    if ([1,2,Course.VERSION].includes(saved?.version)) {
       if (Number.isFinite(saved.best?.peak) && saved.best.peak >= 0 && saved.best.peak <= 20000) best.peak = saved.best.peak;
-      if (saved.version===Course.VERSION&&saved.best?.completed === true && Number.isFinite(saved.best.time) && saved.best.time > 0 && Number.isInteger(saved.best.falls) && saved.best.falls >= 0) Object.assign(best, { completed: true, time: saved.best.time, falls: saved.best.falls });
+      if ([2,Course.VERSION].includes(saved.version)&&saved.best?.completed === true && Number.isFinite(saved.best.time) && saved.best.time > 0 && Number.isInteger(saved.best.falls) && saved.best.falls >= 0) Object.assign(best, { completed: true, time: saved.best.time, falls: saved.best.falls });
       savedRun = saved.run;
     }
   } catch { canSave = false; }

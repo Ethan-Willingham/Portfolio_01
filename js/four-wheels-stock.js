@@ -444,10 +444,13 @@
       for (const s of w.shelves) {
         if(w.level.campaign&&((b.z||0)>s.height+5||(b.z||0)<-20))continue;
         let poly = shelfPolygon(s);
-        const hits = [polygonContact(geo.corners(b), poly)];
-        const p = geo.point(b, geo.BODY.personX, 0); hits.push(circlePolygon(p.x, p.y, geo.BODY.personRadius, poly));
-        hits.forEach((h, i) => { if (h) {this.prepareHit(s,h,i===0?22:15);this.hitShelf(s,h,w.impulse(h,s));} });
-        w.wheels.forEach((wheel, i) => {
+        const nearCart=!w.level.campaign||Math.hypot(s.cx-b.x,s.cy-b.y)<Math.hypot(s.w,s.h)/2+75;
+        const base=w.level.campaign&&nearCart?w.floorAt({x:s.cx,y:s.cy},false)?.height??0:0;
+        const shape=!nearCart?[]:w.level.campaign?geo.cartHull(b,base,base+s.height):geo.corners(b);
+        const hits = [shape.length>=3?polygonContact(shape, poly):null];
+        const p = w.shopper||geo.point(b, geo.BODY.personX, 0); hits.push(circlePolygon(p.x, p.y, geo.BODY.personRadius, poly));
+        hits.forEach((h, i) => { if (h) {this.prepareHit(s,h,w.level.campaign?Math.min(s.height,i===0?22:15):i===0?22:15);if(w.level.campaign)h.cartZ=i===0?geo.contactHeight(shape,h):p.z+7;this.hitShelf(s,h,i===1&&w.shopper?w.shopperContact(h,s):w.impulse(h,s));} });
+        if(nearCart)w.wheels.forEach((wheel, i) => {
           const h = polygonContact(geo.casterCorners(b, wheel, i), shelfPolygon(s));
           if (h) {this.prepareHit(s,h,3);this.hitShelf(s,h,w.casterImpulse(h,wheel,i,s));}
         });

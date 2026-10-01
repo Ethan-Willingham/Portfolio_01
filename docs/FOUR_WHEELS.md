@@ -39,19 +39,24 @@ The twelve sections and their fall destinations are:
 The road has real elevation: a gentle first hill, four speed bumps, a raised
 causeway, a quarry climb and descent, a boost ramp across an empty gap, an icy
 ledge, and a final climb. The cart has vertical velocity, pitch, roll and angular
-rates. Four trailing tire contacts and two feet produce unilateral ground
-impulses. Unsupported contacts cannot pull the body back onto the floor.
-The shopper can extend the knees six units while crossing a small bump.
+rates. Four cylindrical tires, the lower frame, basket corners and handle produce
+unilateral ground impulses. Unsupported contacts cannot pull the cart back onto
+the floor. The shopper has an independent pelvis, flexible arms and braced legs.
 
 ## Terrain, jumps and the water relay
 
 `four-wheels-terrain.js` is the shared height field and contact solver. It works
 in the same artwork units as the existing cart, at 120 fixed steps per second.
 Gravity is 200 units per second squared. Contact normals follow the local slope;
-analytic point Jacobians account for body yaw, pitch, roll and independent caster
-swivel. Sequential accumulated impulses remain nonnegative. Mild restitution and
+point Jacobians account for heading, angular velocity and independent caster
+swivel. A normalized quaternion stores the cart tilt, including sideways and
+upside-down poses. Heading absorbs quaternion twist so steering follows the basket. Sequential accumulated impulses remain nonnegative. Mild restitution and
 ground damping settle landings without flattening the cart's orientation.
-The body rotates around a center of mass 22 units above its floor pose. This is
+The empty cart rotates around a center of mass 10 units forward and 16 above its
+floor pose. Low tire impacts and high basket impacts produce different pitch and
+roll torques. Collision hulls are sliced at the obstacle's actual height. The
+frame, rim and handle can hit and scrape the road. Turning over on supported
+road no longer triggers a cliff fall. This is
 a small game solver, not an imported general-purpose physics engine.
 
 Hills use smooth centerline height profiles. The four painted speed bumps have
@@ -94,10 +99,20 @@ module instead. Keep browser order: stock, terrain, course, physics, view, main.
 
 ## Handling to preserve
 
-The cart and shopper are a rigid body with the center of mass behind the basket.
-The basket center is 14 units ahead and the shopper is 16 behind. Steering applies
-a force couple. It rotates the body without rotating the existing velocity vector.
-Push and pull apply force along the heading. Brake acts on the actual velocity.
+The cart is a rigid body. The basket center is 14 units ahead and the walking
+stance is about 16 behind. Steering applies a force couple without rotating the
+existing velocity vector. Push and pull apply force along the heading. Brake
+acts on the actual velocity.
+
+The shopper is a separate spring mass. Legs support the pelvis on local ground,
+while arms exchange impulses with the moving handle. Elbows bend before the
+maximum reach becomes a unilateral tether. Knees crouch as the handle drops.
+Torso lean has its own damped velocity and survives saves. The head follows the
+torso rather than the basket tilt. Feet can lose ground independently of tires.
+Countersteering shifts hand loading against a sideways tip. Pull opposes a
+forward tip; push opposes an excessive backward tip. The finite balance torque
+requires planted feet. No input grants traction to a fully airborne assembly.
+The legacy timed fixtures retain their original combined body.
 
 All four wheels have independent swivel angles, angular velocities and signed
 rolling distances. Each fixed pivot carries a fork whose tire trails 5.5 units
@@ -112,7 +127,10 @@ collision rectangles, colored tread and visible wheel models share the same pose
 The silver cart stays empty and translucent, with three-unit wire spacing so all
 four wheels remain visible. The shopper has articulated trouser legs, planted and
 swinging feet, travel-driven walking phase, a shaded head and eased effort/braking
-lean. Gait advances during physics, including travel around the handle while
+lean. A small per-pixel depth buffer renders the cart and shopper. Metallic
+rim tubes, tires, forks and limbs have shaded 3D faces, and hide each other at
+their actual depth during a tumble. Each tire also has a height-dependent
+contact shadow. Gait advances during physics, including travel around the handle while
 rotating. Rendering and pause do not advance it.
 
 The caster model follows the principles described by
@@ -146,10 +164,11 @@ support torques determine pitch and roll as the center of mass moves beyond the
 supported footprint. Tires can recover across a lip while within four units of
 its top; they cannot teleport up through the underside of a platform.
 
-A fall becomes committed when an unsupported body drops 26 units below its last
-supporting surface or overturns beyond approximately 89 degrees with fewer than
-two contacts. Gravity and angular momentum continue. The cart hits water at -50
-or rock at -100; splash, rebound and a short settling period happen at impact.
+A fall becomes committed when an unsupported body drops 38 units below its last
+supporting surface. Cart angle alone does not commit a fall. Gravity and angular
+momentum continue. The cart hits water at -50 or rock at -100. Its actual lowest
+geometry meets the lower plane, and frame and tire contacts produce the rebound
+and tumble before the catch returns it.
 It then returns to the earlier catch using the same body, wheels and stock world.
 Ordered progress rewinds. Furthest distance, furniture, products, doors, relay
 and spills remain. There is no time penalty. Pause freezes gravity, relay motion
@@ -202,8 +221,8 @@ acknowledge physical events without adding another score.
 
 The camera looks down about 52 degrees. Projection is x = 290 + 0.84(x-y),
 y = 24 + 0.66(x+y) - 0.74z. Input and physics use world coordinates. Depth-sorted
-solid faces draw the shopper, cart, furniture and products at their real heights.
-It is a painter's renderer, not a per-pixel depth buffer.
+solid faces draw furniture and products at their real heights. The cart and
+articulated shopper use a small per-pixel depth buffer inside that world scene.
 
 The following camera uses a 960-pixel canvas on wide views and 480 in portrait,
 at scales 1.45 and 1.8 respectively. Canvas height matches the stage aspect ratio.
@@ -252,7 +271,7 @@ stock, films, hinged doors, loaded contacts, vertical motion and the water relay
 and film maps; it does not turn supported stock into falling products. Short-lived particles restart after reload. Mid-jump and mid-fall saves retain
 vertical velocity, orientation, angular rates and delayed impact.
 
-Loading parks a valid saved run behind Continue. Schema 2 migrates the former planar schema 1: records and store mess stay, new
+Loading parks a valid saved run behind Continue. Schema 3 migrates the former planar schema 1: records and store mess stay, new
 vertical motion initializes on the terrain, and the new relay table gets a vase.
 An old pose inside the new gap moves to its catch. Invalid versions or malformed
 physics values start a fresh run safely. Blocked storage shows a short message
@@ -274,6 +293,7 @@ node tools/test-four-wheels-view.cjs
 node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
 node tools/test-four-wheels-terrain.cjs
+node tools/test-four-wheels-balance.cjs
 node tools/test-four-wheels-course.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
@@ -302,3 +322,13 @@ Keep the archive picture wrapper. Bump all seven CSS/script query versions for
 any deployment. Commit only the game's changes and push main, which deploys via
 GitHub Pages. Check deployed bytes and real desktop/mobile input before reporting
 that a release is live.
+
+## Balance and impact verification
+
+`node tools/test-four-wheels-balance.cjs` checks countersteering recovery,
+impact-height torque, a supported-road tumble, independent shopper motion over
+bumps, rigid dimensions through a full rotation, deterministic recovery saves
+and upgrading a v22 run. Saved schema 3 carries the tilt quaternion and shopper
+spring velocities. Schema 2 upgrades these fields while keeping stock, the
+relay, route progress and records. The browser checks include successive bump,
+impact and recovery frames on desktop and touch controls on a phone.

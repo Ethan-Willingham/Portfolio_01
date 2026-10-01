@@ -4,6 +4,7 @@
  */
 (function (root) {
   'use strict';
+  const TerrainModule=typeof module!=='undefined'&&module.exports?require('./four-wheels-terrain.js'):root.CartTerrain;
   // A roughly 52-degree pitch opens the basket and floor while retaining height.
   const CAMERA = Object.freeze({ width:720, height:580, x:290, y:24, horizontal:.84, vertical:.66, elevation:.74 });
   const VIEW_Z = CAMERA.vertical * 2 / CAMERA.elevation;
@@ -19,7 +20,7 @@
   const subtract = (a,b) => ({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)});
   const normalize = p => {const n=Math.hypot(p.x,p.y,p.z)||1;return {x:p.x/n,y:p.y/n,z:p.z/n};};
   function local(b,x,y,z=0) {
-    if(b.comHeight)return root.CartTerrain.kinematics(b,x,y,z).p;
+    if(b.comHeight)return TerrainModule.kinematics(b,x,y,z).p;
     const c=Math.cos(b.a||0),s=Math.sin(b.a||0);
     if(b.pitch||b.rollTilt){const cp=Math.cos(b.pitch||0),sp=Math.sin(b.pitch||0),cr=Math.cos(b.rollTilt||0),sr=Math.sin(b.rollTilt||0),xx=x*cp+z*sp,zz=z*cp-x*sp;z=zz*cr+y*sr;y=y*cr-zz*sr;x=xx;}
     return {x:b.x+x*c-y*s,y:b.y+x*s+y*c,z:(b.z||0)+z};
@@ -76,7 +77,7 @@
     [[1,2,6,5],[1,0,0]],[[0,1,5,4],[0,-1,0]],[[3,7,6,2],[0,1,0]]
   ];
   function create(P) {
-    const Physics=root.CartPhysics,Stock=root.CartStock,Terrain=root.CartTerrain;
+    const Physics=root.CartPhysics,Stock=root.CartStock,Terrain=TerrainModule;
     let terrainLevel=null;
     const onGround=p=>({...p,z:terrainLevel?Terrain.height(terrainLevel,p):(p.z||0),surface:!!terrainLevel});
     if(!Physics||!Stock)throw new Error('The cart view needs the cart simulation.');
@@ -111,8 +112,8 @@
     }
     class Scene {
       constructor(opacity=1){this.commands=[];this.sequence=0;this.opacity=opacity;}
-      push(points,draw,bias=0) {
-        this.commands.push({depth:points.reduce((n,p)=>n+depth(p),0)/points.length+bias,order:this.sequence++,draw});
+      push(points,draw,bias=0,mesh=null) {
+        this.commands.push({depth:points.reduce((n,p)=>n+depth(p),0)/points.length+bias,order:this.sequence++,draw,mesh});
       }
       face(points,color,alpha=1,detail=null,edges=false) {
         alpha*=this.opacity;
@@ -123,15 +124,16 @@
           g.globalAlpha=alpha;const q=points.map(p=>project(p,origin));poly(g,q,tint);
           if(edges){g.globalAlpha=alpha*.3;for(let i=0;i<q.length;i++)line(g,q[i],q[(i+1)%q.length],n.z>.6?P.cream:P.dark);}
           g.globalAlpha=1;if(detail)detail(g,q,origin);
-        });
+        },0,{kind:'face',points,color:tint,alpha});
       }
       flat(points,color,alpha=1,bias=0) {
         alpha*=this.opacity;
-        this.push(points,(g,origin)=>{g.globalAlpha=alpha;poly(g,points.map(p=>project(p,origin)),color);g.globalAlpha=1;},bias);
+        this.push(points,(g,origin)=>{g.globalAlpha=alpha;poly(g,points.map(p=>project(p,origin)),color);g.globalAlpha=1;},bias,{kind:'face',points,color,alpha});
       }
       wire(a,b,color=P.steel,width=1,alpha=1) {
+        if(this.rigid&&width>=2){this.tube(a,b,width*.48,width*.48,color);return;}
         alpha*=this.opacity;
-        this.push([a,b],(g,origin)=>{g.globalAlpha=alpha;line(g,project(a,origin),project(b,origin),color,width);g.globalAlpha=1;},.04);
+        this.push([a,b],(g,origin)=>{g.globalAlpha=alpha;line(g,project(a,origin),project(b,origin),color,width);g.globalAlpha=1;},.04,{kind:'wire',points:[a,b],color,width,alpha});
       }
       box(transform,x,y,z,w,h,d,color,top=color,edges=false) {
         const p=[[x,y,z],[x+w,y,z],[x+w,y+h,z],[x,y+h,z],[x,y,z+d],[x+w,y,z+d],[x+w,y+h,z+d],[x,y+h,z+d]].map(v=>transform(...v));
@@ -144,14 +146,32 @@
           g.drawImage(texture,0,0);g.restore();
         });
       }
-      limb(a,b,width,endWidth,color,highlight=null) {
-        this.push([a,b],(g,origin)=>{
-          g.globalAlpha=this.opacity;
-          const p=project(a,origin),q=project(b,origin),length=Math.hypot(q.x-p.x,q.y-p.y)||1,nx=-(q.y-p.y)/length,ny=(q.x-p.x)/length;
-          const silhouette=(w,h)=>[{x:p.x+nx*w/2,y:p.y+ny*w/2},{x:q.x+nx*h/2,y:q.y+ny*h/2},{x:q.x-nx*h/2,y:q.y-ny*h/2},{x:p.x-nx*w/2,y:p.y-ny*w/2}];
-          poly(g,silhouette(width+1,endWidth+1),P.dark);poly(g,silhouette(width,endWidth),color);
-          if(highlight)line(g,add(p,-.5),add(q,-.5),highlight);g.globalAlpha=1;
-        });
+      tube(a,b,width,endWidth,color,count=6) {
+        const axis=normalize(subtract(b,a)),ref=Math.abs(axis.z)<.8?{x:0,y:0,z:1}:{x:1,y:0,z:0},u=normalize(cross(axis,ref)),v=cross(axis,u);
+        const ring=(p,r)=>Array.from({length:count},(_,i)=>{const t=i*Math.PI*2/count;return add(p,r*(u.x*Math.cos(t)+v.x*Math.sin(t)),r*(u.y*Math.cos(t)+v.y*Math.sin(t)),r*(u.z*Math.cos(t)+v.z*Math.sin(t)));});
+        const first=ring(a,width),last=ring(b,endWidth);
+        for(let i=0;i<count;i++)this.face([first[i],first[(i+1)%count],last[(i+1)%count],last[i]],color);
+        this.face(first.slice().reverse(),color);this.face(last,color);
+      }
+      limb(a,b,width,endWidth,color) {this.tube(a,b,width/2,endWidth/2,color,7);}
+      // A small object raster has a real per-pixel depth buffer. Rim tubes,
+      // tires, spokes, legs and the wire basket occlude each other at their
+      // actual 3D depth, even when the whole cart is sideways or upside down.
+      rasterInto(scene) {
+        const commands=this.commands.filter(q=>q.mesh),points=commands.flatMap(q=>q.mesh.points),screen=points.map(p=>project(p));
+        const x=Math.floor(Math.min(...screen.map(p=>p.x)))-3,y=Math.floor(Math.min(...screen.map(p=>p.y)))-3,width=Math.ceil(Math.max(...screen.map(p=>p.x)))-x+4,height=Math.ceil(Math.max(...screen.map(p=>p.y)))-y+4;
+        if(width>400||height>400)return this.commands.forEach(q=>scene.commands.push(q));
+        const tile=document.createElement('canvas');tile.width=width;tile.height=height;const g=tile.getContext('2d'),im=g.createImageData(width,height),zbuffer=new Float32Array(width*height);zbuffer.fill(-Infinity);
+        const pixel=(px,py,z,color,alpha,write)=>{if(px<0||py<0||px>=width||py>=height)return;const key=py*width+px;if(z<zbuffer[key]-.045)return;const k=key*4,c=rgb(color),a=im.data[k+3]/255,out=alpha+a*(1-alpha);for(let j=0;j<3;j++)im.data[k+j]=(c[j]*alpha+im.data[k+j]*a*(1-alpha))/out;im.data[k+3]=out*255;if(write)zbuffer[key]=z;};
+        const vertex=p=>({...project(p),d:depth(p)});
+        const triangle=(a,b,c,color,alpha,write)=>{const denominator=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);if(Math.abs(denominator)<.001)return;
+          const left=Math.max(0,Math.floor(Math.min(a.x,b.x,c.x)-x)),right=Math.min(width-1,Math.ceil(Math.max(a.x,b.x,c.x)-x)),top=Math.max(0,Math.floor(Math.min(a.y,b.y,c.y)-y)),bottom=Math.min(height-1,Math.ceil(Math.max(a.y,b.y,c.y)-y));
+          for(let py=top;py<=bottom;py++)for(let px=left;px<=right;px++){const X=x+px+.5,Y=y+py+.5,u=((b.y-c.y)*(X-c.x)+(c.x-b.x)*(Y-c.y))/denominator,v=((c.y-a.y)*(X-c.x)+(a.x-c.x)*(Y-c.y))/denominator,t=1-u-v;if(u>=-1e-7&&v>=-1e-7&&t>=-1e-7)pixel(px,py,u*a.d+v*b.d+t*c.d,color,alpha,write);}
+        };
+        const paint=(q,write)=>{const m=q.mesh,v=m.points.map(vertex);if(m.kind==='face'){for(let i=1;i<v.length-1;i++)triangle(v[0],v[i],v[i+1],m.color,m.alpha,write);}else{const a=v[0],b=v[1],steps=Math.max(1,Math.ceil(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))));for(let i=0;i<=steps;i++){const t=i/steps;pixel(Math.round(a.x+(b.x-a.x)*t-x),Math.round(a.y+(b.y-a.y)*t-y),a.d+(b.d-a.d)*t,m.color,m.alpha,write);}}};
+        for(const q of commands)if(q.mesh.alpha>=.99)paint(q,true);
+        commands.sort((a,b)=>a.depth-b.depth);for(const q of commands)if(q.mesh.alpha<.99)paint(q,false);
+        g.putImageData(im,0,0);scene.push(points,(target,origin)=>{target.drawImage(tile,x+(origin.x-CAMERA.x),y+(origin.y-CAMERA.y));});
       }
       flush(g,origin=CAMERA) {
         this.commands.sort((a,b)=>a.depth-b.depth||a.order-b.order);
@@ -441,16 +461,17 @@
         if(wet&&wet[1]>.015)scene.wire(tr(-l+1,h+.08,l+1),tr(l-1,h+.08,l+1),spillColor(wet[0]),1,clamp(wet[1]*3,.2,.75));
       }
       for(const side of [-1,1]) {
-        const axle=tr(0,side*(h+.5),l),pin=local(b,...WHEELS[i],9);
-        const fork=add(pin,-Math.sin(wheel.a)*side*1.5,Math.cos(wheel.a)*side*1.5,-1);
+        const axle=tr(0,side*(h+.5),l);
+        const fork=tr(CASTER.trail,side*1.5,8);
         scene.wire(axle,fork,P.dark,3);scene.wire(axle,fork,P.steel,1);
       }
-      const bearing=local(b,...WHEELS[i],9);
-      scene.flat(circle(bearing,1.6,1.6,0,8),P.steelShade);
-      scene.flat(circle(bearing,1.1,1.1,.4,8),P.gold);
-      scene.wire(add(bearing,0,0,.6),add(bearing,0,0,2),P.steelLight,1);
+      const bearingRing=(r,z)=>Array.from({length:8},(_,j)=>local(b,WHEELS[i][0]+r*Math.cos(j*Math.PI/4),WHEELS[i][1]+r*Math.sin(j*Math.PI/4),z));
+      scene.flat(bearingRing(1.6,9),P.steelShade);scene.flat(bearingRing(1.1,9.4),P.gold);
+      scene.wire(local(b,...WHEELS[i],9.6),local(b,...WHEELS[i],11),P.steelLight);
     }
     function shopper(scene,b,gait) {
+      if(b.shopper){articulatedShopper(scene,b,gait,b.shopper);return;}
+
       const phase=gait.phase||0,stride=gait.stride||0,forward=gait.forward??1,sideways=gait.sideways||0;
       const lx=gait.leanX||0,ly=gait.leanY||0,sway=Math.cos(phase)*Math.min(1,stride/2.8)*.25;
       const tr=(x,y,z)=>local(b,x,y,z);
@@ -489,7 +510,25 @@
       // Eye details only on the visible front, so they never leak through hair.
       if(Math.cos(b.a)+Math.sin(b.a)>.15)for(const side of [-1,1])scene.wire(headTr(3.65,side*1.7,.1),headTr(3.65,side*1.7,-.7),P.hairDark,1);
     }
-    function cart(scene,b,wheels,gait) {
+    function articulatedShopper(scene,b,gait,p) {
+      const c=Math.cos(b.a),s=Math.sin(b.a),leanX=p.leanX,leanY=p.leanY,tr=(x,y,z)=>({x:p.x+x*c-y*s,y:p.y+x*s+y*c,z:p.z+z});
+      const bentJoint=(a,b,l1,l2,side)=>{const delta=subtract(b,a),distance=Math.hypot(delta.x,delta.y,delta.z)||1,axis=normalize(delta),d=Math.min(distance,l1+l2-.05),along=(l1*l1-l2*l2+d*d)/(2*d),bend=Math.sqrt(Math.max(.15,l1*l1-along*along)),hint={x:c,y:s,z:0},normal=normalize(subtract(hint,{x:axis.x*(axis.x*c+axis.y*s),y:axis.y*(axis.x*c+axis.y*s),z:axis.z*(axis.x*c+axis.y*s)}));return add(a,axis.x*along+normal.x*bend*side,axis.y*along+normal.y*bend*side,axis.z*along+normal.z*bend*side);};
+      const phase=gait.phase||0,stride=gait.stride||0;
+      for(const side of [-1,1]){
+        const t=((phase/(Math.PI*2)+(side===1?.5:0))%1+1)%1,swing=Math.max(0,(t-.6)/.4),reach=t<.6?1-t/.3:-1+2*swing*swing*(3-2*swing),lift=Math.sin(swing*Math.PI)*Math.min(1,stride/2.8)*3.6;
+        const travel=reach*stride,sole=tr(travel*(gait.forward??1)-1,side*3.5+travel*(gait.sideways||0)*.65,-18+lift),floor=terrainLevel?root.CartCourse.sample(terrainLevel,sole,false):null;
+        if(p.feet&&floor)sole.z=floor.height+lift;else sole.z=Math.min(sole.z,p.z-10+lift);
+        const hip=tr(0,side*2.7,0),ankle=add(sole,0,0,2),knee=bentJoint(hip,ankle,10,10,1);
+        scene.limb(hip,knee,3.5,2.7,P.steelShade);scene.limb(knee,ankle,2.8,2.1,P.edge);
+        const foot=(x,y,z)=>local({...sole,a:b.a+side*.1},x,y,z);scene.box(foot,-2,-1.5,0,5.5,3,1,P.cream,P.steelLight);scene.box(foot,-1.7,-1.4,1,4.8,2.8,1.5,P.dark,P.steelShade);scene.wire(foot(.2,-.9,2.55),foot(.2,.9,2.55),P.steelLight);
+      }
+      const bottom=[tr(-2.7,-3,0),tr(2.7,-3,0),tr(2.7,3,0),tr(-2.7,3,0)],top=[tr(-2+leanX,-5+leanY,11.5),tr(2+leanX,-5+leanY,11.5),tr(2+leanX,5+leanY,11.5),tr(-2+leanX,5+leanY,11.5)],torso=[...bottom,...top];for(const [indices]of faces)scene.face(indices.map(i=>torso[i]),P.brick);
+      for(const side of [-1,1]){const shoulder=tr(leanX,side*5+leanY,10.5),wrist=local(b,-6,side*9,30),elbow=bentJoint(shoulder,wrist,9,10,-1);scene.limb(shoulder,elbow,3.3,2.6,P.brick);scene.limb(elbow,wrist,2.5,2,P.clay);scene.box((x,y,z)=>local({...wrist,a:b.a},x,y,z),-1,-1,-1,2,2,2,P.clay,P.gold);}
+      const head=tr(leanX*1.12,leanY*1.12,18.5),headTr=(x,y,z)=>local({...head,a:b.a,pitch:clamp(-leanX*.035,-.18,.18),rollTilt:clamp(leanY*.035,-.18,.18)},x,y,z);
+      cylinder(scene,headTr,[[-3.5,1.8],[-2.5,3.5],[1,4],[3.5,3],[4.5,1]],P.clay);cylinder(scene,headTr,[[.5,4.05],[2.8,3.45],[4.3,1.9],[4.6,.8]],P.hair);scene.box(headTr,3,-1,-1.2,2,2,1.7,P.clay,P.gold);for(const side of [-1,1])scene.box(headTr,-.5,side*3.5,-1,1.5,1,2,P.clay,P.gold);scene.wire(headTr(-2,-1.5,3.4),headTr(0,-1.5,4.4),P.hairLight);scene.wire(headTr(0,-1.5,4.4),headTr(1,-.5,4.2),P.hairDark);
+    }
+    function cart(target,b,wheels,gait) {
+      const scene=new Scene();scene.rigid=true;
       const tr=(x,y,z)=>local(b,x,y,z);
       for(let i=0;i<4;i++)caster(scene,b,wheels?.[i]||{a:b.a,roll:0},i);
       for(const side of [-1,1]) {
@@ -518,7 +557,7 @@
       }
       for(const side of [-1,1])scene.wire(tr(-3,side*11,31),tr(-6,side*12,30),P.steel,2,.9);
       scene.wire(tr(-6,-12,30),tr(-6,12,30),P.steelShade,3,.95);scene.wire(tr(-6,-10,30.5),tr(-6,10,30.5),P.steelLight,1,.85);
-      shopper(scene,b,gait||{phase:0,stride:0,forward:1,sideways:0});
+      shopper(scene,b,gait||{phase:0,stride:0,forward:1,sideways:0});scene.rasterInto(target);
     }
     function drawCart(g,b,wheels,gait,origin=CAMERA) {const scene=new Scene();cart(scene,b,wheels,gait);scene.flush(g,origin);}
     function drawShelf(g,s) {const scene=new Scene();shelf(scene,s);for(const p of s.stockItems)if(p.state==='shelf')product(scene,p);scene.flush(g);}
@@ -577,9 +616,11 @@
       w._shadowClipped=true;
       for(const s of w.shelves)if(!w._visible||w._visible({x:s.cx,y:s.cy},150))drawFurnitureShadow(g,s,w);
       const b=w.body;
-      if(!w.fall&&(!w.level.campaign||w.isFloor(b))){groundPoly(g,circle(onGround(local(b,14,0)),23,12).map(onGround),P.dark,.12);
-      groundPoly(g,circle(onGround(local(b,-16,1)),6,5).map(onGround),P.dark,.22);
+      if(!w.fall&&(!w.level.campaign||w.isFloor(b)&&!w.edge.risk)){const height=Math.max(0,(b.z||0)-(w.ground?.lastHeight||0));groundPoly(g,circle(onGround(local(b,14,0)),23+height*.04,12+height*.02).map(onGround),P.dark,.12*Math.exp(-height/40));
+      groundPoly(g,circle(onGround(w.shopper||local(b,-16,1)),6,5).map(onGround),P.dark,.22);
       groundPoly(g,Stock.hull([local(b,-20,-5),local(b,-12,5),local(b,4,13),local(b,-4,2)]).map(onGround),P.dark,.09);}
+      for(let i=0;i<4;i++){const tire=Physics.casterPoint(b,w.wheels[i],i,0,0,4),floor=w.level.campaign?w.floorAt(tire):{height:0};if(floor){const height=Math.max(0,tire.z-floor.height-4);groundPoly(g,circle({...tire,z:floor.height},4+height*.018,2.8+height*.012),P.dark,.27*Math.exp(-height/24));}}
+      if(w.shopper){const p=w.shopper,floor=w.floorAt(p);if(floor)groundPoly(g,circle({...p,z:floor.height},5,3.5),P.dark,.2*Math.exp(-Math.max(0,p.z-floor.height-18)/24));}
       for(const o of w.objects)if(!o.gone&&!o.falling)groundPoly(g,circle(add(o,3,3),o.kind==='box'?10:7,o.kind==='box'?8:5),P.dark,.18);
       for(const p of w.stock.items)if((!w._visible||w._visible(p))&&p.state!=='shelf'&&!p.broken&&p.kind!=='shard')groundPoly(g,circle(add(p,1,1,-p.z),Math.max(2,p.length),p.width),P.dark,.13);
       g.restore();delete w._shadowClipped;
@@ -649,7 +690,7 @@
       for(const s of w.shelves)shelf(scene,s);
       for(const p of w.stock.items)if(!p.broken)product(scene,p);
       for(const o of w.objects)prop(scene,o);
-      cart(scene,w.body,w.wheels,w.gait);
+      cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
       if(!preview)for(const p of options.particles||[]) {
         const tr=(x,y,z)=>local({...p,z:0},x,y,z);
         scene.flat([tr(-p.w/2,-p.h/2,p.z),tr(p.w/2,-p.h/2,p.z),tr(p.w/2,p.h/2,p.z),tr(-p.w/2,p.h/2,p.z)],p.color,clamp(p.life,0,1));
@@ -706,7 +747,7 @@
       for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},180))shelf(scene,s);
       for(const p of w.stock.items)if(!p.broken&&visible(p))product(scene,p);
       for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
-      cart(scene,w.body,w.wheels,w.gait);
+      cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
       for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));
       scene.flush(g);
       if(w.fall) {
@@ -853,7 +894,7 @@
       for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},170))shelf(scene,s);
       for(const p of w.stock.items)if(!p.broken&&visible(p))product(scene,p);
       for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
-      cart(scene,w.body,w.wheels,w.gait);
+      cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
       for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));scene.flush(g);
       if(w.fall?.kind==='lake'&&w.fall.impactTime!==null){const t=w.fall.impactTime;groundRing(g,{...w.body,z:-50},12+t*32,P.light,2,1-t);groundRing(g,{...w.body,z:-50},7+t*22,P.blue,2,.65-t*.5);}
       if(!w.fall){const speed=Math.hypot(w.body.vx,w.body.vy);if(speed>8)groundArrow(g,{...onGround({x:w.body.x+w.body.vx*.5,y:w.body.y+w.body.vy*.5}),a:Math.atan2(w.body.vy,w.body.vx)},10,P.light,.65);w.wheels.forEach((q,i)=>{if(w.edge.risk>0&&!w.ground.airborne&&w.unsupported?.[i])groundRing(g,Physics.casterPoint(w.body,q,i,0,0,1),5,P.red,2);});}

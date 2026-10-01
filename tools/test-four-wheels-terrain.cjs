@@ -12,17 +12,17 @@ check('a supported cart settles, leans on a hill and coasts downhill under gravi
  const flat=make();step(flat,2);assert.ok(Math.abs(flat.body.z)<.2&&Math.abs(flat.body.pitch)<.01&&Math.abs(flat.body.rollTilt)<.01);assert.equal(flat.falls,0);
  const w=make(4);pose(w,1300,980,Math.PI);const initial={...w.body},floor=w.floorAt(w.body);assert.ok(initial.z>20&&Math.abs(initial.pitch)>.05);step(w,1);assert.ok(w.body.vx*floor.gx+w.body.vy*floor.gy< -5);assert.ok(Number.isFinite(w.body.pitchRate));
 });
-check('the same two-wheel overhang can be pulled back or allowed to topple',()=>{
+check('the same two-wheel overhang can be pulled back or pushed too far',()=>{
  const rescued=make(6),lost=make(6);for(const w of [rescued,lost]){pose(w,710,722,Math.PI/2,3);step(w,.15);assert.equal(w.fall,null);assert.equal(w.edge.count,2);assert.ok(w.body.pitch>.005);}
- step(rescued,1.1,{push:-1});assert.equal(rescued.falls,0);assert.equal(rescued.fall,null);assert.ok(rescued.body.y<705);assert.ok(rescued.terrainStats.saves>0);
- step(lost,2);assert.equal(lost.falls,1);assert.ok(lost.fall&&lost.body.z< -26);const identity=[lost.body,lost.wheels,lost.stock];step(lost,3);assert.equal(lost.fall,null);assert.equal(lost.roomIndex,0);assert.deepEqual([lost.body,lost.wheels,lost.stock],identity);
+ step(rescued,1.5,{push:-1});assert.equal(rescued.falls,0);assert.equal(rescued.fall,null);assert.ok(rescued.body.y<705);assert.ok(rescued.terrainStats.saves>0);
+ step(lost,2,{push:1});assert.equal(lost.falls,1);assert.ok(lost.fall&&lost.body.z< -26);const identity=[lost.body,lost.wheels,lost.stock];step(lost,3);assert.equal(lost.fall,null);assert.equal(lost.roomIndex,0);assert.deepEqual([lost.body,lost.wheels,lost.stock],identity);
 });
 check('the boost accelerates real wheels, the ramp launches, and a short approach fails',()=>{
  const jump=make(5);pose(jump,1390,410,Math.PI,35);let air=false;for(let i=0;i<120*3;i++){jump.step(1/120,{push:1});air ||=jump.ground.airborne;}assert.ok(air&&jump.body.x<1150);assert.ok(jump.terrainStats.boosts>0&&jump.terrainStats.jumps>0&&jump.terrainStats.landings>0);assert.equal(jump.falls,0);
- const short=make(5);pose(short,1250,410,Math.PI,8);step(short,2);assert.ok(short.falls>0,'coasting off the lip is not a scripted success');
+ const short=make(5);pose(short,1250,410,Math.PI,8);step(short,3,{push:1});assert.ok(short.falls>0,'coasting off the lip is not a scripted success');
 });
 check('airborne input cannot create ground traction or brake momentum',()=>{
- const coast=make(5),controlled=make(5);for(const w of [coast,controlled]){pose(w,1215,410,Math.PI,60);Object.assign(w.body,{z:45,vz:10});w.ground.airborne=true;w.ground.count=0;w.ground.feet=0;w.wheels.forEach(q=>q.load=0);}
+ const coast=make(5),controlled=make(5);for(const w of [coast,controlled]){pose(w,1215,410,Math.PI,60);Object.assign(w.body,{z:45,vz:10});Object.assign(w.shopper,{z:63,vz:10,feet:0});w.ground.airborne=true;w.ground.count=0;w.ground.feet=0;w.wheels.forEach(q=>q.load=0);}
  step(coast,.1);step(controlled,.1,{push:1,turn:1,brake:1});assert.ok(Math.abs(coast.body.vx-controlled.body.vx)<.01&&Math.abs(coast.body.a-controlled.body.a)<.01);
 });
 check('ice reduces tire friction, rolling loss and the shopper footing',()=>{
@@ -45,6 +45,6 @@ check('schema 1 keeps the old run and mess while creating the new relay challeng
 });
 check('an airborne save keeps velocity, wheel loads, angular motion and delayed impact',()=>{
  const w=make(5);pose(w,1215,410,Math.PI,60);Object.assign(w.body,{z:45,vz:10,pitchRate:.7});w.ground.airborne=true;w.ground.count=0;w.ground.feet=0;w.wheels.forEach(q=>q.load=0);const r=make(),s=JSON.parse(JSON.stringify(C.snapshot(w)));assert.ok(C.restore(r,s));step(w,.3);step(r,.3);assert.deepEqual(r.body,w.body);assert.deepEqual(r.ground,w.ground);
- const lost=make(6);pose(lost,710,722,Math.PI/2,3);for(let i=0;i<480&&!lost.fall;i++)lost.step(1/120);const mid=make();assert.ok(C.restore(mid,JSON.parse(JSON.stringify(C.snapshot(lost)))));assert.equal(mid.fall.impactTime,null);step(mid,3);assert.equal(mid.fall,null);assert.equal(mid.falls,1);
+ const lost=make(6);pose(lost,710,722,Math.PI/2,3);for(let i=0;i<480&&!lost.fall;i++)lost.step(1/120,{push:1});const mid=make();assert.ok(C.restore(mid,JSON.parse(JSON.stringify(C.snapshot(lost)))));assert.equal(mid.fall.impactTime,null);step(mid,3);assert.equal(mid.fall,null);assert.equal(mid.falls,1);
 });
 console.log('All terrain and recovery checks passed.');

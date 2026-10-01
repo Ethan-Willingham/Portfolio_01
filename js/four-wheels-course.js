@@ -2,7 +2,7 @@
  * materials, guardrail contacts, route distance, scenery and the rasterizer. */
 (function(root){
   'use strict';
-  const VERSION=2, CELL=128, UNITS_PER_FOOT=4;
+  const VERSION=3, CELL=128, UNITS_PER_FOOT=4;
   const Terrain=typeof module!=='undefined'&&module.exports?require('./four-wheels-terrain.js'):root.CartTerrain;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const chapters=[
@@ -148,10 +148,11 @@
   function catchPose(world){const c=world.level.sections[world.roomIndex],back=world.practice?c.index:c.back,target=world.level.sections[back];return {pose:{...target.start},gate:target.startGate,chapter:back,distance:target.startDistance};}
   const numbers=(o)=>Object.fromEntries(Object.entries(o).filter(([k,v])=>typeof v==='number'&&Number.isFinite(v)||typeof v==='string'||typeof v==='boolean'));
   function snapshot(w){return {version:VERSION,body:numbers(w.body),wheels:w.wheels.map(q=>({...numbers(q),coating:{...q.coating}})),gait:numbers(w.gait),time:w.time,gate:w.gate,peak:w.peak,falls:w.falls,messes:w.messes,roomIndex:w.roomIndex,fall:w.fall?JSON.parse(JSON.stringify(w.fall)):null,
-    shelves:w.shelves.map(numbers),objects:w.objects.map(numbers),items:w.stock.items.map(p=>({...numbers(p),shelfId:p.shelf?.id??null})),liquids:[...w.stock.liquids].map(([kind,l])=>({kind,cells:[...l.cells]})),stats:{...w.stock.stats},doors:w.trackDoors.map(numbers),ground:numbers(w.ground),edge:numbers(w.edge),circuit:numbers(w.circuit),terrainStats:numbers(w.terrainStats)};}
+    shelves:w.shelves.map(numbers),objects:w.objects.map(numbers),items:w.stock.items.map(p=>({...numbers(p),shelfId:p.shelf?.id??null})),liquids:[...w.stock.liquids].map(([kind,l])=>({kind,cells:[...l.cells]})),stats:{...w.stock.stats},doors:w.trackDoors.map(numbers),ground:numbers(w.ground),edge:numbers(w.edge),circuit:numbers(w.circuit),terrainStats:numbers(w.terrainStats),shopper:numbers(w.shopper)};}
   function restore(w,s){
-    const legacy=s?.version===1;
+    const legacy=s?.version===1,oldTilt=s?.version===2;
     if(legacy&&s.body&&Array.isArray(s.wheels)){s=JSON.parse(JSON.stringify(s));s.version=VERSION;s.body={...numbers(w.body),...s.body};s.wheels=s.wheels.map((q,i)=>({...numbers(w.wheels[i]),...q}));s.gate=Math.min(w.level.gates.length,s.gate);s.ground=numbers(w.ground);s.edge=numbers(w.edge);s.circuit=numbers(w.circuit);s.terrainStats=numbers(w.terrainStats);}
+    if((legacy||oldTilt)&&s?.body){s=JSON.parse(JSON.stringify(s));s.version=VERSION;const b={...w.body,...s.body,comX:10,comHeight:16};delete b.qw;Terrain.storeAttitude(b,Terrain.attitude(b));s.body=numbers(b);if(s.ground)s.ground={...s.ground,count:Math.min(4,s.ground.count)};}
     if(!s||s.version!==VERSION||!s.body||!Array.isArray(s.wheels)||s.wheels.length!==4||!Array.isArray(s.shelves)||s.shelves.length!==w.shelves.length||!Array.isArray(s.objects)||s.objects.length!==w.objects.length||!Array.isArray(s.items)||s.items.length>650||!Array.isArray(s.doors)||s.doors.length!==w.trackDoors.length)return false;
     const scalar=v=>typeof v==='number'?Number.isFinite(v)&&Math.abs(v)<1e7:typeof v==='string'?v.length<120:typeof v==='boolean'||v===null;
     const valid=o=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.entries(o).every(([k,v])=>!['__proto__','constructor','prototype','velocityAt','tiltMass','tiltImpulse'].includes(k)&&scalar(v));
@@ -160,17 +161,18 @@
     const extras=['gone','falling','sleep','impactTime','fallZ','fallVz','z','vz','pitch','rollTilt'];
     const apply=(o,q)=>{for(const k of Object.keys(q))if((Object.hasOwn(o,k)&&typeof o[k]!=='function'&&scalar(o[k])||extras.includes(k))&&scalar(q[k]))o[k]=q[k];};
     if(!typed(s.body,w.body)||!typed(s.gait,w.gait)||!s.shelves.every((q,i)=>typed(q,w.shelves[i])&&q.mass>0&&q.inertia>0&&q.id===i&&q.w===w.shelves[i].w&&q.h===w.shelves[i].h)||!s.objects.every((q,i)=>typed(q,w.objects[i])&&q.id===i&&q.mass===w.objects[i].mass&&q.radius===w.objects[i].radius)||!s.items.every(valid)||!s.doors.every((q,i)=>typed(q,w.trackDoors[i])&&q.id===i&&q.cx===w.trackDoors[i].cx&&q.cy===w.trackDoors[i].cy&&q.length===w.trackDoors[i].length)||!Number.isInteger(s.gate)||s.gate<0||s.gate>w.level.gates.length||![s.time,s.peak,s.falls,s.messes].every(v=>Number.isFinite(v)&&v>=0)||s.peak>w.level.totalDistance+1)return false;
-    if(s.body.comHeight!==22||Math.abs(s.body.z)>1000||Math.abs(s.body.vz)>2000||Math.abs(s.body.pitch)>Math.PI+.01||Math.abs(s.body.rollTilt)>Math.PI+.01||s.wheels.some(q=>q.load<0||q.load>2))return false;
+    if(s.body.comHeight!==16||s.body.comX!==10||Math.abs(Math.hypot(s.body.qw,s.body.qx,s.body.qy,s.body.qz)-1)>.001||Math.abs(s.body.z)>1000||Math.abs(s.body.vz)>2000||Math.abs(s.body.pitch)>Math.PI+.01||Math.abs(s.body.rollTilt)>Math.PI+.01||s.wheels.some(q=>q.load<0||q.load>2))return false;
     if(!Number.isInteger(s.falls)||!Number.isInteger(s.messes)||!Number.isInteger(s.roomIndex)||!w.level.sections[s.roomIndex]||numberKeys.some(k=>s.body[k]!==undefined&&!Number.isFinite(s.body[k])))return false;
     const materials=['water','wine','ketchup','oil','soil'];
     if(s.body.x<0||s.body.x>w.level.bounds.right||s.body.y<0||s.body.y>w.level.bounds.bottom||s.wheels.some((q,i)=>!typed(numbers(q),w.wheels[i])||!q.coating||typeof q.coating!=='object'||Object.entries(q.coating).some(([k,v])=>!materials.includes(k)||!Number.isFinite(v)||v<0||v>1)))return false;
     const kinds=['vase','wine','ketchup','jar','can','plate','pot','towel','carton','shard'];
     if(s.items.some(p=>!kinds.includes(p.kind)||!['x','y','z','a','vx','vy','omega','vz','tumble','tumbleOmega','mass','length','width','inertia'].every(k=>Number.isFinite(p[k]))||p.mass<=0||p.mass>2||p.length<=0||p.length>10||p.width<=0||p.width>10||p.inertia<=0||!['shelf','air','floor','broken','gone'].includes(p.state)||p.shelfId!==null&&(!Number.isInteger(p.shelfId)||!w.shelves[p.shelfId])))return false;
     if(!Array.isArray(s.liquids)||s.liquids.length>5||s.liquids.some(l=>!materials.includes(l.kind)||!Array.isArray(l.cells)||l.cells.length>30000||l.cells.some(q=>!Array.isArray(q)||q.length!==2||!Number.isInteger(q[0])||q[0]<0||q[0]>=w.stock.cols*w.stock.rows||!Number.isFinite(q[1])||q[1]<0||q[1]>100)))return false;
-    if(!typed(s.ground,w.ground)||!typed(s.edge,w.edge)||!typed(s.circuit,w.circuit)||!typed(s.terrainStats,w.terrainStats)||s.circuit.lift<0||s.circuit.lift>1||s.circuit.charge<0||s.circuit.charge>.3||s.ground.count<0||s.ground.count>6)return false;
+    if(!typed(s.ground,w.ground)||!typed(s.edge,w.edge)||!typed(s.circuit,w.circuit)||!typed(s.terrainStats,w.terrainStats)||s.circuit.lift<0||s.circuit.lift>1||s.circuit.charge<0||s.circuit.charge>.3||s.ground.count<0||s.ground.count>4)return false;
     if(!typed(s.stats,w.stock.stats)||Object.values(s.stats).some(v=>!Number.isInteger(v)||v<0))return false;
     if(s.fall&&!legacy&&(!Number.isFinite(s.fall.plane)||s.fall.impactTime!==null&&(!Number.isFinite(s.fall.impactTime)||s.fall.impactTime<0)))return false;
     if(s.fall&&(!valid(numbers(s.fall))||!['time','vz','pitch','roll'].every(k=>Number.isFinite(s.fall[k]))||!['lake','cliff'].includes(s.fall.kind)||!s.fall.catch||!Number.isInteger(s.fall.catch.chapter)||!w.level.sections[s.fall.catch.chapter]))return false;
+    if(!legacy&&!oldTilt&&(!typed(s.shopper,w.shopper)||s.shopper.feet<0||s.shopper.feet>1||s.shopper.grip<0||s.shopper.grip>1||Math.abs(s.shopper.z)>2000))return false;
     apply(w.body,s.body);s.wheels.forEach((q,i)=>{apply(w.wheels[i],q);w.wheels[i].coating={...q.coating};});apply(w.gait,s.gait);
     Object.assign(w,{time:s.time,gate:s.gate,peak:s.peak,falls:s.falls,messes:s.messes,roomIndex:s.roomIndex,fall:s.fall?{...numbers(s.fall),impactTime:s.fall.impactTime??null,plane:s.fall.plane??(s.fall.kind==='lake'?-50:-100),catch:null}:null});
     if(w.fall){const target=w.level.sections[s.fall.catch.chapter];w.fall.catch={pose:{...target.start},gate:target.startGate,chapter:target.index,distance:target.startDistance};}
@@ -186,6 +188,7 @@
       const table=w.shelves[6],spec=w.level.shelves[6];Object.assign(table,{cx:spec.x+spec.w/2,cy:spec.y+spec.h/2,vx:0,vy:0,a:0,omega:0,tilt:0,tiltOmega:0,down:false});w.stock.items=w.stock.items.filter(p=>p.shelf!==table);table.stockItems=[];const vase=w.stock.addProduct('vase',table.cx,table.cy,{state:'shelf',shelf:table,u:0,v:0,du:0,dv:0,tier:table.height,color:0});table.stockItems.push(vase);w.stock.positionStock(vase);w.stock.weigh(table);
       if(!w.isFloor(b)){const back=catchPose(w);Object.assign(b,back.pose,{vx:0,vy:0,omega:0});w.gate=back.gate;w.roomIndex=back.chapter;Terrain.init(w,w.terrainGeometry);}
     }
+    if(legacy||oldTilt)Terrain.initShopper(w);else apply(w.shopper,s.shopper);
     w.stock.surfaceClock=0;w.distance=progress(w);w.walls=w.activeWalls();return true;
   }
   const api={VERSION,UNITS_PER_FOOT,chapters,build,sample,baseSample,supports,wallsNear,progress,chapterAt,doorPolygon,init,update,catchPose,snapshot,restore,bounds,inside,nearest,disk,ribbon,query};
