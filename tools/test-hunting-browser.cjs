@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
             world = new World(world.art, 11); world.deer = [world.deer[0]];
             Object.assign(world.deer[0], { x: 0, y: .8, facingRight: true, pause: 999 }); world.wind = 0;
             scopeToggle = false; scopeHeld = false; view.scope(false, aim);
-            const man = world.hunter, h = .45 * world.art.height / 16, x = .1 * world.art.width / 16;
+            const man = world.hunter, h = T.vitalsY * world.art.height / T.pixelsPerUnit, x = (T.vitalsX - .5) * world.art.width / T.pixelsPerUnit;
             const t = Math.hypot(x, .8 - man.y) / T.muzzleSpeed;
             const vz = (h - T.standHeight + .5 * T.gravity * t * t) / t;
             const duration = (vz + Math.sqrt(vz * vz + 2 * T.gravity * T.standHeight)) / T.gravity;
@@ -70,7 +70,7 @@ async function noOverflow(page) {
     browser = await chromium.launch({ headless: true, executablePath: '/Users/ethan/.local/bin/agent-chrome-for-testing' });
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     const page = await setup(desktop, url);
-    check('the original art loads and the briefing does not advance the field', await page.evaluate(() => { const s = __huntTest.state(); return s.phase === 'ready' && s.time === 0 && s.art.width === 24 && s.art.solid > 100; }));
+    check('the new art loads and the briefing does not advance the field', await page.evaluate(() => { const s = __huntTest.state(); return s.phase === 'ready' && s.time === 0 && s.art.width === 64 && s.art.solid > 100; }));
     check('desktop controls fit and have 44-pixel targets', await noOverflow(page));
     await page.screenshot({ path: path.join(dump, 'desktop-ready.png'), fullPage: true });
     await page.locator('#hunt-start').click();
@@ -85,7 +85,7 @@ async function noOverflow(page) {
     await page.evaluate(() => __huntTest.step(1.2));
     check('reload completes with five rounds', await page.evaluate(() => __huntTest.state().ammo === 5));
     await page.keyboard.press('q');
-    check('keyboard scope zooms the original pixel field', await page.evaluate(() => __huntTest.state().zoom === 2));
+    check('keyboard scope zooms the pixel field', await page.evaluate(() => __huntTest.state().zoom === 2));
     await page.keyboard.press('q');
     await page.mouse.move(target.x, target.y); await page.mouse.down({ button: 'right' });
     check('right mouse raises the scope', await page.evaluate(() => __huntTest.state().zoom === 2));

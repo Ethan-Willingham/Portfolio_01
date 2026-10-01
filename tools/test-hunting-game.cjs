@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { PNG } = require('pngjs');
 const { TUNING: T, World, launch, position, hitPixel } = require('../js/hunting-physics.js');
-const png = PNG.sync.read(fs.readFileSync(path.join(__dirname, '../assets/hunting/deer.png')));
+const png = PNG.sync.read(fs.readFileSync(path.join(__dirname, '../assets/hunting/deer-v2.png')));
 const art = { width: png.width, height: png.height, alpha: Uint8Array.from({ length: png.width * png.height }, (_, i) => png.data[i * 4 + 3]) };
 function check(name, run) { run(); console.log('PASS ' + name); }
 function advance(world, seconds, input = {}) { for (let i = 0; i < Math.round(seconds * 120); i++) world.step(1 / 120, input); }
@@ -17,18 +17,18 @@ function scene(facingRight = true) {
 }
 function aimFor(world, u, v, wind = 0) {
   const deer = world.deer[0], man = world.hunter;
-  const targetX = deer.x + (u - .5) * art.width / 16;
+  const targetX = deer.x + (u - .5) * art.width / T.pixelsPerUnit;
   const dy = deer.y - man.y;
   let time = Math.hypot(targetX - man.x, dy) / T.muzzleSpeed;
   for (let i = 0; i < 20; i++) time = Math.hypot(targetX - man.x - .5 * wind * T.windStrength * time * time, dy) / T.muzzleSpeed;
-  const height = v * art.height / 16;
+  const height = v * art.height / T.pixelsPerUnit;
   const vz = (height - T.standHeight + .5 * T.gravity * time * time) / time;
   const duration = (vz + Math.sqrt(vz * vz + 2 * T.gravity * T.standHeight)) / T.gravity;
   const ratio = duration / time;
   return { x: man.x + (targetX - man.x - .5 * wind * T.windStrength * time * time) * ratio, y: man.y + dy * ratio };
 }
-check('the original artwork is 24 by 19 and has both solid and transparent pixels', () => {
-  assert.equal(art.width, 24); assert.equal(art.height, 19);
+check('the new deer sprite is 64 by 48 and has both solid and transparent pixels', () => {
+  assert.equal(art.width, 64); assert.equal(art.height, 48);
   assert.ok(art.alpha.some(a => a === 0)); assert.ok(art.alpha.some(a => a === 255));
 });
 check('a still-air round lands exactly at its aim, independent of integration steps', () => {
@@ -45,16 +45,16 @@ check('wind deflects longer shots more, without changing their flight duration',
   assert.equal(long.duration, launch(long.origin, { x: 0, y: 5 }, 0).duration);
 });
 check('opaque vitals, body wounds, and transparent pixels follow the actual sprite', () => {
-  assert.equal(hitPixel(art, true, .6, .45), 'vitals');
+  assert.equal(hitPixel(art, true, T.vitalsX, T.vitalsY), 'vitals');
   assert.equal(hitPixel(art, true, .4, .55), 'wound');
   assert.equal(hitPixel(art, true, .35, .1), 'transparent');
-  assert.equal(hitPixel(art, false, .4, .45), 'vitals');
+  assert.equal(hitPixel(art, false, 1 - T.vitalsX, T.vitalsY), 'vitals');
   assert.equal(hitPixel(art, false, .6, .55), 'wound');
 });
 check('a swept shot through either mirrored chest is recovered after a short run', () => {
   for (const facing of [true, false]) {
     const world = scene(facing);
-    world.fire(aimFor(world, facing ? .6 : .4, .45));
+    world.fire(aimFor(world, facing ? T.vitalsX : 1 - T.vitalsX, T.vitalsY));
     advance(world, .6);
     assert.equal(world.deer[0].state, 'fleeing');
     assert.ok(world.deer[0].bleed > 0);
@@ -65,7 +65,7 @@ check('a swept shot through either mirrored chest is recovered after a short run
 check('wind compensation still resolves the intended sprite pixel', () => {
   for (const wind of [-.9, .9]) {
     const world = scene(); world.wind = wind;
-    world.fire(aimFor(world, .6, .45, wind)); advance(world, 2.5);
+    world.fire(aimFor(world, T.vitalsX, T.vitalsY, wind)); advance(world, 2.5);
     assert.equal(world.recovered, 1);
   }
 });

@@ -12,9 +12,11 @@ The Unity project stays intact. This version is ordinary JavaScript served from
 - `js/hunting-physics.js`: tuning, analytic ballistics, deer behavior, ammo, and recovery.
 - `js/hunting-view.js`: pixel renderer, asset loading, alpha mask, and scope camera.
 - `js/hunting-game.js`: fixed-step loop, input, UI, synthesized sound, and pause state.
-- `assets/hunting/*.png`: the original exported sprites.
-- `assets/hunting/source/*.aseprite`: editable sources copied from the Unity project.
-- `tools/export-hunting-art.mjs`: repeatable export using the installed Aseprite CLI.
+- `assets/hunting/*-v2.png`: the current field, deer, and hunter art.
+- `assets/hunting/source-v2/`: generated masters and the exact prompts.
+- `tools/build-hunting-art.cjs`: crops and normalizes the current art.
+- `assets/hunting/source/*.aseprite`: the original Unity art, retained as source history.
+- `tools/export-hunting-art.mjs`: legacy export using the installed Aseprite CLI.
 
 No Unity player, game engine dependency, Sluice code, or bundle step. The only
 external request on the page is the site's existing analytics. Fonts are the
@@ -34,22 +36,26 @@ fast-forwards eight times. The magazine holds five rounds and reload takes
 1.1 seconds. The stand, movement bounds, deer speeds, three living deer limit,
 and six-second spawn interval use the original tuning.
 
-The current source values take precedence over older README comments:
-`VitalsCenter` is 0.40 from the nose and 0.45 up from the hooves, rather than
-the README's old 0.25. The original art faces right. In unmirrored PNG space,
-the vital center is therefore u = 0.60, v = 0.45, with radius 0.10 in
-normalized sprite coordinates. That circle appears as an ellipse in pixels.
+The first port used the original trimmed 24 by 19 deer, with vital center
+u = 0.60, v = 0.45. That corrected the Unity README's outdated 0.25-from-nose
+comment. The original sprites and Aseprite sources remain in the repository.
 
-Sprites are exported with transparent margins trimmed, matching Unity's local
-artwork pivot rather than the Aseprite canvas bounds. The deer is 24 by 19
-pixels. The hunter was still an ASCII placeholder in `Art.cs`; its original
-rows and palette were rendered to PNG and saved as an editable Aseprite file.
-All art pixels are retained. Grass and bushes stay behind animals, as in Unity.
+The owner requested a complete art replacement on 2026-09-30. The current
+art is a layered morning woodland clearing, a 64 by 48 right-facing buck,
+and a 24 by 64 rear-facing hunter. It was created with the built-in imagegen
+tool. See `docs/HUNTING_ART.md` and `assets/hunting/source-v2/prompts.json`.
+The runtime sprites are cropped to the opaque artwork, resized with nearest
+sampling, and use binary alpha so visible edges and hit edges match. The
+updated shoulder center is u = 0.67, v = 0.45, with the original normalized
+radius 0.10. The ellipse is mirrored with the deer. Source images retain the
+generated transparency. The cedar platform is drawn in the renderer.
 
 ## Shooting and simulation
 
 World units match Unity: x right, y farther into the clearing, height above the
-ground. One unit is 16 pixels. The full field is a 320 by 180 canvas. The
+ground. One unit is 32 pixels. The full field is a 640 by 360 canvas. This
+doubles art resolution while keeping the 20 by 11.25-unit world and the
+original stand, roam bounds, velocities, wind, and timing. The
 crosshair is a ground-plane landing point in still air. The renderer adds
 height to the bullet's screen position so its flight is visible from above.
 

@@ -19,18 +19,18 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/hunting-game.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game.jpg">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game-v2.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="675">
   <meta property="og:image:alt" content="Pixel-art deer grazing in a grassy clearing, with pine trees behind them and a hunting stand in the foreground.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game-v2.jpg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="hunting-game.css?v=1">
+  <link rel="stylesheet" href="hunting-game.css?v=2">
 </head>
 <body class="hunt-page">
   <div class="site-wrapper">
@@ -51,7 +51,7 @@
           </div>
         </header>
         <div class="hunt-stage" id="hunt-stage">
-          <canvas id="hunt-canvas" width="320" height="180" tabindex="0" aria-label="A hunting stand overlooking deer in a field. Aim with the mouse, click to fire. On touchscreens, drag to aim and use the Fire button. R reloads, right mouse or Q raises the scope, A and D move along the stand." aria-describedby="hunt-instructions">This game needs a browser with canvas support.</canvas>
+          <canvas id="hunt-canvas" width="640" height="360" tabindex="0" aria-label="A hunting stand overlooking deer in a field. Aim with the mouse, click to fire. On touchscreens, drag to aim and use the Fire button. R reloads, right mouse or Q raises the scope, A and D move along the stand." aria-describedby="hunt-instructions">This game needs a browser with canvas support.</canvas>
           <div class="hunt-overlay" id="hunt-overlay" role="dialog" aria-modal="false" aria-labelledby="hunt-overlay-title">
             <div class="hunt-briefing">
               <p class="hunt-kicker" id="hunt-overlay-kicker">A 2D hunting prototype</p>
@@ -67,7 +67,7 @@
         </div>
         <div class="hunt-field-bar">
           <div class="hunt-wind"><span class="hunt-kicker">Wind</span><svg width="70" height="15" viewBox="0 0 70 15" aria-hidden="true"><path d="M35 1v13" class="hunt-wind-center"/><path id="hunt-wind-arrow" d="M35 7h0"/></svg><output id="hunt-wind">Calm</output></div>
-          <p id="hunt-message" role="status" aria-live="polite" aria-atomic="true">Loading the original artwork.</p>
+          <p id="hunt-message" role="status" aria-live="polite" aria-atomic="true">Loading the field.</p>
           <button id="hunt-reset" type="button" disabled>New outing</button>
         </div>
         <div class="hunt-actions" aria-label="Game controls">
@@ -81,7 +81,7 @@
         <footer class="hunt-instructions" id="hunt-instructions">Aim beyond the deer along your sightline. Hold right mouse for the scope. <kbd>P</kbd> pauses. No timer, keep practicing.</footer>
       </section>
       <div class="post-body hunt-prose">
-        <p><strong>Hunting Game</strong> started as a Unity project I made with AI. I don't want to keep developing it in Unity, so this is the first JavaScript version: the same stand, the same pixel art, and a round you can watch fall through the field. Still in progress.</p>
+        <p><strong>Hunting Game</strong> started as a Unity project I made with AI. I don't want to keep developing it in Unity, so this is the JavaScript version: a stand at the edge of a wooded clearing and a round you can watch fall through the field. Still in progress.</p>
         <details class="hunt-notes">
           <summary>How shooting works</summary>
           <p>Your crosshair marks where the round would land without wind. Aim at a deer's hooves and the round arrives too low. Aim beyond the deer, along the line from your stand, and the round is still above the ground when it reaches the animal. Aim too far beyond it and you shoot over its back.</p>
@@ -89,16 +89,16 @@
           <p>Transparent pixels between the legs or around the antlers let a round pass through. A hit outside the vitals wounds the deer and it runs. A vital hit brings it down after a short run and counts as recovered. A wounded deer that escapes into the trees doesn't count.</p>
           <p>You have five rounds. R reloads; clicking with an empty magazine starts a reload too. Q toggles the scope, or hold the right mouse button. A and D shuffle along the stand. Hold F or the Wait button to move time forward. P pauses. On a phone, drag your aim across the field, then use Fire. New outing resets the field and counters.</p>
         </details>
-        <p class="hunt-source">Built with JavaScript and a 320 by 180 canvas. The deer, trees, grass, bushes, and hunter are from the Unity prototype. <a href="js/hunting-physics.js">Shooting and deer behavior</a> &middot; <a href="js/hunting-view.js">Renderer</a> &middot; <a href="js/hunting-game.js">Game source</a>.</p>
+        <p class="hunt-source">Built with JavaScript and a 640 by 360 canvas. The pixel art was remade for this browser version. <a href="js/hunting-physics.js">Shooting and deer behavior</a> &middot; <a href="js/hunting-view.js">Renderer</a> &middot; <a href="js/hunting-game.js">Game source</a>.</p>
         <nav class="hunt-bottomnav" aria-label="Site navigation"><a href="/" class="post-back"><span class="pb-label">Home</span></a><a href="archive.html" class="post-back"><span class="pb-label">In Progress</span></a></nav>
       </div>
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/hunting-physics.js?v=1"></script>
-  <script src="js/hunting-view.js?v=1"></script>
-  <script src="js/hunting-game.js?v=1"></script>
+  <script src="js/hunting-physics.js?v=2"></script>
+  <script src="js/hunting-view.js?v=2"></script>
+  <script src="js/hunting-game.js?v=2"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

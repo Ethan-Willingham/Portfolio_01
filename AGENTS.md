@@ -69,7 +69,9 @@ when changing them so deployed edits bypass stale caches.
 **Hunting Game**, the JavaScript port of the owner's Unity hunting prototype,
 lives in `hunting-game.html`, `hunting-game.css`, and `js/hunting-*.js`.
 Read `docs/HUNTING_GAME.md` for the ballistics, art, and checks. Its original
-pixel art and editable Aseprite sources live in `assets/hunting/`. Keep this
+pixel art and editable Aseprite sources live in `assets/hunting/`. The current
+art uses `*-v2.png`, with generated masters and prompts in `source-v2/`;
+see `docs/HUNTING_ART.md` and `tools/build-hunting-art.cjs`. Keep this
 post beside All Four Wheels on `archive.html` (In Progress). It has no Unity
 runtime, Sluice dependencies, or bundle step. Bump its CSS and script `?v=`
 values when changing them.

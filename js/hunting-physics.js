@@ -4,13 +4,13 @@
 (function (root) {
   'use strict';
   const TUNING = Object.freeze({
-    pixelsPerUnit: 16, width: 320, height: 180,
+    pixelsPerUnit: 32, width: 640, height: 360,
     standY: -4.2, muzzleY: -3.9, walkSpeed: 3.2,
     roamNear: .2, roamFar: 2, fieldHalfWidth: 9.2, treelineY: 4,
     muzzleSpeed: 14, gravity: 9, standHeight: 1.6, windStrength: 3.5,
     minRange: 1.5, magazine: 5, reloadSeconds: 1.1,
     deerWalkSpeed: .9, deerRunSpeed: 7.5, spawnEvery: 6, maxDeer: 3,
-    vitalsX: .6, vitalsY: .45, vitalsRadius: .1, fastForward: 8
+    vitalsX: .67, vitalsY: .45, vitalsRadius: .1, fastForward: 8
   });
   const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
   function randomSource(seed) {
