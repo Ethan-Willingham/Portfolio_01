@@ -1,0 +1,54 @@
+Sluice logo v18
+
+User clarification: extend the dirt support under the E by one block. Its base is roughly three blocks wide, and the left two blocks should be supported, leaving water to pour only from the right tip.
+
+Mode: built-in image_gen edit for a single tip flow guide; native Sluice terrain and LiquidWGPU water rendering for integration.
+The exact heavier E body from v17 is retained, along with all the other letters and v10 smoke.
+
+Terrain:
+Restore native dirt cell (14,6), relative to world tile(40,40), previously a void.
+At native render scale3 and TILE32, the extra block covers x1344 to 1440 and y576 to 672.
+Use the existing native terrain and ore renderers, original ore positions and remaining v15 void cells.
+Composite the changed ground below y638. The dirt shelf now reaches x1440 beneath the E. The remaining drop is under its far-right tip.
+Everything above y638 and left of x1232 compares exactly to v17.
+
+Flow:
+Selected generated source: exec-5f78f58f-c41d-42dc-83ba-fe4e58673b33.png, 1024 x 1536, saved as sluice-logo-v18-flow-source.png.
+Source crop (150,140,766,1370), placement (1240,309,248,457.132653).
+The source is used only as a silhouette and aeration guide for water below y638. It does not replace the approved E body.
+Native rendering follows the v17 method: 53,800 posed particles, render scale3, unchanged LiquidWGPU surface shader, native cave mask.
+Only one outlet remains, x1464 with initial downward speed 120 world pixels per second. Below the letter, speed follows sqrt(120 squared +2*1000*world-space drop).
+The pool has one corresponding impact disturbance. Water is clipped out of the new solid dirt support.
+This is a composed still-image particle field rendered by the real shader, not a captured full solver simulation.
+The master restores the new native terrain below y638 and composites new water there. The E body and original pixels above that line are retained.
+GPU validation and uncaptured errors: none.
+No game source or live thumbnail references are changed.
+
+Artifacts:
+assets/images/sluice-logo-v18.png: opaque 1672 x 941 master.
+assets/images/sluice-logo-v18-wordmark.png: transparent logo and tip flow.
+assets/images/sluice-logo-v18-background.png: native terrain with extended dirt shelf.
+assets/images/sluice-logo-v18-e-layer.png: retained thick E with revised flow.
+assets/images/sluice-logo-v18-water.png: native water layer, including the lower pool.
+assets/images/sluice-logo-v18-flow-source.png: selected built-in source.
+assets/images/sluice-logo-v18-flow-guide.png: cleaned source for native compositing.
+assets/thumbs/sluice-logo-v18.webp: 600 x 338 blog thumbnail.
+
+Validation:
+Full image and thumbnail visually reviewed.
+All original pixels above y638 and left of x1232 are unchanged.
+The support block is solid dirt at (1390,650); cave below remains void at (1390,686).
+No water crosses the supported middle block in x1344 to 1434, y642 to 671.
+Exactly one flow crosses y686, entirely beyond x1440.
+All exports decode, master is fully opaque, wordmark has actual transparency, thumbnail is 600 x 338.
+Owned Chrome for Testing child processes were closed with exact process cleanup.
+
+Built-in image generation prompt:
+Use case: precise-object-edit.
+Asset: E-shaped water-filled excavation component for the Sluice logo.
+Image 1 is the isolated E edit target. Image 2 is the complete logo for context.
+
+Correct ONLY the drainage at the bottom. Think of the E's bottom arm as three blocks wide: the solid dirt floor supports its LEFT TWO BLOCKS, so the only open drop into the cave is at the FAR RIGHT TIP. Remove both current water fingers and drops. Close their holes into an unbroken gently uneven floor across the left two-thirds of the bottom arm. The water stays contained over that supported portion. Make ONE coherent gravity-fed water flow leave the very end of the lower arm, near 93 percent of the E's width, fall down and become a slightly fuller irregular blob near its lower end. The flow is connected to the right tip of the E, not a hole near its middle. Keep its length similar to the existing larger stream so it can meet the pool below. No other leakage under the left or middle of the E.
+
+Keep EXACTLY the same thick E shape, stroke weight, overall height/width, dark cavity, medium blue water and restrained pale blue movement. Retain all three arms and both transparent gaps between them. Do not add a shelf object or any dirt artwork: the native dirt floor will be composited afterward. No frame or metal, no new styling, no outer glow, no added text or letters. Output the entire revised E with its single stream on genuine transparency, high definition.
+
