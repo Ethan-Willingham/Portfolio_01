@@ -193,7 +193,7 @@
     announce(broken?'Combo broken. Banked style kept.':e.name+', '+e.points+' style'+(e.seconds?', '+e.seconds+' seconds back':'')+(e.combo>1?', combo times '+e.combo:''));
     if(!broken&&!reducedMotion.matches) {
       const first=particles.length;burst(e.x,e.y,e.kind==='full'?22:10,[color,P.gold,P.cream]);
-      particles.slice(first).forEach((p,i)=>{p.vz=24+i%5*5;p.life=.85;p.z=3;});
+      particles.slice(first).forEach((p,i)=>{p.vz=35+i%5*6;p.life=.95;p.z=24;p.vx*=4;p.vy*=4;p.w=i%3===0?3:2;});
       if(e.kind==='full')screenShake=Math.max(screenShake,.5);
     }
     if(broken){sound.note(180,.12,.025,0,'triangle',110);return;}
