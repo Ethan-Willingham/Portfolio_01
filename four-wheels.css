@@ -98,6 +98,23 @@
 .cart-toast.is-visible { opacity: 1; }
 .cart-route-bar { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .7rem 1.35rem; border-top: 1px solid var(--cart-line); }
 .cart-route-copy { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.cart-route-copy { flex: 1; }
+.cart-style { position: relative; min-width: 54px; padding: 0 .6rem .35rem; border-left: 1px solid var(--cart-line); color: var(--cart-ink); flex-shrink: 0; }
+.cart-style > div { display: flex; align-items: baseline; gap: .35rem; }
+.cart-style output { font-family: var(--font-mono); font-size: .85rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+#cart-style-chain { font-family: var(--font-mono); font-size: .6rem; font-weight: 700; color: var(--cart-alert); }
+.cart-style > i { position: absolute; bottom: 0; right: .6rem; left: .6rem; height: 2px; background: var(--room-color, var(--cart-accent)); transform: scaleX(var(--chain-life, 0)); transform-origin: left; }
+.cart-trick { position: absolute; top: 62px; left: 50%; z-index: 3; display: flex; align-items: center; gap: .8rem; width: max-content; max-width: calc(100% - 24px); min-height: 74px; padding: .7rem .9rem .85rem; overflow: hidden; border: 1px solid var(--cart-ink); border-radius: 9px; background: var(--cart-paper); color: var(--cart-ink); box-shadow: 0 4px 0 rgba(41,40,32,.2); transform: translateX(-50%); pointer-events: none; }
+.cart-trick-symbol { display: grid; place-items: center; min-width: 42px; height: 42px; border: 1px solid var(--cart-line); border-radius: 50%; color: var(--cart-ink); background: var(--trick-color, var(--cart-accent)); font-family: var(--font-mono); font-size: .73rem; font-weight: 700; letter-spacing: -.05em; }
+.cart-trick-copy { min-width: 0; }
+.cart-trick-copy > strong { display: block; font-family: var(--font-body); font-size: 1.1rem; font-weight: 700; letter-spacing: -.025em; white-space: nowrap; }
+.cart-trick-copy > p { display: flex; gap: .7rem; margin-top: .2rem; font-family: var(--font-mono); font-size: .6rem; color: var(--cart-muted); }
+#cart-trick-credit { color: var(--cart-ink); }
+.cart-trick-combo { padding-left: .75rem; border-left: 1px solid var(--cart-line); font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700; letter-spacing: -.08em; }
+.cart-trick-life { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: var(--trick-color, var(--cart-accent)); transform: scaleX(var(--trick-life, 1)); transform-origin: left; }
+.cart-trick.is-new { animation: cart-trick-in .22s ease-out; }
+.cart-game:not([data-phase="running"]) .cart-trick { display: none; }
+@keyframes cart-trick-in { from { opacity: 0; transform: translate(-50%, 7px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 .cart-route-bar p { font-size: .76rem; color: var(--cart-muted); }
 .cart-route-steps { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .cart-route-steps i { display: grid; place-items: center; min-width: 23px; height: 23px; padding-inline: 4px; border: 1px solid var(--cart-line); border-radius: 4px; font-family: var(--font-mono); font-size: .57rem; font-style: normal; color: var(--cart-muted); }
@@ -210,7 +227,14 @@
   .cart-route-bar { padding: .6rem .8rem; }
   .cart-route-copy { gap: .35rem; align-items: flex-start; flex-direction: column; }
   .cart-route-bar p { font-size: .64rem; }
+  .cart-style { padding-inline: .4rem; min-width: 48px; }
+  .cart-style output { font-size: .72rem; }
+  .cart-style > div { flex-direction: column; gap: 0; }
+  .cart-trick { top: 90px; gap: .6rem; padding: .65rem .75rem .8rem; }
+  .cart-trick-copy > strong { font-size: 1rem; }
+  .cart-trick-combo { font-size: 1.1rem; padding-left: .5rem; }
   .cart-route-steps i { min-width: 19px; height: 18px; font-size: .48rem; }
+  .cart-route-steps { flex-wrap: wrap; max-width: 100%; row-gap: 4px; flex-shrink: 1; }
   .cart-route-bar button { font-size: .68rem; }
   .cart-controls { gap: .75rem; padding: .65rem .8rem; flex-wrap: wrap; }
   .cart-arrow-note { display: none; }
@@ -242,6 +266,12 @@
   .cart-best { margin-top: .85rem; padding-top: .6rem; }
 }
 @media (max-height: 520px) {
+  .cart-trick { top: 8px; min-height: 52px; padding: .35rem .65rem .5rem; gap: .6rem; }
+  .cart-trick .cart-kicker { display: none; }
+  .cart-trick-symbol { min-width: 32px; height: 32px; font-size: .58rem; }
+  .cart-trick-copy > strong { font-size: .9rem; }
+  .cart-trick-copy > p { margin-top: .05rem; font-size: .55rem; }
+  .cart-toast { top: 70px; }
   .cart-toolbar { padding-block: .4rem; gap: 1rem; }
   .cart-wordmark { display: none; }
   .cart-course-badge { width: 30px; height: 30px; font-size: .75rem; }
@@ -271,7 +301,7 @@
   .cart-result > span { grid-column: 1 / -1; font-size: .56rem; }
   .cart-overlay[data-state="won"] .cart-best { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .cart-button-primary:active, .cart-touch-brake.is-held { transform: none; } .cart-thumb-knob { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .cart-button-primary:active, .cart-touch-brake.is-held { transform: none; } .cart-thumb-knob { transition: none; } .cart-trick.is-new { animation: none; } }
 @media print { .cart-game { display: none; } }
 
 /* Room color belongs to the trip, and follows the cart through each doorway. */

@@ -10,6 +10,7 @@ feature flags, or build step.
 - `four-wheels.css`: responsive game shell, touch controls, fullscreen fallback.
 - `js/four-wheels-stock.js`: furniture, supported stock, loose products, breakage and floor films.
 - `js/four-wheels-physics.js`: cart physics and course state; browser and CommonJS.
+- `js/four-wheels-tricks.js`: physical clearance, moving spins, sideways glides, combos and bounded clock bonuses.
 - `js/four-wheels-levels.js`: six rooms, ordered wheel markers, hazards and the connected-world layout.
 - `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D scene.
 - `js/four-wheels.js`: input, audio, UI, fixed-step loop and local records.
@@ -262,9 +263,53 @@ Wine, water and other films in later rooms remain local to those coordinates,
 and wheel pickup and deposition continue across corridors. Full shelves retain
 their existing ground and tipping contact model.
 
-Timed trip records use `four-wheels-records-v5`, with a separate slot for each
+Timed trip records use `four-wheels-records-v6`, with a separate slot for each
 starting room, validation and blocked-storage fallback. More marks rank above
-fewer; equal marks rank by time. All older v1 through v4 records remain untouched.
+fewer; equal marks rank by time including earned clock bonuses. Older v1 through
+v5 records remain untouched, since the new bonuses change the timed rules.
+
+## Close calls, rotations and style
+
+Style observes the simulation at its fixed step and never changes cart forces,
+velocities, caster angles, gait or contact impulses. Clearances use the actual
+oriented basket and all four tire rectangles, the shopper circle, the current
+3D shelf's projected collision hull and each cone or box's physical radius.
+At 20 Hz, a pass arms within six units at a speed of at least 22. It earns a
+Close call only after clearing twelve units, traveling fourteen units during
+the pass and still moving at sixteen. Touches within 0.15 units do not count.
+An impacted obstacle stays blocked for that entire pass. An intact shelf or
+prop can pay once per trip. Down, spilled or falling stock does not count.
+Walls, loose products and hazard edges are not close-call targets.
+
+A spin starts under active steering while moving at fourteen units per second.
+It tracks signed pose changes across the angle wrap. Reversals, a settled turn,
+slow travel, contacts, missing wheel support, falls and pose jumps interrupt it.
+A half rotation needs twenty units of travel; a full rotation needs forty-five.
+A 180 earns 100 style and one second. Finishing its 360 adds 250 style and two
+seconds, upgrades the same maneuver and does not increase its own combo.
+One uninterrupted spin pays only those two milestones. A new paid maneuver
+needs settled rotation and another forty-five units of travel.
+A sustained sideways coast, over 86 percent sideways and at least 28 units per
+second for 0.6 seconds and twenty units of travel, earns a Power slide. Braking
+or an active spin prevents it, and another slide requires 100 units of travel.
+Close calls and slides each earn 75 style and one second.
+
+Clean awards within five simulation seconds chain up to x4. The multiplier
+affects style points, not time. Contact breaks the chain and unbanked progress;
+banked points and seconds remain. Practice earns style with no clock credit.
+Timed runs can earn at most twelve seconds in total. Deadline precedence remains:
+an already expired clock cannot be revived by a trick or checkout on that step.
+Results show style, best combo, maneuver counts and earned time separately from
+driving time and penalties.
+
+The floor draws the spin's actual swept angle, a fading completion arc, close-pass
+glints at the measured clearance point and short sideways wheel streaks.
+Earned moves receive a paper-and-ink callout, colored pixel confetti and distinct
+ascending tones when sound is enabled. Callouts announce through the existing
+live region. Pause freezes detection, combo time, effects and callout life.
+Reduced motion keeps the text and rewards while disabling trails, confetti,
+shake and entrance animation. Feedback never captures input or covers the thumb
+pads. The compact Style counter lives beside route progress on all screen sizes.
 
 ## Controls and lifecycle
 
@@ -291,13 +336,14 @@ disables shake and marker particles. Idle and paused screens do not run a loop.
 
 ## Verification and deployment
 
-Run `node --check` on each of the five game scripts, then:
+Run `node --check` on each of the six game scripts, then:
 
 ```sh
 node tools/test-four-wheels.cjs
 node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
 node tools/test-four-wheels-journey.cjs
+node tools/test-four-wheels-tricks.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
@@ -322,10 +368,16 @@ pause and recovery, vase water, final checkout, new and older records, fullscree
 small phones, landscape, blocked storage and reduced motion. Hooks and the pilot
 are injected by a local verification server; none are shipped in game scripts.
 Browser checks use an owned Chrome for Testing process closed in `finally`.
+Trick tests cover real tire and shopper clearance, clean passes, impact rejection,
+both spin directions across the angle wrap, stationary and repeated spin rejection,
+slides, combo expiry, interruption and upgrades, clock caps, falls, pose jumps,
+deadline precedence and unchanged physical trajectories. Browser checks also
+verify actual 180, 360 and close-pass callouts, chain feedback, pause, results,
+small-screen placement, old records and reduced-motion feedback.
 
 `ASSETS=1` writes fall animation GIFs into the QA directory and refreshes the
 1200-by-750 game thumbnail. Rebuild its WebP sibling and preserve the picture
-wrapper. Bump all six CSS/game-script query versions in `four-wheels.html` for
+wrapper. Bump all seven CSS/game-script query versions in `four-wheels.html` for
 any deployed edit. Commit only this game's changes and push to main; GitHub Pages
 publishes it automatically. Verify the deployed asset bytes and desktop/mobile
 boot before calling a release live.

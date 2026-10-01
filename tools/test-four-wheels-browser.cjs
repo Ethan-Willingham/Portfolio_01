@@ -16,7 +16,8 @@ const server=http.createServer((req,res)=>{
    data=source.slice(0,end)+`
     const testPilot=${pilot.toString()};
     window.__cartTest={
-     state:()=>({phase,index:levelIndex,room:world.roomIndex,narrowCamera,followCart,body:{...world.body},wheels:world.wheels.map(q=>({...q})),gait:{...world.gait},gate:world.gate,time:world.time,penalty:world.penalty,messes:world.messes,fall:world.fall,falls:world.falls,practice:world.practice,records,keys:keys.size,touches:touches.size,input:controls(),touchInput:[...touches].map(([id,q])=>({id,control:q.control,value:q.value})),contacts:world.boundaryContacts}),
+     stunt:(kind)=>{reset(0);world=new World({...levels.journey(),start:{x:kind==='near'?80:110,y:kind==='near'?142:200,a:0},shelves:kind==='near'?[{x:200,y:160,w:32,h:32,kind:'table'}]:[],objects:[]});floor=makeFloor(world.level);run();cancelAnimationFrame(raf);raf=0;world.body.vx=kind==='near'?70:75;draw();updateUI();},
+     state:()=>({phase,index:levelIndex,room:world.roomIndex,narrowCamera,followCart,body:{...world.body},wheels:world.wheels.map(q=>({...q})),gait:{...world.gait},gate:world.gate,time:world.time,penalty:world.penalty,bonus:world.bonus,particles:particles.length,style:{score:world.tricks.score,combo:world.tricks.combo,chainLife:world.tricks.chainLife,counts:{...world.tricks.counts},spin:world.tricks.spin,effects:world.tricks.effects},messes:world.messes,fall:world.fall,falls:world.falls,practice:world.practice,records,keys:keys.size,touches:touches.size,input:controls(),touchInput:[...touches].map(([id,q])=>({id,control:q.control,value:q.value})),contacts:world.boundaryContacts}),
      world:()=>world,draw,reset,run,events,stop:()=>{cancelAnimationFrame(raf);raf=0;},
      step:(seconds,input)=>{cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,input||controls());events();tickEffects(1/120);}draw();updateUI();},
      pilot:(seconds)=>{cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,testPilot(world));events();tickEffects(1/120);}draw();updateUI();},
@@ -37,13 +38,13 @@ let browser;
 function check(name,condition){assert.ok(condition,name);console.log('PASS '+name);}
 async function setup(context,url){await context.route('https://www.googletagmanager.com/**',r=>r.abort());const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));await page.goto(url);await page.waitForFunction(()=>!!window.__cartTest);await page.evaluate(()=>document.fonts.ready);return page;}
 const state=p=>p.evaluate(()=>__cartTest.state());
-const shot=(p,name)=>p.locator('#cart-game').screenshot({path:path.join(dump,name+'.png')});
+async function shot(p,name){if(await p.locator('#cart-trick').isVisible())await p.waitForTimeout(250);return p.locator('#cart-game').screenshot({path:path.join(dump,name+'.png')});}
 const fits=()=>{const game=document.getElementById('cart-game').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect(),c=document.getElementById('cart-canvas');return game.top>=0&&game.bottom<=innerHeight+1&&game.height>innerHeight*.9&&Math.abs(c.height/c.width-stage.height/stage.width)<.003&&document.documentElement.scrollWidth<=innerWidth;};
 (async()=>{try {
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/four-wheels.html';
  browser=await chromium.launch({headless:true,executablePath:process.env.CART_BROWSER||'/Users/ethan/.local/bin/agent-chrome-for-testing'});
  const desktop=await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:1});
- await desktop.addInitScript(()=>{localStorage.setItem('four-wheels-records-v4','[{"time":50,"stars":3}]');});
+ await desktop.addInitScript(()=>{localStorage.setItem('four-wheels-records-v4','[{"time":50,"stars":3}]');localStorage.setItem('four-wheels-records-v5','[{"time":42,"stars":3}]');});
  const page=await setup(desktop,url);
  check('the game boots one connected world and the higher isometric camera',await page.evaluate(()=>__cartTest.world().level.connected&&__cartTest.world().level.rooms.length===6&&CartView.CAMERA.vertical/CartView.CAMERA.horizontal>.75));
  check('the game fills the desktop viewport without stretching its pixel camera',await page.evaluate(fits));
@@ -94,6 +95,20 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await page.evaluate(()=>{__cartTest.reset(0);__cartTest.run();__cartTest.stop();const w=__cartTest.world();Object.assign(w.body,{x:72,y:157,a:0,vx:0,vy:0,omega:0});w.wheels.forEach(q=>{q.a=0;q.omega=0;});__cartTest.step(.8,{push:1});__cartTest.step(3.2);});
  check('the first-room vase still breaks and leaves clear physical water',await page.evaluate(()=>{const w=__cartTest.world();return w.stock.stats.broken===1&&w.stock.liquids.get('water').cells.size>40&&!w.shelves[0].down;}));await shot(page,'vase-puddle');
  console.log('Connected render profile: '+(await page.evaluate(()=>__cartTest.profile())).toFixed(2)+' ms/frame.');
+ await page.evaluate(()=>{__cartTest.stunt('spin');__cartTest.step(1.9,{turn:1});});a=await state(page);
+ check('a real moving half turn earns the 180 callout and clock credit',a.style.counts.half===1&&a.bonus===1&&await page.locator('#cart-trick').isVisible()&&await page.locator('#cart-trick-title').textContent()==='180° swivel'&&await page.locator('#cart-trick-credit').textContent()==='+1s');await shot(page,'stunt-180');
+ const frozenStyle=JSON.stringify([a.style,a.bonus]);await page.locator('#cart-pause').click();await page.waitForTimeout(150);
+ check('pause freezes combo, spin progress and reward effects',JSON.stringify([(await state(page)).style,(await state(page)).bonus])===frozenStyle&&await page.locator('#cart-trick').isHidden());await page.locator('#cart-start').click();await page.evaluate(()=>__cartTest.stop());
+ await page.evaluate(()=>__cartTest.step(1.7,{turn:1}));a=await state(page);
+ check('a full rotation upgrades to the 360 with confetti and a distinct callout',a.style.counts.full===1&&a.style.counts.half===0&&a.style.score===350&&a.bonus===3&&await page.locator('#cart-trick-title').textContent()==='360° swivel'&&await page.locator('#cart-trick-credit').textContent()==='+2s');await shot(page,'stunt-360');
+ check('the result is announced without making its card intercept controls',/360° swivel/.test(await page.locator('#cart-live').textContent())&&await page.locator('#cart-trick').evaluate(e=>getComputedStyle(e).pointerEvents)==='none');
+ await page.evaluate(()=>{const w=__cartTest.world();w.tricks.award('near',w.body.x,w.body.y);__cartTest.events();__cartTest.step(1/120);});a=await state(page);
+ check('a second clean move links a visible style combo',a.style.combo===2&&a.style.score===500&&await page.locator('#cart-trick-combo').textContent()==='x2'&&await page.locator('#cart-style-chain').textContent()==='x2');await shot(page,'stunt-combo');
+ await page.evaluate(()=>{const w=__cartTest.world();Object.assign(w.body,{x:460,y:200,a:0,vx:60,vy:0,omega:0});w.wheels.forEach(q=>q.a=0);__cartTest.step(1/120);});a=await state(page);
+ check('a real wall bump breaks the combo and keeps banked rewards',a.contacts.length>0&&a.style.combo===0&&a.style.score===500&&a.bonus===4&&await page.locator('#cart-trick-title').textContent()==='Combo broken');await shot(page,'stunt-combo-break');
+ await page.evaluate(()=>{__cartTest.stunt('near');__cartTest.step(3,{push:.35});});a=await state(page);
+ check('a real clear tire pass awards the close-call flash and score',a.style.counts.near===1&&a.bonus===1&&a.messes===0&&await page.locator('#cart-trick-title').textContent()==='Close call'&&await page.locator('#cart-style-score').textContent()==='75');await shot(page,'stunt-near-miss');
+
  await page.evaluate(()=>{document.getElementById('cart-practice').checked=false;__cartTest.reset(0);__cartTest.run();__cartTest.stop();});
  const visited=new Set([0]);let trip;
  for(let i=0;i<30;i++) {
@@ -107,6 +122,7 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  check('final checkout requires physically driving the whole cart out',(await state(page)).phase==='running');await page.evaluate(()=>__cartTest.step(1.2,{push:1}));a=await state(page);
  check('the final exit ends the trip and saves a new record',a.phase==='won'&&a.records[0]?.stars===3);await shot(page,'checkout');
  check('older independent-course records remain untouched',await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v4'))[0].time===50));
+ check('older connected-trip records remain untouched',await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-records-v5'))[0].time===42));
  await page.reload();await page.waitForFunction(()=>!!window.__cartTest);check('trip records survive reload',(await state(page)).records[0]?.stars===3);
  await page.evaluate(()=>{__cartTest.run();__cartTest.stop();const w=__cartTest.world();w.penalty=w.level.limit;__cartTest.step(.1);});
  check('timeout provides retry and untimed practice',(await state(page)).phase==='lost'&&await page.locator('#cart-secondary').isVisible());await page.locator('#cart-secondary').click();
@@ -151,8 +167,17 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await send('touchStart',[left,right]);await phone.setViewportSize({width:852,height:393});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===960);a=await state(phone);check('rotating the phone releases old pointers instead of sticking inputs',a.touches===0&&a.input.push===0&&a.input.turn===0);await send('touchEnd',[]);
  check('landscape keeps large thumb controls and the full viewport',await phone.evaluate(fits)&&await phone.evaluate(geometry));await shot(phone,'mobile-landscape');
  await phone.setViewportSize({width:320,height:720});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===480);check('the smallest phone fits both pads and the brake',await phone.evaluate(fits)&&await phone.evaluate(geometry));await shot(phone,'mobile-small');
+ await phone.evaluate(()=>{__cartTest.reset(5);__cartTest.run();__cartTest.stop();const w=__cartTest.world();w.tricks.award('half',w.body.x,w.body.y);w.tricks.award('near',w.body.x,w.body.y);__cartTest.events();__cartTest.step(1/120);});
+ check('a phone stunt keeps the thumb pads and cart center clear',await phone.evaluate(()=>{const t=document.getElementById('cart-trick').getBoundingClientRect(),s=document.getElementById('cart-steer').getBoundingClientRect(),d=document.getElementById('cart-drive').getBoundingClientRect(),c=document.getElementById('cart-canvas').getBoundingClientRect(),r=document.querySelector('.cart-route-bar').getBoundingClientRect();return t.left>=0&&t.right<=innerWidth&&t.bottom<s.top&&t.bottom<d.top&&t.bottom<c.top+c.height*.45&&r.right<=innerWidth;}));await shot(phone,'mobile-stunt');
+ await phone.setViewportSize({width:852,height:393});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===960);
+ check('a landscape stunt stays compact and above the cart and controls',await phone.evaluate(()=>{const t=document.getElementById('cart-trick').getBoundingClientRect(),s=document.getElementById('cart-steer').getBoundingClientRect(),c=document.getElementById('cart-canvas').getBoundingClientRect();return t.height<=65&&t.top>=c.top&&t.bottom<c.top+c.height*.45&&t.bottom<s.top;}));await shot(phone,'mobile-landscape-stunt');
+ await phone.evaluate(()=>{__cartTest.exit();__cartTest.step(2.3,{push:1});});
+ check('the phone checkout reports banked style and clock bonuses',(await state(phone)).phase==='won'&&/250 style/.test(await phone.locator('#cart-result').textContent())&&/2s tricks/.test(await phone.locator('#cart-result').textContent()));
+ check('the longer stunt result fits in landscape',await phone.evaluate(()=>{const a=document.querySelector('.cart-overlay-card').getBoundingClientRect(),b=document.getElementById('cart-stage').getBoundingClientRect();return a.top>=b.top&&a.bottom<=b.bottom+1;}));await shot(phone,'mobile-landscape-stunt-checkout');
+
  await page.locator('#cart-fullscreen').click();check('fullscreen remains usable',await page.evaluate(()=>document.fullscreenElement===document.getElementById('cart-game')||document.getElementById('cart-game').classList.contains('cart-pseudo-fullscreen')));await page.locator('#cart-fullscreen').click();
  const fallback=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'});await fallback.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked');}});});const blocked=await setup(fallback,url);await blocked.locator('#cart-start').click();await blocked.keyboard.down('w');await blocked.waitForTimeout(150);await blocked.keyboard.up('w');check('blocked storage and reduced motion still allow play',(await state(blocked)).phase==='running');
+ await blocked.evaluate(()=>{__cartTest.stunt('spin');__cartTest.step(3.6,{turn:1});});check('reduced motion retains stunt text and rewards without confetti',(await state(blocked)).particles===0&&await blocked.locator('#cart-trick-title').textContent()==='360° swivel'&&await blocked.locator('#cart-trick').evaluate(e=>getComputedStyle(e).animationName)==='none');
  await blocked.evaluate(()=>window.dispatchEvent(new Event('blur')));check('losing focus pauses and clears inputs',(await state(blocked)).phase==='paused'&&(await state(blocked)).keys===0);
  const archive=await desktop.newPage();await archive.route('https://www.googletagmanager.com/**',r=>r.abort());await archive.goto(url.replace('four-wheels.html','archive.html'));check('the game stays listed in In Progress',await archive.locator('a[href="four-wheels.html"]').count()>0);
  check('no JavaScript errors during desktop, touch or fallback play',errors.length===0);

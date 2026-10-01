@@ -593,12 +593,38 @@
         const q=project(c);rect(g,q.x-2,q.y-2,5,5,P.red);rect(g,q.x-1,q.y-1,3,3,P.light);
       }
     }
+    function trickFloor(g,w,options) {
+      if(!w.tricks||options.reducedMotion)return;
+      const arc=(p,r,start,sweep,color,width,alpha)=>{
+        const steps=Math.max(2,Math.ceil(Math.abs(sweep)/.14));
+        let last={x:p.x+Math.cos(start)*r,y:p.y+Math.sin(start)*r};
+        for(let i=1;i<=steps;i++){const a=start+sweep*i/steps,next={x:p.x+Math.cos(a)*r,y:p.y+Math.sin(a)*r};groundLine(g,last,next,color,width,alpha);last=next;}
+        return last;
+      };
+      const spin=w.tricks.spin;
+      if(spin&&spin.angle>.25&&spin.tier<2) {
+        const sweep=spin.direction*Math.min(Math.PI*2,spin.angle),color=spin.tier?P.purple:P.blue;
+        const end=arc(w.body,43,spin.startAngle,sweep,color,2,.65);
+        groundRing(g,end,2,P.light,1,.85);
+      }
+      if(w.tricks.slide) {
+        const speed=Math.hypot(w.body.vx,w.body.vy);
+        w.wheels.forEach((q,i)=>{const p=casterPose(w.body,q,i);groundLine(g,p,{x:p.x-w.body.vx/speed*13,y:p.y-w.body.vy/speed*13},P.sage,2,.4);});
+      }
+      for(const e of w.tricks.effects) {
+        const alpha=clamp(e.life/e.maxLife,0,1),progress=1-alpha;
+        if(e.kind==='near'){groundRing(g,e,4+progress*10,P.gold,2,alpha);groundLine(g,{x:e.x-4,y:e.y},{x:e.x+4,y:e.y},P.light,2,alpha);}
+        else if(e.kind==='half'||e.kind==='full')arc(e,43+progress*8,e.startAngle,e.direction*(e.kind==='full'?Math.PI*2:Math.PI),e.kind==='full'?P.purple:P.blue,2,alpha*.8);
+        else for(let i=0;i<3;i++)groundRing(g,{x:e.x-i*5,y:e.y-i*5},5+progress*5,P.sage,1,alpha*.6);
+      }
+    }
     function draw(g,w,background,options={}) {
       if(w.level.connected)return drawConnected(g,w,background,options);
       const preview=options.preview;
       g.save();g.imageSmoothingEnabled=false;g.clearRect(0,0,g.canvas.width,g.canvas.height);
       if(!preview&&options.shake&&!options.reducedMotion)g.translate(Math.round(Math.sin(w.time*99)*options.shake),Math.round(Math.cos(w.time*78)*options.shake));
       g.drawImage(background,0,0);spills(g,w.stock);shadows(g,w);routes(g,w);
+      if(!preview)trickFloor(g,w,options);
       for(const t of w.tracks)groundLocal(g,t,-2,-1,4,1,P.hairDark,t.life/3*.16);
       if(!preview) {
         const b=w.body,speed=Math.hypot(b.vx,b.vy);
@@ -652,6 +678,7 @@
       w._visible=visible;
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.dark,P.blue,.16));
       g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
+      if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
       for(const a of w.level.floorAreas)if(a.room===undefined) {
         groundPoly(g,quad(a.x,a.y,a.w,a.h,-5),P.hairDark);groundPoly(g,quad(a.x,a.y,a.w,a.h),P.gold);
         for(let u=0;u<a.w;u+=12)groundLine(g,{x:a.x+u,y:a.y},{x:a.x+u,y:a.y+a.h},P.cream,1,.45);
@@ -662,6 +689,7 @@
         g.drawImage(tile.canvas,dx,dy);
       }
       spills(g,w.stock);shadows(g,w);routes(g,w);
+      if(!options.preview)trickFloor(g,w,options);
       for(const t of w.tracks)if(visible(t))groundLocal(g,t,-2,-1,4,1,P.hairDark,t.life/3*.16);
       const scene=new Scene();doorway(scene,w);
       for(const p of w.level.portals)if(visible(p,150))doorway(scene,{exit:p,exitOpen:w.gate>=p.opensAt});

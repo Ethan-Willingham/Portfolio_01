@@ -16,6 +16,7 @@
   const ROOM = Object.freeze({ left: 8, right: 472, top: 8, bottom: 292, width: 480, height: 300 });
   const CHECKPOINT_RADIUS = 20;
   const Stock = typeof module !== 'undefined' && module.exports ? require('./four-wheels-stock.js') : root.CartStock;
+  const Tricks = typeof module !== 'undefined' && module.exports ? require('./four-wheels-tricks.js') : root.CartTricks;
 
   function point(body, x, y) {
     const c = Math.cos(body.a), s = Math.sin(body.a);
@@ -187,7 +188,7 @@
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
       this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
       this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0, leanX: 0, leanY: 0 };
-      this.time = 0; this.penalty = 0; this.messes = 0; this.gate = level.startGate||0;
+      this.time = 0; this.penalty = 0; this.bonus = 0; this.messes = 0; this.gate = level.startGate||0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
       this.shelves = level.shelves.map((s, i) => Stock.createShelf(s, i));
       this.objects = level.objects.map((o, i) => ({ ...o, id: i, vx: 0, vy: 0, a: i * 1.7, omega: 0, down: false, radius: o.kind === 'cone' ? 5.5 : 8, mass: o.kind === 'cone' ? 0.12 : 0.32 }));
@@ -200,6 +201,7 @@
       this.roomIndex=level.startRoom||0;this.safePose={...level.start};this.fall=null;this.falls=0;
       this.hazardEnabled=!!(level.connected||level.hazards?.length);
       this.stock = new Stock.System(this, { point, corners, casterPose, casterCorners, circleRect, cartCircle, casterCircle, BODY, CASTER });
+      this.tricks = new Tricks.System(this, {point,corners,casterCorners,BODY,Stock});
     }
 
     activeWalls() {
@@ -243,10 +245,14 @@
     roomAt(p) {
       return this.level.rooms?.find(r=>p.x>=r.x+8&&p.x<=r.x+472&&p.y>=r.y+8&&p.y<=r.y+292);
     }
-    emit(type, data = {}) { this.events.push({ type, ...data }); }
+    emit(type, data = {}) {
+      if(['mess','break','shelf-down','fall'].includes(type))this.trickHit=true;
+      this.events.push({ type, ...data });
+    }
     get exitOpen() { return this.gate === this.level.gates.length; }
     boundaryContact(rect, hit, part) {
       if (!rect.side) return;
+      this.trickHit=true;
       const old = this.boundaryContacts.find(c => c.side === rect.side && c.part === part);
       const contact = { side: rect.side, part, x: hit.x, y: hit.y, nx: hit.nx, ny: hit.ny, life: .32 };
       if (old) Object.assign(old, contact); else this.boundaryContacts.push(contact);
@@ -258,6 +264,8 @@
     }
 
     impulse(hit, other) {
+      this.trickHit=true;
+      if(other)this.tricks.block(other);
       const b = this.body, rx = hit.x - b.x, ry = hit.y - b.y;
       const center = other && { x: other.cx ?? other.x, y: other.cy ?? other.y };
       const qx = other ? hit.x - center.x : 0, qy = other ? hit.y - center.y : 0;
@@ -293,6 +301,8 @@
     }
 
     casterImpulse(hit, wheel, i, other) {
+      this.trickHit=true;
+      if(other)this.tricks.block(other);
       const b = this.body, { pivot } = casterPose(b, wheel, i);
       const px = pivot.x - b.x, py = pivot.y - b.y, qx = hit.x - pivot.x, qy = hit.y - pivot.y;
       const nx = hit.nx, ny = hit.ny;
@@ -359,8 +369,9 @@
       // Caller uses a 120 Hz fixed step. Clamp external steps to avoid tunneling.
       dt = clamp(dt, 0, 1 / 120);
       const b = this.body;
+      this.trickHit=false;
       this.time += dt;
-      if(this.fall){this.fallStep(dt);return;}
+      if(this.fall){this.fallStep(dt);this.tricks.step(dt,{},true);return;}
       this.walls = this.activeWalls();
       this.boundaryContacts.forEach(c => { c.life -= dt; });
       this.boundaryContacts = this.boundaryContacts.filter(c => c.life > 0);
@@ -498,6 +509,8 @@
       const room=this.roomAt(b);
       if(room&&room.index!==this.roomIndex){this.roomIndex=room.index;this.safePose={...room.spawn};this.emit('room',{index:room.index});}
       this.checkSupport();
+      const expired=!this.practice&&this.remaining<=0;
+      this.tricks.step(dt,input,this.trickHit||expired);
       if(this.fall){if(!this.practice&&this.remaining<=0){this.status='lost';this.emit('lost');}return;}
       const e = this.exit, shape = footprint(b, this.wheels), tangent = e.vertical ? b.y : b.x;
       const distance = p => (p.x - e.x) * e.nx + (p.y - e.y) * e.ny;
@@ -506,13 +519,13 @@
       const cleared = this.exitOpen && this.exitEntered && shape.every(p => distance(p) > 8);
       this.walls = this.activeWalls();
       // An expired clock cannot be rescued by finishing on the same step.
-      if (!this.practice && this.remaining <= 0) { this.status = 'lost'; this.emit('lost'); }
+      if (expired) { this.status = 'lost'; this.emit('lost'); }
       else if (cleared) { this.status = 'won'; this.emit('won'); }
     }
-    get remaining() { return Math.max(0, this.level.limit - this.time - this.penalty); }
+    get remaining() { return Math.max(0, this.level.limit - this.time - this.penalty + this.bonus); }
     get result() {
-      const elapsed = this.time + this.penalty;
-      return { time: elapsed, driving: this.time, penalty: this.penalty, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
+      const elapsed = Math.max(.1,this.time + this.penalty - this.bonus);
+      return { time: elapsed, driving: this.time, penalty: this.penalty, bonus: this.bonus, style: this.tricks.score, bestCombo: this.tricks.bestCombo, tricks: {...this.tricks.counts}, messes: this.messes, stars: this.messes === 0 && elapsed <= this.level.par ? 3 : this.messes <= 2 ? 2 : 1 };
     }
   }
   const api = { World, BODY, WHEELS, CASTER, ROOM, CHECKPOINT_RADIUS, cartTouchesCheckpoint, point, advanceGait, corners, casterPose, casterCorners, footprint, exitGeometry, boxContact, circleRect, cartCircle, casterCircle, wrap, clamp };

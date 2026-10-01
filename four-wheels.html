@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=17">
+  <link rel="stylesheet" href="four-wheels.css?v=18">
 </head>
 <body class="cart-page">
   <div class="site-wrapper">
@@ -105,11 +105,18 @@
               </div>
             </div>
             <div class="cart-toast" id="cart-toast" aria-hidden="true"></div>
+            <div class="cart-trick" id="cart-trick" aria-hidden="true" hidden>
+              <span class="cart-trick-symbol" id="cart-trick-symbol"></span>
+              <div class="cart-trick-copy"><span class="cart-kicker" id="cart-trick-kicker">Clean move</span><strong id="cart-trick-title"></strong><p><span id="cart-trick-points"></span><b id="cart-trick-credit"></b></p></div>
+              <span class="cart-trick-combo" id="cart-trick-combo" hidden></span>
+              <i class="cart-trick-life"></i>
+            </div>
             <p class="cart-live sr-only" id="cart-live" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
 
           <div class="cart-route-bar">
             <div class="cart-route-copy"><div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div><p id="cart-route">Touch circle 1 of 3 with any wheel</p></div>
+            <div class="cart-style" id="cart-style" aria-label="Style score"><span class="cart-kicker">Style</span><div><output id="cart-style-score">0</output><span id="cart-style-chain" hidden></span></div><i aria-hidden="true"></i></div>
             <button type="button" id="cart-retry">Retry <span>R</span></button>
           </div>
 
@@ -132,6 +139,7 @@
             <p>Get through the store before time runs out. Cones add two seconds to your time, loose boxes add three, and spilled shelves add five.</p>
             <p>In the first room, push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward.</p>
             <p>On a phone, use the two thumb pads. Slide the left pad sideways to rotate. Slide the right pad up to push or down to pull. Small movements give you a gentle nudge; slide farther for more force. Let go to coast, or hold the middle Brake button to slow down. You can push and turn together.</p>
+            <p>A close pass by a shelf or cone earns a Close call once you're safely clear. Keep rolling through a half turn for a 180, or finish the whole rotation for a 360. A sustained sideways coast earns a Power slide. Link clean moves within five seconds for a style multiplier, up to four times. Bumps and falls break the combo. Tricks return a little time to the clock, up to twelve seconds per trip. Spinning in place doesn't count.</p>
             <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch the wheels swing around; turn while moving and each one follows a different curve. You can see them through the basket.</p>
             <p>The thin line ahead of the cart shows where you're moving. The basket shows where you're facing. Those directions can be very different. The map edge and your outline turn red when the basket, a wheel, or you touch the boundary.</p>
             <p>Touch the numbered circles in order with any of the four tires. The tire itself counts, including its edges, as it swivels around the gold pin. Clear a room's markers to open the next door. Keep driving. The same cart, momentum, and mess carry through the corridors until the final checkout.</p>
@@ -149,11 +157,12 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=17"></script>
-  <script src="js/four-wheels-physics.js?v=17"></script>
-  <script src="js/four-wheels-levels.js?v=17"></script>
-  <script src="js/four-wheels-view.js?v=17"></script>
-  <script src="js/four-wheels.js?v=17"></script>
+  <script src="js/four-wheels-stock.js?v=18"></script>
+  <script src="js/four-wheels-tricks.js?v=18"></script>
+  <script src="js/four-wheels-physics.js?v=18"></script>
+  <script src="js/four-wheels-levels.js?v=18"></script>
+  <script src="js/four-wheels-view.js?v=18"></script>
+  <script src="js/four-wheels.js?v=18"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

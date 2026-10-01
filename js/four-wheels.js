@@ -17,7 +17,7 @@
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
   const swatches = [P.coral, P.blue, P.gold, P.sage, P.clay, P.purple];
-  const STORAGE = 'four-wheels-records-v5';
+  const STORAGE = 'four-wheels-records-v6';
   let records = [], canSave = true;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
@@ -26,6 +26,7 @@
   let levelIndex = 0, world = new World(levels.journey(0)), phase = 'ready', floor;
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
   let particles = [], screenShake = 0, pickerReturn = 'ready';
+  let trickLife=0, trickDuration=0;
   let keys = new Set(), touches = new Map(), pseudoFullscreen = false;
   const thumbPads = [...game.querySelectorAll('[data-axis]')];
   const touchMode = window.matchMedia('(any-pointer: coarse)');
@@ -167,11 +168,37 @@
     screenShake = Math.max(0, screenShake - dt * 7);
     toastLife -= dt;
     if (toastLife <= 0) $('toast').classList.remove('is-visible');
+    trickLife=Math.max(0,trickLife-dt);
+    $('trick').style.setProperty('--trick-life',trickDuration?trickLife/trickDuration:0);
+    if(!trickLife)$('trick').hidden=true;
     for (const p of particles) {
       p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.omega * dt;
       p.vx *= Math.exp(-1.5 * dt); p.vy *= Math.exp(-1.5 * dt);
+      if(p.vz!==undefined){p.z=Math.max(0,p.z+p.vz*dt);p.vz-=80*dt;}
     }
     particles = particles.filter(p => p.life > 0);
+  }
+  function trickCard(e) {
+    const broken=e.type==='combo-break',card=$('trick');
+    const color=broken?P.coral:e.kind==='full'?P.purple:e.kind==='half'?P.blue:e.kind==='slide'?P.sage:P.gold;
+    card.style.setProperty('--trick-color',color);card.style.setProperty('--trick-life',1);
+    $('trick-symbol').textContent=broken?'X':e.kind==='half'?'180':e.kind==='full'?'360':e.kind==='slide'?'SLIDE':'CLOSE';
+    $('trick-kicker').textContent=broken?'Keep rolling':e.upgrade?'Full rotation':e.combo>1?'Clean combo':'Clean move';
+    $('trick-title').textContent=broken?'Combo broken':e.name;
+    $('trick-points').textContent=broken?'Banked style kept':'+'+e.points+' style';
+    $('trick-credit').textContent=broken||!e.seconds?'':'+'+e.seconds+'s';
+    $('trick-combo').textContent='x'+e.combo;$('trick-combo').hidden=broken||e.combo<2;
+    trickLife=trickDuration=broken?1.1:e.kind==='full'?2.3:1.8;
+    card.hidden=false;card.classList.remove('is-new');void card.offsetWidth;card.classList.add('is-new');
+    announce(broken?'Combo broken. Banked style kept.':e.name+', '+e.points+' style'+(e.seconds?', '+e.seconds+' seconds back':'')+(e.combo>1?', combo times '+e.combo:''));
+    if(!broken&&!reducedMotion.matches) {
+      const first=particles.length;burst(e.x,e.y,e.kind==='full'?22:10,[color,P.gold,P.cream]);
+      particles.slice(first).forEach((p,i)=>{p.vz=24+i%5*5;p.life=.85;p.z=3;});
+      if(e.kind==='full')screenShake=Math.max(screenShake,.5);
+    }
+    if(broken){sound.note(180,.12,.025,0,'triangle',110);return;}
+    const tones=e.kind==='full'?[523,659,784,1047]:e.kind==='half'?[440,660,880]:e.kind==='slide'?[392,523]:[660,880];
+    tones.forEach((f,i)=>sound.note(f,.12,.025,i*.055));
   }
   function events() {
     for (const e of world.events.splice(0)) {
@@ -187,6 +214,7 @@
       if(e.type==='room'){notify('Room '+(e.index+1)+' / '+levels[e.index].name);sound.note(520,.12,.025);}
       if(e.type==='fall'){notify((e.kind==='lake'?'In the lake':'Over the edge')+(world.practice?'':' / +8 seconds'));sound.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);}
       if(e.type==='respawn')notify('Back at the room entrance. Keep rolling.');
+      if(e.type==='trick'||e.type==='combo-break')trickCard(e);
       if (e.type === 'won' || e.type === 'lost') finish(e.type === 'won');
     }
   }
@@ -199,7 +227,11 @@
     $('clock-fill').style.setProperty('--clock', world.practice ? 1 : clamp(world.remaining / world.level.limit, 0, 1));
     $('messes').textContent = world.messes;
     $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.messes > 0);
-    $('penalty').textContent = '+' + world.penalty + 's';
+    $('penalty').textContent = '+' + world.penalty + 's'+(world.bonus?' / -'+world.bonus+'s':'');
+    $('style-score').textContent=world.tricks.score>=10000?(world.tricks.score/1000).toFixed(1)+'k':world.tricks.score.toLocaleString('en-US');
+    $('style-chain').textContent='x'+world.tricks.combo;$('style-chain').hidden=world.tricks.combo<2;
+    $('style').style.setProperty('--chain-life',world.tricks.chainLife/CartTricks.COMBO_WINDOW);
+    $('style').setAttribute('aria-label',world.tricks.score+' style points, best combo times '+world.tricks.bestCombo+(world.bonus?', '+world.bonus+' seconds earned':''));
     const room=world.level.rooms?.[world.roomIndex]||world.level;
     const roomGates=world.level.gates.map((p,i)=>({p,i})).filter(q=>q.p.room===undefined||q.p.room===world.roomIndex);
     if($('route-steps').children.length!==roomGates.length+1||$('route-steps').dataset.room!==String(world.roomIndex)) {
@@ -239,6 +271,7 @@
   function reset(index = levelIndex) {
     if (raf) cancelAnimationFrame(raf); raf = 0;
     clearInput(); levelIndex = index; world = new World(levels.journey(index), $('practice').checked);
+    trickLife=0;$('trick').hidden=true;
     phase = 'ready'; particles = []; screenShake = 0; toastLife = 0;
     $('toast').classList.remove('is-visible'); $('picker').hidden = true; $('result').hidden = true;
     floor = makeFloor(world.level);
@@ -273,8 +306,9 @@
       const marks = document.createElement('div'); marks.className = 'cart-marks'; marks.setAttribute('aria-label', r.stars + ' of 3 marks');
       for (let i = 0; i < 3; i++) { const mark = document.createElement('i'); mark.className = i < r.stars ? 'is-earned' : ''; marks.append(mark); }
       const time = document.createElement('strong'); time.textContent = timeString(world.practice ? world.time : r.time, true);
-      const detail = document.createElement('span'); detail.textContent = r.messes + (r.messes === 1 ? ' mishap' : ' mishaps') + (world.practice ? '' : ' / ' + timeString(r.driving, true) + ' driving + ' + r.penalty + 's penalties');
-      if (!world.practice) result.append(marks); result.append(time, detail); result.hidden = false;
+      const detail = document.createElement('span'); detail.textContent = r.messes + (r.messes === 1 ? ' mishap' : ' mishaps') + (world.practice ? '' : ' / ' + timeString(r.driving, true) + ' driving + ' + r.penalty + 's penalties - '+r.bonus+'s tricks');
+      const style=document.createElement('span');style.textContent=r.style.toLocaleString('en-US')+' style / best combo x'+r.bestCombo+' / '+r.tricks.near+' close calls, '+r.tricks.half+' half turns, '+r.tricks.full+' full turns, '+r.tricks.slide+' slides';
+      if (!world.practice) result.append(marks); result.append(time, detail,style); result.hidden = false;
     } else {
       $('result').hidden = true;
       overlay('The store is closed', 'Out of time', 'Try an earlier turn and a shorter push. You can also switch to untimed practice.', 'Try again', 'Untimed practice');
