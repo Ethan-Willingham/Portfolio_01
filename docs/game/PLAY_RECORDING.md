@@ -30,7 +30,13 @@ A sample reports `partial` and `skippedPasses` if that limit or existing timesta
 writes prevent complete coverage. Unsupported devices retain all CPU, input,
 state, and pacing data. GPU samples omit WebGL execution and browser composition.
 CPU buckets include command submission, overlap with parent buckets, and must
-not be added together. Sampled GPU pass sums are not whole-frame GPU times.
+not be added together. Sampled GPU pass sums are not whole-frame GPU times. Since
+v28.133, each pass retains beginning/end timestamp strings and each encoder
+retains `spanMs`, the interval from its first to last valid timestamp. This
+includes gaps between passes but excludes queue wait and other encoders.
+Empty indirect timestamps remain in raw data; invalid samples are partial.
+The trace reader groups liquid spans by actual scheduler quanta and grain
+ticks, rather than comparing catch-up frames as if their work were equal.
 
 Frame storage uses packed Float32 chunks, bounded at 72,000 frames or ten minutes.
 The capture stops at the first limit and remains available under Save recording.
@@ -86,3 +92,14 @@ this diagnostic and verifies that every retained particle type is snow:
 ```sh
 DUMP=/tmp/sluice-dry WATER=0 DURATION_MS=90000 node tools/perf/test-ordinary-game.mjs
 ```
+
+
+The capacity tools also support `COUNT_BODY_WORK=1` in an ordinary background
+capture without a population fixture. This counts actual internal body calls,
+point and spring steps, active/solving bodies and onscreen bodies. It retains
+the natural residents, weather, water and stock smoke. `capacity.controlled`
+is false for these captures. The counter is test-only and adds no per-call
+clock reads. The existing recorder `visibleResidents` field uses the
+expanded jello culling region; the body-work probe counts actual viewport
+intersection separately. See [SLIME_SNOW_CAPACITY.md](SLIME_SNOW_CAPACITY.md) for the serial
+matrix and one-window native runner.

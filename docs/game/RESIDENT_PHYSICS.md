@@ -782,3 +782,20 @@ water, snowfall, and the five natural residents, with no pauses or browser/shade
 errors. This is a separate trajectory and still does not prove 120 FPS. The
 harness now requires successful gameplay frames and rejects a failed loading
 screen instead of accepting an empty capture.
+
+
+### v28.133 capacity measurements and skin bounds
+
+Strictly disjoint skin-edge bounds now return before the redundant intent
+intersection test. Touching bounds keep the complete proper-crossing and
+collinear-overlap checks. The final bundle matches the privately tested
+candidate, apart from its version. The change passed 315,792 geometry checks,
+30 production trajectories and the existing 18,216 skin/terrain correction
+comparisons. Hard circular sky slimes and snow physics are unchanged.
+
+Fixed nominal-step slime CPU savings were about 0.9% for five bodies and
+3.5% for 64. Five-body whole-game comparisons overlapped, so no larger native
+120 FPS capacity is claimed. The separate snow, slime and combined service
+sweeps expose extra physics catch-up and GPU costs, with AC repeats and
+actual body-work coverage. See [SLIME_SNOW_CAPACITY.md](SLIME_SNOW_CAPACITY.md)
+for conditions, tables, rejected candidates and pending foreground validation.

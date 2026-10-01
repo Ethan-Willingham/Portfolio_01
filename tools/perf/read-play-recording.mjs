@@ -39,14 +39,28 @@ const worst = [...active].sort((a, b) => a.fps - b.fps).slice(0, 12).map(s => ({
   fps: s.fps, cpuMs: s.cpuMs, maxIntervalMs: s.maxIntervalMs, snow: s.state.snowActive,
   awakeSlimes: s.state.awakeResidents, jet: s.state.jet, holding: s.state.holding, bath: s.state.bath,
   topCPU: s.topCPU.slice(0, 5) }));
-const gpu = {};
-for (const sample of trace.gpu) for (const pass of sample.passes) {
-  const name = sample.name + '/' + pass.name; (gpu[name] ||= []).push(pass.ms);
+const gpu = {}, gpuEncoders = {};
+for (const sample of trace.gpu) {
+  const quanta = sample.passes.filter(pass => pass.name === 'liquid.g2p').length;
+  const grainTicks = sample.passes.filter(pass => pass.name === 'snow.predict').length;
+  const key = sample.name === 'liquid.frame' ? sample.name + ': ' + quanta + ' quanta / ' + grainTicks + ' grain ticks' : sample.name;
+  const group = gpuEncoders[key] ||= { samples: 0, partial: 0, sums: [], spans: [] };
+  group.samples++; group.partial += !!sample.partial;
+  if (sample.partial) continue;
+  if (Number.isFinite(sample.ms)) group.sums.push(sample.ms);
+  if (Number.isFinite(sample.spanMs)) group.spans.push(sample.spanMs);
+  for (const pass of sample.passes) {
+    const name = sample.name + '/' + pass.name; (gpu[name] ||= []).push(pass.ms);
+  }
 }
 console.log(JSON.stringify({ version: trace.version, durationSeconds: trace.durationMs / 1000,
   frames: trace.frameCount, reason: trace.reason, metrics: Object.fromEntries(Object.entries(metrics).map(([k, v]) => [k, distribution(v)])),
   worstSeconds: worst, largestHitches: hitches.sort((a, b) => b.intervalMs - a.intervalMs).slice(0, 20),
   cpuAverage: Object.entries(cpu).map(([name, total]) => ({ name, ms: total / trace.frameCount })).sort((a, b) => b.ms - a.ms).slice(0, 16),
   gpu: Object.entries(gpu).map(([name, values]) => ({ name, samples: values.length, ...distribution(values) })).sort((a, b) => b.mean - a.mean).slice(0, 20),
+  gpuEncoders: Object.entries(gpuEncoders).map(([name, group]) => ({ name, samples: group.samples, partial: group.partial,
+    passSumMs: group.sums.length ? distribution(group.sums) : null,
+    spanSamples: group.spans.length, spanMs: group.spans.length ? distribution(group.spans) : null })),
+  gpuLimitations: 'Sparse encoders exclude queue wait, WebGL smoke and composition. Span includes pass gaps. Older traces have no span; partial samples are excluded from cost distributions.',
   gpuStatus: trace.gpuStatus, dropped: { events: trace.droppedEvents, gpu: trace.droppedGPU, buckets: trace.droppedBuckets },
   notes: trace.metadata.notes }, null, 2));

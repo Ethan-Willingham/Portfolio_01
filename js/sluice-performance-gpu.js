@@ -135,12 +135,22 @@
         mapping.then(function () {
           if (sample.disposed) return;
           var times = new BigUint64Array(sample.read.getMappedRange()), passes = [], total = 0;
+          var first = null, last = 0n, invalid = false;
           for (var i = 0; i < sample.names.length; i++) {
-            var ms = Number(times[i * 2 + 1] - times[i * 2]) / 1e6;
-            total += ms; passes.push({ name: sample.names[i], ms: ms });
+            var begin = times[i * 2], end = times[i * 2 + 1];
+            // Empty indirect dispatches can return zero timestamps. Retain
+            // them in the raw rows, excluding them from the encoder span.
+            var valid = begin > 0n && end >= begin;
+            var ms = valid ? Number(end - begin) / 1e6 : 0;
+            if (begin !== 0n || end !== 0n) invalid = invalid || !valid;
+            if (valid) { if (first === null || begin < first) first = begin; if (end > last) last = end; }
+            total += ms; passes.push({ name: sample.names[i], ms: ms,
+              beginNs: begin.toString(), endNs: end.toString(), emptyTimestamp: begin === 0n && end === 0n });
           }
           rows.push({ name: sample.label, at: sample.at, submittedAt: sample.submittedAt, completedAt: performance.now(),
-            frameId: sample.frameId, skippedPasses: sample.skippedPasses, partial: sample.skippedPasses > 0, ms: total, passes: passes });
+            frameId: sample.frameId, skippedPasses: sample.skippedPasses, partial: sample.skippedPasses > 0 || invalid,
+            invalidTimestamp: invalid, ms: total, spanMs: first === null ? null : Number(last - first) / 1e6,
+            spanIncludesPassGaps: true, passes: passes });
           if (rows.length > 128) rows.shift();
         }).catch(error).finally(function () { dispose(sample); });
       });

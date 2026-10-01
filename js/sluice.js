@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.132';
+  var GAME_VERSION = 'v28.133';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -70599,12 +70599,10 @@
       for (var c = a + 2; c < n; c++) {
         if (a === 0 && c === n - 1) continue;
         var q0 = ring[c], q1 = ring[(c + 1) % n];
-        // Disjoint or merely touching axis bounds cannot cross properly.
-        if ((px[q0] <= left && px[q1] <= left) || (px[q0] >= right && px[q1] >= right) ||
-            (py[q0] <= top && py[q1] <= top) || (py[q0] >= bottom && py[q1] >= bottom)) {
-          if (intentMode && softIntentEdgesOverlap(b, p0, p1, q0, q1)) return true;
-          continue;
-        }
+        // Strictly disjoint bounds also exclude collinear intent overlap.
+        // Touching bounds retain the existing proper-crossing/overlap test.
+        if ((px[q0] < left && px[q1] < left) || (px[q0] > right && px[q1] > right) ||
+            (py[q0] < top && py[q1] < top) || (py[q0] > bottom && py[q1] > bottom)) continue;
         if (softContactEdgesCross(b, p0, p1, q0, q1)) return true;
       }
     }
