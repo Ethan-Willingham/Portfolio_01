@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.75';
+  var VERSION = 'v1.76';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {

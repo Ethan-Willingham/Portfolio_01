@@ -33,7 +33,7 @@
     ants: {
       name: 'Ant colony', summary: 'Find food. Leave a trail. Bring the colony with you.',
       source: ['NetLogo: Ants', 'https://ccl.northwestern.edu/netlogo/models/Ants'],
-      about: 'Scouts explore with persistent, noisy headings. Food carriers leave food scent; scouts leave home scent. Three forward sensors steer toward food scent, which spreads and evaporates. Carriers remember breadcrumbs from their own outward trip and retrace them, skipping a bend only when the shortcut is clear. They use home scent and a nest bearing if those memories are blocked or run out. Walls block movement and scent. This educational model adds route memory and a separate home signal to the NetLogo-inspired foraging rule. It does not compute a global shortest path.',
+      about: 'Scouts explore with persistent, noisy headings. Food carriers leave food scent; scouts leave home scent. Three forward sensors steer toward food scent, which spreads and evaporates. Carriers remember breadcrumbs from their own outward trip and retrace them, skipping a bend only when the shortcut is clear. They use home scent and a nest bearing if those memories are blocked or run out. Walls block movement and scent. The habitat fits the view; ants turn inward near its edge. Distances use the same scale in both directions. This educational model adds route memory and a separate home signal to the NetLogo-inspired foraging rule. It does not compute a global shortest path.',
       tools: [['view','Pan / zoom'],['food','Place or refill food'],['move','Move food or nest'],['wall','Draw a wall'],['cut','Erase scent'],['erase','Erase wall or food'],['inspect','Follow an ant']],
       presets: [['forage','Open foraging'],['detour','Around the wall'],['scarce','Two routes']],
       rules: [['following','Follow food scent',0,3,.1],['evaporation','Scent fades',.1,2,.1],['deposit','Leave scent',0,2,.1],['exploration','Explore new ground',0,2,.1]],
@@ -77,7 +77,8 @@
       this.n=this.def.count[small?1:0];
       for(const key of ['x','y','z','vx','vy','vz','a','phase','rate','light','ax','ay','az','trip','wander'])this[key]=F(this.n);
       this.carry=new Uint8Array(this.n);this.species=new Uint8Array(this.n);this.neighbors=new Uint8Array(this.n);
-      this.size=id==='ants'?(small?112:160):1;this.field=F(this.size**2);this.home=F(this.field.length);this.temp=F(this.field.length);this.wallMask=new Uint8Array(this.field.length);
+      this.size=id==='ants'?(small?112:160):1;this.geometry(id==='ants'?settings.aspect||1:1);
+      this.field=F(this.cols*this.rows);this.home=F(this.field.length);this.temp=F(this.field.length);this.wallMask=new Uint8Array(this.field.length);
       this.grid=new Grid(this.n);this.nearest=new Int32Array(7);this.distances=F(7);
       this.routeLimit=id==='ants'?160:0;this.routeX=F(this.n*this.routeLimit);this.routeY=F(this.routeX.length);this.routeCount=new Uint16Array(this.n);
       this.init();
@@ -86,19 +87,19 @@
       }
       if(id==='ants'&&settings.nest)this.nest={x:clamp(+settings.nest.x||.2,.04,.96),y:clamp(+settings.nest.y||.5,.04,.96)};
       if(Array.isArray(settings.food))this.food=settings.food.slice(0,24).map(f=>({x:clamp(+f.x||0,.04,.96),y:clamp(+f.y||0,.04,.96),capacity:clamp(+f.capacity||+f.amount||600,1,2000),amount:clamp(+f.capacity||+f.amount||600,1,2000)}));
-      if(Array.isArray(settings.walls))this.walls=settings.walls.slice(0,180).map(w=>({x:clamp(+w.x||0,0,1),y:clamp(+w.y||0,0,1),z:clamp(Number.isFinite(w.z)?w.z:.5,0,1),r:clamp(+w.r||.018,.008,.12)}));
+      if(Array.isArray(settings.walls))this.walls=settings.walls.slice(0,180).map(w=>({x:clamp(+w.x||0,0,1),y:clamp(+w.y||0,0,1),z:clamp(Number.isFinite(w.z)?w.z:.5,0,1),r:clamp(+w.r||.018,.008,.12),...(Number.isFinite(w.ex)&&Number.isFinite(w.ey)?{ex:clamp(w.ex,0,1),ey:clamp(w.ey,0,1)}:{})}));
       if(id==='boids'&&settings.predator)this.setPredator(settings.predator.x,settings.predator.y,settings.predator.z);
       this.rebuildWalls();
-      if(id==='ants')for(let i=0;i<this.n;i++){this.x[i]=this.nest.x+(this.random()-.5)*.024;this.y[i]=this.nest.y+(this.random()-.5)*.024;this.routeX[i*this.routeLimit]=this.x[i];this.routeY[i*this.routeLimit]=this.y[i];this.routeCount[i]=1;}
+      if(id==='ants')for(let i=0;i<this.n;i++){this.x[i]=this.nest.x+(this.random()-.5)*.024/this.spanX;this.y[i]=this.nest.y+(this.random()-.5)*.024/this.spanY;this.routeX[i*this.routeLimit]=this.x[i];this.routeY[i*this.routeLimit]=this.y[i];this.routeCount[i]=1;}
     }
     init() {
       const random=this.random;
       if(this.id==='ants'){
         this.nest={x:.18,y:.5};this.food=[{x:.76,y:.22,amount:900,capacity:900},{x:.83,y:.57,amount:900,capacity:900},{x:.68,y:.84,amount:900,capacity:900}];
-        if(this.preset==='detour')for(let y=.18;y<.79;y+=.02)this.walls.push({x:.5,y,r:.016});
+        if(this.preset==='detour')for(let y=.18;y<.79;y+=.02)this.walls.push({x:.5,y,r:.016,ex:.5,ey:Math.max(.18,y-.02)});
         if(this.preset==='scarce'){
           this.food=[{x:.84,y:.5,amount:1800,capacity:1800}];
-          for(let y=.29;y<.73;y+=.02)this.walls.push({x:.5,y,r:.016});
+          for(let y=.29;y<.73;y+=.02)this.walls.push({x:.5,y,r:.016,ex:.5,ey:Math.max(.29,y-.02)});
         }
       }else if(this.preset==='chaos')Object.assign(this.p,{alignment:0,cohesion:.15});
       for(let i=0;i<this.n;i++){
@@ -121,38 +122,65 @@
       return w;
     }
     configuration() {
-      return {id:this.id,seed:this.seed,preset:this.preset,p:{...this.p},food:this.food.map(f=>({...f,amount:f.capacity})),walls:this.walls.map(w=>({...w})),nest:this.nest?{...this.nest}:undefined,predator:this.predator?{x:this.predator.x,y:this.predator.y,z:this.predator.z}:null};
+      return {id:this.id,seed:this.seed,preset:this.preset,aspect:this.aspect,p:{...this.p},food:this.food.map(f=>({...f,amount:f.capacity})),walls:this.walls.map(w=>({...w})),nest:this.nest?{...this.nest}:undefined,predator:this.predator?{x:this.predator.x,y:this.predator.y,z:this.predator.z}:null};
     }
-    cell(x,y) { const n=this.size;return clamp(y*n|0,0,n-1)*n+clamp(x*n|0,0,n-1); }
-    blocked(x,y) {return x<.008||x>.992||y<.008||y>.992||!!this.wallMask[this.cell(x,y)];}
+    geometry(aspect) {
+      this.aspect=Number.isFinite(aspect)?clamp(aspect,.02,50):1;
+      this.spanX=Math.max(1,this.aspect);this.spanY=Math.max(1,1/this.aspect);
+      this.cols=Math.min(512,Math.round(this.size*this.spanX));this.rows=Math.min(512,Math.round(this.size*this.spanY));
+    }
+    setAspect(aspect) {
+      if(this.id!=='ants'||Math.abs(this.aspect-aspect)<.0001)return;
+      this.linkWalls();
+      const cols=this.cols,rows=this.rows,oldFood=this.field,oldHome=this.home;
+      this.geometry(aspect);this.field=F(this.cols*this.rows);this.home=F(this.field.length);this.temp=F(this.field.length);this.wallMask=new Uint8Array(this.field.length);
+      // Keep scent at its normalized place when the viewport changes shape.
+      for(let y=0;y<this.rows;y++)for(let x=0;x<this.cols;x++){
+        const xx=clamp((x+.5)*cols/this.cols-.5,0,cols-1),yy=clamp((y+.5)*rows/this.rows-.5,0,rows-1),x0=xx|0,y0=yy|0,x1=Math.min(x0+1,cols-1),y1=Math.min(y0+1,rows-1),fx=xx-x0,fy=yy-y0,k=y*this.cols+x;
+        for(const [src,dst]of [[oldFood,this.field],[oldHome,this.home]])dst[k]=(src[y0*cols+x0]*(1-fx)+src[y0*cols+x1]*fx)*(1-fy)+(src[y1*cols+x0]*(1-fx)+src[y1*cols+x1]*fx)*fy;
+      }
+      this.rebuildWalls();
+    }
+    distance(dx,dy) {return Math.hypot(dx*this.spanX,dy*this.spanY);}
+    linkWalls() {
+      for(let i=1;i<this.walls.length;i++){const w=this.walls[i],p=this.walls[i-1];if(w.ex===undefined&&this.distance(w.x-p.x,w.y-p.y)<w.r+p.r){w.ex=p.x;w.ey=p.y;}}
+    }
+    wallDistance(w,x,y) {
+      const dx=((w.ex??w.x)-w.x)*this.spanX,dy=((w.ey??w.y)-w.y)*this.spanY,px=(x-w.x)*this.spanX,py=(y-w.y)*this.spanY,t=clamp((px*dx+py*dy)/(dx*dx+dy*dy||1),0,1);
+      return Math.hypot(px-t*dx,py-t*dy);
+    }
+    cell(x,y) {return clamp(y*this.rows|0,0,this.rows-1)*this.cols+clamp(x*this.cols|0,0,this.cols-1);}
+    blocked(x,y) {return x<.008/this.spanX||x>1-.008/this.spanX||y<.008/this.spanY||y>1-.008/this.spanY||!!this.wallMask[this.cell(x,y)];}
     rebuildWalls() {
       if(this.id!=='ants')return;
-      const n=this.size;this.wallMask.fill(0);
-      for(const wall of this.walls)for(let y=Math.max(0,(wall.y-wall.r)*n|0);y<=Math.min(n-1,(wall.y+wall.r)*n|0);y++)
-        for(let x=Math.max(0,(wall.x-wall.r)*n|0);x<=Math.min(n-1,(wall.x+wall.r)*n|0);x++)
-          if(Math.hypot((x+.5)/n-wall.x,(y+.5)/n-wall.y)<wall.r+.004)this.wallMask[y*n+x]=1;
+      const {cols,rows,spanX,spanY}=this;this.wallMask.fill(0);this.linkWalls();
+      for(const wall of this.walls){const r=wall.r+.004;
+        for(let y=Math.max(0,(Math.min(wall.y,wall.ey??wall.y)-r/spanY)*rows|0);y<=Math.min(rows-1,(Math.max(wall.y,wall.ey??wall.y)+r/spanY)*rows|0);y++)
+          for(let x=Math.max(0,(Math.min(wall.x,wall.ex??wall.x)-r/spanX)*cols|0);x<=Math.min(cols-1,(Math.max(wall.x,wall.ex??wall.x)+r/spanX)*cols|0);x++)
+            if(this.wallDistance(wall,(x+.5)/cols,(y+.5)/rows)<r)this.wallMask[y*cols+x]=1;
+      }
       for(let k=0;k<this.field.length;k++)if(this.wallMask[k])this.field[k]=this.home[k]=0;
       for(let i=0;i<this.n;i++)if(this.blocked(this.x[i],this.y[i])){
         let found=false;
         for(let r=1;r<24&&!found;r++)for(let a=0;a<16;a++){
-          const x=this.x[i]+Math.cos(a*TAU/16)*r/n,y=this.y[i]+Math.sin(a*TAU/16)*r/n;
+          const x=this.x[i]+Math.cos(a*TAU/16)*r/this.size/spanX,y=this.y[i]+Math.sin(a*TAU/16)*r/this.size/spanY;
           if(!this.blocked(x,y)){this.x[i]=x;this.y[i]=y;found=true;break;}
         }
       }
     }
     sample(x,y,field=this.field) {return this.blocked(x,y)?0:field[this.cell(x,y)];}
     diffuse(decay,field=this.field) {
-      const n=this.size,mask=this.wallMask,temp=this.temp;
-      for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-        const k=y*n+x;if(mask[k]){temp[k]=0;continue;}const v=field[k];let sum=0,count=0;
-        if(x>0&&!mask[k-1]){sum+=field[k-1];count++;}if(x<n-1&&!mask[k+1]){sum+=field[k+1];count++;}
-        if(y>0&&!mask[k-n]){sum+=field[k-n];count++;}if(y<n-1&&!mask[k+n]){sum+=field[k+n];count++;}
-        temp[k]=Math.max(0,(v+(sum-count*v)*.06)*(1-decay));
+      const {cols,rows,wallMask:mask,temp}=this,wx=.06*(cols/(this.size*this.spanX))**2,wy=.06*(rows/(this.size*this.spanY))**2;
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        const k=y*cols+x;if(mask[k]){temp[k]=0;continue;}const v=field[k];let flux=0;
+        if(x>0&&!mask[k-1])flux+=(field[k-1]-v)*wx;if(x<cols-1&&!mask[k+1])flux+=(field[k+1]-v)*wx;
+        if(y>0&&!mask[k-cols])flux+=(field[k-cols]-v)*wy;if(y<rows-1&&!mask[k+cols])flux+=(field[k+cols]-v)*wy;
+        temp[k]=Math.max(0,(v+flux)*(1-decay));
       }
       field.set(temp);
     }
     clearLine(x,y,xx,yy) {
-      const steps=Math.ceil(Math.hypot(xx-x,yy-y)*this.size*1.5);
+      const steps=Math.ceil(Math.max(Math.abs(xx-x)*this.cols,Math.abs(yy-y)*this.rows)*1.5);
       for(let i=1;i<=steps;i++)if(this.blocked(x+(xx-x)*i/steps,y+(yy-y)*i/steps))return false;
       return true;
     }
@@ -211,49 +239,61 @@
       }
     }
     antsStep(dt) {
-      const random=this.random,nest=this.nest;
+      const random=this.random,nest=this.nest,sx=this.spanX,sy=this.spanY;
       for(let i=0;i<this.n;i++){
         let x=this.x[i],y=this.y[i],a=this.a[i],base=i*this.routeLimit,count=this.routeCount[i];
         const returning=this.carry[i]!==0;
         if(returning){
-          if(Math.hypot(x-nest.x,y-nest.y)<.027){
+          if(this.distance(x-nest.x,y-nest.y)<.027){
             if(this.carry[i]===1)this.delivered++;this.carry[i]=0;this.trip[i]=0;this.routeCount[i]=1;this.routeX[base]=x;this.routeY[base]=y;this.a[i]=a+Math.PI+(random()-.5);continue;
           }
-          while(count>1&&Math.hypot(x-this.routeX[base+count-1],y-this.routeY[base+count-1])<.017)count--;
+          while(count>1&&this.distance(x-this.routeX[base+count-1],y-this.routeY[base+count-1])<.017)count--;
           // Only skip remembered waypoints if the physical shortcut is clear.
           if(this.steps%6===0&&count>3)for(let skip=Math.min(6,count-1);skip>1;skip--){const j=base+count-skip;if(this.clearLine(x,y,this.routeX[j],this.routeY[j])){count-=skip-1;break;}}
           this.routeCount[i]=count;
           let tx=count>1?this.routeX[base+count-1]:nest.x,ty=count>1?this.routeY[base+count-1]:nest.y;
           if(this.blocked(tx,ty)){this.routeCount[i]=Math.max(1,count-1);tx=nest.x;ty=nest.y;}
-          a+=clamp(turn(Math.atan2(ty-y,tx-x)-a),-.22,.22);
-          if(count<=1||this.blocked(tx,ty)){const look=.025,l=this.sample(x+Math.cos(a-.6)*look,y+Math.sin(a-.6)*look,this.home),r=this.sample(x+Math.cos(a+.6)*look,y+Math.sin(a+.6)*look,this.home);a+=clamp((r-l)/(Math.max(r,l)+.1)*.18,-.18,.18);}
+          a+=clamp(turn(Math.atan2((ty-y)*sy,(tx-x)*sx)-a),-.22,.22);
+          if(count<=1||this.blocked(tx,ty)){const look=.025,l=this.sample(x+Math.cos(a-.6)*look/sx,y+Math.sin(a-.6)*look/sy,this.home),r=this.sample(x+Math.cos(a+.6)*look/sx,y+Math.sin(a+.6)*look/sy,this.home);a+=clamp((r-l)/(Math.max(r,l)+.1)*.18,-.18,.18);}
           if(this.carry[i]===1)this.field[this.cell(x,y)]=Math.min(120,this.field[this.cell(x,y)]+this.p.deposit*5*Math.exp(-this.trip[i]*.08));
         }else{
           let picked=false;
-          for(const f of this.food)if(f.amount>0&&Math.hypot(x-f.x,y-f.y)<.043){f.amount--;this.carry[i]=1;this.trip[i]=0;a+=Math.PI;picked=true;break;}
+          for(const f of this.food)if(f.amount>0&&this.distance(x-f.x,y-f.y)<.043){f.amount--;this.carry[i]=1;this.trip[i]=0;a+=Math.PI;picked=true;break;}
           if(picked){this.a[i]=a;continue;}
-          const look=.023,sensor=.58,left=this.sample(x+Math.cos(a-sensor)*look,y+Math.sin(a-sensor)*look),front=this.sample(x+Math.cos(a)*look,y+Math.sin(a)*look),right=this.sample(x+Math.cos(a+sensor)*look,y+Math.sin(a+sensor)*look);
+          const look=.023,sensor=.58,left=this.sample(x+Math.cos(a-sensor)*look/sx,y+Math.sin(a-sensor)*look/sy),front=this.sample(x+Math.cos(a)*look/sx,y+Math.sin(a)*look/sy),right=this.sample(x+Math.cos(a+sensor)*look/sx,y+Math.sin(a+sensor)*look/sy);
           const strongest=Math.max(left,front,right),bias=strongest>.07?(right-left)/(strongest+.1)*.16*this.p.following:0;
           this.wander[i]=this.wander[i]*.92+(random()-.5)*.07*this.p.exploration;
           a+=bias+this.wander[i]*(strongest>.07&&this.p.following>0?.23:1);
           this.home[this.cell(x,y)]=Math.min(80,this.home[this.cell(x,y)]+1.7*Math.exp(-this.trip[i]*.065));
           const last=base+count-1;
-          if(Math.hypot(x-this.routeX[last],y-this.routeY[last])>.018){
+          if(this.distance(x-this.routeX[last],y-this.routeY[last])>.018){
             if(count<this.routeLimit){this.routeX[base+count]=x;this.routeY[base+count]=y;this.routeCount[i]=count+1;}
             else{this.carry[i]=2;a+=Math.PI;}
           }
         }
         const speed=(this.carry[i]===1?.082:.096)*this.rate[i];
+        // Anticipate the outer boundary separately from user-drawn obstacles.
+        // A full inward turn prevents repeated shallow collisions along an edge.
+        const futureX=x*sx+Math.cos(a)*.018,futureY=y*sy+Math.sin(a)*.018,margin=.032;
+        const inwardX=Math.max(0,margin-futureX)-Math.max(0,futureX-(sx-margin));
+        const inwardY=Math.max(0,margin-futureY)-Math.max(0,futureY-(sy-margin));
+        if(inwardX||inwardY){
+          a+=clamp(turn(Math.atan2(inwardY,inwardX)-a),-.5,.5);
+          this.wander[i]*=.5;
+        }
         // Look ahead for walls. Turn into the clearer local direction, then test the move.
-        const ahead=.015,blocked=this.blocked(x+Math.cos(a)*ahead,y+Math.sin(a)*ahead);
+        const ahead=.015,blocked=this.blocked(x+Math.cos(a)*ahead/sx,y+Math.sin(a)*ahead/sy);
         if(blocked){
-          const left=this.blocked(x+Math.cos(a-.85)*ahead,y+Math.sin(a-.85)*ahead),right=this.blocked(x+Math.cos(a+.85)*ahead,y+Math.sin(a+.85)*ahead);
+          const left=this.blocked(x+Math.cos(a-.85)*ahead/sx,y+Math.sin(a-.85)*ahead/sy),right=this.blocked(x+Math.cos(a+.85)*ahead/sx,y+Math.sin(a+.85)*ahead/sy);
           a+=left&&!right?.6:right&&!left?-.6:(i%2?.65:-.65);
         }
-        let xx=x+Math.cos(a)*speed*dt,yy=y+Math.sin(a)*speed*dt;
+        let xx=x+Math.cos(a)*speed*dt/sx,yy=y+Math.sin(a)*speed*dt/sy;
+        if(xx<.008/sx||xx>1-.008/sx){a=Math.PI-a;this.wander[i]=0;}
+        if(yy<.008/sy||yy>1-.008/sy){a=-a;this.wander[i]=0;}
+        xx=x+Math.cos(a)*speed*dt/sx;yy=y+Math.sin(a)*speed*dt/sy;
         if(this.blocked(xx,yy)){
           let moved=false;
-          for(const t of [.7,-.7,1.4,-1.4,2.2,-2.2,Math.PI]){const angle=a+t,nx=x+Math.cos(angle)*speed*dt,ny=y+Math.sin(angle)*speed*dt;if(!this.blocked(nx,ny)){a=angle;xx=nx;yy=ny;moved=true;break;}}
+          for(const t of [.7,-.7,1.4,-1.4,2.2,-2.2,Math.PI]){const angle=a+t,nx=x+Math.cos(angle)*speed*dt/sx,ny=y+Math.sin(angle)*speed*dt/sy;if(!this.blocked(nx,ny)){a=angle;xx=nx;yy=ny;moved=true;break;}}
           if(!moved){xx=x;yy=y;}
         }
         this.vx[i]=(xx-x)/dt;this.vy[i]=(yy-y)/dt;this.x[i]=xx;this.y[i]=yy;this.a[i]=a%TAU;this.trip[i]+=dt;
@@ -265,27 +305,27 @@
     intervene(tool,x,y,r,z=.5) {
       x=clamp(x,.02,.98);y=clamp(y,.02,.98);z=clamp(z,.02,.98);
       if(tool==='food'&&this.id==='ants'&&!this.blocked(x,y)){
-        const food=this.food.find(f=>Math.hypot(x-f.x,y-f.y)<.055);
+        const food=this.food.find(f=>this.distance(x-f.x,y-f.y)<.055);
         if(food)food.amount=food.capacity;else if(this.food.length<24)this.food.push({x,y,amount:900,capacity:900});
       }
       if(tool==='wall'&&this.walls.length<180){
         r=r||(this.id==='ants'?.018:.07);
-        if(this.nest&&Math.hypot(x-this.nest.x,y-this.nest.y)<r+.035)return;
-        if(!this.walls.some(w=>Math.hypot(w.x-x,w.y-y,(w.z??.5)-z)<r*.65)){this.walls.push(this.id==='boids'?{x:clamp(x,r+.02,1-r-.02),y:clamp(y,r+.02,1-r-.02),z:clamp(z,r+.02,1-r-.02),r}:{x,y,z,r});this.rebuildWalls();}
+        if(this.nest&&this.distance(x-this.nest.x,y-this.nest.y)<r+.035)return;
+        if(!this.walls.some(w=>Math.hypot((w.x-x)*this.spanX,(w.y-y)*this.spanY,this.id==='boids'?(w.z??.5)-z:0)<r*.65)){this.walls.push(this.id==='boids'?{x:clamp(x,r+.02,1-r-.02),y:clamp(y,r+.02,1-r-.02),z:clamp(z,r+.02,1-r-.02),r}:{x,y,z,r});this.rebuildWalls();}
       }
       if(tool==='erase'){
-        this.walls=this.walls.filter(w=>Math.hypot(w.x-x,w.y-y,this.id==='boids'?(w.z??.5)-z:0)>w.r+.035);
-        this.food=this.food.filter(f=>Math.hypot(f.x-x,f.y-y)>.05);
+        this.walls=this.walls.filter(w=>(this.id==='ants'?this.wallDistance(w,x,y):Math.hypot(w.x-x,w.y-y,(w.z??.5)-z))>w.r+.035);
+        this.food=this.food.filter(f=>this.distance(f.x-x,f.y-y)>.05);
         if(this.predator&&Math.hypot(this.predator.x-x,this.predator.y-y,this.predator.z-z)<.1)this.predator=null;
         this.rebuildWalls();
       }
-      if(tool==='cut')for(let yy=0;yy<this.size;yy++)for(let xx=0;xx<this.size;xx++)if(Math.hypot((xx+.5)/this.size-x,(yy+.5)/this.size-y)<.045){this.field[yy*this.size+xx]=0;this.home[yy*this.size+xx]=0;}
+      if(tool==='cut')for(let yy=0;yy<this.rows;yy++)for(let xx=0;xx<this.cols;xx++)if(this.distance((xx+.5)/this.cols-x,(yy+.5)/this.rows-y)<.045){this.field[yy*this.cols+xx]=0;this.home[yy*this.cols+xx]=0;}
       if(tool==='predator'&&this.id==='boids')this.setPredator(x,y,z);
       if(tool==='scatter')for(let i=0;i<this.n;i++){
         const dx=this.x[i]-x,dy=this.y[i]-y,dz=this.z[i]-z,d=Math.hypot(dx,dy,dz);
         if(d<.23){const k=(.23-d)*2/(d+.01);this.vx[i]+=dx*k;this.vy[i]+=dy*k;this.vz[i]+=dz*k;}
       }
-      if(tool==='inspect'){let best=Infinity;for(let i=0;i<this.n;i++){const d=(this.x[i]-x)**2+(this.y[i]-y)**2;if(d<best){best=d;this.selected=i;}}}
+      if(tool==='inspect'){let best=Infinity;for(let i=0;i<this.n;i++){const d=((this.x[i]-x)*this.spanX)**2+((this.y[i]-y)*this.spanY)**2;if(d<best){best=d;this.selected=i;}}}
     }
     movePlace(index,x,y) {
       if(this.id!=='ants'||this.blocked(x,y))return;

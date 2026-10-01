@@ -14,6 +14,22 @@ for(const preset of M.definitions.ants.presets){
   const fresh=new M.World('ants',w.seed,w.small,w.preset,w.configuration());assert.equal(fresh.food.reduce((n,f)=>n+f.amount,0),total);assert.equal(fresh.delivered,0);
 }
 pass('All ant maps deliver food, conserve it and restart with replenished sources');
+// The initial outward exploration should turn inward rather than line the perimeter.
+for(const small of [false,true])for(const seed of [42,731,1955]){
+  const w=new M.World('ants',seed,small);
+  for(let step=0;step<360;step++){
+    w.step(1/30);
+    if(step===119||step===239||step===359){
+      let edge=0;for(let i=0;i<w.n;i++)if(w.x[i]<.035||w.x[i]>.965||w.y[i]<.035||w.y[i]>.965)edge++;
+      assert.ok(edge/w.n<.08,JSON.stringify({small,seed,step,edge,n:w.n}));
+    }
+  }
+}
+const edges=new M.World('ants',731,true);edges.food=[];
+const starts=[[.0081,.5,Math.PI],[.9919,.5,0],[.5,.0081,-Math.PI/2],[.5,.9919,Math.PI/2],[.0081,.0081,-Math.PI*.75],[.9919,.9919,Math.PI*.25]];
+starts.forEach(([x,y,a],i)=>{edges.x[i]=x;edges.y[i]=y;edges.a[i]=a;edges.routeX[i*edges.routeLimit]=x;edges.routeY[i*edges.routeLimit]=y;});edges.step(1/30);
+starts.forEach(([x,y],i)=>{assert.ok(!edges.blocked(edges.x[i],edges.y[i]));if(x<.01)assert.ok(edges.vx[i]>0);if(x>.99)assert.ok(edges.vx[i]<0);if(y<.01)assert.ok(edges.vy[i]>0);if(y>.99)assert.ok(edges.vy[i]<0);});
+pass('Scouts turn away from every edge and corner without perimeter pileups');
 const barrier=new M.World('ants',731,true);barrier.food=[{x:.8,y:.5,capacity:900,amount:900}];barrier.walls=[];
 for(let y=0;y<=1;y+=.02)barrier.walls.push({x:.5,y,r:.025});barrier.rebuildWalls();barrier.field.fill(0);barrier.field[barrier.cell(.45,.5)]=10;
 for(let i=0;i<60;i++)barrier.diffuse(0);
@@ -23,6 +39,24 @@ pass('Solid barriers block ants, scent and remembered shortcuts');
 const ant=new M.World('ants',42,true);ant.field.fill(8);ant.home.fill(5);ant.intervene('cut',.45,.45);assert.equal(ant.sample(.45,.45),0);assert.equal(ant.sample(.45,.45,ant.home),0);
 ant.movePlace(0,.65,.3);assert.equal(ant.food[0].x,.65);ant.movePlace(-2,.25,.45);assert.equal(ant.nest.x,.25);ant.food[0].amount=0;ant.intervene('food',.65,.3);assert.equal(ant.food[0].amount,ant.food[0].capacity);
 ant.intervene('wall',.6,.6);assert.ok(ant.blocked(.6,.6));ant.intervene('erase',.6,.6);assert.ok(!ant.blocked(.6,.6));pass('Food refills, nest and food move, scent erases and walls edit');
+for(const aspect of [.4,.7,1.8,4]){
+  const w=new M.World('ants',731,true,'forage',{aspect});w.food=[];w.p.exploration=0;w.p.following=0;
+  for(let i=0;i<2;i++){w.x[i]=w.y[i]=.5;w.a[i]=i*Math.PI/2;w.rate[i]=1;w.routeX[i*w.routeLimit]=w.routeY[i*w.routeLimit]=.5;}
+  w.step(1/30);assert.ok(Math.abs(w.vx[0]*w.spanX-w.vy[1]*w.spanY)<1e-5,'Unequal speed by screen direction');
+  w.intervene('wall',.6,.6,.04);assert.ok(w.blocked(.6+.02/w.spanX,.6)&&w.blocked(.6,.6+.02/w.spanY));assert.ok(!w.blocked(.6+.07/w.spanX,.6)&&!w.blocked(.6,.6+.07/w.spanY));
+  const detour=new M.World('ants',42,true,'detour',{aspect});for(let y=.19;y<.78;y+=.005)assert.ok(detour.blocked(.5,y),'Resize opened a preset wall');
+  detour.setAspect(1/aspect);for(let y=.19;y<.78;y+=.005)assert.ok(detour.blocked(.5,y),'Changing orientation opened a wall');
+  const barrier=new M.World('ants',42,true,'forage',{aspect});barrier.food=[];for(let y=0;y<=1.001;y+=.02)barrier.walls.push({x:.5,y,r:.025,ex:.5,ey:Math.max(0,y-.02)});barrier.rebuildWalls();barrier.field[barrier.cell(.46,.5)]=10;
+  for(let i=0;i<80;i++)barrier.diffuse(0);assert.ok(barrier.sample(.54,.5)<1e-8);assert.ok(Math.abs(barrier.field.reduce((a,b)=>a+b,0)-10)<.001);assert.ok(!barrier.clearLine(.2,.5,.8,.5));
+  const active=evolve(new M.World('ants',42,true,'forage',{aspect}),Math.ceil(1200*Math.sqrt(Math.max(aspect,1/aspect)))),total=2700;
+  finite(active);assert.ok(active.delivered>0,'Rectangular habitat failed to deliver food: '+aspect);assert.equal(total-active.food.reduce((a,b)=>a+b.amount,0),active.delivered+active.carry.reduce((a,b)=>a+(b===1),0));
+  const copy=active.clone();evolve(active,10);evolve(copy,10);assert.deepEqual(active.x,copy.x);assert.deepEqual(active.field,copy.field);assert.deepEqual(active.food,copy.food);
+}
+const rescaled=new M.World('ants',85,true);rescaled.home.fill(4);
+for(let y=0;y<rescaled.rows;y++)for(let x=0;x<rescaled.cols;x++)rescaled.field[y*rescaled.cols+x]=2+(x+.5)/rescaled.cols+(y+.5)/rescaled.rows;
+const positions=rescaled.x.slice(),resources=JSON.stringify(rescaled.food),routes=rescaled.routeX.slice();rescaled.setAspect(2.4);
+assert.deepEqual(rescaled.x,positions);assert.deepEqual(rescaled.routeX,routes);assert.equal(JSON.stringify(rescaled.food),resources);assert.equal(rescaled.steps,0);assert.ok(Math.abs(rescaled.sample(.35,.7)-3.05)<.015);assert.equal(rescaled.sample(.35,.7,rescaled.home),4);
+pass('Rectangular habitats preserve speed, circular obstacles, sealed walls, scent, resources and deterministic clones');
 const flock=evolve(new M.World('boids',731,true),900),independent=evolve(new M.World('boids',731,true,'chaos'),900);finite(flock);finite(independent);
 const coherence=w=>{let x=0,y=0,z=0;for(let i=0;i<w.n;i++){const s=Math.hypot(w.vx[i],w.vy[i],w.vz[i]);x+=w.vx[i]/s;y+=w.vy[i]/s;z+=w.vz[i]/s;}return Math.hypot(x,y,z)/w.n;};
 assert.ok(coherence(flock)>.7);assert.ok(coherence(independent)<.3);assert.ok(flock.neighbors.every(n=>n<=7));pass('Local bird steering creates agreement and independent birds remain disordered');
