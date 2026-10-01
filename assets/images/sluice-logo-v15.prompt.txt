@@ -1,0 +1,57 @@
+Sluice logo v15
+
+User change: increase the water reservoir inside the E and improve the balance of background dirt, stone, voids and ores.
+
+Built-in image_gen edit mode was used to widen the reservoir within the original cream-and-bronze E. The other five letters, v10 smoke, original falling water and lower pool are retained. The background is a new render of the game's own terrain and ore code with adjusted world cells and ore placement, not generated terrain artwork.
+
+E edit:
+Reference was extracted from sluice-logo-v10-wordmark.png at (1232,302,258,334), drawn at (64,64,774,1002) on a 902 x 1130 transparent canvas.
+The full v14 master was the second reference for letter style and scale.
+Selected source: exec-fb489f57-2867-4952-ab8d-02e282afdc84.png, 1120 x 1404, saved as sluice-logo-v15-e.png.
+Letter source bounds: (88,95,937,1204).
+Placed E: (1238.4759871931697,309,248,327).
+The source outlet center x728.5 aligns to the original falling water center x1408.
+The original E is cleared in the rectangle (1232,302,264,335). A seven-pixel-high original water patch at (1388,630,42,7) bridges the outlet to the retained stream. No duplicate water is overlaid below the cleared region.
+
+Background:
+Actual source fragments 100-render-terrain.js, 110-render-ore-renderers.js, 120-render-ore-atlas-grass.js and 130-render-mine-break.js.
+Native renderTerrainChunk at scale3, TILE32. Final terrain blocks remain 96 pixels.
+The large upper-right stone area is divided, stone is added at the clipped upper-left edge, and the lower stone patch is reduced and stepped. Ore clusters are smaller, irregularly sized and spaced. Top and lower-left void cells receive small outline changes. The lower pool cave geometry is unchanged.
+Ore points (column,row,scale), relative to world tile(40,40):
+coal: (-0.36,0.58,0.72), (0.44,1.35,0.88), (1.51,1.08,0.61), (2.24,1.81,0.84), (3.35,0.23,0.43), (11.55,0.61,0.42).
+bauxite: (-0.17,7.39,0.60), (0.29,8.60,0.82), (1.66,8.20,0.59), (2.64,9.39,0.68), (11.23,8.63,0.40).
+copper: (7.34,8.39,0.66), (8.70,8.97,0.81), (9.84,9.77,0.49).
+iron: (1.12,-0.20,0.46), (14.08,-0.17,0.84), (15.53,1.16,0.57), (16.88,2.61,0.71), (17.27,3.40,0.42).
+Native ore atlas variation: row73+index*37, column127+index*19.
+Stone host cells:
+(0,-1),(1,-1),(0,0),(7,8),(8,8),(7,9),(8,9),(9,9),(10,9),(10,10),(14,-1),(14,0),(15,0),(15,1),(16,2),(17,2),(17,3),(18,3).
+Void cells:
+(-1,3),(0,3),(-1,4),(0,4),(1,4),
+(8,-1),(9,-1),(8,0),(9,0),(8,1),
+(16,-1),(17,-1),(16,0),(17,0),(18,0),(17,1),(18,1),
+(5,7),(4,8),(5,8),(6,8),(5,9),(6,9),
+(14,6),(15,6),(13,7),(14,7),(15,7),(16,7),
+(13,8),(14,8),(15,8),(16,8),(17,8),(14,9),(15,9),(16,9).
+
+Composition:
+The original v14 foreground coverage is calculated from its wordmark and v10 water below y720. Background colour changes are applied to the v14 master weighted by one minus that coverage, preserving original opaque foreground pixels. The E body is then replaced with the enlarged reservoir component. Transparent wordmark retains original logo outside the E body and its short outlet join.
+
+Artifacts:
+assets/images/sluice-logo-v15.png, opaque 1672 x 941 master.
+assets/images/sluice-logo-v15-wordmark.png, transparent wordmark.
+assets/images/sluice-logo-v15-background.png, revised native terrain.
+assets/images/sluice-logo-v15-e.png, selected generated E source.
+assets/images/sluice-logo-v15-e-layer.png, aligned E component.
+assets/thumbs/sluice-logo-v15.webp, 600 x 338 thumbnail.
+
+Validation:
+Full master, thumbnail and transparent wordmark visually reviewed. Original opaque S/L/U/I/C pixels compare exactly to v14. The enlarged upper reservoir has over 1.4 times the visible blue area of v14. Files decode, master is fully opaque, wordmark has real alpha, thumbnail dimensions verified. All work used owned Chrome for Testing processes with exact child cleanup. No production game source or live page references changed.
+
+Built-in image generation prompt:
+Use case: precise-object-edit.
+Asset: the existing E letter from the Sluice logo, edited as a separate high-definition transparent component.
+Image 1 is the exact E edit target. Image 2 shows the full approved wordmark for the common letter style and proportions.
+Change ONLY the size of the recessed water reservoir inside the E. Make the current narrow vertical reservoir in its left upright about TWICE AS WIDE, and slightly taller. It should visibly hold more water, a substantial cavity carved into the letter rather than a tiny sight glass. Keep its top below the E's upper beam and a modest dark gap above the waterline. The enlarged cavity can extend a little into the root of the middle arm, with rounded inner corners and the same bronze interior edge. It narrows naturally into the EXISTING thin diagonal fractured channel that crosses the lower arm and exits at the same bottom location, about 70 percent of the letter width. The whole E must remain a solid recognizable letter with its three broad arms, generous cream face, bronze bevel and shallow depth, not a hollow outline.
+Preserve the exact outer silhouette, overall width/height, cream and warm bronze colours, lighting, surface finish, three arms, original quiet plate seams, narrow lower fracture and outlet position. Use the exact simple blue water appearance of image 1: medium blue continuous volume with softly blended lighter blue, a quiet uneven waterline, minimal surface detail. No bright white reflections, no glossy glass or jelly, no foamy ocean wave, no elaborate swirling texture, no cyan glow, no particles or big droplet decorations. The water stays inside the enlarged cavity and current crack.
+Output ONLY this complete enlarged-reservoir E body on genuine transparency, portrait framing with clear transparent margins. No water drops beyond the bottom baseline; the existing falling stream will be retained during composition. No other letters, smoke, dirt, ores, pool, text or watermark.
+
