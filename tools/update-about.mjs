@@ -387,14 +387,14 @@ about = replaceStat(about, 'tokens', tokStr);
 about = replaceStat(about, 'peak', peakStr);
 about = replaceStat(about, 'cost', costStr);
 const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from retained Claude Code and Codex logs on my Mac and the September 9 to 23 report from my PC. These totals include my other projects. Usage through July 22 is an older estimate; the later totals come from deduplicated logs. The dollar figure uses standard API list prices, not my actual bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">The method and its limits are public.</a></p>`;
+const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from Claude Code and Codex logs on my Mac and a September 9 to 23 usage report from my PC. These totals cover all my projects. Usage through July 22 is estimated; later records are deduplicated. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>`;
 if (!/<p data-about-freshness>[\s\S]*?<\/p>/.test(about)) throw new Error('about.html is missing the freshness marker');
 about = about.replace(/<p data-about-freshness>[\s\S]*?<\/p>/, freshnessParagraph);
 const categoryTotals = Object.values(stats.days).flatMap(d => Object.values(d.models));
 const recentTokens = categoryTotals.reduce((n, m) => n + m.totalTokens, 0);
 const cachePct = Math.round(categoryTotals.reduce((n, m) => n + m.cacheRead, 0) / recentTokens * 100);
 const outputPct = (categoryTotals.reduce((n, m) => n + m.output, 0) / recentTokens * 100).toFixed(1);
-about = about.replace(/<p data-about-token-mix>[\s\S]*?<\/p>/, `<p data-about-token-mix>I play a lot of ping-pong with the AI, and every round it re-reads what it already has, the same files and the whole conversation. In the logs collected since July 23, cache reads account for ${cachePct}% of the tokens and new output for ${outputPct}%. I know I could be more efficient about it. I'm not really trying to be.</p>`);
+about = about.replace(/<p data-about-token-mix>[\s\S]*?<\/p>/, `<p data-about-token-mix>Most tokens are cached text the AI reads again as we work, including files and earlier messages. Since July 23, cache reads account for ${cachePct}% of logged tokens and new output for ${outputPct}%.</p>`);
 writeFileSync(F_ABOUT, about);
 writeFileSync(F_STATS, JSON.stringify(stats, null, 2) + '\n');
 log(ok('  wrote about.html token stats') + dim(`  ${tokStr} / ${peakStr} / ${costStr}`));
@@ -403,11 +403,7 @@ log(ok('  wrote about.html token stats') + dim(`  ${tokStr} / ${peakStr} / ${cos
 execSync('node tools/build-search-index.mjs', { cwd: REPO, stdio: 'inherit' });
 log(ok('  rebuilt search-index.json'));
 
-// 5. site-size growth curve (deployed bytes per day, from git blob sizes)
-execSync('node tools/build-site-size.mjs --write', { cwd: REPO, stdio: 'inherit' });
-log(ok('  rebuilt js/site-size-data.js'));
-
-// 6. fail closed: a stale price, missing page, bad total, or partial generator
+// 5. fail closed: a stale price, missing page, bad total, or partial generator
 // run stops here and cannot be published by the live wrapper.
 execSync('node tools/check-about.mjs', { cwd: REPO, stdio: 'inherit' });
 log(ok('  validated every About dataset'));
@@ -415,7 +411,7 @@ log(ok('  validated every About dataset'));
 // optional commit + push
 if (COMMIT) {
   log(H('COMMIT + PUSH'));
-  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-models.json', 'tools/about-attribution-ledger.json'];
+  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json', 'tools/about-models.json', 'tools/about-attribution-ledger.json'];
   try {
     execSync('git add ' + files.map(f => JSON.stringify(f)).join(' '), { cwd: REPO, stdio: 'inherit' });
     const msg = `about: refresh build stats (+${fresh.length} commits, +${newTopics.length} posts, ${tokStr || 'tokens'})`;

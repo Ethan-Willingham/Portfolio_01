@@ -24,7 +24,6 @@ const stats = json('tools/about-stats.json');
 const ledger = json('tools/about-attribution-ledger.json');
 const attr = data('js/git-attribution-data.js');
 const hist = data('js/git-history-data.js');
-const size = data('js/site-size-data.js');
 const about = readFileSync(join(REPO, 'about.html'), 'utf8');
 
 check(models.version === 1, 'tools/about-models.json has an unsupported version');
@@ -136,10 +135,6 @@ for (const model of attr.models) {
   check(model.cost === Math.round(base.cost + sum(daily.map(d => d.cost))), `${model.id} fuel cost disagrees with the usage ledger`);
 }
 check(generatedDaysOld(attr.generated) < 2, 'attribution data is more than two days old');
-
-check(size.totalBytes === sum(size.categories.map(c => c.bytes)), 'site-size categories do not equal totalBytes');
-check(size.series.at(-1)?.[1] === size.totalBytes, 'site-size latest series point does not equal totalBytes');
-check(generatedDaysOld(size.generated) < 2, 'site-size data is more than two days old');
 
 check(new Set(hist.topics.map(t => t.key)).size === hist.topics.length, 'git-history topic keys are not unique');
 check(Array.isArray(hist.daily) && hist.daily.length > 0, 'git-history fuel line is missing');

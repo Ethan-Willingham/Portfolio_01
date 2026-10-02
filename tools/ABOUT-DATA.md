@@ -7,7 +7,7 @@ bash tools/update-about-live.sh
 ```
 
 The wrapper starts from live `main` in a clean temporary worktree. It collects usage,
-refreshes the commit timeline, page attribution, search index and site size, checks the
+refreshes the commit timeline, page attribution and search index, checks the
 result, then commits and pushes. A failed collector or validator stops publication.
 
 ## September 23, 2026 refresh
