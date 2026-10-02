@@ -16,20 +16,15 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // The stat. Recounted 2026-09-24, when staying-alive and inner-life joined
-  // philosophy and power-story-love on the In Progress index and four more
-  // posts moved under /archive: 60 in progress (23 under /archive plus those
-  // four collections' 14 + 7 + 6 + 10 live members), against 84 posts in all
-  // (9 homepage cards + 15 on the Longform shelf + the 60).
-  // The old 20/31 counted only the archive against the homepage, which left out
-  // the whole Longform shelf and so overstated the share. This denominator is
-  // every post on the site. Recount both numbers together; a bump to one alone
-  // makes the sentence below false. `node tools/build-search-index.mjs` prints
-  // the active / in progress / archived split, which is the easiest recount.
-  // All Four Wheels adds one in-progress post and one indexed post.
-  var ARCHIVED = 61;
-  var TOTAL = 85;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 72
+  // Recounted 2026-10-01 after moving The Wisdom Never Written Down and
+  // The Zhuangzi into In Progress: 25 archived posts plus 39 in-progress
+  // posts at their root URLs, against 86 indexed posts in all.
+  // Recount both numbers together when membership changes.
+  // `node tools/build-search-index.mjs` prints the active / in progress /
+  // archived split used here.
+  var ARCHIVED = 64;
+  var TOTAL = 86;
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 74
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +
