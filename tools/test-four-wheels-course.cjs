@@ -3,6 +3,19 @@ function check(name,fn){fn();console.log('PASS '+name);}
 const make=(i=0,practice=false)=>new P.World(C.build(i),practice);
 const step=(w,seconds,input={})=>{for(let i=0;i<seconds*120;i++){w.step(1/120,input);w.events.length=0;}};
 const pose=(w,x,y,a=0,v=0)=>{Object.assign(w.body,{x,y,a,vx:Math.cos(a)*v,vy:Math.sin(a)*v,omega:0});T.init(w,w.terrainGeometry);w.wheels.forEach(q=>{q.a=a;q.omega=0;});};
+check('point lookup keeps exact polygon precedence at grid seams and floor edges',()=>{
+ const l=C.build(),reference=p=>{const candidates=C.query(l.floorAreas,l.floorGrid,p).filter(a=>p.x>=a.bounds.left-.001&&p.x<=a.bounds.right+.001&&p.y>=a.bounds.top-.001&&p.y<=a.bounds.bottom+.001&&C.inside(p,a.poly)),a=candidates.find(a=>a.kind==='tile')||candidates.find(a=>a.kind!=='grass')||candidates[0];return a?{kind:a.kind,chapter:a.chapter,grip:a.kind==='dirt'?.85:a.kind==='grass'?.7:1,drag:a.kind==='dirt'?1.38:a.kind==='grass'?3.8:a.kind==='asphalt'?.68:1}:null;};
+ const points=l.floorAreas.flatMap(a=>a.poly.flatMap(p=>[p,{x:p.x-.001,y:p.y+.001},{x:p.x+.001,y:p.y-.001}]));
+ for(let y=0;y<l.bounds.bottom;y+=32)for(let x=0;x<l.bounds.right;x+=32)points.push({x,y});
+ for(const p of points)assert.deepEqual(C.baseSample(l,p),reference(p));
+});
+check('film caches preserve support, exact height, diffusion and restored saves',()=>{
+ const cached=make(),fresh=make();fresh.stock.groundCell=(col,row)=>C.sample(fresh.level,{x:(col+.5)*S.CELL,y:(row+.5)*S.CELL},false);
+ for(const w of [cached,fresh])for(const [x,y]of [[420,1520],[1250,410],[1550,690],[902,290]]){w.stock.spill('water',x,y,22);w.stock.spill('wine',x,y,13);}
+ for(let i=0;i<60;i++){cached.stock.flow(.05);fresh.stock.flow(.05);}
+ assert.deepEqual(C.snapshot(cached).liquids,C.snapshot(fresh).liquids);
+ const saved=C.snapshot(cached),restored=make();assert.ok(C.restore(restored,saved));assert.equal(restored.stock.cellGround.size,0);cached.stock.flow(.05);restored.stock.flow(.05);assert.deepEqual(C.snapshot(cached).liquids,C.snapshot(restored).liquids);
+});
 check('twelve chapters share one supported route and three stores',()=>{
  const w=make(),l=w.level;assert.equal(l.sections.length,12);assert.equal(l.stores.length,3);assert.equal(l.gates.length,54);assert.ok(l.totalDistance>9300);assert.ok(l.sections.some(s=>s.rail===0)&&l.sections.some(s=>s.rail===3));
  for(const leg of l.legs)for(let t=0;t<=1;t+=.05){const p={x:leg.a.x+(leg.b.x-leg.a.x)*t,y:leg.a.y+(leg.b.y-leg.a.y)*t};assert.ok(w.isFloor(p)||leg.chapter===5&&T.inStrip(p,l.terrain.gap));}

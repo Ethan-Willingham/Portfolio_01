@@ -171,6 +171,9 @@
     constructor(world, geometry) {
       this.world = world; this.geometry = geometry;
       this.cols=Math.ceil((world.level.bounds?.right||480)/CELL);this.rows=Math.ceil((world.level.bounds?.bottom||300)/CELL); this.items = []; this.liquids = new Map(); this.smears = []; this.serial = 0;
+      // Film cells have fixed centers on immutable course geometry. Cache their
+      // exact support and height, without quantizing moving tire contacts.
+      this.cellGround=new Map();
       this.fluidTime = 0; this.fragments=0; this.stats = { fallen: 0, broken: 0, crushed: 0, toppled: 0, wheelContacts: 0 };
       for (const s of world.shelves) {
         if (s.kind === 'table') {
@@ -284,7 +287,13 @@
     }
     validCell(col,row) {
       if(col<0||col>=this.cols||row<0||row>=this.rows)return false;
+      if(this.world.level.campaign)return this.groundCell(col,row)!==null;
       return this.world.isFloor({x:(col+.5)*CELL,y:(row+.5)*CELL});
+    }
+    groundCell(col,row) {
+      const key=row*this.cols+col;
+      if(!this.cellGround.has(key))this.cellGround.set(key,globalCourse(this.world,{x:(col+.5)*CELL,y:(row+.5)*CELL}));
+      return this.cellGround.get(key);
     }
     cell(liquid, x, y, amount) {
       const col = Math.floor(x / CELL), row = Math.floor(y / CELL);
@@ -321,10 +330,11 @@
         for (const [key, volume] of cells) {
           if (volume < .025) continue;
           const col = key % this.cols, row = Math.floor(key / this.cols);
+          const height=this.world.level.campaign?(this.groundCell(col,row)?.height||0):0;
           for (const [dc, dr] of [[-1,0],[1,0],[0,-1],[0,1]]) {
             if (!this.validCell(col+dc,row+dr)) continue;
             const next = key + dc + dr * this.cols, neighbor = cells.get(next) || 0;
-            const elevation=this.world.level.campaign?(globalCourse(this.world,{x:(col+.5)*CELL,y:(row+.5)*CELL})?.height||0)-(globalCourse(this.world,{x:(col+dc+.5)*CELL,y:(row+dr+.5)*CELL})?.height||0):0;
+            const elevation=this.world.level.campaign?height-(this.groundCell(col+dc,row+dr)?.height||0):0;
             const flow = Math.min(volume * .16, Math.max(0, volume - neighbor + elevation*.15 - .02) * liquid.flow * dt * .16);
             if (flow) { add(key, -flow); add(next, flow); }
           }

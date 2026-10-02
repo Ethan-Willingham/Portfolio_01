@@ -29,10 +29,12 @@
   function coordinates(p,f){const c=Math.cos(f.a),s=Math.sin(f.a),x=p.x-f.x,y=p.y-f.y;return {u:x*c+y*s,v:-x*s+y*c};}
   function inStrip(p,f,margin=0){const q=coordinates(p,f);return q.u>=-margin&&q.u<=f.length+margin&&Math.abs(q.v)<=f.width/2+margin;}
   function profile(p,f){
-    let best=null;
-    for(const l of f.legs){const dx=l.b.x-l.a.x,dy=l.b.y-l.a.y,t=clamp(((p.x-l.a.x)*dx+(p.y-l.a.y)*dy)/(l.length*l.length),0,1),d=Math.hypot(p.x-l.a.x-t*dx,p.y-l.a.y-t*dy);if(!best||d<best.d)best={d,t,l};}
-    if(!best||best.d>f.width)return 0;
-    const at=clamp((best.l.distance+best.l.length*best.t-f.start)/f.length,0,1);
+    // Nearest-leg ordering needs squared distance, not a square root and a
+    // temporary object for every segment in every height/gradient sample.
+    let bestDistance=Infinity,bestT=0,bestLeg=null;
+    for(const l of f.legs){const dx=l.b.x-l.a.x,dy=l.b.y-l.a.y,t=clamp(((p.x-l.a.x)*dx+(p.y-l.a.y)*dy)/(l.length*l.length),0,1),x=p.x-l.a.x-t*dx,y=p.y-l.a.y-t*dy,d=x*x+y*y;if(d<bestDistance){bestDistance=d;bestT=t;bestLeg=l;}}
+    if(!bestLeg||bestDistance>f.width*f.width)return 0;
+    const at=clamp((bestLeg.distance+bestLeg.length*bestT-f.start)/f.length,0,1);
     for(let i=1;i<f.knots.length;i++)if(at<=f.knots[i][0]){const a=f.knots[i-1],b=f.knots[i],u=clamp((at-a[0])/(b[0]-a[0]),0,1),t=u*u*(3-2*u);return a[1]+(b[1]-a[1])*t;}
     return f.knots.at(-1)[1];
   }

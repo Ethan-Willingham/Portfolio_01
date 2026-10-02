@@ -338,6 +338,16 @@ its exact body momentum and mess. Reload during practice loads the parked challe
 
 ## Verification and release
 
+The renderer caches immutable scenery and lower cliff tiles. Shelves and stock
+reuse projected pixel paths until their pose, appearance or supporting shelf
+changes. Font readiness invalidates labels. Floor tiles use a 32-entry cache,
+lower cliffs use at most 24 tiles, and the overview caches three viewport-sized
+layers beneath the live cart, stock, doors and relay.
+Spills outside the camera skip drawing. Point contacts use a finer polygon index
+with the same floor precedence; liquid cells cache exact support and height.
+Moving tires still sample their actual coordinates and physics still runs at
+120 Hz. These caches do not enter saved runs.
+
 Run `node --check` on all seven live scripts and the legacy fixture, then:
 
 ```sh
@@ -352,12 +362,22 @@ node tools/test-four-wheels-balance.cjs
 node tools/test-four-wheels-course.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-performance.cjs
+CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-performance.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 MOBILE_ONLY=1 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 MOBILE_ONLY=1 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
 The old room and journey tests preserve handling and stock regression fixtures.
+The performance suite measures sustained real frames with sound, driving,
+crowded stores and spills on desktop and landscape phone viewports. It checks
+frame work against a 16.7 ms budget, cache limits, overview reuse and exact fresh
+renders after shelf movement, changed stock, release and font refresh. Set
+`CART_FRAME_BUDGET` to the machine's intended budget when comparing slower test
+hardware. `CART_COMPARE_REF=<git ref>` also measures that release and requires
+at least a 30 percent reduction in mean shop and relay frame work. Run this
+suite alone so competing test processes do not skew frame measurements.
 The audio suite renders real stereo PCM to check material spectra, every effect,
 surface blending, tire motion, footfalls, shutter movement, distance attenuation,
 voice cleanup and bounded pileup levels. Gesture-driven desktop and phone checks
