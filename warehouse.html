@@ -267,7 +267,7 @@
 
   <article class="essay">
     <div class="lede first reveal">
-      <p>You can have 500 pumps in a warehouse and still be unable to fill an order for 100. If 300 are reserved for other orders and 120 more are held for inspection, only 80 are available for the new order.</p>
+      <p>You can have 500 shirts in a warehouse and still be unable to fill an order for 100. If 300 are reserved for other orders and 120 more are held for inspection, only 80 are available for the new order.</p>
       <p>A <a href="https://www.sap.com/mena/resources/what-is-a-warehouse-management-system-wms">warehouse management system</a>, or WMS, tracks those differences and turns orders into work: which stock to use, where to find it, and what to move next.</p>
     </div>
 
@@ -275,13 +275,13 @@
       <div class="u-sechead"><p class="u-sechead-k">01</p><h2 class="u-sechead-h">What the system records</h2></div>
       <p>The WMS connects three records. The <b>item master</b> describes the product: its dimensions, weight, packaging, and any lot or serial tracking. The <b>location master</b> describes the places it can occupy. The <b>inventory record</b> says how much of that item is in a particular location, who owns it, and whether it can be used.</p>
       <p>A SKU, stock keeping unit, identifies a distinct item. A medium blue shirt and a large blue shirt have different SKUs. A lot identifies a batch; a serial number identifies an individual unit. Those distinctions let a business recall one production batch without pulling every unit of the product.</p>
-      <p>Quantities need units. Twelve cases are not twelve pumps. If each case holds ten pumps, the WMS needs that conversion to receive cases and pick individual units correctly. A wrong <a href="https://docs.oracle.com/en/cloud/saas/warehouse-management/26b/owmim/package-uom.html">case quantity</a> can make every scan look valid while every count is wrong.</p>
+      <p>Quantities need units. Twelve cases are not twelve shirts. If each case holds ten shirts, the WMS needs that conversion to receive cases and pick individual units correctly. A wrong <a href="https://docs.oracle.com/en/cloud/saas/warehouse-management/26b/owmim/package-uom.html">case quantity</a> can make every scan look valid while every count is wrong.</p>
     </section>
 
     <section class="sec reveal" id="the-scan">
       <div class="u-sechead"><p class="u-sechead-k">02</p><h2 class="u-sechead-h">How a move becomes a record</h2></div>
-      <p>A directed picking task might read: go to A-12-03, scan the location, scan the pump, put two units in tote T-17. The system chooses the task using the order, the stock, and the warehouse's rules.</p>
-      <p>The scans check identifiers against the task. Confirmation records the quantity moved from the shelf to the tote, with a time and user. The pumps are still in the building; their recorded location has changed.</p>
+      <p>A directed picking task might read: go to A-12-03, scan the location, scan the shirt, put two units in tote T-17. The system chooses the task using the order, the stock, and the warehouse's rules.</p>
+      <p>The scans check identifiers against the task. Confirmation records the quantity moved from the shelf to the tote, with a time and user. The shirts are still in the building; their recorded location has changed.</p>
       <p>A barcode doesn't count the contents of a box. Someone can scan the right label and enter the wrong quantity, or move stock without recording it. Voice systems, sensors, and automation can also confirm work. What matters is that physical movement gets a matching transaction, and exceptions can be traced.</p>
     </section>
 
@@ -383,7 +383,7 @@
 
     <section class="sec reveal" id="the-loop">
       <div class="u-sechead"><p class="u-sechead-k">09</p><h2 class="u-sechead-h">Returns and quarantine</h2></div>
-      <p>A returned pump needs an identity, a condition assessment, and a decision. It might be restocked, repaired, returned to the supplier, or scrapped. A <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/sales-marketing/specify-how-to-dispose-of-returned-items">disposition code</a> records that decision. The physical return and the customer's credit are related events, but one does not prove the other happened.</p>
+      <p>A returned shirt needs an identity, a condition assessment, and a decision. It might be restocked, repaired, returned to the supplier, or scrapped. A <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/sales-marketing/specify-how-to-dispose-of-returned-items">disposition code</a> records that decision. The physical return and the customer's credit are related events, but one does not prove the other happened.</p>
       <p>Stock awaiting a decision can be held in the software and separated physically. A software hold prevents normal allocation when the rules are enforced. It cannot stop someone taking the item off a shelf. Quarantine needs both a recorded restriction and a floor process that respects it.</p>
     </section>
 
