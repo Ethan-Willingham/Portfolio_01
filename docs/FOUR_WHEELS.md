@@ -122,6 +122,17 @@ with the chassis; idle casters keep their last angles. Ground impulses constrain
 lateral tire velocity using body translation, yaw and caster swivel inertia.
 Unsupported tires receive no ground grip. Unequal surfaces can produce braking yaw.
 
+The menu's test cart button switches between the original four swivel wheels and
+front swivel wheels with fixed rear forks. The rear pair are the pivots at local
+X = 1, nearest the shopper. They stay aligned with the chassis while their tires
+roll forward or backward. Their lateral grip and collision impulses act on the
+chassis without an independent swivel degree of freedom, including on tilted
+terrain. Front forks retain the existing caster physics. Fixed rear pins use
+steel instead of gold. Switching preserves the cart, momentum, route and mess;
+pressing the button again restores four swivel wheels. The selected arrangement
+survives restart, falls and saved-run reloads. Practice inherits the current
+arrangement, while returning to the run restores its parked arrangement.
+
 The tire envelope is 8 by 4 units. Physical fork pivots, trailing tire contacts,
 collision rectangles, colored tread and visible wheel models share the same pose.
 The silver cart stays empty and translucent, with three-unit wire spacing so all
@@ -300,6 +311,7 @@ Run `node --check` on all six live scripts and the legacy fixture, then:
 
 ```sh
 node tools/test-four-wheels.cjs
+node tools/test-four-wheels-wheel-modes.cjs
 node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
 node tools/test-four-wheels-journey.cjs

@@ -86,16 +86,17 @@
   }
 
   function casterPose(body, wheel, i) {
-    const pivot = point(body, ...WHEELS[i]), c = Math.cos(wheel.a), s = Math.sin(wheel.a);
+    const a = wheel.fixed ? body.a : wheel.a;
+    const pivot = point(body, ...WHEELS[i]), c = Math.cos(a), s = Math.sin(a);
     // The small alternating axle offset also gives rolling resistance a real
     // lever arm, breaking the unstable, perfectly backward caster equilibrium.
     const side = (i % 2 ? -1 : 1) * CASTER.axleOffset;
-    if(body.comHeight){const a=wheel.a-body.a,p=casterPoint(body,wheel,i,0,0,0);return {...p,pivot,a:wheel.a};}
-    return { pivot, x: pivot.x - CASTER.trail * c - side * s, y: pivot.y - CASTER.trail * s + side * c, a: wheel.a };
+    if(body.comHeight){const p=casterPoint(body,wheel,i,0,0,0);return {...p,pivot,a};}
+    return { pivot, x: pivot.x - CASTER.trail * c - side * s, y: pivot.y - CASTER.trail * s + side * c, a };
   }
 
   function casterPoint(body,wheel,i,x=0,y=0,z=0){
-    const a=wheel.a-body.a,c=Math.cos(a),s=Math.sin(a),side=(i%2?-1:1)*CASTER.axleOffset;
+    const a=wheel.fixed?0:wheel.a-body.a,c=Math.cos(a),s=Math.sin(a),side=(i%2?-1:1)*CASTER.axleOffset;
     const X=WHEELS[i][0]+(x-CASTER.trail)*c-(y+side)*s,Y=WHEELS[i][1]+(x-CASTER.trail)*s+(y+side)*c;
     return Terrain.kinematics(body,X,Y,z).p;
   }
@@ -212,10 +213,11 @@
   }
 
   class World {
-    constructor(level, practice = false) {
+    constructor(level, practice = false, wheelMode = 'all-swivel') {
       this.level = level; this.practice = practice;
       this.body = { x: level.start.x, y: level.start.y, a: level.start.a, vx: 0, vy: 0, omega: 0 };
       this.wheels = WHEELS.map(() => ({ a: level.start.a, omega: 0, roll: 0, speed: 0 }));
+      this.setWheelMode(wheelMode);
       this.gait = { phase: 0, stride: 0, forward: 1, sideways: 0, speed: 0, leanX: 0, leanY: 0 };
       this.time = 0; this.penalty = 0; this.bonus = 0; this.messes = 0; this.gate = level.startGate||0;
       this.status = 'running'; this.events = []; this.tracks = []; this.trackTime = 0;
@@ -232,6 +234,22 @@
       this.stock = new Stock.System(this, { point, corners, cartHull,contactHeight,casterPose, casterCorners, circleRect, cartCircle, casterCircle, BODY, CASTER });
       this.tricks = level.campaign?{score:0,bestCombo:0,counts:{near:0,half:0,full:0,slide:0},claimed:new Set(),block(){},step(){}}:new Tricks.System(this, {point,corners,casterCorners,BODY,Stock});
       if(level.campaign){Course.init(this);Terrain.init(this,{BODY,WHEELS,CASTER});}
+    }
+
+    setWheelMode(mode) {
+      this.wheelMode = mode === 'front-swivel' ? mode : 'all-swivel';
+      this.wheels.forEach((wheel, i) => {
+        // The rear pivots are nearest the handle, at local X = 1.
+        if (this.wheelMode === 'front-swivel' && WHEELS[i][0] === 1) wheel.fixed = true;
+        else delete wheel.fixed;
+      });
+      this.syncFixedWheels();
+    }
+
+    syncFixedWheels() {
+      this.wheels.forEach(wheel => {
+        if (wheel.fixed) { wheel.a = this.body.a; wheel.omega = this.body.omega; }
+      });
     }
 
     activeWalls() {
@@ -265,11 +283,12 @@
       this.emit('fall',{kind:hazard.kind,x:p.x,y:p.y,seconds:this.level.campaign?0:8,lost:this.lostDistance,catch:this.fall.catch?.chapter});
     }
     fallStep(dt) {
-      if(this.level.campaign){const b=this.body;b.x+=b.vx*dt;b.y+=b.vy*dt;b.a=wrap(b.a+b.omega*dt);Terrain.advance(this,dt);this.stock.integrate(dt);this.integrateProps(dt);this.courseDoors(dt);Terrain.circuitStep(this,dt);return;}
+      if(this.level.campaign){const b=this.body;b.x+=b.vx*dt;b.y+=b.vy*dt;b.a=wrap(b.a+b.omega*dt);Terrain.advance(this,dt);this.stock.integrate(dt);this.integrateProps(dt);this.courseDoors(dt);Terrain.circuitStep(this,dt);this.syncFixedWheels();return;}
       const f=this.fall,b=this.body;f.time+=dt;f.vz-=200*dt;
       b.z=(b.z||0)+f.vz*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.a=wrap(b.a+b.omega*dt);
       b.pitch=f.pitch*Math.min(.9,f.time*1.5);b.rollTilt=f.roll*Math.min(.65,f.time);
-      this.wheels.forEach(w=>{w.a=wrap(w.a+w.omega*dt);w.roll+=w.speed*dt;});
+      this.wheels.forEach(w=>{if(!w.fixed)w.a=wrap(w.a+w.omega*dt);w.roll+=w.speed*dt;});
+      this.syncFixedWheels();
       this.stock.integrate(dt);
       if(this.level.campaign){this.integrateProps(dt);this.courseDoors(dt);this.tricks.step(dt,{},true);}
       if(!this.practice&&this.remaining<=0){this.status='lost';this.emit('lost');return;}
@@ -356,7 +375,7 @@
       const h=pose?pose.z+3:hit.cartZ??(floor?.height??b.z)+(hit.height??Math.min(22,other?.height??22));
       const p={x:hit.x,y:hit.y,z:h},n={x:hit.nx,y:hit.ny,z:0},t={x:-hit.ny,y:hit.nx,z:0};
       const pivot=pose?.pivot,offset=pose?{x:hit.x-pivot.x,y:hit.y-pivot.y}:null;
-      const casterJac=direction=>wheel?cross(offset.x,offset.y,direction.x,direction.y):0;
+      const casterJac=direction=>wheel&&!wheel.fixed?cross(offset.x,offset.y,direction.x,direction.y):0;
       const inv=other?1/other.mass:0,oi=other?1/(other.inertia||other.mass*50):0;
       const otherV=()=>other?.velocityAt?other.velocityAt(hit):{x:other?(other.vx||0)-(other.omega||0)*oy:0,y:other?(other.vy||0)+(other.omega||0)*ox:0};
       const jac=direction=>{const k=Terrain.contactAt(b,p,direction),js=casterJac(direction);k.ja-=js;return {...k,js,mass:1+inv+k.jp*k.jp/Terrain.PITCH_INERTIA+k.jr*k.jr/Terrain.ROLL_INERTIA+k.ja*k.ja/BODY.inertia+js*js/(wheel?CASTER.inertia:1)+cross(ox,oy,direction.x,direction.y)**2*oi+(other?.tiltMass?other.tiltMass(direction.x,direction.y,hit.height):0)};};
@@ -374,6 +393,7 @@
 
     casterImpulse(hit, wheel, i, other) {
       if(this.level.campaign)return this.spatialImpulse(hit,other,wheel,i);
+      if(wheel.fixed)return this.impulse(hit,other);
       this.trickHit=true;
       if(other)this.tricks.block(other);
       const b = this.body, { pivot } = casterPose(b, wheel, i);
@@ -407,6 +427,7 @@
     casterForces(dt, rolling) {
       const b = this.body;
       this.wheels.forEach((w, i) => {
+        if(w.fixed)return;
         const pose = casterPose(b, w, i), rx = pose.pivot.x - b.x-(b.comX||0)*Math.cos(b.a), ry = pose.pivot.y - b.y-(b.comX||0)*Math.sin(b.a);
         const vx = b.vx - b.omega * ry, vy = b.vy + b.omega * rx;
         const side = (i % 2 ? -1 : 1) * CASTER.axleOffset;
@@ -428,6 +449,16 @@
       // V(P).normal - trail * swivelRate. Ground impulses remove that slip,
       // exchanging momentum with both the chassis and the independent fork.
       for (let pass = 0; pass < 4; pass++) this.wheels.forEach((w, i) => {
+        if(w.fixed){
+          // A locked fork transfers lateral grip through the whole chassis.
+          // Its tire still rolls forward and backward along the basket heading.
+          const pose=casterPose(b,w,i),rx=pose.x-b.x-(b.comX||0)*Math.cos(b.a),ry=pose.y-b.y-(b.comX||0)*Math.sin(b.a);
+          const nx=-Math.sin(b.a),ny=Math.cos(b.a),lever=cross(rx,ry,nx,ny);
+          const lateral=(b.vx-b.omega*ry)*nx+(b.vy+b.omega*rx)*ny;
+          const j=-lateral*(w.surface?.grip??1)/(1+lever*lever/BODY.inertia);
+          b.vx+=nx*j;b.vy+=ny*j;b.omega+=lever*j/BODY.inertia;
+          return;
+        }
         const { pivot } = casterPose(b, w, i), rx = pivot.x - b.x-(b.comX||0)*Math.cos(b.a), ry = pivot.y - b.y-(b.comX||0)*Math.sin(b.a);
         const nx = -Math.sin(w.a), ny = Math.cos(w.a), lever = cross(rx, ry, nx, ny);
         const lateral = (b.vx - b.omega * ry) * nx + (b.vy + b.omega * rx) * ny - CASTER.trail * w.omega;
@@ -435,6 +466,7 @@
         b.vx += nx * j; b.vy += ny * j; b.omega += lever * j / BODY.inertia;
         w.omega -= CASTER.trail * j / CASTER.inertia;
       });
+      this.syncFixedWheels();
     }
 
     step(dt, input = {}) {
@@ -442,6 +474,7 @@
       // Caller uses a 120 Hz fixed step. Clamp external steps to avoid tunneling.
       dt = clamp(dt, 0, 1 / 120);
       const b = this.body;
+      this.syncFixedWheels();
       this.trickHit=false;
       this.time += dt;
       if(this.fall){this.fallStep(dt);this.tricks.step(dt,{},true);return;}
@@ -485,8 +518,9 @@
       this.solveCasters();
       const previousHeading=b.a,nextHeading=wrap(b.a+b.omega*dt);
       b.x += b.vx * dt+(b.comX||0)*(Math.cos(previousHeading)-Math.cos(nextHeading));b.y += b.vy*dt+(b.comX||0)*(Math.sin(previousHeading)-Math.sin(nextHeading));b.a=nextHeading;
-      this.wheels.forEach(w => { w.a = wrap(w.a + w.omega * dt); });
+      this.wheels.forEach(w => { if(!w.fixed)w.a = wrap(w.a + w.omega * dt); });
       if(this.level.campaign){Terrain.advance(this,dt,input);Terrain.circuitStep(this,dt);}
+      this.syncFixedWheels();
       this.stock.integrate(dt);
       if(this.level.campaign)this.courseDoors(dt);
       this.integrateProps(dt);
@@ -509,7 +543,7 @@
           this.wheels.forEach((wheel, i) => {
             const pose = casterPose(b, wheel, i);
             if(!this.wallOverlaps(rect,pose.z||0,7))return;
-            const h = polygonRectContact(casterCorners(b, wheel, i), pose, wheel.a, rect);
+            const h = polygonRectContact(casterCorners(b, wheel, i), pose, pose.a, rect);
             if (!h) return;
             this.boundaryContact(rect, h, 'wheel:' + i);
             const impact = this.casterImpulse(h, wheel, i);
@@ -558,7 +592,7 @@
         const shopper = circleRect(person.x, person.y, BODY.personRadius, touch);
         if (shopper) this.boundaryContact(wall, shopper, 'shopper');
         this.wheels.forEach((wheel, i) => {
-          const pose = casterPose(b, wheel, i), hit = polygonRectContact(casterCorners(b, wheel, i), pose, wheel.a, touch);
+          const pose = casterPose(b, wheel, i), hit = polygonRectContact(casterCorners(b, wheel, i), pose, pose.a, touch);
           if (hit) this.boundaryContact(wall, hit, 'wheel:' + i);
         });
       }
