@@ -13,10 +13,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>About</title>
-  <meta name="description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. How it gets made, and what it's made of.">
+  <meta name="description" content="Ethan Willingham's games, interactive demos, and articles. The site's build history, AI usage, colors, and fonts.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="About">
-  <meta property="og:description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. How it gets made, and what it's made of.">
+  <meta property="og:description" content="Ethan Willingham's games, interactive demos, and articles. The site's build history, AI usage, colors, and fonts.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/about.html">
@@ -66,14 +66,6 @@
     color: #9ec79a; margin: 3.4rem 0 0; padding-top: 1.4rem; border-top: 1px solid var(--rule);
   }
   .lab-seclead .n { color: var(--text-faint); }
-
-  /* ---- the two tags (from colophon) ---- */
-  .co-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.34em 0.72em; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.5em; line-height: 1; }
-  .co-tag::before { content: ""; width: 6px; height: 6px; border-radius: 999px; flex: none; }
-  .co-tag--made     { color: #bcd9b6; background: rgba(158,199,154,0.12); border: 1px solid rgba(158,199,154,0.34); }
-  .co-tag--made::before     { background: #9ec79a; }
-  .co-tag--borrowed { color: var(--text-dim); background: rgba(245,241,234,0.05); border: 1px solid rgba(245,241,234,0.10); }
-  .co-tag--borrowed::before { background: var(--line-mid); }
 
   /* ---- one labeled spec on its stage (from colophon, no column wrapper) ---- */
   .lab-spec { margin: 1.8rem 0 0; }
@@ -196,23 +188,6 @@
   .gh-card-del { color: #e08a7a; }
   .gh-card-link { margin-left: auto; color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; pointer-events: auto; }
   .gh-card-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  /* ---- "Size on disk": deployed-weight stat row + growth area chart ---- */
-  #ss-root { margin-top: 0.5rem; }
-  .ss-stats { display: flex; flex-wrap: wrap; gap: 1.5rem 2.6rem; margin: 0 0 1.5rem; }
-  .ss-chart { position: relative; }
-  .ss-svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .ss-grid { stroke: var(--rule); }
-  .ss-ylab, .ss-xlab { fill: #8d9387; font-family: var(--font-mono); font-size: 11px; }
-  .ss-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  .ss-end { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
-  .ss-hover { transition: opacity 0.15s ease; pointer-events: none; }
-  .ss-guide { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.55; }
-  .ss-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
-  .ss-read { position: absolute; top: 0; right: 2px; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); white-space: nowrap; }
-  .ss-read b { color: var(--text-bright); font-weight: 600; }
-  .ss-break { margin: 1rem 0 0; font-family: var(--font-body); font-size: 0.85rem; color: var(--text-dim); }
-  .ss-break b { color: var(--text); font-weight: 600; }
-  .ss-sep { margin: 0 0.55em; color: #565f56; }
   .gh-fuel { display: flex; flex-wrap: wrap; gap: 1.5rem 2.6rem; margin: 2.2em 0; padding: 1.5rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
   .gh-stat { display: flex; flex-direction: column; gap: 0.3rem; }
   .gh-stat .n { font-family: var(--font-heading); font-weight: 400; font-size: 2.15rem; line-height: 1; letter-spacing: -0.015em; color: var(--accent); }
@@ -221,7 +196,6 @@
     .gh-readout { font-size: 0.62rem; }
     .gh-hint { font-size: 0.64rem; }
     .gh-stat .n { font-size: 1.7rem; }
-    .ss-ylab, .ss-xlab { font-size: 17px; }
   }
 
   /* ============ "Which AI built which page" attribution viz (from git-history.html) ============ */
@@ -407,7 +381,7 @@
 
     <header class="about-head fade-in">
       <h1 class="about-title">About</h1>
-      <p class="about-lead">Welcome to my woodshop. I build things for fun and write the articles I want to read; it's my reference shelf, fully open on the web.</p>
+      <p class="about-lead">I build games and interactive demos for fun, and write the articles I want to read.</p>
     </header>
 
     <main>
@@ -435,12 +409,6 @@
             </div>
           </div>
 
-          <h2 class="u-h2">Size on disk</h2>
-
-          <p>Almost all of it is images. The writing is a sliver.</p>
-
-          <div id="ss-root"></div>
-
           <h2 class="u-h2">Tokens</h2>
 
           <div class="gh-fuel">
@@ -449,13 +417,13 @@
             <div class="gh-stat"><span class="n" data-about-stat="cost">~$27,700</span><span class="l">at list prices, to date</span></div>
           </div>
 
-          <p data-about-token-mix>I play a lot of ping-pong with the AI, and every round it re-reads what it already has, the same files and the whole conversation. In the logs collected since July 23, cache reads account for 97% of the tokens and new output for 0.5%. I know I could be more efficient about it. I'm not really trying to be.</p>
+          <p data-about-token-mix>Most tokens are cached text the AI reads again as we work, including files and earlier messages. Since July 23, cache reads account for 97% of logged tokens and new output for 0.5%.</p>
 
-          <p data-about-freshness>Updated September 23, 2026 from retained Claude Code and Codex logs on my Mac and the September 9 to 23 report from my PC. These totals include my other projects. Usage through July 22 is an older estimate; the later totals come from deduplicated logs. The dollar figure uses standard API list prices, not my actual bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">The method and its limits are public.</a></p>
+          <p data-about-freshness>Updated September 23, 2026 from Claude Code and Codex logs on my Mac and a September 9 to 23 usage report from my PC. These totals cover all my projects. Usage through July 22 is estimated; later records are deduplicated. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>
 
           <h2 class="u-h2">Which AI built which page</h2>
 
-          <p>Claude did most of the early work. GPT-5.6 Sol joined in July, and GPT-6 Astra did much of the recent Sluice work. The model badges show total token use across all my projects. Each page card counts recorded file changes, and its bar shows which models made them. Click a card for the breakdown and build history.</p>
+          <p>I use Claude and Codex to build the site. The model badges show token use across all my projects. Each page card shows recorded file changes by model. Click one for the breakdown and build history.</p>
 
           <div id="ma-root"></div>
 
@@ -464,9 +432,8 @@
 
           <div class="lab-spec">
             <div class="co-spec-head">
-              <span class="co-spec-name">the palette</span>
-              <span class="co-tag co-tag--made">Made here</span>
-              <p class="co-spec-note">The muted accents a post paints with, every one dialed to the same softness so they read as a family.</p>
+              <span class="co-spec-name">Colors</span>
+              <p class="co-spec-note">The site has a dark green background and muted accent colors. Click a swatch to copy its color values.</p>
             </div>
             <div class="co-stage">
               <div class="pal-wrap">
@@ -493,28 +460,27 @@
 
           <div class="lab-spec">
             <div class="co-spec-head">
-              <span class="co-spec-name">the three faces</span>
-              <span class="co-tag co-tag--borrowed">Borrowed</span>
-              <p class="co-spec-note">Every word is set in one of three self-hosted typefaces: a serif for display, a familiar sans for body, a mono for anything that reads like data. I did not draw them; what is mine is the casting.</p>
+              <span class="co-spec-name">Fonts</span>
+              <p class="co-spec-note">Three fonts, with the font files hosted here.</p>
             </div>
             <div class="co-faces">
               <div class="co-face">
                 <div class="co-face-aa" style="font-family:var(--font-heading); font-weight:700;">Aa</div>
                 <div class="co-face-name">Century Supra &middot; serif &middot; --font-heading</div>
-                <div class="co-face-line" style="font-family:var(--font-heading);">Headlines, display, and <em style="font-style:italic">the italic that does the editorial talking.</em></div>
-                <div class="co-face-role">Titles, section heads, pull quotes, big numerals. The voice of the site.</div>
+                <div class="co-face-line" style="font-family:var(--font-heading);">Century Supra, <em style="font-style:italic">in regular and italic.</em></div>
+                <div class="co-face-role">Titles, section headings, quotes, and large numbers.</div>
               </div>
               <div class="co-face">
                 <div class="co-face-aa" style="font-family:var(--font-body); font-weight:700;">Aa</div>
                 <div class="co-face-name">Segoe UI &middot; sans &middot; --font-body</div>
-                <div class="co-face-line" style="font-family:var(--font-body);">The quick brown fox sets the body text and the interface.</div>
-                <div class="co-face-role">Paragraphs and UI. Plain, legible, and already on most machines.</div>
+                <div class="co-face-line" style="font-family:var(--font-body);">Segoe UI, for the text you read here.</div>
+                <div class="co-face-role">Paragraphs, buttons, and menus.</div>
               </div>
               <div class="co-face">
                 <div class="co-face-aa" style="font-family:var(--font-mono);">Aa</div>
                 <div class="co-face-name">Commit Mono &middot; mono &middot; --font-mono</div>
                 <div class="co-face-line" style="font-family:var(--font-mono); font-size:1.1rem;">0123456789 = { labels, gauges, code }</div>
-                <div class="co-face-role">Data, eyebrows, citation chips, code blocks. Anything that reads like a readout.</div>
+                <div class="co-face-role">Data, labels, citations, and code.</div>
               </div>
             </div>
           </div>
@@ -533,8 +499,6 @@
   <script src="js/main.js"></script>
   <script src="js/git-history-data.js"></script>
   <script src="js/git-history.js"></script>
-  <script src="js/site-size-data.js"></script>
-  <script src="js/site-size.js"></script>
   <script src="js/git-attribution-data.js"></script>
   <script src="js/post-prompts-data.js"></script>
   <script src="js/git-attribution.js"></script>
