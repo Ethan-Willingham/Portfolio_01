@@ -1,8 +1,6 @@
 /* ============================================================
    The Analects of Confucius, side by side.
-   Pick any of the 503 passages, begin with one plain-language
-   distillation, read the received Chinese, then compare every
-   English translation in the corpus. Famous editions lead.
+   Reading notes, received Chinese, and available English excerpts.
 
    Data:  window.ANA       -> {translators, order, books, chapters}
    Notes: window.ANA_NOTES -> {"B.C": {title, plain}}
@@ -50,9 +48,9 @@
       return !inKey[v.k] && m.full !== true && m.n < 450;
     }).sort(byYear);
     return [
-      { label: 'The famous ones', list: t1 },
-      { label: 'The lesser-known complete translations', list: t2 },
-      { label: 'Partial translations', list: t3 }
+      { label: 'Translations', list: t1 },
+      { label: 'More translations', list: t2 },
+      { label: 'Further excerpts', list: t3 }
     ];
   }
 
@@ -70,9 +68,11 @@
 
   function versionHtml(v) {
     var m = meta(v.k);
+    var name = esc(m.name);
+    if (m.url) name = '<a href="' + esc(m.url) + '">' + name + '</a>';
     return '<article class="ana-v ana-' + era(m.year) + '">' +
-      '<header class="ana-vh"><span class="ana-vn">' + esc(m.name) + '</span>' +
-      '<span class="ana-vy">' + (m.year || '') + '</span></header>' +
+      '<header class="ana-vh"><span class="ana-vn">' + name + '</span>' +
+      '<span class="ana-vy">' + esc(m.edition || m.year) + '</span></header>' +
       '<div class="ana-vt">' + textHtml(v.t) + '</div></article>';
   }
 
@@ -80,7 +80,7 @@
     if (!note.plain) {
       return '<p class="ana-note-error">The plain-English opening for this passage did not load. The source and translations are still available below.</p>';
     }
-    return '<div class="ana-note"><p class="ana-note-k">In plain English</p>' +
+    return '<div class="ana-note"><p class="ana-note-k">Reading note</p>' +
       '<p class="ana-note-text">' + note.plain + '</p></div>';
   }
 
@@ -172,7 +172,10 @@
     });
     window.addEventListener('hashchange', function () {
       var i = indexOfRef(location.hash.slice(1));
-      if (i >= 0 && i !== cur) go(i, false);
+      if (i >= 0) {
+        if (i !== cur) go(i, false);
+        $('ana').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
 
@@ -186,6 +189,7 @@
     render();
     var mount = $('ana');
     if (mount) mount.classList.add('ana-ready');
+    if (i >= 0 && mount) mount.scrollIntoView({ behavior: 'auto', block: 'start' });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
