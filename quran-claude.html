@@ -29,7 +29,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
     :root {
       --torah-measure: 760px;
@@ -98,10 +98,7 @@
     .verse q { font-family: var(--font-heading); font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
     .verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
     .hard-reading { max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding-top: clamp(3.5rem, 7vw, 5rem); border-top: 1px solid var(--accent); }
-    .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 2.2rem; }
-    .hard-item { padding: 1.1rem 1.15rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
-    .hard-item h3 { margin: 0 0 .5rem; font-family: var(--font-heading); font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
-    .hard-item p { margin: 0; font-size: .94rem; line-height: 1.62; color: var(--text-dim); }
+    .hard-reading-grid { margin-top: 2.2rem; }
     .torah-sources { max-width: var(--torah-copy); margin: 3rem auto 0; }
     .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
     .torah-sources li { break-inside: avoid; }
@@ -109,7 +106,7 @@
     .torah-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .torah-context-grid, .hard-reading-grid { grid-template-columns: 1fr; }
+      .torah-context-grid { grid-template-columns: 1fr; }
       .torah-convergence { grid-template-columns: 1fr; gap: .7rem; }
       .torah-sources .u-collapse-list { columns: 1; }
     }
@@ -369,11 +366,11 @@
       <section class="hard-reading" aria-labelledby="hard-title">
         <p class="torah-layer-tag"><b>Do not skip</b> The hard parts</p>
         <h2 class="torah-h2" id="hard-title">Fighting, patriarchy, slavery, punishment</h2>
-        <div class="hard-reading-grid">
-          <article class="hard-item"><h3>Fighting is commanded</h3><p>The Quran regulates war and also orders it. &ldquo;Fight in the way of Allah against those who fight against you, but begin not hostilities&rdquo; (2:190) shares the book with the ninth sura&rsquo;s &ldquo;slay the idolaters wherever ye find them&rdquo; (9:5), aimed at treaty-breaking Mecca, and its command to fight the People of the Book until they pay a tribute tax (9:29). The famous &ldquo;no compulsion in religion&rdquo; (2:256) is also here, and the tradition itself splits on how these sit together: many classical jurists ruled the sword verses abrogate the tolerant ones; many modern scholars rule the war verses are bound to their seventh-century context. Both are readings. The verses are the text.</p></article>
-          <article class="hard-item"><h3>The legal world is patriarchal</h3><p>&ldquo;Men are in charge of women&rdquo; (4:34), and the same verse permits striking a defiant wife, which Pickthall renders &ldquo;scourge them.&rdquo; A daughter inherits half a son&rsquo;s share (4:11); in financial disputes it takes two women&rsquo;s testimony to stand where one man&rsquo;s does (2:282); a man may hold four wives (4:3). Reinterpretation of nearly every clause exists, some of it centuries old, but any account that says the Quran&rsquo;s law treats men and women identically is false.</p></article>
-          <article class="hard-item"><h3>Slavery is regulated, not abolished</h3><p>Freeing a slave is high righteousness here (2:177, 90:13) and a prescribed penance for several sins, and zakat funds can buy freedom. Enslaved concubinage is also plainly permitted, the recurring &ldquo;those whom your right hands possess&rdquo; (4:3, 23:6), and no verse abolishes the institution. Muslim abolition arrived by later argument, as Christian abolition did, against readings the text had left available.</p></article>
-          <article class="hard-item"><h3>Punishment is corporal now and vivid after</h3><p>The thief&rsquo;s hand is cut (5:38); adultery draws a hundred lashes, with pity explicitly disallowed (24:2); and hell is described with a thoroughness the mercy chapters never cancel, down to skins renewed so the burning can continue (4:56). Jurists hedged the earthly penalties with strict evidence rules almost immediately, but the sentences themselves are scripture.</p></article></div>
+        <div class="hard-reading-grid u-reading-list">
+          <article class="hard-item u-reading-section"><h3>Fighting is commanded</h3><p>The Quran regulates war and also orders it. &ldquo;Fight in the way of Allah against those who fight against you, but begin not hostilities&rdquo; (2:190) shares the book with the ninth sura&rsquo;s &ldquo;slay the idolaters wherever ye find them&rdquo; (9:5), aimed at treaty-breaking Mecca, and its command to fight the People of the Book until they pay a tribute tax (9:29). The famous &ldquo;no compulsion in religion&rdquo; (2:256) is also here, and the tradition itself splits on how these sit together: many classical jurists ruled the sword verses abrogate the tolerant ones; many modern scholars rule the war verses are bound to their seventh-century context. Both are readings. The verses are the text.</p></article>
+          <article class="hard-item u-reading-section"><h3>The legal world is patriarchal</h3><p>&ldquo;Men are in charge of women&rdquo; (4:34), and the same verse permits striking a defiant wife, which Pickthall renders &ldquo;scourge them.&rdquo; A daughter inherits half a son&rsquo;s share (4:11); in financial disputes it takes two women&rsquo;s testimony to stand where one man&rsquo;s does (2:282); a man may hold four wives (4:3). Reinterpretation of nearly every clause exists, some of it centuries old, but any account that says the Quran&rsquo;s law treats men and women identically is false.</p></article>
+          <article class="hard-item u-reading-section"><h3>Slavery is regulated, not abolished</h3><p>Freeing a slave is high righteousness here (2:177, 90:13) and a prescribed penance for several sins, and zakat funds can buy freedom. Enslaved concubinage is also plainly permitted, the recurring &ldquo;those whom your right hands possess&rdquo; (4:3, 23:6), and no verse abolishes the institution. Muslim abolition arrived by later argument, as Christian abolition did, against readings the text had left available.</p></article>
+          <article class="hard-item u-reading-section"><h3>Punishment is corporal now and vivid after</h3><p>The thief&rsquo;s hand is cut (5:38); adultery draws a hundred lashes, with pity explicitly disallowed (24:2); and hell is described with a thoroughness the mercy chapters never cancel, down to skins renewed so the burning can continue (4:56). Jurists hedged the earthly penalties with strict evidence rules almost immediately, but the sentences themselves are scripture.</p></article></div>
       </section>
 
       <details class="u-collapse torah-sources">

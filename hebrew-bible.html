@@ -29,7 +29,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
     :root {
       --torah-measure: 760px;
@@ -94,10 +94,7 @@
     .verse q { font-family: var(--font-heading); font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
     .verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
     .hard-reading { max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding-top: clamp(3.5rem, 7vw, 5rem); border-top: 1px solid var(--accent); }
-    .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 2.2rem; }
-    .hard-item { padding: 1.1rem 1.15rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
-    .hard-item h3 { margin: 0 0 .5rem; font-family: var(--font-heading); font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
-    .hard-item p { margin: 0; font-size: .94rem; line-height: 1.62; color: var(--text-dim); }
+    .hard-reading-grid { margin-top: 2.2rem; }
     .torah-sources { max-width: var(--torah-copy); margin: 3rem auto 0; }
     .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
     .torah-sources li { break-inside: avoid; }
@@ -105,7 +102,7 @@
     .torah-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .torah-context-grid, .hard-reading-grid { grid-template-columns: 1fr; }
+      .torah-context-grid { grid-template-columns: 1fr; }
       .torah-sources .u-collapse-list { columns: 1; }
     }
     @media (max-width: 560px) {
@@ -366,11 +363,11 @@
       <section class="hard-reading" aria-labelledby="hard-title">
         <p class="torah-layer-tag"><b>Do not skip</b> The hard parts</p>
         <h2 class="torah-h2" id="hard-title">Slavery, patriarchy, violence, contradiction</h2>
-        <div class="hard-reading-grid">
-          <article class="hard-item"><h3>Slavery is limited, not abolished</h3><p>The rescue from Egyptian forced labor does not produce a general ban on owning people. Exodus 21 regulates slaveholding and permits an owner to beat an enslaved person, subject to specified penalties. Leviticus 25:44-46 permits permanent, inheritable slavery of foreigners. Release protections for Israelites cannot be generalized to everyone.</p></article>
-          <article class="hard-item"><h3>The legal world is patriarchal</h3><p>The narratives give women decisive roles, including the midwives who defy Pharaoh and Miriam, a prophet. The law usually assumes male household authority. Numbers 30 lets fathers or husbands annul women&rsquo;s vows; Numbers 27 gives daughters inheritance when there is no son. These provisions grant some protections within a hierarchy.</p></article>
-          <article class="hard-item"><h3>Some violence is commanded</h3><p>Numbers 31 includes the killing of Midianite captives. Deuteronomy 7 and 20 command destruction of named Canaanite peoples, and Deuteronomy 25 commands the erasure of Amalek. Some later Jewish interpretations restrict when such commands could apply. They remain part of the Torah and resist a wholly humane account of it.</p></article>
-          <article class="hard-item"><h3>The laws do not always agree</h3><p>Exodus 21 gives a Hebrew male slave release after six years and treats a daughter sold into slavery differently. Deuteronomy 15 explicitly gives six-year release to Hebrew men and women. Leviticus 25 describes release at the Jubilee. Later interpreters reconcile these rules; historians also study their differences as evidence of separate legal collections.</p></article>
+        <div class="hard-reading-grid u-reading-list">
+          <article class="hard-item u-reading-section"><h3>Slavery is limited, not abolished</h3><p>The rescue from Egyptian forced labor does not produce a general ban on owning people. Exodus 21 regulates slaveholding and permits an owner to beat an enslaved person, subject to specified penalties. Leviticus 25:44-46 permits permanent, inheritable slavery of foreigners. Release protections for Israelites cannot be generalized to everyone.</p></article>
+          <article class="hard-item u-reading-section"><h3>The legal world is patriarchal</h3><p>The narratives give women decisive roles, including the midwives who defy Pharaoh and Miriam, a prophet. The law usually assumes male household authority. Numbers 30 lets fathers or husbands annul women&rsquo;s vows; Numbers 27 gives daughters inheritance when there is no son. These provisions grant some protections within a hierarchy.</p></article>
+          <article class="hard-item u-reading-section"><h3>Some violence is commanded</h3><p>Numbers 31 includes the killing of Midianite captives. Deuteronomy 7 and 20 command destruction of named Canaanite peoples, and Deuteronomy 25 commands the erasure of Amalek. Some later Jewish interpretations restrict when such commands could apply. They remain part of the Torah and resist a wholly humane account of it.</p></article>
+          <article class="hard-item u-reading-section"><h3>The laws do not always agree</h3><p>Exodus 21 gives a Hebrew male slave release after six years and treats a daughter sold into slavery differently. Deuteronomy 15 explicitly gives six-year release to Hebrew men and women. Leviticus 25 describes release at the Jubilee. Later interpreters reconcile these rules; historians also study their differences as evidence of separate legal collections.</p></article>
         </div>
       </section>
 

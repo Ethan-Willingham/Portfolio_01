@@ -29,7 +29,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
     :root {
       --gg-copy: 64ch;
@@ -97,11 +97,7 @@
     .gg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
     .gg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-    .gg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--gg-copy); margin: 2.6rem auto 0; }
-    .gg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--gg-tint); border: 1px solid var(--gg-hair); border-radius: 7px; }
-    .gg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
-    .gg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
-    .gg-hard a { color: var(--accent); text-decoration: none; }
+    .gg-hard-grid { max-width: var(--gg-copy); margin: 2.6rem auto 0; }
 
     .gg-sources { max-width: var(--gg-copy); margin: 3.2rem auto 0; }
     .gg-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
@@ -110,7 +106,7 @@
     .gg-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .gg-context-grid, .gg-hard-grid { grid-template-columns: 1fr; }
+      .gg-context-grid { grid-template-columns: 1fr; }
       .gg-convergence { grid-template-columns: 1fr; gap: .7rem; }
       .gg-sources .u-collapse-list { columns: 1; }
     }
@@ -394,28 +390,28 @@
       <h2 class="gg-h2" id="hard-title">War, caste, women, detachment, renunciation, other gods</h2>
       <p class="gg-intro">These passages are part of the teaching. A reading that leaves them out makes the Gita easier than it is.</p>
 
-      <div class="gg-hard-grid">
-        <article class="gg-hard">
+      <div class="gg-hard-grid u-reading-list">
+        <article class="gg-hard u-reading-section">
           <h3>Krishna tells Arjuna to fight</h3>
           <p>In <a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29/Discourse_11">11.32-34</a>, Krishna says the opposing warriors are already doomed and tells Arjuna to kill them as his instrument. Within the epic, this is a war that kills relatives and teachers. Gandhi read the battlefield as a struggle within the human heart and used the Gita in a life committed to nonviolence. That influential interpretation does not explain away the literal command to fight.</p>
         </article>
-        <article class="gg-hard">
+        <article class="gg-hard u-reading-section">
           <h3>Duty is tied to a ranked social order</h3>
           <p>Verse 4.13 says Krishna created the fourfold order according to qualities and action. <a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29/Discourse_18">18.41-44</a> assigns duties to Brahmins (priests and teachers), Kshatriyas (rulers and warriors), Vaishyas (farmers and traders), and Shudras (servants). This ideal of <em>varna</em> differs from <em>jati</em>, the hereditary caste groups through which much social life is organized. Some interpreters emphasize qualities and work over birth. The verses still assign unequal roles, whose justice remains disputed.</p>
         </article>
-        <article class="gg-hard">
+        <article class="gg-hard u-reading-section">
           <h3>Women are promised liberation in the language of low status</h3>
           <p><a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29/Discourse_9">9.32</a> promises the highest goal to women, Vaishyas, and Shudras who take refuge in Krishna. Besant&rsquo;s translation places them after &ldquo;though of the womb of sin.&rdquo; Commentators disagree about how the Sanskrit links the groups and that phrase. The next verse names Brahmins and royal sages as the more obvious candidates. The passage widens access to liberation while speaking within a hierarchy of birth and gender.</p>
         </article>
-        <article class="gg-hard">
+        <article class="gg-hard u-reading-section">
           <h3>Detachment can be used to excuse harm</h3>
           <p>Krishna says nature&rsquo;s qualities perform actions while the deluded ego claims to be the doer (3.27). In the battle scene he also calls Arjuna an instrument. Read alone, those claims can excuse a person from responsibility. But <a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29/Discourse_18">18.25</a> condemns action that disregards consequences, loss, or injury to others. Giving up attachment to a reward does not remove the obligation to examine what an action will do.</p>
         </article>
-        <article class="gg-hard">
+        <article class="gg-hard u-reading-section">
           <h3>Readers disagree about what must be renounced</h3>
           <p>At 5.2 Krishna praises both renunciation and karma yoga, preferring karma yoga. At <a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29/Discourse_18">18.66</a> he tells Arjuna to abandon all duties and take refuge in him. Shankara gives knowledge and renunciation a decisive role in liberation. Ramanuja interprets surrender as compatible with continuing prescribed work while giving up possessiveness and independent agency. Whether action prepares for liberation or remains central to the liberating path depends on the school.</p>
         </article>
-        <article class="gg-hard">
+        <article class="gg-hard u-reading-section">
           <h3>Other gods are recognized and subordinated</h3>
           <p>Krishna says he supports faith in other deities, but calls their rewards temporary (7.20-23). At <a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29/Discourse_9">9.23-25</a> he says their worship reaches him, though performed without proper understanding, and distinguishes its destination from reaching him directly. Some Hindu readers use these passages to explain many forms of worship within one divine reality. Krishna-centered traditions also read them as a claim that devotion to Krishna is supreme.</p>
         </article>
