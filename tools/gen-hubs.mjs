@@ -43,7 +43,7 @@ const HUBS = [
       live('new-testament.html', 'The New Testament', 'new-testament.jpg', '1st to 2nd c. CE', 70, "Four accounts of Jesus, letters to early churches, and Revelation. The books in plain English, their Jewish setting, fifteen central ideas, manuscript history, and the passages Christians disagree about."),
       live('nagarjuna.html', 'Nagarjuna and the Emptiness of Everything', 'nagarjuna.jpg', 'c. 150 CE', 150, "The deepest book in Buddhist philosophy, from about 150 CE. Its argument is that nothing, including you, exists on its own, and that this emptiness is not bleak but the very thing that lets anything change or ever be set free."),
       live('quran.html', 'The Quran: A Guided Reading', 'quran.jpg', '632 CE', 632, "Muslims hold the Quran to be God's revelation in Arabic. Its early preaching and later laws, twelve recurring ideas, manuscript history, and difficult passages on war, family authority, slavery, and religious freedom."),
-      live('guru-granth-sahib.html', 'The Guru Granth Sahib', 'guru-granth-sahib.jpg', '1604', 1604, "A 1,430-ang anthology arranged by music, the Sikh history that made it the living Guru, fourteen ideas practiced in Sikh life, and the questions a clean summary cannot settle."),
+      live('guru-granth-sahib.html', 'The Guru Granth Sahib', 'guru-granth-sahib.jpg', '1604', 1604, "Sikhs receive this anthology of hymns as their eternal Guru. Its music and poetry connect love of the Divine with honest work, service, and equality."),
     ],
   },
   {

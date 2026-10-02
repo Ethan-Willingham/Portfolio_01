@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Guru Granth Sahib</title>
-  <meta name="description" content="The Guru Granth Sahib in plain English: what this anthology of hymns is, how music orders it, how it became the living Guru, fourteen ideas tested in Sikh practice, its textual history, and the questions a serious reader should not skip.">
+  <meta name="description" content="Sikh scripture is an anthology of hymns revered as the eternal Guru. Its music, devotion, teachings, and history, with passages from the text.">
   <meta property="og:title" content="The Guru Granth Sahib">
-  <meta property="og:description" content="A 1,430-ang anthology arranged by music, the Sikh story that made it the living Guru, fourteen ideas practiced in Sikh life, and the questions a clean summary cannot settle.">
+  <meta property="og:description" content="Sikh scripture is an anthology of hymns revered as the eternal Guru. Its music, devotion, teachings, and history, with passages from the text.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/guru-granth-sahib.html">
@@ -47,7 +47,6 @@
     .gsg-hero .u-title { max-width: 14ch; margin-inline: auto; font-size: clamp(3.15rem, 10.4vw, 6.6rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
     .gsg-hero .u-dek { max-width: 55ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
     .gsg-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
-    .gsg-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
 
     .gsg-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); }
     .gsg-layer::before { content: ""; position: absolute; top: 0; left: 50%; width: calc(100% - var(--gutter) - var(--gutter)); max-width: var(--gsg-frame); border-top: 1px solid var(--rule); transform: translateX(-50%); pointer-events: none; }
@@ -59,8 +58,8 @@
     .gsg-prose p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); text-wrap: pretty; }
     .gsg-prose p:last-child { margin-bottom: 0; }
     .gsg-prose p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
-    .gsg-prose a, .gsg-context a, .gsg-page .u-textcheck a, .gsg-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--gsg-hair); }
-    .gsg-prose a:hover, .gsg-context a:hover, .gsg-page .u-textcheck a:hover, .gsg-sources a:hover { color: var(--accent-hover); }
+    .gsg-prose a, .gsg-context a, .gsg-concept-body a, .gsg-hard a, .gsg-page .u-textcheck a, .gsg-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--gsg-hair); }
+    .gsg-prose a:hover, .gsg-context a:hover, .gsg-concept-body a:hover, .gsg-hard a:hover, .gsg-page .u-textcheck a:hover, .gsg-sources a:hover { color: var(--accent-hover); }
 
     .gsg-day { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: var(--gsg-copy); margin: 2.8rem auto; border: 1px solid var(--gsg-hair); border-radius: 8px; overflow: hidden; background: var(--gsg-tint); }
     .gsg-hour { padding: 1.35rem 1.25rem 1.45rem; }
@@ -101,10 +100,6 @@
     .gsg-verse q { font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
     .gsg-verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
 
-    .gsg-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--gsg-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding: 1.35rem 1.4rem; background: var(--gsg-tint); border: 1px solid var(--gsg-hair); border-radius: 7px; }
-    .gsg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
-    .gsg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
-
     .gsg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--gsg-copy); margin: 2.6rem auto 0; }
     .gsg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--gsg-tint); border: 1px solid var(--gsg-hair); border-radius: 7px; }
     .gsg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
@@ -122,7 +117,6 @@
       .gsg-context-grid, .gsg-hard-grid { grid-template-columns: 1fr; }
       .gsg-day { grid-template-columns: 1fr; }
       .gsg-hour + .gsg-hour { border-left: 0; border-top: 1px solid var(--gsg-hair); }
-      .gsg-convergence { grid-template-columns: 1fr; gap: .7rem; }
     }
     @media (max-width: 560px) {
       .gsg-concept > summary { grid-template-columns: 2.2rem 1fr 1.7rem; gap: .65rem; padding-inline: .2rem; }
@@ -141,71 +135,68 @@
 
   <header class="gsg-shell gsg-hero">
     <h1 class="u-title">The Guru Granth Sahib</h1>
-    <p class="u-dek">A 1,430-ang anthology arranged by music, not plot, and the Sikh story that made a book the living Guru.</p>
-    <p class="u-meta"><b>Four-part reading guide</b><span class="u-sep">/</span>14 practice-tested ideas<span class="u-sep">/</span>24 sources<span class="u-sep">/</span>23 min</p>
-    <span class="gsg-scroll">begin with the book</span>
+    <p class="u-dek">Sikhs bow before this book as their Guru. Its hymns speak of loving God, losing the ego, and living honestly among other people.</p>
+    <p class="u-meta">20 min</p>
   </header>
 
   <main>
     <section class="gsg-layer" id="anthology">
       <div class="gsg-shell">
         <p class="gsg-layer-tag"><b>01</b><span>What the book is</span></p>
-        <h2 class="gsg-h2">A songbook, a Sikh history, a living Guru</h2>
-        <p class="gsg-intro">Do not look for a plot. Look for voices gathered under musical instructions, meant to be heard until their teaching becomes a way of life.</p>
+        <h2 class="gsg-h2">Hymns received as Guru</h2>
 
         <div class="gsg-prose">
-          <p>A Christian Bible can be mapped as a library and the Quran can be put back into a rough preaching chronology. The Guru Granth Sahib asks for a different first move. Its center is neither story nor law code. It is <em>bani</em>, sacred utterance, composed as hymns and set inside a musical architecture. The standard volume has 1,430 <em>angs</em>. The word means limbs, not merely pages. A Sikh who says ang 349 is locating a line within the body of the Guru.</p>
-          <p>The volume opens with <em>Ik Oankar</em> and the Mul Mantar, a compressed statement of the One as true, creative, fearless, without hatred, beyond birth, and known by grace. Japji follows, then the evening and bedtime compositions So Dar, So Purakh, and Sohila. After that opening liturgical sequence, most of the book is ordered under thirty-one main <em>ragas</em>. A raga is not just a tune. It is a melodic framework that gives sung words a shape, mood, and field of movement. Inside each raga, compositions are grouped further by author, poetic form, length, and musical house. The closing region gathers forms outside the main raga sequence, including the saloks of Kabir and Farid, the Bhatts&rsquo; praise poetry, Guru Tegh Bahadur&rsquo;s saloks, Mundavani, and the still-disputed Ragmala.</p>
-          <p>That arrangement changes how the book should be read. A first-time reader is not supposed to push through 1,430 angs waiting for the next event. Follow one composition, hear its refrain, notice who speaks, and listen for the argument made by the raga, image, repetition, and response. Silent English reading can reveal the claims. It cannot reproduce what happens when the same lines are sung as <em>kirtan</em> among a congregation.</p>
-          <p>The authorship is as striking as the structure. The received volume contains compositions by six Sikh Gurus, from Guru Nanak through Guru Arjan and Guru Tegh Bahadur. It also carries the voices of fifteen Bhagats, eleven Bhatts, and other Sikh contributors. Kabir, Sheikh Farid, Ravidas, Namdev, and their companions came from different devotional, social, and religious locations. Their inclusion does not mean Guru Arjan pasted together every available holy poem or declared all doctrines interchangeable. He selected, arranged, and sometimes answered these voices inside a Sikh theological frame. The welcome is real. So is the editorial judgment.</p>
-          <p>The Sikh story around the anthology begins before the bound volume. Guru Nanak&rsquo;s hymns were sung and remembered in the community at Kartarpur. Collections grew through his successors. Guru Arjan supervised a canonical compilation in 1604, with Bhai Gurdas serving as scribe, and the volume was installed at Harmandir Sahib in Amritsar. The received text later added the compositions of Guru Tegh Bahadur in the recension associated with Guru Gobind Singh. Sikh tradition remembers Guru Gobind Singh ending the line of human Gurus at Nanded in 1708 and giving enduring Guruship to the Granth. &ldquo;Eleventh Guru&rdquo; is common shorthand. The more exact Sikh claim is that the Guru Granth Sahib is the eternal Guru, while the Guru Panth also carries corporate responsibility and authority.</p>
+          <p>The Guru Granth Sahib is opened in the morning and put to rest at night. In a <em>gurdwara</em>, a Sikh place of worship, people bow before it and listen to its hymns. Sikhs receive it as the eternal Guru, the continuing spiritual authority after the ten human Gurus. Its contents are <em>bani</em>, sacred utterance, mostly composed as poetry for singing.</p>
+          <p>The standard volume has 1,430 <em>angs</em>, the numbered pages whose name means &ldquo;limbs.&rdquo; It opens with <em>Ik Oankar</em>, the One, and the <em>Mul Mantar</em>, the opening statement of divine reality. Japji, Guru Nanak&rsquo;s morning prayer, follows. Then come So Dar, So Purakh, and Sohila, compositions used in evening and bedtime prayer.</p>
+          <p>Most of what follows is arranged under thirty-one main <em>ragas</em>, melodic frameworks for singing. Within them, headings identify authors, verse forms, and musical directions. Near the end are shorter verses called <em>saloks</em>, praise poems, and compositions outside the main raga sequence. The final piece is Ragmala, a list of ragas whose status Sikhs dispute. This is an anthology: a hymn can stand on its own, and the same concerns return in different voices. <a href="https://new.sgpc.net/sri-guru-granth-sahib/">Structure and contents</a></p>
+          <p>The contributors include the first five Sikh Gurus and the ninth, Guru Tegh Bahadur. Alongside them are fifteen <em>Bhagats</em>, devotional poets, eleven <em>Bhatts</em>, praise poets, and other Sikh contributors. Kabir, Sheikh Farid, Ravidas, and Namdev came from different religious and social backgrounds. Their presence gives those voices scriptural authority within Sikh tradition; it doesn&rsquo;t make their every belief identical. The Gurus also use the name &ldquo;Nanak&rdquo; in their verses. An author heading identifies which Guru is speaking.</p>
+          <p>Guru Arjan supervised the compilation of the Adi Granth in 1604, with Bhai Gurdas as scribe, and installed it at Harmandir Sahib in Amritsar. Guru Tegh Bahadur&rsquo;s compositions entered the later form associated with Guru Gobind Singh. Sikh tradition locates the conferral of enduring Guruship at Nanded in 1708. It also recognizes the <em>Guru Panth</em>, the committed, initiated Sikh community acting collectively, as a bearer of authority. <a href="https://new.sgpc.net/ten-guru-sahibs/guru-gobind-singh-sahib/">SGPC account</a></p>
         </div>
 
         <div class="gsg-day" aria-label="A day in the presence of the Guru Granth Sahib">
           <article class="gsg-hour">
             <p class="gsg-hour-k">Morning</p>
             <h3>Prakash</h3>
-            <p>The volume is ceremonially opened, attended beneath a canopy, and a hymn is read as the day&rsquo;s <em>hukam</em>. The act is an audience with the Guru, not the opening of a reference book.</p>
+            <p>The volume is ceremonially opened beneath a canopy. A hymn is read as the day&rsquo;s <em>hukam</em>, guidance received from the Guru.</p>
           </article>
           <article class="gsg-hour">
             <p class="gsg-hour-k">Gathered life</p>
             <h3>Kirtan and hukam</h3>
-            <p>Hymns are sung, explained, read at births, marriages, and deaths, and received by the <em>sangat</em>. No other book is installed at the same level in a gurdwara.</p>
+            <p>The <em>sangat</em>, congregation, gathers for <em>kirtan</em>, the singing of hymns, and readings. The Guru Granth Sahib also has a central place in naming children, weddings, and funerals.</p>
           </article>
           <article class="gsg-hour">
             <p class="gsg-hour-k">Evening</p>
             <h3>Sukhasan</h3>
-            <p>After evening prayer, the Guru is ceremonially closed and returned with care to a resting room. Reverence governs carrying, covering, attendance, and place.</p>
+            <p>The volume is closed, covered, and placed at rest. A separate resting room is common, though arrangements vary with the space available.</p>
           </article>
         </div>
 
         <div class="gsg-prose">
-          <p>This daily movement is the book&rsquo;s one indispensable frame. Sikhs bow before the Guru Granth Sahib because the Guru&rsquo;s <em>shabad</em>, the teaching Word, is present there. The conduct code is equally clear that the cloth, canopy, whisk, and seat are not magic objects. Respect becomes Sikh only when the person listens and acts. The book is treated as living because its address is living.</p>
+          <p>This care expresses reverence for the Guru&rsquo;s <em>shabad</em>, the divine Word or teaching. The Sikh conduct code specifies how the volume should be attended and also rejects superstitious ceremonies. Following the teaching is part of that reverence. <a href="https://sgpc.net/sikh-rehat-maryada-in-english/">Sikh Rehat Maryada</a></p>
         </div>
       </div>
     </section>
 
     <section class="gsg-layer" id="history">
       <div class="gsg-shell">
-        <p class="gsg-layer-tag"><b>02</b><span>What can be known</span></p>
-        <h2 class="gsg-h2">The canon is early, deliberate, and more complicated than one perfect copy</h2>
-        <p class="gsg-intro">Devotion can call the bani timeless. History still has to ask which collections, manuscripts, editorial choices, and recensions carried it.</p>
+        <p class="gsg-layer-tag"><b>02</b><span>Text and translation</span></p>
+        <h2 class="gsg-h2">How the hymns reached us</h2>
 
         <div class="gsg-prose">
-          <p>The simple story says Guru Nanak composed hymns, each Guru handed an unchanged book to the next, Guru Arjan bound it in 1604, and Guru Gobind Singh added Guru Tegh Bahadur&rsquo;s bani before making it Guru. The strong historical version keeps the spine and removes the false smoothness. Early bani also lived in oral repertoires. Written collections existed before 1604, including the Goindval pothis. Surviving manuscripts contain variants, different arrangements, and evidence of editorial work. This is not proof that anything could be inserted. It is proof that canon formation was a process.</p>
-          <p>Guru Arjan&rsquo;s 1604 compilation is the decisive turn. Its raga order, author labels, recurrent Mul Mantar forms, poetic classifications, and cross-comments show a compiler doing theology through arrangement. The Kartarpur manuscript is closely associated with that first canonical volume, though access, dating, and the exact stages of its production have generated fierce argument. Other early families, often called recensions, preserve overlapping but not identical textual histories.</p>
+          <p>The hymns circulated in singing and written collections before the compilation of 1604. The Goindval <em>pothis</em>, manuscript collections associated with Guru Amar Das&rsquo;s family, are among the early witnesses. Surviving manuscripts differ in wording and arrangement. Jeevan Singh Deol&rsquo;s study describes concurrent oral repertoires and the later emergence of more standardized written versions. <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">Text and lineage</a></p>
+          <p>The Kartarpur manuscript is closely associated with Guru Arjan&rsquo;s compilation. Scholars have disagreed over aspects of its production and the relationship between early collections. Access to important manuscripts is limited. The broad compilation history is easier to establish than an account of every change to every hymn. Pashaura Singh&rsquo;s <a href="https://academic.oup.com/book/10787">study of canon formation</a> is one influential scholarly account, rather than an uncontested verdict.</p>
         </div>
 
         <div class="gsg-context-grid">
           <article class="gsg-context">
             <h3>The received volume</h3>
-            <p>The standard 1,430-ang form includes the bani of Guru Tegh Bahadur and is tied by Sikh memory to Guru Gobind Singh&rsquo;s final recension. Historians can document the resulting canon more easily than every detail of the Damdama dictation story. The present text is highly fixed in worship and print.</p>
-            <p>Ragmala remains printed at the end. The Sikh conduct code allows a complete reading to conclude at Mundavani or after Ragmala according to local convention, while forbidding an edition that simply removes it. The disagreement is contained without pretending it vanished.</p>
+            <p>The standard text includes Guru Tegh Bahadur&rsquo;s bani. The traditional account says Guru Gobind Singh dictated the final recension at Damdama. The details of that account are harder to verify than the contents of the canon Sikhs now use.</p>
+            <p>Ragmala remains printed at the end. The Sikh conduct code allows a complete reading to end at Mundavani or include Ragmala, according to local convention. It also forbids printing a volume that omits Ragmala. The disagreement concerns its scriptural status, not whether it appears in the standard edition.</p>
           </article>
           <article class="gsg-context">
             <h3>Gurmukhi and English</h3>
-            <p>Gurmukhi is the script, not one language spoken uniformly from ang 1 to 1,430. The hymns use several North Indian literary registers, including Punjabi and Braj forms, alongside Persian, Arabic, and Sanskritic vocabulary. Grammar, meter, pun, and musical placement can carry interpretation.</p>
-            <p>That is why careful projects now use both literal translation and &ldquo;transcreation.&rdquo; English can state a claim, but it must choose whether <em>hukam</em> is order, command, will, or a lawful unfolding, and whether <em>naam</em> is name, presence, remembrance, or all three in practice.</p>
+            <p>Gurmukhi is the script. The hymns use several North Indian literary languages and registers, including Punjabi and Braj forms, with Persian, Arabic, and Sanskrit vocabulary. Translating them requires decisions about grammar, imagery, and words whose meanings shift with context.</p>
+            <p>English &ldquo;Name&rdquo; only partly explains <em>naam</em>; &ldquo;command&rdquo; only partly explains <em>hukam</em>. The Guru Granth Sahib Project distinguishes literal translation from interpretive &ldquo;transcreation.&rdquo; The excerpts below use Sant Singh Khalsa&rsquo;s English rendering. They give one reading of each line. <a href="https://sikhresearchjournal.org/index.php/srj/article/view/117">The translation problem</a></p>
           </article>
         </div>
 
@@ -213,28 +204,28 @@
           <div class="u-textcheck-head">
             <div>
               <p class="u-textcheck-k">How safely did this reach us?</p>
-              <h3 class="u-textcheck-verdict" id="gsg-textcheck-title">An early canonical volume survives close to the act of compilation. The received text is stable. Its path into English is unusually demanding.</h3>
+              <h3 class="u-textcheck-verdict" id="gsg-textcheck-title">The standard text is stable. Early manuscript history and English interpretation need separate judgments.</h3>
             </div>
-            <p class="u-textcheck-rule">Three questions, because one confidence score would lie.</p>
+            <p class="u-textcheck-rule">Manuscript evidence, present wording, and translation.</p>
           </div>
           <div class="u-textcheck-rows">
             <div class="u-textcheck-row">
               <span class="u-textcheck-name">Early witnesses</span>
               <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong, qualified</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
-              <p class="u-textcheck-note">The Kartarpur volume stands very near Guru Arjan&rsquo;s 1604 compilation, and earlier collections preserve material behind it. No authorial sheet survives for every hymn, access to key manuscripts is limited, and the earliest oral and written repertoires were plural.</p>
+              <p class="u-textcheck-note">The Kartarpur volume is associated with the compilation of 1604, and earlier collections survive. The relationships between manuscripts and the stages of compilation remain subjects of scholarship and dispute.</p>
             </div>
             <div class="u-textcheck-row">
               <span class="u-textcheck-name">Received wording</span>
               <span class="u-textcheck-read"><span class="u-textcheck-grade">Highly stable now</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
-              <p class="u-textcheck-note">The standard 1,430-ang text is fixed across printed copies and digital editions. Early manuscripts preserve variants and recension differences, and the received canon includes later addition of Guru Tegh Bahadur&rsquo;s bani and the contested Ragmala.</p>
+              <p class="u-textcheck-note">Worship and publication use a standardized 1,430-ang text. That present stability should not be projected back onto every early manuscript. Ragmala is printed even where it is not recited.</p>
             </div>
             <div class="u-textcheck-row">
               <span class="u-textcheck-name">English meaning</span>
               <span class="u-textcheck-read"><span class="u-textcheck-grade">Deeply interpretive</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
-              <p class="u-textcheck-note">The central calls to oneness, remembrance, truthful living, service, and equality cross over clearly. The mixed registers, compressed grammar, sound, raga, gendered imagery, and terms such as <em>naam</em>, <em>shabad</em>, <em>haumai</em>, and <em>hukam</em> force choices on every translator.</p>
+              <p class="u-textcheck-note">Love of the Divine, remembrance, and truthful living are recurring concerns. Compressed verse and terms such as <em>naam</em>, <em>shabad</em>, <em>haumai</em>, and <em>hukam</em> leave substantial room for interpretation.</p>
             </div>
           </div>
-          <p class="u-textcheck-foot">Verdict based on the <a href="https://academic.oup.com/book/10787">Oxford study of canon, meaning, and authority</a>, the <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">study of concurrent early repertoires and recensions</a>, the <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291502862">linguistic and philological account</a>, and the practice and translation sources below. It measures access to the text, not whether the bani is revelation.</p>
+          <p class="u-textcheck-foot">These judgments draw on the <a href="https://academic.oup.com/book/10787">Oxford study of canon, meaning, and authority</a>, the <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">study of concurrent early repertoires and recensions</a>, the <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291502862">linguistic and philological account</a>, and the practice and translation sources below. They concern the transmission and interpretation of the text. Revelation is a religious claim.</p>
         </aside>
       </div>
     </section>
@@ -242,243 +233,238 @@
     <section class="gsg-layer" id="ideas">
       <div class="gsg-shell">
         <p class="gsg-layer-tag"><b>03</b><span>What shapes a Sikh life</span></p>
-        <h2 class="gsg-h2">Fourteen ideas a longtime Sikh would make you keep</h2>
-        <p class="gsg-intro">The count comes from practice. Each item has to organize prayer, work, food, money, family, courage, or the training of attention.</p>
+        <h2 class="gsg-h2">The recurring teachings</h2>
+        <p class="gsg-intro">The hymns return to these concerns across different authors and compositions. The passages below are a selection, with links to their context.</p>
+
+        <div class="gsg-prose">
+          <p>Much of this book speaks in the voice of someone in love. The speaker longs for the Divine, feels the pain of separation, and rejoices in meeting the beloved. A recurring image makes the human being a bride and the Divine a husband. Men as well as women occupy the bride&rsquo;s voice. In Guru Nanak&rsquo;s hymn on ang 765, finding the beloved becomes recognition that the One is present in every heart. <a href="https://gurugranthsahib.io/bani/details/ASWC1/2/4">Read the hymn and commentary</a></p>
+          <p>This is <em>bhakti</em>, devotion. Honest work and service matter within a life directed toward the Divine. A summary of the ethics can explain what a person should do and still miss whom the poetry loves.</p>
+        </div>
 
         <div class="gsg-concepts">
           <details class="gsg-concept" id="one">
-            <summary><span class="gsg-concept-n">01</span><span><span class="gsg-concept-title">The One is present through the whole creation.</span><span class="gsg-concept-place">Ik Oankar, without fear or hatred</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">01</span><span><span class="gsg-concept-title">The One is present throughout creation.</span><span class="gsg-concept-place">Ik Oankar</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role"><em>Ik Oankar</em> opens the canon before any story, command, or argument. The One is not a tribal deity inside the universe. Divine reality is creative, timeless, beyond birth, and without fear or enmity. Kabir&rsquo;s image pushes the claim into ethics: every person comes from one Light, so contempt has to fight the book&rsquo;s first principle.</p>
-              <p class="gsg-practice"><b>In practice</b> Sikh prayer begins with the One, and ordinary speech names the divine with terms drawn from several religious vocabularies. Bowing to one Guru does not permit hatred of the neighbor. It is meant to train the eye to meet difference without inventing a second source of being.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>One Universal Creator God. The Name Is Truth. Creative Being Personified. No Fear. No Hatred.</q><cite>Mul Mantar, ang 1</cite></p>
-                <p class="gsg-verse"><q>From the One Light, the entire universe welled up. So who is good, and who is bad?</q><cite>Kabir, ang 1349</cite></p>
+              <p class="gsg-concept-role"><em>Ik Oankar</em> opens the book. The Mul Mantar describes the One as true, creative, without fear or hatred, timeless, beyond birth, self-existent, and known through the Guru&rsquo;s grace. Kabir draws a social consequence from that oneness: everyone comes from the same Light. Religious identity or inherited rank cannot give a person a different divine origin.</p>
+              <p class="gsg-practice"><b>In practice</b> The hymns address the Divine through names including Hari, Ram, and Allah. Sikh worship centers on the One; that devotion carries an obligation to recognize the same Light in other people.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One Universal Creator God. The Name Is Truth. Creative Being Personified. No Fear. No Hatred.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1&amp;source=G">Mul Mantar, ang 1</a></cite></p>
+                <p class="gsg-verse"><q>From the One Light, the entire universe welled up. So who is good, and who is bad?</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1349&amp;source=G">Kabir, ang 1349</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="hukam">
-            <summary><span class="gsg-concept-n">02</span><span><span class="gsg-concept-title">Freedom begins by learning to live within hukam.</span><span class="gsg-concept-place">Order, command, will, and reality</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">02</span><span><span class="gsg-concept-title">Live within hukam.</span><span class="gsg-concept-place">Divine order and human action</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">Japji asks how a person becomes truthful and answers with <em>hukam</em>. The word can mean command, order, will, or the way reality unfolds. It does not describe a secret script that excuses every choice. It breaks the fantasy that the self stands outside creation as its controller. Understanding hukam and loosening ego are presented as one movement.</p>
-              <p class="gsg-practice"><b>In practice</b> A Sikh receives a daily hukam from the opened Guru Granth Sahib, listens for direction, and learns to meet events without demanding that reality flatter the self. Acceptance does not cancel action. It changes the spirit in which action is taken, especially when the result cannot be controlled.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>O Nanak, it is written that you shall obey the Hukam of His Command, and walk in the Way of His Will.</q><cite>Japji, ang 1</cite></p>
-                <p class="gsg-verse"><q>O Nanak, one who understands His Command, does not speak in ego.</q><cite>Japji, ang 1</cite></p>
+              <p class="gsg-concept-role">Japji asks how a person becomes truthful. Its answer is to live within <em>hukam</em>, divine command or order. Everything exists within it, including things the self cannot control. The following verse connects understanding hukam with the end of speaking in ego. Translating this as acceptance captures part of the idea, but hukam is also a claim about the Divine and creation.</p>
+              <p class="gsg-practice"><b>In practice</b> The hymn received from the opened Guru Granth Sahib is also called a hukam, or <em>hukamnama</em>. Sikhs listen to it for guidance. Accepting divine order has to coexist with the duties to work, serve, and resist injustice.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>O Nanak, it is written that you shall obey the Hukam of His Command, and walk in the Way of His Will.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1&amp;source=G">Japji, ang 1</a></cite></p>
+                <p class="gsg-verse"><q>O Nanak, one who understands His Command, does not speak in ego.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1&amp;source=G">Japji, ang 1</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="naam">
-            <summary><span class="gsg-concept-n">03</span><span><span class="gsg-concept-title">Naam is remembrance that becomes a way of seeing.</span><span class="gsg-concept-place">The Name held in breath, work, and attention</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">03</span><span><span class="gsg-concept-title">Remember the Divine through naam.</span><span class="gsg-concept-place">The Name, remembrance, and presence</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role"><em>Naam</em> is translated as Name, but the practice is larger than repeating a label. It is sustained remembrance of divine reality, the attention that lets the One become present in mind and conduct. The book can speak of chanting, hearing, receiving, dwelling in, and living by Naam. Sound begins the discipline. A changed center is the point.</p>
-              <p class="gsg-practice"><b>In practice</b> Sikhs repeat and sing the divine Name, rise for early prayer, recite prescribed bani, and return attention during work. The test is not how many syllables were counted. It is whether remembrance survives irritation, money, appetite, grief, and the presence of another person.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>Those who have meditated on the Naam, the Name of the Lord, and departed after having worked by the sweat of their brows</q><cite>Japji closing salok, ang 8</cite></p>
-                <p class="gsg-verse"><q>O Nanak, if I am blessed with the Naam, I live, and my body and mind blossom forth.</q><cite>Guru Arjan, ang 1429</cite></p>
+              <p class="gsg-concept-role"><em>Naam</em> means Name. In the hymns it can refer to the Divine and divine presence as well as the Name uttered in devotion. In Sukhmani, Guru Arjan describes naam as sustaining creatures and worlds. Remembrance is the practice associated with it; translating naam simply as attention loses that larger claim. <a href="https://www.sikhitothemax.org/ang?ang=284&amp;source=G">Sukhmani, ang 284</a></p>
+              <p class="gsg-practice"><b>In practice</b> <em>Simran</em>, remembrance of the Divine, includes repeating or singing the Name and holding it in mind during daily life. The hymns describe this with love, gratitude, and longing. The relationship with the One matters as much as the discipline of returning attention.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Those who have meditated on the Naam, the Name of the Lord, and departed after having worked by the sweat of their brows</q><cite><a href="https://www.sikhitothemax.org/ang?ang=8&amp;source=G">Japji closing salok, ang 8</a></cite></p>
+                <p class="gsg-verse"><q>O Nanak, if I am blessed with the Naam, I live, and my body and mind blossom forth.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1429&amp;source=G">Guru Arjan, ang 1429</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="shabad">
-            <summary><span class="gsg-concept-n">04</span><span><span class="gsg-concept-title">The Guru teaches as shabad, the Word that must be practiced.</span><span class="gsg-concept-place">Why bani can be living Guru</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">04</span><span><span class="gsg-concept-title">The Guru teaches through shabad.</span><span class="gsg-concept-place">The Word and the disciple</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role"><em>Shabad</em> joins revelation, teaching, sound, and disciplined understanding. Guru Nanak can call the Shabad Guru and consciousness the disciple. Guru Ram Das can say Bani is Guru and Guru is Bani. The claim makes sense of Sikh reverence for the Granth, but it also prevents reverence from stopping at furniture. The disciple has to hear, understand, and act.</p>
-              <p class="gsg-practice"><b>In practice</b> The Guru is approached through recitation, kirtan, exposition, memorization, and hukam. Sikhs bow to the Guru Granth Sahib, then sit low in the congregation to listen. A beautiful room and perfect ceremony become hollow if the Word never corrects the person attending it.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>The Shabad is the Guru, upon whom I lovingly focus my consciousness; I am the chaylaa, the disciple.</q><cite>Guru Nanak, ang 943</cite></p>
-                <p class="gsg-verse"><q>The Word, the Bani is Guru, and Guru is the Bani.</q><cite>Guru Ram Das, ang 982</cite></p>
+              <p class="gsg-concept-role"><em>Shabad</em> means Word and also refers to a hymn. Guru Nanak calls the Shabad Guru and his attentive consciousness the disciple. Guru Ram Das identifies bani with Guru. These lines help explain why Sikhs receive the Granth as their continuing Guru. A recurrent distinction is between the <em>gurmukh</em>, oriented toward the Guru, and the <em>manmukh</em>, governed by the self.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikhs approach the teaching through recitation, singing, explanation, and reflection. Bowing before the Guru Granth Sahib accompanies a commitment to learn from it and follow its teaching.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>The Shabad is the Guru, upon whom I lovingly focus my consciousness; I am the chaylaa, the disciple.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=943&amp;source=G">Guru Nanak, ang 943</a></cite></p>
+                <p class="gsg-verse"><q>The Word, the Bani is Guru, and Guru is the Bani.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=982&amp;source=G">Guru Ram Das, ang 982</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="haumai">
-            <summary><span class="gsg-concept-n">05</span><span><span class="gsg-concept-title">Haumai is the disease that turns life into &ldquo;I&rdquo; and &ldquo;mine.&rdquo;</span><span class="gsg-concept-place">Ego and the five thieves</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">05</span><span><span class="gsg-concept-title">Haumai keeps the self at the center.</span><span class="gsg-concept-place">Ego and the five thieves</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role"><em>Haumai</em> is not healthy self-respect. It is the felt separation that makes the self owner, judge, and center of everything it touches. Desire, anger, greed, attachment, and pride become the traditional five thieves because each steals attention into that false center. The book&rsquo;s diagnosis is severe and oddly hopeful: ego contains the conditions in which its cure can be learned.</p>
-              <p class="gsg-practice"><b>In practice</b> Simran, seva, shared food, honest work, giving, and accepting correction all train against self-importance. The discipline is not self-hatred. A person who performs humility for admiration has simply taught haumai a religious costume.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>Ego is a chronic disease, but it contains its own cure as well.</q><cite>Guru Nanak, ang 466</cite></p>
-                <p class="gsg-verse"><q>On the twelfth day, the five thieves are subdued, and then, O Nanak, the mind is pleased and appeased.</q><cite>Guru Nanak, ang 1245</cite></p>
+              <p class="gsg-concept-role"><em>Haumai</em>, often translated as ego, is the self-centered condition that separates a person from recognition of the One. The traditional five thieves are lust, anger, greed, attachment, and pride. The hymns describe how these bind a person to desire and repeated suffering. Guru Angad calls ego a chronic disease and says its cure is also found within it; the next lines locate that cure in grace and practicing the Guru&rsquo;s Word.</p>
+              <p class="gsg-practice"><b>In practice</b> Remembrance, service, sharing, and willingness to accept correction work against self-importance. Religious activity can also become a source of pride. The hymns repeatedly criticize that failure.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Ego is a chronic disease, but it contains its own cure as well.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=466&amp;source=G">Guru Angad, ang 466</a></cite></p>
+                <p class="gsg-verse"><q>On the twelfth day, the five thieves are subdued, and then, O Nanak, the mind is pleased and appeased.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1245&amp;source=G">Guru Amar Das, ang 1245</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="grace">
-            <summary><span class="gsg-concept-n">06</span><span><span class="gsg-concept-title">Practice matters, and liberation is still grace.</span><span class="gsg-concept-place">Gurprasad and nadar</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">06</span><span><span class="gsg-concept-title">Liberation depends on grace.</span><span class="gsg-concept-place">Gurprasad and nadar</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The Mul Mantar ends with <em>gurprasad</em>, by the Guru&rsquo;s grace. Japji gives effort and grace different jobs: actions shape the embodied life, while the gate of liberation opens by the gracious glance, <em>nadar</em>. Sikh practice is strenuous without becoming a purchase. Recitation, service, courage, and truthful work prepare attention. They do not put the Infinite in debt.</p>
-              <p class="gsg-practice"><b>In practice</b> Sikhs undertake disciplined prayer and service, then close with Ardas rather than a receipt. Success can invite gratitude instead of ownership. Failure can be confessed without assuming one has fallen beyond mercy. Grace keeps the path from becoming spiritual merit collecting.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>Beyond Birth, Self-Existent. By Guru&rsquo;s Grace</q><cite>Mul Mantar, ang 1</cite></p>
-                <p class="gsg-verse"><q>By the karma of past actions, the robe of this physical body is obtained. By His Grace, the Gate of Liberation is found.</q><cite>Japji, ang 2</cite></p>
+              <p class="gsg-concept-role">The Mul Mantar ends with <em>gurprasad</em>, by the Guru&rsquo;s grace. Japji distinguishes the embodied life shaped by karma from liberation through <em>nadar</em>, the gracious divine glance. Effort matters, but the teaching does not present release as something earned through a sufficient number of prayers or good deeds.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikh worship includes disciplined daily prayer and <em>Ardas</em>, the congregational or personal prayer of petition. Asking for grace acknowledges a dependence that discipline alone cannot remove.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Beyond Birth, Self-Existent. By Guru&rsquo;s Grace</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1&amp;source=G">Mul Mantar, ang 1</a></cite></p>
+                <p class="gsg-verse"><q>By the karma of past actions, the robe of this physical body is obtained. By His Grace, the Gate of Liberation is found.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=2&amp;source=G">Japji, ang 2</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="truthful-living">
-            <summary><span class="gsg-concept-n">07</span><span><span class="gsg-concept-title">Truthful living outranks religious display.</span><span class="gsg-concept-place">Conduct above costume and ceremony</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">07</span><span><span class="gsg-concept-title">Live truthfully.</span><span class="gsg-concept-place">Conduct and religious observance</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The Granth repeatedly borrows ritual language and turns it inward. Compassion becomes the mosque, contentment the earrings, honest conduct the pilgrimage, and the whole sky an offering plate. The target is not beauty, tradition, or disciplined form. It is the lie that a correct display can replace a truthful person. Truth as an idea stands below truth embodied in conduct.</p>
-              <p class="gsg-practice"><b>In practice</b> A Sikh can keep the visible discipline, attend the gurdwara, give, sing, and still be asked how money was earned, how power was used, and what happened at home. Ceremony is valuable when it trains truthful living. It becomes camouflage when it protects the opposite.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>Truth is higher than everything; but higher still is truthful living.</q><cite>Guru Nanak, ang 62</cite></p>
-                <p class="gsg-verse"><q>That which is pleasing to Him is the lamp-lit worship service.</q><cite>Guru Nanak, ang 13</cite></p>
+              <p class="gsg-concept-role">Guru Nanak puts truthful living above truth itself. Other hymns recast familiar rituals: compassion becomes a mosque, and the sky becomes the plate for a lamp offering. These images ask what worship means when conduct contradicts it. The criticism falls on observance used to conceal dishonesty or claim superiority.</p>
+              <p class="gsg-practice"><b>In practice</b> The question follows a person out of the gurdwara: how was the money earned, how were others treated, and were promises kept? Sikh prayer and ceremony belong alongside those obligations.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Truth is higher than everything; but higher still is truthful living.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=62&amp;source=G">Guru Nanak, ang 62</a></cite></p>
+                <p class="gsg-verse"><q>That which is pleasing to Him is the lamp-lit worship service.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=13&amp;source=G">Guru Nanak, ang 13</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="work-share">
-            <summary><span class="gsg-concept-n">08</span><span><span class="gsg-concept-title">Earn honestly and share what comes through your hands.</span><span class="gsg-concept-place">Kirat karni and vand chhakna</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">08</span><span><span class="gsg-concept-title">Earn honestly and share.</span><span class="gsg-concept-place">Kirat karni and vand chhakna</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The famous threefold summary of Sikh life joins remembrance with honest work and sharing. The scriptural line is blunt: work for what you eat, then give some of what you have. Labor and generosity protect each other. Giving cannot cleanse exploitation, and honest earnings are not complete while every benefit stops at the earner.</p>
-              <p class="gsg-practice"><b>In practice</b> Sikhs support a household, contribute money and labor to the gurdwara, feed people, fund relief, and treat a livelihood as moral territory. <em>Dasvandh</em>, traditionally a tenth of earnings, gives sharing a regular claim before surplus becomes an excuse.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>One who works for what he eats, and gives some of what he has<br>O Nanak, he knows the Path.</q><cite>Guru Nanak, ang 1245</cite></p>
-                <p class="gsg-verse"><q>Those who have meditated on the Naam, the Name of the Lord, and departed after having worked by the sweat of their brows</q><cite>Guru Nanak, ang 8</cite></p>
+              <p class="gsg-concept-role">A common summary of Sikh life joins remembrance of the Name with <em>kirat karni</em>, honest work, and <em>vand chhakna</em>, sharing what one has. Guru Nanak&rsquo;s line on ang 1245 links earning a living to giving. The familiar three-part formulation is a summary of the teachings, rather than a numbered list presented in the Granth.</p>
+              <p class="gsg-practice"><b>In practice</b> Sharing includes supporting the community kitchen, giving time, and helping people in need. <em>Dasvandh</em>, giving a tenth of earnings, is a traditional discipline also specified in the Sikh conduct code. It should not be confused with a percentage commanded in the quoted hymn.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One who works for what he eats, and gives some of what he has<br>O Nanak, he knows the Path.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1245&amp;source=G">Guru Nanak, ang 1245</a></cite></p>
+                <p class="gsg-verse"><q>Those who have meditated on the Naam, the Name of the Lord, and departed after having worked by the sweat of their brows</q><cite><a href="https://www.sikhitothemax.org/ang?ang=8&amp;source=G">Guru Nanak, ang 8</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="seva">
-            <summary><span class="gsg-concept-n">09</span><span><span class="gsg-concept-title">Seva makes service ordinary, physical, and shared.</span><span class="gsg-concept-place">Work without a superior seat</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">09</span><span><span class="gsg-concept-title">Serve other people.</span><span class="gsg-concept-place">Seva and langar</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role"><em>Seva</em> is selfless service, but the adjective should not make it sound rare or heroic. It includes carrying water, cooking, washing dishes, cleaning shoes, sweeping floors, teaching, giving professional skill, and responding to disaster. Langar turns the principle into a room: people cook and serve, then sit in rows to eat without caste rank.</p>
-              <p class="gsg-practice"><b>In practice</b> A gurdwara needs hands before it needs an audience. The work is open enough for a child to pour water and demanding enough to organize global relief. Seva trains the server to disappear from the center without making the person served into a prop for goodness.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>you shall find peace, doing seva (selfless service).</q><cite>Guru Nanak, ang 25</cite></p>
-                <p class="gsg-verse"><q>I carry water for the Guru&rsquo;s household; &hellip; I grind the corn for the Guru&rsquo;s household.</q><cite>Guru Arjan, ang 239</cite></p>
+              <p class="gsg-concept-role"><em>Seva</em> is service undertaken without seeking personal reward. It includes cooking, carrying water, washing dishes, and caring for people. Guru Arjan sings of carrying water and grinding grain for the Guru&rsquo;s household. <em>Langar</em>, the free community kitchen, makes service and equal access part of the same institution.</p>
+              <p class="gsg-practice"><b>In practice</b> People volunteer to prepare and serve food, clean up, and maintain the gurdwara. Langar is open to people of any faith. Serving and eating together put the teaching about equality into an ordinary shared activity.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>you shall find peace, doing seva (selfless service).</q><cite><a href="https://www.sikhitothemax.org/ang?ang=25&amp;source=G">Guru Nanak, ang 25</a></cite></p>
+                <p class="gsg-verse"><q>I carry water for the Guru&rsquo;s household; &hellip; I grind the corn for the Guru&rsquo;s household.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=239&amp;source=G">Guru Arjan, ang 239</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="sangat">
-            <summary><span class="gsg-concept-n">10</span><span><span class="gsg-concept-title">Sangat and kirtan train people together.</span><span class="gsg-concept-place">Company, singing, and shared correction</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">10</span><span><span class="gsg-concept-title">Gather and sing together.</span><span class="gsg-concept-place">Sangat and kirtan</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The Sikh path is personal without being solitary. <em>Sangat</em> is the gathered community, and <em>sadh sangat</em> is company shaped by the Guru&rsquo;s teaching. Kirtan lets a group breathe, repeat, and receive the same bani together. Company matters because habits travel between people. So do courage, generosity, resentment, and ego.</p>
-              <p class="gsg-practice"><b>In practice</b> Sikhs gather for kirtan, katha, Ardas, hukam, langar, and decisions. The congregation can steady prayer when private motivation fails and challenge a self-serving reading. It can also reproduce status and faction, which is why sitting together under the Guru remains a discipline rather than a compliment.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>Join the Saadh Sangat, the Company of the Holy; vibrate and meditate on the Jewel of the Naam.</q><cite>Guru Arjan, ang 12</cite></p>
-                <p class="gsg-verse"><q>Sing, and listen, and let your mind be filled with love.</q><cite>Japji, ang 2</cite></p>
+              <p class="gsg-concept-role"><em>Sangat</em> is the congregation; <em>sadh sangat</em> is holy company. The hymns urge the listener to seek such company and remember the Divine there. Kirtan gives that gathering a common activity: people hear and sing the same words. A <em>rahau</em>, or pause marker, often identifies the line that carries a hymn&rsquo;s central thought.</p>
+              <p class="gsg-practice"><b>In practice</b> A gurdwara gathering may include kirtan, <em>katha</em>, explanation of the teaching, Ardas, a hukam, and langar. Participation includes listening and learning as well as helping with the work.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Join the Saadh Sangat, the Company of the Holy; vibrate and meditate on the Jewel of the Naam.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=12&amp;source=G">Guru Arjan, ang 12</a></cite></p>
+                <p class="gsg-verse"><q>Sing, and listen, and let your mind be filled with love.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=2&amp;source=G">Japji, ang 2</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="householder">
-            <summary><span class="gsg-concept-n">11</span><span><span class="gsg-concept-title">The spiritual life belongs inside the household.</span><span class="gsg-concept-place">Detachment without desertion</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">11</span><span><span class="gsg-concept-title">Live the spiritual life at home.</span><span class="gsg-concept-place">The household and detachment</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The Gurus did not make escape from work, marriage, children, and public obligation the normal road to liberation. The sharper demand is to live among attachments without letting possession rule. Detachment means love without ownership and action without making outcome the self&rsquo;s identity. A robe in the forest can carry as much ego as a ledger in town.</p>
-              <p class="gsg-practice"><b>In practice</b> Prayer has to fit around waking, feeding, earning, cleaning, caring, and keeping promises. Family life becomes a field for patience and service, not proof of spiritual inferiority. The same tradition can honor celibacy or renunciation while refusing to make either the Sikh norm.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>O mind, remain detached in the midst of your household.</q><cite>Guru Nanak, ang 26</cite></p>
-                <p class="gsg-verse"><q>Even as householders, they lovingly attune themselves to the True Lord.</q><cite>Guru Arjan, ang 230</cite></p>
+              <p class="gsg-concept-role">The Sikh path places spiritual practice within work and family life. Guru Amar Das asks the mind to remain detached while living in a household. Detachment here concerns the attachment that makes possessions and relationships a source of bondage. It does not require abandoning the people who depend on you.</p>
+              <p class="gsg-practice"><b>In practice</b> Earning, caring for children, and keeping a household are compatible with devotion. The conduct code includes altruistic service among a Sikh&rsquo;s personal duties. Renunciation is not the required route to liberation.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>O mind, remain detached in the midst of your household.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=26&amp;source=G">Guru Amar Das, ang 26</a></cite></p>
+                <p class="gsg-verse"><q>Even as householders, they lovingly attune themselves to the True Lord.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=230&amp;source=G">Guru Amar Das, ang 230</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="equality">
-            <summary><span class="gsg-concept-n">12</span><span><span class="gsg-concept-title">One Light makes caste and inherited rank spiritually false.</span><span class="gsg-concept-place">Equality given a seat and a meal</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">12</span><span><span class="gsg-concept-title">Caste cannot determine spiritual worth.</span><span class="gsg-concept-place">One Light in every person</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The Granth does more than announce a generic human dignity. It preserves Ravidas, born into a community treated as untouchable, and has Guru Nanak seek the company of the lowest. It tells the reader to recognize Light rather than ask caste. The later institutions of sangat, langar, common initiation, Singh, and Kaur try to make the theology visible in bodies seated together.</p>
-              <p class="gsg-practice"><b>In practice</b> The Sikh conduct code bars discrimination by caste, religion, nation, or status in the congregation and langar. Men and women may read, lead prayer, receive initiation, and serve. The rule remains necessary because Sikh societies, like the societies around them, have not always obeyed their own center.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>Recognize the Lord&rsquo;s Light within all, and do not consider social class or status; there are no classes or castes in the world hereafter.</q><cite>Guru Nanak, ang 349</cite></p>
-                <p class="gsg-verse"><q>Nanak seeks the company of the lowest of the low class, the very lowest of the low.</q><cite>Guru Nanak, ang 15</cite></p>
+              <p class="gsg-concept-role">Guru Nanak tells the listener to recognize the divine Light rather than ask about caste. He also identifies himself with the lowest of the low. The book includes Ravidas, whose community was treated as untouchable. His hymns have scriptural authority alongside those of the Gurus.</p>
+              <p class="gsg-practice"><b>In practice</b> The Sikh conduct code rejects caste discrimination in the congregation and langar. Women and men may read scripture, lead prayer, receive initiation, and serve. These are religious commitments whose observance in Sikh institutions and homes has been uneven.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Recognize the Lord&rsquo;s Light within all, and do not consider social class or status; there are no classes or castes in the world hereafter.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=349&amp;source=G">Guru Nanak, ang 349</a></cite></p>
+                <p class="gsg-verse"><q>Nanak seeks the company of the lowest of the low class, the very lowest of the low.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=15&amp;source=G">Guru Nanak, ang 15</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="courage">
-            <summary><span class="gsg-concept-n">13</span><span><span class="gsg-concept-title">Courage means neither terrorizing nor living terrified.</span><span class="gsg-concept-place">Fearlessness without hatred</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">13</span><span><span class="gsg-concept-title">Neither frighten others nor submit to fear.</span><span class="gsg-concept-place">Fearlessness and responsibility</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The One is <em>nirbhau</em> and <em>nirvair</em>, without fear and without enmity. Guru Tegh Bahadur turns that theology into a human test: do not frighten anyone, and do not be frightened by anyone. This is not politeness at any price. It is a refusal of domination from either side, the spiritual root later Sikh history develops into martyrdom, defense, and the saint-soldier ideal.</p>
-              <p class="gsg-practice"><b>In practice</b> Sikhs are taught to speak against injustice, protect the vulnerable, and master fear without cultivating an enemy&rsquo;s hatred. The kirpan gives that obligation a visible form in initiated life. Restraint matters as much as readiness, because intimidation fails the line before any blow is struck.</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>One who does not frighten anyone, and who is not afraid of anyone else &hellip; says Nanak, listen, mind: call him spiritually wise.</q><cite>Guru Tegh Bahadur, ang 1427</cite></p>
-                <p class="gsg-verse"><q>Fareed, do not turn around and strike those who strike you with their fists.</q><cite>Sheikh Farid, ang 1378</cite></p>
+              <p class="gsg-concept-role">The Mul Mantar describes the One as without fear and without hatred. Guru Tegh Bahadur praises a person who neither frightens others nor fears them. Farid asks the listener not to strike back at someone who strikes them. These passages belong in an account of Sikh courage, alongside the later history of armed resistance and defense.</p>
+              <p class="gsg-practice"><b>In practice</b> The <em>kirpan</em>, the sword carried by initiated Sikhs, expresses an obligation to defend justice and the vulnerable. Its place in the <em>Khalsa</em>, the initiated Sikh community, comes from Guru Gobind Singh&rsquo;s institution of that community. The Granth alone does not supply its full rules or history.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One who does not frighten anyone, and who is not afraid of anyone else &hellip; says Nanak, listen, mind: call him spiritually wise.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1427&amp;source=G">Guru Tegh Bahadur, ang 1427</a></cite></p>
+                <p class="gsg-verse"><q>Fareed, do not turn around and strike those who strike you with their fists.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1378&amp;source=G">Sheikh Farid, ang 1378</a></cite></p>
               </div></div>
             </div>
           </details>
 
           <details class="gsg-concept" id="liberation">
-            <summary><span class="gsg-concept-n">14</span><span><span class="gsg-concept-title">Liberation can begin while a person is still alive.</span><span class="gsg-concept-place">Mukti inside ordinary life</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <summary><span class="gsg-concept-n">14</span><span><span class="gsg-concept-title">Freedom is possible while alive.</span><span class="gsg-concept-place">Karma, rebirth, and jivan mukti</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
             <div class="gsg-concept-body">
-              <p class="gsg-concept-role">The Granth accepts karma, rebirth, and release from the cycle, but it does not make liberation only a postmortem destination. The liberated person can be recognized now: less ruled by pleasure and pain, friend and enemy, greed, attachment, and ego. Union with the One changes the quality of living before it changes any theory of what follows death.</p>
-              <p class="gsg-practice"><b>In practice</b> A Sikh seeks <em>jivan mukti</em>, freedom while living, through Naam, grace, truthful conduct, and the Guru&rsquo;s Word. Funeral prayer can hold hope beyond death. Daily practice asks a harder near-term question: what bondage is loosening in the person who is still here?</p>
-              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
-                <p class="gsg-verse"><q>One who is not affected by pleasure or pain, who looks upon friend and enemy alike &hellip; says Nanak, listen, mind: know that such a person is liberated.</q><cite>Guru Tegh Bahadur, ang 1427</cite></p>
-                <p class="gsg-verse"><q>Meeting the True Guru, eternal liberation is obtained; He has banished attachment from within.</q><cite>Guru Nanak, ang 466</cite></p>
+              <p class="gsg-concept-role">The hymns speak of karma, repeated birth and death, and <em>mukti</em>, liberation from that cycle. They also describe <em>jivan mukti</em>, liberation while living. Freedom from greed, attachment, and the opposition of friend and enemy is part of that state. Union with the One gives these changes their religious meaning; being calmer or kinder is only part of what is claimed.</p>
+              <p class="gsg-practice"><b>In practice</b> Guru Arjan presents human life as an opportunity to meet the Divine. The evening prayer on ang 12 warns against wasting that opportunity in attachment to <em>maya</em>, the worldly entanglement that draws a person away from the One. Death makes the opportunity urgent. <a href="https://www.sikhitothemax.org/ang?ang=12&amp;source=G">Guru Arjan, ang 12</a></p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>From the hymns</span><span>Sant Singh Khalsa</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One who is not affected by pleasure or pain, who looks upon friend and enemy alike &hellip; says Nanak, listen, mind: know that such a person is liberated.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=1427&amp;source=G">Guru Tegh Bahadur, ang 1427</a></cite></p>
+                <p class="gsg-verse"><q>Meeting the True Guru, eternal liberation is obtained; He has banished attachment from within.</q><cite><a href="https://www.sikhitothemax.org/ang?ang=466&amp;source=G">Guru Nanak, ang 466</a></cite></p>
               </div></div>
             </div>
           </details>
         </div>
 
-        <aside class="gsg-convergence">
-          <h3>Why the list stops at fourteen</h3>
-          <p>The test crossed initiated and non-initiated life, household and gurdwara, prayer and public service. Ecological kinship, sweetness of speech, contentment, and the welfare of all remain important. They were the first candidates a longtime Sikh could merely nod along to after the load-bearing practices above were already present. Several live inside the fourteen rather than needing a fifteenth card.</p>
-        </aside>
       </div>
     </section>
 
     <section class="gsg-layer" id="hard-parts">
       <div class="gsg-shell">
-        <p class="gsg-layer-tag"><b>04</b><span>What resists a clean summary</span></p>
-        <h2 class="gsg-h2">Caste, gender, other faiths, violence, hukam, text</h2>
-        <p class="gsg-intro">The strongest reading keeps the liberating claim and the historical complication in the same room.</p>
+        <p class="gsg-layer-tag"><b>04</b><span>Questions and limits</span></p>
+        <h2 class="gsg-h2">Where teaching and history differ</h2>
 
         <div class="gsg-hard-grid">
           <article class="gsg-hard">
             <h3>Caste</h3>
-            <p>The scriptural rejection is direct, the contributor list embodies it, and langar gives it a social form. Sikh life has still carried caste endogamy, status around Jat identity, caste-marked gurdwaras, and discrimination against Dalit Sikhs. Calling those practices &ldquo;cultural&rdquo; does not make them harmless. Calling Sikh teaching casteist because Sikhs violate it misses the text. The honest statement is sharper: the canon supplies an internal indictment that Sikh society continues to need.</p>
+            <p>The hymns reject inherited spiritual superiority. Sikh society has nevertheless retained caste-based marriage, status, and discrimination, including caste-associated gurdwaras. Jodhka&rsquo;s study shows why describing this only as a failure to follow the teaching is inadequate: kinship, land, and social power also sustain caste. Scriptural equality gives Sikhs grounds to challenge those arrangements; it has not by itself removed them. <a href="https://www.mdpi.com/2077-1444/15/10/1219">Caste study</a></p>
           </article>
           <article class="gsg-hard">
             <h3>Gender</h3>
-            <p>Guru Nanak asks why woman should be called bad when kings are born through her, and Sikh discipline grants women the same access to initiation, reading, kirtan, and service. No composition in the received canon is attributed to a woman, however, and the poetry often casts the human soul as bride and the divine as Husband. Sikh feminist readings find fluidity and female centrality there. Critics also see a male-authored marriage world that can leave hierarchy intact. Equal doctrine has not guaranteed equal authority in every institution or home.</p>
+            <p>Guru Nanak asks why woman should be called bad when kings are born through her. The canon&rsquo;s named composers are men. Its bride imagery lets a male speaker take a feminine devotional role, while drawing on a marriage world that was socially unequal. The conduct code permits women to read scripture, sing kirtan, and receive initiation. Religious permission and actual authority in institutions or households are different questions. <a href="https://www.sikhitothemax.org/ang?ang=473&amp;source=G">Ang 473</a>; <a href="https://www.mdpi.com/2077-1444/11/2/95">Gender and householding</a></p>
           </article>
           <article class="gsg-hard">
             <h3>Other faiths</h3>
-            <p>The Granth includes Kabir, Farid, Ravidas, Namdev, and other non-Guru voices, uses names such as Allah and Ram, and attacks empty Hindu, Muslim, and yogic performance. That is not the modern slogan that all religions say exactly the same thing. Guru Arjan selected bhagat bani for theological fit and excluded other material. The Sikh conduct code welcomes anyone into a gurdwara while defining a Sikh as owing allegiance to no other religion. Openness and distinctness are both part of the record.</p>
+            <p>The book includes poets from different religious backgrounds and addresses the Divine as Allah and Ram. It also criticizes Hindu, Muslim, and yogic observances. That combination does not establish that every religion teaches the same thing. Sikhism has its own account of the Guru and liberation. The conduct code welcomes visitors of any faith into a gurdwara while defining Sikh religious allegiance distinctly. <a href="https://sgpc.net/sikh-rehat-maryada-in-english/">Conduct code</a></p>
           </article>
           <article class="gsg-hard">
             <h3>Violence</h3>
-            <p>The Guru Granth Sahib praises fearlessness, condemns oppression, and contains images of struggle, but it is not a manual of war. The explicit martial institutions of miri-piri, Khalsa initiation, the kirpan, and rules for force develop through later Guru history and other Sikh texts. Calling the Granth simply pacifist cuts that history away. Using every spiritual battle as a license for violence is equally careless. Sikh tradition argues for defense and justice under severe restraints, not violence as spiritual proof.</p>
+            <p>The Granth condemns oppression and praises courage. To understand armed defense, the kirpan, and the saint-soldier ideal, a reader also needs the history of the Gurus and other Sikh texts. Guru Gobind Singh established the Khalsa after the original compilation of the Adi Granth. A hymn about overcoming the ego cannot automatically be read as a rule for warfare. Nor does Farid&rsquo;s counsel against retaliation settle the whole tradition&rsquo;s position on force. <a href="https://www.cambridge.org/core/books/abs/cambridge-companion-to-religion-and-war/sikhism/0A283203A454F718136DE6773769835F">Sikhism and war</a></p>
           </article>
           <article class="gsg-hard">
             <h3>Hukam</h3>
-            <p>If everything unfolds within hukam, suffering can sound deserved and resistance can sound faithless. The book does not give that easy escape. It laments invasion, condemns rulers who become butchers, requires truthful action, and makes service and courage central. Accepting that an event is real is different from approving the person who caused it. Sikh practice has used hukam to endure what cannot be reversed and seva to change what can. The balance is argued, not automatic.</p>
+            <p>If everything falls within divine order, why protest suffering? Guru Nanak does protest. In a hymn about Babur&rsquo;s invasion, he describes the killing and asks God about the victims&rsquo; pain. The text itself gives grief and accusation a voice. Hukam therefore needs to be read alongside the demands for truthful action and care for others. It should not be used to declare that victims deserved what happened. <a href="https://www.sikhitothemax.org/ang?ang=360&amp;source=G">Guru Nanak, ang 360</a></p>
           </article>
           <article class="gsg-hard">
             <h3>Text</h3>
-            <p>Sikhs receive one inviolable Guru in the standard 1,430-ang form. Historians see concurrent oral repertoires, working collections, manuscript variants, several recensions, Guru Tegh Bahadur&rsquo;s later inclusion, and disagreement over Ragmala. Neither description cancels the other because they answer different questions. Scholarship becomes irresponsible when it treats reverence as evidence against variants. Devotional defense becomes brittle when it requires a manuscript history cleaner than the surviving manuscripts.</p>
+            <p>The authority Sikhs give the Guru Granth Sahib is a religious commitment. Manuscript comparison asks how particular written forms developed. Present-day standardization is well established; it does not settle every question about earlier collections. Claims about editorial changes should identify the manuscript and the scholar making the argument, especially where scholars or Sikh communities dispute the interpretation.</p>
           </article>
         </div>
 
         <div class="gsg-prose">
-          <p>The best first reading is therefore not &ldquo;Sikhism teaches equality&rdquo; or &ldquo;Sikhs treat a book like a person,&rdquo; though both point toward something true. It is this: a multilingual anthology of sung teaching was deliberately gathered, received as Guru, and made the center of a community whose ordinary tests are remembrance, honest work, shared food, service, equality, and courage without hatred. The ceremony protects that address. The life proves whether it was heard.</p>
+          <p>This selection gives only short English excerpts. It cannot reproduce a complete hymn&rsquo;s movement, its sound in Gurmukhi, or its place in worship. The linked passages let you read the surrounding lines. Listening to <a href="https://kirtan.sgpc.net/">kirtan from Harmandir Sahib</a> brings back something a written explanation leaves out.</p>
         </div>
 
         <div class="gsg-sources">
           <details class="u-collapse">
-            <summary class="u-collapse-s">Sources and what they support</summary>
+            <summary class="u-collapse-s">Sources</summary>
             <ol class="gsg-source-list">
-              <li><b>Structure and received contents.</b> The SGPC account of <a href="https://new.sgpc.net/sri-guru-granth-sahib/">Sri Guru Granth Sahib</a> gives the 1604 compilation, contributor list, raga ordering, 1,430-ang division, and its official account of the volume as Guru. Its historical claims are read beside the manuscript scholarship below.</li>
-              <li><b>Canon, meaning, and authority.</b> Pashaura Singh&rsquo;s Oxford study, <a href="https://academic.oup.com/book/10787"><em>The Guru Granth Sahib: Canon, Meaning and Authority</em></a>, supplies the page&rsquo;s basic separation of canon formation, interpretation, and the book&rsquo;s authority as Guru.</li>
-              <li><b>The formation sequence.</b> The book&rsquo;s <a href="https://academic.oup.com/book/10787/chapter-abstract/158927503">conclusion</a> supports the movement from Guru Nanak&rsquo;s Kartarpur liturgy through the Goindval pothis to Guru Arjan&rsquo;s 1604 canon. The chapter on <a href="https://academic.oup.com/book/10787/chapter-abstract/158923901">Guru Arjan&rsquo;s editorial perspective</a> supports the claim that arrangement and selection were deliberate theological acts.</li>
-              <li><b>Bhagat bani.</b> Oxford&rsquo;s chapter on <a href="https://academic.oup.com/book/10787/chapter-abstract/158924664">scriptural adaptation</a> supports both the inclusion of non-Guru devotional voices and the qualification that Guru Arjan selected and adapted material rather than declaring all positions identical.</li>
-              <li><b>Manuscript complexity.</b> Jeevan Deol&rsquo;s Cambridge article on <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">text and lineage in early Sikh history</a> supports concurrent oral repertoires and the emergence of relatively standardized written recensions. Oxford&rsquo;s <a href="https://academic.oup.com/book/10787/chapter-abstract/158922155?login=false">textual analysis</a> documents variation among early collections and manuscripts.</li>
-              <li><b>Living Guru.</b> Oxford&rsquo;s account of <a href="https://academic.oup.com/book/10787/chapter-abstract/158927008">the place of scripture in Sikh tradition</a> supports the Guru Granth Sahib as living Word, source of personal and corporate authority, and center of liturgy and ceremony.</li>
-              <li><b>Conduct and life around the Guru.</b> The SGPC&rsquo;s current <a href="https://sgpc.net/sikh-rehat-maryada-in-english/">English Sikh Rehat Maryada page</a> and <a href="https://sgpc.net/wp-content/uploads/2025/06/Sikh-Rehat-Maryada-English-n.pdf">official code</a> support daily ceremonial opening and closing, canopy and attendance, kirtan and hukam, complete readings, langar and seva, equal seating, initiation, daily bani, and Guru Panth status.</li>
-              <li><b>Raga and performed scripture.</b> The Oxford Handbook entry on <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291499834">the Guru Granth Sahib</a> supports its canonization, performative practice, ceremony, and communal force. The study of <a href="https://www.tandfonline.com/doi/full/10.1080/17448727.2015.1023105">Gurbani music</a> supports the thirty-one main ragas and kirtan as a distinct devotional form.</li>
-              <li><b>Language is not script.</b> The Oxford Handbook chapter on <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291502862">linguistic and philological approaches</a> supports close attention to language, Gurmukhi script, meter, and formal structure. SikhRI&rsquo;s plain explanation of <a href="https://sikhri.org/articles/gurmukhi-guru-nanak-sahibs-alphabets">Gurmukhi</a> supports the page&rsquo;s language-versus-script correction.</li>
-              <li><b>Translation.</b> Nirvikar Singh&rsquo;s article on <a href="https://sikhresearchjournal.org/index.php/srj/article/view/117">the challenge of translating the Guru Granth Sahib</a> supports the need to mark interpretation. <a href="https://sikhri.org/tags/tggsp">The Guru Granth Sahib Project</a> supports pairing literal translation with context, musicology, history, culture, philosophy, and transcreation.</li>
-              <li><b>Quoted wording.</b> Brief English excerpts follow Sant Singh Khalsa&rsquo;s 1996 rendering as served by the open <a href="https://www.banidb.com/">BaniDB</a>, checked line by line against its Gurmukhi source, ang number, author, and raga metadata. Refrain marks were omitted only when they did not change the quoted words.</li>
-              <li><b>The ideas section.</b> The 2026 Cambridge Element <a href="https://www.cambridge.org/core/elements/sikh-ethics/931645585C0461FFC33D034EF558360C"><em>Sikh Ethics</em></a> supports truthful living, oneness, equality, virtue, hukam, justice, and the careful connection between the Guru Granth Sahib and later Khalsa practice. Oxford&rsquo;s account of <a href="https://academic.oup.com/book/3601/chapter-abstract/144903612">Khalsa ethical concerns</a> supports honest living, soft speech, service, care for the vulnerable, restraint in war, and the household reach of Sikh ethics.</li>
-              <li><b>Caste in teaching and practice.</b> Surinder S. Jodhka&rsquo;s open study of <a href="https://www.mdpi.com/2077-1444/15/10/1219">Sikh religion and contentions around caste</a> supports the sharp conflict between the canon&rsquo;s rejection and caste&rsquo;s persistence among Sikhs.</li>
-              <li><b>Gender, caste, and the household.</b> Nicola Mooney&rsquo;s study of <a href="https://www.mdpi.com/2077-1444/11/2/95">Sikh householding at the intersection of gender and caste</a> supports both Guru Nanak&rsquo;s egalitarian household model and the later persistence of endogamy and male privilege.</li>
-              <li><b>Violence and the saint-soldier.</b> The Cambridge Companion chapter on <a href="https://www.cambridge.org/core/books/abs/cambridge-companion-to-religion-and-war/sikhism/0A283203A454F718136DE6773769835F">Sikhism and war</a> supports the tradition&rsquo;s join between hymns of surrender, defensive warfare, sovereignty, Khalsa, and martyrdom. Cambridge&rsquo;s <a href="https://www.cambridge.org/core/books/violence-and-the-sikhs/7F206F1063105B3E600FEDEA39A8FDC3"><em>Violence and the Sikhs</em></a> supports refusing a simple fall from early pacifism into later militancy.</li>
-              <li><b>Image.</b> The site image is an opening folio from a Guru Granth Sahib manuscript at Sri Patna Sahib, with the Mul Mantar illuminated in gold and a <em>nisan</em> associated with Guru Gobind Singh. The <a href="https://commons.wikimedia.org/wiki/File:Guru_Granth_Sahib_manuscript_housed_at_Sri_Patna_Sahib_with_%27nisan%27_%28signature_of_the_Sikh_guru_by_scribing_the_Mul_Mantar%29_of_Guru_Gobind_Singh_02.jpg">Wikimedia Commons file</a> is marked public domain.</li>
+              <li><b>Structure and Guruship.</b> The Shiromani Gurdwara Parbandhak Committee (SGPC) gives an institutional Sikh account of <a href="https://new.sgpc.net/sri-guru-granth-sahib/">the volume and its contents</a> and <a href="https://new.sgpc.net/ten-guru-sahibs/guru-gobind-singh-sahib/">Guru Gobind Singh&rsquo;s life</a>.</li>
+              <li><b>Conduct and worship.</b> The SGPC&rsquo;s <a href="https://sgpc.net/sikh-rehat-maryada-in-english/">Sikh Rehat Maryada</a>, also available as an <a href="https://sgpc.net/wp-content/uploads/2025/06/Sikh-Rehat-Maryada-English-n.pdf">official PDF</a>, sets out rules for attending the Guru Granth Sahib, prayer, readings, langar, service, and initiation. These are prescribed norms, rather than a description of everything Sikhs do.</li>
+              <li><b>Quoted wording.</b> English excerpts use Sant Singh Khalsa&rsquo;s rendering in <a href="https://www.banidb.com/">BaniDB</a>. Wording, ang numbers, and author labels were compared with the database. Links open the surrounding ang in SikhiToTheMax. Verse numbers and pause markers are omitted; ellipses mark omissions. The explanations are interpretations, not additional translations.</li>
+              <li><b>Devotion and translation.</b> The Guru Granth Sahib Project pairs literal translation with interpretive commentary. Its <a href="https://gurugranthsahib.io/bani/details/ASWC1/2/4">reading of Guru Nanak&rsquo;s hymn on ang 765</a> explains the bride image and union with the Divine. Nirvikar Singh&rsquo;s <a href="https://sikhresearchjournal.org/index.php/srj/article/view/117">translation study</a> examines the choices made in English renderings.</li>
+              <li><b>Canon formation.</b> Pashaura Singh, <a href="https://academic.oup.com/book/10787"><em>The Guru Granth Sahib: Canon, Meaning and Authority</em></a>. Relevant chapters cover <a href="https://academic.oup.com/book/10787/chapter-abstract/158922155?login=false">textual analysis</a>, <a href="https://academic.oup.com/book/10787/chapter-abstract/158923901">Guru Arjan&rsquo;s editorial perspective</a>, <a href="https://academic.oup.com/book/10787/chapter-abstract/158924664">bhagat bani</a>, and <a href="https://academic.oup.com/book/10787/chapter-abstract/158927008">scriptural authority</a>. Some of its manuscript interpretations are disputed.</li>
+              <li><b>Early textual traditions.</b> Jeevan Singh Deol, <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">&ldquo;Text and lineage in early Sikh history&rdquo;</a>, on oral repertoires and written recensions.</li>
+              <li><b>Music and language.</b> The Oxford Handbook of Sikh Studies chapters on <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291499834">the Guru Granth Sahib</a> and <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291502862">linguistic and philological approaches</a>; a study of <a href="https://www.tandfonline.com/doi/full/10.1080/17448727.2015.1023105">Gurbani music</a>; SikhRI&rsquo;s introduction to <a href="https://sikhri.org/articles/gurmukhi-guru-nanak-sahibs-alphabets">Gurmukhi</a>.</li>
+              <li><b>Ethics.</b> Keshav Singh, <a href="https://www.cambridge.org/core/elements/sikh-ethics/931645585C0461FFC33D034EF558360C"><em>Sikh Ethics</em></a>, on oneness, hukam, truthful living, and Khalsa practice; Oxford&rsquo;s chapter on <a href="https://academic.oup.com/book/3601/chapter-abstract/144903612">Khalsa ethical concerns</a>.</li>
+              <li><b>Caste and gender.</b> Surinder S. Jodhka, <a href="https://www.mdpi.com/2077-1444/15/10/1219">&ldquo;Sikh Religion and Contentions around Caste&rdquo;</a>; Nicola Mooney, <a href="https://www.mdpi.com/2077-1444/11/2/95">&ldquo;Sikh Householding and the Intersection of Gender and Caste&rdquo;</a>. Both examine the relationship between religious teaching and social institutions.</li>
+              <li><b>Armed defense.</b> The Cambridge Companion chapter on <a href="https://www.cambridge.org/core/books/abs/cambridge-companion-to-religion-and-war/sikhism/0A283203A454F718136DE6773769835F">Sikhism and war</a>; <a href="https://www.cambridge.org/core/books/violence-and-the-sikhs/7F206F1063105B3E600FEDEA39A8FDC3"><em>Violence and the Sikhs</em></a>, on the history behind the saint-soldier tradition.</li>
+              <li><b>Site thumbnail.</b> An illuminated opening folio from a Guru Granth Sahib manuscript at Sri Patna Sahib, with a <em>nisan</em>, an inscribed mark, associated with Guru Gobind Singh. The <a href="https://commons.wikimedia.org/wiki/File:Guru_Granth_Sahib_manuscript_housed_at_Sri_Patna_Sahib_with_%27nisan%27_%28signature_of_the_Sikh_guru_by_scribing_the_Mul_Mantar%29_of_Guru_Gobind_Singh_02.jpg">Wikimedia Commons file</a> is marked public domain.</li>
             </ol>
           </details>
         </div>
