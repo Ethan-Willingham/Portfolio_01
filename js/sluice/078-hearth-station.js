@@ -32,7 +32,10 @@
   }
   function hearthRoomLayout() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
-    var landscape = w >= 520 && h <= 500, wide = w >= 700 && !landscape;
+    // Mobile play is landscape only, including taller tablet viewports.
+    // Narrow desktop windows retain their existing stacked room layout.
+    var landscape = (typeof isMobile !== 'undefined' && isMobile) || w >= 520 && h <= 500;
+    var wide = w >= 700 && !landscape;
     if (!wide) return hearthMobileLayout(w, h, landscape);
     var ratio = HEARTH_WIDTH / HEARTH_HEIGHT, gap = 8, bh, bw, sh;
     var station, scene, box, bin, pump, action, ash, tools, water, meter;

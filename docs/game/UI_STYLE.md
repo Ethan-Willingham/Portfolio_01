@@ -1,5 +1,13 @@
 # UI_STYLE.md — Frontier Soviet UI
 
+> **Mobile orientation policy (owner instruction, 2026-10-01).** Sluice mobile
+> play is landscape only across the mine, shops, menus and bathhouse. Portrait
+> presents the rotate screen and freezes gameplay and held input. Rotation back
+> to landscape preserves a manual pause; loading may continue behind the cover.
+> Develop and test mobile working views in landscape, including tablets and
+> browser-toolbar height changes. Portrait tests verify the gate. Narrow desktop
+> windows retain responsive layouts. This supersedes older portrait guidance below.
+
 > **Bath workshop (2026-09-26, v28.97).** One view contains the catenary tub
 > and its curved boiler. Material selection opens a compact paged rack; the
 > translucent cursor previews the exact piece that a click will release. Flint
@@ -8,10 +16,9 @@
 > controls beside the hose. No Prepare, Guest or instant ignition buttons.
 > Desktop controls flank the furnace. Since v28.140, phones use a 104px bottom
 > strip with WATER, GUESTS and FIRE tabs above one row of four 44px actions.
-> Readings share the navigation row. Portrait gives the bowl nearly the full
-> width and uses a taller furnace opening; GUESTS widens the view to include
-> the dry landing. Landscape puts bath and fire beside one another above the
-> same compact strip. Mobile guest cards never cover the room. Liquid and
+> Readings share the navigation row. Mobile landscape puts bath and fire beside
+> one another above the compact strip, including on tablets. GUESTS widens the
+> view to include the dry landing. Mobile guest cards never cover the room. Liquid and
 > material trays have explicit CLOSE controls and own pointer input while open.
 > Targets stay at least 44px
 > wide and tall. Real water, heat-driven steam, guests and fire stay live.
@@ -110,7 +117,7 @@ visible beyond the copper rim until it reaches the floor and drains away.
 > home. Spare fuel stays visible, and failed saves retain a written warning.
 > Large balances abbreviate only where the exact amount cannot fit.
 >
-> Phones use three survival readings above three journey readings. Short
+> Mobile play uses landscape. Short
 > landscape screens compress the single row; the canvas and touch disc
 > fit above the browser edge. Cached instruments must repaint when capacity,
 > displayed numbers, thresholds, or save status change. The menu smoke tool
@@ -185,7 +192,7 @@ The console replaces the v10 top-bar HUD. It is a **horizontal instrument panel 
 - **Anchor:** bottom-edge of the canvas, full canvas width
 - **Height:** 88 CSS pixels (fixed; does not scale with viewport)
 - **Inner playable area:** the world is rendered into the area *above* the console (`viewH - 88`). Camera framing accounts for this — `screenH = (viewH - 88) / worldScale`.
-- **Mobile portrait:** stays 88 px (still readable)
+- **Mobile portrait:** rotate screen, with gameplay frozen
 - **Mobile landscape:** drops to 72 px to preserve vertical play space
 - **Letterbox behaviour:** the console always touches the bottom edge of the canvas. Letterbox bars (if any) are above the playfield, never below the console.
 

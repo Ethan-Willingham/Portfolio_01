@@ -208,7 +208,7 @@
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
     // re-kicks it. (pauseGame also cancels the pending handle; this is backup.)
-    if (gamePaused) { gameRafId = 0; return; }
+    if (gamePaused || mobileLandscapeBlocked) { gameRafId = 0; return; }
     var frameIntervalMs = time - lastTime;
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
@@ -742,7 +742,7 @@
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).
-    gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+    gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
   }
 
   /* ---- Boot ---- */

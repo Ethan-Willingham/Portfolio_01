@@ -4,6 +4,12 @@ The banya uses physical fuel pieces, manually cast sparks, stored liquids and
 a conserved thermal field as of v28.97. The visitor loop remains enabled, and
 individual guest recipes are still undecided.
 
+Sluice mobile play is landscape only, including the bathhouse. Portrait shows
+the rotate screen and stops gameplay and held input; returning to landscape
+keeps any manual pause intact. Build and verify mobile bath controls in landscape,
+including tablet screens and changing browser-toolbar height. Portrait tests
+verify the orientation gate. Narrow desktop windows retain their stacked layout.
+
 Since v28.16, the banya opens by default for returning profiles as well as
 new ones. A one-time `sluice.opt.banya-default=open-v1` migration replaces
 the old saved off setting. Later choices in Pause > Options > Banya persist
@@ -16,7 +22,7 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
 2. Scoop water into the rig tank. The bath needs at least 40 L and holds 450 L.
 3. Enter the banya. The main room fills the viewport around a wide catenary tub,
    with a copper lining, curved rows of bolts, and the boiler built beneath it.
-4. Tend the boiler directly below the bath. On phones, open the FIRE tab.
+4. Tend the boiler, which sits beside the bath on phones. Open the FIRE tab.
    Select a material, position its translucent preview and click to release it.
    Select the flint and steel, then drag above the pile to cast sparks onto fuel.
    Work the bellows for more heat and turn the grate crank to sift pale ash.
@@ -66,8 +72,8 @@ actual fuel bodies while pale ash sifts through the slots.
 The room gives its full height to the bathhouse, with no top or bottom HUD
 bar since v28.84. Navigation buttons mount directly on the timber wall.
 The claw and hose switches sit beside the firebox on desktop, opposite the
-water control and water, temperature and money readings. Since v28.140, narrow
-screens use a compact 104px strip below the basin and a taller furnace. WATER,
+water control and water, temperature and money readings. Phones use a compact
+104px strip below the landscape working area. WATER,
 GUESTS and FIRE tabs sit above one row of four actions. Water
 has source selection, hose, pour and jet/shower actions; Guests has the claw,
 grab/drop and visitor admission; Fire has material selection, striker, bellows
@@ -82,8 +88,8 @@ from the basin shoulders into a broad grate spanning 56% of the chamber,
 75% wider than the earlier tapered base. Coal and ash collide with the curved
 walls, the GPU fire mask follows them, and cut-away corners reject coal drops.
 Existing fuel is moved inside the new walls without losing its mass or heat.
-Short landscape screens place the basin and
-firebox beside one another. Tool and boiler controls retain 44-pixel-high targets. Fuel,
+All mobile screens place the basin and
+firebox beside one another in landscape. Tool and boiler controls retain 44-pixel-high targets. Fuel,
 average exposed air and ash blockage are visible alongside the boiler. The
 main basin spans 26 tiles and retains the original catenary
 formula. Since v28.65, the drawn copper liner is also an analytic collision boundary in
@@ -162,7 +168,7 @@ outside the copper liner. Dragging low or tilting near a wall no longer puts
 the outlet inside solid copper and silently blocks accepted water.
 
 Since v28.140, the tool rail also stays below the physical main-room ceiling.
-Extra wall exposed by a tall phone view cannot put the hose into an invisible
+Extra wall exposed by a tall viewport cannot put the hose into an invisible
 upper tub. Entry recovers liquid in locked upper tubs into pending silo stock,
 preserving identity, count and remaining warm-inflow credits. Existing stores,
 the main thermal field, owned-floor liquid and snow remain intact. Repeated
@@ -189,14 +195,14 @@ physical guest saves, cancellation and responsive layouts. Screenshots go to
 progress and CPU moving-boundary water coupling.
 
 `node tools/bath-mobile-smoke.mjs` checks phone tabs and trays, separate touch
-targets, guest admission and real touch fuel placement in portrait and short
-landscape, plus the desktop controls. `BATH_HOSE_TOUCH=1 node
+targets, guest admission and real touch fuel placement on landscape phones and
+tablets, plus the desktop controls. `BATH_HOSE_TOUCH=1 node
 tools/bathhouse-workshop-smoke.mjs` drags the hose deep into the bowl on four
 phone sizes, reads back real GPU particles and verifies finite liquid supply
 accounting. Both own and close a separate Chrome for Testing process.
 `BATH_HOSE_VISUAL=1 node tools/bathhouse-workshop-smoke.mjs` checks actual blue
 pixels against the copper cavity, the basin meter and finite stock in a bordered
-DPR 3 phone canvas after a viewport resize. It also verifies recovery reaches
+DPR 3 landscape phone canvas after browser-toolbar height changes. It also verifies recovery reaches
 the GPU solver and captures a working bath with two visitors and real burning fuel.
 
 ## Coal and heat

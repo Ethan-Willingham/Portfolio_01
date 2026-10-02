@@ -39,7 +39,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.140">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.141">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -170,10 +170,8 @@
       .game-canvas-area { height: min(97dvh, calc(100dvh - 18px)); }
     }
 
-    /* On portrait devices the stacked 2-row console + d-pad take up the
-       lower part of the canvas. Give the game nearly the whole viewport so
-       the world view — which scales off WIDTH, not height — shows many
-       more rows. Fullscreen (body.gm-fs) still overrides this. */
+    /* Narrow desktop windows retain their tall responsive view. Mobile
+       portrait is covered by the landscape-only rotation screen. */
     @media (orientation: portrait) {
       .game-canvas-area { height: min(95dvh, calc(100dvh - 18px)); }
     }
@@ -420,6 +418,13 @@
             </div>
             <div class="game-canvas-area">
               <canvas id="game-canvas" tabindex="-1"></canvas>
+              <div id="gm-rotate-screen" hidden role="status" aria-live="polite">
+                <div class="gm-rotate-card">
+                  <p class="gm-rotate-title">Rotate your device</p>
+                  <p>Sluice plays in landscape.</p>
+                  <p class="gm-rotate-note">Your game will wait here.</p>
+                </div>
+              </div>
               <aside id="gm-perf-recorder" hidden aria-label="Play recording">
                 <span id="gm-perf-status">Record a slowdown while you play</span>
                 <button id="gm-perf-toggle" type="button">Record play</button>
@@ -944,13 +949,13 @@
       });
     })();
   </script>
-  <script defer src="js/sluice-performance-gpu.js?v=v28.140"></script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.140"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.140"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.140"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.140"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.140"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.140"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.140"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.141"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.141"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.141"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.141"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.141"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.141"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.141"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.141"></script>
 </body>
 </html>

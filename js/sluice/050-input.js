@@ -1,6 +1,7 @@
   /* ---- Input ---- */
   function setupInput() {
     window.addEventListener('keydown', function (e) {
+      if (mobileLandscapeBlocked) return;
       if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
@@ -49,7 +50,7 @@
     });
     window.addEventListener('keyup', function (e) {
       keys[e.key] = false;
-      if (introPhase !== 'done') return;
+      if (mobileLandscapeBlocked || introPhase !== 'done') return;
       // v11.10 — release [Q] fires the wheel's hovered slot
       if ((e.key === 'q' || e.key === 'Q') && itemWheel.open && itemWheel.pointerId === 'kb') {
         closeItemWheel(true);
@@ -78,6 +79,51 @@
       bathToolCancel(); hearthCancelDrag(); bathPtrDown = false;
       if (itemWheel.open) closeItemWheel(false);
     }
+    // Mobile play requires landscape, including iPadOS desktop-style agents.
+    // Loading still warms the GPU behind the cover; ordinary simulation stops.
+    var rotateScreen = document.getElementById('gm-rotate-screen');
+    var orientationControls = ['game-canvas', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder'];
+    function syncMobileOrientation() {
+      var blocked = isMobile && window.innerWidth <= window.innerHeight;
+      if (rotateScreen) rotateScreen.hidden = !blocked;
+      for (var i = 0; i < orientationControls.length; i++) {
+        var control = document.getElementById(orientationControls[i]);
+        if (control) control.inert = blocked;
+      }
+      if (blocked === mobileLandscapeBlocked) return;
+      mobileLandscapeBlocked = blocked;
+      if (blocked) {
+        surfaceSlimeGrabEnd(undefined, true);
+        clearAllInput();
+        gpReleaseAll();
+        drillSfxActive = false; drillSfxMat = null;
+        playPerfPause(true, 'rotate to landscape');
+        if (introPhase === 'done' && gameRafId) {
+          cancelAnimationFrame(gameRafId); gameRafId = 0;
+        }
+      } else if (!gamePaused) {
+        playPerfPause(false);
+        if (introPhase === 'done') {
+          lastTime = performance.now();
+          if (gameRafId) cancelAnimationFrame(gameRafId);
+          gameRafId = requestAnimationFrame(loop);
+        }
+      }
+      if (window.SluiceAudio) window.SluiceAudio.setPaused(blocked || gamePaused || introPhase !== 'done');
+    }
+    window.addEventListener('resize', syncMobileOrientation);
+    window.addEventListener('orientationchange', syncMobileOrientation);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', syncMobileOrientation);
+    syncMobileOrientation();
+    // The cover owns real touches. These guards also reject delayed events
+    // delivered to the old canvas target during a rotation.
+    function blockPortraitInput(e) {
+      if (!mobileLandscapeBlocked) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }
+    ['pointerdown', 'pointermove', 'touchstart', 'touchmove', 'mousedown', 'mousemove', 'wheel'].forEach(function (type) {
+      canvas.addEventListener(type, blockPortraitInput, { capture: true, passive: false });
+    });
     // v17.82 — pause the game when the window loses focus (or the tab is
     // hidden). This is NOT just a state freeze: pauseGame cancels the pending
     // animation frame so the rAF loop stops scheduling entirely, which lets
@@ -102,15 +148,15 @@
     function resumeGame() {
       if (!gamePaused) return;
       gamePaused = false;
-      playPerfPause(false);
-      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(false);
+      playPerfPause(mobileLandscapeBlocked, mobileLandscapeBlocked ? 'rotate to landscape' : undefined);
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(mobileLandscapeBlocked);
       var ov = document.getElementById('game-pause');
       if (ov) { ov.classList.remove('is-visible'); ov.setAttribute('aria-hidden', 'true'); }
       // Reset the clock so the long paused gap doesn't arrive as one giant dt
       // on the first resumed frame (loop clamps to 0.1s, but this is cleaner).
       lastTime = performance.now();
       if (gameRafId) cancelAnimationFrame(gameRafId);
-      gameRafId = requestAnimationFrame(loop);
+      gameRafId = mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
     }
     // Auto-pause triggers: window blur (visible-but-unfocused — the case the
     // browser does NOT throttle on its own) and tab hide. Both route through
@@ -253,7 +299,7 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id, right) {
-    if (gamePaused) return;
+    if (gamePaused || mobileLandscapeBlocked) return;
     if (bathMode) return; // The room owns pointer input, including right clicks.
     // Right click is a location-independent dump, including over buildings.
     if (right) { siphonPointerDown(x, y, id, true); return; }

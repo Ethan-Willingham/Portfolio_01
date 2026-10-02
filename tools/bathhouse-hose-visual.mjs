@@ -1,18 +1,18 @@
 // Actual rendered water and conserved basin readings in a bordered phone view.
 export async function bathHoseVisual({ game, ev, send, sleep, check, screenshot, press, button }) {
-  await send('Emulation.setDeviceMetricsOverride', { width: 420, height: 960, deviceScaleFactor: 3, mobile: true });
+  await send('Emulation.setDeviceMetricsOverride', { width: 844, height: 390, deviceScaleFactor: 3, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true });
   await ev(`document.body.classList.remove('gm-fs');var wrap=document.querySelector('.game-wrapper');
-    wrap.style.cssText='position:fixed;left:12px;top:24px;width:396px;max-width:none;margin:0;';
+    wrap.style.cssText='position:fixed;left:12px;top:12px;width:820px;max-width:none;margin:0;';
     for(var el of wrap.querySelectorAll('.game-header,.game-controls-info'))el.style.display='none';
-    wrap.querySelector('.game-canvas-area').style.height='884px';window.scrollTo(0,0);window.dispatchEvent(new Event('resize'));`);
+    wrap.querySelector('.game-canvas-area').style.height='366px';window.scrollTo(0,0);window.dispatchEvent(new Event('resize'));`);
   await sleep(150);
   await game('isMobile=true;resize();bathEnter();'); await sleep(750);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];skySlimeNext=1e9;bathNoticeT=0;setDevMode(false);bathToolReset();bathSiloReset();liquidCount=0;liquidOps.length=0;liquidMutationSeq++;siphon.tank[0]=16000;bathWater=0;updateCamera();render();');
   await press(button('hose'), true);
   const points = await game(`(function(){var t=bathTool,L=hearthRoomLayout(),r=canvas.getBoundingClientRect();
     function client(x,y){return{x:r.left+(x-cam.x)*dpr*worldScale*r.width/canvas.width,y:r.top+(y-cam.y)*dpr*worldScale*r.height/canvas.height};}
-    return{head:client(t.x,t.y),high:{x:r.left+r.width/2,y:r.top+(L.scene.y+50)*r.height/(canvas.height/dpr)}};
+    return{head:client(t.x,t.y),high:{x:r.left+(L.scene.x+L.scene.w/2)*r.width/(canvas.width/dpr),y:r.top+(L.scene.y+50)*r.height/(canvas.height/dpr)}};
   })()`);
   await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...points.head, id: 3 }] });
   await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...points.high, id: 3 }] });
@@ -30,8 +30,8 @@ export async function bathHoseVisual({ game, ev, send, sleep, check, screenshot,
     await game('liquidWGPU.device.queue.onSubmittedWorkDone()');
   }
   // Mobile browser chrome can change the visible canvas after a pour.
-  await send('Emulation.setDeviceMetricsOverride', { width: 420, height: 780, deviceScaleFactor: 3, mobile: true });
-  await ev("document.querySelector('.game-canvas-area').style.height='704px';window.dispatchEvent(new Event('resize'));");
+  await send('Emulation.setDeviceMetricsOverride', { width: 844, height: 340, deviceScaleFactor: 3, mobile: true });
+  await ev("document.querySelector('.game-canvas-area').style.height='316px';window.dispatchEvent(new Event('resize'));");
   await sleep(150); await game('resize();updateCamera();bathOperationsTick(.2);render();');
   await screenshot('phone-bordered-dpr3-hose');
   const report = await game(`(function(){render();var g=liquidWGPU,c=bathToolBounds().curve,v=g.renderParamsHost,r=canvas.getBoundingClientRect(),gr=g.renderCanvas.getBoundingClientRect();

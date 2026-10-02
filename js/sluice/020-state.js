@@ -1466,6 +1466,8 @@
   // stops cooking. gameRafId is the handle of the pending frame so we can
   // cancel it on pause and re-kick exactly one on resume (no double loops).
   var gamePaused = false;
+  // Orientation blocks play independently so rotating cannot undo a pause.
+  var mobileLandscapeBlocked = false;
   var gameRafId = 0;
   // v17.84: boot-pause toggle. When true, the loop runs the intro warmup (so
   // the world renders behind it) then drops into the pause menu until the player
@@ -1544,7 +1546,8 @@
   var lastTime = 0;
   var depthRecord = 0;
   var gameStartedAt = 0;
-  var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  var isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var DPAD_SIZE, DPAD_CX, DPAD_CY, DPAD_BTN;
 
   /* ---- Day/night cycle (Stage 5a) ----

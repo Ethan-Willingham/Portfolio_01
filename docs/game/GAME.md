@@ -13,6 +13,12 @@ deep design docs are the other files in `docs/game/` (see the map at the bottom)
 
 ## The loop (what the game IS now)
 
+Mobile play is landscape only. Portrait shows a rotate screen and freezes gameplay
+and held input. Returning to landscape restores play, while a manual pause stays
+paused. Loading can continue behind the rotate screen. Build and test all mobile
+views in landscape; portrait checks verify the orientation gate. Narrow desktop
+windows retain their responsive layouts.
+
 Dig down through one town, collect ore, fly up to the surface station to sell + refuel
 + upgrade, then go deeper. No win screen, just a deeper hole. The town is 400 m deep (was
 800; compressed 2026-07-03 so the ore art's native ~400 m arc lands and variety hits from
@@ -55,9 +61,9 @@ bellows, flint, ash grate and actionable fire guidance stay in this same view.
 Since v28.97, select an existing fuel or mineral from the rack, then click to
 release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption.
-Since v28.140, phone controls use a compact two-row Water, Guests and Fire
-strip. The basin takes nearly the full width, the furnace opening is taller,
-and readings share the navigation row. Mobile visitor cards stay off the scene.
+Phone controls use a compact two-row Water, Guests and Fire strip in landscape.
+The basin and furnace sit beside each other, and readings share the navigation
+row. Mobile visitor cards stay off the scene.
 The hose outlet stays outside the copper even when dragged against the liner,
 so a low aim still pours into the bowl.
 Its ceiling stays in the physical main room; liquid previously poured into

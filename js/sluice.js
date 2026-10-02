@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.140';
+  var GAME_VERSION = 'v28.141';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -2829,6 +2829,8 @@
   // stops cooking. gameRafId is the handle of the pending frame so we can
   // cancel it on pause and re-kick exactly one on resume (no double loops).
   var gamePaused = false;
+  // Orientation blocks play independently so rotating cannot undo a pause.
+  var mobileLandscapeBlocked = false;
   var gameRafId = 0;
   // v17.84: boot-pause toggle. When true, the loop runs the intro warmup (so
   // the world renders behind it) then drops into the pause menu until the player
@@ -2907,7 +2909,8 @@
   var lastTime = 0;
   var depthRecord = 0;
   var gameStartedAt = 0;
-  var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  var isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var DPAD_SIZE, DPAD_CX, DPAD_CY, DPAD_BTN;
 
   /* ---- Day/night cycle (Stage 5a) ----
@@ -5488,7 +5491,7 @@
         showPauseOverlay(gameLoadingPauseReason);
         gameLoadingPauseReason = '';
       }
-      if (window.SluiceAudio) window.SluiceAudio.setPaused(gamePaused);
+      if (window.SluiceAudio) window.SluiceAudio.setPaused(gamePaused || mobileLandscapeBlocked);
     }
     if (window.SluiceLoading) window.SluiceLoading.finish(reveal);
     else reveal();
@@ -6804,6 +6807,7 @@
   /* ---- Input ---- */
   function setupInput() {
     window.addEventListener('keydown', function (e) {
+      if (mobileLandscapeBlocked) return;
       if (introPhase !== 'done') return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
@@ -6852,7 +6856,7 @@
     });
     window.addEventListener('keyup', function (e) {
       keys[e.key] = false;
-      if (introPhase !== 'done') return;
+      if (mobileLandscapeBlocked || introPhase !== 'done') return;
       // v11.10 — release [Q] fires the wheel's hovered slot
       if ((e.key === 'q' || e.key === 'Q') && itemWheel.open && itemWheel.pointerId === 'kb') {
         closeItemWheel(true);
@@ -6881,6 +6885,51 @@
       bathToolCancel(); hearthCancelDrag(); bathPtrDown = false;
       if (itemWheel.open) closeItemWheel(false);
     }
+    // Mobile play requires landscape, including iPadOS desktop-style agents.
+    // Loading still warms the GPU behind the cover; ordinary simulation stops.
+    var rotateScreen = document.getElementById('gm-rotate-screen');
+    var orientationControls = ['game-canvas', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder'];
+    function syncMobileOrientation() {
+      var blocked = isMobile && window.innerWidth <= window.innerHeight;
+      if (rotateScreen) rotateScreen.hidden = !blocked;
+      for (var i = 0; i < orientationControls.length; i++) {
+        var control = document.getElementById(orientationControls[i]);
+        if (control) control.inert = blocked;
+      }
+      if (blocked === mobileLandscapeBlocked) return;
+      mobileLandscapeBlocked = blocked;
+      if (blocked) {
+        surfaceSlimeGrabEnd(undefined, true);
+        clearAllInput();
+        gpReleaseAll();
+        drillSfxActive = false; drillSfxMat = null;
+        playPerfPause(true, 'rotate to landscape');
+        if (introPhase === 'done' && gameRafId) {
+          cancelAnimationFrame(gameRafId); gameRafId = 0;
+        }
+      } else if (!gamePaused) {
+        playPerfPause(false);
+        if (introPhase === 'done') {
+          lastTime = performance.now();
+          if (gameRafId) cancelAnimationFrame(gameRafId);
+          gameRafId = requestAnimationFrame(loop);
+        }
+      }
+      if (window.SluiceAudio) window.SluiceAudio.setPaused(blocked || gamePaused || introPhase !== 'done');
+    }
+    window.addEventListener('resize', syncMobileOrientation);
+    window.addEventListener('orientationchange', syncMobileOrientation);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', syncMobileOrientation);
+    syncMobileOrientation();
+    // The cover owns real touches. These guards also reject delayed events
+    // delivered to the old canvas target during a rotation.
+    function blockPortraitInput(e) {
+      if (!mobileLandscapeBlocked) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }
+    ['pointerdown', 'pointermove', 'touchstart', 'touchmove', 'mousedown', 'mousemove', 'wheel'].forEach(function (type) {
+      canvas.addEventListener(type, blockPortraitInput, { capture: true, passive: false });
+    });
     // v17.82 — pause the game when the window loses focus (or the tab is
     // hidden). This is NOT just a state freeze: pauseGame cancels the pending
     // animation frame so the rAF loop stops scheduling entirely, which lets
@@ -6905,15 +6954,15 @@
     function resumeGame() {
       if (!gamePaused) return;
       gamePaused = false;
-      playPerfPause(false);
-      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(false);
+      playPerfPause(mobileLandscapeBlocked, mobileLandscapeBlocked ? 'rotate to landscape' : undefined);
+      if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(mobileLandscapeBlocked);
       var ov = document.getElementById('game-pause');
       if (ov) { ov.classList.remove('is-visible'); ov.setAttribute('aria-hidden', 'true'); }
       // Reset the clock so the long paused gap doesn't arrive as one giant dt
       // on the first resumed frame (loop clamps to 0.1s, but this is cleaner).
       lastTime = performance.now();
       if (gameRafId) cancelAnimationFrame(gameRafId);
-      gameRafId = requestAnimationFrame(loop);
+      gameRafId = mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
     }
     // Auto-pause triggers: window blur (visible-but-unfocused — the case the
     // browser does NOT throttle on its own) and tab hide. Both route through
@@ -7056,7 +7105,7 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id, right) {
-    if (gamePaused) return;
+    if (gamePaused || mobileLandscapeBlocked) return;
     if (bathMode) return; // The room owns pointer input, including right clicks.
     // Right click is a location-independent dump, including over buildings.
     if (right) { siphonPointerDown(x, y, id, true); return; }
@@ -8000,6 +8049,7 @@
 
   // ----- Core poll (shared by the game-loop tick and the paused poll) -----
   function gpFrame() {
+    if (mobileLandscapeBlocked) { gpReleaseAll(); return; }
     var pad = gpFindPad();
     if (!pad) {
       if (gpConnected) {
@@ -20482,7 +20532,10 @@
   }
   function hearthRoomLayout() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
-    var landscape = w >= 520 && h <= 500, wide = w >= 700 && !landscape;
+    // Mobile play is landscape only, including taller tablet viewports.
+    // Narrow desktop windows retain their existing stacked room layout.
+    var landscape = (typeof isMobile !== 'undefined' && isMobile) || w >= 520 && h <= 500;
+    var wide = w >= 700 && !landscape;
     if (!wide) return hearthMobileLayout(w, h, landscape);
     var ratio = HEARTH_WIDTH / HEARTH_HEIGHT, gap = 8, bh, bw, sh;
     var station, scene, box, bin, pump, action, ash, tools, water, meter;
@@ -75467,7 +75520,7 @@
     // v17.82 — if a pause landed between scheduling and firing this frame,
     // bail without rescheduling so the loop dies and the chips idle. resumeGame
     // re-kicks it. (pauseGame also cancels the pending handle; this is backup.)
-    if (gamePaused) { gameRafId = 0; return; }
+    if (gamePaused || mobileLandscapeBlocked) { gameRafId = 0; return; }
     var frameIntervalMs = time - lastTime;
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
@@ -76001,7 +76054,7 @@
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).
-    gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+    gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
   }
 
   /* ---- Boot ---- */

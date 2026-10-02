@@ -40,7 +40,7 @@ export async function bathHoseTouchFlow({ game, send, sleep, check, screenshot, 
   await game('bathEnter()'); await sleep(750);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];skySlimeNext=1e9;bathNoticeT=0;setDevMode(false);');
   await send('Emulation.setTouchEmulationEnabled', { enabled: true });
-  for (const [width, height] of [[390, 844], [320, 568], [844, 390], [568, 320]]) {
+  for (const [width, height] of [[844, 390], [667, 375], [568, 320], [520, 320]]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: true });
     await sleep(100);
     await game('isMobile=true;resize();bathToolReset();bathSiloReset();liquidCount=0;liquidOps.length=0;liquidMutationSeq++;siphon.tank[0]=16000;bathWater=0;updateCamera();render();');

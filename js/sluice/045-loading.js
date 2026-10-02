@@ -383,7 +383,7 @@
         showPauseOverlay(gameLoadingPauseReason);
         gameLoadingPauseReason = '';
       }
-      if (window.SluiceAudio) window.SluiceAudio.setPaused(gamePaused);
+      if (window.SluiceAudio) window.SluiceAudio.setPaused(gamePaused || mobileLandscapeBlocked);
     }
     if (window.SluiceLoading) window.SluiceLoading.finish(reveal);
     else reveal();

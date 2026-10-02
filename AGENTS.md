@@ -36,6 +36,15 @@ Verify with `node --check js/sluice.js` plus a browser/headless boot.
 above (read `docs/game/GAME.md`). They share `style.css` (the game shell reuses the `--d-*`
 panel tokens) and the three fonts; otherwise they do not overlap.
 
+**Sluice mobile policy (owner instruction, 2026-10-01): landscape only.** Develop
+and verify every mobile game view for landscape, including touch controls, shops,
+menus, the bathhouse and browser-toolbar height changes. Portrait shows the rotate
+screen and freezes gameplay and held input until the device returns to landscape.
+Keep manual pause separate so rotating never resumes a deliberately paused game.
+Loading may continue behind the rotate screen. Test portrait only to verify this
+gate; do not build or maintain active portrait gameplay layouts unless the owner
+explicitly changes this policy. Narrow or tall desktop windows remain supported.
+
 > **The game is a deliberately SIMPLE single-town mining sandbox.** Multi-town world, combat +
 > the rig auto-turret, No Man's Zone obstacle courses, the cross-town Trade Board, underground
 > oil, and ore refinement are **intentionally disabled** behind a central feature-flag block

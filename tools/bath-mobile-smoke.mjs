@@ -100,13 +100,14 @@ try {
   await ev("document.body.classList.add('gm-fs');document.body.appendChild(document.querySelector('.game-wrapper'));window.dispatchEvent(new Event('resize'));window.scrollTo(0,0)");
   await game('bathEnter()'); await sleep(750);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];');
-  for (const [width,height] of [[390,844],[320,568],[430,932],[699,500],[844,390],[667,375],[568,320],[520,320],[1280,900]]) {
+  for (const [width,height] of [[844,390],[844,340],[667,375],[568,320],[520,320],[1024,768],[1280,900]]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<900});
-    await game('isMobile='+ (width<900) + ';resize();'); await sleep(150); await game('updateCamera();render();');
+    await game('isMobile='+ (width!==1280) + ';resize();'); await sleep(150); await game('updateCamera();render();');
     if (width===1280) {
       check('desktop keeps the combined controls',await game('!hearthRoomLayout().mobile && hearthButtons.some(b=>b.action===\'fuels\') && hearthButtons.some(b=>b.action===\'claw\')'));
       await screenshot('desktop'); continue;
     }
+    check(width+'x'+height+' mobile bath uses the landscape working areas', await game('hearthRoomLayout().mobile && hearthRoomLayout().landscape'));
     for (const tab of ['water','guests','fire']) {
       await press(button('panel:'+tab),true);
       const fit=await game(`(function(){var L=hearthRoomLayout(),bs=hearthButtons,b=L.box;
@@ -116,7 +117,7 @@ try {
       })()`);
       if(!fit)console.log('LAYOUT',width,height,tab,await game('({layout:hearthRoomLayout(),buttons:hearthButtons})'));
       check(width+'x'+height+' '+tab+' has reachable, separate touch targets and visible furnace',fit);
-      check('compact controls leave the working area most of the phone',await game('hearthRoomLayout().dock.h<=104 && hearthRoomLayout().meter.h<=44 && (hearthRoomLayout().landscape || hearthRoomLayout().scene.h>canvas.height/dpr*.58)'));
+      check('compact controls preserve landscape working space',await game('hearthRoomLayout().dock.h<=104 && hearthRoomLayout().meter.h<=44 && hearthRoomLayout().landscape'));
       await screenshot(width+'x'+height+'-'+tab);
       if(tab==='guests') {
         await game("bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=(g.slot?22.5:20.75)*TILE;});render();");

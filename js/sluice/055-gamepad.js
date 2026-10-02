@@ -155,6 +155,7 @@
 
   // ----- Core poll (shared by the game-loop tick and the paused poll) -----
   function gpFrame() {
+    if (mobileLandscapeBlocked) { gpReleaseAll(); return; }
     var pad = gpFindPad();
     if (!pad) {
       if (gpConnected) {

@@ -1,4 +1,24 @@
 /* Sluice menus share the material colors from 020-state via 053-pause-menu. */
+#gm-rotate-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: var(--menu-panel, var(--d-bg-raised));
+  color: var(--menu-text, var(--d-text));
+  font: 14px/1.6 var(--font-mono);
+  text-align: center;
+  touch-action: none;
+}
+#gm-rotate-screen[hidden] { display: none; }
+#gm-rotate-screen .gm-rotate-card { max-width: 300px; }
+#gm-rotate-screen p { margin: 12px 0 0; }
+#gm-rotate-screen .gm-rotate-title { margin-top: 0; font-size: 24px; font-weight: 700; line-height: 1.3; }
+#gm-rotate-screen .gm-rotate-note { color: var(--menu-dim, var(--d-text-dim)); font-size: 12px; }
 #gm-perf-recorder {
   position: absolute;
   top: 64px;
