@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Analects of Confucius, Side by Side</title>
-  <meta name="description" content="All 503 passages of the Analects in plain English, each followed by the received Chinese and every English translation I could gather, stacked side by side.">
-  <meta property="og:title" content="The Analects of Confucius, Side by Side">
-  <meta property="og:description" content="Five hundred and three fragments about learning, ritual, government, friendship, grief, and the lifelong work of becoming decent. Each one in plain English, then the Chinese and every translation I could gather, stacked.">
+  <title>The Analects of Confucius</title>
+  <meta name="description" content="Confucius on learning to live with other people. Read the Analects with short notes, the Chinese text, and English translations to compare.">
+  <meta property="og:title" content="The Analects of Confucius">
+  <meta property="og:description" content="Confucius on learning to live with other people. Read the Analects with short notes, the Chinese text, and English translations to compare.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/analects.html">
@@ -32,10 +32,8 @@
   <link rel="stylesheet" href="style.css">
   <style>
   /* ============================================================
-     THE ANALECTS OF CONFUCIUS, SIDE BY SIDE
-     The completed Translation Stack: 503 passages, each opened in
-     plain English, followed by the received Chinese and every
-     English translation in the corpus. No unfinished units.
+     THE ANALECTS OF CONFUCIUS
+     Reading notes, received Chinese, and English translations.
      ============================================================ */
   :root {
     --measure: 820px;
@@ -71,7 +69,7 @@
   .ana-plain p:last-child { margin-bottom: 0; }
   .ana-plain p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
   .ana-plain em { font-style: italic; color: var(--text-bright); }
-  .ana-plain a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: .18em; }
+  .ana-plain a, .ana-note-text a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: .18em; }
 
   /* ---------- THE READER ---------- */
   .ana { max-width: var(--measure); margin: clamp(2.4rem, 5vw, 3.4rem) auto 0; scroll-margin-top: 4.5rem; }
@@ -108,7 +106,7 @@
   .ana-source { margin-top: 2.2rem; padding: 1.15rem 0 1.2rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--accent); }
   .ana-source-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 0 0 .55rem; }
   .ana-source-head b { font-family: var(--font-heading); font-size: 1.12rem; font-weight: 400; color: var(--text-bright); }
-  .ana-source-head a { color: inherit; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: .18em; }
+  .ana-source-head a, .ana-vn a { color: inherit; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: .18em; }
   .ana-source-head span { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .04em; color: var(--text-faint); }
   .ana-zh { margin: 0; font-family: var(--zh-font); font-size: clamp(1.28rem, 3.4vw, 1.72rem); line-height: 1.78; letter-spacing: .04em; color: var(--text); text-wrap: pretty; }
 
@@ -153,9 +151,8 @@
   <a href="religion.html" class="post-back"><span class="pb-label">The Sacred Books</span></a>
 
   <header class="u-hero ana-hero ana-shell">
-    <h1 class="u-title">The Analects of Confucius, Side by Side</h1>
-    <p class="u-dek">Five hundred and three fragments about learning, ritual, government, friendship, grief, and the lifelong work of becoming decent. Each one broken down in plain language, then read against the original Chinese and every English translation I could gather.</p>
-    <p class="u-meta">An interactive reader <span class="u-sep">/</span> <b>503 passages</b> <span class="u-sep">/</span> <b>20 books</b> <span class="u-sep">/</span> <b>7 translators</b></p>
+    <h1 class="u-title">The Analects of Confucius</h1>
+    <p class="u-dek">Confucius on learning to live with other people.</p>
     <span class="ana-scroll" aria-hidden="true">scroll</span>
   </header>
 
@@ -164,22 +161,27 @@
       <p class="ana-layer-tag"><b>01</b> Summary</p>
       <h2 class="ana-h2" id="summary-title">The Analects, in plain English</h2>
       <div class="ana-plain">
-        <p>The Analects is 503 scraps of conversation, not a book Confucius wrote. Some are one sentence. Some are scenes: a student asks the same question another student asked and gets the opposite answer; a stable burns and Confucius asks whether anyone was hurt, not about the horses; his favorite student dies and the calm teacher loses control of his grief.</p>
-        <p><a href="https://plato.stanford.edu/entries/confucius/">Confucius, Master Kong, lived from 551 to 479 BCE</a> in the small state of Lu, while the old Zhou political order was coming apart. He taught, held minor offices, traveled between courts looking for a ruler willing to use him, and died without seeing his program tried at scale. The speaking voice is usually his, but the hands preserving it belonged to students and later followers.</p>
-        <p>The traditional account says his first and second generation disciples assembled the sayings. The honest answer is less tidy. The collection grew through different branches of the school and reached something like its received form over the next few centuries. <a href="https://plato.stanford.edu/entries/confucius/#SourForConfLifeThou">Early China had competing versions, including a 22-book text.</a> The 20 books here are the version that survived. Scholars still argue over how much gives us the historical man's own words.</p>
-        <p>The project running through those fragments is <em>self-cultivation</em>: turn an ordinary person into a <em>junzi</em>, someone exemplary enough to be trusted with a family, a friendship, or a government. Learning begins the work. Repeated practice makes it settle. Confucius says he started at fifteen and reached the point where desire stopped crossing the moral line at seventy. No revelation. Fifty-five years of training.</p>
-        <p>The book's largest word is <em>ren</em>. Benevolence, humaneness, goodness, and authoritative conduct are all real translations, and none is large enough. Confucius defines it differently depending on who asks: master yourself and return to ritual; love others; help them stand where you want to stand; do not impose on them what you would not want yourself. It is less a feeling than the quality of a person whose relationships have become reliably good.</p>
-        <p>The machinery that builds it is <em>li</em>, ritual. That includes sacrifices and court ceremony, but also how to sit on a mat, receive a guest, mourn a parent, correct a friend, dress for an occasion, and leave a room. Confucius bets that repeated outward form can train inward desire. Law may stop a person from stealing. Good ritual, good company, and a good ruler are supposed to make stealing feel shameful before a guard arrives.</p>
-        <p>That is also his politics. A ruler's character spreads like wind over grass. Promote upright people and the public learns what the state honors. Take more than you need and theft appears below. Confucius trusts moral example more than punishment, which is powerful when the ruler is good and dangerously thin protection when the ruler is not.</p>
-        <p>The hard parts belong to the book too. It defends hierarchy, gives fathers and rulers strong presumptions, praises a son for hiding a father's theft, and contains a contemptuous line about women and servants. Confucius can be flexible with ritual and generous about education, then fiercely nostalgic for inherited rank. Reading him honestly means keeping those claims in the room with the golden rule.</p>
-        <p><a href="https://plato.stanford.edu/entries/confucius/#ConfChinPhilSymbTradCult">From the twelfth century onward, the Analects sat inside the Four Books curriculum</a> that shaped elite education across East Asia. Its endurance did not make its key words easier to move into English. <em>Junzi</em> becomes gentleman, superior man, noble person, or exemplary person. <em>Li</em> becomes ritual, propriety, rites, or good form. Stack the translations and you can see every English Confucius being built from those choices.</p>
+        <p>Confucius gives two students opposite answers to the same question. Zilu needs to slow down; Ran Qiu needs encouragement to act. He explains the difference in <a href="#11.22">11.22</a>. Much of the Analects works this way: someone asks how to behave, and the answer depends on who's asking.</p>
+        <p>The Analects collects sayings and conversations attributed to Confucius and his circle. He didn't write it. <a href="https://plato.stanford.edu/entries/confucius/#SourForConfLifeThou">Traditionally dated to 551 to 479 BCE</a>, he lived as Zhou authority weakened and rival states competed for power. Early accounts describe a teacher who held office and sought rulers willing to employ him. They disagree about his career, and some were written centuries later.</p>
+        <p>The collection also took shape over generations. Early versions differed; <a href="https://plato.stanford.edu/entries/confucius/#SourForConfLifeThou">one had twenty-two books</a>. This reader follows the received text, the version handed down through later editions. We can't treat every conversation as a transcript of the historical Confucius.</p>
+        <p>A recurring question is how to become a <em>junzi</em>, usually translated as a gentleman or an exemplary person. The word carries an association with noble birth, but the book repeatedly judges people by their conduct. You learn from others, practice what you've learned, and correct your mistakes. In <a href="#2.4">2.4</a>, Confucius describes a lifetime of this work, from beginning to learn at fifteen to following his desires without overstepping at seventy.</p>
+        <p><em>Ren</em>, often translated as humaneness, is central to that work. Asked what it means, Confucius says to love people (<a href="#12.22">12.22</a>). Elsewhere he says to restrain yourself and return to ritual (<a href="#12.1">12.1</a>), or to help others establish themselves as you would wish to establish yourself (<a href="#6.30">6.30</a>). When asked for a single lifelong guide, he names <em>shu</em>, reciprocity: don't impose on others what you wouldn't want yourself (<a href="#15.24">15.24</a>).</p>
+        <p><em>Li</em>, ritual, includes ancestral sacrifice and court ceremony, but also ordinary manners. How you care for a parent matters as much as whether you provide food (<a href="#2.7">2.7</a>). At a funeral, real grief matters more than a polished performance (<a href="#3.4">3.4</a>). The forms are supposed to teach respect. Confucius also asks what ritual is worth without humaneness (<a href="#3.3">3.3</a>).</p>
+        <p>Poetry and music belong to this education too. Students learn the Odes, a collection of old poems they can use in conversation and public life. In <a href="#8.8">8.8</a>, Confucius puts poetry, ritual, and music together as parts of a person's formation. He enjoys music himself: after hearing the Shao, the text says, he didn't notice the taste of meat for months (<a href="#7.14">7.14</a>).</p>
+        <p>His politics depends heavily on the ruler's example. Punishment can make people evade the law; virtue and ritual are supposed to give them a sense of shame (<a href="#2.3">2.3</a>). A ruler must act as a ruler and a father as a father (<a href="#12.11">12.11</a>): a title brings obligations. This demand to make names fit their use is explicit in <a href="#13.3">13.3</a>. The book also allows opposition: a minister should contradict a ruler openly (<a href="#14.22">14.22</a>), and a son should gently correct a parent (<a href="#4.18">4.18</a>). That still leaves a question about protection when those in power refuse correction.</p>
+        <p>The hierarchy still has hard consequences. In <a href="#13.18">13.18</a>, Confucius places uprightness in fathers and sons concealing each other's wrongdoing. <a href="#17.25">17.25</a> groups women with <em>xiaoren</em>, translated here as servants or petty people, and calls them difficult to deal with. The second term is disputed; the dismissive treatment of women is there in the text.</p>
+        <p>Heaven, <em>tian</em>, also matters. Confucius says Heaven gave him his virtue (<a href="#7.23">7.23</a>), then cries that Heaven has bereaved him when Yan Hui dies (<a href="#11.9">11.9</a>). He puts serving people before questions about spirits and death (<a href="#11.12">11.12</a>), but he takes part in sacrifice. Calling him simply secular leaves too much out.</p>
+        <p><a href="https://plato.stanford.edu/entries/confucius/#ConfChinPhilSymbTradCult">Zhu Xi's twelfth-century Four Books curriculum helped make the Analects central to education in China, Korea, and Japan.</a> That later tradition developed arguments this book leaves open. Here, even a short line can admit different readings. The notes below offer a reading of each passage; the translations let you check it.</p>
       </div>
     </section>
 
     <section class="ana-layer ana-shell" id="reader" aria-labelledby="reader-title">
       <p class="ana-layer-tag"><b>02</b> The reader</p>
-      <h2 class="ana-h2" id="reader-title">All 503 passages, side by side</h2>
-      <p class="ana-intro">Each passage opens with what it says in plain English, my own distillation rather than another translation. Then comes the received Chinese and every English version in the corpus, the famous editions first and the fragments last. Arrows or your keyboard to move.</p>
+      <h2 class="ana-h2" id="reader-title">Read the Analects</h2>
+      <p class="ana-intro">Use the arrows to move, or click the passage number to choose where to start.</p>
+      <div class="ana-plain">
+        <p>The notes offer a reading of each passage. Legge is the only complete English text here. Muller appears for most passages; the other editions are selected excerpts. Numbering follows the <a href="https://ctext.org/analects">Chinese Text Project</a>, alongside its Chinese text. Other editions sometimes divide passages differently.</p>
+      </div>
 
       <div class="ana" id="ana">
         <div class="ana-bar">
@@ -218,8 +220,8 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/analects-notes.js?v=20260719a" defer></script>
-  <script src="js/analects-data.js" defer></script>
-  <script src="js/analects.js?v=20260719a" defer></script>
+  <script src="js/analects-notes.js?v=20261001a" defer></script>
+  <script src="js/analects-data.js?v=20261001a" defer></script>
+  <script src="js/analects.js?v=20261001a" defer></script>
 </body>
 </html>
