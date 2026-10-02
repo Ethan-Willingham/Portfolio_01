@@ -224,6 +224,13 @@ wording stability, and English translation into one percentage. The rails are
 qualitative: `data-level="2"`, `3`, or `4` fills that many of four segments, while
 the written grade carries the actual claim.
 
+Keep the surface a subtle green mixed from `--bg` and `--bg-raised`, with a thin
+neutral border and no shadow. Stack the header's explanation below its verdict.
+On wider screens, group the label, written grade, and short rail in the left
+column, with the evidence beside them. On mobile, place the evidence below.
+Use cream for the evidence, muted text for the grades, and reserve gold for the
+small rails and source links.
+
 ```html
 <aside class="u-textcheck" aria-labelledby="textcheck-title">
   <div class="u-textcheck-head">

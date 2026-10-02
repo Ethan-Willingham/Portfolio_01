@@ -93,30 +93,32 @@
 
 /* .u-textcheck - a reusable transmission confidence readout for sacred texts.
    It deliberately separates manuscript evidence, source wording, and translation.
-   The segmented rails are qualitative, not invented numerical precision. */
-.u-textcheck{ margin:0; padding:clamp(20px,3vw,28px); border:1px solid var(--s-gold-hair); border-radius:18px; background:var(--s-gold-tint); box-shadow:var(--s-shadow-gold); }
-.u-textcheck-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; padding-bottom:1.1rem; border-bottom:1px solid var(--s-gold-hair); }
-.u-textcheck-k{ margin:0 0 .35rem; font-family:var(--font-mono); font-size:.68rem; line-height:1.35; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
-.u-textcheck-verdict{ margin:0; max-width:24ch; font-family:var(--font-heading); font-size:clamp(1.25rem,2.7vw,1.55rem); line-height:1.25; color:var(--text-bright); }
-.u-textcheck-rule{ margin:.2rem 0 0; max-width:23ch; font-size:.78rem; line-height:1.45; color:var(--text-dim); text-align:right; }
+   Labels and qualitative rails share a column, leaving room for the evidence.
+   A subtle green surface keeps gold reserved for the rails and source links. */
+.u-textcheck{ margin:0; padding:clamp(22px,3vw,32px); border:1px solid var(--rule); border-radius:12px; background:color-mix(in srgb,var(--bg) 68%,var(--bg-raised)); }
+.u-textcheck-head{ padding-bottom:1.35rem; border-bottom:1px solid var(--rule); }
+.u-textcheck-k{ margin:0 0 .55rem; font-family:var(--font-mono); font-size:.64rem; line-height:1.35; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); }
+.u-textcheck-verdict{ margin:0; max-width:42ch; font-family:var(--font-heading); font-size:clamp(1.25rem,2.7vw,1.5rem); line-height:1.3; letter-spacing:-.015em; color:var(--text-bright); text-wrap:pretty; }
+.u-textcheck-rule{ margin:.7rem 0 0; max-width:60ch; font-family:var(--font-body); font-size:.82rem; line-height:1.55; color:var(--text-dim); }
 .u-textcheck-rows{ margin:0; }
-.u-textcheck-row{ display:grid; grid-template-columns:minmax(7.5rem,.8fr) minmax(7rem,.7fr) minmax(12rem,1.6fr); gap:1rem; align-items:center; padding:1rem 0; border-bottom:1px solid var(--s-divide); }
+.u-textcheck-row{ display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,2fr); grid-template-rows:auto 1fr; column-gap:clamp(1.5rem,4vw,3rem); row-gap:.5rem; align-items:start; padding:1.35rem 0; border-bottom:1px solid var(--s-divide); }
 .u-textcheck-row:last-child{ border-bottom:0; padding-bottom:0; }
-.u-textcheck-name{ font-family:var(--font-heading); font-size:1rem; font-weight:700; line-height:1.25; color:var(--text-bright); }
-.u-textcheck-read{ display:flex; flex-direction:column; gap:.5rem; }
-.u-textcheck-grade{ font-family:var(--font-mono); font-size:.67rem; line-height:1.35; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
-.u-textcheck-scale{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; height:4px; }
+.u-textcheck-name{ grid-column:1; grid-row:1; font-family:var(--font-heading); font-size:1rem; font-weight:700; line-height:1.4; color:var(--text-bright); }
+.u-textcheck-read{ grid-column:1; grid-row:2; display:flex; flex-direction:column; align-items:flex-start; gap:.6rem; }
+.u-textcheck-grade{ font-family:var(--font-body); font-size:.77rem; line-height:1.45; color:var(--text-dim); }
+.u-textcheck-scale{ display:grid; grid-template-columns:repeat(4,1fr); width:4.5rem; gap:3px; height:3px; }
 .u-textcheck-scale i{ display:block; border-radius:999px; background:var(--rule); }
 .u-textcheck-scale[data-level="2"] i:nth-child(-n+2),
 .u-textcheck-scale[data-level="3"] i:nth-child(-n+3),
-.u-textcheck-scale[data-level="4"] i{ background:var(--accent); }
-.u-textcheck-note{ margin:0; font-size:.84rem; line-height:1.5; color:var(--text-dim); }
-.u-textcheck-foot{ margin:1rem 0 0; padding-top:1rem; border-top:1px solid var(--s-gold-hair); font-size:.78rem; line-height:1.5; color:var(--text-dim); }
-@media(max-width:640px){
-  .u-textcheck-head{ display:block; }
-  .u-textcheck-rule{ margin-top:.65rem; max-width:none; text-align:left; }
-  .u-textcheck-row{ grid-template-columns:1fr minmax(7rem,.75fr); gap:.55rem 1rem; }
-  .u-textcheck-note{ grid-column:1 / -1; }
+.u-textcheck-scale[data-level="4"] i{ background:color-mix(in srgb,var(--accent) 75%,var(--bg)); }
+.u-textcheck-note{ grid-column:2; grid-row:1 / 3; margin:0; font-size:.91rem; line-height:1.65; color:var(--text); text-wrap:pretty; }
+.u-textcheck-foot{ margin:1.35rem 0 0; padding-top:1.05rem; border-top:1px solid var(--rule); font-family:var(--font-body); font-size:.75rem; line-height:1.65; color:var(--text-dim); }
+@media(max-width:560px){
+  .u-textcheck-row{ grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto auto; gap:.5rem; padding-block:1.3rem; }
+  .u-textcheck-name,.u-textcheck-read,.u-textcheck-note{ grid-column:1; grid-row:auto; }
+  .u-textcheck-read{ flex-direction:row; align-items:center; justify-content:space-between; gap:1rem; }
+  .u-textcheck-scale{ flex:none; }
+  .u-textcheck-note{ margin-top:.3rem; }
 }
 /* .u-kpis / .u-kpi - dashboard readout. LEGACY: kept for big-enough (its only user); not offered for new posts or the archive migration. */
 .u-kpis{ display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:16px; } .u-kpi{ background: var(--s-surface); border:1px solid var(--s-hair); border-radius:18px; padding:24px 22px; box-shadow: var(--s-shadow-2); display:flex; flex-direction:column; gap:.3em; }
