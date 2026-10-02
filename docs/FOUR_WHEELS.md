@@ -91,11 +91,12 @@ and reloads. Wet tires can paint a connecting trail if the vase lands to one sid
 - `js/four-wheels-tricks.js`: legacy timed-game regression fixture, not loaded by the live game.
 - `js/four-wheels-physics.js`: cart, four caster constraints, contacts and fixed steps.
 - `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D models.
-- `js/four-wheels.js`: input, audio, lifecycle, saved run, records and UI.
+- `js/four-wheels-audio.js`: surface-aware wheel Foley, material impacts and audio lifecycle.
+- `js/four-wheels.js`: input, lifecycle, saved run, records and UI.
 
 `js/four-wheels-levels.js` and `tools/four-wheels-driver.cjs` remain as legacy
 regression fixtures for the old timed store. The live page loads the course
-module instead. Keep browser order: stock, terrain, course, physics, view, main.
+module instead. Keep browser order: stock, terrain, course, physics, view, audio, main.
 
 ## Handling to preserve
 
@@ -284,6 +285,36 @@ input is persisted. The frozen origin and travel radius cannot change because
 of a caption or browser layout adjustment. An attached keyboard can also use
 the focused stick and brake; the normal desktop controls remain available.
 
+## Sound effects
+
+Sound is on by default and starts after the play button or sound button receives
+a gesture. The menu saves its on/off preference in `four-wheels-sound-v1`, separate
+from the run. Missing audio support or blocked storage still permits play.
+
+The standalone Web Audio engine generates its own noise and resonant tones.
+Loaded tires blend their surfaces and signed rolling speeds for gravel, grass,
+asphalt, tile and ice rumble, including turns in place. Actual fork swivel produces
+short squeaks; brake input and sideways tire slip produce a skid. Aligned forks
+can roll sideways without a false skid. Travel adds light frame rattle, and the
+shopper's gait adds footfalls. Unsupported wheels and airborne carts make no
+rolling or skid noise.
+The lifting relay shutter has a quiet motor sound.
+
+Physical events play metal basket and guardrail knocks, rack crashes, can rattles, distinct
+glass and ceramic breaks, bottle and vase splashes, sauce squashes, landing
+thumps, water falls, boosts, checkpoints and the finish cue. Nearby impacts pan
+with the isometric camera and fade with distance; distant stock cannot play a
+close-up crash. Cooldowns, a 32-voice cap and a compressor bound noisy pileups.
+Finished sources disconnect.
+Pause, route selection, restart confirmation, focus loss and pagehide silence
+loops and pending effects. Idle audio contexts suspend after their last effect
+ends, then resume on the next play gesture. Late unlocks cannot revive paused
+sound. Muting stops every sound, including scheduled cues. A closed context
+rebuilds on the next play gesture; initialization failures release all audio nodes.
+The game remains playable if the audio script itself fails to load.
+The engine reads physics without changing the cart or consuming its randomness.
+There are no audio downloads, music, or dependencies on Sluice's audio engine.
+
 ## Saves and practice
 
 `four-wheels-course-v1` holds best distance, completion/time/falls, and one parked
@@ -307,7 +338,7 @@ its exact body momentum and mess. Reload during practice loads the parked challe
 
 ## Verification and release
 
-Run `node --check` on all six live scripts and the legacy fixture, then:
+Run `node --check` on all seven live scripts and the legacy fixture, then:
 
 ```sh
 node tools/test-four-wheels.cjs
@@ -319,12 +350,19 @@ node tools/test-four-wheels-tricks.cjs
 node tools/test-four-wheels-terrain.cjs
 node tools/test-four-wheels-balance.cjs
 node tools/test-four-wheels-course.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
+CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 MOBILE_ONLY=1 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 MOBILE_ONLY=1 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
 The old room and journey tests preserve handling and stock regression fixtures.
+The audio suite renders real stereo PCM to check material spectra, every effect,
+surface blending, tire motion, footfalls, shutter movement, distance attenuation,
+voice cleanup and bounded pileup levels. Gesture-driven desktop and phone checks
+cover audible driving, persisted mute, paused processing, unlock races, finish
+cues, closed-context recovery, pagehide and unavailable audio or storage.
 The new course tests verify floor continuity, material forces, real rail contacts,
 water/cliff setbacks, retained world identity and mess, swinging/broken doors,
 stock tiers, saved debris and films, corruption rejection, ordered tire progress,
@@ -348,7 +386,7 @@ pilot are injected by the local test server, never shipped. Use the owned
 `/Users/ethan/.local/bin/agent-chrome-for-testing` process and close it in finally.
 
 `ASSETS=1` refreshes the 1200 by 750 thumbnail and WebP sibling from the renderer.
-Keep the archive picture wrapper. Bump all seven CSS/script query versions for
+Keep the archive picture wrapper. Bump all eight CSS/script query versions for
 any deployment. Commit only the game's changes and push main, which deploys via
 GitHub Pages. Check deployed bytes and real desktop/mobile input before reporting
 that a release is live.

@@ -539,6 +539,7 @@
             this.boundaryContact(rect, h, k === 0 ? 'cart' : 'shopper');
             const impact = k===1&&this.shopper?this.shopperContact(h):this.impulse(h);
             if (impact > 14 && pass === 0 && !rect.side) this.emit('bump', { x: h.x, y: h.y, impact });
+            if (impact > 14 && pass === 0 && this.level.campaign && rect.side) this.emit('wall-hit', { kind: rect.side, part: k === 0 ? 'cart' : 'shopper', x: h.x, y: h.y, impact });
           }
           this.wheels.forEach((wheel, i) => {
             const pose = casterPose(b, wheel, i);
@@ -547,6 +548,7 @@
             if (!h) return;
             this.boundaryContact(rect, h, 'wheel:' + i);
             const impact = this.casterImpulse(h, wheel, i);
+            if (impact > 6 && pass === 0 && this.level.campaign && rect.side) this.emit('wall-hit', { kind: rect.side, part: 'wheel', x: h.x, y: h.y, impact });
           });
         }
         this.stock.shelfContacts(pass);

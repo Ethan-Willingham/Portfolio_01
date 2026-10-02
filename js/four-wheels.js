@@ -85,65 +85,22 @@
     };
   }
 
-  // Sound is synthesized locally and only initialized after a user gesture.
-  const sound = {
-    enabled: false, context: null, roll: null,
-    async prepare() {
-      if (!this.enabled) return;
-      try {
-        if (!this.context) {
-          const Audio = window.AudioContext || window.webkitAudioContext;
-          if (!Audio) throw new Error('Audio unavailable');
-          this.context = new Audio();
-          const ac = this.context, buffer = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
-          const data = buffer.getChannelData(0);
-          for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-          const noise = ac.createBufferSource(); noise.buffer = buffer; noise.loop = true;
-          const filter = ac.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 900; filter.Q.value = 0.7;
-          this.roll = ac.createGain(); this.roll.gain.value = 0;
-          this.filter=filter;noise.connect(filter).connect(this.roll).connect(ac.destination); noise.start();
-        }
-        await this.context.resume();
-      } catch { this.enabled = false; this.refresh(); notify('Sound is unavailable in this browser.'); }
-    },
-    refresh() { $('sound').setAttribute('aria-pressed', String(this.enabled)); $('sound').setAttribute('aria-label', this.enabled ? 'Turn sound off' : 'Turn sound on'); $('sound-text').textContent=this.enabled?'Sound on':'Sound off'; },
-    rolling(speed) {
-      if (!this.roll) return;
-      const kind=Course.sample(world.level,world.body)?.kind;this.filter.frequency.setTargetAtTime(kind==='dirt'?1200:kind==='grass'?450:900,this.context.currentTime,.1);
-      this.roll.gain.setTargetAtTime(this.enabled && phase === 'running'&&!world.ground.airborne ? Math.min(0.03, speed / 4500) : 0, this.context.currentTime, .06);
-    },
-    note(frequency, duration = .15, volume = .06, delay = 0, type = 'sine', end) {
-      if (!this.enabled || !this.context || this.context.state !== 'running') return;
-      const ac = this.context, start = ac.currentTime + delay, osc = ac.createOscillator(), gain = ac.createGain();
-      osc.type = type; osc.frequency.setValueAtTime(frequency, start);
-      if (end) osc.frequency.exponentialRampToValueAtTime(end, start + duration);
-      gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(volume, start + .005); gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
-      osc.connect(gain).connect(ac.destination); osc.start(start); osc.stop(start + duration + .02);
-    },
-    event(e) {
-      if (e.type === 'gate') { this.note(660, .12, .04); this.note(880, .16, .03, .07); }
-      if(e.type==='room') this.note(520,.12,.025);
-      if(e.type==='boost')this.note(180,.3,.025,0,'triangle',700);
-      if(e.type==='land'&&e.impact>20)this.note(85,.12,.025,0,'triangle',45);
-      if(e.type==='circuit'){this.note(220,.2,.02);this.note(440,.2,.02,.15);}
-      if(e.type==='save-edge')this.note(320,.12,.015);
-      if(e.type==='fall-impact')this.note(e.kind==='lake'?270:60,.25,.05,0,'triangle',30);
-      if(e.type==='fall') this.note(e.kind==='lake'?430:220,.55,.04,0,'triangle',60);
-
-      if (e.type === 'won') [523, 659, 784, 1047].forEach((f, i) => this.note(f, .3, .045, i * .1));
-      if (e.type === 'lost') { this.note(220, .4, .045, 0, 'triangle', 90); }
-      if (e.type === 'bump' || e.type === 'mess') {
-        this.note(e.kind === 'shelf' ? 460 : 130, .17, .055, 0, 'triangle', e.kind === 'shelf' ? 180 : 50);
-        if (e.kind === 'shelf') for (let i = 0; i < 5; i++) this.note(800 + i * 207, .2, .025, i * .035);
-      }
-      if (e.type === 'rack-hit') { this.note(90, .22, .035, 0, 'triangle', 40); this.note(370, .15, .012, .03, 'sine', 190); }
-      if (e.type === 'shelf-down') { this.note(65, .35, .07, 0, 'triangle', 25); for (let i = 0; i < 4; i++) this.note(130 + i * 51, .22, .022, i * .03, 'triangle', 60); }
-      if (e.type === 'break') for (let i = 0; i < 4; i++) this.note((e.material === 'ceramic' ? 630 : 1500) + i * 317, .1 + i * .025, .012, i * .012, 'triangle', 370 + i * 130);
-      if (e.type === 'squash') this.note(130, .12, .02, 0, 'sawtooth', 35);
-      if (e.type === 'wheel-rattle') this.note(e.kind === 'can' ? 340 : 180, .05, .008, 0, 'triangle', 90);
-      if (e.type === 'product-land' && e.material === 'metal') this.note(610, .13, .012, 0, 'sine', 410);
-    }
-  };
+  const SOUND_STORAGE = 'four-wheels-sound-v1';
+  let soundEnabled = true;
+  try { soundEnabled = localStorage.getItem(SOUND_STORAGE) !== 'off'; } catch {}
+  const sound = window.CartAudio?.create({ enabled: soundEnabled, onUnavailable: () => {
+    refreshSound(); notify('Sound is unavailable in this browser.');
+  } }) || { enabled: false, prepare: async () => false, stop() {}, update() {}, event() {}, setEnabled() {} };
+  $('sound').disabled = !window.CartAudio;
+  function refreshSound() {
+    $('sound').setAttribute('aria-pressed', String(sound.enabled));
+    $('sound').setAttribute('aria-label', sound.enabled ? 'Turn sound off' : 'Turn sound on');
+    $('sound-text').textContent = sound.enabled ? 'Sound on' : 'Sound off';
+  }
+  function playSound(e) {
+    const dx = (e.x ?? world.body.x) - world.body.x, dy = (e.y ?? world.body.y) - world.body.y;
+    sound.event(e, clamp((dx - dy) / 180, -.65, .65), Math.hypot(dx, dy));
+  }
 
   // Rendering owns the isometric camera; input and fixed-step physics never
   // use screen coordinates. The same renderer draws play, previews and art.
@@ -196,7 +153,7 @@
   }
   function events() {
     for (const e of world.events.splice(0)) {
-      sound.event(e);
+      if (e.type !== 'won') playSound(e);
       if (e.type === 'gate' && world.level.gates[world.gate-1]?.visible) burst(e.x, e.y, 8, [P.cream, P.gold, P.sage]);
       if (e.type === 'mess') {
         screenShake = e.kind === 'shelf' ? 1.5 : .65;
@@ -213,7 +170,7 @@
       if(e.type==='circuit'){notify('Water connected. Shutter opening.');save();}
       if(e.type==='land'&&e.impact>22)screenShake=Math.max(screenShake,Math.min(1.2,e.impact/90));
       if(e.type==='fall-impact'){screenShake=1.2;if(e.kind==='lake')burst(e.x,e.y,18,[P.blue,P.light]);}
-      if (e.type === 'won') finish();
+      if (e.type === 'won') { finish(); playSound(e); }
     }
   }
   function updateUI() {
@@ -273,7 +230,7 @@
     $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
     floor=makeFloor(world.level);
     overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Climb the quarry, ride the bumps, jump the gap, and spill your way through the groceries. Get the cart to the end. Falls send you back; your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
-    updateUI();draw();drawIllustration();sound.rolling(0);
+    updateUI();draw();drawIllustration();sound.stop();
     $('start').focus({preventScroll:true});
   }
   function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice,world.wheelMode)); if(!practice)save(); }
@@ -288,25 +245,25 @@
   }
   function run() {
     phase='running';clearInput();$('overlay').hidden=true;
-    canvas.focus({preventScroll:true});sound.prepare();last=performance.now();accumulator=0;uiTime=0;
+    canvas.focus({preventScroll:true});sound.prepare().then(ready => { if (ready && phase === 'running' && !document.hidden) sound.update(world, controls()); });last=performance.now();accumulator=0;uiTime=0;
     updateUI();if(!raf)raf=requestAnimationFrame(frame);
   }
   function pause() {
     if(phase!=='running')return;
-    phase='paused';clearInput();sound.rolling(0);save();$('result').hidden=true;
+    phase='paused';clearInput();sound.stop();save();$('result').hidden=true;
     overlay('All Four Wheels','Cart parked',world.practice?'Your practice stretch is paused. Your saved run is waiting.':canSave?'Your run is saved. Pick up exactly where you left it.':'Everything is paused. Pick up exactly where you left it.','Keep rolling',null);
     updateUI();$('start').focus({preventScroll:true});
   }
   function retry() {
     if(world.practice){returnToRun();return;}
     if(phase==='confirm')return;
-    confirmReturn=phase;phase='confirm';clearInput();sound.rolling(0);save();$('result').hidden=true;
+    confirmReturn=phase;phase='confirm';clearInput();sound.stop();save();$('result').hidden=true;
     overlay('Furthest distance kept','Back to the first push?','This starts a fresh run and resets the cart and the mess. Your furthest distance and unlocked practice sections stay.','Start fresh','Keep this run');
     updateUI();$('secondary').focus({preventScroll:true});
   }
   function cancelRetry() { const was=confirmReturn;phase=was;prepare(world,true);if(was==='running')run();else if(was==='paused'){run();pause();}else if(was==='won')finish(); }
   function finish() {
-    phase='won';clearInput();sound.rolling(0);
+    phase='won';clearInput();sound.stop();
     if(!world.practice){best.peak=world.level.totalDistance;if(!best.completed||world.time<best.time){best.time=world.time;best.falls=world.falls;}best.completed=true;save();}
     overlay(world.practice?'Practice complete':'Every bend, every grocery aisle.','All four made it.',world.practice?'A clean way to learn the last stretch. Your saved run is waiting.':'You got the cart to the end. There is probably some wine on the floor behind you.','Go again',world.practice?'Return to run':null);
     const result=$('result');result.replaceChildren();
@@ -319,7 +276,7 @@
     raf=0;if(phase!=='running')return;
     const dt=Math.min((now-last)/1000,.1);last=now;accumulator+=dt;
     while(accumulator>=1/120&&phase==='running'){world.step(1/120,controls());events();tickEffects(1/120);accumulator-=1/120;}
-    draw();sound.rolling(Math.hypot(world.body.vx,world.body.vy));
+    draw();if(phase==='running')sound.update(world, controls(), dt);
     uiTime+=dt;saveTime+=dt;if(uiTime>.1||phase!=='running'){uiTime=0;updateUI();}if(saveTime>2)save();
     if(phase==='running')raf=requestAnimationFrame(frame);
   }
@@ -329,7 +286,7 @@
   }
   function openPicker() {
     if(!$('picker').hidden||phase==='confirm')return;
-    pickerReturn=phase;clearInput();sound.rolling(0);save();if(phase==='running')phase='paused';
+    pickerReturn=phase;clearInput();sound.stop();save();if(phase==='running')phase='paused';
     const grid=$('course-grid');grid.replaceChildren();
     world.level.sections.forEach((section,i)=>{
       const unlocked=i===0||best.peak>=section.startDistance-1;
@@ -381,7 +338,11 @@
   $('pause').addEventListener('click', () => phase === 'paused' ? run() : pause());
   $('courses').addEventListener('click', openPicker); $('picker-close').addEventListener('click', closePicker);
   $('fullscreen').addEventListener('click', fullscreen); document.addEventListener('fullscreenchange', fullscreenLabel);
-  $('sound').addEventListener('click', () => { sound.enabled = !sound.enabled; sound.refresh(); if (sound.enabled) { sound.prepare().then(() => sound.note(660, .1, .025)); } else sound.rolling(0); });
+  $('sound').addEventListener('click', () => {
+    sound.setEnabled(!sound.enabled); refreshSound();
+    try { localStorage.setItem(SOUND_STORAGE, sound.enabled ? 'on' : 'off'); } catch {}
+    if (sound.enabled) sound.prepare().then(ready => { if (ready && !document.hidden) sound.event({ type: 'toggle' }); });
+  });
   function toggleCamera() {
     if(phase!=='running')return;
     followCart = !followCart; cameraLabel(); draw();
@@ -528,16 +489,16 @@
     if (movement.has(e.code) && phase === 'running') { e.preventDefault(); keys.add(e.code); }
   });
   document.addEventListener('keyup', e => keys.delete(e.code));
-  window.addEventListener('blur', () => { clearInput(); pause(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); } });
-  window.addEventListener('pagehide', () => { save(); clearInput(); sound.rolling(0); });
+  window.addEventListener('blur', () => { clearInput(); pause(); sound.stop(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); sound.stop(); } });
+  window.addEventListener('pagehide', () => { pause(); save(); clearInput(); sound.stop(); });
   window.addEventListener('resize', () => { if (touches.size) clearInput(); });
   window.addEventListener('orientationchange', clearInput);
   window.addEventListener('pageshow', clearInput);
   window.visualViewport?.addEventListener('resize', clearInput);
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
-  prepare(world,resumed); drawIllustration();
+  refreshSound(); prepare(world,resumed); drawIllustration();
   const viewResize = new ResizeObserver(resizeView);
   viewResize.observe($('stage')); viewResize.observe($('touch'));
   // Canvas text caches are rebuilt when the site's own mono font arrives.
