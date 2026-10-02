@@ -36,6 +36,7 @@
     const t=g.getTransform(),left=-t.e/t.a,right=(g.canvas.width-t.e)/t.a,top=-t.f/t.d,bottom=(g.canvas.height-t.f)/t.d;
     const low=Math.max(Math.floor(top),Math.floor(Math.min(...points.map(p=>p.y)))),high=Math.min(Math.ceil(bottom),Math.ceil(Math.max(...points.map(p=>p.y))));
     g.fillStyle=color;
+    g.beginPath();
     for(let y=low;y<high;y++) {
       const cuts=[];
       for(let i=0;i<points.length;i++) {
@@ -45,9 +46,20 @@
       cuts.sort((a,b)=>a-b);
       for(let i=0;i<cuts.length-1;i+=2) {
         const x=Math.max(Math.floor(left),Math.round(cuts[i])),end=Math.min(Math.ceil(right),Math.round(cuts[i+1]));
-        if(end>x)g.fillRect(x,y,end-x,1);
+        if(end>x)g.rect(x,y,end-x,1);
       }
     }
+    g.fill();
+  }
+  function polygonPath(points) {
+    const path=new Path2D(),low=Math.floor(Math.min(...points.map(p=>p.y))),high=Math.ceil(Math.max(...points.map(p=>p.y)));
+    for(let y=low;y<high;y++){
+      const cuts=[];
+      for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];if((a.y<=y+.5&&b.y>y+.5)||(b.y<=y+.5&&a.y>y+.5))cuts.push(a.x+(y+.5-a.y)*(b.x-a.x)/(b.y-a.y));}
+      cuts.sort((a,b)=>a-b);
+      for(let i=0;i<cuts.length-1;i+=2){const x=Math.round(cuts[i]),end=Math.round(cuts[i+1]);if(end>x)path.rect(x,y,end-x,1);}
+    }
+    return path;
   }
   function line(g,a,b,color,width=1) {
     const n=Math.max(1,Math.ceil(Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))));
@@ -59,6 +71,13 @@
       if(y!==row){draw();row=y;left=right=x;}else{left=Math.min(left,x);right=Math.max(right,x);}
     }
     draw();
+  }
+  function linePath(a,b,width) {
+    const path=new Path2D(),n=Math.max(1,Math.ceil(Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))));
+    let row=Math.round(a.y),left=Math.round(a.x),right=left;
+    const draw=()=>path.rect(left-Math.floor(width/2),row-Math.floor(width/2),right-left+width,width);
+    for(let i=1;i<=n;i++){const x=Math.round(a.x+(b.x-a.x)*i/n),y=Math.round(a.y+(b.y-a.y)*i/n);if(y!==row){draw();row=y;left=right=x;}else{left=Math.min(left,x);right=Math.max(right,x);}}
+    draw();return path;
   }
   function oval(g,x,y,rx,ry,color) {
     g.fillStyle=color;
@@ -83,7 +102,7 @@
     if(!Physics||!Stock)throw new Error('The cart view needs the cart simulation.');
     const {BODY,WHEELS,CASTER,CHECKPOINT_RADIUS,casterPose,casterCorners,corners,ROOM}=Physics;
     const swatches=[P.coral,P.blue,P.gold,P.sage,P.clay,P.purple];
-    const colors=new Map(),tints=new Map(),textures=new Map();
+    const colors=new Map(),tints=new Map(),textures=new Map(),models=new WeakMap();let cacheEpoch=0;
     function rgb(color) {
       if(!colors.has(color)) {
         const c=document.createElement('canvas');c.width=c.height=1;
@@ -111,29 +130,34 @@
       return textures.get(key);
     }
     class Scene {
-      constructor(opacity=1){this.commands=[];this.sequence=0;this.opacity=opacity;}
+      constructor(opacity=1,cached=false){this.commands=[];this.sequence=0;this.opacity=opacity;this.cached=cached;}
       push(points,draw,bias=0,mesh=null) {
-        this.commands.push({depth:points.reduce((n,p)=>n+depth(p),0)/points.length+bias,order:this.sequence++,draw,mesh});
+        const q=this.cached?points.map(p=>project(p)):null;
+        this.commands.push({depth:points.reduce((n,p)=>n+depth(p),0)/points.length+bias,order:this.sequence++,draw,mesh,bounds:q?{left:Math.min(...q.map(p=>p.x))-4,right:Math.max(...q.map(p=>p.x))+4,top:Math.min(...q.map(p=>p.y))-4,bottom:Math.max(...q.map(p=>p.y))+4}:null});
       }
       face(points,color,alpha=1,detail=null,edges=false) {
         alpha*=this.opacity;
         const n=normalize(cross(subtract(points[1],points[0]),subtract(points[2],points[0])));
         if(n.x+n.y+n.z*VIEW_Z<=.005)return;
         const tint=shade(color,n);
+        const cached=this.cached?points.map(p=>project(p)):null;let path,edgePaths;
         this.push(points,(g,origin)=>{
-          g.globalAlpha=alpha;const q=points.map(p=>project(p,origin));poly(g,q,tint);
-          if(edges){g.globalAlpha=alpha*.3;for(let i=0;i<q.length;i++)line(g,q[i],q[(i+1)%q.length],n.z>.6?P.cream:P.dark);}
+          g.globalAlpha=alpha;const q=cached||points.map(p=>project(p,origin));
+          if(cached){path||=polygonPath(q);g.fillStyle=tint;g.fill(path);}else poly(g,q,tint);
+          if(edges){g.globalAlpha=alpha*.3;const color=n.z>.6?P.cream:P.dark;if(cached){edgePaths||=q.map((p,i)=>linePath(p,q[(i+1)%q.length],1));g.fillStyle=color;for(const edge of edgePaths)g.fill(edge);}else for(let i=0;i<q.length;i++)line(g,q[i],q[(i+1)%q.length],color);}
           g.globalAlpha=1;if(detail)detail(g,q,origin);
         },0,{kind:'face',points,color:tint,alpha});
       }
       flat(points,color,alpha=1,bias=0) {
         alpha*=this.opacity;
-        this.push(points,(g,origin)=>{g.globalAlpha=alpha;poly(g,points.map(p=>project(p,origin)),color);g.globalAlpha=1;},bias,{kind:'face',points,color,alpha});
+        const cached=this.cached?points.map(p=>project(p)):null;let path;
+        this.push(points,(g,origin)=>{g.globalAlpha=alpha;if(cached){path||=polygonPath(cached);g.fillStyle=color;g.fill(path);}else poly(g,points.map(p=>project(p,origin)),color);g.globalAlpha=1;},bias,{kind:'face',points,color,alpha});
       }
       wire(a,b,color=P.steel,width=1,alpha=1) {
         if(this.rigid&&width>=2){this.tube(a,b,width*.48,width*.48,color);return;}
         alpha*=this.opacity;
-        this.push([a,b],(g,origin)=>{g.globalAlpha=alpha;line(g,project(a,origin),project(b,origin),color,width);g.globalAlpha=1;},.04,{kind:'wire',points:[a,b],color,width,alpha});
+        const cached=this.cached;let path;
+        this.push([a,b],(g,origin)=>{g.globalAlpha=alpha;if(cached){path||=linePath(project(a),project(b),width);g.fillStyle=color;g.fill(path);}else line(g,project(a,origin),project(b,origin),color,width);g.globalAlpha=1;},.04,{kind:'wire',points:[a,b],color,width,alpha});
       }
       box(transform,x,y,z,w,h,d,color,top=color,edges=false) {
         const p=[[x,y,z],[x+w,y,z],[x+w,y+h,z],[x,y+h,z],[x,y,z+d],[x+w,y,z+d],[x+w,y+h,z+d],[x,y+h,z+d]].map(v=>transform(...v));
@@ -178,6 +202,14 @@
         for(const command of this.commands)command.draw(g,origin);
         g.globalAlpha=1;
       }
+    }
+    const shelfFields=['cx','cy','a','tilt','nx','ny','w','h','height','kind','theme','label'];
+    const productFields=['x','y','z','a','u','v','tier','state','kind','flat','length','width','tumble','pitch','rollTilt','material','source','color'];
+    function cachedModel(scene,object,fields,build,extra=[]) {
+      const values=[cacheEpoch,...fields.map(k=>object[k]),...extra],old=models.get(object);
+      let model=old?.scene;
+      if(!old||values.length!==old.values.length||values.some((v,i)=>v!==old.values[i])){model=new Scene(1,true);build(model,object);models.set(object,{values,scene:model});}
+      for(const command of model.commands)scene.commands.push({...command,order:scene.sequence++});
     }
     function groundPoly(g,points,color,alpha=1) {
       g.globalAlpha=alpha;poly(g,points.map(p=>project(p)),color);g.globalAlpha=1;
@@ -291,7 +323,7 @@
       }
     }
     function makeFloor(level,transparent=false) {
-      if(level.campaign)return {course:true,tiles:new Map()};
+      if(level.campaign)return {course:true,tiles:new Map(),rocks:new Map()};
       if(level.connected)return {rooms:level.rooms.map(r=>({room:r,canvas:makeFloor(r,true)}))};
       const c=document.createElement('canvas');c.width=CAMERA.width;c.height=CAMERA.height;const g=c.getContext('2d');
       const matte=blend(P.hairDark,P.edge,.48);if(!transparent)rect(g,0,0,c.width,c.height,matte);
@@ -564,6 +596,7 @@
     function spills(g,stock) {
       for(const liquid of stock.liquids.values())for(const [key,volume]of liquid.cells) {
         const x=key%stock.cols*Stock.CELL,y=Math.floor(key/stock.cols)*Stock.CELL;
+        if(stock.world._visible&&(!stock.world._visible({x,y},130)||!stock.world._visible({x,y,z:Terrain.height(stock.world.level,{x,y})},12)))continue;
         if(liquid.kind==='water') {
           groundPoly(g,quad(x,y,4,4).map(onGround),P.blue,clamp(volume*.2,.018,.13));
           if(volume>.055) {
@@ -576,7 +609,7 @@
           }
         }else groundPoly(g,quad(x,y,4,4).map(onGround),spillColor(liquid.kind),clamp(volume*1.4,.025,.65));
       }
-      for(const smear of stock.smears)groundLocal(g,onGround(smear),-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind),smear.alpha*(smear.kind==='water'?.45:1));
+      for(const smear of stock.smears)if(!stock.world._visible||stock.world._visible(smear,100))groundLocal(g,onGround(smear),-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind),smear.alpha*(smear.kind==='water'?.45:1));
     }
     function routes(g,w) {
       for(const p of w.level.portals||[]) {
@@ -819,8 +852,35 @@
       for(const f of [w.level.terrain.boost,w.level.terrain.ramp]){for(let u=10;u<f.length;u+=15){const p=onGround(local(f,u,0));if(p.x<x*size||p.x>=(x+1)*size||p.y<y*size||p.y>=(y+1)*size)continue;groundArrow(g,{...p,a:f.a},8,f===w.level.terrain.boost?P.hairDark:P.gold,.95);}}
       const tile={canvas:c,x:left,y:top};background.tiles.set(key,tile);if(background.tiles.size>32)background.tiles.delete(background.tiles.keys().next().value);return tile;
     }
-    function courseModels(scene,w,visible) {
+    function courseRocks(g,w,background,camera,follow) {
+      // The lower cliffs never move or interleave with the cart. Rasterize them
+      // once in bounded screen-space tiles, just like the supporting floor.
+      if(!follow){
+        let map=background.rockMap;
+        if(!map||map.width!==g.canvas.width||map.height!==g.canvas.height){
+          map=document.createElement('canvas');map.width=g.canvas.width;map.height=g.canvas.height;
+          const target=map.getContext('2d');target.translate(camera.x,camera.y);target.scale(camera.scale,camera.scale);
+          const scene=new Scene();cliffFaces(scene,w,()=>true,'below');scene.flush(target);background.rockMap=map;
+        }
+        g.drawImage(map,-camera.x/camera.scale,-camera.y/camera.scale,map.width/camera.scale,map.height/camera.scale);return;
+      }
+      const size=512,left=-camera.x/camera.scale,top=-camera.y/camera.scale,right=left+g.canvas.width/camera.scale,bottom=top+g.canvas.height/camera.scale;
+      for(let y=Math.floor(top/size);y<=Math.floor(bottom/size);y++)for(let x=Math.floor(left/size);x<=Math.floor(right/size);x++){
+        const key=x+','+y;let tile=background.rocks.get(key);
+        if(!tile){
+          tile=document.createElement('canvas');tile.width=tile.height=size;
+          const target=tile.getContext('2d');target.translate(-x*size,-y*size);
+          const visible=(p,r)=>{const q=project(p);return q.x>=x*size-r&&q.x<=(x+1)*size+r&&q.y>=y*size-r&&q.y<=(y+1)*size+r;};
+          const scene=new Scene();cliffFaces(scene,w,visible,'below');scene.flush(target);
+        }
+        background.rocks.delete(key);background.rocks.set(key,tile);
+        g.drawImage(tile,x*size,y*size);
+        if(background.rocks.size>24)background.rocks.delete(background.rocks.keys().next().value);
+      }
+    }
+    function courseModels(scene,w,visible,mode='all') {
       const tr=(x,y,z)=>({x,y,z:z+Terrain.height(w.level,{x,y})});
+      if(mode!=='dynamic'){
       cliffFaces(scene,w,visible);
       for(const r of w.level.rails)if(visible({x:(r.a.x+r.b.x)/2,y:(r.a.y+r.b.y)/2},Math.hypot(r.b.x-r.a.x,r.b.y-r.a.y)/2+70)){
         scene.flat(r.poly.map(onGround),P.steelShade);
@@ -847,6 +907,8 @@
         const points=[{x:p.x+2,y:p.y-10,z:18},{x:p.x+2,y:p.y+10,z:18},{x:p.x+2,y:p.y+10,z:32},{x:p.x+2,y:p.y-10,z:32}];
         const elevated=points.map(p=>({...p,z:p.z+Terrain.height(w.level,p)}));scene.flat(elevated,P.gold);scene.texture(elevated,labelTexture(String(s.index+1).padStart(2,'0'),24,14));
       }
+      }
+      if(mode!=='static'){
       for(const d of w.trackDoors)if(!d.broken&&visible({x:d.cx,y:d.cy},100)){
         const poly=root.CartCourse.doorPolygon(d);scene.flat(poly.map(p=>({...p,z:2})),P.steelShade,.2);
         const a={x:d.cx,y:d.cy},b={x:d.cx+Math.cos(d.a)*d.length,y:d.cy+Math.sin(d.a)*d.length};
@@ -865,7 +927,8 @@
         relay.terminals.forEach((p,i)=>{const leadY=i?tray.y+tray.h+12:tray.y-12,leadX=d.x-12+i*5;scene.box((x,y,z)=>({x,y,z}),p.x-3,p.y-3,.15,6,6,.7,P.steelShade,P.gold);scene.wire({x:p.x,y:p.y+(i?4:-4),z:.5},{x:p.x,y:leadY,z:.5},P.dark,2);scene.wire({x:p.x,y:leadY,z:.5},{x:leadX,y:leadY,z:.5},P.dark,2);scene.wire({x:leadX,y:leadY,z:.5},{x:leadX,y:d.y-9,z:.5},P.dark,2);scene.wire({x:leadX,y:d.y-9,z:.5},{x:leadX,y:d.y-9,z:45},P.dark,2);});
         if(c.connected)for(const key of c.path){const x=key%w.stock.cols*4,y=Math.floor(key/w.stock.cols)*4;scene.flat(quad(x+1,y+1,2,2,.2),P.blue,.65);}
       }
-      for(const p of w.level.decor)if(visible(p,100)){
+      }
+      if(mode!=='dynamic')for(const p of w.level.decor)if(visible(p,100)){
         scene.box(tr,p.x-2,p.y-2,-30,4,4,22,P.hairDark,P.hair);
         for(let z=-13;z<8;z+=6){const r=16-(z+13)*.3;scene.face([{x:p.x-r,y:p.y-r,z},{x:p.x+r,y:p.y-r,z},{x:p.x,y:p.y,z:z+15}],P.pine);scene.face([{x:p.x+r,y:p.y-r,z},{x:p.x+r,y:p.y+r,z},{x:p.x,y:p.y,z:z+15}],P.sage);scene.face([{x:p.x+r,y:p.y+r,z},{x:p.x-r,y:p.y+r,z},{x:p.x,y:p.y,z:z+15}],P.pine);}
       }
@@ -876,8 +939,15 @@
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
       if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
       for(const h of w.level.hazards)if(visible(h,350)){groundPoly(g,circle({...h,z:-50},h.rx,h.ry),blend(P.blue,P.dark,.22));for(let i=0;i<22;i++){const a=i*2.399,p={x:h.x+Math.cos(a)*h.rx*.75,y:h.y+Math.sin(a)*h.ry*.75,z:-49};groundLine(g,p,{x:p.x+14,y:p.y-4,z:-49},P.light,1,.25);}}
-      const rock=new Scene();cliffFaces(rock,w,visible,'below');rock.flush(g);
-      if(options.follow===false){for(const a of w.level.floorAreas)groundPoly(g,a.poly.map(onGround),a.kind==='grass'?P.pine:a.kind==='tile'?P.cream:a.kind==='dirt'?P.clay:P.steelShade);}
+      courseRocks(g,w,background,camera,options.follow!==false);
+      if(options.follow===false){
+        let map=background.floorMap;
+        if(!map||map.width!==width||map.height!==height){
+          map=document.createElement('canvas');map.width=width;map.height=height;const target=map.getContext('2d');target.translate(camera.x,camera.y);target.scale(camera.scale,camera.scale);
+          for(const a of w.level.floorAreas)groundPoly(target,a.poly.map(onGround),a.kind==='grass'?P.pine:a.kind==='tile'?P.cream:a.kind==='dirt'?P.clay:P.steelShade);background.floorMap=map;
+        }
+        g.drawImage(map,-camera.x/camera.scale,-camera.y/camera.scale,width/camera.scale,height/camera.scale);
+      }
       else{
         const corners=[{x:-80,y:-80},{x:width+80,y:-80},{x:width+80,y:height+80},{x:-80,y:height+80}].map(p=>unproject({x:(p.x-camera.x)/camera.scale,y:(p.y-camera.y)/camera.scale})),b=Course.bounds(corners);
         for(let y=Math.max(0,Math.floor(b.top/256));y<=Math.min(Math.floor(w.level.bounds.bottom/256),Math.floor(b.bottom/256));y++)for(let x=Math.max(0,Math.floor(b.left/256));x<=Math.min(Math.floor(w.level.bounds.right/256),Math.floor(b.right/256));x++){if(!Course.query(w.level.floorAreas,w.level.floorGrid,{x:(x+.5)*256,y:(y+.5)*256},184).length)continue;const tile=courseTile(w,background,x,y);g.drawImage(tile.canvas,tile.x,tile.y);}
@@ -887,12 +957,24 @@
       for(const l of w.level.legs)if(l.length>90){const p={...onGround({x:(l.a.x+l.b.x)/2,y:(l.a.y+l.b.y)/2}),a:Math.atan2(l.b.y-l.a.y,l.b.x-l.a.x)};if(visible(p))groundArrow(g,p,13,P.light,l.surface==='asphalt'?.65:.42);}
       const start=w.level.sections[0].start;
       if(visible(start,120))for(let row=0;row<8;row++)for(let col=0;col<2;col++)groundPoly(g,quad(start.x+55+col*10,start.y-40+row*10,10,10),(row+col)%2?P.light:P.hairDark);
-      const f=w.level.finish;for(let y=-60;y<60;y+=15)for(let x=-15;x<30;x+=15)groundPoly(g,quad(f.x+x,f.y+y,15,15).map(onGround),(Math.round((x+y)/15)%2)?P.light:P.dark);
+      const f=w.level.finish;if(visible({...f,z:Terrain.height(w.level,f)},160))for(let y=-60;y<60;y+=15)for(let x=-15;x<30;x+=15)groundPoly(g,quad(f.x+x,f.y+y,15,15).map(onGround),(Math.round((x+y)/15)%2)?P.light:P.dark);
       const target=w.level.gates[w.gate];if(target){groundRing(g,onGround(target),20,target.visible?P.light:P.gold,2,.8);const p=project(onGround(target));text(g,w.gate===w.level.gates.length-1?'FINISH':target.visible?String(target.room+1).padStart(2,'0'):'GO',p.x,p.y+3,P.hairDark,8,'center');}
       if(!options.preview)trickFloor(g,w,options);
-      const scene=new Scene();courseModels(scene,w,visible);if(w.fall||w.body.z<w.ground.lastHeight-2)cliffFaces(scene,w,visible,'occlude');
-      for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},170))shelf(scene,s);
-      for(const p of w.stock.items)if(!p.broken&&visible(p))product(scene,p);
+      if(!background.scenery||background.sceneryEpoch!==cacheEpoch){background.scenery=new Scene(1,true);background.sceneryEpoch=cacheEpoch;courseModels(background.scenery,w,()=>true,'static');}
+      const scene=new Scene(),left=-camera.x/camera.scale,top=-camera.y/camera.scale,right=left+width/camera.scale,bottom=top+height/camera.scale;
+      if(options.follow===false){
+        // At overview scale fixed scenery is a backdrop; keep the live cart,
+        // stock, doors and relay updating above it rather than issuing thousands
+        // of subpixel cliff paths every frame.
+        let map=background.sceneryMap;
+        if(!map||map.width!==width||map.height!==height||background.sceneryMapEpoch!==cacheEpoch){
+          map=document.createElement('canvas');map.width=width;map.height=height;const target=map.getContext('2d');target.translate(camera.x,camera.y);target.scale(camera.scale,camera.scale);background.scenery.flush(target);background.sceneryMap=map;background.sceneryMapEpoch=cacheEpoch;
+        }
+        g.drawImage(map,left,top,width/camera.scale,height/camera.scale);
+      }else for(const command of background.scenery.commands){const b=command.bounds;if(b.right<left-4||b.left>right+4||b.bottom<top-4||b.top>bottom+4)continue;scene.commands.push({...command,order:scene.sequence++});}
+      courseModels(scene,w,visible,'dynamic');if(w.fall||w.body.z<w.ground.lastHeight-2)cliffFaces(scene,w,visible,'occlude');
+      for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},170))cachedModel(scene,s,shelfFields,shelf);
+      for(const p of w.stock.items)if(!p.broken&&visible(p))cachedModel(scene,p,productFields,product,p.state==='shelf'?[p.shelf,...shelfFields.map(k=>p.shelf[k])]:[]);
       for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
       cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
       for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));scene.flush(g);
@@ -942,7 +1024,7 @@
       }
       g.restore();
     }
-    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,refreshFonts:()=>textures.clear()};
+    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
   }
   const api={CAMERA,project,unproject,depth,local,create};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartView=api;

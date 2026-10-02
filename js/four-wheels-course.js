@@ -2,7 +2,7 @@
  * materials, guardrail contacts, route distance, scenery and the rasterizer. */
 (function(root){
   'use strict';
-  const VERSION=3, CELL=128, UNITS_PER_FOOT=4;
+  const VERSION=3, CELL=128, POINT_CELL=32, UNITS_PER_FOOT=4;
   const Terrain=typeof module!=='undefined'&&module.exports?require('./four-wheels-terrain.js'):root.CartTerrain;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const chapters=[
@@ -39,7 +39,7 @@
     }
     out.push({x:points.at(-1)[0],y:points.at(-1)[1]});return out;
   }
-  function index(shapes){const grid=new Map();shapes.forEach((s,i)=>{const b=s.bounds||bounds(s.poly);s.bounds=b;for(let y=Math.floor(b.top/CELL);y<=Math.floor(b.bottom/CELL);y++)for(let x=Math.floor(b.left/CELL);x<=Math.floor(b.right/CELL);x++){const key=x+','+y,bin=grid.get(key)||[];bin.push(i);grid.set(key,bin);}});return grid;}
+  function index(shapes,cell=CELL){const grid=new Map();shapes.forEach((s,i)=>{const b=s.bounds||bounds(s.poly);s.bounds=b;for(let y=Math.floor(b.top/cell);y<=Math.floor(b.bottom/cell);y++)for(let x=Math.floor(b.left/cell);x<=Math.floor(b.right/cell);x++){const key=x+','+y,bin=grid.get(key)||[];bin.push(i);grid.set(key,bin);}});return grid;}
   function query(shapes,grid,p,r=0){const ids=new Set();for(let y=Math.floor((p.y-r)/CELL);y<=Math.floor((p.y+r)/CELL);y++)for(let x=Math.floor((p.x-r)/CELL);x<=Math.floor((p.x+r)/CELL);x++)for(const i of grid.get(x+','+y)||[])ids.add(i);return [...ids].map(i=>shapes[i]);}
   function wall(poly,kind='rail',chapter=0){const b=bounds(poly);return {poly,bounds:b,x:b.left,y:b.top,w:b.right-b.left,h:b.bottom-b.top,side:kind,chapter};}
   function storeWalls(store){
@@ -117,7 +117,7 @@
       for(const poly of [clip(a.poly,'x',cut.left,-1),clip(a.poly,'x',cut.right,1),clip(clip(clip(a.poly,'x',cut.left,1),'x',cut.right,-1),'y',cut.top,-1),clip(clip(clip(a.poly,'x',cut.left,1),'x',cut.right,-1),'y',cut.bottom,1)])if(poly.length>=3)cropped.push({...a,poly,bounds:bounds(poly)});
     }
     floorAreas.splice(0,floorAreas.length,...cropped);roadAreas.splice(0,roadAreas.length,...cropped.filter(q=>q.kind!=='grass'));
-    level.floorGrid=index(floorAreas);level.roadGrid=index(roadAreas);level.wallGrid=index(walls);
+    level.floorGrid=index(floorAreas);level.pointGrid=index(floorAreas,POINT_CELL);level.roadGrid=index(roadAreas);level.wallGrid=index(walls);
     // Nothing, including a grass shoulder or rail, bridges the jump's void.
     const crosses=r=>r.bounds.right>cut.left&&r.bounds.left<cut.right&&r.bounds.bottom>cut.top&&r.bounds.top<cut.bottom;
     level.rails=rails.filter(r=>!crosses(r));level.walls=walls.filter(r=>r.side!=='rail'||!crosses(r));level.wallGrid=index(level.walls);
@@ -128,8 +128,15 @@
     return level;
   }
   function baseSample(level,p){
-    const candidates=query(level.floorAreas,level.floorGrid,p).filter(a=>p.x>=a.bounds.left-.001&&p.x<=a.bounds.right+.001&&p.y>=a.bounds.top-.001&&p.y<=a.bounds.bottom+.001&&inside(p,a.poly));
-    const tile=candidates.find(a=>a.kind==='tile'),road=candidates.find(a=>a.kind!=='grass'),area=tile||road||candidates[0];
+    // A point occupies one grid cell, whose ids already retain floor order.
+    // Avoid building a Set and several temporary arrays at every tire contact.
+    let first=null,road=null,tile=null;
+    for(const id of level.pointGrid.get(Math.floor(p.x/POINT_CELL)+','+Math.floor(p.y/POINT_CELL))||[]){
+      const a=level.floorAreas[id],b=a.bounds;
+      if(p.x<b.left-.001||p.x>b.right+.001||p.y<b.top-.001||p.y>b.bottom+.001||!inside(p,a.poly))continue;
+      first||=a;if(a.kind!=='grass')road||=a;if(a.kind==='tile'){tile=a;break;}
+    }
+    const area=tile||road||first;
     if(!area)return null;
     return {kind:area.kind,chapter:area.chapter,grip:area.kind==='dirt'?.85:area.kind==='grass'?.7:1,drag:area.kind==='dirt'?1.38:area.kind==='grass'?3.8:area.kind==='asphalt'?.68:1};
   }
