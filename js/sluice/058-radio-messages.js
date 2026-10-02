@@ -123,7 +123,7 @@
     }
     st.panelA = st.cur ? Math.min(1, st.panelA + dt / 0.15)
                        : Math.max(0, st.panelA - dt / 0.15);
-    st.y = (isMobile ? 104 : 60) + 10;
+    st.y = 70;
   }
 
   // Fixed 12px text wraps instead of shrinking to illegible single lines.

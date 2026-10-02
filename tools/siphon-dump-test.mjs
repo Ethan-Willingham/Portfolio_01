@@ -8,6 +8,7 @@ function fn(src, name) {
   return src.slice(a, src.indexOf('\n  }', a) + 4);
 }
 const s = { Math, Number, isFinite, window: {},
+  PERF_SNOW_ONLY: false,
   LIQUID_MAX_PARTICLES: 40000, LIQUID_OPS_MAX: 300000, LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5,
   LIQUID_DENSITY: 4, TILE: 32, PLAYER_W: 22, PLAYER_H: 26,
   liquidCount: 0, liquidMutationSeq: 0, liquidOps: [], liquidOpsOverflow: false, liquidWGPU: null,

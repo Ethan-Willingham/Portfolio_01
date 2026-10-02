@@ -237,19 +237,19 @@
   function siphonHUD() {
     siphonButtons = [];
     if (!siphonAvailable()) return;
-    var x = 14, bottom = itemWheelButtonRect().y - 10, w = isMobile ? 206 : 302;
+    var x = 14, bottom = itemWheelButtonRect().y - 10, w = 302;
     if (isMobile && viewW < 520) {
       var padLeft = DPAD_CX - DPAD_SIZE * 0.85;
-      w = Math.min(206, Math.max(156, padLeft - x - 10));
+      w = Math.min(w, Math.max(156, padLeft - x - 10));
       if (x + w + 8 > padLeft) bottom = Math.min(bottom, DPAD_CY - DPAD_SIZE * 0.85 - 10);
     }
     w = Math.min(w, viewW - 28);
     var expanded = siphon.equipped || siphon.dump || siphon.noticeT > 0 || siphonTotal() > 0 || siphon.passenger;
-    var h = expanded ? (isMobile ? 132 : 126) : 42;
+    var h = expanded ? 126 : 42;
     var y = Math.max(56, bottom - h);
     ctx.save();
     if (!expanded) {
-      siphonDrawButton(x, y, isMobile ? 106 : 126, 40, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
+      siphonDrawButton(x, y, 126, 40, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
       ctx.restore(); return;
     }
     ctx.fillStyle = UIT_PANEL; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
@@ -279,7 +279,7 @@
       ctx.fillText(siphon.dump ? 'Lift off' : (siphon.equipped ? 'Tap SCOOP to stop' : '+ launch the rig'), x + 10, y + 123);
     } else ctx.fillText(hint, x + 10, y + 111);
     if (siphon.noticeT > 0) {
-      var noticeW = Math.min(viewW - 28, isMobile ? w : 490), words = siphon.notice.split(' '), lines = [], line = '';
+      var noticeW = Math.min(viewW - 28, 490), words = siphon.notice.split(' '), lines = [], line = '';
       ctx.font = '10px ' + UI_FONT;
       for (var wi = 0; wi < words.length; wi++) {
         var next = line ? line + ' ' + words[wi] : words[wi];

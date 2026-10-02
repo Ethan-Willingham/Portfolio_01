@@ -516,7 +516,6 @@
   function srUiScale() {
     var ws = (typeof worldScale === 'number' && worldScale > 0) ? worldScale : 2;
     var ref = viewW / (ZOOM_TILES.out * TILE);          // worldScale the 'out' preset yields here
-    if (typeof isMobile !== 'undefined' && isMobile) ref *= 0.9;
     ref = Math.max(1.2, Math.min(ref, 4.5));            // mirror computeTargetWorldScale's clamp
     if (ref <= 0) return 1;
     var raw = ws / ref;                                 // 1.0 at 'out', ~2.1 at 'in'

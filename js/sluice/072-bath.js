@@ -508,11 +508,13 @@
     // Reserve the fixed controls before fitting the entire ground-floor tub.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
     var mainHeight = bathInteriorBottom() - mainCurve.y0 + 120;
-    // Include the dry guest landing to the left of the copper bowl.
-    var guestsView = layout.mobile && bathControlsTab === 'guests';
-    var viewLeft = guestsView ? 19.5 * TILE - 16 : mainCurve.x0 - 34, viewRight = mainCurve.x1 + 34;
-    var viewWidth = layout.mobile ? viewRight - viewLeft : BATH_VIEW_W;
-    worldScale = Math.min(scene.w / viewWidth, Math.max(40, scene.h) / mainHeight);
+    // The guest landing and the vessel share the desktop framing everywhere.
+    worldScale = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / mainHeight);
+    if (layout.compact) {
+      var belowLip = layout.shoulderDepth + layout.outerWorldW / (HEARTH_PHI * HEARTH_PHI);
+      worldScale = Math.min(scene.w / BATH_VIEW_W, layout.bodyWidth / layout.outerWorldW,
+        Math.max(44, height - 128) / belowLip);
+    }
     var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
     if (bathViewportKey !== viewportKey) {
       bathToolCancel(); bathTool.rope = [];
@@ -530,15 +532,10 @@
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
     var maxY = bathInteriorBottom() - (scene.y + scene.h) / worldScale;
-    // Fit the visible bowl and the larger phone furnace as one working area.
-    if (layout.mobile && !layout.landscape) {
-      var shoulder = bathRimPoint(mainCurve, mainCurve.x0 + (mainCurve.x1 - mainCurve.x0) * 0.06, 24);
-      var outerW = (mainCurve.x0 + mainCurve.x1 - 2 * shoulder.x) * worldScale;
-      var fireH = Math.max(84, Math.min(outerW * 0.78, scene.h - 110));
-      var headroom = 182 * worldScale;
-      var bodyH = headroom + (shoulder.y - mainCurve.y0) * worldScale + fireH + 36;
-      var lipY = scene.y + Math.max(0, (scene.h - bodyH) / 2) + headroom;
-      maxY = mainCurve.y0 - lipY / worldScale;
+    // Short windows crop spare timber above the bowl rather than replacing
+    // the room with a second layout. Keep the real furnace below the copper.
+    if (layout.compact) {
+      maxY = mainCurve.y0 - 88 / worldScale;
     }
     if (maxY < minY) minY = maxY;
     // A single-room bath has nothing to scroll to. Do not reveal the retired
@@ -547,7 +544,7 @@
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
     bathCamY = bathScrollT;
-    var centerX = layout.mobile ? (viewLeft + viewRight) / 2 : 37 * TILE;
+    var centerX = 37 * TILE;
     cam.x = centerX - (scene.x + scene.w / 2) / worldScale;
     cam.y = bathCamY;
     return true;

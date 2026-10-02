@@ -225,9 +225,10 @@ try {
     bathThermal.energy.set(bathThermal.capacity.map((c,k)=>c*(k>=48?42:22)));bathThermalStep(.05);bathThermalUpload();bathNoticeT=0;`);
   for(let i=0;i<120;i++){await game('hearthRoomTick(1/60);bathThermalTick(1/60);updateLiquids(1/60);bathThermalVaporTick(1/60);');await game('liquidWGPU.device.queue.onSubmittedWorkDone()');}
   await game('render()');await screenshot('workshop-desktop');
-  for(const [width,height,mobile]of [[390,844,true],[667,375,true],[320,568,true]]){
+  for(const [width,height,mobile]of [[844,390,true],[667,375,true],[568,320,true],[520,320,true],[1024,768,true]]){
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});
-    await sleep(150);await game('resize();bathCamY=-1;updateCamera();updateLiquids(1/60);render();');
+    await sleep(150);await game('isMobile=true;resize();bathCamY=-1;updateCamera();updateLiquids(1/60);render();');
+    check(`${width}x${height} retains the integrated desktop composition`,await game('!hearthRoomLayout().mobile && hearthRoomLayout().wide && !hearthRoomLayout().landscape && !hearthButtons.some(b=>b.action.indexOf(\'panel:\')===0)'));
     const layout=await game('({w:canvas.width/dpr,h:canvas.height/dpr,buttons:hearthButtons.map(b=>({a:b.action,x:b.x,y:b.y,w:b.w,h:b.h}))})');
     check(`${width}x${height} controls stay on canvas`,layout.buttons.every(b=>b.x>=0&&b.y>=0&&b.x+b.w<=layout.w+.5&&b.y+b.h<=layout.h+.5));
     check(`${width}x${height} controls have usable touch targets`,layout.buttons.every(b=>b.w>=44&&b.h>=44));
@@ -241,10 +242,10 @@ try {
     check(`${width}x${height} touch places selected fuel`,await game('hearthBeds.boiler.chunks.length')===n+1);
     await game('for(var i=0;i<240;i++)hearthStepBed(hearthBeds.boiler);');
     await press(button('liquids'),true);await screenshot(`silos-${width}x${height}`);
-    await game('hearthHand.silos=false;render()');
+    await press(button('close-tray'),true);
   }
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
-  await game('bathExit()');await sleep(550);
+  await game('isMobile=false;bathExit()');await sleep(550);
   await game('resize();bathCamPin();var sr=bathSilosExteriorRect();cam.x=banyaX-120;cam.y=SKY_ROWS*TILE-500;render();');
   check('workshop overlay clears on exit',await game('hearthOverlayCanvas.style.display==="none"'));
   check('three exterior silos stand to the right of bath',await game('bathSilos.tanks.length===3&&bathSilosExteriorRect().x>=banyaX+BANYA_W+32'));

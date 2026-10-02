@@ -7,6 +7,10 @@
 > Develop and test mobile working views in landscape, including tablets and
 > browser-toolbar height changes. Portrait tests verify the gate. Narrow desktop
 > windows retain responsive layouts. This supersedes older portrait guidance below.
+> Landscape mobile uses the desktop presentation: scene composition, control
+> arrangement, trays and menus share viewport-driven geometry. Adapt scale and
+> spacing while keeping touch targets at least 44px. Do not introduce mobile tabs
+> or a separate scene arrangement.
 
 > **Bath workshop (2026-09-26, v28.97).** One view contains the catenary tub
 > and its curved boiler. Material selection opens a compact paged rack; the
@@ -14,11 +18,11 @@
 > and steel are a held tool that casts sparks on drag. A mounted crank drives
 > the travelling grate. Liquid selection opens three tank gauges and identity
 > controls beside the hose. No Prepare, Guest or instant ignition buttons.
-> Desktop controls flank the furnace. Since v28.140, phones use a 104px bottom
-> strip with WATER, GUESTS and FIRE tabs above one row of four 44px actions.
-> Readings share the navigation row. Mobile landscape puts bath and fire beside
-> one another above the compact strip, including on tablets. GUESTS widens the
-> view to include the dry landing. Mobile guest cards never cover the room. Liquid and
+> Controls flank the joined tub and furnace on desktop and landscape mobile.
+> Materials, bellows, claw and hose sit on the left; striker, grate, liquid
+> selection and readings sit on the right. Short viewports scale the vessel
+> and use compact guest cards while retaining 44px targets. The dry guest
+> landing stays visible in the same view. Liquid and
 > material trays have explicit CLOSE controls and own pointer input while open.
 > Targets stay at least 44px
 > wide and tall. Real water, heat-driven steam, guests and fire stay live.

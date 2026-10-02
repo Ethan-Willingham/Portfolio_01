@@ -10,7 +10,6 @@
     hearthCancelDrag();
     hearthReset(); forgeResourcesReset(); hearthHandReset(); hearthHand.mode = 'fuel'; hearthHand.material = 'coal';
     hearthView = 'bath'; hearthButtons = []; hearthPress = null;
-    bathControlsTab = 'water';
     hearthJob = { stage: 'empty', heat: 0, hits: 0, quench: 0 };
     hearthToolTime = 0; hearthToolPulse = 0; hearthQuenchSteam = 0;
   }
@@ -104,16 +103,10 @@
   function hearthRoomAction(action) {
     if (!bathMode || bathFading || gamePaused) return;
     if (action === 'close-tray') { hearthHand.rack = hearthHand.silos = false;
-    } else if (hearthRoomLayout().mobile && (action === 'tool-valve' || action === 'tool-grip' || action === 'tool-spray')) {
+    } else if (bathToolTouchControls() && (action === 'tool-valve' || action === 'tool-grip' || action === 'tool-spray')) {
       var tool = action === 'tool-grip' ? 'claw' : 'hose';
       if (bathTool.mode !== tool) bathToolSelect(tool);
       bathToolAction(action);
-    } else if (action.indexOf('panel:') === 0) {
-      hearthCancelDrag(); hearthHand.rack = hearthHand.silos = false;
-      bathControlsTab = action.slice(6);
-      if (bathControlsTab === 'water') { if (bathTool.mode !== 'hose') bathToolSelect('hose'); }
-      else if (bathControlsTab === 'guests') { if (bathTool.mode !== 'claw') bathToolSelect('claw'); }
-      else { bathToolReset(); hearthHand.mode = 'fuel'; }
     } else if (action.indexOf('serve:') === 0) { bathServe(Number(action.slice(6)));
     } else if (action === 'kit') {
       if (!hearthDevSupplies()) return;

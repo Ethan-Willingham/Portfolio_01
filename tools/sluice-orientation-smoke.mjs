@@ -148,6 +148,7 @@ try {
 
   await game('bathEnter()'); await sleep(1000);
   await game('bathGuests=[];skySlimes=[];skySlimeNext=1e9;siphon.tank[0]=16000;');
+  await pressBath('hose');
   await pressBath('tool-valve');
   check('landscape bath can pour', await game('bathTool.mode===\'hose\' && bathTool.valve'));
   await metrics(390, 844);
@@ -155,7 +156,7 @@ try {
   await frozen('portrait freezes the bath and its finite water');
   await metrics(844, 390);
   await sleep(250);
-  check('bath resumes with side-by-side basin and furnace and no open valve', await game('!mobileLandscapeBlocked && hearthRoomLayout().landscape && !bathTool.valve && gameRafId!==0'));
+  check('bath resumes with the shared joined basin and furnace and no open valve', await game('!mobileLandscapeBlocked && !!hearthRoomLayout().box.bowl && !hearthRoomLayout().mobile && !bathTool.valve && gameRafId!==0'));
   await screenshot('landscape-bath');
 
   await send('Network.setUserAgentOverride', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15', platform: 'MacIntel' });

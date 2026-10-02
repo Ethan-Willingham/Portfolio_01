@@ -146,6 +146,6 @@
     var st = onboardState;
     if (st.done || st.panelA <= 0 || !st.lastLine || onboardingObscured() || onboardingRadioBusy()) return;
     var layout = radioMsgLayout(st.lastLine);
-    var y = (isMobile ? 104 : 60) + 10;
+    var y = 70;
     drawRadioPlate(st.lastLine, 'TIP', false, st.panelA, y, layout);
   }

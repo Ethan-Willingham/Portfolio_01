@@ -45,6 +45,13 @@ Loading may continue behind the rotate screen. Test portrait only to verify this
 gate; do not build or maintain active portrait gameplay layouts unless the owner
 explicitly changes this policy. Narrow or tall desktop windows remain supported.
 
+**Sluice mobile presentation (owner instruction, 2026-10-01): match desktop.**
+Use the same scene composition, controls, trays and menus on landscape mobile
+and desktop at the same viewport size. Adapt spacing and scale to the viewport,
+with touch targets at least 44px, rather than introducing mobile tabs or a
+different arrangement. The bathhouse keeps its integrated tub above the furnace
+and its tools beside the firebox on every active device.
+
 > **The game is a deliberately SIMPLE single-town mining sandbox.** Multi-town world, combat +
 > the rig auto-turret, No Man's Zone obstacle courses, the cross-town Trade Board, underground
 > oil, and ore refinement are **intentionally disabled** behind a central feature-flag block

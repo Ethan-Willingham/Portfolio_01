@@ -18,6 +18,8 @@ and held input. Returning to landscape restores play, while a manual pause stays
 paused. Loading can continue behind the rotate screen. Build and test all mobile
 views in landscape; portrait checks verify the orientation gate. Narrow desktop
 windows retain their responsive layouts.
+Landscape mobile uses the desktop presentation. Viewport size controls scale and
+spacing, and touch controls keep 44px targets without changing the arrangement.
 
 Dig down through one town, collect ore, fly up to the surface station to sell + refuel
 + upgrade, then go deeper. No win screen, just a deeper hole. The town is 400 m deep (was
@@ -61,9 +63,11 @@ bellows, flint, ash grate and actionable fire guidance stay in this same view.
 Since v28.97, select an existing fuel or mineral from the rack, then click to
 release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption.
-Phone controls use a compact two-row Water, Guests and Fire strip in landscape.
-The basin and furnace sit beside each other, and readings share the navigation
-row. Mobile visitor cards stay off the scene.
+Landscape phones and desktop share the same integrated tub above the furnace,
+with fuel, bellows, claw and hose on the left and striker, grate, liquid selection
+and readings on the right. Short viewports scale the joined vessel and shorten
+guest cards; they keep every control together with 44px touch targets. The dry
+guest landing stays visible without switching views.
 The hose outlet stays outside the copper even when dragged against the liner,
 so a low aim still pours into the bowl.
 Its ceiling stays in the physical main room; liquid previously poured into
@@ -85,8 +89,8 @@ Since v28.80, the physical chamber is 896 by 256 world pixels. A broad, low
 firebox and compact controls give the basin more room. Cast ironwork, hinges
 and an ash drawer frame the opening. The copper tub rim follows the collision
 curve with outward thickness. Since v28.84, the top and bottom HUD bars are
-removed. Tools, water controls and readings sit beside the firebox on desktop,
-or beneath it in compact layouts; navigation mounts directly on the wall.
+removed. Tools, water controls and readings sit beside the firebox on every
+active device; navigation mounts directly on the wall.
 The tub's original catenary and water collision geometry are unchanged.
 Since v28.94, the entire furnace bowl uses golden-section proportions:
 opening width divided by depth is phi squared, and the level coal bed spans

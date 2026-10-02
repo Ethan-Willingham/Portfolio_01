@@ -797,8 +797,6 @@
   // panel that holds the new diegetic gauges. Stage 3 ships the
   // empty frame + bay slots; stage 4 fills the bays with instruments.
   var CONSOLE_HEIGHT_DESKTOP = 88;
-  var CONSOLE_HEIGHT_MOBILE_LANDSCAPE = 72;
-  var CONSOLE_HEIGHT_MOBILE_PORTRAIT = 88;
   // Survival reads left to right first. Journey and balance are quieter.
   // Widths are proportions when a short landscape viewport compresses the rail.
   var CONSOLE_BAYS = [
@@ -870,8 +868,7 @@
   // real on-screen height.
   function consoleBaseHeight() {
     if (consoleStacked()) return CONSOLE_ROW_STACKED * 2;
-    if (!isMobile) return CONSOLE_HEIGHT_DESKTOP;
-    return viewW > viewH ? CONSOLE_HEIGHT_MOBILE_LANDSCAPE : CONSOLE_HEIGHT_MOBILE_PORTRAIT;
+    return CONSOLE_HEIGHT_DESKTOP;
   }
   function consoleHeight() { return consoleBaseHeight() * consoleScale(); }
   // Slim mounts terminate the continuous instrument field. Historic end-cap

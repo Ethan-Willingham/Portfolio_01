@@ -590,7 +590,6 @@
   function computeTargetWorldScale() {
     var TARGET_TILES_ACROSS = ZOOM_TILES[zoomMode] || ZOOM_TILES.out;
     var idealScale = (viewW / (TARGET_TILES_ACROSS * TILE));
-    if (isMobile) idealScale *= 0.9;
     return Math.max(1.2, Math.min(idealScale, 4.5));
   }
 

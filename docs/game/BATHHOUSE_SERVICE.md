@@ -8,7 +8,9 @@ Sluice mobile play is landscape only, including the bathhouse. Portrait shows
 the rotate screen and stops gameplay and held input; returning to landscape
 keeps any manual pause intact. Build and verify mobile bath controls in landscape,
 including tablet screens and changing browser-toolbar height. Portrait tests
-verify the orientation gate. Narrow desktop windows retain their stacked layout.
+verify the orientation gate. Landscape mobile and desktop share the same joined
+tub and furnace, flanking controls and trays at the same viewport size. Short
+viewports adjust scale and spacing while keeping 44px touch targets.
 
 Since v28.16, the banya opens by default for returning profiles as well as
 new ones. A one-time `sluice.opt.banya-default=open-v1` migration replaces
@@ -22,13 +24,13 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
 2. Scoop water into the rig tank. The bath needs at least 40 L and holds 450 L.
 3. Enter the banya. The main room fills the viewport around a wide catenary tub,
    with a copper lining, curved rows of bolts, and the boiler built beneath it.
-4. Tend the boiler, which sits beside the bath on phones. Open the FIRE tab.
+4. Tend the boiler beneath the bath on every device.
    Select a material, position its translucent preview and click to release it.
    Select the flint and steel, then drag above the pile to cast sparks onto fuel.
    Work the bellows for more heat and turn the grate crank to sift pale ash.
-5. Open the liquid control (WATER on phones), select water and aim the hose into the tub. Hold to
+5. Open the liquid control, select water and aim the hose into the tub. Hold to
    pour (use POUR on touch). Three silos beside the building store carried liquids.
-   Tap a visitor's order at 30 to 48 C, or ADMIT 1 / ADMIT 2 in the phone's GUESTS tab.
+   Tap a visitor's order at 30 to 48 C.
    It soaks, pays, and returns outside.
 
 The forge and its crafting requirement are retired. New and returning games
@@ -71,16 +73,14 @@ actual fuel bodies while pale ash sifts through the slots.
 
 The room gives its full height to the bathhouse, with no top or bottom HUD
 bar since v28.84. Navigation buttons mount directly on the timber wall.
-The claw and hose switches sit beside the firebox on desktop, opposite the
-water control and water, temperature and money readings. Phones use a compact
-104px strip below the landscape working area. WATER,
-GUESTS and FIRE tabs sit above one row of four actions. Water
-has source selection, hose, pour and jet/shower actions; Guests has the claw,
-grab/drop and visitor admission; Fire has material selection, striker, bellows
-and ash removal. Each action is 44px tall, with short wrapped labels.
-Water volume, temperature, readiness, money and version share the navigation
-row. The GUESTS view includes the dry landing; visitor cards are hidden on
-phones, including when both tools are stowed.
+The same desktop arrangement serves landscape phones and tablets. The claw,
+hose, materials and bellows sit beside the firebox on the left, opposite the
+striker, grate, liquid control and water, temperature and money readings.
+Every tool is available in the same view. Selecting the hose exposes POUR/STOP
+and JET/SHOWER; selecting the claw exposes GRAB/DROP. Short viewports scale the
+joined copper tub and furnace, adapt the columns and use compact guest cards.
+Controls and guest cards retain targets at least 44px wide and tall. The dry
+guest landing stays visible. Version and FPS remain beside Pause on the wall.
 Liquid and material trays have separate CLOSE buttons and block input to
 covered controls. Since v28.80, a 896 by 256 chamber
 replaces the narrow firebox. Since v28.90, smooth refractory cheeks sweep
@@ -88,8 +88,8 @@ from the basin shoulders into a broad grate spanning 56% of the chamber,
 75% wider than the earlier tapered base. Coal and ash collide with the curved
 walls, the GPU fire mask follows them, and cut-away corners reject coal drops.
 Existing fuel is moved inside the new walls without losing its mass or heat.
-All mobile screens place the basin and
-firebox beside one another in landscape. Tool and boiler controls retain 44-pixel-high targets. Fuel,
+The basin stays above the integrated firebox on every active device.
+Tool and boiler controls retain 44-pixel-high targets. Fuel,
 average exposed air and ash blockage are visible alongside the boiler. The
 main basin spans 26 tiles and retains the original catenary
 formula. Since v28.65, the drawn copper liner is also an analytic collision boundary in
@@ -138,8 +138,7 @@ provide a local `BATH_SAVE` fixture).
 
 ## Ceiling claw and hose (v28.73)
 
-The desktop rail has CLAW and HOSE switches; phones put them in GUESTS and
-WATER. Tap the selected switch again to
+The same rail has CLAW and HOSE switches on every device. Tap the selected switch again to
 stow it. Only the selected tool and its ceiling carriage are visible. While a
 tool is selected, the mouse moves it without holding a button. Click to grab a
 slime and click again to drop it. Hold the mouse button to pour water; release
@@ -194,9 +193,10 @@ physical guest saves, cancellation and responsive layouts. Screenshots go to
 `/tmp/sluice-bath-tools-qa`. The bathhouse unit suite also checks physical soak
 progress and CPU moving-boundary water coupling.
 
-`node tools/bath-mobile-smoke.mjs` checks phone tabs and trays, separate touch
-targets, guest admission and real touch fuel placement on landscape phones and
-tablets, plus the desktop controls. `BATH_HOSE_TOUCH=1 node
+`node tools/bath-mobile-smoke.mjs` checks equal desktop/mobile geometry,
+the integrated vessel, simultaneous flanking controls and viewport-fitting
+trays, guest admission and real touch fuel placement on landscape phones and
+tablets. `BATH_HOSE_TOUCH=1 node
 tools/bathhouse-workshop-smoke.mjs` drags the hose deep into the bowl on four
 phone sizes, reads back real GPU particles and verifies finite liquid supply
 accounting. Both own and close a separate Chrome for Testing process.

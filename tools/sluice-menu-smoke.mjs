@@ -49,6 +49,26 @@ window.__menuSmoke = {
   consoleInfo: function () { return { rect: consoleRect(), layout: consoleBayLayout, height: consoleHeight(), mobile: isMobile, dpad: {x:DPAD_CX,y:DPAD_CY,r:DPAD_SIZE*0.91},
     used: cargoUsed(), capacity: maxCargo, fuel: consoleFuelReading(), save: consoleSaveState(),
     signatures: CONSOLE_BAYS.map(function (bay) {return consoleBaySig(bay.id);}) }; },
+  controls: function () { return {dpad:Object.assign({},dpad),equipped:siphon.equipped,selected:siphon.selected,buttons:siphonButtons}; },
+  deviceLayout: function (mobile, zoom) {
+    var previous = {mobile:isMobile,zoom:zoomMode,ctx:ctx,siphon:siphon,buttons:siphonButtons,available:siphonAvailable};
+    try {
+      isMobile=mobile; zoomMode=zoom; resize();
+      var rail=consoleRect(), panel=null;
+      var scratch=document.createElement('canvas');scratch.width=canvas.width;scratch.height=canvas.height;
+      ctx=scratch.getContext('2d');
+      var fill=ctx.fillRect;
+      ctx.fillRect=function(x,y,w,h) {if(!panel)panel={x:x+1,y:y+1,w:w-2,h:h-2};fill.call(this,x,y,w,h);};
+      siphon=Object.assign({},siphon,{equipped:true,dump:null,noticeT:0,tank:[0,0,0,0,0,0],passenger:null});
+      siphonAvailable=function(){return true;};
+      siphonHUD();
+      return {console:rail,scoop:panel,worldScale:worldScale,saleScale:srUiScale(),
+        buttons:siphonButtons.map(function(b){return {x:b.x,y:b.y,w:b.w,h:b.h,action:b.action};})};
+    } finally {
+      isMobile=previous.mobile;zoomMode=previous.zoom;ctx=previous.ctx;siphon=previous.siphon;
+      siphonButtons=previous.buttons;siphonAvailable=previous.available;resize();
+    }
+  },
   consoleScan: function () {
     var oldCtx = ctx, oldText = consoleText, bounds = [], current;
     var scratch = document.createElement('canvas'); scratch.width=canvas.width; scratch.height=canvas.height;
@@ -186,7 +206,9 @@ async function boot() {
   await send('Page.bringToFront');
   if (await ev('__menuSmoke.state().paused')) await click('gm-resume-btn');
   await ev('document.fonts.ready');
-  for (let i=0; i<100; i++) { if (await ev('__menuSmoke.state().intro === "done"')) break; await sleep(100); }
+  for (let i=0; i<600; i++) { if (await ev('__menuSmoke.state().intro === "done"')) break; await sleep(100); }
+  assert.ok(await ev('__menuSmoke.state().intro === "done"'), 'game completed loading');
+  if (await ev('__menuSmoke.state().paused')) await click('gm-resume-btn');
 }
 try {
   await new Promise(resolve => server.listen(port, '127.0.0.1', resolve));
@@ -208,7 +230,18 @@ try {
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Network.setBlockedURLs', { urls:['*googletagmanager.com*','*google-analytics.com*'] });
   await size(1440,900); await boot();
-  for (const [width,height,mobile] of [[1440,900,false],[390,844,true],[320,568,true],[568,320,true],[844,390,true],[768,1024,true],[1920,1080,false]]) {
+  for (const [width,height] of [[844,390],[667,375]]) {
+    await size(width,height);
+    for (const zoom of ['out','in']) {
+      const desktop=await ev(`__menuSmoke.deviceLayout(false,${JSON.stringify(zoom)})`);
+      const mobile=await ev(`__menuSmoke.deviceLayout(true,${JSON.stringify(zoom)})`);
+      assert.deepEqual(mobile,desktop,`same viewport uses the desktop console, scoop and zoom ${width}x${height} ${zoom}`);
+      assert.equal(mobile.console.h,88);assert.equal(mobile.console.stacked,false);
+      assert.equal(mobile.scoop.w,302);assert.equal(mobile.scoop.h,126);
+      checks++;console.log(`PASS desktop/mobile layout parity ${width}x${height} ${zoom}`);
+    }
+  }
+  for (const [width,height,mobile] of [[1440,900,false],[844,390,true],[667,375,true],[568,320,true],[1024,768,true],[1920,1080,false]]) {
     await size(width,height,mobile);
     for (const scenario of ['working','critical']) {
       await ev(`__menuSmoke.seedConsole('${scenario}')`); await sleep(100);
@@ -266,20 +299,25 @@ try {
     await click('gm-pause-btn');
   }
   await click('gm-options-btn');
-  for (const [width,height,mobile] of [[390,844,true],[320,568,true],[844,390,true],[768,1024,true],[1920,1080,false]]) {
+  for (const [width,height,mobile] of [[844,390,true],[667,375,true],[568,320,true],[1024,768,true],[1920,1080,false]]) {
     await size(width,height,mobile);
     await check(`menu fits ${width}x${height}`, `(() => {const a=document.getElementById('game-pause').getBoundingClientRect(),c=document.getElementById('gm-pause-card').getBoundingClientRect(),b=document.getElementById('gm-opt-back').getBoundingClientRect();return c.left>=a.left && c.right<=a.right && c.top>=a.top && c.bottom<=a.bottom && b.bottom<=a.bottom && document.querySelector('.pause-body').scrollWidth<=document.querySelector('.pause-body').clientWidth;})()`);
     await shot(`options-${width}x${height}`);
   }
-  await size(320,568,true);
+  await size(568,320,true);
   await ev('document.querySelector(".pause-body").scrollTop=0');
   const scrollArea=await ev('document.querySelector(".pause-body").getBoundingClientRect().toJSON()');
   const scrollX=scrollArea.x+8, scrollStart=scrollArea.bottom-20;
-  for(let swipe=0;swipe<2;swipe++){
+  const scrollSwipes=await ev('(() => {const b=document.querySelector(".pause-body");return Math.ceil((b.scrollHeight-b.clientHeight)/Math.max(1,b.clientHeight-40))+6;})()');
+  for(let swipe=0;swipe<scrollSwipes;swipe++){
     await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:scrollX,y:scrollStart}]});
-    for(let y=scrollStart-25;y>=scrollArea.y+15;y-=25){await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:scrollX,y}]});await sleep(20);}
-    await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(350);
+    await sleep(100);
+    for(let y=scrollStart-12;y>=scrollArea.y+15;y-=12){await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:scrollX,y}]});await sleep(40);}
+    await sleep(100);
+    await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(500);
+    if(await ev('(() => {const b=document.querySelector(".pause-body");return b.scrollTop>=b.scrollHeight-b.clientHeight-2;})()'))break;
   }
+  console.log('Touch scroll',await ev('(() => {const b=document.querySelector(".pause-body");return {top:b.scrollTop,height:b.clientHeight,total:b.scrollHeight};})()'));
   await check('touch scroll reaches lower settings', `(() => {const b=document.querySelector('.pause-body'); return b.scrollTop > 0 && b.scrollTop >= b.scrollHeight-b.clientHeight-2;})()`);
   await key('Escape'); await click('gm-new-game-btn'); await click('gm-restart-btn');
   await check('explicit confirmation resets run only', `!__menuSmoke.state().paused && __menuSmoke.state().money < ${savedMoney} && localStorage.getItem('sluice.opt.gfx') === 'balanced'`);
@@ -289,7 +327,7 @@ try {
   await key('Escape'); await check('ledger Escape closes without pause', '!__menuSmoke.state().ledger && !__menuSmoke.state().paused');
   await ev('__menuSmoke.parkAtShop()'); await key('Enter'); await sleep(500); await shot('shop-desktop');
   await check('shop opens', '__menuSmoke.state().shop !== "closed"');
-  await size(390,844,true); await sleep(200); await shot('shop-mobile');
+  await size(844,390,true); await sleep(200); await shot('shop-mobile');
   await canvasClick("__menuSmoke.catalog().hit.find(r=>r.id==='uk:child')",true);
   await check('touch opens drill tiers', '__menuSmoke.catalog().depth === 1');await shot('shop-tiers-mobile');
   await canvasClick("__menuSmoke.catalog().hit.find(r=>r.id==='uk:back')",true);
@@ -305,7 +343,7 @@ try {
 
   await size(844,390,true); await sleep(200); await shot('shop-landscape');
   await key('Escape'); await sleep(400);
-  await size(390,844,true); await ev('__menuSmoke.seedLedger()'); await key('c','KeyC'); await shot('ledger-mobile');
+  await size(844,390,true); await ev('__menuSmoke.seedLedger()'); await key('c','KeyC'); await shot('ledger-mobile');
   const position=await ev('__menuSmoke.state()');
   await canvasClick('__menuSmoke.ledger().layout.next',true);
   await check('ledger touch pages forward', '__menuSmoke.ledger().page === 1');
@@ -336,7 +374,7 @@ try {
   await key('i','KeyI'); await canvasClick('__menuSmoke.manifest().layout.close');
   await check('I opens and cargo X closes', '!__menuSmoke.manifest().open && __menuSmoke.manifest().summary.total===62610');
   await ev('__menuSmoke.seedCargo("all"); __menuSmoke.toggleCargo()');
-  for(const [width,height,mobile] of [[1440,900,false],[390,844,true],[320,568,true],[568,320,true],[844,390,true]]) {
+  for(const [width,height,mobile] of [[1440,900,false],[844,390,true],[667,375,true],[568,320,true]]) {
     await size(width,height,mobile);await key('Home');
     const pageCount=await ev('__menuSmoke.manifest().layout.pages');
     for(let page=0;page<pageCount;page++) {
@@ -346,7 +384,7 @@ try {
     await shot(`cargo-last-${width}x${height}`);
   }
   await check('all 64 mineral variants remain reachable', '__menuSmoke.manifest().rows.length===64 && __menuSmoke.manifest().page===__menuSmoke.manifest().layout.pages-1');
-  await size(390,844,true);await key('Home');
+  await size(844,390,true);await key('Home');
   await canvasClick('__menuSmoke.manifest().layout.next',true);
   await check('touch pages cargo forward', '__menuSmoke.manifest().page===1');
   await canvasClick('__menuSmoke.manifest().layout.close',true);
@@ -355,10 +393,25 @@ try {
   await shot('cargo-empty-phone');await key('i','KeyI');
   await ev('__menuSmoke.resetConsole()');
   await send('Emulation.setUserAgentOverride', { userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' });
-  await size(390,844,true,3); await boot();
+  await size(844,390,true,3); await boot();
   await check('mobile controls boot', '__menuSmoke.consoleInfo().mobile');
   await shot('console-live-phone');
-  for (const [width,height] of [[390,844],[320,568],[844,390],[568,320]]) {
+  const pad=await ev('(() => {const p=__menuSmoke.consoleInfo().dpad,c=document.getElementById("game-canvas").getBoundingClientRect();return {x:c.x+p.x,y:c.y+p.y-p.r*.65};})()');
+  const beforeFlight=await ev('__menuSmoke.state().y');
+  await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[pad]});await sleep(450);
+  await check('touch d-pad flies the rig', `__menuSmoke.controls().dpad.up && !__menuSmoke.controls().dpad.left && !__menuSmoke.controls().dpad.right && __menuSmoke.state().y < ${beforeFlight}`);
+  await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(100);
+  await check('touch release clears rig controls', 'Object.values(__menuSmoke.controls().dpad).every(value=>!value)');
+  await canvasClick('__menuSmoke.controls().buttons.find(b=>b.action==="equip")',true);
+  await check('touch equips scoop', '__menuSmoke.controls().equipped');
+  await ev('__siphon.state.tank=[100,0,100,0,0,0];__siphon.state.selected=0');
+  const beforeChamber=await ev('__menuSmoke.controls().selected');
+  await canvasClick('__menuSmoke.controls().buttons.find(b=>b.action==="cycle")',true);
+  await check('touch switches scoop chambers', `__menuSmoke.controls().selected !== ${beforeChamber}`);
+  await shot('scoop-expanded-phone');
+  await canvasClick('__menuSmoke.controls().buttons.find(b=>b.action==="equip")',true);
+  await check('touch stows scoop', '!__menuSmoke.controls().equipped');
+  for (const [width,height] of [[844,390],[667,375],[568,320],[1024,768]]) {
     await size(width,height,true,2);
     for(const scenario of ['empty','critical']) {
       await ev(`__menuSmoke.seedConsole('${scenario}')`); await sleep(100);

@@ -318,6 +318,13 @@
 
   function bathOrderRect(g) {
     var L = hearthRoomLayout(), width = L.scene.w, short = L.landscape || L.scene.h < 250;
+    if (L.compact) {
+      var cardW = Math.min(144, Math.max(112, (width - 224) / 2 - 4));
+      var cardX = width / 2 + (g.slot ? 4 : -cardW - 4);
+      var cardScale = cardW / 160 / Math.max(0.1, worldScale);
+      return { x: cam.x + cardX / worldScale, y: cam.y + 56 / worldScale,
+        w: 160 * cardScale, h: 62 * cardScale, scale: cardScale, compact: true };
+    }
     var scale = Math.min(1, (width - (L.landscape ? 24 : 40)) / (L.landscape ? 160 : 340)) / Math.max(0.1, worldScale);
     if (!L.landscape) scale = Math.min(scale, Math.max(24, L.scene.h - 66) / (short ? 62 : 96) / worldScale);
     var sx = L.landscape ? (width - 160 * scale * worldScale) / 2 : g.slot ? width - 18 - 160 * scale * worldScale : 18;
@@ -332,7 +339,7 @@
       var g = bathGuests[i];
       if (g.st !== 'wait') continue;
       var r = bathOrderRect(g);
-      if ((!hearthRoomLayout().mobile && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) ||
+      if ((x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) ||
           Math.hypot(x - g.s.x, y - g.s.y) < g.s.r + 10) { bathServe(g.s.id); return true; }
     }
     return false;
@@ -374,7 +381,7 @@
         ctx.fillStyle = BLD.goldPale; ctx.fillRect(g.s.x - 21, g.s.y - g.s.r - 15, 42 * g.soak / BATH_VISIT.seconds, 3);
       }
     }
-    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait' && !bathTool.mode && !hearthRoomLayout().mobile) bathDrawOrder(bathGuests[b]);
+    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait' && !bathTool.mode) bathDrawOrder(bathGuests[b]);
     for (var f = 0; f < bathFloats.length; f++) {
       var p = bathFloats[f];
       ctx.save(); ctx.globalAlpha = 1 - p.t / 2;
@@ -384,7 +391,6 @@
   }
   function bathHUDHeight() { return 0; }
   function bathDrawPerformance(c, L) {
-    if (L.mobile) return;
     // Share the wall's navigation row without covering the pause or leave target.
     var navWidth = L.landscape ? L.scene.w : L.w;
     var r = { x: 60, y: 8, w: Math.min(96, navWidth - 154), h: 44 };
@@ -398,7 +404,6 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
     bathDrawPerformance(ctx, L);
-    if (L.mobile) { bathDrawMobileControls(ctx, L); return; }
     bathToolDrawControls(ctx, L.tools);
     bathServiceButtons = [];
     var type = bathSilos.selected, available = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
@@ -415,44 +420,6 @@
       ctx.fillStyle = BLD.woodDeep; ctx.fillRect(x - 4, y, width + 8, 38);
       hearthWrap(ctx, bathNotice, x + 4, y + 11, width - 8, BLD.goldPale, 2);
     }
-  }
-  function bathDrawMobileControls(c, L) {
-    var r = L.dock, slots = L.tools, tab = bathControlsTab;
-    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(r.x, r.y, r.w, r.h);
-    var names = ['WATER', 'GUESTS' + (bathGuests.length ? ' ' + bathGuests.length : ''), 'FIRE'], ids = ['water', 'guests', 'fire'];
-    for (var n = 0; n < 3; n++) hearthButton(c, L.tabs[n], names[n], 'panel:' + ids[n], tab === ids[n]);
-    var type = bathSilos.selected, source = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
-    if (tab === 'water') {
-      hearthButton(c, slots[0], liquidCatalog[type].name.toUpperCase() + ' / ' + source, 'liquids', true);
-      hearthButton(c, slots[1], 'HOSE', 'hose', bathTool.mode === 'hose');
-      hearthButton(c, slots[2], bathTool.valve ? 'STOP' : 'POUR', 'tool-valve', bathTool.valve);
-      hearthButton(c, slots[3], bathTool.shower ? 'SHOWER' : 'JET', 'tool-spray', bathTool.shower);
-    } else if (tab === 'guests') {
-      hearthButton(c, slots[0], 'CLAW', 'claw', bathTool.mode === 'claw');
-      hearthButton(c, slots[1], bathTool.held ? 'DROP' : 'GRAB', 'tool-grip', !!bathTool.held);
-      for (var i = 0; i < 2; i++) {
-        var guest = bathGuests[i], label = !guest ? 'NO GUEST' : guest.st === 'wait' ? 'ADMIT ' + (i + 1) : 'SOAK ' + (i + 1);
-        hearthButton(c, slots[i + 2], label, guest ? 'serve:' + guest.s.id : 'no-guest', !!guest && guest.st === 'wait' && bathCanServe());
-      }
-    } else {
-      var fuel = hearthMaterial(hearthHand.material).label.toUpperCase();
-      hearthButton(c, slots[0], fuel + ' / ' + (hearthDevSupplies() ? 'FREE' : hearthMaterialCount(hearthHand.material)), 'fuels', hearthHand.mode === 'fuel');
-      hearthButton(c, slots[1], 'STRIKER', 'strike', hearthHand.mode === 'striker');
-      hearthButton(c, slots[2], 'AIR', 'pump', true);
-      hearthButton(c, slots[3], 'ASH', 'ash', !!hearthHand.rake);
-    }
-    hearthPlate(c, L.meter, false);
-    var ready = bathCanServe(), status = ready ? 'READY' : bathWater <= 0 ? 'EMPTY' : bathWater < BATH_MIN_WATER ? 'ADD WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING';
-    var cx = L.meter.x + L.meter.w / 2;
-    hearthText(c, Math.floor(bathWater / 100) + ' L / ' + bathThermalTemperature().toFixed(1) + ' C', cx, L.meter.y + 11, 12, BLD.cream, 'center');
-    hearthText(c, status + ' / $' + bathFmtMoney(money), cx, L.meter.y + 25, 10, ready ? BLD.goldPale : BLD.cream, 'center');
-    hearthText(c, GAME_VERSION + ' / ' + (perfFps || 0) + ' FPS', cx, L.meter.y + 37, 8, UIT_DIM, 'center');
-    if (bathNoticeT > 0 && L.scene.h >= 200) {
-      var notice = { x: 8, y: 60, w: L.scene.w - 16, h: 38 };
-      hearthPlate(c, notice, false);
-      hearthWrap(c, bathNotice, notice.x + 8, notice.y + 10, notice.w - 16, BLD.goldPale, 2);
-    }
-    bathServiceButtons = [];
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {

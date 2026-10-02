@@ -44,6 +44,7 @@ export async function bathHoseTouchFlow({ game, send, sleep, check, screenshot, 
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: true });
     await sleep(100);
     await game('isMobile=true;resize();bathToolReset();bathSiloReset();liquidCount=0;liquidOps.length=0;liquidMutationSeq++;siphon.tank[0]=16000;bathWater=0;updateCamera();render();');
+    check(width+'x'+height+' hose shares the desktop bath and its flanking tools',await game('!hearthRoomLayout().mobile && hearthRoomLayout().wide && !hearthRoomLayout().landscape && !hearthRoomLayout().dock && [\'fuels\',\'pump\',\'strike\',\'ash\',\'claw\',\'hose\',\'liquids\'].every(action=>hearthButtons.some(b=>b.action===action))'));
     await press(button('hose'), true);
     const points = await game(`(function(){var c=bathToolBounds().curve,r=canvas.getBoundingClientRect();
       function client(x,y){return{x:r.left+(x-cam.x)*dpr*worldScale*r.width/canvas.width,y:r.top+(y-cam.y)*dpr*worldScale*r.height/canvas.height};}

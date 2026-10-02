@@ -9,6 +9,7 @@ export async function bathHoseVisual({ game, ev, send, sleep, check, screenshot,
   await sleep(150);
   await game('isMobile=true;resize();bathEnter();'); await sleep(750);
   await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];skySlimeNext=1e9;bathNoticeT=0;setDevMode(false);bathToolReset();bathSiloReset();liquidCount=0;liquidOps.length=0;liquidMutationSeq++;siphon.tank[0]=16000;bathWater=0;updateCamera();render();');
+  check('bordered phone uses the integrated desktop bath without tabs',await game('!hearthRoomLayout().mobile && hearthRoomLayout().wide && !hearthRoomLayout().landscape && !hearthRoomLayout().dock && hearthCasingProfile(hearthRoomLayout().box,true).roof.length>2 && !hearthButtons.some(b=>b.action.indexOf(\'panel:\')===0)'));
   await press(button('hose'), true);
   const points = await game(`(function(){var t=bathTool,L=hearthRoomLayout(),r=canvas.getBoundingClientRect();
     function client(x,y){return{x:r.left+(x-cam.x)*dpr*worldScale*r.width/canvas.width,y:r.top+(y-cam.y)*dpr*worldScale*r.height/canvas.height};}
@@ -51,13 +52,16 @@ export async function bathHoseVisual({ game, ev, send, sleep, check, screenshot,
   check('DPR 3 renderer uses the live main-camera transform', report.view.every((n,i)=>Math.abs(n-report.expected[i])<0.01));
   check('settled visible water occupies the drawn copper cavity', report.colored>100 && report.cavity>report.colored*0.97 && report.above===0);
   check('visible settled water agrees with the basin meter and finite stock', report.water===report.basin && report.water>4000 && report.spent===report.water+report.lost);
-  await game("bathToolReset();bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=(g.slot?22.5:20.75)*TILE;});hearthReset();forgeGive('coal',3);for(var i=0;i<3;i++)hearthDropMaterial('boiler',HEARTH_WIDTH/2+(i-1)*62,110,'coal');for(var i=0;i<240;i++)hearthStepBed(hearthBeds.boiler);hearthBeds.boiler.chunks.forEach(b=>hearthLightChunk(hearthBeds.boiler,b));bathControlsTab='guests';updateCamera();render();");
+  await game("bathToolReset();bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=(g.slot?22.5:20.75)*TILE;});hearthReset();forgeGive('coal',3);for(var i=0;i<3;i++)hearthDropMaterial('boiler',HEARTH_WIDTH/2+(i-1)*62,110,'coal');for(var i=0;i<240;i++)hearthStepBed(hearthBeds.boiler);hearthBeds.boiler.chunks.forEach(b=>hearthLightChunk(hearthBeds.boiler,b));updateCamera();render();");
   for (let frame=0; frame<180; frame++) {
     await game('hearthRoomTick(1/60);updateLiquids(1/60);render();');
     await game('liquidWGPU.device.queue.onSubmittedWorkDone()');
   }
   await screenshot('phone-bordered-dpr3-working-bath');
   check('representative phone scene contains two waiting guests and physical burning fuel', await game("!bathTool.mode&&bathGuests.length===2&&bathGuests.every(g=>g.st==='wait')&&hearthBeds.boiler.chunks.some(b=>b.lit)&&bathWater>4000"));
+  check('the same view contains both waiting guests and the desktop flanking controls',await game(`(function(){var L=hearthRoomLayout();return bathGuests.every(g=>{var x=(g.s.x-cam.x)*worldScale,y=(g.s.y-cam.y)*worldScale,r=g.s.r*worldScale;return x-r>=0 && x+r<=L.w && y-r>=0 && y+r<=L.h;}) &&
+    ['fuels','pump','strike','ash','claw','hose','liquids'].every(action=>hearthButtons.some(b=>b.action===action)) && !L.mobile && !L.landscape && !L.dock;
+  })()`));
   const recovery = await game(`(function(){var stored=[0,1,2,3,4].map(bathLiquidCount),main=bathBasinCount(),F=BATH_FLOORS[1],c=bathTubCurve(F,F.tubs[0]);
     for(var i=0;i<160;i++)addLiquidParticle(i<90?0:2,(c.x0+c.x1)/2+(i%20-10)*1.25,c.y0+c.D-10-Math.floor(i/20)*1.25,0,0,0);
     bathArrivalBegin();return{mainBefore:main,mainAfter:bathBasinCount(),delta:stored.map((n,type)=>bathLiquidCount(type)-n),floors:bathArrival.map(r=>r.floor)};
