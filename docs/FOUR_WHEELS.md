@@ -245,7 +245,7 @@ section's advice, unlocked practice, restart, sound, fullscreen, expandable help
 and links back to the site. Help and the route picker scroll inside their dialogs.
 Opening either clears driving input; closed dialogs cannot receive keyboard focus.
 Tab and reverse Tab stay within the active dialog. Phone captions use small dark
-labels above the original analog pads, with no bottom background band.
+labels above the driving stick, with no bottom background band.
 
 Keyboard: W/S or up/down push/pull; A/D or left/right rotate; Space brakes;
 P/Escape pauses; R requests a fresh run; F toggles fullscreen; M toggles the course
@@ -253,18 +253,25 @@ map. Inputs are scoped
 to focus inside the game. Restart asks in-game before discarding the run and
 retains records and unlocked practice. Escape cancels that confirmation.
 
-Phones have two independent captured analog thumb pads, 140 to 200 pixels wide,
-with proportional thumb grips and a 96-pixel brake. Portrait puts the brake
-above the pads so narrow phones retain large, separate touch targets. Landscape
-puts it between them. Safe-area padding keeps them clear of the home indicator.
-The portrait camera places the cart above the brake on shorter phones. This
-changes only the view; the canvas still fills the entire viewport.
-The left rotates horizontally; the right pushes upward and pulls downward.
-A 12-percent neutral zone prevents accidental force. Full displacement is 28
-percent of pad width. Releasing coasts. Brake overrides push/pull while preserving
-rotation. Pads, captions and accessible slider values reflect the actual force.
-Each pad owns one pointer; another finger cannot steal it. Inputs clear on pause,
-picker, blur, hidden tab, cancellation, lost capture and viewport changes.
+Phones have one floating, two-axis left thumbstick, 140 to 200 pixels wide,
+and a large momentary brake on the right. Dragging up pushes, down pulls,
+and sideways turns. Diagonals combine those forces. The initial touch is
+neutral anywhere in the control zone: the base appears under that thumb and
+subsequent movement is relative to that frozen origin. A circular travel limit
+and a 12-percent dead zone prevent accidental input. Releasing coasts. Braking
+suppresses push/pull while preserving steering, including tip recovery.
+Safe-area padding keeps both controls clear of the home indicator.
+
+Native Touch Events own fingers; compatibility Pointer Events cannot create a
+second input for them. Window-level touch end/cancel handlers release individual
+identifiers and reconcile the complete remaining contact list. A new touch
+also discards stale identifiers before claiming a control. Mouse and pen use
+captured Pointer Events with window-level terminal listeners and a buttons-up
+check. The stick springs back on release, cancellation, pause, blur, pagehide,
+visibility loss, lost pointer capture or viewport/orientation changes. No held
+input is persisted. The frozen origin and travel radius cannot change because
+of a caption or browser layout adjustment. An attached keyboard can also use
+the focused stick and brake; the normal desktop controls remain available.
 
 ## Saves and practice
 
@@ -301,6 +308,8 @@ node tools/test-four-wheels-terrain.cjs
 node tools/test-four-wheels-balance.cjs
 node tools/test-four-wheels-course.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
+MOBILE_ONLY=1 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
+MOBILE_ONLY=1 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 ```
 
 The old room and journey tests preserve handling and stock regression fixtures.
@@ -318,7 +327,11 @@ reloads, practice isolation, restart confirmation, both falls, paused gravity,
 edge rescue, jump reload, lifting water relay, ice, overview, fullscreen, 320-pixel phones, short landscape, blocked storage,
 reduced motion, no scene requests and JavaScript errors. Layout assertions check the canvas itself against all four viewport edges,
 compact separated HUD buttons, help scrolling, dialog keyboard focus and retained
-phone controls. Private hooks and the
+phone controls. Mobile regressions cover neutral off-center starts, diagonals,
+frozen origins, native release/cancellation outside controls, absent mouse
+capture, missed terminal events, stale-contact repair and two-finger braking.
+Chromium uses native CDP contacts; the optional managed WebKit run uses native
+taps and WebKit TouchEvent/TouchList gestures. Private hooks and the
 pilot are injected by the local test server, never shipped. Use the owned
 `/Users/ethan/.local/bin/agent-chrome-for-testing` process and close it in finally.
 

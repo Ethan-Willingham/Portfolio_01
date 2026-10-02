@@ -43,7 +43,7 @@
   let raf = 0, last = 0, accumulator = 0, uiTime = 0, toastLife = 0;
   let particles = [], screenShake = 0, pickerReturn = 'ready';
   let keys = new Set(), touches = new Map(), pseudoFullscreen = false;
-  const thumbPads = [...game.querySelectorAll('[data-axis]')];
+  const stick = $('stick');
   const touchMode = window.matchMedia('(any-pointer: coarse)');
 
   function timeString(seconds, tenths = false) {
@@ -54,34 +54,27 @@
   function announce(text) { $('live').textContent = text; }
   function notify(text) { $('toast').textContent = text; $('toast').classList.add('is-visible'); toastLife = 2.4; announce(text); }
   function clearInput() {
-    const captured = [...touches];
-    keys.clear(); touches.clear();
-    for (const [id, input] of captured) {
-      if (typeof id === 'number' && input.element.hasPointerCapture(id)) input.element.releasePointerCapture(id);
-    }
+    keys.clear();
+    for (const id of [...touches.keys()]) releaseContact(id);
     paintTouch();
   }
   function touchValue(control) {
     let value = 0;
-    for (const input of touches.values()) if (input.control === control) value += input.value;
+    for (const input of touches.values()) value += input[control] || 0;
     return clamp(value, -1, 1);
   }
   function paintTouch() {
-    for (const pad of thumbPads) {
-      const input = [...touches.values()].find(q => q.element === pad), value = input?.value || 0;
-      const steering = pad.dataset.axis === 'turn', amount = Math.round(Math.abs(value) * 100);
-      const action = amount ? (steering ? value < 0 ? 'Left' : 'Right' : value < 0 ? 'Pull' : 'Push') + ' ' + amount + '%' : steering ? 'Slide left / right' : 'Slide up / down';
-      pad.classList.toggle('is-held', !!input);
-      pad.style.setProperty('--thumb-x', (steering ? input?.offset || 0 : 0) + 'px');
-      pad.style.setProperty('--thumb-y', (!steering ? -(input?.offset || 0) : 0) + 'px');
-      pad.setAttribute('aria-valuenow', String(Math.round(value * 100)));
-      pad.setAttribute('aria-valuetext', amount ? (steering ? value < 0 ? 'Turning left' : 'Turning right' : value < 0 ? 'Pulling' : 'Pushing') + ', ' + amount + ' percent' : steering ? 'Not turning' : 'Coasting');
-      $(steering ? 'steer-status' : 'drive-status').textContent = action;
-    }
+    const input = [...touches.values()].find(q => q.element === stick), turn = input?.turn || 0, push = input?.push || 0;
+    stick.classList.toggle('is-held', !!input);
+    stick.style.setProperty('--stick-base-x', (input?.baseX || 0) + 'px');
+    stick.style.setProperty('--stick-base-y', (input?.baseY || 0) + 'px');
+    stick.style.setProperty('--thumb-x', (input?.x || 0) + 'px');
+    stick.style.setProperty('--thumb-y', (input?.y || 0) + 'px');
     const braking = touchValue('brake') > 0;
     $('touch-brake').classList.toggle('is-held', braking);
     $('touch-brake').setAttribute('aria-pressed', String(braking));
-    if (braking) $('drive-status').textContent = 'Braking';
+    const actions = [braking ? 'Braking' : push > .01 ? 'Push' : push < -.01 ? 'Pull' : '', turn < -.01 ? 'Left' : turn > .01 ? 'Right' : ''].filter(Boolean);
+    $('stick-status').textContent = actions.join(' / ') || 'Release to coast';
   }
   function controls() {
     const braking = touchValue('brake');
@@ -160,7 +153,7 @@
   let narrowCamera = false, followCart = true, touchFocusY = .54;
   function drawIllustration() { view.illustration($('illustration').getContext('2d')); }
   function draw(g = ctx, w = world, background = floor, preview = false) {
-    view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview?.54:touchFocusY});
+    view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview ? .54 : touchFocusY});
   }
   function cameraLabel() {
     $('camera').hidden = false;
@@ -385,55 +378,109 @@
     canvas.focus({ preventScroll:true });
   }
   $('camera').addEventListener('click',toggleCamera);
-  function releaseTouch(element, id) {
-    if (touches.get(id)?.element !== element) return;
-    touches.delete(id); paintTouch();
-    if (typeof id === 'number' && element.hasPointerCapture(id)) element.releasePointerCapture(id);
+  // Touch Events own fingers. Pointer Events only own mouse/pen gestures, so a
+  // compatibility pointer stream cannot duplicate or strand a physical touch.
+  function releaseContact(id) {
+    const input = touches.get(id);
+    if (!input) return;
+    touches.delete(id);
+    if (input.pointerId !== undefined && input.element.hasPointerCapture?.(input.pointerId)) {
+      try { input.element.releasePointerCapture(input.pointerId); } catch {}
+    }
+    paintTouch();
   }
-  function bindTouch(element, begin, move) {
+  function reconcileFingers(e) {
+    if (!e.touches) return;
+    const active = new Set(Array.from(e.touches, t => 'touch-' + t.identifier));
+    for (const [id, input] of touches) if (input.source === 'touch' && !active.has(id)) releaseContact(id);
+  }
+  function beginContact(element, id, point, source, begin, move, pointerId) {
+    if (phase !== 'running' || [...touches.values()].some(q => q.element === element)) return false;
+    const input = { element, source, pointerId, turn: 0, push: 0, brake: 0, x: 0, y: 0, baseX: 0, baseY: 0, move };
+    touches.set(id, input);
+    if (pointerId !== undefined) {
+      try { element.setPointerCapture(pointerId); } catch { touches.delete(id); return false; }
+    }
+    begin(input, point); paintTouch(); return true;
+  }
+  function bindContact(element, begin, move) {
+    element.addEventListener('touchstart', e => {
+      for (const finger of e.changedTouches) {
+        if (beginContact(element, 'touch-' + finger.identifier, finger, 'touch', begin, move)) e.preventDefault();
+      }
+    }, { passive: false });
     element.addEventListener('pointerdown', e => {
-      if (phase !== 'running' || e.button !== 0 || [...touches.values()].some(q => q.element === element)) return;
-      e.preventDefault();
-      touches.set(e.pointerId, { element, control: element.dataset.axis || 'brake', value: 0, offset: 0 });
-      element.setPointerCapture(e.pointerId); begin(e); paintTouch();
+      if (e.pointerType === 'touch' || e.button !== 0) return;
+      if (beginContact(element, 'pointer-' + e.pointerId, e, 'pointer', begin, move, e.pointerId)) e.preventDefault();
     });
-    element.addEventListener('pointermove', e => {
-      if (touches.get(e.pointerId)?.element !== element) return;
-      e.preventDefault(); move?.(e); paintTouch();
-    });
-    for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) element.addEventListener(event, e => releaseTouch(element, e.pointerId));
     element.addEventListener('contextmenu', e => e.preventDefault());
   }
-  for (const pad of thumbPads) {
-    const move = e => {
-      const r = pad.getBoundingClientRect(), steering = pad.dataset.axis === 'turn', travel = r.width * .28;
-      const distance = steering ? e.clientX - r.left - r.width / 2 : r.top + r.height / 2 - e.clientY;
-      const input = touches.get(e.pointerId), offset = clamp(distance, -travel, travel);
-      input.offset = offset;
-      const fraction = Math.abs(offset) / travel;
-      input.value = Math.sign(offset) * Math.max(0, (fraction - .12) / .88);
-    };
-    bindTouch(pad, move, move);
-    // The same momentary sliders can be adjusted with an attached keyboard.
-    pad.addEventListener('keydown', e => {
-      const direction = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.code];
-      if (!direction || phase !== 'running') return;
-      e.preventDefault(); e.stopPropagation();
-      if ([...touches.values()].some(q => q.element === pad && !q.keyboard)) return;
-      const id = 'keyboard-' + pad.dataset.axis, previous = touches.get(id)?.value || 0, value = clamp(previous + direction * .1, -1, 1);
-      touches.set(id, { element: pad, control: pad.dataset.axis, value, offset: value * pad.getBoundingClientRect().width * .28, keyboard: true }); paintTouch();
-    });
-    pad.addEventListener('keyup', e => { if (e.code.startsWith('Arrow')) releaseTouch(pad, 'keyboard-' + pad.dataset.axis); });
-    pad.addEventListener('blur', () => releaseTouch(pad, 'keyboard-' + pad.dataset.axis));
+  const touchEvents = { capture: true, passive: false };
+  window.addEventListener('touchstart', reconcileFingers, touchEvents);
+  window.addEventListener('touchmove', e => {
+    reconcileFingers(e);
+    let handled = false;
+    for (const finger of e.changedTouches) {
+      const input = touches.get('touch-' + finger.identifier);
+      if (input) { input.move?.(input, finger); handled = true; }
+    }
+    if (handled) { e.preventDefault(); paintTouch(); }
+  }, touchEvents);
+  for (const type of ['touchend', 'touchcancel']) window.addEventListener(type, e => {
+    for (const finger of e.changedTouches) releaseContact('touch-' + finger.identifier);
+    reconcileFingers(e);
+  }, touchEvents);
+  window.addEventListener('pointermove', e => {
+    const id = 'pointer-' + e.pointerId, input = touches.get(id);
+    if (!input) return;
+    if (!e.buttons) { releaseContact(id); return; }
+    input.move?.(input, e); e.preventDefault(); paintTouch();
+  }, { capture: true, passive: false });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) window.addEventListener(type, e => releaseContact('pointer-' + e.pointerId), true);
+
+  function moveStick(input, point) {
+    const dx = point.clientX - input.originX, dy = point.clientY - input.originY;
+    const length = Math.hypot(dx, dy), limit = length > input.travel ? input.travel / length : 1;
+    input.x = dx * limit; input.y = dy * limit;
+    const axis = value => Math.sign(value) * Math.max(0, (Math.abs(value) / input.travel - .12) / .88);
+    input.turn = axis(input.x); input.push = axis(-input.y);
   }
+  bindContact(stick, (input, point) => {
+    const r = stick.getBoundingClientRect();
+    // Freeze the gesture origin and travel. A new touch is neutral anywhere in
+    // the large zone; layout changes cannot turn a held thumb into full force.
+    Object.assign(input, { originX: point.clientX, originY: point.clientY, travel: r.width * .28,
+      baseX: point.clientX - r.left - r.width / 2, baseY: point.clientY - r.top - r.height / 2 });
+  }, moveStick);
+  stick.addEventListener('keydown', e => {
+    const direction = { ArrowLeft: ['turn', -1], ArrowRight: ['turn', 1], ArrowUp: ['push', 1], ArrowDown: ['push', -1] }[e.code];
+    if (!direction || phase !== 'running') return;
+    e.preventDefault(); e.stopPropagation();
+    if ([...touches.values()].some(q => q.element === stick && !q.keyboard)) return;
+    const input = touches.get('keyboard-stick') || { element: stick, keyboard: true, turn: 0, push: 0, brake: 0, baseX: 0, baseY: 0, x: 0, y: 0, held: new Set() };
+    input.held.add(e.code); input[direction[0]] = clamp(input[direction[0]] + direction[1] * .1, -1, 1);
+    input.x = input.turn * stick.clientWidth * .28; input.y = -input.push * stick.clientWidth * .28;
+    touches.set('keyboard-stick', input); paintTouch();
+  });
+  stick.addEventListener('blur', () => releaseContact('keyboard-stick'));
   const brake = $('touch-brake');
-  bindTouch(brake, e => { touches.get(e.pointerId).value = 1; });
+  bindContact(brake, input => { input.brake = 1; });
   brake.addEventListener('keydown', e => {
     if (!['Space', 'Enter'].includes(e.code) || phase !== 'running') return;
-    e.preventDefault(); e.stopPropagation(); touches.set('keyboard-brake', { element: brake, control: 'brake', value: 1 }); paintTouch();
+    e.preventDefault(); e.stopPropagation();
+    if (![...touches.values()].some(q => q.element === brake && !q.keyboard)) touches.set('keyboard-brake', { element: brake, keyboard: true, brake: 1 });
+    paintTouch();
   });
-  brake.addEventListener('keyup', e => { if (['Space', 'Enter'].includes(e.code)) releaseTouch(brake, 'keyboard-brake'); });
-  brake.addEventListener('blur', () => releaseTouch(brake, 'keyboard-brake'));
+  brake.addEventListener('blur', () => releaseContact('keyboard-brake'));
+  window.addEventListener('keyup', e => {
+    if (['Space', 'Enter'].includes(e.code)) releaseContact('keyboard-brake');
+    const input = touches.get('keyboard-stick');
+    if (!input || !input.held.delete(e.code)) return;
+    if (!input.held.size) { releaseContact('keyboard-stick'); return; }
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') input.turn = input.held.has('ArrowLeft') ? -.1 : input.held.has('ArrowRight') ? .1 : 0;
+    else input.push = input.held.has('ArrowUp') ? .1 : input.held.has('ArrowDown') ? -.1 : 0;
+    input.x = input.turn * stick.clientWidth * .28; input.y = -input.push * stick.clientWidth * .28; paintTouch();
+  }, true);
   const movement = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']);
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey || !game.contains(document.activeElement) || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -474,6 +521,9 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); } });
   window.addEventListener('pagehide', () => { save(); clearInput(); sound.rolling(0); });
   window.addEventListener('resize', () => { if (touches.size) clearInput(); });
+  window.addEventListener('orientationchange', clearInput);
+  window.addEventListener('pageshow', clearInput);
+  window.visualViewport?.addEventListener('resize', clearInput);
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
   prepare(world,resumed); drawIllustration();

@@ -1,6 +1,6 @@
 // Private test hooks are injected by this server, never shipped. Chrome is owned and closed.
 const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('node:http'),path=require('node:path');
-const {execFileSync}=require('node:child_process'),{chromium}=require('playwright');
+const {execFileSync}=require('node:child_process'),{chromium,webkit}=require('playwright');
 const pilot=require('./four-wheels-course-driver.cjs');
 const root=path.resolve(__dirname,'..'),dump=process.env.DUMP||'/tmp/four-wheels-course-qa';fs.mkdirSync(dump,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml'};
@@ -10,7 +10,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
  if(file.endsWith('/js/four-wheels.js')){const source=data.toString(),end=source.lastIndexOf('})();');data=source.slice(0,end)+`
  const testPilot=${pilot.toString()};
  window.__cartTest={
-  state:()=>({phase,index:levelIndex,room:world.roomIndex,narrowCamera,followCart,cameraFocusY:touchFocusY,body:{...world.body},shopper:{...world.shopper},wheels:world.wheels.map(q=>({...q})),gait:{...world.gait},gate:world.gate,time:world.time,distance:world.distance,peak:world.peak,best:{...best},penalty:world.penalty,bonus:world.bonus,particles:particles.length,terrain:{...world.terrainStats},ground:{...world.ground},circuit:{...world.circuit},messes:world.messes,fall:world.fall,falls:world.falls,practice:world.practice,keys:keys.size,touches:touches.size,input:controls(),touchInput:[...touches].map(([id,q])=>({id,control:q.control,value:q.value})),contacts:world.boundaryContacts}),
+  state:()=>({phase,index:levelIndex,room:world.roomIndex,narrowCamera,followCart,cameraFocusY:touchFocusY,body:{...world.body},shopper:{...world.shopper},wheels:world.wheels.map(q=>({...q})),gait:{...world.gait},gate:world.gate,time:world.time,distance:world.distance,peak:world.peak,best:{...best},penalty:world.penalty,bonus:world.bonus,particles:particles.length,terrain:{...world.terrainStats},ground:{...world.ground},circuit:{...world.circuit},messes:world.messes,fall:world.fall,falls:world.falls,practice:world.practice,keys:keys.size,touches:touches.size,input:controls(),touchInput:[...touches].map(([id,q])=>({id,source:q.source,turn:q.turn||0,push:q.push||0,brake:q.brake||0,baseX:q.baseX||0,baseY:q.baseY||0})),contacts:world.boundaryContacts}),
   world:()=>world,draw,reset,run,events,save,startPractice,returnToRun,stop:()=>{cancelAnimationFrame(raf);raf=0;},
   step:(seconds,input)=>{cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,input||controls());events();tickEffects(1/120);}draw();updateUI();},
   pilot:(seconds)=>{cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,testPilot(world));events();tickEffects(1/120);}draw();updateUI();},
@@ -31,14 +31,15 @@ async function shot(p,name){return p.locator('#cart-game').screenshot({path:path
 const fits=()=>{const game=document.getElementById('cart-game').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect(),c=document.getElementById('cart-canvas');return Math.abs(game.top)<1&&Math.abs(game.left)<1&&Math.abs(game.width-innerWidth)<1&&Math.abs(game.height-innerHeight)<1&&Math.abs(stage.width-innerWidth)<1&&Math.abs(stage.height-innerHeight)<1&&Math.abs(c.height/c.width-stage.height/stage.width)<.003&&document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight+1;};
 (async()=>{try {
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/four-wheels.html';
- browser=await chromium.launch({headless:true,executablePath:process.env.CART_BROWSER||'/Users/ethan/.local/bin/agent-chrome-for-testing'});
+ browser=await (process.env.CART_ENGINE==='webkit'?webkit:chromium).launch({headless:true,...(process.env.CART_ENGINE==='webkit'?{}:{executablePath:process.env.CART_BROWSER||'/Users/ethan/.local/bin/agent-chrome-for-testing'})});
  const desktop=await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:1});
  await desktop.addInitScript(()=>{if(!localStorage.getItem('four-wheels-records-v6'))localStorage.setItem('four-wheels-records-v6','[{"time":42,"stars":3}]');});
- const page=await setup(desktop,url);
+ const page=await setup(desktop,url);let a;
+ if(process.env.MOBILE_ONLY!=='1'){
  check('the complete twelve-section course boots',await page.evaluate(()=>__cartTest.world().level.campaign&&__cartTest.world().level.rooms.length===12));
  check('the canvas fills the complete desktop viewport with no reserved bars',await page.evaluate(fits));await shot(page,'desktop-start');
  await page.setViewportSize({width:1280,height:720});check('briefing fits a short laptop',await page.evaluate(()=>{const a=document.querySelector('.cart-overlay-card').getBoundingClientRect(),b=document.getElementById('cart-stage').getBoundingClientRect();return a.top>=b.top&&a.bottom<=b.bottom+1;}));await page.setViewportSize({width:1440,height:1000});
- await page.locator('#cart-start').click();await page.keyboard.down('w');await page.waitForTimeout(450);await page.keyboard.up('w');let a=await state(page);
+ await page.locator('#cart-start').click();await page.keyboard.down('w');await page.waitForTimeout(450);await page.keyboard.up('w');a=await state(page);
  check('keyboard push moves the physical cart',a.body.vx>20);const before={...a.body};await page.keyboard.down('d');await page.waitForTimeout(250);await page.keyboard.up('d');a=await state(page);
  check('turning preserves the coasting direction',Math.abs(a.body.a-before.a)>.07&&Math.abs(Math.atan2(a.body.vy,a.body.vx)-Math.atan2(before.vy,before.vx))<.2);await shot(page,'desktop-track');
  check('the HUD leaves the center and bottom of the track free',await page.evaluate(()=>{const read=document.querySelector('.cart-readouts').getBoundingClientRect(),buttons=document.querySelector('.cart-utilities').getBoundingClientRect(),canvas=document.getElementById('cart-canvas').getBoundingClientRect();return read.width<200&&read.height<90&&buttons.width<100&&buttons.height===44&&read.right<canvas.width*.3&&buttons.left>canvas.width*.7&&document.getElementById('cart-instructions').getBoundingClientRect().height===0&&document.getElementById('cart-courses').getBoundingClientRect().height===0;}));
@@ -83,51 +84,67 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await page.evaluate(()=>{__cartTest.terrainPose(7,850,290,0,65);__cartTest.step(2,{push:.4});__cartTest.step(3,{brake:1});});check('the table vase powers the actual lifting shutter',(await state(page)).circuit.powered&&(await state(page)).circuit.lift===1);await shot(page,'water-relay');
  await page.evaluate(()=>{__cartTest.terrainPose(9,2110,600,Math.PI/2,45);__cartTest.step(.2,{brake:1});});await shot(page,'ice');
  console.log('Warm render ms:',await page.evaluate(()=>__cartTest.profile()));
- const mobile=await browser.newContext({viewport:{width:393,height:852},deviceScaleFactor:2,isMobile:true,hasTouch:true}),phone=await setup(mobile,url);
- check('the portrait game fits without horizontal overflow',await phone.evaluate(fits));
- check('thumb instructions appear before play',await phone.locator('.cart-intro-touch').isVisible()&&await phone.locator('#cart-touch').isHidden());
- await phone.locator('#cart-start').tap();check('portrait uses a closer following pixel camera',(await state(phone)).narrowCamera&&await phone.locator('#cart-canvas').getAttribute('width')==='480');await phone.evaluate(()=>__cartTest.stop());
- check('touch utilities retain 44-pixel targets',await phone.evaluate(()=>[...document.querySelectorAll('.cart-icon-button')].every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})));
- const geometry=()=>{const s=document.getElementById('cart-steer').getBoundingClientRect(),d=document.getElementById('cart-drive').getBoundingClientRect(),b=document.getElementById('cart-touch-brake').getBoundingClientRect(),m=document.getElementById('cart-camera').getBoundingClientRect(),k=document.querySelector('.cart-thumb-knob').getBoundingClientRect();const separate=(a,c)=>a.right+4<=c.left||c.right+4<=a.left||a.bottom+4<=c.top||c.bottom+4<=a.top;return s.width>=140&&d.width>=140&&k.width>=60&&b.width>=96&&b.height>=96&&separate(s,b)&&separate(b,d)&&separate(s,d)&&m.bottom<s.top&&[s,d,b].every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight);};
- check('large separated thumb targets leave the map button clear',await phone.evaluate(geometry));await shot(phone,'mobile-driving');
- check('portrait HUD stays separated and compact',await phone.evaluate(()=>{const a=document.querySelector('.cart-readouts').getBoundingClientRect(),b=document.querySelector('.cart-utilities').getBoundingClientRect();return a.right+8<=b.left&&a.height<90&&b.height===44&&document.getElementById('cart-instructions').getBoundingClientRect().height===0;}));
- await phone.locator('#cart-pause').tap();await shot(phone,'mobile-pause');await phone.locator('#cart-help summary').tap();await phone.locator('.cart-source').scrollIntoViewIfNeeded();check('phone help scrolls inside the menu while the page stays fixed',await phone.evaluate(()=>document.getElementById('cart-overlay').scrollTop>0&&scrollY===0)&&(await state(phone)).phase==='paused');await phone.keyboard.press('Escape');await phone.evaluate(()=>__cartTest.stop());
-
- const steer=await phone.locator('#cart-steer').boundingBox(),drive=await phone.locator('#cart-drive').boundingBox(),brake=await phone.locator('#cart-touch-brake').boundingBox();
- const point=(r,id)=>({x:r.x+r.width/2,y:r.y+r.height/2,id}),left=point(steer,1),right=point(drive,2),middle=point(brake,3),sx=left.x,sy=left.y,dx=right.x,dy=right.y,travel=steer.width*.28;
- const touch=await mobile.newCDPSession(phone),send=async(type,points)=>{await touch.send('Input.dispatchTouchEvent',{type,touchPoints:points});await phone.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
- await send('touchStart',[left,right]);a=await state(phone);
- check('centered thumbs coast with two independently captured pointers',a.touches===2&&a.input.push===0&&a.input.turn===0);
- left.x=sx+travel*.5;right.y=dy-travel*.5;await send('touchMove',[left,right]);a=await state(phone);
- check('half travel gives gentle proportional push and rotation',a.input.push>.4&&a.input.push<.46&&a.input.turn>.4&&a.input.turn<.46);
- check('pad knobs, captions and accessible values follow both thumbs',await phone.evaluate(()=>Number(document.getElementById('cart-steer').getAttribute('aria-valuenow'))===43&&Number(document.getElementById('cart-drive').getAttribute('aria-valuenow'))===43&&document.getElementById('cart-drive-status').textContent==='Push 43%'&&parseFloat(document.getElementById('cart-steer').style.getPropertyValue('--thumb-x'))>10&&parseFloat(document.getElementById('cart-drive').style.getPropertyValue('--thumb-y'))< -10));
- await phone.evaluate(()=>__cartTest.step(.35));a=await state(phone);const gentleSpeed=Math.hypot(a.body.vx,a.body.vy);
- check('simultaneous analog input moves and rotates the physical cart',gentleSpeed>8&&Math.abs(a.body.a)>.05);await shot(phone,'mobile-gentle-controls');
- left.x=sx+2;right.y=dy-2;await send('touchMove',[left,right]);a=await state(phone);
- check('the neutral zone prevents accidental pushes and turns',a.input.push===0&&a.input.turn===0);await phone.evaluate(()=>__cartTest.step(.2));a=await state(phone);
- check('neutral thumbs let the existing momentum coast',Math.hypot(a.body.vx,a.body.vy)>gentleSpeed*.7);
- left.x=sx+travel+2;right.y=dy-travel-2;await send('touchMove',[left,right]);a=await state(phone);check('full thumb travel reaches full force',a.input.push>.999&&a.input.turn>.999);await phone.evaluate(()=>__cartTest.step(.35));a=await state(phone);
- check('full pressure accelerates more than the gentle nudge',Math.hypot(a.body.vx,a.body.vy)>gentleSpeed*1.8);await shot(phone,'mobile-held-controls');
- right.y=dy+travel+2;left.x=sx;await send('touchMove',[left,right]);a=await state(phone);check('sliding down pulls without changing the steering axis',a.input.push< -.999&&a.input.turn===0&&await phone.locator('#cart-drive-status').textContent()==='Pull 100%');
- left.x=sx+travel*.7;right.y=dy-travel-2;await send('touchMove',[left,right]);const steerHeld=(await state(phone)).input.turn;
- await send('touchStart',[left,right,middle]);a=await state(phone);check('the middle brake overrides a held push and keeps rotation independent',a.touches===3&&a.input.push===0&&a.input.brake===1&&a.input.turn===steerHeld);
- const speedBeforeBrake=Math.hypot(a.body.vx,a.body.vy);await phone.evaluate(()=>__cartTest.step(.2));a=await state(phone);check('holding the brake slows actual momentum',Math.hypot(a.body.vx,a.body.vy)<speedBeforeBrake*.75);
- check('brake feedback is visible and announced on the button',await phone.locator('#cart-touch-brake').getAttribute('aria-pressed')==='true'&&await phone.locator('#cart-drive-status').textContent()==='Braking');await shot(phone,'mobile-brake');
- middle.y-=80;await send('touchMove',[left,right,middle]);check('the brake stays held when a thumb slips outside it',(await state(phone)).input.brake===1);
- await send('touchEnd',[middle]);a=await state(phone);check('releasing only the brake preserves both thumb pads',a.touches===2&&a.input.brake===0&&a.input.push>.999&&a.input.turn===steerHeld);
- const extra={x:sx-travel*.6,y:sy,id:4};await send('touchStart',[left,right,extra]);check('a second finger cannot steal an occupied pad',(await state(phone)).touches===2&&(await state(phone)).input.turn===steerHeld);await send('touchEnd',[extra]);
- left.x=steer.x-10;right.y=drive.y-30;await send('touchMove',[left,right]);a=await state(phone);check('captured thumbs keep controlling outside the circles',a.touches===2&&a.input.push>.999&&a.input.turn< -.999);
- await phone.evaluate(()=>{const id=__cartTest.state().touchInput.find(q=>q.control==='turn').id;document.getElementById('cart-steer').releasePointerCapture(id);});left.x-=2;await send('touchMove',[left,right]);a=await state(phone);check('losing one pointer capture releases only that pad',a.touches===1&&a.input.turn===0&&a.input.push>.999);
- await send('touchCancel',[]);a=await state(phone);check('cancelled touches release every force and center both knobs',a.touches===0&&a.input.push===0&&a.input.turn===0&&a.input.brake===0&&await phone.evaluate(()=>[...document.querySelectorAll('[data-axis]')].every(p=>p.getAttribute('aria-valuenow')==='0'&&p.style.getPropertyValue('--thumb-x')==='0px'&&p.style.getPropertyValue('--thumb-y')==='0px')));
- left.x=sx+travel+2;right.y=dy-travel-2;await send('touchStart',[left,right]);await phone.evaluate(()=>document.getElementById('cart-pause').click());a=await state(phone);check('pause releases captured fingers and all analog forces',a.phase==='paused'&&a.touches===0&&a.input.push===0&&a.input.turn===0&&await phone.locator('#cart-touch').isHidden());await send('touchEnd',[]);await phone.locator('#cart-start').tap();await phone.evaluate(()=>__cartTest.stop());
- await phone.locator('#cart-steer').focus();await phone.keyboard.down('ArrowRight');a=await state(phone);check('an attached keyboard can adjust a focused thumb slider',a.input.turn===.1&&a.keys===0&&await phone.locator('#cart-steer').getAttribute('aria-valuenow')==='10');await phone.keyboard.up('ArrowRight');check('releasing an attached key recenters the slider',(await state(phone)).input.turn===0);
- await phone.locator('#cart-touch-brake').focus();await phone.keyboard.down('Space');check('the brake can also be held with a focused keyboard',(await state(phone)).input.brake===1);await phone.keyboard.up('Space');check('keyboard brake release restores coasting',(await state(phone)).input.brake===0);
- await phone.locator('#cart-camera').tap();await shot(phone,'mobile-map');check('mobile can inspect the full route',!(await state(phone)).followCart);await phone.locator('#cart-camera').tap();
- await send('touchStart',[left,right]);await phone.setViewportSize({width:852,height:393});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===960);a=await state(phone);check('rotating the phone releases old pointers instead of sticking inputs',a.touches===0&&a.input.push===0&&a.input.turn===0);await send('touchEnd',[]);
- check('landscape keeps large thumb controls and the full viewport',await phone.evaluate(fits)&&await phone.evaluate(geometry));await shot(phone,'mobile-landscape');
- await phone.setViewportSize({width:320,height:720});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===480);check('the smallest phone fits both pads and the brake',await phone.evaluate(fits)&&await phone.evaluate(geometry));await shot(phone,'mobile-small');
- await phone.evaluate(()=>{__cartTest.reset(5);__cartTest.run();__cartTest.stop();});await shot(phone,'mobile-jump-section');
+ } else {await page.locator('#cart-start').click();await page.evaluate(()=>__cartTest.stop());}
+ const mobile=await browser.newContext({viewport:{width:393,height:852},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+ await mobile.addInitScript(()=>{window.dropCartEnds=0;window.addEventListener('touchend',e=>{if(window.dropCartEnds>0){window.dropCartEnds--;e.stopImmediatePropagation();}},true);});
+ const phone=await setup(mobile,url);
+ check('phone explains one driving stick and one brake',await phone.locator('.cart-intro-touch').isVisible()&&await phone.locator('#cart-touch').isHidden()&&await phone.locator('#cart-stick').count()===1&&await phone.locator('#cart-drive').count()===0);
+ await phone.locator('#cart-start').tap();await phone.evaluate(()=>__cartTest.stop());
+ const geometry=()=>{const s=document.getElementById('cart-stick').getBoundingClientRect(),b=document.getElementById('cart-touch-brake').getBoundingClientRect(),k=document.querySelector('.cart-stick-knob').getBoundingClientRect(),m=document.getElementById('cart-camera').getBoundingClientRect();return s.width>=140&&k.width>=60&&b.width>=140&&b.height>=140&&s.right+4<=b.left&&m.bottom<s.top&&[s,b].every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight);};
+ check('large familiar controls fit without reserving a bottom bar',await phone.evaluate(fits)&&await phone.evaluate(geometry));await shot(phone,'mobile-driving');
+ const r=await phone.locator('#cart-stick').boundingBox(),br=await phone.locator('#cart-touch-brake').boundingBox(),sx=r.x+r.width/2,sy=r.y+r.height/2,travel=r.width*.28;
+ const finger={x:sx,y:sy,id:1},braking={x:br.x+br.width/2,y:br.y+br.height/2,id:2};
+ const cdp=process.env.CART_ENGINE==='webkit'?null:await mobile.newCDPSession(phone);
+ await phone.evaluate(()=>window.testFingers=new Map());
+ const send=async(type,points)=>{
+  if(cdp)await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points});
+  else await phone.evaluate(({type,points})=>{
+   const active=window.testFingers,changed=[];
+   const touch=p=>document.createTouch(window,p.target,p.id,p.x,p.y,p.x,p.y);
+   if(type==='touchCancel'){for(const p of active.values())changed.push(touch(p));active.clear();}
+   else for(const p of points){if(type==='touchEnd'){const old=active.get(p.id);if(old){changed.push(touch(old));active.delete(p.id);}}else if(type==='touchStart'){if(!active.has(p.id)){const q={...p,target:document.elementFromPoint(p.x,p.y)};active.set(p.id,q);changed.push(touch(q));}}else{const old=active.get(p.id);if(old){Object.assign(old,p);changed.push(touch(old));}}}
+   if(changed.length){const target=changed[0].target,remaining=[...active.values()].map(touch);target.dispatchEvent(new TouchEvent(type.toLowerCase(),{bubbles:true,cancelable:true,touches:document.createTouchList(...remaining),targetTouches:document.createTouchList(...remaining.filter(t=>t.target===target)),changedTouches:document.createTouchList(...changed)}));}
+  },{type,points});
+  await phone.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ };
+ const neutral=async()=>{const q=await state(phone);return q.touches===0&&q.input.push===0&&q.input.turn===0&&q.input.brake===0&&await phone.evaluate(()=>document.getElementById('cart-stick').style.getPropertyValue('--thumb-x')==='0px'&&document.getElementById('cart-stick').style.getPropertyValue('--thumb-y')==='0px'&&!document.getElementById('cart-stick').classList.contains('is-held'));};
+ await phone.locator('#cart-stick').tap({position:{x:30,y:r.height-30}});check('a native quick tap also releases without injecting force',await neutral());
+ // Begin away from the painted center. This used to apply full force on contact.
+ finger.x=sx-r.width*.28;finger.y=sy+r.height*.28;await send('touchStart',[finger]);a=await state(phone);
+ check('a touch near an edge starts neutral under that thumb',a.touches===1&&a.input.push===0&&a.input.turn===0&&a.touchInput[0].baseX< -30&&a.touchInput[0].baseY>30);
+ const ox=finger.x,oy=finger.y;
+ finger.x=ox+travel*.5;finger.y=oy-travel*.5;await send('touchMove',[finger]);a=await state(phone);
+ check('a diagonal combines proportional steering and push',a.input.push>.4&&a.input.push<.46&&a.input.turn>.4&&a.input.turn<.46);await phone.evaluate(()=>__cartTest.step(.3));a=await state(phone);
+ check('the one stick moves and turns the physical cart',Math.hypot(a.body.vx,a.body.vy)>8&&Math.abs(a.body.a)>.04);await shot(phone,'mobile-diagonal');
+ finger.x=ox+2;finger.y=oy-2;await send('touchMove',[finger]);a=await state(phone);check('returning to the touch origin coasts inside a dead zone',a.input.push===0&&a.input.turn===0);
+ await phone.evaluate(()=>document.getElementById('cart-stick').style.transform='translateY(20px)');await send('touchMove',[finger]);check('layout motion cannot move the frozen input origin',(await state(phone)).input.push===0&&(await state(phone)).input.turn===0);await phone.evaluate(()=>document.getElementById('cart-stick').style.transform='');
+ finger.x=ox;finger.y=oy-travel-4;await send('touchMove',[finger]);check('drag up pushes at full force',(await state(phone)).input.push>.999&&(await state(phone)).input.turn===0);
+ finger.y=oy+travel+4;await send('touchMove',[finger]);check('drag down pulls at full force',(await state(phone)).input.push< -.999);
+ finger.x=ox+travel*.5;finger.y=oy-travel*.7;await send('touchMove',[finger]);const held=(await state(phone)).input.turn;
+ await send('touchStart',[finger,braking]);a=await state(phone);check('the right brake stops push while keeping steering and only two physical owners',a.touches===2&&a.input.push===0&&a.input.brake===1&&a.input.turn===held);await shot(phone,'mobile-brake');
+ const extra={x:sx,y:sy,id:3};await send('touchStart',[finger,braking,extra]);check('another finger cannot steal the stick',(await state(phone)).touches===2&&(await state(phone)).input.turn===held);await send('touchEnd',[extra]);
+ braking.x=br.x-30; // Outside the button, still the same physical contact.
+ await send('touchMove',[finger,braking]);check('brake holds through a drag outside its button',(await state(phone)).input.brake===1);
+ await send('touchEnd',[braking]);a=await state(phone);check('releasing just the brake preserves the held stick',a.touches===1&&a.input.brake===0&&a.input.push>.5&&a.input.turn===held);
+ finger.x=ox-travel*3;finger.y=oy;await send('touchMove',[finger]);a=await state(phone);check('dragging outside the stick keeps bounded directional input',a.input.turn< -.999&&a.input.push===0);
+ await send('touchEnd',[finger]);check('release outside the control immediately springs back and coasts',await neutral());
+ finger.x=sx;finger.y=sy;await send('touchStart',[finger]);finger.x+=travel;finger.y-=travel;await send('touchMove',[finger]);await send('touchStart',[finger,braking]);await send('touchCancel',[]);check('cancellation clears both axes and the brake',await neutral());
+ // Fault injection: physically lift both fingers while suppressing terminal events.
+ finger.x=sx;finger.y=sy;await send('touchStart',[finger]);finger.x+=travel;await send('touchMove',[finger]);braking.x=br.x+br.width/2;await send('touchStart',[finger,braking]);await phone.evaluate(()=>window.dropCartEnds=2);await send('touchEnd',[finger]);await send('touchEnd',[braking]);check('the dropped-release fixture really leaves both inputs stranded',(await state(phone)).touches===2);
+ const fresh={x:sx-30,y:sy+20,id:7};await send('touchStart',[fresh]);a=await state(phone);check('the next physical touch removes stale owners and begins neutral',a.touches===1&&a.input.turn===0&&a.input.push===0&&a.input.brake===0);await send('touchEnd',[fresh]);check('the repaired control also releases normally',await neutral());
+ finger.x=sx;finger.y=sy;await send('touchStart',[finger]);finger.x+=travel;await send('touchMove',[finger]);await phone.evaluate(()=>document.getElementById('cart-pause').click());check('pause clears every physical input and hides the controls',(await state(phone)).phase==='paused'&&await neutral()&&await phone.locator('#cart-touch').isHidden());await send('touchEnd',[finger]);await phone.locator('#cart-start').tap();await phone.evaluate(()=>__cartTest.stop());
+ await phone.locator('#cart-stick').focus();await phone.keyboard.down('ArrowRight');check('a focused stick also accepts a momentary keyboard input',(await state(phone)).input.turn===.1&&(await state(phone)).keys===0);await phone.keyboard.up('ArrowRight');check('keyboard release recenters the stick',await neutral());
+ await phone.locator('#cart-touch-brake').focus();await phone.keyboard.down('Space');check('the brake is keyboard accessible',(await state(phone)).input.brake===1);await phone.keyboard.up('Space');check('keyboard brake release coasts',await neutral());
+ finger.x=sx;finger.y=sy;await send('touchStart',[finger]);finger.x+=travel;await send('touchMove',[finger]);await phone.setViewportSize({width:852,height:393});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===960);check('rotating the phone clears held input',await neutral());await send('touchEnd',[finger]);
+ for(const [width,height]of [[852,393],[320,568],[393,852],[430,932],[568,320],[768,1024]]){await phone.setViewportSize({width,height});await phone.waitForTimeout(60);check('large controls fit '+width+' by '+height,await phone.evaluate(fits)&&await phone.evaluate(geometry));await shot(phone,'mobile-'+width+'x'+height);}
+ await phone.locator('#cart-camera').tap();check('the full route is still available',!(await state(phone)).followCart);await phone.locator('#cart-camera').tap();
  await phone.setViewportSize({width:852,height:393});await phone.waitForFunction(()=>document.getElementById('cart-canvas').width===960);
+ // Mouse/pen fallback must not require successful pointer capture to see a lift.
+ const mr=await phone.locator('#cart-stick').boundingBox();
+ await phone.evaluate(()=>{window.savedCapture=HTMLElement.prototype.setPointerCapture;HTMLElement.prototype.setPointerCapture=function(){};});
+ await phone.mouse.move(mr.x+mr.width/2,mr.y+mr.height/2);await phone.mouse.down();await phone.mouse.move(mr.x+mr.width*2,mr.y-40);check('window-level pointer move survives absent capture',(await state(phone)).input.turn>0);
+ await phone.mouse.up();check('window-level pointer up cannot strand a mouse stick',(await state(phone)).touches===0&&(await state(phone)).input.turn===0);await phone.evaluate(()=>HTMLElement.prototype.setPointerCapture=window.savedCapture);
+ if(process.env.MOBILE_ONLY==='1'){check('no JavaScript errors on desktop and mobile',errors.length===0);console.log('Screenshots: '+dump);return;}
  await page.evaluate(()=>{__cartTest.reset();__cartTest.run();__cartTest.stop();});
  // A whole journey, driven by forces. This is intentionally separate from pose-based render fixtures.
  await page.evaluate(()=>__cartTest.pilot(440));a=await state(page);

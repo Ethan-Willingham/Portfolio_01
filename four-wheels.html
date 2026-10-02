@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=24">
+  <link rel="stylesheet" href="four-wheels.css?v=25">
 </head>
 <body class="cart-page">
   <main>
@@ -51,26 +51,20 @@
           <div class="cart-stage" id="cart-stage">
             <canvas id="cart-canvas" width="720" height="580" tabindex="0" aria-label="Isometric shopping cart distance challenge. Follow the track through the grocery stores. Touch route checkpoints with any wheel. W or up to push, S or down to pull, A and D or left and right to turn, space to brake, P to pause, R to start over." aria-describedby="cart-instructions">This game needs a browser with canvas support. Drive the track, pass through the grocery stores, and see how far you can get.</canvas>
             <div class="cart-touch" id="cart-touch" role="group" aria-label="Thumb controls">
-              <div class="cart-thumb cart-thumb-steering">
-                <div class="cart-thumb-caption"><strong>Rotate</strong><span id="cart-steer-status">Slide left / right</span></div>
-                <div class="cart-thumb-pad cart-thumb-pad-steer" id="cart-steer" data-axis="turn" role="slider" tabindex="0" aria-label="Rotate cart" aria-orientation="horizontal" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Not turning" aria-describedby="cart-touch-help">
-                  <span class="cart-thumb-track" aria-hidden="true"></span>
-                  <svg class="cart-thumb-direction cart-thumb-left" viewBox="0 0 20 20" aria-hidden="true"><path d="m12 6-4 4 4 4"/></svg>
-                  <svg class="cart-thumb-direction cart-thumb-right" viewBox="0 0 20 20" aria-hidden="true"><path d="m8 6 4 4-4 4"/></svg>
-                  <span class="cart-thumb-knob" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M7 10a8 8 0 0 1 14 0M7 5v5h5m9 8a8 8 0 0 1-14 0m14 5v-5h-5"/></svg></span>
+              <div class="cart-thumb">
+                <div class="cart-thumb-caption"><strong>Drive</strong><span id="cart-stick-status">Release to coast</span></div>
+                <div class="cart-stick" id="cart-stick" role="group" tabindex="0" aria-roledescription="thumbstick" aria-label="Drive and steer cart" aria-describedby="cart-touch-help">
+                  <div class="cart-stick-base" aria-hidden="true">
+                    <span class="cart-stick-track cart-stick-track-x"></span><span class="cart-stick-track cart-stick-track-y"></span>
+                    <span class="cart-stick-label cart-stick-up">Push</span><span class="cart-stick-label cart-stick-down">Pull</span>
+                    <svg class="cart-stick-direction cart-stick-left" viewBox="0 0 20 20"><path d="m12 6-4 4 4 4"/></svg>
+                    <svg class="cart-stick-direction cart-stick-right" viewBox="0 0 20 20"><path d="m8 6 4 4-4 4"/></svg>
+                    <span class="cart-stick-knob"><i></i></span>
+                  </div>
                 </div>
               </div>
-              <button type="button" class="cart-touch-brake" id="cart-touch-brake" data-control="brake" aria-label="Hold to brake cart" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14m10-14v14"/></svg><strong>Brake</strong><span>Hold</span></button>
-              <div class="cart-thumb cart-thumb-drive">
-                <div class="cart-thumb-caption"><strong>Push / pull</strong><span id="cart-drive-status">Slide up / down</span></div>
-                <div class="cart-thumb-pad cart-thumb-pad-drive" id="cart-drive" data-axis="push" role="slider" tabindex="0" aria-label="Push or pull cart" aria-orientation="vertical" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Coasting" aria-describedby="cart-touch-help">
-                  <span class="cart-thumb-track" aria-hidden="true"></span>
-                  <svg class="cart-thumb-direction cart-thumb-up" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 12 4-4 4 4"/></svg>
-                  <svg class="cart-thumb-direction cart-thumb-down" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
-                  <span class="cart-thumb-knob" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M10 9h8m-8 5h8m-8 5h8"/></svg></span>
-                </div>
-              </div>
-              <p class="sr-only" id="cart-touch-help">Left thumb slides left or right to rotate. Right thumb slides up to push or down to pull. Slide farther for more force. Release to coast. Hold the middle button to brake.</p>
+              <button type="button" class="cart-touch-brake" id="cart-touch-brake" aria-label="Hold to brake cart" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8Zm1 9h6"/></svg><strong>Brake</strong><span>Hold to slow</span></button>
+              <p class="sr-only" id="cart-touch-help">Drag the left stick up to push, down to pull, or sideways to turn. Drag diagonally to push and turn together. Release to coast. Hold the right button to brake.</p>
             </div>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
@@ -80,7 +74,7 @@
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
                 <p id="cart-overlay-text">Hills, speed bumps, ice, a boost into a jump, and a water-powered grocery shutter. Get the cart to the end.</p>
                 <div class="cart-intro-controls" aria-hidden="true"><span><b><kbd>W</kbd> <kbd>S</kbd></b>Push / pull</span><span><b><kbd>A</kbd> <kbd>D</kbd></b>Rotate</span><span><b><kbd>Space</kbd></b>Brake</span></div>
-                <p class="cart-intro-touch">Left thumb rotates. Right thumb pushes or pulls. Release to coast; hold Brake to slow down.</p>
+                <p class="cart-intro-touch">Left stick drives and steers. Right button brakes. Release the stick to coast.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
                 <label class="cart-practice" id="cart-practice-label" hidden><input type="checkbox" id="cart-practice"><span>Practice<small>Get a feel for the wheels.</small></span></label>
                 <div class="cart-overlay-actions">
@@ -114,7 +108,7 @@
                     <div class="cart-notes">
                       <p>Follow the red and white curbs. Dirt slows the wheels, asphalt carries a slide farther, and the grass shoulders drag on the cart. Some bends have guardrails. Some have a long drop.</p>
                       <p>Push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward. Brake before a tight bend and leave room for the shopper behind the handle.</p>
-                      <p>On a phone, slide the left thumb pad sideways to rotate. Slide the right pad up to push or down to pull. Small movements give you a gentle nudge. Let go to coast, or hold the middle Brake button to slow down. You can push and turn together.</p>
+                      <p>On a phone, drag the left stick up to push, down to pull, or sideways to turn. Drag diagonally to do both. The stick starts under your thumb, wherever you touch it. Small movements give you a gentle nudge. Let go to coast, or hold Brake with your right thumb to slow down. You can still turn while braking.</p>
                       <p>The route runs through three grocery stores. Push the swinging doors open, or hit them hard enough to break the glass. Tables rock, shelves topple, bottles break, and cans roll. A vase leaves clear water; a wheel over a ketchup bottle squeezes sauce onto the tiles. The tires pick up spills and leave tracks. That mess stays after a fall.</p>
                       <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
                       <p>Lost wheel support lets the cart tip. Steer against a sideways tip. Pull back if the nose is going over, or push if it is lifting too far. Your feet need ground to brace. The arms and knees bend as the cart rocks. A real drop below the lip becomes a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
@@ -142,11 +136,11 @@
     </section>
   </main>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=24"></script>
-  <script src="js/four-wheels-terrain.js?v=24"></script>
-  <script src="js/four-wheels-course.js?v=24"></script>
-  <script src="js/four-wheels-physics.js?v=24"></script>
-  <script src="js/four-wheels-view.js?v=24"></script>
-  <script src="js/four-wheels.js?v=24"></script>
+  <script src="js/four-wheels-stock.js?v=25"></script>
+  <script src="js/four-wheels-terrain.js?v=25"></script>
+  <script src="js/four-wheels-course.js?v=25"></script>
+  <script src="js/four-wheels-physics.js?v=25"></script>
+  <script src="js/four-wheels-view.js?v=25"></script>
+  <script src="js/four-wheels.js?v=25"></script>
 </body>
 </html>
