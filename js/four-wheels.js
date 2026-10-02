@@ -157,10 +157,10 @@
   const view = CartView.create(P);
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
   const { makeFloor } = view;
-  let narrowCamera = false, followCart = true;
+  let narrowCamera = false, followCart = true, touchFocusY = .54;
   function drawIllustration() { view.illustration($('illustration').getContext('2d')); }
   function draw(g = ctx, w = world, background = floor, preview = false) {
-    view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart});
+    view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview?.54:touchFocusY});
   }
   function cameraLabel() {
     $('camera').hidden = false;
@@ -172,6 +172,8 @@
     const stage = $('stage').getBoundingClientRect();
     if (stage.width <= 0 || stage.height <= 0) return;
     narrowCamera = stage.width < 600 && stage.height > stage.width * 1.2;
+    const brake = $('touch-brake').getBoundingClientRect();
+    touchFocusY = narrowCamera && touchMode.matches && brake.height ? clamp((brake.top-stage.top-56)/stage.height, .24, .54) : .54;
     const width = narrowCamera ? 480 : 960;
     const height = Math.round(width*stage.height/stage.width);
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
@@ -475,7 +477,8 @@
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
   prepare(world,resumed); drawIllustration();
-  new ResizeObserver(resizeView).observe($('stage'));
+  const viewResize = new ResizeObserver(resizeView);
+  viewResize.observe($('stage')); viewResize.observe($('touch'));
   // Canvas text caches are rebuilt when the site's own mono font arrives.
   document.fonts.ready.then(() => { view.refreshFonts(); floor = makeFloor(world.level); draw(); });
 })();

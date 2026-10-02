@@ -253,7 +253,12 @@ map. Inputs are scoped
 to focus inside the game. Restart asks in-game before discarding the run and
 retains records and unlocked practice. Escape cancels that confirmation.
 
-Phones have two independent captured analog thumb pads and a central brake.
+Phones have two independent captured analog thumb pads, 140 to 200 pixels wide,
+with proportional thumb grips and a 96-pixel brake. Portrait puts the brake
+above the pads so narrow phones retain large, separate touch targets. Landscape
+puts it between them. Safe-area padding keeps them clear of the home indicator.
+The portrait camera places the cart above the brake on shorter phones. This
+changes only the view; the canvas still fills the entire viewport.
 The left rotates horizontally; the right pushes upward and pulls downward.
 A 12-percent neutral zone prevents accidental force. Full displacement is 28
 percent of pad width. Releasing coasts. Brake overrides push/pull while preserving

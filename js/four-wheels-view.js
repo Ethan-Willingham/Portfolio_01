@@ -705,8 +705,8 @@
       const left=Math.min(...points.map(p=>p.x))-35,top=Math.min(...points.map(p=>p.y))-45,right=Math.max(...points.map(p=>p.x))+35,bottom=Math.max(...points.map(p=>p.y))+40;
       const frame={left,top,width:right-left,height:bottom-top};if(w.level.campaign)w.level._viewFrame=frame;return frame;
     }
-    function connectedCamera(width,height,w,follow=true) {
-      if(follow){const focus=project({...w.body,z:w.level.campaign?(w.ground.lastHeight+clamp(w.body.z-w.ground.lastHeight,0,65)*.4):0});const scale=width<=480?1.8:1.45;return {scale,x:width*.5-focus.x*scale,y:height*.54-focus.y*scale};}
+    function connectedCamera(width,height,w,follow=true,focusY=.54) {
+      if(follow){const focus=project({...w.body,z:w.level.campaign?(w.ground.lastHeight+clamp(w.body.z-w.ground.lastHeight,0,65)*.4):0});const scale=width<=480?1.8:1.45;return {scale,x:width*.5-focus.x*scale,y:height*focusY-focus.y*scale};}
       const box=worldFrame(w),scale=Math.min((width-28)/box.width,(height-28)/box.height);
       return {scale,x:(width-box.width*scale)/2-box.left*scale,y:(height-box.height*scale)/2-box.top*scale};
     }
@@ -724,7 +724,7 @@
       g.restore();
     }
     function drawConnected(g,w,background,options) {
-      const camera=connectedCamera(g.canvas.width,g.canvas.height,w,options.follow!==false),width=g.canvas.width,height=g.canvas.height;
+      const camera=connectedCamera(g.canvas.width,g.canvas.height,w,options.follow!==false,options.focusY),width=g.canvas.width,height=g.canvas.height;
       const visible=(p,margin=90)=>{const q=project(p);return camera.x+q.x*camera.scale>-margin&&camera.x+q.x*camera.scale<width+margin&&camera.y+q.y*camera.scale>-margin&&camera.y+q.y*camera.scale<height+margin;};
       w._visible=visible;
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.dark,P.blue,.16));
@@ -872,7 +872,7 @@
     }
     function drawCourse(g,w,background,options) {
       terrainLevel=w.level;
-      const Course=root.CartCourse,width=g.canvas.width,height=g.canvas.height,camera=connectedCamera(width,height,w,options.follow!==false),visible=(p,r=100)=>{const q=project(p);return camera.x+q.x*camera.scale>-r&&camera.x+q.x*camera.scale<width+r&&camera.y+q.y*camera.scale>-r&&camera.y+q.y*camera.scale<height+r;};w._visible=visible;
+      const Course=root.CartCourse,width=g.canvas.width,height=g.canvas.height,camera=connectedCamera(width,height,w,options.follow!==false,options.focusY),visible=(p,r=100)=>{const q=project(p);return camera.x+q.x*camera.scale>-r&&camera.x+q.x*camera.scale<width+r&&camera.y+q.y*camera.scale>-r&&camera.y+q.y*camera.scale<height+r;};w._visible=visible;
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
       if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
       for(const h of w.level.hazards)if(visible(h,350)){groundPoly(g,circle({...h,z:-50},h.rx,h.ry),blend(P.blue,P.dark,.22));for(let i=0;i<22;i++){const a=i*2.399,p={x:h.x+Math.cos(a)*h.rx*.75,y:h.y+Math.sin(a)*h.ry*.75,z:-49};groundLine(g,p,{x:p.x+14,y:p.y-4,z:-49},P.light,1,.25);}}
