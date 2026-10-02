@@ -30,7 +30,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
     :root {
       --gsg-copy: 64ch;
@@ -62,12 +62,7 @@
     .gsg-prose a, .gsg-context a, .gsg-page .u-textcheck a, .gsg-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--gsg-hair); }
     .gsg-prose a:hover, .gsg-context a:hover, .gsg-page .u-textcheck a:hover, .gsg-sources a:hover { color: var(--accent-hover); }
 
-    .gsg-day { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: var(--gsg-copy); margin: 2.8rem auto; border: 1px solid var(--gsg-hair); border-radius: 8px; overflow: hidden; background: var(--gsg-tint); }
-    .gsg-hour { padding: 1.35rem 1.25rem 1.45rem; }
-    .gsg-hour + .gsg-hour { border-left: 1px solid var(--gsg-hair); }
-    .gsg-hour-k { margin: 0 0 .5rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-    .gsg-hour h3 { margin: 0 0 .65rem; font-size: 1.35rem; line-height: 1.2; color: var(--text-bright); }
-    .gsg-hour p:last-child { margin: 0; font-size: .96rem; line-height: 1.62; color: var(--text-dim); }
+    .gsg-day { max-width: var(--gsg-copy); margin: 2.8rem auto; }
 
     .gsg-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--gsg-copy); margin: 2.8rem auto 0; }
     .gsg-context { padding-top: 1rem; border-top: 1px solid var(--gsg-hair); }
@@ -105,10 +100,7 @@
     .gsg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
     .gsg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-    .gsg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--gsg-copy); margin: 2.6rem auto 0; }
-    .gsg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--gsg-tint); border: 1px solid var(--gsg-hair); border-radius: 7px; }
-    .gsg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
-    .gsg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
+    .gsg-hard-grid { max-width: var(--gsg-copy); margin: 2.6rem auto 0; }
     .gsg-sources { max-width: var(--gsg-copy); margin: 3.2rem auto 0; }
     .gsg-sources .u-collapse { border-color: var(--gsg-hair); }
     .gsg-source-list { margin: 0; padding: 1.1rem 1.4rem 1.3rem 2.7rem; }
@@ -119,9 +111,7 @@
     .gsg-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .gsg-context-grid, .gsg-hard-grid { grid-template-columns: 1fr; }
-      .gsg-day { grid-template-columns: 1fr; }
-      .gsg-hour + .gsg-hour { border-left: 0; border-top: 1px solid var(--gsg-hair); }
+      .gsg-context-grid { grid-template-columns: 1fr; }
       .gsg-convergence { grid-template-columns: 1fr; gap: .7rem; }
     }
     @media (max-width: 560px) {
@@ -161,19 +151,19 @@
           <p>The Sikh story around the anthology begins before the bound volume. Guru Nanak&rsquo;s hymns were sung and remembered in the community at Kartarpur. Collections grew through his successors. Guru Arjan supervised a canonical compilation in 1604, with Bhai Gurdas serving as scribe, and the volume was installed at Harmandir Sahib in Amritsar. The received text later added the compositions of Guru Tegh Bahadur in the recension associated with Guru Gobind Singh. Sikh tradition remembers Guru Gobind Singh ending the line of human Gurus at Nanded in 1708 and giving enduring Guruship to the Granth. &ldquo;Eleventh Guru&rdquo; is common shorthand. The more exact Sikh claim is that the Guru Granth Sahib is the eternal Guru, while the Guru Panth also carries corporate responsibility and authority.</p>
         </div>
 
-        <div class="gsg-day" aria-label="A day in the presence of the Guru Granth Sahib">
-          <article class="gsg-hour">
-            <p class="gsg-hour-k">Morning</p>
+        <div class="gsg-day u-sequence" aria-label="A day in the presence of the Guru Granth Sahib">
+          <article class="gsg-hour u-sequence-step">
+            <p class="gsg-hour-k u-sequence-k">Morning</p>
             <h3>Prakash</h3>
             <p>The volume is ceremonially opened, attended beneath a canopy, and a hymn is read as the day&rsquo;s <em>hukam</em>. The act is an audience with the Guru, not the opening of a reference book.</p>
           </article>
-          <article class="gsg-hour">
-            <p class="gsg-hour-k">Gathered life</p>
+          <article class="gsg-hour u-sequence-step">
+            <p class="gsg-hour-k u-sequence-k">Gathered life</p>
             <h3>Kirtan and hukam</h3>
             <p>Hymns are sung, explained, read at births, marriages, and deaths, and received by the <em>sangat</em>. No other book is installed at the same level in a gurdwara.</p>
           </article>
-          <article class="gsg-hour">
-            <p class="gsg-hour-k">Evening</p>
+          <article class="gsg-hour u-sequence-step">
+            <p class="gsg-hour-k u-sequence-k">Evening</p>
             <h3>Sukhasan</h3>
             <p>After evening prayer, the Guru is ceremonially closed and returned with care to a resting room. Reverence governs carrying, covering, attendance, and place.</p>
           </article>
@@ -428,28 +418,28 @@
         <h2 class="gsg-h2">Caste, gender, other faiths, violence, hukam, text</h2>
         <p class="gsg-intro">The strongest reading keeps the liberating claim and the historical complication in the same room.</p>
 
-        <div class="gsg-hard-grid">
-          <article class="gsg-hard">
+        <div class="gsg-hard-grid u-reading-list u-reading-list--columns">
+          <article class="gsg-hard u-reading-section">
             <h3>Caste</h3>
             <p>The scriptural rejection is direct, the contributor list embodies it, and langar gives it a social form. Sikh life has still carried caste endogamy, status around Jat identity, caste-marked gurdwaras, and discrimination against Dalit Sikhs. Calling those practices &ldquo;cultural&rdquo; does not make them harmless. Calling Sikh teaching casteist because Sikhs violate it misses the text. The honest statement is sharper: the canon supplies an internal indictment that Sikh society continues to need.</p>
           </article>
-          <article class="gsg-hard">
+          <article class="gsg-hard u-reading-section">
             <h3>Gender</h3>
             <p>Guru Nanak asks why woman should be called bad when kings are born through her, and Sikh discipline grants women the same access to initiation, reading, kirtan, and service. No composition in the received canon is attributed to a woman, however, and the poetry often casts the human soul as bride and the divine as Husband. Sikh feminist readings find fluidity and female centrality there. Critics also see a male-authored marriage world that can leave hierarchy intact. Equal doctrine has not guaranteed equal authority in every institution or home.</p>
           </article>
-          <article class="gsg-hard">
+          <article class="gsg-hard u-reading-section">
             <h3>Other faiths</h3>
             <p>The Granth includes Kabir, Farid, Ravidas, Namdev, and other non-Guru voices, uses names such as Allah and Ram, and attacks empty Hindu, Muslim, and yogic performance. That is not the modern slogan that all religions say exactly the same thing. Guru Arjan selected bhagat bani for theological fit and excluded other material. The Sikh conduct code welcomes anyone into a gurdwara while defining a Sikh as owing allegiance to no other religion. Openness and distinctness are both part of the record.</p>
           </article>
-          <article class="gsg-hard">
+          <article class="gsg-hard u-reading-section">
             <h3>Violence</h3>
             <p>The Guru Granth Sahib praises fearlessness, condemns oppression, and contains images of struggle, but it is not a manual of war. The explicit martial institutions of miri-piri, Khalsa initiation, the kirpan, and rules for force develop through later Guru history and other Sikh texts. Calling the Granth simply pacifist cuts that history away. Using every spiritual battle as a license for violence is equally careless. Sikh tradition argues for defense and justice under severe restraints, not violence as spiritual proof.</p>
           </article>
-          <article class="gsg-hard">
+          <article class="gsg-hard u-reading-section">
             <h3>Hukam</h3>
             <p>If everything unfolds within hukam, suffering can sound deserved and resistance can sound faithless. The book does not give that easy escape. It laments invasion, condemns rulers who become butchers, requires truthful action, and makes service and courage central. Accepting that an event is real is different from approving the person who caused it. Sikh practice has used hukam to endure what cannot be reversed and seva to change what can. The balance is argued, not automatic.</p>
           </article>
-          <article class="gsg-hard">
+          <article class="gsg-hard u-reading-section">
             <h3>Text</h3>
             <p>Sikhs receive one inviolable Guru in the standard 1,430-ang form. Historians see concurrent oral repertoires, working collections, manuscript variants, several recensions, Guru Tegh Bahadur&rsquo;s later inclusion, and disagreement over Ragmala. Neither description cancels the other because they answer different questions. Scholarship becomes irresponsible when it treats reverence as evidence against variants. Devotional defense becomes brittle when it requires a manuscript history cleaner than the surviving manuscripts.</p>
           </article>

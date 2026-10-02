@@ -30,7 +30,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
     :root {
       --ntg-copy: 64ch;
@@ -62,11 +62,7 @@
     .ntg-prose a, .ntg-context a, .ntg-page .u-textcheck a, .ntg-sources a, .ntg-verse cite a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--ntg-hair); }
     .ntg-prose a:hover, .ntg-context a:hover, .ntg-page .u-textcheck a:hover, .ntg-sources a:hover, .ntg-verse cite a:hover { color: var(--accent-hover); }
 
-    .ntg-gospels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: var(--ntg-copy); margin: 2.6rem auto; }
-    .ntg-gospel { padding: 1.35rem 1.4rem 1.45rem; background: var(--ntg-tint); border: 1px solid var(--ntg-hair); border-radius: 7px; }
-    .ntg-gospel-k { margin: 0 0 .5rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-    .ntg-gospel h3 { margin: 0 0 .65rem; font-size: 1.5rem; line-height: 1.15; color: var(--text-bright); }
-    .ntg-gospel p:last-child { margin: 0; font-size: 1rem; line-height: 1.65; color: var(--text-dim); }
+    .ntg-gospels { max-width: var(--ntg-copy); margin: 2.6rem auto; }
 
     .ntg-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--ntg-copy); margin: 2.8rem auto 0; }
     .ntg-context { padding-top: 1rem; border-top: 1px solid var(--ntg-hair); }
@@ -104,10 +100,7 @@
     .ntg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
     .ntg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-    .ntg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--ntg-copy); margin: 2.6rem auto 0; }
-    .ntg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--ntg-tint); border: 1px solid var(--ntg-hair); border-radius: 7px; }
-    .ntg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
-    .ntg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
+    .ntg-hard-grid { max-width: var(--ntg-copy); margin: 2.6rem auto 0; }
 
     .ntg-sources { max-width: var(--ntg-copy); margin: 3.2rem auto 0; }
     .ntg-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
@@ -116,7 +109,7 @@
     .ntg-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .ntg-gospels, .ntg-context-grid, .ntg-hard-grid { grid-template-columns: 1fr; }
+      .ntg-context-grid { grid-template-columns: 1fr; }
       .ntg-convergence { grid-template-columns: 1fr; gap: .7rem; }
       .ntg-sources .u-collapse-list { columns: 1; }
     }
@@ -155,24 +148,24 @@
         <p>All four accounts lead to Jesus&rsquo;s crucifixion under Pontius Pilate and the announcement that he has risen. They tell much of the rest differently. Matthew, Mark, and Luke share enough wording and sequence to be called the Synoptic Gospels, meaning they can be viewed together. Most scholars think Matthew and Luke used Mark, alongside other material. Their agreement therefore isn&rsquo;t three independent confirmations of every event. John has a different arrangement and gives Jesus longer speeches. The audiences behind each book have to be reconstructed.</p>
       </div>
 
-      <div class="ntg-gospels" aria-label="Four Gospel portraits of Jesus">
-        <article class="ntg-gospel">
-          <p class="ntg-gospel-k">The shortest and probably earliest</p>
+      <div class="ntg-gospels u-reading-list u-reading-list--grid" aria-label="Four Gospel portraits of Jesus">
+        <article class="ntg-gospel u-reading-section">
+          <p class="ntg-gospel-k u-reading-k">The shortest and probably earliest</p>
           <h3>Mark</h3>
           <p>Jesus arrives as an adult, announces God&rsquo;s kingdom, heals and casts out demons, and repeatedly predicts suffering that his disciples cannot accept. The ending used in modern critical editions stops at 16:8: the tomb is empty, a messenger says Jesus has risen, and the women flee in fear before any risen appearance is narrated.</p>
         </article>
-        <article class="ntg-gospel">
-          <p class="ntg-gospel-k">The teacher and Jewish Messiah</p>
+        <article class="ntg-gospel u-reading-section">
+          <p class="ntg-gospel-k u-reading-k">The teacher and Jewish Messiah</p>
           <h3>Matthew</h3>
           <p>Matthew gives Jesus a genealogy through David and Abraham, a virgin birth under Herod, and five large blocks of teaching. Jesus fulfills Israel&rsquo;s scriptures, says he fulfills the law, forms a church, and ends by sending disciples to every nation.</p>
         </article>
-        <article class="ntg-gospel">
-          <p class="ntg-gospel-k">The first of two volumes</p>
+        <article class="ntg-gospel u-reading-section">
+          <p class="ntg-gospel-k u-reading-k">The first of two volumes</p>
           <h3>Luke</h3>
           <p>Luke includes Mary&rsquo;s story, Jesus&rsquo;s birth in Bethlehem, and sustained attention to poverty, prayer, and the Spirit. Its Jesus begins with good news for the poor and ends by opening the scriptures to his followers. Acts is volume two, carrying the same story through Peter, Paul, and the gentile mission.</p>
         </article>
-        <article class="ntg-gospel">
-          <p class="ntg-gospel-k">The Word made flesh</p>
+        <article class="ntg-gospel u-reading-section">
+          <p class="ntg-gospel-k u-reading-k">The Word made flesh</p>
           <h3>John</h3>
           <p>John begins before creation, calls Jesus the divine Word, and emphasizes signs and long conversations. Its chronology and voice differ sharply from the other three. Jesus speaks openly about who he is, washes his disciples&rsquo; feet, and makes self-giving love the mark of belonging to him.</p>
         </article>
@@ -432,36 +425,36 @@
       <h2 class="ntg-h2" id="hard-title">Hell, slavery, women, sexuality, anti-Judaism, delay, contradiction, salvation</h2>
       <p class="ntg-intro">These passages have shaped church rules and harmed people. Their wording and the arguments over it belong beside the more familiar teachings.</p>
 
-      <div class="ntg-hard-grid">
-        <article class="ntg-hard">
+      <div class="ntg-hard-grid u-reading-list">
+        <article class="ntg-hard u-reading-section">
           <h3>Hell has several names and images</h3>
           <p>English &ldquo;hell&rdquo; can translate Gehenna, Hades, or Tartarus; Revelation adds a lake of fire. Matthew 25:46 places eternal punishment beside eternal life. The dominant traditional reading is conscious punishment without end. Other Christians read the destruction passages as final extinction, or passages about reconciliation as grounds for eventual restoration. Each reading faces textual difficulties. The books do not give one consistent map of the afterlife.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>The letters regulate slavery</h3>
           <p>Ephesians 6:5 tells enslaved people to obey masters. First Peter 2:18 includes harsh masters. Paul sends Onesimus back to Philemon and asks that he be received as a beloved brother (Philemon 12, 16). Whether Paul expects his release is debated; he does not explicitly demand it, much less abolish slavery as an institution. Abolitionists appealed to equality in Christ, especially Galatians 3:28. Defenders of slavery appealed to the commands to obey. Both arguments drew on passages actually present in the collection.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>Women teach and are told not to teach</h3>
           <p>Women support Jesus&rsquo;s work, host churches, and prophesy. Priscilla helps teach Apollos (Acts 18:26); Paul commends Phoebe and names Junia, whom many scholars understand as a woman counted among the apostles (Romans 16). First Timothy 2:12 forbids a woman to teach or exercise authority over a man. First Corinthians 14:34-35 tells women to be silent, though chapter 11 assumes women pray and prophesy. Some scholars argue that the silence verses were added later; others explain the tension through context. Churches disagree over whether the restrictions are local or permanent.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>Same-sex acts and ancient categories</h3>
           <p>Romans 1:26-27 condemns same-sex acts in an argument about idolatry and desire. First Corinthians 6:9 uses <em>malakoi</em> and <em>arsenokoitai</em>, words whose precise scope is disputed. The traditional reading prohibits same-sex sexual relations generally. Affirming readings argue that exploitation, status, and excess matter to the ancient setting, and that the texts do not address modern marriages between equal partners. Romans is harder to limit to exploitation alone than the disputed vocabulary in Corinthians. Applying either passage to modern relationships requires an argument about which features of the ancient acts carry over.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>Anti-Jewish passages and their reception</h3>
           <p>Jesus, Paul, and the first disciples were Jews. That does not remove the problem of John&rsquo;s hostile uses of &ldquo;the Jews,&rdquo; Matthew 27:25&rsquo;s crowd accepting bloodguilt, or First Thessalonians 2:14-16. The settings and targets of these passages are debated; some reflect conflicts among Jews and others a movement increasingly separating from Jewish communities. Later Christians used them against Jews collectively, helping justify exclusion and violence. Romans 11 rejects the claim that God has rejected Israel and warns gentile believers against boasting. Those warnings did not prevent the later uses of the other passages.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>The expected return was delayed</h3>
           <p>Mark 13:30 says &ldquo;this generation&rdquo; will not pass before the events described. First Thessalonians 4:15 speaks of &ldquo;we that are alive&rdquo; at the Lord&rsquo;s coming. Many scholars read these and Revelation&rsquo;s &ldquo;the time is at hand&rdquo; as evidence of an expectation of an imminent end. Other readings connect parts of the sayings with Jerusalem&rsquo;s destruction or distinguish different events. Second Peter 3 explicitly answers people asking what happened to the promised coming. The delay was already a question within the collection.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>The accounts disagree about events</h3>
           <p>Matthew and Luke give different genealogies and birth narratives. Judas hangs himself in Matthew 27:5; Acts 1:18 describes a fatal fall in which his body bursts open. The resurrection accounts differ over people, places, and sequences. On the usual reading, John puts Jesus&rsquo;s crucifixion before the Passover meal, while Matthew, Mark, and Luke place it after a Passover supper. Harmonizations have been proposed, including alternative calendar readings. Some are possible, but they add explanations that the accounts themselves do not give.</p>
         </article>
-        <article class="ntg-hard">
+        <article class="ntg-hard u-reading-section">
           <h3>Can people outside Christianity be saved?</h3>
           <p>John 14:6 says no one comes to the Father except through Jesus; Acts 4:12 says salvation is found in no other name. First Timothy 2:4 says God desires everyone to be saved. Many Christians hold that explicit faith in Jesus is necessary. Others distinguish salvation through Christ from consciously knowing him. Catholic teaching, for example, allows salvation for people who do not know the Gospel through no fault of their own and respond to grace through conscience. Universalists hope or argue that everyone will eventually be reconciled. The texts do not simply teach that all religions are equivalent, and Christians disagree over how far their promises extend.</p>
         </article>

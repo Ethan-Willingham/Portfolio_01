@@ -29,7 +29,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
     :root {
       --qg-copy: 64ch;
@@ -97,11 +97,7 @@
     .qg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
     .qg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-    .qg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--qg-copy); margin: 2.6rem auto 0; }
-    .qg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--qg-tint); border: 1px solid var(--qg-hair); border-radius: 7px; }
-    .qg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
-    .qg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
-    .qg-hard a { color: var(--accent); text-decoration: none; }
+    .qg-hard-grid { max-width: var(--qg-copy); margin: 2.6rem auto 0; }
 
     .qg-sources { max-width: var(--qg-copy); margin: 3.2rem auto 0; }
     .qg-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
@@ -110,7 +106,7 @@
     .qg-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .qg-context-grid, .qg-hard-grid { grid-template-columns: 1fr; }
+      .qg-context-grid { grid-template-columns: 1fr; }
       .qg-convergence { grid-template-columns: 1fr; gap: .7rem; }
       .qg-sources .u-collapse-list { columns: 1; }
     }
@@ -388,32 +384,32 @@
       <h2 class="qg-h2" id="hard-title">The difficult passages</h2>
       <p class="qg-intro">The verses, the rules later jurists drew from them, and the disputes over those readings.</p>
 
-      <div class="qg-hard-grid">
-        <article class="qg-hard">
+      <div class="qg-hard-grid u-reading-list">
+        <article class="qg-hard u-reading-section">
           <h3>Fighting, treaties, and tribute</h3>
           <p>Sura 2:190 commands fighting those who fight you and prohibits aggression. <a href="https://quran.com/9/4-6">Sura 9:4-6</a> protects unbroken treaties and requires safe passage for a polytheist seeking protection, but also commands killing polytheists after the sacred months. Sura 9:29 commands fighting specified People of the Book until they pay <em>jizya</em>, tribute under Muslim rule. Classical Sunni law commonly authorized war to expand that rule. Some modern interpreters argue that the commands apply only to aggression and treaty violations. That reading is disputed, including by scholars who reject modern militant interpretations.</p>
         </article>
-        <article class="qg-hard">
+        <article class="qg-hard u-reading-section">
           <h3>Men have greater authority in family law</h3>
           <p>Sura 33:35 promises men and women the same spiritual reward. In <a href="https://quran.com/4/11">4:11</a>, a son receives twice a daughter&rsquo;s share when they inherit together; this is not a formula for every inheritance case. Sura 4:3 permits up to four wives, conditional on just treatment, and directs a man who fears injustice to marry one. Sura 4:34 gives men authority tied to financial support and includes a disciplinary verb Pickthall renders &ldquo;scourge them.&rdquo; Premodern commentators generally understood striking, with restrictions. Some modern interpreters reject that meaning; others retain it or prohibit its use through broader arguments against harm.</p>
         </article>
-        <article class="qg-hard">
+        <article class="qg-hard u-reading-section">
           <h3>Slavery and concubinage remain permitted</h3>
           <p>The Quran praises freeing enslaved people and requires it as compensation for some wrongs. It also recognizes ownership of people. Classical jurists read <a href="https://quran.com/23/5-6">23:5-6</a> and 4:24 as permitting men sexual access to enslaved women, including some married captives. This became the law of <em>concubinage</em>, sexual relations based on ownership rather than marriage. Modern descriptions that insert mutual consent into that legal entitlement misrepresent the classical rule. The commands to free people did not amount to a general abolition of slavery.</p>
         </article>
-        <article class="qg-hard">
+        <article class="qg-hard u-reading-section">
           <h3>Lashes and amputation are prescribed</h3>
           <p><a href="https://quran.com/24/2">Sura 24:2</a> prescribes one hundred lashes for <em>zina</em>, unlawful sexual intercourse. Sura 5:38 prescribes cutting off a thief&rsquo;s hand. Later law defined qualifying offenses and evidence, and developed rules for avoiding fixed penalties when doubt existed. The classical stoning penalty for adultery draws on hadith, including <a href="https://sunnah.com/muslim:1690a">Muslim 1690a</a>, rather than the wording of 24:2. A description of these punishments needs both the verses and the legal conditions; neither alone describes the whole system.</p>
         </article>
-        <article class="qg-hard">
+        <article class="qg-hard u-reading-section">
           <h3>&ldquo;No compulsion&rdquo; and apostasy law</h3>
           <p>Sura 2:256 says there is no compulsion in religion. The Quran condemns abandoning belief but sets out no explicit earthly penalty for <em>apostasy</em>, leaving the faith. <a href="https://sunnah.com/bukhari:3017">Bukhari 3017</a> reports a command to kill a Muslim who discards his religion. Most classical jurists prescribed death for at least some categories of apostate, differing over women, repentance, and other conditions. Some modern Muslim scholars reject this penalty or confine it to political betrayal. The freedom verse has not produced one agreed rule.</p>
         </article>
-        <article class="qg-hard">
+        <article class="qg-hard u-reading-section">
           <h3>Who can be saved?</h3>
           <p><a href="https://quran.com/2/62">Sura 2:62</a> promises reward to believers, Jews, Christians, and Sabaeans who believe in God and the Last Day and do right. Sura 5:48 tells communities to compete in good works. Sura 3:85 says a religion other than <em>islam</em>, surrender to God, will not be accepted. Interpreters dispute whether 2:62 refers to earlier faithful communities, people who accept Muhammad, or a wider possibility of salvation. Translating <em>islam</em> as &ldquo;surrender&rdquo; does not by itself settle that dispute.</p>
         </article>
-        <article class="qg-hard">
+        <article class="qg-hard u-reading-section">
           <h3>People choose, and God controls their willing</h3>
           <p><a href="https://quran.com/76/29-30">Sura 76:29</a> invites whoever wills to take a way to God. The next verse says that people do not will unless God wills. Elsewhere the Quran holds people responsible for their deeds and says God guides or leaves astray whom he wills. Muslim theologians have proposed different accounts of human freedom and divine decree, often discussed as <em>qadar</em>.</p>
         </article>

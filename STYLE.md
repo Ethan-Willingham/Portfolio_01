@@ -210,7 +210,26 @@ Default is a single column with hairline rules. For a **short** glossary (roughl
 <ol class="u-steps"><li class="u-step"><span class="u-step-h">Step.</span><p class="u-step-p">Detail.</p></li>…</ol>
 ```
 
-### Table of contents `.u-toc` · info cards `.u-cards` · collapsible `.u-collapse`
+### Reading sections `.u-reading-list` and sequences `.u-sequence`
+
+Long discussions use open sections separated by thin rules, with cream body text.
+Use `.u-reading-list--columns` when short headings can sit beside the evidence.
+Use `.u-reading-list--grid` for short comparisons. Both stack on phones. Keep
+long headings and explanations in the default single column.
+
+A sequence uses quiet step numbers, three columns on wider screens, and a
+vertical path on phones. Use it for an actual order of events, not unrelated ideas.
+These components have no filled surface, rounded box, shadow, or hover lift.
+
+```html
+<div class="u-reading-list"><article class="u-reading-section"><h3>Topic</h3><p>Explanation.</p></article></div>
+<div class="u-sequence"><article class="u-sequence-step"><p class="u-sequence-k">Morning</p><h3>Opening</h3><p>What happens.</p></article></div>
+```
+
+### Table of contents `.u-toc` · info groups `.u-cards` · collapsible `.u-collapse`
+
+Info groups use a responsive grid, thin top rules, and cream text. They stay flat
+and have no hover animation. The existing `.u-card` class names remain usable.
 ```html
 <nav class="u-toc"><p class="u-toc-k">What is inside</p><ul class="u-toc-list"><li><a class="u-toc-row" href="#"><span class="u-toc-name"><span class="u-toc-n">01</span>Chapter</span><span class="u-toc-m">8 min</span></a></li>…</ul></nav>
 <div class="u-cards"><div class="u-card"><h4 class="u-card-h">Title</h4><p class="u-card-p">Body.</p></div>…</div>
