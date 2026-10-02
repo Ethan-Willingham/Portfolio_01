@@ -1,138 +1,33 @@
-/* ============================================================
-   Nagarjuna, a walk through the Middle Way.
-   Approach B (the One-Reading Walk): the page is read top to
-   bottom, so this script is light. It powers the sticky station
-   rail: a scroll-spy that names the stop you are in, a jump
-   menu, and prev/next that scroll to the neighboring stop.
-
-   Contract with nagarjuna.html:
-     #walkbar      the sticky bar
-       #walk-prev  #walk-next   nav buttons
-       #walk-jump  (button) -> #walk-stno + #walk-stlabel
-       #walk-count "1 / 8"
-     #walkpop      the jump menu (filled here)
-     section.station[id]  each with data-label and data-tag
-
-   No dependencies. Vanilla, deferred. No em dashes.
-   ============================================================ */
+/* Native disclosures keep the reading guide usable without JavaScript.
+   Open any enclosing panels when a concept or source is linked directly. */
 (function () {
   'use strict';
 
-  var $ = function (id) { return document.getElementById(id); };
-  var bar = $('walkbar');
-  if (!bar) return;
-
-  var stations = Array.prototype.slice.call(
-    document.querySelectorAll('section.station')
-  );
-  if (!stations.length) return;
-
-  var pop = $('walkpop');
-  var stno = $('walk-stno');
-  var stlabel = $('walk-stlabel');
-  var count = $('walk-count');
-  var total = stations.length;
-  var cur = 0;
-
-  var reduce = window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function tag(el) { return el.getAttribute('data-tag') || ''; }
-  function label(el) { return el.getAttribute('data-label') || ''; }
-
-  function setOpen(open) {
-    pop.hidden = !open;
-    bar.classList.toggle('is-open', open);
-    $('walk-jump').setAttribute('aria-expanded', String(open));
+  function reveal(target) {
+    for (var el = target; el; el = el.parentElement) {
+      if (el.tagName === 'DETAILS') el.open = true;
+    }
   }
 
-  /* ---------- the jump menu ---------- */
-  function buildPop() {
-    if (!pop) return;
-    pop.innerHTML = stations.map(function (el, i) {
-      return '<button data-i="' + i + '">' +
-        '<span class="walkpop-n">' + (i + 1) + '</span>' +
-        '<span class="walkpop-name">' + label(el) + '</span>' +
-        '<span class="walkpop-tag">' + tag(el) + '</span>' +
-        '</button>';
-    }).join('');
-    pop.addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-i]');
-      if (!b) return;
-      setOpen(false);
-      $('walk-jump').focus();
-      goTo(+b.getAttribute('data-i'));
-    });
-  }
-
-  /* ---------- reflect the current station ---------- */
-  function paint() {
-    var el = stations[cur];
-    if (stno) stno.textContent = 'Section ' + (cur + 1);
-    if (stlabel) stlabel.textContent = label(el);
-    if (count) count.innerHTML = '<b>' + (cur + 1) + '</b> / ' + total;
-    if (pop) {
-      Array.prototype.forEach.call(pop.children, function (b, i) {
-        b.classList.toggle('is-cur', i === cur);
+  function openTarget(align) {
+    var target = document.getElementById(location.hash.slice(1));
+    if (!target) return;
+    reveal(target);
+    if (align) {
+      window.requestAnimationFrame(function () {
+        target.scrollIntoView({ block: 'start' });
       });
     }
-    $('walk-prev').disabled = cur === 0;
-    $('walk-next').disabled = cur === total - 1;
   }
 
-  function goTo(i) {
-    i = Math.max(0, Math.min(total - 1, i));
-    var el = stations[i];
-    var y = el.getBoundingClientRect().top + window.pageYOffset -
-      (bar.offsetHeight + 12);
-    window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
-  }
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    var target = document.getElementById(link.hash.slice(1));
+    if (target) reveal(target);
+  });
 
-  /* ---------- scroll-spy ---------- */
-  function spy() {
-    var line = bar.getBoundingClientRect().bottom + 16;
-    var i = 0;
-    for (var k = 0; k < stations.length; k++) {
-      if (stations[k].getBoundingClientRect().top <= line) i = k;
-    }
-    if (i !== cur) { cur = i; paint(); }
-  }
-
-  /* ---------- wire ---------- */
-  function wire() {
-    $('walk-prev').onclick = function () { goTo(cur - 1); };
-    $('walk-next').onclick = function () { goTo(cur + 1); };
-    if (pop) {
-      $('walk-jump').onclick = function () {
-        setOpen(pop.hidden);
-        if (!pop.hidden) pop.children[cur].focus();
-      };
-      document.addEventListener('click', function (e) {
-        if (pop.hidden) return;
-        if (!pop.contains(e.target) && !$('walk-jump').contains(e.target)) {
-          setOpen(false);
-        }
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !pop.hidden) {
-          setOpen(false);
-          $('walk-jump').focus();
-        }
-      });
-    }
-    var ticking = false;
-    window.addEventListener('scroll', function () {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(function () { spy(); ticking = false; });
-    }, { passive: true });
-    window.addEventListener('resize', spy, { passive: true });
-  }
-
-  buildPop();
-  wire();
-  spy();
-  paint();
-  /* catch scroll position restored on reload */
-  window.addEventListener('load', spy);
+  openTarget(false);
+  window.addEventListener('hashchange', function () { openTarget(true); });
+  window.addEventListener('load', function () { openTarget(true); });
 })();
