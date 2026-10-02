@@ -32,40 +32,40 @@ const HUBS = [
   {
     slug: 'religion', title: 'The Sacred Books',
     card: { thumb: 'guru-granth-sahib.jpg', alt: 'An illuminated page of the Guru Granth Sahib, with Gurmukhi script framed by orange, blue, and gold flowers.',
-      desc: 'The books billions live by, opened on their own terms: the ideas that hold each one together, original-language context where it changes the meaning, and honest notes on translation.' },
-    lead: 'The books billions live by, laid out oldest first, from the Torah to the Guru Granth Sahib. Each post looks for the ideas that carry the book, with original-language context where English materially changes them.',
+      desc: "Read beyond the familiar verses. From the Torah to the Guru Granth Sahib, these posts follow what each book says and where its English translations disagree." },
+    lead: "Most of us know these books by a few famous lines. These readings follow the stories and ideas around them, including the difficult passages and disagreements over translation.",
     members: [
-      live('hebrew-bible.html', 'The Torah', 'hebrew-bible.jpg', 'five books', -600, "A continuous reading of Genesis through Deuteronomy: the story, its central ideas, what history can confirm, how securely the text survived, and the hard parts a serious reader should not miss."),
-      live('analects.html', 'The Analects of Confucius', 'analects.jpg', 'compiled over centuries', -450, "Confucius gives different answers to the same question, depending on who asks. Read his conversations with students, short notes, and English translations to compare."),
-      live('tao-te-ching.html', 'The Tao Te Ching', 'tao-te-ching.jpg', 'date disputed', -400, "A military victory deserves funeral rites, and the best ruler is barely noticed. All 81 chapters explained in plain English, with English translations and adaptations to compare."),
-      live('dhammapada.html', 'The Dhammapada: A Reading Guide', 'dhammapada.jpg', 'Compilation date uncertain', -250, "An early Buddhist collection about harmful action, craving, and freedom from suffering. A reading guide, with all 423 verses explained and compared across English translations."),
-      live('gita.html', 'The Bhagavad Gita: A Guided Reading', 'gita.jpg', 'Late BCE to early CE', -100, "Arjuna refuses to fight his relatives. Krishna teaches him about duty and liberation: the conversation, thirteen ideas, the text's history, and the passages readers disagree about."),
-      live('new-testament.html', 'The New Testament', 'new-testament.jpg', '1st to 2nd c. CE', 70, "Four accounts of Jesus, letters to early churches, and Revelation. The books in plain English, their Jewish setting, fifteen central ideas, manuscript history, and the passages Christians disagree about."),
-      live('nagarjuna.html', 'Nagarjuna and the Emptiness of Everything', 'nagarjuna.jpg', 'c. 150 CE', 150, "Nagarjuna argues that things lack an independent nature. A reading of emptiness, causes, the self, and why Buddhist practice would be impossible if suffering could never change."),
-      live('quran.html', 'The Quran', 'quran.jpg', '632 CE', 632, "Muslims hold the Quran to be God's revelation in Arabic. Its early preaching and later laws, twelve recurring ideas, manuscript history, and difficult passages on war, family authority, slavery, and religious freedom."),
-      live('guru-granth-sahib.html', 'The Guru Granth Sahib', 'guru-granth-sahib.jpg', '1604', 1604, "Sikhs receive this anthology of hymns as their eternal Guru. Its music and poetry connect love of the Divine with honest work, service, and equality."),
+      live('hebrew-bible.html', 'The Torah', 'hebrew-bible.jpg', "Genesis to Deuteronomy", -600, "A family becomes a people, escapes slavery, and receives a law. The Torah follows them to the edge of the promised land, where Moses dies before they enter."),
+      live('analects.html', 'The Analects of Confucius', 'analects.jpg', "Sayings and conversations", -450, "How do you become someone other people can rely on? Confucius works through that question in brief conversations about learning, family duties, and the conduct of rulers."),
+      live('tao-te-ching.html', 'The Tao Te Ching', 'tao-te-ching.jpg', "81 short chapters", -400, "Water takes the low ground; a good ruler knows when to stop interfering. The Tao Te Ching asks how much of our trouble comes from trying too hard."),
+      live('dhammapada.html', 'The Dhammapada: A Reading Guide', 'dhammapada.jpg', "Buddhist verses; date uncertain", -250, "Reciting a teaching gets you little if you never practice it. These Buddhist verses return to what we do with anger and desire, and how suffering can end."),
+      live('gita.html', 'The Bhagavad Gita: A Guided Reading', 'gita.jpg', "Late BCE to early CE", -100, "Arjuna puts down his bow rather than fight his relatives. Krishna's answer joins duty with devotion and freedom from attachment, then persuades him to fight."),
+      live('new-testament.html', 'The New Testament', 'new-testament.jpg', '1st to 2nd c. CE', 70, "Paul's letters came before the Gospels. Read the accounts of Jesus alongside the disputes in the early churches, where questions about faith and belonging were already urgent."),
+      live('nagarjuna.html', 'Nagarjuna and the Emptiness of Everything', 'nagarjuna.jpg', 'c. 150 CE', 150, "If suffering had a fixed nature, it could never end. Nagarjuna calls things empty because they depend on conditions, and uses that argument to explain how change is possible."),
+      live('quran.html', 'The Quran', 'quran.jpg', '632 CE', 632, "The Quran opens with a prayer, then the laws of a community. Its chapters weave ordinary duties into warnings of judgment; their order often hides how the teaching developed."),
+      live('guru-granth-sahib.html', 'The Guru Granth Sahib', 'guru-granth-sahib.jpg', '1604', 1604, "This book is opened each morning and put to rest at night. Sikhs receive its hymns as their Guru, with devotion expressed through honest work and service."),
     ],
   },
   {
     slug: 'philosophy', title: "How to Think, and What's Real", inProgress: true,
     card: { thumb: 'aristotle.jpg', alt: "Rembrandt's painting of Aristotle resting a hand on a bust of Homer.",
-      desc: 'How to think and what is real, from Plato and Aristotle to Darwin and Deutsch, each argument walked one move at a time, the dissenters kept in.' },
-    lead: 'How to think, and what is real, in the order it was argued. From the ancient Greeks through the Enlightenment to modern science, with the dissenters kept in the room.',
+      desc: "What can we know, and how should we live? Read the arguments from Plato to David Deutsch, with enough of the original text to judge them for yourself." },
+    lead: "What makes a good life? What gives a government the right to rule? These readings follow the answers closely enough that you can see where you agree, and where you don't.",
     members: [
-      live('plato.html', 'Plato', 'plato.jpg', 'c. 380 BCE', -380, "Western philosophy starts here, in ancient Athens. Socrates is put to death for asking too many questions, and his student Plato leaves us the most famous image in all of philosophy: prisoners in a cave who mistake shadows on the wall for the real world."),
-      live('aristotle.html', 'Aristotle', 'aristotle.jpg', 'c. 340 BCE', -340, "Plato's student, and maybe the most influential thinker who ever lived. His Ethics takes up the oldest question, what makes a good life, and answers that happiness is not a feeling but a whole life lived well, built one good habit at a time."),
-      live('meditations.html', 'Marcus Aurelius', 'marcus-aurelius.jpg', 'c. 175 CE', 175, "The private journal of a Roman emperor, written to himself and never meant for anyone to read. The most powerful man alive, reminding himself to stay humble, to control only what he can, and to remember he will soon be dead. Stoicism, lived."),
-      live('social-contract.html', 'Hobbes, Locke, and Rousseau', 'social-contract.jpg', '1651-1762', 1651, "The question that built the modern world: why should anyone obey the government at all? Three thinkers imagine life with no state, then argue their way to very different answers, the seeds of the dictator, of human rights, and of democracy."),
-      live('marx.html', 'Karl Marx', 'marx.jpg', '1848', 1848, "Whatever you make of him, one of the most world-changing books ever written. Marx's argument that history runs on class struggle and that capitalism breeds its own gravediggers, walked honestly, next to the catastrophe carried out in his name."),
-      live('mill.html', 'John Stuart Mill', 'mill.jpg', '1859', 1859, "The 1859 case for freedom that still shapes how we argue about it: the only reason to stop an adult from doing something is to keep them from harming someone else. With the strongest defense of free speech ever written."),
-      live('darwin.html', 'Charles Darwin', 'darwin.jpg', '1859', 1859, "The most important science book of the modern age. A pocket watch found in the dirt needs a watchmaker; an eye, Darwin shows, does not. How the endless design of living things builds itself, with no designer at all, given enough time."),
-      live('nietzsche.html', 'Nietzsche', 'nietzsche.jpg', '1886', 1886, "The great wrecking ball. God is dead, he announced, and our morals are not eternal truth but a clever revolt of the weak against the strong. The shelf's resident dissenter, here to attack what all the other books quietly agree on."),
-      live('case-for-god.html', 'Can You Argue Your Way to God?', 'case-for-god.jpg', '1660 & 1952', 1952, "The two most famous arguments that you should believe in God, each built at full strength. Pascal says bet on God, the math favors it; C.S. Lewis says you cannot call Jesus a mere moral teacher. Both are brilliant, and both have a famous hole."),
-      live('beginning-of-infinity.html', 'David Deutsch', 'beginning-of-infinity.jpg', '2011', 2011, "A living physicist's case for radical optimism. A good explanation is one that is hard to vary, and from that single test he argues that human knowledge has no built-in limit and that people are the most significant things in the universe."),
-      live('euclid.html', 'Euclid', 'euclid.jpg', 'c. 300 BCE', -300, "Two thousand years of certainty from one little book: where the idea of proving something true, step by airtight step, was born."),
-      live('kant.html', 'Kant', 'kant.jpg', '1785', 1785, "The other giant of modern philosophy, and the single rule he tried to build all of morality on: act only as you could wish everyone would act."),
-      live('camus.html', 'Albert Camus', 'camus.jpg', '1942', 1942, "The one question he thought serious is whether life is worth living. If the universe hands us no built-in meaning, Camus says, the honest answer is revolt: refuse the exit of suicide and the comfort of faith alike, and live fully anyway, eyes open, picturing Sisyphus happy at the foot of his hill. The companion piece to Frankl, arguing the other way."),
-      live('sapiens.html', 'Sapiens, Read Skeptically', 'sapiens.jpg', '2011', 2011, "A weak ape took over the planet, Yuval Noah Harari argues, by believing in shared fictions, money, gods, nations, that let total strangers cooperate. The decade's most gripping history, handled with a skeptic's eye."),
+      live('plato.html', 'Plato', 'plato.jpg', 'c. 380 BCE', -380, "Socrates refuses to escape his death sentence. Plato's cave asks why someone who has seen beyond the shadows should go back. Both put a cost on examining your life."),
+      live('aristotle.html', 'Aristotle', 'aristotle.jpg', 'c. 340 BCE', -340, "Aristotle treats happiness as something you do across a life. His Ethics asks how habits and judgment help us live well, and why friendship belongs in the answer."),
+      live('meditations.html', 'Marcus Aurelius', 'marcus-aurelius.jpg', 'c. 175 CE', 175, "The Roman emperor reminds himself to get out of bed and stop resenting people. His notebook shows someone repeatedly practicing the advice he's still struggling to follow."),
+      live('social-contract.html', 'Hobbes, Locke, and Rousseau', 'social-contract.jpg', '1651-1762', 1651, "Imagine living without a government. Hobbes sees danger, Locke sees rights, and Rousseau asks how people can rule themselves. Their answers give the state very different limits."),
+      live('marx.html', 'Karl Marx', 'marx.jpg', '1848', 1848, "Work creates wealth. Marx asks who gets to keep it, then argues that capitalism produces the class that will overthrow it. Read the claim alongside what it failed to predict."),
+      live('mill.html', 'John Stuart Mill', 'mill.jpg', '1859', 1859, "Your own good isn't enough reason for someone to force you. Mill draws the line at harm to others, then tests it against unpopular speech and unconventional lives."),
+      live('darwin.html', 'Charles Darwin', 'darwin.jpg', '1859', 1859, "Useful inherited differences can accumulate over generations. Darwin's argument explains how living things become suited to their surroundings, including organs that seem too complicated to have developed gradually."),
+      live('nietzsche.html', 'Nietzsche', 'nietzsche.jpg', '1886', 1886, "Who benefits when humility becomes a virtue? Nietzsche traces moral judgments back to the people making them and asks whether some of our admired qualities work against life."),
+      live('case-for-god.html', 'Can You Argue Your Way to God?', 'case-for-god.jpg', '1660 & 1952', 1952, "Pascal treats belief as a wager. C.S. Lewis argues from Jesus's claims about himself. Follow both arguments, then look at the assumptions each needs you to accept."),
+      live('beginning-of-infinity.html', 'David Deutsch', 'beginning-of-infinity.jpg', '2011', 2011, "An explanation that fits anything explains little. David Deutsch starts with explanations that are hard to vary and builds a case that our capacity to learn has no fixed limit."),
+      live('euclid.html', 'Euclid', 'euclid.jpg', 'c. 300 BCE', -300, "Euclid starts with a few definitions and assumptions, then proves what follows. The Elements lets you watch geometry being built, with each claim depending on the ones before it."),
+      live('kant.html', 'Kant', 'kant.jpg', '1785', 1785, "A lying promise works only while people still trust promises. Kant uses that problem to test moral rules: could you accept everyone acting on the same principle?"),
+      live('camus.html', 'Albert Camus', 'camus.jpg', '1942', 1942, "We want life to make sense; the world offers no clear answer. Camus asks how to keep living without pretending that this gap has been resolved."),
+      live('sapiens.html', 'Sapiens, Read Skeptically', 'sapiens.jpg', '2011', 2011, "Money works because strangers trust the same story about it. Harari uses that kind of shared belief to explain human cooperation. This reading checks the larger claims against the evidence."),
     ],
   },
   {
@@ -89,16 +89,16 @@ const HUBS = [
   {
     slug: 'power-story-love', title: 'Power, Story, and Love', inProgress: true,
     card: { thumb: 'symposium.jpg', alt: "A detail of Anselm Feuerbach's Das Gastmahl, a torch-lit procession of garlanded revelers entering a feast.",
-      desc: 'The human dramas: the Art of War on winning without fighting, the Odyssey on getting home, with power, story, and love still to come.' },
-    lead: 'The human dramas, oldest first: the founding adventure of the West, the oldest book on strategy, and the great arguments about power, desire, and beauty still to come.',
+      desc: "A long trip home, a dinner party about love, and advice for keeping power. Homer, Plato, Machiavelli, and the others are often stranger than the lines people quote." },
+    lead: "Odysseus is trying to get home. The Prince asks how a ruler keeps power. From epic poems to advice on love, these books pay close attention to what people do when they want something.",
     members: [
-      live('odyssey.html', 'The Odyssey, the Long Way Home', 'odyssey.jpg', 'c. 700 BCE', -700, "The founding adventure story of the West. A soldier spends ten years trying to get home from a war, through monsters, witches, and the sea, winning by cunning more than force. Walked one monster at a time in Emily Wilson's translation."),
-      live('art-of-war.html', 'The Art of War, Side by Side', 'art-of-war.jpg', 'c. 500 BCE', -500, "The oldest and most famous book on strategy, from China 2,500 years ago, and its central lesson is a twist: the best way to win is never to fight at all. Read everywhere now, from boardrooms to ballfields. Seven translations side by side."),
-      live('symposium.html', "Plato's Symposium, the Ladder of Love", 'symposium.jpg', 'c. 385 BCE', -385, "Plato's dinner party on love, climbing from drunken jokes to the sublime, and the source of Platonic love, which almost nobody has right. Where the idea that you have an other half comes from."),
-      live('kama-sutra.html', 'The Kama Sutra, Side by Side', 'kama-sutra.jpg', 'c. 300 CE', 300, "The most misunderstood book in the world: not a sex manual but a guide to living well, of which desire is one civilized art. The prudish Victorian translation that made it a scandal, set against an honest modern one."),
-      live('machiavelli.html', 'The Prince, Power Without the Moralizing', 'machiavelli.jpg', '1532', 1532, "Machiavelli's blunt manual on power as it really is, not as it ought to be: a ruler who insists on staying good among the wicked will be destroyed, so he must learn how not to be. The book that turned a man's name into an insult, walked one cold lesson at a time."),
-      live('grand-inquisitor.html', 'The Grand Inquisitor', 'grand-inquisitor.jpg', '1880', 1880, "The most powerful argument against God ever written, buried inside a Russian novel. Christ returns to earth, and the Church arrests him, for the crime of handing people a freedom they cannot bear."),
-      live('in-praise-of-shadows.html', 'In Praise of Shadows', 'in-praise-of-shadows.jpg', '1906-1933', 1933, "A Japanese reply to Western taste: beauty lives in shadow, age, and imperfection, not in bright light and the brand new. Wabi-sabi, explained through a dim room and a cup of tea."),
+      live('odyssey.html', 'The Odyssey, the Long Way Home', 'odyssey.jpg', 'c. 700 BCE', -700, "Odysseus survives by lying, waiting, and knowing when to act. Getting back to Ithaca takes more than crossing the sea: he has to recover his place at home."),
+      live('art-of-war.html', 'The Art of War, Side by Side', 'art-of-war.jpg', 'c. 500 BCE', -500, "A victory can cost more than it gains. Sun Tzu asks how preparation and knowledge can make fighting unnecessary, with English translations that reveal how much interpretation the advice needs."),
+      live('symposium.html', "A dinner party turns into competing explanations of love. Plato gives us the search for an other half, then a stranger proposal: desire can lead beyond any one person."),
+      live('kama-sutra.html', 'The Kama Sutra, Side by Side', 'kama-sutra.jpg', 'c. 300 CE', 300, "Courtship and marriage occupy much of this book on pleasure. Put the Victorian and modern translations together and you can see how differently they describe the same social world."),
+      live('machiavelli.html', 'The Prince, Power Without the Moralizing', 'machiavelli.jpg', '1532', 1532, "A ruler can look merciful and leave people worse off. Machiavelli judges political choices by what they secure, including the cruel ones, and asks how power is kept."),
+      live('grand-inquisitor.html', 'The Grand Inquisitor', 'grand-inquisitor.jpg', '1880', 1880, "Jesus returns to Seville, and the Church has him arrested. Dostoevsky's Inquisitor argues that people would rather be fed and told what to believe than be free."),
+      live('in-praise-of-shadows.html', 'In Praise of Shadows', 'in-praise-of-shadows.jpg', '1906-1933', 1933, "A lacquer bowl looks different in a dim room. Tanizaki asks what electric light has cost Japanese beauty; Okakura approaches related questions through the preparation and drinking of tea."),
     ],
   },
   {
@@ -118,12 +118,12 @@ const HUBS = [
   {
     slug: 'career', title: 'Career',
     card: { thumb: 'all-in.jpg', alt: "Two oarsmen in Thomas Eakins's painting The Biglin Brothers Racing pull in unison across calm water.",
-      desc: 'Managing people, warehouse software, and the work that starts after the sale.' },
-    lead: 'Three field guides from the work I know: managing professionals, the software behind a warehouse, and the customer work that starts after the sale.',
+      desc: "How to manage a team, run a warehouse with software, and keep a customer after the sale. Guides built around the problems that come up at work." },
+    lead: "Hiring good people, getting software to work on a warehouse floor, and helping a customer get what they paid for. Notes from the work I know.",
     members: [
-      live('all-in.html', 'All In: Managing Professionals', 'all-in.jpg', 'management', 1, 'The work that makes people valuable changed; the way we manage them mostly did not. A field guide from managing your first team to leading managers and systems.'),
-      live('warehouse.html', 'The Brain Behind the Warehouse', 'warehouse.jpg', 'operations', 2, 'A warehouse can have stock and still be unable to ship an order. How its software tracks inventory, assigns work, and records what leaves the building.'),
-      live('customer-success.html', 'The Work After the Sale', 'customer-success.jpg', 'customers', 3, 'A warehouse can pay for new software and still run on its old spreadsheet. How to get the operation working, measure what improved, and give the customer a reason to renew.'),
+      live('all-in.html', "People can meet every requirement and still hold back their best work. Managing professionals means making room for judgment while staying clear about responsibility and the problems you need solved."),
+      live('warehouse.html', "Stock on a shelf may already belong to another order. Warehouse software tracks what's available and directs each move, from receiving a delivery to putting a parcel on a truck."),
+      live('customer-success.html', "The software is live, but a supervisor still copies orders into a spreadsheet. Customer success starts by finding that gap and helping the customer get the result they bought."),
     ],
   },
 ];
@@ -137,7 +137,7 @@ const SHELF = {
   thumb: 'boring-stuff.jpg',
   credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
   alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
-  cardDesc: 'the more substantial posts: the sacred books, the craft of work, and one theory of my own.',
+  cardDesc: "Longer readings on old books and the work of everyday life. Pick a collection, or start with a question you already have.",
   /* only the finished collections. philosophy, power-story-love, staying-alive,
      and inner-life moved to the In Progress index (archive.html); they carry
      inProgress above. */
@@ -150,7 +150,7 @@ const SHELF = {
       href: 'the-other-side.html', title: 'The Other Side', thumb: 'the-other-side.jpg',
       date: '2026-07-02', dateDisplay: '2 Jul 2026',
       alt: "An artist's impression of a star torn into a glowing streak as it falls toward a black hole, a dark disc against red clouds of gas.",
-      desc: "My take on the Tao Te Ching's named and nameless. The two need each other to exist, and losing your sense of self brings you closer to the other side.",
+      desc: "A cup needs both clay and empty space. My reading of the Tao Te Ching starts with that dependence, then asks what it might mean for the self.",
     },
   ],
 };
@@ -252,7 +252,7 @@ const liveCount = (h) => h.members.filter((m) => !m.soon).length;
 const shelfHubs = SHELF.hubOrder.map((slug) => HUBS.find((h) => h.slug === slug));
 if (shelfHubs.some((h) => !h)) throw new Error('SHELF.hubOrder names a missing hub');
 const shelfCount = shelfHubs.reduce((sum, h) => sum + liveCount(h), 0) + SHELF.singles.length;
-const shelfLead = `${shelfCount} posts that are more like vegetables than candy.`;
+const shelfLead = "Longer readings on old books and the work of everyday life. Pick a collection, or start with a question you already have.";
 
 const shelfHubCard = (h, i) => `        <li class="article-list-item fade-in">
           <a class="article-item is-collection" href="${h.slug}.html">
