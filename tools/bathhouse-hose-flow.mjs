@@ -33,3 +33,44 @@ export async function bathHoseFlow({ game, sleep, check, screenshot, press, butt
     }
   }
 }
+
+// A finger can point at the copper bottom. The hose mouth must stay in the
+// cavity instead of crossing the liner and silently blocking the whole pour.
+export async function bathHoseTouchFlow({ game, send, sleep, check, screenshot, press, button }) {
+  await game('bathEnter()'); await sleep(750);
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=false;bathFading=false;bathGuests=[];skySlimes=[];skySlimeNext=1e9;bathNoticeT=0;setDevMode(false);');
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  for (const [width, height] of [[390, 844], [320, 568], [844, 390], [568, 320]]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: true });
+    await sleep(100);
+    await game('isMobile=true;resize();bathToolReset();bathSiloReset();liquidCount=0;liquidOps.length=0;liquidMutationSeq++;siphon.tank[0]=16000;bathWater=0;updateCamera();render();');
+    await press(button('hose'), true);
+    const points = await game(`(function(){var c=bathToolBounds().curve,r=canvas.getBoundingClientRect();
+      function client(x,y){return{x:r.left+(x-cam.x)*dpr*worldScale*r.width/canvas.width,y:r.top+(y-cam.y)*dpr*worldScale*r.height/canvas.height};}
+      return{head:client(bathTool.x,bathTool.y),bottom:client((c.x0+c.x1)/2,c.y0+c.D-24)};
+    })()`);
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...points.head, id: 3 }] });
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...points.bottom, id: 3 }] });
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await game('for(var i=0;i<150;i++)bathToolTick(1/60);render();');
+    const mouth = await game('(function(){var t=bathTool,x=t.x+Math.sin(t.tilt)*25,y=t.y+Math.cos(t.tilt)*25;return{x:x,y:y,solid:liquidWorldSolidAt(x,y),touch:!!t.touchInput,target:t.ty,head:t.y};})()');
+    console.log('TOUCH_MOUTH', width, height, mouth);
+    check(width+'x'+height+' touch drag keeps the hose mouth above the copper', mouth.touch && !mouth.solid);
+    await press(button('tool-valve'), true);
+    for (let frame=0; frame<120; frame++) {
+      await game('liquidToolSync();bathToolTick(1/60);mineralLiquidTick(1/60);bathOperationsTick(1/60);updateLiquids(1/60);render();');
+      await game('liquidWGPU.device.queue.onSubmittedWorkDone()');
+    }
+    const poured = await game(`(async function(){var g=liquidWGPU,n=g.uploadedCount,b=g.device.createBuffer({size:Math.max(16,n*16),usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+      try{var e=g.device.createCommandEncoder();e.copyBufferToBuffer(g.buf.pos,0,b,0,n*16);g.device.queue.submit([e.finish()]);await b.mapAsync(GPUMapMode.READ);var p=new Float32Array(b.getMappedRange()),c=bathToolBounds().curve,wet=0,finite=true;
+        for(var i=0;i<n;i++){var x=p[i*4],y=p[i*4+1];finite=finite&&Number.isFinite(x)&&Number.isFinite(y);if(x>=c.x0&&x<=c.x1&&y>=c.y0&&y<=c.y0+c.depthAt(x)+1)wet++;}
+        return{n:n,wet:wet,finite:finite,spent:16000-bathLiquidCount(0),output:bathTool.output,valve:bathTool.valve,lost:bathLostWater};
+      }finally{b.unmap();b.destroy();}
+    })()`);
+    console.log('TOUCH_POUR', width, height, poured);
+    check(width+'x'+height+' bottom-aimed hose keeps pouring real GPU water', poured.valve && poured.output>0 && poured.wet>2000 && poured.finite);
+    check(width+'x'+height+' touch pour conserves its finite supply', poured.spent===poured.n+poured.lost);
+    await screenshot('touch-bottom-hose-'+width+'x'+height);
+    await press(button('tool-valve'), true);
+  }
+}

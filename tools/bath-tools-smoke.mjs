@@ -52,6 +52,13 @@ async function press(target, touch = false) {
   }
   await ev('new Promise(resolve=>requestAnimationFrame(()=>resolve()))');
 }
+async function selectTool(mode, touch = false) {
+  if (await game('!!hearthRoomLayout().mobile')) {
+    await press(buttonCenter('panel:' + (mode === 'claw' ? 'guests' : 'water')), touch);
+    if (await game('bathTool.mode===' + JSON.stringify(mode))) return;
+  }
+  await press(buttonCenter(mode), touch);
+}
 async function screenshot(name) { const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(r.data,'base64')); }
 function check(label, condition) { assert.ok(condition,label);console.log('PASS '+label); }
 
@@ -72,7 +79,7 @@ try {
   await game('bathEnter()'); await sleep(800);
   await game('skySlimeNext=100000;skySlimes=[];bathGuests=[];siphon.tank[0]=18000;bathHeat=0.8;var s=skySlimeFresh(0,0);bathGuestAccept(s);');
   await sleep(900);
-  await press(buttonCenter('claw'));
+  await selectTool('claw');
   check('claw selected through real mouse input', await game("bathTool.mode==='claw'"));
   const guestPoint = '(function(){var s=bathGuests[0].s;return {x:(s.x-cam.x)*worldScale,y:(s.y-28-cam.y)*worldScale};})()';
   let point=await clientPoint(guestPoint);
@@ -90,7 +97,7 @@ try {
   await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
   await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   check('drop releases without losing the visitor',await game('bathTool.held===null && bathGuests.length===1'));
-  await press(buttonCenter('hose'));
+  await selectTool('hose');
   check('hose replaces claw',await game("bathTool.mode==='hose' && bathTool.held===null"));
   point=await clientPoint('(function(){return {x:(bathTool.x+80-cam.x)*worldScale,y:(bathTool.y-cam.y)*worldScale};})()');
   const beforeHover=await game('siphon.tank[0]');
@@ -149,9 +156,10 @@ try {
   check('claw carries, drops and restores physical visitors at 30/60/144 Hz',physics.every(p=>p.caught&&p.manual&&p.free&&p.finite&&p.carried>1000));
   for(const [width,height] of [[1280,900],[700,500],[699,500],[520,500],[390,844],[320,568],[320,320],[844,390],[568,320]]){
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
-    await game('isMobile='+String(width<500)+';resize();updateCamera();render()');
+    await game('isMobile='+String(width<500)+';resize();');
+    await sleep(150); await game('updateCamera();render()');
     for(const mode of ['claw','hose']){
-      await game('bathToolReset();bathToolSelect('+JSON.stringify(mode)+');bathToolTick(1/60);updateCamera();render()');
+      await game('bathControlsTab='+JSON.stringify(mode==='claw'?'guests':'water')+';bathToolReset();bathToolSelect('+JSON.stringify(mode)+');bathToolTick(1/60);updateCamera();render()');
       const fits=await game(`(function(){var w=canvas.width/dpr,h=canvas.height/dpr,bs=hearthButtons;
         var bounds=bathToolBounds();return bs.every(a=>a.x>=0&&a.y>=0&&a.x+a.w<=w&&a.y+a.h<=h&&a.h>=44)&&
           bs.every((a,i)=>bs.every((b,j)=>i===j||a.x>=b.x+b.w||a.x+a.w<=b.x||a.y>=b.y+b.h||a.y+a.h<=b.y))&&
@@ -165,7 +173,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await send('Emulation.setTouchEmulationEnabled',{enabled:true});
   await game("resize();bathToolReset();updateCamera();render();siphon.tank[0]=20000;bathWater=0;bathGuests=[];gameRafId=requestAnimationFrame(loop)");
-  await press(buttonCenter('hose'),true);
+  await selectTool('hose',true);
   point=await clientPoint('(function(){return {x:(bathTool.x-cam.x)*worldScale,y:(bathTool.y-cam.y)*worldScale};})()');
   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...point,id:8}]});
   await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:point.x+50,y:point.y+30,id:8}]});
@@ -191,7 +199,7 @@ try {
   check('focus loss closes the valve',await game('!bathTool.valve && bathTool.flow===0'));
   await game('bathGuests=[];skySlimes=[];var s=skySlimeFresh(0,0);bathGuestAccept(s)');
   await sleep(850);
-  await press(buttonCenter('claw'),true);
+  await selectTool('claw',true);
   point=await clientPoint(guestPoint);
   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...point,id:8}]});
   await sleep(1400);

@@ -16,13 +16,14 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
 2. Scoop water into the rig tank. The bath needs at least 40 L and holds 450 L.
 3. Enter the banya. The main room fills the viewport around a wide catenary tub,
    with a copper lining, curved rows of bolts, and the boiler built beneath it.
-4. Tend the boiler directly below the bath. Its controls are always available.
+4. Tend the boiler directly below the bath. On phones, open the FIRE tab.
    Select a material, position its translucent preview and click to release it.
    Select the flint and steel, then drag above the pile to cast sparks onto fuel.
    Work the bellows for more heat and turn the grate crank to sift pale ash.
-5. Open the liquid control, select water and aim the hose into the tub. Hold to
+5. Open the liquid control (WATER on phones), select water and aim the hose into the tub. Hold to
    pour (use POUR on touch). Three silos beside the building store carried liquids.
-   Tap a visitor's order at 30 to 48 C. It soaks, pays, and returns outside.
+   Tap a visitor's order at 30 to 48 C, or ADMIT GUEST in the phone's GUESTS tab.
+   It soaks, pays, and returns outside.
 
 The forge and its crafting requirement are retired. New and returning games
 receive a supplied striker. Old stored iron, forge fuel, and unfinished work
@@ -65,8 +66,14 @@ actual fuel bodies while pale ash sifts through the slots.
 The room gives its full height to the bathhouse, with no top or bottom HUD
 bar since v28.84. Navigation buttons mount directly on the timber wall.
 The claw and hose switches sit beside the firebox on desktop, opposite the
-water control and water, temperature and money readings. Narrow screens keep
-these controls directly beneath the firebox. Since v28.80, a 896 by 256 chamber
+water control and water, temperature and money readings. Since v28.139, narrow
+screens frame the basin more closely above WATER, GUESTS and FIRE tabs. Water
+has source selection, hose, pour and jet/shower actions; Guests has the claw,
+grab/drop and visitor admission; Fire has material selection, striker, bellows
+and ash removal. The four actions are 52px tall, with readable wrapped labels.
+Water volume, temperature, readiness and money stay visible above the basin.
+Liquid and material trays have separate CLOSE buttons and block input to
+covered controls. Since v28.80, a 896 by 256 chamber
 replaces the narrow firebox. Since v28.90, smooth refractory cheeks sweep
 from the basin shoulders into a broad grate spanning 56% of the chamber,
 75% wider than the earlier tapered base. Coal and ash collide with the curved
@@ -122,7 +129,8 @@ provide a local `BATH_SAVE` fixture).
 
 ## Ceiling claw and hose (v28.73)
 
-The bottom rail has CLAW and HOSE switches. Tap the selected switch again to
+The desktop rail has CLAW and HOSE switches; phones put them in GUESTS and
+WATER. Tap the selected switch again to
 stow it. Only the selected tool and its ceiling carriage are visible. While a
 tool is selected, the mouse moves it without holding a button. Click to grab a
 slime and click again to drop it. Hold the mouse button to pour water; release
@@ -146,6 +154,10 @@ hose trails behind, and the pressure ramps smoothly. Its real water particles
 hit guests, displace the bath, and spill onto the floor. The claw hub and
 fingers also displace water when dipped into the tub.
 
+Since v28.139, collision projects the actual hose outlet as well as its head
+outside the copper liner. Dragging low or tilting near a wall no longer puts
+the outlet inside solid copper and silently blocks accepted water.
+
 The liquid tray selects water, legacy oil, brine, nectar or lumen. The hose
 draws that identity from silos, remaining legacy storage and the rig. It only
 debits particles the solver accepts; blocked output remains reserved in a saved
@@ -165,6 +177,13 @@ actual mouse and touch controls, water accounting, three simulation rates,
 physical guest saves, cancellation and responsive layouts. Screenshots go to
 `/tmp/sluice-bath-tools-qa`. The bathhouse unit suite also checks physical soak
 progress and CPU moving-boundary water coupling.
+
+`node tools/bath-mobile-smoke.mjs` checks phone tabs and trays, separate touch
+targets, guest admission and real touch fuel placement in portrait and short
+landscape, plus the desktop controls. `BATH_HOSE_TOUCH=1 node
+tools/bathhouse-workshop-smoke.mjs` drags the hose deep into the bowl on four
+phone sizes, reads back real GPU particles and verifies finite liquid supply
+accounting. Both own and close a separate Chrome for Testing process.
 
 ## Coal and heat
 

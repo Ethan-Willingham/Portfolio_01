@@ -54,7 +54,12 @@ an integrated boiler beneath the basin. Since v28.74, the firebox, fuel bunker,
 bellows, flint, ash grate and actionable fire guidance stay in this same view.
 Since v28.97, select an existing fuel or mineral from the rack, then click to
 release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
-and burn down to ash. Bellows increase heat and fuel consumption. Since v28.63, a bounded WebGPU
+and burn down to ash. Bellows increase heat and fuel consumption.
+Phone controls use Water, Guests and Fire tabs since v28.139, with large
+labeled actions, a closer basin view and separate landscape work areas.
+The hose outlet stays outside the copper even when dragged against the liner,
+so a low aim still pours into the bowl.
+Since v28.63, a bounded WebGPU
 reacting-flow solver transports fuel, oxygen, soot, steam and heat around the
 actual coal polygons. Its reactions and heat exchanges drive combustion and
 boiler output. See [FIRE_SIMULATION.md](FIRE_SIMULATION.md) for the material model,

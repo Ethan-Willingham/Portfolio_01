@@ -155,17 +155,19 @@
     hearthButtons.push(Object.assign({ action: 'ash' }, r));
   }
   function hearthFuelRackRect(L) {
-    var w = Math.min(354, L.w - 24), h = HEARTH_MATERIAL_ORDER.length > 6 ? 312 : 260;
+    var w = Math.min(354, L.w - 24), h = (HEARTH_MATERIAL_ORDER.length > 6 ? 312 : 260) + (L.mobile ? 44 : 0);
     return { x: Math.max(12, Math.min(L.w - w - 12, L.bin.x)), y: Math.max(8, Math.min(L.h - h - 8, L.bin.y - h - 8)), w: w, h: h };
   }
   function hearthDrawFuelRack(c, L) {
     if (!hearthHand.rack) return;
     var r = hearthFuelRackRect(L); hearthPlate(c, r, true);
     hearthText(c, hearthDevSupplies() ? 'UNLIMITED MATERIALS' : 'FUEL & MINERALS', r.x + 12, r.y + 25, 11, BLD.cream);
-    hearthButton(c, { x: r.x + r.w - 82, y: r.y + 4, w: 76, h: 44 }, 'TONGS', 'hand', hearthHand.mode === 'hand');
+    hearthButton(c, { x: r.x + r.w - 82, y: r.y + 4, w: 76, h: 44 }, L.mobile ? 'CLOSE' : 'TONGS', L.mobile ? 'close-tray' : 'hand', hearthHand.mode === 'hand');
+    if (L.mobile) hearthButton(c, { x: r.x + 6, y: r.y + 48, w: r.w - 12, h: 44 }, 'TONGS / MOVE FUEL', 'hand', hearthHand.mode === 'hand');
+    var down = L.mobile ? 44 : 0;
     var cw = (r.w - 24) / 3, first = hearthHand.rackPage * 6;
     for (var i = 0; i < 6 && first + i < HEARTH_MATERIAL_ORDER.length; i++) {
-      var id = HEARTH_MATERIAL_ORDER[first + i], cell = { x: r.x + 6 + i % 3 * (cw + 3), y: r.y + 52 + Math.floor(i / 3) * 73, w: cw, h: 67 };
+      var id = HEARTH_MATERIAL_ORDER[first + i], cell = { x: r.x + 6 + i % 3 * (cw + 3), y: r.y + 52 + down + Math.floor(i / 3) * 73, w: cw, h: 67 };
       var chosen = hearthHand.mode === 'fuel' && hearthHand.material === id;
       hearthPlate(c, cell, chosen);
       var sample = hearthFuelPreview(id, 'boiler');
@@ -177,12 +179,12 @@
       hearthButtons.push(Object.assign({ action: 'fuel:' + id }, cell));
     }
     var selected = hearthMaterial(hearthHand.material);
-    hearthText(c, selected.role === 'additive' ? 'ADDITIVE / NO FUEL' : 'HEAT ' + selected.heat + '/5  BURN ' + selected.burn + '/5', r.x + 12, r.y + 211, 11, BLD.goldPale);
-    hearthWrap(c, selected.description, r.x + 12, r.y + 232, r.w - 24, BLD.cream, 2);
+    hearthText(c, selected.role === 'additive' ? 'ADDITIVE / NO FUEL' : 'HEAT ' + selected.heat + '/5  BURN ' + selected.burn + '/5', r.x + 12, r.y + 211 + down, 11, BLD.goldPale);
+    hearthWrap(c, selected.description, r.x + 12, r.y + 232 + down, r.w - 24, BLD.cream, 2);
     if (HEARTH_MATERIAL_ORDER.length > 6) {
-      hearthButton(c, { x: r.x + 6, y: r.y + 264, w: 76, h: 44 }, 'BACK', 'fuel-prev', first > 0);
-      hearthText(c, (hearthHand.rackPage + 1) + ' / ' + Math.ceil(HEARTH_MATERIAL_ORDER.length / 6), r.x + r.w / 2, r.y + 286, 11, BLD.cream, 'center');
-      hearthButton(c, { x: r.x + r.w - 82, y: r.y + 264, w: 76, h: 44 }, 'NEXT', 'fuel-next', first + 6 < HEARTH_MATERIAL_ORDER.length);
+      hearthButton(c, { x: r.x + 6, y: r.y + 264 + down, w: 76, h: 44 }, 'BACK', 'fuel-prev', first > 0);
+      hearthText(c, (hearthHand.rackPage + 1) + ' / ' + Math.ceil(HEARTH_MATERIAL_ORDER.length / 6), r.x + r.w / 2, r.y + 286 + down, 11, BLD.cream, 'center');
+      hearthButton(c, { x: r.x + r.w - 82, y: r.y + 264 + down, w: 76, h: 44 }, 'NEXT', 'fuel-next', first + 6 < HEARTH_MATERIAL_ORDER.length);
     }
   }
   function hearthDrawHand(c, L) {
@@ -223,23 +225,26 @@
   }
   function hearthDrawLiquidRack(c, L) {
     if (!hearthHand.silos) return;
-    var w = Math.min(354, L.w - 24), h = 256;
-    var r = { x: Math.max(12, Math.min(L.w - w - 12, L.water.x)), y: Math.max(56, Math.min(L.h - h - 12, L.water.y - h - 8)), w: w, h: h };
+    var w = Math.min(354, L.w - 24), h = L.mobile ? 300 : 256;
+    var r = { x: Math.max(12, Math.min(L.w - w - 12, L.water.x)), y: Math.max(L.mobile ? 8 : 56, Math.min(L.h - h - 12, L.water.y - h - 8)), w: w, h: h };
     hearthPlate(c, r, true); hearthText(c, 'LIQUID SILOS', r.x + 12, r.y + 14, 11, BLD.cream);
-    var tanks = drawBathSilos(c, r.x + 8, r.y + 29, r.w - 16, 114, { labels: true });
+    if (L.mobile) hearthButton(c, { x: r.x + r.w - 82, y: r.y + 4, w: 76, h: 44 }, 'CLOSE', 'close-tray', true);
+    var tanks = drawBathSilos(c, r.x + 8, r.y + (L.mobile ? 52 : 29), r.w - 16, L.mobile ? 66 : 114, { labels: true });
     for (var i = 0; i < tanks.length; i++) hearthButtons.push(Object.assign({ action: 'silo-' + i }, tanks[i]));
-    var cw = (r.w - 28) / 5;
+    var cols = L.mobile ? 3 : 5, cw = (r.w - 12 - (cols - 1) * 4) / cols;
     for (var type = 0; type < 5; type++) {
-      var q = { x: r.x + 6 + type * (cw + 4), y: r.y + 152, w: cw, h: 44 };
+      var q = { x: r.x + 6 + type % cols * (cw + 4), y: r.y + (L.mobile ? 126 : 152) + Math.floor(type / cols) * 52, w: cw, h: L.mobile ? 48 : 44 };
       var active = bathSilos.selected === type;
       hearthButton(c, q, liquidCatalog[type].name.toUpperCase(), 'liquid:' + type, active);
     }
     var half = (r.w - 18) / 2;
-    hearthButton(c, { x: r.x + 6, y: r.y + 204, w: half, h: 44 }, 'STORE TANK', 'silo-store', true);
-    hearthButton(c, { x: r.x + 12 + half, y: r.y + 204, w: half, h: 44 }, 'TAKE BACK', 'silo-take', true);
+    hearthButton(c, { x: r.x + 6, y: r.y + (L.mobile ? 240 : 204), w: half, h: L.mobile ? 52 : 44 }, 'STORE TANK', 'silo-store', true);
+    hearthButton(c, { x: r.x + 12 + half, y: r.y + (L.mobile ? 240 : 204), w: half, h: L.mobile ? 52 : 44 }, 'TAKE BACK', 'silo-take', true);
   }
   function hearthDrawOverlays(c) {
     if (gamePaused || bathFading) { hearthOverlayHide(); return; }
     c = hearthOverlayContext(c);
-    var L = hearthRoomLayout(); hearthDrawHand(c, L); hearthDrawFuelRack(c, L); hearthDrawLiquidRack(c, L);
+    var L = hearthRoomLayout(), first = hearthButtons.length;
+    hearthDrawHand(c, L); hearthDrawFuelRack(c, L); hearthDrawLiquidRack(c, L);
+    if (L.mobile && (hearthHand.rack || hearthHand.silos)) hearthButtons = hearthButtons.slice(first);
   }

@@ -253,7 +253,7 @@
     return true;
   }
   function bathInteriorWarm(c) {
-    var previous = ctx, copperC = bathThermal ? bathThermal.copperC : 20;
+    var previous = ctx, buttons = hearthButtons, copperC = bathThermal ? bathThermal.copperC : 20;
     c.save();
     try {
       ctx = c;
@@ -276,5 +276,10 @@
       hearthDrawCasing(c, { x: 24, y: 30, w: 208, h: 160 }, hearthBeds.boiler, false);
       hearthDrawStriker(c, 240, 60, 1, 0.5);
       drawBathSilos(c, 0, 0, 250, 110, { labels: true });
-    } finally { if (bathThermal) bathThermal.copperC = copperC; c.restore(); ctx = previous; }
+      // Phone controls use larger lettering and wrapped two-line actions.
+      hearthButtons = [];
+      hearthButton(c, { x: 0, y: 150, w: 140, h: 52 }, 'WATER / 200 L', 'warm', true);
+      hearthButton(c, { x: 148, y: 150, w: 100, h: 52 }, 'GUEST 1 SOAKING', 'warm', false);
+      hearthText(c, '450 L   40.0 C', 12, 220, 17, BLD.cream);
+    } finally { hearthButtons = buttons; if (bathThermal) bathThermal.copperC = copperC; c.restore(); ctx = previous; }
   }

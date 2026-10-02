@@ -1,8 +1,44 @@
   // One bathhouse, two working areas. This layout owns the fire's display and
   // pointer transform, and reserves an unobscured viewport for the real basin.
+  var bathControlsTab = 'water';
+  function hearthMobileLayout(w, h, landscape) {
+    var gap = 8, pad = 12, dock, scene, box, ratio = HEARTH_WIDTH / HEARTH_HEIGHT;
+    if (landscape) {
+      var split = Math.round(w * 0.55);
+      scene = { x: 0, y: 60, w: split, h: h - 60 };
+      dock = { x: split, y: 0, w: w - split, h: h };
+      var bw = dock.w - pad * 2, bh = Math.min(90, bw / ratio);
+      box = { x: split + pad, y: 60, w: bw, h: bh };
+    } else {
+      dock = { x: 0, y: h - 224, w: w, h: 224 };
+      scene = { x: 0, y: 124, w: w, h: Math.max(64, dock.y - 124 - 82) };
+      var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
+      var shoulder = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * 0.06, 24);
+      var outerX = (shoulder.x - cam.x) * worldScale;
+      var outerW = (curve.x0 + curve.x1 - 2 * shoulder.x) * worldScale;
+      var outerY = (shoulder.y - cam.y) * worldScale;
+      var outerH = Math.max(100, outerW / (HEARTH_PHI * HEARTH_PHI));
+      box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
+        w: outerW * HEARTH_BOWL_SPAN, h: outerH * (1 - HEARTH_BOWL_CUT),
+        bowl: { x: outerX, y: outerY, w: outerW, h: outerH } };
+    }
+    var cw = (dock.w - pad * 2 - gap) / 2;
+    var tabY = landscape ? h - 48 - pad : dock.y + pad;
+    var tabW = (dock.w - pad * 2 - gap * 2) / 3;
+    var tabs = [], tools = [], actionY = landscape ? box.y + box.h + 12 : tabY + 56;
+    for (var n = 0; n < 3; n++) tabs.push({ x: dock.x + pad + n * (tabW + gap), y: tabY, w: tabW, h: 48 });
+    for (var i = 0; i < 4; i++) tools.push({ x: dock.x + pad + (i % 2) * (cw + gap),
+      y: actionY + Math.floor(i / 2) * 60, w: cw, h: 52 });
+    var meter = landscape ? { x: 12, y: 64, w: scene.w - 24, h: 52 } : { x: 12, y: 64, w: w - 24, h: 52 };
+    if (bathMode && typeof hearthCasingProfile === 'function') hearthChamberSetLayout(box, !landscape);
+    return { w: w, h: h, top: 0, footer: h, station: dock, dock: dock, scene: scene, box: box,
+      bin: tools[0], pump: tools[2], action: tools[1], ash: tools[3], tools: tools,
+      water: tools[0], meter: meter, tabs: tabs, mobile: true, wide: false, side: landscape, landscape: landscape };
+  }
   function hearthRoomLayout() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
-    var landscape = w >= 520 && h < 500, wide = w >= 700 && !landscape;
+    var landscape = w >= 520 && h <= 500, wide = w >= 700 && !landscape;
+    if (!wide) return hearthMobileLayout(w, h, landscape);
     var ratio = HEARTH_WIDTH / HEARTH_HEIGHT, gap = 8, bh, bw, sh;
     var station, scene, box, bin, pump, action, ash, tools, water, meter;
     if (landscape) {
@@ -112,9 +148,26 @@
     hearthText(c, count + '  >', r.x + r.w - 7, iy + 9, 11, BLD.goldPale, 'right');
     hearthButtons.push(Object.assign({ action: 'fuels' }, r));
   }
+  function hearthDrawHeldFuel(c, L) {
+    if (!hearthDrag) return;
+    var d = hearthDrag;
+    hearthDrawCoal(c, d.b, d.x, d.y, L.box.w / HEARTH_WIDTH, hearthToolTime);
+    c.strokeStyle = BLD.goldPale; c.lineWidth = 1;
+    hearthCasingPath(c, hearthCasingProfile(L.box, !L.landscape), false); c.stroke();
+  }
   function hearthDrawStation(c) {
     var L = hearthRoomLayout(), r = L.station, box = L.box, bed = hearthBeds.boiler;
     c.save(); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (L.mobile) {
+      c.fillStyle = BLD.woodDeep;
+      if (L.landscape) c.fillRect(r.x, r.y, r.w, r.h);
+      hearthDrawCasing(c, box, bed, bathBoilerHover, !L.landscape);
+      var label = { x: box.x, y: L.landscape ? 24 : box.y + box.h + 8, w: box.w, h: 24 };
+      hearthPlate(c, label, false);
+      hearthText(c, hearthStationReadout(bed), label.x + label.w / 2, label.y + 12, 11, BLD.cream, 'center');
+      hearthDrawHeldFuel(c, L);
+      c.restore(); return;
+    }
     c.fillStyle = BLD.woodDeep; c.fillRect(r.x, r.y, r.w, r.h);
     hearthDrawCasing(c, box, bed, bathBoilerHover, !L.landscape);
     hearthDrawFuelControl(c, L.bin, false);
@@ -132,11 +185,6 @@
       var readY = L.h >= 500 ? L.h - 12 : r.y + 8;
       hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, readY, 11, BLD.cream, 'center');
     }
-    if (hearthDrag) {
-      var d = hearthDrag;
-      hearthDrawCoal(c, d.b, d.x, d.y, box.w / HEARTH_WIDTH, hearthToolTime);
-      c.strokeStyle = BLD.goldPale; c.lineWidth = 1;
-      hearthCasingPath(c, hearthCasingProfile(box, !L.landscape), false); c.stroke();
-    }
+    hearthDrawHeldFuel(c, L);
     c.restore();
   }

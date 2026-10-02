@@ -59,6 +59,21 @@ function fixture() {
 }
 
 {
+  for (const fps of [30, 60, 144]) for (const aim of [0.08, 0.28, 0.5, 0.72, 0.92]) {
+    const { s, c } = fixture(), t = s.bathTool;
+    t.valve = false; t.flow = 0;
+    t.tx = c.x0 + (c.x1 - c.x0) * aim; t.ty = c.y0 + c.D - 24;
+    for (let frame = 0; frame < fps * 3; frame++) {
+      s.bathToolTick(1 / fps);
+      const x = t.x + Math.sin(t.tilt) * 25, y = t.y + Math.cos(t.tilt) * 25;
+      assert(!s.bathSolidAt(x, y), fps+' Hz tilted hose mouth crosses copper at aim '+aim);
+      assert([t.x, t.y, t.vx, t.vy, t.tilt].every(Number.isFinite));
+    }
+  }
+  console.log('PASS tilted hose outlets stay clear of the full curved liner at 30/60/144 Hz');
+}
+
+{
   const { s } = fixture(); s.bathWater = 90000; s.bathSiloQueue(2, 1000, 60); s.bathSilos.selected = 2;
   s.emissionLimit = 7; s.bathToolTick(0.1);
   assert.equal(s.liquidCount, 7); assert.equal(s.bathLiquidCount(2), 993);

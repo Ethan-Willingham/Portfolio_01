@@ -397,6 +397,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     hearthDrawNav(ctx, 'bath');
     bathDrawPerformance(ctx, L);
+    if (L.mobile) { bathDrawMobileControls(ctx, L); return; }
     bathToolDrawControls(ctx, L.tools);
     bathServiceButtons = [];
     var type = bathSilos.selected, available = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
@@ -413,6 +414,48 @@
       ctx.fillStyle = BLD.woodDeep; ctx.fillRect(x - 4, y, width + 8, 38);
       hearthWrap(ctx, bathNotice, x + 4, y + 11, width - 8, BLD.goldPale, 2);
     }
+  }
+  function bathDrawMobileControls(c, L) {
+    var r = L.dock, slots = L.tools, tab = bathControlsTab;
+    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(r.x, L.landscape ? L.tabs[0].y - 4 : r.y, r.w, L.landscape ? 60 : r.h);
+    var names = ['WATER', 'GUESTS', 'FIRE'], ids = ['water', 'guests', 'fire'];
+    for (var n = 0; n < 3; n++) hearthButton(c, L.tabs[n], names[n], 'panel:' + ids[n], tab === ids[n]);
+    var type = bathSilos.selected, source = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
+    if (tab === 'water') {
+      hearthButton(c, slots[0], liquidCatalog[type].name.toUpperCase() + ' / ' + source, 'liquids', true);
+      hearthButton(c, slots[1], bathTool.mode === 'hose' ? 'STOW HOSE' : 'USE HOSE', 'hose', bathTool.mode === 'hose');
+      hearthButton(c, slots[2], bathTool.valve ? 'STOP POUR' : 'POUR', 'tool-valve', bathTool.valve);
+      hearthButton(c, slots[3], bathTool.shower ? 'SHOWER' : 'JET', 'tool-spray', bathTool.shower);
+    } else if (tab === 'guests') {
+      hearthButton(c, slots[0], bathTool.mode === 'claw' ? 'STOW CLAW' : 'USE CLAW', 'claw', bathTool.mode === 'claw');
+      hearthButton(c, slots[1], bathTool.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!bathTool.held);
+      for (var i = 0; i < 2; i++) {
+        var guest = bathGuests[i], label = !guest ? 'NO VISITOR' : guest.st === 'wait' ? 'ADMIT GUEST ' + (i + 1) : 'GUEST ' + (i + 1) + ' SOAKING';
+        hearthButton(c, slots[i + 2], label, guest ? 'serve:' + guest.s.id : 'no-guest', !!guest && guest.st === 'wait' && bathCanServe());
+      }
+    } else {
+      var fuel = hearthMaterial(hearthHand.material).label.toUpperCase();
+      hearthButton(c, slots[0], fuel + ' / ' + (hearthDevSupplies() ? 'FREE' : hearthMaterialCount(hearthHand.material)), 'fuels', hearthHand.mode === 'fuel');
+      hearthButton(c, slots[1], 'STRIKER', 'strike', hearthHand.mode === 'striker');
+      hearthButton(c, slots[2], 'BELLOWS', 'pump', true);
+      hearthButton(c, slots[3], 'CLEAR ASH', 'ash', !!hearthHand.rake);
+    }
+    hearthPlate(c, L.meter, false);
+    var ready = bathCanServe(), status = ready ? 'BATH READY' : bathWater <= 0 ? 'EMPTY TUB' : bathWater < BATH_MIN_WATER ? 'ADD WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER';
+    hearthText(c, Math.floor(bathWater / 100) + ' L', L.meter.x + 14, L.meter.y + 18, 17, BLD.cream);
+    hearthText(c, bathThermalTemperature().toFixed(1) + ' C', L.meter.x + L.meter.w - 14, L.meter.y + 18, 17, BLD.cream, 'right');
+    hearthText(c, status, L.meter.x + 14, L.meter.y + 39, 12, ready ? BLD.goldPale : BLD.cream);
+    hearthText(c, '$' + bathFmtMoney(money), L.meter.x + L.meter.w - 14, L.meter.y + 39, 12, BLD.goldPale, 'right');
+    var hintY = slots[3].y + slots[3].h + 10;
+    var room = L.landscape ? L.tabs[0].y - hintY : L.h - hintY;
+    if (room >= 30) {
+      var hint = bathNoticeT > 0 ? bathNotice : tab === 'fire' ?
+        hearthHand.mode === 'striker' ? 'Drag the striker above the fuel to light it.' : 'Choose fuel, then tap inside the firebox to drop it.' :
+        tab === 'guests' ? 'Drag the claw to aim. Grab a visitor, then lower it into the warm bath.' :
+        bathTool.mode === 'hose' ? 'Drag the hose into the bowl. Tap POUR to fill, then STOP.' : 'Select your water, then tap USE HOSE.';
+      hearthWrap(c, hint, r.x + 14, hintY + 8, r.w - 28, BLD.cream, 2);
+    }
+    bathServiceButtons = [];
   }
   function bathServicePointer(x, y) {
     for (var i = 0; i < bathServiceButtons.length; i++) {

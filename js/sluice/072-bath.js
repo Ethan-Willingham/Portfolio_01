@@ -504,11 +504,14 @@
     }
     if (!bathSaved) bathSaved = { ws: worldScale, sw: screenW, sh: screenH };
     var width = canvas.width / dpr, height = canvas.height / dpr;
-    var nav = hearthNavHeight(), scene = hearthRoomLayout().scene;
+    var nav = hearthNavHeight(), layout = hearthRoomLayout(), scene = layout.scene;
     // Reserve the fixed controls before fitting the entire ground-floor tub.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
     var mainHeight = bathInteriorBottom() - mainCurve.y0 + 120;
-    worldScale = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / mainHeight);
+    // Include the dry guest landing to the left of the copper bowl.
+    var viewLeft = 19.5 * TILE - 16, viewRight = mainCurve.x1 + 40;
+    var viewWidth = layout.mobile ? viewRight - viewLeft : BATH_VIEW_W;
+    worldScale = Math.min(scene.w / viewWidth, Math.max(40, scene.h) / mainHeight);
     var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
     if (bathViewportKey !== viewportKey) {
       bathToolCancel(); bathTool.rope = [];
@@ -526,6 +529,13 @@
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
     var maxY = bathInteriorBottom() - (scene.y + scene.h) / worldScale;
+    // Center the working bowl on phones instead of pinning a tiny tub below
+    // several screens of empty timber. Physical water keeps the same transform.
+    if (layout.mobile && !layout.landscape) {
+      var used = mainHeight * worldScale;
+      var bottom = scene.y + (scene.h + used) / 2;
+      maxY = bathInteriorBottom() - bottom / worldScale;
+    }
     if (maxY < minY) minY = maxY;
     // A single-room bath has nothing to scroll to. Do not reveal the retired
     // tower artwork on a stray wheel gesture. Purchased upper floors remain reachable.
@@ -533,7 +543,8 @@
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
     bathCamY = bathScrollT;
-    cam.x = 37 * TILE - (scene.x + scene.w / 2) / worldScale;
+    var centerX = layout.mobile ? (viewLeft + viewRight) / 2 : 37 * TILE;
+    cam.x = centerX - (scene.x + scene.w / 2) / worldScale;
     cam.y = bathCamY;
     return true;
   }

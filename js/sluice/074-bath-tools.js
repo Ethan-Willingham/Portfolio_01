@@ -167,10 +167,18 @@
       // The head collides with the same curved copper liner as the particles.
       var q = bathToolProject(t.x, t.y, t.vx, t.vy, t.mode === 'claw' ? 21 : 16);
       t.x = q[0]; t.y = q[1]; t.vx = q[2]; t.vy = q[3];
-      t.railX += (t.x - t.railX) * (1 - Math.exp(-h * 14));
       var tiltTarget = Math.max(-0.85, Math.min(0.85, t.vx / 350));
       t.tiltV += ((tiltTarget - t.tilt) * 80 - t.tiltV * 12) * h;
       t.tilt += t.tiltV * h;
+      if (t.mode === 'hose') {
+        // The outlet sits below the head. A head-only collision let a deep
+        // aim put the mouth inside copper, where every emitted drop was blocked.
+        var mouthX = t.x + Math.sin(t.tilt) * 25, mouthY = t.y + Math.cos(t.tilt) * 25;
+        var mouth = bathToolProject(mouthX, mouthY, t.vx, t.vy, 9);
+        t.x += mouth[0] - mouthX; t.y += mouth[1] - mouthY;
+        t.vx = mouth[2]; t.vy = mouth[3];
+      }
+      t.railX += (t.x - t.railX) * (1 - Math.exp(-h * 14));
       bathToolRopeStep(h, b);
     }
     if (t.mode === 'claw' && !t.held && t.grab) {

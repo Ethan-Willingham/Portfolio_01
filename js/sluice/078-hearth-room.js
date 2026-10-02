@@ -10,6 +10,7 @@
     hearthCancelDrag();
     hearthReset(); forgeResourcesReset(); hearthHandReset(); hearthHand.mode = 'fuel'; hearthHand.material = 'coal';
     hearthView = 'bath'; hearthButtons = []; hearthPress = null;
+    bathControlsTab = 'water';
     hearthJob = { stage: 'empty', heat: 0, hits: 0, quench: 0 };
     hearthToolTime = 0; hearthToolPulse = 0; hearthQuenchSteam = 0;
   }
@@ -102,7 +103,19 @@
   function hearthClearAsh(kind) { if (kind === 'boiler') hearthRakeStart(); }
   function hearthRoomAction(action) {
     if (!bathMode || bathFading || gamePaused) return;
-    if (action === 'kit') {
+    if (action === 'close-tray') { hearthHand.rack = hearthHand.silos = false;
+    } else if (hearthRoomLayout().mobile && (action === 'tool-valve' || action === 'tool-grip' || action === 'tool-spray')) {
+      var tool = action === 'tool-grip' ? 'claw' : 'hose';
+      if (bathTool.mode !== tool) bathToolSelect(tool);
+      bathToolAction(action);
+    } else if (action.indexOf('panel:') === 0) {
+      hearthCancelDrag(); hearthHand.rack = hearthHand.silos = false;
+      bathControlsTab = action.slice(6);
+      if (bathControlsTab === 'water') { if (bathTool.mode !== 'hose') bathToolSelect('hose'); }
+      else if (bathControlsTab === 'guests') { if (bathTool.mode !== 'claw') bathToolSelect('claw'); }
+      else { bathToolReset(); hearthHand.mode = 'fuel'; }
+    } else if (action.indexOf('serve:') === 0) { bathServe(Number(action.slice(6)));
+    } else if (action === 'kit') {
       if (!hearthDevSupplies()) return;
       hearthCancelDrag();
       var bed = hearthBeds.boiler;
@@ -324,12 +337,13 @@
     hearthPlate(c, r, ready);
     if (ready) { c.fillStyle = BLD.goldDark; c.fillRect(r.x + 12, r.y + r.h - 3, r.w - 24, 2); }
     var lines = [label];
-    c.font = '11px ' + UI_FONT;
+    var size = r.h >= 48 ? 13 : 11;
+    c.font = size + 'px ' + UI_FONT;
     if (c.measureText(label).width > r.w - 12) {
       var split = label.lastIndexOf(' ', Math.ceil(label.length * 0.62));
       if (split > 0) lines = [label.slice(0, split), label.slice(split + 1)];
     }
-    for (var l = 0; l < lines.length; l++) hearthText(c, lines[l], r.x + r.w / 2, r.y + r.h / 2 + (l - (lines.length - 1) / 2) * 14, 11, ready ? BLD.cream : UIT_DIM, 'center');
+    for (var l = 0; l < lines.length; l++) hearthText(c, lines[l], r.x + r.w / 2, r.y + r.h / 2 + (l - (lines.length - 1) / 2) * 16, size, ready ? BLD.cream : UIT_DIM, 'center');
     hearthButtons.push({ x: r.x, y: r.y, w: r.w, h: r.h, action: action });
   }
   function hearthDrawNav(c, view) {
