@@ -4,7 +4,7 @@
 Run with --source-dir /path/to/ati-pages to use saved than.01.html to than.26.html.
 Include woodward.txt in that directory, or pass --woodward-file separately.
 Otherwise fetch the chapter pages and Gutenberg text. Quoted text is
-normalized only as in the original build: straight quotes and whitespace.
+normalized for straight quotes, whitespace, and the site's sentence-dash rule.
 """
 import argparse
 import concurrent.futures
@@ -18,6 +18,12 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / "js/dhammapada-data.js"
 
 
+def editorial_punctuation(text):
+    text = re.sub(r"(?<=\d)[\u2013\u2014](?=\d)", " to ", text)
+    text = re.sub(r"[ \t]*[\u2013\u2014][ \t]*", ", ", text)
+    return "\n".join(line.rstrip() for line in text.split("\n"))
+
+
 def tidy(source):
     text = html.unescape(re.sub(r"<[^>]+>", "", source))
     for char in ("\u201c", "\u201d", "\u2033"):
@@ -25,7 +31,7 @@ def tidy(source):
     for char in ("\u2018", "\u2019", "\u02bc"):
         text = text.replace(char, "'")
     text = "\n".join(re.sub(r"[ \t\u00a0]+", " ", line).strip() for line in text.split("\n"))
-    return re.sub(r"\n{3,}", "\n\n", text.strip("\n"))
+    return editorial_punctuation(re.sub(r"\n{3,}", "\n\n", text.strip("\n")))
 
 
 def parse_chapter(raw):
@@ -182,6 +188,10 @@ def main():
                 break
     final = next(entry for entry in data["verses"][-1]["v"] if entry["k"] == "sujato")
     final["t"] = final["t"].replace("\nThe Sayings of the Dhamma are complete.", "").rstrip()
+    for verse in data["verses"]:
+        verse["pali"] = editorial_punctuation(verse["pali"])
+        for entry in verse["v"]:
+            entry["t"] = editorial_punctuation(entry["t"])
 
     # The original build duplicated combined passages at each verse number.
     # Identify those identical adjacent entries, confined to one chapter.

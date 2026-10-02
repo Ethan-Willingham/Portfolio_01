@@ -57,9 +57,9 @@ coverage, and updates the existing corpus. To reuse downloaded sources, pass
 `woodward.txt`. The operation is idempotent. If using the older ignored research
 builder to regenerate the backbone, run this repair afterward.
 
-Keep quotations faithful to their sources. The existing straight-quote and
-whitespace normalization is retained. Translation punctuation is source text;
-new prose follows the site's punctuation rules.
+Keep the translators' wording. Straight-quote and whitespace normalization is
+retained. Sentence dashes become commas to follow the owner's punctuation rule;
+numeric ranges use "to". The source notes disclose these editorial adjustments.
 
 Check JavaScript syntax for all three page scripts. In a browser, check all
 423 explanations, translation counts and source text, grouped ranges, verse
