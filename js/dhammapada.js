@@ -1,4 +1,4 @@
-/* Dhammapada reading guide. Notes are paraphrases; translations retain source text. */
+/* Dhammapada reading guide. Notes are paraphrases. Editorial punctuation is disclosed. */
 (function () {
   'use strict';
   var DHP = window.DHP, NOTES = window.DHP_NOTES || {}, cur = 1;
