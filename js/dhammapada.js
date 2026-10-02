@@ -5,6 +5,20 @@
   var mount = document.getElementById('dhp');
   if (!mount) return;
   var $ = function (id) { return document.getElementById(id); };
+  function revealDetails(hash) {
+    var target = $(hash.slice(1));
+    for (var node = target; node; node = node.parentElement) {
+      if (node.tagName === 'DETAILS') node.open = true;
+    }
+  }
+  revealDetails(location.hash);
+  window.addEventListener('hashchange', function () { revealDetails(location.hash); });
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest('a[href^="#"]');
+    if (link && !event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      revealDetails(link.getAttribute('href'));
+    }
+  });
   var TIERS = [
     { title: 'Main comparisons', keys: ['muller', 'buddharakkhita', 'thanissaro', 'sujato'] },
     { title: 'Other translations', keys: ['woodward', 'kaviratna', 'suddhaso'] },
@@ -146,11 +160,8 @@
   window.addEventListener('hashchange', function () {
     var number = numberFromHash();
     if (number) { closeGrid(false); go(number, { updateHash: false, scroll: true }); }
-    if (location.hash === '#sources') $('sources').open = true;
   });
   var initial = numberFromHash();
   go(initial || 1, { updateHash: false, scroll: !!initial });
-  if (location.hash === '#sources') $('sources').open = true;
-  document.querySelector('a[href="#sources"]').addEventListener('click', function () { $('sources').open = true; });
   mount.classList.add('dhp-ready');
 })();
