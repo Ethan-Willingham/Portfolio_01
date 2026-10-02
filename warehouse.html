@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Brain Behind the Warehouse</title>
-  <meta name="description" content="Behind every 'your order has shipped' is a building you have probably never seen and a piece of software that knows where every item inside it is. How that software runs the warehouse and the factory beside it, explained from the ground up.">
+  <meta name="description" content="A warehouse can have stock and still be unable to ship an order. How its software tracks inventory, assigns work, and records what leaves the building.">
   <meta property="og:title" content="The Brain Behind the Warehouse">
-  <meta property="og:description" content="The software behind the buy button is the brain of the building. How it runs a warehouse and the factory beside it: receiving, slotting, allocation, picking, packing, manufacturing, and what the customer actually measures.">
+  <meta property="og:description" content="A warehouse can have stock and still be unable to ship an order. How its software tracks inventory, assigns work, and records what leaves the building.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/warehouse.html">
@@ -32,24 +32,11 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-  /* ============================================================
-     THE BRAIN BEHIND THE WAREHOUSE
-     A reading essay built on the "All In" template: one centered
-     reading column (~64ch) with full-width "breakout" figures,
-     big-stat anchors, and one interactive. Warm ink on the site's
-     forest green. The site's single gold accent in a few roles
-     (section numbers, big stats, the drop cap, links).
-     Spine: one idea per section, concrete first, a name and a
-     number, a stat, then "the WMS pro's read" (the retrieval cue that
-     points every section back at the reader's goal: standing in a
-     warehouse and knowing what you are looking at).
-     No em dashes anywhere.
-     ============================================================ */
+  /* Reading column, interactive process diagrams, and order metric model. */
   :root {
     --measure: 64ch;
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --tint: #2a322b;
-    --tint-2: #252c26;
     --hair: rgba(212,196,160,0.18);
   }
 
@@ -73,8 +60,7 @@
   .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
 
   /* ============ COVER ============ */
-  .cover { max-width: 56rem; margin: 0 auto; padding: 12svh var(--gutter) 6svh; text-align: center; }
-  .cover .eyebrow { font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.92rem; color: var(--accent); }
+  .cover { max-width: 56rem; margin: 0 auto; padding: 6svh var(--gutter) 3svh; text-align: center; }
   .cover h1 {
     font-weight: 700; font-size: clamp(3.1rem, 11vw, 6.6rem); line-height: 0.95;
     letter-spacing: -0.03em; color: var(--text-bright); margin: 1.1rem 0 0;
@@ -85,17 +71,6 @@
     max-width: 46ch; margin: 1.5rem auto 0; text-wrap: pretty;
   }
   .cover .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.6rem auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5em 1.1em; }
-  .cover .hero-meta b { color: var(--accent); font-weight: 400; }
-  .cover .hero-meta .sep { opacity: 0.4; }
-  /* the box's day: a faint floor line and the gold route a single
-     box travels, dock to door. computed, not decorative. */
-  .cover-motif { display: block; width: min(86vw, 420px); height: auto; margin: 2.6rem auto 0; overflow: visible; }
-  .cover-motif .floor { stroke: rgba(184,178,162,0.32); stroke-width: 1; stroke-dasharray: 3 4; fill: none; }
-  .cover-motif .route { stroke: var(--accent); stroke-width: 2; fill: none; }
-  .cover-motif .node { fill: var(--bg); stroke: var(--accent); stroke-width: 1.6; }
-  .cover-motif .box { fill: var(--accent); }
-  .cover-motif .lbl { font-family: var(--font-body); font-size: 7px; letter-spacing: 0.1em; fill: var(--text-dim); text-transform: uppercase; }
-  .scroll-cue { display:block; text-align:center; font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.82rem; color: var(--text-dim); opacity: 0.7; margin-top: 3rem; }
 
   /* ============ ESSAY GRID ============ */
   .essay {
@@ -123,23 +98,9 @@
     padding: 0.06em 0.12em 0 0; color: var(--accent);
   }
 
-  /* act divider */
-  .act { text-align: center; margin: 7svh auto 1svh; }
-  .act .act-k { font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.84rem; color: var(--text-dim); }
-  .act .act-t { font-family: var(--font-heading); font-weight: 700; font-style: italic; font-size: clamp(1.5rem, 4vw, 2.1rem); color: var(--accent); line-height: 1.2; margin-top: 0.3rem; text-wrap: balance; }
-  .act::after { content: ''; display: block; width: 90px; height: 1px; margin: 1.3rem auto 0; background: linear-gradient(90deg, transparent, var(--hair) 30%, var(--hair) 70%, transparent); }
-
-  /* numbered section (header is the shared .u-sechead kit; .sub + spacing stay local) */
+  /* Numbered section headers use the shared kit. */
   .sec { margin: 6svh 0 0; }
   .sec .u-sechead { margin-bottom: 0.5rem; }
-  .sec .sub { font-style: italic; font-size: 1.26rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.4rem; text-wrap: pretty; }
-
-  /* VISUAL BALANCING is now in the shared kit (kit.css): the number-left
-     .u-bignum, the .u-move takeaway line, the .dlnum-2up compact glossary,
-     and the kit-block flow margins. This post opts in via class names in
-     the markup below (u-move on the callouts, dlnum-2up on the glossary;
-     its 5 terms 2-up with the last spanning, handled by the kit). */
-  .essay .dlnum-wrap { margin: 2.4rem auto; }
 
   /* section numbers: drop the kit's gold pill for a plain understated
      number, like all-in's .sec-num. A bare "01" in a pill read too loud
@@ -243,7 +204,7 @@
   .concept .cd b { color: var(--accent-hover); font-weight: 700; }
   @media (max-width: 560px) { .concepts { grid-template-columns: 1fr; } }
 
-  /* ============ THE INTERACTIVE: the multiplied nines ============ */
+  /* ============ PERFECT ORDER MODEL ============ */
   .lab { background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; overflow: hidden;
     box-shadow: 0 1px 2px rgba(12,16,13,0.45), 0 18px 40px -16px rgba(8,12,9,0.55), inset 0 1px 0 rgba(245,241,234,0.04); margin: 3rem 0; }
   .lab-head { padding: 0.9em 1.3em; background: var(--d-bg-raised); border-bottom: 1px solid var(--d-rule); }
@@ -257,60 +218,17 @@
   .lab-link .ll-desc { grid-column: 1 / -1; font-size: 0.85rem; color: var(--d-text-dim); line-height: 1.35; margin-top: -0.05rem; }
   .lab-link .ll-track { grid-column: 1 / -1; height: 16px; background: rgba(0,0,0,0.24); border-radius: 5px; overflow: hidden; }
   .lab-link .ll-fill { height: 100%; width: 97%; border-radius: 5px; background: var(--d-accent); transition: width 0.5s var(--ease-out); }
-  .lab-toggle { font-family: var(--font-heading); font-size: 0.96rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; padding: 0.4em 0.9em; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .lab-toggle { min-height: 44px; font-family: var(--font-heading); font-size: 0.96rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; padding: 0.4em 0.9em; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .lab-toggle[aria-pressed=true] { background: var(--d-accent); border-color: var(--d-accent); color: var(--d-bg); font-weight: 700; }
   .lab-out { text-align: center; margin: 0.4rem 0 0.2rem; }
   .lab-out .po { font-weight: 700; font-size: clamp(3rem, 12vw, 4.4rem); line-height: 0.9; color: var(--d-accent); font-variant-numeric: tabular-nums; display: block; transition: color 0.3s; }
   .lab-out .pol { font-variant: small-caps; letter-spacing: 0.12em; font-size: 0.84rem; color: var(--d-text-dim); margin-top: 0.4rem; }
+  .lab-overlap { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1.2rem; }
+  .lab-overlap .lab-toggle { min-height: 44px; }
   .lab-read { margin-top: 1.2rem; padding: 0.9rem 1.05rem; background: rgba(0,0,0,0.18); border-radius: 6px; border-left: 2px solid var(--d-accent); }
   .lab-read p { font-size: 1.0rem; line-height: 1.5; color: var(--d-text); margin: 0; }
   .lab-read b { color: var(--d-text-bright); }
   .lab-cite { text-align: center; font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.82rem; color: var(--d-text-dim); opacity: 0.72; margin-top: 0.95rem; }
-
-  /* ============ THE CSM MODULE (one self-contained band) ============ */
-  .fyi { background: linear-gradient(180deg, var(--tint) 0%, var(--tint-2) 100%); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 6svh 0 6.5svh; margin: 7svh 0 0; }
-  .fyi-in { max-width: calc(var(--measure) + 12rem); margin: 0 auto; padding: 0 var(--gutter); }
-  .fyi .kicker { font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.86rem; color: var(--accent); text-align: center; }
-  .fyi h3 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.08; color: var(--text-bright); text-align: center; margin: 0.5rem auto 0; max-width: 22ch; text-wrap: balance; }
-  .fyi .stand { font-style: italic; font-size: 1.16rem; line-height: 1.55; color: var(--text-dim); text-align: center; max-width: 54ch; margin: 1.1rem auto 0; text-wrap: pretty; }
-  .fyi .fyi-col { max-width: var(--measure); margin: 2.2rem auto 0; }
-  .fyi .fyi-col p { font-size: 1.16rem; line-height: 1.66; color: var(--text); margin: 0 0 1.1em; }
-  .fyi .fyi-col p b { color: var(--text-bright); font-weight: 700; }
-
-  /* the personas map */
-  .map { margin: 2.4rem auto 0; max-width: calc(var(--measure) + 11rem); display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .map .factor { background: var(--bg); border: 1px solid var(--hair); border-radius: 7px; padding: 1rem 0.95rem 1.1rem; }
-  .map .factor.lit { border-color: var(--accent); background: rgba(212,196,160,0.10); }
-  .map .factor h4 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.2rem; }
-  .map .factor .fn { font-size: 0.84rem; color: var(--text-dim); font-style: italic; margin-bottom: 0.7rem; line-height: 1.3; }
-  .map .factor ul { list-style: none; margin: 0; padding: 0; }
-  .map .factor li { font-size: 0.9rem; line-height: 1.34; color: var(--text); padding: 0.16rem 0; }
-  .map .factor li.hi { color: var(--accent-hover); font-weight: 700; }
-  .map-note { max-width: var(--measure); margin: 1rem auto 0; font-size: 0.92rem; font-style: italic; color: var(--text-dim); text-align: center; line-height: 1.5; }
-
-  /* the go-live timeline */
-  .anat { margin: 2.2rem auto 0; max-width: calc(var(--measure) + 6rem); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
-  .anat .step { background: var(--bg); border: 1px solid var(--hair); border-radius: 6px; padding: 0.8rem 0.9rem; }
-  .anat .step.warn { border-color: var(--accent); background: rgba(212,196,160,0.08); }
-  .anat .step .sn { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); }
-  .anat .step .st { font-weight: 700; color: var(--text-bright); font-size: 0.96rem; margin: 0.1rem 0 0.25rem; }
-  .anat .step .sd { font-size: 0.84rem; color: var(--text-dim); line-height: 1.36; }
-
-  /* ============ ENDING + APPENDIX ============ */
-  .ending { max-width: 42rem; margin: 0 auto; padding: 9svh var(--gutter) 4svh; text-align: center; }
-  .ending h2 { font-weight: 700; font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.12; letter-spacing: -0.015em; color: var(--text-bright); text-wrap: balance; }
-  .ending h2 em { color: var(--accent); font-style: italic; }
-  .ending p { font-size: 1.2rem; color: var(--text-dim); line-height: 1.64; margin-top: 1.4rem; text-wrap: pretty; }
-
-  .appendix { border-top: 1px solid var(--hair); max-width: calc(var(--measure) + 12rem); margin: 4svh auto 0; padding: 3svh var(--gutter) 0; }
-  .appendix h2 { font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); text-align: center; margin-bottom: 0.4rem; }
-  .appendix .ap-intro { text-align: center; font-style: italic; color: var(--text-dim); max-width: 56ch; margin: 0 auto 2.2rem; font-size: 1.04rem; line-height: 1.55; }
-  /* the acronym zoo */
-  .zoo { columns: 2; column-gap: 2.2rem; }
-  .zoo .row { break-inside: avoid; padding: 0.4rem 0; border-bottom: 1px solid var(--hair); font-size: 0.96rem; line-height: 1.4; }
-  .zoo .row b { color: var(--text-bright); font-weight: 700; font-family: var(--font-mono); font-size: 0.9rem; }
-  .zoo .row span { color: var(--text-dim); }
-  .ap-foot { font-size: 0.92rem; color: var(--text-dim); line-height: 1.55; text-align: center; max-width: 58ch; margin: 2.6rem auto 0; font-style: italic; }
 
   /* ============ REVEAL ON SCROLL (gated) ============ */
   @media (hover: hover) and (pointer: fine) {
@@ -326,31 +244,13 @@
     .essay p { font-size: 1.2rem; }
     .compare { grid-template-columns: 1fr; }
     .compare > div:first-child { border-right: none; border-bottom: 1px solid var(--hair); }
-    .map { grid-template-columns: 1fr 1fr; }
     .lab-link { grid-template-columns: 1fr; }
     .lab-link .lab-toggle { justify-self: start; }
-    .zoo { columns: 1; }
   }
   @media (max-width: 420px) {
     .stages { grid-template-columns: 1fr 1fr; }
-    .map { grid-template-columns: 1fr; }
   }
 
-  /* ============================================================
-     THE RECAP  (the whole tour, one card; numbers via kit .u-steps)
-     ============================================================ */
-  .recap { max-width: calc(var(--measure) + 14rem); margin: 9svh auto 0; padding: 0 var(--gutter); }
-  .recap .recap-k { text-align: center; font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.86rem; color: var(--accent); }
-  .recap h3 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 4.8vw, 2.4rem); line-height: 1.1; color: var(--text-bright); text-align: center; margin: 0.4rem 0 0; text-wrap: balance; }
-  .recap .recap-s { text-align: center; font-style: italic; color: var(--text-dim); font-size: 1.02rem; line-height: 1.5; margin: 0.6rem auto 0; max-width: 52ch; text-wrap: pretty; }
-  .recap .u-steps { margin-top: 2.4rem; columns: 2; column-gap: 3.2rem; }
-  .recap .u-step { break-inside: avoid; }
-  .recap a.u-step-h { text-decoration: none; color: var(--text-bright); transition: color 0.2s; }
-  .recap a.u-step-h:hover { color: var(--accent-hover); }
-  .recap .u-step .u-step-p { font-size: 1.02rem; text-wrap: pretty; }
-  .recap-foot { text-align: center; font-style: italic; font-size: 0.98rem; color: var(--text-dim); line-height: 1.5; margin: 2rem auto 0; max-width: 60ch; }
-  .recap-foot a { color: var(--accent); }
-  @media (max-width: 760px) { .recap .u-steps { columns: 1; } }
   </style>
 </head>
 <body>
@@ -360,268 +260,156 @@
 
   <!-- ============ COVER ============ -->
   <header class="cover">
-    <div class="eyebrow">On Warehouses, Factories &amp; the Software That Runs Them</div>
     <h1>The Brain Behind the Warehouse</h1>
-    <p class="dek">Behind every "your order has shipped" is a building you have probably never seen, anywhere from a spare back room to a place the size of a small town, and a piece of software that knows where every item inside it is sitting right now, to the shelf. This is how that software works, from the receiving dock to the factory line, explained from the ground up, so the next time it comes up you can follow every word.</p>
-    <p class="hero-meta">A guided tour <span class="sep">/</span> <b>16 stops, dock to door</b> <span class="sep">/</span> <b>25 acronyms decoded</b> <span class="sep">/</span> 33 min read</p>
-    <svg class="cover-motif" viewBox="0 0 200 78" aria-hidden="true">
-      <path class="floor" d="M6,68 L194,68"/>
-      <path class="route" d="M12,60 L48,60 L70,30 L104,30 L104,60 L150,60 L150,32 L188,32"/>
-      <rect class="box" x="9" y="57" width="6" height="6" rx="1"/>
-      <circle class="node" cx="48" cy="60" r="3"/>
-      <circle class="node" cx="104" cy="30" r="3"/>
-      <circle class="node" cx="150" cy="60" r="3"/>
-      <circle class="box" cx="188" cy="32" r="3.2"/>
-      <text class="lbl" x="10" y="76">received</text>
-      <text class="lbl" x="104" y="22" text-anchor="middle">picked</text>
-      <text class="lbl" x="190" y="48" text-anchor="end" style="fill:#D4C4A0;">shipped</text>
-    </svg>
-    <span class="scroll-cue">scroll</span>
+    <p class="dek">How warehouse software turns an order into work.</p>
+    <p class="hero-meta">12 min read</p>
   </header>
 
   <article class="essay">
-
-    <!-- ============ INTRO ============ -->
     <div class="lede first reveal">
-      <p>A single building can hold a few million items across a hundred thousand kinds, and know, to the shelf, where every one of them is sitting right now. Not in a binder, and not in a foreman's head. In a piece of software. You tap "buy," and a few hours later a phone buzzes in a county you have never driven through, in a space that might be a back room behind a shop or might be longer than a runway. A person you will never meet walks to a shelf, scans a barcode, drops your thing in a tote, and a screen updates by one. This is a tour of how that software thinks.</p>
-      <p>It's a <b>Warehouse Management System</b>, a WMS, and an entire industry of companies sells it, installs it, and keeps it running. To understand the modern economy of stuff, the factory that makes it and the warehouse that ships it, the fastest way in is the system that runs the floor. By the end of this you should be able to stand in a distribution center, follow a box from the truck to the door, and understand every step, well enough to be the person a warehouse calls when their software starts misbehaving.</p>
+      <p>You can have 500 pumps in a warehouse and still be unable to fill an order for 100. If 300 are reserved for other orders and 120 more are held for inspection, only 80 are available for the new order.</p>
+      <p>A <a href="https://www.sap.com/mena/resources/what-is-a-warehouse-management-system-wms">warehouse management system</a>, or WMS, tracks those differences and turns orders into work: which stock to use, where to find it, and what to move next.</p>
     </div>
-
-    <div class="dlnum-wrap dlnum-2up reveal">
-      <p class="dlnum-head">Five words before we start</p>
-      <div class="dlnum-item">
-        <div class="dlnum-numeral">1</div>
-        <div class="dlnum-body">
-          <h3 class="dlnum-term">WMS (Warehouse Management System)</h3>
-          <p class="dlnum-def">The software that runs the floor: it knows what you have, where it sits, and what each worker should do next. The brain of the building.</p>
-        </div>
-      </div>
-      <div class="dlnum-item">
-        <div class="dlnum-numeral">2</div>
-        <div class="dlnum-body">
-          <h3 class="dlnum-term">SKU (stock keeping unit)</h3>
-          <p class="dlnum-def">One distinct sellable item. A blue medium tee and a blue large tee are two SKUs. A big warehouse carries tens of thousands. Say it "skew."</p>
-        </div>
-      </div>
-      <div class="dlnum-item">
-        <div class="dlnum-numeral">3</div>
-        <div class="dlnum-body">
-          <h3 class="dlnum-term">LPN (license plate)</h3>
-          <p class="dlnum-def">A barcode on a pallet, case, or tote that the system treats as one object. Scan the plate and the system knows everything riding on it, in one beep.</p>
-        </div>
-      </div>
-      <div class="dlnum-item">
-        <div class="dlnum-numeral">4</div>
-        <div class="dlnum-body">
-          <h3 class="dlnum-term">ERP vs WMS</h3>
-          <p class="dlnum-def">The ERP (the company's financial brain) knows you own 500 units and what they are worth. The WMS knows those 500 are in bin A-12-03, on this pallet, in this lot. Books versus the floor.</p>
-        </div>
-      </div>
-      <div class="dlnum-item">
-        <div class="dlnum-numeral">5</div>
-        <div class="dlnum-body">
-          <h3 class="dlnum-term">Directed work</h3>
-          <p class="dlnum-def">The system tells the worker where to go and what to do, instead of the worker deciding. The single feature that separates a real WMS from a spreadsheet.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ ACT I ============ -->
-    <div class="act reveal"><div class="act-k">Act I</div><div class="act-t">The building and its brain</div></div>
-
-    <section class="sec reveal" id="building">
-      <div class="u-sechead"><p class="u-sechead-k">01</p><h2 class="u-sechead-h">The building behind the buy button</h2></div>
-      <p class="sub">First, the scale of the thing, so the rest makes sense.</p>
-      <p>A modern distribution center is not a stockroom. It is a machine for moving objects, and it runs at a tempo that's hard to picture from outside. A single large e-commerce warehouse can hold a hundred thousand kinds of things and ship hundreds of thousands of items in a day, each one going to a different doorstep. The work of finding, grabbing, boxing, and shipping all of it is the whole game, and it happens against a clock set by a customer who was promised the package tomorrow.</p>
-      <p>None of that is possible by memory or paper. The instant the building gets bigger than what one foreman can hold in his head, you need a system that holds the map for everyone. That system is the WMS. It is the difference between a warehouse and a pile.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">$1.19<span class="u-bignum-u"> trillion</span></span><span class="u-bignum-cap">What Americans spent online in 2024. Most of those orders were picked, packed, and shipped out of a building run by a WMS.</span><span class="u-bignum-src"><a href="https://www.census.gov/retail/ecommerce.html">US Census Bureau, 2024</a></span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">For a real operation, this is the thing the building can't run without. That's why the deals take months to close and a decade to leave, and why "it went down" is a five-alarm call.</p></aside>
-    </section>
 
     <section class="sec reveal" id="digital-twin">
-      <div class="u-sechead"><p class="u-sechead-k">02</p><h2 class="u-sechead-h">How the software sees the room</h2></div>
-      <p class="sub">The whole warehouse, rebuilt inside a database. Get this and you get everything that follows.</p>
-      <p>The WMS keeps a digital twin of the physical building, and it is built from a few simple objects. There is the <b>item master</b>, the record of every SKU: its size, its weight, whether it ships in eaches (single units) or cases, whether it needs a lot or a serial number. There is the <b>location master</b>, a record for every addressable spot on the floor, usually coded by aisle, bay, level, and position, so <span class="sc">A-12-03</span> means a specific shelf you can walk to. And tying them together is the <b>inventory record</b>: this item, in that location, this quantity, in this status. That last word, status, is doing enormous work, and we'll come back to it.</p>
-      <p>Here's the catch that sinks more projects than any bug. The system is only as true as that data. Tell it a case weighs 8 pounds when it weighs 80 and it will cheerfully send a worker to stack it on a top shelf. Leave out a box's dimensions and it can't choose a carton or rate a carrier. The unglamorous work of clean item and location data is the foundation the whole building stands on, and the most common reason a go-live turns into a nightmare.</p>
-      <blockquote class="u-pq">Every warehouse is a snowflake. The software is the same; the rules each one runs are not.<cite class="u-pq-cite">The first thing anyone in this industry learns</cite></blockquote>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">When a customer says "the system is wrong," your first suspect is almost never the software. It's the data feeding it. Knowing how to run a quick data-quality audit is half the job.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">01</p><h2 class="u-sechead-h">What the system records</h2></div>
+      <p>The WMS connects three records. The <b>item master</b> describes the product: its dimensions, weight, packaging, and any lot or serial tracking. The <b>location master</b> describes the places it can occupy. The <b>inventory record</b> says how much of that item is in a particular location, who owns it, and whether it can be used.</p>
+      <p>A SKU, stock keeping unit, identifies a distinct item. A medium blue shirt and a large blue shirt have different SKUs. A lot identifies a batch; a serial number identifies an individual unit. Those distinctions let a business recall one production batch without pulling every unit of the product.</p>
+      <p>Quantities need units. Twelve cases are not twelve pumps. If each case holds ten pumps, the WMS needs that conversion to receive cases and pick individual units correctly. A wrong <a href="https://docs.oracle.com/en/cloud/saas/warehouse-management/26b/owmim/package-uom.html">case quantity</a> can make every scan look valid while every count is wrong.</p>
     </section>
 
     <section class="sec reveal" id="the-scan">
-      <div class="u-sechead"><p class="u-sechead-k">03</p><h2 class="u-sechead-h">Directed work and the holy scan</h2></div>
-      <p class="sub">The difference between a WMS and a clipboard is who decides, and one beep.</p>
-      <p>On a paper system, a worker gets a list and figures out their own route, their own order, their own shortcuts. The inventory gets updated later, or never, and errors surface days after they happen, when they are expensive. A WMS inverts this. It hands the worker the next task on a scanner: go to <span class="sc">A-12-03</span>, scan the location, scan the item, confirm the count. The worker does not choose. The system chooses, because the system can see the whole board.</p>
-      <p>And the scan is the point. In a well-run warehouse the barcode scan is the atomic unit of truth: no scan, no change. The worker can't skip it, and the moment they do it, the inventory updates in real time and a line is written to an audit trail with a timestamp, a device, and a name. This is what people mean when they say a warehouse is "on the system." Reality and the record move together.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">99.9<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">Pick accuracy a scan-confirmed operation can hold, where a worker must scan the item before the system accepts it. Paper and memory top out a full point or two lower, and you find the errors much later.</span><span class="u-bignum-src">Industry benchmark, directional</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">If a customer is still working a zone "off the system" because it is faster, that zone is where their accuracy goes to die. The whole value of what you sell is the discipline of the scan. Defend it. And remember the scan rides on hardware: a good share of "the system is down" calls turn out to be a dead gun battery, an offline label printer, or a wifi dead spot in the far racking. Check the physical layer first.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">02</p><h2 class="u-sechead-h">How a move becomes a record</h2></div>
+      <p>A directed picking task might read: go to A-12-03, scan the location, scan the pump, put two units in tote T-17. The system chooses the task using the order, the stock, and the warehouse's rules.</p>
+      <p>The scans check identifiers against the task. Confirmation records the quantity moved from the shelf to the tote, with a time and user. The pumps are still in the building; their recorded location has changed.</p>
+      <p>A barcode doesn't count the contents of a box. Someone can scan the right label and enter the wrong quantity, or move stock without recording it. Voice systems, sensors, and automation can also confirm work. What matters is that physical movement gets a matching transaction, and exceptions can be traced.</p>
     </section>
 
-    <!-- ============ ACT II ============ -->
-    <div class="act reveal"><div class="act-k">Act II</div><div class="act-t">Follow the box</div></div>
-
     <div class="fig-block reveal flowfig" id="flow1">
-      <div class="fig-title">The life of one item, dock to door</div>
+      <div class="fig-title">Receiving to shipping</div>
       <div class="plate">
         <canvas data-bg></canvas>
         <canvas data-flow></canvas>
         <canvas data-ink role="img"
-          aria-label="A blueprint diagram of the life of one item in a warehouse, flowing left to right through the stages it passes: received, put away, stored where it waits, transferred between shelves, picked for an order, packed, staged for the truck, and shipped. The warehouse management system directs and records every move."></canvas>
+          aria-label="Item movement: receive, put away, store, transfer, pick, pack, stage, ship."></canvas>
         <canvas data-grain class="grain"></canvas>
         <div class="vnav">
           <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
       </div>
-      <p class="fig-note">Click any stage to walk it, or step through with the arrows. Every item in the building is somewhere on this path right now, and the system knows which. Next we follow that same path in detail, one stage at a time.</p>
+      <p class="fig-note">Select a stage or use the arrows.</p>
       <p class="sr" data-t aria-live="polite"></p>
-      <p class="sr">The life of one item: received and checked in, put away on a shelf where it waits, sometimes moved to another shelf, picked when an order comes in, packed, staged to wait for the truck, then shipped. One software system directs and records every move.</p>
+      <p class="sr">Item movement: receive, put away, store, transfer, pick, pack, stage, ship.</p>
     </div>
 
     <section class="sec reveal" id="the-dock">
-      <div class="u-sechead"><p class="u-sechead-k">04</p><h2 class="u-sechead-h">The dock</h2></div>
-      <p class="sub">Receiving is where the system meets reality, and where most retail fines are born.</p>
-      <p>A truck backs in. Before it arrives, a good supplier has already sent an <b>ASN</b>, an advance ship notice, an electronic manifest that says exactly what is on the trailer and on which pallet. The receiver scans the pallet's license plate, the system says "expected: 48 of SKU 00193, on PO 4451," the worker counts, and a match turns the screen green. A mismatch goes to an exception queue. Anything missing, broken, or extra gets logged then and there as <span class="sc">OS&amp;D</span>, over, short, and damaged, because once the driver leaves, the claim is much harder to win.</p>
-      <p>The clock that matters here is <b>dock to stock</b>: how long from the trailer touching the door to the goods being findable and sellable on the system. Stretch it out and you create phantom shortages, stock that is physically in the building but invisible to every order. Sometimes the system never stores it at all: if an outbound order is already waiting for those exact units, the WMS can <b>cross-dock</b> them straight from the inbound door to an outbound truck, and the box never sees a shelf.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">&lt; 2<span class="u-bignum-u"> hours</span></span><span class="u-bignum-cap">Dock-to-stock at a sharp operation, against the day or more it takes a struggling one. The gap is pure availability: hours your inventory does not exist yet.</span><span class="u-bignum-src">Warehouse benchmark surveys</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">The ASN is where the big retailers live. Walmart and Target fine suppliers for a late or wrong one. If your customer ships to those giants, every clean, on-time ASN out of your system is money they didn't lose.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">03</p><h2 class="u-sechead-h">Receiving</h2></div>
+      <p>A supplier may send an advance ship notice, or ASN, before the truck arrives. It describes what is coming. At the dock, the receiver checks the delivery against that notice and the purchase order, records the quantities actually received, and logs shortages, extras, or damage.</p>
+      <p>A pallet or tote can have a license plate number, or LPN: an identifier attached to a container and its recorded contents. Scanning it retrieves that record. It doesn't prove the contents match, so the receiving process still needs rules for inspection and discrepancy handling.</p>
+      <p>Dock-to-stock time measures how long receiving takes to make goods available for use. A pallet waiting for inspection can be physically present without being available to an order. With cross-docking, goods needed for an outbound shipment go toward shipping without a trip through storage.</p>
     </section>
 
     <section class="sec reveal" id="putaway">
-      <div class="u-sechead"><p class="u-sechead-k">05</p><h2 class="u-sechead-h">Putaway, and the quiet art of where</h2></div>
-      <p class="sub">Picking a shelf for a box sounds trivial. It is the single highest-leverage decision in the building.</p>
-      <p>When the box is received, the WMS tells the worker where to put it, and it's not random. The system runs <b>directed putaway</b> against rules: keep frozen with frozen, heavy down low, and put the fast movers where they are easy to reach. The deepest of these rules is <b>slotting</b>, the deliberate placement of each SKU to cut the one cost that dominates a warehouse: walking. The fastest 20 percent of SKUs drive 80 percent of the trips, so they belong in the <b>golden zone</b>, between your knees and your shoulders, close to packing. The slow stuff goes to the top shelves and the back forty.</p>
-      <p>There is a two-tier trick underneath this. The full pallets live in high <b>reserve</b> racking, and a small, dense <b>forward pick</b> face holds a few days of the busy items at hand height. The WMS quietly runs a <b>replenishment</b> loop, topping up the pick face from reserve before it runs dry, so the picker never has to climb. And it hates an empty-handed trip: <b>task interleaving</b> hands a forklift driver a putaway on the way in and a pick on the way back, so the machine never drives one direction for nothing. Get slotting wrong and you pay for it on every single pick, forever.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">20 to 40<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">How much a serious slotting pass can cut the distance pickers walk. Walking is roughly half of all pick labor, so this is real money, found by moving boxes, not hiring anyone.</span><span class="u-bignum-src">Slotting case studies, directional</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">A customer whose pickers walk a little farther every quarter has stale slotting and does not know it. That is a concrete, dollarized win you can bring to a review, and often an upsell to a slotting module.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">04</p><h2 class="u-sechead-h">Choosing a location</h2></div>
+      <p>Putaway moves received stock into storage. The WMS chooses a destination using <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/create-location-directive">location rules</a>: suitable temperature, enough capacity, permitted item types, and other constraints.</p>
+      <p>Slotting decides where products should live to make picking easier. Frequently picked items benefit from accessible locations and shorter routes. Weight, dimensions, congestion, and items often ordered together also matter. A single popularity ranking won't settle all of those tradeoffs.</p>
+      <p>Full pallets may sit in reserve storage while individual units sit in a smaller forward pick location. <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/replenishment">Replenishment</a> moves stock from reserve to that pick location, either when it falls below a threshold or when upcoming work needs more. An empty pick location can stop a task even when there is plenty of stock elsewhere.</p>
     </section>
 
     <section class="sec reveal" id="the-count">
-      <div class="u-sechead"><p class="u-sechead-k">06</p><h2 class="u-sechead-h">The count that never stops</h2></div>
-      <p class="sub">Everything downstream is built on one number being true: do the books match the bins?</p>
-      <p>Inventory accuracy is the foundation, and it decays on its own. A box gets moved without a scan, one gets crushed and tossed, a count gets fudged under time pressure, and slowly the record drifts from the shelf. The old fix was to shut the building once a year and count everything, a miserable snapshot that is stale the next morning. The modern fix is <b>cycle counting</b>: count a small, smart slice every day, count the fast movers most often, and chase the root cause of every miss, so accuracy is maintained continuously instead of rescued annually.</p>
-      <p>Two ideas ride along with the count. The first is the order you sell in: <b>FIFO</b> ships the oldest stock first, and <b>FEFO</b>, first expired first out, ships whatever dies soonest, which is the law of the land in food and pharma.</p>
-      <p>The second is the word <b>status</b>, and it explains a complaint you'll hear a hundred times: "the system says I have 500, but I can't ship any." A unit on hand is not the same as a unit you can sell. It might be <b>available</b>, or it might be spoken for in one of two very different ways. <b>Allocated</b> means it's reserved for a specific order and about to ship. <b>On hold</b> means it's blocked because something is wrong with it, like damage or an expired date. So all 500 are real. They're just all allocated, or all held, and on hand is never the same as available to promise.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">99<span class="u-bignum-u">%+</span></span><span class="u-bignum-cap">Where a WMS holds inventory accuracy. On paper it is often 80 to 90, which means one pick in ten goes wrong. The leap from "ten" to "ninety-nine" is the system's plainest payoff.</span><span class="u-bignum-src">Warehouse benchmark surveys</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">Half the "your software is broken" tickets you ever get will be a status confusion or a process that skipped a scan, not a bug. Learn to read the inventory record out loud, item, location, quantity, status, and you can solve most of them on the call.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">05</p><h2 class="u-sechead-h">Present, available, and counted</h2></div>
+      <p><b>On hand</b> is the quantity recorded in the warehouse. <b>Allocated</b> stock is reserved for demand. A <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/inventory/inventory-statuses">hold</a> blocks stock from use, perhaps pending inspection or because it is damaged. Reservations and holds are separate controls, even when a screen groups them together.</p>
+      <p>The recorded quantity also needs a physical check. <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/cycle-counting">Cycle counting</a> audits selected locations throughout the year. A discrepancy goes through review, recount, or adjustment according to the operation's rules. Repeated misses in one location are a reason to investigate the process there.</p>
+      <p>For dated stock, FIFO means first in, first out. FEFO means first expiring, first out: use the stock with the earliest eligible expiration date. A customer may also require enough shelf life remaining at delivery, so the oldest lot isn't always suitable.</p>
     </section>
 
     <section class="sec reveal" id="before-the-pick">
-      <div class="u-sechead"><p class="u-sechead-k">07</p><h2 class="u-sechead-h">Before the pick</h2></div>
-      <p class="sub">An order can exist, have inventory behind it, and still produce no work. Two decisions stand between the buy button and the scanner: allocation and release.</p>
-      <p>The order usually arrives from an ERP or an order management system as demand: ship these items, in these quantities, to this place, by this time. The WMS first asks which stock is allowed to fill it. Inventory on hold is out. Inventory already promised to another order is out. A food order may need a lot that will still be fresh when it arrives. A 3PL order can use only the client's own stock. From everything left, the system <b>allocates</b> inventory to the order. A soft allocation reserves a quantity from a pool. A hard allocation points to the exact case, pallet, or location that will satisfy it.</p>
-      <p>Allocated does not mean ready to pick. The building may have fifty thousand orders waiting and only so many people, pack stations, and trailer doors. The WMS must decide what reaches the floor first. It weighs the promised ship time, the carrier cutoff, the service level, the trailer schedule, and whether the pick face has enough stock. Then it <b>releases</b> the order. Some buildings release a timed <b>wave</b> of orders together. Others run <b>waveless</b>, feeding the next best work to the floor all day. Release is the starting gun: only then do pick and replenishment tasks appear on scanners.</p>
+      <div class="u-sechead"><p class="u-sechead-k">06</p><h2 class="u-sechead-h">Why an order isn't being picked</h2></div>
+      <p>An order arrives from the business's sales or order system with items, quantities, a destination, and a deadline. <b>Allocation</b> reserves eligible inventory for it. The WMS may reserve a quantity first and choose the exact stock later, or assign specific locations, lots, or containers.</p>
+      <p><b>Release</b> authorizes work to proceed. The operation must fit that work around people, equipment, pack stations, and carrier cutoffs. A wave groups orders for processing; a waveless operation feeds work more continuously. The sequence varies by product. In <a href="https://docs.oracle.com/en/cloud/saas/warehouse-management/26b/owmwr/allocation.html">Oracle WMS</a>, for example, running a wave can create the allocations.</p>
       <div class="fig-block wide reveal">
-        <div class="fig-title">How an order becomes work</div>
+        <div class="fig-title">Checks for a stuck order</div>
         <div class="stages">
-          <div class="st"><div class="lv">01</div><div class="nm">Arrive</div><div class="dz">ERP or OMS sends the demand.</div></div>
-          <div class="st"><div class="lv">02</div><div class="nm">Qualify</div><div class="dz">Find inventory allowed to fill it.</div></div>
-          <div class="st"><div class="lv">03</div><div class="nm">Allocate</div><div class="dz">Reserve the right quantity or stock.</div></div>
-          <div class="st"><div class="lv">04</div><div class="nm">Prioritize</div><div class="dz">Weigh promises, cutoffs, and capacity.</div></div>
-          <div class="st"><div class="lv">05</div><div class="nm">Release</div><div class="dz">Give the floor permission to begin.</div></div>
-          <div class="st"><div class="lv">06</div><div class="nm">Create work</div><div class="dz">Send picks and replenishments to scanners.</div></div>
+          <div class="st"><div class="lv">01</div><div class="nm">Received?</div><div class="dz">Did the order reach the WMS?</div></div>
+          <div class="st"><div class="lv">02</div><div class="nm">Eligible?</div><div class="dz">Is the stock usable for this order?</div></div>
+          <div class="st"><div class="lv">03</div><div class="nm">Reserved?</div><div class="dz">Has enough inventory been assigned?</div></div>
+          <div class="st"><div class="lv">04</div><div class="nm">Released?</div><div class="dz">Has work been authorized?</div></div>
+          <div class="st"><div class="lv">05</div><div class="nm">Created?</div><div class="dz">Did processing create the task?</div></div>
+          <div class="st"><div class="lv">06</div><div class="nm">Reachable?</div><div class="dz">Can this worker see and execute it?</div></div>
         </div>
-        <p class="fig-note">An order in the system is demand. An allocated order has stock behind it. A released order has become work. Those are three different states.</p>
+        <p class="fig-note">These are diagnostic checks, not a processing sequence shared by every WMS.</p>
       </div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">When pick work has not appeared, do not start at the scanner. Walk the order backward: did it arrive, qualify, allocate, and release? Those four checks turn "the order is stuck" into a status you can find.</p></aside>
     </section>
 
     <section class="sec reveal" id="the-pick">
-      <div class="u-sechead"><p class="u-sechead-k">08</p><h2 class="u-sechead-h">The pick</h2></div>
-      <p class="sub">The heart of the building, the biggest labor cost, and where automation is rewriting the rules.</p>
-      <p>Picking is the act of pulling the right things for one order, and it is where most of the warehouse's hours go. The dirty secret is that a picker spends as much as half their shift just walking, which is why the WMS obsesses over how to organize the trip. It can send one worker for one order (<b>discrete</b>), or batch many orders into one loop and sort them after (<b>batch</b> and <b>cluster</b>), or split the floor into zones and pass a tote down the line (<b>zone</b>), or release a timed wave of orders to hit a truck's cutoff (<b>wave</b>). Each is a different answer to the same question: how do we touch the most orders per step?</p>
-      <p>How the worker is guided matters too. A scanner screen is the baseline; <b>pick-to-light</b> flashes the bin and the count; <b>voice</b> talks the picker through it hands-free, big in freezers and groceries. And then the radical move, <b>goods to person</b>: instead of the human walking to the shelf, the shelf comes to a standing human, and the walking disappears. Cranes and carousels have done this in high-bay buildings since the 1960s, under the name <b>AS/RS</b>, automated storage and retrieval. What changed the industry was <a href="https://press.aboutamazon.com/2012/3/amazon-com-to-acquire-kiva-systems-inc">Kiva Systems</a> putting the idea on wheels, squat orange robots carrying whole shelf racks, and Amazon buying Kiva for 775 million dollars in 2012 and refusing to sell it to anyone else. The rest of the industry spent the next decade rebuilding the idea, which is why the robot menu now has names worth knowing: free-roaming <b>AMRs</b> that follow pickers or haul totes, and cube systems like AutoStore that pack bins into a dense grid with robots driving on the roof.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">10 to 15<span class="u-bignum-u"> miles</span></span><span class="u-bignum-cap">How far a picker can walk in one shift in a big building. Goods-to-person robotics exists to drive that number toward zero, and to turn a half day of walking into a half day of picking.</span><span class="u-bignum-src">Industry reporting</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">The pick is where your ROI story is won. When you talk picks-per-hour and travel saved, you are speaking the operations director's native language, and that is the number that renews the contract.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">07</p><h2 class="u-sechead-h">Picking without wasting the trip</h2></div>
+      <p>In discrete picking, a worker picks one order at a time. Batch picking combines demand from several orders, then sorts the items afterward. <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/system-directed-cluster-pick">Cluster picking</a> keeps those orders separate during the trip, often in different totes on one cart. Zone picking gives workers parts of the floor, with the order moving between zones or being consolidated later.</p>
+      <p>Those choices solve different problems. Batching saves repeated visits to a popular item but adds sorting work. Clusters avoid that later sort but limit how many orders fit on the cart. Zones reduce travel within each area but need a reliable handoff.</p>
+      <p>Workers can follow scanners, spoken instructions, or lights at the bins. In goods-to-person systems, conveyors, cranes, shuttles, or robots bring stock to a station. The WMS still tracks inventory and demand; equipment software controls the movement. Less walking can leave packing or station capacity as the next constraint.</p>
     </section>
 
     <section class="sec reveal" id="pack-and-ship">
-      <div class="u-sechead"><p class="u-sechead-k">09</p><h2 class="u-sechead-h">Pack, label, and out the door</h2></div>
-      <p class="sub">The last hundred feet, where the warehouse hands off to the carrier and closes the loop.</p>
-      <p>At the pack station the picked items get verified one more time by scan, then the system does something clever called <b>cartonization</b>: it picks the smallest box that fits, because shipping air is expensive. How expensive? Carriers bill on <b>dimensional weight</b>, charging by the box's size or its actual weight, whichever costs more, so a big light box of pillows is billed as if it were heavy. The WMS weighs and measures, then <b>rate shops</b> across carriers, choosing parcel for a small box, <b>LTL</b> (less than truckload) for a pallet, <b>FTL</b> for a full trailer, and prints the label.</p>
-      <p>Then it closes the loop, and a quiet stack of paperwork leaves with the order. Four documents do the real work, and they split cleanly in two: two are printed for a person to read, and two are messages fired between machines.</p>
+      <div class="u-sechead"><p class="u-sechead-k">08</p><h2 class="u-sechead-h">Packing and shipping</h2></div>
+      <p>At packing, the items are checked against the order and assigned to containers. <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/container-packing-strategy-overview">Cartonization</a> uses item and container data to propose how to pack them, subject to weight, fit, and packing rules. It may happen before picking rather than at the pack bench.</p>
+      <p>Box size affects the bill. Parcel carriers can charge by <a href="https://www.ups.com/us/en/support/shipping-support/shipping-dimensions-weight">dimensional weight</a>, calculated from package volume, when it exceeds actual weight. Carrier selection and label printing may belong to the WMS, a shipping application, or a transportation management system (TMS).</p>
       <div class="docs">
-        <div class="doc">
-          <span class="dk">Paper &middot; rides in the box</span>
-          <div class="dn">Packing slip</div>
-          <div class="dd">The plain list of what is in the carton: items, quantities, and the order number, with no prices. It is the page a person checks the shipment against, tucked inside the box or in a pouch stuck to the outside.</div>
-        </div>
-        <div class="doc">
-          <span class="dk">Paper &middot; rides with the driver</span>
-          <div class="dn">Bill of lading</div>
-          <div class="dd">Only for <b>freight</b>, the pallets that move by truck. It is at once the receipt for the goods and the contract with the carrier, so the driver signs it at pickup. One page: pallets, weight, class, addresses, and who pays.</div>
-        </div>
-        <div class="doc">
-          <span class="dk">Electronic &middot; sent ahead to the buyer</span>
-          <div class="dn">Outbound ASN</div>
-          <div class="dd">The advance ship notice, an <b>EDI 856</b> fired to the customer before the truck arrives, describing every pallet and carton down to the barcode, meaning the <b>GS1-128</b> label stuck on each one. The packing slip's machine twin: the buyer scans that label and their system already knows what is inside. A label that doesn't match the ASN draws the same retail fines a late one does.</div>
-        </div>
-        <div class="doc">
-          <span class="dk">Electronic &middot; sent up to your ERP</span>
-          <div class="dn">Ship confirmation</div>
-          <div class="dd">The message that tells your own business the order is gone, often an <b>EDI 945</b>. Invisible, and the one that matters most: it relieves the inventory, closes the order, and finally lets finance send the invoice.</div>
-        </div>
+        <div class="doc"><span class="dk">Contents</span><div class="dn">Packing slip</div><div class="dd">Lists shipped items and quantities so the receiver can check them.</div></div>
+        <div class="doc"><span class="dk">Freight</span><div class="dn">Bill of lading</div><div class="dd">Records the freight shipment and carriage details. It can be electronic.</div></div>
+        <div class="doc"><span class="dk">To the buyer</span><div class="dn">Outbound ASN</div><div class="dd">Describes the shipment before arrival. In an X12 EDI exchange, this is the 856.</div></div>
+        <div class="doc"><span class="dk">To the business system</span><div class="dn">Ship confirmation</div><div class="dd">Reports what actually shipped so other systems can update their records.</div></div>
       </div>
-      <p>That last one, the ship confirmation, is the one to watch. Until it fires, the order hangs in <b>processing</b>: the stock is never relieved, the customer is never billed, and the warehouse gets the angry call, because the WMS is the last system in the chain, so it is blamed first.</p>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">This is the seam between the warehouse system and the transportation system (the TMS). Knowing exactly where one ends and the other begins, and that the ship confirm is what closes the money loop, makes you the rare WMS pro who can actually triage a stuck shipment.</p></aside>
+      <p>With a <a href="https://www.gs1.org/standards/gs1-logistic-label-guideline/1-3">GS1 logistics label</a>, the container's identifier is the SSCC, or Serial Shipping Container Code, commonly carried in a GS1-128 barcode. The ASN associates that identifier with the contents. The number on the label and the number in the message must agree.</p>
+      <p>A truck can leave while the business system still shows an open order. Check whether the WMS created the ship confirmation, whether it was delivered, and whether the receiving system accepted it. Inventory posting and invoicing depend on that business's setup; printing a label alone doesn't settle either.</p>
     </section>
 
-    <!-- ============ ACT III ============ -->
-    <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The work that never stops</div></div>
-
     <div class="fig-block reveal flowfig" id="flow3">
-      <div class="fig-title">The work that keeps inventory true</div>
+      <div class="fig-title">Inventory maintenance</div>
       <div class="plate">
         <canvas data-bg></canvas>
         <canvas data-flow></canvas>
         <canvas data-ink role="img"
-          aria-label="A blueprint diagram of the upkeep loop that keeps a warehouse accurate, drawn as a continuous ring. Goods circle clockwise through four stations that run all day at once: replenishment refills the pick shelves, cycle counting verifies the records, holds pull unsafe stock out, and returns bring goods back to be re-entered or retired. The loop never stops."></canvas>
+          aria-label="Inventory maintenance: replenish pick locations, count stock, block unsuitable inventory, inspect returns."></canvas>
         <canvas data-grain class="grain"></canvas>
         <div class="vnav">
           <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
       </div>
-      <p class="fig-note">Click any station, or step through with the arrows. Replenish, count, hold, returns: four jobs that never finish, running at once, all day. This is the quiet loop behind a shelf you can trust.</p>
+      <p class="fig-note">Select a stage or use the arrows.</p>
       <p class="sr" data-t aria-live="polite"></p>
-      <p class="sr">The work that keeps inventory true runs in a loop, all day, all at once: replenishment refills the pick shelves from reserve, cycle counting verifies the records a slice at a time, holds pull damaged or expired stock out before it can ship, and returns bring goods back to be inspected and re-entered or retired. Then it begins again.</p>
+      <p class="sr">Inventory maintenance: replenish pick locations, count stock, block unsuitable inventory, inspect returns.</p>
     </div>
 
     <section class="sec reveal" id="the-loop">
-      <div class="u-sechead"><p class="u-sechead-k">10</p><h2 class="u-sechead-h">The upkeep that never sleeps</h2></div>
-      <p class="sub">The journey you just followed assumes the shelves are stocked and the counts are honest. Keeping them that way is a loop that runs all day, forever.</p>
-      <p>Four jobs circle the building without end. <b>Replenishment</b> keeps refilling the small pick face from the big reserve in back, before a picker ever reaches an empty slot. <b>Cycle counting</b> checks a smart slice of the inventory every day, so the record and the shelf are reconciled in days instead of once a year. Those two you have already met. The loop adds two more that quietly decide whether a customer ever gets burned.</p>
-      <p>The first is the <b>hold</b>. When stock is damaged, expired, recalled, or simply awaiting inspection, the system pulls it out of the <b>available</b> pool and parks it in <b>quarantine</b>, where it physically cannot be picked, so it can never ship by mistake. The second is <b>returns</b>, the whole reverse journey: goods come back from customers, get inspected one at a time, and are restocked, sent back to the vendor, or written off. It is slow and expensive precisely because almost none of it can be done in bulk. And every job in this loop feeds the next: a return that passes inspection becomes replenishment stock, a count that finds a gap can trigger a hold, and around it goes.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">2 to 3<span class="u-bignum-u">&times; cost</span></span><span class="u-bignum-cap">What it takes to process one returned item versus shipping it in the first place, because each one must be inspected by hand instead of handled in bulk. Returns run close to a fifth of everything sold online, and for apparel, where shoppers order three sizes to keep one, far more.</span><span class="u-bignum-src"><a href="https://nrf.com/research/2024-consumer-returns-retail-industry">NRF</a> and industry estimates, directional</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">Half of "the system is broken, it shows stock I cannot ship" tickets are a hold or an allocation doing its job, not a bug. And a customer drowning in returns is ready to hear about a reverse-logistics module, whether they've asked or not. Both are this loop, and you can read both off the inventory record before the call is over.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">09</p><h2 class="u-sechead-h">Returns and quarantine</h2></div>
+      <p>A returned pump needs an identity, a condition assessment, and a decision. It might be restocked, repaired, returned to the supplier, or scrapped. A <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/sales-marketing/specify-how-to-dispose-of-returned-items">disposition code</a> records that decision. The physical return and the customer's credit are related events, but one does not prove the other happened.</p>
+      <p>Stock awaiting a decision can be held in the software and separated physically. A software hold prevents normal allocation when the rules are enforced. It cannot stop someone taking the item off a shelf. Quarantine needs both a recorded restriction and a floor process that respects it.</p>
     </section>
 
-    <!-- ============ ACT IV ============ -->
-    <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">The factory next door</div></div>
-
     <div class="fig-block reveal flowfig" id="flow2">
-      <div class="fig-title">How raw materials become a product</div>
+      <div class="fig-title">Parts to finished goods</div>
       <div class="plate">
         <canvas data-bg></canvas>
         <canvas data-flow></canvas>
         <canvas data-ink role="img"
-          aria-label="A blueprint diagram of how a factory turns parts into a finished product. Four streams of components flow in from the left, wait in the stockroom until a work order releases them, are gathered into a kit by the bill of materials, and converge at a single assembly node where many parts become one. The finished good then flows out to the right, into warehouse storage or onto a truck."></canvas>
+          aria-label="Production supply: receive parts, store, release a work order, kit, assemble, receive finished goods."></canvas>
         <canvas data-grain class="grain"></canvas>
         <div class="vnav">
           <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
       </div>
-      <p class="fig-note">Click any stage, or step through with the arrows. Four kinds of parts arrive, wait for a work order, and meet at the line, where many become one. The finished good then feeds the warehouse from the first visual. Here is how that transformation works.</p>
+      <p class="fig-note">Select a stage or use the arrows.</p>
       <p class="sr" data-t aria-live="polite"></p>
-      <p class="sr">How raw materials become a product: components arrive and are checked in, wait in the stockroom until a work order calls for them, are gathered into one kit per build by the bill of materials, and at the assembly line many parts become one finished good. That finished good then becomes a new item in the warehouse to be stored, picked, packed, and shipped, or sent straight onto a truck.</p>
+      <p class="sr">Production supply: receive parts, store, release a work order, kit, assemble, receive finished goods.</p>
     </div>
 
     <section class="sec reveal" id="raw-to-finished">
-      <div class="u-sechead"><p class="u-sechead-k">11</p><h2 class="u-sechead-h">From raw to finished</h2></div>
-      <p class="sub">A factory is a warehouse with a transformation in the middle. The WMS feeds the line and catches what comes off it.</p>
-      <p>In manufacturing the same building logic runs, but the goods change shape on the way through, and the jargon multiplies fast. Here's the key that unlocks it: nearly everything orbits one idea, the <b>bill of materials</b>, or BOM. It's simply the recipe for one unit, the exact parts it takes to build a single product, anywhere from a dozen for a toy to tens of thousands for a car.</p>
+      <div class="u-sechead"><p class="u-sechead-k">10</p><h2 class="u-sechead-h">Supplying a factory</h2></div>
+      <p>A bill of materials, or BOM, lists the components required for a product. A work order specifies what to build and how many. The warehouse supplies those parts and receives finished goods. The production system manages the build.</p>
       <div class="bom">
-        <div class="bh"><span class="bk">Bill of materials &middot; BOM</span><span class="bt">the recipe for one unit</span></div>
+        <div class="bh"><span class="bk">Example bill of materials</span><span class="bt">one finished unit</span></div>
         <ul>
           <li><span class="q">1&times;</span> Steel frame</li>
           <li><span class="q">1&times;</span> Motor</li>
@@ -631,254 +419,114 @@
         </ul>
         <div class="bsum"><span class="q">= 1</span> finished product</div>
       </div>
-      <p>A <b>work order</b> says to build, say, two hundred of them. After that, almost every other manufacturing term is just a verb you apply to that recipe.</p>
-      <div class="concepts">
-        <div class="concept"><div class="ct">Kitting</div><div class="cd">Gather one recipe's worth of parts into a single bin and stage it at the line, so the assembler never leaves the station to hunt for a screw.</div></div>
-        <div class="concept"><div class="ct">Line replenishment</div><div class="cd">Keep the recipe's parts stocked right at the line as it eats them. The classic signal is <b>Kanban</b>: an empty bin means send another.</div></div>
-        <div class="concept"><div class="ct">Backflushing</div><div class="cd">When a finished unit is reported, deduct the whole recipe from inventory in one stroke, rather than scanning each part out. A wrong BOM quietly miscounts your stock.</div></div>
-        <div class="concept"><div class="ct">Work in process</div><div class="cd">The recipe half-assembled: units on the line that are no longer loose parts and not yet finished goods. Let <b>WIP</b> pile up and it hides problems.</div></div>
-      </div>
-      <p>When the unit is finished, it is received back into the warehouse as a new item, exactly the handoff in the diagram above. The stakes on the line, though, are different. In distribution a slow pick means a late package. On a car line, a part that arrives late or out of sequence stops the line, and a stopped automotive line is measured in many thousands of dollars per minute. That is why high-end plants run <b>just in sequence</b>, parts arriving in the exact order the line will use them.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">$10 to 22<span class="u-bignum-u"> k / min</span></span><span class="u-bignum-cap">What a stopped assembly line can cost at a major automaker. In a plant, the warehouse system has one job: keep a very expensive machine from going quiet.</span><span class="u-bignum-src">Widely cited industry figure</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">A manufacturing customer does not care about "orders shipped." They care about the line never starving. Reframe every conversation around feeding production on time, and you are speaking to their actual fear.</p></aside>
+      <p>Kitting gathers parts for a build. Line replenishment keeps components available at the production station; a kanban is a signal to supply more, such as an empty bin or an electronic request. Partly completed production is work in process, or WIP.</p>
+      <p>Component consumption can be recorded directly or inferred. With <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/production-control/flushing-principles">backflushing</a>, a reported production event deducts the expected components. In the example, reporting 200 finished units could consume 1,200 fasteners. If the line actually used 1,230, the extra 30 need recording too. A correct BOM cannot account for unreported scrap.</p>
+      <p>A line can stop for want of one component while every other component is abundant. Some plants need parts delivered just in sequence, in the order production will use them. Total warehouse stock is a poor measure of whether the next build can begin.</p>
     </section>
 
     <section class="sec reveal" id="system-zoo">
-      <div class="u-sechead"><p class="u-sechead-k">12</p><h2 class="u-sechead-h">The system zoo</h2></div>
-      <p class="sub">Five three-letter systems claim a piece of the floor. The day you can draw the stack is the day you stop sounding like an outsider.</p>
-      <p>The most confusing thing for a newcomer is that the WMS is not alone. It lives in a stack of systems, each minding its own altitude, and they are forever blamed for each other's failures. At the top is the <b>ERP</b>, the financial brain that decides what to make and buy and what it is worth. (In e-commerce an <b>OMS</b>, an order management system, often sits beside it, deciding which building ships each order before any warehouse hears about it.) Below it the <b>WMS</b> runs the physical floor. On the factory side the <b>MES</b> tracks what is happening on the machines right now. And where there is automation, a <b>WCS</b> drives the conveyors and sorters in millisecond real time, with a newer layer, the <b>WES</b>, orchestrating robots and humans together. This layered map is old enough to have a name, the ISA-95 pyramid.</p>
+      <div class="u-sechead"><p class="u-sechead-k">11</p><h2 class="u-sechead-h">The other systems involved</h2></div>
+      <p>A WMS shares work with other software. These names describe responsibilities; they don't guarantee a separate product for each one.</p>
       <div class="fig-block wide reveal">
-        <div class="fig-title">Who owns what, top to bottom</div>
+        <div class="fig-title">Common responsibilities</div>
         <div class="stack">
-          <div class="layer"><div class="top"><span class="lv">level 4</span><span class="nm">ERP</span></div><div class="ds">The ledger. What to make, what to buy, what it is worth. Knows you own 500; not which shelf.</div></div>
-          <div class="layer lit"><div class="top"><span class="lv">level 3</span><span class="nm">WMS &#9733;</span></div><div class="ds">The floor. Where every unit physically sits, and what each worker does next. Your world.</div></div>
-          <div class="layer"><div class="top"><span class="lv">level 3</span><span class="nm">MES</span></div><div class="ds">The line. Which machine is running what, right now, and the quality check at each step.</div></div>
-          <div class="layer"><div class="top"><span class="lv">level 2</span><span class="nm">WES / WCS</span></div><div class="ds">The machines. Orchestrates robots, then drives conveyors and sorters in real time.</div></div>
-          <div class="layer"><div class="top"><span class="lv">level 1</span><span class="nm">PLC</span></div><div class="ds">The motors and sensors. A valve opens, a belt turns. No idea what an order is.</div></div>
+          <div class="layer"><div class="top"><span class="nm">ERP: enterprise resource planning</span></div><div class="ds">Purchasing, production planning, financial records, and other business processes.</div></div>
+          <div class="layer"><div class="top"><span class="nm">OMS: order management system</span></div><div class="ds">Customer orders and fulfillment decisions across locations or channels.</div></div>
+          <div class="layer lit"><div class="top"><span class="nm">WMS: warehouse management system</span></div><div class="ds">Warehouse inventory, locations, and work.</div></div>
+          <div class="layer"><div class="top"><span class="nm">MES: manufacturing execution system</span></div><div class="ds">Production execution, progress, and quality records.</div></div>
+          <div class="layer"><div class="top"><span class="nm">WES / WCS: warehouse execution / control systems</span></div><div class="ds">Coordinate work across resources and control material-handling equipment.</div></div>
         </div>
-        <p class="fig-note">They talk constantly, mostly through a decades-old language called EDI. The two messages that matter most: a 940 tells the WMS to ship something, and a 945 tells the ERP it shipped. That handshake is the heartbeat of the whole stack.</p>
+        <p class="fig-note"><a href="https://og.mhi.org/fundamentals/software">MHI's software definitions</a> and <a href="https://www.mhi.org/blog/126112/how-wes-supports-warehouse-automation-goals">WES integration overview</a>. Product boundaries overlap.</p>
       </div>
-      <p>And this is exactly where projects die. The software vendor does its part, the data flows between systems get underestimated, and the connection between WMS and ERP becomes the thing nobody owns. When the 945 silently fails to send, three different teams point at each other while the customer's orders pile up unbilled.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">~45<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">Of warehouse software projects that name integration as the main cause of going live late and over budget. Not the software itself. The wiring between the software and everything around it.</span><span class="u-bignum-src">Implementation surveys, directional</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">Most "WMS bugs" are integration bugs. The WMS pro who can tell whether the WMS sent the message, the middleware dropped it, or the ERP rejected it is worth their salary three times over. Learn the 940 and the 945 cold.</p></aside>
+      <p>Electronic data interchange, or EDI, exchanges standardized business documents. X12's <a href="https://x12.org/products/transaction-sets">940</a> requests warehouse shipping work; the <a href="https://x12.org/node/4447">945</a> reports the shipment. The buyer's <a href="https://x12.org/flow/supply-chain">856</a> serves a different recipient and purpose. Systems also exchange data through application programming interfaces (APIs) and files.</p>
+      <p>An integration needs to handle delays, rejections, and duplicates. If a shipment was posted but its acknowledgment was lost, resending the message must not deduct the inventory again. Message IDs, processing logs, and reconciliation are what let teams distinguish a missing event from an event processed twice.</p>
     </section>
 
-    <!-- ============ ACT V ============ -->
-    <div class="act reveal"><div class="act-k">Act V</div><div class="act-t">What the customer measures</div></div>
-
     <section class="sec reveal" id="nines">
-      <div class="u-sechead"><p class="u-sechead-k">13</p><h2 class="u-sechead-h">The tyranny of the multiplied nines</h2></div>
-      <p class="sub">Every warehouse lives and dies by a handful of numbers. The cruelest one is the product of the others.</p>
-      <p>Ask an operator how good they are and they will quote you a metric: inventory accuracy, on-time shipping, pick accuracy, dock-to-stock time. The one the executives actually watch is the <b>perfect order rate</b>, the share of orders that go out right on every dimension at once. The industry standard breaks it into four: on time, complete (in full), undamaged, and documented correctly, meaning the invoice, the packing slip, and the bill of lading all match. A few operations add a fifth or sixth, but these are the universal core. It sounds soft until you do the arithmetic. Because all four must hold at once, the score is their product, not their average, so four steps that each hit a respectable 97 percent do not give you 97. They give you something that will ruin your afternoon. Try it.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">12</p><h2 class="u-sechead-h">Measuring the result</h2></div>
+      <p>A <b>perfect order</b> arrives on time, complete, undamaged, and with accurate documentation. For a direct measurement, count orders meeting all four conditions and divide by the total orders. Four separate success rates don't show whether the failures hit the same orders.</p>
+      <p><a href="https://www.apqc.org/what-we-do/benchmarking/open-standards-benchmarking/measures/percentage-change-perfect-order-0">APQC's measure</a> multiplies the four rates and calls the result an approximation. Four rates of 97 percent produce an estimate of 88.5 percent. As a probability calculation, that assumes independent failures. The demo lets you change that assumption.</p>
       <div class="lab full reveal" id="lab" aria-label="Interactive: the perfect order rate">
         <div class="lab-in" style="max-width: calc(var(--measure) + 11rem); margin: 0 auto;">
           <div class="lab-head">
-            <div class="t">The tyranny of the multiplied nines</div>
-            <div class="s">Four steps, each nearly perfect on its own. Upgrade them to best-in-class and watch what survives the multiplication.</div>
+            <div class="t">What counts as a perfect order?</div>
+            <div class="s">Change the success rates, then change which orders fail.</div>
           </div>
           <div class="lab-body">
-            <div class="lab-out"><span class="po" id="po-fig">88.5%</span><span class="pol">perfect order rate</span></div>
-            <div class="lab-metric">each link, tap to upgrade from typical (97%) to best-in-class (99.5%)</div>
+            <div class="lab-out"><span class="po" id="po-fig">88.5%</span><span class="pol">perfect orders in this model</span></div>
+            <div class="lab-metric">Each button switches between 97% and 99.5%. These are example rates.</div>
             <div class="lab-links">
               <div class="lab-link">
                 <span class="ll-name" id="name-ontime">On time</span>
-                <button class="lab-toggle" data-link="ontime" aria-pressed="false">97% &rarr; upgrade</button>
+                <button class="lab-toggle" data-link="ontime" aria-pressed="false">Use 99.5%</button>
                 <span class="ll-desc">delivered by the date you promised</span>
             <div class="ll-track"><div class="ll-fill" id="fill-ontime"></div></div>
               </div>
               <div class="lab-link">
                 <span class="ll-name" id="name-infull">In full</span>
-                <button class="lab-toggle" data-link="infull" aria-pressed="false">97% &rarr; upgrade</button>
+                <button class="lab-toggle" data-link="infull" aria-pressed="false">Use 99.5%</button>
                 <span class="ll-desc">the complete order, no missing items or short counts</span>
             <div class="ll-track"><div class="ll-fill" id="fill-infull"></div></div>
               </div>
               <div class="lab-link">
                 <span class="ll-name" id="name-intact">Undamaged</span>
-                <button class="lab-toggle" data-link="intact" aria-pressed="false">97% &rarr; upgrade</button>
+                <button class="lab-toggle" data-link="intact" aria-pressed="false">Use 99.5%</button>
                 <span class="ll-desc">arrives in sellable condition, nothing broken</span>
             <div class="ll-track"><div class="ll-fill" id="fill-intact"></div></div>
               </div>
               <div class="lab-link">
-                <span class="ll-name" id="name-invoice">Billed right</span>
-                <button class="lab-toggle" data-link="invoice" aria-pressed="false">97% &rarr; upgrade</button>
-                <span class="ll-desc">the invoice and paperwork match the order</span>
+                <span class="ll-name" id="name-invoice">Documented correctly</span>
+                <button class="lab-toggle" data-link="invoice" aria-pressed="false">Use 99.5%</button>
+                <span class="ll-desc">the required documents are accurate</span>
             <div class="ll-track"><div class="ll-fill" id="fill-invoice"></div></div>
               </div>
             </div>
-            <div class="lab-read"><p id="lab-msg">Four steps at 97 percent each. Feels like an A. But 0.97 times itself four times is only <b>88.5 percent</b>, so more than one order in nine is imperfect somewhere. Tap the links to fix them.</p></div>
-            <div class="lab-cite">The perfect order rate, the standard order-reliability metric from the SCOR supply-chain model, benchmarked by APQC.</div>
+            <div class="lab-overlap" role="group" aria-label="How failures overlap">
+              <button class="lab-toggle" data-overlap="independent" aria-pressed="true">Independent failures</button>
+              <button class="lab-toggle" data-overlap="same" aria-pressed="false">Same orders fail</button>
+              <button class="lab-toggle" data-overlap="different" aria-pressed="false">Different orders fail</button>
+            </div>
+            <div class="lab-read" aria-live="polite"><p id="lab-msg">With independent failures, 0.97 &times; 0.97 &times; 0.97 &times; 0.97 = 88.5%. Change the overlap to see why the four rates alone cannot tell you how many orders were perfect.</p></div>
+            <div class="lab-cite">Example probabilities, not warehouse benchmarks. The overlap settings hold the individual rates constant.</div>
           </div>
         </div>
       </div>
 
-      <p>That is the whole reason this software exists. A WMS does not win by being brilliant at one step. It wins by holding every link, the receiving and the slotting and the picking and the billing, up near the nines at the same time, because the customer's headline number is the product, not the average. For scale, the cross-industry median runs about 90 percent and a world-class operation 95 and up, so the 88.5 above is already below average. Lift the weakest link and the whole rate jumps.</p>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">Your quarterly review with a customer should open on their perfect order rate, then walk back to which link is dragging it. That single chart turns a "are you happy with us" chat into a "here is the money we made you" one.</p></aside>
+
+      <p>For 1,000 orders, a 97 percent rate means 30 failures on each measure. If the same 30 orders fail all four, 970 are perfect. If four separate groups of 30 fail, only 880 are. Both operations report 97 percent on every individual measure.</p>
+      <p>Other measures answer narrower questions: receiving time, pick accuracy, units per labor hour, or cost per order. Compare like work over a consistent period. A full-pallet pick and a single-item pick are different jobs, even if a dashboard calls both one pick.</p>
     </section>
 
     <section class="sec reveal" id="planets">
-      <div class="u-sechead"><p class="u-sechead-k">14</p><h2 class="u-sechead-h">Every warehouse is a different planet</h2></div>
-      <p class="sub">The path from dock to door is the same everywhere. What makes a deal succeed or fail is the one rule the customer's industry cannot bend.</p>
-      <p>The fastest way to sound like you belong is to know a customer's world from their industry alone. Each vertical bends the same software around one non-negotiable, and naming that rule before they do is what earns trust in the first meeting.</p>
+      <div class="u-sechead"><p class="u-sechead-k">13</p><h2 class="u-sechead-h">What changes between warehouses</h2></div>
       <div class="fig-block wide reveal">
-        <div class="fig-title">Name the industry, name the deal-breaker</div>
         <div class="cases">
-          <div class="case"><div class="co">Third-party logistics (3PL)</div><div class="did">Runs one building for many clients, each with their own rules.</div><div class="res">The WMS <b>is the product</b>, and it must meter every action to bill for it.</div></div>
-          <div class="case"><div class="co">E-commerce &amp; retail</div><div class="did">Huge SKU counts, single-unit picks, a tidal wave of returns.</div><div class="res">Real-time inventory across every channel, or you <b>oversell</b>.</div></div>
-          <div class="case"><div class="co">Food &amp; cold chain</div><div class="did">Everything is perishable and must be traceable for recalls.</div><div class="res"><b>FEFO</b> and lot tracking, enforced. FSMA is the law.</div></div>
-          <div class="case"><div class="co">Pharma &amp; life sciences</div><div class="did">Every package traced to the patient; quarantine is sacred.</div><div class="res"><b>DSCSA</b> serial scanning and an unbreakable audit trail.</div></div>
-          <div class="case"><div class="co">Apparel &amp; footwear</div><div class="did">One style explodes into dozens of size and color SKUs.</div><div class="res">The size-color <b>matrix</b>, item-level <b>RFID</b>, garment-on-hanger handling.</div></div>
-          <div class="case"><div class="co">Automotive &amp; industrial</div><div class="did">The warehouse feeds a production line that must not stop.</div><div class="res">Just-in-<b>sequence</b> delivery, wired tight to the plant.</div></div>
+          <div class="case"><div class="co">Third-party logistics (3PL)</div><div class="did">Stores and ships goods for other businesses.</div><div class="res">Separate each client's stock, apply their rules, and record billable work.</div></div>
+          <div class="case"><div class="co">E-commerce</div><div class="did">Small orders across many products.</div><div class="res">Handle individual-unit picking, carrier cutoffs, and returns.</div></div>
+          <div class="case"><div class="co">Food</div><div class="did">Shelf life and storage conditions limit what can ship.</div><div class="res">Track lots and dates, enforce eligibility, and locate affected stock for recalls.</div></div>
+          <div class="case"><div class="co">Pharmaceuticals</div><div class="did">Product identity and traceability require careful records.</div><div class="res">Preserve required lot or serial history and control release from inspection.</div></div>
+          <div class="case"><div class="co">Apparel</div><div class="did">Styles split into sizes and colors.</div><div class="res">Keep variants distinct and support the operation's handling and return processes.</div></div>
+          <div class="case"><div class="co">Manufacturing</div><div class="did">Production needs particular components at particular times.</div><div class="res">Supply the line in the required quantity and sequence.</div></div>
         </div>
-        <p class="fig-note">Same path, six different masters. A 3PL fears unbilled work; a pharma distributor fears the FDA; a carmaker fears a silent line. Know which one is sitting across the table.</p>
       </div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">Before a first call, look up the customer's vertical and rehearse its one rule. Walking in already knowing a food client lives on FEFO, or a 3PL lives on billing accuracy, buys you more credibility than any demo.</p></aside>
     </section>
 
     <section class="sec reveal" id="labor">
-      <div class="u-sechead"><p class="u-sechead-k">15</p><h2 class="u-sechead-h">The labor math underneath it all</h2></div>
-      <p class="sub">Strip away the software and the warehouse is a people problem. That is also where the money to buy the software comes from.</p>
-      <p>Labor is half to two-thirds of what it costs to run a warehouse, and the workforce churns ferociously: the work is repetitive and physically punishing, and roughly half the floor turns over in a year. So the business case for nearly every WMS and every robot is, at bottom, a labor case. A <b>labor management system</b> sets a fair time standard for each task and measures everyone against it, which raises productivity and, used badly, tips into the surveillance that makes headlines. This is the real tension in the industry: the same data that coaches a struggling worker can also grind one down.</p>
-      <p>It is also why automation keeps winning. When half your people quit every year and each replacement costs thousands, a robot that never quits starts to pencil out, especially rented by the month instead of bought, which is how a lot of warehouse robotics is sold now. The labor crisis is the engine under the whole industry.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">~49<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">Annual turnover on a typical warehouse floor, with each departure costing thousands to replace. A 500-person building can spend over a million a year just replacing the people who left.</span><span class="u-bignum-src"><a href="https://www.bls.gov/news.release/jolts.t16.htm">US labor data</a> and industry estimates</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">The economic buyer is usually the CFO, and the CFO buys labor savings, not features. Frame value in fully-loaded hours saved and turnover absorbed, and you are arguing in the only currency that signs the renewal.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">14</p><h2 class="u-sechead-h">What a labor saving means</h2></div>
+      <p>A labor management system compares recorded work with <a href="https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/manage-warehouse-workers">planned or engineered task times</a>. Those comparisons need to account for travel, load size, equipment, and delays outside the worker's control. Otherwise, a slow replenishment looks like a slow picker.</p>
+      <p>Suppose a change saves 20 seconds on each of 10,000 daily tasks. That is about 56 labor hours. At an assumed fully loaded cost of $25 an hour, it represents roughly $1,389 of daily capacity. These are example inputs, not an industry payback estimate.</p>
+      <p>That capacity becomes a cash saving only if the business can reduce paid hours or avoid adding them. It may instead absorb growth or ease a backlog. Software, equipment, maintenance, and new work elsewhere in the process still belong in the calculation.</p>
     </section>
 
-    <!-- ============ ACT VI ============ -->
-    <div class="act reveal"><div class="act-k">Act VI</div><div class="act-t">The industry that sells it</div></div>
-
     <section class="sec reveal" id="vendors">
-      <div class="u-sechead"><p class="u-sechead-k">16</p><h2 class="u-sechead-h">The vendors and the money</h2></div>
-      <p class="sub">Who sells this software, who buys each tier, and why the install costs more than the code.</p>
-      <p>Ask anyone in the industry about a WMS vendor and they'll place it on the same mental map, sorted by one thing: the complexity of the building it was built for. At the top sit the enterprise suites, Manhattan Associates, Blue Yonder, Körber, SAP, Oracle, the systems running the giant automated buildings of national retailers and parcel networks. The scoreboard up here is Gartner's <b>Magic Quadrant</b>, the analyst chart that re-ranks the field once a year and gets argued about for the other 364 days.</p>
-      <div class="fig-block wide reveal">
-        <div class="fig-title">The vendor map, top rung to no rung</div>
-        <div class="stack">
-          <div class="layer"><div class="top"><span class="lv">tier 1</span><span class="nm">Enterprise suites</span></div><div class="ds">Manhattan, Blue Yonder, K&ouml;rber, SAP EWM, Oracle. Giant automated buildings, seven-figure deals, installs measured in quarters.</div></div>
-          <div class="layer"><div class="top"><span class="lv">tier 2</span><span class="nm">Mid-market specialists</span></div><div class="ds">The same moves for simpler buildings. Six figures, months not years, less exotic automation.</div></div>
-          <div class="layer"><div class="top"><span class="lv">tier 3</span><span class="nm">ERP warehouse modules</span></div><div class="ds">The warehouse screens inside NetSuite, Dynamics, and friends. Fine until directed work starts to matter.</div></div>
-          <div class="layer"><div class="top"><span class="lv">tier 4</span><span class="nm">E-commerce native</span></div><div class="ds">Cloud systems a small 3PL or brand can turn on in weeks, priced by order volume.</div></div>
-          <div class="layer"><div class="top"><span class="lv">tier 0</span><span class="nm">Spreadsheets and memory</span></div><div class="ds">Where every operation starts, and what every tier above is really selling against.</div></div>
-        </div>
-        <p class="fig-note">Every customer climbs from the bottom; every vendor defends its rung and poaches the one below.</p>
-      </div>
-      <p>Each rung down trades depth for speed. Mid-market specialists sell the same core discipline, directed work, real scans, real statuses, to buildings that count their SKUs in the thousands, at six figures instead of seven. Below them sit the warehouse modules bolted onto ERPs like NetSuite and Dynamics, fine right up until directed work and real-time inventory start to matter. At the bottom, e-commerce-native systems switch on in weeks and price by order volume. Most customers climb this ladder rung by rung, and the jump is rarely triggered by a feature list. It's a peak season that melted down, or an accuracy collapse.</p>
-      <p>The money is its own lesson. The license or subscription is the visible price, but the implementation, the consultants who map processes, tune rules, wire integrations, and staff the go-live, routinely costs one to two times the software again, and an entire consulting industry lives on that work. Perpetual licenses are giving way to cloud subscriptions, but the shape of the business hasn't changed: winning a deal is expensive, and the profit is in keeping the customer for a decade. That's why the job in the next act exists.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">1 to 2<span class="u-bignum-u">&times; the software</span></span><span class="u-bignum-cap">What the implementation typically costs on top of the license: process mapping, integration wiring, testing, training, go-live support. In this industry the install is routinely a bigger bill than the code.</span><span class="u-bignum-src">Industry rule of thumb, directional</span></div>
-      <p>One last pair of words carries most of the industry's scar tissue: <b>configuration</b> versus <b>customization</b>. Configuration is settings, rules the vendor already built levers for, and it survives every upgrade. Customization is new code written for one customer, and it is a debt: every mod has to be retested or rebuilt at every upgrade, which is how older on-premise sites end up frozen on a version from five years ago that nobody dares touch. The quiet revolution of the cloud era is mostly this one discipline: everyone on the current version, every snowflake expressed as configuration, so the upgrade stops being a project and becomes a Tuesday.</p>
-      <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">Place any vendor you meet on this map within the first minute, including your own employer. The most common mis-sold deal in this industry is a tier mismatch, a building that bought one rung above or below what its complexity needed, and it surfaces at go-live, as your problem.</p></aside>
+      <div class="u-sechead"><p class="u-sechead-k">15</p><h2 class="u-sechead-h">Choosing and changing the system</h2></div>
+      <p>A WMS can be a standalone product or part of an ERP. ERP warehouse modules can support directed work and real-time inventory; the label on the product doesn't tell you how capable it is. Evaluate the actual operation: owners, lots, automation, shipping requirements, peak volume, and integrations.</p>
+      <p>Configuration sets rules the product supports. Customization adds behavior through code. Either can cause failures and need testing after an upgrade. Supported extensions may be reasonable; a heavily modified process carries a larger maintenance burden.</p>
+      <p>Implementation means mapping the work, cleaning and migrating data, connecting systems, testing, training, and cutting over. Before that cutover, run real examples through receiving to shipment. Include a short delivery, a held lot, a partial pick, a rejected message, and a retry. A happy-path demonstration leaves those questions unanswered.</p>
+      <p>If a pick location runs empty ten minutes before the carrier cutoff, who gets the replenishment task, can they complete it, and what happens to the order if they can't? A trial on the floor can establish that. A feature list can't.</p>
     </section>
 
   </article>
-
-  <!-- ============ ACT VII: THE CSM MODULE (one self-contained piece) ============ -->
-  <section class="fyi reveal" id="playbook" aria-label="The customer success playbook">
-    <div class="fyi-in">
-      <div class="kicker">Act VII &middot; The Playbook</div>
-      <h3>The customer's success is the job</h3>
-      <p class="stand">Everything so far was the floor. Here is the part that is actually your work: keeping the human beings who run that floor glad they chose you, year after year, in a product that is brutally hard to rip out once it is in.</p>
-
-      <div class="fyi-col">
-        <p>People buy a WMS for a reason you can almost always name: they outgrew the warehouse module bolted onto their ERP, their inventory accuracy fell apart, a peak season melted down, or an audit went badly. Find that original wound on the first call and keep it in front of you, because two years later your renewal argument is "remember why you bought us," and you can't make it if you never knew.</p>
-        <p>And you are never selling to one person. You are managing a small cast, each of whom wants something different and fears something different.</p>
-      </div>
-
-      <div class="map reveal">
-        <div class="factor lit"><h4>VP of Operations &#9733;</h4><div class="fn">your sponsor</div><ul><li class="hi">Wants throughput and SLAs</li><li class="hi">Fears a go-live that stops shipping</li><li>Speaks in cost per order</li></ul></div>
-        <div class="factor"><h4>Warehouse manager</h4><div class="fn">daily reality</div><ul><li>Wants it to just work on the floor</li><li>Fears retraining churned staff</li><li>Your truest source of truth</li></ul></div>
-        <div class="factor"><h4>IT / integrations</h4><div class="fn">the wiring</div><ul><li>Wants stable ERP and EDI links</li><li>Fears the 2am batch failure</li><li>Blamed for the seams</li></ul></div>
-        <div class="factor"><h4>CFO / finance</h4><div class="fn">the wallet</div><ul><li>Wants payback inside two years</li><li>Fears scope creep</li><li>Acts on numbers, not stories</li></ul></div>
-      </div>
-      <p class="map-note">Below them sit the floor super-users, the lead pickers and supervisors who become your champions. Win them and adoption takes care of itself. Lose one to turnover and you have lost your eyes on the account.</p>
-
-      <div class="fyi-col">
-        <p>The hardest stretch is the implementation, and it is famously rough. A WMS go-live can take many months, routinely runs over budget, and ends in a cutover, the day the old system goes dark and productivity drops before it climbs. The phases are predictable, and two of them are where reputations are made or lost.</p>
-      </div>
-
-      <div class="anat reveal">
-        <div class="step"><span class="sn">1</span><div class="st">Blueprint</div><div class="sd">Map every process to "to-be." Scope creep is born here.</div></div>
-        <div class="step"><span class="sn">2</span><div class="st">Configure</div><div class="sd">Tune the rules to this snowflake of a warehouse.</div></div>
-        <div class="step warn"><span class="sn">3</span><div class="st">Integrate</div><div class="sd">Wire to ERP, carriers, EDI. Where projects die.</div></div>
-        <div class="step"><span class="sn">4</span><div class="st">Migrate data</div><div class="sd">Items, locations, units. Dirty data surfaces here.</div></div>
-        <div class="step"><span class="sn">5</span><div class="st">Pilot &amp; train</div><div class="sd">Walk it through with real people and real totes.</div></div>
-        <div class="step"><span class="sn">6</span><div class="st">Go-live</div><div class="sd">Old system off. Stressful by definition.</div></div>
-        <div class="step warn"><span class="sn">7</span><div class="st">Hypercare</div><div class="sd">The weeks after. Where you earn the account.</div></div>
-      </div>
-
-      <div class="fyi-col">
-        <p>Once they are live, your job becomes a number. The most important thing you do in the first ninety days is the least glamorous: <b>write down the baseline.</b> Capture their inventory accuracy, their picks per hour, their order accuracy <em>before</em> go-live, because without it you can never prove what you delivered, and memory always edits the past in the customer's favor. From then on every review is a before-and-after with dollar signs, and every dollar you can show is a wall against the competitor whispering in the next building over.</p>
-        <p>The calendar has a shape too. Most of retail aims its whole year at <b>peak</b>, the holiday quarter, and treats it as sacred: capacity conversations happen in the summer, a <b>change freeze</b> locks the system down from late fall, and nobody goes live in November. Plan your year backward from peak, and you will never be the vendor who broke Christmas.</p>
-        <p>Churn in this world is rarely about price. It's a failed go-live that never healed, a champion who left, an acquisition that standardizes on someone else, or an ROI nobody ever bothered to measure. And the flip side is the happy truth of this category: a WMS with years of configuration, dozens of integrations, and hundreds of trained users is nearly impossible to tear out. The switching cost is your moat. Expansion, more sites, more modules, labor, slotting, automation, is the easiest motion you have, because the system is already the floor.</p>
-        <p>Which is the quiet point of this whole tour. The credibility that makes a great warehouse CSM is knowing how the building thinks, well enough to stand on the floor and be useful. That part is learnable. You just did most of it.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ THE RECAP: the whole tour, one card ============ -->
-  <section class="recap reveal" id="recap" aria-label="The whole tour, one card">
-    <div class="recap-k">Before you go</div>
-    <h3>The whole tour, one card</h3>
-    <p class="recap-s">Sixteen stops, sixteen moves. Each line links back to its stop.</p>
-    <ol class="u-steps">
-      <li class="u-step"><a class="u-step-h" href="#building">The building</a><p class="u-step-p">The WMS is the difference between a warehouse and a pile. Deals take months to close and a decade to leave.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#digital-twin">The digital twin</a><p class="u-step-p">When "the system is wrong," suspect the data first. A quick data-quality audit is half the job.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#the-scan">The holy scan</a><p class="u-step-p">No scan, no change. And check the physical layer first: half of "it's down" is a battery, a printer, or wifi.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#the-dock">The dock</a><p class="u-step-p">Log OS&amp;D before the driver leaves. A clean, on-time ASN is money the customer didn't lose.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#putaway">Putaway and slotting</a><p class="u-step-p">Fast movers in the golden zone. Stale slotting is a dollarized win waiting for a review.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#the-count">The count</a><p class="u-step-p">On hand is never available to promise. Read the record out loud: item, location, quantity, status.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#before-the-pick">Before the pick</a><p class="u-step-p">No work on the floor? Walk it backward: arrived, qualified, allocated, released.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#the-pick">The pick</a><p class="u-step-p">Picks per hour and travel saved are the operations director's native language.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#pack-and-ship">Pack and ship</a><p class="u-step-p">The ship confirm closes the money loop. Until the 945 fires, nobody gets billed.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#the-loop">The upkeep loop</a><p class="u-step-p">Half of "broken" tickets are a hold or an allocation doing its job.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#raw-to-finished">Raw to finished</a><p class="u-step-p">A manufacturing customer cares about one thing: the line never starves.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#system-zoo">The system zoo</a><p class="u-step-p">Most WMS bugs are integration bugs. Learn the 940 and the 945 cold.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#nines">The multiplied nines</a><p class="u-step-p">The perfect order rate is a product, not an average. Open every review with it.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#planets">Different planets</a><p class="u-step-p">Name the vertical's one non-negotiable before the customer does.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#labor">The labor math</a><p class="u-step-p">The CFO buys fully-loaded hours saved, not features.</p></li>
-      <li class="u-step"><a class="u-step-h" href="#vendors">Vendors and money</a><p class="u-step-p">Place every vendor on the tier map in the first minute, including your own. Configuration over customization.</p></li>
-    </ol>
-    <p class="recap-foot">And <a href="#playbook">the playbook</a>: find the original wound, write down the baseline, guard the go-live, plan backward from peak, earn the renewal.</p>
-  </section>
-
-  <!-- ============ ENDING ============ -->
-  <div class="ending reveal">
-    <h2>A warehouse is just a promise,<br><em>kept at scale.</em></h2>
-    <p>Somebody tapped "buy," and a building you will never see quietly made good on it, one scan at a time. The WMS is how a pile of stuff becomes a system that always knows where everything is and what to do next. Learn to read it, and the whole hidden machinery behind every package on your porch turns from a black box into a place you could walk into and understand.</p>
-  </div>
-
-  <!-- ============ APPENDIX ============ -->
-  <section class="appendix reveal">
-    <h2>The acronym zoo, decoded</h2>
-    <p class="ap-intro">This world runs on three-letter codes, and fluency in them is most of sounding like you belong. Here are the ones worth carrying in your head.</p>
-    <div class="zoo">
-      <div class="row"><b>WMS</b> <span>Warehouse Management System. The brain of the floor.</span></div>
-      <div class="row"><b>ERP</b> <span>Enterprise Resource Planning. The financial system of record.</span></div>
-      <div class="row"><b>MES</b> <span>Manufacturing Execution System. Runs the production line.</span></div>
-      <div class="row"><b>WCS / WES</b> <span>Warehouse Control / Execution System. Drives and orchestrates the automation.</span></div>
-      <div class="row"><b>TMS</b> <span>Transportation Management System. Plans and rates the trucks; the WMS hands off to it.</span></div>
-      <div class="row"><b>OMS</b> <span>Order Management System. Decides which building ships each order, upstream of the WMS.</span></div>
-      <div class="row"><b>YMS</b> <span>Yard Management System. Tracks trailers between the gate and the dock door.</span></div>
-      <div class="row"><b>SKU</b> <span>Stock Keeping Unit. One distinct sellable item.</span></div>
-      <div class="row"><b>LPN</b> <span>License Plate Number. A barcode for a pallet, case, or tote.</span></div>
-      <div class="row"><b>RFID</b> <span>Radio tags read in bulk with no line of sight. The item-level standard in apparel.</span></div>
-      <div class="row"><b>ASN</b> <span>Advance Ship Notice. "Here is what is on the truck," sent before it arrives.</span></div>
-      <div class="row"><b>EDI</b> <span>Electronic Data Interchange. The old language systems trade documents in.</span></div>
-      <div class="row"><b>GS1-128</b> <span>The standard carton and pallet barcode retail compliance runs on. The ASN promises it; the label delivers it.</span></div>
-      <div class="row"><b>940 / 945</b> <span>"Go ship this" / "It shipped." The WMS-to-ERP heartbeat.</span></div>
-      <div class="row"><b>FIFO / FEFO</b> <span>First In or First Expired, First Out. The order you sell stock in.</span></div>
-      <div class="row"><b>OS&amp;D</b> <span>Over, Short &amp; Damaged. Receiving discrepancies, logged at the dock.</span></div>
-      <div class="row"><b>ATP</b> <span>Available To Promise. On hand minus what is already spoken for.</span></div>
-      <div class="row"><b>BOM</b> <span>Bill of Materials. The recipe for a manufactured thing.</span></div>
-      <div class="row"><b>LTL / FTL</b> <span>Less-than / Full Truckload. How palletized freight ships.</span></div>
-      <div class="row"><b>3PL</b> <span>Third-Party Logistics. A company that runs warehouses for others.</span></div>
-      <div class="row"><b>OTIF</b> <span>On Time In Full. The retail compliance metric with the fines.</span></div>
-      <div class="row"><b>LMS</b> <span>Labor Management System. Sets and measures work standards.</span></div>
-      <div class="row"><b>AMR</b> <span>Autonomous Mobile Robot. The free-roaming floor robot that follows pickers or hauls totes.</span></div>
-      <div class="row"><b>AS/RS</b> <span>Automated Storage &amp; Retrieval System. Cranes, shuttles, and cube grids that fetch the goods themselves.</span></div>
-      <div class="row"><b>DSCSA / FSMA</b> <span>The pharma and food traceability laws that shape those verticals.</span></div>
-    </div>
-    <p class="ap-foot">Built from a wide read of the warehousing and supply-chain trade literature. Hard figures link their sources; the rest are industry benchmarks, directional rather than audited, with the more conservative reading used where sources disagree.</p>
-  </section>
 
   <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
   <nav class="u-next" aria-label="Keep reading">
@@ -920,50 +568,54 @@
       Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function (el) { io.observe(el); });
     }
 
-    /* ===== the interactive: the multiplied nines =====
-       Four links of the perfect order, each at a "typical" 97% or a
-       "best-in-class" 99.5%. The perfect order rate is their product,
-       which is why four good-looking links can still total a bad one. */
-    var TYP = 0.97, BEST = 0.995;
+    /* Example marginal success rates, with three failure-overlap models. */
+    var LOW = 0.97, HIGH = 0.995;
     var order = ['ontime', 'infull', 'intact', 'invoice'];
-    var labels = { ontime: 'On time', infull: 'In full', intact: 'Undamaged', invoice: 'Billed right' };
+    var labels = { ontime: 'On time', infull: 'In full', intact: 'Undamaged', invoice: 'Documented correctly' };
     var state = { ontime: false, infull: false, intact: false, invoice: false };
+    var overlap = 'independent';
     var poFig = document.getElementById('po-fig');
     var msg = document.getElementById('lab-msg');
 
     function render() {
-      var prod = 1, fixed = 0;
+      var product = 1, failures = 0, worstFailure = 0;
       order.forEach(function (k) {
-        var on = state[k];
-        var v = on ? BEST : TYP;
-        prod *= v;
-        if (on) fixed++;
-        var fill = document.getElementById('fill-' + k);
-        if (fill) fill.style.width = (v * 100).toFixed(1) + '%';
-        var nm = document.getElementById('name-' + k);
-        if (nm) nm.textContent = labels[k] + ' · ' + (v * 100).toFixed(1) + '%';
+        var v = state[k] ? HIGH : LOW;
+        product *= v;
+        failures += 1 - v;
+        worstFailure = Math.max(worstFailure, 1 - v);
+        document.getElementById('fill-' + k).style.width = (v * 100).toFixed(1) + '%';
+        document.getElementById('name-' + k).textContent = labels[k] + ' · ' + (v * 100).toFixed(1) + '%';
         var btn = document.querySelector('.lab-toggle[data-link="' + k + '"]');
-        if (btn) {
-          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-          btn.innerHTML = on ? 'best-in-class ✓' : '97% &rarr; upgrade';
-        }
+        btn.setAttribute('aria-pressed', state[k] ? 'true' : 'false');
+        btn.textContent = state[k] ? 'Use 97%' : 'Use 99.5%';
+        btn.setAttribute('aria-label', btn.textContent + ' for ' + labels[k]);
       });
-      var pct = prod * 100;
-      if (poFig) poFig.textContent = pct.toFixed(1) + '%';
-      if (!msg) return;
-      if (fixed === 0) {
-        msg.innerHTML = 'Four steps at 97 percent each. Feels like an A. But 0.97 multiplied by itself four times is only <b>88.5 percent</b>, so more than one order in nine is wrong somewhere. Tap a link to fix it.';
-      } else if (fixed === 4) {
-        msg.innerHTML = 'All four at best-in-class, and the rate is <b>98.0 percent</b>. That is what world-class actually costs: not one heroic fix, but every single link held near-perfect at the same time. That is the job a WMS does.';
+      var result = overlap === 'same' ? 1 - worstFailure : overlap === 'different' ? Math.max(0, 1 - failures) : product;
+      var pct = (result * 100).toFixed(1) + '%';
+      poFig.textContent = pct;
+      document.querySelectorAll('[data-overlap]').forEach(function (btn) {
+        btn.setAttribute('aria-pressed', btn.dataset.overlap === overlap ? 'true' : 'false');
+      });
+      if (overlap === 'independent') {
+        msg.textContent = 'Independent failures: multiply the four rates to get ' + pct + '. A failure on one measure does not change the chance of failure on another. This is a model, not a count of actual orders.';
+      } else if (overlap === 'same') {
+        msg.textContent = 'Failures overlap as much as possible: smaller failure groups sit inside the largest. ' + pct + ' of orders pass all four checks. The individual success rates have not changed.';
       } else {
-        msg.innerHTML = 'You upgraded ' + fixed + ' of 4, and the rate climbed to <b>' + pct.toFixed(1) + ' percent</b>. But the order is only as good as its weakest link: every step still at 97 keeps dragging the product down. Fix them all.';
+        msg.textContent = 'Failures hit separate groups of orders, with no overlap. ' + pct + ' pass all four checks. The individual success rates have not changed.';
       }
     }
 
-    Array.prototype.forEach.call(document.querySelectorAll('.lab-toggle'), function (btn) {
+    document.querySelectorAll('.lab-toggle[data-link]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var k = btn.getAttribute('data-link');
+        var k = btn.dataset.link;
         state[k] = !state[k];
+        render();
+      });
+    });
+    document.querySelectorAll('[data-overlap]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        overlap = btn.dataset.overlap;
         render();
       });
     });
@@ -1066,22 +718,22 @@
     var wmsA = 0, tWms = 0, annoA = 0, noteTxt = '', hovered = null;
 
     var steps = [
-      { title: 'The life of one item', note: 'every item is somewhere on this path',
-        d: 'Follow a single item from the moment it arrives to the moment it ships. Every item in the building is somewhere on this path right now.' },
-      { title: 'It arrives and gets checked in', win: [xIn, LT - 7, xPut - 24, LB + 7], st: ['recv'], note: 'now the system knows it’s here',
-        d: 'A truck backs in. The item is unloaded, counted, and scanned. The moment it’s scanned, the system knows it’s in the building.' },
-      { title: 'It’s put away, then it waits', win: [xPut - 28, LT - 7, xXfer - 26, LB + 7], st: ['put', 'store'], note: 'the system knows exactly where it is',
-        d: 'The system picks a shelf and a worker puts it there. Then it just waits, sometimes hours, sometimes weeks, until someone orders it. Most of the building is items sitting still, waiting.' },
+      { title: 'The life of one item', note: 'common warehouse movements',
+        d: 'Receive, store, pick, pack, and ship an item.' },
+      { title: 'It arrives and gets checked in', win: [xIn, LT - 7, xPut - 24, LB + 7], st: ['recv'], note: 'receipt quantity recorded',
+        d: 'Count the delivery and record the quantity actually received.' },
+      { title: 'It’s put away, then it waits', win: [xPut - 28, LT - 7, xXfer - 26, LB + 7], st: ['put', 'store'], note: 'storage location recorded',
+        d: 'Confirm putaway to update the recorded storage location.' },
       { title: 'Sometimes it gets moved', win: [xXfer - 54, LT - 7, xXfer + 60, LB + 7], st: ['xfer'], note: 'the back keeps the front stocked',
-        d: 'A warehouse keeps the bulk of each item in the back, and a little out front where picking is fast. As the front runs low, more is brought up to refill it. Busy items also get moved to better spots as demand changes.' },
-      { title: 'An order pulls it off the shelf', win: [xPick - 52, LT - 7, xPick + 52, LB + 7], st: ['pick'], note: 'a picker walks miles every shift',
-        d: 'When a customer orders it, the system sends a worker straight to its shelf to grab it. This is the most expensive part of the day, and most of that is just the walking.' },
+        d: 'Replenishment moves stock from reserve into a pick location.' },
+      { title: 'An order pulls it off the shelf', win: [xPick - 52, LT - 7, xPick + 52, LB + 7], st: ['pick'], note: 'stock moves into an order container',
+        d: 'A released task directs the worker to eligible stock.' },
       { title: 'It gets boxed up', win: [xPack - 52, LT - 7, xPack + 52, LB + 7], st: ['pack'], note: 'boxed, weighed, labeled',
-        d: 'The item is boxed, weighed, and labeled, ready to go to the right customer.' },
-      { title: 'It’s staged, then shipped', win: [xStage - 48, LT - 7, xOut, LB + 7], st: ['stage', 'ship'], note: 'nothing counts until it ships',
-        d: 'It’s lined up by truck and waits its turn to be loaded. Once the truck pulls out, the company can finally charge the customer.' },
-      { title: 'One system runs all of it', wms: true,
-        d: 'None of this happens on its own. One piece of software decides every move and records it the instant it happens. That software is the brain of the warehouse.' }
+        d: 'Verify the picked items and pack them into a shipping container.' },
+      { title: 'It’s staged, then shipped', win: [xStage - 48, LT - 7, xOut, LB + 7], st: ['stage', 'ship'], note: 'actual shipment reported',
+        d: 'Stage the shipment, confirm departure, and report what shipped.' },
+      { title: 'Warehouse records and tasks', wms: true,
+        d: 'The WMS records the warehouse tasks and inventory movements.' }
     ];
 
     /* ---- sizing ---- */
@@ -1389,21 +1041,21 @@
 
     var steps = [
       { title: 'How raw materials become a product', note: 'many parts, one product',
-        d: 'A warehouse stores things; a factory builds them. Watch a product come together out of many separate parts, then hand that finished product back to the warehouse you just walked.' },
+        d: 'Components are supplied to production; finished goods enter warehouse inventory.' },
       { title: 'The parts arrive', win: [xIn, LT - 7, xStock + 8, LB + 7], st: ['partsin'], note: 'received and checked in, like any inbound',
-        d: 'Every component and raw material is delivered, counted against the purchase order, and booked into inventory. It is the same receiving step as the warehouse, just at the start of a build. One product might take a handful of parts, or tens of thousands.' },
+        d: 'Receive components against the purchase order.' },
       { title: 'They wait in the stockroom', win: [xStock - 28, LT - 7, xWork - 16, LB + 7], st: ['stock'], note: 'components sit until a build is ordered',
-        d: 'The parts rest in storage, the stockroom, as ordinary inventory: a location, a quantity, a count. Most of a factory, like most of a warehouse, is things sitting still and waiting to be needed.' },
-      { title: 'A work order says build', win: [xWork - 40, LT - 7, xKit - 28, LB + 7], st: ['work'], note: 'the instruction to build, say, 200 units',
-        d: 'A work order is the order to build a set number of one product. It is what wakes the parts up: the moment it drops, the system reserves the exact components that build needs and releases them from the stockroom.' },
+        d: 'Store components until production needs them.' },
+      { title: 'A work order says build', win: [xWork - 40, LT - 7, xKit - 28, LB + 7], st: ['work'], note: 'product and build quantity specified',
+        d: 'A work order specifies the product and quantity to build.' },
       { title: 'One kit, one build', win: [xKit - 38, LT - 7, xAsm - 50, LB + 7], st: ['kit'], note: 'every part on the bill of materials, gathered',
-        d: 'A worker gathers every part the product needs into a single kit and stages it at the line. That list of parts is the bill of materials, or BOM, the recipe for one unit, so the assembler never leaves the station to hunt for a screw.' },
+        d: 'Gather the components listed in the bill of materials.' },
       { title: 'Many parts become one', win: [xAsm - 64, LT - 7, xAsm + 70, LB + 7], st: ['asm'], note: 'the components are joined into a product',
-        d: 'At the line the kit is assembled into a single product. This is the one move a warehouse never makes: several distinct parts go in, and one new thing comes out. Half-built and still on the line, it is called work in process.' },
+        d: 'Assembly consumes components and creates a new product.' },
       { title: 'A finished good comes off the line', win: [xFin - 58, LT - 7, xFin + 58, nodeY + 48], st: ['fin'], note: 'one new item, ready to sell',
-        d: 'The product is confirmed complete and quality-checked. The system then backflushes: it deducts every component the BOM says was used in one stroke, so nobody scans each part out by hand. Many part numbers are now one sellable item.' },
+        d: 'Report completed production. Consumption may be recorded directly or backflushed from the BOM.' },
       { title: 'Into the warehouse, or onto a truck', win: [xFin + 8, LT - 7, xOut, nodeY + 48], st: ['out'], note: 'now just another item to store, pick, and ship',
-        d: 'Nothing gets picked or packed here. The finished good is received into finished-goods storage as a brand-new item, then runs the exact warehouse path from the first visual: stored, picked, packed, shipped. Build-to-order can skip the shelf and roll straight onto an outbound truck.' }
+        d: 'Receive the finished goods into storage or stage them for shipping.' }
     ];
 
     /* ---- sizing ---- */
@@ -1723,18 +1375,18 @@
 
     function nwin(n) { var nd = nodes[n]; return [nd.x - 76, nd.y - 58, nd.x + 76, nd.y + 58]; }
     var steps = [
-      { title: 'The work that keeps it true', note: 'all four run at once, all day',
-        d: 'The last visual followed one item from the dock to the door. But that journey only works if the shelves stay full and the count stays honest, and keeping them that way never ends. Four jobs circle the building at once, every hour, forever.' },
-      { title: 'Refill the pick shelves', win: nwin(0), st: ['replenish'], note: 'so a picker never finds an empty slot',
-        d: 'The bulk of each item sits in tall reserve racking in the back; a little waits in easy-to-reach pick shelves out front. Replenishment quietly tops up the front from the back before it runs dry, so a picker never walks up to an empty slot.' },
-      { title: 'Count a little, every day', win: nwin(1), st: ['count'], note: 'find errors in days, not at the year-end count',
-        d: 'Rather than shut the whole building once a year to count everything, cycle counting checks a small, smart slice every day. Errors surface in days, the records stay glued to the shelves, and the floor never stops to do it.' },
-      { title: 'Pull anything unsafe to ship', win: nwin(2), st: ['hold'], note: 'damaged or expired stock, walled off',
-        d: 'When a unit is damaged, expired, recalled, or simply awaiting inspection, a hold pulls it out of the available pool and parks it in quarantine, where it cannot be picked. It is how bad stock never reaches a customer by accident.' },
-      { title: 'Take back what comes home', win: nwin(3), st: ['returns'], note: 'inspect, then restock, return, or scrap',
-        d: 'Returned items flow back in, are inspected one at a time, and are either restocked, sent back to the supplier, or written off. It is slow and expensive precisely because each one is handled by hand, never in bulk.' },
-      { title: 'It never stops', st: ['replenish', 'count', 'hold', 'returns'], note: 'this is why your order is right',
-        d: 'None of these four ever truly finishes; they run together, all day, every day, each one feeding the next. You never notice them. You feel them only when an order comes out wrong, and, far more often, when it quietly does not.' }
+      { title: 'Inventory maintenance', note: 'all four run at once, all day',
+        d: 'Replenishment, counting, holds, and returns support usable inventory.' },
+      { title: 'Refill the pick shelves', win: nwin(0), st: ['replenish'], note: 'move reserve stock into pick locations',
+        d: 'Move stock from reserve to the pick location when required.' },
+      { title: 'Count a little, every day', win: nwin(1), st: ['count'], note: 'compare physical stock with the record',
+        d: 'Count selected locations and review discrepancies.' },
+      { title: 'Hold unsuitable stock', win: nwin(2), st: ['hold'], note: 'block unsuitable stock from allocation',
+        d: 'Block stock awaiting inspection or unsuitable for use. Physical segregation is a separate control.' },
+      { title: 'Process returns', win: nwin(3), st: ['returns'], note: 'inspect, then restock, return, or scrap',
+        d: 'Inspect returns and record whether to restock, repair, return, or scrap them.' },
+      { title: 'Recurring work', st: ['replenish', 'count', 'hold', 'returns'], note: 'maintenance tasks recur',
+        d: 'These jobs recur as stock moves and its condition changes.' }
     ];
 
     /* ---- sizing ---- */

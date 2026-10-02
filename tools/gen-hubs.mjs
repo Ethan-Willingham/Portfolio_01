@@ -122,7 +122,7 @@ const HUBS = [
     lead: 'Three field guides from the work I know: managing professionals, the software behind a warehouse, and the customer work that starts after the sale.',
     members: [
       live('all-in.html', 'All In: Managing Professionals', 'all-in.jpg', 'management', 1, 'The work that makes people valuable changed; the way we manage them mostly did not. A field guide from managing your first team to leading managers and systems.'),
-      live('warehouse.html', 'The Brain Behind the Warehouse', 'warehouse.jpg', 'operations', 2, 'Behind every "your order has shipped" is a building you have probably never seen and software that knows where every item inside it is. How that software runs the warehouse and the factory beside it.'),
+      live('warehouse.html', 'The Brain Behind the Warehouse', 'warehouse.jpg', 'operations', 2, 'A warehouse can have stock and still be unable to ship an order. How its software tracks inventory, assigns work, and records what leaves the building.'),
       live('customer-success.html', 'The Work After the Sale', 'customer-success.jpg', 'customers', 3, 'A warehouse can pay for new software and still run on its old spreadsheet. How to get the operation working, measure what improved, and give the customer a reason to renew.'),
     ],
   },
