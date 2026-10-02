@@ -1,423 +1,330 @@
-/* ============================================================
-   The Tao Te Ching, side by side: the commentary.
-   One plain-language version of each chapter, written in the
-   site voice. No sections, no labels beyond the single card
-   heading, no translator talk (the stacked translations below
-   the card carry the divergences themselves). No em dashes.
-   Light inline HTML (<em>) is allowed; injected as innerHTML
-   by js/tao.js.
-
-   shape:  n: { title, plain }
-   `title` feeds the chapter jump button in the toolbar.
-   All 81 chapters require both fields. The reader keeps a
-   fallback for load failures, but a shipped chapter is never
-   intentionally left without its plain-English opening.
-   ============================================================ */
+/* The Tao Te Ching: chapter commentary, not a translation.
+   Each chapter has a title and a plain-English explanation.
+   Keep disputed readings visible where they change the meaning.
+   Light inline HTML is rendered by js/tao.js. */
 window.TAO_NOTES = {
-
   1: {
     title: "The Tao that cannot be told",
-    plain: "The real Way cannot be put into words: name it and you have already lost it. The chapter then splits the world in two. Nameless, it is the origin of heaven and earth; named, it is the mother of 'the ten thousand things,' the old Chinese count for everything there is. Drop your wanting and you see the hidden half. Keep your wanting and you only ever see the surface. Both halves come from the same place, and the chapter's last image for that sameness is a doorway: the gate to every mystery."
+    plain: "A description of the Way cannot capture the lasting Way. Naming gives us a world of separate things; the nameless is their beginning. 'The ten thousand things' means everything that exists. Desire affects what we notice: without it, the chapter says, we see the mystery; with it, we see its manifestations. These come from the same source. The opening warns us about the limits of the words the rest of the book will use."
   },
-
   2: {
     title: "How opposites make each other",
-    plain: "The moment everyone agrees something is beautiful, ugliness exists too; call one thing good and you have invented bad. Having and lacking, hard and easy, long and short, high and low, before and after: each pair is born together, and neither half exists alone. So the sage works without forcing and teaches without lecturing, lets things rise and fall, gives without possessing, finishes without claiming credit. And because no credit is claimed, none can be taken away."
+    plain: "Calling something beautiful also establishes what counts as ugly. Good and bad work the same way. Other pairs, such as long and short or high and low, depend on each other for their meaning. The sage, the book's model of a wise person, works without forcing and teaches by example. Things develop without being claimed as possessions. Work gets finished without the sage insisting on the credit."
   },
-
   3: {
     title: "Empty minds, full bellies",
-    plain: "Stop parading prizes and people stop fighting for them. Stop hoarding treasures and nobody steals; stop advertising the desirable and hearts stay quiet. So the sage governs by emptying minds and filling bellies, weakening ambitions and strengthening bones, and by giving the clever nothing to scheme about. Act without forcing, the chapter ends, and nothing goes unruled."
+    plain: "Rulers can stir up the very desires they later struggle to control. Reward status and people compete; prize rare goods and people steal. The proposed remedy is to fill people's bellies, strengthen their bodies, and weaken their ambitions. It also calls for keeping them without knowledge and desire. The ruler gets to decide what people should want and know."
   },
-
   4: {
     title: "Empty, and never used up",
-    plain: "The Tao is an empty vessel that never needs refilling, a bottomless source the ten thousand things all draw on. It blunts what is sharp, unties what is knotted, softens what glares, and settles into the dust. It is hidden but always present. Nobody knows where it came from; it looks older than the gods."
+    plain: "The Way is compared to an empty vessel whose use never exhausts it. It seems to be the source of everything, yet its own origin is unknown. The chapter pairs that mystery with instructions to blunt sharpness, loosen knots, soften glare, and mingle with the dust. Its last line places the Way before Di, an ancient Chinese high deity. 'God' in some English versions can suggest a different religious setting."
   },
-
   5: {
     title: "Heaven is not kind",
-    plain: "Heaven and earth play no favorites. They treat the ten thousand things like the straw dogs of a ceremony, honored while the ritual lasts, discarded when it ends, and the sage extends the same even hand to people. The space between heaven and earth is a bellows: empty, never exhausted, giving more the more it moves. Many words wear out fast. Better, the chapter closes, to hold the center."
+    plain: "Heaven and earth do not treat living things with human benevolence. They treat them like straw dogs, ritual objects that could be honored during a ceremony and discarded afterward. The sage is said to treat people the same way. This can suggest impartiality, but the image also allows indifference. Then the chapter compares the space between heaven and earth to a bellows: empty, yet able to keep producing. It closes by recommending restraint over exhausting talk."
   },
-
   6: {
     title: "The valley spirit",
-    plain: "The spirit of the valley never dies. The chapter calls it the mysterious female, the primal mother, and her gateway the root of heaven and earth. It is barely there, a veil you can hardly see, and yet you can draw on it forever without using it up."
+    plain: "The valley spirit is an inexhaustible source of life. The chapter calls it the mysterious female and describes her gateway as the root of heaven and earth. The female body supplies the image for creation, while the valley suggests openness and a low position. This source is barely perceptible, but using it does not wear it out."
   },
-
   7: {
     title: "Why heaven lasts",
-    plain: "Heaven and earth last forever, and the chapter says why: they do not live for themselves. The sage copies the trick. He puts himself last and comes out ahead, leaves himself out and is preserved. It is the book's favorite bargain: through selflessness, the self is completed."
+    plain: "Heaven and earth endure because they do not live for themselves. The sage follows their example by putting personal interests last and treating the self as something that can be set aside. The surprising result is that the self survives and its interests are fulfilled. Selflessness here has a practical benefit as well as an ethical one."
   },
-
   8: {
     title: "Be like water",
-    plain: "The highest good is like water. It gives life to everything, competes with nothing, and settles into the low places people despise, which is why it is close to the Way. Then a small manual: in a home, what matters is the ground it sits on; in thought, depth; in dealing with people, gentleness; in speech, truth; in ruling, justice; in work, competence; in action, timing. And because water does not contend, nothing finds fault with it."
+    plain: "Water benefits things without competing with them and occupies low places that people avoid. Those qualities bring it close to the Way. The chapter then applies good judgment to ordinary life: choose a suitable place to live, think deeply, deal kindly with others, speak reliably, govern well, work competently, and act at the right time. Its closing claim is that someone who does not contend avoids blame."
   },
-
   9: {
     title: "Know when to stop",
-    plain: "Better to stop pouring than fill the cup to the brim. Oversharpen a blade and the edge is soon gone. A hall stuffed with gold and jade cannot be guarded; wealth plus pride writes its own downfall. Do the work, then step back. That, the chapter says, is heaven's way."
+    plain: "A vessel filled to the brim is harder to handle. A blade worked too much will not keep its edge. Gold and jade bring the problem of guarding them, and pride in wealth or rank invites trouble. The advice is to finish the work and withdraw. Knowing when to stop is part of doing the job well."
   },
-
   10: {
-    title: "Six questions with one answer",
-    plain: "Six questions, each asking whether you can do a good thing without gripping it. Can you keep body and soul together in one embrace? Breathe as softly as a newborn? Wipe your inner mirror clean of every smudge? Love people and lead them without scheming? Stay receptive while the gates of heaven open and close? Understand everything and still leave it alone? Then the answer key for all six: give life without possessing, work without taking credit, lead without ruling. The book calls that dark virtue, goodness with no fingerprints on it."
+    title: "Body, breath, and governing",
+    plain: "Can you keep yourself whole, soften your breath like an infant's, and clear your inner vision? Can you care for people and govern without imposing your will? The questions connect bodily practice with political conduct. They end with a description of mysterious virtue: producing and nourishing things without owning them, acting without claiming credit, and leading without dominating. Some of the bodily images remain difficult to interpret."
   },
-
   11: {
     title: "The use of what is not there",
-    plain: "Thirty spokes share one hub, and it is the hole in the middle that makes the wheel useful. Shape clay into a pot: the emptiness inside is what holds the water. Cut doors and windows for a room: the openings are what make it livable. So profit comes from what is there, the chapter ends, and usefulness from what is not."
+    plain: "A wheel needs the empty hole in its hub. A pot needs the space inside. A room needs its interior and openings. The material makes each object possible, while the empty space makes it useful. The chapter gives nonbeing a practical role you can see in things you use every day."
   },
-
   12: {
     title: "Too much color makes you blind",
-    plain: "The five colors blind the eye, the five notes deafen the ear, the five flavors numb the mouth. Racing and hunting drive the mind wild, and rare goods bend a person's conduct. So the sage tends the belly, not the eye: real needs over bottomless spectacle."
+    plain: "The five colors, five tones, and five flavors stand for the pleasures of the senses. The chapter says they can overwhelm the very senses they satisfy. Racing and hunting disturb the mind; rare goods distort behavior. The sage therefore attends to the belly rather than the eye, choosing basic nourishment over the pursuit of stimulation."
   },
-
   13: {
     title: "Favor is as bad as disgrace",
-    plain: "Favor and disgrace both jolt you, because both hang on someone else's opinion: you flinch receiving them and flinch losing them. And the root of your great troubles, the chapter says, is having a self to defend at all; without one, what could misfortune land on? The turn at the end: whoever values the world as their own body, whoever loves it as themselves, is the one who can be trusted with it."
+    plain: "Favor brings anxiety because it can be lost. Disgrace brings anxiety too. The chapter then traces vulnerability to having a body or personal self: without that, what could suffer? Its final advice about governing is disputed. Some versions say to care for the world as for your own body; others say the safest ruler values personal life more than ruling the world. Both readings make care more important than the desire for power."
   },
-
   14: {
     title: "Looking for what can't be seen",
-    plain: "Look and see nothing. Listen and hear nothing. Reach and hold nothing. Three failures, folded into one thing with no name. Its top is not bright, its bottom is not dark, and it returns always to nothing: the shape of the shapeless, the image of no image. Meet it and it has no front; follow it and it has no back. Hold to this old Way anyway, the chapter ends, and you can steer the present with it."
+    plain: "The Way cannot be seen, heard, or grasped. These failures of perception point toward the same elusive thing. It has no clear front or back and cannot be given a stable name. Yet the chapter says that holding to the ancient Way lets someone manage the present. We can follow it even though we cannot make it into an ordinary object of knowledge."
   },
-
   15: {
     title: "What the old masters looked like",
-    plain: "The old masters were too deep to understand, so the chapter describes how they carried themselves instead. Careful, like someone crossing a stream in winter. Alert, like someone in dangerous country. Courteous, like a guest. Yielding, like ice about to melt. Plain, like uncarved wood. Open, like a valley. Murky, like muddied water. Then two questions worth a lifetime: who can be muddy and settle slowly toward clear? Who can be still and slowly come to life? Whoever keeps this Way, the close says, does not crave fullness."
+    plain: "The ancient practitioners are described through their behavior because their understanding cannot be measured directly. They are cautious as someone crossing a winter stream, courteous as guests, yielding as melting ice, and plain as uncarved wood. Muddy water supplies the clearest instruction: clarity can emerge when disturbance stops. Their practice allows change without demanding fullness or immediate completion."
   },
-
   16: {
     title: "Return to the root",
-    plain: "Empty yourself completely and hold still, and watch: the ten thousand things rise together, and every one of them returns to its root. Returning to the root is stillness; stillness is the way of nature; and knowing that constancy is clarity, while ignoring it invites disaster. Know the constant, the chapter says, and you widen: open, then fair, then royal, then heavenly, then one with the Way, and what is one with the Way outlasts the body."
+    plain: "Be still enough to watch things grow and return to their roots. The chapter calls that return stillness and a return to life's allotted course. Recognizing this constancy brings clarity; acting without it brings trouble. Understanding then widens toward impartiality and agreement with heaven and the Way. The closing promise of freedom from danger despite the body's end has been read both spiritually and as advice about living out one's life."
   },
-
   17: {
     title: "The best leader is barely noticed",
-    plain: "The best ruler, the people barely know exists. The next best, they love and praise. The next, they fear. The worst, they despise. And a leader who does not trust the people will not be trusted by them. So the best leader talks little, finishes the work, and the people all say: we did this ourselves."
+    plain: "The best ruler is barely known to exist. Below that come rulers who are loved, feared, and finally despised. The chapter connects a lack of trust with receiving little trust in return. Its best ruler speaks sparingly and completes the work so quietly that the people believe they did it themselves. Good government leaves room for their own activity."
   },
-
   18: {
     title: "When the great Tao is forgotten",
-    plain: "When the great Way is abandoned, kindness and morality appear, as slogans. When cleverness shows up, so does pretending. When a family loses its harmony, filial piety becomes something to preach; when a state falls into chaos, loyal ministers appear. The praise-words, the chapter is saying, only arrive after the real thing has left."
+    plain: "Benevolence and righteousness become prominent when the great Way has been abandoned. Cleverness brings hypocrisy; broken family relations make filial devotion conspicuous; a troubled state produces the figure of the loyal minister. The chapter treats celebrated virtues as signs that something more basic has failed. Calling them mere slogans would soften its challenge to conventional morality."
   },
-
   19: {
-    title: "Drop the sage, drop the profit",
-    plain: "Drop the sainthood and the cleverness, and people are a hundred times better off. Drop the preached kindness and morality, and families rediscover actual love. Drop the scheming and the profit, and thieves disappear. These three are ornament, the chapter says, not substance. In their place: see the simple, hold the uncarved block, shrink the self, thin the wants."
+    title: "Give up cleverness and profit",
+    plain: "The received text calls for abandoning sagehood and cleverness, benevolence and righteousness, skill and profit. It promises that people will benefit, family affection will return, and theft will disappear. The replacement is simplicity, pictured as uncarved wood, with less selfishness and fewer desires. This is a direct attack on valued social ideals. An early Guodian manuscript uses different wording in part of the passage, making the attack less explicit."
   },
-
   20: {
     title: "I alone am dull",
-    plain: "The book's loneliest page. Everyone else is glowing, as if at a feast, as if climbing a terrace in spring; the speaker drifts alone, like a baby who has not yet learned to smile, like someone with no home to go back to. Everyone else has more than enough; the speaker alone seems to lack, dim where they are sharp, dull where they are quick, a fool by every public measure. The last line explains the difference without apologizing for it: I alone am fed by the mother, the Way itself."
+    plain: "The speaker feels unlike everyone else. Other people enjoy a feast or a spring outing; the speaker seems unsettled and without a home. Others have abundance and clear purposes; the speaker looks foolish and confused. The final line explains this separation as valuing nourishment from the mother, a recurring image for the Way. Following it can mean looking unsuccessful by the standards around you."
   },
-
   21: {
     title: "Something real inside the blur",
-    plain: "The greatest virtue simply follows the Tao, and the Tao, looked at directly, is a blur. But the blur is loaded. Within it are images; within it, things; within it, an essence, and the essence is real enough to trust. Its name has never left, and through it, the chapter says, you can watch everything begin."
+    plain: "De, often translated as virtue or power, follows the Way. The Way itself is elusive, but the chapter says there are images, things, and a trustworthy essence within that obscurity. Its claim is that the source of things is real even though we cannot perceive it clearly. Following it allows us to recognize how things begin."
   },
-
   22: {
     title: "Yield and stay whole",
-    plain: "Yield and stay whole. Bend and straighten; empty and be filled; wear out and be renewed; have little and gain, have much and be confused. So the sage holds to the one and becomes a measure for the world: not showing off, and therefore shining; not insisting, and therefore seen; not boasting, and therefore trusted with the credit. He does not contend, so no one can contend with him. The old saying about yielding, the chapter insists, is not empty talk: stay whole, and everything comes to you."
+    plain: "Yielding can preserve what resistance would damage. The chapter pairs bending with becoming straight, emptiness with being filled, and wearing out with renewal. The sage holds to unity and avoids displaying, asserting, or praising the self. This restraint is said to bring recognition and lasting achievement. Refusing to compete also leaves opponents with less to fight against."
   },
-
   23: {
     title: "Nature doesn't make long speeches",
-    plain: "Nature says little. A whirlwind does not last all morning, and a cloudburst does not last all day; even heaven and earth cannot keep a violent performance going. So stop straining to make yourself heard and give yourself wholly to the thing you follow. The person of the Way becomes at home in the Way, the person of virtue in virtue, and the person of loss in loss. The last line makes the rule social: offer too little trust and none comes back."
+    plain: "A violent wind or downpour cannot last indefinitely, even when heaven and earth produce it. Human activity has limits too. The chapter recommends few words and describes people becoming joined with what they follow: the Way, virtue, or loss. Several versions end with a warning that insufficient trust receives insufficient trust. The passage's wording and divisions vary across editions."
   },
-
   24: {
     title: "Standing on tiptoe",
-    plain: "Standing on tiptoe does not make you steady, and taking giant strides does not help you walk. The same failure shows up in public life: display yourself and you do not shine; insist you are right and you earn no distinction; boast and the credit will not hold. From the Way's point of view, all of this is leftover food or a growth on the body, extra matter nobody wants. A person of the Way does not live there."
+    plain: "Standing on tiptoe makes you less steady; taking overlong strides makes walking harder. Showing off, insisting you are right, and boasting about achievement have similar effects. They undermine the recognition they seek. The chapter compares such conduct to unwanted food or a growth on the body, something a person following the Way avoids."
   },
-
   25: {
-    title: "Something formed in the chaos",
-    plain: "Something formless yet complete existed before heaven and earth: silent, empty, standing alone, unchanging, moving everywhere without tiring, the mother of the world. Nobody knows its name, so it gets the makeshift label Tao, and, pressed further, great. Great means flowing on; flowing on means going far; going far means coming back. So there are four great things, the chapter says: the Way, heaven, earth, and the human ruler, each following the one above it, and the Way following only its own nature."
+    title: "Before heaven and earth",
+    plain: "Something existed before heaven and earth, complete but difficult to describe. The speaker provisionally calls it the Way and then great. Its movement goes outward and returns. The chapter places the Way, heaven, earth, and the ruler among the great things, then says people follow earth, earth follows heaven, and heaven follows the Way. The Way follows ziran, 'self-so' or what happens of itself. Nature here does not mean just the countryside."
   },
-
   26: {
     title: "Heavy is the root of light",
-    plain: "Weight steadies what is light, and stillness governs what moves. That is why a careful traveler may march all day without losing sight of the baggage cart: the plain, heavy necessities keep the journey rooted. A ruler has even less room for restless display. Treat yourself or the country lightly and you lose the ground beneath both. Let agitation take command and you lose command."
+    plain: "Weight provides a foundation for lightness, and stillness steadies movement. A careful traveler stays with the baggage cart even when attractive sights appear. The ruler needs the same steadiness. Treating the country lightly or letting agitation govern conduct means losing the basis of authority."
   },
-
   27: {
     title: "Leave no one behind",
-    plain: "The best traveler leaves no track, the best speaker no loose word, the best accountant no tally, the best door no lock that can be forced, the best knot no rope that can be untied. The sage carries that kind of skill into people and things, abandoning neither. Good people become teachers; people who are not good yet become the material a teacher works with. Disrespect the teacher or discard the student and cleverness has turned into confusion."
+    plain: "Great skill needs little visible equipment: the traveler leaves no tracks, the calculator needs no tally, and the secure fastening needs no rope. The sage similarly knows how to make use of people and things without discarding them. Good people teach those who are not good, and those who are not good give the teacher something to work on. Both sides of that relationship matter."
   },
-
   28: {
     title: "Know the male, keep the female",
-    plain: "Know the male but keep to the female, and be a streambed for the world. Know the white but keep to the black, and be a pattern for the world. Know honor but keep to humility, and be a valley for the world, constant, unswerving, returned to the state of the newborn and the uncarved block. When the block is carved up it becomes tools and officials; the sage, the chapter ends, uses it whole."
+    plain: "Know the male but keep to the female; know brightness but keep to darkness; know honor but accept a low position. These pairings recommend receptivity and humility through the images of an infant, a valley, and uncarved wood. The ending connects carved wood becoming vessels with the sage's role among officials. Its ideal is governing without breaking the original whole into conflicting parts."
   },
-
   29: {
     title: "The world is a sacred vessel",
-    plain: "Anyone who tries to seize the world and improve it by force will damage it. The world is a sacred vessel, not raw material for somebody's plan; grip it and it slips away. Things already move in different ways: some lead and some follow, some breathe easily and some struggle, some grow strong and some fail. The sage does not flatten those differences. He drops excess, extravagance, and the need to push everything to an extreme."
+    plain: "The world cannot safely be seized and worked over to suit a ruler's plan. It is described as a sacred vessel: forcing it damages it, grasping it loses it. Things lead and follow, strengthen and weaken, in different ways. The sage avoids excess and extreme conduct. The political target is the ambition to control the whole world through deliberate manipulation."
   },
-
   30: {
     title: "War grows thorns",
-    plain: "A ruler guided by the Way does not make weapons the proof of his power, because violence returns to its sender. Where an army camps, thorns grow. After a great campaign, harvests fail. If force becomes unavoidable, the good commander gets the necessary result and stops, with no boasting, triumph, or attempt to turn necessity into domination. Strength pushed past its season begins to decay. What leaves the Way does not last."
+    plain: "A ruler following the Way avoids using military force to dominate. Violence brings consequences: thorns grow where armies camp, and bad harvests follow campaigns. When a result must be obtained by force, the commander should stop there, without boasting or further aggression. Strength that is pushed too far becomes decline."
   },
-
   31: {
     title: "Victory is a funeral",
-    plain: "Weapons are tools of bad omen, hated by living things. A thoughtful person uses them only when there is no choice, calmly and without pleasure. Victory deserves no celebration, because celebrating it means enjoying the killing of people. The chapter reaches for the old seating order of Chinese ritual to make the point exact: the generals take the places used in mourning. When many have been killed, grieve for them. Receive a victory the way you would receive a funeral."
+    plain: "Weapons are inauspicious instruments, used only when necessary. Taking pleasure in victory would mean taking pleasure in killing. The chapter uses ceremonial positions associated with mourning to explain how military leaders should stand after a battle. Large losses of life call for grief. Even a victorious army should observe funeral rites rather than celebrate."
   },
-
   32: {
     title: "The nameless block",
-    plain: "The Way remains nameless, simple as uncarved wood, and no power can make it a servant. If rulers could hold to that simplicity, things would settle by themselves: heaven and earth would meet, sweet dew would fall, and fairness would need no decree. Carve the block and names begin. Once names multiply, know when to stop, because knowing where to stop keeps you out of danger. The Way gathers the world as rivers and streams gather in the sea."
+    plain: "The nameless Way is compared to uncarved wood, simple and impossible to subordinate. A ruler who preserves it would allow things to settle without commands. Once distinctions and names appear, the ruler needs to know when to stop. The final image is of streams flowing toward rivers and the sea: the Way draws things together without forcing them."
   },
-
   33: {
     title: "Knowing yourself",
-    plain: "A chapter of short equations. Knowing others is intelligence; knowing yourself is wisdom. Mastering others takes force; mastering yourself takes strength. Knowing you have enough is wealth. Perseverance is willpower, staying planted is endurance, and dying without perishing is long life."
+    plain: "Knowing other people is intelligence; knowing yourself is clarity. Overcoming others requires force; overcoming yourself requires strength. Contentment counts as wealth. The closing lines connect persistence with endurance and distinguish dying from perishing. That last distinction can suggest a lasting influence or a form of continued existence; the chapter does not explain which."
   },
-
   34: {
     title: "Great because it claims nothing",
-    plain: "The great Way flows everywhere, left and right. Everything depends on it for life, and it refuses nothing. It finishes the work without claiming credit, feeds and clothes the ten thousand things without calling itself their master, and asks for nothing back. That makes it small enough to go unnamed and great enough for everything to return to it. The sage becomes great by the same route: never trying to look great."
+    plain: "The Way sustains everything without claiming ownership or demanding service. It has no desires, so it can be called small; all things return to it, so it can be called great. The sage follows this example and becomes great without pursuing greatness. The practical model is care that does not turn its recipients into subjects or possessions."
   },
-
   35: {
     title: "The Way tastes like nothing",
-    plain: "Hold to the great image of the Way and people come without being harmed, finding rest and peace. Music and good food can stop a traveler, but only for a while. Put the Way into words and it sounds bland. Look for it and there is not much to see; listen and there is not much to hear. Use it, though, and it never runs out."
+    plain: "Holding to the great image brings people peace and safety. Music and food attract a passing traveler more obviously than talk about the Way, which sounds bland. The Way gives little for the eye or ear to grasp. Its value appears in use, where it cannot be exhausted."
   },
-
   36: {
     title: "To shrink, first stretch",
-    plain: "The chapter watches each reversal grow from its opposite. What is about to shrink must first have stretched; what will weaken must first have been strong; what will fall must first have risen; what will be taken must first have been given. This is the subtle light behind change, and it leads back to the book's standing rule: the soft and weak outlast the hard and strong. Keep fish in deep water. Keep a state's sharpest power out of sight."
+    plain: "Shrinking is preceded by expansion, weakening by strengthening, taking by giving. The wording can describe how change happens, or tell someone how to bring that change about. The second reading makes this a passage about strategy and manipulation. It ends by saying the soft overcome the hard, fish should stay in deep water, and a state's instruments of power should remain concealed."
   },
-
   37: {
     title: "The Way does nothing",
-    plain: "The Tao does nothing, and nothing is left undone. If rulers could hold to that, the chapter says, the ten thousand things would transform on their own, and if desire stirred mid-transformation, it would be stilled by the nameless uncarved block. No desire, then stillness; stillness, and the world settles itself."
+    plain: "The Way acts through nonaction, yet nothing is left undone. If rulers followed it, things would change on their own. When desire arose, the ruler would restrain it through the simplicity of the nameless uncarved block. Stillness and order would follow. Even this account of minimal government gives the ruler a role in shaping what people desire."
   },
-
   38: {
-    title: "Higher virtue isn't virtuous",
-    plain: "The highest virtue does not perform virtue, which is why it has any; the lowest cannot stop performing, which is why it has none. Then the slide, rung by rung: lose the Way and virtue appears; lose virtue and kindness appears; lose kindness and justice appears; lose justice and all that is left is ritual, which the chapter calls loyalty worn thin and the beginning of disorder. So the mature, it ends, stay with the fruit and not the flower: the substance, not the show."
+    title: "When virtue becomes a performance",
+    plain: "The highest de, virtue or power, does not cling to being virtuous. Lesser virtue worries about retaining that status. The chapter describes a decline from the Way through virtue, benevolence, righteousness, and finally ritual. At the bottom, someone enforcing ritual rolls up their sleeves when others fail to respond. Ritual has become coercion after trust has thinned. The recommended choice is substance over outward observance."
   },
-
   39: {
     title: "Everything stands on the low",
-    plain: "Heaven is clear, earth steady, spirit potent, valleys full, creatures alive, and rulers legitimate because each holds to the One. Remove that underlying wholeness and each comes apart. The political lesson follows: high rank rests on a low foundation, which is why kings call themselves orphaned, lonely, and poor. A title does not float above ordinary life. The chapter would rather be rough stone, which holds, than polished jade, which only looks precious."
+    plain: "Heaven, earth, spirits, valleys, living things, and rulers depend on an underlying unity called the One. Without it, they lose their order or power. Political rank likewise rests on a low foundation. This explains why rulers use humble titles such as orphaned or without grain. The difficult final comparison between jade and stone is rendered differently across the versions below."
   },
-
   40: {
     title: "Return, and weakness",
-    plain: "The whole chapter is four lines. Returning is how the Way moves; yielding is how it works. The ten thousand things are born from being, and being is born from nothing."
+    plain: "The Way moves by returning and works through weakness or yielding. Things arise from being, and being arises from nonbeing. This brief chapter connects the practical preference for yielding with a claim about the origin of existence. It gives no further account of what nonbeing is."
   },
-
   41: {
     title: "The Way looks backwards",
-    plain: "The best student hears about the Way and practices it. The average student moves toward it and away. The worst laughs, and the chapter says the laughter is evidence: a Way that never looked ridiculous would not be this Way. Then the reversals pile up. The bright Way looks dark, the forward Way looks like retreat, the smooth Way feels rough, the highest virtue looks empty, the great vessel unfinished, the great sound nearly silent, the great image shapeless. Hidden and nameless, it still begins and completes everything."
+    plain: "A good student practices the Way; an average student is inconsistent; a poor student laughs at it. The chapter expects its teaching to seem strange. Its examples reverse familiar judgments: progress looks like retreat, great skill looks unfinished, and great sound is barely heard. The hidden, nameless Way is nevertheless said to nourish and complete things."
   },
-
   42: {
     title: "One, two, three, everything",
-    plain: "The Way gives birth to one, one to two, two to three, and three to the ten thousand things, each carrying shadow on its back and light in its arms, blended into harmony by breath. Then a turn: people hate to be called orphaned, widowed, worthless, yet kings name themselves exactly that, because you can gain by losing and lose by gaining. The chapter ends on the book's harshest sentence: the violent do not die a natural death."
+    plain: "The Way produces one, one produces two, two produces three, and three produces everything. The sequence is not fully explained. The text then names yin and yang, opposing aspects present in all things, and qi, breath or vital energy, through which they reach harmony. Rulers adopt humble titles because loss can bring gain. The chapter closes with the warning that violent people do not die a natural death."
   },
-
   43: {
-    title: "The soft rides the hard",
-    plain: "The softest thing in the world overtakes the hardest; what has no substance enters where there is no gap. From that, the value of doing without forcing and teaching without words, which, the chapter admits, almost no one under heaven manages to learn."
+    title: "The soft overcomes the hard",
+    plain: "The softest thing can overcome the hardest, and what has no substance can enter where there is no opening. The chapter uses these claims to explain the benefit of nonaction. It pairs acting without force with teaching without words and says few people understand their value."
   },
-
   44: {
     title: "Your name or yourself",
-    plain: "Your name or your body, which is dearer? Your body or your money, which is worth more? Gain or loss, which does the deeper damage? Cling hard and you pay heavily; hoard much and you lose much. Know what is enough and nothing disgraces you. Know when to stop and nothing endangers you. That is how to last."
+    plain: "Which matters more: your reputation or your life, your life or your possessions? Strong attachment brings a heavy cost, and hoarding brings the prospect of great loss. Knowing what is enough protects against disgrace; knowing when to stop protects against danger. The advice is to judge gain by what you risk to obtain it."
   },
-
   45: {
     title: "Perfect looks unfinished",
-    plain: "Great completion looks chipped but never wears out. Great fullness looks empty but never runs dry. True straightness seems bent, great skill clumsy, and real eloquence tongue-tied. The chapter then gives the body two simple instructions: movement overcomes cold, stillness overcomes heat. Its larger instruction is the second one. Stay clear and calm, and you can meet the world without adding more agitation to it."
+    plain: "Great completion can look imperfect while remaining useful. Great fullness can look empty without being exhausted. Straightness, skill, and eloquence can likewise lack the appearances people expect. The chapter ends with movement overcoming cold and stillness overcoming heat, then recommends clarity and stillness as a way to put the world in order."
   },
-
   46: {
     title: "Enough is enough",
-    plain: "When the world follows the Way, fast horses go back to hauling manure. When it loses the Way, warhorses breed outside the cities. The cause sits inside before it appears at the border: no crime grows larger than unchecked desire, no disaster deeper than discontent, no fault more costly than always wanting more. Know that enough is enough, and enough does not run out."
+    plain: "When the world follows the Way, horses work on the land. When it does not, warhorses are bred outside the cities. The chapter then identifies desire, discontent, and the pursuit of gain as sources of harm. Recognizing enough provides lasting contentment. The contrast between farm work and warfare shows what is at stake in the desire for more."
   },
-
   47: {
     title: "Without going out the door",
-    plain: "Without going out the door, you can know the world. Without looking out the window, you can see heaven's way. The farther you travel, the chapter says, the less you know. So the sage knows without going, sees without looking, and completes without striving."
+    plain: "The chapter claims that the world and heaven's Way can be understood without traveling or looking outside. Going farther can mean knowing less. The sage knows without traveling and completes things without deliberate action. This expresses confidence that the underlying pattern can be understood close to home, without gathering ever more experiences."
   },
-
   48: {
     title: "Subtract your way there",
-    plain: "Learning adds something every day. The Way subtracts something every day, and then subtracts again, down to the point of doing nothing, and nothing left undone. The world is won, the chapter says, by leaving it alone; the meddler is not equal to the job."
+    plain: "Ordinary learning adds something each day. Following the Way subtracts until nonaction is reached and nothing remains undone. The chapter carries that contrast into government: winning or governing the world requires freedom from meddling. Acquiring more knowledge and making more interventions do not automatically bring better understanding or order."
   },
-
   49: {
     title: "No fixed mind",
-    plain: "The sage carries no private, fixed mind into the world. He takes the people's mind as his own, meeting everyone with goodness whether or not they return it, and offering trust whether or not they have earned it. This is not ordinary caution. Goodness and trust begin in the giver instead of waiting for the other person to go first. The sage mixes his mind with the world and looks after its people as children."
+    plain: "The sage does not insist on a fixed personal mind but takes the people's minds into account. Goodness extends to people who are not good, and trust extends to people who are not trustworthy. The chapter recommends these qualities without making them depend on repayment. Its final image treats the people as children, combining care with a paternal view of governing."
   },
-
   50: {
-    title: "Holding too hard to life",
-    plain: "People come out into life and go back into death. The chapter blames much of the danger between those points on clutching at life so hard that every move becomes self-protection. Then it gives the person who has stopped clutching an impossible kind of safety: rhino horns, tiger claws, and weapons can find nowhere to enter. The image is absolute because the claim is absolute. When there is no defended place for death to strike, fear no longer runs the life it was trying to save."
+    title: "Life and death",
+    plain: "Trying too hard to preserve life can lead people toward death. The opening numbers are disputed: some versions read three in ten, others thirteen. The second half describes a person so adept at preserving life that beasts and weapons cannot find a place to injure them. That extraordinary protection can be read literally, spiritually, or as an image of avoiding danger. Turning it only into advice about overcoming fear would settle an ambiguity the text leaves open."
   },
-
   51: {
     title: "Give life without owning it",
-    plain: "The Way gives things life. Virtue nourishes them, matter gives them form, and circumstance brings them to maturity. Nobody orders the ten thousand things to honor that process; they do it naturally. Then the chapter names dark virtue by listing everything control usually gets wrong: give birth without possessing, help without making anyone dependent, bring things to maturity without ruling them. Care is deepest when it does not turn what it cares for into property."
+    plain: "The Way brings things into existence; de nourishes them. Material gives them shape, and conditions bring them to maturity. Things honor the Way and de without being commanded to do so. Mysterious virtue means producing without possessing and nurturing without dominating. Care does not require ownership of what grows from it."
   },
-
   52: {
     title: "Return to the mother",
-    plain: "The world has a beginning, and the chapter calls that beginning its mother. Know the mother and you understand the children; know the children and return to the mother, holding to the source as the body moves toward its end. Close the mouth and guard the senses and you do not wear yourself out. Chase every opening and affair and you never settle. Real sight notices the small. Real strength keeps hold of what yields. Use the light, then follow it home."
+    plain: "The beginning of the world is called its mother. Knowing the source helps us understand its offspring, but attention to particular things should return to that source. The chapter recommends closing openings through which distraction and desire exhaust us. It associates clear perception with noticing the small and strength with holding to softness. The promised result is avoiding danger through the end of life."
   },
-
   53: {
     title: "The great road and the side paths",
-    plain: "The great Way is broad and level. People prefer the side paths. The proof is political: the palace is swept clean while the fields fill with weeds and the granaries stand empty. Officials wear embroidered clothes, carry sharp swords, eat and drink too much, and collect more wealth than they can use. The chapter does not call that success. It calls the whole display organized robbery and places it far from the Way."
+    plain: "The Way is broad, yet people choose side paths. The chapter makes its criticism concrete: the court is well kept while fields are neglected and granaries empty. Those at the top have fine clothes, weapons, food, and surplus wealth. It calls this robbery. Elite luxury alongside public deprivation is a departure from the Way."
   },
-
   54: {
     title: "Start with yourself",
-    plain: "What is planted well cannot be uprooted; what is held well does not slip away. The chapter then lets cultivation widen one circle at a time. Practice the Way in yourself and virtue becomes real, in the family and it overflows, in the village and it lasts, in the state and it grows abundant, in the world and it reaches everywhere. How do you know what a person, family, country, or world is like? Look at each at its own scale, beginning with the one you can actually practice in."
+    plain: "What is firmly established endures, allowing descendants to continue their ancestral sacrifices. The chapter then follows the cultivation of virtue from the person to the family, village, state, and world. Its effect grows as the setting widens. It recommends examining each of those levels through that same level. Personal practice and public order are connected, and the opening keeps that connection within inherited family life."
   },
-
   55: {
     title: "The newborn's strength",
-    plain: "A person full of virtue resembles a newborn: soft bones, weak muscles, a firm grip, a voice that can cry all day without going hoarse. The old images of insects, beasts, and birds unable to harm the child make its harmony look like protection. That harmony is the constant. Trying to improve life by forcing more life into it breaks the balance; driving the breath with the mind becomes violence. Whatever hardens at its peak has already begun to age."
+    plain: "An infant represents abundant virtue: its body is soft, yet its grip is firm. It can have an erection without knowing sexual union, which the text takes as a sign of undirected vitality. The child is also said to cry without becoming hoarse and escape harm from dangerous animals. The lesson drawn from this idealized infant is to preserve natural vitality without forcing the breath or trying to intensify life."
   },
-
   56: {
     title: "Those who know don't talk",
-    plain: "Those who know do not talk; those who talk do not know. Close the mouth, guard the senses, blunt the sharpness, untie the knots, soften the glare, settle into the dust: the chapter calls this the deep merging. A person merged like that cannot be courted or kept out, helped or harmed, honored or shamed, and that immunity, it ends, is exactly why the world honors them."
+    plain: "Understanding the Way is contrasted with talking about it. The chapter recommends closing the senses, blunting sharpness, loosening knots, and softening glare. These lead to a profound joining in which someone cannot be moved by intimacy, rejection, gain, harm, honor, or disgrace. The claim is that freedom from these pressures makes a person worthy of respect."
   },
-
   57: {
-    title: "Govern by not governing",
-    plain: "Rule a state with steadiness and fight a war with surprise, but win the world by leaving it alone. The more prohibitions, the poorer the people; the sharper the weapons, the darker the state; the more clever schemes, the stranger the inventions; the more laws, the more thieves. So the sage says: I do nothing, and the people transform themselves. I stay still, and they straighten themselves. I keep out of their affairs, and they prosper. I want nothing, and they return, on their own, to the uncarved block."
+    title: "Govern with less interference",
+    plain: "Ordinary government uses regular methods, warfare uses surprise, and governing the world requires noninterference. Prohibitions, weapons, clever devices, and proliferating laws are blamed for poverty and disorder. The sage proposes less intervention and less personal desire, allowing people to change and prosper themselves. The ruler's restraint gives people room to recover simplicity."
   },
-
   58: {
     title: "Good fortune hides disaster",
-    plain: "A government that leaves some blur in the edges can have plain, decent people; a government that sees and regulates everything teaches people to become clever around it. Good fortune rests on disaster, disaster crouches beneath good fortune, and neither stays fixed. So the sage refuses to turn correctness into a weapon: square without cutting, sharp without stabbing, straight without forcing, bright without dazzling."
+    plain: "An unobtrusive government leaves people relatively simple; an intrusive one makes them evasive or dissatisfied. Fortune and disaster can turn into each other, and the right course is difficult to fix permanently. The sage therefore keeps standards without using them to injure: firm without cutting, direct without imposing, bright without dazzling."
   },
-
   59: {
     title: "The power of being sparing",
-    plain: "In caring for people and serving heaven, nothing beats restraint. Begin there early and virtue accumulates. Accumulate enough and nothing stands beyond you; when nobody can see the limit of that strength, a country can be held without being squeezed. The chapter calls this keeping the mother of the state, then changes the image from family to a plant: deep roots, a firm trunk, long life, and the ability to see beyond the next season."
+    plain: "Governing people and serving heaven require restraint or frugality. Practiced early, it allows virtue to accumulate and capacity to grow. This makes lasting rule possible. The chapter ends with the image of deep roots and a firm base, connecting political endurance with long life. Restraint preserves resources before a crisis makes their value obvious."
   },
-
   60: {
     title: "Cook a country like a small fish",
-    plain: "Rule a large country the way you cook a small fish: handle it as little as possible, because constant poking ruins it. Govern through the Way and even troubled spirits lose the power to harm people. The chapter corrects itself: the spirits keep their power but do no harm, and the sage also refuses to harm. When neither side injures the other, their different powers stop fighting and return to the same virtue."
+    plain: "Governing a large state is compared to cooking a small fish, commonly understood as a warning against too much handling. The chapter then discusses spirits: under government guided by the Way, they do not harm people. The sage also causes no harm. Their powers can therefore benefit people together. The spirits belong to the chapter's religious world, alongside its advice about governing."
   },
-
   61: {
     title: "The great country lies low",
-    plain: "A great country should be the low reach of a river, the place where every stream gathers. The chapter uses the female and her stillness for the same lesson: lying beneath is how she overcomes. A large state wins a small one by lowering itself; a small state gains a place with the large by lowering itself too. Both can get what they need. The larger power carries the larger duty to take the lower position."
+    plain: "A great state should occupy the low position where rivers gather. The chapter connects that position with the female overcoming through stillness. Large and small states can both benefit from humility: the large gains people, while the small gains a place and protection. Because their power is unequal, the larger state has the greater responsibility to lower itself."
   },
-
   62: {
     title: "The Way shelters the bad too",
-    plain: "The Way is the home of the ten thousand things, treasured by good people and a shelter for people who are not good. Fine speeches and impressive deeds can buy rank, but neither is a reason to throw a person away. At a ruler's enthronement, an offering of the Way is worth more than jade and four horses. The ancients valued it because whoever seeks can find, and whoever has done wrong can still find refuge."
+    plain: "The Way is a refuge for everything, treasured by good people and available to those who are not good. Fine words and deeds can win approval, but wrongdoing does not make a person disposable. Offering the Way at an enthronement is valued above expensive gifts. The closing explanation is that through it people can obtain what they seek and find release from their faults."
   },
-
   63: {
     title: "Do the hard thing while it's small",
-    plain: "Act without forcing, work without fussing, taste the flavorless. Handle the hard while it is still easy and the great while it is still small: the hardest things in the world begin easy, and the biggest begin small, so the sage never attempts anything huge and achieves the huge anyway. Easy promises earn little trust, and what looks simple turns out difficult, so the sage treats everything as difficult and ends up with no difficulties at all."
+    plain: "Practice nonaction and attend to difficult things while they are still easy. Large undertakings begin in small ones. The chapter also says to respond to resentment or injury with virtue, often translated as kindness. Rash promises undermine trust, and treating every task as easy creates difficulties. The sage takes difficulty seriously at the start, making it easier to manage later."
   },
-
   64: {
     title: "A thousand miles, one step",
-    plain: "What is still is easy to hold; what has not yet appeared is easy to plan for; the brittle shatters easily and the small scatters easily, so deal with things before they happen and order them before they tangle. A tree you cannot wrap your arms around grew from a shoot. A nine-story tower rose from a basket of earth. A thousand-mile journey starts under your feet. And since people ruin things right at the finish, the chapter adds the fix: care at the end the way you cared at the beginning."
+    plain: "Deal with trouble before it develops and keep order before disorder begins. A huge tree starts as a shoot; a tall terrace starts with baskets of earth; the received text's long journey starts under your feet. The chapter also warns that forcing or grasping ruins things. Stay as careful near completion as at the beginning, and help things develop according to their own nature. Early attention and restraint have to work together."
   },
-
   65: {
     title: "The troubling case for ignorance",
-    plain: "This is one of the book's hardest political pages. It says the old rulers did not enlighten people but kept them simple, because clever people are hard to govern; rule through cleverness and the state is robbed, rule without it and the state is blessed. Read gently, it attacks scheming and the kind of intelligence trained to game every rule. Read straight, it is paternalism. The chapter calls knowing that difference mysterious virtue and says it leads everything back toward accord."
+    plain: "Ancient rulers following the Way are praised for keeping people ignorant or simple rather than enlightening them. Knowledge makes people harder to govern; governing through cleverness harms the state. The chapter calls understanding these two ways of ruling mysterious virtue. Some readers take its target to be manipulative cleverness. Its explicit preference for an uninformed population still gives a ruler troubling power over the people."
   },
-
   66: {
     title: "Why the sea rules the rivers",
-    plain: "The sea rules a hundred rivers because it lies below them. Whoever would stand above people must speak from beneath them; whoever would lead must walk behind. Then the payoff: the sage stands above and no one feels weight, stands in front and no one feels blocked, and the whole world pushes such a person forward without tiring of them, because they do not contend."
+    plain: "Rivers flow toward the sea because it lies below them. A leader should likewise speak humbly and put personal interests behind the people's. Such a ruler can occupy the high position without being felt as a burden. The chapter argues that refusing to compete helps someone gain willing support. Humility and political authority remain closely connected."
   },
-
   67: {
     title: "The three treasures",
-    plain: "Everyone says my Way is great and looks like nothing else, the chapter begins; being great is why. Then the three treasures: compassion, frugality, and not daring to put yourself ahead of the world. Compassion makes real courage, frugality makes generosity, and staying behind makes a leader worth following. Keep the results and drop the treasures, courage without compassion, reach without restraint, front without back, and you die. It ends with the strongest of the three: whom heaven would save, it arms with compassion."
+    plain: "The speaker names three things to preserve: compassion, frugality, and reluctance to put oneself ahead of the world. Compassion makes courage possible, frugality permits generosity, and staying behind makes leadership possible. Pursuing those results while abandoning their basis brings disaster. Compassion also matters in war, where it is said to make attack effective and defense secure."
   },
-
   68: {
     title: "The best fighter doesn't look fierce",
-    plain: "The best warrior does not parade strength. The best fighter does not get angry. The best winner does not meet the enemy on the enemy's terms. The best leader puts himself below the people whose ability he needs. The chapter gives the pattern three names: the virtue of not contending, the right use of other people, and matching heaven. Mastery has stopped needing to look like mastery."
+    plain: "A skilled warrior avoids aggression and a skilled fighter avoids anger. Defeating an opponent need not involve direct contention. Someone who uses other people's abilities well takes a humble position toward them. The chapter treats restraint as a source of military and political effectiveness, so its preference for noncontention does not remove the pursuit of victory."
   },
-
   69: {
     title: "The one who grieves wins",
-    plain: "A good strategist would rather receive an attack than begin one, rather retreat a foot than advance an inch. The chapter stretches that restraint into paradox: march without marching, raise an arm without baring it, hold a weapon without a weapon, meet an enemy without making one. Treating an opponent lightly is the fastest way to lose what the book calls precious. When two equal armies finally meet, the side that grieves the fight is the one most fit to win it."
+    plain: "The speaker prefers responding to aggression over starting it, and retreating a foot over advancing an inch. The following images describe military action carried out with extreme restraint. Underestimating an enemy risks losing what is treasured. When matched armies meet, the side that grieves or feels compassion is said to prevail. Even in battle, the chapter favors someone who feels the cost of fighting."
   },
-
   70: {
     title: "Jade under rough cloth",
-    plain: "My words are easy to understand and easy to practice, the speaker says, yet nobody understands or practices them. The words have an ancestor and the actions a master, but people miss both and therefore miss the person speaking. Being understood by few is not treated as failure. It makes the teaching more precious. The sage wears coarse cloth in public and carries jade against the body, value kept inward instead of displayed."
+    plain: "The speaker says the teaching is easy to understand and practice, yet few people do either. The words and actions have a source that listeners fail to recognize. Being understood by few does not diminish their value. The sage's rough clothing and hidden jade illustrate the difference between outward appearance and what someone carries within."
   },
-
   71: {
     title: "Know that you don't know",
-    plain: "Knowing that you do not know is health. Not knowing while believing that you know is the disease. The cure is equally plain: recognize the disease as disease. The sage is spared from it by never pretending to be spared from it."
+    plain: "Recognizing the limits of your knowledge is best. Failing to know while taking yourself to know is treated as an illness. Recognizing that illness helps prevent it. The sage avoids the problem by being alert to it, rather than assuming that wisdom makes error impossible."
   },
-
   72: {
     title: "Do not make life unbearable",
-    plain: "When people lose their fear of authority, something more frightening is close behind. The ruler's answer should not be tighter pressure. Do not squeeze people's living space or grind down their livelihood, and they will not become sick of the whole arrangement. The sage applies the same restraint inwardly: know yourself without putting yourself on display, care for yourself without treating yourself as precious. Keep the care. Drop the self-exaltation."
+    plain: "When people stop fearing authority, a greater danger approaches. The ruler is told not to constrict their living space or make their lives oppressive. The sage also knows and cares for the self without putting it on display or exalting it. The advice applies restraint both to public authority and to personal importance."
   },
-
   73: {
     title: "Brave enough not to dare",
-    plain: "Daring courage gets a person killed; cautious courage keeps a person alive. Which one helps and which one harms is not always easy to judge, and the chapter admits even a sage finds heaven's reasons difficult. Heaven does not compete, yet wins; does not speak, yet answers; does not summon, yet everything comes. Its net is wide and the mesh looks loose, but nothing slips through."
+    plain: "Reckless courage leads to death, while courage that holds back preserves life. Heaven's reasons for favoring or rejecting things are difficult to know. Its Way succeeds without competing, responds without speaking, and brings things together without summoning them. The image of a wide net with nothing escaping expresses an order that works without constant visible enforcement."
   },
-
   74: {
     title: "Do not play executioner",
-    plain: "If people no longer fear death, threatening them with death does nothing. Even when they do fear it, what gives a ruler the right to kill the difficult ones? The chapter says there is already an executioner, whether that means heaven, death, or the order of things. Taking that role is like cutting timber for a master carpenter. Most people who try end up cutting their own hands."
+    plain: "Threats of execution cannot deter people who no longer fear death. The chapter then considers what killing offenders could accomplish if people did fear it. It warns against taking the place of the proper executioner, comparing that mistake to an amateur taking a master carpenter's tools and cutting their own hands. The executioner can be understood as heaven or the power responsible for death. This is not a straightforward rejection of every death penalty."
   },
-
   75: {
     title: "Why people starve",
-    plain: "People starve because rulers consume too much in taxes. They become hard to govern because rulers interfere too much. They stop fearing death because the struggle to stay alive has made life too costly. The chapter places each public failure back at the top instead of blaming the people carrying it. A person who does not spend life desperately trying to secure life understands its value better than the person gripping it."
+    plain: "People go hungry because their rulers take too much in taxes. They become hard to govern because those above interfere too much. They treat death lightly when the pursuit of life has become excessive. The chapter places responsibility for suffering and disorder on government, while also warning against overvaluing the effort to preserve life."
   },
-
   76: {
     title: "The living are soft",
-    plain: "A person alive is soft and supple. Dead, stiff and hard. Grass and trees are tender while they grow, dry and brittle when they die. So stiffness and hardness travel with death, softness and yielding with life: an unbending army loses, an unbending tree snaps. The hard and mighty end up below; the soft and weak end up on top."
+    plain: "Living bodies are supple; dead bodies are stiff. Growing plants are tender; dead plants are dry and brittle. The chapter associates softness with life and hardness with death, then applies the comparison to armies and trees. Rigid strength is vulnerable. Its closing reversal places the hard and strong below the soft and weak."
   },
-
   77: {
     title: "Heaven draws a bow",
-    plain: "Heaven's way is like stringing a bow: the top gets pulled down, the bottom raised, the extra trimmed, the shortfall filled. Heaven takes from what has too much and gives to what has too little. People, the chapter notes, do the opposite, stripping those without enough to serve those with too much. Who has extra to offer the world? Only a person of the Way, who works without claiming and finishes without sitting in the result."
+    plain: "Drawing a bow lowers what is high and raises what is low. Heaven's Way similarly removes surplus and supplies what is lacking. Human society does the reverse, taking from people without enough to serve those with too much. The person following the Way gives their surplus to others and completes work without claiming it as a personal achievement."
   },
-
   78: {
     title: "Nothing softer than water",
-    plain: "Nothing in the world is softer than water, and nothing beats it at wearing down the hard and strong; nothing can replace it. Everyone knows the weak overcome the strong and the soft overcome the stiff, and no one acts on it. So the sage says something that sounds backwards, and the chapter admits it sounds backwards: take on a country's filth and you are fit to rule it; carry its disasters and you deserve to be its king."
+    plain: "Water is soft, yet it wears down hard things. People know this advantage of softness but struggle to act on it. The chapter applies the lesson to ruling: someone willing to bear a country's shame or misfortune is qualified to lead it. Political responsibility includes accepting what other people would rather avoid. The chapter acknowledges how contrary this sounds to ordinary judgments."
   },
-
   79: {
     title: "Peace leaves a remainder",
-    plain: "Settle a great hatred and some hatred remains. No agreement can pretend otherwise. So the sage keeps his half of the contract and makes no demand on the other person, taking responsibility for what is owed without turning the debt into leverage. People with virtue attend to their obligations; people without it attend to collection. Heaven plays no favorites, the chapter ends, but stays with whoever is doing the good."
+    plain: "Settling a bitter dispute can leave resentment behind. The sage therefore holds a contractual tally, a record of a claim, without demanding payment from others. The contrast is between keeping that claim and pressing to collect it. Some versions describe the latter as tax collection. The final line says heaven has no favorites yet remains with good people, connecting impartial order with ethical conduct."
   },
-
   80: {
     title: "The small country",
-    plain: "Picture a small country with few people. Machines exist and sit unused; boats and wagons go nowhere; weapons are never lined up. Death is taken seriously enough that no one travels far. People knot cords instead of writing, find their plain food sweet, their simple clothes fine, their homes secure, their customs a pleasure. The neighboring village is close enough to hear its roosters and dogs, and people grow old and die without ever needing to go see it."
+    plain: "The ideal community is small and sparsely populated. Labor-saving equipment, transport, and weapons are available but unused. People return to knotted cords for records and are content with their food, clothes, homes, and customs. A neighboring community is close enough to hear its animals, yet people grow old without visiting. This ideal gives up mobility and technological ambition along with conflict. Its isolation is part of the proposal."
   },
-
   81: {
     title: "True words aren't beautiful",
-    plain: "True words are not beautiful, and beautiful words are not true. The good do not argue; the arguers are not good. The wise are not learned; the learned are not wise. The sage stores nothing up: the more he does for others, the more he has; the more he gives away, the more is his. Heaven's way benefits and does not harm. The sage's way, and this is the book's last line, is to work and not contend."
+    plain: "Trustworthy words are contrasted with attractive words, goodness with contentiousness, and understanding with extensive learning. The sage does not hoard: doing and giving more for others brings greater abundance. Heaven's Way benefits without harming. The sage's Way acts without contending. The closing contrast allows action while rejecting competition for personal advantage."
   }
-
 };

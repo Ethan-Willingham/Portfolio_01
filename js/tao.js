@@ -47,12 +47,12 @@
     KEY.forEach(function (k) { inKey[k] = true; });
     var byYear = function (a, b) { return (meta(a.k).year || 9999) - (meta(b.k).year || 9999); };
     var t1 = KEY.map(function (k) { return have[k]; }).filter(Boolean);
-    var t2 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n >= 75; }).sort(byYear);
-    var t3 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n < 75; }).sort(byYear);
+    var t2 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n === 81; }).sort(byYear);
+    var t3 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n < 81; }).sort(byYear);
     return [
-      { label: 'The famous ones', list: t1 },
-      { label: 'The lesser-known complete translations', list: t2 },
-      { label: 'Partial translations', list: t3 }
+      { label: 'Well-known versions', list: t1 },
+      { label: 'Other versions with all 81 chapters', list: t2 },
+      { label: 'Other versions and excerpts', list: t3 }
     ];
   }
 
@@ -69,10 +69,35 @@
   }
 
   /* ---------- render ---------- */
+  function sourceUrl(v) {
+    var m = meta(v.k);
+    if (m.src === 'egreenway') return 'https://www.egreenway.com/taoism/ttclz' + cur + '.htm';
+    var pages = {
+      legge: 'legge', waley: 'waley', lau: 'lau', wu: 'wu', chan: 'chan',
+      henricks: 'henricks', blakney: 'blakney', bynner: 'bynner',
+      yutang: 'yutang', cleary: 'Cleary', crowley: 'crowley', duyvendak: 'duyvendak'
+    };
+    if (m.src === 'terebess' && pages[v.k]) {
+      return 'https://terebess.hu/english/tao/' + pages[v.k] + '.html#Kap' + cur;
+    }
+    var files = {
+      'feng-english': '1972-gia-fu-feng', mitchell: '1988-stephen-mitchell',
+      mair: '1990-victor-h-mair', 'addiss-lombardo': '1993-addis-lombardo',
+      'lin-derek': '1994-derek-lin', mcdonald: '1996-j-h-mcdonald',
+      clatfelter: '2000-jim-clatfelter', hinton: '2002-david-hinton',
+      hogan: '2004-ron-hogan', solska: '2005-agnieszka-solska',
+      'le-guin': '2009-ursula-k-le-guin'
+    };
+    if (m.src === 'tasuki' && files[v.k]) {
+      return 'https://github.com/tasuki/sbs-ttc/blob/master/ttc/' + files[v.k] + '.md#' + cur;
+    }
+    return 'https://terebess.hu/english/tao/_index.html';
+  }
+
   function vHtml(v) {
     var m = meta(v.k);
     return '<article class="tao-v tao-' + era(m.year) + '">' +
-      '<header class="tao-vh"><span class="tao-vn">' + esc(m.name) + '</span>' +
+      '<header class="tao-vh"><a class="tao-vn" href="' + sourceUrl(v) + '">' + esc(m.name) + '</a>' +
       '<span class="tao-vy">' + (m.year || '') + '</span></header>' +
       '<div class="tao-vt">' + textHtml(v.t) + '</div></article>';
   }
@@ -82,7 +107,7 @@
 
     $('tao-chno').textContent = 'Chapter ' + cur;
     $('tao-title').textContent = note.title ? note.title : '';
-    $('tao-count').innerHTML = '<b>' + c.v.length + '</b> translations';
+    $('tao-count').innerHTML = '<b>' + c.v.length + '</b> versions';
 
     /* commentary */
     $('tao-notes').innerHTML = noteHtml(note);
