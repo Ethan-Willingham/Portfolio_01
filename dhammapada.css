@@ -21,9 +21,8 @@ body.dhp-page { padding-inline: 0; font-family: var(--font-heading); font-weight
 .dhp-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
 .dhp-plain p:last-child { margin-bottom: 0; }
 .dhp-lead::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
-.dhp-history-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--dhp-copy); margin: 2.6rem auto 0; }
-.dhp-history { padding-top: 1rem; border-top: 1px solid var(--s-gold-hair); }
-.dhp-history p { margin: 0; font-size: 1.05rem; line-height: 1.7; text-wrap: pretty; }
+.dhp-page .u-textcheck { max-width: var(--dhp-copy); margin: 2.6rem auto 0; }
+.dhp-history-note { max-width: var(--dhp-copy); margin: 1.7rem auto 0; font-size: 1.05rem; line-height: 1.7; text-wrap: pretty; }
 .dhp-concept-list { max-width: var(--dhp-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
 .dhp-concept { scroll-margin-top: 1rem; border-bottom: 1px solid var(--rule); }
 .dhp-concept > summary { list-style: none; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
@@ -86,7 +85,6 @@ html:not(.js) .dhp-bar, html:not(.js) .dhp-loading, html:not(.js) .dhp-source { 
 .dhp-source-copy ul { padding-left: 1.2rem; }
 .dhp-source-copy li { margin-bottom: .7rem; }
 .dhp-page button:focus-visible, .dhp-page summary:focus-visible, .dhp-page a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-@media (max-width: 720px) { .dhp-history-grid { grid-template-columns: 1fr; } }
 @media (max-width: 560px) {
   .dhp-layer { padding-block: 3.4rem; }
   .dhp-concept > summary { padding: 1.15rem .85rem; }
