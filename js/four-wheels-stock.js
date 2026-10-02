@@ -495,9 +495,9 @@
             if (pass === 0) { p.wheelHits++; this.stats.wheelContacts++; this.breakProduct(p, speed, true); }
             // Climbing a small object dissipates rolling energy at that caster.
             if (pass === 0 && speed > 3) {
-              const loss = Math.min(.018, p.mass * .12), c = Math.cos(wheel.a), s = Math.sin(wheel.a), along = b.vx * c + b.vy * s;
+              const loss = Math.min(.018, p.mass * .12), c = Math.cos(pose.a), s = Math.sin(pose.a), along = b.vx * c + b.vy * s;
               b.vx -= c * along * loss; b.vy -= s * along * loss;
-              wheel.omega += cross(h.x - pose.pivot.x, h.y - pose.pivot.y, -h.nx, -h.ny) * Math.min(.18, speed * .002);
+              if(!wheel.fixed)wheel.omega += cross(h.x - pose.pivot.x, h.y - pose.pivot.y, -h.nx, -h.ny) * Math.min(.18, speed * .002);
               if (p.kind !== 'shard' && w.time - (wheel.rattleTime || -1) > .16) { wheel.rattleTime = w.time; w.emit('wheel-rattle',{x:p.x,y:p.y,kind:p.kind}); }
             }
           });

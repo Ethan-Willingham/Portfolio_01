@@ -151,7 +151,7 @@
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
   const { makeFloor } = view;
   let narrowCamera = false, followCart = true, touchFocusY = .54;
-  function drawIllustration() { view.illustration($('illustration').getContext('2d')); }
+  function drawIllustration() { view.illustration($('illustration').getContext('2d'),world.wheelMode); }
   function draw(g = ctx, w = world, background = floor, preview = false) {
     view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview ? .54 : touchFocusY});
   }
@@ -244,6 +244,11 @@
     else if (world.fall) $('route').textContent='Catching at '+levels[world.fall.catch.chapter].name+'. Record kept.';
     else $('route').textContent=world.roomIndex===7&&!world.circuit.powered&&world.shelves[6].spilled?'Roll the wet wheels between the two brass floor contacts. A continuous water trail powers the shutter.':section.tip;
     $('retry').firstChild.textContent=world.practice?'Exit practice ':'Start over ';
+    const frontSwivel=world.wheelMode==='front-swivel';
+    $('wheel-mode').setAttribute('aria-pressed',String(frontSwivel));
+    $('wheel-mode').textContent=frontSwivel?'Using front swivel / rear fixed':'Test cart: front swivel / rear fixed';
+    $('wheel-mode').setAttribute('aria-label',frontSwivel?'Use four swivel wheels':'Test cart with front swivel wheels and fixed rear wheels');
+    $('wheel-caption').textContent=frontSwivel?'FRONT SWIVEL. REAR FIXED.':'FOUR WHEELS. ALL SWIVEL.';
     $('pause').disabled = !['running','paused'].includes(phase)||!$('picker').hidden;
     $('retry').disabled=!$('picker').hidden||phase==='confirm';$('courses').disabled=phase==='confirm';
     $('pause').setAttribute('aria-label',phase==='paused'?'Resume game':'Pause and open menu');
@@ -268,10 +273,10 @@
     $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
     floor=makeFloor(world.level);
     overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Climb the quarry, ride the bumps, jump the gap, and spill your way through the groceries. Get the cart to the end. Falls send you back; your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
-    updateUI();draw();sound.rolling(0);
+    updateUI();draw();drawIllustration();sound.rolling(0);
     $('start').focus({preventScroll:true});
   }
-  function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice)); if(!practice)save(); }
+  function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice,world.wheelMode)); if(!practice)save(); }
   function returnToRun() {
     const w=new World(Course.build());
     const loaded=parkedRun&&Course.restore(w,parkedRun);parkedRun=null;
@@ -367,6 +372,12 @@
   });
   $('secondary').addEventListener('click',()=>phase==='confirm'?cancelRetry():world.practice?returnToRun():retry());
   $('retry').addEventListener('click',retry);
+  $('wheel-mode').addEventListener('click',()=>{
+    if(!['ready','paused'].includes(phase))return;
+    clearInput();world.setWheelMode(world.wheelMode==='front-swivel'?'all-swivel':'front-swivel');
+    save();updateUI();draw();drawIllustration();
+    announce(world.wheelMode==='front-swivel'?'Front wheels swivel. Rear wheels are fixed.':'All four wheels swivel.');
+  });
   $('pause').addEventListener('click', () => phase === 'paused' ? run() : pause());
   $('courses').addEventListener('click', openPicker); $('picker-close').addEventListener('click', closePicker);
   $('fullscreen').addEventListener('click', fullscreen); document.addEventListener('fullscreenchange', fullscreenLabel);

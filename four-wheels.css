@@ -105,6 +105,8 @@
 .cart-menu-button { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .55rem .6rem; border: 1px solid var(--cart-line); border-radius: 6px; color: var(--cart-ink); background: transparent; font-size: .76rem; }
 .cart-menu-button:hover, .cart-menu-button[aria-pressed="true"] { background: var(--cart-sheet); border-color: var(--cart-muted); }
 .cart-menu-button svg { flex-shrink: 0; width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.cart-wheel-mode { width: 100%; margin-top: 7px; }
+.cart-overlay[data-state="confirm"] .cart-wheel-mode, .cart-overlay[data-state="won"] .cart-wheel-mode { display: none; }
 .cart-key-hint { font-family: var(--font-mono); font-size: .6rem; color: var(--cart-muted); }
 .cart-sound-on, #cart-sound[aria-pressed="true"] .cart-sound-off { display: none; }
 #cart-sound[aria-pressed="true"] .cart-sound-on { display: block; }

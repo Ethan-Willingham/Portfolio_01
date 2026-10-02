@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=25">
+  <link rel="stylesheet" href="four-wheels.css?v=26">
 </head>
 <body class="cart-page">
   <main>
@@ -68,7 +68,7 @@
             </div>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
-                <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span>FOUR WHEELS. ALL SWIVEL.</span></div>
+                <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span id="cart-wheel-caption">FOUR WHEELS. ALL SWIVEL.</span></div>
                 <div class="cart-overlay-copy">
                 <p class="cart-kicker" id="cart-overlay-kicker">Section 01 / 12 &middot; The first push</p>
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
@@ -97,6 +97,7 @@
                     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="cart-fullscreen-text">Fullscreen</span>
                   </button>
                 </div>
+                <button class="cart-menu-button cart-wheel-mode" id="cart-wheel-mode" type="button" aria-pressed="false">Test cart: front swivel / rear fixed</button>
                 <details class="cart-help" id="cart-help">
                   <summary>Controls &amp; how to play</summary>
                   <div class="cart-controls" id="cart-instructions">
@@ -110,7 +111,7 @@
                       <p>Push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward. Brake before a tight bend and leave room for the shopper behind the handle.</p>
                       <p>On a phone, drag the left stick up to push, down to pull, or sideways to turn. Drag diagonally to do both. The stick starts under your thumb, wherever you touch it. Small movements give you a gentle nudge. Let go to coast, or hold Brake with your right thumb to slow down. You can still turn while braking.</p>
                       <p>The route runs through three grocery stores. Push the swinging doors open, or hit them hard enough to break the glass. Tables rock, shelves topple, bottles break, and cans roll. A vase leaves clear water; a wheel over a ketchup bottle squeezes sauce onto the tiles. The tires pick up spills and leave tracks. That mess stays after a fall.</p>
-                      <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
+                      <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. The test cart button in the menu locks the rear forks straight while the front pair swivel. The rear tires still roll both ways, and their grip bends a turn into a tighter curve. Press it again to return to four swivel wheels. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
                       <p>Lost wheel support lets the cart tip. Steer against a sideways tip. Pull back if the nose is going over, or push if it is lifting too far. Your feet need ground to brace. The arms and knees bend as the cart rocks. A real drop below the lip becomes a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
                       <p>There is no countdown. The run saves automatically in your browser, including the cart, broken stock and puddles. Reach a section to unlock it in the route menu for practice. Practice parks your real run and leaves its record alone. Start over keeps your distance record but begins with a fresh cart and course.</p>
                       <p>The road climbs and dips. Yellow and black speed bumps lift each wheel as it passes. Line up with the gold boost pad, keep pushing up the ramp, and carry your speed across the gap. Brake before the blue ice. In the weekly shop, knock the vase off the small table and get its clear water to connect the two brass contacts on the floor. The powered shutter lifts out of your way. At the end, get the cart, all four tires and the shopper onto the checked finish pad.</p>
@@ -136,11 +137,11 @@
     </section>
   </main>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=25"></script>
-  <script src="js/four-wheels-terrain.js?v=25"></script>
-  <script src="js/four-wheels-course.js?v=25"></script>
-  <script src="js/four-wheels-physics.js?v=25"></script>
-  <script src="js/four-wheels-view.js?v=25"></script>
-  <script src="js/four-wheels.js?v=25"></script>
+  <script src="js/four-wheels-stock.js?v=26"></script>
+  <script src="js/four-wheels-terrain.js?v=26"></script>
+  <script src="js/four-wheels-course.js?v=26"></script>
+  <script src="js/four-wheels-physics.js?v=26"></script>
+  <script src="js/four-wheels-view.js?v=26"></script>
+  <script src="js/four-wheels.js?v=26"></script>
 </body>
 </html>

@@ -143,7 +143,7 @@
   function contacts(w){
     const b=w.body,g=w.terrainGeometry,list=[];
     for(let i=0;i<4;i++){
-      const q=w.wheels[i],a=q.a-b.a,side=(i%2?-1:1)*g.CASTER.axleOffset,center={x:g.WHEELS[i][0]-g.CASTER.trail*Math.cos(a)-side*Math.sin(a),y:g.WHEELS[i][1]-g.CASTER.trail*Math.sin(a)+side*Math.cos(a),z:4},axle=kinematics(b,center.x,center.y,4).p,f=w.floorAt(axle),n=normalize({x:-(f?.gx||0),y:-(f?.gy||0),z:1}),ln=localVector(b,n),axis={x:-Math.sin(a),y:Math.cos(a),z:0},d=dot(ln,axis),radial=normalize({x:ln.x-axis.x*d,y:ln.y-axis.y*d,z:ln.z});
+      const q=w.wheels[i],a=q.fixed?0:q.a-b.a,side=(i%2?-1:1)*g.CASTER.axleOffset,center={x:g.WHEELS[i][0]-g.CASTER.trail*Math.cos(a)-side*Math.sin(a),y:g.WHEELS[i][1]-g.CASTER.trail*Math.sin(a)+side*Math.cos(a),z:4},axle=kinematics(b,center.x,center.y,4).p,f=w.floorAt(axle),n=normalize({x:-(f?.gx||0),y:-(f?.gy||0),z:1}),ln=localVector(b,n),axis={x:-Math.sin(a),y:Math.cos(a),z:0},d=dot(ln,axis),radial=normalize({x:ln.x-axis.x*d,y:ln.y-axis.y*d,z:ln.z});
       // A cylindrical tire meets the floor on its curved tread or sidewall.
       list.push({x:center.x-4*radial.x-2*Math.sign(d)*axis.x,y:center.y-4*radial.y-2*Math.sign(d)*axis.y,z:4-4*radial.z,wheel:i});
     }
@@ -178,7 +178,7 @@
       q.n=wall||normalize({x:-floor.gx,y:-floor.gy,z:1});q.jp=dot(k.pitch,q.n);q.jr=dot(k.roll,q.n);q.ja=dot(k.yaw,q.n);
       // Swivel changes tire height on a tilted chassis. Its contact impulse
       // exchanges angular momentum with the fork and the body.
-      q.js=0;q.casterInverse=0;if(q.wheel>=0){const pivot=w.terrainGeometry.WHEELS[q.wheel],v=kinematics(b,b.comX-(q.y-pivot[1]),q.x-pivot[0],b.comHeight).p;q.js=dot({x:v.x-b.x-b.comX*Math.cos(b.a),y:v.y-b.y-b.comX*Math.sin(b.a),z:v.z-b.z-b.comHeight},q.n);q.caster=w.wheels[q.wheel];q.casterInverse=1/w.terrainGeometry.CASTER.inertia;q.ja-=q.js;}
+      q.js=0;q.casterInverse=0;if(q.wheel>=0&&!w.wheels[q.wheel].fixed){const pivot=w.terrainGeometry.WHEELS[q.wheel],v=kinematics(b,b.comX-(q.y-pivot[1]),q.x-pivot[0],b.comHeight).p;q.js=dot({x:v.x-b.x-b.comX*Math.cos(b.a),y:v.y-b.y-b.comX*Math.sin(b.a),z:v.z-b.z-b.comHeight},q.n);q.caster=w.wheels[q.wheel];q.casterInverse=1/w.terrainGeometry.CASTER.inertia;q.ja-=q.js;}
       q.mass=1+q.js*q.js*q.casterInverse+q.jp*q.jp/PITCH_INERTIA+q.jr*q.jr/ROLL_INERTIA+q.ja*q.ja/YAW_INERTIA;
       const velocity=b.vx*q.n.x+b.vy*q.n.y+b.vz*q.n.z+b.pitchRate*q.jp+b.rollRate*q.jr+b.omega*q.ja+(q.caster?.omega||0)*q.js;
       q.target=q.side?Math.min(28,q.sideDepth*.12/dt):gap<0?Math.min(28,-gap*.12/dt):-gap/dt;

@@ -448,7 +448,7 @@
       const phase=wheel.roll/l;
       for(let j=0;j<3;j++) {
         const a=phase+j*Math.PI*2/3,x=Math.cos(a),z=Math.sin(a);
-        if((Math.cos(wheel.a)+Math.sin(wheel.a))*x+VIEW_Z*z>0)
+        if((Math.cos(pose.a)+Math.sin(pose.a))*x+VIEW_Z*z>0)
           scene.wire(tr(l*x,-h,l+l*z),tr(l*x,h,l+l*z),P.mid,1,.45);
       }
       for(const side of [-h-.05,h+.05]) {
@@ -466,7 +466,7 @@
         scene.wire(axle,fork,P.dark,3);scene.wire(axle,fork,P.steel,1);
       }
       const bearingRing=(r,z)=>Array.from({length:8},(_,j)=>local(b,WHEELS[i][0]+r*Math.cos(j*Math.PI/4),WHEELS[i][1]+r*Math.sin(j*Math.PI/4),z));
-      scene.flat(bearingRing(1.6,9),P.steelShade);scene.flat(bearingRing(1.1,9.4),P.gold);
+      scene.flat(bearingRing(1.6,9),P.steelShade);scene.flat(bearingRing(1.1,9.4),wheel.fixed?P.steel:P.gold);
       scene.wire(local(b,...WHEELS[i],9.6),local(b,...WHEELS[i],11),P.steelLight);
     }
     function shopper(scene,b,gait) {
@@ -901,10 +901,10 @@
       boundaries(g,w);g.restore();delete w._visible;terrainLevel=null;
       if(target&&!options.preview&&options.follow!==false){const p=project({...target,z:w.level.campaign?Terrain.height(w.level,target):target.z}),tx=camera.x+p.x*camera.scale,ty=camera.y+p.y*camera.scale;if(tx<25||tx>width-25||ty<25||ty>height-25){const dx=tx-width/2,dy=ty-height*.54,t=Math.min((width/2-30)/Math.max(1,Math.abs(dx)),(height*.45-30)/Math.max(1,Math.abs(dy))),x=clamp(width/2+dx*t,25,width-25),y=clamp(height*.54+dy*t,25,height-25);oval(g,x,y,13,13,P.hairDark);oval(g,x,y,11,11,P.gold);text(g,'GO',x,y+3,P.hairDark,8,'center');}}
     }
-    function illustration(g) {
+    function illustration(g,wheelMode='all-swivel') {
       g.clearRect(0,0,g.canvas.width,g.canvas.height);
       const b={x:0,y:0,a:-.18,vx:0,vy:0,omega:0},scene=new Scene();
-      cart(scene,b,[0,-.6,.35,-.15].map(a=>({a,roll:0})),{phase:0,stride:0});
+      cart(scene,b,[0,-.6,.35,-.15].map((a,i)=>({a,roll:0,fixed:wheelMode==='front-swivel'&&WHEELS[i][0]===1})),{phase:0,stride:0});
       g.save();g.scale(2,2);scene.flush(g,{x:39,y:48});g.restore();
     }
     function framing(width,height,body,follow=true) {
