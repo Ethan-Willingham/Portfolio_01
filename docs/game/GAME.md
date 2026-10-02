@@ -55,10 +55,13 @@ bellows, flint, ash grate and actionable fire guidance stay in this same view.
 Since v28.97, select an existing fuel or mineral from the rack, then click to
 release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption.
-Phone controls use Water, Guests and Fire tabs since v28.139, with large
-labeled actions, a closer basin view and separate landscape work areas.
+Since v28.140, phone controls use a compact two-row Water, Guests and Fire
+strip. The basin takes nearly the full width, the furnace opening is taller,
+and readings share the navigation row. Mobile visitor cards stay off the scene.
 The hose outlet stays outside the copper even when dragged against the liner,
 so a low aim still pours into the bowl.
+Its ceiling stays in the physical main room; liquid previously poured into
+hidden locked upper tubs returns to stored supplies on entry.
 Since v28.63, a bounded WebGPU
 reacting-flow solver transports fuel, oxygen, soot, steam and heat around the
 actual coal polygons. Its reactions and heat exchanges drive combustion and

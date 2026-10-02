@@ -171,6 +171,33 @@ function liveSignature(s) {
 }
 
 {
+  const s = fixture(); seedReveal(s, 400, 0); seedReveal(s, 100, 1); seedReveal(s, 75, 3);
+  s.bathFloorsOwned[3] = true;
+  const F = s.BATH_FLOORS[1], c = s.bathTubCurve(F, F.tubs[0]);
+  for (let i = 0; i < 20; i++) s.addLiquidParticle(2, (c.x0 + c.x1) / 2, c.y0 + 40, 0, 0, 0);
+  s.addLiquidParticle(5, (c.x0 + c.x1) / 2, c.y0 + 40, 0, 0, 0);
+  s.mineralLiquidPark(0, 64, 128); s.bathSiloPut(0, 0, 300, 35);
+  s.bathThermal.pendingInlets = [{ type: 2, count: 30, delta: 15, expires: 4 },
+    { type: 0, count: 7, delta: 9, expires: 4 }]; s.bathThermal.elapsed = 1;
+  const stored = copy(s.bathSilos.tanks), main = s.bathBasinCount();
+  begin(s);
+  assert.deepEqual(copy(s.bathSilos.tanks), stored, 'existing silo stock and its temperature stay untouched');
+  assert.deepEqual(Array.from(s.bathSilos.pending), [20, 20, 40, 20, 20], 'parked and live hidden liquid return with their own identity');
+  near(s.bathSilos.pendingHeat[2], 40 * 20 + 30 * 15);
+  near(s.bathSilos.pendingHeat[0], 20 * 20 + 7 * 9);
+  assert.equal(s.bathThermal.pendingInlets.length, 0, 'warm inflow credit transfers once into returned stock');
+  assert.equal(s.bathBasinCount(), main, 'main-basin water remains in place');
+  assert.equal(parkedCount(s), 476, 'main, owned upper-room and outdoor parcels retain their positions');
+  assert.equal(s.liquidCount, 1); assert.equal(s.liquidType[0], 5, 'snow stays snow');
+  // Snow persistence belongs to its own grain serializer, outside this liquid fixture.
+  s.removeLiquidParticle(0);
+  const after = snapshot(s); begin(s); assert.deepEqual(snapshot(s), after, 'repeated entry cannot recover a parcel twice');
+  const reloaded = fixture(); restore(reloaded, after); begin(reloaded);
+  assert.deepEqual(snapshot(reloaded), after, 'normal service and liquid saves preserve recovered stock and heat');
+  console.log('PASS locked upper tubs return paid liquids and pending heat once, preserving owned floors, snow and existing stores');
+}
+
+{
   for (const [mode, fading] of [[false, false], [true, false], [false, true], [true, true]]) {
     const s = fixture(); seedBath(s, 0, 0, 8105); s.bathMode = mode; s.bathFading = fading;
     s.mineralLiquidTick(1 / 60);
@@ -321,6 +348,7 @@ function liveSignature(s) {
 
 {
   const s = fixture(); seedReveal(s, 1000, 1);
+  s.bathFloorsOwned[1] = true;
   begin(s); s.bathFading = false;
   const r = s.bathArrival[0]; r.emitted = 1;
   // A hidden room must not scan every live particle to draw a clipped reflection.

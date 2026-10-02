@@ -276,10 +276,12 @@
       hearthDrawCasing(c, { x: 24, y: 30, w: 208, h: 160 }, hearthBeds.boiler, false);
       hearthDrawStriker(c, 240, 60, 1, 0.5);
       drawBathSilos(c, 0, 0, 250, 110, { labels: true });
-      // Phone controls use larger lettering and wrapped two-line actions.
+      // Compact phone actions and the shared navigation readout.
       hearthButtons = [];
       hearthButton(c, { x: 0, y: 150, w: 140, h: 52 }, 'WATER / 200 L', 'warm', true);
       hearthButton(c, { x: 148, y: 150, w: 100, h: 52 }, 'GUEST 1 SOAKING', 'warm', false);
-      hearthText(c, '450 L   40.0 C', 12, 220, 17, BLD.cream);
+      hearthButton(c, { x: 0, y: 212, w: 72, h: 44 }, 'WATER / 106 L', 'warm', true);
+      hearthText(c, '450 L / 40.0 C', 12, 270, 12, BLD.cream);
+      hearthText(c, GAME_VERSION + ' / 50 FPS', 12, 282, 8, UIT_DIM);
     } finally { hearthButtons = buttons; if (bathThermal) bathThermal.copperC = copperC; c.restore(); ctx = previous; }
   }

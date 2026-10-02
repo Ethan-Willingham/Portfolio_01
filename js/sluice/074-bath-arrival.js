@@ -14,6 +14,48 @@
       }
     }
   }
+  function bathArrivalRecoverLocked(rooms) {
+    var counts = [0, 0, 0, 0, 0], recovered = 0;
+    for (var j = 0; j < rooms.length; j++) {
+      var r = rooms[j];
+      if (r.floor === 0 || bathFloorsOwned[r.floor]) continue;
+      // A camera-sized hose ceiling once reached these hidden, locked tubs.
+      // Return those paid parcels to storage, leaving owned floors intact.
+      for (var i = liquidCount - 1; i >= 0; i--) {
+        var type = liquidType[i];
+        if (liquidOrigin[i] !== 0 || type < 0 || type > 4 || !bathArrivalContains(r, liquidX[i], liquidY[i])) continue;
+        counts[type]++; recovered++; removeLiquidParticle(i);
+      }
+      bathArrivalEach(r, function (data, key) {
+        for (var p = data.length - 3; p >= 0; p -= 3) {
+          var type = data[p];
+          if (type < 0 || type > 4 || !bathArrivalContains(r, data[p + 1], data[p + 2])) continue;
+          counts[type]++; recovered++;
+          var last = data.length - 3;
+          data[p] = data[last]; data[p + 1] = data[last + 1]; data[p + 2] = data[last + 2]; data.length -= 3;
+        }
+        if (!data.length) delete mineralLiquidParked[key];
+      });
+    }
+    for (var type = 0; type < 5; type++) {
+      if (!counts[type]) continue;
+      // Upper rooms have no thermal field; their settled liquid is ambient.
+      // Retain any still-recorded warm inflow credit instead of duplicating
+      // it between the returned stock and the main basin's future arrivals.
+      var heat = counts[type] * 20, remaining = counts[type];
+      var inlets = bathThermal && bathThermal.pendingInlets;
+      if (inlets) for (var n = 0; n < inlets.length && remaining > 0; n++) {
+        var inlet = inlets[n];
+        if (inlet.type !== type || inlet.expires < bathThermal.elapsed) continue;
+        var count = Math.min(remaining, inlet.count);
+        heat += count * inlet.delta; inlet.count -= count; remaining -= count;
+      }
+      bathSiloQueue(type, counts[type], heat / counts[type]);
+    }
+    if (recovered && bathThermal && bathThermal.pendingInlets)
+      bathThermal.pendingInlets = bathThermal.pendingInlets.filter(function (inlet) { return inlet.count > 0; });
+    return recovered;
+  }
   function bathArrivalBegin() {
     var rooms = [];
     for (var f = 0; f < BATH_FLOORS.length; f++) {
@@ -28,6 +70,7 @@
       }
     }
     liquidToolSync();
+    bathArrivalRecoverLocked(rooms);
     // A quick return may still have live water. Repark it through the normal
     // ordered journal, so all entries get the same reveal without duplication.
     for (var i = liquidCount - 1; i >= 0; i--) {

@@ -2,34 +2,29 @@
   // pointer transform, and reserves an unobscured viewport for the real basin.
   var bathControlsTab = 'water';
   function hearthMobileLayout(w, h, landscape) {
-    var gap = 8, pad = 12, dock, scene, box, ratio = HEARTH_WIDTH / HEARTH_HEIGHT;
+    var pad = 8, gap = 4, dock = { x: 0, y: h - 104, w: w, h: 104 };
+    var scene = { x: 0, y: 60, w: landscape ? Math.round(w * 0.62) : w, h: Math.max(64, dock.y - 68) };
+    var box;
     if (landscape) {
-      var split = Math.round(w * 0.55);
-      scene = { x: 0, y: 60, w: split, h: h - 60 };
-      dock = { x: split, y: 0, w: w - split, h: h };
-      var bw = dock.w - pad * 2, bh = Math.min(90, bw / ratio);
-      box = { x: split + pad, y: 60, w: bw, h: bh };
+      box = { x: scene.w + pad, y: 68, w: w - scene.w - pad * 2,
+        h: Math.max(68, Math.min(180, scene.h - 30)) };
     } else {
-      dock = { x: 0, y: h - 224, w: w, h: 224 };
-      scene = { x: 0, y: 124, w: w, h: Math.max(64, dock.y - 124 - 82) };
       var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
       var shoulder = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * 0.06, 24);
       var outerX = (shoulder.x - cam.x) * worldScale;
       var outerW = (curve.x0 + curve.x1 - 2 * shoulder.x) * worldScale;
       var outerY = (shoulder.y - cam.y) * worldScale;
-      var outerH = Math.max(100, outerW / (HEARTH_PHI * HEARTH_PHI));
+      // A taller phone firebox makes its real fuel and flame readable.
+      var outerH = Math.max(84, Math.min(outerW * 0.78, scene.h - 110));
       box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
         w: outerW * HEARTH_BOWL_SPAN, h: outerH * (1 - HEARTH_BOWL_CUT),
         bowl: { x: outerX, y: outerY, w: outerW, h: outerH } };
     }
-    var cw = (dock.w - pad * 2 - gap) / 2;
-    var tabY = landscape ? h - 48 - pad : dock.y + pad;
-    var tabW = (dock.w - pad * 2 - gap * 2) / 3;
-    var tabs = [], tools = [], actionY = landscape ? box.y + box.h + 12 : tabY + 56;
-    for (var n = 0; n < 3; n++) tabs.push({ x: dock.x + pad + n * (tabW + gap), y: tabY, w: tabW, h: 48 });
-    for (var i = 0; i < 4; i++) tools.push({ x: dock.x + pad + (i % 2) * (cw + gap),
-      y: actionY + Math.floor(i / 2) * 60, w: cw, h: 52 });
-    var meter = landscape ? { x: 12, y: 64, w: scene.w - 24, h: 52 } : { x: 12, y: 64, w: w - 24, h: 52 };
+    var tabs = [], tools = [], tabW = (w - pad * 2 - gap * 2) / 3;
+    var toolW = (w - pad * 2 - gap * 3) / 4;
+    for (var n = 0; n < 3; n++) tabs.push({ x: pad + n * (tabW + gap), y: dock.y + 6, w: tabW, h: 44 });
+    for (var i = 0; i < 4; i++) tools.push({ x: pad + i * (toolW + gap), y: dock.y + 54, w: toolW, h: 44 });
+    var meter = { x: 60, y: 8, w: (landscape ? scene.w : w) - 154, h: 44 };
     if (bathMode && typeof hearthCasingProfile === 'function') hearthChamberSetLayout(box, !landscape);
     return { w: w, h: h, top: 0, footer: h, station: dock, dock: dock, scene: scene, box: box,
       bin: tools[0], pump: tools[2], action: tools[1], ash: tools[3], tools: tools,

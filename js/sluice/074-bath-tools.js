@@ -7,8 +7,10 @@
   function bathToolBounds() {
     var F = BATH_FLOORS[0], c = bathTubCurve(F, F.tubs[0]);
     var top = c.y0 - 182;
+    // Extra wall visible on a tall screen is still above this room's physical
+    // ceiling. Keep pours out of the hidden, locked tubs on the older floors.
     if (typeof cam !== 'undefined' && bathMode && worldScale > 0)
-      top = cam.y + (hearthRoomLayout().scene.y + 28) / worldScale;
+      top = Math.max(top, cam.y + (hearthRoomLayout().scene.y + 28) / worldScale);
     return { left: 19.5 * TILE, right: c.x1 + 48, top: top,
       bottom: c.y0 + c.D - 24, curve: c, floor: F.fr * TILE };
   }

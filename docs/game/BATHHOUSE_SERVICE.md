@@ -22,7 +22,7 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
    Work the bellows for more heat and turn the grate crank to sift pale ash.
 5. Open the liquid control (WATER on phones), select water and aim the hose into the tub. Hold to
    pour (use POUR on touch). Three silos beside the building store carried liquids.
-   Tap a visitor's order at 30 to 48 C, or ADMIT GUEST in the phone's GUESTS tab.
+   Tap a visitor's order at 30 to 48 C, or ADMIT 1 / ADMIT 2 in the phone's GUESTS tab.
    It soaks, pays, and returns outside.
 
 The forge and its crafting requirement are retired. New and returning games
@@ -66,12 +66,15 @@ actual fuel bodies while pale ash sifts through the slots.
 The room gives its full height to the bathhouse, with no top or bottom HUD
 bar since v28.84. Navigation buttons mount directly on the timber wall.
 The claw and hose switches sit beside the firebox on desktop, opposite the
-water control and water, temperature and money readings. Since v28.139, narrow
-screens frame the basin more closely above WATER, GUESTS and FIRE tabs. Water
+water control and water, temperature and money readings. Since v28.140, narrow
+screens use a compact 104px strip below the basin and a taller furnace. WATER,
+GUESTS and FIRE tabs sit above one row of four actions. Water
 has source selection, hose, pour and jet/shower actions; Guests has the claw,
 grab/drop and visitor admission; Fire has material selection, striker, bellows
-and ash removal. The four actions are 52px tall, with readable wrapped labels.
-Water volume, temperature, readiness and money stay visible above the basin.
+and ash removal. Each action is 44px tall, with short wrapped labels.
+Water volume, temperature, readiness, money and version share the navigation
+row. The GUESTS view includes the dry landing; visitor cards are hidden on
+phones, including when both tools are stowed.
 Liquid and material trays have separate CLOSE buttons and block input to
 covered controls. Since v28.80, a 896 by 256 chamber
 replaces the narrow firebox. Since v28.90, smooth refractory cheeks sweep
@@ -158,6 +161,13 @@ Since v28.139, collision projects the actual hose outlet as well as its head
 outside the copper liner. Dragging low or tilting near a wall no longer puts
 the outlet inside solid copper and silently blocks accepted water.
 
+Since v28.140, the tool rail also stays below the physical main-room ceiling.
+Extra wall exposed by a tall phone view cannot put the hose into an invisible
+upper tub. Entry recovers liquid in locked upper tubs into pending silo stock,
+preserving identity, count and remaining warm-inflow credits. Existing stores,
+the main thermal field, owned-floor liquid and snow remain intact. Repeated
+entry or reload cannot return a parcel twice.
+
 The liquid tray selects water, legacy oil, brine, nectar or lumen. The hose
 draws that identity from silos, remaining legacy storage and the rig. It only
 debits particles the solver accepts; blocked output remains reserved in a saved
@@ -184,6 +194,10 @@ landscape, plus the desktop controls. `BATH_HOSE_TOUCH=1 node
 tools/bathhouse-workshop-smoke.mjs` drags the hose deep into the bowl on four
 phone sizes, reads back real GPU particles and verifies finite liquid supply
 accounting. Both own and close a separate Chrome for Testing process.
+`BATH_HOSE_VISUAL=1 node tools/bathhouse-workshop-smoke.mjs` checks actual blue
+pixels against the copper cavity, the basin meter and finite stock in a bordered
+DPR 3 phone canvas after a viewport resize. It also verifies recovery reaches
+the GPU solver and captures a working bath with two visitors and real burning fuel.
 
 ## Coal and heat
 

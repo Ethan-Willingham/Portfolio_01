@@ -332,7 +332,7 @@
       var g = bathGuests[i];
       if (g.st !== 'wait') continue;
       var r = bathOrderRect(g);
-      if ((x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) ||
+      if ((!hearthRoomLayout().mobile && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) ||
           Math.hypot(x - g.s.x, y - g.s.y) < g.s.r + 10) { bathServe(g.s.id); return true; }
     }
     return false;
@@ -374,7 +374,7 @@
         ctx.fillStyle = BLD.goldPale; ctx.fillRect(g.s.x - 21, g.s.y - g.s.r - 15, 42 * g.soak / BATH_VISIT.seconds, 3);
       }
     }
-    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait' && !bathTool.mode) bathDrawOrder(bathGuests[b]);
+    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait' && !bathTool.mode && !hearthRoomLayout().mobile) bathDrawOrder(bathGuests[b]);
     for (var f = 0; f < bathFloats.length; f++) {
       var p = bathFloats[f];
       ctx.save(); ctx.globalAlpha = 1 - p.t / 2;
@@ -384,6 +384,7 @@
   }
   function bathHUDHeight() { return 0; }
   function bathDrawPerformance(c, L) {
+    if (L.mobile) return;
     // Share the wall's navigation row without covering the pause or leave target.
     var navWidth = L.landscape ? L.scene.w : L.w;
     var r = { x: 60, y: 8, w: Math.min(96, navWidth - 154), h: 44 };
@@ -417,43 +418,39 @@
   }
   function bathDrawMobileControls(c, L) {
     var r = L.dock, slots = L.tools, tab = bathControlsTab;
-    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(r.x, L.landscape ? L.tabs[0].y - 4 : r.y, r.w, L.landscape ? 60 : r.h);
-    var names = ['WATER', 'GUESTS', 'FIRE'], ids = ['water', 'guests', 'fire'];
+    c.fillStyle = UIMAT_PLATE_SHADOW; c.fillRect(r.x, r.y, r.w, r.h);
+    var names = ['WATER', 'GUESTS' + (bathGuests.length ? ' ' + bathGuests.length : ''), 'FIRE'], ids = ['water', 'guests', 'fire'];
     for (var n = 0; n < 3; n++) hearthButton(c, L.tabs[n], names[n], 'panel:' + ids[n], tab === ids[n]);
     var type = bathSilos.selected, source = hearthDevSupplies() ? 'FREE' : Math.floor(bathLiquidCount(type) / 100) + ' L';
     if (tab === 'water') {
       hearthButton(c, slots[0], liquidCatalog[type].name.toUpperCase() + ' / ' + source, 'liquids', true);
-      hearthButton(c, slots[1], bathTool.mode === 'hose' ? 'STOW HOSE' : 'USE HOSE', 'hose', bathTool.mode === 'hose');
-      hearthButton(c, slots[2], bathTool.valve ? 'STOP POUR' : 'POUR', 'tool-valve', bathTool.valve);
+      hearthButton(c, slots[1], 'HOSE', 'hose', bathTool.mode === 'hose');
+      hearthButton(c, slots[2], bathTool.valve ? 'STOP' : 'POUR', 'tool-valve', bathTool.valve);
       hearthButton(c, slots[3], bathTool.shower ? 'SHOWER' : 'JET', 'tool-spray', bathTool.shower);
     } else if (tab === 'guests') {
-      hearthButton(c, slots[0], bathTool.mode === 'claw' ? 'STOW CLAW' : 'USE CLAW', 'claw', bathTool.mode === 'claw');
-      hearthButton(c, slots[1], bathTool.held ? 'DROP SLIME' : 'GRAB SLIME', 'tool-grip', !!bathTool.held);
+      hearthButton(c, slots[0], 'CLAW', 'claw', bathTool.mode === 'claw');
+      hearthButton(c, slots[1], bathTool.held ? 'DROP' : 'GRAB', 'tool-grip', !!bathTool.held);
       for (var i = 0; i < 2; i++) {
-        var guest = bathGuests[i], label = !guest ? 'NO VISITOR' : guest.st === 'wait' ? 'ADMIT GUEST ' + (i + 1) : 'GUEST ' + (i + 1) + ' SOAKING';
+        var guest = bathGuests[i], label = !guest ? 'NO GUEST' : guest.st === 'wait' ? 'ADMIT ' + (i + 1) : 'SOAK ' + (i + 1);
         hearthButton(c, slots[i + 2], label, guest ? 'serve:' + guest.s.id : 'no-guest', !!guest && guest.st === 'wait' && bathCanServe());
       }
     } else {
       var fuel = hearthMaterial(hearthHand.material).label.toUpperCase();
       hearthButton(c, slots[0], fuel + ' / ' + (hearthDevSupplies() ? 'FREE' : hearthMaterialCount(hearthHand.material)), 'fuels', hearthHand.mode === 'fuel');
       hearthButton(c, slots[1], 'STRIKER', 'strike', hearthHand.mode === 'striker');
-      hearthButton(c, slots[2], 'BELLOWS', 'pump', true);
-      hearthButton(c, slots[3], 'CLEAR ASH', 'ash', !!hearthHand.rake);
+      hearthButton(c, slots[2], 'AIR', 'pump', true);
+      hearthButton(c, slots[3], 'ASH', 'ash', !!hearthHand.rake);
     }
     hearthPlate(c, L.meter, false);
-    var ready = bathCanServe(), status = ready ? 'BATH READY' : bathWater <= 0 ? 'EMPTY TUB' : bathWater < BATH_MIN_WATER ? 'ADD WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING WATER';
-    hearthText(c, Math.floor(bathWater / 100) + ' L', L.meter.x + 14, L.meter.y + 18, 17, BLD.cream);
-    hearthText(c, bathThermalTemperature().toFixed(1) + ' C', L.meter.x + L.meter.w - 14, L.meter.y + 18, 17, BLD.cream, 'right');
-    hearthText(c, status, L.meter.x + 14, L.meter.y + 39, 12, ready ? BLD.goldPale : BLD.cream);
-    hearthText(c, '$' + bathFmtMoney(money), L.meter.x + L.meter.w - 14, L.meter.y + 39, 12, BLD.goldPale, 'right');
-    var hintY = slots[3].y + slots[3].h + 10;
-    var room = L.landscape ? L.tabs[0].y - hintY : L.h - hintY;
-    if (room >= 30) {
-      var hint = bathNoticeT > 0 ? bathNotice : tab === 'fire' ?
-        hearthHand.mode === 'striker' ? 'Drag the striker above the fuel to light it.' : 'Choose fuel, then tap inside the firebox to drop it.' :
-        tab === 'guests' ? 'Drag the claw to aim. Grab a visitor, then lower it into the warm bath.' :
-        bathTool.mode === 'hose' ? 'Drag the hose into the bowl. Tap POUR to fill, then STOP.' : 'Select your water, then tap USE HOSE.';
-      hearthWrap(c, hint, r.x + 14, hintY + 8, r.w - 28, BLD.cream, 2);
+    var ready = bathCanServe(), status = ready ? 'READY' : bathWater <= 0 ? 'EMPTY' : bathWater < BATH_MIN_WATER ? 'ADD WATER' : bathThermalTemperature() > 48 ? 'TOO HOT' : 'WARMING';
+    var cx = L.meter.x + L.meter.w / 2;
+    hearthText(c, Math.floor(bathWater / 100) + ' L / ' + bathThermalTemperature().toFixed(1) + ' C', cx, L.meter.y + 11, 12, BLD.cream, 'center');
+    hearthText(c, status + ' / $' + bathFmtMoney(money), cx, L.meter.y + 25, 10, ready ? BLD.goldPale : BLD.cream, 'center');
+    hearthText(c, GAME_VERSION + ' / ' + (perfFps || 0) + ' FPS', cx, L.meter.y + 37, 8, UIT_DIM, 'center');
+    if (bathNoticeT > 0 && L.scene.h >= 200) {
+      var notice = { x: 8, y: 60, w: L.scene.w - 16, h: 38 };
+      hearthPlate(c, notice, false);
+      hearthWrap(c, bathNotice, notice.x + 8, notice.y + 10, notice.w - 16, BLD.goldPale, 2);
     }
     bathServiceButtons = [];
   }

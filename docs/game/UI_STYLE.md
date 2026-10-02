@@ -6,11 +6,14 @@
 > and steel are a held tool that casts sparks on drag. A mounted crank drives
 > the travelling grate. Liquid selection opens three tank gauges and identity
 > controls beside the hose. No Prepare, Guest or instant ignition buttons.
-> Desktop controls flank the furnace. Since v28.139, phones use WATER, GUESTS
-> and FIRE tabs with labeled 52px actions and 48px tabs. Portrait frames the
-> bowl above the controls; short landscape puts the fire and controls beside
-> the bath. Liquid and material trays have explicit CLOSE controls and own
-> pointer input while open. Targets stay at least 44px
+> Desktop controls flank the furnace. Since v28.140, phones use a 104px bottom
+> strip with WATER, GUESTS and FIRE tabs above one row of four 44px actions.
+> Readings share the navigation row. Portrait gives the bowl nearly the full
+> width and uses a taller furnace opening; GUESTS widens the view to include
+> the dry landing. Landscape puts bath and fire beside one another above the
+> same compact strip. Mobile guest cards never cover the room. Liquid and
+> material trays have explicit CLOSE controls and own pointer input while open.
+> Targets stay at least 44px
 > wide and tall. Real water, heat-driven steam, guests and fire stay live.
 
 Fuel placement covers the full visible furnace cavity, including the upper

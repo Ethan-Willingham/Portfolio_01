@@ -509,7 +509,8 @@
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
     var mainHeight = bathInteriorBottom() - mainCurve.y0 + 120;
     // Include the dry guest landing to the left of the copper bowl.
-    var viewLeft = 19.5 * TILE - 16, viewRight = mainCurve.x1 + 40;
+    var guestsView = layout.mobile && bathControlsTab === 'guests';
+    var viewLeft = guestsView ? 19.5 * TILE - 16 : mainCurve.x0 - 34, viewRight = mainCurve.x1 + 34;
     var viewWidth = layout.mobile ? viewRight - viewLeft : BATH_VIEW_W;
     worldScale = Math.min(scene.w / viewWidth, Math.max(40, scene.h) / mainHeight);
     var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
@@ -529,12 +530,15 @@
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
     var maxY = bathInteriorBottom() - (scene.y + scene.h) / worldScale;
-    // Center the working bowl on phones instead of pinning a tiny tub below
-    // several screens of empty timber. Physical water keeps the same transform.
+    // Fit the visible bowl and the larger phone furnace as one working area.
     if (layout.mobile && !layout.landscape) {
-      var used = mainHeight * worldScale;
-      var bottom = scene.y + (scene.h + used) / 2;
-      maxY = bathInteriorBottom() - bottom / worldScale;
+      var shoulder = bathRimPoint(mainCurve, mainCurve.x0 + (mainCurve.x1 - mainCurve.x0) * 0.06, 24);
+      var outerW = (mainCurve.x0 + mainCurve.x1 - 2 * shoulder.x) * worldScale;
+      var fireH = Math.max(84, Math.min(outerW * 0.78, scene.h - 110));
+      var headroom = 182 * worldScale;
+      var bodyH = headroom + (shoulder.y - mainCurve.y0) * worldScale + fireH + 36;
+      var lipY = scene.y + Math.max(0, (scene.h - bodyH) / 2) + headroom;
+      maxY = mainCurve.y0 - lipY / worldScale;
     }
     if (maxY < minY) minY = maxY;
     // A single-room bath has nothing to scroll to. Do not reveal the retired

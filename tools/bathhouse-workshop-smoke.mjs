@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { savedBathEntry } from './bathhouse-saved-entry.mjs';
 import { bathHoseFlow, bathHoseTouchFlow } from './bathhouse-hose-flow.mjs';
+import { bathHoseVisual } from './bathhouse-hose-visual.mjs';
 import { bathFireOutline } from './bathhouse-fire-outline.mjs';
 import { bathOverflow } from './bathhouse-overflow.mjs';
 
@@ -113,6 +114,8 @@ try {
     await bathFireOutline({ game, ev, send, sleep, check, screenshot });
   } else if (process.env.BATH_OVERFLOW) {
     await bathOverflow({ game, ev, send, sleep, check, screenshot, press, button });
+  } else if (process.env.BATH_HOSE_VISUAL) {
+    await bathHoseVisual({ game, ev, send, sleep, check, screenshot, press, button });
   } else if (process.env.BATH_HOSE_TOUCH) {
     await bathHoseTouchFlow({ game, send, sleep, check, screenshot, press, button });
   } else if (process.env.BATH_HOSE) {

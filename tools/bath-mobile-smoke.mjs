@@ -64,7 +64,7 @@ async function press(target,touch=false){
   const p=await client(target);
   if(touch){await send('Emulation.setTouchEmulationEnabled',{enabled:true});await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[p]});await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
   else{await send('Input.dispatchMouseEvent',{type:'mousePressed',...p,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',...p,button:'left',clickCount:1});}
-  await game('render()');
+  await game('updateCamera();render()');
 }
 
 try {
@@ -116,6 +116,7 @@ try {
       })()`);
       if(!fit)console.log('LAYOUT',width,height,tab,await game('({layout:hearthRoomLayout(),buttons:hearthButtons})'));
       check(width+'x'+height+' '+tab+' has reachable, separate touch targets and visible furnace',fit);
+      check('compact controls leave the working area most of the phone',await game('hearthRoomLayout().dock.h<=104 && hearthRoomLayout().meter.h<=44 && (hearthRoomLayout().landscape || hearthRoomLayout().scene.h>canvas.height/dpr*.58)'));
       await screenshot(width+'x'+height+'-'+tab);
       if(tab==='guests') {
         await game("bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=(g.slot?22.5:20.75)*TILE;});render();");

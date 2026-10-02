@@ -74,6 +74,16 @@ function fixture() {
 }
 
 {
+  const { s, c } = fixture();
+  s.cam = { y: 18400 }; s.worldScale = 0.4;
+  s.hearthRoomLayout = () => ({ scene: { y: 124 } });
+  assert.equal(s.bathToolBounds().top, c.y0 - 182, 'a tall viewport cannot lift the tool ceiling into locked upper floors');
+  s.cam.y = 19200;
+  assert.equal(s.bathToolBounds().top, 19200 + 152 / 0.4, 'short views still keep the rail below fixed navigation');
+  console.log('PASS the main-room tool ceiling excludes hidden upper tubs while respecting viewport controls');
+}
+
+{
   const { s } = fixture(); s.bathWater = 90000; s.bathSiloQueue(2, 1000, 60); s.bathSilos.selected = 2;
   s.emissionLimit = 7; s.bathToolTick(0.1);
   assert.equal(s.liquidCount, 7); assert.equal(s.bathLiquidCount(2), 993);
