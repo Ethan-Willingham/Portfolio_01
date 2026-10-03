@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.153';
+  var GAME_VERSION = 'v28.154';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -5900,11 +5900,11 @@
     b.shFrame = -1;   // refit the sheen deformation for this pose
   }
 
-  // Visitor order bubbles, meteor wakes and the scoop/dump effects all
+  // Visitor bodies, meteor wakes and the scoop/dump effects all
   // introduce paints absent from a fresh spawn. Draw temporary specimens,
   // never construction or simulation, and restore every borrowed reference.
   function shaderWarmVisitors(ws, ox, oy) {
-    if (typeof bathDrawOrder !== 'function' || typeof skySlimeDraw !== 'function' ||
+    if (typeof skySlimeDraw !== 'function' ||
         typeof siphonDraw !== 'function') return;
     var liveSlimes = skySlimes, liveDust = skySlimeDust;
     var liveSiphon = siphon, liveButtons = siphonButtons, available = siphonAvailable;
@@ -5932,10 +5932,6 @@
         skySlimes.push(s);
       }
       skySlimeDraw();
-      ctx.save();
-      ctx.translate(x - 884, y - (BATH_FLOORS[0].fr * TILE - 164));
-      bathDrawOrder({ slot: 0, s: { x: 904, y: BATH_FLOORS[0].fr * TILE - 25, r: 25 } });
-      ctx.restore();
 
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool
@@ -14469,7 +14465,7 @@
     var rct = canvas.getBoundingClientRect();
     var cssX = (e.clientX - rct.left) * (canvas.width / dpr / rct.width);
     var cssY = (e.clientY - rct.top) * (canvas.height / dpr / rct.height);
-    if (gamePaused || bathServicePointer(cssX, cssY) || bathOrderPointer(p.x, p.y)) return;
+    if (gamePaused || bathServicePointer(cssX, cssY) || bathGuestPointer(p.x, p.y)) return;
     // Main-room walls do not expose the hidden legacy floor purchase targets.
     if (bathMainRoomVisible()) return;
     // Purchase buttons on locked floors take priority over the exit door.
@@ -16049,7 +16045,7 @@
       top: curve.y0 + 25, bottom: curve.y0 + curve.D - 5, phase: 0.55,
       age: 1, duration: 2, tail: 0.1, emitted: 100, type: 0 }]);
   }
-  /* ---- Bathhouse visitors: sky arrival, an order, a soak, and payment ---- */
+  /* ---- Bathhouse visitors: sky arrival, admission, a soak, and payment ---- */
   // Individual guest recipes are intentionally undecided. These are shared
   // operating resources, never a per-guest water or coal charge.
   var BATH_VISIT = { seconds: 18, pay: 75 };
@@ -16367,54 +16363,21 @@
     bathToolCollider();
   }
 
-  function bathOrderRect(g) {
-    var L = hearthRoomLayout(), width = L.scene.w, short = L.landscape || L.scene.h < 250;
-    if (L.compact) {
-      var cardW = Math.min(144, Math.max(112, (width - 224) / 2 - 4));
-      var cardX = width / 2 + (g.slot ? 4 : -cardW - 4);
-      var cardScale = cardW / 160 / Math.max(0.1, worldScale);
-      return { x: cam.x + cardX / worldScale, y: cam.y + 56 / worldScale,
-        w: 160 * cardScale, h: 62 * cardScale, scale: cardScale, compact: true };
-    }
-    var scale = Math.min(1, (width - (L.landscape ? 24 : 40)) / (L.landscape ? 160 : 340)) / Math.max(0.1, worldScale);
-    if (!L.landscape) scale = Math.min(scale, Math.max(24, L.scene.h - 66) / (short ? 62 : 96) / worldScale);
-    var sx = L.landscape ? (width - 160 * scale * worldScale) / 2 : g.slot ? width - 18 - 160 * scale * worldScale : 18;
-    var sy = L.landscape ? (hearthDevSupplies() ? 156 : 62) + g.slot * 68 : Math.max(106,
-      (BATH_FLOORS[0].fr * TILE - cam.y) * worldScale - 148);
-    if (!L.landscape) sy = Math.max(58, Math.min(sy, L.scene.h - (short ? 62 : 96) * scale * worldScale - 8));
-    return { x: cam.x + (L.scene.x + sx) / worldScale, y: cam.y + sy / worldScale,
-      w: 160 * scale, h: (short ? 62 : 96) * scale, scale: scale, compact: short };
+  function bathGuestHitRadius(g) {
+    return Math.max(g.s.r + 10, 22 / Math.max(0.1, worldScale));
   }
-  function bathOrderPointer(x, y) {
+  function bathGuestPointer(x, y) {
+    // Invisible touch padding keeps small visitors easy to select. Pick the
+    // nearest body when two waiting guests share that padding.
+    var nearest = null, distance = Infinity;
     for (var i = 0; i < bathGuests.length; i++) {
       var g = bathGuests[i];
       if (g.st !== 'wait') continue;
-      var r = bathOrderRect(g);
-      if ((x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) ||
-          Math.hypot(x - g.s.x, y - g.s.y) < g.s.r + 10) { bathServe(g.s.id); return true; }
+      var d = Math.hypot(x - g.s.x, y - g.s.y);
+      if (d <= bathGuestHitRadius(g) && d < distance) { nearest = g; distance = d; }
     }
-    return false;
-  }
-  function bathDrawOrder(g) {
-    var r = bathOrderRect(g), ready = bathCanServe();
-    ctx.save();
-    ctx.fillStyle = BLD.cream; ctx.strokeStyle = BLD.outline; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(r.x + r.w / 2 - 6, r.y + r.h - 1);
-    ctx.lineTo(g.s.x, g.s.y - g.s.r - 5); ctx.lineTo(r.x + r.w / 2 + 6, r.y + r.h - 1);
-    ctx.fill(); ctx.stroke();
-    ctx.fillRect(r.x, r.y, r.w, r.h); ctx.strokeRect(r.x, r.y, r.w, r.h);
-    ctx.translate(r.x, r.y); ctx.scale(r.scale, r.scale);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = BLD.outline; ctx.font = 'bold 13px ' + UI_FONT;
-    ctx.fillText('WARM BATH', 10, 15);
-    ctx.font = '12px ' + UI_FONT;
-    if (!r.compact) ctx.fillText(bathWater >= BATH_MIN_WATER ? 'Water ready' : 'Needs water', 10, 36);
-    if (!r.compact) ctx.fillText(bathThermalTemperature() > 48 ? 'Water too hot' : bathThermalTemperature() >= 30 ? 'Warm enough' : 'Waiting for heat', 10, 54);
-    ctx.fillStyle = ready ? BLD.goldDark : BLD.woodDark;
-    ctx.fillRect(6, r.compact ? 32 : 68, 148, 22);
-    ctx.fillStyle = BLD.cream; ctx.font = 'bold 11px ' + UI_FONT;
-    ctx.textAlign = 'center'; ctx.fillText(ready ? 'SERVE  /  $75' : 'WAITING', 80, r.compact ? 43 : 79);
-    ctx.restore();
+    if (!nearest) return false;
+    bathServe(nearest.s.id); return true;
   }
   function bathDrawGuests() {
     ctx.save();
@@ -16432,7 +16395,6 @@
         ctx.fillStyle = BLD.goldPale; ctx.fillRect(g.s.x - 21, g.s.y - g.s.r - 15, 42 * g.soak / BATH_VISIT.seconds, 3);
       }
     }
-    for (var b = 0; b < bathGuests.length; b++) if (bathGuests[b].st === 'wait' && !bathTool.mode) bathDrawOrder(bathGuests[b]);
     for (var f = 0; f < bathFloats.length; f++) {
       var p = bathFloats[f];
       ctx.save(); ctx.globalAlpha = 1 - p.t / 2;

@@ -391,11 +391,11 @@
     b.shFrame = -1;   // refit the sheen deformation for this pose
   }
 
-  // Visitor order bubbles, meteor wakes and the scoop/dump effects all
+  // Visitor bodies, meteor wakes and the scoop/dump effects all
   // introduce paints absent from a fresh spawn. Draw temporary specimens,
   // never construction or simulation, and restore every borrowed reference.
   function shaderWarmVisitors(ws, ox, oy) {
-    if (typeof bathDrawOrder !== 'function' || typeof skySlimeDraw !== 'function' ||
+    if (typeof skySlimeDraw !== 'function' ||
         typeof siphonDraw !== 'function') return;
     var liveSlimes = skySlimes, liveDust = skySlimeDust;
     var liveSiphon = siphon, liveButtons = siphonButtons, available = siphonAvailable;
@@ -423,10 +423,6 @@
         skySlimes.push(s);
       }
       skySlimeDraw();
-      ctx.save();
-      ctx.translate(x - 884, y - (BATH_FLOORS[0].fr * TILE - 164));
-      bathDrawOrder({ slot: 0, s: { x: 904, y: BATH_FLOORS[0].fr * TILE - 25, r: 25 } });
-      ctx.restore();
 
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool

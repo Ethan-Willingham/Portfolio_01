@@ -30,7 +30,7 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
    Work the bellows for more heat and turn the grate crank to sift pale ash.
 5. Open the liquid control, select water and aim the hose into the tub. Hold to
    pour (use POUR on touch). Three silos beside the building store carried liquids.
-   Tap a visitor's order at 30 to 48 C.
+   Tap the waiting visitor itself at 30 to 48 C, or press E / Enter.
    It soaks, pays, and returns outside.
 
 The forge and its crafting requirement are retired. New and returning games
@@ -78,9 +78,11 @@ hose, materials and bellows sit beside the firebox on the left, opposite the
 striker, grate, liquid control and water, temperature and money readings.
 Every tool is available in the same view. Selecting the hose exposes POUR/STOP
 and JET/SHOWER; selecting the claw exposes GRAB/DROP. Short viewports scale the
-joined copper tub and furnace, adapt the columns and use compact guest cards.
-Controls and guest cards retain targets at least 44px wide and tall. The dry
-guest landing stays visible. Version and FPS remain beside Pause on the wall.
+joined copper tub and furnace and adapt the columns. Controls retain targets
+at least 44px wide and tall. Waiting visitors have invisible touch padding
+of the same minimum size. The guest cards and their connecting lines are removed
+since v28.154. The dry guest landing stays visible. Version and FPS remain
+beside Pause on the wall.
 Liquid and material trays have separate CLOSE buttons and block input to
 covered controls. Since v28.80, a 896 by 256 chamber
 replaces the narrow firebox. Since v28.90, smooth refractory cheeks sweep

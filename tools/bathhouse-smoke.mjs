@@ -170,8 +170,6 @@ try {
           var overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
           return hearthNavHeight()===0 && bathHUDHeight()===0 && L.scene.y===0 && L.footer===h &&
             bs.every(b=>!overlap(b,{x:8,y:3,w:44,h:44})) &&
-            [0,1].every(slot=>{var r=bathOrderRect({slot:slot});var card={x:(r.x-cam.x)*worldScale,y:(r.y-cam.y)*worldScale,w:r.w*worldScale,h:r.h*worldScale};
-              return card.y+card.h<=L.scene.h+1 && bs.every(b=>!overlap(card,b));}) &&
             hearthView==='bath' && !bs.some(b=>['forge','boiler','bath'].includes(b.action)) &&
             ['coal','pump','strike','ash','water'].every(a=>bs.some(b=>b.action===a)) &&
             left>=L.scene.x&&right<=L.scene.x+L.scene.w&&lip>=L.scene.y&&bottom<=L.scene.y+L.scene.h&&
@@ -204,9 +202,9 @@ try {
     await sleep(300);
     await game('isMobile=true;resize();updateCamera();render()');
     await boilerFlow('phone',true);
-    await press('(function(){var r=bathOrderRect(bathGuests[0]);return {x:(r.x+r.w/2-cam.x)*worldScale,y:(r.y+r.h/2-cam.y)*worldScale};})()',true);
+    await press('(function(){var g=bathGuests[0];return {x:(g.s.x-cam.x)*worldScale,y:(g.s.y-cam.y)*worldScale};})()',true);
     await sleep(100);
-    check('phone touch serves dev guest through the visible order',await game('bathGuests[0].st!==\'wait\''));
+    check('phone touch serves the dev guest through its body',await game('bathGuests[0].st!==\'wait\''));
     check('dev interactions preserve the real supply inventory',await game('JSON.stringify({stock:forgeStock,tank:siphon.tank,supplies:bathSupplies,cargo:cargo})')===stock);
     await key('`','Backquote');
     await game('render()');
@@ -316,9 +314,9 @@ try {
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await game('isMobile=true;resize();for(var frame=0;frame<60;frame++)updateCamera();render()');await screenshot('mobile');
   await boilerFlow('normal-phone',true);
-  check('phone order cards remain readable',await game('bathGuests.filter(function(g){return g.st==="wait";}).every(function(g){return bathOrderRect(g).w*worldScale>=130;})'));
+  check('phone visitors retain 44px touch padding',await game('bathGuests.filter(function(g){return g.st==="wait";}).every(function(g){return bathGuestHitRadius(g)*worldScale>=22;})'));
   check('touch resource controls stay large and the fire is reached in the room',await game('bathServiceButtons.length>=1 && bathServiceButtons.every(function(b){return b.h>=40;}) && !bathServiceButtons.some(function(b){return b.action==="boiler";})'));
-  await press('(function(){var g=bathGuests.find(function(g){return g.st===\"wait\";}),r=bathOrderRect(g);return {x:(r.x+r.w/2-cam.x)*worldScale,y:(r.y+r.h/2-cam.y)*worldScale};})()',true);
+  await press('(function(){var g=bathGuests.find(function(g){return g.st===\"wait\";});return {x:(g.s.x-cam.x)*worldScale,y:(g.s.y-cam.y)*worldScale};})()',true);
   check('phone tap admits the waiting visitor',await game('bathGuests.every(function(g){return g.st!=="wait";})'));
   check('no runtime or shader errors',errors.length===0);
   console.log('Screenshots: '+out);
