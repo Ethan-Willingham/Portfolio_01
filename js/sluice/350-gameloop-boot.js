@@ -26,7 +26,8 @@
       // the soundscape to death() (it stopped the beds + ducked).
       if (gameOver && !_audio.gameOver) {
         // The crunch that precedes the lament (SFX_BIBLE §10: death's SFX
-        // side is hull-hit + land-damage; the music side is death()).
+        // side starts with hull-hit + land-damage; the music side is death()).
+        // The rig's own rupture adds its panned blast in deathFrameTick.
         // A fatal fall already played its contact cue on this frame.
         if (!deathInfo || deathInfo.type !== 'fall') { sfxPlay('hull-hit'); sfxPlay('land-damage'); }
         SluiceAudio.death(); drillSfxActive = false; drillSfxMat = null; _audio.mode = null; _audio.danger = false;
@@ -185,6 +186,14 @@
   /* ---- Game Loop ---- */
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
+  function finishDeathFrame(time,intervalMs,cpuStart) {
+    audioUpdate(0);
+    gamepadTick(0);
+    if (gameOver && !gamePaused && !mobileLandscapeBlocked) deathFrameTick(Math.min(0.25,Math.max(0,intervalMs/1000)));
+    if (playPerfActive || playPerfAuto) playPerfFrame(time,intervalMs,cpuStart ? performance.now()-cpuStart : 0,2);
+    gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+  }
+
   function loop(time) {
     var _playPerfCPU = playPerfActive ? performance.now() : 0;
     gameRafId = 0;
@@ -213,6 +222,7 @@
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     if (dt > 0) dt = simFrameStep(dt);
     lastFrameDt = dt;
     // v14.21 — fresh raw-bucket slate each frame; perfMark fills it, the
@@ -613,12 +623,15 @@
     var _t0 = performance.now();
     update(dt);
     var _t1 = performance.now();
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     try { updateCombat(dt); } catch (e) { if (!window.__combatErr) { window.__combatErr = String(e) + '\n' + (e.stack||''); console.error('updateCombat threw:', e); } }
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     try { saveTick(dt); } catch (e) { if (!window.__saveErr) { window.__saveErr = String(e) + '\n' + (e.stack||''); console.error('saveTick threw:', e); } }
     // Optional systems land as their fragments ship; typeof-guarded so the
     // loop never depends on them: NMZ obstacle course (087), onboarding radio
     // (057), general radio messages (058), gamepad bridge (055).
     try { if (typeof nmzCourseTick === 'function') nmzCourseTick(dt); } catch (e) { if (!window.__courseErr) { window.__courseErr = String(e) + '\n' + (e.stack||''); console.error('nmzCourseTick threw:', e); } }
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     try { if (typeof onboardingTick === 'function') onboardingTick(dt); } catch (e) { if (!window.__onboardErr) { window.__onboardErr = String(e) + '\n' + (e.stack||''); console.error('onboardingTick threw:', e); } }
     try { if (typeof radioMsgTick === 'function') radioMsgTick(dt); } catch (e) { if (!window.__radioErr) { window.__radioErr = String(e) + '\n' + (e.stack||''); console.error('radioMsgTick threw:', e); } }
     try { if (typeof gamepadTick === 'function') gamepadTick(dt); } catch (e) { if (!window.__padErr) { window.__padErr = String(e) + '\n' + (e.stack||''); console.error('gamepadTick threw:', e); } }
@@ -664,6 +677,7 @@
     _ts = performance.now(); try { updateMineFx(dt); } catch (e) {} perfMark('update.mineFx', _ts);
     _ts = performance.now(); updateTerrainClearOverlays(dt); perfMark('update.clearOverlays', _ts);
     _ts = performance.now(); updateLiveBombs(dt);          perfMark('update.liveBombs', _ts);
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     _ts = performance.now();
     liquidToolSync();
     mineralLiquidTick(dt);

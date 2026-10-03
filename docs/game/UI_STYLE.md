@@ -537,13 +537,24 @@ Used by speedrunners, players curious about exact numbers, and accessibility-con
 
 ## 9. End-state screens
 
-### 9.1 Death: recovery panel (v28.153)
+### 9.1 Death: rig rupture and recovery panel (v28.158)
 
 The owner requested a simpler, quieter death screen on 2026-10-03. One compact
 native dialog now uses the pause menu's gunmetal, cream text and brass action.
 This supersedes the full-screen salvage manifest, paper receipt, item-by-item
 printing, stamp, sparks, shaking and pulsing return prompt.
 
+- First freeze the world, camera and sun. Play a 0.95-second rig rupture:
+  a brief intact beat, seven fragments cut from the current miner art,
+  a compact fireball, cooling rivets and sparks, then shaded smoke. Fragments
+  tumble and bounce cosmetically without changing terrain or the death fee.
+  The captured world includes water and smoke. The instrument strip gives this
+  beat the playfield. The scene stays still through recovery and fits a changed
+  viewport without advancing the simulation.
+- Reduced motion uses a quieter 0.60-second rupture with short fragment travel,
+  no spin or spark trails. Low flash removes the bright local ignition core.
+  Neither version shakes the camera or flashes the whole screen. Warm the
+  fragment clips, fire, smoke and sparks in 046 before play.
 - Show Rig lost, a short cause with depth, Cargo lost, Recovery fee (10%),
   and Cash remaining. An empty hold reads Empty hold. Values appear together.
 - Snapshot the cargo and fee when death occurs, before any save can apply the
@@ -552,16 +563,17 @@ printing, stamp, sparks, shaking and pulsing return prompt.
 - Return to town is the only action. One click or tap recovers. Enter, Space
   or R also recovers; gamepad A uses a fresh press edge. A 0.35-second input
   guard and ignored key repeats prevent held thrust from dismissing the screen.
+  Recovery cannot skip the rig rupture. Manual pause also freezes this effect.
 - The return button receives focus. Tab remains on it. Escape opens normal
   pause; closing pause returns focus to recovery. Gameplay input stays blocked.
 - Keep the same panel on desktop and landscape mobile. The summary scrolls
   inside very short views while the action remains visible and at least 44px.
   Portrait retains the rotate gate and cannot recover or advance the death clock.
 - Verify with `DUMP=/tmp/sluice-death node tools/sluice-death-smoke.mjs`.
-- No reveal or exit animation. The existing restrained world desaturation is
-  warmed by 046; the DOM panel introduces no new canvas effect.
+- The panel's values appear together after the rupture, with no exit animation.
+  Its existing restrained world desaturation is warmed by 046.
 - `?deathshot=CAUSE` remains available for review; `&deathskip=1` is accepted
-  by existing review URLs, with all information already visible.
+  by existing review URLs but does not skip the short rig rupture.
 
 ### 9.2 Win
 

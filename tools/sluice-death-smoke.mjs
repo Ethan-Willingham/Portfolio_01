@@ -19,21 +19,52 @@ let chrome, ws, sequence = 0, checks = 0;
 // Read-only inspection and deterministic specimen seeding, injected by this
 // test server only. No test accessors are added to the production bundle.
 const probe = `
+var deathWorldTicks = 0;
+[updateWeather, updateParticleRain, updateLiquids, updateJello, updateSmoke,
+ updateCamera, treesUpdate, surfaceSlimeTick, skySlimeTick].forEach(function(fn) {
+  var wrapped=function(){deathWorldTicks++;return fn.apply(this,arguments);};
+  if(fn===updateWeather)updateWeather=wrapped;
+  else if(fn===updateParticleRain)updateParticleRain=wrapped;
+  else if(fn===updateLiquids)updateLiquids=wrapped;
+  else if(fn===updateJello)updateJello=wrapped;
+  else if(fn===updateSmoke)updateSmoke=wrapped;
+  else if(fn===updateCamera)updateCamera=wrapped;
+  else if(fn===treesUpdate)treesUpdate=wrapped;
+  else if(fn===surfaceSlimeTick)surfaceSlimeTick=wrapped;
+  else if(fn===skySlimeTick)skySlimeTick=wrapped;
+});
 window.__deathSmoke = {
   state: function () { return {version:GAME_VERSION,intro:introPhase,paused:gamePaused,
     over:gameOver,clock:deathPhaseT,money:money,cargo:cargo.length,upgrades:JSON.stringify(upgrades),
     grid:JSON.stringify(world[SKY_ROWS+20]),fuel:player.fuel,hull:player.hull,
     maxFuel:getMaxFuel(),maxHull:getMaxHull(),x:player.x,y:player.y,
-    blocked:mobileLandscapeBlocked,keys:keys,touch:touch.active,dpad:dpad}; },
+    blocked:mobileLandscapeBlocked,keys:keys,touch:touch.active,dpad:dpad,
+    worldTicks:deathWorldTicks,tod:timeOfDay,cam:[cam.x,cam.y],
+    burst:deathSequence ? {ready:deathSequence.ready,duration:deathSequence.duration,quiet:deathSequence.quiet,
+      lowFlash:deathSequence.lowFlash,pieces:deathSequence.pieces.length,physics:deathSequence.physicsT,
+      x:deathSequence.x,y:deathSequence.y} : null}; },
   seed: function (kind, cause) {
     SAVE_DISABLED=true;devMode=false;update=function(){};
     money=8920;displayMoney=money;cargo=[];
     if(kind!=='empty') cargo=[{type:'gold'}, {type:'gold',shiny:true}, 'coal'];
     upgrades.hull=2;depthRecord=184;
     player.x=(townStationCol(0)-4)*TILE;player.y=(SKY_ROWS+183)*TILE;
-    player.vx=player.vy=0;cam.snap=true;updateCamera();
+    player.renderX=player.x;player.renderY=player.y;
+    var row=Math.floor(player.y/TILE),col=Math.floor(player.x/TILE);
+    for(var r=row-5;r<row+5;r++)for(var c=col-6;c<col+7;c++)world[r][c]=null;
+    for(var r=SKY_ROWS-2;r<row;r++)world[r][col]=null;
+    terrainChunkCache={};lightingInit();
+    player.hull=0;player.vx=player.vy=0;cam.snap=true;updateCamera();
+    for(var warm=0;warm<12;warm++)render();
     endGame({type:cause||'fall'});
   },
+  preview: function (time) {
+    if(gameRafId)cancelAnimationFrame(gameRafId);gameRafId=0;
+    deathSequence.pieces=[];deathSequence.physicsT=0;deathFractureSprite(deathSequence);
+    deathPhaseT=time;updateDeathFragments(deathSequence);drawDeathFrame();
+  },
+  continue: function () {lastTime=performance.now();gameRafId=requestAnimationFrame(loop);},
+  release: function () {deathRecover();},
   fee: function () {applyDeathPenalty();},
   pad: function (pressed) {
     gpFindPad=function(){return {connected:true,mapping:'standard',id:'Recovery test',axes:[0,0],
@@ -126,7 +157,11 @@ try {
   await size(1440,900); await boot();
   async function seed(kind='mixed', cause='fall') {
     await ev(`__deathSmoke.seed(${JSON.stringify(kind)},${JSON.stringify(cause)})`);
-    await sleep(450);
+    for(let i=0;i<60;i++) {
+      if(await ev("!document.getElementById('game-death').hidden")) return;
+      await sleep(50);
+    }
+    throw Error('Death summary did not appear');
   }
   async function alive() {
     for(let i=0;i<600;i++) {
@@ -135,7 +170,25 @@ try {
     }
     throw Error('Recovery did not finish loading');
   }
-  await seed();
+  await ev('__deathSmoke.seed("mixed","fall")');
+  for(let i=0;i<30;i++){if(await ev('__deathSmoke.state().burst?.ready'))break;await sleep(10);}
+  const impact=await ev('__deathSmoke.state()');
+  await check('short explosion precedes the recovery screen', '__deathSmoke.state().burst.ready && __deathSmoke.state().burst.duration<=1 && document.getElementById("game-death").hidden');
+  await ev('window.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter"}));__deathSmoke.release()');
+  await check('recovery input cannot skip the explosion', '__deathSmoke.state().over && document.getElementById("game-death").hidden');
+  await sleep(230);
+  for(let i=0;i<60;i++){if(await ev('__deathSmoke.state().burst.physics>0'))break;await sleep(20);}
+  await check('weather, water, slimes, sun and camera freeze while the rig breaks apart', `(()=>{const s=__deathSmoke.state();return s.worldTicks===${impact.worldTicks} && s.tod===${impact.tod} && JSON.stringify(s.cam)===${JSON.stringify(JSON.stringify(impact.cam))} && s.burst.pieces===7 && s.burst.physics>0;})()`);
+  await key('Escape');const paused=await ev('__deathSmoke.state().clock');await sleep(150);
+  await check('manual pause freezes the explosion clock', `__deathSmoke.state().paused && __deathSmoke.state().clock===${paused}`);
+  await key('Escape');
+  // Deterministic review stills use the real production drawing path. Holding
+  // the RAF is test-server-only and never adds a production screenshot mode.
+  for(const t of [0.04,0.12,0.25,0.48,0.78]) {
+    await ev(`__deathSmoke.preview(${t})`);
+    await shot(`burst-desktop-${t}`,await ev(`(()=>{const r=document.getElementById('game-canvas').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scale:1};})()`));
+  }
+  await ev('__deathSmoke.continue()');await sleep(400);
   await check('summary appears with one focused action', `!document.getElementById('game-death').hidden &&
     document.querySelectorAll('#game-death button').length===1 && document.activeElement.id==='gm-death-return' &&
     document.getElementById('gm-death-cause').textContent==='Hard landing at 184 m.' &&
@@ -173,7 +226,12 @@ try {
   await ev('__deathSmoke.pad(false)');
   await send('Emulation.setUserAgentOverride',{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'});
   await size(844,390,true,2);await boot();
-  await seed('mixed','magma');
+  await ev('__deathSmoke.seed("mixed","magma")');await sleep(80);
+  await size(390,844,true,2);const stopped=await ev('__deathSmoke.state().clock');await sleep(180);
+  await check('portrait freezes the burst before the panel', `__deathSmoke.state().blocked && __deathSmoke.state().clock===${stopped} && document.getElementById("game-death").hidden`);
+  await size(844,390,true,2);
+  await ev('__deathSmoke.preview(0.2)');await shot('burst-landscape');await ev('__deathSmoke.continue()');
+  await sleep(1000);
   for(const [width,height] of [[844,390],[667,375],[568,320],[1024,600],[844,250]]) {
     await size(width,height,true,2);
     await check(`recovery action fits landscape ${width}x${height}`, `(()=>{const a=document.querySelector('.game-canvas-area').getBoundingClientRect(),c=document.querySelector('.death-card').getBoundingClientRect(),b=document.getElementById('gm-death-return').getBoundingClientRect(),body=document.querySelector('.death-body');return b.width>=44&&b.height>=44&&b.top>=a.top&&b.bottom<=a.bottom&&c.left>=a.left&&c.right<=a.right&&body.clientHeight>0&&document.querySelector('.death-actions').getBoundingClientRect().top>=body.getBoundingClientRect().bottom-1;})()`);
@@ -193,6 +251,14 @@ try {
   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[pos]});
   await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await alive();
   await check('one landscape touch recovers', '!__deathSmoke.state().over && __deathSmoke.state().money===8028 && document.getElementById("game-death").hidden');
+  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  await ev('SluiceOptions.set("lowflash","1");__deathSmoke.seed("mixed","bomb")');await sleep(100);
+  await check('reduced motion uses a shorter quieter explosion without a bright core', '__deathSmoke.state().burst.quiet && __deathSmoke.state().burst.lowFlash && __deathSmoke.state().burst.duration===0.6');
+  await ev('__deathSmoke.preview(0.20)');await shot('burst-reduced-motion');await ev('__deathSmoke.continue()');await sleep(500);
+  await check('reduced-motion explosion still leads to recovery', '!document.getElementById("game-death").hidden && document.activeElement.id==="gm-death-return"');
+  await click('gm-death-return');await alive();
+  await check('recovery releases the frozen frame and fragment resources', '!__deathSmoke.state().burst && !__deathSmoke.state().over');
+  await check('new drawing effects are warmed without shader errors', 'window.__shaderWarm.errors.length===0 && window.__shaderWarm.times.death>=0');
   assert.deepEqual(errors, [], 'browser console and runtime errors');
   console.log(`PASS ${checks} recovery checks, no browser errors`);
 } finally {

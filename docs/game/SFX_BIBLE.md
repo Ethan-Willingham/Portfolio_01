@@ -268,7 +268,7 @@ The `footstep-*` rows stay rostered for a possible on-foot/NPC future; the playe
 | `depth-record` | one-shot | new depth milestone (subtle) |
 | `discovery` | one-shot | rare-ore reveal (noise layer; tonal layer is music-side) |
 
-Death is a music piece (`death.m4a`, solo piano, `MUSIC_PROMPT_SYSTEM.md`); the SFX side is only the impact/crunch that precedes it (use `hull-hit` + `land-damage`).
+Death is a music piece (`death.m4a`, solo piano, `MUSIC_PROMPT_SYSTEM.md`). Its SFX starts with the impact/crunch (`hull-hit` + `land-damage`). The short rig rupture reuses `bomb-small` once at moderate gain and lower pitch, panned to the rig, as its body separates. The frozen world adds no ongoing engine or ambience bed.
 
 ---
 

@@ -1418,11 +1418,7 @@
   var drilling = null;
   var gameOver = false;
   var deathInfo = null;
-  // v11.33 — UI_NEW death screen (UI_STYLE.md §9). Two-phase animation:
-  // phase 1 (0-1.5s) the rig is dead in place and the world dims a bit;
-  // phase 2 (>=1.5s) a steel plate descends from the top of the canvas
-  // with TERMINATED + cause icon + stats. Click/tap raises the plate
-  // and restarts the run.
+  // Death-only clock: the frozen-world rig burst, then the recovery panel.
   var deathPhaseT = 0;
   var shopOpen = false;
   // v11.12 — Walk-up shop state machine (UI_STYLE.md §15). Proximity-driven:

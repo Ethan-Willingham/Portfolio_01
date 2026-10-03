@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.156';
+  var GAME_VERSION = 'v28.158';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -2781,11 +2781,7 @@
   var drilling = null;
   var gameOver = false;
   var deathInfo = null;
-  // v11.33 — UI_NEW death screen (UI_STYLE.md §9). Two-phase animation:
-  // phase 1 (0-1.5s) the rig is dead in place and the world dims a bit;
-  // phase 2 (>=1.5s) a steel plate descends from the top of the canvas
-  // with TERMINATED + cause icon + stats. Click/tap raises the plate
-  // and restarts the run.
+  // Death-only clock: the frozen-world rig burst, then the recovery panel.
   var deathPhaseT = 0;
   var shopOpen = false;
   // v11.12 — Walk-up shop state machine (UI_STYLE.md §15). Proximity-driven:
@@ -5550,7 +5546,7 @@
         ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
         ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
         ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); bathInteriorWarm(ctx); }],
-        ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
+        ['hud', shaderWarmHud], ['death', shaderWarmDeath], ['menus', shaderWarmMenus]
       ];
       var jobs = [];
       for (var round = 0; round < 2; round++) for (var i = 0; i < passes.length; i++) {
@@ -6222,6 +6218,16 @@
     } finally {
       explosions = blasts; liveBombs = bombs; bombSparks = embers;
     }
+  }
+
+  function shaderWarmDeath(ws,ox,oy) {
+    var sprite=document.createElement('canvas');sprite.width=sprite.height=288;
+    var sc=sprite.getContext('2d');sc.fillStyle=UIMAT_PLATE_BASE;sc.fillRect(116,112,60,68);
+    var s={sprite:sprite,pieces:[],duration:DEATH_BURST_S,quiet:false,lowFlash:false};
+    deathFractureSprite(s);
+    ctx.setTransform(ws,0,0,ws,ox+canvas.width*0.5,oy+canvas.height*0.5);
+    [0.04,0.10,0.25,0.55,0.85].forEach(function(t) { drawRigDeathBurst(s,t); });
+    sprite.width=sprite.height=0;
   }
 
   // Screen-space plates: tip and warning radio messages, the hull damage
@@ -12666,7 +12672,7 @@
   }
 
   function uiCoversDomEffectLayers() {
-    return !!(UI_NEW && ((shopState !== 'closed') || gameOver || gameWon));
+    return !!(UI_NEW && ((shopState !== 'closed') || (gameOver && !deathSceneCapture) || gameWon));
   }
 
   function setDomEffectLayerHidden(layer, hidden) {
@@ -22388,6 +22394,7 @@
     deathInfo = info || null;
     deathPhaseT = 0;
     deathManifest = buildDeathManifest();
+    beginDeathSequence();
     for (var key in keys) keys[key] = false;
     touch.active = false;
     dpad.left = dpad.right = dpad.up = dpad.down = false;
@@ -34432,6 +34439,7 @@
   }
 
   function render() {
+    if (UI_NEW && gameOver && !deathSceneCapture) { drawDeathFrame(); return; }
     hearthOverlayHide();
     if (hearthFireGPU) hearthFireGPU.hide();
     var _renderT0 = performance.now();
@@ -34448,7 +34456,7 @@
     // Combat screenshake: a tiny world-space offset (trauma-based, subtle,
     // reduced-motion-gated; defined in 085-combat.js). Applied to the world
     // transform only, so the HUD + native-space night sky stay steady.
-    var _shk = (typeof combatShakeOffset === 'function') ? combatShakeOffset() : { x: 0, y: 0 };
+    var _shk = !deathSceneCapture && (typeof combatShakeOffset === 'function') ? combatShakeOffset() : { x: 0, y: 0 };
     ctx.setTransform(ws, 0, 0, ws, -(cam.x - _shk.x) * ws, -(cam.y - _shk.y) * ws);
     // imageSmoothingEnabled true keeps gradients smooth
     ctx.imageSmoothingEnabled = true;
@@ -34879,7 +34887,7 @@
 
     // ---- Player ground shadow (drawn BEFORE jello so the gel covers it,
     //      instead of the shadow showing through the translucent gel) ----
-    try { drawPlayerShadow(); } catch (e) {}
+    if (!deathSceneCapture) { try { drawPlayerShadow(); } catch (e) {} }
 
     // ---- Jello soft bodies (drawn behind the rig so the rig stays read) ----
     var _rJl = performance.now();
@@ -34891,7 +34899,7 @@
 
     // ---- Player ----
     var _rPl = performance.now();
-    drawPlayer();
+    if (!deathSceneCapture) drawPlayer();
     skySlimeDraw();
     siphonDraw();
     perfMark('render.player', _rPl);
@@ -35067,7 +35075,7 @@
     // the rig. Drawn UNDER the HUD so the bars stay readable, but OVER
     // the world. Two layers: a soft red wash + a vignette gradient that
     // darkens the edges — the same "you took damage" cue you see in shooters.
-    if (damageFlashT > 0 &&
+    if (!deathSceneCapture && damageFlashT > 0 &&
         !(typeof window !== 'undefined' && window.SluiceOptions &&
           (window.SluiceOptions.damageFlash === false || window.SluiceOptions.lowFlash === true))) {
       // Player options (052-options.js): damage-flash toggle + photosensitive
@@ -35137,11 +35145,11 @@
     if (!ledgerOpen && !cargoManifestOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
 
     // Recovery summary (UI_NEW only). Always on top.
-    if (UI_NEW && gameOver) {
+    if (UI_NEW && gameOver && !deathSceneCapture) {
       drawDeathScreen(lastFrameDt || 1 / 60);
     }
     // Hide recovery after respawn and host the death screenshot lever.
-    syncDeathScreen();
+    if (!deathSceneCapture) syncDeathScreen();
 
     // Great Seam extraction crescendo + EXPEDITION COMPLETE plate (295).
     // Self-gates on its own state, same dispatch model as drawDeathScreen.
@@ -59702,6 +59710,266 @@
   var deathReturnButton = document.getElementById('gm-death-return');
   var deathFocusPending = false;
 
+  // A self-contained death beat. Only its clock and cosmetic fragments move;
+  // the ordinary world loop and all fluid, weather and actor ticks stay stopped.
+  var deathSequence = null;
+  var deathSceneCapture = false;
+  var DEATH_BURST_S = 0.95;
+
+  function deathHash(n) {
+    var x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  function beginDeathSequence() {
+    var quiet = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    deathSequence = {
+      duration: quiet ? 0.60 : DEATH_BURST_S, quiet: quiet,
+      lowFlash: !!(window.SluiceOptions && (SluiceOptions.lowFlash || !SluiceOptions.damageFlash)),
+      x: player.renderX + PLAYER_W / 2, y: player.renderY + PLAYER_H / 2,
+      camX: cam.x, camY: cam.y, scale: worldScale, pixelRatio: dpr,
+      ready: false, sound: false, physicsT: 0, pieces: [], frame: null, sprite: null
+    };
+    if (deathOverlay) deathOverlay.hidden = true;
+    if (deathReturnButton) deathReturnButton.disabled = true;
+  }
+
+  // Voronoi cuts around the roof, body, track beds and drill retain the
+  // actual mounted rig art, including facing, bank, suspension and upgrades.
+  function deathFractureSprite(s) {
+    var tilt = player.bodyTiltRender || 0, co = Math.cos(tilt), si = Math.sin(tilt);
+    var dir = player.dir < 0 ? -1 : 1;
+    var local = [[-7,-9],[6,-8],[-6,1],[5,2],[-8,11],[5,12],[16,9]];
+    var sites = local.map(function (p) { return { x: p[0]*dir*co-p[1]*si, y:p[0]*dir*si+p[1]*co }; });
+    for (var i = 0; i < sites.length; i++) {
+      var site = sites[i], poly = [[-48,-48],[48,-48],[48,48],[-48,48]];
+      for (var j = 0; j < sites.length; j++) {
+        if (i === j) continue;
+        var other = sites[j], nx = other.x-site.x, ny = other.y-site.y;
+        var limit = (other.x*other.x+other.y*other.y-site.x*site.x-site.y*site.y)*0.5;
+        var next = [];
+        for (var k = 0; k < poly.length; k++) {
+          var a = poly[k], b = poly[(k+1)%poly.length];
+          var da = a[0]*nx+a[1]*ny-limit, db = b[0]*nx+b[1]*ny-limit;
+          if (da <= 0) next.push(a);
+          if ((da <= 0) !== (db <= 0)) {
+            var u = da/(da-db);
+            next.push([a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u]);
+          }
+        }
+        poly = next;
+      }
+      var length = Math.max(1, Math.hypot(site.x,site.y));
+      var speed = 55+deathHash(i+3)*65;
+      s.pieces.push({ polygon:poly, ox:site.x, oy:site.y, x:site.x, y:site.y,
+        vx:site.x/length*speed, vy:site.y/length*speed-72,
+        angle:0, spin:(deathHash(i+17)-0.5)*15, bounced:false });
+    }
+  }
+
+  function captureDeathScene(s) {
+    // Draw one clean destination frame without the miner. Render-only capture
+    // performs no simulation step, and never submits a new death/menu frame.
+    deathSceneCapture = true;
+    try { render(); } finally { deathSceneCapture = false; }
+    var frame = document.createElement('canvas');
+    frame.width = canvas.width; frame.height = canvas.height;
+    var fc = frame.getContext('2d');
+    fc.drawImage(canvas,0,0);
+    // One cross-context copy at death, not a per-frame GPU readback. Preserve
+    // the real water and exhaust, in the compositor's existing order. The
+    // instrument strip gives the rupture the playfield until recovery.
+    var layers = [liquidGLCanvas, liquidWGPU && liquidWGPU.renderCanvas,
+      smokeFluidCanvas, rigExhaustCanvas].filter(function (c) { return c && c.width && c.height; });
+    layers.sort(function(a,b) { return (parseInt(a.style.zIndex,10)||0)-(parseInt(b.style.zIndex,10)||0); });
+    for (var i = 0; i < layers.length; i++) {
+      var layer = layers[i];
+      if (layer.style.display === 'none') continue;
+      var inset = (layer.style.clipPath || '').match(/^inset\(0px 0px ([\d.]+)px 0px\)$/);
+      fc.save();
+      if (inset) { fc.beginPath(); fc.rect(0,0,frame.width,Math.max(0,frame.height-Number(inset[1])*dpr)); fc.clip(); }
+      fc.drawImage(layer,0,0,frame.width,frame.height);
+      fc.restore();
+    }
+    s.frame = frame;
+    var sprite = document.createElement('canvas');
+    sprite.width = sprite.height = 288;
+    var previous = ctx;
+    try {
+      ctx = sprite.getContext('2d');
+      ctx.setTransform(3,0,0,3,(48-s.x)*3,(48-s.y)*3);
+      drawPlayer();
+    } finally { ctx = previous; }
+    s.sprite = sprite;
+    deathFractureSprite(s);
+    s.ready = true;
+    syncDomEffectLayerVisibility();
+  }
+
+  function deathFragmentSolid(x,y) {
+    var tile = tileAt(Math.floor(y/TILE),Math.floor(x/TILE));
+    return !!(tile && tile.type !== 'water' && tile.type !== 'oil');
+  }
+  function updateDeathFragments(s) {
+    var target = Math.max(0,deathPhaseT-0.075);
+    while (s.physicsT+1/120 <= target && s.physicsT < s.duration) {
+      s.physicsT += 1/120;
+      for (var i = 0; i < s.pieces.length; i++) {
+        var p = s.pieces[i], dt = 1/120;
+        p.vy += 270*dt;
+        var x = p.x+p.vx*dt, y = p.y+p.vy*dt;
+        if (!deathFragmentSolid(s.x+x,s.y+p.y)) p.x=x;
+        else { p.vx *= -0.3; p.spin *= -0.5; }
+        if (!deathFragmentSolid(s.x+p.x,s.y+y)) p.y=y;
+        else {
+          if (p.vy>12 && !p.bounced) { p.vy *= -0.28; p.bounced=true; }
+          else p.vy=0;
+          p.vx *= 0.92; p.spin *= 0.9;
+        }
+        p.angle += p.spin*dt;
+      }
+    }
+  }
+
+  // Small stepped discs keep the fire and soot in the foreground's pixel
+  // grammar. Offset highlight lobes give each puff volume without a ring.
+  function deathPixelDisc(x,y,r,color) {
+    ctx.fillStyle=color;
+    var radius=Math.max(1,Math.ceil(r));
+    for (var y0=-radius;y0<=radius;y0+=2) {
+      var span=Math.floor(Math.sqrt(Math.max(0,radius*radius-y0*y0)));
+      ctx.fillRect(Math.round(x)-span,Math.round(y)+y0,span*2+1,2);
+    }
+  }
+
+  function drawRigDeathBurst(s,t) {
+    var blast=Math.max(0,t-0.075), quiet=s.quiet;
+    // A short intact beat precedes the rupture; no camera or world shake.
+    if (t<0.075) {
+      ctx.drawImage(s.sprite,-48,-48,96,96);
+      if (!quiet && !s.lowFlash) {
+        ctx.globalAlpha=Math.sin(t/0.075*Math.PI)*0.7;
+        deathPixelDisc(1,1,3,'#ffe6a0');
+        ctx.globalAlpha=1;
+      }
+      return;
+    }
+    // Smoke spreads after the flame, with a lit upper-left rim and a cooler
+    // underside. It finishes before the recovery panel covers the scene.
+    for (var i=0;i<9;i++) {
+      var age=blast-0.10-i*0.013;
+      if (age<0) continue;
+      var angle=deathHash(i+51)*Math.PI*2;
+      var reach=(quiet?5:11)+age*(quiet?4:12);
+      var x=Math.cos(angle)*reach, y=Math.sin(angle)*reach-age*24;
+      var r=(quiet?4:7)+age*9;
+      ctx.globalAlpha=Math.min(1,age/0.06)*Math.max(0,1-age/(quiet?0.42:0.68))*0.7;
+      deathPixelDisc(x,y,r,'#252320');
+      deathPixelDisc(x-1,y-2,r*0.8,'#3e3830');
+      deathPixelDisc(x-2,y-3,r*0.52,'#5a5248');
+    }
+    ctx.globalAlpha=1;
+    var fade=Math.max(0,Math.min(1,(s.duration-t)/0.23));
+    for (var pi=0;pi<s.pieces.length;pi++) {
+      var p=s.pieces[pi];
+      ctx.save();
+      ctx.globalAlpha=fade;
+      ctx.translate(quiet?p.ox+(p.x-p.ox)*0.12:p.x,quiet?p.oy+(p.y-p.oy)*0.12:p.y);
+      ctx.rotate(quiet?0:p.angle);
+      ctx.beginPath();
+      for (var vi=0;vi<p.polygon.length;vi++) {
+        var v=p.polygon[vi];
+        if (!vi) ctx.moveTo(v[0]-p.ox,v[1]-p.oy); else ctx.lineTo(v[0]-p.ox,v[1]-p.oy);
+      }
+      ctx.closePath();ctx.clip();
+      ctx.drawImage(s.sprite,-48-p.ox,-48-p.oy,96,96);
+      ctx.restore();
+    }
+    // A compact asymmetric fireball, moving from cream to orange to rust.
+    // Low-flash mode removes the bright ignition core; it never washes the screen.
+    if (blast<0.34) {
+      var fire=Math.max(0,1-blast/0.34);
+      ctx.globalAlpha=fire;
+      for (var fi=0;fi<7;fi++) {
+        var a=fi*2.399, distance=(quiet?3:8)*(1-Math.exp(-blast*25));
+        var fx=Math.cos(a)*distance, fy=Math.sin(a)*distance-blast*16;
+        var fr=(quiet?6:11)*Math.sin(Math.min(1,blast/0.11)*Math.PI*0.5)*fire+2;
+        deathPixelDisc(fx,fy,fr,'#a8281e');
+        deathPixelDisc(fx-1,fy-1,fr*0.72,'#ff8030');
+        deathPixelDisc(fx-1,fy-2,fr*0.4,'#ffd060');
+      }
+      if (!quiet && !s.lowFlash && blast<0.07) {
+        ctx.globalAlpha=(1-blast/0.07)*0.9;
+        deathPixelDisc(0,-1,8*(1-blast/0.07)+2,'#ffe6a0');
+      }
+    }
+    // Separate hot rivets and fine spark trails cool and fall independently.
+    var sparks=quiet?8:26;
+    for (var si=0;si<sparks;si++) {
+      var life=0.3+deathHash(si+73)*0.4;
+      if (blast>=life) continue;
+      var ang=deathHash(si+81)*Math.PI*2;
+      var speed=(quiet?16:65)+deathHash(si+97)*(quiet?14:120);
+      var vx=Math.cos(ang)*speed, vy=Math.sin(ang)*speed-35;
+      var px=vx*blast, py=vy*blast+135*blast*blast;
+      ctx.globalAlpha=Math.min(1,(life-blast)/0.13);
+      ctx.fillStyle=blast<life*0.45?'#ffd060':'#ff8030';
+      if (!quiet) {
+        ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-vx*0.018,py-(vy+270*blast)*0.018);
+        ctx.lineWidth=1;ctx.strokeStyle=ctx.fillStyle;ctx.stroke();
+      }
+      ctx.fillRect(Math.round(px),Math.round(py),si%5===0?2:1,2);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function drawDeathFrame() {
+    if (!deathSequence) beginDeathSequence();
+    var s=deathSequence;
+    if (!s.ready) captureDeathScene(s);
+    var previous=ctx;
+    ctx=uiTopEnsure() || previous;
+    // This canvas now owns the whole frozen frame. Discard any HUD clip or
+    // blend state before replacing it, including after a pause or resize.
+    if (ctx.reset) ctx.reset();
+    ctx.save();
+    try {
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+      ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+      ctx.fillStyle=UIT_INSET;ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+      var fit=Math.min(ctx.canvas.width/s.frame.width,ctx.canvas.height/s.frame.height);
+      var left=(ctx.canvas.width-s.frame.width*fit)*0.5, top=(ctx.canvas.height-s.frame.height*fit)*0.5;
+      ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(s.frame,left,top,s.frame.width*fit,s.frame.height*fit);
+      if (deathPhaseT<s.duration) {
+        var scale=s.pixelRatio*s.scale*fit;
+        ctx.setTransform(scale,0,0,scale,left+(s.x-s.camX)*scale,top+(s.y-s.camY)*scale);
+        drawRigDeathBurst(s,deathPhaseT);
+      } else drawDeathScreen(0);
+    } finally { ctx.restore();ctx=previous; }
+  }
+
+  function deathFrameTick(dt) {
+    if (!deathSequence) beginDeathSequence();
+    if (!deathSequence.ready) captureDeathScene(deathSequence);
+    deathPhaseT+=Math.max(0,dt);
+    updateDeathFragments(deathSequence);
+    if (!deathSequence.sound && deathPhaseT>=0.075) {
+      deathSequence.sound=true;
+      sfxPlay('bomb-small',{gain:0.6,rate:0.9,pan:sfxPanAt(deathSequence.x)});
+    }
+    drawDeathFrame();
+  }
+
+  function clearDeathSequence() {
+    if (deathSequence) {
+      if (deathSequence.frame) deathSequence.frame.width=deathSequence.frame.height=0;
+      if (deathSequence.sprite) deathSequence.sprite.width=deathSequence.sprite.height=0;
+    }
+    deathSequence=null;
+  }
+
   function buildDeathManifest() {
     var fee, balance;
     if (applyDeathPenalty._done) {
@@ -59735,12 +60003,14 @@
   function deathRecover() {
     if (!gameOver || gamePaused || mobileLandscapeBlocked ||
         deathPhaseT < DEATH_INPUT_DELAY_S ||
+        (deathSequence && deathPhaseT < deathSequence.duration) ||
         (window.SluiceLoading && window.SluiceLoading.active())) return;
     if (deathOverlay) deathOverlay.hidden = true;
     for (var k in keys) keys[k] = false;
     touch.active = false;
     dpad.left = dpad.right = dpad.up = dpad.down = false;
     gpReleaseAll();
+    clearDeathSequence();
     respawnFromDeath();
     deathManifest = null;
     deathFocusPending = false;
@@ -59754,7 +60024,7 @@
         e.ctrlKey || e.metaKey || e.altKey) return false;
     e.preventDefault();
     if (e.key === 'Tab') {
-      if (deathReturnButton) deathReturnButton.focus({ preventScroll: true });
+      if (deathOverlay && !deathOverlay.hidden && deathReturnButton) deathReturnButton.focus({ preventScroll: true });
     } else if (!e.repeat && (e.key === 'Enter' || e.key === ' ' || e.key === 'r' || e.key === 'R')) {
       deathRecover();
     }
@@ -59764,7 +60034,8 @@
   if (deathReturnButton) deathReturnButton.addEventListener('click', deathRecover);
 
   // Keep the existing screenshot lever. The summary has no reveal sequence;
-  // deathskip remains accepted by old review URLs without requiring a skip.
+  // Old deathskip review URLs still work; the short rig burst always precedes
+  // the panel, whose summary appears together with no printing animation.
   var DEATHSHOT = (function () {
     var match = location.search.match(/[?&]deathshot=([a-z]+)/);
     return match ? match[1] : null;
@@ -59785,6 +60056,7 @@
     }
     if (gameOver) return;
     if (deathOverlay) deathOverlay.hidden = true;
+    clearDeathSequence();
     deathManifest = null;
     deathFocusPending = false;
     deathPhaseT = 0;
@@ -59811,7 +60083,8 @@
   }
 
   function drawDeathScreen(dt) {
-    if (!UI_NEW || !gameOver || !deathOverlay) return;
+    if (!UI_NEW || !gameOver || !deathOverlay || deathSceneCapture ||
+        (deathSequence && deathPhaseT < deathSequence.duration)) return;
     if (!deathManifest) deathManifest = buildDeathManifest();
     var m = deathManifest;
     var opening = deathOverlay.hidden;
@@ -59823,7 +60096,6 @@
       deathOverlay.hidden = false;
       deathFocusPending = true;
     }
-    deathPhaseT += dt;
     deathReturnButton.disabled = deathPhaseT < DEATH_INPUT_DELAY_S;
     document.getElementById('gm-death-shortcut').textContent = gpConnected ? 'A to return' : isMobile ? '' : 'Enter or R';
     if (deathFocusPending && !deathReturnButton.disabled && !gamePaused && !mobileLandscapeBlocked) {
@@ -59995,7 +60267,6 @@
       shopHoverWorkshopItem = null;
     }
   }
-
   // ====== GREAT SEAM + MINERAL LEDGER ======
   // The game's "proper end that doesn't end the game": a one-time legendary
   // find (the Great Seam, ЖИЛА) carved into the deepest town's floor by
@@ -75522,7 +75793,8 @@
       // the soundscape to death() (it stopped the beds + ducked).
       if (gameOver && !_audio.gameOver) {
         // The crunch that precedes the lament (SFX_BIBLE §10: death's SFX
-        // side is hull-hit + land-damage; the music side is death()).
+        // side starts with hull-hit + land-damage; the music side is death()).
+        // The rig's own rupture adds its panned blast in deathFrameTick.
         // A fatal fall already played its contact cue on this frame.
         if (!deathInfo || deathInfo.type !== 'fall') { sfxPlay('hull-hit'); sfxPlay('land-damage'); }
         SluiceAudio.death(); drillSfxActive = false; drillSfxMat = null; _audio.mode = null; _audio.danger = false;
@@ -75681,6 +75953,14 @@
   /* ---- Game Loop ---- */
   var ledgerPadHeld = {};
   var cargoManifestPadHeld = {};
+  function finishDeathFrame(time,intervalMs,cpuStart) {
+    audioUpdate(0);
+    gamepadTick(0);
+    if (gameOver && !gamePaused && !mobileLandscapeBlocked) deathFrameTick(Math.min(0.25,Math.max(0,intervalMs/1000)));
+    if (playPerfActive || playPerfAuto) playPerfFrame(time,intervalMs,cpuStart ? performance.now()-cpuStart : 0,2);
+    gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+  }
+
   function loop(time) {
     var _playPerfCPU = playPerfActive ? performance.now() : 0;
     gameRafId = 0;
@@ -75709,6 +75989,7 @@
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     if (dt > 0) dt = simFrameStep(dt);
     lastFrameDt = dt;
     // v14.21 — fresh raw-bucket slate each frame; perfMark fills it, the
@@ -76109,12 +76390,15 @@
     var _t0 = performance.now();
     update(dt);
     var _t1 = performance.now();
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     try { updateCombat(dt); } catch (e) { if (!window.__combatErr) { window.__combatErr = String(e) + '\n' + (e.stack||''); console.error('updateCombat threw:', e); } }
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     try { saveTick(dt); } catch (e) { if (!window.__saveErr) { window.__saveErr = String(e) + '\n' + (e.stack||''); console.error('saveTick threw:', e); } }
     // Optional systems land as their fragments ship; typeof-guarded so the
     // loop never depends on them: NMZ obstacle course (087), onboarding radio
     // (057), general radio messages (058), gamepad bridge (055).
     try { if (typeof nmzCourseTick === 'function') nmzCourseTick(dt); } catch (e) { if (!window.__courseErr) { window.__courseErr = String(e) + '\n' + (e.stack||''); console.error('nmzCourseTick threw:', e); } }
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     try { if (typeof onboardingTick === 'function') onboardingTick(dt); } catch (e) { if (!window.__onboardErr) { window.__onboardErr = String(e) + '\n' + (e.stack||''); console.error('onboardingTick threw:', e); } }
     try { if (typeof radioMsgTick === 'function') radioMsgTick(dt); } catch (e) { if (!window.__radioErr) { window.__radioErr = String(e) + '\n' + (e.stack||''); console.error('radioMsgTick threw:', e); } }
     try { if (typeof gamepadTick === 'function') gamepadTick(dt); } catch (e) { if (!window.__padErr) { window.__padErr = String(e) + '\n' + (e.stack||''); console.error('gamepadTick threw:', e); } }
@@ -76160,6 +76444,7 @@
     _ts = performance.now(); try { updateMineFx(dt); } catch (e) {} perfMark('update.mineFx', _ts);
     _ts = performance.now(); updateTerrainClearOverlays(dt); perfMark('update.clearOverlays', _ts);
     _ts = performance.now(); updateLiveBombs(dt);          perfMark('update.liveBombs', _ts);
+    if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     _ts = performance.now();
     liquidToolSync();
     mineralLiquidTick(dt);

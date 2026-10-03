@@ -42,7 +42,7 @@
         ['slime', shaderWarmSlime], ['visitors', shaderWarmVisitors], ['terrain', shaderWarmTerrain], ['scenery', shaderWarmScenery],
         ['banya', shaderWarmBanya], ['underground', shaderWarmUnderground], ['blast', shaderWarmBlast],
         ['rain', shaderWarmRain], ['snow', shaderWarmSnow], ['hearth', function () { hearthArtWarm(ctx); bathInteriorWarm(ctx); }],
-        ['hud', shaderWarmHud], ['menus', shaderWarmMenus]
+        ['hud', shaderWarmHud], ['death', shaderWarmDeath], ['menus', shaderWarmMenus]
       ];
       var jobs = [];
       for (var round = 0; round < 2; round++) for (var i = 0; i < passes.length; i++) {
@@ -714,6 +714,16 @@
     } finally {
       explosions = blasts; liveBombs = bombs; bombSparks = embers;
     }
+  }
+
+  function shaderWarmDeath(ws,ox,oy) {
+    var sprite=document.createElement('canvas');sprite.width=sprite.height=288;
+    var sc=sprite.getContext('2d');sc.fillStyle=UIMAT_PLATE_BASE;sc.fillRect(116,112,60,68);
+    var s={sprite:sprite,pieces:[],duration:DEATH_BURST_S,quiet:false,lowFlash:false};
+    deathFractureSprite(s);
+    ctx.setTransform(ws,0,0,ws,ox+canvas.width*0.5,oy+canvas.height*0.5);
+    [0.04,0.10,0.25,0.55,0.85].forEach(function(t) { drawRigDeathBurst(s,t); });
+    sprite.width=sprite.height=0;
   }
 
   // Screen-space plates: tip and warning radio messages, the hull damage
