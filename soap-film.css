@@ -8,13 +8,22 @@
 .sf-hero .u-eyebrow { font-size: .7rem; margin-bottom: .45rem; }
 .sf-demo { border: 1px solid var(--rule); background: var(--bg-raised); border-radius: 3px; overflow: hidden; }
 .sf-view { position: relative; height: var(--sf-view-height, calc(100dvh - 160px)); min-height: 160px; background: #000; }
-#sf-canvas, #sf-still { display: block; width: 100%; height: 100%; object-fit: contain; }
+#sf-canvas { display: block; width: 100%; height: 100%; }
+#sf-touch, #sf-still { position: absolute; left: var(--sf-film-left); top: var(--sf-film-top); width: var(--sf-film-width); height: var(--sf-film-height); }
+#sf-touch { clip-path: ellipse(50% 50% at 50% 50%); touch-action: none; cursor: grab; }
+#sf-touch.sf-dragging { cursor: grabbing; }
+#sf-still { display: block; object-fit: fill; border-radius: 50%; }
 .sf-demo [hidden] { display: none !important; }
 .sf-topline, .sf-bottomline { position: absolute; left: 22px; right: 22px; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; color: var(--text-faint); font: .65rem/1.5 var(--font-mono); }
 .sf-topline { top: 18px; text-transform: uppercase; letter-spacing: .06em; }
 .sf-bottomline { bottom: 18px; }
 #sf-status { position: absolute; inset: 35% 10% auto; text-align: center; font: .95rem/1.6 var(--font-body); color: var(--text); background: var(--bg-raised); padding: .8rem; border-radius: 3px; }
 .sf-toolbar { display: flex; padding: 8px 12px; gap: 5px; border-top: 1px solid var(--rule); }
+.sf-temperature { display: flex; align-items: center; gap: 6px; margin: 0 auto; width: min(360px, 45%); }
+.sf-temperature label { display: grid; gap: 2px; color: var(--text-faint); font: .6rem/1.4 var(--font-mono); }
+.sf-temperature output { color: var(--text); white-space: nowrap; }
+.sf-temperature input { flex: 1; min-width: 60px !important; width: 100%; padding: 0 !important; }
+.sf-temperature button { padding: 8px !important; }
 .sf-demo button, .sf-demo select, .sf-demo input { font: .8rem/1.4 var(--font-body); color: var(--text-dim); background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 8px 13px; }
 .sf-toolbar button { border-color: transparent; }
 .sf-toolbar button:last-child { margin-left: auto; }
@@ -51,7 +60,8 @@
  .sf-hero .u-eyebrow { display: none; }
  .sf-nav span { font-size: .6rem; }
  .sf-topline, .sf-bottomline { left: 13px; right: 13px; font-size: .55rem; }
- .sf-toolbar { padding: 6px; gap: 0; }
+ .sf-toolbar { display: grid; grid-template-columns: auto auto auto 1fr; padding: 6px; gap: 0; }
+ .sf-temperature { grid-column: 1 / -1; grid-row: 2; width: 100%; padding-top: 5px; }
  .sf-toolbar button { padding: 7px 9px; font-size: .75rem; }
  .sf-instruments { padding: 16px; }
  .sf-settings { grid-template-columns: 1fr 1fr; }

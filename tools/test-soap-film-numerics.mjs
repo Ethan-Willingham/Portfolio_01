@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {FilmModel} from '../js/soap-film-model.js';
+import {goldenRatio,squareFromOval,ovalFromSquare,filmRect,filmPoint} from '../js/soap-film-geometry.js';
 const results={};
 // Divergence-free streamfunction on MAC faces gives an independent closed-flow fixture.
 function swirl(m){const n=m.n,L=m.p.lengthMeters,psi=(x,y)=>.00008*Math.sin(Math.PI*x/n)**2*Math.sin(Math.PI*y/n)**2;
@@ -21,6 +22,21 @@ const coarse=run(32,.02,15),medium=run(64,.02,15),fine=run(128,.02,15);
 const restrict=m=>{const n=m.n,b=new Float64Array(n*n/4);for(let y=0;y<n/2;y++)for(let x=0;x<n/2;x++){const i=2*y*n+2*x;b[y*n/2+x]=(m.h[i]+m.h[i+1]+m.h[i+n]+m.h[i+n+1])/4;}return b;};
 results.grid={rmsNm32vs64:rms(coarse.h,restrict(medium)),rmsNm64vs128:rms(medium.h,restrict(fine))};assert.ok(results.grid.rmsNm64vs128<results.grid.rmsNm32vs64);
 const f32=run(32,.02,2,Float32Array),f64=run(32,.02,2);results.precisionRmsNm=rms(f32.h,f64.h);assert.ok(results.precisionRmsNm<.01);
+let mapError=0;
+for(let y=0;y<=32;y++)for(let x=0;x<=32;x++){const p=ovalFromSquare(x/32,y/32),q=squareFromOval(p.x,p.y);mapError=Math.max(mapError,Math.abs(q.x-x/32),Math.abs(q.y-y/32));}
+const rect=filmRect(1440,729);assert.ok(Math.abs(rect.width/rect.height-goldenRatio)<1e-12);assert.equal(filmPoint(rect.left,rect.top,rect),null);assert.ok(mapError<1e-8);results.ovalMapping={roundTripError:mapError,aspectRatio:rect.width/rect.height};
+const options={evaporationNmPerSecond:0,drainageSpeedMetersPerSecond:0,ruptureNm:-1,autoRenew:false};
+const thinPersistent=new FilmModel(32,'51a9f17c',options);thinPersistent.h.fill(12);thinPersistent.replenished=thinPersistent.volume();thinPersistent.advance(.04);assert.equal(thinPersistent.state,'intact');assert.equal(thinPersistent.cycle,1);
+const cycling=new FilmModel(32);cycling.h.fill(12);cycling.replenished=cycling.volume();cycling.advance(.04);assert.equal(cycling.state,'rupturing');for(let k=0;k<300&&cycling.cycle<2;k++)cycling.advance(.04);assert.equal(cycling.cycle,2);results.compatibility={thinPersistentState:thinPersistent.state,defaultRoomRenewalCycle:cycling.cycle};
+const interactive=new FilmModel(32,'51a9f17c',options),initialH=Array.from(interactive.h),initialVolume=interactive.volume();
+for(let k=0;k<80;k++)interactive.stir({x:.5+.15*Math.sin(k*.2),y:.55+.12*Math.cos(k*.17),dx:.025,dy:-.015,tap:k%20===0});
+const impulse=interactive.measure();assert.ok(impulse.divergenceMaxPerSecond<2e-5);assert.ok(impulse.maxSpeedMetersPerSecond<=.02500001);assert.equal(interactive.volume(),initialVolume);
+for(let k=0;k<30;k++)interactive.advance(.04);assert.ok(rms(interactive.h,initialH)>.1);results.stir={divergenceMaxPerSecond:impulse.divergenceMaxPerSecond,maxSpeedMetersPerSecond:impulse.maxSpeedMetersPerSecond,thicknessRmsNm:rms(interactive.h,initialH)};
+const heaterModels=[];
+for(const temperature of [10,50]){const m=new FilmModel(32,'51a9f17c',options),h=Array.from(m.h);m.setTemperatureC(temperature);assert.deepEqual(Array.from(m.h),h);assert.equal(m.p.heatingKelvin+m.p.ambientC,temperature);for(let k=0;k<50;k++)m.advance(.04);heaterModels.push(m);results['heater'+temperature]={temperatureRangeC:m.measure().temperatureRangeC};}
+const temperatureDifference=rms(heaterModels[0].t,heaterModels[1].t),velocityDifference=rms(heaterModels[0].v,heaterModels[1].v);assert.ok(temperatureDifference>5);assert.ok(velocityDifference>1e-5);results.heaterResponse={temperatureRmsC:temperatureDifference,verticalVelocityRmsMetersPerSecond:velocityDifference};
+for(let k=30;k<15000;k++)interactive.advance(.04);
+const persistent=interactive.measure();assert.equal(persistent.cycle,1);assert.equal(persistent.state,'intact');assert.equal(interactive.events.length,0);assert.equal(persistent.evaporatedM3,0);assert.equal(persistent.drainedM3,0);assert.equal(persistent.resetDiscardedM3,0);assert.ok(persistent.thicknessRangeNm[0]>0);assert.ok(Math.abs(persistent.massBalanceErrorM3)/initialVolume<2e-4);results.persistent={...persistent,relativeMassError:persistent.massBalanceErrorM3/initialVolume,modelSeconds:interactive.time};
 if(process.argv.includes('--long')){const n=Number(process.env.SOAP_GRID||64),m=new FilmModel(n);const times=[],start=performance.now();let next=60;
  for(let k=0;k<60000&&m.cycle<4;k++){const a=performance.now();m.advance(.04);if(k>30)times.push(performance.now()-a);if(m.time>=next){const d=m.measure();console.log(JSON.stringify({at:d.time,cycle:d.cycle,state:d.state,min:d.thicknessRangeNm[0],max:d.thicknessRangeNm[1]}));next+=60;}}
  d=m.measure();assert.ok(m.cycle>=4,'Three complete phrases must renew');assert.ok(Math.abs(d.massBalanceErrorM3)/d.replenishedM3<1e-4);times.sort((a,b)=>a-b);results.long={n,wallSeconds:(performance.now()-start)/1000,events:m.events,diagnostics:d,medianMs:times[Math.floor(times.length*.5)],p95Ms:times[Math.floor(times.length*.95)]};

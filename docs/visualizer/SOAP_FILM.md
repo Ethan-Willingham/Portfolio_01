@@ -1,20 +1,72 @@
 # Soap film
 
 Open [the live comparison prototype](https://ethanwillingham.com/soap-film-lab.html).
-The page starts silently. Pause, Instruments, Restart and Fullscreen are its
-outer controls. Reduced motion starts with an actual still state and Play.
+The page starts silently. Pause, Clear, temperature, Instruments and Fullscreen
+are its outer controls. Reduced motion starts with an actual still state and Play.
 No source files outside the soap-film prefix are needed or changed.
+
+## Persistent oval and interaction
+
+The standalone page now shows a horizontal ellipse with width / height equal
+to the golden ratio, (1 + sqrt(5)) / 2 = 1.61803398875. It uses the whole
+computational field, mapped from a square to a disk and then scaled to an ellipse:
+
+```text
+X = u sqrt(1 - v² / 2)
+Y = v sqrt(1 - u² / 2),     u,v in [-1,1].
+```
+
+The renderer and pointer mapping use the matching analytic inverse. This is
+a presentation map of the square flow, not a simulation on a physical elliptical
+mesh. It preserves every part of the field, including the heated lower wall.
+The dimensions and measured fluid volume refer to the computational square.
+The computed fallback uses the same optical lookup and map, without animation.
+
+The standalone uses a closed film: evaporation and drainage coefficients are
+zero, rupture is disabled, and autoRenew is false. There is no clock-triggered
+clearing, automatic replenishment, lifetime threshold or fade to a new film.
+Clear restores the seeded initial thickness and velocity, resets the clock and
+ledger, and retains temperature, playback speed and manual pause. The explicit
+Clear with settings button also recreates the model with the selected seed/grid.
+Default createRoom calls retain the original square, draining and cycling film
+for existing hosts; persistent and presentation are optional initialization fields.
+
+The visible temperature slider sets a nominal lower-edge temperature from 0 to
+60 °C, initially 34 °C. Cooler and Warmer change it by 2 °C. The reference remains
+22 °C; the declared lateral boundary modulation still applies to the difference
+between heater and reference. Moving the control also changes the existing lower
+thermal layer by delta T exp(-(1-y/L)/0.12), allowing an immediate heat input
+without renewing or recoloring the thickness field. Temperature continues through
+the existing buoyancy, advection, diffusion and cooling equations.
+
+Dragging injects a compact momentum impulse into the MAC velocities. A tap
+starts an eddy. Its streamfunction is a Gaussian with radius 0.012 m, smoothly
+tapered to zero at three radii and exactly zero on the square walls. Dragging
+uses (vx Y - vy X) times that envelope; a tap uses 0.008 m/s times the radius.
+The discrete curl supplies horizontal and vertical face velocities, so discrete
+divergence cancels. No thickness or optical colors are painted by input. Drag
+target speed is capped at 0.012 m/s. If accumulated face speeds exceed 0.025 m/s,
+the entire velocity field is scaled uniformly, preserving its divergence and
+closed boundaries. This is a documented interaction bound. Normal advection
+moves the interference bands.
+
+Pointer capture supports strokes beyond the oval and releases on pointerup,
+pointercancel or lost capture. Only the clipped oval suppresses native touch
+scrolling. Arrow keys stir the selected sample, and Enter starts an eddy.
+Input while paused queues momentum without advancing the model clock.
+Touch interaction, temperature and Clear preserve a deliberate pause.
 
 ## Geometry and equations
 
-The apparatus is a flat square, 0.16 m on each side, vertical in gravity. Screen
+The computational apparatus is a flat square, 0.16 m on each side, vertical in gravity. Screen
 x points right and screen y points down. Warm liquid accelerates upward. It is
 thermal convection in a chosen geometry, not Rayleigh-Taylor instability.
 [Seychelles et al. (2008)](https://doi.org/10.1103/PhysRevLett.100.144501)
 used a half-bubble heated at its equator. This model does not reproduce that
 curvature or claim experimental calibration.
 
-The reduced model is
+The original cycling room's reduced model is shown below. The standalone uses
+the same momentum and temperature equations, with E = v_d = 0 and user impulses.
 
 ```text
 u_t + u.grad u = -grad p + nu laplacian(u)
@@ -54,7 +106,7 @@ uniform evaporation.
 | rho | 1000 kg/m³ | assumed liquid density for the hole estimate |
 
 These are selected effective coefficients, not measured values for a soap
-solution. There is no invented time-varying force, vorticity confinement, noise
+solution. The default room has no invented time-varying force, vorticity confinement, noise
 texture, particle blob scheduler or soundtrack.
 
 All four walls are impermeable to u, with free-slip tangential velocity. The
@@ -131,9 +183,10 @@ time, fluid ledger, seed, temperature, hole and apparatus cycle. It does not
 change coefficients or secretly renew the apparatus. Instruments and the caption
 report the change. Explicitly choosing a grid disables automatic reduction.
 The standalone stage fills the available viewport below a compact heading,
-with the playback controls visible at the bottom. Its square film uses 96% of
-the available width, capped by the stage height minus 64 CSS pixels reserved
-for labels. Pointer sampling uses the same geometry. The optional render
+with the playback and temperature controls visible at the bottom. Its oval uses
+96% of the available width, capped by the stage height minus 64 CSS pixels
+reserved for labels, and retains the golden ratio on every viewport.
+Pointer sampling uses the same geometry and inverse map. The optional render
 argument filmFill sets normalized x/y limits; omitting it retains the room's
 original 82% width / 84% height framing for existing hosts.
 Canvas DPR is capped at 1.5. The CPU model uses Float32 state arrays and
@@ -395,6 +448,35 @@ Updated evidence: [default view](../../assets/visualizer/soap-film/checks-v2/sta
 [browser report](../../assets/visualizer/soap-film/checks-v2/report.json).
 The fluid and optical equations are unchanged; the earlier numerical and
 three-phrase results remain the model validation record.
+
+### Golden-ratio oval, touch and persistence, October 3, 2026
+
+The oval is 1076 × 665 CSS pixels at a 1440 × 900 viewport. Mouse strokes and
+native touch strokes move the actual velocity field; the browser fixture changed
+the thickness by about 50 nm RMS after one model second of advection, without
+adding or removing liquid. Temperature changes, Cooler/Warmer, Clear, reduced
+motion, manual pause, fullscreen, resize, seed replay and device loss passed.
+Both the original square and new oval GPU references match independently
+integrated CPU reflection within 5.91e-5 linear RGB, below the 1e-4 tolerance.
+The square-to-oval round trip differs by at most 4.44e-16 normalized units.
+
+A 32² persistent run lasted 600 model seconds and 15,000 solver increments
+without a rupture, renewal or removed fluid. Relative mass error was 3.36e-7,
+below the 2e-4 long-run tolerance; remaining thickness was 429 to 752 nm.
+A separate 12 nm fixture remains intact in persistent mode, while the default
+cycling room ruptures and renews, verifying compatibility. Eighty successive
+stir impulses left maximum divergence 1.12e-6 s⁻¹, below 2e-5, and the selected
+0.025 m/s face-speed bound held. Heater settings of 10 and 50 °C produced
+different temperature and velocity fields without resetting thickness.
+
+Updated [browser report](../../assets/visualizer/soap-film/checks-v3/report.json),
+[numerical report](../../assets/visualizer/soap-film/checks-v3/numerics.json),
+[default oval](../../assets/visualizer/soap-film/checks-v3/startup.png),
+[stirred film](../../assets/visualizer/soap-film/checks-v3/stirred.png),
+[portrait](../../assets/visualizer/soap-film/checks-v3/390x844.png), and
+[landscape](../../assets/visualizer/soap-film/checks-v3/844x390.png)
+record the current experience. The earlier drain and rupture evidence describes
+the optional cycling room.
 
 ### Remaining limits
 
