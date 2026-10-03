@@ -7,16 +7,17 @@
     cream: '#e8e2d6', gold: '#d4c4a0', warn: '#d99090', ink: '#1e2420'
   };
   async function loadArt() {
-    const names = ['deer', 'hunter', 'clearing', 'boar', 'marsh', 'dog'];
+    const names = ['hunter', 'clearing', 'boar', 'marsh', 'dog', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)];
     const pairs = await Promise.all(names.map(name => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve([name, img]);
       img.onerror = () => reject(new Error('Could not load ' + name + ' artwork.'));
-      img.src = 'assets/hunting/' + name + (['deer', 'hunter', 'clearing'].includes(name) ? '-v2.png' : '-v3.png') + '?v=3';
+      img.src = 'assets/hunting/' + name + (name.startsWith('deer-') ? '-v4.png' : ['hunter', 'clearing'].includes(name) ? '-v2.png' : '-v3.png') + '?v=4';
     })));
     const sprites = Object.fromEntries(pairs);
+    sprites.deer = sprites['deer-1'];
     const masks = {};
-    for (const name of ['deer', 'boar']) {
+    for (const name of ['boar', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)]) {
       const canvas = document.createElement('canvas');
       canvas.width = sprites[name].width; canvas.height = sprites[name].height;
       const g = canvas.getContext('2d', { willReadFrequently: true });
@@ -24,9 +25,10 @@
       const pixels = g.getImageData(0, 0, canvas.width, canvas.height).data;
       const alpha = new Uint8Array(canvas.width * canvas.height);
       for (let i = 0; i < alpha.length; i++) alpha[i] = pixels[i * 4 + 3];
-      const species = HuntingCampaign.SPECIES[name];
+      const species = name.startsWith('deer-') ? HuntingCampaign.deerLevel(Number(name.split('-')[1])) : HuntingCampaign.SPECIES[name];
       masks[name] = { width: canvas.width, height: canvas.height, alpha, vitalsX: species.vitalsX, vitalsY: species.vitalsY, radius: species.radius };
     }
+    masks.deer = masks['deer-1'];
     return { sprites, mask: masks.deer, masks };
   }
   const project = (point, camera) => ({
@@ -108,7 +110,7 @@
       }
       const sorted = world.deer.slice().sort((a, b) => b.y - a.y);
       for (const deer of sorted) {
-        const at = project(deer, normal), image = this.sprites[world.artName];
+        const at = project(deer, normal), image = this.sprites[world.animalSprite(deer)];
         g.save(); g.globalAlpha = .32; g.fillStyle = palette.shadow;
         g.beginPath(); g.ellipse(Math.round(at.x) + 4, Math.round(at.y) + 1, image.width * .4, 5, 0, 0, Math.PI * 2); g.fill(); g.restore();
         if (deer.state === 'down') {
@@ -157,11 +159,12 @@
         g.restore();
         for (const deer of world.deer) {
           if (deer.state === 'down' || deer.bleed > 0) continue;
-          const vx = world.art.vitalsX ?? T.vitalsX, vy = world.art.vitalsY ?? T.vitalsY, radius = world.art.radius ?? T.vitalsRadius;
+          const art = world.animalArt(deer);
+          const vx = art.vitalsX ?? T.vitalsX, vy = art.vitalsY ?? T.vitalsY, radius = art.radius ?? T.vitalsRadius;
           const u = deer.facingRight ? vx : 1 - vx;
-          const p = project({ x: deer.x + (u - .5) * world.art.width / T.pixelsPerUnit, y: deer.y + vy * world.art.height / T.pixelsPerUnit }, normal);
+          const p = project({ x: deer.x + (u - .5) * art.width / T.pixelsPerUnit, y: deer.y + vy * art.height / T.pixelsPerUnit }, normal);
           g.strokeStyle = palette.gold; g.lineWidth = 1;
-          g.beginPath(); g.ellipse(p.x, p.y, radius * world.art.width, radius * world.art.height, 0, 0, Math.PI * 2); g.stroke();
+          g.beginPath(); g.ellipse(p.x, p.y, radius * art.width, radius * art.height, 0, 0, Math.PI * 2); g.stroke();
         }
       }
       for (const shot of world.bullets) {

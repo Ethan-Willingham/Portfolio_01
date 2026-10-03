@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const sharp = require('sharp');
 const root = path.resolve(__dirname, '../assets/hunting');
+const { DEER_LEVELS } = require('../js/hunting-campaign.js');
 async function sprite(name, width, height, version = 2) {
   const source = path.join(root, 'source-v' + version, name + '.png');
   const { data, info } = await sharp(source).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -34,4 +35,5 @@ async function sprite(name, width, height, version = 2) {
   }
   await sprite('boar', 64, 42, 3);
   await sprite('dog', 40, null, 3);
+  for (const deer of DEER_LEVELS) await sprite('deer-' + deer.level, deer.width, null, 4);
 })().catch(error => { console.error(error); process.exitCode = 1; });

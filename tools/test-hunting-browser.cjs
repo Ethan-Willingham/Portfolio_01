@@ -4,13 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const { chromium } = require('playwright');
-const root = path.resolve(__dirname, '..'), dump = process.env.DUMP || '/tmp/hunting-game-v3-qa';
+const root = path.resolve(__dirname, '..'), dump = process.env.DUMP || '/tmp/hunting-game-v4-qa';
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const errors = [], missing = [];
 const hooks = `window.__huntTest = {
  ready: () => !!art && !!view,
- state: () => ({phase, time: world.time, x: world.hunter.x, y: world.hunter.y, mounted: world.hunter.mounted, ammo: world.hunter.ammo, shots: world.shots, recovered: world.recovered, zoom: view.camera.zoom, guide, holds: holds.size, keys: [...keys], blood: world.blood.length, species: world.species, windScale: world.options.windScale, dog: world.options.dog, minute: campaign.state.minute, credits: campaign.state.credits, owned: campaign.state.owned, records: campaign.state.records, tracks: campaign.state.tracks, artWidth: world.art.width}),
+ state: () => ({phase, time: world.time, x: world.hunter.x, y: world.hunter.y, mounted: world.hunter.mounted, ammo: world.hunter.ammo, shots: world.shots, recovered: world.recovered, zoom: view.camera.zoom, guide, holds: holds.size, keys: [...keys], blood: world.blood.length, species: world.species, windScale: world.options.windScale, dog: world.options.dog, minute: campaign.state.minute, credits: campaign.state.credits, owned: campaign.state.owned, records: campaign.state.records, tracks: campaign.state.tracks, artWidth: world.art.width, deerLevel: campaign.state.deerLevel, animals: world.deer.map(d=>({level:d.profile.level, sprite:world.animalSprite(d), width:world.animalArt(d).width}))}),
  stop: () => { cancelAnimationFrame(raf); raf = 0; },
  loop: () => { cancelAnimationFrame(raf); active = true; previous = 0; raf = requestAnimationFrame(frame); },
  step: (seconds, input) => {
@@ -29,14 +29,21 @@ const hooks = `window.__huntTest = {
   Object.assign(world.hunter, {x:0,y:T.muzzleY,height:T.standHeight,mounted:true});
   world.deer=[world.deer[0]]; Object.assign(world.deer[0],{x:0,y:.8,previousX:0,previousY:.8,facingRight:true,pause:999});
   world.wind=0; scopeToggle=false; scopeHeld=false; view.scope(false,aim);
-  const u=wound?.4:world.art.vitalsX, v=wound?.55:world.art.vitalsY, x=(u-.5)*world.art.width/T.pixelsPerUnit;
-  const man=world.hunter, h=v*world.art.height/T.pixelsPerUnit, t=Math.hypot(x,.8-man.y)/T.muzzleSpeed;
+  const mask=world.animalArt(world.deer[0]);
+  const u=wound?.4:mask.vitalsX, v=wound?.55:mask.vitalsY, x=(u-.5)*mask.width/T.pixelsPerUnit;
+  const man=world.hunter, h=v*mask.height/T.pixelsPerUnit, t=Math.hypot(x,.8-man.y)/T.muzzleSpeed;
   const vz=(h-man.height+.5*T.gravity*t*t)/t, duration=(vz+Math.sqrt(vz*vz+2*T.gravity*man.height))/T.gravity;
   aim={x:x*duration/t,y:man.y+(.8-man.y)*duration/t}; updateUI(); draw();
   const p=HuntingView.project(aim,view.camera), rect=canvas.getBoundingClientRect();
   return {x:rect.left+p.x*rect.width/T.width,y:rect.top+p.y*rect.height/T.height};
  },
  creditFixture: () => { campaign.state.credits=1000; renderCamp(); persist(); },
+ deerFixture: () => { for(let i=0;i<14;i++) campaign.recover(campaign.animal('deer',100+i)); renderCamp(); persist(); },
+ deerShowcase: () => {
+  cancelAnimationFrame(raf); raf=0; world.deer=[];
+  DEER_LEVELS.forEach((d,i)=>{const animal=world.spawn(-7+i*3.5,.8); animal.profile=campaign.animal('deer',90+i,d.level); animal.facingRight=true; animal.pause=999;});
+  guide=false; view.scope(false,aim); draw(false);
+ },
  clockFixture: minute => {campaign.state.minute=minute; updateUI();},
  screenshot: () => {draw(false); return canvas.toDataURL('image/png').split(',')[1];}
 };`;
@@ -94,6 +101,7 @@ async function noOverflow(page) {
   await page.screenshot({path:path.join(dump,'trophies.png'),fullPage:false});
   await page.locator('#hunt-sell-all').click();
   check('selling pays credits and keeps the recovery record',await page.evaluate(()=>__huntTest.state().credits>=350&&__huntTest.state().records.every(r=>r.status==='sold')));
+  check('recovering and selling deer unlocks the next level and keeps level-specific art',await page.evaluate(()=>__huntTest.state().deerLevel===2&&!document.querySelector('[data-deer-level="2"]').disabled&&document.querySelector('[data-deer-level="3"]').disabled&&document.querySelector('#hunt-record-list [data-art="deer-1"]')));
   await page.locator('[data-tab="shop"]').click(); await page.locator('[data-unlock="cypress"]').click();
   check('earned credits unlock the second playable area',await page.locator('[data-unlock="cypress"]').isDisabled());
   await page.evaluate(()=>__huntTest.creditFixture());
@@ -142,6 +150,29 @@ async function noOverflow(page) {
   await phone.setViewportSize({width:844,height:390}); check('landscape field controls fit',await noOverflow(phone)); await phone.screenshot({path:path.join(dump,'mobile-landscape.png'),fullPage:false});
   await phone.setViewportSize({width:320,height:740}); check('small-phone field controls fit',await noOverflow(phone));
   await phone.locator('#hunt-reset').tap(); check('small-phone camp controls fit',await noOverflow(phone));
+  const tierContext=await browser.newContext({viewport:{width:1440,height:1000}}), tiers=await setup(tierContext,url);
+  await tiers.evaluate(()=>{__huntTest.stop();__huntTest.deerFixture();});
+  await tiers.locator('#hunt-deer-levels').scrollIntoViewIfNeeded();
+  await tiers.screenshot({path:path.join(dump,'deer-levels.png'),fullPage:false});
+  for(let level=1;level<=5;level++) {
+    await tiers.locator('[data-deer-level="'+level+'"]').click();
+    await tiers.locator('#hunt-embark').click(); await tiers.evaluate(()=>__huntTest.stop());
+    check('level '+level+' loads its own field sprite and mask',await tiers.evaluate(l=>__huntTest.state().animals.every(a=>a.level===l&&a.sprite==='deer-'+l),level));
+    const target=await tiers.evaluate(()=>__huntTest.shot()); await tiers.mouse.click(target.x,target.y); await tiers.evaluate(()=>__huntTest.step(2.5));
+    check('a real pointer shot recovers level '+level,await tiers.evaluate(l=>__huntTest.state().records.at(-1).level===l&&__huntTest.state().recovered===1,level));
+    if(level===5) {
+      await tiers.evaluate(()=>__huntTest.deerShowcase());
+      fs.writeFileSync(path.join(dump,'five-deer-field.png'),Buffer.from(await tiers.evaluate(()=>__huntTest.screenshot()),'base64'));
+    }
+    await tiers.locator('#hunt-reset').click();
+  }
+  await tiers.locator('[data-tab="trophies"]').click();
+  check('the collection uses all five deer names and sprites',await tiers.evaluate(()=>HuntingCampaign.DEER_LEVELS.every(d=>document.querySelector('#hunt-record-list [data-art="deer-'+d.level+'"]')&&document.getElementById('hunt-record-list').textContent.includes(d.name))));
+  await tiers.reload(); await tiers.waitForFunction(()=>__huntTest?.ready());
+  check('the chosen final deer level survives browser reload',await tiers.evaluate(()=>__huntTest.state().deerLevel===5&&document.querySelector('[data-deer-level="5"]').getAttribute('aria-pressed')==='true'));
+  await tiers.setViewportSize({width:390,height:844});
+  check('all five deer choices fit on a phone',await noOverflow(tiers));
+  await tiers.screenshot({path:path.join(dump,'mobile-deer-levels.png'),fullPage:true});
   check('scripts have no page errors and all local assets load',!errors.length&&!missing.length);
   console.log('Screenshots: '+dump);
  } finally { if(browser) await browser.close(); await new Promise(resolve=>server.close(resolve)); }

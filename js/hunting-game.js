@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   const { TUNING: T, World } = HuntingPhysics;
-  const { Campaign, REGIONS, SPECIES, ITEMS, SAVE_KEY, period, activity } = HuntingCampaign;
+  const { Campaign, REGIONS, SPECIES, DEER_LEVELS, deerLevel, animalArt, animalName, ITEMS, SAVE_KEY, period, activity } = HuntingCampaign;
   const $ = id => document.getElementById('hunt-' + id);
   const game = $('game'), canvas = $('canvas'), overlay = $('overlay');
   const keys = new Set(), holds = new Map(), touchAim = new Set();
@@ -70,8 +70,8 @@
     }
   }
   function recordCard(record, packed) {
-    const def = SPECIES[record.species], tier = record.score >= .75 ? 'Gold' : record.score >= .4 ? 'Silver' : 'Bronze';
-    return '<article class="hunt-record"><span class="hunt-record-art" data-species="' + record.species + '" aria-hidden="true"></span><div><p class="hunt-kicker">' + tier + ' / ' + esc(REGIONS[record.region].name) + '</p><h4>' + def.name + '</h4><p>' + record.weight + ' lb / ' + (record.method === 'tracked' ? 'Tracked recovery' : 'Recovered in the field') + '</p><p class="hunt-record-status">' + (record.status === 'mounted' ? 'Kept as a trophy' : record.status === 'sold' ? 'Sold / record kept' : campaign.value(record) + ' credits') + '</p>' + (packed ? '<div class="hunt-record-actions"><button type="button" data-sell="' + record.id + '">Sell</button><button type="button" data-mount="' + record.id + '">Keep trophy</button></div>' : '') + '</div></article>';
+    const tier = record.score >= .75 ? 'Gold' : record.score >= .4 ? 'Silver' : 'Bronze';
+    return '<article class="hunt-record"><span class="hunt-record-art" data-art="' + animalArt(record) + '" aria-hidden="true"></span><div><p class="hunt-kicker">' + (record.species === 'deer' ? 'Level ' + deerLevel(record.level).level + ' / ' : '') + tier + ' / ' + esc(REGIONS[record.region].name) + '</p><h4>' + animalName(record) + '</h4><p>' + record.weight + ' lb / ' + (record.method === 'tracked' ? 'Tracked recovery' : 'Recovered in the field') + '</p><p class="hunt-record-status">' + (record.status === 'mounted' ? 'Kept as a trophy' : record.status === 'sold' ? 'Sold / record kept' : campaign.value(record) + ' credits') + '</p>' + (packed ? '<div class="hunt-record-actions"><button type="button" data-sell="' + record.id + '">Sell</button><button type="button" data-mount="' + record.id + '">Keep trophy</button></div>' : '') + '</div></article>';
   }
   function renderCollection() {
     $('bag-list').innerHTML = campaign.packed.length ? campaign.packed.map(r => recordCard(r, true)).join('') : '<p class="hunt-empty">Your pack is empty. A recovered animal will go here.</p>';
@@ -85,7 +85,12 @@
     const s = campaign.state, selected = REGIONS[s.selected];
     $('location').dataset.region = s.selected;
     $('location-name').textContent = selected.name;
-    $('location-detail').textContent = SPECIES[selected.animal].name + '. ' + selected.peak + '.';
+    $('location-detail').textContent = (selected.animal === 'deer' ? 'Level ' + s.deerLevel + ': ' + deerLevel(s.deerLevel).name : SPECIES[selected.animal].name) + '. ' + selected.peak + '.';
+    $('deer-progress').textContent = campaign.deerRecoveries + ' deer recovered. Choose a level for your next Birch outing. Selling or keeping trophies counts.';
+    $('deer-levels').innerHTML = DEER_LEVELS.map(d => {
+      const unlocked = d.level <= campaign.maxDeerLevel, remaining = d.required - campaign.deerRecoveries;
+      return '<button type="button" data-deer-level="' + d.level + '" aria-pressed="' + (s.selected === 'birch' && s.deerLevel === d.level) + '"' + (unlocked ? '' : ' disabled') + '><span class="hunt-record-art" data-art="deer-' + d.level + '" aria-hidden="true"></span><span class="hunt-kicker">Level ' + d.level + '</span><strong>' + d.name + '</strong><span>' + d.description + '</span><span class="hunt-deer-gate">' + (unlocked ? s.selected === 'birch' && s.deerLevel === d.level ? 'Selected for Birch' : 'Available' : remaining + ' more deer to unlock') + '</span></button>';
+    }).join('');
     $('regions').innerHTML = Object.entries(REGIONS).map(([id, r]) => '<button type="button" data-region="' + id + '" aria-pressed="' + (s.selected === id) + '"' + (s.regions.includes(id) ? '' : ' disabled') + '><span class="hunt-kicker">' + (s.regions.includes(id) ? SPECIES[r.animal].name : 'Unlock at the outfitter') + '</span><strong>' + r.name + '</strong><span>' + r.description + '</span></button>').join('');
     $('loadout').innerHTML = '<option value="starter">Field rifle</option>' + (s.owned.includes('rifle') ? '<option value="rifle">Weighted-round rifle</option>' : '');
     $('loadout').value = s.equipped;
@@ -137,7 +142,8 @@
     const options = campaign.begin(); if (!options) return;
     const region = REGIONS[options.region];
     world = new World(art.masks[region.animal], Date.now(), { ...options, freeWalk: true, species: region.animal, backdrop: region.backdrop,
-      windForce: region.wind, animal: (species, seed) => campaign.animal(species, seed), activity: () => activity(campaign.state.minute) });
+      windForce: region.wind, animal: (species, seed) => campaign.animal(species, seed, options.deerLevel),
+      artFor: profile => art.masks[animalArt(profile)], spriteFor: animalArt, activity: () => activity(campaign.state.minute) });
     campaign.advance(10 * 60);
     view.effects = []; aim = { x: 0, y: 3 }; scopeToggle = false; scopeHeld = false; setScope();
     setPhase('running'); canvas.scrollIntoView({ block: 'center', behavior: 'instant' });
@@ -175,8 +181,10 @@
       view.addEffect(event);
       if (event.type === 'shot') { campaign.state.shots++; persist(); }
       else if (event.type === 'recovered' && event.animal) {
+        const previousLevel = campaign.maxDeerLevel;
         const record = campaign.recover(event.animal, 'clean', event.animal.wounded ? .9 : 1);
-        message(SPECIES[record.species].name + ', ' + record.weight + ' lb. Added to your pack.', 'recovered'); persist();
+        const unlocked = campaign.maxDeerLevel > previousLevel ? ' Level ' + campaign.maxDeerLevel + ', ' + deerLevel(campaign.maxDeerLevel).name + ', unlocked for your next outing.' : '';
+        message(animalName(record) + ', ' + record.weight + ' lb. Added to your pack.' + unlocked, 'recovered'); persist();
       } else if (event.type === 'escape' && event.animal) {
         campaign.addTrack(event.animal); message(event.text, event.type); persist();
       } else message(event.text, event.type);
@@ -257,7 +265,7 @@
     $('search-progress').hidden = true; $('track-close').disabled = false; $('track-close').textContent = 'Back';
     $('track-choice').innerHTML = campaign.pending.map(t => {
       const age = Math.max(0, campaign.state.minute - t.hitAt), freshness = age < 60 ? 'Fresh trail' : age < 240 ? 'Fading trail' : 'Old trail';
-      return '<button type="button" data-search="' + t.id + '"><span class="hunt-kicker">' + freshness + ' / ' + esc(REGIONS[t.region].name) + '</span>' + SPECIES[t.species].name + ', ' + t.weight + ' lb<span>Search this trail</span></button>';
+      return '<button type="button" data-search="' + t.id + '"><span class="hunt-kicker">' + freshness + ' / ' + esc(REGIONS[t.region].name) + '</span>' + animalName(t) + ', ' + t.weight + ' lb<span>Search this trail</span></button>';
     }).join('');
     $('track-choice').querySelector('button').focus({ preventScroll: true });
   }
@@ -302,6 +310,7 @@
     if (data.tab) { selectTab(data.tab); renderCollection(); }
     else if (data.speed !== undefined) { campSpeed = Number(data.speed); game.querySelectorAll('[data-speed]').forEach(b => b.setAttribute('aria-pressed', String(b === button))); }
     else if (data.region) { campaign.select(data.region); renderCamp(); persist(); }
+    else if (data.deerLevel && campaign.selectDeerLevel(Number(data.deerLevel))) { campMessage(deerLevel(campaign.state.deerLevel).name + ' selected for your next Birch outing.'); renderCamp(); persist(); }
     else if (data.buy && campaign.buy(data.buy)) { campMessage(ITEMS[data.buy].name + ' is ready for your next outing.'); renderCamp(); persist(); }
     else if (data.unlock && campaign.unlock(data.unlock)) { campMessage('Cypress Edge is open. Your next outing can head into the reeds.'); renderCamp(); persist(); }
     else if (data.sell) { const value = campaign.sell(Number(data.sell)); campMessage('Sold for ' + value + ' credits. The record stays in your collection.'); renderCamp(); persist(); }

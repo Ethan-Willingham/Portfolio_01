@@ -77,3 +77,31 @@ logical sizes for the two animal targets. All generated source alpha stays
 intact. These are generated assets, not hand-authored or directional animated
 sprite sheets. They can be replaced with the owner's future drawn assets,
 provided the renderer, native hit mask and vital coordinates are updated together.
+
+## Version 4, five deer levels
+
+The owner requested four-legged deer and five increasingly impressive levels
+on 2026-10-02. All active deer art now uses new built-in imagegen masters, with
+the original buck as a style reference. Three first-pass variants retained the
+extra foreleg and were corrected with targeted imagegen edits before shipping.
+The old v2 sprite remains as history and is no longer loaded by the game.
+
+| Asset | Logical size | Appearance |
+|---|---|---|
+| `deer-1-v4.png` | 56 by 56 | Young tan buck, small forked rack |
+| `deer-2-v4.png` | 60 by 57 | Russet woodland adult, branching rack |
+| `deer-3-v4.png` | 64 by 59 | Chestnut ridge buck, stronger shoulders and tall tines |
+| `deer-4-v4.png` | 70 by 63 | Dark old monarch, weathered muzzle and irregular forks |
+| `deer-5-v4.png` | 76 by 75 | Silver winter stag with a large crown of antlers |
+
+The five PNGs live in `assets/hunting/`. Their full transparent masters are
+`assets/hunting/source-v4/deer-[1-5].png`, and `source-v4/prompts.json` preserves
+the initial prompt set and corrective edits. The builder crops by opacity and
+scales by width while preserving each master's aspect ratio, then quantizes
+to 48 colors and binary alpha. It does not stretch deer into a shared rectangle.
+
+Every final master was inspected for two hind legs and two forelegs. The physics
+test also verifies four separate connected silhouettes in the bottom 15 percent
+of each runtime sprite. Each level's shoulder is opaque at u = 0.67, v = 0.45
+in both orientations. The renderer, guide and bullet collision select the same
+per-animal asset, so a larger rack never inherits another level's hitbox.
