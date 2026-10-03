@@ -31,11 +31,11 @@
 .sf-demo button:disabled { opacity: .5; }
 .sf-demo :focus-visible, .sf-page a:focus-visible, .sf-page summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .sf-instruments { padding: 18px 22px; border-top: 1px solid var(--rule); }
-.sf-settings { display: grid; grid-template-columns: 1fr .7fr 1.3fr 1fr auto; gap: 12px; align-items: end; }
+.sf-settings { display: grid; grid-template-columns: 1fr .7fr 1.2fr 1.2fr 1fr auto; gap: 12px; align-items: end; }
 .sf-settings label { display: grid; gap: 4px; color: var(--text-faint); font: .65rem/1.6 var(--font-mono); }
 .sf-settings input, .sf-settings select { width: 100%; min-width: 0; }
-.sf-settings label:has(#sf-angle) { position: relative; padding-right: 35px; }
-#sf-angle-value { position: absolute; bottom: 13px; right: 0; }
+.sf-settings label:has(input[type=range]) { position: relative; padding-right: 42px; }
+#sf-angle-value, #sf-richness-value { position: absolute; bottom: 13px; right: 0; }
 #sf-readings { display: grid; grid-template-columns: repeat(3,1fr); gap: 13px 22px; margin: 24px 0 16px; }
 #sf-readings div { min-width: 0; }
 #sf-readings dt { color: var(--text-faint); font: .65rem/1.5 var(--font-mono); }

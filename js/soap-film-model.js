@@ -126,8 +126,8 @@ export class FilmModel {
       const bottom=y<n-1?this.t[i+n]:p.ambientC+p.heatingKelvin*(1+.15*Math.cos(2*Math.PI*(x+.5)/n)+.08*Math.sin(6*Math.PI*(x+.5)/n));
       this.t1[i]=adv+td*(left+right+top+bottom-4*this.t[i])-dt*p.coolingPerSecond*(adv-p.ambientC);}
     [this.t,this.t1]=[this.t1,this.t];
-    const a=this.transport(this.h,this.h1,dt),b=this.transport(this.h1,this.h2,dt);
-    for(let i=0;i<n*n;i++)this.h[i]=.5*(this.h[i]+this.h2[i]);this.drain+=(a.drain+b.drain)/2;this.evap+=(a.evap+b.evap)/2;
+    if(!p.externalThickness){const a=this.transport(this.h,this.h1,dt),b=this.transport(this.h1,this.h2,dt);
+      for(let i=0;i<n*n;i++)this.h[i]=.5*(this.h[i]+this.h2[i]);this.drain+=(a.drain+b.drain)/2;this.evap+=(a.evap+b.evap)/2;}
     this.steps++;this.time+=dt;this.age+=dt;
   }
   advance(dt) {
