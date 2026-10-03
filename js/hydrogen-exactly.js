@@ -1,6 +1,6 @@
 // Standalone host. The room owns no DOM, canvas configuration or animation loop.
-import { createRoom } from './hydrogen-exactly-room.js?v=3';
-import { DISPLAY } from './hydrogen-exactly-shaders.js?v=3';
+import { createRoom } from './hydrogen-exactly-room.js?v=4';
+import { DISPLAY } from './hydrogen-exactly-shaders.js?v=4';
 import * as M from './hydrogen-exactly-math.js?v=2';
 const $ = id => document.getElementById(id);
 const demo = $('hx-demo'), canvas = $('hx-canvas'), status = $('hx-status');

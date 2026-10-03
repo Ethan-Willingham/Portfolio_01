@@ -127,6 +127,36 @@ fn densityNormal(p:vec3<f32>) -> vec3<f32> {
   let g=vec3<f32>(fieldAt(p+dx).a-fieldAt(p-dx).a,fieldAt(p+dy).a-fieldAt(p-dy).a,fieldAt(p+dz).a-fieldAt(p-dz).a);
   return -g/max(length(g),1e-8);
 }
+// Presentation lights stay in world space as the user rotates the camera.
+fn keyLight() -> vec3<f32> { return normalize(vec3<f32>(-0.55,-0.65,1.3)); }
+fn surfaceShadow(hit:vec3<f32>, level:f32) -> f32 {
+  var blocked=0.0;
+  for (var i=0u; i<8u; i++) {
+    let distance=2.5/u.domain.x+0.028*f32(i)+0.003*f32(i*i);
+    let rho=fieldAt(hit+keyLight()*distance).a;
+    blocked+=smoothstep(level*1.03,level*1.45,rho);
+  }
+  return exp(-0.24*blocked);
+}
+fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
+  // A synthetic receiver behind the default view, not part of the atom.
+  // Fade away edge-on and from its back so it never obscures the volume.
+  let facing=smoothstep(0.05,0.3,-forward.z);
+  if (facing<=0.0) { return vec3<f32>(0.0); }
+  let p=origin+forward*((-0.27-origin.z)/forward.z);
+  let radius=length(p.xy);
+  let edge=1.0-smoothstep(0.72,0.82,radius);
+  if (edge<=0.0) { return vec3<f32>(0.0); }
+  var density=0.0;
+  for (var i=0u; i<16u; i++) {
+    density+=pow(max(fieldAt(p+keyLight()*(0.035+0.05*f32(i))).a,0.0),0.65)*0.05;
+  }
+  let shadow=exp(-2.8*density);
+  let ring=1.0-smoothstep(pixel,3.0*pixel,abs(radius-0.72));
+  let gridDistance=min(abs(fract(p.x/0.24+0.5)-0.5),abs(fract(p.y/0.24+0.5)-0.5))*0.24;
+  let grid=(1.0-smoothstep(pixel,2.0*pixel,gridDistance))*0.18;
+  return u.tint.rgb*(0.038+0.025*(ring+grid))*edge*facing*shadow;
+}
 @vertex fn vertex(@builtin(vertex_index) i: u32) -> Vertex {
   let p = array<vec2<f32>,3>(vec2<f32>(-1.0,-1.0),vec2<f32>(3.0,-1.0),vec2<f32>(-1.0,3.0));
   var v: Vertex; v.position=vec4<f32>(p[i],0.0,1.0); v.uv=p[i]; return v;
@@ -142,7 +172,7 @@ fn densityNormal(p:vec3<f32>) -> vec3<f32> {
   let yaw=u.camera.x;
   let right=vec3<f32>(cos(yaw),sin(yaw),0.0);
   let up=vec3<f32>(-sin(yaw)*sin(tilt),cos(yaw)*sin(tilt),cos(tilt));
-  let forward=cross(right,up);
+  let forward=-cross(right,up);
   var radiance=vec3<f32>(0.0);
   if (u.view.w>0.5) {
     // Direct analytic equatorial cut: no interpolation across dark nodes.
@@ -171,17 +201,19 @@ fn densityNormal(p:vec3<f32>) -> vec3<f32> {
     // Six level sets of the sampled positive density, with refined crossings.
     // Surface lighting is a display aid; no density, phase or mass is altered.
     let origin=right*xy.x+up*xy.y;
+    let plane=referencePlane(origin,forward,span/u.view.y);
     let safeForward=select(vec3<f32>(1e-8),forward,abs(forward)>vec3<f32>(1e-8));
     let boxA=(-vec3<f32>(1.0)-origin)/safeForward;
     let boxB=(vec3<f32>(1.0)-origin)/safeForward;
     let near=max(max(min(boxA.x,boxB.x),min(boxA.y,boxB.y)),min(boxA.z,boxB.z));
     let far=min(min(max(boxA.x,boxB.x),max(boxA.y,boxB.y)),max(boxA.z,boxB.z));
-    if (far<=near) { return vec4<f32>(0.0,0.0,0.0,1.0); }
+    if (far<=near) { return vec4<f32>(plane*u.camera.z,1.0); }
     let steps=u32(ceil((far-near)*u.camera.y/3.4641016));
     let ds=(far-near)/f32(steps);
     var previousP=origin+forward*near;
     var previous=fieldAt(previousP).a;
     var highestLevel=0u;
+    var surface=vec3<f32>(0.0);
     let levels=array<f32,6>(0.3,0.9,2.7,8.1,24.3,72.9);
     for (var i=1u; i<=steps; i++) {
       let p=origin+forward*(near+f32(i)*ds);
@@ -199,20 +231,28 @@ fn densityNormal(p:vec3<f32>) -> vec3<f32> {
           let middle=(lo+hi)*0.5;
           if ((fieldAt(middle).a<level)==(previous<level)) { lo=middle; } else { hi=middle; }
         }
-        let hit=(lo+hi)*0.5;
-        let sample=fieldAt(hit);
-        let color=sample.rgb/max(sample.a,1e-8);
-        let normal=densityNormal(hit);
-        let facing=abs(dot(normal,forward));
-        let light=normalize(-forward+0.55*up-0.35*right);
-        let shade=0.36+0.64*abs(dot(normal,light));
-        let rim=pow(1.0-facing,3.0);
         // Reveal the highest density contour reached by this view ray.
         // Avoid mixing complementary bands into a washed-out neutral cloud.
         highestLevel=nextLevel;
-        radiance=color*(2.8*shade+0.8*rim);
+        surface=(lo+hi)*0.5;
       }
       previous=current; previousP=p;
+    }
+    radiance=plane;
+    if (highestLevel>0u) {
+      let sample=fieldAt(surface);
+      let color=sample.rgb/max(sample.a,1e-8);
+      let outward=densityNormal(surface);
+      let normal=select(outward,-outward,dot(outward,forward)>0.0);
+      let viewDirection=-forward;
+      let light=keyLight();
+      let diffuse=max(dot(normal,light),0.0);
+      let shadow=surfaceShadow(surface,levels[highestLevel-1u]);
+      let rim=pow(1.0-clamp(dot(normal,viewDirection),0.0,1.0),3.0);
+      let halfVector=light+viewDirection;
+      let highlight=pow(max(dot(normal,halfVector/max(length(halfVector),1e-8)),0.0),48.0)*shadow;
+      let fill=0.32+0.28*max(dot(normal,normalize(viewDirection+right)),0.0);
+      radiance=color*(fill+3.3*diffuse*shadow+0.42*rim)+mix(color,u.tint.rgb,0.35)*highlight*1.35;
     }
   }
   return vec4<f32>(radiance*u.camera.z,1.0);

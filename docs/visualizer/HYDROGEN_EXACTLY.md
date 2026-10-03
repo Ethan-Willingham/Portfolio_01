@@ -160,6 +160,18 @@ captured-mass calculation. Surface illumination is a display aid, not light
 emitted by the atom. Ray steps can miss a thin contour and the grid can soften
 or displace a boundary; these are presentation errors.
 
+Contour lighting uses a fixed world-space directional key, a camera-side fill,
+and a tight halfway-vector highlight. Normals face the viewer, with Lambert
+diffuse rather than equal illumination of both sides. Eight field samples toward
+the key attenuate illumination where the same density level blocks it. Lighting
+is evaluated once at the final chosen surface, rather than at every crossing.
+A faint circular reference plane at normalized z = -0.27 has a sparse grid and
+a soft shadow from 16 density samples toward the key. It fades at grazing angles
+and vanishes when viewed from underneath. This synthetic receiver is composited
+behind the contours and never obscures them. It is a visual guide, not a physical
+surface, electron trajectory, or emitted-light prediction. Neither shadows nor
+illumination modify the stored density, CPU/GPU probes, or mass calculation.
+
 The circular packet defaults to density false color. A linear-RGB palette goes
 from teal through blue, violet and pink to gold, using
 t = clamp(log2(max(rhoScaled,0.3)/0.3)/6,0,1). These hues encode density alone;
@@ -291,7 +303,7 @@ gitignored research/visualizer/hydrogen-exactly-results directory.
 Measured on October 3, 2026, Apple M1 Pro, hardware Apple Metal-3 WebGPU adapter
 (isFallbackAdapter false), Chrome for Testing 148.0.7778.96. A 24-sample benchmark
 after three warmups at 128 cubed and 1358 by 684 pixels measured compute median
-2.5 ms / p95 2.7 ms, contour render median 2.8 ms / p95 3.2 ms.
+3.0 ms / p95 4.0 ms, lit contour render with shadows median 3.2 ms / p95 4.4 ms.
 These are GPU queue-completion latencies
 including submit/wait overhead, not pure shader timestamps or a claim about
 other devices. Simulation and rendering are timed separately. The final run's

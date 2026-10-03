@@ -28,7 +28,7 @@
           <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" aria-describedby="hx-camera-help" tabindex="0"></canvas>
           <img id="hx-still" src="assets/visualizer/hydrogen-exactly/initial-section.png?v=2" alt="Computed equatorial density section of the initial n=24 to 36 circular-state packet, localized on the left of the nucleus.">
           <div class="hx-stage-heading"><span id="hx-mode-label">Circular packet</span><span id="hx-encoding-label">Density false color, cyan to gold</span></div>
-          <p class="hx-rotation-hint" id="hx-rotation-hint" aria-hidden="true" hidden>Drag to rotate</p>
+          <p class="hx-rotation-hint" id="hx-rotation-hint" aria-hidden="true" hidden>Drag to rotate in 3D</p>
           <p class="hx-sr-only" id="hx-camera-help">Drag with a mouse or one finger to rotate the 3D view. Arrow keys rotate when the image has focus. Home resets the camera. Rotation is available in the contour and soft volume views.</p>
           <p class="hx-status" id="hx-status" role="status">Preparing the wavefunction</p>
           <div class="hx-caption"><span id="hx-caption">13 circular states, n = 24 to 36</span><span id="hx-scale">Characteristic radius 47.6 nm</span></div>
@@ -85,7 +85,7 @@
         <details class="u-collapse">
           <summary class="u-collapse-s">What “exactly” means here, and sources</summary>
           <p>These are exact eigenstates of the fixed-nucleus, nonrelativistic Coulomb model, evaluated numerically. The finite state list, render box, f32 shader arithmetic, f16 display texture, grid interpolation, and ray samples introduce errors. Nuclear motion, relativity, and radiative corrections are omitted. The 2D section evaluates the wavefunction directly; the volume interpolates sampled positive density.</p>
-          <p>The default view draws surfaces at six fixed density levels, revealing the highest contour reached along each view ray. Surface shading and the cyan-to-gold density palette are visual encodings. They leave the wavefunction and its diagnostics unchanged. Soft volume and a directly evaluated 2D section are also available in Instruments. Spectral color weights the magnitudes of visible signed cross terms. A separate diagnostic marks the sign of the 2p / 3s term. Dark nodes have zero analytic density; volume interpolation can soften them.</p>
+          <p>The default view draws surfaces at six fixed density levels, revealing the highest contour reached along each view ray. Directional lighting, highlights, shadows, a faint reference plane, and the cyan-to-gold palette help show the shape. These are visual aids; the plane is not part of the atom. They leave the wavefunction and its diagnostics unchanged. Soft volume and a directly evaluated 2D section are also available in Instruments. Spectral color weights the magnitudes of visible signed cross terms. A separate diagnostic marks the sign of the 2p / 3s term. Dark nodes have zero analytic density; volume interpolation can soften them.</p>
           <ol class="u-collapse-list">
             <li><a href="https://arxiv.org/html/quant-ph/9510029v1">Bluhm, Kostelecký, and Porter, wave-packet evolution and revivals</a>. Characteristic scales guide the event search; the actual energies determine the image.</li>
             <li><a href="https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0">NIST Bohr radius</a> and <a href="https://physics.nist.gov/cgi-bin/cuu/Value?ryd">Rydberg constant</a>. The circular n = 30 radius is about 48 nm. The low-n view uses a separate scale.</li>
@@ -98,6 +98,6 @@
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
-  <script type="module" src="js/hydrogen-exactly.js?v=3"></script>
+  <script type="module" src="js/hydrogen-exactly.js?v=4"></script>
 </body>
 </html>
