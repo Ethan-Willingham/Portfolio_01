@@ -84,10 +84,14 @@ export function summarizeRecording(trace) {
   const slowFrame = value => value ? {frameId: value.frameId, seconds: value.atMs / 1000, cpuMs: value.cpuMs,
     snow: value.snowActive, awakeSlimes: value.awakeResidents, microsteps: value.microsteps,
     contacts: value.contacts, topCPU: value.phases?.slice(0, 3)} : null;
-  const slowdown = event ? {frameId: event.frameId, kind: event.kind, severityMs: event.severity,
-    gapMs: event.gapMs, outsideRetainedHistory: columns.has('frameId') ? !ids.has(event.frameId) : !!event.outsideHistory,
-    current: slowFrame(event.current), precedingFrame: slowFrame(event.previous), baseline: event.reference || event.baseline || null,
-    gpu: event.gpu || null, workload: event.workload || null} : null;
+  const slowEvent = value => value ? {frameId: value.frameId, kind: value.kind, severityMs: value.severity,
+    gapMs: value.gapMs, outsideRetainedHistory: columns.has('frameId') ? !ids.has(value.frameId) : !!value.outsideHistory,
+    current: slowFrame(value.current), precedingFrame: slowFrame(value.previous), baseline: value.reference || value.baseline || null,
+    gpu: value.gpu || null, workload: value.workload || null} : null;
+  const slowdown = slowEvent(event);
+  const issueSummary = issue => issue ? {id: issue.id, title: issue.title, certainty: issue.certainty,
+    flaggedFrames: issue.occurrences, worst: slowEvent(issue.event)} : null;
+  const issues = (trace.issues || []).slice(0, 16).map(issueSummary);
   const workload = (trace.workload || []).slice(-40).map(row => {
     const matched = row.frameId !== null ? gpuByFrame.get(row.frameId) : null;
     return {frameId: row.frameId, seconds: row.atMs / 1000, partial: !!row.partial,
@@ -109,7 +113,7 @@ export function summarizeRecording(trace) {
       spanSamples: group.spans.length, spanMs: group.spans.length ? distribution(group.spans) : null})),
     gpuLimitations: 'Sparse encoders exclude queue wait, WebGL smoke and composition. Span includes pass gaps. Older traces have no span; partial samples are excluded from cost distributions.',
     gpuStatus: trace.gpuStatus, workload, workloadLimitations: 'Queue visits repeat across substeps; peaks describe one batch, not unique particles across the frame. Match GPU costs only by frameId.',
-    slowdown, observer: trace.observer || null,
+    slowdown, issues, selectedIssue: issueSummary(trace.selectedIssue), observer: trace.observer || null,
     dropped: {events: trace.droppedEvents, gpu: trace.droppedGPU, buckets: trace.droppedBuckets}, notes: trace.metadata?.notes || []};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

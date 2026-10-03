@@ -19,45 +19,73 @@
 #gm-rotate-screen p { margin: 12px 0 0; }
 #gm-rotate-screen .gm-rotate-title { margin-top: 0; font-size: 24px; font-weight: 700; line-height: 1.3; }
 #gm-rotate-screen .gm-rotate-note { color: var(--menu-dim, var(--d-text-dim)); font-size: 12px; }
+/* Local game HUD colors, independent of the portfolio's article palette. */
 #gm-perf-panel {
+  --perf-panel: #252a33;
+  --perf-inset: #14181f;
+  --perf-raised: #323947;
+  --perf-border: #566372;
+  --perf-text: #c9c7b8;
+  --perf-bright: #eee1b8;
+  --perf-dim: #929dac;
+  --perf-amber: #d9ad3f;
+  --perf-red: #ec7058;
+  --perf-green: #40c060;
   position: absolute;
   top: 44px;
   right: 8px;
   z-index: 11;
   box-sizing: border-box;
-  width: 320px;
+  width: 296px;
   max-width: calc(100% - 16px);
   max-height: calc(100% - 96px);
   display: flex;
   flex-direction: column;
   padding: 10px;
-  border: 1px solid var(--d-rule-strong);
-  background: var(--d-bg-raised);
-  color: var(--d-text);
-  font: 11px/1.5 var(--font-mono);
+  border: 1px solid var(--perf-border);
+  border-top: 2px solid var(--perf-amber);
+  background: var(--perf-panel);
+  color: var(--perf-text);
+  font: 12px/1.45 var(--font-body);
   font-variant-numeric: tabular-nums;
 }
 #gm-perf-panel[hidden], #gm-perf-panel [hidden] { display: none; }
-#gm-perf-panel .gm-perf-heading { display: flex; flex-direction: column; gap: 2px; }
-#gm-perf-fps { font-size: 17px; color: var(--d-accent); }
-#gm-perf-fps.perf-over-budget { color: var(--d-warn); }
-#gm-perf-budget, #gm-perf-panel .gm-perf-muted { color: var(--d-text-dim); }
-#gm-perf-panel .gm-perf-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px 0; }
-#gm-perf-panel button { min-width: 44px; min-height: 44px; padding: 6px; border: 1px solid var(--d-rule-strong); background: var(--d-bg); color: var(--d-text); font: inherit; cursor: pointer; touch-action: manipulation; }
-#gm-perf-panel button:hover { border-color: var(--d-accent); }
-#gm-perf-panel button:focus-visible { outline: 2px solid var(--d-accent); outline-offset: 1px; }
-#gm-perf-panel button:disabled { opacity: 0.55; cursor: default; }
+#gm-perf-panel .gm-perf-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--perf-border); }
+#gm-perf-fps { color: var(--perf-green); font: 700 20px/1.2 var(--font-mono); }
+#gm-perf-fps.perf-over-budget { color: var(--perf-amber); }
+#gm-perf-fps.perf-critical { color: var(--perf-red); }
+#gm-perf-budget { text-align: right; font-size: 11px; color: var(--perf-dim); }
+#gm-perf-panel .gm-perf-muted { color: var(--perf-dim); }
 #gm-perf-panel .gm-perf-scroll { overflow: auto; overscroll-behavior: contain; min-height: 0; scrollbar-width: thin; }
+#gm-perf-live-view, #gm-perf-inspection { padding: 10px 0; }
+#gm-perf-diagnosis, #gm-perf-inspection-title { display: block; color: var(--perf-bright); font-size: 13px; line-height: 1.35; }
 #gm-perf-panel p { margin: 6px 0; font-size: inherit; line-height: inherit; }
-#gm-perf-panel ol { margin: 4px 0 8px; padding-left: 18px; }
+#gm-perf-panel .gm-perf-certainty { display: inline-block; color: var(--perf-dim); font: 11px/1.4 var(--font-mono); }
+#gm-perf-panel .gm-perf-issue-heading { display: flex; justify-content: space-between; padding: 8px 0 5px; border-top: 1px solid var(--perf-border); color: var(--perf-dim); font: 11px/1.4 var(--font-mono); }
+#gm-perf-issues { display: grid; gap: 5px; max-height: 156px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+#gm-perf-panel button { box-sizing: border-box; min-width: 44px; min-height: 44px; padding: 7px; border: 1px solid var(--perf-border); border-radius: 0; background: var(--perf-inset); color: var(--perf-text); font: 12px/1.3 var(--font-body); cursor: pointer; touch-action: manipulation; }
+#gm-perf-panel button:hover { border-color: var(--perf-amber); background: var(--perf-raised); }
+#gm-perf-panel button:focus-visible { outline: 2px solid var(--perf-amber); outline-offset: 1px; }
+#gm-perf-panel button:disabled { opacity: 0.55; cursor: default; }
+#gm-perf-panel .gm-perf-issue { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 3px 7px; align-items: center; text-align: left; border-left: 2px solid var(--perf-amber); }
+#gm-perf-panel .gm-perf-issue[data-major="critical"] { border-left-color: var(--perf-red); }
+#gm-perf-panel .gm-perf-issue[aria-pressed="true"] { border-color: var(--perf-amber); background: var(--perf-raised); }
+#gm-perf-panel .gm-perf-issue-title { color: var(--perf-bright); }
+#gm-perf-panel .gm-perf-issue-severity { color: var(--perf-amber); font: 11px/1.3 var(--font-mono); }
+#gm-perf-panel .gm-perf-issue[data-major="critical"] .gm-perf-issue-severity { color: var(--perf-red); }
+#gm-perf-panel .gm-perf-issue-note { grid-column: 1 / -1; color: var(--perf-dim); font: 11px/1.3 var(--font-mono); }
+#gm-perf-panel .gm-perf-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding-top: 8px; }
+#gm-perf-back { width: 100%; margin-bottom: 9px; }
+#gm-perf-panel ol, #gm-perf-panel ul { margin: 5px 0 8px; padding-left: 17px; font-size: 11px; }
 #gm-perf-panel li { overflow-wrap: anywhere; }
-#gm-perf-graph { display: block; width: 100%; height: 48px; background: var(--d-bg); }
-#gm-perf-panel .gm-perf-slowdown { padding-top: 8px; border-top: 1px solid var(--d-rule); }
-#gm-perf-panel .gm-perf-slowdown strong { color: var(--d-accent); }
-#gm-perf-detail-body { padding-top: 10px; }
-#gm-perf-detail-text { margin: 0 0 10px; padding: 0; border: 0; background: transparent; color: inherit; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+#gm-perf-detail-body { padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--perf-border); font-family: var(--font-mono); font-size: 11px; }
+#gm-perf-panel .gm-perf-detail-label { color: var(--perf-bright); font-family: var(--font-body); font-size: 12px; }
+#gm-perf-graph { display: block; width: 100%; height: 48px; background: var(--perf-inset); }
+#gm-perf-panel .gm-perf-slowdown { padding-top: 8px; border-top: 1px solid var(--perf-border); }
+#gm-perf-panel .gm-perf-slowdown strong { color: var(--perf-amber); }
+#gm-perf-detail-text { margin: 8px 0 10px; padding: 0; border: 0; background: transparent; color: inherit; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
 #gm-perf-panel #gm-perf-recorder .gm-perf-note { font-size: inherit; }
-#gm-perf-panel #gm-perf-recorder { position: static; box-sizing: border-box; width: auto; max-width: none; padding: 8px 0; border: 0; background: transparent; }
+#gm-perf-panel #gm-perf-recorder { position: static; box-sizing: border-box; width: auto; max-width: none; padding: 8px 0; border: 0; background: transparent; color: var(--perf-text); }
 #gm-perf-recorder {
   position: absolute;
   top: 64px;

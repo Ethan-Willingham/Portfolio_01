@@ -1,12 +1,24 @@
 # Recording a gameplay slowdown
 
-Since v28.164, dev mode shows a compact live performance panel. It compares
-callback pacing with a 120 FPS target (8.33 ms), shows disjoint CPU phase means,
-active snow and slime workload, and retains up to thirty seconds of packed
-frames automatically. The twenty-second graph shows arrival gaps and CPU time.
-Pin worst preserves a slowdown and its workload until cleared. For an arrival
-gap, it retains the preceding CPU frame; CPU work after the gap is separate.
-The prior-second mean provides context, not proof of causation.
+Since v28.169, dev mode shows a compact game HUD with FPS and a plain explanation
+of the measured cost. CPU measured, GPU sampled and Cause unknown distinguish
+observations from missing evidence. Slow pacing alone does not name snow or
+slimes as its cause. Graphs, individual timings and queue counts stay in Details.
+
+Major warnings retain their worst complete context for the current page session.
+Warnings begin after two seconds of active gameplay. A 25 ms CPU cost, arrival
+gap or sampled GPU cost qualifies; 50 ms is marked Critical. GPU warning
+severity uses the measured GPU cost, without inheriting a CPU stall or arrival
+gap. Repeated flags are grouped by CPU/GPU subsystem or unexplained pacing, with a hard limit of
+sixteen groups and no unbounded frame journal. Flag counts refer to frames or
+samples, not distinct incidents. Issues survive recovery, the thirty-second
+history window and turning dev mode off and on. Clear issues removes them;
+reloading the page starts a new session. Click a tag to inspect its retained
+worst moment. The selected recording stays fixed when a newer worst arrives.
+Back to live restores the current explanation. Late GPU evidence may augment
+the same stored frame. For an arrival gap, the preceding CPU frame is retained;
+CPU work after the gap is separate. The prior-second mean provides context,
+not proof of causation.
 
 Save 30s downloads the retained local history without starting a recording.
 The file reports its actual duration, including shorter captures after startup.
@@ -30,12 +42,14 @@ recording are off.
 
 The rolling export uses the existing trace schema with explicit `active`,
 `frameId`, and `observerMs` columns. Its times are relative to capture start;
-`pageAtMs`/`at` retain absolute page-clock context. A pin older than the rolling
-window is preserved separately with `outsideHistory: true`. The reader honors
+`pageAtMs`/`at` retain absolute page-clock context. Issues and the selected
+recording older than the rolling window are preserved separately with `outsideHistory: true`. The reader honors
 active-frame boundaries and derives second bins when needed.
 `window.__sluicePerformance.liveStatus()` and `liveSnapshot()` expose the
 current evidence without taking keyboard control. `rollingCapture()` reads
-retained data; `pin()`, `clearPin()` and `saveRecent()` match the panel buttons.
+retained data; `issues()`, `inspectIssue(id)`, `clearIssues()` and `saveRecent()`
+match the panel controls. Legacy `pin()` and `clearPin()` remain available to
+existing capture scripts.
 Nothing is uploaded.
 
 Since v28.124, ordinary play has a local performance recorder. Press F9 to

@@ -70,6 +70,9 @@ Posts pick an accent (or per-section accents) from one shared, muted, chroma-equ
 > (`#e6c074`→`#dfc288`, `#e98e7f`→`#d9978c` or `#b8796d`).
 
 ### What is deliberately NOT on this system (do not "fix")
+- The Sluice live performance inspector uses a local steel, brass and warning
+  palette (`--perf-*`), by owner request on 2026-10-03. Its fonts remain Segoe UI
+  and Commit Mono; this exception applies only to the game inspector.
 - The Living Ocean (`ocean.html`) has an owner-approved, page-local blue charcoal
   background (`#142328`), including its enlarged-photo viewer. The shared `--bg` stays locked.
 - Photographs and their `--img-bg` mattes (sampled from the photos).

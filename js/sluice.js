@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.168';
+  var GAME_VERSION = 'v28.169';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -3350,7 +3350,9 @@
     capacity: 8192, data: null, buckets: [], bucketIndex: {}, events: [], gpu: [],
     workload: [], latestGPU: {}, previous: null, worst: null, pinned: null,
     observerMs: 0, paintMs: 0, paintAt: -Infinity, collectAt: -Infinity,
-    interrupted: true, saving: false, droppedBuckets: 0, details: false };
+    interrupted: true, saving: false, droppedBuckets: 0, details: false,
+    issues: [], issueLimit: 16, selectedIssue: null, inspectedIssue: null,
+    activeMs: 0, issueReadyAt: null };
   var perfLiveFields = playPerfFields.slice(0, 30).concat(['frameId', 'visibleResidents', 'observerMs', 'active']);
   var perfLiveStride = perfLiveFields.length + playPerfBucketLimit;
   var perfLiveBudget = 1000 / 120;
@@ -3388,6 +3390,7 @@
         perfLive.started = performance.now(); perfLive.write = perfLive.count = 0;
         perfLive.events = []; perfLive.gpu = []; perfLive.workload = []; perfLive.latestGPU = {};
         perfLive.worst = null; perfLive.pinned = null; perfLive.collectAt = -Infinity;
+        perfLive.activeMs = 0; perfLive.issueReadyAt = null;
       }
     }
     var gpuActive = (enabled || playPerfActive) && introPhase === 'done' && !gamePaused && !mobileLandscapeBlocked;
@@ -3427,8 +3430,11 @@
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
       perfLiveAttach(perfLive.worst, row, false); perfLiveAttach(perfLive.pinned, row, false);
+      perfLive.issues.forEach(function (issue) { perfLiveAttach(issue.event, row, false); });
+      if (perfLive.inspectedIssue) perfLiveAttach(perfLive.inspectedIssue.event, row, false);
       if (perfLive.enabled) {
         perfLive.gpu.push(row); perfLive.latestGPU[row.name] = row;
+        perfLiveObserveGPU(row);
       }
       if (trace && row.at >= trace.started && (!trace.ended || row.at <= trace.ended)) {
         if (trace.gpu.length < 8000) trace.gpu.push(Object.assign({}, row, { atMs: row.at - trace.started }));
@@ -3441,6 +3447,8 @@
     if (counters && counters.frameId !== null && counters.atMs !== undefined && (!perfLive.workload.length || perfLive.workload[perfLive.workload.length - 1].frameId !== counters.frameId)) {
       var sample = Object.assign({}, counters, { at: counters.atMs });
       perfLiveAttach(perfLive.worst, sample, true); perfLiveAttach(perfLive.pinned, sample, true);
+      perfLive.issues.forEach(function (issue) { perfLiveAttach(issue.event, sample, true); });
+      if (perfLive.inspectedIssue) perfLiveAttach(perfLive.inspectedIssue.event, sample, true);
       if (perfLive.enabled) perfLive.workload.push(sample);
       if (trace && sample.at >= trace.started && (!trace.ended || sample.at <= trace.ended)) {
         if (!trace.workload) trace.workload = [];
@@ -3499,6 +3507,8 @@
     row[offset + 28] = inputMask; row[offset + 29] = view || 0;
     row[offset + 30] = perfLive.frameId; row[offset + 31] = visible;
     row[offset + 33] = active && !perfLive.interrupted ? 1 : 0;
+    if (row[offset + 33]) perfLive.activeMs += Math.max(0, interval);
+    if (perfLive.issueReadyAt === null && perfLive.activeMs >= 2000) perfLive.issueReadyAt = time;
     for (var name in perfBucketsRaw) {
       var slot = perfLive.bucketIndex[name];
       if (slot === undefined) {
@@ -3510,16 +3520,19 @@
     // Interval describes the gap BEFORE this callback. Preserve its predecessor
     // instead of attributing it to CPU work that has not happened yet.
     var severity = Math.max(row[offset + 33] ? interval : 0, active ? cpu : 0);
-    if (!perfLive.saving && active && time - perfLive.started > 2000 && severity > perfLiveBudget * 1.5 &&
-        (!perfLive.worst || severity > perfLive.worst.severity)) {
+    var newWorst = !perfLive.worst || severity > perfLive.worst.severity;
+    if (!perfLive.saving && active && perfLive.issueReadyAt !== null && severity > perfLiveBudget * 1.5 &&
+        (newWorst || severity >= 25)) {
       var kind = cpu > (row[offset + 33] ? interval : 0) ? 'cpu' : 'gap';
       var referenceEnd = kind === 'gap' && perfLive.previous !== null ? row[perfLive.previous * perfLiveStride] : time;
-      perfLive.worst = { frameId: perfLive.frameId, at: time, severity: severity,
+      var event = { frameId: perfLive.frameId, at: time, severity: severity,
         kind: kind,
         gapMs: row[offset + 33] ? interval : null, reference: perfLiveReference(referenceEnd), current: perfLiveRow(perfLive.write),
         previous: perfLive.previous !== null ? perfLiveRow(perfLive.previous) : null };
-      perfLive.gpu.forEach(function (r) { perfLiveAttach(perfLive.worst, r, false); });
-      perfLive.workload.forEach(function (r) { perfLiveAttach(perfLive.worst, r, true); });
+      perfLive.gpu.forEach(function (r) { perfLiveAttach(event, r, false); });
+      perfLive.workload.forEach(function (r) { perfLiveAttach(event, r, true); });
+      if (newWorst) perfLive.worst = event;
+      if (severity >= 25) perfLiveRememberIssue(event);
     }
     perfLive.previous = active ? perfLive.write : null; perfLive.interrupted = !active;
     perfLive.write = (perfLive.write + 1) % perfLive.capacity;
@@ -3557,6 +3570,7 @@
       lastFrameAgeMs: perfLive.count ? performance.now() - perfLive.data[((perfLive.write - 1 + perfLive.capacity) % perfLive.capacity) * perfLiveStride] : null,
       seconds: perfLive.count ? Math.min(30, (performance.now() - perfLive.data[((perfLive.write - perfLive.count + perfLive.capacity) % perfLive.capacity) * perfLiveStride]) / 1000) : 0,
       worst: perfLive.pinned || perfLive.worst, pinned: !!perfLive.pinned,
+      issues: perfLiveIssueList(), selectedIssue: perfLive.selectedIssue, inspection: perfLiveGetSelectedIssue(),
       observerMs: perfLive.observerMs, paintMs: perfLive.paintMs,
       gpuStatus: window.__sluiceGPUTrace ? window.__sluiceGPUTrace.status() : null,
       gpu: Object.keys(perfLive.latestGPU).map(function (key) { return perfLive.latestGPU[key]; }),
@@ -3579,14 +3593,7 @@
     }
     var ended = perfLive.data[((perfLive.write - 1 + perfLive.capacity) % perfLive.capacity) * perfLiveStride];
     var event = perfLive.pinned || perfLive.worst;
-    if (event) {
-      event = Object.assign({}, event, { atMs: event.at - started, outsideHistory: event.at < started });
-      if (event.gpu) event.gpu = event.gpu.map(function (r) { return Object.assign({}, r, { atMs: r.at - started }); });
-      if (event.workload) event.workload = Object.assign({}, event.workload, { pageAtMs: event.workload.atMs, atMs: event.workload.at - started, pageCompletedAtMs: event.workload.completedAtMs, completedAtMs: event.workload.completedAtMs - started });
-      ['current', 'previous'].forEach(function (key) {
-        if (event[key]) event[key] = Object.assign({}, event[key], { pageAtMs: event[key].atMs, atMs: event[key].atMs - started });
-      });
-    }
+    event = perfLiveExportEvent(event, started);
     var gpu = perfLive.gpu.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return Object.assign({}, r, { atMs: r.at - started }); });
     var capture = { schema: 'sluice-performance-1', version: GAME_VERSION,
       startedUTC: new Date(performance.timeOrigin + started).toISOString(), durationMs: ended - started,
@@ -3603,7 +3610,9 @@
       events: perfLive.events.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return { atMs: r.at - started, kind: r.kind, detail: r.detail }; }),
       gpu: gpu, gpuStatus: window.__sluiceGPUTrace ? window.__sluiceGPUTrace.status() : null,
       workload: perfLive.workload.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return Object.assign({}, r, { pageAtMs: r.atMs, atMs: r.at - started, pageCompletedAtMs: r.completedAtMs, completedAtMs: r.completedAtMs - started }); }),
-      slowdown: event, droppedEvents: 0, droppedGPU: 0, droppedBuckets: perfLive.droppedBuckets,
+      slowdown: event, issues: perfLiveIssueList().map(function (issue) { return perfLiveExportIssue(issue, started); }),
+      selectedIssue: perfLiveExportIssue(perfLiveGetSelectedIssue(), started),
+      droppedEvents: 0, droppedGPU: 0, droppedBuckets: perfLive.droppedBuckets,
       observer: { frameMs: perfLive.observerMs, panelPaintMs: perfLive.paintMs, exportSnapshotMs: performance.now() - captureAt } };
     return capture;
   }
@@ -3642,6 +3651,187 @@
   }
   Object.assign(window.__sluicePerformance, { liveStatus: perfLiveStatus, liveSnapshot: perfLiveSnapshot,
     rollingCapture: perfLiveCapture, pin: perfLivePin, clearPin: perfLiveClearPin, saveRecent: perfLiveDownload });
+  /* Plain explanations and bounded session warnings. Counts never infer causes. */
+  function perfLiveCPUName(name) {
+    if (name === 'snow.cpu') return { key: 'cpu-snow', name: 'Snow processing' };
+    if (/^update\.(jello|fluidSkin|residents|slimeNpc|slimeAudio)$/.test(name)) return { key: 'cpu-slimes', name: 'Slime physics' };
+    if (name === 'update.liquids') return { key: 'cpu-water', name: 'Water and snow submission' };
+    if (/^render\./.test(name)) return { key: 'cpu-drawing', name: 'Drawing the game' };
+    if (name === 'update.bathhouse') return { key: 'cpu-bath', name: 'Bathhouse simulation' };
+    if (name === 'update.main') return { key: 'cpu-rig', name: 'Rig physics' };
+    if (name === 'update.smoke') return { key: 'cpu-smoke', name: 'Smoke processing' };
+    var names = { 'update.aux': 'Camera and controls', 'update.wind': 'Wind', 'update.grassWind': 'Grass wind',
+      'update.trees': 'Tree simulation', 'update.boulders': 'Rock simulation', 'update.weather': 'Weather',
+      'update.audio': 'Audio', 'update.explosions': 'Explosions', 'update.mineFx': 'Mining debris',
+      'update.liveBombs': 'Bombs', 'update.pondStream': 'Pond loading' };
+    return { key: 'cpu-other', name: names[name] || 'Other game work' };
+  }
+  function perfLiveGPUName(name) {
+    if (/snow/.test(name)) return { key: 'gpu-snow', name: /contact|collide/.test(name) ? 'Snow collisions' : 'Snow simulation' };
+    if (/smoke/.test(name)) return { key: 'gpu-smoke', name: 'Smoke simulation' };
+    if (/fire|hearth/.test(name)) return { key: 'gpu-fire', name: 'Fire simulation' };
+    if (/render|draw/i.test(name)) return { key: 'gpu-drawing', name: 'Drawing particles' };
+    return { key: 'gpu-water', name: 'Water and snow simulation' };
+  }
+  function perfLiveGPUExplanation(row) {
+    if (!row || row.partial || row.invalidTimestamp || row.invalid || !Number.isFinite(row.ms) || row.ms <= perfLiveBudget) return null;
+    var totals = {}, best = null;
+    (row.passes || []).forEach(function (pass) {
+      if (!pass.emptyTimestamp && Number.isFinite(pass.ms) && pass.ms >= 0) totals[pass.name] = (totals[pass.name] || 0) + pass.ms;
+    });
+    for (var name in totals) if (!best || totals[name] > best.ms) best = { name: name, ms: totals[name] };
+    var leading = best && best.ms >= row.ms * 0.35;
+    var label = perfLiveGPUName(leading ? best.name : row.name);
+    return { key: label.key, title: label.name + (/collisions$/.test(label.name) ? ' are expensive' : ' is expensive'), certainty: 'GPU sampled',
+      summary: (leading ? label.name + ' took ' + best.ms.toFixed(1) : 'Sampled GPU passes took ' + row.ms.toFixed(1)) + ' ms. The 120 FPS budget is 8.3 ms.',
+      evidence: ['Sampled GPU passes: ' + row.ms.toFixed(2) + ' ms.',
+        'Sampled frame #' + row.frameId + (best ? '; largest pass ' + best.name + ': ' + best.ms.toFixed(2) + ' ms.' : '.'),
+        'GPU samples omit browser drawing and can miss a short stall. CPU and GPU work overlap.'] };
+  }
+  function perfLiveExplainFrame(frame, gpuRows) {
+    if (!frame) return { key: 'waiting', title: 'Waiting for play', summary: 'Play to start measuring.', evidence: [], certainty: 'Within budget' };
+    var cpu = Number(frame.cpuMs) || 0, phases = frame.phases || perfLivePhases(frame.buckets || {}, cpu);
+    var top = phases[0], interval = Number(frame.intervalMs) || 0;
+    if (cpu > perfLiveBudget) {
+      var leading = top && top.ms >= cpu * 0.35, label = perfLiveCPUName(leading ? top.name : 'other game work');
+      return { key: label.key, title: leading ? label.name + ' is expensive' : 'Too much game work', certainty: 'CPU measured',
+        summary: (leading ? label.name + ' took ' + top.ms.toFixed(1) + ' ms of ' : 'Game work took ') + cpu.toFixed(1) + ' ms. The 120 FPS budget is 8.3 ms.',
+        evidence: ['Measured game work: ' + cpu.toFixed(2) + ' ms.', top ? 'Largest measured cost: ' + perfLiveCPUName(top.name).name + ', ' + top.ms.toFixed(2) + ' ms.' : 'No individual cost was measured.',
+          'These CPU phases do not overlap. CPU time excludes panel work and does not measure GPU execution.'] };
+    }
+    if (!gpuRows) gpuRows = perfLive.gpu;
+    var bestGPU = null;
+    if (frame.frameId !== null && frame.frameId !== undefined) gpuRows.forEach(function (row) {
+      if (row.frameId !== frame.frameId) return;
+      var explanation = perfLiveGPUExplanation(row);
+      if (explanation && (!bestGPU || row.ms > bestGPU.ms)) bestGPU = { ms: row.ms, explanation: explanation };
+    });
+    if (bestGPU) return bestGPU.explanation;
+    if (interval > perfLiveBudget * 1.15) return { key: 'unexplained', title: 'Frame pacing is slow', certainty: 'Cause unknown',
+      summary: 'Measured game work took ' + cpu.toFixed(1) + ' ms. That does not explain the ' + interval.toFixed(1) + ' ms frame gap.',
+      evidence: ['Arrival gap: ' + interval.toFixed(2) + ' ms; preceding game work: ' + cpu.toFixed(2) + ' ms.',
+        'No complete, expensive GPU sample matches this frame. Browser scheduling and drawing are not measured here.',
+        'Snow and slime counts provide context, not a measured cause.'] };
+    return { key: 'healthy', title: 'Game work is within budget', certainty: 'Within budget',
+      summary: 'Measured game work took ' + cpu.toFixed(1) + ' ms. The 120 FPS budget is 8.3 ms.', evidence: [] };
+  }
+  function perfLiveLiveDiagnosis(stats) {
+    if (!stats.frames) return perfLiveExplainFrame(null, []);
+    var frame = { frameId: null, cpuMs: stats.cpu, phases: stats.phases, intervalMs: stats.fps ? 1000 / stats.fps : 0 };
+    var diagnosis = perfLiveExplainFrame(frame, []);
+    if (diagnosis.certainty === 'CPU measured') return diagnosis;
+    var now = performance.now(), best = null;
+    for (var name in perfLive.latestGPU) {
+      var row = perfLive.latestGPU[name];
+      var age = now - row.at;
+      if (!Number.isFinite(age) || age < 0 || age > 3000) continue;
+      var explanation = perfLiveGPUExplanation(row);
+      if (explanation && (!best || row.ms > best.ms)) best = { ms: row.ms, explanation: explanation };
+    }
+    if (best) {
+      best.explanation.summary = 'Latest GPU sample: ' + best.explanation.summary;
+      return best.explanation;
+    }
+    return diagnosis;
+  }
+  function perfLiveIssueFrame(event) {
+    var frame = event.kind === 'gap' && event.previous ? event.previous : event.current;
+    return Object.assign({}, frame, { intervalMs: event.gapMs || frame.intervalMs });
+  }
+  function perfLiveExplainIssue(event) {
+    var frame = perfLiveIssueFrame(event);
+    if (event.kind === 'gpu') {
+      var source = (event.gpu || []).filter(function (row) { return row.frameId === frame.frameId && (!event.sourceGPU || row.name === event.sourceGPU); })[0];
+      var measured = perfLiveGPUExplanation(source);
+      if (measured) return measured;
+    }
+    return perfLiveExplainFrame(frame, event.gpu || []);
+  }
+  function perfLiveRememberIssue(event) {
+    if (event.severity < 25 || perfLive.saving) return;
+    var explanation = perfLiveExplainIssue(event);
+    var id = explanation.key;
+    if (id === 'healthy' || id === 'waiting') id = 'unexplained';
+    var issue = null;
+    for (var i = 0; i < perfLive.issues.length; i++) if (perfLive.issues[i].id === id) { issue = perfLive.issues[i]; break; }
+    var sourceFrameId = perfLiveIssueFrame(event).frameId;
+    if (issue) {
+      if (issue.lastSourceFrameId !== sourceFrameId) { issue.occurrences++; issue.lastSourceFrameId = sourceFrameId; }
+      issue.lastAt = event.at;
+      if (event.severity <= issue.severity) return issue;
+    } else {
+      // There are fourteen fixed CPU/GPU/pacing groups. Keep a hard cap too.
+      if (perfLive.issues.length >= perfLive.issueLimit) return null;
+      issue = { id: id, occurrences: 1, lastSourceFrameId: sourceFrameId, firstAt: event.at, lastAt: event.at };
+      perfLive.issues.push(issue);
+    }
+    Object.assign(issue, { title: explanation.title, summary: explanation.summary, certainty: explanation.certainty,
+      severity: event.severity, major: true, at: event.at, frameId: event.frameId, kind: event.kind, event: event });
+    return issue;
+  }
+  function perfLiveFrameIndex(frameId) {
+    var first = (perfLive.write - perfLive.count + perfLive.capacity) % perfLive.capacity, low = 0, high = perfLive.count - 1;
+    while (low <= high) {
+      var mid = (low + high) >> 1, index = (first + mid) % perfLive.capacity;
+      var id = perfLive.data[index * perfLiveStride + 30];
+      if (id === frameId) return { index: index, order: mid };
+      if (id < frameId) low = mid + 1; else high = mid - 1;
+    }
+    return null;
+  }
+  function perfLiveObserveGPU(row) {
+    if (!perfLive.enabled || !perfLive.data || perfLive.saving || !perfLiveGPUExplanation(row)) return;
+    var found = perfLiveFrameIndex(row.frameId);
+    if (!found) return;
+    var offset = found.index * perfLiveStride;
+    if (!perfLive.data[offset + 33] || perfLive.issueReadyAt === null || perfLive.data[offset] < perfLive.issueReadyAt) return;
+    var frame = perfLiveRow(found.index), gap = null;
+    if (found.order + 1 < perfLive.count) {
+      var nextIndex = (found.index + 1) % perfLive.capacity, nextOffset = nextIndex * perfLiveStride;
+      if (perfLive.data[nextOffset + 33]) gap = perfLive.data[nextOffset + 1];
+    }
+    // This tag describes measured GPU work. A CPU stall or contextual arrival
+    // gap must not inflate the GPU cost or its severity badge.
+    var severity = row.ms;
+    if (severity < 25) return;
+    var event = { kind: 'gpu', frameId: row.frameId, at: frame.atMs, severity: severity,
+      gapMs: gap, current: frame, previous: null, reference: perfLiveReference(frame.atMs), gpu: [row], sourceGPU: row.name };
+    perfLive.workload.forEach(function (sample) { perfLiveAttach(event, sample, true); });
+    perfLiveRememberIssue(event);
+  }
+  function perfLiveIssueList() {
+    return perfLive.issues.slice().sort(function (a, b) { return b.severity - a.severity; });
+  }
+  function perfLiveGetSelectedIssue() { return perfLive.inspectedIssue; }
+  function perfLiveSelectIssue(id) {
+    perfLive.selectedIssue = null; perfLive.inspectedIssue = null;
+    for (var i = 0; i < perfLive.issues.length; i++) if (perfLive.issues[i].id === id) {
+      perfLive.selectedIssue = id; perfLive.inspectedIssue = Object.assign({}, perfLive.issues[i]); break;
+    }
+    if (typeof perfPanelPaint === 'function') perfPanelPaint();
+    return perfLive.inspectedIssue;
+  }
+  function perfLiveClearIssues() {
+    perfLive.issues = []; perfLive.selectedIssue = null; perfLive.inspectedIssue = null;
+    perfLiveClearPin();
+  }
+  function perfLiveExportEvent(event, started) {
+    if (!event) return null;
+    var result = Object.assign({}, event, { atMs: event.at - started, outsideHistory: event.at < started });
+    if (event.gpu) result.gpu = event.gpu.map(function (row) { return Object.assign({}, row, { atMs: row.at - started }); });
+    if (event.workload) result.workload = Object.assign({}, event.workload, { pageAtMs: event.workload.atMs,
+      atMs: event.workload.at - started, pageCompletedAtMs: event.workload.completedAtMs, completedAtMs: event.workload.completedAtMs - started });
+    ['current', 'previous'].forEach(function (key) {
+      if (event[key]) result[key] = Object.assign({}, event[key], { pageAtMs: event[key].atMs, atMs: event[key].atMs - started });
+    });
+    return result;
+  }
+  function perfLiveExportIssue(issue, started) {
+    if (!issue) return null;
+    return Object.assign({}, issue, { atMs: issue.at - started, firstAtMs: issue.firstAt - started,
+      lastAtMs: issue.lastAt - started, outsideHistory: issue.at < started, event: perfLiveExportEvent(issue.event, started) });
+  }
+  Object.assign(window.__sluicePerformance, { issues: perfLiveIssueList, inspectIssue: perfLiveSelectIssue, clearIssues: perfLiveClearIssues });
   /* ---- World Generation ---- */
   // Surface ponds are STREAMED (v24.11): worldgen carves every pit into this
   // list, but updateSurfacePondStreaming() (070) only spawns water in the
@@ -63478,76 +63668,133 @@
     c.moveTo(0, budgetY); c.lineTo(width, budgetY); c.stroke(); c.setLineDash([]);
     perfPanelText(perfPanel.graphScale, '20s · gap bars / CPU line · max ' + max.toFixed(0) + ' ms');
   }
+  function perfPanelPaintIssues(issues) {
+    var list = perfPanel.issues, nodes = perfPanel.issueNodes, kept = {};
+    var focusedIssue = document.activeElement;
+    if (!focusedIssue || focusedIssue.parentNode !== list) focusedIssue = null;
+    for (var i = 0; i < issues.length; i++) {
+      var issue = issues[i], item = nodes[issue.id]; kept[issue.id] = true;
+      if (!item) {
+        item = document.createElement('button'); item.type = 'button'; item.className = 'gm-perf-issue';
+        ['title', 'severity', 'note'].forEach(function (name) {
+          var span = document.createElement('span'); span.className = 'gm-perf-issue-' + name; item.appendChild(span);
+        });
+        item.setAttribute('data-perf-issue', issue.id); nodes[issue.id] = item;
+      }
+      // A button keeps its category identity when the severity ordering changes.
+      if (list.children[i] !== item) list.insertBefore(item, list.children[i] || null);
+      item.setAttribute('data-major', issue.severity >= 50 ? 'critical' : 'major');
+      item.setAttribute('aria-pressed', String(perfLive.selectedIssue === issue.id));
+      perfPanelText(item.children[0], issue.title);
+      perfPanelText(item.children[1], issue.severity >= 50 ? 'Critical' : 'Major');
+      var metric = issue.kind === 'gpu' ? 'GPU' : issue.kind === 'gap' ? 'gap' : 'CPU';
+      perfPanelText(item.children[2], issue.severity.toFixed(1) + ' ms ' + metric + ' worst · ' + issue.occurrences + ' flagged ' + (issue.occurrences === 1 ? 'frame' : 'frames'));
+    }
+    for (var id in nodes) if (!kept[id]) { nodes[id].remove(); delete nodes[id]; }
+    // Chromium can drop focus when an existing button moves in the DOM.
+    if (focusedIssue && focusedIssue.isConnected && document.activeElement !== focusedIssue) focusedIssue.focus({ preventScroll: true });
+    perfPanelText(perfPanel.issueCount, String(issues.length));
+    perfPanel.issueEmpty.hidden = !!issues.length;
+    perfPanel.clear.disabled = !issues.length;
+  }
+  function perfPanelPaintRaw(snapshot, stats, workload, liquidRow, status, event, selected) {
+    perfPanelText(perfPanel.cpu, (selected ? 'Recorded frame: ' : 'Live: ') + stats.cpu.toFixed(2) + ' ms CPU · ' + stats.p99.toFixed(1) + ' ms ' + (selected ? 'gap' : 'p99 gap'));
+    perfPanelList(perfPanel.cpuRows, stats.phases, 3, function (r) { return perfPanelName(r.name) + '  ' + r.ms.toFixed(2) + ' ms'; });
+    perfPanelText(perfPanel.load, Math.round(snapshot.snowActive).toLocaleString() + ' snow active · ' + snapshot.awakeResidents + '/' + snapshot.residents + ' slimes awake');
+    perfPanelText(perfPanel.steps, snapshot.microsteps + ' microsteps · ' + snapshot.contacts + ' contacts · mirror simulation lag ' + (snapshot.readbackAgeMs < 0 ? 'unavailable' : Math.round(snapshot.readbackAgeMs) + ' ms'));
+    if (liquidRow) {
+      var age = performance.now() - liquidRow.at;
+      perfPanelText(perfPanel.gpu, 'Liquid GPU sample ' + liquidRow.ms.toFixed(2) + ' ms · #' + liquidRow.frameId +
+        (selected ? ' · recorded frame' : ' · ' + (age / 1000).toFixed(1) + ' s old') +
+        (liquidRow.partial ? ' · partial' : '') + (!selected && age > 3000 ? ' · stale' : ''));
+      perfPanelList(perfPanel.gpuRows, perfPanelGPU(liquidRow), 2, function (r) { return r.name + '  ' + r.ms.toFixed(2) + ' ms'; });
+    } else {
+      perfPanelText(perfPanel.gpu, selected ? 'No GPU timestamp sample for this recorded frame.' : status && status.supported ? 'GPU sample pending' : 'GPU timestamps unavailable');
+      perfPanelList(perfPanel.gpuRows, [], 0, function () { return ''; });
+    }
+    if (workload && workload.atMs !== undefined) {
+      var matched = liquidRow && liquidRow.frameId === workload.frameId;
+      perfPanelText(perfPanel.queues, 'Snow queues ' + workload.snowGuestPeak + ' guest / ' + workload.snowFallbackPeak + ' escape peak · #' + workload.frameId +
+        (selected ? ' · recorded frame' : ' · ' + ((workload.ageMs || 0) / 1000).toFixed(1) + ' s old') +
+        (matched ? ' · GPU matched' : ' · separate sample') + (workload.partial || (!selected && !workload.valid) ? ' · stale / partial' : ''));
+      perfPanel.queues.title = 'Peak particles in one collision batch, not unique particles across the frame. ' + workload.snowCollisionBatches + ' snow batches; ' + workload.snowGuestTotal + ' guest visits; ' + workload.snowFallbackTotal + ' escape visits.';
+    } else perfPanelText(perfPanel.queues, selected ? 'No collision queue sample for this recorded frame.' : 'Snow collision queues pending');
+    if (event) {
+      var frame = event.kind === 'gap' && event.previous ? event.previous : event.current;
+      var row = frame.phases[0];
+      perfPanelText(perfPanel.spike, (selected ? 'Inspected' : 'Worst') + ' event #' + event.frameId + ': ' + event.severity.toFixed(1) + ' ms');
+      perfPanelText(perfPanel.spikeCost, '#' + frame.frameId + ' CPU ' + frame.cpuMs.toFixed(2) + ' ms' + (row ? ' · ' + perfPanelName(row.name) + ' ' + row.ms.toFixed(2) + ' ms' : ''));
+      perfPanelText(perfPanel.spikeLoad, Math.round(frame.snowActive).toLocaleString() + ' snow · ' + frame.awakeResidents + ' awake slimes · ' + frame.microsteps + ' microsteps');
+    } else {
+      perfPanelText(perfPanel.spike, 'No major issue recorded'); perfPanelText(perfPanel.spikeCost, ''); perfPanelText(perfPanel.spikeLoad, '');
+    }
+    perfPanelGraph(performance.now());
+    perfPanelPaintDetails(snapshot, stats, workload, event, selected);
+  }
   function perfPanelPaint() {
     if (!perfPanel || !perfLive.enabled || !perfLive.count) return;
     var t0 = performance.now(), snapshot = perfLiveSnapshot(), stats = perfPanelWindow(t0);
-    perfPanelText(perfPanel.fps, stats.fps ? Math.round(stats.fps) + ' FPS' : 'Waiting for play');
-    perfPanel.fps.classList.toggle('perf-over-budget', !!stats.frames && stats.fps < 114);
-    var context = gamePaused || mobileLandscapeBlocked ? 'Paused' : document.hidden ? 'Hidden tab' : snapshot.view ? 'Menu / loading' : 'Target 120 FPS · 8.33 ms';
-    perfPanelText(perfPanel.budget, context + (playPerfActive ? ' · recording' : ''));
-    perfPanelText(perfPanel.cpu, stats.cpu.toFixed(2) + ' ms CPU · ' + stats.p99.toFixed(1) + ' ms p99 gap');
-    perfPanelList(perfPanel.cpuRows, stats.phases, 3, function (r) { return perfPanelName(r.name) + '  ' + r.ms.toFixed(2) + ' ms'; });
-    perfPanelText(perfPanel.load, Math.round(snapshot.snowActive).toLocaleString() + ' snow active · ' + snapshot.awakeResidents + '/' + snapshot.residents + ' slimes awake');
-    perfPanelText(perfPanel.steps, snapshot.microsteps + ' microsteps · ' + snapshot.contacts + ' contacts · mirror lag ' + (snapshot.readbackAgeMs < 0 ? 'unavailable' : Math.round(snapshot.readbackAgeMs) + ' ms'));
-    var source = window.__sluiceGPUTrace, status = source ? source.status() : null, liquidRow = null;
-    for (var name in perfLive.latestGPU) if (name === 'liquid.frame') liquidRow = perfLive.latestGPU[name];
-    if (liquidRow) {
-      var age = t0 - liquidRow.at;
-      perfPanelText(perfPanel.gpu, 'Liquid GPU sample ' + liquidRow.ms.toFixed(2) + ' ms · #' + liquidRow.frameId + ' · ' + (age / 1000).toFixed(1) + ' s old' + (liquidRow.partial ? ' · partial' : '') + (age > 3000 ? ' · stale' : ''));
-      perfPanelList(perfPanel.gpuRows, perfPanelGPU(liquidRow), 2, function (r) { return r.name + '  ' + r.ms.toFixed(2) + ' ms'; });
-    } else {
-      perfPanelText(perfPanel.gpu, status && status.supported ? 'GPU sample pending' : 'GPU timestamps unavailable');
-      perfPanelList(perfPanel.gpuRows, [], 0, function () { return ''; });
-    }
-    var workload = liquidWGPU && liquidWGPU.getDiagnostics ? liquidWGPU.getDiagnostics() : null;
-    if (workload && workload.atMs !== undefined) {
-      var matched = liquidRow && liquidRow.frameId === workload.frameId;
-      perfPanelText(perfPanel.queues, 'Snow queues ' + workload.snowGuestPeak + ' guest / ' + workload.snowFallbackPeak + ' escape peak · #' + workload.frameId + ' · ' + ((workload.ageMs || 0) / 1000).toFixed(1) + ' s old' + (matched ? ' · GPU matched' : ' · separate sample') + (workload.valid ? '' : ' · stale / partial'));
-      perfPanel.queues.title = 'Peak particles in one collision batch, not unique particles across the frame. ' + workload.snowCollisionBatches + ' snow batches; ' + workload.snowGuestTotal + ' guest visits; ' + workload.snowFallbackTotal + ' escape visits. Age ' + Math.round(workload.ageMs || 0) + ' ms.';
-    } else perfPanelText(perfPanel.queues, 'Snow collision queues pending');
-    var event = perfLive.pinned || perfLive.worst;
-    if (event) {
-      var previous = event.previous;
-      perfPanelText(perfPanel.spike, (perfLive.pinned ? 'Pinned ' : 'Worst ') + '#' + event.frameId + ': ' + (event.kind === 'cpu' ? event.current.cpuMs.toFixed(1) + ' ms CPU' : event.gapMs.toFixed(1) + ' ms arrival gap'));
-      var frame = event.kind === 'gap' && previous ? previous : event.current;
-      var row = frame.phases[0];
-      perfPanelText(perfPanel.spikeCost, '#' + frame.frameId + ' CPU ' + frame.cpuMs.toFixed(2) + ' ms' + (row ? ' · ' + perfPanelName(row.name) + ' ' + row.ms.toFixed(2) + ' ms' : ''));
-      var change = event.reference && event.reference.frames ? frame.cpuMs - event.reference.cpuMs : null;
-      perfPanelText(perfPanel.spikeLoad, Math.round(frame.snowActive).toLocaleString() + ' snow · ' + frame.awakeResidents + ' awake slimes · ' + frame.microsteps + ' microsteps' + (change === null ? '' : ' · CPU ' + (change >= 0 ? '+' : '') + change.toFixed(2) + ' ms vs prior second'));
-      perfPanel.clear.hidden = false;
-    } else {
-      perfPanelText(perfPanel.spike, 'No slowdown pinned');
-      perfPanelText(perfPanel.spikeCost, 'Worst spike stays here until cleared.');
-      perfPanelText(perfPanel.spikeLoad, '');
-      perfPanel.clear.hidden = true;
-    }
-    perfPanel.pin.disabled = !event; perfPanel.save.disabled = perfLive.saving || !perfLive.count;
+    var issues = perfLiveIssueList(), selected = perfLiveGetSelectedIssue();
+    var paused = gamePaused || mobileLandscapeBlocked, inactive = paused || document.hidden || snapshot.view;
+    perfPanelText(perfPanel.fps, paused ? 'Paused' : stats.fps ? Math.round(stats.fps) + ' FPS' : 'Waiting');
+    perfPanel.fps.classList.toggle('perf-over-budget', !inactive && !!stats.frames && stats.fps < 114);
+    perfPanel.fps.classList.toggle('perf-critical', !inactive && !!stats.frames && stats.fps < 60);
+    perfPanelText(perfPanel.budget, (selected ? 'Saved issue' : paused ? 'Capture paused' : document.hidden ? 'Hidden tab' : snapshot.view ? 'Menu / loading' : 'Target 120 FPS') + (playPerfActive ? ' · recording' : ''));
+    var explanation = perfLiveLiveDiagnosis(stats);
+    if (inactive) explanation = { title: paused ? 'Capture paused' : document.hidden ? 'Tab hidden' : 'Waiting for gameplay',
+      summary: 'Saved issues remain available. Live measurements continue when you return to play.', certainty: 'Not measuring play', evidence: [] };
+    perfPanelText(perfPanel.diagnosis, explanation.title);
+    perfPanelText(perfPanel.summary, explanation.summary);
+    perfPanelText(perfPanel.certainty, explanation.certainty);
+    perfPanel.liveView.hidden = !!selected; perfPanel.inspection.hidden = !selected;
+    perfPanel.root.setAttribute('data-perf-view', selected ? 'issue' : 'live');
+    var event = selected ? selected.event : perfLive.pinned || perfLive.worst, inspected = null, frame = null;
+    if (selected && event) {
+      frame = event.kind === 'gap' && event.previous ? event.previous : event.current;
+      inspected = perfLiveExplainIssue(event);
+      perfPanel.inspection.setAttribute('data-perf-issue', selected.id);
+      perfPanelText(perfPanel.inspectionTitle, selected.title);
+      perfPanelText(perfPanel.inspectionSummary, inspected.summary);
+      perfPanelText(perfPanel.inspectionCertainty, inspected.certainty);
+      perfPanelText(perfPanel.inspectionMeta, 'Worst recorded: ' + selected.severity.toFixed(1) + ' ms. Game CPU: ' + frame.cpuMs.toFixed(1) + ' ms. Retained for this session.');
+    } else perfPanel.inspection.removeAttribute('data-perf-issue');
+    perfPanelPaintIssues(issues);
+    perfPanel.save.disabled = perfLive.saving || !perfLive.count;
     perfPanelText(perfPanel.save, perfLive.saving ? 'Saving' : 'Save 30s');
-    perfPanel.pin.textContent = perfLive.pinned ? 'Pinned' : 'Pin worst';
-    perfPanelGraph(t0);
-    if (perfLive.details) perfPanelPaintDetails(snapshot, stats, workload);
+    if (perfLive.details) {
+      perfPanel.inspectionEvidence.hidden = !selected;
+      perfPanelList(perfPanel.inspectionEvidence, inspected ? inspected.evidence : [], 8, function (r) { return r; });
+      var rawStats = selected ? { cpu: frame.cpuMs, p99: event.gapMs || frame.intervalMs || 0,
+        raw: frame.buckets || {}, phases: frame.phases || [], frames: 1 } : stats;
+      var liquidRow = selected ? (event.gpu || []).filter(function (r) { return r.name === 'liquid.frame' && r.frameId === frame.frameId; })[0] : perfLive.latestGPU['liquid.frame'];
+      var workload = selected ? event.workload || null : liquidWGPU && liquidWGPU.getDiagnostics ? liquidWGPU.getDiagnostics() : null;
+      perfPanelPaintRaw(selected ? frame : snapshot, rawStats, workload, liquidRow,
+        window.__sluiceGPUTrace ? window.__sluiceGPUTrace.status() : null, event, !!selected);
+    }
+    // Machine-readable live context stays small. Full recorded frames and GPU
+    // pass inventories are available only when Details is opened or exported.
     perfPanelText(perfPanel.live, JSON.stringify({ version: GAME_VERSION, frameId: snapshot.frameId,
-      fps: stats.fps, cpuMs: stats.cpu, p99GapMs: stats.p99, state: snapshot,
-      worst: event, pinned: !!perfLive.pinned, gpu: liquidRow, workload: workload,
-      observerMs: perfLive.observerMs, paintMs: perfLive.paintMs }));
+      fps: stats.fps, cpuMs: stats.cpu, p99GapMs: stats.p99, diagnosis: explanation,
+      selectedIssue: perfLive.selectedIssue, issues: issues.map(function (r) {
+        return { id: r.id, title: r.title, severity: r.severity, occurrences: r.occurrences, frameId: r.frameId };
+      }), observerMs: perfLive.observerMs, paintMs: perfLive.paintMs }));
     perfLive.paintMs = performance.now() - t0;
   }
-  function perfPanelPaintDetails(snapshot, stats, workload) {
+  function perfPanelPaintDetails(snapshot, stats, workload, event, selected) {
     var rows = [];
     rows.push('Build ' + GAME_VERSION + ' · callback target 120 FPS');
     rows.push('Panel observer ' + perfLive.observerMs.toFixed(3) + ' ms/frame; last paint ' + perfLive.paintMs.toFixed(2) + ' ms (5 Hz). GPU timestamp overhead is separate.');
     rows.push('Visible residents ' + snapshot.visibleResidents + '; outer ticks ' + snapshot.outerTicks + '; terrain rebuilds ' + snapshot.terrainRebuilds);
     rows.push('Snow ' + snapshot.snowAirborne + ' airborne / ' + snapshot.snowParked + ' parked; shared liquid storage ' + snapshot.liquids);
-    rows.push('CPU phase means, last active second. These rows are disjoint.');
+    rows.push(selected ? 'Recorded CPU frame. These rows are disjoint.' : 'CPU phase means, last active second. These rows are disjoint.');
     stats.phases.forEach(function (r) { rows.push(perfPanelName(r.name) + ': ' + r.ms.toFixed(3) + ' ms'); });
     rows.push('Slime solver children (already inside Slime solver):');
     ['jello.internal', 'jello.contact', 'jello.tail'].forEach(function (key) { rows.push(key + ': ' + (stats.raw[key] || 0).toFixed(3) + ' ms'); });
     rows.push('Snow CPU children (already inside Snow CPU):');
     ['snow.airCPU', 'snow.scanCPU', 'snow.supportCPU', 'snow.flakesCPU'].forEach(function (key) { rows.push(key + ': ' + (stats.raw[key] || 0).toFixed(3) + ' ms'); });
-    var event = perfLive.pinned || perfLive.worst;
     if (event) {
       var frame = event.kind === 'gap' && event.previous ? event.previous : event.current;
-      rows.push((perfLive.pinned ? 'Pinned' : 'Worst') + ' event #' + event.frameId + ', ' + ((performance.now() - event.at) / 1000).toFixed(1) + ' s ago. CPU frame #' + frame.frameId + ':');
+      rows.push((selected ? 'Inspected' : 'Worst') + ' event #' + event.frameId + ', ' + ((performance.now() - event.at) / 1000).toFixed(1) + ' s ago. CPU frame #' + frame.frameId + ':');
       frame.phases.forEach(function (r) { rows.push(perfPanelName(r.name) + ': ' + r.ms.toFixed(3) + ' ms'); });
       if (event.reference && event.reference.frames) rows.push('Prior-second means: CPU ' + event.reference.cpuMs.toFixed(2) + ' ms; snow ' + Math.round(event.reference.snowActive) + '; awake slimes ' + event.reference.awakeResidents.toFixed(1) + '; microsteps ' + event.reference.microsteps.toFixed(1));
       var matched = event.gpu || perfLive.gpu.filter(function (r) { return r.frameId === frame.frameId; });
@@ -63586,16 +63833,25 @@
       load: node('load'), steps: node('steps'), queues: node('queues'),
       graph: node('graph'), graphScale: node('graph-scale'),
       spike: node('spike'), spikeCost: node('spike-cost'), spikeLoad: node('spike-load'),
-      pin: node('pin'), save: node('save'), clear: node('clear'), detailsButton: node('details'),
+      save: node('save'), clear: node('clear'), detailsButton: node('details'),
+      liveView: node('live-view'), diagnosis: node('diagnosis'), summary: node('summary'), certainty: node('certainty'),
+      issues: node('issues'), issueNodes: Object.create(null), issueCount: node('issue-count'), issueEmpty: node('issue-empty'),
+      inspection: node('inspection'), inspectionTitle: node('inspection-title'), inspectionSummary: node('inspection-summary'),
+      inspectionCertainty: node('inspection-certainty'), inspectionMeta: node('inspection-meta'),
+      inspectionEvidence: node('inspection-evidence'), back: node('back'),
       details: node('detail-body'), detailText: node('detail-text'), live: node('diagnostics-live') };
     var style = getComputedStyle(root);
-    perfPanel.colors = { text: style.getPropertyValue('--d-text').trim() || '#e8e2d6',
-      dim: style.getPropertyValue('--d-text-dim').trim() || '#b8b2a2',
-      gold: style.getPropertyValue('--d-accent').trim() || '#d4c4a0',
-      warn: style.getPropertyValue('--d-warn').trim() || '#d99090' };
-    perfPanel.pin.addEventListener('click', perfLivePin);
+    perfPanel.colors = { text: style.getPropertyValue('--perf-text').trim() || UIT_BODY,
+      dim: style.getPropertyValue('--perf-dim').trim() || UIT_DIM,
+      gold: style.getPropertyValue('--perf-amber').trim() || UIT_GOLD,
+      warn: style.getPropertyValue('--perf-red').trim() || UIT_RED };
     perfPanel.save.addEventListener('click', perfLiveDownload);
-    perfPanel.clear.addEventListener('click', perfLiveClearPin);
+    perfPanel.clear.addEventListener('click', function () { perfLiveClearIssues(); perfPanelPaint(); });
+    perfPanel.back.addEventListener('click', function () { perfLiveSelectIssue(null); perfPanelPaint(); });
+    perfPanel.issues.addEventListener('click', function (e) {
+      var button = e.target.closest('button[data-perf-issue]');
+      if (button && perfPanel.issues.contains(button)) { perfLiveSelectIssue(button.getAttribute('data-perf-issue')); perfPanelPaint(); }
+    });
     perfPanel.detailsButton.addEventListener('click', function () {
       perfLive.details = !perfLive.details; perfPanel.details.hidden = !perfLive.details;
       perfPanel.detailsButton.setAttribute('aria-expanded', String(perfLive.details));
@@ -63603,7 +63859,7 @@
     });
     ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'keydown'].forEach(function (kind) {
       root.addEventListener(kind, function (e) {
-        if (kind === 'keydown' && (e.key === 'F9' || e.key === 'Escape' || e.key === '`')) return;
+        if (kind === 'keydown' && (e.key === 'F9' || e.key === 'Escape' || e.key === '`' || e.key === '~')) return;
         e.stopPropagation();
       });
     });

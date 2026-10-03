@@ -3,7 +3,9 @@
     capacity: 8192, data: null, buckets: [], bucketIndex: {}, events: [], gpu: [],
     workload: [], latestGPU: {}, previous: null, worst: null, pinned: null,
     observerMs: 0, paintMs: 0, paintAt: -Infinity, collectAt: -Infinity,
-    interrupted: true, saving: false, droppedBuckets: 0, details: false };
+    interrupted: true, saving: false, droppedBuckets: 0, details: false,
+    issues: [], issueLimit: 16, selectedIssue: null, inspectedIssue: null,
+    activeMs: 0, issueReadyAt: null };
   var perfLiveFields = playPerfFields.slice(0, 30).concat(['frameId', 'visibleResidents', 'observerMs', 'active']);
   var perfLiveStride = perfLiveFields.length + playPerfBucketLimit;
   var perfLiveBudget = 1000 / 120;
@@ -41,6 +43,7 @@
         perfLive.started = performance.now(); perfLive.write = perfLive.count = 0;
         perfLive.events = []; perfLive.gpu = []; perfLive.workload = []; perfLive.latestGPU = {};
         perfLive.worst = null; perfLive.pinned = null; perfLive.collectAt = -Infinity;
+        perfLive.activeMs = 0; perfLive.issueReadyAt = null;
       }
     }
     var gpuActive = (enabled || playPerfActive) && introPhase === 'done' && !gamePaused && !mobileLandscapeBlocked;
@@ -80,8 +83,11 @@
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
       perfLiveAttach(perfLive.worst, row, false); perfLiveAttach(perfLive.pinned, row, false);
+      perfLive.issues.forEach(function (issue) { perfLiveAttach(issue.event, row, false); });
+      if (perfLive.inspectedIssue) perfLiveAttach(perfLive.inspectedIssue.event, row, false);
       if (perfLive.enabled) {
         perfLive.gpu.push(row); perfLive.latestGPU[row.name] = row;
+        perfLiveObserveGPU(row);
       }
       if (trace && row.at >= trace.started && (!trace.ended || row.at <= trace.ended)) {
         if (trace.gpu.length < 8000) trace.gpu.push(Object.assign({}, row, { atMs: row.at - trace.started }));
@@ -94,6 +100,8 @@
     if (counters && counters.frameId !== null && counters.atMs !== undefined && (!perfLive.workload.length || perfLive.workload[perfLive.workload.length - 1].frameId !== counters.frameId)) {
       var sample = Object.assign({}, counters, { at: counters.atMs });
       perfLiveAttach(perfLive.worst, sample, true); perfLiveAttach(perfLive.pinned, sample, true);
+      perfLive.issues.forEach(function (issue) { perfLiveAttach(issue.event, sample, true); });
+      if (perfLive.inspectedIssue) perfLiveAttach(perfLive.inspectedIssue.event, sample, true);
       if (perfLive.enabled) perfLive.workload.push(sample);
       if (trace && sample.at >= trace.started && (!trace.ended || sample.at <= trace.ended)) {
         if (!trace.workload) trace.workload = [];
@@ -152,6 +160,8 @@
     row[offset + 28] = inputMask; row[offset + 29] = view || 0;
     row[offset + 30] = perfLive.frameId; row[offset + 31] = visible;
     row[offset + 33] = active && !perfLive.interrupted ? 1 : 0;
+    if (row[offset + 33]) perfLive.activeMs += Math.max(0, interval);
+    if (perfLive.issueReadyAt === null && perfLive.activeMs >= 2000) perfLive.issueReadyAt = time;
     for (var name in perfBucketsRaw) {
       var slot = perfLive.bucketIndex[name];
       if (slot === undefined) {
@@ -163,16 +173,19 @@
     // Interval describes the gap BEFORE this callback. Preserve its predecessor
     // instead of attributing it to CPU work that has not happened yet.
     var severity = Math.max(row[offset + 33] ? interval : 0, active ? cpu : 0);
-    if (!perfLive.saving && active && time - perfLive.started > 2000 && severity > perfLiveBudget * 1.5 &&
-        (!perfLive.worst || severity > perfLive.worst.severity)) {
+    var newWorst = !perfLive.worst || severity > perfLive.worst.severity;
+    if (!perfLive.saving && active && perfLive.issueReadyAt !== null && severity > perfLiveBudget * 1.5 &&
+        (newWorst || severity >= 25)) {
       var kind = cpu > (row[offset + 33] ? interval : 0) ? 'cpu' : 'gap';
       var referenceEnd = kind === 'gap' && perfLive.previous !== null ? row[perfLive.previous * perfLiveStride] : time;
-      perfLive.worst = { frameId: perfLive.frameId, at: time, severity: severity,
+      var event = { frameId: perfLive.frameId, at: time, severity: severity,
         kind: kind,
         gapMs: row[offset + 33] ? interval : null, reference: perfLiveReference(referenceEnd), current: perfLiveRow(perfLive.write),
         previous: perfLive.previous !== null ? perfLiveRow(perfLive.previous) : null };
-      perfLive.gpu.forEach(function (r) { perfLiveAttach(perfLive.worst, r, false); });
-      perfLive.workload.forEach(function (r) { perfLiveAttach(perfLive.worst, r, true); });
+      perfLive.gpu.forEach(function (r) { perfLiveAttach(event, r, false); });
+      perfLive.workload.forEach(function (r) { perfLiveAttach(event, r, true); });
+      if (newWorst) perfLive.worst = event;
+      if (severity >= 25) perfLiveRememberIssue(event);
     }
     perfLive.previous = active ? perfLive.write : null; perfLive.interrupted = !active;
     perfLive.write = (perfLive.write + 1) % perfLive.capacity;
@@ -210,6 +223,7 @@
       lastFrameAgeMs: perfLive.count ? performance.now() - perfLive.data[((perfLive.write - 1 + perfLive.capacity) % perfLive.capacity) * perfLiveStride] : null,
       seconds: perfLive.count ? Math.min(30, (performance.now() - perfLive.data[((perfLive.write - perfLive.count + perfLive.capacity) % perfLive.capacity) * perfLiveStride]) / 1000) : 0,
       worst: perfLive.pinned || perfLive.worst, pinned: !!perfLive.pinned,
+      issues: perfLiveIssueList(), selectedIssue: perfLive.selectedIssue, inspection: perfLiveGetSelectedIssue(),
       observerMs: perfLive.observerMs, paintMs: perfLive.paintMs,
       gpuStatus: window.__sluiceGPUTrace ? window.__sluiceGPUTrace.status() : null,
       gpu: Object.keys(perfLive.latestGPU).map(function (key) { return perfLive.latestGPU[key]; }),
@@ -232,14 +246,7 @@
     }
     var ended = perfLive.data[((perfLive.write - 1 + perfLive.capacity) % perfLive.capacity) * perfLiveStride];
     var event = perfLive.pinned || perfLive.worst;
-    if (event) {
-      event = Object.assign({}, event, { atMs: event.at - started, outsideHistory: event.at < started });
-      if (event.gpu) event.gpu = event.gpu.map(function (r) { return Object.assign({}, r, { atMs: r.at - started }); });
-      if (event.workload) event.workload = Object.assign({}, event.workload, { pageAtMs: event.workload.atMs, atMs: event.workload.at - started, pageCompletedAtMs: event.workload.completedAtMs, completedAtMs: event.workload.completedAtMs - started });
-      ['current', 'previous'].forEach(function (key) {
-        if (event[key]) event[key] = Object.assign({}, event[key], { pageAtMs: event[key].atMs, atMs: event[key].atMs - started });
-      });
-    }
+    event = perfLiveExportEvent(event, started);
     var gpu = perfLive.gpu.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return Object.assign({}, r, { atMs: r.at - started }); });
     var capture = { schema: 'sluice-performance-1', version: GAME_VERSION,
       startedUTC: new Date(performance.timeOrigin + started).toISOString(), durationMs: ended - started,
@@ -256,7 +263,9 @@
       events: perfLive.events.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return { atMs: r.at - started, kind: r.kind, detail: r.detail }; }),
       gpu: gpu, gpuStatus: window.__sluiceGPUTrace ? window.__sluiceGPUTrace.status() : null,
       workload: perfLive.workload.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return Object.assign({}, r, { pageAtMs: r.atMs, atMs: r.at - started, pageCompletedAtMs: r.completedAtMs, completedAtMs: r.completedAtMs - started }); }),
-      slowdown: event, droppedEvents: 0, droppedGPU: 0, droppedBuckets: perfLive.droppedBuckets,
+      slowdown: event, issues: perfLiveIssueList().map(function (issue) { return perfLiveExportIssue(issue, started); }),
+      selectedIssue: perfLiveExportIssue(perfLiveGetSelectedIssue(), started),
+      droppedEvents: 0, droppedGPU: 0, droppedBuckets: perfLive.droppedBuckets,
       observer: { frameMs: perfLive.observerMs, panelPaintMs: perfLive.paintMs, exportSnapshotMs: performance.now() - captureAt } };
     return capture;
   }

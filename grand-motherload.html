@@ -39,7 +39,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.168">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.169">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -456,21 +456,40 @@
                 </div>
               </div>
               <aside id="gm-perf-panel" hidden aria-label="Live performance">
-                <div class="gm-perf-heading"><strong id="gm-perf-fps">Waiting for play</strong><span id="gm-perf-budget">Target 120 FPS · 8.33 ms</span></div>
+                <div class="gm-perf-heading"><strong id="gm-perf-fps">Waiting for play</strong><span id="gm-perf-budget">Target 120 FPS</span></div>
+                <div class="gm-perf-scroll">
+                  <section id="gm-perf-live-view" aria-label="Current performance">
+                    <strong id="gm-perf-diagnosis">Watching performance</strong>
+                    <p id="gm-perf-summary">Play normally. Major slowdowns stay below so you can inspect them later.</p>
+                    <span id="gm-perf-certainty" class="gm-perf-certainty">Cause unknown</span>
+                  </section>
+                  <section id="gm-perf-inspection" hidden aria-label="Saved issue">
+                    <button id="gm-perf-back" type="button">Back to live</button>
+                    <strong id="gm-perf-inspection-title"></strong>
+                    <p id="gm-perf-inspection-summary"></p>
+                    <span id="gm-perf-inspection-certainty" class="gm-perf-certainty"></span>
+                    <p id="gm-perf-inspection-meta" class="gm-perf-muted"></p>
+                  </section>
+                  <div class="gm-perf-issue-heading"><span>Session issues</span><span id="gm-perf-issue-count">0</span></div>
+                  <p id="gm-perf-issue-empty" class="gm-perf-muted">No major slowdowns saved yet.</p>
+                  <div id="gm-perf-issues" aria-label="Major issues retained for this session"></div>
+                  <div id="gm-perf-detail-body" hidden>
+                    <p class="gm-perf-detail-label">Technical evidence</p>
+                    <ul id="gm-perf-inspection-evidence" hidden></ul>
+                    <canvas id="gm-perf-graph" aria-label="Live callback gaps and CPU time over the last twenty seconds"></canvas>
+                    <p id="gm-perf-graph-scale" class="gm-perf-muted">20 seconds of live timings</p>
+                    <p id="gm-perf-cpu"></p><ol id="gm-perf-cpu-rows"></ol>
+                    <p id="gm-perf-load"></p><p id="gm-perf-steps" class="gm-perf-muted"></p>
+                    <p id="gm-perf-gpu"></p><ol id="gm-perf-gpu-rows"></ol>
+                    <p id="gm-perf-queues" class="gm-perf-muted"></p>
+                    <div class="gm-perf-slowdown"><strong id="gm-perf-spike"></strong><p id="gm-perf-spike-cost"></p><p id="gm-perf-spike-load" class="gm-perf-muted"></p></div>
+                    <pre id="gm-perf-detail-text"></pre>
+                  </div>
+                </div>
                 <div class="gm-perf-actions">
-                  <button id="gm-perf-pin" type="button" disabled>Pin worst</button>
                   <button id="gm-perf-save" type="button">Save 30s</button>
                   <button id="gm-perf-details" type="button" aria-expanded="false" aria-controls="gm-perf-detail-body">Details</button>
-                </div>
-                <div class="gm-perf-scroll">
-                  <canvas id="gm-perf-graph" aria-label="Last twenty seconds of callback gaps and CPU time"></canvas>
-                  <p id="gm-perf-graph-scale" class="gm-perf-muted">20 seconds · gap bars / CPU line</p>
-                  <p id="gm-perf-cpu"></p><ol id="gm-perf-cpu-rows"></ol>
-                  <p id="gm-perf-load"></p><p id="gm-perf-steps" class="gm-perf-muted"></p>
-                  <p id="gm-perf-gpu"></p><ol id="gm-perf-gpu-rows"></ol>
-                  <p id="gm-perf-queues" class="gm-perf-muted"></p>
-                  <div class="gm-perf-slowdown"><strong id="gm-perf-spike">No slowdown pinned</strong><p id="gm-perf-spike-cost"></p><p id="gm-perf-spike-load" class="gm-perf-muted"></p><button id="gm-perf-clear" type="button" hidden>Clear worst / pin</button></div>
-                  <div id="gm-perf-detail-body" hidden><pre id="gm-perf-detail-text"></pre></div>
+                  <button id="gm-perf-clear" type="button" disabled>Clear issues</button>
                 </div>
               </aside>
               <pre id="gm-perf-diagnostics-live" hidden></pre>
@@ -1002,13 +1021,13 @@
       });
     })();
   </script>
-  <script defer src="js/sluice-performance-gpu.js?v=v28.168"></script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.168"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.168"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.168"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.168"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.168"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.168"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.168"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.169"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.169"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.169"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.169"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.169"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.169"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.169"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.169"></script>
 </body>
 </html>

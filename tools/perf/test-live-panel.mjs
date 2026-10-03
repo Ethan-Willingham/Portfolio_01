@@ -9,33 +9,17 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {spawn, execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {createLiveIssueFixture,runLiveIssueChecks} from './test-live-issues.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const out = path.resolve(process.env.DUMP || '/tmp/sluice-live-panel-' + Date.now());
 assert(out.startsWith(fs.realpathSync(os.tmpdir()) + path.sep) || out.startsWith('/tmp/'), 'Evidence must stay in the temporary directory');
 fs.mkdirSync(out, {recursive: true});
 function boundedHistoryUnit() {
-  const recorder = fs.readFileSync(root+'/js/sluice/021-performance-recording.js','utf8');
-  const fields = recorder.match(/var playPerfFields = (\[[\s\S]*?\]);/);
-  assert(fields,'Actual packed field declaration is available');
-  let now = 0;
-  const context = vm.createContext({
-    Float32Array,Math,Object,Array,Date,performance:{now:()=>now,timeOrigin:1000000},
-    window:{__sluicePerformance:{}},document:{hidden:false,hasFocus:()=>true},
-    navigator:{userAgent:'Local VM'},location:{href:'local-test'},GAME_VERSION:'unit',
-    playPerfFields:vm.runInNewContext(fields[1]),playPerfBucketLimit:96,playPerfChunkSize:1024,
-    playPerfState:()=>({test:true}),
-    playPerfKeys:[],playPerfActive:false,playPerfAuto:false,playPerfTrace:null,
-    diagnosticOn:true,perfOverlayOn:()=>context.diagnosticOn,liquidWGPU:null,
-    jelloBodies:[],keys:{},player:{x:1,y:2,vx:0,vy:0},cam:{x:0,y:0},
-    surfaceSlimeGrip:null,bathMode:false,gamePaused:false,mobileLandscapeBlocked:false,
-    introPhase:'done',liquidCount:0,snow:{active:0,grains:[],parked:[]},
-    jelloRecordedOuterTicks:0,jelloRecordedMicrosteps:0,jelloContactsThisFrame:0,
-    terrainChunkRebuildsThisFrame:0,perfBucketsRaw:{}
-  });
-  vm.runInContext(fs.readFileSync(root+'/js/sluice/022-live-performance.js','utf8'),context);
+  const fixture=createLiveIssueFixture(),context=fixture.context;
+  context.liquidWGPU=null;
   for(let frame=1;frame<=9000;frame++) {
-    now = frame*1000/120;
+    const now=frame*1000/120;fixture.setNow(now);
     context.perfLiveBegin();
     if(frame===360) {
       context.perfLive.gpu.push({frameId:360,name:'test.retained.gpu',at:now,ms:2,passes:[]});
@@ -80,6 +64,19 @@ function autoStartUnit() {
   return {checks:3,loadingGate:true};
 }
 const autoUnit=autoStartUnit();
+const issueUnit=runLiveIssueChecks();
+function presentationUnit() {
+  const css=fs.readFileSync(root+'/sluice-menu.css','utf8');
+  const local=css.slice(css.indexOf('#gm-perf-panel {'),css.indexOf('\n#gm-perf-recorder {'));
+  assert(local&&!/var\(--d-/.test(local),'Performance panel palette is independent of article tokens');
+  const html=fs.readFileSync(root+'/grand-motherload.html','utf8');
+  const panel=html.slice(html.indexOf('<aside id="gm-perf-panel"'),html.indexOf('<pre id="gm-perf-diagnostics-live"'));
+  assert(!panel.includes('id="gm-perf-pin"'),'Issue journal replaces the UI Pin control');
+  assert(panel.indexOf('id="gm-perf-graph"')>panel.indexOf('id="gm-perf-detail-body"'),'Raw timing graph belongs to technical Details');
+  assert(panel.indexOf('id="gm-perf-inspection-evidence"')>panel.indexOf('id="gm-perf-detail-body"'),'Recorded technical evidence belongs to Details');
+  return {checks:4,localGamePalette:true,technicalDetailsOnly:true};
+}
+const presentation=presentationUnit();
 const original = fs.readFileSync(root + '/js/sluice.js', 'utf8');
 const end = original.lastIndexOf('})();');
 assert(end > 0, 'Unique game closure is available');
@@ -93,6 +90,28 @@ const hook = `
     held: function () { return {w:!!keys.w, space:!!keys[' ']}; },
     pauseEnabled: function (on) { PAUSE_DISABLED = !on; },
     rollingSaving: function () { return perfLive.saving; },
+    issues: function () { return perfLiveIssueList(); },
+    selected: function () { return perfLiveGetSelectedIssue(); },
+    clearIssues: function () { perfLiveClearIssues(); if(typeof perfPanelPaint==='function')perfPanelPaint(); },
+    journalCPU: function (name, ms) {
+      // Synthetic diagnostic input for keyed DOM focus checks only. Uses the
+      // actual journal implementation and does not change physics or timing.
+      var snapshot=perfLiveSnapshot(), raw={};raw[name]=ms;
+      var current=Object.assign({},snapshot,{cpuMs:ms,buckets:raw,phases:perfLivePhases(raw,ms)});
+      var event={kind:'cpu',frameId:current.frameId,at:current.atMs,severity:ms,gapMs:null,
+        current:current,previous:null,reference:perfLiveReference(current.atMs)};
+      var issue=perfLiveRememberIssue(event);perfPanelPaint();return issue.id;
+    },
+    journalGPU: function (cpu, ms) {
+      // Synthetic simultaneous CPU/GPU evidence isolates inspector attribution.
+      var snapshot=perfLiveSnapshot(), raw={'update.jello':cpu};
+      var current=Object.assign({},snapshot,{cpuMs:cpu,buckets:raw,phases:perfLivePhases(raw,cpu)});
+      var row={name:'liquid.frame',frameId:current.frameId,at:current.atMs,ms:ms,partial:false,
+        passes:[{name:'snow.contacts',ms:ms,emptyTimestamp:false}]};
+      var event={kind:'gpu',frameId:current.frameId,at:current.atMs,severity:Math.max(cpu,ms),gapMs:null,
+        current:current,previous:null,reference:perfLiveReference(current.atMs),gpu:[row],sourceGPU:row.name};
+      var issue=perfLiveRememberIssue(event);perfPanelPaint();return issue.id;
+    },
     phases: function (raw, cpu) { return perfLivePhases(raw, cpu); },
     stall: function (ms, frames) {
       var previous = update, left = frames;
@@ -126,7 +145,7 @@ const hook = `
 const bundle = original.slice(0, end) + hook + original.slice(end);
 new vm.Script(bundle);
 if (process.env.DRY_RUN === '1') {
-  console.log(JSON.stringify({passed:true,dryRun:true,privateHookParses:true,browserLaunched:false,unit,autoUnit}));
+  console.log(JSON.stringify({passed:true,dryRun:true,privateHookParses:true,browserLaunched:false,unit,autoUnit,issueUnit,presentation}));
   process.exit(0);
 }
 const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2',
@@ -188,7 +207,7 @@ async function screenshot(name) {
   fs.writeFileSync(out + '/' + name + '.png', Buffer.from(shot.data,'base64'));
 }
 async function click(selector) {
-  const point = await evaluate(`(()=>{var r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};})()`);
+  const point = await evaluate(`(()=>{var node=document.querySelector(${JSON.stringify(selector)});node.scrollIntoView({block:'nearest',inline:'nearest'});var r=node.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};})()`);
   await send('Input.dispatchMouseEvent', {type:'mousePressed',...point,button:'left',buttons:1,clickCount:1});
   await send('Input.dispatchMouseEvent', {type:'mouseReleased',...point,button:'left',buttons:0,clickCount:1});
 }
@@ -218,6 +237,15 @@ function captureClocks(capture) {
     for(const key of ['current','previous'])if(capture.slowdown[key]){
       const row=capture.slowdown[key];assert(row.atMs>=-1&&row.atMs<=capture.durationMs+1,'Pinned CPU frame timestamp is relative');
       assert(Number.isFinite(row.pageAtMs),'Pinned CPU frame also preserves original page timestamp');
+    }
+  }
+  for(const issue of capture.issues.concat(capture.selectedIssue?[capture.selectedIssue]:[])) {
+    assert(Number.isFinite(issue.atMs),'Session issue has a relative export timestamp');
+    assert(issue.atMs>=0?issue.atMs<=capture.durationMs+1:issue.outsideHistory,'Historical issue is explicitly outside the rolling window');
+    const event=issue.event;
+    assert(event&&Number.isFinite(event.atMs),'Issue event has a relative export timestamp');
+    for(const key of ['current','previous'])if(event[key]) {
+      const row=event[key];assert(Number.isFinite(row.atMs)&&Number.isFinite(row.pageAtMs),'Issue CPU frames keep relative and original clocks');
     }
   }
 }
@@ -346,6 +374,9 @@ try {
   check('Desktop panel stays inside viewport',desktop.left>=0&&desktop.top>=0&&desktop.right<=1281&&desktop.bottom<=801);
   check('Desktop buttons have 44 pixel targets',desktop.buttons.length>=3&&desktop.buttons.every(b=>b.width>=44&&b.height>=44));
   check('Panel text stays readable',desktop.minFont>=11);
+  check('Main view uses plain diagnosis and prose',await evaluate('!!document.getElementById("gm-perf-diagnosis").textContent&&!!document.getElementById("gm-perf-summary").textContent'));
+  check('Raw graph and CPU evidence stay behind Details',await evaluate('document.getElementById("gm-perf-detail-body").hidden&&document.getElementById("gm-perf-graph").getBoundingClientRect().height===0&&document.getElementById("gm-perf-cpu").getBoundingClientRect().height===0'));
+  check('Panel uses local game palette tokens',await evaluate('(()=>{var s=getComputedStyle(document.getElementById("gm-perf-panel"));return !!s.getPropertyValue("--perf-text").trim()&&!!s.getPropertyValue("--perf-panel").trim()})()'));
   await until('!!__sluicePerformance.liveStatus().workload?.valid','GPU counter readback becomes valid',15000);
   const counter = await evaluate('__sluicePerformance.liveStatus().workload');
   check('GPU counters retain sample frame ID',Number.isInteger(counter.frameId)&&counter.frameId>0&&Number.isFinite(counter.atMs));
@@ -360,7 +391,7 @@ try {
   await evaluate('__livePanelTest.pauseEnabled(true)');
   await click('#gm-pause-btn');
   await until('__livePanelTest.state().paused','Pause control stops play',5000);
-  await until('document.getElementById("gm-perf-budget").textContent.includes("Paused")','Panel headline updates without game callbacks while paused',5000);
+  await until('document.getElementById("gm-perf-fps").textContent==="Paused"','Panel headline updates without game callbacks while paused',5000);
   checks.push('Paused headline updates after game loop stops');
   await evaluate('document.getElementById("gm-perf-details").focus()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
@@ -370,27 +401,50 @@ try {
   checks.push('Escape from focused panel reaches pause controls');
 
   await until('__sluicePerformance.liveStatus().seconds>2.2','Observer passes initial loading grace period',10000);
-  await evaluate('__sluicePerformance.clearPin();__livePanelTest.stall(200,2)');
+  await evaluate('__livePanelTest.clearIssues();__livePanelTest.stall(200,2)');
   await sleep(1000);
-  await click('#gm-perf-pin');
+  await until('__livePanelTest.issues().length>0&&document.querySelector("#gm-perf-issues button[data-perf-issue]")','Major issue is retained and rendered',10000);
+  // Keep compatibility coverage for the recording API after its UI Pin
+  // control was replaced by the session issue journal.
+  await evaluate('__sluicePerformance.pin()');
   const pinned = await evaluate('__sluicePerformance.liveStatus()');
   fs.writeFileSync(out+'/pinned.json',JSON.stringify(pinned));
-  check('Pin retains actual slow update',pinned.pinned&&pinned.worst?.severity>=200&&
+  check('Recording API pin retains actual slow update',pinned.pinned&&pinned.worst?.severity>=200&&
     Math.max(pinned.worst.current.cpuMs,pinned.worst.previous?.cpuMs||0)>=200);
-  await screenshot('pinned');
-  await sleep(11000);
+  const issue=await evaluate('__livePanelTest.issues()[0]');
+  await click('#gm-perf-issues button[data-perf-issue='+JSON.stringify(issue.id)+']');
+  const selected=await evaluate('__livePanelTest.selected()');
+  check('Issue tag opens frozen inspector',selected?.id===issue.id&&await evaluate('document.getElementById("gm-perf-panel").getAttribute("data-perf-view")==="issue"&&!document.getElementById("gm-perf-inspection").hidden&&document.getElementById("gm-perf-live-view").hidden'));
+  check('Selected issue tag exposes native pressed state',await evaluate('document.querySelector("#gm-perf-issues button[aria-pressed=true]")?.getAttribute("data-perf-issue")==='+JSON.stringify(issue.id)));
+  check('Inspector technical evidence stays behind Details',await evaluate('document.getElementById("gm-perf-inspection-evidence").getBoundingClientRect().height===0'));
+  await screenshot('issue-inspection');
+  await evaluate('__livePanelTest.stall(260,1)');
+  await until('__livePanelTest.issues().some(issue=>issue.id==='+JSON.stringify(issue.id)+'&&issue.severity>=260)','New worse issue is retained',10000);
+  check('New worst event does not move selected inspection',(await evaluate('__livePanelTest.selected().event.frameId'))===selected.event.frameId);
+  const focusIssue=await evaluate('__livePanelTest.journalCPU("snow.cpu",80)');
+  await evaluate('document.querySelector('+JSON.stringify('#gm-perf-issues button[data-perf-issue='+JSON.stringify(focusIssue)+']')+').focus()');
+  await evaluate('__livePanelTest.journalCPU("snow.cpu",500)');
+  check('Issue severity reorder preserves native focus on category',await evaluate('document.activeElement?.getAttribute("data-perf-issue")==='+JSON.stringify(focusIssue)));
+  await sleep(31000);
   const recovered = await evaluate('__sluicePerformance.liveStatus()');
-  check('Pinned spike survives recovery and the old ten second expiry',recovered.pinned&&recovered.worst.frameId===pinned.worst.frameId);
+  check('Pinned spike survives recovery beyond rolling history',recovered.pinned&&recovered.worst.frameId===pinned.worst.frameId);
+  check('Session issue survives recovery beyond rolling history',(await evaluate('__livePanelTest.issues().some(issue=>issue.id==='+JSON.stringify(issue.id)+')')));
+  check('Selected inspection survives recovery beyond rolling history',(await evaluate('__livePanelTest.selected().event.frameId'))===selected.event.frameId);
   check('Game recovers while spike remains pinned', (await evaluate('__sluicePerformance.liveSnapshot().cpuMs')) < 200);
   await click('#gm-perf-save');
   await until('!__livePanelTest.rollingSaving()','Rolling save finishes',10000);
   const savedRecent=await downloaded('sluice-last30-');
   captureClocks(savedRecent.capture);
   check('Save 30 seconds downloads a complete compatible trace',savedRecent.capture.metadata.rolling&&savedRecent.capture.frameCount>0&&savedRecent.capture.slowdown?.frameId===pinned.worst.frameId);
+  check('Save includes historical journal and frozen inspection',savedRecent.capture.issues.some(row=>row.id===issue.id&&row.outsideHistory)&&savedRecent.capture.selectedIssue?.id===issue.id&&savedRecent.capture.selectedIssue.outsideHistory&&savedRecent.capture.selectedIssue.event.frameId===selected.event.frameId);
+  const savedReader=JSON.parse(execFileSync(process.execPath,[root+'/tools/perf/read-play-recording.mjs',out+'/downloads/'+savedRecent.file],{encoding:'utf8'}));
+  check('Offline reader preserves retained issues and selection',savedReader.issues.length===savedRecent.capture.issues.length&&savedReader.selectedIssue?.id===issue.id);
   check('Saved frames GPU counters events and slowdown share relative timestamps',true);
   check('Rolling capture reports export snapshot cost',Number.isFinite(savedRecent.capture.observer.exportSnapshotMs));
-  await click('#gm-perf-clear');
-  check('Clear control releases pinned spike',!(await evaluate('__sluicePerformance.liveStatus().pinned')));
+  await click('#gm-perf-back');
+  check('Back returns to live without erasing journal',await evaluate('__livePanelTest.selected()===null&&__livePanelTest.issues().length>0&&document.getElementById("gm-perf-panel").getAttribute("data-perf-view")==="live"'));
+  await click('#gm-perf-issues button[data-perf-issue='+JSON.stringify(issue.id)+']');
+  const selectedBeforeToggle=await evaluate('__livePanelTest.selected()');
 
   await evaluate('__livePanelTest.mockGPU()');
   await f9();
@@ -416,28 +470,39 @@ try {
   check('Dev toggles do not duplicate panel nodes',await evaluate('document.querySelectorAll("#gm-perf-panel").length===1&&document.querySelectorAll("#gm-perf-graph").length===1'));
   check('Dev toggles do not duplicate gameplay callbacks',await evaluate('__livePanelRAFs.max<=1&&__livePanelRAFs.pending()<=1'));
   check('Dev toggles preserve monotonic frame IDs',(await evaluate('__livePanelTest.state().frameId'))>beforeToggle);
+  check('Dev toggles preserve session issue journal',await evaluate('__livePanelTest.issues().some(issue=>issue.id==='+JSON.stringify(issue.id)+')'));
+  check('Dev toggles preserve frozen inspector',(await evaluate('__livePanelTest.selected()?.event.frameId'))===selectedBeforeToggle.event.frameId);
   await click('#gm-perf-details');
   await sleep(200);
   check('Details control reveals diagnostics',await evaluate('__livePanelTest.details()'));
+  check('Details reveals exact selected event evidence',await evaluate('document.getElementById("gm-perf-inspection-evidence").children.length>0&&!document.getElementById("gm-perf-inspection-evidence").hidden&&document.getElementById("gm-perf-cpu").textContent.startsWith("Recorded frame:" )'));
   await screenshot('desktop-details');
   await click('#gm-perf-details');
   check('Details control returns to compact panel',!(await evaluate('__livePanelTest.details()')));
+  await click('#gm-perf-clear');
+  check('Clear issues removes journal inspection and old pin',await evaluate('__livePanelTest.issues().length===0&&__livePanelTest.selected()===null&&!__sluicePerformance.liveStatus().pinned&&!__sluicePerformance.liveStatus().worst'));
+  const gpuIssueId=await evaluate('__livePanelTest.journalGPU(30,70)');
+  await click('#gm-perf-issues button[data-perf-issue='+JSON.stringify(gpuIssueId)+']');
+  check('GPU issue inspector preserves sampled GPU cause when CPU is also costly',await evaluate('document.getElementById("gm-perf-inspection-certainty").textContent==="GPU sampled"&&/snow/i.test(document.getElementById("gm-perf-inspection-title").textContent)&&document.getElementById("gm-perf-inspection-summary").textContent.includes("70.0")'));
+  await click('#gm-perf-clear');
 
   await navigate(true,false,844,390);
   await fullscreen();
   await until('__sluicePerformance.liveStatus().enabled','Short desktop starts observer',10000);
-  await until('!!document.getElementById("gm-perf-cpu").textContent','Short desktop panel paints',10000);
+  await until('!!document.getElementById("gm-perf-summary").textContent','Short desktop panel paints',10000);
+  await evaluate('__livePanelTest.clearIssues()');
   const shortDesktop = await layout();
   await screenshot('short-desktop');
   await navigate(true,true,844,390);
   await fullscreen();
   await until('__sluicePerformance.liveStatus().enabled','Landscape phone starts observer',10000);
-  await until('!!document.getElementById("gm-perf-cpu").textContent','Landscape phone panel paints',10000);
+  await until('!!document.getElementById("gm-perf-summary").textContent','Landscape phone panel paints',10000);
+  await evaluate('__livePanelTest.clearIssues()');
   const mobile = await layout();
   check('Landscape phone panel fits viewport',mobile.left>=0&&mobile.top>=0&&mobile.right<=845&&mobile.bottom<=391);
   check('Landscape phone targets remain 44 pixels',mobile.buttons.every(b=>b.width>=44&&b.height>=44));
   check('Landscape phone text does not shrink',mobile.minFont>=11);
-  const toolbarButtons=buttons=>buttons.filter(b=>['gm-perf-pin','gm-perf-save','gm-perf-details'].includes(b.id));
+  const toolbarButtons=buttons=>buttons.filter(b=>['gm-perf-clear','gm-perf-save','gm-perf-details'].includes(b.id));
   const desktopToolbar=toolbarButtons(shortDesktop.buttons),phoneToolbar=toolbarButtons(mobile.buttons);
   fs.writeFileSync(out+'/layout-comparison.json',JSON.stringify({shortDesktop,mobile},null,2));
   check('Desktop and phone share viewport-based panel layout',
@@ -464,7 +529,7 @@ try {
   await until('!__livePanelTest.state().blocked&&__livePanelTest.state().raf','Landscape restores active play',10000);
 
   assert.deepEqual(errors,[],'No console or unhandled browser errors');
-  const result={passed:true,checks:checks.length+unit.checks+autoUnit.checks,unit,autoUnit,checkNames:checks,out,desktop,shortDesktop,mobile,mobileDetails,
+  const result={passed:true,checks:checks.length+unit.checks+autoUnit.checks+issueUnit.checks+presentation.checks,unit,autoUnit,issueUnit,presentation,checkNames:checks,out,desktop,shortDesktop,mobile,mobileDetails,
     headless:true,ownedChromeForTesting:true,presentationCertified:false};
   fs.writeFileSync(out+'/result.json',JSON.stringify(result,null,2));
   console.log(JSON.stringify(result));
