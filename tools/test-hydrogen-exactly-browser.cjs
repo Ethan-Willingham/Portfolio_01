@@ -142,6 +142,29 @@ async function checkLayerInspection(page) {
   await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5); await page.waitForFunction(()=>document.getElementById('hx-layer-tip').hidden);
   assert.equal(await page.evaluate(()=>HydrogenExactly.pickLayer({u:.5,v:.5})),null);
   const after=await page.evaluate(() => HydrogenExactly.debugReadback()); assert.deepEqual(after.probes,before.probes); assert.equal(after.spatialCapturedMass,before.spatialCapturedMass); assert.equal(after.numericalStepCount,before.numericalStepCount);
+  const originalImage=await page.locator('#hx-canvas').screenshot();
+  const pin=async index=>{
+    const point=points[index]; await page.mouse.click(box.x+box.width*point.u,box.y+box.height*point.v);
+    await page.mouse.move(5,5);
+    await page.waitForFunction(index=>HydrogenExactly.snapshot().pinnedLayer===index,index);
+  };
+  await pin(4); await page.waitForFunction(()=>HydrogenExactly.snapshot().pinnedLayerVisible===true);
+  assert.equal((await snap(page)).parameterValues.selectedLayer,4);
+  const pinned=await page.evaluate(()=>HydrogenExactly.debugReadback()); assert.deepEqual(pinned.probes,before.probes); assert.equal(pinned.spatialCapturedMass,before.spatialCapturedMass); assert.equal(pinned.numericalStepCount,before.numericalStepCount);
+  assert.ok(!originalImage.equals(await page.locator('#hx-canvas').screenshot()));
+  await page.mouse.move(5,5); assert.ok(await page.locator('#hx-layer-tip').isVisible()); await shot(page,'layer-pinned');
+  await page.mouse.move(box.x+box.width*points[1].u,box.y+box.height*points[1].v); assert.equal((await snap(page)).pinnedLayer,4);
+  await pin(3); await pin(4);
+  await turnWithMouse(page,180,-70); assert.equal((await snap(page)).pinnedLayer,4); assert.ok(await page.locator('#hx-layer-tip').isVisible());
+  assert.equal((await snap(page)).numericalStepCount,before.numericalStepCount);
+  await page.evaluate(()=>HydrogenExactly.seek(50)); await page.waitForFunction(()=>HydrogenExactly.snapshot().pinnedLayerVisible===false);
+  assert.equal((await snap(page)).pinnedLayer,4); assert.match(await page.locator('#hx-layer-selection').textContent(),/not visible.*when it returns/);
+  assert.ok(!(await page.evaluate(()=>HydrogenExactly.readLayerPresence())).visibleLayers.includes(4)); await shot(page,'layer-pinned-absent');
+  await page.evaluate(()=>{HydrogenExactly.resetView();HydrogenExactly.seek(0);}); await page.waitForFunction(()=>HydrogenExactly.snapshot().pinnedLayerVisible===true);
+  assert.equal((await snap(page)).pinnedLayer,4); await shot(page,'layer-pinned-return');
+  await page.locator('#hx-clear-layer').focus(); await page.keyboard.press('Escape'); assert.equal((await snap(page)).pinnedLayer,null); assert.ok(await page.locator('#hx-layer-tip').isHidden());
+  await pin(4); await page.mouse.click(box.x+box.width*.5,box.y+box.height*.5); await page.waitForFunction(()=>HydrogenExactly.snapshot().pinnedLayer===null);
+  pass('Click pins and highlights the chosen density level without changing physics; rotation, disappearance and return preserve it, and Escape or empty space clears it');
   await page.evaluate(()=>HydrogenExactly.setMode('spectral'));
   const spectralPoints=await findLayerPoints(page,true); assert.equal(Object.keys(spectralPoints).length,6,JSON.stringify(spectralPoints));
   const sixth=spectralPoints[5]; await page.mouse.move(box.x+box.width*sixth.u,box.y+box.height*sixth.v);
@@ -150,11 +173,14 @@ async function checkLayerInspection(page) {
   await page.evaluate(()=>HydrogenExactly.setMode('revival'));
   await page.locator('#hx-instruments-toggle').click(); await page.locator('[data-density-layer="3"]').focus();
   assert.match(await page.locator('#hx-layer-detail').textContent(),/27 times/);
+  await page.locator('[data-density-layer="3"]').click(); assert.equal((await snap(page)).pinnedLayer,3);
   await page.locator('#hx-view').selectOption('section'); assert.ok(await page.locator('#hx-density-guide').isHidden()); assert.equal(await page.evaluate(()=>HydrogenExactly.pickLayer({u:.33,v:.5})),null);
   await page.locator('#hx-view').selectOption('soft'); assert.ok(await page.locator('#hx-density-guide').isHidden());
+  assert.equal((await snap(page)).pinnedLayer,3);
   await page.locator('#hx-view').selectOption('volume'); await page.locator('#hx-color').selectOption('0'); await page.locator('#hx-instruments-toggle').click();
   const same=await page.evaluate(point=>HydrogenExactly.pickLayer(point),points[3]); assert.equal(same.index,3);
   await page.locator('#hx-instruments-toggle').click(); await page.locator('#hx-color').selectOption('3'); await page.locator('#hx-instruments-toggle').click();
+  await page.evaluate(()=>HydrogenExactly.clearPinnedLayer());
   // Real touch tap opens a bounded card, while a subsequent drag rotates.
   const touchContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   const touch=await open(touchContext); const session=await touchContext.newCDPSession(touch);
@@ -170,11 +196,14 @@ async function checkLayerInspection(page) {
   const touchBefore=await snap(touch);
   await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]}); await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await touch.waitForFunction(()=>!document.getElementById('hx-layer-tip').hidden);
+  assert.equal((await snap(touch)).pinnedLayer,3); await touch.waitForFunction(()=>HydrogenExactly.snapshot().pinnedLayerVisible===true);
   const bounds=await touch.locator('#hx-layer-tip').boundingBox(); assert.ok(bounds.x>=tbox.x && bounds.x+bounds.width<=tbox.x+tbox.width+1 && bounds.y>=tbox.y && bounds.y+bounds.height<=tbox.y+tbox.height);
   assert.equal((await snap(touch)).parameterValues.yaw,touchBefore.parameterValues.yaw); assert.equal((await snap(touch)).numericalStepCount,touchBefore.numericalStepCount);
   const touchShot=path.join(output,'layer-touch.png'); await touch.screenshot({path:touchShot,fullPage:false}); report.screenshots.push(touchShot);
-  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]}); await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+35,y:y+25}]}); await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  assert.notEqual((await snap(touch)).parameterValues.yaw,touchBefore.parameterValues.yaw); assert.ok(await touch.locator('#hx-layer-tip').isHidden());
+  const dragX=tbox.x+tbox.width*.65, dragY=tbox.y+(bounds.y-tbox.y)*.4;
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:dragX,y:dragY}]}); await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:dragX+35,y:dragY+25}]}); await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  assert.notEqual((await snap(touch)).parameterValues.yaw,touchBefore.parameterValues.yaw); assert.ok(await touch.locator('#hx-layer-tip').isVisible()); assert.equal((await snap(touch)).pinnedLayer,3);
+  await touch.locator('#hx-clear-layer').tap(); assert.equal((await snap(touch)).pinnedLayer,null); assert.ok(await touch.locator('#hx-layer-tip').isHidden());
   await session.detach(); await touchContext.close(); await page.mouse.move(5,5);
   pass('Six density levels across both modes have correct explanations; hover, keyboard and touch inspection preserve physics and coexist with rotation');
 }

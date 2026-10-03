@@ -180,12 +180,33 @@ Soft-volume and analytic-section modes do not offer discrete layer picking.
 The sampled boundary can differ from the exact analytic surface by the
 renderer errors described above.
 
-The host allows one pick at a time, at most once every 110 ms, while the
-pointer is over the contour view. It refreshes a stationary hover as the
-packet evolves and stops when paused without new input. A touch tap opens
-the same bounded card; a movement beyond six CSS pixels rotates the camera.
-Instruments also provides six keyboard-focusable layer explanations.
-Inspection neither advances time nor changes the computed field.
+The host allows one inspection read at a time. Hover and pinned-layer presence
+checks run at most once every 110 ms. Explicit clicks take priority and submit
+their pixel copy immediately when no read is pending. A stationary hover follows
+the packet; a click or touch tap instead pins that density level's explanation
+and highlight. Pointer movement and camera rotation cannot replace a selection.
+The renderer brightens the selected ID's pixels and dims the other contours;
+the field and contour IDs stay unchanged. The popup keeps its explanation when
+that layer disappears, and the same level highlights automatically on return.
+
+A small compute pass checks every pixel of the rendered ID texture. Each 32 by
+32 tile reduces locally before contributing to one six-bit global presence mask.
+Only four bytes are read back, using two temporary four-byte buffers, destroyed
+after the read. This measures visibility in the current sampled view, including
+camera occlusion, rather than claiming the level is absent everywhere in the
+analytic field. No presence pass runs without a pinned selection, and paused,
+hidden or offscreen views do not poll unchanged frames. The popup reserves space
+for its changing visibility message. Its touch position leaves the initial
+packet visible below the card; short, wide canvases dock it to the right and
+scroll the card's contents.
+
+A movement beyond six CSS pixels rotates the camera. Clear, Escape or clicking
+empty canvas releases the selection; another contour replaces it. Instruments
+provides six keyboard-focusable explanations, with click, Enter or Space pinning
+that level even if it is absent. Focus alone does not change the selection.
+Switching views keeps it; changing superpositions clears it because their
+physical density thresholds differ. Inspection and highlighting neither advance
+time nor change the computed field.
 
 Contour lighting uses a fixed world-space directional key, a camera-side fill,
 and a tight halfway-vector highlight. Normals face the viewer, with Lambert
@@ -284,12 +305,16 @@ render clears and writes the supplied full-size rgba16float target, applies
 exposure linearly and adds a pass to the host encoder without submitting it.
 step submits the room's own compute command buffer. The host owns the canvas,
 device, output target, presentation, loop and tone mapping. Extra methods are
-setMode, setPresentation, setQuality, densityLayers, pickLayer and benchmark.
+setMode, setPresentation, setQuality, densityLayers, pickLayer, readLayerPresence
+and benchmark. setPresentation({selectedLayer}) accepts a zero-based index 0
+through 5 or null to clear. It changes only presentation uniforms.
 pickLayer({u, v}) uses normalized canvas coordinates with the origin at the
 top left. Submit the host render encoder before calling it. It returns null
 for background, unsupported views, invalid coordinates or a disposed room.
 A successful result contains index (zero based), scaledDensity, relativeDensity,
 densityPerNmCubed, mode and scoreSeconds from the most recently encoded frame.
+readLayerPresence() returns visibleLayers (zero-based indices), mode and
+scoreSeconds from that rendered frame, or null for an unsupported/disposed view.
 Slow mass readbacks include
 their score timestamp and age; absent measurements are null with an explicit
 unavailableMeasurements entry. Numerical step count counts analytic evaluations,
@@ -340,8 +365,8 @@ gitignored research/visualizer/hydrogen-exactly-results directory.
 Measured on October 3, 2026, Apple M1 Pro, hardware Apple Metal-3 WebGPU adapter
 (isFallbackAdapter false), Chrome for Testing 148.0.7778.96. A 24-sample benchmark
 after three warmups at 128 cubed and 1358 by 684 pixels measured compute median
-3.5 ms / p95 5.4 ms, lit contour render with shadows and layer IDs median
-4.5 ms / p95 6.6 ms.
+2.6 ms / p95 2.9 ms, lit contour render with shadows and layer IDs median
+2.9 ms / p95 3.1 ms, with no layer selected.
 These are GPU queue-completion latencies
 including submit/wait overhead, not pure shader timestamps or a claim about
 other devices. Simulation and rendering are timed separately. The final run's
@@ -410,6 +435,12 @@ hover, keyboard focus and CDP touch tap followed by drag. The card stays inside
 the portrait canvas. Background gives no layer; neutral color preserves the
 same picked ID. Inspection leaves GPU probes, captured mass and step count
 unchanged. Soft and section views hide the layer controls.
+Pin checks compare the unchanged probes, mass and step count against a changed
+canvas image, then verify mouse exit, replacement, rotation, Escape and empty
+space. Layer 5 is visible at the initial circular packet, disappears at 50
+seconds and highlights again after returning to time zero. Its popup stays
+selected throughout. Real touch tap pins, dragging outside the interactive
+card rotates without clearing it, and its Clear button releases the selection.
 
 Limitations: no demonstrated knotted nodes, Bohmian tracers, fine structure,
 Lamb shifts, spontaneous emission, or global synchronization.

@@ -1,5 +1,5 @@
 import * as M from './hydrogen-exactly-math.js?v=2';
-import { COMPUTE, PROBES, RENDER, CONTOUR_LEVELS } from './hydrogen-exactly-shaders.js?v=5';
+import { COMPUTE, PROBES, RENDER, CONTOUR_LEVELS, LAYER_PRESENCE } from './hydrogen-exactly-shaders.js?v=6';
 
 export const roomInfo = {
   apiVersion: 1, id: 'hydrogen-exactly', title: 'Hydrogen Exactly', model: M.MODEL,
@@ -25,6 +25,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
   const cie = M.parseCIE(await response.text());
   const colors = M.spectralPairs(M.SPECTRAL, cie);
   let mode = 'revival', overlay = 3, section = false, soft = false, tilt = 0.92, yaw = 0.1;
+  let selectedLayer = null;
   let grid = Math.min(tiers[quality][0], device.limits.maxTextureDimension3D), raySteps = tiers[quality][1];
   let width = 1, height = 1, time = 0, score = 0, steps = 0, disposed = false, field, renderBinding, computeBinding;
   let dirty = true, tint = [0.72, 0.61, 0.39], diagnosticTime = -1, fidelity = { fidelity: 1, rotation: 0 };
@@ -40,13 +41,14 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     return module;
   }
   device.pushErrorScope('validation');
-  let computeModule, probeModule, renderModule;
-  try { computeModule = await shader(COMPUTE); probeModule = await shader(PROBES); renderModule = await shader(RENDER); }
+  let computeModule, probeModule, renderModule, presenceModule;
+  try { computeModule = await shader(COMPUTE); probeModule = await shader(PROBES); renderModule = await shader(RENDER); presenceModule = await shader(LAYER_PRESENCE); }
   catch (error) { await device.popErrorScope(); uniform.destroy(); throw error; }
-  let compute, probePipeline, renderPipeline;
+  let compute, probePipeline, renderPipeline, presencePipeline;
   try {
     compute = await device.createComputePipelineAsync({ label: 'Hydrogen full-spectrum density', layout: 'auto', compute: { module: computeModule, entryPoint: 'volume' } });
     probePipeline = await device.createComputePipelineAsync({ layout: 'auto', compute: { module: probeModule, entryPoint: 'probe' } });
+    presencePipeline = await device.createComputePipelineAsync({ label: 'Hydrogen visible density layers', layout: 'auto', compute: { module: presenceModule, entryPoint: 'presence' } });
     renderPipeline = await device.createRenderPipelineAsync({ label: 'Hydrogen linear volume and contour IDs', layout: 'auto', vertex: { module: renderModule, entryPoint: 'vertex' }, fragment: { module: renderModule, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }, { format: 'r32uint' }] }, primitive: { topology: 'triangle-list' } });
   } catch (error) { await device.popErrorScope(); uniform.destroy(); throw new HydrogenInitializationError(error.message); }
   const initializationError = await device.popErrorScope();
@@ -66,7 +68,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     data.set([grid, side, mode === 'spectral' ? 1 : 0, overlay], 0);
     data.set([width, height, tilt, section ? 1 : (soft ? -1 : 0)], 4);
     data.set([yaw, raySteps, exposure, mode === 'revival' ? 0.14 : 0.26], 8);
-    data.set([...tint, 0], 12);
+    data.set([...tint, selectedLayer === null ? 0 : selectedLayer + 1], 12);
     states.forEach((s, i) => {
       data.set([...phases[i], 0, 0], 16 + i * 4);
       const log = mode === 'revival' ? M.circularLogNorm(s.n) : M.radialLogNorm(s.n, s.l) + 0.5 * Math.log((s.l ? 3 : 1) / (4 * Math.PI));
@@ -104,13 +106,28 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
       width = w; height = h; upload(exposure);
       if (!layerTarget || layerTarget.width !== width || layerTarget.height !== height) {
         layerTarget?.destroy();
-        layerTarget = device.createTexture({ label: 'Hydrogen visible contour IDs', size: [width, height], format: 'r32uint', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
+        layerTarget = device.createTexture({ label: 'Hydrogen visible contour IDs', size: [width, height], format: 'r32uint', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.TEXTURE_BINDING });
       }
       lastRendered = { width, height, mode, scoreSeconds: score, section, soft, layers: densityLayers() };
       const pass = encoder.beginRenderPass({ colorAttachments: [{ view: targetView, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }, { view: layerTarget.createView(), clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: 'clear', storeOp: 'store' }] });
       pass.setPipeline(renderPipeline); pass.setBindGroup(0, renderBinding); pass.draw(3); pass.end();
     },
     densityLayers,
+    async readLayerPresence() {
+      if (disposed || !layerTarget || !lastRendered || lastRendered.section || lastRendered.soft) return null;
+      const frame = lastRendered;
+      const flags = device.createBuffer({ label: 'Hydrogen contour presence mask', size: 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+      const read = device.createBuffer({ label: 'Hydrogen contour presence readback', size: 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+      try {
+        const binding = device.createBindGroup({ layout: presencePipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: layerTarget.createView() }, { binding: 1, resource: { buffer: flags } }] });
+        const encoder = device.createCommandEncoder(); encoder.clearBuffer(flags);
+        const pass = encoder.beginComputePass(); pass.setPipeline(presencePipeline); pass.setBindGroup(0, binding); pass.dispatchWorkgroups(Math.ceil(frame.width / 32), Math.ceil(frame.height / 32)); pass.end();
+        encoder.copyBufferToBuffer(flags, 0, read, 0, 4); device.queue.submit([encoder.finish()]);
+        await read.mapAsync(GPUMapMode.READ);
+        const mask = new Uint32Array(read.getMappedRange())[0];
+        return { visibleLayers: frame.layers.filter(layer => mask & (1 << layer.index)).map(layer => layer.index), mode: frame.mode, scoreSeconds: frame.scoreSeconds };
+      } finally { flags.destroy(); read.destroy(); }
+    },
     async pickLayer({ u, v }) {
       if (disposed || !layerTarget || !lastRendered || lastRendered.section || lastRendered.soft) return null;
       if (![u, v].every(Number.isFinite) || u < 0 || u >= 1 || v < 0 || v >= 1) return null;
@@ -125,9 +142,13 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
         return id > 0 && id <= frame.layers.length ? { ...frame.layers[id - 1], scoreSeconds: frame.scoreSeconds } : null;
       } finally { read.destroy(); }
     },
-    setMode(value) { if (!['revival', 'spectral'].includes(value)) throw new Error('Unknown hydrogen mode.'); mode = value; overlay = value === 'spectral' ? 1 : 3; score = 0; time = 0; diagnosticTime = -1; dirty = true; lastMeasurement = null; update(); },
+    setMode(value) { if (!['revival', 'spectral'].includes(value)) throw new Error('Unknown hydrogen mode.'); mode = value; selectedLayer = null; overlay = value === 'spectral' ? 1 : 3; score = 0; time = 0; diagnosticTime = -1; dirty = true; lastMeasurement = null; update(); },
     setPresentation(value = {}) {
       for (const key of ['yaw', 'tilt']) if (value[key] !== undefined && !Number.isFinite(value[key])) throw new Error('Camera angles must be finite.');
+      if (value.selectedLayer !== undefined) {
+        if (value.selectedLayer !== null && (!Number.isInteger(value.selectedLayer) || value.selectedLayer < 0 || value.selectedLayer >= CONTOUR_LEVELS.length)) throw new Error('Unknown density layer.');
+        selectedLayer = value.selectedLayer;
+      }
       if (value.section !== undefined) section = !!value.section;
       if (value.soft !== undefined) soft = !!value.soft;
       if (value.yaw !== undefined) yaw = value.yaw;
@@ -142,7 +163,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
       return {
         ...roomInfo, numericalStepCount: steps, simulationTime: time, simulationTimeUnits: 'hbar/Eh (atomic time)', simulationTimeSeconds: time * M.ATOMIC_TIME,
         scoreSeconds: score, mode, quality, seed: seed || null, seedProvenance: 'Deterministic analytic initial coefficients; seed is recorded but unused. No random draws or beacon claim.',
-        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, yaw, portraitTiltOffsetRadians: -0.32, contourLevelsScaledDensity: [...CONTOUR_LEVELS], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
+        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, yaw, selectedLayer, portraitTiltOffsetRadians: -0.32, contourLevelsScaledDensity: [...CONTOUR_LEVELS], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
         representativeScaleMeters: M.scaleFor(mode), scaleMeaning: mode === 'revival' ? 'n0^2 a0, characteristic circular radius' : 'n_max^2 a0, characteristic extent of the highest n=5 basis state',
         analyticNorm: M.statesFor(mode).reduce((s, j) => s + j.c_real ** 2 + j.c_imag ** 2, 0),
         autocorrelation: M.autocorrelation(M.statesFor(mode), time), rotationAdjustedOverlap: fidelity.fidelity, bestRotationRadians: fidelity.rotation,

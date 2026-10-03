@@ -1,4 +1,34 @@
 export const CONTOUR_LEVELS = Object.freeze([0.3, 0.9, 2.7, 8.1, 24.3, 72.9]);
+// Inspect every rendered pixel, reducing each 32 by 32 tile before the global OR.
+// The bit mask distinguishes an absent contour from one that moved away from
+// the original click. This pass runs only when the host checks a pinned layer.
+export const LAYER_PRESENCE = /* wgsl */ `
+@group(0) @binding(0) var layers: texture_2d<u32>;
+@group(0) @binding(1) var<storage,read_write> visible: atomic<u32>;
+var<workgroup> tileMask: atomic<u32>;
+@compute @workgroup_size(8,8)
+fn presence(@builtin(workgroup_id) group:vec3<u32>, @builtin(local_invocation_id) local:vec3<u32>, @builtin(local_invocation_index) index:u32) {
+  if (index==0u) { atomicStore(&tileMask,0u); }
+  workgroupBarrier();
+  let size=textureDimensions(layers);
+  var mask=0u;
+  for (var y=0u;y<4u;y++) {
+    for (var x=0u;x<4u;x++) {
+      let pixel=group.xy*32u+local.xy*4u+vec2<u32>(x,y);
+      if (all(pixel<size)) {
+        let id=textureLoad(layers,vec2<i32>(pixel),0).r;
+        if (id>0u && id<=6u) { mask=mask | (1u<<(id-1u)); }
+      }
+    }
+  }
+  if (mask!=0u) { atomicOr(&tileMask,mask); }
+  workgroupBarrier();
+  if (index==0u) {
+    let tile=atomicLoad(&tileMask);
+    if (tile!=0u) { atomicOr(&visible,tile); }
+  }
+}
+`;
 export const EVALUATOR = /* wgsl */ `
 struct Uniforms {
   domain: vec4<f32>,
@@ -262,6 +292,12 @@ fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
       let highlight=pow(max(dot(normal,halfVector/max(length(halfVector),1e-8)),0.0),48.0)*shadow;
       let fill=0.32+0.28*max(dot(normal,normalize(viewDirection+right)),0.0);
       radiance=color*(fill+3.3*diffuse*shadow+0.42*rim)+mix(color,u.tint.rgb,0.35)*highlight*1.35;
+      if (u.tint.w>0.0) {
+        if (highestLevel==u32(u.tint.w)) {
+          // Persistent selection changes presentation, never the density field.
+          radiance=radiance*1.18+mix(color,u.tint.rgb,0.6)*(0.38+0.9*rim);
+        } else { radiance=radiance*0.32; }
+      }
     }
   }
   return output(radiance,layer);

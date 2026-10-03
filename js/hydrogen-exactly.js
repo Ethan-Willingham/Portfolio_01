@@ -1,6 +1,6 @@
 // Standalone host. The room owns no DOM, canvas configuration or animation loop.
-import { createRoom } from './hydrogen-exactly-room.js?v=5';
-import { DISPLAY } from './hydrogen-exactly-shaders.js?v=5';
+import { createRoom } from './hydrogen-exactly-room.js?v=6';
+import { DISPLAY } from './hydrogen-exactly-shaders.js?v=6';
 import * as M from './hydrogen-exactly-math.js?v=2';
 const $ = id => document.getElementById(id);
 const demo = $('hx-demo'), canvas = $('hx-canvas'), status = $('hx-status');
@@ -15,12 +15,16 @@ const adapterInfo = {};
 let beaconAudit = null;
 let cameraYaw = 0.1, cameraTilt = 0.92, drag = null, viewRaf = 0, viewDirty = false;
 let inspection = null, inspectionRevision = 0, inspectionRaf = 0, inspectionTimer = 0, picking = false, lastPickAt = 0, renderSerial = 0;
+let pinnedLayer = null, pinAnchor = null, pinnedLayerVisible = null, lastPresenceSerial = -1;
 const layerTip = $('hx-layer-tip');
 const wrapAngle = value => Math.atan2(Math.sin(value), Math.cos(value));
-function canInspect() { return !!room && !disposed && !busy && visible && intersecting && demo.dataset.ready === 'true' && $('hx-view').value === 'volume'; }
+function canSelectLayer() { return !!room && !disposed && !busy && demo.dataset.ready === 'true' && $('hx-view').value === 'volume'; }
+function canInspect() { return canSelectLayer() && visible && intersecting; }
 function clearInspection() {
-  inspection = null; inspectionRevision++; layerTip.hidden = true;
+  inspection = null; inspectionRevision++; if (!pinnedLayer) layerTip.hidden = true;
   cancelAnimationFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0;
+  // Pointer exit can cancel a pending presence check on an otherwise still view.
+  if (pinnedLayer) requestInspection();
 }
 function fillLayerInfo(element, layer) {
   if (element.dataset.layer === String(layer.index) && element.dataset.mode === layer.mode) return;
@@ -33,39 +37,94 @@ function fillLayerInfo(element, layer) {
 function placeLayerTip(point) {
   const box = canvas.getBoundingClientRect(), card = layerTip.getBoundingClientRect();
   let x = point.x - box.left + 18, y = point.y - box.top + 18;
-  if (point.kind === 'touch') { x = (box.width - card.width) / 2; y = box.height - card.height - 68; }
+  if (point.kind === 'touch') { x = (box.width - card.width) / 2; y = 82; }
+  else if (point.kind === 'keyboard') { x = box.width - card.width - 16; y = box.height - card.height - 68; }
   else { if (x + card.width > box.width - 12) x = point.x - box.left - card.width - 18; if (y + card.height > box.height - 12) y = point.y - box.top - card.height - 18; }
   layerTip.style.left = `${Math.max(12, Math.min(x, box.width - card.width - 12))}px`;
   layerTip.style.top = `${Math.max(12, Math.min(y, box.height - card.height - 12))}px`;
 }
+function placePinnedTip() {
+  if (!pinnedLayer || !pinAnchor) return;
+  const box = canvas.getBoundingClientRect();
+  const kind = box.height < 300 && box.width > 650 ? 'keyboard' : pinAnchor.kind;
+  placeLayerTip({ x: box.left + box.width * pinAnchor.u, y: box.top + box.height * pinAnchor.v, kind });
+}
+function selectionUI() {
+  layerTip.dataset.pinned = String(!!pinnedLayer);
+  layerTip.setAttribute('role', pinnedLayer ? 'group' : 'tooltip');
+  $('hx-clear-layer').hidden = !pinnedLayer; $('hx-layer-selection').hidden = !pinnedLayer;
+  for (const button of $('hx-density-guide').querySelectorAll('button')) button.setAttribute('aria-pressed', String(+button.dataset.densityLayer === pinnedLayer?.index));
+  $('hx-inspection-hint').textContent = pinnedLayer ? `Layer ${pinnedLayer.index + 1} pinned` : 'Hover to inspect. Click or tap to pin.';
+}
+function selectionMessage(text) {
+  const label = $('hx-layer-selection');
+  if (label.textContent !== text) label.textContent = text;
+}
+function clearPinnedLayer(redraw = true) {
+  if (layerTip.contains(document.activeElement)) canvas.focus({ preventScroll: true });
+  pinnedLayer = null; pinAnchor = null; pinnedLayerVisible = null; lastPresenceSerial = -1;
+  room?.setPresentation({ selectedLayer: null }); clearInspection(); selectionUI();
+  if (redraw) render();
+}
+function pinLayer(layer, point) {
+  clearInspection(); pinnedLayer = layer; pinnedLayerVisible = null; lastPresenceSerial = -1;
+  const box = canvas.getBoundingClientRect();
+  pinAnchor = point ? { u: (point.x - box.left) / box.width, v: (point.y - box.top) / box.height, kind: point.kind } : { u: 1, v: 1, kind: 'keyboard' };
+  room.setPresentation({ selectedLayer: layer.index }); fillLayerInfo(layerTip, layer);
+  selectionMessage('Pinned. Checking the current view.');
+  layerTip.dataset.visible = 'unknown'; layerTip.hidden = false; selectionUI(); placePinnedTip(); render();
+}
 function requestInspection() {
-  if (!inspection || !canInspect() || drag || picking || inspectionRaf || inspectionTimer) return;
-  const delay = Math.max(0, 110 - (performance.now() - lastPickAt));
+  if ((!inspection && !pinnedLayer) || !canInspect() || (drag && !pinnedLayer) || picking || inspectionRaf || inspectionTimer) return;
+  if (pinnedLayer && !inspection?.pin && lastPresenceSerial === renderSerial) return;
+  const delay = inspection?.pin ? 0 : Math.max(0, 110 - (performance.now() - lastPickAt));
   if (delay) { inspectionTimer = setTimeout(() => { inspectionTimer = 0; requestInspection(); }, delay); return; }
-  inspectionRaf = requestAnimationFrame(async () => {
+  const inspect = async () => {
     inspectionRaf = 0;
-    if (!inspection || !canInspect() || drag) return;
+    if ((!inspection && !pinnedLayer) || !canInspect() || (drag && !pinnedLayer)) return;
     const point = inspection, revision = inspectionRevision, serial = renderSerial, box = canvas.getBoundingClientRect();
+    const selected = point?.pin ? null : pinnedLayer;
     picking = true; lastPickAt = performance.now();
     try {
+      if (selected) {
+        const presence = await room.readLayerPresence();
+        if (revision !== inspectionRevision || selected !== pinnedLayer || !canInspect()) return;
+        if (presence?.mode === selected.mode) {
+          pinnedLayerVisible = presence.visibleLayers.includes(selected.index); lastPresenceSerial = serial;
+          layerTip.dataset.visible = String(pinnedLayerVisible); layerTip.dataset.score = presence.scoreSeconds;
+          selectionMessage(pinnedLayerVisible ? 'Pinned. This layer is highlighted.' : 'Pinned. This layer is not visible in the current view. It will highlight when it returns.');
+          placePinnedTip();
+        }
+        return;
+      }
       const layer = await room.pickLayer({ u: (point.x - box.left) / box.width, v: (point.y - box.top) / box.height });
       if (revision !== inspectionRevision || !canInspect() || drag) return;
+      if (point.pin) { if (layer) pinLayer(layer, point); else clearPinnedLayer(); return; }
       if (!layer) { layerTip.hidden = true; return; }
       fillLayerInfo(layerTip, layer); layerTip.dataset.score = layer.scoreSeconds; layerTip.hidden = false; placeLayerTip(point);
-    } catch { if (revision === inspectionRevision) layerTip.hidden = true; }
-    finally { picking = false; if (inspection && (revision !== inspectionRevision || serial !== renderSerial)) requestInspection(); }
-  });
+    } catch { if (revision === inspectionRevision && !pinnedLayer) layerTip.hidden = true; }
+    finally { picking = false; if ((inspection || pinnedLayer) && (revision !== inspectionRevision || serial !== renderSerial)) requestInspection(); }
+  };
+  // Submit an explicit click pick before the next animation render when idle.
+  if (inspection?.pin) void inspect(); else inspectionRaf = requestAnimationFrame(inspect);
 }
-function inspectPoint(e) {
-  if (!canInspect()) return;
-  inspection = { x: e.clientX, y: e.clientY, kind: e.pointerType === 'touch' ? 'touch' : 'mouse' }; inspectionRevision++; requestInspection();
+function inspectPoint(e, pin = false) {
+  if (!canInspect() || (!pin && (pinnedLayer || inspection?.pin))) return;
+  inspection = { x: e.clientX, y: e.clientY, kind: e.pointerType === 'touch' ? 'touch' : 'mouse', pin }; inspectionRevision++;
+  if (pin) { cancelAnimationFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0; }
+  requestInspection();
 }
 function updateLayerGuide() {
   const active = !!room && !disposed && demo.dataset.ready === 'true' && $('hx-view').value === 'volume';
   $('hx-density-guide').hidden = !active; $('hx-inspection-hint').hidden = !active;
-  $('hx-inspection-hint').textContent = 'Hover or tap a layer';
+  selectionUI();
   for (const button of $('hx-density-guide').querySelectorAll('button')) button.disabled = !active;
   if (!active) clearInspection();
+  if (pinnedLayer && !active) {
+    pinnedLayerVisible = null; layerTip.dataset.visible = 'unknown';
+    selectionMessage('Pinned. Switch to Density contours to see this highlight.');
+    placePinnedTip();
+  }
 }
 function canRotate() { return !!room && !disposed && !busy && demo.dataset.ready === 'true' && $('hx-view').value !== 'section'; }
 function endDrag() {
@@ -98,6 +157,7 @@ function tokenRGB(name) {
 function playLabel() { $('hx-play').textContent = paused ? 'Play' : 'Pause'; $('hx-play').setAttribute('aria-label', paused ? 'Play animation' : 'Pause animation'); }
 function signal(message) { status.textContent = message; status.hidden = false; }
 function fallback(message) {
+  clearPinnedLayer(false);
   demo.dataset.ready = 'false'; demo.setAttribute('aria-busy', 'false'); signal(message);
   $('hx-mode-label').textContent = 'Computed initial section'; $('hx-encoding-label').textContent = 'CPU still, t = 0';
   $('hx-caption').textContent = '13 circular states, n = 24 to 36'; $('hx-scale').textContent = 'Characteristic radius 47.6 nm';
@@ -129,7 +189,7 @@ function resize() {
   canvas.width = width; canvas.height = height; scene?.destroy();
   scene = device.createTexture({ size: [width, height], format: 'rgba16float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
   displayBinding = device.createBindGroup({ layout: display.getBindGroupLayout(0), entries: [{ binding: 0, resource: scene.createView() }, { binding: 1, resource: device.createSampler({ minFilter: 'linear', magFilter: 'linear' }) }, { binding: 2, resource: { buffer: background } }] });
-  room.resize({ width, height, dpr }); render();
+  room.resize({ width, height, dpr }); placePinnedTip(); render();
 }
 function updateReadouts() {
   if (!room) return;
@@ -197,7 +257,7 @@ function fullscreenLabel() {
   $('hx-fullscreen').textContent = full ? 'Exit fullscreen' : 'Fullscreen'; $('hx-fullscreen').setAttribute('aria-label', full ? 'Exit fullscreen' : 'Enter fullscreen');
 }
 function setMode(value) {
-  clearInspection(); $('hx-layer-detail').hidden = true;
+  clearPinnedLayer(false); $('hx-layer-detail').hidden = true;
   mode = value; room.setMode(value); score = 0; accumulator = 0;
   $('hx-spectrum').hidden = value !== 'spectral'; $('hx-events').hidden = value === 'spectral';
   for (const option of $('hx-color').options) option.disabled = value !== 'spectral' && ['1','2'].includes(option.value);
@@ -217,10 +277,11 @@ $('hx-play').addEventListener('click', () => { paused = !paused; playLabel(); if
 $('hx-instruments-toggle').addEventListener('click', toggleInstruments, options);
 $('hx-restart').addEventListener('click', () => seek(0), options);
 $('hx-reset-view').addEventListener('click', resetView, options);
+$('hx-clear-layer').addEventListener('click', () => clearPinnedLayer(), options);
 for (const name of ['click', 'focusin']) $('hx-density-guide').addEventListener(name, e => {
-  const button = e.target.closest('button[data-density-layer]'); if (!button || !canInspect()) return;
+  const button = e.target.closest('button[data-density-layer]'); if (!button || !canSelectLayer()) return;
   fillLayerInfo($('hx-layer-detail'), room.densityLayers()[+button.dataset.densityLayer]); $('hx-layer-detail').hidden = false;
-  for (const other of $('hx-density-guide').querySelectorAll('button')) other.setAttribute('aria-pressed', String(other === button));
+  if (name === 'click') pinLayer(room.densityLayers()[+button.dataset.densityLayer]);
 }, options);
 $('hx-fullscreen').addEventListener('click', fullscreen, options);
 $('hx-mode').addEventListener('change', e => setMode(e.target.value), options);
@@ -272,16 +333,16 @@ canvas.addEventListener('pointermove', e => {
 }, options);
 for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(name, e => {
   if (drag?.pointerId !== e.pointerId) return;
-  const tap = name === 'pointerup' && e.pointerType === 'touch' && !drag.moved;
-  endDrag(); if (tap) inspectPoint(e);
+  const tap = name === 'pointerup' && !drag.moved;
+  endDrag(); if (tap) inspectPoint(e, true); else requestInspection();
 }, options);
-canvas.addEventListener('pointerleave', () => { if (inspection?.kind !== 'touch') clearInspection(); }, options);
+canvas.addEventListener('pointerleave', () => { if (!inspection?.pin && inspection?.kind !== 'touch') clearInspection(); }, options);
 document.addEventListener('pointerdown', e => { if (e.target !== canvas) clearInspection(); }, options);
 window.addEventListener('scroll', clearInspection, { ...options, passive: true });
-document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (!visible) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); } }, options);
+document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (!visible) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); requestInspection(); } }, options);
 demo.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (pinnedLayer) { e.preventDefault(); clearPinnedLayer(); } else clearInspection(); return; }
   if (e.target.matches('input,select,button')) return;
-  if (e.key === 'Escape') clearInspection();
   if (e.target === canvas && canRotate()) {
     const step = e.shiftKey ? 0.3 : 0.12;
     const turns = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
@@ -295,7 +356,7 @@ demo.addEventListener('keydown', e => {
 }, options);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && demo.classList.contains('hx-pseudo-fullscreen')) fullscreen(); }, options);
 function dispose() {
-  if (disposed) return; clearInspection(); endDrag(); disposed = true; stop(); cameraInteraction(); controller.abort(); observer?.disconnect(); resizeObserver?.disconnect(); room?.dispose(); scene?.destroy(); background?.destroy(); context?.unconfigure(); device?.destroy();
+  if (disposed) return; clearPinnedLayer(false); endDrag(); disposed = true; stop(); cameraInteraction(); controller.abort(); observer?.disconnect(); resizeObserver?.disconnect(); room?.dispose(); scene?.destroy(); background?.destroy(); context?.unconfigure(); device?.destroy();
 }
 window.addEventListener('pagehide', dispose, options);
 playLabel();
@@ -330,16 +391,17 @@ async function init() {
     }
     room.setMode(spectral.mode);
     resizeObserver = new ResizeObserver(resize); resizeObserver.observe($('hx-stage'));
-    observer = new IntersectionObserver(entries => { intersecting = entries[0].isIntersecting; if (!intersecting) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); } }); observer.observe($('hx-stage'));
+    observer = new IntersectionObserver(entries => { intersecting = entries[0].isIntersecting; if (!intersecting) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); requestInspection(); } }); observer.observe($('hx-stage'));
     demo.dataset.ready = 'true'; demo.setAttribute('aria-busy', 'false'); status.hidden = true;
     cameraInteraction();
     resize(); seek(0); schedule();
     // Small explicit diagnostics surface for model and lifecycle browser checks.
     window.HydrogenExactly = {
-      snapshot: () => ({ ...room.snapshot(), paused, running, visible, intersecting, cameraDragging: !!drag, adapter: adapterInfo, renderWidth: canvas.width, renderHeight: canvas.height, evaluationCadenceDivider: updateEvery, beaconAudit }),
+      snapshot: () => ({ ...room.snapshot(), paused, running, visible, intersecting, cameraDragging: !!drag, pinnedLayer: pinnedLayer?.index ?? null, pinnedLayerVisible, adapter: adapterInfo, renderWidth: canvas.width, renderHeight: canvas.height, evaluationCadenceDivider: updateEvery, beaconAudit }),
       seek, setMode: value => { $('hx-mode').value = value; setMode(value); },
       setCamera: ({ yaw, tilt }) => setCamera(yaw, tilt), resetView,
       pickLayer: point => room.pickLayer(point),
+      readLayerPresence: () => room.readLayerPresence(), clearPinnedLayer: () => clearPinnedLayer(),
       debugReadback: async () => { const resume = !paused; busy = true; stop(); try { return await room.debugReadback(); } finally { busy = false; if (resume) schedule(); } },
       benchmark: async count => { busy = true; stop(); try { return await room.benchmark(count); } finally { busy = false; schedule(); } },
       debugLoseDevice: () => device.destroy(), dispose
