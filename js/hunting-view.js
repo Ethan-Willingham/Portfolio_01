@@ -25,6 +25,17 @@
     return { x: (x - W / 2) * geometry.aimDepth / geometry.focal, y: geometry.aimDepth,
       h: geometry.eyeHeight - (y - geometry.horizon) * geometry.aimDepth / geometry.focal };
   }
+  function sightRange(world, sight, depth) {
+    const eye = world.hunter, dx = sight.x - eye.x, dy = sight.y - eye.y, dh = sight.h - eye.height;
+    if (!(dy > 0)) return null;
+    const animal = Number.isFinite(depth);
+    // The aiming reference lies at depth 100. Follow its ray to the visible
+    // animal's plane, or to the field's ground, before measuring distance.
+    const t = animal ? (depth - eye.y) / dy : dh < 0 ? -eye.height / dh : Infinity;
+    if (!(t > 0) || !Number.isFinite(t)) return null;
+    return { yards: Math.hypot(dx, dy, dh) * t / .9144, surface: animal ? 'animal' : 'ground',
+      point: { x: eye.x + dx * t, y: eye.y + dy * t, h: eye.height + dh * t } };
+  }
   function mix(a, b, t) {
     const aa = parseInt(a.slice(1), 16), bb = parseInt(b.slice(1), 16);
     const channel = shift => Math.round((aa >> shift & 255) * (1 - t) + (bb >> shift & 255) * t);
@@ -65,7 +76,7 @@
       this.scene = scene; this.detailUse = 0; this.activeDetail = [];
       this.rasters = new Map(); this.rasterBuilds = 0;
       this.detailTiles = new Map((scene?.tiles || []).map(tile => [tile.id, { ...tile, state: 'idle', image: null, used: 0 }]));
-      this.onArtReady = null;
+      this.onArtReady = null; this.onRange = null; this.lastRange = null;
       // Warm the common center-field targets while the compact overview is already playable.
       setTimeout(() => {
         for (const tile of this.detailTiles.values()) if ([1, 2].includes(tile.row) && [1, 2].includes(tile.col)) this.requestDetail(tile);
@@ -330,28 +341,37 @@
       g.imageSmoothingEnabled = false;
       g.drawImage(image, -size.width / 2, -size.height, size.width, size.height); g.restore();
     }
-    critter(g, animal, tone) {
+    spriteHit(art, at, size, flip, lean, point) {
+      let x = (point.x - at.x) * (flip ? -1 : 1), y = point.y - at.y;
+      if (lean) { const cos = Math.cos(lean), sin = Math.sin(lean); [x, y] = [x * cos + y * sin, -x * sin + y * cos]; }
+      const hit = HuntingPhysics.hitPixel(art, true, x / size.width + .5, -y / size.height);
+      return hit === 'vitals' || hit === 'wound';
+    }
+    critter(g, animal, tone, sight = null) {
       const at = project(animal, this.camera), s = scaleAt(animal.y) * this.camera.zoom;
-      if (at.x < -30 || at.x > W + 30 || at.y < -30 || at.y > H + 30) return;
+      if (at.x < -30 || at.x > W + 30 || at.y < -30 || at.y > H + 30) return false;
+      let hit = false;
+      const px = sight && sight.x * this.canvas.width / W, py = sight && sight.y * this.canvas.height / H;
+      const fill = () => { if (sight && g.globalAlpha > .01) hit = g.isPointInPath(px, py) || hit; g.fill(); };
       g.save(); g.globalAlpha *= animal.opacity ?? 1; g.translate(at.x, at.y); g.scale(s * (animal.facingRight === false ? -1 : 1), s);
       const kind = animal.species || animal.kind, motion = animal.stride || animal.age || this.time;
       if (kind === 'owl') {
         const flap = Math.sin(motion * 3) * .4; g.fillStyle = mix('#6c6047', '#333c2d', 1 - tone.daylight);
         g.beginPath(); g.moveTo(-.12, -.22); g.lineTo(-1.2, -.05 - flap); g.lineTo(-.9, .2 - flap * .5);
-        g.lineTo(-.22, .18); g.lineTo(0, .5); g.lineTo(.22, .18); g.lineTo(.9, .2 - flap * .5); g.lineTo(1.2, -.05 - flap); g.lineTo(.12, -.22); g.closePath(); g.fill();
-        g.fillStyle = mix('#c0ab7a', '#827856', 1 - tone.daylight); g.beginPath(); g.ellipse(0, -.12, .22, .26, 0, 0, Math.PI * 2); g.fill();
-        g.fillStyle = palette.ink; g.beginPath(); g.arc(-.095, -.18, .055, 0, Math.PI * 2); g.arc(.095, -.18, .055, 0, Math.PI * 2); g.fill();
-        g.beginPath(); g.moveTo(-.2, -.25); g.lineTo(-.19, -.43); g.lineTo(-.07, -.3); g.moveTo(.07, -.3); g.lineTo(.19, -.43); g.lineTo(.2, -.25); g.fill();
+        g.lineTo(-.22, .18); g.lineTo(0, .5); g.lineTo(.22, .18); g.lineTo(.9, .2 - flap * .5); g.lineTo(1.2, -.05 - flap); g.lineTo(.12, -.22); g.closePath(); fill();
+        g.fillStyle = mix('#c0ab7a', '#827856', 1 - tone.daylight); g.beginPath(); g.ellipse(0, -.12, .22, .26, 0, 0, Math.PI * 2); fill();
+        g.fillStyle = palette.ink; g.beginPath(); g.arc(-.095, -.18, .055, 0, Math.PI * 2); g.arc(.095, -.18, .055, 0, Math.PI * 2); fill();
+        g.beginPath(); g.moveTo(-.2, -.25); g.lineTo(-.19, -.43); g.lineTo(-.07, -.3); g.moveTo(.07, -.3); g.lineTo(.19, -.43); g.lineTo(.2, -.25); fill();
       } else {
         const hop = Math.max(0, Math.sin(motion * 3.5)) * .1; g.translate(0, -hop); g.fillStyle = mix('#886c47', '#4f5037', 1 - tone.daylight);
-        g.beginPath(); g.ellipse(-.33, -.37, .18, .31, -.4, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.ellipse(-.33, -.37, .18, .31, -.4, 0, Math.PI * 2); fill();
         g.fillStyle = mix('#b89964', '#736445', 1 - tone.daylight);
-        g.beginPath(); g.ellipse(-.02, -.18, .26, .17, -.25, 0, Math.PI * 2); g.ellipse(.19, -.33, .12, .14, 0, 0, Math.PI * 2); g.fill();
-        g.beginPath(); g.moveTo(.14, -.43); g.lineTo(.17, -.56); g.lineTo(.23, -.44); g.fill();
+        g.beginPath(); g.ellipse(-.02, -.18, .26, .17, -.25, 0, Math.PI * 2); g.ellipse(.19, -.33, .12, .14, 0, 0, Math.PI * 2); fill();
+        g.beginPath(); g.moveTo(.14, -.43); g.lineTo(.17, -.56); g.lineTo(.23, -.44); fill();
         g.fillStyle = palette.ink; g.fillRect(.23, -.37, .034, .034);
-        g.strokeStyle = '#a38a60'; g.lineWidth = .07; g.beginPath(); g.moveTo(.02, -.1); g.lineTo(.14, -.02); g.moveTo(-.16, -.08); g.lineTo(-.24, -.01); g.stroke();
+        g.strokeStyle = '#a38a60'; g.lineWidth = .07; g.beginPath(); g.moveTo(.02, -.1); g.lineTo(.14, -.02); g.moveTo(-.16, -.08); g.lineTo(-.24, -.01); g.stroke(); if (sight && g.globalAlpha > .01) hit = g.isPointInStroke(px, py) || hit;
       }
-      g.restore();
+      g.restore(); return hit;
     }
     drawTrail(g, points, alpha) {
       const usable = points.filter(p => p.y > 1); if (!usable.length) return;
@@ -364,6 +384,9 @@
       // There is no tiny overview image stretched into a magnified scene.
       g.setTransform(this.canvas.width / W, 0, 0, this.canvas.height / H, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.clearRect(0, 0, W, H);
       const tone = this.tone(minute), painted = world.backdrop !== 'marsh';
+      const ranging = this.camera.zoom > 1 && showReticle;
+      const sight = world.sight ? world.sight(aim) : world.aim(aim), crosshair = ranging ? project(sight, this.camera) : null;
+      let rangeDepth = Infinity;
       if (this.camera.zoom > 1) this.releaseRaster('stand');
       if (!painted) { this.releaseRaster('sky'); this.releaseRaster('terrain'); }
       // Painted scenery keeps its authored exposure and color at every clock time.
@@ -372,7 +395,8 @@
       for (const drop of world.blood || []) { const at = project(drop, this.camera), s = scaleAt(drop.y) * this.camera.zoom; g.fillStyle = '#884c3d'; g.fillRect(at.x, at.y, Math.max(1, s * .12), Math.max(.7, s * .04)); }
       const residents = [...(world.deer || []).map(animal => ({ animal, game: true })), ...(world.ambient || world.critters || []).map(animal => ({ animal, game: false }))].sort((a, b) => b.animal.y - a.animal.y);
       for (const resident of residents) {
-        const deer = resident.animal; if (!resident.game) { this.critter(g, deer, tone); continue; }
+        const deer = resident.animal;
+        if (!resident.game) { if (this.critter(g, deer, tone, crosshair)) rangeDepth = Math.min(rangeDepth, deer.y); continue; }
         const image = this.sprites[world.animalSprite(deer)] || this.sprites.deer;
         const size = world.animalSize ? world.animalSize(deer) : { width: image.width / T.pixelsPerUnit, height: image.height / T.pixelsPerUnit };
         const s = scaleAt(deer.y) * this.camera.zoom, at = project(deer, this.camera), rendered = { width: size.width * s, height: size.height * s };
@@ -381,12 +405,18 @@
         g.fillStyle = palette.shadow; const opacity = g.globalAlpha; g.globalAlpha *= .3;
         g.beginPath(); g.ellipse(at.x, at.y + s * .025, rendered.width * .42, s * .075, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = opacity;
         const bob = deer.state === 'walking' || deer.state === 'fleeing' ? Math.sin(deer.stride) * s * .025 : 0;
-        this.sprite(g, image, { x: at.x, y: at.y + bob }, rendered, !deer.facingRight, deer.state === 'down' ? (deer.facingRight ? -1.5 : 1.5) : 0); g.restore();
+        const foot = { x: at.x, y: at.y + bob }, flip = !deer.facingRight, lean = deer.state === 'down' ? (deer.facingRight ? -1.5 : 1.5) : 0;
+        this.sprite(g, image, foot, rendered, flip, lean); g.restore();
+        if (ranging && opacity > .01 && deer.y < rangeDepth && this.spriteHit(world.animalArt(deer), foot, rendered, flip, lean, crosshair)) rangeDepth = deer.y;
         if (guide && this.camera.zoom > 1 && deer.state !== 'down' && !deer.bleed) {
           const art = world.animalArt(deer), vx = art.vitalsX ?? T.vitalsX, vy = art.vitalsY ?? T.vitalsY, u = deer.facingRight ? vx : 1 - vx;
           const p = project({ x: deer.x + (u - .5) * size.width, y: deer.y, h: vy * size.height }, this.camera);
           g.strokeStyle = palette.gold; g.lineWidth = .8; g.beginPath(); g.arc(p.x, p.y, Math.max(2, (art.radius ?? T.vitalsRadius) * rendered.width), 0, Math.PI * 2); g.stroke();
         }
+      }
+      if (ranging || this.camera.zoom <= 1) {
+        this.lastRange = ranging ? sightRange(world, sight, rangeDepth) : null;
+        if (this.onRange) this.onRange(this.lastRange, ranging);
       }
       if (guide && showReticle && this.camera.zoom > 1) {
         const sight = world.sight ? world.sight(aim) : world.aim(aim), shot = HuntingPhysics.launch(world.hunter, sight, world.wind * (world.options.windScale ?? 1)), points = [];
@@ -486,7 +516,9 @@
         for (let i = -3; i <= 3; i++) { if (!i) continue; g.beginPath(); g.moveTo(at.x + i * 14, at.y - 3); g.lineTo(at.x + i * 14, at.y + 3); g.moveTo(at.x - 3, at.y + i * 14); g.lineTo(at.x + 3, at.y + i * 14); g.stroke(); }
         g.fillStyle = palette.warn; g.beginPath(); g.arc(at.x, at.y, 1.2, 0, Math.PI * 2); g.fill(); g.restore();
       }
-      g.fillStyle = palette.gold; g.font = '9px "Commit Mono", monospace'; g.textAlign = 'center'; g.fillText('6x', cx, H - 6); g.textAlign = 'start';
+      if (!this.onRange || !showReticle) {
+        g.fillStyle = palette.gold; g.font = '9px "Commit Mono", monospace'; g.textAlign = 'center'; g.fillText('6x', cx, H - 6); g.textAlign = 'start';
+      }
     }
   }
   window.HuntingView = { loadArt, View, project, unproject, geometry, scaleAt };

@@ -19,6 +19,8 @@ composition. Version 9 adds native scope detail. Version 10 removes artificial
 dimming and tinting so the painted scenery keeps its source colors. Version 11
 caches scenery at display resolution and avoids unchanged UI writes;
 `assets/hunting/source-v9/ASSET_BRIEF.md` records production and visual review.
+Version 12 adds live crosshair yardage. Its interface brief and range contract
+are in `hunting-style/RANGEFINDER.md`.
 Animals, Cypress scenery and the remaining interface await their own passes.
 
 ## Sources
@@ -146,6 +148,17 @@ Rendering and collisions use each animal's own physical size and sprite.
 The renderer draws the scene at the final magnified scale, so scoped animals
 retain their source detail instead of enlarging an already tiny field image.
 
+The scope's HTML readout follows the visible crosshair and reports line-of-sight
+distance to one decimal yard. It intersects the sight ray with the nearest
+opaque animal under that exact pixel, or with the flat ground when no animal
+covers it. Actual sprite alpha, facing, walking bob and downed rotation are
+used; owls and squirrels use their rendered vector paths. Transparent gaps
+return the ground behind them. The distance includes lateral displacement and
+stand height, with one yard equal to 0.9144 world units. The depth-100 aiming
+reference is not itself the measured destination. Sky and horizon rays without
+a finite surface show `No range`. Painted scenery uses the existing ground
+projection; decorative foliage has no separate 3D depth surface.
+
 The rifle launches along the sight ray. Vertical position follows
 `h = muzzleHeight + verticalVelocity * age - 0.5 * gravity * age^2`.
 Sideways displacement includes `0.5 * wind * windStrength * age^2`. Raising
@@ -212,6 +225,7 @@ node tools/hunting-art-reference.cjs --check
 NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs --benchmark
+NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs --range-webkit
 ```
 
 Campaign checks cover save compatibility, deer unlocks and retained historical
@@ -237,6 +251,10 @@ buffers remain below 13 million pixels. The benchmark runs the real animation
 loop in Chrome for Testing and WebKit, measuring wide view, steady scope and
 continuous scope panning. See `hunting-style/PERFORMANCE.md` for the version 11
 comparison, memory budget and repeatable baseline command.
+Range checks cover known near/far/sideways ground points, exact sprite surfaces
+in both orientations for every deer and boar, leg gaps, ambient wildlife, sky,
+real pointer movement, scope panning, unchanged-value DOM writes, Retina
+alignment and readable phone layouts without overlap with field statistics.
 Captures cover dawn, noon, dusk and night. Closing More
 offscreen keeps the field paused. The checks
 also inspect desktop, portrait, narrow-phone and
@@ -245,5 +263,5 @@ landscape layouts for overflow and usable controls.
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v11-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v12-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.

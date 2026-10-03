@@ -21,6 +21,8 @@
 .hunt-stage { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; overflow: hidden; background: var(--bg-raised); }
 #hunt-canvas { display: block; flex-shrink: 0; image-rendering: auto; touch-action: none; cursor: crosshair; }
 .hunt-game[data-phase="running"] #hunt-canvas[data-scoped="true"] { cursor: none; }
+.hunt-range { position: absolute; left: 50%; top: calc(50% + var(--hunt-canvas-height, 360px) / 2 - 2.25rem); transform: translate(-50%, -100%); display: flex; align-items: center; gap: .65rem; padding: .25rem .5rem; background: var(--bg-raised); color: var(--accent); font: .8rem var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
+.hunt-range > span { color: var(--text-faint); }
 .hunt-field-stats { position: absolute; left: .8rem; bottom: .55rem; display: flex; gap: 1rem; padding: .3rem .55rem; background: color-mix(in srgb, var(--bg-raised) 80%, transparent); pointer-events: none; font: .6rem var(--font-mono); color: var(--text-dim); }
 .hunt-field-stats output { color: var(--text); margin-left: .25rem; }
 .hunt-actions { display: flex; gap: .55rem; padding: .7rem 1rem; flex: none; border-top: 1px solid var(--rule); }

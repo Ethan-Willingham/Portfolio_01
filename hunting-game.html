@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="hunting-game.css?v=11">
+  <link rel="stylesheet" href="hunting-game.css?v=12">
 </head>
 <body class="hunt-page">
   <div class="site-wrapper">
@@ -44,6 +44,7 @@
         </header>
         <div class="hunt-stage" id="hunt-stage">
           <canvas id="hunt-canvas" width="640" height="360" tabindex="0" aria-label="A wide field seen from a lookout. Hold F or Space to fast-forward. Release to watch at normal speed. Click to raise the scope. Move the mouse to aim; toward the lens edge to look around, toward the center to steady. Click again to shoot. Q lowers the scope. On touchscreens, drag to aim and use Aim, then Shoot." aria-describedby="hunt-instructions">This game needs a browser with canvas support.</canvas>
+          <div class="hunt-range" id="hunt-range" hidden><span>6x</span><output id="hunt-range-value" aria-label="Distance to the crosshair" aria-live="off">No range</output></div>
           <div class="hunt-field-stats" aria-label="Field conditions"><span>Wind <output id="hunt-wind">Calm</output></span><span>Rounds <output id="hunt-ammo">5 / 5</output></span><span>Recovered <output id="hunt-recovered">0</output></span></div>
           <div class="hunt-overlay" id="hunt-overlay" role="dialog" aria-modal="false" aria-labelledby="hunt-overlay-title">
             <div class="hunt-briefing"><p class="hunt-kicker">The lookout</p><h2 id="hunt-overlay-title">Opening the field.</h2><p id="hunt-overlay-text">Loading the wildlife.</p><button class="hunt-primary" id="hunt-start" type="button" disabled>Loading...</button></div>
@@ -83,10 +84,10 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/hunting-physics.js?v=11"></script>
-  <script src="js/hunting-campaign.js?v=11"></script>
-  <script src="js/hunting-view.js?v=11"></script>
-  <script src="js/hunting-game.js?v=11"></script>
+  <script src="js/hunting-physics.js?v=12"></script>
+  <script src="js/hunting-campaign.js?v=12"></script>
+  <script src="js/hunting-view.js?v=12"></script>
+  <script src="js/hunting-game.js?v=12"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

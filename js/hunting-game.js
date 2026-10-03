@@ -28,6 +28,7 @@
     const stage = $('stage'), scale = Math.min(stage.clientWidth / T.width, stage.clientHeight / T.height);
     canvas.style.width = Math.max(1, Math.floor(T.width * scale)) + 'px';
     canvas.style.height = Math.max(1, Math.floor(T.height * scale)) + 'px';
+    stage.style.setProperty('--hunt-canvas-height', canvas.style.height);
     const renderScale = Math.max(1, Math.min(4, scale * Math.min(2, window.devicePixelRatio || 1)));
     const width = Math.round(T.width * renderScale), height = Math.round(T.height * renderScale);
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
@@ -303,6 +304,10 @@
   }
   HuntingView.loadArt().then(loaded => {
     art = loaded; view = new HuntingView.View(canvas, art.sprites, art.scene); view.onArtReady = () => draw();
+    view.onRange = (range, scoped) => {
+      setProperty('range', 'hidden', !scoped);
+      if (scoped) setText('range-value', range ? 'Range ' + range.yards.toFixed(1) + ' yd' : 'No range');
+    };
     beginField(); setPhase('running'); fitCanvas(); renderOptions(); raf = requestAnimationFrame(frame);
   }).catch(error => {
     $('overlay-title').textContent = 'The field did not load'; $('overlay-text').textContent = error.message + ' Reload to try again.';
