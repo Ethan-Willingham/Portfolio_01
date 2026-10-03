@@ -91,6 +91,52 @@
   function initShopper(w){
     const b=w.body,c=Math.cos(b.a),s=Math.sin(b.a),x=b.x-16*c,y=b.y-16*s,floor=w.floorAt({x,y});
     w.shopper={x,y,z:(floor?.height??b.z)+18,vx:b.vx,vy:b.vy,vz:b.vz,leanX:0,leanY:0,leanVX:0,leanVY:0,feet:floor?1:0,crouch:0,grip:1};
+    w.ragdoll=null;
+  }
+  // Pelvis, chest, head, then paired hips, shoulders, elbows, hands, knees,
+  // ankles. The torso is braced; the limbs keep independent momentum.
+  const RAG_PAIRS=[[0,1],[0,3],[0,4],[0,5],[0,6],[1,3],[1,4],[1,5],[1,6],[3,4],[3,5],[3,6],[4,5],[4,6],[5,6],[1,2],[5,7],[7,9],[6,8],[8,10],[3,11],[11,13],[4,12],[12,14]];
+  const RAG_RADIUS=[2.8,3.5,4,2.4,2.4,2.5,2.5,1.6,1.6,1.3,1.3,1.8,1.8,2,2];
+  const RAG_INVERSE=[1,1,2,2,2,2,2,4,4,5,5,3,3,4,4];
+  function ragdollPose(w){
+    const p=w.shopper,b=w.body,c=Math.cos(b.a),s=Math.sin(b.a),g=w.gait;
+    const at=(x,y,z)=>({x:p.x+x*c-y*s,y:p.y+x*s+y*c,z:p.z+z});
+    const vector=(x,y,z)=>({x:x*c-y*s,y:x*s+y*c,z});
+    const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z});
+    const joint=(a,b,l1,l2,hint)=>{const delta=sub(b,a),distance=Math.hypot(delta.x,delta.y,delta.z),axis=normalize(delta),scale=Math.max(1,distance/(l1+l2-.06));l1*=scale;l2*=scale;const d=clamp(distance,Math.abs(l1-l2)+.001,l1+l2-.001),along=(l1*l1-l2*l2+d*d)/(2*d),projection=dot(axis,hint);let bend=sub(hint,{x:axis.x*projection,y:axis.y*projection,z:axis.z*projection});if(Math.hypot(bend.x,bend.y,bend.z)<.001)bend=vector(0,1,0);bend=normalize(bend);const radius=Math.sqrt(Math.max(0,l1*l1-along*along));return {x:a.x+axis.x*along+bend.x*radius,y:a.y+axis.y*along+bend.y*radius,z:a.z+axis.z*along+bend.z*radius};};
+    const sway=Math.cos(g.phase||0)*clamp((g.stride||0)/2.8,0,1)*.24,lx=p.leanX,ly=p.leanY+sway;
+    const nodes=[at(0,0,0),at(lx*10.1/11.5,ly*10.1/11.5,10.1),at(lx,ly,18.5)];
+    for(const side of [-1,1])nodes.push(at(0,side*2.65,-.1));
+    for(const side of [-1,1])nodes.push(at(lx*10.1/11.5,side*4.7+ly*10.1/11.5,10.1));
+    const hands=[-1,1].map(side=>kinematics(b,-6,side*8.7,30).p);
+    hands.forEach((hand,i)=>nodes.push(joint(nodes[5+i],hand,8.5,8.8,vector(-.7,(i?1:-1)*.85,-.4))));nodes.push(...hands);
+    const ankles=[-1,1].map(side=>{const t=(((g.phase||0)/(Math.PI*2)+(side===1?.5:0))%1+1)%1,swing=Math.max(0,(t-.6)/.4),reach=t<.6?1-t/.3:-1+2*swing*swing*(3-2*swing),travel=reach*(g.stride||0),lift=Math.sin(swing*Math.PI)*clamp((g.stride||0)/2.8,0,1)*3.6;const foot=at(travel*(g.forward??1)-1,side*3.35+travel*(g.sideways||0)*.65,-18+lift),floor=w.floorAt(foot);if(p.feet&&floor)foot.z=floor.height+lift;else foot.z=Math.min(foot.z,p.z-10+lift);foot.z+=2.1;return foot;});
+    ankles.forEach((ankle,i)=>nodes.push(joint(nodes[3+i],ankle,10,10,vector(1,(i?1:-1)*.12,0))));nodes.push(...ankles);return nodes;
+  }
+  function releaseShopper(w){
+    if(w.ragdoll)return;
+    const b=w.body,p=w.shopper,pose=ragdollPose(w),away=normalize({x:p.x-b.x,y:p.y-b.y,z:0}),side={x:-away.y,y:away.x,z:0},spin={x:side.x*6.8+away.x*2.4,y:side.y*6.8+away.y*2.4,z:(b.omega||0)+2.2};
+    const nodes=pose.map(q=>{const r={x:q.x-p.x,y:q.y-p.y,z:q.z-p.z};return {...q,vx:p.vx+away.x*65+spin.y*r.z-spin.z*r.y,vy:p.vy+away.y*65+spin.z*r.x-spin.x*r.z,vz:Math.max(0,p.vz)+132+spin.x*r.y-spin.y*r.x,supported:false};});
+    w.ragdoll={nodes,lengths:RAG_PAIRS.map(([i,j])=>Math.hypot(pose[i].x-pose[j].x,pose[i].y-pose[j].y,pose[i].z-pose[j].z)),time:0,impactTime:null};
+    p.feet=0;p.grip=0;w.ground.feet=0;
+    w.emit('shopper-launch',{x:p.x,y:p.y,z:p.z});
+  }
+  function validRagdoll(r){
+    return r&&Array.isArray(r.nodes)&&r.nodes.length===15&&r.nodes.every(n=>n&&['x','y','z','vx','vy','vz'].every(k=>Number.isFinite(n[k])&&Math.abs(n[k])<20000)&&typeof n.supported==='boolean')&&Array.isArray(r.lengths)&&r.lengths.length===RAG_PAIRS.length&&r.lengths.every(n=>Number.isFinite(n)&&n>.01&&n<70)&&Number.isFinite(r.time)&&r.time>=0&&r.time<30&&(r.impactTime===null||Number.isFinite(r.impactTime)&&r.impactTime>=0&&r.impactTime<=r.time);
+  }
+  function ragdollStep(w,dt){
+    if(dt<=0)return;
+    const r=w.ragdoll,old=r.nodes.map(n=>({...n})),planes=[];r.time+=dt;
+    for(let i=0;i<r.nodes.length;i++){const n=r.nodes[i];n.vz-=G*dt;n.vx*=Math.exp(-.18*dt);n.vy*=Math.exp(-.18*dt);n.x+=n.vx*dt;n.y+=n.vy*dt;n.z+=n.vz*dt;const f=w.floorAt(n);planes[i]=f&&(old[i].z>=f.height+RAG_RADIUS[i]-1||n.supported)?f.height:w.fall.plane;n.supported=false;}
+    // Project bone lengths after ballistic motion. This exchanges momentum
+    // between joints without attaching any of them back to the cart.
+    for(let pass=0;pass<10;pass++){
+      RAG_PAIRS.forEach(([i,j],k)=>{const a=r.nodes[i],b=r.nodes[j],delta={x:b.x-a.x,y:b.y-a.y,z:b.z-a.z},d=Math.hypot(delta.x,delta.y,delta.z)||1,correction=(d-r.lengths[k])/d,wa=RAG_INVERSE[i]/(RAG_INVERSE[i]+RAG_INVERSE[j]),wb=1-wa;for(const key of ['x','y','z']){a[key]+=delta[key]*correction*wa;b[key]-=delta[key]*correction*wb;}});
+      for(let i=0;i<r.nodes.length;i++){const n=r.nodes[i],z=planes[i]+RAG_RADIUS[i];if(n.z<z){n.z=z;n.supported=true;}}
+    }
+    for(let i=0;i<r.nodes.length;i++){const n=r.nodes[i],before=old[i];n.vx=(n.x-before.x)/dt;n.vy=(n.y-before.y)/dt;n.vz=(n.z-before.z)/dt;if(n.supported){n.vx*=Math.exp(-10*dt);n.vy*=Math.exp(-10*dt);if(before.vz< -18&&!before.supported)n.vz=Math.max(n.vz,-before.vz*.23);else n.vz=Math.max(0,n.vz);if(r.impactTime===null){r.impactTime=0;w.emit('shopper-impact',{kind:w.fall.kind,x:n.x,y:n.y,z:planes[i],impact:Math.max(0,-before.vz)});}}}
+    if(r.impactTime!==null)r.impactTime+=dt;
+    const pelvis=r.nodes[0];Object.assign(w.shopper,{x:pelvis.x,y:pelvis.y,z:pelvis.z,vx:pelvis.vx,vy:pelvis.vy,vz:pelvis.vz,feet:0,grip:0});w.ground.feet=0;
   }
   // A spring-mass pelvis, braced legs and two compliant arms. A planted shopper
   // can oppose a tip; an airborne shopper has no ground force to spend.
@@ -105,6 +151,7 @@
     return {...stance,floor};
   }
   function shopperStep(w,dt,input){
+    if(w.ragdoll){ragdollStep(w,dt);return;}
     const b=w.body,p=w.shopper,c=Math.cos(b.a),s=Math.sin(b.a),hand=kinematics(b,-6,0,30),hv=velocity(b,hand),floor=w.floorAt(p);
     const stance=walkingStance(w,hand.p),gripFloor=floor&&p.z-floor.height<26&&p.z-floor.height>=8&&!w.fall;
     // The supported cart can brace a short step back onto the lip, or help a
@@ -174,6 +221,7 @@
   }
   function advance(w,dt,input={}){
     const b=w.body,ground=w.ground,wasAirborne=ground.airborne;
+    if(w.fall&&!w.ragdoll)releaseShopper(w);
     shopperStep(w,dt,input);
     b.vz-=G*dt;
     b.pitchRate*=Math.exp(-.22*dt);b.rollRate*=Math.exp(-.22*dt);
@@ -216,7 +264,7 @@
     // Arms bend freely until taut. Their maximum reach is a unilateral tether,
     // exchanging momentum at the handle rather than stretching the elbows.
     const hand=kinematics(b,-6,0,30),person=w.shopper,delta={x:hand.p.x-person.x,y:hand.p.y-person.y,z:hand.p.z-person.z-11},reach=Math.hypot(delta.x,delta.y,delta.z),n=normalize(delta),arm=contactAt(b,hand.p,n),hv=velocity(b,hand),closing=dot({x:hv.x-person.vx,y:hv.y-person.vy,z:hv.z-person.vz},n);
-    if(reach+closing*dt>22){const mass=1+1/.3+arm.jp*arm.jp/PITCH_INERTIA+arm.jr*arm.jr/ROLL_INERTIA+arm.ja*arm.ja/YAW_INERTIA,j=Math.max(0,(closing+(reach-22)*.18/dt)/mass);pointImpulse(w,hand.p,{x:-n.x*j,y:-n.y*j,z:-n.z*j});person.vx+=n.x*j/.3;person.vy+=n.y*j/.3;person.vz+=n.z*j/.3;}
+    if(!w.ragdoll&&reach+closing*dt>22){const mass=1+1/.3+arm.jp*arm.jp/PITCH_INERTIA+arm.jr*arm.jr/ROLL_INERTIA+arm.ja*arm.ja/YAW_INERTIA,j=Math.max(0,(closing+(reach-22)*.18/dt)/mass);pointImpulse(w,hand.p,{x:-n.x*j,y:-n.y*j,z:-n.z*j});person.vx+=n.x*j/.3;person.vy+=n.y*j/.3;person.vz+=n.z*j/.3;}
     // Solve velocities before integrating pose. Resting contact then has zero
     // vertical velocity, instead of a repeated corrective bounce each tick.
     b.z+=b.vz*dt;const attitudeNow=attitude(b),rx=b.rollRate*dt/2,ry=b.pitchRate*dt/2;
@@ -238,13 +286,13 @@
     // Until then the usual drive, pull, brake and contact forces remain active.
     if(!w.fall&&((b.z<ground.lastHeight-38&&ground.airborne))){
       const hazard=w.hazardAt(b),back=w.catchPose();w.fall={kind:hazard.kind,time:0,vz:b.vz,pitch:b.pitch,roll:b.rollTilt,catch:back,impactTime:null,plane:hazard.kind==='lake'?-50:-100};
-      w.falls++;w.messes++;w.lostDistance=Math.max(0,w.distance-back.distance);w.emit('fall',{kind:hazard.kind,x:b.x,y:b.y,seconds:0,lost:w.lostDistance,catch:back.chapter});
+      releaseShopper(w);w.falls++;w.messes++;w.lostDistance=Math.max(0,w.distance-back.distance);w.emit('fall',{kind:hazard.kind,x:b.x,y:b.y,seconds:0,lost:w.lostDistance,catch:back.chapter});
     }
     if(w.fall){const f=w.fall;f.time+=dt;f.vz=b.vz;
       const bottom=Math.min(...list.map(q=>kinematics(b,q.x,q.y,q.z).p.z));
       if(f.impactTime===null&&(bottom<=f.plane+.1||active.some(q=>q.impulse>0))){f.impactTime=0;f.impactSpeed=impact;b.vx*=.65;b.vy*=.65;w.emit('fall-impact',{kind:f.kind,x:b.x,y:b.y,impact:f.impactSpeed});}
       if(f.impactTime!==null){f.impactTime+=dt;b.vx*=Math.exp(-2*dt);b.vy*=Math.exp(-2*dt);}
-      if(f.impactTime!==null&&f.impactTime>1)recover(w);
+      if(f.impactTime!==null&&f.impactTime>1&&(w.ragdoll.impactTime!==null&&w.ragdoll.impactTime>.4||f.time>3.5))recover(w);
     }
   }
   function recover(w){
@@ -268,6 +316,6 @@
     if(!c.powered&&c.charge>=.3){c.powered=true;w.emit('circuit',{x:919,y:290});}
     if(c.powered)c.lift=Math.min(1,c.lift+dt*.8);
   }
-  const api={G,PITCH_INERTIA,ROLL_INERTIA,attitude,rotate,storeAttitude,contactAt,pointImpulse,velocity,initShopper,configure,height,sample,coordinates,inStrip,kinematics,init,advance,recover,circuitStep,circuitConnection};
+  const api={G,PITCH_INERTIA,ROLL_INERTIA,attitude,rotate,storeAttitude,contactAt,pointImpulse,velocity,initShopper,validRagdoll,configure,height,sample,coordinates,inStrip,kinematics,init,advance,recover,circuitStep,circuitConnection};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartTerrain=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

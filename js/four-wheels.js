@@ -169,6 +169,7 @@
       if(e.type==='circuit'){notify('Water connected. Shutter opening.');save();}
       if(e.type==='land'&&e.impact>22)screenShake=Math.max(screenShake,Math.min(1.2,e.impact/90));
       if(e.type==='fall-impact'){screenShake=1.2;if(e.kind==='lake')burst(e.x,e.y,18,[P.blue,P.light]);}
+      if(e.type==='shopper-launch')screenShake=Math.max(screenShake,.65);
       if (e.type === 'won') { finish(); playSound(e); }
     }
   }

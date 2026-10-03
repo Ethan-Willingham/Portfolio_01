@@ -585,13 +585,22 @@
       scene.wire(local(b,...WHEELS[i],9.6),local(b,...WHEELS[i],11),P.steelLight);
     }
     function shopper(scene,b,gait) {
-      const p=b.shopper,c=Math.cos(b.a),s=Math.sin(b.a);
+      const p=b.shopper,c=Math.cos(b.a),s=Math.sin(b.a),nodes=b.ragdoll?.nodes;
+      const up=nodes?normalize(subtract(nodes[1],nodes[0])):null;
+      const across=nodes?normalize(subtract(nodes[6],nodes[5])):null;
+      const forwardAxis=nodes?normalize(cross(across,up)):null;
+      const sideAxis=nodes?normalize(cross(up,forwardAxis)):null;
+      const ragPoint=(origin,x,y,z)=>add(origin,forwardAxis.x*x+sideAxis.x*y+up.x*z,forwardAxis.y*x+sideAxis.y*y+up.y*z,forwardAxis.z*x+sideAxis.z*y+up.z*z);
+      const jointFrame=(origin,u)=>{
+        const hint=Math.abs(sideAxis.x*u.x+sideAxis.y*u.y+sideAxis.z*u.z)>.9?forwardAxis:sideAxis,f=normalize(cross(hint,u)),side=normalize(cross(u,f));
+        return (x,y,z)=>add(origin,f.x*x+side.x*y+u.x*z,f.y*x+side.y*y+u.y*z,f.z*x+side.z*y+u.z*z);
+      };
       // One model for the independent shopper, menu art and legacy fixtures.
       // The live pelvis stays upright while the hands follow the cart's tilt.
-      const tr=p?(x,y,z)=>({x:p.x+x*c-y*s,y:p.y+x*s+y*c,z:p.z+z}):(x,y,z)=>local(b,-16+x,y,18+z);
+      const tr=nodes?(x,y,z)=>ragPoint(nodes[0],x,y,z):p?(x,y,z)=>({x:p.x+x*c-y*s,y:p.y+x*s+y*c,z:p.z+z}):(x,y,z)=>local(b,-16+x,y,18+z);
       const phase=gait.phase||0,stride=gait.stride||0,forward=gait.forward??1,sideways=gait.sideways||0;
-      const leanX=p?.leanX??gait.leanX??0,leanY=p?.leanY??gait.leanY??0;
-      const activity=clamp(stride/2.8,0,1),sway=Math.cos(phase)*activity*.24;
+      const leanX=nodes?0:p?.leanX??gait.leanX??0,leanY=nodes?0:p?.leanY??gait.leanY??0;
+      const activity=clamp(stride/2.8,0,1),sway=nodes?0:Math.cos(phase)*activity*.24;
       const vector=(x,y,z)=>subtract(tr(x,y,z),tr(0,0,0));
       function joint(a,b,l1,l2,hint) {
         const delta=subtract(b,a),distance=Math.hypot(delta.x,delta.y,delta.z),axis=distance>.0001?normalize(delta):normalize(vector(0,0,-1));
@@ -613,16 +622,17 @@
       for(const side of [-1,1]) {
         const t=((phase/(Math.PI*2)+(side===1?.5:0))%1+1)%1,swing=Math.max(0,(t-.6)/.4);
         const reach=t<.6?1-t/.3:-1+2*swing*swing*(3-2*swing),lift=Math.sin(swing*Math.PI)*activity*3.6;
-        const travel=reach*stride,sole=tr(travel*forward-1,side*3.35+travel*sideways*.65,-18+lift);
+        const index=side===-1?0:1,travel=reach*stride,sole=tr(travel*forward-1,side*3.35+travel*sideways*.65,-18+lift);
         const floor=terrainLevel?root.CartCourse.sample(terrainLevel,sole,false):null;
-        if(floor&&(p?p.feet:Math.abs(sole.z-lift-floor.height)<6))sole.z=floor.height+lift;
-        else if(p)sole.z=Math.min(sole.z,p.z-10+lift);
-        const hip=tr(0,side*2.65,-.1),ankle=add(sole,0,0,2.1),knee=joint(hip,ankle,10,10,vector(1,side*.12,0));
+        if(!nodes&&floor&&(p?p.feet:Math.abs(sole.z-lift-floor.height)<6))sole.z=floor.height+lift;
+        else if(p&&!nodes)sole.z=Math.min(sole.z,p.z-10+lift);
+        const hip=nodes?.[3+index]||tr(0,side*2.65,-.1),ankle=nodes?.[13+index]||add(sole,0,0,2.1),knee=nodes?.[11+index]||joint(hip,ankle,10,10,vector(1,side*.12,0));
         scene.limb(hip,knee,3.8,3.1,P.edge);scene.limb(knee,ankle,3,2.25,P.dark);
         // A small knee fold and ankle cuff break up the trouser silhouette.
         scene.limb(add(knee,c*.9,s*.9,.25),add(knee,c*.9-s*side*.6,s*.9+c*side*.6,-.5),.75,.65,P.steelShade);
         scene.limb(add(ankle,0,0,.8),ankle,2.35,2.35,P.steelShade);
-        const foot=(x,y,z)=>local({...sole,a:b.a+side*.08+clamp(sideways*.2,-.2,.2),pitch:swing>.01?-Math.sin(swing*Math.PI)*.2:0},x,y,z);
+        const shoe=nodes?jointFrame(ankle,normalize(subtract(knee,ankle))):null;
+        const foot=nodes?(x,y,z)=>shoe(x,y,z-2.1):(x,y,z)=>local({...sole,a:b.a+side*.08+clamp(sideways*.2,-.2,.2),pitch:swing>.01?-Math.sin(swing*Math.PI)*.2:0},x,y,z);
         shell([[0,2.7,1.6],[.8,2.8,1.6]],P.cream,(x,y,z)=>foot(x+.65,y,z));
         shell([[.8,2.55,1.5],[2,2.15,1.35],[2.6,1.25,1.1]],P.dark,(x,y,z)=>foot(x+.4,y,z));
         for(const edge of [-1,1]) {
@@ -643,17 +653,17 @@
         scene.face([coat(1.8,side*.85,12.07),coat(1.8,side*2.6,12.07),coat(2.4,side*1.6,10.1)],P.coral);
         scene.wire(coat(-1.45,side*4.45,10.9),coat(1.5,side*4.45,10.9),P.coral,1,.8);
         scene.wire(coat(2.64,side*1.35,3.1),coat(2.58,side*2.5,4.2),P.hairDark,1,.55);
-        const shoulder=coat(0,side*4.7,10.1),wrist=local(b,-6,side*8.7,30);
-        const elbow=joint(shoulder,wrist,8.5,8.8,vector(-.7,side*.85,-.4));
+        const index=side===-1?0:1,shoulder=nodes?.[5+index]||coat(0,side*4.7,10.1),wrist=nodes?.[9+index]||local(b,-6,side*8.7,30);
+        const elbow=nodes?.[7+index]||joint(shoulder,wrist,8.5,8.8,vector(-.7,side*.85,-.4));
         const cuff={x:elbow.x+(wrist.x-elbow.x)*.85,y:elbow.y+(wrist.y-elbow.y)*.85,z:elbow.z+(wrist.z-elbow.z)*.85};
         scene.limb(shoulder,elbow,4.1,3.25,P.brick);scene.limb(elbow,cuff,3.35,2.35,P.brick);
         scene.limb(cuff,wrist,2.5,2.3,P.cream);
         // Hands wrap the bar instead of ending in floating square blocks.
-        const hand=(x,y,z)=>local({...wrist,a:b.a},x,y,z);
+        const hand=nodes?(x,y,z)=>ragPoint(wrist,x,y,z):(x,y,z)=>local({...wrist,a:b.a},x,y,z);
         scene.box(hand,-1.2,-1.05,-1.05,2.4,2.1,1.9,P.clay,P.gold);
         scene.wire(hand(1.25,-.75,.25),hand(1.25,.7,.25),P.hair,1,.65);
       }
-      const head=coat(0,0,18.5),headTr=(x,y,z)=>local({...head,a:b.a,pitch:clamp(-leanX*.035,-.18,.18),rollTilt:clamp(leanY*.035,-.18,.18)},x,y,z);
+      const head=nodes?.[2]||coat(0,0,18.5),headTr=nodes?jointFrame(head,normalize(subtract(nodes[2],nodes[1]))):(x,y,z)=>local({...head,a:b.a,pitch:clamp(-leanX*.035,-.18,.18),rollTilt:clamp(leanY*.035,-.18,.18)},x,y,z);
       cylinder(scene,(x,y,z)=>headTr(x*.88,y,z),[[-3.4,1.7],[-2.4,3.1],[.8,3.65],[2.7,3.15],[3.7,1.6]],P.clay);
       // An uneven hairline and swept crown, rather than concentric cap rings.
       const hair=Array.from({length:3},(_,row)=>Array.from({length:8},(_,i)=>{
@@ -837,7 +847,7 @@
       for(const s of w.shelves)shelf(scene,s);
       for(const p of w.stock.items)if(!p.broken)product(scene,p);
       for(const o of w.objects)prop(scene,o);
-      cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
+      cart(scene,{...w.body,shopper:w.shopper,ragdoll:w.ragdoll},w.wheels,w.gait);
       if(!preview)for(const p of options.particles||[]) {
         const tr=(x,y,z)=>local({...p,z:0},x,y,z);
         scene.flat([tr(-p.w/2,-p.h/2,p.z),tr(p.w/2,-p.h/2,p.z),tr(p.w/2,p.h/2,p.z),tr(-p.w/2,p.h/2,p.z)],p.color,clamp(p.life,0,1));
@@ -853,7 +863,19 @@
       const frame={left,top,width:right-left,height:bottom-top};if(w.level.campaign)w.level._viewFrame=frame;return frame;
     }
     function connectedCamera(width,height,w,follow=true,focusY=.54) {
-      if(follow){const focus=project({...w.body,z:w.level.campaign?(w.ground.lastHeight+clamp(w.body.z-w.ground.lastHeight,0,65)*.4):0});const scale=width<=480?1.8:1.45;return {scale,x:width*.5-focus.x*scale,y:height*focusY-focus.y*scale};}
+      if(follow){
+        const focus=project({...w.body,z:w.level.campaign?(w.ground.lastHeight+clamp(w.body.z-w.ground.lastHeight,0,65)*.4):0}),camera={scale:width<=480?1.8:1.45};
+        if(w.ragdoll){
+          // Keep both independent bodies in view, including on short screens.
+          // The usual lip framing stays until the flight reaches its margins.
+          const points=[...w.ragdoll.nodes,...[[-6,-12,0],[-6,12,32],[31,-12,0],[31,12,32]].map(([x,y,z])=>TerrainModule.kinematics(w.body,x,y,z).p)].map(p=>project(p));
+          const left=Math.min(...points.map(p=>p.x))-5,right=Math.max(...points.map(p=>p.x))+5,top=Math.min(...points.map(p=>p.y))-5,bottom=Math.max(...points.map(p=>p.y))+5;
+          camera.scale=Math.min(camera.scale,(width-40)/(right-left),(height-40)/(bottom-top));
+          camera.x=clamp(width*.5-focus.x*camera.scale,20-left*camera.scale,width-20-right*camera.scale);
+          camera.y=clamp(height*focusY-focus.y*camera.scale,20-top*camera.scale,height-20-bottom*camera.scale);
+        }else {camera.x=width*.5-focus.x*camera.scale;camera.y=height*focusY-focus.y*camera.scale;}
+        return camera;
+      }
       const box=worldFrame(w),scale=Math.min((width-28)/box.width,(height-28)/box.height);
       return {scale,x:(width-box.width*scale)/2-box.left*scale,y:(height-box.height*scale)/2-box.top*scale};
     }
@@ -894,7 +916,7 @@
       for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},180))shelf(scene,s);
       for(const p of w.stock.items)if(!p.broken&&visible(p))product(scene,p);
       for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
-      cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
+      cart(scene,{...w.body,shopper:w.shopper,ragdoll:w.ragdoll},w.wheels,w.gait);
       for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));
       scene.flush(g);
       if(w.fall) {
@@ -1311,7 +1333,7 @@
       for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},170))cachedModel(scene,s,shelfFields,shelf);
       for(const p of w.stock.items)if(!p.broken&&visible(p))cachedModel(scene,p,productFields,product,p.state==='shelf'?[p.shelf,...shelfFields.map(k=>p.shelf[k])]:[]);
       for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
-      cart(scene,{...w.body,shopper:w.shopper},w.wheels,w.gait);
+      cart(scene,{...w.body,shopper:w.shopper,ragdoll:w.ragdoll},w.wheels,w.gait);
       for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));scene.flush(g);
       if(w.fall?.kind==='lake'&&w.fall.impactTime!==null){const t=w.fall.impactTime;groundRing(g,{...w.body,z:-50},12+t*32,P.light,2,1-t);groundRing(g,{...w.body,z:-50},7+t*22,P.blue,2,.65-t*.5);}
       if(!w.fall){const speed=Math.hypot(w.body.vx,w.body.vy);if(speed>8)groundArrow(g,{...onGround({x:w.body.x+w.body.vx*.5,y:w.body.y+w.body.vy*.5}),a:Math.atan2(w.body.vy,w.body.vx)},10,P.light,.65);w.wheels.forEach((q,i)=>{if(w.edge.risk>0&&!w.ground.airborne&&w.unsupported?.[i])groundRing(g,Physics.casterPoint(w.body,q,i,0,0,1),5,P.red,2);});}

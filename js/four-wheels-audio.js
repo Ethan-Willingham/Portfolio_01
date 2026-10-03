@@ -4,7 +4,7 @@
 (function (root) {
   'use strict';
   const MAX_VOICES = 32;
-  const nearbyEvents = new Set(['break', 'product-land', 'rack-hit', 'wheel-rattle', 'squash', 'shelf-down', 'bump', 'wall-hit', 'mess']);
+  const nearbyEvents = new Set(['break', 'product-land', 'rack-hit', 'wheel-rattle', 'squash', 'shelf-down', 'bump', 'wall-hit', 'mess', 'shopper-impact']);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const surfaces = {
     dirt: { frequency: 1500, volume: .13, rattle: 16 },
@@ -207,6 +207,8 @@
       if (e.type === 'land') { this.noise(300, .18, .18 * power, { type: 'lowpass', pan }); if (e.impact > 20) this.metal(power * .7, true, pan); }
       if (e.type === 'fall-impact') { if (e.kind === 'lake') this.splash(1, pan); else this.metal(1, true, pan); }
       if (e.type === 'fall') this.noise(1900, .65, .08, { end: 350, pan });
+      if (e.type === 'shopper-launch') { this.tone(180, .13, .055, { end: 480, type: 'triangle', pan }); this.noise(1100, .12, .07, { end: 2800, pan }); }
+      if (e.type === 'shopper-impact') { if (e.kind === 'lake') this.splash(.55 * power, pan); else { this.noise(240, .16, .16 * power, { type: 'lowpass', pan }); this.tone(95, .13, .055 * power, { end: 45, type: 'triangle', pan }); } }
       if (e.type === 'boost') { this.noise(450, .3, .09, { end: 2500, pan }); this.tone(90, .3, .035, { end: 380, type: 'triangle', pan }); }
       if (e.type === 'jump') this.noise(1400, .16, .1, { end: 500, pan });
       if (e.type === 'circuit') { this.metal(.15); [220, 440, 880].forEach((f, i) => this.tone(f, .15, .045, { delay: i * .09 })); }

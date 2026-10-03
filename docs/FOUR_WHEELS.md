@@ -165,7 +165,7 @@ side trim. The faceted head has a neck, an uneven swept hairline, brows and eyes
 Sleeves use two-segment joints with outward elbow bends; hands stay on the actual
 handle through bumps and tumbles. Degenerate joint directions use a stable bend
 plane. Clothing, face details and hands share the cart's depth buffer. These are
-rendering changes; gait timing, shopper forces and saved-run fields are unchanged.
+rendering details; the attached shopper keeps the same gait timing and forces.
 
 The caster model follows the principles described by
 [Arrizabalaga et al., 2021](https://arxiv.org/abs/2110.05604), simplified for a game.
@@ -203,6 +203,17 @@ supporting surface. Cart angle alone does not commit a fall. Gravity and angular
 momentum continue. The cart hits water at -50 or rock at -100. Its actual lowest
 geometry meets the lower plane, and frame and tire contacts produce the rebound
 and tumble before the catch returns it.
+
+When the drop becomes committed, the shopper releases the handle with an upward
+and outward pop. Fifteen physical joints carry the launch velocity and spin;
+a braced torso, free elbows and knees, gravity, bone constraints and floor
+contacts produce the tumble and rebound. The cart falls independently. A short
+launch cue and a soft thud or splash follow the physical events. The camera
+keeps both bodies visible on short screens. Edge rescues and successful jumps
+keep the shopper attached. Pause freezes every joint, and saved falls preserve
+joint positions, velocities and impact timing. Older mid-fall saves release on
+Continue. The catch waits for the landing beat, with a bounded recovery timeout.
+
 It then returns to the earlier catch using the same body, wheels and stock world.
 Ordered progress rewinds. Furthest distance, furniture, products, doors, relay
 and spills remain. There is no time penalty. Pause freezes gravity, relay motion
@@ -410,6 +421,9 @@ node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
 node tools/test-four-wheels-terrain.cjs
 node tools/test-four-wheels-balance.cjs
+node tools/test-four-wheels-ragdoll.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-ragdoll-browser.cjs
+CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-ragdoll-browser.cjs
 node tools/test-four-wheels-footing.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-footing-browser.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-footing-browser.cjs
