@@ -640,6 +640,7 @@
   }
 
   function render() {
+    syncViewportKeys();
     if (UI_NEW && gameOver && !deathSceneCapture) { drawDeathFrame(); return; }
     hearthOverlayHide();
     if (hearthFireGPU) hearthFireGPU.hide();

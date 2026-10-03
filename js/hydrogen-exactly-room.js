@@ -1,5 +1,5 @@
 import * as M from './hydrogen-exactly-math.js?v=2';
-import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js?v=4';
+import { COMPUTE, PROBES, RENDER, CONTOUR_LEVELS } from './hydrogen-exactly-shaders.js?v=5';
 
 export const roomInfo = {
   apiVersion: 1, id: 'hydrogen-exactly', title: 'Hydrogen Exactly', model: M.MODEL,
@@ -29,6 +29,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
   let width = 1, height = 1, time = 0, score = 0, steps = 0, disposed = false, field, renderBinding, computeBinding;
   let dirty = true, tint = [0.72, 0.61, 0.39], diagnosticTime = -1, fidelity = { fidelity: 1, rotation: 0 };
   let lastMeasurement = null;
+  let layerTarget = null, lastRendered = null;
   const uniform = device.createBuffer({ label: 'Hydrogen f64-reduced phases', size: 576, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   const data = new Float32Array(144);
   async function shader(code) {
@@ -46,7 +47,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
   try {
     compute = await device.createComputePipelineAsync({ label: 'Hydrogen full-spectrum density', layout: 'auto', compute: { module: computeModule, entryPoint: 'volume' } });
     probePipeline = await device.createComputePipelineAsync({ layout: 'auto', compute: { module: probeModule, entryPoint: 'probe' } });
-    renderPipeline = await device.createRenderPipelineAsync({ label: 'Hydrogen linear volume', layout: 'auto', vertex: { module: renderModule, entryPoint: 'vertex' }, fragment: { module: renderModule, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } });
+    renderPipeline = await device.createRenderPipelineAsync({ label: 'Hydrogen linear volume and contour IDs', layout: 'auto', vertex: { module: renderModule, entryPoint: 'vertex' }, fragment: { module: renderModule, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }, { format: 'r32uint' }] }, primitive: { topology: 'triangle-list' } });
   } catch (error) { await device.popErrorScope(); uniform.destroy(); throw new HydrogenInitializationError(error.message); }
   const initializationError = await device.popErrorScope();
   if (initializationError) { uniform.destroy(); throw new HydrogenInitializationError(initializationError.message); }
@@ -82,6 +83,10 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     upload();
     if (dirty) { const encoder = device.createCommandEncoder(); computePass(encoder); device.queue.submit([encoder.finish()]); dirty = false; }
   }
+  function densityLayers() {
+    const sideNm = M.domainFor(mode) * M.A0 * 1e9;
+    return CONTOUR_LEVELS.map((level, index) => ({ index, scaledDensity: level, relativeDensity: 3 ** index, densityPerNmCubed: level / sideNm ** 3, mode }));
+  }
   const room = {
     resize({ width: w, height: h }) { width = Math.max(1, Math.round(w)); height = Math.max(1, Math.round(h)); },
     step({ dtSeconds, elapsedSeconds, scoreSeconds }) {
@@ -97,8 +102,28 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     render({ encoder, targetView, width: w, height: h, exposure = 1 }) {
       if (disposed) return;
       width = w; height = h; upload(exposure);
-      const pass = encoder.beginRenderPass({ colorAttachments: [{ view: targetView, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
+      if (!layerTarget || layerTarget.width !== width || layerTarget.height !== height) {
+        layerTarget?.destroy();
+        layerTarget = device.createTexture({ label: 'Hydrogen visible contour IDs', size: [width, height], format: 'r32uint', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
+      }
+      lastRendered = { width, height, mode, scoreSeconds: score, section, soft, layers: densityLayers() };
+      const pass = encoder.beginRenderPass({ colorAttachments: [{ view: targetView, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }, { view: layerTarget.createView(), clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: 'clear', storeOp: 'store' }] });
       pass.setPipeline(renderPipeline); pass.setBindGroup(0, renderBinding); pass.draw(3); pass.end();
+    },
+    densityLayers,
+    async pickLayer({ u, v }) {
+      if (disposed || !layerTarget || !lastRendered || lastRendered.section || lastRendered.soft) return null;
+      if (![u, v].every(Number.isFinite) || u < 0 || u >= 1 || v < 0 || v >= 1) return null;
+      const frame = lastRendered;
+      const read = device.createBuffer({ label: 'Hydrogen single-pixel contour pick', size: 256, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+      try {
+        const encoder = device.createCommandEncoder();
+        encoder.copyTextureToBuffer({ texture: layerTarget, origin: [Math.floor(u * frame.width), Math.floor(v * frame.height)] }, { buffer: read, bytesPerRow: 256 }, [1, 1]);
+        device.queue.submit([encoder.finish()]);
+        await read.mapAsync(GPUMapMode.READ);
+        const id = new Uint32Array(read.getMappedRange())[0];
+        return id > 0 && id <= frame.layers.length ? { ...frame.layers[id - 1], scoreSeconds: frame.scoreSeconds } : null;
+      } finally { read.destroy(); }
     },
     setMode(value) { if (!['revival', 'spectral'].includes(value)) throw new Error('Unknown hydrogen mode.'); mode = value; overlay = value === 'spectral' ? 1 : 3; score = 0; time = 0; diagnosticTime = -1; dirty = true; lastMeasurement = null; update(); },
     setPresentation(value = {}) {
@@ -117,7 +142,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
       return {
         ...roomInfo, numericalStepCount: steps, simulationTime: time, simulationTimeUnits: 'hbar/Eh (atomic time)', simulationTimeSeconds: time * M.ATOMIC_TIME,
         scoreSeconds: score, mode, quality, seed: seed || null, seedProvenance: 'Deterministic analytic initial coefficients; seed is recorded but unused. No random draws or beacon claim.',
-        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, yaw, portraitTiltOffsetRadians: -0.32, contourLevelsScaledDensity: [0.3, 0.9, 2.7, 8.1, 24.3, 72.9], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
+        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, yaw, portraitTiltOffsetRadians: -0.32, contourLevelsScaledDensity: [...CONTOUR_LEVELS], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
         representativeScaleMeters: M.scaleFor(mode), scaleMeaning: mode === 'revival' ? 'n0^2 a0, characteristic circular radius' : 'n_max^2 a0, characteristic extent of the highest n=5 basis state',
         analyticNorm: M.statesFor(mode).reduce((s, j) => s + j.c_real ** 2 + j.c_imag ** 2, 0),
         autocorrelation: M.autocorrelation(M.statesFor(mode), time), rotationAdjustedOverlap: fidelity.fidelity, bestRotationRadians: fidelity.rotation,
@@ -173,7 +198,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
         return { computeMs: stats(computeMs), renderMs: stats(renderMs), grid, width, height, precision: room.snapshot().precision, method: 'GPU queue completion latency with three warmups, includes submit and wait overhead' };
       } finally { target.destroy(); }
     },
-    dispose() { if (disposed) return; disposed = true; abort.abort(); field.destroy(); uniform.destroy(); }
+    dispose() { if (disposed) return; disposed = true; abort.abort(); field.destroy(); layerTarget?.destroy(); uniform.destroy(); }
   };
   update();
   return room;

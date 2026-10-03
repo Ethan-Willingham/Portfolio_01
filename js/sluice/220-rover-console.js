@@ -495,14 +495,15 @@
     for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
     var hover = consoleCargoHovered();
     var open = typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen;
-    // A raised hatch makes this instrument visibly operable. It is the one
-    // console reading that opens a view, so it earns the brass label and edge.
-    ctx.fillStyle = hover || open ? UIT_PANEL_SEL : UIT_PANEL;
+    // The cargo hatch is the operable part of the instrument bed. Its whole
+    // rim responds to focus, rather than using a decorative gold header rule.
+    ctx.fillStyle = hover || open ? UIT_GOLD : UIT_EDGE;
     ctx.fillRect(bx - 3, by - 2, bw + 6, bh + 3);
-    ctx.fillStyle = hover || open ? UIT_GOLD : UIMAT_WELD;
-    ctx.fillRect(bx - 3, by - 2, bw + 6, 1);
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
-    ctx.fillRect(bx - 3, by + bh, bw + 6, 1);
+    var face = ctx.createLinearGradient(0, by, 0, by + bh);
+    face.addColorStop(0, hover || open ? UIT_PANEL_SEL : UIMAT_BAY_RECESS);
+    face.addColorStop(1, UIT_PANEL);
+    ctx.fillStyle = face;
+    ctx.fillRect(bx - 2, by - 1, bw + 4, bh + 1);
     consoleText('CARGO', bx, by + 11, 11, UIT_GOLD);
     consoleText('>', bx + bw - 1, by + 11, 12, UIT_GOLD, 'right');
     consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
@@ -962,4 +963,3 @@
     srDrawFinale();
     ctx.restore();
   }
-
