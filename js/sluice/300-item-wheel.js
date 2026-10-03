@@ -74,14 +74,21 @@
     itemWheel.pointerId = null;
     itemWheel.hover = -1;
   }
+  function drawConsoleKey(x, y, w, h, active) {
+    ctx.save();
+    ctx.fillStyle = active ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT;
+    roundRect(ctx, x, y, w, h, 3, true);
+    var face = ctx.createLinearGradient(0, y, 0, y + h);
+    face.addColorStop(0, UIT_PANEL_SEL); face.addColorStop(1, UIT_PANEL);
+    ctx.fillStyle = face;
+    roundRect(ctx, x + 1, y + 1, w - 2, h - 2, 2, true);
+    ctx.fillStyle = UIT_INSET; ctx.fillRect(x + 3, y + h - 3, w - 6, 2);
+    ctx.restore();
+  }
   function drawItemWheelButton() {
     var r = itemWheelButtonRect();
     ctx.save();
-    ctx.fillStyle = itemWheel.open ? UIT_PANEL_SEL : UIT_PANEL;
-    ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.strokeStyle = itemWheel.open ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+    drawConsoleKey(r.x, r.y, r.w, r.h, itemWheel.open);
     consoleText('ITEMS', r.x + r.w / 2, r.y + 14, 11, UIT_DIM, 'center');
     var total = teleporters + balloons + bombsSmall + bombsLarge;
     consoleText('' + total, r.x + r.w / 2, r.y + 35, 18, total > 0 ? UIT_TEXT : UIT_DIM, 'center', true);
@@ -644,37 +651,70 @@
     else if (bay.id === 'depth')   drawDepthDisplay(bx, by, bw, bh);
   }
 
+  // Folded end plates share the viewport rim's steel and dark gasket. The
+  // shallow chamfer and ventilation slots are static, cached material detail.
+  function drawConsoleMount(w, y, h, marked) {
+    if (w < 32) return;
+    var face = ctx.createLinearGradient(0, y, 0, y + h);
+    face.addColorStop(0, UIMAT_PLATE_BASE);
+    face.addColorStop(1, UIMAT_PLATE_SHADOW);
+    ctx.beginPath();
+    ctx.moveTo(4, y + 5); ctx.lineTo(w - 18, y + 5);
+    ctx.lineTo(w - 4, y + 13); ctx.lineTo(w - 4, y + h - 12);
+    ctx.lineTo(w - 14, y + h - 5); ctx.lineTo(4, y + h - 5);
+    ctx.closePath(); ctx.fillStyle = face; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = UIT_EDGE; ctx.stroke();
+    if (!marked && w >= 64) {
+      var slotW = Math.min(44, w - 32), slotX = Math.round((w - slotW) / 2);
+      for (var v = 0; v < 4; v++) {
+        var sy = Math.round(y + h / 2 - 11 + v * 6);
+        ctx.fillStyle = UIT_EDGE; ctx.fillRect(slotX, sy, slotW, 3);
+        ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(slotX, sy + 3, slotW, 1);
+      }
+    }
+  }
+
   // Draws the static console structure onto `ctx` (the caller points ctx at
   // the offscreen cache) and records each bay's rect for the live pass.
   function drawConsoleFrameContent(R) {
     consoleBayLayout.length = 0;
-    // A folded steel housing with a narrow brass seam and a glass instrument
-    // bed. All wear is deterministic and cached; it never shimmers in play.
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    // One folded housing, with a recessed instrument bed and a solid lower
+    // sill. The metal lip carries depth without ornamental brass rules.
+    var shell = ctx.createLinearGradient(0, R.y, 0, R.y + R.h);
+    shell.addColorStop(0, UIMAT_PLATE_BASE);
+    shell.addColorStop(0.18, UIMAT_PLATE_SHADOW);
+    shell.addColorStop(1, UIT_PANEL);
+    ctx.fillStyle = shell;
     ctx.fillRect(0, R.y, R.viewW, R.h);
-    ctx.fillStyle = UIMAT_PLATE_BASE;
-    ctx.fillRect(R.x, R.y, R.w, R.h);
     ctx.fillStyle = UI_OUTLINE;
-    ctx.fillRect(0, R.y, R.viewW, 2);
-    ctx.fillRect(0, R.y + R.h - 2, R.viewW, 2);
-    ctx.fillStyle = UIMAT_WELD;
-    ctx.fillRect(R.x + 2, R.y + 2, R.w - 4, 1);
-    ctx.fillStyle = UIT_GOLD;
-    ctx.fillRect(R.bodyX + 2, R.y + 3, R.bodyW - 4, 1);
-    ctx.fillStyle = UIT_INSET;
-    ctx.fillRect(R.bodyX, R.y + 5, R.bodyW, R.h - 10);
+    ctx.fillRect(0, R.y, R.viewW, 1);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(R.bodyX, R.y + R.h - 5, R.bodyW, 1);
-    ctx.fillStyle = 'rgba(201,199,184,0.04)';
-    for (var wi = 0; wi < 9; wi++) {
-      var sx = R.x + 14 + ((wi * 113 + 19) % Math.max(1, Math.floor(R.w - 40)));
-      ctx.fillRect(sx, R.y + R.h - 3, Math.min(9, R.x + R.w - sx), 1);
-    }
-    // Wide screens have a small maker's stamp on the left mounting wing.
+    ctx.fillRect(0, R.y + 1, R.viewW, 2);
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillRect(0, R.y + 3, R.viewW, 2);
+    drawConsoleMount(R.x, R.y, R.h, R.x >= 112);
+    ctx.save(); ctx.translate(R.viewW, 0); ctx.scale(-1, 1);
+    drawConsoleMount(Math.max(0, R.viewW - R.x - R.w), R.y, R.h, false);
+    ctx.restore();
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    roundRect(ctx, R.x, R.y + 3, R.w, R.h - 6, 4, true);
+    ctx.fillStyle = UIT_EDGE;
+    roundRect(ctx, R.bodyX - 1, R.y + 5, R.bodyW + 2, R.h - 10, 3, true);
+    var glass = ctx.createLinearGradient(0, R.y + 6, 0, R.y + R.h - 6);
+    glass.addColorStop(0, UIT_INSET_DK); glass.addColorStop(1, UIT_INSET);
+    ctx.fillStyle = glass;
+    roundRect(ctx, R.bodyX, R.y + 6, R.bodyW, R.h - 12, 2, true);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    ctx.fillRect(0, R.y + R.h - 3, R.viewW, 2);
+    ctx.fillStyle = UIT_EDGE;
+    ctx.fillRect(0, R.y + R.h - 1, R.viewW, 1);
+    // Painted maker's mark sits directly on the left end plate.
     if (R.x >= 112) {
-      consoleText('SLUICE', R.x / 2, R.y + R.h / 2 + 4, 12, UIT_DIM, 'center', true);
-      ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-      ctx.fillRect(R.x / 2 - 21, R.y + R.h / 2 + 13, 42, 1);
+      ctx.save(); ctx.globalAlpha = 0.7;
+      ctx.font = '700 14px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = UIT_BODY;
+      ctx.fillText('SLUICE', Math.round(R.x / 2), Math.round(R.y + R.h / 2 + 5));
+      ctx.restore();
     }
     if (consoleCapStyleId !== 7) {
       drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
@@ -735,4 +775,3 @@
     drawConsoleFrameContent(R);
     ctx = oldCtx;
   }
-

@@ -228,9 +228,8 @@
     ctx.restore();
   }
   function siphonDrawButton(x, y, w, h, label, action, active) {
-    ctx.fillStyle = active ? UIT_PANEL_SEL : UIMAT_PLATE_BASE; ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = active ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-    ctx.fillStyle = active ? UIT_GOLD : UIT_TEXT; ctx.font = 'bold 11px ' + UI_FONT;
+    drawConsoleKey(x, y, w, h, active);
+    ctx.fillStyle = active ? UIT_GOLD : UIT_BODY; ctx.font = 'bold 11px ' + UI_FONT;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h / 2);
     siphonButtons.push({ x: x, y: y, w: w, h: h, action: action });
   }
@@ -245,25 +244,25 @@
     }
     w = Math.min(w, viewW - 28);
     var expanded = siphon.equipped || siphon.dump || siphon.noticeT > 0 || siphonTotal() > 0 || siphon.passenger;
-    var h = expanded ? 126 : 42;
+    var h = expanded ? 126 : 46;
     var y = Math.max(56, bottom - h);
     ctx.save();
     if (!expanded) {
-      siphonDrawButton(x, y, 126, 40, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
+      siphonDrawButton(x, y, 126, 44, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
       ctx.restore(); return;
     }
     ctx.fillStyle = UIT_PANEL; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
     ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
     var bw = Math.floor((w - 16) / 3);
-    siphonDrawButton(x + 4, y + 4, bw, 36, isMobile ? 'SCOOP' : 'F SCOOP', 'equip', siphon.equipped && siphon.mode === 'suck');
-    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, 'DUMP', 'mode', !!siphon.dump);
-    siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 36, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
+    siphonDrawButton(x + 4, y + 4, bw, 44, isMobile ? 'SCOOP' : 'F SCOOP', 'equip', siphon.equipped && siphon.mode === 'suck');
+    siphonDrawButton(x + 8 + bw, y + 4, bw, 44, 'DUMP', 'mode', !!siphon.dump);
+    siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 44, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
     var total = siphonTotal(), info = liquidCatalog[siphon.selected];
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '11px ' + UI_FONT;
     ctx.fillStyle = UIT_TEXT;
-    ctx.fillText(info.name + '  ' + Math.round(siphon.tank[siphon.selected] / 100) + ' L', x + 10, y + 57);
+    ctx.fillText(info.name + '  ' + Math.round(siphon.tank[siphon.selected] / 100) + ' L', x + 10, y + 60);
     ctx.textAlign = 'right'; ctx.fillStyle = UIT_DIM;
-    ctx.fillText(Math.round(total / 100) + '/160 L', x + w - 10, y + 57);
+    ctx.fillText(Math.round(total / 100) + '/160 L', x + w - 10, y + 60);
     ctx.fillStyle = UIT_INSET; ctx.fillRect(x + 10, y + 65, w - 20, 8);
     var barX = x + 10;
     for (var type = 0; type < liquidCatalog.length; type++) {

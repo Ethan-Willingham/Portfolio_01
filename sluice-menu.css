@@ -234,7 +234,7 @@
 #game-pause .pause-bindings dt { font-size: 13px; }
 #game-pause .pause-bindings dd { margin: 0; text-align: right; }
 #game-pause .pause-bindings dd span { display: block; color: var(--menu-dim); font-size: 11px; margin: 3px 0; }
-#gm-pause-btn { position: absolute; top: 28px; left: 8px; z-index: 8; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--menu-highlight); border-radius: 0; background: var(--menu-panel); color: var(--menu-body); cursor: pointer; }
+#gm-pause-btn { position: absolute; top: 10px; left: 10px; z-index: 8; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--menu-highlight); border-radius: 3px; background: linear-gradient(var(--menu-selected), var(--menu-panel)); box-shadow: 0 2px 4px rgba(10,12,16,0.25), inset 0 -2px 0 var(--menu-inset); color: var(--menu-body); cursor: pointer; }
 #gm-pause-btn:hover { color: var(--menu-text); border-color: var(--menu-dim); }
 #gm-pause-btn svg { display: block; width: 16px; height: 16px; fill: currentColor; }
 @media (max-width: 520px) {

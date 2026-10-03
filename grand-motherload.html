@@ -39,7 +39,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.170">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.171">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -76,6 +76,8 @@
       max-width: 1800px;
       margin-left: calc(50% - min(48vw, 900px));
       margin-right: calc(50% - min(48vw, 900px));
+      border-color: #0a0c10;
+      border-radius: 3px;
     }
 
     /* === Game canvas === */
@@ -96,6 +98,18 @@
       user-select: none;
     }
     .game-canvas-area canvas { display: block; outline: none; }
+    /* A continuous metal lip and inner gasket seat the scene in the console.
+       It overlays only the outer four pixels and never intercepts input. */
+    .game-canvas-area::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      pointer-events: none;
+      border: 3px solid var(--menu-panel, #252a33);
+      box-shadow: inset 1px 1px 0 var(--menu-highlight, #46505c),
+                  inset -1px -1px 0 var(--menu-edge, #0a0c10);
+    }
 
     /* Critical loading styles live here so the first paint needs no game assets.
        Fallback colors mirror the gunmetal/brass tokens in 020-state.js. */
@@ -299,22 +313,24 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
+      width: 44px;
+      height: 44px;
       padding: 0;
-      background: rgba(10,8,5,0.72);
-      border: 1px solid rgba(255,190,60,0.38);
-      border-radius: 0;
+      background: linear-gradient(#323947, #252a33);
+      border: 1px solid #46505c;
+      border-radius: 3px;
+      box-shadow: 0 2px 4px rgba(10,12,16,0.25), inset 0 -2px 0 #14181f;
       cursor: pointer;
-      color: rgba(255,190,60,0.85);
+      color: #c9c7b8;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
       flex-shrink: 0;
     }
     #gm-fullscreen-btn:hover {
-      background: rgba(255,190,60,0.12);
-      border-color: rgba(255,190,60,0.7);
-      color: rgba(255,220,100,1);
+      background: #323947;
+      border-color: #929dac;
+      color: #eee1b8;
     }
+    #gm-fullscreen-btn:focus-visible { outline: 2px solid #ffe066; outline-offset: 3px; }
     #gm-fullscreen-btn svg {
       display: block;
       width: 14px;
@@ -386,13 +402,16 @@
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
-      padding: 0.35em 0.5em !important;
+      padding: 10px !important;
       z-index: 5;
       pointer-events: none;
     }
     .game-wrapper .game-header .demo-label { display: none !important; }
     .game-wrapper .game-header #gm-header-right { pointer-events: auto; margin-left: auto; }
-    body.gm-fs .game-wrapper .game-header { padding: 0.35em 0.5em !important; }
+    /* Canvas dialogs own these corners while open, including their X keys. */
+    .game-wrapper.gm-panel-open .game-header,
+    .game-wrapper.gm-panel-open #gm-pause-btn { visibility: hidden; }
+    body.gm-fs .game-wrapper .game-header { padding: 10px !important; }
     body.gm-fs .demo-label { display: none !important; }
     body.gm-fs .game-canvas-area { flex: 1 1 auto; height: auto; }
     body.gm-fs .game-controls-info { display: none !important; }
@@ -1021,13 +1040,13 @@
       });
     })();
   </script>
-  <script defer src="js/sluice-performance-gpu.js?v=v28.170"></script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.170"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.170"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.170"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.170"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.170"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.170"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.170"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.171"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.171"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.171"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.171"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.171"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.171"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.171"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.171"></script>
 </body>
 </html>

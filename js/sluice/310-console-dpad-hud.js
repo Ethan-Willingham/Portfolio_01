@@ -106,24 +106,35 @@
     ctx.restore();
   }
 
+  var viewportKeysHost = null, viewportPanelOpen = null;
+  function syncViewportKeys() {
+    var open = !!(gamePaused || gameOver || ledgerOpen || cargoManifestOpen ||
+      shopOpen || (shopState && shopState !== 'closed') || ukModal || seamCreditsOn);
+    if (!viewportKeysHost) viewportKeysHost = document.getElementById('game-canvas').closest('.game-wrapper');
+    if (viewportKeysHost && viewportPanelOpen !== open) {
+      viewportPanelOpen = open;
+      viewportKeysHost.classList.toggle('gm-panel-open', open);
+    }
+  }
+
   // v11.27 — small persistent FPS + version display in top-left.
   // Tucked in stencil paint so it blends with the rest of the UI.
   function drawTopLeftDebug() {
-    if (!UI_NEW) return;
+    if (!UI_NEW || viewportPanelOpen) return;
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
     var v = GAME_VERSION || '';
     var fps = (perfFps || 0) + ' FPS';
-    // v23.64 — seat the version + FPS on a dark translucent plate so they stay
-    // legible over the bright sky as well as the dark underground (was dim amber
-    // on bare canvas, which washed out against the blue). Matches the dpad disc
-    // / perf-panel backdrops; text bumped to near-opaque amber.
-    var plateW = Math.max(stencilTextWidth(v, 1), stencilTextWidth(fps, 1)) + 8;
-    ctx.fillStyle = 'rgba(8,10,14,0.62)';
-    roundRect(ctx, 4, 3, plateW, 22, 3, true);
-    drawStencilText(v, 8, 6, 1, 'rgba(238,202,104,0.96)');
-    drawStencilText(fps, 8, 16, 1, 'rgba(238,202,104,0.96)');
+    // Status sits beside the pause key in the same housing and text palette.
+    ctx.font = '400 11px ' + UI_FONT;
+    var plateW = Math.ceil(Math.max(ctx.measureText(v).width, ctx.measureText(fps).width)) + 16;
+    ctx.fillStyle = UIT_EDGE;
+    roundRect(ctx, 60, 10, plateW, 44, 3, true);
+    ctx.fillStyle = UIT_PANEL;
+    roundRect(ctx, 61, 11, plateW - 2, 42, 2, true);
+    consoleText(v, 68, 27, 11, UIT_BODY);
+    consoleText(fps, 68, 44, 11, UIT_DIM);
     ctx.restore();
   }
 
@@ -978,4 +989,3 @@
       }
     }
   }
-
