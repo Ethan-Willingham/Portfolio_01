@@ -7,7 +7,7 @@ ROOT="$(git rev-parse --show-toplevel)"
 # Engine-sync guard: the physics toy embeds verbatim copies of the game's
 # smoke + jello engines (and shares liquid-wgpu.js). If a commit touches
 # either side, refuse drift so every engine change ports both ways.
-if git diff --cached --name-only | grep -qE '^(js/water-smoke-slime\.js|water-smoke-slime\.html|js/liquid-wgpu\.js|js/sluice/(190-smoke-webgl|340-jello|000-head)\.js)$'; then
+if git diff --cached --name-only | grep -qE '^(js/water-smoke-slime\.js|archive/water-smoke-slime/water-smoke-slime\.html|js/liquid-wgpu\.js|js/sluice/(190-smoke-webgl|340-jello|000-head|342-soft-contact|344-soft-(handling|terrain|material)|345-soft-pairs|346-soft-(intent|presentation)|347-surface-slimes)\.js)$'; then
   if ! node "$ROOT/tools/toy-engine-sync.mjs" --check; then
     echo "pre-commit: toy/game engine copies have drifted (see above)." >&2
     echo "  game changed -> node tools/toy-engine-sync.mjs --write" >&2

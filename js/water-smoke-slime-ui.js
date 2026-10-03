@@ -28,10 +28,11 @@
       zerog: 'Pull a slime through the floating water.',
       chimney: 'Move a slime into a plume and watch it split.',
       spa: 'Drop the top slime into the pool.',
-      rig: 'Try an exhaust at idle, on the move, or under boost.'
+      rig: 'Try an exhaust at idle, on the move, or under boost.',
+      blank: 'Choose a material to add, or draw your own container.'
     };
     var hints = {
-      poke: 'Drag a slime or stir the water.',
+      poke: 'Grab near a slime’s edge to stretch it. Drag empty space to stir.',
       water: 'Hold to pour. Drag to make a splash.',
       smoke: 'Hold and drag to send smoke swirling.',
       slime: 'Tap to drop a slime. Drag to place it.',
@@ -45,7 +46,7 @@
       Array.from(generated.children).forEach(function (row) {
         var key = row.querySelector('[data-preset]').dataset.preset.split(':')[0];
         var material = key.replace(/Look|Scale/, '');
-        row.querySelector('label').textContent = /Look$/.test(key) ? 'Appearance' : /Scale$/.test(key) ? 'Size & energy' : 'Behavior';
+        row.querySelector('label').textContent = /Look$/.test(key) ? 'Appearance' : /Scale$/.test(key) ? 'Size & energy' : material === 'slime' ? 'Material' : 'Behavior';
         bar.querySelector('[data-presets="' + material + '"]').appendChild(row);
       });
       generated.remove();
@@ -104,12 +105,18 @@
       var label = state.paused ? 'Paused' : state.waterState === 'booting' ? 'Starting water' : 'Live';
       if (status.textContent !== label) status.textContent = label;
       var instruction = state.tool === 'poke' ? (sceneHints[state.scene] || hints.poke) : hints[state.tool] || hints.poke;
+      if (state.tool === 'poke' &&
+          ((/^(falls|zerog|spa)$/.test(state.scene) && state.waterState === 'off') ||
+           (/^(chimney|rig)$/.test(state.scene) && !state.smoke))) instruction = hints.poke;
       if (hint.textContent !== instruction) hint.textContent = instruction;
       bar.querySelectorAll('[data-tool], [data-scene], [data-preset]').forEach(function (button) {
         button.setAttribute('aria-pressed', String(button.classList.contains('is-on')));
       });
       bar.querySelectorAll('[data-panel="water"], [data-tool="water"]').forEach(function (button) {
         button.disabled = state.waterState === 'off';
+      });
+      bar.querySelectorAll('[data-panel="smoke"], [data-tool="smoke"]').forEach(function (button) {
+        button.disabled = !state.smoke;
       });
       ['water', 'smoke', 'slime'].forEach(function (material) {
         var selected = Array.from(bar.querySelectorAll('[data-presets="' + material + '"] .is-on'));
@@ -127,6 +134,16 @@
     document.getElementById('toy-restart').addEventListener('click', function () {
       toy.scene(toy.stats().scene);
       pause(false);
+    });
+    document.querySelectorAll('[data-try]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var kind = button.dataset.try;
+        toy.scene(kind === 'smoke' ? 'chimney' : 'falls');
+        toy.tool(kind === 'water' ? 'erase' : 'poke');
+        pause(false);
+        shell.scrollIntoView({ block: 'start', behavior: 'instant' });
+        document.getElementById('toy-input').focus({ preventScroll: true });
+      });
     });
     bar.addEventListener('click', function (event) {
       if (event.target.closest('[data-scene], #toy-clear')) pause(false);

@@ -163,3 +163,41 @@ body.toy-expanded { overflow: hidden; }
 }
 
 #smoke-origin { min-height: 0; margin-bottom: 8px; color: var(--accent); font: 10px var(--font-mono); }
+
+/* Keep the first interaction visible, with the explanation below the box. */
+.toy-header h1 { font-size: clamp(30px, 3.6vw, 46px); }
+.toy-kicker { margin: 0 0 9px; color: var(--accent); font: 10px/1.5 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.toy-intro { margin: -6px 0 22px; color: var(--text-dim); font: 15px/1.6 var(--font-body); }
+.toy-stage { background: var(--d-canvas-bg); }
+.toy-scenes .toy-chip { min-width: 44px; min-height: 44px; padding-inline: 15px; }
+.toy-playback .toy-icon { width: 44px; height: 44px; }
+.toy-panel .toy-chip { min-height: 44px; }
+#toy-shape { min-height: 44px; }
+.toy-slider input { height: 44px; }
+.toy-prose { max-width: 780px; margin-top: 36px; }
+.toy-prose h2 { margin: 34px 0 14px; color: var(--text-bright); font: 28px/1.2 var(--font-heading); }
+.toy-experiments { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.toy-experiments button { appearance: none; text-align: left; cursor: pointer; background: transparent; color: var(--text-dim); border: 0; border-top: 1px solid var(--rule-strong); padding: 14px 0 0; font: 13px/1.6 var(--font-body); }
+.toy-experiments button:hover { border-color: var(--accent); }
+.toy-experiments span { display: block; margin-bottom: 6px; color: var(--accent); font: 20px/1.2 var(--font-heading); }
+.toy-method { margin-top: 22px; padding: 16px 0; border-block: 1px solid var(--rule); }
+.toy-method summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+.toy-method dl { margin: 18px 0; }
+.toy-method dl > div { display: grid; grid-template-columns: 65px 1fr; gap: 12px; margin-bottom: 14px; }
+.toy-method dt { color: var(--text); font: 11px/1.9 var(--font-mono); }
+.toy-method dd { margin: 0; color: var(--text-dim); font-size: 14px; }
+.toy-method p, .toy-prose .toy-compat { color: var(--text-faint); font-size: 13px; }
+.toy-prose .toy-compat { margin: 18px 0; }
+.toy-links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 13px; }
+.toy-links span { margin-left: auto; color: var(--text-faint); font: 10px/2 var(--font-mono); }
+@media (max-width: 800px) {
+  .toy-header nav { gap: 14px; }
+  .toy-scenes .toy-chip { padding-inline: 10px; }
+}
+@media (max-width: 520px) {
+  .toy-header h1 { font-size: 30px; }
+  .toy-kicker { max-width: 215px; font-size: 9px; letter-spacing: .04em; }
+  .toy-intro { font-size: 13px; margin-bottom: 16px; }
+  .toy-scenes .toy-chip { padding-inline: 6px; }
+  .toy-experiments { grid-template-columns: 1fr; gap: 18px; }
+}
