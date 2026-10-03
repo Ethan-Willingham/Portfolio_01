@@ -10820,13 +10820,7 @@
     return view;
   }
 
-  function surfaceSlimeDraw(b) {
-    b = surfaceSlimeRenderBody(b);
-    var m = b.surfaceSlime;
-    if (!m || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
-    jelloRingBake(b);
-    // Round the actual moving skin vertices into a continuous gel surface.
-    // No extra draw-time wave: the contour follows the colliding soft body.
+  function surfaceSlimeSkinPath() {
     var path = new Path2D(), count = jelloRingBakeN;
     path.moveTo((jelloROX[count - 1] + jelloROX[0]) * 0.5, (jelloROY[count - 1] + jelloROY[0]) * 0.5);
     for (var k = 0; k < count; k++) {
@@ -10835,6 +10829,18 @@
         (jelloROX[k] + jelloROX[next]) * 0.5, (jelloROY[k] + jelloROY[next]) * 0.5);
     }
     path.closePath();
+    return path;
+  }
+
+  function surfaceSlimeDraw(b) {
+    var m = b.surfaceSlime;
+    if (!m) return;
+    var cached = m.fluidFrame === jelloFrameNo && m.fluidAccum === jelloAccum && m.fluidAge === m.age;
+    b = cached ? m.fluidView : surfaceSlimeRenderBody(b);
+    if (!isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
+    var path;
+    if (cached) path = m.fluidPath;
+    else { jelloRingBake(b); path = surfaceSlimeSkinPath(); }
     var r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();

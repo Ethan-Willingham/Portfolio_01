@@ -1273,11 +1273,12 @@
         gh[GS_META_BASE + q * 8 + 1] = (gu[q].y || 0) - gmvy * backTime;
         gh[GS_META_BASE + q * 8 + 2] = gu[q].hw || 0;
         gh[GS_META_BASE + q * 8 + 3] = gu[q].hh || 0;
-        gh[GS_META_BASE + q * 8 + 4] = 1;
+        gh[GS_META_BASE + q * 8 + 4] = gu[q].skin ? (gu[q].convex ? (gu[q].convex > 0 ? 3 : 4) : 2) : 1;
         gh[GS_META_BASE + q * 8 + 5] = ptN;
         gh[GS_META_BASE + q * 8 + 6] = gmvx;
         gh[GS_META_BASE + q * 8 + 7] = gmvy;
         var base = GS_RING_BASE + q * GS_RING * 4;
+        var skinL = Infinity, skinR = -Infinity, skinT = Infinity, skinB = -Infinity;
         for (var pk = 0; pk < ptN; pk++) {
           var pBase = pk * 4;
           var gvx = pts[pBase + 2] || 0;
@@ -1291,6 +1292,26 @@
           gh[base + pBase + 1] = (pts[pBase + 1] || 0) - gvy * backTime;
           gh[base + pBase + 2] = gvx;
           gh[base + pBase + 3] = gvy;
+          if (gu[q].skin) {
+            skinL = Math.min(skinL, gh[base + pBase]); skinR = Math.max(skinR, gh[base + pBase]);
+            skinT = Math.min(skinT, gh[base + pBase + 1]); skinB = Math.max(skinB, gh[base + pBase + 1]);
+          }
+        }
+        if (gu[q].skin) {
+          // Bounds enclose the uploaded substep pose, including local
+          // velocity deformation, so skin queries need no legacy 4px pad.
+          gh[GS_META_BASE + q * 8] = (skinL + skinR) * 0.5;
+          gh[GS_META_BASE + q * 8 + 1] = (skinT + skinB) * 0.5;
+          gh[GS_META_BASE + q * 8 + 2] = (skinR - skinL) * 0.5 + 0.01;
+          gh[GS_META_BASE + q * 8 + 3] = (skinB - skinT) * 0.5 + 0.01;
+          if (gu[q].convex && backTime > 0) {
+            // Differential face velocities can make an earlier pose concave.
+            for (var cv = 0; cv < ptN; cv++) {
+              var ca = base + ((cv + ptN - 1) % ptN) * 4, cb = base + cv * 4, cc = base + ((cv + 1) % ptN) * 4;
+              var cross = (gh[cb] - gh[ca]) * (gh[cc + 1] - gh[cb + 1]) - (gh[cb + 1] - gh[ca + 1]) * (gh[cc] - gh[cb]);
+              if (gu[q].convex * cross <= 1e-4) { gh[GS_META_BASE + q * 8 + 4] = 2; break; }
+            }
+          }
         }
       }
       // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, playerVx, playerVy).
@@ -4512,19 +4533,36 @@ fn guestContainsPoint(gi : i32, px : f32, py : f32) -> bool {
   let gA = gameP.guests[gi * 2];
   let gB = gameP.guests[gi * 2 + 1];
   if (gB.x < 0.5) { return false; }
-  if (abs(px - gA.x) > gA.z + 4.0 || abs(py - gA.y) > gA.w + 4.0) {
+  let padding = select(4.0, 0.0, gB.x > 1.5);
+  if (abs(px - gA.x) > gA.z + padding || abs(py - gA.y) > gA.w + padding) {
     return false;
   }
   let gn = i32(gB.y);
   let gBase = gi * ${GS_RING};
+  if (gB.x > 2.5) {
+    // Convex soft skins use half planes, avoiding ray divisions and
+    // returning at the first outside edge. 3/4 encode both windings.
+    let winding = select(1.0, -1.0, gB.x > 3.5);
+    var previous = gn - 1;
+    for (var edge : i32 = 0; edge < gn; edge = edge + 1) {
+      let a = gameP.guestPts[gBase + previous].xy;
+      let b = gameP.guestPts[gBase + edge].xy;
+      if (winding * ((b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x)) < 0.0) { return false; }
+      previous = edge;
+    }
+    return true;
+  }
   var inside = false;
   var gj = gn - 1;
   for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
     let pa = gameP.guestPts[gBase + gk];
     let pb = gameP.guestPts[gBase + gj];
-    if (((pa.y > py) != (pb.y > py)) &&
-        (px < (pb.x - pa.x) * (py - pa.y) / (pb.y - pa.y) + pa.x)) {
-      inside = !inside;
+    if ((pa.y > py) != (pb.y > py)) {
+      if (gB.x > 1.5) {
+        let lhs = (px - pa.x) * (pb.y - pa.y);
+        let rhs = (pb.x - pa.x) * (py - pa.y);
+        if (select((lhs > rhs), (lhs < rhs), (pb.y > pa.y))) { inside = !inside; }
+      } else if (px < (pb.x - pa.x) * (py - pa.y) / (pb.y - pa.y) + pa.x) { inside = !inside; }
     }
     gj = gk;
   }
@@ -6767,6 +6805,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // One projection and one velocity constraint are applied, so guest array
   // order cannot change the result.
   var guestInsideCount : i32 = 0;
+  var guestSoft = false;
   var gD2 : f32 = 1e9;
   var gPX : f32 = x; var gPY : f32 = y;
   var gFVX : f32 = 0.0; var gFVY : f32 = 0.0;
@@ -6774,6 +6813,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     if (!guestContainsPoint(gi, x, y)) { continue; }
     guestInsideCount = guestInsideCount + 1;
     let gB = gameP.guests[gi * 2 + 1];
+    guestSoft = guestSoft || gB.x > 1.5;
     let gn = i32(gB.y);
     let gBase = gi * ${GS_RING};
     var gj = gn - 1;
@@ -6926,7 +6966,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // Skin dead-band: a contact shallower than 1.5 px is ring-resample
     // jitter, not a meaningful sweep. Deeper overlaps receive one union
     // face constraint and, if a clear exterior was found, one projection.
-    if (gdep > 1.5) {
+    if (gdep > select(1.5, 0.0, guestSoft)) {
       let gvn = (vx - gFVX) * gnx + (vy - gFVY) * gny;
       if (gvn < 0.0) {
         vx = vx - gnx * gvn;
@@ -7105,7 +7145,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   var x=p.x;var y=p.y;var vx=velocity.x;var vy=velocity.y;let r=radius;
 ` + WGSL_COLLIDE.slice(WGSL_COLLIDE.indexOf('  // Preserve the terrain-resolved state.'),
   WGSL_COLLIDE.indexOf('  // World-bounds clamp'))
-  .replace('if (gdep > 1.5) {', 'if (gdep > r * 0.1) {') + /* wgsl */ `
+  .replace('if (gdep > select(1.5, 0.0, guestSoft)) {', 'if (gdep > select(r * 0.1, 0.0, guestSoft)) {') + /* wgsl */ `
   p=vec2f(x,y);velocity=vec2f(vx,vy);
   let right = gp.worldCols * gp.worldTile - radius;
   let bottom = gp.worldRows * gp.worldTile - radius;
@@ -7132,7 +7172,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     .replace('    guestInsideCount = guestInsideCount + 1;', '    guestInsideCount = guestInsideCount + 1;\n    guestInsideMask |= 1u << u32(gi);');
   var WGSL_SNOW_SEARCH = WGSL_COLLIDE.slice(snowSearchStart, snowResponseStart);
   var WGSL_SNOW_RESPONSE = WGSL_COLLIDE.slice(snowResponseStart, snowUnionEnd)
-    .replace('if (gdep > 1.5) {', 'if (gdep > r * 0.1) {');
+    .replace('if (gdep > select(1.5, 0.0, guestSoft)) {', 'if (gdep > select(r * 0.1, 0.0, guestSoft)) {');
   var WGSL_SNOW_FINALIZE = WGSL_SNOW_COLLIDE.slice(WGSL_SNOW_COLLIDE.indexOf('  p=vec2f(x,y);velocity=vec2f(vx,vy);'), WGSL_SNOW_COLLIDE.lastIndexOf('}'));
   var WGSL_SNOW_COOPERATIVE = /* wgsl */ `
 @group(0) @binding(7) var<storage, read_write> snowFallbackCount : array<atomic<u32>>;
@@ -7234,12 +7274,44 @@ fn snowAcceptExit(distance2 : f32, face : vec4<f32>) {
 }
 `;
   var WGSL_SNOW_COMPACT_SEARCH = WGSL_SNOW_SEARCH
-    .replace("          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n          let fvx = pa.z + (pb.z - pa.z) * et;\n          let fvy = pa.w + (pb.w - pa.w) * et;\n", "          let fvx = pa.z + (pb.z - pa.z) * et;\n          let fvy = pa.w + (pb.w - pa.w) * et;\n          if (!guestCandidateWins(dd2, qx, qy, fvx, fvy,\n                                  uD2, uPX, uPY, uFVX, uFVY)) { continue; }\n          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n")
-    .replace("          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n          let fvx = (pa.z + pb.z) * 0.5;\n          let fvy = (pa.w + pb.w) * 0.5;\n", "          let fvx = (pa.z + pb.z) * 0.5;\n          let fvy = (pa.w + pb.w) * 0.5;\n          if (!guestCandidateWins(dd2, mx, my, fvx, fvy,\n                                  oD2, gPX, gPY, gFVX, gFVY)) { continue; }\n          if (guestAnyContainsPoint(tx, ty) ||\n              !guestExitClear(x, y, tx, ty, r)) { continue; }\n");
+    .replace(`          let dl = sqrt(dd2);
+          let tx = qx + ddx / dl * 0.5;
+          let ty = qy + ddy / dl * 0.5;
+          if (guestAnyContainsPoint(tx, ty) ||
+              !guestExitClear(x, y, tx, ty, r)) { continue; }
+          let fvx = pa.z + (pb.z - pa.z) * et;
+          let fvy = pa.w + (pb.w - pa.w) * et;
+`, `          let fvx = pa.z + (pb.z - pa.z) * et;
+          let fvy = pa.w + (pb.w - pa.w) * et;
+          if (!guestCandidateWins(dd2, qx, qy, fvx, fvy,
+                                  uD2, uPX, uPY, uFVX, uFVY)) { continue; }
+          let dl = sqrt(dd2);
+          let tx = qx + ddx / dl * 0.5;
+          let ty = qy + ddy / dl * 0.5;
+          if (guestAnyContainsPoint(tx, ty) ||
+              !guestExitClear(x, y, tx, ty, r)) { continue; }
+`)
+    .replace(`          let dl = sqrt(dd2);
+          let tx = mx + ddx / dl * 0.5;
+          let ty = my + ddy / dl * 0.5;
+          if (guestAnyContainsPoint(tx, ty) ||
+              !guestExitClear(x, y, tx, ty, r)) { continue; }
+          let fvx = (pa.z + pb.z) * 0.5;
+          let fvy = (pa.w + pb.w) * 0.5;
+`, `          let fvx = (pa.z + pb.z) * 0.5;
+          let fvy = (pa.w + pb.w) * 0.5;
+          if (!guestCandidateWins(dd2, mx, my, fvx, fvy,
+                                  oD2, gPX, gPY, gFVX, gFVY)) { continue; }
+          let dl = sqrt(dd2);
+          let tx = mx + ddx / dl * 0.5;
+          let ty = my + ddy / dl * 0.5;
+          if (guestAnyContainsPoint(tx, ty) ||
+              !guestExitClear(x, y, tx, ty, r)) { continue; }
+`);
   // Primary failures cache exact selected geometry and origin containment.
   // One record per pending queue index is written before the fallback pass.
   var WGSL_SNOW_PRIMARY_CACHE = /* wgsl */ `
-struct SnowPrimaryCache { face:vec4f, geometry:vec4f, destination:vec2f, insideMask:u32, _pad:u32 };
+struct SnowPrimaryCache { face:vec4f, geometry:vec4f, destination:vec2f, insideMask:u32, soft:u32 };
 @group(0) @binding(13) var<storage,read_write> snowPrimaryCache:array<SnowPrimaryCache>;
 `;
   var WGSL_SNOW_CACHED_SEARCH = WGSL_SNOW_COMPACT_SEARCH
@@ -7255,7 +7327,7 @@ struct SnowPrimaryCache { face:vec4f, geometry:vec4f, destination:vec2f, insideM
       let pending = atomicAdd(&snowFallbackCount[0], 1u);
       snowFallbackIndices[pending] = i;
       snowPrimaryCache[pending] = SnowPrimaryCache(vec4f(gPX,gPY,gFVX,gFVY),
-        vec4f(gD2,gdep,gnx,gny),vec2f(gtx,gty),guestInsideMask,0u);
+        vec4f(gD2,gdep,gnx,gny),vec2f(gtx,gty),guestInsideMask,select(0u,1u,guestSoft));
       atomicMax(&snowDispatchArgs[0], pending / 32u + 1u);
       return;
     }
@@ -7274,6 +7346,7 @@ fn snowFallback(@builtin(global_invocation_id) gid : vec3<u32>) {
   let terrainX=x;let terrainY=y;let terrainVX=vx;let terrainVY=vy;
   var guestProjected=false;
   let guestInsideMask=cached.insideMask;
+  let guestSoft=cached.soft != 0u;
   var gD2=cached.geometry.x;
   var gPX=cached.face.x;var gPY=cached.face.y;
   var gFVX=cached.face.z;var gFVY=cached.face.w;
@@ -7292,7 +7365,7 @@ fn snowFallback(@builtin(global_invocation_id) gid : vec3<u32>) {
     .replaceAll('  var gD2 : f32 = 1e9;', '  var gD2 : f32 = 1e9;\n  var gOwner : i32 = -1;')
     .replaceAll('      gD2 = ringD2;', '      gD2 = ringD2;\n      gOwner = gi;')
     .replaceAll('  if (guestInsideCount > 0) {', `
-  var guestLegalSlop = guestInsideCount == 1 && sqrt(gD2) <= r * 0.1;
+  var guestLegalSlop = !guestSoft && guestInsideCount == 1 && sqrt(gD2) <= r * 0.1;
   if (guestLegalSlop) {
     for (var other : i32 = 0; other < ${GS_MAX_GUESTS}; other = other + 1) {
       if (other != gOwner && guestContainsPoint(other, gPX, gPY)) {
@@ -7318,7 +7391,8 @@ fn snowFallback(@builtin(global_invocation_id) gid : vec3<u32>) {
   var nearGuest = false;
   for (var gi:i32=0;gi<${GS_MAX_GUESTS};gi=gi+1) {
     let a=gameP.guests[gi*2];let b=gameP.guests[gi*2+1];
-    if (b.x>=0.5 && abs(x-a.x)<=a.z+4.0 && abs(y-a.y)<=a.w+4.0) { nearGuest=true;break; }
+    let padding=select(4.0,0.0,b.x>1.5);
+    if (b.x>=0.5 && abs(x-a.x)<=a.z+padding && abs(y-a.y)<=a.w+padding) { nearGuest=true;break; }
   }
   if (nearGuest) {
     pos[i]=vec4<f32>(x,y,vx,vy);
@@ -7435,7 +7509,7 @@ fn guestExitClear(x0 : f32, y0 : f32, x1 : f32, y1 : f32, r : f32) -> bool {
       let pending = atomicAdd(&liquidFallbackCount[0], 1u);
       liquidFallbackIndices[pending] = i;
       snowPrimaryCache[pending] = SnowPrimaryCache(vec4f(gPX,gPY,gFVX,gFVY),
-        vec4f(gD2,gdep,gnx,gny),vec2f(gtx,gty),guestInsideMask,0u);
+        vec4f(gD2,gdep,gnx,gny),vec2f(gtx,gty),guestInsideMask,select(0u,1u,guestSoft));
       atomicMax(&liquidDispatchArgs[0], pending / 32u + 1u);
       return;
     }
@@ -7456,6 +7530,7 @@ fn liquidCompactFallback(@builtin(global_invocation_id) gid : vec3<u32>) {
   let terrainX=x;let terrainY=y;let terrainVX=vx;let terrainVY=vy;
   var guestProjected=false;
   let guestInsideMask=cached.insideMask;
+  let guestSoft=cached.soft != 0u;
   var gD2=cached.geometry.x;
   var gPX=cached.face.x;var gPY=cached.face.y;
   var gFVX=cached.face.z;var gFVY=cached.face.w;

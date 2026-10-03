@@ -103,21 +103,7 @@
         b.bathBuoy = m.wet ? { line: water.surface, x0: b.bboxL - 12, x1: b.bboxR + 12, lift: 2.2, drag: 0.985 } : null;
       }
       surfaceSlimeThink(b, dt);
-      // The same deforming boundary goes to the water solver. Speeds are
-      // converted from solver time to real time, with resting noise removed.
-      if (surfaceSlimeGuests.length < 6) {
-        var take = Math.min(20, b.ringN), pts = [], ih = JELLO_TIMESCALE / (jelloStepH || JELLO_H);
-        for (var k = 0; k < take; k++) {
-          var p = b.ring[Math.floor(k * b.ringN / take)];
-          var vx = skySlimeClamp((b.px[p] - b.ox[p]) * ih, -600, 600);
-          var vy = skySlimeClamp((b.py[p] - b.oy[p]) * ih, -600, 600);
-          var fade = typeof softWorldBody === 'function' && softWorldBody(b) ?
-            1 / softWorldWaterScale() : skySlimeClamp((Math.hypot(vx, vy) - 20) / 50, 0, 1);
-          pts.push(b.px[p], b.py[p], vx * fade, vy * fade);
-        }
-        surfaceSlimeGuests.push({ x: b.cx, y: b.cy, hw: (b.bboxR - b.bboxL) / 2 + 3,
-          hh: (b.bboxB - b.bboxT) / 2 + 3, vx: 0, vy: 0, pts: pts });
-      }
+
     }
   }
 
@@ -246,13 +232,7 @@
     return view;
   }
 
-  function surfaceSlimeDraw(b) {
-    b = surfaceSlimeRenderBody(b);
-    var m = b.surfaceSlime;
-    if (!m || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
-    jelloRingBake(b);
-    // Round the actual moving skin vertices into a continuous gel surface.
-    // No extra draw-time wave: the contour follows the colliding soft body.
+  function surfaceSlimeSkinPath() {
     var path = new Path2D(), count = jelloRingBakeN;
     path.moveTo((jelloROX[count - 1] + jelloROX[0]) * 0.5, (jelloROY[count - 1] + jelloROY[0]) * 0.5);
     for (var k = 0; k < count; k++) {
@@ -261,6 +241,18 @@
         (jelloROX[k] + jelloROX[next]) * 0.5, (jelloROY[k] + jelloROY[next]) * 0.5);
     }
     path.closePath();
+    return path;
+  }
+
+  function surfaceSlimeDraw(b) {
+    var m = b.surfaceSlime;
+    if (!m) return;
+    var cached = m.fluidFrame === jelloFrameNo && m.fluidAccum === jelloAccum && m.fluidAge === m.age;
+    b = cached ? m.fluidView : surfaceSlimeRenderBody(b);
+    if (!isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
+    var path;
+    if (cached) path = m.fluidPath;
+    else { jelloRingBake(b); path = surfaceSlimeSkinPath(); }
     var r = m.radius, hue = m.hue;
     var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
     ctx.save();
@@ -334,19 +326,7 @@
       var b = jelloBodies[bi];
       if (!b.surfaceSlime || b.frozen) continue;
       if (typeof softWorldBody === 'function' && softWorldBody(b)) { softWorldWaterCPU(b); continue; }
-      for (var i = 0; i < liquidCount; i++) {
-        var x = liquidX[i], y = liquidY[i];
-        if (liquidFrozen[i] || x < b.bboxL || x > b.bboxR || y < b.bboxT || y > b.bboxB ||
-            !jelloPointInRing(b, x, y)) continue;
-        var near = jelloNearestOnRing(b, x, y), dx = near.x - x, dy = near.y - y;
-        var length = Math.hypot(dx, dy) || 1;
-        var nx = near.x + dx / length * 1.2, ny = near.y + dy / length * 1.2;
-        if (liquidWorldSolidAt(nx, ny)) continue;
-        liquidX[i] = nx; liquidY[i] = ny;
-        liquidVX[i] = (b.vx || 0) * JELLO_TIMESCALE * 0.65;
-        liquidVY[i] = (b.vy || 0) * JELLO_TIMESCALE * 0.65;
-        liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
-      }
+      surfaceSlimeFluidCPU(b, false);
     }
   }
 

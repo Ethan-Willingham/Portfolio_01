@@ -15,7 +15,7 @@ function context() {
     LIQUID_CELL: 2.5, LIQUID_PDELTA: 0.5, LIQUID_TIMESCALE: 1, liquidMutationSeq: 0, liquidCount: 0,
     liquidX: [], liquidY: [], liquidVX: [], liquidVY: [], liquidType: [], liquidFrozen: [],
     liquidSleeping: [], liquidRestFrames: [], liquidWGPU: null,
-    LIQUID_DBG_READBACK: 20, ENABLE_JELLO: true, bathMode: false, gamePaused: false,
+    LIQUID_DBG_READBACK: 20, simNominal: 1/60, ENABLE_JELLO: true, bathMode: false, gamePaused: false,
     jelloBodies: [], jelloBodyOnCamera: b => !b.frozen,
     player: { vx: 0, vy: 0 }, gameOver: false, gameWon: false, performance: { now: () => 0 },
     jelloWorldSolidAt: () => false, liquidWorldSolidAt: () => false };

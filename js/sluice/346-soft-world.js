@@ -255,6 +255,7 @@
 
   function softWorldWaterCPU(b) {
     if (!softWorldBody(b)) return;
+    if (typeof surfaceSlimeFluidCPU === 'function') { surfaceSlimeFluidCPU(b, true); return; }
     var inverse = JELLO_TIMESCALE / ((jelloStepH || JELLO_H) * softWorldWaterScale());
     for (var i = 0; i < liquidCount; i++) {
       var x = liquidX[i], y = liquidY[i];

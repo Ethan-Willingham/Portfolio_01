@@ -799,3 +799,63 @@ Fixed nominal-step slime CPU savings were about 0.9% for five bodies and
 sweeps expose extra physics catch-up and GPU costs, with AC repeats and
 actual body-work coverage. See [SLIME_SNOW_CAPACITY.md](SLIME_SNOW_CAPACITY.md)
 for conditions, tables, rejected candidates and pending foreground validation.
+
+### v28.149 fluid contact at the rendered skin
+
+Water and snow use an enclosing polygon derived from the same interpolated,
+outward-baked quadratic path that draws each resident. The old guest export
+sampled the inset physical lattice. The new export retains the existing twenty
+edges and dispatch cadence, carries local face velocities, and shares its baked
+Path2D with drawing. Jello updates before the fluid guest export, so fluid and
+rendering see the same pose. The CPU fluid fallback uses this outline too.
+
+Each edge encloses its curve interval using exact quadratic extrema. Adjacent
+faces use the shortest outward displacement, avoiding long near-parallel miters.
+A folded cusp temporarily uses a bounded convex support envelope; invalid
+geometry is rejected. The polygon includes 0.42 px clearance, which combines
+with the existing 0.5 px contact projection to keep a visible snow grain outside
+the gel. Soft guests no longer retain the old shallow penetration allowance.
+Hard guests retain their existing allowance and containment behavior.
+
+Soft guest bounds enclose the actual uploaded substep vertices, including local
+velocity interpolation, and therefore omit the legacy 4 px query padding.
+Strictly convex soft outlines use winding-aware half planes; concave outlines
+use ray crossings without division. Earlier substeps revalidate convexity after
+velocity interpolation. Compact escape searches reject losing candidates before
+calculating their projected endpoints, while retaining candidate order and the
+complete winning comparator. Buffer layouts, physical particle counts and the
+v28.137 terrain/contact schedule are unchanged.
+
+`node tools/test-slime-fluid-skin.mjs` passes 16 CPU cases and 107 GPU
+differential cases. Coverage includes both windings, interpolated and concave
+skins, every sampled exterior face, folded cusps, 0.9 px rendered clearance,
+local tangential velocity, substep bounds and convexity, terrain pinches,
+overlapping guests, frozen particles and protected tails. The legacy guest
+cases retain exact float, auxiliary and flag words through repeated dispatch.
+`node tools/test-soft-world.cjs` passes its 22 coupling groups. Both the game
+and shared toy boot with advancing simulation and no browser exceptions.
+
+Six ordinary-game comparisons use five moving residents, an initial 8,000
+physical snow grains, normal water and smoke, a 1512 by 982 viewport at DPR 2,
+8 seconds of warmup and 20 seconds of measurement. All GPU fences complete
+without errors or lost coverage. The hidden browser uses `timer120` scheduling:
+
+| Scene | v28.148 average FPS | v28.149 average FPS |
+| --- | ---: | ---: |
+| Dispersed, ABBA repeats | 108.8, 110.5 | 112.1, 113.3 |
+| Clustered | 109.9 | 112.3 |
+
+These trajectories differ and retain ordinary particle exits. One candidate
+repeat ends with 7,680 snow grains; the other five runs retain 8,000. Water
+counts vary between runs. This is evidence of no observed game FPS loss in
+these scenes, not a native 120 FPS certification or a universal performance
+guarantee.
+
+The matched collision-only ABBA benchmark (`BENCH=1`) uses the same 16,384
+particle states and five residents in each source. Separated residents add
+about 0.03 ms per collision. An artificial cloud inside deeply overlapping,
+deformed residents adds about 0.15 to 0.16 ms: the outer skin queues 3,489
+particles instead of 2,462. Earlier candidate rejection recovers roughly
+0.04 to 0.07 ms compared with the first skin candidate, but does not remove
+this remaining cost. These wall timings include seed copies and a queue fence;
+they are separate from whole-game frame timing.
