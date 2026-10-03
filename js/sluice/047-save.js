@@ -416,10 +416,6 @@
     gameOver = false;
     deathInfo = null;
     deathPhaseT = 0;
-    deathPlateY = -10000;
-    deathPlateTargetY = -10000;
-    deathSparks = [];
-    deathLandedAt = -1;
     restartConfirmT = 0;
     explosions = [];
     liveBombs = [];

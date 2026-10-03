@@ -39,7 +39,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.151">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.153">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -418,6 +418,23 @@
             </div>
             <div class="game-canvas-area">
               <canvas id="game-canvas" tabindex="-1"></canvas>
+              <div id="game-death" hidden>
+                <section class="death-card" role="dialog" aria-modal="true" aria-labelledby="gm-death-title" aria-describedby="gm-death-cause gm-death-kept">
+                  <div class="death-body">
+                    <h2 id="gm-death-title">Rig lost</h2>
+                    <p id="gm-death-cause"></p>
+                    <dl class="death-summary">
+                      <div><dt>Cargo lost</dt><dd id="gm-death-cargo"></dd></div>
+                      <div><dt>Recovery fee (10%)</dt><dd id="gm-death-fee"></dd></div>
+                      <div class="death-balance"><dt>Cash remaining</dt><dd id="gm-death-balance"></dd></div>
+                    </dl>
+                    <p id="gm-death-kept">Your mine and upgrades are kept.</p>
+                  </div>
+                  <div class="death-actions">
+                    <button id="gm-death-return" type="button">Return to town <span id="gm-death-shortcut" aria-hidden="true"></span></button>
+                  </div>
+                </section>
+              </div>
               <div id="gm-rotate-screen" hidden role="status" aria-live="polite">
                 <div class="gm-rotate-card">
                   <p class="gm-rotate-title">Rotate your device</p>
@@ -949,13 +966,13 @@
       });
     })();
   </script>
-  <script defer src="js/sluice-performance-gpu.js?v=v28.151"></script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.151"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.151"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.151"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.151"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.151"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.151"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.151"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.153"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.153"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.153"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.153"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.153"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.153"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.153"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.153"></script>
 </body>
 </html>

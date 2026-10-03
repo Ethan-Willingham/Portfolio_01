@@ -3,6 +3,7 @@
     window.addEventListener('keydown', function (e) {
       if (mobileLandscapeBlocked) return;
       if (introPhase !== 'done') return;
+      if (deathKeyDown(e)) return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
       if (hearthRoomKey(e)) { e.preventDefault(); return; }
@@ -82,7 +83,7 @@
     // Mobile play requires landscape, including iPadOS desktop-style agents.
     // Loading still warms the GPU behind the cover; ordinary simulation stops.
     var rotateScreen = document.getElementById('gm-rotate-screen');
-    var orientationControls = ['game-canvas', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder'];
+    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder'];
     function syncMobileOrientation() {
       var blocked = isMobile && window.innerWidth <= window.innerHeight;
       if (rotateScreen) rotateScreen.hidden = !blocked;
@@ -300,6 +301,7 @@
 
   function processPointerDown(x, y, id, right) {
     if (gamePaused || mobileLandscapeBlocked) return;
+    if (UI_NEW && gameOver) return;
     if (bathMode) return; // The room owns pointer input, including right clicks.
     // Right click is a location-independent dump, including over buildings.
     if (right) { siphonPointerDown(x, y, id, true); return; }

@@ -1424,8 +1424,6 @@
   // with TERMINATED + cause icon + stats. Click/tap raises the plate
   // and restarts the run.
   var deathPhaseT = 0;
-  var deathPlateY = 0;     // current plate top in CSS px; -plateH means hidden
-  var deathPlateTargetY = 0;
   var shopOpen = false;
   // v11.12 — Walk-up shop state machine (UI_STYLE.md §15). Proximity-driven:
   // walking the rig within range of the shop building sets state to 'floor';
