@@ -62,13 +62,13 @@ A flip is accepted only if it strictly reduces the distance to the target and
 keeps at most 16 motif disagreements in its 8x8 block. The evolution itself
 never uses this preparation search and never changes its rule.
 
-Measured initial presets, constructor version 3, default 768x512:
+Measured initial presets, constructor version 3, standalone default 1024x768:
 
 | Motif | E/J | Magnetization | Flippable | Neighbor correlation | Mean line run | Block entropy estimator |
 |---|---:|---:|---:|---:|---:|---:|
-| Moth | -556092 | 0.443420 | 4.0993% | 0.707108 | 6.8284 cells | 0.405879 |
-| Bloom | -556092 | 0.693868 | 3.7102% | 0.707108 | 6.8284 cells | 0.399151 |
-| Orbit | -556092 | 0.769379 | 3.6062% | 0.707108 | 6.8284 cells | 0.393293 |
+| Moth | -1112184 | 0.391530 | 4.3145% | 0.707108 | 6.8284 cells | 0.400113 |
+| Bloom | -1112184 | 0.672900 | 4.3883% | 0.707108 | 6.8284 cells | 0.394759 |
+| Orbit | -1112184 | 0.760485 | 4.2411% | 0.707108 | 6.8284 cells | 0.390429 |
 
 For all three, `E/(NJ)=-1.414215087890625`. The infinite-volume equilibrium
 Ising reference is `E_c/(NJ)=-sqrt(2)` and `k_B*T_c/J=2/log(1+sqrt(2))`.
@@ -108,7 +108,7 @@ Diagnostics are marked stale during a drag and refreshed on release.
 During initialization, the GPU computes all 4320 forward states and saves both
 packed layers every 32 steps, including both endpoints. It then computes all
 4320 inverse updates and compares both complete fields with the initial state.
-The 136 checkpoints use 13,369,344 bytes at 768x512. A seek copies the nearest
+The 136 checkpoints use 26,738,688 bytes at 1024x768 (13,369,344 at 768x512). A seek copies the nearest
 preceding checkpoint and performs at most 31 forward updates. Inverse positions
 also execute a forward/inverse pair to establish the adjacent state used for
 interpolation. Images are rendered from these computed bits at the current
@@ -138,17 +138,29 @@ the fractional update interval joins adjacent observables without storing any
 image. The scratch field for an exported state is derived from its two layers
 and direction. Holds, startup, and exact return display the current pair alone.
 
-Edge block areas are retained even for non-power-of-two sizes. Bilinear sampling
-starts at level 0.45 with weights 88%, 10%, and 2% across progressively coarser
-levels. This keeps microscopic detail sharper than the original level-1.3,
-68%/24%/8% filter. The result displays coarse observables; it is not a
-renormalization-group calculation. Zoom is bounded to 1 through 4. The camera
-retains its framing on return. Square cells keep the motif's proportions;
-narrow viewports crop the outer lattice while preserving the central motif.
-The two adjustable inks encode negative-spin density, blended vertically in
-linear RGB. The default copper `#d9978c` and blue `#8fb3c7` are arbitrary colors,
-not physical spectra. The page background and interface retain the site tokens.
-Changing colors does not alter the spins or require rebuilding the sequence.
+Edge block areas are retained even for non-power-of-two sizes. At less than
+one display pixel per cell, bilinear block averages use the appropriate level
+of the exact hierarchy. Between one and 2.5 physical pixels per cell, sampling
+moves smoothly from those averages to the individual paired cell count. At
+larger scales each resolved cell has a sharp boundary. There is no extra coarse
+filter mixed into a close view. This is an observable of the two time layers,
+not a renormalization-group calculation.
+
+The camera covers the stage and starts at 2.2 times that scale in the standalone
+host. Zoom is visible beside the timeline, bounded from 0.4 to 8. Whole image
+chooses a viewport-dependent scale that fits the motif's proportions. Square
+cells retain those proportions at every zoom. The camera retains its framing
+on exact return; only a deliberate control change moves it.
+
+Four adjustable inks encode negative-spin density. A fixed diagonal palette
+coordinate `clamp((uv.y-.23)*2.1+(uv.x-.5)*.65,0,1)` moves through cyan `#24edff`,
+violet `#8f5cff`, pink `#ff42b3`, and amber `#ffce50`, mixed in linear RGB.
+The background defaults to navy `#090d20` and is also adjustable. These are
+arbitrary display colors, not physical spectra. At the owner's request,
+display version 4 uses a navy page background and vivid colors locally;
+shared site CSS is unchanged. Palette changes do not alter either spin layer
+or require rebuilding the sequence. The exported host parameters include all
+four inks and the background in linear RGB.
 
 The room renders linear RGB radiance into the host's `rgba16float` target and
 multiplies it by host exposure. The standalone host uses unit exposure, a single
@@ -176,8 +188,9 @@ hierarchy and scene passes to the supplied encoder and never submits it.
 presentation handling are demonstrated in `js/arrow-of-time.js`.
 
 Quality low is 256x256, medium is 768x512, and high is 1024x768.
-The default has six times the original cell count. The standalone high tier is
-available with `?quality=high`. No unsupported physical scale is assigned.
+The standalone host now defaults to high quality, twice version 3's default cell
+count and twelve times the original. `?quality=medium` selects the previous
+768x512 grid. The reusable room retains its medium default. No unsupported physical scale is assigned.
 `assetBaseURL` resolves to the supplied absolute URL or the module-relative
 assets directory. The current motifs need no asset fetch. The host hex `seed`
 is recorded but unused: constructor id and version identify the starting state.
@@ -195,7 +208,7 @@ for correctness checks, not frame-by-frame rendering.
 Save exact state exports row-aligned packed arrays, checksum, constructor id,
 version, quality, parameters, direction, phase, cycle, preset index, cumulative
 steps, orbit position, forward/inverse counters, hold time, fractional update
-accumulator, active seconds, rate, zoom, and host pause/clock/adaptation counters plus both linear-RGB ink colors.
+accumulator, active seconds, rate, zoom, and host pause/clock/adaptation counters plus the four linear-RGB ink colors and background.
 `decodeReplay` validates a saved record and restores its microscopic fields.
 Version-1, version-2, and version-3 packed records remain readable. For example, inside a
 host with an existing device:
@@ -224,15 +237,15 @@ is 1/60 ambient second; at most six increments are caught up in a frame. Large
 wall-clock gaps are not simulated. Sustained slow frames first reduce that
 catch-up budget, then reduce presentation pixel ratio. These changes affect
 pacing or presentation resolution, never the lattice or microscopic rule.
-Device pixel ratio begins capped at 1.5. The selected lattice stays fixed for
+Device pixel ratio begins capped at 2 for sharp Retina presentation. The selected lattice stays fixed for
 an entire exact-return cycle.
 
 Resize and intersection observers, DOM listeners, GPU buffers/textures, the
 animation request, and the host-owned device are released on page exit.
 Missing WebGPU, missing adapter, shader failure, or device loss produces an
 explicitly labeled still generated from the same CPU-prepared starting state.
-The still uses a separate simple three-cell box filter and is not a recording
-or an alternative running model. Native fullscreen has a fixed-panel fallback.
+The still displays the CPU-prepared cells through the same adjustable palette
+and is not a recording or an alternative running model. Native fullscreen has a fixed-panel fallback.
 Buttons and inputs use native keyboard behavior, visible focus, and 44px targets.
 There is no compulsory camera motion. Portrait and landscape are supported.
 
@@ -277,8 +290,11 @@ The browser run watches three complete scored phrases at accelerated wall
 pacing using all scheduled solver steps. The arrival's rendered interior pixels
 must also match startup exactly. The browser additionally checks start, middle,
 and end seeking; rapid pointer changes; keyboard seeking; Play after seeking;
-drawing and two color controls; custom CPU/GPU preparation equivalence; and
-the full custom-image return. A separate run covers touch drawing, keyboard
+drawing and four ink controls plus the background; custom CPU/GPU preparation equivalence; and
+the full custom-image return. A separate visual check covers 2.2 default zoom,
+zoom up to 8, Whole image, palette changes with both complete spin arrays
+unchanged, 2x Retina target dimensions, the medium option and phone controls.
+A separate run covers touch drawing, keyboard
 drawing, an empty pad, erasing, and a custom-image device-loss still.
 
 The browser suite checks 1440x900, 390x844, and 844x390, Instruments, pause/resume,
@@ -303,19 +319,19 @@ latency outliers; these are retained in p95 rather than removed.
 
 | Lattice | Work | GPU median / p95, ms | Submission/completion median / p95, ms |
 |---|---|---:|---:|
-| 256x256 | One microscopic update | 0.00314 / 0.00380 | 0.50 / 0.70 for 24 updates |
-| 256x256 | Scene fragment render | 0.32799 / 0.42391 | 0.90 / 1.00 including hierarchy |
-| 512x512 | One microscopic update | 0.00685 / 0.00845 | 0.60 / 0.80 for 24 updates |
-| 512x512 | Scene fragment render | 0.75882 / 0.96836 | 1.40 / 1.80 including hierarchy |
-| 768x512 | One microscopic update | 0.00797 / 0.01929 | 0.60 / 1.10 for 24 updates |
-| 768x512 | Scene fragment render | 1.03178 / 1.14036 | 1.70 / 2.10 including hierarchy |
-| 1024x768 | One microscopic update | 0.00965 / 0.01740 | 0.70 / 1.00 for 24 updates |
-| 1024x768 | Scene fragment render | 1.02769 / 1.16452 | 1.70 / 2.10 including hierarchy |
+| 256x256 | One microscopic update | 0.00438 / 0.00519 | 0.50 / 0.60 for 24 updates |
+| 256x256 | Scene fragment render | 0.51257 / 0.62169 | 1.10 / 1.40 including hierarchy |
+| 512x512 | One microscopic update | 0.00691 / 0.01775 | 0.60 / 1.30 for 24 updates |
+| 512x512 | Scene fragment render | 0.68124 / 0.92832 | 1.30 / 2.10 including hierarchy |
+| 768x512 | One microscopic update | 0.00765 / 0.01185 | 0.70 / 0.90 for 24 updates |
+| 768x512 | Scene fragment render | 0.72020 / 0.73470 | 1.30 / 1.50 including hierarchy |
+| 1024x768 | One microscopic update | 0.00954 / 0.00959 | 0.70 / 0.80 for 24 updates |
+| 1024x768 | Scene fragment render | 0.70907 / 0.81574 | 1.40 / 1.50 including hierarchy |
 
-The default is now 768x512. High quality at 1024x768 is also measured and
-available. The doubled paired-count hierarchy still fits the frame budget on
+The standalone default is now 1024x768. Both it and the optional medium tier
+are measured. The doubled paired-count hierarchy still fits the frame budget on
 this hardware. The six measured default-resolution seeks, including complete
-packed readback, took 1.6 to 2.0 ms. They are a small latency sample rather than
+packed readback, took 2.9 to 4.1 ms. They are a small latency sample rather than
 a cross-device guarantee. The initial energy matches the requested reference but
 criticality and cross-vendor exact replay remain unproved. There are no
 unfinished room-contract requirements.
