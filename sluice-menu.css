@@ -214,6 +214,7 @@
   color: var(--menu-text);
   font: 14px/1.5 var(--font-mono);
   touch-action: pan-y;
+  opacity: var(--death-reveal-opacity, 1);
 }
 #game-death[hidden] { display: none; }
 #game-death * { box-sizing: border-box; }
@@ -225,6 +226,12 @@
   max-height: 100%;
   border: 1px solid var(--menu-highlight);
   background: var(--menu-panel);
+  -webkit-mask-image: var(--death-reveal-mask, none);
+  mask-image: var(--death-reveal-mask, none);
+  -webkit-mask-size: 16px 16px;
+  mask-size: 16px 16px;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
 }
 #game-death .death-body {
   padding: 24px 24px 0;

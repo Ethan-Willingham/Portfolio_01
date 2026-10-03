@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.161';
+  var GAME_VERSION = 'v28.162';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -6234,6 +6234,7 @@
   }
 
   function shaderWarmDeath(ws,ox,oy) {
+    warmDeathReveal();
     var sprite=document.createElement('canvas');sprite.width=sprite.height=288;
     var sc=sprite.getContext('2d');sc.fillStyle=UIMAT_PLATE_BASE;sc.fillRect(116,112,60,68);
     var s={sprite:sprite,pieces:[],duration:DEATH_BURST_S,quiet:false,lowFlash:false};
@@ -59770,6 +59771,56 @@
   var deathOverlay = document.getElementById('game-death');
   var deathReturnButton = document.getElementById('gm-death-return');
   var deathFocusPending = false;
+  var DEATH_REVEAL_S = 0.36;
+  var deathRevealMasks = null;
+
+  // Ordered four-pixel cells fill in once, rather than flickering randomly.
+  // Alpha masks keep the native dialog's type, focus and touch targets intact.
+  function prepareDeathRevealMasks() {
+    if (deathRevealMasks) return deathRevealMasks;
+    var order = [0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+    deathRevealMasks = [];
+    for (var step = 0; step < 16; step++) {
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">';
+      for (var i = 0; i < 16; i++) {
+        if (order[i] < step) svg += '<rect x="' + (i%4)*4 + '" y="' + Math.floor(i/4)*4 + '" width="4" height="4" fill="white"/>';
+      }
+      deathRevealMasks.push('url("data:image/svg+xml,' + encodeURIComponent(svg + '</svg>') + '")');
+    }
+    return deathRevealMasks;
+  }
+
+  function deathRevealProgress() {
+    if (!deathSequence) return 1;
+    var duration = deathSequence.quiet ? 0.12 : DEATH_REVEAL_S;
+    return Math.max(0,Math.min(1,(deathPhaseT-deathSequence.duration)/duration));
+  }
+
+  function setDeathReveal(progress, quiet) {
+    if (!deathOverlay) return;
+    var opacity = progress*progress*(3-2*progress);
+    var mask = quiet || progress >= 1 ? 'none' : prepareDeathRevealMasks()[Math.floor(progress*16)];
+    deathOverlay.style.setProperty('--death-reveal-opacity',opacity.toFixed(3));
+    deathOverlay.style.setProperty('--death-reveal-mask',mask);
+    deathOverlay.setAttribute('aria-hidden',progress < 1 ? 'true' : 'false');
+  }
+
+  // Render small CSS mask specimens under the loading cover. The images and
+  // compositor path are ready before the first death, including on Safari.
+  function warmDeathReveal() {
+    var masks = prepareDeathRevealMasks(), host = document.createElement('div');
+    host.setAttribute('aria-hidden','true');
+    host.style.cssText = 'position:absolute;left:0;top:0;display:flex;pointer-events:none;';
+    for (var i = 1; i < 16; i++) {
+      var cell = document.createElement('div');
+      cell.style.cssText = 'width:16px;height:16px;background:var(--menu-panel);opacity:0.5;mask-size:16px 16px;-webkit-mask-size:16px 16px;';
+      cell.style.background = UIT_PANEL;
+      cell.style.maskImage = cell.style.webkitMaskImage = masks[i];
+      host.appendChild(cell);
+    }
+    canvas.parentElement.appendChild(host);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { host.remove(); }); });
+  }
 
   // A self-contained death beat. Only its clock and cosmetic fragments move;
   // the ordinary world loop and all fluid, weather and actor ticks stay stopped.
@@ -59792,6 +59843,7 @@
       ready: false, sound: false, physicsT: 0, pieces: [], frame: null, sprite: null
     };
     if (deathOverlay) deathOverlay.hidden = true;
+    setDeathReveal(0,quiet);
     if (deathReturnButton) deathReturnButton.disabled = true;
   }
 
@@ -60064,7 +60116,7 @@
   function deathRecover() {
     if (!gameOver || gamePaused || mobileLandscapeBlocked ||
         deathPhaseT < DEATH_INPUT_DELAY_S ||
-        (deathSequence && deathPhaseT < deathSequence.duration) ||
+        deathRevealProgress() < 1 ||
         (window.SluiceLoading && window.SluiceLoading.active())) return;
     if (deathOverlay) deathOverlay.hidden = true;
     for (var k in keys) keys[k] = false;
@@ -60094,9 +60146,8 @@
 
   if (deathReturnButton) deathReturnButton.addEventListener('click', deathRecover);
 
-  // Keep the existing screenshot lever. The summary has no reveal sequence;
-  // Old deathskip review URLs still work; the short rig burst always precedes
-  // the panel, whose summary appears together with no printing animation.
+  // Old deathskip review URLs still work. The rig burst and pixel reveal
+  // precede recovery, with all summary values populated together.
   var DEATHSHOT = (function () {
     var match = location.search.match(/[?&]deathshot=([a-z]+)/);
     return match ? match[1] : null;
@@ -60157,7 +60208,9 @@
       deathOverlay.hidden = false;
       deathFocusPending = true;
     }
-    deathReturnButton.disabled = deathPhaseT < DEATH_INPUT_DELAY_S;
+    var reveal = deathRevealProgress();
+    setDeathReveal(reveal,deathSequence && deathSequence.quiet);
+    deathReturnButton.disabled = deathPhaseT < DEATH_INPUT_DELAY_S || reveal < 1;
     document.getElementById('gm-death-shortcut').textContent = gpConnected ? 'A to return' : isMobile ? '' : 'Enter or R';
     if (deathFocusPending && !deathReturnButton.disabled && !gamePaused && !mobileLandscapeBlocked) {
       deathReturnButton.focus({ preventScroll: true });
@@ -60170,7 +60223,7 @@
     }
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawDeathVeil(0.45, 0);
+    drawDeathVeil(0.45*reveal, 0);
     ctx.restore();
   }
 
