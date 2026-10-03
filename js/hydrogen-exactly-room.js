@@ -1,5 +1,5 @@
 import * as M from './hydrogen-exactly-math.js?v=2';
-import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js?v=3';
+import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js?v=4';
 
 export const roomInfo = {
   apiVersion: 1, id: 'hydrogen-exactly', title: 'Hydrogen Exactly', model: M.MODEL,
