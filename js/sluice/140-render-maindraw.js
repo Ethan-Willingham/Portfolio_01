@@ -1344,16 +1344,12 @@
     // ("Need $X") stays readable inside the shop.
     if (!ledgerOpen && !cargoManifestOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
 
-    // v11.33 — Death screen plate (UI_NEW only). Always on top.
+    // Recovery summary (UI_NEW only). Always on top.
     if (UI_NEW && gameOver) {
       drawDeathScreen(lastFrameDt || 1 / 60);
     }
-    // v24.142 — the plate raises over the live town for ~0.3s right after
-    // the respawn tap. Self-gated on the gameOver falling edge (290); also
-    // hosts the ?deathshot=CAUSE screenshot boot lever.
-    if (typeof drawDeathPlateRaise === 'function') {
-      drawDeathPlateRaise(lastFrameDt || 1 / 60);
-    }
+    // Hide recovery after respawn and host the death screenshot lever.
+    syncDeathScreen();
 
     // Great Seam extraction crescendo + EXPEDITION COMPLETE plate (295).
     // Self-gates on its own state, same dispatch model as drawDeathScreen.

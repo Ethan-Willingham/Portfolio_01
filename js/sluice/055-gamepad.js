@@ -67,6 +67,7 @@
   var gpBridgeHeld = {};     // key string -> true while THIS bridge holds keys[k] true
   var gpHoldLevel = {};      // hold-key string -> current engaged level (edge detect)
   var gpStickDir = { left: false, right: false, up: false, down: false };  // hysteresis state
+  var gpRecoveryRelease = false; // release A after recovery before it can thrust
   var gpPrev = [];           // previous per-button pressed levels (edge detect)
   var gpDebug = { connected: false, id: '', lx: 0, ly: 0, rt: 0, mappingTable: GAMEPAD_MAPPING };
   try { window.__gamepad = gpDebug; } catch (e) {}
@@ -199,6 +200,27 @@
     // press edge (which resumes via the Escape path).
     if (gamePaused) {
       gpReleaseAll();
+      if (now[9] && !prev[9]) gpTogglePause();
+      return;
+    }
+
+    if (gpRecoveryRelease) {
+      if (now[0]) {
+        gpReleaseAll();
+        if (now[9] && !prev[9]) gpTogglePause();
+        return;
+      }
+      gpRecoveryRelease = false;
+    }
+
+    // Recovery owns the pad. A requires a fresh press, so held thrust at
+    // impact cannot dismiss the summary or move the recovered rig.
+    if (UI_NEW && gameOver) {
+      gpReleaseAll();
+      if (now[0] && !prev[0]) {
+        deathRecover();
+        if (!gameOver) gpRecoveryRelease = true;
+      }
       if (now[9] && !prev[9]) gpTogglePause();
       return;
     }

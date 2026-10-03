@@ -170,10 +170,6 @@
     deathInfo = null;
     gameWon = false;
     deathPhaseT = 0;
-    deathPlateY = -10000;
-    deathPlateTargetY = -10000;
-    deathSparks = [];
-    deathLandedAt = -1;
     shopDoorT = 0;
     shopOpen = false;
     restartConfirmT = 0;

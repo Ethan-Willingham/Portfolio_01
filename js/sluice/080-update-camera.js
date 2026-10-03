@@ -1298,9 +1298,16 @@
       }
       return;
     }
+    if (gameOver) return;
     gameOver = true;
     deathInfo = info || null;
-    showMsg('Hull destroyed! Depth: ' + depthRecord + 'm');
+    deathPhaseT = 0;
+    deathManifest = buildDeathManifest();
+    for (var key in keys) keys[key] = false;
+    touch.active = false;
+    dpad.left = dpad.right = dpad.up = dpad.down = false;
+    gpReleaseAll();
+    if (itemWheel.open) closeItemWheel(false);
     var duration = Math.round(((typeof performance !== 'undefined' ? performance.now() : Date.now()) - gameStartedAt) / 1000);
     var cause = (info && info.type) || 'hull';
     track('death', { cause: cause, depth: depthRecord, money: money });

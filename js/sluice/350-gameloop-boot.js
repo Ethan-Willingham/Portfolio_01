@@ -290,7 +290,7 @@
       restartConfirmT -= dt;
       if (restartConfirmT < 0) restartConfirmT = 0;
     }
-    if (keys['r'] || keys['R']) {
+    if ((!UI_NEW || !gameOver) && (keys['r'] || keys['R'])) {
       keys['r'] = keys['R'] = false;
       if (restartConfirmT > 0) {
         // Persistent-profile model (047-save.js): R is no longer a wipe.
@@ -311,27 +311,12 @@
       }
     }
 
-    // Touch keeps the old game-over/win restart affordance.
-    // v11.33 — UI_NEW death screen: any tap/click after the plate has
-    // fully descended (~2s after death) restarts. Pre-plate clicks are
-    // ignored so the player can't skip the death animation.
-    if ((gameOver || gameWon) && touch.active) {
-      if (UI_NEW && gameOver) {
-        if (deathPhaseT >= DEATH_PRE_PLATE_S + DEATH_PLATE_SLIDE_S * 0.85) {
-          touch.active = false;
-          // v24.142 — first tap completes the salvage manifest instantly
-          // (290 deathManifestSkip); the next one recovers the rig.
-          if (!(typeof deathManifestSkip === 'function' && deathManifestSkip())) {
-            respawnFromDeath();   // persistent-profile model: recover, don't wipe
-          }
-        } else {
-          touch.active = false;   // consume tap but don't restart yet
-        }
-      } else {
-        touch.active = false;
-        if (gameOver) respawnFromDeath();
-        else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
-      }
+    // The native recovery button owns death input. Legacy death and the
+    // parked win screen retain their original canvas-tap behavior.
+    if ((gameWon || (gameOver && !UI_NEW)) && touch.active) {
+      touch.active = false;
+      if (gameOver) respawnFromDeath();
+      else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
     }
 
     if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }

@@ -150,8 +150,8 @@ visible beyond the copper rim until it reaches the floor and drains away.
 > The Mineral Ledger uses the same plate/inset kit, full mineral names,
 > and pages of readable specimen cards. Close and page controls are at
 > least 44px. The item wheel uses the same gunmetal and gold hierarchy,
-> retains the item sprites, and has a 44px-tall Items trigger. The salvage
-> manifest keeps its established paper-and-ink material.
+> retains the item sprites, and has a 44px-tall Items trigger. Death now uses
+> the compact recovery panel in section 9.1.
 >
 > Verify with `node tools/sluice-menu-smoke.mjs`; optional
 > `DUMP=/tmp/sluice-menus` writes review screenshots outside the repository.
@@ -536,45 +536,31 @@ Used by speedrunners, players curious about exact numbers, and accessibility-con
 
 ## 9. End-state screens
 
-### 9.1 Death — the SALVAGE MANIFEST plate (v24.142)
+### 9.1 Death: recovery panel (v28.153)
 
-Death is a respawn with a 10% salvage fee, so the screen speaks incident
-paperwork, not GAME OVER. Owner-picked treatment 4 from the death-lab.html
-chooser; implementation in `290-death-screen.js`.
+The owner requested a simpler, quieter death screen on 2026-10-03. One compact
+native dialog now uses the pause menu's gunmetal, cream text and brass action.
+This supersedes the full-screen salvage manifest, paper receipt, item-by-item
+printing, stamp, sparks, shaking and pulsing return prompt.
 
-- **t=0:** death cause registered. Player input locked. The incident is
-  snapshotted (cargo manifest, balance, fee, lifetime incident number from
-  `localStorage 'sluice.deaths'`) before any autosave can mutate it.
-- **t=0 to 1.35s:** rig dies in place while the world drains to a cold
-  desaturated grade under a vignette (no red wash).
-- **t=1.35s:** the steel plate (three sheet panels, weld seams, rivets,
-  corner brackets, chain stubs) drops the FULL playfield height and locks
-  onto the console's top edge with a kachunk. Sparks spray along the
-  console line; the landing bounce dips behind the console (clip).
-- **Plate contents:** an aged-paper SALVAGE MANIFEST bolted to the steel.
-  Header (`SALVAGE MANIFEST` / `RIG SL-1 · {depth} M · NO. {NNNN}`), then
-  the lost cargo prints line by line (ore chip, dot leaders, odometer
-  count-up; rows are fitted to the paper, the tail sweeps into one
-  `OTHER ORES` line; an empty hold prints `HOLD EMPTY`). Then in sequence:
-  `CARGO FORFEIT` total (dark red), `BALANCE`, `SALVAGE LEVY 10%` counting
-  down in red, a rule, `REMITTED`, and a red `SETTLED` rubber stamp that
-  slams in angled with uneven ink (speckles painted in paper colour, never
-  erased). A cause-keyed Ministry advisory line in quotes closes the
-  report ("THE GAUGE FACES THE OPERATOR." etc, rotated by incident number).
-- **Plate bottom panel:** `PROGRESS SAVED` (scale 1, dim) above the pulsing
-  gold prompt `TAP/CLICK ▸ RETURN TO TOWN`.
-- **Input:** the first tap/click completes the report instantly (every
-  element is a pure function of the death clock); the next one recovers
-  the rig. R double-press still recovers directly.
-- **On respawn:** the plate raises over the live town for ~0.3s
-  (`drawDeathPlateRaise`).
-- **Dev levers:** `?deathshot=CAUSE` kills the rig on the first live frame
-  (seeded hold if empty); add `&deathskip=1` to jump to the settled report
-  for headless screenshots.
-- Sounds ride the platform keys (`land-hard`, `sell-tick`, `sell-total`,
-  `ui-confirm`) and stay silent until assets/sfx lands them.
-- The retired TERMINATED plate (cause icons, brass stats plate) lives in
-  git history pre-v24.142.
+- Show Rig lost, a short cause with depth, Cargo lost, Recovery fee (10%),
+  and Cash remaining. An empty hold reads Empty hold. Values appear together.
+- Snapshot the cargo and fee when death occurs, before any save can apply the
+  penalty. Mine progress and upgrades remain; cargo and 10% of cash are lost.
+  State this retention plainly without claiming a failed save succeeded.
+- Return to town is the only action. One click or tap recovers. Enter, Space
+  or R also recovers; gamepad A uses a fresh press edge. A 0.35-second input
+  guard and ignored key repeats prevent held thrust from dismissing the screen.
+- The return button receives focus. Tab remains on it. Escape opens normal
+  pause; closing pause returns focus to recovery. Gameplay input stays blocked.
+- Keep the same panel on desktop and landscape mobile. The summary scrolls
+  inside very short views while the action remains visible and at least 44px.
+  Portrait retains the rotate gate and cannot recover or advance the death clock.
+- Verify with `DUMP=/tmp/sluice-death node tools/sluice-death-smoke.mjs`.
+- No reveal or exit animation. The existing restrained world desaturation is
+  warmed by 046; the DOM panel introduces no new canvas effect.
+- `?deathshot=CAUSE` remains available for review; `&deathskip=1` is accepted
+  by existing review URLs, with all information already visible.
 
 ### 9.2 Win
 
@@ -590,7 +576,10 @@ Same structure, different stamp.
 
 If we ever need a pause overlay (currently not in scope), it follows the same plate-descend pattern with a wrench icon and `PAUSED`.
 
-### 9.4 Forbidden end-state patterns
+### 9.4 Historical end-state patterns
+
+The native recovery dialog in section 9.1 supersedes these older prohibitions
+for the death screen. The parked win presentation retains its existing treatment.
 
 - Modal HTML `<div>` overlays
 - Centred text in a browser font

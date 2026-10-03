@@ -199,3 +199,84 @@
   #game-pause .pause-audio-section .pause-setting { margin-top: 0; }
   #game-pause .pause-audio-section > .pause-setting:first-of-type { margin-bottom: 12px; }
 }
+
+/* Recovery keeps the same quiet gunmetal and brass as the pause menu. */
+#game-death {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: rgba(8, 10, 14, 0.72);
+  color: var(--menu-text);
+  font: 14px/1.5 var(--font-mono);
+  touch-action: pan-y;
+}
+#game-death[hidden] { display: none; }
+#game-death * { box-sizing: border-box; }
+#game-death .death-card {
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--menu-highlight);
+  background: var(--menu-panel);
+}
+#game-death .death-body {
+  padding: 24px 24px 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--menu-weld) var(--menu-panel);
+}
+#gm-death-title {
+  margin: 0;
+  color: var(--menu-text);
+  font: 700 24px/1.2 var(--font-mono);
+  letter-spacing: -0.03em;
+}
+#gm-death-cause { margin: 8px 0 22px; color: var(--menu-body); }
+#game-death .death-summary { margin: 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+#game-death .death-summary > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; padding: 5px 0; }
+#game-death dt { color: var(--menu-body); }
+#game-death dd { margin: 0 0 0 auto; color: var(--menu-text); overflow-wrap: anywhere; }
+#game-death .death-balance { margin-top: 10px; padding-top: 14px; border-top: 1px solid var(--menu-highlight); }
+#gm-death-kept { margin: 20px 0 0; color: var(--menu-dim); font-size: 12px; }
+#game-death .death-actions { flex: 0 0 auto; padding: 20px 24px 24px; }
+#gm-death-return {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--menu-gold);
+  border-radius: 0;
+  background: var(--menu-gold);
+  color: var(--menu-gold-text);
+  font: 700 14px/1.4 var(--font-mono);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#gm-death-return:hover { background: var(--menu-gold-hi); border-color: var(--menu-gold-hi); }
+#gm-death-return:focus-visible { outline: 2px solid var(--menu-gold-hi); outline-offset: 3px; }
+#gm-death-return:disabled { cursor: default; }
+#gm-death-shortcut { font-size: 11px; font-weight: 400; }
+@media (max-height: 500px) {
+  #game-death { padding: 12px; }
+  #game-death .death-body { padding: 16px 20px 0; }
+  #gm-death-cause { margin-bottom: 12px; }
+  #game-death .death-summary > div { padding: 3px 0; }
+  #game-death .death-balance { margin-top: 6px; padding-top: 10px; }
+  #gm-death-kept { margin-top: 10px; }
+  #game-death .death-actions { padding: 12px 20px; }
+}
