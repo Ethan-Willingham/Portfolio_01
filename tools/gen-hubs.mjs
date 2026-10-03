@@ -112,7 +112,6 @@ const HUBS = [
       live('what-to-eat.html', "What You're Supposed to Eat", 'what-to-eat.jpg', 'food', 3, "What to eat, sorted from the settled to the sold. Weight is just energy, health is mostly real food, and every famous diet ties when you actually test it. The few things that are true, and the long aisle of things that are not."),
       live('the-other-hours.html', 'The Other Hours: Health Outside the Gym and the Kitchen', 'the-other-hours.jpg', 'the rest', 4, "Everything that decides your health but is not the gym or the kitchen: sleep, the people you love, what you breathe and drink, the medical numbers that save lives, and the recovery rituals that mostly do not work. Ranked biggest lever first."),
       live('how-long-can-you-live.html', 'How Long Can You Live?', 'how-long-can-you-live.jpg', 'the limit', 5, "The hard wall at 120 is unproven, the oldest-age records are riddled with missing paperwork and pension fraud, and the thing that actually adds years is the one nobody calls a hack. How long a human can last, and why."),
-      live('the-body-rhymes.html', 'The Body Rhymes', 'the-body-rhymes.jpg', 'both ends', 6, "The normal-but-startling things the body does at the very start and end of life, set as mirror pairs, from a newborn running on its mother's hormones to the reflex you lose as a toddler and regain only if your brain fails. Why the two ends rhyme."),
     ],
   },
   {
@@ -146,6 +145,12 @@ const SHELF = {
      (archive/no-blood-test/). The Other Side came out of The Inner Life the
      same day to stand on the shelf by itself. */
   singles: [
+    {
+      href: 'the-body-rhymes.html', title: 'The Body Rhymes', thumb: 'the-body-rhymes.jpg',
+      date: '2026-06-21', dateDisplay: '21 Jun 2026',
+      alt: 'A newborn baby wrapped in a pale blanket.',
+      desc: "A newborn boy can produce milk. Some infant reflexes can return after brain damage. A short look at the overlaps between birth and aging, and their limits.",
+    },
     {
       href: 'the-other-side.html', title: 'The Other Side', thumb: 'the-other-side.jpg',
       date: '2026-07-02', dateDisplay: '2 Jul 2026',
