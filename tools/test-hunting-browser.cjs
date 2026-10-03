@@ -6,7 +6,7 @@ const http = require('node:http');
 const { chromium } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v6-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v7-qa';
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const errors = [], missing = [];
@@ -20,6 +20,12 @@ function testSight(d) {
  for(let i=0;i<24;i++){x=targetX-.5*strength*t*t;t=Math.hypot(x,depth)/man.muzzleSpeed;}
  return {x:x*100/depth,y:100,h:man.height+(mask.vitalsY*size.height+.5*T.gravity*t*t-man.height)*100/depth};
 }
+function testPointer(point) {
+ const r=canvas.getBoundingClientRect();
+ const offset=scopeToggle && scopePointer.type!=='touch' && scopePointer.last
+  ? {x:scopePointer.last.x-scopePointer.point.x,y:scopePointer.last.y-scopePointer.point.y} : {x:0,y:0};
+ return {x:r.left+(point.x+offset.x)*r.width/T.width,y:r.top+(point.y+offset.y)*r.height/T.height};
+}
 window.__huntTest = {
  ready: () => !!art && !!view && !!world,
  state: () => ({phase, time: world.time, minute: campaign.state.minute, day: campaign.day,
@@ -27,6 +33,7 @@ window.__huntTest = {
   ammo: world.hunter.ammo, shots: world.shots, recovered: world.recovered,
   scoped: scopeToggle, zoom: view.camera.zoom, guide, holds: holds.size, keys: [...keys], visible,
   aimPixel:HuntingView.project(aim,view.camera), camera:{...view.camera},
+  scopePointer:{...scopePointer,point:{...scopePointer.point},last:scopePointer.last&&{...scopePointer.last}},scopePan:{...view.scopePan},
   opportunity: world.opportunity, opportunityLeft, pace, records: campaign.state.records,
   deerLevel: campaign.state.deerLevel, region: campaign.state.selected, species: world.species,
   credits:campaign.state.credits,owned:campaign.state.owned,tracks:campaign.state.tracks,windScale:world.options.windScale,
@@ -43,13 +50,13 @@ window.__huntTest = {
  quiet: () => {
   cancelAnimationFrame(raf); raf=0; world.deer=[]; world.critters=[]; world.ambient=world.critters;
   world.bullets=[]; world.events=[]; world.spawnTimer=99999; world.critterTimer=99999;
-  opportunityLeft=0; shotViewLeft=0; seenOpportunity=world.opportunity; scopeToggle=false; view.scope(false,aim); updateUI(); draw();
+  opportunityLeft=0; shotViewLeft=0; seenOpportunity=world.opportunity; setScope(false); updateUI(); draw();
  },
  arrival: (visit=12) => {
   const d=world.spawn(0,80); Object.assign(d,{state:'grazing',pause:999,visit});
   events(); updateUI(); draw(); return d.id;
  },
- fixture: (species='deer',level=1,depth=80,wind=.7) => {
+ fixture: (species='deer',level=1,depth=80,wind=.7,offset=0) => {
   cancelAnimationFrame(raf); raf=0;
   const options={...world.options,lookout:true,species,
    animal:(kind,seed)=>campaign.animal(kind,seed,level),
@@ -57,17 +64,17 @@ window.__huntTest = {
   world=new World(art.masks[species] || art.mask,1000+level+campaign.state.records.length,options);
   world.deer=[]; world.events=[]; world.spawnTimer=99999; world.critterTimer=99999;
   world.wind=wind; opportunityLeft=0; shotViewLeft=0;
-  const d=world.spawn(0,depth,species);
-  Object.assign(d,{facingRight:true,state:'grazing',pause:999,visit:999,targetX:0,targetY:depth});
+  const d=world.spawn(offset,depth,species);
+  Object.assign(d,{facingRight:true,state:'grazing',pause:999,visit:999,targetX:offset,targetY:depth});
   world.events=[]; seenOpportunity=world.opportunity; testAim=testSight(d);
-  aim={...testAim}; scopeToggle=false; view.scope(false,aim); updateUI(); draw();
+  aim={...testAim}; setScope(false); updateUI(); draw();
   return window.__huntTest.target();
  },
  target: () => {
   testAim=testSight(world.deer[0]);
-  const p=HuntingView.project(testAim,view.camera),r=canvas.getBoundingClientRect();
-  return {x:r.left+p.x*r.width/T.width,y:r.top+p.y*r.height/T.height};
+  return testPointer(HuntingView.project(testAim,view.camera));
  },
+ pointer: point => testPointer(point),
  clock: minute => {campaign.state.minute=minute;updateUI();draw();},
  sunCenter: () => {
   draw(false);const p=canvas.getContext('2d').getImageData(0,0,T.width,T.height).data;
@@ -103,7 +110,7 @@ window.__huntTest = {
    const d=world.spawn(x,y);Object.assign(d,{state:'grazing',pause:999,visit:999,facingRight:true});
   }
   world.events=[];seenOpportunity=world.opportunity;campaign.state.minute=570;
-  scopeToggle=false;view.scope(false,aim);updateUI();draw(false);
+  setScope(false);updateUI();draw(false);
  },
  screenshot: () => {draw(false);return canvas.toDataURL('image/png').split(',')[1];}
 };`;
@@ -143,13 +150,16 @@ async function noOverflow(page) {
       .filter(b => b.getBoundingClientRect().width > 0)
       .every(b => {const r=b.getBoundingClientRect();return r.x>=-1&&r.right<=innerWidth+1&&r.height>=44;}));
 }
+async function steer(page, x, y) {
+  const point=await page.evaluate(point=>__huntTest.pointer(point),{x,y});
+  await page.mouse.move(point.x,point.y);
+}
 async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
   let target = await page.evaluate(({species,level,depth,wind}) => __huntTest.fixture(species,level,depth,wind), {species,level,depth,wind});
   await page.mouse.click(target.x,target.y);
   check('first pointer click raises the scope without firing', await page.evaluate(() => __huntTest.state().zoom===6 && __huntTest.state().shots===0));
   check('scoped pointer projection is invertible', await page.evaluate(() => __huntTest.projection()<1e-8));
-  await page.keyboard.down('d'); await page.evaluate(()=>__huntTest.step(.2)); await page.keyboard.up('d');
-  await page.keyboard.down('w'); await page.evaluate(()=>__huntTest.step(.15)); await page.keyboard.up('w');
+  await steer(page,440,150); await page.evaluate(()=>__huntTest.step(.2));
   if(species==='deer'&&level===1&&depth===80)await page.screenshot({path:path.join(dump,'scope-aim.png')});
   target = await page.evaluate(() => __huntTest.target());
   await page.mouse.click(target.x,target.y);
@@ -203,38 +213,55 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     let lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
     const lens=await page.locator('#hunt-canvas').boundingBox();await page.mouse.move(lens.x+lens.width-2,lens.y+2);
     check('pointer movement outside the scope stays within the visible lens',await page.evaluate(()=>{const p=__huntTest.state().aimPixel;return Math.hypot(p.x-320,p.y-180)<=162.01;}));
-    lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
-    for(const [key,axis,sign] of [['w','screenY',-1],['a','screenX',-1],['s','screenY',1],['d','screenX',1]]) {
-      const start=await state(page);
-      await page.keyboard.down(key);await page.evaluate(()=>__huntTest.step(.25));await page.keyboard.up(key);
-      const moved=await state(page);
-      check('WASD '+key.toUpperCase()+' pans the raised scope in the intended direction',
-        moved.zoom===6&&(moved.camera[axis]-start.camera[axis])*sign>10);
-      check('the reticle and inverse sight remain aligned while panning '+key.toUpperCase(),
-        Math.hypot(moved.aimPixel.x-start.aimPixel.x,moved.aimPixel.y-start.aimPixel.y)<1e-8&&await page.evaluate(()=>__huntTest.projection()<1e-8));
+    lensTarget=await page.evaluate(()=>__huntTest.fixture('deer',1,80,.7,-20));await page.mouse.click(lensTarget.x,lensTarget.y);
+    const zoomStart=await state(page);await page.evaluate(()=>__huntTest.step(.3));
+    check('zoom centers the clicked animal and waits for deliberate mouse movement',await page.evaluate(expected=>{const s=__huntTest.state();return Math.hypot(s.aimPixel.x-320,s.aimPixel.y-180)<1e-8&&s.camera.screenX===expected.screenX&&s.camera.screenY===expected.screenY&&!s.scopePointer.active;},zoomStart.camera));
+    await page.mouse.move(lensTarget.x+lens.width/640*2,lensTarget.y-lens.height/360*3);
+    const smallMove=await state(page);
+    check('a small mouse movement after zoom never jumps to the old cursor position',Math.hypot(smallMove.aimPixel.x-322,smallMove.aimPixel.y-177)<.001);
+    await steer(page,350,160);const fineAim=await state(page);await page.evaluate(()=>__huntTest.step(.4));const fineStill=await state(page);
+    check('the central aiming area stays perfectly steady for fine corrections',fineStill.camera.screenX===fineAim.camera.screenX&&fineStill.camera.screenY===fineAim.camera.screenY&&Math.hypot(fineStill.scopePan.x,fineStill.scopePan.y)===0);
+    check('the scope uses the reticle as its mouse cursor',await page.locator('#hunt-canvas').evaluate(el=>getComputedStyle(el).cursor==='none'));
+    for(const [label,x,y,axis,sign] of [['up',320,35,'screenY',-1],['left',175,180,'screenX',-1],['down',320,325,'screenY',1],['right',465,180,'screenX',1]]) {
+      lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
+      const start=await state(page);await steer(page,x,y);const aimed=await state(page);await page.evaluate(()=>__huntTest.step(.25));const moved=await state(page);
+      check('moving the sight '+label+' smoothly pans the scope in that direction',moved.zoom===6&&(moved.camera[axis]-start.camera[axis])*sign>3);
+      check('the reticle and shooting ray stay aligned while panning '+label,
+        Math.hypot(aimed.aimPixel.x-x,aimed.aimPixel.y-y)<.001&&Math.hypot(moved.aimPixel.x-aimed.aimPixel.x,moved.aimPixel.y-aimed.aimPixel.y)<1e-8&&await page.evaluate(()=>__huntTest.projection()<1e-8));
     }
-    const diagonalStart=await state(page);
-    await page.keyboard.down('w');await page.keyboard.down('d');await page.evaluate(()=>__huntTest.step(.25));await page.keyboard.up('w');await page.keyboard.up('d');
-    const diagonalEnd=await state(page);
-    check('diagonal scope movement has the same speed as one direction',Math.abs(Math.hypot(diagonalEnd.camera.screenX-diagonalStart.camera.screenX,diagonalEnd.camera.screenY-diagonalStart.camera.screenY)-12.5)<1e-7);
-    await page.evaluate(()=>__huntTest.step(.25));const releasedScope=await state(page);
-    check('releasing WASD stops scope movement',releasedScope.camera.screenX===diagonalEnd.camera.screenX&&releasedScope.camera.screenY===diagonalEnd.camera.screenY);
-    await page.screenshot({path:path.join(dump,'scope-wasd.png')});
-    await page.keyboard.down('d');await page.keyboard.press('p');const panPaused=await state(page);
+    lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
+    await steer(page,465,180);const softStart=await state(page);await page.evaluate(()=>__huntTest.step(.05));const softFirst=await state(page);
+    await page.evaluate(()=>__huntTest.step(.05));const softNext=await state(page);
+    check('panning eases into motion rather than lurching to full speed',softFirst.camera.screenX-softStart.camera.screenX>0&&softFirst.camera.screenX-softStart.camera.screenX<softNext.camera.screenX-softFirst.camera.screenX&&softNext.camera.screenX-softFirst.camera.screenX<2);
+    await page.evaluate(()=>__huntTest.step(.4));const horizontalEnd=await state(page);
+    const horizontalDistance=horizontalEnd.camera.screenX-softStart.camera.screenX;
+    check('the lens rim quietly indicates the direction of travel',horizontalEnd.scopePan.x>.9&&Math.abs(horizontalEnd.scopePan.y)<.001);
+    await page.screenshot({path:path.join(dump,'scope-mouse-pan.png')});
+    lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
+    const diagonalStart=await state(page);await steer(page,320+145/Math.SQRT2,180-145/Math.SQRT2);await page.evaluate(()=>__huntTest.step(.5));const diagonalEnd=await state(page);
+    check('diagonal mouse panning has the same speed as horizontal motion',Math.abs(Math.hypot(diagonalEnd.camera.screenX-diagonalStart.camera.screenX,diagonalEnd.camera.screenY-diagonalStart.camera.screenY)-horizontalDistance)<1e-7);
+    await steer(page,320,180);const centered=await state(page);await page.evaluate(()=>__huntTest.step(.5));const steady=await state(page);
+    check('returning to the center stops immediately without coasting',steady.camera.screenX===centered.camera.screenX&&steady.camera.screenY===centered.camera.screenY&&Math.hypot(steady.scopePan.x,steady.scopePan.y)===0);
+    await steer(page,465,180);await page.evaluate(()=>__huntTest.step(.2));const leaving=await state(page);
+    await page.mouse.move(lens.x+lens.width+5,lens.y+lens.height/2);await page.evaluate(()=>__huntTest.step(.5));const outside=await state(page);
+    check('leaving the canvas stops the view immediately',!outside.scopePointer.active&&outside.camera.screenX===leaving.camera.screenX&&outside.camera.screenY===leaving.camera.screenY);
+    await page.mouse.move(lens.x+lens.width/2,lens.y+lens.height/2);await page.evaluate(()=>__huntTest.step(.3));const reentered=await state(page);
+    check('re-entering the canvas preserves the sight without restarting an old pan',reentered.camera.screenX===outside.camera.screenX&&Math.hypot(reentered.aimPixel.x-outside.aimPixel.x,reentered.aimPixel.y-outside.aimPixel.y)<1e-8&&!reentered.scopePointer.active);
+    await steer(page,450,150);await page.evaluate(()=>__huntTest.step(.2));await page.keyboard.press('p');const panPaused=await state(page);
     await page.evaluate(()=>__huntTest.step(.5));const panStill=await state(page);
-    check('pause clears a held scope direction and freezes its view',panStill.phase==='paused'&&!panStill.keys.length&&panStill.camera.screenX===panPaused.camera.screenX);
-    await page.keyboard.up('d');await page.keyboard.press('Escape');
-    await page.keyboard.down('w');await page.evaluate(()=>window.dispatchEvent(new Event('blur')));const panBlur=await state(page);
-    check('focus loss clears scope movement',panBlur.phase==='paused'&&!panBlur.keys.length);
-    await page.keyboard.up('w');await page.locator('#hunt-start').click();
-    await page.keyboard.down('d');await page.evaluate(()=>__huntTest.step(10));await page.keyboard.up('d');
-    await page.keyboard.down('w');await page.evaluate(()=>__huntTest.step(10));await page.keyboard.up('w');const edgeScope=await state(page);
-    check('scope movement stays inside the wide field at its edges',edgeScope.camera.screenX===640&&edgeScope.camera.screenY===0);
-    await page.keyboard.down('a');await page.keyboard.press('q');const lowered=await state(page);
-    check('lowering the scope clears movement without moving the hunter',lowered.zoom===1&&!lowered.keys.includes('a')&&lowered.x===0&&lowered.y===0);await page.keyboard.up('a');
+    check('pause clears mouse panning and freezes its view',panStill.phase==='paused'&&!panStill.scopePointer.active&&panStill.camera.screenX===panPaused.camera.screenX);
+    await page.keyboard.press('Escape');await page.mouse.move(lens.x+lens.width/2,lens.y+lens.height/2);
+    await steer(page,465,180);await page.evaluate(()=>__huntTest.step(.2));await page.evaluate(()=>window.dispatchEvent(new Event('blur')));const panBlur=await state(page);
+    check('focus loss clears mouse movement',panBlur.phase==='paused'&&!panBlur.scopePointer.active&&Math.hypot(panBlur.scopePan.x,panBlur.scopePan.y)===0);
+    await page.locator('#hunt-start').click();
+    lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
+    await steer(page,465,180);await page.evaluate(()=>__huntTest.step(10));await steer(page,320,35);await page.evaluate(()=>__huntTest.step(10));const edgeScope=await state(page);
+    check('mouse panning stays inside the wide field at its edges',edgeScope.camera.screenX===640&&edgeScope.camera.screenY===0);
+    await page.keyboard.press('q');const lowered=await state(page);
+    check('lowering the scope clears panning without moving the hunter',lowered.zoom===1&&!lowered.scopePointer.active&&lowered.x===0&&lowered.y===0);
     await pointerShot(page);
-    const shotCamera=await state(page);await page.keyboard.down('d');await page.evaluate(()=>__huntTest.step(.05));await page.keyboard.up('d');
-    check('WASD cannot move the shot view during bullet flight',await page.evaluate(expected=>{const s=__huntTest.state();return s.camera.screenX===expected.screenX&&s.camera.screenY===expected.screenY;},shotCamera.camera));
+    const shotCamera=await state(page);await page.mouse.move(lens.x+lens.width-5,lens.y+5);await page.evaluate(()=>__huntTest.step(.05));
+    check('mouse movement cannot disturb the shot view during bullet flight',await page.evaluate(expected=>{const s=__huntTest.state();return s.camera.screenX===expected.screenX&&s.camera.screenY===expected.screenY&&!s.scopePointer.active;},shotCamera.camera));
     await page.screenshot({path:path.join(dump,'scope-shot.png')});
     await page.evaluate(()=>__huntTest.step(.2)); const flight=await state(page);
     check('bullet flight preserves visible scope detail',flight.zoom===6&&flight.bullets.length===1);
@@ -306,6 +333,17 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     check('touching the field aims without shooting',(await state(phone)).shots===0);
     if((await state(phone)).zoom===1)await phone.locator('#hunt-fire').tap();
     check('touch aiming can raise the scope without firing',(await state(phone)).zoom===6&&(await state(phone)).shots===0);
+    const cdp=await mobile.newCDPSession(phone),touchLens=await phone.locator('#hunt-canvas').boundingBox();
+    const touchPoint=(x,y)=>({x:touchLens.x+x*touchLens.width/640,y:touchLens.y+y*touchLens.height/360,id:1});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(320,180)]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[touchPoint(465,180)]});
+    const touchPanStart=await state(phone);await phone.evaluate(()=>__huntTest.step(.3));const touchPanned=await state(phone);
+    check('dragging toward the lens edge pans a real captured touch',touchPanned.camera.screenX>touchPanStart.camera.screenX+3&&touchPanned.scopePointer.active&&touchPanned.shots===0);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await phone.evaluate(()=>__huntTest.step(.3));const touchReleased=await state(phone);
+    check('lifting the finger stops scope panning without drifting',!touchReleased.scopePointer.active&&touchReleased.camera.screenX===touchPanned.camera.screenX);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(465,180)]});await phone.evaluate(()=>__huntTest.step(.15));const touchCancelStart=await state(phone);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});await phone.evaluate(()=>__huntTest.step(.3));const touchCancelled=await state(phone);
+    check('a cancelled touch cannot leave the scope moving',!touchCancelled.scopePointer.active&&touchCancelled.camera.screenX===touchCancelStart.camera.screenX);
     target=await phone.evaluate(()=>__huntTest.target()); await phone.touchscreen.tap(target.x,target.y); await phone.locator('#hunt-fire').tap();
     await phone.evaluate(()=>__huntTest.step(.2));await phone.screenshot({path:path.join(dump,'phone-bullet-flight.png')});
     await phone.evaluate(()=>__huntTest.step(3.8));
@@ -321,7 +359,6 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     assert.equal((await state(phone)).phase,'running','real touch hold starts in an active visible field');
     await phone.evaluate(()=>{__huntTest.quiet();__huntTest.loop();});
     const wait=await phone.locator('#hunt-wait').boundingBox();
-    const cdp=await mobile.newCDPSession(phone);
     const touchStart=(await state(phone)).minute;
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:wait.x+wait.width/2,y:wait.y+wait.height/2,id:1}]});
     try {await phone.waitForFunction(start=>{const s=__huntTest.state();return s.holds>0&&s.pace.clock===600&&s.minute>start+.01;},touchStart,{timeout:5000});}

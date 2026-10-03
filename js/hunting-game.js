@@ -12,6 +12,7 @@
   let previous = 0, accumulator = 0, raf = 0, saveTime = 0, messageUntil = 0, shotViewLeft = 0;
   let opportunityLeft = 0, seenOpportunity = 0, pace = { clock: 1, simulation: 1 }, menuResume = false;
   let active = !document.hidden, visible = true;
+  const scopePointer = { point: { x: T.width / 2, y: T.height / 2 }, last: null, active: false, type: 'mouse', id: null };
   const STEP = 1 / 120;
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   function persist() {
@@ -23,6 +24,7 @@
     const stage = $('stage'), scale = Math.min(stage.clientWidth / T.width, stage.clientHeight / T.height);
     canvas.style.width = Math.max(1, Math.floor(T.width * scale)) + 'px';
     canvas.style.height = Math.max(1, Math.floor(T.height * scale)) + 'px';
+    stopScopeInput();
   }
   new ResizeObserver(fitCanvas).observe($('stage'));
   function waiting() { return phase === 'running' && (keys.has('f') || keys.has(' ') || holds.size > 0); }
@@ -54,18 +56,23 @@
     $('pause').disabled = !['running', 'paused'].includes(phase); $('pause').textContent = phase === 'paused' ? 'Resume' : 'Pause';
     $('menu').disabled = phase === 'loading'; $('region').disabled = flight || recovering; $('deer-level').disabled = flight || recovering;
     if (phase === 'running' && performance.now() > messageUntil) {
-      const text = flight ? 'Watch the round fall and drift.' : scopeToggle ? 'Aim above the shoulder for drop. Allow for wind and movement.' : waiting() && opportunityLeft > 0 ? 'Something moved. Release to stop rushing past it.' : 'Hold Fast-forward to watch the field. Click an animal to raise your scope.';
+      const text = flight ? 'Watch the round fall and drift.' : scopeToggle ? 'Move toward the lens edge to look around. Bring the sight toward the center to steady your shot.' : waiting() && opportunityLeft > 0 ? 'Something moved. Release to stop rushing past it.' : 'Hold Fast-forward to watch the field. Click an animal to raise your scope.';
       message(text, '', 1);
     }
   }
   function setScope(enabled) {
+    const wasScoped = scopeToggle;
     scopeToggle = !!enabled;
     if (view) view.scope(scopeToggle, aim);
-    if (scopeToggle) { keys.delete('f'); keys.delete(' '); holds.clear(); }
-    else for (const key of ['w', 'a', 's', 'd']) keys.delete(key);
+    canvas.dataset.scoped = String(scopeToggle);
+    if (scopeToggle) {
+      keys.delete('f'); keys.delete(' '); holds.clear();
+      if (!wasScoped) { scopePointer.point = { x: T.width / 2, y: T.height / 2 }; scopePointer.active = false; }
+    } else stopScopeInput();
     updateUI(); draw();
   }
-  function clearInput() { keys.clear(); holds.clear(); touchAim.clear(); $('wait').setAttribute('aria-pressed', 'false'); }
+  function stopScopeInput() { scopePointer.active = false; scopePointer.last = null; if (view) view.stopScopePan(); }
+  function clearInput() { keys.clear(); holds.clear(); touchAim.clear(); stopScopeInput(); $('wait').setAttribute('aria-pressed', 'false'); }
   function setPhase(next) {
     if (next === 'running' && !visible) next = 'paused';
     phase = next; game.dataset.phase = next; clearInput(); accumulator = 0;
@@ -139,22 +146,41 @@
   }
   function fire() {
     if (phase !== 'running' || world.bullets.length || world.hunter.reload > 0 || shotViewLeft > 0) return;
-    if (!scopeToggle) { setScope(true); message('Scope raised. WASD moves the view. Click to shoot; Q lowers it.'); return; }
+    if (!scopeToggle) { setScope(true); message('Move the sight toward the lens edge to look around; center it to steady. Click to shoot.'); return; }
     if (world.fire(aim)) { shotViewLeft = .8; clearInput(); message('Round away. Watch its drop and wind drift.'); }
     events(); updateUI(); draw();
   }
   function reload() { if (phase === 'running') { world.reload(); events(); updateUI(); } }
+  function pointerPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: (event.clientX - rect.left) * T.width / rect.width, y: (event.clientY - rect.top) * T.height / rect.height };
+  }
   function pointAim(event) {
     if (!view || phase !== 'running' || world.bullets.length || shotViewLeft > 0 || event.pointerType === 'touch' && !touchAim.has(event.pointerId)) return;
-    const rect = canvas.getBoundingClientRect();
-    const point = { x: (event.clientX - rect.left) * T.width / rect.width, y: (event.clientY - rect.top) * T.height / rect.height };
+    const pointer = pointerPoint(event);
+    const moved = scopePointer.last && (pointer.x !== scopePointer.last.x || pointer.y !== scopePointer.last.y);
+    let point = pointer;
     if (scopeToggle) {
+      // Rebase mouse movement at zoom and re-entry so the sight never jumps
+      // from the clicked animal to the physical cursor's old screen position.
+      point = event.pointerType === 'touch' ? { ...pointer } : { ...scopePointer.point };
+      if (event.pointerType !== 'touch' && scopePointer.last && scopePointer.type === event.pointerType) {
+        point.x += pointer.x - scopePointer.last.x; point.y += pointer.y - scopePointer.last.y;
+      }
       const dx = point.x - T.width / 2, dy = point.y - T.height / 2;
       const distance = Math.hypot(dx, dy), radius = T.height * .45;
       if (distance > radius) { point.x = T.width / 2 + dx * radius / distance; point.y = T.height / 2 + dy * radius / distance; }
+      scopePointer.point = point;
+      scopePointer.active = event.pointerType === 'touch' || scopePointer.active || !!moved;
+      if (distance <= radius * .38) view.stopScopePan();
     }
+    scopePointer.last = pointer; scopePointer.type = event.pointerType; scopePointer.id = event.pointerId;
     aim = world.aim(HuntingView.unproject(point, view.camera)); draw();
   }
+  canvas.addEventListener('pointerenter', event => {
+    if (event.pointerType !== 'touch') { scopePointer.last = pointerPoint(event); scopePointer.type = event.pointerType; }
+  });
+  canvas.addEventListener('pointerleave', event => { if (event.pointerType !== 'touch' || !touchAim.has(event.pointerId)) stopScopeInput(); });
   canvas.addEventListener('pointermove', pointAim);
   canvas.addEventListener('pointerdown', event => {
     if (phase !== 'running') return;
@@ -164,7 +190,11 @@
     else canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('contextmenu', event => event.preventDefault());
-  function releasePointer(event) { holds.delete(event.pointerId); touchAim.delete(event.pointerId); updateUI(); }
+  function releasePointer(event) {
+    holds.delete(event.pointerId); touchAim.delete(event.pointerId);
+    if (event.type === 'pointercancel' || event.type === 'lostpointercapture' || event.pointerType === 'touch' && event.pointerId === scopePointer.id) stopScopeInput();
+    updateUI();
+  }
   window.addEventListener('pointerup', releasePointer); window.addEventListener('pointercancel', releasePointer);
   canvas.addEventListener('lostpointercapture', releasePointer);
   $('wait').addEventListener('pointerdown', event => {
@@ -190,13 +220,12 @@
     if (!game.contains(document.activeElement) || event.target.closest('input, select, textarea, a')) return;
     const key = event.key.toLowerCase();
     if (event.target.closest('button') && [' ', 'enter'].includes(key)) return;
-    if (!['f', ' ', 'q', 'r', 'p', 'escape', 'enter', 'w', 'a', 's', 'd'].includes(key)) return;
+    if (!['f', ' ', 'q', 'r', 'p', 'escape', 'enter'].includes(key)) return;
     event.preventDefault(); if (event.repeat) return;
     if (key === 'escape' && scopeToggle && phase === 'running' && !world.bullets.length && !shotViewLeft) { setScope(false); return; }
     if (key === 'p' || key === 'escape') { pause(); return; }
     if (phase !== 'running') return;
     if (key === 'f' || key === ' ') { if (!scopeToggle && !world.bullets.length) keys.add(key); }
-    else if (['w', 'a', 's', 'd'].includes(key)) { if (scopeToggle && !world.bullets.length && !shotViewLeft) keys.add(key); }
     else if (key === 'q') { if (!world.bullets.length && !shotViewLeft) setScope(!scopeToggle); }
     else if (key === 'r') reload(); else if (key === 'enter') fire(); updateUI();
   });
@@ -244,11 +273,8 @@
     while (left > .000001) {
       const elapsed = Math.min(left, .05); left -= elapsed; opportunityLeft = Math.max(0, opportunityLeft - elapsed);
       const flight = world.bullets.length > 0;
-      if (scopeToggle && !flight && !shotViewLeft) {
-        const moveX = Number(keys.has('d')) - Number(keys.has('a'));
-        const moveY = Number(keys.has('s')) - Number(keys.has('w'));
-        const reticle = HuntingView.project(aim, view.camera);
-        if (view.panScope(moveX, moveY, elapsed)) aim = world.aim(HuntingView.unproject(reticle, view.camera));
+      if (scopeToggle && scopePointer.active && !flight && !shotViewLeft) {
+        if (view.panScope(scopePointer.point, elapsed)) aim = world.aim(HuntingView.unproject(scopePointer.point, view.camera));
       }
       pace = flight ? { clock: 1, simulation: .6 } : world.lookoutPace(waiting(), scopeToggle, opportunityLeft);
       campaign.advance(elapsed, pace.clock); accumulator += elapsed * pace.simulation;
