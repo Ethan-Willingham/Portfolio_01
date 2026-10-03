@@ -370,6 +370,7 @@ node tools/under-street/test-compression.cjs
 They cover the opening, all 66 layer selections, exact record coordinates and IDs,
 source/type links, complete fact disclosure, tiles and offscreen bookmarks,
 direct shared-link landing and visible map/detail transitions,
+refreshing a record without browser scroll restoration clipping its controls,
 keyboard model inspection, data/catalog/imagery retries, phone layouts and
 address matching and local result browsing after city or address navigation. Address cases use controlled responses plus one live civic
 query to check browser CORS and the source schema. The harness uses an installed Playwright package or the bundled Codex runtime.

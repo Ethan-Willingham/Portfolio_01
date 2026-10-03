@@ -5,7 +5,7 @@
   var CANVAS=HOST.querySelector('canvas'),STAGE=HOST.querySelector('.um-stage'),PANEL=HOST.querySelector('.um-panel');
   var STATUS=HOST.querySelector('.um-status'),SCALE=HOST.querySelector('.um-scale'),TOOLTIP=HOST.querySelector('.um-tooltip');
   var RESULTS=HOST.querySelector('.um-results'),SEARCH=HOST.querySelector('.um-search input'),ctx=CANVAS.getContext('2d');
-  var ROOT='assets/map/',VERSION='20261003-3',W=0,H=0,DPR=1,raf=null,started=false,topic='tour',scope='all';
+  var ROOT='assets/map/',VERSION='20261003-4',W=0,H=0,DPR=1,raf=null,started=false,topic='tour',scope='all';
   var showInactive=false,sourceScope='current',catalogLoading=false,catalogError=false;
   var selection=null,hovered=null,addressPin=null,media={photos:[],types:{}},manifest=null,visibleLimit=30,resultItems=[],data={};
   var fmt=new Intl.NumberFormat('en-US'),MINZ=9,MAXZ=18,view={x:mx(-93.19),y:my(44.985),z:10.6};
@@ -542,5 +542,5 @@
   if(requestedFeature){var selectedLayer=Object.keys(layers).find(function(id){return requestedFeature.indexOf(id+'-')===0;});if(selectedLayer){layers[selectedLayer].on=true;if(topics[topic].layers.indexOf(selectedLayer)<0)topic=Object.keys(topics).find(function(t){return topics[t].layers.indexOf(selectedLayer)>=0;})||topic;}}
   setTopic(topic,false);HOST.querySelectorAll('[data-um-base]').forEach(function(b){b.setAttribute('aria-pressed',String((b.dataset.umBase==='sat')===SAT.on));});
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(entries){if(entries.some(function(e){return e.isIntersecting;})){start();io.disconnect();}},{rootMargin:'500px'});io.observe(HOST);}else start();
-  window.addEventListener('resize',resize);if('ResizeObserver' in window)new ResizeObserver(resize).observe(STAGE);resize();if(savedView||requestedFeature){HOST.scrollIntoView({block:'start',behavior:'instant'});start();}
+  window.addEventListener('resize',resize);if('ResizeObserver' in window)new ResizeObserver(resize).observe(STAGE);resize();if(savedView||requestedFeature){if('scrollRestoration' in history)history.scrollRestoration='manual';HOST.scrollIntoView({block:'start',behavior:'instant'});start();}
 })();

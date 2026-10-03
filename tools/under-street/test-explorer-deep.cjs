@@ -106,6 +106,13 @@ let url;
     await direct.locator('[data-pa="closer"]').click();
     const stage=await direct.locator('.um-stage').boundingBox();assert.ok(stage.y>=-2&&stage.y+stage.height<=size.height+2,'Inspector map action brings the whole map into view');
     assert.equal(await direct.evaluate(()=>document.activeElement.tagName),'CANVAS');
+    await direct.waitForFunction(()=>+location.hash.match(/map=([\d.]+)/)[1]>=15.5);
+    await direct.reload({waitUntil:'load'});
+    await direct.waitForFunction(id=>window.__mapAudit?.state().selected===id,pin.id);
+    const reloadLanding=await target.boundingBox();
+    assert.ok(reloadLanding.y>=-2&&reloadLanding.y<90,'Refreshing a shared record keeps its Back control visible at '+size.width);
+    assert.equal(await direct.evaluate(()=>document.activeElement.className),'um-pback');
+    await direct.locator('[data-pa="closer"]').click();
     if(size.width<=960){await direct.keyboard.press('Enter');await direct.waitForFunction(()=>!document.querySelector('.um-panel').hidden);const inspector=await direct.locator('.um-panel').boundingBox();assert.ok(inspector.y>=-2&&inspector.y<90,'Keyboard map inspection brings inline details into view');await direct.locator('.um-pback').click();const backMap=await direct.locator('.um-stage').boundingBox();assert.ok(backMap.y>=-2&&backMap.y+backMap.height<=size.height+2,'Back restores the visible map');assert.equal(await direct.evaluate(()=>document.activeElement.tagName),'CANVAS');}
     await directContext.close();
   }
@@ -133,5 +140,5 @@ let url;
   assert.match(await imagery.page.locator('.um-status').textContent(),/Aerial imagery could not load/);await imagery.page.locator('#undermap').screenshot({path:path.join(output,'imagery-fallback.png')});await imagery.context.close();
   fs.writeFileSync(path.join(output,'coverage.json'),JSON.stringify({layers:coverage,errors,localFailures,offscreenBookmark:{id:pin.id,expected:[pin.lon,pin.lat],restored}},null,2));
   await context.close();assert.deepEqual(errors,[]);assert.deepEqual(localFailures,[]);
-  console.log('PASS '+coverage.length+' layers, unique identities, exact result coordinates, all facts and type/source links, keyboard depth, offscreen low-zoom bookmark, direct shared-link landing, visible inspector map actions, dataset/catalog retry and aerial fallback');
+  console.log('PASS '+coverage.length+' layers, unique identities, exact result coordinates, all facts and type/source links, keyboard depth, offscreen low-zoom bookmark, direct shared-link landing and refresh, visible inspector map actions, dataset/catalog retry and aerial fallback');
 } finally {if(browser)await browser.close();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
