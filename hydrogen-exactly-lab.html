@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#303931">
+  <meta name="robots" content="noindex">
+  <title>Hydrogen Exactly</title>
+  <meta name="description" content="A hydrogen wave packet orbits, spreads, splits, and partly returns. Computed from exact eigenstates of a stated ideal model.">
+  <meta property="og:title" content="Hydrogen Exactly">
+  <meta property="og:description" content="Watch a hydrogen wave packet spread and partly return, then inspect the interference frequencies.">
+  <meta property="og:url" content="https://ethanwillingham.com/hydrogen-exactly-lab.html">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="hydrogen-exactly.css?v=1">
+</head>
+<body class="hx-page">
+  <div class="site-wrapper">
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+    <main>
+      <header class="u-hero hx-hero">
+        <p class="u-eyebrow">A wave packet in hydrogen</p>
+        <h1 class="u-title">Hydrogen Exactly</h1>
+      </header>
+      <section class="hx-demo" id="hx-demo" aria-label="Hydrogen wavefunction visualizer" aria-busy="true">
+        <div class="hx-stage" id="hx-stage">
+          <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" tabindex="0"></canvas>
+          <img id="hx-still" src="assets/visualizer/hydrogen-exactly/initial-section.png" alt="Computed equatorial density section of the initial n=24 to 36 circular-state packet, localized on the left of the nucleus.">
+          <div class="hx-stage-heading"><span id="hx-mode-label">Circular packet</span><span id="hx-encoding-label">Probability density</span></div>
+          <p class="hx-status" id="hx-status" role="status">Preparing the wavefunction</p>
+          <div class="hx-caption"><span id="hx-caption">13 circular states, n = 24 to 36</span><span id="hx-scale">Characteristic radius 47.6 nm</span></div>
+        </div>
+        <div class="hx-toolbar pillbar" aria-label="Playback controls">
+          <button class="hx-button hx-primary" id="hx-play" type="button" aria-label="Pause animation">Pause</button>
+          <button class="hx-button" id="hx-instruments-toggle" type="button" aria-expanded="false" aria-controls="hx-instruments">Instruments</button>
+          <button class="hx-button" id="hx-restart" type="button">Restart</button>
+          <span class="hx-clock" id="hx-clock" aria-label="Local display time">0:00</span>
+          <button class="hx-button" id="hx-fullscreen" type="button" aria-label="Enter fullscreen">Fullscreen</button>
+        </div>
+        <div class="hx-instruments" id="hx-instruments" hidden>
+          <div class="hx-fields">
+            <label>Superposition<select id="hx-mode"><option value="revival">Circular Rydberg packet</option><option value="spectral">Low-n spectral frequencies</option></select></label>
+            <label>View<select id="hx-view"><option value="volume">Soft volume</option><option value="section">Analytic 2D section</option></select></label>
+            <label>Playback speed<select id="hx-speed"><option value="1">1x, 10 seconds per orbit</option><option value="4">4x</option><option value="16">16x</option><option value="64">64x</option></select></label>
+            <label>Sampling<select id="hx-quality"><option value="low">64 cubed / 64 ray samples</option><option value="medium" selected>128 cubed / 96 ray samples</option><option value="high">160 cubed / 128 ray samples</option></select></label>
+            <label id="hx-color-field" hidden>Color encoding<select id="hx-color"><option value="1">Spectral frequencies (false color)</option><option value="0">Neutral density</option><option value="2">Signed 2p / 3s diagnostic</option></select></label>
+            <label>Display exposure<input id="hx-exposure" type="range" min="0.4" max="2" step="0.05" value="1"></label>
+          </div>
+          <label class="hx-timeline">Local display time <output id="hx-time-output">0.0 s</output><input id="hx-time" type="range" min="0" max="900" step="0.1" value="0"></label>
+          <div id="hx-events" class="hx-events" aria-label="Computed packet events">
+            <button type="button" data-time="0">Initial packet</button>
+            <button type="button" data-time="30">Spreading, 30 s</button>
+            <button type="button" data-time="50">Two peaks, 50 s</button>
+            <button type="button" data-time="66.6667">Three peaks, 66.7 s</button>
+            <button type="button" data-time="198.4">Return, 198.4 s</button>
+            <button type="button" data-time="750">Tsr / 6, 750 s</button>
+            <button type="button" data-time="798.1">Late return, 798.1 s</button>
+          </div>
+          <p class="hx-note" id="hx-event-note">Event names count prominent maxima on the r = 900 a0 equatorial cut. They are measured from the full energy spectrum.</p>
+          <dl class="hx-readouts">
+            <div><dt>Analytic norm</dt><dd id="hx-norm">1.000000</dd></div>
+            <div><dt>Initial-position overlap</dt><dd id="hx-overlap">1.000</dd></div>
+            <div><dt>Overlap allowing rotation</dt><dd id="hx-fidelity">1.000</dd></div>
+            <div><dt>Physical time</dt><dd id="hx-physical-time">0 ps</dd></div>
+          </dl>
+          <div id="hx-spectrum" hidden>
+            <p class="hx-note">Visible beat wavelengths, ideal model in vacuum. Hue comes from the CIE observer table. Infrared pairs have no visible hue.</p>
+            <div class="hx-lines" id="hx-lines"></div>
+            <p class="hx-note" id="hx-signed"></p>
+          </div>
+          <p class="hx-note" id="hx-model-note">E_n = -1 / (2n²). One orbit is 10 display seconds; the approximate revival scale is 200 s. Finite-grid box mass is measured only on demand.</p>
+          <button class="hx-button" id="hx-measure" type="button">Measure captured mass</button>
+          <p class="hx-note" id="hx-measurement" aria-live="polite">Analytic norm is the integral over all space. A finite render box captures less.</p>
+          <p class="hx-note" id="hx-runtime"></p>
+          <button class="hx-button" id="hx-beacon" type="button">Verify bundled beacon fixture</button>
+          <p class="hx-note" id="hx-beacon-status" aria-live="polite">The wavefunction uses deterministic coefficients. This optional audit checks the historical round-42 beacon signature; its seed does not change the model.</p>
+        </div>
+      </section>
+      <article class="post-body hx-explanation">
+        <p>A localized hydrogen wave packet spreads around its orbit, forms smaller packets, and partly gathers itself again. This image comes from adding 13 circular states and evolving each with its own energy. Switch to the low-n mode in Instruments to see interference frequencies encoded as the familiar hydrogen colors. Those colors describe beats in the density; they do not show emitted light.</p>
+        <details class="u-collapse">
+          <summary class="u-collapse-s">What “exactly” means here, and sources</summary>
+          <p>These are exact eigenstates of the fixed-nucleus, nonrelativistic Coulomb model, evaluated numerically. The finite state list, render box, f32 shader arithmetic, f16 display texture, grid interpolation, and ray samples introduce errors. Nuclear motion, relativity, and radiative corrections are omitted. The 2D section evaluates the wavefunction directly; the volume interpolates sampled positive density.</p>
+          <p>Brightness uses a display absorption and exposure mapping; the circular volume raises sampled density to the power 1.4 to bring out its peaks. Neutral color is a visual choice. Spectral color weights the magnitudes of visible signed cross terms, while opacity derives from the squared magnitude of the complete wavefunction. A separate diagnostic marks the sign of the 2p / 3s term. Dark nodes have zero analytic density; volume interpolation can soften them.</p>
+          <ol class="u-collapse-list">
+            <li><a href="https://arxiv.org/html/quant-ph/9510029v1">Bluhm, Kostelecký, and Porter, wave-packet evolution and revivals</a>. Characteristic scales guide the event search; the actual energies determine the image.</li>
+            <li><a href="https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0">NIST Bohr radius</a> and <a href="https://physics.nist.gov/cgi-bin/cuu/Value?ryd">Rydberg constant</a>. The circular n = 30 radius is about 48 nm. The low-n view uses a separate scale.</li>
+            <li><a href="https://physics.nist.gov/PhysRefData/Handbook/Tables/hydrogentable2.htm">NIST measured hydrogen line components</a>. Visible air values are separate from this ideal model's vacuum wavelengths.</li>
+            <li><a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer">CIE 1931 observer table</a> (CC BY-SA 4.0). XYZ is converted to linear sRGB, negative channels clipped, and the maximum channel normalized to one. Gamut clipping and exposure mean the screen is an encoding.</li>
+            <li><a href="docs/visualizer/HYDROGEN_EXACTLY.md">Model, numerical checks, room interface, and measured limits</a>.</li>
+          </ol>
+        </details>
+      </article>
+    </main>
+    <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
+  </div>
+  <script type="module" src="js/hydrogen-exactly.js?v=1"></script>
+</body>
+</html>

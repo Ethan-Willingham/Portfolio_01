@@ -1,0 +1,9 @@
+{
+  "client": "drand-client",
+  "version": "1.4.2",
+  "registryTarball": "https://registry.npmjs.org/drand-client/-/drand-client-1.4.2.tgz",
+  "npmTarballSHA1": "f9108eef6881e62c0c0f154f30f7bd0a818ea809",
+  "bundledESMSHA256": "250776f430eab1d8da4005812d9c40347b4b0ad3d355d61c0978d3bc12c34a4a",
+  "modification": "Only the sourcemap URL comment is removed; client and cryptographic algorithms are unmodified.",
+  "license": "MIT (drand client), MIT/BSD-3-Clause (embedded dependencies)"
+}

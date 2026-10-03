@@ -1,0 +1,101 @@
+{
+  "model": "nonrelativistic infinite-mass nucleus unless otherwise declared",
+  "reference_values": {
+    "bohr_radius_m": {
+      "value": 5.29177210544e-11,
+      "standard_uncertainty_m": 8.2e-21,
+      "source": "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0",
+      "edition": "2022 CODATA"
+    },
+    "rydberg_infinite_mass_per_m": {
+      "value": 10973731.568157,
+      "standard_uncertainty_per_m": 1.2e-05,
+      "source": "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
+      "edition": "2022 CODATA"
+    },
+    "planck_constant_J_s": {
+      "value": 6.62607015e-34,
+      "status": "exact SI definition"
+    },
+    "speed_of_light_m_s": {
+      "value": 299792458,
+      "status": "exact SI definition"
+    },
+    "elementary_charge_C": {
+      "value": 1.602176634e-19,
+      "status": "exact SI definition"
+    }
+  },
+  "derived_ideal_values": {
+    "hartree_J": 4.3597447222059776e-18,
+    "hartree_eV": 27.21138624598103,
+    "atomic_time_unit_s": 2.418884326586342e-17
+  },
+  "ideal_model_lines": [
+    {
+      "series_label": "Balmer alpha",
+      "lower_n": 2,
+      "upper_n": 3,
+      "gap_eV": 1.889679600415349,
+      "vacuum_wavelength_nm": 656.1122764194984,
+      "visible_wavelength_band": true
+    },
+    {
+      "series_label": "Balmer beta",
+      "lower_n": 2,
+      "upper_n": 4,
+      "gap_eV": 2.5510674605607213,
+      "vacuum_wavelength_nm": 486.0090936440728,
+      "visible_wavelength_band": true
+    },
+    {
+      "series_label": "Balmer gamma",
+      "lower_n": 2,
+      "upper_n": 5,
+      "gap_eV": 2.8571955558280075,
+      "vacuum_wavelength_nm": 433.93669075363647,
+      "visible_wavelength_band": true
+    },
+    {
+      "series_label": "Lyman alpha",
+      "lower_n": 1,
+      "upper_n": 2,
+      "gap_eV": 10.204269842242885,
+      "vacuum_wavelength_nm": 121.5022734110182,
+      "visible_wavelength_band": false
+    },
+    {
+      "series_label": "Rydberg example",
+      "lower_n": 29,
+      "upper_n": 30,
+      "gap_eV": 0.0010605573976171742,
+      "vacuum_wavelength_nm": 1169047.5094677943,
+      "visible_wavelength_band": false
+    }
+  ],
+  "selected_NIST_line_components": {
+    "source": "https://physics.nist.gov/PhysRefData/Handbook/Tables/hydrogentable2.htm",
+    "note": "Handbook values converted from angstrom to nm, not a complete level or Lamb-shift dataset. Intensity omitted.",
+    "vacuum_nm": [
+      121.566824,
+      121.567364
+    ],
+    "air_nm": [
+      434.0462,
+      486.12786,
+      486.1287,
+      486.13615,
+      656.2711,
+      656.27248,
+      656.28518
+    ]
+  },
+  "n30_radius_estimate_m": 4.762594894896e-08,
+  "n30_10_second_orbit": {
+    "T_cl_display_s": 10,
+    "T_rev_scale_display_s": 200,
+    "T_sr_scale_display_s": 4500,
+    "T_sr_over_6_display_s": 750
+  },
+  "warning": "Spectral beat coloring is not spontaneous emission. Finite-mass, fine structure, and radiative shifts are omitted from ideal values."
+}

@@ -1,0 +1,61 @@
+{
+  "provenance": "Computed with full ideal E_n spectrum; grid scan of rotation, 720-angle r=900 a0 spatial cut",
+  "events": [
+    {
+      "seconds": 0,
+      "initialOverlap": 1.0000000000000004,
+      "fidelity": 1.0000000000000004,
+      "rotation": 0,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 1
+    },
+    {
+      "seconds": 30,
+      "initialOverlap": 0.17632786154228203,
+      "fidelity": 0.3356005826376732,
+      "rotation": 0.9326603190344698,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 3
+    },
+    {
+      "seconds": 50,
+      "initialOverlap": 0.37553182382226613,
+      "fidelity": 0.4418647480022806,
+      "rotation": 2.773437264497239,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 2
+    },
+    {
+      "seconds": 66.6667,
+      "initialOverlap": 0.29961805638749756,
+      "fidelity": 0.37976297721504454,
+      "rotation": 5.896622148632405,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 3
+    },
+    {
+      "seconds": 198.4,
+      "initialOverlap": 0.6261905077909173,
+      "fidelity": 0.7323117042346226,
+      "rotation": 0.2945243112740431,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 1
+    },
+    {
+      "seconds": 750,
+      "initialOverlap": 0.17873806308227613,
+      "fidelity": 0.4541550829104635,
+      "rotation": 2.12916533358527,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 3
+    },
+    {
+      "seconds": 798.1,
+      "initialOverlap": 0.805290181184322,
+      "fidelity": 0.8170532322680351,
+      "rotation": 0.09203884727313846,
+      "angularResolutionRad": 0.006135923151542565,
+      "equatorialPeaks": 1
+    }
+  ]
+}
