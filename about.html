@@ -41,7 +41,8 @@
      ============================================================ */
 
   /* ---- masthead (from about.html) ---- */
-  .about-head { margin-bottom: 2.7rem; }
+  .site-wrapper { padding-top: clamp(1rem, 3vw, 2rem); }
+  .about-head { margin-bottom: 2rem; }
   .about-title {
     margin: 0; font-family: var(--font-heading); font-style: italic; font-weight: 400;
     font-size: clamp(2.9rem, 6.5vw, 4.2rem); line-height: 1.02; letter-spacing: -0.01em;
@@ -54,6 +55,7 @@
 
   /* ---- top utility row: Home (left) + GitHub mark (right) ---- */
   .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .lab-top .post-back { padding: 0.5rem 0; margin-bottom: 0.75rem; min-height: 44px; }
   .lab-gh { display: inline-flex; align-items: center; justify-content: center; color: var(--text-dim); transition: color 0.2s ease, transform 0.2s ease; }
   .lab-gh:hover { color: var(--text-bright); transform: translateY(-1px); }
   .lab-gh:focus-visible { outline: none; color: var(--text-bright); box-shadow: 0 0 0 2px rgba(212,196,160,0.5); border-radius: 6px; }
@@ -66,6 +68,7 @@
     color: #9ec79a; margin: 3.4rem 0 0; padding-top: 1.4rem; border-top: 1px solid var(--rule);
   }
   .lab-seclead .n { color: var(--text-faint); }
+  .post-body > .lab-seclead:first-child { margin-top: 0; padding-top: 1rem; }
 
   /* ---- one labeled spec on its stage (from colophon, no column wrapper) ---- */
   .lab-spec { margin: 1.8rem 0 0; }
