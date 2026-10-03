@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#303931">
+  <meta name="robots" content="noindex">
+  <title>QCD Lava Lamp</title>
+  <meta name="description" content="Smoothed topological charge density from a live pure SU(3) lattice gauge simulation. A small browser box, with measurements you can inspect.">
+  <meta property="og:title" content="QCD Lava Lamp">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://ethanwillingham.com/qcd-lava-lamp-lab.html">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="qcd-lava-lamp.css?v=1">
+</head>
+<body class="qcd-page">
+<div class="site-wrapper">
+  <a class="post-back" href="/"><span class="pb-label">Home</span></a>
+  <main class="post-body">
+    <header class="u-hero qcd-hero">
+      <p class="u-eyebrow">Scientific visualizer / comparison prototype</p>
+      <h1 class="u-title">QCD Lava Lamp</h1>
+      <p class="u-dek">A slice through a small, four-dimensional gauge field.</p>
+    </header>
+    <section class="qcd-demo demo-wrapper" id="qcd-demo" aria-label="Live SU(3) visualizer" aria-busy="true">
+      <div class="qcd-stage" id="qcd-stage">
+        <canvas id="qcd-canvas" tabindex="0" aria-label="Positive and negative smoothed topological charge density. Space pauses. F opens fullscreen."></canvas>
+        <img class="qcd-still" id="qcd-still" src="assets/visualizer/qcd-lava-lamp/still.webp" alt="A saved SU(3) simulation snapshot, with warm positive and blue negative charge structures." hidden>
+        <div class="qcd-status" id="qcd-status" role="status">Preparing an SU(3) ensemble...</div>
+        <div class="qcd-caption"><span>Pure SU(3)</span><span>Smoothed charge density</span></div>
+      </div>
+      <div class="qcd-toolbar">
+        <button class="pillbar-btn" type="button" id="qcd-play" disabled>Pause</button>
+        <button class="pillbar-btn" type="button" id="qcd-instruments-toggle" aria-expanded="false" aria-controls="qcd-instruments">Instruments</button>
+        <button class="pillbar-btn" type="button" id="qcd-restart" disabled>Restart</button>
+        <button class="pillbar-btn qcd-fullscreen" type="button" id="qcd-fullscreen">Fullscreen</button>
+      </div>
+      <div class="qcd-instruments" id="qcd-instruments" hidden>
+        <div class="qcd-settings">
+          <label>Smoothing<select id="qcd-depth"><option value="0">0 cooling sweeps</option><option value="2">2 cooling sweeps</option><option value="4" selected>4 cooling sweeps</option><option value="8">8 cooling sweeps</option><option value="breath">Slow depth breath</option></select></label>
+          <label>Lattice<select id="qcd-quality"><option value="low">8 × 8 × 8 × 8</option><option value="medium" selected>12 × 12 × 12 × 12</option><option value="high">16 × 16 × 16 × 16</option></select></label>
+          <label class="qcd-seed">Replay seed<input id="qcd-seed" maxlength="16" pattern="[0-9a-fA-F]{16}" value="5eedc0de1234abcd" spellcheck="false" autocomplete="off"></label>
+          <p class="qcd-settings-note">Lattice and seed take effect on Restart. Beta is 6.0; lengths are in lattice units.</p>
+        </div>
+        <dl class="qcd-readouts" id="qcd-readouts"></dl>
+        <div class="qcd-convergence"><span>Full 4D charge, by cooling depth</span><div id="qcd-charge-curve"></div></div>
+        <p class="qcd-instrument-note" id="qcd-instrument-note">Measurements are preparing.</p>
+      </div>
+    </section>
+    <div class="qcd-prose">
+      <p>The warm and blue regions mark opposite signs of topological charge density. The browser samples a pure SU(3) gauge field, copies a snapshot, then smooths that copy to reveal its structure. The view scans one Euclidean coordinate while the sampler advances separately. Neither motion is physical time, and the colors encode sign.</p>
+      <p class="qcd-limit">This small periodic box has no calibrated physical scale. Wilson cooling can shrink away structures; the charge estimate need not settle on an integer. Instruments show the raw four-dimensional integral and its change with smoothing. Quarks are absent.</p>
+      <details class="u-collapse"><summary class="u-collapse-s">Sources and implementation</summary><ol class="u-collapse-list">
+        <li><a href="https://arxiv.org/html/1903.08308v1">Biddle, Kamleh and Leinweber, Publicising Lattice Field Theory through Visualisation</a>. The reference uses a larger box and improved cooling.</li>
+        <li><a href="https://youtu.be/WZgZI5vymiM">Leinweber and Puckridge, Structure of the QCD Vacuum</a>. Visual reference.</li>
+        <li><a href="https://arxiv.org/pdf/1003.3219">Johnson, General heatbath algorithm for pure lattice gauge theory</a>, section III B. SU(2) heatbath measure and Creutz rejection.</li>
+        <li><a href="https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf">Lüscher, Computational Strategies in Lattice QCD</a>. Subgroup sampling.</li>
+        <li><a href="https://www.thesalmons.org/john/random123/papers/random123sc11.pdf">Salmon and collaborators, Parallel Random Numbers: As Easy as 1, 2, 3</a>. Counter-based sampling.</li>
+        <li><a href="docs/visualizer/QCD_LAVA_LAMP.md">Numerical conventions, test results, performance and room-host example</a>.</li>
+      </ol></details>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="site-footer-inner"><span>Ethan Willingham</span><a href="/">Home</a></div></footer>
+</div>
+<script type="module" src="js/qcd-lava-lamp.js?v=1"></script>
+</body>
+</html>

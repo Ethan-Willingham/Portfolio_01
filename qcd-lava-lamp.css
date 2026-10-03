@@ -1,0 +1,51 @@
+.qcd-page .site-wrapper { max-width: 1160px; }
+.qcd-hero { margin-bottom: 2rem; }
+.qcd-hero .u-title { font-size: clamp(3rem, 7vw, 5.5rem); }
+.qcd-hero .u-dek { max-width: none; margin-bottom: 0; }
+.qcd-demo { margin: 0; overflow: hidden; border: 1px solid var(--rule); background: var(--bg-raised); }
+.qcd-stage { position: relative; height: min(52dvh, 560px); min-height: 310px; overflow: hidden; background: var(--bg-raised); }
+#qcd-canvas, .qcd-still { display: block; width: 100%; height: 100%; object-fit: cover; }
+#qcd-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.qcd-still[hidden], [hidden] { display: none !important; }
+.qcd-still { position: absolute; inset: 0; }
+.qcd-status { position: absolute; top: 44%; left: 10%; right: 10%; text-align: center; font: 1rem/1.5 var(--font-body); color: var(--text); }
+.qcd-status:empty { display: none; }
+.qcd-status.qcd-error { top: auto; bottom: 4rem; padding: 1rem; background: var(--bg-raised); }
+.qcd-caption { position: absolute; left: 22px; right: 22px; bottom: 18px; display: flex; justify-content: space-between; gap: 1rem; pointer-events: none; font: .65rem/1.5 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
+.qcd-toolbar { display: flex; gap: .4rem; padding: .6rem .75rem; border-top: 1px solid var(--rule); flex-wrap: wrap; }
+.qcd-toolbar .pillbar-btn { min-height: 44px; min-width: 64px; padding: 8px 16px; border: 1px solid var(--rule); border-radius: 3px; background: var(--bg-raised); color: var(--text); font: .8rem/1.4 var(--font-body); cursor: pointer; }
+.qcd-toolbar .pillbar-btn:hover, .qcd-toolbar [aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.qcd-toolbar .pillbar-btn:disabled { color: var(--text-faint); cursor: wait; }
+.qcd-toolbar button:focus-visible, .qcd-settings input:focus-visible, .qcd-settings select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.qcd-fullscreen { margin-left: auto; }
+.qcd-instruments { padding: 1.2rem; border-top: 1px solid var(--rule); }
+.qcd-settings { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 1rem; }
+.qcd-settings label { color: var(--text-dim); font: .72rem/1.5 var(--font-mono); }
+.qcd-settings input, .qcd-settings select { display: block; margin-top: .5rem; width: 100%; min-width: 0; min-height: 44px; color: var(--text); border: 1px solid var(--rule); border-radius: 3px; background: var(--bg); padding: .5rem; font: .85rem var(--font-mono); }
+.qcd-settings-note { grid-column: 1/-1; font-size: .85rem; color: var(--text-dim); }
+.qcd-readouts { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem 1.5rem; margin: 1rem 0; }
+.qcd-readouts div { border-top: 1px solid var(--rule); padding-top: .65rem; min-width: 0; }
+.qcd-readouts dt { font: .65rem/1.5 var(--font-mono); color: var(--text-faint); }
+.qcd-readouts dd { margin: .25rem 0 0; color: var(--text); font: .85rem/1.6 var(--font-mono); overflow-wrap: anywhere; }
+.qcd-convergence { color: var(--text-dim); font: .7rem/1.5 var(--font-mono); }
+#qcd-charge-curve { display: flex; flex-wrap: wrap; gap: .5rem 2rem; padding: .7rem 0; color: var(--text); }
+.qcd-instrument-note { margin-top: .75rem; font-size: .85rem; color: var(--text-dim); }
+.qcd-prose { max-width: 740px; margin: 2.5rem auto 0; }
+.qcd-limit { color: var(--text-dim); font-size: 1rem; }
+.qcd-demo:fullscreen, .qcd-demo.qcd-pseudo-fullscreen { display: flex; flex-direction: column; width: 100%; height: 100dvh; background: var(--bg-raised); border: 0; }
+.qcd-demo.qcd-pseudo-fullscreen { position: fixed; inset: 0; z-index: 9999; }
+.qcd-demo:fullscreen .qcd-stage, .qcd-demo.qcd-pseudo-fullscreen .qcd-stage { flex: 1; height: auto; min-height: 150px; }
+.qcd-demo:fullscreen .qcd-instruments, .qcd-demo.qcd-pseudo-fullscreen .qcd-instruments { max-height: 45dvh; overflow-y: auto; }
+@media (max-width: 600px) {
+ .qcd-hero { margin-bottom: 1.5rem; }
+ .qcd-hero .u-eyebrow { font-size: .6rem; }
+ .qcd-stage { height: 46dvh; min-height: 330px; }
+ .qcd-caption { left: 12px; right: 12px; font-size: .52rem; letter-spacing: .03em; }
+ .qcd-toolbar { gap: 5px; padding: 8px; }
+ .qcd-toolbar .pillbar-btn { font-size: .72rem; padding: 8px 10px; }
+ .qcd-settings { grid-template-columns: 1fr 1fr; }
+ .qcd-seed { grid-column: 1/-1; }
+ .qcd-readouts { grid-template-columns: 1fr 1fr; }
+ .qcd-instruments { padding: .85rem; }
+}
+@media (max-height: 500px) and (min-width: 600px) { .qcd-stage { height: 70dvh; min-height: 240px; } }
