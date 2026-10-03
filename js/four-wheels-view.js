@@ -122,6 +122,7 @@
     }
     return {arrows};
   }
+  const LOWER_GROUND=-100;
   const faces = [
     [[0,3,2,1],[0,0,-1]],[[4,5,6,7],[0,0,1]],[[0,4,7,3],[-1,0,0]],
     [[1,2,6,5],[1,0,0]],[[0,1,5,4],[0,-1,0]],[[3,7,6,2],[0,1,0]]
@@ -1255,9 +1256,38 @@
       slopePaint(g,w,{x:x*size,y:y*size,w:size,h:size});
       const tile={canvas:c,x:left,y:top};background.tiles.set(key,tile);trimTiles(background.tiles,32);return tile;
     }
+    function courseGround(g,w,bounds,detailed=true) {
+      const base=blend(blend(P.pine,P.hairDark,.4),P.dark,.48),size=48;
+      rect(g,bounds.left,bounds.top,bounds.right-bounds.left,bounds.bottom-bounds.top,base);
+      const area=root.CartCourse.bounds([
+        {x:bounds.left-40,y:bounds.top-40},{x:bounds.right+40,y:bounds.top-40},
+        {x:bounds.right+40,y:bounds.bottom+40},{x:bounds.left-40,y:bounds.bottom+40}
+      ].map(p=>unproject(p,LOWER_GROUND)));
+      // World-anchored earth and small surface marks stay still during camera
+      // movement. The lower plane matches the cart's actual rock impact level.
+      for(let y=Math.floor(area.top/size)*size;y<=area.bottom;y+=size)for(let x=Math.floor(area.left/size)*size;x<=area.right;x+=size){
+        const tint=blend(base,blend(P.pine,P.clay,noise(x+24,y+24,170)),.055+noise(x,y,240)*.035);
+        groundPoly(g,quad(x,y,size,size,LOWER_GROUND),tint);
+        if(!detailed)continue;
+        const seed=hash(x,y),p={x:x+8+hash(x+11,y)*32,y:y+8+hash(x,y+19)*32,z:LOWER_GROUND};
+        if(seed>.66){
+          groundPoly(g,[add(p,-4,0),add(p,1,-3),add(p,5,0),add(p,1,3)],P.dark,.2);
+          groundPoly(g,[add(p,-3,0,1),add(p,0,-2,2),add(p,3,0,2),add(p,0,2,1)],P.clay,.28);
+          groundLine(g,add(p,-2,0,1),add(p,1,-1,2),P.floor,1,.22);
+        }else if(seed>.3){
+          for(let i=0;i<3;i++){const a=add(p,i*3,0);groundLine(g,a,add(a,-2+i,-1,3+hash(x+i,y)*3),P.pine,1,.38);}
+        }
+        const q=project(add(p,12,-7));rect(g,q.x,q.y,2,1,blend(base,P.clay,.2));
+      }
+      for(const h of w.level.hazards){
+        groundPoly(g,circle({...h,z:-50},h.rx,h.ry),blend(P.blue,P.dark,.22));
+        for(let i=0;i<22;i++){const a=i*2.399,p={x:h.x+Math.cos(a)*h.rx*.75,y:h.y+Math.sin(a)*h.ry*.75,z:-49};groundLine(g,p,{x:p.x+14,y:p.y-4,z:-49},P.light,1,.25);}
+      }
+    }
     function rockTile(w,x,y){
       const size=512,tile=document.createElement('canvas');tile.width=tile.height=size;
       const target=tile.getContext('2d');target.translate(-x*size,-y*size);
+      courseGround(target,w,{left:x*size,top:y*size,right:(x+1)*size,bottom:(y+1)*size});
       const visible=(p,r)=>{const q=project(p);return q.x>=x*size-r&&q.x<=(x+1)*size+r&&q.y>=y*size-r&&q.y<=(y+1)*size+r;};
       const scene=new Scene();cliffFaces(scene,w,visible,'below');scene.flush(target);return tile;
     }
@@ -1269,6 +1299,7 @@
         if(!map||map.width!==g.canvas.width||map.height!==g.canvas.height){
           map=document.createElement('canvas');map.width=g.canvas.width;map.height=g.canvas.height;
           const target=map.getContext('2d');target.translate(camera.x,camera.y);target.scale(camera.scale,camera.scale);
+          courseGround(target,w,{left:-camera.x/camera.scale,top:-camera.y/camera.scale,right:(map.width-camera.x)/camera.scale,bottom:(map.height-camera.y)/camera.scale},false);
           const scene=new Scene();cliffFaces(scene,w,()=>true,'below');scene.flush(target);background.rockMap=map;
         }
         g.drawImage(map,-camera.x/camera.scale,-camera.y/camera.scale,map.width/camera.scale,map.height/camera.scale);return;
@@ -1289,7 +1320,7 @@
       const key=p.x+','+p.y,old=treeSprites.get(key);
       if(old){scene.push(old.bounds,old.draw,old.bias);return;}
       const seed=Math.round(p.x*7+p.y*11),random=n=>hash(seed,n),size=.85+random(1)*.3;
-      const base=-90,height=(100+random(2)*24)*size,radius=(26+random(3)*7)*size;
+      const base=LOWER_GROUND,height=(100+random(2)*24)*size,radius=(26+random(3)*7)*size;
       const lean={x:(random(4)-.5)*8,y:(random(5)-.5)*8},model=new Scene();
       const at=(x,y,z)=>({x:p.x+x+lean.x*(z-base)/height,y:p.y+y+lean.y*(z-base)/height,z});
       const moss=blend(P.pine,P.dark,.5),bark=blend(P.hair,P.clay,.16);
@@ -1343,6 +1374,32 @@
       const draw=(g,origin)=>g.drawImage(image,x+origin.x-CAMERA.x,y+origin.y-CAMERA.y);
       if(treeSprites.size>=32)treeSprites.delete(treeSprites.keys().next().value);
       treeSprites.set(key,{bounds,draw,bias});scene.push(bounds,draw,bias);
+    }
+    function spaceCourseTrees(scene,level) {
+      // Reserve each road's projected column from the cliff foot to its rails
+      // or shop walls. A clear trunk alone does not protect a wide tree crown.
+      const blockers=level.floorAreas.map(area=>{
+        const height=Math.max(...area.poly.map(p=>Terrain.height(level,p)))+(area.kind==='tile'?56:34);
+        return root.CartCourse.bounds(area.poly.flatMap(p=>[project({...p,z:-105}),project({...p,z:height})]));
+      });
+      const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top,placed=[],sources=level.decor.filter(p=>p.kind==='tree');
+      for(let index=0;index<scene.commands.length;index++){
+        const command=scene.commands[index],source=sources[index],origin=project({...source,z:LOWER_GROUND});
+        const original=command.bounds;let chosen=null;
+        for(let radius=0;radius<=1024&&!chosen;radius+=24)for(let i=0;i<(radius?16:1);i++){
+          const angle=Math.PI/2+i*Math.PI/8,dx=Math.cos(angle)*radius,dy=Math.sin(angle)*radius;
+          const bounds={left:original.left+dx-10,right:original.right+dx+10,top:original.top+dy-10,bottom:original.bottom+dy+10};
+          if(blockers.some(b=>overlap(bounds,b))||placed.some(b=>overlap(bounds,b)))continue;
+          const position=unproject({x:origin.x+dx,y:origin.y+dy},LOWER_GROUND);
+          if(level.hazards.some(h=>((position.x-h.x)/(h.rx+40))**2+((position.y-h.y)/(h.ry+40))**2<1))continue;
+          chosen={dx,dy,bounds,position};break;
+        }
+        if(!chosen){command.draw=()=>{};continue;}
+        const {dx,dy,bounds,position}=chosen,draw=command.draw;
+        command.draw=(g,origin)=>draw(g,{x:origin.x+dx,y:origin.y+dy});
+        command.bounds={left:original.left+dx,right:original.right+dx,top:original.top+dy,bottom:original.bottom+dy};
+        command.depth+=dy/CAMERA.vertical;command.treePosition=position;placed.push(bounds);
+      }
     }
     function courseModels(scene,w,visible,mode='all') {
       const tr=(x,y,z)=>({x,y,z:z+Terrain.height(w.level,{x,y})});
@@ -1402,20 +1459,20 @@
       const Course=root.CartCourse,width=g.canvas.width,height=g.canvas.height,camera=connectedCamera(width,height,w,options.follow!==false,options.focusY),visible=(p,r=100)=>{const q=project(p);return camera.x+q.x*camera.scale>-r&&camera.x+q.x*camera.scale<width+r&&camera.y+q.y*camera.scale>-r&&camera.y+q.y*camera.scale<height+r;};w._visible=visible;
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
       if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
-      for(const h of w.level.hazards)if(visible(h,350)){groundPoly(g,circle({...h,z:-50},h.rx,h.ry),blend(P.blue,P.dark,.22));for(let i=0;i<22;i++){const a=i*2.399,p={x:h.x+Math.cos(a)*h.rx*.75,y:h.y+Math.sin(a)*h.ry*.75,z:-49};groundLine(g,p,{x:p.x+14,y:p.y-4,z:-49},P.light,1,.25);}}
+      courseRocks(g,w,background,camera,options.follow!==false);
       if(!background.trees||background.treesEpoch!==cacheEpoch){
         background.trees=new Scene(1,true);background.treesEpoch=cacheEpoch;
         for(const p of w.level.decor)if(p.kind==='tree')courseTree(background.trees,p);
+        spaceCourseTrees(background.trees,w.level);
         background.trees.commands.sort((a,b)=>a.depth-b.depth);
       }
-      // The lower-ground trees sit behind the elevated track. Drawing them
-      // before its floor and cliffs keeps their roots out of the driving lane.
+      // Whole tree sprites stay clear of the track silhouette and stand on
+      // the textured lower ground, behind the elevated driving surface.
       for(const command of background.trees.commands){
         const b=command.bounds;
         if(camera.x+b.right*camera.scale<0||camera.x+b.left*camera.scale>width||camera.y+b.bottom*camera.scale<0||camera.y+b.top*camera.scale>height)continue;
         command.draw(g,CAMERA);
       }
-      courseRocks(g,w,background,camera,options.follow!==false);
       if(options.follow===false){
         let map=background.floorMap;
         if(!map||map.width!==width||map.height!==height){

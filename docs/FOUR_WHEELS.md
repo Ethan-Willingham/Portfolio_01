@@ -300,6 +300,12 @@ coordinate-derived seed and is drawn once into a transparent pixel sprite in
 the static scenery cache, behind the elevated road and cliffs. The art is drawn
 locally and the game has no runtime art requests or third-party engine.
 Tree sprites share a 32-entry cache across restarted runs and font refreshes.
+Their entire projected sprites have clearance from the road, cliff faces, rails
+and shop walls. Roots stand on the rock impact plane at -100. Quiet earth
+mottling, stones and grass tufts make this lower ground visible during a fall.
+The texture stays fixed in world coordinates and shares the lower cliff cache,
+including its worker rendering. Tree placement is fixed across following views,
+phone views and the course map.
 
 Hill shading follows the ground gradient and the same fixed light direction as
 the cart and scenery, with stronger contrast on gentle grades. Level bands across
@@ -446,6 +452,7 @@ node tools/test-four-wheels-wheel-modes.cjs
 node tools/test-four-wheels-handling.cjs
 node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-scenery-browser.cjs
 node tools/test-four-wheels-motion.cjs
 node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
