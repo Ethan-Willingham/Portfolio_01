@@ -11,7 +11,8 @@
   var softContactDraw = null;
   var SOFT_CONTACT_RIG_MASS = 3.0;
   var SOFT_CONTACT_POINT_MASS = 0.09;
-  var SOFT_CONTACT_FRICTION = 0.45;
+  // Let gel slide toward the crown along the taller, steeper armor sides.
+  var SOFT_CONTACT_FRICTION = 0.25;
   var softContactReport = { contacts: 0, selfContacts: 0, impulse: 0, friction: 0, penetration: 0 };
 
   function softContactBody(b) { return SOFT_CONTACT && !!b.surfaceSlime; }

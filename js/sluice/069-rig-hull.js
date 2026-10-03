@@ -1,15 +1,15 @@
   /* ---- Shared rig contact silhouette ---- */
-  // A narrow rounded crown joins a wide flat track base. Small attachments (pipe,
+  // A head-height rounded crown joins a wide flat track base. Small attachments (pipe,
   // lamp and moving drill) do not enlarge the body contact surface.
-  // The smaller crown leaves room for continuously rising sides inside the
+  // The narrow crown leaves room for continuously rising sides inside the
   // painted cab. Every side normal lifts material; there is no vertical skirt.
   var RIG_HULL_LOCAL = [];
   for (var rigCurveI = 0; rigCurveI <= 9; rigCurveI++) {
-    var rigCurveAngle = (150 - rigCurveI * 120 / 9) * Math.PI / 180;
-    RIG_HULL_LOCAL.push(11 + Math.cos(rigCurveAngle) * 3.2,
-      16 - Math.sin(rigCurveAngle) * 3.2);
+    var rigCurveAngle = (162 - rigCurveI * 144 / 9) * Math.PI / 180;
+    RIG_HULL_LOCAL.push(11.5 + Math.cos(rigCurveAngle) * 2.4,
+      9 - Math.sin(rigCurveAngle) * 2.4);
   }
-  RIG_HULL_LOCAL.push(19.0, 24.0, 3.0, 24.0);
+  RIG_HULL_LOCAL.push(18.5, 24.0, 3.5, 24.0);
   var rigHullCache = { n: RIG_HULL_LOCAL.length / 2, x: new Float64Array(12), y: new Float64Array(12),
     nx: new Float64Array(12), ny: new Float64Array(12) };
   var rigHullResult = { distance: 0, x: 0, y: 0, nx: 0, ny: 0 };

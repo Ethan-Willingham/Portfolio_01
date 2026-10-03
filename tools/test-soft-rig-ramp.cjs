@@ -28,11 +28,13 @@ for (const dir of [-1, 1]) {
   for (let i = 0; i < hull.n; i++) {
     const next = (i + 1) % hull.n;
     if (hull.nx[i] * dir > 0.5 && hull.ny[i] < -0.1 &&
-        (hull.y[i] + hull.y[next]) / 2 > world.player.y + world.PLAYER_H * 0.65) face = i;
+        Math.max(hull.y[i], hull.y[next]) > world.player.y + world.PLAYER_H * 0.85) face = i;
   }
   assert(face >= 0, 'lower side must be a lifting ramp in direction ' + dir);
   const next = (face + 1) % hull.n, nx = hull.nx[face], ny = hull.ny[face];
-  const sx = (hull.x[face] + hull.x[next]) / 2, sy = (hull.y[face] + hull.y[next]) / 2;
+  const u = face === 9 ? 0.7 : 0.3;
+  const sx = hull.x[face] + (hull.x[next] - hull.x[face]) * u;
+  const sy = hull.y[face] + (hull.y[next] - hull.y[face]) * u;
   const nearX = sx - dir * 0.7, left = dir > 0 ? nearX : sx - 12, right = dir > 0 ? sx + 12 : nearX;
   const top = sy - 8, bottom = 126;
   const b = { n: 4, ringN: 4, ring: [0, 1, 2, 3], sleeping: false,
@@ -58,7 +60,7 @@ for (const dir of [-1, 1]) {
     if (!touched.has(i)) assert.equal(b.py[i], beforeY[i], 'uncontacted nodes get no artificial upward boost');
     else {
       assert(b.py[i] < beforeY[i], 'horizontal drive lifts both contacted material nodes');
-      assert((b.py[i] - b.oy[i]) / h < 0, 'lift survives the unchanged Coulomb friction');
+      assert((b.py[i] - b.oy[i]) / h < 0, 'lift survives the bounded Coulomb friction');
       maxRise = Math.max(maxRise, beforeY[i] - b.py[i]);
       upwardSpeed = Math.max(upwardSpeed, -(b.py[i] - b.oy[i]) / h);
     }
