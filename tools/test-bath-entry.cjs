@@ -12,7 +12,7 @@ function fixture() {
   const s = {
     window: {}, TILE: 32, COLS: 320, TOTAL_ROWS: 1412,
     bathMode: false, bathFading: false, bathRoomReady: false, gamePaused: false,
-    bathFloorsOwned: [true, false, false, false, false],
+    bathFloorsOwned: [true, false, false, false, false], bathSkinFlakes: [],
     BLD: { waterFoam: '#cadde5' },
     liquidCatalog: ['Water', 'Oil', 'Brine', 'Nectar', 'Lumen'].map((name, id) => ({ name, id })),
     siphon: { tank: [0, 0, 0, 0, 0, 0], capacity: 16000 },
@@ -23,6 +23,7 @@ function fixture() {
     bathToolReset() {}, bathSyncCollision() {}, hearthRoomRestore() {},
     hearthRoomSave: () => ({}), hearthBeds: { boiler: { fuelSeconds: 0 } },
     skySlimeClamp: (n, lo, hi) => Math.max(lo, Math.min(hi, n)),
+    skySlimes: [], skySlimeHydrate: copy, skySlimeRecord: copy, bathSkinInit() {},
     liquidToolSync() {},
     bathThermalTemperature: () => s.bathThermal.meanC,
     bathThermalReset() { s.bathThermal = { meanC: 20, totalCapacity: 0, migrationC: 0 }; },
@@ -378,4 +379,42 @@ function liveSignature(s) {
   s.bathArrivalDraw(c);
   assert.equal(beads.length, 0, 'glints do not cycle or repeat while a delayed restore finishes');
   console.log('PASS arrival draws no traced contour and its faint glints appear once without changing water');
+}
+
+// The wider waiting landing lowers the copper lip by 40 world pixels.
+// Existing paid liquid follows it once, including across parked-store bins.
+{
+  const s = fixture(), F = s.BATH_FLOORS[0], floor = F.fr * s.TILE;
+  s.mineralLiquidPark(0, 1000, floor + 2);
+  s.mineralLiquidPark(2, 1200, floor + 90);
+  s.mineralLiquidPark(4, 64, 128);
+  s.addLiquidParticle(0, 1100, floor + 8, 3, 4, 0);
+  s.addLiquidParticle(2, 80, 200, 5, 6, 0);
+  s.bathServiceRestore({ version: 7, ready: true, thermal: { meanC: 42 }, guests: [
+    {s:{id:1,x:1100,y:floor+80,r:30},slot:0,st:'soak',served:true,manual:true,soak:12},
+    {s:{id:2,x:660,y:floor-30,r:30},slot:1,st:'wait',served:false}
+  ] });
+  assert.equal(s.bathGuests[0].s.y, floor + 120, 'an existing soaking guest follows the basin');
+  assert.equal(s.bathGuests[0].soak, 12);
+  assert.equal(s.bathGuests[1].s.x, s.bathGuestQueueX(1), 'the old queue moves onto the wider landing');
+  assert.equal(s.bathGuests[1].s.y, floor - 30);
+  assert.equal(s.bathRoomReady, false, 'an old room rebuilds its longer landing');
+  assert.equal(s.liquidCount, 2);
+  const basin = s.liquidX.indexOf(1100), outdoor = s.liquidX.indexOf(80);
+  assert.equal(s.liquidY[basin], floor + 48);
+  assert.equal(s.liquidVX[basin], 3); assert.equal(s.liquidVY[basin], 4);
+  assert.equal(s.liquidY[outdoor], 200);
+  const parked = Object.values(s.mineralLiquidParked).flatMap(data => {
+    const list = []; for(let i=0;i<data.length;i+=3) list.push(data.slice(i,i+3)); return list;
+  });
+  assert.deepEqual(copy(parked.sort((a,b)=>a[1]-b[1])), [[4,64,128],[0,1000,floor+42],[2,1200,floor+130]]);
+  assert.equal(s.bathThermal.meanC, 42, 'the existing thermal field retains its temperature');
+  s.bathRoomReady = true;
+  const saved = snapshot(s), signature = liquidSignature(s);
+  assert.equal(saved.bathhouse.layout, 1);
+  const reloaded = fixture(); restore(reloaded, saved);
+  assert.equal(reloaded.bathRoomReady, true);
+  assert.deepEqual(liquidSignature(reloaded), signature, 'a current save cannot shift water twice');
+  assert.deepEqual(snapshot(reloaded), saved, 'layout migration preserves mass, identity, heat and outdoor parcels');
+  console.log('PASS level-rim migration conserves live and parked parcels, velocities, heat and one-time restoration');
 }

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.160';
+  var GAME_VERSION = 'v28.161';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -14015,7 +14015,7 @@
   // simple while holding 3+ tiles of REAL water depth (deep water is calm
   // water; the shallow popcorn problem dies here, no sim-scale tricks).
   var BATH_FLOORS = [
-    { c0: 20, c1: 53, fr: 610, lip: 1, sink: 5, tubs: [[24,49]], fill: [2], price: 0 },
+    { c0: 10, c1: 53, fr: 610, lip: 0, sink: 6, rim: 20, tubs: [[24,49]], fill: [2], price: 0 },
     { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[32,41]], fill: [1], price: 2000 },
     { c0: 27, c1: 43, fr: 588, lip: 0, sink: 0, tubs: [], fill: [], sauna: true, price: 8000 },
     { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[30,39]], fill: [1], price: 20000 },
@@ -14038,7 +14038,7 @@
     var D = W / 2.618;
     var maxD = (F.lip + F.sink) * TILE - 12;
     if (D > maxD) D = maxD;
-    var y0 = (F.fr - F.lip) * TILE + 12;      // the lip waterline plane
+    var y0 = (F.fr - F.lip) * TILE + (F.rim === undefined ? 12 : F.rim);
     var ch = Math.cosh(BATH_CAT_C) - 1;
     return {
       x0: x0, x1: x1, y0: y0, D: D,
@@ -14085,7 +14085,7 @@
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
   var BATH_BOT_ROW = 616;                       // F1 floor slab row
-  var BATH_VIEW_W = 36 * TILE;                  // width-fit + headroom for the F2 peek
+  var BATH_VIEW_W = 44 * TILE;                  // dry landing plus the joined vessel
   var BATH_EXIT_X0 = 43 * TILE, BATH_EXIT_X1 = 46 * TILE;   // F1 right-wall door
   var BATH_EXIT_Y0 = 606 * TILE, BATH_EXIT_Y1 = 610 * TILE;
 
@@ -14118,7 +14118,7 @@
     // Remove only those obsolete blocks so overflow clears the visible rim.
     for (var f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f], row = world[F.fr - 1];
-      if (!F.lip || !row) continue;
+      if (!F.tubs.length || !row) continue;
       for (var t = 0; t < F.tubs.length; t++) for (var side = 0; side < 2; side++) {
         var col = side ? F.tubs[t][1] + 1 : F.tubs[t][0] - 1;
         if (!row[col] || row[col].type !== 'foundation') continue;
@@ -14134,7 +14134,7 @@
     // shared frozen fill prototypes are never mutated, only de-referenced),
     // then carve each floor's cavity out of it.
     for (r = BATH_TOP_ROW; r <= BATH_BOT_ROW + 1; r++) {
-      for (c = 18; c <= 55; c++) {
+      for (c = 8; c <= 55; c++) {
         world[r][c] = { type: 'foundation', hp: 999999 };
       }
     }
@@ -14395,16 +14395,13 @@
     if (!bathSaved) bathSaved = { ws: worldScale, sw: screenW, sh: screenH };
     var width = canvas.width / dpr, height = canvas.height / dpr;
     var nav = hearthNavHeight(), layout = hearthRoomLayout(), scene = layout.scene;
-    // Reserve the fixed controls before fitting the entire ground-floor tub.
+    // Fit the vessel on the right and leave the dry landing above the tools.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
-    var mainHeight = bathInteriorBottom() - mainCurve.y0 + 120;
-    // The guest landing and the vessel share the desktop framing everywhere.
-    worldScale = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / mainHeight);
-    if (layout.compact) {
-      var belowLip = layout.shoulderDepth + layout.outerWorldW / (HEARTH_PHI * HEARTH_PHI);
-      worldScale = Math.min(scene.w / BATH_VIEW_W, layout.bodyWidth / layout.outerWorldW,
-        Math.max(44, height - 128) / belowLip);
-    }
+    var floorY = Math.max(88, Math.min(height * 0.38, height - 228));
+    var belowFloor = mainCurve.y0 - main.fr * TILE + layout.shoulderDepth +
+      layout.outerWorldW / (HEARTH_PHI * HEARTH_PHI);
+    worldScale = Math.min(scene.w / BATH_VIEW_W, layout.bodyWidth / (mainCurve.x1 - mainCurve.x0 + 80),
+      Math.max(44, height - floorY - 28) / belowFloor);
     var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
     if (bathViewportKey !== viewportKey) {
       bathToolCancel(); bathTool.rope = [];
@@ -14421,12 +14418,7 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = bathInteriorBottom() - (scene.y + scene.h) / worldScale;
-    // Short windows crop spare timber above the bowl rather than replacing
-    // the room with a second layout. Keep the real furnace below the copper.
-    if (layout.compact) {
-      maxY = mainCurve.y0 - 88 / worldScale;
-    }
+    var maxY = main.fr * TILE - floorY / worldScale;
     if (maxY < minY) minY = maxY;
     // A single-room bath has nothing to scroll to. Do not reveal the retired
     // tower artwork on a stray wheel gesture. Purchased upper floors remain reachable.
@@ -14434,8 +14426,8 @@
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
     bathCamY = bathScrollT;
-    var centerX = 37 * TILE;
-    cam.x = centerX - (scene.x + scene.w / 2) / worldScale;
+    var vesselRight = mainCurve.x1 + 40;
+    cam.x = vesselRight - (width - 24) / worldScale;
     cam.y = bathCamY;
     return true;
   }
@@ -15635,8 +15627,9 @@
     }
     c.fillStyle = BLD.metalDark; c.fillRect(tapX - 8, tapY - 5, 16, 6);
     // The waiting landing remains level with the actual guest contacts.
-    bathInteriorTimber(c, 19 * TILE, floor, 5 * TILE - 24, 18);
-    c.fillStyle = BLD.woodMid; c.fillRect(19 * TILE, floor, 5 * TILE - 24, 2);
+    var landingLeft = (F.c0 - 1) * TILE, landingRight = curve.x0 - 8;
+    bathInteriorTimber(c, landingLeft, floor, landingRight - landingLeft, 18);
+    c.fillStyle = BLD.woodMid; c.fillRect(landingLeft, floor, landingRight - landingLeft, 2);
     c.fillStyle = BLD.woodDeep; c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 24);
     bathDrawDryLiner(c, curve);
     c.restore();
@@ -16184,7 +16177,7 @@
     return true;
   }
   function bathFloorAt(x, y) {
-    if (x < 19 * TILE || x > 55 * TILE || y < BATH_FLOORS[BATH_FLOORS.length - 1].fr * TILE - 5 ||
+    if (x < (BATH_FLOORS[0].c0 - 1) * TILE || x > 55 * TILE || y < BATH_FLOORS[BATH_FLOORS.length - 1].fr * TILE - 5 ||
         y > (BATH_FLOORS[0].fr + 5) * TILE) return 0;
     for (var f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f];
@@ -16273,19 +16266,23 @@
     if (bathGuests.some(function (g) { return g.s.id === s.id; })) return false;
     var slot = bathGuests.some(function (g) { return g.slot === 0; }) ? 1 : 0;
     var F = BATH_FLOORS[0];
-    s.x = 20.5 * TILE; s.y = F.fr * TILE - s.r;
+    s.x = (F.c0 + 2) * TILE; s.y = F.fr * TILE - s.r;
     s.vx = 0; s.vy = 0; s.entry = 0; s.wet = 0; s._trail = [];
     s.visit = 'inside';
     var g = { s: s, slot: slot, st: 'arrive', t: 0, paid: false, served: false, soak: 0 };
     bathSkinInit(g);
     bathGuests.push(g);
-    bathBeginHop(g, (slot ? 22.5 : 20.75) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
+    bathBeginHop(g, bathGuestQueueX(slot), F.fr * TILE - s.r, 0.7, 22, 'wait');
     if (!bathIntroSeen) {
       bathIntroSeen = true;
       showMsg('A sky slime is waiting. Bring water and coal to the banya. Click the boiler beneath the tub to tend its fire. A striker is supplied; stone sometimes drops flint.', false,
         { key: 'bath-arrival', tag: 'BATHHOUSE' });
     }
     return true;
+  }
+  function bathGuestQueueX(slot) {
+    var F = BATH_FLOORS[0], left = (F.c0 + 2.5) * TILE, right = (F.tubs[0][0] - 2) * TILE;
+    return left + (right - left) * (slot ? 0.72 : 0.28);
   }
   // The developer helper creates a real surface visitor, never a paying phantom.
   function bathSpawnGuest() {
@@ -16322,7 +16319,7 @@
     money += BATH_VISIT.pay;
     bathFloats.push({ x: g.s.x, y: g.s.y - 38, t: 0, s: '+$' + BATH_VISIT.pay });
     if (bathMode) sfxPlay('sell-total');
-    bathBeginHop(g, 21.5 * TILE, BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
+    bathBeginHop(g, bathGuestQueueX(g.slot), BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
     saveNow('bath-payment');
   }
   function bathReleaseGuest(g) {
@@ -16444,7 +16441,7 @@
   function bathHUDHeight() { return 0; }
   function bathDrawPerformance(c, L) {
     // Share the wall's navigation row without covering the pause or leave target.
-    var navWidth = L.landscape ? L.scene.w : L.w;
+    var navWidth = L.controls.x + L.controls.w;
     var r = { x: 60, y: 8, w: Math.min(96, navWidth - 154), h: 44 };
     var size = r.w < 60 ? 10 : 11;
     hearthPlate(c, r, false);
@@ -16487,12 +16484,42 @@
     // SaveBuild serializes this before mineralLiquids. Flush floor spills
     // now so saving between drain ticks cannot restore already lost water.
     if (bathRoomReady) bathDrainFloor(true);
-    return { version: 7, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
+    return { version: 7, layout: 1, silos: bathSiloSave(), thermal: bathThermalSave(), workshop: hearthRoomSave(), fire: bathFire, heat: bathHeat, pour: bathPour, lost: bathLostWater, served: bathServed, introSeen: bathIntroSeen,
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
           served: g.served, soak: g.soak, skin: g.skin, manual: !!g.manual, hop: g.hop ? Object.assign({}, g.hop) : null };
       }) };
+  }
+  function bathMigrateLevelRim() {
+    // Move existing basin parcels through the ordinary mutation journal.
+    // Rebin parked parcels too; their store key follows the new position.
+    var F = BATH_FLOORS[0], tub = F.tubs[0], shifted = [];
+    var x0 = tub[0] * TILE, x1 = (tub[1] + 1) * TILE;
+    var y0 = (F.fr - 2) * TILE, y1 = (F.fr + 6) * TILE;
+    var shift = TILE + F.rim - 12;
+    liquidToolSync();
+    for (var i = liquidCount - 1; i >= 0; i--) {
+      if (liquidX[i] < x0 || liquidX[i] >= x1 || liquidY[i] < y0 || liquidY[i] >= y1) continue;
+      shifted.push([liquidType[i], liquidX[i], liquidY[i] + shift, liquidVX[i], liquidVY[i],
+        typeof liquidOrigin === 'undefined' ? 0 : liquidOrigin[i]]);
+      removeLiquidParticle(i);
+    }
+    shifted.forEach(function (p) {
+      if (addLiquidParticle(p[0], p[1], p[2], p[3], p[4], p[5]) < 0) mineralLiquidPark(p[0], p[1], p[2]);
+    });
+    shifted = [];
+    Object.keys(mineralLiquidParked).forEach(function (key) {
+      var data = mineralLiquidParked[key];
+      for (var i = data.length - 3; i >= 0; i -= 3) {
+        if (data[i + 1] < x0 || data[i + 1] >= x1 || data[i + 2] < y0 || data[i + 2] >= y1) continue;
+        shifted.push([data[i], data[i + 1], data[i + 2] + shift]);
+        var last = data.length - 3;
+        data[i] = data[last]; data[i + 1] = data[last + 1]; data[i + 2] = data[last + 2]; data.length -= 3;
+      }
+      if (!data.length) delete mineralLiquidParked[key];
+    });
+    shifted.forEach(function (p) { mineralLiquidPark(p[0], p[1], p[2]); });
   }
   function bathServiceRestore(data) {
     if (typeof bathArrivalReset === 'function') bathArrivalReset();
@@ -16523,7 +16550,8 @@
     bathSiloRestore(data.silos, bathPour); bathPour = 0;
     // The carved grid and real water are already in the world/liquid save.
     // Re-arm the heater on next entry without filling the bath a second time.
-    bathRoomReady = !!data.ready && data.version >= 4;
+    if (!data.layout) bathMigrateLevelRim();
+    bathRoomReady = !!data.ready && data.version >= 4 && data.layout >= 1;
     bathSyncCollision();
     var list = Array.isArray(data.guests) ? data.guests : [];
     for (var i = 0; i < Math.min(bathGuestCap, list.length); i++) {
@@ -16538,9 +16566,17 @@
         served: !!src.served, manual: !!src.manual, soak: skySlimeClamp(Number(src.soak) || 0, 0, BATH_VISIT.seconds),
         hop: st === 'hop' ? Object.assign({}, hop) : null };
       if (!g.manual && !g.served && st !== 'wait' && !(st === 'hop' && hop.next === 'wait')) g.st = 'wait';
-      if ((Number(data.version) || 0) < 4 && !g.served) {
+      if (((Number(data.version) || 0) < 4 || !data.layout) && !g.served && !g.manual) {
         g.st = 'wait'; g.hop = null;
-        s.x = (slot ? 22.5 : 20.75) * TILE; s.y = BATH_FLOORS[0].fr * TILE - s.r;
+        s.x = bathGuestQueueX(slot); s.y = BATH_FLOORS[0].fr * TILE - s.r;
+      }
+      if (!data.layout) {
+        var tub = BATH_FLOORS[0].tubs[0], shift = TILE + BATH_FLOORS[0].rim - 12;
+        if (s.x >= tub[0] * TILE && s.x <= (tub[1] + 1) * TILE) s.y += shift;
+        if (g.hop) {
+          if (g.hop.x >= tub[0] * TILE && g.hop.x <= (tub[1] + 1) * TILE) g.hop.y += shift;
+          if (g.hop.tx >= tub[0] * TILE && g.hop.tx <= (tub[1] + 1) * TILE) g.hop.ty += shift;
+        }
       }
       if (g.paid) s.bathed = true;
       if (g.paid && g.st === 'soak') g.st = 'leave';
@@ -17442,7 +17478,7 @@
     // ceiling. Keep pours out of the hidden, locked tubs on the older floors.
     if (typeof cam !== 'undefined' && bathMode && worldScale > 0)
       top = Math.max(top, cam.y + (hearthRoomLayout().scene.y + 28) / worldScale);
-    return { left: 19.5 * TILE, right: c.x1 + 48, top: top,
+    return { left: (F.c0 + 0.5) * TILE, right: c.x1 + 48, top: top,
       bottom: c.y0 + c.D - 24, curve: c, floor: F.fr * TILE };
   }
   function bathToolRelease(quiet) {
@@ -20864,10 +20900,10 @@
     hearthButtons.push({ x: r.x, y: r.y, w: r.w, h: r.h, action: action });
   }
   function hearthDrawNav(c, view) {
-    var L = hearthRoomLayout(), w = L.landscape ? L.scene.w : L.w;
+    var L = hearthRoomLayout(), w = L.controls.x + L.controls.w;
     // The native pause button occupies x=8..52. These individual wall plates
     // stay clear of it without laying an opaque strip over the bathhouse.
-    hearthButton(c, { x: w - 86, y: 8, w: 74, h: 44 }, 'LEAVE', 'exit', false);
+    hearthButton(c, { x: w - 74, y: 8, w: 74, h: 44 }, 'LEAVE', 'exit', false);
 
   }
   function hearthWrap(c, text, x, y, width, color, maxLines) {
@@ -20883,39 +20919,30 @@
     hearthText(c, line, x, y + row * 18, 12, color);
   }
   // One composition on every screen: copper bath over the joined furnace,
-  // with the same tool columns on both sides. Only viewport size changes fit.
+  // with all tool columns below the left landing. Only viewport size changes fit.
   function hearthRoomLayout() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
-    var compact = h < 500 || w < 700, gap = 8, station, scene, box, bw, bh;
+    var compact = h < 500 || w < 700, gap = 8;
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     var shoulder = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * 0.06, 24);
     var outerWorldW = curve.x0 + curve.x1 - 2 * shoulder.x;
-    var cw = compact ? Math.max(96, Math.min(144, w * 0.14)) : 144;
-    var bodyWidth = Math.max(88, w - 2 * (cw + 20));
-    if (compact) {
-      scene = { x: 0, y: 0, w: w, h: Math.max(44, h - 26) };
-      var floor = (curve.y0 + curve.D + 24 - cam.y) * worldScale;
-      station = { x: 0, y: floor, w: w, h: Math.max(0, h - floor) };
-    } else {
-      bh = Math.min(208, h * 0.26, (w - 344) / (HEARTH_WIDTH / HEARTH_HEIGHT));
-      var sh = Math.max(242, bh + 74);
-      station = { x: 0, y: h - sh, w: w, h: sh };
-      scene = { x: 0, y: 0, w: w, h: station.y };
-    }
+    var cw = Math.max(96, Math.min(144, w * 0.18));
+    var controls = { x: 8, y: 0, w: cw * 2 + gap, h: h };
+    var bodyWidth = Math.max(88, w - controls.w - 48);
+    var scene = { x: 0, y: 0, w: w, h: Math.max(44, h - 26) };
+    var floor = (curve.y0 + curve.D + 24 - cam.y) * worldScale;
+    var station = { x: 0, y: floor, w: w, h: Math.max(0, h - floor) };
     // Draw and collide against the same continuous ellipse under the copper.
     var outerX = (shoulder.x - cam.x) * worldScale;
     var outerW = outerWorldW * worldScale;
     var outerY = (shoulder.y - cam.y) * worldScale;
     var outerH = Math.max(88, outerW / (HEARTH_PHI * HEARTH_PHI));
-    box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
+    var box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
       w: outerW * HEARTH_BOWL_SPAN, h: outerH * (1 - HEARTH_BOWL_CUT),
       bowl: { x: outerX, y: outerY, w: outerW, h: outerH } };
-    bw = box.w; bh = box.h;
-    if (!compact) cw = Math.min(144, (w - bw) / 2 - 20);
-    var cy = compact ? Math.max(60, h - 218) : Math.max(station.y, box.y + bh - 194);
-    var left = compact ? 8 : box.x - cw - 12;
-    var right = compact ? w - cw - 8 : box.x + bw + 12;
-    var half = (cw - gap) / 2;
+    var landingY = (F.fr * TILE - cam.y) * worldScale;
+    var cy = Math.max(60, Math.min(h - 218, landingY + 24));
+    var left = controls.x, right = left + cw + gap, half = (cw - gap) / 2;
     var bin = { x: left, y: cy, w: cw, h: 44 };
     var pump = { x: left, y: cy + 50, w: cw, h: 44 };
     var action = { x: right, y: cy, w: cw, h: 44 };
@@ -20929,7 +20956,7 @@
     var water = { x: right, y: cy + 100, w: cw, h: 44 };
     var meter = { x: right, y: cy + 150, w: cw, h: 44 };
     if (bathMode && typeof hearthCasingProfile === 'function') hearthChamberSetLayout(box, true);
-    return { w: w, h: h, top: 0, footer: h, station: station, scene: scene, box: box,
+    return { w: w, h: h, top: 0, footer: h, station: station, scene: scene, box: box, controls: controls,
       bin: bin, pump: pump, action: action, ash: ash, tools: tools, water: water, meter: meter,
       bodyWidth: bodyWidth, outerWorldW: outerWorldW, shoulderDepth: shoulder.y - curve.y0,
       compact: compact, touch: !!isMobile, mobile: false, wide: true, side: false, landscape: false };
@@ -20992,8 +21019,7 @@
     hearthButtons.push(Object.assign({ action: 'strike' }, L.action));
     hearthDrawGrateControl(c, L.ash);
     if (L.wide || L.side) {
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, 11, BLD.cream, 'center');
-      if (L.wide && !bed.chunks.length) { var hint = { x: L.bin.x, y: L.bin.y - 26, w: L.bin.w, h: 20 }; hearthPlate(c, hint, false); hearthText(c, bathToolTouchControls() ? 'TAP TO DROP' : 'CLICK TO DROP', hint.x + hint.w / 2, hint.y + 10, 11, BLD.cream, 'center'); }
+      hearthText(c, hearthStationReadout(bed), L.controls.x + L.controls.w / 2, L.h - 10, 10, BLD.cream, 'center');
     } else {
       // Keep the sloping ironwork continuous behind the compact readings.
       var readY = L.h >= 500 ? L.h - 12 : r.y + 8;

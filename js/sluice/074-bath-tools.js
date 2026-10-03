@@ -11,7 +11,7 @@
     // ceiling. Keep pours out of the hidden, locked tubs on the older floors.
     if (typeof cam !== 'undefined' && bathMode && worldScale > 0)
       top = Math.max(top, cam.y + (hearthRoomLayout().scene.y + 28) / worldScale);
-    return { left: 19.5 * TILE, right: c.x1 + 48, top: top,
+    return { left: (F.c0 + 0.5) * TILE, right: c.x1 + 48, top: top,
       bottom: c.y0 + c.D - 24, curve: c, floor: F.fr * TILE };
   }
   function bathToolRelease(quiet) {

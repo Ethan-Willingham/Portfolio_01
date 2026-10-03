@@ -130,7 +130,7 @@
   // simple while holding 3+ tiles of REAL water depth (deep water is calm
   // water; the shallow popcorn problem dies here, no sim-scale tricks).
   var BATH_FLOORS = [
-    { c0: 20, c1: 53, fr: 610, lip: 1, sink: 5, tubs: [[24,49]], fill: [2], price: 0 },
+    { c0: 10, c1: 53, fr: 610, lip: 0, sink: 6, rim: 20, tubs: [[24,49]], fill: [2], price: 0 },
     { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[32,41]], fill: [1], price: 2000 },
     { c0: 27, c1: 43, fr: 588, lip: 0, sink: 0, tubs: [], fill: [], sauna: true, price: 8000 },
     { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[30,39]], fill: [1], price: 20000 },
@@ -153,7 +153,7 @@
     var D = W / 2.618;
     var maxD = (F.lip + F.sink) * TILE - 12;
     if (D > maxD) D = maxD;
-    var y0 = (F.fr - F.lip) * TILE + 12;      // the lip waterline plane
+    var y0 = (F.fr - F.lip) * TILE + (F.rim === undefined ? 12 : F.rim);
     var ch = Math.cosh(BATH_CAT_C) - 1;
     return {
       x0: x0, x1: x1, y0: y0, D: D,
@@ -200,7 +200,7 @@
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
   var BATH_BOT_ROW = 616;                       // F1 floor slab row
-  var BATH_VIEW_W = 36 * TILE;                  // width-fit + headroom for the F2 peek
+  var BATH_VIEW_W = 44 * TILE;                  // dry landing plus the joined vessel
   var BATH_EXIT_X0 = 43 * TILE, BATH_EXIT_X1 = 46 * TILE;   // F1 right-wall door
   var BATH_EXIT_Y0 = 606 * TILE, BATH_EXIT_Y1 = 610 * TILE;
 
@@ -233,7 +233,7 @@
     // Remove only those obsolete blocks so overflow clears the visible rim.
     for (var f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f], row = world[F.fr - 1];
-      if (!F.lip || !row) continue;
+      if (!F.tubs.length || !row) continue;
       for (var t = 0; t < F.tubs.length; t++) for (var side = 0; side < 2; side++) {
         var col = side ? F.tubs[t][1] + 1 : F.tubs[t][0] - 1;
         if (!row[col] || row[col].type !== 'foundation') continue;
@@ -249,7 +249,7 @@
     // shared frozen fill prototypes are never mutated, only de-referenced),
     // then carve each floor's cavity out of it.
     for (r = BATH_TOP_ROW; r <= BATH_BOT_ROW + 1; r++) {
-      for (c = 18; c <= 55; c++) {
+      for (c = 8; c <= 55; c++) {
         world[r][c] = { type: 'foundation', hp: 999999 };
       }
     }
@@ -510,16 +510,13 @@
     if (!bathSaved) bathSaved = { ws: worldScale, sw: screenW, sh: screenH };
     var width = canvas.width / dpr, height = canvas.height / dpr;
     var nav = hearthNavHeight(), layout = hearthRoomLayout(), scene = layout.scene;
-    // Reserve the fixed controls before fitting the entire ground-floor tub.
+    // Fit the vessel on the right and leave the dry landing above the tools.
     var main = BATH_FLOORS[0], mainCurve = bathTubCurve(main,main.tubs[0]);
-    var mainHeight = bathInteriorBottom() - mainCurve.y0 + 120;
-    // The guest landing and the vessel share the desktop framing everywhere.
-    worldScale = Math.min(scene.w / BATH_VIEW_W, Math.max(40, scene.h) / mainHeight);
-    if (layout.compact) {
-      var belowLip = layout.shoulderDepth + layout.outerWorldW / (HEARTH_PHI * HEARTH_PHI);
-      worldScale = Math.min(scene.w / BATH_VIEW_W, layout.bodyWidth / layout.outerWorldW,
-        Math.max(44, height - 128) / belowLip);
-    }
+    var floorY = Math.max(88, Math.min(height * 0.38, height - 228));
+    var belowFloor = mainCurve.y0 - main.fr * TILE + layout.shoulderDepth +
+      layout.outerWorldW / (HEARTH_PHI * HEARTH_PHI);
+    worldScale = Math.min(scene.w / BATH_VIEW_W, layout.bodyWidth / (mainCurve.x1 - mainCurve.x0 + 80),
+      Math.max(44, height - floorY - 28) / belowFloor);
     var viewportKey = width + ':' + height + ':' + nav + ':' + scene.h;
     if (bathViewportKey !== viewportKey) {
       bathToolCancel(); bathTool.rope = [];
@@ -536,12 +533,7 @@
     screenW = canvas.width * iws;
     screenH = bathViewH;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = bathInteriorBottom() - (scene.y + scene.h) / worldScale;
-    // Short windows crop spare timber above the bowl rather than replacing
-    // the room with a second layout. Keep the real furnace below the copper.
-    if (layout.compact) {
-      maxY = mainCurve.y0 - 88 / worldScale;
-    }
+    var maxY = main.fr * TILE - floorY / worldScale;
     if (maxY < minY) minY = maxY;
     // A single-room bath has nothing to scroll to. Do not reveal the retired
     // tower artwork on a stray wheel gesture. Purchased upper floors remain reachable.
@@ -549,8 +541,8 @@
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
     bathCamY = bathScrollT;
-    var centerX = 37 * TILE;
-    cam.x = centerX - (scene.x + scene.w / 2) / worldScale;
+    var vesselRight = mainCurve.x1 + 40;
+    cam.x = vesselRight - (width - 24) / worldScale;
     cam.y = bathCamY;
     return true;
   }

@@ -9,7 +9,7 @@ the rotate screen and stops gameplay and held input; returning to landscape
 keeps any manual pause intact. Build and verify mobile bath controls in landscape,
 including tablet screens and changing browser-toolbar height. Portrait tests
 verify the orientation gate. Landscape mobile and desktop share the same joined
-tub and furnace, flanking controls and trays at the same viewport size. Short
+tub and furnace on the right, with controls and trays on the left at the same viewport size. Short
 viewports adjust scale and spacing while keeping 44px touch targets.
 
 Since v28.16, the banya opens by default for returning profiles as well as
@@ -73,12 +73,14 @@ actual fuel bodies while pale ash sifts through the slots.
 
 The room gives its full height to the bathhouse, with no top or bottom HUD
 bar since v28.84. Navigation buttons mount directly on the timber wall.
-The same desktop arrangement serves landscape phones and tablets. The claw,
-hose, materials and bellows sit beside the firebox on the left, opposite the
-striker, grate, liquid control and water, temperature and money readings.
+Since v28.161, the tub and its integrated furnace sit on the right. The top
+of the copper rim meets the waiting floor, which extends across fourteen tiles
+on the left. Two control columns sit below that landing: materials, bellows,
+claw and hose alongside the striker, grate, liquid selection and bath readings.
+The same arrangement serves desktop, landscape phones and tablets.
 Every tool is available in the same view. Selecting the hose exposes POUR/STOP
 and JET/SHOWER; selecting the claw exposes GRAB/DROP. Short viewports scale the
-joined copper tub and furnace and adapt the columns. Controls retain targets
+joined copper tub and furnace and adapt the left columns. Controls retain targets
 at least 44px wide and tall. Waiting visitors have invisible touch padding
 of the same minimum size. The guest cards and their connecting lines are removed
 since v28.154. The dry guest landing stays visible. Version and FPS remain
@@ -101,7 +103,10 @@ older saves in the concealed tile clearance. The coarse tile mask remains a
 backstop, and is uploaded separately so it cannot flatten the curved boundary.
 Guest buoyancy integrates the same visible cavity. Existing
 saves recarve the larger room on entry without adding water or charging again.
-Old waiting guests move to the dry landing. Purchased upper floors remain
+Old waiting guests move to the longer dry landing. The saved layout revision
+moves existing basin liquid and soaking guests down forty world pixels once,
+retaining liquid identity, quantity, heat and fuel. Outdoor and upper-floor
+liquids keep their positions. Purchased upper floors remain
 available by immediate scrolling. Without purchased upper floors, wheel and drag
 gestures leave the bath fixed. There is no separate boiler screen or camera transition.
 
